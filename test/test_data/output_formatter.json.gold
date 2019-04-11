@@ -1,0 +1,102 @@
+{
+ "options": {
+  "requests_per_second": "0",
+  "connections": "0",
+  "h2": false,
+  "concurrency": "",
+  "verbosity": "",
+  "output_format": "",
+  "uri": "",
+  "duration": "1s"
+ },
+ "results": [
+  {
+   "name": "worker_0",
+   "statistics": [
+    {
+     "count": "3",
+     "id": "stat_id",
+     "percentiles": [],
+     "mean": "0.002s",
+     "pstdev": "0.000816497s"
+    },
+    {
+     "count": "0",
+     "id": "",
+     "percentiles": [],
+     "mean": "0s",
+     "pstdev": "0s"
+    }
+   ],
+   "counters": [
+    {
+     "name": "bar",
+     "value": "2"
+    },
+    {
+     "name": "foo",
+     "value": "1"
+    }
+   ]
+  },
+  {
+   "name": "worker_1",
+   "statistics": [
+    {
+     "count": "3",
+     "id": "stat_id",
+     "percentiles": [],
+     "mean": "0.002s",
+     "pstdev": "0.000816497s"
+    },
+    {
+     "count": "0",
+     "id": "",
+     "percentiles": [],
+     "mean": "0s",
+     "pstdev": "0s"
+    }
+   ],
+   "counters": [
+    {
+     "name": "bar",
+     "value": "2"
+    },
+    {
+     "name": "foo",
+     "value": "1"
+    }
+   ]
+  },
+  {
+   "name": "global",
+   "statistics": [
+    {
+     "count": "3",
+     "id": "stat_id",
+     "percentiles": [],
+     "mean": "0.002s",
+     "pstdev": "0.000816497s"
+    },
+    {
+     "count": "0",
+     "id": "",
+     "percentiles": [],
+     "mean": "0s",
+     "pstdev": "0s"
+    }
+   ],
+   "counters": [
+    {
+     "name": "bar",
+     "value": "2"
+    },
+    {
+     "name": "foo",
+     "value": "1"
+    }
+   ]
+  }
+ ],
+ "timestamp": "2009-02-13T23:31:31.567Z"
+}

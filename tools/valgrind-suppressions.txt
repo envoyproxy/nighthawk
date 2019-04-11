@@ -1,0 +1,12 @@
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:_Znam
+   fun:InitModule
+   fun:_ZN15MallocExtension8RegisterEPS_
+   fun:__cxx_global_var_init.2
+   fun:_GLOBAL__sub_I_tcmalloc.cc
+   fun:__libc_csu_init
+   fun:(below main)
+}
