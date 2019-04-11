@@ -1,4 +1,4 @@
-#include "nighthawk/source/client/client_worker_impl.h"
+#include "client/client_worker_impl.h"
 
 namespace Nighthawk {
 namespace Client {

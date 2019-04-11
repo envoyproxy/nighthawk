@@ -6,7 +6,7 @@
 #include "envoy/event/dispatcher.h"
 #include "envoy/stats/store.h"
 
-#include "nighthawk/source/common/platform_util_impl.h"
+#include "common/platform_util_impl.h"
 
 namespace Nighthawk {
 namespace Client {

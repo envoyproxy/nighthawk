@@ -1,4 +1,4 @@
-#include "nighthawk/source/client/benchmark_client_impl.h"
+#include "client/benchmark_client_impl.h"
 
 #include "absl/strings/str_split.h"
 
@@ -21,7 +21,7 @@
 
 #include "nighthawk/common/statistic.h"
 
-#include "nighthawk/source/client/stream_decoder.h"
+#include "client/stream_decoder.h"
 
 using namespace std::chrono_literals;
 

@@ -19,9 +19,9 @@
 #include "common/http/header_map_impl.h"
 #include "common/runtime/runtime_impl.h"
 
-#include "nighthawk/source/client/stream_decoder.h"
-#include "nighthawk/source/common/ssl.h"
-#include "nighthawk/source/common/utility.h"
+#include "client/stream_decoder.h"
+#include "common/ssl.h"
+#include "common/utility.h"
 
 namespace Nighthawk {
 namespace Client {

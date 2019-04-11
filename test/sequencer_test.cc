@@ -13,14 +13,14 @@
 #include "test/mocks/event/mocks.h"
 #include "test/test_common/simulated_time_system.h"
 
-#include "nighthawk/test/mocks.h"
+#include "test/mocks.h"
 
 #include "nighthawk/common/exception.h"
 #include "nighthawk/common/platform_util.h"
 
-#include "nighthawk/source/common/rate_limiter_impl.h"
-#include "nighthawk/source/common/sequencer_impl.h"
-#include "nighthawk/source/common/statistic_impl.h"
+#include "common/rate_limiter_impl.h"
+#include "common/sequencer_impl.h"
+#include "common/statistic_impl.h"
 
 using namespace std::chrono_literals;
 

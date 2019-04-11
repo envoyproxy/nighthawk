@@ -81,7 +81,7 @@ if __name__ == "__main__":
     parser.add_argument('--include_genfiles', action='store_true')
     parser.add_argument('--include_headers', action='store_true')
     parser.add_argument(
-        'bazel_targets', nargs='*', default=["//nighthawk/source/exe/...", "//nighthawk/test/..."])
+        'bazel_targets', nargs='*', default=["//source/exe/...", "//test/..."])
     args = parser.parse_args()
     generateCompilationDatabase(args)
     fixCompilationDatabase(args)

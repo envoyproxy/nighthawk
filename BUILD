@@ -1,6 +1,5 @@
 load(
     "@envoy//bazel:envoy_build_system.bzl",
-    "envoy_basic_cc_library",
     "envoy_cc_binary",
 )
 
@@ -10,6 +9,6 @@ envoy_cc_binary(
     name = "nighthawk_client",
     repository = "@envoy",
     deps = [
-        "//nighthawk/source/exe:nighthawk_client_entry_lib",
+        "//source/exe:nighthawk_client_entry_lib",
     ],
 )

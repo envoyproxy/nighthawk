@@ -1,17 +1,17 @@
 #!/bin/bash -e
 
 function do_build () {
-    bazel build $BAZEL_BUILD_OPTIONS --verbose_failures=true //nighthawk:nighthawk_client
+    bazel build $BAZEL_BUILD_OPTIONS --verbose_failures=true //:nighthawk_client
 }
 
 function do_test() {
     bazel test $BAZEL_BUILD_OPTIONS $BAZEL_TEST_OPTIONS --test_output=all \
-    //nighthawk/test:nighthawk_test
+    //test:nighthawk_test
 }
 
 function do_test_with_valgrind() {
     apt-get update && apt-get install valgrind && \
-    bazel build $BAZEL_BUILD_OPTIONS -c dbg //nighthawk/test:nighthawk_test && \
+    bazel build $BAZEL_BUILD_OPTIONS -c dbg //test:nighthawk_test && \
     nighthawk/tools/valgrind-tests.sh
 }
 
@@ -80,7 +80,7 @@ function do_asan() {
     echo "Building and testing envoy tests..."
     override_linker_with_lld
     cd "${SRCDIR}"
-    run_bazel test ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-asan //nighthawk/test:nighthawk_test
+    run_bazel test ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-asan //test:nighthawk_test
 }
 
 function do_tsan() {
@@ -88,7 +88,7 @@ function do_tsan() {
     echo "Building and testing envoy tests..."
     override_linker_with_lld
     cd "${SRCDIR}"
-    run_bazel test ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-tsan //nighthawk/test:nighthawk_test
+    run_bazel test ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-tsan //test:nighthawk_test
 }
 
 [ -z "${NUM_CPUS}" ] && NUM_CPUS=`grep -c ^processor /proc/cpuinfo`

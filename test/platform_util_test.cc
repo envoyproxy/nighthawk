@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 
-#include "nighthawk/source/common/platform_util_impl.h"
+#include "common/platform_util_impl.h"
 
 namespace Nighthawk {
 

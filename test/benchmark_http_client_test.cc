@@ -16,12 +16,12 @@
 #include "common/stats/isolated_store_impl.h"
 #include "common/thread_local/thread_local_impl.h"
 
-#include "nighthawk/source/client/benchmark_client_impl.h"
-#include "nighthawk/source/common/platform_util_impl.h"
-#include "nighthawk/source/common/rate_limiter_impl.h"
-#include "nighthawk/source/common/sequencer_impl.h"
-#include "nighthawk/source/common/statistic_impl.h"
-#include "nighthawk/source/common/utility.h"
+#include "client/benchmark_client_impl.h"
+#include "common/platform_util_impl.h"
+#include "common/rate_limiter_impl.h"
+#include "common/sequencer_impl.h"
+#include "common/statistic_impl.h"
+#include "common/utility.h"
 
 #include "envoy/thread_local/thread_local.h"
 #include "test/mocks/runtime/mocks.h"
@@ -49,7 +49,7 @@ public:
   static void SetUpTestCase() {
     Envoy::Filesystem::InstanceImplPosix file_system;
     envoy_config = file_system.fileReadToEnd(Envoy::TestEnvironment::runfilesPath(
-        "nighthawk/test/test_data/benchmark_http_client_test_envoy.yaml"));
+        "test/test_data/benchmark_http_client_test_envoy.yaml"));
     envoy_config = Envoy::TestEnvironment::substitute(envoy_config);
   }
 

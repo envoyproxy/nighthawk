@@ -6,7 +6,7 @@
 #include "common/http/utility.h"
 #include "common/network/utility.h"
 
-#include "nighthawk/source/common/utility.h"
+#include "common/utility.h"
 
 namespace Nighthawk {
 

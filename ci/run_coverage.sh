@@ -8,7 +8,7 @@ set -e
 
 # This is the target that will be run to generate coverage data. It can be overridden by consumer
 # projects that want to run coverage on a different/combined target.
-[[ -z "${COVERAGE_TARGET}" ]] && COVERAGE_TARGET="//nighthawk/test/..."
+[[ -z "${COVERAGE_TARGET}" ]] && COVERAGE_TARGET="//test/..."
 
 bazel clean
 
@@ -16,7 +16,7 @@ bazel clean
 "${BAZEL_COVERAGE}" coverage ${BAZEL_TEST_OPTIONS} \
 "${COVERAGE_TARGET}"  \
 --experimental_cc_coverage \
---instrumentation_filter=//nighthawk/source/...,//nighthawk/include/... \
+--instrumentation_filter=//source/...,//include/... \
 --coverage_report_generator=@bazel_tools//tools/test/CoverageOutputGenerator/java/com/google/devtools/coverageoutputgenerator:Main \
 --combined_report=lcov
 

@@ -20,7 +20,7 @@
 #include "nighthawk/common/sequencer.h"
 #include "nighthawk/common/statistic.h"
 
-#include "nighthawk/source/common/utility.h"
+#include "common/utility.h"
 
 using namespace std::chrono_literals;
 

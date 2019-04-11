@@ -2,7 +2,7 @@ workspace(name = "nighthawk")
 
 local_repository(
     name = "envoy",
-    path = "nighthawk/envoy",
+    path = "envoy",
 )
 
 load("@envoy//bazel:repositories.bzl", "GO_VERSION", "envoy_dependencies")

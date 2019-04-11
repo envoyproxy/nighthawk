@@ -8,5 +8,5 @@ generated/
 .local
 .cmake
 .rnd
+.vscode/
 bazel.output.txt
-measurements/

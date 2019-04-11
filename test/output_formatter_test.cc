@@ -2,16 +2,16 @@
 
 #include "gtest/gtest.h"
 
-#include "nighthawk/source/client/output_formatter_impl.h"
+#include "client/output_formatter_impl.h"
 
 #include "test/test_common/simulated_time_system.h"
 
 #include "common/filesystem/filesystem_impl.h"
 
-#include "nighthawk/source/client/options.pb.h"
-#include "nighthawk/source/common/statistic_impl.h"
-#include "nighthawk/test/mocks.h"
-#include "nighthawk/test/test_common/environment.h"
+#include "common/statistic_impl.h"
+#include "source/client/options.pb.h"
+#include "test/mocks.h"
+#include "test/test_common/environment.h"
 
 using namespace std::chrono_literals;
 using namespace testing;
@@ -56,17 +56,17 @@ public:
 
 TEST_F(OutputFormatterTest, CliFormatter) {
   ConsoleOutputFormatterImpl formatter(time_system_, options_);
-  expectEqualToGoldFile(formatter, "nighthawk/test/test_data/output_formatter.txt.gold");
+  expectEqualToGoldFile(formatter, "test/test_data/output_formatter.txt.gold");
 }
 
 TEST_F(OutputFormatterTest, JsonFormatter) {
   JsonOutputFormatterImpl formatter(time_system_, options_);
-  expectEqualToGoldFile(formatter, "nighthawk/test/test_data/output_formatter.json.gold");
+  expectEqualToGoldFile(formatter, "test/test_data/output_formatter.json.gold");
 }
 
 TEST_F(OutputFormatterTest, YamlFormatter) {
   YamlOutputFormatterImpl formatter(time_system_, options_);
-  expectEqualToGoldFile(formatter, "nighthawk/test/test_data/output_formatter.yaml.gold");
+  expectEqualToGoldFile(formatter, "test/test_data/output_formatter.yaml.gold");
 }
 
 } // namespace Client

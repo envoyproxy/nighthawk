@@ -1,4 +1,4 @@
-#include "nighthawk/source/common/sequencer_impl.h"
+#include "common/sequencer_impl.h"
 
 #include "common/common/assert.h"
 

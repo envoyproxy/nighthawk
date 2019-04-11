@@ -14,7 +14,7 @@ envoy_cc_library(
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
-        "//nighthawk/source/client:nighthawk_client_lib",
+        "//source/client:nighthawk_client_lib",
         "@envoy//source/common/common:thread_lib",
     ],
 )

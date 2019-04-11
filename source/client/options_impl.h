@@ -7,7 +7,7 @@
 #include "nighthawk/client/options.h"
 #include "nighthawk/common/exception.h"
 
-#include "nighthawk/source/client/options.pb.h"
+#include "source/client/options.pb.h"
 
 namespace Nighthawk {
 namespace Client {

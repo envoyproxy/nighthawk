@@ -8,7 +8,7 @@
 #include "envoy/common/exception.h"
 #include "envoy/common/pure.h"
 
-#include "nighthawk/source/client/output.pb.h"
+#include "source/client/output.pb.h"
 
 namespace Nighthawk {
 

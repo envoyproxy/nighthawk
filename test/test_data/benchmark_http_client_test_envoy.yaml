@@ -36,13 +36,13 @@ static_resources:
                   direct_response:
                     status: 200
                     body:
-                      filename: {{ test_rundir }}/nighthawk/test/test_data/lorem_ipsum.txt
+                      filename: {{ test_rundir }}/test/test_data/lorem_ipsum.txt
                 - match:
                     prefix: /404
                   direct_response:
                     status: 404
                     body:
-                      filename: {{ test_rundir }}/nighthawk/test/test_data/lorem_ipsum.txt
+                      filename: {{ test_rundir }}/test/test_data/lorem_ipsum.txt
             http_filters:
             - name: envoy.router
               config:

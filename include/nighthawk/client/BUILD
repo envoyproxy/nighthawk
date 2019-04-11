@@ -19,7 +19,7 @@ envoy_basic_cc_library(
     ],
     include_prefix = "nighthawk/client",
     deps = [
-        "//nighthawk/include/nighthawk/common:base_includes",
+        "//include/nighthawk/common:base_includes",
         "@envoy//include/envoy/common:base_includes",
         "@envoy//source/common/common:minimal_logger_lib",
         "@envoy//source/common/common:non_copyable",

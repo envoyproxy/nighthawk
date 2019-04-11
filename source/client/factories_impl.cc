@@ -1,14 +1,14 @@
-#include "nighthawk/source/client/factories_impl.h"
+#include "client/factories_impl.h"
 
 #include "common/stats/isolated_store_impl.h"
 
-#include "nighthawk/source/client/benchmark_client_impl.h"
-#include "nighthawk/source/client/output_formatter_impl.h"
-#include "nighthawk/source/common/platform_util_impl.h"
-#include "nighthawk/source/common/rate_limiter_impl.h"
-#include "nighthawk/source/common/sequencer_impl.h"
-#include "nighthawk/source/common/statistic_impl.h"
-#include "nighthawk/source/common/utility.h"
+#include "client/benchmark_client_impl.h"
+#include "client/output_formatter_impl.h"
+#include "common/platform_util_impl.h"
+#include "common/rate_limiter_impl.h"
+#include "common/sequencer_impl.h"
+#include "common/statistic_impl.h"
+#include "common/utility.h"
 
 namespace Nighthawk {
 namespace Client {

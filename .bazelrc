@@ -1,4 +1,4 @@
-import %workspace%/nighthawk/envoy/.bazelrc
+import %workspace%/envoy/.bazelrc
 build:asan --action_env="CC=clang"
 build:asan --action_env="CXX=clang++"
 
