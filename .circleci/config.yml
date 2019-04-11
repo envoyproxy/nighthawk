@@ -1,0 +1,70 @@
+references:
+  envoy-build-image: &envoy-build-image
+    envoyproxy/envoy-build:b3995b7c5e3846f80f6f09436043ec4c8c8f762a
+
+version: 2
+jobs:
+  build:
+    docker:
+      - image: *envoy-build-image
+    resource_class: xlarge
+    steps:
+      - checkout
+      - run: ci/do_ci.sh build
+  test:
+    docker:
+      - image: *envoy-build-image
+    resource_class: xlarge
+    steps:
+      - checkout
+      - run: ci/do_ci.sh test
+  clang_tidy:
+    docker:
+      - image: *envoy-build-image
+    resource_class: xlarge
+    steps:
+      - checkout
+      - run: ci/do_ci.sh clang_tidy
+  test_with_valgrind:
+    docker:
+      - image: *envoy-build-image
+    resource_class: xlarge
+    steps:
+      - checkout
+      - run: ci/do_ci.sh test_with_valgrind
+  coverage:
+    docker:
+      - image: *envoy-build-image
+    resource_class: xlarge
+    steps:
+      - checkout
+      - run: ci/do_ci.sh coverage
+      - store_artifacts:
+          path: /root/project/generated
+          destination: /      
+  asan:
+    docker:
+      - image: *envoy-build-image
+    resource_class: xlarge
+    steps:
+      - checkout
+      - run: ci/do_ci.sh asan
+  tsan:
+    docker:
+      - image: *envoy-build-image
+    resource_class: xlarge
+    steps:
+      - checkout
+      - run: ci/do_ci.sh tsan
+
+workflows:
+  version: 2
+  all:
+    jobs:
+      - build
+      - test
+      - clang_tidy
+#      - test_with_valgrind
+      - coverage
+      - asan
+      - tsan
