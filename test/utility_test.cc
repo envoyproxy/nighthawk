@@ -6,6 +6,7 @@
 #include "test/test_common/environment.h"
 #include "test/test_common/utility.h"
 
+#include "common/uri_impl.h"
 #include "common/utility.h"
 
 namespace Nighthawk {
@@ -16,7 +17,7 @@ public:
   void checkUriParsing(const std::string& uri_to_test, const std::string& host_and_port,
                        const std::string& host_without_port, const uint64_t port,
                        const std::string& scheme, const std::string& path) {
-    const Uri uri = Uri::Parse(uri_to_test);
+    const UriImpl uri = UriImpl(uri_to_test);
     EXPECT_EQ(host_and_port, uri.host_and_port());
     EXPECT_EQ(host_without_port, uri.host_without_port());
     EXPECT_EQ(port, uri.port());
@@ -38,47 +39,47 @@ TEST_F(UtilityTest, Defaults) {
 }
 
 TEST_F(UtilityTest, SchemeIsLowerCased) {
-  const Uri uri = Uri::Parse("HTTP://a");
+  const UriImpl uri = UriImpl("HTTP://a");
   EXPECT_EQ("http", uri.scheme());
 }
 
 TEST_F(UtilityTest, ExplicitPort) {
-  const Uri u1 = Uri::Parse("HTTP://a:111");
+  const UriImpl u1 = UriImpl("HTTP://a:111");
   EXPECT_EQ(111, u1.port());
 
-  EXPECT_THROW(Uri::Parse("HTTP://a:-111"), UriException);
-  EXPECT_THROW(Uri::Parse("HTTP://a:0"), UriException);
+  EXPECT_THROW(UriImpl("HTTP://a:-111"), UriException);
+  EXPECT_THROW(UriImpl("HTTP://a:0"), UriException);
 }
 
-TEST_F(UtilityTest, SchemeWeDontUnderstand) { EXPECT_THROW(Uri::Parse("foo://a"), UriException); }
+TEST_F(UtilityTest, SchemeWeDontUnderstand) { EXPECT_THROW(UriImpl("foo://a"), UriException); }
 
-TEST_F(UtilityTest, Empty) { EXPECT_THROW(Uri::Parse(""), UriException); }
+TEST_F(UtilityTest, Empty) { EXPECT_THROW(UriImpl(""), UriException); }
 
-TEST_F(UtilityTest, HostStartsWithMinus) { EXPECT_THROW(Uri::Parse("http://-a"), UriException); }
+TEST_F(UtilityTest, HostStartsWithMinus) { EXPECT_THROW(UriImpl("http://-a"), UriException); }
 
 TEST_F(UtilityTest, Ipv6Address) {
-  const Uri u = Uri::Parse("http://[::1]:81/bar");
+  const UriImpl u = UriImpl("http://[::1]:81/bar");
   EXPECT_EQ("[::1]", u.host_without_port());
   EXPECT_EQ("[::1]:81", u.host_and_port());
   EXPECT_EQ(81, u.port());
 
-  const Uri u2 = Uri::Parse("http://[::1]/bar");
+  const UriImpl u2 = UriImpl("http://[::1]/bar");
   EXPECT_EQ("[::1]", u2.host_without_port());
   EXPECT_EQ("[::1]:80", u2.host_and_port());
   EXPECT_EQ(80, u2.port());
 }
 
 TEST_F(UtilityTest, FindPortSeparator) {
-  EXPECT_EQ(absl::string_view::npos, Uri::findPortSeparator("127.0.0.1"));
-  EXPECT_EQ(5, Uri::findPortSeparator("[::1]:80"));
-  EXPECT_EQ(absl::string_view::npos, Uri::findPortSeparator("[::1]"));
-  EXPECT_EQ(9, Uri::findPortSeparator("127.0.0.1:80"));
-  EXPECT_EQ(absl::string_view::npos, Uri::findPortSeparator("127.0.0.1"));
+  EXPECT_EQ(absl::string_view::npos, Utility::findPortSeparator("127.0.0.1"));
+  EXPECT_EQ(5, Utility::findPortSeparator("[::1]:80"));
+  EXPECT_EQ(absl::string_view::npos, Utility::findPortSeparator("[::1]"));
+  EXPECT_EQ(9, Utility::findPortSeparator("127.0.0.1:80"));
+  EXPECT_EQ(absl::string_view::npos, Utility::findPortSeparator("127.0.0.1"));
 
-  EXPECT_EQ(absl::string_view::npos, Uri::findPortSeparator("foo.com"));
+  EXPECT_EQ(absl::string_view::npos, Utility::findPortSeparator("foo.com"));
 
-  EXPECT_EQ(7, Uri::findPortSeparator("foo.com:80"));
-  EXPECT_EQ(8, Uri::findPortSeparator("8foo.com:80"));
+  EXPECT_EQ(7, Utility::findPortSeparator("foo.com:80"));
+  EXPECT_EQ(8, Utility::findPortSeparator("8foo.com:80"));
 }
 
 class UtilityAddressResolutionTest
@@ -88,7 +89,7 @@ public:
   testResolution(absl::string_view uri, Envoy::Network::DnsLookupFamily address_family) {
     Envoy::Api::ApiPtr api = Envoy::Api::createApiForTest();
     auto dispatcher = api->allocateDispatcher();
-    auto u = Uri::Parse(uri);
+    auto u = UriImpl(uri);
     return u.resolve(*dispatcher, address_family);
   }
 };
@@ -137,7 +138,7 @@ TEST_P(UtilityAddressResolutionTest, ResolveTwiceReturnsCached) {
 
   Envoy::Api::ApiPtr api = Envoy::Api::createApiForTest();
   auto dispatcher = api->allocateDispatcher();
-  auto u = Uri::Parse("localhost");
+  auto u = UriImpl("localhost");
 
   EXPECT_EQ(u.resolve(*dispatcher, address_family).get(),
             u.resolve(*dispatcher, address_family).get());

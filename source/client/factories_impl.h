@@ -7,6 +7,7 @@
 #include "envoy/stats/store.h"
 
 #include "common/platform_util_impl.h"
+#include "nighthawk/common/uri.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -25,7 +26,7 @@ class BenchmarkClientFactoryImpl : public OptionBasedFactoryImpl, public Benchma
 public:
   BenchmarkClientFactoryImpl(const Options& options);
   BenchmarkClientPtr create(Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher,
-                            Envoy::Stats::Store& store, const Uri uri) const override;
+                            Envoy::Stats::Store& store, UriPtr&& uri) const override;
 };
 
 class SequencerFactoryImpl : public OptionBasedFactoryImpl, public SequencerFactory {

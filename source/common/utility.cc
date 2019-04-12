@@ -44,105 +44,11 @@ Utility::mapCountersFromStore(const Envoy::Stats::Store& store,
   return results;
 }
 
-Uri Uri::Parse(absl::string_view uri) {
-  auto r = Uri(uri);
-  if (!r.isValid()) {
-    throw UriException("Invalid URI");
-  }
-  return r;
-}
-
-bool Uri::isValid() const {
-  return (scheme_ == "http" || scheme_ == "https") && (port_ > 0 && port_ <= 65535) &&
-         // We check that we do not start with '-' because that overlaps with CLI argument
-         // parsing. For other hostname validation, we defer to parseInternetAddressAndPort() and
-         // dns resolution later on.
-         host_without_port_.size() > 0 && host_without_port_[0] != '-';
-}
-
-size_t Uri::findPortSeparator(absl::string_view hostname) {
+size_t Utility::findPortSeparator(absl::string_view hostname) {
   if (hostname.size() > 0 && hostname[0] == '[') {
     return hostname.find(":", hostname.find(']'));
   }
   return hostname.rfind(":");
-}
-
-Uri::Uri(absl::string_view uri) : scheme_("http") {
-  absl::string_view host, path;
-  Envoy::Http::Utility::extractHostPathFromUri(uri, host, path);
-
-  if (host.empty()) {
-    throw UriException("Invalid URI (no host)");
-  }
-
-  host_and_port_ = std::string(host);
-  path_ = std::string(path);
-  const bool is_https = absl::StartsWith(uri, "https://");
-  const size_t scheme_end = uri.find("://", 0);
-  if (scheme_end != std::string::npos) {
-    scheme_ = absl::AsciiStrToLower(uri.substr(0, scheme_end));
-  }
-
-  const size_t colon_index = findPortSeparator(host_and_port_);
-
-  if (colon_index == absl::string_view::npos) {
-    port_ = is_https ? 443 : 80;
-    host_without_port_ = host_and_port_;
-    host_and_port_ = fmt::format("{}:{}", host_and_port_, port_);
-  } else {
-    port_ = std::stoi(host_and_port_.substr(colon_index + 1));
-    host_without_port_ = host_and_port_.substr(0, colon_index);
-  }
-}
-
-bool Uri::performDnsLookup(Envoy::Event::Dispatcher& dispatcher,
-                           const Envoy::Network::DnsLookupFamily dns_lookup_family) {
-  auto dns_resolver = dispatcher.createDnsResolver({});
-  auto hostname = host_without_port();
-
-  if (!hostname.empty() && hostname[0] == '[' && hostname[hostname.size() - 1] == ']') {
-    hostname = absl::StrReplaceAll(hostname, {{"[", ""}, {"]", ""}});
-  }
-
-  Envoy::Network::ActiveDnsQuery* active_dns_query_ = dns_resolver->resolve(
-      hostname, dns_lookup_family,
-      [this, &dispatcher, &active_dns_query_](
-          const std::list<Envoy::Network::Address::InstanceConstSharedPtr>&& address_list) -> void {
-        active_dns_query_ = nullptr;
-        if (!address_list.empty()) {
-          address_ = Envoy::Network::Utility::getAddressWithPort(*address_list.front(), port());
-          ENVOY_LOG(debug, "DNS resolution complete for {} ({} entries, using {}).",
-                    host_without_port(), address_list.size(), address_->asString());
-        }
-        dispatcher.exit();
-      });
-
-  // Wait for DNS resolution to complete before proceeding.
-  dispatcher.run(Envoy::Event::Dispatcher::RunType::Block);
-  return address_ != nullptr;
-}
-
-Envoy::Network::Address::InstanceConstSharedPtr
-Uri::resolve(Envoy::Event::Dispatcher& dispatcher,
-             const Envoy::Network::DnsLookupFamily dns_lookup_family) {
-  if (resolve_attempted_) {
-    return address_;
-  }
-  resolve_attempted_ = true;
-
-  bool ok = performDnsLookup(dispatcher, dns_lookup_family);
-
-  // Ensure that we figured out a fitting match for the requested dns lookup family.
-  ok = ok && !((dns_lookup_family == Envoy::Network::DnsLookupFamily::V6Only &&
-                address_->ip()->ipv6() == nullptr) ||
-               (dns_lookup_family == Envoy::Network::DnsLookupFamily::V4Only &&
-                address_->ip()->ipv4() == nullptr));
-  if (!ok) {
-    ENVOY_LOG(warn, "Could not resolve '{}'", host_without_port());
-    address_.reset();
-    throw UriException("Could not determine address");
-  }
-  return address_;
 }
 
 } // namespace Nighthawk

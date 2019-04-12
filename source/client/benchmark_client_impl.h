@@ -21,7 +21,7 @@
 
 #include "client/stream_decoder.h"
 #include "common/ssl.h"
-#include "common/utility.h"
+#include "nighthawk/common/uri.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -49,7 +49,7 @@ class BenchmarkClientHttpImpl : public BenchmarkClient,
 public:
   BenchmarkClientHttpImpl(Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher,
                           Envoy::Stats::Store& store, StatisticPtr&& connect_statistic,
-                          StatisticPtr&& response_statistic, const Uri& uri, bool use_h2);
+                          StatisticPtr&& response_statistic, UriPtr&& uri, bool use_h2);
 
   void setConnectionLimit(uint64_t connection_limit) { connection_limit_ = connection_limit; }
   void setConnectionTimeout(std::chrono::seconds timeout) { timeout_ = timeout; }
@@ -88,7 +88,7 @@ private:
   StatisticPtr connect_statistic_;
   StatisticPtr response_statistic_;
   const bool use_h2_;
-  const Uri uri_;
+  const UriPtr uri_;
   std::chrono::seconds timeout_{5s};
   uint64_t connection_limit_{1};
   uint64_t max_pending_requests_{1};

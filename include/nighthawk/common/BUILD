@@ -16,6 +16,7 @@ envoy_basic_cc_library(
         "rate_limiter.h",
         "sequencer.h",
         "statistic.h",
+        "uri.h",
         "worker.h",
     ],
     include_prefix = "nighthawk/common",
@@ -23,6 +24,7 @@ envoy_basic_cc_library(
         "@envoy//include/envoy/common:base_includes",
         "@envoy//source/common/common:minimal_logger_lib",
         "@envoy//source/common/common:non_copyable",
+        "@envoy//source/common/network:dns_lib",
         "@envoy//source/common/protobuf",
     ],
 )

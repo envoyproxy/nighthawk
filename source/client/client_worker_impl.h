@@ -9,6 +9,7 @@
 
 #include "common/utility.h"
 #include "common/worker_impl.h"
+#include "nighthawk/common/uri.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -19,7 +20,7 @@ class ClientWorkerImpl : public WorkerImpl,
 public:
   ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Instance& tls,
                    const BenchmarkClientFactory& benchmark_client_factory,
-                   const SequencerFactory& sequencer_factory, const Uri& uri,
+                   const SequencerFactory& sequencer_factory, UriPtr&& uri,
                    Envoy::Stats::StorePtr&& store, const int worker_number,
                    const Envoy::MonotonicTime starting_time);
 
@@ -32,7 +33,6 @@ protected:
 
 private:
   void simpleWarmup();
-  const Uri uri_;
   const int worker_number_;
   const Envoy::MonotonicTime starting_time_;
   bool success_{};

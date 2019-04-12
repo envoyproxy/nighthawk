@@ -4,6 +4,7 @@
 
 #include "tclap/CmdLine.h"
 
+#include "common/uri_impl.h"
 #include "common/utility.h"
 
 namespace Nighthawk {
@@ -123,7 +124,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   }
 
   try {
-    Uri::Parse(uri_);
+    UriImpl uri(uri_);
   } catch (const UriException) {
     throw MalformedArgvException("Invalid URI");
   }

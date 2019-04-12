@@ -19,6 +19,7 @@
 #include "nighthawk/common/rate_limiter.h"
 #include "nighthawk/common/sequencer.h"
 #include "nighthawk/common/statistic.h"
+#include "nighthawk/common/uri.h"
 
 #include "common/utility.h"
 
@@ -81,7 +82,7 @@ public:
   ~MockBenchmarkClientFactory() override;
   MOCK_CONST_METHOD4(create, Client::BenchmarkClientPtr(Envoy::Api::Api& api,
                                                         Envoy::Event::Dispatcher& dispatcher,
-                                                        Envoy::Stats::Store& store, const Uri uri));
+                                                        Envoy::Stats::Store& store, UriPtr&& uri));
 };
 
 class MockSequencerFactory : public Client::SequencerFactory {

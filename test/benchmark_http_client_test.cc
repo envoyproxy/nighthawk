@@ -21,6 +21,7 @@
 #include "common/rate_limiter_impl.h"
 #include "common/sequencer_impl.h"
 #include "common/statistic_impl.h"
+#include "common/uri_impl.h"
 #include "common/utility.h"
 
 #include "envoy/thread_local/thread_local.h"
@@ -105,14 +106,14 @@ public:
 
   void doSetupBenchmarkClient(const std::string& uriPath, bool use_https, bool use_h2) {
     const std::string address = Envoy::Network::Test::getLoopbackAddressUrlString(GetParam());
-    Uri uri = Uri::Parse(fmt::format("{}://{}:{}{}", use_https ? "https" : "http", address,
-                                     getTestServerHostAndPort(), uriPath));
-    uri.resolve(*dispatcher_, GetParam() == Envoy::Network::Address::IpVersion::v4
-                                  ? Envoy::Network::DnsLookupFamily::V4Only
-                                  : Envoy::Network::DnsLookupFamily::V6Only);
+    auto uri = std::make_unique<UriImpl>(fmt::format("{}://{}:{}{}", use_https ? "https" : "http",
+                                                     address, getTestServerHostAndPort(), uriPath));
+    uri->resolve(*dispatcher_, GetParam() == Envoy::Network::Address::IpVersion::v4
+                                   ? Envoy::Network::DnsLookupFamily::V4Only
+                                   : Envoy::Network::DnsLookupFamily::V6Only);
     client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
         api_, *dispatcher_, store_, std::make_unique<StreamingStatistic>(),
-        std::make_unique<StreamingStatistic>(), uri, use_h2);
+        std::make_unique<StreamingStatistic>(), std::move(uri), use_h2);
   }
 
   uint64_t nonZeroValuedCounterCount() {
@@ -342,11 +343,11 @@ TEST_P(BenchmarkClientHttpTest, EnableLatencyMeasurement) {
 }
 
 TEST_P(BenchmarkClientHttpTest, StatusTrackingInOnComplete) {
-  Uri uri = Uri::Parse(fmt::format("http://foo/"));
+  auto uri = std::make_unique<UriImpl>("http://foo/");
   auto store = std::make_unique<Envoy::Stats::IsolatedStoreImpl>();
   client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
       api_, *dispatcher_, *store, std::make_unique<StreamingStatistic>(),
-      std::make_unique<StreamingStatistic>(), uri, false);
+      std::make_unique<StreamingStatistic>(), std::move(uri), false);
   Envoy::Http::HeaderMapImpl header;
 
   auto& status = header.insertStatus();

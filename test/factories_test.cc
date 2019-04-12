@@ -12,6 +12,7 @@
 #include "test/mocks.h"
 
 #include "client/factories_impl.h"
+#include "common/uri_impl.h"
 
 using namespace std::chrono_literals;
 
@@ -36,7 +37,7 @@ TEST_F(FactoriesTest, CreateBenchmarkClient) {
   EXPECT_CALL(options_, h2()).Times(1);
 
   auto benchmark_client =
-      factory.create(*api_, dispatcher_, stats_store_, Uri::Parse("http://foo/"));
+      factory.create(*api_, dispatcher_, stats_store_, std::make_unique<UriImpl>("http://foo/"));
   EXPECT_NE(nullptr, benchmark_client.get());
 }
 

@@ -15,6 +15,7 @@
 
 #include "client/client_worker_impl.h"
 #include "common/statistic_impl.h"
+#include "common/uri_impl.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -91,10 +92,11 @@ TEST_F(ClientWorkerTest, BasicTest) {
   }
 
   int worker_number = 12345;
-  auto worker = std::make_unique<ClientWorkerImpl>(
-      api_, tls_, benchmark_client_factory_, sequencer_factory_, Uri::Parse("http://foo"),
-      std::make_unique<Envoy::Stats::IsolatedStoreImpl>(), worker_number,
-      time_system_.monotonicTime());
+  auto worker =
+      std::make_unique<ClientWorkerImpl>(api_, tls_, benchmark_client_factory_, sequencer_factory_,
+                                         std::make_unique<Nighthawk::UriImpl>("http://foo"),
+                                         std::make_unique<Envoy::Stats::IsolatedStoreImpl>(),
+                                         worker_number, time_system_.monotonicTime());
 
   worker->start();
   worker->waitForCompletion();
