@@ -1,4 +1,4 @@
-#include "nighthawk/source/client/output_formatter_impl.h"
+#include "client/output_formatter_impl.h"
 
 #include <chrono>
 #include <sstream>

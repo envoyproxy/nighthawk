@@ -15,11 +15,11 @@
 #include "common/common/thread_impl.h"
 #include "common/filesystem/filesystem_impl.h"
 
-#include "nighthawk/test/mocks.h"
+#include "test/mocks.h"
 
-#include "nighthawk/source/client/client.h"
-#include "nighthawk/source/client/factories_impl.h"
-#include "nighthawk/source/client/options_impl.h"
+#include "client/client.h"
+#include "client/factories_impl.h"
+#include "client/options_impl.h"
 
 using namespace std::chrono_literals;
 
@@ -33,9 +33,9 @@ public:
 
   std::string readEnvoyConfiguration() {
     Envoy::Filesystem::InstanceImplPosix file_system;
-    const std::string config = file_system.fileReadToEnd(Envoy::TestEnvironment::runfilesPath(
-        "nighthawk/test/test_data/benchmark_http_client_test_envoy.yaml"));
-    return Envoy::TestEnvironment::substitute(config);
+    std::string envoy_config = file_system.fileReadToEnd(Envoy::TestEnvironment::runfilesPath(
+        "test/test_data/benchmark_http_client_test_envoy.yaml"));
+    return Envoy::TestEnvironment::substitute(envoy_config);
   }
 
   void SetUp() override {

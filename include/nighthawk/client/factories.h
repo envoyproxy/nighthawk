@@ -10,13 +10,13 @@
 #include "envoy/event/dispatcher.h"
 #include "envoy/stats/store.h"
 
+#include "common/utility.h"
 #include "nighthawk/client/benchmark_client.h"
 #include "nighthawk/client/options.h"
 #include "nighthawk/client/output_formatter.h"
 #include "nighthawk/common/platform_util.h"
 #include "nighthawk/common/sequencer.h"
 #include "nighthawk/common/statistic.h"
-#include "nighthawk/source/common/utility.h"
 
 namespace Nighthawk {
 namespace Client {

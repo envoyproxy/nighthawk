@@ -6,7 +6,7 @@
 #include "test/test_common/environment.h"
 #include "test/test_common/utility.h"
 
-#include "nighthawk/source/common/utility.h"
+#include "common/utility.h"
 
 namespace Nighthawk {
 
@@ -94,7 +94,7 @@ public:
 };
 
 INSTANTIATE_TEST_SUITE_P(IpVersions, UtilityAddressResolutionTest,
-                         testing::ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()),
+                         testing::ValuesIn(TestEnvironment::getIpVersionsForTest()),
                          Envoy::TestUtility::ipTestParamsToString);
 
 TEST_P(UtilityAddressResolutionTest, AddressResolution) {

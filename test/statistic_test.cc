@@ -12,9 +12,8 @@
 
 #include "test/test_common/utility.h"
 
-#include "nighthawk/common/statistic.h"
-#include "nighthawk/source/common/statistic_impl.h"
-#include "nighthawk/test/test_common/environment.h"
+#include "common/statistic_impl.h"
+#include "test/test_common/environment.h"
 
 using namespace std::chrono_literals;
 
@@ -257,9 +256,9 @@ TEST(StatisticTest, HdrStatisticPercentilesProto) {
   }
 
   Envoy::MessageUtil util;
-  util.loadFromJson(filesystem.fileReadToEnd(TestEnvironment::runfilesPath(
-                        "nighthawk/test/test_data/hdr_proto_json.gold")),
-                    parsed_json_proto);
+  util.loadFromJson(
+      filesystem.fileReadToEnd(TestEnvironment::runfilesPath("test/test_data/hdr_proto_json.gold")),
+      parsed_json_proto);
   EXPECT_TRUE(util(parsed_json_proto, statistic.toProto()));
 }
 

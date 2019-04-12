@@ -7,8 +7,8 @@
 
 #include "common/common/logger.h"
 
+#include "common/frequency.h"
 #include "nighthawk/common/statistic.h"
-#include "nighthawk/source/common/frequency.h"
 
 namespace Nighthawk {
 

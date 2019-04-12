@@ -13,10 +13,10 @@
 
 #include "test/mocks/http/mocks.h"
 
-#include "nighthawk/test/mocks.h"
+#include "test/mocks.h"
 
-#include "nighthawk/source/client/stream_decoder.h"
-#include "nighthawk/source/common/statistic_impl.h"
+#include "client/stream_decoder.h"
+#include "common/statistic_impl.h"
 
 using namespace std::chrono_literals;
 

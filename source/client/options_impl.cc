@@ -1,10 +1,10 @@
-#include "nighthawk/source/client/options_impl.h"
+#include "client/options_impl.h"
 
 #include <cmath>
 
 #include "tclap/CmdLine.h"
 
-#include "nighthawk/source/common/utility.h"
+#include "common/utility.h"
 
 namespace Nighthawk {
 namespace Client {

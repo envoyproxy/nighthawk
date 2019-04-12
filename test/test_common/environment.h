@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "test/test_common/environment.h"
+#include "external/envoy/test/test_common/environment.h"
 
 namespace Nighthawk {
 

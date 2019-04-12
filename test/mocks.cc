@@ -3,7 +3,7 @@
 
 #include "gmock/gmock.h"
 
-#include "nighthawk/test/mocks.h"
+#include "test/mocks.h"
 
 using namespace std::chrono_literals;
 

@@ -17,19 +17,19 @@ First, follow steps 1 and 2 over at [Quick start Bazel build for developers](htt
 ## Building and testing Nighthawk
 ```bash
 # test it
-bazel test -c fastbuild //nighthawk/test:nighthawk_test
+bazel test -c fastbuild //test:nighthawk_test
 ```
 # build it. for best accuracy it is important to specify -c opt.
-bazel build -c opt //nighthawk:nighthawk_client
+bazel build -c opt //:nighthawk_client
 
 ## Using the Nighthawk client
 
 ```
-➜ bazel-bin/nighthawk/nighthawk_client --help
+➜ bazel-bin/nighthawk_client --help
 
 USAGE: 
 
-   bazel-bin/nighthawk/nighthawk_client  [--output-format <human|yaml
+   bazel-bin/nighthawk_client  [--output-format <human|yaml
                                         |json>] [-v <trace|debug|info|warn
                                         |error|critical>] [--concurrency
                                         <string>] [--h2] [--timeout
@@ -99,7 +99,7 @@ Where:
 $ taskset -c 3 /path/to/envoy --config-path nighthawk/tools/envoy.yaml
 
 # run a quick benchmark using cpu cores 4 and 5.
-$ taskset -c 4-5 bazel-bin/nighthawk/nighthawk_client --rps 1000 --concurrency auto http://127.0.0.1:10000/
+$ taskset -c 4-5 bazel-bin/nighthawk_client --rps 1000 --concurrency auto http://127.0.0.1:10000/
 Nighthawk - A layer 7 protocol benchmarking tool.
 
 benchmark_http_client.queue_to_connect: 9997 samples, mean: 0.000010513s, pstdev: 0.000007883s

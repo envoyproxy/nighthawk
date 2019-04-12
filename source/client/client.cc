@@ -1,4 +1,4 @@
-#include "nighthawk/source/client/client.h"
+#include "client/client.h"
 
 #include <chrono>
 #include <fstream>
@@ -20,13 +20,13 @@
 #include "common/runtime/runtime_impl.h"
 #include "common/thread_local/thread_local_impl.h"
 
+#include "client/client_worker_impl.h"
+#include "client/factories_impl.h"
+#include "client/options_impl.h"
+#include "common/frequency.h"
+#include "common/utility.h"
 #include "nighthawk/client/output_formatter.h"
-#include "nighthawk/source/client/client_worker_impl.h"
-#include "nighthawk/source/client/factories_impl.h"
-#include "nighthawk/source/client/options_impl.h"
-#include "nighthawk/source/client/output.pb.h"
-#include "nighthawk/source/common/frequency.h"
-#include "nighthawk/source/common/utility.h"
+#include "source/client/output.pb.h"
 
 using namespace std::chrono_literals;
 

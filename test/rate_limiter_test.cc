@@ -6,8 +6,8 @@
 
 #include "nighthawk/common/exception.h"
 
-#include "nighthawk/source/common/frequency.h"
-#include "nighthawk/source/common/rate_limiter_impl.h"
+#include "common/frequency.h"
+#include "common/rate_limiter_impl.h"
 
 using namespace std::chrono_literals;
 

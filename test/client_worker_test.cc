@@ -11,10 +11,10 @@
 
 #include "test/mocks/thread_local/mocks.h"
 
-#include "nighthawk/test/mocks.h"
+#include "test/mocks.h"
 
-#include "nighthawk/source/client/client_worker_impl.h"
-#include "nighthawk/source/common/statistic_impl.h"
+#include "client/client_worker_impl.h"
+#include "common/statistic_impl.h"
 
 namespace Nighthawk {
 namespace Client {

@@ -9,9 +9,9 @@
 
 #include "common/api/api_impl.h"
 
-#include "nighthawk/test/mocks.h"
+#include "test/mocks.h"
 
-#include "nighthawk/source/client/factories_impl.h"
+#include "client/factories_impl.h"
 
 using namespace std::chrono_literals;
 

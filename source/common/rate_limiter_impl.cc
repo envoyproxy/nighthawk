@@ -1,4 +1,4 @@
-#include "nighthawk/source/common/rate_limiter_impl.h"
+#include "common/rate_limiter_impl.h"
 
 #include "common/common/assert.h"
 

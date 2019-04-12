@@ -9,9 +9,9 @@
 
 #include "test/mocks/thread_local/mocks.h"
 
-#include "nighthawk/test/mocks.h"
+#include "test/mocks.h"
 
-#include "nighthawk/source/common/worker_impl.h"
+#include "common/worker_impl.h"
 
 namespace Nighthawk {
 

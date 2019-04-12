@@ -1,4 +1,4 @@
-#include "nighthawk/source/client/stream_decoder.h"
+#include "client/stream_decoder.h"
 
 #include <memory>
 

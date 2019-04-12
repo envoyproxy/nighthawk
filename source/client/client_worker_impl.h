@@ -7,8 +7,8 @@
 #include "nighthawk/client/factories.h"
 #include "nighthawk/common/sequencer.h"
 
-#include "nighthawk/source/common/utility.h"
-#include "nighthawk/source/common/worker_impl.h"
+#include "common/utility.h"
+#include "common/worker_impl.h"
 
 namespace Nighthawk {
 namespace Client {
