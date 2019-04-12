@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package nighthawk.client;
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+
+import "nighthawk/source/client/options.proto";
+
+message Counter {
+  string name = 1;
+  uint64 value = 2;
+}
+
+message Percentile {
+  google.protobuf.Duration duration = 1;
+  double percentile = 2;
+  uint64 count = 3;
+}
+
+message Statistic {
+  uint64 count = 1;
+  string id = 2;
+  google.protobuf.Duration mean = 3;
+  google.protobuf.Duration pstdev = 4;
+  repeated Percentile percentiles = 5;
+}
+
+message Result {
+  string name = 1;
+  repeated Statistic statistics = 2;
+  repeated Counter counters = 3;
+}
+
+message Output {
+  google.protobuf.Timestamp timestamp = 1;
+  nighthawk.client.CommandLineOptions options = 2;
+  repeated Result results = 3;
+}
