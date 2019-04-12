@@ -91,7 +91,7 @@ Main::mergeWorkerStatistics(const StatisticFactory& statistic_factory,
   // instances associated to them, in the same order).
   std::vector<StatisticPtr> merged_statistics;
   StatisticPtrMap w0_statistics = workers[0]->statistics();
-  for (auto w0_statistic : w0_statistics) {
+  for (const auto& w0_statistic : w0_statistics) {
     auto new_statistic = statistic_factory.create();
     new_statistic->setId(w0_statistic.first);
     merged_statistics.push_back(std::move(new_statistic));
@@ -100,7 +100,7 @@ Main::mergeWorkerStatistics(const StatisticFactory& statistic_factory,
   // Merge the statistics of all workers into the statistics vector we initialized above.
   for (auto& w : workers) {
     uint32_t i = 0;
-    for (auto wx_statistic : w->statistics()) {
+    for (const auto& wx_statistic : w->statistics()) {
       auto merged = merged_statistics[i]->combine(*(wx_statistic.second));
       merged->setId(merged_statistics[i]->id());
       merged_statistics[i] = std::move(merged);
@@ -116,7 +116,7 @@ Main::mergeWorkerCounters(const std::vector<ClientWorkerPtr>& workers) const {
   for (auto& w : workers) {
     const auto counters = Utility().mapCountersFromStore(
         w->store(), [](std::string, uint64_t value) { return value > 0; });
-    for (auto counter : counters) {
+    for (const auto& counter : counters) {
       if (merged.count(counter.first) == 0) {
         merged[counter.first] = counter.second;
       } else {
@@ -188,7 +188,7 @@ public:
   std::vector<StatisticPtr> vectorizeStatisticPtrMap(const StatisticFactory& statistic_factory,
                                                      const StatisticPtrMap& statistics) const {
     std::vector<StatisticPtr> v;
-    for (auto statistic : statistics) {
+    for (const auto& statistic : statistics) {
       auto new_statistic = statistic_factory.create()->combine(*(statistic.second));
       new_statistic->setId(statistic.first);
       v.push_back(std::move(new_statistic));

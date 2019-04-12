@@ -12,7 +12,7 @@ namespace Nighthawk {
 
 class UtilityTest : public testing::Test {
 public:
-  UtilityTest() {}
+  UtilityTest() = default;
   void checkUriParsing(const std::string& uri_to_test, const std::string& host_and_port,
                        const std::string& host_without_port, const uint64_t port,
                        const std::string& scheme, const std::string& path) {

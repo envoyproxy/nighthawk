@@ -19,7 +19,7 @@ class ClientWorkerImpl : public WorkerImpl,
 public:
   ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Instance& tls,
                    const BenchmarkClientFactory& benchmark_client_factory,
-                   const SequencerFactory& sequencer_factory, const Uri uri,
+                   const SequencerFactory& sequencer_factory, const Uri& uri,
                    Envoy::Stats::StorePtr&& store, const int worker_number,
                    const Envoy::MonotonicTime starting_time);
 
@@ -40,7 +40,7 @@ private:
   const SequencerPtr sequencer_;
 };
 
-typedef std::unique_ptr<ClientWorkerImpl> ClientWorkerImplPtr;
+using ClientWorkerImplPtr = std::unique_ptr<ClientWorkerImpl>;
 
 } // namespace Client
 } // namespace Nighthawk

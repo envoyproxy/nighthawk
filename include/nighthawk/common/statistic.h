@@ -14,8 +14,8 @@ namespace Nighthawk {
 
 class Statistic;
 
-typedef std::unique_ptr<Statistic> StatisticPtr;
-typedef std::map<std::string, Statistic const*> StatisticPtrMap;
+using StatisticPtr = std::unique_ptr<Statistic>;
+using StatisticPtrMap = std::map<std::string, Statistic const*>;
 
 /**
  * Abstract interface for a statistic.

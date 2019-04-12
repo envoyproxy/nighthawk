@@ -63,7 +63,7 @@ public:
   virtual bool measureLatencies() const PURE;
 };
 
-typedef std::unique_ptr<BenchmarkClient> BenchmarkClientPtr;
+using BenchmarkClientPtr = std::unique_ptr<BenchmarkClient>;
 
 } // namespace Client
 } // namespace Nighthawk

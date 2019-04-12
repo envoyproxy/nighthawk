@@ -39,7 +39,7 @@ public:
             std::make_unique<nighthawk::client::CommandLineOptions>(command_line_options_))));
   }
 
-  void expectEqualToGoldFile(OutputFormatterImpl& formatter, const std::string path) {
+  void expectEqualToGoldFile(OutputFormatterImpl& formatter, const std::string& path) {
     formatter.addResult("worker_0", statistics_, counters_);
     formatter.addResult("worker_1", statistics_, counters_);
     formatter.addResult("global", statistics_, counters_);

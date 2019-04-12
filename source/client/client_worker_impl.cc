@@ -5,7 +5,7 @@ namespace Client {
 
 ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Instance& tls,
                                    const BenchmarkClientFactory& benchmark_client_factory,
-                                   const SequencerFactory& sequencer_factory, const Uri uri,
+                                   const SequencerFactory& sequencer_factory, const Uri& uri,
                                    Envoy::Stats::StorePtr&& store, const int worker_number,
                                    const Envoy::MonotonicTime starting_time)
     : WorkerImpl(api, tls, std::move(store)), uri_(uri), worker_number_(worker_number),

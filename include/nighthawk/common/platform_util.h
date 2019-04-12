@@ -19,6 +19,6 @@ public:
   virtual void yieldCurrentThread() const PURE;
 };
 
-typedef std::unique_ptr<PlatformUtil> PlatformUtilPtr;
+using PlatformUtilPtr = std::unique_ptr<PlatformUtil>;
 
 }

@@ -67,7 +67,7 @@ TEST_F(FactoriesTest, CreateStatistic) {
 class OutputFormatterFactoryTest : public FactoriesTest,
                                    public ::testing::WithParamInterface<const char*> {
 public:
-  void testOutputFormatter(const std::string type) {
+  void testOutputFormatter(const std::string& type) {
     Envoy::RealTimeSource time_source;
     EXPECT_CALL(options_, toCommandLineOptions());
     EXPECT_CALL(options_, outputFormat()).WillOnce(testing::Return(type));

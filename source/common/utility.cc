@@ -32,10 +32,10 @@ uint32_t determineCpuCoresWithAffinity() {
 
 std::map<std::string, uint64_t>
 Utility::mapCountersFromStore(const Envoy::Stats::Store& store,
-                              const StoreCounterFilter filter) const {
+                              const StoreCounterFilter& filter) const {
   std::map<std::string, uint64_t> results;
 
-  for (auto stat : store.counters()) {
+  for (const auto& stat : store.counters()) {
     if (filter(stat->name(), stat->value())) {
       results[stat->name()] = stat->value();
     }
@@ -119,7 +119,7 @@ bool Uri::performDnsLookup(Envoy::Event::Dispatcher& dispatcher,
 
   // Wait for DNS resolution to complete before proceeding.
   dispatcher.run(Envoy::Event::Dispatcher::RunType::Block);
-  return address_.get() != nullptr;
+  return address_ != nullptr;
 }
 
 Envoy::Network::Address::InstanceConstSharedPtr

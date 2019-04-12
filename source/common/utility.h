@@ -18,7 +18,7 @@ namespace PlatformUtils {
 uint32_t determineCpuCoresWithAffinity();
 }
 
-typedef std::function<bool(const std::string, const uint64_t)> StoreCounterFilter;
+using StoreCounterFilter = std::function<bool(const std::string&, const uint64_t)>;
 
 class Utility {
 public:
@@ -28,9 +28,11 @@ public:
    * based on the named and value it gets passed. The default filter returns all counters.
    * @return std::map<std::string, uint64_t> containing zero or more entries.
    */
-  std::map<std::string, uint64_t> mapCountersFromStore(
-      const Envoy::Stats::Store& store,
-      const StoreCounterFilter filter = [](std::string, uint64_t) { return true; }) const;
+  std::map<std::string, uint64_t> mapCountersFromStore(const Envoy::Stats::Store& store,
+                                                       const StoreCounterFilter& filter =
+                                                           [](const std::string&, const uint64_t) {
+                                                             return true;
+                                                           }) const;
 };
 
 class UriException : public NighthawkException {

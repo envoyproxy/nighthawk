@@ -11,14 +11,14 @@
 namespace Nighthawk {
 namespace Client {
 
-typedef std::unique_ptr<nighthawk::client::CommandLineOptions> CommandLineOptionsPtr;
+using CommandLineOptionsPtr = std::unique_ptr<nighthawk::client::CommandLineOptions>;
 
 /**
  * Abstract options interface.
  */
 class Options {
 public:
-  virtual ~Options() {}
+  virtual ~Options() = default;
 
   virtual uint64_t requestsPerSecond() const PURE;
   virtual uint64_t connections() const PURE;
@@ -38,7 +38,7 @@ public:
   virtual CommandLineOptionsPtr toCommandLineOptions() const PURE;
 };
 
-typedef std::unique_ptr<Options> OptionsPtr;
+using OptionsPtr = std::unique_ptr<Options>;
 
 } // namespace Client
 } // namespace Nighthawk

@@ -97,7 +97,7 @@ private:
 class HdrStatistic : public StatisticImpl {
 public:
   HdrStatistic();
-  virtual ~HdrStatistic() override;
+  ~HdrStatistic() override;
   void addValue(int64_t sample_value) override;
   uint64_t count() const override;
   double mean() const override;

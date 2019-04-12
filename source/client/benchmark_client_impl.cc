@@ -51,7 +51,7 @@ BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(Envoy::Api::Api& api,
 }
 
 void BenchmarkClientHttpImpl::initialize(Envoy::Runtime::Loader& runtime) {
-  ASSERT(uri_.address().get() != nullptr);
+  ASSERT(uri_.address() != nullptr);
   envoy::api::v2::Cluster cluster_config;
   envoy::api::v2::core::BindConfig bind_config;
 
@@ -90,8 +90,9 @@ void BenchmarkClientHttpImpl::initialize(Envoy::Runtime::Loader& runtime) {
     Envoy::ProtobufTypes::MessagePtr message =
         Envoy::Config::Utility::translateToFactoryConfig(transport_socket, config_factory);
 
-    ssl_context_manager_.reset(
-        new Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl(api_.timeSource()));
+    ssl_context_manager_ =
+        std::make_unique<Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl>(
+            api_.timeSource());
     transport_socket_factory_context_ = std::make_unique<Ssl::MinimalTransportSocketFactoryContext>(
         store_.createScope("client."), dispatcher_, generator_, store_, api_,
         *ssl_context_manager_);
@@ -112,7 +113,7 @@ void BenchmarkClientHttpImpl::initialize(Envoy::Runtime::Loader& runtime) {
       cluster_config, bind_config, runtime, std::move(socket_factory),
       store_.createScope("client."), false /*added_via_api*/);
 
-  ASSERT(uri_.address().get() != nullptr);
+  ASSERT(uri_.address() != nullptr);
 
   auto host = std::shared_ptr<Envoy::Upstream::Host>{new Envoy::Upstream::HostImpl(
       cluster_, uri_.host_and_port(), uri_.address(),

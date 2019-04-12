@@ -13,7 +13,7 @@ namespace Nighthawk {
  */
 class Worker {
 public:
-  virtual ~Worker() {}
+  virtual ~Worker() = default;
 
   /**
    * Start the worker thread.
@@ -26,6 +26,6 @@ public:
   virtual void waitForCompletion() PURE;
 };
 
-typedef std::unique_ptr<Worker> WorkerPtr;
+using WorkerPtr = std::unique_ptr<Worker>;
 
 } // namespace Nighthawk

@@ -2,8 +2,8 @@
 #include "common/statistic_impl.h"
 
 #include <cmath>
+#include <cstdio>
 #include <sstream>
-#include <stdio.h>
 
 #include "common/common/assert.h"
 
@@ -55,7 +55,7 @@ double SimpleStatistic::pstdev() const { return count() == 0 ? std::nan("") : sq
 
 StatisticPtr SimpleStatistic::combine(const Statistic& statistic) const {
   const SimpleStatistic& a = *this;
-  const SimpleStatistic& b = dynamic_cast<const SimpleStatistic&>(statistic);
+  const auto& b = dynamic_cast<const SimpleStatistic&>(statistic);
   auto combined = std::make_unique<SimpleStatistic>();
 
   combined->count_ = a.count() + b.count();
@@ -89,7 +89,7 @@ double StreamingStatistic::pstdev() const {
 
 StatisticPtr StreamingStatistic::combine(const Statistic& statistic) const {
   const StreamingStatistic& a = *this;
-  const StreamingStatistic& b = dynamic_cast<const StreamingStatistic&>(statistic);
+  const auto& b = dynamic_cast<const StreamingStatistic&>(statistic);
   auto combined = std::make_unique<StreamingStatistic>();
 
   combined->count_ = a.count() + b.count();
@@ -117,7 +117,7 @@ double InMemoryStatistic::pstdev() const { return streaming_stats_->pstdev(); }
 
 StatisticPtr InMemoryStatistic::combine(const Statistic& statistic) const {
   auto combined = std::make_unique<InMemoryStatistic>();
-  const InMemoryStatistic& b = dynamic_cast<const InMemoryStatistic&>(statistic);
+  const auto& b = dynamic_cast<const InMemoryStatistic&>(statistic);
 
   combined->samples_.insert(combined->samples_.end(), this->samples_.begin(), this->samples_.end());
   combined->samples_.insert(combined->samples_.end(), b.samples_.begin(), b.samples_.end());
@@ -159,7 +159,7 @@ double HdrStatistic::pstdev() const { return count() == 0 ? std::nan("") : hdr_s
 
 StatisticPtr HdrStatistic::combine(const Statistic& statistic) const {
   auto combined = std::make_unique<HdrStatistic>();
-  const HdrStatistic& b = dynamic_cast<const HdrStatistic&>(statistic);
+  const auto& b = dynamic_cast<const HdrStatistic&>(statistic);
 
   // Dropping a value can happen when it exceeds the configured minimum
   // or maximum value we passed when initializing histogram_.
@@ -179,8 +179,7 @@ std::string HdrStatistic::toString() const {
   stream << fmt::format("{:>12} {:>14} (usec)", "Percentile", "Value") << std::endl;
 
   std::vector<double> percentiles{50.0, 75.0, 90.0, 99.0, 99.9, 99.99, 99.999, 100.0};
-  for (uint64_t i = 0; i < percentiles.size(); i++) {
-    const double p = percentiles[i];
+  for (double p : percentiles) {
     const int64_t n = hdr_value_at_percentile(histogram_, p);
 
     // We scale from nanoseconds to microseconds in the output.

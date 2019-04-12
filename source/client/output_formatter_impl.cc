@@ -74,10 +74,10 @@ void OutputFormatterImpl::addResult(absl::string_view name,
   for (auto& statistic : statistics) {
     *(result->add_statistics()) = statistic->toProto();
   }
-  for (auto counter : counters) {
-    auto counters = result->add_counters();
-    counters->set_name(counter.first);
-    counters->set_value(counter.second);
+  for (const auto& counter : counters) {
+    auto new_counters = result->add_counters();
+    new_counters->set_name(counter.first);
+    new_counters->set_value(counter.second);
   }
 }
 
