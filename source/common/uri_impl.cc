@@ -53,14 +53,14 @@ UriImpl::UriImpl(absl::string_view uri) : scheme_("http") {
 bool UriImpl::performDnsLookup(Envoy::Event::Dispatcher& dispatcher,
                                const Envoy::Network::DnsLookupFamily dns_lookup_family) {
   auto dns_resolver = dispatcher.createDnsResolver({});
-  auto hostname = host_without_port();
+  std::string hostname = std::string(host_without_port());
 
   if (!hostname.empty() && hostname[0] == '[' && hostname[hostname.size() - 1] == ']') {
     hostname = absl::StrReplaceAll(hostname, {{"[", ""}, {"]", ""}});
   }
 
   Envoy::Network::ActiveDnsQuery* active_dns_query_ = dns_resolver->resolve(
-      std::string(hostname), dns_lookup_family,
+      hostname, dns_lookup_family,
       [this, &dispatcher, &active_dns_query_](
           const std::list<Envoy::Network::Address::InstanceConstSharedPtr>&& address_list) -> void {
         active_dns_query_ = nullptr;
