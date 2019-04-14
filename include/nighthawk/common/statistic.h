@@ -77,7 +77,7 @@ public:
    * Sets the id of the Statistic instance.
    * @param id The id that should be set for the Statistic instance.
    */
-  virtual void setId(const std::string& id) PURE;
+  virtual void setId(absl::string_view id) PURE;
 };
 
 } // namespace Nighthawk

@@ -49,6 +49,7 @@ envoy_cc_test(
     deps = [
         "//source/client:nighthawk_client_lib",
         "//test:nighthawk_mocks",
+        "//test/client:utility_lib",
         "//test/test_common:environment_lib",
         "@envoy//source/common/filesystem:filesystem_lib",
         "@envoy//source/common/network:dns_lib",

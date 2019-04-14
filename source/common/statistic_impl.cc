@@ -33,7 +33,7 @@ nighthawk::client::Statistic StatisticImpl::toProto() {
 
 std::string StatisticImpl::id() const { return id_; };
 
-void StatisticImpl::setId(const std::string& id) { id_ = id; };
+void StatisticImpl::setId(absl::string_view id) { id_ = std::string(id); };
 
 SimpleStatistic::SimpleStatistic() : count_(0), sum_x_(0), sum_x2_(0) {}
 

@@ -18,11 +18,11 @@ namespace Nighthawk {
 class UriImpl : public Uri, public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
   UriImpl(absl::string_view uri);
-  const std::string& host_and_port() const override { return host_and_port_; }
-  const std::string& host_without_port() const override { return host_without_port_; }
-  const std::string& path() const override { return path_; }
+  absl::string_view host_and_port() const override { return host_and_port_; }
+  absl::string_view host_without_port() const override { return host_without_port_; }
+  absl::string_view path() const override { return path_; }
   uint64_t port() const override { return port_; }
-  const std::string& scheme() const override { return scheme_; }
+  absl::string_view scheme() const override { return scheme_; }
   Envoy::Network::Address::InstanceConstSharedPtr
   resolve(Envoy::Event::Dispatcher& dispatcher,
           const Envoy::Network::DnsLookupFamily dns_lookup_family) override;

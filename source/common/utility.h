@@ -18,7 +18,7 @@ namespace PlatformUtils {
 uint32_t determineCpuCoresWithAffinity();
 }
 
-using StoreCounterFilter = std::function<bool(const std::string&, const uint64_t)>;
+using StoreCounterFilter = std::function<bool(absl::string_view, const uint64_t)>;
 
 class Utility {
 public:
@@ -30,7 +30,7 @@ public:
    */
   std::map<std::string, uint64_t> mapCountersFromStore(const Envoy::Stats::Store& store,
                                                        const StoreCounterFilter& filter =
-                                                           [](const std::string&, const uint64_t) {
+                                                           [](absl::string_view, const uint64_t) {
                                                              return true;
                                                            }) const;
   /**

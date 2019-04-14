@@ -60,7 +60,7 @@ bool UriImpl::performDnsLookup(Envoy::Event::Dispatcher& dispatcher,
   }
 
   Envoy::Network::ActiveDnsQuery* active_dns_query_ = dns_resolver->resolve(
-      hostname, dns_lookup_family,
+      std::string(hostname), dns_lookup_family,
       [this, &dispatcher, &active_dns_query_](
           const std::list<Envoy::Network::Address::InstanceConstSharedPtr>&& address_list) -> void {
         active_dns_query_ = nullptr;

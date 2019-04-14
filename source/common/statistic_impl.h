@@ -17,7 +17,7 @@ public:
   std::string toString() const override;
   nighthawk::client::Statistic toProto() override;
   std::string id() const override;
-  void setId(const std::string& id) override;
+  void setId(absl::string_view id) override;
   std::string id_;
 };
 

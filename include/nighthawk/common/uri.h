@@ -19,11 +19,11 @@ public:
 class Uri {
 public:
   virtual ~Uri() = default;
-  virtual const std::string& host_and_port() const PURE;
-  virtual const std::string& host_without_port() const PURE;
-  virtual const std::string& path() const PURE;
+  virtual absl::string_view host_and_port() const PURE;
+  virtual absl::string_view host_without_port() const PURE;
+  virtual absl::string_view path() const PURE;
   virtual uint64_t port() const PURE;
-  virtual const std::string& scheme() const PURE;
+  virtual absl::string_view scheme() const PURE;
 
   virtual Envoy::Network::Address::InstanceConstSharedPtr
   resolve(Envoy::Event::Dispatcher& dispatcher,

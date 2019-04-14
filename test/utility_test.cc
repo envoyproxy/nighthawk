@@ -14,9 +14,9 @@ namespace Nighthawk {
 class UtilityTest : public testing::Test {
 public:
   UtilityTest() = default;
-  void checkUriParsing(const std::string& uri_to_test, const std::string& host_and_port,
-                       const std::string& host_without_port, const uint64_t port,
-                       const std::string& scheme, const std::string& path) {
+  void checkUriParsing(absl::string_view uri_to_test, absl::string_view host_and_port,
+                       absl::string_view host_without_port, const uint64_t port,
+                       absl::string_view scheme, absl::string_view path) {
     const UriImpl uri = UriImpl(uri_to_test);
     EXPECT_EQ(host_and_port, uri.host_and_port());
     EXPECT_EQ(host_without_port, uri.host_without_port());

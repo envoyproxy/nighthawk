@@ -116,7 +116,7 @@ Main::mergeWorkerCounters(const std::vector<ClientWorkerPtr>& workers) const {
   std::map<std::string, uint64_t> merged;
   for (auto& w : workers) {
     const auto counters = Utility().mapCountersFromStore(
-        w->store(), [](std::string, uint64_t value) { return value > 0; });
+        w->store(), [](absl::string_view, uint64_t value) { return value > 0; });
     for (const auto& counter : counters) {
       if (merged.count(counter.first) == 0) {
         merged[counter.first] = counter.second;
@@ -223,7 +223,7 @@ public:
               fmt::format("worker_{}", i),
               vectorizeStatisticPtrMap(statistic_factory, worker->statistics()),
               Utility().mapCountersFromStore(
-                  worker->store(), [](std::string, uint64_t value) { return value > 0; }));
+                  worker->store(), [](absl::string_view, uint64_t value) { return value > 0; }));
         }
         i++;
       }

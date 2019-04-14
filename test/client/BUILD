@@ -8,12 +8,14 @@ package(default_visibility = ["//visibility:public"])
 licenses(["notice"])  # Apache 2
 
 envoy_cc_test_library(
-    name = "environment_lib",
+    name = "utility_lib",
+    srcs = ["utility.cc"],
     hdrs = [
-        "environment.h",
+        "utility.h",
     ],
     repository = "@envoy",
     deps = [
-        "@envoy//test/test_common:environment_lib",
+        "//source/client:nighthawk_client_lib",
+        "@envoy//test/test_common:utility_lib",
     ],
 )
