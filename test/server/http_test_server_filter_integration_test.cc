@@ -20,10 +20,10 @@ public:
   // TODO(oschaaf): Modify Envoy's Envoy::IntegrationUtil::makeSingleRequest() to allow for a way to
   // manipulate the request headers before they get send. Then we can eliminate these copies.
   Envoy::BufferingStreamDecoderPtr
-  makeSingleRequest(uint32_t port, const std::string& method, const std::string& url,
-                    const std::string& body, Envoy::Http::CodecClient::Type type,
-                    Envoy::Network::Address::IpVersion ip_version, const std::string& host,
-                    const std::string& content_type,
+  makeSingleRequest(uint32_t port, absl::string_view method, absl::string_view url,
+                    absl::string_view body, Envoy::Http::CodecClient::Type type,
+                    Envoy::Network::Address::IpVersion ip_version, absl::string_view host,
+                    absl::string_view content_type,
                     std::function<void(Envoy::Http::HeaderMapImpl&)> request_header_delegate) {
     auto addr = Envoy::Network::Utility::resolveUrl(fmt::format(
         "tcp://{}:{}", Envoy::Network::Test::getLoopbackAddressUrlString(ip_version), port));
@@ -33,9 +33,9 @@ public:
 
   Envoy::BufferingStreamDecoderPtr
   makeSingleRequest(const Envoy::Network::Address::InstanceConstSharedPtr& addr,
-                    const std::string& method, const std::string& url, const std::string& body,
-                    Envoy::Http::CodecClient::Type type, const std::string& host,
-                    const std::string& content_type,
+                    absl::string_view method, absl::string_view url, absl::string_view body,
+                    Envoy::Http::CodecClient::Type type, absl::string_view host,
+                    absl::string_view content_type,
                     std::function<void(Envoy::Http::HeaderMapImpl&)> request_header_delegate) {
 
     testing::NiceMock<Envoy::Stats::MockIsolatedStatsStore> mock_stats_store;
@@ -52,10 +52,11 @@ public:
         dispatcher->createClientConnection(addr, Envoy::Network::Address::InstanceConstSharedPtr(),
                                            Envoy::Network::Test::createRawBufferSocket(), nullptr),
         host_description, *dispatcher);
-    Envoy::BufferingStreamDecoderPtr response(new Envoy::BufferingStreamDecoder([&]() -> void {
-      client.close();
-      dispatcher->exit();
-    }));
+    Envoy::BufferingStreamDecoderPtr response(
+        new Envoy::BufferingStreamDecoder([&client, &dispatcher]() -> void {
+          client.close();
+          dispatcher->exit();
+        }));
     Envoy::Http::StreamEncoder& encoder = client.newStream(*response);
     encoder.getStream().addCallbacks(*response);
 
