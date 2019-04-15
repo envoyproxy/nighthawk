@@ -23,6 +23,8 @@ message CommandLineOptions {
   string verbosity = 7;
   // See :option:`--output-format` for details.
   string output_format = 8;
+  // See :option:`--prefetch-connections` for details.
+  bool prefetch_connections = 9;
   // See :option:`--uri` for details.
-  string uri = 9;
+  string uri = 10;
 }

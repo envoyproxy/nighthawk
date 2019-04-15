@@ -28,13 +28,17 @@ using namespace std::chrono_literals;
 namespace Nighthawk {
 namespace Client {
 
-BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
-    Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Store& store,
-    StatisticPtr&& connect_statistic, StatisticPtr&& response_statistic, UriPtr&& uri, bool use_h2)
+BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(Envoy::Api::Api& api,
+                                                 Envoy::Event::Dispatcher& dispatcher,
+                                                 Envoy::Stats::Store& store,
+                                                 StatisticPtr&& connect_statistic,
+                                                 StatisticPtr&& response_statistic, UriPtr&& uri,
+                                                 bool use_h2, bool prefetch_connections)
     : api_(api), dispatcher_(dispatcher), store_(store),
       scope_(store_.createScope("client.benchmark.")),
       connect_statistic_(std::move(connect_statistic)),
-      response_statistic_(std::move(response_statistic)), use_h2_(use_h2), uri_(std::move(uri)),
+      response_statistic_(std::move(response_statistic)), use_h2_(use_h2),
+      prefetch_connections_(prefetch_connections), uri_(std::move(uri)),
       benchmark_client_stats_({ALL_BENCHMARK_CLIENT_STATS(POOL_COUNTER(*scope_))}) {
   connect_statistic_->setId("benchmark_http_client.queue_to_connect");
   response_statistic_->setId("benchmark_http_client.request_to_response");
@@ -46,6 +50,32 @@ BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
                                             ? Envoy::Http::Headers::get().SchemeValues.Https
                                             : Envoy::Http::Headers::get().SchemeValues.Http);
 }
+
+class H1Pool : public PrefetchablePool, public Envoy::Http::Http1::ProdConnPoolImpl {
+public:
+  H1Pool(Envoy::Event::Dispatcher& dispatcher, Envoy::Upstream::HostConstSharedPtr host,
+         Envoy::Upstream::ResourcePriority priority,
+         const Envoy::Network::ConnectionSocket::OptionsSharedPtr& options)
+      : Envoy::Http::Http1::ProdConnPoolImpl(dispatcher, host, priority, options) {}
+
+  void prefetchConnections() {
+    while (host_->cluster().resourceManager(priority_).connections().canCreate()) {
+      createNewConnection();
+    }
+  }
+};
+
+class H2Pool : public PrefetchablePool, public Envoy::Http::Http2::ProdConnPoolImpl {
+public:
+  H2Pool(Envoy::Event::Dispatcher& dispatcher, Envoy::Upstream::HostConstSharedPtr host,
+         Envoy::Upstream::ResourcePriority priority,
+         const Envoy::Network::ConnectionSocket::OptionsSharedPtr& options)
+      : Envoy::Http::Http2::ProdConnPoolImpl(dispatcher, host, priority, options) {}
+
+  void prefetchConnections() {
+    // No-op, this is a "pool" with a single connection.
+  }
+};
 
 void BenchmarkClientHttpImpl::initialize(Envoy::Runtime::Loader& runtime) {
   ASSERT(uri_->address() != nullptr);
@@ -122,11 +152,15 @@ void BenchmarkClientHttpImpl::initialize(Envoy::Runtime::Loader& runtime) {
   Envoy::Network::ConnectionSocket::OptionsSharedPtr options =
       std::make_shared<Envoy::Network::ConnectionSocket::Options>();
   if (use_h2_) {
-    pool_ = std::make_unique<Envoy::Http::Http2::ProdConnPoolImpl>(
-        dispatcher_, host, Envoy::Upstream::ResourcePriority::Default, options);
+    pool_ = std::make_unique<H2Pool>(dispatcher_, host, Envoy::Upstream::ResourcePriority::Default,
+                                     options);
   } else {
-    pool_ = std::make_unique<Envoy::Http::Http1::ProdConnPoolImpl>(
-        dispatcher_, host, Envoy::Upstream::ResourcePriority::Default, options);
+    pool_ = std::make_unique<H1Pool>(dispatcher_, host, Envoy::Upstream::ResourcePriority::Default,
+                                     options);
+  }
+
+  if (prefetch_connections_) {
+    prefetchPoolConnections();
   }
 }
 

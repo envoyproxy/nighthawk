@@ -33,10 +33,10 @@ TEST_F(OptionsImplTest, BogusInput) {
 }
 
 TEST_F(OptionsImplTest, All) {
-  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(
-      fmt::format("{} --rps 4 --connections 5 --duration 6 --timeout 7 --h2 "
-                  "--concurrency 8 --verbosity error --output-format json {}",
-                  client_name_, good_test_uri_));
+  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(fmt::format(
+      "{} --rps 4 --connections 5 --duration 6 --timeout 7 --h2 "
+      "--concurrency 8 --verbosity error --output-format json --prefetch-connections {}",
+      client_name_, good_test_uri_));
 
   EXPECT_EQ(4, options->requestsPerSecond());
   EXPECT_EQ(5, options->connections());
@@ -46,6 +46,7 @@ TEST_F(OptionsImplTest, All) {
   EXPECT_EQ("8", options->concurrency());
   EXPECT_EQ("error", options->verbosity());
   EXPECT_EQ("json", options->outputFormat());
+  EXPECT_EQ(true, options->prefetchConnections());
   EXPECT_EQ(good_test_uri_, options->uri());
 
   // Check that our conversion to CommandLineOptionsPtr makes sense.
@@ -58,6 +59,7 @@ TEST_F(OptionsImplTest, All) {
   EXPECT_EQ(cmd->concurrency(), options->concurrency());
   EXPECT_EQ(cmd->verbosity(), options->verbosity());
   EXPECT_EQ(cmd->output_format(), options->outputFormat());
+  EXPECT_EQ(cmd->prefetch_connections(), options->prefetchConnections());
   EXPECT_EQ(cmd->uri(), options->uri());
 }
 
@@ -105,6 +107,34 @@ TEST_F(OptionsImplTest, BadH2FlagThrows) {
   EXPECT_THROW_WITH_REGEX(
       TestUtility::createOptionsImpl(fmt::format("{} {} --h2 true", client_name_, good_test_uri_)),
       MalformedArgvException, "Couldn't find match for argument");
+}
+
+TEST_F(OptionsImplTest, H2Flag) {
+  EXPECT_FALSE(
+      TestUtility::createOptionsImpl(fmt::format("{} {}", client_name_, good_test_uri_))->h2());
+  EXPECT_TRUE(
+      TestUtility::createOptionsImpl(fmt::format("{} {} --h2", client_name_, good_test_uri_))
+          ->h2());
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(fmt::format("{} {} --h2 0", client_name_, good_test_uri_)),
+      MalformedArgvException, "Couldn't find match for argument");
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(fmt::format("{} {} --h2 true", client_name_, good_test_uri_)),
+      MalformedArgvException, "Couldn't find match for argument");
+}
+
+TEST_F(OptionsImplTest, PrefetchConnectionsFlag) {
+  EXPECT_FALSE(TestUtility::createOptionsImpl(fmt::format("{} {}", client_name_, good_test_uri_))
+                   ->prefetchConnections());
+  EXPECT_TRUE(TestUtility::createOptionsImpl(
+                  fmt::format("{} {} --prefetch-connections", client_name_, good_test_uri_))
+                  ->prefetchConnections());
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                              "{} {} --prefetch-connections 0", client_name_, good_test_uri_)),
+                          MalformedArgvException, "Couldn't find match for argument");
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                              "{} {} --prefetch-connections true", client_name_, good_test_uri_)),
+                          MalformedArgvException, "Couldn't find match for argument");
 }
 
 TEST_F(OptionsImplTest, BadConcurrencyValuesThrow) {

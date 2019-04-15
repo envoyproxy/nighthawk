@@ -15,15 +15,10 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
                                           *benchmark_client_)) {}
 
 void ClientWorkerImpl::simpleWarmup() {
-  ENVOY_LOG(debug, "> worker {}: warming up.", worker_number_);
-  // TODO(oschaaf): Maybe add BenchmarkClient::warmup() and call that here.
-  // Ideally we prefetch the requested amount of connections.
-  // Currently it is possible to use less connections then specified if
-  // completions are fast enough. While this may be an asset, it may also be annoying
-  // when comparing results to some other tools, which do open up the specified amount
-  // of connections.
+  ENVOY_LOG(debug, "> worker {}: warmup start.", worker_number_);
   benchmark_client_->tryStartOne([this] { dispatcher_->exit(); });
   dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
+  ENVOY_LOG(debug, "> worker {}: warmup done.", worker_number_);
 }
 
 void ClientWorkerImpl::work() {
