@@ -140,7 +140,7 @@ TYPED_TEST(TypedStatisticTest, OneMillionRandomSamples) {
   // TODO(oschaaf): Actually the range we want to test is a factor 1000 higher, but
   // then catastrophical cancellation make SimpleStatistic fail expectations.
   // For now, we use values that shouldn't trigger the phenomena. Revisit this later.
-  std::uniform_real_distribution<double> dist(1ULL, 1000ULL * 1000 * 60);
+  std::uniform_int_distribution<uint64_t> dist(1ULL, 1000ULL * 1000 * 60);
   StreamingStatistic referenceStatistic;
   TypeParam testStatistic;
 
@@ -149,7 +149,7 @@ TYPED_TEST(TypedStatisticTest, OneMillionRandomSamples) {
 
     // Small selftest that we generate a deterministic set in this test.
     if (i == 10000) {
-      EXPECT_DOUBLE_EQ(13944017.313468568, value);
+      EXPECT_EQ(13944017, value);
     }
     referenceStatistic.addValue(value);
     testStatistic.addValue(value);

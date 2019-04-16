@@ -8,6 +8,7 @@ namespace Client {
 std::unique_ptr<OptionsImpl> TestUtility::createOptionsImpl(absl::string_view args) {
   std::vector<std::string> words = Envoy::TestUtility::split(std::string(args), ' ');
   std::vector<const char*> argv;
+  argv.reserve(words.size());
   for (const std::string& s : words) {
     argv.push_back(s.c_str());
   }

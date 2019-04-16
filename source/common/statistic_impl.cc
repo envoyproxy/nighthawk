@@ -20,11 +20,11 @@ nighthawk::client::Statistic StatisticImpl::toProto() {
   statistic.set_id(id());
   statistic.set_count(count());
 
-  int64_t nanos = count() == 0 ? 0 : std::round(mean());
+  int64_t nanos = count() == 0 ? 0 : static_cast<int64_t>(std::round(mean()));
   statistic.mutable_mean()->set_seconds(nanos / 1000000000);
   statistic.mutable_mean()->set_nanos(nanos % 1000000000);
 
-  nanos = count() == 0 ? 0 : std::round(pstdev());
+  nanos = count() == 0 ? 0 : static_cast<int64_t>(std::round(pstdev()));
   statistic.mutable_pstdev()->set_seconds(nanos / 1000000000);
   statistic.mutable_pstdev()->set_nanos(nanos % 1000000000);
 
