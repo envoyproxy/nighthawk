@@ -31,13 +31,13 @@ public:
    * will be explicitly set in case it is the default for the protocol. Do not use the returned
    * value after the Uri instance is destructed.
    */
-  virtual absl::string_view host_and_port() const PURE;
+  virtual absl::string_view hostAndPort() const PURE;
 
   /**
    * @return absl::string_view containing the "host" fragment parsed uri. Do not use the
    * returned value after the Uri instance is destructed.
    */
-  virtual absl::string_view host_without_port() const PURE;
+  virtual absl::string_view hostWithoutPort() const PURE;
 
   /**
    * @return absl::string_view containing the "/path" fragment of the parsed uri.

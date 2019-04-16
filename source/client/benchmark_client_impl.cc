@@ -41,7 +41,7 @@ BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
 
   request_headers_.insertMethod().value(Envoy::Http::Headers::get().MethodValues.Get);
   request_headers_.insertPath().value(uri_->path());
-  request_headers_.insertHost().value(uri_->host_and_port());
+  request_headers_.insertHost().value(uri_->hostAndPort());
   request_headers_.insertScheme().value(uri_->scheme() == "https"
                                             ? Envoy::Http::Headers::get().SchemeValues.Https
                                             : Envoy::Http::Headers::get().SchemeValues.Http);
@@ -113,7 +113,7 @@ void BenchmarkClientHttpImpl::initialize(Envoy::Runtime::Loader& runtime) {
   ASSERT(uri_->address() != nullptr);
 
   auto host = std::shared_ptr<Envoy::Upstream::Host>{new Envoy::Upstream::HostImpl(
-      cluster_, std::string(uri_->host_and_port()), uri_->address(),
+      cluster_, std::string(uri_->hostAndPort()), uri_->address(),
       envoy::api::v2::core::Metadata::default_instance(), 1 /* weight */,
       envoy::api::v2::core::Locality(),
       envoy::api::v2::endpoint::Endpoint::HealthCheckConfig::default_instance(), 0,

@@ -18,8 +18,8 @@ namespace Nighthawk {
 class UriImpl : public Uri, public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
   UriImpl(absl::string_view uri);
-  absl::string_view host_and_port() const override { return host_and_port_; }
-  absl::string_view host_without_port() const override { return host_without_port_; }
+  absl::string_view hostAndPort() const override { return hostAndPort_; }
+  absl::string_view hostWithoutPort() const override { return hostWithoutPort_; }
   absl::string_view path() const override { return path_; }
   uint64_t port() const override { return port_; }
   absl::string_view scheme() const override { return scheme_; }
@@ -38,8 +38,8 @@ private:
 
   // TODO(oschaaf): username, password, query etc. But we may want to look at
   // pulling in a mature uri parser.
-  std::string host_and_port_;
-  std::string host_without_port_;
+  std::string hostAndPort_;
+  std::string hostWithoutPort_;
   std::string path_;
   uint64_t port_{};
   std::string scheme_;

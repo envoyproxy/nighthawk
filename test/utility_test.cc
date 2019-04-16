@@ -14,12 +14,12 @@ namespace Nighthawk {
 class UtilityTest : public testing::Test {
 public:
   UtilityTest() = default;
-  void checkUriParsing(absl::string_view uri_to_test, absl::string_view host_and_port,
-                       absl::string_view host_without_port, const uint64_t port,
+  void checkUriParsing(absl::string_view uri_to_test, absl::string_view hostAndPort,
+                       absl::string_view hostWithoutPort, const uint64_t port,
                        absl::string_view scheme, absl::string_view path) {
     const UriImpl uri = UriImpl(uri_to_test);
-    EXPECT_EQ(host_and_port, uri.host_and_port());
-    EXPECT_EQ(host_without_port, uri.host_without_port());
+    EXPECT_EQ(hostAndPort, uri.hostAndPort());
+    EXPECT_EQ(hostWithoutPort, uri.hostWithoutPort());
     EXPECT_EQ(port, uri.port());
     EXPECT_EQ(scheme, uri.scheme());
     EXPECT_EQ(path, uri.path());
@@ -59,13 +59,13 @@ TEST_F(UtilityTest, HostStartsWithMinus) { EXPECT_THROW(UriImpl("http://-a"), Ur
 
 TEST_F(UtilityTest, Ipv6Address) {
   const UriImpl u = UriImpl("http://[::1]:81/bar");
-  EXPECT_EQ("[::1]", u.host_without_port());
-  EXPECT_EQ("[::1]:81", u.host_and_port());
+  EXPECT_EQ("[::1]", u.hostWithoutPort());
+  EXPECT_EQ("[::1]:81", u.hostAndPort());
   EXPECT_EQ(81, u.port());
 
   const UriImpl u2 = UriImpl("http://[::1]/bar");
-  EXPECT_EQ("[::1]", u2.host_without_port());
-  EXPECT_EQ("[::1]:80", u2.host_and_port());
+  EXPECT_EQ("[::1]", u2.hostWithoutPort());
+  EXPECT_EQ("[::1]:80", u2.hostAndPort());
   EXPECT_EQ(80, u2.port());
 }
 

@@ -16,7 +16,7 @@ bool UriImpl::isValid() const {
          // We check that we do not start with '-' because that overlaps with CLI argument
          // parsing. For other hostname validation, we defer to parseInternetAddressAndPort() and
          // dns resolution later on.
-         host_without_port_.size() > 0 && host_without_port_[0] != '-';
+         hostWithoutPort_.size() > 0 && hostWithoutPort_[0] != '-';
 }
 
 UriImpl::UriImpl(absl::string_view uri) : scheme_("http") {
@@ -27,7 +27,7 @@ UriImpl::UriImpl(absl::string_view uri) : scheme_("http") {
     throw UriException("Invalid URI (no host)");
   }
 
-  host_and_port_ = std::string(host);
+  hostAndPort_ = std::string(host);
   path_ = std::string(path);
   const bool is_https = absl::StartsWith(uri, "https://");
   const size_t scheme_end = uri.find("://", 0);
@@ -35,15 +35,15 @@ UriImpl::UriImpl(absl::string_view uri) : scheme_("http") {
     scheme_ = absl::AsciiStrToLower(uri.substr(0, scheme_end));
   }
 
-  const size_t colon_index = Utility::findPortSeparator(host_and_port_);
+  const size_t colon_index = Utility::findPortSeparator(hostAndPort_);
 
   if (colon_index == absl::string_view::npos) {
     port_ = is_https ? 443 : 80;
-    host_without_port_ = host_and_port_;
-    host_and_port_ = fmt::format("{}:{}", host_and_port_, port_);
+    hostWithoutPort_ = hostAndPort_;
+    hostAndPort_ = fmt::format("{}:{}", hostAndPort_, port_);
   } else {
-    port_ = std::stoi(host_and_port_.substr(colon_index + 1));
-    host_without_port_ = host_and_port_.substr(0, colon_index);
+    port_ = std::stoi(hostAndPort_.substr(colon_index + 1));
+    hostWithoutPort_ = hostAndPort_.substr(0, colon_index);
   }
   if (!isValid()) {
     throw UriException("Invalid URI");
@@ -53,7 +53,7 @@ UriImpl::UriImpl(absl::string_view uri) : scheme_("http") {
 bool UriImpl::performDnsLookup(Envoy::Event::Dispatcher& dispatcher,
                                const Envoy::Network::DnsLookupFamily dns_lookup_family) {
   auto dns_resolver = dispatcher.createDnsResolver({});
-  std::string hostname = std::string(host_without_port());
+  std::string hostname = std::string(hostWithoutPort());
 
   if (!hostname.empty() && hostname[0] == '[' && hostname[hostname.size() - 1] == ']') {
     hostname = absl::StrReplaceAll(hostname, {{"[", ""}, {"]", ""}});
@@ -67,7 +67,7 @@ bool UriImpl::performDnsLookup(Envoy::Event::Dispatcher& dispatcher,
         if (!address_list.empty()) {
           address_ = Envoy::Network::Utility::getAddressWithPort(*address_list.front(), port());
           ENVOY_LOG(debug, "DNS resolution complete for {} ({} entries, using {}).",
-                    host_without_port(), address_list.size(), address_->asString());
+                    hostWithoutPort(), address_list.size(), address_->asString());
         }
         dispatcher.exit();
       });
@@ -93,7 +93,7 @@ UriImpl::resolve(Envoy::Event::Dispatcher& dispatcher,
                (dns_lookup_family == Envoy::Network::DnsLookupFamily::V4Only &&
                 address_->ip()->ipv4() == nullptr));
   if (!ok) {
-    ENVOY_LOG(warn, "Could not resolve '{}'", host_without_port());
+    ENVOY_LOG(warn, "Could not resolve '{}'", hostWithoutPort());
     address_.reset();
     throw UriException("Could not determine address");
   }
