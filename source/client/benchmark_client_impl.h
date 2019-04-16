@@ -12,8 +12,10 @@
 #include "envoy/upstream/upstream.h"
 
 #include "nighthawk/client/benchmark_client.h"
+#include "nighthawk/client/prefetchable_pool.h"
 #include "nighthawk/common/sequencer.h"
 #include "nighthawk/common/statistic.h"
+#include "nighthawk/common/uri.h"
 
 #include "common/common/logger.h"
 #include "common/http/header_map_impl.h"
@@ -21,7 +23,6 @@
 
 #include "client/stream_decoder.h"
 #include "common/ssl.h"
-#include "nighthawk/common/uri.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -41,12 +42,6 @@ using namespace Envoy; // We need this because of macro expectations.
 
 struct BenchmarkClientStats {
   ALL_BENCHMARK_CLIENT_STATS(GENERATE_COUNTER_STRUCT)
-};
-
-class PrefetchablePool {
-public:
-  virtual ~PrefetchablePool() = default;
-  virtual void prefetchConnections() PURE;
 };
 
 class BenchmarkClientHttpImpl : public BenchmarkClient,
