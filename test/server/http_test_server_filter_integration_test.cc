@@ -19,24 +19,22 @@ public:
 
   // TODO(oschaaf): Modify Envoy's Envoy::IntegrationUtil::makeSingleRequest() to allow for a way to
   // manipulate the request headers before they get send. Then we can eliminate these copies.
-  Envoy::BufferingStreamDecoderPtr
-  makeSingleRequest(uint32_t port, absl::string_view method, absl::string_view url,
-                    absl::string_view body, Envoy::Http::CodecClient::Type type,
-                    Envoy::Network::Address::IpVersion ip_version, absl::string_view host,
-                    absl::string_view content_type,
-                    std::function<void(Envoy::Http::HeaderMapImpl&)> request_header_delegate) {
+  Envoy::BufferingStreamDecoderPtr makeSingleRequest(
+      uint32_t port, absl::string_view method, absl::string_view url, absl::string_view body,
+      Envoy::Http::CodecClient::Type type, Envoy::Network::Address::IpVersion ip_version,
+      absl::string_view host, absl::string_view content_type,
+      const std::function<void(Envoy::Http::HeaderMapImpl&)>& request_header_delegate) {
     auto addr = Envoy::Network::Utility::resolveUrl(fmt::format(
         "tcp://{}:{}", Envoy::Network::Test::getLoopbackAddressUrlString(ip_version), port));
     return makeSingleRequest(addr, method, url, body, type, host, content_type,
                              request_header_delegate);
   }
 
-  Envoy::BufferingStreamDecoderPtr
-  makeSingleRequest(const Envoy::Network::Address::InstanceConstSharedPtr& addr,
-                    absl::string_view method, absl::string_view url, absl::string_view body,
-                    Envoy::Http::CodecClient::Type type, absl::string_view host,
-                    absl::string_view content_type,
-                    std::function<void(Envoy::Http::HeaderMapImpl&)> request_header_delegate) {
+  Envoy::BufferingStreamDecoderPtr makeSingleRequest(
+      const Envoy::Network::Address::InstanceConstSharedPtr& addr, absl::string_view method,
+      absl::string_view url, absl::string_view body, Envoy::Http::CodecClient::Type type,
+      absl::string_view host, absl::string_view content_type,
+      const std::function<void(Envoy::Http::HeaderMapImpl&)>& request_header_delegate) {
 
     testing::NiceMock<Envoy::Stats::MockIsolatedStatsStore> mock_stats_store;
     Envoy::Event::GlobalTimeSystem time_system;
@@ -176,7 +174,7 @@ TEST_P(HttpTestServerIntegrationTest, TestHeaderConfig) {
       lookupPort("http"), "GET", "/", "", downstream_protocol_, version_, "foo.com", "",
       [](Envoy::Http::HeaderMapImpl& request_headers) {
         const std::string header_config =
-            "{response_headers: [ { header: { key: \"foo\", value: \"bar2\"}, append: true } ]}";
+            R"({response_headers: [ { header: { key: "foo", value: "bar2"}, append: true } ]})";
         request_headers.addCopy(Nighthawk::Server::TestServer::HeaderNames::get().TestServerConfig,
                                 header_config);
       });
@@ -214,7 +212,7 @@ TEST_P(HttpTestServerIntegrationNoConfigTest, TestNoHeaderConfig) {
                         "foo.com", "", [](Envoy::Http::HeaderMapImpl&) {});
   ASSERT_TRUE(response->complete());
   EXPECT_STREQ("200", response->headers().Status()->value().c_str());
-  EXPECT_EQ(std::string(0, 'a'), response->body());
+  EXPECT_EQ("", response->body());
 }
 
 TEST_P(HttpTestServerIntegrationNoConfigTest, TestBasics) {
@@ -246,7 +244,7 @@ TEST_P(HttpTestServerIntegrationNoConfigTest, TestHeaderConfig) {
       lookupPort("http"), "GET", "/", "", downstream_protocol_, version_, "foo.com", "",
       [](Envoy::Http::HeaderMapImpl& request_headers) {
         const std::string header_config =
-            "{response_headers: [ { header: { key: \"foo\", value: \"bar2\"}, append: true } ]}";
+            R"({response_headers: [ { header: { key: "foo", value: "bar2"}, append: true } ]})";
         request_headers.addCopy(Nighthawk::Server::TestServer::HeaderNames::get().TestServerConfig,
                                 header_config);
       });
@@ -254,7 +252,7 @@ TEST_P(HttpTestServerIntegrationNoConfigTest, TestHeaderConfig) {
   EXPECT_STREQ("200", response->headers().Status()->value().c_str());
   EXPECT_STREQ("bar2",
                response->headers().get(Envoy::Http::LowerCaseString("foo"))->value().c_str());
-  EXPECT_EQ(std::string(0, 'a'), response->body());
+  EXPECT_EQ("", response->body());
 }
 
 // TODO(oschaaf): maybe add a couple more tests for appending headers.

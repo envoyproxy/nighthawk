@@ -16,27 +16,26 @@ public:
   const Envoy::Http::LowerCaseString TestServerConfig{"x-nighthawk-test-server-config"};
 };
 
-typedef Envoy::ConstSingleton<HeaderNameValues> HeaderNames;
+using HeaderNames = Envoy::ConstSingleton<HeaderNameValues>;
 
 } // namespace TestServer
 
 // Basically this is left in as a placeholder for further configuration.
 class HttpTestServerDecoderFilterConfig {
 public:
-  HttpTestServerDecoderFilterConfig(const nighthawk::server::ResponseOptions& proto_config);
+  HttpTestServerDecoderFilterConfig(nighthawk::server::ResponseOptions proto_config);
   const nighthawk::server::ResponseOptions& server_config() { return server_config_; }
 
 private:
   const nighthawk::server::ResponseOptions server_config_;
 };
 
-typedef std::shared_ptr<HttpTestServerDecoderFilterConfig>
-    HttpTestServerDecoderFilterConfigSharedPtr;
+using HttpTestServerDecoderFilterConfigSharedPtr =
+    std::shared_ptr<HttpTestServerDecoderFilterConfig>;
 
 class HttpTestServerDecoderFilter : public Envoy::Http::StreamDecoderFilter {
 public:
   HttpTestServerDecoderFilter(HttpTestServerDecoderFilterConfigSharedPtr);
-  ~HttpTestServerDecoderFilter();
 
   // Http::StreamFilterBase
   void onDestroy() override;

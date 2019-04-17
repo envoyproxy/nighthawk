@@ -13,14 +13,12 @@ namespace Nighthawk {
 namespace Server {
 
 HttpTestServerDecoderFilterConfig::HttpTestServerDecoderFilterConfig(
-    const nighthawk::server::ResponseOptions& proto_config)
-    : server_config_(proto_config) {}
+    nighthawk::server::ResponseOptions proto_config)
+    : server_config_(std::move(proto_config)) {}
 
 HttpTestServerDecoderFilter::HttpTestServerDecoderFilter(
     HttpTestServerDecoderFilterConfigSharedPtr config)
-    : config_(config) {}
-
-HttpTestServerDecoderFilter::~HttpTestServerDecoderFilter() {}
+    : config_(std::move(config)) {}
 
 void HttpTestServerDecoderFilter::onDestroy() {}
 
@@ -29,7 +27,7 @@ HttpTestServerDecoderFilter::decodeHeaders(Envoy::Http::HeaderMap& headers, bool
   const auto* request_config_header = headers.get(TestServer::HeaderNames::get().TestServerConfig);
   nighthawk::server::ResponseOptions base_config = config_->server_config();
 
-  std::string error_message = "";
+  std::string error_message;
   if (request_config_header != nullptr) {
     try {
       nighthawk::server::ResponseOptions json_config;
@@ -45,8 +43,8 @@ HttpTestServerDecoderFilter::decodeHeaders(Envoy::Http::HeaderMap& headers, bool
     decoder_callbacks_->sendLocalReply(
         static_cast<Envoy::Http::Code>(200), std::string(base_config.response_size(), 'a'),
         [&base_config](Envoy::Http::HeaderMap& direct_response_headers) {
-          for (auto header_value_option : base_config.response_headers()) {
-            auto header = header_value_option.header();
+          for (const auto& header_value_option : base_config.response_headers()) {
+            const auto& header = header_value_option.header();
             auto lower_case_key = Envoy::Http::LowerCaseString(header.key());
             if (!header_value_option.append().value()) {
               direct_response_headers.remove(lower_case_key);
