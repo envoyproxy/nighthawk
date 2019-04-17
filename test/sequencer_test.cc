@@ -30,15 +30,12 @@ class SequencerTestBase : public testing::Test {
 public:
   SequencerTestBase()
       : api_(Envoy::Thread::ThreadFactorySingleton::get(), store_, time_system_, file_system_),
-        dispatcher_(std::make_unique<Envoy::Event::MockDispatcher>()), callback_test_count_(0),
-        frequency_(10_Hz),
+        dispatcher_(std::make_unique<Envoy::Event::MockDispatcher>()), frequency_(10_Hz),
         interval_(std::chrono::duration_cast<std::chrono::milliseconds>(frequency_.interval())),
-        test_number_of_intervals_(5), sequencer_target_(std::bind(&SequencerTestBase::callback_test,
-                                                                  this, std::placeholders::_1)) {}
+        sequencer_target_(
+            std::bind(&SequencerTestBase::callback_test, this, std::placeholders::_1)) {}
 
-  virtual ~SequencerTestBase() = default;
-
-  bool callback_test(std::function<void()> f) {
+  bool callback_test(const std::function<void()>& f) {
     callback_test_count_++;
     f();
     return true;
@@ -50,10 +47,10 @@ public:
   Envoy::Event::SimulatedTimeSystem time_system_;
   Envoy::Api::Impl api_;
   std::unique_ptr<Envoy::Event::MockDispatcher> dispatcher_;
-  int callback_test_count_;
+  int callback_test_count_{0};
   const Frequency frequency_;
   const std::chrono::milliseconds interval_;
-  const uint64_t test_number_of_intervals_;
+  const uint64_t test_number_of_intervals_{5};
   SequencerTarget sequencer_target_;
 };
 
@@ -71,9 +68,7 @@ public:
 
 class SequencerTestWithTimerEmulation : public SequencerTest {
 public:
-  SequencerTestWithTimerEmulation() : timer1_set_(false), timer2_set_(false), stopped_(false) {
-    setupDispatcherTimerEmulation();
-  }
+  SequencerTestWithTimerEmulation() { setupDispatcherTimerEmulation(); }
 
   // the Sequencer implementation is effectively driven by two timers. We set us up for emulating
   // those timers firing and moving simulated time forward in simulateTimerloop() below.
@@ -130,9 +125,9 @@ private:
   testing::NiceMock<Envoy::Event::MockTimer>* timer2_; // not owned
   Envoy::Event::TimerCb timer_cb_1_;
   Envoy::Event::TimerCb timer_cb_2_;
-  bool timer1_set_;
-  bool timer2_set_;
-  bool stopped_;
+  bool timer1_set_{};
+  bool timer2_set_{};
+  bool stopped_{};
 };
 
 // Basic rate limiter interaction test.
@@ -199,12 +194,12 @@ public:
     rate_limiter_ = std::make_unique<LinearRateLimiter>(time_system_, frequency_);
   }
 
-  bool timeout_test(std::function<void()> /* f */) {
+  bool timeout_test(const std::function<void()>& /* f */) {
     callback_test_count_++;
     // We don't call f(); which will cause the sequencer to think there is in-flight work.
     return true;
   }
-  bool saturated_test(std::function<void()> /* f */) { return false; }
+  bool saturated_test(const std::function<void()>& /* f */) { return false; }
 
   std::unique_ptr<LinearRateLimiter> rate_limiter_;
 };

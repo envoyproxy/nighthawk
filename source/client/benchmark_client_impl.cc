@@ -28,30 +28,27 @@ using namespace std::chrono_literals;
 namespace Nighthawk {
 namespace Client {
 
-BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(Envoy::Api::Api& api,
-                                                 Envoy::Event::Dispatcher& dispatcher,
-                                                 Envoy::Stats::Store& store,
-                                                 StatisticPtr&& connect_statistic,
-                                                 StatisticPtr&& response_statistic, const Uri& uri,
-                                                 bool use_h2)
+BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
+    Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Store& store,
+    StatisticPtr&& connect_statistic, StatisticPtr&& response_statistic, UriPtr&& uri, bool use_h2)
     : api_(api), dispatcher_(dispatcher), store_(store),
       scope_(store_.createScope("client.benchmark.")),
       connect_statistic_(std::move(connect_statistic)),
-      response_statistic_(std::move(response_statistic)), use_h2_(use_h2), uri_(uri),
+      response_statistic_(std::move(response_statistic)), use_h2_(use_h2), uri_(std::move(uri)),
       benchmark_client_stats_({ALL_BENCHMARK_CLIENT_STATS(POOL_COUNTER(*scope_))}) {
   connect_statistic_->setId("benchmark_http_client.queue_to_connect");
   response_statistic_->setId("benchmark_http_client.request_to_response");
 
   request_headers_.insertMethod().value(Envoy::Http::Headers::get().MethodValues.Get);
-  request_headers_.insertPath().value(uri_.path());
-  request_headers_.insertHost().value(uri_.host_and_port());
-  request_headers_.insertScheme().value(uri_.scheme() == "https"
+  request_headers_.insertPath().value(uri_->path());
+  request_headers_.insertHost().value(uri_->hostAndPort());
+  request_headers_.insertScheme().value(uri_->scheme() == "https"
                                             ? Envoy::Http::Headers::get().SchemeValues.Https
                                             : Envoy::Http::Headers::get().SchemeValues.Http);
 }
 
 void BenchmarkClientHttpImpl::initialize(Envoy::Runtime::Loader& runtime) {
-  ASSERT(uri_.address().get() != nullptr);
+  ASSERT(uri_->address() != nullptr);
   envoy::api::v2::Cluster cluster_config;
   envoy::api::v2::core::BindConfig bind_config;
 
@@ -64,7 +61,7 @@ void BenchmarkClientHttpImpl::initialize(Envoy::Runtime::Loader& runtime) {
 
   Envoy::Network::TransportSocketFactoryPtr socket_factory;
 
-  if (uri_.scheme() == "https") {
+  if (uri_->scheme() == "https") {
     auto common_tls_context = cluster_config.mutable_tls_context()->mutable_common_tls_context();
     // TODO(oschaaf): we should ensure that we fail when h2 is requested but not supported on the
     // server-side in tests.
@@ -90,8 +87,9 @@ void BenchmarkClientHttpImpl::initialize(Envoy::Runtime::Loader& runtime) {
     Envoy::ProtobufTypes::MessagePtr message =
         Envoy::Config::Utility::translateToFactoryConfig(transport_socket, config_factory);
 
-    ssl_context_manager_.reset(
-        new Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl(api_.timeSource()));
+    ssl_context_manager_ =
+        std::make_unique<Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl>(
+            api_.timeSource());
     transport_socket_factory_context_ = std::make_unique<Ssl::MinimalTransportSocketFactoryContext>(
         store_.createScope("client."), dispatcher_, generator_, store_, api_,
         *ssl_context_manager_);
@@ -112,10 +110,10 @@ void BenchmarkClientHttpImpl::initialize(Envoy::Runtime::Loader& runtime) {
       cluster_config, bind_config, runtime, std::move(socket_factory),
       store_.createScope("client."), false /*added_via_api*/);
 
-  ASSERT(uri_.address().get() != nullptr);
+  ASSERT(uri_->address() != nullptr);
 
   auto host = std::shared_ptr<Envoy::Upstream::Host>{new Envoy::Upstream::HostImpl(
-      cluster_, uri_.host_and_port(), uri_.address(),
+      cluster_, std::string(uri_->hostAndPort()), uri_->address(),
       envoy::api::v2::core::Metadata::default_instance(), 1 /* weight */,
       envoy::api::v2::core::Locality(),
       envoy::api::v2::endpoint::Endpoint::HealthCheckConfig::default_instance(), 0,

@@ -7,6 +7,7 @@
 #include "envoy/stats/store.h"
 
 #include "nighthawk/common/statistic.h"
+#include "nighthawk/common/uri.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -63,7 +64,7 @@ public:
   virtual bool measureLatencies() const PURE;
 };
 
-typedef std::unique_ptr<BenchmarkClient> BenchmarkClientPtr;
+using BenchmarkClientPtr = std::unique_ptr<BenchmarkClient>;
 
 } // namespace Client
 } // namespace Nighthawk

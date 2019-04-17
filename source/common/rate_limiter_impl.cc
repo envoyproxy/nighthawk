@@ -24,7 +24,9 @@ bool LinearRateLimiter::tryAcquireOne() {
   }
 
   const auto elapsed_since_start = time_source_.monotonicTime() - started_at_;
-  acquireable_count_ = (elapsed_since_start / frequency_.interval()) - acquired_count_;
+  acquireable_count_ =
+      static_cast<int64_t>(std::round(elapsed_since_start / frequency_.interval())) -
+      acquired_count_;
   return acquireable_count_ > 0 ? tryAcquireOne() : false;
 }
 

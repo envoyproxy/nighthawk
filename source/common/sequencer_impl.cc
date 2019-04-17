@@ -15,7 +15,7 @@ SequencerImpl::SequencerImpl(const PlatformUtil& platform_util,
                              SequencerTarget target, StatisticPtr&& latency_statistic,
                              StatisticPtr&& blocked_statistic, std::chrono::microseconds duration,
                              std::chrono::microseconds grace_timeout)
-    : target_(target), platform_util_(platform_util), dispatcher_(dispatcher),
+    : target_(std::move(target)), platform_util_(platform_util), dispatcher_(dispatcher),
       time_source_(time_source), rate_limiter_(std::move(rate_limiter)),
       latency_statistic_(std::move(latency_statistic)),
       blocked_statistic_(std::move(blocked_statistic)), duration_(duration),

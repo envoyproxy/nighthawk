@@ -15,6 +15,7 @@
 #include "common/common/thread_impl.h"
 #include "common/filesystem/filesystem_impl.h"
 
+#include "test/client/utility.h"
 #include "test/mocks.h"
 
 #include "client/client.h"
@@ -91,15 +92,6 @@ public:
     return fmt::format("http://{}:{}/", address, port_);
   }
 
-  std::unique_ptr<OptionsImpl> createOptionsImpl(const std::string& args) {
-    std::vector<std::string> words = Envoy::TestUtility::split(args, ' ');
-    std::vector<const char*> argv;
-    for (const std::string& s : words) {
-      argv.push_back(s.c_str());
-    }
-    return std::make_unique<OptionsImpl>(argv.size(), argv.data());
-  }
-
   int port_;
   pid_t pid_;
   int fd_port_[2];
@@ -111,7 +103,8 @@ INSTANTIATE_TEST_SUITE_P(IpVersions, ClientTest,
                          Envoy::TestUtility::ipTestParamsToString);
 
 TEST_P(ClientTest, NormalRun) {
-  Main program(createOptionsImpl(fmt::format("foo --duration 2 --rps 10 {}", testUrl())));
+  Main program(Nighthawk::Client::TestUtility::createOptionsImpl(
+      fmt::format("foo --duration 2 --rps 10 {}", testUrl())));
   EXPECT_TRUE(program.run());
 }
 
@@ -134,7 +127,8 @@ TEST_P(ClientTest, AutoConcurrencyRun) {
 }
 
 TEST_P(ClientTest, BadRun) {
-  Main program(createOptionsImpl("foo --duration 1 --rps 1 https://unresolveable.host/"));
+  Main program(Nighthawk::Client::TestUtility::createOptionsImpl(
+      "foo --duration 1 --rps 1 https://unresolveable.host/"));
   EXPECT_FALSE(program.run());
 }
 

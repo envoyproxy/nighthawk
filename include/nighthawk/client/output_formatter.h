@@ -20,7 +20,7 @@ public:
   virtual std::string toString() const PURE;
 };
 
-typedef std::unique_ptr<OutputFormatter> OutputFormatterPtr;
+using OutputFormatterPtr = std::unique_ptr<OutputFormatter>;
 
 } // namespace Client
 } // namespace Nighthawk

@@ -26,6 +26,6 @@ public:
   virtual void releaseOne() PURE;
 };
 
-typedef std::unique_ptr<RateLimiter> RateLimiterPtr;
+using RateLimiterPtr = std::unique_ptr<RateLimiter>;
 
 } // namespace Nighthawk

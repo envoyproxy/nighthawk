@@ -17,7 +17,7 @@ public:
   std::string toString() const override;
   nighthawk::client::Statistic toProto() override;
   std::string id() const override;
-  void setId(const std::string& id) override;
+  void setId(absl::string_view id) override;
   std::string id_;
 };
 
@@ -97,7 +97,7 @@ private:
 class HdrStatistic : public StatisticImpl {
 public:
   HdrStatistic();
-  virtual ~HdrStatistic() override;
+  ~HdrStatistic() override;
   void addValue(int64_t sample_value) override;
   uint64_t count() const override;
   double mean() const override;

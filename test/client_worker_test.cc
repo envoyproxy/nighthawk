@@ -15,6 +15,7 @@
 
 #include "client/client_worker_impl.h"
 #include "common/statistic_impl.h"
+#include "common/uri_impl.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -45,7 +46,7 @@ public:
     return map;
   }
 
-  bool CheckTreadChanged(std::function<void()>) {
+  bool CheckThreadChanged(const std::function<void()>&) {
     EXPECT_NE(thread_id_, std::this_thread::get_id());
     return true;
   }
@@ -83,7 +84,7 @@ TEST_F(ClientWorkerTest, BasicTest) {
     // warmup
     EXPECT_CALL(*benchmark_client_, tryStartOne(_))
         .Times(1)
-        .WillRepeatedly(Invoke(this, &ClientWorkerTest::CheckTreadChanged));
+        .WillRepeatedly(Invoke(this, &ClientWorkerTest::CheckThreadChanged));
 
     // latency measurement will be initiated
     EXPECT_CALL(*benchmark_client_, setMeasureLatencies(true)).Times(1);
@@ -91,10 +92,11 @@ TEST_F(ClientWorkerTest, BasicTest) {
   }
 
   int worker_number = 12345;
-  auto worker = std::make_unique<ClientWorkerImpl>(
-      api_, tls_, benchmark_client_factory_, sequencer_factory_, Uri::Parse("http://foo"),
-      std::make_unique<Envoy::Stats::IsolatedStoreImpl>(), worker_number,
-      time_system_.monotonicTime());
+  auto worker =
+      std::make_unique<ClientWorkerImpl>(api_, tls_, benchmark_client_factory_, sequencer_factory_,
+                                         std::make_unique<Nighthawk::UriImpl>("http://foo"),
+                                         std::make_unique<Envoy::Stats::IsolatedStoreImpl>(),
+                                         worker_number, time_system_.monotonicTime());
 
   worker->start();
   worker->waitForCompletion();

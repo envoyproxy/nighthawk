@@ -4,6 +4,8 @@
 #include <memory>
 #include <string>
 
+#include "absl/strings/string_view.h"
+
 #include "common/common/non_copyable.h"
 #include "envoy/common/exception.h"
 #include "envoy/common/pure.h"
@@ -14,8 +16,8 @@ namespace Nighthawk {
 
 class Statistic;
 
-typedef std::unique_ptr<Statistic> StatisticPtr;
-typedef std::map<std::string, Statistic const*> StatisticPtrMap;
+using StatisticPtr = std::unique_ptr<Statistic>;
+using StatisticPtrMap = std::map<std::string, Statistic const*>;
 
 /**
  * Abstract interface for a statistic.
@@ -77,7 +79,7 @@ public:
    * Sets the id of the Statistic instance.
    * @param id The id that should be set for the Statistic instance.
    */
-  virtual void setId(const std::string& id) PURE;
+  virtual void setId(absl::string_view id) PURE;
 };
 
 } // namespace Nighthawk

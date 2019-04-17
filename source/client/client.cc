@@ -24,6 +24,7 @@
 #include "client/factories_impl.h"
 #include "client/options_impl.h"
 #include "common/frequency.h"
+#include "common/uri_impl.h"
 #include "common/utility.h"
 #include "nighthawk/client/output_formatter.h"
 #include "source/client/output.pb.h"
@@ -91,7 +92,7 @@ Main::mergeWorkerStatistics(const StatisticFactory& statistic_factory,
   // instances associated to them, in the same order).
   std::vector<StatisticPtr> merged_statistics;
   StatisticPtrMap w0_statistics = workers[0]->statistics();
-  for (auto w0_statistic : w0_statistics) {
+  for (const auto& w0_statistic : w0_statistics) {
     auto new_statistic = statistic_factory.create();
     new_statistic->setId(w0_statistic.first);
     merged_statistics.push_back(std::move(new_statistic));
@@ -100,7 +101,7 @@ Main::mergeWorkerStatistics(const StatisticFactory& statistic_factory,
   // Merge the statistics of all workers into the statistics vector we initialized above.
   for (auto& w : workers) {
     uint32_t i = 0;
-    for (auto wx_statistic : w->statistics()) {
+    for (const auto& wx_statistic : w->statistics()) {
       auto merged = merged_statistics[i]->combine(*(wx_statistic.second));
       merged->setId(merged_statistics[i]->id());
       merged_statistics[i] = std::move(merged);
@@ -115,8 +116,8 @@ Main::mergeWorkerCounters(const std::vector<ClientWorkerPtr>& workers) const {
   std::map<std::string, uint64_t> merged;
   for (auto& w : workers) {
     const auto counters = Utility().mapCountersFromStore(
-        w->store(), [](std::string, uint64_t value) { return value > 0; });
-    for (auto counter : counters) {
+        w->store(), [](absl::string_view, uint64_t value) { return value > 0; });
+    for (const auto& counter : counters) {
       if (merged.count(counter.first) == 0) {
         merged[counter.first] = counter.second;
       } else {
@@ -155,7 +156,8 @@ public:
   const SequencerFactory& sequencer_factory() const { return sequencer_factory_; }
   const StoreFactory& store_factory() const { return store_factory_; };
 
-  const std::vector<ClientWorkerPtr>& createWorkers(const Uri& uri, const uint32_t concurrency) {
+  const std::vector<ClientWorkerPtr>& createWorkers(const UriImpl& uri,
+                                                    const uint32_t concurrency) {
     // TODO(oschaaf): Expose kMinimalDelay in configuration.
     const std::chrono::seconds kMinimalWorkerDelay = 2s;
     ASSERT(workers_.size() == 0);
@@ -178,8 +180,8 @@ public:
       const auto worker_delay = std::chrono::duration_cast<std::chrono::nanoseconds>(
           ((inter_worker_delay_usec * worker_number) * 1us));
       workers_.push_back(std::make_unique<ClientWorkerImpl>(
-          api_, tls_, benchmark_client_factory_, sequencer_factory_, uri, store_factory_.create(),
-          worker_number, first_worker_start + worker_delay));
+          api_, tls_, benchmark_client_factory_, sequencer_factory_, std::make_unique<UriImpl>(uri),
+          store_factory_.create(), worker_number, first_worker_start + worker_delay));
       worker_number++;
     }
     return workers_;
@@ -188,7 +190,7 @@ public:
   std::vector<StatisticPtr> vectorizeStatisticPtrMap(const StatisticFactory& statistic_factory,
                                                      const StatisticPtrMap& statistics) const {
     std::vector<StatisticPtr> v;
-    for (auto statistic : statistics) {
+    for (const auto& statistic : statistics) {
       auto new_statistic = statistic_factory.create()->combine(*(statistic.second));
       new_statistic->setId(statistic.first);
       v.push_back(std::move(new_statistic));
@@ -221,7 +223,7 @@ public:
               fmt::format("worker_{}", i),
               vectorizeStatisticPtrMap(statistic_factory, worker->statistics()),
               Utility().mapCountersFromStore(
-                  worker->store(), [](std::string, uint64_t value) { return value > 0; }));
+                  worker->store(), [](absl::string_view, uint64_t value) { return value > 0; }));
         }
         i++;
       }
@@ -246,7 +248,7 @@ private:
 };
 
 bool Main::runWorkers(ProcessContext& context, OutputFormatter& formatter) const {
-  Uri uri = Uri::Parse(options_->uri());
+  UriImpl uri(options_->uri());
   try {
     // TODO(oschaaf): DnsLookupFamily should be optionized.
     uri.resolve(context.dispatcher(), Envoy::Network::DnsLookupFamily::Auto);

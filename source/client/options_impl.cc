@@ -4,6 +4,7 @@
 
 #include "tclap/CmdLine.h"
 
+#include "common/uri_impl.h"
 #include "common/utility.h"
 
 namespace Nighthawk {
@@ -92,7 +93,8 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
 
   // We cap on negative values. TCLAP accepts negative values which we will get here as very
   // large values. We just cap values to 2^63.
-  const uint64_t largest_acceptable_uint64_option_value = std::pow(2ull, 63ull);
+  const uint64_t largest_acceptable_uint64_option_value =
+      static_cast<uint64_t>(std::pow(2ull, 63ull));
 
   if (requests_per_second_ == 0 || requests_per_second_ > largest_acceptable_uint64_option_value) {
     throw MalformedArgvException("Invalid value for --rps");
@@ -123,7 +125,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   }
 
   try {
-    Uri::Parse(uri_);
+    UriImpl uri(uri_);
   } catch (const UriException) {
     throw MalformedArgvException("Invalid URI");
   }

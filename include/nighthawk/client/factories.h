@@ -10,13 +10,13 @@
 #include "envoy/event/dispatcher.h"
 #include "envoy/stats/store.h"
 
-#include "common/utility.h"
 #include "nighthawk/client/benchmark_client.h"
 #include "nighthawk/client/options.h"
 #include "nighthawk/client/output_formatter.h"
 #include "nighthawk/common/platform_util.h"
 #include "nighthawk/common/sequencer.h"
 #include "nighthawk/common/statistic.h"
+#include "nighthawk/common/uri.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -25,7 +25,7 @@ class BenchmarkClientFactory {
 public:
   virtual ~BenchmarkClientFactory() = default;
   virtual BenchmarkClientPtr create(Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher,
-                                    Envoy::Stats::Store& store, const Uri uri) const PURE;
+                                    Envoy::Stats::Store& store, UriPtr&& uri) const PURE;
 };
 
 class SequencerFactory {

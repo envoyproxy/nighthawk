@@ -34,7 +34,7 @@ public:
   virtual bool success() const PURE;
 };
 
-typedef std::unique_ptr<ClientWorker> ClientWorkerPtr;
+using ClientWorkerPtr = std::unique_ptr<ClientWorker>;
 
 } // namespace Client
 } // namespace Nighthawk

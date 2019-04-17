@@ -43,6 +43,6 @@ public:
   virtual StatisticPtrMap statistics() const PURE;
 };
 
-typedef std::unique_ptr<Sequencer> SequencerPtr;
+using SequencerPtr = std::unique_ptr<Sequencer>;
 
 } // namespace Nighthawk

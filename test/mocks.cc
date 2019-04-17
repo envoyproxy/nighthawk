@@ -9,7 +9,7 @@ using namespace std::chrono_literals;
 
 namespace Nighthawk {
 
-MockPlatformUtil::MockPlatformUtil() {}
+MockPlatformUtil::MockPlatformUtil() = default;
 MockPlatformUtil::~MockPlatformUtil() = default;
 
 MockRateLimiter::MockRateLimiter() = default;

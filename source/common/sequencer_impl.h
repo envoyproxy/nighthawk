@@ -63,7 +63,7 @@ public:
     return usec == 0 ? 0 : ((targets_completed_ / usec) * 1000000);
   }
 
-  virtual StatisticPtrMap statistics() const override;
+  StatisticPtrMap statistics() const override;
 
   const Statistic& blockedStatistic() const { return *blocked_statistic_; }
   const Statistic& latencyStatistic() const { return *latency_statistic_; }

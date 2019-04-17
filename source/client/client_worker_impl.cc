@@ -5,12 +5,12 @@ namespace Client {
 
 ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Instance& tls,
                                    const BenchmarkClientFactory& benchmark_client_factory,
-                                   const SequencerFactory& sequencer_factory, const Uri uri,
+                                   const SequencerFactory& sequencer_factory, UriPtr&& uri,
                                    Envoy::Stats::StorePtr&& store, const int worker_number,
                                    const Envoy::MonotonicTime starting_time)
-    : WorkerImpl(api, tls, std::move(store)), uri_(uri), worker_number_(worker_number),
-      starting_time_(starting_time),
-      benchmark_client_(benchmark_client_factory.create(api, *dispatcher_, *store_, uri)),
+    : WorkerImpl(api, tls, std::move(store)), worker_number_(worker_number),
+      starting_time_(starting_time), benchmark_client_(benchmark_client_factory.create(
+                                         api, *dispatcher_, *store_, std::move(uri))),
       sequencer_(sequencer_factory.create(time_source_, *dispatcher_, starting_time,
                                           *benchmark_client_)) {}
 

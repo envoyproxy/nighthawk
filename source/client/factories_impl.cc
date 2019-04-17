@@ -21,11 +21,11 @@ BenchmarkClientFactoryImpl::BenchmarkClientFactoryImpl(const Options& options)
 BenchmarkClientPtr BenchmarkClientFactoryImpl::create(Envoy::Api::Api& api,
                                                       Envoy::Event::Dispatcher& dispatcher,
                                                       Envoy::Stats::Store& store,
-                                                      const Uri uri) const {
+                                                      UriPtr&& uri) const {
   StatisticFactoryImpl statistic_factory(options_);
-  auto benchmark_client =
-      std::make_unique<BenchmarkClientHttpImpl>(api, dispatcher, store, statistic_factory.create(),
-                                                statistic_factory.create(), uri, options_.h2());
+  auto benchmark_client = std::make_unique<BenchmarkClientHttpImpl>(
+      api, dispatcher, store, statistic_factory.create(), statistic_factory.create(),
+      std::move(uri), options_.h2());
   benchmark_client->setConnectionTimeout(options_.timeout());
   benchmark_client->setConnectionLimit(options_.connections());
   return benchmark_client;
