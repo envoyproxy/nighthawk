@@ -46,6 +46,11 @@ public:
   Envoy::Http::FilterTrailersStatus decodeTrailers(Envoy::Http::HeaderMap&) override;
   void setDecoderFilterCallbacks(Envoy::Http::StreamDecoderFilterCallbacks&) override;
 
+  bool mergeJsonConfig(std::string json, nighthawk::server::ResponseOptions& config,
+                       std::string& error_message);
+  void : applyConfigToResponseHeaders(Envoy::Http::HeaderMap& response_headers,
+                                      nighthawk::server::ResponseOptions& response_options);
+
 private:
   const HttpTestServerDecoderFilterConfigSharedPtr config_;
   Envoy::Http::StreamDecoderFilterCallbacks* decoder_callbacks_;

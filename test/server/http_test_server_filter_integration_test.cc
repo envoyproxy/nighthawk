@@ -255,6 +255,56 @@ TEST_P(HttpTestServerIntegrationNoConfigTest, TestHeaderConfig) {
   EXPECT_EQ("", response->body());
 }
 
-// TODO(oschaaf): maybe add a couple more tests for appending headers.
+class HttpTestServerDecoderFilterTest : public testing::Test {};
+
+TEST_F(HttpTestServerDecoderFilterTest, ConfigLevelMerge) {
+  nighthawk::server::ResponseOptions initial_options;
+  auto response_header = initial_options.add_response_headers();
+  response_header->mutable_header()->set_key("foo");
+  response_header->mutable_header()->set_value("bar1");
+  response_header->mutable_append();
+
+  Server::HttpTestServerDecoderFilterConfigSharedPtr config =
+      std::make_shared<Server::HttpTestServerDecoderFilterConfig>(initial_options);
+  Server::HttpTestServerDecoderFilter f(config);
+  std::string error_message;
+  nighthawk::server::ResponseOptions options = config->server_config();
+
+  EXPECT_EQ(1, options.response_headers_size());
+
+  EXPECT_EQ("foo", options.response_headers(0).header().key());
+  EXPECT_EQ("bar1", options.response_headers(0).header().value());
+  EXPECT_EQ(false, options.response_headers(0).append().value());
+
+  EXPECT_TRUE(f.mergeJsonConfig(
+      R"({response_headers: [ { header: { key: "foo", value: "bar2"}, append: false } ]})", options,
+      error_message));
+  EXPECT_EQ("", error_message);
+  EXPECT_EQ(2, options.response_headers_size());
+
+  EXPECT_EQ("foo", options.response_headers(1).header().key());
+  EXPECT_EQ("bar2", options.response_headers(1).header().value());
+  EXPECT_EQ(false, options.response_headers(1).append().value());
+
+  EXPECT_TRUE(f.mergeJsonConfig(
+      R"({response_headers: [ { header: { key: "foo2", value: "bar3"}, append: true } ]})", options,
+      error_message));
+  EXPECT_EQ("", error_message);
+  EXPECT_EQ(3, options.response_headers_size());
+
+  EXPECT_EQ("foo2", options.response_headers(2).header().key());
+  EXPECT_EQ("bar3", options.response_headers(2).header().value());
+  EXPECT_EQ(true, options.response_headers(2).append().value());
+
+  EXPECT_FALSE(f.mergeJsonConfig(R"(bad_json)", options, error_message));
+  EXPECT_EQ("Error merging json config: Unable to parse JSON as proto (INVALID_ARGUMENT:Unexpected "
+            "token.\nbad_json\n^): bad_json",
+            error_message);
+  EXPECT_EQ(3, options.response_headers_size());
+}
+
+TEST_F(HttpTestServerDecoderFilterTest, ResponseHeaderMerging) {
+  // TODO(oschaaf): test HttpTestServerDecoderFilter::applyConfigToResponseHeaders
+}
 
 } // namespace Nighthawk
