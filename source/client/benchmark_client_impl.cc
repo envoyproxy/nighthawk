@@ -56,9 +56,9 @@ public:
   H1Pool(Envoy::Event::Dispatcher& dispatcher, Envoy::Upstream::HostConstSharedPtr host,
          Envoy::Upstream::ResourcePriority priority,
          const Envoy::Network::ConnectionSocket::OptionsSharedPtr& options)
-      : Envoy::Http::Http1::ProdConnPoolImpl(dispatcher, host, priority, options) {}
+      : Envoy::Http::Http1::ProdConnPoolImpl(dispatcher, std::move(host), priority, options) {}
 
-  void prefetchConnections() {
+  void prefetchConnections() override {
     while (host_->cluster().resourceManager(priority_).connections().canCreate()) {
       createNewConnection();
     }
@@ -70,9 +70,9 @@ public:
   H2Pool(Envoy::Event::Dispatcher& dispatcher, Envoy::Upstream::HostConstSharedPtr host,
          Envoy::Upstream::ResourcePriority priority,
          const Envoy::Network::ConnectionSocket::OptionsSharedPtr& options)
-      : Envoy::Http::Http2::ProdConnPoolImpl(dispatcher, host, priority, options) {}
+      : Envoy::Http::Http2::ProdConnPoolImpl(dispatcher, std::move(host), priority, options) {}
 
-  void prefetchConnections() {
+  void prefetchConnections() override {
     // No-op, this is a "pool" with a single connection.
   }
 };
