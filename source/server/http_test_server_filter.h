@@ -48,8 +48,8 @@ public:
 
   bool mergeJsonConfig(std::string json, nighthawk::server::ResponseOptions& config,
                        std::string& error_message);
-  void : applyConfigToResponseHeaders(Envoy::Http::HeaderMap& response_headers,
-                                      nighthawk::server::ResponseOptions& response_options);
+  void applyConfigToResponseHeaders(Envoy::Http::HeaderMap& response_headers,
+                                    nighthawk::server::ResponseOptions& response_options);
 
 private:
   const HttpTestServerDecoderFilterConfigSharedPtr config_;

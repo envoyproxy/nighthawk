@@ -60,7 +60,7 @@ HttpTestServerDecoderFilter::decodeHeaders(Envoy::Http::HeaderMap& headers, bool
       mergeJsonConfig(request_config_header->value().c_str(), base_config, error_message)) {
     decoder_callbacks_->sendLocalReply(
         static_cast<Envoy::Http::Code>(200), std::string(base_config.response_size(), 'a'),
-        [&base_config](Envoy::Http::HeaderMap& direct_response_headers) {
+        [this, &base_config](Envoy::Http::HeaderMap& direct_response_headers) {
           applyConfigToResponseHeaders(direct_response_headers, base_config);
         },
         absl::nullopt);
