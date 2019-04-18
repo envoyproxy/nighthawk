@@ -13,6 +13,8 @@
 
 #include "common/worker_impl.h"
 
+using namespace testing;
+
 namespace Nighthawk {
 
 class TestWorker : public WorkerImpl {
@@ -29,7 +31,7 @@ public:
   std::thread::id thread_id_;
 };
 
-class WorkerTest : public testing::Test {
+class WorkerTest : public Test {
 public:
   WorkerTest()
       : api_(Envoy::Thread::ThreadFactorySingleton::get(), store_, time_system_, file_system_) {}
@@ -43,7 +45,7 @@ public:
 };
 
 TEST_F(WorkerTest, WorkerExecutesOnThread) {
-  ::testing::InSequence in_sequence;
+  InSequence in_sequence;
 
   EXPECT_CALL(tls_, registerThread(_, false)).Times(1);
   EXPECT_CALL(tls_, allocateSlot()).Times(1);

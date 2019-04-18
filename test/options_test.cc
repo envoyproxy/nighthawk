@@ -6,11 +6,12 @@
 #include "client/options_impl.h"
 
 using namespace std::chrono_literals;
+using namespace testing;
 
 namespace Nighthawk {
 namespace Client {
 
-class OptionsImplTest : public testing::Test {
+class OptionsImplTest : public Test {
 public:
   OptionsImplTest()
       : client_name_("nighthawk_client"), good_test_uri_("http://127.0.0.1/"),
@@ -21,8 +22,7 @@ public:
   std::string no_arg_match_;
 };
 
-class OptionsImplIntTest : public OptionsImplTest,
-                           public testing::WithParamInterface<const char*> {};
+class OptionsImplIntTest : public OptionsImplTest, public WithParamInterface<const char*> {};
 
 TEST_F(OptionsImplTest, BogusInput) {
   // When just passing the non-existing argument --foo it would be interpreted as a
@@ -96,7 +96,7 @@ TEST_P(OptionsImplIntTest, IntOptionsBadValuesThrow) {
 }
 
 INSTANTIATE_TEST_SUITE_P(IntOptionTests, OptionsImplIntTest,
-                         testing::Values("rps", "connections", "duration", "timeout"));
+                         Values("rps", "connections", "duration", "timeout"));
 
 TEST_F(OptionsImplTest, BadH2FlagThrows) {
   EXPECT_THROW_WITH_REGEX(

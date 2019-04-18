@@ -16,13 +16,13 @@
 #include "test/test_common/environment.h"
 
 using namespace std::chrono_literals;
+using namespace testing;
 
 namespace Nighthawk {
 
-using MyTypes =
-    ::testing::Types<SimpleStatistic, InMemoryStatistic, HdrStatistic, StreamingStatistic>;
+using MyTypes = Types<SimpleStatistic, InMemoryStatistic, HdrStatistic, StreamingStatistic>;
 
-template <typename T> class TypedStatisticTest : public testing::Test {};
+template <typename T> class TypedStatisticTest : public Test {};
 
 class Helper {
 public:
@@ -198,7 +198,7 @@ TYPED_TEST(TypedStatisticTest, StringOutput) {
   EXPECT_NE(std::string::npos, s.find("pstdev: 3100.5"));
 }
 
-class StatisticTest : public testing::Test {};
+class StatisticTest : public Test {};
 
 // Note that we explicitly subject SimpleStatistic to the large
 // values below, and see a negative stdev returned.

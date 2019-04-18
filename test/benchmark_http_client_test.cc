@@ -36,11 +36,12 @@
 #include "test/test_common/utility.h"
 
 using namespace std::chrono_literals;
+using namespace testing;
 
 namespace Nighthawk {
 
 class BenchmarkClientTestBase : public Envoy::BaseIntegrationTest,
-                                public testing::TestWithParam<Envoy::Network::Address::IpVersion> {
+                                public TestWithParam<Envoy::Network::Address::IpVersion> {
 public:
   BenchmarkClientTestBase()
       : Envoy::BaseIntegrationTest(GetParam(), realTime(), BenchmarkClientTestBase::envoy_config),
@@ -132,8 +133,8 @@ public:
   Envoy::Api::Impl api_;
   Envoy::Event::DispatcherPtr dispatcher_;
   Envoy::Runtime::RandomGeneratorImpl generator_;
-  ::testing::NiceMock<Envoy::ThreadLocal::MockInstance> tls_;
-  ::testing::NiceMock<Envoy::Runtime::MockLoader> runtime_;
+  NiceMock<Envoy::ThreadLocal::MockInstance> tls_;
+  NiceMock<Envoy::Runtime::MockLoader> runtime_;
   std::unique_ptr<Client::BenchmarkClientHttpImpl> client_;
   Envoy::Filesystem::InstanceImplPosix file_system_;
   static std::string envoy_config;
@@ -189,10 +190,10 @@ public:
 std::string BenchmarkClientTestBase::envoy_config;
 
 INSTANTIATE_TEST_SUITE_P(IpVersions, BenchmarkClientHttpTest,
-                         testing::ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()),
+                         ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()),
                          Envoy::TestUtility::ipTestParamsToString);
 INSTANTIATE_TEST_SUITE_P(IpVersions, BenchmarkClientHttpsTest,
-                         testing::ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()),
+                         ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()),
                          Envoy::TestUtility::ipTestParamsToString);
 
 TEST_P(BenchmarkClientHttpTest, BasicTestH1) {
