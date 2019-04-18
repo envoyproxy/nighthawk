@@ -34,10 +34,11 @@ TEST_F(OptionsImplTest, BogusInput) {
 
 // This test should cover every option we offer.
 TEST_F(OptionsImplTest, All) {
-  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(fmt::format(
-      "{} --rps 4 --connections 5 --duration 6 --timeout 7 --h2 "
-      "--concurrency 8 --verbosity error --output-format json --prefetch-connections {}",
-      client_name_, good_test_uri_));
+  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(
+      fmt::format("{} --rps 4 --connections 5 --duration 6 --timeout 7 --h2 "
+                  "--concurrency 8 --verbosity error --output-format json --prefetch-connections "
+                  "--burst-size 13 {}",
+                  client_name_, good_test_uri_));
 
   EXPECT_EQ(4, options->requestsPerSecond());
   EXPECT_EQ(5, options->connections());
@@ -48,6 +49,7 @@ TEST_F(OptionsImplTest, All) {
   EXPECT_EQ("error", options->verbosity());
   EXPECT_EQ("json", options->outputFormat());
   EXPECT_EQ(true, options->prefetchConnections());
+  EXPECT_EQ(13, options->burstSize());
   EXPECT_EQ(good_test_uri_, options->uri());
 
   // Check that our conversion to CommandLineOptionsPtr makes sense.
@@ -61,6 +63,7 @@ TEST_F(OptionsImplTest, All) {
   EXPECT_EQ(cmd->verbosity(), options->verbosity());
   EXPECT_EQ(cmd->output_format(), options->outputFormat());
   EXPECT_EQ(cmd->prefetch_connections(), options->prefetchConnections());
+  EXPECT_EQ(cmd->burst_size(), options->burstSize());
   EXPECT_EQ(cmd->uri(), options->uri());
 }
 

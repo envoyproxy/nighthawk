@@ -50,6 +50,7 @@ TEST_F(FactoriesTest, CreateSequencer) {
   EXPECT_CALL(options_, timeout()).Times(1);
   EXPECT_CALL(options_, duration()).Times(1).WillOnce(Return(1s));
   EXPECT_CALL(options_, requestsPerSecond()).Times(1).WillOnce(Return(1));
+  EXPECT_CALL(options_, burstSize()).Times(1).WillOnce(Return(2));
   EXPECT_CALL(dispatcher_, createTimer_(_)).Times(2);
   Envoy::Event::SimulatedTimeSystem time_system;
   auto sequencer = factory.create(api_->timeSource(), dispatcher_, time_system.monotonicTime(),

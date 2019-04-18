@@ -62,6 +62,14 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   TCLAP::SwitchArg prefetch_connections(
       "", "prefetch-connections", "Prefetch connections before benchmarking (HTTP/1 only).", cmd);
 
+  // Note: we allow a burst size of 1, which intuitively may not make sense. However, allowing it
+  // doesn't hurt either, and it does allow one to use a the same code-execution-paths in test
+  // series that ramp up burst sizes.
+  TCLAP::ValueArg<uint64_t> burst_size(
+      "", "burst-size",
+      "Release requests in bursts of the specified size (default: 0, no bursting).", false, 0,
+      "uint64_t", cmd);
+
   TCLAP::UnlabeledValueArg<std::string> uri("uri",
                                             "uri to benchmark. http:// and https:// are supported, "
                                             "but in case of https no certificates are validated.",
@@ -94,6 +102,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   verbosity_ = verbosity.getValue();
   output_format_ = output_format.getValue();
   prefetch_connections_ = prefetch_connections.getValue();
+  burst_size_ = burst_size.getValue();
 
   // We cap on negative values. TCLAP accepts negative values which we will get here as very
   // large values. We just cap values to 2^63.
@@ -149,6 +158,7 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptions() const {
   command_line_options->set_verbosity(verbosity());
   command_line_options->set_output_format(outputFormat());
   command_line_options->set_prefetch_connections(prefetchConnections());
+  command_line_options->set_burst_size(burstSize());
 
   return command_line_options;
 }

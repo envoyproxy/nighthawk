@@ -25,6 +25,8 @@ message CommandLineOptions {
   string output_format = 8;
   // See :option:`--prefetch-connections` for details.
   bool prefetch_connections = 9;
+  // See :option:`--burst-size` for details.
+  uint64 burst_size = 10;
   // See :option:`--uri` for details.
-  string uri = 10;
+  string uri = 11;
 }
