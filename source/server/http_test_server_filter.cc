@@ -22,13 +22,13 @@ HttpTestServerDecoderFilter::HttpTestServerDecoderFilter(
 
 void HttpTestServerDecoderFilter::onDestroy() {}
 
-bool HttpTestServerDecoderFilter::mergeJsonConfig(std::string json,
+bool HttpTestServerDecoderFilter::mergeJsonConfig(absl::string_view json,
                                                   nighthawk::server::ResponseOptions& config,
                                                   std::string& error_message) {
   error_message = "";
   try {
     nighthawk::server::ResponseOptions json_config;
-    Envoy::MessageUtil::loadFromJson(json, json_config);
+    Envoy::MessageUtil::loadFromJson(std::string(json), json_config);
     config.MergeFrom(json_config);
     Envoy::MessageUtil::validate(config);
   } catch (Envoy::EnvoyException exception) {

@@ -10,9 +10,10 @@
 
 namespace Nighthawk {
 
-class HttpTestServerIntegrationTestBase
-    : public Envoy::HttpIntegrationTest,
-      public testing::TestWithParam<Envoy::Network::Address::IpVersion> {
+using namespace testing;
+
+class HttpTestServerIntegrationTestBase : public Envoy::HttpIntegrationTest,
+                                          public TestWithParam<Envoy::Network::Address::IpVersion> {
 public:
   HttpTestServerIntegrationTestBase()
       : HttpIntegrationTest(Envoy::Http::CodecClient::Type::HTTP1, GetParam(), realTime()) {}
@@ -36,13 +37,13 @@ public:
       absl::string_view host, absl::string_view content_type,
       const std::function<void(Envoy::Http::HeaderMapImpl&)>& request_header_delegate) {
 
-    testing::NiceMock<Envoy::Stats::MockIsolatedStatsStore> mock_stats_store;
+    NiceMock<Envoy::Stats::MockIsolatedStatsStore> mock_stats_store;
     Envoy::Event::GlobalTimeSystem time_system;
     Envoy::Api::Impl api(Envoy::Thread::threadFactoryForTest(), mock_stats_store, time_system,
                          Envoy::Filesystem::fileSystemForTest());
     Envoy::Event::DispatcherPtr dispatcher(api.allocateDispatcher());
     std::shared_ptr<Envoy::Upstream::MockClusterInfo> cluster{
-        new testing::NiceMock<Envoy::Upstream::MockClusterInfo>()};
+        new NiceMock<Envoy::Upstream::MockClusterInfo>()};
     Envoy::Upstream::HostDescriptionConstSharedPtr host_description{
         Envoy::Upstream::makeTestHostDescription(cluster, "tcp://127.0.0.1:80")};
     Envoy::Http::CodecClientProd client(
@@ -136,7 +137,7 @@ config:
 };
 
 INSTANTIATE_TEST_CASE_P(IpVersions, HttpTestServerIntegrationTest,
-                        testing::ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()));
+                        ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()));
 
 TEST_P(HttpTestServerIntegrationTest, TestNoHeaderConfig) {
   Envoy::BufferingStreamDecoderPtr response =
@@ -204,7 +205,7 @@ name: test-server
 };
 
 INSTANTIATE_TEST_CASE_P(IpVersions, HttpTestServerIntegrationNoConfigTest,
-                        testing::ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()));
+                        ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()));
 
 TEST_P(HttpTestServerIntegrationNoConfigTest, TestNoHeaderConfig) {
   Envoy::BufferingStreamDecoderPtr response =
@@ -255,9 +256,10 @@ TEST_P(HttpTestServerIntegrationNoConfigTest, TestHeaderConfig) {
   EXPECT_EQ("", response->body());
 }
 
-class HttpTestServerDecoderFilterTest : public testing::Test {};
+class HttpTestServerDecoderFilterTest : public Test {};
 
-TEST_F(HttpTestServerDecoderFilterTest, ConfigLevelMerge) {
+// Here we test config-level merging as well as its application at the response-header level.
+TEST_F(HttpTestServerDecoderFilterTest, HeaderMerge) {
   nighthawk::server::ResponseOptions initial_options;
   auto response_header = initial_options.add_response_headers();
   response_header->mutable_header()->set_key("foo");
@@ -276,6 +278,11 @@ TEST_F(HttpTestServerDecoderFilterTest, ConfigLevelMerge) {
   EXPECT_EQ("bar1", options.response_headers(0).header().value());
   EXPECT_EQ(false, options.response_headers(0).append().value());
 
+  Envoy::Http::TestHeaderMapImpl header_map{{":status", "200"}, {"foo", "bar"}};
+  f.applyConfigToResponseHeaders(header_map, options);
+  EXPECT_TRUE(Envoy::TestUtility::headerMapEqualIgnoreOrder(
+      header_map, Envoy::Http::TestHeaderMapImpl{{":status", "200"}, {"foo", "bar1"}}));
+
   EXPECT_TRUE(f.mergeJsonConfig(
       R"({response_headers: [ { header: { key: "foo", value: "bar2"}, append: false } ]})", options,
       error_message));
@@ -285,6 +292,10 @@ TEST_F(HttpTestServerDecoderFilterTest, ConfigLevelMerge) {
   EXPECT_EQ("foo", options.response_headers(1).header().key());
   EXPECT_EQ("bar2", options.response_headers(1).header().value());
   EXPECT_EQ(false, options.response_headers(1).append().value());
+
+  f.applyConfigToResponseHeaders(header_map, options);
+  EXPECT_TRUE(Envoy::TestUtility::headerMapEqualIgnoreOrder(
+      header_map, Envoy::Http::TestHeaderMapImpl{{":status", "200"}, {"foo", "bar2"}}));
 
   EXPECT_TRUE(f.mergeJsonConfig(
       R"({response_headers: [ { header: { key: "foo2", value: "bar3"}, append: true } ]})", options,
@@ -296,15 +307,16 @@ TEST_F(HttpTestServerDecoderFilterTest, ConfigLevelMerge) {
   EXPECT_EQ("bar3", options.response_headers(2).header().value());
   EXPECT_EQ(true, options.response_headers(2).append().value());
 
+  f.applyConfigToResponseHeaders(header_map, options);
+  EXPECT_TRUE(Envoy::TestUtility::headerMapEqualIgnoreOrder(
+      header_map,
+      Envoy::Http::TestHeaderMapImpl{{":status", "200"}, {"foo", "bar2"}, {"foo2", "bar3"}}));
+
   EXPECT_FALSE(f.mergeJsonConfig(R"(bad_json)", options, error_message));
   EXPECT_EQ("Error merging json config: Unable to parse JSON as proto (INVALID_ARGUMENT:Unexpected "
             "token.\nbad_json\n^): bad_json",
             error_message);
   EXPECT_EQ(3, options.response_headers_size());
-}
-
-TEST_F(HttpTestServerDecoderFilterTest, ResponseHeaderMerging) {
-  // TODO(oschaaf): test HttpTestServerDecoderFilter::applyConfigToResponseHeaders
 }
 
 } // namespace Nighthawk
