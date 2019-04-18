@@ -23,12 +23,13 @@
 #include "client/options_impl.h"
 
 using namespace std::chrono_literals;
+using namespace testing;
 
 namespace Nighthawk {
 namespace Client {
 
 class ClientTest : public Envoy::BaseIntegrationTest,
-                   public testing::TestWithParam<Envoy::Network::Address::IpVersion> {
+                   public TestWithParam<Envoy::Network::Address::IpVersion> {
 public:
   ClientTest() : Envoy::BaseIntegrationTest(GetParam(), realTime(), readEnvoyConfiguration()) {}
 
@@ -99,7 +100,7 @@ public:
 };
 
 INSTANTIATE_TEST_SUITE_P(IpVersions, ClientTest,
-                         testing::ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()),
+                         ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()),
                          Envoy::TestUtility::ipTestParamsToString);
 
 TEST_P(ClientTest, NormalRun) {

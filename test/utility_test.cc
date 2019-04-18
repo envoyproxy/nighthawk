@@ -9,9 +9,11 @@
 #include "common/uri_impl.h"
 #include "common/utility.h"
 
+using namespace testing;
+
 namespace Nighthawk {
 
-class UtilityTest : public testing::Test {
+class UtilityTest : public Test {
 public:
   UtilityTest() = default;
   void checkUriParsing(absl::string_view uri_to_test, absl::string_view hostAndPort,
@@ -82,8 +84,7 @@ TEST_F(UtilityTest, FindPortSeparator) {
   EXPECT_EQ(8, Utility::findPortSeparator("8foo.com:80"));
 }
 
-class UtilityAddressResolutionTest
-    : public testing::TestWithParam<Envoy::Network::Address::IpVersion> {
+class UtilityAddressResolutionTest : public TestWithParam<Envoy::Network::Address::IpVersion> {
 public:
   Envoy::Network::Address::InstanceConstSharedPtr
   testResolution(absl::string_view uri, Envoy::Network::DnsLookupFamily address_family) {
@@ -95,7 +96,7 @@ public:
 };
 
 INSTANTIATE_TEST_SUITE_P(IpVersions, UtilityAddressResolutionTest,
-                         testing::ValuesIn(TestEnvironment::getIpVersionsForTest()),
+                         ValuesIn(TestEnvironment::getIpVersionsForTest()),
                          Envoy::TestUtility::ipTestParamsToString);
 
 TEST_P(UtilityAddressResolutionTest, AddressResolution) {

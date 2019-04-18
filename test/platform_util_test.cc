@@ -2,9 +2,11 @@
 
 #include "common/platform_util_impl.h"
 
+using namespace testing;
+
 namespace Nighthawk {
 
-class PlatformUtilTest : public testing::Test {
+class PlatformUtilTest : public Test {
 public:
   PlatformUtilImpl platform_util_;
 };

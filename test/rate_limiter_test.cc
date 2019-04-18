@@ -10,10 +10,11 @@
 #include "common/rate_limiter_impl.h"
 
 using namespace std::chrono_literals;
+using namespace testing;
 
 namespace Nighthawk {
 
-class RateLimiterTest : public testing::Test {};
+class RateLimiterTest : public Test {};
 
 TEST_F(RateLimiterTest, LinearRateLimiterTest) {
   Envoy::Event::SimulatedTimeSystem time_system;

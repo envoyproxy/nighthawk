@@ -35,7 +35,7 @@ public:
     time_system_.setSystemTime(std::chrono::milliseconds(1234567891567));
     command_line_options_.mutable_duration()->set_seconds(1);
     EXPECT_CALL(options_, toCommandLineOptions())
-        .WillOnce(testing::Return(testing::ByMove(
+        .WillOnce(Return(ByMove(
             std::make_unique<nighthawk::client::CommandLineOptions>(command_line_options_))));
   }
 

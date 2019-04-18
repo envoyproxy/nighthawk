@@ -17,10 +17,12 @@
 #include "common/statistic_impl.h"
 #include "common/uri_impl.h"
 
+using namespace testing;
+
 namespace Nighthawk {
 namespace Client {
 
-class ClientWorkerTest : public testing::Test {
+class ClientWorkerTest : public Test {
 public:
   ClientWorkerTest()
       : api_(Envoy::Thread::ThreadFactorySingleton::get(), store_, time_system_, file_system_),
@@ -31,12 +33,11 @@ public:
 
     EXPECT_CALL(benchmark_client_factory_, create(_, _, _, _))
         .Times(1)
-        .WillOnce(testing::Return(
-            testing::ByMove(std::unique_ptr<MockBenchmarkClient>(benchmark_client_))));
+        .WillOnce(Return(ByMove(std::unique_ptr<MockBenchmarkClient>(benchmark_client_))));
 
     EXPECT_CALL(sequencer_factory_, create(_, _, _, _))
         .Times(1)
-        .WillOnce(testing::Return(testing::ByMove(std::unique_ptr<MockSequencer>(sequencer_))));
+        .WillOnce(Return(ByMove(std::unique_ptr<MockSequencer>(sequencer_))));
   }
 
   StatisticPtrMap createStatisticPtrMap() const {
@@ -58,7 +59,7 @@ public:
   MockBenchmarkClientFactory benchmark_client_factory_;
   MockSequencerFactory sequencer_factory_;
   Envoy::Stats::IsolatedStoreImpl store_;
-  ::testing::NiceMock<Envoy::ThreadLocal::MockInstance> tls_;
+  NiceMock<Envoy::ThreadLocal::MockInstance> tls_;
   Envoy::Event::RealTimeSystem time_system_;
   MockBenchmarkClient* benchmark_client_;
   MockSequencer* sequencer_;
@@ -71,7 +72,7 @@ TEST_F(ClientWorkerTest, BasicTest) {
   ASSERT_EQ(std::this_thread::get_id(), thread_id_);
 
   {
-    testing::InSequence dummy;
+    InSequence dummy;
 
     EXPECT_CALL(*benchmark_client_, initialize).Times(1);
     EXPECT_CALL(*sequencer_, start).Times(1);
@@ -79,7 +80,7 @@ TEST_F(ClientWorkerTest, BasicTest) {
   }
 
   {
-    testing::InSequence dummy;
+    InSequence dummy;
 
     // warmup
     EXPECT_CALL(*benchmark_client_, tryStartOne(_))
@@ -101,12 +102,8 @@ TEST_F(ClientWorkerTest, BasicTest) {
   worker->start();
   worker->waitForCompletion();
 
-  EXPECT_CALL(*benchmark_client_, statistics())
-      .Times(1)
-      .WillOnce(testing::Return(createStatisticPtrMap()));
-  EXPECT_CALL(*sequencer_, statistics())
-      .Times(1)
-      .WillOnce(testing::Return(createStatisticPtrMap()));
+  EXPECT_CALL(*benchmark_client_, statistics()).Times(1).WillOnce(Return(createStatisticPtrMap()));
+  EXPECT_CALL(*sequencer_, statistics()).Times(1).WillOnce(Return(createStatisticPtrMap()));
 
   auto statistics = worker->statistics();
   EXPECT_EQ(2, statistics.size());

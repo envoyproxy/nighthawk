@@ -23,10 +23,11 @@
 #include "common/statistic_impl.h"
 
 using namespace std::chrono_literals;
+using namespace testing;
 
 namespace Nighthawk {
 
-class SequencerTestBase : public testing::Test {
+class SequencerTestBase : public Test {
 public:
   SequencerTestBase()
       : api_(Envoy::Thread::ThreadFactorySingleton::get(), store_, time_system_, file_system_),
@@ -73,8 +74,8 @@ public:
   // the Sequencer implementation is effectively driven by two timers. We set us up for emulating
   // those timers firing and moving simulated time forward in simulateTimerloop() below.
   void setupDispatcherTimerEmulation() {
-    timer1_ = new testing::NiceMock<Envoy::Event::MockTimer>();
-    timer2_ = new testing::NiceMock<Envoy::Event::MockTimer>();
+    timer1_ = new NiceMock<Envoy::Event::MockTimer>();
+    timer2_ = new NiceMock<Envoy::Event::MockTimer>();
     EXPECT_CALL(*dispatcher_, createTimer_(_))
         .WillOnce(Invoke([&](Envoy::Event::TimerCb cb) {
           timer_cb_1_ = cb;
@@ -121,8 +122,8 @@ public:
   }
 
 private:
-  testing::NiceMock<Envoy::Event::MockTimer>* timer1_; // not owned
-  testing::NiceMock<Envoy::Event::MockTimer>* timer2_; // not owned
+  NiceMock<Envoy::Event::MockTimer>* timer1_; // not owned
+  NiceMock<Envoy::Event::MockTimer>* timer2_; // not owned
   Envoy::Event::TimerCb timer_cb_1_;
   Envoy::Event::TimerCb timer_cb_2_;
   bool timer1_set_{};
@@ -142,15 +143,12 @@ TEST_F(SequencerTestWithTimerEmulation, RateLimiterInteraction) {
       test_number_of_intervals_ * interval_ /* Sequencer run time.*/, 1ms /* Sequencer timeout. */);
   // Have the mock rate limiter gate two calls, and block everything else.
   EXPECT_CALL(rate_limiter_unsafe_ref_, tryAcquireOne())
-      .Times(testing::AtLeast(3))
-      .WillOnce(testing::Return(true))
-      .WillOnce(testing::Return(true))
-      .WillRepeatedly(testing::Return(false));
+      .Times(AtLeast(3))
+      .WillOnce(Return(true))
+      .WillOnce(Return(true))
+      .WillRepeatedly(Return(false));
 
-  EXPECT_CALL(target, callback(testing::_))
-      .Times(2)
-      .WillOnce(testing::Return(true))
-      .WillOnce(testing::Return(true));
+  EXPECT_CALL(target, callback(_)).Times(2).WillOnce(Return(true)).WillOnce(Return(true));
 
   sequencer.start();
   sequencer.waitForCompletion();
@@ -169,15 +167,12 @@ TEST_F(SequencerTestWithTimerEmulation, RateLimiterSaturatedTargetInteraction) {
       test_number_of_intervals_ * interval_ /* Sequencer run time.*/, 0ms /* Sequencer timeout. */);
 
   EXPECT_CALL(rate_limiter_unsafe_ref_, tryAcquireOne())
-      .Times(testing::AtLeast(3))
-      .WillOnce(testing::Return(true))
-      .WillOnce(testing::Return(true))
-      .WillRepeatedly(testing::Return(false));
+      .Times(AtLeast(3))
+      .WillOnce(Return(true))
+      .WillOnce(Return(true))
+      .WillRepeatedly(Return(false));
 
-  EXPECT_CALL(target, callback(testing::_))
-      .Times(2)
-      .WillOnce(testing::Return(true))
-      .WillOnce(testing::Return(false));
+  EXPECT_CALL(target, callback(_)).Times(2).WillOnce(Return(true)).WillOnce(Return(false));
 
   // The sequencer should call RateLimiter::releaseOne() when the target returns false.
   EXPECT_CALL(rate_limiter_unsafe_ref_, releaseOne()).Times(1);
@@ -210,7 +205,7 @@ TEST_F(SequencerIntegrationTest, TheHappyFlow) {
       std::move(rate_limiter_), sequencer_target_, std::make_unique<StreamingStatistic>(),
       std::make_unique<StreamingStatistic>(), test_number_of_intervals_ * interval_, 1s);
 
-  EXPECT_CALL(platform_util_, yieldCurrentThread()).Times(testing::AtLeast(1));
+  EXPECT_CALL(platform_util_, yieldCurrentThread()).Times(AtLeast(1));
 
   EXPECT_EQ(0, callback_test_count_);
   EXPECT_EQ(0, sequencer.latencyStatistic().count());

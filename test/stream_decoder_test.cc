@@ -19,11 +19,12 @@
 #include "common/statistic_impl.h"
 
 using namespace std::chrono_literals;
+using namespace testing;
 
 namespace Nighthawk {
 namespace Client {
 
-class StreamDecoderTest : public testing::Test, public StreamDecoderCompletionCallback {
+class StreamDecoderTest : public Test, public StreamDecoderCompletionCallback {
 public:
   StreamDecoderTest()
       : api_(thread_factory_, store_, time_system_, file_system_),

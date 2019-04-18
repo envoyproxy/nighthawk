@@ -15,11 +15,12 @@
 #include "common/uri_impl.h"
 
 using namespace std::chrono_literals;
+using namespace testing;
 
 namespace Nighthawk {
 namespace Client {
 
-class FactoriesTest : public testing::Test {
+class FactoriesTest : public Test {
 public:
   FactoriesTest() : api_(Envoy::Api::createApiForTest(stats_store_)) {}
 
@@ -47,8 +48,8 @@ TEST_F(FactoriesTest, CreateSequencer) {
   MockBenchmarkClient benchmark_client;
 
   EXPECT_CALL(options_, timeout()).Times(1);
-  EXPECT_CALL(options_, duration()).Times(1).WillOnce(testing::Return(1s));
-  EXPECT_CALL(options_, requestsPerSecond()).Times(1).WillOnce(testing::Return(1));
+  EXPECT_CALL(options_, duration()).Times(1).WillOnce(Return(1s));
+  EXPECT_CALL(options_, requestsPerSecond()).Times(1).WillOnce(Return(1));
   EXPECT_CALL(dispatcher_, createTimer_(_)).Times(2);
   Envoy::Event::SimulatedTimeSystem time_system;
   auto sequencer = factory.create(api_->timeSource(), dispatcher_, time_system.monotonicTime(),
@@ -66,13 +67,12 @@ TEST_F(FactoriesTest, CreateStatistic) {
   EXPECT_NE(nullptr, factory.create().get());
 }
 
-class OutputFormatterFactoryTest : public FactoriesTest,
-                                   public ::testing::WithParamInterface<const char*> {
+class OutputFormatterFactoryTest : public FactoriesTest, public WithParamInterface<const char*> {
 public:
   void testOutputFormatter(absl::string_view type) {
     Envoy::RealTimeSource time_source;
     EXPECT_CALL(options_, toCommandLineOptions());
-    EXPECT_CALL(options_, outputFormat()).WillOnce(testing::Return(std::string(type)));
+    EXPECT_CALL(options_, outputFormat()).WillOnce(Return(std::string(type)));
     OutputFormatterFactoryImpl factory(time_source, options_);
     EXPECT_NE(nullptr, factory.create().get());
   }
@@ -81,7 +81,7 @@ public:
 TEST_P(OutputFormatterFactoryTest, TestCreation) { testOutputFormatter(GetParam()); }
 
 INSTANTIATE_TEST_SUITE_P(OutputFormats, OutputFormatterFactoryTest,
-                         ::testing::ValuesIn({"human", "json", "yaml"}));
+                         ValuesIn({"human", "json", "yaml"}));
 
 } // namespace Client
 } // namespace Nighthawk

@@ -2,9 +2,11 @@
 
 #include "common/frequency.h"
 
+using namespace testing;
+
 namespace Nighthawk {
 
-class FrequencyTest : public testing::Test {};
+class FrequencyTest : public Test {};
 
 TEST_F(FrequencyTest, BasicTest) {
   Frequency f1 = 1_Hz;
