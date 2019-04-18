@@ -27,6 +27,7 @@ public:
   std::string concurrency() const override { return concurrency_; }
   std::string verbosity() const override { return verbosity_; };
   std::string outputFormat() const override { return output_format_; };
+  bool prefetchConnections() const override { return prefetch_connections_; }
 
 private:
   uint64_t requests_per_second_;
@@ -38,6 +39,7 @@ private:
   std::string concurrency_;
   std::string verbosity_;
   std::string output_format_;
+  bool prefetch_connections_;
 };
 
 } // namespace Client

@@ -6,11 +6,12 @@
 #include "client/options_impl.h"
 
 using namespace std::chrono_literals;
+using namespace testing;
 
 namespace Nighthawk {
 namespace Client {
 
-class OptionsImplTest : public testing::Test {
+class OptionsImplTest : public Test {
 public:
   OptionsImplTest()
       : client_name_("nighthawk_client"), good_test_uri_("http://127.0.0.1/"),
@@ -21,8 +22,7 @@ public:
   std::string no_arg_match_;
 };
 
-class OptionsImplIntTest : public OptionsImplTest,
-                           public testing::WithParamInterface<const char*> {};
+class OptionsImplIntTest : public OptionsImplTest, public WithParamInterface<const char*> {};
 
 TEST_F(OptionsImplTest, BogusInput) {
   // When just passing the non-existing argument --foo it would be interpreted as a
@@ -32,11 +32,12 @@ TEST_F(OptionsImplTest, BogusInput) {
                           MalformedArgvException, "Invalid URI");
 }
 
+// This test should cover every option we offer.
 TEST_F(OptionsImplTest, All) {
-  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(
-      fmt::format("{} --rps 4 --connections 5 --duration 6 --timeout 7 --h2 "
-                  "--concurrency 8 --verbosity error --output-format json {}",
-                  client_name_, good_test_uri_));
+  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(fmt::format(
+      "{} --rps 4 --connections 5 --duration 6 --timeout 7 --h2 "
+      "--concurrency 8 --verbosity error --output-format json --prefetch-connections {}",
+      client_name_, good_test_uri_));
 
   EXPECT_EQ(4, options->requestsPerSecond());
   EXPECT_EQ(5, options->connections());
@@ -46,6 +47,7 @@ TEST_F(OptionsImplTest, All) {
   EXPECT_EQ("8", options->concurrency());
   EXPECT_EQ("error", options->verbosity());
   EXPECT_EQ("json", options->outputFormat());
+  EXPECT_EQ(true, options->prefetchConnections());
   EXPECT_EQ(good_test_uri_, options->uri());
 
   // Check that our conversion to CommandLineOptionsPtr makes sense.
@@ -58,25 +60,30 @@ TEST_F(OptionsImplTest, All) {
   EXPECT_EQ(cmd->concurrency(), options->concurrency());
   EXPECT_EQ(cmd->verbosity(), options->verbosity());
   EXPECT_EQ(cmd->output_format(), options->outputFormat());
+  EXPECT_EQ(cmd->prefetch_connections(), options->prefetchConnections());
   EXPECT_EQ(cmd->uri(), options->uri());
 }
 
+// Test that TCLAP's way of handling --help behaves as expected.
 TEST_F(OptionsImplTest, Help) {
   EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{}  --help", client_name_)),
                           NoServingException, "NoServingException");
 }
 
+// Test that TCLAP's way of handling --version behaves as expected.
 TEST_F(OptionsImplTest, Version) {
   EXPECT_THROW_WITH_REGEX(
       TestUtility::createOptionsImpl(fmt::format("{}  --version", client_name_)),
       NoServingException, "NoServingException");
 }
 
+// We should fail when no arguments are passed.
 TEST_F(OptionsImplTest, NoArguments) {
   EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{}", client_name_)),
                           MalformedArgvException, "Required argument missing: uri");
 }
 
+// Check standard expectations for any integer values options we offer.
 TEST_P(OptionsImplIntTest, IntOptionsBadValuesThrow) {
   const char* option_name = GetParam();
   EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{} {} --{} 0", client_name_,
@@ -96,9 +103,15 @@ TEST_P(OptionsImplIntTest, IntOptionsBadValuesThrow) {
 }
 
 INSTANTIATE_TEST_SUITE_P(IntOptionTests, OptionsImplIntTest,
-                         testing::Values("rps", "connections", "duration", "timeout"));
+                         Values("rps", "connections", "duration", "timeout"));
 
-TEST_F(OptionsImplTest, BadH2FlagThrows) {
+// Test behaviour of the boolean valued --h2 flag.
+TEST_F(OptionsImplTest, H2Flag) {
+  EXPECT_FALSE(
+      TestUtility::createOptionsImpl(fmt::format("{} {}", client_name_, good_test_uri_))->h2());
+  EXPECT_TRUE(
+      TestUtility::createOptionsImpl(fmt::format("{} {} --h2", client_name_, good_test_uri_))
+          ->h2());
   EXPECT_THROW_WITH_REGEX(
       TestUtility::createOptionsImpl(fmt::format("{} {} --h2 0", client_name_, good_test_uri_)),
       MalformedArgvException, "Couldn't find match for argument");
@@ -107,6 +120,23 @@ TEST_F(OptionsImplTest, BadH2FlagThrows) {
       MalformedArgvException, "Couldn't find match for argument");
 }
 
+TEST_F(OptionsImplTest, PrefetchConnectionsFlag) {
+  EXPECT_FALSE(TestUtility::createOptionsImpl(fmt::format("{} {}", client_name_, good_test_uri_))
+                   ->prefetchConnections());
+  EXPECT_TRUE(TestUtility::createOptionsImpl(
+                  fmt::format("{} {} --prefetch-connections", client_name_, good_test_uri_))
+                  ->prefetchConnections());
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                              "{} {} --prefetch-connections 0", client_name_, good_test_uri_)),
+                          MalformedArgvException, "Couldn't find match for argument");
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                              "{} {} --prefetch-connections true", client_name_, good_test_uri_)),
+                          MalformedArgvException, "Couldn't find match for argument");
+}
+
+// Test --concurrency, which is a bit special. It's an int option, which also accepts 'auto' as
+// a value. We need to implement some stuff ourselves to get this to work, hence we don't run it
+// through the OptionsImplIntTest.
 TEST_F(OptionsImplTest, BadConcurrencyValuesThrow) {
   EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(
                               fmt::format("{} {} --concurrency 0", client_name_, good_test_uri_)),
@@ -128,12 +158,25 @@ TEST_F(OptionsImplTest, BadConcurrencyValuesThrow) {
       MalformedArgvException, "Value out of range: --concurrency");
 }
 
+// Test we accept --concurrency auto
 TEST_F(OptionsImplTest, AutoConcurrencyValueParsedOK) {
   std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(
       fmt::format("{} --concurrency auto {} ", client_name_, good_test_uri_));
   EXPECT_EQ("auto", options->concurrency());
 }
 
+class OptionsImplVerbosityTest : public OptionsImplTest, public WithParamInterface<const char*> {};
+
+// Test we accept all possible --verbosity values.
+TEST_P(OptionsImplVerbosityTest, VerbosityValues) {
+  TestUtility::createOptionsImpl(
+      fmt::format("{} --verbosity {} {}", client_name_, GetParam(), good_test_uri_));
+}
+
+INSTANTIATE_TEST_SUITE_P(VerbosityOptionTests, OptionsImplVerbosityTest,
+                         Values("trace", "debug", "info", "warn", "error", "critical"));
+
+// Test we don't accept any bad --verbosity values.
 TEST_F(OptionsImplTest, VerbosityValuesAreConstrained) {
   EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(
                               fmt::format("{} {} --verbosity foo", client_name_, good_test_uri_)),

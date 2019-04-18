@@ -12,8 +12,10 @@
 #include "envoy/upstream/upstream.h"
 
 #include "nighthawk/client/benchmark_client.h"
+#include "nighthawk/client/prefetchable_pool.h"
 #include "nighthawk/common/sequencer.h"
 #include "nighthawk/common/statistic.h"
+#include "nighthawk/common/uri.h"
 
 #include "common/common/logger.h"
 #include "common/http/header_map_impl.h"
@@ -21,7 +23,6 @@
 
 #include "client/stream_decoder.h"
 #include "common/ssl.h"
-#include "nighthawk/common/uri.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -49,7 +50,8 @@ class BenchmarkClientHttpImpl : public BenchmarkClient,
 public:
   BenchmarkClientHttpImpl(Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher,
                           Envoy::Stats::Store& store, StatisticPtr&& connect_statistic,
-                          StatisticPtr&& response_statistic, UriPtr&& uri, bool use_h2);
+                          StatisticPtr&& response_statistic, UriPtr&& uri, bool use_h2,
+                          bool prefetch_connections);
 
   void setConnectionLimit(uint64_t connection_limit) { connection_limit_ = connection_limit; }
   void setConnectionTimeout(std::chrono::seconds timeout) { timeout_ = timeout; }
@@ -67,12 +69,13 @@ public:
   }
   bool tryStartOne(std::function<void()> caller_completion_callback) override;
   Envoy::Stats::Store& store() const override { return store_; }
-
   // StreamDecoderCompletionCallback
   void onComplete(bool success, const Envoy::Http::HeaderMap& headers) override;
   void onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason reason) override;
 
 private:
+  void prefetchPoolConnections() override;
+
   Envoy::Api::Api& api_;
   Envoy::Event::Dispatcher& dispatcher_;
   Envoy::Stats::Store& store_;
@@ -88,11 +91,12 @@ private:
   StatisticPtr connect_statistic_;
   StatisticPtr response_statistic_;
   const bool use_h2_;
+  const bool prefetch_connections_;
   const UriPtr uri_;
   std::chrono::seconds timeout_{5s};
   uint64_t connection_limit_{1};
   uint64_t max_pending_requests_{1};
-  Envoy::Http::ConnectionPool::InstancePtr pool_;
+  PrefetchablePoolPtr pool_;
   Envoy::Event::TimerPtr timer_;
   Envoy::Runtime::RandomGeneratorImpl generator_;
   uint64_t requests_completed_{};
