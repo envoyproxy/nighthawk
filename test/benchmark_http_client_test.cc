@@ -75,7 +75,7 @@ public:
   void testBasicFunctionality(absl::string_view uriPath, const uint64_t max_pending,
                               const uint64_t connection_limit, const bool use_h2,
                               const uint64_t amount_of_request) {
-    setupBenchmarkClient(uriPath, use_h2);
+    setupBenchmarkClient(uriPath, use_h2, false);
 
     client_->setConnectionTimeout(10s);
     client_->setMaxPendingRequests(max_pending);
@@ -103,9 +103,11 @@ public:
     EXPECT_EQ(0, getCounter("benchmark.stream_resets"));
   }
 
-  virtual void setupBenchmarkClient(absl::string_view uriPath, bool use_h2) = 0;
+  virtual void setupBenchmarkClient(absl::string_view uriPath, bool use_h2,
+                                    bool prefetch_connections) = 0;
 
-  void doSetupBenchmarkClient(absl::string_view uriPath, bool use_https, bool use_h2) {
+  void doSetupBenchmarkClient(absl::string_view uriPath, bool use_https, bool use_h2,
+                              bool prefetch_connections) {
     const std::string address = Envoy::Network::Test::getLoopbackAddressUrlString(GetParam());
     auto uri = std::make_unique<UriImpl>(fmt::format("{}://{}:{}{}", use_https ? "https" : "http",
                                                      address, getTestServerHostAndPort(), uriPath));
@@ -114,7 +116,7 @@ public:
                                    : Envoy::Network::DnsLookupFamily::V6Only);
     client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
         api_, *dispatcher_, store_, std::make_unique<StreamingStatistic>(),
-        std::make_unique<StreamingStatistic>(), std::move(uri), use_h2);
+        std::make_unique<StreamingStatistic>(), std::move(uri), use_h2, prefetch_connections);
   }
 
   uint64_t nonZeroValuedCounterCount() {
@@ -144,8 +146,9 @@ class BenchmarkClientHttpTest : public BenchmarkClientTestBase {
 public:
   void SetUp() override { BenchmarkClientHttpTest::initialize(); }
 
-  void setupBenchmarkClient(absl::string_view uriPath, bool use_h2) override {
-    doSetupBenchmarkClient(uriPath, false, use_h2);
+  void setupBenchmarkClient(absl::string_view uriPath, bool use_h2,
+                            bool prefetch_connections) override {
+    doSetupBenchmarkClient(uriPath, false, use_h2, prefetch_connections);
   };
 };
 
@@ -153,8 +156,9 @@ class BenchmarkClientHttpsTest : public BenchmarkClientTestBase {
 public:
   void SetUp() override { BenchmarkClientHttpsTest::initialize(); }
 
-  void setupBenchmarkClient(absl::string_view uriPath, bool use_h2) override {
-    doSetupBenchmarkClient(uriPath, true, use_h2);
+  void setupBenchmarkClient(absl::string_view uriPath, bool use_h2,
+                            bool prefetch_connections) override {
+    doSetupBenchmarkClient(uriPath, true, use_h2, prefetch_connections);
   };
 
   void initialize() override {
@@ -316,7 +320,7 @@ TEST_P(BenchmarkClientHttpTest, H1MultiConnectionFailure) {
 }
 
 TEST_P(BenchmarkClientHttpTest, EnableLatencyMeasurement) {
-  setupBenchmarkClient("/", false);
+  setupBenchmarkClient("/", false, false);
   int callback_count = 0;
   client_->initialize(runtime_);
 
@@ -348,7 +352,7 @@ TEST_P(BenchmarkClientHttpTest, StatusTrackingInOnComplete) {
   auto store = std::make_unique<Envoy::Stats::IsolatedStoreImpl>();
   client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
       api_, *dispatcher_, *store, std::make_unique<StreamingStatistic>(),
-      std::make_unique<StreamingStatistic>(), std::move(uri), false);
+      std::make_unique<StreamingStatistic>(), std::move(uri), false, false);
   Envoy::Http::HeaderMapImpl header;
 
   auto& status = header.insertStatus();
@@ -377,6 +381,15 @@ TEST_P(BenchmarkClientHttpTest, StatusTrackingInOnComplete) {
   EXPECT_EQ(1, getCounter("benchmark.http_5xx"));
   EXPECT_EQ(2, getCounter("benchmark.http_xxx"));
   EXPECT_EQ(1, getCounter("benchmark.stream_resets"));
+}
+
+TEST_P(BenchmarkClientHttpTest, ConnectionPrefetching) {
+  setupBenchmarkClient("/", false, true);
+  client_->setConnectionLimit(50);
+  client_->initialize(runtime_);
+  EXPECT_EQ(true, client_->tryStartOne([&]() { dispatcher_->exit(); }));
+  dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
+  EXPECT_EQ(50, getCounter("upstream_cx_total"));
 }
 
 // TODO(oschaaf): test protocol violations, stream resets, etc.

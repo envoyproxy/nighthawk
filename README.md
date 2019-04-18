@@ -29,7 +29,7 @@ bazel build -c opt //:nighthawk_client
 
 USAGE: 
 
-   bazel-bin/nighthawk_client  [--output-format <human|yaml
+   bazel-bin/nighthawk_client [--prefetch-connections] [--output-format <human|yaml
                                         |json>] [-v <trace|debug|info|warn
                                         |error|critical>] [--concurrency
                                         <string>] [--h2] [--timeout
@@ -41,6 +41,9 @@ USAGE:
 
 Where: 
 
+   --prefetch-connections
+     Prefetch connections before benchmarking (HTTP/1 only).
+
    --output-format <human|yaml|json>
      Verbosity of the output. Possible values: [human, yaml, json]. The
      default output format is 'human'.
@@ -48,7 +51,7 @@ Where:
    -v <trace|debug|info|warn|error|critical>,  --verbosity <trace|debug
       |info|warn|error|critical>
      Verbosity of the output. Possible values: [trace, debug, info, warn,
-     error, critical]. The default output format is 'info'.
+     error, critical]. The default level is 'info'.
 
    --concurrency <string>
      The number of concurrent event loops that should be used. Specify
@@ -70,7 +73,7 @@ Where:
 
    --connections <uint64_t>
      The number of connections per event loop that the test should
-     maximally use. Default: 1.
+     maximally use. HTTP/1 only. Default: 1.
 
    --rps <uint64_t>
      The target requests-per-second rate. Default: 5.

@@ -25,7 +25,7 @@ BenchmarkClientPtr BenchmarkClientFactoryImpl::create(Envoy::Api::Api& api,
   StatisticFactoryImpl statistic_factory(options_);
   auto benchmark_client = std::make_unique<BenchmarkClientHttpImpl>(
       api, dispatcher, store, statistic_factory.create(), statistic_factory.create(),
-      std::move(uri), options_.h2());
+      std::move(uri), options_.h2(), options_.prefetchConnections());
   benchmark_client->setConnectionTimeout(options_.timeout());
   benchmark_client->setConnectionLimit(options_.connections());
   return benchmark_client;

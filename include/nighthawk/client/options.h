@@ -29,6 +29,7 @@ public:
   virtual std::string concurrency() const PURE;
   virtual std::string verbosity() const PURE;
   virtual std::string outputFormat() const PURE;
+  virtual bool prefetchConnections() const PURE;
 
   /**
    * Converts an Options instance to an equivalent CommandLineOptions instance in terms of option

@@ -5,6 +5,7 @@ options:
   concurrency: ""
   verbosity: ""
   output_format: ""
+  prefetch_connections: false
   uri: ""
   duration: 1s
 results:

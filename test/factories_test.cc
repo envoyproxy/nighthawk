@@ -36,6 +36,7 @@ TEST_F(FactoriesTest, CreateBenchmarkClient) {
   EXPECT_CALL(options_, timeout()).Times(1);
   EXPECT_CALL(options_, connections()).Times(1);
   EXPECT_CALL(options_, h2()).Times(1);
+  EXPECT_CALL(options_, prefetchConnections()).Times(1);
 
   auto benchmark_client =
       factory.create(*api_, dispatcher_, stats_store_, std::make_unique<UriImpl>("http://foo/"));
