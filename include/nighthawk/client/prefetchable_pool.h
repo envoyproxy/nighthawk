@@ -1,6 +1,9 @@
 #pragma once
 
+#include <memory>
+
 #include "envoy/common/pure.h"
+#include "envoy/http/conn_pool.h"
 
 namespace Nighthawk {
 namespace Client {
