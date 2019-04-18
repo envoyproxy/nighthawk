@@ -1,7 +1,6 @@
 #!/bin/bash
 
 set -e
-set +x
 
 echo "Generating compilation database..."
 # The compilation database generate script doesn't support passing build options via CLI.
