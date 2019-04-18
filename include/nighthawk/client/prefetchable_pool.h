@@ -16,7 +16,14 @@ public:
    * prefetchConnections will open up the maximum number of allowed connections.
    */
   virtual void prefetchConnections() PURE;
+  /**
+   * @return Envoy::Http::ConnectionPool::Instance& Accessor for getting to connection pool
+   * implementation.
+   */
+  virtual Envoy::Http::ConnectionPool::Instance& pool() PURE;
 };
+
+using PrefetchablePoolPtr = std::unique_ptr<PrefetchablePool>;
 
 } // namespace Client
 } // namespace Nighthawk

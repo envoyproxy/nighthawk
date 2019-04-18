@@ -74,9 +74,7 @@ public:
   void onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason reason) override;
 
 private:
-  void prefetchPoolConnections() override {
-    dynamic_cast<PrefetchablePool*>(pool_.get())->prefetchConnections();
-  }
+  void prefetchPoolConnections() override;
 
   Envoy::Api::Api& api_;
   Envoy::Event::Dispatcher& dispatcher_;
@@ -98,7 +96,7 @@ private:
   std::chrono::seconds timeout_{5s};
   uint64_t connection_limit_{1};
   uint64_t max_pending_requests_{1};
-  Envoy::Http::ConnectionPool::InstancePtr pool_;
+  PrefetchablePoolPtr pool_;
   Envoy::Event::TimerPtr timer_;
   Envoy::Runtime::RandomGeneratorImpl generator_;
   uint64_t requests_completed_{};

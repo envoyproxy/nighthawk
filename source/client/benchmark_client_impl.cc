@@ -63,6 +63,7 @@ public:
       createNewConnection();
     }
   }
+  Envoy::Http::ConnectionPool::Instance& pool() override { return *this; }
 };
 
 class H2Pool : public PrefetchablePool, public Envoy::Http::Http2::ProdConnPoolImpl {
@@ -75,7 +76,10 @@ public:
   void prefetchConnections() override {
     // No-op, this is a "pool" with a single connection.
   }
+  Envoy::Http::ConnectionPool::Instance& pool() override { return *this; }
 };
+
+void BenchmarkClientHttpImpl::prefetchPoolConnections() { pool_->prefetchConnections(); }
 
 void BenchmarkClientHttpImpl::initialize(Envoy::Runtime::Loader& runtime) {
   ASSERT(uri_->address() != nullptr);
@@ -189,7 +193,7 @@ bool BenchmarkClientHttpImpl::tryStartOne(std::function<void()> caller_completio
       dispatcher_, api_.timeSource(), *this, std::move(caller_completion_callback),
       *connect_statistic_, *response_statistic_, request_headers_, measureLatencies());
   requests_initiated_++;
-  pool_->newStream(*stream_decoder, *stream_decoder);
+  pool_->pool().newStream(*stream_decoder, *stream_decoder);
   return true;
 }
 
