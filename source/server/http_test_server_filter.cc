@@ -56,6 +56,7 @@ HttpTestServerDecoderFilter::decodeHeaders(Envoy::Http::HeaderMap& headers, bool
   nighthawk::server::ResponseOptions base_config = config_->server_config();
   absl::optional<std::string> error_message;
 
+  // TODO(oschaaf): Add functionality to clear fields
   if (!request_config_header ||
       mergeJsonConfig(request_config_header->value().c_str(), base_config, error_message)) {
     decoder_callbacks_->sendLocalReply(
