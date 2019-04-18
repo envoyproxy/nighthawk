@@ -117,11 +117,11 @@ TYPED_TEST(TypedStatisticTest, CatastrophicalCancellation) {
   // two-pass algorithm, but the naïve algorithm now computes it as −170.66666666666666. This is a
   // serious problem with naïve algorithm and is due to catastrophic cancellation in the subtraction
   // of two similar numbers at the final stage of the algorithm.
-  std::vector<int> values{4, 7, 13, 16};
-  int exponential = 0;
+  std::vector<uint64_t> values{4, 7, 13, 16};
+  uint64_t exponential = 0;
   for (exponential = 3; exponential < 16; exponential++) {
     TypeParam a;
-    double offset = std::pow(10, exponential);
+    double offset = std::pow(10ULL, exponential);
     for (int value : values) {
       a.addValue(offset + value);
     }
@@ -201,7 +201,7 @@ TYPED_TEST(TypedStatisticTest, StringOutput) {
 class StatisticTest : public testing::Test {};
 
 // Note that we explicitly subject SimpleStatistic to the large
-// values below, and see a negative stdev returned.
+// values below, and see a 0 stdev returned.
 TEST(StatisticTest, SimpleStatisticProtoOutputLargeValues) {
   SimpleStatistic a;
   uint64_t value = 100ul + 0xFFFFFFFF; // 100 + the max for uint32_t
@@ -212,7 +212,8 @@ TEST(StatisticTest, SimpleStatisticProtoOutputLargeValues) {
   EXPECT_EQ(proto.count(), 2);
   Helper::expectNear(((1ul * proto.mean().seconds() * 1000 * 1000 * 1000) + proto.mean().nanos()),
                      value, a.significantDigits() - 1);
-  EXPECT_EQ(proto.pstdev().nanos(), -854775808);
+  // 0 because std::nan() gets translated to that.
+  EXPECT_EQ(proto.pstdev().nanos(), 0);
 }
 
 TEST(StatisticTest, HdrStatisticProtoOutputLargeValues) {

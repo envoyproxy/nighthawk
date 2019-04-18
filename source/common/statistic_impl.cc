@@ -24,7 +24,7 @@ nighthawk::client::Statistic StatisticImpl::toProto() {
   statistic.mutable_mean()->set_seconds(nanos / 1000000000);
   statistic.mutable_mean()->set_nanos(nanos % 1000000000);
 
-  nanos = count() == 0 ? 0 : static_cast<int64_t>(std::round(pstdev()));
+  nanos = count() == 0 ? 0 : static_cast<int64_t>(std::round(std::isnan(pstdev()) ? 0 : pstdev()));
   statistic.mutable_pstdev()->set_seconds(nanos / 1000000000);
   statistic.mutable_pstdev()->set_nanos(nanos % 1000000000);
 
@@ -37,7 +37,7 @@ void StatisticImpl::setId(absl::string_view id) { id_ = std::string(id); };
 
 SimpleStatistic::SimpleStatistic() : count_(0), sum_x_(0), sum_x2_(0) {}
 
-void SimpleStatistic::addValue(int64_t value) {
+void SimpleStatistic::addValue(uint64_t value) {
   count_++;
   sum_x_ += value;
   sum_x2_ += value * value;
@@ -66,7 +66,7 @@ StatisticPtr SimpleStatistic::combine(const Statistic& statistic) const {
 
 StreamingStatistic::StreamingStatistic() : count_(0), mean_(0), accumulated_variance_(0) {}
 
-void StreamingStatistic::addValue(int64_t value) {
+void StreamingStatistic::addValue(uint64_t value) {
   double delta, delta_n;
   count_++;
   delta = value - mean_;
@@ -102,7 +102,7 @@ StatisticPtr StreamingStatistic::combine(const Statistic& statistic) const {
 
 InMemoryStatistic::InMemoryStatistic() : streaming_stats_(std::make_unique<StreamingStatistic>()) {}
 
-void InMemoryStatistic::addValue(int64_t sample_value) {
+void InMemoryStatistic::addValue(uint64_t sample_value) {
   samples_.push_back(sample_value);
   streaming_stats_->addValue(sample_value);
 }
@@ -144,7 +144,7 @@ HdrStatistic::~HdrStatistic() {
   histogram_ = nullptr;
 }
 
-void HdrStatistic::addValue(int64_t value) {
+void HdrStatistic::addValue(uint64_t value) {
   // Failure to record a value can happen when it exceeds the configured minimum
   // or maximum value we passed when initializing histogram_.
   if (!hdr_record_value(histogram_, value)) {

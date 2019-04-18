@@ -28,7 +28,7 @@ public:
 class SimpleStatistic : public StatisticImpl {
 public:
   SimpleStatistic();
-  void addValue(int64_t value) override;
+  void addValue(uint64_t value) override;
   uint64_t count() const override;
   double mean() const override;
   double pvariance() const override;
@@ -53,7 +53,7 @@ private:
 class StreamingStatistic : public StatisticImpl {
 public:
   StreamingStatistic();
-  void addValue(int64_t value) override;
+  void addValue(uint64_t value) override;
   uint64_t count() const override;
   double mean() const override;
   double pvariance() const override;
@@ -75,7 +75,7 @@ private:
 class InMemoryStatistic : public StatisticImpl {
 public:
   InMemoryStatistic();
-  void addValue(int64_t sample_value) override;
+  void addValue(uint64_t sample_value) override;
   uint64_t count() const override;
   double mean() const override;
   double pvariance() const override;
@@ -98,7 +98,7 @@ class HdrStatistic : public StatisticImpl {
 public:
   HdrStatistic();
   ~HdrStatistic() override;
-  void addValue(int64_t sample_value) override;
+  void addValue(uint64_t sample_value) override;
   uint64_t count() const override;
   double mean() const override;
   double pvariance() const override;
