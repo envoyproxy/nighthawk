@@ -29,7 +29,7 @@ public:
    * Method for adding a sample value.
    * @param value the value of the sample to add
    */
-  virtual void addValue(int64_t sample_value) PURE;
+  virtual void addValue(uint64_t sample_value) PURE;
 
   virtual uint64_t count() const PURE;
   virtual double mean() const PURE;
