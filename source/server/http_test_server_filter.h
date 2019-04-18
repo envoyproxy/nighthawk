@@ -55,7 +55,7 @@ public:
    * @return bool false iff an error occurred.
    */
   bool mergeJsonConfig(absl::string_view json, nighthawk::server::ResponseOptions& config,
-                       std::string& error_message);
+                       absl::optional<std::string>& error_message);
 
   /**
    * Applies ResponseOptions onto a HeaderMap containing response headers.

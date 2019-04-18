@@ -24,17 +24,17 @@ void HttpTestServerDecoderFilter::onDestroy() {}
 
 bool HttpTestServerDecoderFilter::mergeJsonConfig(absl::string_view json,
                                                   nighthawk::server::ResponseOptions& config,
-                                                  std::string& error_message) {
-  error_message = "";
+                                                  absl::optional<std::string>& error_message) {
+  error_message = absl::nullopt;
   try {
     nighthawk::server::ResponseOptions json_config;
     Envoy::MessageUtil::loadFromJson(std::string(json), json_config);
     config.MergeFrom(json_config);
     Envoy::MessageUtil::validate(config);
   } catch (Envoy::EnvoyException exception) {
-    error_message = fmt::format("Error merging json config: {}", exception.what());
+    error_message.emplace(fmt::format("Error merging json config: {}", exception.what()));
   }
-  return error_message.empty();
+  return error_message == absl::nullopt;
 }
 
 void HttpTestServerDecoderFilter::applyConfigToResponseHeaders(
@@ -54,7 +54,7 @@ Envoy::Http::FilterHeadersStatus
 HttpTestServerDecoderFilter::decodeHeaders(Envoy::Http::HeaderMap& headers, bool) {
   const auto* request_config_header = headers.get(TestServer::HeaderNames::get().TestServerConfig);
   nighthawk::server::ResponseOptions base_config = config_->server_config();
-  std::string error_message;
+  absl::optional<std::string> error_message;
 
   if (!request_config_header ||
       mergeJsonConfig(request_config_header->value().c_str(), base_config, error_message)) {
@@ -67,7 +67,7 @@ HttpTestServerDecoderFilter::decodeHeaders(Envoy::Http::HeaderMap& headers, bool
   } else {
     decoder_callbacks_->sendLocalReply(
         static_cast<Envoy::Http::Code>(500),
-        fmt::format("test-server didn't understand the request: {}", error_message), nullptr,
+        fmt::format("test-server didn't understand the request: {}", *error_message), nullptr,
         absl::nullopt);
   }
   return Envoy::Http::FilterHeadersStatus::StopIteration;
