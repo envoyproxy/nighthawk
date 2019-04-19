@@ -1,12 +1,12 @@
 #!/bin/bash -e
 
 function do_build () {
-    bazel build $BAZEL_BUILD_OPTIONS --verbose_failures=true //:nighthawk_client
+    bazel build $BAZEL_BUILD_OPTIONS --verbose_failures=true //:nighthawk_client //:nighthawk_test_server
 }
 
 function do_test() {
     bazel test $BAZEL_BUILD_OPTIONS $BAZEL_TEST_OPTIONS --test_output=all \
-    //test:nighthawk_test
+    //test:nighthawk_test //test/server:http_test_server_filter_integration_test
 }
 
 function do_test_with_valgrind() {
@@ -80,7 +80,7 @@ function do_asan() {
     echo "Building and testing envoy tests..."
     override_linker_with_lld
     cd "${SRCDIR}"
-    run_bazel test ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-asan //test:nighthawk_test
+    run_bazel test ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-asan //test:nighthawk_test //test/server:http_test_server_filter_integration_test
 }
 
 function do_tsan() {
@@ -88,7 +88,7 @@ function do_tsan() {
     echo "Building and testing envoy tests..."
     override_linker_with_lld
     cd "${SRCDIR}"
-    run_bazel test ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-tsan //test:nighthawk_test
+    run_bazel test ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-tsan //test:nighthawk_test //test/server:http_test_server_filter_integration_test
 }
 
 [ -z "${NUM_CPUS}" ] && NUM_CPUS=`grep -c ^processor /proc/cpuinfo`

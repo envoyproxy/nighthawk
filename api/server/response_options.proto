@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package nighthawk.server;
+
+import "google/protobuf/wrappers.proto";
+import "validate/validate.proto";
+import "envoy/api/v2/core/base.proto";
+
+message ResponseOptions {
+    repeated envoy.api.v2.core.HeaderValueOption response_headers = 1;
+    oneof oneof_response_size { 
+      uint32 response_size = 2 [(validate.rules).uint32 = {gte: 0, lte: 4194304}];
+    }
+}
