@@ -87,16 +87,16 @@ public:
               Nighthawk::Server::TestServer::HeaderNames::get().TestServerConfig, header_config);
         });
     ASSERT_TRUE(response->complete());
-    EXPECT_STREQ("200", response->headers().Status()->value().c_str());
+    EXPECT_EQ("200", response->headers().Status()->value().getStringView());
     if (expect_header) {
       auto inserted_header = response->headers().get(Envoy::Http::LowerCaseString("x-supplied-by"));
       ASSERT_NE(nullptr, inserted_header);
-      EXPECT_STREQ("nighthawk-test-server", inserted_header->value().c_str());
+      EXPECT_EQ("nighthawk-test-server", inserted_header->value().getStringView());
     }
     if (response_size == 0) {
       EXPECT_EQ(nullptr, response->headers().ContentType());
     } else {
-      EXPECT_STREQ("text/plain", response->headers().ContentType()->value().c_str());
+      EXPECT_EQ("text/plain", response->headers().ContentType()->value().getStringView());
     }
     EXPECT_EQ(std::string(response_size, 'a'), response->body());
   }
@@ -110,7 +110,7 @@ public:
               Nighthawk::Server::TestServer::HeaderNames::get().TestServerConfig, header_config);
         });
     ASSERT_TRUE(response->complete());
-    EXPECT_STREQ("500", response->headers().Status()->value().c_str());
+    EXPECT_EQ("500", response->headers().Status()->value().getStringView());
   }
 };
 
@@ -144,7 +144,7 @@ TEST_P(HttpTestServerIntegrationTest, TestNoHeaderConfig) {
       makeSingleRequest(lookupPort("http"), "GET", "/", "", downstream_protocol_, version_,
                         "foo.com", "", [](Envoy::Http::HeaderMapImpl&) {});
   ASSERT_TRUE(response->complete());
-  EXPECT_STREQ("200", response->headers().Status()->value().c_str());
+  EXPECT_EQ("200", response->headers().Status()->value().getStringView());
   EXPECT_EQ(std::string(10, 'a'), response->body());
 }
 
@@ -180,9 +180,9 @@ TEST_P(HttpTestServerIntegrationTest, TestHeaderConfig) {
                                 header_config);
       });
   ASSERT_TRUE(response->complete());
-  EXPECT_STREQ("200", response->headers().Status()->value().c_str());
-  EXPECT_STREQ("bar2",
-               response->headers().get(Envoy::Http::LowerCaseString("foo"))->value().c_str());
+  EXPECT_EQ("200", response->headers().Status()->value().getStringView());
+  EXPECT_EQ("bar2",
+            response->headers().get(Envoy::Http::LowerCaseString("foo"))->value().getStringView());
   EXPECT_EQ(std::string(10, 'a'), response->body());
 }
 
@@ -212,7 +212,7 @@ TEST_P(HttpTestServerIntegrationNoConfigTest, TestNoHeaderConfig) {
       makeSingleRequest(lookupPort("http"), "GET", "/", "", downstream_protocol_, version_,
                         "foo.com", "", [](Envoy::Http::HeaderMapImpl&) {});
   ASSERT_TRUE(response->complete());
-  EXPECT_STREQ("200", response->headers().Status()->value().c_str());
+  EXPECT_EQ("200", response->headers().Status()->value().getStringView());
   EXPECT_EQ("", response->body());
 }
 
@@ -250,9 +250,9 @@ TEST_P(HttpTestServerIntegrationNoConfigTest, TestHeaderConfig) {
                                 header_config);
       });
   ASSERT_TRUE(response->complete());
-  EXPECT_STREQ("200", response->headers().Status()->value().c_str());
-  EXPECT_STREQ("bar2",
-               response->headers().get(Envoy::Http::LowerCaseString("foo"))->value().c_str());
+  EXPECT_EQ("200", response->headers().Status()->value().getStringView());
+  EXPECT_EQ("bar2",
+            response->headers().get(Envoy::Http::LowerCaseString("foo"))->value().getStringView());
   EXPECT_EQ("", response->body());
 }
 

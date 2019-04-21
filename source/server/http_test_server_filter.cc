@@ -58,7 +58,7 @@ HttpTestServerDecoderFilter::decodeHeaders(Envoy::Http::HeaderMap& headers, bool
 
   // TODO(oschaaf): Add functionality to clear fields
   if (!request_config_header ||
-      mergeJsonConfig(request_config_header->value().c_str(), base_config, error_message)) {
+      mergeJsonConfig(request_config_header->value().getStringView(), base_config, error_message)) {
     decoder_callbacks_->sendLocalReply(
         static_cast<Envoy::Http::Code>(200), std::string(base_config.response_size(), 'a'),
         [this, &base_config](Envoy::Http::HeaderMap& direct_response_headers) {
