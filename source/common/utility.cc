@@ -51,4 +51,16 @@ size_t Utility::findPortSeparator(absl::string_view hostname) {
   return hostname.rfind(":");
 }
 
+Envoy::Network::DnsLookupFamily Utility::parseAddressFamilyOptionString(absl::string_view family) {
+  const std::string lowercase_family = absl::AsciiStrToLower(family);
+  if (lowercase_family == "v6") {
+    return Envoy::Network::DnsLookupFamily::V6Only;
+  } else if (lowercase_family == "v4") {
+    return Envoy::Network::DnsLookupFamily::V4Only;
+  } else if (lowercase_family == "auto") {
+    return Envoy::Network::DnsLookupFamily::Auto;
+  }
+  throw NighthawkException("Invalid argument");
+}
+
 } // namespace Nighthawk
