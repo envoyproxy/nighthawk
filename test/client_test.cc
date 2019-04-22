@@ -93,6 +93,14 @@ public:
     return fmt::format("http://{}:{}/", address, port_);
   }
 
+  const char* getAddressFamilyOptionString() {
+    auto ip_version = GetParam();
+    RELEASE_ASSERT(ip_version == Envoy::Network::Address::IpVersion::v4 ||
+                       ip_version == Envoy::Network::Address::IpVersion::v6,
+                   "bad ip version");
+    return ip_version == Envoy::Network::Address::IpVersion::v6 ? "v6" : "v4";
+  }
+
   int port_;
   pid_t pid_;
   int fd_port_[2];
@@ -105,7 +113,8 @@ INSTANTIATE_TEST_SUITE_P(IpVersions, ClientTest,
 
 TEST_P(ClientTest, NormalRun) {
   Main program(Nighthawk::Client::TestUtility::createOptionsImpl(
-      fmt::format("foo --duration 2 --rps 10 {}", testUrl())));
+      fmt::format("foo --address-family {} --duration 2 --rps 10 {}",
+                  getAddressFamilyOptionString(), testUrl())));
   EXPECT_TRUE(program.run());
 }
 
@@ -114,6 +123,8 @@ TEST_P(ClientTest, AutoConcurrencyRun) {
   argv.push_back("foo");
   argv.push_back("--concurrency");
   argv.push_back("auto");
+  argv.push_back("--address-family");
+  argv.push_back(getAddressFamilyOptionString());
   argv.push_back("--duration");
   argv.push_back("1");
   argv.push_back("--rps");
@@ -129,7 +140,8 @@ TEST_P(ClientTest, AutoConcurrencyRun) {
 
 TEST_P(ClientTest, BadRun) {
   Main program(Nighthawk::Client::TestUtility::createOptionsImpl(
-      "foo --duration 1 --rps 1 https://unresolveable.host/"));
+      fmt::format("foo --address-family {} --duration 1 --rps 1 https://unresolveable.host/",
+                  getAddressFamilyOptionString())));
   EXPECT_FALSE(program.run());
 }
 

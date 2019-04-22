@@ -250,8 +250,8 @@ private:
 bool Main::runWorkers(ProcessContext& context, OutputFormatter& formatter) const {
   UriImpl uri(options_->uri());
   try {
-    // TODO(oschaaf): DnsLookupFamily should be optionized.
-    uri.resolve(context.dispatcher(), Envoy::Network::DnsLookupFamily::Auto);
+    uri.resolve(context.dispatcher(),
+                Utility::parseAddressFamilyOptionString(options_->addressFamily()));
   } catch (UriException) {
     return false;
   }

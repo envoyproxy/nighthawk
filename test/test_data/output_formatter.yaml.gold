@@ -6,6 +6,7 @@ options:
   verbosity: ""
   output_format: ""
   prefetch_connections: false
+  address_family: ""
   uri: ""
   duration: 1s
 results:

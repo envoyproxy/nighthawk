@@ -28,6 +28,7 @@ public:
   std::string verbosity() const override { return verbosity_; };
   std::string outputFormat() const override { return output_format_; };
   bool prefetchConnections() const override { return prefetch_connections_; }
+  std::string addressFamily() const override { return address_family_; };
 
 private:
   uint64_t requests_per_second_;
@@ -40,6 +41,7 @@ private:
   std::string verbosity_;
   std::string output_format_;
   bool prefetch_connections_;
+  std::string address_family_;
 };
 
 } // namespace Client

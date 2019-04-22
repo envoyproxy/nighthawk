@@ -62,6 +62,15 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   TCLAP::SwitchArg prefetch_connections(
       "", "prefetch-connections", "Prefetch connections before benchmarking (HTTP/1 only).", cmd);
 
+  std::vector<std::string> address_families = {"auto", "v4", "v6"};
+  TCLAP::ValuesConstraint<std::string> address_families_allowed(address_families);
+
+  TCLAP::ValueArg<std::string> address_family(
+      "", "address-family",
+      "Network addres family preference. Possible values: [auto, v4, v6]. The "
+      "default output format is 'v4'.",
+      false, "v4", &address_families_allowed, cmd);
+
   TCLAP::UnlabeledValueArg<std::string> uri("uri",
                                             "uri to benchmark. http:// and https:// are supported, "
                                             "but in case of https no certificates are validated.",
@@ -94,6 +103,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   verbosity_ = verbosity.getValue();
   output_format_ = output_format.getValue();
   prefetch_connections_ = prefetch_connections.getValue();
+  address_family_ = address_family.getValue();
 
   // We cap on negative values. TCLAP accepts negative values which we will get here as very
   // large values. We just cap values to 2^63.
@@ -149,6 +159,7 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptions() const {
   command_line_options->set_verbosity(verbosity());
   command_line_options->set_output_format(outputFormat());
   command_line_options->set_prefetch_connections(prefetchConnections());
+  command_line_options->set_address_family(addressFamily());
 
   return command_line_options;
 }
