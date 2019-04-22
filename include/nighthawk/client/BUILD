@@ -23,6 +23,7 @@ envoy_basic_cc_library(
         "//include/nighthawk/common:base_includes",
         "@envoy//include/envoy/common:base_includes",
         "@envoy//include/envoy/http:conn_pool_interface",
+        "@envoy//source/common/api:api_lib",
         "@envoy//source/common/common:minimal_logger_lib",
         "@envoy//source/common/common:non_copyable",
         "@envoy//source/common/network:dns_lib",
