@@ -41,6 +41,13 @@ public:
    * found.
    */
   static size_t findPortSeparator(absl::string_view hostname);
+
+  /**
+   * @param family Address family as a string. Allowed values are "v6", "v4", and "auto" (case
+   * insensitive). Any other values will throw a NighthawkException.
+   * @return Envoy::Network::DnsLookupFamily the equivalent DnsLookupFamily value
+   */
+  static Envoy::Network::DnsLookupFamily parseAddressFamilyOptionString(absl::string_view family);
 };
 
 } // namespace Nighthawk

@@ -7,6 +7,7 @@ options:
   output_format: ""
   prefetch_connections: false
   burst_size: 0
+  address_family: ""
   uri: ""
   duration: 1s
 results:

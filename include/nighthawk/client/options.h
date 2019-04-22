@@ -31,6 +31,7 @@ public:
   virtual std::string outputFormat() const PURE;
   virtual bool prefetchConnections() const PURE;
   virtual uint64_t burstSize() const PURE;
+  virtual std::string addressFamily() const PURE;
 
   /**
    * Converts an Options instance to an equivalent CommandLineOptions instance in terms of option

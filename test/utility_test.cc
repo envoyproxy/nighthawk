@@ -167,4 +167,18 @@ TEST_F(UtilityTest, CpusWithAffinity) {
   EXPECT_EQ(original_cpu_count, PlatformUtils::determineCpuCoresWithAffinity());
 }
 
+TEST_F(UtilityTest, ParseAddressFamilyGoodValues) {
+  EXPECT_EQ(Envoy::Network::DnsLookupFamily::V6Only, Utility::parseAddressFamilyOptionString("v6"));
+  EXPECT_EQ(Envoy::Network::DnsLookupFamily::V4Only, Utility::parseAddressFamilyOptionString("v4"));
+  EXPECT_EQ(Envoy::Network::DnsLookupFamily::Auto, Utility::parseAddressFamilyOptionString("auto"));
+
+  EXPECT_EQ(Envoy::Network::DnsLookupFamily::V6Only, Utility::parseAddressFamilyOptionString("V6"));
+  EXPECT_EQ(Envoy::Network::DnsLookupFamily::V4Only, Utility::parseAddressFamilyOptionString("V4"));
+  EXPECT_EQ(Envoy::Network::DnsLookupFamily::Auto, Utility::parseAddressFamilyOptionString("aUTo"));
+}
+
+TEST_F(UtilityTest, ParseAddressFamilyBadValues) {
+  EXPECT_THROW(Utility::parseAddressFamilyOptionString(""), NighthawkException);
+  EXPECT_THROW(Utility::parseAddressFamilyOptionString("bad value"), NighthawkException);
+}
 } // namespace Nighthawk

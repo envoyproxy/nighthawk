@@ -75,6 +75,7 @@ public:
   MOCK_CONST_METHOD0(outputFormat, std::string());
   MOCK_CONST_METHOD0(prefetchConnections, bool());
   MOCK_CONST_METHOD0(burstSize, uint64_t());
+  MOCK_CONST_METHOD0(addressFamily, std::string());
   MOCK_CONST_METHOD0(toCommandLineOptions, Client::CommandLineOptionsPtr());
 };
 
