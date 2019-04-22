@@ -186,8 +186,6 @@ TEST_F(OptionsImplTest, VerbosityValuesAreConstrained) {
                           MalformedArgvException, "Value 'foo' does not meet constraint");
 }
 
-/// -------
-
 class OptionsImplAddressFamilyTest : public OptionsImplTest,
                                      public WithParamInterface<const char*> {};
 
