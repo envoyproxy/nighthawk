@@ -12,6 +12,7 @@
 
 #include "test/mocks/event/mocks.h"
 #include "test/test_common/simulated_time_system.h"
+#include "test/test_common/thread_factory_for_test.h"
 
 #include "test/mocks.h"
 
@@ -30,7 +31,7 @@ namespace Nighthawk {
 class SequencerTestBase : public Test {
 public:
   SequencerTestBase()
-      : api_(Envoy::Thread::ThreadFactorySingleton::get(), store_, time_system_, file_system_),
+      : api_(Envoy::Thread::threadFactoryForTest(), store_, time_system_, file_system_),
         dispatcher_(std::make_unique<Envoy::Event::MockDispatcher>()), frequency_(10_Hz),
         interval_(std::chrono::duration_cast<std::chrono::milliseconds>(frequency_.interval())),
         sequencer_target_(

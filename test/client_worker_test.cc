@@ -10,6 +10,7 @@
 #include "common/stats/isolated_store_impl.h"
 
 #include "test/mocks/thread_local/mocks.h"
+#include "test/test_common/thread_factory_for_test.h"
 
 #include "test/mocks.h"
 
@@ -25,7 +26,7 @@ namespace Client {
 class ClientWorkerTest : public Test {
 public:
   ClientWorkerTest()
-      : api_(Envoy::Thread::ThreadFactorySingleton::get(), store_, time_system_, file_system_),
+      : api_(Envoy::Thread::threadFactoryForTest(), store_, time_system_, file_system_),
         thread_id_(std::this_thread::get_id()),
         loader_(Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl(rand_, store_, tls_)}) {
     benchmark_client_ = new MockBenchmarkClient();

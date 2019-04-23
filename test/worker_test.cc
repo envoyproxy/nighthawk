@@ -8,6 +8,7 @@
 #include "common/stats/isolated_store_impl.h"
 
 #include "test/mocks/thread_local/mocks.h"
+#include "test/test_common/thread_factory_for_test.h"
 
 #include "test/mocks.h"
 
@@ -33,8 +34,7 @@ public:
 
 class WorkerTest : public Test {
 public:
-  WorkerTest()
-      : api_(Envoy::Thread::ThreadFactorySingleton::get(), store_, time_system_, file_system_) {}
+  WorkerTest() : api_(Envoy::Thread::threadFactoryForTest(), store_, time_system_, file_system_) {}
 
   Envoy::Filesystem::InstanceImplPosix file_system_;
   Envoy::Api::Impl api_;
