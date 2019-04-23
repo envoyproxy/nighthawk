@@ -12,7 +12,14 @@ BurstingRateLimiter::BurstingRateLimiter(RateLimiterPtr&& rate_limiter, const ui
 }
 
 bool BurstingRateLimiter::tryAcquireOne() {
+  // Callers may not be able to actually make use of a successfull acquisition, and
+  // call releaseOne() to indicate so. We remember state here so we can use that later when
+  // that happens to restore it.
+  previously_releasing_ = releasing_;
+
   if (releasing_) {
+    // When releasing_ we drain the accumulated total until there's nothing left. We'll transit to
+    // accumulating mode after that.
     accumulated_--;
     releasing_ = accumulated_ > 0;
     return true;
@@ -23,20 +30,24 @@ bool BurstingRateLimiter::tryAcquireOne() {
       accumulated_++;
       if ((accumulated_ % burst_size_) == 0) {
         releasing_ = true;
+        // We have accumulated the burst size. Enter release mode and recurse.
         return tryAcquireOne();
       }
     }
   }
+
+  previously_releasing_ = absl::nullopt;
   return false;
 }
 
 void BurstingRateLimiter::releaseOne() {
-  if (releasing_) {
-    accumulated_++;
-    ASSERT(accumulated_ <= burst_size_);
-  } else {
-    rate_limiter_->releaseOne();
-  }
+  ASSERT(accumulated_ < burst_size_);
+  ASSERT(previously_releasing_ != absl::nullopt && previously_releasing_ == true);
+  // The caller wasn't able to put its earlier successfull acquisition to good use, so we restore
+  // state to what it was prior to that.
+  accumulated_++;
+  releasing_ = true; // release_ could only have been set earlier.
+  previously_releasing_ = absl::nullopt;
 }
 
 LinearRateLimiter::LinearRateLimiter(Envoy::TimeSource& time_source, const Frequency frequency)

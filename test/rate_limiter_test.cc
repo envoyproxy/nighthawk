@@ -54,6 +54,8 @@ TEST_F(RateLimiterTest, BurstingRateLimiterTest) {
 
   // On the first acquisition the bursting rate limiter will have accumulated three.
   EXPECT_TRUE(rate_limiter->tryAcquireOne());
+  rate_limiter->releaseOne();
+  EXPECT_TRUE(rate_limiter->tryAcquireOne());
   EXPECT_TRUE(rate_limiter->tryAcquireOne());
 
   // Releasing one here should result in one more successfull acquisition, as the
@@ -61,17 +63,6 @@ TEST_F(RateLimiterTest, BurstingRateLimiterTest) {
   rate_limiter->releaseOne();
   EXPECT_TRUE(rate_limiter->tryAcquireOne());
   EXPECT_TRUE(rate_limiter->tryAcquireOne());
-  EXPECT_CALL(unsafe_mock_rate_limiter, tryAcquireOne)
-      .Times(1)
-      .WillOnce(Return(false))
-      .RetiresOnSaturation();
-  EXPECT_FALSE(rate_limiter->tryAcquireOne());
-
-  // We'll explicitly release one, but this should not allow us to successfully
-  // acquire one more, because now the BurstingRateLimiter is working to accumulate
-  // a new burst.
-  EXPECT_CALL(unsafe_mock_rate_limiter, releaseOne);
-  rate_limiter->releaseOne();
   EXPECT_CALL(unsafe_mock_rate_limiter, tryAcquireOne)
       .Times(1)
       .WillOnce(Return(false))

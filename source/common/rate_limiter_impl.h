@@ -2,6 +2,8 @@
 
 #include "nighthawk/common/rate_limiter.h"
 
+#include "absl/types/optional.h"
+
 #include "envoy/common/time.h"
 
 #include "common/common/logger.h"
@@ -30,6 +32,7 @@ private:
   const uint64_t burst_size_;
   uint64_t accumulated_{0};
   bool releasing_{};
+  absl::optional<bool> previously_releasing_; // Solely used for sanity checking.
 };
 
 // Simple rate limiter that will allow acquiring at a linear pace.
