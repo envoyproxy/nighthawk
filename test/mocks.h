@@ -34,7 +34,6 @@ namespace Nighthawk {
 class MockPlatformUtil : public PlatformUtil {
 public:
   MockPlatformUtil();
-  ~MockPlatformUtil() override;
 
   MOCK_CONST_METHOD0(yieldCurrentThread, void());
 };
@@ -42,7 +41,6 @@ public:
 class MockRateLimiter : public RateLimiter {
 public:
   MockRateLimiter();
-  ~MockRateLimiter() override;
 
   MOCK_METHOD0(tryAcquireOne, bool());
   MOCK_METHOD0(releaseOne, void());
@@ -51,7 +49,6 @@ public:
 class MockSequencer : public Sequencer {
 public:
   MockSequencer();
-  ~MockSequencer() override;
 
   MOCK_METHOD0(start, void());
   MOCK_METHOD0(waitForCompletion, void());
@@ -62,7 +59,6 @@ public:
 class MockOptions : public Client::Options {
 public:
   MockOptions();
-  ~MockOptions() override;
 
   MOCK_CONST_METHOD0(requestsPerSecond, uint64_t());
   MOCK_CONST_METHOD0(connections, uint64_t());
@@ -81,7 +77,6 @@ public:
 class MockBenchmarkClientFactory : public Client::BenchmarkClientFactory {
 public:
   MockBenchmarkClientFactory();
-  ~MockBenchmarkClientFactory() override;
   MOCK_CONST_METHOD4(create, Client::BenchmarkClientPtr(Envoy::Api::Api& api,
                                                         Envoy::Event::Dispatcher& dispatcher,
                                                         Envoy::Stats::Store& store, UriPtr&& uri));
@@ -90,7 +85,6 @@ public:
 class MockSequencerFactory : public Client::SequencerFactory {
 public:
   MockSequencerFactory();
-  ~MockSequencerFactory() override;
   MOCK_CONST_METHOD4(create, SequencerPtr(Envoy::TimeSource& time_source,
                                           Envoy::Event::Dispatcher& dispatcher,
                                           Envoy::MonotonicTime start_time,
@@ -100,21 +94,18 @@ public:
 class MockStoreFactory : public Client::StoreFactory {
 public:
   MockStoreFactory();
-  ~MockStoreFactory() override;
   MOCK_CONST_METHOD0(create, Envoy::Stats::StorePtr());
 };
 
 class MockStatisticFactory : public Client::StatisticFactory {
 public:
   MockStatisticFactory();
-  ~MockStatisticFactory() override;
   MOCK_CONST_METHOD0(create, StatisticPtr());
 };
 
 class FakeSequencerTarget {
 public:
-  FakeSequencerTarget();
-  virtual ~FakeSequencerTarget();
+  virtual ~FakeSequencerTarget() = default;
   // A fake method that matches the sequencer target signature.
   virtual bool callback(std::function<void()>) PURE;
 };
@@ -122,15 +113,12 @@ public:
 class MockSequencerTarget : public FakeSequencerTarget {
 public:
   MockSequencerTarget();
-  ~MockSequencerTarget() override;
-
   MOCK_METHOD1(callback, bool(std::function<void()>));
 };
 
 class MockBenchmarkClient : public Client::BenchmarkClient {
 public:
   MockBenchmarkClient();
-  ~MockBenchmarkClient() override;
 
   MOCK_METHOD1(initialize, void(Envoy::Runtime::Loader&));
   MOCK_METHOD0(terminate, void());

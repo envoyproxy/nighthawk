@@ -1,6 +1,6 @@
 Checks:          'clang-diagnostic-*,clang-analyzer-*,abseil-*,bugprone-*,modernize-*,performance-*,readability-redundant-*,readability-braces-around-statements'
 
-WarningsAsErrors: 'bugprone-assert-side-effect,modernize-make-shared,modernize-make-unique,readability-redundant-smartptr-get,readability-braces-around-statements,readability-redundant-string-cstr,bugprone-use-after-move'
+WarningsAsErrors: 'clang-diagnostic-*,clang-analyzer-*,abseil-*,bugprone-*,modernize-*,performance-*,readability-redundant-*,readability-braces-around-statements'
 
 CheckOptions:
   - key:             bugprone-assert-side-effect.AssertMacros
