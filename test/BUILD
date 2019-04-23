@@ -44,6 +44,7 @@ envoy_cc_test(
         "test_data/output_formatter.txt.gold",
         "test_data/output_formatter.yaml.gold",
         "@envoy//test/config/integration/certs",
+        "@envoy//test/test_common:thread_factory_for_test_lib",
     ],
     repository = "@envoy",
     deps = [
