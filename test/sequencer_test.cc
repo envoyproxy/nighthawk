@@ -121,11 +121,14 @@ public:
     }
   }
 
+  MockSequencerTarget* target() { return &target_; }
+
 private:
   NiceMock<Envoy::Event::MockTimer>* timer1_; // not owned
   NiceMock<Envoy::Event::MockTimer>* timer2_; // not owned
   Envoy::Event::TimerCb timer_cb_1_;
   Envoy::Event::TimerCb timer_cb_2_;
+  MockSequencerTarget target_;
   bool timer1_set_{};
   bool timer2_set_{};
   bool stopped_{};
@@ -133,9 +136,8 @@ private:
 
 // Basic rate limiter interaction test.
 TEST_F(SequencerTestWithTimerEmulation, RateLimiterInteraction) {
-  MockSequencerTarget target;
   SequencerTarget callback =
-      std::bind(&MockSequencerTarget::callback, &target, std::placeholders::_1);
+      std::bind(&MockSequencerTarget::callback, target(), std::placeholders::_1);
   SequencerImpl sequencer(
       platform_util_, *dispatcher_, time_system_, time_system_.monotonicTime(),
       std::move(rate_limiter_), callback, std::make_unique<StreamingStatistic>(),
@@ -148,7 +150,7 @@ TEST_F(SequencerTestWithTimerEmulation, RateLimiterInteraction) {
       .WillOnce(Return(true))
       .WillRepeatedly(Return(false));
 
-  EXPECT_CALL(target, callback(_)).Times(2).WillOnce(Return(true)).WillOnce(Return(true));
+  EXPECT_CALL(*target(), callback(_)).Times(2).WillOnce(Return(true)).WillOnce(Return(true));
 
   sequencer.start();
   sequencer.waitForCompletion();
@@ -156,10 +158,8 @@ TEST_F(SequencerTestWithTimerEmulation, RateLimiterInteraction) {
 
 // Saturated rate limiter interaction test.
 TEST_F(SequencerTestWithTimerEmulation, RateLimiterSaturatedTargetInteraction) {
-  MockSequencerTarget target;
-
   SequencerTarget callback =
-      std::bind(&MockSequencerTarget::callback, &target, std::placeholders::_1);
+      std::bind(&MockSequencerTarget::callback, target(), std::placeholders::_1);
   SequencerImpl sequencer(
       platform_util_, *dispatcher_, time_system_, time_system_.monotonicTime(),
       std::move(rate_limiter_), callback, std::make_unique<StreamingStatistic>(),
@@ -172,7 +172,7 @@ TEST_F(SequencerTestWithTimerEmulation, RateLimiterSaturatedTargetInteraction) {
       .WillOnce(Return(true))
       .WillRepeatedly(Return(false));
 
-  EXPECT_CALL(target, callback(_)).Times(2).WillOnce(Return(true)).WillOnce(Return(false));
+  EXPECT_CALL(*target(), callback(_)).Times(2).WillOnce(Return(true)).WillOnce(Return(false));
 
   // The sequencer should call RateLimiter::releaseOne() when the target returns false.
   EXPECT_CALL(rate_limiter_unsafe_ref_, releaseOne()).Times(1);

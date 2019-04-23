@@ -33,11 +33,11 @@ public:
 
     EXPECT_CALL(benchmark_client_factory_, create(_, _, _, _))
         .Times(1)
-        .WillOnce(Return(ByMove(std::unique_ptr<MockBenchmarkClient>(benchmark_client_))));
+        .WillOnce(Return(ByMove(std::unique_ptr<BenchmarkClient>(benchmark_client_))));
 
     EXPECT_CALL(sequencer_factory_, create(_, _, _, _))
         .Times(1)
-        .WillOnce(Return(ByMove(std::unique_ptr<MockSequencer>(sequencer_))));
+        .WillOnce(Return(ByMove(std::unique_ptr<Sequencer>(sequencer_))));
   }
 
   StatisticPtrMap createStatisticPtrMap() const {
