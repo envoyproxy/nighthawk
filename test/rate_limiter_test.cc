@@ -45,10 +45,11 @@ TEST_F(RateLimiterTest, BurstingRateLimiterTest) {
   const uint64_t burst_size = 3;
   std::unique_ptr<MockRateLimiter> mock_rate_limiter = std::make_unique<MockRateLimiter>();
   MockRateLimiter& unsafe_mock_rate_limiter = *mock_rate_limiter;
+  InSequence s;
+
   EXPECT_CALL(unsafe_mock_rate_limiter, tryAcquireOne)
       .Times(burst_size)
-      .WillRepeatedly(Return(true))
-      .RetiresOnSaturation();
+      .WillRepeatedly(Return(true));
   RateLimiterPtr rate_limiter =
       std::make_unique<BurstingRateLimiter>(std::move(mock_rate_limiter), burst_size);
 
@@ -63,10 +64,7 @@ TEST_F(RateLimiterTest, BurstingRateLimiterTest) {
   rate_limiter->releaseOne();
   EXPECT_TRUE(rate_limiter->tryAcquireOne());
   EXPECT_TRUE(rate_limiter->tryAcquireOne());
-  EXPECT_CALL(unsafe_mock_rate_limiter, tryAcquireOne)
-      .Times(1)
-      .WillOnce(Return(false))
-      .RetiresOnSaturation();
+  EXPECT_CALL(unsafe_mock_rate_limiter, tryAcquireOne).Times(1).WillOnce(Return(false));
   EXPECT_FALSE(rate_limiter->tryAcquireOne());
 }
 
