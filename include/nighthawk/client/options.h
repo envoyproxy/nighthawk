@@ -30,6 +30,7 @@ public:
   virtual std::string verbosity() const PURE;
   virtual std::string outputFormat() const PURE;
   virtual bool prefetchConnections() const PURE;
+  virtual uint64_t burstSize() const PURE;
   virtual std::string addressFamily() const PURE;
 
   /**

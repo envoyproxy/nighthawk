@@ -41,6 +41,10 @@ SequencerPtr SequencerFactoryImpl::create(Envoy::TimeSource& time_source,
   StatisticFactoryImpl statistic_factory(options_);
   RateLimiterPtr rate_limiter =
       std::make_unique<LinearRateLimiter>(time_source, Frequency(options_.requestsPerSecond()));
+  const uint64_t burst_size = options_.burstSize();
+  if (burst_size) {
+    rate_limiter = std::make_unique<BurstingRateLimiter>(std::move(rate_limiter), burst_size);
+  }
   SequencerTarget sequencer_target = [&benchmark_client](std::function<void()> f) -> bool {
     return benchmark_client.tryStartOne(f);
   };

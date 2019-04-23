@@ -28,6 +28,7 @@ public:
   std::string verbosity() const override { return verbosity_; };
   std::string outputFormat() const override { return output_format_; };
   bool prefetchConnections() const override { return prefetch_connections_; }
+  uint64_t burstSize() const override { return burst_size_; }
   std::string addressFamily() const override { return address_family_; };
 
 private:
@@ -41,6 +42,7 @@ private:
   std::string verbosity_;
   std::string output_format_;
   bool prefetch_connections_;
+  uint64_t burst_size_;
   std::string address_family_;
 };
 
