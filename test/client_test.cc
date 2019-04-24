@@ -34,7 +34,7 @@ class ClientServerTest : public TestWithParam<Envoy::Network::Address::IpVersion
                          Envoy::Logger::Loggable<Envoy::Logger::Id::testing> {
 public:
   ClientServerTest()
-      : transport_socket_factory_(), ip_version_(GetParam()),
+      : ip_version_(GetParam()),
         listening_socket_(
             Envoy::Network::Utility::parseInternetAddressAndPort(fmt::format(
                 "{}:{}", Envoy::Network::Test::getLoopbackAddressUrlString(ip_version_), 0)),

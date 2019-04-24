@@ -68,44 +68,41 @@ public:
   sendGrpcResponse(Envoy::Grpc::Status::GrpcStatus status, const Envoy::Protobuf::Message& response,
                    const std::chrono::milliseconds delay = std::chrono::milliseconds(0)) PURE;
 
-private:
-  ServerStream(const ServerStream&) = delete;
-  void operator=(const ServerStream&) = delete;
+  // private:
+  //  ServerStream(const ServerStream&) = delete;
+  //  void operator=(const ServerStream&) = delete;
 };
 
-typedef std::unique_ptr<ServerStream> ServerStreamPtr;
-typedef std::shared_ptr<ServerStream> ServerStreamSharedPtr;
+using ServerStreamPtr = std::unique_ptr<ServerStream>;
+using ServerStreamSharedPtr = std::shared_ptr<ServerStream>;
 
 class ServerConnection;
 
 // NB: references passed to any of these callbacks are owned by the caller and must not be used
 // after the callback returns -- except for the request headers which may be moved into the caller.
-typedef std::function<ServerCallbackResult(ServerConnection& server_connection)>
-    ServerAcceptCallback;
-typedef std::function<void(ServerConnection& connection, ServerCloseReason reason)>
-    ServerCloseCallback;
+using ServerAcceptCallback = std::function<ServerCallbackResult(ServerConnection&)>;
+using ServerCloseCallback = std::function<void(ServerConnection&, ServerCloseReason)>;
 // TODO support sending delayed responses
-typedef std::function<void(ServerConnection& connection, ServerStream& stream,
-                           Envoy::Http::HeaderMapPtr request_headers)>
-    ServerRequestCallback;
+using ServerRequestCallback =
+    std::function<void(ServerConnection&, ServerStream&, Envoy::Http::HeaderMapPtr)>;
 
 class ServerConnection : public Envoy::Network::ReadFilter,
                          public Envoy::Network::ConnectionCallbacks,
                          public Envoy::Http::ServerConnectionCallbacks,
                          Envoy::Logger::Loggable<Envoy::Logger::Id::testing> {
 public:
-  ServerConnection(const std::string& name, uint32_t id, ServerRequestCallback request_callback,
+  ServerConnection(absl::string_view name, uint32_t id, ServerRequestCallback request_callback,
                    ServerCloseCallback close_callback,
                    Envoy::Network::Connection& network_connection,
                    Envoy::Event::Dispatcher& dispatcher, Envoy::Http::CodecClient::Type http_type,
                    Envoy::Stats::Scope& scope);
 
-  virtual ~ServerConnection();
+  ~ServerConnection() override;
 
-  ServerConnection(ServerConnection&&) = default;
-  ServerConnection& operator=(ServerConnection&&) = default;
+  // ServerConnection(ServerConnection&&) = default;
+  // ServerConnection& operator=(ServerConnection&&) = default;
 
-  const std::string& name() const;
+  absl::string_view name() const;
 
   uint32_t id() const;
 
@@ -126,39 +123,38 @@ public:
   // Envoy::Network::ReadFilter
   //
 
-  virtual Envoy::Network::FilterStatus onData(Envoy::Buffer::Instance& data,
-                                              bool end_stream) override;
+  Envoy::Network::FilterStatus onData(Envoy::Buffer::Instance& data, bool end_stream) override;
 
-  virtual Envoy::Network::FilterStatus onNewConnection() override;
+  Envoy::Network::FilterStatus onNewConnection() override;
 
-  virtual void initializeReadFilterCallbacks(Envoy::Network::ReadFilterCallbacks&) override;
+  void initializeReadFilterCallbacks(Envoy::Network::ReadFilterCallbacks&) override;
 
   //
   // Envoy::Http::ConnectionCallbacks
   //
 
-  virtual void onGoAway() override;
+  void onGoAway() override;
 
   //
   // Envoy::Http::ServerConnectionCallbacks
   //
 
-  virtual Envoy::Http::StreamDecoder& newStream(Envoy::Http::StreamEncoder& stream_encoder,
-                                                bool is_internally_created = false) override;
+  Envoy::Http::StreamDecoder& newStream(Envoy::Http::StreamEncoder& stream_encoder,
+                                        bool is_internally_created = false) override;
 
   //
   // Envoy::Network::ConnectionCallbacks
   //
 
-  virtual void onEvent(Envoy::Network::ConnectionEvent event) override;
+  void onEvent(Envoy::Network::ConnectionEvent event) override;
 
-  virtual void onAboveWriteBufferHighWatermark() override;
+  void onAboveWriteBufferHighWatermark() override;
 
-  virtual void onBelowWriteBufferLowWatermark() override;
+  void onBelowWriteBufferLowWatermark() override;
 
 private:
-  ServerConnection(const ServerConnection&) = delete;
-  ServerConnection& operator=(const ServerConnection&) = delete;
+  // ServerConnection(const ServerConnection&) = delete;
+  // ServerConnection& operator=(const ServerConnection&) = delete;
 
   std::string name_;
   uint32_t id_;
@@ -173,30 +169,29 @@ private:
   uint32_t stream_counter_{0U};
 };
 
-typedef std::unique_ptr<ServerConnection> ServerConnectionPtr;
-typedef std::shared_ptr<ServerConnection> ServerConnectionSharedPtr;
+using ServerConnectionPtr = std::unique_ptr<ServerConnection>;
+using ServerConnectionSharedPtr = std::shared_ptr<ServerConnection>;
 
 class ServerFilterChain : public Envoy::Network::FilterChain {
 public:
   ServerFilterChain(Envoy::Network::TransportSocketFactory& transport_socket_factory);
 
-  virtual ~ServerFilterChain();
+  ~ServerFilterChain() override;
 
-  ServerFilterChain(ServerFilterChain&&) = default;
-  ServerFilterChain& operator=(ServerFilterChain&&) = default;
+  // ServerFilterChain(ServerFilterChain&&) = default;
+  // ServerFilterChain& operator=(ServerFilterChain&&) = default;
 
   //
   // Envoy::Network::FilterChain
   //
 
-  virtual const Envoy::Network::TransportSocketFactory& transportSocketFactory() const override;
+  const Envoy::Network::TransportSocketFactory& transportSocketFactory() const override;
 
-  virtual const std::vector<Envoy::Network::FilterFactoryCb>&
-  networkFilterFactories() const override;
+  const std::vector<Envoy::Network::FilterFactoryCb>& networkFilterFactories() const override;
 
 private:
-  ServerFilterChain(const ServerFilterChain&) = delete;
-  ServerFilterChain& operator=(const ServerFilterChain&) = delete;
+  // ServerFilterChain(const ServerFilterChain&) = delete;
+  // ServerFilterChain& operator=(const ServerFilterChain&) = delete;
 
   Envoy::Network::TransportSocketFactory& transport_socket_factory_;
   std::vector<Envoy::Network::FilterFactoryCb> network_filter_factories_;
@@ -220,15 +215,12 @@ public:
       Envoy::Network::Address::IpVersion ip_version = Envoy::Network::Address::IpVersion::v4,
       uint16_t port = 0, const Envoy::Network::Socket::OptionsSharedPtr& options = nullptr,
       bool bind_to_port = true);
+  // LocalListenSocket(LocalListenSocket&&) = default;
+  // LocalListenSocket& operator=(LocalListenSocket&&) = default;
 
-  virtual ~LocalListenSocket();
-
-  LocalListenSocket(LocalListenSocket&&) = default;
-  LocalListenSocket& operator=(LocalListenSocket&&) = default;
-
-private:
-  LocalListenSocket(const LocalListenSocket&) = delete;
-  void operator=(const LocalListenSocket&) = delete;
+  // private:
+  // LocalListenSocket(const LocalListenSocket&) = delete;
+  // void operator=(const LocalListenSocket&) = delete;
 };
 
 /**
@@ -243,9 +235,8 @@ public:
                        ServerCloseCallback close_callback = nullptr);
 
   virtual ~ServerCallbackHelper();
-
-  ServerCallbackHelper(ServerCallbackHelper&&) = default;
-  ServerCallbackHelper& operator=(ServerCallbackHelper&&) = default;
+  // ServerCallbackHelper(ServerCallbackHelper&&) = default;
+  // ServerCallbackHelper& operator=(ServerCallbackHelper&&) = default;
 
   uint32_t connectionsAccepted() const;
   uint32_t requestsReceived() const;
@@ -266,10 +257,10 @@ public:
    */
   void wait();
 
-private:
   ServerCallbackHelper(const ServerCallbackHelper&) = delete;
   void operator=(const ServerCallbackHelper&) = delete;
 
+private:
   ServerAcceptCallback accept_callback_;
   ServerRequestCallback request_callback_;
   ServerCloseCallback close_callback_;
@@ -282,8 +273,8 @@ private:
   std::condition_variable condvar_;
 };
 
-typedef std::unique_ptr<ServerCallbackHelper> ServerCallbackHelperPtr;
-typedef std::shared_ptr<ServerCallbackHelper> ServerCallbackHelperSharedPtr;
+using ServerCallbackHelperPtr = std::unique_ptr<ServerCallbackHelper>;
+using ServerCallbackHelperSharedPtr = std::shared_ptr<ServerCallbackHelper>;
 
 class Server : public Envoy::Network::FilterChainManager,
                public Envoy::Network::FilterChainFactory,
@@ -291,14 +282,13 @@ class Server : public Envoy::Network::FilterChainManager,
                Envoy::Logger::Loggable<Envoy::Logger::Id::testing> {
 public:
   // TODO make use of Network::Socket::OptionsSharedPtr
-  Server(const std::string& name, Envoy::Network::Socket& listening_socket,
+  Server(absl::string_view name, Envoy::Network::Socket& listening_socket,
          Envoy::Network::TransportSocketFactory& transport_socket_factory,
          Envoy::Http::CodecClient::Type http_type);
 
-  virtual ~Server();
-
-  Server(Server&&) = default;
-  Server& operator=(Server&&) = default;
+  ~Server() override;
+  // Server(Server&&) = default;
+  // Server& operator=(Server&&) = default;
 
   void start(ServerAcceptCallback accept_callback, ServerRequestCallback request_callback,
              ServerCloseCallback close_callback);
@@ -320,50 +310,49 @@ public:
   // Envoy::Network::ListenerConfig
   //
 
-  virtual Envoy::Network::FilterChainManager& filterChainManager() override;
+  Envoy::Network::FilterChainManager& filterChainManager() override;
 
-  virtual Envoy::Network::FilterChainFactory& filterChainFactory() override;
+  Envoy::Network::FilterChainFactory& filterChainFactory() override;
 
-  virtual Envoy::Network::Socket& socket() override;
+  Envoy::Network::Socket& socket() override;
 
-  virtual const Envoy::Network::Socket& socket() const override;
+  const Envoy::Network::Socket& socket() const override;
 
-  virtual bool bindToPort() override;
+  bool bindToPort() override;
 
-  virtual bool handOffRestoredDestinationConnections() const override;
+  bool handOffRestoredDestinationConnections() const override;
 
   // TODO does this affect socket recv buffer size?  Only for new connections?
-  virtual uint32_t perConnectionBufferLimitBytes() const override;
+  uint32_t perConnectionBufferLimitBytes() const override;
 
-  virtual std::chrono::milliseconds listenerFiltersTimeout() const override;
+  std::chrono::milliseconds listenerFiltersTimeout() const override;
 
-  virtual Envoy::Stats::Scope& listenerScope() override;
+  Envoy::Stats::Scope& listenerScope() override;
 
-  virtual uint64_t listenerTag() const override;
+  uint64_t listenerTag() const override;
 
-  virtual const std::string& name() const override;
+  const std::string& name() const override;
 
   //
   // Envoy::Network::FilterChainManager
   //
 
-  virtual const Envoy::Network::FilterChain*
+  const Envoy::Network::FilterChain*
   findFilterChain(const Envoy::Network::ConnectionSocket&) const override;
 
   //
   // Envoy::Network::FilterChainFactory
   //
 
-  virtual bool
-  createNetworkFilterChain(Envoy::Network::Connection& network_connection,
-                           const std::vector<Envoy::Network::FilterFactoryCb>&) override;
+  bool createNetworkFilterChain(Envoy::Network::Connection& network_connection,
+                                const std::vector<Envoy::Network::FilterFactoryCb>&) override;
 
-  virtual bool createListenerFilterChain(Envoy::Network::ListenerFilterManager&) override;
+  bool createListenerFilterChain(Envoy::Network::ListenerFilterManager&) override;
 
-private:
   Server(const Server&) = delete;
   void operator=(const Server&) = delete;
 
+private:
   std::string name_;
   Envoy::Stats::IsolatedStoreImpl stats_;
   Envoy::Event::TestRealTimeSystem time_system_;
@@ -399,8 +388,8 @@ private:
   std::atomic<uint32_t> connection_counter_{0U};
 };
 
-typedef std::unique_ptr<Server> ServerPtr;
-typedef std::shared_ptr<Server> ServerSharedPtr;
+using ServerPtr = std::unique_ptr<Server>;
+using ServerSharedPtr = std::shared_ptr<Server>;
 
 class ClusterHelper {
 public:
@@ -421,10 +410,10 @@ public:
 
   void wait();
 
-private:
   ClusterHelper(const ClusterHelper&) = delete;
   void operator=(const ClusterHelper&) = delete;
 
+private:
   std::vector<ServerCallbackHelperPtr> server_callback_helpers_;
 };
 

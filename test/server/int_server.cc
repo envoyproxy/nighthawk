@@ -38,9 +38,9 @@ namespace Integration {
 
 static Envoy::Http::LowerCaseString RequestId(std::string("x-request-id"));
 
-ServerStream::ServerStream() {}
+ServerStream::ServerStream() = default;
 
-ServerStream::~ServerStream() {}
+ServerStream::~ServerStream() = default;
 
 class ServerStreamImpl : public ServerStream,
                          public Envoy::Http::StreamDecoder,
@@ -50,24 +50,23 @@ public:
   ServerStreamImpl(uint32_t id, ServerConnection& connection,
                    ServerRequestCallback request_callback,
                    Envoy::Http::StreamEncoder& stream_encoder)
-      : id_(id), connection_(connection), request_callback_(request_callback),
+      : id_(id), connection_(connection), request_callback_(std::move(request_callback)),
         stream_encoder_(stream_encoder) {
     // TODO do i have to do this? stream_encoder_.addCallbacks(*this);
   }
 
-  virtual ~ServerStreamImpl() {
+  ~ServerStreamImpl() override {
     ENVOY_LOG(trace, "ServerStream({}:{}:{}) destroyed", connection_.name(), connection_.id(), id_);
   }
 
   ServerStreamImpl(ServerStreamImpl&&) = default;
-  ServerStreamImpl& operator=(ServerStreamImpl&&) = default;
 
   //
   // ServerStream
   //
 
-  virtual void sendResponseHeaders(const Envoy::Http::HeaderMap& response_headers,
-                                   const std::chrono::milliseconds delay) override {
+  void sendResponseHeaders(const Envoy::Http::HeaderMap& response_headers,
+                           const std::chrono::milliseconds delay) override {
     if (connection_.networkConnection().state() != Envoy::Network::Connection::State::Open) {
       ENVOY_LOG(warn, "ServerStream({}:{}:{})'s underlying connection is not open!",
                 connection_.name(), connection_.id(), id_);
@@ -100,9 +99,9 @@ public:
     delay_timer->enableTimer(delay);
   }
 
-  virtual void sendGrpcResponse(Envoy::Grpc::Status::GrpcStatus status,
-                                const Envoy::Protobuf::Message& message,
-                                const std::chrono::milliseconds delay) override {
+  void sendGrpcResponse(Envoy::Grpc::Status::GrpcStatus status,
+                        const Envoy::Protobuf::Message& message,
+                        const std::chrono::milliseconds delay) override {
     if (delay <= std::chrono::milliseconds(0)) {
       ENVOY_LOG(debug, "ServerStream({}:{}:{}) sending gRPC response", connection_.name(),
                 connection_.id(), id_);
@@ -142,7 +141,7 @@ public:
   // Envoy::Http::StreamDecoder
   //
 
-  virtual void decode100ContinueHeaders(Envoy::Http::HeaderMapPtr&&) override {
+  void decode100ContinueHeaders(Envoy::Http::HeaderMapPtr&&) override {
     ENVOY_LOG(error, "ServerStream({}:{}:{}) got continue headers?!?!", connection_.name(),
               connection_.id(), id_);
   }
@@ -153,7 +152,7 @@ public:
    * callee.
    * @param end_stream supplies whether this is a header only request/response.
    */
-  virtual void decodeHeaders(Envoy::Http::HeaderMapPtr&& headers, bool end_stream) override {
+  void decodeHeaders(Envoy::Http::HeaderMapPtr&& headers, bool end_stream) override {
     ENVOY_LOG(debug, "ServerStream({}:{}:{}) got request headers", connection_.name(),
               connection_.id(), id_);
 
@@ -175,7 +174,7 @@ public:
     }
   }
 
-  virtual void decodeData(Envoy::Buffer::Instance&, bool end_stream) override {
+  void decodeData(Envoy::Buffer::Instance&, bool end_stream) override {
     ENVOY_LOG(debug, "ServerStream({}:{}:{}) got request body data", connection_.name(),
               connection_.id(), id_);
 
@@ -185,14 +184,14 @@ public:
     }
   }
 
-  virtual void decodeTrailers(Envoy::Http::HeaderMapPtr&&) override {
+  void decodeTrailers(Envoy::Http::HeaderMapPtr&&) override {
     ENVOY_LOG(trace, "ServerStream({}:{}:{}) got request trailers", connection_.name(),
               connection_.id(), id_);
     onEndStream();
     // stream is now destroyed
   }
 
-  virtual void decodeMetadata(Envoy::Http::MetadataMapPtr&&) override {
+  void decodeMetadata(Envoy::Http::MetadataMapPtr&&) override {
     ENVOY_LOG(trace, "ServerStream({}:{}):{} got metadata", connection_.name(), connection_.id(),
               id_);
   }
@@ -201,8 +200,8 @@ public:
   // Envoy::Http::StreamCallbacks
   //
 
-  virtual void onResetStream(Envoy::Http::StreamResetReason reason,
-                             absl::string_view /*transport_failure_reason*/) override {
+  void onResetStream(Envoy::Http::StreamResetReason reason,
+                     absl::string_view /*transport_failure_reason*/) override {
     // TODO test with h2 to see if we get these and whether the connection error
     // handling is enough to handle it.
     switch (reason) {
@@ -241,17 +240,21 @@ public:
     }
   }
 
-  virtual void onAboveWriteBufferHighWatermark() override {
+  void onAboveWriteBufferHighWatermark() override {
     // TODO is their anything to be done here?
     ENVOY_LOG(trace, "ServerStream({}:{}:{}) above write buffer high watermark", connection_.name(),
               connection_.id(), id_);
   }
 
-  virtual void onBelowWriteBufferLowWatermark() override {
+  void onBelowWriteBufferLowWatermark() override {
     // TODO is their anything to be done here?
     ENVOY_LOG(trace, "ServerStream({}:{}:{}) below write buffer low watermark", connection_.name(),
               connection_.id(), id_);
   }
+
+  ServerStreamImpl(const ServerStreamImpl&) = delete;
+
+  ServerStreamImpl& operator=(const ServerStreamImpl&) = delete;
 
 private:
   virtual void onEndStream() {
@@ -263,10 +266,6 @@ private:
       // This stream is now destroyed
     }
   }
-
-  ServerStreamImpl(const ServerStreamImpl&) = delete;
-
-  ServerStreamImpl& operator=(const ServerStreamImpl&) = delete;
 
   uint32_t id_;
   ServerConnection& connection_;
@@ -280,7 +279,7 @@ private:
   bool delete_after_callback_{true};
 };
 
-ServerConnection::ServerConnection(const std::string& name, uint32_t id,
+ServerConnection::ServerConnection(absl::string_view name, uint32_t id,
                                    ServerRequestCallback request_callback,
                                    ServerCloseCallback close_callback,
                                    Envoy::Network::Connection& network_connection,
@@ -288,7 +287,7 @@ ServerConnection::ServerConnection(const std::string& name, uint32_t id,
                                    Envoy::Http::CodecClient::Type http_type,
                                    Envoy::Stats::Scope& scope)
     : name_(name), id_(id), network_connection_(network_connection), dispatcher_(dispatcher),
-      request_callback_(request_callback), close_callback_(close_callback) {
+      request_callback_(std::move(request_callback)), close_callback_(std::move(close_callback)) {
   // TODO make use of network_connection_->socketOptions() and possibly http settings;
 
   const uint64_t max_request_headers_kb = 16;
@@ -317,7 +316,7 @@ ServerConnection::~ServerConnection() {
   ENVOY_LOG(trace, "ServerConnection({}:{}) destroyed", name_, id_);
 }
 
-const std::string& ServerConnection::name() const { return name_; }
+absl::string_view ServerConnection::name() const { return name_; }
 
 uint32_t ServerConnection::id() const { return id_; }
 
@@ -434,7 +433,7 @@ ServerFilterChain::ServerFilterChain(
     Envoy::Network::TransportSocketFactory& transport_socket_factory)
     : transport_socket_factory_(transport_socket_factory) {}
 
-ServerFilterChain::~ServerFilterChain() {}
+ServerFilterChain::~ServerFilterChain() = default;
 
 const Envoy::Network::TransportSocketFactory& ServerFilterChain::transportSocketFactory() const {
   return transport_socket_factory_;
@@ -452,13 +451,11 @@ LocalListenSocket::LocalListenSocket(Envoy::Network::Address::IpVersion ip_versi
                               Envoy::Network::Test::getAnyAddressUrlString(ip_version), port),
                           options, bind_to_port) {}
 
-LocalListenSocket::~LocalListenSocket() {}
-
 ServerCallbackHelper::ServerCallbackHelper(ServerRequestCallback request_callback,
                                            ServerAcceptCallback accept_callback,
                                            ServerCloseCallback close_callback)
-    : accept_callback_(accept_callback), request_callback_(request_callback),
-      close_callback_(close_callback) {
+    : accept_callback_(std::move(accept_callback)), request_callback_(std::move(request_callback)),
+      close_callback_(std::move(close_callback)) {
   if (request_callback) {
     request_callback_ = [this, &request_callback](ServerConnection& connection,
                                                   ServerStream& stream,
@@ -518,7 +515,7 @@ ServerCallbackHelper::ServerCallbackHelper(ServerRequestCallback request_callbac
   }
 }
 
-ServerCallbackHelper::~ServerCallbackHelper() {}
+ServerCallbackHelper::~ServerCallbackHelper() = default;
 
 uint32_t ServerCallbackHelper::connectionsAccepted() const { return accepts_; }
 
@@ -548,11 +545,10 @@ void ServerCallbackHelper::wait() {
   }
 }
 
-Server::Server(const std::string& name, Envoy::Network::Socket& listening_socket,
+Server::Server(absl::string_view name, Envoy::Network::Socket& listening_socket,
                Envoy::Network::TransportSocketFactory& transport_socket_factory,
                Envoy::Http::CodecClient::Type http_type)
-    : name_(name), stats_(), time_system_(),
-      api_(Envoy::Thread::threadFactoryForTest(), stats_, time_system_, file_system_),
+    : name_(name), api_(Envoy::Thread::threadFactoryForTest(), stats_, time_system_, file_system_),
       dispatcher_(api_.allocateDispatcher()),
       connection_handler_(new Envoy::Server::ConnectionHandlerImpl(ENVOY_LOGGER(), *dispatcher_)),
       thread_(nullptr), listening_socket_(listening_socket),
@@ -562,9 +558,9 @@ Server::~Server() { stop(); }
 
 void Server::start(ServerAcceptCallback accept_callback, ServerRequestCallback request_callback,
                    ServerCloseCallback close_callback) {
-  accept_callback_ = accept_callback;
-  request_callback_ = request_callback;
-  close_callback_ = close_callback;
+  accept_callback_ = std::move(accept_callback);
+  request_callback_ = std::move(request_callback);
+  close_callback_ = std::move(close_callback);
   std::promise<bool> promise;
 
   thread_ = api_.threadFactory().createThread([this, &promise]() {
@@ -670,12 +666,12 @@ bool Server::createNetworkFilterChain(Envoy::Network::Connection& network_connec
 bool Server::createListenerFilterChain(Envoy::Network::ListenerFilterManager&) { return true; }
 
 ClusterHelper::ClusterHelper(std::initializer_list<ServerCallbackHelper*> server_callbacks) {
-  for (auto it = server_callbacks.begin(); it != server_callbacks.end(); ++it) {
-    server_callback_helpers_.emplace_back(*it);
+  for (auto server_callback : server_callbacks) {
+    server_callback_helpers_.emplace_back(server_callback);
   }
 }
 
-ClusterHelper::~ClusterHelper() {}
+ClusterHelper::~ClusterHelper() = default;
 
 const std::vector<ServerCallbackHelperPtr>& ClusterHelper::servers() const {
   return server_callback_helpers_;
@@ -686,8 +682,8 @@ std::vector<ServerCallbackHelperPtr>& ClusterHelper::servers() { return server_c
 uint32_t ClusterHelper::connectionsAccepted() const {
   uint32_t total = 0U;
 
-  for (size_t i = 0; i < server_callback_helpers_.size(); ++i) {
-    total += server_callback_helpers_[i]->connectionsAccepted();
+  for (auto& helper : server_callback_helpers_) {
+    total += helper->connectionsAccepted();
   }
 
   return total;
@@ -696,8 +692,8 @@ uint32_t ClusterHelper::connectionsAccepted() const {
 uint32_t ClusterHelper::requestsReceived() const {
   uint32_t total = 0U;
 
-  for (size_t i = 0; i < server_callback_helpers_.size(); ++i) {
-    total += server_callback_helpers_[i]->requestsReceived();
+  for (auto& helper : server_callback_helpers_) {
+    total += helper->requestsReceived();
   }
 
   return total;
@@ -706,8 +702,8 @@ uint32_t ClusterHelper::requestsReceived() const {
 uint32_t ClusterHelper::localCloses() const {
   uint32_t total = 0U;
 
-  for (size_t i = 0; i < server_callback_helpers_.size(); ++i) {
-    total += server_callback_helpers_[i]->localCloses();
+  for (auto& helper : server_callback_helpers_) {
+    total += helper->localCloses();
   }
 
   return total;
@@ -716,16 +712,16 @@ uint32_t ClusterHelper::localCloses() const {
 uint32_t ClusterHelper::remoteCloses() const {
   uint32_t total = 0U;
 
-  for (size_t i = 0; i < server_callback_helpers_.size(); ++i) {
-    total += server_callback_helpers_[i]->remoteCloses();
+  for (auto& helper : server_callback_helpers_) {
+    total += helper->remoteCloses();
   }
 
   return total;
 }
 
 void ClusterHelper::wait() {
-  for (size_t i = 0; i < server_callback_helpers_.size(); ++i) {
-    server_callback_helpers_[i]->wait();
+  for (auto& helper : server_callback_helpers_) {
+    helper->wait();
   }
 }
 
