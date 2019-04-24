@@ -10,7 +10,7 @@
 #include "envoy/common/exception.h"
 #include "envoy/common/pure.h"
 
-#include "source/client/output.pb.h"
+#include "api/client/output.pb.h"
 
 namespace Nighthawk {
 

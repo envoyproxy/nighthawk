@@ -72,6 +72,10 @@ public:
   MOCK_CONST_METHOD0(prefetchConnections, bool());
   MOCK_CONST_METHOD0(burstSize, uint64_t());
   MOCK_CONST_METHOD0(addressFamily, std::string());
+  MOCK_CONST_METHOD0(requestMethod, std::string());
+  MOCK_CONST_METHOD0(requestHeaders, std::vector<std::string>());
+  MOCK_CONST_METHOD0(requestSize, uint32_t());
+
   MOCK_CONST_METHOD0(toCommandLineOptions, Client::CommandLineOptionsPtr());
 };
 
