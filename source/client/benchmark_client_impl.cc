@@ -177,6 +177,13 @@ StatisticPtrMap BenchmarkClientHttpImpl::statistics() const {
   return statistics;
 };
 
+void BenchmarkClientHttpImpl::setRequestHeader(absl::string_view key, absl::string_view value) {
+  auto lower_case_key = Envoy::Http::LowerCaseString(std::string(key));
+  request_headers_.remove(lower_case_key);
+  // TODO(oschaaf): we've performed zero validation on the header key/value.
+  request_headers_.addCopy(lower_case_key, std::string(value));
+}
+
 bool BenchmarkClientHttpImpl::tryStartOne(std::function<void()> caller_completion_callback) {
   if (!cluster_->resourceManager(Envoy::Upstream::ResourcePriority::Default)
            .pendingRequests()

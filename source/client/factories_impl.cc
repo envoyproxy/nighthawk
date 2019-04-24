@@ -26,6 +26,18 @@ BenchmarkClientPtr BenchmarkClientFactoryImpl::create(Envoy::Api::Api& api,
   auto benchmark_client = std::make_unique<BenchmarkClientHttpImpl>(
       api, dispatcher, store, statistic_factory.create(), statistic_factory.create(),
       std::move(uri), options_.h2(), options_.prefetchConnections());
+
+  benchmark_client->setRequestMethod(options_.requestMethod());
+
+  // TODO(oschaaf): Summon default request headers here, and merge?
+  auto request_options = options_.toCommandLineOptions()->request_options();
+  if (request_options.request_headers_size() > 0) {
+    for (const auto header : request_options.request_headers()) {
+      benchmark_client->setRequestHeader(header.header().key(), header.header().value());
+    }
+  }
+
+  benchmark_client->setRequestBodySize(options_.requestBodySize());
   benchmark_client->setConnectionTimeout(options_.timeout());
   benchmark_client->setConnectionLimit(options_.connections());
   return benchmark_client;

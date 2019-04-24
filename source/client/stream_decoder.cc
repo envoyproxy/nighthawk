@@ -57,6 +57,8 @@ void StreamDecoder::onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason
 
 void StreamDecoder::onPoolReady(Envoy::Http::StreamEncoder& encoder,
                                 Envoy::Upstream::HostDescriptionConstSharedPtr) {
+  // TODO(oschaaf): Here's where we want to call encoder.encodeData() if the configuration suggests
+  // we should do so.
   encoder.encodeHeaders(request_headers_, true);
   request_start_ = time_source_.monotonicTime();
   if (measure_latencies_) {

@@ -92,8 +92,8 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
                                                "Raw request headers in the format of 'name: value' "
                                                "pairs. This argument may specified multiple times.",
                                                false, "string");
-  TCLAP::ValueArg<uint32_t> request_size(
-      "", "request-size",
+  TCLAP::ValueArg<uint32_t> request_body_size(
+      "", "request-body-size",
       "Size of the request body to send. NH will send a number of consecutive 'a' characters equal "
       "to the number specified here. (default: 0, no data).",
       false, 0, "uint32_t", cmd);
@@ -134,7 +134,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   address_family_ = address_family.getValue();
   request_method_ = request_method.getValue();
   request_headers_ = request_headers.getValue();
-  request_size_ = request_size.getValue();
+  request_body_size_ = request_body_size.getValue();
 
   // We cap on negative values. TCLAP accepts negative values which we will get here as very
   // large values. We just cap values to 2^63.
@@ -194,19 +194,20 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptions() const {
   command_line_options->set_address_family(addressFamily());
   auto request_options = command_line_options->mutable_request_options();
   request_options->set_request_method(requestMethod());
-  for (auto header : requestHeaders()) {
+  for (const auto header : requestHeaders()) {
     auto header_value_option = request_options->add_request_headers();
     // TODO(oschaaf): expose append option in CLI? For now we just set.
     header_value_option->mutable_append()->set_value(false);
     auto request_header = header_value_option->mutable_header();
-    std::vector<std::string> split_header =
-        absl::StrSplit(header, ':'); // TODO(oschaaf): maybe throw when we find > 2 elements.
+    std::vector<std::string> split_header = absl::StrSplit(
+        header, ':',
+        absl::SkipWhitespace()); // TODO(oschaaf): maybe throw when we find > 2 elements.
     request_header->set_key(split_header[0]);
     if (split_header.size() == 2) {
       request_header->set_value(split_header[1]);
     }
   }
-  request_options->set_request_size(requestSize());
+  request_options->set_request_size(requestBodySize());
 
   return command_line_options;
 }

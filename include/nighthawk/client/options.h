@@ -34,7 +34,7 @@ public:
   virtual std::string addressFamily() const PURE;
   virtual std::string requestMethod() const PURE;
   virtual std::vector<std::string> requestHeaders() const PURE;
-  virtual uint32_t requestSize() const PURE;
+  virtual uint32_t requestBodySize() const PURE;
 
   /**
    * Converts an Options instance to an equivalent CommandLineOptions instance in terms of option
