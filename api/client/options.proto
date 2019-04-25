@@ -6,12 +6,11 @@ import "google/protobuf/duration.proto";
 import "validate/validate.proto";
 import "envoy/api/v2/core/base.proto";
 
-
 message RequestOptions {
-  string request_method = 1;
+  envoy.api.v2.core.RequestMethod request_method = 1;
   repeated envoy.api.v2.core.HeaderValueOption request_headers = 2;
-  oneof oneof_request_size { 
-    uint32 request_size = 3 [(validate.rules).uint32 = {gte: 0, lte: 4194304}];
+  oneof oneof_request_body_size { 
+    uint32 request_body_size = 3 [(validate.rules).uint32 = {gte: 0, lte: 4194304}];
   }
 }
 // TODO(oschaaf): Ultimately this will be a load test specification. The fact that it

@@ -392,6 +392,27 @@ TEST_P(BenchmarkClientHttpTest, ConnectionPrefetching) {
   EXPECT_EQ(50, getCounter("upstream_cx_total"));
 }
 
+TEST_P(BenchmarkClientHttpTest, RequestMethodPost) {
+  setupBenchmarkClient("/", false, true);
+  client_->setRequestMethod("GET");
+  client_->setRequestBodySize(1313);
+  client_->initialize(runtime_);
+
+  EXPECT_EQ(true, client_->tryStartOne([&]() { dispatcher_->exit(); }));
+  dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
+
+  EXPECT_EQ(1, getCounter("benchmark.http_4xx"));
+  EXPECT_LE(1390, getCounter("upstream_cx_tx_bytes_total"));
+  EXPECT_EQ(1, getCounter("upstream_cx_total"));
+  EXPECT_EQ(1, getCounter("upstream_rq_total"));
+  EXPECT_EQ(1, getCounter("upstream_cx_overflow"));
+  EXPECT_EQ(116, getCounter("upstream_cx_rx_bytes_total"));
+  EXPECT_EQ(1, getCounter("upstream_rq_pending_total"));
+  EXPECT_EQ(1, getCounter("upstream_cx_close_notify"));
+  EXPECT_EQ(1, getCounter("upstream_cx_http1_total"));
+  EXPECT_EQ(9, nonZeroValuedCounterCount());
+}
+
 // TODO(oschaaf): test protocol violations, stream resets, etc.
 
 } // namespace Nighthawk

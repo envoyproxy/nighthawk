@@ -193,8 +193,11 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptions() const {
   command_line_options->set_burst_size(burstSize());
   command_line_options->set_address_family(addressFamily());
   auto request_options = command_line_options->mutable_request_options();
-  request_options->set_request_method(requestMethod());
-  for (const auto header : requestHeaders()) {
+  envoy::api::v2::core::RequestMethod method =
+      envoy::api::v2::core::RequestMethod::METHOD_UNSPECIFIED;
+  envoy::api::v2::core::RequestMethod_Parse(requestMethod(), &method);
+  request_options->set_request_method(method);
+  for (const auto& header : requestHeaders()) {
     auto header_value_option = request_options->add_request_headers();
     // TODO(oschaaf): expose append option in CLI? For now we just set.
     header_value_option->mutable_append()->set_value(false);
@@ -207,7 +210,7 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptions() const {
       request_header->set_value(split_header[1]);
     }
   }
-  request_options->set_request_size(requestBodySize());
+  request_options->set_request_body_size(requestBodySize());
 
   return command_line_options;
 }
