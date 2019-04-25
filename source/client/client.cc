@@ -159,7 +159,7 @@ public:
   const std::vector<ClientWorkerPtr>& createWorkers(const UriImpl& uri,
                                                     const uint32_t concurrency) {
     // TODO(oschaaf): Expose kMinimalDelay in configuration.
-    const std::chrono::seconds kMinimalWorkerDelay = 2s;
+    const std::chrono::milliseconds kMinimalWorkerDelay = 500ms;
     ASSERT(workers_.size() == 0);
 
     // We try to offset the start of each thread so that workers will execute tasks evenly spaced in

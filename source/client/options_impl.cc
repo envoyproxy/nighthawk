@@ -91,7 +91,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   TCLAP::MultiArg<std::string> request_headers("", "request-header",
                                                "Raw request headers in the format of 'name: value' "
                                                "pairs. This argument may specified multiple times.",
-                                               false, "string");
+                                               false, "string", cmd);
   TCLAP::ValueArg<uint32_t> request_body_size(
       "", "request-body-size",
       "Size of the request body to send. NH will send a number of consecutive 'a' characters equal "

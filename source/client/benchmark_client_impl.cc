@@ -196,9 +196,10 @@ bool BenchmarkClientHttpImpl::tryStartOne(std::function<void()> caller_completio
     return false;
   }
 
-  auto stream_decoder = new StreamDecoder(
-      dispatcher_, api_.timeSource(), *this, std::move(caller_completion_callback),
-      *connect_statistic_, *response_statistic_, request_headers_, measureLatencies());
+  auto stream_decoder = new StreamDecoder(dispatcher_, api_.timeSource(), *this,
+                                          std::move(caller_completion_callback),
+                                          *connect_statistic_, *response_statistic_,
+                                          request_headers_, measureLatencies(), request_body_size_);
   requests_initiated_++;
   pool_->pool().newStream(*stream_decoder, *stream_decoder);
   return true;
