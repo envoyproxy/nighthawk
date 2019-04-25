@@ -38,8 +38,10 @@ message CommandLineOptions {
   uint64 burst_size = 10;
   // See :option:`--address-family` for details.
   string address_family = 11;
-  // See :option:`--request_options` for details.
-  RequestOptions request_options = 12;
+  oneof oneof_request_options {
+    // See :option:`--request_options` for details.
+    RequestOptions request_options = 12;
+  }
   // See :option:`--uri` for details.
   string uri = 13;
 }

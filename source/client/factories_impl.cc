@@ -29,7 +29,6 @@ BenchmarkClientPtr BenchmarkClientFactoryImpl::create(Envoy::Api::Api& api,
 
   benchmark_client->setRequestMethod(options_.requestMethod());
 
-  // TODO(oschaaf): Summon default request headers here, and merge?
   auto request_options = options_.toCommandLineOptions()->request_options();
   if (request_options.request_headers_size() > 0) {
     for (const auto& header : request_options.request_headers()) {

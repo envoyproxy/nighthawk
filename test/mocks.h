@@ -135,6 +135,7 @@ public:
   MOCK_METHOD1(setRequestMethod, void(absl::string_view));
   MOCK_METHOD2(setRequestHeader, void(absl::string_view, absl::string_view));
   MOCK_METHOD1(setRequestBodySize, void(uint32_t));
+  MOCK_CONST_METHOD0(requestHeaders, const Envoy::Http::HeaderMap&());
 
 protected:
   MOCK_CONST_METHOD0(measureLatencies, bool());

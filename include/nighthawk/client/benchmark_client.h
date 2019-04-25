@@ -3,6 +3,7 @@
 #include <functional>
 #include <memory>
 
+#include "envoy/http/header_map.h"
 #include "envoy/runtime/runtime.h"
 #include "envoy/stats/store.h"
 
@@ -78,7 +79,18 @@ public:
    * @param value Value to set the request header to.
    */
   virtual void setRequestHeader(absl::string_view key, absl::string_view value) PURE;
+
+  /**
+   * @brief Set the Request Body Size
+   *
+   * @param request_body_size number of bytes to send
+   */
   virtual void setRequestBodySize(uint32_t request_body_size) PURE;
+
+  /**
+   * @return const HeaderMap& the request headers.
+   */
+  virtual const Envoy::Http::HeaderMap& requestHeaders() const PURE;
 };
 
 using BenchmarkClientPtr = std::unique_ptr<BenchmarkClient>;

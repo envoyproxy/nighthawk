@@ -71,13 +71,13 @@ public:
   Envoy::Stats::Store& store() const override { return store_; }
 
   void setRequestMethod(absl::string_view request_method) override {
-    // TODO(oschaaf): normalize method? test invalid methods.
     request_headers_.insertMethod().value(request_method);
   };
   void setRequestHeader(absl::string_view key, absl::string_view value) override;
   void setRequestBodySize(uint32_t request_body_size) override {
     request_body_size_ = request_body_size;
   };
+  const Envoy::Http::HeaderMap& requestHeaders() const override { return request_headers_; }
 
   // StreamDecoderCompletionCallback
   void onComplete(bool success, const Envoy::Http::HeaderMap& headers) override;
