@@ -7,8 +7,6 @@
 #include "nighthawk/client/options.h"
 #include "nighthawk/common/exception.h"
 
-#include "source/client/options.pb.h"
-
 namespace Nighthawk {
 namespace Client {
 
@@ -30,6 +28,9 @@ public:
   bool prefetchConnections() const override { return prefetch_connections_; }
   uint64_t burstSize() const override { return burst_size_; }
   std::string addressFamily() const override { return address_family_; };
+  std::string requestMethod() const override { return request_method_; };
+  std::vector<std::string> requestHeaders() const override { return request_headers_; };
+  uint32_t requestBodySize() const override { return request_body_size_; };
 
 private:
   uint64_t requests_per_second_;
@@ -44,6 +45,9 @@ private:
   bool prefetch_connections_;
   uint64_t burst_size_;
   std::string address_family_;
+  std::string request_method_;
+  std::vector<std::string> request_headers_;
+  uint32_t request_body_size_;
 };
 
 } // namespace Client

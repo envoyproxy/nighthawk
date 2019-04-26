@@ -32,11 +32,15 @@ public:
 
 TEST_F(FactoriesTest, CreateBenchmarkClient) {
   BenchmarkClientFactoryImpl factory(options_);
-
   EXPECT_CALL(options_, timeout()).Times(1);
   EXPECT_CALL(options_, connections()).Times(1);
   EXPECT_CALL(options_, h2()).Times(1);
   EXPECT_CALL(options_, prefetchConnections()).Times(1);
+  EXPECT_CALL(options_, requestMethod()).Times(1);
+  EXPECT_CALL(options_, requestBodySize()).Times(1);
+  EXPECT_CALL(options_, toCommandLineOptions())
+      .Times(1)
+      .WillOnce(Return(ByMove(std::make_unique<nighthawk::client::CommandLineOptions>())));
 
   auto benchmark_client =
       factory.create(*api_, dispatcher_, stats_store_, std::make_unique<UriImpl>("http://foo/"));

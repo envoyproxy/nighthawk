@@ -33,13 +33,14 @@ public:
                 StreamDecoderCompletionCallback& decoder_completion_callback,
                 std::function<void()> caller_completion_callback, Statistic& connect_statistic,
                 Statistic& latency_statistic, const Envoy::Http::HeaderMap& request_headers,
-                bool measure_latencies)
+                bool measure_latencies, uint32_t request_body_size)
       : dispatcher_(dispatcher), time_source_(time_source),
         decoder_completion_callback_(decoder_completion_callback),
         caller_completion_callback_(std::move(caller_completion_callback)),
         connect_statistic_(connect_statistic), latency_statistic_(latency_statistic),
         request_headers_(request_headers), connect_start_(time_source_.monotonicTime()),
-        complete_(false), measure_latencies_(measure_latencies) {}
+        complete_(false), measure_latencies_(measure_latencies),
+        request_body_size_(request_body_size) {}
 
   // Http::StreamDecoder
   void decode100ContinueHeaders(Envoy::Http::HeaderMapPtr&&) override {
@@ -78,6 +79,7 @@ private:
   Envoy::MonotonicTime request_start_;
   bool complete_;
   bool measure_latencies_;
+  const uint32_t request_body_size_;
 };
 
 } // namespace Client

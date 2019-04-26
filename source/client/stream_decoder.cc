@@ -57,7 +57,15 @@ void StreamDecoder::onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason
 
 void StreamDecoder::onPoolReady(Envoy::Http::StreamEncoder& encoder,
                                 Envoy::Upstream::HostDescriptionConstSharedPtr) {
-  encoder.encodeHeaders(request_headers_, true);
+  encoder.encodeHeaders(request_headers_, request_body_size_ == 0);
+  if (request_body_size_ > 0) {
+    // TODO(oschaaf): We can probably get away without allocating/copying here if we pregenerate
+    // potential request-body candidates up front. Revisit this when we have non-uniform request
+    // distributions and on-the-fly reconfiguration in place.
+    std::string body(request_body_size_, 'a');
+    Envoy::Buffer::OwnedImpl body_buffer(body);
+    encoder.encodeData(body_buffer, true);
+  }
   request_start_ = time_source_.monotonicTime();
   if (measure_latencies_) {
     connect_statistic_.addValue((request_start_ - connect_start_).count());

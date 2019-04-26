@@ -37,7 +37,8 @@ TEST_F(OptionsImplTest, All) {
   std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(
       fmt::format("{} --rps 4 --connections 5 --duration 6 --timeout 7 --h2 "
                   "--concurrency 8 --verbosity error --output-format json --prefetch-connections "
-                  "--burst-size 13 --address-family v6 {}",
+                  "--burst-size 13 --address-family v6 --request-method POST --request-body-size "
+                  "1234 --request-header f1:b1 --request-header f2:b2 {}",
                   client_name_, good_test_uri_));
 
   EXPECT_EQ(4, options->requestsPerSecond());
@@ -52,6 +53,10 @@ TEST_F(OptionsImplTest, All) {
   EXPECT_EQ(13, options->burstSize());
   EXPECT_EQ("v6", options->addressFamily());
   EXPECT_EQ(good_test_uri_, options->uri());
+  EXPECT_EQ("POST", options->requestMethod());
+  const std::vector<std::string> expected_headers = {"f1:b1", "f2:b2"};
+  EXPECT_EQ(expected_headers, options->requestHeaders());
+  EXPECT_EQ(1234, options->requestBodySize());
 
   // Check that our conversion to CommandLineOptionsPtr makes sense.
   CommandLineOptionsPtr cmd = options->toCommandLineOptions();
@@ -67,6 +72,18 @@ TEST_F(OptionsImplTest, All) {
   EXPECT_EQ(cmd->burst_size(), options->burstSize());
   EXPECT_EQ(cmd->address_family(), options->addressFamily());
   EXPECT_EQ(cmd->uri(), options->uri());
+  auto request_options = cmd->request_options();
+  envoy::api::v2::core::RequestMethod method =
+      envoy::api::v2::core::RequestMethod::METHOD_UNSPECIFIED;
+  envoy::api::v2::core::RequestMethod_Parse(options->requestMethod(), &method);
+  EXPECT_EQ(request_options.request_method(), method);
+  EXPECT_EQ(expected_headers.size(), request_options.request_headers_size());
+  int i = 0;
+  for (const auto& header : request_options.request_headers()) {
+    EXPECT_EQ(expected_headers[i++], header.header().key() + ":" + header.header().value());
+  }
+
+  EXPECT_EQ(request_options.request_body_size(), options->requestBodySize());
 }
 
 // Test that TCLAP's way of handling --help behaves as expected.
@@ -187,6 +204,29 @@ TEST_F(OptionsImplTest, VerbosityValuesAreConstrained) {
                               fmt::format("{} {} --verbosity foo", client_name_, good_test_uri_)),
                           MalformedArgvException, "Value 'foo' does not meet constraint");
 }
+
+/// ---
+class OptionsImplRequestMethodTest : public OptionsImplTest,
+                                     public WithParamInterface<const char*> {};
+
+// Test we accept all possible --request-method values.
+TEST_P(OptionsImplRequestMethodTest, RequestMethodValues) {
+  TestUtility::createOptionsImpl(
+      fmt::format("{} --request-method {} {}", client_name_, GetParam(), good_test_uri_));
+}
+
+INSTANTIATE_TEST_SUITE_P(RequestMethodOptionTests, OptionsImplRequestMethodTest,
+                         Values("GET", "HEAD", "POST", "PUT", "DELETE", "CONNECT", "OPTIONS",
+                                "TRACE"));
+
+// Test we don't accept any bad --request-method values.
+TEST_F(OptionsImplTest, RequestMethodValuesAreConstrained) {
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{} {} --request-method foo",
+                                                                     client_name_, good_test_uri_)),
+                          MalformedArgvException, "Value 'foo' does not meet constraint");
+}
+
+/// ----
 
 class OptionsImplAddressFamilyTest : public OptionsImplTest,
                                      public WithParamInterface<const char*> {};
