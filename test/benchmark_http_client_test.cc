@@ -381,6 +381,8 @@ TEST_P(BenchmarkClientHttpTest, StatusTrackingInOnComplete) {
   EXPECT_EQ(1, getCounter("benchmark.http_5xx"));
   EXPECT_EQ(2, getCounter("benchmark.http_xxx"));
   EXPECT_EQ(1, getCounter("benchmark.stream_resets"));
+
+  client_.reset();
 }
 
 TEST_P(BenchmarkClientHttpTest, ConnectionPrefetching) {

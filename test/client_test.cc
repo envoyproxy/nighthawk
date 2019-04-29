@@ -103,8 +103,8 @@ public:
 
   int port_;
   pid_t pid_;
-  int fd_port_[2];
-  int fd_confirm_[2];
+  int fd_port_[2];    // NOLINT
+  int fd_confirm_[2]; // NOLINT
 };
 
 INSTANTIATE_TEST_SUITE_P(IpVersions, ClientTest,
