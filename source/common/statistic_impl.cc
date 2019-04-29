@@ -40,7 +40,7 @@ SimpleStatistic::SimpleStatistic() : count_(0), sum_x_(0), sum_x2_(0) {}
 void SimpleStatistic::addValue(uint64_t value) {
   count_++;
   sum_x_ += value;
-  sum_x2_ += value * value; // NOLINT
+  sum_x2_ += 1.0 * value * value;
 }
 
 uint64_t SimpleStatistic::count() const { return count_; }
@@ -72,7 +72,7 @@ void StreamingStatistic::addValue(uint64_t value) {
   delta = value - mean_;
   delta_n = delta / count_;
   mean_ += delta_n;
-  accumulated_variance_ += delta * delta_n * (count_ - 1); // NOLINT
+  accumulated_variance_ += delta * delta_n * (count_ - 1.0);
 }
 
 uint64_t StreamingStatistic::count() const { return count_; }
