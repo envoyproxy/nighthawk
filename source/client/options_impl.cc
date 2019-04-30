@@ -2,6 +2,8 @@
 
 #include <cmath>
 
+#include "absl/strings/str_split.h"
+
 #include "tclap/CmdLine.h"
 
 #include "common/uri_impl.h"
@@ -78,6 +80,24 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "default output format is 'v4'.",
       false, "v4", &address_families_allowed, cmd);
 
+  std::vector<std::string> request_methods = {"GET",    "HEAD",    "POST",    "PUT",
+                                              "DELETE", "CONNECT", "OPTIONS", "TRACE"};
+  TCLAP::ValuesConstraint<std::string> request_methods_allowed(request_methods);
+  TCLAP::ValueArg<std::string> request_method("", "request-method",
+                                              "Request method used when sending requests. The "
+                                              "default is 'GET'.",
+                                              false, "GET", &request_methods_allowed, cmd);
+
+  TCLAP::MultiArg<std::string> request_headers("", "request-header",
+                                               "Raw request headers in the format of 'name: value' "
+                                               "pairs. This argument may specified multiple times.",
+                                               false, "string", cmd);
+  TCLAP::ValueArg<uint32_t> request_body_size(
+      "", "request-body-size",
+      "Size of the request body to send. NH will send a number of consecutive 'a' characters equal "
+      "to the number specified here. (default: 0, no data).",
+      false, 0, "uint32_t", cmd);
+
   TCLAP::UnlabeledValueArg<std::string> uri("uri",
                                             "uri to benchmark. http:// and https:// are supported, "
                                             "but in case of https no certificates are validated.",
@@ -112,6 +132,9 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   prefetch_connections_ = prefetch_connections.getValue();
   burst_size_ = burst_size.getValue();
   address_family_ = address_family.getValue();
+  request_method_ = request_method.getValue();
+  request_headers_ = request_headers.getValue();
+  request_body_size_ = request_body_size.getValue();
 
   // We cap on negative values. TCLAP accepts negative values which we will get here as very
   // large values. We just cap values to 2^63.
@@ -169,6 +192,25 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptions() const {
   command_line_options->set_prefetch_connections(prefetchConnections());
   command_line_options->set_burst_size(burstSize());
   command_line_options->set_address_family(addressFamily());
+  auto request_options = command_line_options->mutable_request_options();
+  envoy::api::v2::core::RequestMethod method =
+      envoy::api::v2::core::RequestMethod::METHOD_UNSPECIFIED;
+  envoy::api::v2::core::RequestMethod_Parse(requestMethod(), &method);
+  request_options->set_request_method(method);
+  for (const auto& header : requestHeaders()) {
+    auto header_value_option = request_options->add_request_headers();
+    // TODO(oschaaf): expose append option in CLI? For now we just set.
+    header_value_option->mutable_append()->set_value(false);
+    auto request_header = header_value_option->mutable_header();
+    std::vector<std::string> split_header = absl::StrSplit(
+        header, ':',
+        absl::SkipWhitespace()); // TODO(oschaaf): maybe throw when we find > 2 elements.
+    request_header->set_key(split_header[0]);
+    if (split_header.size() == 2) {
+      request_header->set_value(split_header[1]);
+    }
+  }
+  request_options->set_request_body_size(requestBodySize());
 
   return command_line_options;
 }

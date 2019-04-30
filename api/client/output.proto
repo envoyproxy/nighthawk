@@ -5,7 +5,7 @@ package nighthawk.client;
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 
-import "source/client/options.proto";
+import "api/client/options.proto";
 
 message Counter {
   string name = 1;

@@ -15,31 +15,61 @@ HTTPS certificates are not yet validated.
 First, follow steps 1 and 2 over at [Quick start Bazel build for developers](https://github.com/envoyproxy/envoy/blob/master/bazel/README.md#quick-start-bazel-build-for-developers).
 
 ## Building and testing Nighthawk
+
 ```bash
 # test it
 bazel test -c fastbuild //test:nighthawk_test
 ```
-# build it. for best accuracy it is important to specify -c opt.
+
+### Build it
+
+```bash
+# for best accuracy it is important to specify -c opt.
 bazel build -c opt //:nighthawk_client
-
-## Using the Nighthawk client
-
 ```
+
+### Using the Nighthawk client
+
+```bash
 ➜ bazel-bin/nighthawk_client --help
 
 USAGE: 
 
-   bazel-bin/nighthawk_client [--prefetch-connections] [--output-format <human|yaml
-                                        |json>] [-v <trace|debug|info|warn
-                                        |error|critical>] [--concurrency
-                                        <string>] [--h2] [--timeout
-                                        <uint64_t>] [--duration <uint64_t>]
-                                        [--connections <uint64_t>] [--rps
-                                        <uint64_t>] [--] [--version] [-h]
-                                        <uri format>
+   bazel-bin/nighthawk_client  [--request-body-size <uint32_t>]
+                               [--request-header <string>] ... 
+                               [--request-method <GET|HEAD|POST|PUT|DELETE
+                               |CONNECT|OPTIONS|TRACE>] [--address-family
+                               <auto|v4|v6>] [--burst-size <uint64_t>]
+                               [--prefetch-connections] [--output-format
+                               <human|yaml|json>] [-v <trace|debug|info
+                               |warn|error|critical>] [--concurrency
+                               <string>] [--h2] [--timeout <uint64_t>]
+                               [--duration <uint64_t>] [--connections
+                               <uint64_t>] [--rps <uint64_t>] [--]
+                               [--version] [-h] <uri format>
 
 
 Where: 
+
+   --request-body-size <uint32_t>
+     Size of the request body to send. NH will send a number of consecutive
+     'a' characters equal to the number specified here. (default: 0, no
+     data).
+
+   --request-header <string>  (accepted multiple times)
+     Raw request headers in the format of 'name: value' pairs. This
+     argument may specified multiple times.
+
+   --request-method <GET|HEAD|POST|PUT|DELETE|CONNECT|OPTIONS|TRACE>
+     Request method used when sending requests. The default is 'GET'.
+
+   --address-family <auto|v4|v6>
+     Network addres family preference. Possible values: [auto, v4, v6]. The
+     default output format is 'v4'.
+
+   --burst-size <uint64_t>
+     Release requests in bursts of the specified size (default: 0, no
+     bursting).
 
    --prefetch-connections
      Prefetch connections before benchmarking (HTTP/1 only).
@@ -93,6 +123,8 @@ Where:
 
 
    Nighthawk, a L7 HTTP protocol family benchmarking tool based on Envoy.
+
+
 ```
 
 ## Sample benchmark run
@@ -103,75 +135,66 @@ $ taskset -c 3 /path/to/envoy --config-path nighthawk/tools/envoy.yaml
 
 # run a quick benchmark using cpu cores 4 and 5.
 $ taskset -c 4-5 bazel-bin/nighthawk_client --rps 1000 --concurrency auto http://127.0.0.1:10000/
+
 Nighthawk - A layer 7 protocol benchmarking tool.
 
-benchmark_http_client.queue_to_connect: 9997 samples, mean: 0.000010513s, pstdev: 0.000007883s
+benchmark_http_client.queue_to_connect: 9993 samples, mean: 0.000010053s, pstdev: 0.000011278s
 Percentile  Count       Latency        
-0           1           0.000006549s   
-0.5         4999        0.000007325s   
-0.75        7498        0.000010387s   
-0.8         7998        0.000012010s   
-0.9         8998        0.000017883s   
-0.95        9498        0.000025680s   
-0.990625    9905        0.000047415s   
-0.999023    9988        0.000076479s   
-1           9997        0.000113999s   
+0           1           0.000006713s   
+0.5         4997        0.000007821s   
+0.75        7495        0.000008677s   
+0.8         7995        0.000009084s   
+0.9         8994        0.000011583s   
+0.95        9494        0.000015702s   
+0.990625    9900        0.000077299s   
+0.999023    9984        0.000145863s   
+1           9993        0.000232383s   
 
-benchmark_http_client.request_to_response: 9997 samples, mean: 0.000156183s, pstdev: 0.000147691s
+benchmark_http_client.request_to_response: 9993 samples, mean: 0.000115456s, pstdev: 0.000052326s
 Percentile  Count       Latency        
-0           1           0.000055659s   
-0.5         5003        0.000146655s   
-0.75        7500        0.000152631s   
-0.8         7998        0.000161455s   
-0.9         8998        0.000205247s   
-0.95        9498        0.000269951s   
-0.990625    9904        0.000495695s   
-0.999023    9988        0.000971967s   
-1           9997        0.008059903s   
+0           1           0.000080279s   
+0.5         4998        0.000104799s   
+0.75        7496        0.000113787s   
+0.8         7996        0.000121359s   
+0.9         8994        0.000153487s   
+0.95        9494        0.000180647s   
+0.990625    9900        0.000382591s   
+0.999023    9984        0.000608159s   
+1           9993        0.000985951s   
 
-sequencer.blocking: 42 samples, mean: 0.000755961s, pstdev: 0.001613017s
+sequencer.blocking: 14 samples, mean: 0.000531127s, pstdev: 0.000070919s
 Percentile  Count       Latency        
-0           1           0.000067199s   
-0.5         21          0.000117843s   
-0.75        32          0.000540191s   
-0.8         34          0.000544223s   
-0.9         38          0.000653183s   
-0.95        40          0.003944319s   
-1           42          0.006995967s   
-1           42          0.006995967s   
-1           42          0.006995967s   
+0           1           0.000484127s   
+0.5         7           0.000495615s   
+0.75        11          0.000521007s   
+0.8         12          0.000545887s   
+0.9         13          0.000655839s   
+1           14          0.000736223s   
 
-sequencer.callback: 9997 samples, mean: 0.000173003s, pstdev: 0.000153462s
+sequencer.callback: 9993 samples, mean: 0.000131079s, pstdev: 0.000060199s
 Percentile  Count       Latency        
-0           1           0.000066339s   
-0.5         4999        0.000157879s   
-0.75        7498        0.000164863s   
-0.8         7998        0.000179951s   
-0.9         8998        0.000234383s   
-0.95        9498        0.000314831s   
-0.990625    9904        0.000558047s   
-0.999023    9988        0.001160063s   
-1           9997        0.008074751s   
+0           1           0.000091547s   
+0.5         4998        0.000116935s   
+0.75        7495        0.000127351s   
+0.8         7995        0.000137807s   
+0.9         8994        0.000174335s   
+0.95        9495        0.000210063s   
+0.990625    9900        0.000444063s   
+0.999023    9984        0.000664383s   
+1           9993        0.001103615s   
 
 Counter                                 Value       Per second
-client.benchmark.http_2xx               9999        1999.80
-client.upstream_cx_http1_total          2           0.40
-client.upstream_cx_rx_bytes_total       36026397    7205279.40
-client.upstream_cx_total                2           0.40
-client.upstream_cx_tx_bytes_total       599940      119988.00
-client.upstream_rq_pending_total        2           0.40
-client.upstream_rq_total                9999        1999.80
+client.benchmark.http_2xx               9995        1999.00
+client.upstream_cx_close_notify         98          19.60
+client.upstream_cx_http1_total          100         20.00
+client.upstream_cx_rx_bytes_total       8585215     1717043.00
+client.upstream_cx_total                100         20.00
+client.upstream_cx_tx_bytes_total       569715      113943.00
+client.upstream_rq_pending_total        100         20.00
+client.upstream_rq_total                9995        1999.00
 ```
 
-Nighthawk will create a directory called `measurements/` and log results in json format there.
-The name of the file will be `<epoch.json>`, which contains:
-
-- The start time of the test, and a serialization of the Nighthawk options involved.
-- The mean latency and the observed standard deviation.
-- Latency percentiles produced by HdrHistogram.
-- Counters as tracked by Envoy's connection-pool and ssl libraries.
-
-## Accuracy and repeatability considerations when using the Nighthawk client.
+## Accuracy and repeatability considerations when using the Nighthawk client
 
 - Processes not related to the benchmarking task at hand may add significant noise. Consider stopping any
   processes that are not needed. 
@@ -187,9 +210,10 @@ The name of the file will be `<epoch.json>`, which contains:
 | As this may change boot flags, take precautions, and familiarize yourself with the tool on systems that you don't mind breaking. For example, running this has been observed to mess up dual-boot systems! |
 | --- |
 
-```
+```bash
 sudo tuned-adm profile network-latency
 ```
+
 - When using Nighthawk with concurrency > 1 or multiple connections, workers may produce significantly different results. That can happen because of various reasons:
   - Server fairness. For example, connections may end up being serviced by the same server thread, or not.
   - One of the clients may be unlucky and structurally spend time waiting on requests from the other(s)

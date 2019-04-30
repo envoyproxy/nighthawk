@@ -72,6 +72,9 @@ public:
   MOCK_CONST_METHOD0(prefetchConnections, bool());
   MOCK_CONST_METHOD0(burstSize, uint64_t());
   MOCK_CONST_METHOD0(addressFamily, std::string());
+  MOCK_CONST_METHOD0(requestMethod, std::string());
+  MOCK_CONST_METHOD0(requestHeaders, std::vector<std::string>());
+  MOCK_CONST_METHOD0(requestBodySize, uint32_t());
   MOCK_CONST_METHOD0(toCommandLineOptions, Client::CommandLineOptionsPtr());
 };
 
@@ -128,6 +131,11 @@ public:
   MOCK_METHOD1(tryStartOne, bool(std::function<void()>));
   MOCK_CONST_METHOD0(store, Envoy::Stats::Store&());
   MOCK_METHOD0(prefetchPoolConnections, void());
+
+  MOCK_METHOD1(setRequestMethod, void(absl::string_view));
+  MOCK_METHOD2(setRequestHeader, void(absl::string_view, absl::string_view));
+  MOCK_METHOD1(setRequestBodySize, void(uint32_t));
+  MOCK_CONST_METHOD0(requestHeaders, const Envoy::Http::HeaderMap&());
 
 protected:
   MOCK_CONST_METHOD0(measureLatencies, bool());

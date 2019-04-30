@@ -3,6 +3,14 @@ syntax = "proto3";
 package nighthawk.client;
 
 import "google/protobuf/duration.proto";
+import "validate/validate.proto";
+import "envoy/api/v2/core/base.proto";
+
+message RequestOptions {
+  envoy.api.v2.core.RequestMethod request_method = 1;
+  repeated envoy.api.v2.core.HeaderValueOption request_headers = 2;
+  uint32 request_body_size = 3 [(validate.rules).uint32 = {gte: 0, lte: 4194304}];
+}
 
 // TODO(oschaaf): Ultimately this will be a load test specification. The fact that it
 // can arrive via CLI is just a concrete detail. Change this to reflect that.
@@ -29,6 +37,10 @@ message CommandLineOptions {
   uint64 burst_size = 10;
   // See :option:`--address-family` for details.
   string address_family = 11;
+  oneof oneof_request_options {
+    // See :option:`--request_options` for details.
+    RequestOptions request_options = 12;
+  }
   // See :option:`--uri` for details.
-  string uri = 12;
+  string uri = 13;
 }

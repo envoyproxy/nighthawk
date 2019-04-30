@@ -20,6 +20,7 @@
 #include "common/runtime/runtime_impl.h"
 #include "common/thread_local/thread_local_impl.h"
 
+#include "api/client/output.pb.h"
 #include "client/client_worker_impl.h"
 #include "client/factories_impl.h"
 #include "client/options_impl.h"
@@ -27,7 +28,6 @@
 #include "common/uri_impl.h"
 #include "common/utility.h"
 #include "nighthawk/client/output_formatter.h"
-#include "source/client/output.pb.h"
 
 using namespace std::chrono_literals;
 
@@ -159,7 +159,7 @@ public:
   const std::vector<ClientWorkerPtr>& createWorkers(const UriImpl& uri,
                                                     const uint32_t concurrency) {
     // TODO(oschaaf): Expose kMinimalDelay in configuration.
-    const std::chrono::seconds kMinimalWorkerDelay = 2s;
+    const std::chrono::milliseconds kMinimalWorkerDelay = 500ms;
     ASSERT(workers_.size() == 0);
 
     // We try to offset the start of each thread so that workers will execute tasks evenly spaced in

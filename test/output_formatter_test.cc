@@ -8,8 +8,8 @@
 
 #include "common/filesystem/filesystem_impl.h"
 
+#include "api/client/options.pb.h"
 #include "common/statistic_impl.h"
-#include "source/client/options.pb.h"
 #include "test/mocks.h"
 #include "test/test_common/environment.h"
 

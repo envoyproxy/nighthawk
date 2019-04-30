@@ -69,19 +69,28 @@ public:
   }
   bool tryStartOne(std::function<void()> caller_completion_callback) override;
   Envoy::Stats::Store& store() const override { return store_; }
+
+  void setRequestMethod(absl::string_view request_method) override {
+    request_headers_.insertMethod().value(request_method);
+  };
+  void setRequestHeader(absl::string_view key, absl::string_view value) override;
+  void setRequestBodySize(uint32_t request_body_size) override {
+    request_body_size_ = request_body_size;
+  };
+  const Envoy::Http::HeaderMap& requestHeaders() const override { return request_headers_; }
+
   // StreamDecoderCompletionCallback
   void onComplete(bool success, const Envoy::Http::HeaderMap& headers) override;
   void onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason reason) override;
 
 private:
   void prefetchPoolConnections() override;
-
   Envoy::Api::Api& api_;
   Envoy::Event::Dispatcher& dispatcher_;
   Envoy::Stats::Store& store_;
   Envoy::Stats::ScopePtr scope_;
   Envoy::Http::HeaderMapImpl request_headers_;
-  // These are declared order dependent. Changing orderering may trigger on assert upon
+  // These are declared order dependent. Changing ordering may trigger on assert upon
   // destruction when tls has been involved during usage.
   std::unique_ptr<Envoy::Server::Configuration::TransportSocketFactoryContext>
       transport_socket_factory_context_;
@@ -103,6 +112,7 @@ private:
   uint64_t requests_initiated_{};
   bool measure_latencies_{};
   BenchmarkClientStats benchmark_client_stats_;
+  uint32_t request_body_size_{0};
 };
 
 } // namespace Client

@@ -6,7 +6,7 @@
 
 #include "envoy/common/pure.h"
 
-#include "source/client/options.pb.h"
+#include "api/client/options.pb.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -32,6 +32,9 @@ public:
   virtual bool prefetchConnections() const PURE;
   virtual uint64_t burstSize() const PURE;
   virtual std::string addressFamily() const PURE;
+  virtual std::string requestMethod() const PURE;
+  virtual std::vector<std::string> requestHeaders() const PURE;
+  virtual uint32_t requestBodySize() const PURE;
 
   /**
    * Converts an Options instance to an equivalent CommandLineOptions instance in terms of option
