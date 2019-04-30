@@ -61,8 +61,6 @@ cc_library(
     url = "https://github.com/HdrHistogram/HdrHistogram_c/archive/0.9.8.tar.gz",
 )
 
-cc_configure()
-
 load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies")
 
 go_rules_dependencies()

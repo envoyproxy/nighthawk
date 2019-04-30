@@ -79,11 +79,11 @@ public:
     timer2_ = new NiceMock<Envoy::Event::MockTimer>();
     EXPECT_CALL(*dispatcher_, createTimer_(_))
         .WillOnce(Invoke([&](Envoy::Event::TimerCb cb) {
-          timer_cb_1_ = cb;
+          timer_cb_1_ = std::move(cb);
           return timer1_;
         }))
         .WillOnce(Invoke([&](Envoy::Event::TimerCb cb) {
-          timer_cb_2_ = cb;
+          timer_cb_2_ = std::move(cb);
           return timer2_;
         }));
     EXPECT_CALL(*timer1_, disableTimer()).WillOnce(Invoke([&]() { timer1_set_ = false; }));
