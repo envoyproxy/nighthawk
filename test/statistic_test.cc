@@ -210,7 +210,7 @@ TEST(StatisticTest, SimpleStatisticProtoOutputLargeValues) {
   const nighthawk::client::Statistic proto = a.toProto();
 
   EXPECT_EQ(proto.count(), 2);
-  Helper::expectNear(((1ul * proto.mean().seconds() * 1000 * 1000 * 1000) + proto.mean().nanos()),
+  Helper::expectNear(((1.0 * proto.mean().seconds() * 1000 * 1000 * 1000) + proto.mean().nanos()),
                      value, a.significantDigits() - 1);
   // 0 because std::nan() gets translated to that.
   EXPECT_EQ(proto.pstdev().nanos(), 0);
@@ -227,7 +227,7 @@ TEST(StatisticTest, HdrStatisticProtoOutputLargeValues) {
   // TODO(oschaaf): hdr doesn't seem to the promised precision in this scenario.
   // We substract one from the indicated significant digits to make this test pass.
   // TODO(oschaaf): revisit this to make sure there's not a different underlying problem.
-  Helper::expectNear(((1ul * proto.mean().seconds() * 1000 * 1000 * 1000) + proto.mean().nanos()),
+  Helper::expectNear(((1.0 * proto.mean().seconds() * 1000 * 1000 * 1000) + proto.mean().nanos()),
                      value, a.significantDigits() - 1);
   EXPECT_EQ(proto.pstdev().nanos(), 0);
 }
@@ -240,7 +240,8 @@ TEST(StatisticTest, StreamingStatProtoOutputLargeValues) {
   const nighthawk::client::Statistic proto = a.toProto();
 
   EXPECT_EQ(proto.count(), 2);
-  Helper::expectNear(((1ul * proto.mean().seconds() * 1000 * 1000 * 1000) + proto.mean().nanos()),
+
+  Helper::expectNear(((1.0 * proto.mean().seconds() * 1000 * 1000 * 1000) + proto.mean().nanos()),
                      value, a.significantDigits());
 
   EXPECT_EQ(proto.pstdev().nanos(), 0);

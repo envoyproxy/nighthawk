@@ -1,4 +1,6 @@
-#!/bin/bash -e
+#!/bin/bash
+
+set -e
 
 function do_build () {
     bazel build $BAZEL_BUILD_OPTIONS --verbose_failures=true //:nighthawk_client //:nighthawk_test_server
@@ -30,32 +32,11 @@ function setup_gcc_toolchain() {
 }
 
 function setup_clang_toolchain() {
-    export PATH=/usr/lib/llvm-7/bin:$PATH
+    export PATH=/usr/lib/llvm-8/bin:$PATH
     export CC=clang
     export CXX=clang++
-    export ASAN_SYMBOLIZER_PATH=/usr/lib/llvm-7/bin/llvm-symbolizer
+    export ASAN_SYMBOLIZER_PATH=/usr/lib/llvm-8/bin/llvm-symbolizer
     echo "$CC/$CXX toolchain configured"
-}
-
-# TODO(oschaaf): This is quite the hack, we want to revisit this and back it out
-# once we figure out why bazel coverage isn't working as expected without doing
-# this. Once we do figure that out, this hack *could* be rewritten to assert that the linker
-# that gets used is the actual one we requested.
-# Overrides both ld and ld.gold with llvm's ld.lld.
-function override_linker_with_lld() {
-    WORK_DIR=`mktemp -d -p "$DIR"`
-    export PATH="$WORK_DIR:$PATH"
-    ln -s "$(which ld.lld)" "$WORK_DIR/ld"
-    # We write a script to call ld.lld as 'ld' because it objects to being
-    # called `ld.gold` on some systems.
-    script="#!/bin/bash
-$WORK_DIR/ld \$@
-"
-    echo "$script" > "$WORK_DIR/ld.gold"
-    chmod +x "$WORK_DIR/ld.gold"
-    echo "lld linker override in place:"
-    # As a test, we output the version of ld.lld, which has some diagnostic value as well.
-    $WORK_DIR/ld.gold -v
 }
 
 function run_bazel() {
@@ -78,7 +59,6 @@ function run_bazel() {
 function do_asan() {
     echo "bazel ASAN/UBSAN debug build with tests"
     echo "Building and testing envoy tests..."
-    override_linker_with_lld
     cd "${SRCDIR}"
     run_bazel test ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-asan //test:nighthawk_test //test/server:http_test_server_filter_integration_test
 }
@@ -86,7 +66,6 @@ function do_asan() {
 function do_tsan() {
     echo "bazel TSAN debug build with tests"
     echo "Building and testing envoy tests..."
-    override_linker_with_lld
     cd "${SRCDIR}"
     run_bazel test ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-tsan //test:nighthawk_test //test/server:http_test_server_filter_integration_test
 }
@@ -100,7 +79,7 @@ if [ -n "$CIRCLECI" ]; then
         mv "${HOME:-/root}/.gitconfig" "${HOME:-/root}/.gitconfig_save"
         echo 1
     fi
-
+    
     NUM_CPUS=8
     if [ "$1" == "coverage" ]; then
         NUM_CPUS=6
@@ -125,25 +104,31 @@ fi
 case "$1" in
     build)
         do_build
+        exit 0
     ;;
     test)
         do_test
+        exit 0
     ;;
     test_with_valgrind)
         do_test_with_valgrind
+        exit 0
     ;;
     clang_tidy)
-        export RUN_FULL_CLANG_TIDY=1
         do_clang_tidy
+        exit 0
     ;;
     coverage)
         do_coverage
+        exit 0
     ;;
     asan)
         do_asan
+        exit 0
     ;;
     tsan)
         do_tsan
+        exit 0
     ;;
     *)
         echo "must be one of [build,test,clang_tidy,test_with_valgrind,coverage,asan,tsan]"
