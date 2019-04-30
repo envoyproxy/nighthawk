@@ -31,7 +31,9 @@ namespace Client {
 class ClientTest : public Envoy::BaseIntegrationTest,
                    public TestWithParam<Envoy::Network::Address::IpVersion> {
 public:
-  ClientTest() : Envoy::BaseIntegrationTest(GetParam(), realTime(), readEnvoyConfiguration()) {}
+  ClientTest()
+      : Envoy::BaseIntegrationTest(GetParam(), realTime(), readEnvoyConfiguration()),
+        fd_port_(2, 0), fd_confirm_(2, 0) {}
 
   std::string readEnvoyConfiguration() {
     Envoy::Filesystem::InstanceImplPosix file_system;
@@ -103,8 +105,8 @@ public:
 
   int port_;
   pid_t pid_;
-  std::vector<int> fd_port_ = {0, 0};
-  std::vector<int> fd_confirm_ = {0, 0};
+  std::vector<int> fd_port_;
+  std::vector<int> fd_confirm_;
 };
 
 INSTANTIATE_TEST_SUITE_P(IpVersions, ClientTest,
