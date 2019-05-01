@@ -325,27 +325,4 @@ TEST_F(HttpTestServerDecoderFilterTest, HeaderMerge) {
   EXPECT_EQ(3, options.response_headers_size());
 }
 
-TEST_F(HttpTestServerDecoderFilterTest, ProtoMergeDefaultGetsOverriden) {
-  nighthawk::server::ResponseOptions parent_options;
-  nighthawk::server::ResponseOptions specific_options;
-  parent_options.set_response_body_size(0);
-  specific_options.set_response_body_size(1);
-  parent_options.MergeFrom(specific_options);
-  Envoy::MessageUtil::validate(parent_options);
-
-  EXPECT_EQ(1, parent_options.response_body_size());
-}
-
-// TODO(oschaaf): We currently cannot override to the default ('0' in this case.).
-TEST_F(HttpTestServerDecoderFilterTest, DISABLED_ProtoMergeCanOverrideWithDefault) {
-  nighthawk::server::ResponseOptions parent_options;
-  nighthawk::server::ResponseOptions specific_options;
-  parent_options.set_response_body_size(1);
-  specific_options.set_response_body_size(0);
-  parent_options.MergeFrom(specific_options);
-  Envoy::MessageUtil::validate(parent_options);
-
-  EXPECT_EQ(0, parent_options.response_body_size());
-}
-
 } // namespace Nighthawk
