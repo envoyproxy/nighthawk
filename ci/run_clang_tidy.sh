@@ -10,4 +10,5 @@ echo "build ${BAZEL_BUILD_OPTIONS}" >> .bazelrc
 # bazel build need to be run to setup virtual includes, generating files which are consumed
 # by clang-tidy
 tools/gen_compilation_database.py --run_bazel_build --include_headers
-run-clang-tidy-8 -extra-arg-before=-xc++ -quiet
+set -x
+run-clang-tidy-8 -extra-arg-before=-xc++ -quiet -j "${NUM_CPUS}"

@@ -70,7 +70,7 @@ function do_tsan() {
     run_bazel test ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-tsan //test:nighthawk_test //test/server:http_test_server_filter_integration_test
 }
 
-[ -z "${NUM_CPUS}" ] && NUM_CPUS=`grep -c ^processor /proc/cpuinfo`
+[ -z "${NUM_CPUS}" ] && export NUM_CPUS=`grep -c ^processor /proc/cpuinfo`
 
 if [ -n "$CIRCLECI" ]; then
     # TODO(oschaaf): hack, this should be done in .circleci/config.yml
