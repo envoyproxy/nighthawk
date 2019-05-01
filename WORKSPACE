@@ -2,11 +2,14 @@ workspace(name = "nighthawk")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
+ENVOY_COMMIT="b8325ac4167284b4d566c2779c15ec3c8473dc66"
+ENVOY_SHA="9c19940b25d87ab122bf904b5b8534f42f5aea730d0b09e810605e0c388ddbc0"
+
 http_archive(
     name = "envoy",
-    sha256 = "9c19940b25d87ab122bf904b5b8534f42f5aea730d0b09e810605e0c388ddbc0",
-    strip_prefix = "envoy-b8325ac4167284b4d566c2779c15ec3c8473dc66",
-    url = "https://github.com/envoyproxy/envoy/archive/b8325ac4167284b4d566c2779c15ec3c8473dc66.tar.gz"
+    sha256 = ENVOY_SHA,
+    strip_prefix = "envoy-%s" % ENVOY_COMMIT,
+    url = "https://github.com/envoyproxy/envoy/archive/%s.tar.gz" % ENVOY_COMMIT,
 )
 
 load("@envoy//bazel:api_repositories.bzl", "envoy_api_dependencies")
