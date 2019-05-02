@@ -2,16 +2,16 @@
 
 #include <string>
 
-#include "absl/strings/string_view.h"
-
 #include "envoy/stats/store.h"
+
+#include "nighthawk/common/exception.h"
+#include "nighthawk/common/uri.h"
 
 #include "common/common/logger.h"
 #include "common/network/dns_impl.h"
 #include "common/network/utility.h"
 
-#include "nighthawk/common/exception.h"
-#include "nighthawk/common/uri.h"
+#include "absl/strings/string_view.h"
 
 namespace Nighthawk {
 

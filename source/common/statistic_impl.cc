@@ -1,4 +1,3 @@
-
 #include "common/statistic_impl.h"
 
 #include <cmath>

@@ -2,12 +2,12 @@
 
 #include <string>
 
-#include "absl/strings/string_view.h"
+#include "nighthawk/common/exception.h"
 
 #include "common/network/dns_impl.h"
 #include "common/network/utility.h"
 
-#include "nighthawk/common/exception.h"
+#include "absl/strings/string_view.h"
 
 namespace Nighthawk {
 

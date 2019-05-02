@@ -3,9 +3,9 @@
 #include <memory>
 #include <vector>
 
-#include "absl/strings/string_view.h"
-
 #include "client/options_impl.h"
+
+#include "absl/strings/string_view.h"
 
 namespace Nighthawk {
 namespace Client {

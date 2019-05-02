@@ -1,9 +1,9 @@
-#include "gtest/gtest.h"
+#include "client/options_impl.h"
 
-#include "external/envoy/test/test_common/utility.h"
 #include "test/client/utility.h"
 
-#include "client/options_impl.h"
+#include "external/envoy/test/test_common/utility.h"
+#include "gtest/gtest.h"
 
 using namespace std::chrono_literals;
 using namespace testing;

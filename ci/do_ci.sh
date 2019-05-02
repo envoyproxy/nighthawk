@@ -2,6 +2,8 @@
 
 set -e
 
+export BUILDIFIER_BIN="/usr/local/bin/buildifier"
+
 function do_build () {
     bazel build $BAZEL_BUILD_OPTIONS --verbose_failures=true //:nighthawk_client //:nighthawk_test_server
 }
@@ -70,6 +72,16 @@ function do_tsan() {
     run_bazel test ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-tsan //test:nighthawk_test //test/server:http_test_server_filter_integration_test
 }
 
+function do_check_format() {
+    echo "check_format..."
+    ./tools/check_format.sh check
+}
+
+function do_fix_format() {
+    echo "fix_format..."
+    ./tools/check_format.sh fix
+}
+
 [ -z "${NUM_CPUS}" ] && export NUM_CPUS=`grep -c ^processor /proc/cpuinfo`
 
 if [ -n "$CIRCLECI" ]; then
@@ -126,6 +138,14 @@ case "$1" in
     ;;
     tsan)
         do_tsan
+        exit 0
+    ;;
+    check_format)
+        do_check_format
+        exit 0
+    ;;
+    fix_format)
+        do_fix_format
         exit 0
     ;;
     *)

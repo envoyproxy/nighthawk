@@ -3,16 +3,16 @@
 
 // TODO(oschaaf): certificate validation.
 
+#include "envoy/network/transport_socket.h"
+
+#include "common/secret/secret_manager_impl.h"
+
 #include "server/transport_socket_config_impl.h"
 
 #include "extensions/transport_sockets/tls/context_config_impl.h"
 #include "extensions/transport_sockets/tls/context_impl.h"
 #include "extensions/transport_sockets/tls/context_manager_impl.h"
 #include "extensions/transport_sockets/tls/ssl_socket.h"
-
-#include "common/secret/secret_manager_impl.h"
-
-#include "envoy/network/transport_socket.h"
 
 namespace Nighthawk {
 namespace Ssl {

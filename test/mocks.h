@@ -3,10 +3,6 @@
 #include <chrono>
 #include <memory>
 
-#include "gmock/gmock.h"
-
-#include "test/test_common/simulated_time_system.h"
-
 #include "envoy/api/api.h"
 #include "envoy/common/time.h"
 #include "envoy/event/dispatcher.h"
@@ -22,6 +18,10 @@
 #include "nighthawk/common/uri.h"
 
 #include "common/utility.h"
+
+#include "test/test_common/simulated_time_system.h"
+
+#include "gmock/gmock.h"
 
 using namespace std::chrono_literals;
 

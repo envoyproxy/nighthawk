@@ -1,27 +1,25 @@
 #include <chrono>
 #include <memory>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
+#include "nighthawk/common/exception.h"
+#include "nighthawk/common/platform_util.h"
 
 #include "common/api/api_impl.h"
 #include "common/common/thread_impl.h"
 #include "common/event/dispatcher_impl.h"
 #include "common/filesystem/filesystem_impl.h"
+#include "common/rate_limiter_impl.h"
+#include "common/sequencer_impl.h"
+#include "common/statistic_impl.h"
 #include "common/stats/isolated_store_impl.h"
 
+#include "test/mocks.h"
 #include "test/mocks/event/mocks.h"
 #include "test/test_common/simulated_time_system.h"
 #include "test/test_common/thread_factory_for_test.h"
 
-#include "test/mocks.h"
-
-#include "nighthawk/common/exception.h"
-#include "nighthawk/common/platform_util.h"
-
-#include "common/rate_limiter_impl.h"
-#include "common/sequencer_impl.h"
-#include "common/statistic_impl.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 using namespace std::chrono_literals;
 using namespace testing;

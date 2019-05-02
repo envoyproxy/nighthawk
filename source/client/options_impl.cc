@@ -2,12 +2,11 @@
 
 #include <cmath>
 
-#include "absl/strings/str_split.h"
-
-#include "tclap/CmdLine.h"
-
 #include "common/uri_impl.h"
 #include "common/utility.h"
+
+#include "absl/strings/str_split.h"
+#include "tclap/CmdLine.h"
 
 namespace Nighthawk {
 namespace Client {
