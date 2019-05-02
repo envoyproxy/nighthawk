@@ -2,8 +2,8 @@ workspace(name = "nighthawk")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-ENVOY_COMMIT="b8325ac4167284b4d566c2779c15ec3c8473dc66"
-ENVOY_SHA="9c19940b25d87ab122bf904b5b8534f42f5aea730d0b09e810605e0c388ddbc0"
+ENVOY_COMMIT="f35eea732cf64b19c7684c673580413840aad0ba"
+ENVOY_SHA="a64ca9e3c313f879b569ecbd1eab9a845c04e600fbf05beb31621ebfcdf14d73"
 
 http_archive(
     name = "envoy",
