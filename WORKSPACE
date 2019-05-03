@@ -1,17 +1,22 @@
 workspace(name = "nighthawk")
 
-local_repository(
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+ENVOY_COMMIT="f35eea732cf64b19c7684c673580413840aad0ba"
+ENVOY_SHA="a64ca9e3c313f879b569ecbd1eab9a845c04e600fbf05beb31621ebfcdf14d73"
+
+http_archive(
     name = "envoy",
-    path = "envoy",
+    sha256 = ENVOY_SHA,
+    strip_prefix = "envoy-%s" % ENVOY_COMMIT,
+    url = "https://github.com/envoyproxy/envoy/archive/%s.tar.gz" % ENVOY_COMMIT,
 )
 
 load("@envoy//bazel:api_repositories.bzl", "envoy_api_dependencies")
-
 envoy_api_dependencies()
 
 load("@envoy//bazel:repositories.bzl", "envoy_dependencies")
 load("@envoy//bazel:cc_configure.bzl", "cc_configure")
-
 envoy_dependencies()
 
 load("@rules_foreign_cc//:workspace_definitions.bzl", "rules_foreign_cc_dependencies")
@@ -19,8 +24,6 @@ load("@rules_foreign_cc//:workspace_definitions.bzl", "rules_foreign_cc_dependen
 rules_foreign_cc_dependencies()
 
 cc_configure()
-
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
     name = "dep_hdrhistogram_c",
@@ -54,7 +57,7 @@ cc_library(
         "-Wno-error",
     ],
     visibility = ["//visibility:public"],
-)        
+)
 """,
     sha256 = "6928ba22634d9a5b2752227309c9097708e790db6a285fa5c3f40a219bf7ee98",
     strip_prefix = "HdrHistogram_c-0.9.8",
