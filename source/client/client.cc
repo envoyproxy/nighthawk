@@ -234,7 +234,7 @@ public:
 private:
   Envoy::Thread::ThreadFactoryImplPosix thread_factory_;
   Envoy::Filesystem::InstanceImplPosix file_system_;
-  Envoy::Event::RealTimeSystem time_system_;
+  Envoy::Event::RealTimeSystem time_system_; // NO_CHECK_FORMAT(real_time)
   StoreFactoryImpl store_factory_;
   Envoy::Stats::StorePtr store_;
   Envoy::Api::Impl api_;

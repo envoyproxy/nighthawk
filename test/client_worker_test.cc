@@ -61,7 +61,7 @@ public:
   MockSequencerFactory sequencer_factory_;
   Envoy::Stats::IsolatedStoreImpl store_;
   NiceMock<Envoy::ThreadLocal::MockInstance> tls_;
-  Envoy::Event::RealTimeSystem time_system_;
+  Envoy::Event::TestRealTimeSystem time_system_;
   MockBenchmarkClient* benchmark_client_;
   MockSequencer* sequencer_;
   Envoy::Runtime::RandomGeneratorImpl rand_;

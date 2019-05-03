@@ -36,7 +36,7 @@ public:
   void onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason) override { pool_failures_++; }
 
   Envoy::Thread::ThreadFactoryImplPosix thread_factory_;
-  Envoy::Event::RealTimeSystem time_system_;
+  Envoy::Event::TestRealTimeSystem time_system_;
   Envoy::Stats::IsolatedStoreImpl store_;
   Envoy::Api::Impl api_;
   Envoy::Event::DispatcherPtr dispatcher_;

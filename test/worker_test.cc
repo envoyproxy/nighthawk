@@ -40,7 +40,7 @@ public:
   Envoy::Api::Impl api_;
   Envoy::ThreadLocal::MockInstance tls_;
   Envoy::Stats::IsolatedStoreImpl store_;
-  Envoy::Event::RealTimeSystem time_system_;
+  Envoy::Event::TestRealTimeSystem time_system_;
   Envoy::Runtime::RandomGeneratorImpl rand_;
 };
 
