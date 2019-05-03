@@ -10,3 +10,4 @@ generated/
 .rnd
 .vscode/
 bazel.output.txt
+envoy/
