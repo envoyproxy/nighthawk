@@ -106,6 +106,13 @@ mkdir -p "${FAKE_HOME}"
 export HOME="${FAKE_HOME}"
 export PYTHONUSERBASE="${FAKE_HOME}"
 
+export BUILD_DIR=/build
+if [[ ! -d "${BUILD_DIR}" ]]
+then
+  echo "${BUILD_DIR} mount missing - did you forget -v <something>:${BUILD_DIR}? Creating."
+  mkdir -p "${BUILD_DIR}"
+fi
+
 # Environment setup.
 export USER=bazel
 export TEST_TMPDIR=/build/tmp
