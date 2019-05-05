@@ -73,8 +73,6 @@ function do_tsan() {
 [ -z "${NUM_CPUS}" ] && export NUM_CPUS=`grep -c ^processor /proc/cpuinfo`
 
 if [ -n "$CIRCLECI" ]; then
-    # TODO(oschaaf): hack, this should be done in .circleci/config.yml
-    git submodule update --init --recursive
     if [[ -f "${HOME:-/root}/.gitconfig" ]]; then
         mv "${HOME:-/root}/.gitconfig" "${HOME:-/root}/.gitconfig_save"
         echo 1
