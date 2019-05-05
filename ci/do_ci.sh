@@ -106,6 +106,11 @@ mkdir -p "${FAKE_HOME}"
 export HOME="${FAKE_HOME}"
 export PYTHONUSERBASE="${FAKE_HOME}"
 
+# Environment setup.
+export USER=bazel
+export TEST_TMPDIR=/build/tmp
+export BAZEL="bazel"
+
 export BAZEL_EXTRA_TEST_OPTIONS="--test_env=ENVOY_IP_TEST_VERSIONS=v4only ${BAZEL_EXTRA_TEST_OPTIONS}"
 export BAZEL_BUILD_OPTIONS=" \
 --verbose_failures ${BAZEL_OPTIONS} --action_env=HOME --action_env=PYTHONUSERBASE \
