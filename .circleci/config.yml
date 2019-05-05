@@ -56,13 +56,13 @@ jobs:
     steps:
       - checkout
       - run: ci/do_ci.sh tsan
-   format:
-     docker:
-       - image: *envoy-build-image
-     resource_class: small
-     steps:
-       - checkout
-       - run: ci/do_ci.sh check_format
+  format:
+    docker:
+      - image: *envoy-build-image
+    resource_class: small
+    steps:
+      - checkout
+      - run: ci/do_ci.sh check_format
 
 workflows:
   version: 2
