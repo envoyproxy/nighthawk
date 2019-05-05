@@ -1,8 +1,8 @@
+#include "test/mocks.h"
+
 #include <memory>
 
 #include "gmock/gmock.h"
-
-#include "test/mocks.h"
 
 namespace Nighthawk {
 

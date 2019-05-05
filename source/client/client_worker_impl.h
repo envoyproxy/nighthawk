@@ -6,10 +6,10 @@
 #include "nighthawk/client/client_worker.h"
 #include "nighthawk/client/factories.h"
 #include "nighthawk/common/sequencer.h"
+#include "nighthawk/common/uri.h"
 
 #include "common/utility.h"
 #include "common/worker_impl.h"
-#include "nighthawk/common/uri.h"
 
 namespace Nighthawk {
 namespace Client {

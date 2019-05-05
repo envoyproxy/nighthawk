@@ -1,13 +1,12 @@
 #pragma once
 
-#include "nighthawk/common/rate_limiter.h"
-
-#include "absl/types/optional.h"
-
 #include "envoy/common/time.h"
+
+#include "nighthawk/common/rate_limiter.h"
 
 #include "common/common/logger.h"
 
+#include "absl/types/optional.h"
 #include "frequency.h"
 
 namespace Nighthawk {

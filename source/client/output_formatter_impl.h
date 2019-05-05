@@ -1,12 +1,12 @@
 #pragma once
 
-#include "nighthawk/client/output_formatter.h"
+#include <cstdint>
 
 #include "envoy/common/time.h"
 
-#include "common/protobuf/protobuf.h"
+#include "nighthawk/client/output_formatter.h"
 
-#include <cstdint>
+#include "common/protobuf/protobuf.h"
 
 namespace Nighthawk {
 namespace Client {

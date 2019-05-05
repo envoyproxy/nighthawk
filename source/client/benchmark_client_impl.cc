@@ -1,11 +1,9 @@
 #include "client/benchmark_client_impl.h"
 
-#include "absl/strings/str_split.h"
-
 #include "envoy/event/dispatcher.h"
 #include "envoy/thread_local/thread_local.h"
 
-#include "extensions/transport_sockets/well_known_names.h"
+#include "nighthawk/common/statistic.h"
 
 #include "common/common/compiler_requirements.h"
 #include "common/http/header_map_impl.h"
@@ -19,9 +17,11 @@
 #include "common/upstream/cluster_manager_impl.h"
 #include "common/upstream/upstream_impl.h"
 
-#include "nighthawk/common/statistic.h"
-
 #include "client/stream_decoder.h"
+
+#include "extensions/transport_sockets/well_known_names.h"
+
+#include "absl/strings/str_split.h"
 
 using namespace std::chrono_literals;
 
