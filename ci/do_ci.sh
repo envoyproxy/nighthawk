@@ -74,11 +74,13 @@ function do_tsan() {
 
 function do_check_format() {
     echo "check_format..."
+    cd "${SRCDIR}"
     ./tools/check_format.sh check
 }
 
 function do_fix_format() {
     echo "fix_format..."
+    cd "${SRCDIR}"
     ./tools/check_format.sh fix
 }
 
@@ -89,12 +91,20 @@ if [ -n "$CIRCLECI" ]; then
         mv "${HOME:-/root}/.gitconfig" "${HOME:-/root}/.gitconfig_save"
         echo 1
     fi
-    
+
     NUM_CPUS=8
     if [ "$1" == "coverage" ]; then
         NUM_CPUS=6
     fi
 fi
+
+# Create a fake home. Python site libs tries to do getpwuid(3) if we don't and the CI
+# Docker image gets confused as it has no passwd entry when running non-root
+# unless we do this.
+FAKE_HOME=/tmp/fake_home
+mkdir -p "${FAKE_HOME}"
+export HOME="${FAKE_HOME}"
+export PYTHONUSERBASE="${FAKE_HOME}"
 
 export BAZEL_EXTRA_TEST_OPTIONS="--test_env=ENVOY_IP_TEST_VERSIONS=v4only ${BAZEL_EXTRA_TEST_OPTIONS}"
 export BAZEL_BUILD_OPTIONS=" \
