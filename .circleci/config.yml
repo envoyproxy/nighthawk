@@ -75,3 +75,4 @@ workflows:
       - coverage
       - asan
       - tsan
+      - format
