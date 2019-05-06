@@ -8,10 +8,9 @@
 #include "test/common/upstream/utility.h"
 #include "test/integration/http_integration.h"
 
-#include "gtest/gtest.h"
-
 #include "api/server/response_options.pb.h"
 #include "api/server/response_options.pb.validate.h"
+#include "gtest/gtest.h"
 
 namespace Nighthawk {
 
