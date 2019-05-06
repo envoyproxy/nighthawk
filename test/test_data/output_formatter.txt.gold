@@ -1,7 +1,11 @@
 Nighthawk - A layer 7 protocol benchmarking tool.
 
-stat_id: 3 samples, mean: 0.002s, pstdev: 0.000816497s
-Percentile  Count       Latency        
+stat_id
+  samples: 3
+  mean:    0s 002 ms 000 us
+  pstdev:  0s 000 ms 816 us
+
+  Percentile  Count       Latency        
 
 Counter                                 Value       Per second
 bar                                     2           2.00
