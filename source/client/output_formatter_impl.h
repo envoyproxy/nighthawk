@@ -32,6 +32,10 @@ class ConsoleOutputFormatterImpl : public OutputFormatterImpl {
 public:
   ConsoleOutputFormatterImpl(Envoy::TimeSource& time_source, const Options& options);
   std::string toString() const override;
+
+private:
+  std::string statIdtoFriendlyStatName(absl::string_view stat_id) const;
+  std::string formatProtoDuration(const Envoy::Protobuf::Duration& duration) const;
 };
 
 class JsonOutputFormatterImpl : public OutputFormatterImpl {

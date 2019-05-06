@@ -1,5 +1,7 @@
 #include "client/output_formatter_impl.h"
 
+#include <google/protobuf/util/time_util.h>
+
 #include <chrono>
 #include <sstream>
 
@@ -32,10 +34,12 @@ std::string ConsoleOutputFormatterImpl::toString() const {
         if (statistic.count() == 0) {
           continue;
         }
-        ss << fmt::format("{}: {} samples, mean: {}, pstdev: {}", statistic.id(), statistic.count(),
-                          statistic.mean(), statistic.pstdev())
-           << std::endl;
-        ss << fmt::format("{:<{}}{:<{}}{:<{}}", "Percentile", 12, "Count", 12, "Latency", 15)
+        ss << fmt::format("{}", statIdtoFriendlyStatName(statistic.id())) << std::endl;
+        ss << fmt::format("  samples: {}", statistic.count()) << std::endl;
+        ss << fmt::format("  mean:    {}", formatProtoDuration(statistic.mean())) << std::endl;
+        ss << fmt::format("  pstdev:  {}", formatProtoDuration(statistic.pstdev())) << std::endl;
+        ss << std::endl;
+        ss << fmt::format("  {:<{}}{:<{}}{:<{}}", "Percentile", 12, "Count", 12, "Latency", 15)
            << std::endl;
 
         // The proto percentiles are ordered ascending. We write the first match to the stream.
@@ -44,8 +48,9 @@ std::string ConsoleOutputFormatterImpl::toString() const {
           for (const auto& percentile : statistic.percentiles()) {
             if (percentile.percentile() >= p && last_percentile < percentile.percentile()) {
               last_percentile = percentile.percentile();
-              ss << fmt::format("{:<{}}{:<{}}{:<{}}", percentile.percentile(), 12,
-                                percentile.count(), 12, percentile.duration(), 15)
+              ss << fmt::format("  {:<{}}{:<{}}{:<{}}", percentile.percentile(), 12,
+                                percentile.count(), 12, formatProtoDuration(percentile.duration()),
+                                15)
                  << std::endl;
               break;
             }
@@ -64,6 +69,26 @@ std::string ConsoleOutputFormatterImpl::toString() const {
   }
 
   return ss.str();
+}
+
+std::string
+ConsoleOutputFormatterImpl::formatProtoDuration(const Envoy::Protobuf::Duration& duration) const {
+  auto c = Envoy::ProtobufUtil::TimeUtil::DurationToMicroseconds(duration);
+  return fmt::format("{}s {:03}ms {:03}us", (c % 1'000'000'000) / 1'000'000,
+                     (c % 1'000'000) / 1'000, c % 1'000);
+}
+
+std::string ConsoleOutputFormatterImpl::statIdtoFriendlyStatName(absl::string_view stat_id) const {
+  if (stat_id == "benchmark_http_client.queue_to_connect") {
+    return "Queueing and connection setup latency";
+  } else if (stat_id == "benchmark_http_client.request_to_response") {
+    return "Request start to response end";
+  } else if (stat_id == "sequencer.callback") {
+    return "Initiation to completion";
+  } else if (stat_id == "sequencer.blocking") {
+    return "Blocking. Results are skewed when significant numbers are reported here.";
+  }
+  return std::string(stat_id);
 }
 
 void OutputFormatterImpl::addResult(absl::string_view name,
