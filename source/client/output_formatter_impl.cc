@@ -1,13 +1,11 @@
 #include "client/output_formatter_impl.h"
 
+#include <google/protobuf/util/time_util.h>
+
 #include <chrono>
 #include <sstream>
 
 #include "common/protobuf/utility.h"
-
-#include <google/protobuf/util/time_util.h>
-
-using namespace google::protobuf::util;
 
 namespace Nighthawk {
 namespace Client {
@@ -74,9 +72,9 @@ std::string ConsoleOutputFormatterImpl::toString() const {
 }
 
 std::string
-ConsoleOutputFormatterImpl::formatProtoDuration(const google::protobuf::Duration& duration) const {
-  auto c = TimeUtil::DurationToMicroseconds(duration);
-  return fmt::format("{}s {:03} ms {:03} us", (c % 1'000'000'000) / 1'000'000,
+ConsoleOutputFormatterImpl::formatProtoDuration(const Envoy::Protobuf::Duration& duration) const {
+  auto c = Envoy::ProtobufUtil::TimeUtil::DurationToMicroseconds(duration);
+  return fmt::format("{}s {:03}ms {:03}us", (c % 1'000'000'000) / 1'000'000,
                      (c % 1'000'000) / 1'000, c % 1'000);
 }
 
