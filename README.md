@@ -1,12 +1,15 @@
 # Nighthawk
 
-*A L7 HTTP protocol family benchmarking tool based on Envoy*
+*A L7 (HTTP/HTTPS/HTTP2) performance characterization tool*
 
 ## Current state
 
-The nighthawk client supports HTTP/1.1 and HTTP/2 over HTTP and HTTPS.
+Nighthawk currently offers:
 
-HTTPS certificates are not yet validated.
+- A load testing client which supports HTTP/1.1 and HTTP/2 over HTTP and HTTPS.
+(HTTPS certificates are not yet validated).
+- A simple [test server](source/server/README.md) which is capable of generating dynamic response sizes, as well as inject delays.
+
 
 ## Prerequisites
 
@@ -14,21 +17,24 @@ HTTPS certificates are not yet validated.
 
 First, follow steps 1 and 2 over at [Quick start Bazel build for developers](https://github.com/envoyproxy/envoy/blob/master/bazel/README.md#quick-start-bazel-build-for-developers).
 
-## Building and testing Nighthawk
+
+## Building and using the Nighthawk client CLI
+
+For building the Nighthawk test server, see [here](source/server/README.md).
+
+### Test it
 
 ```bash
-# test it
 bazel test -c dbg //test:nighthawk_test
 ```
 
 ### Build it
 
 ```bash
-# for best accuracy it is important to specify -c opt.
 bazel build -c opt //:nighthawk_client
 ```
 
-### Using the Nighthawk client
+### Using the CLI
 
 ```bash
 ➜ bazel-bin/nighthawk_client --help
@@ -122,76 +128,84 @@ Where:
      in case of https no certificates are validated.
 
 
-   Nighthawk, a L7 HTTP protocol family benchmarking tool based on Envoy.
+   Nighthawk, a L7 (HTTP/HTTPS/HTTP2) performance characterization tool.
 
 
 ```
 
-## Sample benchmark run
+## A sample benchmark run
 
 ```bash
-# start the benchmark target (Envoy in this case) on core 3.
-$ taskset -c 3 /path/to/envoy --config-path nighthawk/tools/envoy.yaml
+# start the benchmark target (Envoy with a single worker in this case) on cpu-core 3.
+➜ taskset -c 3 envoy --concurrency 1 --config-path ~/envoy.yaml
 
-# run a quick benchmark using cpu cores 4 and 5.
-$ taskset -c 4-5 bazel-bin/nighthawk_client --rps 1000 --concurrency auto http://127.0.0.1:10000/
-
+# run a quick benchmark using cpu-cores 4 and 5.
+➜ taskset -c 4-5 bazel-bin/nighthawk_client --rps 1000 --connections 4 --concurrency auto --prefetch-connections -v info http://127.0.0.1:10000/
+[21:28:12.690578][27849][I] [source/client/client.cc:71] Detected 2 (v)CPUs with affinity..
+[21:28:12.690621][27849][I] [source/client/client.cc:75] Starting 2 threads / event loops. Test duration: 5 seconds.
+[21:28:12.690627][27849][I] [source/client/client.cc:77] Global targets: 8 connections and 2000 calls per second.
+[21:28:12.690632][27849][I] [source/client/client.cc:81]    (Per-worker targets: 4 connections and 1000 calls per second)
 Nighthawk - A layer 7 protocol benchmarking tool.
 
-benchmark_http_client.queue_to_connect: 9993 samples, mean: 0.000010053s, pstdev: 0.000011278s
-Percentile  Count       Latency        
-0           1           0.000006713s   
-0.5         4997        0.000007821s   
-0.75        7495        0.000008677s   
-0.8         7995        0.000009084s   
-0.9         8994        0.000011583s   
-0.95        9494        0.000015702s   
-0.990625    9900        0.000077299s   
-0.999023    9984        0.000145863s   
-1           9993        0.000232383s   
+Queueing and connection setup latency
+  samples: 9992
+  mean:    0s 000ms 002us
+  pstdev:  0s 000ms 000us
 
-benchmark_http_client.request_to_response: 9993 samples, mean: 0.000115456s, pstdev: 0.000052326s
-Percentile  Count       Latency        
-0           1           0.000080279s   
-0.5         4998        0.000104799s   
-0.75        7496        0.000113787s   
-0.8         7996        0.000121359s   
-0.9         8994        0.000153487s   
-0.95        9494        0.000180647s   
-0.990625    9900        0.000382591s   
-0.999023    9984        0.000608159s   
-1           9993        0.000985951s   
+  Percentile  Count       Latency        
+  0           1           0s 000ms 001us 
+  0.5         5013        0s 000ms 002us 
+  0.75        7496        0s 000ms 002us 
+  0.8         8008        0s 000ms 002us 
+  0.9         8996        0s 000ms 002us 
+  0.95        9493        0s 000ms 002us 
+  0.990625    9899        0s 000ms 003us 
+  0.999023    9983        0s 000ms 004us 
+  1           9992        0s 000ms 027us 
 
-sequencer.blocking: 14 samples, mean: 0.000531127s, pstdev: 0.000070919s
-Percentile  Count       Latency        
-0           1           0.000484127s   
-0.5         7           0.000495615s   
-0.75        11          0.000521007s   
-0.8         12          0.000545887s   
-0.9         13          0.000655839s   
-1           14          0.000736223s   
+Request start to response end
+  samples: 9992
+  mean:    0s 000ms 108us
+  pstdev:  0s 000ms 061us
 
-sequencer.callback: 9993 samples, mean: 0.000131079s, pstdev: 0.000060199s
-Percentile  Count       Latency        
-0           1           0.000091547s   
-0.5         4998        0.000116935s   
-0.75        7495        0.000127351s   
-0.8         7995        0.000137807s   
-0.9         8994        0.000174335s   
-0.95        9495        0.000210063s   
-0.990625    9900        0.000444063s   
-0.999023    9984        0.000664383s   
-1           9993        0.001103615s   
+  Percentile  Count       Latency        
+  0           1           0s 000ms 073us 
+  0.5         4997        0s 000ms 111us 
+  0.75        7495        0s 000ms 113us 
+  0.8         7997        0s 000ms 114us 
+  0.9         8993        0s 000ms 116us 
+  0.95        9493        0s 000ms 120us 
+  0.990625    9899        0s 000ms 130us 
+  0.999023    9983        0s 000ms 528us 
+  1           9992        0s 004ms 083us 
+
+Initiation to completion
+  samples: 9992
+  mean:    0s 000ms 113us
+  pstdev:  0s 000ms 061us
+
+  Percentile  Count       Latency        
+  0           1           0s 000ms 077us 
+  0.5         4996        0s 000ms 115us 
+  0.75        7495        0s 000ms 118us 
+  0.8         7998        0s 000ms 118us 
+  0.9         8993        0s 000ms 121us 
+  0.95        9493        0s 000ms 124us 
+  0.990625    9899        0s 000ms 135us 
+  0.999023    9983        0s 000ms 588us 
+  1           9992        0s 004ms 090us 
 
 Counter                                 Value       Per second
-client.benchmark.http_2xx               9995        1999.00
-client.upstream_cx_close_notify         98          19.60
-client.upstream_cx_http1_total          100         20.00
-client.upstream_cx_rx_bytes_total       8585215     1717043.00
-client.upstream_cx_total                100         20.00
-client.upstream_cx_tx_bytes_total       569715      113943.00
-client.upstream_rq_pending_total        100         20.00
-client.upstream_rq_total                9995        1999.00
+client.benchmark.http_2xx               9994        1998.80
+client.upstream_cx_http1_total          8           1.60
+client.upstream_cx_overflow             2           0.40
+client.upstream_cx_rx_bytes_total       36008382    7201676.40
+client.upstream_cx_total                8           1.60
+client.upstream_cx_tx_bytes_total       599640      119928.00
+client.upstream_rq_pending_total        2           0.40
+client.upstream_rq_total                9994        1998.80
+
+[21:28:18.522403][27849][I] [source/client/client.cc:279] Done.
 ```
 
 ## Accuracy and repeatability considerations when using the Nighthawk client
