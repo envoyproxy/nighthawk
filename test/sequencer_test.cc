@@ -93,6 +93,9 @@ public:
       timer2_set_ = true;
     }));
     EXPECT_CALL(*dispatcher_, exit()).WillOnce(Invoke([&]() { stopped_ = true; }));
+  }
+
+  void expectDispatcherRun() {
     EXPECT_CALL(*dispatcher_, run(_))
         .WillOnce(Invoke([&](Envoy::Event::DispatcherImpl::RunType type) {
           ASSERT_EQ(Envoy::Event::DispatcherImpl::RunType::Block, type);
@@ -150,7 +153,21 @@ TEST_F(SequencerTestWithTimerEmulation, RateLimiterInteraction) {
       .WillRepeatedly(Return(false));
 
   EXPECT_CALL(*target(), callback(_)).Times(2).WillOnce(Return(true)).WillOnce(Return(true));
+  expectDispatcherRun();
+  sequencer.start();
+  sequencer.waitForCompletion();
+}
 
+TEST_F(SequencerTestWithTimerEmulation, StartingLate) {
+  SequencerTarget callback =
+      std::bind(&MockSequencerTarget::callback, target(), std::placeholders::_1);
+  SequencerImpl sequencer(
+      platform_util_, *dispatcher_, time_system_, time_system_.monotonicTime(),
+      std::move(rate_limiter_), callback, std::make_unique<StreamingStatistic>(),
+      std::make_unique<StreamingStatistic>(),
+      test_number_of_intervals_ * interval_ /* Sequencer run time.*/, 1ms /* Sequencer timeout. */);
+
+  time_system_.setMonotonicTime(time_system_.monotonicTime() + 100s);
   sequencer.start();
   sequencer.waitForCompletion();
 }
@@ -175,6 +192,7 @@ TEST_F(SequencerTestWithTimerEmulation, RateLimiterSaturatedTargetInteraction) {
 
   // The sequencer should call RateLimiter::releaseOne() when the target returns false.
   EXPECT_CALL(rate_limiter_unsafe_ref_, releaseOne()).Times(1);
+  expectDispatcherRun();
 
   sequencer.start();
   sequencer.waitForCompletion();
@@ -186,6 +204,7 @@ public:
   SequencerIntegrationTest() {
     Envoy::Event::SimulatedTimeSystem time_system;
     rate_limiter_ = std::make_unique<LinearRateLimiter>(time_system_, frequency_);
+    expectDispatcherRun();
   }
 
   bool timeout_test(const std::function<void()>& /* f */) {
