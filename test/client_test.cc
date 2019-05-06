@@ -1,3 +1,16 @@
+// This test relies on fork(). Somehow the integration test server excepts when running
+// under TSAN because of Envoy not being able to find its configuration file with die_after_fork
+// disabled. The code below seems to suggest that TSAN doesn't support this scenario.
+// https://github.com/llvm-mirror/compiler-rt/blob/master/lib/tsan/rtl/tsan_interceptors.cc#L999
+// Further root cause analysis is not worth it at this point, because this code will be deprecated
+// soon in favor of either https://github.com/envoyproxy/nighthawk/pull/60 or moving this end-to-end
+// testing to python.
+// Thus we just disable this test when we detect we are running under TSAN.
+#ifndef __has_feature
+#define __has_feature(x) 0 // Compatibility with non-clang compilers.
+#endif
+#if defined(__has_feature) && !__has_feature(thread_sanitizer)
+
 #include <chrono>
 
 #include "common/api/api_impl.h"
@@ -147,3 +160,5 @@ TEST_P(ClientTest, BadRun) {
 
 } // namespace Client
 } // namespace Nighthawk
+
+#endif
