@@ -42,6 +42,7 @@ cc_library(
         "-Wno-implicit-function-declaration",
         "-Wno-error",
     ],
+    deps = ["//external:zlib"],
     visibility = ["//visibility:public"],
 )
   """,

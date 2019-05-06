@@ -50,7 +50,7 @@ static_resources:
                   numerator: 100
           - name: test-server   # before envoy.router because order matters!
             config:
-              response_size: 10
+              response_body_size: 10
               response_headers:
               - { header: { key: "foo", value: "bar"} }
               - { header: { key: "foo", value: "bar2"}, append: true }
@@ -74,4 +74,4 @@ admin:
 ➜ /bazel-bin/nighthawk/source/server/server --config-path /path/to/test-server-server.yaml
 
 # Verify the test server with a curl command similar to:
-➜ curl -H "x-envoy-fault-delay-request: 1000" -H "x-nighthawk-test-server-config: {response_size:20}"  -vv 127.0.0.1:10000 
+➜ curl -H "x-envoy-fault-delay-request: 1000" -H "x-nighthawk-test-server-config: {response_body_size:20}"  -vv 127.0.0.1:10000 

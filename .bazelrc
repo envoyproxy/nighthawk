@@ -44,8 +44,6 @@ build:clang-tsan --copt -fsanitize=thread
 build:clang-tsan --linkopt -fsanitize=thread
 build:clang-tsan --linkopt -fuse-ld=lld
 build:clang-tsan --define tcmalloc=disabled
-# The line below is Nighthawk-specific, and can be backed out when we no longer in the client integration test. 
-build:clang-tsan --test_env=TSAN_OPTIONS=die_after_fork=0
 # Needed due to https://github.com/libevent/libevent/issues/777
 build:clang-tsan --copt -DEVENT__DISABLE_DEBUG_MODE
 

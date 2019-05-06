@@ -98,25 +98,27 @@ if [ -n "$CIRCLECI" ]; then
     fi
 fi
 
-# Create a fake home. Python site libs tries to do getpwuid(3) if we don't and the CI
-# Docker image gets confused as it has no passwd entry when running non-root
-# unless we do this.
-FAKE_HOME=/tmp/fake_home
-mkdir -p "${FAKE_HOME}"
-export HOME="${FAKE_HOME}"
-export PYTHONUSERBASE="${FAKE_HOME}"
+ if grep 'docker\|lxc' /proc/1/cgroup; then
+    # Create a fake home. Python site libs tries to do getpwuid(3) if we don't and the CI
+    # Docker image gets confused as it has no passwd entry when running non-root
+    # unless we do this.
+    FAKE_HOME=/tmp/fake_home
+    mkdir -p "${FAKE_HOME}"
+    export HOME="${FAKE_HOME}"
+    export PYTHONUSERBASE="${FAKE_HOME}"
 
-export BUILD_DIR=/build
-if [[ ! -d "${BUILD_DIR}" ]]
-then
-  echo "${BUILD_DIR} mount missing - did you forget -v <something>:${BUILD_DIR}? Creating."
-  mkdir -p "${BUILD_DIR}"
+    export BUILD_DIR=/build
+    if [[ ! -d "${BUILD_DIR}" ]]
+    then
+        echo "${BUILD_DIR} mount missing - did you forget -v <something>:${BUILD_DIR}? Creating."
+        mkdir -p "${BUILD_DIR}"
+    fi
+
+    # Environment setup.
+    export USER=bazel
+    export TEST_TMPDIR=/build/tmp
+    export BAZEL="bazel"
 fi
-
-# Environment setup.
-export USER=bazel
-export TEST_TMPDIR=/build/tmp
-export BAZEL="bazel"
 
 export BAZEL_EXTRA_TEST_OPTIONS="--test_env=ENVOY_IP_TEST_VERSIONS=v4only ${BAZEL_EXTRA_TEST_OPTIONS}"
 export BAZEL_BUILD_OPTIONS=" \

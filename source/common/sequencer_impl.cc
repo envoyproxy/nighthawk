@@ -150,8 +150,10 @@ void SequencerImpl::run(bool from_periodic_timer) {
 }
 
 void SequencerImpl::waitForCompletion() {
-  ASSERT(running_);
-  dispatcher_.run(Envoy::Event::Dispatcher::RunType::Block);
+  // It's possible that we have already finished when we get here.
+  if (running_) {
+    dispatcher_.run(Envoy::Event::Dispatcher::RunType::Block);
+  }
   // We should guarantee the flow terminates, so:
   ASSERT(!running_);
 }
