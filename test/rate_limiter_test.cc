@@ -1,15 +1,14 @@
 #include <chrono>
 
-#include "gtest/gtest.h"
-
-#include "test/test_common/simulated_time_system.h"
-
 #include "nighthawk/common/exception.h"
 
 #include "common/frequency.h"
 #include "common/rate_limiter_impl.h"
 
 #include "test/mocks.h"
+#include "test/test_common/simulated_time_system.h"
+
+#include "gtest/gtest.h"
 
 using namespace std::chrono_literals;
 using namespace testing;

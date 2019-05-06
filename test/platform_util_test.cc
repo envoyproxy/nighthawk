@@ -1,6 +1,6 @@
-#include "gtest/gtest.h"
-
 #include "common/platform_util_impl.h"
+
+#include "gtest/gtest.h"
 
 using namespace testing;
 

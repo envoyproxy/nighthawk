@@ -1,22 +1,20 @@
-#include "gtest/gtest.h"
-
 #include <functional>
-
 #include <thread>
 
 #include "common/api/api_impl.h"
 #include "common/filesystem/filesystem_impl.h"
 #include "common/runtime/runtime_impl.h"
+#include "common/statistic_impl.h"
 #include "common/stats/isolated_store_impl.h"
+#include "common/uri_impl.h"
 
+#include "client/client_worker_impl.h"
+
+#include "test/mocks.h"
 #include "test/mocks/thread_local/mocks.h"
 #include "test/test_common/thread_factory_for_test.h"
 
-#include "test/mocks.h"
-
-#include "client/client_worker_impl.h"
-#include "common/statistic_impl.h"
-#include "common/uri_impl.h"
+#include "gtest/gtest.h"
 
 using namespace testing;
 

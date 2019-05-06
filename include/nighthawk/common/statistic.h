@@ -4,12 +4,12 @@
 #include <memory>
 #include <string>
 
-#include "absl/strings/string_view.h"
-
-#include "common/common/non_copyable.h"
 #include "envoy/common/exception.h"
 #include "envoy/common/pure.h"
 
+#include "common/common/non_copyable.h"
+
+#include "absl/strings/string_view.h"
 #include "api/client/output.pb.h"
 
 namespace Nighthawk {

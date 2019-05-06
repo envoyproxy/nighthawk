@@ -1,17 +1,16 @@
 #include <chrono>
 
-#include "gtest/gtest.h"
+#include "common/filesystem/filesystem_impl.h"
+#include "common/statistic_impl.h"
 
 #include "client/output_formatter_impl.h"
 
-#include "test/test_common/simulated_time_system.h"
-
-#include "common/filesystem/filesystem_impl.h"
-
-#include "api/client/options.pb.h"
-#include "common/statistic_impl.h"
 #include "test/mocks.h"
 #include "test/test_common/environment.h"
+#include "test/test_common/simulated_time_system.h"
+
+#include "api/client/options.pb.h"
+#include "gtest/gtest.h"
 
 using namespace std::chrono_literals;
 using namespace testing;

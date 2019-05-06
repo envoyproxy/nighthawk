@@ -20,9 +20,9 @@
 #include "common/common/logger.h"
 #include "common/http/header_map_impl.h"
 #include "common/runtime/runtime_impl.h"
+#include "common/ssl.h"
 
 #include "client/stream_decoder.h"
-#include "common/ssl.h"
 
 namespace Nighthawk {
 namespace Client {

@@ -1,12 +1,12 @@
-#include <string>
-
 #include "server/http_test_server_filter.h"
 
-#include "absl/strings/numbers.h"
+#include <string>
 
-#include "common/protobuf/utility.h"
 #include "envoy/server/filter_config.h"
 
+#include "common/protobuf/utility.h"
+
+#include "absl/strings/numbers.h"
 #include "api/server/response_options.pb.validate.h"
 
 namespace Nighthawk {

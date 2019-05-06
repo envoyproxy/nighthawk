@@ -2,15 +2,15 @@
 
 #include <string>
 
-#include "absl/strings/string_view.h"
-
 #include "envoy/stats/store.h"
+
+#include "nighthawk/common/exception.h"
 
 #include "common/common/logger.h"
 #include "common/network/dns_impl.h"
 #include "common/network/utility.h"
 
-#include "nighthawk/common/exception.h"
+#include "absl/strings/string_view.h"
 
 namespace Nighthawk {
 
@@ -28,11 +28,11 @@ public:
    * based on the named and value it gets passed. The default filter returns all counters.
    * @return std::map<std::string, uint64_t> containing zero or more entries.
    */
-  std::map<std::string, uint64_t> mapCountersFromStore(const Envoy::Stats::Store& store,
-                                                       const StoreCounterFilter& filter =
-                                                           [](absl::string_view, const uint64_t) {
-                                                             return true;
-                                                           }) const;
+  std::map<std::string, uint64_t> mapCountersFromStore(
+      const Envoy::Stats::Store& store,
+      const StoreCounterFilter& filter = [](absl::string_view, const uint64_t) {
+        return true;
+      }) const;
   /**
    * Finds the position of the port separator in the host:port fragment.
    *

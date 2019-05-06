@@ -1,8 +1,15 @@
-load("@envoy//api/bazel:api_build_system.bzl", "api_proto_library")
-
 licenses(["notice"])  # Apache 2
 
-api_proto_library(
+load(
+    "@envoy//bazel:envoy_build_system.bzl",
+    "envoy_package",
+)
+
+envoy_package()
+
+load("@envoy_api//bazel:api_build_system.bzl", "api_proto_library_internal")
+
+api_proto_library_internal(
     name = "benchmark_options",
     srcs = [
         "options.proto",

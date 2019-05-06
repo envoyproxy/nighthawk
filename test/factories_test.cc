@@ -1,18 +1,17 @@
 #include <chrono>
 
-#include "gtest/gtest.h"
+#include "common/api/api_impl.h"
+#include "common/uri_impl.h"
 
+#include "client/factories_impl.h"
+
+#include "test/mocks.h"
 #include "test/mocks/event/mocks.h"
 #include "test/mocks/stats/mocks.h"
 #include "test/test_common/simulated_time_system.h"
 #include "test/test_common/utility.h"
 
-#include "common/api/api_impl.h"
-
-#include "test/mocks.h"
-
-#include "client/factories_impl.h"
-#include "common/uri_impl.h"
+#include "gtest/gtest.h"
 
 using namespace std::chrono_literals;
 using namespace testing;

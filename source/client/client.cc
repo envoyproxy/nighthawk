@@ -6,9 +6,9 @@
 #include <memory>
 #include <random>
 
-#include "ares.h"
-
 #include "envoy/stats/store.h"
+
+#include "nighthawk/client/output_formatter.h"
 
 #include "common/api/api_impl.h"
 #include "common/common/cleanup.h"
@@ -16,18 +16,19 @@
 #include "common/event/dispatcher_impl.h"
 #include "common/event/real_time_system.h"
 #include "common/filesystem/filesystem_impl.h"
+#include "common/frequency.h"
 #include "common/network/utility.h"
 #include "common/runtime/runtime_impl.h"
 #include "common/thread_local/thread_local_impl.h"
+#include "common/uri_impl.h"
+#include "common/utility.h"
 
-#include "api/client/output.pb.h"
 #include "client/client_worker_impl.h"
 #include "client/factories_impl.h"
 #include "client/options_impl.h"
-#include "common/frequency.h"
-#include "common/uri_impl.h"
-#include "common/utility.h"
-#include "nighthawk/client/output_formatter.h"
+
+#include "api/client/output.pb.h"
+#include "ares.h"
 
 using namespace std::chrono_literals;
 

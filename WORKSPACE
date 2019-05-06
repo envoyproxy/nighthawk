@@ -1,68 +1,23 @@
 workspace(name = "nighthawk")
 
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("//bazel:repositories.bzl", "nighthawk_dependencies")
 
-ENVOY_COMMIT="f35eea732cf64b19c7684c673580413840aad0ba"
-ENVOY_SHA="a64ca9e3c313f879b569ecbd1eab9a845c04e600fbf05beb31621ebfcdf14d73"
-
-http_archive(
-    name = "envoy",
-    sha256 = ENVOY_SHA,
-    strip_prefix = "envoy-%s" % ENVOY_COMMIT,
-    url = "https://github.com/envoyproxy/envoy/archive/%s.tar.gz" % ENVOY_COMMIT,
-)
+nighthawk_dependencies()
 
 load("@envoy//bazel:api_repositories.bzl", "envoy_api_dependencies")
+
 envoy_api_dependencies()
 
 load("@envoy//bazel:repositories.bzl", "envoy_dependencies")
 load("@envoy//bazel:cc_configure.bzl", "cc_configure")
+
 envoy_dependencies()
+
+cc_configure()
 
 load("@rules_foreign_cc//:workspace_definitions.bzl", "rules_foreign_cc_dependencies")
 
 rules_foreign_cc_dependencies()
-
-cc_configure()
-
-http_archive(
-    name = "dep_hdrhistogram_c",
-    build_file_content = """
-cc_library(
-    name = "hdrhistogram_c",
-    srcs = [
-        "src/hdr_encoding.c",
-        "src/hdr_histogram.c",
-        "src/hdr_histogram_log.c",
-        "src/hdr_interval_recorder.c",
-        "src/hdr_thread.c",
-        "src/hdr_time.c",
-        "src/hdr_writer_reader_phaser.c",
-    ],
-    hdrs = [
-        "src/hdr_atomic.h",
-        "src/hdr_encoding.h",
-        "src/hdr_endian.h",
-        "src/hdr_histogram.h",
-        "src/hdr_histogram_log.h",
-        "src/hdr_interval_recorder.h",
-        "src/hdr_tests.h",
-        "src/hdr_thread.h",
-        "src/hdr_time.h",
-        "src/hdr_writer_reader_phaser.h",
-    ],
-    copts = [
-        "-std=gnu99",
-        "-Wno-implicit-function-declaration",
-        "-Wno-error",
-    ],
-    visibility = ["//visibility:public"],
-)
-""",
-    sha256 = "6928ba22634d9a5b2752227309c9097708e790db6a285fa5c3f40a219bf7ee98",
-    strip_prefix = "HdrHistogram_c-0.9.8",
-    url = "https://github.com/HdrHistogram/HdrHistogram_c/archive/0.9.8.tar.gz",
-)
 
 load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies")
 

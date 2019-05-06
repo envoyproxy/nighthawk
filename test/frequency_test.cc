@@ -1,6 +1,6 @@
-#include "gtest/gtest.h"
-
 #include "common/frequency.h"
+
+#include "gtest/gtest.h"
 
 using namespace testing;
 

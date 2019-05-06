@@ -1,7 +1,5 @@
 #pragma once
 
-#include "common/common/logger.h"
-
 #include "envoy/network/address.h"
 #include "envoy/stats/store.h"
 
@@ -10,6 +8,8 @@
 #include "nighthawk/client/options.h"
 #include "nighthawk/client/output_formatter.h"
 #include "nighthawk/common/statistic.h"
+
+#include "common/common/logger.h"
 
 namespace Nighthawk {
 namespace Client {
