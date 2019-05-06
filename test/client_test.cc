@@ -6,7 +6,10 @@
 // soon in favor of either https://github.com/envoyproxy/nighthawk/pull/60 or moving this end-to-end
 // testing to python.
 // Thus we just disable this test when we detect we are running under TSAN.
-#ifndef ENVOY_CONFIG_TSAN
+#ifndef __has_feature
+#define __has_feature(x) 0 // Compatibility with non-clang compilers.
+#endif
+#if defined(__has_feature) && !__has_feature(thread_sanitizer)
 
 #include <chrono>
 
