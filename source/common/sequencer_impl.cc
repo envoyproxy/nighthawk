@@ -1,9 +1,9 @@
 #include "common/sequencer_impl.h"
 
-#include "common/common/assert.h"
-
 #include "nighthawk/common/exception.h"
 #include "nighthawk/common/platform_util.h"
+
+#include "common/common/assert.h"
 
 using namespace std::chrono_literals;
 

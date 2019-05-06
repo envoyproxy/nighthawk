@@ -2,6 +2,8 @@
 
 set -e
 
+export BUILDIFIER_BIN="/usr/local/bin/buildifier"
+
 function do_build () {
     bazel build $BAZEL_BUILD_OPTIONS --verbose_failures=true //:nighthawk_client //:nighthawk_test_server
 }
@@ -70,6 +72,18 @@ function do_tsan() {
     run_bazel test ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-tsan //test:nighthawk_test //test/server:http_test_server_filter_integration_test
 }
 
+function do_check_format() {
+    echo "check_format..."
+    cd "${SRCDIR}"
+    ./tools/check_format.sh check
+}
+
+function do_fix_format() {
+    echo "fix_format..."
+    cd "${SRCDIR}"
+    ./tools/check_format.sh fix
+}
+
 [ -z "${NUM_CPUS}" ] && export NUM_CPUS=`grep -c ^processor /proc/cpuinfo`
 
 if [ -n "$CIRCLECI" ]; then
@@ -77,12 +91,32 @@ if [ -n "$CIRCLECI" ]; then
         mv "${HOME:-/root}/.gitconfig" "${HOME:-/root}/.gitconfig_save"
         echo 1
     fi
-    
+
     NUM_CPUS=8
     if [ "$1" == "coverage" ]; then
         NUM_CPUS=6
     fi
 fi
+
+# Create a fake home. Python site libs tries to do getpwuid(3) if we don't and the CI
+# Docker image gets confused as it has no passwd entry when running non-root
+# unless we do this.
+FAKE_HOME=/tmp/fake_home
+mkdir -p "${FAKE_HOME}"
+export HOME="${FAKE_HOME}"
+export PYTHONUSERBASE="${FAKE_HOME}"
+
+export BUILD_DIR=/build
+if [[ ! -d "${BUILD_DIR}" ]]
+then
+  echo "${BUILD_DIR} mount missing - did you forget -v <something>:${BUILD_DIR}? Creating."
+  mkdir -p "${BUILD_DIR}"
+fi
+
+# Environment setup.
+export USER=bazel
+export TEST_TMPDIR=/build/tmp
+export BAZEL="bazel"
 
 export BAZEL_EXTRA_TEST_OPTIONS="--test_env=ENVOY_IP_TEST_VERSIONS=v4only ${BAZEL_EXTRA_TEST_OPTIONS}"
 export BAZEL_BUILD_OPTIONS=" \
@@ -126,6 +160,14 @@ case "$1" in
     ;;
     tsan)
         do_tsan
+        exit 0
+    ;;
+    check_format)
+        do_check_format
+        exit 0
+    ;;
+    fix_format)
+        do_fix_format
         exit 0
     ;;
     *)

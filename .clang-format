@@ -7,3 +7,9 @@ PointerAlignment: Left
 SortIncludes: true
 ...
 
+---
+Language: Proto
+ColumnLimit: 100
+SpacesInContainerLiterals: false
+AllowShortFunctionsOnASingleLine: false
+...

@@ -1,8 +1,6 @@
 #include <chrono>
 
-#include "ares.h"
-
-#include "gtest/gtest.h"
+#include "envoy/thread_local/thread_local.h"
 
 #include "common/api/api_impl.h"
 #include "common/common/compiler_requirements.h"
@@ -12,28 +10,28 @@
 #include "common/http/header_map_impl.h"
 #include "common/network/dns_impl.h"
 #include "common/network/utility.h"
-#include "common/runtime/runtime_impl.h"
-#include "common/stats/isolated_store_impl.h"
-#include "common/thread_local/thread_local_impl.h"
-
-#include "client/benchmark_client_impl.h"
 #include "common/platform_util_impl.h"
 #include "common/rate_limiter_impl.h"
+#include "common/runtime/runtime_impl.h"
 #include "common/sequencer_impl.h"
 #include "common/statistic_impl.h"
+#include "common/stats/isolated_store_impl.h"
+#include "common/thread_local/thread_local_impl.h"
 #include "common/uri_impl.h"
 #include "common/utility.h"
 
-#include "envoy/thread_local/thread_local.h"
-#include "test/mocks/runtime/mocks.h"
-#include "test/mocks/thread_local/mocks.h"
+#include "client/benchmark_client_impl.h"
 
 #include "test/integration/http_integration.h"
-
 #include "test/integration/integration.h"
 #include "test/integration/utility.h"
+#include "test/mocks/runtime/mocks.h"
+#include "test/mocks/thread_local/mocks.h"
 #include "test/server/utility.h"
 #include "test/test_common/utility.h"
+
+#include "ares.h"
+#include "gtest/gtest.h"
 
 using namespace std::chrono_literals;
 using namespace testing;

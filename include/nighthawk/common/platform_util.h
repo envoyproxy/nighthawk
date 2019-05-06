@@ -21,4 +21,4 @@ public:
 
 using PlatformUtilPtr = std::unique_ptr<PlatformUtil>;
 
-}
+} // namespace Nighthawk

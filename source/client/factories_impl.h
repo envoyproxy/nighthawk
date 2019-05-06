@@ -1,13 +1,13 @@
 #pragma once
 
-#include "nighthawk/client/factories.h"
-
 #include "envoy/api/api.h"
 #include "envoy/event/dispatcher.h"
 #include "envoy/stats/store.h"
 
-#include "common/platform_util_impl.h"
+#include "nighthawk/client/factories.h"
 #include "nighthawk/common/uri.h"
+
+#include "common/platform_util_impl.h"
 
 namespace Nighthawk {
 namespace Client {

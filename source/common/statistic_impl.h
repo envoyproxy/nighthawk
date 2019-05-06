@@ -3,12 +3,12 @@
 #include <memory>
 #include <vector>
 
-#include "external/dep_hdrhistogram_c/src/hdr_histogram.h"
+#include "nighthawk/common/statistic.h"
 
 #include "common/common/logger.h"
-
 #include "common/frequency.h"
-#include "nighthawk/common/statistic.h"
+
+#include "external/dep_hdrhistogram_c/src/hdr_histogram.h"
 
 namespace Nighthawk {
 

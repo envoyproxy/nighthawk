@@ -2,10 +2,8 @@
 
 #include <memory>
 
-#include "envoy/common/pure.h"
-#include "envoy/common/time.h"
-
 #include "envoy/api/api.h"
+#include "envoy/common/pure.h"
 #include "envoy/common/time.h"
 #include "envoy/event/dispatcher.h"
 #include "envoy/stats/store.h"
