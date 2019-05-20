@@ -203,7 +203,7 @@ public:
     bool ok = true;
     Envoy::Runtime::RandomGeneratorImpl generator;
     Envoy::Runtime::ScopedLoaderSingleton loader(
-        Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl(generator, store(), tls())});
+        Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl({}, generator, store(), tls())});
 
     for (auto& w : workers_) {
       w->start();

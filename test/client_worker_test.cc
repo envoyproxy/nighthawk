@@ -26,7 +26,8 @@ public:
   ClientWorkerTest()
       : api_(Envoy::Thread::threadFactoryForTest(), store_, time_system_, file_system_),
         thread_id_(std::this_thread::get_id()),
-        loader_(Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl(rand_, store_, tls_)}) {
+        loader_(
+            Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl({}, rand_, store_, tls_)}) {
     benchmark_client_ = new MockBenchmarkClient();
     sequencer_ = new MockSequencer();
 
