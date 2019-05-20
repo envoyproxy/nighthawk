@@ -64,12 +64,12 @@ HttpTestServerDecoderFilter::decodeHeaders(Envoy::Http::HeaderMap& headers, bool
         [this, &base_config](Envoy::Http::HeaderMap& direct_response_headers) {
           applyConfigToResponseHeaders(direct_response_headers, base_config);
         },
-        absl::nullopt);
+        absl::nullopt, "");
   } else {
     decoder_callbacks_->sendLocalReply(
         static_cast<Envoy::Http::Code>(500),
         fmt::format("test-server didn't understand the request: {}", *error_message), nullptr,
-        absl::nullopt);
+        absl::nullopt, "");
   }
   return Envoy::Http::FilterHeadersStatus::StopIteration;
 }
