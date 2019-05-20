@@ -1,7 +1,7 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 ENVOY_COMMIT = "cd910bc54f8bbc24061aaeaf666b39422666ee58"
-ENVOY_SHA = "3c987abfa6bab52371a8ee62759021df9de4848f7d8fc82640cf69179c0e5edc"
+ENVOY_SHA = "2614c4d24269017ded547577d5ee226351de96c7d3fbbf29e4dfd3a4b7159f82"
 
 def nighthawk_dependencies():
     http_archive(
