@@ -50,7 +50,7 @@ TEST_F(WorkerTest, WorkerExecutesOnThread) {
 
   TestWorker worker(api_, tls_);
   Envoy::Runtime::ScopedLoaderSingleton loader(
-      Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl(rand_, store_, tls_)});
+      Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl({}, rand_, store_, tls_)});
   worker.start();
   worker.waitForCompletion();
 
