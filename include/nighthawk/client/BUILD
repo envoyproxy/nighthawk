@@ -17,6 +17,7 @@ envoy_basic_cc_library(
         "options.h",
         "output_formatter.h",
         "prefetchable_pool.h",
+        "process_context.h",
     ],
     include_prefix = "nighthawk/client",
     deps = [
