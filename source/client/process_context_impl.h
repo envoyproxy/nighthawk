@@ -46,14 +46,12 @@ public:
   const SequencerFactory& sequencer_factory() const override;
   const StoreFactory& store_factory() const override;
 
-  const std::vector<ClientWorkerPtr>& createWorkers(const UriImpl& uri,
-                                                    const uint32_t concurrency) override;
-  std::vector<StatisticPtr>
-  vectorizeStatisticPtrMap(const StatisticFactory& statistic_factory,
-                           const StatisticPtrMap& statistics) const override;
   bool run(OutputFormatter& formatter) override;
 
 private:
+  const std::vector<ClientWorkerPtr>& createWorkers(const UriImpl& uri, const uint32_t concurrency);
+  std::vector<StatisticPtr> vectorizeStatisticPtrMap(const StatisticFactory& statistic_factory,
+                                                     const StatisticPtrMap& statistics) const;
   std::vector<StatisticPtr>
   mergeWorkerStatistics(const StatisticFactory& statistic_factory,
                         const std::vector<ClientWorkerPtr>& workers) const;

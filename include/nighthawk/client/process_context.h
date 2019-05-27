@@ -40,13 +40,6 @@ public:
   virtual const SequencerFactory& sequencer_factory() const PURE;
   virtual const StoreFactory& store_factory() const PURE;
 
-  virtual const std::vector<ClientWorkerPtr>& createWorkers(const UriImpl& uri,
-                                                            const uint32_t concurrency) PURE;
-
-  virtual std::vector<StatisticPtr>
-  vectorizeStatisticPtrMap(const StatisticFactory& statistic_factory,
-                           const StatisticPtrMap& statistics) const PURE;
-
   virtual bool run(OutputFormatter& formatter) PURE;
 };
 
