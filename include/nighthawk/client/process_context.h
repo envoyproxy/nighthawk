@@ -22,11 +22,22 @@
 namespace Nighthawk {
 namespace Client {
 
+/**
+ * Process context is shared between the CLI and grpc service. It is capable of executing
+ * a full Nighthawk test run. Only a single instance is allowed at a time.
+ */
 class ProcessContext {
 public:
   virtual ~ProcessContext() = default;
 
+  /**
+   * @param level to set the logging level to.
+   */
   virtual void configureComponentLogLevels(spdlog::level::level_enum level) PURE;
+  /**
+   * @return uint32_t the number of workers that will be used based on configuration
+   * and available hardware.
+   */
   virtual uint32_t determineConcurrency() const PURE;
   virtual Envoy::Thread::ThreadFactory& thread_factory() PURE;
   virtual Envoy::Filesystem::Instance& file_system() PURE;
@@ -40,6 +51,10 @@ public:
   virtual const SequencerFactory& sequencer_factory() const PURE;
   virtual const StoreFactory& store_factory() const PURE;
 
+  /**
+   * @param formatter used to transform output into the desired format.
+   * @return bool true iff execution was successfull.
+   */
   virtual bool run(OutputFormatter& formatter) PURE;
 };
 
