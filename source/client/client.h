@@ -10,6 +10,7 @@
 #include "nighthawk/common/statistic.h"
 
 #include "common/common/logger.h"
+
 #include "process_context_impl.h"
 
 namespace Nighthawk {

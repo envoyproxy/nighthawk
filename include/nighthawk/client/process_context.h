@@ -3,13 +3,6 @@
 #include "envoy/network/address.h"
 #include "envoy/stats/store.h"
 
-#include "common/api/api_impl.h"
-#include "common/common/logger.h"
-#include "common/common/thread_impl.h"
-#include "common/event/real_time_system.h"
-#include "common/filesystem/filesystem_impl.h"
-#include "common/thread_local/thread_local_impl.h"
-
 #include "nighthawk/client/client_worker.h"
 #include "nighthawk/client/factories.h"
 #include "nighthawk/client/options.h"
@@ -17,6 +10,12 @@
 #include "nighthawk/common/statistic.h"
 #include "nighthawk/common/uri.h"
 
+#include "common/api/api_impl.h"
+#include "common/common/logger.h"
+#include "common/common/thread_impl.h"
+#include "common/event/real_time_system.h"
+#include "common/filesystem/filesystem_impl.h"
+#include "common/thread_local/thread_local_impl.h"
 #include "common/uri_impl.h"
 
 namespace Nighthawk {

@@ -1,4 +1,4 @@
-#include "client/client.h"
+#include "client/process_context_impl.h"
 
 #include <chrono>
 #include <fstream>
@@ -20,13 +20,13 @@
 #include "common/network/utility.h"
 #include "common/runtime/runtime_impl.h"
 #include "common/thread_local/thread_local_impl.h"
+#include "common/uri_impl.h"
 #include "common/utility.h"
 
+#include "client/client.h"
 #include "client/client_worker_impl.h"
 #include "client/factories_impl.h"
 #include "client/options_impl.h"
-#include "client/process_context_impl.h"
-#include "common/uri_impl.h"
 
 #include "api/client/output.pb.h"
 #include "ares.h"
