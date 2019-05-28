@@ -51,7 +51,6 @@ ProcessContextImpl::ProcessContextImpl(const Options& options)
 
 Envoy::Event::TimeSystem& ProcessContextImpl::time_system() { return time_system_; }
 Envoy::Api::Impl& ProcessContextImpl::api() { return api_; }
-Envoy::ThreadLocal::Instance& ProcessContextImpl::tls() { return tls_; }
 Envoy::Stats::Store& ProcessContextImpl::store() const { return *store_; }
 
 const std::vector<ClientWorkerPtr>& ProcessContextImpl::createWorkers(const UriImpl& uri,
@@ -195,7 +194,7 @@ bool ProcessContextImpl::run(OutputFormatter& formatter) {
   bool ok = true;
   Envoy::Runtime::RandomGeneratorImpl generator;
   Envoy::Runtime::ScopedLoaderSingleton loader(
-      Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl({}, generator, store(), tls())});
+      Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl({}, generator, store(), tls_)});
 
   for (auto& w : workers_) {
     w->start();

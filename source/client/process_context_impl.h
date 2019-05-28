@@ -35,7 +35,6 @@ public:
 
   Envoy::Event::TimeSystem& time_system() override;
   Envoy::Api::Impl& api() override;
-  Envoy::ThreadLocal::Instance& tls() override;
   Envoy::Stats::Store& store() const override;
 
   bool run(OutputFormatter& formatter) override;

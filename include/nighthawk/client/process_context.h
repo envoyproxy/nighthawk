@@ -13,7 +13,6 @@
 #include "common/api/api_impl.h"
 #include "common/common/logger.h"
 #include "common/event/real_time_system.h"
-#include "common/thread_local/thread_local_impl.h"
 #include "common/uri_impl.h"
 
 namespace Nighthawk {
@@ -34,7 +33,6 @@ public:
   virtual uint32_t determineConcurrency() const PURE;
   virtual Envoy::Event::TimeSystem& time_system() PURE;
   virtual Envoy::Api::Impl& api() PURE;
-  virtual Envoy::ThreadLocal::Instance& tls() PURE;
   virtual Envoy::Stats::Store& store() const PURE;
 
   /**
