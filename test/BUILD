@@ -32,6 +32,7 @@ envoy_cc_test(
         "options_test.cc",
         "output_formatter_test.cc",
         "platform_util_test.cc",
+        "process_context_test.cc",
         "rate_limiter_test.cc",
         "sequencer_test.cc",
         "statistic_test.cc",

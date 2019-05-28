@@ -30,25 +30,14 @@ public:
   virtual ~ProcessContext() = default;
 
   /**
-   * @param level to set the logging level to.
-   */
-  virtual void configureComponentLogLevels(spdlog::level::level_enum level) PURE;
-  /**
    * @return uint32_t the number of workers that will be used based on configuration
    * and available hardware.
    */
   virtual uint32_t determineConcurrency() const PURE;
-  virtual Envoy::Thread::ThreadFactory& thread_factory() PURE;
-  virtual Envoy::Filesystem::Instance& file_system() PURE;
   virtual Envoy::Event::TimeSystem& time_system() PURE;
   virtual Envoy::Api::Impl& api() PURE;
-  virtual Envoy::Event::Dispatcher& dispatcher() const PURE;
   virtual Envoy::ThreadLocal::Instance& tls() PURE;
   virtual Envoy::Stats::Store& store() const PURE;
-
-  virtual const BenchmarkClientFactory& benchmark_client_factory() const PURE;
-  virtual const SequencerFactory& sequencer_factory() const PURE;
-  virtual const StoreFactory& store_factory() const PURE;
 
   /**
    * @param formatter used to transform output into the desired format.

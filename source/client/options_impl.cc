@@ -187,7 +187,7 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options)
       request_body_size_(options.request_options().request_body_size()) {
   for (const auto& header : options.request_options().request_headers()) {
     std::string header_string =
-        fmt::format("{}: {}", header.header().key(), header.header().value());
+        fmt::format("{}:{}", header.header().key(), header.header().value());
     request_headers_.push_back(header_string);
   }
 }

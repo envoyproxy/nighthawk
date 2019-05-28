@@ -31,24 +31,17 @@ public:
   ProcessContextImpl(const Options& options);
   ~ProcessContextImpl() override;
 
-  void configureComponentLogLevels(spdlog::level::level_enum level) override;
   uint32_t determineConcurrency() const override;
 
-  Envoy::Thread::ThreadFactory& thread_factory() override;
-  Envoy::Filesystem::Instance& file_system() override;
   Envoy::Event::TimeSystem& time_system() override;
   Envoy::Api::Impl& api() override;
-  Envoy::Event::Dispatcher& dispatcher() const override;
   Envoy::ThreadLocal::Instance& tls() override;
   Envoy::Stats::Store& store() const override;
-
-  const BenchmarkClientFactory& benchmark_client_factory() const override;
-  const SequencerFactory& sequencer_factory() const override;
-  const StoreFactory& store_factory() const override;
 
   bool run(OutputFormatter& formatter) override;
 
 private:
+  void configureComponentLogLevels(spdlog::level::level_enum level);
   const std::vector<ClientWorkerPtr>& createWorkers(const UriImpl& uri, const uint32_t concurrency);
   std::vector<StatisticPtr> vectorizeStatisticPtrMap(const StatisticFactory& statistic_factory,
                                                      const StatisticPtrMap& statistics) const;

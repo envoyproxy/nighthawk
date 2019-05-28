@@ -37,9 +37,11 @@ TEST_F(FactoriesTest, CreateBenchmarkClient) {
   EXPECT_CALL(options_, prefetchConnections()).Times(1);
   EXPECT_CALL(options_, requestMethod()).Times(1);
   EXPECT_CALL(options_, requestBodySize()).Times(1);
-  EXPECT_CALL(options_, toCommandLineOptions())
-      .Times(1)
-      .WillOnce(Return(ByMove(std::make_unique<nighthawk::client::CommandLineOptions>())));
+  auto cmd = std::make_unique<nighthawk::client::CommandLineOptions>();
+  auto request_headers = cmd->mutable_request_options()->add_request_headers();
+  request_headers->mutable_header()->set_key("foo");
+  request_headers->mutable_header()->set_value("bar");
+  EXPECT_CALL(options_, toCommandLineOptions()).Times(1).WillOnce(Return(ByMove(std::move(cmd))));
 
   auto benchmark_client =
       factory.create(*api_, dispatcher_, stats_store_, std::make_unique<UriImpl>("http://foo/"));

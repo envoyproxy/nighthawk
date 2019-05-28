@@ -49,19 +49,10 @@ ProcessContextImpl::ProcessContextImpl(const Options& options)
   tls_.registerThread(*dispatcher_, true);
 }
 
-Envoy::Thread::ThreadFactory& ProcessContextImpl::thread_factory() { return thread_factory_; };
-Envoy::Filesystem::Instance& ProcessContextImpl::file_system() { return file_system_; }
 Envoy::Event::TimeSystem& ProcessContextImpl::time_system() { return time_system_; }
 Envoy::Api::Impl& ProcessContextImpl::api() { return api_; }
-Envoy::Event::Dispatcher& ProcessContextImpl::dispatcher() const { return *dispatcher_; }
 Envoy::ThreadLocal::Instance& ProcessContextImpl::tls() { return tls_; }
 Envoy::Stats::Store& ProcessContextImpl::store() const { return *store_; }
-
-const BenchmarkClientFactory& ProcessContextImpl::benchmark_client_factory() const {
-  return benchmark_client_factory_;
-}
-const SequencerFactory& ProcessContextImpl::sequencer_factory() const { return sequencer_factory_; }
-const StoreFactory& ProcessContextImpl::store_factory() const { return store_factory_; };
 
 const std::vector<ClientWorkerPtr>& ProcessContextImpl::createWorkers(const UriImpl& uri,
                                                                       const uint32_t concurrency) {
