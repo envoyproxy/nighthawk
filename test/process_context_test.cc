@@ -1,9 +1,9 @@
+#include "client/options_impl.h"
 #include "client/process_context_impl.h"
 
-#include "gtest/gtest.h"
-
-#include "client/options_impl.h"
 #include "test/client/utility.h"
+
+#include "gtest/gtest.h"
 
 using namespace testing;
 
