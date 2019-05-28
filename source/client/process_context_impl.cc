@@ -39,7 +39,7 @@ namespace Client {
 ProcessContextImpl::ProcessContextImpl(const Options& options)
     : store_factory_(options), store_(store_factory_.create()),
       api_(thread_factory_, *store_, time_system_, file_system_),
-      dispatcher_(api().allocateDispatcher()), cleanup_([this] { tls_.shutdownGlobalThreading(); }),
+      dispatcher_(api_.allocateDispatcher()), cleanup_([this] { tls_.shutdownGlobalThreading(); }),
       benchmark_client_factory_(options), sequencer_factory_(options), options_(options)
 
 {
