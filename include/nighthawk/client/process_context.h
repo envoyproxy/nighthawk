@@ -13,7 +13,6 @@
 #include "common/api/api_impl.h"
 #include "common/common/logger.h"
 #include "common/event/real_time_system.h"
-#include "common/uri_impl.h"
 
 namespace Nighthawk {
 namespace Client {
