@@ -1,5 +1,7 @@
 #include "client/process_context_impl.h"
 
+#include <sys/file.h>
+
 #include <chrono>
 #include <fstream>
 #include <iostream>
@@ -40,13 +42,26 @@ ProcessContextImpl::ProcessContextImpl(const Options& options)
     : store_factory_(options), store_(store_factory_.create()),
       api_(thread_factory_, *store_, time_system_, file_system_),
       dispatcher_(api_.allocateDispatcher()), cleanup_([this] { tls_.shutdownGlobalThreading(); }),
-      benchmark_client_factory_(options), sequencer_factory_(options), options_(options)
-
-{
+      benchmark_client_factory_(options), sequencer_factory_(options), options_(options) {
+  machine_lock_ = open(ProcessContextLockFile, O_CREAT | O_RDWR, 0666);
+  if (flock(machine_lock_, LOCK_EX | LOCK_NB)) {
+    throw NighthawkException(
+        "Only a single ProcessContextImpl instance is allowed to exist at a time (machine wide).");
+  }
   ares_library_init(ARES_LIB_INIT_ALL);
   Envoy::Event::Libevent::Global::initialize();
   configureComponentLogLevels(spdlog::level::from_str(options_.verbosity()));
   tls_.registerThread(*dispatcher_, true);
+}
+
+ProcessContextImpl::~ProcessContextImpl() {
+  ares_library_cleanup();
+  if (machine_lock_ > 0) {
+    flock(machine_lock_, LOCK_UN);
+    RELEASE_ASSERT(close(machine_lock_) == 0, "Failure cleaning up global lock");
+    remove(ProcessContextLockFile);
+    machine_lock_ = 0;
+  }
 }
 
 Envoy::Event::TimeSystem& ProcessContextImpl::time_system() { return time_system_; }
@@ -83,8 +98,6 @@ const std::vector<ClientWorkerPtr>& ProcessContextImpl::createWorkers(const UriI
   }
   return workers_;
 }
-
-ProcessContextImpl::~ProcessContextImpl() { ares_library_cleanup(); }
 
 void ProcessContextImpl::configureComponentLogLevels(spdlog::level::level_enum level) {
   // TODO(oschaaf): Add options to tweak the log level of the various log tags

@@ -25,6 +25,15 @@
 namespace Nighthawk {
 namespace Client {
 
+constexpr const char* ProcessContextLockFile = "/tmp/nighthawk.lock";
+
+/**
+ * Only a single instance is allowed at a time machine-wide in this implementation.
+ * Running multiple instances at the same might introduce noise into the measurements.
+ * If there turns out to be a desire to run multiple instances at the same time, we could
+ * introduce a --lock-name option. Note that multiple instances in the same process may
+ * be problematic because of Envoy enforcing a single runtime instance.
+ */
 class ProcessContextImpl : public ProcessContext,
                            public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
@@ -64,6 +73,7 @@ private:
   const BenchmarkClientFactoryImpl benchmark_client_factory_;
   const SequencerFactoryImpl sequencer_factory_;
   const Options& options_;
+  int machine_lock_;
 };
 
 } // namespace Client

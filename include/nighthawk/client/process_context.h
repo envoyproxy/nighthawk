@@ -19,7 +19,7 @@ namespace Client {
 
 /**
  * Process context is shared between the CLI and grpc service. It is capable of executing
- * a full Nighthawk test run. Only a single instance is allowed at a time.
+ * a full Nighthawk test run.
  */
 class ProcessContext {
 public:
@@ -30,8 +30,20 @@ public:
    * and available hardware.
    */
   virtual uint32_t determineConcurrency() const PURE;
+
+  /**
+   * @return Envoy::Event::TimeSystem& The time system implementation used by this instance.
+   */
   virtual Envoy::Event::TimeSystem& time_system() PURE;
+
+  /**
+   * Envoy::Api::Impl& The api implementation used by this instance.
+   */
   virtual Envoy::Api::Impl& api() PURE;
+
+  /**
+   * @return Envoy::Stats::Store& The statistics store implementation used by this instance.
+   */
   virtual Envoy::Stats::Store& store() const PURE;
 
   /**
