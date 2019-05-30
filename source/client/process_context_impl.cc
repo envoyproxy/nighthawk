@@ -1,5 +1,3 @@
-#include "client/process_impl.h"
-
 #include <sys/file.h>
 
 #include <chrono>
@@ -29,6 +27,7 @@
 #include "client/client_worker_impl.h"
 #include "client/factories_impl.h"
 #include "client/options_impl.h"
+#include "client/process_impl.h"
 
 #include "api/client/output.pb.h"
 #include "ares.h"
