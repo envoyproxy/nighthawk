@@ -21,9 +21,9 @@ namespace Client {
  * Process context is shared between the CLI and grpc service. It is capable of executing
  * a full Nighthawk test run.
  */
-class ProcessContext {
+class Process {
 public:
-  virtual ~ProcessContext() = default;
+  virtual ~Process() = default;
 
   /**
    * @return uint32_t the number of workers that will be used based on configuration
@@ -38,7 +38,7 @@ public:
   virtual bool run(OutputFormatter& formatter) PURE;
 };
 
-using ProcessContextPtr = std::unique_ptr<ProcessContext>;
+using ProcessPtr = std::unique_ptr<Process>;
 
 } // namespace Client
 } // namespace Nighthawk

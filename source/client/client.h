@@ -11,7 +11,7 @@
 
 #include "common/common/logger.h"
 
-#include "process_context_impl.h"
+#include "process_impl.h"
 
 namespace Nighthawk {
 namespace Client {

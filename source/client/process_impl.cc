@@ -1,4 +1,4 @@
-#include "client/process_context_impl.h"
+#include "client/process_impl.h"
 
 #include <sys/file.h>
 
@@ -38,32 +38,31 @@ using namespace std::chrono_literals;
 namespace Nighthawk {
 namespace Client {
 
-ProcessContextImpl::ProcessContextImpl(const Options& options,
-                                       Envoy::Event::TimeSystem& time_system)
+ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system)
     : time_system_(time_system), store_factory_(options), store_(store_factory_.create()),
       api_(thread_factory_, *store_, time_system_, file_system_),
       dispatcher_(api_.allocateDispatcher()), cleanup_([this] { tls_.shutdownGlobalThreading(); }),
       benchmark_client_factory_(options), sequencer_factory_(options), options_(options) {
-  machine_lock_ = open(ProcessContextLockFile, O_CREAT | O_RDWR, 0666);
+  machine_lock_ = open(ProcessLockFile, O_CREAT | O_RDWR, 0666);
   if (flock(machine_lock_, LOCK_EX | LOCK_NB)) {
     throw NighthawkException(
-        "Only a single ProcessContextImpl instance is allowed to exist at a time (machine wide).");
+        "Only a single ProcessImpl instance is allowed to exist at a time (machine wide).");
   }
   configureComponentLogLevels(spdlog::level::from_str(options_.verbosity()));
   tls_.registerThread(*dispatcher_, true);
 }
 
-ProcessContextImpl::~ProcessContextImpl() {
+ProcessImpl::~ProcessImpl() {
   if (machine_lock_ > 0) {
     flock(machine_lock_, LOCK_UN);
     RELEASE_ASSERT(close(machine_lock_) == 0, "Failure cleaning up global lock");
-    remove(ProcessContextLockFile);
+    remove(ProcessLockFile);
     machine_lock_ = 0;
   }
 }
 
-const std::vector<ClientWorkerPtr>& ProcessContextImpl::createWorkers(const UriImpl& uri,
-                                                                      const uint32_t concurrency) {
+const std::vector<ClientWorkerPtr>& ProcessImpl::createWorkers(const UriImpl& uri,
+                                                               const uint32_t concurrency) {
   // TODO(oschaaf): Expose kMinimalDelay in configuration.
   const std::chrono::milliseconds kMinimalWorkerDelay = 500ms;
   ASSERT(workers_.size() == 0);
@@ -93,7 +92,7 @@ const std::vector<ClientWorkerPtr>& ProcessContextImpl::createWorkers(const UriI
   return workers_;
 }
 
-void ProcessContextImpl::configureComponentLogLevels(spdlog::level::level_enum level) {
+void ProcessImpl::configureComponentLogLevels(spdlog::level::level_enum level) {
   // TODO(oschaaf): Add options to tweak the log level of the various log tags
   // that are available.
   Envoy::Logger::Registry::setLogLevel(level);
@@ -101,7 +100,7 @@ void ProcessContextImpl::configureComponentLogLevels(spdlog::level::level_enum l
   logger_to_change->setLevel(level);
 }
 
-uint32_t ProcessContextImpl::determineConcurrency() const {
+uint32_t ProcessImpl::determineConcurrency() const {
   uint32_t cpu_cores_with_affinity = PlatformUtils::determineCpuCoresWithAffinity();
   if (cpu_cores_with_affinity == 0) {
     ENVOY_LOG(warn, "Failed to determine the number of cpus with affinity to our thread.");
@@ -132,8 +131,8 @@ uint32_t ProcessContextImpl::determineConcurrency() const {
 }
 
 std::vector<StatisticPtr>
-ProcessContextImpl::vectorizeStatisticPtrMap(const StatisticFactory& statistic_factory,
-                                             const StatisticPtrMap& statistics) const {
+ProcessImpl::vectorizeStatisticPtrMap(const StatisticFactory& statistic_factory,
+                                      const StatisticPtrMap& statistics) const {
   std::vector<StatisticPtr> v;
   for (const auto& statistic : statistics) {
     auto new_statistic = statistic_factory.create()->combine(*(statistic.second));
@@ -144,8 +143,8 @@ ProcessContextImpl::vectorizeStatisticPtrMap(const StatisticFactory& statistic_f
 }
 
 std::vector<StatisticPtr>
-ProcessContextImpl::mergeWorkerStatistics(const StatisticFactory& statistic_factory,
-                                          const std::vector<ClientWorkerPtr>& workers) const {
+ProcessImpl::mergeWorkerStatistics(const StatisticFactory& statistic_factory,
+                                   const std::vector<ClientWorkerPtr>& workers) const {
   // First we init merged_statistics with newly created statistics instances.
   // We do that by adding the same amount of Statistic instances that the first worker has.
   // (We always have at least one worker, and all workers have the same number of Statistic
@@ -172,7 +171,7 @@ ProcessContextImpl::mergeWorkerStatistics(const StatisticFactory& statistic_fact
 }
 
 std::map<std::string, uint64_t>
-ProcessContextImpl::mergeWorkerCounters(const std::vector<ClientWorkerPtr>& workers) const {
+ProcessImpl::mergeWorkerCounters(const std::vector<ClientWorkerPtr>& workers) const {
   std::map<std::string, uint64_t> merged;
   for (auto& w : workers) {
     const auto counters = Utility().mapCountersFromStore(
@@ -189,7 +188,7 @@ ProcessContextImpl::mergeWorkerCounters(const std::vector<ClientWorkerPtr>& work
   return merged;
 }
 
-bool ProcessContextImpl::run(OutputFormatter& formatter) {
+bool ProcessImpl::run(OutputFormatter& formatter) {
   UriImpl uri(options_.uri());
   try {
     uri.resolve(*dispatcher_, Utility::parseAddressFamilyOptionString(options_.addressFamily()));

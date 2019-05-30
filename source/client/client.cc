@@ -26,7 +26,7 @@
 #include "client/client_worker_impl.h"
 #include "client/factories_impl.h"
 #include "client/options_impl.h"
-#include "client/process_context_impl.h"
+#include "client/process_impl.h"
 
 #include "api/client/output.pb.h"
 
@@ -45,10 +45,10 @@ bool Main::run() {
   auto logging_context = std::make_unique<Envoy::Logger::Context>(
       spdlog::level::from_str(options_->verbosity()), "[%T.%f][%t][%L] %v", log_lock);
   Envoy::Event::RealTimeSystem time_system; // NO_CHECK_FORMAT(real_time)
-  ProcessContextImpl process_context(*options_, time_system);
+  ProcessImpl process(*options_, time_system);
   OutputFormatterFactoryImpl output_format_factory(time_system, *options_);
   auto formatter = output_format_factory.create();
-  if (process_context.run(*formatter)) {
+  if (process.run(*formatter)) {
     // TODO(oschaaf): the way we output should be optionized.
     std::cout << formatter->toString();
     ENVOY_LOG(info, "Done.");

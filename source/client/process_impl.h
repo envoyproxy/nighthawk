@@ -7,7 +7,7 @@
 #include "nighthawk/client/factories.h"
 #include "nighthawk/client/options.h"
 #include "nighthawk/client/output_formatter.h"
-#include "nighthawk/client/process_context.h"
+#include "nighthawk/client/process.h"
 #include "nighthawk/common/statistic.h"
 #include "nighthawk/common/uri.h"
 
@@ -26,7 +26,7 @@
 namespace Nighthawk {
 namespace Client {
 
-constexpr const char* ProcessContextLockFile = "/tmp/nighthawk.lock";
+constexpr const char* ProcessLockFile = "/tmp/nighthawk.lock";
 
 /**
  * Only a single instance is allowed at a time machine-wide in this implementation.
@@ -35,11 +35,10 @@ constexpr const char* ProcessContextLockFile = "/tmp/nighthawk.lock";
  * introduce a --lock-name option. Note that multiple instances in the same process may
  * be problematic because of Envoy enforcing a single runtime instance.
  */
-class ProcessContextImpl : public ProcessContext,
-                           public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
+class ProcessImpl : public Process, public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
-  ProcessContextImpl(const Options& options, Envoy::Event::TimeSystem& time_system);
-  ~ProcessContextImpl() override;
+  ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system);
+  ~ProcessImpl() override;
 
   uint32_t determineConcurrency() const override;
   bool run(OutputFormatter& formatter) override;
