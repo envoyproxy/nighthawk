@@ -18,6 +18,7 @@
 #include "common/filesystem/filesystem_impl.h"
 #include "common/thread_local/thread_local_impl.h"
 #include "common/uri_impl.h"
+#include "exe/process_wide.h"
 
 #include "client/benchmark_client_impl.h"
 #include "client/factories_impl.h"
@@ -55,6 +56,7 @@ private:
   std::map<std::string, uint64_t>
   mergeWorkerCounters(const std::vector<ClientWorkerPtr>& workers) const;
 
+  Envoy::ProcessWide process_wide_;
   Envoy::Thread::ThreadFactoryImplPosix thread_factory_;
   Envoy::Filesystem::InstanceImplPosix file_system_;
   Envoy::Event::TimeSystem& time_system_;

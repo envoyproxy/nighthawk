@@ -44,5 +44,6 @@ envoy_cc_library(
         "@envoy//source/common/protobuf:utility_lib",
         "@envoy//source/common/runtime:runtime_lib",
         "@envoy//source/exe:envoy_common_lib",
+        "@envoy//source/exe:process_wide_lib",
     ],
 )

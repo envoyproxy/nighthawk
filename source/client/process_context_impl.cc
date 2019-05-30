@@ -49,14 +49,11 @@ ProcessContextImpl::ProcessContextImpl(const Options& options,
     throw NighthawkException(
         "Only a single ProcessContextImpl instance is allowed to exist at a time (machine wide).");
   }
-  ares_library_init(ARES_LIB_INIT_ALL);
-  Envoy::Event::Libevent::Global::initialize();
   configureComponentLogLevels(spdlog::level::from_str(options_.verbosity()));
   tls_.registerThread(*dispatcher_, true);
 }
 
 ProcessContextImpl::~ProcessContextImpl() {
-  ares_library_cleanup();
   if (machine_lock_ > 0) {
     flock(machine_lock_, LOCK_UN);
     RELEASE_ASSERT(close(machine_lock_) == 0, "Failure cleaning up global lock");
