@@ -6,7 +6,7 @@
 #include "nighthawk/client/client_worker.h"
 #include "nighthawk/client/factories.h"
 #include "nighthawk/client/options.h"
-#include "nighthawk/client/output_formatter.h"
+#include "nighthawk/client/output_collector.h"
 #include "nighthawk/common/statistic.h"
 
 #include "common/common/logger.h"

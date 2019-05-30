@@ -8,7 +8,7 @@
 
 #include "envoy/stats/store.h"
 
-#include "nighthawk/client/output_formatter.h"
+#include "nighthawk/client/output_collector.h"
 
 #include "common/api/api_impl.h"
 #include "common/common/cleanup.h"
@@ -46,11 +46,11 @@ bool Main::run() {
       spdlog::level::from_str(options_->verbosity()), "[%T.%f][%t][%L] %v", log_lock);
   Envoy::Event::RealTimeSystem time_system; // NO_CHECK_FORMAT(real_time)
   ProcessImpl process(*options_, time_system);
-  OutputFormatterFactoryImpl output_format_factory(time_system, *options_);
-  auto formatter = output_format_factory.create();
-  if (process.run(*formatter)) {
+  OutputCollectorFactoryImpl output_format_factory(time_system, *options_);
+  auto collector = output_format_factory.create();
+  if (process.run(*collector)) {
     // TODO(oschaaf): the way we output should be optionized.
-    std::cout << formatter->toString();
+    std::cout << collector->toString();
     ENVOY_LOG(info, "Done.");
     return true;
   }

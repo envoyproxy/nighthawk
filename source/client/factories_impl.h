@@ -49,10 +49,10 @@ public:
   StatisticPtr create() const override;
 };
 
-class OutputFormatterFactoryImpl : public OptionBasedFactoryImpl, public OutputFormatterFactory {
+class OutputCollectorFactoryImpl : public OptionBasedFactoryImpl, public OutputCollectorFactory {
 public:
-  OutputFormatterFactoryImpl(Envoy::TimeSource& time_source, const Options& options);
-  OutputFormatterPtr create() const override;
+  OutputCollectorFactoryImpl(Envoy::TimeSource& time_source, const Options& options);
+  OutputCollectorPtr create() const override;
 
 private:
   Envoy::TimeSource& time_source_;

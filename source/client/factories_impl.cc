@@ -8,7 +8,7 @@
 #include "common/utility.h"
 
 #include "client/benchmark_client_impl.h"
-#include "client/output_formatter_impl.h"
+#include "client/output_collector_impl.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -76,18 +76,18 @@ StatisticFactoryImpl::StatisticFactoryImpl(const Options& options)
 
 StatisticPtr StatisticFactoryImpl::create() const { return std::make_unique<HdrStatistic>(); }
 
-OutputFormatterFactoryImpl::OutputFormatterFactoryImpl(Envoy::TimeSource& time_source,
+OutputCollectorFactoryImpl::OutputCollectorFactoryImpl(Envoy::TimeSource& time_source,
                                                        const Options& options)
     : OptionBasedFactoryImpl(options), time_source_(time_source) {}
 
-OutputFormatterPtr OutputFormatterFactoryImpl::create() const {
+OutputCollectorPtr OutputCollectorFactoryImpl::create() const {
   const std::string format = options_.outputFormat();
   if (format == "human") {
-    return std::make_unique<Client::ConsoleOutputFormatterImpl>(time_source_, options_);
+    return std::make_unique<Client::ConsoleOutputCollectorImpl>(time_source_, options_);
   } else if (format == "json") {
-    return std::make_unique<Client::JsonOutputFormatterImpl>(time_source_, options_);
+    return std::make_unique<Client::JsonOutputCollectorImpl>(time_source_, options_);
   } else if (format == "yaml") {
-    return std::make_unique<Client::YamlOutputFormatterImpl>(time_source_, options_);
+    return std::make_unique<Client::YamlOutputCollectorImpl>(time_source_, options_);
   }
   NOT_REACHED_GCOVR_EXCL_LINE;
 }

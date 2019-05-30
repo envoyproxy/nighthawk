@@ -73,20 +73,20 @@ TEST_F(FactoriesTest, CreateStatistic) {
   EXPECT_NE(nullptr, factory.create().get());
 }
 
-class OutputFormatterFactoryTest : public FactoriesTest, public WithParamInterface<const char*> {
+class OutputCollectorFactoryTest : public FactoriesTest, public WithParamInterface<const char*> {
 public:
-  void testOutputFormatter(absl::string_view type) {
+  void testOutputCollector(absl::string_view type) {
     Envoy::Event::SimulatedTimeSystem time_source;
     EXPECT_CALL(options_, toCommandLineOptions());
     EXPECT_CALL(options_, outputFormat()).WillOnce(Return(std::string(type)));
-    OutputFormatterFactoryImpl factory(time_source, options_);
+    OutputCollectorFactoryImpl factory(time_source, options_);
     EXPECT_NE(nullptr, factory.create().get());
   }
 };
 
-TEST_P(OutputFormatterFactoryTest, TestCreation) { testOutputFormatter(GetParam()); }
+TEST_P(OutputCollectorFactoryTest, TestCreation) { testOutputCollector(GetParam()); }
 
-INSTANTIATE_TEST_SUITE_P(OutputFormats, OutputFormatterFactoryTest,
+INSTANTIATE_TEST_SUITE_P(OutputFormats, OutputCollectorFactoryTest,
                          ValuesIn({"human", "json", "yaml"}));
 
 } // namespace Client
