@@ -37,15 +37,10 @@ constexpr const char* ProcessContextLockFile = "/tmp/nighthawk.lock";
 class ProcessContextImpl : public ProcessContext,
                            public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
-  ProcessContextImpl(const Options& options);
+  ProcessContextImpl(const Options& options, Envoy::Event::TimeSystem& time_system);
   ~ProcessContextImpl() override;
 
   uint32_t determineConcurrency() const override;
-
-  Envoy::Event::TimeSystem& time_system() override;
-  Envoy::Api::Impl& api() override;
-  Envoy::Stats::Store& store() const override;
-
   bool run(OutputFormatter& formatter) override;
 
 private:
@@ -62,7 +57,7 @@ private:
 
   Envoy::Thread::ThreadFactoryImplPosix thread_factory_;
   Envoy::Filesystem::InstanceImplPosix file_system_;
-  Envoy::Event::RealTimeSystem time_system_; // NO_CHECK_FORMAT(real_time)
+  Envoy::Event::TimeSystem& time_system_;
   StoreFactoryImpl store_factory_;
   Envoy::Stats::StorePtr store_;
   Envoy::Api::Impl api_;

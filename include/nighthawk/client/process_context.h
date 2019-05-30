@@ -32,21 +32,6 @@ public:
   virtual uint32_t determineConcurrency() const PURE;
 
   /**
-   * @return Envoy::Event::TimeSystem& The time system implementation used by this instance.
-   */
-  virtual Envoy::Event::TimeSystem& time_system() PURE;
-
-  /**
-   * Envoy::Api::Impl& The api implementation used by this instance.
-   */
-  virtual Envoy::Api::Impl& api() PURE;
-
-  /**
-   * @return Envoy::Stats::Store& The statistics store implementation used by this instance.
-   */
-  virtual Envoy::Stats::Store& store() const PURE;
-
-  /**
    * @param formatter used to transform output into the desired format.
    * @return bool true iff execution was successfull.
    */

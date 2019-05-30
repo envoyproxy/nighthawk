@@ -38,8 +38,9 @@ using namespace std::chrono_literals;
 namespace Nighthawk {
 namespace Client {
 
-ProcessContextImpl::ProcessContextImpl(const Options& options)
-    : store_factory_(options), store_(store_factory_.create()),
+ProcessContextImpl::ProcessContextImpl(const Options& options,
+                                       Envoy::Event::TimeSystem& time_system)
+    : time_system_(time_system), store_factory_(options), store_(store_factory_.create()),
       api_(thread_factory_, *store_, time_system_, file_system_),
       dispatcher_(api_.allocateDispatcher()), cleanup_([this] { tls_.shutdownGlobalThreading(); }),
       benchmark_client_factory_(options), sequencer_factory_(options), options_(options) {
@@ -64,10 +65,6 @@ ProcessContextImpl::~ProcessContextImpl() {
   }
 }
 
-Envoy::Event::TimeSystem& ProcessContextImpl::time_system() { return time_system_; }
-Envoy::Api::Impl& ProcessContextImpl::api() { return api_; }
-Envoy::Stats::Store& ProcessContextImpl::store() const { return *store_; }
-
 const std::vector<ClientWorkerPtr>& ProcessContextImpl::createWorkers(const UriImpl& uri,
                                                                       const uint32_t concurrency) {
   // TODO(oschaaf): Expose kMinimalDelay in configuration.
@@ -84,7 +81,7 @@ const std::vector<ClientWorkerPtr>& ProcessContextImpl::createWorkers(const UriI
   // TODO(oschaaf): Arguably, this ought to be the job of a rate limiter with awareness of the
   // global status quo, which we do not have right now. This has been noted in the
   // track-for-future issue.
-  const auto first_worker_start = time_system().monotonicTime() + kMinimalWorkerDelay;
+  const auto first_worker_start = time_system_.monotonicTime() + kMinimalWorkerDelay;
   const double inter_worker_delay_usec =
       (1. / options_.requestsPerSecond()) * 1000000 / concurrency;
   int worker_number = 0;
@@ -207,7 +204,7 @@ bool ProcessContextImpl::run(OutputFormatter& formatter) {
   bool ok = true;
   Envoy::Runtime::RandomGeneratorImpl generator;
   Envoy::Runtime::ScopedLoaderSingleton loader(
-      Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl({}, generator, store(), tls_)});
+      Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl({}, generator, *store_, tls_)});
 
   for (auto& w : workers_) {
     w->start();

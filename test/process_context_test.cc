@@ -19,16 +19,20 @@ namespace Client {
 class ProcessContextTest : public Test {
 public:
   void runProcessContext() {
+
     OptionsPtr options = TestUtility::createOptionsImpl(
         fmt::format("foo --address-family v4 --duration 2 --rps 10 http://127.0.0.1/"));
 
-    ProcessContextPtr process_context = std::make_unique<ProcessContextImpl>(*options);
-    OutputFormatterFactoryImpl output_format_factory(process_context->time_system(), *options);
+    ProcessContextPtr process_context =
+        std::make_unique<ProcessContextImpl>(*options, time_system_);
+    OutputFormatterFactoryImpl output_format_factory(time_system_, *options);
     auto formatter = output_format_factory.create();
 
     EXPECT_TRUE(process_context->run(*formatter));
     process_context.reset();
   }
+
+  Envoy::Event::RealTimeSystem time_system_; // NO_CHECK_FORMAT(real_time)
 };
 
 TEST_F(ProcessContextTest, TwoProcessContextsInSequence) {
@@ -38,7 +42,7 @@ TEST_F(ProcessContextTest, TwoProcessContextsInSequence) {
 
 TEST_F(ProcessContextTest, SimultaneousProcessContextExcepts) {
   OptionsPtr options = TestUtility::createOptionsImpl(fmt::format("foo http://127.0.0.1/"));
-  ProcessContextImpl process_context(*options);
+  ProcessContextImpl process_context(*options, time_system_);
   EXPECT_THROW_WITH_REGEX(
       runProcessContext(), NighthawkException,
       "Only a single ProcessContextImpl instance is allowed to exist at a time.");

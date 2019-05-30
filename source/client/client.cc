@@ -44,8 +44,9 @@ bool Main::run() {
   Envoy::Thread::MutexBasicLockable log_lock;
   auto logging_context = std::make_unique<Envoy::Logger::Context>(
       spdlog::level::from_str(options_->verbosity()), "[%T.%f][%t][%L] %v", log_lock);
-  ProcessContextImpl process_context(*options_);
-  OutputFormatterFactoryImpl output_format_factory(process_context.time_system(), *options_);
+  Envoy::Event::RealTimeSystem time_system; // NO_CHECK_FORMAT(real_time)
+  ProcessContextImpl process_context(*options_, time_system);
+  OutputFormatterFactoryImpl output_format_factory(time_system, *options_);
   auto formatter = output_format_factory.create();
   if (process_context.run(*formatter)) {
     // TODO(oschaaf): the way we output should be optionized.
