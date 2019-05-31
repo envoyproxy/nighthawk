@@ -41,7 +41,7 @@ public:
   ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system);
   ~ProcessImpl() override;
 
-  uint32_t determineConcurrency() const override;
+  uint32_t determineConcurrency() const;
   bool run(OutputCollector& collector) override;
 
 private:
@@ -70,7 +70,6 @@ private:
   const BenchmarkClientFactoryImpl benchmark_client_factory_;
   const SequencerFactoryImpl sequencer_factory_;
   const Options& options_;
-  int machine_lock_;
 };
 
 } // namespace Client

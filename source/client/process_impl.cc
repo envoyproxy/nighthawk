@@ -43,23 +43,11 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
       api_(thread_factory_, *store_, time_system_, file_system_),
       dispatcher_(api_.allocateDispatcher()), cleanup_([this] { tls_.shutdownGlobalThreading(); }),
       benchmark_client_factory_(options), sequencer_factory_(options), options_(options) {
-  machine_lock_ = open(ProcessLockFile, O_CREAT | O_RDWR, 0666);
-  if (flock(machine_lock_, LOCK_EX | LOCK_NB)) {
-    throw NighthawkException(
-        "Only a single ProcessImpl instance is allowed to exist at a time (machine wide).");
-  }
   configureComponentLogLevels(spdlog::level::from_str(options_.verbosity()));
   tls_.registerThread(*dispatcher_, true);
 }
 
-ProcessImpl::~ProcessImpl() {
-  if (machine_lock_ > 0) {
-    flock(machine_lock_, LOCK_UN);
-    RELEASE_ASSERT(close(machine_lock_) == 0, "Failure cleaning up global lock");
-    remove(ProcessLockFile);
-    machine_lock_ = 0;
-  }
-}
+ProcessImpl::~ProcessImpl() {}
 
 const std::vector<ClientWorkerPtr>& ProcessImpl::createWorkers(const UriImpl& uri,
                                                                const uint32_t concurrency) {

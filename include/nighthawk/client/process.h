@@ -26,12 +26,6 @@ public:
   virtual ~Process() = default;
 
   /**
-   * @return uint32_t the number of workers that will be used based on configuration
-   * and available hardware.
-   */
-  virtual uint32_t determineConcurrency() const PURE;
-
-  /**
    * @param collector used to transform output into the desired format.
    * @return bool true iff execution was successfull.
    */

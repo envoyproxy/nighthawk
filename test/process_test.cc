@@ -39,12 +39,5 @@ TEST_F(ProcessTest, TwoProcesssInSequence) {
   runProcess();
 }
 
-TEST_F(ProcessTest, SimultaneousProcessExcepts) {
-  OptionsPtr options = TestUtility::createOptionsImpl(fmt::format("foo http://127.0.0.1/"));
-  ProcessImpl process(*options, time_system_);
-  EXPECT_THROW_WITH_REGEX(runProcess(), NighthawkException,
-                          "Only a single ProcessImpl instance is allowed to exist at a time.");
-}
-
 } // namespace Client
 } // namespace Nighthawk
