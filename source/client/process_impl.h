@@ -27,8 +27,6 @@
 namespace Nighthawk {
 namespace Client {
 
-constexpr const char* ProcessLockFile = "/tmp/nighthawk.lock";
-
 /**
  * Only a single instance is allowed at a time machine-wide in this implementation.
  * Running multiple instances at the same might introduce noise into the measurements.
