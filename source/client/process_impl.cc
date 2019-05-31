@@ -47,8 +47,6 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
   tls_.registerThread(*dispatcher_, true);
 }
 
-ProcessImpl::~ProcessImpl() {}
-
 const std::vector<ClientWorkerPtr>& ProcessImpl::createWorkers(const UriImpl& uri,
                                                                const uint32_t concurrency) {
   // TODO(oschaaf): Expose kMinimalDelay in configuration.

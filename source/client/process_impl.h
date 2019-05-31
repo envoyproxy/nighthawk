@@ -39,7 +39,6 @@ constexpr const char* ProcessLockFile = "/tmp/nighthawk.lock";
 class ProcessImpl : public Process, public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
   ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system);
-  ~ProcessImpl() override;
 
   uint32_t determineConcurrency() const;
   bool run(OutputCollector& collector) override;
