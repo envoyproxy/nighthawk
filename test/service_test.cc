@@ -1,21 +1,20 @@
+#include <grpc++/grpc++.h>
+
 #include <chrono>
 
 #include "nighthawk/common/exception.h"
 
+#include "common/grpc/async_client_impl.h"
+
+#include "client/service_impl.h"
+
 #include "test/mocks.h"
-
-#include "gtest/gtest.h"
-
 #include "test/mocks/upstream/mocks.h"
-
-#include <grpc++/grpc++.h>
-
 #include "test/test_common/environment.h"
 #include "test/test_common/network_utility.h"
 
 #include "api/client/service.pb.h"
-#include "client/service_impl.h"
-#include "common/grpc/async_client_impl.h"
+#include "gtest/gtest.h"
 
 using namespace std::chrono_literals;
 using namespace testing;
