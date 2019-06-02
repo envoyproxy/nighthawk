@@ -41,6 +41,19 @@ private:
   std::condition_variable condvar_;
 };
 
+class ServiceProcessResult {
+public:
+  ServiceProcessResult(const nighthawk::client::SendCommandResponse& response, bool success)
+      : response_(response), success_(success) {}
+
+  nighthawk::client::SendCommandResponse response() const { return response_; }
+  bool succes() const { return success_; }
+
+private:
+  const nighthawk::client::SendCommandResponse response_;
+  bool success_;
+};
+
 class ServiceImpl final : public nighthawk::client::NighthawkService::Service,
                           public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 
@@ -55,8 +68,7 @@ private:
   bool EmitResponses(::grpc::ServerReaderWriter<::nighthawk::client::SendCommandResponse,
                                                 ::nighthawk::client::SendCommandRequest>* stream);
 
-  BlockingQueue<nighthawk::client::SendCommandRequest> request_queue_;
-  BlockingQueue<nighthawk::client::SendCommandResponse> response_queue_;
+  BlockingQueue<ServiceProcessResult> response_queue_;
   std::thread nighthawk_runner_thread_;
   Envoy::Event::RealTimeSystem time_system_; // NO_CHECK_FORMAT(real_time)
   ProcessPtr process_;

@@ -20,17 +20,10 @@ void ServiceImpl::NighthawkRunner(nighthawk::client::SendCommandRequest request)
   process_ = std::make_unique<ProcessImpl>(*options, time_system_);
   OutputCollectorFactoryImpl output_format_factory(time_system_, *options);
   auto formatter = output_format_factory.create();
+  bool success = process_->run(*formatter);
   nighthawk::client::SendCommandResponse response;
-
-  if (process_->run(*formatter)) {
-    *(response.mutable_output()->Add()) = formatter->toProto();
-  }
-  /*
-  // TODO(oschaaf): communicate this actual failure to run.
-  else {
-    return grpc::Status(grpc::StatusCode::INTERNAL, "NH failed to execute");
-  }*/
-  response_queue_.Push(response);
+  *(response.mutable_output()->Add()) = formatter->toProto();
+  response_queue_.Push(ServiceProcessResult(response, success));
   process_.reset();
 }
 
@@ -38,8 +31,9 @@ bool ServiceImpl::EmitResponses(
     ::grpc::ServerReaderWriter<::nighthawk::client::SendCommandResponse,
                                ::nighthawk::client::SendCommandRequest>* stream) {
   while (!response_queue_.IsEmpty()) {
-    auto response = response_queue_.Pop();
-    if (!stream->Write(response)) {
+    auto result = response_queue_.Pop();
+    // TODO(oschaaf): handle result.status == false;
+    if (!stream->Write(result.response())) {
       ENVOY_LOG(info, "Stream write failed");
       return false;
     }
@@ -47,14 +41,11 @@ bool ServiceImpl::EmitResponses(
   return true;
 }
 
-// TODO(oschaaf): handle Process.run returning an error correctly.
 // TODO(oschaaf): implement a way to cancel test runs, and update configuration on the fly.
 // TODO(oschaaf): create MockProcess & use in service_test.cc
 // TODO(oschaaf): add some logging to this.
 // TODO(oschaaf): unit-test BlockingQueue
 // TODO(oschaaf): unit-test Process
-// TODO(oschaaf): unit-test the new OptionImpl constructor that takes a proto arg.
-// TODO(oschaaf): move to async grpc server so we can process updates while running a benchmark
 // TODO(oschaaf): validate options, sensible defaults. consider abusing TCLAP for both
 // TODO(oschaaf): aggregate the logs and forward them in the grpc result-response.
 ::grpc::Status ServiceImpl::SendCommand(
