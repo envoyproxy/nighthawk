@@ -1,5 +1,4 @@
 #include "client/service_impl.h"
-#include "client/service.grpc.pb.h"
 
 #include <grpc++/grpc++.h>
 
@@ -49,7 +48,7 @@ bool ServiceImpl::EmitResponses(
 // TODO(oschaaf): validate options, sensible defaults. consider abusing TCLAP for both
 // TODO(oschaaf): aggregate the logs and forward them in the grpc result-response.
 ::grpc::Status ServiceImpl::SendCommand(
-    ::grpc::ServerContext* context,
+    ::grpc::ServerContext* /*context*/,
     ::grpc::ServerReaderWriter<::nighthawk::client::SendCommandResponse,
                                ::nighthawk::client::SendCommandRequest>* stream) {
 

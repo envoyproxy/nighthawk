@@ -1,5 +1,10 @@
 licenses(["notice"])  # Apache 2
 
+load("@com_github_grpc_grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
+load("//bazel:envoy_build_system.bzl", "envoy_package")
+
+envoy_package()
+
 load(
     "@envoy//bazel:envoy_build_system.bzl",
     "envoy_package",
@@ -8,14 +13,11 @@ load("@envoy_api//bazel:api_build_system.bzl", "api_proto_library")
 
 envoy_package()
 
-load("@build_stack_rules_proto//cpp:cpp_grpc_library.bzl", "cpp_grpc_library")
-
 api_proto_library(
     name = "base",
     srcs = [
         "options.proto",
         "output.proto",
-        "service.proto",
     ],
     has_services = 1,
     visibility = ["//visibility:public"],
@@ -24,23 +26,40 @@ api_proto_library(
     ],
 )
 
-#api_proto_library(
-#    name = "service_proto",
-#    srcs = [
-#        "service.proto",
-#    ],
-#    deps = [
-#        ":base",
-#    ],
-#)
+# TODO(OSCHAAF): This is pretty gross, but works for now, so I can iterate on the grpc proto spec more easily.
 
-#cpp_grpc_library(
-#    name = "cpp_service_proto",
-#    has_services = True,
-#    include_imports = False,
-#    transitive = True,
-#    deps = [
-#        ":base",
-#        ":service_proto",
-#    ],
-#)
+proto_library(
+    name = "_base_cc_only",
+    srcs = [
+        "options.proto",
+        "output.proto",
+        "service.proto",
+    ],
+    deps = [
+        "@com_github_gogo_protobuf//:gogo_proto",
+        "@com_google_protobuf//:any_proto",
+        "@com_google_protobuf//:descriptor_proto",
+        "@com_google_protobuf//:duration_proto",
+        "@com_google_protobuf//:empty_proto",
+        "@com_google_protobuf//:struct_proto",
+        "@com_google_protobuf//:timestamp_proto",
+        "@com_google_protobuf//:wrappers_proto",
+        "@com_lyft_protoc_gen_validate//validate:validate_proto",
+        "@envoy_api//envoy/api/v2/core:base_export",
+        "@googleapis//:http_api_protos_proto",
+        "@googleapis//:rpc_status_protos_lib",
+    ],
+)
+
+cc_grpc_library(
+    name = "cpp_service_proto",
+    srcs = [
+        "service.proto",
+    ],
+    proto_only = False,
+    use_external = True,
+    well_known_protos = True,
+    deps = [
+        ":base_cc",
+    ],
+)

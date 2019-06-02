@@ -1,4 +1,9 @@
-#include "client/service.grpc.pb.h"
+#pragma once
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
+#include "api/client/service.grpc.pb.h"
+
+#pragma clang diagnostic pop
 
 #include "common/common/logger.h"
 
