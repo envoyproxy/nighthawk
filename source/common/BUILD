@@ -32,7 +32,8 @@ envoy_cc_library(
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
-        "//api/client:benchmark_options_cc",
+        "//api/client:base_cc",
+        # "//api/client:cpp_service_proto",
         "//include/nighthawk/client:client_includes",
         "//include/nighthawk/common:base_includes",
         "@dep_hdrhistogram_c//:hdrhistogram_c",

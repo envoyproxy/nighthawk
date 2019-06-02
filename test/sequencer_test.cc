@@ -238,6 +238,27 @@ TEST_F(SequencerIntegrationTest, TheHappyFlow) {
   EXPECT_EQ(2, sequencer.statistics().size());
 }
 
+// TODO(oschaaf): would be good to have a mid-run cancellation test as well.
+TEST_F(SequencerIntegrationTest, CancelEarly) {
+  SequencerImpl sequencer(
+      platform_util_, *dispatcher_, time_system_, time_system_.monotonicTime(),
+      std::move(rate_limiter_), sequencer_target_, std::make_unique<StreamingStatistic>(),
+      std::make_unique<StreamingStatistic>(), test_number_of_intervals_ * interval_, 1s);
+
+  EXPECT_EQ(0, callback_test_count_);
+  EXPECT_EQ(0, sequencer.latencyStatistic().count());
+
+  sequencer.start();
+  sequencer.cancel();
+  sequencer.waitForCompletion();
+
+  EXPECT_EQ(0, callback_test_count_);
+  EXPECT_EQ(0, sequencer.latencyStatistic().count());
+  EXPECT_EQ(0, sequencer.blockedStatistic().count());
+
+  EXPECT_EQ(2, sequencer.statistics().size());
+}
+
 // Test an always saturated sequencer target. A concrete example would be a http benchmark client
 // not being able to start any requests, for example due to misconfiguration or system conditions.
 TEST_F(SequencerIntegrationTest, AlwaysSaturatedTargetTest) {

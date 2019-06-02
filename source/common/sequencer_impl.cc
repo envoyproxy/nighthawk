@@ -19,8 +19,7 @@ SequencerImpl::SequencerImpl(const PlatformUtil& platform_util,
       time_source_(time_source), rate_limiter_(std::move(rate_limiter)),
       latency_statistic_(std::move(latency_statistic)),
       blocked_statistic_(std::move(blocked_statistic)), duration_(duration),
-      grace_timeout_(grace_timeout), start_time_(start_time), targets_initiated_(0),
-      targets_completed_(0), running_(false), blocked_(false) {
+      grace_timeout_(grace_timeout), start_time_(start_time) {
   ASSERT(target_ != nullptr, "No SequencerTarget");
   periodic_timer_ = dispatcher_.createTimer([this]() { run(true); });
   spin_timer_ = dispatcher_.createTimer([this]() { run(false); });
@@ -86,7 +85,7 @@ void SequencerImpl::run(bool from_periodic_timer) {
   const auto running_duration = now - start_time_;
 
   // If we exceed the benchmark duration.
-  if (running_duration > duration_) {
+  if (cancelled_ || (running_duration > duration_)) {
     if (targets_completed_ == targets_initiated_) {
       // All work has completed. Stop this sequencer.
       stop(false);
@@ -157,6 +156,8 @@ void SequencerImpl::waitForCompletion() {
   // We should guarantee the flow terminates, so:
   ASSERT(!running_);
 }
+
+void SequencerImpl::cancel() { cancelled_ = true; }
 
 StatisticPtrMap SequencerImpl::statistics() const {
   StatisticPtrMap statistics;

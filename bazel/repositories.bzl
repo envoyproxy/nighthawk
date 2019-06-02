@@ -10,7 +10,12 @@ def nighthawk_dependencies():
         strip_prefix = "envoy-%s" % ENVOY_COMMIT,
         url = "https://github.com/envoyproxy/envoy/archive/%s.tar.gz" % ENVOY_COMMIT,
     )
-
+    http_archive(
+        name = "build_stack_rules_proto",
+        urls = ["https://github.com/stackb/rules_proto/archive/56665373fe541d6f134d394624c8c64cd5652e8c.tar.gz"],
+        sha256 = "78e378237c6e7bd7cfdda155d4f7010b27723f26ebfa6345e79675bddbbebc11",
+        strip_prefix = "rules_proto-56665373fe541d6f134d394624c8c64cd5652e8c",
+    )
     http_archive(
         name = "dep_hdrhistogram_c",
         build_file_content = """

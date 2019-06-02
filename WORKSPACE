@@ -24,3 +24,11 @@ load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_depe
 go_rules_dependencies()
 
 go_register_toolchains()
+
+#load("@com_github_grpc_grpc//bazel:grpc_deps.bzl", "grpc_deps")
+
+#grpc_deps()
+
+load("@build_stack_rules_proto//cpp:deps.bzl", "cpp_proto_compile")
+
+cpp_proto_compile()
