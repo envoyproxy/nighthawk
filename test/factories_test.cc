@@ -37,9 +37,11 @@ TEST_F(FactoriesTest, CreateBenchmarkClient) {
   EXPECT_CALL(options_, prefetchConnections()).Times(1);
   EXPECT_CALL(options_, requestMethod()).Times(1);
   EXPECT_CALL(options_, requestBodySize()).Times(1);
-  EXPECT_CALL(options_, toCommandLineOptions())
-      .Times(1)
-      .WillOnce(Return(ByMove(std::make_unique<nighthawk::client::CommandLineOptions>())));
+  auto cmd = std::make_unique<nighthawk::client::CommandLineOptions>();
+  auto request_headers = cmd->mutable_request_options()->add_request_headers();
+  request_headers->mutable_header()->set_key("foo");
+  request_headers->mutable_header()->set_value("bar");
+  EXPECT_CALL(options_, toCommandLineOptions()).Times(1).WillOnce(Return(ByMove(std::move(cmd))));
 
   auto benchmark_client =
       factory.create(*api_, dispatcher_, stats_store_, std::make_unique<UriImpl>("http://foo/"));
@@ -71,20 +73,20 @@ TEST_F(FactoriesTest, CreateStatistic) {
   EXPECT_NE(nullptr, factory.create().get());
 }
 
-class OutputFormatterFactoryTest : public FactoriesTest, public WithParamInterface<const char*> {
+class OutputCollectorFactoryTest : public FactoriesTest, public WithParamInterface<const char*> {
 public:
-  void testOutputFormatter(absl::string_view type) {
+  void testOutputCollector(absl::string_view type) {
     Envoy::Event::SimulatedTimeSystem time_source;
     EXPECT_CALL(options_, toCommandLineOptions());
     EXPECT_CALL(options_, outputFormat()).WillOnce(Return(std::string(type)));
-    OutputFormatterFactoryImpl factory(time_source, options_);
+    OutputCollectorFactoryImpl factory(time_source, options_);
     EXPECT_NE(nullptr, factory.create().get());
   }
 };
 
-TEST_P(OutputFormatterFactoryTest, TestCreation) { testOutputFormatter(GetParam()); }
+TEST_P(OutputCollectorFactoryTest, TestCreation) { testOutputCollector(GetParam()); }
 
-INSTANTIATE_TEST_SUITE_P(OutputFormats, OutputFormatterFactoryTest,
+INSTANTIATE_TEST_SUITE_P(OutputFormats, OutputCollectorFactoryTest,
                          ValuesIn({"human", "json", "yaml"}));
 
 } // namespace Client

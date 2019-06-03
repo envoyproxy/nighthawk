@@ -3,7 +3,7 @@
 #include "common/filesystem/filesystem_impl.h"
 #include "common/statistic_impl.h"
 
-#include "client/output_formatter_impl.h"
+#include "client/output_collector_impl.h"
 
 #include "test/mocks.h"
 #include "test/test_common/environment.h"
@@ -18,9 +18,9 @@ using namespace testing;
 namespace Nighthawk {
 namespace Client {
 
-class OutputFormatterTest : public Test {
+class OutputCollectorTest : public Test {
 public:
-  OutputFormatterTest() {
+  OutputCollectorTest() {
     StatisticPtr used_statistic = std::make_unique<StreamingStatistic>();
     StatisticPtr empty_statistic = std::make_unique<StreamingStatistic>();
     used_statistic->setId("stat_id");
@@ -38,12 +38,12 @@ public:
             std::make_unique<nighthawk::client::CommandLineOptions>(command_line_options_))));
   }
 
-  void expectEqualToGoldFile(OutputFormatterImpl& formatter, absl::string_view path) {
-    formatter.addResult("worker_0", statistics_, counters_);
-    formatter.addResult("worker_1", statistics_, counters_);
-    formatter.addResult("global", statistics_, counters_);
+  void expectEqualToGoldFile(OutputCollectorImpl& collector, absl::string_view path) {
+    collector.addResult("worker_0", statistics_, counters_);
+    collector.addResult("worker_1", statistics_, counters_);
+    collector.addResult("global", statistics_, counters_);
     EXPECT_EQ(filesystem_.fileReadToEnd(TestEnvironment::runfilesPath(std::string(path))),
-              formatter.toString());
+              collector.toString());
   }
 
   nighthawk::client::CommandLineOptions command_line_options_;
@@ -54,19 +54,19 @@ public:
   std::map<std::string, uint64_t> counters_;
 };
 
-TEST_F(OutputFormatterTest, CliFormatter) {
-  ConsoleOutputFormatterImpl formatter(time_system_, options_);
-  expectEqualToGoldFile(formatter, "test/test_data/output_formatter.txt.gold");
+TEST_F(OutputCollectorTest, CliFormatter) {
+  ConsoleOutputCollectorImpl collector(time_system_, options_);
+  expectEqualToGoldFile(collector, "test/test_data/output_collector.txt.gold");
 }
 
-TEST_F(OutputFormatterTest, JsonFormatter) {
-  JsonOutputFormatterImpl formatter(time_system_, options_);
-  expectEqualToGoldFile(formatter, "test/test_data/output_formatter.json.gold");
+TEST_F(OutputCollectorTest, JsonFormatter) {
+  JsonOutputCollectorImpl collector(time_system_, options_);
+  expectEqualToGoldFile(collector, "test/test_data/output_collector.json.gold");
 }
 
-TEST_F(OutputFormatterTest, YamlFormatter) {
-  YamlOutputFormatterImpl formatter(time_system_, options_);
-  expectEqualToGoldFile(formatter, "test/test_data/output_formatter.yaml.gold");
+TEST_F(OutputCollectorTest, YamlFormatter) {
+  YamlOutputCollectorImpl collector(time_system_, options_);
+  expectEqualToGoldFile(collector, "test/test_data/output_collector.yaml.gold");
 }
 
 } // namespace Client

@@ -84,6 +84,20 @@ TEST_F(OptionsImplTest, All) {
   }
 
   EXPECT_EQ(request_options.request_body_size(), options->requestBodySize());
+
+  // Now we construct a new options from the proto we created above. This should result in an
+  // OptionsImpl instance equivalent to options. We test that by converting both to yaml strings,
+  // expecting them to be equal. This should provide helpful output when the test fails by showing
+  // the unexpected (yaml) diff.
+  OptionsImpl options_from_proto(*cmd);
+  Envoy::MessageUtil util;
+  std::string s1 = Envoy::MessageUtil::getYamlStringFromMessage(
+      *(options_from_proto.toCommandLineOptions()), true, true);
+  std::string s2 = Envoy::MessageUtil::getYamlStringFromMessage(*cmd, true, true);
+  EXPECT_EQ(s1, s2);
+  // For good measure, also directly test for proto equivalence, though this should be
+  // superfluous.
+  EXPECT_TRUE(util(*(options_from_proto.toCommandLineOptions()), *cmd));
 }
 
 // Test that TCLAP's way of handling --help behaves as expected.

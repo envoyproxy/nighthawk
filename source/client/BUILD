@@ -16,7 +16,8 @@ envoy_cc_library(
         "client_worker_impl.cc",
         "factories_impl.cc",
         "options_impl.cc",
-        "output_formatter_impl.cc",
+        "output_collector_impl.cc",
+        "process_impl.cc",
         "stream_decoder.cc",
     ],
     hdrs = [
@@ -25,7 +26,8 @@ envoy_cc_library(
         "client_worker_impl.h",
         "factories_impl.h",
         "options_impl.h",
-        "output_formatter_impl.h",
+        "output_collector_impl.h",
+        "process_impl.h",
         "stream_decoder.h",
     ],
     repository = "@envoy",
@@ -42,5 +44,6 @@ envoy_cc_library(
         "@envoy//source/common/protobuf:utility_lib",
         "@envoy//source/common/runtime:runtime_lib",
         "@envoy//source/exe:envoy_common_lib",
+        "@envoy//source/exe:process_wide_lib",
     ],
 )

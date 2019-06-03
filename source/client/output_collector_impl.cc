@@ -1,4 +1,4 @@
-#include "client/output_formatter_impl.h"
+#include "client/output_collector_impl.h"
 
 #include <google/protobuf/util/time_util.h>
 
@@ -10,7 +10,7 @@
 namespace Nighthawk {
 namespace Client {
 
-OutputFormatterImpl::OutputFormatterImpl(Envoy::TimeSource& time_source, const Options& options) {
+OutputCollectorImpl::OutputCollectorImpl(Envoy::TimeSource& time_source, const Options& options) {
   *(output_.mutable_timestamp()) = Envoy::Protobuf::util::TimeUtil::NanosecondsToTimestamp(
       std::chrono::duration_cast<std::chrono::nanoseconds>(
           time_source.systemTime().time_since_epoch())
@@ -18,13 +18,13 @@ OutputFormatterImpl::OutputFormatterImpl(Envoy::TimeSource& time_source, const O
   output_.set_allocated_options(options.toCommandLineOptions().release());
 }
 
-nighthawk::client::Output OutputFormatterImpl::toProto() const { return output_; }
+nighthawk::client::Output OutputCollectorImpl::toProto() const { return output_; }
 
-ConsoleOutputFormatterImpl::ConsoleOutputFormatterImpl(Envoy::TimeSource& time_source,
+ConsoleOutputCollectorImpl::ConsoleOutputCollectorImpl(Envoy::TimeSource& time_source,
                                                        const Options& options)
-    : OutputFormatterImpl(time_source, options) {}
+    : OutputCollectorImpl(time_source, options) {}
 
-std::string ConsoleOutputFormatterImpl::toString() const {
+std::string ConsoleOutputCollectorImpl::toString() const {
   std::stringstream ss;
   const auto& output = toProto();
   ss << "Nighthawk - A layer 7 protocol benchmarking tool." << std::endl << std::endl;
@@ -72,13 +72,13 @@ std::string ConsoleOutputFormatterImpl::toString() const {
 }
 
 std::string
-ConsoleOutputFormatterImpl::formatProtoDuration(const Envoy::Protobuf::Duration& duration) const {
+ConsoleOutputCollectorImpl::formatProtoDuration(const Envoy::Protobuf::Duration& duration) const {
   auto c = Envoy::ProtobufUtil::TimeUtil::DurationToMicroseconds(duration);
   return fmt::format("{}s {:03}ms {:03}us", (c % 1'000'000'000) / 1'000'000,
                      (c % 1'000'000) / 1'000, c % 1'000);
 }
 
-std::string ConsoleOutputFormatterImpl::statIdtoFriendlyStatName(absl::string_view stat_id) const {
+std::string ConsoleOutputCollectorImpl::statIdtoFriendlyStatName(absl::string_view stat_id) const {
   if (stat_id == "benchmark_http_client.queue_to_connect") {
     return "Queueing and connection setup latency";
   } else if (stat_id == "benchmark_http_client.request_to_response") {
@@ -91,7 +91,7 @@ std::string ConsoleOutputFormatterImpl::statIdtoFriendlyStatName(absl::string_vi
   return std::string(stat_id);
 }
 
-void OutputFormatterImpl::addResult(absl::string_view name,
+void OutputCollectorImpl::addResult(absl::string_view name,
                                     const std::vector<StatisticPtr>& statistics,
                                     const std::map<std::string, uint64_t>& counters) {
   auto result = output_.add_results();
@@ -106,19 +106,19 @@ void OutputFormatterImpl::addResult(absl::string_view name,
   }
 }
 
-JsonOutputFormatterImpl::JsonOutputFormatterImpl(Envoy::TimeSource& time_source,
+JsonOutputCollectorImpl::JsonOutputCollectorImpl(Envoy::TimeSource& time_source,
                                                  const Options& options)
-    : OutputFormatterImpl(time_source, options) {}
+    : OutputCollectorImpl(time_source, options) {}
 
-std::string JsonOutputFormatterImpl::toString() const {
+std::string JsonOutputCollectorImpl::toString() const {
   return Envoy::MessageUtil::getJsonStringFromMessage(toProto(), true, true);
 }
 
-YamlOutputFormatterImpl::YamlOutputFormatterImpl(Envoy::TimeSource& time_source,
+YamlOutputCollectorImpl::YamlOutputCollectorImpl(Envoy::TimeSource& time_source,
                                                  const Options& options)
-    : OutputFormatterImpl(time_source, options) {}
+    : OutputCollectorImpl(time_source, options) {}
 
-std::string YamlOutputFormatterImpl::toString() const {
+std::string YamlOutputCollectorImpl::toString() const {
   return Envoy::MessageUtil::getYamlStringFromMessage(toProto(), true, true);
 }
 

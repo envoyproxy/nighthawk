@@ -13,6 +13,7 @@ namespace Client {
 class OptionsImpl : public Options {
 public:
   OptionsImpl(int argc, const char* const* argv);
+  OptionsImpl(const nighthawk::client::CommandLineOptions& options);
 
   Client::CommandLineOptionsPtr toCommandLineOptions() const override;
 

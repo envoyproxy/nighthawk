@@ -175,6 +175,23 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   }
 }
 
+OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options)
+    : requests_per_second_(options.requests_per_second()), connections_(options.connections()),
+      duration_(options.duration().seconds()), timeout_(options.timeout().seconds()),
+      uri_(options.uri()), h2_(options.h2()), concurrency_(options.concurrency()),
+      verbosity_(options.verbosity()), output_format_(options.output_format()),
+      prefetch_connections_(options.prefetch_connections()), burst_size_(options.burst_size()),
+      address_family_(options.address_family()),
+      request_method_(
+          ::envoy::api::v2::core::RequestMethod_Name(options.request_options().request_method())),
+      request_body_size_(options.request_options().request_body_size()) {
+  for (const auto& header : options.request_options().request_headers()) {
+    std::string header_string =
+        fmt::format("{}:{}", header.header().key(), header.header().value());
+    request_headers_.push_back(header_string);
+  }
+}
+
 CommandLineOptionsPtr OptionsImpl::toCommandLineOptions() const {
   CommandLineOptionsPtr command_line_options =
       std::make_unique<nighthawk::client::CommandLineOptions>();
