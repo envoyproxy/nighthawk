@@ -2,8 +2,7 @@
 
 #include <grpc++/grpc++.h>
 
-#include "common/common/lock_guard.h"
-
+#include "api/client/options.pb.validate.h"
 #include "client/client.h"
 #include "client/options_impl.h"
 
@@ -56,17 +55,27 @@ bool ServiceImpl::EmitResponses(
   try {
     nighthawk::client::SendCommandRequest request;
     while (!error && stream->Read(&request)) {
-      switch (request.command_type()) {
-      case nighthawk::client::SendCommandRequest_CommandType::SendCommandRequest_CommandType_kStart:
-        if (nighthawk_runner_thread_.joinable()) {
-          ENVOY_LOG(error, "Only a single benchmark session is allowed at a time.");
-          error = true;
-        } else {
-          nighthawk_runner_thread_ = std::thread(&ServiceImpl::NighthawkRunner, this, request);
-        }
+      try {
+        Envoy::MessageUtil::validate(request.options());
+      } catch (Envoy::EnvoyException exception) {
+        ENVOY_LOG(error, "Request options validation error: {}", exception.what());
+        error = true;
         break;
-      default:
-        NOT_REACHED_GCOVR_EXCL_LINE;
+      }
+      if (!error) {
+        switch (request.command_type()) {
+        case nighthawk::client::SendCommandRequest_CommandType::
+            SendCommandRequest_CommandType_kStart:
+          if (nighthawk_runner_thread_.joinable()) {
+            ENVOY_LOG(error, "Only a single benchmark session is allowed at a time.");
+            error = true;
+          } else {
+            nighthawk_runner_thread_ = std::thread(&ServiceImpl::NighthawkRunner, this, request);
+          }
+          break;
+        default:
+          NOT_REACHED_GCOVR_EXCL_LINE;
+        }
       }
     }
     // TODO(oschaaf): which exceptions do we want to catch?

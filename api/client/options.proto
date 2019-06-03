@@ -16,11 +16,11 @@ message RequestOptions {
 // can arrive via CLI is just a concrete detail. Change this to reflect that.
 message CommandLineOptions {
   // See :option:`--rps` for details.
-  uint64 requests_per_second = 1;
+  uint64 requests_per_second = 1 [(validate.rules).uint64 = {gte: 1, lte: 1000000}];
   // See :option:`--connections` for details.
-  uint64 connections = 2;
+  uint64 connections = 2 [(validate.rules).uint64 = {gte: 1, lte: 1000000}];
   // See :option:`--duration` for details.
-  google.protobuf.Duration duration = 3;
+  google.protobuf.Duration duration = 3 [(validate.rules).duration.gte.seconds = 1];
   // See :option:`--timeout` for details.
   google.protobuf.Duration timeout = 4;
   // See :option:`--h2` for details.
