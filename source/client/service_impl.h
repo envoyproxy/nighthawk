@@ -70,8 +70,9 @@ public:
 
 private:
   void NighthawkRunner(nighthawk::client::SendCommandRequest start_request);
-  bool EmitResponses(::grpc::ServerReaderWriter<::nighthawk::client::SendCommandResponse,
-                                                ::nighthawk::client::SendCommandRequest>* stream);
+  void EmitResponses(::grpc::ServerReaderWriter<::nighthawk::client::SendCommandResponse,
+                                                ::nighthawk::client::SendCommandRequest>* stream,
+                     std::string& error_messages);
 
   BlockingQueue<ServiceProcessResult> response_queue_;
   std::thread nighthawk_runner_thread_;

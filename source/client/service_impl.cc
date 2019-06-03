@@ -25,18 +25,21 @@ void ServiceImpl::NighthawkRunner(nighthawk::client::SendCommandRequest request)
   process_.reset();
 }
 
-bool ServiceImpl::EmitResponses(
+void ServiceImpl::EmitResponses(
     ::grpc::ServerReaderWriter<::nighthawk::client::SendCommandResponse,
-                               ::nighthawk::client::SendCommandRequest>* stream) {
+                               ::nighthawk::client::SendCommandRequest>* stream,
+    std::string& error_messages) {
+
   while (!response_queue_.IsEmpty()) {
     auto result = response_queue_.Pop();
-    // TODO(oschaaf): handle result.status == false;
+    if (!result.succes()) {
+      error_messages += "Failure processing request\n";
+    }
+    // We just log write failures and proceed as usual; not much we can do.
     if (!stream->Write(result.response())) {
-      ENVOY_LOG(info, "Stream write failed");
-      return false;
+      ENVOY_LOG(warn, "Stream write failed");
     }
   }
-  return true;
 }
 
 // TODO(oschaaf): implement a way to cancel test runs, and update configuration on the fly.
@@ -51,44 +54,42 @@ bool ServiceImpl::EmitResponses(
     ::grpc::ServerReaderWriter<::nighthawk::client::SendCommandResponse,
                                ::nighthawk::client::SendCommandRequest>* stream) {
 
-  bool error = false;
+  std::string error_message = "";
+
   try {
     nighthawk::client::SendCommandRequest request;
-    while (!error && stream->Read(&request)) {
-      try {
-        Envoy::MessageUtil::validate(request.options());
-      } catch (Envoy::EnvoyException exception) {
-        ENVOY_LOG(error, "Request options validation error: {}", exception.what());
-        error = true;
-        break;
-      }
-      if (!error) {
-        switch (request.command_type()) {
-        case nighthawk::client::SendCommandRequest_CommandType::
-            SendCommandRequest_CommandType_kStart:
-          if (nighthawk_runner_thread_.joinable()) {
-            ENVOY_LOG(error, "Only a single benchmark session is allowed at a time.");
-            error = true;
-          } else {
-            nighthawk_runner_thread_ = std::thread(&ServiceImpl::NighthawkRunner, this, request);
-          }
+    while (stream->Read(&request)) {
+      // TODO(oschaaf): validate() ought to throw in one of the tests, figure out why that does not
+      // seem to happen.
+      Envoy::MessageUtil::validate(request.options());
+      switch (request.command_type()) {
+      case nighthawk::client::SendCommandRequest_CommandType::SendCommandRequest_CommandType_kStart:
+        if (nighthawk_runner_thread_.joinable()) {
+          error_message = "Only a single benchmark session is allowed at a time.";
           break;
-        default:
-          NOT_REACHED_GCOVR_EXCL_LINE;
+        } else {
+          nighthawk_runner_thread_ = std::thread(&ServiceImpl::NighthawkRunner, this, request);
         }
+        break;
+      case nighthawk::client::SendCommandRequest_CommandType::
+          SendCommandRequest_CommandType_kUpdate:
+        error_message = "Configuration updates are not supported yet.";
+        break;
+      default:
+        NOT_REACHED_GCOVR_EXCL_LINE;
       }
     }
-    // TODO(oschaaf): which exceptions do we want to catch?
-  } catch (std::exception& e) {
-    ENVOY_LOG(error, "Exception: {}", e.what());
-    error = true;
+  } catch (Envoy::EnvoyException exception) {
+    error_message = fmt::format("Request options validation error: {}", exception.what());
   }
 
   nighthawk_runner_thread_.join();
-  EmitResponses(stream);
-  ENVOY_LOG(info, "Server side done");
-  return error ? grpc::Status(grpc::StatusCode::INTERNAL, "NH encountered an exception")
-               : grpc::Status::OK;
+  EmitResponses(stream, error_message);
+  if (error_message.empty()) {
+    return grpc::Status::OK;
+  }
+  ENVOY_LOG(error, "One or more errors processing grpc request stream: {}", error_message);
+  return grpc::Status(grpc::StatusCode::INTERNAL, fmt::format("Error: {}", error_message));
 }
 
 } // namespace Client
