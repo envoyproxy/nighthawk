@@ -80,10 +80,12 @@ void ServiceImpl::EmitResponses(
       }
     }
   } catch (Envoy::EnvoyException exception) {
-    error_message = fmt::format("Request options validation error: {}", exception.what());
+    error_message = fmt::format("Error: {}", exception.what());
   }
 
-  nighthawk_runner_thread_.join();
+  if (nighthawk_runner_thread_.joinable()) {
+    nighthawk_runner_thread_.join();
+  }
   EmitResponses(stream, error_message);
   if (error_message.empty()) {
     return grpc::Status::OK;

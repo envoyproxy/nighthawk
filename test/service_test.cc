@@ -15,6 +15,7 @@
 
 using namespace std::chrono_literals;
 using namespace testing;
+using testing::MatchesRegex;
 
 namespace Nighthawk {
 namespace Client {
@@ -54,7 +55,7 @@ public:
         nighthawk::client::SendCommandRequest_CommandType::SendCommandRequest_CommandType_kStart);
   }
 
-  void runWithFailingValidationExpectations() {
+  void runWithFailingValidationExpectations(std::string match_error = "") {
     auto r = stub_->SendCommand(&context_);
     request_.set_command_type(
         nighthawk::client::SendCommandRequest_CommandType::SendCommandRequest_CommandType_kStart);
@@ -62,6 +63,10 @@ public:
     r->WritesDone();
     EXPECT_FALSE(r->Read(&response_));
     auto status = r->Finish();
+
+    if (!match_error.empty()) {
+      EXPECT_THAT(status.error_message(), HasSubstr(match_error));
+    }
     EXPECT_FALSE(status.ok());
   }
 
@@ -80,17 +85,12 @@ INSTANTIATE_TEST_SUITE_P(IpVersions, ServiceTest,
 
 TEST_P(ServiceTest, Basic) {
   auto r = stub_->SendCommand(&context_);
-
   request_.set_command_type(
       nighthawk::client::SendCommandRequest_CommandType::SendCommandRequest_CommandType_kStart);
   r->Write(request_, {});
-  // request_.set_command_type(
-  //    nighthawk::client::SendCommandRequest_CommandType::SendCommandRequest_CommandType_kUpdate);
-  // r->Write(request_, {});
   r->WritesDone();
   EXPECT_TRUE(r->Read(&response_));
-
-  // std::cerr << response.DebugString() << std::endl;
+  EXPECT_EQ(6, response_.output(0).results(0).counters().size());
   auto status = r->Finish();
   EXPECT_TRUE(status.ok());
 }
@@ -103,7 +103,6 @@ TEST_P(ServiceTest, AttemptDoubleStart) {
   EXPECT_TRUE(r->Write(request_, {}));
   EXPECT_TRUE(r->WritesDone());
   EXPECT_TRUE(r->Read(&response_));
-  // std::cerr << response.DebugString() << std::endl;
   auto status = r->Finish();
   EXPECT_FALSE(status.ok());
 }
@@ -111,7 +110,8 @@ TEST_P(ServiceTest, AttemptDoubleStart) {
 TEST_P(ServiceTest, InvalidRps) {
   auto options = request_.mutable_options();
   options->set_requests_per_second(0);
-  runWithFailingValidationExpectations();
+  runWithFailingValidationExpectations(
+      "CommandLineOptionsValidationError.RequestsPerSecond: [\"value must be inside range");
 }
 
 } // namespace Client
