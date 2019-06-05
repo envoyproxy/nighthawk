@@ -48,15 +48,17 @@ private:
 
 class ServiceProcessResult {
 public:
-  ServiceProcessResult(const nighthawk::client::SendCommandResponse& response, bool success)
-      : response_(response), success_(success) {}
+  ServiceProcessResult(const nighthawk::client::SendCommandResponse& response,
+                       absl::string_view error_message)
+      : response_(response), error_message_(std::string(error_message)) {}
 
   nighthawk::client::SendCommandResponse response() const { return response_; }
-  bool succes() const { return success_; }
+  bool success() const  { return error_message_.empty(); }
+  std::string error_message() const { return error_message_; }
 
 private:
   const nighthawk::client::SendCommandResponse response_;
-  bool success_;
+  std::string error_message_;
 };
 
 class ServiceImpl final : public nighthawk::client::NighthawkService::Service,
@@ -77,7 +79,8 @@ private:
   BlockingQueue<ServiceProcessResult> response_queue_;
   std::thread nighthawk_runner_thread_;
   Envoy::Event::RealTimeSystem time_system_; // NO_CHECK_FORMAT(real_time)
-  ProcessPtr process_;
+  ProcessPtr process_ GUARDED_BY(mutex_);
+  Envoy::Thread::MutexBasicLockable mutex_;
 };
 
 } // namespace Client

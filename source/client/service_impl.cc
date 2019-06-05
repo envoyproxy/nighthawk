@@ -11,18 +11,30 @@ namespace Nighthawk {
 namespace Client {
 
 void ServiceImpl::NighthawkRunner(nighthawk::client::SendCommandRequest request) {
+  Envoy::Thread::LockGuard lock(mutex_);
   OptionsPtr options = std::make_unique<OptionsImpl>(request.options());
   Envoy::Thread::MutexBasicLockable log_lock;
   auto logging_context = std::make_unique<Envoy::Logger::Context>(
       spdlog::level::from_str(options->verbosity()), "[%T.%f][%t][%L] %v", log_lock);
-  ENVOY_LOG(info, "starting {}", request.options().DebugString());
   process_ = std::make_unique<ProcessImpl>(*options, time_system_);
+
+  // We perform this validation here because we need to rutime to be initialized
+  // for this, something that ProcessContext does for us.
+  try {
+    Envoy::MessageUtil::validate(request.options());
+  } catch (Envoy::EnvoyException exception) {
+    nighthawk::client::SendCommandResponse response;
+    response_queue_.Push(ServiceProcessResult(response, exception.what()));
+    process_.reset();
+    return;
+  }
+
   OutputCollectorFactoryImpl output_format_factory(time_system_, *options);
   auto formatter = output_format_factory.create();
   bool success = process_->run(*formatter);
   nighthawk::client::SendCommandResponse response;
   *(response.mutable_output()->Add()) = formatter->toProto();
-  response_queue_.Push(ServiceProcessResult(response, success));
+  response_queue_.Push(ServiceProcessResult(response, success ? "" : "Unkown failure"));
   process_.reset();
 }
 
@@ -33,8 +45,9 @@ void ServiceImpl::EmitResponses(
 
   while (!response_queue_.IsEmpty()) {
     auto result = response_queue_.Pop();
-    if (!result.succes()) {
-      error_messages += "Failure processing request\n";
+    if (!result.success()) {
+      error_messages.append(result.error_message());
+      continue;
     }
     // We just log write failures and proceed as usual; not much we can do.
     if (!stream->Write(result.response())) {
@@ -54,34 +67,26 @@ void ServiceImpl::EmitResponses(
     ::grpc::ServerContext* /*context*/,
     ::grpc::ServerReaderWriter<::nighthawk::client::SendCommandResponse,
                                ::nighthawk::client::SendCommandRequest>* stream) {
-
   std::string error_message = "";
 
-  try {
-    nighthawk::client::SendCommandRequest request;
-    while (stream->Read(&request)) {
-      // TODO(oschaaf): validate() ought to throw in one of the tests, figure out why that does not
-      // seem to happen.
-      Envoy::MessageUtil::validate(request.options());
-      switch (request.command_type()) {
-      case nighthawk::client::SendCommandRequest_CommandType::SendCommandRequest_CommandType_kStart:
-        if (nighthawk_runner_thread_.joinable()) {
-          error_message = "Only a single benchmark session is allowed at a time.";
-          break;
-        } else {
-          nighthawk_runner_thread_ = std::thread(&ServiceImpl::NighthawkRunner, this, request);
-        }
+  nighthawk::client::SendCommandRequest request;
+  while (stream->Read(&request)) {
+    Envoy::Thread::LockGuard lock(mutex_);
+    switch (request.command_type()) {
+    case nighthawk::client::SendCommandRequest_CommandType::SendCommandRequest_CommandType_kStart:
+      if (nighthawk_runner_thread_.joinable()) {
+        error_message = "Only a single benchmark session is allowed at a time.";
         break;
-      case nighthawk::client::SendCommandRequest_CommandType::
-          SendCommandRequest_CommandType_kUpdate:
-        error_message = "Configuration updates are not supported yet.";
-        break;
-      default:
-        NOT_REACHED_GCOVR_EXCL_LINE;
+      } else {
+        nighthawk_runner_thread_ = std::thread(&ServiceImpl::NighthawkRunner, this, request);
       }
+      break;
+    case nighthawk::client::SendCommandRequest_CommandType::SendCommandRequest_CommandType_kUpdate:
+      error_message = "Configuration updates are not supported yet.";
+      break;
+    default:
+      NOT_REACHED_GCOVR_EXCL_LINE;
     }
-  } catch (Envoy::EnvoyException exception) {
-    error_message = fmt::format("Error: {}", exception.what());
   }
 
   if (nighthawk_runner_thread_.joinable()) {
