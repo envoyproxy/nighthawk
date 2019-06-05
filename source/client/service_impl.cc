@@ -2,9 +2,10 @@
 
 #include <grpc++/grpc++.h>
 
-#include "api/client/options.pb.validate.h"
 #include "client/client.h"
 #include "client/options_impl.h"
+
+#include "api/client/options.pb.validate.h"
 
 namespace Nighthawk {
 namespace Client {

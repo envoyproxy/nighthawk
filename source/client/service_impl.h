@@ -5,11 +5,11 @@
 
 #pragma clang diagnostic pop
 
-#include "common/common/logger.h"
-
-#include <condition_variable>
-#include <mutex>
 #include <queue>
+
+#include "common/common/lock_guard.h"
+#include "common/common/logger.h"
+#include "common/common/thread.h"
 
 #include "nighthawk/client/process.h"
 
@@ -20,15 +20,15 @@ namespace Client {
 template <class T> class BlockingQueue {
 public:
   void Push(T element) {
-    std::lock_guard<std::mutex> lock(mutex_);
+    Envoy::Thread::LockGuard lock(mutex_);
     queue_.push(element);
-    condvar_.notify_one();
+    condvar_.notifyOne();
   }
 
   T Pop() {
-    std::unique_lock<std::mutex> lock(mutex_);
+    Envoy::Thread::LockGuard lock(mutex_);
     while (queue_.empty()) {
-      condvar_.wait(lock);
+      condvar_.wait(mutex_);
     }
     T element = queue_.front();
     queue_.pop();
@@ -36,14 +36,14 @@ public:
   }
 
   bool IsEmpty() {
-    std::unique_lock<std::mutex> lock(mutex_);
+    Envoy::Thread::LockGuard lock(mutex_);
     return queue_.empty();
   }
 
 private:
-  std::queue<T> queue_;
-  mutable std::mutex mutex_;
-  std::condition_variable condvar_;
+  Envoy::Thread::MutexBasicLockable mutex_;
+  Envoy::Thread::CondVar condvar_;
+  std::queue<T> queue_ GUARDED_BY(mutex_);
 };
 
 class ServiceProcessResult {
