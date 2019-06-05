@@ -53,7 +53,7 @@ public:
       : response_(response), error_message_(std::string(error_message)) {}
 
   nighthawk::client::SendCommandResponse response() const { return response_; }
-  bool success() const  { return error_message_.empty(); }
+  bool success() const { return error_message_.empty(); }
   std::string error_message() const { return error_message_; }
 
 private:
