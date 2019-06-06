@@ -1,6 +1,6 @@
 #pragma once
 #pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
+#pragma clang diagnostic warning "-Wunused-parameter"
 #include "api/client/service.grpc.pb.h"
 
 #pragma clang diagnostic pop
