@@ -115,5 +115,17 @@ TEST_P(ServiceTest, InvalidRps) {
       "CommandLineOptionsValidationError.RequestsPerSecond: [\"value must be inside range");
 }
 
+TEST_P(ServiceTest, UpdatesNotSupported) {
+  auto r = stub_->sendCommand(&context_);
+  request_.set_command_type(
+      nighthawk::client::ExecutionRequest_CommandType::ExecutionRequest_CommandType_UPDATE);
+  r->Write(request_, {});
+  r->WritesDone();
+  EXPECT_FALSE(r->Read(&response_));
+  auto status = r->Finish();
+  EXPECT_THAT(status.error_message(), HasSubstr("Configuration updates are not supported yet"));
+  EXPECT_FALSE(status.ok());
+}
+
 } // namespace Client
 } // namespace Nighthawk
