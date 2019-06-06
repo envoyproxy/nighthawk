@@ -5,27 +5,29 @@ package nighthawk.client;
 import "api/client/options.proto";
 import "api/client/output.proto";
 
-message SendCommandRequest {
+message ExecutionRequest {
   enum CommandType {
-    kStart = 0;
-    kUpdate = 1;
-    UNSET = 2;
+    UNSET = 0;
+    START = 1;
+    UPDATE = 2;
   }
   CommandType command_type = 1;
-  CommandLineOptions options = 2;
+  oneof command_specific_options {
+    CommandLineOptions options = 2;
+  }
 }
 
-message SendCommandResponse {
-  repeated Output output = 1;
+message ExecutionResponse {
+  Output output = 1;
 }
 
 service NighthawkService {
 
   /*
-  Accepts a SendCommandRequest, which can be used to initiate, update, or cancel a test.
-  Returns a stream of SendCommandResponse objects which will contain results for all successfull
+  Accepts a ExecutionRequest, which can be used to initiate, update, or cancel a test.
+  Returns a stream of ExecutionResponse objects which will contain results for all successfull
   NH runs.
   */
-  rpc SendCommand(stream SendCommandRequest) returns (stream SendCommandResponse) {
+  rpc sendCommand(stream ExecutionRequest) returns (stream ExecutionResponse) {
   }
 }

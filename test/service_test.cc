@@ -53,13 +53,13 @@ public:
         envoy::api::v2::core::RequestMethod::GET);
     options->set_address_family("v4");
     request_.set_command_type(
-        nighthawk::client::SendCommandRequest_CommandType::SendCommandRequest_CommandType_kStart);
+        nighthawk::client::ExecutionRequest_CommandType::ExecutionRequest_CommandType_START);
   }
 
   void runWithFailingValidationExpectations(std::string match_error = "") {
-    auto r = stub_->SendCommand(&context_);
+    auto r = stub_->sendCommand(&context_);
     request_.set_command_type(
-        nighthawk::client::SendCommandRequest_CommandType::SendCommandRequest_CommandType_kStart);
+        nighthawk::client::ExecutionRequest_CommandType::ExecutionRequest_CommandType_START);
     r->Write(request_, {});
     r->WritesDone();
     EXPECT_FALSE(r->Read(&response_));
@@ -75,8 +75,8 @@ public:
   std::unique_ptr<grpc::Server> server_;
   std::shared_ptr<grpc::Channel> channel_;
   grpc::ClientContext context_;
-  nighthawk::client::SendCommandRequest request_;
-  nighthawk::client::SendCommandResponse response_;
+  nighthawk::client::ExecutionRequest request_;
+  nighthawk::client::ExecutionResponse response_;
   std::unique_ptr<nighthawk::client::NighthawkService::Stub> stub_;
 };
 
@@ -85,22 +85,22 @@ INSTANTIATE_TEST_SUITE_P(IpVersions, ServiceTest,
                          Envoy::TestUtility::ipTestParamsToString);
 
 TEST_P(ServiceTest, Basic) {
-  auto r = stub_->SendCommand(&context_);
+  auto r = stub_->sendCommand(&context_);
   request_.set_command_type(
-      nighthawk::client::SendCommandRequest_CommandType::SendCommandRequest_CommandType_kStart);
+      nighthawk::client::ExecutionRequest_CommandType::ExecutionRequest_CommandType_START);
   r->Write(request_, {});
   r->WritesDone();
   EXPECT_TRUE(r->Read(&response_));
-  EXPECT_EQ(6, response_.output(0).results(0).counters().size());
+  EXPECT_EQ(6, response_.output().results(0).counters().size());
   auto status = r->Finish();
   EXPECT_TRUE(status.ok());
 }
 
 TEST_P(ServiceTest, AttemptDoubleStart) {
-  auto r = stub_->SendCommand(&context_);
+  auto r = stub_->sendCommand(&context_);
   EXPECT_TRUE(r->Write(request_, {}));
   request_.set_command_type(
-      nighthawk::client::SendCommandRequest_CommandType::SendCommandRequest_CommandType_kStart);
+      nighthawk::client::ExecutionRequest_CommandType::ExecutionRequest_CommandType_START);
   EXPECT_TRUE(r->Write(request_, {}));
   EXPECT_TRUE(r->WritesDone());
   EXPECT_TRUE(r->Read(&response_));

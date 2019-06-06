@@ -10,7 +10,7 @@
 namespace Nighthawk {
 namespace Client {
 
-void ServiceImpl::NighthawkRunner(nighthawk::client::SendCommandRequest request) {
+void ServiceImpl::nighthawkRunner(nighthawk::client::ExecutionRequest request) {
   Envoy::Thread::LockGuard lock(mutex_);
   OptionsPtr options = std::make_unique<OptionsImpl>(request.options());
   Envoy::Thread::MutexBasicLockable log_lock;
@@ -23,8 +23,8 @@ void ServiceImpl::NighthawkRunner(nighthawk::client::SendCommandRequest request)
   try {
     Envoy::MessageUtil::validate(request.options());
   } catch (Envoy::EnvoyException exception) {
-    nighthawk::client::SendCommandResponse response;
-    response_queue_.Push(ServiceProcessResult(response, exception.what()));
+    nighthawk::client::ExecutionResponse response;
+    response_queue_.push(ServiceProcessResult(response, exception.what()));
     process_.reset();
     return;
   }
@@ -32,19 +32,19 @@ void ServiceImpl::NighthawkRunner(nighthawk::client::SendCommandRequest request)
   OutputCollectorFactoryImpl output_format_factory(time_system_, *options);
   auto formatter = output_format_factory.create();
   bool success = process_->run(*formatter);
-  nighthawk::client::SendCommandResponse response;
-  *(response.mutable_output()->Add()) = formatter->toProto();
-  response_queue_.Push(ServiceProcessResult(response, success ? "" : "Unkown failure"));
+  nighthawk::client::ExecutionResponse response;
+  *(response.mutable_output()) = formatter->toProto();
+  response_queue_.push(ServiceProcessResult(response, success ? "" : "Unkown failure"));
   process_.reset();
 }
 
-void ServiceImpl::EmitResponses(
-    ::grpc::ServerReaderWriter<::nighthawk::client::SendCommandResponse,
-                               ::nighthawk::client::SendCommandRequest>* stream,
+void ServiceImpl::emitResponses(
+    ::grpc::ServerReaderWriter<::nighthawk::client::ExecutionResponse,
+                               ::nighthawk::client::ExecutionRequest>* stream,
     std::string& error_messages) {
 
-  while (!response_queue_.IsEmpty()) {
-    auto result = response_queue_.Pop();
+  while (!response_queue_.isEmpty()) {
+    auto result = response_queue_.pop();
     if (!result.success()) {
       error_messages.append(result.error_message());
       continue;
@@ -63,25 +63,25 @@ void ServiceImpl::EmitResponses(
 // TODO(oschaaf): unit-test Process
 // TODO(oschaaf): validate options, sensible defaults. consider abusing TCLAP for both
 // TODO(oschaaf): aggregate the logs and forward them in the grpc result-response.
-::grpc::Status ServiceImpl::SendCommand(
+::grpc::Status ServiceImpl::sendCommand(
     ::grpc::ServerContext* /*context*/,
-    ::grpc::ServerReaderWriter<::nighthawk::client::SendCommandResponse,
-                               ::nighthawk::client::SendCommandRequest>* stream) {
+    ::grpc::ServerReaderWriter<::nighthawk::client::ExecutionResponse,
+                               ::nighthawk::client::ExecutionRequest>* stream) {
   std::string error_message = "";
 
-  nighthawk::client::SendCommandRequest request;
+  nighthawk::client::ExecutionRequest request;
   while (stream->Read(&request)) {
     Envoy::Thread::LockGuard lock(mutex_);
     switch (request.command_type()) {
-    case nighthawk::client::SendCommandRequest_CommandType::SendCommandRequest_CommandType_kStart:
+    case nighthawk::client::ExecutionRequest_CommandType::ExecutionRequest_CommandType_START:
       if (nighthawk_runner_thread_.joinable()) {
         error_message = "Only a single benchmark session is allowed at a time.";
         break;
       } else {
-        nighthawk_runner_thread_ = std::thread(&ServiceImpl::NighthawkRunner, this, request);
+        nighthawk_runner_thread_ = std::thread(&ServiceImpl::nighthawkRunner, this, request);
       }
       break;
-    case nighthawk::client::SendCommandRequest_CommandType::SendCommandRequest_CommandType_kUpdate:
+    case nighthawk::client::ExecutionRequest_CommandType::ExecutionRequest_CommandType_UPDATE:
       error_message = "Configuration updates are not supported yet.";
       break;
     default:
@@ -92,7 +92,7 @@ void ServiceImpl::EmitResponses(
   if (nighthawk_runner_thread_.joinable()) {
     nighthawk_runner_thread_.join();
   }
-  EmitResponses(stream, error_message);
+  emitResponses(stream, error_message);
   if (error_message.empty()) {
     return grpc::Status::OK;
   }
