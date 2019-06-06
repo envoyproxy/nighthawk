@@ -1,9 +1,13 @@
 #pragma once
+#ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic warning "-Wunused-parameter"
+#endif
 #include "api/client/service.grpc.pb.h"
 
+#ifdef __clang__
 #pragma clang diagnostic pop
+#endif
 
 #include <queue>
 
