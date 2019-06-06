@@ -10,7 +10,7 @@
 namespace Nighthawk {
 namespace Client {
 
-void ServiceImpl::nighthawkRunner(nighthawk::client::ExecutionRequest request) {
+void ServiceImpl::nighthawkRunner(const nighthawk::client::ExecutionRequest& request) {
   Envoy::Thread::LockGuard lock(mutex_);
   OptionsPtr options = std::make_unique<OptionsImpl>(request.options());
   Envoy::Thread::MutexBasicLockable log_lock;
@@ -67,7 +67,7 @@ void ServiceImpl::emitResponses(
     ::grpc::ServerContext* /*context*/,
     ::grpc::ServerReaderWriter<::nighthawk::client::ExecutionResponse,
                                ::nighthawk::client::ExecutionRequest>* stream) {
-  std::string error_message = "";
+  std::string error_message;
 
   nighthawk::client::ExecutionRequest request;
   while (stream->Read(&request)) {

@@ -56,7 +56,7 @@ public:
         nighthawk::client::ExecutionRequest_CommandType::ExecutionRequest_CommandType_START);
   }
 
-  void runWithFailingValidationExpectations(std::string match_error = "") {
+  void runWithFailingValidationExpectations(absl::string_view match_error = "") {
     auto r = stub_->sendCommand(&context_);
     request_.set_command_type(
         nighthawk::client::ExecutionRequest_CommandType::ExecutionRequest_CommandType_START);
@@ -66,7 +66,7 @@ public:
     auto status = r->Finish();
 
     if (!match_error.empty()) {
-      EXPECT_THAT(status.error_message(), HasSubstr(match_error));
+      EXPECT_THAT(status.error_message(), HasSubstr(std::string(match_error)));
     }
     EXPECT_FALSE(status.ok());
   }

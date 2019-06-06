@@ -48,9 +48,9 @@ private:
 
 class ServiceProcessResult {
 public:
-  ServiceProcessResult(const nighthawk::client::ExecutionResponse& response,
+  ServiceProcessResult(nighthawk::client::ExecutionResponse response,
                        absl::string_view error_message)
-      : response_(response), error_message_(std::string(error_message)) {}
+      : response_(std::move(response)), error_message_(std::string(error_message)) {}
 
   nighthawk::client::ExecutionResponse response() const { return response_; }
   bool success() const { return error_message_.empty(); }
@@ -65,13 +65,13 @@ class ServiceImpl final : public nighthawk::client::NighthawkService::Service,
                           public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 
 public:
-  virtual ::grpc::Status
+  ::grpc::Status
   sendCommand(::grpc::ServerContext* context,
               ::grpc::ServerReaderWriter<::nighthawk::client::ExecutionResponse,
                                          ::nighthawk::client::ExecutionRequest>* stream) override;
 
 private:
-  void nighthawkRunner(nighthawk::client::ExecutionRequest start_request);
+  void nighthawkRunner(const nighthawk::client::ExecutionRequest& start_request);
   void emitResponses(::grpc::ServerReaderWriter<::nighthawk::client::ExecutionResponse,
                                                 ::nighthawk::client::ExecutionRequest>* stream,
                      std::string& error_messages);

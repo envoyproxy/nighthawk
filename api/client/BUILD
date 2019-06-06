@@ -9,15 +9,14 @@ api_proto_library(
         "options.proto",
         "output.proto",
     ],
-    has_services = 1,
     visibility = ["//visibility:public"],
     deps = [
         "@envoy_api//envoy/api/v2/core:base_export",
     ],
 )
 
-# TODO(OSCHAAF): This is pretty gross, but works for now, so I can iterate on the grpc proto spec more easily.
-
+# TODO(oschaaf): This is a bit of a hack, we conjure the expected _base_cc_only ourselves here
+# because it doesn't get generated for us. Also see https://github.com/grpc/grpc/issues/14145
 proto_library(
     name = "_base_cc_only",
     srcs = [
@@ -42,7 +41,7 @@ proto_library(
 )
 
 cc_grpc_library(
-    name = "cpp_service_proto",
+    name = "grpc_service_lib",
     srcs = [
         "service.proto",
     ],
