@@ -55,6 +55,7 @@ private:
   Envoy::Event::RealTimeSystem time_system_; // NO_CHECK_FORMAT(real_time)
   ProcessPtr process_ GUARDED_BY(mutex_);
   Envoy::Thread::MutexBasicLockable mutex_;
+  Envoy::Thread::MutexBasicLockable log_lock_;
 };
 
 } // namespace Client

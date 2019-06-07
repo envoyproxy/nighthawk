@@ -268,5 +268,14 @@ TEST_F(OptionsImplTest, InacceptibleUri) {
       MalformedArgvException, "Invalid URI");
 }
 
+TEST_F(OptionsImplTest, ProtoConstructorValidation) {
+  const auto option =
+      TestUtility::createOptionsImpl(fmt::format("{} http://127.0.0.1/", client_name_));
+  auto proto = option->toCommandLineOptions();
+  proto->set_requests_per_second(0);
+  EXPECT_THROW_WITH_REGEX(std::make_unique<OptionsImpl>(*proto), Envoy::EnvoyException,
+                          "CommandLineOptionsValidationError.RequestsPerSecond");
+}
+
 } // namespace Client
 } // namespace Nighthawk

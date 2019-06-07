@@ -5,30 +5,22 @@
 #include "client/client.h"
 #include "client/options_impl.h"
 
-#include "api/client/options.pb.validate.h"
-
 namespace Nighthawk {
 namespace Client {
 
 void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionRequest& request) {
   Envoy::Thread::LockGuard lock(mutex_);
-  OptionsPtr options = std::make_unique<OptionsImpl>(request.start_request().options());
-  Envoy::Thread::MutexBasicLockable log_lock;
-  auto logging_context = std::make_unique<Envoy::Logger::Context>(
-      spdlog::level::from_str(options->verbosity()), "[%T.%f][%t][%L] %v", log_lock);
-  process_ = std::make_unique<ProcessImpl>(*options, time_system_);
-
-  // We perform this validation here because we need to runtime to be initialized
-  // for this, something that ProcessContext does for us.
+  OptionsPtr options;
   try {
-    Envoy::MessageUtil::validate(request.start_request().options());
+    options = std::make_unique<OptionsImpl>(request.start_request().options());
   } catch (Envoy::EnvoyException exception) {
-    nighthawk::client::ExecutionResponse response;
-    response_queue_.push_back(ServiceProcessResult(response, exception.what()));
-    process_.reset();
+    response_queue_.push_back(ServiceProcessResult({}, exception.what()));
     return;
   }
 
+  auto logging_context = std::make_unique<Envoy::Logger::Context>(
+      spdlog::level::from_str(options->verbosity()), "[%T.%f][%t][%L] %v", log_lock_);
+  process_ = std::make_unique<ProcessImpl>(*options, time_system_);
   OutputCollectorFactoryImpl output_format_factory(time_system_, *options);
   auto formatter = output_format_factory.create();
   bool success = process_->run(*formatter);
@@ -55,11 +47,9 @@ void ServiceImpl::emitResponses(
 }
 
 // TODO(oschaaf): implement a way to cancel test runs, and update configuration on the fly.
-// TODO(oschaaf): create MockProcess & use in service_test.cc
 // TODO(oschaaf): add some logging to this.
-// TODO(oschaaf): unit-test BlockingQueue
-// TODO(oschaaf): unit-test Process
-// TODO(oschaaf): validate options, sensible defaults. consider abusing TCLAP for both
+// TODO(oschaaf): unit-test Process, create MockProcess & use in service_test.cc / client_test.cc
+// TODO(oschaaf): finish option validations, should we add defaults?
 // TODO(oschaaf): aggregate the logs and forward them in the grpc result-response.
 ::grpc::Status ServiceImpl::sendCommand(
     ::grpc::ServerContext* /*context*/,
