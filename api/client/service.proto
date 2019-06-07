@@ -5,15 +5,17 @@ package nighthawk.client;
 import "api/client/options.proto";
 import "api/client/output.proto";
 
+message StartRequest {
+  CommandLineOptions options = 1;
+}
+
+message UpdateRequest {
+}
+
 message ExecutionRequest {
-  enum CommandType {
-    UNSET = 0;
-    START = 1;
-    UPDATE = 2;
-  }
-  CommandType command_type = 1;
   oneof command_specific_options {
-    CommandLineOptions options = 2;
+    StartRequest start_request = 1;
+    UpdateRequest update_request = 2;
   }
 }
 

@@ -12,7 +12,7 @@ namespace Client {
 
 void ServiceImpl::nighthawkRunner(const nighthawk::client::ExecutionRequest& request) {
   Envoy::Thread::LockGuard lock(mutex_);
-  OptionsPtr options = std::make_unique<OptionsImpl>(request.options());
+  OptionsPtr options = std::make_unique<OptionsImpl>(request.start_request().options());
   Envoy::Thread::MutexBasicLockable log_lock;
   auto logging_context = std::make_unique<Envoy::Logger::Context>(
       spdlog::level::from_str(options->verbosity()), "[%T.%f][%t][%L] %v", log_lock);
@@ -21,7 +21,7 @@ void ServiceImpl::nighthawkRunner(const nighthawk::client::ExecutionRequest& req
   // We perform this validation here because we need to rutime to be initialized
   // for this, something that ProcessContext does for us.
   try {
-    Envoy::MessageUtil::validate(request.options());
+    Envoy::MessageUtil::validate(request.start_request().options());
   } catch (Envoy::EnvoyException exception) {
     nighthawk::client::ExecutionResponse response;
     response_queue_.push(ServiceProcessResult(response, exception.what()));
@@ -72,19 +72,16 @@ void ServiceImpl::emitResponses(
   nighthawk::client::ExecutionRequest request;
   while (stream->Read(&request)) {
     Envoy::Thread::LockGuard lock(mutex_);
-    switch (request.command_type()) {
-    case nighthawk::client::ExecutionRequest_CommandType::ExecutionRequest_CommandType_START:
+    if (request.has_start_request()) {
       if (nighthawk_runner_thread_.joinable()) {
         error_message = "Only a single benchmark session is allowed at a time.";
         break;
       } else {
         nighthawk_runner_thread_ = std::thread(&ServiceImpl::nighthawkRunner, this, request);
       }
-      break;
-    case nighthawk::client::ExecutionRequest_CommandType::ExecutionRequest_CommandType_UPDATE:
+    } else if (request.has_update_request()) {
       error_message = "Configuration updates are not supported yet.";
-      break;
-    default:
+    } else {
       NOT_REACHED_GCOVR_EXCL_LINE;
     }
   }
@@ -98,7 +95,7 @@ void ServiceImpl::emitResponses(
   }
   ENVOY_LOG(error, "One or more errors processing grpc request stream: {}", error_message);
   return grpc::Status(grpc::StatusCode::INTERNAL, fmt::format("Error: {}", error_message));
-}
+} // namespace Client
 
 } // namespace Client
 } // namespace Nighthawk

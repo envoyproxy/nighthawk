@@ -42,7 +42,7 @@ public:
   void TearDown() override { server_->Shutdown(); }
 
   void setBasicRequestOptions() {
-    auto options = request_.mutable_options();
+    auto options = request_.mutable_start_request()->mutable_options();
     options->set_uri("http://127.0.0.1:10001/");
     options->set_connections(1);
     options->set_concurrency("1");
@@ -52,14 +52,10 @@ public:
     options->mutable_request_options()->set_request_method(
         envoy::api::v2::core::RequestMethod::GET);
     options->set_address_family("v4");
-    request_.set_command_type(
-        nighthawk::client::ExecutionRequest_CommandType::ExecutionRequest_CommandType_START);
   }
 
   void runWithFailingValidationExpectations(absl::string_view match_error = "") {
     auto r = stub_->sendCommand(&context_);
-    request_.set_command_type(
-        nighthawk::client::ExecutionRequest_CommandType::ExecutionRequest_CommandType_START);
     r->Write(request_, {});
     r->WritesDone();
     EXPECT_FALSE(r->Read(&response_));
@@ -86,8 +82,6 @@ INSTANTIATE_TEST_SUITE_P(IpVersions, ServiceTest,
 
 TEST_P(ServiceTest, Basic) {
   auto r = stub_->sendCommand(&context_);
-  request_.set_command_type(
-      nighthawk::client::ExecutionRequest_CommandType::ExecutionRequest_CommandType_START);
   r->Write(request_, {});
   r->WritesDone();
   EXPECT_TRUE(r->Read(&response_));
@@ -99,8 +93,6 @@ TEST_P(ServiceTest, Basic) {
 TEST_P(ServiceTest, AttemptDoubleStart) {
   auto r = stub_->sendCommand(&context_);
   EXPECT_TRUE(r->Write(request_, {}));
-  request_.set_command_type(
-      nighthawk::client::ExecutionRequest_CommandType::ExecutionRequest_CommandType_START);
   EXPECT_TRUE(r->Write(request_, {}));
   EXPECT_TRUE(r->WritesDone());
   EXPECT_TRUE(r->Read(&response_));
@@ -109,16 +101,16 @@ TEST_P(ServiceTest, AttemptDoubleStart) {
 }
 
 TEST_P(ServiceTest, InvalidRps) {
-  auto options = request_.mutable_options();
+  auto options = request_.mutable_start_request()->mutable_options();
   options->set_requests_per_second(0);
   runWithFailingValidationExpectations(
       "CommandLineOptionsValidationError.RequestsPerSecond: [\"value must be inside range");
 }
 
 TEST_P(ServiceTest, UpdatesNotSupported) {
+  request_ = nighthawk::client::ExecutionRequest();
+  request_.mutable_update_request();
   auto r = stub_->sendCommand(&context_);
-  request_.set_command_type(
-      nighthawk::client::ExecutionRequest_CommandType::ExecutionRequest_CommandType_UPDATE);
   r->Write(request_, {});
   r->WritesDone();
   EXPECT_FALSE(r->Read(&response_));
