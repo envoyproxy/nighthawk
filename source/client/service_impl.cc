@@ -24,7 +24,7 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
     Envoy::MessageUtil::validate(request.start_request().options());
   } catch (Envoy::EnvoyException exception) {
     nighthawk::client::ExecutionResponse response;
-    response_queue_.push(ServiceProcessResult(response, exception.what()));
+    response_queue_.push_back(ServiceProcessResult(response, exception.what()));
     process_.reset();
     return;
   }
@@ -34,7 +34,7 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
   bool success = process_->run(*formatter);
   nighthawk::client::ExecutionResponse response;
   *(response.mutable_output()) = formatter->toProto();
-  response_queue_.push(ServiceProcessResult(response, success ? "" : "Unkown failure"));
+  response_queue_.push_back(ServiceProcessResult(response, success ? "" : "Unkown failure"));
   process_.reset();
 }
 
@@ -42,8 +42,7 @@ void ServiceImpl::emitResponses(
     ::grpc::ServerReaderWriter<::nighthawk::client::ExecutionResponse,
                                ::nighthawk::client::ExecutionRequest>* stream,
     std::string& error_messages) {
-  while (!response_queue_.isEmpty()) {
-    auto result = response_queue_.pop();
+  for (auto result : response_queue_) {
     if (!result.success()) {
       error_messages.append(result.error_message());
       continue;
@@ -67,16 +66,16 @@ void ServiceImpl::emitResponses(
     ::grpc::ServerReaderWriter<::nighthawk::client::ExecutionResponse,
                                ::nighthawk::client::ExecutionRequest>* stream) {
   std::string error_message;
-
   nighthawk::client::ExecutionRequest request;
+
   while (stream->Read(&request)) {
-    Envoy::Thread::LockGuard lock(mutex_);
     if (request.has_start_request()) {
-      if (nighthawk_runner_thread_.joinable()) {
+      Envoy::Thread::TryLockGuard lock(mutex_);
+      if (lock.tryLock()) {
+        nighthawk_runner_thread_ = std::thread(&ServiceImpl::handleExecutionRequest, this, request);
+      } else {
         error_message = "Only a single benchmark session is allowed at a time.";
         break;
-      } else {
-        nighthawk_runner_thread_ = std::thread(&ServiceImpl::handleExecutionRequest, this, request);
       }
     } else if (request.has_update_request()) {
       error_message = "Configuration updates are not supported yet.";
@@ -94,7 +93,7 @@ void ServiceImpl::emitResponses(
   }
   ENVOY_LOG(error, "One or more errors processing grpc request stream: {}", error_message);
   return grpc::Status(grpc::StatusCode::INTERNAL, fmt::format("Error: {}", error_message));
-} // namespace Client
+}
 
 } // namespace Client
 } // namespace Nighthawk
