@@ -44,6 +44,7 @@ public:
   void setBasicRequestOptions() {
     auto options = request_.mutable_start_request()->mutable_options();
     options->set_uri("http://127.0.0.1:10001/");
+    options->set_verbosity("info");
     options->set_connections(1);
     options->set_concurrency("1");
     options->mutable_duration()->set_seconds(3);

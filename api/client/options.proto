@@ -20,27 +20,32 @@ message CommandLineOptions {
   // See :option:`--connections` for details.
   uint64 connections = 2 [(validate.rules).uint64 = {gte: 1, lte: 1000000}];
   // See :option:`--duration` for details.
-  google.protobuf.Duration duration = 3 [(validate.rules).duration.gte.seconds = 1];
+  google.protobuf.Duration duration = 3 [(validate.rules).duration.gte.nanos = 1];
   // See :option:`--timeout` for details.
-  google.protobuf.Duration timeout = 4;
+  google.protobuf.Duration timeout = 4 [(validate.rules).duration.gte.seconds = 0];
   // See :option:`--h2` for details.
   bool h2 = 5;
   // See :option:`--concurrency` for details.
   string concurrency = 6;
+  // TODO(oschaaf): pvg throw NotImplementedException for the following rule:
+  // string concurrency = 6 [(validate.rules).string = {pattern: "^([0-9]*|auto)$"}];
   // See :option:`--verbosity` for details.
-  string verbosity = 7;
+  string verbosity = 7
+      [(validate.rules).string = {in: ["trace", "debug", "info", "warn", "error", "critical"]}];
   // See :option:`--output-format` for details.
-  string output_format = 8;
+  string output_format = 8 [(validate.rules).string = {in: ["human", "yaml", "json"]}];
   // See :option:`--prefetch-connections` for details.
   bool prefetch_connections = 9;
   // See :option:`--burst-size` for details.
-  uint64 burst_size = 10;
+  uint64 burst_size = 10 [(validate.rules).uint64 = {gte: 0, lte: 1000000}];
   // See :option:`--address-family` for details.
-  string address_family = 11;
+  string address_family = 11 [(validate.rules).string = {in: ["v4", "v6"]}];
   oneof oneof_request_options {
     // See :option:`--request_options` for details.
     RequestOptions request_options = 12;
   }
   // See :option:`--uri` for details.
   string uri = 13;
+  // TODO(oschaaf): pvg throw NotImplementedException for the following rule:
+  // string uri = 13 [(validate.rules).string.uri = true];
 }
