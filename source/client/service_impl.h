@@ -75,7 +75,7 @@ public:
                                          ::nighthawk::client::ExecutionRequest>* stream) override;
 
 private:
-  void nighthawkRunner(const nighthawk::client::ExecutionRequest& start_request);
+  void handleExecutionRequest(const nighthawk::client::ExecutionRequest& start_request);
   void emitResponses(::grpc::ServerReaderWriter<::nighthawk::client::ExecutionResponse,
                                                 ::nighthawk::client::ExecutionRequest>* stream,
                      std::string& error_messages);

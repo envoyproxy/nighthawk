@@ -10,7 +10,7 @@
 namespace Nighthawk {
 namespace Client {
 
-void ServiceImpl::nighthawkRunner(const nighthawk::client::ExecutionRequest& request) {
+void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionRequest& request) {
   Envoy::Thread::LockGuard lock(mutex_);
   OptionsPtr options = std::make_unique<OptionsImpl>(request.start_request().options());
   Envoy::Thread::MutexBasicLockable log_lock;
@@ -18,7 +18,7 @@ void ServiceImpl::nighthawkRunner(const nighthawk::client::ExecutionRequest& req
       spdlog::level::from_str(options->verbosity()), "[%T.%f][%t][%L] %v", log_lock);
   process_ = std::make_unique<ProcessImpl>(*options, time_system_);
 
-  // We perform this validation here because we need to rutime to be initialized
+  // We perform this validation here because we need to runtime to be initialized
   // for this, something that ProcessContext does for us.
   try {
     Envoy::MessageUtil::validate(request.start_request().options());
@@ -42,7 +42,6 @@ void ServiceImpl::emitResponses(
     ::grpc::ServerReaderWriter<::nighthawk::client::ExecutionResponse,
                                ::nighthawk::client::ExecutionRequest>* stream,
     std::string& error_messages) {
-
   while (!response_queue_.isEmpty()) {
     auto result = response_queue_.pop();
     if (!result.success()) {
@@ -77,7 +76,7 @@ void ServiceImpl::emitResponses(
         error_message = "Only a single benchmark session is allowed at a time.";
         break;
       } else {
-        nighthawk_runner_thread_ = std::thread(&ServiceImpl::nighthawkRunner, this, request);
+        nighthawk_runner_thread_ = std::thread(&ServiceImpl::handleExecutionRequest, this, request);
       }
     } else if (request.has_update_request()) {
       error_message = "Configuration updates are not supported yet.";
