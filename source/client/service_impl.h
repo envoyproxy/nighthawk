@@ -9,9 +9,6 @@
 #pragma clang diagnostic pop
 #endif
 
-#include <queue>
-
-#include "common/common/lock_guard.h"
 #include "common/common/logger.h"
 #include "common/common/thread.h"
 
@@ -53,9 +50,9 @@ private:
   std::list<ServiceProcessResult> response_queue_;
   std::thread nighthawk_runner_thread_;
   Envoy::Event::RealTimeSystem time_system_; // NO_CHECK_FORMAT(real_time)
-  ProcessPtr process_ GUARDED_BY(mutex_);
-  Envoy::Thread::MutexBasicLockable mutex_;
+  ProcessPtr process_;
   Envoy::Thread::MutexBasicLockable log_lock_;
+  bool running_{};
 };
 
 } // namespace Client

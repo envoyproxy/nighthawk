@@ -9,7 +9,6 @@ namespace Nighthawk {
 namespace Client {
 
 void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionRequest& request) {
-  Envoy::Thread::LockGuard lock(mutex_);
   OptionsPtr options;
   try {
     options = std::make_unique<OptionsImpl>(request.start_request().options());
@@ -60,12 +59,12 @@ void ServiceImpl::emitResponses(
 
   while (stream->Read(&request)) {
     if (request.has_start_request()) {
-      Envoy::Thread::TryLockGuard lock(mutex_);
-      if (lock.tryLock()) {
-        nighthawk_runner_thread_ = std::thread(&ServiceImpl::handleExecutionRequest, this, request);
-      } else {
+      if (running_) {
         error_message = "Only a single benchmark session is allowed at a time.";
         break;
+      } else {
+        running_ = true;
+        nighthawk_runner_thread_ = std::thread(&ServiceImpl::handleExecutionRequest, this, request);
       }
     } else if (request.has_update_request()) {
       error_message = "Configuration updates are not supported yet.";
@@ -74,7 +73,7 @@ void ServiceImpl::emitResponses(
     }
   }
 
-  if (nighthawk_runner_thread_.joinable()) {
+  if (running_ && nighthawk_runner_thread_.joinable()) {
     nighthawk_runner_thread_.join();
   }
   emitResponses(stream, error_message);
