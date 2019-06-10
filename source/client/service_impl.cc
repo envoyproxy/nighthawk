@@ -26,7 +26,7 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
   bool success = process_->run(*formatter);
   nighthawk::client::ExecutionResponse response;
   *(response.mutable_output()) = formatter->toProto();
-  response_queue_.push_back(ServiceProcessResult(response, success ? "" : "Unkown failure"));
+  response_queue_.emplace_back(ServiceProcessResult(response, success ? "" : "Unkown failure"));
   process_.reset();
 }
 
@@ -34,7 +34,7 @@ void ServiceImpl::emitResponses(
     ::grpc::ServerReaderWriter<::nighthawk::client::ExecutionResponse,
                                ::nighthawk::client::ExecutionRequest>* stream,
     std::string& error_messages) {
-  for (auto result : response_queue_) {
+  for (const auto result : response_queue_) {
     if (!result.success()) {
       error_messages.append(result.error_message());
       continue;
