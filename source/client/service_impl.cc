@@ -33,7 +33,7 @@ void ServiceImpl::emitResponses(
     ::grpc::ServerReaderWriter<::nighthawk::client::ExecutionResponse,
                                ::nighthawk::client::ExecutionRequest>* stream,
     std::string& error_messages) {
-  for (const auto result : response_queue_) {
+  for (const auto& result : response_queue_) {
     if (!result.success()) {
       error_messages.append(result.error_message());
       continue;
