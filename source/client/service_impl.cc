@@ -45,11 +45,11 @@ void ServiceImpl::emitResponses(
   }
 }
 
-// TODO(oschaaf): implement a way to cancel test runs, and update configuration on the fly.
-// TODO(oschaaf): add some logging to this.
+// TODO(oschaaf): implement a way to cancel test runs, and update rps config on the fly.
 // TODO(oschaaf): unit-test Process, create MockProcess & use in service_test.cc / client_test.cc
-// TODO(oschaaf): finish option validations, should we add defaults?
-// TODO(oschaaf): aggregate the logs and forward them in the grpc result-response.
+// TODO(oschaaf): should we merge incoming request options with defaults?
+// TODO(oschaaf): aggregate the client's logs and forward them in the grpc response.
+// TODO(oschaaf): add some logging to this.
 ::grpc::Status ServiceImpl::sendCommand(
     ::grpc::ServerContext* /*context*/,
     ::grpc::ServerReaderWriter<::nighthawk::client::ExecutionResponse,
@@ -58,6 +58,7 @@ void ServiceImpl::emitResponses(
   nighthawk::client::ExecutionRequest request;
 
   while (stream->Read(&request)) {
+    ENVOY_LOG(debug, "Read ExecutionRequest data: {}", request.DebugString());
     if (request.has_start_request()) {
       if (running_) {
         error_message = "Only a single benchmark session is allowed at a time.";
