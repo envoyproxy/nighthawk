@@ -23,7 +23,7 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
   ProcessImpl process(*options, time_system_);
   OutputCollectorFactoryImpl output_format_factory(time_system_, *options);
   auto formatter = output_format_factory.create();
-  bool success = process.run(*formatter);
+  const bool success = process.run(*formatter);
   nighthawk::client::ExecutionResponse response;
   *(response.mutable_output()) = formatter->toProto();
   response_queue_.emplace_back(ServiceProcessResult(response, success ? "" : "Unkown failure"));
