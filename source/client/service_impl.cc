@@ -9,76 +9,90 @@ namespace Nighthawk {
 namespace Client {
 
 void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionRequest& request) {
+  RELEASE_ASSERT(running_, "running_ ought to be set");
+  nighthawk::client::ExecutionResponse response;
   OptionsPtr options;
   try {
     options = std::make_unique<OptionsImpl>(request.start_request().options());
   } catch (Envoy::EnvoyException exception) {
-    response_queue_.push_back(ServiceProcessResult({}, exception.what()));
+    response.set_error_message(exception.what());
+    writeResponseAndFinish(response);
     return;
   }
 
-  auto logging_context = std::make_unique<Envoy::Logger::Context>(
-      spdlog::level::from_str(options->verbosity()), "[%T.%f][%t][%L] %v", log_lock_);
   ProcessImpl process(*options, time_system_);
   OutputCollectorFactoryImpl output_format_factory(time_system_, *options);
+  auto logging_context = std::make_unique<Envoy::Logger::Context>(
+      spdlog::level::from_str(options->verbosity()), "[%T.%f][%t][%L] %v", log_lock_);
   auto formatter = output_format_factory.create();
-  const bool success = process.run(*formatter);
-  nighthawk::client::ExecutionResponse response;
+  if (process.run(*formatter)) {
+    response.set_success(true);
+  } else {
+    response.set_error_message("Unkown failure");
+  }
   *(response.mutable_output()) = formatter->toProto();
-  response_queue_.emplace_back(ServiceProcessResult(response, success ? "" : "Unkown failure"));
+  writeResponseAndFinish(response);
 }
 
-void ServiceImpl::emitResponses(
-    ::grpc::ServerReaderWriter<::nighthawk::client::ExecutionResponse,
-                               ::nighthawk::client::ExecutionRequest>* stream,
-    std::string& error_messages) {
-  for (const auto& result : response_queue_) {
+void ServiceImpl::writeResponseAndFinish(const nighthawk::client::ExecutionResponse& response) {
+  response_history_.emplace_back(response);
+  if (!stream_->Write(response)) {
+    ENVOY_LOG(warn, "Stream write failed");
+  }
+  running_ = false;
+}
+
+void ServiceImpl::collectErrorsFromHistory(std::list<std::string>& error_messages) const {
+  for (const auto& result : response_history_) {
     if (!result.success()) {
-      error_messages.append(result.error_message());
-      continue;
-    }
-    // We just log write failures and proceed as usual; not much we can do.
-    if (!stream->Write(result.response())) {
-      ENVOY_LOG(warn, "Stream write failed");
+      error_messages.push_back(result.error_message());
     }
   }
+}
+
+void ServiceImpl::waitForRunnerThreadCompletion() {
+  if (runner_thread_.joinable()) {
+    runner_thread_.join();
+  }
+  RELEASE_ASSERT(!running_, "running_ ought to be unset");
 }
 
 // TODO(oschaaf): implement a way to cancel test runs, and update rps config on the fly.
 // TODO(oschaaf): unit-test Process, create MockProcess & use in service_test.cc / client_test.cc
 // TODO(oschaaf): should we merge incoming request options with defaults?
 // TODO(oschaaf): aggregate the client's logs and forward them in the grpc response.
-// TODO(oschaaf): add some logging to this.
 ::grpc::Status ServiceImpl::sendCommand(
     ::grpc::ServerContext* /*context*/,
     ::grpc::ServerReaderWriter<::nighthawk::client::ExecutionResponse,
                                ::nighthawk::client::ExecutionRequest>* stream) {
-  std::string error_message;
+  std::list<std::string> error_messages;
   nighthawk::client::ExecutionRequest request;
-
+  stream_ = stream;
   while (stream->Read(&request)) {
     ENVOY_LOG(debug, "Read ExecutionRequest data: {}", request.DebugString());
     if (request.has_start_request()) {
       if (running_) {
-        error_message = "Only a single benchmark session is allowed at a time.";
+        error_messages.push_back("Only a single benchmark session is allowed at a time.");
         break;
       } else {
+        waitForRunnerThreadCompletion();
         running_ = true;
-        nighthawk_runner_thread_ = std::thread(&ServiceImpl::handleExecutionRequest, this, request);
+        runner_thread_ = std::thread(&ServiceImpl::handleExecutionRequest, this, request);
       }
     } else if (request.has_update_request()) {
-      error_message = "Configuration updates are not supported yet.";
+      error_messages.push_back("Configuration updates are not supported yet.");
     } else {
       NOT_REACHED_GCOVR_EXCL_LINE;
     }
   }
-
-  if (running_ && nighthawk_runner_thread_.joinable()) {
-    nighthawk_runner_thread_.join();
-  }
-  emitResponses(stream, error_message);
-  if (error_message.empty()) {
+  waitForRunnerThreadCompletion();
+  collectErrorsFromHistory(error_messages);
+  if (error_messages.size() == 0) {
     return grpc::Status::OK;
+  }
+  std::string error_message = "";
+  for (const auto& error : error_messages) {
+    error_message = fmt::format("{}\n", error);
   }
   ENVOY_LOG(error, "One or more errors processing grpc request stream: {}", error_message);
   return grpc::Status(grpc::StatusCode::INTERNAL, fmt::format("Error: {}", error_message));

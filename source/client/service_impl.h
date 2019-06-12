@@ -17,21 +17,6 @@
 namespace Nighthawk {
 namespace Client {
 
-class ServiceProcessResult {
-public:
-  ServiceProcessResult(nighthawk::client::ExecutionResponse response,
-                       absl::string_view error_message)
-      : response_(std::move(response)), error_message_(std::string(error_message)) {}
-
-  nighthawk::client::ExecutionResponse response() const { return response_; }
-  bool success() const { return error_message_.empty(); }
-  std::string error_message() const { return error_message_; }
-
-private:
-  const nighthawk::client::ExecutionResponse response_;
-  std::string error_message_;
-};
-
 class ServiceImpl final : public nighthawk::client::NighthawkService::Service,
                           public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 
@@ -42,16 +27,18 @@ public:
                                          ::nighthawk::client::ExecutionRequest>* stream) override;
 
 private:
-  void handleExecutionRequest(const nighthawk::client::ExecutionRequest& start_request);
-  void emitResponses(::grpc::ServerReaderWriter<::nighthawk::client::ExecutionResponse,
-                                                ::nighthawk::client::ExecutionRequest>* stream,
-                     std::string& error_messages);
+  void handleExecutionRequest(const nighthawk::client::ExecutionRequest& request);
+  void collectErrorsFromHistory(std::list<std::string>& error_messages) const;
+  void writeResponseAndFinish(const nighthawk::client::ExecutionResponse& response);
+  void waitForRunnerThreadCompletion();
 
-  std::list<ServiceProcessResult> response_queue_;
-  std::thread nighthawk_runner_thread_;
+  std::list<nighthawk::client::ExecutionResponse> response_history_;
+  std::thread runner_thread_;
   Envoy::Event::RealTimeSystem time_system_; // NO_CHECK_FORMAT(real_time)
   Envoy::Thread::MutexBasicLockable log_lock_;
-  bool running_{};
+  std::atomic<bool> running_{};
+  ::grpc::ServerReaderWriter<::nighthawk::client::ExecutionResponse,
+                             ::nighthawk::client::ExecutionRequest>* stream_;
 };
 
 } // namespace Client

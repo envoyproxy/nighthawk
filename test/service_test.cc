@@ -59,7 +59,7 @@ public:
     auto r = stub_->sendCommand(&context_);
     r->Write(request_, {});
     r->WritesDone();
-    EXPECT_FALSE(r->Read(&response_));
+    EXPECT_TRUE(r->Read(&response_));
     auto status = r->Finish();
 
     if (!match_error.empty()) {
@@ -91,7 +91,7 @@ TEST_P(ServiceTest, Basic) {
   EXPECT_TRUE(status.ok());
 }
 
-TEST_P(ServiceTest, AttemptDoubleStart) {
+TEST_P(ServiceTest, NoConcurrentStart) {
   auto r = stub_->sendCommand(&context_);
   EXPECT_TRUE(r->Write(request_, {}));
   EXPECT_TRUE(r->Write(request_, {}));
@@ -99,6 +99,17 @@ TEST_P(ServiceTest, AttemptDoubleStart) {
   EXPECT_TRUE(r->Read(&response_));
   auto status = r->Finish();
   EXPECT_FALSE(status.ok());
+}
+
+TEST_P(ServiceTest, BackToBackExecution) {
+  auto r = stub_->sendCommand(&context_);
+  EXPECT_TRUE(r->Write(request_, {}));
+  EXPECT_TRUE(r->Read(&response_));
+  EXPECT_TRUE(r->Write(request_, {}));
+  EXPECT_TRUE(r->Read(&response_));
+  EXPECT_TRUE(r->WritesDone());
+  auto status = r->Finish();
+  EXPECT_TRUE(status.ok());
 }
 
 TEST_P(ServiceTest, InvalidRps) {

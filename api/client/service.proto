@@ -21,6 +21,8 @@ message ExecutionRequest {
 
 message ExecutionResponse {
   Output output = 1;
+  bool success = 2;
+  string error_message = 3;
 }
 
 service NighthawkService {
