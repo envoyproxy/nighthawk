@@ -79,8 +79,8 @@ void ServiceImpl::waitForRunnerThreadCompletion() {
         running_ = true;
         runner_thread_ = std::thread(&ServiceImpl::handleExecutionRequest, this, request);
       }
-    } else if (request.has_update_request()) {
-      error_messages.emplace_back("Configuration updates are not supported yet.");
+    } else if (request.has_update_request() || request.has_cancellation_request()) {
+      error_messages.emplace_back("Request is not supported yet.");
     } else {
       NOT_REACHED_GCOVR_EXCL_LINE;
     }

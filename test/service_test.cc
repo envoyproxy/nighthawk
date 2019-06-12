@@ -127,7 +127,7 @@ TEST_P(ServiceTest, UpdatesNotSupported) {
   r->WritesDone();
   EXPECT_FALSE(r->Read(&response_));
   auto status = r->Finish();
-  EXPECT_THAT(status.error_message(), HasSubstr("Configuration updates are not supported yet"));
+  EXPECT_THAT(status.error_message(), HasSubstr("Request is not supported yet"));
   EXPECT_FALSE(status.ok());
 }
 
