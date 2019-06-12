@@ -37,7 +37,7 @@ message CommandLineOptions {
   // See :option:`--prefetch-connections` for details.
   bool prefetch_connections = 9;
   // See :option:`--burst-size` for details.
-  uint64 burst_size = 10 [(validate.rules).uint64 = {gte: 0, lte: 1000000}];
+  uint64 burst_size = 10 [(validate.rules).uint64 = {lte: 1000000}];
   // See :option:`--address-family` for details.
   string address_family = 11 [(validate.rules).string = {in: ["v4", "v6"]}];
   oneof oneof_request_options {
