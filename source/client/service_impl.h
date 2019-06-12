@@ -50,7 +50,6 @@ private:
   std::list<ServiceProcessResult> response_queue_;
   std::thread nighthawk_runner_thread_;
   Envoy::Event::RealTimeSystem time_system_; // NO_CHECK_FORMAT(real_time)
-  ProcessPtr process_;
   Envoy::Thread::MutexBasicLockable log_lock_;
   bool running_{};
 };

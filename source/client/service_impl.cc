@@ -9,6 +9,7 @@ namespace Nighthawk {
 namespace Client {
 
 void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionRequest& request) {
+
   OptionsPtr options;
   try {
     options = std::make_unique<OptionsImpl>(request.start_request().options());
@@ -19,14 +20,13 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
 
   auto logging_context = std::make_unique<Envoy::Logger::Context>(
       spdlog::level::from_str(options->verbosity()), "[%T.%f][%t][%L] %v", log_lock_);
-  process_ = std::make_unique<ProcessImpl>(*options, time_system_);
+  ProcessImpl process(*options, time_system_);
   OutputCollectorFactoryImpl output_format_factory(time_system_, *options);
   auto formatter = output_format_factory.create();
-  bool success = process_->run(*formatter);
+  bool success = process.run(*formatter);
   nighthawk::client::ExecutionResponse response;
   *(response.mutable_output()) = formatter->toProto();
   response_queue_.emplace_back(ServiceProcessResult(response, success ? "" : "Unkown failure"));
-  process_.reset();
 }
 
 void ServiceImpl::emitResponses(
