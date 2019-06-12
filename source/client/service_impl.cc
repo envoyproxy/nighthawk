@@ -9,7 +9,6 @@ namespace Nighthawk {
 namespace Client {
 
 void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionRequest& request) {
-
   OptionsPtr options;
   try {
     options = std::make_unique<OptionsImpl>(request.start_request().options());
