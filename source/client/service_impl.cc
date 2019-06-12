@@ -72,7 +72,7 @@ void ServiceImpl::waitForRunnerThreadCompletion() {
     ENVOY_LOG(debug, "Read ExecutionRequest data: {}", request.DebugString());
     if (request.has_start_request()) {
       if (running_) {
-        error_messages.push_back("Only a single benchmark session is allowed at a time.");
+        error_messages.emplace_back("Only a single benchmark session is allowed at a time.");
         break;
       } else {
         waitForRunnerThreadCompletion();
@@ -80,7 +80,7 @@ void ServiceImpl::waitForRunnerThreadCompletion() {
         runner_thread_ = std::thread(&ServiceImpl::handleExecutionRequest, this, request);
       }
     } else if (request.has_update_request()) {
-      error_messages.push_back("Configuration updates are not supported yet.");
+      error_messages.emplace_back("Configuration updates are not supported yet.");
     } else {
       NOT_REACHED_GCOVR_EXCL_LINE;
     }
@@ -90,7 +90,8 @@ void ServiceImpl::waitForRunnerThreadCompletion() {
   if (error_messages.size() == 0) {
     return grpc::Status::OK;
   }
-  std::string error_message = "";
+
+  std::string error_message;
   for (const auto& error : error_messages) {
     error_message = fmt::format("{}\n", error);
   }
