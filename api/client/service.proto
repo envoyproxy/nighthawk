@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package nighthawk.client;
 
+import "google/rpc/status.proto";
+
 import "api/client/options.proto";
 import "api/client/output.proto";
 
@@ -29,8 +31,7 @@ message ExecutionRequest {
 // output may or may not be set, and error message is guaranteed to be set.
 message ExecutionResponse {
   Output output = 1;
-  bool success = 2;
-  string error_message = 3;
+  google.rpc.Status error_detail = 7;
 }
 
 service NighthawkService {

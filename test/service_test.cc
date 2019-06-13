@@ -63,7 +63,11 @@ public:
     auto status = r->Finish();
 
     if (!match_error.empty()) {
-      EXPECT_THAT(response_.error_message(), HasSubstr(std::string(match_error)));
+      EXPECT_EQ(::grpc::StatusCode::INTERNAL, response_.error_detail().code());
+      EXPECT_THAT(response_.error_detail().message(), HasSubstr(std::string(match_error)));
+    } else {
+      EXPECT_EQ(::grpc::StatusCode::OK, response_.error_detail().code());
+      EXPECT_EQ("", response_.error_detail().message());
     }
     EXPECT_TRUE(status.ok());
   }
@@ -86,6 +90,7 @@ TEST_P(ServiceTest, Basic) {
   r->Write(request_, {});
   r->WritesDone();
   EXPECT_TRUE(r->Read(&response_));
+  EXPECT_EQ(::grpc::StatusCode::OK, response_.error_detail().code());
   EXPECT_EQ(6, response_.output().results(0).counters().size());
   auto status = r->Finish();
   EXPECT_TRUE(status.ok());
@@ -97,6 +102,8 @@ TEST_P(ServiceTest, NoConcurrentStart) {
   EXPECT_TRUE(r->Write(request_, {}));
   EXPECT_TRUE(r->WritesDone());
   EXPECT_TRUE(r->Read(&response_));
+  EXPECT_EQ(::grpc::StatusCode::OK, response_.error_detail().code());
+  EXPECT_FALSE(r->Read(&response_));
   auto status = r->Finish();
   EXPECT_FALSE(status.ok());
 }
@@ -105,8 +112,10 @@ TEST_P(ServiceTest, BackToBackExecution) {
   auto r = stub_->ExecutionStream(&context_);
   EXPECT_TRUE(r->Write(request_, {}));
   EXPECT_TRUE(r->Read(&response_));
+  EXPECT_EQ(::grpc::StatusCode::OK, response_.error_detail().code());
   EXPECT_TRUE(r->Write(request_, {}));
   EXPECT_TRUE(r->Read(&response_));
+  EXPECT_EQ(::grpc::StatusCode::OK, response_.error_detail().code());
   EXPECT_TRUE(r->WritesDone());
   auto status = r->Finish();
   EXPECT_TRUE(status.ok());

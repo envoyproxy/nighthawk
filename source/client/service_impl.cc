@@ -11,11 +11,13 @@ namespace Client {
 void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionRequest& request) {
   ASSERT(running_, "running_ ought to be set");
   nighthawk::client::ExecutionResponse response;
+  response.mutable_error_detail()->set_code(grpc::StatusCode::INTERNAL);
+
   OptionsPtr options;
   try {
     options = std::make_unique<OptionsImpl>(request.start_request().options());
   } catch (Envoy::EnvoyException exception) {
-    response.set_error_message(exception.what());
+    response.mutable_error_detail()->set_message(exception.what());
     writeResponseAndFinish(response);
     return;
   }
@@ -26,9 +28,9 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
       spdlog::level::from_str(options->verbosity()), "[%T.%f][%t][%L] %v", log_lock_);
   auto formatter = output_format_factory.create();
   if (process.run(*formatter)) {
-    response.set_success(true);
+    response.mutable_error_detail()->set_code(grpc::StatusCode::OK);
   } else {
-    response.set_error_message("Unkown failure");
+    response.mutable_error_detail()->set_message("Unknown failure");
   }
   *(response.mutable_output()) = formatter->toProto();
   writeResponseAndFinish(response);
