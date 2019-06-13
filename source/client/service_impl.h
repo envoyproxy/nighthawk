@@ -21,18 +21,17 @@ class ServiceImpl final : public nighthawk::client::NighthawkService::Service,
                           public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 
 public:
-  ::grpc::Status
-  sendCommand(::grpc::ServerContext* context,
-              ::grpc::ServerReaderWriter<::nighthawk::client::ExecutionResponse,
-                                         ::nighthawk::client::ExecutionRequest>* stream) override;
+  ::grpc::Status ExecutionStream(
+      ::grpc::ServerContext* context,
+      ::grpc::ServerReaderWriter<::nighthawk::client::ExecutionResponse,
+                                 ::nighthawk::client::ExecutionRequest>* stream) override;
 
 private:
   void handleExecutionRequest(const nighthawk::client::ExecutionRequest& request);
-  void collectErrorsFromHistory(std::list<std::string>& error_messages) const;
   void writeResponseAndFinish(const nighthawk::client::ExecutionResponse& response);
   void waitForRunnerThreadCompletion();
+  ::grpc::Status finishGrpcStream(const bool success, absl::string_view description = "");
 
-  std::list<nighthawk::client::ExecutionResponse> response_history_;
   std::thread runner_thread_;
   Envoy::Event::RealTimeSystem time_system_; // NO_CHECK_FORMAT(real_time)
   Envoy::Thread::MutexBasicLockable log_lock_;

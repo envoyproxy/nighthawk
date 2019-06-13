@@ -9,7 +9,7 @@ namespace Nighthawk {
 namespace Client {
 
 void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionRequest& request) {
-  RELEASE_ASSERT(running_, "running_ ought to be set");
+  ASSERT(running_, "running_ ought to be set");
   nighthawk::client::ExecutionResponse response;
   OptionsPtr options;
   try {
@@ -35,33 +35,30 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
 }
 
 void ServiceImpl::writeResponseAndFinish(const nighthawk::client::ExecutionResponse& response) {
-  response_history_.emplace_back(response);
   if (!stream_->Write(response)) {
     ENVOY_LOG(warn, "Stream write failed");
   }
   running_ = false;
 }
 
-void ServiceImpl::collectErrorsFromHistory(std::list<std::string>& error_messages) const {
-  for (const auto& result : response_history_) {
-    if (!result.success()) {
-      error_messages.push_back(result.error_message());
-    }
-  }
-}
-
 void ServiceImpl::waitForRunnerThreadCompletion() {
   if (runner_thread_.joinable()) {
     runner_thread_.join();
   }
-  RELEASE_ASSERT(!running_, "running_ ought to be unset");
+  ASSERT(!running_, "running_ ought to be unset");
+}
+
+::grpc::Status ServiceImpl::finishGrpcStream(const bool success, absl::string_view description) {
+  waitForRunnerThreadCompletion();
+  return success ? grpc::Status::OK
+                 : grpc::Status(grpc::StatusCode::INTERNAL, std::string(description));
 }
 
 // TODO(oschaaf): implement a way to cancel test runs, and update rps config on the fly.
 // TODO(oschaaf): unit-test Process, create MockProcess & use in service_test.cc / client_test.cc
 // TODO(oschaaf): should we merge incoming request options with defaults?
 // TODO(oschaaf): aggregate the client's logs and forward them in the grpc response.
-::grpc::Status ServiceImpl::sendCommand(
+::grpc::Status ServiceImpl::ExecutionStream(
     ::grpc::ServerContext* /*context*/,
     ::grpc::ServerReaderWriter<::nighthawk::client::ExecutionResponse,
                                ::nighthawk::client::ExecutionRequest>* stream) {
@@ -72,31 +69,20 @@ void ServiceImpl::waitForRunnerThreadCompletion() {
     ENVOY_LOG(debug, "Read ExecutionRequest data: {}", request.DebugString());
     if (request.has_start_request()) {
       if (running_) {
-        error_messages.emplace_back("Only a single benchmark session is allowed at a time.");
-        break;
+        return finishGrpcStream(false, "Only a single benchmark session is allowed at a time.");
       } else {
         waitForRunnerThreadCompletion();
         running_ = true;
         runner_thread_ = std::thread(&ServiceImpl::handleExecutionRequest, this, request);
       }
     } else if (request.has_update_request() || request.has_cancellation_request()) {
-      error_messages.emplace_back("Request is not supported yet.");
+      return finishGrpcStream(false, "Request is not supported yet.");
     } else {
       NOT_REACHED_GCOVR_EXCL_LINE;
     }
   }
-  waitForRunnerThreadCompletion();
-  collectErrorsFromHistory(error_messages);
-  if (error_messages.size() == 0) {
-    return grpc::Status::OK;
-  }
 
-  std::string error_message;
-  for (const auto& error : error_messages) {
-    error_message = fmt::format("{}\n", error);
-  }
-  ENVOY_LOG(error, "One or more errors processing grpc request stream: {}", error_message);
-  return grpc::Status(grpc::StatusCode::INTERNAL, fmt::format("Error: {}", error_message));
+  return finishGrpcStream(true);
 }
 
 } // namespace Client

@@ -9,15 +9,11 @@ message StartRequest {
   CommandLineOptions options = 1;
 }
 
-/*
-TODO(oschaaf): Not implemented yet.
-*/
+// TODO(oschaaf): Not implemented yet.
 message UpdateRequest {
 }
 
-/*
-TODO(oschaaf): Not implemented yet.
-*/
+// TODO(oschaaf): Not implemented yet.
 message CancellationRequest {
 }
 
@@ -29,10 +25,8 @@ message ExecutionRequest {
   }
 }
 
-/*
-Output is guaranteed to be set when success is true. When success is false,
-output may or may not be set, and error message is guaranteed to be set.
-*/
+// Output is guaranteed to be set when success is true. When success is false,
+// output may or may not be set, and error message is guaranteed to be set.
 message ExecutionResponse {
   Output output = 1;
   bool success = 2;
@@ -41,10 +35,8 @@ message ExecutionResponse {
 
 service NighthawkService {
 
-  /*
-  Accepts a stream of ExecutionRequests, which can be used to initiate, update, or cancel a test.
-  Returns a stream of ExecutionResponse objects which will contain results for all Nighthawk runs.
-  */
-  rpc sendCommand(stream ExecutionRequest) returns (stream ExecutionResponse) {
+  //  Accepts a stream of ExecutionRequests, which can be used to initiate, update, or cancel a test.
+  //  Returns a stream of ExecutionResponse objects which will contain results for all Nighthawk runs.
+  rpc ExecutionStream(stream ExecutionRequest) returns (stream ExecutionResponse) {
   }
 }

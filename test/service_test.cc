@@ -56,16 +56,16 @@ public:
   }
 
   void runWithFailingValidationExpectations(absl::string_view match_error = "") {
-    auto r = stub_->sendCommand(&context_);
+    auto r = stub_->ExecutionStream(&context_);
     r->Write(request_, {});
     r->WritesDone();
     EXPECT_TRUE(r->Read(&response_));
     auto status = r->Finish();
 
     if (!match_error.empty()) {
-      EXPECT_THAT(status.error_message(), HasSubstr(std::string(match_error)));
+      EXPECT_THAT(response_.error_message(), HasSubstr(std::string(match_error)));
     }
-    EXPECT_FALSE(status.ok());
+    EXPECT_TRUE(status.ok());
   }
 
   ServiceImpl service_;
@@ -82,7 +82,7 @@ INSTANTIATE_TEST_SUITE_P(IpVersions, ServiceTest,
                          Envoy::TestUtility::ipTestParamsToString);
 
 TEST_P(ServiceTest, Basic) {
-  auto r = stub_->sendCommand(&context_);
+  auto r = stub_->ExecutionStream(&context_);
   r->Write(request_, {});
   r->WritesDone();
   EXPECT_TRUE(r->Read(&response_));
@@ -92,7 +92,7 @@ TEST_P(ServiceTest, Basic) {
 }
 
 TEST_P(ServiceTest, NoConcurrentStart) {
-  auto r = stub_->sendCommand(&context_);
+  auto r = stub_->ExecutionStream(&context_);
   EXPECT_TRUE(r->Write(request_, {}));
   EXPECT_TRUE(r->Write(request_, {}));
   EXPECT_TRUE(r->WritesDone());
@@ -102,7 +102,7 @@ TEST_P(ServiceTest, NoConcurrentStart) {
 }
 
 TEST_P(ServiceTest, BackToBackExecution) {
-  auto r = stub_->sendCommand(&context_);
+  auto r = stub_->ExecutionStream(&context_);
   EXPECT_TRUE(r->Write(request_, {}));
   EXPECT_TRUE(r->Read(&response_));
   EXPECT_TRUE(r->Write(request_, {}));
@@ -122,7 +122,7 @@ TEST_P(ServiceTest, InvalidRps) {
 TEST_P(ServiceTest, UpdatesNotSupported) {
   request_ = nighthawk::client::ExecutionRequest();
   request_.mutable_update_request();
-  auto r = stub_->sendCommand(&context_);
+  auto r = stub_->ExecutionStream(&context_);
   r->Write(request_, {});
   r->WritesDone();
   EXPECT_FALSE(r->Read(&response_));

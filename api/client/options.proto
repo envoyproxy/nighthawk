@@ -26,9 +26,7 @@ message CommandLineOptions {
   // See :option:`--h2` for details.
   bool h2 = 5;
   // See :option:`--concurrency` for details.
-  string concurrency = 6;
-  // TODO(oschaaf): pvg throw NotImplementedException for the following rule:
-  // string concurrency = 6 [(validate.rules).string = {pattern: "^([0-9]*|auto)$"}];
+  string concurrency = 6;// [(validate.rules).string = {pattern: "^([0-9]*|auto)$"}];
   // See :option:`--verbosity` for details.
   string verbosity = 7
       [(validate.rules).string = {in: ["trace", "debug", "info", "warn", "error", "critical"]}];
@@ -44,8 +42,5 @@ message CommandLineOptions {
     // See :option:`--request_options` for details.
     RequestOptions request_options = 12;
   }
-  // See :option:`--uri` for details.
-  string uri = 13;
-  // TODO(oschaaf): pvg throw NotImplementedException for the following rule:
-  // string uri = 13 [(validate.rules).string.uri = true];
+  string uri = 13;// [(validate.rules).string.uri = true];
 }
