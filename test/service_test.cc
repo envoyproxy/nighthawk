@@ -61,14 +61,11 @@ public:
     r->WritesDone();
     EXPECT_TRUE(r->Read(&response_));
     auto status = r->Finish();
-
-    if (!match_error.empty()) {
-      EXPECT_EQ(::grpc::StatusCode::INTERNAL, response_.error_detail().code());
-      EXPECT_THAT(response_.error_detail().message(), HasSubstr(std::string(match_error)));
-    } else {
-      EXPECT_EQ(::grpc::StatusCode::OK, response_.error_detail().code());
-      EXPECT_EQ("", response_.error_detail().message());
-    }
+    ASSERT_FALSE(match_error.empty());
+    EXPECT_TRUE(response_.has_error_detail());
+    EXPECT_FALSE(response_.has_output());
+    EXPECT_EQ(::grpc::StatusCode::INTERNAL, response_.error_detail().code());
+    EXPECT_THAT(response_.error_detail().message(), HasSubstr(std::string(match_error)));
     EXPECT_TRUE(status.ok());
   }
 
@@ -85,42 +82,52 @@ INSTANTIATE_TEST_SUITE_P(IpVersions, ServiceTest,
                          ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()),
                          Envoy::TestUtility::ipTestParamsToString);
 
+// Test single NH run
 TEST_P(ServiceTest, Basic) {
   auto r = stub_->ExecutionStream(&context_);
   r->Write(request_, {});
   r->WritesDone();
   EXPECT_TRUE(r->Read(&response_));
-  EXPECT_EQ(::grpc::StatusCode::OK, response_.error_detail().code());
+  EXPECT_FALSE(response_.has_error_detail());
+  EXPECT_TRUE(response_.has_output());
   EXPECT_EQ(6, response_.output().results(0).counters().size());
   auto status = r->Finish();
   EXPECT_TRUE(status.ok());
 }
 
+// Test that attempts to perform concurrent executions result in a
+// failure being returned.
 TEST_P(ServiceTest, NoConcurrentStart) {
   auto r = stub_->ExecutionStream(&context_);
   EXPECT_TRUE(r->Write(request_, {}));
   EXPECT_TRUE(r->Write(request_, {}));
   EXPECT_TRUE(r->WritesDone());
   EXPECT_TRUE(r->Read(&response_));
-  EXPECT_EQ(::grpc::StatusCode::OK, response_.error_detail().code());
+  EXPECT_FALSE(response_.has_error_detail());
+  EXPECT_TRUE(response_.has_output());
   EXPECT_FALSE(r->Read(&response_));
   auto status = r->Finish();
   EXPECT_FALSE(status.ok());
 }
 
+// Test we are able to perform serialized executions.
 TEST_P(ServiceTest, BackToBackExecution) {
   auto r = stub_->ExecutionStream(&context_);
   EXPECT_TRUE(r->Write(request_, {}));
   EXPECT_TRUE(r->Read(&response_));
-  EXPECT_EQ(::grpc::StatusCode::OK, response_.error_detail().code());
+  EXPECT_FALSE(response_.has_error_detail());
+  EXPECT_TRUE(response_.has_output());
   EXPECT_TRUE(r->Write(request_, {}));
   EXPECT_TRUE(r->Read(&response_));
-  EXPECT_EQ(::grpc::StatusCode::OK, response_.error_detail().code());
+  EXPECT_FALSE(response_.has_error_detail());
+  EXPECT_TRUE(response_.has_output());
   EXPECT_TRUE(r->WritesDone());
   auto status = r->Finish();
   EXPECT_TRUE(status.ok());
 }
 
+// Test that proto validation is wired up and works.
+// TODO(oschaaf): functional coverage of all the options / validations.
 TEST_P(ServiceTest, InvalidRps) {
   auto options = request_.mutable_start_request()->mutable_options();
   options->set_requests_per_second(0);
@@ -128,9 +135,23 @@ TEST_P(ServiceTest, InvalidRps) {
       "CommandLineOptionsValidationError.RequestsPerSecond: [\"value must be inside range");
 }
 
+// We didn't implement updates yet, ensure we indicate so.
 TEST_P(ServiceTest, UpdatesNotSupported) {
   request_ = nighthawk::client::ExecutionRequest();
   request_.mutable_update_request();
+  auto r = stub_->ExecutionStream(&context_);
+  r->Write(request_, {});
+  r->WritesDone();
+  EXPECT_FALSE(r->Read(&response_));
+  auto status = r->Finish();
+  EXPECT_THAT(status.error_message(), HasSubstr("Request is not supported yet"));
+  EXPECT_FALSE(status.ok());
+}
+
+// We didn't implement cancellations yet, ensure we indicate so.
+TEST_P(ServiceTest, CancelNotSupported) {
+  request_ = nighthawk::client::ExecutionRequest();
+  request_.mutable_cancellation_request();
   auto r = stub_->ExecutionStream(&context_);
   r->Write(request_, {});
   r->WritesDone();

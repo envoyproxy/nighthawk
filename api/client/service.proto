@@ -27,11 +27,11 @@ message ExecutionRequest {
   }
 }
 
-// Output is guaranteed to be set when success is true. When success is false,
-// output may or may not be set, and error message is guaranteed to be set.
 message ExecutionResponse {
-  Output output = 1;
-  google.rpc.Status error_detail = 7;
+  oneof status_specifier {
+    Output output = 1;
+    google.rpc.Status error_detail = 7;
+  }
 }
 
 service NighthawkService {

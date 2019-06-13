@@ -28,11 +28,11 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
       spdlog::level::from_str(options->verbosity()), "[%T.%f][%t][%L] %v", log_lock_);
   auto formatter = output_format_factory.create();
   if (process.run(*formatter)) {
-    response.mutable_error_detail()->set_code(grpc::StatusCode::OK);
+    response.clear_error_detail();
+    *(response.mutable_output()) = formatter->toProto();
   } else {
     response.mutable_error_detail()->set_message("Unknown failure");
   }
-  *(response.mutable_output()) = formatter->toProto();
   writeResponseAndFinish(response);
 }
 
