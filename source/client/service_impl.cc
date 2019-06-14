@@ -64,7 +64,6 @@ void ServiceImpl::waitForRunnerThreadCompletion() {
     ::grpc::ServerContext* /*context*/,
     ::grpc::ServerReaderWriter<::nighthawk::client::ExecutionResponse,
                                ::nighthawk::client::ExecutionRequest>* stream) {
-  std::list<std::string> error_messages;
   nighthawk::client::ExecutionRequest request;
   stream_ = stream;
   while (stream->Read(&request)) {

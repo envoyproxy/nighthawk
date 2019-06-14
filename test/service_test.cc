@@ -161,5 +161,11 @@ TEST_P(ServiceTest, CancelNotSupported) {
   EXPECT_FALSE(status.ok());
 }
 
+TEST_P(ServiceTest, Unresolveable) {
+  auto options = request_.mutable_start_request()->mutable_options();
+  options->set_uri("http://unresolvable-host/");
+  runWithFailingValidationExpectations("Unknown failure");
+}
+
 } // namespace Client
 } // namespace Nighthawk
