@@ -22,16 +22,20 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
     return;
   }
 
-  ProcessImpl process(*options, time_system_);
-  OutputCollectorFactoryImpl output_format_factory(time_system_, *options);
-  auto logging_context = std::make_unique<Envoy::Logger::Context>(
-      spdlog::level::from_str(options->verbosity()), "[%T.%f][%t][%L] %v", log_lock_);
-  auto formatter = output_format_factory.create();
-  if (process.run(*formatter)) {
-    response.clear_error_detail();
-    *(response.mutable_output()) = formatter->toProto();
-  } else {
-    response.mutable_error_detail()->set_message("Unknown failure");
+  // We scope here because the ProcessImpl instance must be destructed before we write the response
+  // and set running to false.
+  {
+    ProcessImpl process(*options, time_system_);
+    OutputCollectorFactoryImpl output_format_factory(time_system_, *options);
+    auto logging_context = std::make_unique<Envoy::Logger::Context>(
+        spdlog::level::from_str(options->verbosity()), "[%T.%f][%t][%L] %v", log_lock_);
+    auto formatter = output_format_factory.create();
+    if (process.run(*formatter)) {
+      response.clear_error_detail();
+      *(response.mutable_output()) = formatter->toProto();
+    } else {
+      response.mutable_error_detail()->set_message("Unknown failure");
+    }
   }
   writeResponseAndFinish(response);
 }
