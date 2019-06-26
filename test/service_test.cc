@@ -43,6 +43,7 @@ public:
 
   void setBasicRequestOptions() {
     auto options = request_.mutable_start_request()->mutable_options();
+    // TODO(oschaaf): Work on mocking so we can avoid sending actual traffic here.
     options->set_uri("http://127.0.0.1:10001/");
     options->set_verbosity("info");
     options->set_connections(1);
