@@ -10,7 +10,6 @@ def nighthawk_dependencies():
         strip_prefix = "envoy-%s" % ENVOY_COMMIT,
         url = "https://github.com/envoyproxy/envoy/archive/%s.tar.gz" % ENVOY_COMMIT,
     )
-
     http_archive(
         name = "dep_hdrhistogram_c",
         build_file_content = """

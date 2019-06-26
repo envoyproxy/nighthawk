@@ -54,6 +54,7 @@ public:
   MOCK_METHOD0(waitForCompletion, void());
   MOCK_CONST_METHOD0(completionsPerSecond, double());
   MOCK_CONST_METHOD0(statistics, StatisticPtrMap());
+  MOCK_METHOD0(cancel, void());
 };
 
 class MockOptions : public Client::Options {

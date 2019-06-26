@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package nighthawk.client;
+
+import "google/rpc/status.proto";
+import "validate/validate.proto";
+
+import "api/client/options.proto";
+import "api/client/output.proto";
+
+message StartRequest {
+  CommandLineOptions options = 1;
+}
+
+// TODO(oschaaf): Not implemented yet.
+message UpdateRequest {
+}
+
+// TODO(oschaaf): Not implemented yet.
+message CancellationRequest {
+}
+
+message ExecutionRequest {
+  oneof command_specific_options {
+    option (validate.required) = true;
+    StartRequest start_request = 1;
+    UpdateRequest update_request = 2;
+    CancellationRequest cancellation_request = 3;
+  }
+}
+
+message ExecutionResponse {
+  oneof status_specifier {
+    option (validate.required) = true;
+    Output output = 1;
+    google.rpc.Status error_detail = 7;
+  }
+}
+
+service NighthawkService {
+  //  Accepts a stream of ExecutionRequests, which can be used to initiate, update, or cancel a
+  //  test. Returns a stream of ExecutionResponse objects which will contain results for all
+  //  Nighthawk runs.
+  rpc ExecutionStream(stream ExecutionRequest) returns (stream ExecutionResponse) {
+  }
+}

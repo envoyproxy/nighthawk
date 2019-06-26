@@ -18,6 +18,7 @@ envoy_cc_library(
         "options_impl.cc",
         "output_collector_impl.cc",
         "process_impl.cc",
+        "service_impl.cc",
         "stream_decoder.cc",
     ],
     hdrs = [
@@ -28,12 +29,13 @@ envoy_cc_library(
         "options_impl.h",
         "output_collector_impl.h",
         "process_impl.h",
+        "service_impl.h",
         "stream_decoder.h",
     ],
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
-        "//api/client:benchmark_options_cc",
+        "//api/client:base_cc",
         "//include/nighthawk/client:client_includes",
         "//include/nighthawk/common:base_includes",
         "//source/common:nighthawk_common_lib",

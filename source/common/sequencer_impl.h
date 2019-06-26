@@ -113,11 +113,12 @@ private:
   std::chrono::microseconds duration_;
   std::chrono::microseconds grace_timeout_;
   Envoy::MonotonicTime start_time_;
-  uint64_t targets_initiated_;
-  uint64_t targets_completed_;
-  bool running_;
-  bool blocked_;
+  uint64_t targets_initiated_{0};
+  uint64_t targets_completed_{0};
+  bool running_{};
+  bool blocked_{};
   Envoy::MonotonicTime blocked_start_;
+  bool cancelled_{};
 };
 
 } // namespace Nighthawk

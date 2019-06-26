@@ -2,10 +2,12 @@
 
 #include <cmath>
 
+#include "common/protobuf/utility.h"
 #include "common/uri_impl.h"
 #include "common/utility.h"
 
 #include "absl/strings/str_split.h"
+#include "api/client/options.pb.validate.h"
 #include "tclap/CmdLine.h"
 
 namespace Nighthawk {
@@ -185,6 +187,7 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options)
       request_method_(
           ::envoy::api::v2::core::RequestMethod_Name(options.request_options().request_method())),
       request_body_size_(options.request_options().request_body_size()) {
+  Envoy::MessageUtil::validate(options);
   for (const auto& header : options.request_options().request_headers()) {
     std::string header_string =
         fmt::format("{}:{}", header.header().key(), header.header().value());
