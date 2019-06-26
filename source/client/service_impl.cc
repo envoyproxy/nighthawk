@@ -41,10 +41,10 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
 }
 
 void ServiceImpl::writeResponseAndFinish(const nighthawk::client::ExecutionResponse& response) {
+  running_ = false;
   if (!stream_->Write(response)) {
     ENVOY_LOG(warn, "Stream write failed");
   }
-  running_ = false;
 }
 
 void ServiceImpl::waitForRunnerThreadCompletion() {
