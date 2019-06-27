@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 """@package integration_test.py
 Entry point for our integration testing
 """
@@ -14,6 +13,7 @@ from common import IpVersion, NighthawkException
 from integration_test_fixtures import IntegrationTestBase
 
 assert sys.version_info >= (3, 0)
+
 
 def determineIpVersionsFromEnvironment():
   env_versions = os.environ.get("ENVOY_IP_TEST_VERSIONS", "all")

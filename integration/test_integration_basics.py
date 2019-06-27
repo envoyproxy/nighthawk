@@ -88,4 +88,3 @@ class TestHttps(HttpsIntegrationTestBase):
     self.assertEqual(counters["ssl.sigalgs.rsa_pss_rsae_sha256"], 1)
     self.assertEqual(counters["ssl.versions.TLSv1.2"], 1)
     self.assertEqual(len(counters), 14)
- 

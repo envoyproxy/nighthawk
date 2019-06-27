@@ -13,7 +13,6 @@ import threading
 import time
 import unittest
 
-
 from common import IpVersion
 from nighthawk_test_server import NighthawkTestServer
 
