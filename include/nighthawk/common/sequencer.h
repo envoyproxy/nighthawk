@@ -41,6 +41,12 @@ public:
    * other words, time spend while the Sequencer is idle and not blocked by a rate limiter).
    */
   virtual StatisticPtrMap statistics() const PURE;
+
+  /**
+   * Stops all planned work. Makes pending waitForCompletion() calls return ASAP, disregarding any
+   * timeouts.
+   */
+  virtual void cancel() PURE;
 };
 
 using SequencerPtr = std::unique_ptr<Sequencer>;

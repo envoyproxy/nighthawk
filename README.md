@@ -41,21 +41,37 @@ bazel build -c opt //:nighthawk_client
 
 USAGE: 
 
-   bazel-bin/nighthawk_client  [--request-body-size <uint32_t>]
-                               [--request-header <string>] ... 
-                               [--request-method <GET|HEAD|POST|PUT|DELETE
-                               |CONNECT|OPTIONS|TRACE>] [--address-family
-                               <auto|v4|v6>] [--burst-size <uint64_t>]
-                               [--prefetch-connections] [--output-format
-                               <human|yaml|json>] [-v <trace|debug|info
-                               |warn|error|critical>] [--concurrency
-                               <string>] [--h2] [--timeout <uint64_t>]
-                               [--duration <uint64_t>] [--connections
-                               <uint64_t>] [--rps <uint64_t>] [--]
-                               [--version] [-h] <uri format>
+   nighthawk_client  [--max-requests-per-connection <uint32_t>]
+                     [--max-active-requests <uint32_t>]
+                     [--max-pending-requests <uint32_t>] [--tls-context
+                     <string>] [--request-body-size <uint32_t>]
+                     [--request-header <string>] ... [--request-method
+                     <GET|HEAD|POST|PUT|DELETE|CONNECT|OPTIONS|TRACE>]
+                     [--address-family <auto|v4|v6>] [--burst-size
+                     <uint64_t>] [--prefetch-connections] [--output-format
+                     <human|yaml|json>] [-v <trace|debug|info|warn|error
+                     |critical>] [--concurrency <string>] [--h2] [--timeout
+                     <uint64_t>] [--duration <uint64_t>] [--connections
+                     <uint32_t>] [--rps <uint64_t>] [--] [--version] [-h]
+                     <uri format>
 
 
 Where: 
+
+   --max-requests-per-connection <uint32_t>
+     Max requests per connection (default: 2^31).
+
+   --max-active-requests <uint32_t>
+     Max active requests (default: 2^31).
+
+   --max-pending-requests <uint32_t>
+     Max pending requests (default: 1, no client side queuing. Specifying
+     any other value will allow client-side queuing of requests).
+
+   --tls-context <string>
+     Tls context configuration in yaml or json. Example
+     (json):{common_tls_context:{tls_params:{cipher_suites:["-ALL:ECDHE-RSA
+     -AES128-SHA"]}}}
 
    --request-body-size <uint32_t>
      Size of the request body to send. NH will send a number of consecutive
@@ -107,7 +123,7 @@ Where:
    --duration <uint64_t>
      The number of seconds that the test should run. Default: 5.
 
-   --connections <uint64_t>
+   --connections <uint32_t>
      The number of connections per event loop that the test should
      maximally use. HTTP/1 only. Default: 1.
 
@@ -128,8 +144,7 @@ Where:
      in case of https no certificates are validated.
 
 
-   Nighthawk, a L7 (HTTP/HTTPS/HTTP2) performance characterization tool.
-
+   L7 (HTTP/HTTPS/HTTP2) performance characterization tool.
 
 ```
 

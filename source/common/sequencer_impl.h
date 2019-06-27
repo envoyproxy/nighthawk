@@ -68,6 +68,8 @@ public:
   const Statistic& blockedStatistic() const { return *blocked_statistic_; }
   const Statistic& latencyStatistic() const { return *latency_statistic_; }
 
+  void cancel() override;
+
 protected:
   /**
    * Run is called initially by start() and thereafter by two timers:

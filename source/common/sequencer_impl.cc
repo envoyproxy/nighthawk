@@ -157,6 +157,8 @@ void SequencerImpl::waitForCompletion() {
   ASSERT(!running_);
 }
 
+void SequencerImpl::cancel() { cancelled_ = true; }
+
 StatisticPtrMap SequencerImpl::statistics() const {
   StatisticPtrMap statistics;
   statistics[latency_statistic_->id()] = latency_statistic_.get();

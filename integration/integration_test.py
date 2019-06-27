@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """@package integration_test.py
 Entry point for our integration testing
 """
@@ -11,8 +10,6 @@ import unittest
 import test_integration_basics
 from common import IpVersion, NighthawkException
 from integration_test_fixtures import IntegrationTestBase
-
-assert sys.version_info >= (3, 0)
 
 
 def determineIpVersionsFromEnvironment():

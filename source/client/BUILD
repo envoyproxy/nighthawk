@@ -47,5 +47,6 @@ envoy_cc_library(
         "@envoy//source/common/runtime:runtime_lib",
         "@envoy//source/exe:envoy_common_lib",
         "@envoy//source/exe:process_wide_lib",
+        "@envoy_api//envoy/api/v2:cds_export_cc",
     ],
 )

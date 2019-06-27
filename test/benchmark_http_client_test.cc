@@ -111,9 +111,11 @@ public:
     uri->resolve(*dispatcher_, GetParam() == Envoy::Network::Address::IpVersion::v4
                                    ? Envoy::Network::DnsLookupFamily::V4Only
                                    : Envoy::Network::DnsLookupFamily::V6Only);
+    envoy::api::v2::auth::UpstreamTlsContext tls_context;
     client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
         api_, *dispatcher_, store_, std::make_unique<StreamingStatistic>(),
-        std::make_unique<StreamingStatistic>(), std::move(uri), use_h2, prefetch_connections);
+        std::make_unique<StreamingStatistic>(), std::move(uri), use_h2, prefetch_connections,
+        tls_context);
   }
 
   uint64_t nonZeroValuedCounterCount() {
@@ -301,7 +303,7 @@ TEST_P(BenchmarkClientHttpTest, H1ConnectionFailure) {
   EXPECT_EQ(1, getCounter("upstream_rq_pending_total"));
   EXPECT_EQ(1, getCounter("upstream_cx_destroy_remote"));
   EXPECT_EQ(1, getCounter("upstream_cx_destroy"));
-  EXPECT_EQ(7, nonZeroValuedCounterCount());
+  EXPECT_EQ(8, nonZeroValuedCounterCount());
 }
 
 TEST_P(BenchmarkClientHttpTest, H1MultiConnectionFailure) {
@@ -317,7 +319,7 @@ TEST_P(BenchmarkClientHttpTest, H1MultiConnectionFailure) {
   EXPECT_EQ(10, getCounter("upstream_rq_pending_total"));
   EXPECT_EQ(10, getCounter("upstream_cx_destroy_remote"));
   EXPECT_EQ(10, getCounter("upstream_cx_destroy"));
-  EXPECT_EQ(7, nonZeroValuedCounterCount());
+  EXPECT_EQ(8, nonZeroValuedCounterCount());
 }
 
 TEST_P(BenchmarkClientHttpTest, EnableLatencyMeasurement) {
@@ -351,9 +353,10 @@ TEST_P(BenchmarkClientHttpTest, EnableLatencyMeasurement) {
 TEST_P(BenchmarkClientHttpTest, StatusTrackingInOnComplete) {
   auto uri = std::make_unique<UriImpl>("http://foo/");
   auto store = std::make_unique<Envoy::Stats::IsolatedStoreImpl>();
+  envoy::api::v2::auth::UpstreamTlsContext tls_context;
   client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
       api_, *dispatcher_, *store, std::make_unique<StreamingStatistic>(),
-      std::make_unique<StreamingStatistic>(), std::move(uri), false, false);
+      std::make_unique<StreamingStatistic>(), std::move(uri), false, false, tls_context);
   Envoy::Http::HeaderMapImpl header;
 
   auto& status = header.insertStatus();
@@ -393,6 +396,64 @@ TEST_P(BenchmarkClientHttpTest, ConnectionPrefetching) {
   EXPECT_EQ(true, client_->tryStartOne([&]() { dispatcher_->exit(); }));
   dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
   EXPECT_EQ(50, getCounter("upstream_cx_total"));
+}
+
+// XXX(oschaaf): Ok; so turns out this feature is h/2 only atm. Maybe want need to log a warning
+// if someone configures this for h1.
+// XXX(oschaaf): maybe we want to run parameterized tests running over
+// h1/h2 and tls vs plain
+TEST_P(BenchmarkClientHttpTest, CapRequestConcurrency) {
+  setupBenchmarkClient("/lorem-ipsum-status-200", true, false);
+  const uint64_t requests = 4;
+  uint64_t inflight_response_count = requests;
+
+  // We configure so that max requests is the only thing that can  be throttling.
+  client_->setMaxPendingRequests(requests);
+  client_->setConnectionLimit(requests);
+  client_->setMaxActiveRequests(1);
+  client_->initialize(runtime_);
+
+  std::function<void()> f = [this, &inflight_response_count]() {
+    --inflight_response_count;
+    if (inflight_response_count == 3) {
+      dispatcher_->exit();
+    }
+  };
+  for (uint64_t i = 0; i < requests; i++) {
+    EXPECT_EQ(true, client_->tryStartOne(f));
+  }
+  dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
+  EXPECT_EQ(1, getCounter("benchmark.http_2xx"));
+  EXPECT_EQ(1, getCounter("upstream_rq_total"));
+  EXPECT_EQ(3, getCounter("upstream_rq_pending_overflow"));
+  EXPECT_EQ(3, getCounter("benchmark.pool_overflow"));
+}
+
+TEST_P(BenchmarkClientHttpsTest, MaxRequestsPerConnection) {
+  setupBenchmarkClient("/lorem-ipsum-status-200", false, false);
+  const uint64_t requests = 4;
+  uint64_t inflight_response_count = requests;
+
+  // We configure so that max requests is the only thing that can  be throttling.
+  client_->setMaxPendingRequests(requests);
+  client_->setConnectionLimit(requests);
+  client_->setMaxActiveRequests(1024);
+  client_->setMaxRequestsPerConnection(1);
+  client_->initialize(runtime_);
+
+  std::function<void()> f = [this, &inflight_response_count]() {
+    --inflight_response_count;
+    if (inflight_response_count == 0) {
+      dispatcher_->exit();
+    }
+  };
+  for (uint64_t i = 0; i < requests; i++) {
+    EXPECT_EQ(true, client_->tryStartOne(f));
+  }
+  dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
+
+  EXPECT_EQ(requests, getCounter("benchmark.http_2xx"));
+  EXPECT_EQ(requests, getCounter("upstream_cx_http1_total"));
 }
 
 TEST_P(BenchmarkClientHttpTest, RequestMethodPost) {

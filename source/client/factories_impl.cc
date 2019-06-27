@@ -25,20 +25,20 @@ BenchmarkClientPtr BenchmarkClientFactoryImpl::create(Envoy::Api::Api& api,
   StatisticFactoryImpl statistic_factory(options_);
   auto benchmark_client = std::make_unique<BenchmarkClientHttpImpl>(
       api, dispatcher, store, statistic_factory.create(), statistic_factory.create(),
-      std::move(uri), options_.h2(), options_.prefetchConnections());
-
-  benchmark_client->setRequestMethod(options_.requestMethod());
-
+      std::move(uri), options_.h2(), options_.prefetchConnections(), options_.tlsContext());
   auto request_options = options_.toCommandLineOptions()->request_options();
   if (request_options.request_headers_size() > 0) {
     for (const auto& header : request_options.request_headers()) {
       benchmark_client->setRequestHeader(header.header().key(), header.header().value());
     }
   }
-
+  benchmark_client->setRequestMethod(options_.requestMethod());
   benchmark_client->setRequestBodySize(options_.requestBodySize());
   benchmark_client->setConnectionTimeout(options_.timeout());
   benchmark_client->setConnectionLimit(options_.connections());
+  benchmark_client->setMaxPendingRequests(options_.maxPendingRequests());
+  benchmark_client->setMaxActiveRequests(options_.maxActiveRequests());
+  benchmark_client->setMaxRequestsPerConnection(options_.maxRequestsPerConnection());
   return benchmark_client;
 }
 
