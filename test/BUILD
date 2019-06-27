@@ -61,7 +61,6 @@ envoy_cc_test(
         "@envoy//source/common/network:dns_lib",
         "@envoy//source/common/protobuf:utility_lib",
         "@envoy//source/common/stats:isolated_store_lib",
-        "@envoy//test/integration:http_integration_lib",
         "@envoy//test/integration:integration_lib",
         "@envoy//test/mocks/event:event_mocks",
         "@envoy//test/mocks/thread_local:thread_local_mocks",

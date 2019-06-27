@@ -91,7 +91,7 @@ TEST_P(ServiceTest, Basic) {
   EXPECT_TRUE(r->Read(&response_));
   EXPECT_FALSE(response_.has_error_detail());
   EXPECT_TRUE(response_.has_output());
-  EXPECT_EQ(6, response_.output().results(0).counters().size());
+  EXPECT_GE(response_.output().results(0).counters().size(), 8);
   auto status = r->Finish();
   EXPECT_TRUE(status.ok());
 }

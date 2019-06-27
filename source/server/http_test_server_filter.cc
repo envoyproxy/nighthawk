@@ -4,6 +4,7 @@
 
 #include "envoy/server/filter_config.h"
 
+#include "common/protobuf/message_validator_impl.h"
 #include "common/protobuf/utility.h"
 
 #include "absl/strings/numbers.h"
@@ -28,7 +29,9 @@ bool HttpTestServerDecoderFilter::mergeJsonConfig(absl::string_view json,
   error_message = absl::nullopt;
   try {
     nighthawk::server::ResponseOptions json_config;
-    Envoy::MessageUtil::loadFromJson(std::string(json), json_config);
+    // TODO(oschaaf): pass in the right ValidationVisitor type.
+    Envoy::MessageUtil::loadFromJson(std::string(json), json_config,
+                                     Envoy::ProtobufMessage::getNullValidationVisitor());
     config.MergeFrom(json_config);
     Envoy::MessageUtil::validate(config);
   } catch (Envoy::EnvoyException exception) {

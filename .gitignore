@@ -11,3 +11,6 @@ generated/
 .vscode/
 bazel.output.txt
 envoy/
+*.pyc
+__pycache__
+tools/pyformat

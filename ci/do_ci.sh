@@ -9,8 +9,10 @@ function do_build () {
 }
 
 function do_test() {
-    bazel test $BAZEL_BUILD_OPTIONS $BAZEL_TEST_OPTIONS --test_output=all \
-    //test:nighthawk_test //test/server:http_test_server_filter_integration_test
+    bazel test $BAZEL_BUILD_OPTIONS $BAZEL_TEST_OPTIONS \
+    --test_output=all \
+    //test:nighthawk_test //test/server:http_test_server_filter_integration_test \
+    //integration:integration_test
 }
 
 function do_test_with_valgrind() {
@@ -76,12 +78,14 @@ function do_check_format() {
     echo "check_format..."
     cd "${SRCDIR}"
     ./tools/check_format.sh check
+    ./tools/format_python_tools.sh check
 }
 
 function do_fix_format() {
     echo "fix_format..."
     cd "${SRCDIR}"
     ./tools/check_format.sh fix
+    ./tools/format_python_tools.sh fix
 }
 
 [ -z "${NUM_CPUS}" ] && export NUM_CPUS=`grep -c ^processor /proc/cpuinfo`

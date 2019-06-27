@@ -14,6 +14,7 @@
 #include "common/network/dns_impl.h"
 #include "common/network/raw_buffer_socket.h"
 #include "common/network/utility.h"
+#include "common/protobuf/message_validator_impl.h"
 #include "common/upstream/cluster_manager_impl.h"
 #include "common/upstream/upstream_impl.h"
 
@@ -118,15 +119,18 @@ void BenchmarkClientHttpImpl::initialize(Envoy::Runtime::Loader& runtime) {
     auto& config_factory = Envoy::Config::Utility::getAndCheckFactory<
         Envoy::Server::Configuration::UpstreamTransportSocketConfigFactory>(
         transport_socket.name());
-    Envoy::ProtobufTypes::MessagePtr message =
-        Envoy::Config::Utility::translateToFactoryConfig(transport_socket, config_factory);
 
     ssl_context_manager_ =
         std::make_unique<Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl>(
             api_.timeSource());
+    // TODO: pass in the right validation visitor
     transport_socket_factory_context_ = std::make_unique<Ssl::MinimalTransportSocketFactoryContext>(
-        store_.createScope("client."), dispatcher_, generator_, store_, api_,
-        *ssl_context_manager_);
+        store_.createScope("client."), dispatcher_, generator_, store_, api_, *ssl_context_manager_,
+        Envoy::ProtobufMessage::getNullValidationVisitor());
+
+    Envoy::ProtobufTypes::MessagePtr message = Envoy::Config::Utility::translateToFactoryConfig(
+        transport_socket, transport_socket_factory_context_->messageValidationVisitor(),
+        config_factory);
 
     auto client_config =
         std::make_unique<Envoy::Extensions::TransportSockets::Tls::ClientContextConfigImpl>(
@@ -140,9 +144,11 @@ void BenchmarkClientHttpImpl::initialize(Envoy::Runtime::Loader& runtime) {
     socket_factory = std::make_unique<Envoy::Network::RawBufferSocketFactory>();
   };
 
+  // TODO(oschaaf): pass in the right validation visitor.
   cluster_ = std::make_unique<Envoy::Upstream::ClusterInfoImpl>(
       cluster_config, bind_config, runtime, std::move(socket_factory),
-      store_.createScope("client."), false /*added_via_api*/);
+      store_.createScope("client."), false /*added_via_api*/,
+      Envoy::ProtobufMessage::getNullValidationVisitor());
 
   ASSERT(uri_->address() != nullptr);
 
