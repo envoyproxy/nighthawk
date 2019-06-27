@@ -6,9 +6,8 @@
 
 #include "client/service_impl.h"
 
-#include "api/client/service.pb.h"
-
 #include "absl/debugging/symbolize.h"
+#include "api/client/service.pb.h"
 
 // NOLINT(namespace-nighthawk)
 
