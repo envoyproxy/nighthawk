@@ -29,10 +29,6 @@ class TestHttp(HttpIntegrationTestBase):
     self.assertEqual(counters["upstream_rq_total"], 25)
     self.assertEqual(len(counters), 9)
 
-    server_stats = self.getTestServerStatisticsJson()
-    self.assertEqual(
-        self.getServerStatFromJson(server_stats, "http.ingress_http.downstream_rq_2xx"), 25)
-
   def test_h2(self):
     parsed_json = self.runNighthawkClient(["--h2", self.getTestServerRootUri()])
     counters = self.getNighthawkCounterMapFromJson(parsed_json)

@@ -26,7 +26,7 @@ py_test(
     srcs_version = "PY3ONLY",
     deps = [
         requirement("requests"),
-        # I think the following are implied by 'request'.
+        # The following are implied by 'request'.
         requirement("urllib3"),
         requirement("chardet"),
         requirement("certifi"),
