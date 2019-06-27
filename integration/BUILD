@@ -20,8 +20,6 @@ py_test(
         "//:nighthawk_test_server",
         "@envoy//test/config/integration/certs",
     ],
-    # We enforce python 2, but I we may be able to stop doing that when we update
-    # bazel in CI. (Or we add python3 explicitly as a build dependency somehow).
     python_version = "PY3",
     srcs_version = "PY3ONLY",
     deps = [

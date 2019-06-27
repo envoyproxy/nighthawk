@@ -56,7 +56,6 @@ class TestServerBase(object):
         time.sleep(0.5)
         tries -= 1
         if sock.connect_ex((self.server_ip, self.server_port)) == 0:
-          sock.close()
           return True
       logging.error("Timeout while waiting for server listener at %s:%s to accept connections.",
                     self.server_ip, self.server_port)
