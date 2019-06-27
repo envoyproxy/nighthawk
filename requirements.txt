@@ -1,5 +1,1 @@
 requests
-urllib3
-chardet
-certifi
-idna
