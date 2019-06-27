@@ -23,9 +23,11 @@ public:
   MinimalTransportSocketFactoryContext(
       Envoy::Stats::ScopePtr&& stats_scope, Envoy::Event::Dispatcher& dispatcher,
       Envoy::Runtime::RandomGenerator& random, Envoy::Stats::Store& stats, Envoy::Api::Api& api,
-      Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl& ssl_context_manager)
+      Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl& ssl_context_manager,
+      Envoy::ProtobufMessage::ValidationVisitor& validation_visitor)
       : ssl_context_manager_(ssl_context_manager), stats_scope_(std::move(stats_scope)),
-        dispatcher_(dispatcher), random_(random), stats_(stats), api_(api) {}
+        dispatcher_(dispatcher), random_(random), stats_(stats), api_(api),
+        validation_visitor_(validation_visitor) {}
 
   Envoy::Server::Admin& admin() override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; }
 
@@ -55,6 +57,10 @@ public:
 
   Envoy::Api::Api& api() override { return api_; }
 
+  Envoy::ProtobufMessage::ValidationVisitor& messageValidationVisitor() override {
+    return validation_visitor_;
+  }
+
 private:
   Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl& ssl_context_manager_;
   Envoy::Stats::ScopePtr stats_scope_;
@@ -63,6 +69,7 @@ private:
   Envoy::Runtime::RandomGenerator& random_;
   Envoy::Stats::Store& stats_;
   Envoy::Api::Api& api_;
+  Envoy::ProtobufMessage::ValidationVisitor& validation_visitor_;
 };
 
 } // namespace Ssl

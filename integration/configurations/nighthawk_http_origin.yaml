@@ -1,0 +1,28 @@
+static_resources:
+  listeners:
+  - address:
+      socket_address:
+        address: $server_ip
+        port_value: $server_port
+    filter_chains:
+    - filters:
+      - name: envoy.http_connection_manager
+        config: 
+          generate_request_id: false
+          codec_type: auto
+          stat_prefix: ingress_http
+          route_config:
+            name: local_route
+            virtual_hosts:
+            - name: service
+              domains:
+              - "*"
+          http_filters:
+          - name: test-server
+            config:
+              response_body_size: 10
+              response_headers:
+              - { header: { key: "x-nh", value: "1"}}
+          - name: envoy.router
+            config:
+              dynamic_stats: false  

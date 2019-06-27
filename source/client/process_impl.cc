@@ -186,7 +186,8 @@ bool ProcessImpl::run(OutputCollector& collector) {
   bool ok = true;
   Envoy::Runtime::RandomGeneratorImpl generator;
   Envoy::Runtime::ScopedLoaderSingleton loader(
-      Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl({}, generator, *store_, tls_)});
+      Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl(
+          *dispatcher_, tls_, {}, "foo-cluster", *store_, generator, api_)});
 
   for (auto& w : workers_) {
     w->start();

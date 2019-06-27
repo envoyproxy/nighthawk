@@ -49,8 +49,10 @@ TEST_F(WorkerTest, WorkerExecutesOnThread) {
   EXPECT_CALL(tls_, allocateSlot()).Times(1);
 
   TestWorker worker(api_, tls_);
-  Envoy::Runtime::ScopedLoaderSingleton loader(
-      Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl({}, rand_, store_, tls_)});
+  NiceMock<Envoy::Event::MockDispatcher> dispatcher;
+  Envoy::Runtime::ScopedLoaderSingleton loader(Envoy::Runtime::LoaderPtr{
+      new Envoy::Runtime::LoaderImpl(dispatcher, tls_, {}, "test-cluster", store_, rand_, api_)});
+
   worker.start();
   worker.waitForCompletion();
 

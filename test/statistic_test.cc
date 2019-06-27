@@ -259,7 +259,7 @@ TEST(StatisticTest, HdrStatisticPercentilesProto) {
   Envoy::MessageUtil util;
   util.loadFromJson(
       filesystem.fileReadToEnd(TestEnvironment::runfilesPath("test/test_data/hdr_proto_json.gold")),
-      parsed_json_proto);
+      parsed_json_proto, Envoy::ProtobufMessage::getNullValidationVisitor());
   EXPECT_TRUE(util(parsed_json_proto, statistic.toProto()));
 }
 
