@@ -54,6 +54,7 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         "//source/client:nighthawk_client_lib",
+        "//source/client:nighthawk_service_lib",
         "//test:nighthawk_mocks",
         "//test/client:utility_lib",
         "//test/test_common:environment_lib",
