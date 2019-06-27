@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import logging
 import os
@@ -15,7 +15,7 @@ from integration_test_fixtures import (HttpIntegrationTestBase, HttpsIntegration
 class TestHttp(HttpIntegrationTestBase):
 
   def test_h1(self):
-    parsed_json = self.runNighthawk([self.getTestServerRootUri()])
+    parsed_json = self.runNighthawkClient([self.getTestServerRootUri()])
     counters = self.getNighthawkCounterMapFromJson(parsed_json)
     self.assertEqual(counters["benchmark.http_2xx"], 25)
     self.assertEqual(counters["upstream_cx_destroy"], 1)
@@ -29,8 +29,12 @@ class TestHttp(HttpIntegrationTestBase):
     self.assertEqual(counters["upstream_rq_total"], 25)
     self.assertEqual(len(counters), 9)
 
+    server_stats = self.getTestServerStatisticsJson()
+    self.assertEqual(
+        self.getServerStatFromJson(server_stats, "http.ingress_http.downstream_rq_2xx"), 25)
+
   def test_h2(self):
-    parsed_json = self.runNighthawk(["--h2", self.getTestServerRootUri()])
+    parsed_json = self.runNighthawkClient(["--h2", self.getTestServerRootUri()])
     counters = self.getNighthawkCounterMapFromJson(parsed_json)
     self.assertEqual(counters["benchmark.http_2xx"], 25)
     self.assertEqual(counters["upstream_cx_destroy"], 1)
@@ -47,7 +51,7 @@ class TestHttp(HttpIntegrationTestBase):
 class TestHttps(HttpsIntegrationTestBase):
 
   def test_h1(self):
-    parsed_json = self.runNighthawk([self.getTestServerRootUri()])
+    parsed_json = self.runNighthawkClient([self.getTestServerRootUri()])
     counters = self.getNighthawkCounterMapFromJson(parsed_json)
     self.assertEqual(counters["benchmark.http_2xx"], 25)
     self.assertEqual(counters["upstream_cx_destroy"], 1)
@@ -67,7 +71,7 @@ class TestHttps(HttpsIntegrationTestBase):
     self.assertEqual(len(counters), 14)
 
   def test_h2(self):
-    parsed_json = self.runNighthawk(["--h2", self.getTestServerRootUri()])
+    parsed_json = self.runNighthawkClient(["--h2", self.getTestServerRootUri()])
     counters = self.getNighthawkCounterMapFromJson(parsed_json)
     self.assertEqual(counters["benchmark.http_2xx"], 25)
     self.assertEqual(counters["upstream_cx_destroy"], 1)
@@ -84,3 +88,4 @@ class TestHttps(HttpsIntegrationTestBase):
     self.assertEqual(counters["ssl.sigalgs.rsa_pss_rsae_sha256"], 1)
     self.assertEqual(counters["ssl.versions.TLSv1.2"], 1)
     self.assertEqual(len(counters), 14)
+ 

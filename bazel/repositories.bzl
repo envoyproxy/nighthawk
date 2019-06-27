@@ -3,6 +3,9 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 ENVOY_COMMIT = "2f569b9a8d3f0d7a43ffa69e3e5ba947cd3a9f8b"
 ENVOY_SHA = "ec47fee6604468bc392937967415c736f19fb22129929881270a1635ad216d87"
 
+RULES_PYTHON_COMMIT = "fdbb17a4118a1728d19e638a5291b4c4266ea5b8"
+RULES_PYTHON_SHA = "9a3d71e348da504a9c4c5e8abd4cb822f7afb32c613dc6ee8b8535333a81a938"
+
 def nighthawk_dependencies():
     http_archive(
         name = "envoy",
@@ -48,4 +51,11 @@ cc_library(
         sha256 = "6928ba22634d9a5b2752227309c9097708e790db6a285fa5c3f40a219bf7ee98",
         strip_prefix = "HdrHistogram_c-0.9.8",
         url = "https://github.com/HdrHistogram/HdrHistogram_c/archive/0.9.8.tar.gz",
+    )
+
+    http_archive(
+        name = "io_bazel_rules_python",
+        sha256 = RULES_PYTHON_SHA,
+        strip_prefix = "rules_python-%s" % RULES_PYTHON_COMMIT,
+        url = "https://github.com/bazelbuild/rules_python/archive/%s.tar.gz" % RULES_PYTHON_COMMIT,
     )
