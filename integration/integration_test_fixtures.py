@@ -48,7 +48,6 @@ class IntegrationTestBase(unittest.TestCase):
     with socket.socket(self.socket_type, socket.SOCK_STREAM) as sock:
       sock.bind((address, 0))
       port = sock.getsockname()[1]
-      sock.close()
     return port
 
   def setUp(self):
