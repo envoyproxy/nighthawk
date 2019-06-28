@@ -1,3 +1,8 @@
+admin:
+  access_log_path: /tmp/admin_access.log
+  profile_path: /tmp/envoy.prof
+  address:
+    socket_address: { address: $server_ip, port_value: $admin_port }
 static_resources:
   listeners:
   - address:
