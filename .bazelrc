@@ -66,3 +66,4 @@ build:libc++ --define force_libcpp=enabled
 
 # Test options
 test --test_env=HEAPCHECK=normal --test_env=PPROF_PATH
+build  --verbose_failures  --action_env=HOME --action_env=PYTHONUSERBASE --jobs=80 --show_task_finish --experimental_generate_json_trace_profile 
