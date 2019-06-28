@@ -76,8 +76,10 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
                   output_format_),
       false, "", &output_formats_allowed, cmd);
 
-  TCLAP::SwitchArg prefetch_connections(
-      "", "prefetch-connections", "Prefetch connections before benchmarking (HTTP/1 only).", cmd);
+  TCLAP::SwitchArg prefetch_connections(                         // NOLINT
+      "", "prefetch-connections",                                // NOLINT
+      "Prefetch connections before benchmarking (HTTP/1 only).", // NOLINT
+      cmd);                                                      // NOLINT
 
   // Note: we allow a burst size of 1, which intuitively may not make sense. However, allowing it
   // doesn't hurt either, and it does allow one to use a the same code-execution-paths in test
