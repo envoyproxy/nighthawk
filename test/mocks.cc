@@ -26,4 +26,6 @@ MockStatisticFactory::MockStatisticFactory() = default;
 
 MockBenchmarkClient::MockBenchmarkClient() = default;
 
+MockPoolable::MockPoolable() = default;
+
 } // namespace Nighthawk

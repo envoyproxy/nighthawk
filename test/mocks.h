@@ -142,4 +142,11 @@ protected:
   MOCK_CONST_METHOD0(measureLatencies, bool());
 };
 
+class MockPoolable {
+public:
+  MockPoolable();
+  MOCK_METHOD0(orphan, void());
+  MOCK_METHOD0(orphaned, bool());
+};
+
 } // namespace Nighthawk
