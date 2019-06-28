@@ -70,7 +70,6 @@ class TestHttps(HttpsIntegrationTestBase):
     self.assertEqual(
         self.getServerStatFromJson(server_stats, "http.ingress_http.downstream_rq_2xx"), 25)
 
-
   def test_h2(self):
     parsed_json = self.runNighthawkClient(["--h2", self.getTestServerRootUri()])
     counters = self.getNighthawkCounterMapFromJson(parsed_json)
@@ -90,36 +89,38 @@ class TestHttps(HttpsIntegrationTestBase):
     self.assertEqual(counters["ssl.versions.TLSv1.2"], 1)
     self.assertEqual(len(counters), 14)
 
-def test_h1_tls_context_configuration(self):
-    parsed_json = self.runNighthawkClient([
-        "--duration 1",
-        "--tls-context {common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES128-SHA\"]}}}",
-        self.getTestServerRootUri()
-    ])
-    counters = self.getNighthawkCounterMapFromJson(parsed_json)
-    self.assertEqual(counters["ssl.ciphers.ECDHE-RSA-AES128-SHA"], 1)
 
-    parsed_json = self.runNighthawkClient([
-        "--h2", "--duration 1",
-        "--tls-context {common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"]}}}",
-        self.getTestServerRootUri()
-    ])
-    counters = self.getNighthawkCounterMapFromJson(parsed_json)
-    self.assertEqual(counters["ssl.ciphers.ECDHE-RSA-AES256-GCM-SHA384"], 1)
+def test_h1_tls_context_configuration(self):
+  parsed_json = self.runNighthawkClient([
+      "--duration 1",
+      "--tls-context {common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES128-SHA\"]}}}",
+      self.getTestServerRootUri()
+  ])
+  counters = self.getNighthawkCounterMapFromJson(parsed_json)
+  self.assertEqual(counters["ssl.ciphers.ECDHE-RSA-AES128-SHA"], 1)
+
+  parsed_json = self.runNighthawkClient([
+      "--h2", "--duration 1",
+      "--tls-context {common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"]}}}",
+      self.getTestServerRootUri()
+  ])
+  counters = self.getNighthawkCounterMapFromJson(parsed_json)
+  self.assertEqual(counters["ssl.ciphers.ECDHE-RSA-AES256-GCM-SHA384"], 1)
+
 
 def test_h2_tls_context_configuration(self):
-    parsed_json = self.runNighthawkClient([
-        "--duration 1",
-        "--tls-context {common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES128-SHA\"]}}}",
-        self.getTestServerRootUri()
-    ])
-    counters = self.getNighthawkCounterMapFromJson(parsed_json)
-    self.assertEqual(counters["ssl.ciphers.ECDHE-RSA-AES128-SHA"], 1)
+  parsed_json = self.runNighthawkClient([
+      "--duration 1",
+      "--tls-context {common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES128-SHA\"]}}}",
+      self.getTestServerRootUri()
+  ])
+  counters = self.getNighthawkCounterMapFromJson(parsed_json)
+  self.assertEqual(counters["ssl.ciphers.ECDHE-RSA-AES128-SHA"], 1)
 
-    parsed_json = self.runNighthawkClient([
-        "--h2", "--duration 1",
-        "--tls-context {common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"]}}}",
-        self.getTestServerRootUri()
-    ])
-    counters = self.getNighthawkCounterMapFromJson(parsed_json)
-    self.assertEqual(counters["ssl.ciphers.ECDHE-RSA-AES256-GCM-SHA384"], 1)
+  parsed_json = self.runNighthawkClient([
+      "--h2", "--duration 1",
+      "--tls-context {common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"]}}}",
+      self.getTestServerRootUri()
+  ])
+  counters = self.getNighthawkCounterMapFromJson(parsed_json)
+  self.assertEqual(counters["ssl.ciphers.ECDHE-RSA-AES256-GCM-SHA384"], 1)
