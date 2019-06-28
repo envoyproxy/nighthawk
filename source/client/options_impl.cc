@@ -50,9 +50,8 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       fmt::format(
           "The number of concurrent event loops that should be used. Specify 'auto' to let "
           "Nighthawk leverage all vCPUs that have affinity to the Nighthawk process.Note that "
-          "increasing this results in an effective load multiplier combined with the configured-- "
-          "rps "
-          "and --connections values. Default: {}. ",
+          "increasing this results in an effective load multiplier combined with the configured "
+          "--rps and --connections values. Default: {}. ",
           concurrency_),
       false, "", "string", cmd);
 
