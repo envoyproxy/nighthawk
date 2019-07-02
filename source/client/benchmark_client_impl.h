@@ -58,15 +58,15 @@ public:
                           bool prefetch_connections,
                           envoy::api::v2::auth::UpstreamTlsContext tls_context);
 
-  void setConnectionLimit(uint64_t connection_limit) { connection_limit_ = connection_limit; }
+  void setConnectionLimit(uint32_t connection_limit) { connection_limit_ = connection_limit; }
   void setConnectionTimeout(std::chrono::seconds timeout) { timeout_ = timeout; }
-  void setMaxPendingRequests(uint64_t max_pending_requests) {
+  void setMaxPendingRequests(uint32_t max_pending_requests) {
     max_pending_requests_ = max_pending_requests;
   }
-  void setMaxActiveRequests(uint64_t max_active_requests) {
+  void setMaxActiveRequests(uint32_t max_active_requests) {
     max_active_requests_ = max_active_requests;
   }
-  void setMaxRequestsPerConnection(uint64_t max_requests_per_connection) {
+  void setMaxRequestsPerConnection(uint32_t max_requests_per_connection) {
     max_requests_per_connection_ = max_requests_per_connection;
   }
 
