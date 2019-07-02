@@ -41,28 +41,31 @@ bazel build -c opt //:nighthawk_client
 
 USAGE: 
 
-   nighthawk_client  [--max-requests-per-connection <uint32_t>]
-                     [--max-active-requests <uint32_t>]
-                     [--max-pending-requests <uint32_t>] [--tls-context
-                     <string>] [--request-body-size <uint32_t>]
-                     [--request-header <string>] ... [--request-method
-                     <GET|HEAD|POST|PUT|DELETE|CONNECT|OPTIONS|TRACE>]
-                     [--address-family <auto|v4|v6>] [--burst-size
-                     <uint64_t>] [--prefetch-connections] [--output-format
-                     <human|yaml|json>] [-v <trace|debug|info|warn|error
-                     |critical>] [--concurrency <string>] [--h2] [--timeout
-                     <uint64_t>] [--duration <uint64_t>] [--connections
-                     <uint32_t>] [--rps <uint64_t>] [--] [--version] [-h]
-                     <uri format>
+   bazel-bin/nighthawk_client  [--max-requests-per-connection <uint32_t>]
+                               [--max-active-requests <uint32_t>]
+                               [--max-pending-requests <uint32_t>]
+                               [--tls-context <string>]
+                               [--request-body-size <uint32_t>]
+                               [--request-header <string>] ... 
+                               [--request-method <GET|HEAD|POST|PUT|DELETE
+                               |CONNECT|OPTIONS|TRACE>] [--address-family
+                               <auto|v4|v6>] [--burst-size <uint32_t>]
+                               [--prefetch-connections] [--output-format
+                               <human|yaml|json>] [-v <trace|debug|info
+                               |warn|error|critical>] [--concurrency
+                               <string>] [--h2] [--timeout <uint32_t>]
+                               [--duration <uint32_t>] [--connections
+                               <uint32_t>] [--rps <uint32_t>] [--]
+                               [--version] [-h] <uri format>
 
 
 Where: 
 
    --max-requests-per-connection <uint32_t>
-     Max requests per connection (default: 2^31).
+     Max requests per connection (default: 4294937295).
 
    --max-active-requests <uint32_t>
-     Max active requests (default: 2^31).
+     Max active requests (default: 4294937295).
 
    --max-pending-requests <uint32_t>
      Max pending requests (default: 1, no client side queuing. Specifying
@@ -89,9 +92,8 @@ Where:
      Network addres family preference. Possible values: [auto, v4, v6]. The
      default output format is 'v4'.
 
-   --burst-size <uint64_t>
-     Release requests in bursts of the specified size (default: 0, no
-     bursting).
+   --burst-size <uint32_t>
+     Release requests in bursts of the specified size (default: 0).
 
    --prefetch-connections
      Prefetch connections before benchmarking (HTTP/1 only).
@@ -109,25 +111,25 @@ Where:
      The number of concurrent event loops that should be used. Specify
      'auto' to let Nighthawk leverage all vCPUs that have affinity to the
      Nighthawk process.Note that increasing this results in an effective
-     load multiplier combined with the configured-- rps and --connections
-     values.Default : 1. 
+     load multiplier combined with the configured --rps and --connections
+     values. Default: 1. 
 
    --h2
      Use HTTP/2
 
-   --timeout <uint64_t>
+   --timeout <uint32_t>
      Timeout period in seconds used for both connection timeout and grace
      period waiting for lagging responses to come in after the test run is
-     done. Default: 5.
+     done. Default: 30.
 
-   --duration <uint64_t>
+   --duration <uint32_t>
      The number of seconds that the test should run. Default: 5.
 
    --connections <uint32_t>
      The number of connections per event loop that the test should
      maximally use. HTTP/1 only. Default: 1.
 
-   --rps <uint64_t>
+   --rps <uint32_t>
      The target requests-per-second rate. Default: 5.
 
    --,  --ignore_rest
