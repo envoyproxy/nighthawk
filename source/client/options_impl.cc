@@ -18,6 +18,8 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   verbosity_ = "info";
   output_format_ = "human";
 
+  // TODO(oschaaf): Purge the validation we perform here. Most of it should have become
+  // redundant now that we also perform validation of the resulting proto.
   const char* descr = "L7 (HTTP/HTTPS/HTTP2) performance characterization tool.";
   TCLAP::CmdLine cmd(descr, ' ', "PoC"); // NOLINT
 
@@ -242,15 +244,17 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   }
 
   if (!tls_context.getValue().empty()) {
-    // TODO(oschaaf): used to by loadFromJsonEx, which is now gone.
-    Envoy::MessageUtil::loadFromJson(tls_context.getValue(), tls_context_,
-                                     Envoy::ProtobufMessage::getNullValidationVisitor());
+    try {
+      Envoy::MessageUtil::loadFromJson(tls_context.getValue(), tls_context_,
+                                       Envoy::ProtobufMessage::getNullValidationVisitor());
+    } catch (Envoy::EnvoyException e) {
+      throw MalformedArgvException(e.what());
+    }
   }
   validate();
 }
 
 OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
-  // XXX(oschaaf): as default composition isn't trivial, add tests to ensure all constructors
   setNonTrivialDefaults();
 
   for (const auto& header : options.request_options().request_headers()) {

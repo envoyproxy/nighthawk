@@ -294,5 +294,21 @@ TEST_F(OptionsImplTest, ProtoConstructorValidation) {
                           "CommandLineOptionsValidationError.RequestsPerSecond");
 }
 
+TEST_F(OptionsImplTest, BadTlsContextSpecification) {
+  // Bad JSON
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                              "{} --tls-context {} http://foo/", client_name_, "{broken_json:")),
+                          MalformedArgvException, "Unable to parse JSON as proto");
+
+  // TODO(oschaaf): This should fail, but does not. Probably because we pass in a
+  // NullValidationVisitor. Correct that later on.
+
+  // Correct JSON, but contents not according to spec.
+  // EXPECT_THROW_WITH_REGEX(
+  //    TestUtility::createOptionsImpl(fmt::format("{} --tls-context {} http://foo/", client_name_,
+  //                                               "{misspelled_tls_context:{}}")),
+  //    MalformedArgvException, "Unable to parse JSON as proto");
+}
+
 } // namespace Client
 } // namespace Nighthawk

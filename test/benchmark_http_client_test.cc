@@ -398,10 +398,9 @@ TEST_P(BenchmarkClientHttpTest, ConnectionPrefetching) {
   EXPECT_EQ(50, getCounter("upstream_cx_total"));
 }
 
-// XXX(oschaaf): Ok; so turns out this feature is h/2 only atm. Maybe want need to log a warning
-// if someone configures this for h1.
-// XXX(oschaaf): maybe we want to run parameterized tests running over
-// h1/h2 and tls vs plain
+// TODO(oschaaf): Turns out this feature is h/2 only as of writing this.
+// Consider logging a warning/error when attempting to configure this with
+// H1 enabled.
 TEST_P(BenchmarkClientHttpTest, CapRequestConcurrency) {
   setupBenchmarkClient("/lorem-ipsum-status-200", true, false);
   const uint64_t requests = 4;
