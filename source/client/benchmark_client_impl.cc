@@ -160,7 +160,6 @@ void BenchmarkClientHttpImpl::initialize(Envoy::Runtime::Loader& runtime) {
 
   Envoy::Network::ConnectionSocket::OptionsSharedPtr options =
       std::make_shared<Envoy::Network::ConnectionSocket::Options>();
-
   if (use_h2_) {
     pool_ = std::make_unique<H2Pool>(dispatcher_, host, Envoy::Upstream::ResourcePriority::Default,
                                      options);
@@ -172,7 +171,7 @@ void BenchmarkClientHttpImpl::initialize(Envoy::Runtime::Loader& runtime) {
   if (prefetch_connections_) {
     prefetchPoolConnections();
   }
-} // namespace Client
+}
 
 void BenchmarkClientHttpImpl::terminate() { pool_.reset(); }
 
