@@ -12,6 +12,9 @@
 namespace Nighthawk {
 namespace Client {
 
+#define TCLAP_SET_IF_SPECIFIED(command, value_member)                                              \
+  (value_member = (command).isSet() ? (command).getValue() : (value_member))
+
 OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   setNonTrivialDefaults();
   // Override some defaults, we are in CLI-mode.
@@ -161,60 +164,28 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
     throw NoServingException();
   }
 
-  if (requests_per_second.isSet()) {
-    requests_per_second_ = requests_per_second.getValue();
-  }
-  if (connections.isSet()) {
-    connections_ = connections.getValue();
-  }
-  if (duration.isSet()) {
-    duration_ = duration.getValue();
-  }
-  if (timeout.isSet()) {
-    timeout_ = timeout.getValue();
-  }
+  TCLAP_SET_IF_SPECIFIED(requests_per_second, requests_per_second_);
+  TCLAP_SET_IF_SPECIFIED(connections, connections_);
+  TCLAP_SET_IF_SPECIFIED(duration, duration_);
+  TCLAP_SET_IF_SPECIFIED(timeout, timeout_);
   uri_ = uri.getValue();
-  if (h2.isSet()) {
-    h2_ = h2.getValue();
-  }
-  if (concurrency.isSet()) {
-    concurrency_ = concurrency.getValue();
-  }
-  if (verbosity.isSet()) {
-    verbosity_ = verbosity.getValue();
-  }
-  if (output_format.isSet()) {
-    output_format_ = output_format.getValue();
-  }
-  if (prefetch_connections.isSet()) {
-    prefetch_connections_ = prefetch_connections.getValue();
-  }
-  if (burst_size.isSet()) {
-    burst_size_ = burst_size.getValue();
-  }
-  if (address_family.isSet()) {
-    address_family_ = address_family.getValue();
-  }
-  if (request_method.isSet()) {
-    request_method_ = request_method.getValue();
-  }
-  if (request_headers.isSet()) {
-    request_headers_ = request_headers.getValue();
-  }
-  if (request_body_size.isSet()) {
-    request_body_size_ = request_body_size.getValue();
-  }
-  if (max_pending_requests.isSet()) {
-    max_pending_requests_ = max_pending_requests.getValue();
-  }
-  if (max_active_requests.isSet()) {
-    max_active_requests_ = max_active_requests.getValue();
-  }
-  if (max_requests_per_connection.isSet()) {
-    max_requests_per_connection_ = max_requests_per_connection.getValue();
-  }
+  TCLAP_SET_IF_SPECIFIED(h2, h2_);
+  TCLAP_SET_IF_SPECIFIED(concurrency, concurrency_);
+  TCLAP_SET_IF_SPECIFIED(verbosity, verbosity_);
+  TCLAP_SET_IF_SPECIFIED(output_format, output_format_);
+  TCLAP_SET_IF_SPECIFIED(prefetch_connections, prefetch_connections_);
+  TCLAP_SET_IF_SPECIFIED(burst_size, burst_size_);
+  TCLAP_SET_IF_SPECIFIED(address_family, address_family_);
+  TCLAP_SET_IF_SPECIFIED(request_method, request_method_);
+  TCLAP_SET_IF_SPECIFIED(request_headers, request_headers_);
+  TCLAP_SET_IF_SPECIFIED(request_body_size, request_body_size_);
+  TCLAP_SET_IF_SPECIFIED(max_pending_requests, max_pending_requests_);
+  TCLAP_SET_IF_SPECIFIED(max_active_requests, max_active_requests_);
+  TCLAP_SET_IF_SPECIFIED(max_requests_per_connection, max_requests_per_connection_);
 
   // CLI-specific tests.
+  // TODO(oschaaf): as per mergconflicts's remark, it would be nice to aggregate
+  // these and present everything we couldn't understand to the CLI user in on go.
   if (requests_per_second_ > largest_acceptable_uint32_option_value) {
     throw MalformedArgvException("Invalid value for --rps");
   }

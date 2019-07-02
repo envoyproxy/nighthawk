@@ -406,7 +406,7 @@ TEST_P(BenchmarkClientHttpTest, CapRequestConcurrency) {
   const uint64_t requests = 4;
   uint64_t inflight_response_count = requests;
 
-  // We configure so that max requests is the only thing that can  be throttling.
+  // We configure so that max requests is the only thing that can be throttling.
   client_->setMaxPendingRequests(requests);
   client_->setConnectionLimit(requests);
   client_->setMaxActiveRequests(1);
@@ -433,7 +433,7 @@ TEST_P(BenchmarkClientHttpsTest, MaxRequestsPerConnection) {
   const uint64_t requests = 4;
   uint64_t inflight_response_count = requests;
 
-  // We configure so that max requests is the only thing that can  be throttling.
+  // We configure so that max requests is the only thing that can be throttling.
   client_->setMaxPendingRequests(requests);
   client_->setConnectionLimit(requests);
   client_->setMaxActiveRequests(1024);
