@@ -43,9 +43,9 @@ public:
 
   void setBasicRequestOptions() {
     auto options = request_.mutable_start_request()->mutable_options();
-    // XXX(oschaaf): Set defaults in the options header.
-    // See if we can get rid of the ones in TCLAP to disambiguate
-    // how we handle default values.
+    // TODO(oschaaf): this sends actual traffic, which isn't relevant for the tests
+    // we are about to perform. However, it would be nice to be able to mock out things
+    // to clean this up.
     options->mutable_uri()->set_value("http://127.0.0.1:10001/");
     options->mutable_duration()->set_seconds(3);
     options->mutable_requests_per_second()->set_value(3);
