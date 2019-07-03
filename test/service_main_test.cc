@@ -48,7 +48,7 @@ TEST_F(ServiceMainTest, Unbindable) {
   std::vector<const char*> argv;
   argv.push_back("foo");
   argv.push_back("--listen");
-  argv.push_back("255.255.255.255:10");
+  argv.push_back("1.1.1.1:10");
   ServiceMain service_main(argv.size(), argv.data());
   EXPECT_THROW(service_main.Start(), NighthawkException);
 }
