@@ -211,6 +211,16 @@ TEST_F(OptionsImplTest, BadConcurrencyValuesThrow) {
       MalformedArgvException, "Value out of range: --concurrency");
 }
 
+// Test a relatively large uint value to see if we can get reasonable range
+// when we specced a uint32_t
+// See https://github.com/envoyproxy/nighthawk/pull/88/files#r299572672
+TEST_F(OptionsImplTest, ParserIntRangeTest) {
+  const uint32_t test_value = OptionsImpl::largest_acceptable_uint32_option_value;
+  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(fmt::format(
+      "{} --max-requests-per-connection {}  {} ", client_name_, test_value, good_test_uri_));
+  EXPECT_EQ(test_value, options->maxRequestsPerConnection());
+}
+
 // Test we accept --concurrency auto
 TEST_F(OptionsImplTest, AutoConcurrencyValueParsedOK) {
   std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(

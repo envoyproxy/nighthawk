@@ -13,6 +13,10 @@ namespace Client {
 
 class OptionsImpl : public Options {
 public:
+  // We cap on negative values. TCLAP accepts negative values which we will get here as very
+  // large values. We just cap values, hoping we catch accidental wraparound to a reasonable extent.
+  static constexpr uint32_t largest_acceptable_uint32_option_value = UINT32_MAX - 30000;
+
   OptionsImpl(int argc, const char* const* argv);
   OptionsImpl(const nighthawk::client::CommandLineOptions& options);
   Client::CommandLineOptionsPtr toCommandLineOptions() const override;
@@ -43,9 +47,6 @@ private:
   void setNonTrivialDefaults();
   void validate() const;
 
-  // We cap on negative values. TCLAP accepts negative values which we will get here as very
-  // large values. We just cap values, hoping we catch accidental wraparound to a reasonable extent.
-  static constexpr uint32_t largest_acceptable_uint32_option_value = UINT32_MAX - 30000;
   uint32_t requests_per_second_{5};
   uint32_t connections_{1};
   uint32_t duration_{5};
