@@ -36,6 +36,7 @@ envoy_cc_test(
         "rate_limiter_test.cc",
         "sequencer_test.cc",
         "service_test.cc",
+        "service_main_test.cc",
         "statistic_test.cc",
         "stream_decoder_test.cc",
         "utility_test.cc",

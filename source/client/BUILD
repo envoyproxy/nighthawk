@@ -52,9 +52,11 @@ envoy_cc_library(
     name = "nighthawk_service_lib",
     srcs = [
         "service_impl.cc",
+        "service_main.cc",
     ],
     hdrs = [
         "service_impl.h",
+        "service_main.h",
     ],
     repository = "@envoy",
     visibility = ["//visibility:public"],
