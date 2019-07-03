@@ -13,7 +13,7 @@ namespace Nighthawk {
 namespace Client {
 
 #define TCLAP_SET_IF_SPECIFIED(command, value_member)                                              \
-  (value_member = (command).isSet() ? (command).getValue() : (value_member))
+  (value_member = ((command.isSet()) ? (command.getValue()) : (value_member)))
 
 OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   setNonTrivialDefaults();
@@ -217,7 +217,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   if (!tls_context.getValue().empty()) {
     try {
       Envoy::MessageUtil::loadFromJson(tls_context.getValue(), tls_context_,
-                                       Envoy::ProtobufMessage::getNullValidationVisitor());
+                                       Envoy::ProtobufMessage::getStrictValidationVisitor());
     } catch (Envoy::EnvoyException e) {
       throw MalformedArgvException(e.what());
     }

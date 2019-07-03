@@ -122,10 +122,9 @@ void BenchmarkClientHttpImpl::initialize(Envoy::Runtime::Loader& runtime) {
     ssl_context_manager_ =
         std::make_unique<Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl>(
             api_.timeSource());
-    // TODO: pass in the right validation visitor
     transport_socket_factory_context_ = std::make_unique<Ssl::MinimalTransportSocketFactoryContext>(
         store_.createScope("client."), dispatcher_, generator_, store_, api_, *ssl_context_manager_,
-        Envoy::ProtobufMessage::getNullValidationVisitor());
+        Envoy::ProtobufMessage::getStrictValidationVisitor());
 
     Envoy::ProtobufTypes::MessagePtr message = Envoy::Config::Utility::translateToFactoryConfig(
         transport_socket, transport_socket_factory_context_->messageValidationVisitor(),
@@ -147,7 +146,7 @@ void BenchmarkClientHttpImpl::initialize(Envoy::Runtime::Loader& runtime) {
   cluster_ = std::make_unique<Envoy::Upstream::ClusterInfoImpl>(
       cluster_config, bind_config, runtime, std::move(socket_factory),
       store_.createScope("client."), false /*added_via_api*/,
-      Envoy::ProtobufMessage::getNullValidationVisitor());
+      Envoy::ProtobufMessage::getStrictValidationVisitor());
 
   ASSERT(uri_->address() != nullptr);
 

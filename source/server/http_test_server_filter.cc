@@ -29,9 +29,8 @@ bool HttpTestServerDecoderFilter::mergeJsonConfig(absl::string_view json,
   error_message = absl::nullopt;
   try {
     nighthawk::server::ResponseOptions json_config;
-    // TODO(oschaaf): pass in the right ValidationVisitor type.
     Envoy::MessageUtil::loadFromJson(std::string(json), json_config,
-                                     Envoy::ProtobufMessage::getNullValidationVisitor());
+                                     Envoy::ProtobufMessage::getStrictValidationVisitor());
     config.MergeFrom(json_config);
     Envoy::MessageUtil::validate(config);
   } catch (Envoy::EnvoyException exception) {
