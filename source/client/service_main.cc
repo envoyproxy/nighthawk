@@ -10,7 +10,6 @@
 
 #include "client/service_impl.h"
 
-#include "api/client/service.pb.h"
 #include "tclap/CmdLine.h"
 
 namespace Nighthawk {
@@ -36,7 +35,7 @@ ServiceMain::ServiceMain(int argc, const char** argv) {
   }
 }
 
-void ServiceMain::Run() {
+void ServiceMain::Start() {
   grpc::ServerBuilder builder;
   int grpc_server_port = listener_address_->ip()->port();
   builder.AddListeningPort(listener_address_->asString(), grpc::InsecureServerCredentials(),
@@ -49,8 +48,9 @@ void ServiceMain::Run() {
   std::cout << "Nighthawk grpc service listening: " << listener_address_->asString() << std::endl;
   channel_ = grpc::CreateChannel(listener_address_->asString(), grpc::InsecureChannelCredentials());
   stub_ = std::make_unique<nighthawk::client::NighthawkService::Stub>(channel_);
-  server_->Wait();
 }
+
+void ServiceMain::Wait() { server_->Wait(); }
 
 void ServiceMain::Shutdown() { server_->Shutdown(); }
 

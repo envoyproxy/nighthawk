@@ -8,7 +8,7 @@
 
 using namespace Nighthawk::Client;
 
-int main(int argc, char** argv) {
+int main(int argc, const char** argv) {
 #ifndef __APPLE__
   // absl::Symbolize mostly works without this, but this improves corner case
   // handling, such as running in a chroot jail.
@@ -16,8 +16,8 @@ int main(int argc, char** argv) {
 #endif
   try {
     ServiceMain service(argc, argv); // NOLINT
-    service.Run();
-    service.Shutdown();
+    service.Start();
+    service.Wait();
   } catch (const Nighthawk::Client::NoServingException& e) {
     return EXIT_SUCCESS;
   } catch (const Nighthawk::Client::MalformedArgvException& e) {

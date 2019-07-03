@@ -21,10 +21,8 @@ TEST_F(ServiceMainTest, HelloWorld) {
   std::vector<const char*> argv;
   argv.push_back("foo");
   ServiceMain service(argv.size(), argv.data());
-  std::thread t1([&service] { service.Run(); });
-  sleep(1);
+  service.Start();
   service.Shutdown();
-  t1.join();
 }
 
 TEST_F(ServiceMainTest, BadArgs) {
