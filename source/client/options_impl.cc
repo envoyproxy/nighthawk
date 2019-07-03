@@ -13,7 +13,7 @@ namespace Nighthawk {
 namespace Client {
 
 #define TCLAP_SET_IF_SPECIFIED(command, value_member)                                              \
-  (value_member = ((command.isSet()) ? (command.getValue()) : (value_member)))
+  ((value_member) = (((command).isSet()) ? ((command).getValue()) : (value_member)))
 
 OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   setNonTrivialDefaults();
