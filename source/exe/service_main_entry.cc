@@ -1,7 +1,8 @@
 #include "nighthawk/common/exception.h"
 
-#include "absl/debugging/symbolize.h"
 #include "client/service_main.h"
+
+#include "absl/debugging/symbolize.h"
 
 // NOLINT(namespace-nighthawk)
 

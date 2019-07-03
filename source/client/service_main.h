@@ -18,7 +18,7 @@ namespace Client {
 
 class ServiceMain {
 public:
-  ServiceMain(int argc, char** argv);
+  ServiceMain(int argc, const char** argv);
   void Run();
   void Shutdown();
 

@@ -16,7 +16,7 @@
 namespace Nighthawk {
 namespace Client {
 
-ServiceMain::ServiceMain(int argc, char** argv) {
+ServiceMain::ServiceMain(int argc, const char** argv) {
   const char* descr = "L7 (HTTP/HTTPS/HTTP2) performance characterization tool.";
   TCLAP::CmdLine cmd(descr, ' ', "PoC"); // NOLINT
 
