@@ -4,6 +4,8 @@
 
 #include "nighthawk/common/exception.h"
 
+#include "common/utility.h"
+
 #include "client/service_impl.h"
 
 #include "absl/debugging/symbolize.h"
@@ -27,24 +29,7 @@ public:
         "0.0.0.0:8443.",
         false, "0.0.0.0:8443", "uint32_t", cmd);
 
-    // TODO(oschaaf): duplicate code, shared with the CLI
-    cmd.setExceptionHandling(false);
-    try {
-      cmd.parse(argc, argv);
-    } catch (TCLAP::ArgException& e) {
-      try {
-        cmd.getOutput()->failure(cmd, e);
-      } catch (const TCLAP::ExitException&) {
-        // failure() has already written an informative message to stderr, so all that's left to do
-        // is throw our own exception with the original message.
-        throw MalformedArgvException(e.what());
-      }
-    } catch (const TCLAP::ExitException& e) {
-      // parse() throws an ExitException with status 0 after printing the output for --help and
-      // --version.
-      throw NoServingException();
-    }
-    // end duplicate code, shared with the CLI. Fix this.
+    Utility::parseCommand(cmd, argc, argv);
 
     auto listener_address =
         Envoy::Network::Utility::parseInternetAddressAndPort(internet_address_and_port.getValue());

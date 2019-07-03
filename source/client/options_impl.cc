@@ -104,22 +104,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
                                             "but in case of https no certificates are validated.",
                                             true, "", "uri format", cmd);
 
-  cmd.setExceptionHandling(false);
-  try {
-    cmd.parse(argc, argv);
-  } catch (TCLAP::ArgException& e) {
-    try {
-      cmd.getOutput()->failure(cmd, e);
-    } catch (const TCLAP::ExitException&) {
-      // failure() has already written an informative message to stderr, so all that's left to do
-      // is throw our own exception with the original message.
-      throw MalformedArgvException(e.what());
-    }
-  } catch (const TCLAP::ExitException& e) {
-    // parse() throws an ExitException with status 0 after printing the output for --help and
-    // --version.
-    throw NoServingException();
-  }
+  Utility::parseCommand(cmd, argc, argv);
 
   requests_per_second_ = requests_per_second.getValue();
   connections_ = connections.getValue();
