@@ -79,7 +79,7 @@ int main(int argc, char** argv) {
   absl::InitializeSymbolizer(argv[0]);
 #endif
   try {
-    ServiceMain service(argc, argv);
+    ServiceMain service(argc, argv); // NOLINT
     service.server_->Wait();
     service.Shutdown();
   } catch (const Nighthawk::Client::NoServingException& e) {
