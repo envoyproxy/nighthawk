@@ -6,6 +6,7 @@
 
 #include "nighthawk/common/exception.h"
 
+#include "common/common/logger.h"
 #include "common/utility.h"
 
 #include "client/service_impl.h"
@@ -16,7 +17,7 @@
 namespace Nighthawk {
 namespace Client {
 
-class ServiceMain {
+class ServiceMain : public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
   ServiceMain(int argc, const char** argv);
   void Start();

@@ -16,35 +16,24 @@ class ServiceMainTest : public Test {};
 // TODO(oschaaf): this gets us some coverage, but we need more functional testing.
 // See if we can add some python integration tests.
 TEST_F(ServiceMainTest, HelloWorld) {
-  std::vector<const char*> argv;
-  argv.push_back("foo");
+  std::vector<const char*> argv = {"foo"};
   ServiceMain service(argv.size(), argv.data());
   service.Start();
   service.Shutdown();
 }
 
 TEST_F(ServiceMainTest, BadArgs) {
-  std::vector<const char*> argv;
-  argv.push_back("foo");
-  argv.push_back("bar");
-
+  std::vector<const char*> argv = {"foo", "bar"};
   EXPECT_THROW(ServiceMain(argv.size(), argv.data()), std::exception);
 }
 
 TEST_F(ServiceMainTest, BadIpAddress) {
-  std::vector<const char*> argv;
-  argv.push_back("foo");
-  argv.push_back("--listen");
-  argv.push_back("bar");
-
+  std::vector<const char*> argv = {"foo", "--listen", "bar"};
   EXPECT_THROW(ServiceMain(argv.size(), argv.data()), NighthawkException);
 }
 
 TEST_F(ServiceMainTest, Unbindable) {
-  std::vector<const char*> argv;
-  argv.push_back("foo");
-  argv.push_back("--listen");
-  argv.push_back("1.1.1.1:10");
+  std::vector<const char*> argv = {"foo", "--listen", "1.1.1.1:10"};
   ServiceMain service_main(argv.size(), argv.data());
   EXPECT_THROW(service_main.Start(), NighthawkException);
 }

@@ -23,7 +23,7 @@ ServiceMain::ServiceMain(int argc, const char** argv) {
       "", "listen",
       "The address:port on which the Nighthawk grpc service should listen. Default: "
       "0.0.0.0:8443.",
-      false, "0.0.0.0:8443", "uint32_t", cmd);
+      false, "0.0.0.0:8443", "address:port", cmd);
 
   Utility::parseCommand(cmd, argc, argv);
 
@@ -45,7 +45,7 @@ void ServiceMain::Start() {
   if (server_ == nullptr) {
     throw NighthawkException("Could not start the grpc service.");
   }
-  std::cout << "Nighthawk grpc service listening: " << listener_address_->asString() << std::endl;
+  ENVOY_LOG(info, "Nighthawk grpc service listening: {}", listener_address_->asString());
   channel_ = grpc::CreateChannel(listener_address_->asString(), grpc::InsecureChannelCredentials());
   stub_ = std::make_unique<nighthawk::client::NighthawkService::Stub>(channel_);
 }
