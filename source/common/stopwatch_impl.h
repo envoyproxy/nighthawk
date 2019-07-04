@@ -12,8 +12,7 @@ namespace Nighthawk {
 
 class StopwatchImpl : public Stopwatch {
 public:
-  StopwatchImpl(Envoy::TimeSource& time_source) : time_source_(time_source) {}
-
+  StopwatchImpl(Envoy::TimeSource& time_source);
   void reset() override;
   void start() override;
   void stop() override;
@@ -21,7 +20,9 @@ public:
 
 private:
   Envoy::TimeSource& time_source_;
-  Envoy::MonotonicTime start_;
+  Envoy::MonotonicTime started_at_;
+  Envoy::MonotonicTime stopped_at_;
+  bool running_{};
 };
 
 } // namespace Nighthawk
