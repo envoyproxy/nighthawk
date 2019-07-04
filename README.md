@@ -41,25 +41,27 @@ bazel build -c opt //:nighthawk_client
 
 USAGE: 
 
-   bazel-bin/nighthawk_client  [--max-requests-per-connection <uint32_t>]
-                               [--max-active-requests <uint32_t>]
-                               [--max-pending-requests <uint32_t>]
-                               [--tls-context <string>]
-                               [--request-body-size <uint32_t>]
-                               [--request-header <string>] ... 
-                               [--request-method <GET|HEAD|POST|PUT|DELETE
-                               |CONNECT|OPTIONS|TRACE>] [--address-family
-                               <auto|v4|v6>] [--burst-size <uint32_t>]
-                               [--prefetch-connections] [--output-format
-                               <human|yaml|json>] [-v <trace|debug|info
-                               |warn|error|critical>] [--concurrency
-                               <string>] [--h2] [--timeout <uint32_t>]
-                               [--duration <uint32_t>] [--connections
-                               <uint32_t>] [--rps <uint32_t>] [--]
-                               [--version] [-h] <uri format>
+   nighthawk_client  [--sequencer-idle-strategy <string>]
+                     [--max-requests-per-connection <uint32_t>]
+                     [--max-active-requests <uint32_t>]
+                     [--max-pending-requests <uint32_t>] [--tls-context
+                     <string>] [--request-body-size <uint32_t>]
+                     [--request-header <string>] ... [--request-method
+                     <GET|HEAD|POST|PUT|DELETE|CONNECT|OPTIONS|TRACE>]
+                     [--address-family <auto|v4|v6>] [--burst-size
+                     <uint32_t>] [--prefetch-connections] [--output-format
+                     <human|yaml|json>] [-v <trace|debug|info|warn|error
+                     |critical>] [--concurrency <string>] [--h2] [--timeout
+                     <uint32_t>] [--duration <uint32_t>] [--connections
+                     <uint32_t>] [--rps <uint32_t>] [--] [--version] [-h]
+                     <uri format>
 
 
 Where: 
+
+   --sequencer-idle-strategy <string>
+     Choose between using a busy spin/yield loop or have the thread sleep
+     while waiting for the next scheduled request (default: spin).
 
    --max-requests-per-connection <uint32_t>
      Max requests per connection (default: 4294937295).
