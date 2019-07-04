@@ -41,7 +41,8 @@ public:
                 Envoy::TimeSource& time_source, Envoy::MonotonicTime start_time,
                 RateLimiterPtr&& rate_limiter, SequencerTarget target,
                 StatisticPtr&& latency_statistic, StatisticPtr&& blocked_statistic,
-                std::chrono::microseconds duration, std::chrono::microseconds grace_timeout);
+                std::chrono::microseconds duration, std::chrono::microseconds grace_timeout,
+                bool use_spin_loop);
 
   /**
    * Starts the Sequencer. Should be followed up with a call to waitForCompletion().
@@ -119,6 +120,7 @@ private:
   bool blocked_{};
   Envoy::MonotonicTime blocked_start_;
   bool cancelled_{};
+  bool use_spin_loop_{};
 };
 
 } // namespace Nighthawk

@@ -81,6 +81,7 @@ public:
   MOCK_CONST_METHOD0(maxActiveRequests, uint32_t());
   MOCK_CONST_METHOD0(maxRequestsPerConnection, uint32_t());
   MOCK_CONST_METHOD0(toCommandLineOptions, Client::CommandLineOptionsPtr());
+  MOCK_CONST_METHOD0(sequencerIdleStrategy, std::string());
 };
 
 class MockBenchmarkClientFactory : public Client::BenchmarkClientFactory {

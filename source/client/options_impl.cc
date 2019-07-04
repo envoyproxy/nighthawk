@@ -276,6 +276,7 @@ void OptionsImpl::setNonTrivialDefaults() {
   output_format_ = "json";
   address_family_ = "v4";
   request_method_ = "GET";
+  sequencer_idle_strategy_ = "spin";
 }
 
 void OptionsImpl::validate() const {

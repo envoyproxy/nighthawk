@@ -53,6 +53,9 @@ SequencerPtr SequencerFactoryImpl::create(Envoy::TimeSource& time_source,
   RateLimiterPtr rate_limiter =
       std::make_unique<LinearRateLimiter>(time_source, Frequency(options_.requestsPerSecond()));
   const uint64_t burst_size = options_.burstSize();
+  // XXX(oschaaf):
+  const bool useSpinLoop = options_.sequencerIdleStrategy() == "spin";
+
   if (burst_size) {
     rate_limiter = std::make_unique<BurstingRateLimiter>(std::move(rate_limiter), burst_size);
   }
@@ -62,7 +65,7 @@ SequencerPtr SequencerFactoryImpl::create(Envoy::TimeSource& time_source,
   return std::make_unique<SequencerImpl>(platform_util_, dispatcher, time_source, start_time,
                                          std::move(rate_limiter), sequencer_target,
                                          statistic_factory.create(), statistic_factory.create(),
-                                         options_.duration(), options_.timeout());
+                                         options_.duration(), options_.timeout(), useSpinLoop);
 }
 
 StoreFactoryImpl::StoreFactoryImpl(const Options& options) : OptionBasedFactoryImpl(options) {}

@@ -42,6 +42,7 @@ public:
   uint32_t maxPendingRequests() const override { return max_pending_requests_; }
   uint32_t maxActiveRequests() const override { return max_active_requests_; }
   uint32_t maxRequestsPerConnection() const override { return max_requests_per_connection_; }
+  std::string sequencerIdleStrategy() const override { return sequencer_idle_strategy_; }
 
 private:
   void setNonTrivialDefaults();
@@ -66,6 +67,7 @@ private:
   uint32_t max_pending_requests_{1};
   uint32_t max_active_requests_{largest_acceptable_uint32_option_value};
   uint32_t max_requests_per_connection_{largest_acceptable_uint32_option_value};
+  std::string sequencer_idle_strategy_;
 };
 
 } // namespace Client
