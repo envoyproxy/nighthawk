@@ -6,14 +6,14 @@ namespace Nighthawk {
 
 class PoolableImpl : public Poolable {
 public:
-  void orphan() override {
-    ASSERT(!orphaned_);
-    orphaned_ = true;
+  void mark_orphaned() override {
+    ASSERT(!is_orphaned_);
+    is_orphaned_ = true;
   };
-  bool orphaned() const override { return orphaned_; };
+  bool is_orphaned() const override { return is_orphaned_; };
 
 private:
-  bool orphaned_{false};
+  bool is_orphaned_{false};
 };
 
 } // namespace Nighthawk

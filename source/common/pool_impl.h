@@ -14,8 +14,8 @@ namespace Nighthawk {
 
 template <typename Poolable> class PoolImpl {
 public:
-  using poolDeletionDelegate = std::function<void(Poolable*)>;
-  using PoolablePtr = std::unique_ptr<Poolable, poolDeletionDelegate>;
+  using PoolDeletionDelegate = std::function<void(Poolable*)>;
+  using PoolablePtr = std::unique_ptr<Poolable, PoolDeletionDelegate>;
 
   ~PoolImpl() {
     while (!pool_.empty()) {
@@ -25,7 +25,7 @@ public:
     }
     // Inform the in-flight poolables that they are own their own now.
     for (auto poolable : all_) {
-      poolable->orphan();
+      poolable->mark_orphaned();
     }
   }
 
@@ -49,7 +49,7 @@ public:
 
 private:
   void recyclePoolable(Poolable* poolable) {
-    if (!poolable->orphaned()) {
+    if (!poolable->is_orphaned()) {
       pool_.push(std::unique_ptr<Poolable>(poolable));
     } else {
       // The pool is gone, we must self-destruct.

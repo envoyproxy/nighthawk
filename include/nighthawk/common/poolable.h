@@ -7,8 +7,14 @@ namespace Nighthawk {
 class Poolable {
 public:
   virtual ~Poolable() = default;
-  virtual void orphan() PURE;
-  virtual bool orphaned() const PURE;
+  /**
+   * Marks the Poolable instance as orphaned. Called when the associated Pool destructs.
+   */
+  virtual void mark_orphaned() PURE;
+  /**
+   * @return bool true iff mark_orphaned() has been called.
+   */
+  virtual bool is_orphaned() const PURE;
 };
 
 } // namespace Nighthawk

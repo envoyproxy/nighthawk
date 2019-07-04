@@ -145,8 +145,8 @@ protected:
 class MockPoolable {
 public:
   MockPoolable();
-  MOCK_METHOD0(orphan, void());
-  MOCK_METHOD0(orphaned, bool());
+  MOCK_METHOD0(mark_orphaned, void());
+  MOCK_METHOD0(is_orphaned, bool());
 };
 
 } // namespace Nighthawk

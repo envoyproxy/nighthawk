@@ -24,7 +24,7 @@ TEST_F(PoolTest, DestructPoolWithoutInFlightPoolables) {
   EXPECT_EQ(1, pool->allocated());
   EXPECT_EQ(1, pool->available());
   auto poolable = pool->get();
-  EXPECT_CALL(*poolable, orphaned()).WillOnce(Return(false));
+  EXPECT_CALL(*poolable, is_orphaned()).WillOnce(Return(false));
   EXPECT_EQ(1, pool->allocated());
   EXPECT_EQ(0, pool->available());
   poolable.reset();
@@ -45,13 +45,13 @@ TEST_F(PoolTest, DestructPoolWithInFlightPoolables) {
   EXPECT_EQ(1, pool->allocated());
   EXPECT_EQ(0, pool->available());
 
-  // We will reset the pool, which should cause it to call orphan() on the in-flight
+  // We will reset the pool, which should cause it to call mark_orphaned() on the in-flight
   // poolable object.
-  EXPECT_CALL(*poolable, orphan());
+  EXPECT_CALL(*poolable, mark_orphaned());
 
-  // As orphaned is set have it return true so it will self destruct on test exit.
+  // As is_orphaned is set have it return true so it will self destruct on test exit.
   pool.reset();
-  EXPECT_CALL(*poolable, orphaned()).WillOnce(Return(true));
+  EXPECT_CALL(*poolable, is_orphaned()).WillOnce(Return(true));
 }
 
 // Compose a poolable stopwatch
