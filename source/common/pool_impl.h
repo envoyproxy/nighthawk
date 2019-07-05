@@ -5,9 +5,10 @@
 #include <stack>
 #include <vector>
 
-#include "common/common/assert.h"
 #include "nighthawk/common/exception.h"
 #include "nighthawk/common/poolable.h"
+
+#include "common/common/assert.h"
 
 namespace Nighthawk {
 
@@ -43,7 +44,7 @@ public:
   PoolablePtr get() {
     if (pool_.empty()) {
       if (construction_delegate_ != nullptr) {
-        addPoolable(std::move(construction_delegate_()));
+        addPoolable(construction_delegate_());
       } else {
         throw NighthawkException("Pool is out of resources");
       }

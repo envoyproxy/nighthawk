@@ -1,7 +1,8 @@
 #pragma once
 
-#include "common/common/non_copyable.h"
 #include "envoy/common/pure.h"
+
+#include "common/common/non_copyable.h"
 
 namespace Nighthawk {
 

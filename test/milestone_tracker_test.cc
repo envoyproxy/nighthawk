@@ -17,15 +17,22 @@ namespace Nighthawk {
 
 class MilestoneTrackerTest : public testing::Test {
 public:
+  enum Milestone { Start = 0, Middle, End };
+
+  void SetUp() override {
+    // Corresponds with the enum above.
+    EXPECT_EQ(0, tracker_->registerMilestone("start"));
+    EXPECT_EQ(1, tracker_->registerMilestone("middle"));
+    EXPECT_EQ(2, tracker_->registerMilestone("end"));
+  }
+
   void basicRun() {
-    tracker_->markMilestone(MilestoneTracker::Milestone::Start);
+    tracker_->markMilestone(Milestone::Start);
     time_system_.sleep(1s);
-    tracker_->markMilestone(MilestoneTracker::Milestone::Complete);
+    tracker_->markMilestone(Milestone::End);
     time_system_.sleep(1s);
 
-    EXPECT_EQ(tracker_->elapsedBetween(MilestoneTracker::Milestone::Start,
-                                       MilestoneTracker::Milestone::Complete),
-              1s);
+    EXPECT_EQ(tracker_->elapsedBetween(Milestone::Start, Milestone::End), 1s);
   }
 
   Envoy::Event::SimulatedTimeSystem time_system_;
@@ -34,30 +41,25 @@ public:
 
 TEST_F(MilestoneTrackerTest, Tracking) { basicRun(); }
 
-TEST_F(MilestoneTrackerTest, Reset) {
+TEST_F(MilestoneTrackerTest, CanReuseAfterReset) {
   basicRun();
   tracker_->reset();
   basicRun();
 }
 
 TEST_F(MilestoneTrackerTest, SameMilestoneTwiceThrows) {
-  tracker_->markMilestone(MilestoneTracker::Milestone::Start);
-  EXPECT_THROW(tracker_->markMilestone(MilestoneTracker::Milestone::Start), NighthawkException);
-  tracker_->markMilestone(MilestoneTracker::Milestone::BlockingStart);
-  EXPECT_THROW(tracker_->markMilestone(MilestoneTracker::Milestone::Start), NighthawkException);
-  EXPECT_THROW(tracker_->markMilestone(MilestoneTracker::Milestone::BlockingStart),
-               NighthawkException);
+  tracker_->markMilestone(Milestone::Start);
+  EXPECT_THROW(tracker_->markMilestone(Milestone::Start), NighthawkException);
+  tracker_->markMilestone(Milestone::Middle);
+  EXPECT_THROW(tracker_->markMilestone(Milestone::Start), NighthawkException);
+  EXPECT_THROW(tracker_->markMilestone(Milestone::Middle), NighthawkException);
 }
 
 TEST_F(MilestoneTrackerTest, OutOfOrderMilsetoneSetThrows) {
-  tracker_->markMilestone(MilestoneTracker::Milestone::Start);
-  tracker_->markMilestone(MilestoneTracker::Milestone::BlockingStart);
-  EXPECT_EQ(tracker_->elapsedBetween(MilestoneTracker::Milestone::Start,
-                                     MilestoneTracker::Milestone::BlockingStart),
-            0s);
-  EXPECT_THROW(tracker_->elapsedBetween(MilestoneTracker::Milestone::BlockingStart,
-                                        MilestoneTracker::Milestone::Start),
-               NighthawkException);
+  tracker_->markMilestone(Milestone::Start);
+  tracker_->markMilestone(Milestone::Middle);
+  EXPECT_EQ(tracker_->elapsedBetween(Milestone::Start, Milestone::Middle), 0s);
+  EXPECT_THROW(tracker_->elapsedBetween(Milestone::End, Milestone::Start), NighthawkException);
 }
 
 } // namespace Nighthawk

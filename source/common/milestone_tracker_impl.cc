@@ -2,37 +2,41 @@
 
 #include "nighthawk/common/exception.h"
 
+#include "common/common/assert.h"
+
 namespace Nighthawk {
 
 MilestoneTrackerImpl::MilestoneTrackerImpl(Envoy::TimeSource& time_source)
-    : time_source_(time_source) {
-  for (int i = 0; i <= static_cast<int>(Milestone::Complete); i++) {
-    timestamps_.emplace_back(
-        std::tuple<Milestone, Envoy::MonotonicTime>{Milestone(i), Envoy::MonotonicTime::min()});
-  }
-}
+    : time_source_(time_source) {}
 
 void MilestoneTrackerImpl::reset() {
-  for (int i = 0; i <= static_cast<int>(Milestone::Complete); i++) {
-    std::get<1>(timestamps_[i]) = Envoy::MonotonicTime::min();
+  for (uint32_t i = 0; i < timestamps_.size(); i++) {
+    std::get<0>(timestamps_[i]) = Envoy::MonotonicTime::min();
   }
 }
 
-void MilestoneTrackerImpl::markMilestone(const Milestone milestone) {
-  auto& timestamp = std::get<1>(timestamps_[static_cast<int>(milestone)]);
+uint32_t MilestoneTrackerImpl::registerMilestone(absl::string_view name) {
+  timestamps_.emplace_back(std::tuple<Envoy::MonotonicTime, std::string>{
+      Envoy::MonotonicTime::min(), std::string(name)});
+  return timestamps_.size() - 1;
+}
+
+void MilestoneTrackerImpl::markMilestone(const uint32_t milestone) {
+  ASSERT(milestone < timestamps_.size());
+  auto& timestamp = std::get<0>(timestamps_[milestone]);
   if (timestamp != Envoy::MonotonicTime::min()) {
-    throw NighthawkException(fmt::format("Milestone {} already set", static_cast<int>(milestone)));
+    throw NighthawkException("Milestone already set");
   }
   timestamp = time_source_.monotonicTime();
 }
 
-const Envoy::MonotonicTime MilestoneTrackerImpl::getMilestone(const Milestone milestone) const {
-  return std::get<1>(timestamps_[static_cast<int>(milestone)]);
+const Envoy::MonotonicTime MilestoneTrackerImpl::getMilestone(const uint32_t milestone) const {
+  return std::get<0>(timestamps_[milestone]);
 }
 
-std::chrono::duration<double> MilestoneTrackerImpl::elapsedBetween(const Milestone from,
-                                                                   const Milestone to) const {
-  if (static_cast<int>(from) >= static_cast<int>(to)) {
+std::chrono::duration<double> MilestoneTrackerImpl::elapsedBetween(const uint32_t from,
+                                                                   const uint32_t to) const {
+  if (from >= to) {
     throw NighthawkException("The 'to' milestone must lie ahead of 'to'.");
   }
   return getMilestone(to) - getMilestone(from);

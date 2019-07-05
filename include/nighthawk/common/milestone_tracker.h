@@ -7,23 +7,12 @@
 #include "envoy/common/pure.h"
 #include "envoy/common/time.h"
 
-#include "nighthawk/common/poolable.h"
+#include "absl/strings/string_view.h"
 
 namespace Nighthawk {
 
 class MilestoneTracker {
 public:
-  enum class Milestone {
-    Start = 0,
-    SequencerStart,
-    SequencerInit,
-    BlockingStart,
-    BlockingEnd,
-    TransactionStart,
-    TransactionEnd,
-    Complete
-  };
-
   virtual ~MilestoneTracker() = default;
 
   /**
@@ -32,21 +21,27 @@ public:
   virtual void reset() PURE;
 
   /**
+   * Registers a milestone, and returns the index to be used as an argument in further calls
+   * related to this milestone.
+   */
+  virtual uint32_t registerMilestone(absl::string_view name) PURE;
+
+  /**
    * Call when a milestone is reached. Annotatess the milestone with a stimestamp.
    */
-  virtual void markMilestone(const Milestone milestone) PURE;
+  virtual void markMilestone(const uint32_t milestone) PURE;
 
   /**
    * @return Envoy::MonotonicTime for when the milestone was reached.
    */
-  virtual const Envoy::MonotonicTime getMilestone(const Milestone milestone) const PURE;
+  virtual const Envoy::MonotonicTime getMilestone(const uint32_t milestone) const PURE;
 
   /**
    * @return std::chrono::duration<double> elapsed duration between marking the
    * from and to milestones.
    */
-  virtual std::chrono::duration<double> elapsedBetween(const Milestone from,
-                                                       const Milestone to) const PURE;
+  virtual std::chrono::duration<double> elapsedBetween(const uint32_t from,
+                                                       const uint32_t to) const PURE;
 };
 
 using MilestoneTrackerPtr = std::unique_ptr<MilestoneTracker>;

@@ -12,6 +12,7 @@
 #include "nighthawk/client/factories.h"
 #include "nighthawk/client/options.h"
 #include "nighthawk/common/platform_util.h"
+#include "nighthawk/common/poolable.h"
 #include "nighthawk/common/rate_limiter.h"
 #include "nighthawk/common/sequencer.h"
 #include "nighthawk/common/statistic.h"
@@ -142,11 +143,11 @@ protected:
   MOCK_CONST_METHOD0(measureLatencies, bool());
 };
 
-class MockPoolable {
+class MockPoolable : public Nighthawk::Poolable {
 public:
   MockPoolable();
   MOCK_METHOD0(mark_orphaned, void());
-  MOCK_METHOD0(is_orphaned, bool());
+  MOCK_CONST_METHOD0(is_orphaned, bool());
 };
 
 } // namespace Nighthawk

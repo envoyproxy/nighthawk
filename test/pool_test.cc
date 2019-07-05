@@ -19,7 +19,8 @@ public:
       MockPoolablePoolImpl::PoolInstanceConstructionDelegate&& construction_delegate,
       MockPoolablePoolImpl::PoolInstanceResetDelegate&& reset_delegate)
       : PoolImpl<MockPoolable>(std::move(construction_delegate), std::move(reset_delegate)) {}
-  MockPoolablePoolImpl() : PoolImpl<MockPoolable>() {}
+
+  MockPoolablePoolImpl() {}
 };
 class PoolTest : public testing::Test {};
 
