@@ -2,7 +2,7 @@
 
 namespace Nighthawk {
 
-void PoolableImpl::mark_orphaned() override {
+void PoolableImpl::mark_orphaned() {
   ASSERT(!is_orphaned_);
   is_orphaned_ = true;
 };
