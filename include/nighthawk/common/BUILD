@@ -12,12 +12,12 @@ envoy_basic_cc_library(
     name = "base_includes",
     hdrs = [
         "exception.h",
+        "milestone_tracker.h",
         "platform_util.h",
         "poolable.h",
         "rate_limiter.h",
         "sequencer.h",
         "statistic.h",
-        "stopwatch.h",
         "uri.h",
         "worker.h",
     ],

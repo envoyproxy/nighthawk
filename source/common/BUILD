@@ -11,16 +11,17 @@ envoy_package()
 envoy_cc_library(
     name = "nighthawk_common_lib",
     srcs = [
+        "milestone_tracker_impl.cc",
         "rate_limiter_impl.cc",
         "sequencer_impl.cc",
         "statistic_impl.cc",
-        "stopwatch_impl.cc",
         "uri_impl.cc",
         "utility.cc",
         "worker_impl.cc",
     ],
     hdrs = [
         "frequency.h",
+        "milestone_tracker_impl.h",
         "platform_util_impl.h",
         "pool_impl.h",
         "poolable_impl.h",
@@ -28,7 +29,6 @@ envoy_cc_library(
         "sequencer_impl.h",
         "ssl.h",
         "statistic_impl.h",
-        "stopwatch_impl.h",
         "uri_impl.h",
         "utility.h",
         "worker_impl.h",

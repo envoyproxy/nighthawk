@@ -2,6 +2,8 @@
 
 #include "nighthawk/common/poolable.h"
 
+#include "common/common/assert.h"
+
 namespace Nighthawk {
 
 class PoolableImpl : public Poolable {

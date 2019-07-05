@@ -1,8 +1,8 @@
 #include <chrono>
 
+#include "common/milestone_tracker_impl.h"
 #include "common/pool_impl.h"
 #include "common/poolable_impl.h"
-#include "common/stopwatch_impl.h"
 
 #include "test/mocks.h"
 #include "test/test_common/simulated_time_system.h"
@@ -13,7 +13,6 @@ using namespace testing;
 
 namespace Nighthawk {
 
-// Declare a pool for the poolable stopwatch
 class MockPoolablePoolImpl : public PoolImpl<MockPoolable> {};
 class PoolTest : public testing::Test {};
 
@@ -54,26 +53,27 @@ TEST_F(PoolTest, DestructPoolWithInFlightPoolables) {
   EXPECT_CALL(*poolable, is_orphaned()).WillOnce(Return(true));
 }
 
-// Compose a poolable stopwatch
-class PoolableStopwatchImpl : public StopwatchImpl, public PoolableImpl {
+// Compose a poolable milestone for testing a concrete mix-in case.
+class PoolableMilestoneTrackerImpl : public MilestoneTrackerImpl, public PoolableImpl {
 public:
-  PoolableStopwatchImpl(Envoy::TimeSource& time_source) : StopwatchImpl(time_source) {}
+  PoolableMilestoneTrackerImpl(Envoy::TimeSource& time_source)
+      : MilestoneTrackerImpl(time_source) {}
 };
 
-// Declare a pool for the poolable stopwatch
-class StopwatchPoolImpl : public PoolImpl<PoolableStopwatchImpl> {};
+// Declare a pool for the poolable milestone
+class MilestoneTrackerPoolImpl : public PoolImpl<PoolableMilestoneTrackerImpl> {};
 
-class StopwatchPoolTest : public testing::Test {
+class MilestoneTrackerPoolTest : public testing::Test {
 public:
   Envoy::Event::SimulatedTimeSystem time_system_;
 };
 
 // Hello world test with a concrete poolable implementing object.
-TEST_F(StopwatchPoolTest, HappyPoolImpl) {
-  StopwatchPoolImpl pool;
-  pool.addPoolable(std::make_unique<PoolableStopwatchImpl>(time_system_));
-  auto stopwatch = pool.get();
-  stopwatch->start();
+TEST_F(MilestoneTrackerPoolTest, HappyPoolImpl) {
+  MilestoneTrackerPoolImpl pool;
+  pool.addPoolable(std::make_unique<PoolableMilestoneTrackerImpl>(time_system_));
+  auto milestone = pool.get();
+  milestone->reset();
 }
 
 } // namespace Nighthawk
