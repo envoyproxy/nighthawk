@@ -7,7 +7,8 @@ namespace Nighthawk {
 MilestoneTrackerImpl::MilestoneTrackerImpl(Envoy::TimeSource& time_source)
     : time_source_(time_source) {
   for (int i = 0; i <= static_cast<int>(Milestone::Complete); i++) {
-    timestamps_.emplace_back({Milestone(i), Envoy::MonotonicTime::min()});
+    timestamps_.emplace_back(
+        std::tuple<Milestone, Envoy::MonotonicTime>{Milestone(i), Envoy::MonotonicTime::min()});
   }
 }
 
