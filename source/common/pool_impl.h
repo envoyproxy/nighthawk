@@ -1,15 +1,13 @@
 #pragma once
 
 #include <functional>
-#include <iostream>
 #include <memory>
 #include <stack>
 #include <vector>
 
+#include "common/common/assert.h"
 #include "nighthawk/common/exception.h"
 #include "nighthawk/common/poolable.h"
-
-#include "common/common/assert.h"
 
 namespace Nighthawk {
 
@@ -36,7 +34,7 @@ public:
     }
   }
 
-  void addPoolable(std::unique_ptr<Poolable> poolable) {
+  void addPoolable(std::unique_ptr<Poolable>&& poolable) {
     ASSERT(poolable.get() != nullptr);
     all_.push_back(poolable.get());
     pool_.push(std::move(poolable));
@@ -45,7 +43,7 @@ public:
   PoolablePtr get() {
     if (pool_.empty()) {
       if (construction_delegate_ != nullptr) {
-        addPoolable(construction_delegate_());
+        addPoolable(std::move(construction_delegate_()));
       } else {
         throw NighthawkException("Pool is out of resources");
       }
