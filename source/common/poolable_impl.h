@@ -8,10 +8,7 @@ namespace Nighthawk {
 
 class PoolableImpl : public Poolable {
 public:
-  void mark_orphaned() override {
-    ASSERT(!is_orphaned_);
-    is_orphaned_ = true;
-  };
+  void mark_orphaned() override;
   bool is_orphaned() const override { return is_orphaned_; };
 
 private:

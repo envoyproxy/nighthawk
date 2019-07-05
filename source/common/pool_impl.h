@@ -35,9 +35,6 @@ public:
   }
 
   PoolablePtr get() {
-    if (pool_.empty()) {
-      throw;
-    }
     PoolablePtr poolable(pool_.top().release(),
                          [this](Poolable* poolable) { recyclePoolable(poolable); });
     pool_.pop();
