@@ -13,7 +13,14 @@ using namespace testing;
 
 namespace Nighthawk {
 
-class MockPoolablePoolImpl : public PoolImpl<MockPoolable> {};
+class MockPoolablePoolImpl : public PoolImpl<MockPoolable> {
+public:
+  MockPoolablePoolImpl(
+      MockPoolablePoolImpl::PoolInstanceConstructionDelegate&& construction_delegate,
+      MockPoolablePoolImpl::PoolInstanceResetDelegate&& reset_delegate)
+      : PoolImpl<MockPoolable>(std::move(construction_delegate), std::move(reset_delegate)) {}
+  MockPoolablePoolImpl() : PoolImpl<MockPoolable>() {}
+};
 class PoolTest : public testing::Test {};
 
 TEST_F(PoolTest, DestructPoolWithoutInFlightPoolables) {
@@ -51,6 +58,30 @@ TEST_F(PoolTest, DestructPoolWithInFlightPoolables) {
   // As is_orphaned is set have it return true so it will self destruct on test exit.
   pool.reset();
   EXPECT_CALL(*poolable, is_orphaned()).WillOnce(Return(true));
+}
+
+TEST_F(PoolTest, AllocationDelegate) {
+  auto pool = std::make_unique<MockPoolablePoolImpl>(
+      []() { return std::make_unique<MockPoolable>(); }, nullptr);
+  EXPECT_EQ(0, pool->allocated());
+  EXPECT_EQ(0, pool->available());
+
+  MockPoolablePoolImpl::PoolablePtr poolable = pool->get();
+  EXPECT_CALL(*poolable, is_orphaned()).WillOnce(Return(false));
+
+  EXPECT_EQ(1, pool->allocated());
+  EXPECT_EQ(0, pool->available());
+}
+
+TEST_F(PoolTest, ResetDelegate) {
+  int reset_count = 0;
+  auto pool =
+      std::make_unique<MockPoolablePoolImpl>([]() { return std::make_unique<MockPoolable>(); },
+                                             [&reset_count](MockPoolable&) { reset_count++; });
+  MockPoolablePoolImpl::PoolablePtr poolable = pool->get();
+  EXPECT_CALL(*poolable, is_orphaned()).WillOnce(Return(false));
+  poolable.reset();
+  EXPECT_EQ(1, reset_count);
 }
 
 // Compose a poolable milestone for testing a concrete mix-in case.

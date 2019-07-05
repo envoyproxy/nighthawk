@@ -40,7 +40,7 @@ TEST_F(MilestoneTrackerTest, Reset) {
   basicRun();
 }
 
-TEST_F(MilestoneTrackerTest, CannotSetMilestoneTwice) {
+TEST_F(MilestoneTrackerTest, SameMilestoneTwiceThrows) {
   tracker_->markMilestone(MilestoneTracker::Milestone::Start);
   EXPECT_THROW(tracker_->markMilestone(MilestoneTracker::Milestone::Start), NighthawkException);
   tracker_->markMilestone(MilestoneTracker::Milestone::BlockingStart);
@@ -49,7 +49,7 @@ TEST_F(MilestoneTrackerTest, CannotSetMilestoneTwice) {
                NighthawkException);
 }
 
-TEST_F(MilestoneTrackerTest, CannotQueryMilestonesBackwards) {
+TEST_F(MilestoneTrackerTest, OutOfOrderMilsetoneSetThrows) {
   tracker_->markMilestone(MilestoneTracker::Milestone::Start);
   tracker_->markMilestone(MilestoneTracker::Milestone::BlockingStart);
   EXPECT_EQ(tracker_->elapsedBetween(MilestoneTracker::Milestone::Start,
