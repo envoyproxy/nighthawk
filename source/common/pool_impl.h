@@ -41,18 +41,23 @@ public:
   }
 
   PoolablePtr get() {
+    PoolDeletionDelegate release_fn = [this](Poolable* poolable) {
+      if (poolable->is_orphaned()) {
+        delete poolable;
+      } else {
+        recyclePoolable(poolable);
+      }
+    };
     if (pool_.empty()) {
       if (construction_delegate_ != nullptr) {
-        PoolablePtr poolable(construction_delegate_(),
-                             [this](Poolable* poolable) { recyclePoolable(poolable); });
+        PoolablePtr poolable(construction_delegate_(), release_fn);
         all_.push_back(poolable.get());
         return poolable;
       } else {
         throw NighthawkException("Pool is out of resources");
       }
     }
-    PoolablePtr poolable(pool_.back().release(),
-                         [this](Poolable* poolable) { recyclePoolable(poolable); });
+    PoolablePtr poolable(pool_.back().release(), release_fn);
     pool_.pop_back();
     return poolable;
   }
@@ -62,15 +67,10 @@ public:
 
 private:
   void recyclePoolable(Poolable* poolable) {
-    if (!poolable->is_orphaned()) {
-      if (reset_delegate_ != nullptr) {
-        reset_delegate_(*poolable);
-      }
-      pool_.push_back(std::unique_ptr<Poolable>(poolable));
-    } else {
-      // The pool is gone, we must self-destruct.
-      delete poolable;
+    if (reset_delegate_ != nullptr) {
+      reset_delegate_(*poolable);
     }
+    pool_.push_back(std::unique_ptr<Poolable>(poolable));
   }
 
   std::vector<std::unique_ptr<Poolable>> pool_;
