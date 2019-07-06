@@ -22,6 +22,7 @@ public:
 private:
   Envoy::TimeSource& time_source_;
   std::vector<std::tuple<Envoy::MonotonicTime, std::string>> timestamps_;
+  int last_milestone_{-1}; // for verification only.
 };
 
 } // namespace Nighthawk

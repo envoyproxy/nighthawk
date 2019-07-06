@@ -13,6 +13,7 @@ void MilestoneTrackerImpl::reset() {
   for (auto& timestamp : timestamps_) {
     std::get<0>(timestamp) = Envoy::MonotonicTime::min();
   }
+  last_milestone_ = -1;
 }
 
 uint32_t MilestoneTrackerImpl::registerMilestone(absl::string_view name) {
@@ -23,11 +24,15 @@ uint32_t MilestoneTrackerImpl::registerMilestone(absl::string_view name) {
 
 void MilestoneTrackerImpl::markMilestone(const uint32_t milestone) {
   ASSERT(milestone < timestamps_.size());
+  if (last_milestone_ > static_cast<int>(milestone)) {
+    throw NighthawkException("Can't set milestones twice");
+  }
   auto& timestamp = std::get<0>(timestamps_[milestone]);
   if (timestamp != Envoy::MonotonicTime::min()) {
     throw NighthawkException("Milestone already set");
   }
   timestamp = time_source_.monotonicTime();
+  last_milestone_ = milestone;
 }
 
 const Envoy::MonotonicTime MilestoneTrackerImpl::getMilestone(const uint32_t milestone) const {

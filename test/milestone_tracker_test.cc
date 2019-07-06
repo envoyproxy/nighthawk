@@ -57,11 +57,16 @@ TEST_F(MilestoneTrackerTest, SameMilestoneTwiceThrows) {
   EXPECT_THROW(tracker_->markMilestone(Milestone::Middle), NighthawkException);
 }
 
-TEST_F(MilestoneTrackerTest, OutOfOrderMilsetoneQueryThrows) {
+TEST_F(MilestoneTrackerTest, OutOfOrderMilestoreQueryThrows) {
   tracker_->markMilestone(Milestone::Start);
   tracker_->markMilestone(Milestone::Middle);
   EXPECT_EQ(tracker_->elapsedBetween(Milestone::Start, Milestone::Middle), 0s);
   EXPECT_THROW(tracker_->elapsedBetween(Milestone::End, Milestone::Start), NighthawkException);
+}
+
+TEST_F(MilestoneTrackerTest, OutOfOrderMilestoneSetThrows) {
+  tracker_->markMilestone(Milestone::Middle);
+  EXPECT_THROW(tracker_->markMilestone(Milestone::Start), NighthawkException);
 }
 
 } // namespace Nighthawk
