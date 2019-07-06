@@ -40,7 +40,14 @@ BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(Envoy::Api::Api& api,
       connect_statistic_(std::move(connect_statistic)),
       response_statistic_(std::move(response_statistic)), use_h2_(use_h2),
       prefetch_connections_(prefetch_connections), uri_(std::move(uri)),
-      benchmark_client_stats_({ALL_BENCHMARK_CLIENT_STATS(POOL_COUNTER(*scope_))}) {
+      benchmark_client_stats_({ALL_BENCHMARK_CLIENT_STATS(POOL_COUNTER(*scope_))}),
+      stream_decoder_pool_(
+          [this]() {
+            return new PoolableStreamDecoder(
+                dispatcher_, api_.timeSource(), *this, []() {}, *connect_statistic_,
+                *response_statistic_, request_headers_, measureLatencies(), request_body_size_);
+          },
+          [](PoolableStreamDecoder& decoder) { decoder.reset(); }) {
   connect_statistic_->setId("benchmark_http_client.queue_to_connect");
   response_statistic_->setId("benchmark_http_client.request_to_response");
 
@@ -202,12 +209,13 @@ bool BenchmarkClientHttpImpl::tryStartOne(std::function<void()> caller_completio
     return false;
   }
 
-  auto stream_decoder = new StreamDecoder(dispatcher_, api_.timeSource(), *this,
-                                          std::move(caller_completion_callback),
-                                          *connect_statistic_, *response_statistic_,
-                                          request_headers_, measureLatencies(), request_body_size_);
-  requests_initiated_++;
+  Nighthawk::PoolImpl<PoolableStreamDecoder>::PoolablePtr stream_decoder =
+      stream_decoder_pool_.get();
+  stream_decoder->setMeasureLatencies(measureLatencies());
+  stream_decoder->setCallerCompletionCallback(caller_completion_callback);
   pool_->pool().newStream(*stream_decoder, *stream_decoder);
+  stream_decoder->takeOwnership(std::move(stream_decoder));
+  requests_initiated_++;
   return true;
 }
 

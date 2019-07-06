@@ -9,6 +9,9 @@
 
 #include "nighthawk/common/statistic.h"
 
+#include "common/pool_impl.h"
+#include "common/poolable_impl.h"
+
 namespace Nighthawk {
 namespace Client {
 
@@ -19,7 +22,7 @@ public:
   virtual void onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason reason) PURE;
 };
 
-// TODO(oschaaf): create a StreamDecoderPool?
+class PoolableStreamDecoder;
 
 /**
  * A self destructing response decoder that discards the response body.
@@ -64,6 +67,31 @@ public:
   void onPoolReady(Envoy::Http::StreamEncoder& encoder,
                    Envoy::Upstream::HostDescriptionConstSharedPtr host) override;
 
+  // The stream decoder isn't owned by anyone, and self destructs.
+  // Our pool implementationn relies on a unique_ptr with a custom deleter.
+  // When we must play nice with a pool, we take ownership of that pointer through
+  // this call. The pointer will be released upon stream completion, resulting in
+  // either a pool recycle or a self destruct.
+  void takeOwnership(Nighthawk::PoolImpl<PoolableStreamDecoder>::PoolablePtr self) {
+    self_ = std::move(self);
+  }
+
+  void setCallerCompletionCallback(std::function<void()> caller_completion_callback) {
+    caller_completion_callback_ = caller_completion_callback;
+  }
+
+  void reset() { complete_ = false; }
+  void setMeasureLatencies(const bool measure_latencies) { measure_latencies_ = measure_latencies; }
+  void freeSelf() {
+    if (self_.get() == nullptr) {
+      // We're not pool-owned, regular self destruct.
+      delete this;
+    } else {
+      // Managed by custome deleter.
+      self_ = nullptr;
+    }
+  }
+
 private:
   void onComplete(bool success);
 
@@ -78,8 +106,31 @@ private:
   const Envoy::MonotonicTime connect_start_;
   Envoy::MonotonicTime request_start_;
   bool complete_;
-  bool measure_latencies_;
+  bool measure_latencies_{true};
   const uint32_t request_body_size_;
+  Nighthawk::PoolImpl<PoolableStreamDecoder>::PoolablePtr self_;
+};
+
+class PoolableStreamDecoder : public Client::StreamDecoder, public PoolableImpl {
+public:
+  PoolableStreamDecoder(Envoy::Event::Dispatcher& dispatcher, Envoy::TimeSource& time_source,
+                        Client::StreamDecoderCompletionCallback& decoder_completion_callback,
+                        std::function<void()> caller_completion_callback,
+                        Statistic& connect_statistic, Statistic& latency_statistic,
+                        const Envoy::Http::HeaderMap& request_headers, bool measure_latencies,
+                        uint32_t request_body_size)
+      : StreamDecoder(dispatcher, time_source, decoder_completion_callback,
+                      caller_completion_callback, connect_statistic, latency_statistic,
+                      request_headers, measure_latencies, request_body_size) {}
+};
+
+class StreamDecoderPoolImpl : public PoolImpl<PoolableStreamDecoder> {
+public:
+  StreamDecoderPoolImpl(
+      StreamDecoderPoolImpl::PoolInstanceConstructionDelegate&& construction_delegate,
+      StreamDecoderPoolImpl::PoolInstanceResetDelegate&& reset_delegate)
+      : PoolImpl<PoolableStreamDecoder>(std::move(construction_delegate),
+                                        std::move(reset_delegate)) {}
 };
 
 } // namespace Client

@@ -19,6 +19,7 @@
 
 #include "common/common/logger.h"
 #include "common/http/header_map_impl.h"
+#include "common/pool_impl.h"
 #include "common/runtime/runtime_impl.h"
 #include "common/ssl.h"
 
@@ -113,6 +114,7 @@ private:
   bool measure_latencies_{};
   BenchmarkClientStats benchmark_client_stats_;
   uint32_t request_body_size_{0};
+  StreamDecoderPoolImpl stream_decoder_pool_;
 };
 
 } // namespace Client

@@ -40,7 +40,7 @@ void StreamDecoder::onComplete(bool success) {
   if (success) {
     caller_completion_callback_();
   }
-  dispatcher_.deferredDelete(std::unique_ptr<StreamDecoder>(this));
+  freeSelf();
 }
 
 void StreamDecoder::onResetStream(Envoy::Http::StreamResetReason,
@@ -52,7 +52,9 @@ void StreamDecoder::onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason
                                   absl::string_view /* transport_failure_reason */,
                                   Envoy::Upstream::HostDescriptionConstSharedPtr) {
   decoder_completion_callback_.onPoolFailure(reason);
-  dispatcher_.deferredDelete(std::unique_ptr<StreamDecoder>(this));
+  freeSelf();
+  // XXX(oschaaf): clean up
+  (void)dispatcher_;
 }
 
 void StreamDecoder::onPoolReady(Envoy::Http::StreamEncoder& encoder,
