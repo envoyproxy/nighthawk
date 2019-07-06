@@ -20,7 +20,7 @@ public:
       MockPoolablePoolImpl::PoolInstanceResetDelegate&& reset_delegate)
       : PoolImpl<MockPoolable>(std::move(construction_delegate), std::move(reset_delegate)) {}
 
-  MockPoolablePoolImpl() {}
+  MockPoolablePoolImpl() = default;
 };
 class PoolTest : public testing::Test {};
 
@@ -62,8 +62,7 @@ TEST_F(PoolTest, DestructPoolWithInFlightPoolables) {
 }
 
 TEST_F(PoolTest, AllocationDelegate) {
-  auto pool = std::make_unique<MockPoolablePoolImpl>(
-      []() { return std::make_unique<MockPoolable>(); }, nullptr);
+  auto pool = std::make_unique<MockPoolablePoolImpl>([]() { return new MockPoolable(); }, nullptr);
   EXPECT_EQ(0, pool->allocated());
   EXPECT_EQ(0, pool->available());
 
@@ -76,9 +75,8 @@ TEST_F(PoolTest, AllocationDelegate) {
 
 TEST_F(PoolTest, ResetDelegate) {
   int reset_count = 0;
-  auto pool =
-      std::make_unique<MockPoolablePoolImpl>([]() { return std::make_unique<MockPoolable>(); },
-                                             [&reset_count](MockPoolable&) { reset_count++; });
+  auto pool = std::make_unique<MockPoolablePoolImpl>(
+      []() { return new MockPoolable(); }, [&reset_count](MockPoolable&) { reset_count++; });
   MockPoolablePoolImpl::PoolablePtr poolable = pool->get();
   EXPECT_CALL(*poolable, is_orphaned()).WillOnce(Return(false));
   poolable.reset();

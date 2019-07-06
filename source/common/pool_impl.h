@@ -2,7 +2,6 @@
 
 #include <functional>
 #include <memory>
-#include <stack>
 #include <vector>
 
 #include "nighthawk/common/exception.h"
@@ -15,7 +14,7 @@ namespace Nighthawk {
 template <typename Poolable> class PoolImpl {
 public:
   using PoolDeletionDelegate = std::function<void(Poolable*)>;
-  using PoolInstanceConstructionDelegate = std::function<std::unique_ptr<Poolable>(void)>;
+  using PoolInstanceConstructionDelegate = std::function<Poolable*(void)>;
   using PoolInstanceResetDelegate = std::function<void(Poolable&)>;
   using PoolablePtr = std::unique_ptr<Poolable, PoolDeletionDelegate>;
 
@@ -25,9 +24,9 @@ public:
 
   ~PoolImpl() {
     while (!pool_.empty()) {
-      Poolable* poolable = pool_.top().get();
+      Poolable* poolable = pool_.back().get();
       all_.erase(std::remove(all_.begin(), all_.end(), poolable), all_.end());
-      pool_.pop();
+      pool_.pop_back();
     }
     // Inform the in-flight poolables that they are own their own now.
     for (auto poolable : all_) {
@@ -38,20 +37,23 @@ public:
   void addPoolable(std::unique_ptr<Poolable>&& poolable) {
     ASSERT(poolable.get() != nullptr);
     all_.push_back(poolable.get());
-    pool_.push(std::move(poolable));
+    pool_.emplace_back(std::move(poolable));
   }
 
   PoolablePtr get() {
     if (pool_.empty()) {
       if (construction_delegate_ != nullptr) {
-        addPoolable(construction_delegate_());
+        PoolablePtr poolable(construction_delegate_(),
+                             [this](Poolable* poolable) { recyclePoolable(poolable); });
+        all_.push_back(poolable.get());
+        return poolable;
       } else {
         throw NighthawkException("Pool is out of resources");
       }
     }
-    PoolablePtr poolable(pool_.top().release(),
+    PoolablePtr poolable(pool_.back().release(),
                          [this](Poolable* poolable) { recyclePoolable(poolable); });
-    pool_.pop();
+    pool_.pop_back();
     return poolable;
   }
 
@@ -64,14 +66,14 @@ private:
       if (reset_delegate_ != nullptr) {
         reset_delegate_(*poolable);
       }
-      pool_.push(std::unique_ptr<Poolable>(poolable));
+      pool_.push_back(std::unique_ptr<Poolable>(poolable));
     } else {
       // The pool is gone, we must self-destruct.
       delete poolable;
     }
   }
 
-  std::stack<std::unique_ptr<Poolable>> pool_;
+  std::vector<std::unique_ptr<Poolable>> pool_;
   std::vector<Poolable*> all_;
   PoolInstanceConstructionDelegate construction_delegate_;
   PoolInstanceResetDelegate reset_delegate_;

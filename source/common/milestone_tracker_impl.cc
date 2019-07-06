@@ -10,8 +10,8 @@ MilestoneTrackerImpl::MilestoneTrackerImpl(Envoy::TimeSource& time_source)
     : time_source_(time_source) {}
 
 void MilestoneTrackerImpl::reset() {
-  for (uint32_t i = 0; i < timestamps_.size(); i++) {
-    std::get<0>(timestamps_[i]) = Envoy::MonotonicTime::min();
+  for (auto& timestamp : timestamps_) {
+    std::get<0>(timestamp) = Envoy::MonotonicTime::min();
   }
 }
 

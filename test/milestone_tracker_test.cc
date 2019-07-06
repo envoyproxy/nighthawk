@@ -29,10 +29,12 @@ public:
   void basicRun() {
     tracker_->markMilestone(Milestone::Start);
     time_system_.sleep(1s);
-    tracker_->markMilestone(Milestone::End);
+    tracker_->markMilestone(Milestone::Middle);
     time_system_.sleep(1s);
-
-    EXPECT_EQ(tracker_->elapsedBetween(Milestone::Start, Milestone::End), 1s);
+    tracker_->markMilestone(Milestone::End);
+    EXPECT_EQ(tracker_->elapsedBetween(Milestone::Start, Milestone::Middle), 1s);
+    EXPECT_EQ(tracker_->elapsedBetween(Milestone::Middle, Milestone::End), 1s);
+    EXPECT_EQ(tracker_->elapsedBetween(Milestone::Start, Milestone::End), 2s);
   }
 
   Envoy::Event::SimulatedTimeSystem time_system_;
@@ -55,7 +57,7 @@ TEST_F(MilestoneTrackerTest, SameMilestoneTwiceThrows) {
   EXPECT_THROW(tracker_->markMilestone(Milestone::Middle), NighthawkException);
 }
 
-TEST_F(MilestoneTrackerTest, OutOfOrderMilsetoneSetThrows) {
+TEST_F(MilestoneTrackerTest, OutOfOrderMilsetoneQueryThrows) {
   tracker_->markMilestone(Milestone::Start);
   tracker_->markMilestone(Milestone::Middle);
   EXPECT_EQ(tracker_->elapsedBetween(Milestone::Start, Milestone::Middle), 0s);
