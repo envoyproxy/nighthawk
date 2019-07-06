@@ -48,6 +48,7 @@ public:
         recyclePoolable(poolable);
       }
     };
+
     if (pool_.empty()) {
       if (construction_delegate_ != nullptr) {
         PoolablePtr poolable(construction_delegate_(), release_fn);

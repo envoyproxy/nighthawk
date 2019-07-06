@@ -34,7 +34,7 @@ TEST_F(PoolTest, DestructPoolWithoutInFlightPoolables) {
   EXPECT_CALL(*poolable, is_orphaned()).WillOnce(Return(false));
   EXPECT_EQ(1, pool->allocated());
   EXPECT_EQ(0, pool->available());
-  poolable.reset();
+  poolable = nullptr;
   EXPECT_EQ(1, pool->allocated());
   EXPECT_EQ(1, pool->available());
 }
@@ -73,16 +73,6 @@ TEST_F(PoolTest, AllocationDelegate) {
   EXPECT_EQ(0, pool->available());
 }
 
-TEST_F(PoolTest, ResetDelegate) {
-  int reset_count = 0;
-  auto pool = std::make_unique<MockPoolablePoolImpl>(
-      []() { return new MockPoolable(); }, [&reset_count](MockPoolable&) { reset_count++; });
-  MockPoolablePoolImpl::PoolablePtr poolable = pool->get();
-  EXPECT_CALL(*poolable, is_orphaned()).WillOnce(Return(false));
-  poolable.reset();
-  EXPECT_EQ(1, reset_count);
-}
-
 // Compose a poolable milestone for testing a concrete mix-in case.
 class PoolableMilestoneTrackerImpl : public MilestoneTrackerImpl, public PoolableImpl {
 public:
@@ -91,7 +81,15 @@ public:
 };
 
 // Declare a pool for the poolable milestone
-class MilestoneTrackerPoolImpl : public PoolImpl<PoolableMilestoneTrackerImpl> {};
+class MilestoneTrackerPoolImpl : public PoolImpl<PoolableMilestoneTrackerImpl> {
+public:
+  MilestoneTrackerPoolImpl(
+      MilestoneTrackerPoolImpl::PoolInstanceConstructionDelegate&& construction_delegate,
+      MilestoneTrackerPoolImpl::PoolInstanceResetDelegate&& reset_delegate)
+      : PoolImpl<PoolableMilestoneTrackerImpl>(std::move(construction_delegate),
+                                               std::move(reset_delegate)) {}
+  MilestoneTrackerPoolImpl() = default;
+};
 
 class MilestoneTrackerPoolTest : public testing::Test {
 public:
@@ -104,6 +102,16 @@ TEST_F(MilestoneTrackerPoolTest, HappyPoolImpl) {
   pool.addPoolable(std::make_unique<PoolableMilestoneTrackerImpl>(time_system_));
   auto milestone = pool.get();
   milestone->reset();
+}
+
+TEST_F(MilestoneTrackerPoolTest, ResetDelegate) {
+  int reset_count = 0;
+  auto pool = std::make_unique<MilestoneTrackerPoolImpl>(
+      [this]() { return new PoolableMilestoneTrackerImpl(time_system_); },
+      [&reset_count](PoolableMilestoneTrackerImpl&) { reset_count++; });
+  MilestoneTrackerPoolImpl::PoolablePtr poolable = pool->get();
+  poolable = nullptr;
+  EXPECT_EQ(1, reset_count);
 }
 
 } // namespace Nighthawk
