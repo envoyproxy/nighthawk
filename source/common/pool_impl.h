@@ -8,6 +8,8 @@
 #include "nighthawk/common/poolable.h"
 
 #include "common/common/assert.h"
+#include "common/milestone_tracker_impl.h"
+#include "common/poolable_impl.h"
 
 namespace Nighthawk {
 
@@ -78,6 +80,24 @@ private:
   std::vector<Poolable*> all_;
   PoolInstanceConstructionDelegate construction_delegate_;
   PoolInstanceResetDelegate reset_delegate_;
+};
+
+// Compose a poolable MilestoneTrackerImpl.
+class PoolableMilestoneTrackerImpl : public MilestoneTrackerImpl, public PoolableImpl {
+public:
+  PoolableMilestoneTrackerImpl(Envoy::TimeSource& time_source)
+      : MilestoneTrackerImpl(time_source) {}
+};
+
+// Declare a pool for the poolable milestone
+class MilestoneTrackerPoolImpl : public PoolImpl<PoolableMilestoneTrackerImpl> {
+public:
+  MilestoneTrackerPoolImpl(
+      MilestoneTrackerPoolImpl::PoolInstanceConstructionDelegate&& construction_delegate,
+      MilestoneTrackerPoolImpl::PoolInstanceResetDelegate&& reset_delegate)
+      : PoolImpl<PoolableMilestoneTrackerImpl>(std::move(construction_delegate),
+                                               std::move(reset_delegate)) {}
+  MilestoneTrackerPoolImpl() = default;
 };
 
 } // namespace Nighthawk

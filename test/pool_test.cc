@@ -73,35 +73,24 @@ TEST_F(PoolTest, AllocationDelegate) {
   EXPECT_EQ(0, pool->available());
 }
 
-// Compose a poolable milestone for testing a concrete mix-in case.
-class PoolableMilestoneTrackerImpl : public MilestoneTrackerImpl, public PoolableImpl {
-public:
-  PoolableMilestoneTrackerImpl(Envoy::TimeSource& time_source)
-      : MilestoneTrackerImpl(time_source) {}
-};
-
-// Declare a pool for the poolable milestone
-class MilestoneTrackerPoolImpl : public PoolImpl<PoolableMilestoneTrackerImpl> {
-public:
-  MilestoneTrackerPoolImpl(
-      MilestoneTrackerPoolImpl::PoolInstanceConstructionDelegate&& construction_delegate,
-      MilestoneTrackerPoolImpl::PoolInstanceResetDelegate&& reset_delegate)
-      : PoolImpl<PoolableMilestoneTrackerImpl>(std::move(construction_delegate),
-                                               std::move(reset_delegate)) {}
-  MilestoneTrackerPoolImpl() = default;
-};
-
 class MilestoneTrackerPoolTest : public testing::Test {
 public:
   Envoy::Event::SimulatedTimeSystem time_system_;
 };
 
-// Hello world test with a concrete poolable implementing object.
+// PoolableMilestoneTrackerImpl tests
+// XXX(oschaaf): Would be nice run all concrete implementations through the
+// above tests.
 TEST_F(MilestoneTrackerPoolTest, HappyPoolImpl) {
   MilestoneTrackerPoolImpl pool;
   pool.addPoolable(std::make_unique<PoolableMilestoneTrackerImpl>(time_system_));
   auto milestone = pool.get();
-  milestone->reset();
+  EXPECT_EQ(1, pool.allocated());
+  EXPECT_EQ(0, pool.available());
+  EXPECT_NE(nullptr, milestone.get());
+  milestone = nullptr;
+  EXPECT_EQ(1, pool.allocated());
+  EXPECT_EQ(1, pool.available());
 }
 
 TEST_F(MilestoneTrackerPoolTest, ResetDelegate) {
