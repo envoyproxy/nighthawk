@@ -73,6 +73,11 @@ TEST_F(PoolTest, AllocationDelegate) {
   EXPECT_EQ(0, pool->available());
 }
 
+TEST_F(PoolTest, PoolOutOfResourcesThrows) {
+  auto pool = std::make_unique<MockPoolablePoolImpl>();
+  EXPECT_THROW(pool->get(), NighthawkException);
+}
+
 class MilestoneTrackerPoolTest : public testing::Test {
 public:
   Envoy::Event::SimulatedTimeSystem time_system_;
@@ -81,7 +86,7 @@ public:
 // PoolableMilestoneTrackerImpl tests
 // XXX(oschaaf): Would be nice run all concrete implementations through the
 // above tests.
-TEST_F(MilestoneTrackerPoolTest, HappyPoolImpl) {
+TEST_F(MilestoneTrackerPoolTest, RegularFlow) {
   MilestoneTrackerPoolImpl pool;
   pool.addPoolable(std::make_unique<PoolableMilestoneTrackerImpl>(time_system_));
   auto milestone = pool.get();
@@ -101,6 +106,14 @@ TEST_F(MilestoneTrackerPoolTest, ResetDelegate) {
   MilestoneTrackerPoolImpl::PoolablePtr poolable = pool->get();
   poolable = nullptr;
   EXPECT_EQ(1, reset_count);
+}
+
+TEST_F(MilestoneTrackerPoolTest, PoolableOrphanMarking) {
+  auto pool = std::make_unique<MilestoneTrackerPoolImpl>(
+      [this]() { return new PoolableMilestoneTrackerImpl(time_system_); }, nullptr);
+  MilestoneTrackerPoolImpl::PoolablePtr poolable = pool->get();
+  pool = nullptr;
+  ASSERT_TRUE(poolable->is_orphaned());
 }
 
 } // namespace Nighthawk
