@@ -8,6 +8,7 @@
 
 #include "nighthawk/common/statistic.h"
 
+#include "common/milestone_tracker_impl.h"
 #include "common/pool_impl.h"
 #include "common/poolable_impl.h"
 
@@ -41,7 +42,16 @@ public:
         connect_statistic_(connect_statistic), latency_statistic_(latency_statistic),
         request_headers_(request_headers), connect_start_(time_source_.monotonicTime()),
         complete_(false), measure_latencies_(measure_latencies),
-        request_body_size_(request_body_size) {}
+        request_body_size_(request_body_size), milestone_tracker_(time_source_) {
+    milestone_request_start_ = milestone_tracker_.registerMilestone("enqueued");
+    milestone_pool_ready_ = milestone_tracker_.registerMilestone("start");
+    milestone_response_header_ = milestone_tracker_.registerMilestone("header");
+    milestone_first_body_byte_ = milestone_tracker_.registerMilestone("body_start");
+    milestone_last_body_byte_ = milestone_tracker_.registerMilestone("body_end");
+    milestone_trailer_ = milestone_tracker_.registerMilestone("trailer");
+    milestone_response_complete_ = milestone_tracker_.registerMilestone("complete");
+    reset();
+  }
 
   // Http::StreamDecoder
   void decode100ContinueHeaders(Envoy::Http::HeaderMapPtr&&) override {
@@ -66,7 +76,7 @@ public:
                    Envoy::Upstream::HostDescriptionConstSharedPtr host) override;
 
   // The stream decoder isn't owned by anyone, and self destructs.
-  // Our pool implementationn relies on a unique_ptr with a custom deleter.
+  // Our pool implementation relies on a unique_ptr with a custom deleter.
   // When we must play nice with a pool, we take ownership of that pointer through
   // this call. The pointer will be released upon stream completion, resulting in
   // either a pool recycle or a self destruct.
@@ -78,14 +88,21 @@ public:
     caller_completion_callback_ = std::move(caller_completion_callback);
   }
 
-  void reset() { complete_ = false; }
+  void reset() {
+    complete_ = false;
+    have_first_body_byte_ = false;
+    milestone_tracker_.reset();
+    // TODO(oschaaf): this is kind of a hack to mark this here.
+    milestone_tracker_.markMilestone(milestone_request_start_);
+  }
+
   void setMeasureLatencies(const bool measure_latencies) { measure_latencies_ = measure_latencies; }
   void freeSelf() {
     if (self_.get() == nullptr) {
       // We're not pool-owned, regular self destruct.
       delete this;
     } else {
-      // Managed by custome deleter.
+      // Managed by custom deleter.
       self_ = nullptr;
     }
   }
@@ -106,6 +123,15 @@ private:
   bool measure_latencies_{true};
   const uint32_t request_body_size_;
   Nighthawk::PoolImpl<PoolableStreamDecoder>::PoolablePtr self_;
+  MilestoneTrackerImpl milestone_tracker_;
+  uint32_t milestone_request_start_;   // in queue or connecting
+  uint32_t milestone_pool_ready_;      // connection ready to start request
+  uint32_t milestone_response_header_; // received response header
+  uint32_t milestone_first_body_byte_; // received the first body byte
+  uint32_t milestone_last_body_byte_;
+  uint32_t milestone_trailer_;
+  uint32_t milestone_response_complete_;
+  bool have_first_body_byte_{false};
 };
 
 class PoolableStreamDecoder : public Client::StreamDecoder, public PoolableImpl {

@@ -40,8 +40,8 @@ public:
    * @return std::chrono::duration<double> elapsed duration between marking the
    * from and to milestones.
    */
-  virtual std::chrono::duration<double> elapsedBetween(const uint32_t from,
-                                                       const uint32_t to) const PURE;
+  virtual std::chrono::nanoseconds elapsedBetween(const uint32_t from,
+                                                  const uint32_t to) const PURE;
 };
 
 using MilestoneTrackerPtr = std::unique_ptr<MilestoneTracker>;

@@ -19,6 +19,7 @@
 
 #include "common/common/logger.h"
 #include "common/http/header_map_impl.h"
+#include "common/milestone_tracker_impl.h"
 #include "common/pool_impl.h"
 #include "common/runtime/runtime_impl.h"
 #include "common/ssl.h"

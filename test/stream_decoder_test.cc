@@ -13,6 +13,7 @@
 
 #include "test/mocks.h"
 #include "test/mocks/http/mocks.h"
+#include "test/test_common/simulated_time_system.h"
 
 #include "gtest/gtest.h"
 
@@ -32,7 +33,7 @@ public:
   void onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason) override { pool_failures_++; }
 
   Envoy::Thread::ThreadFactoryImplPosix thread_factory_;
-  Envoy::Event::TestRealTimeSystem time_system_;
+  Envoy::Event::SimulatedTimeSystem time_system_;
   Envoy::Stats::IsolatedStoreImpl store_;
   Envoy::Api::Impl api_;
   StreamingStatistic connect_statistic_;
@@ -56,18 +57,32 @@ TEST_F(StreamDecoderTest, HeaderOnlyTest) {
 
 TEST_F(StreamDecoderTest, HeaderWithBodyTest) {
   bool is_complete = false;
+  Envoy::Http::MockStreamEncoder stream_encoder;
+  Envoy::Upstream::HostDescriptionConstSharedPtr ptr;
+  EXPECT_CALL(stream_encoder, encodeHeaders(HeaderMapEqualRef(&request_headers_), true));
   auto decoder = new StreamDecoder(
       time_system_, *this, [&is_complete]() { is_complete = true; }, connect_statistic_,
-      latency_statistic_, request_headers_, false, 0);
+      latency_statistic_, request_headers_, true, 0);
+  time_system_.sleep(1s);
+  decoder->onPoolReady(stream_encoder, ptr);
+  time_system_.sleep(1s);
   auto headers = std::make_unique<Envoy::Http::HeaderMapImpl>();
   decoder->decodeHeaders(std::move(headers), false);
   EXPECT_FALSE(is_complete);
   Envoy::Buffer::OwnedImpl buf(std::string(1, 'a'));
+  time_system_.sleep(1s);
   decoder->decodeData(buf, false);
   EXPECT_FALSE(is_complete);
+  time_system_.sleep(1s);
   decoder->decodeData(buf, true);
   EXPECT_TRUE(is_complete);
   EXPECT_EQ(1, stream_decoder_completion_callbacks_);
+  EXPECT_EQ(1, connect_statistic_.count());
+  EXPECT_EQ(std::chrono::duration_cast<std::chrono::nanoseconds>(1s).count(),
+            connect_statistic_.mean());
+  EXPECT_EQ(1, latency_statistic_.count());
+  EXPECT_EQ(std::chrono::duration_cast<std::chrono::nanoseconds>(3s).count(),
+            latency_statistic_.mean());
 }
 
 TEST_F(StreamDecoderTest, TrailerTest) {
@@ -119,7 +134,6 @@ TEST_F(StreamDecoderTest, StreamResetTest) {
       latency_statistic_, request_headers_, false, 0);
   auto headers = std::make_unique<Envoy::Http::HeaderMapImpl>();
   decoder->decodeHeaders(std::move(headers), false);
-  auto trailers = std::make_unique<Envoy::Http::HeaderMapImpl>();
   decoder->onResetStream(Envoy::Http::StreamResetReason::LocalReset, "fooreason");
   EXPECT_FALSE(is_complete); // these do not get reported.
   EXPECT_EQ(1, stream_decoder_completion_callbacks_);

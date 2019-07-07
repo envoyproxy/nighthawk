@@ -39,8 +39,8 @@ const Envoy::MonotonicTime MilestoneTrackerImpl::getMilestone(const uint32_t mil
   return std::get<0>(timestamps_[milestone]);
 }
 
-std::chrono::duration<double> MilestoneTrackerImpl::elapsedBetween(const uint32_t from,
-                                                                   const uint32_t to) const {
+std::chrono::nanoseconds MilestoneTrackerImpl::elapsedBetween(const uint32_t from,
+                                                              const uint32_t to) const {
   if (from >= to) {
     throw NighthawkException("The 'to' milestone must lie ahead of 'to'.");
   }
