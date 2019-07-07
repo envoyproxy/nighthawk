@@ -43,9 +43,9 @@ BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(Envoy::Api::Api& api,
       benchmark_client_stats_({ALL_BENCHMARK_CLIENT_STATS(POOL_COUNTER(*scope_))}),
       stream_decoder_pool_(
           [this]() {
-            return new PoolableStreamDecoder(api_.timeSource(), *this, []() {}, *connect_statistic_,
-                                             *response_statistic_, request_headers_,
-                                             measureLatencies(), request_body_size_);
+            return new PoolableStreamDecoder(
+                api_.timeSource(), *this, []() {}, *connect_statistic_, *response_statistic_,
+                request_headers_, measureLatencies(), request_body_size_);
           },
           [](PoolableStreamDecoder& decoder) { decoder.reset(); }) {
   connect_statistic_->setId("benchmark_http_client.queue_to_connect");
