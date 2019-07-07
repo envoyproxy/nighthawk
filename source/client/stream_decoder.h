@@ -75,7 +75,7 @@ public:
   }
 
   void setCallerCompletionCallback(std::function<void()> caller_completion_callback) {
-    caller_completion_callback_ = caller_completion_callback;
+    caller_completion_callback_ = std::move(caller_completion_callback);
   }
 
   void reset() { complete_ = false; }
@@ -116,9 +116,9 @@ public:
                         Statistic& connect_statistic, Statistic& latency_statistic,
                         const Envoy::Http::HeaderMap& request_headers, bool measure_latencies,
                         uint32_t request_body_size)
-      : StreamDecoder(time_source, decoder_completion_callback, caller_completion_callback,
-                      connect_statistic, latency_statistic, request_headers, measure_latencies,
-                      request_body_size) {}
+      : StreamDecoder(time_source, decoder_completion_callback,
+                      std::move(caller_completion_callback), connect_statistic, latency_statistic,
+                      request_headers, measure_latencies, request_body_size) {}
 };
 
 class StreamDecoderPoolImpl : public PoolImpl<PoolableStreamDecoder> {

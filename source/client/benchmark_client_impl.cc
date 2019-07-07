@@ -214,7 +214,8 @@ bool BenchmarkClientHttpImpl::tryStartOne(std::function<void()> caller_completio
   stream_decoder->setMeasureLatencies(measureLatencies());
   stream_decoder->setCallerCompletionCallback(caller_completion_callback);
   pool_->pool().newStream(*stream_decoder, *stream_decoder);
-  stream_decoder->takeOwnership(std::move(stream_decoder));
+  PoolableStreamDecoder* raw = stream_decoder.get();
+  raw->takeOwnership(std::move(stream_decoder));
   requests_initiated_++;
   return true;
 }
