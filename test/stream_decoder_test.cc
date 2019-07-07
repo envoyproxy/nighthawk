@@ -2,7 +2,6 @@
 
 #include "common/api/api_impl.h"
 #include "common/common/thread_impl.h"
-#include "common/event/dispatcher_impl.h"
 #include "common/filesystem/filesystem_impl.h"
 #include "common/http/header_map_impl.h"
 #include "common/network/utility.h"
@@ -25,9 +24,7 @@ namespace Client {
 
 class StreamDecoderTest : public Test, public StreamDecoderCompletionCallback {
 public:
-  StreamDecoderTest()
-      : api_(thread_factory_, store_, time_system_, file_system_),
-        dispatcher_(api_.allocateDispatcher()) {}
+  StreamDecoderTest() : api_(thread_factory_, store_, time_system_, file_system_) {}
 
   void onComplete(bool, const Envoy::Http::HeaderMap&) override {
     stream_decoder_completion_callbacks_++;
@@ -38,7 +35,6 @@ public:
   Envoy::Event::TestRealTimeSystem time_system_;
   Envoy::Stats::IsolatedStoreImpl store_;
   Envoy::Api::Impl api_;
-  Envoy::Event::DispatcherPtr dispatcher_;
   StreamingStatistic connect_statistic_;
   StreamingStatistic latency_statistic_;
   Envoy::Http::HeaderMapImpl request_headers_;
@@ -49,9 +45,9 @@ public:
 
 TEST_F(StreamDecoderTest, HeaderOnlyTest) {
   bool is_complete = false;
-  auto decoder = new StreamDecoder(
-      *dispatcher_, time_system_, *this, [&is_complete]() { is_complete = true; },
-      connect_statistic_, latency_statistic_, request_headers_, false, 0);
+  auto decoder =
+      new StreamDecoder(time_system_, *this, [&is_complete]() { is_complete = true; },
+                        connect_statistic_, latency_statistic_, request_headers_, false, 0);
   auto headers = std::make_unique<Envoy::Http::HeaderMapImpl>();
   decoder->decodeHeaders(std::move(headers), true);
   EXPECT_TRUE(is_complete);
@@ -60,9 +56,9 @@ TEST_F(StreamDecoderTest, HeaderOnlyTest) {
 
 TEST_F(StreamDecoderTest, HeaderWithBodyTest) {
   bool is_complete = false;
-  auto decoder = new StreamDecoder(
-      *dispatcher_, time_system_, *this, [&is_complete]() { is_complete = true; },
-      connect_statistic_, latency_statistic_, request_headers_, false, 0);
+  auto decoder =
+      new StreamDecoder(time_system_, *this, [&is_complete]() { is_complete = true; },
+                        connect_statistic_, latency_statistic_, request_headers_, false, 0);
   auto headers = std::make_unique<Envoy::Http::HeaderMapImpl>();
   decoder->decodeHeaders(std::move(headers), false);
   EXPECT_FALSE(is_complete);
@@ -76,9 +72,9 @@ TEST_F(StreamDecoderTest, HeaderWithBodyTest) {
 
 TEST_F(StreamDecoderTest, TrailerTest) {
   bool is_complete = false;
-  auto decoder = new StreamDecoder(
-      *dispatcher_, time_system_, *this, [&is_complete]() { is_complete = true; },
-      connect_statistic_, latency_statistic_, request_headers_, false, 0);
+  auto decoder =
+      new StreamDecoder(time_system_, *this, [&is_complete]() { is_complete = true; },
+                        connect_statistic_, latency_statistic_, request_headers_, false, 0);
   auto headers = std::make_unique<Envoy::Http::HeaderMapImpl>();
   decoder->decodeHeaders(std::move(headers), false);
   auto trailers = std::make_unique<Envoy::Http::HeaderMapImpl>();
@@ -88,9 +84,8 @@ TEST_F(StreamDecoderTest, TrailerTest) {
 }
 
 TEST_F(StreamDecoderTest, LatencyIsNotMeasured) {
-  auto decoder = new StreamDecoder(
-      *dispatcher_, time_system_, *this, []() {}, connect_statistic_, latency_statistic_,
-      request_headers_, false, 0);
+  auto decoder = new StreamDecoder(time_system_, *this, []() {}, connect_statistic_,
+                                   latency_statistic_, request_headers_, false, 0);
   Envoy::Http::MockStreamEncoder stream_encoder;
   Envoy::Upstream::HostDescriptionConstSharedPtr ptr;
   EXPECT_CALL(stream_encoder, encodeHeaders(HeaderMapEqualRef(&request_headers_), true));
@@ -102,9 +97,8 @@ TEST_F(StreamDecoderTest, LatencyIsNotMeasured) {
 }
 
 TEST_F(StreamDecoderTest, LatencyIsMeasured) {
-  auto decoder = new StreamDecoder(
-      *dispatcher_, time_system_, *this, []() {}, connect_statistic_, latency_statistic_,
-      request_headers_, true, 0);
+  auto decoder = new StreamDecoder(time_system_, *this, []() {}, connect_statistic_,
+                                   latency_statistic_, request_headers_, true, 0);
   Envoy::Http::MockStreamEncoder stream_encoder;
   Envoy::Upstream::HostDescriptionConstSharedPtr ptr;
   EXPECT_CALL(stream_encoder, encodeHeaders(HeaderMapEqualRef(&request_headers_), true));
@@ -118,9 +112,9 @@ TEST_F(StreamDecoderTest, LatencyIsMeasured) {
 
 TEST_F(StreamDecoderTest, StreamResetTest) {
   bool is_complete = false;
-  auto decoder = new StreamDecoder(
-      *dispatcher_, time_system_, *this, [&is_complete]() { is_complete = true; },
-      connect_statistic_, latency_statistic_, request_headers_, false, 0);
+  auto decoder =
+      new StreamDecoder(time_system_, *this, [&is_complete]() { is_complete = true; },
+                        connect_statistic_, latency_statistic_, request_headers_, false, 0);
   auto headers = std::make_unique<Envoy::Http::HeaderMapImpl>();
   decoder->decodeHeaders(std::move(headers), false);
   auto trailers = std::make_unique<Envoy::Http::HeaderMapImpl>();
@@ -131,9 +125,9 @@ TEST_F(StreamDecoderTest, StreamResetTest) {
 
 TEST_F(StreamDecoderTest, PoolFailureTest) {
   bool is_complete = false;
-  auto decoder = new StreamDecoder(
-      *dispatcher_, time_system_, *this, [&is_complete]() { is_complete = true; },
-      connect_statistic_, latency_statistic_, request_headers_, false, 0);
+  auto decoder =
+      new StreamDecoder(time_system_, *this, [&is_complete]() { is_complete = true; },
+                        connect_statistic_, latency_statistic_, request_headers_, false, 0);
   Envoy::Upstream::HostDescriptionConstSharedPtr ptr;
   decoder->onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason::Overflow, "fooreason",
                          ptr);

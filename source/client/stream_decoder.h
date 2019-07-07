@@ -4,7 +4,6 @@
 
 #include "envoy/common/time.h"
 #include "envoy/event/deferred_deletable.h"
-#include "envoy/event/dispatcher.h"
 #include "envoy/http/conn_pool.h"
 
 #include "nighthawk/common/statistic.h"
@@ -32,13 +31,12 @@ class StreamDecoder : public Envoy::Http::StreamDecoder,
                       public Envoy::Http::ConnectionPool::Callbacks,
                       public Envoy::Event::DeferredDeletable {
 public:
-  StreamDecoder(Envoy::Event::Dispatcher& dispatcher, Envoy::TimeSource& time_source,
+  StreamDecoder(Envoy::TimeSource& time_source,
                 StreamDecoderCompletionCallback& decoder_completion_callback,
                 std::function<void()> caller_completion_callback, Statistic& connect_statistic,
                 Statistic& latency_statistic, const Envoy::Http::HeaderMap& request_headers,
                 bool measure_latencies, uint32_t request_body_size)
-      : dispatcher_(dispatcher), time_source_(time_source),
-        decoder_completion_callback_(decoder_completion_callback),
+      : time_source_(time_source), decoder_completion_callback_(decoder_completion_callback),
         caller_completion_callback_(std::move(caller_completion_callback)),
         connect_statistic_(connect_statistic), latency_statistic_(latency_statistic),
         request_headers_(request_headers), connect_start_(time_source_.monotonicTime()),
@@ -95,7 +93,6 @@ public:
 private:
   void onComplete(bool success);
 
-  Envoy::Event::Dispatcher& dispatcher_;
   Envoy::TimeSource& time_source_;
   StreamDecoderCompletionCallback& decoder_completion_callback_;
   std::function<void()> caller_completion_callback_;
@@ -113,15 +110,15 @@ private:
 
 class PoolableStreamDecoder : public Client::StreamDecoder, public PoolableImpl {
 public:
-  PoolableStreamDecoder(Envoy::Event::Dispatcher& dispatcher, Envoy::TimeSource& time_source,
+  PoolableStreamDecoder(Envoy::TimeSource& time_source,
                         Client::StreamDecoderCompletionCallback& decoder_completion_callback,
                         std::function<void()> caller_completion_callback,
                         Statistic& connect_statistic, Statistic& latency_statistic,
                         const Envoy::Http::HeaderMap& request_headers, bool measure_latencies,
                         uint32_t request_body_size)
-      : StreamDecoder(dispatcher, time_source, decoder_completion_callback,
-                      caller_completion_callback, connect_statistic, latency_statistic,
-                      request_headers, measure_latencies, request_body_size) {}
+      : StreamDecoder(time_source, decoder_completion_callback, caller_completion_callback,
+                      connect_statistic, latency_statistic, request_headers, measure_latencies,
+                      request_body_size) {}
 };
 
 class StreamDecoderPoolImpl : public PoolImpl<PoolableStreamDecoder> {

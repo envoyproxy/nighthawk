@@ -53,8 +53,6 @@ void StreamDecoder::onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason
                                   Envoy::Upstream::HostDescriptionConstSharedPtr) {
   decoder_completion_callback_.onPoolFailure(reason);
   freeSelf();
-  // XXX(oschaaf): clean up
-  (void)dispatcher_;
 }
 
 void StreamDecoder::onPoolReady(Envoy::Http::StreamEncoder& encoder,
