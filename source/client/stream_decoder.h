@@ -97,15 +97,7 @@ public:
   }
 
   void setMeasureLatencies(const bool measure_latencies) { measure_latencies_ = measure_latencies; }
-  void freeSelf() {
-    if (self_.get() == nullptr) {
-      // We're not pool-owned, regular self destruct.
-      delete this;
-    } else {
-      // Managed by custom deleter.
-      self_ = nullptr;
-    }
-  }
+  void freeSelf() { self_ = nullptr; }
 
 private:
   void onComplete(bool success);
