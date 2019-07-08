@@ -93,6 +93,8 @@ public:
     have_first_body_byte_ = false;
     milestone_tracker_.reset();
     // TODO(oschaaf): this is kind of a hack to mark this here.
+    // It would be better to have a dedicated and properly named method to do so
+    // and explicitly have that called from outside of this class.
     milestone_tracker_.markMilestone(milestone_request_start_);
   }
 
@@ -139,14 +141,7 @@ public:
                       request_headers, measure_latencies, request_body_size) {}
 };
 
-class StreamDecoderPoolImpl : public PoolImpl<PoolableStreamDecoder> {
-public:
-  StreamDecoderPoolImpl(
-      StreamDecoderPoolImpl::PoolInstanceConstructionDelegate&& construction_delegate,
-      StreamDecoderPoolImpl::PoolInstanceResetDelegate&& reset_delegate)
-      : PoolImpl<PoolableStreamDecoder>(std::move(construction_delegate),
-                                        std::move(reset_delegate)) {}
-};
+using StreamDecoderPoolImpl = PoolImpl<PoolableStreamDecoder>;
 
 } // namespace Client
 } // namespace Nighthawk

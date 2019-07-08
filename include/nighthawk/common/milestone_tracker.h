@@ -37,7 +37,7 @@ public:
   virtual const Envoy::MonotonicTime getMilestone(const uint32_t milestone) const PURE;
 
   /**
-   * @return std::chrono::duration<double> elapsed duration between marking the
+   * @return std::chrono::nanoseconds elapsed nanoseconds between marking the
    * from and to milestones.
    */
   virtual std::chrono::nanoseconds elapsedBetween(const uint32_t from,

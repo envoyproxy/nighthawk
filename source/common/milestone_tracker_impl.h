@@ -34,15 +34,6 @@ public:
       : MilestoneTrackerImpl(time_source) {}
 };
 
-// Declare a pool for the poolable milestone
-class MilestoneTrackerPoolImpl : public PoolImpl<PoolableMilestoneTrackerImpl> {
-public:
-  MilestoneTrackerPoolImpl(
-      MilestoneTrackerPoolImpl::PoolInstanceConstructionDelegate&& construction_delegate,
-      MilestoneTrackerPoolImpl::PoolInstanceResetDelegate&& reset_delegate)
-      : PoolImpl<PoolableMilestoneTrackerImpl>(std::move(construction_delegate),
-                                               std::move(reset_delegate)) {}
-  MilestoneTrackerPoolImpl() = default;
-};
+using MilestoneTrackerPoolImpl = PoolImpl<PoolableMilestoneTrackerImpl>;
 
 } // namespace Nighthawk

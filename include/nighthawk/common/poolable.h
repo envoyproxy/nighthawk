@@ -6,6 +6,14 @@
 
 namespace Nighthawk {
 
+/**
+ * Poolable is an interface that allows PoolImpl<T> to interact with
+ * objects that implement it (or inherit the generic PoolableImpl). Poolable objects allocated from
+ * the pool will be accessible through a unique_ptr with a custom deleter. When the deleter runs
+ * while the associated pool is alive, the poolable object will be recycled. The pool will mark any
+ * in-use Poolable instances as orphaned during destruction. The custom deleter will delete
+ * poolable objects which have been marked as orphaned.
+ */
 class Poolable : Envoy::NonCopyable {
 public:
   virtual ~Poolable() = default;

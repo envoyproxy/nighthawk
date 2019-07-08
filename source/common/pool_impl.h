@@ -29,13 +29,14 @@ public:
       all_.erase(std::remove(all_.begin(), all_.end(), poolable), all_.end());
       pool_.pop_back();
     }
-    // Inform the in-flight poolables that they are own their own now.
+    // Inform the in-flight poolables that they are own their own now, which means they
+    // should no longer attempt to recycle to this pool instance but self-destruct instead.
     for (auto poolable : all_) {
       poolable->mark_orphaned();
     }
   }
 
-  void addPoolable(std::unique_ptr<Poolable>&& poolable) {
+  void addPoolable(std::unique_ptr<Poolable> poolable) {
     ASSERT(poolable.get() != nullptr);
     all_.push_back(poolable.get());
     pool_.emplace_back(std::move(poolable));
