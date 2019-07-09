@@ -18,8 +18,8 @@ class ServiceMainTest : public Test {};
 TEST_F(ServiceMainTest, HelloWorld) {
   std::vector<const char*> argv = {"foo"};
   ServiceMain service(argv.size(), argv.data());
-  service.Start();
-  service.Shutdown();
+  service.start();
+  service.shutdown();
 }
 
 TEST_F(ServiceMainTest, BadArgs) {
@@ -35,7 +35,13 @@ TEST_F(ServiceMainTest, BadIpAddress) {
 TEST_F(ServiceMainTest, Unbindable) {
   std::vector<const char*> argv = {"foo", "--listen", "1.1.1.1:10"};
   ServiceMain service_main(argv.size(), argv.data());
-  EXPECT_THROW(service_main.Start(), NighthawkException);
+  EXPECT_THROW(service_main.start(), NighthawkException);
+}
+
+TEST_F(ServiceMainTest, PortZero) {
+  std::vector<const char*> argv = {"foo", "--listen", "127.0.0.1:0"};
+  ServiceMain service_main(argv.size(), argv.data());
+  EXPECT_NO_THROW(service_main.start());
 }
 
 } // namespace Client

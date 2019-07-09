@@ -35,7 +35,7 @@ ServiceMain::ServiceMain(int argc, const char** argv) {
   }
 }
 
-void ServiceMain::Start() {
+void ServiceMain::start() {
   grpc::ServerBuilder builder;
   int grpc_server_port = listener_address_->ip()->port();
   builder.AddListeningPort(listener_address_->asString(), grpc::InsecureServerCredentials(),
@@ -45,14 +45,22 @@ void ServiceMain::Start() {
   if (server_ == nullptr) {
     throw NighthawkException("Could not start the grpc service.");
   }
+
+  if (!listener_address_->ip()->port()) {
+    ASSERT(grpc_server_port != 0);
+    listener_address_ = Envoy::Network::Utility::parseInternetAddressAndPort(
+        fmt::format("{}:{}", listener_address_->ip()->addressAsString(), grpc_server_port));
+  } else {
+    ASSERT(listener_address_->ip()->port() == static_cast<uint32_t>(grpc_server_port));
+  }
   ENVOY_LOG(info, "Nighthawk grpc service listening: {}", listener_address_->asString());
   channel_ = grpc::CreateChannel(listener_address_->asString(), grpc::InsecureChannelCredentials());
   stub_ = std::make_unique<nighthawk::client::NighthawkService::Stub>(channel_);
 }
 
-void ServiceMain::Wait() { server_->Wait(); }
+void ServiceMain::wait() { server_->Wait(); }
 
-void ServiceMain::Shutdown() { server_->Shutdown(); }
+void ServiceMain::shutdown() { server_->Shutdown(); }
 
 } // namespace Client
 } // namespace Nighthawk

@@ -20,9 +20,9 @@ namespace Client {
 class ServiceMain : public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
   ServiceMain(int argc, const char** argv);
-  void Start();
-  void Wait();
-  void Shutdown();
+  void start();
+  void wait();
+  void shutdown();
 
 private:
   Envoy::Network::Address::InstanceConstSharedPtr listener_address_;
