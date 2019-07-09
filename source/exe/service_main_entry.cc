@@ -16,8 +16,8 @@ int main(int argc, const char** argv) {
 #endif
   try {
     ServiceMain service(argc, argv); // NOLINT
-    service.Start();
-    service.Wait();
+    service.start();
+    service.wait();
   } catch (const Nighthawk::Client::NoServingException& e) {
     return EXIT_SUCCESS;
   } catch (const Nighthawk::Client::MalformedArgvException& e) {
