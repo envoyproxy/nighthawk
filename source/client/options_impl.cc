@@ -142,12 +142,14 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       fmt::format("Max requests per connection (default: {}).", max_requests_per_connection_),
       false, 0, "uint32_t", cmd);
 
+  std::vector<std::string> sequencer_idle_strategies = {"spin", "sleep"};
+  TCLAP::ValuesConstraint<std::string> sequencer_idle_strategies_allowed(sequencer_idle_strategies);
   TCLAP::ValueArg<std::string> sequencer_idle_strategy(
       "", "sequencer-idle-strategy",
       fmt::format("Choose between using a busy spin/yield loop or have the thread sleep while "
                   "waiting for the next scheduled request (default: {}).",
                   sequencer_idle_strategy_),
-      false, "", "string", cmd);
+      false, "", &sequencer_idle_strategies_allowed, cmd);
 
   TCLAP::UnlabeledValueArg<std::string> uri("uri",
                                             "uri to benchmark. http:// and https:// are supported, "

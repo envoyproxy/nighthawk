@@ -340,8 +340,7 @@ INSTANTIATE_TEST_SUITE_P(SequencerIdleStrategyOptionsTest, OptionsImplSequencerI
 TEST_F(OptionsImplTest, SequencerIdleStrategyValuesAreConstrained) {
   EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
                               "{} {} --sequencer-idle-strategy foo", client_name_, good_test_uri_)),
-                          MalformedArgvException,
-                          "CommandLineOptionsValidationError.SequencerIdleStrategy");
+                          MalformedArgvException, "--sequencer-idle-strategy");
 }
 
 } // namespace Client

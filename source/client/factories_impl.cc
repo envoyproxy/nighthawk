@@ -53,7 +53,6 @@ SequencerPtr SequencerFactoryImpl::create(Envoy::TimeSource& time_source,
   RateLimiterPtr rate_limiter =
       std::make_unique<LinearRateLimiter>(time_source, Frequency(options_.requestsPerSecond()));
   const uint64_t burst_size = options_.burstSize();
-  // XXX(oschaaf):
   const bool useSpinLoop = options_.sequencerIdleStrategy() == "spin";
 
   if (burst_size) {
