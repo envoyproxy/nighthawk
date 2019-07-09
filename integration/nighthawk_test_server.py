@@ -48,24 +48,23 @@ class TestServerBase(object):
     self.server_process = subprocess.Popen(args)
     self.server_process.communicate()
 
-  def waitUntillServerListening(self):
-    sock = socket.socket(self.socket_type, socket.SOCK_STREAM)
-    sock.settimeout(1)
-    tries = 10
-    while tries > 0:
-      time.sleep(0.5)
-      tries -= 1
-      if sock.connect_ex((self.server_ip, self.server_port)) == 0:
-        sock.close()
-        return True
-    logging.error("Timeout while waiting for server listener at %s:%s to accept connections.",
-                  self.server_ip, self.server_port)
-    return False
+  def waitUntilServerListening(self):
+    with socket.socket(self.socket_type, socket.SOCK_STREAM) as sock:
+      sock.settimeout(1)
+      tries = 10
+      while tries > 0:
+        time.sleep(0.5)
+        tries -= 1
+        if sock.connect_ex((self.server_ip, self.server_port)) == 0:
+          return True
+      logging.error("Timeout while waiting for server listener at %s:%s to accept connections.",
+                    self.server_ip, self.server_port)
+      return False
 
   def start(self):
     self.server_thread.daemon = True
     self.server_thread.start()
-    return self.waitUntillServerListening()
+    return self.waitUntilServerListening()
 
   def stop(self):
     self.server_process.terminate()

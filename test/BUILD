@@ -51,6 +51,7 @@ envoy_cc_test(
         "test_data/output_collector.yaml.gold",
         "@envoy//test/config/integration/certs",
         "@envoy//test/test_common:thread_factory_for_test_lib",
+        "@envoy_api//envoy/api/v2:cds_export_cc",
     ],
     repository = "@envoy",
     deps = [

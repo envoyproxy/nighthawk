@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 
+#include "envoy/api/v2/cds.pb.h"
 #include "envoy/common/pure.h"
 
 #include "api/client/options.pb.h"
@@ -20,8 +21,8 @@ class Options {
 public:
   virtual ~Options() = default;
 
-  virtual uint64_t requestsPerSecond() const PURE;
-  virtual uint64_t connections() const PURE;
+  virtual uint32_t requestsPerSecond() const PURE;
+  virtual uint32_t connections() const PURE;
   virtual std::chrono::seconds duration() const PURE;
   virtual std::chrono::seconds timeout() const PURE;
   virtual std::string uri() const PURE;
@@ -30,11 +31,15 @@ public:
   virtual std::string verbosity() const PURE;
   virtual std::string outputFormat() const PURE;
   virtual bool prefetchConnections() const PURE;
-  virtual uint64_t burstSize() const PURE;
+  virtual uint32_t burstSize() const PURE;
   virtual std::string addressFamily() const PURE;
   virtual std::string requestMethod() const PURE;
   virtual std::vector<std::string> requestHeaders() const PURE;
   virtual uint32_t requestBodySize() const PURE;
+  virtual const envoy::api::v2::auth::UpstreamTlsContext& tlsContext() const PURE;
+  virtual uint32_t maxPendingRequests() const PURE;
+  virtual uint32_t maxActiveRequests() const PURE;
+  virtual uint32_t maxRequestsPerConnection() const PURE;
 
   /**
    * Converts an Options instance to an equivalent CommandLineOptions instance in terms of option

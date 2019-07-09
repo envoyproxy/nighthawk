@@ -29,18 +29,17 @@ using namespace std::chrono_literals;
 namespace Nighthawk {
 namespace Client {
 
-BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(Envoy::Api::Api& api,
-                                                 Envoy::Event::Dispatcher& dispatcher,
-                                                 Envoy::Stats::Store& store,
-                                                 StatisticPtr&& connect_statistic,
-                                                 StatisticPtr&& response_statistic, UriPtr&& uri,
-                                                 bool use_h2, bool prefetch_connections)
+BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
+    Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Store& store,
+    StatisticPtr&& connect_statistic, StatisticPtr&& response_statistic, UriPtr&& uri, bool use_h2,
+    bool prefetch_connections, envoy::api::v2::auth::UpstreamTlsContext tls_context)
     : api_(api), dispatcher_(dispatcher), store_(store),
       scope_(store_.createScope("client.benchmark.")),
       connect_statistic_(std::move(connect_statistic)),
       response_statistic_(std::move(response_statistic)), use_h2_(use_h2),
       prefetch_connections_(prefetch_connections), uri_(std::move(uri)),
-      benchmark_client_stats_({ALL_BENCHMARK_CLIENT_STATS(POOL_COUNTER(*scope_))}) {
+      benchmark_client_stats_({ALL_BENCHMARK_CLIENT_STATS(POOL_COUNTER(*scope_))}),
+      tls_context_(std::move(tls_context)) {
   connect_statistic_->setId("benchmark_http_client.queue_to_connect");
   response_statistic_->setId("benchmark_http_client.request_to_response");
 
@@ -88,11 +87,14 @@ void BenchmarkClientHttpImpl::initialize(Envoy::Runtime::Loader& runtime) {
   envoy::api::v2::core::BindConfig bind_config;
 
   cluster_config.mutable_connect_timeout()->set_seconds(timeout_.count());
+  cluster_config.mutable_max_requests_per_connection()->set_value(max_requests_per_connection_);
   auto thresholds = cluster_config.mutable_circuit_breakers()->add_thresholds();
 
+  // We do not support any retrying.
   thresholds->mutable_max_retries()->set_value(0);
   thresholds->mutable_max_connections()->set_value(connection_limit_);
   thresholds->mutable_max_pending_requests()->set_value(max_pending_requests_);
+  thresholds->mutable_max_requests()->set_value(max_active_requests_);
 
   Envoy::Network::TransportSocketFactoryPtr socket_factory;
 
@@ -106,12 +108,9 @@ void BenchmarkClientHttpImpl::initialize(Envoy::Runtime::Loader& runtime) {
       common_tls_context->add_alpn_protocols("http/1.1");
     }
     auto transport_socket = cluster_config.transport_socket();
-    if (!cluster_config.has_transport_socket()) {
-      ASSERT(cluster_config.has_tls_context());
-      transport_socket.set_name(
-          Envoy::Extensions::TransportSockets::TransportSocketNames::get().Tls);
-      transport_socket.mutable_typed_config()->PackFrom(cluster_config.tls_context());
-    }
+    ASSERT(!cluster_config.has_transport_socket());
+    transport_socket.set_name(Envoy::Extensions::TransportSockets::TransportSocketNames::get().Tls);
+    transport_socket.mutable_typed_config()->PackFrom(tls_context_);
 
     // TODO(oschaaf): Ideally we'd just re-use Tls::Upstream::createTransportFactory().
     // But instead of doing that, we need to perform some of what that implements ourselves here,
@@ -123,10 +122,9 @@ void BenchmarkClientHttpImpl::initialize(Envoy::Runtime::Loader& runtime) {
     ssl_context_manager_ =
         std::make_unique<Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl>(
             api_.timeSource());
-    // TODO: pass in the right validation visitor
     transport_socket_factory_context_ = std::make_unique<Ssl::MinimalTransportSocketFactoryContext>(
         store_.createScope("client."), dispatcher_, generator_, store_, api_, *ssl_context_manager_,
-        Envoy::ProtobufMessage::getNullValidationVisitor());
+        Envoy::ProtobufMessage::getStrictValidationVisitor());
 
     Envoy::ProtobufTypes::MessagePtr message = Envoy::Config::Utility::translateToFactoryConfig(
         transport_socket, transport_socket_factory_context_->messageValidationVisitor(),
@@ -148,7 +146,7 @@ void BenchmarkClientHttpImpl::initialize(Envoy::Runtime::Loader& runtime) {
   cluster_ = std::make_unique<Envoy::Upstream::ClusterInfoImpl>(
       cluster_config, bind_config, runtime, std::move(socket_factory),
       store_.createScope("client."), false /*added_via_api*/,
-      Envoy::ProtobufMessage::getNullValidationVisitor());
+      Envoy::ProtobufMessage::getStrictValidationVisitor());
 
   ASSERT(uri_->address() != nullptr);
 
@@ -191,14 +189,16 @@ void BenchmarkClientHttpImpl::setRequestHeader(absl::string_view key, absl::stri
 }
 
 bool BenchmarkClientHttpImpl::tryStartOne(std::function<void()> caller_completion_callback) {
-  if (!cluster_->resourceManager(Envoy::Upstream::ResourcePriority::Default)
-           .pendingRequests()
-           .canCreate() ||
-      // In closed loop mode we want to be able to control the pacing as exactly as possible.
-      // In open-loop mode we probably want to skip this.
-      // NOTE(oschaaf): We can't consistently rely on resourceManager()::requests() because that
-      // isn't used for h/1 (it is used in tcp and h2 though).
-      ((requests_initiated_ - requests_completed_) >= connection_limit_)) {
+  // When no client side queueing is specified (via max_pending_requests_), we are in closed loop
+  // mode. In closed loop mode we want to be able to control the pacing as exactly as possible. In
+  // open-loop mode we probably want to skip this. NOTE(oschaaf): We can't consistently rely on
+  // resourceManager()::requests() because that isn't used for h/1 (it is used in tcp and h2
+  // though).
+  if (max_pending_requests_ == 1 &&
+      (!cluster_->resourceManager(Envoy::Upstream::ResourcePriority::Default)
+            .pendingRequests()
+            .canCreate() ||
+       ((requests_initiated_ - requests_completed_) >= connection_limit_))) {
     return false;
   }
 
@@ -236,7 +236,16 @@ void BenchmarkClientHttpImpl::onComplete(bool success, const Envoy::Http::Header
 }
 
 void BenchmarkClientHttpImpl::onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason reason) {
-  ASSERT(reason == Envoy::Http::ConnectionPool::PoolFailureReason::ConnectionFailure);
+  switch (reason) {
+  case Envoy::Http::ConnectionPool::PoolFailureReason::Overflow:
+    benchmark_client_stats_.pool_overflow_.inc();
+    break;
+  case Envoy::Http::ConnectionPool::PoolFailureReason::ConnectionFailure:
+    benchmark_client_stats_.pool_connection_failure_.inc();
+    break;
+  default:
+    NOT_REACHED_GCOVR_EXCL_LINE;
+  }
 }
 
 } // namespace Client
