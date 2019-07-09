@@ -11,6 +11,7 @@
 #include "common/network/utility.h"
 
 #include "absl/strings/string_view.h"
+#include "tclap/CmdLine.h"
 
 namespace Nighthawk {
 
@@ -48,6 +49,14 @@ public:
    * @return Envoy::Network::DnsLookupFamily the equivalent DnsLookupFamily value
    */
   static Envoy::Network::DnsLookupFamily parseAddressFamilyOptionString(absl::string_view family);
+
+  /**
+   * Executes TCLAP command line parsing
+   * @param cmd TCLAP command line specification.
+   * @param argc forwarded argc argument of the main entry point.
+   * @param argv forwarded argv argument of the main entry point.
+   */
+  static void parseCommand(TCLAP::CmdLine& cmd, const int argc, const char* const* argv);
 };
 
 } // namespace Nighthawk

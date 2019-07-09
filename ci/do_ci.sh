@@ -5,7 +5,8 @@ set -e
 export BUILDIFIER_BIN="/usr/local/bin/buildifier"
 
 function do_build () {
-    bazel build $BAZEL_BUILD_OPTIONS --verbose_failures=true //:nighthawk_client //:nighthawk_test_server
+    bazel build $BAZEL_BUILD_OPTIONS --verbose_failures=true //:nighthawk_client //:nighthawk_test_server \
+        //:nighthawk_service
 }
 
 function do_test() {

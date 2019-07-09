@@ -1,5 +1,7 @@
 #include "common/utility.h"
 
+#include "nighthawk/common/exception.h"
+
 #include "common/http/utility.h"
 #include "common/network/utility.h"
 
@@ -60,6 +62,25 @@ Envoy::Network::DnsLookupFamily Utility::parseAddressFamilyOptionString(absl::st
     return Envoy::Network::DnsLookupFamily::Auto;
   }
   throw NighthawkException("Invalid argument");
+}
+
+void Utility::parseCommand(TCLAP::CmdLine& cmd, const int argc, const char* const* argv) {
+  cmd.setExceptionHandling(false);
+  try {
+    cmd.parse(argc, argv);
+  } catch (TCLAP::ArgException& e) {
+    try {
+      cmd.getOutput()->failure(cmd, e);
+    } catch (const TCLAP::ExitException&) {
+      // failure() has already written an informative message to stderr, so all that's left to do
+      // is throw our own exception with the original message.
+      throw Client::MalformedArgvException(e.what());
+    }
+  } catch (const TCLAP::ExitException& e) {
+    // parse() throws an ExitException with status 0 after printing the output for --help and
+    // --version.
+    throw Client::NoServingException();
+  }
 }
 
 } // namespace Nighthawk

@@ -24,3 +24,11 @@ envoy_cc_binary(
         "@envoy//source/exe:envoy_main_entry_lib",
     ],
 )
+
+envoy_cc_binary(
+    name = "nighthawk_service",
+    repository = "@envoy",
+    deps = [
+        "//source/exe:nighthawk_service_entry_lib",
+    ],
+)
