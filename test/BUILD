@@ -35,6 +35,7 @@ envoy_cc_test(
         "process_test.cc",
         "rate_limiter_test.cc",
         "sequencer_test.cc",
+        "service_main_test.cc",
         "service_test.cc",
         "statistic_test.cc",
         "stream_decoder_test.cc",
@@ -55,6 +56,7 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         "//source/client:nighthawk_client_lib",
+        "//source/client:nighthawk_service_lib",
         "//test:nighthawk_mocks",
         "//test/client:utility_lib",
         "//test/test_common:environment_lib",

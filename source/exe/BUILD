@@ -21,3 +21,17 @@ envoy_cc_library(
         "@envoy//source/common/common:thread_lib",
     ],
 )
+
+envoy_cc_library(
+    name = "nighthawk_service_entry_lib",
+    srcs = ["service_main_entry.cc"],
+    external_deps = [
+        "abseil_symbolize",
+    ],
+    repository = "@envoy",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//source/client:nighthawk_service_lib",
+        "@envoy//source/common/common:thread_lib",
+    ],
+)
