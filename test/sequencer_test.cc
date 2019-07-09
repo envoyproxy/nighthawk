@@ -247,7 +247,7 @@ TEST_F(SequencerIntegrationTest, TheHappyFlow) { testRegularFlow(true); }
 TEST_F(SequencerIntegrationTest, TheHappyFlowNoSpinning) { testRegularFlow(false); }
 
 // Test an always saturated sequencer target. A concrete example would be a http benchmark client
-// not being able to start a  ny requests, for example due to misconfiguration or system conditions.
+// not being able to start any requests, for example due to misconfiguration or system conditions.
 TEST_F(SequencerIntegrationTest, AlwaysSaturatedTargetTest) {
   SequencerTarget callback =
       std::bind(&SequencerIntegrationTest::saturated_test, this, std::placeholders::_1);
