@@ -33,6 +33,7 @@ public:
     counters_["bar"] = 2;
     time_system_.setSystemTime(std::chrono::milliseconds(1234567891567));
     command_line_options_.mutable_duration()->set_seconds(1);
+    command_line_options_.mutable_connections()->set_value(0);
     EXPECT_CALL(options_, toCommandLineOptions())
         .WillOnce(Return(ByMove(
             std::make_unique<nighthawk::client::CommandLineOptions>(command_line_options_))));

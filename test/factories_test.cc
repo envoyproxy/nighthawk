@@ -31,12 +31,17 @@ public:
 
 TEST_F(FactoriesTest, CreateBenchmarkClient) {
   BenchmarkClientFactoryImpl factory(options_);
+  envoy::api::v2::auth::UpstreamTlsContext tls_context;
   EXPECT_CALL(options_, timeout()).Times(1);
   EXPECT_CALL(options_, connections()).Times(1);
   EXPECT_CALL(options_, h2()).Times(1);
   EXPECT_CALL(options_, prefetchConnections()).Times(1);
   EXPECT_CALL(options_, requestMethod()).Times(1);
   EXPECT_CALL(options_, requestBodySize()).Times(1);
+  EXPECT_CALL(options_, tlsContext()).Times(1).WillOnce(ReturnRef(tls_context));
+  EXPECT_CALL(options_, maxPendingRequests()).Times(1);
+  EXPECT_CALL(options_, maxActiveRequests()).Times(1);
+  EXPECT_CALL(options_, maxRequestsPerConnection()).Times(1);
   auto cmd = std::make_unique<nighthawk::client::CommandLineOptions>();
   auto request_headers = cmd->mutable_request_options()->add_request_headers();
   request_headers->mutable_header()->set_key("foo");

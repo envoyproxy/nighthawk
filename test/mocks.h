@@ -61,8 +61,8 @@ class MockOptions : public Client::Options {
 public:
   MockOptions();
 
-  MOCK_CONST_METHOD0(requestsPerSecond, uint64_t());
-  MOCK_CONST_METHOD0(connections, uint64_t());
+  MOCK_CONST_METHOD0(requestsPerSecond, uint32_t());
+  MOCK_CONST_METHOD0(connections, uint32_t());
   MOCK_CONST_METHOD0(duration, std::chrono::seconds());
   MOCK_CONST_METHOD0(timeout, std::chrono::seconds());
   MOCK_CONST_METHOD0(uri, std::string());
@@ -71,11 +71,15 @@ public:
   MOCK_CONST_METHOD0(verbosity, std::string());
   MOCK_CONST_METHOD0(outputFormat, std::string());
   MOCK_CONST_METHOD0(prefetchConnections, bool());
-  MOCK_CONST_METHOD0(burstSize, uint64_t());
+  MOCK_CONST_METHOD0(burstSize, uint32_t());
   MOCK_CONST_METHOD0(addressFamily, std::string());
   MOCK_CONST_METHOD0(requestMethod, std::string());
   MOCK_CONST_METHOD0(requestHeaders, std::vector<std::string>());
   MOCK_CONST_METHOD0(requestBodySize, uint32_t());
+  MOCK_CONST_METHOD0(tlsContext, envoy::api::v2::auth::UpstreamTlsContext&());
+  MOCK_CONST_METHOD0(maxPendingRequests, uint32_t());
+  MOCK_CONST_METHOD0(maxActiveRequests, uint32_t());
+  MOCK_CONST_METHOD0(maxRequestsPerConnection, uint32_t());
   MOCK_CONST_METHOD0(toCommandLineOptions, Client::CommandLineOptionsPtr());
 };
 

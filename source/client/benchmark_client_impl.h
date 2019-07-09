@@ -24,6 +24,8 @@
 
 #include "client/stream_decoder.h"
 
+#include "api/client/options.pb.h"
+
 namespace Nighthawk {
 namespace Client {
 
@@ -38,7 +40,9 @@ using namespace Envoy; // We need this because of macro expectations.
   COUNTER(http_3xx)                                                                                \
   COUNTER(http_4xx)                                                                                \
   COUNTER(http_5xx)                                                                                \
-  COUNTER(http_xxx)
+  COUNTER(http_xxx)                                                                                \
+  COUNTER(pool_overflow)                                                                           \
+  COUNTER(pool_connection_failure)
 
 struct BenchmarkClientStats {
   ALL_BENCHMARK_CLIENT_STATS(GENERATE_COUNTER_STRUCT)
@@ -51,12 +55,19 @@ public:
   BenchmarkClientHttpImpl(Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher,
                           Envoy::Stats::Store& store, StatisticPtr&& connect_statistic,
                           StatisticPtr&& response_statistic, UriPtr&& uri, bool use_h2,
-                          bool prefetch_connections);
+                          bool prefetch_connections,
+                          envoy::api::v2::auth::UpstreamTlsContext tls_context);
 
-  void setConnectionLimit(uint64_t connection_limit) { connection_limit_ = connection_limit; }
+  void setConnectionLimit(uint32_t connection_limit) { connection_limit_ = connection_limit; }
   void setConnectionTimeout(std::chrono::seconds timeout) { timeout_ = timeout; }
-  void setMaxPendingRequests(uint64_t max_pending_requests) {
+  void setMaxPendingRequests(uint32_t max_pending_requests) {
     max_pending_requests_ = max_pending_requests;
+  }
+  void setMaxActiveRequests(uint32_t max_active_requests) {
+    max_active_requests_ = max_active_requests;
+  }
+  void setMaxRequestsPerConnection(uint32_t max_requests_per_connection) {
+    max_requests_per_connection_ = max_requests_per_connection;
   }
 
   // BenchmarkClient
@@ -103,8 +114,10 @@ private:
   const bool prefetch_connections_;
   const UriPtr uri_;
   std::chrono::seconds timeout_{5s};
-  uint64_t connection_limit_{1};
-  uint64_t max_pending_requests_{1};
+  uint32_t connection_limit_{1};
+  uint32_t max_pending_requests_{1};
+  uint32_t max_active_requests_{UINT32_MAX};
+  uint32_t max_requests_per_connection_{UINT32_MAX};
   PrefetchablePoolPtr pool_;
   Envoy::Event::TimerPtr timer_;
   Envoy::Runtime::RandomGeneratorImpl generator_;
@@ -113,6 +126,7 @@ private:
   bool measure_latencies_{};
   BenchmarkClientStats benchmark_client_stats_;
   uint32_t request_body_size_{0};
+  const envoy::api::v2::auth::UpstreamTlsContext tls_context_;
 };
 
 } // namespace Client
