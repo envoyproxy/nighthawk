@@ -136,11 +136,21 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "", "max-active-requests",
       fmt::format("Max active requests (default: {}).", max_active_requests_), false, 0, "uint32_t",
       cmd);
-
+  // NOLINTNEXTLINE
   TCLAP::ValueArg<uint32_t> max_requests_per_connection(
       "", "max-requests-per-connection",
       fmt::format("Max requests per connection (default: {}).", max_requests_per_connection_),
       false, 0, "uint32_t", cmd);
+
+  std::vector<std::string> sequencer_idle_strategies = {"spin", "poll", "sleep"};
+  TCLAP::ValuesConstraint<std::string> sequencer_idle_strategies_allowed(sequencer_idle_strategies);
+  TCLAP::ValueArg<std::string> sequencer_idle_strategy(
+      "", "sequencer-idle-strategy",
+      fmt::format(
+          "Choose between using a busy spin/yield loop or have the thread poll or sleep while "
+          "waiting for the next scheduled request (default: {}).",
+          sequencer_idle_strategy_),
+      false, "", &sequencer_idle_strategies_allowed, cmd);
 
   TCLAP::UnlabeledValueArg<std::string> uri("uri",
                                             "uri to benchmark. http:// and https:// are supported, "
@@ -167,6 +177,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   TCLAP_SET_IF_SPECIFIED(max_pending_requests, max_pending_requests_);
   TCLAP_SET_IF_SPECIFIED(max_active_requests, max_active_requests_);
   TCLAP_SET_IF_SPECIFIED(max_requests_per_connection, max_requests_per_connection_);
+  TCLAP_SET_IF_SPECIFIED(sequencer_idle_strategy, sequencer_idle_strategy_);
 
   // CLI-specific tests.
   // TODO(oschaaf): as per mergconflicts's remark, it would be nice to aggregate
@@ -250,6 +261,8 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   max_requests_per_connection_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(
       options, max_requests_per_connection, max_requests_per_connection_);
   connections_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, connections, connections_);
+  sequencer_idle_strategy_ =
+      PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, sequencer_idle_strategy, sequencer_idle_strategy_);
 
   tls_context_.MergeFrom(options.tls_context());
   validate();
@@ -261,6 +274,7 @@ void OptionsImpl::setNonTrivialDefaults() {
   output_format_ = "json";
   address_family_ = "v4";
   request_method_ = "GET";
+  sequencer_idle_strategy_ = "spin";
 }
 
 void OptionsImpl::validate() const {
@@ -330,6 +344,7 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptions() const {
   command_line_options->mutable_max_active_requests()->set_value(maxActiveRequests());
   command_line_options->mutable_max_requests_per_connection()->set_value(
       maxRequestsPerConnection());
+  command_line_options->mutable_sequencer_idle_strategy()->set_value(sequencerIdleStrategy());
   return command_line_options;
 }
 

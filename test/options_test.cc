@@ -41,7 +41,8 @@ TEST_F(OptionsImplTest, All) {
       "{} --rps 4 --connections 5 --duration 6 --timeout 7 --h2 "
       "--concurrency 8 --verbosity error --output-format json --prefetch-connections "
       "--burst-size 13 --address-family v6 --request-method POST --request-body-size 1234 "
-      "--tls-context {} --request-header f1:b1 --request-header f2:b2 {}",
+      "--tls-context {} --request-header f1:b1 --request-header f2:b2 {} --max-pending-requests 10 "
+      "--max-active-requests 11 --max-requests-per-connection 12 --sequencer-idle-strategy sleep",
       client_name_,
       "{common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"]}}}",
       good_test_uri_));
@@ -65,6 +66,10 @@ TEST_F(OptionsImplTest, All) {
   EXPECT_EQ("common_tls_context {\n  tls_params {\n    cipher_suites: "
             "\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"\n  }\n}\n",
             options->tlsContext().DebugString());
+  EXPECT_EQ(10, options->maxPendingRequests());
+  EXPECT_EQ(11, options->maxActiveRequests());
+  EXPECT_EQ(12, options->maxRequestsPerConnection());
+  EXPECT_EQ("sleep", options->sequencerIdleStrategy());
 
   // Check that our conversion to CommandLineOptionsPtr makes sense.
   CommandLineOptionsPtr cmd = options->toCommandLineOptions();
@@ -86,6 +91,7 @@ TEST_F(OptionsImplTest, All) {
   envoy::api::v2::core::RequestMethod_Parse(options->requestMethod(), &method);
   EXPECT_EQ(request_options.request_method(), method);
   EXPECT_EQ(expected_headers.size(), request_options.request_headers_size());
+
   int i = 0;
   for (const auto& header : request_options.request_headers()) {
     EXPECT_EQ(expected_headers[i++], header.header().key() + ":" + header.header().value());
@@ -93,6 +99,10 @@ TEST_F(OptionsImplTest, All) {
 
   EXPECT_EQ(request_options.request_body_size().value(), options->requestBodySize());
   EXPECT_TRUE(util(cmd->tls_context(), options->tlsContext()));
+  EXPECT_EQ(cmd->max_pending_requests().value(), options->maxPendingRequests());
+  EXPECT_EQ(cmd->max_active_requests().value(), options->maxActiveRequests());
+  EXPECT_EQ(cmd->max_requests_per_connection().value(), options->maxRequestsPerConnection());
+  EXPECT_EQ(cmd->sequencer_idle_strategy().value(), options->sequencerIdleStrategy());
 
   // Now we construct a new options from the proto we created above. This should result in an
   // OptionsImpl instance equivalent to options. We test that by converting both to yaml strings,
@@ -267,8 +277,6 @@ TEST_F(OptionsImplTest, RequestMethodValuesAreConstrained) {
                           MalformedArgvException, "Value 'foo' does not meet constraint");
 }
 
-/// ----
-
 class OptionsImplAddressFamilyTest : public OptionsImplTest,
                                      public WithParamInterface<const char*> {};
 
@@ -314,6 +322,25 @@ TEST_F(OptionsImplTest, BadTlsContextSpecification) {
       TestUtility::createOptionsImpl(fmt::format("{} --tls-context {} http://foo/", client_name_,
                                                  "{misspelled_tls_context:{}}")),
       MalformedArgvException, "envoy.api.v2.auth.UpstreamTlsContext reason INVALID_ARGUMENT");
+}
+
+class OptionsImplSequencerIdleStrategyTest : public OptionsImplTest,
+                                             public WithParamInterface<const char*> {};
+
+// Test we accept all possible --sequencer-idle-strategy values.
+TEST_P(OptionsImplSequencerIdleStrategyTest, SequencerIdleStrategyValues) {
+  TestUtility::createOptionsImpl(
+      fmt::format("{} --sequencer-idle-strategy {} {}", client_name_, GetParam(), good_test_uri_));
+}
+
+INSTANTIATE_TEST_SUITE_P(SequencerIdleStrategyOptionsTest, OptionsImplSequencerIdleStrategyTest,
+                         Values("sleep", "poll", "spin"));
+
+// Test we don't accept any bad -sequencer-idle-strategy values.
+TEST_F(OptionsImplTest, SequencerIdleStrategyValuesAreConstrained) {
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                              "{} {} --sequencer-idle-strategy foo", client_name_, good_test_uri_)),
+                          MalformedArgvException, "--sequencer-idle-strategy");
 }
 
 } // namespace Client

@@ -53,20 +53,30 @@ TEST_F(FactoriesTest, CreateBenchmarkClient) {
   EXPECT_NE(nullptr, benchmark_client.get());
 }
 
-TEST_F(FactoriesTest, CreateSequencer) {
-  SequencerFactoryImpl factory(options_);
-  MockBenchmarkClient benchmark_client;
+TEST_F(FactoriesTest, CreateSequencer) {}
+class SequencerFactoryTest : public FactoriesTest, public WithParamInterface<const char*> {
+public:
+  void testSequencerCreation(absl::string_view type) {
+    SequencerFactoryImpl factory(options_);
+    MockBenchmarkClient benchmark_client;
 
-  EXPECT_CALL(options_, timeout()).Times(1);
-  EXPECT_CALL(options_, duration()).Times(1).WillOnce(Return(1s));
-  EXPECT_CALL(options_, requestsPerSecond()).Times(1).WillOnce(Return(1));
-  EXPECT_CALL(options_, burstSize()).Times(1).WillOnce(Return(2));
-  EXPECT_CALL(dispatcher_, createTimer_(_)).Times(2);
-  Envoy::Event::SimulatedTimeSystem time_system;
-  auto sequencer = factory.create(api_->timeSource(), dispatcher_, time_system.monotonicTime(),
-                                  benchmark_client);
-  EXPECT_NE(nullptr, sequencer.get());
-}
+    EXPECT_CALL(options_, timeout()).Times(1);
+    EXPECT_CALL(options_, duration()).Times(1).WillOnce(Return(1s));
+    EXPECT_CALL(options_, requestsPerSecond()).Times(1).WillOnce(Return(1));
+    EXPECT_CALL(options_, burstSize()).Times(1).WillOnce(Return(2));
+    EXPECT_CALL(options_, sequencerIdleStrategy()).Times(1).WillOnce(Return(std::string(type)));
+    EXPECT_CALL(dispatcher_, createTimer_(_)).Times(2);
+    Envoy::Event::SimulatedTimeSystem time_system;
+    auto sequencer = factory.create(api_->timeSource(), dispatcher_, time_system.monotonicTime(),
+                                    benchmark_client);
+    EXPECT_NE(nullptr, sequencer.get());
+  }
+};
+
+TEST_P(SequencerFactoryTest, TestCreation) { testSequencerCreation(GetParam()); }
+
+INSTANTIATE_TEST_SUITE_P(SequencerIdleStrategies, SequencerFactoryTest,
+                         ValuesIn({"poll", "sleep", "spin"}));
 
 TEST_F(FactoriesTest, CreateStore) {
   StoreFactoryImpl factory(options_);

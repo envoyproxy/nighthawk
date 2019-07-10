@@ -36,6 +36,7 @@ public:
   MockPlatformUtil();
 
   MOCK_CONST_METHOD0(yieldCurrentThread, void());
+  MOCK_CONST_METHOD1(sleep, void(std::chrono::microseconds));
 };
 
 class MockRateLimiter : public RateLimiter {
@@ -81,6 +82,7 @@ public:
   MOCK_CONST_METHOD0(maxActiveRequests, uint32_t());
   MOCK_CONST_METHOD0(maxRequestsPerConnection, uint32_t());
   MOCK_CONST_METHOD0(toCommandLineOptions, Client::CommandLineOptionsPtr());
+  MOCK_CONST_METHOD0(sequencerIdleStrategy, std::string());
 };
 
 class MockBenchmarkClientFactory : public Client::BenchmarkClientFactory {
