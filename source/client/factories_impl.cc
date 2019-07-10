@@ -53,7 +53,6 @@ SequencerPtr SequencerFactoryImpl::create(Envoy::TimeSource& time_source,
   RateLimiterPtr rate_limiter =
       std::make_unique<LinearRateLimiter>(time_source, Frequency(options_.requestsPerSecond()));
   const uint64_t burst_size = options_.burstSize();
-  const bool useSpinLoop = options_.sequencerIdleStrategy() == "spin";
 
   if (burst_size) {
     rate_limiter = std::make_unique<BurstingRateLimiter>(std::move(rate_limiter), burst_size);
@@ -61,10 +60,20 @@ SequencerPtr SequencerFactoryImpl::create(Envoy::TimeSource& time_source,
   SequencerTarget sequencer_target = [&benchmark_client](std::function<void()> f) -> bool {
     return benchmark_client.tryStartOne(std::move(f));
   };
+  IdleStrategy idle_strategy;
+  if (options_.sequencerIdleStrategy() == "spin") {
+    idle_strategy = IdleStrategy::Spin;
+  } else if (options_.sequencerIdleStrategy() == "sleep") {
+    idle_strategy = IdleStrategy::Sleep;
+  } else if (options_.sequencerIdleStrategy() == "poll") {
+    idle_strategy = IdleStrategy::Poll;
+  } else {
+    NOT_REACHED_GCOVR_EXCL_LINE;
+  }
   return std::make_unique<SequencerImpl>(platform_util_, dispatcher, time_source, start_time,
                                          std::move(rate_limiter), sequencer_target,
                                          statistic_factory.create(), statistic_factory.create(),
-                                         options_.duration(), options_.timeout(), useSpinLoop);
+                                         options_.duration(), options_.timeout(), idle_strategy);
 }
 
 StoreFactoryImpl::StoreFactoryImpl(const Options& options) : OptionBasedFactoryImpl(options) {}

@@ -24,6 +24,8 @@ constexpr std::chrono::milliseconds EnvoyTimerMinResolution = 1ms;
 
 using SequencerTarget = std::function<bool(std::function<void()>)>;
 
+enum class IdleStrategy { Spin, Poll, Sleep };
+
 /**
  * The Sequencer will drive calls to the SequencerTarget at a pace indicated by the associated
  * RateLimiter. The contract with the target is that it will call the provided callback when it is
@@ -42,7 +44,7 @@ public:
                 RateLimiterPtr&& rate_limiter, SequencerTarget target,
                 StatisticPtr&& latency_statistic, StatisticPtr&& blocked_statistic,
                 std::chrono::microseconds duration, std::chrono::microseconds grace_timeout,
-                bool use_spin_loop);
+                IdleStrategy idle_strategy);
 
   /**
    * Starts the Sequencer. Should be followed up with a call to waitForCompletion().
@@ -120,7 +122,7 @@ private:
   bool blocked_{};
   Envoy::MonotonicTime blocked_start_;
   bool cancelled_{};
-  bool use_spin_loop_{};
+  IdleStrategy idle_strategy_;
 };
 
 } // namespace Nighthawk
