@@ -52,16 +52,18 @@ size_t Utility::findPortSeparator(absl::string_view hostname) {
   return hostname.rfind(":");
 }
 
-Envoy::Network::DnsLookupFamily Utility::parseAddressFamilyOptionString(absl::string_view family) {
-  const std::string lowercase_family = absl::AsciiStrToLower(family);
-  if (lowercase_family == "v6") {
-    return Envoy::Network::DnsLookupFamily::V6Only;
-  } else if (lowercase_family == "v4") {
+Envoy::Network::DnsLookupFamily
+Utility::translateFamilyOptionString(nighthawk::client::AddressFamily::AddressFamilyOptions value) {
+  switch (value) {
+  case nighthawk::client::AddressFamily_AddressFamilyOptions_v4:
     return Envoy::Network::DnsLookupFamily::V4Only;
-  } else if (lowercase_family == "auto") {
+  case nighthawk::client::AddressFamily_AddressFamilyOptions_v6:;
+    return Envoy::Network::DnsLookupFamily::V6Only;
+  case nighthawk::client::AddressFamily_AddressFamilyOptions_auto_:;
     return Envoy::Network::DnsLookupFamily::Auto;
+  default:
+    NOT_REACHED_GCOVR_EXCL_LINE;
   }
-  throw NighthawkException("Invalid argument");
 }
 
 void Utility::parseCommand(TCLAP::CmdLine& cmd, const int argc, const char* const* argv) {

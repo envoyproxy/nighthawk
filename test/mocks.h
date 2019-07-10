@@ -73,7 +73,7 @@ public:
   MOCK_CONST_METHOD0(outputFormat, std::string());
   MOCK_CONST_METHOD0(prefetchConnections, bool());
   MOCK_CONST_METHOD0(burstSize, uint32_t());
-  MOCK_CONST_METHOD0(addressFamily, Nighthawk::Client::AddressFamilyOptions());
+  MOCK_CONST_METHOD0(addressFamily, nighthawk::client::AddressFamily::AddressFamilyOptions());
   MOCK_CONST_METHOD0(requestMethod, std::string());
   MOCK_CONST_METHOD0(requestHeaders, std::vector<std::string>());
   MOCK_CONST_METHOD0(requestBodySize, uint32_t());

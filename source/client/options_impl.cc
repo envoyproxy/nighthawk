@@ -99,7 +99,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "", "address-family",
       fmt::format("Network addres family preference. Possible values: [auto, v4, v6]. The "
                   "default output format is '{}'.",
-                  AddressFamilyOptions_List[static_cast<uint32_t>(address_family_)]),
+                  nighthawk::client::AddressFamily::AddressFamilyOptions_Name(address_family_)),
       false, "", &address_families_allowed, cmd);
 
   std::vector<std::string> request_methods = {"GET",    "HEAD",    "POST",    "PUT",
@@ -172,12 +172,8 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   TCLAP_SET_IF_SPECIFIED(burst_size, burst_size_);
 
   if (address_family.isSet()) {
-    for (uint32_t i = 0; i <= 2; i++) {
-      if (address_family.getValue() == AddressFamilyOptions_List[i]) {
-        address_family_ = static_cast<AddressFamilyOptions>(i);
-        break;
-      }
-    }
+    ASSERT(nighthawk::client::AddressFamily::AddressFamilyOptions_Parse(address_family.getValue(),
+                                                                        &address_family_));
   }
   TCLAP_SET_IF_SPECIFIED(request_method, request_method_);
   TCLAP_SET_IF_SPECIFIED(request_headers, request_headers_);
@@ -254,8 +250,10 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   prefetch_connections_ =
       PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, prefetch_connections, prefetch_connections_);
   burst_size_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, burst_size, burst_size_);
-  address_family_ = static_cast<AddressFamilyOptions>(
-      PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, address_family, static_cast<int>(address_family_)));
+  //  address_family_.set_value(
+  //      PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, address_family.value(), address_family_));
+  address_family_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, address_family, address_family_);
+
   const auto& request_options = options.request_options();
   if (request_options.request_method() !=
       ::envoy::api::v2::core::RequestMethod::METHOD_UNSPECIFIED) {
@@ -281,7 +279,8 @@ void OptionsImpl::setNonTrivialDefaults() {
   concurrency_ = "1";
   verbosity_ = "warn";
   output_format_ = "json";
-  address_family_ = AddressFamilyOptions::v4;
+  address_family_ =
+      nighthawk::client::AddressFamily::AddressFamilyOptions::AddressFamily_AddressFamilyOptions_v4;
   request_method_ = "GET";
   sequencer_idle_strategy_ = "spin";
 }

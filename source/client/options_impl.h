@@ -32,7 +32,9 @@ public:
   std::string outputFormat() const override { return output_format_; };
   bool prefetchConnections() const override { return prefetch_connections_; }
   uint32_t burstSize() const override { return burst_size_; }
-  AddressFamilyOptions addressFamily() const override { return address_family_; };
+  nighthawk::client::AddressFamily::AddressFamilyOptions addressFamily() const override {
+    return address_family_;
+  };
   std::string requestMethod() const override { return request_method_; };
   std::vector<std::string> requestHeaders() const override { return request_headers_; };
   uint32_t requestBodySize() const override { return request_body_size_; };
@@ -59,7 +61,7 @@ private:
   std::string output_format_;
   bool prefetch_connections_{false};
   uint32_t burst_size_{0};
-  AddressFamilyOptions address_family_;
+  nighthawk::client::AddressFamily::AddressFamilyOptions address_family_;
   std::string request_method_;
   std::vector<std::string> request_headers_;
   uint32_t request_body_size_{0};

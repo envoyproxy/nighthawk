@@ -11,6 +11,7 @@
 #include "common/network/utility.h"
 
 #include "absl/strings/string_view.h"
+#include "api/client/options.pb.h"
 #include "tclap/CmdLine.h"
 
 namespace Nighthawk {
@@ -48,7 +49,8 @@ public:
    * insensitive). Any other values will throw a NighthawkException.
    * @return Envoy::Network::DnsLookupFamily the equivalent DnsLookupFamily value
    */
-  static Envoy::Network::DnsLookupFamily parseAddressFamilyOptionString(absl::string_view family);
+  static Envoy::Network::DnsLookupFamily
+  translateFamilyOptionString(nighthawk::client::AddressFamily::AddressFamilyOptions value);
 
   /**
    * Executes TCLAP command line parsing

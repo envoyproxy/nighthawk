@@ -55,7 +55,6 @@ message CommandLineOptions {
   // See :option:`--burst-size` for details.
   google.protobuf.UInt32Value burst_size = 10 [(validate.rules).uint32 = {lte: 1000000}];
 
-
   // See :option:`--address-family` for details.
   AddressFamily address_family = 11;
   oneof oneof_request_options {

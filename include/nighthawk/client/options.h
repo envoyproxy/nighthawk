@@ -14,9 +14,6 @@ namespace Client {
 
 using CommandLineOptionsPtr = std::unique_ptr<nighthawk::client::CommandLineOptions>;
 
-enum class AddressFamilyOptions { v4, v6, automatic };
-const char* const AddressFamilyOptions_List[] = {"v4", "v6", "auto"};
-
 /**
  * Abstract options interface.
  */
@@ -35,7 +32,7 @@ public:
   virtual std::string outputFormat() const PURE;
   virtual bool prefetchConnections() const PURE;
   virtual uint32_t burstSize() const PURE;
-  virtual AddressFamilyOptions addressFamily() const PURE;
+  virtual nighthawk::client::AddressFamily::AddressFamilyOptions addressFamily() const PURE;
   virtual std::string requestMethod() const PURE;
   virtual std::vector<std::string> requestHeaders() const PURE;
   virtual uint32_t requestBodySize() const PURE;

@@ -30,6 +30,7 @@
 #include "client/factories_impl.h"
 #include "client/options_impl.h"
 
+#include "api/client/options.pb.h"
 #include "api/client/output.pb.h"
 #include "ares.h"
 
@@ -177,9 +178,7 @@ ProcessImpl::mergeWorkerCounters(const std::vector<ClientWorkerPtr>& workers) co
 bool ProcessImpl::run(OutputCollector& collector) {
   UriImpl uri(options_.uri());
   try {
-    uri.resolve(*dispatcher_,
-                Utility::parseAddressFamilyOptionString(
-                    AddressFamilyOptions_List[static_cast<int>(options_.addressFamily())]));
+    uri.resolve(*dispatcher_, Utility::translateFamilyOptionString(options_.addressFamily()));
   } catch (UriException) {
     return false;
   }

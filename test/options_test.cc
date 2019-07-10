@@ -57,7 +57,7 @@ TEST_F(OptionsImplTest, All) {
   EXPECT_EQ("json", options->outputFormat());
   EXPECT_EQ(true, options->prefetchConnections());
   EXPECT_EQ(13, options->burstSize());
-  EXPECT_EQ(AddressFamilyOptions::v6, options->addressFamily());
+  EXPECT_EQ(nighthawk::client::AddressFamily_AddressFamilyOptions_v6, options->addressFamily());
   EXPECT_EQ(good_test_uri_, options->uri());
   EXPECT_EQ("POST", options->requestMethod());
   const std::vector<std::string> expected_headers = {"f1:b1", "f2:b2"};
@@ -83,9 +83,7 @@ TEST_F(OptionsImplTest, All) {
   EXPECT_EQ(cmd->output_format().value(), options->outputFormat());
   EXPECT_EQ(cmd->prefetch_connections().value(), options->prefetchConnections());
   EXPECT_EQ(cmd->burst_size().value(), options->burstSize());
-  EXPECT_EQ(
-      cmd->address_family().value(),
-      static_cast<nighthawk::client::AddressFamily_AddressFamilyOptions>(options->addressFamily()));
+  EXPECT_EQ(cmd->address_family().value(), options->addressFamily());
   EXPECT_EQ(cmd->uri().value(), options->uri());
   auto request_options = cmd->request_options();
   envoy::api::v2::core::RequestMethod method =
