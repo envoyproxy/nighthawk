@@ -61,11 +61,13 @@ SequencerPtr SequencerFactoryImpl::create(Envoy::TimeSource& time_source,
     return benchmark_client.tryStartOne(std::move(f));
   };
   IdleStrategy idle_strategy;
-  if (options_.sequencerIdleStrategy() == "spin") {
+  std::string lowered_idle_strategy = options_.sequencerIdleStrategy();
+  absl::AsciiStrToLower(&lowered_idle_strategy);
+  if (lowered_idle_strategy == "spin") {
     idle_strategy = IdleStrategy::Spin;
-  } else if (options_.sequencerIdleStrategy() == "sleep") {
+  } else if (lowered_idle_strategy == "sleep") {
     idle_strategy = IdleStrategy::Sleep;
-  } else if (options_.sequencerIdleStrategy() == "poll") {
+  } else if (lowered_idle_strategy == "poll") {
     idle_strategy = IdleStrategy::Poll;
   } else {
     NOT_REACHED_GCOVR_EXCL_LINE;

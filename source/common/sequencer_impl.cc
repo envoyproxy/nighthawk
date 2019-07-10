@@ -145,7 +145,8 @@ void SequencerImpl::run(bool from_periodic_timer) {
       platform_util_.yieldCurrentThread();
       spin_timer_->enableTimer(0ms);
     } else if (idle_strategy_ == IdleStrategy::Sleep) {
-      usleep(10); // TODO(oschaaf): move to platform utils.
+      // optionize sleep duration.
+      platform_util_.sleep(50us);
       spin_timer_->enableTimer(0ms);
     } // .. else we poll, the periodic timer will be active
   }

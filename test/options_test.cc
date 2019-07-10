@@ -334,7 +334,7 @@ TEST_P(OptionsImplSequencerIdleStrategyTest, SequencerIdleStrategyValues) {
 }
 
 INSTANTIATE_TEST_SUITE_P(SequencerIdleStrategyOptionsTest, OptionsImplSequencerIdleStrategyTest,
-                         Values("sleep", "spin"));
+                         Values("sleep", "poll", "spin"));
 
 // Test we don't accept any bad -sequencer-idle-strategy values.
 TEST_F(OptionsImplTest, SequencerIdleStrategyValuesAreConstrained) {
