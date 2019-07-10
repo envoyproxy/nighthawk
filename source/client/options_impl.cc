@@ -99,7 +99,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "", "address-family",
       fmt::format("Network addres family preference. Possible values: [auto, v4, v6]. The "
                   "default output format is '{}'.",
-                  address_family_),
+                  AddressFamilyOptions_List[static_cast<uint32_t>(address_family_)]),
       false, "", &address_families_allowed, cmd);
 
   std::vector<std::string> request_methods = {"GET",    "HEAD",    "POST",    "PUT",
@@ -170,7 +170,15 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   TCLAP_SET_IF_SPECIFIED(output_format, output_format_);
   TCLAP_SET_IF_SPECIFIED(prefetch_connections, prefetch_connections_);
   TCLAP_SET_IF_SPECIFIED(burst_size, burst_size_);
-  TCLAP_SET_IF_SPECIFIED(address_family, address_family_);
+
+  if (address_family.isSet()) {
+    for (uint32_t i = 0; i <= 2; i++) {
+      if (address_family.getValue() == AddressFamilyOptions_List[i]) {
+        address_family_ = static_cast<AddressFamilyOptions>(i);
+        break;
+      }
+    }
+  }
   TCLAP_SET_IF_SPECIFIED(request_method, request_method_);
   TCLAP_SET_IF_SPECIFIED(request_headers, request_headers_);
   TCLAP_SET_IF_SPECIFIED(request_body_size, request_body_size_);
@@ -246,7 +254,8 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   prefetch_connections_ =
       PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, prefetch_connections, prefetch_connections_);
   burst_size_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, burst_size, burst_size_);
-  address_family_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, address_family, address_family_);
+  address_family_ = static_cast<AddressFamilyOptions>(
+      PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, address_family, static_cast<int>(address_family_)));
   const auto& request_options = options.request_options();
   if (request_options.request_method() !=
       ::envoy::api::v2::core::RequestMethod::METHOD_UNSPECIFIED) {
@@ -272,7 +281,7 @@ void OptionsImpl::setNonTrivialDefaults() {
   concurrency_ = "1";
   verbosity_ = "warn";
   output_format_ = "json";
-  address_family_ = "v4";
+  address_family_ = AddressFamilyOptions::v4;
   request_method_ = "GET";
   sequencer_idle_strategy_ = "spin";
 }
@@ -319,7 +328,8 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptions() const {
   command_line_options->mutable_output_format()->set_value(outputFormat());
   command_line_options->mutable_prefetch_connections()->set_value(prefetchConnections());
   command_line_options->mutable_burst_size()->set_value(burstSize());
-  command_line_options->mutable_address_family()->set_value(addressFamily());
+  command_line_options->mutable_address_family()->set_value(
+      static_cast<nighthawk::client::AddressFamily_AddressFamilyOptions>(addressFamily()));
   auto request_options = command_line_options->mutable_request_options();
   envoy::api::v2::core::RequestMethod method =
       envoy::api::v2::core::RequestMethod::METHOD_UNSPECIFIED;

@@ -14,6 +14,19 @@ message RequestOptions {
   google.protobuf.UInt32Value request_body_size = 3 [(validate.rules).uint32 = {lte: 4194304}];
 }
 
+// We wrap all values so we can have a unified way of option handling with respect to
+// defaults, merging, etc. As there's no stock concept for enumerations, we manually
+// define custom wrappers for them. These used to be strings, which did provide the
+// wrapped type.
+message AddressFamily {
+  enum AddressFamilyOptions {
+    v4 = 0;
+    v6 = 1;
+    auto = 2;
+  }
+  AddressFamilyOptions value = 1;
+}
+
 // TODO(oschaaf): Ultimately this will be a load test specification. The fact that it
 // can arrive via CLI is just a concrete detail. Change this to reflect that.
 message CommandLineOptions {
@@ -41,9 +54,10 @@ message CommandLineOptions {
   google.protobuf.BoolValue prefetch_connections = 9;
   // See :option:`--burst-size` for details.
   google.protobuf.UInt32Value burst_size = 10 [(validate.rules).uint32 = {lte: 1000000}];
+
+
   // See :option:`--address-family` for details.
-  google.protobuf.StringValue address_family = 11
-      [(validate.rules).string = {in: ["v4", "v6", "auto"]}];
+  AddressFamily address_family = 11;
   oneof oneof_request_options {
     // See :option:`--request_options` for details.
     RequestOptions request_options = 12;

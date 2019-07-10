@@ -177,7 +177,9 @@ ProcessImpl::mergeWorkerCounters(const std::vector<ClientWorkerPtr>& workers) co
 bool ProcessImpl::run(OutputCollector& collector) {
   UriImpl uri(options_.uri());
   try {
-    uri.resolve(*dispatcher_, Utility::parseAddressFamilyOptionString(options_.addressFamily()));
+    uri.resolve(*dispatcher_,
+                Utility::parseAddressFamilyOptionString(
+                    AddressFamilyOptions_List[static_cast<int>(options_.addressFamily())]));
   } catch (UriException) {
     return false;
   }
