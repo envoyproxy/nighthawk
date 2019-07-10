@@ -56,7 +56,7 @@ message CommandLineOptions {
   google.protobuf.UInt32Value max_active_requests = 15 [(validate.rules).uint32 = {gte: 1}];
   // See :option:`--max-requests-per-connection` for details.
   google.protobuf.UInt32Value max_requests_per_connection = 16 [(validate.rules).uint32 = {gte: 1}];
-  // See :option:`--output-format` for details.
+  // See :option:`--sequencer-idle-strategy` for details.
   google.protobuf.StringValue sequencer_idle_strategy = 17
       [(validate.rules).string = {in: ["spin", "poll", "sleep"]}];
   // See :option:`--uri` for details.
