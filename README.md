@@ -39,13 +39,13 @@ bazel build -c opt //:nighthawk_client
 ```bash
 ➜ bazel-bin/nighthawk_client --help
 
-USAGE: 
+USAGE:
 
-   bazel-bin/nighthawk_client  [--sequencer-idle-strategy <spin|sleep>]
-                               [--max-requests-per-connection <uint32_t>]
-                               [--max-active-requests <uint32_t>]
-                               [--max-pending-requests <uint32_t>]
-                               [--tls-context <string>]
+   bazel-bin/nighthawk_client  [--sequencer-idle-strategy <spin|poll
+                               |sleep>] [--max-requests-per-connection
+                               <uint32_t>] [--max-active-requests
+                               <uint32_t>] [--max-pending-requests
+                               <uint32_t>] [--tls-context <string>]
                                [--request-body-size <uint32_t>]
                                [--request-header <string>] ... 
                                [--request-method <GET|HEAD|POST|PUT|DELETE
@@ -62,9 +62,9 @@ USAGE:
 
 Where: 
 
-   --sequencer-idle-strategy <spin|sleep>
-     Choose between using a busy spin/yield loop or have the thread sleep
-     while waiting for the next scheduled request (default: spin).
+   --sequencer-idle-strategy <spin|poll|sleep>
+     Choose between using a busy spin/yield loop or have the thread poll or
+     sleep while waiting for the next scheduled request (default: spin).
 
    --max-requests-per-connection <uint32_t>
      Max requests per connection (default: 4294937295).
