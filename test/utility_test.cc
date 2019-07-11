@@ -170,13 +170,13 @@ TEST_F(UtilityTest, CpusWithAffinity) {
 TEST_F(UtilityTest, translateAddressFamilyGoodValues) {
   EXPECT_EQ(Envoy::Network::DnsLookupFamily::V6Only,
             Utility::translateFamilyOptionString(
-                nighthawk::client::AddressFamily_AddressFamilyOptions_v6));
+                nighthawk::client::AddressFamily_AddressFamilyOptions_V6));
   EXPECT_EQ(Envoy::Network::DnsLookupFamily::V4Only,
             Utility::translateFamilyOptionString(
-                nighthawk::client::AddressFamily_AddressFamilyOptions_v4));
+                nighthawk::client::AddressFamily_AddressFamilyOptions_V4));
   EXPECT_EQ(Envoy::Network::DnsLookupFamily::Auto,
             Utility::translateFamilyOptionString(
-                nighthawk::client::AddressFamily_AddressFamilyOptions_auto_));
+                nighthawk::client::AddressFamily_AddressFamilyOptions_AUTO));
 }
 
 } // namespace Nighthawk

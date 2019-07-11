@@ -57,7 +57,7 @@ TEST_F(OptionsImplTest, All) {
   EXPECT_EQ("json", options->outputFormat());
   EXPECT_EQ(true, options->prefetchConnections());
   EXPECT_EQ(13, options->burstSize());
-  EXPECT_EQ(nighthawk::client::AddressFamily_AddressFamilyOptions_v6, options->addressFamily());
+  EXPECT_EQ(nighthawk::client::AddressFamily_AddressFamilyOptions_V6, options->addressFamily());
   EXPECT_EQ(good_test_uri_, options->uri());
   EXPECT_EQ("POST", options->requestMethod());
   const std::vector<std::string> expected_headers = {"f1:b1", "f2:b2"};

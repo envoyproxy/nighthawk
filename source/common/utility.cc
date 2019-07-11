@@ -55,11 +55,11 @@ size_t Utility::findPortSeparator(absl::string_view hostname) {
 Envoy::Network::DnsLookupFamily
 Utility::translateFamilyOptionString(nighthawk::client::AddressFamily::AddressFamilyOptions value) {
   switch (value) {
-  case nighthawk::client::AddressFamily_AddressFamilyOptions_v4:
+  case nighthawk::client::AddressFamily_AddressFamilyOptions_V4:
     return Envoy::Network::DnsLookupFamily::V4Only;
-  case nighthawk::client::AddressFamily_AddressFamilyOptions_v6:;
+  case nighthawk::client::AddressFamily_AddressFamilyOptions_V6:
     return Envoy::Network::DnsLookupFamily::V6Only;
-  case nighthawk::client::AddressFamily_AddressFamilyOptions_auto_:;
+  case nighthawk::client::AddressFamily_AddressFamilyOptions_AUTO:
     return Envoy::Network::DnsLookupFamily::Auto;
   default:
     NOT_REACHED_GCOVR_EXCL_LINE;

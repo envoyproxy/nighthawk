@@ -170,10 +170,10 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   TCLAP_SET_IF_SPECIFIED(output_format, output_format_);
   TCLAP_SET_IF_SPECIFIED(prefetch_connections, prefetch_connections_);
   TCLAP_SET_IF_SPECIFIED(burst_size, burst_size_);
-
   if (address_family.isSet()) {
-    ASSERT(nighthawk::client::AddressFamily::AddressFamilyOptions_Parse(address_family.getValue(),
-                                                                        &address_family_));
+    std::string lowered = address_family.getValue();
+    absl::AsciiStrToUpper(&lowered);
+    ASSERT(nighthawk::client::AddressFamily::AddressFamilyOptions_Parse(lowered, &address_family_));
   }
   TCLAP_SET_IF_SPECIFIED(request_method, request_method_);
   TCLAP_SET_IF_SPECIFIED(request_headers, request_headers_);
@@ -250,8 +250,6 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   prefetch_connections_ =
       PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, prefetch_connections, prefetch_connections_);
   burst_size_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, burst_size, burst_size_);
-  //  address_family_.set_value(
-  //      PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, address_family.value(), address_family_));
   address_family_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, address_family, address_family_);
 
   const auto& request_options = options.request_options();
@@ -279,8 +277,8 @@ void OptionsImpl::setNonTrivialDefaults() {
   concurrency_ = "1";
   verbosity_ = "warn";
   output_format_ = "json";
-  address_family_ =
-      nighthawk::client::AddressFamily::AddressFamilyOptions::AddressFamily_AddressFamilyOptions_v4;
+  address_family_ = nighthawk::client::AddressFamily::AddressFamilyOptions::
+      AddressFamily_AddressFamilyOptions_AUTO;
   request_method_ = "GET";
   sequencer_idle_strategy_ = "spin";
 }

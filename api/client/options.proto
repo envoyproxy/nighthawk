@@ -20,9 +20,9 @@ message RequestOptions {
 // wrapped type.
 message AddressFamily {
   enum AddressFamilyOptions {
-    v4 = 0;
-    v6 = 1;
-    auto = 2;
+    AUTO = 0;
+    V4 = 1;
+    V6 = 2;
   }
   AddressFamilyOptions value = 1;
 }
