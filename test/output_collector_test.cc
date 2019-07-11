@@ -21,13 +21,8 @@ namespace Client {
 class OutputCollectorTest : public Test {
 public:
   OutputCollectorTest() {
-    StatisticPtr used_statistic = std::make_unique<StreamingStatistic>();
+    addStatWithId("stat_id");
     StatisticPtr empty_statistic = std::make_unique<StreamingStatistic>();
-    used_statistic->setId("stat_id");
-    used_statistic->addValue(1000000);
-    used_statistic->addValue(2000000);
-    used_statistic->addValue(3000000);
-    statistics_.push_back(std::move(used_statistic));
     statistics_.push_back(std::move(empty_statistic));
     counters_["foo"] = 1;
     counters_["bar"] = 2;
@@ -45,6 +40,15 @@ public:
     collector.addResult("global", statistics_, counters_);
     EXPECT_EQ(filesystem_.fileReadToEnd(TestEnvironment::runfilesPath(std::string(path))),
               collector.toString());
+  }
+
+  void addStatWithId(absl::string_view id) {
+    StatisticPtr stat = std::make_unique<StreamingStatistic>();
+    stat->setId(id);
+    stat->addValue(1000000);
+    stat->addValue(2000000);
+    stat->addValue(3000000);
+    statistics_.push_back(std::move(stat));
   }
 
   nighthawk::client::CommandLineOptions command_line_options_;
@@ -68,6 +72,18 @@ TEST_F(OutputCollectorTest, JsonFormatter) {
 TEST_F(OutputCollectorTest, YamlFormatter) {
   YamlOutputCollectorImpl collector(time_system_, options_);
   expectEqualToGoldFile(collector, "test/test_data/output_collector.yaml.gold");
+}
+
+TEST_F(OutputCollectorTest, CliFormatterstatIdFiendlyNames) {
+  ConsoleOutputCollectorImpl collector(time_system_, options_);
+  // Makes us hit switch cases in statIdtoFriendlyStatName()
+  addStatWithId("benchmark_http_client.queue_to_connect");
+  addStatWithId("benchmark_http_client.request_to_response");
+  addStatWithId("sequencer.callback");
+  addStatWithId("sequencer.blocking");
+  // TODO(oschaaf): one day we may want to ensure that we do get the nice names.
+  // For now, I'm happy if this doesn't fail us.
+  ASSERT_NO_FATAL_FAILURE(collector.toProto());
 }
 
 } // namespace Client
