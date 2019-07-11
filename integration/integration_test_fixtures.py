@@ -80,6 +80,15 @@ class IntegrationTestBase(unittest.TestCase):
         for counter in parsed_json["results"][0]["counters"]
     }
 
+  def getNighthawkGlobalHistogramsbyIdFromJson(self, parsed_json):
+    """
+    Utility method to get the global histograms from the json indexed by id.
+    """
+    return {
+        statistic["id"]: statistic
+        for statistic in parsed_json["results"][0]["statistics"]
+    }
+
   def getTestServerRootUri(self, https=False):
     """
     Utility for getting the http://host:port/ that can be used to query the server we started in setUp()

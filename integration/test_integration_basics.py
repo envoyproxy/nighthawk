@@ -29,6 +29,26 @@ class TestHttp(HttpIntegrationTestBase):
     self.assertEqual(counters["upstream_rq_total"], 25)
     self.assertEqual(len(counters), 9)
 
+  def mini_stress_test_h1(self, args):
+    # run a test with more rps then we can handle, and a very small client-side queue.
+    # we should observe both lots of successfull requests as well as time spend in blocking mode., 
+    parsed_json = self.runNighthawkClient(args)
+    counters = self.getNighthawkCounterMapFromJson(parsed_json)
+    self.assertGreater(counters["benchmark.http_2xx"], 1000)
+    self.assertEqual(counters["upstream_cx_http1_total"], 1)
+    global_histograms = self.getNighthawkGlobalHistogramsbyIdFromJson(parsed_json)
+    self.assertGreater(int(global_histograms["sequencer.blocking"]["count"]), 1000)
+    self.assertGreater(int(global_histograms["benchmark_http_client.request_to_response"]["count"]), 1000)
+    return counters
+
+  def test_h1_mini_stress_test_with_client_side_queueing(self):
+    counters = self.mini_stress_test_h1([self.getTestServerRootUri(), "--rps", "999999", "--max-pending-requests", "10", "--duration 2"])
+    self.assertGreater(counters["upstream_rq_pending_total"], 100)
+ 
+  def test_h1_mini_stress_test_without_client_side_queueing(self):
+    counters = self.mini_stress_test_h1([self.getTestServerRootUri(), "--rps", "999999", "--duration 2"])
+    self.assertEqual(counters["upstream_rq_pending_total"], 1)
+
   def test_h2(self):
     parsed_json = self.runNighthawkClient(["--h2", self.getTestServerRootUri()])
     counters = self.getNighthawkCounterMapFromJson(parsed_json)
