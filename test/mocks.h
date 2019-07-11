@@ -37,6 +37,7 @@ public:
 
   MOCK_CONST_METHOD0(yieldCurrentThread, void());
   MOCK_CONST_METHOD1(sleep, void(std::chrono::microseconds));
+  MOCK_CONST_METHOD0(determineCpuCoresWithAffinity, uint32_t());
 };
 
 class MockRateLimiter : public RateLimiter {

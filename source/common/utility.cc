@@ -11,26 +11,6 @@
 
 namespace Nighthawk {
 
-namespace PlatformUtils {
-
-// returns 0 on failure. returns the number of HW CPU's
-// that the current thread has affinity with.
-// TODO(oschaaf): mull over what to do w/regard to hyperthreading.
-uint32_t determineCpuCoresWithAffinity() {
-  const pthread_t thread = pthread_self();
-  cpu_set_t cpuset;
-  int i;
-
-  CPU_ZERO(&cpuset);
-  i = pthread_getaffinity_np(thread, sizeof(cpu_set_t), &cpuset);
-  if (i == 0) {
-    return CPU_COUNT(&cpuset);
-  }
-  return 0;
-}
-
-} // namespace PlatformUtils
-
 std::map<std::string, uint64_t>
 Utility::mapCountersFromStore(const Envoy::Stats::Store& store,
                               const StoreCounterFilter& filter) const {

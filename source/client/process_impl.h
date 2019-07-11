@@ -36,7 +36,8 @@ namespace Client {
  */
 class ProcessImpl : public Process, public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
-  ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system);
+  ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
+              const PlatformUtil& platform_util);
 
   uint32_t determineConcurrency() const;
   bool run(OutputCollector& collector) override;
@@ -67,6 +68,7 @@ private:
   const BenchmarkClientFactoryImpl benchmark_client_factory_;
   const SequencerFactoryImpl sequencer_factory_;
   const Options& options_;
+  const PlatformUtil& platform_util_;
 };
 
 } // namespace Client
