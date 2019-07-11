@@ -78,7 +78,7 @@ TEST_F(StatidToNameTest, TestTranslations) {
   const std::vector<std::string> ids = {"benchmark_http_client.queue_to_connect",
                                         "benchmark_http_client.request_to_response",
                                         "sequencer.callback", "sequencer.blocking"};
-  for (const std::string id : ids) {
+  for (const std::string& id : ids) {
     EXPECT_NE(ConsoleOutputCollectorImpl::statIdtoFriendlyStatName(id), id);
   }
 }
