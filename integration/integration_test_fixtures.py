@@ -84,10 +84,7 @@ class IntegrationTestBase(unittest.TestCase):
     """
     Utility method to get the global histograms from the json indexed by id.
     """
-    return {
-        statistic["id"]: statistic
-        for statistic in parsed_json["results"][0]["statistics"]
-    }
+    return {statistic["id"]: statistic for statistic in parsed_json["results"][0]["statistics"]}
 
   def getTestServerRootUri(self, https=False):
     """
