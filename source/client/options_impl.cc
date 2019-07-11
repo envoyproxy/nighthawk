@@ -170,26 +170,30 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   if (verbosity.isSet()) {
     std::string upper_cased = verbosity.getValue();
     absl::AsciiStrToUpper(&upper_cased);
-    ASSERT(nighthawk::client::Verbosity::VerbosityOptions_Parse(upper_cased, &verbosity_));
+    RELEASE_ASSERT(nighthawk::client::Verbosity::VerbosityOptions_Parse(upper_cased, &verbosity_),
+                   "Failed to parse verbosity");
   }
   if (output_format.isSet()) {
     std::string upper_cased = output_format.getValue();
     absl::AsciiStrToUpper(&upper_cased);
-    ASSERT(
-        nighthawk::client::OutputFormat::OutputFormatOptions_Parse(upper_cased, &output_format_));
+    RELEASE_ASSERT(
+        nighthawk::client::OutputFormat::OutputFormatOptions_Parse(upper_cased, &output_format_),
+        "Failed to parse output format");
   }
   TCLAP_SET_IF_SPECIFIED(prefetch_connections, prefetch_connections_);
   TCLAP_SET_IF_SPECIFIED(burst_size, burst_size_);
   if (address_family.isSet()) {
     std::string upper_cased = address_family.getValue();
     absl::AsciiStrToUpper(&upper_cased);
-    ASSERT(nighthawk::client::AddressFamily::AddressFamilyOptions_Parse(upper_cased,
-                                                                        &address_family_));
+    RELEASE_ASSERT(
+        nighthawk::client::AddressFamily::AddressFamilyOptions_Parse(upper_cased, &address_family_),
+        "Failed to parse address family");
   }
   if (request_method.isSet()) {
     std::string upper_cased = request_method.getValue();
     absl::AsciiStrToUpper(&upper_cased);
-    ASSERT(envoy::api::v2::core::RequestMethod_Parse(upper_cased, &request_method_));
+    RELEASE_ASSERT(envoy::api::v2::core::RequestMethod_Parse(upper_cased, &request_method_),
+                   "Failed to parse request method");
   }
   TCLAP_SET_IF_SPECIFIED(request_headers, request_headers_);
   TCLAP_SET_IF_SPECIFIED(request_body_size, request_body_size_);
@@ -199,8 +203,9 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   if (sequencer_idle_strategy.isSet()) {
     std::string upper_cased = sequencer_idle_strategy.getValue();
     absl::AsciiStrToUpper(&upper_cased);
-    ASSERT(nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions_Parse(
-        upper_cased, &sequencer_idle_strategy_));
+    RELEASE_ASSERT(nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions_Parse(
+                       upper_cased, &sequencer_idle_strategy_),
+                   "Failed to parse sequencer idle strategy");
   }
 
   // CLI-specific tests.
