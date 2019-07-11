@@ -39,12 +39,15 @@ class TestHttp(HttpIntegrationTestBase):
     # we should observe both lots of successfull requests as well as time spend in blocking mode.,
     parsed_json = self.runNighthawkClient(args)
     counters = self.getNighthawkCounterMapFromJson(parsed_json)
-    self.assertGreater(counters["benchmark.http_2xx"], 1000)
+    # We set a reasonably low expecation of 1000 requests. We set it low, because we want this
+    # test to succeed on a reasonable share of setups (hopefully practically all).
+    MIN_EXPECTED_REQUESTS = 1000
+    self.assertGreater(counters["benchmark.http_2xx"], MIN_EXPECTED_REQUESTS)
     self.assertEqual(counters["upstream_cx_http1_total"], 1)
     global_histograms = self.getNighthawkGlobalHistogramsbyIdFromJson(parsed_json)
-    self.assertGreater(int(global_histograms["sequencer.blocking"]["count"]), 1000)
+    self.assertGreater(int(global_histograms["sequencer.blocking"]["count"]), MIN_EXPECTED_REQUESTS)
     self.assertGreater(
-        int(global_histograms["benchmark_http_client.request_to_response"]["count"]), 1000)
+        int(global_histograms["benchmark_http_client.request_to_response"]["count"]), MIN_EXPECTED_REQUESTS)
     return counters
 
   def test_h1_mini_stress_test_with_client_side_queueing(self):
