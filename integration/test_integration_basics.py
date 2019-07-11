@@ -13,6 +13,7 @@ from integration_test_fixtures import (HttpIntegrationTestBase, HttpsIntegration
 # TODO(oschaaf): we mostly verify stats observed from the client-side. Add expectations
 # for the server side as well.
 
+
 class TestHttp(HttpIntegrationTestBase):
 
   def test_h1(self):
@@ -47,7 +48,8 @@ class TestHttp(HttpIntegrationTestBase):
     global_histograms = self.getNighthawkGlobalHistogramsbyIdFromJson(parsed_json)
     self.assertGreater(int(global_histograms["sequencer.blocking"]["count"]), MIN_EXPECTED_REQUESTS)
     self.assertGreater(
-        int(global_histograms["benchmark_http_client.request_to_response"]["count"]), MIN_EXPECTED_REQUESTS)
+        int(global_histograms["benchmark_http_client.request_to_response"]["count"]),
+        MIN_EXPECTED_REQUESTS)
     return counters
 
   def test_h1_mini_stress_test_with_client_side_queueing(self):
@@ -77,7 +79,6 @@ class TestHttp(HttpIntegrationTestBase):
         [self.getTestServerRootUri(), "--rps", "999999", "--duration 2"])
     self.assertEqual(counters["upstream_rq_pending_total"], 1)
     self.assertFalse("upstream_cx_overflow" in counters)
-
 
   def test_h2(self):
     """
