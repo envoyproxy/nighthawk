@@ -10,11 +10,16 @@ from integration_test_fixtures import (HttpIntegrationTestBase, HttpsIntegration
                                        IntegrationTestBase)
 
 # TODO(oschaaf): rewrite the tests so we can just hand a map of expected key values to it.
-
+# TODO(oschaaf): we mostly verify stats observed from the client-side. Add expectations
+# for the server side as well.
 
 class TestHttp(HttpIntegrationTestBase):
 
   def test_h1(self):
+    """
+    Runs the CLI configured to use plain HTTP/1 against our test server, and sanity
+    checks statistics from both client and server.
+    """
     parsed_json = self.runNighthawkClient([self.getTestServerRootUri()])
     counters = self.getNighthawkCounterMapFromJson(parsed_json)
     self.assertEqual(counters["benchmark.http_2xx"], 25)
@@ -43,18 +48,39 @@ class TestHttp(HttpIntegrationTestBase):
     return counters
 
   def test_h1_mini_stress_test_with_client_side_queueing(self):
+    """
+    Run a max rps test with the h1 pool against our test server, using a small client-side
+    queue. We expect to observe:
+    - upstream_rq_pending_total increasing 
+    - upstream_cx_overflow overflows 
+    - blocking to be reported by the sequencer
+    """
     counters = self.mini_stress_test_h1([
         self.getTestServerRootUri(), "--rps", "999999", "--max-pending-requests", "10",
         "--duration 2"
     ])
     self.assertGreater(counters["upstream_rq_pending_total"], 100)
+    self.assertGreater(counters["upstream_cx_overflow"], 0)
 
   def test_h1_mini_stress_test_without_client_side_queueing(self):
+    """
+    Run a max rps test with the h1 pool against our test server, with no client-side
+    queueing. We expect to observe:
+    - upstream_rq_pending_total to be equal to 1
+    - blocking to be reported by the sequencer
+    - no upstream_cx_overflows
+    """
     counters = self.mini_stress_test_h1(
         [self.getTestServerRootUri(), "--rps", "999999", "--duration 2"])
     self.assertEqual(counters["upstream_rq_pending_total"], 1)
+    self.assertFalse("upstream_cx_overflow" in counters)
+
 
   def test_h2(self):
+    """
+    Runs the CLI configured to use h2c against our test server, and sanity
+    checks statistics from both client and server.
+    """
     parsed_json = self.runNighthawkClient(["--h2", self.getTestServerRootUri()])
     counters = self.getNighthawkCounterMapFromJson(parsed_json)
     self.assertEqual(counters["benchmark.http_2xx"], 25)
@@ -72,6 +98,10 @@ class TestHttp(HttpIntegrationTestBase):
 class TestHttps(HttpsIntegrationTestBase):
 
   def test_h1(self):
+    """
+    Runs the CLI configured to use HTTP/1 over https against our test server, and sanity
+    checks statistics from both client and server.
+    """
     parsed_json = self.runNighthawkClient([self.getTestServerRootUri()])
     counters = self.getNighthawkCounterMapFromJson(parsed_json)
     self.assertEqual(counters["benchmark.http_2xx"], 25)
@@ -96,6 +126,11 @@ class TestHttps(HttpsIntegrationTestBase):
         self.getServerStatFromJson(server_stats, "http.ingress_http.downstream_rq_2xx"), 25)
 
   def test_h2(self):
+    """
+    Runs the CLI configured to use HTTP/2 (using https) against our test server, and sanity
+    checks statistics from both client and server.
+    """
+
     parsed_json = self.runNighthawkClient(["--h2", self.getTestServerRootUri()])
     counters = self.getNighthawkCounterMapFromJson(parsed_json)
     self.assertEqual(counters["benchmark.http_2xx"], 25)
@@ -116,6 +151,10 @@ class TestHttps(HttpsIntegrationTestBase):
 
 
 def test_h1_tls_context_configuration(self):
+  """
+  Verifies specifying tls cipher suites works with the h1 pool
+  """
+
   parsed_json = self.runNighthawkClient([
       "--duration 1",
       "--tls-context {common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES128-SHA\"]}}}",
@@ -134,6 +173,9 @@ def test_h1_tls_context_configuration(self):
 
 
 def test_h2_tls_context_configuration(self):
+  """
+  Verifies specifying tls cipher suites works with the h2 pool
+  """
   parsed_json = self.runNighthawkClient([
       "--duration 1",
       "--tls-context {common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES128-SHA\"]}}}",
