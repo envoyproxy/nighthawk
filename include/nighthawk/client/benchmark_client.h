@@ -76,7 +76,7 @@ public:
    * Sets request header named 'key' to the specified value.
    *
    * @param key Name of the request header to set.
-   * @param value Value to set the request headerto.
+   * @param value Value to set the request header to.
    */
   virtual void setRequestHeader(absl::string_view key, absl::string_view value) PURE;
 
