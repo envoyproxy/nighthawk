@@ -28,14 +28,16 @@ public:
   std::string uri() const override { return uri_; }
   bool h2() const override { return h2_; }
   std::string concurrency() const override { return concurrency_; }
-  std::string verbosity() const override { return verbosity_; };
-  std::string outputFormat() const override { return output_format_; };
+  nighthawk::client::Verbosity::VerbosityOptions verbosity() const override { return verbosity_; };
+  nighthawk::client::OutputFormat::OutputFormatOptions outputFormat() const override {
+    return output_format_;
+  };
   bool prefetchConnections() const override { return prefetch_connections_; }
   uint32_t burstSize() const override { return burst_size_; }
   nighthawk::client::AddressFamily::AddressFamilyOptions addressFamily() const override {
     return address_family_;
   };
-  std::string requestMethod() const override { return request_method_; };
+  envoy::api::v2::core::RequestMethod requestMethod() const override { return request_method_; };
   std::vector<std::string> requestHeaders() const override { return request_headers_; };
   uint32_t requestBodySize() const override { return request_body_size_; };
   const envoy::api::v2::auth::UpstreamTlsContext& tlsContext() const override {
@@ -44,7 +46,10 @@ public:
   uint32_t maxPendingRequests() const override { return max_pending_requests_; }
   uint32_t maxActiveRequests() const override { return max_active_requests_; }
   uint32_t maxRequestsPerConnection() const override { return max_requests_per_connection_; }
-  std::string sequencerIdleStrategy() const override { return sequencer_idle_strategy_; }
+  nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions
+  sequencerIdleStrategy() const override {
+    return sequencer_idle_strategy_;
+  }
 
 private:
   void setNonTrivialDefaults();
@@ -57,19 +62,19 @@ private:
   std::string uri_;
   bool h2_{false};
   std::string concurrency_;
-  std::string verbosity_;
-  std::string output_format_;
+  nighthawk::client::Verbosity::VerbosityOptions verbosity_{};
+  nighthawk::client::OutputFormat::OutputFormatOptions output_format_{};
   bool prefetch_connections_{false};
   uint32_t burst_size_{0};
-  nighthawk::client::AddressFamily::AddressFamilyOptions address_family_;
-  std::string request_method_;
+  nighthawk::client::AddressFamily::AddressFamilyOptions address_family_{};
+  envoy::api::v2::core::RequestMethod request_method_;
   std::vector<std::string> request_headers_;
   uint32_t request_body_size_{0};
   envoy::api::v2::auth::UpstreamTlsContext tls_context_;
   uint32_t max_pending_requests_{1};
   uint32_t max_active_requests_{largest_acceptable_uint32_option_value};
   uint32_t max_requests_per_connection_{largest_acceptable_uint32_option_value};
-  std::string sequencer_idle_strategy_;
+  nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions sequencer_idle_strategy_{};
 };
 
 } // namespace Client

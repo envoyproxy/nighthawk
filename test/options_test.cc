@@ -39,7 +39,7 @@ TEST_F(OptionsImplTest, All) {
   Envoy::MessageUtil util;
   std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(fmt::format(
       "{} --rps 4 --connections 5 --duration 6 --timeout 7 --h2 "
-      "--concurrency 8 --verbosity error --output-format json --prefetch-connections "
+      "--concurrency 8 --verbosity error --output-format yaml --prefetch-connections "
       "--burst-size 13 --address-family v6 --request-method POST --request-body-size 1234 "
       "--tls-context {} --request-header f1:b1 --request-header f2:b2 {} --max-pending-requests 10 "
       "--max-active-requests 11 --max-requests-per-connection 12 --sequencer-idle-strategy sleep",
@@ -53,13 +53,13 @@ TEST_F(OptionsImplTest, All) {
   EXPECT_EQ(7s, options->timeout());
   EXPECT_EQ(true, options->h2());
   EXPECT_EQ("8", options->concurrency());
-  EXPECT_EQ("error", options->verbosity());
-  EXPECT_EQ("json", options->outputFormat());
+  EXPECT_EQ(nighthawk::client::Verbosity::ERROR, options->verbosity());
+  EXPECT_EQ(nighthawk::client::OutputFormat::YAML, options->outputFormat());
   EXPECT_EQ(true, options->prefetchConnections());
   EXPECT_EQ(13, options->burstSize());
-  EXPECT_EQ(nighthawk::client::AddressFamily_AddressFamilyOptions_V6, options->addressFamily());
+  EXPECT_EQ(nighthawk::client::AddressFamily::V6, options->addressFamily());
   EXPECT_EQ(good_test_uri_, options->uri());
-  EXPECT_EQ("POST", options->requestMethod());
+  EXPECT_EQ(envoy::api::v2::core::RequestMethod::POST, options->requestMethod());
   const std::vector<std::string> expected_headers = {"f1:b1", "f2:b2"};
   EXPECT_EQ(expected_headers, options->requestHeaders());
   EXPECT_EQ(1234, options->requestBodySize());
@@ -69,7 +69,8 @@ TEST_F(OptionsImplTest, All) {
   EXPECT_EQ(10, options->maxPendingRequests());
   EXPECT_EQ(11, options->maxActiveRequests());
   EXPECT_EQ(12, options->maxRequestsPerConnection());
-  EXPECT_EQ("sleep", options->sequencerIdleStrategy());
+  // XXX(oschaaf): use this shorter access to the enum value everywhere.
+  EXPECT_EQ(nighthawk::client::SequencerIdleStrategy::SLEEP, options->sequencerIdleStrategy());
 
   // Check that our conversion to CommandLineOptionsPtr makes sense.
   CommandLineOptionsPtr cmd = options->toCommandLineOptions();
@@ -85,19 +86,15 @@ TEST_F(OptionsImplTest, All) {
   EXPECT_EQ(cmd->burst_size().value(), options->burstSize());
   EXPECT_EQ(cmd->address_family().value(), options->addressFamily());
   EXPECT_EQ(cmd->uri().value(), options->uri());
-  auto request_options = cmd->request_options();
-  envoy::api::v2::core::RequestMethod method =
-      envoy::api::v2::core::RequestMethod::METHOD_UNSPECIFIED;
-  envoy::api::v2::core::RequestMethod_Parse(options->requestMethod(), &method);
-  EXPECT_EQ(request_options.request_method(), method);
-  EXPECT_EQ(expected_headers.size(), request_options.request_headers_size());
+  EXPECT_EQ(cmd->request_options().request_method(), cmd->request_options().request_method());
+  EXPECT_EQ(expected_headers.size(), cmd->request_options().request_headers_size());
 
   int i = 0;
-  for (const auto& header : request_options.request_headers()) {
+  for (const auto& header : cmd->request_options().request_headers()) {
     EXPECT_EQ(expected_headers[i++], header.header().key() + ":" + header.header().value());
   }
 
-  EXPECT_EQ(request_options.request_body_size().value(), options->requestBodySize());
+  EXPECT_EQ(cmd->request_options().request_body_size().value(), options->requestBodySize());
   EXPECT_TRUE(util(cmd->tls_context(), options->tlsContext()));
   EXPECT_EQ(cmd->max_pending_requests().value(), options->maxPendingRequests());
   EXPECT_EQ(cmd->max_active_requests().value(), options->maxActiveRequests());

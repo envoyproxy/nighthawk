@@ -81,8 +81,8 @@ public:
   bool tryStartOne(std::function<void()> caller_completion_callback) override;
   Envoy::Stats::Store& store() const override { return store_; }
 
-  void setRequestMethod(absl::string_view request_method) override {
-    request_headers_.insertMethod().value(request_method);
+  void setRequestMethod(envoy::api::v2::core::RequestMethod request_method) override {
+    request_headers_.insertMethod().value(envoy::api::v2::core::RequestMethod_Name(request_method));
   };
   void setRequestHeader(absl::string_view key, absl::string_view value) override;
   void setRequestBodySize(uint32_t request_body_size) override {

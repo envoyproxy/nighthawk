@@ -60,22 +60,10 @@ SequencerPtr SequencerFactoryImpl::create(Envoy::TimeSource& time_source,
   SequencerTarget sequencer_target = [&benchmark_client](std::function<void()> f) -> bool {
     return benchmark_client.tryStartOne(std::move(f));
   };
-  IdleStrategy idle_strategy;
-  std::string lowered_idle_strategy = options_.sequencerIdleStrategy();
-  absl::AsciiStrToLower(&lowered_idle_strategy);
-  if (lowered_idle_strategy == "spin") {
-    idle_strategy = IdleStrategy::Spin;
-  } else if (lowered_idle_strategy == "sleep") {
-    idle_strategy = IdleStrategy::Sleep;
-  } else if (lowered_idle_strategy == "poll") {
-    idle_strategy = IdleStrategy::Poll;
-  } else {
-    NOT_REACHED_GCOVR_EXCL_LINE;
-  }
-  return std::make_unique<SequencerImpl>(platform_util_, dispatcher, time_source, start_time,
-                                         std::move(rate_limiter), sequencer_target,
-                                         statistic_factory.create(), statistic_factory.create(),
-                                         options_.duration(), options_.timeout(), idle_strategy);
+  return std::make_unique<SequencerImpl>(
+      platform_util_, dispatcher, time_source, start_time, std::move(rate_limiter),
+      sequencer_target, statistic_factory.create(), statistic_factory.create(), options_.duration(),
+      options_.timeout(), options_.sequencerIdleStrategy());
 }
 
 StoreFactoryImpl::StoreFactoryImpl(const Options& options) : OptionBasedFactoryImpl(options) {}
@@ -94,15 +82,16 @@ OutputCollectorFactoryImpl::OutputCollectorFactoryImpl(Envoy::TimeSource& time_s
     : OptionBasedFactoryImpl(options), time_source_(time_source) {}
 
 OutputCollectorPtr OutputCollectorFactoryImpl::create() const {
-  const std::string format = options_.outputFormat();
-  if (format == "human") {
+  switch (options_.outputFormat()) {
+  case nighthawk::client::OutputFormat::HUMAN:
     return std::make_unique<Client::ConsoleOutputCollectorImpl>(time_source_, options_);
-  } else if (format == "json") {
+  case nighthawk::client::OutputFormat::JSON:
     return std::make_unique<Client::JsonOutputCollectorImpl>(time_source_, options_);
-  } else if (format == "yaml") {
+  case nighthawk::client::OutputFormat::YAML:
     return std::make_unique<Client::YamlOutputCollectorImpl>(time_source_, options_);
+  default:
+    NOT_REACHED_GCOVR_EXCL_LINE;
   }
-  NOT_REACHED_GCOVR_EXCL_LINE;
 }
 
 } // namespace Client

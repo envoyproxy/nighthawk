@@ -27,6 +27,36 @@ message AddressFamily {
   AddressFamilyOptions value = 1;
 }
 
+message Verbosity {
+  enum VerbosityOptions {
+    INFO = 0;
+    TRACE = 1;
+    DEBUG = 2;
+    WARN = 3;
+    ERROR = 4;
+    CRITICAL = 5;
+  }
+  VerbosityOptions value = 1;
+}
+
+message OutputFormat {
+  enum OutputFormatOptions {
+    JSON = 0;
+    HUMAN = 1;
+    YAML = 2;
+  }
+  OutputFormatOptions value = 1;
+}
+
+message SequencerIdleStrategy {
+  enum SequencerIdleStrategyOptions {
+    SPIN = 0;
+    POLL = 1;
+    SLEEP = 2;
+  }
+  SequencerIdleStrategyOptions value = 1;
+}
+
 // TODO(oschaaf): Ultimately this will be a load test specification. The fact that it
 // can arrive via CLI is just a concrete detail. Change this to reflect that.
 message CommandLineOptions {
@@ -45,11 +75,9 @@ message CommandLineOptions {
   google.protobuf.StringValue concurrency =
       6; // [(validate.rules).string = {pattern: "^([0-9]*|auto)$"}];
   // See :option:`--verbosity` for details.
-  google.protobuf.StringValue verbosity = 7
-      [(validate.rules).string = {in: ["trace", "debug", "info", "warn", "error", "critical"]}];
+  Verbosity verbosity = 7;
   // See :option:`--output-format` for details.
-  google.protobuf.StringValue output_format = 8
-      [(validate.rules).string = {in: ["human", "yaml", "json"]}];
+  OutputFormat output_format = 8;
   // See :option:`--prefetch-connections` for details.
   google.protobuf.BoolValue prefetch_connections = 9;
   // See :option:`--burst-size` for details.
@@ -70,8 +98,7 @@ message CommandLineOptions {
   // See :option:`--max-requests-per-connection` for details.
   google.protobuf.UInt32Value max_requests_per_connection = 16 [(validate.rules).uint32 = {gte: 1}];
   // See :option:`--sequencer-idle-strategy` for details.
-  google.protobuf.StringValue sequencer_idle_strategy = 17
-      [(validate.rules).string = {in: ["spin", "poll", "sleep"]}];
+  SequencerIdleStrategy sequencer_idle_strategy = 17;
   // See :option:`--uri` for details.
   google.protobuf.StringValue uri = 18; // [(validate.rules).string.uri = true];
 }

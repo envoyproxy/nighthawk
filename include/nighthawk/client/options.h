@@ -28,19 +28,20 @@ public:
   virtual std::string uri() const PURE;
   virtual bool h2() const PURE;
   virtual std::string concurrency() const PURE;
-  virtual std::string verbosity() const PURE;
-  virtual std::string outputFormat() const PURE;
+  virtual nighthawk::client::Verbosity::VerbosityOptions verbosity() const PURE;
+  virtual nighthawk::client::OutputFormat::OutputFormatOptions outputFormat() const PURE;
   virtual bool prefetchConnections() const PURE;
   virtual uint32_t burstSize() const PURE;
   virtual nighthawk::client::AddressFamily::AddressFamilyOptions addressFamily() const PURE;
-  virtual std::string requestMethod() const PURE;
+  virtual envoy::api::v2::core::RequestMethod requestMethod() const PURE;
   virtual std::vector<std::string> requestHeaders() const PURE;
   virtual uint32_t requestBodySize() const PURE;
   virtual const envoy::api::v2::auth::UpstreamTlsContext& tlsContext() const PURE;
   virtual uint32_t maxPendingRequests() const PURE;
   virtual uint32_t maxActiveRequests() const PURE;
   virtual uint32_t maxRequestsPerConnection() const PURE;
-  virtual std::string sequencerIdleStrategy() const PURE;
+  virtual nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions
+  sequencerIdleStrategy() const PURE;
 
   /**
    * Converts an Options instance to an equivalent CommandLineOptions instance in terms of option
