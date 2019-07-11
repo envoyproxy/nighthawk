@@ -62,19 +62,22 @@ private:
   std::string uri_;
   bool h2_{false};
   std::string concurrency_;
-  nighthawk::client::Verbosity::VerbosityOptions verbosity_{};
-  nighthawk::client::OutputFormat::OutputFormatOptions output_format_{};
+  nighthawk::client::Verbosity::VerbosityOptions verbosity_{nighthawk::client::Verbosity::WARN};
+  nighthawk::client::OutputFormat::OutputFormatOptions output_format_{
+      nighthawk::client::OutputFormat::JSON};
   bool prefetch_connections_{false};
   uint32_t burst_size_{0};
-  nighthawk::client::AddressFamily::AddressFamilyOptions address_family_{};
-  envoy::api::v2::core::RequestMethod request_method_;
+  nighthawk::client::AddressFamily::AddressFamilyOptions address_family_{
+      nighthawk::client::AddressFamily::AUTO};
+  envoy::api::v2::core::RequestMethod request_method_{envoy::api::v2::core::RequestMethod::GET};
   std::vector<std::string> request_headers_;
   uint32_t request_body_size_{0};
   envoy::api::v2::auth::UpstreamTlsContext tls_context_;
   uint32_t max_pending_requests_{1};
   uint32_t max_active_requests_{largest_acceptable_uint32_option_value};
   uint32_t max_requests_per_connection_{largest_acceptable_uint32_option_value};
-  nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions sequencer_idle_strategy_{};
+  nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions sequencer_idle_strategy_{
+      nighthawk::client::SequencerIdleStrategy::SPIN};
 };
 
 } // namespace Client

@@ -69,7 +69,6 @@ TEST_F(OptionsImplTest, All) {
   EXPECT_EQ(10, options->maxPendingRequests());
   EXPECT_EQ(11, options->maxActiveRequests());
   EXPECT_EQ(12, options->maxRequestsPerConnection());
-  // XXX(oschaaf): use this shorter access to the enum value everywhere.
   EXPECT_EQ(nighthawk::client::SequencerIdleStrategy::SLEEP, options->sequencerIdleStrategy());
 
   // Check that our conversion to CommandLineOptionsPtr makes sense.

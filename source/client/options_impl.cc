@@ -18,10 +18,8 @@ namespace Client {
 OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   setNonTrivialDefaults();
   // Override some defaults, we are in CLI-mode.
-  // XXX(oschaaf):
-  verbosity_ = nighthawk::client::Verbosity::VerbosityOptions::Verbosity_VerbosityOptions_INFO;
-  output_format_ =
-      nighthawk::client::OutputFormat::OutputFormatOptions::OutputFormat_OutputFormatOptions_HUMAN;
+  verbosity_ = nighthawk::client::Verbosity::INFO;
+  output_format_ = nighthawk::client::OutputFormat::HUMAN;
 
   // TODO(oschaaf): Purge the validation we perform here. Most of it should have become
   // redundant now that we also perform validation of the resulting proto.
@@ -168,7 +166,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   uri_ = uri.getValue();
   TCLAP_SET_IF_SPECIFIED(h2, h2_);
   TCLAP_SET_IF_SPECIFIED(concurrency, concurrency_);
-  // XXX(oschaaf): is there a generic way?
+  // TODO(oschaaf): is there a generic way to set these enum values?
   if (verbosity.isSet()) {
     std::string upper_cased = verbosity.getValue();
     absl::AsciiStrToUpper(&upper_cased);
@@ -295,20 +293,7 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   validate();
 }
 
-void OptionsImpl::setNonTrivialDefaults() {
-  concurrency_ = "1";
-  // XXX(oschaaf):
-  verbosity_ = nighthawk::client::Verbosity::VerbosityOptions::Verbosity_VerbosityOptions_WARN;
-  output_format_ =
-      nighthawk::client::OutputFormat::OutputFormatOptions::OutputFormat_OutputFormatOptions_JSON;
-  address_family_ = nighthawk::client::AddressFamily::AddressFamilyOptions::
-      AddressFamily_AddressFamilyOptions_AUTO;
-  // XXX(oschaaf):
-  request_method_ = envoy::api::v2::core::RequestMethod::GET;
-  // XXX(oschaaf):
-  sequencer_idle_strategy_ = nighthawk::client::SequencerIdleStrategy::
-      SequencerIdleStrategyOptions::SequencerIdleStrategy_SequencerIdleStrategyOptions_SPIN;
-}
+void OptionsImpl::setNonTrivialDefaults() { concurrency_ = "1"; }
 
 void OptionsImpl::validate() const {
   // concurrency must be either 'auto' or a positive integer.
