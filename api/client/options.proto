@@ -29,30 +29,33 @@ message AddressFamily {
 
 message Verbosity {
   enum VerbosityOptions {
-    INFO = 0;
-    TRACE = 1;
-    DEBUG = 2;
-    WARN = 3;
-    ERROR = 4;
-    CRITICAL = 5;
+    DEFAULT = 0;
+    INFO = 1;
+    TRACE = 2;
+    DEBUG = 3;
+    WARN = 4;
+    ERROR = 5;
+    CRITICAL = 6;
   }
   VerbosityOptions value = 1;
 }
 
 message OutputFormat {
   enum OutputFormatOptions {
-    JSON = 0;
-    HUMAN = 1;
-    YAML = 2;
+    DEFAULT = 0;
+    JSON = 1;
+    HUMAN = 2;
+    YAML = 3;
   }
   OutputFormatOptions value = 1;
 }
 
 message SequencerIdleStrategy {
   enum SequencerIdleStrategyOptions {
-    SPIN = 0;
-    POLL = 1;
-    SLEEP = 2;
+    DEFAULT = 0;
+    SPIN = 1;
+    POLL = 2;
+    SLEEP = 3;
   }
   SequencerIdleStrategyOptions value = 1;
 }
