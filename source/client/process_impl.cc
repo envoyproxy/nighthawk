@@ -20,6 +20,7 @@
 #include "common/filesystem/filesystem_impl.h"
 #include "common/frequency.h"
 #include "common/init/manager_impl.h"
+#include "common/local_info/local_info_impl.h"
 #include "common/network/utility.h"
 #include "common/protobuf/message_validator_impl.h"
 #include "common/runtime/runtime_impl.h"
@@ -196,10 +197,14 @@ bool ProcessImpl::run(OutputCollector& collector) {
                Stats::Store& store, RandomGenerator& generator,
                ProtobufMessage::ValidationVisitor& validation_visitor, Api::Api& api);
                */
-  Envoy::LocalInfo::LocalInfoPtr local_info;
+  auto local_address = Network::Utility::getLocalAddress(Envoy::Network::Address::IpVersion::v4);
+  auto local_info =
+      Envoy::LocalInfo::LocalInfoImpl({}, local_address, "nighthawk_service_zone",
+                                      "nighthawk_service_cluster", "nighthawk_service_node");
+
   Envoy::Init::ManagerImpl init_manager("nighthawk_init_manager");
   Envoy::Runtime::ScopedLoaderSingleton loader(Envoy::Runtime::LoaderPtr{
-      new Envoy::Runtime::LoaderImpl(*dispatcher_, tls_, {}, *local_info, init_manager, *store_,
+      new Envoy::Runtime::LoaderImpl(*dispatcher_, tls_, {}, local_info, init_manager, *store_,
                                      generator,
                                      Envoy::ProtobufMessage::getStrictValidationVisitor(), api_)});
 
