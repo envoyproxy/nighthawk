@@ -42,8 +42,11 @@ Main::Main(Client::OptionsPtr&& options) : options_(std::move(options)) {}
 
 bool Main::run() {
   Envoy::Thread::MutexBasicLockable log_lock;
+
   auto logging_context = std::make_unique<Envoy::Logger::Context>(
-      spdlog::level::from_str(options_->verbosity()), "[%T.%f][%t][%L] %v", log_lock);
+      spdlog::level::from_str(
+          nighthawk::client::Verbosity::VerbosityOptions_Name(options_->verbosity())),
+      "[%T.%f][%t][%L] %v", log_lock);
   Envoy::Event::RealTimeSystem time_system; // NO_CHECK_FORMAT(real_time)
   ProcessImpl process(*options_, time_system);
   OutputCollectorFactoryImpl output_format_factory(time_system, *options_);

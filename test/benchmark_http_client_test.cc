@@ -458,7 +458,7 @@ TEST_P(BenchmarkClientHttpsTest, MaxRequestsPerConnection) {
 TEST_P(BenchmarkClientHttpTest, RequestMethodPost) {
   setupBenchmarkClient("/", false, true);
   EXPECT_EQ("GET", client_->requestHeaders().Method()->value().getStringView());
-  client_->setRequestMethod("POST");
+  client_->setRequestMethod(envoy::api::v2::core::RequestMethod::POST);
   client_->setRequestHeader("a", "b");
   client_->setRequestHeader("c", "d");
   client_->setRequestBodySize(1313);

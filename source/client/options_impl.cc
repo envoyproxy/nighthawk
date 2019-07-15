@@ -18,8 +18,8 @@ namespace Client {
 OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   setNonTrivialDefaults();
   // Override some defaults, we are in CLI-mode.
-  verbosity_ = "info";
-  output_format_ = "human";
+  verbosity_ = nighthawk::client::Verbosity::INFO;
+  output_format_ = nighthawk::client::OutputFormat::HUMAN;
 
   // TODO(oschaaf): Purge the validation we perform here. Most of it should have become
   // redundant now that we also perform validation of the resulting proto.
@@ -99,7 +99,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "", "address-family",
       fmt::format("Network addres family preference. Possible values: [auto, v4, v6]. The "
                   "default output format is '{}'.",
-                  address_family_),
+                  nighthawk::client::AddressFamily::AddressFamilyOptions_Name(address_family_)),
       false, "", &address_families_allowed, cmd);
 
   std::vector<std::string> request_methods = {"GET",    "HEAD",    "POST",    "PUT",
@@ -166,18 +166,47 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   uri_ = uri.getValue();
   TCLAP_SET_IF_SPECIFIED(h2, h2_);
   TCLAP_SET_IF_SPECIFIED(concurrency, concurrency_);
-  TCLAP_SET_IF_SPECIFIED(verbosity, verbosity_);
-  TCLAP_SET_IF_SPECIFIED(output_format, output_format_);
+  // TODO(oschaaf): is there a generic way to set these enum values?
+  if (verbosity.isSet()) {
+    std::string upper_cased = verbosity.getValue();
+    absl::AsciiStrToUpper(&upper_cased);
+    RELEASE_ASSERT(nighthawk::client::Verbosity::VerbosityOptions_Parse(upper_cased, &verbosity_),
+                   "Failed to parse verbosity");
+  }
+  if (output_format.isSet()) {
+    std::string upper_cased = output_format.getValue();
+    absl::AsciiStrToUpper(&upper_cased);
+    RELEASE_ASSERT(
+        nighthawk::client::OutputFormat::OutputFormatOptions_Parse(upper_cased, &output_format_),
+        "Failed to parse output format");
+  }
   TCLAP_SET_IF_SPECIFIED(prefetch_connections, prefetch_connections_);
   TCLAP_SET_IF_SPECIFIED(burst_size, burst_size_);
-  TCLAP_SET_IF_SPECIFIED(address_family, address_family_);
-  TCLAP_SET_IF_SPECIFIED(request_method, request_method_);
+  if (address_family.isSet()) {
+    std::string upper_cased = address_family.getValue();
+    absl::AsciiStrToUpper(&upper_cased);
+    RELEASE_ASSERT(
+        nighthawk::client::AddressFamily::AddressFamilyOptions_Parse(upper_cased, &address_family_),
+        "Failed to parse address family");
+  }
+  if (request_method.isSet()) {
+    std::string upper_cased = request_method.getValue();
+    absl::AsciiStrToUpper(&upper_cased);
+    RELEASE_ASSERT(envoy::api::v2::core::RequestMethod_Parse(upper_cased, &request_method_),
+                   "Failed to parse request method");
+  }
   TCLAP_SET_IF_SPECIFIED(request_headers, request_headers_);
   TCLAP_SET_IF_SPECIFIED(request_body_size, request_body_size_);
   TCLAP_SET_IF_SPECIFIED(max_pending_requests, max_pending_requests_);
   TCLAP_SET_IF_SPECIFIED(max_active_requests, max_active_requests_);
   TCLAP_SET_IF_SPECIFIED(max_requests_per_connection, max_requests_per_connection_);
-  TCLAP_SET_IF_SPECIFIED(sequencer_idle_strategy, sequencer_idle_strategy_);
+  if (sequencer_idle_strategy.isSet()) {
+    std::string upper_cased = sequencer_idle_strategy.getValue();
+    absl::AsciiStrToUpper(&upper_cased);
+    RELEASE_ASSERT(nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions_Parse(
+                       upper_cased, &sequencer_idle_strategy_),
+                   "Failed to parse sequencer idle strategy");
+  }
 
   // CLI-specific tests.
   // TODO(oschaaf): as per mergconflicts's remark, it would be nice to aggregate
@@ -247,10 +276,11 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
       PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, prefetch_connections, prefetch_connections_);
   burst_size_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, burst_size, burst_size_);
   address_family_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, address_family, address_family_);
+
   const auto& request_options = options.request_options();
   if (request_options.request_method() !=
       ::envoy::api::v2::core::RequestMethod::METHOD_UNSPECIFIED) {
-    request_method_ = ::envoy::api::v2::core::RequestMethod_Name(request_options.request_method());
+    request_method_ = request_options.request_method();
   }
   request_body_size_ =
       PROTOBUF_GET_WRAPPED_OR_DEFAULT(request_options, request_body_size, request_body_size_);
@@ -268,14 +298,7 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   validate();
 }
 
-void OptionsImpl::setNonTrivialDefaults() {
-  concurrency_ = "1";
-  verbosity_ = "warn";
-  output_format_ = "json";
-  address_family_ = "v4";
-  request_method_ = "GET";
-  sequencer_idle_strategy_ = "spin";
-}
+void OptionsImpl::setNonTrivialDefaults() { concurrency_ = "1"; }
 
 void OptionsImpl::validate() const {
   // concurrency must be either 'auto' or a positive integer.
@@ -319,12 +342,10 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptions() const {
   command_line_options->mutable_output_format()->set_value(outputFormat());
   command_line_options->mutable_prefetch_connections()->set_value(prefetchConnections());
   command_line_options->mutable_burst_size()->set_value(burstSize());
-  command_line_options->mutable_address_family()->set_value(addressFamily());
+  command_line_options->mutable_address_family()->set_value(
+      static_cast<nighthawk::client::AddressFamily_AddressFamilyOptions>(addressFamily()));
   auto request_options = command_line_options->mutable_request_options();
-  envoy::api::v2::core::RequestMethod method =
-      envoy::api::v2::core::RequestMethod::METHOD_UNSPECIFIED;
-  envoy::api::v2::core::RequestMethod_Parse(requestMethod(), &method);
-  request_options->set_request_method(method);
+  request_options->set_request_method(requestMethod());
   for (const auto& header : requestHeaders()) {
     auto header_value_option = request_options->add_request_headers();
     // TODO(oschaaf): expose append option in CLI? For now we just set.

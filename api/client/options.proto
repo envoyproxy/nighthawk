@@ -14,6 +14,52 @@ message RequestOptions {
   google.protobuf.UInt32Value request_body_size = 3 [(validate.rules).uint32 = {lte: 4194304}];
 }
 
+// We wrap all values so we can have a unified way of option handling with respect to
+// defaults, merging, etc. As there's no stock concept for enumerations, we manually
+// define custom wrappers for them. These used to be strings, which did provide the
+// wrapped type.
+message AddressFamily {
+  enum AddressFamilyOptions {
+    AUTO = 0;
+    V4 = 1;
+    V6 = 2;
+  }
+  AddressFamilyOptions value = 1;
+}
+
+message Verbosity {
+  enum VerbosityOptions {
+    DEFAULT = 0;
+    INFO = 1;
+    TRACE = 2;
+    DEBUG = 3;
+    WARN = 4;
+    ERROR = 5;
+    CRITICAL = 6;
+  }
+  VerbosityOptions value = 1;
+}
+
+message OutputFormat {
+  enum OutputFormatOptions {
+    DEFAULT = 0;
+    JSON = 1;
+    HUMAN = 2;
+    YAML = 3;
+  }
+  OutputFormatOptions value = 1;
+}
+
+message SequencerIdleStrategy {
+  enum SequencerIdleStrategyOptions {
+    DEFAULT = 0;
+    SPIN = 1;
+    POLL = 2;
+    SLEEP = 3;
+  }
+  SequencerIdleStrategyOptions value = 1;
+}
+
 // TODO(oschaaf): Ultimately this will be a load test specification. The fact that it
 // can arrive via CLI is just a concrete detail. Change this to reflect that.
 message CommandLineOptions {
@@ -32,18 +78,16 @@ message CommandLineOptions {
   google.protobuf.StringValue concurrency =
       6; // [(validate.rules).string = {pattern: "^([0-9]*|auto)$"}];
   // See :option:`--verbosity` for details.
-  google.protobuf.StringValue verbosity = 7
-      [(validate.rules).string = {in: ["trace", "debug", "info", "warn", "error", "critical"]}];
+  Verbosity verbosity = 7;
   // See :option:`--output-format` for details.
-  google.protobuf.StringValue output_format = 8
-      [(validate.rules).string = {in: ["human", "yaml", "json"]}];
+  OutputFormat output_format = 8;
   // See :option:`--prefetch-connections` for details.
   google.protobuf.BoolValue prefetch_connections = 9;
   // See :option:`--burst-size` for details.
   google.protobuf.UInt32Value burst_size = 10 [(validate.rules).uint32 = {lte: 1000000}];
+
   // See :option:`--address-family` for details.
-  google.protobuf.StringValue address_family = 11
-      [(validate.rules).string = {in: ["v4", "v6", "auto"]}];
+  AddressFamily address_family = 11;
   oneof oneof_request_options {
     // See :option:`--request_options` for details.
     RequestOptions request_options = 12;
@@ -57,8 +101,7 @@ message CommandLineOptions {
   // See :option:`--max-requests-per-connection` for details.
   google.protobuf.UInt32Value max_requests_per_connection = 16 [(validate.rules).uint32 = {gte: 1}];
   // See :option:`--sequencer-idle-strategy` for details.
-  google.protobuf.StringValue sequencer_idle_strategy = 17
-      [(validate.rules).string = {in: ["spin", "poll", "sleep"]}];
+  SequencerIdleStrategy sequencer_idle_strategy = 17;
   // See :option:`--uri` for details.
   google.protobuf.StringValue uri = 18; // [(validate.rules).string.uri = true];
 }

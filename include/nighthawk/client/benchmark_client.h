@@ -70,7 +70,7 @@ public:
    * Sets the request method to use when sending request.
    * @param request_method to set.
    */
-  virtual void setRequestMethod(absl::string_view request_method) PURE;
+  virtual void setRequestMethod(envoy::api::v2::core::RequestMethod request_method) PURE;
 
   /**
    * Sets request header named 'key' to the specified value.

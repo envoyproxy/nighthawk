@@ -22,6 +22,7 @@
 #include "gtest/gtest.h"
 
 using namespace std::chrono_literals;
+using namespace nighthawk::client;
 using namespace testing;
 
 namespace Nighthawk {
@@ -145,7 +146,7 @@ TEST_F(SequencerTestWithTimerEmulation, RateLimiterInteraction) {
                           std::make_unique<StreamingStatistic>(),
                           std::make_unique<StreamingStatistic>(),
                           test_number_of_intervals_ * interval_ /* Sequencer run time.*/,
-                          1ms /* Sequencer timeout. */, IdleStrategy::Spin);
+                          1ms /* Sequencer timeout. */, SequencerIdleStrategy::SLEEP);
   // Have the mock rate limiter gate two calls, and block everything else.
   EXPECT_CALL(rate_limiter_unsafe_ref_, tryAcquireOne())
       .Times(AtLeast(3))
@@ -167,7 +168,7 @@ TEST_F(SequencerTestWithTimerEmulation, StartingLate) {
                           std::make_unique<StreamingStatistic>(),
                           std::make_unique<StreamingStatistic>(),
                           test_number_of_intervals_ * interval_ /* Sequencer run time.*/,
-                          1ms /* Sequencer timeout. */, IdleStrategy::Spin);
+                          1ms /* Sequencer timeout. */, SequencerIdleStrategy::SLEEP);
 
   time_system_.setMonotonicTime(time_system_.monotonicTime() + 100s);
   sequencer.start();
@@ -183,7 +184,7 @@ TEST_F(SequencerTestWithTimerEmulation, RateLimiterSaturatedTargetInteraction) {
                           std::make_unique<StreamingStatistic>(),
                           std::make_unique<StreamingStatistic>(),
                           test_number_of_intervals_ * interval_ /* Sequencer run time.*/,
-                          0ms /* Sequencer timeout. */, IdleStrategy::Spin);
+                          0ms /* Sequencer timeout. */, SequencerIdleStrategy::SLEEP);
 
   EXPECT_CALL(rate_limiter_unsafe_ref_, tryAcquireOne())
       .Times(AtLeast(3))
@@ -219,7 +220,7 @@ public:
 
   std::unique_ptr<LinearRateLimiter> rate_limiter_;
 
-  void testRegularFlow(IdleStrategy idle_strategy) {
+  void testRegularFlow(SequencerIdleStrategy::SequencerIdleStrategyOptions idle_strategy) {
     SequencerImpl sequencer(platform_util_, *dispatcher_, time_system_,
                             time_system_.monotonicTime(), std::move(rate_limiter_),
                             sequencer_target_, std::make_unique<StreamingStatistic>(),
@@ -234,24 +235,24 @@ public:
     EXPECT_EQ(0, sequencer.blockedStatistic().count());
     EXPECT_EQ(2, sequencer.statistics().size());
   }
-}; // namespace Nighthawk
+};
 
 TEST_F(SequencerIntegrationTest, IdleStrategySpin) {
   EXPECT_CALL(platform_util_, yieldCurrentThread()).Times(AtLeast(1));
   EXPECT_CALL(platform_util_, sleep(_)).Times(0);
-  testRegularFlow(IdleStrategy::Spin);
+  testRegularFlow(SequencerIdleStrategy::SPIN);
 }
 
 TEST_F(SequencerIntegrationTest, IdleStrategyPoll) {
   EXPECT_CALL(platform_util_, yieldCurrentThread()).Times(0);
   EXPECT_CALL(platform_util_, sleep(_)).Times(0);
-  testRegularFlow(IdleStrategy::Poll);
+  testRegularFlow(SequencerIdleStrategy::POLL);
 }
 
 TEST_F(SequencerIntegrationTest, IdleStrategySleep) {
   EXPECT_CALL(platform_util_, yieldCurrentThread()).Times(0);
   EXPECT_CALL(platform_util_, sleep(_)).Times(AtLeast(1));
-  testRegularFlow(IdleStrategy::Sleep);
+  testRegularFlow(SequencerIdleStrategy::SLEEP);
 }
 
 // Test an always saturated sequencer target. A concrete example would be a http benchmark client
@@ -264,7 +265,7 @@ TEST_F(SequencerIntegrationTest, AlwaysSaturatedTargetTest) {
                           std::make_unique<StreamingStatistic>(),
                           std::make_unique<StreamingStatistic>(),
                           test_number_of_intervals_ * interval_ /* Sequencer run time.*/,
-                          1ms /* Sequencer timeout. */, IdleStrategy::Spin);
+                          1ms /* Sequencer timeout. */, SequencerIdleStrategy::SLEEP);
 
   sequencer.start();
   sequencer.waitForCompletion();
@@ -287,7 +288,7 @@ TEST_F(SequencerIntegrationTest, GraceTimeoutTest) {
                           std::make_unique<StreamingStatistic>(),
                           std::make_unique<StreamingStatistic>(),
                           test_number_of_intervals_ * interval_ /* Sequencer run time.*/,
-                          grace_timeout, IdleStrategy::Spin);
+                          grace_timeout, SequencerIdleStrategy::SLEEP);
 
   auto pre_timeout = time_system_.monotonicTime();
   sequencer.start();

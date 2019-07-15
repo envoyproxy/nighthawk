@@ -30,6 +30,7 @@
 #include "client/factories_impl.h"
 #include "client/options_impl.h"
 
+#include "api/client/options.pb.h"
 #include "api/client/output.pb.h"
 #include "ares.h"
 
@@ -43,7 +44,8 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
       api_(thread_factory_, *store_, time_system_, file_system_),
       dispatcher_(api_.allocateDispatcher()), cleanup_([this] { tls_.shutdownGlobalThreading(); }),
       benchmark_client_factory_(options), sequencer_factory_(options), options_(options) {
-  configureComponentLogLevels(spdlog::level::from_str(options_.verbosity()));
+  configureComponentLogLevels(spdlog::level::from_str(
+      nighthawk::client::Verbosity::VerbosityOptions_Name(options_.verbosity())));
   tls_.registerThread(*dispatcher_, true);
 }
 
@@ -177,7 +179,7 @@ ProcessImpl::mergeWorkerCounters(const std::vector<ClientWorkerPtr>& workers) co
 bool ProcessImpl::run(OutputCollector& collector) {
   UriImpl uri(options_.uri());
   try {
-    uri.resolve(*dispatcher_, Utility::parseAddressFamilyOptionString(options_.addressFamily()));
+    uri.resolve(*dispatcher_, Utility::translateFamilyOptionString(options_.addressFamily()));
   } catch (UriException) {
     return false;
   }
