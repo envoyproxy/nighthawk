@@ -20,6 +20,7 @@
 #include "common/filesystem/filesystem_impl.h"
 #include "common/frequency.h"
 #include "common/network/utility.h"
+#include "common/protobuf/message_validator_impl.h"
 #include "common/runtime/runtime_impl.h"
 #include "common/thread_local/thread_local_impl.h"
 #include "common/uri_impl.h"
@@ -187,9 +188,16 @@ bool ProcessImpl::run(OutputCollector& collector) {
 
   bool ok = true;
   Envoy::Runtime::RandomGeneratorImpl generator;
-  Envoy::Runtime::ScopedLoaderSingleton loader(
-      Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl(
-          *dispatcher_, tls_, {}, "foo-cluster", *store_, generator, api_)});
+  /*
+    LoaderImpl(Event::Dispatcher& dispatcher, ThreadLocal::SlotAllocator& tls,
+               const envoy::config::bootstrap::v2::LayeredRuntime& config,
+               const LocalInfo::LocalInfo& local_info, Init::Manager& init_manager,
+               Stats::Store& store, RandomGenerator& generator,
+               ProtobufMessage::ValidationVisitor& validation_visitor, Api::Api& api);
+               */
+  Envoy::Runtime::ScopedLoaderSingleton loader(Envoy::Runtime::LoaderPtr{
+      new Envoy::Runtime::LoaderImpl(*dispatcher_, tls_, {}, "foo-cluster", *store_, generator,
+                                     Envoy::ProtobufMessage::getStrictValidationVisitor(), api_)});
 
   for (auto& w : workers_) {
     w->start();

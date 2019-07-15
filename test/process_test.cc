@@ -16,7 +16,7 @@ namespace Client {
 // TODO(oschaaf): when we have proper integration testing, update this.
 // For now we are covered via the client_tests.cc by proxy. Eventually we
 // want those tests in here, and mock Process in client_test.
-class ProcessTest : public Test {
+class ProcessTest : public testing::Test {
 public:
   void runProcess() {
 
