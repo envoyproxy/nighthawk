@@ -189,16 +189,19 @@ void BenchmarkClientHttpImpl::setRequestHeader(absl::string_view key, absl::stri
 }
 
 bool BenchmarkClientHttpImpl::tryStartOne(std::function<void()> caller_completion_callback) {
-  // When no client side queueing is specified (via max_pending_requests_), we are in closed loop
-  // mode. In closed loop mode we want to be able to control the pacing as exactly as possible. In
-  // open-loop mode we probably want to skip this. NOTE(oschaaf): We can't consistently rely on
-  // resourceManager()::requests() because that isn't used for h/1 (it is used in tcp and h2
-  // though).
-  if (max_pending_requests_ == 1 &&
-      (!cluster_->resourceManager(Envoy::Upstream::ResourcePriority::Default)
-            .pendingRequests()
-            .canCreate() ||
-       ((requests_initiated_ - requests_completed_) >= connection_limit_))) {
+  // When we allow client-side queuing, we want to have a sense of time spend waiting on that queue.
+  // So we return false here to indicate we couldn't initiate a new request.
+  if (!cluster_->resourceManager(Envoy::Upstream::ResourcePriority::Default)
+           .pendingRequests()
+           .canCreate()) {
+    return false;
+  }
+  // When no client side queueing is disabled (max_pending equals 1) we control the pacing as
+  // exactly as possible here.
+  // NOTE: We can't consistently rely on resourceManager()::requests()
+  // because that isn't used for h/1 (it is used in tcp and h2 though).
+  if ((max_pending_requests_ == 1 &&
+       (requests_initiated_ - requests_completed_) >= connection_limit_)) {
     return false;
   }
 
