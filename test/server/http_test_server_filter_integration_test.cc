@@ -142,8 +142,8 @@ config:
   }
 };
 
-INSTANTIATE_TEST_CASE_P(IpVersions, HttpTestServerIntegrationTest,
-                        ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()));
+INSTANTIATE_TEST_SUITE_P(IpVersions, HttpTestServerIntegrationTest,
+                         ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()));
 
 TEST_P(HttpTestServerIntegrationTest, TestNoHeaderConfig) {
   Envoy::BufferingStreamDecoderPtr response =
@@ -211,8 +211,8 @@ name: test-server
   }
 };
 
-INSTANTIATE_TEST_CASE_P(IpVersions, HttpTestServerIntegrationNoConfigTest,
-                        ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()));
+INSTANTIATE_TEST_SUITE_P(IpVersions, HttpTestServerIntegrationNoConfigTest,
+                         ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()));
 
 TEST_P(HttpTestServerIntegrationNoConfigTest, TestNoHeaderConfig) {
   Envoy::BufferingStreamDecoderPtr response =

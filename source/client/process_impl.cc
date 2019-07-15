@@ -19,6 +19,7 @@
 #include "common/event/real_time_system.h"
 #include "common/filesystem/filesystem_impl.h"
 #include "common/frequency.h"
+#include "common/init/manager_impl.h"
 #include "common/network/utility.h"
 #include "common/protobuf/message_validator_impl.h"
 #include "common/runtime/runtime_impl.h"
@@ -195,8 +196,11 @@ bool ProcessImpl::run(OutputCollector& collector) {
                Stats::Store& store, RandomGenerator& generator,
                ProtobufMessage::ValidationVisitor& validation_visitor, Api::Api& api);
                */
+  Envoy::LocalInfo::LocalInfoPtr local_info;
+  Envoy::Init::ManagerImpl init_manager("nighthawk_init_manager");
   Envoy::Runtime::ScopedLoaderSingleton loader(Envoy::Runtime::LoaderPtr{
-      new Envoy::Runtime::LoaderImpl(*dispatcher_, tls_, {}, "foo-cluster", *store_, generator,
+      new Envoy::Runtime::LoaderImpl(*dispatcher_, tls_, {}, *local_info, init_manager, *store_,
+                                     generator,
                                      Envoy::ProtobufMessage::getStrictValidationVisitor(), api_)});
 
   for (auto& w : workers_) {
