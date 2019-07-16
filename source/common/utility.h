@@ -16,10 +16,6 @@
 
 namespace Nighthawk {
 
-namespace PlatformUtils {
-uint32_t determineCpuCoresWithAffinity();
-}
-
 using StoreCounterFilter = std::function<bool(absl::string_view, const uint64_t)>;
 
 class Utility {

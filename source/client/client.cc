@@ -48,7 +48,8 @@ bool Main::run() {
           nighthawk::client::Verbosity::VerbosityOptions_Name(options_->verbosity())),
       "[%T.%f][%t][%L] %v", log_lock);
   Envoy::Event::RealTimeSystem time_system; // NO_CHECK_FORMAT(real_time)
-  ProcessImpl process(*options_, time_system);
+  PlatformUtilImpl platform_util;
+  ProcessImpl process(*options_, time_system, platform_util);
   OutputCollectorFactoryImpl output_format_factory(time_system, *options_);
   auto collector = output_format_factory.create();
   if (process.run(*collector)) {
