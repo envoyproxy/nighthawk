@@ -31,7 +31,7 @@ bazel test -c dbg //test/... //integration/...
 ### Build it
 
 ```bash
-bazel build -c opt //:nighthawk_client nighthawk_test_server nighthawk_service
+bazel build -c opt //:nighthawk
 ```
 
 ### Using the CLI
