@@ -25,46 +25,13 @@ For building the Nighthawk test server, see [here](source/server/README.md).
 ### Test it
 
 ```bash
-bazel test -c dbg //...
+bazel test -c dbg //test/...
 ```
 
 ### Build it
 
 ```bash
-bazel build -c opt //...
-```
-### Using the service
-
-The grpc service can be used to start a server which is able to perform back-to-back benchmark runs upon request. The service interface definition [can be found here.](https://github.com/envoyproxy/nighthawk/blob/59a37568783272a6438b5697277d4e56aa16ebbe/api/client/service.proto) 
-
-
-```bash
-➜ bazel-bin/nighthawk_service --help
-
-USAGE: 
-
-   bazel-bin/nighthawk_service  [--listen <address:port>] [--] [--version]
-                                [-h]
-
-
-Where: 
-
-   --listen <address:port>
-     The address:port on which the Nighthawk grpc service should listen.
-     Default: 0.0.0.0:8443.
-
-   --,  --ignore_rest
-     Ignores the rest of the labeled arguments following this flag.
-
-   --version
-     Displays version information and exits.
-
-   -h,  --help
-     Displays usage information and exits.
-
-
-   L7 (HTTP/HTTPS/HTTP2) performance characterization tool.
-
+bazel build -c opt //:nighthawk_client nighthawk_test_server nighthawk_service
 ```
 
 ### Using the CLI
@@ -182,6 +149,40 @@ Where:
    <uri format>
      (required)  uri to benchmark. http:// and https:// are supported, but
      in case of https no certificates are validated.
+
+
+   L7 (HTTP/HTTPS/HTTP2) performance characterization tool.
+
+```
+
+### Nighthawk gRPC service
+
+The gRPC service can be used to start a server which is able to perform back-to-back benchmark runs upon request. The service interface definition [can be found here.](https://github.com/envoyproxy/nighthawk/blob/59a37568783272a6438b5697277d4e56aa16ebbe/api/client/service.proto) 
+
+
+```bash
+➜ bazel-bin/nighthawk_service --help
+
+USAGE: 
+
+   bazel-bin/nighthawk_service  [--listen <address:port>] [--] [--version]
+                                [-h]
+
+
+Where: 
+
+   --listen <address:port>
+     The address:port on which the Nighthawk gRPC service should listen.
+     Default: 0.0.0.0:8443.
+
+   --,  --ignore_rest
+     Ignores the rest of the labeled arguments following this flag.
+
+   --version
+     Displays version information and exits.
+
+   -h,  --help
+     Displays usage information and exits.
 
 
    L7 (HTTP/HTTPS/HTTP2) performance characterization tool.
