@@ -187,27 +187,17 @@ bool ProcessImpl::run(OutputCollector& collector) {
     return false;
   }
   const std::vector<ClientWorkerPtr>& workers = createWorkers(uri, determineConcurrency());
-
-  bool ok = true;
   Envoy::Runtime::RandomGeneratorImpl generator;
-  /*
-    LoaderImpl(Event::Dispatcher& dispatcher, ThreadLocal::SlotAllocator& tls,
-               const envoy::config::bootstrap::v2::LayeredRuntime& config,
-               const LocalInfo::LocalInfo& local_info, Init::Manager& init_manager,
-               Stats::Store& store, RandomGenerator& generator,
-               ProtobufMessage::ValidationVisitor& validation_visitor, Api::Api& api);
-               */
-  auto local_address = Network::Utility::getLocalAddress(Envoy::Network::Address::IpVersion::v4);
-  auto local_info =
-      Envoy::LocalInfo::LocalInfoImpl({}, local_address, "nighthawk_service_zone",
-                                      "nighthawk_service_cluster", "nighthawk_service_node");
-
+  auto local_info = Envoy::LocalInfo::LocalInfoImpl(
+      {}, Network::Utility::getLocalAddress(Envoy::Network::Address::IpVersion::v4),
+      "nighthawk_service_zone", "nighthawk_service_cluster", "nighthawk_service_node");
   Envoy::Init::ManagerImpl init_manager("nighthawk_init_manager");
   Envoy::Runtime::ScopedLoaderSingleton loader(Envoy::Runtime::LoaderPtr{
       new Envoy::Runtime::LoaderImpl(*dispatcher_, tls_, {}, local_info, init_manager, *store_,
                                      generator,
                                      Envoy::ProtobufMessage::getStrictValidationVisitor(), api_)});
 
+  bool ok = true;
   for (auto& w : workers_) {
     w->start();
   }

@@ -44,18 +44,11 @@ public:
 
 TEST_F(WorkerTest, WorkerExecutesOnThread) {
   InSequence in_sequence;
-
   EXPECT_CALL(tls_, registerThread(_, false)).Times(1);
-  EXPECT_CALL(tls_, allocateSlot()).Times(1);
-
   TestWorker worker(api_, tls_);
   NiceMock<Envoy::Event::MockDispatcher> dispatcher;
-  // Envoy::Runtime::ScopedLoaderSingleton loader(Envoy::Runtime::LoaderPtr{
-  //    new Envoy::Runtime::LoaderImpl(dispatcher, tls_, {}, "test-cluster", store_, rand_, api_)});
-
   worker.start();
   worker.waitForCompletion();
-
   EXPECT_CALL(tls_, shutdownThread()).Times(1);
   ASSERT_TRUE(worker.ran_);
 }
