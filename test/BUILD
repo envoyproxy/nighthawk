@@ -1,11 +1,11 @@
-licenses(["notice"])  # Apache 2
-
 load(
     "@envoy//bazel:envoy_build_system.bzl",
     "envoy_cc_mock",
     "envoy_cc_test",
     "envoy_package",
 )
+
+licenses(["notice"])  # Apache 2
 
 envoy_package()
 
@@ -69,5 +69,6 @@ envoy_cc_test(
         "@envoy//test/mocks/thread_local:thread_local_mocks",
         "@envoy//test/server:utility_lib",
         "@envoy//test/test_common:simulated_time_system_lib",
+        "@python_linux//:python36-lib",
     ],
 )

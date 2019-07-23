@@ -27,22 +27,45 @@
 #include "test/mocks/runtime/mocks.h"
 #include "test/mocks/thread_local/mocks.h"
 #include "test/server/utility.h"
+#include "test/test_common/test_time_system.h"
 #include "test/test_common/utility.h"
 
 #include "ares.h"
 #include "gtest/gtest.h"
+
+#include <Python.h>
 
 using namespace std::chrono_literals;
 using namespace testing;
 
 namespace Nighthawk {
 
-class BenchmarkClientTestBase : public Envoy::BaseIntegrationTest,
+class PythonIntegrationTestBase {
+public:
+  virtual ~PythonIntegrationTestBase() = default;
+  PythonIntegrationTestBase(Envoy::Network::Address::IpVersion version,
+                            const std::string& config = Envoy::ConfigHelper::HTTP_PROXY_CONFIG)
+      : version_(version), config_(config) {
+    initialize();
+  };
+
+  virtual void initialize() {
+    Py_Initialize();
+    PyRun_SimpleString("import sys\n"
+                       "print('hey', file=sys.stderr)\n");
+    Py_Finalize();
+  }
+  Envoy::Event::RealTimeSystem time_system_;
+  Envoy::Network::Address::IpVersion version_;
+  const std::string config_;
+};
+
+class BenchmarkClientTestBase : public PythonIntegrationTestBase,
                                 public TestWithParam<Envoy::Network::Address::IpVersion> {
 public:
   BenchmarkClientTestBase()
-      : Envoy::BaseIntegrationTest(GetParam(), realTime(), BenchmarkClientTestBase::envoy_config),
-        api_(thread_factory_, store_, timeSystem(), file_system_),
+      : PythonIntegrationTestBase(GetParam(), BenchmarkClientTestBase::envoy_config),
+        api_(thread_factory_, store_, time_system_, file_system_),
         dispatcher_(api_.allocateDispatcher()) {}
 
   static void SetUpTestCase() {
@@ -61,13 +84,15 @@ public:
     if (client_ != nullptr) {
       client_->terminate();
     }
-    test_server_.reset();
-    fake_upstreams_.clear();
     tls_.shutdownGlobalThreading();
     ares_library_cleanup();
   }
 
-  uint32_t getTestServerHostAndPort() { return lookupPort("listener_0"); }
+  uint32_t getTestServerHostAndPort() {
+    ASSERT(false);
+    return 0;
+    /* return lookupPort("listener_0");*/
+  }
 
   void testBasicFunctionality(absl::string_view uriPath, const uint64_t max_pending,
                               const uint64_t connection_limit, const bool use_h2,
@@ -161,31 +186,32 @@ public:
   };
 
   void initialize() override {
-    config_helper_.addConfigModifier([](envoy::config::bootstrap::v2::Bootstrap& bootstrap) {
-      auto* common_tls_context = bootstrap.mutable_static_resources()
-                                     ->mutable_listeners(0)
-                                     ->mutable_filter_chains(0)
-                                     ->mutable_tls_context()
-                                     ->mutable_common_tls_context();
-      common_tls_context->mutable_validation_context_sds_secret_config()->set_name(
-          "validation_context");
-      common_tls_context->add_tls_certificate_sds_secret_configs()->set_name("server_cert");
+    /*
+        config_helper_.addConfigModifier([](envoy::config::bootstrap::v2::Bootstrap& bootstrap) {
+          auto* common_tls_context = bootstrap.mutable_static_resources()
+                                         ->mutable_listeners(0)
+                                         ->mutable_filter_chains(0)
+                                         ->mutable_tls_context()
+                                         ->mutable_common_tls_context();
+          common_tls_context->mutable_validation_context_sds_secret_config()->set_name(
+              "validation_context");
+          common_tls_context->add_tls_certificate_sds_secret_configs()->set_name("server_cert");
 
-      auto* secret = bootstrap.mutable_static_resources()->add_secrets();
-      secret->set_name("validation_context");
-      auto* validation_context = secret->mutable_validation_context();
-      validation_context->mutable_trusted_ca()->set_filename(Envoy::TestEnvironment::runfilesPath(
-          "external/envoy/test/config/integration/certs/cacert.pem"));
-      secret = bootstrap.mutable_static_resources()->add_secrets();
-      secret->set_name("server_cert");
-      auto* tls_certificate = secret->mutable_tls_certificate();
-      tls_certificate->mutable_certificate_chain()->set_filename(
-          Envoy::TestEnvironment::runfilesPath(
-              "external/envoy/test/config/integration/certs/servercert.pem"));
-      tls_certificate->mutable_private_key()->set_filename(Envoy::TestEnvironment::runfilesPath(
-          "external/envoy/test/config/integration/certs/serverkey.pem"));
-    });
-
+          auto* secret = bootstrap.mutable_static_resources()->add_secrets();
+          secret->set_name("validation_context");
+          auto* validation_context = secret->mutable_validation_context();
+          validation_context->mutable_trusted_ca()->set_filename(Envoy::TestEnvironment::runfilesPath(
+              "external/envoy/test/config/integration/certs/cacert.pem"));
+          secret = bootstrap.mutable_static_resources()->add_secrets();
+          secret->set_name("server_cert");
+          auto* tls_certificate = secret->mutable_tls_certificate();
+          tls_certificate->mutable_certificate_chain()->set_filename(
+              Envoy::TestEnvironment::runfilesPath(
+                  "external/envoy/test/config/integration/certs/servercert.pem"));
+          tls_certificate->mutable_private_key()->set_filename(Envoy::TestEnvironment::runfilesPath(
+              "external/envoy/test/config/integration/certs/serverkey.pem"));
+        });
+    */
     BenchmarkClientTestBase::initialize();
   }
 };
@@ -293,7 +319,9 @@ TEST_P(BenchmarkClientHttpTest, DISABLED_WeirdStatus) {
 TEST_P(BenchmarkClientHttpTest, H1ConnectionFailure) {
   // Kill the test server, so we can't connect.
   // We allow a single connection and no pending. We expect one connection failure.
-  test_server_.reset();
+  ASSERT(false);
+  // test_server_.reset();
+
   testBasicFunctionality("/lorem-ipsum-status-200", 1, 1, false, 10);
 
   EXPECT_EQ(1, getCounter("upstream_cx_connect_fail"));
@@ -309,7 +337,8 @@ TEST_P(BenchmarkClientHttpTest, H1ConnectionFailure) {
 TEST_P(BenchmarkClientHttpTest, H1MultiConnectionFailure) {
   // Kill the test server, so we can't connect.
   // We allow ten connections and ten pending requests. We expect ten connection failures.
-  test_server_.reset();
+  ASSERT(false);
+  // test_server_.reset();
   testBasicFunctionality("/lorem-ipsum-status-200", 10, 10, false, 10);
 
   EXPECT_EQ(10, getCounter("upstream_cx_connect_fail"));
