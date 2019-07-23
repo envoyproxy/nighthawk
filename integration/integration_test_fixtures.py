@@ -55,7 +55,6 @@ class IntegrationTestBase(unittest.TestCase):
     Performs sanity checks and starts up the server. Upon exit the server is ready to accept connections.
     """
     self.assertTrue(os.path.exists(self.nighthawk_test_server_path))
-    self.assertTrue(os.path.exists(self.nighthawk_client_path))
     self.server_port = self.getFreeListenerPortForAddress(self.server_ip)
     self.admin_port = self.getFreeListenerPortForAddress(self.server_ip)
     self.parameters["admin_port"] = self.admin_port
@@ -69,6 +68,12 @@ class IntegrationTestBase(unittest.TestCase):
     Stops the server.
     """
     self.assertEqual(0, self.test_server.stop())
+
+  def waitForServerExit(self):
+    self.assertEqual(0, self.test_server.waitForExit())
+
+  def getServerPid(self):
+    return self.test_server.getPid()
 
   def getNighthawkCounterMapFromJson(self, parsed_json):
     """
@@ -121,6 +126,8 @@ class IntegrationTestBase(unittest.TestCase):
     Runs Nighthawk against the test server, returning a json-formatted result.
     If the timeout is exceeded an exception will be raised.
     """
+
+    self.assertTrue(os.path.exists(self.nighthawk_client_path))    
     if IntegrationTestBase.ip_version == IpVersion.IPV6:
       args.insert(0, "--address-family v6")
     args.insert(0, "--output-format json")

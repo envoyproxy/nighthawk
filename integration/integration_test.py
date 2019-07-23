@@ -36,7 +36,6 @@ def runTests(ip_version):
       unittest.TestLoader().loadTestsFromModule(test_integration_basics))
   return res.wasSuccessful()
 
-
 if __name__ == '__main__':
   logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
   ip_versions = determineIpVersionsFromEnvironment()

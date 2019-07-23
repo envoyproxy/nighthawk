@@ -45,19 +45,89 @@ public:
   virtual ~PythonIntegrationTestBase() = default;
   PythonIntegrationTestBase(Envoy::Network::Address::IpVersion version,
                             const std::string& config = Envoy::ConfigHelper::HTTP_PROXY_CONFIG)
-      : version_(version), config_(config) {
-    initialize();
-  };
+      : version_(version), config_(config){};
 
-  virtual void initialize() {
+  void runPython() {
+    // std::string cmd = "PYTHONPATH=\"" + Envoy::TestEnvironment::runfilesPath("integration/") +
+    // "\""; RELEASE_ASSERT(::system(cmd.c_str()) == 0, "Failed to set pythonpath env var");
+    // std::cerr << cmd << std::endl;
     Py_Initialize();
-    PyRun_SimpleString("import sys\n"
-                       "print('hey', file=sys.stderr)\n");
-    Py_Finalize();
+    PyRun_SimpleString("import sys");
+    PyRun_SimpleString(
+        ("sys.path.append(\"" + Envoy::TestEnvironment::runfilesPath("integration/") + "\")")
+            .c_str());
+
+    PyObject* pName = PyUnicode_DecodeFSDefault("cpp_benchmark_client_server");
+    PyObject* pModule = PyImport_Import(pName);
+    Py_DECREF(pName);
+    PyObject* pValue = nullptr;
+    PyObject* pFunc = nullptr;
+
+    if (pModule != NULL) {
+      pFunc = PyObject_GetAttrString(pModule, "serverStartHook");
+      if (pFunc && PyCallable_Check(pFunc)) {
+        pValue = PyObject_CallObject(pFunc, nullptr);
+        if (pValue != NULL) {
+          server_port_ = PyLong_AsLong(pValue);
+          RELEASE_ASSERT(server_port_ > 0, "bad server port");
+          std::cerr << "@@@ port: " << server_port_ << std::endl;
+          Py_DECREF(pValue);
+        } else {
+          Py_DECREF(pFunc);
+          Py_DECREF(pModule);
+          PyErr_Print();
+          std::cerr << "call failed" << std::endl;
+        }
+      } else {
+        if (PyErr_Occurred()) {
+          PyErr_Print();
+          std::cerr << "failed to find cuntion" << std::endl;
+        }
+      }
+
+      pFunc = PyObject_GetAttrString(pModule, "getRunningServerPid");
+      if (pFunc && PyCallable_Check(pFunc)) {
+        pValue = PyObject_CallObject(pFunc, nullptr);
+        if (pValue != NULL) {
+          server_pid_ = PyLong_AsLong(pValue);
+          RELEASE_ASSERT(server_pid_ > 0, "bad server pid");
+          std::cerr << "@@@ port: " << server_pid_ << std::endl;
+          Py_DECREF(pValue);
+        } else {
+          Py_DECREF(pFunc);
+          Py_DECREF(pModule);
+          PyErr_Print();
+          std::cerr << "call failed" << std::endl;
+        }
+      } else {
+        if (PyErr_Occurred()) {
+          PyErr_Print();
+          std::cerr << "failed to find cuntion" << std::endl;
+        }
+      }
+
+      Py_XDECREF(pFunc);
+      Py_DECREF(pModule);
+    } else {
+      PyErr_Print();
+      std::cerr << "failed to load: " << pModule << "," << pFunc << std::endl;
+    }
+
+    if (Py_FinalizeEx() < 0) {
+      std::cerr << "finalize failed" << std::endl;
+    }
+
+    std::cerr << "finish" << std::endl;
   }
+
+  virtual void initialize(){};
+
   Envoy::Event::RealTimeSystem time_system_;
   Envoy::Network::Address::IpVersion version_;
   const std::string config_;
+  std::thread python_thread_;
+  int server_port_{0};
+  int server_pid_{0};
 };
 
 class BenchmarkClientTestBase : public PythonIntegrationTestBase,
@@ -78,9 +148,16 @@ public:
   void SetUp() override {
     ares_library_init(ARES_LIB_INIT_ALL);
     Envoy::Event::Libevent::Global::initialize();
+    python_thread_ = std::thread([this]() { runPython(); });
+    sleep(1);
   }
 
   void TearDown() override {
+    std::cerr << "prejoin " << server_pid_ << std::endl;
+    kill(server_pid_, SIGTERM);
+    sleep(1);
+    python_thread_.join();
+    std::cerr << "postjoin" << std::endl;
     if (client_ != nullptr) {
       client_->terminate();
     }
@@ -89,9 +166,10 @@ public:
   }
 
   uint32_t getTestServerHostAndPort() {
-    ASSERT(false);
-    return 0;
-    /* return lookupPort("listener_0");*/
+    while (server_port_ == 0) {
+      usleep(1000);
+    }
+    return server_port_;
   }
 
   void testBasicFunctionality(absl::string_view uriPath, const uint64_t max_pending,
@@ -168,7 +246,10 @@ public:
 
 class BenchmarkClientHttpTest : public BenchmarkClientTestBase {
 public:
-  void SetUp() override { BenchmarkClientHttpTest::initialize(); }
+  void SetUp() override {
+    BenchmarkClientTestBase::SetUp();
+    BenchmarkClientHttpTest::initialize();
+  }
 
   void setupBenchmarkClient(absl::string_view uriPath, bool use_h2,
                             bool prefetch_connections) override {
@@ -178,7 +259,11 @@ public:
 
 class BenchmarkClientHttpsTest : public BenchmarkClientTestBase {
 public:
-  void SetUp() override { BenchmarkClientHttpsTest::initialize(); }
+  void SetUp() override {
+    BenchmarkClientTestBase::SetUp();
+
+    BenchmarkClientHttpsTest::initialize();
+  }
 
   void setupBenchmarkClient(absl::string_view uriPath, bool use_h2,
                             bool prefetch_connections) override {
@@ -319,8 +404,7 @@ TEST_P(BenchmarkClientHttpTest, DISABLED_WeirdStatus) {
 TEST_P(BenchmarkClientHttpTest, H1ConnectionFailure) {
   // Kill the test server, so we can't connect.
   // We allow a single connection and no pending. We expect one connection failure.
-  ASSERT(false);
-  // test_server_.reset();
+  kill(server_pid_, SIGTERM);
 
   testBasicFunctionality("/lorem-ipsum-status-200", 1, 1, false, 10);
 
@@ -337,8 +421,7 @@ TEST_P(BenchmarkClientHttpTest, H1ConnectionFailure) {
 TEST_P(BenchmarkClientHttpTest, H1MultiConnectionFailure) {
   // Kill the test server, so we can't connect.
   // We allow ten connections and ten pending requests. We expect ten connection failures.
-  ASSERT(false);
-  // test_server_.reset();
+  kill(server_pid_, SIGTERM);
   testBasicFunctionality("/lorem-ipsum-status-200", 10, 10, false, 10);
 
   EXPECT_EQ(10, getCounter("upstream_cx_connect_fail"));

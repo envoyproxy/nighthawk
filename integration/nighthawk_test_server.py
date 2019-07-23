@@ -66,6 +66,13 @@ class TestServerBase(object):
     self.server_thread.start()
     return self.waitUntilServerListening()
 
+  def waitForExit(self):
+    self.server_thread.join()
+    return self.server_process.returncode
+
+  def getPid(self):
+    return self.server_process.pid
+
   def stop(self):
     self.server_process.terminate()
     self.server_thread.join()
