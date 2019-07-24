@@ -1,3 +1,5 @@
+#include <Python.h>
+
 #include <chrono>
 
 #include "envoy/thread_local/thread_local.h"
@@ -32,8 +34,6 @@
 
 #include "ares.h"
 #include "gtest/gtest.h"
-
-#include <Python.h>
 
 using namespace std::chrono_literals;
 using namespace testing;
@@ -72,7 +72,7 @@ public:
   }
 
   std::function<void(PyObject* p)> py_object_deleter_ = [](PyObject* p) { Py_DECREF(p); };
-  Envoy::Event::RealTimeSystem time_system_;
+  Envoy::Event::RealTimeSystem time_system_; // NO_CHECK_FORMAT(real_time)
   Envoy::Network::Address::IpVersion version_;
   PyObjectPtr module_;
   int server_port_{0};
@@ -254,7 +254,7 @@ TEST_P(BenchmarkClientHttpTest, BasicTestH1) {
   testBasicFunctionality("/lorem-ipsum-status-200", 1, 1, false, 10);
 
   EXPECT_EQ(1, getCounter("upstream_cx_http1_total"));
-  // EXPECT_LE(3621, getCounter("upstream_cx_rx_bytes_total"));
+  EXPECT_LE(3621, getCounter("upstream_cx_rx_bytes_total"));
   EXPECT_EQ(1, getCounter("upstream_cx_total"));
   EXPECT_LE(78, getCounter("upstream_cx_tx_bytes_total"));
   EXPECT_EQ(1, getCounter("upstream_rq_pending_total"));

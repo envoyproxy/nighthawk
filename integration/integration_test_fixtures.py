@@ -131,7 +131,7 @@ class IntegrationTestBase(unittest.TestCase):
     If the timeout is exceeded an exception will be raised.
     """
 
-    self.assertTrue(os.path.exists(self.nighthawk_client_path))    
+    self.assertTrue(os.path.exists(self.nighthawk_client_path))
     if IntegrationTestBase.ip_version == IpVersion.IPV6:
       args.insert(0, "--address-family v6")
     args.insert(0, "--output-format json")
