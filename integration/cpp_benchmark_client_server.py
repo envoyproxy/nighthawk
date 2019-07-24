@@ -7,7 +7,6 @@ import logging
 import os
 import sys
 import unittest
-import cpp_benchmark_client_server
 
 from common import IpVersion, NighthawkException
 from integration_test_fixtures import (HttpIntegrationTestBase, HttpsIntegrationTestBase,
@@ -21,7 +20,6 @@ httpbase = None
 def serverStartHook(ip_version, is_https):
   IntegrationTestBase.ip_version = ip_version
   logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
-
   global httpbase
 
   if is_https:
@@ -35,25 +33,26 @@ def serverStartHook(ip_version, is_https):
   return httpbase.server_port
 
 
-def serverStartHookHttpIPV4():
-  return serverStartHook(IpVersion.IPV4, False)
-
-
-def serverStartHookHttpIPV6():
-  return serverStartHook(IpVersion.IPV6, False)
-
-
-def serverStartHookHttpsIPV4():
-  return serverStartHook(IpVersion.IPV4, True)
-
-
-def serverStartHookHttpsIPV6():
-  return serverStartHook(IpVersion.IPV6, True)
-
-
 def getRunningServerPid():
   return httpbase.getServerPid()
 
 
 def waitForExit():
   return httpbase.waitForServerExit()
+
+
+def main():
+  if len(sys.argv) != 3:
+    print("cpp_benchmark_client_server.py [ipv4|ipv6] [http|https]")
+    return -1
+  port = serverStartHook(
+      IpVersion.IPV6 if str.lower(sys.argv[1]) == "ipv6" else IpVersion.IPV4,
+      str.lower(sys.argv[2]) == "https")
+  print(str(port))
+  print(str(getRunningServerPid()))
+  sys.stdout.flush()
+  return waitForExit()
+
+
+if __name__ == '__main__':
+  main()

@@ -22,20 +22,6 @@ go_rules_dependencies()
 
 go_register_toolchains(go_version = GO_VERSION)
 
-new_local_repository(
-    name = "python_linux",
-    build_file_content = """
-cc_library(
-    name = "python36-lib",
-    srcs = ["lib/python3.6/config-3.6m-x86_64-linux-gnu/libpython3.6.so"],
-    hdrs = glob(["include/python3.6/*.h"]),
-    includes = ["include/python3.6"],
-    visibility = ["//visibility:public"]
-)
-    """,
-    path = "/usr",
-)
-
 # For PIP support:
 load("@io_bazel_rules_python//python:pip.bzl", "pip_import", "pip_repositories")
 
