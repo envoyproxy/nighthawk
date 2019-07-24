@@ -37,7 +37,6 @@ def runTests(ip_version):
   return res.wasSuccessful()
 
 
-
 if __name__ == '__main__':
   logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
   ip_versions = determineIpVersionsFromEnvironment()
