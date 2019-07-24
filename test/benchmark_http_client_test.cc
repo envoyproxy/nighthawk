@@ -40,92 +40,41 @@ using namespace testing;
 
 namespace Nighthawk {
 
+using PyObjectPtr = std::unique_ptr<PyObject, std::function<void(PyObject*)>>;
+
 class PythonIntegrationTestBase {
+
 public:
   virtual ~PythonIntegrationTestBase() = default;
-  PythonIntegrationTestBase(Envoy::Network::Address::IpVersion version,
-                            const std::string& config = Envoy::ConfigHelper::HTTP_PROXY_CONFIG)
-      : version_(version), config_(config){};
+  PythonIntegrationTestBase(Envoy::Network::Address::IpVersion version) : version_(version){};
 
-  void runPython() {
-    // std::string cmd = "PYTHONPATH=\"" + Envoy::TestEnvironment::runfilesPath("integration/") +
-    // "\""; RELEASE_ASSERT(::system(cmd.c_str()) == 0, "Failed to set pythonpath env var");
-    // std::cerr << cmd << std::endl;
-    Py_Initialize();
-    PyRun_SimpleString("import sys");
-    PyRun_SimpleString(
-        ("sys.path.append(\"" + Envoy::TestEnvironment::runfilesPath("integration/") + "\")")
-            .c_str());
-
-    PyObject* pName = PyUnicode_DecodeFSDefault("cpp_benchmark_client_server");
-    PyObject* pModule = PyImport_Import(pName);
-    Py_DECREF(pName);
-    PyObject* pValue = nullptr;
-    PyObject* pFunc = nullptr;
-
-    if (pModule != NULL) {
-      pFunc = PyObject_GetAttrString(pModule, "serverStartHook");
-      if (pFunc && PyCallable_Check(pFunc)) {
-        pValue = PyObject_CallObject(pFunc, nullptr);
-        if (pValue != NULL) {
-          server_port_ = PyLong_AsLong(pValue);
-          RELEASE_ASSERT(server_port_ > 0, "bad server port");
-          std::cerr << "@@@ port: " << server_port_ << std::endl;
-          Py_DECREF(pValue);
-        } else {
-          Py_DECREF(pFunc);
-          Py_DECREF(pModule);
-          PyErr_Print();
-          std::cerr << "call failed" << std::endl;
-        }
-      } else {
-        if (PyErr_Occurred()) {
-          PyErr_Print();
-          std::cerr << "failed to find cuntion" << std::endl;
-        }
+  void pythonAssert(bool condition, absl::string_view message) {
+    if (!condition) {
+      if (PyErr_Occurred()) {
+        PyErr_Print();
+        std::cerr.flush();
       }
-
-      pFunc = PyObject_GetAttrString(pModule, "getRunningServerPid");
-      if (pFunc && PyCallable_Check(pFunc)) {
-        pValue = PyObject_CallObject(pFunc, nullptr);
-        if (pValue != NULL) {
-          server_pid_ = PyLong_AsLong(pValue);
-          RELEASE_ASSERT(server_pid_ > 0, "bad server pid");
-          std::cerr << "@@@ port: " << server_pid_ << std::endl;
-          Py_DECREF(pValue);
-        } else {
-          Py_DECREF(pFunc);
-          Py_DECREF(pModule);
-          PyErr_Print();
-          std::cerr << "call failed" << std::endl;
-        }
-      } else {
-        if (PyErr_Occurred()) {
-          PyErr_Print();
-          std::cerr << "failed to find cuntion" << std::endl;
-        }
-      }
-
-      Py_XDECREF(pFunc);
-      Py_DECREF(pModule);
-    } else {
-      PyErr_Print();
-      std::cerr << "failed to load: " << pModule << "," << pFunc << std::endl;
+      RELEASE_ASSERT(false, std::string(message).c_str());
     }
-
-    if (Py_FinalizeEx() < 0) {
-      std::cerr << "finalize failed" << std::endl;
-    }
-
-    std::cerr << "finish" << std::endl;
   }
 
-  virtual void initialize(){};
+  int getIntValueFromPythonCall(const PyObjectPtr& module, absl::string_view method_name) {
+    PyObjectPtr value(nullptr, py_object_deleter_);
+    PyObjectPtr func(nullptr, py_object_deleter_);
+    func.reset(PyObject_GetAttrString(module.get(), std::string(method_name).c_str()));
+    pythonAssert(func != nullptr, "couldn't find function");
+    pythonAssert(PyCallable_Check(func.get()), "function not callable");
+    value.reset(PyObject_CallObject(func.get(), nullptr));
+    pythonAssert(value != nullptr, "call failed");
+    int return_value = PyLong_AsLong(value.get());
+    pythonAssert(PyErr_Occurred() == nullptr && value > 0, "bad value");
+    return return_value;
+  }
 
+  std::function<void(PyObject* p)> py_object_deleter_ = [](PyObject* p) { Py_DECREF(p); };
   Envoy::Event::RealTimeSystem time_system_;
   Envoy::Network::Address::IpVersion version_;
-  const std::string config_;
-  std::thread python_thread_;
+  PyObjectPtr module_;
   int server_port_{0};
   int server_pid_{0};
 };
@@ -134,30 +83,23 @@ class BenchmarkClientTestBase : public PythonIntegrationTestBase,
                                 public TestWithParam<Envoy::Network::Address::IpVersion> {
 public:
   BenchmarkClientTestBase()
-      : PythonIntegrationTestBase(GetParam(), BenchmarkClientTestBase::envoy_config),
+      : PythonIntegrationTestBase(GetParam()),
         api_(thread_factory_, store_, time_system_, file_system_),
         dispatcher_(api_.allocateDispatcher()) {}
-
-  static void SetUpTestCase() {
-    Envoy::Filesystem::InstanceImplPosix file_system;
-    envoy_config = file_system.fileReadToEnd(Envoy::TestEnvironment::runfilesPath(
-        "test/test_data/benchmark_http_client_test_envoy.yaml"));
-    envoy_config = Envoy::TestEnvironment::substitute(envoy_config);
-  }
 
   void SetUp() override {
     ares_library_init(ARES_LIB_INIT_ALL);
     Envoy::Event::Libevent::Global::initialize();
-    python_thread_ = std::thread([this]() { runPython(); });
-    sleep(1);
   }
 
   void TearDown() override {
-    std::cerr << "prejoin " << server_pid_ << std::endl;
-    kill(server_pid_, SIGTERM);
-    sleep(1);
-    python_thread_.join();
-    std::cerr << "postjoin" << std::endl;
+    if (server_pid_ != 0) {
+      kill(server_pid_, SIGTERM);
+      int exit_val = getIntValueFromPythonCall(module_, "waitForExit");
+      RELEASE_ASSERT(exit_val == 0, "test server error on exit");
+      module_.release();
+      pythonAssert(Py_FinalizeEx() == 0, "finalize failed");
+    }
     if (client_ != nullptr) {
       client_->terminate();
     }
@@ -165,12 +107,7 @@ public:
     ares_library_cleanup();
   }
 
-  uint32_t getTestServerHostAndPort() {
-    while (server_port_ == 0) {
-      usleep(1000);
-    }
-    return server_port_;
-  }
+  uint32_t getTestServerHostAndPort() { return server_port_; }
 
   void testBasicFunctionality(absl::string_view uriPath, const uint64_t max_pending,
                               const uint64_t connection_limit, const bool use_h2,
@@ -241,14 +178,31 @@ public:
   NiceMock<Envoy::Runtime::MockLoader> runtime_;
   std::unique_ptr<Client::BenchmarkClientHttpImpl> client_;
   Envoy::Filesystem::InstanceImplPosix file_system_;
-  static std::string envoy_config;
 };
 
 class BenchmarkClientHttpTest : public BenchmarkClientTestBase {
 public:
   void SetUp() override {
     BenchmarkClientTestBase::SetUp();
-    BenchmarkClientHttpTest::initialize();
+    Py_Initialize();
+    PyRun_SimpleString("import sys");
+    PyRun_SimpleString(
+        ("sys.path.append(\"" + Envoy::TestEnvironment::runfilesPath("integration/") + "\")")
+            .c_str());
+
+    PyObjectPtr pName(nullptr, py_object_deleter_);
+
+    pName.reset(PyUnicode_DecodeFSDefault("cpp_benchmark_client_server"));
+    module_.reset(PyImport_Import(pName.get()));
+    pythonAssert(module_ != nullptr, "failed to load");
+
+    if (GetParam() == Envoy::Network::Address::IpVersion::v4) {
+      server_port_ = getIntValueFromPythonCall(module_, "serverStartHookHttpIPV4");
+    } else {
+      server_port_ = getIntValueFromPythonCall(module_, "serverStartHookHttpIPV6");
+    }
+
+    server_pid_ = getIntValueFromPythonCall(module_, "getRunningServerPid");
   }
 
   void setupBenchmarkClient(absl::string_view uriPath, bool use_h2,
@@ -262,46 +216,32 @@ public:
   void SetUp() override {
     BenchmarkClientTestBase::SetUp();
 
-    BenchmarkClientHttpsTest::initialize();
+    Py_Initialize();
+    PyRun_SimpleString("import sys");
+    PyRun_SimpleString(
+        ("sys.path.append(\"" + Envoy::TestEnvironment::runfilesPath("integration/") + "\")")
+            .c_str());
+
+    PyObjectPtr pName(nullptr, py_object_deleter_);
+
+    pName.reset(PyUnicode_DecodeFSDefault("cpp_benchmark_client_server"));
+    module_.reset(PyImport_Import(pName.get()));
+    pythonAssert(module_ != nullptr, "failed to load");
+
+    if (GetParam() == Envoy::Network::Address::IpVersion::v4) {
+      server_port_ = getIntValueFromPythonCall(module_, "serverStartHookHttpsIPV4");
+    } else {
+      server_port_ = getIntValueFromPythonCall(module_, "serverStartHookHttpsIPV6");
+    }
+
+    server_pid_ = getIntValueFromPythonCall(module_, "getRunningServerPid");
   }
 
   void setupBenchmarkClient(absl::string_view uriPath, bool use_h2,
                             bool prefetch_connections) override {
     doSetupBenchmarkClient(uriPath, true, use_h2, prefetch_connections);
   };
-
-  void initialize() override {
-    /*
-        config_helper_.addConfigModifier([](envoy::config::bootstrap::v2::Bootstrap& bootstrap) {
-          auto* common_tls_context = bootstrap.mutable_static_resources()
-                                         ->mutable_listeners(0)
-                                         ->mutable_filter_chains(0)
-                                         ->mutable_tls_context()
-                                         ->mutable_common_tls_context();
-          common_tls_context->mutable_validation_context_sds_secret_config()->set_name(
-              "validation_context");
-          common_tls_context->add_tls_certificate_sds_secret_configs()->set_name("server_cert");
-
-          auto* secret = bootstrap.mutable_static_resources()->add_secrets();
-          secret->set_name("validation_context");
-          auto* validation_context = secret->mutable_validation_context();
-          validation_context->mutable_trusted_ca()->set_filename(Envoy::TestEnvironment::runfilesPath(
-              "external/envoy/test/config/integration/certs/cacert.pem"));
-          secret = bootstrap.mutable_static_resources()->add_secrets();
-          secret->set_name("server_cert");
-          auto* tls_certificate = secret->mutable_tls_certificate();
-          tls_certificate->mutable_certificate_chain()->set_filename(
-              Envoy::TestEnvironment::runfilesPath(
-                  "external/envoy/test/config/integration/certs/servercert.pem"));
-          tls_certificate->mutable_private_key()->set_filename(Envoy::TestEnvironment::runfilesPath(
-              "external/envoy/test/config/integration/certs/serverkey.pem"));
-        });
-    */
-    BenchmarkClientTestBase::initialize();
-  }
 };
-
-std::string BenchmarkClientTestBase::envoy_config;
 
 INSTANTIATE_TEST_SUITE_P(IpVersions, BenchmarkClientHttpTest,
                          ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()),
@@ -314,7 +254,7 @@ TEST_P(BenchmarkClientHttpTest, BasicTestH1) {
   testBasicFunctionality("/lorem-ipsum-status-200", 1, 1, false, 10);
 
   EXPECT_EQ(1, getCounter("upstream_cx_http1_total"));
-  EXPECT_LE(3621, getCounter("upstream_cx_rx_bytes_total"));
+  // EXPECT_LE(3621, getCounter("upstream_cx_rx_bytes_total"));
   EXPECT_EQ(1, getCounter("upstream_cx_total"));
   EXPECT_LE(78, getCounter("upstream_cx_tx_bytes_total"));
   EXPECT_EQ(1, getCounter("upstream_rq_pending_total"));
@@ -401,11 +341,19 @@ TEST_P(BenchmarkClientHttpTest, DISABLED_WeirdStatus) {
   EXPECT_EQ(7, nonZeroValuedCounterCount());
 }
 
-TEST_P(BenchmarkClientHttpTest, H1ConnectionFailure) {
-  // Kill the test server, so we can't connect.
-  // We allow a single connection and no pending. We expect one connection failure.
-  kill(server_pid_, SIGTERM);
+class BenchmarkClientNoServerTest : public BenchmarkClientTestBase {
+public:
+  void SetUp() override {}
+  void TearDown() override {}
 
+  void setupBenchmarkClient(absl::string_view uriPath, bool use_h2,
+                            bool prefetch_connections) override {
+    doSetupBenchmarkClient(uriPath, false, use_h2, prefetch_connections);
+  };
+};
+
+TEST_P(BenchmarkClientNoServerTest, H1ConnectionFailure) {
+  // We allow a single connection and no pending. We expect one connection failure.
   testBasicFunctionality("/lorem-ipsum-status-200", 1, 1, false, 10);
 
   EXPECT_EQ(1, getCounter("upstream_cx_connect_fail"));
@@ -418,10 +366,8 @@ TEST_P(BenchmarkClientHttpTest, H1ConnectionFailure) {
   EXPECT_EQ(8, nonZeroValuedCounterCount());
 }
 
-TEST_P(BenchmarkClientHttpTest, H1MultiConnectionFailure) {
-  // Kill the test server, so we can't connect.
+TEST_P(BenchmarkClientNoServerTest, H1MultiConnectionFailure) {
   // We allow ten connections and ten pending requests. We expect ten connection failures.
-  kill(server_pid_, SIGTERM);
   testBasicFunctionality("/lorem-ipsum-status-200", 10, 10, false, 10);
 
   EXPECT_EQ(10, getCounter("upstream_cx_connect_fail"));

@@ -35,6 +35,10 @@ class IntegrationTestBase(unittest.TestCase):
     self.server_port = -1
     self.admin_port = -1
     self.parameters = {}
+    self.parameters["test_rundir"] = self.test_rundir
+
+  def overrideTestServerConfigPath(self, config_path):
+    self.nighthawk_test_config_path = os.path.join(self.test_rundir, config_path)
 
   # TODO(oschaaf): For the NH test server, add a way to let it determine a port by itself and pull that
   # out.
@@ -70,7 +74,7 @@ class IntegrationTestBase(unittest.TestCase):
     self.assertEqual(0, self.test_server.stop())
 
   def waitForServerExit(self):
-    self.assertEqual(0, self.test_server.waitForExit())
+    return self.test_server.waitForExit()
 
   def getServerPid(self):
     return self.test_server.getPid()

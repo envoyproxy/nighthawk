@@ -44,6 +44,7 @@ envoy_cc_test(
     ],
     data = [
         "test_data/benchmark_http_client_test_envoy.yaml",
+        "test_data/benchmark_https_client_test_envoy.yaml",
         "test_data/hdr_proto_json.gold",
         "test_data/lorem_ipsum.txt",
         "test_data/output_collector.json.gold",

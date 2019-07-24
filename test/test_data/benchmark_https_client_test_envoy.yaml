@@ -41,3 +41,10 @@ static_resources:
             - name: envoy.router
               config:
                 dynamic_stats: false
+        tls_context:
+          common_tls_context:
+            tls_certificates:
+              - certificate_chain:
+                  filename: $ssl_cert_path
+                private_key:
+                  filename: $ssl_key_path
