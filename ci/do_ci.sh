@@ -4,12 +4,24 @@ set -e
 
 export BUILDIFIER_BIN="/usr/local/bin/buildifier"
 
+
+function install_virtualenv() {
+    echo "Install python requirements via virtualenv"
+    cd "${SRCDIR}"
+    if [ ! -d "venv" ]; then
+            virtualenv3 venv
+    fi
+    . venv/bin/activate
+    pip3 install -r requirements.txt
+}
+
 function do_build () {
     bazel build $BAZEL_BUILD_OPTIONS --verbose_failures=true //:nighthawk_client //:nighthawk_test_server \
         //:nighthawk_service
 }
 
 function do_test() {
+    install_virtualenv
     bazel test $BAZEL_BUILD_OPTIONS $BAZEL_TEST_OPTIONS \
     --test_output=all \
     //test:nighthawk_test //test/server:http_test_server_filter_integration_test \
@@ -17,6 +29,7 @@ function do_test() {
 }
 
 function do_test_with_valgrind() {
+    install_virtualenv
     apt-get update && apt-get install valgrind && \
     bazel build $BAZEL_BUILD_OPTIONS -c dbg //test:nighthawk_test && \
     nighthawk/tools/valgrind-tests.sh
@@ -27,6 +40,7 @@ function do_clang_tidy() {
 }
 
 function do_coverage() {
+    install_virtualenv
     ci/run_coverage.sh
 }
 
@@ -62,6 +76,7 @@ function run_bazel() {
 }
 
 function do_asan() {
+    install_virtualenv
     echo "bazel ASAN/UBSAN debug build with tests"
     echo "Building and testing envoy tests..."
     cd "${SRCDIR}"
@@ -69,6 +84,7 @@ function do_asan() {
 }
 
 function do_tsan() {
+    install_virtualenv
     echo "bazel TSAN debug build with tests"
     echo "Building and testing envoy tests..."
     cd "${SRCDIR}"
@@ -135,6 +151,7 @@ export BAZEL_TEST_OPTIONS="${BAZEL_BUILD_OPTIONS} --test_env=HOME --test_env=PYT
 [[ -z "${SRCDIR}" ]] && SRCDIR="${PWD}"
 
 setup_clang_toolchain
+
 
 if [ "$1" == "coverage" ]; then
     setup_gcc_toolchain
