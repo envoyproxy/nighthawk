@@ -5,23 +5,12 @@ set -e
 export BUILDIFIER_BIN="/usr/local/bin/buildifier"
 
 
-function install_virtualenv() {
-    echo "Install python requirements via virtualenv"
-    cd "${SRCDIR}"
-    if [ ! -d "venv" ]; then
-            virtualenv3 venv
-    fi
-    . venv/bin/activate
-    pip3 install -r requirements.txt
-}
-
 function do_build () {
     bazel build $BAZEL_BUILD_OPTIONS --verbose_failures=true //:nighthawk_client //:nighthawk_test_server \
-        //:nighthawk_service
+    //:nighthawk_service
 }
 
 function do_test() {
-    install_virtualenv
     bazel test $BAZEL_BUILD_OPTIONS $BAZEL_TEST_OPTIONS \
     --test_output=all \
     //test:nighthawk_test //test/server:http_test_server_filter_integration_test \
@@ -29,7 +18,6 @@ function do_test() {
 }
 
 function do_test_with_valgrind() {
-    install_virtualenv
     apt-get update && apt-get install valgrind && \
     bazel build $BAZEL_BUILD_OPTIONS -c dbg //test:nighthawk_test && \
     nighthawk/tools/valgrind-tests.sh
@@ -40,7 +28,6 @@ function do_clang_tidy() {
 }
 
 function do_coverage() {
-    install_virtualenv
     ci/run_coverage.sh
 }
 
@@ -76,7 +63,6 @@ function run_bazel() {
 }
 
 function do_asan() {
-    install_virtualenv
     echo "bazel ASAN/UBSAN debug build with tests"
     echo "Building and testing envoy tests..."
     cd "${SRCDIR}"
@@ -84,7 +70,6 @@ function do_asan() {
 }
 
 function do_tsan() {
-    install_virtualenv
     echo "bazel TSAN debug build with tests"
     echo "Building and testing envoy tests..."
     cd "${SRCDIR}"
@@ -112,14 +97,14 @@ if [ -n "$CIRCLECI" ]; then
         mv "${HOME:-/root}/.gitconfig" "${HOME:-/root}/.gitconfig_save"
         echo 1
     fi
-
+    
     NUM_CPUS=8
     if [ "$1" == "coverage" ]; then
         NUM_CPUS=6
     fi
 fi
 
- if grep 'docker\|lxc' /proc/1/cgroup; then
+if grep 'docker\|lxc' /proc/1/cgroup; then
     # Create a fake home. Python site libs tries to do getpwuid(3) if we don't and the CI
     # Docker image gets confused as it has no passwd entry when running non-root
     # unless we do this.
@@ -127,14 +112,14 @@ fi
     mkdir -p "${FAKE_HOME}"
     export HOME="${FAKE_HOME}"
     export PYTHONUSERBASE="${FAKE_HOME}"
-
+    
     export BUILD_DIR=/build
     if [[ ! -d "${BUILD_DIR}" ]]
     then
         echo "${BUILD_DIR} mount missing - did you forget -v <something>:${BUILD_DIR}? Creating."
         mkdir -p "${BUILD_DIR}"
     fi
-
+    
     # Environment setup.
     export USER=bazel
     export TEST_TMPDIR=/build/tmp

@@ -46,7 +46,7 @@ public:
 
   void startPythonIntegrationWrapper(bool use_https) {
     std::string script =
-        Envoy::TestEnvironment::runfilesPath("integration/cpp_benchmark_client_server.py");
+        Envoy::TestEnvironment::runfilesPath("integration/cpp_benchmark_client_server");
 
     std::string args;
     if (GetParam() == Envoy::Network::Address::IpVersion::v4) {
