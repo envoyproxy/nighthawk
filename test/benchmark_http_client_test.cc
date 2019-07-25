@@ -40,56 +40,54 @@ namespace Nighthawk {
 
 class PythonIntegrationTestBase : public TestWithParam<Envoy::Network::Address::IpVersion> {
 public:
-  virtual ~PythonIntegrationTestBase() = default;
-  PythonIntegrationTestBase(Envoy::Network::Address::IpVersion version)
+  PythonIntegrationTestBase(const Envoy::Network::Address::IpVersion version)
       : version_(version), pipe_(nullptr){};
 
-  void startPythonIntegrationWrapper(bool use_https) {
-    std::string script =
-        Envoy::TestEnvironment::runfilesPath("integration/cpp_benchmark_client_server");
-
+  void startPythonIntegrationWrapper(const bool use_https) {
     std::string args;
+
     if (GetParam() == Envoy::Network::Address::IpVersion::v4) {
       args.append(" ipv4");
     } else {
       args.append(" ipv6");
     }
+    args.append(" http");
     if (use_https) {
-      args.append(" https");
-    } else {
-      args.append(" http");
+      args.append("s");
     }
-    script.append(args);
-
-    char buffer[128];
-    script = "python3 " + script;
-    pipe_ = popen(script.c_str(), "r");
+    pipe_ = popen(Envoy::TestEnvironment::runfilesPath("integration/cpp_benchmark_client_server")
+                      .append(args)
+                      .c_str(),
+                  "r");
     RELEASE_ASSERT(pipe_ != nullptr, "Failed to open pipe");
-    RELEASE_ASSERT(fgets(buffer, sizeof(buffer), pipe_) != nullptr, "Expected more data");
-    RELEASE_ASSERT(absl::SimpleAtoi(buffer, &server_port_), "couldn't understand server_pid");
-
-    RELEASE_ASSERT(fgets(buffer, sizeof(buffer), pipe_) != nullptr, "Expected more data");
-    RELEASE_ASSERT(absl::SimpleAtoi(buffer, &server_pid_), "couldn't understand server_pid");
+    RELEASE_ASSERT(fgets(buffer_.data(), buffer_.max_size(), pipe_) != nullptr,
+                   "Expected more data");
+    RELEASE_ASSERT(absl::SimpleAtoi(buffer_.data(), &server_port_),
+                   "couldn't understand server_pid");
+    RELEASE_ASSERT(fgets(buffer_.data(), buffer_.max_size(), pipe_) != nullptr,
+                   "Expected more data");
+    RELEASE_ASSERT(absl::SimpleAtoi(buffer_.data(), &server_pid_),
+                   "couldn't understand server_pid");
   }
 
-  void TearDown() {
+  void TearDown() override {
     if (server_pid_ != 0) {
       kill(server_pid_, SIGTERM);
     }
     if (pipe_ != nullptr) {
-      char buffer[128];
       // We don't expect any output, lets print it when that happens
-      while (fgets(buffer, sizeof(buffer), pipe_) != nullptr) {
-        std::cerr << "python stdout: " << buffer << std::endl;
+      while (fgets(buffer_.data(), buffer_.max_size(), pipe_) != nullptr) {
+        std::cerr << "python stdout: " << buffer_.data() << std::endl;
       }
       RELEASE_ASSERT(!pclose(pipe_), "Failure closing pipe");
     }
   }
 
   Envoy::Event::RealTimeSystem time_system_; // NO_CHECK_FORMAT(real_time)
-  Envoy::Network::Address::IpVersion version_;
+  const Envoy::Network::Address::IpVersion version_;
   int server_port_{0};
   int server_pid_{0};
+  std::array<char, 128> buffer_;
   FILE* pipe_;
 };
 
