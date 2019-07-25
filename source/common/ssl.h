@@ -7,6 +7,7 @@
 
 #include "common/secret/secret_manager_impl.h"
 
+#include "server/http/config_tracker_impl.h"
 #include "server/transport_socket_config_impl.h"
 
 #include "extensions/transport_sockets/tls/context_config_impl.h"
@@ -26,8 +27,8 @@ public:
       Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl& ssl_context_manager,
       Envoy::ProtobufMessage::ValidationVisitor& validation_visitor)
       : ssl_context_manager_(ssl_context_manager), stats_scope_(std::move(stats_scope)),
-        dispatcher_(dispatcher), random_(random), stats_(stats), api_(api),
-        validation_visitor_(validation_visitor) {}
+        secret_manager_(config_tracker_), dispatcher_(dispatcher), random_(random), stats_(stats),
+        api_(api), validation_visitor_(validation_visitor) {}
 
   Envoy::Server::Admin& admin() override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; }
 
@@ -64,6 +65,7 @@ public:
 private:
   Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl& ssl_context_manager_;
   Envoy::Stats::ScopePtr stats_scope_;
+  Envoy::Server::ConfigTrackerImpl config_tracker_;
   Envoy::Secret::SecretManagerImpl secret_manager_;
   Envoy::Event::Dispatcher& dispatcher_;
   Envoy::Runtime::RandomGenerator& random_;
