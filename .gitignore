@@ -15,3 +15,4 @@ envoy/
 *.pyc
 __pycache__
 tools/pyformat
+test/coverage/BUILD
