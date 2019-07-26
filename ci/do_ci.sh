@@ -38,7 +38,6 @@ function do_coverage() {
 
   export TEST_TARGETS="//test/..."
   test/run_envoy_bazel_coverage.sh ${TEST_TARGETS}
-  collect_build_profile coverage
   exit 0
 }
 
