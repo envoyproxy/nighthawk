@@ -1,3 +1,6 @@
+# The following .bazelrc content is forked from the main Envoy repository. This is necessary since	
+# this needs to be available before we can access the Envoy repository contents via Bazel.
+
 # Envoy specific Bazel build/test options.
 
 # Bazel doesn't need more than 200MB of memory for local build based on memory profiling:

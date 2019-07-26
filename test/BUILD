@@ -69,6 +69,7 @@ envoy_cc_test(
         "@envoy//source/common/stats:isolated_store_lib",
         "@envoy//test/integration:integration_lib",
         "@envoy//test/mocks/event:event_mocks",
+        "@envoy//test/mocks/protobuf:protobuf_mocks",
         "@envoy//test/mocks/thread_local:thread_local_mocks",
         "@envoy//test/server:utility_lib",
         "@envoy//test/test_common:simulated_time_system_lib",

@@ -7,6 +7,9 @@
 #include "common/worker_impl.h"
 
 #include "test/mocks.h"
+#include "test/mocks/init/mocks.h"
+#include "test/mocks/local_info/mocks.h"
+#include "test/mocks/protobuf/mocks.h"
 #include "test/mocks/thread_local/mocks.h"
 #include "test/test_common/thread_factory_for_test.h"
 
@@ -40,13 +43,22 @@ public:
   Envoy::Stats::IsolatedStoreImpl store_;
   Envoy::Event::TestRealTimeSystem time_system_;
   Envoy::Runtime::RandomGeneratorImpl rand_;
+  NiceMock<Envoy::LocalInfo::MockLocalInfo> local_info_;
+  Envoy::Init::MockManager init_manager_;
+  NiceMock<Envoy::ProtobufMessage::MockValidationVisitor> validation_visitor_;
 };
 
 TEST_F(WorkerTest, WorkerExecutesOnThread) {
   InSequence in_sequence;
   EXPECT_CALL(tls_, registerThread(_, false)).Times(1);
+  EXPECT_CALL(tls_, allocateSlot()).Times(1);
+
   TestWorker worker(api_, tls_);
   NiceMock<Envoy::Event::MockDispatcher> dispatcher;
+  std::unique_ptr<Envoy::Runtime::ScopedLoaderSingleton> loader =
+      std::make_unique<Envoy::Runtime::ScopedLoaderSingleton>(Envoy::Runtime::LoaderPtr{
+          new Envoy::Runtime::LoaderImpl(dispatcher, tls_, {}, local_info_, init_manager_, store_,
+                                         rand_, validation_visitor_, api_)});
   worker.start();
   worker.waitForCompletion();
   EXPECT_CALL(tls_, shutdownThread()).Times(1);

@@ -11,6 +11,9 @@
 #include "client/client_worker_impl.h"
 
 #include "test/mocks.h"
+#include "test/mocks/init/mocks.h"
+#include "test/mocks/local_info/mocks.h"
+#include "test/mocks/protobuf/mocks.h"
 #include "test/mocks/thread_local/mocks.h"
 #include "test/test_common/thread_factory_for_test.h"
 
@@ -26,6 +29,9 @@ public:
   ClientWorkerTest()
       : api_(Envoy::Thread::threadFactoryForTest(), store_, time_system_, file_system_),
         thread_id_(std::this_thread::get_id()) {
+    loader_ = std::make_unique<Envoy::Runtime::ScopedLoaderSingleton>(Envoy::Runtime::LoaderPtr{
+        new Envoy::Runtime::LoaderImpl(dispatcher_, tls_, {}, local_info_, init_manager_, store_,
+                                       rand_, validation_visitor_, api_)});
     benchmark_client_ = new MockBenchmarkClient();
     sequencer_ = new MockSequencer();
 
@@ -64,6 +70,10 @@ public:
   Envoy::Runtime::RandomGeneratorImpl rand_;
   NiceMock<Envoy::Event::MockDispatcher> dispatcher_;
   Envoy::Filesystem::InstanceImplPosix file_system_;
+  std::unique_ptr<Envoy::Runtime::ScopedLoaderSingleton> loader_;
+  NiceMock<Envoy::LocalInfo::MockLocalInfo> local_info_;
+  Envoy::Init::MockManager init_manager_;
+  NiceMock<Envoy::ProtobufMessage::MockValidationVisitor> validation_visitor_;
 };
 
 TEST_F(ClientWorkerTest, BasicTest) {
