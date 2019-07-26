@@ -42,11 +42,13 @@ using namespace std::chrono_literals;
 namespace Nighthawk {
 namespace Client {
 
-ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system)
+ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
+                         const PlatformUtil& platform_util)
     : time_system_(time_system), store_factory_(options), store_(store_factory_.create()),
       api_(thread_factory_, *store_, time_system_, file_system_),
       dispatcher_(api_.allocateDispatcher()), cleanup_([this] { tls_.shutdownGlobalThreading(); }),
-      benchmark_client_factory_(options), sequencer_factory_(options), options_(options) {
+      benchmark_client_factory_(options), sequencer_factory_(options), options_(options),
+      platform_util_(platform_util) {
   configureComponentLogLevels(spdlog::level::from_str(
       nighthawk::client::Verbosity::VerbosityOptions_Name(options_.verbosity())));
   tls_.registerThread(*dispatcher_, true);
@@ -92,7 +94,7 @@ void ProcessImpl::configureComponentLogLevels(spdlog::level::level_enum level) {
 }
 
 uint32_t ProcessImpl::determineConcurrency() const {
-  uint32_t cpu_cores_with_affinity = PlatformUtils::determineCpuCoresWithAffinity();
+  uint32_t cpu_cores_with_affinity = platform_util_.determineCpuCoresWithAffinity();
   if (cpu_cores_with_affinity == 0) {
     ENVOY_LOG(warn, "Failed to determine the number of cpus with affinity to our thread.");
     cpu_cores_with_affinity = std::thread::hardware_concurrency();

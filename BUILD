@@ -8,6 +8,15 @@ load(
 
 envoy_package()
 
+filegroup(
+    name = "nighthawk",
+    srcs = [
+        ":nighthawk_client",
+        ":nighthawk_service",
+        ":nighthawk_test_server",
+    ],
+)
+
 envoy_cc_binary(
     name = "nighthawk_client",
     repository = "@envoy",

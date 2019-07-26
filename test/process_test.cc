@@ -4,6 +4,7 @@
 #include "client/process_impl.h"
 
 #include "test/client/utility.h"
+#include "test/mocks.h"
 #include "test/test_common/utility.h"
 
 #include "gtest/gtest.h"
@@ -19,14 +20,12 @@ namespace Client {
 class ProcessTest : public testing::Test {
 public:
   void runProcess() {
-
     OptionsPtr options = TestUtility::createOptionsImpl(
         fmt::format("foo --address-family v4 --duration 2 --rps 10 http://127.0.0.1/"));
-
-    ProcessPtr process = std::make_unique<ProcessImpl>(*options, time_system_);
+    PlatformUtilImpl platform_util;
+    ProcessPtr process = std::make_unique<ProcessImpl>(*options, time_system_, platform_util);
     OutputCollectorFactoryImpl output_format_factory(time_system_, *options);
     auto collector = output_format_factory.create();
-
     EXPECT_TRUE(process->run(*collector));
     process.reset();
   }
@@ -37,6 +36,20 @@ public:
 TEST_F(ProcessTest, TwoProcesssInSequence) {
   runProcess();
   runProcess();
+}
+
+TEST_F(ProcessTest, CpuAffinityDetectionFailure) {
+  OptionsPtr options = TestUtility::createOptionsImpl(
+      fmt::format("foo --address-family v4 --duration 2 --rps 10 http://127.0.0.1/"));
+  MockPlatformUtil platform_util;
+  ProcessPtr process = std::make_unique<ProcessImpl>(*options, time_system_, platform_util);
+  OutputCollectorFactoryImpl output_format_factory(time_system_, *options);
+  auto collector = output_format_factory.create();
+  // Will return 0, which happens on failure in the implementation.
+  EXPECT_CALL(platform_util, determineCpuCoresWithAffinity);
+  EXPECT_TRUE(process->run(*collector));
+  // TODO(oschaaf): check the proto output that we reflect the concurreny we actually used.
+  // I'm not sure we do so right now.
 }
 
 } // namespace Client
