@@ -122,7 +122,7 @@ public:
     client_->setConnectionTimeout(10s);
     client_->setMaxPendingRequests(max_pending);
     client_->setConnectionLimit(connection_limit);
-    client_->initialize(runtime_);
+    client_->initialize(runtime_, tls_);
 
     const uint64_t amount = amount_of_request;
     uint64_t inflight_response_count = 0;
@@ -351,7 +351,7 @@ TEST_P(BenchmarkClientNoServerTest, H1MultiConnectionFailure) {
 TEST_P(BenchmarkClientHttpTest, EnableLatencyMeasurement) {
   setupBenchmarkClient("/", false, false);
   int callback_count = 0;
-  client_->initialize(runtime_);
+  client_->initialize(runtime_, tls_);
 
   EXPECT_EQ(false, client_->measureLatencies());
   EXPECT_EQ(true, client_->tryStartOne([&]() {
@@ -418,7 +418,7 @@ TEST_P(BenchmarkClientHttpTest, StatusTrackingInOnComplete) {
 TEST_P(BenchmarkClientHttpTest, ConnectionPrefetching) {
   setupBenchmarkClient("/", false, true);
   client_->setConnectionLimit(50);
-  client_->initialize(runtime_);
+  client_->initialize(runtime_, tls_);
   EXPECT_EQ(true, client_->tryStartOne([&]() { dispatcher_->exit(); }));
   dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
   EXPECT_EQ(50, getCounter("upstream_cx_total"));
@@ -436,7 +436,7 @@ TEST_P(BenchmarkClientHttpTest, CapRequestConcurrency) {
   client_->setMaxPendingRequests(requests);
   client_->setConnectionLimit(requests);
   client_->setMaxActiveRequests(1);
-  client_->initialize(runtime_);
+  client_->initialize(runtime_, tls_);
 
   std::function<void()> f = [this, &inflight_response_count]() {
     --inflight_response_count;
@@ -464,7 +464,7 @@ TEST_P(BenchmarkClientHttpsTest, MaxRequestsPerConnection) {
   client_->setConnectionLimit(requests);
   client_->setMaxActiveRequests(1024);
   client_->setMaxRequestsPerConnection(1);
-  client_->initialize(runtime_);
+  client_->initialize(runtime_, tls_);
 
   std::function<void()> f = [this, &inflight_response_count]() {
     --inflight_response_count;
@@ -497,7 +497,7 @@ TEST_P(BenchmarkClientHttpTest, RequestMethodPost) {
       "d",
       client_->requestHeaders().get(Envoy::Http::LowerCaseString("c"))->value().getStringView());
 
-  client_->initialize(runtime_);
+  client_->initialize(runtime_, tls_);
 
   EXPECT_EQ(true, client_->tryStartOne([&]() { dispatcher_->exit(); }));
   dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);

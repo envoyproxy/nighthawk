@@ -7,6 +7,7 @@
 #include "envoy/common/time.h"
 #include "envoy/event/dispatcher.h"
 #include "envoy/stats/store.h"
+#include "envoy/thread_local/thread_local.h"
 
 #include "nighthawk/client/benchmark_client.h"
 #include "nighthawk/client/factories.h"
@@ -133,7 +134,7 @@ class MockBenchmarkClient : public Client::BenchmarkClient {
 public:
   MockBenchmarkClient();
 
-  MOCK_METHOD1(initialize, void(Envoy::Runtime::Loader&));
+  MOCK_METHOD2(initialize, void(Envoy::Runtime::Loader&, Envoy::ThreadLocal::Instance&));
   MOCK_METHOD0(terminate, void());
   MOCK_METHOD1(setMeasureLatencies, void(bool));
   MOCK_CONST_METHOD0(statistics, StatisticPtrMap());

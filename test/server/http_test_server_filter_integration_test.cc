@@ -54,7 +54,7 @@ public:
         type,
         dispatcher->createClientConnection(addr, Envoy::Network::Address::InstanceConstSharedPtr(),
                                            Envoy::Network::Test::createRawBufferSocket(), nullptr),
-        host_description, *dispatcher, false /* strict header validation */);
+        host_description, *dispatcher);
     Envoy::BufferingStreamDecoderPtr response(
         new Envoy::BufferingStreamDecoder([&client, &dispatcher]() -> void {
           client.close();
