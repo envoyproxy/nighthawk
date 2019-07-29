@@ -28,17 +28,17 @@ function do_clang_tidy() {
 }
 
 function do_coverage() {
-  setup_clang_toolchain
-  echo "bazel coverage build with tests ${TEST_TARGETS}"
-
-  # Reduce the amount of memory Bazel tries to use to prevent it from launching too many subprocesses.
-  # This should prevent the system from running out of memory and killing tasks. See discussion on
-  # https://github.com/envoyproxy/envoy/pull/5611.
-  [ -z "$CIRCLECI" ] || export BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} --local_ram_resources=12288"
-
-  export TEST_TARGETS="//test/..."
-  test/run_envoy_bazel_coverage.sh ${TEST_TARGETS}
-  exit 0
+    setup_clang_toolchain
+    echo "bazel coverage build with tests ${TEST_TARGETS}"
+    
+    # Reduce the amount of memory Bazel tries to use to prevent it from launching too many subprocesses.
+    # This should prevent the system from running out of memory and killing tasks. See discussion on
+    # https://github.com/envoyproxy/envoy/pull/5611.
+    [ -z "$CIRCLECI" ] || export BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} --local_ram_resources=12288"
+    
+    export TEST_TARGETS="//test/..."
+    test/run_envoy_bazel_coverage.sh ${TEST_TARGETS}
+    exit 0
 }
 
 function setup_gcc_toolchain() {
@@ -146,11 +146,6 @@ export BAZEL_TEST_OPTIONS="${BAZEL_BUILD_OPTIONS} --test_env=HOME --test_env=PYT
 [[ -z "${SRCDIR}" ]] && SRCDIR="${PWD}"
 
 setup_clang_toolchain
-
-
-if [ "$1" == "coverage" ]; then
-    setup_gcc_toolchain
-fi
 
 case "$1" in
     build)
