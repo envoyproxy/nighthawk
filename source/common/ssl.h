@@ -6,6 +6,7 @@
 #include "envoy/network/transport_socket.h"
 
 #include "common/local_info/local_info_impl.h"
+#include "common/network/utility.h"
 #include "common/secret/secret_manager_impl.h"
 #include "common/singleton/manager_impl.h"
 #include "common/thread_local/thread_local_impl.h"
