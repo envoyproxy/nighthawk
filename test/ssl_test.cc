@@ -21,35 +21,35 @@ class SslTest : public Test {};
 TEST_F(SslTest, FakeAdminCoverage) {
   FakeAdmin admin;
   Envoy::Server::Admin::HandlerCb cb;
-  EXPECT_DEATH(admin.addHandler("", "", cb, false, false), "");
-  EXPECT_DEATH(admin.removeHandler(""), "");
+  EXPECT_NO_FATAL_FAILURE(admin.addHandler("", "", cb, false, false));
+  EXPECT_NO_FATAL_FAILURE(admin.removeHandler(""));
   EXPECT_DEATH(admin.socket(), "");
   EXPECT_DEATH(admin.getConfigTracker(), "");
-  EXPECT_DEATH(admin.startHttpListener("", "", {}, {}, {}), "");
+  EXPECT_NO_FATAL_FAILURE(admin.startHttpListener("", "", {}, {}, {}));
   Envoy::Http::HeaderMapImpl map;
   std::string foo;
-  EXPECT_DEATH(admin.request("", "", map, foo), "");
-  EXPECT_DEATH(admin.addListenerToHandler(nullptr), "");
+  EXPECT_NO_FATAL_FAILURE(admin.request("", "", map, foo));
+  EXPECT_NO_FATAL_FAILURE(admin.addListenerToHandler(nullptr));
 }
 
 TEST_F(SslTest, FakeClusterManager) {
   FakeClusterManager manager;
-  EXPECT_DEATH(manager.addOrUpdateCluster({}, {}), "");
-  EXPECT_DEATH(manager.setInitializedCb([]() {}), "");
+  EXPECT_NO_FATAL_FAILURE(manager.addOrUpdateCluster({}, {}));
+  EXPECT_NO_FATAL_FAILURE(manager.setInitializedCb([]() {}));
   EXPECT_DEATH(manager.clusters(), "");
-  EXPECT_DEATH(manager.get(""), "");
-  EXPECT_DEATH(manager.httpConnPoolForCluster("", {}, {}, {}), "");
-  EXPECT_DEATH(manager.tcpConnPoolForCluster("", {}, {}, {}), "");
+  EXPECT_NO_FATAL_FAILURE(manager.get(""));
+  EXPECT_NO_FATAL_FAILURE(manager.httpConnPoolForCluster("", {}, {}, {}));
+  EXPECT_NO_FATAL_FAILURE(manager.tcpConnPoolForCluster("", {}, {}, {}));
   EXPECT_DEATH(manager.tcpConnForCluster("", {}, {}), "");
   EXPECT_DEATH(manager.httpAsyncClientForCluster(""), "");
-  EXPECT_DEATH(manager.removeCluster(""), "");
-  EXPECT_DEATH(manager.shutdown(), "");
+  EXPECT_NO_FATAL_FAILURE(manager.removeCluster(""));
+  EXPECT_NO_FATAL_FAILURE(manager.shutdown());
   EXPECT_DEATH(manager.bindConfig(), "");
   EXPECT_DEATH(manager.adsMux(), "");
   EXPECT_DEATH(manager.grpcAsyncClientManager(), "");
-  EXPECT_DEATH(manager.localClusterName(), "");
+  EXPECT_NO_FATAL_FAILURE(manager.localClusterName());
   Envoy::Upstream::MockClusterUpdateCallbacks cb;
-  EXPECT_DEATH(manager.addThreadLocalClusterUpdateCallbacks(cb), "");
+  EXPECT_NO_FATAL_FAILURE(manager.addThreadLocalClusterUpdateCallbacks(cb));
   EXPECT_DEATH(manager.clusterManagerFactory(), "");
   EXPECT_DEATH(manager.subscriptionFactory(), "");
 }
@@ -78,8 +78,8 @@ TEST_F(SslTest, MinimalTransportSocketFactoryContextTest) {
   EXPECT_NO_FATAL_FAILURE(mtsfc.random());
   EXPECT_NO_FATAL_FAILURE(mtsfc.stats());
   Envoy::Init::ManagerImpl manager("test");
-  EXPECT_DEATH(mtsfc.setInitManager(manager), "");
-  EXPECT_DEATH(mtsfc.initManager(), "");
+  EXPECT_NO_FATAL_FAILURE(mtsfc.setInitManager(manager));
+  EXPECT_NO_FATAL_FAILURE(mtsfc.initManager());
   EXPECT_NO_FATAL_FAILURE(mtsfc.singletonManager());
   EXPECT_NO_FATAL_FAILURE(mtsfc.threadLocal());
   EXPECT_NO_FATAL_FAILURE(mtsfc.api());

@@ -13,6 +13,7 @@ envoy_cc_library(
     srcs = [
         "rate_limiter_impl.cc",
         "sequencer_impl.cc",
+        "ssl.cc",
         "statistic_impl.cc",
         "uri_impl.cc",
         "utility.cc",
