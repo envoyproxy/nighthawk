@@ -71,7 +71,7 @@ public:
   }
 
   // BenchmarkClient
-  void initialize(Envoy::Runtime::Loader& runtime) override;
+  void initialize(Envoy::Runtime::Loader& runtime, Envoy::ThreadLocal::Instance& tls) override;
   void terminate() override;
   StatisticPtrMap statistics() const override;
   bool measureLatencies() const override { return measure_latencies_; }

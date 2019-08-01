@@ -60,13 +60,14 @@ bool UriImpl::performDnsLookup(Envoy::Event::Dispatcher& dispatcher,
 
   Envoy::Network::ActiveDnsQuery* active_dns_query_ = dns_resolver->resolve(
       hostname, dns_lookup_family,
-      [this, &dispatcher, &active_dns_query_](
-          const std::list<Envoy::Network::Address::InstanceConstSharedPtr>&& address_list) -> void {
+      [this, &dispatcher,
+       &active_dns_query_](std::list<Envoy::Network::DnsResponse>&& response) -> void {
         active_dns_query_ = nullptr;
-        if (!address_list.empty()) {
-          address_ = Envoy::Network::Utility::getAddressWithPort(*address_list.front(), port());
+        if (!response.empty()) {
+          address_ =
+              Envoy::Network::Utility::getAddressWithPort(*response.front().address_, port());
           ENVOY_LOG(debug, "DNS resolution complete for {} ({} entries, using {}).",
-                    hostWithoutPort(), address_list.size(), address_->asString());
+                    hostWithoutPort(), response.size(), address_->asString());
         }
         dispatcher.exit();
       });
