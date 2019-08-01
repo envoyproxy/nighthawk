@@ -20,8 +20,9 @@ public:
   /**
    * Initialize will be called on the worker thread after it has started.
    * @param runtime to be used during initialization.
+   * @param thread local storage to be used.
    */
-  virtual void initialize(Envoy::Runtime::Loader& runtime) PURE;
+  virtual void initialize(Envoy::Runtime::Loader& runtime, Envoy::ThreadLocal::Instance& tls) PURE;
 
   /**
    * Terminate will be called on the worker thread before it ends.
@@ -70,7 +71,7 @@ public:
    * Sets the request method to use when sending request.
    * @param request_method to set.
    */
-  virtual void setRequestMethod(absl::string_view request_method) PURE;
+  virtual void setRequestMethod(envoy::api::v2::core::RequestMethod request_method) PURE;
 
   /**
    * Sets request header named 'key' to the specified value.

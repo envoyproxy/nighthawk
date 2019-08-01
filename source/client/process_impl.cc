@@ -19,7 +19,10 @@
 #include "common/event/real_time_system.h"
 #include "common/filesystem/filesystem_impl.h"
 #include "common/frequency.h"
+#include "common/init/manager_impl.h"
+#include "common/local_info/local_info_impl.h"
 #include "common/network/utility.h"
+#include "common/protobuf/message_validator_impl.h"
 #include "common/runtime/runtime_impl.h"
 #include "common/thread_local/thread_local_impl.h"
 #include "common/uri_impl.h"
@@ -30,6 +33,7 @@
 #include "client/factories_impl.h"
 #include "client/options_impl.h"
 
+#include "api/client/options.pb.h"
 #include "api/client/output.pb.h"
 #include "ares.h"
 
@@ -38,12 +42,15 @@ using namespace std::chrono_literals;
 namespace Nighthawk {
 namespace Client {
 
-ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system)
+ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
+                         const PlatformUtil& platform_util)
     : time_system_(time_system), store_factory_(options), store_(store_factory_.create()),
       api_(thread_factory_, *store_, time_system_, file_system_),
       dispatcher_(api_.allocateDispatcher()), cleanup_([this] { tls_.shutdownGlobalThreading(); }),
-      benchmark_client_factory_(options), sequencer_factory_(options), options_(options) {
-  configureComponentLogLevels(spdlog::level::from_str(options_.verbosity()));
+      benchmark_client_factory_(options), sequencer_factory_(options), options_(options),
+      platform_util_(platform_util) {
+  configureComponentLogLevels(spdlog::level::from_str(
+      nighthawk::client::Verbosity::VerbosityOptions_Name(options_.verbosity())));
   tls_.registerThread(*dispatcher_, true);
 }
 
@@ -87,7 +94,7 @@ void ProcessImpl::configureComponentLogLevels(spdlog::level::level_enum level) {
 }
 
 uint32_t ProcessImpl::determineConcurrency() const {
-  uint32_t cpu_cores_with_affinity = PlatformUtils::determineCpuCoresWithAffinity();
+  uint32_t cpu_cores_with_affinity = platform_util_.determineCpuCoresWithAffinity();
   if (cpu_cores_with_affinity == 0) {
     ENVOY_LOG(warn, "Failed to determine the number of cpus with affinity to our thread.");
     cpu_cores_with_affinity = std::thread::hardware_concurrency();
@@ -177,18 +184,22 @@ ProcessImpl::mergeWorkerCounters(const std::vector<ClientWorkerPtr>& workers) co
 bool ProcessImpl::run(OutputCollector& collector) {
   UriImpl uri(options_.uri());
   try {
-    uri.resolve(*dispatcher_, Utility::parseAddressFamilyOptionString(options_.addressFamily()));
+    uri.resolve(*dispatcher_, Utility::translateFamilyOptionString(options_.addressFamily()));
   } catch (UriException) {
     return false;
   }
   const std::vector<ClientWorkerPtr>& workers = createWorkers(uri, determineConcurrency());
+  Envoy::Runtime::RandomGeneratorImpl generator;
+  auto local_info = Envoy::LocalInfo::LocalInfoImpl(
+      {}, Network::Utility::getLocalAddress(Envoy::Network::Address::IpVersion::v4),
+      "nighthawk_service_zone", "nighthawk_service_cluster", "nighthawk_service_node");
+  Envoy::Init::ManagerImpl init_manager("nighthawk_init_manager");
+  Envoy::Runtime::ScopedLoaderSingleton loader(Envoy::Runtime::LoaderPtr{
+      new Envoy::Runtime::LoaderImpl(*dispatcher_, tls_, {}, local_info, init_manager, *store_,
+                                     generator,
+                                     Envoy::ProtobufMessage::getStrictValidationVisitor(), api_)});
 
   bool ok = true;
-  Envoy::Runtime::RandomGeneratorImpl generator;
-  Envoy::Runtime::ScopedLoaderSingleton loader(
-      Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl(
-          *dispatcher_, tls_, {}, "foo-cluster", *store_, generator, api_)});
-
   for (auto& w : workers_) {
     w->start();
   }

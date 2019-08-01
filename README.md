@@ -25,13 +25,13 @@ For building the Nighthawk test server, see [here](source/server/README.md).
 ### Test it
 
 ```bash
-bazel test -c dbg //test:nighthawk_test
+bazel test -c dbg //test/... //integration/...
 ```
 
 ### Build it
 
 ```bash
-bazel build -c opt //:nighthawk_client
+bazel build -c opt //:nighthawk
 ```
 
 ### Using the CLI
@@ -39,23 +39,47 @@ bazel build -c opt //:nighthawk_client
 ```bash
 ➜ bazel-bin/nighthawk_client --help
 
-USAGE: 
+USAGE:
 
-   bazel-bin/nighthawk_client  [--request-body-size <uint32_t>]
+   bazel-bin/nighthawk_client  [--sequencer-idle-strategy <spin|poll
+                               |sleep>] [--max-requests-per-connection
+                               <uint32_t>] [--max-active-requests
+                               <uint32_t>] [--max-pending-requests
+                               <uint32_t>] [--tls-context <string>]
+                               [--request-body-size <uint32_t>]
                                [--request-header <string>] ... 
                                [--request-method <GET|HEAD|POST|PUT|DELETE
                                |CONNECT|OPTIONS|TRACE>] [--address-family
-                               <auto|v4|v6>] [--burst-size <uint64_t>]
+                               <auto|v4|v6>] [--burst-size <uint32_t>]
                                [--prefetch-connections] [--output-format
                                <human|yaml|json>] [-v <trace|debug|info
                                |warn|error|critical>] [--concurrency
-                               <string>] [--h2] [--timeout <uint64_t>]
-                               [--duration <uint64_t>] [--connections
-                               <uint64_t>] [--rps <uint64_t>] [--]
+                               <string>] [--h2] [--timeout <uint32_t>]
+                               [--duration <uint32_t>] [--connections
+                               <uint32_t>] [--rps <uint32_t>] [--]
                                [--version] [-h] <uri format>
 
 
 Where: 
+
+   --sequencer-idle-strategy <spin|poll|sleep>
+     Choose between using a busy spin/yield loop or have the thread poll or
+     sleep while waiting for the next scheduled request (default: spin).
+
+   --max-requests-per-connection <uint32_t>
+     Max requests per connection (default: 4294937295).
+
+   --max-active-requests <uint32_t>
+     Max active requests (default: 4294937295).
+
+   --max-pending-requests <uint32_t>
+     Max pending requests (default: 1, no client side queuing. Specifying
+     any other value will allow client-side queuing of requests).
+
+   --tls-context <string>
+     Tls context configuration in yaml or json. Example
+     (json):{common_tls_context:{tls_params:{cipher_suites:["-ALL:ECDHE-RSA
+     -AES128-SHA"]}}}
 
    --request-body-size <uint32_t>
      Size of the request body to send. NH will send a number of consecutive
@@ -73,9 +97,8 @@ Where:
      Network addres family preference. Possible values: [auto, v4, v6]. The
      default output format is 'v4'.
 
-   --burst-size <uint64_t>
-     Release requests in bursts of the specified size (default: 0, no
-     bursting).
+   --burst-size <uint32_t>
+     Release requests in bursts of the specified size (default: 0).
 
    --prefetch-connections
      Prefetch connections before benchmarking (HTTP/1 only).
@@ -93,25 +116,25 @@ Where:
      The number of concurrent event loops that should be used. Specify
      'auto' to let Nighthawk leverage all vCPUs that have affinity to the
      Nighthawk process.Note that increasing this results in an effective
-     load multiplier combined with the configured-- rps and --connections
-     values.Default : 1. 
+     load multiplier combined with the configured --rps and --connections
+     values. Default: 1. 
 
    --h2
      Use HTTP/2
 
-   --timeout <uint64_t>
+   --timeout <uint32_t>
      Timeout period in seconds used for both connection timeout and grace
      period waiting for lagging responses to come in after the test run is
-     done. Default: 5.
+     done. Default: 30.
 
-   --duration <uint64_t>
+   --duration <uint32_t>
      The number of seconds that the test should run. Default: 5.
 
-   --connections <uint64_t>
+   --connections <uint32_t>
      The number of connections per event loop that the test should
      maximally use. HTTP/1 only. Default: 1.
 
-   --rps <uint64_t>
+   --rps <uint32_t>
      The target requests-per-second rate. Default: 5.
 
    --,  --ignore_rest
@@ -128,8 +151,41 @@ Where:
      in case of https no certificates are validated.
 
 
-   Nighthawk, a L7 (HTTP/HTTPS/HTTP2) performance characterization tool.
+   L7 (HTTP/HTTPS/HTTP2) performance characterization tool.
 
+```
+
+### Nighthawk gRPC service
+
+The gRPC service can be used to start a server which is able to perform back-to-back benchmark runs upon request. The service interface definition [can be found here.](https://github.com/envoyproxy/nighthawk/blob/59a37568783272a6438b5697277d4e56aa16ebbe/api/client/service.proto) 
+
+
+```bash
+➜ bazel-bin/nighthawk_service --help
+
+USAGE: 
+
+   bazel-bin/nighthawk_service  [--listen <address:port>] [--] [--version]
+                                [-h]
+
+
+Where: 
+
+   --listen <address:port>
+     The address:port on which the Nighthawk gRPC service should listen.
+     Default: 0.0.0.0:8443.
+
+   --,  --ignore_rest
+     Ignores the rest of the labeled arguments following this flag.
+
+   --version
+     Displays version information and exits.
+
+   -h,  --help
+     Displays usage information and exits.
+
+
+   L7 (HTTP/HTTPS/HTTP2) performance characterization tool.
 
 ```
 

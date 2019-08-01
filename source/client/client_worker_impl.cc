@@ -22,7 +22,7 @@ void ClientWorkerImpl::simpleWarmup() {
 }
 
 void ClientWorkerImpl::work() {
-  benchmark_client_->initialize(*Envoy::Runtime::LoaderSingleton::getExisting());
+  benchmark_client_->initialize(*Envoy::Runtime::LoaderSingleton::getExisting(), tls_);
   simpleWarmup();
   benchmark_client_->setMeasureLatencies(true);
   sequencer_->start();

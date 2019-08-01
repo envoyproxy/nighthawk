@@ -18,7 +18,6 @@ envoy_cc_library(
         "options_impl.cc",
         "output_collector_impl.cc",
         "process_impl.cc",
-        "service_impl.cc",
         "stream_decoder.cc",
     ],
     hdrs = [
@@ -29,7 +28,6 @@ envoy_cc_library(
         "options_impl.h",
         "output_collector_impl.h",
         "process_impl.h",
-        "service_impl.h",
         "stream_decoder.h",
     ],
     repository = "@envoy",
@@ -47,5 +45,23 @@ envoy_cc_library(
         "@envoy//source/common/runtime:runtime_lib",
         "@envoy//source/exe:envoy_common_lib",
         "@envoy//source/exe:process_wide_lib",
+        "@envoy_api//envoy/api/v2:cds_export_cc",
+    ],
+)
+
+envoy_cc_library(
+    name = "nighthawk_service_lib",
+    srcs = [
+        "service_impl.cc",
+        "service_main.cc",
+    ],
+    hdrs = [
+        "service_impl.h",
+        "service_main.h",
+    ],
+    repository = "@envoy",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":nighthawk_client_lib",
     ],
 )

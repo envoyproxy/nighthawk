@@ -23,6 +23,8 @@ public:
 };
 
 class OptionsImplIntTest : public OptionsImplTest, public WithParamInterface<const char*> {};
+class OptionsImplIntTestNonZeroable : public OptionsImplTest,
+                                      public WithParamInterface<const char*> {};
 
 TEST_F(OptionsImplTest, BogusInput) {
   // When just passing the non-existing argument --foo it would be interpreted as a
@@ -34,12 +36,16 @@ TEST_F(OptionsImplTest, BogusInput) {
 
 // This test should cover every option we offer.
 TEST_F(OptionsImplTest, All) {
-  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(
-      fmt::format("{} --rps 4 --connections 5 --duration 6 --timeout 7 --h2 "
-                  "--concurrency 8 --verbosity error --output-format json --prefetch-connections "
-                  "--burst-size 13 --address-family v6 --request-method POST --request-body-size "
-                  "1234 --request-header f1:b1 --request-header f2:b2 {}",
-                  client_name_, good_test_uri_));
+  Envoy::MessageUtil util;
+  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(fmt::format(
+      "{} --rps 4 --connections 5 --duration 6 --timeout 7 --h2 "
+      "--concurrency 8 --verbosity error --output-format yaml --prefetch-connections "
+      "--burst-size 13 --address-family v6 --request-method POST --request-body-size 1234 "
+      "--tls-context {} --request-header f1:b1 --request-header f2:b2 {} --max-pending-requests 10 "
+      "--max-active-requests 11 --max-requests-per-connection 12 --sequencer-idle-strategy sleep",
+      client_name_,
+      "{common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"]}}}",
+      good_test_uri_));
 
   EXPECT_EQ(4, options->requestsPerSecond());
   EXPECT_EQ(5, options->connections());
@@ -47,50 +53,58 @@ TEST_F(OptionsImplTest, All) {
   EXPECT_EQ(7s, options->timeout());
   EXPECT_EQ(true, options->h2());
   EXPECT_EQ("8", options->concurrency());
-  EXPECT_EQ("error", options->verbosity());
-  EXPECT_EQ("json", options->outputFormat());
+  EXPECT_EQ(nighthawk::client::Verbosity::ERROR, options->verbosity());
+  EXPECT_EQ(nighthawk::client::OutputFormat::YAML, options->outputFormat());
   EXPECT_EQ(true, options->prefetchConnections());
   EXPECT_EQ(13, options->burstSize());
-  EXPECT_EQ("v6", options->addressFamily());
+  EXPECT_EQ(nighthawk::client::AddressFamily::V6, options->addressFamily());
   EXPECT_EQ(good_test_uri_, options->uri());
-  EXPECT_EQ("POST", options->requestMethod());
+  EXPECT_EQ(envoy::api::v2::core::RequestMethod::POST, options->requestMethod());
   const std::vector<std::string> expected_headers = {"f1:b1", "f2:b2"};
   EXPECT_EQ(expected_headers, options->requestHeaders());
   EXPECT_EQ(1234, options->requestBodySize());
+  EXPECT_EQ("common_tls_context {\n  tls_params {\n    cipher_suites: "
+            "\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"\n  }\n}\n",
+            options->tlsContext().DebugString());
+  EXPECT_EQ(10, options->maxPendingRequests());
+  EXPECT_EQ(11, options->maxActiveRequests());
+  EXPECT_EQ(12, options->maxRequestsPerConnection());
+  EXPECT_EQ(nighthawk::client::SequencerIdleStrategy::SLEEP, options->sequencerIdleStrategy());
 
   // Check that our conversion to CommandLineOptionsPtr makes sense.
   CommandLineOptionsPtr cmd = options->toCommandLineOptions();
-  EXPECT_EQ(cmd->requests_per_second(), options->requestsPerSecond());
-  EXPECT_EQ(cmd->connections(), options->connections());
+  EXPECT_EQ(cmd->requests_per_second().value(), options->requestsPerSecond());
+  EXPECT_EQ(cmd->connections().value(), options->connections());
   EXPECT_EQ(cmd->duration().seconds(), options->duration().count());
   EXPECT_EQ(cmd->timeout().seconds(), options->timeout().count());
-  EXPECT_EQ(cmd->h2(), options->h2());
-  EXPECT_EQ(cmd->concurrency(), options->concurrency());
-  EXPECT_EQ(cmd->verbosity(), options->verbosity());
-  EXPECT_EQ(cmd->output_format(), options->outputFormat());
-  EXPECT_EQ(cmd->prefetch_connections(), options->prefetchConnections());
-  EXPECT_EQ(cmd->burst_size(), options->burstSize());
-  EXPECT_EQ(cmd->address_family(), options->addressFamily());
-  EXPECT_EQ(cmd->uri(), options->uri());
-  auto request_options = cmd->request_options();
-  envoy::api::v2::core::RequestMethod method =
-      envoy::api::v2::core::RequestMethod::METHOD_UNSPECIFIED;
-  envoy::api::v2::core::RequestMethod_Parse(options->requestMethod(), &method);
-  EXPECT_EQ(request_options.request_method(), method);
-  EXPECT_EQ(expected_headers.size(), request_options.request_headers_size());
+  EXPECT_EQ(cmd->h2().value(), options->h2());
+  EXPECT_EQ(cmd->concurrency().value(), options->concurrency());
+  EXPECT_EQ(cmd->verbosity().value(), options->verbosity());
+  EXPECT_EQ(cmd->output_format().value(), options->outputFormat());
+  EXPECT_EQ(cmd->prefetch_connections().value(), options->prefetchConnections());
+  EXPECT_EQ(cmd->burst_size().value(), options->burstSize());
+  EXPECT_EQ(cmd->address_family().value(), options->addressFamily());
+  EXPECT_EQ(cmd->uri().value(), options->uri());
+  EXPECT_EQ(cmd->request_options().request_method(), cmd->request_options().request_method());
+  EXPECT_EQ(expected_headers.size(), cmd->request_options().request_headers_size());
+
   int i = 0;
-  for (const auto& header : request_options.request_headers()) {
+  for (const auto& header : cmd->request_options().request_headers()) {
     EXPECT_EQ(expected_headers[i++], header.header().key() + ":" + header.header().value());
   }
 
-  EXPECT_EQ(request_options.request_body_size(), options->requestBodySize());
+  EXPECT_EQ(cmd->request_options().request_body_size().value(), options->requestBodySize());
+  EXPECT_TRUE(util(cmd->tls_context(), options->tlsContext()));
+  EXPECT_EQ(cmd->max_pending_requests().value(), options->maxPendingRequests());
+  EXPECT_EQ(cmd->max_active_requests().value(), options->maxActiveRequests());
+  EXPECT_EQ(cmd->max_requests_per_connection().value(), options->maxRequestsPerConnection());
+  EXPECT_EQ(cmd->sequencer_idle_strategy().value(), options->sequencerIdleStrategy());
 
   // Now we construct a new options from the proto we created above. This should result in an
   // OptionsImpl instance equivalent to options. We test that by converting both to yaml strings,
   // expecting them to be equal. This should provide helpful output when the test fails by showing
   // the unexpected (yaml) diff.
   OptionsImpl options_from_proto(*cmd);
-  Envoy::MessageUtil util;
   std::string s1 = Envoy::MessageUtil::getYamlStringFromMessage(
       *(options_from_proto.toCommandLineOptions()), true, true);
   std::string s2 = Envoy::MessageUtil::getYamlStringFromMessage(*cmd, true, true);
@@ -119,13 +133,20 @@ TEST_F(OptionsImplTest, NoArguments) {
                           MalformedArgvException, "Required argument missing: uri");
 }
 
-// Check standard expectations for any integer values options we offer.
-TEST_P(OptionsImplIntTest, IntOptionsBadValuesThrow) {
+TEST_P(OptionsImplIntTestNonZeroable, NonZeroableOptions) {
   const char* option_name = GetParam();
   EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{} {} --{} 0", client_name_,
                                                                      good_test_uri_, option_name)),
-                          MalformedArgvException,
-                          fmt::format("Invalid value for --{}", option_name));
+                          std::exception, "Proto constraint validation failed");
+}
+
+INSTANTIATE_TEST_SUITE_P(NonZeroableIntOptionTests, OptionsImplIntTestNonZeroable,
+                         Values("rps", "connections", "duration", "max-pending-requests",
+                                "max-active-requests", "max-requests-per-connection"));
+
+// Check standard expectations for any integer values options we offer.
+TEST_P(OptionsImplIntTest, IntOptionsBadValuesTest) {
+  const char* option_name = GetParam();
   EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{} {} --{} -1", client_name_,
                                                                      good_test_uri_, option_name)),
                           MalformedArgvException,
@@ -139,7 +160,9 @@ TEST_P(OptionsImplIntTest, IntOptionsBadValuesThrow) {
 }
 
 INSTANTIATE_TEST_SUITE_P(IntOptionTests, OptionsImplIntTest,
-                         Values("rps", "connections", "duration", "timeout"));
+                         Values("rps", "connections", "duration", "timeout", "request-body-size",
+                                "burst-size", "max-pending-requests", "max-active-requests",
+                                "max-requests-per-connection"));
 
 // Test behaviour of the boolean valued --h2 flag.
 TEST_F(OptionsImplTest, H2Flag) {
@@ -194,6 +217,16 @@ TEST_F(OptionsImplTest, BadConcurrencyValuesThrow) {
       MalformedArgvException, "Value out of range: --concurrency");
 }
 
+// Test a relatively large uint value to see if we can get reasonable range
+// when we specced a uint32_t
+// See https://github.com/envoyproxy/nighthawk/pull/88/files#r299572672
+TEST_F(OptionsImplTest, ParserIntRangeTest) {
+  const uint32_t test_value = OptionsImpl::largest_acceptable_uint32_option_value;
+  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(fmt::format(
+      "{} --max-requests-per-connection {}  {} ", client_name_, test_value, good_test_uri_));
+  EXPECT_EQ(test_value, options->maxRequestsPerConnection());
+}
+
 // Test we accept --concurrency auto
 TEST_F(OptionsImplTest, AutoConcurrencyValueParsedOK) {
   std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(
@@ -240,8 +273,6 @@ TEST_F(OptionsImplTest, RequestMethodValuesAreConstrained) {
                           MalformedArgvException, "Value 'foo' does not meet constraint");
 }
 
-/// ----
-
 class OptionsImplAddressFamilyTest : public OptionsImplTest,
                                      public WithParamInterface<const char*> {};
 
@@ -272,9 +303,40 @@ TEST_F(OptionsImplTest, ProtoConstructorValidation) {
   const auto option =
       TestUtility::createOptionsImpl(fmt::format("{} http://127.0.0.1/", client_name_));
   auto proto = option->toCommandLineOptions();
-  proto->set_requests_per_second(0);
-  EXPECT_THROW_WITH_REGEX(std::make_unique<OptionsImpl>(*proto), Envoy::EnvoyException,
+  proto->mutable_requests_per_second()->set_value(0);
+  EXPECT_THROW_WITH_REGEX(std::make_unique<OptionsImpl>(*proto), MalformedArgvException,
                           "CommandLineOptionsValidationError.RequestsPerSecond");
+}
+
+TEST_F(OptionsImplTest, BadTlsContextSpecification) {
+  // Bad JSON
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                              "{} --tls-context {} http://foo/", client_name_, "{broken_json:")),
+                          MalformedArgvException, "Unable to parse JSON as proto");
+  // Correct JSON, but contents not according to spec.
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(fmt::format("{} --tls-context {} http://foo/", client_name_,
+                                                 "{misspelled_tls_context:{}}")),
+      MalformedArgvException, "envoy.api.v2.auth.UpstreamTlsContext reason INVALID_ARGUMENT");
+}
+
+class OptionsImplSequencerIdleStrategyTest : public OptionsImplTest,
+                                             public WithParamInterface<const char*> {};
+
+// Test we accept all possible --sequencer-idle-strategy values.
+TEST_P(OptionsImplSequencerIdleStrategyTest, SequencerIdleStrategyValues) {
+  TestUtility::createOptionsImpl(
+      fmt::format("{} --sequencer-idle-strategy {} {}", client_name_, GetParam(), good_test_uri_));
+}
+
+INSTANTIATE_TEST_SUITE_P(SequencerIdleStrategyOptionsTest, OptionsImplSequencerIdleStrategyTest,
+                         Values("sleep", "poll", "spin"));
+
+// Test we don't accept any bad -sequencer-idle-strategy values.
+TEST_F(OptionsImplTest, SequencerIdleStrategyValuesAreConstrained) {
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                              "{} {} --sequencer-idle-strategy foo", client_name_, good_test_uri_)),
+                          MalformedArgvException, "--sequencer-idle-strategy");
 }
 
 } // namespace Client

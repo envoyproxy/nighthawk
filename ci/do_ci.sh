@@ -5,7 +5,8 @@ set -e
 export BUILDIFIER_BIN="/usr/local/bin/buildifier"
 
 function do_build () {
-    bazel build $BAZEL_BUILD_OPTIONS --verbose_failures=true //:nighthawk_client //:nighthawk_test_server
+    bazel build $BAZEL_BUILD_OPTIONS --verbose_failures=true //:nighthawk_client //:nighthawk_test_server \
+    //:nighthawk_service
 }
 
 function do_test() {
@@ -26,7 +27,17 @@ function do_clang_tidy() {
 }
 
 function do_coverage() {
-    ci/run_coverage.sh
+    setup_clang_toolchain
+    echo "bazel coverage build with tests ${TEST_TARGETS}"
+    
+    # Reduce the amount of memory Bazel tries to use to prevent it from launching too many subprocesses.
+    # This should prevent the system from running out of memory and killing tasks. See discussion on
+    # https://github.com/envoyproxy/envoy/pull/5611.
+    [ -z "$CIRCLECI" ] || export BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} --local_ram_resources=12288"
+    
+    export TEST_TARGETS="//test/..."
+    test/run_envoy_bazel_coverage.sh ${TEST_TARGETS}
+    exit 0
 }
 
 function setup_gcc_toolchain() {
@@ -95,14 +106,10 @@ if [ -n "$CIRCLECI" ]; then
         mv "${HOME:-/root}/.gitconfig" "${HOME:-/root}/.gitconfig_save"
         echo 1
     fi
-
     NUM_CPUS=8
-    if [ "$1" == "coverage" ]; then
-        NUM_CPUS=6
-    fi
 fi
 
- if grep 'docker\|lxc' /proc/1/cgroup; then
+if grep 'docker\|lxc' /proc/1/cgroup; then
     # Create a fake home. Python site libs tries to do getpwuid(3) if we don't and the CI
     # Docker image gets confused as it has no passwd entry when running non-root
     # unless we do this.
@@ -134,10 +141,6 @@ export BAZEL_TEST_OPTIONS="${BAZEL_BUILD_OPTIONS} --test_env=HOME --test_env=PYT
 [[ -z "${SRCDIR}" ]] && SRCDIR="${PWD}"
 
 setup_clang_toolchain
-
-if [ "$1" == "coverage" ]; then
-    setup_gcc_toolchain
-fi
 
 case "$1" in
     build)

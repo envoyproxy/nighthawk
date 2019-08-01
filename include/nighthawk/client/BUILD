@@ -30,5 +30,6 @@ envoy_basic_cc_library(
         "@envoy//source/common/network:dns_lib",
         "@envoy//source/common/protobuf",
         "@envoy//source/common/runtime:runtime_lib",
+        "@envoy_api//envoy/api/v2:cds_export_cc",
     ],
 )

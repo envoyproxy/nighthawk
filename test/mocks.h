@@ -7,6 +7,7 @@
 #include "envoy/common/time.h"
 #include "envoy/event/dispatcher.h"
 #include "envoy/stats/store.h"
+#include "envoy/thread_local/thread_local.h"
 
 #include "nighthawk/client/benchmark_client.h"
 #include "nighthawk/client/factories.h"
@@ -37,6 +38,8 @@ public:
   MockPlatformUtil();
 
   MOCK_CONST_METHOD0(yieldCurrentThread, void());
+  MOCK_CONST_METHOD1(sleep, void(std::chrono::microseconds));
+  MOCK_CONST_METHOD0(determineCpuCoresWithAffinity, uint32_t());
 };
 
 class MockRateLimiter : public RateLimiter {
@@ -62,22 +65,28 @@ class MockOptions : public Client::Options {
 public:
   MockOptions();
 
-  MOCK_CONST_METHOD0(requestsPerSecond, uint64_t());
-  MOCK_CONST_METHOD0(connections, uint64_t());
+  MOCK_CONST_METHOD0(requestsPerSecond, uint32_t());
+  MOCK_CONST_METHOD0(connections, uint32_t());
   MOCK_CONST_METHOD0(duration, std::chrono::seconds());
   MOCK_CONST_METHOD0(timeout, std::chrono::seconds());
   MOCK_CONST_METHOD0(uri, std::string());
   MOCK_CONST_METHOD0(h2, bool());
   MOCK_CONST_METHOD0(concurrency, std::string());
-  MOCK_CONST_METHOD0(verbosity, std::string());
-  MOCK_CONST_METHOD0(outputFormat, std::string());
+  MOCK_CONST_METHOD0(verbosity, nighthawk::client::Verbosity::VerbosityOptions());
+  MOCK_CONST_METHOD0(outputFormat, nighthawk::client::OutputFormat::OutputFormatOptions());
   MOCK_CONST_METHOD0(prefetchConnections, bool());
-  MOCK_CONST_METHOD0(burstSize, uint64_t());
-  MOCK_CONST_METHOD0(addressFamily, std::string());
-  MOCK_CONST_METHOD0(requestMethod, std::string());
+  MOCK_CONST_METHOD0(burstSize, uint32_t());
+  MOCK_CONST_METHOD0(addressFamily, nighthawk::client::AddressFamily::AddressFamilyOptions());
+  MOCK_CONST_METHOD0(requestMethod, envoy::api::v2::core::RequestMethod());
   MOCK_CONST_METHOD0(requestHeaders, std::vector<std::string>());
   MOCK_CONST_METHOD0(requestBodySize, uint32_t());
+  MOCK_CONST_METHOD0(tlsContext, envoy::api::v2::auth::UpstreamTlsContext&());
+  MOCK_CONST_METHOD0(maxPendingRequests, uint32_t());
+  MOCK_CONST_METHOD0(maxActiveRequests, uint32_t());
+  MOCK_CONST_METHOD0(maxRequestsPerConnection, uint32_t());
   MOCK_CONST_METHOD0(toCommandLineOptions, Client::CommandLineOptionsPtr());
+  MOCK_CONST_METHOD0(sequencerIdleStrategy,
+                     nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions());
 };
 
 class MockBenchmarkClientFactory : public Client::BenchmarkClientFactory {
@@ -126,7 +135,7 @@ class MockBenchmarkClient : public Client::BenchmarkClient {
 public:
   MockBenchmarkClient();
 
-  MOCK_METHOD1(initialize, void(Envoy::Runtime::Loader&));
+  MOCK_METHOD2(initialize, void(Envoy::Runtime::Loader&, Envoy::ThreadLocal::Instance&));
   MOCK_METHOD0(terminate, void());
   MOCK_METHOD1(setMeasureLatencies, void(bool));
   MOCK_CONST_METHOD0(statistics, StatisticPtrMap());
@@ -134,7 +143,7 @@ public:
   MOCK_CONST_METHOD0(store, Envoy::Stats::Store&());
   MOCK_METHOD0(prefetchPoolConnections, void());
 
-  MOCK_METHOD1(setRequestMethod, void(absl::string_view));
+  MOCK_METHOD1(setRequestMethod, void(envoy::api::v2::core::RequestMethod));
   MOCK_METHOD2(setRequestHeader, void(absl::string_view, absl::string_view));
   MOCK_METHOD1(setRequestBodySize, void(uint32_t));
   MOCK_CONST_METHOD0(requestHeaders, const Envoy::Http::HeaderMap&());

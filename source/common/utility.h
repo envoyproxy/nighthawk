@@ -11,12 +11,10 @@
 #include "common/network/utility.h"
 
 #include "absl/strings/string_view.h"
+#include "api/client/options.pb.h"
+#include "tclap/CmdLine.h"
 
 namespace Nighthawk {
-
-namespace PlatformUtils {
-uint32_t determineCpuCoresWithAffinity();
-}
 
 using StoreCounterFilter = std::function<bool(absl::string_view, const uint64_t)>;
 
@@ -47,7 +45,16 @@ public:
    * insensitive). Any other values will throw a NighthawkException.
    * @return Envoy::Network::DnsLookupFamily the equivalent DnsLookupFamily value
    */
-  static Envoy::Network::DnsLookupFamily parseAddressFamilyOptionString(absl::string_view family);
+  static Envoy::Network::DnsLookupFamily
+  translateFamilyOptionString(nighthawk::client::AddressFamily::AddressFamilyOptions value);
+
+  /**
+   * Executes TCLAP command line parsing
+   * @param cmd TCLAP command line specification.
+   * @param argc forwarded argc argument of the main entry point.
+   * @param argv forwarded argv argument of the main entry point.
+   */
+  static void parseCommand(TCLAP::CmdLine& cmd, const int argc, const char* const* argv);
 };
 
 } // namespace Nighthawk

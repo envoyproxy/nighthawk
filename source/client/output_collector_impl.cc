@@ -78,7 +78,7 @@ ConsoleOutputCollectorImpl::formatProtoDuration(const Envoy::Protobuf::Duration&
                      (c % 1'000'000) / 1'000, c % 1'000);
 }
 
-std::string ConsoleOutputCollectorImpl::statIdtoFriendlyStatName(absl::string_view stat_id) const {
+std::string ConsoleOutputCollectorImpl::statIdtoFriendlyStatName(absl::string_view stat_id) {
   if (stat_id == "benchmark_http_client.queue_to_connect") {
     return "Queueing and connection setup latency";
   } else if (stat_id == "benchmark_http_client.request_to_response") {

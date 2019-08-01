@@ -37,11 +37,13 @@ using SequencerTarget = std::function<bool(std::function<void()>)>;
  */
 class SequencerImpl : public Sequencer, public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
-  SequencerImpl(const PlatformUtil& platform_util, Envoy::Event::Dispatcher& dispatcher,
-                Envoy::TimeSource& time_source, Envoy::MonotonicTime start_time,
-                RateLimiterPtr&& rate_limiter, SequencerTarget target,
-                StatisticPtr&& latency_statistic, StatisticPtr&& blocked_statistic,
-                std::chrono::microseconds duration, std::chrono::microseconds grace_timeout);
+  SequencerImpl(
+      const PlatformUtil& platform_util, Envoy::Event::Dispatcher& dispatcher,
+      Envoy::TimeSource& time_source, Envoy::MonotonicTime start_time,
+      RateLimiterPtr&& rate_limiter, SequencerTarget target, StatisticPtr&& latency_statistic,
+      StatisticPtr&& blocked_statistic, std::chrono::microseconds duration,
+      std::chrono::microseconds grace_timeout,
+      nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions idle_strategy);
 
   /**
    * Starts the Sequencer. Should be followed up with a call to waitForCompletion().
@@ -119,6 +121,7 @@ private:
   bool blocked_{};
   Envoy::MonotonicTime blocked_start_;
   bool cancelled_{};
+  nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions idle_strategy_;
 };
 
 } // namespace Nighthawk

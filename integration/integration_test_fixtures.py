@@ -35,6 +35,10 @@ class IntegrationTestBase(unittest.TestCase):
     self.server_port = -1
     self.admin_port = -1
     self.parameters = {}
+    self.parameters["test_rundir"] = self.test_rundir
+
+  def overrideTestServerConfigPath(self, config_path):
+    self.nighthawk_test_config_path = os.path.join(self.test_rundir, config_path)
 
   # TODO(oschaaf): For the NH test server, add a way to let it determine a port by itself and pull that
   # out.
@@ -55,7 +59,6 @@ class IntegrationTestBase(unittest.TestCase):
     Performs sanity checks and starts up the server. Upon exit the server is ready to accept connections.
     """
     self.assertTrue(os.path.exists(self.nighthawk_test_server_path))
-    self.assertTrue(os.path.exists(self.nighthawk_client_path))
     self.server_port = self.getFreeListenerPortForAddress(self.server_ip)
     self.admin_port = self.getFreeListenerPortForAddress(self.server_ip)
     self.parameters["admin_port"] = self.admin_port
@@ -70,6 +73,12 @@ class IntegrationTestBase(unittest.TestCase):
     """
     self.assertEqual(0, self.test_server.stop())
 
+  def waitForServerExit(self):
+    return self.test_server.waitForExit()
+
+  def getServerPid(self):
+    return self.test_server.getPid()
+
   def getNighthawkCounterMapFromJson(self, parsed_json):
     """
     Utility method to get the counters from the json indexed by name.
@@ -79,6 +88,12 @@ class IntegrationTestBase(unittest.TestCase):
         counter["name"][len("client."):]: int(counter["value"])
         for counter in parsed_json["results"][0]["counters"]
     }
+
+  def getNighthawkGlobalHistogramsbyIdFromJson(self, parsed_json):
+    """
+    Utility method to get the global histograms from the json indexed by id.
+    """
+    return {statistic["id"]: statistic for statistic in parsed_json["results"][0]["statistics"]}
 
   def getTestServerRootUri(self, https=False):
     """
@@ -115,6 +130,7 @@ class IntegrationTestBase(unittest.TestCase):
     Runs Nighthawk against the test server, returning a json-formatted result.
     If the timeout is exceeded an exception will be raised.
     """
+    self.assertTrue(os.path.exists(self.nighthawk_client_path))
     if IntegrationTestBase.ip_version == IpVersion.IPV6:
       args.insert(0, "--address-family v6")
     args.insert(0, "--output-format json")

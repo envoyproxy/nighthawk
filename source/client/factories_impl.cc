@@ -25,20 +25,20 @@ BenchmarkClientPtr BenchmarkClientFactoryImpl::create(Envoy::Api::Api& api,
   StatisticFactoryImpl statistic_factory(options_);
   auto benchmark_client = std::make_unique<BenchmarkClientHttpImpl>(
       api, dispatcher, store, statistic_factory.create(), statistic_factory.create(),
-      std::move(uri), options_.h2(), options_.prefetchConnections());
-
-  benchmark_client->setRequestMethod(options_.requestMethod());
-
+      std::move(uri), options_.h2(), options_.prefetchConnections(), options_.tlsContext());
   auto request_options = options_.toCommandLineOptions()->request_options();
   if (request_options.request_headers_size() > 0) {
     for (const auto& header : request_options.request_headers()) {
       benchmark_client->setRequestHeader(header.header().key(), header.header().value());
     }
   }
-
+  benchmark_client->setRequestMethod(options_.requestMethod());
   benchmark_client->setRequestBodySize(options_.requestBodySize());
   benchmark_client->setConnectionTimeout(options_.timeout());
   benchmark_client->setConnectionLimit(options_.connections());
+  benchmark_client->setMaxPendingRequests(options_.maxPendingRequests());
+  benchmark_client->setMaxActiveRequests(options_.maxActiveRequests());
+  benchmark_client->setMaxRequestsPerConnection(options_.maxRequestsPerConnection());
   return benchmark_client;
 }
 
@@ -53,16 +53,17 @@ SequencerPtr SequencerFactoryImpl::create(Envoy::TimeSource& time_source,
   RateLimiterPtr rate_limiter =
       std::make_unique<LinearRateLimiter>(time_source, Frequency(options_.requestsPerSecond()));
   const uint64_t burst_size = options_.burstSize();
+
   if (burst_size) {
     rate_limiter = std::make_unique<BurstingRateLimiter>(std::move(rate_limiter), burst_size);
   }
   SequencerTarget sequencer_target = [&benchmark_client](std::function<void()> f) -> bool {
     return benchmark_client.tryStartOne(std::move(f));
   };
-  return std::make_unique<SequencerImpl>(platform_util_, dispatcher, time_source, start_time,
-                                         std::move(rate_limiter), sequencer_target,
-                                         statistic_factory.create(), statistic_factory.create(),
-                                         options_.duration(), options_.timeout());
+  return std::make_unique<SequencerImpl>(
+      platform_util_, dispatcher, time_source, start_time, std::move(rate_limiter),
+      sequencer_target, statistic_factory.create(), statistic_factory.create(), options_.duration(),
+      options_.timeout(), options_.sequencerIdleStrategy());
 }
 
 StoreFactoryImpl::StoreFactoryImpl(const Options& options) : OptionBasedFactoryImpl(options) {}
@@ -81,15 +82,16 @@ OutputCollectorFactoryImpl::OutputCollectorFactoryImpl(Envoy::TimeSource& time_s
     : OptionBasedFactoryImpl(options), time_source_(time_source) {}
 
 OutputCollectorPtr OutputCollectorFactoryImpl::create() const {
-  const std::string format = options_.outputFormat();
-  if (format == "human") {
+  switch (options_.outputFormat()) {
+  case nighthawk::client::OutputFormat::HUMAN:
     return std::make_unique<Client::ConsoleOutputCollectorImpl>(time_source_, options_);
-  } else if (format == "json") {
+  case nighthawk::client::OutputFormat::JSON:
     return std::make_unique<Client::JsonOutputCollectorImpl>(time_source_, options_);
-  } else if (format == "yaml") {
+  case nighthawk::client::OutputFormat::YAML:
     return std::make_unique<Client::YamlOutputCollectorImpl>(time_source_, options_);
+  default:
+    NOT_REACHED_GCOVR_EXCL_LINE;
   }
-  NOT_REACHED_GCOVR_EXCL_LINE;
 }
 
 } // namespace Client

@@ -33,6 +33,7 @@ public:
     counters_["bar"] = 2;
     time_system_.setSystemTime(std::chrono::milliseconds(1234567891567));
     command_line_options_.mutable_duration()->set_seconds(1);
+    command_line_options_.mutable_connections()->set_value(0);
     EXPECT_CALL(options_, toCommandLineOptions())
         .WillOnce(Return(ByMove(
             std::make_unique<nighthawk::client::CommandLineOptions>(command_line_options_))));
@@ -67,6 +68,19 @@ TEST_F(OutputCollectorTest, JsonFormatter) {
 TEST_F(OutputCollectorTest, YamlFormatter) {
   YamlOutputCollectorImpl collector(time_system_, options_);
   expectEqualToGoldFile(collector, "test/test_data/output_collector.yaml.gold");
+}
+
+class StatidToNameTest : public Test {};
+
+TEST_F(StatidToNameTest, TestTranslations) {
+  // Well known id's shouldn't be returned as-is, but unknown ones should.
+  EXPECT_EQ(ConsoleOutputCollectorImpl::statIdtoFriendlyStatName("foo"), "foo");
+  const std::vector<std::string> ids = {"benchmark_http_client.queue_to_connect",
+                                        "benchmark_http_client.request_to_response",
+                                        "sequencer.callback", "sequencer.blocking"};
+  for (const std::string& id : ids) {
+    EXPECT_NE(ConsoleOutputCollectorImpl::statIdtoFriendlyStatName(id), id);
+  }
 }
 
 } // namespace Client

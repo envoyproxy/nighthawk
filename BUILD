@@ -8,6 +8,15 @@ load(
 
 envoy_package()
 
+filegroup(
+    name = "nighthawk",
+    srcs = [
+        ":nighthawk_client",
+        ":nighthawk_service",
+        ":nighthawk_test_server",
+    ],
+)
+
 envoy_cc_binary(
     name = "nighthawk_client",
     repository = "@envoy",
@@ -22,5 +31,13 @@ envoy_cc_binary(
     deps = [
         "//source/server:http_test_server_filter_config",
         "@envoy//source/exe:envoy_main_entry_lib",
+    ],
+)
+
+envoy_cc_binary(
+    name = "nighthawk_service",
+    repository = "@envoy",
+    deps = [
+        "//source/exe:nighthawk_service_entry_lib",
     ],
 )

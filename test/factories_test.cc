@@ -31,12 +31,17 @@ public:
 
 TEST_F(FactoriesTest, CreateBenchmarkClient) {
   BenchmarkClientFactoryImpl factory(options_);
+  envoy::api::v2::auth::UpstreamTlsContext tls_context;
   EXPECT_CALL(options_, timeout()).Times(1);
   EXPECT_CALL(options_, connections()).Times(1);
   EXPECT_CALL(options_, h2()).Times(1);
   EXPECT_CALL(options_, prefetchConnections()).Times(1);
   EXPECT_CALL(options_, requestMethod()).Times(1);
   EXPECT_CALL(options_, requestBodySize()).Times(1);
+  EXPECT_CALL(options_, tlsContext()).Times(1).WillOnce(ReturnRef(tls_context));
+  EXPECT_CALL(options_, maxPendingRequests()).Times(1);
+  EXPECT_CALL(options_, maxActiveRequests()).Times(1);
+  EXPECT_CALL(options_, maxRequestsPerConnection()).Times(1);
   auto cmd = std::make_unique<nighthawk::client::CommandLineOptions>();
   auto request_headers = cmd->mutable_request_options()->add_request_headers();
   request_headers->mutable_header()->set_key("foo");
@@ -48,20 +53,38 @@ TEST_F(FactoriesTest, CreateBenchmarkClient) {
   EXPECT_NE(nullptr, benchmark_client.get());
 }
 
-TEST_F(FactoriesTest, CreateSequencer) {
-  SequencerFactoryImpl factory(options_);
-  MockBenchmarkClient benchmark_client;
+TEST_F(FactoriesTest, CreateSequencer) {}
+class SequencerFactoryTest
+    : public FactoriesTest,
+      public WithParamInterface<
+          nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions> {
+public:
+  void testSequencerCreation(nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions
+                                 sequencer_idle_strategy) {
+    SequencerFactoryImpl factory(options_);
+    MockBenchmarkClient benchmark_client;
 
-  EXPECT_CALL(options_, timeout()).Times(1);
-  EXPECT_CALL(options_, duration()).Times(1).WillOnce(Return(1s));
-  EXPECT_CALL(options_, requestsPerSecond()).Times(1).WillOnce(Return(1));
-  EXPECT_CALL(options_, burstSize()).Times(1).WillOnce(Return(2));
-  EXPECT_CALL(dispatcher_, createTimer_(_)).Times(2);
-  Envoy::Event::SimulatedTimeSystem time_system;
-  auto sequencer = factory.create(api_->timeSource(), dispatcher_, time_system.monotonicTime(),
-                                  benchmark_client);
-  EXPECT_NE(nullptr, sequencer.get());
-}
+    EXPECT_CALL(options_, timeout()).Times(1);
+    EXPECT_CALL(options_, duration()).Times(1).WillOnce(Return(1s));
+    EXPECT_CALL(options_, requestsPerSecond()).Times(1).WillOnce(Return(1));
+    EXPECT_CALL(options_, burstSize()).Times(1).WillOnce(Return(2));
+    EXPECT_CALL(options_, sequencerIdleStrategy())
+        .Times(1)
+        .WillOnce(Return(sequencer_idle_strategy));
+    EXPECT_CALL(dispatcher_, createTimer_(_)).Times(2);
+    Envoy::Event::SimulatedTimeSystem time_system;
+    auto sequencer = factory.create(api_->timeSource(), dispatcher_, time_system.monotonicTime(),
+                                    benchmark_client);
+    EXPECT_NE(nullptr, sequencer.get());
+  }
+};
+
+TEST_P(SequencerFactoryTest, TestCreation) { testSequencerCreation(GetParam()); }
+
+INSTANTIATE_TEST_SUITE_P(SequencerIdleStrategies, SequencerFactoryTest,
+                         ValuesIn({nighthawk::client::SequencerIdleStrategy::POLL,
+                                   nighthawk::client::SequencerIdleStrategy::SLEEP,
+                                   nighthawk::client::SequencerIdleStrategy::SPIN}));
 
 TEST_F(FactoriesTest, CreateStore) {
   StoreFactoryImpl factory(options_);
@@ -73,12 +96,14 @@ TEST_F(FactoriesTest, CreateStatistic) {
   EXPECT_NE(nullptr, factory.create().get());
 }
 
-class OutputCollectorFactoryTest : public FactoriesTest, public WithParamInterface<const char*> {
+class OutputCollectorFactoryTest
+    : public FactoriesTest,
+      public WithParamInterface<nighthawk::client::OutputFormat::OutputFormatOptions> {
 public:
-  void testOutputCollector(absl::string_view type) {
+  void testOutputCollector(nighthawk::client::OutputFormat::OutputFormatOptions type) {
     Envoy::Event::SimulatedTimeSystem time_source;
     EXPECT_CALL(options_, toCommandLineOptions());
-    EXPECT_CALL(options_, outputFormat()).WillOnce(Return(std::string(type)));
+    EXPECT_CALL(options_, outputFormat()).WillOnce(Return(type));
     OutputCollectorFactoryImpl factory(time_source, options_);
     EXPECT_NE(nullptr, factory.create().get());
   }
@@ -87,7 +112,9 @@ public:
 TEST_P(OutputCollectorFactoryTest, TestCreation) { testOutputCollector(GetParam()); }
 
 INSTANTIATE_TEST_SUITE_P(OutputFormats, OutputCollectorFactoryTest,
-                         ValuesIn({"human", "json", "yaml"}));
+                         ValuesIn({nighthawk::client::OutputFormat::HUMAN,
+                                   nighthawk::client::OutputFormat::JSON,
+                                   nighthawk::client::OutputFormat::YAML}));
 
 } // namespace Client
 } // namespace Nighthawk
