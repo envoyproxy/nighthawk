@@ -27,6 +27,7 @@
 #include "test/mocks/runtime/mocks.h"
 #include "test/mocks/thread_local/mocks.h"
 #include "test/server/utility.h"
+#include "test/test_common/test_time_system.h"
 #include "test/test_common/utility.h"
 
 #include "ares.h"
@@ -37,20 +38,65 @@ using namespace testing;
 
 namespace Nighthawk {
 
-class BenchmarkClientTestBase : public Envoy::BaseIntegrationTest,
-                                public TestWithParam<Envoy::Network::Address::IpVersion> {
+class PythonIntegrationTestBase : public TestWithParam<Envoy::Network::Address::IpVersion> {
+public:
+  PythonIntegrationTestBase(const Envoy::Network::Address::IpVersion version)
+      : version_(version), pipe_(nullptr){};
+
+  void startPythonIntegrationWrapper(const bool use_https) {
+    std::string args;
+
+    if (GetParam() == Envoy::Network::Address::IpVersion::v4) {
+      args.append(" ipv4");
+    } else {
+      args.append(" ipv6");
+    }
+    args.append(" http");
+    if (use_https) {
+      args.append("s");
+    }
+    pipe_ = popen(Envoy::TestEnvironment::runfilesPath("integration/cpp_benchmark_client_server")
+                      .append(args)
+                      .c_str(),
+                  "r");
+    RELEASE_ASSERT(pipe_ != nullptr, "Failed to open pipe");
+    RELEASE_ASSERT(fgets(buffer_.data(), buffer_.max_size(), pipe_) != nullptr,
+                   "Expected more data");
+    RELEASE_ASSERT(absl::SimpleAtoi(buffer_.data(), &server_port_),
+                   "couldn't understand server_pid");
+    RELEASE_ASSERT(fgets(buffer_.data(), buffer_.max_size(), pipe_) != nullptr,
+                   "Expected more data");
+    RELEASE_ASSERT(absl::SimpleAtoi(buffer_.data(), &server_pid_),
+                   "couldn't understand server_pid");
+  }
+
+  void TearDown() override {
+    if (server_pid_ != 0) {
+      kill(server_pid_, SIGTERM);
+    }
+    if (pipe_ != nullptr) {
+      // We don't expect any output, lets print it when that happens
+      while (fgets(buffer_.data(), buffer_.max_size(), pipe_) != nullptr) {
+        std::cerr << "python stdout: " << buffer_.data() << std::endl;
+      }
+      RELEASE_ASSERT(!pclose(pipe_), "Failure closing pipe");
+    }
+  }
+
+  Envoy::Event::RealTimeSystem time_system_; // NO_CHECK_FORMAT(real_time)
+  const Envoy::Network::Address::IpVersion version_;
+  int server_port_{0};
+  int server_pid_{0};
+  std::array<char, 128> buffer_;
+  FILE* pipe_;
+};
+
+class BenchmarkClientTestBase : public PythonIntegrationTestBase {
 public:
   BenchmarkClientTestBase()
-      : Envoy::BaseIntegrationTest(GetParam(), realTime(), BenchmarkClientTestBase::envoy_config),
-        api_(thread_factory_, store_, timeSystem(), file_system_),
+      : PythonIntegrationTestBase(GetParam()),
+        api_(thread_factory_, store_, time_system_, file_system_),
         dispatcher_(api_.allocateDispatcher()) {}
-
-  static void SetUpTestCase() {
-    Envoy::Filesystem::InstanceImplPosix file_system;
-    envoy_config = file_system.fileReadToEnd(Envoy::TestEnvironment::runfilesPath(
-        "test/test_data/benchmark_http_client_test_envoy.yaml"));
-    envoy_config = Envoy::TestEnvironment::substitute(envoy_config);
-  }
 
   void SetUp() override {
     ares_library_init(ARES_LIB_INIT_ALL);
@@ -58,16 +104,15 @@ public:
   }
 
   void TearDown() override {
+    tls_.shutdownGlobalThreading();
+    ares_library_cleanup();
     if (client_ != nullptr) {
       client_->terminate();
     }
-    test_server_.reset();
-    fake_upstreams_.clear();
-    tls_.shutdownGlobalThreading();
-    ares_library_cleanup();
+    PythonIntegrationTestBase::TearDown();
   }
 
-  uint32_t getTestServerHostAndPort() { return lookupPort("listener_0"); }
+  uint32_t getTestServerHostAndPort() { return server_port_; }
 
   void testBasicFunctionality(absl::string_view uriPath, const uint64_t max_pending,
                               const uint64_t connection_limit, const bool use_h2,
@@ -138,12 +183,14 @@ public:
   NiceMock<Envoy::Runtime::MockLoader> runtime_;
   std::unique_ptr<Client::BenchmarkClientHttpImpl> client_;
   Envoy::Filesystem::InstanceImplPosix file_system_;
-  static std::string envoy_config;
 };
 
 class BenchmarkClientHttpTest : public BenchmarkClientTestBase {
 public:
-  void SetUp() override { BenchmarkClientHttpTest::initialize(); }
+  void SetUp() override {
+    BenchmarkClientTestBase::SetUp();
+    startPythonIntegrationWrapper(false);
+  }
 
   void setupBenchmarkClient(absl::string_view uriPath, bool use_h2,
                             bool prefetch_connections) override {
@@ -153,44 +200,16 @@ public:
 
 class BenchmarkClientHttpsTest : public BenchmarkClientTestBase {
 public:
-  void SetUp() override { BenchmarkClientHttpsTest::initialize(); }
+  void SetUp() override {
+    BenchmarkClientTestBase::SetUp();
+    startPythonIntegrationWrapper(true);
+  }
 
   void setupBenchmarkClient(absl::string_view uriPath, bool use_h2,
                             bool prefetch_connections) override {
     doSetupBenchmarkClient(uriPath, true, use_h2, prefetch_connections);
   };
-
-  void initialize() override {
-    config_helper_.addConfigModifier([](envoy::config::bootstrap::v2::Bootstrap& bootstrap) {
-      auto* common_tls_context = bootstrap.mutable_static_resources()
-                                     ->mutable_listeners(0)
-                                     ->mutable_filter_chains(0)
-                                     ->mutable_tls_context()
-                                     ->mutable_common_tls_context();
-      common_tls_context->mutable_validation_context_sds_secret_config()->set_name(
-          "validation_context");
-      common_tls_context->add_tls_certificate_sds_secret_configs()->set_name("server_cert");
-
-      auto* secret = bootstrap.mutable_static_resources()->add_secrets();
-      secret->set_name("validation_context");
-      auto* validation_context = secret->mutable_validation_context();
-      validation_context->mutable_trusted_ca()->set_filename(Envoy::TestEnvironment::runfilesPath(
-          "external/envoy/test/config/integration/certs/cacert.pem"));
-      secret = bootstrap.mutable_static_resources()->add_secrets();
-      secret->set_name("server_cert");
-      auto* tls_certificate = secret->mutable_tls_certificate();
-      tls_certificate->mutable_certificate_chain()->set_filename(
-          Envoy::TestEnvironment::runfilesPath(
-              "external/envoy/test/config/integration/certs/servercert.pem"));
-      tls_certificate->mutable_private_key()->set_filename(Envoy::TestEnvironment::runfilesPath(
-          "external/envoy/test/config/integration/certs/serverkey.pem"));
-    });
-
-    BenchmarkClientTestBase::initialize();
-  }
 };
-
-std::string BenchmarkClientTestBase::envoy_config;
 
 INSTANTIATE_TEST_SUITE_P(IpVersions, BenchmarkClientHttpTest,
                          ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()),
@@ -290,10 +309,19 @@ TEST_P(BenchmarkClientHttpTest, DISABLED_WeirdStatus) {
   EXPECT_EQ(7, nonZeroValuedCounterCount());
 }
 
-TEST_P(BenchmarkClientHttpTest, H1ConnectionFailure) {
-  // Kill the test server, so we can't connect.
+class BenchmarkClientNoServerTest : public BenchmarkClientTestBase {
+public:
+  void SetUp() override {}
+  void TearDown() override {}
+
+  void setupBenchmarkClient(absl::string_view uriPath, bool use_h2,
+                            bool prefetch_connections) override {
+    doSetupBenchmarkClient(uriPath, false, use_h2, prefetch_connections);
+  };
+};
+
+TEST_P(BenchmarkClientNoServerTest, H1ConnectionFailure) {
   // We allow a single connection and no pending. We expect one connection failure.
-  test_server_.reset();
   testBasicFunctionality("/lorem-ipsum-status-200", 1, 1, false, 10);
 
   EXPECT_EQ(1, getCounter("upstream_cx_connect_fail"));
@@ -306,10 +334,8 @@ TEST_P(BenchmarkClientHttpTest, H1ConnectionFailure) {
   EXPECT_EQ(8, nonZeroValuedCounterCount());
 }
 
-TEST_P(BenchmarkClientHttpTest, H1MultiConnectionFailure) {
-  // Kill the test server, so we can't connect.
+TEST_P(BenchmarkClientNoServerTest, H1MultiConnectionFailure) {
   // We allow ten connections and ten pending requests. We expect ten connection failures.
-  test_server_.reset();
   testBasicFunctionality("/lorem-ipsum-status-200", 10, 10, false, 10);
 
   EXPECT_EQ(10, getCounter("upstream_cx_connect_fail"));
