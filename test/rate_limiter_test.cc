@@ -35,11 +35,9 @@ TEST_F(RateLimiterTest, LinearRateLimiterTest) {
   EXPECT_FALSE(rate_limiter.tryAcquireOne());
 }
 
-// TODO(oschaaf): this fails with the new coverage testing method.
-// Disabled it for now.
-TEST_F(RateLimiterTest, DISABLED_LinearRateLimiterInvalidArgumentTest) {
+TEST_F(RateLimiterTest, LinearRateLimiterInvalidArgumentTest) {
   Envoy::Event::SimulatedTimeSystem time_system;
-  ASSERT_DEATH(LinearRateLimiter rate_limiter(time_system, 0_Hz), "Frequency must be > 0");
+  EXPECT_THROW(LinearRateLimiter rate_limiter(time_system, 0_Hz), NighthawkException);
 }
 
 TEST_F(RateLimiterTest, BurstingRateLimiterTest) {
