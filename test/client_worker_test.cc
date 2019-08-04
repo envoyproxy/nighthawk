@@ -35,7 +35,7 @@ public:
     benchmark_client_ = new MockBenchmarkClient();
     sequencer_ = new MockSequencer();
 
-    EXPECT_CALL(benchmark_client_factory_, create(_, _, _, _))
+    EXPECT_CALL(benchmark_client_factory_, create(_, _, _, _, _))
         .Times(1)
         .WillOnce(Return(ByMove(std::unique_ptr<BenchmarkClient>(benchmark_client_))));
 
@@ -65,7 +65,7 @@ public:
   Envoy::Stats::IsolatedStoreImpl store_;
   NiceMock<Envoy::ThreadLocal::MockInstance> tls_;
   Envoy::Event::TestRealTimeSystem time_system_;
-  MockBenchmarkClient* benchmark_client_;
+  BenchmarkClient* benchmark_client_;
   MockSequencer* sequencer_;
   Envoy::Runtime::RandomGeneratorImpl rand_;
   NiceMock<Envoy::Event::MockDispatcher> dispatcher_;

@@ -12,7 +12,7 @@ bool FakeAdmin::removeHandler(const std::string&) { return true; };
 
 const Envoy::Network::Socket& FakeAdmin::socket() { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; };
 
-Envoy::Server::ConfigTracker& FakeAdmin::getConfigTracker() { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; };
+Envoy::Server::ConfigTracker& FakeAdmin::getConfigTracker() { return config_tracker_; };
 
 void FakeAdmin::startHttpListener(const std::string&, const std::string&,
                                   Envoy::Network::Address::InstanceConstSharedPtr,

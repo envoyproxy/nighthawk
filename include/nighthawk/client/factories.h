@@ -7,6 +7,7 @@
 #include "envoy/common/time.h"
 #include "envoy/event/dispatcher.h"
 #include "envoy/stats/store.h"
+#include "envoy/upstream/cluster_manager.h"
 
 #include "nighthawk/client/benchmark_client.h"
 #include "nighthawk/client/options.h"
@@ -23,7 +24,8 @@ class BenchmarkClientFactory {
 public:
   virtual ~BenchmarkClientFactory() = default;
   virtual BenchmarkClientPtr create(Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher,
-                                    Envoy::Stats::Store& store, UriPtr&& uri) const PURE;
+                                    Envoy::Stats::Store& store, UriPtr&& uri,
+                                    Envoy::Upstream::ClusterManagerPtr& cluster_manager) const PURE;
 };
 
 class SequencerFactory {

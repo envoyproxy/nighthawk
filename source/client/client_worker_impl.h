@@ -11,6 +11,16 @@
 #include "common/utility.h"
 #include "common/worker_impl.h"
 
+#include "common/access_log/access_log_manager_impl.h"
+#include "common/http/context_impl.h"
+
+#include "common/common/logger.h"
+#include "common/http/header_map_impl.h"
+#include "common/runtime/runtime_impl.h"
+#include "common/ssl.h"
+
+#include "common/upstream/cluster_manager_impl.h"
+
 namespace Nighthawk {
 namespace Client {
 
@@ -19,6 +29,7 @@ class ClientWorkerImpl : public WorkerImpl,
                          Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
   ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Instance& tls,
+                   Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                    const BenchmarkClientFactory& benchmark_client_factory,
                    const SequencerFactory& sequencer_factory, UriPtr&& uri,
                    Envoy::Stats::StorePtr&& store, const int worker_number,
@@ -36,8 +47,12 @@ private:
   const int worker_number_;
   const Envoy::MonotonicTime starting_time_;
   bool success_{};
-  const BenchmarkClientPtr benchmark_client_;
+  BenchmarkClientPtr benchmark_client_;
   const SequencerPtr sequencer_;
+
+  Ssl::FakeAdmin admin_;
+  Envoy::LocalInfo::LocalInfoPtr local_info_;
+  Envoy::Upstream::ClusterManagerPtr& cluster_manager_;
 };
 
 using ClientWorkerImplPtr = std::unique_ptr<ClientWorkerImpl>;

@@ -8,6 +8,7 @@
 #include "envoy/event/dispatcher.h"
 #include "envoy/stats/store.h"
 #include "envoy/thread_local/thread_local.h"
+#include "envoy/upstream/cluster_manager.h"
 
 #include "nighthawk/client/benchmark_client.h"
 #include "nighthawk/client/factories.h"
@@ -91,9 +92,9 @@ public:
 class MockBenchmarkClientFactory : public Client::BenchmarkClientFactory {
 public:
   MockBenchmarkClientFactory();
-  MOCK_CONST_METHOD4(create, Client::BenchmarkClientPtr(Envoy::Api::Api& api,
-                                                        Envoy::Event::Dispatcher& dispatcher,
-                                                        Envoy::Stats::Store& store, UriPtr&& uri));
+  MOCK_CONST_METHOD5(create, Client::BenchmarkClientPtr(Envoy::Api::Api&, Envoy::Event::Dispatcher&,
+                                                        Envoy::Stats::Store&, UriPtr&&,
+                                                        Envoy::Upstream::ClusterManager&));
 };
 
 class MockSequencerFactory : public Client::SequencerFactory {

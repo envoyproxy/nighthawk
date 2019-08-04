@@ -3,6 +3,7 @@
 #include "envoy/api/api.h"
 #include "envoy/event/dispatcher.h"
 #include "envoy/stats/store.h"
+#include "envoy/upstream/cluster_manager.h"
 
 #include "nighthawk/client/factories.h"
 #include "nighthawk/common/uri.h"
@@ -26,7 +27,8 @@ class BenchmarkClientFactoryImpl : public OptionBasedFactoryImpl, public Benchma
 public:
   BenchmarkClientFactoryImpl(const Options& options);
   BenchmarkClientPtr create(Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher,
-                            Envoy::Stats::Store& store, UriPtr&& uri) const override;
+                            Envoy::Stats::Store& store, UriPtr&& uri,
+                            Envoy::Upstream::ClusterManagerPtr& cluster_manager) const override;
 };
 
 class SequencerFactoryImpl : public OptionBasedFactoryImpl, public SequencerFactory {

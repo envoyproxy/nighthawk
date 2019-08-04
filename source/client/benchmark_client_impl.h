@@ -26,6 +26,9 @@
 
 #include "api/client/options.pb.h"
 
+#include "common/access_log/access_log_manager_impl.h"
+#include "common/http/context_impl.h"
+
 namespace Nighthawk {
 namespace Client {
 
@@ -56,7 +59,8 @@ public:
                           Envoy::Stats::Store& store, StatisticPtr&& connect_statistic,
                           StatisticPtr&& response_statistic, UriPtr&& uri, bool use_h2,
                           bool prefetch_connections,
-                          envoy::api::v2::auth::UpstreamTlsContext tls_context);
+                          envoy::api::v2::auth::UpstreamTlsContext tls_context,
+                          Envoy::Upstream::ClusterManagerPtr& cluster_manager);
 
   void setConnectionLimit(uint32_t connection_limit) { connection_limit_ = connection_limit; }
   void setConnectionTimeout(std::chrono::seconds timeout) { timeout_ = timeout; }
@@ -103,10 +107,6 @@ private:
   Envoy::Http::HeaderMapImpl request_headers_;
   // These are declared order dependent. Changing ordering may trigger on assert upon
   // destruction when tls has been involved during usage.
-  std::unique_ptr<Envoy::Server::Configuration::TransportSocketFactoryContext>
-      transport_socket_factory_context_;
-  std::unique_ptr<Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl>
-      ssl_context_manager_;
   Envoy::Upstream::ClusterInfoConstSharedPtr cluster_;
   StatisticPtr connect_statistic_;
   StatisticPtr response_statistic_;
@@ -118,7 +118,8 @@ private:
   uint32_t max_pending_requests_{1};
   uint32_t max_active_requests_{UINT32_MAX};
   uint32_t max_requests_per_connection_{UINT32_MAX};
-  PrefetchablePoolPtr pool_;
+  // PrefetchablePoolPtr pool_
+  Envoy::Http::ConnectionPool::Instance* pool_;
   Envoy::Event::TimerPtr timer_;
   Envoy::Runtime::RandomGeneratorImpl generator_;
   uint64_t requests_completed_{};
@@ -126,7 +127,7 @@ private:
   bool measure_latencies_{};
   BenchmarkClientStats benchmark_client_stats_;
   uint32_t request_body_size_{0};
-  const envoy::api::v2::auth::UpstreamTlsContext tls_context_;
+  Envoy::Upstream::ClusterManagerPtr& cluster_manager_;
 };
 
 } // namespace Client

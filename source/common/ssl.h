@@ -38,6 +38,9 @@ public:
   Envoy::Http::Code request(absl::string_view, absl::string_view, Envoy::Http::HeaderMap&,
                             std::string&) override;
   void addListenerToHandler(Envoy::Network::ConnectionHandler*) override;
+
+private:
+  Envoy::Server::ConfigTrackerImpl config_tracker_;
 };
 
 // Shim class that we aneed a concrete implementations for, but

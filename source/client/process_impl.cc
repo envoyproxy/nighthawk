@@ -44,14 +44,24 @@ namespace Client {
 
 ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
                          const PlatformUtil& platform_util)
-    : time_system_(time_system), store_factory_(options), store_(store_factory_.create()),
-      api_(thread_factory_, *store_, time_system_, file_system_),
-      dispatcher_(api_.allocateDispatcher()), cleanup_([this] { tls_.shutdownGlobalThreading(); }),
+    : time_system_(time_system), store_factory_(options), stats_allocator_(symbol_table_),
+      store_root_(stats_allocator_), api_(thread_factory_, store_root_, time_system_, file_system_),
+      dispatcher_(api_.allocateDispatcher()), cleanup_([this] {
+        store_root_.shutdownThreading();
+        tls_.shutdownGlobalThreading();
+      }),
       benchmark_client_factory_(options), sequencer_factory_(options), options_(options),
-      platform_util_(platform_util) {
+      platform_util_(platform_util), init_manager_("nh_init_manager"),
+      local_info_(new Envoy::LocalInfo::LocalInfoImpl(
+          {}, Envoy::Network::Utility::getLocalAddress(Envoy::Network::Address::IpVersion::v4),
+          "nighthawk_service_zone", "nighthawk_service_cluster", "nighthawk_service_node")),
+      secret_manager_(config_tracker_), http_context_(store_root_.symbolTable()),
+      singleton_manager_(std::make_unique<Envoy::Singleton::ManagerImpl>(api_.threadFactory())),
+      access_log_manager_(std::chrono::milliseconds(1000), api_, *dispatcher_, fakelock_,
+                          store_root_),
+      init_watcher_("Nighthawk", []() { std::cerr << "InitWatcher fires." << std::endl; }) {
   configureComponentLogLevels(spdlog::level::from_str(
       nighthawk::client::Verbosity::VerbosityOptions_Name(options_.verbosity())));
-  tls_.registerThread(*dispatcher_, true);
 }
 
 const std::vector<ClientWorkerPtr>& ProcessImpl::createWorkers(const UriImpl& uri,
@@ -78,8 +88,9 @@ const std::vector<ClientWorkerPtr>& ProcessImpl::createWorkers(const UriImpl& ur
     const auto worker_delay = std::chrono::duration_cast<std::chrono::nanoseconds>(
         ((inter_worker_delay_usec * worker_number) * 1us));
     workers_.push_back(std::make_unique<ClientWorkerImpl>(
-        api_, tls_, benchmark_client_factory_, sequencer_factory_, std::make_unique<UriImpl>(uri),
-        store_factory_.create(), worker_number, first_worker_start + worker_delay));
+        api_, tls_, cluster_manager_, benchmark_client_factory_, sequencer_factory_,
+        std::make_unique<UriImpl>(uri), store_factory_.create(), worker_number,
+        first_worker_start + worker_delay));
     worker_number++;
   }
   return workers_;
@@ -182,22 +193,72 @@ ProcessImpl::mergeWorkerCounters(const std::vector<ClientWorkerPtr>& workers) co
 }
 
 bool ProcessImpl::run(OutputCollector& collector) {
+
+  store_root_.setTagProducer(Envoy::Config::Utility::createTagProducer({}));
+  store_root_.setStatsMatcher(Envoy::Config::Utility::createStatsMatcher({}));
+
+  const std::string server_stats_prefix = "server.";
+
+  server_stats_ = std::make_unique<Envoy::Server::ServerStats>(Envoy::Server::ServerStats{
+      ALL_SERVER_STATS(POOL_COUNTER_PREFIX(store_root_, server_stats_prefix),
+                       POOL_GAUGE_PREFIX(store_root_, server_stats_prefix),
+                       POOL_HISTOGRAM_PREFIX(store_root_, server_stats_prefix))});
+
   UriImpl uri(options_.uri());
   try {
-    uri.resolve(*dispatcher_, Utility::translateFamilyOptionString(options_.addressFamily()));
+    // uri.resolve(*dispatcher_, Utility::translateFamilyOptionString(options_.addressFamily()));
   } catch (UriException) {
-    return false;
+    // return false;
   }
   const std::vector<ClientWorkerPtr>& workers = createWorkers(uri, determineConcurrency());
-  Envoy::Runtime::RandomGeneratorImpl generator;
-  auto local_info = Envoy::LocalInfo::LocalInfoImpl(
-      {}, Network::Utility::getLocalAddress(Envoy::Network::Address::IpVersion::v4),
-      "nighthawk_service_zone", "nighthawk_service_cluster", "nighthawk_service_node");
-  Envoy::Init::ManagerImpl init_manager("nighthawk_init_manager");
-  Envoy::Runtime::ScopedLoaderSingleton loader(Envoy::Runtime::LoaderPtr{
-      new Envoy::Runtime::LoaderImpl(*dispatcher_, tls_, {}, local_info, init_manager, *store_,
-                                     generator,
-                                     Envoy::ProtobufMessage::getStrictValidationVisitor(), api_)});
+
+  tls_.registerThread(*dispatcher_, true);
+  std::cerr << "registerThread main " << dispatcher_.get() << std::endl;
+  dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
+
+  store_root_.initializeThreading(*dispatcher_, tls_);
+  dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
+
+  runtime_singleton_ = std::make_unique<Envoy::Runtime::ScopedLoaderSingleton>(
+      Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl(
+          *dispatcher_, tls_, {}, *local_info_, init_manager_, store_root_, generator_,
+          Envoy::ProtobufMessage::getStrictValidationVisitor(), api_)});
+
+  ssl_context_manager_ =
+      std::make_unique<Extensions::TransportSockets::Tls::ContextManagerImpl>(time_system_);
+
+  cluster_manager_factory_ = std::make_unique<Envoy::Upstream::ProdClusterManagerFactory>(
+      admin_, Envoy::Runtime::LoaderSingleton::get(), store_root_, tls_, generator_,
+      dispatcher_->createDnsResolver({}), *ssl_context_manager_, *dispatcher_, *local_info_,
+      secret_manager_, Envoy::ProtobufMessage::getStrictValidationVisitor(), api_, http_context_,
+      access_log_manager_, *singleton_manager_);
+
+  // config_.initialize(bootstrap, *this, *cluster_manager_factory_);
+  // http_context_.setTracer(config_.httpTracer());
+
+  envoy::config::bootstrap::v2::Bootstrap bootstrap;
+  const std::string json = R"EOF(
+  static_resources:
+    clusters:
+    - name: staticcluster
+      connect_timeout: 0.250s
+      type: STATIC
+      hosts:
+      - socket_address:
+          address: "127.0.0.1"
+          port_value: 80
+    )EOF";
+  Envoy::MessageUtil::loadFromYaml(json, bootstrap,
+                                   Envoy::ProtobufMessage::getStrictValidationVisitor());
+  cluster_manager_ = cluster_manager_factory_->clusterManagerFromProto(bootstrap);
+
+  std::cerr << "MT cluster manager: " << cluster_manager_.get() << std::endl;
+
+  cluster_manager_->setInitializedCb([this]() -> void {
+    std::cerr << "cluster manager initialized!" << std::endl;
+    init_manager_.initialize(init_watcher_);
+  });
+  dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
 
   bool ok = true;
   for (auto& w : workers_) {
@@ -208,7 +269,6 @@ bool ProcessImpl::run(OutputCollector& collector) {
     w->waitForCompletion();
     ok = ok && w->success();
   }
-
   // We don't write per-worker results if we only have a single worker, because the global results
   // will be precisely the same.
   if (workers_.size() > 1) {
@@ -219,8 +279,10 @@ bool ProcessImpl::run(OutputCollector& collector) {
         collector.addResult(
             fmt::format("worker_{}", i),
             vectorizeStatisticPtrMap(statistic_factory, worker->statistics()),
-            Utility().mapCountersFromStore(
-                worker->store(), [](absl::string_view, uint64_t value) { return value > 0; }));
+            Utility().mapCountersFromStore(worker->store(), [](absl::string_view, uint64_t) {
+              return true; /* value > 0*/
+              ;
+            }));
       }
       i++;
     }
@@ -230,6 +292,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
     collector.addResult("global", mergeWorkerStatistics(statistic_factory, workers),
                         mergeWorkerCounters(workers));
   }
+
   return ok;
 }
 

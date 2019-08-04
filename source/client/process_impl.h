@@ -24,6 +24,13 @@
 #include "client/benchmark_client_impl.h"
 #include "client/factories_impl.h"
 
+#include "common/upstream/cluster_manager_impl.h"
+
+#include "common/stats/allocator_impl.h"
+#include "common/stats/fake_symbol_table_impl.h"
+#include "common/stats/thread_local_store.h"
+#include "server/server.h"
+
 namespace Nighthawk {
 namespace Client {
 
@@ -59,7 +66,14 @@ private:
   Envoy::Filesystem::InstanceImplPosix file_system_;
   Envoy::Event::TimeSystem& time_system_;
   StoreFactoryImpl store_factory_;
-  Envoy::Stats::StorePtr store_;
+  Envoy::Stats::FakeSymbolTableImpl symbol_table_;
+
+  // Envoy::Stats::SymbolTableImpl symbol_table_;
+  Envoy::Stats::AllocatorImpl stats_allocator_;
+  Envoy::Stats::ThreadLocalStoreImpl store_root_;
+  std::unique_ptr<Envoy::Server::ServerStats> server_stats_;
+
+  // Envoy::Stats::StorePtr store_;
   Envoy::Api::Impl api_;
   Envoy::ThreadLocal::InstanceImpl tls_;
   Envoy::Event::DispatcherPtr dispatcher_;
@@ -69,6 +83,25 @@ private:
   const SequencerFactoryImpl sequencer_factory_;
   const Options& options_;
   const PlatformUtil& platform_util_;
+
+  Ssl::FakeAdmin admin_;
+  Envoy::Init::ManagerImpl init_manager_;
+  Envoy::LocalInfo::LocalInfoPtr local_info_;
+  Envoy::Runtime::RandomGeneratorImpl generator_;
+  Envoy::Server::ConfigTrackerImpl config_tracker_;
+  Envoy::Secret::SecretManagerImpl secret_manager_;
+  Envoy::Http::ContextImpl http_context_;
+  Envoy::Thread::MutexBasicLockable fakelock_;
+  Envoy::Singleton::ManagerPtr singleton_manager_;
+  Envoy::AccessLog::AccessLogManagerImpl access_log_manager_;
+
+  std::unique_ptr<Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl>
+      ssl_context_manager_;
+
+  std::unique_ptr<Envoy::Upstream::ProdClusterManagerFactory> cluster_manager_factory_;
+  Envoy::Upstream::ClusterManagerPtr cluster_manager_{};
+  std::unique_ptr<Runtime::ScopedLoaderSingleton> runtime_singleton_;
+  Envoy::Init::WatcherImpl init_watcher_;
 };
 
 } // namespace Client

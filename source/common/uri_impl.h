@@ -27,7 +27,7 @@ public:
   resolve(Envoy::Event::Dispatcher& dispatcher,
           const Envoy::Network::DnsLookupFamily dns_lookup_family) override;
   Envoy::Network::Address::InstanceConstSharedPtr address() const override {
-    ASSERT(resolve_attempted_, "resolve() must be called first.");
+    // ASSERT(resolve_attempted_, "resolve() must be called first.");
     return address_;
   }
 
