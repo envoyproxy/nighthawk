@@ -42,6 +42,8 @@
 #include "extensions/tracers/well_known_names.h"
 #include "extensions/tracers/zipkin/zipkin_tracer_impl.h"
 
+#include "envoy/server/filter_config.h"
+
 using namespace std::chrono_literals;
 
 namespace Nighthawk {
@@ -195,7 +197,52 @@ ProcessImpl::mergeWorkerCounters(const std::vector<ClientWorkerPtr>& workers) co
 
   return merged;
 }
+/*
+class TestUpstreamNetworkFilterConfigFactory
+    : public Server::Configuration::NamedUpstreamNetworkFilterConfigFactory {
+public:
+  Network::FilterFactoryCb
+  createFilterFactoryFromProto(const Protobuf::Message&,
+                               Server::Configuration::CommonFactoryContext&) override {
+    return [](Network::FilterManager& filter_manager) -> void {
+      filter_manager.addWriteFilter(std::make_shared<TestUpstreamNetworkFilter>());
+    };
+  }
+  ProtobufTypes::MessagePtr createEmptyConfigProto() override {
+    return std::make_unique<Envoy::ProtobufWkt::Empty>();
+  }
+  std::string name() override { return "envoy.test.filter"; }
+};
+*/
 
+/*
+class MyFilter : public Envoy::Http::ConnectionManagerImpl {
+  // using Envoy::Http::ConnectionManagerImpl;
+};
+
+class PoliteFilterConfigFactory
+    : public Envoy::Server::Configuration::NamedUpstreamNetworkFilterConfigFactory {
+public:
+  Envoy::Network::FilterFactoryCb
+  createFilterFactoryFromProto(const Envoy::Protobuf::Message& proto_config,
+                               Envoy::Server::Configuration::CommonFactoryContext&) override {
+    auto config = dynamic_cast<const Envoy::ProtobufWkt::StringValue&>(proto_config);
+    return [config](Envoy::Network::FilterManager& filter_manager) -> void {
+      filter_manager.addReadFilter(std::make_shared<MyFilter>(config));
+    };
+  }
+
+  Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override {
+    return std::make_unique<ProtobufWkt::StringValue>();
+  }
+
+  std::string name() override { return "envoy.upstream.polite"; }
+};
+
+// perform static registration
+REGISTER_FACTORY(PoliteFilterConfigFactory,
+                 Server::Configuration::NamedUpstreamNetworkFilterConfigFactory);
+*/
 bool ProcessImpl::run(OutputCollector& collector) {
 
   store_root_.setTagProducer(Envoy::Config::Utility::createTagProducer({}));
@@ -237,6 +284,24 @@ bool ProcessImpl::run(OutputCollector& collector) {
       secret_manager_, Envoy::ProtobufMessage::getStrictValidationVisitor(), api_, http_context_,
       access_log_manager_, *singleton_manager_);
 
+  // REGISTER_FACTORY(Envoy::Extensions::NetworkFilters::HttpConnectionManager::
+  //                     HttpConnectionManagerFilterConfigFactory,
+  //                 Server::Configuration::NamedNetworkFilterConfigFactory);
+
+  // Envoy::Registry::FactoryRegistry<
+  //    Envoy::Server::Configuration::NamedUpstreamNetworkFilterConfigFactory>::
+  //    registerFactory(Server::Configuration::NamedNetworkFilterConfigFactory);
+
+  // TestUpstreamNetworkFilterConfigFactory factory;
+  // Envoy::Registry::InjectFactory<
+  //    Envoy::Server::Configuration::NamedUpstreamNetworkFilterConfigFactory>
+  //    registry(factory);
+
+  ENVOY_LOG(info, "  filters.network: {}",
+            Envoy::Registry::FactoryRegistry<
+                Envoy::Server::Configuration::NamedUpstreamNetworkFilterConfigFactory>::
+                allFactoryNames());
+
   envoy::config::bootstrap::v2::Bootstrap bootstrap;
   const std::string json = R"EOF(
 static_resources:
@@ -248,6 +313,15 @@ static_resources:
     - socket_address:
         address: "127.0.0.1"
         port_value: 80
+    #filters:
+    #- name: envoy.http_connection_manager
+    #  typed_config:
+    #    "@type": type.googleapis.com/envoy.config.filter.network.http_connection_manager.v2.HttpConnectionManager
+    #    generate_request_id: true
+    #    tracing:
+    #      operation_name: egress
+    #    codec_type: auto
+    #    stat_prefix: ingress_http
   - name: zipkin
     connect_timeout: 1s
     type: strict_dns
