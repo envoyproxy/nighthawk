@@ -89,7 +89,7 @@ const std::vector<ClientWorkerPtr>& ProcessImpl::createWorkers(const UriImpl& ur
         ((inter_worker_delay_usec * worker_number) * 1us));
     workers_.push_back(std::make_unique<ClientWorkerImpl>(
         api_, tls_, cluster_manager_, benchmark_client_factory_, sequencer_factory_,
-        std::make_unique<UriImpl>(uri), store_factory_.create(), worker_number,
+        std::make_unique<UriImpl>(uri), store_root_, worker_number,
         first_worker_start + worker_delay));
     worker_number++;
   }
@@ -293,6 +293,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
                         mergeWorkerCounters(workers));
   }
 
+  cluster_manager_->shutdown();
   return ok;
 }
 

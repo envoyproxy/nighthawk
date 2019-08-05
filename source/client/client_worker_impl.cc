@@ -19,27 +19,14 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
                                    Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                                    const BenchmarkClientFactory& benchmark_client_factory,
                                    const SequencerFactory& sequencer_factory, UriPtr&& uri,
-                                   Envoy::Stats::StorePtr&& store, const int worker_number,
+                                   Envoy::Stats::Store& store, const int worker_number,
                                    const Envoy::MonotonicTime starting_time)
-    : WorkerImpl(api, tls, std::move(store)), worker_number_(worker_number),
-      starting_time_(starting_time),
-      benchmark_client_(benchmark_client_factory.create(api, *dispatcher_, *store_, std::move(uri),
+    : WorkerImpl(api, tls, store), worker_number_(worker_number), starting_time_(starting_time),
+      benchmark_client_(benchmark_client_factory.create(api, *dispatcher_, store_, std::move(uri),
                                                         cluster_manager)),
       sequencer_(
           sequencer_factory.create(time_source_, *dispatcher_, starting_time, *benchmark_client_)),
-      cluster_manager_(cluster_manager) {
-
-  //  benchmark_client_ = benchmark_client_factory.create(api, *dispatcher_, *store_,
-  //  std::move(uri),
-  //                                                      *cluster_manager_);
-
-  std::cerr << "client worker get : " << &cluster_manager_ << std::endl;
-
-  // auto foo = cluster_manager_.get("staticcluster");
-  // std::cerr << "client worker get staticcluster: " << &foo << std::endl;
-  // foo->loadBalancer().chooseHost(nullptr);
-  // foo->info()->
-}
+      cluster_manager_(cluster_manager) {}
 
 void ClientWorkerImpl::simpleWarmup() {
   ENVOY_LOG(debug, "> worker {}: warmup start.", worker_number_);

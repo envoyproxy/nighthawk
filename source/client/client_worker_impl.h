@@ -32,11 +32,11 @@ public:
                    Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                    const BenchmarkClientFactory& benchmark_client_factory,
                    const SequencerFactory& sequencer_factory, UriPtr&& uri,
-                   Envoy::Stats::StorePtr&& store, const int worker_number,
+                   Envoy::Stats::Store& store, const int worker_number,
                    const Envoy::MonotonicTime starting_time);
 
   StatisticPtrMap statistics() const override;
-  Envoy::Stats::Store& store() const override { return *store_; }
+  Envoy::Stats::Store& store() const override { return store_; }
   bool success() const override { return success_; }
 
 protected:

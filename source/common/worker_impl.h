@@ -14,8 +14,7 @@ namespace Nighthawk {
 
 class WorkerImpl : virtual public Worker {
 public:
-  WorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Instance& tls,
-             Envoy::Stats::StorePtr&& store);
+  WorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Instance& tls, Envoy::Stats::Store& store);
   ~WorkerImpl() override;
 
   void start() override;
@@ -30,7 +29,7 @@ protected:
   Envoy::Thread::ThreadFactory& thread_factory_;
   Envoy::Event::DispatcherPtr dispatcher_;
   Envoy::ThreadLocal::Instance& tls_;
-  Envoy::Stats::StorePtr store_;
+  Envoy::Stats::Store& store_;
   Envoy::TimeSource& time_source_;
   Envoy::Filesystem::Instance& file_system_;
 
