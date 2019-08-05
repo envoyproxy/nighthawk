@@ -92,7 +92,11 @@ void BenchmarkClientHttpImpl::initialize(Envoy::Runtime::Loader&, Envoy::ThreadL
       "staticcluster", Envoy::Upstream::ResourcePriority::Default, proto, nullptr);
 }
 
-void BenchmarkClientHttpImpl::terminate() { pool_ = nullptr; }
+void BenchmarkClientHttpImpl::terminate() {
+  pool_->drainConnections();
+  dispatcher_.run(Envoy::Event::Dispatcher::RunType::Block);
+  pool_ = nullptr;
+}
 
 StatisticPtrMap BenchmarkClientHttpImpl::statistics() const {
   StatisticPtrMap statistics;
