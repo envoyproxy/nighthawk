@@ -24,7 +24,7 @@ void WorkerImpl::start() {
   started_ = true;
   thread_ = thread_factory_.createThread([this]() {
     ASSERT(Envoy::Runtime::LoaderSingleton::getExisting() != nullptr);
-    dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
+    dispatcher_->run(Envoy::Event::Dispatcher::RunType::NonBlock);
     work();
   });
 }

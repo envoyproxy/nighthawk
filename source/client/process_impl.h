@@ -31,6 +31,8 @@
 #include "common/stats/thread_local_store.h"
 #include "server/server.h"
 
+#include "envoy/tracing/http_tracer.h"
+
 namespace Nighthawk {
 namespace Client {
 
@@ -102,6 +104,7 @@ private:
   Envoy::Upstream::ClusterManagerPtr cluster_manager_{};
   std::unique_ptr<Runtime::ScopedLoaderSingleton> runtime_singleton_;
   Envoy::Init::WatcherImpl init_watcher_;
+  Tracing::HttpTracerPtr http_tracer_;
 };
 
 } // namespace Client

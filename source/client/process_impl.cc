@@ -28,6 +28,8 @@
 #include "common/uri_impl.h"
 #include "common/utility.h"
 
+#include "common/config/utility.h"
+
 #include "client/client.h"
 #include "client/client_worker_impl.h"
 #include "client/factories_impl.h"
@@ -36,6 +38,9 @@
 #include "api/client/options.pb.h"
 #include "api/client/output.pb.h"
 #include "ares.h"
+
+#include "extensions/tracers/well_known_names.h"
+#include "extensions/tracers/zipkin/zipkin_tracer_impl.h"
 
 using namespace std::chrono_literals;
 
@@ -60,8 +65,7 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
       access_log_manager_(std::chrono::milliseconds(1000), api_, *dispatcher_, fakelock_,
                           store_root_),
       init_watcher_("Nighthawk", []() { std::cerr << "InitWatcher fires." << std::endl; }) {
-  configureComponentLogLevels(spdlog::level::from_str(
-      nighthawk::client::Verbosity::VerbosityOptions_Name(options_.verbosity())));
+  configureComponentLogLevels(spdlog::level::from_str("trace"));
 }
 
 const std::vector<ClientWorkerPtr>& ProcessImpl::createWorkers(const UriImpl& uri,
@@ -233,32 +237,63 @@ bool ProcessImpl::run(OutputCollector& collector) {
       secret_manager_, Envoy::ProtobufMessage::getStrictValidationVisitor(), api_, http_context_,
       access_log_manager_, *singleton_manager_);
 
-  // config_.initialize(bootstrap, *this, *cluster_manager_factory_);
-  // http_context_.setTracer(config_.httpTracer());
-
   envoy::config::bootstrap::v2::Bootstrap bootstrap;
   const std::string json = R"EOF(
-  static_resources:
-    clusters:
-    - name: staticcluster
-      connect_timeout: 0.250s
-      type: STATIC
-      hosts:
-      - socket_address:
-          address: "127.0.0.1"
-          port_value: 80
+static_resources:
+  clusters:
+  - name: staticcluster
+    connect_timeout: 0.250s
+    type: STATIC
+    hosts:
+    - socket_address:
+        address: "127.0.0.1"
+        port_value: 80
+  - name: zipkin
+    connect_timeout: 1s
+    type: strict_dns
+    lb_policy: round_robin
+    load_assignment:
+      cluster_name: zipkin
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: 127.0.0.1
+                port_value: 9411        
+tracing:
+  http:
+    name: envoy.zipkin
+    typed_config:
+      "@type": type.googleapis.com/envoy.config.trace.v2.ZipkinConfig
+      collector_cluster: zipkin
+      collector_endpoint: "/api/v2/spans"
+      shared_span_context: false
     )EOF";
   Envoy::MessageUtil::loadFromYaml(json, bootstrap,
                                    Envoy::ProtobufMessage::getStrictValidationVisitor());
+
   cluster_manager_ = cluster_manager_factory_->clusterManagerFromProto(bootstrap);
 
-  std::cerr << "MT cluster manager: " << cluster_manager_.get() << std::endl;
+  auto& factory = Config::Utility::getAndCheckFactory<Envoy::Server::Configuration::TracerFactory>(
+      bootstrap.tracing().http().name());
+  ProtobufTypes::MessagePtr message = Envoy::Config::Utility::translateToFactoryConfig(
+      bootstrap.tracing().http(), Envoy::ProtobufMessage::getStrictValidationVisitor(), factory);
+  auto zipkin_config = dynamic_cast<const envoy::config::trace::v2::ZipkinConfig&>(*message);
+  Envoy::Tracing::DriverPtr zipkin_driver =
+      std::make_unique<Envoy::Extensions::Tracers::Zipkin::Driver>(
+          zipkin_config, *cluster_manager_, store_root_, tls_,
+          Envoy::Runtime::LoaderSingleton::get(), *local_info_, generator_, time_system_);
+  http_tracer_ =
+      std::make_unique<Envoy::Tracing::HttpTracerImpl>(std::move(zipkin_driver), *local_info_);
+  http_context_.setTracer(*http_tracer_);
 
   cluster_manager_->setInitializedCb([this]() -> void {
     std::cerr << "cluster manager initialized!" << std::endl;
     init_manager_.initialize(init_watcher_);
   });
-  dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
+
+  Runtime::LoaderSingleton::get().initialize(*cluster_manager_);
 
   bool ok = true;
   for (auto& w : workers_) {

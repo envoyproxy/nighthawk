@@ -94,7 +94,8 @@ void BenchmarkClientHttpImpl::initialize(Envoy::Runtime::Loader&, Envoy::ThreadL
 
 void BenchmarkClientHttpImpl::terminate() {
   pool_->drainConnections();
-  dispatcher_.run(Envoy::Event::Dispatcher::RunType::Block);
+  dispatcher_.run(Envoy::Event::Dispatcher::RunType::NonBlock);
+  dispatcher_.clearDeferredDeleteList();
   pool_ = nullptr;
 }
 
