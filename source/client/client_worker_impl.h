@@ -52,7 +52,6 @@ private:
 
   Ssl::FakeAdmin admin_;
   Envoy::LocalInfo::LocalInfoPtr local_info_;
-  Envoy::Upstream::ClusterManagerPtr& cluster_manager_;
 };
 
 using ClientWorkerImplPtr = std::unique_ptr<ClientWorkerImpl>;

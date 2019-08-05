@@ -293,7 +293,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
                         mergeWorkerCounters(workers));
   }
 
-  cluster_manager_->shutdown();
+  // cluster_manager_->shutdown();
   return ok;
 }
 

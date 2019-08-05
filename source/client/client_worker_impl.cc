@@ -24,9 +24,8 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
     : WorkerImpl(api, tls, store), worker_number_(worker_number), starting_time_(starting_time),
       benchmark_client_(benchmark_client_factory.create(api, *dispatcher_, store_, std::move(uri),
                                                         cluster_manager)),
-      sequencer_(
-          sequencer_factory.create(time_source_, *dispatcher_, starting_time, *benchmark_client_)),
-      cluster_manager_(cluster_manager) {}
+      sequencer_(sequencer_factory.create(time_source_, *dispatcher_, starting_time,
+                                          *benchmark_client_)) {}
 
 void ClientWorkerImpl::simpleWarmup() {
   ENVOY_LOG(debug, "> worker {}: warmup start.", worker_number_);
