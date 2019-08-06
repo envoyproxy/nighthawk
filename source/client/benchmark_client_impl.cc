@@ -34,14 +34,14 @@ BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
     Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Store& store,
     StatisticPtr&& connect_statistic, StatisticPtr&& response_statistic, UriPtr&& uri, bool use_h2,
     bool prefetch_connections, envoy::api::v2::auth::UpstreamTlsContext,
-    Envoy::Upstream::ClusterManagerPtr& cluster_manager)
+    Envoy::Upstream::ClusterManagerPtr& cluster_manager, Envoy::Tracing::HttpTracerPtr& http_tracer)
     : api_(api), dispatcher_(dispatcher), store_(store),
       scope_(store_.createScope("client.benchmark.")),
       connect_statistic_(std::move(connect_statistic)),
       response_statistic_(std::move(response_statistic)), use_h2_(use_h2),
       prefetch_connections_(prefetch_connections), uri_(std::move(uri)),
       benchmark_client_stats_({ALL_BENCHMARK_CLIENT_STATS(POOL_COUNTER(*scope_))}),
-      cluster_manager_(cluster_manager) {
+      cluster_manager_(cluster_manager), http_tracer_(http_tracer) {
 
   connect_statistic_->setId("benchmark_http_client.queue_to_connect");
   response_statistic_->setId("benchmark_http_client.request_to_response");
@@ -85,7 +85,7 @@ public:
 void BenchmarkClientHttpImpl::prefetchPoolConnections() { /*pool_->prefetchConnections(); */
 }
 
-void BenchmarkClientHttpImpl::initialize(Envoy::Runtime::Loader&, Envoy::ThreadLocal::Instance&) {
+void BenchmarkClientHttpImpl::initialize() {
   cluster_ = cluster_manager_->get("staticcluster")->info();
   auto proto = use_h2_ ? Envoy::Http::Protocol::Http2 : Envoy::Http::Protocol::Http11;
   pool_ = cluster_manager_->httpConnPoolForCluster(
@@ -130,6 +130,21 @@ bool BenchmarkClientHttpImpl::tryStartOne(std::function<void()> caller_completio
     return false;
   }
 
+  Envoy::Tracing::EgressConfigImpl config;
+  Envoy::StreamInfo::StreamInfoImpl stream_info(api_.timeSource());
+
+  stream_info.setResponseCodeDetails("OK");
+  Envoy::Tracing::Decision tracing_decision =
+      Envoy::Tracing::HttpTracerUtility::isTracing(stream_info, request_headers_);
+  // ConnectionManagerImpl::chargeTracingStats(tracing_decision.reason,
+  //                                          connection_manager_.config_.tracingStats());
+
+  auto active_span_ =
+      http_tracer_->startSpan(config, request_headers_, stream_info, tracing_decision);
+  active_span_->setSampled(true);
+  Envoy::Tracing::HttpTracerUtility::finalizeSpan(*active_span_, &request_headers_, stream_info,
+                                                  config);
+
   auto stream_decoder = new StreamDecoder(dispatcher_, api_.timeSource(), *this,
                                           std::move(caller_completion_callback),
                                           *connect_statistic_, *response_statistic_,
@@ -137,6 +152,7 @@ bool BenchmarkClientHttpImpl::tryStartOne(std::function<void()> caller_completio
   requests_initiated_++;
   if (prefetch_connections_) {
   }
+
   pool_->newStream(*stream_decoder, *stream_decoder);
   return true;
 }

@@ -28,7 +28,7 @@ public:
   BenchmarkClientFactoryImpl(const Options& options);
   BenchmarkClientPtr create(Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher,
                             Envoy::Stats::Store& store, UriPtr&& uri,
-                            Envoy::Upstream::ClusterManagerPtr& cluster_manager) const override;
+                            Envoy::Upstream::ClusterManagerPtr& cluster_manager, Envoy::Tracing::HttpTracerPtr& http_tracer) const override;
 };
 
 class SequencerFactoryImpl : public OptionBasedFactoryImpl, public SequencerFactory {

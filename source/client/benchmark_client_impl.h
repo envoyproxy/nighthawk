@@ -60,7 +60,7 @@ public:
                           StatisticPtr&& response_statistic, UriPtr&& uri, bool use_h2,
                           bool prefetch_connections,
                           envoy::api::v2::auth::UpstreamTlsContext tls_context,
-                          Envoy::Upstream::ClusterManagerPtr& cluster_manager);
+                          Envoy::Upstream::ClusterManagerPtr& cluster_manager, Envoy::Tracing::HttpTracerPtr& http_tracer);
 
   void setConnectionLimit(uint32_t connection_limit) { connection_limit_ = connection_limit; }
   void setConnectionTimeout(std::chrono::seconds timeout) { timeout_ = timeout; }
@@ -75,7 +75,7 @@ public:
   }
 
   // BenchmarkClient
-  void initialize(Envoy::Runtime::Loader& runtime, Envoy::ThreadLocal::Instance& tls) override;
+  void initialize() override;
   void terminate() override;
   StatisticPtrMap statistics() const override;
   bool measureLatencies() const override { return measure_latencies_; }
@@ -128,6 +128,7 @@ private:
   BenchmarkClientStats benchmark_client_stats_;
   uint32_t request_body_size_{0};
   Envoy::Upstream::ClusterManagerPtr& cluster_manager_;
+  Envoy::Tracing::HttpTracerPtr& http_tracer_;
 };
 
 } // namespace Client

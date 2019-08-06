@@ -33,7 +33,8 @@ public:
                    const BenchmarkClientFactory& benchmark_client_factory,
                    const SequencerFactory& sequencer_factory, UriPtr&& uri,
                    Envoy::Stats::Store& store, const int worker_number,
-                   const Envoy::MonotonicTime starting_time);
+                   const Envoy::MonotonicTime starting_time,
+                   Envoy::Tracing::HttpTracerPtr& http_tracer);
 
   StatisticPtrMap statistics() const override;
   Envoy::Stats::Store& store() const override { return store_; }
@@ -47,9 +48,9 @@ private:
   const int worker_number_;
   const Envoy::MonotonicTime starting_time_;
   bool success_{};
+  Envoy::Tracing::HttpTracerPtr& http_tracer_;
   BenchmarkClientPtr benchmark_client_;
   const SequencerPtr sequencer_;
-
   Ssl::FakeAdmin admin_;
   Envoy::LocalInfo::LocalInfoPtr local_info_;
 };

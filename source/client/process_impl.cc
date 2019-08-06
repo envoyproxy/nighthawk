@@ -96,7 +96,7 @@ const std::vector<ClientWorkerPtr>& ProcessImpl::createWorkers(const UriImpl& ur
     workers_.push_back(std::make_unique<ClientWorkerImpl>(
         api_, tls_, cluster_manager_, benchmark_client_factory_, sequencer_factory_,
         std::make_unique<UriImpl>(uri), store_root_, worker_number,
-        first_worker_start + worker_delay));
+        first_worker_start + worker_delay, http_tracer_));
     worker_number++;
   }
   return workers_;
@@ -341,7 +341,7 @@ tracing:
     typed_config:
       "@type": type.googleapis.com/envoy.config.trace.v2.ZipkinConfig
       collector_cluster: zipkin
-      collector_endpoint: "/api/v2/spans"
+      collector_endpoint: "/api/v1/spans"
       shared_span_context: false
     )EOF";
   Envoy::MessageUtil::loadFromYaml(json, bootstrap,

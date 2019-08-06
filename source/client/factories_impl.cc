@@ -18,15 +18,15 @@ OptionBasedFactoryImpl::OptionBasedFactoryImpl(const Options& options) : options
 BenchmarkClientFactoryImpl::BenchmarkClientFactoryImpl(const Options& options)
     : OptionBasedFactoryImpl(options) {}
 
-BenchmarkClientPtr
-BenchmarkClientFactoryImpl::create(Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher,
-                                   Envoy::Stats::Store& store, UriPtr&& uri,
-                                   Envoy::Upstream::ClusterManagerPtr& cluster_manager) const {
+BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
+    Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Store& store,
+    UriPtr&& uri, Envoy::Upstream::ClusterManagerPtr& cluster_manager,
+    Envoy::Tracing::HttpTracerPtr& http_tracer) const {
   StatisticFactoryImpl statistic_factory(options_);
   auto benchmark_client = std::make_unique<BenchmarkClientHttpImpl>(
       api, dispatcher, store, statistic_factory.create(), statistic_factory.create(),
       std::move(uri), options_.h2(), options_.prefetchConnections(), options_.tlsContext(),
-      cluster_manager);
+      cluster_manager, http_tracer);
   auto request_options = options_.toCommandLineOptions()->request_options();
   if (request_options.request_headers_size() > 0) {
     for (const auto& header : request_options.request_headers()) {

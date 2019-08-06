@@ -20,10 +20,12 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
                                    const BenchmarkClientFactory& benchmark_client_factory,
                                    const SequencerFactory& sequencer_factory, UriPtr&& uri,
                                    Envoy::Stats::Store& store, const int worker_number,
-                                   const Envoy::MonotonicTime starting_time)
+                                   const Envoy::MonotonicTime starting_time,
+                                   Envoy::Tracing::HttpTracerPtr& http_tracer)
     : WorkerImpl(api, tls, store), worker_number_(worker_number), starting_time_(starting_time),
+      http_tracer_(http_tracer),
       benchmark_client_(benchmark_client_factory.create(api, *dispatcher_, store_, std::move(uri),
-                                                        cluster_manager)),
+                                                        cluster_manager, http_tracer_)),
       sequencer_(sequencer_factory.create(time_source_, *dispatcher_, starting_time,
                                           *benchmark_client_)) {}
 
@@ -36,7 +38,7 @@ void ClientWorkerImpl::simpleWarmup() {
 
 void ClientWorkerImpl::work() {
   std::cerr << "ClientWorkerImpl::work " << dispatcher_.get() << std::endl;
-  benchmark_client_->initialize(*Envoy::Runtime::LoaderSingleton::getExisting(), tls_);
+  benchmark_client_->initialize();
   simpleWarmup();
   benchmark_client_->setMeasureLatencies(true);
   sequencer_->start();
