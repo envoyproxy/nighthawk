@@ -7,7 +7,6 @@
 #include "nighthawk/common/statistic.h"
 
 #include "common/common/compiler_requirements.h"
-#include "common/http/header_map_impl.h"
 #include "common/http/headers.h"
 #include "common/http/http1/conn_pool.h"
 #include "common/http/http2/conn_pool.h"
@@ -24,6 +23,7 @@
 #include "extensions/transport_sockets/well_known_names.h"
 
 #include "absl/strings/str_split.h"
+#include "common/runtime/uuid_util.h"
 
 using namespace std::chrono_literals;
 
@@ -134,21 +134,26 @@ bool BenchmarkClientHttpImpl::tryStartOne(std::function<void()> caller_completio
   Envoy::StreamInfo::StreamInfoImpl stream_info(api_.timeSource());
 
   stream_info.setResponseCodeDetails("OK");
-  Envoy::Tracing::Decision tracing_decision =
-      Envoy::Tracing::HttpTracerUtility::isTracing(stream_info, request_headers_);
-  // ConnectionManagerImpl::chargeTracingStats(tracing_decision.reason,
-  //                                          connection_manager_.config_.tracingStats());
 
-  auto active_span_ =
-      http_tracer_->startSpan(config, request_headers_, stream_info, tracing_decision);
-  active_span_->setSampled(true);
-  Envoy::Tracing::HttpTracerUtility::finalizeSpan(*active_span_, &request_headers_, stream_info,
+  Envoy::Http::HeaderMapImpl working_copy;
+  Envoy::Http::HeaderUtility::addHeaders(working_copy, request_headers_);
+
+  Envoy::Tracing::Decision tracing_decision = {Envoy::Tracing::Reason::ClientForced, true};
+  working_copy.insertClientTraceId();
+  std::string x_request_id = generator_.uuid();
+  Envoy::UuidUtils::setTraceableUuid(x_request_id, UuidTraceStatus::Client);
+  working_copy.ClientTraceId()->value(x_request_id);
+
+  auto active_span_ = http_tracer_->startSpan(config, working_copy, stream_info, tracing_decision);
+  active_span_->injectContext(working_copy);
+  // active_span_->setSampled(true);
+  Envoy::Tracing::HttpTracerUtility::finalizeSpan(*active_span_, &working_copy, stream_info,
                                                   config);
 
-  auto stream_decoder = new StreamDecoder(dispatcher_, api_.timeSource(), *this,
-                                          std::move(caller_completion_callback),
-                                          *connect_statistic_, *response_statistic_,
-                                          request_headers_, measureLatencies(), request_body_size_);
+  auto stream_decoder =
+      new StreamDecoder(dispatcher_, api_.timeSource(), *this,
+                        std::move(caller_completion_callback), *connect_statistic_,
+                        *response_statistic_, working_copy, measureLatencies(), request_body_size_);
   requests_initiated_++;
   if (prefetch_connections_) {
   }

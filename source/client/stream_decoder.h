@@ -2,6 +2,7 @@
 
 #include <functional>
 
+#include "common/http/header_map_impl.h"
 #include "envoy/common/time.h"
 #include "envoy/event/deferred_deletable.h"
 #include "envoy/event/dispatcher.h"
@@ -73,7 +74,7 @@ private:
   std::function<void()> caller_completion_callback_;
   Statistic& connect_statistic_;
   Statistic& latency_statistic_;
-  const Envoy::Http::HeaderMap& request_headers_;
+  const Envoy::Http::HeaderMapImpl request_headers_;
   Envoy::Http::HeaderMapPtr response_headers_;
   const Envoy::MonotonicTime connect_start_;
   Envoy::MonotonicTime request_start_;
