@@ -55,7 +55,6 @@ public:
                           Envoy::Upstream::ClusterManagerPtr& cluster_manager);
 
   void setConnectionLimit(uint32_t connection_limit) { connection_limit_ = connection_limit; }
-  void setConnectionTimeout(std::chrono::seconds timeout) { timeout_ = timeout; }
   void setMaxPendingRequests(uint32_t max_pending_requests) {
     max_pending_requests_ = max_pending_requests;
   }

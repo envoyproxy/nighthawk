@@ -51,6 +51,7 @@ public:
 
   uint32_t determineConcurrency() const;
   bool run(OutputCollector& collector) override;
+  const envoy::config::bootstrap::v2::Bootstrap createBootstrapConfiguration(const Uri& uri) const;
 
 private:
   void configureComponentLogLevels(spdlog::level::level_enum level);
