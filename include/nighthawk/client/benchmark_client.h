@@ -18,13 +18,6 @@ public:
   virtual ~BenchmarkClient() = default;
 
   /**
-   * Initialize will be called on the worker thread after it has started.
-   * @param runtime to be used during initialization.
-   * @param thread local storage to be used.
-   */
-  virtual void initialize(Envoy::Runtime::Loader& runtime, Envoy::ThreadLocal::Instance& tls) PURE;
-
-  /**
    * Terminate will be called on the worker thread before it ends.
    */
   virtual void terminate() PURE;

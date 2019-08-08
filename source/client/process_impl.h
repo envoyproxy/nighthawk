@@ -24,14 +24,15 @@
 #include "client/benchmark_client_impl.h"
 #include "client/factories_impl.h"
 
-#include "common/upstream/cluster_manager_impl.h"
-
+#include "common/secret/secret_manager_impl.h"
 #include "common/stats/allocator_impl.h"
-#include "common/stats/fake_symbol_table_impl.h"
 #include "common/stats/thread_local_store.h"
-#include "server/server.h"
+#include "common/upstream/cluster_manager_impl.h"
+#include "extensions/transport_sockets/tls/context_manager_impl.h"
+#include "server/config_validation/admin.h"
 
-#include "envoy/tracing/http_tracer.h"
+#include "common/access_log/access_log_manager_impl.h"
+#include "common/http/context_impl.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -68,12 +69,9 @@ private:
   Envoy::Filesystem::InstanceImplPosix file_system_;
   Envoy::Event::TimeSystem& time_system_;
   StoreFactoryImpl store_factory_;
-  Envoy::Stats::FakeSymbolTableImpl symbol_table_;
-
-  // Envoy::Stats::SymbolTableImpl symbol_table_;
+  Envoy::Stats::SymbolTableImpl symbol_table_;
   Envoy::Stats::AllocatorImpl stats_allocator_;
   Envoy::Stats::ThreadLocalStoreImpl store_root_;
-  std::unique_ptr<Envoy::Server::ServerStats> server_stats_;
 
   // Envoy::Stats::StorePtr store_;
   Envoy::Api::Impl api_;
@@ -86,7 +84,6 @@ private:
   const Options& options_;
   const PlatformUtil& platform_util_;
 
-  Ssl::FakeAdmin admin_;
   Envoy::Init::ManagerImpl init_manager_;
   Envoy::LocalInfo::LocalInfoPtr local_info_;
   Envoy::Runtime::RandomGeneratorImpl generator_;
@@ -105,6 +102,7 @@ private:
   std::unique_ptr<Runtime::ScopedLoaderSingleton> runtime_singleton_;
   Envoy::Init::WatcherImpl init_watcher_;
   Tracing::HttpTracerPtr http_tracer_;
+  Envoy::Server::ValidationAdmin admin_;
 };
 
 } // namespace Client

@@ -94,7 +94,7 @@ public:
   MockBenchmarkClientFactory();
   MOCK_CONST_METHOD5(create, Client::BenchmarkClientPtr(Envoy::Api::Api&, Envoy::Event::Dispatcher&,
                                                         Envoy::Stats::Store&, UriPtr&&,
-                                                        Envoy::Upstream::ClusterManager&));
+                                                        Envoy::Upstream::ClusterManagerPtr&));
 };
 
 class MockSequencerFactory : public Client::SequencerFactory {
@@ -135,21 +135,17 @@ class MockBenchmarkClient : public Client::BenchmarkClient {
 public:
   MockBenchmarkClient();
 
-  MOCK_METHOD2(initialize, void(Envoy::Runtime::Loader&, Envoy::ThreadLocal::Instance&));
   MOCK_METHOD0(terminate, void());
   MOCK_METHOD1(setMeasureLatencies, void(bool));
   MOCK_CONST_METHOD0(statistics, StatisticPtrMap());
   MOCK_METHOD1(tryStartOne, bool(std::function<void()>));
   MOCK_CONST_METHOD0(store, Envoy::Stats::Store&());
   MOCK_METHOD0(prefetchPoolConnections, void());
-
+  MOCK_CONST_METHOD0(measureLatencies, bool());
   MOCK_METHOD1(setRequestMethod, void(envoy::api::v2::core::RequestMethod));
   MOCK_METHOD2(setRequestHeader, void(absl::string_view, absl::string_view));
   MOCK_METHOD1(setRequestBodySize, void(uint32_t));
   MOCK_CONST_METHOD0(requestHeaders, const Envoy::Http::HeaderMap&());
-
-protected:
-  MOCK_CONST_METHOD0(measureLatencies, bool());
 };
 
 } // namespace Nighthawk

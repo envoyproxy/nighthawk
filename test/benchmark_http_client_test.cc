@@ -22,14 +22,14 @@
 
 #include "client/benchmark_client_impl.h"
 
+#include "ares.h"
 #include "test/integration/integration.h"
 #include "test/integration/utility.h"
 #include "test/mocks/runtime/mocks.h"
 #include "test/mocks/thread_local/mocks.h"
+#include "test/mocks/upstream/mocks.h"
 #include "test/server/utility.h"
 #include "test/test_common/utility.h"
-
-#include "ares.h"
 #include "gtest/gtest.h"
 
 using namespace std::chrono_literals;
@@ -43,7 +43,8 @@ public:
   BenchmarkClientTestBase()
       : Envoy::BaseIntegrationTest(GetParam(), realTime(), BenchmarkClientTestBase::envoy_config),
         api_(thread_factory_, store_, timeSystem(), file_system_),
-        dispatcher_(api_.allocateDispatcher()) {}
+        dispatcher_(api_.allocateDispatcher()),
+        cluster_manager_(std::make_unique<Envoy::Upstream::MockClusterManager>()) {}
 
   static void SetUpTestCase() {
     Envoy::Filesystem::InstanceImplPosix file_system;
@@ -77,7 +78,6 @@ public:
     client_->setConnectionTimeout(10s);
     client_->setMaxPendingRequests(max_pending);
     client_->setConnectionLimit(connection_limit);
-    client_->initialize(runtime_, tls_);
 
     const uint64_t amount = amount_of_request;
     uint64_t inflight_response_count = 0;
@@ -115,7 +115,7 @@ public:
     client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
         api_, *dispatcher_, store_, std::make_unique<StreamingStatistic>(),
         std::make_unique<StreamingStatistic>(), std::move(uri), use_h2, prefetch_connections,
-        tls_context);
+        cluster_manager_);
   }
 
   uint64_t nonZeroValuedCounterCount() {
@@ -139,6 +139,7 @@ public:
   std::unique_ptr<Client::BenchmarkClientHttpImpl> client_;
   Envoy::Filesystem::InstanceImplPosix file_system_;
   static std::string envoy_config;
+  Envoy::Upstream::ClusterManagerPtr cluster_manager_;
 };
 
 class BenchmarkClientHttpTest : public BenchmarkClientTestBase {
@@ -325,7 +326,6 @@ TEST_P(BenchmarkClientHttpTest, H1MultiConnectionFailure) {
 TEST_P(BenchmarkClientHttpTest, EnableLatencyMeasurement) {
   setupBenchmarkClient("/", false, false);
   int callback_count = 0;
-  client_->initialize(runtime_, tls_);
 
   EXPECT_EQ(false, client_->measureLatencies());
   EXPECT_EQ(true, client_->tryStartOne([&]() {
@@ -356,7 +356,7 @@ TEST_P(BenchmarkClientHttpTest, StatusTrackingInOnComplete) {
   envoy::api::v2::auth::UpstreamTlsContext tls_context;
   client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
       api_, *dispatcher_, *store, std::make_unique<StreamingStatistic>(),
-      std::make_unique<StreamingStatistic>(), std::move(uri), false, false, tls_context);
+      std::make_unique<StreamingStatistic>(), std::move(uri), false, false, cluster_manager_);
   Envoy::Http::HeaderMapImpl header;
 
   auto& status = header.insertStatus();
@@ -392,7 +392,6 @@ TEST_P(BenchmarkClientHttpTest, StatusTrackingInOnComplete) {
 TEST_P(BenchmarkClientHttpTest, ConnectionPrefetching) {
   setupBenchmarkClient("/", false, true);
   client_->setConnectionLimit(50);
-  client_->initialize(runtime_, tls_);
   EXPECT_EQ(true, client_->tryStartOne([&]() { dispatcher_->exit(); }));
   dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
   EXPECT_EQ(50, getCounter("upstream_cx_total"));
@@ -410,7 +409,6 @@ TEST_P(BenchmarkClientHttpTest, CapRequestConcurrency) {
   client_->setMaxPendingRequests(requests);
   client_->setConnectionLimit(requests);
   client_->setMaxActiveRequests(1);
-  client_->initialize(runtime_, tls_);
 
   std::function<void()> f = [this, &inflight_response_count]() {
     --inflight_response_count;
@@ -438,7 +436,6 @@ TEST_P(BenchmarkClientHttpsTest, MaxRequestsPerConnection) {
   client_->setConnectionLimit(requests);
   client_->setMaxActiveRequests(1024);
   client_->setMaxRequestsPerConnection(1);
-  client_->initialize(runtime_, tls_);
 
   std::function<void()> f = [this, &inflight_response_count]() {
     --inflight_response_count;
@@ -470,8 +467,6 @@ TEST_P(BenchmarkClientHttpTest, RequestMethodPost) {
   EXPECT_EQ(
       "d",
       client_->requestHeaders().get(Envoy::Http::LowerCaseString("c"))->value().getStringView());
-
-  client_->initialize(runtime_, tls_);
 
   EXPECT_EQ(true, client_->tryStartOne([&]() { dispatcher_->exit(); }));
   dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);

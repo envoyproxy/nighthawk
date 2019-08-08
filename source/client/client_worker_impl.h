@@ -11,15 +11,8 @@
 #include "common/utility.h"
 #include "common/worker_impl.h"
 
-#include "common/access_log/access_log_manager_impl.h"
-#include "common/http/context_impl.h"
-
 #include "common/common/logger.h"
 #include "common/http/header_map_impl.h"
-#include "common/runtime/runtime_impl.h"
-#include "common/ssl.h"
-
-#include "common/upstream/cluster_manager_impl.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -49,8 +42,6 @@ private:
   bool success_{};
   BenchmarkClientPtr benchmark_client_;
   const SequencerPtr sequencer_;
-
-  Ssl::FakeAdmin admin_;
   Envoy::LocalInfo::LocalInfoPtr local_info_;
 };
 

@@ -22,14 +22,14 @@ namespace Nighthawk {
 class TestWorker : public WorkerImpl {
 public:
   TestWorker(Envoy::Api::Impl& api, Envoy::ThreadLocal::Instance& tls)
-      : WorkerImpl(api, tls, std::make_unique<Envoy::Stats::IsolatedStoreImpl>()),
-        thread_id_(std::this_thread::get_id()) {}
+      : WorkerImpl(api, tls, store_), thread_id_(std::this_thread::get_id()) {}
   void work() override {
     EXPECT_NE(thread_id_, std::this_thread::get_id());
     ran_ = true;
   }
 
   bool ran_{};
+  Envoy::Stats::IsolatedStoreImpl store_;
   std::thread::id thread_id_;
 };
 

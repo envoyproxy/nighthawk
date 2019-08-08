@@ -15,6 +15,7 @@
 #include "common/api/api_impl.h"
 #include "common/common/cleanup.h"
 #include "common/common/thread_impl.h"
+#include "common/config/utility.h"
 #include "common/event/dispatcher_impl.h"
 #include "common/event/real_time_system.h"
 #include "common/filesystem/filesystem_impl.h"
@@ -24,11 +25,11 @@
 #include "common/network/utility.h"
 #include "common/protobuf/message_validator_impl.h"
 #include "common/runtime/runtime_impl.h"
+#include "common/singleton/manager_impl.h"
 #include "common/thread_local/thread_local_impl.h"
 #include "common/uri_impl.h"
 #include "common/utility.h"
-
-#include "common/config/utility.h"
+#include "extensions/transport_sockets/well_known_names.h"
 
 #include "client/client.h"
 #include "client/client_worker_impl.h"
@@ -38,11 +39,6 @@
 #include "api/client/options.pb.h"
 #include "api/client/output.pb.h"
 #include "ares.h"
-
-#include "extensions/tracers/well_known_names.h"
-#include "extensions/tracers/zipkin/zipkin_tracer_impl.h"
-
-#include "envoy/server/filter_config.h"
 
 using namespace std::chrono_literals;
 
@@ -66,8 +62,8 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
       singleton_manager_(std::make_unique<Envoy::Singleton::ManagerImpl>(api_.threadFactory())),
       access_log_manager_(std::chrono::milliseconds(1000), api_, *dispatcher_, fakelock_,
                           store_root_),
-      init_watcher_("Nighthawk", []() { std::cerr << "InitWatcher fires." << std::endl; }) {
-  configureComponentLogLevels(spdlog::level::from_str("trace"));
+      init_watcher_("Nighthawk", []() {}) {
+  // configureComponentLogLevels(spdlog::level::from_str("trace"));
 }
 
 const std::vector<ClientWorkerPtr>& ProcessImpl::createWorkers(const UriImpl& uri,
@@ -197,175 +193,69 @@ ProcessImpl::mergeWorkerCounters(const std::vector<ClientWorkerPtr>& workers) co
 
   return merged;
 }
-/*
-class TestUpstreamNetworkFilterConfigFactory
-    : public Server::Configuration::NamedUpstreamNetworkFilterConfigFactory {
-public:
-  Network::FilterFactoryCb
-  createFilterFactoryFromProto(const Protobuf::Message&,
-                               Server::Configuration::CommonFactoryContext&) override {
-    return [](Network::FilterManager& filter_manager) -> void {
-      filter_manager.addWriteFilter(std::make_shared<TestUpstreamNetworkFilter>());
-    };
-  }
-  ProtobufTypes::MessagePtr createEmptyConfigProto() override {
-    return std::make_unique<Envoy::ProtobufWkt::Empty>();
-  }
-  std::string name() override { return "envoy.test.filter"; }
-};
-*/
 
-/*
-class MyFilter : public Envoy::Http::ConnectionManagerImpl {
-  // using Envoy::Http::ConnectionManagerImpl;
-};
-
-class PoliteFilterConfigFactory
-    : public Envoy::Server::Configuration::NamedUpstreamNetworkFilterConfigFactory {
-public:
-  Envoy::Network::FilterFactoryCb
-  createFilterFactoryFromProto(const Envoy::Protobuf::Message& proto_config,
-                               Envoy::Server::Configuration::CommonFactoryContext&) override {
-    auto config = dynamic_cast<const Envoy::ProtobufWkt::StringValue&>(proto_config);
-    return [config](Envoy::Network::FilterManager& filter_manager) -> void {
-      filter_manager.addReadFilter(std::make_shared<MyFilter>(config));
-    };
-  }
-
-  Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override {
-    return std::make_unique<ProtobufWkt::StringValue>();
-  }
-
-  std::string name() override { return "envoy.upstream.polite"; }
-};
-
-// perform static registration
-REGISTER_FACTORY(PoliteFilterConfigFactory,
-                 Server::Configuration::NamedUpstreamNetworkFilterConfigFactory);
-*/
 bool ProcessImpl::run(OutputCollector& collector) {
-
-  store_root_.setTagProducer(Envoy::Config::Utility::createTagProducer({}));
-  store_root_.setStatsMatcher(Envoy::Config::Utility::createStatsMatcher({}));
-
-  const std::string server_stats_prefix = "server.";
-
-  server_stats_ = std::make_unique<Envoy::Server::ServerStats>(Envoy::Server::ServerStats{
-      ALL_SERVER_STATS(POOL_COUNTER_PREFIX(store_root_, server_stats_prefix),
-                       POOL_GAUGE_PREFIX(store_root_, server_stats_prefix),
-                       POOL_HISTOGRAM_PREFIX(store_root_, server_stats_prefix))});
-
   UriImpl uri(options_.uri());
   try {
-    // uri.resolve(*dispatcher_, Utility::translateFamilyOptionString(options_.addressFamily()));
+    uri.resolve(*dispatcher_, Utility::translateFamilyOptionString(options_.addressFamily()));
   } catch (UriException) {
-    // return false;
+    return false;
   }
   const std::vector<ClientWorkerPtr>& workers = createWorkers(uri, determineConcurrency());
 
   tls_.registerThread(*dispatcher_, true);
-  std::cerr << "registerThread main " << dispatcher_.get() << std::endl;
-  dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
-
+  store_root_.setTagProducer(Envoy::Config::Utility::createTagProducer({}));
+  store_root_.setStatsMatcher(Envoy::Config::Utility::createStatsMatcher({}));
   store_root_.initializeThreading(*dispatcher_, tls_);
-  dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
 
   runtime_singleton_ = std::make_unique<Envoy::Runtime::ScopedLoaderSingleton>(
       Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl(
           *dispatcher_, tls_, {}, *local_info_, init_manager_, store_root_, generator_,
           Envoy::ProtobufMessage::getStrictValidationVisitor(), api_)});
-
   ssl_context_manager_ =
       std::make_unique<Extensions::TransportSockets::Tls::ContextManagerImpl>(time_system_);
-
   cluster_manager_factory_ = std::make_unique<Envoy::Upstream::ProdClusterManagerFactory>(
       admin_, Envoy::Runtime::LoaderSingleton::get(), store_root_, tls_, generator_,
       dispatcher_->createDnsResolver({}), *ssl_context_manager_, *dispatcher_, *local_info_,
       secret_manager_, Envoy::ProtobufMessage::getStrictValidationVisitor(), api_, http_context_,
       access_log_manager_, *singleton_manager_);
 
-  // REGISTER_FACTORY(Envoy::Extensions::NetworkFilters::HttpConnectionManager::
-  //                     HttpConnectionManagerFilterConfigFactory,
-  //                 Server::Configuration::NamedNetworkFilterConfigFactory);
-
-  // Envoy::Registry::FactoryRegistry<
-  //    Envoy::Server::Configuration::NamedUpstreamNetworkFilterConfigFactory>::
-  //    registerFactory(Server::Configuration::NamedNetworkFilterConfigFactory);
-
-  // TestUpstreamNetworkFilterConfigFactory factory;
-  // Envoy::Registry::InjectFactory<
-  //    Envoy::Server::Configuration::NamedUpstreamNetworkFilterConfigFactory>
-  //    registry(factory);
-
-  ENVOY_LOG(info, "  filters.network: {}",
-            Envoy::Registry::FactoryRegistry<
-                Envoy::Server::Configuration::NamedUpstreamNetworkFilterConfigFactory>::
-                allFactoryNames());
-
   envoy::config::bootstrap::v2::Bootstrap bootstrap;
-  const std::string json = R"EOF(
-static_resources:
-  clusters:
-  - name: staticcluster
-    connect_timeout: 0.250s
-    type: STATIC
-    hosts:
-    - socket_address:
-        address: "127.0.0.1"
-        port_value: 80
-    #filters:
-    #- name: envoy.http_connection_manager
-    #  typed_config:
-    #    "@type": type.googleapis.com/envoy.config.filter.network.http_connection_manager.v2.HttpConnectionManager
-    #    generate_request_id: true
-    #    tracing:
-    #      operation_name: egress
-    #    codec_type: auto
-    #    stat_prefix: ingress_http
-  - name: zipkin
-    connect_timeout: 1s
-    type: strict_dns
-    lb_policy: round_robin
-    load_assignment:
-      cluster_name: zipkin
-      endpoints:
-      - lb_endpoints:
-        - endpoint:
-            address:
-              socket_address:
-                address: 127.0.0.1
-                port_value: 9411        
-tracing:
-  http:
-    name: envoy.zipkin
-    typed_config:
-      "@type": type.googleapis.com/envoy.config.trace.v2.ZipkinConfig
-      collector_cluster: zipkin
-      collector_endpoint: "/api/v2/spans"
-      shared_span_context: false
-    )EOF";
-  Envoy::MessageUtil::loadFromYaml(json, bootstrap,
-                                   Envoy::ProtobufMessage::getStrictValidationVisitor());
+  auto* cluster = bootstrap.mutable_static_resources()->add_clusters();
+  if (uri.scheme() == "https") {
+    auto* tls_context = cluster->mutable_tls_context();
+    auto* common_tls_context = tls_context->mutable_common_tls_context();
+    if (options_.h2()) {
+      common_tls_context->add_alpn_protocols("h2");
+    } else {
+      common_tls_context->add_alpn_protocols("http/1.1");
+    }
 
+    auto transport_socket = cluster->transport_socket();
+    transport_socket.set_name(Envoy::Extensions::TransportSockets::TransportSocketNames::get().Tls);
+    transport_socket.mutable_typed_config()->PackFrom(options_.tlsContext());
+  }
+
+  cluster->set_name("client");
+  cluster->mutable_connect_timeout()->set_seconds(options_.timeout().count());
+  cluster->mutable_max_requests_per_connection()->set_value(options_.maxRequestsPerConnection());
+
+  auto thresholds = cluster->mutable_circuit_breakers()->add_thresholds();
+  // We do not support any retrying.
+  thresholds->mutable_max_retries()->set_value(0);
+  thresholds->mutable_max_connections()->set_value(options_.connections());
+  thresholds->mutable_max_pending_requests()->set_value(options_.maxPendingRequests());
+  thresholds->mutable_max_requests()->set_value(options_.maxActiveRequests());
+
+  cluster->set_type(envoy::api::v2::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
+  auto* host = cluster->add_hosts();
+  auto* socket_address = host->mutable_socket_address();
+  socket_address->set_address(uri.address()->ip()->addressAsString());
+  socket_address->set_port_value(uri.port());
   cluster_manager_ = cluster_manager_factory_->clusterManagerFromProto(bootstrap);
+  cluster_manager_->setInitializedCb([this]() -> void { init_manager_.initialize(init_watcher_); });
 
-  auto& factory = Config::Utility::getAndCheckFactory<Envoy::Server::Configuration::TracerFactory>(
-      bootstrap.tracing().http().name());
-  ProtobufTypes::MessagePtr message = Envoy::Config::Utility::translateToFactoryConfig(
-      bootstrap.tracing().http(), Envoy::ProtobufMessage::getStrictValidationVisitor(), factory);
-  auto zipkin_config = dynamic_cast<const envoy::config::trace::v2::ZipkinConfig&>(*message);
-  Envoy::Tracing::DriverPtr zipkin_driver =
-      std::make_unique<Envoy::Extensions::Tracers::Zipkin::Driver>(
-          zipkin_config, *cluster_manager_, store_root_, tls_,
-          Envoy::Runtime::LoaderSingleton::get(), *local_info_, generator_, time_system_);
-  http_tracer_ =
-      std::make_unique<Envoy::Tracing::HttpTracerImpl>(std::move(zipkin_driver), *local_info_);
-  http_context_.setTracer(*http_tracer_);
-
-  cluster_manager_->setInitializedCb([this]() -> void {
-    std::cerr << "cluster manager initialized!" << std::endl;
-    init_manager_.initialize(init_watcher_);
-  });
+  ENVOY_LOG(info, "Computed cluster configuration: {}", cluster->DebugString());
 
   Runtime::LoaderSingleton::get().initialize(*cluster_manager_);
 

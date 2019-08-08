@@ -25,8 +25,7 @@ BenchmarkClientFactoryImpl::create(Envoy::Api::Api& api, Envoy::Event::Dispatche
   StatisticFactoryImpl statistic_factory(options_);
   auto benchmark_client = std::make_unique<BenchmarkClientHttpImpl>(
       api, dispatcher, store, statistic_factory.create(), statistic_factory.create(),
-      std::move(uri), options_.h2(), options_.prefetchConnections(), options_.tlsContext(),
-      cluster_manager);
+      std::move(uri), options_.h2(), options_.prefetchConnections(), cluster_manager);
   auto request_options = options_.toCommandLineOptions()->request_options();
   if (request_options.request_headers_size() > 0) {
     for (const auto& header : request_options.request_headers()) {

@@ -35,8 +35,6 @@ void ClientWorkerImpl::simpleWarmup() {
 }
 
 void ClientWorkerImpl::work() {
-  std::cerr << "ClientWorkerImpl::work " << dispatcher_.get() << std::endl;
-  benchmark_client_->initialize(*Envoy::Runtime::LoaderSingleton::getExisting(), tls_);
   simpleWarmup();
   benchmark_client_->setMeasureLatencies(true);
   sequencer_->start();
