@@ -37,7 +37,6 @@ envoy_cc_library(
         "//include/nighthawk/client:client_includes",
         "//include/nighthawk/common:base_includes",
         "//source/common:nighthawk_common_lib",
-        "@envoy//source/common/common:compiler_requirements_lib",
         "@envoy//source/common/common:thread_impl_lib_posix",
         "@envoy//source/common/filesystem:filesystem_lib",
         "@envoy//source/common/network:dns_lib",
@@ -45,8 +44,6 @@ envoy_cc_library(
         "@envoy//source/common/runtime:runtime_lib",
         "@envoy//source/exe:envoy_common_lib",
         "@envoy//source/exe:process_wide_lib",
-        "@envoy//source/server:server_lib",
-        "@envoy_api//envoy/api/v2:cds_export_cc",
     ],
 )
 

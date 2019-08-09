@@ -5,15 +5,10 @@
 
 #include "nighthawk/common/statistic.h"
 
-#include "common/common/compiler_requirements.h"
 #include "common/http/header_map_impl.h"
 #include "common/http/headers.h"
-#include "common/http/http1/conn_pool.h"
-#include "common/http/http2/conn_pool.h"
 #include "common/http/utility.h"
-#include "common/network/dns_impl.h"
 #include "common/network/utility.h"
-#include "common/protobuf/message_validator_impl.h"
 
 #include "client/stream_decoder.h"
 
