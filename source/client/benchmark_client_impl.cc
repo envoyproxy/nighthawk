@@ -46,6 +46,10 @@ BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
   request_headers_.insertScheme().value(uri_->scheme() == "https"
                                             ? Envoy::Http::Headers::get().SchemeValues.Https
                                             : Envoy::Http::Headers::get().SchemeValues.Http);
+  // XXX(oschaaf):
+  if (prefetch_connections_) {
+    prefetchPoolConnections();
+  }
 }
 
 void BenchmarkClientHttpImpl::prefetchPoolConnections() {
