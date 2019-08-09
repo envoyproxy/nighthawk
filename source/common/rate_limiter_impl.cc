@@ -52,7 +52,9 @@ void BurstingRateLimiter::releaseOne() {
 
 LinearRateLimiter::LinearRateLimiter(Envoy::TimeSource& time_source, const Frequency frequency)
     : time_source_(time_source), acquireable_count_(0), acquired_count_(0), frequency_(frequency) {
-  ASSERT(frequency.value() > 0, "Frequency must be > 0");
+  if (frequency.value() <= 0) {
+    throw NighthawkException("Frequency must be > 0");
+  }
 }
 
 bool LinearRateLimiter::tryAcquireOne() {
