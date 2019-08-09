@@ -1,6 +1,10 @@
 #pragma once
 
 #include "envoy/api/api.h"
+#include "envoy/event/dispatcher.h"
+#include "envoy/stats/store.h"
+#include "envoy/thread_local/thread_local.h"
+#include "envoy/upstream/cluster_manager.h"
 
 #include "nighthawk/client/benchmark_client.h"
 #include "nighthawk/client/client_worker.h"
@@ -9,8 +13,6 @@
 #include "nighthawk/common/uri.h"
 
 #include "common/common/logger.h"
-#include "common/http/header_map_impl.h"
-#include "common/utility.h"
 #include "common/worker_impl.h"
 
 namespace Nighthawk {

@@ -1,17 +1,5 @@
 #include "client/client_worker_impl.h"
 
-#include "common/http/header_map_impl.h"
-#include "common/http/headers.h"
-#include "common/http/http1/conn_pool.h"
-#include "common/http/http2/conn_pool.h"
-#include "common/http/utility.h"
-#include "common/network/dns_impl.h"
-#include "common/network/raw_buffer_socket.h"
-#include "common/network/utility.h"
-#include "common/protobuf/message_validator_impl.h"
-#include "common/upstream/cluster_manager_impl.h"
-#include "common/upstream/upstream_impl.h"
-
 namespace Nighthawk {
 namespace Client {
 
