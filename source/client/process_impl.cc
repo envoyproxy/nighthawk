@@ -64,7 +64,8 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
       access_log_manager_(std::chrono::milliseconds(1000), api_, *dispatcher_, fakelock_,
                           store_root_),
       init_watcher_("Nighthawk", []() {}) {
-  configureComponentLogLevels(spdlog::level::from_str("info"));
+  configureComponentLogLevels(spdlog::level::from_str(
+      nighthawk::client::Verbosity::VerbosityOptions_Name(options_.verbosity())));
 }
 
 const std::vector<ClientWorkerPtr>& ProcessImpl::createWorkers(const UriImpl& uri,
