@@ -45,6 +45,11 @@ function setup_gcc_toolchain() {
     export CC=gcc
     export CXX=g++
     echo "$CC/$CXX toolchain configured"
+    # GCC is memory-hungry compared to clang, and runs us into trouble.
+    # We constrain parallelism in CI to avoid running out of memory.
+    if [ -n "$CIRCLECI" ]; then
+        NUM_CPUS=6
+    fi
 }
 
 function setup_clang_toolchain() {
@@ -107,7 +112,6 @@ if [ -n "$CIRCLECI" ]; then
         mv "${HOME:-/root}/.gitconfig" "${HOME:-/root}/.gitconfig_save"
         echo 1
     fi
-    NUM_CPUS=8
 fi
 
 if grep 'docker\|lxc' /proc/1/cgroup; then
