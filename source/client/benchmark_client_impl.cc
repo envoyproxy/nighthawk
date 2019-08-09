@@ -32,8 +32,7 @@ BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
     : api_(api), dispatcher_(dispatcher), store_(store),
       scope_(store_.createScope("client.benchmark.")),
       connect_statistic_(std::move(connect_statistic)),
-      response_statistic_(std::move(response_statistic)), use_h2_(use_h2),
-      prefetch_connections_(prefetch_connections), uri_(std::move(uri)),
+      response_statistic_(std::move(response_statistic)), use_h2_(use_h2), uri_(std::move(uri)),
       benchmark_client_stats_({ALL_BENCHMARK_CLIENT_STATS(POOL_COUNTER(*scope_))}),
       cluster_manager_(cluster_manager) {
 
@@ -46,10 +45,6 @@ BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
   request_headers_.insertScheme().value(uri_->scheme() == "https"
                                             ? Envoy::Http::Headers::get().SchemeValues.Https
                                             : Envoy::Http::Headers::get().SchemeValues.Http);
-  // XXX(oschaaf):
-  if (prefetch_connections_) {
-    prefetchPoolConnections();
-  }
 }
 
 void BenchmarkClientHttpImpl::prefetchPoolConnections() {

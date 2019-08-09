@@ -194,12 +194,12 @@ TEST_F(BenchmarkClientHttpTest, StatusTrackingInOnComplete) {
   client_.reset();
 }
 
-TEST_F(BenchmarkClientHttpTest, DISABLED_ConnectionPrefetching) {
+TEST_F(BenchmarkClientHttpTest, ConnectionPrefetching) {
   setupBenchmarkClient();
   client_->setConnectionLimit(50);
-  EXPECT_EQ(true, client_->tryStartOne([&]() { dispatcher_->exit(); }));
+  client_->prefetchPoolConnections();
   dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
-  EXPECT_EQ(50, getCounter("upstream_cx_total"));
+  // XXX(oschaaf): create expectations once implemented
 }
 
 TEST_F(BenchmarkClientHttpTest, PoolFailures) {
