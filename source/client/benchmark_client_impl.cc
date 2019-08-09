@@ -77,8 +77,9 @@ void BenchmarkClientHttpImpl::setRequestHeader(absl::string_view key, absl::stri
 bool BenchmarkClientHttpImpl::tryStartOne(std::function<void()> caller_completion_callback) {
   // When we allow client-side queuing, we want to have a sense of time spend waiting on that queue.
   // So we return false here to indicate we couldn't initiate a new request.
+  auto* pool_ptr = pool();
   auto cluster_info = cluster();
-  if (cluster_info == nullptr ||
+  if (pool_ptr == nullptr || cluster_info == nullptr ||
       !cluster_info->resourceManager(Envoy::Upstream::ResourcePriority::Default)
            .pendingRequests()
            .canCreate()) {
@@ -98,12 +99,7 @@ bool BenchmarkClientHttpImpl::tryStartOne(std::function<void()> caller_completio
                                           *connect_statistic_, *response_statistic_,
                                           request_headers_, measureLatencies(), request_body_size_);
   requests_initiated_++;
-  if (prefetch_connections_) {
-  }
-  auto* poolPtr = pool();
-  if (poolPtr != nullptr) {
-    poolPtr->newStream(*stream_decoder, *stream_decoder);
-  }
+  pool_ptr->newStream(*stream_decoder, *stream_decoder);
   return true;
 }
 

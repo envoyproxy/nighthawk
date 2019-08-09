@@ -84,7 +84,7 @@ public:
       Envoy::Http::HeaderMapPtr response_headers{
           new Envoy::Http::TestHeaderMapImpl{{":status", response_code_}}};
       decoder->decodeHeaders(std::move(response_headers), false);
-      Envoy::Buffer::OwnedImpl buffer(std::string('a', 97));
+      Envoy::Buffer::OwnedImpl buffer(std::string(97, 'a'));
       decoder->decodeData(buffer, true);
     }
     decoders_.clear();
