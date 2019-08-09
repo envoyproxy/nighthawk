@@ -98,6 +98,20 @@ class TestHttp(HttpIntegrationTestBase):
     self.assertEqual(counters["upstream_rq_total"], 25)
     self.assertEqual(len(counters), 9)
 
+  def test_concurrency(self):
+    """
+    Concurrency should act like a multiplier.
+    """
+
+    parsed_json = self.runNighthawkClient(
+        ["--concurrency 4 --rps 5 --connections 1",
+         self.getTestServerRootUri()])
+    counters = self.getNighthawkCounterMapFromJson(parsed_json)
+
+    self.assertGreater(counters["benchmark.http_2xx"], 25)
+    self.assertLessEqual(counters["benchmark.http_2xx"], 100)
+    self.assertEqual(counters["upstream_cx_http1_total"], 4)
+
 
 class TestHttps(HttpsIntegrationTestBase):
 
@@ -153,7 +167,6 @@ class TestHttps(HttpsIntegrationTestBase):
     self.assertEqual(counters["ssl.versions.TLSv1.2"], 1)
     self.assertEqual(len(counters), 14)
 
-
   def test_h1_tls_context_configuration(self):
     """
     Verifies specifying tls cipher suites works with the h1 pool
@@ -174,7 +187,6 @@ class TestHttps(HttpsIntegrationTestBase):
     ])
     counters = self.getNighthawkCounterMapFromJson(parsed_json)
     self.assertEqual(counters["ssl.ciphers.ECDHE-RSA-AES256-GCM-SHA384"], 1)
-
 
   def test_h2_tls_context_configuration(self):
     """

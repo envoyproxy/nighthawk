@@ -42,7 +42,8 @@ BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
 }
 
 void BenchmarkClientHttpImpl::prefetchPoolConnections() {
-  // XXX(oschaaf): needs to be re-implemented.
+  // XXX(oschaaf): when switching to base off from cluster manager
+  // we lost this feature. restore!
 }
 
 void BenchmarkClientHttpImpl::terminate() {
