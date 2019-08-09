@@ -21,7 +21,7 @@ class ProcessTest : public testing::Test {
 public:
   void runProcess() {
     OptionsPtr options = TestUtility::createOptionsImpl(
-        fmt::format("foo --address-family v4 --duration 2 --rps 10 http://127.0.0.1/"));
+        fmt::format("foo --address-family v4 --duration 2 --rps 10 https://127.0.0.1/"));
     PlatformUtilImpl platform_util;
     ProcessPtr process = std::make_unique<ProcessImpl>(*options, time_system_, platform_util);
     OutputCollectorFactoryImpl output_format_factory(time_system_, *options);

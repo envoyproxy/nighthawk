@@ -11,18 +11,28 @@
 #include "nighthawk/common/statistic.h"
 #include "nighthawk/common/uri.h"
 
+#include "common/access_log/access_log_manager_impl.h"
 #include "common/api/api_impl.h"
 #include "common/common/logger.h"
 #include "common/common/thread_impl.h"
 #include "common/event/real_time_system.h"
 #include "common/filesystem/filesystem_impl.h"
+#include "common/http/context_impl.h"
+#include "common/secret/secret_manager_impl.h"
+#include "common/stats/allocator_impl.h"
+#include "common/stats/thread_local_store.h"
 #include "common/thread_local/thread_local_impl.h"
+#include "common/upstream/cluster_manager_impl.h"
 #include "common/uri_impl.h"
 
 #include "exe/process_wide.h"
 
+#include "server/config_validation/admin.h"
+
 #include "client/benchmark_client_impl.h"
 #include "client/factories_impl.h"
+
+#include "extensions/transport_sockets/tls/context_manager_impl.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -41,6 +51,7 @@ public:
 
   uint32_t determineConcurrency() const;
   bool run(OutputCollector& collector) override;
+  const envoy::config::bootstrap::v2::Bootstrap createBootstrapConfiguration(const Uri& uri) const;
 
 private:
   void configureComponentLogLevels(spdlog::level::level_enum level);
@@ -59,7 +70,9 @@ private:
   Envoy::Filesystem::InstanceImplPosix file_system_;
   Envoy::Event::TimeSystem& time_system_;
   StoreFactoryImpl store_factory_;
-  Envoy::Stats::StorePtr store_;
+  Envoy::Stats::SymbolTableImpl symbol_table_;
+  Envoy::Stats::AllocatorImpl stats_allocator_;
+  Envoy::Stats::ThreadLocalStoreImpl store_root_;
   Envoy::Api::Impl api_;
   Envoy::ThreadLocal::InstanceImpl tls_;
   Envoy::Event::DispatcherPtr dispatcher_;
@@ -69,6 +82,26 @@ private:
   const SequencerFactoryImpl sequencer_factory_;
   const Options& options_;
   const PlatformUtil& platform_util_;
+
+  Envoy::Init::ManagerImpl init_manager_;
+  Envoy::LocalInfo::LocalInfoPtr local_info_;
+  Envoy::Runtime::RandomGeneratorImpl generator_;
+  Envoy::Server::ConfigTrackerImpl config_tracker_;
+  Envoy::Secret::SecretManagerImpl secret_manager_;
+  Envoy::Http::ContextImpl http_context_;
+  Envoy::Thread::MutexBasicLockable fakelock_;
+  Envoy::Singleton::ManagerPtr singleton_manager_;
+  Envoy::AccessLog::AccessLogManagerImpl access_log_manager_;
+
+  std::unique_ptr<Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl>
+      ssl_context_manager_;
+
+  std::unique_ptr<Envoy::Upstream::ProdClusterManagerFactory> cluster_manager_factory_;
+  Envoy::Upstream::ClusterManagerPtr cluster_manager_{};
+  std::unique_ptr<Runtime::ScopedLoaderSingleton> runtime_singleton_;
+  Envoy::Init::WatcherImpl init_watcher_;
+  Tracing::HttpTracerPtr http_tracer_;
+  Envoy::Server::ValidationAdmin admin_;
 };
 
 } // namespace Client

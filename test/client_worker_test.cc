@@ -1,6 +1,8 @@
 #include <functional>
 #include <thread>
 
+#include "envoy/upstream/cluster_manager.h"
+
 #include "common/api/api_impl.h"
 #include "common/filesystem/filesystem_impl.h"
 #include "common/runtime/runtime_impl.h"
@@ -11,6 +13,9 @@
 #include "client/client_worker_impl.h"
 
 #include "test/mocks.h"
+#include "test/mocks/init/mocks.h"
+#include "test/mocks/local_info/mocks.h"
+#include "test/mocks/protobuf/mocks.h"
 #include "test/mocks/thread_local/mocks.h"
 #include "test/test_common/thread_factory_for_test.h"
 
@@ -25,13 +30,14 @@ class ClientWorkerTest : public Test {
 public:
   ClientWorkerTest()
       : api_(Envoy::Thread::threadFactoryForTest(), store_, time_system_, file_system_),
-        thread_id_(std::this_thread::get_id()),
-        loader_(Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl(
-            dispatcher_, tls_, {}, "test-cluster", store_, rand_, api_)}) {
+        thread_id_(std::this_thread::get_id()) {
+    loader_ = std::make_unique<Envoy::Runtime::ScopedLoaderSingleton>(Envoy::Runtime::LoaderPtr{
+        new Envoy::Runtime::LoaderImpl(dispatcher_, tls_, {}, local_info_, init_manager_, store_,
+                                       rand_, validation_visitor_, api_)});
     benchmark_client_ = new MockBenchmarkClient();
     sequencer_ = new MockSequencer();
 
-    EXPECT_CALL(benchmark_client_factory_, create(_, _, _, _))
+    EXPECT_CALL(benchmark_client_factory_, create(_, _, _, _, _))
         .Times(1)
         .WillOnce(Return(ByMove(std::unique_ptr<BenchmarkClient>(benchmark_client_))));
 
@@ -65,8 +71,12 @@ public:
   MockSequencer* sequencer_;
   Envoy::Runtime::RandomGeneratorImpl rand_;
   NiceMock<Envoy::Event::MockDispatcher> dispatcher_;
-  Envoy::Runtime::ScopedLoaderSingleton loader_;
   Envoy::Filesystem::InstanceImplPosix file_system_;
+  std::unique_ptr<Envoy::Runtime::ScopedLoaderSingleton> loader_;
+  NiceMock<Envoy::LocalInfo::MockLocalInfo> local_info_;
+  Envoy::Init::MockManager init_manager_;
+  NiceMock<Envoy::ProtobufMessage::MockValidationVisitor> validation_visitor_;
+  Envoy::Upstream::ClusterManagerPtr cluster_manager_ptr_;
 };
 
 TEST_F(ClientWorkerTest, BasicTest) {
@@ -75,7 +85,6 @@ TEST_F(ClientWorkerTest, BasicTest) {
   {
     InSequence dummy;
 
-    EXPECT_CALL(*benchmark_client_, initialize).Times(1);
     EXPECT_CALL(*sequencer_, start).Times(1);
     EXPECT_CALL(*sequencer_, waitForCompletion).Times(1);
   }
@@ -94,11 +103,10 @@ TEST_F(ClientWorkerTest, BasicTest) {
   }
 
   int worker_number = 12345;
-  auto worker =
-      std::make_unique<ClientWorkerImpl>(api_, tls_, benchmark_client_factory_, sequencer_factory_,
-                                         std::make_unique<Nighthawk::UriImpl>("http://foo"),
-                                         std::make_unique<Envoy::Stats::IsolatedStoreImpl>(),
-                                         worker_number, time_system_.monotonicTime());
+  auto worker = std::make_unique<ClientWorkerImpl>(
+      api_, tls_, cluster_manager_ptr_, benchmark_client_factory_, sequencer_factory_,
+      std::make_unique<Nighthawk::UriImpl>("http://foo"), store_, worker_number,
+      time_system_.monotonicTime());
 
   worker->start();
   worker->waitForCompletion();

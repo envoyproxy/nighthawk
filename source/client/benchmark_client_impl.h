@@ -5,14 +5,11 @@
 #include "envoy/http/conn_pool.h"
 #include "envoy/network/address.h"
 #include "envoy/runtime/runtime.h"
-#include "envoy/server/transport_socket_config.h"
-#include "envoy/ssl/context_manager.h"
 #include "envoy/stats/scope.h"
 #include "envoy/stats/store.h"
 #include "envoy/upstream/upstream.h"
 
 #include "nighthawk/client/benchmark_client.h"
-#include "nighthawk/client/prefetchable_pool.h"
 #include "nighthawk/common/sequencer.h"
 #include "nighthawk/common/statistic.h"
 #include "nighthawk/common/uri.h"
@@ -20,7 +17,6 @@
 #include "common/common/logger.h"
 #include "common/http/header_map_impl.h"
 #include "common/runtime/runtime_impl.h"
-#include "common/ssl.h"
 
 #include "client/stream_decoder.h"
 
@@ -55,11 +51,9 @@ public:
   BenchmarkClientHttpImpl(Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher,
                           Envoy::Stats::Store& store, StatisticPtr&& connect_statistic,
                           StatisticPtr&& response_statistic, UriPtr&& uri, bool use_h2,
-                          bool prefetch_connections,
-                          envoy::api::v2::auth::UpstreamTlsContext tls_context);
+                          Envoy::Upstream::ClusterManagerPtr& cluster_manager);
 
   void setConnectionLimit(uint32_t connection_limit) { connection_limit_ = connection_limit; }
-  void setConnectionTimeout(std::chrono::seconds timeout) { timeout_ = timeout; }
   void setMaxPendingRequests(uint32_t max_pending_requests) {
     max_pending_requests_ = max_pending_requests;
   }
@@ -71,7 +65,6 @@ public:
   }
 
   // BenchmarkClient
-  void initialize(Envoy::Runtime::Loader& runtime) override;
   void terminate() override;
   StatisticPtrMap statistics() const override;
   bool measureLatencies() const override { return measure_latencies_; }
@@ -94,8 +87,21 @@ public:
   void onComplete(bool success, const Envoy::Http::HeaderMap& headers) override;
   void onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason reason) override;
 
-private:
+  // Helpers
+  Envoy::Http::ConnectionPool::Instance* pool() {
+    auto proto = use_h2_ ? Envoy::Http::Protocol::Http2 : Envoy::Http::Protocol::Http11;
+    return cluster_manager_->httpConnPoolForCluster(
+        "client", Envoy::Upstream::ResourcePriority::Default, proto, nullptr);
+  }
+
+  Envoy::Upstream::ClusterInfoConstSharedPtr cluster() {
+    auto* cluster = cluster_manager_->get("client");
+    return cluster == nullptr ? nullptr : cluster->info();
+  }
+
   void prefetchPoolConnections() override;
+
+private:
   Envoy::Api::Api& api_;
   Envoy::Event::Dispatcher& dispatcher_;
   Envoy::Stats::Store& store_;
@@ -103,22 +109,15 @@ private:
   Envoy::Http::HeaderMapImpl request_headers_;
   // These are declared order dependent. Changing ordering may trigger on assert upon
   // destruction when tls has been involved during usage.
-  std::unique_ptr<Envoy::Server::Configuration::TransportSocketFactoryContext>
-      transport_socket_factory_context_;
-  std::unique_ptr<Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl>
-      ssl_context_manager_;
-  Envoy::Upstream::ClusterInfoConstSharedPtr cluster_;
   StatisticPtr connect_statistic_;
   StatisticPtr response_statistic_;
   const bool use_h2_;
-  const bool prefetch_connections_;
   const UriPtr uri_;
   std::chrono::seconds timeout_{5s};
   uint32_t connection_limit_{1};
   uint32_t max_pending_requests_{1};
   uint32_t max_active_requests_{UINT32_MAX};
   uint32_t max_requests_per_connection_{UINT32_MAX};
-  PrefetchablePoolPtr pool_;
   Envoy::Event::TimerPtr timer_;
   Envoy::Runtime::RandomGeneratorImpl generator_;
   uint64_t requests_completed_{};
@@ -126,7 +125,7 @@ private:
   bool measure_latencies_{};
   BenchmarkClientStats benchmark_client_stats_;
   uint32_t request_body_size_{0};
-  const envoy::api::v2::auth::UpstreamTlsContext tls_context_;
+  Envoy::Upstream::ClusterManagerPtr& cluster_manager_;
 };
 
 } // namespace Client

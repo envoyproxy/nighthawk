@@ -15,12 +15,17 @@
 #include "common/api/api_impl.h"
 #include "common/common/cleanup.h"
 #include "common/common/thread_impl.h"
+#include "common/config/utility.h"
 #include "common/event/dispatcher_impl.h"
 #include "common/event/real_time_system.h"
 #include "common/filesystem/filesystem_impl.h"
 #include "common/frequency.h"
+#include "common/init/manager_impl.h"
+#include "common/local_info/local_info_impl.h"
 #include "common/network/utility.h"
+#include "common/protobuf/message_validator_impl.h"
 #include "common/runtime/runtime_impl.h"
+#include "common/singleton/manager_impl.h"
 #include "common/thread_local/thread_local_impl.h"
 #include "common/uri_impl.h"
 #include "common/utility.h"
@@ -29,6 +34,8 @@
 #include "client/client_worker_impl.h"
 #include "client/factories_impl.h"
 #include "client/options_impl.h"
+
+#include "extensions/transport_sockets/well_known_names.h"
 
 #include "api/client/options.pb.h"
 #include "api/client/output.pb.h"
@@ -41,14 +48,24 @@ namespace Client {
 
 ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
                          const PlatformUtil& platform_util)
-    : time_system_(time_system), store_factory_(options), store_(store_factory_.create()),
-      api_(thread_factory_, *store_, time_system_, file_system_),
-      dispatcher_(api_.allocateDispatcher()), cleanup_([this] { tls_.shutdownGlobalThreading(); }),
+    : time_system_(time_system), store_factory_(options), stats_allocator_(symbol_table_),
+      store_root_(stats_allocator_), api_(thread_factory_, store_root_, time_system_, file_system_),
+      dispatcher_(api_.allocateDispatcher()), cleanup_([this] {
+        store_root_.shutdownThreading();
+        tls_.shutdownGlobalThreading();
+      }),
       benchmark_client_factory_(options), sequencer_factory_(options), options_(options),
-      platform_util_(platform_util) {
+      platform_util_(platform_util), init_manager_("nh_init_manager"),
+      local_info_(new Envoy::LocalInfo::LocalInfoImpl(
+          {}, Envoy::Network::Utility::getLocalAddress(Envoy::Network::Address::IpVersion::v4),
+          "nighthawk_service_zone", "nighthawk_service_cluster", "nighthawk_service_node")),
+      secret_manager_(config_tracker_), http_context_(store_root_.symbolTable()),
+      singleton_manager_(std::make_unique<Envoy::Singleton::ManagerImpl>(api_.threadFactory())),
+      access_log_manager_(std::chrono::milliseconds(1000), api_, *dispatcher_, fakelock_,
+                          store_root_),
+      init_watcher_("Nighthawk", []() {}) {
   configureComponentLogLevels(spdlog::level::from_str(
       nighthawk::client::Verbosity::VerbosityOptions_Name(options_.verbosity())));
-  tls_.registerThread(*dispatcher_, true);
 }
 
 const std::vector<ClientWorkerPtr>& ProcessImpl::createWorkers(const UriImpl& uri,
@@ -75,8 +92,9 @@ const std::vector<ClientWorkerPtr>& ProcessImpl::createWorkers(const UriImpl& ur
     const auto worker_delay = std::chrono::duration_cast<std::chrono::nanoseconds>(
         ((inter_worker_delay_usec * worker_number) * 1us));
     workers_.push_back(std::make_unique<ClientWorkerImpl>(
-        api_, tls_, benchmark_client_factory_, sequencer_factory_, std::make_unique<UriImpl>(uri),
-        store_factory_.create(), worker_number, first_worker_start + worker_delay));
+        api_, tls_, cluster_manager_, benchmark_client_factory_, sequencer_factory_,
+        std::make_unique<UriImpl>(uri), store_root_, worker_number,
+        first_worker_start + worker_delay));
     worker_number++;
   }
   return workers_;
@@ -170,12 +188,52 @@ ProcessImpl::mergeWorkerCounters(const std::vector<ClientWorkerPtr>& workers) co
       if (merged.count(counter.first) == 0) {
         merged[counter.first] = counter.second;
       } else {
-        merged[counter.first] += counter.second;
+        // TODO(oschaaf): we used to sum the stats here, but when we switched to tls stats
+        // the merging is done for us. We lost some information, which can be restored
+        // in a follow-up.
+        merged[counter.first] = counter.second;
       }
     }
   }
 
   return merged;
+}
+
+const envoy::config::bootstrap::v2::Bootstrap
+ProcessImpl::createBootstrapConfiguration(const Uri& uri) const {
+  envoy::config::bootstrap::v2::Bootstrap bootstrap;
+  auto* cluster = bootstrap.mutable_static_resources()->add_clusters();
+  if (uri.scheme() == "https") {
+    auto* tls_context = cluster->mutable_tls_context();
+    *tls_context = options_.tlsContext();
+    auto* common_tls_context = tls_context->mutable_common_tls_context();
+    if (options_.h2()) {
+      common_tls_context->add_alpn_protocols("h2");
+    } else {
+      common_tls_context->add_alpn_protocols("http/1.1");
+    }
+  }
+
+  cluster->set_name("client");
+  cluster->mutable_connect_timeout()->set_seconds(options_.timeout().count());
+  cluster->mutable_max_requests_per_connection()->set_value(options_.maxRequestsPerConnection());
+
+  auto thresholds = cluster->mutable_circuit_breakers()->add_thresholds();
+  // We do not support any retrying.
+  thresholds->mutable_max_retries()->set_value(0);
+  thresholds->mutable_max_connections()->set_value(options_.connections());
+  thresholds->mutable_max_pending_requests()->set_value(options_.maxPendingRequests());
+  thresholds->mutable_max_requests()->set_value(options_.maxActiveRequests());
+
+  cluster->set_type(envoy::api::v2::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
+  auto* host = cluster->add_hosts();
+  auto* socket_address = host->mutable_socket_address();
+  socket_address->set_address(uri.address()->ip()->addressAsString());
+  socket_address->set_port_value(uri.port());
+
+  ENVOY_LOG(info, "Computed configuration: {}", bootstrap.DebugString());
+
+  return bootstrap;
 }
 
 bool ProcessImpl::run(OutputCollector& collector) {
@@ -187,20 +245,34 @@ bool ProcessImpl::run(OutputCollector& collector) {
   }
   const std::vector<ClientWorkerPtr>& workers = createWorkers(uri, determineConcurrency());
 
-  bool ok = true;
-  Envoy::Runtime::RandomGeneratorImpl generator;
-  Envoy::Runtime::ScopedLoaderSingleton loader(
+  tls_.registerThread(*dispatcher_, true);
+  store_root_.initializeThreading(*dispatcher_, tls_);
+  runtime_singleton_ = std::make_unique<Envoy::Runtime::ScopedLoaderSingleton>(
       Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl(
-          *dispatcher_, tls_, {}, "foo-cluster", *store_, generator, api_)});
+          *dispatcher_, tls_, {}, *local_info_, init_manager_, store_root_, generator_,
+          Envoy::ProtobufMessage::getStrictValidationVisitor(), api_)});
+  ssl_context_manager_ =
+      std::make_unique<Extensions::TransportSockets::Tls::ContextManagerImpl>(time_system_);
+  cluster_manager_factory_ = std::make_unique<Envoy::Upstream::ProdClusterManagerFactory>(
+      admin_, Envoy::Runtime::LoaderSingleton::get(), store_root_, tls_, generator_,
+      dispatcher_->createDnsResolver({}), *ssl_context_manager_, *dispatcher_, *local_info_,
+      secret_manager_, Envoy::ProtobufMessage::getStrictValidationVisitor(), api_, http_context_,
+      access_log_manager_, *singleton_manager_);
+  cluster_manager_ =
+      cluster_manager_factory_->clusterManagerFromProto(createBootstrapConfiguration(uri));
+  cluster_manager_->setInitializedCb([this]() -> void { init_manager_.initialize(init_watcher_); });
+  Runtime::LoaderSingleton::get().initialize(*cluster_manager_);
 
   for (auto& w : workers_) {
     w->start();
   }
 
+  bool ok = true;
   for (auto& w : workers_) {
     w->waitForCompletion();
     ok = ok && w->success();
   }
+  cluster_manager_->shutdown();
 
   // We don't write per-worker results if we only have a single worker, because the global results
   // will be precisely the same.

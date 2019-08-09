@@ -1,6 +1,10 @@
 #pragma once
 
 #include "envoy/api/api.h"
+#include "envoy/event/dispatcher.h"
+#include "envoy/stats/store.h"
+#include "envoy/thread_local/thread_local.h"
+#include "envoy/upstream/cluster_manager.h"
 
 #include "nighthawk/client/benchmark_client.h"
 #include "nighthawk/client/client_worker.h"
@@ -8,7 +12,7 @@
 #include "nighthawk/common/sequencer.h"
 #include "nighthawk/common/uri.h"
 
-#include "common/utility.h"
+#include "common/common/logger.h"
 #include "common/worker_impl.h"
 
 namespace Nighthawk {
@@ -19,13 +23,14 @@ class ClientWorkerImpl : public WorkerImpl,
                          Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
   ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Instance& tls,
+                   Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                    const BenchmarkClientFactory& benchmark_client_factory,
                    const SequencerFactory& sequencer_factory, UriPtr&& uri,
-                   Envoy::Stats::StorePtr&& store, const int worker_number,
+                   Envoy::Stats::Store& store, const int worker_number,
                    const Envoy::MonotonicTime starting_time);
 
   StatisticPtrMap statistics() const override;
-  Envoy::Stats::Store& store() const override { return *store_; }
+  Envoy::Stats::Store& store() const override { return store_; }
   bool success() const override { return success_; }
 
 protected:
@@ -36,8 +41,9 @@ private:
   const int worker_number_;
   const Envoy::MonotonicTime starting_time_;
   bool success_{};
-  const BenchmarkClientPtr benchmark_client_;
+  BenchmarkClientPtr benchmark_client_;
   const SequencerPtr sequencer_;
+  Envoy::LocalInfo::LocalInfoPtr local_info_;
 };
 
 using ClientWorkerImplPtr = std::unique_ptr<ClientWorkerImpl>;

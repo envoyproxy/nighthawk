@@ -4,13 +4,14 @@ namespace Nighthawk {
 namespace Client {
 
 ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Instance& tls,
+                                   Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                                    const BenchmarkClientFactory& benchmark_client_factory,
                                    const SequencerFactory& sequencer_factory, UriPtr&& uri,
-                                   Envoy::Stats::StorePtr&& store, const int worker_number,
+                                   Envoy::Stats::Store& store, const int worker_number,
                                    const Envoy::MonotonicTime starting_time)
-    : WorkerImpl(api, tls, std::move(store)), worker_number_(worker_number),
-      starting_time_(starting_time), benchmark_client_(benchmark_client_factory.create(
-                                         api, *dispatcher_, *store_, std::move(uri))),
+    : WorkerImpl(api, tls, store), worker_number_(worker_number), starting_time_(starting_time),
+      benchmark_client_(benchmark_client_factory.create(api, *dispatcher_, store_, std::move(uri),
+                                                        cluster_manager)),
       sequencer_(sequencer_factory.create(time_source_, *dispatcher_, starting_time,
                                           *benchmark_client_)) {}
 
@@ -22,7 +23,6 @@ void ClientWorkerImpl::simpleWarmup() {
 }
 
 void ClientWorkerImpl::work() {
-  benchmark_client_->initialize(*Envoy::Runtime::LoaderSingleton::getExisting());
   simpleWarmup();
   benchmark_client_->setMeasureLatencies(true);
   sequencer_->start();

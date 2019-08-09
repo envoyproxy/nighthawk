@@ -18,7 +18,15 @@ Utility::mapCountersFromStore(const Envoy::Stats::Store& store,
 
   for (const auto& stat : store.counters()) {
     if (filter(stat->name(), stat->value())) {
-      results[stat->name()] = stat->value();
+      // We strip off the "cluster." prefix. Any stats that do not start with
+      // "client." after that will be omitted.
+      // TODO(oschaaf): we can expose those after amending some tests to expect them.
+      std::string stripped_name = std::string(absl::StripPrefix(stat->name(), "cluster."));
+      if (!absl::StartsWith(stripped_name, "client.") ||
+          stripped_name == "client.membership_change") {
+        continue;
+      }
+      results[stripped_name] = stat->value();
     }
   }
 
