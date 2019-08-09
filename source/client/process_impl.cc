@@ -259,16 +259,15 @@ bool ProcessImpl::run(OutputCollector& collector) {
   cluster_manager_->setInitializedCb([this]() -> void { init_manager_.initialize(init_watcher_); });
   Runtime::LoaderSingleton::get().initialize(*cluster_manager_);
 
-  bool ok = true;
   for (auto& w : workers_) {
     w->start();
   }
 
+  bool ok = true;
   for (auto& w : workers_) {
     w->waitForCompletion();
     ok = ok && w->success();
   }
-
   cluster_manager_->shutdown();
 
   // We don't write per-worker results if we only have a single worker, because the global results
@@ -281,10 +280,8 @@ bool ProcessImpl::run(OutputCollector& collector) {
         collector.addResult(
             fmt::format("worker_{}", i),
             vectorizeStatisticPtrMap(statistic_factory, worker->statistics()),
-            Utility().mapCountersFromStore(worker->store(), [](absl::string_view, uint64_t) {
-              return true; /* value > 0*/
-              ;
-            }));
+            Utility().mapCountersFromStore(
+                worker->store(), [](absl::string_view, uint64_t value) { return value > 0; }));
       }
       i++;
     }
@@ -294,7 +291,6 @@ bool ProcessImpl::run(OutputCollector& collector) {
     collector.addResult("global", mergeWorkerStatistics(statistic_factory, workers),
                         mergeWorkerCounters(workers));
   }
-
   return ok;
 }
 

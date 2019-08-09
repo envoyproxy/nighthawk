@@ -99,7 +99,7 @@ public:
     uri->resolve(*dispatcher_, Envoy::Network::DnsLookupFamily::Auto);
     client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
         *api_, *dispatcher_, store_, std::make_unique<StreamingStatistic>(),
-        std::make_unique<StreamingStatistic>(), std::move(uri), false, false, cluster_manager_);
+        std::make_unique<StreamingStatistic>(), std::move(uri), false, cluster_manager_);
   }
 
   uint64_t getCounter(absl::string_view name) {
@@ -161,7 +161,7 @@ TEST_F(BenchmarkClientHttpTest, StatusTrackingInOnComplete) {
   auto store = std::make_unique<Envoy::Stats::IsolatedStoreImpl>();
   client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
       *api_, *dispatcher_, *store, std::make_unique<StreamingStatistic>(),
-      std::make_unique<StreamingStatistic>(), std::move(uri), false, false, cluster_manager_);
+      std::make_unique<StreamingStatistic>(), std::move(uri), false, cluster_manager_);
   Envoy::Http::HeaderMapImpl header;
 
   auto& status = header.insertStatus();

@@ -7,7 +7,6 @@
 #include "envoy/common/time.h"
 #include "envoy/event/dispatcher.h"
 #include "envoy/stats/store.h"
-#include "envoy/thread_local/thread_local.h"
 #include "envoy/upstream/cluster_manager.h"
 
 #include "nighthawk/client/benchmark_client.h"

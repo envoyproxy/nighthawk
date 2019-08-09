@@ -34,7 +34,6 @@ TEST_F(FactoriesTest, CreateBenchmarkClient) {
   Envoy::Upstream::ClusterManagerPtr cluster_manager;
   EXPECT_CALL(options_, connections()).Times(1);
   EXPECT_CALL(options_, h2()).Times(1);
-  EXPECT_CALL(options_, prefetchConnections()).Times(1);
   EXPECT_CALL(options_, requestMethod()).Times(1);
   EXPECT_CALL(options_, requestBodySize()).Times(1);
   EXPECT_CALL(options_, maxPendingRequests()).Times(1);

@@ -73,8 +73,6 @@ private:
   Envoy::Stats::SymbolTableImpl symbol_table_;
   Envoy::Stats::AllocatorImpl stats_allocator_;
   Envoy::Stats::ThreadLocalStoreImpl store_root_;
-
-  // Envoy::Stats::StorePtr store_;
   Envoy::Api::Impl api_;
   Envoy::ThreadLocal::InstanceImpl tls_;
   Envoy::Event::DispatcherPtr dispatcher_;

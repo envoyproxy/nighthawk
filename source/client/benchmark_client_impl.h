@@ -99,8 +99,9 @@ public:
     return cluster == nullptr ? nullptr : cluster->info();
   }
 
-private:
   void prefetchPoolConnections() override;
+
+private:
   Envoy::Api::Api& api_;
   Envoy::Event::Dispatcher& dispatcher_;
   Envoy::Stats::Store& store_;

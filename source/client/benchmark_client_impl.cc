@@ -1,7 +1,6 @@
 #include "client/benchmark_client_impl.h"
 
 #include "envoy/event/dispatcher.h"
-#include "envoy/server/tracer_config.h"
 #include "envoy/thread_local/thread_local.h"
 
 #include "nighthawk/common/statistic.h"
@@ -28,7 +27,7 @@ namespace Client {
 BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
     Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Store& store,
     StatisticPtr&& connect_statistic, StatisticPtr&& response_statistic, UriPtr&& uri, bool use_h2,
-    bool prefetch_connections, Envoy::Upstream::ClusterManagerPtr& cluster_manager)
+    Envoy::Upstream::ClusterManagerPtr& cluster_manager)
     : api_(api), dispatcher_(dispatcher), store_(store),
       scope_(store_.createScope("client.benchmark.")),
       connect_statistic_(std::move(connect_statistic)),
