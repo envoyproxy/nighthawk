@@ -58,6 +58,9 @@ function setup_clang_toolchain() {
     export CXX=clang++
     export ASAN_SYMBOLIZER_PATH=/usr/lib/llvm-8/bin/llvm-symbolizer
     echo "$CC/$CXX toolchain configured"
+    if [ -n "$CIRCLECI" ]; then
+        NUM_CPUS=8
+    fi
 }
 
 function run_bazel() {
