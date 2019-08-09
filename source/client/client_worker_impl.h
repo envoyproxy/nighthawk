@@ -8,11 +8,10 @@
 #include "nighthawk/common/sequencer.h"
 #include "nighthawk/common/uri.h"
 
-#include "common/utility.h"
-#include "common/worker_impl.h"
-
 #include "common/common/logger.h"
 #include "common/http/header_map_impl.h"
+#include "common/utility.h"
+#include "common/worker_impl.h"
 
 namespace Nighthawk {
 namespace Client {
