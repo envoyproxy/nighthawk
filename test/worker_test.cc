@@ -50,6 +50,7 @@ public:
 
 TEST_F(WorkerTest, WorkerExecutesOnThread) {
   InSequence in_sequence;
+
   EXPECT_CALL(tls_, registerThread(_, false)).Times(1);
   EXPECT_CALL(tls_, allocateSlot()).Times(1);
 
@@ -61,6 +62,7 @@ TEST_F(WorkerTest, WorkerExecutesOnThread) {
                                          rand_, validation_visitor_, api_)});
   worker.start();
   worker.waitForCompletion();
+
   EXPECT_CALL(tls_, shutdownThread()).Times(1);
   ASSERT_TRUE(worker.ran_);
 }
