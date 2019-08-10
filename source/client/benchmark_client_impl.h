@@ -16,6 +16,7 @@
 
 #include "common/common/logger.h"
 #include "common/http/header_map_impl.h"
+#include "common/http/http1/conn_pool.h"
 #include "common/runtime/runtime_impl.h"
 
 #include "client/stream_decoder.h"
@@ -42,6 +43,12 @@ using namespace Envoy; // We need this because of macro expectations.
 
 struct BenchmarkClientStats {
   ALL_BENCHMARK_CLIENT_STATS(GENERATE_COUNTER_STRUCT)
+};
+
+class Http1PoolImpl : public Envoy::Http::Http1::ProdConnPoolImpl {
+public:
+  using Envoy::Http::Http1::ProdConnPoolImpl::ProdConnPoolImpl;
+  void createConnections(const uint32_t connection_limit);
 };
 
 class BenchmarkClientHttpImpl : public BenchmarkClient,

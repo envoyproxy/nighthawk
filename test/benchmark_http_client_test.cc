@@ -195,11 +195,16 @@ TEST_F(BenchmarkClientHttpTest, StatusTrackingInOnComplete) {
 }
 
 TEST_F(BenchmarkClientHttpTest, ConnectionPrefetching) {
-  setupBenchmarkClient();
+  auto uri = std::make_unique<UriImpl>("http://foo/");
+  auto store = std::make_unique<Envoy::Stats::IsolatedStoreImpl>();
+  client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
+      *api_, *dispatcher_, *store, std::make_unique<StreamingStatistic>(),
+      std::make_unique<StreamingStatistic>(), std::move(uri), false, cluster_manager_);
+
   client_->setConnectionLimit(50);
   client_->prefetchPoolConnections();
   dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
-  // XXX(oschaaf): create expectations once implemented
+  client_.reset();
 }
 
 TEST_F(BenchmarkClientHttpTest, PoolFailures) {

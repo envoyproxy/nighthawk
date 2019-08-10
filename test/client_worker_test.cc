@@ -93,6 +93,7 @@ TEST_F(ClientWorkerTest, BasicTest) {
     InSequence dummy;
 
     // warmup
+    EXPECT_CALL(*benchmark_client_, prefetchPoolConnections()).Times(1);
     EXPECT_CALL(*benchmark_client_, tryStartOne(_))
         .Times(1)
         .WillRepeatedly(Invoke(this, &ClientWorkerTest::CheckThreadChanged));
@@ -106,7 +107,7 @@ TEST_F(ClientWorkerTest, BasicTest) {
   auto worker = std::make_unique<ClientWorkerImpl>(
       api_, tls_, cluster_manager_ptr_, benchmark_client_factory_, sequencer_factory_,
       std::make_unique<Nighthawk::UriImpl>("http://foo"), store_, worker_number,
-      time_system_.monotonicTime());
+      time_system_.monotonicTime(), true);
 
   worker->start();
   worker->waitForCompletion();

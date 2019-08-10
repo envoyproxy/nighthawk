@@ -207,3 +207,14 @@ class TestHttps(HttpsIntegrationTestBase):
     ])
     counters = self.getNighthawkCounterMapFromJson(parsed_json)
     self.assertEqual(counters["ssl.ciphers.ECDHE-RSA-AES256-GCM-SHA384"], 1)
+
+  def test_prefetching(self):
+    """
+    Test we prefetch connections.
+    """
+    parsed_json = self.runNighthawkClient([
+        "--duration 1", "--rps 1", "--prefetch-connections", "--connections 50",
+        self.getTestServerRootUri()
+    ])
+    counters = self.getNighthawkCounterMapFromJson(parsed_json)
+    self.assertEqual(counters["upstream_cx_http1_total"], 50)
