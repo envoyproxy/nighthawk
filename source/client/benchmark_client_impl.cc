@@ -49,7 +49,7 @@ BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
 }
 
 void BenchmarkClientHttpImpl::prefetchPoolConnections() {
-  Http1PoolImpl* prefetchable_pool = dynamic_cast<Http1PoolImpl*>(pool());
+  auto* prefetchable_pool = dynamic_cast<Http1PoolImpl*>(pool());
   if (prefetchable_pool == nullptr) {
     ENVOY_LOG(error, "prefetchPoolConnections() pool not prefetchable");
     return;
