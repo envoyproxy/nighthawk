@@ -344,12 +344,12 @@ bool ProcessImpl::run(OutputCollector& collector) {
                         mergeWorkerCounters(workers));
   }
 
+  // Before we shut down the worker threads, stop threading.
   tls_.shutdownGlobalThreading();
   store_root_.shutdownThreading();
+  // Before shutting down the cluster manager, stop the workers.
+  workers_.clear();
   cluster_manager_->shutdown();
-  // TODO(oschaaf): asserts when the symbol table destroys.
-  // Probably, we need to keep the workers running while we stop threading,
-  // then shut down the worker threads, and then proceed to destroy the cluster manager.
   return ok;
 }
 

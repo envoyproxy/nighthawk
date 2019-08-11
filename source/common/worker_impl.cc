@@ -14,7 +14,11 @@ WorkerImpl::WorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Instance& tls,
   tls.registerThread(*dispatcher_, false);
 }
 
-WorkerImpl::~WorkerImpl() { tls_.shutdownThread(); }
+WorkerImpl::~WorkerImpl() {
+  started_ = false;
+  tls_.shutdownThread();
+  thread_->join();
+}
 
 void WorkerImpl::start() {
   ASSERT(!started_ && !completed_);
@@ -24,13 +28,19 @@ void WorkerImpl::start() {
     // Run the dispatcher to let the callbacks posted by registerThread() execute.
     dispatcher_->run(Envoy::Event::Dispatcher::RunType::NonBlock);
     work();
+    completed_ = true;
+    while (started_) {
+      usleep(1000 * 250);
+    }
   });
 }
 
 void WorkerImpl::waitForCompletion() {
   ASSERT(started_ && !completed_);
-  completed_ = true;
-  thread_->join();
+  // thread_->join();
+  while (!completed_) {
+    usleep(1000 * 250);
+  }
 }
 
 } // namespace Nighthawk
