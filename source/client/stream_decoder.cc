@@ -12,6 +12,9 @@ void StreamDecoder::decodeHeaders(Envoy::Http::HeaderMapPtr&& headers, bool end_
   ASSERT(!complete_);
   complete_ = end_stream;
   response_headers_ = std::move(headers);
+  const uint64_t response_code = Envoy::Http::Utility::getResponseStatus(*response_headers_);
+  stream_info_.response_code_ = static_cast<uint32_t>(response_code);
+
   if (complete_) {
     onComplete(true);
   }
@@ -35,11 +38,17 @@ void StreamDecoder::onComplete(bool success) {
   if (success && measure_latencies_) {
     latency_statistic_.addValue((time_source_.monotonicTime() - request_start_).count());
   }
+  stream_info_.onRequestComplete();
   ASSERT(!success || complete_);
   decoder_completion_callback_.onComplete(success, *response_headers_);
   if (success) {
     caller_completion_callback_();
   }
+
+  stream_info_.dumpState(std::cerr, 2);
+  Envoy::Tracing::HttpTracerUtility::finalizeSpan(*active_span_, &request_headers_, stream_info_,
+                                                  config_);
+
   dispatcher_.deferredDelete(std::unique_ptr<StreamDecoder>(this));
 }
 

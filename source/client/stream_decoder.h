@@ -3,12 +3,17 @@
 #include <functional>
 
 #include "common/http/header_map_impl.h"
+#include "common/runtime/uuid_util.h"
 #include "envoy/common/time.h"
 #include "envoy/event/deferred_deletable.h"
 #include "envoy/event/dispatcher.h"
 #include "envoy/http/conn_pool.h"
+#include "envoy/server/tracer_config.h"
 
 #include "nighthawk/common/statistic.h"
+
+#include "common/stream_info/stream_info_impl.h"
+#include "common/tracing/http_tracer_impl.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -34,14 +39,25 @@ public:
                 StreamDecoderCompletionCallback& decoder_completion_callback,
                 std::function<void()> caller_completion_callback, Statistic& connect_statistic,
                 Statistic& latency_statistic, const Envoy::Http::HeaderMap& request_headers,
-                bool measure_latencies, uint32_t request_body_size)
+                bool measure_latencies, uint32_t request_body_size, std::string x_request_id,
+                Envoy::Tracing::HttpTracer& http_tracer)
       : dispatcher_(dispatcher), time_source_(time_source),
         decoder_completion_callback_(decoder_completion_callback),
         caller_completion_callback_(std::move(caller_completion_callback)),
         connect_statistic_(connect_statistic), latency_statistic_(latency_statistic),
         request_headers_(request_headers), connect_start_(time_source_.monotonicTime()),
         complete_(false), measure_latencies_(measure_latencies),
-        request_body_size_(request_body_size) {}
+        request_body_size_(request_body_size), stream_info_(time_source_),
+        http_tracer_(http_tracer) {
+    Envoy::Tracing::Decision tracing_decision = {Envoy::Tracing::Reason::ClientForced, true};
+    request_headers_.insertClientTraceId();
+    Envoy::UuidUtils::setTraceableUuid(x_request_id, Envoy::UuidTraceStatus::Client);
+    request_headers_.ClientTraceId()->value(x_request_id);
+    active_span_ =
+        http_tracer_.startSpan(config_, request_headers_, stream_info_, tracing_decision);
+    active_span_->injectContext(request_headers_);
+    // active_span_->setSampled(true);
+  }
 
   // Http::StreamDecoder
   void decode100ContinueHeaders(Envoy::Http::HeaderMapPtr&&) override {
@@ -74,13 +90,17 @@ private:
   std::function<void()> caller_completion_callback_;
   Statistic& connect_statistic_;
   Statistic& latency_statistic_;
-  const Envoy::Http::HeaderMapImpl request_headers_;
+  Envoy::Http::HeaderMapImpl request_headers_;
   Envoy::Http::HeaderMapPtr response_headers_;
   const Envoy::MonotonicTime connect_start_;
   Envoy::MonotonicTime request_start_;
   bool complete_;
   bool measure_latencies_;
   const uint32_t request_body_size_;
+  Envoy::Tracing::EgressConfigImpl config_;
+  Envoy::StreamInfo::StreamInfoImpl stream_info_;
+  Envoy::Tracing::HttpTracer& http_tracer_;
+  Envoy::Tracing::SpanPtr active_span_;
 };
 
 } // namespace Client

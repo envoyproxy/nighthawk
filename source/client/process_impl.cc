@@ -67,7 +67,7 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
       access_log_manager_(std::chrono::milliseconds(1000), api_, *dispatcher_, fakelock_,
                           store_root_),
       init_watcher_("Nighthawk", []() { std::cerr << "InitWatcher fires." << std::endl; }) {
-  configureComponentLogLevels(spdlog::level::from_str("trace"));
+  // XXX configureComponentLogLevels(spdlog::level::from_str("trace"));
 }
 
 const std::vector<ClientWorkerPtr>& ProcessImpl::createWorkers(const UriImpl& uri,

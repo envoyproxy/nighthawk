@@ -7,6 +7,7 @@
 #include "nighthawk/common/statistic.h"
 
 #include "common/common/compiler_requirements.h"
+#include "common/http/context_impl.h"
 #include "common/http/headers.h"
 #include "common/http/http1/conn_pool.h"
 #include "common/http/http2/conn_pool.h"
@@ -130,30 +131,11 @@ bool BenchmarkClientHttpImpl::tryStartOne(std::function<void()> caller_completio
     return false;
   }
 
-  Envoy::Tracing::EgressConfigImpl config;
-  Envoy::StreamInfo::StreamInfoImpl stream_info(api_.timeSource());
-
-  stream_info.setResponseCodeDetails("OK");
-
-  Envoy::Http::HeaderMapImpl working_copy;
-  Envoy::Http::HeaderUtility::addHeaders(working_copy, request_headers_);
-
-  Envoy::Tracing::Decision tracing_decision = {Envoy::Tracing::Reason::ClientForced, true};
-  working_copy.insertClientTraceId();
   std::string x_request_id = generator_.uuid();
-  Envoy::UuidUtils::setTraceableUuid(x_request_id, UuidTraceStatus::Client);
-  working_copy.ClientTraceId()->value(x_request_id);
-
-  auto active_span_ = http_tracer_->startSpan(config, working_copy, stream_info, tracing_decision);
-  active_span_->injectContext(working_copy);
-  // active_span_->setSampled(true);
-  Envoy::Tracing::HttpTracerUtility::finalizeSpan(*active_span_, &working_copy, stream_info,
-                                                  config);
-
-  auto stream_decoder =
-      new StreamDecoder(dispatcher_, api_.timeSource(), *this,
-                        std::move(caller_completion_callback), *connect_statistic_,
-                        *response_statistic_, working_copy, measureLatencies(), request_body_size_);
+  auto stream_decoder = new StreamDecoder(
+      dispatcher_, api_.timeSource(), *this, std::move(caller_completion_callback),
+      *connect_statistic_, *response_statistic_, request_headers_, measureLatencies(),
+      request_body_size_, x_request_id, *http_tracer_);
   requests_initiated_++;
   if (prefetch_connections_) {
   }
