@@ -30,7 +30,6 @@
 #include "exe/process_wide.h"
 
 #include "server/config_validation/admin.h"
-#include "server/server.h"
 
 #include "client/benchmark_client_impl.h"
 #include "client/factories_impl.h"

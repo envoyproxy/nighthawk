@@ -187,7 +187,10 @@ ProcessImpl::mergeWorkerCounters(const std::vector<ClientWorkerPtr>& workers) co
       if (merged.count(counter.first) == 0) {
         merged[counter.first] = counter.second;
       } else {
-        merged[counter.first] += counter.second;
+        // TODO(oschaaf): we used to sum the stats here, but when we switched to tls stats
+        // the merging is done for us. We lost some information, which can be restored
+        // in a follow-up.
+        merged[counter.first] = counter.second;
       }
     }
   }
@@ -317,6 +320,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
     w->waitForCompletion();
     ok = ok && w->success();
   }
+  cluster_manager_->shutdown();
 
   // We don't write per-worker results if we only have a single worker, because the global results
   // will be precisely the same.
