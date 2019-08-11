@@ -1,11 +1,11 @@
+licenses(["notice"])  # Apache 2
+
 load(
     "@envoy//bazel:envoy_build_system.bzl",
     "envoy_cc_mock",
     "envoy_cc_test",
     "envoy_package",
 )
-
-licenses(["notice"])  # Apache 2
 
 envoy_package()
 
@@ -24,35 +24,29 @@ envoy_cc_mock(
 envoy_cc_test(
     name = "nighthawk_test",
     srcs = [
-        #"benchmark_http_client_test.cc",
-        #"client_test.cc",
-        #"client_worker_test.cc",
-        #"factories_test.cc",
-        #"frequency_test.cc",
-        #"options_test.cc",
-        #"output_collector_test.cc",
-        #"platform_util_test.cc",
+        "benchmark_http_client_test.cc",
+        "client_test.cc",
+        "client_worker_test.cc",
+        "factories_test.cc",
+        "frequency_test.cc",
+        "options_test.cc",
+        "output_collector_test.cc",
+        "platform_util_test.cc",
         "process_test.cc",
-        #"rate_limiter_test.cc",
-        #"sequencer_test.cc",
-        #"service_main_test.cc",
-        #"service_test.cc",
-        #"ssl_test.cc",
-        #"statistic_test.cc",
-        #"stream_decoder_test.cc",
-        #"utility_test.cc",
-        #"worker_test.cc",
+        "rate_limiter_test.cc",
+        "sequencer_test.cc",
+        "service_main_test.cc",
+        "service_test.cc",
+        "statistic_test.cc",
+        "stream_decoder_test.cc",
+        "utility_test.cc",
+        "worker_test.cc",
     ],
     data = [
-        "test_data/benchmark_http_client_test_envoy.yaml",
         "test_data/hdr_proto_json.gold",
-        "test_data/lorem_ipsum.txt",
         "test_data/output_collector.json.gold",
         "test_data/output_collector.txt.gold",
         "test_data/output_collector.yaml.gold",
-        "@envoy//test/config/integration/certs",
-        "@envoy//test/test_common:thread_factory_for_test_lib",
-        "@envoy_api//envoy/api/v2:cds_export_cc",
     ],
     repository = "@envoy",
     deps = [
@@ -65,11 +59,14 @@ envoy_cc_test(
         "@envoy//source/common/network:dns_lib",
         "@envoy//source/common/protobuf:utility_lib",
         "@envoy//source/common/stats:isolated_store_lib",
-        "@envoy//test/integration:integration_lib",
         "@envoy//test/mocks/event:event_mocks",
+        "@envoy//test/mocks/init:init_mocks",
+        "@envoy//test/mocks/local_info:local_info_mocks",
         "@envoy//test/mocks/protobuf:protobuf_mocks",
+        "@envoy//test/mocks/runtime:runtime_mocks",
         "@envoy//test/mocks/thread_local:thread_local_mocks",
-        "@envoy//test/server:utility_lib",
+        "@envoy//test/mocks/upstream:upstream_mocks",
+        "@envoy//test/test_common:network_utility_lib",
         "@envoy//test/test_common:simulated_time_system_lib",
     ],
 )

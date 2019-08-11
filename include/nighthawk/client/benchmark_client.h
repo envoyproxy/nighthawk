@@ -18,11 +18,6 @@ public:
   virtual ~BenchmarkClient() = default;
 
   /**
-   * Initialize will be called on the worker thread after it has started.
-   */
-  virtual void initialize() PURE;
-
-  /**
    * Terminate will be called on the worker thread before it ends.
    */
   virtual void terminate() PURE;

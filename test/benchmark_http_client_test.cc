@@ -1,83 +1,66 @@
-#include <chrono>
+#include <vector>
 
-#include "envoy/thread_local/thread_local.h"
-
-#include "common/api/api_impl.h"
-#include "common/common/compiler_requirements.h"
-#include "common/common/thread_impl.h"
-#include "common/event/dispatcher_impl.h"
-#include "common/filesystem/filesystem_impl.h"
 #include "common/http/header_map_impl.h"
-#include "common/network/dns_impl.h"
 #include "common/network/utility.h"
-#include "common/platform_util_impl.h"
-#include "common/rate_limiter_impl.h"
 #include "common/runtime/runtime_impl.h"
-#include "common/sequencer_impl.h"
 #include "common/statistic_impl.h"
 #include "common/stats/isolated_store_impl.h"
-#include "common/thread_local/thread_local_impl.h"
 #include "common/uri_impl.h"
 #include "common/utility.h"
 
+#include "exe/process_wide.h"
+
 #include "client/benchmark_client_impl.h"
 
-#include "test/integration/integration.h"
-#include "test/integration/utility.h"
+#include "test/mocks/common.h"
 #include "test/mocks/runtime/mocks.h"
 #include "test/mocks/thread_local/mocks.h"
-#include "test/server/utility.h"
-#include "test/test_common/utility.h"
+#include "test/mocks/upstream/mocks.h"
+#include "test/test_common/network_utility.h"
 
-#include "ares.h"
 #include "gtest/gtest.h"
 
-using namespace std::chrono_literals;
 using namespace testing;
+using Envoy::SaveArgAddress;
 
 namespace Nighthawk {
 
-class BenchmarkClientTestBase : public Envoy::BaseIntegrationTest,
-                                public TestWithParam<Envoy::Network::Address::IpVersion> {
+class BenchmarkClientHttpTest : public Test {
 public:
-  BenchmarkClientTestBase()
-      : Envoy::BaseIntegrationTest(GetParam(), realTime(), BenchmarkClientTestBase::envoy_config),
-        api_(thread_factory_, store_, timeSystem(), file_system_),
-        dispatcher_(api_.allocateDispatcher()) {}
-
-  static void SetUpTestCase() {
-    Envoy::Filesystem::InstanceImplPosix file_system;
-    envoy_config = file_system.fileReadToEnd(Envoy::TestEnvironment::runfilesPath(
-        "test/test_data/benchmark_http_client_test_envoy.yaml"));
-    envoy_config = Envoy::TestEnvironment::substitute(envoy_config);
+  BenchmarkClientHttpTest()
+      : api_(Envoy::Api::createApiForTest()), dispatcher_(api_->allocateDispatcher()),
+        cluster_manager_(std::make_unique<Envoy::Upstream::MockClusterManager>()),
+        cluster_info_(std::make_unique<Envoy::Upstream::MockClusterInfo>()), response_code_("200") {
+    EXPECT_CALL(cluster_manager(), httpConnPoolForCluster(_, _, _, _))
+        .WillRepeatedly(Return(&pool_));
+    EXPECT_CALL(cluster_manager(), get(_)).WillRepeatedly(Return(&thread_local_cluster_));
+    EXPECT_CALL(thread_local_cluster_, info()).WillRepeatedly(Return(cluster_info_));
   }
 
-  void SetUp() override {
-    ares_library_init(ARES_LIB_INIT_ALL);
-    Envoy::Event::Libevent::Global::initialize();
-  }
-
-  void TearDown() override {
-    if (client_ != nullptr) {
-      client_->terminate();
-    }
-    test_server_.reset();
-    fake_upstreams_.clear();
-    tls_.shutdownGlobalThreading();
-    ares_library_cleanup();
-  }
-
-  uint32_t getTestServerHostAndPort() { return lookupPort("listener_0"); }
-
-  void testBasicFunctionality(absl::string_view uriPath, const uint64_t max_pending,
-                              const uint64_t connection_limit, const bool use_h2,
+  void testBasicFunctionality(const uint64_t max_pending, const uint64_t connection_limit,
                               const uint64_t amount_of_request) {
-    setupBenchmarkClient(uriPath, use_h2, false);
+    if (client_ == nullptr) {
+      setupBenchmarkClient();
+      cluster_info().resetResourceManager(connection_limit, max_pending, 1024, 0, 1024);
+    }
 
-    client_->setConnectionTimeout(10s);
+    EXPECT_CALL(stream_encoder_, encodeHeaders(_, _)).Times(AtLeast(1));
+
+    EXPECT_CALL(pool_, newStream(_, _))
+        .WillRepeatedly(Invoke([&](Envoy::Http::StreamDecoder& decoder,
+                                   Envoy::Http::ConnectionPool::Callbacks& callbacks)
+                                   -> Envoy::Http::ConnectionPool::Cancellable* {
+          decoders_.push_back(&decoder);
+          callbacks.onPoolReady(stream_encoder_, Envoy::Upstream::HostDescriptionConstSharedPtr{});
+          return nullptr;
+        }));
+
     client_->setMaxPendingRequests(max_pending);
     client_->setConnectionLimit(connection_limit);
-    client_->initialize(runtime_, tls_);
+
+    EXPECT_CALL(cluster_info(), resourceManager(_))
+        .WillRepeatedly(
+            ReturnRef(cluster_info_->resourceManager(Envoy::Upstream::ResourcePriority::Default)));
 
     const uint64_t amount = amount_of_request;
     uint64_t inflight_response_count = 0;
@@ -94,269 +77,91 @@ public:
         inflight_response_count++;
       }
     }
-
-    EXPECT_EQ(max_pending, inflight_response_count);
     dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
-    EXPECT_EQ(0, getCounter("benchmark.stream_resets"));
+    EXPECT_EQ(max_pending, inflight_response_count);
+
+    for (Envoy::Http::StreamDecoder* decoder : decoders_) {
+      Envoy::Http::HeaderMapPtr response_headers{
+          new Envoy::Http::TestHeaderMapImpl{{":status", response_code_}}};
+      decoder->decodeHeaders(std::move(response_headers), false);
+      Envoy::Buffer::OwnedImpl buffer(std::string(97, 'a'));
+      decoder->decodeData(buffer, true);
+    }
+    decoders_.clear();
+    dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
+    EXPECT_EQ(0, inflight_response_count);
   }
 
-  virtual void setupBenchmarkClient(absl::string_view uriPath, bool use_h2,
-                                    bool prefetch_connections) = 0;
-
-  void doSetupBenchmarkClient(absl::string_view uriPath, bool use_https, bool use_h2,
-                              bool prefetch_connections) {
-    const std::string address = Envoy::Network::Test::getLoopbackAddressUrlString(GetParam());
-    auto uri = std::make_unique<UriImpl>(fmt::format("{}://{}:{}{}", use_https ? "https" : "http",
-                                                     address, getTestServerHostAndPort(), uriPath));
-    uri->resolve(*dispatcher_, GetParam() == Envoy::Network::Address::IpVersion::v4
-                                   ? Envoy::Network::DnsLookupFamily::V4Only
-                                   : Envoy::Network::DnsLookupFamily::V6Only);
-    envoy::api::v2::auth::UpstreamTlsContext tls_context;
+  void setupBenchmarkClient() {
+    const std::string address =
+        Envoy::Network::Test::getLoopbackAddressUrlString(Envoy::Network::Address::IpVersion::v4);
+    auto uri = std::make_unique<UriImpl>(fmt::format("http://localhost:1/"));
+    uri->resolve(*dispatcher_, Envoy::Network::DnsLookupFamily::Auto);
     client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
-        api_, *dispatcher_, store_, std::make_unique<StreamingStatistic>(),
-        std::make_unique<StreamingStatistic>(), std::move(uri), use_h2, prefetch_connections,
-        tls_context);
-  }
-
-  uint64_t nonZeroValuedCounterCount() {
-    return Utility()
-        .mapCountersFromStore(client_->store(),
-                              [](absl::string_view, uint64_t value) { return value > 0; })
-        .size();
+        *api_, *dispatcher_, store_, std::make_unique<StreamingStatistic>(),
+        std::make_unique<StreamingStatistic>(), std::move(uri), false, cluster_manager_);
   }
 
   uint64_t getCounter(absl::string_view name) {
     return client_->store().counter("client." + std::string(name)).value();
   }
 
-  Envoy::Thread::ThreadFactoryImplPosix thread_factory_;
+  Envoy::Upstream::MockClusterManager& cluster_manager() {
+    return dynamic_cast<Envoy::Upstream::MockClusterManager&>(*cluster_manager_);
+  }
+  Envoy::Upstream::MockClusterInfo& cluster_info() {
+    return const_cast<Envoy::Upstream::MockClusterInfo&>(
+        dynamic_cast<const Envoy::Upstream::MockClusterInfo&>(*cluster_info_));
+  }
+
+  Envoy::Event::TestRealTimeSystem time_system_;
   Envoy::Stats::IsolatedStoreImpl store_;
-  Envoy::Api::Impl api_;
+  Envoy::Api::ApiPtr api_;
   Envoy::Event::DispatcherPtr dispatcher_;
   Envoy::Runtime::RandomGeneratorImpl generator_;
   NiceMock<Envoy::ThreadLocal::MockInstance> tls_;
   NiceMock<Envoy::Runtime::MockLoader> runtime_;
   std::unique_ptr<Client::BenchmarkClientHttpImpl> client_;
-  Envoy::Filesystem::InstanceImplPosix file_system_;
-  static std::string envoy_config;
+  Envoy::Upstream::ClusterManagerPtr cluster_manager_;
+  Envoy::Http::ConnectionPool::MockInstance pool_;
+  Envoy::ProcessWide process_wide;
+  std::vector<Envoy::Http::StreamDecoder*> decoders_;
+  Envoy::Http::MockStreamEncoder stream_encoder_;
+  Envoy::Upstream::MockThreadLocalCluster thread_local_cluster_;
+  Envoy::Upstream::ClusterInfoConstSharedPtr cluster_info_;
+  std::string response_code_;
 };
 
-class BenchmarkClientHttpTest : public BenchmarkClientTestBase {
-public:
-  void SetUp() override { BenchmarkClientHttpTest::initialize(); }
-
-  void setupBenchmarkClient(absl::string_view uriPath, bool use_h2,
-                            bool prefetch_connections) override {
-    doSetupBenchmarkClient(uriPath, false, use_h2, prefetch_connections);
-  };
-};
-
-class BenchmarkClientHttpsTest : public BenchmarkClientTestBase {
-public:
-  void SetUp() override { BenchmarkClientHttpsTest::initialize(); }
-
-  void setupBenchmarkClient(absl::string_view uriPath, bool use_h2,
-                            bool prefetch_connections) override {
-    doSetupBenchmarkClient(uriPath, true, use_h2, prefetch_connections);
-  };
-
-  void initialize() override {
-    config_helper_.addConfigModifier([](envoy::config::bootstrap::v2::Bootstrap& bootstrap) {
-      auto* common_tls_context = bootstrap.mutable_static_resources()
-                                     ->mutable_listeners(0)
-                                     ->mutable_filter_chains(0)
-                                     ->mutable_tls_context()
-                                     ->mutable_common_tls_context();
-      common_tls_context->mutable_validation_context_sds_secret_config()->set_name(
-          "validation_context");
-      common_tls_context->add_tls_certificate_sds_secret_configs()->set_name("server_cert");
-
-      auto* secret = bootstrap.mutable_static_resources()->add_secrets();
-      secret->set_name("validation_context");
-      auto* validation_context = secret->mutable_validation_context();
-      validation_context->mutable_trusted_ca()->set_filename(Envoy::TestEnvironment::runfilesPath(
-          "external/envoy/test/config/integration/certs/cacert.pem"));
-      secret = bootstrap.mutable_static_resources()->add_secrets();
-      secret->set_name("server_cert");
-      auto* tls_certificate = secret->mutable_tls_certificate();
-      tls_certificate->mutable_certificate_chain()->set_filename(
-          Envoy::TestEnvironment::runfilesPath(
-              "external/envoy/test/config/integration/certs/servercert.pem"));
-      tls_certificate->mutable_private_key()->set_filename(Envoy::TestEnvironment::runfilesPath(
-          "external/envoy/test/config/integration/certs/serverkey.pem"));
-    });
-
-    BenchmarkClientTestBase::initialize();
-  }
-};
-
-std::string BenchmarkClientTestBase::envoy_config;
-
-INSTANTIATE_TEST_SUITE_P(IpVersions, BenchmarkClientHttpTest,
-                         ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()),
-                         Envoy::TestUtility::ipTestParamsToString);
-INSTANTIATE_TEST_SUITE_P(IpVersions, BenchmarkClientHttpsTest,
-                         ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()),
-                         Envoy::TestUtility::ipTestParamsToString);
-
-TEST_P(BenchmarkClientHttpTest, BasicTestH1) {
-  testBasicFunctionality("/lorem-ipsum-status-200", 1, 1, false, 10);
-
-  EXPECT_EQ(1, getCounter("upstream_cx_http1_total"));
-  EXPECT_LE(3621, getCounter("upstream_cx_rx_bytes_total"));
-  EXPECT_EQ(1, getCounter("upstream_cx_total"));
-  EXPECT_LE(78, getCounter("upstream_cx_tx_bytes_total"));
-  EXPECT_EQ(1, getCounter("upstream_rq_pending_total"));
-  EXPECT_EQ(1, getCounter("upstream_rq_total"));
-  EXPECT_EQ(1, getCounter("benchmark.http_2xx"));
-  EXPECT_EQ(7, nonZeroValuedCounterCount());
-}
-
-TEST_P(BenchmarkClientHttpTest, BasicTestH1404) {
-  testBasicFunctionality("/lorem-ipsum-status-404", 1, 1, false, 10);
-
-  EXPECT_EQ(1, getCounter("upstream_cx_http1_total"));
-  EXPECT_EQ(0, getCounter("upstream_cx_protocol_error"));
-  EXPECT_LE(97, getCounter("upstream_cx_rx_bytes_total"));
-  EXPECT_EQ(1, getCounter("upstream_cx_total"));
-  EXPECT_LE(78, getCounter("upstream_cx_tx_bytes_total"));
-  EXPECT_EQ(1, getCounter("upstream_rq_pending_total"));
-  EXPECT_EQ(1, getCounter("upstream_rq_total"));
+TEST_F(BenchmarkClientHttpTest, BasicTestH1404) {
+  response_code_ = "404";
+  testBasicFunctionality(1, 1, 10);
   EXPECT_EQ(1, getCounter("benchmark.http_4xx"));
-  EXPECT_EQ(7, nonZeroValuedCounterCount());
 }
 
-TEST_P(BenchmarkClientHttpsTest, BasicTestHttpsH1) {
-  testBasicFunctionality("/lorem-ipsum-status-200", 1, 1, false, 10);
-
-  EXPECT_EQ(1, getCounter("ssl.ciphers.ECDHE-RSA-AES128-GCM-SHA256"));
-  EXPECT_EQ(1, getCounter("ssl.curves.X25519"));
-  EXPECT_EQ(1, getCounter("ssl.handshake"));
-  EXPECT_EQ(1, getCounter("ssl.sigalgs.rsa_pss_rsae_sha256"));
-  EXPECT_EQ(1, getCounter("ssl.versions.TLSv1.2"));
-  EXPECT_EQ(1, getCounter("upstream_cx_http1_total"));
-  EXPECT_LE(3622, getCounter("upstream_cx_rx_bytes_total"));
-  EXPECT_EQ(1, getCounter("upstream_cx_total"));
-  EXPECT_LE(78, getCounter("upstream_cx_tx_bytes_total"));
-  EXPECT_EQ(1, getCounter("upstream_rq_pending_total"));
-  EXPECT_EQ(1, getCounter("upstream_rq_total"));
-  EXPECT_EQ(1, getCounter("benchmark.http_2xx"));
-  EXPECT_EQ(12, nonZeroValuedCounterCount());
-}
-
-TEST_P(BenchmarkClientHttpsTest, BasicTestH2) {
-  testBasicFunctionality("/lorem-ipsum-status-200", 1, 1, true, 10);
-
-  EXPECT_EQ(1, getCounter("ssl.ciphers.ECDHE-RSA-AES128-GCM-SHA256"));
-  EXPECT_EQ(1, getCounter("ssl.curves.X25519"));
-  EXPECT_EQ(1, getCounter("ssl.handshake"));
-  EXPECT_EQ(1, getCounter("ssl.sigalgs.rsa_pss_rsae_sha256"));
-  EXPECT_EQ(1, getCounter("ssl.versions.TLSv1.2"));
-  EXPECT_EQ(1, getCounter("upstream_cx_http2_total"));
-  EXPECT_LE(3585, getCounter("upstream_cx_rx_bytes_total"));
-  EXPECT_EQ(1, getCounter("upstream_cx_total"));
-  EXPECT_LE(108, getCounter("upstream_cx_tx_bytes_total"));
-  EXPECT_EQ(1, getCounter("upstream_rq_pending_total"));
-  EXPECT_EQ(1, getCounter("upstream_rq_total"));
-  EXPECT_EQ(1, getCounter("benchmark.http_2xx"));
-  EXPECT_EQ(12, nonZeroValuedCounterCount());
-}
-
-TEST_P(BenchmarkClientHttpTest, BasicTestH2C) {
-  testBasicFunctionality("/lorem-ipsum-status-200", 1, 1, true, 10);
-
-  EXPECT_EQ(1, getCounter("upstream_cx_http2_total"));
-  EXPECT_LE(3584, getCounter("upstream_cx_rx_bytes_total"));
-  EXPECT_EQ(1, getCounter("upstream_cx_total"));
-  EXPECT_LE(108, getCounter("upstream_cx_tx_bytes_total"));
-  EXPECT_EQ(1, getCounter("upstream_rq_pending_total"));
-  EXPECT_EQ(1, getCounter("upstream_rq_total"));
-  EXPECT_EQ(1, getCounter("benchmark.http_2xx"));
-  EXPECT_EQ(7, nonZeroValuedCounterCount());
-}
-
-// TODO(oschaaf): can't configure envoy to emit a weird status, fix
-// this later.
-TEST_P(BenchmarkClientHttpTest, DISABLED_WeirdStatus) {
-  testBasicFunctionality("/601", 1, 1, false, 10);
-
-  EXPECT_EQ(1, getCounter("upstream_cx_http1_total"));
-  EXPECT_LE(3621, getCounter("upstream_cx_rx_bytes_total"));
-  EXPECT_EQ(1, getCounter("upstream_cx_total"));
-  EXPECT_LE(78, getCounter("upstream_cx_tx_bytes_total"));
-  EXPECT_EQ(1, getCounter("upstream_rq_pending_total"));
-  EXPECT_EQ(1, getCounter("upstream_rq_total"));
+TEST_F(BenchmarkClientHttpTest, WeirdStatus) {
+  response_code_ = "601";
+  testBasicFunctionality(1, 1, 10);
   EXPECT_EQ(1, getCounter("benchmark.http_xxx"));
-  EXPECT_EQ(7, nonZeroValuedCounterCount());
 }
 
-TEST_P(BenchmarkClientHttpTest, H1ConnectionFailure) {
-  // Kill the test server, so we can't connect.
-  // We allow a single connection and no pending. We expect one connection failure.
-  test_server_.reset();
-  testBasicFunctionality("/lorem-ipsum-status-200", 1, 1, false, 10);
-
-  EXPECT_EQ(1, getCounter("upstream_cx_connect_fail"));
-  EXPECT_LE(1, getCounter("upstream_cx_http1_total"));
-  EXPECT_EQ(1, getCounter("upstream_cx_total"));
-  EXPECT_LE(1, getCounter("upstream_rq_pending_failure_eject"));
-  EXPECT_EQ(1, getCounter("upstream_rq_pending_total"));
-  EXPECT_EQ(1, getCounter("upstream_cx_destroy_remote"));
-  EXPECT_EQ(1, getCounter("upstream_cx_destroy"));
-  EXPECT_EQ(8, nonZeroValuedCounterCount());
-}
-
-TEST_P(BenchmarkClientHttpTest, H1MultiConnectionFailure) {
-  // Kill the test server, so we can't connect.
-  // We allow ten connections and ten pending requests. We expect ten connection failures.
-  test_server_.reset();
-  testBasicFunctionality("/lorem-ipsum-status-200", 10, 10, false, 10);
-
-  EXPECT_EQ(10, getCounter("upstream_cx_connect_fail"));
-  EXPECT_LE(10, getCounter("upstream_cx_http1_total"));
-  EXPECT_EQ(10, getCounter("upstream_cx_total"));
-  EXPECT_LE(10, getCounter("upstream_rq_pending_failure_eject"));
-  EXPECT_EQ(10, getCounter("upstream_rq_pending_total"));
-  EXPECT_EQ(10, getCounter("upstream_cx_destroy_remote"));
-  EXPECT_EQ(10, getCounter("upstream_cx_destroy"));
-  EXPECT_EQ(8, nonZeroValuedCounterCount());
-}
-
-TEST_P(BenchmarkClientHttpTest, EnableLatencyMeasurement) {
-  setupBenchmarkClient("/", false, false);
-  int callback_count = 0;
-  client_->initialize(runtime_, tls_);
-
+TEST_F(BenchmarkClientHttpTest, EnableLatencyMeasurement) {
+  setupBenchmarkClient();
   EXPECT_EQ(false, client_->measureLatencies());
-  EXPECT_EQ(true, client_->tryStartOne([&]() {
-    callback_count++;
-    dispatcher_->exit();
-  }));
-  dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
-  EXPECT_EQ(1, callback_count);
+  testBasicFunctionality(10, 1, 10);
   EXPECT_EQ(0, client_->statistics()["benchmark_http_client.queue_to_connect"]->count());
   EXPECT_EQ(0, client_->statistics()["benchmark_http_client.request_to_response"]->count());
   client_->setMeasureLatencies(true);
-  EXPECT_EQ(true, client_->measureLatencies());
-  EXPECT_EQ(true, client_->tryStartOne([&]() {
-    callback_count++;
-    dispatcher_->exit();
-  }));
-
-  dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
-
-  EXPECT_EQ(2, callback_count);
-  EXPECT_EQ(1, client_->statistics()["benchmark_http_client.queue_to_connect"]->count());
-  EXPECT_EQ(1, client_->statistics()["benchmark_http_client.request_to_response"]->count());
+  testBasicFunctionality(10, 1, 10);
+  EXPECT_EQ(10, client_->statistics()["benchmark_http_client.queue_to_connect"]->count());
+  EXPECT_EQ(10, client_->statistics()["benchmark_http_client.request_to_response"]->count());
 }
 
-TEST_P(BenchmarkClientHttpTest, StatusTrackingInOnComplete) {
+TEST_F(BenchmarkClientHttpTest, StatusTrackingInOnComplete) {
   auto uri = std::make_unique<UriImpl>("http://foo/");
   auto store = std::make_unique<Envoy::Stats::IsolatedStoreImpl>();
-  envoy::api::v2::auth::UpstreamTlsContext tls_context;
   client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
-      api_, *dispatcher_, *store, std::make_unique<StreamingStatistic>(),
-      std::make_unique<StreamingStatistic>(), std::move(uri), false, false, tls_context);
+      *api_, *dispatcher_, *store, std::make_unique<StreamingStatistic>(),
+      std::make_unique<StreamingStatistic>(), std::move(uri), false, cluster_manager_);
   Envoy::Http::HeaderMapImpl header;
 
   auto& status = header.insertStatus();
@@ -389,74 +194,24 @@ TEST_P(BenchmarkClientHttpTest, StatusTrackingInOnComplete) {
   client_.reset();
 }
 
-TEST_P(BenchmarkClientHttpTest, ConnectionPrefetching) {
-  setupBenchmarkClient("/", false, true);
+TEST_F(BenchmarkClientHttpTest, ConnectionPrefetching) {
+  setupBenchmarkClient();
   client_->setConnectionLimit(50);
-  client_->initialize(runtime_, tls_);
-  EXPECT_EQ(true, client_->tryStartOne([&]() { dispatcher_->exit(); }));
+  client_->prefetchPoolConnections();
   dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
-  EXPECT_EQ(50, getCounter("upstream_cx_total"));
+  // XXX(oschaaf): create expectations once implemented
 }
 
-// TODO(oschaaf): Turns out this feature is h/2 only as of writing this.
-// Consider logging a warning/error when attempting to configure this with
-// H1 enabled.
-TEST_P(BenchmarkClientHttpTest, CapRequestConcurrency) {
-  setupBenchmarkClient("/lorem-ipsum-status-200", true, false);
-  const uint64_t requests = 4;
-  uint64_t inflight_response_count = requests;
-
-  // We configure so that max requests is the only thing that can be throttling.
-  client_->setMaxPendingRequests(requests);
-  client_->setConnectionLimit(requests);
-  client_->setMaxActiveRequests(1);
-  client_->initialize(runtime_, tls_);
-
-  std::function<void()> f = [this, &inflight_response_count]() {
-    --inflight_response_count;
-    if (inflight_response_count == 3) {
-      dispatcher_->exit();
-    }
-  };
-  for (uint64_t i = 0; i < requests; i++) {
-    EXPECT_EQ(true, client_->tryStartOne(f));
-  }
-  dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
-  EXPECT_EQ(1, getCounter("benchmark.http_2xx"));
-  EXPECT_EQ(1, getCounter("upstream_rq_total"));
-  EXPECT_EQ(3, getCounter("upstream_rq_pending_overflow"));
-  EXPECT_EQ(3, getCounter("benchmark.pool_overflow"));
+TEST_F(BenchmarkClientHttpTest, PoolFailures) {
+  setupBenchmarkClient();
+  client_->onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason::ConnectionFailure);
+  client_->onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason::Overflow);
+  EXPECT_EQ(1, getCounter("benchmark.pool_overflow"));
+  EXPECT_EQ(1, getCounter("benchmark.pool_connection_failure"));
 }
 
-TEST_P(BenchmarkClientHttpsTest, MaxRequestsPerConnection) {
-  setupBenchmarkClient("/lorem-ipsum-status-200", false, false);
-  const uint64_t requests = 4;
-  uint64_t inflight_response_count = requests;
-
-  // We configure so that max requests is the only thing that can be throttling.
-  client_->setMaxPendingRequests(requests);
-  client_->setConnectionLimit(requests);
-  client_->setMaxActiveRequests(1024);
-  client_->setMaxRequestsPerConnection(1);
-  client_->initialize(runtime_, tls_);
-
-  std::function<void()> f = [this, &inflight_response_count]() {
-    --inflight_response_count;
-    if (inflight_response_count == 0) {
-      dispatcher_->exit();
-    }
-  };
-  for (uint64_t i = 0; i < requests; i++) {
-    EXPECT_EQ(true, client_->tryStartOne(f));
-  }
-  dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
-
-  EXPECT_EQ(requests, getCounter("benchmark.http_2xx"));
-  EXPECT_EQ(requests, getCounter("upstream_cx_http1_total"));
-}
-
-TEST_P(BenchmarkClientHttpTest, RequestMethodPost) {
-  setupBenchmarkClient("/", false, true);
+TEST_F(BenchmarkClientHttpTest, RequestMethodPost) {
+  setupBenchmarkClient();
   EXPECT_EQ("GET", client_->requestHeaders().Method()->value().getStringView());
   client_->setRequestMethod(envoy::api::v2::core::RequestMethod::POST);
   client_->setRequestHeader("a", "b");
@@ -471,26 +226,11 @@ TEST_P(BenchmarkClientHttpTest, RequestMethodPost) {
       "d",
       client_->requestHeaders().get(Envoy::Http::LowerCaseString("c"))->value().getStringView());
 
-  client_->initialize(runtime_, tls_);
+  EXPECT_CALL(stream_encoder_, encodeData(_, _)).Times(1);
 
-  EXPECT_EQ(true, client_->tryStartOne([&]() { dispatcher_->exit(); }));
-  dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
+  testBasicFunctionality(1, 1, 1);
 
-  EXPECT_EQ(1, getCounter("benchmark.http_4xx"));
-  EXPECT_EQ(GetParam() == Envoy::Network::Address::IpVersion::v4 ? 1407 : 1403,
-            getCounter("upstream_cx_tx_bytes_total"));
-  EXPECT_EQ(1, getCounter("upstream_cx_total"));
-  EXPECT_EQ(1, getCounter("upstream_rq_total"));
-  EXPECT_EQ(1, getCounter("upstream_cx_overflow"));
-  EXPECT_EQ(116, getCounter("upstream_cx_rx_bytes_total"));
-  EXPECT_EQ(1, getCounter("upstream_rq_pending_total"));
-  EXPECT_EQ(1, getCounter("upstream_cx_close_notify"));
-  EXPECT_EQ(1, getCounter("upstream_cx_http1_total"));
-  EXPECT_EQ(1, getCounter("upstream_cx_close_notify"));
-  EXPECT_EQ(1, getCounter("upstream_cx_destroy_local"));
-  EXPECT_EQ(11, nonZeroValuedCounterCount());
+  EXPECT_EQ(1, getCounter("benchmark.http_2xx"));
 }
-
-// TODO(oschaaf): test protocol violations, stream resets, etc.
 
 } // namespace Nighthawk

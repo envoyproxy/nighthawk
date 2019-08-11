@@ -22,14 +22,14 @@ namespace Nighthawk {
 class TestWorker : public WorkerImpl {
 public:
   TestWorker(Envoy::Api::Impl& api, Envoy::ThreadLocal::Instance& tls)
-      : WorkerImpl(api, tls, std::make_unique<Envoy::Stats::IsolatedStoreImpl>()),
-        thread_id_(std::this_thread::get_id()) {}
+      : WorkerImpl(api, tls, store_), thread_id_(std::this_thread::get_id()) {}
   void work() override {
     EXPECT_NE(thread_id_, std::this_thread::get_id());
     ran_ = true;
   }
 
   bool ran_{};
+  Envoy::Stats::IsolatedStoreImpl store_;
   std::thread::id thread_id_;
 };
 
@@ -50,6 +50,7 @@ public:
 
 TEST_F(WorkerTest, WorkerExecutesOnThread) {
   InSequence in_sequence;
+
   EXPECT_CALL(tls_, registerThread(_, false)).Times(1);
   EXPECT_CALL(tls_, allocateSlot()).Times(1);
 
@@ -61,6 +62,7 @@ TEST_F(WorkerTest, WorkerExecutesOnThread) {
                                          rand_, validation_visitor_, api_)});
   worker.start();
   worker.waitForCompletion();
+
   EXPECT_CALL(tls_, shutdownThread()).Times(1);
   ASSERT_TRUE(worker.ran_);
 }

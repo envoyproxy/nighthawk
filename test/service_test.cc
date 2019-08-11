@@ -6,10 +6,9 @@
 
 #include "client/service_impl.h"
 
-#include "test/mocks.h"
-#include "test/mocks/upstream/mocks.h"
 #include "test/test_common/environment.h"
 #include "test/test_common/network_utility.h"
+#include "test/test_common/utility.h"
 
 #include "api/client/service.pb.h"
 #include "gtest/gtest.h"

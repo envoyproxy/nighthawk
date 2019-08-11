@@ -1,6 +1,10 @@
 #pragma once
 
 #include "envoy/api/api.h"
+#include "envoy/event/dispatcher.h"
+#include "envoy/stats/store.h"
+#include "envoy/thread_local/thread_local.h"
+#include "envoy/upstream/cluster_manager.h"
 
 #include "nighthawk/client/benchmark_client.h"
 #include "nighthawk/client/client_worker.h"
@@ -8,18 +12,8 @@
 #include "nighthawk/common/sequencer.h"
 #include "nighthawk/common/uri.h"
 
-#include "common/utility.h"
-#include "common/worker_impl.h"
-
-#include "common/access_log/access_log_manager_impl.h"
-#include "common/http/context_impl.h"
-
 #include "common/common/logger.h"
-#include "common/http/header_map_impl.h"
-#include "common/runtime/runtime_impl.h"
-#include "common/ssl.h"
-
-#include "common/upstream/cluster_manager_impl.h"
+#include "common/worker_impl.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -51,7 +45,6 @@ private:
   Envoy::Tracing::HttpTracerPtr& http_tracer_;
   BenchmarkClientPtr benchmark_client_;
   const SequencerPtr sequencer_;
-  Ssl::FakeAdmin admin_;
   Envoy::LocalInfo::LocalInfoPtr local_info_;
 };
 

@@ -12,18 +12,16 @@ WorkerImpl::WorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Instance& tls,
     : thread_factory_(api.threadFactory()), dispatcher_(api.allocateDispatcher()), tls_(tls),
       store_(store), time_source_(api.timeSource()), file_system_(api.fileSystem()) {
   tls.registerThread(*dispatcher_, false);
-
-  std::cerr << "registerThread worker " << dispatcher_.get() << std::endl;
 }
 
 WorkerImpl::~WorkerImpl() { tls_.shutdownThread(); }
 
 void WorkerImpl::start() {
   ASSERT(!started_ && !completed_);
-  std::cerr << "worker::start()" << std::endl;
   started_ = true;
   thread_ = thread_factory_.createThread([this]() {
     ASSERT(Envoy::Runtime::LoaderSingleton::getExisting() != nullptr);
+    // Run the dispatcher to let the callbacks posted by registerThread() execute.
     dispatcher_->run(Envoy::Event::Dispatcher::RunType::NonBlock);
     work();
   });

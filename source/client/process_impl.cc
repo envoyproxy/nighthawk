@@ -8,6 +8,7 @@
 #include <memory>
 #include <random>
 
+#include "envoy/server/filter_config.h"
 #include "envoy/stats/store.h"
 
 #include "nighthawk/client/output_collector.h"
@@ -15,6 +16,7 @@
 #include "common/api/api_impl.h"
 #include "common/common/cleanup.h"
 #include "common/common/thread_impl.h"
+#include "common/config/utility.h"
 #include "common/event/dispatcher_impl.h"
 #include "common/event/real_time_system.h"
 #include "common/filesystem/filesystem_impl.h"
@@ -24,25 +26,23 @@
 #include "common/network/utility.h"
 #include "common/protobuf/message_validator_impl.h"
 #include "common/runtime/runtime_impl.h"
+#include "common/singleton/manager_impl.h"
 #include "common/thread_local/thread_local_impl.h"
 #include "common/uri_impl.h"
 #include "common/utility.h"
-
-#include "common/config/utility.h"
 
 #include "client/client.h"
 #include "client/client_worker_impl.h"
 #include "client/factories_impl.h"
 #include "client/options_impl.h"
 
+#include "extensions/tracers/well_known_names.h"
+#include "extensions/tracers/zipkin/zipkin_tracer_impl.h"
+#include "extensions/transport_sockets/well_known_names.h"
+
 #include "api/client/options.pb.h"
 #include "api/client/output.pb.h"
 #include "ares.h"
-
-#include "extensions/tracers/well_known_names.h"
-#include "extensions/tracers/zipkin/zipkin_tracer_impl.h"
-
-#include "envoy/server/filter_config.h"
 
 using namespace std::chrono_literals;
 
@@ -53,12 +53,9 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
                          const PlatformUtil& platform_util)
     : time_system_(time_system), store_factory_(options), stats_allocator_(symbol_table_),
       store_root_(stats_allocator_), api_(thread_factory_, store_root_, time_system_, file_system_),
-      dispatcher_(api_.allocateDispatcher()), cleanup_([this] {
-        store_root_.shutdownThreading();
-        tls_.shutdownGlobalThreading();
-      }),
-      benchmark_client_factory_(options), sequencer_factory_(options), options_(options),
-      platform_util_(platform_util), init_manager_("nh_init_manager"),
+      dispatcher_(api_.allocateDispatcher()), benchmark_client_factory_(options),
+      sequencer_factory_(options), options_(options), platform_util_(platform_util),
+      init_manager_("nh_init_manager"),
       local_info_(new Envoy::LocalInfo::LocalInfoImpl(
           {}, Envoy::Network::Utility::getLocalAddress(Envoy::Network::Address::IpVersion::v4),
           "nighthawk_service_zone", "nighthawk_service_cluster", "nighthawk_service_node")),
@@ -67,7 +64,7 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
       access_log_manager_(std::chrono::milliseconds(1000), api_, *dispatcher_, fakelock_,
                           store_root_),
       init_watcher_("Nighthawk", []() { std::cerr << "InitWatcher fires." << std::endl; }) {
-  // XXX configureComponentLogLevels(spdlog::level::from_str("trace"));
+  configureComponentLogLevels(spdlog::level::from_str("trace"));
 }
 
 const std::vector<ClientWorkerPtr>& ProcessImpl::createWorkers(const UriImpl& uri,
@@ -197,41 +194,91 @@ ProcessImpl::mergeWorkerCounters(const std::vector<ClientWorkerPtr>& workers) co
 
   return merged;
 }
+
+void ProcessImpl::createBootstrapConfiguration(envoy::config::bootstrap::v2::Bootstrap& bootstrap,
+                                               const Uri& uri) const {
+  auto* cluster = bootstrap.mutable_static_resources()->add_clusters();
+  if (uri.scheme() == "https") {
+    auto* tls_context = cluster->mutable_tls_context();
+    *tls_context = options_.tlsContext();
+    auto* common_tls_context = tls_context->mutable_common_tls_context();
+    if (options_.h2()) {
+      common_tls_context->add_alpn_protocols("h2");
+    } else {
+      common_tls_context->add_alpn_protocols("http/1.1");
+    }
+  }
+
+  cluster->set_name("client");
+  cluster->mutable_connect_timeout()->set_seconds(options_.timeout().count());
+  cluster->mutable_max_requests_per_connection()->set_value(options_.maxRequestsPerConnection());
+
+  auto thresholds = cluster->mutable_circuit_breakers()->add_thresholds();
+  // We do not support any retrying.
+  thresholds->mutable_max_retries()->set_value(0);
+  thresholds->mutable_max_connections()->set_value(options_.connections());
+  thresholds->mutable_max_pending_requests()->set_value(options_.maxPendingRequests());
+  thresholds->mutable_max_requests()->set_value(options_.maxActiveRequests());
+
+  cluster->set_type(envoy::api::v2::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
+  auto* host = cluster->add_hosts();
+  auto* socket_address = host->mutable_socket_address();
+  socket_address->set_address(uri.address()->ip()->addressAsString());
+  socket_address->set_port_value(uri.port());
+
+  ENVOY_LOG(info, "Computed configuration: {}", bootstrap.DebugString());
+}
+
+void ProcessImpl::addTracingCluster(envoy::config::bootstrap::v2::Bootstrap& bootstrap,
+                                    const Uri& uri) const {
+  auto* cluster = bootstrap.mutable_static_resources()->add_clusters();
+  if (uri.scheme() == "https") {
+    RELEASE_ASSERT(false, "No tls config supported yet in tracing destination");
+  }
+
+  cluster->set_name("tracing");
+  cluster->mutable_connect_timeout()->set_seconds(options_.timeout().count());
+  cluster->set_type(envoy::api::v2::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
+  auto* host = cluster->add_hosts();
+  auto* socket_address = host->mutable_socket_address();
+  socket_address->set_address(uri.address()->ip()->addressAsString());
+  socket_address->set_port_value(uri.port());
+  ENVOY_LOG(info, "Computed tracing configuration: {}", bootstrap.DebugString());
+}
+
+void ProcessImpl::setupTracingImplementation(
+    envoy::config::bootstrap::v2::Bootstrap& bootstrap) const {
+  auto* http = bootstrap.mutable_tracing()->mutable_http();
+  http->set_name("envoy.zipkin");
+  envoy::config::trace::v2::ZipkinConfig zipkin_config;
+  zipkin_config.mutable_collector_cluster()->assign("tracing");
+  zipkin_config.mutable_collector_endpoint()->assign("/api/v1/spans");
+  zipkin_config.mutable_shared_span_context()->set_value(true);
+  http->mutable_typed_config()->PackFrom(zipkin_config);
+  ENVOY_LOG(info, "Computed tracing setup: {}", bootstrap.DebugString());
+}
+
 bool ProcessImpl::run(OutputCollector& collector) {
-
-  store_root_.setTagProducer(Envoy::Config::Utility::createTagProducer({}));
-  store_root_.setStatsMatcher(Envoy::Config::Utility::createStatsMatcher({}));
-
-  const std::string server_stats_prefix = "server.";
-
-  server_stats_ = std::make_unique<Envoy::Server::ServerStats>(Envoy::Server::ServerStats{
-      ALL_SERVER_STATS(POOL_COUNTER_PREFIX(store_root_, server_stats_prefix),
-                       POOL_GAUGE_PREFIX(store_root_, server_stats_prefix),
-                       POOL_HISTOGRAM_PREFIX(store_root_, server_stats_prefix))});
-
   UriImpl uri(options_.uri());
+  UriImpl tracing_uri("http://127.0.0.1:9411/api/v1/spans");
+
   try {
-    // uri.resolve(*dispatcher_, Utility::translateFamilyOptionString(options_.addressFamily()));
+    uri.resolve(*dispatcher_, Utility::translateFamilyOptionString(options_.addressFamily()));
+    tracing_uri.resolve(*dispatcher_,
+                        Utility::translateFamilyOptionString(options_.addressFamily()));
   } catch (UriException) {
-    // return false;
+    return false;
   }
   const std::vector<ClientWorkerPtr>& workers = createWorkers(uri, determineConcurrency());
 
   tls_.registerThread(*dispatcher_, true);
-  std::cerr << "registerThread main " << dispatcher_.get() << std::endl;
-  dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
-
   store_root_.initializeThreading(*dispatcher_, tls_);
-  dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
-
   runtime_singleton_ = std::make_unique<Envoy::Runtime::ScopedLoaderSingleton>(
       Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl(
           *dispatcher_, tls_, {}, *local_info_, init_manager_, store_root_, generator_,
           Envoy::ProtobufMessage::getStrictValidationVisitor(), api_)});
-
   ssl_context_manager_ =
       std::make_unique<Extensions::TransportSockets::Tls::ContextManagerImpl>(time_system_);
-
   cluster_manager_factory_ = std::make_unique<Envoy::Upstream::ProdClusterManagerFactory>(
       admin_, Envoy::Runtime::LoaderSingleton::get(), store_root_, tls_, generator_,
       dispatcher_->createDnsResolver({}), *ssl_context_manager_, *dispatcher_, *local_info_,
@@ -239,41 +286,9 @@ bool ProcessImpl::run(OutputCollector& collector) {
       access_log_manager_, *singleton_manager_);
 
   envoy::config::bootstrap::v2::Bootstrap bootstrap;
-  const std::string json = R"EOF(
-static_resources:
-  clusters:
-  - name: staticcluster
-    connect_timeout: 0.250s
-    type: STATIC
-    hosts:
-    - socket_address:
-        address: "127.0.0.1"
-        port_value: 10000
-  - name: zipkin
-    connect_timeout: 1s
-    type: strict_dns
-    lb_policy: round_robin
-    load_assignment:
-      cluster_name: zipkin
-      endpoints:
-      - lb_endpoints:
-        - endpoint:
-            address:
-              socket_address:
-                address: 127.0.0.1
-                port_value: 9411        
-tracing:
-  http:
-    name: envoy.zipkin
-    typed_config:
-      "@type": type.googleapis.com/envoy.config.trace.v2.ZipkinConfig
-      collector_cluster: zipkin
-      collector_endpoint: "/api/v1/spans"
-      shared_span_context: false
-    )EOF";
-  Envoy::MessageUtil::loadFromYaml(json, bootstrap,
-                                   Envoy::ProtobufMessage::getStrictValidationVisitor());
-
+  createBootstrapConfiguration(bootstrap, uri);
+  addTracingCluster(bootstrap, tracing_uri);
+  setupTracingImplementation(bootstrap);
   cluster_manager_ = cluster_manager_factory_->clusterManagerFromProto(bootstrap);
 
   auto& factory = Config::Utility::getAndCheckFactory<Envoy::Server::Configuration::TracerFactory>(
@@ -289,22 +304,20 @@ tracing:
       std::make_unique<Envoy::Tracing::HttpTracerImpl>(std::move(zipkin_driver), *local_info_);
   http_context_.setTracer(*http_tracer_);
 
-  cluster_manager_->setInitializedCb([this]() -> void {
-    std::cerr << "cluster manager initialized!" << std::endl;
-    init_manager_.initialize(init_watcher_);
-  });
+  cluster_manager_->setInitializedCb([this]() -> void { init_manager_.initialize(init_watcher_); });
 
   Runtime::LoaderSingleton::get().initialize(*cluster_manager_);
 
-  bool ok = true;
   for (auto& w : workers_) {
     w->start();
   }
 
+  bool ok = true;
   for (auto& w : workers_) {
     w->waitForCompletion();
     ok = ok && w->success();
   }
+
   // We don't write per-worker results if we only have a single worker, because the global results
   // will be precisely the same.
   if (workers_.size() > 1) {
@@ -315,10 +328,8 @@ tracing:
         collector.addResult(
             fmt::format("worker_{}", i),
             vectorizeStatisticPtrMap(statistic_factory, worker->statistics()),
-            Utility().mapCountersFromStore(worker->store(), [](absl::string_view, uint64_t) {
-              return true; /* value > 0*/
-              ;
-            }));
+            Utility().mapCountersFromStore(
+                worker->store(), [](absl::string_view, uint64_t value) { return value > 0; }));
       }
       i++;
     }
@@ -329,7 +340,12 @@ tracing:
                         mergeWorkerCounters(workers));
   }
 
-  // cluster_manager_->shutdown();
+  tls_.shutdownGlobalThreading();
+  store_root_.shutdownThreading();
+  cluster_manager_->shutdown();
+  // TODO(oschaaf): asserts when the symbol table destroys.
+  // Probably, we need to keep the workers running while we stop threading,
+  // then shut down the worker threads, and then proceed to destroy the cluster manager.
   return ok;
 }
 

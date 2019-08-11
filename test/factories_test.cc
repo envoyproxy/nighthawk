@@ -31,14 +31,11 @@ public:
 
 TEST_F(FactoriesTest, CreateBenchmarkClient) {
   BenchmarkClientFactoryImpl factory(options_);
-  envoy::api::v2::auth::UpstreamTlsContext tls_context;
-  EXPECT_CALL(options_, timeout()).Times(1);
+  Envoy::Upstream::ClusterManagerPtr cluster_manager;
   EXPECT_CALL(options_, connections()).Times(1);
   EXPECT_CALL(options_, h2()).Times(1);
-  EXPECT_CALL(options_, prefetchConnections()).Times(1);
   EXPECT_CALL(options_, requestMethod()).Times(1);
   EXPECT_CALL(options_, requestBodySize()).Times(1);
-  EXPECT_CALL(options_, tlsContext()).Times(1).WillOnce(ReturnRef(tls_context));
   EXPECT_CALL(options_, maxPendingRequests()).Times(1);
   EXPECT_CALL(options_, maxActiveRequests()).Times(1);
   EXPECT_CALL(options_, maxRequestsPerConnection()).Times(1);
@@ -48,8 +45,8 @@ TEST_F(FactoriesTest, CreateBenchmarkClient) {
   request_headers->mutable_header()->set_value("bar");
   EXPECT_CALL(options_, toCommandLineOptions()).Times(1).WillOnce(Return(ByMove(std::move(cmd))));
 
-  auto benchmark_client =
-      factory.create(*api_, dispatcher_, stats_store_, std::make_unique<UriImpl>("http://foo/"));
+  auto benchmark_client = factory.create(*api_, dispatcher_, stats_store_,
+                                         std::make_unique<UriImpl>("http://foo/"), cluster_manager);
   EXPECT_NE(nullptr, benchmark_client.get());
 }
 

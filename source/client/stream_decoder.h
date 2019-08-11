@@ -2,8 +2,6 @@
 
 #include <functional>
 
-#include "common/http/header_map_impl.h"
-#include "common/runtime/uuid_util.h"
 #include "envoy/common/time.h"
 #include "envoy/event/deferred_deletable.h"
 #include "envoy/event/dispatcher.h"
@@ -12,6 +10,8 @@
 
 #include "nighthawk/common/statistic.h"
 
+#include "common/http/header_map_impl.h"
+#include "common/runtime/uuid_util.h"
 #include "common/stream_info/stream_info_impl.h"
 #include "common/tracing/http_tracer_impl.h"
 
