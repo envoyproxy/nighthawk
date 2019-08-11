@@ -36,8 +36,6 @@ void WorkerImpl::start() {
 }
 
 void WorkerImpl::waitForCompletion() {
-  ASSERT(started_ && !completed_);
-  // thread_->join();
   while (!completed_) {
     usleep(1000 * 250);
   }

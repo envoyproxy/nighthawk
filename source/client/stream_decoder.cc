@@ -45,7 +45,7 @@ void StreamDecoder::onComplete(bool success) {
     caller_completion_callback_();
   }
 
-  stream_info_.dumpState(std::cerr, 2);
+  // stream_info_.dumpState(std::cerr, 2);
   Envoy::Tracing::HttpTracerUtility::finalizeSpan(*active_span_, &request_headers_, stream_info_,
                                                   config_);
 
