@@ -5,13 +5,11 @@ set -e
 export BUILDIFIER_BIN="/usr/local/bin/buildifier"
 
 function do_build () {
-    setup_gcc_toolchain
     bazel build $BAZEL_BUILD_OPTIONS --verbose_failures=true //:nighthawk_client //:nighthawk_test_server \
     //:nighthawk_service
 }
 
 function do_test() {
-    setup_gcc_toolchain
     bazel test $BAZEL_BUILD_OPTIONS $BAZEL_TEST_OPTIONS \
     --test_output=all \
     //test:nighthawk_test //test/server:http_test_server_filter_integration_test \
@@ -39,12 +37,6 @@ function do_coverage() {
     export TEST_TARGETS="//test/..."
     test/run_nighthawk_bazel_coverage.sh ${TEST_TARGETS}
     exit 0
-}
-
-function setup_gcc_toolchain() {
-    export CC=gcc
-    export CXX=g++
-    echo "$CC/$CXX toolchain configured"
 }
 
 function setup_clang_toolchain() {
@@ -107,8 +99,6 @@ if [ -n "$CIRCLECI" ]; then
         mv "${HOME:-/root}/.gitconfig" "${HOME:-/root}/.gitconfig_save"
         echo 1
     fi
-    # We constrain parallelism in CI to avoid running out of memory.
-    NUM_CPUS=6
 fi
 
 if grep 'docker\|lxc' /proc/1/cgroup; then
@@ -119,14 +109,14 @@ if grep 'docker\|lxc' /proc/1/cgroup; then
     mkdir -p "${FAKE_HOME}"
     export HOME="${FAKE_HOME}"
     export PYTHONUSERBASE="${FAKE_HOME}"
-
+    
     export BUILD_DIR=/build
     if [[ ! -d "${BUILD_DIR}" ]]
     then
         echo "${BUILD_DIR} mount missing - did you forget -v <something>:${BUILD_DIR}? Creating."
         mkdir -p "${BUILD_DIR}"
     fi
-
+    
     # Environment setup.
     export USER=bazel
     export TEST_TMPDIR=/build/tmp
