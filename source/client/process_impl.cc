@@ -57,7 +57,7 @@ public:
   allocateConnPool(Envoy::Event::Dispatcher& dispatcher, Envoy::Upstream::HostConstSharedPtr host,
                    Envoy::Upstream::ResourcePriority priority, Envoy::Http::Protocol protocol,
                    const Envoy::Network::ConnectionSocket::OptionsSharedPtr& options) override {
-    if (protocol == Envoy::Http::Protocol::Http11 || protocol == Envoy::Http::Protocol::Http11) {
+    if (protocol == Envoy::Http::Protocol::Http11 || protocol == Envoy::Http::Protocol::Http10) {
       return Envoy::Http::ConnectionPool::InstancePtr{
           new Http1PoolImpl(dispatcher, host, priority, options)};
     }

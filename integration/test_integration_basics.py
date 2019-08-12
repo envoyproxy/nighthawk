@@ -210,7 +210,9 @@ class TestHttps(HttpsIntegrationTestBase):
 
   def test_prefetching(self):
     """
-    Test we prefetch connections.
+    Test we prefetch connections. We test for 1 second at 1 rps, which should
+    result in 1 connection max without prefetching. However, we specify 50 connections
+    and the prefetching flag, so we ought to see 50 http1 connections created.
     """
     parsed_json = self.runNighthawkClient([
         "--duration 1", "--rps 1", "--prefetch-connections", "--connections 50",
