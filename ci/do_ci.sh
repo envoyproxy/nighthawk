@@ -99,6 +99,8 @@ if [ -n "$CIRCLECI" ]; then
         mv "${HOME:-/root}/.gitconfig" "${HOME:-/root}/.gitconfig_save"
         echo 1
     fi
+    # We constrain parallelism in CI to avoid running out of memory.	
+    NUM_CPUS=8
 fi
 
 if grep 'docker\|lxc' /proc/1/cgroup; then
@@ -109,14 +111,14 @@ if grep 'docker\|lxc' /proc/1/cgroup; then
     mkdir -p "${FAKE_HOME}"
     export HOME="${FAKE_HOME}"
     export PYTHONUSERBASE="${FAKE_HOME}"
-    
+
     export BUILD_DIR=/build
     if [[ ! -d "${BUILD_DIR}" ]]
     then
         echo "${BUILD_DIR} mount missing - did you forget -v <something>:${BUILD_DIR}? Creating."
         mkdir -p "${BUILD_DIR}"
     fi
-    
+
     # Environment setup.
     export USER=bazel
     export TEST_TMPDIR=/build/tmp
