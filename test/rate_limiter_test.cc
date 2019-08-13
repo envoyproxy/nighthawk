@@ -37,7 +37,7 @@ TEST_F(RateLimiterTest, LinearRateLimiterTest) {
 
 TEST_F(RateLimiterTest, LinearRateLimiterInvalidArgumentTest) {
   Envoy::Event::SimulatedTimeSystem time_system;
-  ASSERT_DEATH(LinearRateLimiter rate_limiter(time_system, 0_Hz), "Frequency must be > 0");
+  EXPECT_THROW(LinearRateLimiter rate_limiter(time_system, 0_Hz), NighthawkException);
 }
 
 TEST_F(RateLimiterTest, BurstingRateLimiterTest) {
