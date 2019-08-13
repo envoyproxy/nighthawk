@@ -19,6 +19,13 @@ using namespace std::chrono_literals;
 namespace Nighthawk {
 namespace Client {
 
+void Http1PoolImpl::createConnections(const uint32_t connection_limit) {
+  ENVOY_LOG(error, "Prefetching {} connections.", connection_limit);
+  for (uint32_t i = 0; i < connection_limit; i++) {
+    createNewConnection();
+  }
+}
+
 BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
     Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Store& store,
     StatisticPtr&& connect_statistic, StatisticPtr&& response_statistic, UriPtr&& uri, bool use_h2,
@@ -42,8 +49,12 @@ BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
 }
 
 void BenchmarkClientHttpImpl::prefetchPoolConnections() {
-  // XXX(oschaaf): when switching to base off from cluster manager
-  // we lost this feature. restore!
+  auto* prefetchable_pool = dynamic_cast<Http1PoolImpl*>(pool());
+  if (prefetchable_pool == nullptr) {
+    ENVOY_LOG(error, "prefetchPoolConnections() pool not prefetchable");
+    return;
+  }
+  prefetchable_pool->createConnections(connection_limit_);
 }
 
 void BenchmarkClientHttpImpl::terminate() {

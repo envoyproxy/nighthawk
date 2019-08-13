@@ -207,3 +207,16 @@ class TestHttps(HttpsIntegrationTestBase):
     ])
     counters = self.getNighthawkCounterMapFromJson(parsed_json)
     self.assertEqual(counters["ssl.ciphers.ECDHE-RSA-AES256-GCM-SHA384"], 1)
+
+  def test_prefetching(self):
+    """
+    Test we prefetch connections. We test for 1 second at 1 rps, which should
+    result in 1 connection max without prefetching. However, we specify 50 connections
+    and the prefetching flag, so we ought to see 50 http1 connections created.
+    """
+    parsed_json = self.runNighthawkClient([
+        "--duration 1", "--rps 1", "--prefetch-connections", "--connections 50",
+        self.getTestServerRootUri()
+    ])
+    counters = self.getNighthawkCounterMapFromJson(parsed_json)
+    self.assertEqual(counters["upstream_cx_http1_total"], 50)

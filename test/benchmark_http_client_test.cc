@@ -195,11 +195,29 @@ TEST_F(BenchmarkClientHttpTest, StatusTrackingInOnComplete) {
 }
 
 TEST_F(BenchmarkClientHttpTest, ConnectionPrefetching) {
-  setupBenchmarkClient();
-  client_->setConnectionLimit(50);
+  auto uri = std::make_unique<UriImpl>("http://foo/");
+  auto store = std::make_unique<Envoy::Stats::IsolatedStoreImpl>();
+  client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
+      *api_, *dispatcher_, *store, std::make_unique<StreamingStatistic>(),
+      std::make_unique<StreamingStatistic>(), std::move(uri), false, cluster_manager_);
+
+  // Test with the mock pool, which isn't prefetchable. Should be a no-op.
   client_->prefetchPoolConnections();
-  dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
-  // XXX(oschaaf): create expectations once implemented
+
+  // Now we test the path where we hit our specialized pool.
+  auto* mock_host = new Envoy::Upstream::MockHost();
+  Envoy::Upstream::HostConstSharedPtr host_ptr{mock_host};
+  EXPECT_CALL(*mock_host, cluster()).WillRepeatedly(ReturnRef(*cluster_info_));
+  auto* options = new Envoy::Network::ConnectionSocket::Options();
+  Envoy::Network::ConnectionSocket::OptionsSharedPtr options_ptr{options};
+  Client::Http1PoolImpl pool(*dispatcher_, host_ptr, Envoy::Upstream::ResourcePriority::Default,
+                             options_ptr);
+  EXPECT_CALL(cluster_manager(), httpConnPoolForCluster(_, _, _, _)).WillRepeatedly(Return(&pool));
+  // Short circuit actual connection creation to avoids having to wire through more mocking.
+  // (We have python integration tests for covering functionality)
+  client_->setConnectionLimit(0);
+  client_->prefetchPoolConnections();
+  client_.reset();
 }
 
 TEST_F(BenchmarkClientHttpTest, PoolFailures) {
