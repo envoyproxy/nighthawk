@@ -229,14 +229,12 @@ class TestHttps(HttpsIntegrationTestBase):
     """
     # TODO(oschaaf): this is kind of fragile. Can we improve?
     trace_level_sentinel = "nighthawk_service_zone"
-    parsed_json, logs = self.runNighthawkClient([
-        "--duration 1", "--rps 1", "-v debug",
-        self.getTestServerRootUri()
-    ])
+    parsed_json, logs = self.runNighthawkClient(
+        ["--duration 1", "--rps 1", "-v debug",
+         self.getTestServerRootUri()])
     self.assertNotIn(trace_level_sentinel, logs)
 
-    parsed_json, logs = self.runNighthawkClient([
-        "--duration 1", "--rps 1", "-v trace",
-        self.getTestServerRootUri()
-    ])
+    parsed_json, logs = self.runNighthawkClient(
+        ["--duration 1", "--rps 1", "-v trace",
+         self.getTestServerRootUri()])
     self.assertIn(trace_level_sentinel, logs)
