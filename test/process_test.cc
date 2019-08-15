@@ -21,7 +21,7 @@ class ProcessTest : public testing::Test {
 public:
   ProcessTest()
       : options_(TestUtility::createOptionsImpl(
-            fmt::format("foo --duration 1 --rps 10 https://127.0.0.1/"))){
+            fmt::format("foo --duration 1 -v error --rps 10 https://127.0.0.1/"))){
 
         };
   void runProcess() {
@@ -37,7 +37,7 @@ public:
   Envoy::Event::RealTimeSystem time_system_; // NO_CHECK_FORMAT(real_time)
 };
 
-TEST_F(ProcessTest, TwoProcesssInSequence) {
+TEST_F(ProcessTest, TwoProcessInSequence) {
   runProcess();
   runProcess();
 }

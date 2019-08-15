@@ -21,7 +21,7 @@ class TestHttp(HttpIntegrationTestBase):
     Runs the CLI configured to use plain HTTP/1 against our test server, and sanity
     checks statistics from both client and server.
     """
-    parsed_json, logs = self.runNighthawkClient([self.getTestServerRootUri()])
+    parsed_json, _ = self.runNighthawkClient([self.getTestServerRootUri()])
     counters = self.getNighthawkCounterMapFromJson(parsed_json)
     self.assertEqual(counters["benchmark.http_2xx"], 25)
     self.assertEqual(counters["upstream_cx_destroy"], 1)
@@ -38,7 +38,7 @@ class TestHttp(HttpIntegrationTestBase):
   def mini_stress_test_h1(self, args):
     # run a test with more rps then we can handle, and a very small client-side queue.
     # we should observe both lots of successfull requests as well as time spend in blocking mode.,
-    parsed_json, logs = self.runNighthawkClient(args)
+    parsed_json, _ = self.runNighthawkClient(args)
     counters = self.getNighthawkCounterMapFromJson(parsed_json)
     # We set a reasonably low expecation of 1000 requests. We set it low, because we want this
     # test to succeed on a reasonable share of setups (hopefully practically all).
@@ -85,7 +85,7 @@ class TestHttp(HttpIntegrationTestBase):
     Runs the CLI configured to use h2c against our test server, and sanity
     checks statistics from both client and server.
     """
-    parsed_json, logs = self.runNighthawkClient(["--h2", self.getTestServerRootUri()])
+    parsed_json, _ = self.runNighthawkClient(["--h2", self.getTestServerRootUri()])
     counters = self.getNighthawkCounterMapFromJson(parsed_json)
     self.assertEqual(counters["benchmark.http_2xx"], 25)
     self.assertEqual(counters["upstream_cx_destroy"], 1)
@@ -103,7 +103,7 @@ class TestHttp(HttpIntegrationTestBase):
     Concurrency should act like a multiplier.
     """
 
-    parsed_json, logs = self.runNighthawkClient(
+    parsed_json, _ = self.runNighthawkClient(
         ["--concurrency 4 --rps 5 --connections 1",
          self.getTestServerRootUri()])
     counters = self.getNighthawkCounterMapFromJson(parsed_json)
@@ -120,7 +120,7 @@ class TestHttps(HttpsIntegrationTestBase):
     Runs the CLI configured to use HTTP/1 over https against our test server, and sanity
     checks statistics from both client and server.
     """
-    parsed_json, logs = self.runNighthawkClient([self.getTestServerRootUri()])
+    parsed_json, _ = self.runNighthawkClient([self.getTestServerRootUri()])
     counters = self.getNighthawkCounterMapFromJson(parsed_json)
     self.assertEqual(counters["benchmark.http_2xx"], 25)
     self.assertEqual(counters["upstream_cx_destroy"], 1)
@@ -149,7 +149,7 @@ class TestHttps(HttpsIntegrationTestBase):
     checks statistics from both client and server.
     """
 
-    parsed_json, logs = self.runNighthawkClient(["--h2", self.getTestServerRootUri()])
+    parsed_json, _ = self.runNighthawkClient(["--h2", self.getTestServerRootUri()])
     counters = self.getNighthawkCounterMapFromJson(parsed_json)
     self.assertEqual(counters["benchmark.http_2xx"], 25)
     self.assertEqual(counters["upstream_cx_destroy"], 1)
@@ -172,7 +172,7 @@ class TestHttps(HttpsIntegrationTestBase):
     Verifies specifying tls cipher suites works with the h1 pool
     """
 
-    parsed_json, logs = self.runNighthawkClient([
+    parsed_json, _ = self.runNighthawkClient([
         "--duration 1",
         "--tls-context {common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES128-SHA\"]}}}",
         self.getTestServerRootUri()
@@ -180,7 +180,7 @@ class TestHttps(HttpsIntegrationTestBase):
     counters = self.getNighthawkCounterMapFromJson(parsed_json)
     self.assertEqual(counters["ssl.ciphers.ECDHE-RSA-AES128-SHA"], 1)
 
-    parsed_json, logs = self.runNighthawkClient([
+    parsed_json, _ = self.runNighthawkClient([
         "--h2", "--duration 1",
         "--tls-context {common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"]}}}",
         self.getTestServerRootUri()
@@ -192,7 +192,7 @@ class TestHttps(HttpsIntegrationTestBase):
     """
     Verifies specifying tls cipher suites works with the h2 pool
     """
-    parsed_json, logs = self.runNighthawkClient([
+    parsed_json, _ = self.runNighthawkClient([
         "--duration 1",
         "--tls-context {common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES128-SHA\"]}}}",
         self.getTestServerRootUri()
@@ -200,7 +200,7 @@ class TestHttps(HttpsIntegrationTestBase):
     counters = self.getNighthawkCounterMapFromJson(parsed_json)
     self.assertEqual(counters["ssl.ciphers.ECDHE-RSA-AES128-SHA"], 1)
 
-    parsed_json, logs = self.runNighthawkClient([
+    parsed_json, _ = self.runNighthawkClient([
         "--h2", "--duration 1",
         "--tls-context {common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"]}}}",
         self.getTestServerRootUri()
@@ -214,7 +214,7 @@ class TestHttps(HttpsIntegrationTestBase):
     result in 1 connection max without prefetching. However, we specify 50 connections
     and the prefetching flag, so we ought to see 50 http1 connections created.
     """
-    parsed_json, logs = self.runNighthawkClient([
+    parsed_json, _ = self.runNighthawkClient([
         "--duration 1", "--rps 1", "--prefetch-connections", "--connections 50",
         self.getTestServerRootUri()
     ])
@@ -224,7 +224,7 @@ class TestHttps(HttpsIntegrationTestBase):
   def test_log_verbosity(self):
     """
     Test that that the specified log verbosity level is respected.
-    This tests for a sentinel we know is only writter when the level
+    This tests for a sentinel we know is only right when the level
     is set to 'trace'.
     """
     # TODO(oschaaf): this is kind of fragile. Can we improve?
