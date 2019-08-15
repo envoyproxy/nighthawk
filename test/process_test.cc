@@ -39,6 +39,8 @@ public:
 
 TEST_F(ProcessTest, TwoProcessInSequence) {
   runProcess();
+  options_ = TestUtility::createOptionsImpl(
+      fmt::format("foo --h2 --duration 1 --rps 10 https://127.0.0.1/"));
   runProcess();
 }
 
