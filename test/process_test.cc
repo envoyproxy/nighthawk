@@ -21,7 +21,7 @@ class ProcessTest : public testing::Test {
 public:
   ProcessTest()
       : options_(TestUtility::createOptionsImpl(
-            fmt::format("foo --duration 1 --rps 10 https://127.0.0.1/"))){
+            fmt::format("foo --duration 1 -v error --rps 10 https://127.0.0.1/"))){
 
         };
   void runProcess() {
@@ -37,8 +37,10 @@ public:
   Envoy::Event::RealTimeSystem time_system_; // NO_CHECK_FORMAT(real_time)
 };
 
-TEST_F(ProcessTest, TwoProcesssInSequence) {
+TEST_F(ProcessTest, TwoProcessInSequence) {
   runProcess();
+  options_ = TestUtility::createOptionsImpl(
+      fmt::format("foo --h2 --duration 1 --rps 10 https://127.0.0.1/"));
   runProcess();
 }
 
@@ -52,21 +54,6 @@ TEST_F(ProcessTest, CpuAffinityDetectionFailure) {
   EXPECT_TRUE(process->run(*collector));
   // TODO(oschaaf): check the proto output that we reflect the concurrency we actually used.
   // I'm not sure we do so right now.
-}
-
-TEST_F(ProcessTest, LogVerbosity) {
-  std::stringstream buffer;
-  std::streambuf* sbuf = std::cout.rdbuf();
-  std::cerr.rdbuf(buffer.rdbuf());
-  options_ = TestUtility::createOptionsImpl(
-      fmt::format("foo --duration 1 --rps 10 -v error https://127.0.0.1/"));
-  runProcess();
-  EXPECT_EQ(buffer.str(), "");
-  options_ = TestUtility::createOptionsImpl(
-      fmt::format("foo --duration 1 --rps 10 -v trace https://127.0.0.1/"));
-  runProcess();
-  EXPECT_NE(buffer.str(), "");
-  std::cerr.rdbuf(sbuf);
 }
 
 } // namespace Client
