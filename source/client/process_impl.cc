@@ -200,24 +200,13 @@ ProcessImpl::mergeWorkerStatistics(const StatisticFactory& statistic_factory,
   return merged_statistics;
 }
 
-std::map<std::string, uint64_t>
-ProcessImpl::mergeWorkerCounters(const std::vector<ClientWorkerPtr>& workers) const {
+std::map<std::string, uint64_t> ProcessImpl::countersToMap() const {
   std::map<std::string, uint64_t> merged;
-  for (auto& w : workers) {
-    const auto counters = Utility().mapCountersFromStore(
-        w->store(), [](absl::string_view, uint64_t value) { return value > 0; });
-    for (const auto& counter : counters) {
-      if (merged.count(counter.first) == 0) {
-        merged[counter.first] = counter.second;
-      } else {
-        // TODO(oschaaf): we used to sum the stats here, but when we switched to tls stats
-        // the merging is done for us. We lost some information, which can be restored
-        // in a follow-up.
-        merged[counter.first] = counter.second;
-      }
-    }
+  const auto counters = Utility().mapCountersFromStore(
+      store_root_, [](absl::string_view, uint64_t value) { return value > 0; });
+  for (const auto& counter : counters) {
+    merged[counter.first] = counter.second;
   }
-
   return merged;
 }
 
@@ -304,11 +293,9 @@ bool ProcessImpl::run(OutputCollector& collector) {
     for (auto& worker : workers_) {
       if (worker->success()) {
         StatisticFactoryImpl statistic_factory(options_);
-        collector.addResult(
-            fmt::format("worker_{}", i),
-            vectorizeStatisticPtrMap(statistic_factory, worker->statistics()),
-            Utility().mapCountersFromStore(
-                worker->store(), [](absl::string_view, uint64_t value) { return value > 0; }));
+        collector.addResult(fmt::format("worker_{}", i),
+                            vectorizeStatisticPtrMap(statistic_factory, worker->statistics()),
+                            worker->thread_local_counter_values());
       }
       i++;
     }
@@ -316,7 +303,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
   if (ok) {
     StatisticFactoryImpl statistic_factory(options_);
     collector.addResult("global", mergeWorkerStatistics(statistic_factory, workers),
-                        mergeWorkerCounters(workers));
+                        countersToMap());
   }
   return ok;
 }

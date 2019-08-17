@@ -33,6 +33,10 @@ public:
   Envoy::Stats::Store& store() const override { return store_; }
   bool success() const override { return success_; }
 
+  const std::map<std::string, uint64_t>& thread_local_counter_values() override {
+    return thread_local_counter_values_;
+  }
+
 protected:
   void work() override;
 
@@ -45,6 +49,7 @@ private:
   const SequencerPtr sequencer_;
   Envoy::LocalInfo::LocalInfoPtr local_info_;
   const bool prefetch_connections_;
+  std::map<std::string, uint64_t> thread_local_counter_values_;
 };
 
 using ClientWorkerImplPtr = std::unique_ptr<ClientWorkerImpl>;

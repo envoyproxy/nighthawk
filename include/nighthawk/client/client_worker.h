@@ -32,6 +32,9 @@ public:
    * @return bool True iff the worker ran and completed successfully.
    */
   virtual bool success() const PURE;
+
+  virtual const std::map<std::string, uint64_t>& thread_local_counter_values() PURE;
+
 };
 
 using ClientWorkerPtr = std::unique_ptr<ClientWorker>;
