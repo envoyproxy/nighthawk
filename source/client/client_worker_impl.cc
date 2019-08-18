@@ -1,7 +1,6 @@
 #include "client/client_worker_impl.h"
 
 #include "common/stats/symbol_table_impl.h"
-
 #include "common/utility.h"
 
 namespace Nighthawk {
@@ -39,13 +38,10 @@ void ClientWorkerImpl::work() {
   benchmark_client_->terminate();
   success_ = true;
   dispatcher_->exit();
-
-  // We store the final thread-local counter values while we are still on the worker thread.
-  const auto counters = Utility().mapCountersFromStore(
+  // Save a final snapshot of the worker-specific counter accumulations before
+  // we exit the thread.
+  thread_local_counter_values_ = Utility().mapCountersFromStore(
       store_, [](absl::string_view, uint64_t value) { return value > 0; });
-  for (const auto& counter : counters) {
-    thread_local_counter_values_[counter.first] = counter.second;
-  }
 }
 
 StatisticPtrMap ClientWorkerImpl::statistics() const {

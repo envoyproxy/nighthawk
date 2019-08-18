@@ -24,6 +24,8 @@ envoy_cc_library(
         "rate_limiter_impl.h",
         "sequencer_impl.h",
         "statistic_impl.h",
+        "stats_allocator_impl.h",
+        "stats_counter_impl.h",
         "uri_impl.h",
         "utility.h",
         "worker_impl.h",

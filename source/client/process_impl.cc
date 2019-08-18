@@ -200,16 +200,6 @@ ProcessImpl::mergeWorkerStatistics(const StatisticFactory& statistic_factory,
   return merged_statistics;
 }
 
-std::map<std::string, uint64_t> ProcessImpl::countersToMap() const {
-  std::map<std::string, uint64_t> merged;
-  const auto counters = Utility().mapCountersFromStore(
-      store_root_, [](absl::string_view, uint64_t value) { return value > 0; });
-  for (const auto& counter : counters) {
-    merged[counter.first] = counter.second;
-  }
-  return merged;
-}
-
 const envoy::config::bootstrap::v2::Bootstrap
 ProcessImpl::createBootstrapConfiguration(const Uri& uri) const {
   envoy::config::bootstrap::v2::Bootstrap bootstrap;
@@ -302,8 +292,10 @@ bool ProcessImpl::run(OutputCollector& collector) {
   }
   if (ok) {
     StatisticFactoryImpl statistic_factory(options_);
-    collector.addResult("global", mergeWorkerStatistics(statistic_factory, workers),
-                        countersToMap());
+    collector.addResult(
+        "global", mergeWorkerStatistics(statistic_factory, workers),
+        Utility().mapCountersFromStore(
+            store_root_, [](absl::string_view, uint64_t value) { return value > 0; }));
   }
   return ok;
 }

@@ -33,8 +33,11 @@ public:
    */
   virtual bool success() const PURE;
 
+  /**
+   * @return const std::map<std::string, uint64_t>& The worker-specific counter values.
+   * Gets filled when the worker has completed its task, empty before that.
+   */
   virtual const std::map<std::string, uint64_t>& thread_local_counter_values() PURE;
-
 };
 
 using ClientWorkerPtr = std::unique_ptr<ClientWorker>;
