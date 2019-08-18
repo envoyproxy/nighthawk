@@ -1,5 +1,7 @@
 #pragma once
 
+#include "common/stats/allocator_impl.h"
+
 namespace Nighthawk {
 
 /**
