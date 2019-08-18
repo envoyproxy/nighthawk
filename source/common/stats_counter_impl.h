@@ -9,8 +9,12 @@ namespace Nighthawk {
  * per-worker counter accumulations on top of just the global aggregated value. We can't just derive
  * from the stock CounterImpl because we need to go through
  * Envoy::Stats::AllocatorImpl::makeCounter. So we store that as an 'inner counter', and 1:1 proxy
- * most calls to it except for: add(), inc(), and value(). We specialize those to add tracking of
- * per-thread accumulations, and querying per-thread values.
+ * expected calls to it except for: add(), inc(), and value(). We specialize those to add tracking
+ * of per-thread accumulations, and querying per-thread values. Once created, this counter will be
+ * cached in the tls-cache when the tls-store is used. This won't work with the isolated store
+ * implementation, but then it doesn't make much sense to use this with that. We have lots of
+ * NOT_IMPLEMENTED_GCOVR_EXCL_LINE to make sure we hear about unexpected calls in the future, in
+ * case implementation details change.
  */
 class NighthawkCounterImpl : public Envoy::Stats::Counter {
 public:
@@ -30,12 +34,11 @@ public:
   };
   bool used() const override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; };
   void add(uint64_t amount) override {
-    // TODO(oschaaf): Ideally we can preallocate slots to store the values
-    // per thread, and void the locking we perform here altogether.
-    // Note that we strive for being eventually consistent, so we only
-    // need to protect the stl map itself, not its content, and we don't
-    // worry about doing multiple increments in sequence on ourselves and
-    // our inner counter structure.
+    // TODO(oschaaf): Locking here isn't ideal. But it is fairly
+    // granular, as it is done per-counter. Still, we're in the hot path
+    // here, so look into ways to avoid it if we observe contention.
+    // Ideally we'd preallocate thread-local slots for storage (and also eliminate the thread
+    // lookup).
     mutex_.lock();
     auto pair = per_thread_counters_.emplace(std::this_thread::get_id(), amount);
     mutex_.unlock();
@@ -52,11 +55,10 @@ public:
   // Otherwise we return the value from the inner counter, which will have the
   // global value.
   uint64_t value() const override {
-    // XXX(oschaaf): can't lock here because of the method being const.
-    // however, I haven't seen this being called concurrently with add()
-    // and I think that even if that happens we'll be OK. But that needs
-    // verification by figuring out what std::map is supposed to behave
-    // like when there a concurrent insert/read.
+    // XXX(oschaaf): I don't think this wil be called concurrently with
+    // add(), but still it would be good to ensure std::map would be OK
+    // with that to avoid future surprises. Note: we can't lock here, this
+    // being a const method.
     const auto it = per_thread_counters_.find(std::this_thread::get_id());
     if (it != per_thread_counters_.end()) {
       return it->second;
