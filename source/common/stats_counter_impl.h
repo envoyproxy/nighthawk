@@ -30,13 +30,29 @@ public:
   };
   bool used() const override { return inner_counter_->used(); };
   void add(uint64_t amount) override {
-    auto pair = per_thread_counters_.insert({std::this_thread::get_id(), 0});
-    pair.first->second += amount;
+    // TODO(oschaaf): Ideally we can preallocate slots to store the values
+    // per thread, and void the locking we perform here altogether.
+    // Note that we strive for being eventually consistent, so we only
+    // need to protect the stl map itself, not its content, and we don't
+    // worry about doing multiple increments in sequence on ourselves and
+    // our inner counter structure.
+    mutex_.lock();
+    auto pair = per_thread_counters_.emplace(std::this_thread::get_id(), amount);
+    mutex_.unlock();
+    if (!pair.second) {
+      pair.first->second += amount;
+    }
     inner_counter_->add(amount);
   };
   void inc() override { add(1); };
   uint64_t latch() override { return inner_counter_->latch(); };
-  void reset() override { inner_counter_->reset(); };
+  void reset() override {
+    inner_counter_->reset();
+    // TODO(oschaaf): Audit call sites. Tsan/asan runs are clean, but ensure
+    // we do not need to worry about this being concurrently called.
+    // maybe just ASSERT here if we don't expect any calls at all.
+    per_thread_counters_.clear();
+  };
 
   // We return the value we accumulated on this thread, if we have it.
   // Otherwise we return the value from the inner counter, which will have the
@@ -60,6 +76,7 @@ public:
   uint32_t use_count() const override { return refcount_helper_.use_count(); }
 
 private:
+  Envoy::Thread::MutexBasicLockable mutex_;
   Envoy::Stats::CounterSharedPtr inner_counter_;
   Envoy::Stats::RefcountHelper refcount_helper_;
   std::map<std::thread::id, uint64_t> per_thread_counters_;
