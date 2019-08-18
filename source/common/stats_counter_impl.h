@@ -19,18 +19,16 @@ public:
 
   std::string name() const override { return inner_counter_->name(); };
   Envoy::Stats::StatName statName() const override { return inner_counter_->statName(); };
-  std::vector<Envoy::Stats::Tag> tags() const override { return inner_counter_->tags(); };
-  std::string tagExtractedName() const override { return inner_counter_->tagExtractedName(); };
-  Envoy::Stats::StatName tagExtractedStatName() const override {
-    return inner_counter_->tagExtractedStatName();
+  std::vector<Envoy::Stats::Tag> tags() const override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; };
+  std::string tagExtractedName() const override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; };
+  Envoy::Stats::StatName tagExtractedStatName() const override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; };
+  void iterateTagStatNames(const Envoy::Stats::Counter::TagStatNameIterFn&) const override {
+    NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
   };
-  void iterateTagStatNames(const Envoy::Stats::Counter::TagStatNameIterFn& fn) const override {
-    inner_counter_->iterateTagStatNames(fn);
+  void iterateTags(const Envoy::Stats::Counter::TagIterFn&) const override {
+    NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
   };
-  void iterateTags(const Envoy::Stats::Counter::TagIterFn& fn) const override {
-    inner_counter_->iterateTags(fn);
-  };
-  bool used() const override { return inner_counter_->used(); };
+  bool used() const override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; };
   void add(uint64_t amount) override {
     // TODO(oschaaf): Ideally we can preallocate slots to store the values
     // per thread, and void the locking we perform here altogether.
@@ -47,35 +45,34 @@ public:
     inner_counter_->add(amount);
   };
   void inc() override { add(1); };
-  uint64_t latch() override { return inner_counter_->latch(); };
-  void reset() override {
-    inner_counter_->reset();
-    // TODO(oschaaf): Audit call sites. Tsan/asan runs are clean, but ensure
-    // we do not need to worry about this being concurrently called.
-    // maybe just ASSERT here if we don't expect any calls at all.
-    per_thread_counters_.clear();
-  };
+  uint64_t latch() override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; };
+  void reset() override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; };
 
   // We return the value we accumulated on this thread, if we have it.
   // Otherwise we return the value from the inner counter, which will have the
   // global value.
   uint64_t value() const override {
-    auto it = per_thread_counters_.find(std::this_thread::get_id());
+    // XXX(oschaaf): can't lock here because of the method being const.
+    // however, I haven't seen this being called concurrently with add()
+    // and I think that even if that happens we'll be OK. But that needs
+    // verification by figuring out what std::map is supposed to behave
+    // like when there a concurrent insert/read.
+    const auto it = per_thread_counters_.find(std::this_thread::get_id());
     if (it != per_thread_counters_.end()) {
       return it->second;
     } else {
       return inner_counter_->value();
     }
   };
-  Envoy::Stats::SymbolTable& symbolTable() override { return inner_counter_->symbolTable(); }
+  Envoy::Stats::SymbolTable& symbolTable() override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; }
   const Envoy::Stats::SymbolTable& constSymbolTable() const override {
-    return inner_counter_->constSymbolTable();
+    NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
   }
 
   // RefcountInterface
   void incRefCount() override { refcount_helper_.incRefCount(); }
   bool decRefCount() override { return refcount_helper_.decRefCount(); }
-  uint32_t use_count() const override { return refcount_helper_.use_count(); }
+  uint32_t use_count() const override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; }
 
 private:
   Envoy::Thread::MutexBasicLockable mutex_;
