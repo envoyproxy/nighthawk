@@ -13,7 +13,7 @@ function do_test() {
     bazel test $BAZEL_BUILD_OPTIONS $BAZEL_TEST_OPTIONS \
     --test_output=all \
     //test:nighthawk_test //test/server:http_test_server_filter_integration_test \
-    //integration:integration_test
+    //test/integration:integration_test
 }
 
 function do_test_with_valgrind() {
