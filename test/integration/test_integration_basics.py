@@ -40,9 +40,9 @@ class TestHttp(HttpIntegrationTestBase):
     # we should observe both lots of successfull requests as well as time spend in blocking mode.,
     parsed_json, _ = self.runNighthawkClient(args)
     counters = self.getNighthawkCounterMapFromJson(parsed_json)
-    # We set a reasonably low expecation of 1000 requests. We set it low, because we want this
+    # We set a reasonably low expecation of 100 requests. We set it low, because we want this
     # test to succeed on a reasonable share of setups (hopefully practically all).
-    MIN_EXPECTED_REQUESTS = 1000
+    MIN_EXPECTED_REQUESTS = 100
     self.assertGreater(counters["benchmark.http_2xx"], MIN_EXPECTED_REQUESTS)
     self.assertEqual(counters["upstream_cx_http1_total"], 1)
     global_histograms = self.getNighthawkGlobalHistogramsbyIdFromJson(parsed_json)

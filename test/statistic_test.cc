@@ -145,11 +145,6 @@ TYPED_TEST(TypedStatisticTest, OneMillionRandomSamples) {
 
   for (int i = 0; i < 999999; ++i) {
     auto value = dist(mt);
-
-    // Small selftest that we generate a deterministic set in this test.
-    if (i == 10000) {
-      EXPECT_EQ(13944017, value);
-    }
     referenceStatistic.addValue(value);
     testStatistic.addValue(value);
   }

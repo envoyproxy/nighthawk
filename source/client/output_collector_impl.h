@@ -35,7 +35,7 @@ public:
   static std::string statIdtoFriendlyStatName(absl::string_view stat_id);
 
 private:
-  std::string formatProtoDuration(const Envoy::Protobuf::Duration& duration) const;
+  std::string formatProtoDuration(const Envoy::ProtobufWkt::Duration& duration) const;
 };
 
 class JsonOutputCollectorImpl : public OutputCollectorImpl {
