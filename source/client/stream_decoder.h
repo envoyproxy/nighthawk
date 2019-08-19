@@ -49,14 +49,16 @@ public:
         complete_(false), measure_latencies_(measure_latencies),
         request_body_size_(request_body_size), stream_info_(time_source_),
         http_tracer_(http_tracer) {
-    Envoy::Tracing::Decision tracing_decision = {Envoy::Tracing::Reason::ClientForced, true};
-    request_headers_.insertClientTraceId();
-    Envoy::UuidUtils::setTraceableUuid(x_request_id, Envoy::UuidTraceStatus::Client);
-    request_headers_.ClientTraceId()->value(x_request_id);
-    active_span_ =
-        http_tracer_.startSpan(config_, request_headers_, stream_info_, tracing_decision);
-    active_span_->injectContext(request_headers_);
-    // active_span_->setSampled(true);
+    if (measure_latencies_) {
+      Envoy::Tracing::Decision tracing_decision = {Envoy::Tracing::Reason::ClientForced, true};
+      request_headers_.insertClientTraceId();
+      Envoy::UuidUtils::setTraceableUuid(x_request_id, Envoy::UuidTraceStatus::Client);
+      request_headers_.ClientTraceId()->value(x_request_id);
+      active_span_ =
+          http_tracer_.startSpan(config_, request_headers_, stream_info_, tracing_decision);
+      active_span_->injectContext(request_headers_);
+      // active_span_->setSampled(true);
+    }
   }
 
   // Http::StreamDecoder

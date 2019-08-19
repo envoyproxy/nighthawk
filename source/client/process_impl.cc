@@ -268,6 +268,8 @@ bool ProcessImpl::run(OutputCollector& collector) {
     tracing_uri.resolve(*dispatcher_,
                         Utility::translateFamilyOptionString(options_.addressFamily()));
   } catch (UriException) {
+    // XXX(oschaaf):
+    tls_.shutdownGlobalThreading();
     return false;
   }
   const std::vector<ClientWorkerPtr>& workers = createWorkers(uri, determineConcurrency());
@@ -318,7 +320,6 @@ bool ProcessImpl::run(OutputCollector& collector) {
     w->waitForCompletion();
     ok = ok && w->success();
   }
-  cluster_manager_->shutdown();
 
   // We don't write per-worker results if we only have a single worker, because the global results
   // will be precisely the same.

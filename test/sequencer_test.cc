@@ -99,7 +99,7 @@ public:
   void expectDispatcherRun() {
     EXPECT_CALL(*dispatcher_, run(_))
         .WillOnce(Invoke([&](Envoy::Event::DispatcherImpl::RunType type) {
-          ASSERT_EQ(Envoy::Event::DispatcherImpl::RunType::Block, type);
+          ASSERT_EQ(Envoy::Event::DispatcherImpl::RunType::RunUntilExit, type);
           simulateTimerLoop();
         }));
   }

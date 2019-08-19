@@ -91,9 +91,10 @@ public:
 class MockBenchmarkClientFactory : public Client::BenchmarkClientFactory {
 public:
   MockBenchmarkClientFactory();
-  MOCK_CONST_METHOD5(create, Client::BenchmarkClientPtr(Envoy::Api::Api&, Envoy::Event::Dispatcher&,
+  MOCK_CONST_METHOD6(create, Client::BenchmarkClientPtr(Envoy::Api::Api&, Envoy::Event::Dispatcher&,
                                                         Envoy::Stats::Store&, UriPtr&&,
-                                                        Envoy::Upstream::ClusterManagerPtr&));
+                                                        Envoy::Upstream::ClusterManagerPtr&,
+                                                        Envoy::Tracing::HttpTracerPtr&));
 };
 
 class MockSequencerFactory : public Client::SequencerFactory {

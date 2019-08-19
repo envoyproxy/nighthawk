@@ -41,14 +41,15 @@ void StreamDecoder::onComplete(bool success) {
   stream_info_.onRequestComplete();
   ASSERT(!success || complete_);
   decoder_completion_callback_.onComplete(success, *response_headers_);
-  if (success) {
-    caller_completion_callback_();
+  // XXX(oschaaf): forward success state
+  // if (success) {
+  caller_completion_callback_();
+  //}
+  if (active_span_.get() != nullptr) {
+    // stream_info_.dumpState(std::cerr, 2);
+    Envoy::Tracing::HttpTracerUtility::finalizeSpan(*active_span_, &request_headers_, stream_info_,
+                                                    config_);
   }
-
-  // stream_info_.dumpState(std::cerr, 2);
-  Envoy::Tracing::HttpTracerUtility::finalizeSpan(*active_span_, &request_headers_, stream_info_,
-                                                  config_);
-
   dispatcher_.deferredDelete(std::unique_ptr<StreamDecoder>(this));
 }
 
@@ -61,6 +62,8 @@ void StreamDecoder::onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason
                                   absl::string_view /* transport_failure_reason */,
                                   Envoy::Upstream::HostDescriptionConstSharedPtr) {
   decoder_completion_callback_.onPoolFailure(reason);
+  // XXX(oschaaf): pass in failure flag
+  caller_completion_callback_();
   dispatcher_.deferredDelete(std::unique_ptr<StreamDecoder>(this));
 }
 

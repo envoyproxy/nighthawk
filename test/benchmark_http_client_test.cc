@@ -15,6 +15,7 @@
 #include "test/mocks/common.h"
 #include "test/mocks/runtime/mocks.h"
 #include "test/mocks/thread_local/mocks.h"
+#include "test/mocks/tracing/mocks.h"
 #include "test/mocks/upstream/mocks.h"
 #include "test/test_common/network_utility.h"
 
@@ -30,11 +31,24 @@ public:
   BenchmarkClientHttpTest()
       : api_(Envoy::Api::createApiForTest()), dispatcher_(api_->allocateDispatcher()),
         cluster_manager_(std::make_unique<Envoy::Upstream::MockClusterManager>()),
-        cluster_info_(std::make_unique<Envoy::Upstream::MockClusterInfo>()), response_code_("200") {
+        cluster_info_(std::make_unique<Envoy::Upstream::MockClusterInfo>()),
+        http_tracer_(std::make_unique<Envoy::Tracing::MockHttpTracer>()), response_code_("200") {
     EXPECT_CALL(cluster_manager(), httpConnPoolForCluster(_, _, _, _))
         .WillRepeatedly(Return(&pool_));
     EXPECT_CALL(cluster_manager(), get(_)).WillRepeatedly(Return(&thread_local_cluster_));
     EXPECT_CALL(thread_local_cluster_, info()).WillRepeatedly(Return(cluster_info_));
+
+    Envoy::Tracing::MockHttpTracer& tracer =
+        static_cast<Envoy::Tracing::MockHttpTracer&>(*http_tracer_);
+    EXPECT_CALL(tracer, startSpan_(_, _, _, _))
+        .WillRepeatedly(
+            Invoke([&](const Envoy::Tracing::Config& config, const Envoy::Http::HeaderMap&,
+                       const Envoy::StreamInfo::StreamInfo&,
+                       const Envoy::Tracing::Decision) -> Envoy::Tracing::Span* {
+              EXPECT_EQ(Envoy::Tracing::OperationName::Egress, config.operationName());
+              auto* span = new NiceMock<Envoy::Tracing::MockSpan>();
+              return span;
+            }));
   }
 
   void testBasicFunctionality(const uint64_t max_pending, const uint64_t connection_limit,
@@ -99,7 +113,8 @@ public:
     uri->resolve(*dispatcher_, Envoy::Network::DnsLookupFamily::Auto);
     client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
         *api_, *dispatcher_, store_, std::make_unique<StreamingStatistic>(),
-        std::make_unique<StreamingStatistic>(), std::move(uri), false, cluster_manager_);
+        std::make_unique<StreamingStatistic>(), std::move(uri), false, cluster_manager_,
+        http_tracer_);
   }
 
   uint64_t getCounter(absl::string_view name) {
@@ -129,6 +144,7 @@ public:
   Envoy::Http::MockStreamEncoder stream_encoder_;
   Envoy::Upstream::MockThreadLocalCluster thread_local_cluster_;
   Envoy::Upstream::ClusterInfoConstSharedPtr cluster_info_;
+  Envoy::Tracing::HttpTracerPtr http_tracer_;
   std::string response_code_;
 };
 
@@ -161,7 +177,8 @@ TEST_F(BenchmarkClientHttpTest, StatusTrackingInOnComplete) {
   auto store = std::make_unique<Envoy::Stats::IsolatedStoreImpl>();
   client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
       *api_, *dispatcher_, *store, std::make_unique<StreamingStatistic>(),
-      std::make_unique<StreamingStatistic>(), std::move(uri), false, cluster_manager_);
+      std::make_unique<StreamingStatistic>(), std::move(uri), false, cluster_manager_,
+      http_tracer_);
   Envoy::Http::HeaderMapImpl header;
 
   auto& status = header.insertStatus();
