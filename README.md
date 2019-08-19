@@ -25,7 +25,7 @@ For building the Nighthawk test server, see [here](source/server/README.md).
 ### Test it
 
 ```bash
-bazel test -c dbg //test/... //integration/...
+bazel test -c dbg //test/...
 ```
 
 ### Build it
