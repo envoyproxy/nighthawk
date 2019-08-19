@@ -118,8 +118,8 @@ class IntegrationTestBase(unittest.TestCase):
 
   def runNighthawkClient(self, args, expect_failure=False, timeout=30):
     """
-    Runs Nighthawk against the test server, returning a json-formatted result.
-    If the timeout is exceeded an exception will be raised.
+    Runs Nighthawk against the test server, returning a json-formatted result
+    and logs. If the timeout is exceeded an exception will be raised.
     """
     if IntegrationTestBase.ip_version == IpVersion.IPV6:
       args.insert(0, "--address-family v6")
@@ -128,13 +128,13 @@ class IntegrationTestBase(unittest.TestCase):
     logging.info("Nighthawk client popen() args: [%s]" % args)
     client_process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = client_process.communicate()
-    logging.info(stderr.decode('utf-8'))
+    logs = stderr.decode('utf-8')
     json_string = stdout.decode('utf-8')
     if expect_failure:
       self.assertNotEqual(0, client_process.returncode)
     else:
       self.assertEqual(0, client_process.returncode)
-      return json.loads(json_string)
+      return json.loads(json_string), logs
 
 
 # We don't have a straightforward way to do parameterized tests yet.

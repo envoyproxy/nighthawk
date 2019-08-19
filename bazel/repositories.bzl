@@ -1,7 +1,7 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-ENVOY_COMMIT = "bdd6788f1e01787d015eabd9902f4b565e5dea98"
-ENVOY_SHA = "a53022b5c985e4c8bb999f2bed40f66a8621aea44312c8fe2fee6d65cd824da8"
+ENVOY_COMMIT = "3dd84d3b41b6be378ccb71e81c0063a84bb956e3"
+ENVOY_SHA = "aae57a8859e3f0267880d3ce7086771549045f77b3f5c9ada23ede70b9e1e316"
 
 RULES_PYTHON_COMMIT = "fdbb17a4118a1728d19e638a5291b4c4266ea5b8"
 RULES_PYTHON_SHA = "9a3d71e348da504a9c4c5e8abd4cb822f7afb32c613dc6ee8b8535333a81a938"
@@ -48,9 +48,9 @@ cc_library(
     visibility = ["//visibility:public"],
 )
   """,
-        sha256 = "6928ba22634d9a5b2752227309c9097708e790db6a285fa5c3f40a219bf7ee98",
-        strip_prefix = "HdrHistogram_c-0.9.8",
-        url = "https://github.com/HdrHistogram/HdrHistogram_c/archive/0.9.8.tar.gz",
+        sha256 = "43859763552a5cda0d3c8b0d81b2ae15d3e341df73b6c959095434fd0e2239e7",
+        strip_prefix = "HdrHistogram_c-0.9.11",
+        url = "https://github.com/HdrHistogram/HdrHistogram_c/archive/0.9.11.tar.gz",
     )
 
     http_archive(

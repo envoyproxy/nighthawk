@@ -31,6 +31,7 @@
 #include "common/uri_impl.h"
 #include "common/utility.h"
 
+#include "client/benchmark_client_impl.h"
 #include "client/client.h"
 #include "client/client_worker_impl.h"
 #include "client/factories_impl.h"
@@ -49,6 +50,25 @@ using namespace std::chrono_literals;
 namespace Nighthawk {
 namespace Client {
 
+// We customize ProdClusterManagerFactory for the sole purpose of returning our specialized
+// http1 pool to the benchmark client, which allows us to offer connection prefetching.
+class ClusterManagerFactory : public Envoy::Upstream::ProdClusterManagerFactory {
+public:
+  using Envoy::Upstream::ProdClusterManagerFactory::ProdClusterManagerFactory;
+
+  Envoy::Http::ConnectionPool::InstancePtr
+  allocateConnPool(Envoy::Event::Dispatcher& dispatcher, Envoy::Upstream::HostConstSharedPtr host,
+                   Envoy::Upstream::ResourcePriority priority, Envoy::Http::Protocol protocol,
+                   const Envoy::Network::ConnectionSocket::OptionsSharedPtr& options) override {
+    if (protocol == Envoy::Http::Protocol::Http11 || protocol == Envoy::Http::Protocol::Http10) {
+      return Envoy::Http::ConnectionPool::InstancePtr{
+          new Http1PoolImpl(dispatcher, host, priority, options)};
+    }
+    return Envoy::Upstream::ProdClusterManagerFactory::allocateConnPool(dispatcher, host, priority,
+                                                                        protocol, options);
+  }
+};
+
 ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
                          const PlatformUtil& platform_util)
     : time_system_(time_system), store_factory_(options), stats_allocator_(symbol_table_),
@@ -63,10 +83,15 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
       singleton_manager_(std::make_unique<Envoy::Singleton::ManagerImpl>(api_.threadFactory())),
       access_log_manager_(std::chrono::milliseconds(1000), api_, *dispatcher_, fakelock_,
                           store_root_),
-      init_watcher_("Nighthawk", []() {}) {}
+      init_watcher_("Nighthawk", []() {}) {
+  std::string lower = absl::AsciiStrToLower(
+      nighthawk::client::Verbosity::VerbosityOptions_Name(options_.verbosity()));
+  configureComponentLogLevels(spdlog::level::from_str(lower));
+}
 
 const std::vector<ClientWorkerPtr>& ProcessImpl::createWorkers(const UriImpl& uri,
-                                                               const uint32_t concurrency) {
+                                                               const uint32_t concurrency,
+                                                               const bool prefetch_connections) {
   // TODO(oschaaf): Expose kMinimalDelay in configuration.
   const std::chrono::milliseconds kMinimalWorkerDelay = 500ms;
   ASSERT(workers_.size() == 0);
@@ -91,7 +116,7 @@ const std::vector<ClientWorkerPtr>& ProcessImpl::createWorkers(const UriImpl& ur
     workers_.push_back(std::make_unique<ClientWorkerImpl>(
         api_, tls_, cluster_manager_, benchmark_client_factory_, sequencer_factory_,
         std::make_unique<UriImpl>(uri), store_root_, worker_number,
-        first_worker_start + worker_delay, http_tracer_));
+        first_worker_start + worker_delay, http_tracer_, prefetch_connections));
     worker_number++;
   }
   return workers_;
@@ -272,7 +297,8 @@ bool ProcessImpl::run(OutputCollector& collector) {
     tls_.shutdownGlobalThreading();
     return false;
   }
-  const std::vector<ClientWorkerPtr>& workers = createWorkers(uri, determineConcurrency());
+  const std::vector<ClientWorkerPtr>& workers =
+      createWorkers(uri, determineConcurrency(), options_.prefetchConnections());
 
   tls_.registerThread(*dispatcher_, true);
   store_root_.initializeThreading(*dispatcher_, tls_);
@@ -282,7 +308,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
           Envoy::ProtobufMessage::getStrictValidationVisitor(), api_)});
   ssl_context_manager_ =
       std::make_unique<Extensions::TransportSockets::Tls::ContextManagerImpl>(time_system_);
-  cluster_manager_factory_ = std::make_unique<Envoy::Upstream::ProdClusterManagerFactory>(
+  cluster_manager_factory_ = std::make_unique<ClusterManagerFactory>(
       admin_, Envoy::Runtime::LoaderSingleton::get(), store_root_, tls_, generator_,
       dispatcher_->createDnsResolver({}), *ssl_context_manager_, *dispatcher_, *local_info_,
       secret_manager_, Envoy::ProtobufMessage::getStrictValidationVisitor(), api_, http_context_,

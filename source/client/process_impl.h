@@ -60,7 +60,8 @@ public:
 
 private:
   void configureComponentLogLevels(spdlog::level::level_enum level);
-  const std::vector<ClientWorkerPtr>& createWorkers(const UriImpl& uri, const uint32_t concurrency);
+  const std::vector<ClientWorkerPtr>& createWorkers(const UriImpl& uri, const uint32_t concurrency,
+                                                    bool prefetch_connections);
   std::vector<StatisticPtr> vectorizeStatisticPtrMap(const StatisticFactory& statistic_factory,
                                                      const StatisticPtrMap& statistics) const;
   std::vector<StatisticPtr>

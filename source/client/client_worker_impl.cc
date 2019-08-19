@@ -9,21 +9,27 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
                                    const SequencerFactory& sequencer_factory, UriPtr&& uri,
                                    Envoy::Stats::Store& store, const int worker_number,
                                    const Envoy::MonotonicTime starting_time,
-                                   Envoy::Tracing::HttpTracerPtr& http_tracer)
+                                   Envoy::Tracing::HttpTracerPtr& http_tracer,
+                                   bool prefetch_connections)
     : WorkerImpl(api, tls, store), worker_number_(worker_number), starting_time_(starting_time),
       http_tracer_(http_tracer),
       benchmark_client_(benchmark_client_factory.create(api, *dispatcher_, store_, std::move(uri),
                                                         cluster_manager, http_tracer_)),
-      sequencer_(sequencer_factory.create(time_source_, *dispatcher_, starting_time,
-                                          *benchmark_client_)) {}
+      sequencer_(
+          sequencer_factory.create(time_source_, *dispatcher_, starting_time, *benchmark_client_)),
+      prefetch_connections_(prefetch_connections) {}
 
 void ClientWorkerImpl::simpleWarmup() {
   ENVOY_LOG(debug, "> worker {}: warmup start.", worker_number_);
+  if (prefetch_connections_) {
+    benchmark_client_->prefetchPoolConnections();
+  }
   if (benchmark_client_->tryStartOne([this] { dispatcher_->exit(); })) {
     dispatcher_->run(Envoy::Event::Dispatcher::RunType::RunUntilExit);
   } else {
     ENVOY_LOG(warn, "> worker {}: failed to initiate warmup request.", worker_number_);
   }
+  ENVOY_LOG(debug, "> worker {}: warmup start.", worker_number_);
   ENVOY_LOG(debug, "> worker {}: warmup done.", worker_number_);
 }
 

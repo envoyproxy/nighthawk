@@ -28,7 +28,7 @@ public:
                    const SequencerFactory& sequencer_factory, UriPtr&& uri,
                    Envoy::Stats::Store& store, const int worker_number,
                    const Envoy::MonotonicTime starting_time,
-                   Envoy::Tracing::HttpTracerPtr& http_tracer);
+                   Envoy::Tracing::HttpTracerPtr& http_tracer, bool prefetch_connections);
 
   StatisticPtrMap statistics() const override;
   Envoy::Stats::Store& store() const override { return store_; }
@@ -46,6 +46,7 @@ private:
   BenchmarkClientPtr benchmark_client_;
   const SequencerPtr sequencer_;
   Envoy::LocalInfo::LocalInfoPtr local_info_;
+  const bool prefetch_connections_;
 };
 
 using ClientWorkerImplPtr = std::unique_ptr<ClientWorkerImpl>;

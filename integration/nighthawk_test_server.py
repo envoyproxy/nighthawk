@@ -43,7 +43,11 @@ class TestServerBase(object):
       parameterized_config_path = tmp.name
       tmp.write(config)
 
-    args = [self.server_binary_path, self.server_binary_config_path_arg, parameterized_config_path, "-l", "error"]
+    args = [
+        self.server_binary_path, self.server_binary_config_path_arg, parameterized_config_path, "-l", "error",
+        "--base-id",
+        str(self.server_port)
+    ]
     logging.info("Test server popen() args: [%s]" % args)
     self.server_process = subprocess.Popen(args)
     self.server_process.communicate()

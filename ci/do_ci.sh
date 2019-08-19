@@ -27,13 +27,16 @@ function do_clang_tidy() {
 }
 
 function do_coverage() {
-    ci/run_coverage.sh
-}
-
-function setup_gcc_toolchain() {
-    export CC=gcc
-    export CXX=g++
-    echo "$CC/$CXX toolchain configured"
+    echo "bazel coverage build with tests ${TEST_TARGETS}"
+    
+    # Reduce the amount of memory Bazel tries to use to prevent it from launching too many subprocesses.
+    # This should prevent the system from running out of memory and killing tasks. See discussion on
+    # https://github.com/envoyproxy/envoy/pull/5611.
+    [ -z "$CIRCLECI" ] || export BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} --local_ram_resources=12288"
+    
+    export TEST_TARGETS="//test/..."
+    test/run_nighthawk_bazel_coverage.sh ${TEST_TARGETS}
+    exit 0
 }
 
 function setup_clang_toolchain() {
@@ -96,14 +99,11 @@ if [ -n "$CIRCLECI" ]; then
         mv "${HOME:-/root}/.gitconfig" "${HOME:-/root}/.gitconfig_save"
         echo 1
     fi
-
+    # We constrain parallelism in CI to avoid running out of memory.	
     NUM_CPUS=8
-    if [ "$1" == "coverage" ]; then
-        NUM_CPUS=6
-    fi
 fi
 
- if grep 'docker\|lxc' /proc/1/cgroup; then
+if grep 'docker\|lxc' /proc/1/cgroup; then
     # Create a fake home. Python site libs tries to do getpwuid(3) if we don't and the CI
     # Docker image gets confused as it has no passwd entry when running non-root
     # unless we do this.
@@ -135,10 +135,6 @@ export BAZEL_TEST_OPTIONS="${BAZEL_BUILD_OPTIONS} --test_env=HOME --test_env=PYT
 [[ -z "${SRCDIR}" ]] && SRCDIR="${PWD}"
 
 setup_clang_toolchain
-
-if [ "$1" == "coverage" ]; then
-    setup_gcc_toolchain
-fi
 
 case "$1" in
     build)
