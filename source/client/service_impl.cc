@@ -69,8 +69,12 @@ void ServiceImpl::writeResponseAndFinish(const nighthawk::client::ExecutionRespo
   while (stream->Read(&request)) {
     ENVOY_LOG(debug, "Read ExecutionRequest data: {}", request.DebugString());
     if (request.has_start_request()) {
+      // It is possible to receive a back-to-back request here, while the future that is associated
+      // to our previous response is still active. To resolve this in practice we allow waiting here
+      // for a short period in favor of adding a more complex atomic bool to track if we are ready
+      // for the next request.
       if (future_.valid() &&
-          future_.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
+          future_.wait_for(std::chrono::seconds(1)) != std::future_status::ready) {
         return finishGrpcStream(false, "Only a single benchmark session is allowed at a time.");
       } else {
         future_ =
