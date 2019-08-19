@@ -38,6 +38,7 @@ private:
   ::grpc::ServerReaderWriter<::nighthawk::client::ExecutionResponse,
                              ::nighthawk::client::ExecutionRequest>* stream_;
   std::future<void> future_;
+  std::atomic<bool> busy_;
 };
 
 } // namespace Client
