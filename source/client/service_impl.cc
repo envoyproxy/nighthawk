@@ -39,11 +39,11 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
       response.mutable_error_detail()->set_message("Unknown failure");
     }
   }
-  busy_ = false;
   writeResponse(response);
 }
 
 void ServiceImpl::writeResponse(const nighthawk::client::ExecutionResponse& response) {
+  busy_ = false;
   if (!stream_->Write(response)) {
     ENVOY_LOG(warn, "Stream write failed");
   }
