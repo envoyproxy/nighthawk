@@ -30,7 +30,7 @@ public:
 
 private:
   void handleExecutionRequest(const nighthawk::client::ExecutionRequest& request);
-  void writeResponseAndFinish(const nighthawk::client::ExecutionResponse& response);
+  void writeResponse(const nighthawk::client::ExecutionResponse& response);
   ::grpc::Status finishGrpcStream(const bool success, absl::string_view description = "");
 
   Envoy::Event::RealTimeSystem time_system_; // NO_CHECK_FORMAT(real_time)
@@ -38,7 +38,7 @@ private:
   ::grpc::ServerReaderWriter<::nighthawk::client::ExecutionResponse,
                              ::nighthawk::client::ExecutionRequest>* stream_;
   std::future<void> future_;
-  std::atomic<bool> busy_;
+  std::atomic<bool> busy_{};
 };
 
 } // namespace Client

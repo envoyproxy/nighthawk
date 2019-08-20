@@ -24,21 +24,39 @@ class ServiceTest : public TestWithParam<Envoy::Network::Address::IpVersion> {
 public:
   void SetUp() override {
     grpc::ServerBuilder builder;
-    int grpc_server_port = 0;
-    const std::string loopback_address =
-        Envoy::Network::Test::getLoopbackAddressUrlString(GetParam());
+    loopback_address_ = Envoy::Network::Test::getLoopbackAddressUrlString(GetParam());
 
-    builder.AddListeningPort(fmt::format("{}:0", loopback_address),
-                             grpc::InsecureServerCredentials(), &grpc_server_port);
+    builder.AddListeningPort(fmt::format("{}:0", loopback_address_),
+                             grpc::InsecureServerCredentials(), &grpc_server_port_);
     builder.RegisterService(&service_);
     server_ = builder.BuildAndStart();
-    channel_ = grpc::CreateChannel(fmt::format("{}:{}", loopback_address, grpc_server_port),
-                                   grpc::InsecureChannelCredentials());
-    stub_ = std::make_unique<nighthawk::client::NighthawkService::Stub>(channel_);
+    setupGrpcClient();
     setBasicRequestOptions();
   }
 
   void TearDown() override { server_->Shutdown(); }
+
+  void setupGrpcClient() {
+    channel_ = grpc::CreateChannel(fmt::format("{}:{}", loopback_address_, grpc_server_port_),
+                                   grpc::InsecureChannelCredentials());
+    stub_ = std::make_unique<nighthawk::client::NighthawkService::Stub>(channel_);
+  }
+
+  void singleStreamBackToBackExecution() {
+    grpc::ClientContext context;
+    auto r = stub_->ExecutionStream(&context);
+    EXPECT_TRUE(r->Write(request_, {}));
+    EXPECT_TRUE(r->Read(&response_));
+    ASSERT_FALSE(response_.has_error_detail());
+    EXPECT_TRUE(response_.has_output());
+    EXPECT_TRUE(r->Write(request_, {}));
+    EXPECT_TRUE(r->Read(&response_));
+    EXPECT_FALSE(response_.has_error_detail());
+    EXPECT_TRUE(response_.has_output());
+    EXPECT_TRUE(r->WritesDone());
+    auto status = r->Finish();
+    EXPECT_TRUE(status.ok());
+  }
 
   void setBasicRequestOptions() {
     auto options = request_.mutable_start_request()->mutable_options();
@@ -71,6 +89,8 @@ public:
   nighthawk::client::ExecutionRequest request_;
   nighthawk::client::ExecutionResponse response_;
   std::unique_ptr<nighthawk::client::NighthawkService::Stub> stub_;
+  std::string loopback_address_;
+  int grpc_server_port_{0};
 };
 
 INSTANTIATE_TEST_SUITE_P(IpVersions, ServiceTest,
@@ -107,18 +127,10 @@ TEST_P(ServiceTest, NoConcurrentStart) {
 
 // Test we are able to perform serialized executions.
 TEST_P(ServiceTest, BackToBackExecution) {
-  auto r = stub_->ExecutionStream(&context_);
-  EXPECT_TRUE(r->Write(request_, {}));
-  EXPECT_TRUE(r->Read(&response_));
-  ASSERT_FALSE(response_.has_error_detail());
-  EXPECT_TRUE(response_.has_output());
-  EXPECT_TRUE(r->Write(request_, {}));
-  EXPECT_TRUE(r->Read(&response_));
-  EXPECT_FALSE(response_.has_error_detail());
-  EXPECT_TRUE(response_.has_output());
-  EXPECT_TRUE(r->WritesDone());
-  auto status = r->Finish();
-  EXPECT_TRUE(status.ok());
+  singleStreamBackToBackExecution();
+  // create a new client to connect to the same server, and do it one more time.
+  setupGrpcClient();
+  singleStreamBackToBackExecution();
 }
 
 // Test that proto validation is wired up and works.

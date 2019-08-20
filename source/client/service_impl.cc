@@ -17,7 +17,7 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
     options = std::make_unique<OptionsImpl>(request.start_request().options());
   } catch (MalformedArgvException e) {
     response.mutable_error_detail()->set_message(e.what());
-    writeResponseAndFinish(response);
+    writeResponse(response);
     return;
   }
 
@@ -40,10 +40,10 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
     }
   }
   busy_ = false;
-  writeResponseAndFinish(response);
+  writeResponse(response);
 }
 
-void ServiceImpl::writeResponseAndFinish(const nighthawk::client::ExecutionResponse& response) {
+void ServiceImpl::writeResponse(const nighthawk::client::ExecutionResponse& response) {
   if (!stream_->Write(response)) {
     ENVOY_LOG(warn, "Stream write failed");
   }
@@ -67,7 +67,6 @@ void ServiceImpl::writeResponseAndFinish(const nighthawk::client::ExecutionRespo
                                ::nighthawk::client::ExecutionRequest>* stream) {
   nighthawk::client::ExecutionRequest request;
   stream_ = stream;
-  busy_ = false;
   while (stream->Read(&request)) {
     ENVOY_LOG(debug, "Read ExecutionRequest data: {}", request.DebugString());
     if (request.has_start_request()) {
@@ -75,12 +74,15 @@ void ServiceImpl::writeResponseAndFinish(const nighthawk::client::ExecutionRespo
       // to our previous response is still active. We check the running_ flag to see if the previous
       // future has progressed in a state where we can do another one. This avoids the odd flake in
       // ServiceTest.BackToBackExecution.
-      if (busy_) {
+      if (future_.valid() &&
+          future_.wait_for(std::chrono::seconds(0)) != std::future_status::ready && busy_) {
         return finishGrpcStream(false, "Only a single benchmark session is allowed at a time.");
       } else {
         busy_ = true;
-        future_ =
-            std::future<void>(std::async(&ServiceImpl::handleExecutionRequest, this, request));
+        // We pass in std::launch::async to avoid lazy evaluation, as we want this to run
+        // asap. See: https://en.cppreference.com/w/cpp/thread/async
+        future_ = std::future<void>(
+            std::async(std::launch::async, &ServiceImpl::handleExecutionRequest, this, request));
       }
     } else if (request.has_update_request() || request.has_cancellation_request()) {
       return finishGrpcStream(false, "Request is not supported yet.");
