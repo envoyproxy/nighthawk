@@ -6,8 +6,12 @@ import os, sys
 from pathlib import Path
 
 def get_inspection_targets_from_dir(dir):
-    result = list(Path(dir).rglob("*.cc"))
-    result.extend(Path(dir).rglob("*.h"))
+    result = []
+    result.extend(Path(dir).rglob("source/*.cc"))
+    result.extend(Path(dir).rglob("source/*.h"))
+    result.extend(Path(dir).rglob("include/*.h"))
+    result.extend(Path(dir).rglob("test/*.cc"))
+    result.extend(Path(dir).rglob("test/*.h"))
     return result
 
 def inspect_line(bazel_output_base, file_path, line):
@@ -33,7 +37,7 @@ def inspect_line(bazel_output_base, file_path, line):
 
 def inspect_file(bazel_output_base, file_path):
     offending_lines = []
-    with open(file_path) as f:
+    with open(str(file_path), encoding='utf-8') as f:
         lines = f.readlines()
         offending_lines.extend(l for l in lines if not inspect_line(bazel_output_base, file_path, l.strip()))
     return file_path, offending_lines, len(offending_lines) == 0 
