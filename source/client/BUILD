@@ -37,7 +37,6 @@ envoy_cc_library(
         "//include/nighthawk/client:client_includes",
         "//include/nighthawk/common:base_includes",
         "//source/common:nighthawk_common_lib",
-        "@envoy//source/common/common:thread_impl_lib_posix",
         "@envoy//source/common/filesystem:filesystem_lib",
         "@envoy//source/common/network:dns_lib",
         "@envoy//source/common/protobuf:utility_lib",

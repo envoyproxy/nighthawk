@@ -11,7 +11,11 @@ envoy_package()
 py_test(
     name = "integration_test",
     srcs = [
+        "common.py",
         "integration_test.py",
+        "integration_test_fixtures.py",
+        "nighthawk_test_server.py",
+        "test_integration_basics.py",
     ],
     data = [
         "configurations/nighthawk_http_origin.yaml",
