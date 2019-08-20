@@ -71,8 +71,8 @@ std::string ConsoleOutputCollectorImpl::toString() const {
   return ss.str();
 }
 
-std::string
-ConsoleOutputCollectorImpl::formatProtoDuration(const Envoy::ProtobufWkt::Duration& duration) const {
+std::string ConsoleOutputCollectorImpl::formatProtoDuration(
+    const Envoy::ProtobufWkt::Duration& duration) const {
   auto c = Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(duration);
   return fmt::format("{}s {:03}ms {:03}us", (c % 1'000'000'000) / 1'000'000,
                      (c % 1'000'000) / 1'000, c % 1'000);
