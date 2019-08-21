@@ -18,6 +18,7 @@
 #include "common/event/real_time_system.h"
 #include "common/filesystem/filesystem_impl.h"
 #include "common/http/context_impl.h"
+#include "common/protobuf/message_validator_impl.h"
 #include "common/secret/secret_manager_impl.h"
 #include "common/stats/allocator_impl.h"
 #include "common/stats/thread_local_store.h"
@@ -103,6 +104,7 @@ private:
   Envoy::Init::WatcherImpl init_watcher_;
   Tracing::HttpTracerPtr http_tracer_;
   Envoy::Server::ValidationAdmin admin_;
+  Envoy::ProtobufMessage::ProdValidationContextImpl validation_context_;
 };
 
 } // namespace Client

@@ -23,7 +23,6 @@
 #include "common/init/manager_impl.h"
 #include "common/local_info/local_info_impl.h"
 #include "common/network/utility.h"
-#include "common/protobuf/message_validator_impl.h"
 #include "common/runtime/runtime_impl.h"
 #include "common/singleton/manager_impl.h"
 #include "common/thread_local/thread_local_impl.h"
@@ -83,7 +82,7 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
       singleton_manager_(std::make_unique<Envoy::Singleton::ManagerImpl>(api_.threadFactory())),
       access_log_manager_(std::chrono::milliseconds(1000), api_, *dispatcher_, fakelock_,
                           store_root_),
-      init_watcher_("Nighthawk", []() {}) {
+      init_watcher_("Nighthawk", []() {}), validation_context_(false, false) {
   std::string lower = absl::AsciiStrToLower(
       nighthawk::client::Verbosity::VerbosityOptions_Name(options_.verbosity()));
   configureComponentLogLevels(spdlog::level::from_str(lower));
@@ -279,8 +278,8 @@ bool ProcessImpl::run(OutputCollector& collector) {
   cluster_manager_factory_ = std::make_unique<ClusterManagerFactory>(
       admin_, Envoy::Runtime::LoaderSingleton::get(), store_root_, tls_, generator_,
       dispatcher_->createDnsResolver({}), *ssl_context_manager_, *dispatcher_, *local_info_,
-      secret_manager_, Envoy::ProtobufMessage::getStrictValidationVisitor(), api_, http_context_,
-      access_log_manager_, *singleton_manager_);
+      secret_manager_, validation_context_, api_, http_context_, access_log_manager_,
+      *singleton_manager_);
   cluster_manager_ =
       cluster_manager_factory_->clusterManagerFromProto(createBootstrapConfiguration(uri));
   cluster_manager_->setInitializedCb([this]() -> void { init_manager_.initialize(init_watcher_); });
