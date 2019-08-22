@@ -2,7 +2,7 @@
 
 # Ensure that includes are referenced via external/envoy
 
-import os, sys
+import os, re, sys
 import subprocess
 from pathlib import Path
 
@@ -15,10 +15,11 @@ def get_inspection_targets_from_dir(dir):
 
 
 def inspect_line(bazel_output_base, file_path, line):
-  if line.startswith('#include "'):
-    path = line[len("#include"):].strip(' "')
+  match = re.findall(r'#include "([^"]*)"', line)
+  if len(match) == 1:
+    path = match[0]
     if path.startswith("external/") and not path.startswith("envoy/"):
-      return
+      return True
     found_in_nighthawk_sources = os.path.isfile(path) or os.path.isfile(
         "source/" + path) or os.path.isfile("include/" + path)
     if not found_in_nighthawk_sources:
@@ -45,7 +46,7 @@ def inspect_file(bazel_output_base, file_path):
     lines = f.readlines()
     offending_lines.extend(
         l for l in lines if not inspect_line(bazel_output_base, file_path, l.strip()))
-  return file_path, offending_lines, len(offending_lines) == 0
+  return offending_lines
 
 
 if __name__ == '__main__':
@@ -54,5 +55,4 @@ if __name__ == '__main__':
   workspace_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
   targets = get_inspection_targets_from_dir(workspace_root)
   status_list = list(map(lambda x: inspect_file(bazel_output_base, x), targets))
-  noncompliant_list = [path for path, offending_lines, status in status_list if not status]
-  sys.exit(0 if len(noncompliant_list) == 0 else -1)
+  sys.exit(-1 if any(status_list) else 0)

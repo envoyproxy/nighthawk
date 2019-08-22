@@ -85,5 +85,6 @@ envoy_cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":nighthawk_client_lib",
+        "@envoy//source/common/common:thread_lib_with_external_headers",
     ],
 )
