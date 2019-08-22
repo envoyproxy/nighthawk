@@ -323,7 +323,8 @@ void OptionsImpl::validate() const {
     throw MalformedArgvException("Invalid URI");
   }
   try {
-    Envoy::MessageUtil::validate(*toCommandLineOptions());
+    Envoy::MessageUtil::validate(*toCommandLineOptions(),
+                                 Envoy::ProtobufMessage::getStrictValidationVisitor());
   } catch (const Envoy::ProtoValidationException& e) {
     throw MalformedArgvException(e.what());
   }
