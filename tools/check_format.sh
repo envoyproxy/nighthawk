@@ -7,4 +7,4 @@ bazel run @envoy//tools:check_format.py -- \
   --include_dir_order envoy,nighthawk,common,source,exe,server,client,extensions,test \
   $1 $PWD
 
-bazel run //tools:check_envoy_includes.py "$(bazel info output_base)" $PWD
+bazel run //tools:check_envoy_includes.py
