@@ -3,6 +3,14 @@
 #include "envoy/network/address.h"
 #include "envoy/stats/store.h"
 
+#include "nighthawk/client/client_worker.h"
+#include "nighthawk/client/factories.h"
+#include "nighthawk/client/options.h"
+#include "nighthawk/client/output_collector.h"
+#include "nighthawk/client/process.h"
+#include "nighthawk/common/statistic.h"
+#include "nighthawk/common/uri.h"
+
 #include "external/envoy/source/common/access_log/access_log_manager_impl.h"
 #include "external/envoy/source/common/api/api_impl.h"
 #include "external/envoy/source/common/common/logger.h"
@@ -17,14 +25,6 @@
 #include "external/envoy/source/exe/process_wide.h"
 #include "external/envoy/source/extensions/transport_sockets/tls/context_manager_impl.h"
 #include "external/envoy/source/server/config_validation/admin.h"
-
-#include "nighthawk/client/client_worker.h"
-#include "nighthawk/client/factories.h"
-#include "nighthawk/client/options.h"
-#include "nighthawk/client/output_collector.h"
-#include "nighthawk/client/process.h"
-#include "nighthawk/common/statistic.h"
-#include "nighthawk/common/uri.h"
 
 #include "common/common/thread_impl.h" //XXX(oschaaf):
 #include "common/filesystem/filesystem_impl.h"

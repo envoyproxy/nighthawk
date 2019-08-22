@@ -9,8 +9,6 @@
 #include "envoy/stats/store.h"
 #include "envoy/upstream/cluster_manager.h"
 
-#include "external/envoy/test/test_common/simulated_time_system.h"
-
 #include "nighthawk/client/benchmark_client.h"
 #include "nighthawk/client/factories.h"
 #include "nighthawk/client/options.h"
@@ -19,6 +17,8 @@
 #include "nighthawk/common/sequencer.h"
 #include "nighthawk/common/statistic.h"
 #include "nighthawk/common/uri.h"
+
+#include "external/envoy/test/test_common/simulated_time_system.h"
 
 #include "common/utility.h"
 

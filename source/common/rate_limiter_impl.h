@@ -2,9 +2,9 @@
 
 #include "envoy/common/time.h"
 
-#include "external/envoy/source/common/common/logger.h"
-
 #include "nighthawk/common/rate_limiter.h"
+
+#include "external/envoy/source/common/common/logger.h"
 
 #include "common/frequency.h"
 

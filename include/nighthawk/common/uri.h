@@ -2,10 +2,10 @@
 
 #include <string>
 
+#include "nighthawk/common/exception.h"
+
 #include "external/envoy/source/common/network/dns_impl.h"
 #include "external/envoy/source/common/network/utility.h"
-
-#include "nighthawk/common/exception.h"
 
 #include "absl/strings/string_view.h"
 

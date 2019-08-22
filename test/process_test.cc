@@ -1,6 +1,6 @@
-#include "external/envoy/test/test_common/utility.h"
-
 #include "nighthawk/common/exception.h"
+
+#include "external/envoy/test/test_common/utility.h"
 
 #include "client/options_impl.h"
 #include "client/process_impl.h"

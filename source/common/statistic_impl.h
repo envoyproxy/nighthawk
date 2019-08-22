@@ -3,10 +3,10 @@
 #include <memory>
 #include <vector>
 
+#include "nighthawk/common/statistic.h"
+
 #include "external/dep_hdrhistogram_c/src/hdr_histogram.h"
 #include "external/envoy/source/common/common/logger.h"
-
-#include "nighthawk/common/statistic.h"
 
 #include "common/frequency.h"
 

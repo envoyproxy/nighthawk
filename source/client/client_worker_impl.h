@@ -6,13 +6,13 @@
 #include "envoy/thread_local/thread_local.h"
 #include "envoy/upstream/cluster_manager.h"
 
-#include "external/envoy/source/common/common/logger.h"
-
 #include "nighthawk/client/benchmark_client.h"
 #include "nighthawk/client/client_worker.h"
 #include "nighthawk/client/factories.h"
 #include "nighthawk/common/sequencer.h"
 #include "nighthawk/common/uri.h"
+
+#include "external/envoy/source/common/common/logger.h"
 
 #include "common/worker_impl.h"
 

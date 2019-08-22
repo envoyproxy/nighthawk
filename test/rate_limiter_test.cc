@@ -1,8 +1,8 @@
 #include <chrono>
 
-#include "external/envoy/test/test_common/simulated_time_system.h"
-
 #include "nighthawk/common/exception.h"
+
+#include "external/envoy/test/test_common/simulated_time_system.h"
 
 #include "common/frequency.h"
 #include "common/rate_limiter_impl.h"

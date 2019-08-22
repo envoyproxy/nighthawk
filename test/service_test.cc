@@ -2,11 +2,11 @@
 
 #include <chrono>
 
+#include "nighthawk/common/exception.h"
+
 #include "external/envoy/test/test_common/environment.h"
 #include "external/envoy/test/test_common/network_utility.h"
 #include "external/envoy/test/test_common/utility.h"
-
-#include "nighthawk/common/exception.h"
 
 #include "api/client/service.pb.h"
 

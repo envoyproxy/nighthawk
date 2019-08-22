@@ -10,6 +10,8 @@
 
 #include "envoy/stats/store.h"
 
+#include "nighthawk/client/output_collector.h"
+
 #include "external/envoy/source/common/api/api_impl.h"
 #include "external/envoy/source/common/common/cleanup.h"
 #include "external/envoy/source/common/config/utility.h"
@@ -22,8 +24,6 @@
 #include "external/envoy/source/common/singleton/manager_impl.h"
 #include "external/envoy/source/common/thread_local/thread_local_impl.h"
 #include "external/envoy/source/extensions/transport_sockets/well_known_names.h"
-
-#include "nighthawk/client/output_collector.h"
 
 #include "api/client/options.pb.h"
 #include "api/client/output.pb.h"

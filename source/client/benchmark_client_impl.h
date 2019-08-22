@@ -9,15 +9,15 @@
 #include "envoy/stats/store.h"
 #include "envoy/upstream/upstream.h"
 
-#include "external/envoy/source/common/common/logger.h"
-#include "external/envoy/source/common/http/header_map_impl.h"
-#include "external/envoy/source/common/http/http1/conn_pool.h"
-#include "external/envoy/source/common/runtime/runtime_impl.h"
-
 #include "nighthawk/client/benchmark_client.h"
 #include "nighthawk/common/sequencer.h"
 #include "nighthawk/common/statistic.h"
 #include "nighthawk/common/uri.h"
+
+#include "external/envoy/source/common/common/logger.h"
+#include "external/envoy/source/common/http/header_map_impl.h"
+#include "external/envoy/source/common/http/http1/conn_pool.h"
+#include "external/envoy/source/common/runtime/runtime_impl.h"
 
 #include "api/client/options.pb.h"
 

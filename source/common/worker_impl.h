@@ -6,9 +6,9 @@
 #include "envoy/stats/store.h"
 #include "envoy/thread/thread.h"
 
-#include "external/envoy/source/common/common/logger.h"
-
 #include "nighthawk/common/worker.h"
+
+#include "external/envoy/source/common/common/logger.h"
 
 namespace Nighthawk {
 

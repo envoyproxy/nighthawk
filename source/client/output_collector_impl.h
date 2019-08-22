@@ -4,9 +4,9 @@
 
 #include "envoy/common/time.h"
 
-#include "external/envoy/source/common/protobuf/protobuf.h"
-
 #include "nighthawk/client/output_collector.h"
+
+#include "external/envoy/source/common/protobuf/protobuf.h"
 
 namespace Nighthawk {
 namespace Client {
