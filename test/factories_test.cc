@@ -1,16 +1,17 @@
 #include <chrono>
 
+#include "external/envoy/source/common/api/api_impl.h"
+#include "external/envoy/test/mocks/event/mocks.h"
+#include "external/envoy/test/mocks/stats/mocks.h"
+#include "external/envoy/test/test_common/simulated_time_system.h"
+#include "external/envoy/test/test_common/utility.h"
+
 #include "common/uri_impl.h"
 
 #include "client/factories_impl.h"
 
 #include "test/mocks.h"
-#include "test/test_common/utility.h"
 
-#include "external/envoy/source/common/api/api_impl.h"
-#include "external/envoy/test/mocks/event/mocks.h"
-#include "external/envoy/test/mocks/stats/mocks.h"
-#include "external/envoy/test/test_common/simulated_time_system.h"
 #include "gtest/gtest.h"
 
 using namespace std::chrono_literals;

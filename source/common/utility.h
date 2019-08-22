@@ -2,13 +2,14 @@
 
 #include <string>
 
-#include "envoy/stats/store.h"
+#include "external/envoy/source/common/network/dns_impl.h"
 
 #include "nighthawk/common/exception.h"
 
-#include "absl/strings/string_view.h"
 #include "api/client/options.pb.h"
-#include "external/envoy/source/common/network/dns_impl.h"
+
+#include "absl/strings/string_view.h"
+#include "envoy/stats/store.h"
 #include "tclap/CmdLine.h"
 
 namespace Nighthawk {

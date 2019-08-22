@@ -2,12 +2,12 @@
 
 #include <functional>
 
+#include "nighthawk/common/statistic.h"
+
 #include "envoy/common/time.h"
 #include "envoy/event/deferred_deletable.h"
 #include "envoy/event/dispatcher.h"
 #include "envoy/http/conn_pool.h"
-
-#include "nighthawk/common/statistic.h"
 
 namespace Nighthawk {
 namespace Client {

@@ -1,5 +1,13 @@
 #include <chrono>
 
+#include "external/envoy/source/common/api/api_impl.h"
+#include "external/envoy/source/common/event/dispatcher_impl.h"
+#include "external/envoy/source/common/http/header_map_impl.h"
+#include "external/envoy/source/common/network/utility.h"
+#include "external/envoy/source/common/runtime/runtime_impl.h"
+#include "external/envoy/source/common/stats/isolated_store_impl.h"
+#include "external/envoy/test/mocks/http/mocks.h"
+
 #include "common/common/thread_impl.h"         // XXX(oschaaf):
 #include "common/filesystem/filesystem_impl.h" // XXX(oschaaf):
 #include "common/statistic_impl.h"
@@ -7,14 +15,7 @@
 #include "client/stream_decoder.h"
 
 #include "test/mocks.h"
-#include "test/mocks/http/mocks.h"
 
-#include "external/envoy/source/common/api/api_impl.h"
-#include "external/envoy/source/common/event/dispatcher_impl.h"
-#include "external/envoy/source/common/http/header_map_impl.h"
-#include "external/envoy/source/common/network/utility.h"
-#include "external/envoy/source/common/runtime/runtime_impl.h"
-#include "external/envoy/source/common/stats/isolated_store_impl.h"
 #include "gtest/gtest.h"
 
 using namespace std::chrono_literals;

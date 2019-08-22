@@ -19,8 +19,8 @@ def inspect_line(bazel_output_base, file_path, line):
     path = line[len("#include"):].strip(' "')
     if path.startswith("external/") and not path.startswith("envoy/"):
       return
-    found_in_nighthawk_sources = os.path.isfile("source/" + path) or os.path.isfile("include/" +
-                                                                                    path)
+    found_in_nighthawk_sources = os.path.isfile(path) or os.path.isfile(
+        "source/" + path) or os.path.isfile("include/" + path)
     if not found_in_nighthawk_sources:
       alternative_found = False
       potential_envoy_path = os.path.join(bazel_output_base, "external/envoy/", path)

@@ -4,9 +4,9 @@
 #include <functional>
 #include <memory>
 
-#include "envoy/common/pure.h"
-
 #include "nighthawk/common/statistic.h"
+
+#include "envoy/common/pure.h"
 
 namespace Nighthawk {
 

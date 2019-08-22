@@ -1,6 +1,13 @@
 #include <chrono>
 #include <memory>
 
+#include "external/envoy/source/common/api/api_impl.h"
+#include "external/envoy/source/common/event/dispatcher_impl.h"
+#include "external/envoy/source/common/stats/isolated_store_impl.h"
+#include "external/envoy/test/mocks/event/mocks.h"
+#include "external/envoy/test/test_common/simulated_time_system.h"
+#include "external/envoy/test/test_common/thread_factory_for_test.h"
+
 #include "nighthawk/common/exception.h"
 #include "nighthawk/common/platform_util.h"
 
@@ -9,15 +16,9 @@
 #include "common/rate_limiter_impl.h"
 #include "common/sequencer_impl.h"
 #include "common/statistic_impl.h"
-#include "common/stats/isolated_store_impl.h"
 
 #include "test/mocks.h"
-#include "test/mocks/event/mocks.h"
-#include "test/test_common/thread_factory_for_test.h"
 
-#include "external/envoy/source/common/api/api_impl.h"
-#include "external/envoy/source/common/event/dispatcher_impl.h"
-#include "external/envoy/test/test_common/simulated_time_system.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 

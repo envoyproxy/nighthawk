@@ -1,10 +1,5 @@
 #include <thread>
 
-#include "common/filesystem/filesystem_impl.h" // XXX(oschaaf):
-#include "common/worker_impl.h"
-
-#include "test/mocks.h"
-
 #include "external/envoy/source/common/api/api_impl.h"
 #include "external/envoy/source/common/runtime/runtime_impl.h"
 #include "external/envoy/source/common/stats/isolated_store_impl.h"
@@ -13,6 +8,12 @@
 #include "external/envoy/test/mocks/protobuf/mocks.h"
 #include "external/envoy/test/mocks/thread_local/mocks.h"
 #include "external/envoy/test/test_common/thread_factory_for_test.h"
+
+#include "common/filesystem/filesystem_impl.h" // XXX(oschaaf):
+#include "common/worker_impl.h"
+
+#include "test/mocks.h"
+
 #include "gtest/gtest.h"
 
 using namespace testing;

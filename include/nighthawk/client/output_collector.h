@@ -2,11 +2,11 @@
 
 #include <memory>
 
-#include "envoy/common/pure.h"
-
 #include "nighthawk/client/benchmark_client.h"
 #include "nighthawk/client/options.h"
 #include "nighthawk/common/statistic.h"
+
+#include "envoy/common/pure.h"
 
 namespace Nighthawk {
 namespace Client {

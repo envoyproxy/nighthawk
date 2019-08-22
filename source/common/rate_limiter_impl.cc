@@ -1,8 +1,8 @@
 #include "common/rate_limiter_impl.h"
 
-#include "nighthawk/common/exception.h"
-
 #include "external/envoy/source/common/common/assert.h"
+
+#include "nighthawk/common/exception.h"
 
 namespace Nighthawk {
 

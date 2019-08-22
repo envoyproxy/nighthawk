@@ -1,7 +1,19 @@
 #pragma once
 
-#include "envoy/network/address.h"
-#include "envoy/stats/store.h"
+#include "external/envoy/source/common/access_log/access_log_manager_impl.h"
+#include "external/envoy/source/common/api/api_impl.h"
+#include "external/envoy/source/common/common/logger.h"
+#include "external/envoy/source/common/event/real_time_system.h"
+#include "external/envoy/source/common/http/context_impl.h"
+#include "external/envoy/source/common/protobuf/message_validator_impl.h"
+#include "external/envoy/source/common/secret/secret_manager_impl.h"
+#include "external/envoy/source/common/stats/allocator_impl.h"
+#include "external/envoy/source/common/stats/thread_local_store.h"
+#include "external/envoy/source/common/thread_local/thread_local_impl.h"
+#include "external/envoy/source/common/upstream/cluster_manager_impl.h"
+#include "external/envoy/source/exe/process_wide.h"
+#include "external/envoy/source/extensions/transport_sockets/tls/context_manager_impl.h"
+#include "external/envoy/source/server/config_validation/admin.h"
 
 #include "nighthawk/client/client_worker.h"
 #include "nighthawk/client/factories.h"
@@ -18,20 +30,8 @@
 #include "client/benchmark_client_impl.h"
 #include "client/factories_impl.h"
 
-#include "external/envoy/source/common/access_log/access_log_manager_impl.h"
-#include "external/envoy/source/common/api/api_impl.h"
-#include "external/envoy/source/common/common/logger.h"
-#include "external/envoy/source/common/event/real_time_system.h"
-#include "external/envoy/source/common/http/context_impl.h"
-#include "external/envoy/source/common/protobuf/message_validator_impl.h"
-#include "external/envoy/source/common/secret/secret_manager_impl.h"
-#include "external/envoy/source/common/stats/allocator_impl.h"
-#include "external/envoy/source/common/stats/thread_local_store.h"
-#include "external/envoy/source/common/thread_local/thread_local_impl.h"
-#include "external/envoy/source/common/upstream/cluster_manager_impl.h"
-#include "external/envoy/source/exe/process_wide.h"
-#include "external/envoy/source/extensions/transport_sockets/tls/context_manager_impl.h"
-#include "external/envoy/source/server/config_validation/admin.h"
+#include "envoy/network/address.h"
+#include "envoy/stats/store.h"
 
 namespace Nighthawk {
 namespace Client {

@@ -3,11 +3,7 @@
 #include <chrono>
 #include <memory>
 
-#include "envoy/api/api.h"
-#include "envoy/common/time.h"
-#include "envoy/event/dispatcher.h"
-#include "envoy/stats/store.h"
-#include "envoy/upstream/cluster_manager.h"
+#include "external/envoy/test/test_common/simulated_time_system.h"
 
 #include "nighthawk/client/benchmark_client.h"
 #include "nighthawk/client/factories.h"
@@ -20,7 +16,11 @@
 
 #include "common/utility.h"
 
-#include "external/envoy/test/test_common/simulated_time_system.h"
+#include "envoy/api/api.h"
+#include "envoy/common/time.h"
+#include "envoy/event/dispatcher.h"
+#include "envoy/stats/store.h"
+#include "envoy/upstream/cluster_manager.h"
 #include "gmock/gmock.h"
 
 using namespace std::chrono_literals;

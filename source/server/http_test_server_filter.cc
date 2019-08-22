@@ -2,13 +2,13 @@
 
 #include <string>
 
-#include "envoy/server/filter_config.h"
+#include "external/envoy/source/common/protobuf/message_validator_impl.h"
+#include "external/envoy/source/common/protobuf/utility.h"
 
-#include "common/protobuf/message_validator_impl.h"
-#include "common/protobuf/utility.h"
+#include "api/server/response_options.pb.validate.h"
 
 #include "absl/strings/numbers.h"
-#include "api/server/response_options.pb.validate.h"
+#include "envoy/server/filter_config.h"
 
 namespace Nighthawk {
 namespace Server {

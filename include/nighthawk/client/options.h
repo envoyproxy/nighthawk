@@ -4,10 +4,10 @@
 #include <memory>
 #include <string>
 
+#include "api/client/options.pb.h"
+
 #include "envoy/api/v2/cds.pb.h"
 #include "envoy/common/pure.h"
-
-#include "api/client/options.pb.h"
 
 namespace Nighthawk {
 namespace Client {

@@ -2,13 +2,6 @@
 
 #include <memory>
 
-#include "envoy/api/api.h"
-#include "envoy/common/pure.h"
-#include "envoy/common/time.h"
-#include "envoy/event/dispatcher.h"
-#include "envoy/stats/store.h"
-#include "envoy/upstream/cluster_manager.h"
-
 #include "nighthawk/client/benchmark_client.h"
 #include "nighthawk/client/options.h"
 #include "nighthawk/client/output_collector.h"
@@ -16,6 +9,13 @@
 #include "nighthawk/common/sequencer.h"
 #include "nighthawk/common/statistic.h"
 #include "nighthawk/common/uri.h"
+
+#include "envoy/api/api.h"
+#include "envoy/common/pure.h"
+#include "envoy/common/time.h"
+#include "envoy/event/dispatcher.h"
+#include "envoy/stats/store.h"
+#include "envoy/upstream/cluster_manager.h"
 
 namespace Nighthawk {
 namespace Client {

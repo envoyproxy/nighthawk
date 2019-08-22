@@ -1,15 +1,14 @@
-#include "envoy/upstream/cluster_manager.h"
-#include "envoy/upstream/upstream.h"
-
-#include "common/api/api_impl.h"
-
-#include "server/http_test_server_filter.h"
-
-#include "test/common/upstream/utility.h"
-#include "test/integration/http_integration.h"
+#include "external/envoy/source/common/api/api_impl.h"
+#include "external/envoy/test/common/upstream/utility.h"
+#include "external/envoy/test/integration/http_integration.h"
 
 #include "api/server/response_options.pb.h"
 #include "api/server/response_options.pb.validate.h"
+
+#include "server/http_test_server_filter.h"
+
+#include "envoy/upstream/cluster_manager.h"
+#include "envoy/upstream/upstream.h"
 #include "gtest/gtest.h"
 
 namespace Nighthawk {

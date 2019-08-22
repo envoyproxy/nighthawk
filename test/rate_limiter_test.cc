@@ -1,5 +1,7 @@
 #include <chrono>
 
+#include "external/envoy/test/test_common/simulated_time_system.h"
+
 #include "nighthawk/common/exception.h"
 
 #include "common/frequency.h"
@@ -7,7 +9,6 @@
 
 #include "test/mocks.h"
 
-#include "external/envoy/test/test_common/simulated_time_system.h"
 #include "gtest/gtest.h"
 
 using namespace std::chrono_literals;
