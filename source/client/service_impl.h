@@ -12,7 +12,7 @@
 #include <future>
 
 #include "external/envoy/source/common/common/logger.h"
-#include "external/envoy/source/common/common/thread.h" // XXX(oschaaf)
+#include "external/envoy/source/common/common/thread.h"
 
 #include "nighthawk/client/process.h"
 
