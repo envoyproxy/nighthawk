@@ -1,5 +1,8 @@
 #include "client/benchmark_client_impl.h"
 
+#include "envoy/event/dispatcher.h"
+#include "envoy/thread_local/thread_local.h"
+
 #include "external/envoy/source/common/http/header_map_impl.h"
 #include "external/envoy/source/common/http/headers.h"
 #include "external/envoy/source/common/http/utility.h"
@@ -10,8 +13,6 @@
 #include "client/stream_decoder.h"
 
 #include "absl/strings/str_split.h"
-#include "envoy/event/dispatcher.h"
-#include "envoy/thread_local/thread_local.h"
 
 using namespace std::chrono_literals;
 

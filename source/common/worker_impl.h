@@ -1,14 +1,14 @@
 #pragma once
 
-#include "external/envoy/source/common/common/logger.h"
-
-#include "nighthawk/common/worker.h"
-
 #include "envoy/api/api.h"
 #include "envoy/common/time.h"
 #include "envoy/filesystem/filesystem.h"
 #include "envoy/stats/store.h"
 #include "envoy/thread/thread.h"
+
+#include "external/envoy/source/common/common/logger.h"
+
+#include "nighthawk/common/worker.h"
 
 namespace Nighthawk {
 

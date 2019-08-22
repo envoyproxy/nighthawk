@@ -1,16 +1,16 @@
 #pragma once
 
+#include "envoy/common/pure.h"
+#include "envoy/common/time.h"
+#include "envoy/event/dispatcher.h"
+#include "envoy/thread/thread.h"
+
 #include "external/envoy/source/common/common/logger.h"
 
 #include "nighthawk/common/platform_util.h"
 #include "nighthawk/common/rate_limiter.h"
 #include "nighthawk/common/sequencer.h"
 #include "nighthawk/common/statistic.h"
-
-#include "envoy/common/pure.h"
-#include "envoy/common/time.h"
-#include "envoy/event/dispatcher.h"
-#include "envoy/thread/thread.h"
 
 namespace Nighthawk {
 

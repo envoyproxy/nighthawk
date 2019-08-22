@@ -6,6 +6,8 @@
 #include <memory>
 #include <random>
 
+#include "envoy/stats/store.h"
+
 #include "external/envoy/source/common/api/api_impl.h"
 #include "external/envoy/source/common/common/cleanup.h"
 #include "external/envoy/source/common/event/dispatcher_impl.h"
@@ -28,8 +30,6 @@
 #include "client/factories_impl.h"
 #include "client/options_impl.h"
 #include "client/process_impl.h"
-
-#include "envoy/stats/store.h"
 
 using namespace std::chrono_literals;
 

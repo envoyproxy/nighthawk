@@ -3,12 +3,12 @@
 #include <functional>
 #include <memory>
 
-#include "nighthawk/common/statistic.h"
-#include "nighthawk/common/uri.h"
-
 #include "envoy/http/header_map.h"
 #include "envoy/runtime/runtime.h"
 #include "envoy/stats/store.h"
+
+#include "nighthawk/common/statistic.h"
+#include "nighthawk/common/uri.h"
 
 namespace Nighthawk {
 namespace Client {

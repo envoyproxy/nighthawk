@@ -1,5 +1,8 @@
 #pragma once
 
+#include "envoy/network/address.h"
+#include "envoy/stats/store.h"
+
 #include "external/envoy/source/common/common/logger.h"
 
 #include "nighthawk/client/client_worker.h"
@@ -8,8 +11,6 @@
 #include "nighthawk/client/output_collector.h"
 #include "nighthawk/common/statistic.h"
 
-#include "envoy/network/address.h"
-#include "envoy/stats/store.h"
 #include "process_impl.h"
 
 namespace Nighthawk {

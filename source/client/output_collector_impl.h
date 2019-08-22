@@ -2,11 +2,11 @@
 
 #include <cstdint>
 
+#include "envoy/common/time.h"
+
 #include "external/envoy/source/common/protobuf/protobuf.h"
 
 #include "nighthawk/client/output_collector.h"
-
-#include "envoy/common/time.h"
 
 namespace Nighthawk {
 namespace Client {

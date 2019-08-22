@@ -2,9 +2,9 @@
 
 #include <string>
 
-#include "api/server/response_options.pb.h"
-
 #include "envoy/server/filter_config.h"
+
+#include "api/server/response_options.pb.h"
 
 namespace Nighthawk {
 namespace Server {

@@ -1,5 +1,14 @@
 #pragma once
 
+#include "envoy/api/api.h"
+#include "envoy/event/dispatcher.h"
+#include "envoy/http/conn_pool.h"
+#include "envoy/network/address.h"
+#include "envoy/runtime/runtime.h"
+#include "envoy/stats/scope.h"
+#include "envoy/stats/store.h"
+#include "envoy/upstream/upstream.h"
+
 #include "external/envoy/source/common/common/logger.h"
 #include "external/envoy/source/common/http/header_map_impl.h"
 #include "external/envoy/source/common/http/http1/conn_pool.h"
@@ -13,15 +22,6 @@
 #include "api/client/options.pb.h"
 
 #include "client/stream_decoder.h"
-
-#include "envoy/api/api.h"
-#include "envoy/event/dispatcher.h"
-#include "envoy/http/conn_pool.h"
-#include "envoy/network/address.h"
-#include "envoy/runtime/runtime.h"
-#include "envoy/stats/scope.h"
-#include "envoy/stats/store.h"
-#include "envoy/upstream/upstream.h"
 
 namespace Nighthawk {
 namespace Client {
