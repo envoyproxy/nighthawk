@@ -11,8 +11,8 @@
 
 #include <future>
 
-#include "common/common/logger.h"
-#include "common/common/thread.h"
+#include "common/common/thread.h" // XXX(oschaaf)
+#include "external/envoy/source/common/common/logger.h"
 
 #include "nighthawk/client/process.h"
 

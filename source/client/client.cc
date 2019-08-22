@@ -10,12 +10,11 @@
 
 #include "nighthawk/client/output_collector.h"
 
-#include "common/api/api_impl.h"
 #include "common/common/cleanup.h"
 #include "common/common/thread_impl.h"
 #include "common/event/dispatcher_impl.h"
 #include "common/event/real_time_system.h"
-#include "common/filesystem/filesystem_impl.h"
+#include "common/filesystem/filesystem_impl.h" // XXX(oschaaf):
 #include "common/frequency.h"
 #include "common/network/utility.h"
 #include "common/runtime/runtime_impl.h"
@@ -29,6 +28,7 @@
 #include "client/process_impl.h"
 
 #include "api/client/output.pb.h"
+#include "external/envoy/source/common/api/api_impl.h"
 
 using namespace std::chrono_literals;
 

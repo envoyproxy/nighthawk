@@ -6,8 +6,8 @@
 #include "common/rate_limiter_impl.h"
 
 #include "test/mocks.h"
-#include "test/test_common/simulated_time_system.h"
 
+#include "external/envoy/test/test_common/simulated_time_system.h"
 #include "gtest/gtest.h"
 
 using namespace std::chrono_literals;

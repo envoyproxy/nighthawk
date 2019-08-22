@@ -1,12 +1,12 @@
 #include <string>
 
-#include "common/network/utility.h"
 #include "common/uri_impl.h"
 #include "common/utility.h"
 
 #include "test/test_common/environment.h"
 #include "test/test_common/utility.h"
 
+#include "external/envoy/source/common/network/utility.h"
 #include "gtest/gtest.h"
 
 using namespace testing;

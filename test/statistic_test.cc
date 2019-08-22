@@ -5,13 +5,13 @@
 #include <typeinfo> // std::bad_cast
 
 #include "common/filesystem/filesystem_impl.h"
-#include "common/protobuf/utility.h"
 #include "common/statistic_impl.h"
-#include "common/stats/isolated_store_impl.h"
 
 #include "test/test_common/environment.h"
 #include "test/test_common/utility.h"
 
+#include "external/envoy/source/common/protobuf/utility.h"
+#include "external/envoy/source/common/stats/isolated_store_impl.h"
 #include "gtest/gtest.h"
 
 using namespace std::chrono_literals;

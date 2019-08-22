@@ -6,12 +6,9 @@
 
 #include "nighthawk/common/exception.h"
 
-#include "common/common/logger.h"
-#include "common/network/dns_impl.h"
-#include "common/network/utility.h"
-
 #include "absl/strings/string_view.h"
 #include "api/client/options.pb.h"
+#include "external/envoy/source/common/network/dns_impl.h"
 #include "tclap/CmdLine.h"
 
 namespace Nighthawk {

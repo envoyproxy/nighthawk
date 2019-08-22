@@ -1,12 +1,12 @@
 #include "common/uri_impl.h"
 
-#include "common/http/utility.h"
-#include "common/network/utility.h"
 #include "common/utility.h"
 
 #include "absl/strings/match.h"
 #include "absl/strings/str_replace.h"
 #include "absl/strings/str_split.h"
+#include "external/envoy/source/common/http/utility.h"
+#include "external/envoy/source/common/network/utility.h"
 
 namespace Nighthawk {
 

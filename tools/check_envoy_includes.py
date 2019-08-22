@@ -9,20 +9,18 @@ from pathlib import Path
 
 def get_inspection_targets_from_dir(dir):
   result = []
-  result.extend(Path(dir).rglob("source/*.cc"))
-  result.extend(Path(dir).rglob("source/*.h"))
-  result.extend(Path(dir).rglob("include/*.h"))
-  result.extend(Path(dir).rglob("test/*.cc"))
-  result.extend(Path(dir).rglob("test/*.h"))
+  result.extend(Path(dir).rglob("*.cc"))
+  result.extend(Path(dir).rglob("*.h"))
   return result
 
 
 def inspect_line(bazel_output_base, file_path, line):
   if line.startswith('#include "'):
     path = line[len("#include"):].strip(' "')
+    if path.startswith("external/") and not path.startswith("envoy/"):
+      return
     found_in_nighthawk_sources = os.path.isfile("source/" + path) or os.path.isfile("include/" +
                                                                                     path)
-
     if not found_in_nighthawk_sources:
       alternative_found = False
       potential_envoy_path = os.path.join(bazel_output_base, "external/envoy/", path)

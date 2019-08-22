@@ -20,8 +20,7 @@
 
 #include "common/utility.h"
 
-#include "test/test_common/simulated_time_system.h"
-
+#include "external/envoy/test/test_common/simulated_time_system.h"
 #include "gmock/gmock.h"
 
 using namespace std::chrono_literals;

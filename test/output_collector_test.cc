@@ -1,15 +1,15 @@
 #include <chrono>
 
-#include "common/filesystem/filesystem_impl.h"
+#include "common/filesystem/filesystem_impl.h" //XXX(oschaaf)
 #include "common/statistic_impl.h"
 
 #include "client/output_collector_impl.h"
 
 #include "test/mocks.h"
 #include "test/test_common/environment.h"
-#include "test/test_common/simulated_time_system.h"
 
 #include "api/client/options.pb.h"
+#include "external/envoy/test/test_common/simulated_time_system.h"
 #include "gtest/gtest.h"
 
 using namespace std::chrono_literals;

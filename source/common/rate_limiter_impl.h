@@ -4,10 +4,10 @@
 
 #include "nighthawk/common/rate_limiter.h"
 
-#include "common/common/logger.h"
+#include "common/frequency.h"
 
 #include "absl/types/optional.h"
-#include "frequency.h"
+#include "external/envoy/source/common/common/logger.h"
 
 namespace Nighthawk {
 
