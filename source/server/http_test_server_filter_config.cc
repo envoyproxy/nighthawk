@@ -2,12 +2,13 @@
 
 #include "envoy/registry/registry.h"
 
-#include "common/config/json_utility.h"
-
-#include "server/http_test_server_filter.h"
+#include "external/envoy/source/common/config/json_utility.h"
+#include "external/envoy/source/common/protobuf/message_validator_impl.h"
 
 #include "api/server/response_options.pb.h"
 #include "api/server/response_options.pb.validate.h"
+
+#include "server/http_test_server_filter.h"
 
 namespace Nighthawk {
 namespace Server {
@@ -26,9 +27,10 @@ public:
   createFilterFactoryFromProto(const Envoy::Protobuf::Message& proto_config, const std::string&,
                                Envoy::Server::Configuration::FactoryContext& context) override {
 
+    auto& validation_visitor = Envoy::ProtobufMessage::getStrictValidationVisitor();
     return createFilter(
         Envoy::MessageUtil::downcastAndValidate<const nighthawk::server::ResponseOptions&>(
-            proto_config),
+            proto_config, validation_visitor),
         context);
   }
 

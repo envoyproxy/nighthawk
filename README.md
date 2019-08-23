@@ -25,7 +25,7 @@ For building the Nighthawk test server, see [here](source/server/README.md).
 ### Test it
 
 ```bash
-bazel test -c dbg //test/... //integration/...
+bazel test -c dbg //test/...
 ```
 
 ### Build it
@@ -38,7 +38,9 @@ bazel build -c opt //:nighthawk
 
 ```bash
 ➜ bazel-bin/nighthawk_client --help
+```
 
+```
 USAGE:
 
    bazel-bin/nighthawk_client  [--sequencer-idle-strategy <spin|poll
@@ -94,7 +96,7 @@ Where:
      Request method used when sending requests. The default is 'GET'.
 
    --address-family <auto|v4|v6>
-     Network addres family preference. Possible values: [auto, v4, v6]. The
+     Network address family preference. Possible values: [auto, v4, v6]. The
      default output format is 'v4'.
 
    --burst-size <uint32_t>
@@ -115,7 +117,7 @@ Where:
    --concurrency <string>
      The number of concurrent event loops that should be used. Specify
      'auto' to let Nighthawk leverage all vCPUs that have affinity to the
-     Nighthawk process.Note that increasing this results in an effective
+     Nighthawk process. Note that increasing this results in an effective
      load multiplier combined with the configured --rps and --connections
      values. Default: 1. 
 
@@ -162,7 +164,9 @@ The gRPC service can be used to start a server which is able to perform back-to-
 
 ```bash
 ➜ bazel-bin/nighthawk_service --help
+```
 
+```
 USAGE: 
 
    bazel-bin/nighthawk_service  [--listen <address:port>] [--] [--version]

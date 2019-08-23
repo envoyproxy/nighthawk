@@ -2,8 +2,8 @@
 
 #include <memory>
 
-#include "common/http/http1/codec_impl.h"
-#include "common/http/utility.h"
+#include "external/envoy/source/common/http/http1/codec_impl.h"
+#include "external/envoy/source/common/http/utility.h"
 
 namespace Nighthawk {
 namespace Client {

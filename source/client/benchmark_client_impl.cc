@@ -5,11 +5,11 @@
 
 #include "nighthawk/common/statistic.h"
 
-#include "common/http/header_map_impl.h"
-#include "common/http/headers.h"
-#include "common/http/utility.h"
-#include "common/network/utility.h"
-#include "common/runtime/uuid_util.h"
+#include "external/envoy/source/common/http/header_map_impl.h"
+#include "external/envoy/source/common/http/headers.h"
+#include "external/envoy/source/common/http/utility.h"
+#include "external/envoy/source/common/network/utility.h"
+#include "external/envoy/source/common/runtime/uuid_util.h"
 
 #include "client/stream_decoder.h"
 

@@ -14,14 +14,14 @@
 #include "nighthawk/common/statistic.h"
 #include "nighthawk/common/uri.h"
 
-#include "common/common/logger.h"
-#include "common/http/header_map_impl.h"
-#include "common/http/http1/conn_pool.h"
-#include "common/runtime/runtime_impl.h"
-
-#include "client/stream_decoder.h"
+#include "external/envoy/source/common/common/logger.h"
+#include "external/envoy/source/common/http/header_map_impl.h"
+#include "external/envoy/source/common/http/http1/conn_pool.h"
+#include "external/envoy/source/common/runtime/runtime_impl.h"
 
 #include "api/client/options.pb.h"
+
+#include "client/stream_decoder.h"
 
 namespace Nighthawk {
 namespace Client {

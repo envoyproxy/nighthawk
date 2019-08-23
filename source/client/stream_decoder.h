@@ -10,10 +10,10 @@
 
 #include "nighthawk/common/statistic.h"
 
-#include "common/http/header_map_impl.h"
-#include "common/runtime/uuid_util.h"
-#include "common/stream_info/stream_info_impl.h"
-#include "common/tracing/http_tracer_impl.h"
+#include "external/envoy/source/common/http/header_map_impl.h"
+#include "external/envoy/source/common/runtime/uuid_util.h"
+#include "external/envoy/source/common/stream_info/stream_info_impl.h"
+#include "external/envoy/source/common/tracing/http_tracer_impl.h"
 
 namespace Nighthawk {
 namespace Client {

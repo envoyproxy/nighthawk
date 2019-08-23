@@ -7,9 +7,9 @@
 #include "nighthawk/common/exception.h"
 #include "nighthawk/common/uri.h"
 
-#include "common/common/logger.h"
-#include "common/network/dns_impl.h"
-#include "common/network/utility.h"
+#include "external/envoy/source/common/common/logger.h"
+#include "external/envoy/source/common/network/dns_impl.h"
+#include "external/envoy/source/common/network/utility.h"
 
 #include "absl/strings/string_view.h"
 

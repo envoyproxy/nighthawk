@@ -13,21 +13,27 @@
 
 #include "nighthawk/client/output_collector.h"
 
-#include "common/api/api_impl.h"
-#include "common/common/cleanup.h"
+#include "external/envoy/source/common/api/api_impl.h"
+#include "external/envoy/source/common/common/cleanup.h"
+#include "external/envoy/source/common/config/utility.h"
+#include "external/envoy/source/common/event/dispatcher_impl.h"
+#include "external/envoy/source/common/event/real_time_system.h"
+#include "external/envoy/source/common/init/manager_impl.h"
+#include "external/envoy/source/common/local_info/local_info_impl.h"
+#include "external/envoy/source/common/network/utility.h"
+#include "external/envoy/source/common/runtime/runtime_impl.h"
+#include "external/envoy/source/common/singleton/manager_impl.h"
+#include "external/envoy/source/common/thread_local/thread_local_impl.h"
+#include "external/envoy/source/extensions/tracers/well_known_names.h"
+#include "external/envoy/source/extensions/tracers/zipkin/zipkin_tracer_impl.h"
+#include "external/envoy/source/extensions/transport_sockets/well_known_names.h"
+
+#include "api/client/options.pb.h"
+#include "api/client/output.pb.h"
+
 #include "common/common/thread_impl.h"
-#include "common/config/utility.h"
-#include "common/event/dispatcher_impl.h"
-#include "common/event/real_time_system.h"
 #include "common/filesystem/filesystem_impl.h"
 #include "common/frequency.h"
-#include "common/init/manager_impl.h"
-#include "common/local_info/local_info_impl.h"
-#include "common/network/utility.h"
-#include "common/protobuf/message_validator_impl.h"
-#include "common/runtime/runtime_impl.h"
-#include "common/singleton/manager_impl.h"
-#include "common/thread_local/thread_local_impl.h"
 #include "common/uri_impl.h"
 #include "common/utility.h"
 
@@ -37,12 +43,6 @@
 #include "client/factories_impl.h"
 #include "client/options_impl.h"
 
-#include "extensions/tracers/well_known_names.h"
-#include "extensions/tracers/zipkin/zipkin_tracer_impl.h"
-#include "extensions/transport_sockets/well_known_names.h"
-
-#include "api/client/options.pb.h"
-#include "api/client/output.pb.h"
 #include "ares.h"
 
 using namespace std::chrono_literals;
@@ -83,7 +83,7 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
       singleton_manager_(std::make_unique<Envoy::Singleton::ManagerImpl>(api_.threadFactory())),
       access_log_manager_(std::chrono::milliseconds(1000), api_, *dispatcher_, fakelock_,
                           store_root_),
-      init_watcher_("Nighthawk", []() {}) {
+      init_watcher_("Nighthawk", []() {}), validation_context_(false, false) {
   std::string lower = absl::AsciiStrToLower(
       nighthawk::client::Verbosity::VerbosityOptions_Name(options_.verbosity()));
   configureComponentLogLevels(spdlog::level::from_str(lower));
@@ -311,8 +311,8 @@ bool ProcessImpl::run(OutputCollector& collector) {
   cluster_manager_factory_ = std::make_unique<ClusterManagerFactory>(
       admin_, Envoy::Runtime::LoaderSingleton::get(), store_root_, tls_, generator_,
       dispatcher_->createDnsResolver({}), *ssl_context_manager_, *dispatcher_, *local_info_,
-      secret_manager_, Envoy::ProtobufMessage::getStrictValidationVisitor(), api_, http_context_,
-      access_log_manager_, *singleton_manager_);
+      secret_manager_, validation_context_, api_, http_context_, access_log_manager_,
+      *singleton_manager_);
 
   envoy::config::bootstrap::v2::Bootstrap bootstrap;
   createBootstrapConfiguration(bootstrap, uri);
@@ -332,7 +332,6 @@ bool ProcessImpl::run(OutputCollector& collector) {
   http_tracer_ =
       std::make_unique<Envoy::Tracing::HttpTracerImpl>(std::move(zipkin_driver), *local_info_);
   http_context_.setTracer(*http_tracer_);
-
   cluster_manager_->setInitializedCb([this]() -> void { init_manager_.initialize(init_watcher_); });
 
   Runtime::LoaderSingleton::get().initialize(*cluster_manager_);

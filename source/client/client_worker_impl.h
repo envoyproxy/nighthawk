@@ -12,7 +12,8 @@
 #include "nighthawk/common/sequencer.h"
 #include "nighthawk/common/uri.h"
 
-#include "common/common/logger.h"
+#include "external/envoy/source/common/common/logger.h"
+
 #include "common/worker_impl.h"
 
 namespace Nighthawk {

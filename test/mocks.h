@@ -18,9 +18,9 @@
 #include "nighthawk/common/statistic.h"
 #include "nighthawk/common/uri.h"
 
-#include "common/utility.h"
+#include "external/envoy/test/test_common/simulated_time_system.h"
 
-#include "test/test_common/simulated_time_system.h"
+#include "common/utility.h"
 
 #include "gmock/gmock.h"
 

@@ -6,7 +6,7 @@
 
 #include "nighthawk/client/output_collector.h"
 
-#include "common/protobuf/protobuf.h"
+#include "external/envoy/source/common/protobuf/protobuf.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -35,7 +35,7 @@ public:
   static std::string statIdtoFriendlyStatName(absl::string_view stat_id);
 
 private:
-  std::string formatProtoDuration(const Envoy::Protobuf::Duration& duration) const;
+  std::string formatProtoDuration(const Envoy::ProtobufWkt::Duration& duration) const;
 };
 
 class JsonOutputCollectorImpl : public OutputCollectorImpl {

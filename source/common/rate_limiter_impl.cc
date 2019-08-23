@@ -2,7 +2,7 @@
 
 #include "nighthawk/common/exception.h"
 
-#include "common/common/assert.h"
+#include "external/envoy/source/common/common/assert.h"
 
 namespace Nighthawk {
 

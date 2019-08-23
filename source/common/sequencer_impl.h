@@ -10,7 +10,7 @@
 #include "nighthawk/common/sequencer.h"
 #include "nighthawk/common/statistic.h"
 
-#include "common/common/logger.h"
+#include "external/envoy/source/common/common/logger.h"
 
 namespace Nighthawk {
 

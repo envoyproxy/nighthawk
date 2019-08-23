@@ -5,10 +5,10 @@
 
 #include "nighthawk/common/statistic.h"
 
-#include "common/common/logger.h"
-#include "common/frequency.h"
-
 #include "external/dep_hdrhistogram_c/src/hdr_histogram.h"
+#include "external/envoy/source/common/common/logger.h"
+
+#include "common/frequency.h"
 
 namespace Nighthawk {
 
