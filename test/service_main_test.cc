@@ -59,8 +59,6 @@ TEST_F(ServiceMainTest, DestinationParsing) {
 }
 
 TEST_F(ServiceMainTest, Unbindable) {
-  // Binding to port 10 shouldn't be possible, unless we're running as root
-  // (which I hope we are not)
   const std::string dest = fmt::format("unknownhost:10");
   std::vector<const char*> argv = {"foo", "--listen", dest.c_str()};
   ServiceMain service_main(argv.size(), argv.data());

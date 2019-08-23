@@ -129,6 +129,7 @@ envoy_cc_test(
         "//source/client:nighthawk_client_lib",
         "//test:nighthawk_mocks",
         "//test/client:utility_lib",
+        "//test/test_common:environment_lib",
         "@envoy//test/test_common:network_utility_lib",
     ],
 )

@@ -1,5 +1,6 @@
 #include "nighthawk/common/exception.h"
 
+#include "external/envoy/test/test_common/environment.h"
 #include "external/envoy/test/test_common/network_utility.h"
 #include "external/envoy/test/test_common/utility.h"
 
@@ -38,6 +39,10 @@ public:
   OptionsPtr options_;
   Envoy::Event::RealTimeSystem time_system_; // NO_CHECK_FORMAT(real_time)
 };
+
+INSTANTIATE_TEST_SUITE_P(IpVersions, ProcessTest,
+                         ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()),
+                         Envoy::TestUtility::ipTestParamsToString);
 
 TEST_P(ProcessTest, TwoProcessInSequence) {
   runProcess();
