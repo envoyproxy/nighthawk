@@ -1,12 +1,14 @@
 #include "client/options_impl.h"
 
-#include "common/protobuf/message_validator_impl.h"
-#include "common/protobuf/utility.h"
+#include "external/envoy/source/common/protobuf/message_validator_impl.h"
+#include "external/envoy/source/common/protobuf/utility.h"
+
+#include "api/client/options.pb.validate.h"
+
 #include "common/uri_impl.h"
 #include "common/utility.h"
 
 #include "absl/strings/str_split.h"
-#include "api/client/options.pb.validate.h"
 #include "tclap/CmdLine.h"
 
 namespace Nighthawk {
@@ -321,7 +323,8 @@ void OptionsImpl::validate() const {
     throw MalformedArgvException("Invalid URI");
   }
   try {
-    Envoy::MessageUtil::validate(*toCommandLineOptions());
+    Envoy::MessageUtil::validate(*toCommandLineOptions(),
+                                 Envoy::ProtobufMessage::getStrictValidationVisitor());
   } catch (const Envoy::ProtoValidationException& e) {
     throw MalformedArgvException(e.what());
   }

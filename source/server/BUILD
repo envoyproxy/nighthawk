@@ -15,7 +15,9 @@ envoy_cc_library(
     repository = "@envoy",
     deps = [
         "//api/server:response_options_proto_cc",
-        "@envoy//source/exe:envoy_common_lib",
+        "@envoy//source/common/protobuf:message_validator_lib_with_external_headers",
+        "@envoy//source/common/protobuf:utility_lib_with_external_headers",
+        "@envoy//source/exe:envoy_common_lib_with_external_headers",
     ],
 )
 
@@ -25,6 +27,7 @@ envoy_cc_library(
     repository = "@envoy",
     deps = [
         ":http_test_server_filter_lib",
-        "@envoy//include/envoy/server:filter_config_interface",
+        "@envoy//include/envoy/server:filter_config_interface_with_external_headers",
+        "@envoy//source/common/config:json_utility_lib_with_external_headers",
     ],
 )

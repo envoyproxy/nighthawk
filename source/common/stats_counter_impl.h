@@ -1,6 +1,6 @@
 #pragma once
 
-#include "common/stats/allocator_impl.h"
+#include "external/envoy/source/common/stats/allocator_impl.h"
 
 namespace Nighthawk {
 

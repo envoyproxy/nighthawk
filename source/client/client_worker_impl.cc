@@ -1,6 +1,7 @@
 #include "client/client_worker_impl.h"
 
-#include "common/stats/symbol_table_impl.h"
+#include "external/envoy/source/common/stats/symbol_table_impl.h"
+
 #include "common/utility.h"
 
 namespace Nighthawk {

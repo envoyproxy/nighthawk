@@ -13,28 +13,27 @@
 #include "nighthawk/common/statistic.h"
 #include "nighthawk/common/uri.h"
 
-#include "common/access_log/access_log_manager_impl.h"
-#include "common/api/api_impl.h"
-#include "common/common/logger.h"
-#include "common/common/thread_impl.h"
-#include "common/event/real_time_system.h"
+#include "external/envoy/source/common/access_log/access_log_manager_impl.h"
+#include "external/envoy/source/common/api/api_impl.h"
+#include "external/envoy/source/common/common/logger.h"
+#include "external/envoy/source/common/event/real_time_system.h"
+#include "external/envoy/source/common/http/context_impl.h"
+#include "external/envoy/source/common/protobuf/message_validator_impl.h"
+#include "external/envoy/source/common/secret/secret_manager_impl.h"
+#include "external/envoy/source/common/stats/thread_local_store.h"
+#include "external/envoy/source/common/thread_local/thread_local_impl.h"
+#include "external/envoy/source/common/upstream/cluster_manager_impl.h"
+#include "external/envoy/source/exe/process_wide.h"
+#include "external/envoy/source/extensions/transport_sockets/tls/context_manager_impl.h"
+#include "external/envoy/source/server/config_validation/admin.h"
+
+#include "common/common/thread_impl.h" //XXX(oschaaf):
 #include "common/filesystem/filesystem_impl.h"
-#include "common/http/context_impl.h"
-#include "common/secret/secret_manager_impl.h"
-#include "common/stats/thread_local_store.h"
 #include "common/stats_allocator_impl.h"
-#include "common/thread_local/thread_local_impl.h"
-#include "common/upstream/cluster_manager_impl.h"
 #include "common/uri_impl.h"
-
-#include "exe/process_wide.h"
-
-#include "server/config_validation/admin.h"
 
 #include "client/benchmark_client_impl.h"
 #include "client/factories_impl.h"
-
-#include "extensions/transport_sockets/tls/context_manager_impl.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -101,6 +100,7 @@ private:
   Envoy::Init::WatcherImpl init_watcher_;
   Tracing::HttpTracerPtr http_tracer_;
   Envoy::Server::ValidationAdmin admin_;
+  Envoy::ProtobufMessage::ProdValidationContextImpl validation_context_;
 };
 
 } // namespace Client

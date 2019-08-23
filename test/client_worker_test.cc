@@ -3,21 +3,22 @@
 
 #include "envoy/upstream/cluster_manager.h"
 
-#include "common/api/api_impl.h"
-#include "common/filesystem/filesystem_impl.h"
-#include "common/runtime/runtime_impl.h"
+#include "external/envoy/source/common/api/api_impl.h"
+#include "external/envoy/source/common/runtime/runtime_impl.h"
+#include "external/envoy/source/common/stats/isolated_store_impl.h"
+#include "external/envoy/test/mocks/init/mocks.h"
+#include "external/envoy/test/mocks/local_info/mocks.h"
+#include "external/envoy/test/mocks/protobuf/mocks.h"
+#include "external/envoy/test/mocks/thread_local/mocks.h"
+#include "external/envoy/test/test_common/thread_factory_for_test.h"
+
+#include "common/filesystem/filesystem_impl.h" // XXX(oschaaf):
 #include "common/statistic_impl.h"
-#include "common/stats/isolated_store_impl.h"
 #include "common/uri_impl.h"
 
 #include "client/client_worker_impl.h"
 
 #include "test/mocks.h"
-#include "test/mocks/init/mocks.h"
-#include "test/mocks/local_info/mocks.h"
-#include "test/mocks/protobuf/mocks.h"
-#include "test/mocks/thread_local/mocks.h"
-#include "test/test_common/thread_factory_for_test.h"
 
 #include "gtest/gtest.h"
 

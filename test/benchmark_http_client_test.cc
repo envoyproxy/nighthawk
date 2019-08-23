@@ -1,22 +1,21 @@
 #include <vector>
 
-#include "common/http/header_map_impl.h"
-#include "common/network/utility.h"
-#include "common/runtime/runtime_impl.h"
+#include "external/envoy/source/common/http/header_map_impl.h"
+#include "external/envoy/source/common/network/utility.h"
+#include "external/envoy/source/common/runtime/runtime_impl.h"
+#include "external/envoy/source/common/stats/isolated_store_impl.h"
+#include "external/envoy/source/exe/process_wide.h"
+#include "external/envoy/test/mocks/common.h"
+#include "external/envoy/test/mocks/runtime/mocks.h"
+#include "external/envoy/test/mocks/thread_local/mocks.h"
+#include "external/envoy/test/mocks/upstream/mocks.h"
+#include "external/envoy/test/test_common/network_utility.h"
+
 #include "common/statistic_impl.h"
-#include "common/stats/isolated_store_impl.h"
 #include "common/uri_impl.h"
 #include "common/utility.h"
 
-#include "exe/process_wide.h"
-
 #include "client/benchmark_client_impl.h"
-
-#include "test/mocks/common.h"
-#include "test/mocks/runtime/mocks.h"
-#include "test/mocks/thread_local/mocks.h"
-#include "test/mocks/upstream/mocks.h"
-#include "test/test_common/network_utility.h"
 
 #include "gtest/gtest.h"
 

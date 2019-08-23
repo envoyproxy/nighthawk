@@ -10,16 +10,19 @@
 
 #include "nighthawk/client/output_collector.h"
 
-#include "common/api/api_impl.h"
-#include "common/common/cleanup.h"
+#include "external/envoy/source/common/api/api_impl.h"
+#include "external/envoy/source/common/common/cleanup.h"
+#include "external/envoy/source/common/event/dispatcher_impl.h"
+#include "external/envoy/source/common/event/real_time_system.h"
+#include "external/envoy/source/common/network/utility.h"
+#include "external/envoy/source/common/runtime/runtime_impl.h"
+#include "external/envoy/source/common/thread_local/thread_local_impl.h"
+
+#include "api/client/output.pb.h"
+
 #include "common/common/thread_impl.h"
-#include "common/event/dispatcher_impl.h"
-#include "common/event/real_time_system.h"
-#include "common/filesystem/filesystem_impl.h"
+#include "common/filesystem/filesystem_impl.h" // XXX(oschaaf):
 #include "common/frequency.h"
-#include "common/network/utility.h"
-#include "common/runtime/runtime_impl.h"
-#include "common/thread_local/thread_local_impl.h"
 #include "common/uri_impl.h"
 #include "common/utility.h"
 
@@ -27,8 +30,6 @@
 #include "client/factories_impl.h"
 #include "client/options_impl.h"
 #include "client/process_impl.h"
-
-#include "api/client/output.pb.h"
 
 using namespace std::chrono_literals;
 
