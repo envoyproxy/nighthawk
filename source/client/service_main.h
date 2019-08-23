@@ -21,9 +21,14 @@ public:
   void start();
   void wait();
   void shutdown();
+  std::string getListenerAddress() const;
 
 private:
-  Envoy::Network::Address::InstanceConstSharedPtr listener_address_;
+  void parseIpAndMaybePort(const std::string ip_and_maybe_port);
+
+  std::string ip_;
+  int port_ = {8443};
+  grpc::ServerBuilder builder_;
   ServiceImpl service_;
   std::unique_ptr<grpc::Server> server_;
   std::shared_ptr<grpc::Channel> channel_;
