@@ -1,5 +1,6 @@
 #include "nighthawk/common/exception.h"
 
+#include "external/envoy/test/test_common/network_utility.h"
 #include "external/envoy/test/test_common/utility.h"
 
 #include "client/options_impl.h"
@@ -18,13 +19,12 @@ namespace Client {
 // TODO(oschaaf): when we have proper integration testing, update this.
 // For now we are covered via the client_tests.cc by proxy. Eventually we
 // want those tests in here, and mock Process in client_test.
-class ProcessTest : public testing::Test {
+class ProcessTest : public TestWithParam<Envoy::Network::Address::IpVersion> {
 public:
   ProcessTest()
-      : options_(TestUtility::createOptionsImpl(
-            fmt::format("foo --duration 1 -v error --rps 10 https://127.0.0.1/"))){
-
-        };
+      : loopback_address_(Envoy::Network::Test::getLoopbackAddressUrlString(GetParam())),
+        options_(TestUtility::createOptionsImpl(
+            fmt::format("foo --duration 1 -v error --rps 10 https://{}/", loopback_address_))){};
   void runProcess() {
     PlatformUtilImpl platform_util;
     ProcessPtr process = std::make_unique<ProcessImpl>(*options_, time_system_, platform_util);
@@ -34,18 +34,19 @@ public:
     process.reset();
   }
 
+  const std::string loopback_address_;
   OptionsPtr options_;
   Envoy::Event::RealTimeSystem time_system_; // NO_CHECK_FORMAT(real_time)
 };
 
-TEST_F(ProcessTest, TwoProcessInSequence) {
+TEST_P(ProcessTest, TwoProcessInSequence) {
   runProcess();
   options_ = TestUtility::createOptionsImpl(
-      fmt::format("foo --h2 --duration 1 --rps 10 https://127.0.0.1/"));
+      fmt::format("foo --h2 --duration 1 --rps 10 https://{}/", loopback_address_));
   runProcess();
 }
 
-TEST_F(ProcessTest, CpuAffinityDetectionFailure) {
+TEST_P(ProcessTest, CpuAffinityDetectionFailure) {
   MockPlatformUtil platform_util;
   ProcessPtr process = std::make_unique<ProcessImpl>(*options_, time_system_, platform_util);
   OutputCollectorFactoryImpl output_format_factory(time_system_, *options_);
