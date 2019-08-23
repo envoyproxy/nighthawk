@@ -1,9 +1,5 @@
 #include "client/service_main.h"
 
-#include <grpc++/grpc++.h>
-
-#include <chrono>
-
 #include "nighthawk/common/exception.h"
 
 #include "common/utility.h"

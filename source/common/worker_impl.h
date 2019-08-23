@@ -8,7 +8,7 @@
 
 #include "nighthawk/common/worker.h"
 
-#include "common/common/logger.h"
+#include "external/envoy/source/common/common/logger.h"
 
 namespace Nighthawk {
 

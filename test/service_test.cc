@@ -4,13 +4,14 @@
 
 #include "nighthawk/common/exception.h"
 
-#include "client/service_impl.h"
-
-#include "test/test_common/environment.h"
-#include "test/test_common/network_utility.h"
-#include "test/test_common/utility.h"
+#include "external/envoy/test/test_common/environment.h"
+#include "external/envoy/test/test_common/network_utility.h"
+#include "external/envoy/test/test_common/utility.h"
 
 #include "api/client/service.pb.h"
+
+#include "client/service_impl.h"
+
 #include "gtest/gtest.h"
 
 using namespace std::chrono_literals;

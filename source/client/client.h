@@ -9,7 +9,7 @@
 #include "nighthawk/client/output_collector.h"
 #include "nighthawk/common/statistic.h"
 
-#include "common/common/logger.h"
+#include "external/envoy/source/common/common/logger.h"
 
 #include "process_impl.h"
 

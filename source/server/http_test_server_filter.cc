@@ -4,11 +4,12 @@
 
 #include "envoy/server/filter_config.h"
 
-#include "common/protobuf/message_validator_impl.h"
-#include "common/protobuf/utility.h"
+#include "external/envoy/source/common/protobuf/message_validator_impl.h"
+#include "external/envoy/source/common/protobuf/utility.h"
+
+#include "api/server/response_options.pb.validate.h"
 
 #include "absl/strings/numbers.h"
-#include "api/server/response_options.pb.validate.h"
 
 namespace Nighthawk {
 namespace Server {
@@ -29,10 +30,10 @@ bool HttpTestServerDecoderFilter::mergeJsonConfig(absl::string_view json,
   error_message = absl::nullopt;
   try {
     nighthawk::server::ResponseOptions json_config;
-    Envoy::MessageUtil::loadFromJson(std::string(json), json_config,
-                                     Envoy::ProtobufMessage::getStrictValidationVisitor());
+    auto& validation_visitor = Envoy::ProtobufMessage::getStrictValidationVisitor();
+    Envoy::MessageUtil::loadFromJson(std::string(json), json_config, validation_visitor);
     config.MergeFrom(json_config);
-    Envoy::MessageUtil::validate(config);
+    Envoy::MessageUtil::validate(config, validation_visitor);
   } catch (Envoy::EnvoyException exception) {
     error_message.emplace(fmt::format("Error merging json config: {}", exception.what()));
   }
