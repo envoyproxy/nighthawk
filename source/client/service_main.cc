@@ -32,6 +32,7 @@ ServiceMain::ServiceMain(int argc, const char** argv) {
   }
 }
 
+// TODO(oschaaf): move to utility class.
 void ServiceMain::parseIpAndMaybePort(absl::string_view ip_and_maybe_port) {
   const size_t colon_index = Utility::findPortSeparator(ip_and_maybe_port);
 
