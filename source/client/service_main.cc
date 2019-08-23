@@ -18,7 +18,7 @@ ServiceMain::ServiceMain(int argc, const char** argv) {
   TCLAP::ValueArg<std::string> internet_address_and_port(
       "", "listen",
       "The address:port on which the Nighthawk grpc service should listen. Default: "
-      "0.0.0.0:8443",
+      "0.0.0.0:8443.",
       false, "0.0.0.0:8443", "address:port", cmd);
   Utility::parseCommand(cmd, argc, argv);
 
