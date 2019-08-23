@@ -18,7 +18,15 @@ using namespace testing;
 namespace Nighthawk {
 namespace Client {
 
-class ServiceMainTest : public Test {};
+class ServiceMainTest : public Test {
+public:
+  void testDestinationParsing(absl::string_view destination, absl::string_view expected) {
+    std::vector<const char*> argv = {"foo"};
+    ServiceMain service(argv.size(), argv.data());
+    service.parseIpAndMaybePort(destination);
+    EXPECT_EQ(service.getListenerAddress(), expected);
+  }
+};
 
 TEST_F(ServiceMainTest, BadArgs) {
   std::vector<const char*> argv = {"foo", "bar"};
@@ -36,6 +44,18 @@ TEST_F(ServiceMainTest, NoArgs) {
   ServiceMain service(argv.size(), argv.data());
   service.start();
   service.shutdown();
+}
+
+TEST_F(ServiceMainTest, DestinationParsing) {
+  testDestinationParsing("[::]", "[::]:8443");
+  testDestinationParsing("[::]:0", "[::]:0");
+  testDestinationParsing("[::]:1", "[::]:1");
+  testDestinationParsing("127.0.0.1", "127.0.0.1:8443");
+  testDestinationParsing("127.0.0.1:0", "127.0.0.1:0");
+  testDestinationParsing("127.0.0.1:1", "127.0.0.1:1");
+  testDestinationParsing("foo:0", "foo:0");
+  testDestinationParsing("foo:1", "foo:1");
+  testDestinationParsing("foo", "foo:8443");
 }
 
 class ServiceMainTestP : public TestWithParam<Envoy::Network::Address::IpVersion> {
@@ -70,7 +90,6 @@ TEST_P(ServiceMainTestP, Unbindable) {
 TEST_P(ServiceMainTestP, PortZero) {
   // We should be able to bind to port 0
   const std::string dest = fmt::format("{}:0", loopback_address_);
-  std::cerr << dest << std::endl;
   std::vector<const char*> argv = {"foo", "--listen", dest.c_str()};
   ServiceMain service_main(argv.size(), argv.data());
   EXPECT_NO_THROW(service_main.start());

@@ -32,17 +32,17 @@ ServiceMain::ServiceMain(int argc, const char** argv) {
   }
 }
 
-void ServiceMain::parseIpAndMaybePort(const std::string ip_and_maybe_port) {
+void ServiceMain::parseIpAndMaybePort(absl::string_view ip_and_maybe_port) {
   const size_t colon_index = Utility::findPortSeparator(ip_and_maybe_port);
 
   if (colon_index == absl::string_view::npos) {
-    ip_ = ip_and_maybe_port;
+    ip_ = std::string(ip_and_maybe_port);
   } else {
-    ip_ = ip_and_maybe_port.substr(0, colon_index);
-    port_ = std::stoi(ip_and_maybe_port.substr(colon_index + 1));
+    ip_ = std::string(ip_and_maybe_port.substr(0, colon_index));
+    port_ = std::stoi(std::string(ip_and_maybe_port.substr(colon_index + 1)));
   }
   if (ip_.size() > 1 && ip_[0] == '[' && ip_[ip_.length() - 1] == ']') {
-    ip_ = ip_.substr(1, ip_.length() - 2);
+    ip_ = std::string(ip_.substr(1, ip_.length() - 2));
   }
 }
 

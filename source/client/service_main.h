@@ -22,10 +22,9 @@ public:
   void wait();
   void shutdown();
   std::string getListenerAddress() const;
+  void parseIpAndMaybePort(absl::string_view ip_and_maybe_port);
 
 private:
-  void parseIpAndMaybePort(const std::string ip_and_maybe_port);
-
   std::string ip_;
   int port_ = {8443};
   grpc::ServerBuilder builder_;
