@@ -1,11 +1,12 @@
 #include "nighthawk/common/exception.h"
 
+#include "external/envoy/test/test_common/utility.h"
+
 #include "client/options_impl.h"
 #include "client/process_impl.h"
 
 #include "test/client/utility.h"
 #include "test/mocks.h"
-#include "test/test_common/utility.h"
 
 #include "gtest/gtest.h"
 

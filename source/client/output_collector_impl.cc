@@ -5,7 +5,7 @@
 #include <chrono>
 #include <sstream>
 
-#include "common/protobuf/utility.h"
+#include "external/envoy/source/common/protobuf/utility.h"
 
 namespace Nighthawk {
 namespace Client {

@@ -2,16 +2,14 @@
 
 #include <grpc++/grpc++.h>
 
-#include <chrono>
-
 #include "nighthawk/common/exception.h"
 
-#include "common/common/logger.h"
-#include "common/utility.h"
+#include "external/envoy/source/common/common/logger.h"
+
+#include "api/client/service.pb.h"
 
 #include "client/service_impl.h"
 
-#include "api/client/service.pb.h"
 #include "tclap/CmdLine.h"
 
 namespace Nighthawk {

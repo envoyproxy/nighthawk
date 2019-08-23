@@ -28,7 +28,10 @@ envoy_cc_test(
     deps = [
         "//test:nighthawk_mocks",
         "//test/test_common:environment_lib",
-        "@envoy//source/common/stats:isolated_store_lib",
+        "@envoy//source/common/http:header_map_lib_with_external_headers",
+        "@envoy//source/common/network:utility_lib_with_external_headers",
+        "@envoy//source/common/stats:isolated_store_lib_with_external_headers",
+        "@envoy//source/exe:process_wide_lib",
         "@envoy//test/mocks/runtime:runtime_mocks",
         "@envoy//test/mocks/thread_local:thread_local_mocks",
         "@envoy//test/mocks/upstream:upstream_mocks",
@@ -54,6 +57,9 @@ envoy_cc_test(
     deps = [
         "//source/client:nighthawk_client_lib",
         "//test:nighthawk_mocks",
+        "@envoy//source/common/api:api_lib",
+        "@envoy//source/common/filesystem:filesystem_lib",
+        "@envoy//source/common/stats:isolated_store_lib_with_external_headers",
         "@envoy//test/mocks/init:init_mocks",
         "@envoy//test/mocks/local_info:local_info_mocks",
         "@envoy//test/mocks/protobuf:protobuf_mocks",
@@ -150,6 +156,7 @@ envoy_cc_test(
     deps = [
         "//source/common:nighthawk_common_lib",
         "//test:nighthawk_mocks",
+        "@envoy//source/common/event:dispatcher_includes_with_external_headers",
         "@envoy//test/mocks/event:event_mocks",
         "@envoy//test/test_common:simulated_time_system_lib",
     ],
@@ -182,8 +189,8 @@ envoy_cc_test(
         "//source/common:nighthawk_common_lib",
         "//test/test_common:environment_lib",
         "@envoy//source/common/filesystem:filesystem_lib",
-        "@envoy//source/common/protobuf:utility_lib",
-        "@envoy//source/common/stats:isolated_store_lib",
+        "@envoy//source/common/protobuf:utility_lib_with_external_headers",
+        "@envoy//source/common/stats:isolated_store_lib_with_external_headers",
     ],
 )
 
@@ -194,6 +201,10 @@ envoy_cc_test(
     deps = [
         "//source/client:nighthawk_client_lib",
         "//test:nighthawk_mocks",
+        "@envoy//source/common/event:dispatcher_includes_with_external_headers",
+        "@envoy//source/common/http:header_map_lib_with_external_headers",
+        "@envoy//source/common/network:utility_lib_with_external_headers",
+        "@envoy//source/common/stats:isolated_store_lib_with_external_headers",
         "@envoy//test/mocks/http:http_mocks",
     ],
 )
@@ -205,6 +216,7 @@ envoy_cc_test(
     deps = [
         "//source/common:nighthawk_common_lib",
         "//test/test_common:environment_lib",
+        "@envoy//source/common/network:utility_lib_with_external_headers",
     ],
 )
 
@@ -215,6 +227,7 @@ envoy_cc_test(
     deps = [
         "//source/common:nighthawk_common_lib",
         "//test:nighthawk_mocks",
+        "@envoy//source/common/stats:isolated_store_lib_with_external_headers",
         "@envoy//test/mocks/init:init_mocks",
         "@envoy//test/mocks/local_info:local_info_mocks",
         "@envoy//test/mocks/protobuf:protobuf_mocks",

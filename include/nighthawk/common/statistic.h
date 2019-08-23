@@ -7,10 +7,11 @@
 #include "envoy/common/exception.h"
 #include "envoy/common/pure.h"
 
-#include "common/common/non_copyable.h"
+#include "external/envoy/source/common/common/non_copyable.h"
+
+#include "api/client/output.pb.h"
 
 #include "absl/strings/string_view.h"
-#include "api/client/output.pb.h"
 
 namespace Nighthawk {
 

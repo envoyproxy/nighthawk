@@ -6,7 +6,7 @@
 
 #include "nighthawk/client/output_collector.h"
 
-#include "common/protobuf/protobuf.h"
+#include "external/envoy/source/common/protobuf/protobuf.h"
 
 namespace Nighthawk {
 namespace Client {

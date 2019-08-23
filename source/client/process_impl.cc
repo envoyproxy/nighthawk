@@ -12,20 +12,25 @@
 
 #include "nighthawk/client/output_collector.h"
 
-#include "common/api/api_impl.h"
-#include "common/common/cleanup.h"
+#include "external/envoy/source/common/api/api_impl.h"
+#include "external/envoy/source/common/common/cleanup.h"
+#include "external/envoy/source/common/config/utility.h"
+#include "external/envoy/source/common/event/dispatcher_impl.h"
+#include "external/envoy/source/common/event/real_time_system.h"
+#include "external/envoy/source/common/init/manager_impl.h"
+#include "external/envoy/source/common/local_info/local_info_impl.h"
+#include "external/envoy/source/common/network/utility.h"
+#include "external/envoy/source/common/runtime/runtime_impl.h"
+#include "external/envoy/source/common/singleton/manager_impl.h"
+#include "external/envoy/source/common/thread_local/thread_local_impl.h"
+#include "external/envoy/source/extensions/transport_sockets/well_known_names.h"
+
+#include "api/client/options.pb.h"
+#include "api/client/output.pb.h"
+
 #include "common/common/thread_impl.h"
-#include "common/config/utility.h"
-#include "common/event/dispatcher_impl.h"
-#include "common/event/real_time_system.h"
 #include "common/filesystem/filesystem_impl.h"
 #include "common/frequency.h"
-#include "common/init/manager_impl.h"
-#include "common/local_info/local_info_impl.h"
-#include "common/network/utility.h"
-#include "common/runtime/runtime_impl.h"
-#include "common/singleton/manager_impl.h"
-#include "common/thread_local/thread_local_impl.h"
 #include "common/uri_impl.h"
 #include "common/utility.h"
 
@@ -35,10 +40,6 @@
 #include "client/factories_impl.h"
 #include "client/options_impl.h"
 
-#include "extensions/transport_sockets/well_known_names.h"
-
-#include "api/client/options.pb.h"
-#include "api/client/output.pb.h"
 #include "ares.h"
 
 using namespace std::chrono_literals;
