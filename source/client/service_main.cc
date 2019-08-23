@@ -48,7 +48,7 @@ void ServiceMain::parseIpAndMaybePort(absl::string_view ip_and_maybe_port) {
 }
 
 std::string ServiceMain::getListenerAddress() const {
-  if (ip_.find(":") != std::string::npos) {
+  if (ip_.find(':') != std::string::npos) {
     return fmt::format("[{}]:{}", ip_, port_);
   } else {
     return fmt::format("{}:{}", ip_, port_);
