@@ -58,6 +58,15 @@ TEST_F(ServiceMainTest, DestinationParsing) {
   testDestinationParsing("foo", "foo:8443");
 }
 
+TEST_P(ServiceMainTest, Unbindable) {
+  // Binding to port 10 shouldn't be possible, unless we're running as root
+  // (which I hope we are not)
+  const std::string dest = fmt::format("unknownhost:10");
+  std::vector<const char*> argv = {"foo", "--listen", dest.c_str()};
+  ServiceMain service_main(argv.size(), argv.data());
+  EXPECT_THROW(service_main.start(), NighthawkException);
+}
+
 class ServiceMainTestP : public TestWithParam<Envoy::Network::Address::IpVersion> {
 public:
   ServiceMainTestP()
@@ -76,15 +85,6 @@ TEST_P(ServiceMainTestP, OnlyIp) {
   ServiceMain service(argv.size(), argv.data());
   service.start();
   service.shutdown();
-}
-
-TEST_P(ServiceMainTestP, Unbindable) {
-  // Binding to port 10 shouldn't be possible, unless we're running as root
-  // (which I hope we are not)
-  const std::string dest = fmt::format("{}:10", loopback_address_);
-  std::vector<const char*> argv = {"foo", "--listen", dest.c_str()};
-  ServiceMain service_main(argv.size(), argv.data());
-  EXPECT_THROW(service_main.start(), NighthawkException);
 }
 
 TEST_P(ServiceMainTestP, PortZero) {
