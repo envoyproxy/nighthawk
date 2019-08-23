@@ -33,6 +33,12 @@ TEST_F(ServiceMainTest, BadArgs) {
   EXPECT_THROW(ServiceMain(argv.size(), argv.data()), std::exception);
 }
 
+TEST_F(ServiceMainTest, BadHost) {
+  std::vector<const char*> argv = {"foo", "--listen", "b|-%ar"};
+  ServiceMain service_main(argv.size(), argv.data());
+  EXPECT_THROW(service_main.start(), NighthawkException);
+}
+
 TEST_F(ServiceMainTest, UnkownHost) {
   std::vector<const char*> argv = {"foo", "--listen", "bar"};
   ServiceMain service_main(argv.size(), argv.data());

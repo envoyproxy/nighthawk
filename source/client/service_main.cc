@@ -22,14 +22,10 @@ ServiceMain::ServiceMain(int argc, const char** argv) {
       false, "0.0.0.0:8443", "address:port", cmd);
   Utility::parseCommand(cmd, argc, argv);
 
-  try {
-    parseIpAndMaybePort(internet_address_and_port.getValue());
-    ENVOY_LOG(info, "Nighthawk grpc service listener binding to: {}", getListenerAddress());
-    builder_.AddListeningPort(getListenerAddress(), grpc::InsecureServerCredentials(), &port_);
-    builder_.RegisterService(&service_);
-  } catch (Envoy::EnvoyException e) {
-    throw NighthawkException(e.what());
-  }
+  parseIpAndMaybePort(internet_address_and_port.getValue());
+  ENVOY_LOG(info, "Nighthawk grpc service listener binding to: {}", getListenerAddress());
+  builder_.AddListeningPort(getListenerAddress(), grpc::InsecureServerCredentials(), &port_);
+  builder_.RegisterService(&service_);
 }
 
 // TODO(oschaaf): move to utility class.
