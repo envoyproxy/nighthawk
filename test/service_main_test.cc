@@ -58,7 +58,7 @@ TEST_F(ServiceMainTest, DestinationParsing) {
   testDestinationParsing("foo", "foo:8443");
 }
 
-TEST_P(ServiceMainTest, Unbindable) {
+TEST_F(ServiceMainTest, Unbindable) {
   // Binding to port 10 shouldn't be possible, unless we're running as root
   // (which I hope we are not)
   const std::string dest = fmt::format("unknownhost:10");
