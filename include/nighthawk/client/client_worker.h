@@ -24,11 +24,6 @@ public:
   virtual StatisticPtrMap statistics() const PURE;
 
   /**
-   * @return const Envoy::Stats::Store& the statistics store associated the benchmark client.
-   */
-  virtual Envoy::Stats::Store& store() const PURE;
-
-  /**
    * @return bool True iff the worker ran and completed successfully.
    */
   virtual bool success() const PURE;

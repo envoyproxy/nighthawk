@@ -31,7 +31,6 @@ public:
                    const Envoy::MonotonicTime starting_time, bool prefetch_connections);
 
   StatisticPtrMap statistics() const override;
-  Envoy::Stats::Store& store() const override { return store_; }
   bool success() const override { return success_; }
 
   const std::map<std::string, uint64_t>& thread_local_counter_values() override {
