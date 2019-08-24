@@ -20,6 +20,7 @@
 #include "external/envoy/source/common/http/context_impl.h"
 #include "external/envoy/source/common/protobuf/message_validator_impl.h"
 #include "external/envoy/source/common/secret/secret_manager_impl.h"
+#include "external/envoy/source/common/stats/allocator_impl.h"
 #include "external/envoy/source/common/stats/thread_local_store.h"
 #include "external/envoy/source/common/thread_local/thread_local_impl.h"
 #include "external/envoy/source/common/upstream/cluster_manager_impl.h"
@@ -29,7 +30,6 @@
 
 #include "common/common/thread_impl.h" //XXX(oschaaf):
 #include "common/filesystem/filesystem_impl.h"
-#include "common/stats_allocator_impl.h"
 #include "common/uri_impl.h"
 
 #include "client/benchmark_client_impl.h"
@@ -52,7 +52,8 @@ public:
 
   uint32_t determineConcurrency() const;
   bool run(OutputCollector& collector) override;
-  const envoy::config::bootstrap::v2::Bootstrap createBootstrapConfiguration(const Uri& uri) const;
+  const envoy::config::bootstrap::v2::Bootstrap
+  createBootstrapConfiguration(const Uri& uri, int number_of_workers) const;
 
 private:
   void configureComponentLogLevels(spdlog::level::level_enum level);
@@ -69,7 +70,7 @@ private:
   Envoy::Event::TimeSystem& time_system_;
   StoreFactoryImpl store_factory_;
   Envoy::Stats::SymbolTableImpl symbol_table_;
-  StatsAllocatorImpl stats_allocator_;
+  Envoy::Stats::AllocatorImpl stats_allocator_;
   Envoy::Stats::ThreadLocalStoreImpl store_root_;
   Envoy::Api::Impl api_;
   Envoy::ThreadLocal::InstanceImpl tls_;

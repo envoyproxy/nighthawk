@@ -201,37 +201,39 @@ ProcessImpl::mergeWorkerStatistics(const StatisticFactory& statistic_factory,
 }
 
 const envoy::config::bootstrap::v2::Bootstrap
-ProcessImpl::createBootstrapConfiguration(const Uri& uri) const {
+ProcessImpl::createBootstrapConfiguration(const Uri& uri, int number_of_clusters) const {
   envoy::config::bootstrap::v2::Bootstrap bootstrap;
-  auto* cluster = bootstrap.mutable_static_resources()->add_clusters();
-  if (uri.scheme() == "https") {
-    auto* tls_context = cluster->mutable_tls_context();
-    *tls_context = options_.tlsContext();
-    auto* common_tls_context = tls_context->mutable_common_tls_context();
-    if (options_.h2()) {
-      common_tls_context->add_alpn_protocols("h2");
-    } else {
-      common_tls_context->add_alpn_protocols("http/1.1");
+
+  for (int i = 0; i < number_of_clusters; i++) {
+    auto* cluster = bootstrap.mutable_static_resources()->add_clusters();
+    if (uri.scheme() == "https") {
+      auto* tls_context = cluster->mutable_tls_context();
+      *tls_context = options_.tlsContext();
+      auto* common_tls_context = tls_context->mutable_common_tls_context();
+      if (options_.h2()) {
+        common_tls_context->add_alpn_protocols("h2");
+      } else {
+        common_tls_context->add_alpn_protocols("http/1.1");
+      }
     }
+
+    cluster->set_name(fmt::format("worker.{}", i));
+    cluster->mutable_connect_timeout()->set_seconds(options_.timeout().count());
+    cluster->mutable_max_requests_per_connection()->set_value(options_.maxRequestsPerConnection());
+
+    auto thresholds = cluster->mutable_circuit_breakers()->add_thresholds();
+    // We do not support any retrying.
+    thresholds->mutable_max_retries()->set_value(0);
+    thresholds->mutable_max_connections()->set_value(options_.connections());
+    thresholds->mutable_max_pending_requests()->set_value(options_.maxPendingRequests());
+    thresholds->mutable_max_requests()->set_value(options_.maxActiveRequests());
+
+    cluster->set_type(envoy::api::v2::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
+    auto* host = cluster->add_hosts();
+    auto* socket_address = host->mutable_socket_address();
+    socket_address->set_address(uri.address()->ip()->addressAsString());
+    socket_address->set_port_value(uri.port());
   }
-
-  cluster->set_name("client");
-  cluster->mutable_connect_timeout()->set_seconds(options_.timeout().count());
-  cluster->mutable_max_requests_per_connection()->set_value(options_.maxRequestsPerConnection());
-
-  auto thresholds = cluster->mutable_circuit_breakers()->add_thresholds();
-  // We do not support any retrying.
-  thresholds->mutable_max_retries()->set_value(0);
-  thresholds->mutable_max_connections()->set_value(options_.connections());
-  thresholds->mutable_max_pending_requests()->set_value(options_.maxPendingRequests());
-  thresholds->mutable_max_requests()->set_value(options_.maxActiveRequests());
-
-  cluster->set_type(envoy::api::v2::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
-  auto* host = cluster->add_hosts();
-  auto* socket_address = host->mutable_socket_address();
-  socket_address->set_address(uri.address()->ip()->addressAsString());
-  socket_address->set_port_value(uri.port());
-
   ENVOY_LOG(info, "Computed configuration: {}", bootstrap.DebugString());
 
   return bootstrap;
@@ -244,8 +246,9 @@ bool ProcessImpl::run(OutputCollector& collector) {
   } catch (UriException) {
     return false;
   }
+  int number_of_workers = determineConcurrency();
   const std::vector<ClientWorkerPtr>& workers =
-      createWorkers(uri, determineConcurrency(), options_.prefetchConnections());
+      createWorkers(uri, number_of_workers, options_.prefetchConnections());
 
   tls_.registerThread(*dispatcher_, true);
   store_root_.initializeThreading(*dispatcher_, tls_);
@@ -260,8 +263,8 @@ bool ProcessImpl::run(OutputCollector& collector) {
       dispatcher_->createDnsResolver({}), *ssl_context_manager_, *dispatcher_, *local_info_,
       secret_manager_, validation_context_, api_, http_context_, access_log_manager_,
       *singleton_manager_);
-  cluster_manager_ =
-      cluster_manager_factory_->clusterManagerFromProto(createBootstrapConfiguration(uri));
+  cluster_manager_ = cluster_manager_factory_->clusterManagerFromProto(
+      createBootstrapConfiguration(uri, number_of_workers));
   cluster_manager_->setInitializedCb([this]() -> void { init_manager_.initialize(init_watcher_); });
   Runtime::LoaderSingleton::get().initialize(*cluster_manager_);
 

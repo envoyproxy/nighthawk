@@ -24,8 +24,9 @@ class BenchmarkClientFactory {
 public:
   virtual ~BenchmarkClientFactory() = default;
   virtual BenchmarkClientPtr create(Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher,
-                                    Envoy::Stats::Store& store, UriPtr&& uri,
-                                    Envoy::Upstream::ClusterManagerPtr& cluster_manager) const PURE;
+                                    Envoy::Stats::Scope& scope, UriPtr&& uri,
+                                    Envoy::Upstream::ClusterManagerPtr& cluster_manager,
+                                    absl::string_view cluster_name) const PURE;
 };
 
 class SequencerFactory {

@@ -22,10 +22,10 @@ Utility::mapCountersFromStore(const Envoy::Stats::Store& store,
       // "client." after that will be omitted.
       // TODO(oschaaf): we can expose those after amending some tests to expect them.
       std::string stripped_name = std::string(absl::StripPrefix(stat->name(), "cluster."));
-      if (!absl::StartsWith(stripped_name, "client.") ||
-          stripped_name == "client.membership_change") {
-        continue;
-      }
+      // if (!absl::StartsWith(stripped_name, "client.") ||
+      //    stripped_name == "client.membership_change") {
+      //  continue;
+      // }
       results[stripped_name] = stat->value();
     }
   }

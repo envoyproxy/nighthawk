@@ -43,6 +43,7 @@ protected:
 
 private:
   void simpleWarmup();
+  Envoy::Stats::ScopePtr scope_;
   const int worker_number_;
   const Envoy::MonotonicTime starting_time_;
   bool success_{};
