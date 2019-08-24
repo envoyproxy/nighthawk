@@ -73,11 +73,10 @@ class IntegrationTestBase(unittest.TestCase):
   def getNighthawkCounterMapFromJson(self, parsed_json):
     """
     Utility method to get the counters from the json indexed by name.
-    Note:the `client.` prefix will be stripped from the index.
     """
     global_results_index = len(parsed_json["results"]) - 1
     return {
-        counter["name"][len("client."):]: int(counter["value"])
+        counter["name"]: int(counter["value"])
         for counter in parsed_json["results"][global_results_index]["counters"]
     }
 

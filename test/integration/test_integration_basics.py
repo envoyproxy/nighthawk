@@ -33,7 +33,7 @@ class TestHttp(HttpIntegrationTestBase):
                      1400 if IntegrationTestBase.ip_version == IpVersion.IPV6 else 1500)
     self.assertEqual(counters["upstream_rq_pending_total"], 1)
     self.assertEqual(counters["upstream_rq_total"], 25)
-    self.assertEqual(len(counters), 9)
+    self.assertEqual(len(counters), 13)
 
   def mini_stress_test_h1(self, args):
     # run a test with more rps then we can handle, and a very small client-side queue.
@@ -96,7 +96,7 @@ class TestHttp(HttpIntegrationTestBase):
     self.assertGreaterEqual(counters["upstream_cx_tx_bytes_total"], 403)
     self.assertEqual(counters["upstream_rq_pending_total"], 1)
     self.assertEqual(counters["upstream_rq_total"], 25)
-    self.assertEqual(len(counters), 9)
+    self.assertEqual(len(counters), 13)
 
   def test_concurrency(self):
     """
@@ -137,7 +137,7 @@ class TestHttps(HttpsIntegrationTestBase):
     self.assertEqual(counters["ssl.handshake"], 1)
     self.assertEqual(counters["ssl.sigalgs.rsa_pss_rsae_sha256"], 1)
     self.assertEqual(counters["ssl.versions.TLSv1.2"], 1)
-    self.assertEqual(len(counters), 14)
+    self.assertEqual(len(counters), 18)
 
     server_stats = self.getTestServerStatisticsJson()
     self.assertEqual(
@@ -165,7 +165,7 @@ class TestHttps(HttpsIntegrationTestBase):
     self.assertEqual(counters["ssl.handshake"], 1)
     self.assertEqual(counters["ssl.sigalgs.rsa_pss_rsae_sha256"], 1)
     self.assertEqual(counters["ssl.versions.TLSv1.2"], 1)
-    self.assertEqual(len(counters), 14)
+    self.assertEqual(len(counters), 18)
 
   def test_h1_tls_context_configuration(self):
     """
