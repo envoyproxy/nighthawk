@@ -24,6 +24,7 @@
 #include "external/envoy/source/common/singleton/manager_impl.h"
 #include "external/envoy/source/common/thread_local/thread_local_impl.h"
 #include "external/envoy/source/extensions/transport_sockets/well_known_names.h"
+#include "external/envoy/source/server/options_impl_platform.h"
 
 #include "api/client/options.pb.h"
 #include "api/client/output.pb.h"
@@ -66,8 +67,7 @@ public:
   }
 };
 
-ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
-                         const PlatformUtil& platform_util)
+ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system)
     : time_system_(time_system), store_factory_(options), stats_allocator_(symbol_table_),
       store_root_(stats_allocator_), api_(thread_factory_, store_root_, time_system_, file_system_),
       dispatcher_(api_.allocateDispatcher()), cleanup_([this] {
@@ -75,7 +75,7 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
         tls_.shutdownGlobalThreading();
       }),
       benchmark_client_factory_(options), sequencer_factory_(options), options_(options),
-      platform_util_(platform_util), init_manager_("nh_init_manager"),
+      init_manager_("nh_init_manager"),
       local_info_(new Envoy::LocalInfo::LocalInfoImpl(
           {}, Envoy::Network::Utility::getLocalAddress(Envoy::Network::Address::IpVersion::v4),
           "nighthawk_service_zone", "nighthawk_service_cluster", "nighthawk_service_node")),
@@ -131,12 +131,7 @@ void ProcessImpl::configureComponentLogLevels(spdlog::level::level_enum level) {
 }
 
 uint32_t ProcessImpl::determineConcurrency() const {
-  uint32_t cpu_cores_with_affinity = platform_util_.determineCpuCoresWithAffinity();
-  if (cpu_cores_with_affinity == 0) {
-    ENVOY_LOG(warn, "Failed to determine the number of cpus with affinity to our thread.");
-    cpu_cores_with_affinity = std::thread::hardware_concurrency();
-  }
-
+  uint32_t cpu_cores_with_affinity = Envoy::OptionsImplPlatform::getCpuCount();
   bool autoscale = options_.concurrency() == "auto";
   // TODO(oschaaf): Maybe, in the case where the concurrency flag is left out, but
   // affinity is set / we don't have affinity with all cores, we should default to autoscale.
