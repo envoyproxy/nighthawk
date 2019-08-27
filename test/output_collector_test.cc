@@ -1,10 +1,10 @@
 #include <chrono>
 
+#include "external/envoy/test/test_common/file_system_for_test.h"
 #include "external/envoy/test/test_common/simulated_time_system.h"
 
 #include "api/client/options.pb.h"
 
-#include "common/filesystem/filesystem_impl.h" //XXX(oschaaf)
 #include "common/statistic_impl.h"
 
 #include "client/output_collector_impl.h"
@@ -46,13 +46,13 @@ public:
     collector.addResult("worker_0", statistics_, counters_);
     collector.addResult("worker_1", statistics_, counters_);
     collector.addResult("global", statistics_, counters_);
-    EXPECT_EQ(filesystem_.fileReadToEnd(TestEnvironment::runfilesPath(std::string(path))),
+    EXPECT_EQ(Envoy::Filesystem::fileSystemForTest().fileReadToEnd(
+                  TestEnvironment::runfilesPath(std::string(path))),
               collector.toString());
   }
 
   nighthawk::client::CommandLineOptions command_line_options_;
   Envoy::Event::SimulatedTimeSystem time_system_;
-  Envoy::Filesystem::InstanceImplPosix filesystem_;
   MockOptions options_;
   std::vector<StatisticPtr> statistics_;
   std::map<std::string, uint64_t> counters_;

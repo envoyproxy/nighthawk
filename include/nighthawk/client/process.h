@@ -1,18 +1,6 @@
 #pragma once
 
-#include "envoy/network/address.h"
-#include "envoy/stats/store.h"
-
-#include "nighthawk/client/client_worker.h"
-#include "nighthawk/client/factories.h"
-#include "nighthawk/client/options.h"
 #include "nighthawk/client/output_collector.h"
-#include "nighthawk/common/statistic.h"
-#include "nighthawk/common/uri.h"
-
-#include "external/envoy/source/common/api/api_impl.h"
-#include "external/envoy/source/common/common/logger.h"
-#include "external/envoy/source/common/event/real_time_system.h"
 
 namespace Nighthawk {
 namespace Client {
