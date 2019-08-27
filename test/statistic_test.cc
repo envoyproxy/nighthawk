@@ -6,9 +6,9 @@
 
 #include "external/envoy/source/common/protobuf/utility.h"
 #include "external/envoy/source/common/stats/isolated_store_impl.h"
+#include "external/envoy/test/test_common/file_system_for_test.h"
 #include "external/envoy/test/test_common/utility.h"
 
-#include "common/filesystem/filesystem_impl.h"
 #include "common/statistic_impl.h"
 
 #include "test/test_common/environment.h"
@@ -243,8 +243,6 @@ TEST(StatisticTest, StreamingStatProtoOutputLargeValues) {
 }
 
 TEST(StatisticTest, HdrStatisticPercentilesProto) {
-  Envoy::Stats::IsolatedStoreImpl store;
-  Envoy::Filesystem::InstanceImplPosix filesystem;
   nighthawk::client::Statistic parsed_json_proto;
   HdrStatistic statistic;
 
@@ -253,9 +251,9 @@ TEST(StatisticTest, HdrStatisticPercentilesProto) {
   }
 
   Envoy::MessageUtil util;
-  util.loadFromJson(
-      filesystem.fileReadToEnd(TestEnvironment::runfilesPath("test/test_data/hdr_proto_json.gold")),
-      parsed_json_proto, Envoy::ProtobufMessage::getStrictValidationVisitor());
+  util.loadFromJson(Envoy::Filesystem::fileSystemForTest().fileReadToEnd(
+                        TestEnvironment::runfilesPath("test/test_data/hdr_proto_json.gold")),
+                    parsed_json_proto, Envoy::ProtobufMessage::getStrictValidationVisitor());
   EXPECT_TRUE(util(parsed_json_proto, statistic.toProto()));
 }
 

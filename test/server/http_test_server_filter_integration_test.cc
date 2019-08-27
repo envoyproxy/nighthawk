@@ -1,7 +1,6 @@
 #include "envoy/upstream/cluster_manager.h"
 #include "envoy/upstream/upstream.h"
 
-#include "external/envoy/source/common/api/api_impl.h"
 #include "external/envoy/test/common/upstream/utility.h"
 #include "external/envoy/test/integration/http_integration.h"
 
@@ -40,12 +39,8 @@ public:
       absl::string_view url, absl::string_view body, Envoy::Http::CodecClient::Type type,
       absl::string_view host, absl::string_view content_type,
       const std::function<void(Envoy::Http::HeaderMapImpl&)>& request_header_delegate) {
-
-    NiceMock<Envoy::Stats::MockIsolatedStatsStore> mock_stats_store;
-    Envoy::Event::GlobalTimeSystem time_system;
-    Envoy::Api::Impl api(Envoy::Thread::threadFactoryForTest(), mock_stats_store, time_system,
-                         Envoy::Filesystem::fileSystemForTest());
-    Envoy::Event::DispatcherPtr dispatcher(api.allocateDispatcher());
+    Envoy::Api::ApiPtr api = Envoy::Api::createApiForTest();
+    Envoy::Event::DispatcherPtr dispatcher(api->allocateDispatcher());
     std::shared_ptr<Envoy::Upstream::MockClusterInfo> cluster{
         new NiceMock<Envoy::Upstream::MockClusterInfo>()};
     Envoy::Upstream::HostDescriptionConstSharedPtr host_description{

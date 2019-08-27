@@ -4,15 +4,11 @@
 #include "nighthawk/common/exception.h"
 #include "nighthawk/common/platform_util.h"
 
-#include "external/envoy/source/common/api/api_impl.h"
 #include "external/envoy/source/common/event/dispatcher_impl.h"
 #include "external/envoy/source/common/stats/isolated_store_impl.h"
 #include "external/envoy/test/mocks/event/mocks.h"
 #include "external/envoy/test/test_common/simulated_time_system.h"
-#include "external/envoy/test/test_common/thread_factory_for_test.h"
 
-#include "common/common/thread_impl.h"
-#include "common/filesystem/filesystem_impl.h"
 #include "common/rate_limiter_impl.h"
 #include "common/sequencer_impl.h"
 #include "common/statistic_impl.h"
@@ -31,8 +27,7 @@ namespace Nighthawk {
 class SequencerTestBase : public Test {
 public:
   SequencerTestBase()
-      : api_(Envoy::Thread::threadFactoryForTest(), store_, time_system_, file_system_),
-        dispatcher_(std::make_unique<Envoy::Event::MockDispatcher>()), frequency_(10_Hz),
+      : dispatcher_(std::make_unique<Envoy::Event::MockDispatcher>()), frequency_(10_Hz),
         interval_(std::chrono::duration_cast<std::chrono::milliseconds>(frequency_.interval())),
         sequencer_target_(
             std::bind(&SequencerTestBase::callback_test, this, std::placeholders::_1)) {}
@@ -43,11 +38,9 @@ public:
     return true;
   }
 
-  Envoy::Filesystem::InstanceImplPosix file_system_;
   MockPlatformUtil platform_util_;
   Envoy::Stats::IsolatedStoreImpl store_;
   Envoy::Event::SimulatedTimeSystem time_system_;
-  Envoy::Api::Impl api_;
   std::unique_ptr<Envoy::Event::MockDispatcher> dispatcher_;
   int callback_test_count_{0};
   const Frequency frequency_;

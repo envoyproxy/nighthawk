@@ -10,7 +10,6 @@
 
 #include "nighthawk/client/output_collector.h"
 
-#include "external/envoy/source/common/api/api_impl.h"
 #include "external/envoy/source/common/common/cleanup.h"
 #include "external/envoy/source/common/event/dispatcher_impl.h"
 #include "external/envoy/source/common/event/real_time_system.h"
@@ -20,8 +19,6 @@
 
 #include "api/client/output.pb.h"
 
-#include "common/common/thread_impl.h"
-#include "common/filesystem/filesystem_impl.h" // XXX(oschaaf):
 #include "common/frequency.h"
 #include "common/uri_impl.h"
 #include "common/utility.h"
