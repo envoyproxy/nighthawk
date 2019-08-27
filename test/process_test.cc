@@ -27,8 +27,7 @@ public:
         options_(TestUtility::createOptionsImpl(
             fmt::format("foo --duration 1 -v error --rps 10 https://{}/", loopback_address_))){};
   void runProcess() {
-    PlatformUtilImpl platform_util;
-    ProcessPtr process = std::make_unique<ProcessImpl>(*options_, time_system_, platform_util);
+    ProcessPtr process = std::make_unique<ProcessImpl>(*options_, time_system_);
     OutputCollectorFactoryImpl output_format_factory(time_system_, *options_);
     auto collector = output_format_factory.create();
     EXPECT_TRUE(process->run(*collector));
@@ -49,18 +48,6 @@ TEST_P(ProcessTest, TwoProcessInSequence) {
   options_ = TestUtility::createOptionsImpl(
       fmt::format("foo --h2 --duration 1 --rps 10 https://{}/", loopback_address_));
   runProcess();
-}
-
-TEST_P(ProcessTest, CpuAffinityDetectionFailure) {
-  MockPlatformUtil platform_util;
-  ProcessPtr process = std::make_unique<ProcessImpl>(*options_, time_system_, platform_util);
-  OutputCollectorFactoryImpl output_format_factory(time_system_, *options_);
-  auto collector = output_format_factory.create();
-  // Will return 0, which happens on failure in the implementation.
-  EXPECT_CALL(platform_util, determineCpuCoresWithAffinity);
-  EXPECT_TRUE(process->run(*collector));
-  // TODO(oschaaf): check the proto output that we reflect the concurrency we actually used.
-  // I'm not sure we do so right now.
 }
 
 } // namespace Client

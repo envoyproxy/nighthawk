@@ -24,8 +24,7 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
   // We scope here because the ProcessImpl instance must be destructed before we write the response
   // and set running to false.
   {
-    PlatformUtilImpl platform_util;
-    ProcessImpl process(*options, time_system_, platform_util);
+    ProcessImpl process(*options, time_system_);
     OutputCollectorFactoryImpl output_format_factory(time_system_, *options);
     auto logging_context = std::make_unique<Envoy::Logger::Context>(
         spdlog::level::from_str(
