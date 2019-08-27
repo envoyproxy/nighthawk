@@ -1,6 +1,5 @@
 #include <chrono>
 
-#include "external/envoy/source/common/api/api_impl.h"
 #include "external/envoy/test/mocks/event/mocks.h"
 #include "external/envoy/test/mocks/stats/mocks.h"
 #include "external/envoy/test/test_common/simulated_time_system.h"

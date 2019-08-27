@@ -18,7 +18,6 @@ envoy_cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//source/client:nighthawk_client_lib",
-        "@envoy//source/common/common:thread_lib",
     ],
 )
 
@@ -32,6 +31,5 @@ envoy_cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//source/client:nighthawk_service_lib",
-        "@envoy//source/common/common:thread_lib",
     ],
 )

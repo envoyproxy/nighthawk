@@ -3,16 +3,13 @@
 
 #include "envoy/upstream/cluster_manager.h"
 
-#include "external/envoy/source/common/api/api_impl.h"
 #include "external/envoy/source/common/runtime/runtime_impl.h"
 #include "external/envoy/source/common/stats/isolated_store_impl.h"
 #include "external/envoy/test/mocks/init/mocks.h"
 #include "external/envoy/test/mocks/local_info/mocks.h"
 #include "external/envoy/test/mocks/protobuf/mocks.h"
 #include "external/envoy/test/mocks/thread_local/mocks.h"
-#include "external/envoy/test/test_common/thread_factory_for_test.h"
 
-#include "common/filesystem/filesystem_impl.h" // XXX(oschaaf):
 #include "common/statistic_impl.h"
 #include "common/uri_impl.h"
 
@@ -30,11 +27,10 @@ namespace Client {
 class ClientWorkerTest : public Test {
 public:
   ClientWorkerTest()
-      : api_(Envoy::Thread::threadFactoryForTest(), store_, time_system_, file_system_),
-        thread_id_(std::this_thread::get_id()) {
+      : api_(Envoy::Api::createApiForTest()), thread_id_(std::this_thread::get_id()) {
     loader_ = std::make_unique<Envoy::Runtime::ScopedLoaderSingleton>(Envoy::Runtime::LoaderPtr{
         new Envoy::Runtime::LoaderImpl(dispatcher_, tls_, {}, local_info_, init_manager_, store_,
-                                       rand_, validation_visitor_, api_)});
+                                       rand_, validation_visitor_, *api_)});
     benchmark_client_ = new MockBenchmarkClient();
     sequencer_ = new MockSequencer();
 
@@ -60,7 +56,7 @@ public:
   }
 
   StreamingStatistic statistic_;
-  Envoy::Api::Impl api_;
+  Envoy::Api::ApiPtr api_;
   std::thread::id thread_id_;
   MockOptions options_;
   MockBenchmarkClientFactory benchmark_client_factory_;
@@ -72,7 +68,6 @@ public:
   MockSequencer* sequencer_;
   Envoy::Runtime::RandomGeneratorImpl rand_;
   NiceMock<Envoy::Event::MockDispatcher> dispatcher_;
-  Envoy::Filesystem::InstanceImplPosix file_system_;
   std::unique_ptr<Envoy::Runtime::ScopedLoaderSingleton> loader_;
   NiceMock<Envoy::LocalInfo::MockLocalInfo> local_info_;
   Envoy::Init::MockManager init_manager_;
@@ -106,7 +101,7 @@ TEST_F(ClientWorkerTest, BasicTest) {
 
   int worker_number = 12345;
   auto worker = std::make_unique<ClientWorkerImpl>(
-      api_, tls_, cluster_manager_ptr_, benchmark_client_factory_, sequencer_factory_,
+      *api_, tls_, cluster_manager_ptr_, benchmark_client_factory_, sequencer_factory_,
       std::make_unique<Nighthawk::UriImpl>("http://foo"), store_, worker_number,
       time_system_.monotonicTime(), true);
 
