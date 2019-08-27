@@ -13,6 +13,7 @@
 
 #include "external/envoy/source/common/common/logger.h"
 #include "external/envoy/source/common/common/thread.h"
+#include "external/envoy/source/common/event/real_time_system.h"
 
 #include "nighthawk/client/process.h"
 

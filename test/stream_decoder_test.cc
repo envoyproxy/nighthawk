@@ -1,6 +1,5 @@
 #include <chrono>
 
-#include "external/envoy/source/common/api/api_impl.h"
 #include "external/envoy/source/common/event/dispatcher_impl.h"
 #include "external/envoy/source/common/http/header_map_impl.h"
 #include "external/envoy/source/common/network/utility.h"
@@ -8,8 +7,6 @@
 #include "external/envoy/source/common/stats/isolated_store_impl.h"
 #include "external/envoy/test/mocks/http/mocks.h"
 
-#include "common/common/thread_impl.h"         // XXX(oschaaf):
-#include "common/filesystem/filesystem_impl.h" // XXX(oschaaf):
 #include "common/statistic_impl.h"
 
 #include "client/stream_decoder.h"
@@ -27,23 +24,20 @@ namespace Client {
 class StreamDecoderTest : public Test, public StreamDecoderCompletionCallback {
 public:
   StreamDecoderTest()
-      : api_(thread_factory_, store_, time_system_, file_system_),
-        dispatcher_(api_.allocateDispatcher()) {}
+      : api_(Envoy::Api::createApiForTest()), dispatcher_(api_->allocateDispatcher()) {}
 
   void onComplete(bool, const Envoy::Http::HeaderMap&) override {
     stream_decoder_completion_callbacks_++;
   }
   void onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason) override { pool_failures_++; }
 
-  Envoy::Thread::ThreadFactoryImplPosix thread_factory_;
   Envoy::Event::TestRealTimeSystem time_system_;
   Envoy::Stats::IsolatedStoreImpl store_;
-  Envoy::Api::Impl api_;
+  Envoy::Api::ApiPtr api_;
   Envoy::Event::DispatcherPtr dispatcher_;
   StreamingStatistic connect_statistic_;
   StreamingStatistic latency_statistic_;
   Envoy::Http::HeaderMapImpl request_headers_;
-  Envoy::Filesystem::InstanceImplPosix file_system_;
   uint64_t stream_decoder_completion_callbacks_{0};
   uint64_t pool_failures_{0};
   // XXX(oschaaf): mock tracer, set expectations
