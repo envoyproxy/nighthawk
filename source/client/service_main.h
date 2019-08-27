@@ -21,17 +21,16 @@ public:
   void start();
   void wait();
   void shutdown();
-  std::string getListenerAddress() const;
-  void parseIpAndMaybePort(absl::string_view ip_and_maybe_port);
+  static std::string appendDefaultPortIfNeeded(absl::string_view ip_and_maybe_port);
 
 private:
-  std::string ip_;
-  int port_ = {8443};
   grpc::ServerBuilder builder_;
   ServiceImpl service_;
   std::unique_ptr<grpc::Server> server_;
   std::shared_ptr<grpc::Channel> channel_;
   std::unique_ptr<nighthawk::client::NighthawkService::Stub> stub_;
+  int listener_port_{-1};
+  std::string listener_bound_address_;
 };
 
 } // namespace Client
