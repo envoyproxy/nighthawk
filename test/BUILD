@@ -128,6 +128,8 @@ envoy_cc_test(
         "//source/client:nighthawk_client_lib",
         "//test:nighthawk_mocks",
         "//test/client:utility_lib",
+        "//test/test_common:environment_lib",
+        "@envoy//test/test_common:network_utility_lib",
     ],
 )
 
@@ -165,7 +167,10 @@ envoy_cc_test(
     name = "service_main_test",
     srcs = ["service_main_test.cc"],
     repository = "@envoy",
-    deps = ["//source/client:nighthawk_service_lib"],
+    deps = [
+        "//source/client:nighthawk_service_lib",
+        "//test/test_common:environment_lib",
+    ],
 )
 
 envoy_cc_test(
