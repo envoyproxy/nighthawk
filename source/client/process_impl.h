@@ -1,5 +1,6 @@
 #pragma once
 
+#include "envoy/api/api.h"
 #include "envoy/network/address.h"
 #include "envoy/stats/store.h"
 
@@ -12,7 +13,6 @@
 #include "nighthawk/common/uri.h"
 
 #include "external/envoy/source/common/access_log/access_log_manager_impl.h"
-#include "external/envoy/source/common/api/api_impl.h"
 #include "external/envoy/source/common/common/logger.h"
 #include "external/envoy/source/common/event/real_time_system.h"
 #include "external/envoy/source/common/http/context_impl.h"
@@ -22,12 +22,11 @@
 #include "external/envoy/source/common/stats/thread_local_store.h"
 #include "external/envoy/source/common/thread_local/thread_local_impl.h"
 #include "external/envoy/source/common/upstream/cluster_manager_impl.h"
+#include "external/envoy/source/exe/platform_impl.h"
 #include "external/envoy/source/exe/process_wide.h"
 #include "external/envoy/source/extensions/transport_sockets/tls/context_manager_impl.h"
 #include "external/envoy/source/server/config_validation/admin.h"
 
-#include "common/common/thread_impl.h" //XXX(oschaaf):
-#include "common/filesystem/filesystem_impl.h"
 #include "common/uri_impl.h"
 
 #include "client/benchmark_client_impl.h"
@@ -45,8 +44,7 @@ namespace Client {
  */
 class ProcessImpl : public Process, public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
-  ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
-              const PlatformUtil& platform_util);
+  ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system);
 
   uint32_t determineConcurrency() const;
   bool run(OutputCollector& collector) override;
@@ -66,14 +64,13 @@ private:
   mergeWorkerCounters(const std::vector<ClientWorkerPtr>& workers) const;
 
   Envoy::ProcessWide process_wide_;
-  Envoy::Thread::ThreadFactoryImplPosix thread_factory_;
-  Envoy::Filesystem::InstanceImplPosix file_system_;
+  Envoy::PlatformImpl platform_impl_;
   Envoy::Event::TimeSystem& time_system_;
   StoreFactoryImpl store_factory_;
   Envoy::Stats::SymbolTableImpl symbol_table_;
   Envoy::Stats::AllocatorImpl stats_allocator_;
   Envoy::Stats::ThreadLocalStoreImpl store_root_;
-  Envoy::Api::Impl api_;
+  Envoy::Api::ApiPtr api_;
   Envoy::ThreadLocal::InstanceImpl tls_;
   Envoy::Event::DispatcherPtr dispatcher_;
   std::vector<ClientWorkerPtr> workers_;
@@ -81,7 +78,6 @@ private:
   const BenchmarkClientFactoryImpl benchmark_client_factory_;
   const SequencerFactoryImpl sequencer_factory_;
   const Options& options_;
-  const PlatformUtil& platform_util_;
 
   Envoy::Init::ManagerImpl init_manager_;
   Envoy::LocalInfo::LocalInfoPtr local_info_;
@@ -89,7 +85,7 @@ private:
   Envoy::Server::ConfigTrackerImpl config_tracker_;
   Envoy::Secret::SecretManagerImpl secret_manager_;
   Envoy::Http::ContextImpl http_context_;
-  Envoy::Thread::MutexBasicLockable fakelock_;
+  Envoy::Thread::MutexBasicLockable access_log_lock_;
   Envoy::Singleton::ManagerPtr singleton_manager_;
   Envoy::AccessLog::AccessLogManagerImpl access_log_manager_;
 

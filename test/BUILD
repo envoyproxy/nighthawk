@@ -58,7 +58,6 @@ envoy_cc_test(
         "//source/client:nighthawk_client_lib",
         "//test:nighthawk_mocks",
         "@envoy//source/common/api:api_lib",
-        "@envoy//source/common/filesystem:filesystem_lib",
         "@envoy//source/common/stats:isolated_store_lib_with_external_headers",
         "@envoy//test/mocks/init:init_mocks",
         "@envoy//test/mocks/local_info:local_info_mocks",
@@ -129,6 +128,8 @@ envoy_cc_test(
         "//source/client:nighthawk_client_lib",
         "//test:nighthawk_mocks",
         "//test/client:utility_lib",
+        "//test/test_common:environment_lib",
+        "@envoy//test/test_common:network_utility_lib",
     ],
 )
 
@@ -166,7 +167,10 @@ envoy_cc_test(
     name = "service_main_test",
     srcs = ["service_main_test.cc"],
     repository = "@envoy",
-    deps = ["//source/client:nighthawk_service_lib"],
+    deps = [
+        "//source/client:nighthawk_service_lib",
+        "//test/test_common:environment_lib",
+    ],
 )
 
 envoy_cc_test(
@@ -188,7 +192,6 @@ envoy_cc_test(
     deps = [
         "//source/common:nighthawk_common_lib",
         "//test/test_common:environment_lib",
-        "@envoy//source/common/filesystem:filesystem_lib",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
         "@envoy//source/common/stats:isolated_store_lib_with_external_headers",
     ],

@@ -24,12 +24,11 @@
 #include "external/envoy/source/common/singleton/manager_impl.h"
 #include "external/envoy/source/common/thread_local/thread_local_impl.h"
 #include "external/envoy/source/extensions/transport_sockets/well_known_names.h"
+#include "external/envoy/source/server/options_impl_platform.h"
 
 #include "api/client/options.pb.h"
 #include "api/client/output.pb.h"
 
-#include "common/common/thread_impl.h"
-#include "common/filesystem/filesystem_impl.h"
 #include "common/frequency.h"
 #include "common/uri_impl.h"
 #include "common/utility.h"
@@ -66,22 +65,23 @@ public:
   }
 };
 
-ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
-                         const PlatformUtil& platform_util)
+ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system)
     : time_system_(time_system), store_factory_(options), stats_allocator_(symbol_table_),
-      store_root_(stats_allocator_), api_(thread_factory_, store_root_, time_system_, file_system_),
-      dispatcher_(api_.allocateDispatcher()), cleanup_([this] {
+      store_root_(stats_allocator_),
+      api_(std::make_unique<Envoy::Api::Impl>(platform_impl_.threadFactory(), store_root_,
+                                              time_system_, platform_impl_.fileSystem())),
+      dispatcher_(api_->allocateDispatcher()), cleanup_([this] {
         store_root_.shutdownThreading();
         tls_.shutdownGlobalThreading();
       }),
       benchmark_client_factory_(options), sequencer_factory_(options), options_(options),
-      platform_util_(platform_util), init_manager_("nh_init_manager"),
+      init_manager_("nh_init_manager"),
       local_info_(new Envoy::LocalInfo::LocalInfoImpl(
           {}, Envoy::Network::Utility::getLocalAddress(Envoy::Network::Address::IpVersion::v4),
           "nighthawk_service_zone", "nighthawk_service_cluster", "nighthawk_service_node")),
       secret_manager_(config_tracker_), http_context_(store_root_.symbolTable()),
-      singleton_manager_(std::make_unique<Envoy::Singleton::ManagerImpl>(api_.threadFactory())),
-      access_log_manager_(std::chrono::milliseconds(1000), api_, *dispatcher_, fakelock_,
+      singleton_manager_(std::make_unique<Envoy::Singleton::ManagerImpl>(api_->threadFactory())),
+      access_log_manager_(std::chrono::milliseconds(1000), *api_, *dispatcher_, access_log_lock_,
                           store_root_),
       init_watcher_("Nighthawk", []() {}), validation_context_(false, false) {
   std::string lower = absl::AsciiStrToLower(
@@ -114,7 +114,7 @@ const std::vector<ClientWorkerPtr>& ProcessImpl::createWorkers(const UriImpl& ur
     const auto worker_delay = std::chrono::duration_cast<std::chrono::nanoseconds>(
         ((inter_worker_delay_usec * worker_number) * 1us));
     workers_.push_back(std::make_unique<ClientWorkerImpl>(
-        api_, tls_, cluster_manager_, benchmark_client_factory_, sequencer_factory_,
+        *api_, tls_, cluster_manager_, benchmark_client_factory_, sequencer_factory_,
         std::make_unique<UriImpl>(uri), store_root_, worker_number,
         first_worker_start + worker_delay, prefetch_connections));
     worker_number++;
@@ -131,12 +131,7 @@ void ProcessImpl::configureComponentLogLevels(spdlog::level::level_enum level) {
 }
 
 uint32_t ProcessImpl::determineConcurrency() const {
-  uint32_t cpu_cores_with_affinity = platform_util_.determineCpuCoresWithAffinity();
-  if (cpu_cores_with_affinity == 0) {
-    ENVOY_LOG(warn, "Failed to determine the number of cpus with affinity to our thread.");
-    cpu_cores_with_affinity = std::thread::hardware_concurrency();
-  }
-
+  uint32_t cpu_cores_with_affinity = Envoy::OptionsImplPlatform::getCpuCount();
   bool autoscale = options_.concurrency() == "auto";
   // TODO(oschaaf): Maybe, in the case where the concurrency flag is left out, but
   // affinity is set / we don't have affinity with all cores, we should default to autoscale.
@@ -273,13 +268,13 @@ bool ProcessImpl::run(OutputCollector& collector) {
   runtime_singleton_ = std::make_unique<Envoy::Runtime::ScopedLoaderSingleton>(
       Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl(
           *dispatcher_, tls_, {}, *local_info_, init_manager_, store_root_, generator_,
-          Envoy::ProtobufMessage::getStrictValidationVisitor(), api_)});
+          Envoy::ProtobufMessage::getStrictValidationVisitor(), *api_)});
   ssl_context_manager_ =
       std::make_unique<Extensions::TransportSockets::Tls::ContextManagerImpl>(time_system_);
   cluster_manager_factory_ = std::make_unique<ClusterManagerFactory>(
       admin_, Envoy::Runtime::LoaderSingleton::get(), store_root_, tls_, generator_,
       dispatcher_->createDnsResolver({}), *ssl_context_manager_, *dispatcher_, *local_info_,
-      secret_manager_, validation_context_, api_, http_context_, access_log_manager_,
+      secret_manager_, validation_context_, *api_, http_context_, access_log_manager_,
       *singleton_manager_);
   cluster_manager_ =
       cluster_manager_factory_->clusterManagerFromProto(createBootstrapConfiguration(uri));

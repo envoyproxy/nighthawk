@@ -6,6 +6,7 @@
 
 #include "client/service_impl.h"
 
+#include "absl/strings/strip.h"
 #include "tclap/CmdLine.h"
 
 namespace Nighthawk {
@@ -15,42 +16,40 @@ ServiceMain::ServiceMain(int argc, const char** argv) {
   const char* descr = "L7 (HTTP/HTTPS/HTTP2) performance characterization tool.";
   TCLAP::CmdLine cmd(descr, ' ', "PoC"); // NOLINT
 
-  TCLAP::ValueArg<std::string> internet_address_and_port(
+  TCLAP::ValueArg<std::string> listen_arg(
       "", "listen",
       "The address:port on which the Nighthawk grpc service should listen. Default: "
       "0.0.0.0:8443.",
       false, "0.0.0.0:8443", "address:port", cmd);
-
   Utility::parseCommand(cmd, argc, argv);
 
-  try {
-    listener_address_ =
-        Envoy::Network::Utility::parseInternetAddressAndPort(internet_address_and_port.getValue());
-  } catch (Envoy::EnvoyException e) {
-    throw NighthawkException(e.what());
+  listener_bound_address_ = appendDefaultPortIfNeeded(listen_arg.getValue());
+  ENVOY_LOG(info, "Nighthawk grpc service listener binding to: {}", listener_bound_address_);
+  builder_.AddListeningPort(listener_bound_address_, grpc::InsecureServerCredentials(),
+                            &listener_port_);
+  builder_.RegisterService(&service_);
+}
+
+std::string ServiceMain::appendDefaultPortIfNeeded(absl::string_view host_and_maybe_port) {
+  const size_t colon_index = Utility::findPortSeparator(host_and_maybe_port);
+  std::string listener_address = std::string(host_and_maybe_port);
+  if (colon_index == absl::string_view::npos) {
+    listener_address += ":8443";
   }
+  return listener_address;
 }
 
 void ServiceMain::start() {
-  grpc::ServerBuilder builder;
-  int grpc_server_port = listener_address_->ip()->port();
-  builder.AddListeningPort(listener_address_->asString(), grpc::InsecureServerCredentials(),
-                           &grpc_server_port);
-  builder.RegisterService(&service_);
-  server_ = builder.BuildAndStart();
+  server_ = builder_.BuildAndStart();
   if (server_ == nullptr) {
     throw NighthawkException("Could not start the grpc service.");
   }
-
-  if (!listener_address_->ip()->port()) {
-    ASSERT(grpc_server_port != 0);
-    listener_address_ = Envoy::Network::Utility::parseInternetAddressAndPort(
-        fmt::format("{}:{}", listener_address_->ip()->addressAsString(), grpc_server_port));
-  } else {
-    ASSERT(listener_address_->ip()->port() == static_cast<uint32_t>(grpc_server_port));
+  if (absl::EndsWith(listener_bound_address_, ":0")) {
+    listener_bound_address_ = std::string(absl::StripSuffix(listener_bound_address_, "0"));
+    absl::StrAppend(&listener_bound_address_, listener_port_);
   }
-  ENVOY_LOG(info, "Nighthawk grpc service listening: {}", listener_address_->asString());
-  channel_ = grpc::CreateChannel(listener_address_->asString(), grpc::InsecureChannelCredentials());
+  ENVOY_LOG(info, "Nighthawk grpc service listening on: {}", listener_bound_address_);
+  channel_ = grpc::CreateChannel(listener_bound_address_, grpc::InsecureChannelCredentials());
   stub_ = std::make_unique<nighthawk::client::NighthawkService::Stub>(channel_);
 }
 
