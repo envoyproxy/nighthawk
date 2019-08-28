@@ -38,8 +38,8 @@ private:
   Envoy::Thread::MutexBasicLockable log_lock_;
   ::grpc::ServerReaderWriter<::nighthawk::client::ExecutionResponse,
                              ::nighthawk::client::ExecutionRequest>*
-      stream_ GUARDED_BY(global_lock_); // guarded by global_lock_
-  std::future<void> future_;            // guarded by global_lock_
+      stream_; // guarded by global_lock_
+  std::future<void> future_;
   static Envoy::Thread::MutexBasicLockable global_lock_;
   // accepted_lock_ and accepted_event_ are used to synchronize the threads
   // when starting up a future to service a test, and ensure the code servicing it

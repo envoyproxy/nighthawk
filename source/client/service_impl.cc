@@ -11,7 +11,10 @@ namespace Client {
 Envoy::Thread::MutexBasicLockable ServiceImpl::global_lock_;
 
 void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionRequest& request) {
+  // Lock accepted_lock, in case we get here before accepted_event_.wait() is entered.
   auto accepted_lock = std::make_unique<Envoy::Thread::LockGuard>(accepted_lock_);
+  // Acquire busy_lock_, and signal that we did so, allowing the service to continue
+  // processing inbound requests on the stream.
   auto busy_lock = std::make_unique<Envoy::Thread::LockGuard>(busy_lock_);
   accepted_event_.notifyOne();
   accepted_lock.reset();
@@ -27,22 +30,18 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
     return;
   }
 
-  // We scope here because the ProcessImpl instance must be destructed before we write the response
-  // and set running to false.
-  {
-    ProcessImpl process(*options, time_system_);
-    OutputCollectorFactoryImpl output_format_factory(time_system_, *options);
-    auto logging_context = std::make_unique<Envoy::Logger::Context>(
-        spdlog::level::from_str(
-            nighthawk::client::Verbosity::VerbosityOptions_Name(options->verbosity())),
-        "[%T.%f][%t][%L] %v", log_lock_);
-    auto formatter = output_format_factory.create();
-    if (process.run(*formatter)) {
-      response.clear_error_detail();
-      *(response.mutable_output()) = formatter->toProto();
-    } else {
-      response.mutable_error_detail()->set_message("Unknown failure");
-    }
+  ProcessImpl process(*options, time_system_);
+  OutputCollectorFactoryImpl output_format_factory(time_system_, *options);
+  auto logging_context = std::make_unique<Envoy::Logger::Context>(
+      spdlog::level::from_str(
+          nighthawk::client::Verbosity::VerbosityOptions_Name(options->verbosity())),
+      "[%T.%f][%t][%L] %v", log_lock_);
+  auto formatter = output_format_factory.create();
+  if (process.run(*formatter)) {
+    response.clear_error_detail();
+    *(response.mutable_output()) = formatter->toProto();
+  } else {
+    response.mutable_error_detail()->set_message("Unknown failure");
   }
   // We release before writing the response to avoid a race with the client's follow up request
   // coming in before we release the lock, which would lead up to us declining service when
@@ -52,12 +51,15 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
 }
 
 void ServiceImpl::writeResponse(const nighthawk::client::ExecutionResponse& response) {
+  ENVOY_LOG(debug, "Write response: {}", response.DebugString());
   if (!stream_->Write(response)) {
-    ENVOY_LOG(warn, "Stream write failed");
+    ENVOY_LOG(warn, "Failed to write response to the stream");
   }
 }
 
 ::grpc::Status ServiceImpl::finishGrpcStream(const bool success, absl::string_view description) {
+  // We may get here while there's still an active future in-flight in the error-paths.
+  // Allow it to wrap up and put it's response on the stream before finishing the stream.
   if (future_.valid()) {
     future_.wait();
   }
@@ -74,6 +76,8 @@ void ServiceImpl::writeResponse(const nighthawk::client::ExecutionResponse& resp
     ::grpc::ServerReaderWriter<::nighthawk::client::ExecutionResponse,
                                ::nighthawk::client::ExecutionRequest>* stream) {
   nighthawk::client::ExecutionRequest request;
+  // We are able to service a single client at a time, because we can only run a single
+  // ProcessImpl at a time today.
   // Unfortunately, TryLockGuard confuses GUARDED_BY, so we can't annotate or
   // until that is fixed or else the build will fail.
   Envoy::Thread::TryLockGuard service_lock(global_lock_);
@@ -85,8 +89,9 @@ void ServiceImpl::writeResponse(const nighthawk::client::ExecutionResponse& resp
   stream_ = stream;
 
   while (stream->Read(&request)) {
-    ENVOY_LOG(debug, "Read ExecutionRequest data");
+    ENVOY_LOG(debug, "Read ExecutionRequest data {}", request.DebugString());
     if (request.has_start_request()) {
+      // If busy_lock_ is held we can't start a new benchmark run because one is active already.
       if (busy_lock_.tryLock()) {
         busy_lock_.unlock();
         Envoy::Thread::LockGuard accepted_lock(accepted_lock_);
@@ -94,6 +99,7 @@ void ServiceImpl::writeResponse(const nighthawk::client::ExecutionResponse& resp
         // asap. See: https://en.cppreference.com/w/cpp/thread/async
         future_ = std::future<void>(
             std::async(std::launch::async, &ServiceImpl::handleExecutionRequest, this, request));
+        // Block until the thread associated to the future has acquired busy_lock_
         accepted_event_.wait(accepted_lock_);
       } else {
         return finishGrpcStream(false, "Only a single benchmark session is allowed at a time.");
