@@ -8,10 +8,16 @@
 namespace Nighthawk {
 namespace Client {
 
+Envoy::Thread::MutexBasicLockable ServiceImpl::global_lock_;
+
 void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionRequest& request) {
+  auto accepted_lock = std::make_unique<Envoy::Thread::LockGuard>(accepted_lock_);
+  auto busy_lock = std::make_unique<Envoy::Thread::LockGuard>(busy_lock_);
+  accepted_event_.notifyOne();
+  accepted_lock.reset();
+
   nighthawk::client::ExecutionResponse response;
   response.mutable_error_detail()->set_code(grpc::StatusCode::INTERNAL);
-
   OptionsPtr options;
   try {
     options = std::make_unique<OptionsImpl>(request.start_request().options());
@@ -38,6 +44,7 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
       response.mutable_error_detail()->set_message("Unknown failure");
     }
   }
+  busy_lock.reset();
   writeResponse(response);
 }
 
@@ -65,23 +72,27 @@ void ServiceImpl::writeResponse(const nighthawk::client::ExecutionResponse& resp
     ::grpc::ServerReaderWriter<::nighthawk::client::ExecutionResponse,
                                ::nighthawk::client::ExecutionRequest>* stream) {
   nighthawk::client::ExecutionRequest request;
+  Envoy::Thread::TryLockGuard service_lock(global_lock_);
+  if (!service_lock.tryLock()) {
+    stream->Read(&request);
+    return finishGrpcStream(false, "Another client is performing a benchmark.");
+  }
+
   stream_ = stream;
+
   while (stream->Read(&request)) {
-    ENVOY_LOG(debug, "Read ExecutionRequest data: {}", request.DebugString());
+    ENVOY_LOG(debug, "Read ExecutionRequest data");
     if (request.has_start_request()) {
-      // It is possible to receive a back-to-back request here, while the future that is associated
-      // to our previous response is still active. We check the running_ flag to see if the previous
-      // future has progressed in a state where we can do another one. This avoids the odd flake in
-      // ServiceTest.BackToBackExecution.
-      if (future_.valid() &&
-          future_.wait_for(std::chrono::seconds(0)) != std::future_status::ready && busy_) {
-        return finishGrpcStream(false, "Only a single benchmark session is allowed at a time.");
-      } else {
-        busy_ = true;
+      if (busy_lock_.tryLock()) {
+        busy_lock_.unlock();
         // We pass in std::launch::async to avoid lazy evaluation, as we want this to run
         // asap. See: https://en.cppreference.com/w/cpp/thread/async
+        Envoy::Thread::LockGuard accepted_lock(accepted_lock_);
         future_ = std::future<void>(
             std::async(std::launch::async, &ServiceImpl::handleExecutionRequest, this, request));
+        accepted_event_.wait(accepted_lock_);
+      } else {
+        return finishGrpcStream(false, "Only a single benchmark session is allowed at a time.");
       }
     } else if (request.has_update_request() || request.has_cancellation_request()) {
       return finishGrpcStream(false, "Request is not supported yet.");

@@ -43,8 +43,8 @@ public:
     stub_ = std::make_unique<nighthawk::client::NighthawkService::Stub>(channel_);
   }
 
-  void singleStreamBackToBackExecution() {
-    grpc::ClientContext context;
+  void singleStreamBackToBackExecution(grpc::ClientContext& context,
+                                       nighthawk::client::NighthawkService::Stub&) {
     auto r = stub_->ExecutionStream(&context);
     EXPECT_TRUE(r->Write(request_, {}));
     EXPECT_TRUE(r->Read(&response_));
@@ -59,13 +59,30 @@ public:
     EXPECT_TRUE(status.ok());
   }
 
+  std::thread testThreadedClientRun(bool expect_success) const {
+    std::thread thread([this, expect_success]() {
+      auto channel = grpc::CreateChannel(fmt::format("{}:{}", loopback_address_, grpc_server_port_),
+                                         grpc::InsecureChannelCredentials());
+      auto stub = std::make_unique<nighthawk::client::NighthawkService::Stub>(channel);
+      grpc::ClientContext context;
+      auto stream = stub->ExecutionStream(&context);
+      EXPECT_TRUE(stream->Write(request_, {}));
+      EXPECT_TRUE(stream->WritesDone());
+      nighthawk::client::ExecutionResponse response;
+      EXPECT_EQ(stream->Read(&response), expect_success);
+      auto status = stream->Finish();
+      EXPECT_EQ(status.ok(), expect_success);
+    });
+    return thread;
+  }
+
   void setBasicRequestOptions() {
     auto options = request_.mutable_start_request()->mutable_options();
     // TODO(oschaaf): this sends actual traffic, which isn't relevant for the tests
     // we are about to perform. However, it would be nice to be able to mock out things
     // to clean this up.
     options->mutable_uri()->set_value("http://127.0.0.1:10001/");
-    options->mutable_duration()->set_seconds(3);
+    options->mutable_duration()->set_seconds(2);
     options->mutable_requests_per_second()->set_value(3);
   }
 
@@ -128,10 +145,25 @@ TEST_P(ServiceTest, NoConcurrentStart) {
 
 // Test we are able to perform serialized executions.
 TEST_P(ServiceTest, BackToBackExecution) {
-  singleStreamBackToBackExecution();
+  grpc::ClientContext context1;
+  singleStreamBackToBackExecution(context1, *stub_);
   // create a new client to connect to the same server, and do it one more time.
   setupGrpcClient();
-  singleStreamBackToBackExecution();
+  grpc::ClientContext context2;
+  singleStreamBackToBackExecution(context2, *stub_);
+}
+
+// Test concurrent clients. Only a single one should be
+// the server should serve the first and decline the second
+// while it's busy.
+TEST_P(ServiceTest, ConcurrentStreamHandling) {
+  std::thread t1 = testThreadedClientRun(true);
+  sleep(1);
+  std::thread t2 = testThreadedClientRun(false);
+  t1.join();
+  t2.join();
+  std::thread t3 = testThreadedClientRun(true);
+  t3.join();
 }
 
 // Test that proto validation is wired up and works.
