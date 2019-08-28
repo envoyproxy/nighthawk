@@ -44,12 +44,14 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
       response.mutable_error_detail()->set_message("Unknown failure");
     }
   }
+  // We release before writing the response to avoid a race with the client's follow up request
+  // coming in before we release the lock, which would lead up to us declining service when
+  // we should not.
   busy_lock.reset();
   writeResponse(response);
 }
 
 void ServiceImpl::writeResponse(const nighthawk::client::ExecutionResponse& response) {
-  busy_ = false;
   if (!stream_->Write(response)) {
     ENVOY_LOG(warn, "Stream write failed");
   }
@@ -72,6 +74,8 @@ void ServiceImpl::writeResponse(const nighthawk::client::ExecutionResponse& resp
     ::grpc::ServerReaderWriter<::nighthawk::client::ExecutionResponse,
                                ::nighthawk::client::ExecutionRequest>* stream) {
   nighthawk::client::ExecutionRequest request;
+  // Unfortunately, TryLockGuard confuses GUARDED_BY, so we can't annotate or
+  // until that is fixed or else the build will fail.
   Envoy::Thread::TryLockGuard service_lock(global_lock_);
   if (!service_lock.tryLock()) {
     stream->Read(&request);
@@ -85,9 +89,9 @@ void ServiceImpl::writeResponse(const nighthawk::client::ExecutionResponse& resp
     if (request.has_start_request()) {
       if (busy_lock_.tryLock()) {
         busy_lock_.unlock();
+        Envoy::Thread::LockGuard accepted_lock(accepted_lock_);
         // We pass in std::launch::async to avoid lazy evaluation, as we want this to run
         // asap. See: https://en.cppreference.com/w/cpp/thread/async
-        Envoy::Thread::LockGuard accepted_lock(accepted_lock_);
         future_ = std::future<void>(
             std::async(std::launch::async, &ServiceImpl::handleExecutionRequest, this, request));
         accepted_event_.wait(accepted_lock_);
