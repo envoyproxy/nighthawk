@@ -153,9 +153,9 @@ TEST_P(ServiceTest, BackToBackExecution) {
   singleStreamBackToBackExecution(context2, *stub_);
 }
 
-// Test concurrent clients. Only a single one should be
-// the server should serve the first and decline the second
-// while it's busy.
+// Test concurrent clients, we can only service on active test
+// at the same time. We should decline politely, and also be able
+// to service tests back-to-back after completing work.
 TEST_P(ServiceTest, ConcurrentStreamHandling) {
   std::thread t1 = testThreadedClientRun(true);
   sleep(1);
