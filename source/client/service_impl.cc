@@ -8,9 +8,6 @@
 namespace Nighthawk {
 namespace Client {
 
-grpc::ServerReaderWriter<nighthawk::client::ExecutionResponse, nighthawk::client::ExecutionRequest>*
-    ServiceImpl::stream_ = nullptr;
-
 void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionRequest& request) {
   std::unique_ptr<Envoy::Thread::LockGuard> busy_lock;
   {
@@ -80,7 +77,6 @@ void ServiceImpl::writeResponse(const nighthawk::client::ExecutionResponse& resp
     ::grpc::ServerReaderWriter<::nighthawk::client::ExecutionResponse,
                                ::nighthawk::client::ExecutionRequest>* stream) {
   nighthawk::client::ExecutionRequest request;
-  RELEASE_ASSERT(stream_ == nullptr, "Unable to service concurrent clients");
   stream_ = stream;
 
   while (stream->Read(&request)) {
