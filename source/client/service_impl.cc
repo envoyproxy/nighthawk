@@ -12,13 +12,15 @@ grpc::ServerReaderWriter<nighthawk::client::ExecutionResponse, nighthawk::client
     ServiceImpl::stream_ = nullptr;
 
 void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionRequest& request) {
-  // Lock accepted_lock, in case we get here before accepted_event_.wait() is entered.
-  auto accepted_lock = std::make_unique<Envoy::Thread::LockGuard>(accepted_lock_);
-  // Acquire busy_lock_, and signal that we did so, allowing the service to continue
-  // processing inbound requests on the stream.
-  auto busy_lock = std::make_unique<Envoy::Thread::LockGuard>(busy_lock_);
-  accepted_event_.notifyOne();
-  accepted_lock.reset();
+  std::unique_ptr<Envoy::Thread::LockGuard> busy_lock;
+  {
+    // Lock accepted_lock, in case we get here before accepted_event_.wait() is entered.
+    auto accepted_lock = std::make_unique<Envoy::Thread::LockGuard>(accepted_lock_);
+    // Acquire busy_lock_, and signal that we did so, allowing the service to continue
+    // processing inbound requests on the stream.
+    busy_lock = std::make_unique<Envoy::Thread::LockGuard>(busy_lock_);
+    accepted_event_.notifyOne();
+  }
 
   nighthawk::client::ExecutionResponse response;
   response.mutable_error_detail()->set_code(grpc::StatusCode::INTERNAL);
