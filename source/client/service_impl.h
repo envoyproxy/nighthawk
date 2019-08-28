@@ -36,11 +36,9 @@ private:
 
   Envoy::Event::RealTimeSystem time_system_; // NO_CHECK_FORMAT(real_time)
   Envoy::Thread::MutexBasicLockable log_lock_;
-  ::grpc::ServerReaderWriter<::nighthawk::client::ExecutionResponse,
-                             ::nighthawk::client::ExecutionRequest>*
-      stream_; // guarded by global_lock_
+  static ::grpc::ServerReaderWriter<::nighthawk::client::ExecutionResponse,
+                                    ::nighthawk::client::ExecutionRequest>* stream_;
   std::future<void> future_;
-  static Envoy::Thread::MutexBasicLockable global_lock_;
   // accepted_lock_ and accepted_event_ are used to synchronize the threads
   // when starting up a future to service a test, and ensure the code servicing it
   // in the other thread has acquired busy_lock_.

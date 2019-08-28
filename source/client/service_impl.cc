@@ -8,7 +8,8 @@
 namespace Nighthawk {
 namespace Client {
 
-Envoy::Thread::MutexBasicLockable ServiceImpl::global_lock_;
+grpc::ServerReaderWriter<nighthawk::client::ExecutionResponse, nighthawk::client::ExecutionRequest>*
+    ServiceImpl::stream_ = nullptr;
 
 void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionRequest& request) {
   // Lock accepted_lock, in case we get here before accepted_event_.wait() is entered.
@@ -63,6 +64,7 @@ void ServiceImpl::writeResponse(const nighthawk::client::ExecutionResponse& resp
   if (future_.valid()) {
     future_.wait();
   }
+  stream_ = nullptr;
   return success ? grpc::Status::OK
                  : grpc::Status(grpc::StatusCode::INTERNAL, std::string(description));
 }
@@ -76,16 +78,7 @@ void ServiceImpl::writeResponse(const nighthawk::client::ExecutionResponse& resp
     ::grpc::ServerReaderWriter<::nighthawk::client::ExecutionResponse,
                                ::nighthawk::client::ExecutionRequest>* stream) {
   nighthawk::client::ExecutionRequest request;
-  // We are able to service a single client at a time, because we can only run a single
-  // ProcessImpl at a time today.
-  // Unfortunately, TryLockGuard confuses GUARDED_BY, so we can't annotate or
-  // until that is fixed or else the build will fail.
-  Envoy::Thread::TryLockGuard service_lock(global_lock_);
-  if (!service_lock.tryLock()) {
-    stream->Read(&request);
-    return finishGrpcStream(false, "Another client is performing a benchmark.");
-  }
-
+  RELEASE_ASSERT(stream_ == nullptr, "Unable to service concurrent clients");
   stream_ = stream;
 
   while (stream->Read(&request)) {
@@ -110,7 +103,6 @@ void ServiceImpl::writeResponse(const nighthawk::client::ExecutionResponse& resp
       NOT_REACHED_GCOVR_EXCL_LINE;
     }
   }
-
   return finishGrpcStream(true);
 }
 

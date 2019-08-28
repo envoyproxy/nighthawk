@@ -153,19 +153,6 @@ TEST_P(ServiceTest, BackToBackExecution) {
   singleStreamBackToBackExecution(context2, *stub_);
 }
 
-// Test concurrent clients, we can only service on active test
-// at the same time. We should decline politely, and also be able
-// to service tests back-to-back after completing work.
-TEST_P(ServiceTest, ConcurrentStreamHandling) {
-  std::thread t1 = testThreadedClientRun(true);
-  sleep(1);
-  std::thread t2 = testThreadedClientRun(false);
-  t1.join();
-  t2.join();
-  std::thread t3 = testThreadedClientRun(true);
-  t3.join();
-}
-
 // Test that proto validation is wired up and works.
 // TODO(oschaaf): functional coverage of all the options / validations.
 TEST_P(ServiceTest, InvalidRps) {
