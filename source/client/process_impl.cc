@@ -287,7 +287,6 @@ bool ProcessImpl::run(OutputCollector& collector) {
     tracing_uri.resolve(*dispatcher_,
                         Utility::translateFamilyOptionString(options_.addressFamily()));
   } catch (UriException) {
-    // XXX(oschaaf):
     tls_.shutdownGlobalThreading();
     return false;
   }

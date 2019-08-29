@@ -29,7 +29,6 @@ void ClientWorkerImpl::simpleWarmup() {
   } else {
     ENVOY_LOG(warn, "> worker {}: failed to initiate warmup request.", worker_number_);
   }
-  ENVOY_LOG(debug, "> worker {}: warmup start.", worker_number_);
   ENVOY_LOG(debug, "> worker {}: warmup done.", worker_number_);
 }
 
