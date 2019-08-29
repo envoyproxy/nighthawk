@@ -70,12 +70,8 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
       store_root_(stats_allocator_),
       api_(std::make_unique<Envoy::Api::Impl>(platform_impl_.threadFactory(), store_root_,
                                               time_system_, platform_impl_.fileSystem())),
-      dispatcher_(api_->allocateDispatcher()), cleanup_([this] {
-        store_root_.shutdownThreading();
-        tls_.shutdownGlobalThreading();
-      }),
-      benchmark_client_factory_(options), sequencer_factory_(options), options_(options),
-      init_manager_("nh_init_manager"),
+      dispatcher_(api_->allocateDispatcher()), benchmark_client_factory_(options),
+      sequencer_factory_(options), options_(options), init_manager_("nh_init_manager"),
       local_info_(new Envoy::LocalInfo::LocalInfoImpl(
           {}, Envoy::Network::Utility::getLocalAddress(Envoy::Network::Address::IpVersion::v4),
           "nighthawk_service_zone", "nighthawk_service_cluster", "nighthawk_service_node")),
@@ -258,6 +254,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
   try {
     uri.resolve(*dispatcher_, Utility::translateFamilyOptionString(options_.addressFamily()));
   } catch (UriException) {
+    tls_.shutdownGlobalThreading();
     return false;
   }
   const std::vector<ClientWorkerPtr>& workers =
@@ -290,7 +287,6 @@ bool ProcessImpl::run(OutputCollector& collector) {
     w->waitForCompletion();
     ok = ok && w->success();
   }
-  cluster_manager_->shutdown();
 
   // We don't write per-worker results if we only have a single worker, because the global results
   // will be precisely the same.
@@ -313,6 +309,13 @@ bool ProcessImpl::run(OutputCollector& collector) {
     collector.addResult("global", mergeWorkerStatistics(statistic_factory, workers),
                         mergeWorkerCounters(workers));
   }
+
+  // Before we shut down the worker threads, stop threading.
+  tls_.shutdownGlobalThreading();
+  store_root_.shutdownThreading();
+  // Before shutting down the cluster manager, stop the workers.
+  workers_.clear();
+  cluster_manager_->shutdown();
   return ok;
 }
 

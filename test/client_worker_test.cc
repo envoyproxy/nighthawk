@@ -52,7 +52,7 @@ public:
 
   bool CheckThreadChanged(const std::function<void()>&) {
     EXPECT_NE(thread_id_, std::this_thread::get_id());
-    return true;
+    return false;
   }
 
   StreamingStatistic statistic_;

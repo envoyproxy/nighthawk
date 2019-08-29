@@ -120,7 +120,7 @@ TEST_F(StreamDecoderTest, StreamResetTest) {
   decoder->decodeHeaders(std::move(headers), false);
   auto trailers = std::make_unique<Envoy::Http::HeaderMapImpl>();
   decoder->onResetStream(Envoy::Http::StreamResetReason::LocalReset, "fooreason");
-  EXPECT_FALSE(is_complete); // these do not get reported.
+  EXPECT_TRUE(is_complete); // these do get reported.
   EXPECT_EQ(1, stream_decoder_completion_callbacks_);
 }
 

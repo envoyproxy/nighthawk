@@ -74,7 +74,6 @@ private:
   Envoy::ThreadLocal::InstanceImpl tls_;
   Envoy::Event::DispatcherPtr dispatcher_;
   std::vector<ClientWorkerPtr> workers_;
-  const Envoy::Cleanup cleanup_;
   const BenchmarkClientFactoryImpl benchmark_client_factory_;
   const SequencerFactoryImpl sequencer_factory_;
   const Options& options_;
