@@ -12,7 +12,7 @@ static_resources:
     filter_chains:
     - filters:
       - name: envoy.http_connection_manager
-        config: 
+        config:
           generate_request_id: false
           codec_type: auto
           stat_prefix: ingress_http
@@ -30,7 +30,7 @@ static_resources:
               - { header: { key: "x-nh", value: "1"}}
           - name: envoy.router
             config:
-              dynamic_stats: false  
+              dynamic_stats: false
       tls_context:
         common_tls_context:
           tls_certificates:
