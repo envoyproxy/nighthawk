@@ -27,12 +27,12 @@ function do_clang_tidy() {
 
 function do_coverage() {
     echo "bazel coverage build with tests ${TEST_TARGETS}"
-    
+
     # Reduce the amount of memory Bazel tries to use to prevent it from launching too many subprocesses.
     # This should prevent the system from running out of memory and killing tasks. See discussion on
     # https://github.com/envoyproxy/envoy/pull/5611.
     [ -z "$CIRCLECI" ] || export BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} --local_ram_resources=12288"
-    
+
     export TEST_TARGETS="//test/..."
     test/run_nighthawk_bazel_coverage.sh ${TEST_TARGETS}
     exit 0

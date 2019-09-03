@@ -16,7 +16,6 @@
 
 using namespace std::chrono_literals;
 using namespace testing;
-using testing::MatchesRegex;
 
 namespace Nighthawk {
 namespace Client {

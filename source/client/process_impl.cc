@@ -94,7 +94,7 @@ const std::vector<ClientWorkerPtr>& ProcessImpl::createWorkers(const UriImpl& ur
                                                                const bool prefetch_connections) {
   // TODO(oschaaf): Expose kMinimalDelay in configuration.
   const std::chrono::milliseconds kMinimalWorkerDelay = 500ms;
-  ASSERT(workers_.size() == 0);
+  ASSERT(workers_.empty());
 
   // We try to offset the start of each thread so that workers will execute tasks evenly spaced in
   // time. Let's assume we have two workers w0/w1, which should maintain a combined global pace of
