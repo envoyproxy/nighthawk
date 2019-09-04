@@ -57,7 +57,7 @@ SequencerPtr SequencerFactoryImpl::create(Envoy::TimeSource& time_source,
   if (burst_size) {
     rate_limiter = std::make_unique<BurstingRateLimiter>(std::move(rate_limiter), burst_size);
   }
-  SequencerTarget sequencer_target = [&benchmark_client](std::function<void()> f) -> bool {
+  SequencerTarget sequencer_target = [&benchmark_client](CompletionCallback f) -> bool {
     return benchmark_client.tryStartOne(std::move(f));
   };
   return std::make_unique<SequencerImpl>(

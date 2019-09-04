@@ -50,7 +50,7 @@ public:
     return map;
   }
 
-  bool CheckThreadChanged(const std::function<void()>&) {
+  bool CheckThreadChanged(const CompletionCallback&) {
     EXPECT_NE(thread_id_, std::this_thread::get_id());
     return false;
   }

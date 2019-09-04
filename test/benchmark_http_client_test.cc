@@ -64,7 +64,7 @@ public:
     const uint64_t amount = amount_of_request;
     uint64_t inflight_response_count = 0;
 
-    std::function<void()> f = [this, &inflight_response_count]() {
+    Client::CompletionCallback f = [this, &inflight_response_count](bool, bool) {
       --inflight_response_count;
       if (inflight_response_count == 0) {
         dispatcher_->exit();

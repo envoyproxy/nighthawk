@@ -4,6 +4,7 @@
 #include "envoy/common/time.h"
 #include "envoy/event/dispatcher.h"
 
+#include "nighthawk/common/operation_callback.h"
 #include "nighthawk/common/platform_util.h"
 #include "nighthawk/common/rate_limiter.h"
 #include "nighthawk/common/sequencer.h"
@@ -21,7 +22,7 @@ constexpr std::chrono::milliseconds EnvoyTimerMinResolution = 1ms;
 
 } // namespace
 
-using SequencerTarget = std::function<bool(std::function<void()>)>;
+using SequencerTarget = std::function<bool(OperationCallback)>;
 
 /**
  * The Sequencer will drive calls to the SequencerTarget at a pace indicated by the associated
