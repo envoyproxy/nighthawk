@@ -136,9 +136,6 @@ class IntegrationTestBase(unittest.TestCase):
       self.assertEqual(0, client_process.returncode)
       return json.loads(json_string), logs
 
-  def assertIsSubset(self, subset, superset):
-    self.assertLessEqual(subset.items(), superset.items())
-
 
 # We don't have a straightforward way to do parameterized tests yet.
 # But the tests can be run twice if desired so, and setting this to true will enable ipv6 mode.
