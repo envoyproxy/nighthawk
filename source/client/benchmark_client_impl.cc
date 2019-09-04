@@ -30,10 +30,10 @@ BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
     Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
     StatisticPtr&& connect_statistic, StatisticPtr&& response_statistic, UriPtr&& uri, bool use_h2,
     Envoy::Upstream::ClusterManagerPtr& cluster_manager, absl::string_view cluster_name)
-    : api_(api), dispatcher_(dispatcher), scope_(scope),
+    : api_(api), dispatcher_(dispatcher), scope_(scope.createScope("benchmark.")),
       connect_statistic_(std::move(connect_statistic)),
       response_statistic_(std::move(response_statistic)), use_h2_(use_h2), uri_(std::move(uri)),
-      benchmark_client_stats_({ALL_BENCHMARK_CLIENT_STATS(POOL_COUNTER(scope))}),
+      benchmark_client_stats_({ALL_BENCHMARK_CLIENT_STATS(POOL_COUNTER(*scope_))}),
       cluster_manager_(cluster_manager), cluster_name_(std::string(cluster_name)) {
 
   connect_statistic_->setId("benchmark_http_client.queue_to_connect");

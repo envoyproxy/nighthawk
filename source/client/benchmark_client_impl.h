@@ -80,7 +80,7 @@ public:
     measure_latencies_ = measure_latencies;
   }
   bool tryStartOne(std::function<void()> caller_completion_callback) override;
-  Envoy::Stats::Scope& scope() const override { return scope_; }
+  Envoy::Stats::Scope& scope() const override { return *scope_; }
 
   void setRequestMethod(envoy::api::v2::core::RequestMethod request_method) override {
     request_headers_.insertMethod().value(envoy::api::v2::core::RequestMethod_Name(request_method));
@@ -112,7 +112,7 @@ public:
 private:
   Envoy::Api::Api& api_;
   Envoy::Event::Dispatcher& dispatcher_;
-  Envoy::Stats::Scope& scope_;
+  Envoy::Stats::ScopePtr scope_;
   Envoy::Http::HeaderMapImpl request_headers_;
   // These are declared order dependent. Changing ordering may trigger on assert upon
   // destruction when tls has been involved during usage.

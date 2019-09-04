@@ -15,11 +15,11 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
                                    const Envoy::MonotonicTime starting_time,
                                    bool prefetch_connections)
     : WorkerImpl(api, tls, store),
-      scope_(store_.createScope(fmt::format("worker.{}.benchmark.", worker_number))),
+      scope_(store_.createScope(fmt::format("worker-{}.", worker_number))),
       worker_number_(worker_number), starting_time_(starting_time),
       benchmark_client_(benchmark_client_factory.create(api, *dispatcher_, *scope_, std::move(uri),
                                                         cluster_manager,
-                                                        fmt::format("worker.{}", worker_number))),
+                                                        fmt::format("worker-{}", worker_number))),
       sequencer_(
           sequencer_factory.create(time_source_, *dispatcher_, starting_time, *benchmark_client_)),
       prefetch_connections_(prefetch_connections) {}
@@ -48,7 +48,7 @@ void ClientWorkerImpl::work() {
     // First, we strip the cluster prefix
     std::string stat_name = std::string(absl::StripPrefix(stat->name(), "cluster."));
     // Second, we strip our own prefix if it's there, else we skip.
-    const std::string worker_prefix = fmt::format("worker.{}.", worker_number_);
+    const std::string worker_prefix = fmt::format("worker-{}.", worker_number_);
     if (stat->value() && absl::StartsWith(stat_name, worker_prefix)) {
       thread_local_counter_values_[std::string(absl::StripPrefix(stat_name, worker_prefix))] =
           stat->value();
