@@ -85,6 +85,17 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
   configureComponentLogLevels(spdlog::level::from_str(lower));
 }
 
+ProcessImpl::~ProcessImpl() {
+  // Before we shut down the worker threads, stop threading.
+  tls_.shutdownGlobalThreading();
+  store_root_.shutdownThreading();
+  // Before shutting down the cluster manager, stop the workers.
+  workers_.clear();
+  if (cluster_manager_ != nullptr) {
+    cluster_manager_->shutdown();
+  }
+}
+
 const std::vector<ClientWorkerPtr>& ProcessImpl::createWorkers(const UriImpl& uri,
                                                                const uint32_t concurrency,
                                                                const bool prefetch_connections) {
@@ -254,7 +265,6 @@ bool ProcessImpl::run(OutputCollector& collector) {
   try {
     uri.resolve(*dispatcher_, Utility::translateFamilyOptionString(options_.addressFamily()));
   } catch (UriException) {
-    tls_.shutdownGlobalThreading();
     return false;
   }
   const std::vector<ClientWorkerPtr>& workers =
@@ -310,12 +320,6 @@ bool ProcessImpl::run(OutputCollector& collector) {
                         mergeWorkerCounters(workers));
   }
 
-  // Before we shut down the worker threads, stop threading.
-  tls_.shutdownGlobalThreading();
-  store_root_.shutdownThreading();
-  // Before shutting down the cluster manager, stop the workers.
-  workers_.clear();
-  cluster_manager_->shutdown();
   return ok;
 }
 
