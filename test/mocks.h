@@ -136,7 +136,7 @@ public:
   MOCK_METHOD0(terminate, void());
   MOCK_METHOD1(setMeasureLatencies, void(bool));
   MOCK_CONST_METHOD0(statistics, StatisticPtrMap());
-  MOCK_METHOD1(tryStartOne, bool(Client::CompletionCallback));
+  MOCK_METHOD1(tryStartRequest, bool(Client::CompletionCallback));
   MOCK_CONST_METHOD0(store, Envoy::Stats::Store&());
   MOCK_METHOD0(prefetchPoolConnections, void());
   MOCK_CONST_METHOD0(measureLatencies, bool());

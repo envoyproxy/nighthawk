@@ -90,7 +90,7 @@ TEST_F(ClientWorkerTest, BasicTest) {
 
     // warmup
     EXPECT_CALL(*benchmark_client_, prefetchPoolConnections()).Times(1);
-    EXPECT_CALL(*benchmark_client_, tryStartOne(_))
+    EXPECT_CALL(*benchmark_client_, tryStartRequest(_))
         .Times(1)
         .WillRepeatedly(Invoke(this, &ClientWorkerTest::CheckThreadChanged));
 

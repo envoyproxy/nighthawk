@@ -72,7 +72,7 @@ public:
     };
 
     for (uint64_t i = 0; i < amount; i++) {
-      if (client_->tryStartOne(f)) {
+      if (client_->tryStartRequest(f)) {
         inflight_response_count++;
       }
     }
