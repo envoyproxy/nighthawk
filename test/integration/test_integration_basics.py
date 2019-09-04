@@ -9,7 +9,6 @@ from common import IpVersion
 from integration_test_fixtures import (HttpIntegrationTestBase, HttpsIntegrationTestBase,
                                        IntegrationTestBase)
 
-# TODO(oschaaf): rewrite the tests so we can just hand a map of expected key values to it.
 # TODO(oschaaf): we mostly verify stats observed from the client-side. Add expectations
 # for the server side as well.
 
@@ -23,16 +22,18 @@ class TestHttp(HttpIntegrationTestBase):
     """
     parsed_json, _ = self.runNighthawkClient([self.getTestServerRootUri()])
     counters = self.getNighthawkCounterMapFromJson(parsed_json)
-    self.assertEqual(counters["benchmark.http_2xx"], 25)
-    self.assertEqual(counters["upstream_cx_destroy"], 1)
-    self.assertEqual(counters["upstream_cx_destroy_local"], 1)
-    self.assertEqual(counters["upstream_cx_http1_total"], 1)
-    self.assertEqual(counters["upstream_cx_rx_bytes_total"], 3400)
-    self.assertEqual(counters["upstream_cx_total"], 1)
+    self.assertIsSubset({
+        "benchmark.http_2xx": 25,
+        "upstream_cx_destroy": 1,
+        "upstream_cx_destroy_local": 1,
+        "upstream_cx_http1_total": 1,
+        "upstream_cx_rx_bytes_total": 3400,
+        "upstream_cx_total": 1,
+        "upstream_rq_pending_total": 1,
+        "upstream_rq_total": 25,
+    }, counters)
     self.assertEqual(counters["upstream_cx_tx_bytes_total"],
                      1400 if IntegrationTestBase.ip_version == IpVersion.IPV6 else 1500)
-    self.assertEqual(counters["upstream_rq_pending_total"], 1)
-    self.assertEqual(counters["upstream_rq_total"], 25)
     self.assertEqual(len(counters), 13)
 
   def mini_stress_test_h1(self, args):
@@ -87,15 +88,18 @@ class TestHttp(HttpIntegrationTestBase):
     """
     parsed_json, _ = self.runNighthawkClient(["--h2", self.getTestServerRootUri()])
     counters = self.getNighthawkCounterMapFromJson(parsed_json)
-    self.assertEqual(counters["benchmark.http_2xx"], 25)
-    self.assertEqual(counters["upstream_cx_destroy"], 1)
-    self.assertEqual(counters["upstream_cx_destroy_local"], 1)
-    self.assertEqual(counters["upstream_cx_http2_total"], 1)
+    self.assertIsSubset({
+        "benchmark.http_2xx": 25,
+        "upstream_cx_destroy": 1,
+        "upstream_cx_destroy_local": 1,
+        "upstream_cx_http2_total": 1,
+        "upstream_cx_total": 1,
+        "upstream_rq_pending_total": 1,
+        "upstream_rq_total": 25,
+    }, counters)
+
     self.assertGreaterEqual(counters["upstream_cx_rx_bytes_total"], 1145)
-    self.assertEqual(counters["upstream_cx_total"], 1)
     self.assertGreaterEqual(counters["upstream_cx_tx_bytes_total"], 403)
-    self.assertEqual(counters["upstream_rq_pending_total"], 1)
-    self.assertEqual(counters["upstream_rq_total"], 25)
     self.assertEqual(len(counters), 13)
 
   def test_concurrency(self):
@@ -122,21 +126,23 @@ class TestHttps(HttpsIntegrationTestBase):
     """
     parsed_json, _ = self.runNighthawkClient([self.getTestServerRootUri()])
     counters = self.getNighthawkCounterMapFromJson(parsed_json)
-    self.assertEqual(counters["benchmark.http_2xx"], 25)
-    self.assertEqual(counters["upstream_cx_destroy"], 1)
-    self.assertEqual(counters["upstream_cx_destroy_local"], 1)
-    self.assertEqual(counters["upstream_cx_http1_total"], 1)
-    self.assertEqual(counters["upstream_cx_rx_bytes_total"], 3400)
-    self.assertEqual(counters["upstream_cx_total"], 1)
+    self.assertIsSubset({
+        "benchmark.http_2xx": 25,
+        "upstream_cx_destroy": 1,
+        "upstream_cx_destroy_local": 1,
+        "upstream_cx_http1_total": 1,
+        "upstream_cx_rx_bytes_total": 3400,
+        "upstream_cx_total": 1,
+        "upstream_rq_pending_total": 1,
+        "upstream_rq_total": 25,
+        "ssl.ciphers.ECDHE-RSA-AES128-GCM-SHA256": 1,
+        "ssl.curves.X25519": 1,
+        "ssl.handshake": 1,
+        "ssl.sigalgs.rsa_pss_rsae_sha256": 1,
+        "ssl.versions.TLSv1.2": 1,
+    }, counters)
     self.assertEqual(counters["upstream_cx_tx_bytes_total"],
                      1400 if IntegrationTestBase.ip_version == IpVersion.IPV6 else 1500)
-    self.assertEqual(counters["upstream_rq_pending_total"], 1)
-    self.assertEqual(counters["upstream_rq_total"], 25)
-    self.assertEqual(counters["ssl.ciphers.ECDHE-RSA-AES128-GCM-SHA256"], 1)
-    self.assertEqual(counters["ssl.curves.X25519"], 1)
-    self.assertEqual(counters["ssl.handshake"], 1)
-    self.assertEqual(counters["ssl.sigalgs.rsa_pss_rsae_sha256"], 1)
-    self.assertEqual(counters["ssl.versions.TLSv1.2"], 1)
     self.assertEqual(len(counters), 18)
 
     server_stats = self.getTestServerStatisticsJson()
@@ -151,20 +157,22 @@ class TestHttps(HttpsIntegrationTestBase):
 
     parsed_json, _ = self.runNighthawkClient(["--h2", self.getTestServerRootUri()])
     counters = self.getNighthawkCounterMapFromJson(parsed_json)
-    self.assertEqual(counters["benchmark.http_2xx"], 25)
-    self.assertEqual(counters["upstream_cx_destroy"], 1)
-    self.assertEqual(counters["upstream_cx_destroy_local"], 1)
-    self.assertEqual(counters["upstream_cx_http2_total"], 1)
+    self.assertIsSubset({
+        "benchmark.http_2xx": 25,
+        "upstream_cx_destroy": 1,
+        "upstream_cx_destroy_local": 1,
+        "upstream_cx_http2_total": 1,
+        "upstream_cx_total": 1,
+        "upstream_rq_pending_total": 1,
+        "upstream_rq_total": 25,
+        "ssl.ciphers.ECDHE-RSA-AES128-GCM-SHA256": 1,
+        "ssl.curves.X25519": 1,
+        "ssl.handshake": 1,
+        "ssl.sigalgs.rsa_pss_rsae_sha256": 1,
+        "ssl.versions.TLSv1.2": 1
+    }, counters)
     self.assertGreaterEqual(counters["upstream_cx_rx_bytes_total"], 1145)
-    self.assertEqual(counters["upstream_cx_total"], 1)
     self.assertGreaterEqual(counters["upstream_cx_tx_bytes_total"], 403)
-    self.assertEqual(counters["upstream_rq_pending_total"], 1)
-    self.assertEqual(counters["upstream_rq_total"], 25)
-    self.assertEqual(counters["ssl.ciphers.ECDHE-RSA-AES128-GCM-SHA256"], 1)
-    self.assertEqual(counters["ssl.curves.X25519"], 1)
-    self.assertEqual(counters["ssl.handshake"], 1)
-    self.assertEqual(counters["ssl.sigalgs.rsa_pss_rsae_sha256"], 1)
-    self.assertEqual(counters["ssl.versions.TLSv1.2"], 1)
     self.assertEqual(len(counters), 18)
 
   def test_h1_tls_context_configuration(self):
