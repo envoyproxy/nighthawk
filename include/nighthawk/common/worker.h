@@ -24,6 +24,12 @@ public:
    * Wait for the worker thread to complete its work.
    */
   virtual void waitForCompletion() PURE;
+
+  /**
+   * Shuts down the worker. Must be paired with start,
+   * and mandatory.
+   */
+  virtual void shutDown() PURE;
 };
 
 using WorkerPtr = std::unique_ptr<Worker>;

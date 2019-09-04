@@ -52,9 +52,12 @@ bool Main::run() {
   if (process.run(*collector)) {
     // TODO(oschaaf): the way we output should be optionized.
     std::cout << collector->toString();
+    process.shutDown();
     ENVOY_LOG(info, "Done.");
     return true;
   }
+
+  process.shutDown();
   ENVOY_LOG(critical, "An error ocurred.");
   return false;
 }

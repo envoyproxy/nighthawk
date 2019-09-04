@@ -31,7 +31,7 @@ public:
     OutputCollectorFactoryImpl output_format_factory(time_system_, *options_);
     auto collector = output_format_factory.create();
     EXPECT_TRUE(process->run(*collector));
-    process.reset();
+    process->shutDown();
   }
 
   const std::string loopback_address_;

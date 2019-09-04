@@ -12,7 +12,7 @@ WorkerImpl::WorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Instance& tls,
   tls.registerThread(*dispatcher_, false);
 }
 
-WorkerImpl::~WorkerImpl() { shutDown(); }
+WorkerImpl::~WorkerImpl() { RELEASE_ASSERT(shut_down_, "Call shutDown() before destruction."); }
 
 void WorkerImpl::notifyExit() {
   // Unblock the associated worker thread, and wait for it to wrap up.
@@ -29,11 +29,13 @@ void WorkerImpl::shutDown() {
   if (thread_.joinable()) {
     thread_.join();
   }
+  shut_down_ = true;
 }
 
 void WorkerImpl::start() {
   RELEASE_ASSERT(!started_, "WorkerImpl::start() expected started_ to be false");
   started_ = true;
+  shut_down_ = false;
   exit_lock_guard_ = std::make_unique<Envoy::Thread::LockGuard>(exit_lock_);
   Envoy::Thread::LockGuard completion_lock(completion_lock_);
   Envoy::Thread::CondVar wait_event;

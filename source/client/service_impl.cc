@@ -37,6 +37,7 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
     } else {
       response.mutable_error_detail()->set_message("Unknown failure");
     }
+    process.shutDown();
   }
   writeResponseAndFinish(response);
 }

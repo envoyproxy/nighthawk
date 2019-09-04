@@ -18,6 +18,11 @@ public:
    * @return bool true iff execution was successfull.
    */
   virtual bool run(OutputCollector& collector) PURE;
+
+  /**
+   * Shuts down the worker. Mandatory call before destructing.
+   */
+  virtual void shutDown() PURE;
 };
 
 using ProcessPtr = std::unique_ptr<Process>;
