@@ -61,7 +61,7 @@ TEST_F(WorkerTest, WorkerExecutesOnThread) {
 
   EXPECT_CALL(tls_, shutdownThread()).Times(1);
   ASSERT_TRUE(worker.ran_);
-  worker.shutDown();
+  worker.shutdown();
 }
 
 } // namespace Nighthawk

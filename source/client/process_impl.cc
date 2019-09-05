@@ -86,22 +86,22 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
 }
 
 ProcessImpl::~ProcessImpl() {
-  RELEASE_ASSERT(shut_down_, "shutDown not called before destruction.");
+  RELEASE_ASSERT(shutdown_, "shutdown not called before destruction.");
 }
 
-void ProcessImpl::shutDown() {
+void ProcessImpl::shutdown() {
   // Before we shut down the worker threads, stop threading.
   tls_.shutdownGlobalThreading();
   store_root_.shutdownThreading();
   // Before shutting down the cluster manager, stop the workers.
   for (auto& worker : workers_) {
-    worker->shutDown();
+    worker->shutdown();
   }
   workers_.clear();
   if (cluster_manager_ != nullptr) {
     cluster_manager_->shutdown();
   }
-  shut_down_ = true;
+  shutdown_ = true;
 }
 
 const std::vector<ClientWorkerPtr>& ProcessImpl::createWorkers(const UriImpl& uri,
@@ -275,7 +275,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
   } catch (UriException) {
     return false;
   }
-  shut_down_ = false;
+  shutdown_ = false;
   const std::vector<ClientWorkerPtr>& workers =
       createWorkers(uri, determineConcurrency(), options_.prefetchConnections());
 

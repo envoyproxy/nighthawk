@@ -21,7 +21,7 @@ public:
 
   void start() override;
   void waitForCompletion() override;
-  void shutDown() override;
+  void shutdown() override;
 
 protected:
   /**
@@ -42,7 +42,7 @@ private:
   Envoy::Thread::MutexBasicLockable completion_lock_;
   std::thread thread_;
   bool started_{};
-  bool shut_down_{true};
+  bool shutdown_{true};
 };
 
 } // namespace Nighthawk

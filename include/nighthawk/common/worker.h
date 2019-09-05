@@ -29,7 +29,7 @@ public:
    * Shuts down the worker. Must be paired with start,
    * and mandatory.
    */
-  virtual void shutDown() PURE;
+  virtual void shutdown() PURE;
 };
 
 using WorkerPtr = std::unique_ptr<Worker>;

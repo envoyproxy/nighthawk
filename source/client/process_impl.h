@@ -50,7 +50,7 @@ public:
   uint32_t determineConcurrency() const;
   bool run(OutputCollector& collector) override;
   const envoy::config::bootstrap::v2::Bootstrap createBootstrapConfiguration(const Uri& uri) const;
-  void shutDown() override;
+  void shutdown() override;
 
 private:
   void configureComponentLogLevels(spdlog::level::level_enum level);
@@ -100,7 +100,7 @@ private:
   Tracing::HttpTracerPtr http_tracer_;
   Envoy::Server::ValidationAdmin admin_;
   Envoy::ProtobufMessage::ProdValidationContextImpl validation_context_;
-  bool shut_down_{true};
+  bool shutdown_{true};
 };
 
 } // namespace Client

@@ -113,7 +113,7 @@ TEST_F(ClientWorkerTest, BasicTest) {
 
   auto statistics = worker->statistics();
   EXPECT_EQ(2, statistics.size());
-  worker->shutDown();
+  worker->shutdown();
 }
 
 } // namespace Client

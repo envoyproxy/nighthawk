@@ -22,7 +22,7 @@ public:
   /**
    * Shuts down the worker. Mandatory call before destructing.
    */
-  virtual void shutDown() PURE;
+  virtual void shutdown() PURE;
 };
 
 using ProcessPtr = std::unique_ptr<Process>;
