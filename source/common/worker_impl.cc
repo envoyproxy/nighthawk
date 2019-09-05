@@ -15,8 +15,9 @@ WorkerImpl::WorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Instance& tls,
 WorkerImpl::~WorkerImpl() { RELEASE_ASSERT(shutdown_, "Call shutdown() before destruction."); }
 
 void WorkerImpl::shutdown() {
-  tls_.shutdownThread();
   shutdown_ = true;
+  signal_thread_to_exit_.set_value();
+  thread_.join();
 }
 
 void WorkerImpl::start() {
@@ -28,9 +29,14 @@ void WorkerImpl::start() {
                    "Couldn't get runtime");
     dispatcher_->run(Envoy::Event::Dispatcher::RunType::NonBlock);
     work();
+    complete_.set_value();
+    signal_thread_to_exit_.get_future().wait();
+    tls_.shutdownThread();
   });
 }
 
-void WorkerImpl::waitForCompletion() { thread_.join(); }
+void WorkerImpl::waitForCompletion() {
+  complete_.get_future().wait();
+}
 
 } // namespace Nighthawk

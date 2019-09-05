@@ -39,6 +39,8 @@ protected:
 private:
   std::thread thread_;
   bool started_{};
+  std::promise<void> complete_;
+  std::promise<void> signal_thread_to_exit_;
   bool shutdown_{true};
 };
 

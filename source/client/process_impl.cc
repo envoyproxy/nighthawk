@@ -101,6 +101,7 @@ void ProcessImpl::shutdown() {
   if (cluster_manager_ != nullptr) {
     cluster_manager_->shutdown();
   }
+  tls_.shutdownThread();
   shutdown_ = true;
 }
 
