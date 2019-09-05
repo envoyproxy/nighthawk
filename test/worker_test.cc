@@ -20,14 +20,14 @@ namespace Nighthawk {
 class TestWorker : public WorkerImpl {
 public:
   TestWorker(Envoy::Api::Api& api, Envoy::ThreadLocal::Instance& tls)
-      : WorkerImpl(api, tls, store_), thread_id_(std::this_thread::get_id()) {}
+      : WorkerImpl(api, tls, test_store_), thread_id_(std::this_thread::get_id()) {}
   void work() override {
     EXPECT_NE(thread_id_, std::this_thread::get_id());
     ran_ = true;
   }
 
   bool ran_{};
-  Envoy::Stats::IsolatedStoreImpl store_;
+  Envoy::Stats::IsolatedStoreImpl test_store_;
   std::thread::id thread_id_;
 };
 
@@ -37,7 +37,7 @@ public:
 
   Envoy::Api::ApiPtr api_;
   Envoy::ThreadLocal::MockInstance tls_;
-  Envoy::Stats::IsolatedStoreImpl store_;
+  Envoy::Stats::IsolatedStoreImpl test_store_;
   Envoy::Runtime::RandomGeneratorImpl rand_;
   NiceMock<Envoy::LocalInfo::MockLocalInfo> local_info_;
   Envoy::Init::MockManager init_manager_;
@@ -54,8 +54,8 @@ TEST_F(WorkerTest, WorkerExecutesOnThread) {
   NiceMock<Envoy::Event::MockDispatcher> dispatcher;
   std::unique_ptr<Envoy::Runtime::ScopedLoaderSingleton> loader =
       std::make_unique<Envoy::Runtime::ScopedLoaderSingleton>(Envoy::Runtime::LoaderPtr{
-          new Envoy::Runtime::LoaderImpl(dispatcher, tls_, {}, local_info_, init_manager_, store_,
-                                         rand_, validation_visitor_, *api_)});
+          new Envoy::Runtime::LoaderImpl(dispatcher, tls_, {}, local_info_, init_manager_,
+                                         test_store_, rand_, validation_visitor_, *api_)});
   worker.start();
   worker.waitForCompletion();
 

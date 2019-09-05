@@ -20,7 +20,6 @@
 #include "gtest/gtest.h"
 
 using namespace testing;
-using Envoy::SaveArgAddress;
 
 namespace Nighthawk {
 
