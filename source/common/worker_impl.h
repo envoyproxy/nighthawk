@@ -1,5 +1,6 @@
 #pragma once
 
+#include <future>
 #include <thread>
 
 #include "envoy/api/api.h"
@@ -36,10 +37,6 @@ protected:
   Envoy::TimeSource& time_source_;
 
 private:
-  void notifyExit();
-  Envoy::Thread::MutexBasicLockable exit_lock_;
-  std::unique_ptr<Envoy::Thread::LockGuard> exit_lock_guard_;
-  Envoy::Thread::MutexBasicLockable completion_lock_;
   std::thread thread_;
   bool started_{};
   bool shutdown_{true};
