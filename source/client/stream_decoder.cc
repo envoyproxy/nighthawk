@@ -37,7 +37,7 @@ void StreamDecoder::onComplete(bool success) {
   }
   ASSERT(!success || complete_);
   decoder_completion_callback_.onComplete(success, *response_headers_);
-  caller_completion_callback_(success, complete_);
+  caller_completion_callback_(complete_, success);
   dispatcher_.deferredDelete(std::unique_ptr<StreamDecoder>(this));
 }
 
