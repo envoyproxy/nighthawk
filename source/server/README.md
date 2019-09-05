@@ -30,7 +30,7 @@ static_resources:
     filter_chains:
     - filters:
       - name: envoy.http_connection_manager
-        config: 
+        config:
           generate_request_id: false
           codec_type: auto
           stat_prefix: ingress_http
@@ -74,4 +74,4 @@ admin:
 ➜ /bazel-bin/nighthawk/source/server/server --config-path /path/to/test-server-server.yaml
 
 # Verify the test server with a curl command similar to:
-➜ curl -H "x-envoy-fault-delay-request: 1000" -H "x-nighthawk-test-server-config: {response_body_size:20}"  -vv 127.0.0.1:10000 
+➜ curl -H "x-envoy-fault-delay-request: 1000" -H "x-nighthawk-test-server-config: {response_body_size:20}"  -vv 127.0.0.1:10000

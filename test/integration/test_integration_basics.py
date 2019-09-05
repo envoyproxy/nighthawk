@@ -57,8 +57,8 @@ class TestHttp(HttpIntegrationTestBase):
     """
     Run a max rps test with the h1 pool against our test server, using a small client-side
     queue. We expect to observe:
-    - upstream_rq_pending_total increasing 
-    - upstream_cx_overflow overflows 
+    - upstream_rq_pending_total increasing
+    - upstream_cx_overflow overflows
     - blocking to be reported by the sequencer
     """
     counters = self.mini_stress_test_h1([
@@ -79,7 +79,7 @@ class TestHttp(HttpIntegrationTestBase):
     counters = self.mini_stress_test_h1(
         [self.getTestServerRootUri(), "--rps", "999999", "--duration 2"])
     self.assertEqual(counters["upstream_rq_pending_total"], 1)
-    self.assertFalse("upstream_cx_overflow" in counters)
+    self.assertNotIn("upstream_cx_overflow", counters)
 
   def test_h2(self):
     """

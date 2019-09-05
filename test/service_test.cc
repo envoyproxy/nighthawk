@@ -16,7 +16,6 @@
 
 using namespace std::chrono_literals;
 using namespace testing;
-using testing::MatchesRegex;
 
 namespace Nighthawk {
 namespace Client {
@@ -25,21 +24,56 @@ class ServiceTest : public TestWithParam<Envoy::Network::Address::IpVersion> {
 public:
   void SetUp() override {
     grpc::ServerBuilder builder;
-    int grpc_server_port = 0;
-    const std::string loopback_address =
-        Envoy::Network::Test::getLoopbackAddressUrlString(GetParam());
+    loopback_address_ = Envoy::Network::Test::getLoopbackAddressUrlString(GetParam());
 
-    builder.AddListeningPort(fmt::format("{}:0", loopback_address),
-                             grpc::InsecureServerCredentials(), &grpc_server_port);
+    builder.AddListeningPort(fmt::format("{}:0", loopback_address_),
+                             grpc::InsecureServerCredentials(), &grpc_server_port_);
     builder.RegisterService(&service_);
     server_ = builder.BuildAndStart();
-    channel_ = grpc::CreateChannel(fmt::format("{}:{}", loopback_address, grpc_server_port),
-                                   grpc::InsecureChannelCredentials());
-    stub_ = std::make_unique<nighthawk::client::NighthawkService::Stub>(channel_);
+    setupGrpcClient();
     setBasicRequestOptions();
   }
 
   void TearDown() override { server_->Shutdown(); }
+
+  void setupGrpcClient() {
+    channel_ = grpc::CreateChannel(fmt::format("{}:{}", loopback_address_, grpc_server_port_),
+                                   grpc::InsecureChannelCredentials());
+    stub_ = std::make_unique<nighthawk::client::NighthawkService::Stub>(channel_);
+  }
+
+  void singleStreamBackToBackExecution(grpc::ClientContext& context,
+                                       nighthawk::client::NighthawkService::Stub&) {
+    auto r = stub_->ExecutionStream(&context);
+    EXPECT_TRUE(r->Write(request_, {}));
+    EXPECT_TRUE(r->Read(&response_));
+    ASSERT_FALSE(response_.has_error_detail());
+    EXPECT_TRUE(response_.has_output());
+    EXPECT_TRUE(r->Write(request_, {}));
+    EXPECT_TRUE(r->Read(&response_));
+    EXPECT_FALSE(response_.has_error_detail());
+    EXPECT_TRUE(response_.has_output());
+    EXPECT_TRUE(r->WritesDone());
+    auto status = r->Finish();
+    EXPECT_TRUE(status.ok());
+  }
+
+  std::thread testThreadedClientRun(bool expect_success) const {
+    std::thread thread([this, expect_success]() {
+      auto channel = grpc::CreateChannel(fmt::format("{}:{}", loopback_address_, grpc_server_port_),
+                                         grpc::InsecureChannelCredentials());
+      auto stub = std::make_unique<nighthawk::client::NighthawkService::Stub>(channel);
+      grpc::ClientContext context;
+      auto stream = stub->ExecutionStream(&context);
+      EXPECT_TRUE(stream->Write(request_, {}));
+      EXPECT_TRUE(stream->WritesDone());
+      nighthawk::client::ExecutionResponse response;
+      EXPECT_EQ(stream->Read(&response), expect_success);
+      auto status = stream->Finish();
+      EXPECT_EQ(status.ok(), expect_success);
+    });
+    return thread;
+  }
 
   void setBasicRequestOptions() {
     auto options = request_.mutable_start_request()->mutable_options();
@@ -47,7 +81,7 @@ public:
     // we are about to perform. However, it would be nice to be able to mock out things
     // to clean this up.
     options->mutable_uri()->set_value("http://127.0.0.1:10001/");
-    options->mutable_duration()->set_seconds(3);
+    options->mutable_duration()->set_seconds(2);
     options->mutable_requests_per_second()->set_value(3);
   }
 
@@ -72,6 +106,8 @@ public:
   nighthawk::client::ExecutionRequest request_;
   nighthawk::client::ExecutionResponse response_;
   std::unique_ptr<nighthawk::client::NighthawkService::Stub> stub_;
+  std::string loopback_address_;
+  int grpc_server_port_{0};
 };
 
 INSTANTIATE_TEST_SUITE_P(IpVersions, ServiceTest,
@@ -108,18 +144,12 @@ TEST_P(ServiceTest, NoConcurrentStart) {
 
 // Test we are able to perform serialized executions.
 TEST_P(ServiceTest, BackToBackExecution) {
-  auto r = stub_->ExecutionStream(&context_);
-  EXPECT_TRUE(r->Write(request_, {}));
-  EXPECT_TRUE(r->Read(&response_));
-  ASSERT_FALSE(response_.has_error_detail());
-  EXPECT_TRUE(response_.has_output());
-  EXPECT_TRUE(r->Write(request_, {}));
-  EXPECT_TRUE(r->Read(&response_));
-  EXPECT_FALSE(response_.has_error_detail());
-  EXPECT_TRUE(response_.has_output());
-  EXPECT_TRUE(r->WritesDone());
-  auto status = r->Finish();
-  EXPECT_TRUE(status.ok());
+  grpc::ClientContext context1;
+  singleStreamBackToBackExecution(context1, *stub_);
+  // create a new client to connect to the same server, and do it one more time.
+  setupGrpcClient();
+  grpc::ClientContext context2;
+  singleStreamBackToBackExecution(context2, *stub_);
 }
 
 // Test that proto validation is wired up and works.
