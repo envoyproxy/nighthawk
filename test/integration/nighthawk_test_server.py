@@ -19,6 +19,7 @@ class TestServerBase(object):
 
   def __init__(self, server_binary_path, config_template_path, server_ip, server_port, ip_version,
                server_binary_config_path_arg, parameters):
+    assert ip_version != IpVersion.UNKNOWN
     self.ip_version = ip_version
     self.server_binary_path = server_binary_path
     self.config_template_path = config_template_path
