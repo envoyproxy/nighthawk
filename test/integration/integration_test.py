@@ -7,8 +7,6 @@ import os
 import sys
 import pytest
 
-assert sys.version_info >= (3, 0)
-
 if __name__ == '__main__':
   path = os.path.dirname(os.path.realpath(__file__))
   r = pytest.main(["--rootdir=" + path, "-x", path, "-n", "20"], plugins=["xdist"])

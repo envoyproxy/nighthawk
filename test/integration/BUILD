@@ -30,11 +30,12 @@ py_test(
         requirement("requests"),
         # The following are implied by 'request'.
         requirement("urllib3"),
-        requirement("pytest"),
-        requirement("pytest-dependency"),
         requirement("chardet"),
         requirement("certifi"),
         requirement("idna"),
+        requirement("pytest"),
+        requirement("pytest-dependency"),
+        # The following are implied by pytest & co.
         requirement("attrs"),
         requirement("pluggy"),
         requirement("zipp"),
