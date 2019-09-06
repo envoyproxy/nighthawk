@@ -7,11 +7,14 @@
 #include "envoy/runtime/runtime.h"
 #include "envoy/stats/store.h"
 
+#include "nighthawk/common/operation_callback.h"
 #include "nighthawk/common/statistic.h"
 #include "nighthawk/common/uri.h"
 
 namespace Nighthawk {
 namespace Client {
+
+using CompletionCallback = OperationCallback;
 
 class BenchmarkClient {
 public:
@@ -44,7 +47,7 @@ public:
    * @return true if the request could be started, otherwise the request could not be started, for
    * example due to resource limits
    */
-  virtual bool tryStartOne(std::function<void()> caller_completion_callback) PURE;
+  virtual bool tryStartRequest(CompletionCallback caller_completion_callback) PURE;
 
   /**
    * @return const Envoy::Stats::Store& the statistics store associated the benchmark client.

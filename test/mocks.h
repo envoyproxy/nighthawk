@@ -120,13 +120,13 @@ class FakeSequencerTarget {
 public:
   virtual ~FakeSequencerTarget() = default;
   // A fake method that matches the sequencer target signature.
-  virtual bool callback(std::function<void()>) PURE;
+  virtual bool callback(OperationCallback) PURE;
 };
 
 class MockSequencerTarget : public FakeSequencerTarget {
 public:
   MockSequencerTarget();
-  MOCK_METHOD1(callback, bool(std::function<void()>));
+  MOCK_METHOD1(callback, bool(OperationCallback));
 };
 
 class MockBenchmarkClient : public Client::BenchmarkClient {
@@ -136,7 +136,7 @@ public:
   MOCK_METHOD0(terminate, void());
   MOCK_METHOD1(setMeasureLatencies, void(bool));
   MOCK_CONST_METHOD0(statistics, StatisticPtrMap());
-  MOCK_METHOD1(tryStartOne, bool(std::function<void()>));
+  MOCK_METHOD1(tryStartRequest, bool(Client::CompletionCallback));
   MOCK_CONST_METHOD0(store, Envoy::Stats::Store&());
   MOCK_METHOD0(prefetchPoolConnections, void());
   MOCK_CONST_METHOD0(measureLatencies, bool());
