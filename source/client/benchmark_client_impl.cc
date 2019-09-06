@@ -29,12 +29,12 @@ void Http1PoolImpl::createConnections(const uint32_t connection_limit) {
 
 BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
     Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Store& store,
-    StatisticPtr&& connect_statistic, StatisticPtr&& response_statistic, UriPtr&& uri, bool use_h2,
+    StatisticPtr&& connect_statistic, StatisticPtr&& response_statistic, bool use_h2,
     Envoy::Upstream::ClusterManagerPtr& cluster_manager, GeneratorSignature header_generator)
     : api_(api), dispatcher_(dispatcher), store_(store),
       scope_(store_.createScope("client.benchmark.")),
       connect_statistic_(std::move(connect_statistic)),
-      response_statistic_(std::move(response_statistic)), use_h2_(use_h2), uri_(std::move(uri)),
+      response_statistic_(std::move(response_statistic)), use_h2_(use_h2),
       benchmark_client_stats_({ALL_BENCHMARK_CLIENT_STATS(POOL_COUNTER(*scope_))}),
       cluster_manager_(cluster_manager), header_generator_(std::move(header_generator)) {
   connect_statistic_->setId("benchmark_http_client.queue_to_connect");
@@ -93,9 +93,10 @@ bool BenchmarkClientHttpImpl::tryStartOne(std::function<void()> caller_completio
     }
   }
 
-  auto stream_decoder = new StreamDecoder(
-      dispatcher_, api_.timeSource(), *this, std::move(caller_completion_callback),
-      *connect_statistic_, *response_statistic_, header, measureLatencies(), content_length);
+  auto stream_decoder = new StreamDecoder(dispatcher_, api_.timeSource(), *this,
+                                          std::move(caller_completion_callback),
+                                          *connect_statistic_, *response_statistic_,
+                                          std::move(header), measureLatencies(), content_length);
   requests_initiated_++;
   pool_ptr->newStream(*stream_decoder, *stream_decoder);
   return true;

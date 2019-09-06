@@ -33,7 +33,7 @@ public:
   StreamDecoder(Envoy::Event::Dispatcher& dispatcher, Envoy::TimeSource& time_source,
                 StreamDecoderCompletionCallback& decoder_completion_callback,
                 std::function<void()> caller_completion_callback, Statistic& connect_statistic,
-                Statistic& latency_statistic, const HeaderMapPtr& request_headers,
+                Statistic& latency_statistic, const HeaderMapPtr request_headers,
                 bool measure_latencies, uint32_t request_body_size)
       : dispatcher_(dispatcher), time_source_(time_source),
         decoder_completion_callback_(decoder_completion_callback),

@@ -25,7 +25,7 @@ class BenchmarkClientFactory {
 public:
   virtual ~BenchmarkClientFactory() = default;
   virtual BenchmarkClientPtr create(Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher,
-                                    Envoy::Stats::Store& store, UriPtr&& uri,
+                                    Envoy::Stats::Store& store,
                                     Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                                     HeaderGenerator& header_generator) const PURE;
 };

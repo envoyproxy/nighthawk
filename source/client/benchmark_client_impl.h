@@ -13,7 +13,6 @@
 #include "nighthawk/client/header_generator.h"
 #include "nighthawk/common/sequencer.h"
 #include "nighthawk/common/statistic.h"
-#include "nighthawk/common/uri.h"
 
 #include "external/envoy/source/common/common/logger.h"
 #include "external/envoy/source/common/http/http1/conn_pool.h"
@@ -57,7 +56,7 @@ class BenchmarkClientHttpImpl : public BenchmarkClient,
 public:
   BenchmarkClientHttpImpl(Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher,
                           Envoy::Stats::Store& store, StatisticPtr&& connect_statistic,
-                          StatisticPtr&& response_statistic, UriPtr&& uri, bool use_h2,
+                          StatisticPtr&& response_statistic, bool use_h2,
                           Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                           GeneratorSignature header_generator);
 
@@ -110,7 +109,6 @@ private:
   StatisticPtr connect_statistic_;
   StatisticPtr response_statistic_;
   const bool use_h2_;
-  const UriPtr uri_;
   std::chrono::seconds timeout_{5s};
   uint32_t connection_limit_{1};
   uint32_t max_pending_requests_{1};

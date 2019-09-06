@@ -10,14 +10,13 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
                                    const BenchmarkClientFactory& benchmark_client_factory,
                                    const SequencerFactory& sequencer_factory,
                                    const HeaderGeneratorFactory& header_generator_factory,
-                                   UriPtr&& uri, Envoy::Stats::Store& store,
-                                   const int worker_number,
+                                   Envoy::Stats::Store& store, const int worker_number,
                                    const Envoy::MonotonicTime starting_time,
                                    bool prefetch_connections)
     : WorkerImpl(api, tls, store), worker_number_(worker_number), starting_time_(starting_time),
       header_generator_(header_generator_factory.create()),
-      benchmark_client_(benchmark_client_factory.create(api, *dispatcher_, store_, std::move(uri),
-                                                        cluster_manager, *header_generator_)),
+      benchmark_client_(benchmark_client_factory.create(api, *dispatcher_, store_, cluster_manager,
+                                                        *header_generator_)),
       sequencer_(
           sequencer_factory.create(time_source_, *dispatcher_, starting_time, *benchmark_client_)),
       prefetch_connections_(prefetch_connections) {}

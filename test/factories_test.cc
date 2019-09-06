@@ -43,8 +43,7 @@ TEST_F(FactoriesTest, CreateBenchmarkClient) {
   StaticHeaderGeneratorImpl header_generator(
       Envoy::Http::HeaderMapPtr{new Envoy::Http::TestHeaderMapImpl{}});
   auto benchmark_client =
-      factory.create(*api_, dispatcher_, stats_store_, std::make_unique<UriImpl>("http://foo/"),
-                     cluster_manager, header_generator);
+      factory.create(*api_, dispatcher_, stats_store_, cluster_manager, header_generator);
   EXPECT_NE(nullptr, benchmark_client.get());
 }
 

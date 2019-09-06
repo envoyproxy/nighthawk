@@ -11,7 +11,6 @@
 #include "nighthawk/client/factories.h"
 #include "nighthawk/client/header_generator.h"
 #include "nighthawk/common/sequencer.h"
-#include "nighthawk/common/uri.h"
 
 #include "external/envoy/source/common/common/logger.h"
 
@@ -28,7 +27,7 @@ public:
                    Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                    const BenchmarkClientFactory& benchmark_client_factory,
                    const SequencerFactory& sequencer_factory,
-                   const HeaderGeneratorFactory& header_generator_factory, UriPtr&& uri,
+                   const HeaderGeneratorFactory& header_generator_factory,
                    Envoy::Stats::Store& store, const int worker_number,
                    const Envoy::MonotonicTime starting_time, bool prefetch_connections);
 
