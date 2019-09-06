@@ -1,4 +1,4 @@
-#! /home/venv/bin/python
+#!/usr/bin/env python3
 """@package integration_test.py
 Entry point for our integration testing
 """
