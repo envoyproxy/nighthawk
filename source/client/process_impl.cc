@@ -88,12 +88,32 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
   configureComponentLogLevels(spdlog::level::from_str(lower));
 }
 
+ProcessImpl::~ProcessImpl() {
+  RELEASE_ASSERT(shutdown_, "shutdown not called before destruction.");
+}
+
+void ProcessImpl::shutdown() {
+  // Before we shut down the worker threads, stop threading.
+  tls_.shutdownGlobalThreading();
+  store_root_.shutdownThreading();
+  // Before shutting down the cluster manager, stop the workers.
+  for (auto& worker : workers_) {
+    worker->shutdown();
+  }
+  workers_.clear();
+  if (cluster_manager_ != nullptr) {
+    cluster_manager_->shutdown();
+  }
+  tls_.shutdownThread();
+  shutdown_ = true;
+}
+
 const std::vector<ClientWorkerPtr>& ProcessImpl::createWorkers(const UriImpl& uri,
                                                                const uint32_t concurrency,
                                                                const bool prefetch_connections) {
   // TODO(oschaaf): Expose kMinimalDelay in configuration.
   const std::chrono::milliseconds kMinimalWorkerDelay = 500ms;
-  ASSERT(workers_.size() == 0);
+  ASSERT(workers_.empty());
 
   // We try to offset the start of each thread so that workers will execute tasks evenly spaced in
   // time. Let's assume we have two workers w0/w1, which should maintain a combined global pace of
@@ -290,6 +310,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
     tls_.shutdownGlobalThreading();
     return false;
   }
+  shutdown_ = false;
   const std::vector<ClientWorkerPtr>& workers =
       createWorkers(uri, determineConcurrency(), options_.prefetchConnections());
 
@@ -361,12 +382,6 @@ bool ProcessImpl::run(OutputCollector& collector) {
                         mergeWorkerCounters(workers));
   }
 
-  // Before we shut down the worker threads, stop threading.
-  tls_.shutdownGlobalThreading();
-  store_root_.shutdownThreading();
-  // Before shutting down the cluster manager, stop the workers.
-  workers_.clear();
-  cluster_manager_->shutdown();
   return ok;
 }
 

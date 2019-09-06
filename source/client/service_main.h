@@ -21,7 +21,7 @@ public:
   void start();
   void wait();
   void shutdown();
-  static std::string appendDefaultPortIfNeeded(absl::string_view ip_and_maybe_port);
+  static std::string appendDefaultPortIfNeeded(absl::string_view host_and_maybe_port);
 
 private:
   grpc::ServerBuilder builder_;

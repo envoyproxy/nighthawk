@@ -46,6 +46,7 @@ namespace Client {
 class ProcessImpl : public Process, public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
   ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system);
+  ~ProcessImpl() override;
 
   uint32_t determineConcurrency() const;
   bool run(OutputCollector& collector) override;
@@ -53,6 +54,7 @@ public:
                                     const Uri& uri) const;
   void addTracingCluster(envoy::config::bootstrap::v2::Bootstrap& bootstrap, const Uri& uri) const;
   void setupTracingImplementation(envoy::config::bootstrap::v2::Bootstrap& bootstrap) const;
+  void shutdown() override;
 
 private:
   void configureComponentLogLevels(spdlog::level::level_enum level);
@@ -102,6 +104,7 @@ private:
   Tracing::HttpTracerPtr http_tracer_;
   Envoy::Server::ValidationAdmin admin_;
   Envoy::ProtobufMessage::ProdValidationContextImpl validation_context_;
+  bool shutdown_{true};
 };
 
 } // namespace Client

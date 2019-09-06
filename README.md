@@ -49,7 +49,7 @@ USAGE:
                                <uint32_t>] [--max-pending-requests
                                <uint32_t>] [--tls-context <string>]
                                [--request-body-size <uint32_t>]
-                               [--request-header <string>] ... 
+                               [--request-header <string>] ...
                                [--request-method <GET|HEAD|POST|PUT|DELETE
                                |CONNECT|OPTIONS|TRACE>] [--address-family
                                <auto|v4|v6>] [--burst-size <uint32_t>]
@@ -62,7 +62,7 @@ USAGE:
                                [--version] [-h] <uri format>
 
 
-Where: 
+Where:
 
    --sequencer-idle-strategy <spin|poll|sleep>
      Choose between using a busy spin/yield loop or have the thread poll or
@@ -119,7 +119,7 @@ Where:
      'auto' to let Nighthawk leverage all vCPUs that have affinity to the
      Nighthawk process. Note that increasing this results in an effective
      load multiplier combined with the configured --rps and --connections
-     values. Default: 1. 
+     values. Default: 1.
 
    --h2
      Use HTTP/2
@@ -159,7 +159,7 @@ Where:
 
 ### Nighthawk gRPC service
 
-The gRPC service can be used to start a server which is able to perform back-to-back benchmark runs upon request. The service interface definition [can be found here.](https://github.com/envoyproxy/nighthawk/blob/59a37568783272a6438b5697277d4e56aa16ebbe/api/client/service.proto) 
+The gRPC service can be used to start a server which is able to perform back-to-back benchmark runs upon request. The service interface definition [can be found here.](https://github.com/envoyproxy/nighthawk/blob/59a37568783272a6438b5697277d4e56aa16ebbe/api/client/service.proto)
 
 
 ```bash
@@ -167,13 +167,13 @@ The gRPC service can be used to start a server which is able to perform back-to-
 ```
 
 ```
-USAGE: 
+USAGE:
 
    bazel-bin/nighthawk_service  [--listen <address:port>] [--] [--version]
                                 [-h]
 
 
-Where: 
+Where:
 
    --listen <address:port>
      The address:port on which the Nighthawk gRPC service should listen.
@@ -212,48 +212,48 @@ Queueing and connection setup latency
   mean:    0s 000ms 002us
   pstdev:  0s 000ms 000us
 
-  Percentile  Count       Latency        
-  0           1           0s 000ms 001us 
-  0.5         5013        0s 000ms 002us 
-  0.75        7496        0s 000ms 002us 
-  0.8         8008        0s 000ms 002us 
-  0.9         8996        0s 000ms 002us 
-  0.95        9493        0s 000ms 002us 
-  0.990625    9899        0s 000ms 003us 
-  0.999023    9983        0s 000ms 004us 
-  1           9992        0s 000ms 027us 
+  Percentile  Count       Latency
+  0           1           0s 000ms 001us
+  0.5         5013        0s 000ms 002us
+  0.75        7496        0s 000ms 002us
+  0.8         8008        0s 000ms 002us
+  0.9         8996        0s 000ms 002us
+  0.95        9493        0s 000ms 002us
+  0.990625    9899        0s 000ms 003us
+  0.999023    9983        0s 000ms 004us
+  1           9992        0s 000ms 027us
 
 Request start to response end
   samples: 9992
   mean:    0s 000ms 108us
   pstdev:  0s 000ms 061us
 
-  Percentile  Count       Latency        
-  0           1           0s 000ms 073us 
-  0.5         4997        0s 000ms 111us 
-  0.75        7495        0s 000ms 113us 
-  0.8         7997        0s 000ms 114us 
-  0.9         8993        0s 000ms 116us 
-  0.95        9493        0s 000ms 120us 
-  0.990625    9899        0s 000ms 130us 
-  0.999023    9983        0s 000ms 528us 
-  1           9992        0s 004ms 083us 
+  Percentile  Count       Latency
+  0           1           0s 000ms 073us
+  0.5         4997        0s 000ms 111us
+  0.75        7495        0s 000ms 113us
+  0.8         7997        0s 000ms 114us
+  0.9         8993        0s 000ms 116us
+  0.95        9493        0s 000ms 120us
+  0.990625    9899        0s 000ms 130us
+  0.999023    9983        0s 000ms 528us
+  1           9992        0s 004ms 083us
 
 Initiation to completion
   samples: 9992
   mean:    0s 000ms 113us
   pstdev:  0s 000ms 061us
 
-  Percentile  Count       Latency        
-  0           1           0s 000ms 077us 
-  0.5         4996        0s 000ms 115us 
-  0.75        7495        0s 000ms 118us 
-  0.8         7998        0s 000ms 118us 
-  0.9         8993        0s 000ms 121us 
-  0.95        9493        0s 000ms 124us 
-  0.990625    9899        0s 000ms 135us 
-  0.999023    9983        0s 000ms 588us 
-  1           9992        0s 004ms 090us 
+  Percentile  Count       Latency
+  0           1           0s 000ms 077us
+  0.5         4996        0s 000ms 115us
+  0.75        7495        0s 000ms 118us
+  0.8         7998        0s 000ms 118us
+  0.9         8993        0s 000ms 121us
+  0.95        9493        0s 000ms 124us
+  0.990625    9899        0s 000ms 135us
+  0.999023    9983        0s 000ms 588us
+  1           9992        0s 004ms 090us
 
 Counter                                 Value       Per second
 client.benchmark.http_2xx               9994        1998.80
@@ -271,7 +271,7 @@ client.upstream_rq_total                9994        1998.80
 ## Accuracy and repeatability considerations when using the Nighthawk client
 
 - Processes not related to the benchmarking task at hand may add significant noise. Consider stopping any
-  processes that are not needed. 
+  processes that are not needed.
 - Be aware that power state management and CPU Frequency changes are able to introduce significant noise.
   When idle, Nighthawk uses a busy loop to achieve precise timings when starting requests, which helps minimize this.
   Still, consider disabling C-state changes in the system BIOS.

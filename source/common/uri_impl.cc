@@ -16,7 +16,7 @@ bool UriImpl::isValid() const {
          // We check that we do not start with '-' because that overlaps with CLI argument
          // parsing. For other hostname validation, we defer to parseInternetAddressAndPort() and
          // dns resolution later on.
-         host_without_port_.size() > 0 && host_without_port_[0] != '-';
+         !host_without_port_.empty() && host_without_port_[0] != '-';
 }
 
 UriImpl::UriImpl(absl::string_view uri) : scheme_("http") {

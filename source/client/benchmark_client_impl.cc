@@ -80,7 +80,7 @@ void BenchmarkClientHttpImpl::setRequestHeader(absl::string_view key, absl::stri
   request_headers_.addCopy(lower_case_key, std::string(value));
 }
 
-bool BenchmarkClientHttpImpl::tryStartOne(std::function<void()> caller_completion_callback) {
+bool BenchmarkClientHttpImpl::tryStartRequest(CompletionCallback caller_completion_callback) {
   // When we allow client-side queuing, we want to have a sense of time spend waiting on that queue.
   // So we return false here to indicate we couldn't initiate a new request.
   auto* pool_ptr = pool();

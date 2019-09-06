@@ -8,6 +8,7 @@
 #include "envoy/http/conn_pool.h"
 #include "envoy/server/tracer_config.h"
 
+#include "nighthawk/common/operation_callback.h"
 #include "nighthawk/common/statistic.h"
 
 #include "external/envoy/source/common/http/header_map_impl.h"
@@ -37,7 +38,7 @@ class StreamDecoder : public Envoy::Http::StreamDecoder,
 public:
   StreamDecoder(Envoy::Event::Dispatcher& dispatcher, Envoy::TimeSource& time_source,
                 StreamDecoderCompletionCallback& decoder_completion_callback,
-                std::function<void()> caller_completion_callback, Statistic& connect_statistic,
+                OperationCallback caller_completion_callback, Statistic& connect_statistic,
                 Statistic& latency_statistic, const Envoy::Http::HeaderMap& request_headers,
                 bool measure_latencies, uint32_t request_body_size, std::string x_request_id,
                 Envoy::Tracing::HttpTracer& http_tracer)
@@ -89,7 +90,7 @@ private:
   Envoy::Event::Dispatcher& dispatcher_;
   Envoy::TimeSource& time_source_;
   StreamDecoderCompletionCallback& decoder_completion_callback_;
-  std::function<void()> caller_completion_callback_;
+  OperationCallback caller_completion_callback_;
   Statistic& connect_statistic_;
   Statistic& latency_statistic_;
   Envoy::Http::HeaderMapImpl request_headers_;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <future>
+#include <thread>
 
 #include "envoy/api/api.h"
 #include "envoy/common/time.h"
@@ -21,6 +22,7 @@ public:
 
   void start() override;
   void waitForCompletion() override;
+  void shutdown() override;
 
 protected:
   /**
@@ -35,13 +37,11 @@ protected:
   Envoy::TimeSource& time_source_;
 
 private:
-  void notifyExit();
-  void shutDown();
-  Envoy::Thread::MutexBasicLockable exit_lock_;
-  Envoy::Thread::ReleasableLockGuard exit_lock_guard_;
-  Envoy::Thread::MutexBasicLockable completion_lock_;
-  std::future<void> future_;
+  std::thread thread_;
   bool started_{};
+  std::promise<void> complete_;
+  std::promise<void> signal_thread_to_exit_;
+  bool shutdown_{true};
 };
 
 } // namespace Nighthawk

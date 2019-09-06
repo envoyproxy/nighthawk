@@ -108,7 +108,7 @@ void SequencerImpl::run(bool from_periodic_timer) {
     while (rate_limiter_->tryAcquireOne()) {
       // The rate limiter says it's OK to proceed and call the target. Let's see if the target is OK
       // with that as well.
-      const bool target_could_start = target_([this, now]() {
+      const bool target_could_start = target_([this, now](bool, bool) {
         const auto dur = time_source_.monotonicTime() - now;
         latency_statistic_->addValue(dur.count());
         targets_completed_++;

@@ -50,7 +50,7 @@ public:
     return map;
   }
 
-  bool CheckThreadChanged(const std::function<void()>&) {
+  bool CheckThreadChanged(const CompletionCallback&) {
     EXPECT_NE(thread_id_, std::this_thread::get_id());
     return false;
   }
@@ -91,7 +91,7 @@ TEST_F(ClientWorkerTest, BasicTest) {
 
     // warmup
     EXPECT_CALL(*benchmark_client_, prefetchPoolConnections()).Times(1);
-    EXPECT_CALL(*benchmark_client_, tryStartOne(_))
+    EXPECT_CALL(*benchmark_client_, tryStartRequest(_))
         .Times(1)
         .WillRepeatedly(Invoke(this, &ClientWorkerTest::CheckThreadChanged));
 
@@ -114,6 +114,7 @@ TEST_F(ClientWorkerTest, BasicTest) {
 
   auto statistics = worker->statistics();
   EXPECT_EQ(2, statistics.size());
+  worker->shutdown();
 }
 
 } // namespace Client
