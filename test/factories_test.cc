@@ -8,6 +8,7 @@
 #include "common/uri_impl.h"
 
 #include "client/factories_impl.h"
+#include "client/header_generator_impl.h"
 
 #include "test/mocks.h"
 
@@ -34,19 +35,22 @@ TEST_F(FactoriesTest, CreateBenchmarkClient) {
   Envoy::Upstream::ClusterManagerPtr cluster_manager;
   EXPECT_CALL(options_, connections()).Times(1);
   EXPECT_CALL(options_, h2()).Times(1);
-  EXPECT_CALL(options_, requestMethod()).Times(1);
-  EXPECT_CALL(options_, requestBodySize()).Times(1);
+  // XXX(oschaaf):
+  // EXPECT_CALL(options_, requestMethod()).Times(1);
+  // EXPECT_CALL(options_, requestBodySize()).Times(1);
   EXPECT_CALL(options_, maxPendingRequests()).Times(1);
   EXPECT_CALL(options_, maxActiveRequests()).Times(1);
   EXPECT_CALL(options_, maxRequestsPerConnection()).Times(1);
   auto cmd = std::make_unique<nighthawk::client::CommandLineOptions>();
-  auto request_headers = cmd->mutable_request_options()->add_request_headers();
-  request_headers->mutable_header()->set_key("foo");
-  request_headers->mutable_header()->set_value("bar");
+  // auto request_headers = cmd->mutable_request_options()->add_request_headers();
+  // request_headers->mutable_header()->set_key("foo");
+  // request_headers->mutable_header()->set_value("bar");
   EXPECT_CALL(options_, toCommandLineOptions()).Times(1).WillOnce(Return(ByMove(std::move(cmd))));
-
-  auto benchmark_client = factory.create(*api_, dispatcher_, stats_store_,
-                                         std::make_unique<UriImpl>("http://foo/"), cluster_manager);
+  StaticHeaderGeneratorImpl header_generator(
+      Envoy::Http::HeaderMapPtr{new Envoy::Http::TestHeaderMapImpl{}});
+  auto benchmark_client =
+      factory.create(*api_, dispatcher_, stats_store_, std::make_unique<UriImpl>("http://foo/"),
+                     cluster_manager, header_generator);
   EXPECT_NE(nullptr, benchmark_client.get());
 }
 
@@ -74,7 +78,7 @@ public:
                                     benchmark_client);
     EXPECT_NE(nullptr, sequencer.get());
   }
-};
+}; // namespace Client
 
 TEST_P(SequencerFactoryTest, TestCreation) { testSequencerCreation(GetParam()); }
 

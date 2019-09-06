@@ -237,3 +237,13 @@ envoy_cc_test(
         "@envoy//test/mocks/thread_local:thread_local_mocks",
     ],
 )
+
+envoy_cc_test(
+    name = "header_generator_test",
+    srcs = ["header_generator_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/client:nighthawk_client_lib",
+        "//test/client:utility_lib",
+    ],
+)

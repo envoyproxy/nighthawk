@@ -57,7 +57,7 @@ void StreamDecoder::onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason
 
 void StreamDecoder::onPoolReady(Envoy::Http::StreamEncoder& encoder,
                                 Envoy::Upstream::HostDescriptionConstSharedPtr) {
-  encoder.encodeHeaders(request_headers_, request_body_size_ == 0);
+  encoder.encodeHeaders(*request_headers_, request_body_size_ == 0);
   if (request_body_size_ > 0) {
     // TODO(oschaaf): We can probably get away without allocating/copying here if we pregenerate
     // potential request-body candidates up front. Revisit this when we have non-uniform request

@@ -9,6 +9,7 @@
 #include "nighthawk/client/benchmark_client.h"
 #include "nighthawk/client/client_worker.h"
 #include "nighthawk/client/factories.h"
+#include "nighthawk/client/header_generator.h"
 #include "nighthawk/common/sequencer.h"
 #include "nighthawk/common/uri.h"
 
@@ -26,7 +27,8 @@ public:
   ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Instance& tls,
                    Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                    const BenchmarkClientFactory& benchmark_client_factory,
-                   const SequencerFactory& sequencer_factory, UriPtr&& uri,
+                   const SequencerFactory& sequencer_factory,
+                   const HeaderGeneratorFactory& header_generator_factory, UriPtr&& uri,
                    Envoy::Stats::Store& store, const int worker_number,
                    const Envoy::MonotonicTime starting_time, bool prefetch_connections);
 
@@ -42,6 +44,7 @@ private:
   const int worker_number_;
   const Envoy::MonotonicTime starting_time_;
   bool success_{};
+  HeaderGeneratorPtr header_generator_;
   BenchmarkClientPtr benchmark_client_;
   const SequencerPtr sequencer_;
   Envoy::LocalInfo::LocalInfoPtr local_info_;

@@ -10,6 +10,7 @@
 #include "envoy/upstream/cluster_manager.h"
 
 #include "nighthawk/client/benchmark_client.h"
+#include "nighthawk/client/header_generator.h"
 #include "nighthawk/client/options.h"
 #include "nighthawk/client/output_collector.h"
 #include "nighthawk/common/platform_util.h"
@@ -25,7 +26,8 @@ public:
   virtual ~BenchmarkClientFactory() = default;
   virtual BenchmarkClientPtr create(Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher,
                                     Envoy::Stats::Store& store, UriPtr&& uri,
-                                    Envoy::Upstream::ClusterManagerPtr& cluster_manager) const PURE;
+                                    Envoy::Upstream::ClusterManagerPtr& cluster_manager,
+                                    HeaderGenerator& header_generator) const PURE;
 };
 
 class SequencerFactory {
@@ -52,6 +54,12 @@ class OutputCollectorFactory {
 public:
   virtual ~OutputCollectorFactory() = default;
   virtual OutputCollectorPtr create() const PURE;
+};
+
+class HeaderGeneratorFactory {
+public:
+  virtual ~HeaderGeneratorFactory() = default;
+  virtual HeaderGeneratorPtr create() const PURE;
 };
 
 } // namespace Client

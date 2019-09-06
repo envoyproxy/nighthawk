@@ -7,6 +7,7 @@
 #include "envoy/event/dispatcher.h"
 #include "envoy/http/conn_pool.h"
 
+#include "nighthawk/client/header_generator.h"
 #include "nighthawk/common/statistic.h"
 
 namespace Nighthawk {
@@ -32,7 +33,7 @@ public:
   StreamDecoder(Envoy::Event::Dispatcher& dispatcher, Envoy::TimeSource& time_source,
                 StreamDecoderCompletionCallback& decoder_completion_callback,
                 std::function<void()> caller_completion_callback, Statistic& connect_statistic,
-                Statistic& latency_statistic, const Envoy::Http::HeaderMap& request_headers,
+                Statistic& latency_statistic, const HeaderMapPtr request_headers,
                 bool measure_latencies, uint32_t request_body_size)
       : dispatcher_(dispatcher), time_source_(time_source),
         decoder_completion_callback_(decoder_completion_callback),
@@ -73,7 +74,7 @@ private:
   std::function<void()> caller_completion_callback_;
   Statistic& connect_statistic_;
   Statistic& latency_statistic_;
-  const Envoy::Http::HeaderMap& request_headers_;
+  const HeaderMapPtr request_headers_;
   Envoy::Http::HeaderMapPtr response_headers_;
   const Envoy::MonotonicTime connect_start_;
   Envoy::MonotonicTime request_start_;

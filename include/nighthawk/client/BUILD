@@ -14,6 +14,7 @@ envoy_basic_cc_library(
         "benchmark_client.h",
         "client_worker.h",
         "factories.h",
+        "header_generator.h",
         "options.h",
         "output_collector.h",
         "process.h",
