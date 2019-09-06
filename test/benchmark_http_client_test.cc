@@ -244,4 +244,18 @@ TEST_F(BenchmarkClientHttpTest, RequestMethodPost) {
   EXPECT_EQ(1, getCounter("benchmark.http_2xx"));
 }
 
+TEST_F(BenchmarkClientHttpTest, BadContentLength) {
+  header_generator_ = []() {
+    return Envoy::Http::HeaderMapPtr{
+        new Envoy::Http::TestHeaderMapImpl{{":scheme", "http"},
+                                           {":method", "POST"},
+                                           {":path", "/"},
+                                           {":host", "localhost"},
+                                           {"Content-Length", "-1313"}}};
+  };
+  // Note we we explicitly do not expect encodeData to be called.
+  testBasicFunctionality(1, 1, 1);
+  EXPECT_EQ(1, getCounter("benchmark.http_2xx"));
+}
+
 } // namespace Nighthawk

@@ -88,7 +88,9 @@ bool BenchmarkClientHttpImpl::tryStartOne(std::function<void()> caller_completio
   auto* content_length_header = header->ContentLength();
   uint64_t content_length = 0;
   if (content_length_header != nullptr) {
-    if (!absl::SimpleAtoi(header->ContentLength()->value().getStringView(), &content_length)) {
+    auto s_content_length = header->ContentLength()->value().getStringView();
+    if (!absl::SimpleAtoi(s_content_length, &content_length)) {
+      ENVOY_LOG(error, "Ignoring bad content length of {}", s_content_length);
       content_length = 0;
     }
   }
