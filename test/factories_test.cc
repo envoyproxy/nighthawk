@@ -35,16 +35,10 @@ TEST_F(FactoriesTest, CreateBenchmarkClient) {
   Envoy::Upstream::ClusterManagerPtr cluster_manager;
   EXPECT_CALL(options_, connections()).Times(1);
   EXPECT_CALL(options_, h2()).Times(1);
-  // XXX(oschaaf):
-  // EXPECT_CALL(options_, requestMethod()).Times(1);
-  // EXPECT_CALL(options_, requestBodySize()).Times(1);
   EXPECT_CALL(options_, maxPendingRequests()).Times(1);
   EXPECT_CALL(options_, maxActiveRequests()).Times(1);
   EXPECT_CALL(options_, maxRequestsPerConnection()).Times(1);
   auto cmd = std::make_unique<nighthawk::client::CommandLineOptions>();
-  // auto request_headers = cmd->mutable_request_options()->add_request_headers();
-  // request_headers->mutable_header()->set_key("foo");
-  // request_headers->mutable_header()->set_value("bar");
   EXPECT_CALL(options_, toCommandLineOptions()).Times(1).WillOnce(Return(ByMove(std::move(cmd))));
   StaticHeaderGeneratorImpl header_generator(
       Envoy::Http::HeaderMapPtr{new Envoy::Http::TestHeaderMapImpl{}});
@@ -52,6 +46,20 @@ TEST_F(FactoriesTest, CreateBenchmarkClient) {
       factory.create(*api_, dispatcher_, stats_store_, std::make_unique<UriImpl>("http://foo/"),
                      cluster_manager, header_generator);
   EXPECT_NE(nullptr, benchmark_client.get());
+}
+
+TEST_F(FactoriesTest, CreateHeaderGenerator) {
+  EXPECT_CALL(options_, requestMethod()).Times(1);
+  EXPECT_CALL(options_, requestBodySize()).Times(1);
+  EXPECT_CALL(options_, uri()).Times(1).WillOnce(Return("http://foo/"));
+  auto cmd = std::make_unique<nighthawk::client::CommandLineOptions>();
+  auto request_headers = cmd->mutable_request_options()->add_request_headers();
+  request_headers->mutable_header()->set_key("foo");
+  request_headers->mutable_header()->set_value("bar");
+  EXPECT_CALL(options_, toCommandLineOptions()).Times(1).WillOnce(Return(ByMove(std::move(cmd))));
+  HeaderGeneratorFactoryImpl factory(options_);
+  auto header_generator = factory.create();
+  EXPECT_NE(nullptr, header_generator.get());
 }
 
 TEST_F(FactoriesTest, CreateSequencer) {}

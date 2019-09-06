@@ -236,30 +236,21 @@ TEST_F(BenchmarkClientHttpTest, PoolFailures) {
   EXPECT_EQ(1, getCounter("benchmark.pool_connection_failure"));
 }
 
-// XXX(oschaaf):
-/*
 TEST_F(BenchmarkClientHttpTest, RequestMethodPost) {
-  setupBenchmarkClient();
-  EXPECT_EQ("GET", client_->requestHeaders().Method()->value().getStringView());
-  client_->setRequestMethod(envoy::api::v2::core::RequestMethod::POST);
-  client_->setRequestHeader("a", "b");
-  client_->setRequestHeader("c", "d");
-  client_->setRequestBodySize(1313);
-
-  EXPECT_EQ("POST", client_->requestHeaders().Method()->value().getStringView());
-  EXPECT_EQ(
-      "b",
-      client_->requestHeaders().get(Envoy::Http::LowerCaseString("a"))->value().getStringView());
-  EXPECT_EQ(
-      "d",
-      client_->requestHeaders().get(Envoy::Http::LowerCaseString("c"))->value().getStringView());
+  header_generator_ = []() {
+    return Envoy::Http::HeaderMapPtr{
+        new Envoy::Http::TestHeaderMapImpl{{":scheme", "http"},
+                                           {":method", "POST"},
+                                           {":path", "/"},
+                                           {":host", "localhost"},
+                                           {"a", "b"},
+                                           {"c", "d"},
+                                           {"Content-Length", "1313"}}};
+  };
 
   EXPECT_CALL(stream_encoder_, encodeData(_, _)).Times(1);
-
   testBasicFunctionality(1, 1, 1);
-
   EXPECT_EQ(1, getCounter("benchmark.http_2xx"));
 }
-*/
 
 } // namespace Nighthawk
