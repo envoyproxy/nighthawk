@@ -40,7 +40,7 @@ public:
         decoder_completion_callback_(decoder_completion_callback),
         caller_completion_callback_(std::move(caller_completion_callback)),
         connect_statistic_(connect_statistic), latency_statistic_(latency_statistic),
-        request_headers_(request_headers), connect_start_(time_source_.monotonicTime()),
+        request_headers_(std::move(request_headers)), connect_start_(time_source_.monotonicTime()),
         complete_(false), measure_latencies_(measure_latencies),
         request_body_size_(request_body_size) {}
 
