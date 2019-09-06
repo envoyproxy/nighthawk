@@ -36,8 +36,7 @@ BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
       connect_statistic_(std::move(connect_statistic)),
       response_statistic_(std::move(response_statistic)), use_h2_(use_h2), uri_(std::move(uri)),
       benchmark_client_stats_({ALL_BENCHMARK_CLIENT_STATS(POOL_COUNTER(*scope_))}),
-      cluster_manager_(cluster_manager), header_generator_(header_generator) {
-
+      cluster_manager_(cluster_manager), header_generator_(std::move(header_generator)) {
   connect_statistic_->setId("benchmark_http_client.queue_to_connect");
   response_statistic_->setId("benchmark_http_client.request_to_response");
 }
