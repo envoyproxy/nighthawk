@@ -85,9 +85,9 @@ TEST_F(StreamDecoderTest, TrailerTest) {
 }
 
 TEST_F(StreamDecoderTest, LatencyIsNotMeasured) {
-  auto decoder =
-      new StreamDecoder(*dispatcher_, time_system_, *this, [](bool, bool) {}, connect_statistic_,
-                        latency_statistic_, request_headers_, false, 0, "654", http_tracer_);
+  auto decoder = new StreamDecoder(
+      *dispatcher_, time_system_, *this, [](bool, bool) {}, connect_statistic_, latency_statistic_,
+      request_headers_, false, 0, "654", http_tracer_);
   Envoy::Http::MockStreamEncoder stream_encoder;
   Envoy::Upstream::HostDescriptionConstSharedPtr ptr;
   EXPECT_CALL(stream_encoder, encodeHeaders(HeaderMapEqualRef(&request_headers_), true));
@@ -100,9 +100,9 @@ TEST_F(StreamDecoderTest, LatencyIsNotMeasured) {
 
 TEST_F(StreamDecoderTest, LatencyIsMeasured) {
   Envoy::Http::TestHeaderMapImpl request_header{{":method", "GET"}, {":path", "/"}};
-  auto decoder =
-      new StreamDecoder(*dispatcher_, time_system_, *this, [](bool, bool) {}, connect_statistic_,
-                        latency_statistic_, request_header, true, 0, "654", http_tracer_);
+  auto decoder = new StreamDecoder(
+      *dispatcher_, time_system_, *this, [](bool, bool) {}, connect_statistic_, latency_statistic_,
+      request_header, true, 0, "654", http_tracer_);
   Envoy::Http::MockStreamEncoder stream_encoder;
   Envoy::Upstream::HostDescriptionConstSharedPtr ptr;
   Envoy::Http::HeaderMapPtr expected_request_header{new Envoy::Http::TestHeaderMapImpl{
