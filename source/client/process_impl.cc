@@ -70,12 +70,8 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
       store_root_(stats_allocator_),
       api_(std::make_unique<Envoy::Api::Impl>(platform_impl_.threadFactory(), store_root_,
                                               time_system_, platform_impl_.fileSystem())),
-      dispatcher_(api_->allocateDispatcher()), cleanup_([this] {
-        store_root_.shutdownThreading();
-        tls_.shutdownGlobalThreading();
-      }),
-      benchmark_client_factory_(options), sequencer_factory_(options), options_(options),
-      init_manager_("nh_init_manager"),
+      dispatcher_(api_->allocateDispatcher()), benchmark_client_factory_(options),
+      sequencer_factory_(options), options_(options), init_manager_("nh_init_manager"),
       local_info_(new Envoy::LocalInfo::LocalInfoImpl(
           {}, Envoy::Network::Utility::getLocalAddress(Envoy::Network::Address::IpVersion::v4),
           "nighthawk_service_zone", "nighthawk_service_cluster", "nighthawk_service_node")),
@@ -87,6 +83,26 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
   std::string lower = absl::AsciiStrToLower(
       nighthawk::client::Verbosity::VerbosityOptions_Name(options_.verbosity()));
   configureComponentLogLevels(spdlog::level::from_str(lower));
+}
+
+ProcessImpl::~ProcessImpl() {
+  RELEASE_ASSERT(shutdown_, "shutdown not called before destruction.");
+}
+
+void ProcessImpl::shutdown() {
+  // Before we shut down the worker threads, stop threading.
+  tls_.shutdownGlobalThreading();
+  store_root_.shutdownThreading();
+  // Before shutting down the cluster manager, stop the workers.
+  for (auto& worker : workers_) {
+    worker->shutdown();
+  }
+  workers_.clear();
+  if (cluster_manager_ != nullptr) {
+    cluster_manager_->shutdown();
+  }
+  tls_.shutdownThread();
+  shutdown_ = true;
 }
 
 const std::vector<ClientWorkerPtr>& ProcessImpl::createWorkers(const UriImpl& uri,
@@ -242,6 +258,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
     return false;
   }
   int number_of_workers = determineConcurrency();
+  shutdown_ = false;
   const std::vector<ClientWorkerPtr>& workers =
       createWorkers(uri, number_of_workers, options_.prefetchConnections());
 
@@ -272,7 +289,6 @@ bool ProcessImpl::run(OutputCollector& collector) {
     w->waitForCompletion();
     ok = ok && w->success();
   }
-  cluster_manager_->shutdown();
 
   // We don't write per-worker results if we only have a single worker, because the global results
   // will be precisely the same.
@@ -295,6 +311,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
         Utility().mapCountersFromStore(
             store_root_, [](absl::string_view, uint64_t value) { return value > 0; }));
   }
+
   return ok;
 }
 

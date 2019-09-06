@@ -43,6 +43,7 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
   } else {
     response.mutable_error_detail()->set_message("Unknown failure");
   }
+  process.shutdown();
   // We release before writing the response to avoid a race with the client's follow up request
   // coming in before we release the lock, which would lead up to us declining service when
   // we should not.

@@ -79,9 +79,8 @@ public:
   void setMeasureLatencies(bool measure_latencies) override {
     measure_latencies_ = measure_latencies;
   }
-  bool tryStartOne(std::function<void()> caller_completion_callback) override;
+  bool tryStartRequest(CompletionCallback caller_completion_callback) override;
   Envoy::Stats::Scope& scope() const override { return *scope_; }
-
   void setRequestMethod(envoy::api::v2::core::RequestMethod request_method) override {
     request_headers_.insertMethod().value(envoy::api::v2::core::RequestMethod_Name(request_method));
   };
