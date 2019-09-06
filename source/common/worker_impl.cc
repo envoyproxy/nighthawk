@@ -35,8 +35,6 @@ void WorkerImpl::start() {
   });
 }
 
-void WorkerImpl::waitForCompletion() {
-  complete_.get_future().wait();
-}
+void WorkerImpl::waitForCompletion() { complete_.get_future().wait(); }
 
 } // namespace Nighthawk
