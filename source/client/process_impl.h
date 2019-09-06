@@ -42,10 +42,12 @@ namespace Client {
 class ProcessImpl : public Process, public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
   ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system);
+  ~ProcessImpl() override;
 
   uint32_t determineConcurrency() const;
   bool run(OutputCollector& collector) override;
   const envoy::config::bootstrap::v2::Bootstrap createBootstrapConfiguration(const Uri& uri) const;
+  void shutdown() override;
 
 private:
   void configureComponentLogLevels(spdlog::level::level_enum level);
@@ -71,7 +73,6 @@ private:
   Envoy::ThreadLocal::InstanceImpl tls_;
   Envoy::Event::DispatcherPtr dispatcher_;
   std::vector<ClientWorkerPtr> workers_;
-  const Envoy::Cleanup cleanup_;
   const BenchmarkClientFactoryImpl benchmark_client_factory_;
   const SequencerFactoryImpl sequencer_factory_;
   const HeaderGeneratorFactoryImpl header_generator_factory_;
@@ -97,6 +98,7 @@ private:
   Tracing::HttpTracerPtr http_tracer_;
   Envoy::Server::ValidationAdmin admin_;
   Envoy::ProtobufMessage::ProdValidationContextImpl validation_context_;
+  bool shutdown_{true};
 };
 
 } // namespace Client

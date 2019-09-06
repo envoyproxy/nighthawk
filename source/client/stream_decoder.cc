@@ -37,9 +37,7 @@ void StreamDecoder::onComplete(bool success) {
   }
   ASSERT(!success || complete_);
   decoder_completion_callback_.onComplete(success, *response_headers_);
-  if (success) {
-    caller_completion_callback_();
-  }
+  caller_completion_callback_(complete_, success);
   dispatcher_.deferredDelete(std::unique_ptr<StreamDecoder>(this));
 }
 
@@ -52,6 +50,7 @@ void StreamDecoder::onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason
                                   absl::string_view /* transport_failure_reason */,
                                   Envoy::Upstream::HostDescriptionConstSharedPtr) {
   decoder_completion_callback_.onPoolFailure(reason);
+  caller_completion_callback_(false, false);
   dispatcher_.deferredDelete(std::unique_ptr<StreamDecoder>(this));
 }
 

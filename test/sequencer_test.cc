@@ -32,9 +32,9 @@ public:
         sequencer_target_(
             std::bind(&SequencerTestBase::callback_test, this, std::placeholders::_1)) {}
 
-  bool callback_test(const std::function<void()>& f) {
+  bool callback_test(const OperationCallback& f) {
     callback_test_count_++;
-    f();
+    f(true, true);
     return true;
   }
 
@@ -93,7 +93,7 @@ public:
   void expectDispatcherRun() {
     EXPECT_CALL(*dispatcher_, run(_))
         .WillOnce(Invoke([&](Envoy::Event::DispatcherImpl::RunType type) {
-          ASSERT_EQ(Envoy::Event::DispatcherImpl::RunType::Block, type);
+          ASSERT_EQ(Envoy::Event::DispatcherImpl::RunType::RunUntilExit, type);
           simulateTimerLoop();
         }));
   }
@@ -205,12 +205,12 @@ public:
     expectDispatcherRun();
   }
 
-  bool timeout_test(const std::function<void()>& /* f */) {
+  bool timeout_test(const std::function<void(bool, bool)>& /* f */) {
     callback_test_count_++;
     // We don't call f(); which will cause the sequencer to think there is in-flight work.
     return true;
   }
-  bool saturated_test(const std::function<void()>& /* f */) { return false; }
+  bool saturated_test(const std::function<void(bool, bool)>& /* f */) { return false; }
 
   std::unique_ptr<LinearRateLimiter> rate_limiter_;
 

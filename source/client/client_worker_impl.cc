@@ -26,8 +26,11 @@ void ClientWorkerImpl::simpleWarmup() {
   if (prefetch_connections_) {
     benchmark_client_->prefetchPoolConnections();
   }
-  benchmark_client_->tryStartOne([this] { dispatcher_->exit(); });
-  dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
+  if (benchmark_client_->tryStartRequest([this](bool, bool) { dispatcher_->exit(); })) {
+    dispatcher_->run(Envoy::Event::Dispatcher::RunType::RunUntilExit);
+  } else {
+    ENVOY_LOG(warn, "> worker {}: failed to initiate warmup request.", worker_number_);
+  }
   ENVOY_LOG(debug, "> worker {}: warmup done.", worker_number_);
 }
 

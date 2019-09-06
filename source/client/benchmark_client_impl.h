@@ -78,7 +78,7 @@ public:
   void setMeasureLatencies(bool measure_latencies) override {
     measure_latencies_ = measure_latencies;
   }
-  bool tryStartOne(std::function<void()> caller_completion_callback) override;
+  bool tryStartRequest(CompletionCallback caller_completion_callback) override;
   Envoy::Stats::Store& store() const override { return store_; }
 
   // StreamDecoderCompletionCallback

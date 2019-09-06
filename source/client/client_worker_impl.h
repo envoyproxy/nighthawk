@@ -12,16 +12,12 @@
 #include "nighthawk/client/header_generator.h"
 #include "nighthawk/common/sequencer.h"
 
-#include "external/envoy/source/common/common/logger.h"
-
 #include "common/worker_impl.h"
 
 namespace Nighthawk {
 namespace Client {
 
-class ClientWorkerImpl : public WorkerImpl,
-                         virtual public ClientWorker,
-                         Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
+class ClientWorkerImpl : public WorkerImpl, virtual public ClientWorker {
 public:
   ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Instance& tls,
                    Envoy::Upstream::ClusterManagerPtr& cluster_manager,

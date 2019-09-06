@@ -12,23 +12,29 @@ WorkerImpl::WorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Instance& tls,
   tls.registerThread(*dispatcher_, false);
 }
 
-WorkerImpl::~WorkerImpl() { tls_.shutdownThread(); }
+WorkerImpl::~WorkerImpl() { RELEASE_ASSERT(shutdown_, "Call shutdown() before destruction."); }
+
+void WorkerImpl::shutdown() {
+  shutdown_ = true;
+  signal_thread_to_exit_.set_value();
+  thread_.join();
+}
 
 void WorkerImpl::start() {
-  ASSERT(!started_ && !completed_);
+  RELEASE_ASSERT(!started_, "WorkerImpl::start() expected started_ to be false");
   started_ = true;
-  thread_ = thread_factory_.createThread([this]() {
-    ASSERT(Envoy::Runtime::LoaderSingleton::getExisting() != nullptr);
-    // Run the dispatcher to let the callbacks posted by registerThread() execute.
+  shutdown_ = false;
+  thread_ = std::thread([this]() {
+    RELEASE_ASSERT(Envoy::Runtime::LoaderSingleton::getExisting() != nullptr,
+                   "Couldn't get runtime");
     dispatcher_->run(Envoy::Event::Dispatcher::RunType::NonBlock);
     work();
+    complete_.set_value();
+    signal_thread_to_exit_.get_future().wait();
+    tls_.shutdownThread();
   });
 }
 
-void WorkerImpl::waitForCompletion() {
-  ASSERT(started_ && !completed_);
-  completed_ = true;
-  thread_->join();
-}
+void WorkerImpl::waitForCompletion() { complete_.get_future().wait(); }
 
 } // namespace Nighthawk
