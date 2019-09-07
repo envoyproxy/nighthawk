@@ -85,7 +85,7 @@ public:
                                     benchmark_client);
     EXPECT_NE(nullptr, sequencer.get());
   }
-}; // namespace Client
+};
 
 TEST_P(SequencerFactoryTest, TestCreation) { testSequencerCreation(GetParam()); }
 
