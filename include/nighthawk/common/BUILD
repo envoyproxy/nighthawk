@@ -26,6 +26,7 @@ envoy_basic_cc_library(
         "@envoy//include/envoy/common:base_includes",
         "@envoy//source/common/common:minimal_logger_lib",
         "@envoy//source/common/common:non_copyable",
+        "@envoy//source/common/http:headers_lib",
         "@envoy//source/common/network:dns_lib",
         "@envoy//source/common/protobuf",
     ],

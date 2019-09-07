@@ -42,7 +42,6 @@ envoy_cc_library(
         "@envoy//source/common/common:lock_guard_lib_with_external_headers",
         "@envoy//source/common/common:minimal_logger_lib_with_external_headers",
         "@envoy//source/common/common:thread_lib_with_external_headers",
-        "@envoy//source/common/http:headers_lib_with_external_headers",
         "@envoy//source/common/http:utility_lib_with_external_headers",
         "@envoy//source/common/network:utility_lib_with_external_headers",
         "@envoy//source/common/stats:stats_lib_with_external_headers",
