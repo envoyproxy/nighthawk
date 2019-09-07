@@ -11,30 +11,44 @@ import subprocess
 import sys
 import threading
 import time
-import unittest
+import pytest
 
-from common import IpVersion
+from common import IpVersion, NighthawkException
 from nighthawk_test_server import NighthawkTestServer
 
 
-class IntegrationTestBase(unittest.TestCase):
+def determineIpVersionsFromEnvironment():
+  env_versions = os.environ.get("ENVOY_IP_TEST_VERSIONS", "all")
+  if env_versions == "v4only":
+    versions = [IpVersion.IPV4]
+  elif env_versions == "v6only":
+    versions = [IpVersion.IPV6]
+  elif env_versions == "all":
+    versions = [IpVersion.IPV4, IpVersion.IPV6]
+  else:
+    raise NighthawkException("Unknown ip version: '%s'" % versions)
+  return versions
+
+
+class IntegrationTestBase():
   """
   IntegrationTestBase facilitates testing against the Nighthawk test server, by determining a free port, and starting it up in a separate process in setUp().
   """
 
-  def __init__(self, *args, **kwargs):
-    super(IntegrationTestBase, self).__init__(*args, **kwargs)
+  def __init__(self, ip_version):
+    super(IntegrationTestBase, self).__init__()
     self.test_rundir = os.path.join(os.environ["TEST_SRCDIR"], os.environ["TEST_WORKSPACE"])
-
     self.nighthawk_test_server_path = os.path.join(self.test_rundir, "nighthawk_test_server")
     self.nighthawk_test_config_path = None
     self.nighthawk_client_path = os.path.join(self.test_rundir, "nighthawk_client")
-    self.server_ip = "::1" if IntegrationTestBase.ip_version == IpVersion.IPV6 else "127.0.0.1"
-    self.socket_type = socket.AF_INET6 if IntegrationTestBase.ip_version == IpVersion.IPV6 else socket.AF_INET
+    assert ip_version != IpVersion.UNKNOWN
+    self.server_ip = "::1" if ip_version == IpVersion.IPV6 else "127.0.0.1"
+    self.socket_type = socket.AF_INET6 if ip_version == IpVersion.IPV6 else socket.AF_INET
     self.test_server = None
     self.server_port = -1
     self.admin_port = -1
     self.parameters = {}
+    self.ip_version = ip_version
 
   # TODO(oschaaf): For the NH test server, add a way to let it determine a port by itself and pull that
   # out.
@@ -54,21 +68,21 @@ class IntegrationTestBase(unittest.TestCase):
     """
     Performs sanity checks and starts up the server. Upon exit the server is ready to accept connections.
     """
-    self.assertTrue(os.path.exists(self.nighthawk_test_server_path))
-    self.assertTrue(os.path.exists(self.nighthawk_client_path))
+    assert (os.path.exists(self.nighthawk_test_server_path))
+    assert (os.path.exists(self.nighthawk_client_path))
     self.server_port = self.getFreeListenerPortForAddress(self.server_ip)
     self.admin_port = self.getFreeListenerPortForAddress(self.server_ip)
     self.parameters["admin_port"] = self.admin_port
-    self.test_server = NighthawkTestServer(
-        self.nighthawk_test_server_path, self.nighthawk_test_config_path, self.server_ip,
-        self.server_port, IntegrationTestBase.ip_version, self.parameters)
-    self.assertTrue(self.test_server.start())
+    self.test_server = NighthawkTestServer(self.nighthawk_test_server_path,
+                                           self.nighthawk_test_config_path, self.server_ip,
+                                           self.server_port, self.ip_version, self.parameters)
+    assert (self.test_server.start())
 
   def tearDown(self):
     """
     Stops the server.
     """
-    self.assertEqual(0, self.test_server.stop())
+    assert (self.test_server.stop() == 0)
 
   def getNighthawkCounterMapFromJson(self, parsed_json):
     """
@@ -91,7 +105,7 @@ class IntegrationTestBase(unittest.TestCase):
     Utility for getting the http://host:port/ that can be used to query the server we started in setUp()
     """
     uri_host = self.server_ip
-    if IntegrationTestBase.ip_version == IpVersion.IPV6:
+    if self.ip_version == IpVersion.IPV6:
       uri_host = "[%s]" % self.server_ip
 
     uri = "%s://%s:%s/" % ("https" if https else "http", uri_host, self.test_server.server_port)
@@ -102,11 +116,11 @@ class IntegrationTestBase(unittest.TestCase):
         Uri to grab a server stats snapshot over http from the admin interface.
         """
     uri_host = self.server_ip
-    if IntegrationTestBase.ip_version == IpVersion.IPV6:
+    if self.ip_version == IpVersion.IPV6:
       uri_host = "[%s]" % self.server_ip
     uri = "http://%s:%s/stats?format=json" % (uri_host, self.admin_port)
     r = requests.get(uri)
-    self.assertEqual(r.status_code, 200)
+    assert (r.status_code == 200)
     return r.json()
 
   def getServerStatFromJson(self, server_stats_json, name):
@@ -121,7 +135,7 @@ class IntegrationTestBase(unittest.TestCase):
     Runs Nighthawk against the test server, returning a json-formatted result
     and logs. If the timeout is exceeded an exception will be raised.
     """
-    if IntegrationTestBase.ip_version == IpVersion.IPV6:
+    if self.ip_version == IpVersion.IPV6:
       args.insert(0, "--address-family v6")
     args.insert(0, "--output-format json")
     args.insert(0, self.nighthawk_client_path)
@@ -131,18 +145,13 @@ class IntegrationTestBase(unittest.TestCase):
     logs = stderr.decode('utf-8')
     json_string = stdout.decode('utf-8')
     if expect_failure:
-      self.assertNotEqual(0, client_process.returncode)
+      assert (client_process.returncode == 0)
     else:
-      self.assertEqual(0, client_process.returncode)
+      assert (client_process.returncode == 0)
       return json.loads(json_string), logs
 
   def assertIsSubset(self, subset, superset):
     self.assertLessEqual(subset.items(), superset.items())
-
-
-# We don't have a straightforward way to do parameterized tests yet.
-# But the tests can be run twice if desired so, and setting this to true will enable ipv6 mode.
-IntegrationTestBase.ip_version = IpVersion.UNKNOWN
 
 
 class HttpIntegrationTestBase(IntegrationTestBase):
@@ -150,8 +159,8 @@ class HttpIntegrationTestBase(IntegrationTestBase):
   Base for running plain http tests against the Nighthawk test server
   """
 
-  def __init__(self, *args, **kwargs):
-    super(HttpIntegrationTestBase, self).__init__(*args, **kwargs)
+  def __init__(self, ip_version):
+    super(HttpIntegrationTestBase, self).__init__(ip_version)
     self.nighthawk_test_config_path = os.path.join(
         self.test_rundir, "test/integration/configurations/nighthawk_http_origin.yaml")
 
@@ -164,8 +173,8 @@ class HttpsIntegrationTestBase(IntegrationTestBase):
   Base for https tests against the Nighthawk test server
   """
 
-  def __init__(self, *args, **kwargs):
-    super(HttpsIntegrationTestBase, self).__init__(*args, **kwargs)
+  def __init__(self, ip_version):
+    super(HttpsIntegrationTestBase, self).__init__(ip_version)
     self.parameters["ssl_key_path"] = os.path.join(
         self.test_rundir, "external/envoy/test/config/integration/certs/serverkey.pem")
     self.parameters["ssl_cert_path"] = os.path.join(
@@ -175,3 +184,19 @@ class HttpsIntegrationTestBase(IntegrationTestBase):
 
   def getTestServerRootUri(self):
     return super(HttpsIntegrationTestBase, self).getTestServerRootUri(True)
+
+
+@pytest.fixture(params=determineIpVersionsFromEnvironment())
+def http_test_server_fixture(request):
+  f = HttpIntegrationTestBase(request.param)
+  f.setUp()
+  yield f
+  f.tearDown()
+
+
+@pytest.fixture(params=determineIpVersionsFromEnvironment())
+def https_test_server_fixture(request):
+  f = HttpsIntegrationTestBase(request.param)
+  f.setUp()
+  yield f
+  f.tearDown()
