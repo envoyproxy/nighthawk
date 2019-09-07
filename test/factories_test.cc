@@ -5,10 +5,10 @@
 #include "external/envoy/test/test_common/simulated_time_system.h"
 #include "external/envoy/test/test_common/utility.h"
 
+#include "common/header_source_impl.h"
 #include "common/uri_impl.h"
 
 #include "client/factories_impl.h"
-#include "common/header_source_impl.h"
 
 #include "test/mocks.h"
 
