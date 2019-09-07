@@ -275,7 +275,6 @@ void ProcessImpl::addTracingCluster(envoy::config::bootstrap::v2::Bootstrap& boo
   if (uri.scheme() == "https") {
     RELEASE_ASSERT(false, "No tls config supported yet in tracing destination");
   }
-
   cluster->set_name("tracing");
   cluster->mutable_connect_timeout()->set_seconds(options_.timeout().count());
   cluster->set_type(envoy::api::v2::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
@@ -329,22 +328,32 @@ bool ProcessImpl::run(OutputCollector& collector) {
 
   envoy::config::bootstrap::v2::Bootstrap bootstrap;
   createBootstrapConfiguration(bootstrap, uri);
-  addTracingCluster(bootstrap, tracing_uri);
-  setupTracingImplementation(bootstrap);
+  // addTracingCluster(bootstrap, tracing_uri);
+  // setupTracingImplementation(bootstrap);
   cluster_manager_ = cluster_manager_factory_->clusterManagerFromProto(bootstrap);
+  auto& configuration = bootstrap.tracing();
+  if (configuration.has_http()) {
+    std::string type = configuration.http().name();
+    ENVOY_LOG(info, "  loading tracing driver: {}", type);
+    // Envoy::Server::Configuration::TracerFactory would be useful here to create the right
+    // tracer implementation for us. However that ends up needing a Server::Instance to be passed
+    // in which we do not have, and creating a fake for that means we risk code-churn because of
+    // upstream code changes.
+    auto& factory =
+        Config::Utility::getAndCheckFactory<Envoy::Server::Configuration::TracerFactory>(
+            bootstrap.tracing().http().name());
+    ProtobufTypes::MessagePtr message = Envoy::Config::Utility::translateToFactoryConfig(
+        bootstrap.tracing().http(), Envoy::ProtobufMessage::getStrictValidationVisitor(), factory);
+    auto zipkin_config = dynamic_cast<const envoy::config::trace::v2::ZipkinConfig&>(*message);
+    Envoy::Tracing::DriverPtr zipkin_driver =
+        std::make_unique<Envoy::Extensions::Tracers::Zipkin::Driver>(
+            zipkin_config, *cluster_manager_, store_root_, tls_,
+            Envoy::Runtime::LoaderSingleton::get(), *local_info_, generator_, time_system_);
+    http_tracer_ =
+        std::make_unique<Envoy::Tracing::HttpTracerImpl>(std::move(zipkin_driver), *local_info_);
+    http_context_.setTracer(*http_tracer_);
+  }
 
-  auto& factory = Config::Utility::getAndCheckFactory<Envoy::Server::Configuration::TracerFactory>(
-      bootstrap.tracing().http().name());
-  ProtobufTypes::MessagePtr message = Envoy::Config::Utility::translateToFactoryConfig(
-      bootstrap.tracing().http(), Envoy::ProtobufMessage::getStrictValidationVisitor(), factory);
-  auto zipkin_config = dynamic_cast<const envoy::config::trace::v2::ZipkinConfig&>(*message);
-  Envoy::Tracing::DriverPtr zipkin_driver =
-      std::make_unique<Envoy::Extensions::Tracers::Zipkin::Driver>(
-          zipkin_config, *cluster_manager_, store_root_, tls_,
-          Envoy::Runtime::LoaderSingleton::get(), *local_info_, generator_, time_system_);
-  http_tracer_ =
-      std::make_unique<Envoy::Tracing::HttpTracerImpl>(std::move(zipkin_driver), *local_info_);
-  http_context_.setTracer(*http_tracer_);
   cluster_manager_->setInitializedCb([this]() -> void { init_manager_.initialize(init_watcher_); });
 
   Runtime::LoaderSingleton::get().initialize(*cluster_manager_);

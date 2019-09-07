@@ -133,14 +133,14 @@ def test_http_concurrency(http_test_server_fixture):
   """
 
   parsed_json, _ = http_test_server_fixture.runNighthawkClient(
-      ["--concurrency 4 --rps 5 --connections 1",
+      ["--concurrency 4 --rps 5 --prefetch-connections --connections 1",
        http_test_server_fixture.getTestServerRootUri()])
   counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
 
   assertGreater(counters["benchmark.http_2xx"], 25)
   assertLessEqual(counters["benchmark.http_2xx"], 100)
   assertEqual(counters["upstream_cx_http1_total"], 4)
-
+  assertEqual(counters["upstream_cx_overflow"], 0)
 
 def test_https_h1(https_test_server_fixture):
   """

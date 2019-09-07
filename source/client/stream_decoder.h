@@ -41,7 +41,7 @@ public:
                 OperationCallback caller_completion_callback, Statistic& connect_statistic,
                 Statistic& latency_statistic, const Envoy::Http::HeaderMap& request_headers,
                 bool measure_latencies, uint32_t request_body_size, std::string x_request_id,
-                Envoy::Tracing::HttpTracer& http_tracer)
+                Envoy::Tracing::HttpTracerPtr& http_tracer)
       : dispatcher_(dispatcher), time_source_(time_source),
         decoder_completion_callback_(decoder_completion_callback),
         caller_completion_callback_(std::move(caller_completion_callback)),
@@ -50,13 +50,13 @@ public:
         complete_(false), measure_latencies_(measure_latencies),
         request_body_size_(request_body_size), stream_info_(time_source_),
         http_tracer_(http_tracer) {
-    if (measure_latencies_) {
+    if (measure_latencies_ && http_tracer_ != nullptr) {
       Envoy::Tracing::Decision tracing_decision = {Envoy::Tracing::Reason::ClientForced, true};
       request_headers_.insertClientTraceId();
       Envoy::UuidUtils::setTraceableUuid(x_request_id, Envoy::UuidTraceStatus::Client);
       request_headers_.ClientTraceId()->value(x_request_id);
       active_span_ =
-          http_tracer_.startSpan(config_, request_headers_, stream_info_, tracing_decision);
+          http_tracer_->startSpan(config_, request_headers_, stream_info_, tracing_decision);
       active_span_->injectContext(request_headers_);
       // active_span_->setSampled(true);
     }
@@ -102,7 +102,7 @@ private:
   const uint32_t request_body_size_;
   Envoy::Tracing::EgressConfigImpl config_;
   Envoy::StreamInfo::StreamInfoImpl stream_info_;
-  Envoy::Tracing::HttpTracer& http_tracer_;
+  Envoy::Tracing::HttpTracerPtr& http_tracer_;
   Envoy::Tracing::SpanPtr active_span_;
 };
 
