@@ -7,7 +7,7 @@
 #include "envoy/event/dispatcher.h"
 #include "envoy/http/conn_pool.h"
 
-#include "nighthawk/client/header_generator.h"
+#include "nighthawk/common/header_source.h"
 #include "nighthawk/common/operation_callback.h"
 #include "nighthawk/common/statistic.h"
 

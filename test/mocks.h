@@ -11,8 +11,8 @@
 
 #include "nighthawk/client/benchmark_client.h"
 #include "nighthawk/client/factories.h"
-#include "nighthawk/client/header_generator.h"
 #include "nighthawk/client/options.h"
+#include "nighthawk/common/header_source.h"
 #include "nighthawk/common/platform_util.h"
 #include "nighthawk/common/rate_limiter.h"
 #include "nighthawk/common/sequencer.h"
@@ -94,7 +94,7 @@ public:
   MOCK_CONST_METHOD5(create, Client::BenchmarkClientPtr(Envoy::Api::Api&, Envoy::Event::Dispatcher&,
                                                         Envoy::Stats::Store&,
                                                         Envoy::Upstream::ClusterManagerPtr&,
-                                                        Client::HeaderGenerator& header_generator));
+                                                        HeaderSource& header_generator));
 };
 
 class MockSequencerFactory : public Client::SequencerFactory {
@@ -118,10 +118,10 @@ public:
   MOCK_CONST_METHOD0(create, StatisticPtr());
 };
 
-class MockHeaderGeneratorFactory : public Client::HeaderGeneratorFactory {
+class MockHeaderSourceFactory : public HeaderSourceFactory {
 public:
-  MockHeaderGeneratorFactory();
-  MOCK_CONST_METHOD0(create, Client::HeaderGeneratorPtr());
+  MockHeaderSourceFactory();
+  MOCK_CONST_METHOD0(create, HeaderSourcePtr());
 };
 
 class FakeSequencerTarget {
@@ -151,10 +151,10 @@ public:
   MOCK_CONST_METHOD0(requestHeaders, const Envoy::Http::HeaderMap&());
 };
 
-class MockHeaderGenerator : public Client::HeaderGenerator {
+class MockHeaderSource : public HeaderSource {
 public:
-  MockHeaderGenerator();
-  MOCK_METHOD0(get, Client::GeneratorSignature());
+  MockHeaderSource();
+  MOCK_METHOD0(get, HeaderGenerator());
 };
 
 } // namespace Nighthawk

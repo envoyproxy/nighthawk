@@ -1,10 +1,10 @@
-licenses(["notice"])  # Apache 2
-
 load(
     "@envoy//bazel:envoy_build_system.bzl",
     "envoy_cc_library",
     "envoy_package",
 )
+
+licenses(["notice"])  # Apache 2
 
 envoy_package()
 
@@ -15,7 +15,6 @@ envoy_cc_library(
         "client.cc",
         "client_worker_impl.cc",
         "factories_impl.cc",
-        "header_generator_impl.cc",
         "options_impl.cc",
         "output_collector_impl.cc",
         "process_impl.cc",
@@ -26,7 +25,6 @@ envoy_cc_library(
         "client.h",
         "client_worker_impl.h",
         "factories_impl.h",
-        "header_generator_impl.h",
         "options_impl.h",
         "output_collector_impl.h",
         "process_impl.h",

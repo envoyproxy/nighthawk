@@ -29,7 +29,7 @@ public:
   BenchmarkClientPtr create(Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher,
                             Envoy::Stats::Store& store,
                             Envoy::Upstream::ClusterManagerPtr& cluster_manager,
-                            HeaderGenerator& header_generator) const override;
+                            HeaderSource& header_generator) const override;
 };
 
 class SequencerFactoryImpl : public OptionBasedFactoryImpl, public SequencerFactory {
@@ -61,10 +61,10 @@ private:
   Envoy::TimeSource& time_source_;
 };
 
-class HeaderGeneratorFactoryImpl : public OptionBasedFactoryImpl, public HeaderGeneratorFactory {
+class HeaderSourceFactoryImpl : public OptionBasedFactoryImpl, public HeaderSourceFactory {
 public:
-  HeaderGeneratorFactoryImpl(const Options& options);
-  HeaderGeneratorPtr create() const override;
+  HeaderSourceFactoryImpl(const Options& options);
+  HeaderSourcePtr create() const override;
 
 private:
   void setRequestHeader(Envoy::Http::HeaderMap& header, absl::string_view key,

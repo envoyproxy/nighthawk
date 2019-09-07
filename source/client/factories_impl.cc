@@ -11,8 +11,8 @@
 #include "common/utility.h"
 
 #include "client/benchmark_client_impl.h"
-#include "client/header_generator_impl.h"
 #include "client/output_collector_impl.h"
+#include "common/header_source_impl.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -24,7 +24,7 @@ BenchmarkClientFactoryImpl::BenchmarkClientFactoryImpl(const Options& options)
 
 BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
     Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Store& store,
-    Envoy::Upstream::ClusterManagerPtr& cluster_manager, HeaderGenerator& header_generator) const {
+    Envoy::Upstream::ClusterManagerPtr& cluster_manager, HeaderSource& header_generator) const {
   StatisticFactoryImpl statistic_factory(options_);
   auto benchmark_client = std::make_unique<BenchmarkClientHttpImpl>(
       api, dispatcher, store, statistic_factory.create(), statistic_factory.create(), options_.h2(),
@@ -89,19 +89,19 @@ OutputCollectorPtr OutputCollectorFactoryImpl::create() const {
   }
 }
 
-HeaderGeneratorFactoryImpl::HeaderGeneratorFactoryImpl(const Options& options)
+HeaderSourceFactoryImpl::HeaderSourceFactoryImpl(const Options& options)
     : OptionBasedFactoryImpl(options) {}
 
-void HeaderGeneratorFactoryImpl::setRequestHeader(Envoy::Http::HeaderMap& header,
-                                                  absl::string_view key,
-                                                  absl::string_view value) const {
+void HeaderSourceFactoryImpl::setRequestHeader(Envoy::Http::HeaderMap& header,
+                                               absl::string_view key,
+                                               absl::string_view value) const {
   auto lower_case_key = Envoy::Http::LowerCaseString(std::string(key));
   header.remove(lower_case_key);
   // TODO(oschaaf): we've performed zero validation on the header key/value.
   header.addCopy(lower_case_key, std::string(value));
 }
 
-HeaderGeneratorPtr HeaderGeneratorFactoryImpl::create() const {
+HeaderSourcePtr HeaderSourceFactoryImpl::create() const {
   // Note: we assume a valid uri.
   // Also, we can't resolve, but we do not need that.
   UriImpl uri(options_.uri());
@@ -124,7 +124,7 @@ HeaderGeneratorPtr HeaderGeneratorFactoryImpl::create() const {
     }
   }
 
-  return std::make_unique<StaticHeaderGeneratorImpl>(std::move(header));
+  return std::make_unique<StaticHeaderSourceImpl>(std::move(header));
 }
 
 } // namespace Client

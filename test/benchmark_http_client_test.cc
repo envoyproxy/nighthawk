@@ -130,7 +130,7 @@ public:
   Envoy::Upstream::MockThreadLocalCluster thread_local_cluster_;
   Envoy::Upstream::ClusterInfoConstSharedPtr cluster_info_;
   std::string response_code_;
-  Client::GeneratorSignature header_generator_;
+  HeaderGenerator header_generator_;
 };
 
 TEST_F(BenchmarkClientHttpTest, BasicTestH1404) {

@@ -30,7 +30,7 @@ void Http1PoolImpl::createConnections(const uint32_t connection_limit) {
 BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
     Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Store& store,
     StatisticPtr&& connect_statistic, StatisticPtr&& response_statistic, bool use_h2,
-    Envoy::Upstream::ClusterManagerPtr& cluster_manager, GeneratorSignature header_generator)
+    Envoy::Upstream::ClusterManagerPtr& cluster_manager, HeaderGenerator header_generator)
     : api_(api), dispatcher_(dispatcher), store_(store),
       scope_(store_.createScope("client.benchmark.")),
       connect_statistic_(std::move(connect_statistic)),

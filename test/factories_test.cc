@@ -8,7 +8,7 @@
 #include "common/uri_impl.h"
 
 #include "client/factories_impl.h"
-#include "client/header_generator_impl.h"
+#include "common/header_source_impl.h"
 
 #include "test/mocks.h"
 
@@ -40,14 +40,14 @@ TEST_F(FactoriesTest, CreateBenchmarkClient) {
   EXPECT_CALL(options_, maxRequestsPerConnection()).Times(1);
   auto cmd = std::make_unique<nighthawk::client::CommandLineOptions>();
   EXPECT_CALL(options_, toCommandLineOptions()).Times(1).WillOnce(Return(ByMove(std::move(cmd))));
-  StaticHeaderGeneratorImpl header_generator(
+  StaticHeaderSourceImpl header_generator(
       Envoy::Http::HeaderMapPtr{new Envoy::Http::TestHeaderMapImpl{}});
   auto benchmark_client =
       factory.create(*api_, dispatcher_, stats_store_, cluster_manager, header_generator);
   EXPECT_NE(nullptr, benchmark_client.get());
 }
 
-TEST_F(FactoriesTest, CreateHeaderGenerator) {
+TEST_F(FactoriesTest, CreateHeaderSource) {
   EXPECT_CALL(options_, requestMethod()).Times(1);
   EXPECT_CALL(options_, requestBodySize()).Times(1);
   EXPECT_CALL(options_, uri()).Times(1).WillOnce(Return("http://foo/"));
@@ -56,7 +56,7 @@ TEST_F(FactoriesTest, CreateHeaderGenerator) {
   request_headers->mutable_header()->set_key("foo");
   request_headers->mutable_header()->set_value("bar");
   EXPECT_CALL(options_, toCommandLineOptions()).Times(1).WillOnce(Return(ByMove(std::move(cmd))));
-  HeaderGeneratorFactoryImpl factory(options_);
+  HeaderSourceFactoryImpl factory(options_);
   auto header_generator = factory.create();
   EXPECT_NE(nullptr, header_generator.get());
 }

@@ -1,6 +1,6 @@
 #include "client/client_worker_impl.h"
 
-#include "client/header_generator_impl.h"
+#include "common/header_source_impl.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -9,7 +9,7 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
                                    Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                                    const BenchmarkClientFactory& benchmark_client_factory,
                                    const SequencerFactory& sequencer_factory,
-                                   const HeaderGeneratorFactory& header_generator_factory,
+                                   const HeaderSourceFactory& header_generator_factory,
                                    Envoy::Stats::Store& store, const int worker_number,
                                    const Envoy::MonotonicTime starting_time,
                                    bool prefetch_connections)
