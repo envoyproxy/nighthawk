@@ -19,17 +19,16 @@ Utility::mapCountersFromStore(const Envoy::Stats::Store& store,
 
   for (const auto& stat : store.counters()) {
     if (filter(stat->name(), stat->value())) {
-      // First, we strip the cluster prefix
-      std::string stat_name = std::string(absl::StripPrefix(stat->name(), "cluster."));
+      std::string stat_name = stat->name();
+      // Strip off cluster.[x]. & worker.[x]. prefixes.
       std::vector<std::string> v = absl::StrSplit(stat_name, '.');
-      if (absl::StartsWith(v[0], "worker-")) {
-        v.erase(v.begin());
+      if ((v[0] == "cluster" || v[0] == "worker") && v.size() > 1) {
+        v.erase(v.begin(), v.begin() + 2);
         stat_name = absl::StrJoin(v, ".");
       }
       results[stat_name] += stat->value();
     }
   }
-
   return results;
 }
 

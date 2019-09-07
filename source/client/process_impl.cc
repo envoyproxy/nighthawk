@@ -228,7 +228,7 @@ ProcessImpl::createBootstrapConfiguration(const Uri& uri, int number_of_clusters
       }
     }
 
-    cluster->set_name(fmt::format("worker-{}", i));
+    cluster->set_name(fmt::format("{}", i));
     cluster->mutable_connect_timeout()->set_seconds(options_.timeout().count());
     cluster->mutable_max_requests_per_connection()->set_value(options_.maxRequestsPerConnection());
 
