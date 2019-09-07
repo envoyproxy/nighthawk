@@ -109,7 +109,6 @@ class IntegrationTestBase():
       uri_host = "[%s]" % self.server_ip
 
     uri = "%s://%s:%s/" % ("https" if https else "http", uri_host, self.test_server.server_port)
-    print (uri)
     return uri
 
   def getTestServerStatisticsJson(self):
