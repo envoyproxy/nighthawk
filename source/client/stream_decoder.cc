@@ -43,8 +43,8 @@ void StreamDecoder::onComplete(bool success) {
   decoder_completion_callback_.onComplete(success, *response_headers_);
   if (active_span_.get() != nullptr) {
     // stream_info_.dumpState(std::cerr, 2);
-    Envoy::Tracing::HttpTracerUtility::finalizeSpan(*active_span_, &request_headers_, stream_info_,
-                                                    config_);
+    Envoy::Tracing::HttpTracerUtility::finalizeSpan(
+        *active_span_, &request_headers_, response_headers_.get(), nullptr, stream_info_, config_);
   }
   caller_completion_callback_(complete_, success);
   dispatcher_.deferredDelete(std::unique_ptr<StreamDecoder>(this));
