@@ -51,7 +51,7 @@ TEST_F(FactoriesTest, CreateBenchmarkClient) {
 
   auto benchmark_client =
       factory.create(*api_, dispatcher_, stats_store_, std::make_unique<UriImpl>("http://foo/"),
-                     cluster_manager, http_tracer_);
+                     cluster_manager, http_tracer_, "foo");
   EXPECT_NE(nullptr, benchmark_client.get());
 }
 

@@ -214,58 +214,38 @@ ProcessImpl::mergeWorkerStatistics(const StatisticFactory& statistic_factory,
   return merged_statistics;
 }
 
-std::map<std::string, uint64_t>
-ProcessImpl::mergeWorkerCounters(const std::vector<ClientWorkerPtr>& workers) const {
-  std::map<std::string, uint64_t> merged;
-  for (auto& w : workers) {
-    const auto counters = Utility().mapCountersFromStore(
-        w->store(), [](absl::string_view, uint64_t value) { return value > 0; });
-    for (const auto& counter : counters) {
-      if (merged.count(counter.first) == 0) {
-        merged[counter.first] = counter.second;
+void ProcessImpl::createBootstrapConfiguration(envoy::config::bootstrap::v2::Bootstrap& bootstrap,
+                                               const Uri& uri, int number_of_clusters) const {
+  for (int i = 0; i < number_of_clusters; i++) {
+    auto* cluster = bootstrap.mutable_static_resources()->add_clusters();
+    if (uri.scheme() == "https") {
+      auto* tls_context = cluster->mutable_tls_context();
+      *tls_context = options_.tlsContext();
+      auto* common_tls_context = tls_context->mutable_common_tls_context();
+      if (options_.h2()) {
+        common_tls_context->add_alpn_protocols("h2");
       } else {
-        // TODO(oschaaf): we used to sum the stats here, but when we switched to tls stats
-        // the merging is done for us. We lost some information, which can be restored
-        // in a follow-up.
-        merged[counter.first] = counter.second;
+        common_tls_context->add_alpn_protocols("http/1.1");
       }
     }
+
+    cluster->set_name(fmt::format("{}", i));
+    cluster->mutable_connect_timeout()->set_seconds(options_.timeout().count());
+    cluster->mutable_max_requests_per_connection()->set_value(options_.maxRequestsPerConnection());
+
+    auto thresholds = cluster->mutable_circuit_breakers()->add_thresholds();
+    // We do not support any retrying.
+    thresholds->mutable_max_retries()->set_value(0);
+    thresholds->mutable_max_connections()->set_value(options_.connections());
+    thresholds->mutable_max_pending_requests()->set_value(options_.maxPendingRequests());
+    thresholds->mutable_max_requests()->set_value(options_.maxActiveRequests());
+
+    cluster->set_type(envoy::api::v2::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
+    auto* host = cluster->add_hosts();
+    auto* socket_address = host->mutable_socket_address();
+    socket_address->set_address(uri.address()->ip()->addressAsString());
+    socket_address->set_port_value(uri.port());
   }
-
-  return merged;
-}
-
-void ProcessImpl::createBootstrapConfiguration(envoy::config::bootstrap::v2::Bootstrap& bootstrap,
-                                               const Uri& uri) const {
-  auto* cluster = bootstrap.mutable_static_resources()->add_clusters();
-  if (uri.scheme() == "https") {
-    auto* tls_context = cluster->mutable_tls_context();
-    *tls_context = options_.tlsContext();
-    auto* common_tls_context = tls_context->mutable_common_tls_context();
-    if (options_.h2()) {
-      common_tls_context->add_alpn_protocols("h2");
-    } else {
-      common_tls_context->add_alpn_protocols("http/1.1");
-    }
-  }
-
-  cluster->set_name("client");
-  cluster->mutable_connect_timeout()->set_seconds(options_.timeout().count());
-  cluster->mutable_max_requests_per_connection()->set_value(options_.maxRequestsPerConnection());
-
-  auto thresholds = cluster->mutable_circuit_breakers()->add_thresholds();
-  // We do not support any retrying.
-  thresholds->mutable_max_retries()->set_value(0);
-  thresholds->mutable_max_connections()->set_value(options_.connections());
-  thresholds->mutable_max_pending_requests()->set_value(options_.maxPendingRequests());
-  thresholds->mutable_max_requests()->set_value(options_.maxActiveRequests());
-
-  cluster->set_type(envoy::api::v2::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
-  auto* host = cluster->add_hosts();
-  auto* socket_address = host->mutable_socket_address();
-  socket_address->set_address(uri.address()->ip()->addressAsString());
-  socket_address->set_port_value(uri.port());
-
   ENVOY_LOG(info, "Computed configuration: {}", bootstrap.DebugString());
 }
 
@@ -308,9 +288,10 @@ bool ProcessImpl::run(OutputCollector& collector) {
   } catch (UriException) {
     return false;
   }
+  int number_of_workers = determineConcurrency();
   shutdown_ = false;
   const std::vector<ClientWorkerPtr>& workers =
-      createWorkers(uri, determineConcurrency(), options_.prefetchConnections());
+      createWorkers(uri, number_of_workers, options_.prefetchConnections());
 
   tls_.registerThread(*dispatcher_, true);
   store_root_.initializeThreading(*dispatcher_, tls_);
@@ -327,11 +308,11 @@ bool ProcessImpl::run(OutputCollector& collector) {
       *singleton_manager_);
 
   envoy::config::bootstrap::v2::Bootstrap bootstrap;
-  createBootstrapConfiguration(bootstrap, uri);
+  createBootstrapConfiguration(bootstrap, uri, number_of_workers);
   // addTracingCluster(bootstrap, tracing_uri);
   // setupTracingImplementation(bootstrap);
   cluster_manager_ = cluster_manager_factory_->clusterManagerFromProto(bootstrap);
-  auto& configuration = bootstrap.tracing();
+  const auto& configuration = bootstrap.tracing();
   if (configuration.has_http()) {
     std::string type = configuration.http().name();
     ENVOY_LOG(info, "  loading tracing driver: {}", type);
@@ -341,9 +322,9 @@ bool ProcessImpl::run(OutputCollector& collector) {
     // upstream code changes.
     auto& factory =
         Config::Utility::getAndCheckFactory<Envoy::Server::Configuration::TracerFactory>(
-            bootstrap.tracing().http().name());
+            configuration.http().name());
     ProtobufTypes::MessagePtr message = Envoy::Config::Utility::translateToFactoryConfig(
-        bootstrap.tracing().http(), Envoy::ProtobufMessage::getStrictValidationVisitor(), factory);
+        configuration.http(), Envoy::ProtobufMessage::getStrictValidationVisitor(), factory);
     auto zipkin_config = dynamic_cast<const envoy::config::trace::v2::ZipkinConfig&>(*message);
     Envoy::Tracing::DriverPtr zipkin_driver =
         std::make_unique<Envoy::Extensions::Tracers::Zipkin::Driver>(
@@ -375,19 +356,19 @@ bool ProcessImpl::run(OutputCollector& collector) {
     for (auto& worker : workers_) {
       if (worker->success()) {
         StatisticFactoryImpl statistic_factory(options_);
-        collector.addResult(
-            fmt::format("worker_{}", i),
-            vectorizeStatisticPtrMap(statistic_factory, worker->statistics()),
-            Utility().mapCountersFromStore(
-                worker->store(), [](absl::string_view, uint64_t value) { return value > 0; }));
+        collector.addResult(fmt::format("worker_{}", i),
+                            vectorizeStatisticPtrMap(statistic_factory, worker->statistics()),
+                            worker->thread_local_counter_values());
       }
       i++;
     }
   }
   if (ok) {
     StatisticFactoryImpl statistic_factory(options_);
-    collector.addResult("global", mergeWorkerStatistics(statistic_factory, workers),
-                        mergeWorkerCounters(workers));
+    collector.addResult(
+        "global", mergeWorkerStatistics(statistic_factory, workers),
+        Utility().mapCountersFromStore(
+            store_root_, [](absl::string_view, uint64_t value) { return value > 0; }));
   }
 
   return ok;

@@ -8,7 +8,6 @@ import pytest
 from common import IpVersion
 from integration_test_fixtures import (http_test_server_fixture, https_test_server_fixture)
 
-# TODO(oschaaf): rewrite the tests so we can just hand a map of expected key values to it.
 # TODO(oschaaf): we mostly verify stats observed from the client-side. Add expectations
 # for the server side as well.
 
@@ -55,7 +54,7 @@ def test_http_h1(http_test_server_fixture):
               1400 if http_test_server_fixture.ip_version == IpVersion.IPV6 else 1500)
   assertEqual(counters["upstream_rq_pending_total"], 1)
   assertEqual(counters["upstream_rq_total"], 25)
-  assertEqual(len(counters), 9)
+  assertEqual(len(counters), 13)
 
 
 def mini_stress_test_h1(fixture, args):
@@ -124,7 +123,7 @@ def test_http_h2(http_test_server_fixture):
   assertGreaterEqual(counters["upstream_cx_tx_bytes_total"], 403)
   assertEqual(counters["upstream_rq_pending_total"], 1)
   assertEqual(counters["upstream_rq_total"], 25)
-  assertEqual(len(counters), 9)
+  assertEqual(len(counters), 13)
 
 
 def test_http_concurrency(http_test_server_fixture):
@@ -133,14 +132,16 @@ def test_http_concurrency(http_test_server_fixture):
   """
 
   parsed_json, _ = http_test_server_fixture.runNighthawkClient(
-      ["--concurrency 4 --rps 5 --prefetch-connections --connections 1",
+      ["--concurrency 4 --rps 5 --connections 1",
        http_test_server_fixture.getTestServerRootUri()])
   counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
 
+  # Quite a loose expectation, but this may fluctuate depending on server load.
+  # Ideally we'd see 4 workers * 5 rps * 5s = 100 requests total
   assertGreater(counters["benchmark.http_2xx"], 25)
   assertLessEqual(counters["benchmark.http_2xx"], 100)
   assertEqual(counters["upstream_cx_http1_total"], 4)
-  assertEqual(counters["upstream_cx_overflow"], 0)
+
 
 def test_https_h1(https_test_server_fixture):
   """
@@ -165,7 +166,7 @@ def test_https_h1(https_test_server_fixture):
   assertEqual(counters["ssl.handshake"], 1)
   assertEqual(counters["ssl.sigalgs.rsa_pss_rsae_sha256"], 1)
   assertEqual(counters["ssl.versions.TLSv1.2"], 1)
-  assertEqual(len(counters), 14)
+  assertEqual(len(counters), 18)
 
   server_stats = https_test_server_fixture.getTestServerStatisticsJson()
   assertEqual(
@@ -196,7 +197,7 @@ def test_https_h2(https_test_server_fixture):
   assertEqual(counters["ssl.handshake"], 1)
   assertEqual(counters["ssl.sigalgs.rsa_pss_rsae_sha256"], 1)
   assertEqual(counters["ssl.versions.TLSv1.2"], 1)
-  assertEqual(len(counters), 14)
+  assertEqual(len(counters), 18)
 
 
 def test_https_h1_tls_context_configuration(https_test_server_fixture):
