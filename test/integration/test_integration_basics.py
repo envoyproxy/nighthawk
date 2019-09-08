@@ -274,3 +274,22 @@ def test_https_log_verbosity(https_test_server_fixture):
       ["--duration 1", "--rps 1", "-v trace",
        https_test_server_fixture.getTestServerRootUri()])
   assertIn(trace_level_sentinel, logs)
+
+
+def test_zipkin_tracing(http_test_server_fixture):
+  """
+  Test that we send spans when our zipkin tracing feature
+  is enabled. Note there's no actual zipkin server started, so
+  traffic will get (hopefully) get send into the void.
+  """
+  # TODO(oschaaf): boot up an actual zipkin server to accept
+  # spans we send here & validate based on that.
+  parsed_json, _ = http_test_server_fixture.runNighthawkClient([
+      "--duration 5", "--rps 10", "--trace zipkin://localhost:79/api/v1/spans",
+      http_test_server_fixture.getTestServerRootUri()
+  ])
+  counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
+  assertEqual(counters["benchmark.http_2xx"], 50)
+  assertGreaterEqual(counters["tracing.zipkin.reports_dropped"], 9)
+  assertGreaterEqual(counters["tracing.zipkin.spans_sent"], 45)
+  assertEqual(counters["tracing.zipkin.timer_flushed"], 1)
