@@ -246,15 +246,12 @@ void ProcessImpl::createBootstrapConfiguration(envoy::config::bootstrap::v2::Boo
     socket_address->set_address(uri.address()->ip()->addressAsString());
     socket_address->set_port_value(uri.port());
   }
-  ENVOY_LOG(info, "Computed configuration: {}", bootstrap.DebugString());
 }
 
 void ProcessImpl::addTracingCluster(envoy::config::bootstrap::v2::Bootstrap& bootstrap,
                                     const Uri& uri) const {
   auto* cluster = bootstrap.mutable_static_resources()->add_clusters();
-  if (uri.scheme() == "https") {
-    RELEASE_ASSERT(false, "No tls config supported yet in tracing destination");
-  }
+  RELEASE_ASSERT(uri.scheme() == "zipkin", "Currently only zipkin is a supported trace options");
   cluster->set_name("tracing");
   cluster->mutable_connect_timeout()->set_seconds(options_.timeout().count());
   cluster->set_type(envoy::api::v2::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
@@ -262,29 +259,30 @@ void ProcessImpl::addTracingCluster(envoy::config::bootstrap::v2::Bootstrap& boo
   auto* socket_address = host->mutable_socket_address();
   socket_address->set_address(uri.address()->ip()->addressAsString());
   socket_address->set_port_value(uri.port());
-  ENVOY_LOG(info, "Computed tracing configuration: {}", bootstrap.DebugString());
 }
 
-void ProcessImpl::setupTracingImplementation(
-    envoy::config::bootstrap::v2::Bootstrap& bootstrap) const {
+void ProcessImpl::setupTracingImplementation(envoy::config::bootstrap::v2::Bootstrap& bootstrap,
+                                             const Uri& uri) const {
   auto* http = bootstrap.mutable_tracing()->mutable_http();
   http->set_name("envoy.zipkin");
   envoy::config::trace::v2::ZipkinConfig zipkin_config;
   zipkin_config.mutable_collector_cluster()->assign("tracing");
-  zipkin_config.mutable_collector_endpoint()->assign("/api/v1/spans");
+  zipkin_config.mutable_collector_endpoint()->assign(std::string(uri.path()));
   zipkin_config.mutable_shared_span_context()->set_value(true);
   http->mutable_typed_config()->PackFrom(zipkin_config);
-  ENVOY_LOG(info, "Computed tracing setup: {}", bootstrap.DebugString());
 }
 
 bool ProcessImpl::run(OutputCollector& collector) {
   UriImpl uri(options_.uri());
-  UriImpl tracing_uri("http://localhost:9411/api/v1/spans");
+  UriPtr tracing_uri;
 
   try {
     uri.resolve(*dispatcher_, Utility::translateFamilyOptionString(options_.addressFamily()));
-    tracing_uri.resolve(*dispatcher_,
-                        Utility::translateFamilyOptionString(options_.addressFamily()));
+    if (options_.trace() != "") {
+      tracing_uri = std::make_unique<UriImpl>(options_.trace());
+      tracing_uri->resolve(*dispatcher_,
+                           Utility::translateFamilyOptionString(options_.addressFamily()));
+    }
   } catch (UriException) {
     return false;
   }
@@ -309,8 +307,12 @@ bool ProcessImpl::run(OutputCollector& collector) {
 
   envoy::config::bootstrap::v2::Bootstrap bootstrap;
   createBootstrapConfiguration(bootstrap, uri, number_of_workers);
-  // addTracingCluster(bootstrap, tracing_uri);
-  // setupTracingImplementation(bootstrap);
+
+  if (tracing_uri != nullptr) {
+    addTracingCluster(bootstrap, *tracing_uri);
+    setupTracingImplementation(bootstrap, *tracing_uri);
+  }
+
   cluster_manager_ = cluster_manager_factory_->clusterManagerFromProto(bootstrap);
   const auto& configuration = bootstrap.tracing();
   if (configuration.has_http()) {
@@ -335,6 +337,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
     http_context_.setTracer(*http_tracer_);
   }
 
+  ENVOY_LOG(debug, "Computed configuration: {}", bootstrap.DebugString());
   cluster_manager_->setInitializedCb([this]() -> void { init_manager_.initialize(init_watcher_); });
 
   Runtime::LoaderSingleton::get().initialize(*cluster_manager_);

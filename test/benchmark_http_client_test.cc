@@ -33,8 +33,7 @@ public:
     EXPECT_CALL(cluster_manager(), get(_)).WillRepeatedly(Return(&thread_local_cluster_));
     EXPECT_CALL(thread_local_cluster_, info()).WillRepeatedly(Return(cluster_info_));
 
-    Envoy::Tracing::MockHttpTracer& tracer =
-        static_cast<Envoy::Tracing::MockHttpTracer&>(*http_tracer_);
+    auto& tracer = static_cast<Envoy::Tracing::MockHttpTracer&>(*http_tracer_);
     EXPECT_CALL(tracer, startSpan_(_, _, _, _))
         .WillRepeatedly(
             Invoke([&](const Envoy::Tracing::Config& config, const Envoy::Http::HeaderMap&,
