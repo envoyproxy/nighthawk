@@ -58,7 +58,6 @@ public:
       active_span_ =
           http_tracer_->startSpan(config_, request_headers_, stream_info_, tracing_decision);
       active_span_->injectContext(request_headers_);
-      // active_span_->setSampled(true);
     }
   }
 
@@ -84,6 +83,9 @@ public:
   void onPoolReady(Envoy::Http::StreamEncoder& encoder,
                    Envoy::Upstream::HostDescriptionConstSharedPtr host) override;
 
+  Envoy::StreamInfo::ResponseFlag
+  streamResetReasonToResponseFlag(Envoy::Http::StreamResetReason reset_reason);
+
 private:
   void onComplete(bool success);
 
@@ -95,6 +97,7 @@ private:
   Statistic& latency_statistic_;
   Envoy::Http::HeaderMapImpl request_headers_;
   Envoy::Http::HeaderMapPtr response_headers_;
+  Envoy::Http::HeaderMapPtr trailer_headers_;
   const Envoy::MonotonicTime connect_start_;
   Envoy::MonotonicTime request_start_;
   bool complete_;
@@ -104,6 +107,7 @@ private:
   Envoy::StreamInfo::StreamInfoImpl stream_info_;
   Envoy::Tracing::HttpTracerPtr& http_tracer_;
   Envoy::Tracing::SpanPtr active_span_;
+  Envoy::StreamInfo::UpstreamTiming upstream_timing_;
 };
 
 } // namespace Client

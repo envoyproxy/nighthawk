@@ -4,33 +4,38 @@
 
 #include "external/envoy/source/common/http/http1/codec_impl.h"
 #include "external/envoy/source/common/http/utility.h"
+#include "external/envoy/source/common/stream_info/stream_info_impl.h"
 
 namespace Nighthawk {
 namespace Client {
 
 void StreamDecoder::decodeHeaders(Envoy::Http::HeaderMapPtr&& headers, bool end_stream) {
   ASSERT(!complete_);
+  upstream_timing_.onFirstUpstreamRxByteReceived(time_source_);
   complete_ = end_stream;
   response_headers_ = std::move(headers);
   const uint64_t response_code = Envoy::Http::Utility::getResponseStatus(*response_headers_);
   stream_info_.response_code_ = static_cast<uint32_t>(response_code);
-
   if (complete_) {
     onComplete(true);
   }
 }
 
-void StreamDecoder::decodeData(Envoy::Buffer::Instance&, bool end_stream) {
+void StreamDecoder::decodeData(Envoy::Buffer::Instance& data, bool end_stream) {
   ASSERT(!complete_);
   complete_ = end_stream;
+  // This will show up in the zipkin UI as 'response_size'. In Envoy this tracks bytes send by Envoy
+  // to the downstream.
+  stream_info_.addBytesSent(data.length());
   if (complete_) {
     onComplete(true);
   }
 }
 
-void StreamDecoder::decodeTrailers(Envoy::Http::HeaderMapPtr&&) {
+void StreamDecoder::decodeTrailers(Envoy::Http::HeaderMapPtr&& headers) {
   ASSERT(!complete_);
   complete_ = true;
+  trailer_headers_ = std::move(headers);
   onComplete(true);
 }
 
@@ -38,20 +43,24 @@ void StreamDecoder::onComplete(bool success) {
   if (success && measure_latencies_) {
     latency_statistic_.addValue((time_source_.monotonicTime() - request_start_).count());
   }
+  upstream_timing_.onLastUpstreamRxByteReceived(time_source_);
   stream_info_.onRequestComplete();
+  stream_info_.setUpstreamTiming(upstream_timing_);
   ASSERT(!success || complete_);
   decoder_completion_callback_.onComplete(success, *response_headers_);
   if (active_span_.get() != nullptr) {
-    // stream_info_.dumpState(std::cerr, 2);
-    Envoy::Tracing::HttpTracerUtility::finalizeSpan(
-        *active_span_, &request_headers_, response_headers_.get(), nullptr, stream_info_, config_);
+    Envoy::Tracing::HttpTracerUtility::finalizeSpan(*active_span_, &request_headers_,
+                                                    response_headers_.get(), trailer_headers_.get(),
+                                                    stream_info_, config_);
   }
   caller_completion_callback_(complete_, success);
   dispatcher_.deferredDelete(std::unique_ptr<StreamDecoder>(this));
 }
 
-void StreamDecoder::onResetStream(Envoy::Http::StreamResetReason,
+void StreamDecoder::onResetStream(Envoy::Http::StreamResetReason reason,
                                   absl::string_view /* transport_failure_reason */) {
+
+  stream_info_.setResponseFlag(streamResetReasonToResponseFlag(reason));
   onComplete(false);
 }
 
@@ -65,8 +74,15 @@ void StreamDecoder::onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason
 
 void StreamDecoder::onPoolReady(Envoy::Http::StreamEncoder& encoder,
                                 Envoy::Upstream::HostDescriptionConstSharedPtr) {
+  upstream_timing_.onFirstUpstreamTxByteSent(time_source_); // XXX(oschaaf): is this correct?
   encoder.encodeHeaders(request_headers_, request_body_size_ == 0);
   if (request_body_size_ > 0) {
+    // This will show up in the zipkin UI as 'response_size'.
+    // We add it here, optimistically assuming it will all be send.
+    // Ideally, we'd track the encoder events of the stream to dig up and forward
+    // more information. For now, we take the risk of erroneously reporting that
+    // we did send all the bytes, instead of always reporting 0 bytes.
+    stream_info_.addBytesReceived(request_body_size_);
     // TODO(oschaaf): We can probably get away without allocating/copying here if we pregenerate
     // potential request-body candidates up front. Revisit this when we have non-uniform request
     // distributions and on-the-fly reconfiguration in place.
@@ -78,6 +94,28 @@ void StreamDecoder::onPoolReady(Envoy::Http::StreamEncoder& encoder,
   if (measure_latencies_) {
     connect_statistic_.addValue((request_start_ - connect_start_).count());
   }
+}
+
+// TODO(oschaaf): duplicated from the envoy code base.
+// See if it can be moved to make it more easily shareable there, and drop it here.
+Envoy::StreamInfo::ResponseFlag
+StreamDecoder::streamResetReasonToResponseFlag(Envoy::Http::StreamResetReason reset_reason) {
+  switch (reset_reason) {
+  case Envoy::Http::StreamResetReason::ConnectionFailure:
+    return Envoy::StreamInfo::ResponseFlag::UpstreamConnectionFailure;
+  case Envoy::Http::StreamResetReason::ConnectionTermination:
+    return Envoy::StreamInfo::ResponseFlag::UpstreamConnectionTermination;
+  case Envoy::Http::StreamResetReason::LocalReset:
+  case Envoy::Http::StreamResetReason::LocalRefusedStreamReset:
+    return Envoy::StreamInfo::ResponseFlag::LocalReset;
+  case Envoy::Http::StreamResetReason::Overflow:
+    return Envoy::StreamInfo::ResponseFlag::UpstreamOverflow;
+  case Envoy::Http::StreamResetReason::RemoteReset:
+  case Envoy::Http::StreamResetReason::RemoteRefusedStreamReset:
+    return Envoy::StreamInfo::ResponseFlag::UpstreamRemoteReset;
+  }
+
+  NOT_REACHED_GCOVR_EXCL_LINE;
 }
 
 } // namespace Client
