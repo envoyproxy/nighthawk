@@ -86,6 +86,8 @@ public:
   Envoy::StreamInfo::ResponseFlag
   streamResetReasonToResponseFlag(Envoy::Http::StreamResetReason reset_reason);
 
+  void finalizeActiveSpan();
+
 private:
   void onComplete(bool success);
 

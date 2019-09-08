@@ -40,19 +40,15 @@ void StreamDecoder::decodeTrailers(Envoy::Http::HeaderMapPtr&& headers) {
 }
 
 void StreamDecoder::onComplete(bool success) {
+  ASSERT(!success || complete_);
   if (success && measure_latencies_) {
     latency_statistic_.addValue((time_source_.monotonicTime() - request_start_).count());
   }
   upstream_timing_.onLastUpstreamRxByteReceived(time_source_);
   stream_info_.onRequestComplete();
   stream_info_.setUpstreamTiming(upstream_timing_);
-  ASSERT(!success || complete_);
   decoder_completion_callback_.onComplete(success, *response_headers_);
-  if (active_span_.get() != nullptr) {
-    Envoy::Tracing::HttpTracerUtility::finalizeSpan(*active_span_, &request_headers_,
-                                                    response_headers_.get(), trailer_headers_.get(),
-                                                    stream_info_, config_);
-  }
+  finalizeActiveSpan();
   caller_completion_callback_(complete_, success);
   dispatcher_.deferredDelete(std::unique_ptr<StreamDecoder>(this));
 }
@@ -68,6 +64,8 @@ void StreamDecoder::onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason
                                   absl::string_view /* transport_failure_reason */,
                                   Envoy::Upstream::HostDescriptionConstSharedPtr) {
   decoder_completion_callback_.onPoolFailure(reason);
+  stream_info_.setResponseFlag(Envoy::StreamInfo::ResponseFlag::UpstreamConnectionFailure);
+  finalizeActiveSpan();
   caller_completion_callback_(false, false);
   dispatcher_.deferredDelete(std::unique_ptr<StreamDecoder>(this));
 }
@@ -116,6 +114,14 @@ StreamDecoder::streamResetReasonToResponseFlag(Envoy::Http::StreamResetReason re
   }
 
   NOT_REACHED_GCOVR_EXCL_LINE;
+}
+
+void StreamDecoder::finalizeActiveSpan() {
+  if (active_span_.get() != nullptr) {
+    Envoy::Tracing::HttpTracerUtility::finalizeSpan(*active_span_, &request_headers_,
+                                                    response_headers_.get(), trailer_headers_.get(),
+                                                    stream_info_, config_);
+  }
 }
 
 } // namespace Client

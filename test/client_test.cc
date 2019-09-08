@@ -42,6 +42,29 @@ TEST_F(ClientTest, AutoConcurrencyRun) {
   EXPECT_TRUE(program.run());
 }
 
+// TODO(oschaaf): this is just for coverage, and we don't care where
+// any traffic we send ends it or what that looks like.
+// We do functional testing in python now, but unfortunately any code we hit
+// there isn't counted as code-coverage.
+// Ideally, the code hit during the python test runs would count for covergage,
+// and we use unit-tests here to hit any edge cases we can't easily hit otherwise.
+// XXX(oschaaf): look into ways to accomplish that.
+TEST_F(ClientTest, TracingRun) {
+  std::vector<const char*> argv;
+  argv.push_back("foo");
+  argv.push_back("--duration");
+  argv.push_back("5");
+  argv.push_back("--rps");
+  argv.push_back("10");
+  argv.push_back("--verbosity");
+  argv.push_back("error");
+  argv.push_back("http://localhost:63657/");
+  argv.push_back("--trace");
+  argv.push_back("zipkin://localhost:9411/api/v1/spans");
+  Main program(argv.size(), argv.data());
+  EXPECT_TRUE(program.run());
+}
+
 TEST_F(ClientTest, BadRun) {
   Main program(Nighthawk::Client::TestUtility::createOptionsImpl(
       "foo --duration 1 --rps 1 https://unresolveable.host/"));
