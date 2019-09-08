@@ -83,7 +83,7 @@ public:
   void onPoolReady(Envoy::Http::StreamEncoder& encoder,
                    Envoy::Upstream::HostDescriptionConstSharedPtr host) override;
 
-  Envoy::StreamInfo::ResponseFlag
+  static Envoy::StreamInfo::ResponseFlag
   streamResetReasonToResponseFlag(Envoy::Http::StreamResetReason reset_reason);
 
   void finalizeActiveSpan();

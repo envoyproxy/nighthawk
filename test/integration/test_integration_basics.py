@@ -276,7 +276,7 @@ def test_https_log_verbosity(https_test_server_fixture):
   assertIn(trace_level_sentinel, logs)
 
 
-def test_zipkin_tracing(http_test_server_fixture):
+def test_tracing_zipkin(http_test_server_fixture):
   """
   Test that we send spans when our zipkin tracing feature
   is enabled. Note there's no actual zipkin server started, so

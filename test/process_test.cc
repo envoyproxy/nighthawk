@@ -26,11 +26,11 @@ public:
       : loopback_address_(Envoy::Network::Test::getLoopbackAddressUrlString(GetParam())),
         options_(TestUtility::createOptionsImpl(
             fmt::format("foo --duration 1 -v error --rps 10 https://{}/", loopback_address_))){};
-  void runProcess() {
+  void runProcess(bool expect_success = true) {
     ProcessPtr process = std::make_unique<ProcessImpl>(*options_, time_system_);
     OutputCollectorFactoryImpl output_format_factory(time_system_, *options_);
     auto collector = output_format_factory.create();
-    EXPECT_TRUE(process->run(*collector));
+    EXPECT_EQ(expect_success, process->run(*collector));
     process->shutdown();
   }
 
@@ -48,6 +48,13 @@ TEST_P(ProcessTest, TwoProcessInSequence) {
   options_ = TestUtility::createOptionsImpl(
       fmt::format("foo --h2 --duration 1 --rps 10 https://{}/", loopback_address_));
   runProcess();
+}
+
+// TODO(oschaaf): move to python int. tests once it adds to coverage.
+TEST_P(ProcessTest, BadTracerSpec) {
+  options_ = TestUtility::createOptionsImpl(
+      fmt::format("foo --trace foo://localhost:79/api/v1/spans https://{}/", loopback_address_));
+  runProcess(false);
 }
 
 } // namespace Client

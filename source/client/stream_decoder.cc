@@ -112,7 +112,6 @@ StreamDecoder::streamResetReasonToResponseFlag(Envoy::Http::StreamResetReason re
   case Envoy::Http::StreamResetReason::RemoteRefusedStreamReset:
     return Envoy::StreamInfo::ResponseFlag::UpstreamRemoteReset;
   }
-
   NOT_REACHED_GCOVR_EXCL_LINE;
 }
 

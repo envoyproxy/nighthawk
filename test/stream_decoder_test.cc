@@ -143,5 +143,29 @@ TEST_F(StreamDecoderTest, PoolFailureTest) {
   EXPECT_EQ(1, pool_failures_);
 }
 
+TEST_F(StreamDecoderTest, StreamResetReasonToResponseFlag) {
+  ASSERT_EQ(StreamDecoder::streamResetReasonToResponseFlag(
+                Envoy::Http::StreamResetReason::ConnectionFailure),
+            Envoy::StreamInfo::ResponseFlag::UpstreamConnectionFailure);
+  ASSERT_EQ(StreamDecoder::streamResetReasonToResponseFlag(
+                Envoy::Http::StreamResetReason::ConnectionTermination),
+            Envoy::StreamInfo::ResponseFlag::UpstreamConnectionTermination);
+  ASSERT_EQ(
+      StreamDecoder::streamResetReasonToResponseFlag(Envoy::Http::StreamResetReason::LocalReset),
+      Envoy::StreamInfo::ResponseFlag::LocalReset);
+  ASSERT_EQ(StreamDecoder::streamResetReasonToResponseFlag(
+                Envoy::Http::StreamResetReason::LocalRefusedStreamReset),
+            Envoy::StreamInfo::ResponseFlag::LocalReset);
+  ASSERT_EQ(
+      StreamDecoder::streamResetReasonToResponseFlag(Envoy::Http::StreamResetReason::Overflow),
+      Envoy::StreamInfo::ResponseFlag::UpstreamOverflow);
+  ASSERT_EQ(
+      StreamDecoder::streamResetReasonToResponseFlag(Envoy::Http::StreamResetReason::RemoteReset),
+      Envoy::StreamInfo::ResponseFlag::UpstreamRemoteReset);
+  ASSERT_EQ(StreamDecoder::streamResetReasonToResponseFlag(
+                Envoy::Http::StreamResetReason::RemoteRefusedStreamReset),
+            Envoy::StreamInfo::ResponseFlag::UpstreamRemoteReset);
+}
+
 } // namespace Client
 } // namespace Nighthawk

@@ -260,23 +260,18 @@ void ProcessImpl::addTracingCluster(envoy::config::bootstrap::v2::Bootstrap& boo
   socket_address->set_port_value(uri.port());
 }
 
-bool ProcessImpl::setupTracingImplementation(envoy::config::bootstrap::v2::Bootstrap& bootstrap,
+void ProcessImpl::setupTracingImplementation(envoy::config::bootstrap::v2::Bootstrap& bootstrap,
                                              const Uri& uri) const {
   auto* http = bootstrap.mutable_tracing()->mutable_http();
   auto scheme = uri.scheme();
   const std::string kTracingClusterName = "tracing";
   http->set_name(fmt::format("envoy.{}", scheme));
-  if (scheme == "zipkin") {
-    envoy::config::trace::v2::ZipkinConfig config;
-    config.mutable_collector_cluster()->assign(kTracingClusterName);
-    config.mutable_collector_endpoint()->assign(std::string(uri.path()));
-    config.mutable_shared_span_context()->set_value(true);
-    http->mutable_typed_config()->PackFrom(config);
-    return true;
-  }
-  // XXX(oschaaf): Figure out why this does not show up in the output log.
-  ENVOY_LOG(error, "Unknown tracing scheme: {}", scheme);
-  return false;
+  RELEASE_ASSERT(scheme == "zipkin", "Only zipkin is supported");
+  envoy::config::trace::v2::ZipkinConfig config;
+  config.mutable_collector_cluster()->assign(kTracingClusterName);
+  config.mutable_collector_endpoint()->assign(std::string(uri.path()));
+  config.mutable_shared_span_context()->set_value(true);
+  http->mutable_typed_config()->PackFrom(config);
 }
 
 void ProcessImpl::maybeCreateTracingDriver(const envoy::config::trace::v2::Tracing& configuration) {
@@ -339,9 +334,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
   envoy::config::bootstrap::v2::Bootstrap bootstrap;
   createBootstrapConfiguration(bootstrap, uri, number_of_workers);
   if (tracing_uri != nullptr) {
-    if (!setupTracingImplementation(bootstrap, *tracing_uri)) {
-      return false;
-    }
+    setupTracingImplementation(bootstrap, *tracing_uri);
     addTracingCluster(bootstrap, *tracing_uri);
   }
   ENVOY_LOG(debug, "Computed configuration: {}", bootstrap.DebugString());
