@@ -45,8 +45,9 @@ TEST_F(FactoriesTest, CreateBenchmarkClient) {
   request_headers->mutable_header()->set_value("bar");
   EXPECT_CALL(options_, toCommandLineOptions()).Times(1).WillOnce(Return(ByMove(std::move(cmd))));
 
-  auto benchmark_client = factory.create(*api_, dispatcher_, stats_store_,
-                                         std::make_unique<UriImpl>("http://foo/"), cluster_manager);
+  auto benchmark_client =
+      factory.create(*api_, dispatcher_, stats_store_, std::make_unique<UriImpl>("http://foo/"),
+                     cluster_manager, "foo");
   EXPECT_NE(nullptr, benchmark_client.get());
 }
 

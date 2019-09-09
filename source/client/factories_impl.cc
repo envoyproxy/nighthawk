@@ -21,12 +21,13 @@ BenchmarkClientFactoryImpl::BenchmarkClientFactoryImpl(const Options& options)
 
 BenchmarkClientPtr
 BenchmarkClientFactoryImpl::create(Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher,
-                                   Envoy::Stats::Store& store, UriPtr&& uri,
-                                   Envoy::Upstream::ClusterManagerPtr& cluster_manager) const {
+                                   Envoy::Stats::Scope& scope, UriPtr&& uri,
+                                   Envoy::Upstream::ClusterManagerPtr& cluster_manager,
+                                   absl::string_view cluster_name) const {
   StatisticFactoryImpl statistic_factory(options_);
   auto benchmark_client = std::make_unique<BenchmarkClientHttpImpl>(
-      api, dispatcher, store, statistic_factory.create(), statistic_factory.create(),
-      std::move(uri), options_.h2(), cluster_manager);
+      api, dispatcher, scope, statistic_factory.create(), statistic_factory.create(),
+      std::move(uri), options_.h2(), cluster_manager, cluster_name);
   auto request_options = options_.toCommandLineOptions()->request_options();
   if (request_options.request_headers_size() > 0) {
     for (const auto& header : request_options.request_headers()) {

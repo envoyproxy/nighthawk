@@ -1,5 +1,7 @@
 #pragma once
 
+#include <map>
+
 #include "envoy/api/api.h"
 #include "envoy/network/address.h"
 #include "envoy/stats/store.h"
@@ -49,7 +51,8 @@ public:
 
   uint32_t determineConcurrency() const;
   bool run(OutputCollector& collector) override;
-  const envoy::config::bootstrap::v2::Bootstrap createBootstrapConfiguration(const Uri& uri) const;
+  const envoy::config::bootstrap::v2::Bootstrap
+  createBootstrapConfiguration(const Uri& uri, int number_of_workers) const;
   void shutdown() override;
 
 private:
@@ -61,10 +64,6 @@ private:
   std::vector<StatisticPtr>
   mergeWorkerStatistics(const StatisticFactory& statistic_factory,
                         const std::vector<ClientWorkerPtr>& workers) const;
-
-  std::map<std::string, uint64_t>
-  mergeWorkerCounters(const std::vector<ClientWorkerPtr>& workers) const;
-
   Envoy::ProcessWide process_wide_;
   Envoy::PlatformImpl platform_impl_;
   Envoy::Event::TimeSystem& time_system_;

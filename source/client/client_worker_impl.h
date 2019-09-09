@@ -27,14 +27,19 @@ public:
                    const Envoy::MonotonicTime starting_time, bool prefetch_connections);
 
   StatisticPtrMap statistics() const override;
-  Envoy::Stats::Store& store() const override { return store_; }
   bool success() const override { return success_; }
+
+  const std::map<std::string, uint64_t>& thread_local_counter_values() override {
+    return thread_local_counter_values_;
+  }
 
 protected:
   void work() override;
 
 private:
   void simpleWarmup();
+  Envoy::Stats::ScopePtr worker_scope_;
+  Envoy::Stats::ScopePtr worker_number_scope_;
   const int worker_number_;
   const Envoy::MonotonicTime starting_time_;
   bool success_{};
@@ -42,6 +47,7 @@ private:
   const SequencerPtr sequencer_;
   Envoy::LocalInfo::LocalInfoPtr local_info_;
   const bool prefetch_connections_;
+  std::map<std::string, uint64_t> thread_local_counter_values_;
 };
 
 using ClientWorkerImplPtr = std::unique_ptr<ClientWorkerImpl>;

@@ -6,6 +6,7 @@
 #include "external/envoy/source/common/network/utility.h"
 
 #include "absl/strings/match.h"
+#include "absl/strings/str_join.h"
 #include "absl/strings/str_replace.h"
 #include "absl/strings/str_split.h"
 
@@ -18,18 +19,16 @@ Utility::mapCountersFromStore(const Envoy::Stats::Store& store,
 
   for (const auto& stat : store.counters()) {
     if (filter(stat->name(), stat->value())) {
-      // We strip off the "cluster." prefix. Any stats that do not start with
-      // "client." after that will be omitted.
-      // TODO(oschaaf): we can expose those after amending some tests to expect them.
-      std::string stripped_name = std::string(absl::StripPrefix(stat->name(), "cluster."));
-      if (!absl::StartsWith(stripped_name, "client.") ||
-          stripped_name == "client.membership_change") {
-        continue;
+      std::string stat_name = stat->name();
+      // Strip off cluster.[x]. & worker.[x]. prefixes.
+      std::vector<std::string> v = absl::StrSplit(stat_name, '.');
+      if ((v[0] == "cluster" || v[0] == "worker") && v.size() > 1) {
+        v.erase(v.begin(), v.begin() + 2);
+        stat_name = absl::StrJoin(v, ".");
       }
-      results[stripped_name] = stat->value();
+      results[stat_name] += stat->value();
     }
   }
-
   return results;
 }
 

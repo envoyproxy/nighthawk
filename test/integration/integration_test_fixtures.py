@@ -87,11 +87,11 @@ class IntegrationTestBase():
   def getNighthawkCounterMapFromJson(self, parsed_json):
     """
     Utility method to get the counters from the json indexed by name.
-    Note:the `client.` prefix will be stripped from the index.
     """
+    global_results_index = len(parsed_json["results"]) - 1
     return {
-        counter["name"][len("client."):]: int(counter["value"])
-        for counter in parsed_json["results"][0]["counters"]
+        counter["name"]: int(counter["value"])
+        for counter in parsed_json["results"][global_results_index]["counters"]
     }
 
   def getNighthawkGlobalHistogramsbyIdFromJson(self, parsed_json):
@@ -149,6 +149,9 @@ class IntegrationTestBase():
     else:
       assert (client_process.returncode == 0)
       return json.loads(json_string), logs
+
+  def assertIsSubset(self, subset, superset):
+    self.assertLessEqual(subset.items(), superset.items())
 
 
 class HttpIntegrationTestBase(IntegrationTestBase):
