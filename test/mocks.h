@@ -91,10 +91,11 @@ public:
 class MockBenchmarkClientFactory : public Client::BenchmarkClientFactory {
 public:
   MockBenchmarkClientFactory();
-  MOCK_CONST_METHOD5(create, Client::BenchmarkClientPtr(Envoy::Api::Api&, Envoy::Event::Dispatcher&,
-                                                        Envoy::Stats::Store&,
-                                                        Envoy::Upstream::ClusterManagerPtr&,
-                                                        HeaderSource& header_generator));
+  MOCK_CONST_METHOD6(create,
+                     Client::BenchmarkClientPtr(Envoy::Api::Api&, Envoy::Event::Dispatcher&,
+                                                Envoy::Stats::Scope&,
+                                                Envoy::Upstream::ClusterManagerPtr&,
+                                                absl::string_view, HeaderSource& header_generator));
 };
 
 class MockSequencerFactory : public Client::SequencerFactory {
@@ -145,7 +146,7 @@ public:
   MOCK_METHOD1(setMeasureLatencies, void(bool));
   MOCK_CONST_METHOD0(statistics, StatisticPtrMap());
   MOCK_METHOD1(tryStartRequest, bool(Client::CompletionCallback));
-  MOCK_CONST_METHOD0(store, Envoy::Stats::Store&());
+  MOCK_CONST_METHOD0(scope, Envoy::Stats::Scope&());
   MOCK_METHOD0(prefetchPoolConnections, void());
   MOCK_CONST_METHOD0(measureLatencies, bool());
   MOCK_CONST_METHOD0(requestHeaders, const Envoy::Http::HeaderMap&());

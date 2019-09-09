@@ -23,12 +23,13 @@ BenchmarkClientFactoryImpl::BenchmarkClientFactoryImpl(const Options& options)
     : OptionBasedFactoryImpl(options) {}
 
 BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
-    Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Store& store,
-    Envoy::Upstream::ClusterManagerPtr& cluster_manager, HeaderSource& header_generator) const {
+    Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
+    Envoy::Upstream::ClusterManagerPtr& cluster_manager, absl::string_view cluster_name,
+    HeaderSource& header_generator) const {
   StatisticFactoryImpl statistic_factory(options_);
   auto benchmark_client = std::make_unique<BenchmarkClientHttpImpl>(
-      api, dispatcher, store, statistic_factory.create(), statistic_factory.create(), options_.h2(),
-      cluster_manager, header_generator.get());
+      api, dispatcher, scope, statistic_factory.create(), statistic_factory.create(), options_.h2(),
+      cluster_manager, cluster_name, header_generator.get());
   auto request_options = options_.toCommandLineOptions()->request_options();
   benchmark_client->setConnectionLimit(options_.connections());
   benchmark_client->setMaxPendingRequests(options_.maxPendingRequests());

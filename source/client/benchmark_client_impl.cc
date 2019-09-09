@@ -28,15 +28,16 @@ void Http1PoolImpl::createConnections(const uint32_t connection_limit) {
 }
 
 BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
-    Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Store& store,
+    Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
     StatisticPtr&& connect_statistic, StatisticPtr&& response_statistic, bool use_h2,
-    Envoy::Upstream::ClusterManagerPtr& cluster_manager, HeaderGenerator header_generator)
-    : api_(api), dispatcher_(dispatcher), store_(store),
-      scope_(store_.createScope("client.benchmark.")),
+    Envoy::Upstream::ClusterManagerPtr& cluster_manager, absl::string_view cluster_name,
+    HeaderGenerator header_generator)
+    : api_(api), dispatcher_(dispatcher), scope_(scope.createScope("benchmark.")),
       connect_statistic_(std::move(connect_statistic)),
       response_statistic_(std::move(response_statistic)), use_h2_(use_h2),
       benchmark_client_stats_({ALL_BENCHMARK_CLIENT_STATS(POOL_COUNTER(*scope_))}),
-      cluster_manager_(cluster_manager), header_generator_(std::move(header_generator)) {
+      cluster_manager_(cluster_manager), cluster_name_(std::string(cluster_name)),
+      header_generator_(std::move(header_generator)) {
   connect_statistic_->setId("benchmark_http_client.queue_to_connect");
   response_statistic_->setId("benchmark_http_client.request_to_response");
 }

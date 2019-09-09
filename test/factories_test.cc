@@ -42,8 +42,8 @@ TEST_F(FactoriesTest, CreateBenchmarkClient) {
   EXPECT_CALL(options_, toCommandLineOptions()).Times(1).WillOnce(Return(ByMove(std::move(cmd))));
   StaticHeaderSourceImpl header_generator(
       Envoy::Http::HeaderMapPtr{new Envoy::Http::TestHeaderMapImpl{}});
-  auto benchmark_client =
-      factory.create(*api_, dispatcher_, stats_store_, cluster_manager, header_generator);
+  auto benchmark_client = factory.create(*api_, dispatcher_, stats_store_, cluster_manager,
+                                         "foocluster", header_generator);
   EXPECT_NE(nullptr, benchmark_client.get());
 }
 

@@ -99,11 +99,12 @@ public:
   void setupBenchmarkClient() {
     client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
         *api_, *dispatcher_, store_, std::make_unique<StreamingStatistic>(),
-        std::make_unique<StreamingStatistic>(), false, cluster_manager_, header_generator_);
+        std::make_unique<StreamingStatistic>(), false, cluster_manager_, "benchmark",
+        header_generator_);
   }
 
   uint64_t getCounter(absl::string_view name) {
-    return client_->store().counter("client." + std::string(name)).value();
+    return client_->scope().counter(std::string(name)).value();
   }
 
   Envoy::Upstream::MockClusterManager& cluster_manager() {
@@ -136,13 +137,13 @@ public:
 TEST_F(BenchmarkClientHttpTest, BasicTestH1404) {
   response_code_ = "404";
   testBasicFunctionality(1, 1, 10);
-  EXPECT_EQ(1, getCounter("benchmark.http_4xx"));
+  EXPECT_EQ(1, getCounter("http_4xx"));
 }
 
 TEST_F(BenchmarkClientHttpTest, WeirdStatus) {
   response_code_ = "601";
   testBasicFunctionality(1, 1, 10);
-  EXPECT_EQ(1, getCounter("benchmark.http_xxx"));
+  EXPECT_EQ(1, getCounter("http_xxx"));
 }
 
 TEST_F(BenchmarkClientHttpTest, EnableLatencyMeasurement) {
@@ -161,7 +162,8 @@ TEST_F(BenchmarkClientHttpTest, StatusTrackingInOnComplete) {
   auto store = std::make_unique<Envoy::Stats::IsolatedStoreImpl>();
   client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
       *api_, *dispatcher_, *store, std::make_unique<StreamingStatistic>(),
-      std::make_unique<StreamingStatistic>(), false, cluster_manager_, header_generator_);
+      std::make_unique<StreamingStatistic>(), false, cluster_manager_, "benchmark",
+      header_generator_);
   Envoy::Http::HeaderMapImpl header;
 
   auto& status = header.insertStatus();
@@ -184,12 +186,12 @@ TEST_F(BenchmarkClientHttpTest, StatusTrackingInOnComplete) {
   // Shouldn't be counted by status, should add to stream reset.
   client_->onComplete(false, header);
 
-  EXPECT_EQ(1, getCounter("benchmark.http_2xx"));
-  EXPECT_EQ(1, getCounter("benchmark.http_3xx"));
-  EXPECT_EQ(1, getCounter("benchmark.http_4xx"));
-  EXPECT_EQ(1, getCounter("benchmark.http_5xx"));
-  EXPECT_EQ(2, getCounter("benchmark.http_xxx"));
-  EXPECT_EQ(1, getCounter("benchmark.stream_resets"));
+  EXPECT_EQ(1, getCounter("http_2xx"));
+  EXPECT_EQ(1, getCounter("http_3xx"));
+  EXPECT_EQ(1, getCounter("http_4xx"));
+  EXPECT_EQ(1, getCounter("http_5xx"));
+  EXPECT_EQ(2, getCounter("http_xxx"));
+  EXPECT_EQ(1, getCounter("stream_resets"));
 
   client_.reset();
 }
@@ -198,7 +200,7 @@ TEST_F(BenchmarkClientHttpTest, ConnectionPrefetching) {
   auto store = std::make_unique<Envoy::Stats::IsolatedStoreImpl>();
   client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
       *api_, *dispatcher_, *store, std::make_unique<StreamingStatistic>(),
-      std::make_unique<StreamingStatistic>(), false, cluster_manager_, header_generator_);
+      std::make_unique<StreamingStatistic>(), false, cluster_manager_, "foo", header_generator_);
 
   // Test with the mock pool, which isn't prefetchable. Should be a no-op.
   client_->prefetchPoolConnections();
@@ -223,8 +225,8 @@ TEST_F(BenchmarkClientHttpTest, PoolFailures) {
   setupBenchmarkClient();
   client_->onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason::ConnectionFailure);
   client_->onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason::Overflow);
-  EXPECT_EQ(1, getCounter("benchmark.pool_overflow"));
-  EXPECT_EQ(1, getCounter("benchmark.pool_connection_failure"));
+  EXPECT_EQ(1, getCounter("pool_overflow"));
+  EXPECT_EQ(1, getCounter("pool_connection_failure"));
 }
 
 TEST_F(BenchmarkClientHttpTest, RequestMethodPost) {
@@ -241,7 +243,7 @@ TEST_F(BenchmarkClientHttpTest, RequestMethodPost) {
 
   EXPECT_CALL(stream_encoder_, encodeData(_, _)).Times(1);
   testBasicFunctionality(1, 1, 1);
-  EXPECT_EQ(1, getCounter("benchmark.http_2xx"));
+  EXPECT_EQ(1, getCounter("http_2xx"));
 }
 
 TEST_F(BenchmarkClientHttpTest, BadContentLength) {
@@ -255,7 +257,7 @@ TEST_F(BenchmarkClientHttpTest, BadContentLength) {
   };
   // Note we we explicitly do not expect encodeData to be called.
   testBasicFunctionality(1, 1, 1);
-  EXPECT_EQ(1, getCounter("benchmark.http_2xx"));
+  EXPECT_EQ(1, getCounter("http_2xx"));
 }
 
 } // namespace Nighthawk

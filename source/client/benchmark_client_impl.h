@@ -55,11 +55,10 @@ class BenchmarkClientHttpImpl : public BenchmarkClient,
                                 public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
   BenchmarkClientHttpImpl(Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher,
-                          Envoy::Stats::Store& store, StatisticPtr&& connect_statistic,
+                          Envoy::Stats::Scope& scope, StatisticPtr&& connect_statistic,
                           StatisticPtr&& response_statistic, bool use_h2,
                           Envoy::Upstream::ClusterManagerPtr& cluster_manager,
-                          HeaderGenerator header_generator);
-
+                          absl::string_view cluster_name, HeaderGenerator header_generator);
   void setConnectionLimit(uint32_t connection_limit) { connection_limit_ = connection_limit; }
   void setMaxPendingRequests(uint32_t max_pending_requests) {
     max_pending_requests_ = max_pending_requests;
@@ -79,7 +78,7 @@ public:
     measure_latencies_ = measure_latencies;
   }
   bool tryStartRequest(CompletionCallback caller_completion_callback) override;
-  Envoy::Stats::Store& store() const override { return store_; }
+  Envoy::Stats::Scope& scope() const override { return *scope_; }
 
   // StreamDecoderCompletionCallback
   void onComplete(bool success, const Envoy::Http::HeaderMap& headers) override;
@@ -89,11 +88,11 @@ public:
   Envoy::Http::ConnectionPool::Instance* pool() {
     auto proto = use_h2_ ? Envoy::Http::Protocol::Http2 : Envoy::Http::Protocol::Http11;
     return cluster_manager_->httpConnPoolForCluster(
-        "client", Envoy::Upstream::ResourcePriority::Default, proto, nullptr);
+        cluster_name_, Envoy::Upstream::ResourcePriority::Default, proto, nullptr);
   }
 
   Envoy::Upstream::ClusterInfoConstSharedPtr cluster() {
-    auto* cluster = cluster_manager_->get("client");
+    auto* cluster = cluster_manager_->get(cluster_name_);
     return cluster == nullptr ? nullptr : cluster->info();
   }
 
@@ -102,7 +101,6 @@ public:
 private:
   Envoy::Api::Api& api_;
   Envoy::Event::Dispatcher& dispatcher_;
-  Envoy::Stats::Store& store_;
   Envoy::Stats::ScopePtr scope_;
   // These are declared order dependent. Changing ordering may trigger on assert upon
   // destruction when tls has been involved during usage.
@@ -121,6 +119,7 @@ private:
   bool measure_latencies_{};
   BenchmarkClientStats benchmark_client_stats_;
   Envoy::Upstream::ClusterManagerPtr& cluster_manager_;
+  std::string cluster_name_;
   const HeaderGenerator header_generator_;
 };
 

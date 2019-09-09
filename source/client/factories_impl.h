@@ -27,8 +27,9 @@ class BenchmarkClientFactoryImpl : public OptionBasedFactoryImpl, public Benchma
 public:
   BenchmarkClientFactoryImpl(const Options& options);
   BenchmarkClientPtr create(Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher,
-                            Envoy::Stats::Store& store,
+                            Envoy::Stats::Scope& scope,
                             Envoy::Upstream::ClusterManagerPtr& cluster_manager,
+                            absl::string_view cluster_name,
                             HeaderSource& header_generator) const override;
 };
 

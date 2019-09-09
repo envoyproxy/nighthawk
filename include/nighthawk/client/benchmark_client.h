@@ -50,9 +50,9 @@ public:
   virtual bool tryStartRequest(CompletionCallback caller_completion_callback) PURE;
 
   /**
-   * @return const Envoy::Stats::Store& the statistics store associated the benchmark client.
+   * @return const Envoy::Stats::Scope& the statistics scope associated the benchmark client.
    */
-  virtual Envoy::Stats::Store& store() const PURE;
+  virtual Envoy::Stats::Scope& scope() const PURE;
 
   virtual void prefetchPoolConnections() PURE;
 
