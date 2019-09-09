@@ -119,10 +119,8 @@ HeaderSourcePtr HeaderSourceFactoryImpl::create() const {
   }
 
   auto request_options = options_.toCommandLineOptions()->request_options();
-  if (request_options.request_headers_size() > 0) {
-    for (const auto& option_header : request_options.request_headers()) {
-      setRequestHeader(*header, option_header.header().key(), option_header.header().value());
-    }
+  for (const auto& option_header : request_options.request_headers()) {
+    setRequestHeader(*header, option_header.header().key(), option_header.header().value());
   }
 
   return std::make_unique<StaticHeaderSourceImpl>(std::move(header));

@@ -36,8 +36,9 @@ public:
     EXPECT_CALL(cluster_manager(), get(_)).WillRepeatedly(Return(&thread_local_cluster_));
     EXPECT_CALL(thread_local_cluster_, info()).WillRepeatedly(Return(cluster_info_));
     header_generator_ = []() {
-      return Envoy::Http::HeaderMapPtr{new Envoy::Http::TestHeaderMapImpl{
-          {":scheme", "http"}, {":method", "GET"}, {":path", "/"}, {":host", "localhost"}}};
+      return std::make_shared<Envoy::Http::TestHeaderMapImpl>(
+          std::initializer_list<std::pair<std::string, std::string>>(
+              {{":scheme", "http"}, {":method", "GET"}, {":path", "/"}, {":host", "localhost"}}));
     };
   }
 
@@ -231,14 +232,14 @@ TEST_F(BenchmarkClientHttpTest, PoolFailures) {
 
 TEST_F(BenchmarkClientHttpTest, RequestMethodPost) {
   header_generator_ = []() {
-    return Envoy::Http::HeaderMapPtr{
-        new Envoy::Http::TestHeaderMapImpl{{":scheme", "http"},
-                                           {":method", "POST"},
-                                           {":path", "/"},
-                                           {":host", "localhost"},
-                                           {"a", "b"},
-                                           {"c", "d"},
-                                           {"Content-Length", "1313"}}};
+    return std::make_shared<Envoy::Http::TestHeaderMapImpl>(
+        std::initializer_list<std::pair<std::string, std::string>>({{":scheme", "http"},
+                                                                    {":method", "POST"},
+                                                                    {":path", "/"},
+                                                                    {":host", "localhost"},
+                                                                    {"a", "b"},
+                                                                    {"c", "d"},
+                                                                    {"Content-Length", "1313"}}));
   };
 
   EXPECT_CALL(stream_encoder_, encodeData(_, _)).Times(1);
@@ -248,12 +249,12 @@ TEST_F(BenchmarkClientHttpTest, RequestMethodPost) {
 
 TEST_F(BenchmarkClientHttpTest, BadContentLength) {
   header_generator_ = []() {
-    return Envoy::Http::HeaderMapPtr{
-        new Envoy::Http::TestHeaderMapImpl{{":scheme", "http"},
-                                           {":method", "POST"},
-                                           {":path", "/"},
-                                           {":host", "localhost"},
-                                           {"Content-Length", "-1313"}}};
+    return std::make_shared<Envoy::Http::TestHeaderMapImpl>(
+        std::initializer_list<std::pair<std::string, std::string>>({{":scheme", "http"},
+                                                                    {":method", "POST"},
+                                                                    {":path", "/"},
+                                                                    {":host", "localhost"},
+                                                                    {"Content-Length", "-1313"}}));
   };
   // Note we we explicitly do not expect encodeData to be called.
   testBasicFunctionality(1, 1, 1);
