@@ -5,12 +5,10 @@
 #include <string>
 #include <vector>
 
-//#include "envoy/config/bootstrap/v2/bootstrap.pb.h"
 #include "envoy/grpc/async_client.h"
 #include "envoy/grpc/async_client_manager.h"
 #include "envoy/ratelimit/ratelimit.h"
 #include "envoy/server/filter_config.h"
-//#include "envoy/service/ratelimit/v2/rls.pb.h"
 #include "envoy/stats/scope.h"
 #include "envoy/tracing/http_tracer.h"
 #include "envoy/upstream/cluster_manager.h"
@@ -18,8 +16,6 @@
 #include "common/common/logger.h"
 #include "common/grpc/typed_async_client.h"
 #include "common/singleton/const_singleton.h"
-
-//#include "client/grpc/client.h"
 
 #ifdef __clang__
 #pragma clang diagnostic push
