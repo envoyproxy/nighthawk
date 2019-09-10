@@ -253,21 +253,14 @@ ProcessImpl::createBootstrapConfiguration(const Uri& uri, int number_of_clusters
 void ProcessImpl::addSelfReferencingCluster(
     envoy::config::bootstrap::v2::Bootstrap& bootstrap) const {
   auto* cluster = bootstrap.mutable_static_resources()->add_clusters();
-  auto* tls_context = cluster->mutable_tls_context();
-  *tls_context = options_.tlsContext();
-  auto* common_tls_context = tls_context->mutable_common_tls_context();
-  common_tls_context->add_alpn_protocols("h2");
-
+  cluster->mutable_http2_protocol_options();
   cluster->set_name("self");
   cluster->set_type(envoy::api::v2::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
   cluster->mutable_connect_timeout()->set_seconds(options_.timeout().count());
-
   auto* host = cluster->add_hosts();
   auto* socket_address = host->mutable_socket_address();
   socket_address->set_address("127.0.0.1");
-  socket_address->set_port_value(10050);
-
-  ENVOY_LOG(info, "Computed configuration: {}", bootstrap.DebugString());
+  socket_address->set_port_value(8443);
 }
 
 bool ProcessImpl::run(OutputCollector& collector) {

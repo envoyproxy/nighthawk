@@ -40,13 +40,24 @@ void ClientWorkerImpl::simpleWarmup() {
   ENVOY_LOG(debug, "> worker {}: warmup done.", worker_number_);
 }
 
-void ClientWorkerImpl::work() {
+void ClientWorkerImpl::connectToControllerService() {
+  if (cluster_manager_ == nullptr) {
+    return;
+  }
+  auto clusters = cluster_manager_->clusters();
+  if (clusters.find("self") == clusters.end()) {
+    return;
+  }
   envoy::api::v2::core::GrpcService grpc_service;
   grpc_service.mutable_envoy_grpc()->set_cluster_name("self");
   auto cm = cluster_manager_->grpcAsyncClientManager().factoryForGrpcService(
       grpc_service, *worker_number_scope_, true);
-  auto raw_client = cm->create();
+  grpc_client_ =
+      std::make_unique<Envoy::Upstream::GrpcControllerClient>(cm->create(), *dispatcher_);
+}
 
+void ClientWorkerImpl::work() {
+  connectToControllerService();
   simpleWarmup();
   benchmark_client_->setMeasureLatencies(true);
   sequencer_->start();

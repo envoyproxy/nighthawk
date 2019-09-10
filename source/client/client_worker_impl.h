@@ -12,6 +12,7 @@
 #include "nighthawk/common/header_source.h"
 #include "nighthawk/common/sequencer.h"
 
+#include "client/grpc/client_impl.h"
 #include "common/worker_impl.h"
 
 namespace Nighthawk {
@@ -34,6 +35,8 @@ public:
     return thread_local_counter_values_;
   }
 
+  void connectToControllerService();
+
 protected:
   void work() override;
 
@@ -51,6 +54,7 @@ private:
   const bool prefetch_connections_;
   std::map<std::string, uint64_t> thread_local_counter_values_;
   Envoy::Upstream::ClusterManagerPtr& cluster_manager_;
+  Envoy::Upstream::GrpcControllerClientPtr grpc_client_;
 };
 
 using ClientWorkerImplPtr = std::unique_ptr<ClientWorkerImpl>;
