@@ -25,7 +25,7 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
                                           fmt::format("{}", worker_number), *header_generator_)),
       sequencer_(
           sequencer_factory.create(time_source_, *dispatcher_, starting_time, *benchmark_client_)),
-      prefetch_connections_(prefetch_connections) {}
+      prefetch_connections_(prefetch_connections), cluster_manager_(cluster_manager) {}
 
 void ClientWorkerImpl::simpleWarmup() {
   ENVOY_LOG(debug, "> worker {}: warmup start.", worker_number_);
@@ -41,6 +41,12 @@ void ClientWorkerImpl::simpleWarmup() {
 }
 
 void ClientWorkerImpl::work() {
+  envoy::api::v2::core::GrpcService grpc_service;
+  grpc_service.mutable_envoy_grpc()->set_cluster_name("self");
+  auto cm = cluster_manager_->grpcAsyncClientManager().factoryForGrpcService(
+      grpc_service, *worker_number_scope_, true);
+  auto raw_client = cm->create();
+
   simpleWarmup();
   benchmark_client_->setMeasureLatencies(true);
   sequencer_->start();

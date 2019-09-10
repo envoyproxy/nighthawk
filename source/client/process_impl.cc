@@ -250,6 +250,26 @@ ProcessImpl::createBootstrapConfiguration(const Uri& uri, int number_of_clusters
   return bootstrap;
 }
 
+void ProcessImpl::addSelfReferencingCluster(
+    envoy::config::bootstrap::v2::Bootstrap& bootstrap) const {
+  auto* cluster = bootstrap.mutable_static_resources()->add_clusters();
+  auto* tls_context = cluster->mutable_tls_context();
+  *tls_context = options_.tlsContext();
+  auto* common_tls_context = tls_context->mutable_common_tls_context();
+  common_tls_context->add_alpn_protocols("h2");
+
+  cluster->set_name("self");
+  cluster->set_type(envoy::api::v2::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
+  cluster->mutable_connect_timeout()->set_seconds(options_.timeout().count());
+
+  auto* host = cluster->add_hosts();
+  auto* socket_address = host->mutable_socket_address();
+  socket_address->set_address("127.0.0.1");
+  socket_address->set_port_value(10050);
+
+  ENVOY_LOG(info, "Computed configuration: {}", bootstrap.DebugString());
+}
+
 bool ProcessImpl::run(OutputCollector& collector) {
   UriImpl uri(options_.uri());
   try {
@@ -276,8 +296,9 @@ bool ProcessImpl::run(OutputCollector& collector) {
       dispatcher_->createDnsResolver({}), *ssl_context_manager_, *dispatcher_, *local_info_,
       secret_manager_, validation_context_, *api_, http_context_, access_log_manager_,
       *singleton_manager_);
-  cluster_manager_ = cluster_manager_factory_->clusterManagerFromProto(
-      createBootstrapConfiguration(uri, number_of_workers));
+  auto config = createBootstrapConfiguration(uri, number_of_workers);
+  addSelfReferencingCluster(config);
+  cluster_manager_ = cluster_manager_factory_->clusterManagerFromProto(config);
   cluster_manager_->setInitializedCb([this]() -> void { init_manager_.initialize(init_watcher_); });
   Runtime::LoaderSingleton::get().initialize(*cluster_manager_);
 

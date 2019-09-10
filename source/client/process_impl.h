@@ -50,6 +50,7 @@ public:
   bool run(OutputCollector& collector) override;
   const envoy::config::bootstrap::v2::Bootstrap
   createBootstrapConfiguration(const Uri& uri, int number_of_workers) const;
+  void addSelfReferencingCluster(envoy::config::bootstrap::v2::Bootstrap& config) const;
   void shutdown() override;
 
 private:
