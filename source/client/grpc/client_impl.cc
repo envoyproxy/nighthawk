@@ -22,7 +22,7 @@ GrpcControllerClient::GrpcControllerClient(Envoy::Grpc::RawAsyncClientPtr async_
           "nighthawk.client.NighthawkService.ExecutionStream")),
       time_source_(dispatcher.timeSource()) {
   retry_timer_ = dispatcher.createTimer([this]() -> void { establishNewStream(); });
-  response_timer_ = dispatcher.createTimer([this]() -> void { sendLoadStatsRequest(); });
+  response_timer_ = dispatcher.createTimer([this]() -> void { subscribe(); });
   establishNewStream();
 }
 
@@ -38,17 +38,17 @@ void GrpcControllerClient::establishNewStream() {
     handleFailure();
     return;
   }
-  sendLoadStatsRequest();
+  subscribe();
 }
 
-void GrpcControllerClient::sendLoadStatsRequest() {
-  ENVOY_LOG(trace, "Sending ExecutionRequest: {}", request_.DebugString());
+void GrpcControllerClient::subscribe() {
+  auto options = request_.mutable_start_request()->mutable_options();
+  options->mutable_uri()->set_value("http://127.0.0.1:80/");
+  options->mutable_duration()->set_seconds(1);
+  options->mutable_requests_per_second()->set_value(1);
+  options->mutable_verbosity()->set_value(nighthawk::client::Verbosity_VerbosityOptions_TRACE);
   stream_->sendMessage(request_, false);
-  // When the connection is established, the message has not yet been read so we
-  // will not have a load reporting period.
-  if (message_) {
-    startLoadReportPeriod();
-  }
+  ENVOY_LOG(trace, "Sending ExecutionRequest: {}", request_.DebugString());
 }
 
 void GrpcControllerClient::handleFailure() {
@@ -67,12 +67,9 @@ void GrpcControllerClient::onReceiveInitialMetadata(Http::HeaderMapPtr&& metadat
 
 void GrpcControllerClient::onReceiveMessage(
     std::unique_ptr<nighthawk::client::ExecutionResponse>&& message) {
-  ENVOY_LOG(debug, "NighthawkService meessage received: {}", message->DebugString());
+  ENVOY_LOG(warn, "NighthawkService message received: {}", message->DebugString());
   message_ = std::move(message);
-  startLoadReportPeriod();
 }
-
-void GrpcControllerClient::startLoadReportPeriod() {}
 
 void GrpcControllerClient::onReceiveTrailingMetadata(Http::HeaderMapPtr&& metadata) {
   UNREFERENCED_PARAMETER(metadata);

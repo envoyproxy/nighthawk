@@ -43,7 +43,8 @@ namespace Client {
  */
 class ProcessImpl : public Process, public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
-  ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system);
+  ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
+              bool use_grpc_controller = false);
   ~ProcessImpl() override;
 
   uint32_t determineConcurrency() const;
@@ -99,6 +100,7 @@ private:
   Envoy::Server::ValidationAdmin admin_;
   Envoy::ProtobufMessage::ProdValidationContextImpl validation_context_;
   bool shutdown_{true};
+  bool use_grpc_controller_;
 };
 
 } // namespace Client

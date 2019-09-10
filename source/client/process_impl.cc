@@ -65,7 +65,8 @@ public:
   }
 };
 
-ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system)
+ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
+                         bool use_grpc_controller)
     : time_system_(time_system), store_factory_(options), stats_allocator_(symbol_table_),
       store_root_(stats_allocator_),
       api_(std::make_unique<Envoy::Api::Impl>(platform_impl_.threadFactory(), store_root_,
@@ -80,7 +81,8 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
       singleton_manager_(std::make_unique<Envoy::Singleton::ManagerImpl>(api_->threadFactory())),
       access_log_manager_(std::chrono::milliseconds(1000), *api_, *dispatcher_, access_log_lock_,
                           store_root_),
-      init_watcher_("Nighthawk", []() {}), validation_context_(false, false) {
+      init_watcher_("Nighthawk", []() {}), validation_context_(false, false),
+      use_grpc_controller_(use_grpc_controller) {
   std::string lower = absl::AsciiStrToLower(
       nighthawk::client::Verbosity::VerbosityOptions_Name(options_.verbosity()));
   configureComponentLogLevels(spdlog::level::from_str(lower));
@@ -290,7 +292,9 @@ bool ProcessImpl::run(OutputCollector& collector) {
       secret_manager_, validation_context_, *api_, http_context_, access_log_manager_,
       *singleton_manager_);
   auto config = createBootstrapConfiguration(uri, number_of_workers);
-  addSelfReferencingCluster(config);
+  if (use_grpc_controller_) {
+    addSelfReferencingCluster(config);
+  }
   cluster_manager_ = cluster_manager_factory_->clusterManagerFromProto(config);
   cluster_manager_->setInitializedCb([this]() -> void { init_manager_.initialize(init_watcher_); });
   Runtime::LoaderSingleton::get().initialize(*cluster_manager_);

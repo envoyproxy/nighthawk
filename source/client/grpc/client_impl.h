@@ -54,7 +54,7 @@ public:
 private:
   void setRetryTimer();
   void establishNewStream();
-  void sendLoadStatsRequest();
+  void subscribe();
   void handleFailure();
   void startLoadReportPeriod();
 
