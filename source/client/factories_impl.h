@@ -65,7 +65,9 @@ private:
 class HeaderSourceFactoryImpl : public OptionBasedFactoryImpl, public HeaderSourceFactory {
 public:
   HeaderSourceFactoryImpl(const Options& options);
-  HeaderSourcePtr create() const override;
+  HeaderSourcePtr create(Envoy::Upstream::ClusterManagerPtr& cluster_manager,
+                         Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
+                         absl::string_view service_cluster_name) const override;
 
 private:
   void setRequestHeader(Envoy::Http::HeaderMap& header, absl::string_view key,

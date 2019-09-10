@@ -44,29 +44,19 @@ public:
   void onReceiveTrailingMetadata(Envoy::Http::HeaderMapPtr&& metadata) override;
   void onRemoteClose(Grpc::Status::GrpcStatus status, const std::string& message) override;
 
-  // TODO(htuch): Make this configurable or some static.
-  const uint32_t RETRY_DELAY_MS = 5000;
-
 private:
-  void setRetryTimer();
-  void establishNewStream();
   void subscribe();
+  void establishNewStream();
   void handleFailure();
-  void startLoadReportPeriod();
 
-  // Envoy::Upstream::ClusterManager& cm_;
   Envoy::Grpc::AsyncClient<nighthawk::client::ExecutionRequest,
                            nighthawk::client::ExecutionResponse>
       async_client_;
   Envoy::Grpc::AsyncStream<nighthawk::client::ExecutionRequest> stream_{};
   const Protobuf::MethodDescriptor& service_method_;
-  Event::TimerPtr retry_timer_;
-  Event::TimerPtr response_timer_;
   nighthawk::client::ExecutionRequest request_;
   std::unique_ptr<nighthawk::client::ExecutionResponse> message_;
-  // Map from cluster name to start of measurement interval.
-  std::unordered_map<std::string, std::chrono::steady_clock::duration> clusters_;
-  Envoy::TimeSource& time_source_;
+  Envoy::Event::Dispatcher& dispatcher_;
 };
 
 using GrpcControllerClientPtr = std::unique_ptr<GrpcControllerClient>;

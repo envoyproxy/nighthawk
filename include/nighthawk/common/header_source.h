@@ -13,6 +13,7 @@ class HeaderSource {
 public:
   virtual ~HeaderSource() = default;
   virtual HeaderGenerator get() PURE;
+  virtual void initOnThread() PURE;
 };
 
 using HeaderSourcePtr = std::unique_ptr<HeaderSource>;

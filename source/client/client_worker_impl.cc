@@ -19,13 +19,14 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
     : WorkerImpl(api, tls, store), worker_scope_(store_.createScope("worker.")),
       worker_number_scope_(worker_scope_->createScope(fmt::format("{}.", worker_number))),
       worker_number_(worker_number), starting_time_(starting_time),
-      header_generator_(header_generator_factory.create()),
+      header_generator_(header_generator_factory.create(cluster_manager, *dispatcher_,
+                                                        *worker_number_scope_, "self")),
       benchmark_client_(
           benchmark_client_factory.create(api, *dispatcher_, *worker_number_scope_, cluster_manager,
                                           fmt::format("{}", worker_number), *header_generator_)),
       sequencer_(
           sequencer_factory.create(time_source_, *dispatcher_, starting_time, *benchmark_client_)),
-      prefetch_connections_(prefetch_connections), cluster_manager_(cluster_manager) {}
+      prefetch_connections_(prefetch_connections) {}
 
 void ClientWorkerImpl::simpleWarmup() {
   ENVOY_LOG(debug, "> worker {}: warmup start.", worker_number_);
@@ -40,24 +41,9 @@ void ClientWorkerImpl::simpleWarmup() {
   ENVOY_LOG(debug, "> worker {}: warmup done.", worker_number_);
 }
 
-void ClientWorkerImpl::connectToControllerService() {
-  if (cluster_manager_ == nullptr) {
-    return;
-  }
-  auto clusters = cluster_manager_->clusters();
-  if (clusters.find("self") == clusters.end()) {
-    return;
-  }
-  envoy::api::v2::core::GrpcService grpc_service;
-  grpc_service.mutable_envoy_grpc()->set_cluster_name("self");
-  auto cm = cluster_manager_->grpcAsyncClientManager().factoryForGrpcService(
-      grpc_service, *worker_number_scope_, true);
-  grpc_client_ =
-      std::make_unique<Envoy::Upstream::GrpcControllerClient>(cm->create(), *dispatcher_);
-}
-
 void ClientWorkerImpl::work() {
-  connectToControllerService();
+  // connectToControllerService();
+  header_generator_->initOnThread();
   simpleWarmup();
   benchmark_client_->setMeasureLatencies(true);
   sequencer_->start();

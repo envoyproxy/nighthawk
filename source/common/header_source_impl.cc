@@ -20,5 +20,28 @@ HeaderGenerator StaticHeaderSourceImpl::get() {
   };
 }
 
+ReplayHeaderSourceImpl::ReplayHeaderSourceImpl(Envoy::Upstream::ClusterManagerPtr& cluster_manager,
+                                               Envoy::Event::Dispatcher& dispatcher,
+                                               Envoy::Stats::Scope& scope,
+                                               absl::string_view service_cluster_name)
+    : cluster_manager_(cluster_manager), dispatcher_(dispatcher), scope_(scope),
+      service_cluster_name_(std::string(service_cluster_name)) {}
+
+void ReplayHeaderSourceImpl::connectToReplayGrpcSourceService() {
+  auto clusters = cluster_manager_->clusters();
+  if (clusters.find(service_cluster_name_) == clusters.end()) {
+    ENVOY_LOG(critical, "Cluster {} not found.", service_cluster_name_);
+  }
+  envoy::api::v2::core::GrpcService grpc_service;
+  grpc_service.mutable_envoy_grpc()->set_cluster_name(service_cluster_name_);
+  auto cm =
+      cluster_manager_->grpcAsyncClientManager().factoryForGrpcService(grpc_service, scope_, true);
+  grpc_client_ = std::make_unique<Envoy::Upstream::GrpcControllerClient>(cm->create(), dispatcher_);
+}
+
+HeaderGenerator ReplayHeaderSourceImpl::get() {
+  return []() -> HeaderMapPtr { return nullptr; };
+}
+
 } // namespace Client
 } // namespace Nighthawk

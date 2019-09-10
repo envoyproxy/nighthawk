@@ -20,14 +20,9 @@ GrpcControllerClient::GrpcControllerClient(Envoy::Grpc::RawAsyncClientPtr async_
     : async_client_(std::move(async_client)),
       service_method_(*Protobuf::DescriptorPool::generated_pool()->FindMethodByName(
           "nighthawk.client.NighthawkService.ExecutionStream")),
-      time_source_(dispatcher.timeSource()) {
-  retry_timer_ = dispatcher.createTimer([this]() -> void { establishNewStream(); });
-  response_timer_ = dispatcher.createTimer([this]() -> void { subscribe(); });
+      dispatcher_(dispatcher) {
   establishNewStream();
-}
-
-void GrpcControllerClient::setRetryTimer() {
-  retry_timer_->enableTimer(std::chrono::milliseconds(RETRY_DELAY_MS));
+  (void)(dispatcher_);
 }
 
 void GrpcControllerClient::establishNewStream() {
@@ -52,9 +47,7 @@ void GrpcControllerClient::subscribe() {
 }
 
 void GrpcControllerClient::handleFailure() {
-  ENVOY_LOG(warn, "NighthawkService stream/connection failure, will retry in {} ms.",
-            RETRY_DELAY_MS);
-  setRetryTimer();
+  ENVOY_LOG(critical, "NighthawkService stream/connection failure.");
 }
 
 void GrpcControllerClient::onCreateInitialMetadata(Http::HeaderMap& metadata) {
@@ -68,6 +61,7 @@ void GrpcControllerClient::onReceiveInitialMetadata(Http::HeaderMapPtr&& metadat
 void GrpcControllerClient::onReceiveMessage(
     std::unique_ptr<nighthawk::client::ExecutionResponse>&& message) {
   ENVOY_LOG(warn, "NighthawkService message received: {}", message->DebugString());
+  // TODO(oschaaf): can we apply back pressure here?
   message_ = std::move(message);
 }
 
@@ -78,7 +72,6 @@ void GrpcControllerClient::onReceiveTrailingMetadata(Http::HeaderMapPtr&& metada
 void GrpcControllerClient::onRemoteClose(Grpc::Status::GrpcStatus status,
                                          const std::string& message) {
   ENVOY_LOG(warn, "gRPC config stream closed: {}, {}", status, message);
-  response_timer_->disableTimer();
   stream_ = nullptr;
   handleFailure();
 }

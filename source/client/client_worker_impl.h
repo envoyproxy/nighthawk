@@ -35,8 +35,6 @@ public:
     return thread_local_counter_values_;
   }
 
-  void connectToControllerService();
-
 protected:
   void work() override;
 
@@ -53,8 +51,6 @@ private:
   Envoy::LocalInfo::LocalInfoPtr local_info_;
   const bool prefetch_connections_;
   std::map<std::string, uint64_t> thread_local_counter_values_;
-  Envoy::Upstream::ClusterManagerPtr& cluster_manager_;
-  Envoy::Upstream::GrpcControllerClientPtr grpc_client_;
 };
 
 using ClientWorkerImplPtr = std::unique_ptr<ClientWorkerImpl>;

@@ -102,28 +102,37 @@ void HeaderSourceFactoryImpl::setRequestHeader(Envoy::Http::HeaderMap& header,
   header.addCopy(lower_case_key, std::string(value));
 }
 
-HeaderSourcePtr HeaderSourceFactoryImpl::create() const {
-  // Note: we assume a valid uri.
-  // Also, we can't resolve, but we do not need that.
-  UriImpl uri(options_.uri());
-  Envoy::Http::HeaderMapPtr header = std::make_unique<Envoy::Http::HeaderMapImpl>();
+HeaderSourcePtr HeaderSourceFactoryImpl::create(Envoy::Upstream::ClusterManagerPtr& cluster_manager,
+                                                Envoy::Event::Dispatcher& dispatcher,
+                                                Envoy::Stats::Scope& scope,
+                                                absl::string_view service_cluster_name) const {
+  if (service_cluster_name.empty()) {
+    // Note: we assume a valid uri.
+    // Also, we can't resolve, but we do not need that.
+    UriImpl uri(options_.uri());
+    Envoy::Http::HeaderMapPtr header = std::make_unique<Envoy::Http::HeaderMapImpl>();
 
-  header->insertMethod().value(envoy::api::v2::core::RequestMethod_Name(options_.requestMethod()));
-  header->insertPath().value(uri.path());
-  header->insertHost().value(uri.hostAndPort());
-  header->insertScheme().value(uri.scheme() == "https"
-                                   ? Envoy::Http::Headers::get().SchemeValues.Https
-                                   : Envoy::Http::Headers::get().SchemeValues.Http);
-  if (options_.requestBodySize()) {
-    header->insertContentLength().value(options_.requestBodySize());
+    header->insertMethod().value(
+        envoy::api::v2::core::RequestMethod_Name(options_.requestMethod()));
+    header->insertPath().value(uri.path());
+    header->insertHost().value(uri.hostAndPort());
+    header->insertScheme().value(uri.scheme() == "https"
+                                     ? Envoy::Http::Headers::get().SchemeValues.Https
+                                     : Envoy::Http::Headers::get().SchemeValues.Http);
+    if (options_.requestBodySize()) {
+      header->insertContentLength().value(options_.requestBodySize());
+    }
+
+    auto request_options = options_.toCommandLineOptions()->request_options();
+    for (const auto& option_header : request_options.request_headers()) {
+      setRequestHeader(*header, option_header.header().key(), option_header.header().value());
+    }
+
+    return std::make_unique<StaticHeaderSourceImpl>(std::move(header));
+  } else {
+    return std::make_unique<ReplayHeaderSourceImpl>(cluster_manager, dispatcher, scope,
+                                                    service_cluster_name);
   }
-
-  auto request_options = options_.toCommandLineOptions()->request_options();
-  for (const auto& option_header : request_options.request_headers()) {
-    setRequestHeader(*header, option_header.header().key(), option_header.header().value());
-  }
-
-  return std::make_unique<StaticHeaderSourceImpl>(std::move(header));
 }
 
 } // namespace Client

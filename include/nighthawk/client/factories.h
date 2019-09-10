@@ -62,7 +62,9 @@ public:
 class HeaderSourceFactory {
 public:
   virtual ~HeaderSourceFactory() = default;
-  virtual HeaderSourcePtr create() const PURE;
+  virtual HeaderSourcePtr create(Envoy::Upstream::ClusterManagerPtr& cluster_manager,
+                                 Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
+                                 absl::string_view service_cluster_name) const PURE;
 };
 
 } // namespace Nighthawk
