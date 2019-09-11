@@ -43,15 +43,15 @@ namespace Client {
  */
 class ProcessImpl : public Process, public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
-  ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
-              bool use_grpc_controller = false);
+  ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system);
   ~ProcessImpl() override;
 
   uint32_t determineConcurrency() const;
   bool run(OutputCollector& collector) override;
   const envoy::config::bootstrap::v2::Bootstrap
   createBootstrapConfiguration(const Uri& uri, int number_of_workers) const;
-  void addSelfReferencingCluster(envoy::config::bootstrap::v2::Bootstrap& config) const;
+  void addReplaySourceCluster(const Uri& uri,
+                              envoy::config::bootstrap::v2::Bootstrap& config) const;
   void shutdown() override;
 
 private:
@@ -100,7 +100,6 @@ private:
   Envoy::Server::ValidationAdmin admin_;
   Envoy::ProtobufMessage::ProdValidationContextImpl validation_context_;
   bool shutdown_{true};
-  bool use_grpc_controller_;
 };
 
 } // namespace Client

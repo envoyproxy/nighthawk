@@ -42,6 +42,7 @@ public:
   virtual uint32_t maxRequestsPerConnection() const PURE;
   virtual nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions
   sequencerIdleStrategy() const PURE;
+  virtual std::string replaySource() const PURE;
 
   /**
    * Converts an Options instance to an equivalent CommandLineOptions instance in terms of option

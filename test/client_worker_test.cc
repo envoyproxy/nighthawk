@@ -33,7 +33,7 @@ public:
                                        rand_, validation_visitor_, *api_)});
     benchmark_client_ = new MockBenchmarkClient();
     sequencer_ = new MockSequencer();
-    header_generator_ = new MockHeaderSource();
+    header_generator_ = new NiceMock<MockHeaderSource>();
     EXPECT_CALL(benchmark_client_factory_, create(_, _, _, _, _, _))
         .Times(1)
         .WillOnce(Return(ByMove(std::unique_ptr<BenchmarkClient>(benchmark_client_))));
@@ -42,7 +42,7 @@ public:
         .Times(1)
         .WillOnce(Return(ByMove(std::unique_ptr<Sequencer>(sequencer_))));
 
-    EXPECT_CALL(header_generator_factory_, create())
+    EXPECT_CALL(header_generator_factory_, create(_, _, _, _))
         .Times(1)
         .WillOnce(Return(ByMove(std::unique_ptr<HeaderSource>(header_generator_))));
   }

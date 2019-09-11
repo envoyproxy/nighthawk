@@ -106,7 +106,7 @@ HeaderSourcePtr HeaderSourceFactoryImpl::create(Envoy::Upstream::ClusterManagerP
                                                 Envoy::Event::Dispatcher& dispatcher,
                                                 Envoy::Stats::Scope& scope,
                                                 absl::string_view service_cluster_name) const {
-  if (service_cluster_name.empty()) {
+  if (options_.replaySource() == "") {
     // Note: we assume a valid uri.
     // Also, we can't resolve, but we do not need that.
     UriImpl uri(options_.uri());
@@ -130,6 +130,7 @@ HeaderSourcePtr HeaderSourceFactoryImpl::create(Envoy::Upstream::ClusterManagerP
 
     return std::make_unique<StaticHeaderSourceImpl>(std::move(header));
   } else {
+    RELEASE_ASSERT(!service_cluster_name.empty(), "expected cluster name to be set");
     return std::make_unique<ReplayHeaderSourceImpl>(cluster_manager, dispatcher, scope,
                                                     service_cluster_name);
   }

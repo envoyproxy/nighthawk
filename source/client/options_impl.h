@@ -50,6 +50,7 @@ public:
   sequencerIdleStrategy() const override {
     return sequencer_idle_strategy_;
   }
+  std::string replaySource() const override { return replay_source_; }
 
 private:
   void setNonTrivialDefaults();
@@ -78,6 +79,7 @@ private:
   uint32_t max_requests_per_connection_{largest_acceptable_uint32_option_value};
   nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions sequencer_idle_strategy_{
       nighthawk::client::SequencerIdleStrategy::SPIN};
+  std::string replay_source_;
 };
 
 } // namespace Client

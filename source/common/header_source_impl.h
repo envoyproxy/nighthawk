@@ -2,9 +2,9 @@
 
 #include "envoy/http/header_map.h"
 
-#include "external/envoy/source/common/common/logger.h"
-
 #include "nighthawk/common/header_source.h"
+
+#include "external/envoy/source/common/common/logger.h"
 
 #include "common/replay_grpc_client_impl.h"
 

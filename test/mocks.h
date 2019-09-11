@@ -86,6 +86,7 @@ public:
   MOCK_CONST_METHOD0(toCommandLineOptions, Client::CommandLineOptionsPtr());
   MOCK_CONST_METHOD0(sequencerIdleStrategy,
                      nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions());
+  MOCK_CONST_METHOD0(replaySource, std::string());
 };
 
 class MockBenchmarkClientFactory : public Client::BenchmarkClientFactory {
@@ -122,7 +123,10 @@ public:
 class MockHeaderSourceFactory : public HeaderSourceFactory {
 public:
   MockHeaderSourceFactory();
-  MOCK_CONST_METHOD0(create, HeaderSourcePtr());
+  MOCK_CONST_METHOD4(create, HeaderSourcePtr(Envoy::Upstream::ClusterManagerPtr& cluster_manager,
+                                             Envoy::Event::Dispatcher& dispatcher,
+                                             Envoy::Stats::Scope& scope,
+                                             absl::string_view service_cluster_name));
 };
 
 class FakeSequencerTarget {
@@ -156,6 +160,7 @@ class MockHeaderSource : public HeaderSource {
 public:
   MockHeaderSource();
   MOCK_METHOD0(get, HeaderGenerator());
+  MOCK_METHOD0(initOnThread, void());
 };
 
 } // namespace Nighthawk

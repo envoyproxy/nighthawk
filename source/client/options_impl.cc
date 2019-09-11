@@ -159,6 +159,9 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
                                             "but in case of https no certificates are validated.",
                                             true, "", "uri format", cmd);
 
+  TCLAP::ValueArg<std::string> replay_source(
+      "", "replay-source", fmt::format("replay source description"), false, "", "string", cmd);
+
   Utility::parseCommand(cmd, argc, argv);
 
   TCLAP_SET_IF_SPECIFIED(requests_per_second, requests_per_second_);
@@ -209,6 +212,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
                        upper_cased, &sequencer_idle_strategy_),
                    "Failed to parse sequencer idle strategy");
   }
+  TCLAP_SET_IF_SPECIFIED(replay_source, replay_source_);
 
   // CLI-specific tests.
   // TODO(oschaaf): as per mergconflicts's remark, it would be nice to aggregate
@@ -255,12 +259,6 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
 OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   setNonTrivialDefaults();
 
-  for (const auto& header : options.request_options().request_headers()) {
-    std::string header_string =
-        fmt::format("{}:{}", header.header().key(), header.header().value());
-    request_headers_.push_back(header_string);
-  }
-
   requests_per_second_ =
       PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, requests_per_second, requests_per_second_);
   if (options.has_duration()) {
@@ -279,13 +277,24 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   burst_size_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, burst_size, burst_size_);
   address_family_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, address_family, address_family_);
 
-  const auto& request_options = options.request_options();
-  if (request_options.request_method() !=
-      ::envoy::api::v2::core::RequestMethod::METHOD_UNSPECIFIED) {
-    request_method_ = request_options.request_method();
+  if (options.has_request_options()) {
+    const auto& request_options = options.request_options();
+    for (const auto& header : request_options.request_headers()) {
+      std::string header_string =
+          fmt::format("{}:{}", header.header().key(), header.header().value());
+      request_headers_.push_back(header_string);
+    }
+    if (request_options.request_method() !=
+        ::envoy::api::v2::core::RequestMethod::METHOD_UNSPECIFIED) {
+      request_method_ = request_options.request_method();
+    }
+    request_body_size_ =
+        PROTOBUF_GET_WRAPPED_OR_DEFAULT(request_options, request_body_size, request_body_size_);
+  } else if (options.has_replay_source()) {
+    const auto& replay_source_options = options.replay_source();
+    replay_source_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(replay_source_options, uri, replay_source_);
   }
-  request_body_size_ =
-      PROTOBUF_GET_WRAPPED_OR_DEFAULT(request_options, request_body_size, request_body_size_);
+
   max_pending_requests_ =
       PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, max_pending_requests, max_pending_requests_);
   max_active_requests_ =
@@ -320,8 +329,17 @@ void OptionsImpl::validate() const {
   try {
     UriImpl uri(uri_);
   } catch (const UriException) {
-    throw MalformedArgvException("Invalid URI");
+    throw MalformedArgvException("Invalid target URI");
   }
+
+  if (replay_source_ != "") {
+    try {
+      UriImpl uri(replay_source_);
+    } catch (const UriException) {
+      throw MalformedArgvException("Invalid replay source URI");
+    }
+  }
+
   try {
     Envoy::MessageUtil::validate(*toCommandLineOptions(),
                                  Envoy::ProtobufMessage::getStrictValidationVisitor());
@@ -347,22 +365,27 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptions() const {
   command_line_options->mutable_burst_size()->set_value(burstSize());
   command_line_options->mutable_address_family()->set_value(
       static_cast<nighthawk::client::AddressFamily_AddressFamilyOptions>(addressFamily()));
-  auto request_options = command_line_options->mutable_request_options();
-  request_options->set_request_method(requestMethod());
-  for (const auto& header : requestHeaders()) {
-    auto header_value_option = request_options->add_request_headers();
-    // TODO(oschaaf): expose append option in CLI? For now we just set.
-    header_value_option->mutable_append()->set_value(false);
-    auto request_header = header_value_option->mutable_header();
-    std::vector<std::string> split_header = absl::StrSplit(
-        header, ':',
-        absl::SkipWhitespace()); // TODO(oschaaf): maybe throw when we find > 2 elements.
-    request_header->set_key(split_header[0]);
-    if (split_header.size() == 2) {
-      request_header->set_value(split_header[1]);
+  if (replaySource() != "") {
+    auto replay_source = command_line_options->mutable_replay_source();
+    replay_source->mutable_uri()->set_value(replaySource());
+  } else {
+    auto request_options = command_line_options->mutable_request_options();
+    request_options->set_request_method(requestMethod());
+    for (const auto& header : requestHeaders()) {
+      auto header_value_option = request_options->add_request_headers();
+      // TODO(oschaaf): expose append option in CLI? For now we just set.
+      header_value_option->mutable_append()->set_value(false);
+      auto request_header = header_value_option->mutable_header();
+      std::vector<std::string> split_header = absl::StrSplit(
+          header, ':',
+          absl::SkipWhitespace()); // TODO(oschaaf): maybe throw when we find > 2 elements.
+      request_header->set_key(split_header[0]);
+      if (split_header.size() == 2) {
+        request_header->set_value(split_header[1]);
+      }
     }
+    request_options->mutable_request_body_size()->set_value(requestBodySize());
   }
-  request_options->mutable_request_body_size()->set_value(requestBodySize());
   *(command_line_options->mutable_tls_context()) = tlsContext();
   command_line_options->mutable_max_pending_requests()->set_value(maxPendingRequests());
   command_line_options->mutable_max_active_requests()->set_value(maxActiveRequests());

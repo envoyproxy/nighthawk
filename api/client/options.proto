@@ -14,6 +14,10 @@ message RequestOptions {
   google.protobuf.UInt32Value request_body_size = 3 [(validate.rules).uint32 = {lte: 4194304}];
 }
 
+message ReplaySource {
+  google.protobuf.StringValue uri = 19; // [(validate.rules).string.uri = true];
+}
+
 // We wrap all values so we can have a unified way of option handling with respect to
 // defaults, merging, etc. As there's no stock concept for enumerations, we manually
 // define custom wrappers for them. These used to be strings, which did provide the
@@ -91,6 +95,7 @@ message CommandLineOptions {
   oneof oneof_request_options {
     // See :option:`--request_options` for details.
     RequestOptions request_options = 12;
+    ReplaySource replay_source = 19;
   }
   // See :option:`--tls_context` for details.
   envoy.api.v2.auth.UpstreamTlsContext tls_context = 13;

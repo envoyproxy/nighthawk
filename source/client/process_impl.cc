@@ -65,8 +65,7 @@ public:
   }
 };
 
-ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
-                         bool use_grpc_controller)
+ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system)
     : time_system_(time_system), store_factory_(options), stats_allocator_(symbol_table_),
       store_root_(stats_allocator_),
       api_(std::make_unique<Envoy::Api::Impl>(platform_impl_.threadFactory(), store_root_,
@@ -81,8 +80,7 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
       singleton_manager_(std::make_unique<Envoy::Singleton::ManagerImpl>(api_->threadFactory())),
       access_log_manager_(std::chrono::milliseconds(1000), *api_, *dispatcher_, access_log_lock_,
                           store_root_),
-      init_watcher_("Nighthawk", []() {}), validation_context_(false, false),
-      use_grpc_controller_(use_grpc_controller) {
+      init_watcher_("Nighthawk", []() {}), validation_context_(false, false) {
   std::string lower = absl::AsciiStrToLower(
       nighthawk::client::Verbosity::VerbosityOptions_Name(options_.verbosity()));
   configureComponentLogLevels(spdlog::level::from_str(lower));
@@ -252,25 +250,31 @@ ProcessImpl::createBootstrapConfiguration(const Uri& uri, int number_of_clusters
   return bootstrap;
 }
 
-void ProcessImpl::addSelfReferencingCluster(
-    envoy::config::bootstrap::v2::Bootstrap& bootstrap) const {
+void ProcessImpl::addReplaySourceCluster(const Uri& uri,
+                                         envoy::config::bootstrap::v2::Bootstrap& bootstrap) const {
   auto* cluster = bootstrap.mutable_static_resources()->add_clusters();
   cluster->mutable_http2_protocol_options();
-  cluster->set_name("self");
+  cluster->set_name("replay_source_cluster");
   cluster->set_type(envoy::api::v2::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
   cluster->mutable_connect_timeout()->set_seconds(options_.timeout().count());
   auto* host = cluster->add_hosts();
   auto* socket_address = host->mutable_socket_address();
-  socket_address->set_address("127.0.0.1");
-  socket_address->set_port_value(8443);
+  socket_address->set_address(uri.address()->ip()->addressAsString());
+  socket_address->set_port_value(uri.port());
 }
 
 bool ProcessImpl::run(OutputCollector& collector) {
   UriImpl uri(options_.uri());
+  UriPtr replay_source_uri;
   try {
     // TODO(oschaaf): See if we can rid of resolving here.
     // We now only do it to validate.
     uri.resolve(*dispatcher_, Utility::translateFamilyOptionString(options_.addressFamily()));
+    if (options_.replaySource() != "") {
+      replay_source_uri = std::make_unique<UriImpl>(options_.replaySource());
+      replay_source_uri->resolve(*dispatcher_,
+                                 Utility::translateFamilyOptionString(options_.addressFamily()));
+    }
   } catch (UriException) {
     return false;
   }
@@ -292,8 +296,8 @@ bool ProcessImpl::run(OutputCollector& collector) {
       secret_manager_, validation_context_, *api_, http_context_, access_log_manager_,
       *singleton_manager_);
   auto config = createBootstrapConfiguration(uri, number_of_workers);
-  if (use_grpc_controller_) {
-    addSelfReferencingCluster(config);
+  if (replay_source_uri != nullptr) {
+    addReplaySourceCluster(*replay_source_uri, config);
   }
   cluster_manager_ = cluster_manager_factory_->clusterManagerFromProto(config);
   cluster_manager_->setInitializedCb([this]() -> void { init_manager_.initialize(init_watcher_); });

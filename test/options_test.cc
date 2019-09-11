@@ -32,7 +32,7 @@ TEST_F(OptionsImplTest, BogusInput) {
   // hostname. However, hostnames shouldn't start with '-', and hence this test should
   // not pass.
   EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{} --foo", client_name_)),
-                          MalformedArgvException, "Invalid URI");
+                          MalformedArgvException, "Invalid target URI");
 }
 
 // This test should cover every option we offer.
@@ -297,7 +297,7 @@ TEST_F(OptionsImplTest, AddressFamilyValuesAreConstrained) {
 TEST_F(OptionsImplTest, InacceptibleUri) {
   EXPECT_THROW_WITH_REGEX(
       TestUtility::createOptionsImpl(fmt::format("{} bad://127.0.0.1/", client_name_)),
-      MalformedArgvException, "Invalid URI");
+      MalformedArgvException, "Invalid target URI");
 }
 
 TEST_F(OptionsImplTest, ProtoConstructorValidation) {
