@@ -39,7 +39,7 @@ private:
   Envoy::Event::Dispatcher& dispatcher_;
   Envoy::Stats::Scope& scope_;
   const std::string service_cluster_name_;
-  ReplayGrpcClientImplPtr grpc_client_;
+  ReplayGrpcClientPtr grpc_client_;
 };
 
 } // namespace Nighthawk

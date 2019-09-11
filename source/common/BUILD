@@ -16,6 +16,7 @@ envoy_cc_library(
     deps = [
         "//api/client:base_cc",
         "//api/client:grpc_service_lib",
+        "//include/nighthawk/common:base_includes",
         "@envoy//include/envoy/grpc:async_client_interface_with_external_headers",
         "@envoy//include/envoy/grpc:async_client_manager_interface_with_external_headers",
         "@envoy//include/envoy/upstream:cluster_manager_interface_with_external_headers",
@@ -28,9 +29,24 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
-    name = "nighthawk_common_lib",
+    name = "header_source_lib",
     srcs = [
         "header_source_impl.cc",
+    ],
+    hdrs = [
+        "header_source_impl.h",
+    ],
+    repository = "@envoy",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":nighthawk_common_lib",
+        ":replay_grpc_client_lib",
+    ],
+)
+
+envoy_cc_library(
+    name = "nighthawk_common_lib",
+    srcs = [
         "rate_limiter_impl.cc",
         "sequencer_impl.cc",
         "statistic_impl.cc",
@@ -40,7 +56,6 @@ envoy_cc_library(
     ],
     hdrs = [
         "frequency.h",
-        "header_source_impl.h",
         "platform_util_impl.h",
         "rate_limiter_impl.h",
         "sequencer_impl.h",
@@ -52,7 +67,6 @@ envoy_cc_library(
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
-        ":replay_grpc_client_lib",
         "//api/client:base_cc",
         "//include/nighthawk/client:client_includes",
         "//include/nighthawk/common:base_includes",

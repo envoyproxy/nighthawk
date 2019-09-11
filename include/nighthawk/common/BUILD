@@ -16,6 +16,7 @@ envoy_basic_cc_library(
         "operation_callback.h",
         "platform_util.h",
         "rate_limiter.h",
+        "replay_grpc_client.h",
         "sequencer.h",
         "statistic.h",
         "uri.h",

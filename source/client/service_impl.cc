@@ -105,5 +105,26 @@ void ServiceImpl::writeResponse(const nighthawk::client::ExecutionResponse& resp
   return finishGrpcStream(true);
 }
 
+// XXX(oschaaf): currently just writes a bounded set of foo responses with small pause
+// in between.
+::grpc::Status ServiceImpl::HeaderStream(
+    ::grpc::ServerContext* /*context*/,
+    ::grpc::ServerReaderWriter<::nighthawk::client::HeaderStreamResponse,
+                               ::nighthawk::client::HeaderStreamRequest>* stream) {
+  nighthawk::client::HeaderStreamRequest request;
+  nighthawk::client::HeaderStreamResponse response;
+  response.set_path("/foo");
+  while (stream->Read(&request)) {
+    ENVOY_LOG(debug, "Read HeaderStreamRequest data {}", request.DebugString());
+    bool ok = true;
+    for (int i = 0; i < 10 && ok; i++) {
+      ok = ok && stream->Write(response);
+      usleep(10000);
+    }
+    break;
+  }
+  return finishGrpcStream(true);
+}
+
 } // namespace Client
 } // namespace Nighthawk

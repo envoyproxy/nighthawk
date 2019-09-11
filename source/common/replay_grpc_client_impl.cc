@@ -14,7 +14,7 @@ ReplayGrpcClientImpl::ReplayGrpcClientImpl(Envoy::Grpc::RawAsyncClientPtr async_
                                            Envoy::Event::Dispatcher& dispatcher)
     : async_client_(std::move(async_client)),
       service_method_(*Envoy::Protobuf::DescriptorPool::generated_pool()->FindMethodByName(
-          "nighthawk.client.NighthawkService.ExecutionStream")),
+          "nighthawk.client.NighthawkService.HeaderStream")),
       dispatcher_(dispatcher) {
   establishNewStream();
   (void)(dispatcher_);
@@ -28,18 +28,13 @@ void ReplayGrpcClientImpl::establishNewStream() {
     handleFailure();
     return;
   }
-  nighthawk::client::ExecutionRequest request;
-  auto options = request.mutable_start_request()->mutable_options();
-  options->mutable_uri()->set_value("http://127.0.0.1:80/");
-  options->mutable_duration()->set_seconds(1);
-  options->mutable_requests_per_second()->set_value(1);
-  options->mutable_verbosity()->set_value(nighthawk::client::Verbosity_VerbosityOptions_TRACE);
+  nighthawk::client::HeaderStreamRequest request;
   sendRequest(request);
 }
 
-void ReplayGrpcClientImpl::sendRequest(const nighthawk::client::ExecutionRequest& request) {
+void ReplayGrpcClientImpl::sendRequest(const nighthawk::client::HeaderStreamRequest& request) {
   stream_->sendMessage(request, false);
-  ENVOY_LOG(trace, "Sending ExecutionRequest: {}", request.DebugString());
+  ENVOY_LOG(trace, "Sending HeaderStreamRequest: {}", request.DebugString());
 }
 
 void ReplayGrpcClientImpl::handleFailure() {
@@ -55,9 +50,12 @@ void ReplayGrpcClientImpl::onReceiveInitialMetadata(Envoy::Http::HeaderMapPtr&& 
 }
 
 void ReplayGrpcClientImpl::onReceiveMessage(
-    std::unique_ptr<nighthawk::client::ExecutionResponse>&& message) {
+    std::unique_ptr<nighthawk::client::HeaderStreamResponse>&& message) {
   ENVOY_LOG(warn, "NighthawkService message received: {}", message->DebugString());
-  // TODO(oschaaf): can we apply back pressure here?
+  // TODO(oschaaf): I don't think we can apply back pressure here. We could either
+  // propose a new pause() call here, or alternatively request bounded series
+  // of headers, and a request a new set only when our queue/buffer size reaches a certain
+  // lower bound.
   messages_.emplace(std::move(message));
 }
 

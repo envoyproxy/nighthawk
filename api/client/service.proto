@@ -37,10 +37,19 @@ message ExecutionResponse {
   }
 }
 
+message HeaderStreamRequest {
+}
+
+message HeaderStreamResponse {
+  string path = 1;
+}
+
 service NighthawkService {
   //  Accepts a stream of ExecutionRequests, which can be used to initiate, update, or cancel a
   //  test. Returns a stream of ExecutionResponse objects which will contain results for all
   //  Nighthawk runs.
   rpc ExecutionStream(stream ExecutionRequest) returns (stream ExecutionResponse) {
+  }
+  rpc HeaderStream(stream HeaderStreamRequest) returns (stream HeaderStreamResponse) {
   }
 }

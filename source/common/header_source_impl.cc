@@ -39,7 +39,7 @@ void ReplayHeaderSourceImpl::connectToReplayGrpcSourceService() {
 }
 
 HeaderGenerator ReplayHeaderSourceImpl::get() {
-  return []() -> HeaderMapPtr { return nullptr; };
+  return [this]() -> HeaderMapPtr { return grpc_client_->maybeDequeue(); };
 }
 
 } // namespace Nighthawk
