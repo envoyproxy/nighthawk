@@ -12,7 +12,6 @@
 #include "nighthawk/common/header_source.h"
 #include "nighthawk/common/sequencer.h"
 
-#include "client/grpc/client_impl.h"
 #include "common/worker_impl.h"
 
 namespace Nighthawk {

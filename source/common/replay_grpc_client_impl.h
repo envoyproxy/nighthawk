@@ -1,21 +1,15 @@
 #pragma once
 
-#include <chrono>
-#include <cstdint>
+#include <queue>
 #include <string>
-#include <vector>
 
 #include "envoy/grpc/async_client.h"
 #include "envoy/grpc/async_client_manager.h"
-#include "envoy/ratelimit/ratelimit.h"
-#include "envoy/server/filter_config.h"
 #include "envoy/stats/scope.h"
-#include "envoy/tracing/http_tracer.h"
 #include "envoy/upstream/cluster_manager.h"
 
-#include "common/common/logger.h"
-#include "common/grpc/typed_async_client.h"
-#include "common/singleton/const_singleton.h"
+#include "external/envoy/source/common/common/logger.h"
+#include "external/envoy/source/common/grpc/typed_async_client.h"
 
 #ifdef __clang__
 #pragma clang diagnostic push
@@ -27,14 +21,13 @@
 #pragma clang diagnostic pop
 #endif
 
-namespace Envoy {
-namespace Upstream {
+namespace Nighthawk {
 
-class GrpcControllerClient
+class ReplayGrpcClientImpl
     : Envoy::Grpc::AsyncStreamCallbacks<nighthawk::client::ExecutionResponse>,
       Envoy::Logger::Loggable<Envoy::Logger::Id::upstream> {
 public:
-  GrpcControllerClient(Envoy::Grpc::RawAsyncClientPtr async_client,
+  ReplayGrpcClientImpl(Envoy::Grpc::RawAsyncClientPtr async_client,
                        Envoy::Event::Dispatcher& dispatcher);
 
   // Grpc::AsyncStreamCallbacks
@@ -42,10 +35,10 @@ public:
   void onReceiveInitialMetadata(Envoy::Http::HeaderMapPtr&& metadata) override;
   void onReceiveMessage(std::unique_ptr<nighthawk::client::ExecutionResponse>&& message) override;
   void onReceiveTrailingMetadata(Envoy::Http::HeaderMapPtr&& metadata) override;
-  void onRemoteClose(Grpc::Status::GrpcStatus status, const std::string& message) override;
+  void onRemoteClose(Envoy::Grpc::Status::GrpcStatus status, const std::string& message) override;
 
 private:
-  void subscribe();
+  void sendRequest(const nighthawk::client::ExecutionRequest& request);
   void establishNewStream();
   void handleFailure();
 
@@ -53,13 +46,11 @@ private:
                            nighthawk::client::ExecutionResponse>
       async_client_;
   Envoy::Grpc::AsyncStream<nighthawk::client::ExecutionRequest> stream_{};
-  const Protobuf::MethodDescriptor& service_method_;
-  nighthawk::client::ExecutionRequest request_;
-  std::unique_ptr<nighthawk::client::ExecutionResponse> message_;
+  const Envoy::Protobuf::MethodDescriptor& service_method_;
+  std::queue<std::unique_ptr<nighthawk::client::ExecutionResponse>> messages_;
   Envoy::Event::Dispatcher& dispatcher_;
 };
 
-using GrpcControllerClientPtr = std::unique_ptr<GrpcControllerClient>;
+using ReplayGrpcClientImplPtr = std::unique_ptr<ReplayGrpcClientImpl>;
 
-} // namespace Upstream
-} // namespace Envoy
+} // namespace Nighthawk

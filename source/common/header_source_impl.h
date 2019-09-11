@@ -6,10 +6,9 @@
 
 #include "nighthawk/common/header_source.h"
 
-#include "client/grpc/client_impl.h"
+#include "common/replay_grpc_client_impl.h"
 
 namespace Nighthawk {
-namespace Client {
 
 class BaseHeaderSourceImpl : public HeaderSource,
                              public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
@@ -40,8 +39,7 @@ private:
   Envoy::Event::Dispatcher& dispatcher_;
   Envoy::Stats::Scope& scope_;
   const std::string service_cluster_name_;
-  Envoy::Upstream::GrpcControllerClientPtr grpc_client_;
+  ReplayGrpcClientImplPtr grpc_client_;
 };
 
-} // namespace Client
 } // namespace Nighthawk

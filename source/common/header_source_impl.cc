@@ -3,7 +3,6 @@
 #include "external/envoy/source/common/common/assert.h"
 
 namespace Nighthawk {
-namespace Client {
 
 StaticHeaderSourceImpl::StaticHeaderSourceImpl(Envoy::Http::HeaderMapPtr&& header,
                                                const uint64_t max_yields)
@@ -36,12 +35,11 @@ void ReplayHeaderSourceImpl::connectToReplayGrpcSourceService() {
   grpc_service.mutable_envoy_grpc()->set_cluster_name(service_cluster_name_);
   auto cm =
       cluster_manager_->grpcAsyncClientManager().factoryForGrpcService(grpc_service, scope_, true);
-  grpc_client_ = std::make_unique<Envoy::Upstream::GrpcControllerClient>(cm->create(), dispatcher_);
+  grpc_client_ = std::make_unique<ReplayGrpcClientImpl>(cm->create(), dispatcher_);
 }
 
 HeaderGenerator ReplayHeaderSourceImpl::get() {
   return []() -> HeaderMapPtr { return nullptr; };
 }
 
-} // namespace Client
 } // namespace Nighthawk
