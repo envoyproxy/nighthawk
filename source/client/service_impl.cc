@@ -2,6 +2,8 @@
 
 #include <grpc++/grpc++.h>
 
+#include "common/header_source_impl.h"
+
 #include "client/client.h"
 #include "client/options_impl.h"
 
@@ -105,21 +107,60 @@ void ServiceImpl::writeResponse(const nighthawk::client::ExecutionResponse& resp
   return finishGrpcStream(true);
 }
 
-// XXX(oschaaf): currently just writes a bounded set of foo responses with small pause
-// in between.
+namespace {
+void addHeader(envoy::api::v2::core::HeaderMap* map, absl::string_view key,
+               absl::string_view value) {
+  auto* request_header = map->add_headers();
+  request_header->set_key(std::string(key));
+  request_header->set_value(std::string(value));
+}
+} // namespace
+
+ServiceImpl::ServiceImpl() { initHeaderSource(); }
+
+void ServiceImpl::initHeaderSource() {
+  // XXX(oschaaf): currently just writes a bounded set of foo responses with small pause
+  // in between.
+  Envoy::Http::HeaderMapPtr header = std::make_unique<Envoy::Http::HeaderMapImpl>();
+  header->insertMethod().value(envoy::api::v2::core::RequestMethod::GET);
+  header->insertPath().value(std::string("/foopath"));
+  header->insertHost().value(std::string("127.0.0.1:80"));
+  header->insertScheme().value(Envoy::Http::Headers::get().SchemeValues.Http);
+  header_source_ = std::make_unique<StaticHeaderSourceImpl>(std::move(header), 1000);
+}
+
 ::grpc::Status ServiceImpl::HeaderStream(
     ::grpc::ServerContext* /*context*/,
     ::grpc::ServerReaderWriter<::nighthawk::client::HeaderStreamResponse,
                                ::nighthawk::client::HeaderStreamRequest>* stream) {
   nighthawk::client::HeaderStreamRequest request;
-  nighthawk::client::HeaderStreamResponse response;
-  response.set_path("/foo");
+  auto header_generator = header_source_->get();
+
   while (stream->Read(&request)) {
     ENVOY_LOG(debug, "Read HeaderStreamRequest data {}", request.DebugString());
     bool ok = true;
-    for (int i = 0; i < 10 && ok; i++) {
+    for (int i = 0; i < 10000 && ok; i++) {
+      auto headers = header_generator();
+      if (headers == nullptr) {
+        break;
+      }
+      nighthawk::client::HeaderStreamResponse response;
+      auto* request_headers = response.mutable_request_headers();
+
+      headers->iterate(
+          [](const Envoy::Http::HeaderEntry& header,
+             void* context) -> Envoy::Http::HeaderMap::Iterate {
+            addHeader(static_cast<envoy::api::v2::core::HeaderMap*>(context),
+                      header.key().getStringView(), header.value().getStringView());
+            return Envoy::Http::HeaderMap::Iterate::Continue;
+          },
+          request_headers);
+
       ok = ok && stream->Write(response);
-      usleep(10000);
+      usleep(100000);
+    }
+    if (!ok) {
+      ENVOY_LOG(error, "Failed to send the complete set of replay data.");
     }
     break;
   }

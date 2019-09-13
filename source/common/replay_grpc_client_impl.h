@@ -42,20 +42,7 @@ public:
   onReceiveMessage(std::unique_ptr<nighthawk::client::HeaderStreamResponse>&& message) override;
   void onReceiveTrailingMetadata(Envoy::Http::HeaderMapPtr&& metadata) override;
   void onRemoteClose(Envoy::Grpc::Status::GrpcStatus status, const std::string& message) override;
-
-  HeaderMapPtr maybeDequeue() override {
-    if (!messages_.empty()) {
-      messages_.pop();
-      auto header = std::make_shared<Envoy::Http::HeaderMapImpl>();
-      header->insertMethod().value(envoy::api::v2::core::RequestMethod::GET);
-      header->insertPath().value(std::string("/"));
-      header->insertHost().value(std::string("127.0.0.1:80"));
-      header->insertScheme().value(std::string("http"));
-      // header->insertContentLength().value(100);
-      return header;
-    }
-    return nullptr;
-  }
+  HeaderMapPtr maybeDequeue() override;
 
 private:
   void sendRequest(const nighthawk::client::HeaderStreamRequest& request);

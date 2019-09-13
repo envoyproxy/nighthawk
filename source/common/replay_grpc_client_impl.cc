@@ -38,7 +38,7 @@ void ReplayGrpcClientImpl::sendRequest(const nighthawk::client::HeaderStreamRequ
 }
 
 void ReplayGrpcClientImpl::handleFailure() {
-  ENVOY_LOG(critical, "NighthawkService stream/connection failure.");
+  ENVOY_LOG(error, "NighthawkService stream/connection failure.");
 }
 
 void ReplayGrpcClientImpl::onCreateInitialMetadata(Envoy::Http::HeaderMap& metadata) {
@@ -51,11 +51,8 @@ void ReplayGrpcClientImpl::onReceiveInitialMetadata(Envoy::Http::HeaderMapPtr&& 
 
 void ReplayGrpcClientImpl::onReceiveMessage(
     std::unique_ptr<nighthawk::client::HeaderStreamResponse>&& message) {
-  ENVOY_LOG(warn, "NighthawkService message received: {}", message->DebugString());
-  // TODO(oschaaf): I don't think we can apply back pressure here. We could either
-  // propose a new pause() call here, or alternatively request bounded series
-  // of headers, and a request a new set only when our queue/buffer size reaches a certain
-  // lower bound.
+  ENVOY_LOG(trace, "NighthawkService message received: {}", message->DebugString());
+  // TODO(oschaaf): flow control.
   messages_.emplace(std::move(message));
 }
 
@@ -65,9 +62,23 @@ void ReplayGrpcClientImpl::onReceiveTrailingMetadata(Envoy::Http::HeaderMapPtr&&
 
 void ReplayGrpcClientImpl::onRemoteClose(Envoy::Grpc::Status::GrpcStatus status,
                                          const std::string& message) {
-  ENVOY_LOG(warn, "gRPC stream closed: {}, {}", status, message);
+  ENVOY_LOG(info, "gRPC header stream remote close: {}, {}", status, message);
   stream_ = nullptr;
-  handleFailure();
+}
+
+HeaderMapPtr ReplayGrpcClientImpl::maybeDequeue() {
+  if (!messages_.empty()) {
+    // XXX(oschaaf): fix potential null dereferences.
+    const auto& message = messages_.front();
+    auto header = std::make_shared<Envoy::Http::HeaderMapImpl>();
+    const auto& message_request_headers = message->request_headers();
+    for (const auto& message_header : message_request_headers.headers()) {
+      header->addCopy(Envoy::Http::LowerCaseString(message_header.key()), message_header.value());
+    }
+    messages_.pop();
+    return header;
+  }
+  return nullptr;
 }
 
 } // namespace Nighthawk

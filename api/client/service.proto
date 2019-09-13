@@ -4,6 +4,7 @@ package nighthawk.client;
 
 import "google/rpc/status.proto";
 import "validate/validate.proto";
+import "envoy/api/v2/core/base.proto";
 
 import "api/client/options.proto";
 import "api/client/output.proto";
@@ -41,7 +42,7 @@ message HeaderStreamRequest {
 }
 
 message HeaderStreamResponse {
-  string path = 1;
+  envoy.api.v2.core.HeaderMap request_headers = 1 [(validate.rules).message.required = true];
 }
 
 service NighthawkService {

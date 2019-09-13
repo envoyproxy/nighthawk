@@ -16,6 +16,7 @@
 #include "external/envoy/source/common/event/real_time_system.h"
 
 #include "nighthawk/client/process.h"
+#include "nighthawk/common/header_source.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -24,6 +25,7 @@ class ServiceImpl final : public nighthawk::client::NighthawkService::Service,
                           public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 
 public:
+  ServiceImpl();
   ::grpc::Status ExecutionStream(
       ::grpc::ServerContext* context,
       ::grpc::ServerReaderWriter<::nighthawk::client::ExecutionResponse,
@@ -36,6 +38,7 @@ public:
 private:
   void handleExecutionRequest(const nighthawk::client::ExecutionRequest& request);
   void writeResponse(const nighthawk::client::ExecutionResponse& response);
+  void initHeaderSource();
   ::grpc::Status finishGrpcStream(const bool success, absl::string_view description = "");
 
   Envoy::Event::RealTimeSystem time_system_; // NO_CHECK_FORMAT(real_time)
@@ -51,6 +54,7 @@ private:
   // busy_lock_ is used to test from the service thread to query if there's
   // an active test being run.
   Envoy::Thread::MutexBasicLockable busy_lock_;
+  HeaderSourcePtr header_source_;
 };
 
 } // namespace Client
