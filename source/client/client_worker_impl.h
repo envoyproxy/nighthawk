@@ -9,8 +9,8 @@
 #include "nighthawk/client/benchmark_client.h"
 #include "nighthawk/client/client_worker.h"
 #include "nighthawk/client/factories.h"
+#include "nighthawk/common/header_source.h"
 #include "nighthawk/common/sequencer.h"
-#include "nighthawk/common/uri.h"
 
 #include "common/worker_impl.h"
 
@@ -22,9 +22,10 @@ public:
   ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Instance& tls,
                    Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                    const BenchmarkClientFactory& benchmark_client_factory,
-                   const SequencerFactory& sequencer_factory, UriPtr&& uri,
-                   Envoy::Stats::Store& store, const int worker_number,
-                   const Envoy::MonotonicTime starting_time, bool prefetch_connections);
+                   const SequencerFactory& sequencer_factory,
+                   const HeaderSourceFactory& header_generator_factory, Envoy::Stats::Store& store,
+                   const int worker_number, const Envoy::MonotonicTime starting_time,
+                   bool prefetch_connections);
 
   StatisticPtrMap statistics() const override;
   bool success() const override { return success_; }
@@ -43,6 +44,7 @@ private:
   const int worker_number_;
   const Envoy::MonotonicTime starting_time_;
   bool success_{};
+  HeaderSourcePtr header_generator_;
   BenchmarkClientPtr benchmark_client_;
   const SequencerPtr sequencer_;
   Envoy::LocalInfo::LocalInfoPtr local_info_;

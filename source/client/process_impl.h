@@ -12,7 +12,6 @@
 #include "nighthawk/client/output_collector.h"
 #include "nighthawk/client/process.h"
 #include "nighthawk/common/statistic.h"
-#include "nighthawk/common/uri.h"
 
 #include "external/envoy/source/common/access_log/access_log_manager_impl.h"
 #include "external/envoy/source/common/common/logger.h"
@@ -28,8 +27,6 @@
 #include "external/envoy/source/exe/process_wide.h"
 #include "external/envoy/source/extensions/transport_sockets/tls/context_manager_impl.h"
 #include "external/envoy/source/server/config_validation/admin.h"
-
-#include "common/uri_impl.h"
 
 #include "client/benchmark_client_impl.h"
 #include "client/factories_impl.h"
@@ -57,7 +54,7 @@ public:
 
 private:
   void configureComponentLogLevels(spdlog::level::level_enum level);
-  const std::vector<ClientWorkerPtr>& createWorkers(const UriImpl& uri, const uint32_t concurrency,
+  const std::vector<ClientWorkerPtr>& createWorkers(const uint32_t concurrency,
                                                     bool prefetch_connections);
   std::vector<StatisticPtr> vectorizeStatisticPtrMap(const StatisticFactory& statistic_factory,
                                                      const StatisticPtrMap& statistics) const;
@@ -77,6 +74,7 @@ private:
   std::vector<ClientWorkerPtr> workers_;
   const BenchmarkClientFactoryImpl benchmark_client_factory_;
   const SequencerFactoryImpl sequencer_factory_;
+  const HeaderSourceFactoryImpl header_generator_factory_;
   const Options& options_;
 
   Envoy::Init::ManagerImpl init_manager_;

@@ -12,6 +12,7 @@ envoy_basic_cc_library(
     name = "base_includes",
     hdrs = [
         "exception.h",
+        "header_source.h",
         "operation_callback.h",
         "platform_util.h",
         "rate_limiter.h",
@@ -25,6 +26,7 @@ envoy_basic_cc_library(
         "@envoy//include/envoy/common:base_includes",
         "@envoy//source/common/common:minimal_logger_lib",
         "@envoy//source/common/common:non_copyable",
+        "@envoy//source/common/http:headers_lib",
         "@envoy//source/common/network:dns_lib",
         "@envoy//source/common/protobuf",
     ],

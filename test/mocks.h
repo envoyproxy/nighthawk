@@ -12,6 +12,7 @@
 #include "nighthawk/client/benchmark_client.h"
 #include "nighthawk/client/factories.h"
 #include "nighthawk/client/options.h"
+#include "nighthawk/common/header_source.h"
 #include "nighthawk/common/platform_util.h"
 #include "nighthawk/common/rate_limiter.h"
 #include "nighthawk/common/sequencer.h"
@@ -90,10 +91,11 @@ public:
 class MockBenchmarkClientFactory : public Client::BenchmarkClientFactory {
 public:
   MockBenchmarkClientFactory();
-  MOCK_CONST_METHOD6(create, Client::BenchmarkClientPtr(Envoy::Api::Api&, Envoy::Event::Dispatcher&,
-                                                        Envoy::Stats::Scope&, UriPtr&&,
-                                                        Envoy::Upstream::ClusterManagerPtr&,
-                                                        absl::string_view));
+  MOCK_CONST_METHOD6(create,
+                     Client::BenchmarkClientPtr(Envoy::Api::Api&, Envoy::Event::Dispatcher&,
+                                                Envoy::Stats::Scope&,
+                                                Envoy::Upstream::ClusterManagerPtr&,
+                                                absl::string_view, HeaderSource& header_generator));
 };
 
 class MockSequencerFactory : public Client::SequencerFactory {
@@ -115,6 +117,12 @@ class MockStatisticFactory : public Client::StatisticFactory {
 public:
   MockStatisticFactory();
   MOCK_CONST_METHOD0(create, StatisticPtr());
+};
+
+class MockHeaderSourceFactory : public HeaderSourceFactory {
+public:
+  MockHeaderSourceFactory();
+  MOCK_CONST_METHOD0(create, HeaderSourcePtr());
 };
 
 class FakeSequencerTarget {
@@ -141,10 +149,13 @@ public:
   MOCK_CONST_METHOD0(scope, Envoy::Stats::Scope&());
   MOCK_METHOD0(prefetchPoolConnections, void());
   MOCK_CONST_METHOD0(measureLatencies, bool());
-  MOCK_METHOD1(setRequestMethod, void(envoy::api::v2::core::RequestMethod));
-  MOCK_METHOD2(setRequestHeader, void(absl::string_view, absl::string_view));
-  MOCK_METHOD1(setRequestBodySize, void(uint32_t));
   MOCK_CONST_METHOD0(requestHeaders, const Envoy::Http::HeaderMap&());
+};
+
+class MockHeaderSource : public HeaderSource {
+public:
+  MockHeaderSource();
+  MOCK_METHOD0(get, HeaderGenerator());
 };
 
 } // namespace Nighthawk

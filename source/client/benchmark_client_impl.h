@@ -10,12 +10,11 @@
 #include "envoy/upstream/upstream.h"
 
 #include "nighthawk/client/benchmark_client.h"
+#include "nighthawk/common/header_source.h"
 #include "nighthawk/common/sequencer.h"
 #include "nighthawk/common/statistic.h"
-#include "nighthawk/common/uri.h"
 
 #include "external/envoy/source/common/common/logger.h"
-#include "external/envoy/source/common/http/header_map_impl.h"
 #include "external/envoy/source/common/http/http1/conn_pool.h"
 #include "external/envoy/source/common/runtime/runtime_impl.h"
 
@@ -57,10 +56,9 @@ class BenchmarkClientHttpImpl : public BenchmarkClient,
 public:
   BenchmarkClientHttpImpl(Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher,
                           Envoy::Stats::Scope& scope, StatisticPtr&& connect_statistic,
-                          StatisticPtr&& response_statistic, UriPtr&& uri, bool use_h2,
+                          StatisticPtr&& response_statistic, bool use_h2,
                           Envoy::Upstream::ClusterManagerPtr& cluster_manager,
-                          absl::string_view cluster_name);
-
+                          absl::string_view cluster_name, HeaderGenerator header_generator);
   void setConnectionLimit(uint32_t connection_limit) { connection_limit_ = connection_limit; }
   void setMaxPendingRequests(uint32_t max_pending_requests) {
     max_pending_requests_ = max_pending_requests;
@@ -81,14 +79,6 @@ public:
   }
   bool tryStartRequest(CompletionCallback caller_completion_callback) override;
   Envoy::Stats::Scope& scope() const override { return *scope_; }
-  void setRequestMethod(envoy::api::v2::core::RequestMethod request_method) override {
-    request_headers_.insertMethod().value(envoy::api::v2::core::RequestMethod_Name(request_method));
-  };
-  void setRequestHeader(absl::string_view key, absl::string_view value) override;
-  void setRequestBodySize(uint32_t request_body_size) override {
-    request_body_size_ = request_body_size;
-  };
-  const Envoy::Http::HeaderMap& requestHeaders() const override { return request_headers_; }
 
   // StreamDecoderCompletionCallback
   void onComplete(bool success, const Envoy::Http::HeaderMap& headers) override;
@@ -112,13 +102,11 @@ private:
   Envoy::Api::Api& api_;
   Envoy::Event::Dispatcher& dispatcher_;
   Envoy::Stats::ScopePtr scope_;
-  Envoy::Http::HeaderMapImpl request_headers_;
   // These are declared order dependent. Changing ordering may trigger on assert upon
   // destruction when tls has been involved during usage.
   StatisticPtr connect_statistic_;
   StatisticPtr response_statistic_;
   const bool use_h2_;
-  const UriPtr uri_;
   std::chrono::seconds timeout_{5s};
   uint32_t connection_limit_{1};
   uint32_t max_pending_requests_{1};
@@ -130,9 +118,9 @@ private:
   uint64_t requests_initiated_{};
   bool measure_latencies_{};
   BenchmarkClientStats benchmark_client_stats_;
-  uint32_t request_body_size_{0};
   Envoy::Upstream::ClusterManagerPtr& cluster_manager_;
   std::string cluster_name_;
+  const HeaderGenerator header_generator_;
 };
 
 } // namespace Client

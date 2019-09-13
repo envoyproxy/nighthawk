@@ -2,6 +2,7 @@
 
 #include "external/envoy/source/common/stats/symbol_table_impl.h"
 
+#include "common/header_source_impl.h"
 #include "common/utility.h"
 
 namespace Nighthawk {
@@ -10,16 +11,18 @@ namespace Client {
 ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Instance& tls,
                                    Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                                    const BenchmarkClientFactory& benchmark_client_factory,
-                                   const SequencerFactory& sequencer_factory, UriPtr&& uri,
+                                   const SequencerFactory& sequencer_factory,
+                                   const HeaderSourceFactory& header_generator_factory,
                                    Envoy::Stats::Store& store, const int worker_number,
                                    const Envoy::MonotonicTime starting_time,
                                    bool prefetch_connections)
     : WorkerImpl(api, tls, store), worker_scope_(store_.createScope("worker.")),
       worker_number_scope_(worker_scope_->createScope(fmt::format("{}.", worker_number))),
       worker_number_(worker_number), starting_time_(starting_time),
-      benchmark_client_(benchmark_client_factory.create(api, *dispatcher_, *worker_number_scope_,
-                                                        std::move(uri), cluster_manager,
-                                                        fmt::format("{}", worker_number))),
+      header_generator_(header_generator_factory.create()),
+      benchmark_client_(
+          benchmark_client_factory.create(api, *dispatcher_, *worker_number_scope_, cluster_manager,
+                                          fmt::format("{}", worker_number), *header_generator_)),
       sequencer_(
           sequencer_factory.create(time_source_, *dispatcher_, starting_time, *benchmark_client_)),
       prefetch_connections_(prefetch_connections) {}
