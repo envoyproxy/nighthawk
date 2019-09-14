@@ -73,7 +73,7 @@ void StreamDecoder::onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason
 void StreamDecoder::onPoolReady(Envoy::Http::StreamEncoder& encoder,
                                 Envoy::Upstream::HostDescriptionConstSharedPtr) {
   upstream_timing_.onFirstUpstreamTxByteSent(time_source_); // XXX(oschaaf): is this correct?
-  encoder.encodeHeaders(request_headers_, request_body_size_ == 0);
+  encoder.encodeHeaders(*request_headers_, request_body_size_ == 0);
   if (request_body_size_ > 0) {
     // This will show up in the zipkin UI as 'response_size'.
     // We add it here, optimistically assuming it will all be send.
@@ -117,7 +117,7 @@ StreamDecoder::streamResetReasonToResponseFlag(Envoy::Http::StreamResetReason re
 
 void StreamDecoder::finalizeActiveSpan() {
   if (active_span_.get() != nullptr) {
-    Envoy::Tracing::HttpTracerUtility::finalizeSpan(*active_span_, &request_headers_,
+    Envoy::Tracing::HttpTracerUtility::finalizeSpan(*active_span_, request_headers_.get(),
                                                     response_headers_.get(), trailer_headers_.get(),
                                                     stream_info_, config_);
   }

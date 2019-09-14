@@ -13,6 +13,7 @@
 
 #include "client/stream_decoder.h"
 
+#include "absl/strings/numbers.h"
 #include "absl/strings/str_split.h"
 
 using namespace std::chrono_literals;
@@ -29,23 +30,17 @@ void Http1PoolImpl::createConnections(const uint32_t connection_limit) {
 
 BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
     Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
-    StatisticPtr&& connect_statistic, StatisticPtr&& response_statistic, UriPtr&& uri, bool use_h2,
+    StatisticPtr&& connect_statistic, StatisticPtr&& response_statistic, bool use_h2,
     Envoy::Upstream::ClusterManagerPtr& cluster_manager, Envoy::Tracing::HttpTracerPtr& http_tracer,
-    absl::string_view cluster_name)
+    absl::string_view cluster_name, HeaderGenerator header_generator)
     : api_(api), dispatcher_(dispatcher), scope_(scope.createScope("benchmark.")),
       connect_statistic_(std::move(connect_statistic)),
-      response_statistic_(std::move(response_statistic)), use_h2_(use_h2), uri_(std::move(uri)),
+      response_statistic_(std::move(response_statistic)), use_h2_(use_h2),
       benchmark_client_stats_({ALL_BENCHMARK_CLIENT_STATS(POOL_COUNTER(*scope_))}),
       cluster_manager_(cluster_manager), http_tracer_(http_tracer),
-      cluster_name_(std::string(cluster_name)) {
+      cluster_name_(std::string(cluster_name)), header_generator_(std::move(header_generator)) {
   connect_statistic_->setId("benchmark_http_client.queue_to_connect");
   response_statistic_->setId("benchmark_http_client.request_to_response");
-  request_headers_.insertMethod().value(Envoy::Http::Headers::get().MethodValues.Get);
-  request_headers_.insertPath().value(uri_->path());
-  request_headers_.insertHost().value(uri_->hostAndPort());
-  request_headers_.insertScheme().value(uri_->scheme() == "https"
-                                            ? Envoy::Http::Headers::get().SchemeValues.Https
-                                            : Envoy::Http::Headers::get().SchemeValues.Http);
 }
 
 void BenchmarkClientHttpImpl::prefetchPoolConnections() {
@@ -72,13 +67,6 @@ StatisticPtrMap BenchmarkClientHttpImpl::statistics() const {
   return statistics;
 };
 
-void BenchmarkClientHttpImpl::setRequestHeader(absl::string_view key, absl::string_view value) {
-  auto lower_case_key = Envoy::Http::LowerCaseString(std::string(key));
-  request_headers_.remove(lower_case_key);
-  // TODO(oschaaf): we've performed zero validation on the header key/value.
-  request_headers_.addCopy(lower_case_key, std::string(value));
-}
-
 bool BenchmarkClientHttpImpl::tryStartRequest(CompletionCallback caller_completion_callback) {
   // When we allow client-side queuing, we want to have a sense of time spend waiting on that queue.
   // So we return false here to indicate we couldn't initiate a new request.
@@ -98,12 +86,22 @@ bool BenchmarkClientHttpImpl::tryStartRequest(CompletionCallback caller_completi
        (requests_initiated_ - requests_completed_) >= connection_limit_)) {
     return false;
   }
+  auto header = header_generator_();
+  auto* content_length_header = header->ContentLength();
+  uint64_t content_length = 0;
+  if (content_length_header != nullptr) {
+    auto s_content_length = header->ContentLength()->value().getStringView();
+    if (!absl::SimpleAtoi(s_content_length, &content_length)) {
+      ENVOY_LOG(error, "Ignoring bad content length of {}", s_content_length);
+      content_length = 0;
+    }
+  }
 
   std::string x_request_id = generator_.uuid();
   auto stream_decoder = new StreamDecoder(
       dispatcher_, api_.timeSource(), *this, std::move(caller_completion_callback),
-      *connect_statistic_, *response_statistic_, request_headers_, measureLatencies(),
-      request_body_size_, x_request_id, http_tracer_);
+      *connect_statistic_, *response_statistic_, std::move(header), measureLatencies(),
+      content_length, x_request_id, http_tracer_);
   requests_initiated_++;
   pool_ptr->newStream(*stream_decoder, *stream_decoder);
   return true;

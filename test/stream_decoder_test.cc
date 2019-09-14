@@ -25,6 +25,7 @@ class StreamDecoderTest : public Test, public StreamDecoderCompletionCallback {
 public:
   StreamDecoderTest()
       : api_(Envoy::Api::createApiForTest()), dispatcher_(api_->allocateDispatcher()),
+        request_headers_(std::make_shared<Envoy::Http::HeaderMapImpl>()),
         http_tracer_(std::make_unique<Envoy::Tracing::HttpNullTracer>()) {}
 
   void onComplete(bool, const Envoy::Http::HeaderMap&) override {
@@ -38,7 +39,7 @@ public:
   Envoy::Event::DispatcherPtr dispatcher_;
   StreamingStatistic connect_statistic_;
   StreamingStatistic latency_statistic_;
-  Envoy::Http::HeaderMapImpl request_headers_;
+  HeaderMapPtr request_headers_;
   uint64_t stream_decoder_completion_callbacks_{0};
   uint64_t pool_failures_{0};
   // XXX(oschaaf): mock tracer, set expectations
@@ -91,7 +92,8 @@ TEST_F(StreamDecoderTest, LatencyIsNotMeasured) {
       request_headers_, false, 0, "654", http_tracer_);
   Envoy::Http::MockStreamEncoder stream_encoder;
   Envoy::Upstream::HostDescriptionConstSharedPtr ptr;
-  EXPECT_CALL(stream_encoder, encodeHeaders(HeaderMapEqualRef(&request_headers_), true));
+  EXPECT_CALL(stream_encoder,
+              encodeHeaders(Envoy::HeaderMapEqualRef(request_headers_.get()), true));
   decoder->onPoolReady(stream_encoder, ptr);
   Envoy::Http::HeaderMapPtr headers{new Envoy::Http::TestHeaderMapImpl{{":status", "200"}}};
   decoder->decodeHeaders(std::move(headers), true);
@@ -100,7 +102,8 @@ TEST_F(StreamDecoderTest, LatencyIsNotMeasured) {
 }
 
 TEST_F(StreamDecoderTest, LatencyIsMeasured) {
-  Envoy::Http::TestHeaderMapImpl request_header{{":method", "GET"}, {":path", "/"}};
+  HeaderMapPtr request_header{
+      new Envoy::Http::TestHeaderMapImpl{{":method", "GET"}, {":path", "/"}}};
   auto decoder = new StreamDecoder(
       *dispatcher_, time_system_, *this, [](bool, bool) {}, connect_statistic_, latency_statistic_,
       request_header, true, 0, "654", http_tracer_);

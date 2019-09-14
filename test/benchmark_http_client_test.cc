@@ -17,6 +17,10 @@
 
 #include "client/benchmark_client_impl.h"
 
+#include "test/mocks.h"
+
+#include "gtest/gtest.h"
+
 using namespace testing;
 
 namespace Nighthawk {
@@ -43,6 +47,11 @@ public:
               auto* span = new NiceMock<Envoy::Tracing::MockSpan>();
               return span;
             }));
+    header_generator_ = []() {
+      return std::make_shared<Envoy::Http::TestHeaderMapImpl>(
+          std::initializer_list<std::pair<std::string, std::string>>(
+              {{":scheme", "http"}, {":method", "GET"}, {":path", "/"}, {":host", "localhost"}}));
+    };
   }
 
   void testBasicFunctionality(const uint64_t max_pending, const uint64_t connection_limit,
@@ -101,14 +110,10 @@ public:
   }
 
   void setupBenchmarkClient() {
-    const std::string address =
-        Envoy::Network::Test::getLoopbackAddressUrlString(Envoy::Network::Address::IpVersion::v4);
-    auto uri = std::make_unique<UriImpl>(fmt::format("http://localhost:1/"));
-    uri->resolve(*dispatcher_, Envoy::Network::DnsLookupFamily::Auto);
     client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
         *api_, *dispatcher_, store_, std::make_unique<StreamingStatistic>(),
-        std::make_unique<StreamingStatistic>(), std::move(uri), false, cluster_manager_,
-        http_tracer_, "benchmark");
+        std::make_unique<StreamingStatistic>(), false, cluster_manager_, http_tracer_, "benchmark",
+        header_generator_);
   }
 
   uint64_t getCounter(absl::string_view name) {
@@ -140,6 +145,7 @@ public:
   Envoy::Upstream::ClusterInfoConstSharedPtr cluster_info_;
   Envoy::Tracing::HttpTracerPtr http_tracer_;
   std::string response_code_;
+  HeaderGenerator header_generator_;
 };
 
 TEST_F(BenchmarkClientHttpTest, BasicTestH1404) {
@@ -167,12 +173,11 @@ TEST_F(BenchmarkClientHttpTest, EnableLatencyMeasurement) {
 }
 
 TEST_F(BenchmarkClientHttpTest, StatusTrackingInOnComplete) {
-  auto uri = std::make_unique<UriImpl>("http://foo/");
   auto store = std::make_unique<Envoy::Stats::IsolatedStoreImpl>();
   client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
       *api_, *dispatcher_, *store, std::make_unique<StreamingStatistic>(),
-      std::make_unique<StreamingStatistic>(), std::move(uri), false, cluster_manager_, http_tracer_,
-      "foo");
+      std::make_unique<StreamingStatistic>(), false, cluster_manager_, http_tracer_, "foo",
+      header_generator_);
   Envoy::Http::HeaderMapImpl header;
 
   auto& status = header.insertStatus();
@@ -206,13 +211,11 @@ TEST_F(BenchmarkClientHttpTest, StatusTrackingInOnComplete) {
 }
 
 TEST_F(BenchmarkClientHttpTest, ConnectionPrefetching) {
-  auto uri = std::make_unique<UriImpl>("http://foo/");
   auto store = std::make_unique<Envoy::Stats::IsolatedStoreImpl>();
   client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
       *api_, *dispatcher_, *store, std::make_unique<StreamingStatistic>(),
-      std::make_unique<StreamingStatistic>(), std::move(uri), false, cluster_manager_, http_tracer_,
-      "foo");
-
+      std::make_unique<StreamingStatistic>(), false, cluster_manager_, http_tracer_, "foo",
+      header_generator_);
   // Test with the mock pool, which isn't prefetchable. Should be a no-op.
   client_->prefetchPoolConnections();
 
@@ -241,25 +244,33 @@ TEST_F(BenchmarkClientHttpTest, PoolFailures) {
 }
 
 TEST_F(BenchmarkClientHttpTest, RequestMethodPost) {
-  setupBenchmarkClient();
-  EXPECT_EQ("GET", client_->requestHeaders().Method()->value().getStringView());
-  client_->setRequestMethod(envoy::api::v2::core::RequestMethod::POST);
-  client_->setRequestHeader("a", "b");
-  client_->setRequestHeader("c", "d");
-  client_->setRequestBodySize(1313);
-
-  EXPECT_EQ("POST", client_->requestHeaders().Method()->value().getStringView());
-  EXPECT_EQ(
-      "b",
-      client_->requestHeaders().get(Envoy::Http::LowerCaseString("a"))->value().getStringView());
-  EXPECT_EQ(
-      "d",
-      client_->requestHeaders().get(Envoy::Http::LowerCaseString("c"))->value().getStringView());
+  header_generator_ = []() {
+    return std::make_shared<Envoy::Http::TestHeaderMapImpl>(
+        std::initializer_list<std::pair<std::string, std::string>>({{":scheme", "http"},
+                                                                    {":method", "POST"},
+                                                                    {":path", "/"},
+                                                                    {":host", "localhost"},
+                                                                    {"a", "b"},
+                                                                    {"c", "d"},
+                                                                    {"Content-Length", "1313"}}));
+  };
 
   EXPECT_CALL(stream_encoder_, encodeData(_, _)).Times(1);
-
   testBasicFunctionality(1, 1, 1);
+  EXPECT_EQ(1, getCounter("http_2xx"));
+}
 
+TEST_F(BenchmarkClientHttpTest, BadContentLength) {
+  header_generator_ = []() {
+    return std::make_shared<Envoy::Http::TestHeaderMapImpl>(
+        std::initializer_list<std::pair<std::string, std::string>>({{":scheme", "http"},
+                                                                    {":method", "POST"},
+                                                                    {":path", "/"},
+                                                                    {":host", "localhost"},
+                                                                    {"Content-Length", "-1313"}}));
+  };
+  // Note we we explicitly do not expect encodeData to be called.
+  testBasicFunctionality(1, 1, 1);
   EXPECT_EQ(1, getCounter("http_2xx"));
 }
 

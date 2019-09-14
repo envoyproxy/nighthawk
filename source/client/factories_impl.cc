@@ -1,11 +1,14 @@
 #include "client/factories_impl.h"
 
+#include "external/envoy/source/common/http/header_map_impl.h"
 #include "external/envoy/source/common/stats/isolated_store_impl.h"
 
+#include "common/header_source_impl.h"
 #include "common/platform_util_impl.h"
 #include "common/rate_limiter_impl.h"
 #include "common/sequencer_impl.h"
 #include "common/statistic_impl.h"
+#include "common/uri_impl.h"
 #include "common/utility.h"
 
 #include "client/benchmark_client_impl.h"
@@ -21,20 +24,13 @@ BenchmarkClientFactoryImpl::BenchmarkClientFactoryImpl(const Options& options)
 
 BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
     Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
-    UriPtr&& uri, Envoy::Upstream::ClusterManagerPtr& cluster_manager,
-    Envoy::Tracing::HttpTracerPtr& http_tracer, absl::string_view cluster_name) const {
+    Envoy::Upstream::ClusterManagerPtr& cluster_manager, Envoy::Tracing::HttpTracerPtr& http_tracer,
+    absl::string_view cluster_name, HeaderSource& header_generator) const {
   StatisticFactoryImpl statistic_factory(options_);
   auto benchmark_client = std::make_unique<BenchmarkClientHttpImpl>(
-      api, dispatcher, scope, statistic_factory.create(), statistic_factory.create(),
-      std::move(uri), options_.h2(), cluster_manager, http_tracer, cluster_name);
+      api, dispatcher, scope, statistic_factory.create(), statistic_factory.create(), options_.h2(),
+      cluster_manager, http_tracer, cluster_name, header_generator.get());
   auto request_options = options_.toCommandLineOptions()->request_options();
-  if (request_options.request_headers_size() > 0) {
-    for (const auto& header : request_options.request_headers()) {
-      benchmark_client->setRequestHeader(header.header().key(), header.header().value());
-    }
-  }
-  benchmark_client->setRequestMethod(options_.requestMethod());
-  benchmark_client->setRequestBodySize(options_.requestBodySize());
   benchmark_client->setConnectionLimit(options_.connections());
   benchmark_client->setMaxPendingRequests(options_.maxPendingRequests());
   benchmark_client->setMaxActiveRequests(options_.maxActiveRequests());
@@ -92,6 +88,42 @@ OutputCollectorPtr OutputCollectorFactoryImpl::create() const {
   default:
     NOT_REACHED_GCOVR_EXCL_LINE;
   }
+}
+
+HeaderSourceFactoryImpl::HeaderSourceFactoryImpl(const Options& options)
+    : OptionBasedFactoryImpl(options) {}
+
+void HeaderSourceFactoryImpl::setRequestHeader(Envoy::Http::HeaderMap& header,
+                                               absl::string_view key,
+                                               absl::string_view value) const {
+  auto lower_case_key = Envoy::Http::LowerCaseString(std::string(key));
+  header.remove(lower_case_key);
+  // TODO(oschaaf): we've performed zero validation on the header key/value.
+  header.addCopy(lower_case_key, std::string(value));
+}
+
+HeaderSourcePtr HeaderSourceFactoryImpl::create() const {
+  // Note: we assume a valid uri.
+  // Also, we can't resolve, but we do not need that.
+  UriImpl uri(options_.uri());
+  Envoy::Http::HeaderMapPtr header = std::make_unique<Envoy::Http::HeaderMapImpl>();
+
+  header->insertMethod().value(envoy::api::v2::core::RequestMethod_Name(options_.requestMethod()));
+  header->insertPath().value(uri.path());
+  header->insertHost().value(uri.hostAndPort());
+  header->insertScheme().value(uri.scheme() == "https"
+                                   ? Envoy::Http::Headers::get().SchemeValues.Https
+                                   : Envoy::Http::Headers::get().SchemeValues.Http);
+  if (options_.requestBodySize()) {
+    header->insertContentLength().value(options_.requestBodySize());
+  }
+
+  auto request_options = options_.toCommandLineOptions()->request_options();
+  for (const auto& option_header : request_options.request_headers()) {
+    setRequestHeader(*header, option_header.header().key(), option_header.header().value());
+  }
+
+  return std::make_unique<StaticHeaderSourceImpl>(std::move(header));
 }
 
 } // namespace Client

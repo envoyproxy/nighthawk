@@ -27,10 +27,11 @@ class BenchmarkClientFactoryImpl : public OptionBasedFactoryImpl, public Benchma
 public:
   BenchmarkClientFactoryImpl(const Options& options);
   BenchmarkClientPtr create(Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher,
-                            Envoy::Stats::Scope& scope, UriPtr&& uri,
+                            Envoy::Stats::Scope& scope,
                             Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                             Envoy::Tracing::HttpTracerPtr& http_tracer,
-                            absl::string_view cluster_name) const override;
+                            absl::string_view cluster_name,
+                            HeaderSource& header_generator) const override;
 };
 
 class SequencerFactoryImpl : public OptionBasedFactoryImpl, public SequencerFactory {
@@ -60,6 +61,16 @@ public:
 
 private:
   Envoy::TimeSource& time_source_;
+};
+
+class HeaderSourceFactoryImpl : public OptionBasedFactoryImpl, public HeaderSourceFactory {
+public:
+  HeaderSourceFactoryImpl(const Options& options);
+  HeaderSourcePtr create() const override;
+
+private:
+  void setRequestHeader(Envoy::Http::HeaderMap& header, absl::string_view key,
+                        absl::string_view value) const;
 };
 
 } // namespace Client

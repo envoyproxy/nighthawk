@@ -74,7 +74,8 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
       api_(std::make_unique<Envoy::Api::Impl>(platform_impl_.threadFactory(), store_root_,
                                               time_system_, platform_impl_.fileSystem())),
       dispatcher_(api_->allocateDispatcher()), benchmark_client_factory_(options),
-      sequencer_factory_(options), options_(options), init_manager_("nh_init_manager"),
+      sequencer_factory_(options), header_generator_factory_(options), options_(options),
+      init_manager_("nh_init_manager"),
       local_info_(new Envoy::LocalInfo::LocalInfoImpl(
           {}, Envoy::Network::Utility::getLocalAddress(Envoy::Network::Address::IpVersion::v4),
           "nighthawk_service_zone", "nighthawk_service_cluster", "nighthawk_service_node")),
@@ -108,8 +109,7 @@ void ProcessImpl::shutdown() {
   shutdown_ = true;
 }
 
-const std::vector<ClientWorkerPtr>& ProcessImpl::createWorkers(const UriImpl& uri,
-                                                               const uint32_t concurrency,
+const std::vector<ClientWorkerPtr>& ProcessImpl::createWorkers(const uint32_t concurrency,
                                                                const bool prefetch_connections) {
   // TODO(oschaaf): Expose kMinimalDelay in configuration.
   const std::chrono::milliseconds kMinimalWorkerDelay = 500ms;
@@ -134,8 +134,8 @@ const std::vector<ClientWorkerPtr>& ProcessImpl::createWorkers(const UriImpl& ur
         ((inter_worker_delay_usec * worker_number) * 1us));
     workers_.push_back(std::make_unique<ClientWorkerImpl>(
         *api_, tls_, cluster_manager_, benchmark_client_factory_, sequencer_factory_,
-        std::make_unique<UriImpl>(uri), store_root_, worker_number,
-        first_worker_start + worker_delay, http_tracer_, prefetch_connections));
+        header_generator_factory_, store_root_, worker_number, first_worker_start + worker_delay,
+        http_tracer_, prefetch_connections));
     worker_number++;
   }
   return workers_;
@@ -303,6 +303,8 @@ bool ProcessImpl::run(OutputCollector& collector) {
   UriPtr tracing_uri;
 
   try {
+    // TODO(oschaaf): See if we can rid of resolving here.
+    // We now only do it to validate.
     uri.resolve(*dispatcher_, Utility::translateFamilyOptionString(options_.addressFamily()));
     if (options_.trace() != "") {
       tracing_uri = std::make_unique<UriImpl>(options_.trace());
@@ -315,8 +317,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
   int number_of_workers = determineConcurrency();
   shutdown_ = false;
   const std::vector<ClientWorkerPtr>& workers =
-      createWorkers(uri, number_of_workers, options_.prefetchConnections());
-
+      createWorkers(number_of_workers, options_.prefetchConnections());
   tls_.registerThread(*dispatcher_, true);
   store_root_.initializeThreading(*dispatcher_, tls_);
   runtime_singleton_ = std::make_unique<Envoy::Runtime::ScopedLoaderSingleton>(

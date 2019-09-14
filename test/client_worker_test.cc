@@ -33,7 +33,7 @@ public:
                                        rand_, validation_visitor_, *api_)});
     benchmark_client_ = new MockBenchmarkClient();
     sequencer_ = new MockSequencer();
-
+    header_generator_ = new MockHeaderSource();
     EXPECT_CALL(benchmark_client_factory_, create(_, _, _, _, _, _, _))
         .Times(1)
         .WillOnce(Return(ByMove(std::unique_ptr<BenchmarkClient>(benchmark_client_))));
@@ -41,6 +41,10 @@ public:
     EXPECT_CALL(sequencer_factory_, create(_, _, _, _))
         .Times(1)
         .WillOnce(Return(ByMove(std::unique_ptr<Sequencer>(sequencer_))));
+
+    EXPECT_CALL(header_generator_factory_, create())
+        .Times(1)
+        .WillOnce(Return(ByMove(std::unique_ptr<HeaderSource>(header_generator_))));
   }
 
   StatisticPtrMap createStatisticPtrMap() const {
@@ -61,11 +65,13 @@ public:
   MockOptions options_;
   MockBenchmarkClientFactory benchmark_client_factory_;
   MockSequencerFactory sequencer_factory_;
+  MockHeaderSourceFactory header_generator_factory_;
   Envoy::Stats::IsolatedStoreImpl store_;
   NiceMock<Envoy::ThreadLocal::MockInstance> tls_;
   Envoy::Event::TestRealTimeSystem time_system_;
   MockBenchmarkClient* benchmark_client_;
   MockSequencer* sequencer_;
+  MockHeaderSource* header_generator_;
   Envoy::Runtime::RandomGeneratorImpl rand_;
   NiceMock<Envoy::Event::MockDispatcher> dispatcher_;
   std::unique_ptr<Envoy::Runtime::ScopedLoaderSingleton> loader_;
@@ -101,10 +107,11 @@ TEST_F(ClientWorkerTest, BasicTest) {
   }
 
   int worker_number = 12345;
+
   auto worker = std::make_unique<ClientWorkerImpl>(
       *api_, tls_, cluster_manager_ptr_, benchmark_client_factory_, sequencer_factory_,
-      std::make_unique<Nighthawk::UriImpl>("http://foo"), store_, worker_number,
-      time_system_.monotonicTime(), http_tracer_, true);
+      header_generator_factory_, store_, worker_number, time_system_.monotonicTime(), http_tracer_,
+      true);
 
   worker->start();
   worker->waitForCompletion();
