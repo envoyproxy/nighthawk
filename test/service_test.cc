@@ -193,5 +193,21 @@ TEST_P(ServiceTest, Unresolvable) {
   runWithFailingValidationExpectations("Unknown failure");
 }
 
+// TODO(oschaaf): this is a hello-world test for coverage.
+TEST_P(ServiceTest, HeaderStream) {
+  auto options = request_.mutable_start_request()->mutable_options();
+  options->mutable_replay_source()->mutable_uri()->set_value(
+      fmt::format("http://{}:{}", loopback_address_, grpc_server_port_));
+  auto r = stub_->ExecutionStream(&context_);
+  r->Write(request_, {});
+  r->WritesDone();
+  EXPECT_TRUE(r->Read(&response_));
+  ASSERT_FALSE(response_.has_error_detail());
+  EXPECT_TRUE(response_.has_output());
+  EXPECT_GE(response_.output().results(0).counters().size(), 8);
+  auto status = r->Finish();
+  EXPECT_TRUE(status.ok());
+}
+
 } // namespace Client
 } // namespace Nighthawk
