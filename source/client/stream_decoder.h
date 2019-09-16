@@ -52,15 +52,7 @@ public:
         request_body_size_(request_body_size), stream_info_(time_source_),
         http_tracer_(http_tracer) {
     if (measure_latencies_ && http_tracer_ != nullptr) {
-      auto headers_copy = std::make_unique<Envoy::Http::HeaderMapImpl>(*request_headers_);
-      Envoy::Tracing::Decision tracing_decision = {Envoy::Tracing::Reason::ClientForced, true};
-      headers_copy->insertClientTraceId();
-      Envoy::UuidUtils::setTraceableUuid(x_request_id, Envoy::UuidTraceStatus::Client);
-      headers_copy->ClientTraceId()->value(x_request_id);
-      active_span_ =
-          http_tracer_->startSpan(config_, *headers_copy, stream_info_, tracing_decision);
-      active_span_->injectContext(*headers_copy);
-      request_headers_.reset(headers_copy.release());
+      setupForTracing(x_request_id);
     }
   }
 
@@ -88,8 +80,8 @@ public:
 
   static Envoy::StreamInfo::ResponseFlag
   streamResetReasonToResponseFlag(Envoy::Http::StreamResetReason reset_reason);
-
   void finalizeActiveSpan();
+  void setupForTracing(std::string& x_request_id);
 
 private:
   void onComplete(bool success);

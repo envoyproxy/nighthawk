@@ -42,13 +42,11 @@ TEST_F(ClientTest, AutoConcurrencyRun) {
   EXPECT_TRUE(program.run());
 }
 
-// TODO(oschaaf): this is just for coverage, and we don't care where
-// any traffic we send ends it or what that looks like.
-// We do functional testing in python now, but unfortunately any code we hit
-// there isn't counted as code-coverage.
-// Ideally, the code hit during the python test runs would count for covergage,
-// and we use unit-tests here to hit any edge cases we can't easily hit otherwise.
-// XXX(oschaaf): look into ways to accomplish that.
+// TODO(https://github.com/envoyproxy/nighthawk/issues/140):
+// This is just for coverage, and we do not care where any traffic we send ends it or what that
+// looks like. We do functional testing in python now, but unfortunately any code we hit there isn't
+// counted as code-coverage. Ideally, the code hit during the python test runs would count for
+// coverage, and we use unit-tests here to hit any edge cases we can't easily hit otherwise.
 TEST_F(ClientTest, TracingRun) {
   std::vector<const char*> argv;
   argv.push_back("foo");

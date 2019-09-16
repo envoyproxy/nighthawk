@@ -282,8 +282,8 @@ def test_tracing_zipkin(http_test_server_fixture):
   is enabled. Note there's no actual zipkin server started, so
   traffic will get (hopefully) get send into the void.
   """
-  # TODO(oschaaf): boot up an actual zipkin server to accept
-  # spans we send here & validate based on that.
+  # TODO(https://github.com/envoyproxy/nighthawk/issues/141): 
+  # Boot up an actual zipkin server to accept spans we send here & validate based on that.
   parsed_json, _ = http_test_server_fixture.runNighthawkClient([
       "--duration 5", "--rps 10", "--trace zipkin://localhost:79/api/v1/spans",
       http_test_server_fixture.getTestServerRootUri()

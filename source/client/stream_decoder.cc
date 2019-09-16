@@ -35,7 +35,10 @@ void StreamDecoder::decodeData(Envoy::Buffer::Instance& data, bool end_stream) {
 void StreamDecoder::decodeTrailers(Envoy::Http::HeaderMapPtr&& headers) {
   ASSERT(!complete_);
   complete_ = true;
-  trailer_headers_ = std::move(headers);
+  if (active_span_ != nullptr) {
+    // Save a copy of the trailer headers, as we need them in finalizeActiveSpan()
+    trailer_headers_ = std::move(headers);
+  }
   onComplete(true);
 }
 
@@ -75,11 +78,11 @@ void StreamDecoder::onPoolReady(Envoy::Http::StreamEncoder& encoder,
   upstream_timing_.onFirstUpstreamTxByteSent(time_source_); // XXX(oschaaf): is this correct?
   encoder.encodeHeaders(*request_headers_, request_body_size_ == 0);
   if (request_body_size_ > 0) {
-    // This will show up in the zipkin UI as 'response_size'.
-    // We add it here, optimistically assuming it will all be send.
-    // Ideally, we'd track the encoder events of the stream to dig up and forward
-    // more information. For now, we take the risk of erroneously reporting that
-    // we did send all the bytes, instead of always reporting 0 bytes.
+    // TODO(https://github.com/envoyproxy/nighthawk/issues/138): This will show up in the zipkin UI
+    // as 'response_size'. We add it here, optimistically assuming it will all be send. Ideally,
+    // we'd track the encoder events of the stream to dig up and forward more information. For now,
+    // we take the risk of erroneously reporting that we did send all the bytes, instead of always
+    // reporting 0 bytes.
     stream_info_.addBytesReceived(request_body_size_);
     // TODO(oschaaf): We can probably get away without allocating/copying here if we pregenerate
     // potential request-body candidates up front. Revisit this when we have non-uniform request
@@ -94,8 +97,7 @@ void StreamDecoder::onPoolReady(Envoy::Http::StreamEncoder& encoder,
   }
 }
 
-// TODO(oschaaf): duplicated from the envoy code base.
-// See if it can be moved to make it more easily shareable there, and drop it here.
+// TODO(https://github.com/envoyproxy/nighthawk/issues/139): duplicated from the envoy code base.
 Envoy::StreamInfo::ResponseFlag
 StreamDecoder::streamResetReasonToResponseFlag(Envoy::Http::StreamResetReason reset_reason) {
   switch (reset_reason) {
@@ -116,11 +118,23 @@ StreamDecoder::streamResetReasonToResponseFlag(Envoy::Http::StreamResetReason re
 }
 
 void StreamDecoder::finalizeActiveSpan() {
-  if (active_span_.get() != nullptr) {
+  if (active_span_ != nullptr) {
     Envoy::Tracing::HttpTracerUtility::finalizeSpan(*active_span_, request_headers_.get(),
                                                     response_headers_.get(), trailer_headers_.get(),
                                                     stream_info_, config_);
   }
+}
+
+void StreamDecoder::setupForTracing(std::string& x_request_id) {
+  auto headers_copy = std::make_unique<Envoy::Http::HeaderMapImpl>(*request_headers_);
+  Envoy::Tracing::Decision tracing_decision = {Envoy::Tracing::Reason::ClientForced, true};
+  headers_copy->insertClientTraceId();
+  RELEASE_ASSERT(Envoy::UuidUtils::setTraceableUuid(x_request_id, Envoy::UuidTraceStatus::Client),
+                 "setTraceableUuid failed");
+  headers_copy->ClientTraceId()->value(x_request_id);
+  active_span_ = http_tracer_->startSpan(config_, *headers_copy, stream_info_, tracing_decision);
+  active_span_->injectContext(*headers_copy);
+  request_headers_.reset(headers_copy.release());
 }
 
 } // namespace Client
