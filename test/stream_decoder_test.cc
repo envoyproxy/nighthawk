@@ -140,7 +140,8 @@ TEST_F(StreamDecoderTest, LatencyIsMeasured) {
               encodeHeaders(Envoy::HeaderMapEqualRef(expected_request_header.get()), true));
   decoder->onPoolReady(stream_encoder, ptr);
   EXPECT_EQ(1, connect_statistic_.count());
-  decoder->decodeHeaders(std::move(test_header_), true);
+  decoder->decodeHeaders(std::move(test_header_), false);
+  decoder->decodeTrailers(std::move(test_header_));
   EXPECT_EQ(1, connect_statistic_.count());
   EXPECT_EQ(1, latency_statistic_.count());
 }
