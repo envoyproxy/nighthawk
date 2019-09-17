@@ -28,7 +28,8 @@ ReplayHeaderSourceImpl::ReplayHeaderSourceImpl(Envoy::Upstream::ClusterManagerPt
 
 void ReplayHeaderSourceImpl::connectToReplayGrpcSourceService() {
   auto clusters = cluster_manager_->clusters();
-  RELEASE_ASSERT(clusters.find(service_cluster_name_) != clusters.end(), "Source cluster not found");
+  RELEASE_ASSERT(clusters.find(service_cluster_name_) != clusters.end(),
+                 "Source cluster not found");
   envoy::api::v2::core::GrpcService grpc_service;
   grpc_service.mutable_envoy_grpc()->set_cluster_name(service_cluster_name_);
   auto cm =
