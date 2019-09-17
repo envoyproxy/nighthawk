@@ -43,19 +43,16 @@ public:
   void onReceiveTrailingMetadata(Envoy::Http::HeaderMapPtr&& metadata) override;
   void onRemoteClose(Envoy::Grpc::Status::GrpcStatus status, const std::string& message) override;
   HeaderMapPtr maybeDequeue() override;
+  bool establishNewStream() override;
 
 private:
   void sendRequest(const nighthawk::client::HeaderStreamRequest& request);
-  void establishNewStream();
-  void handleFailure();
-
   Envoy::Grpc::AsyncClient<nighthawk::client::HeaderStreamRequest,
                            nighthawk::client::HeaderStreamResponse>
       async_client_;
   Envoy::Grpc::AsyncStream<nighthawk::client::HeaderStreamRequest> stream_{};
   const Envoy::Protobuf::MethodDescriptor& service_method_;
   std::queue<std::unique_ptr<nighthawk::client::HeaderStreamResponse>> messages_;
-  Envoy::Event::Dispatcher& dispatcher_;
 };
 
 } // namespace Nighthawk

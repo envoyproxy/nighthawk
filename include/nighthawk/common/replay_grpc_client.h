@@ -8,6 +8,7 @@ namespace Nighthawk {
 class ReplayGrpcClient {
 public:
   virtual ~ReplayGrpcClient() = default;
+  virtual bool establishNewStream() PURE;
   virtual HeaderMapPtr maybeDequeue() PURE;
 };
 

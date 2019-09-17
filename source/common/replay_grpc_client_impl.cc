@@ -11,34 +11,24 @@
 namespace Nighthawk {
 
 ReplayGrpcClientImpl::ReplayGrpcClientImpl(Envoy::Grpc::RawAsyncClientPtr async_client,
-                                           Envoy::Event::Dispatcher& dispatcher)
+                                           Envoy::Event::Dispatcher&)
     : async_client_(std::move(async_client)),
       service_method_(*Envoy::Protobuf::DescriptorPool::generated_pool()->FindMethodByName(
-          "nighthawk.client.NighthawkService.HeaderStream")),
-      dispatcher_(dispatcher) {
-  establishNewStream();
-  (void)(dispatcher_);
-}
+          "nighthawk.client.NighthawkService.HeaderStream")) {}
 
-void ReplayGrpcClientImpl::establishNewStream() {
+bool ReplayGrpcClientImpl::establishNewStream() {
   ENVOY_LOG(debug, "Establishing new gRPC bidi stream for {}", service_method_.DebugString());
   stream_ = async_client_->start(service_method_, *this);
-  if (stream_ == nullptr) {
-    ENVOY_LOG(warn, "Unable to establish new stream");
-    handleFailure();
-    return;
+  if (stream_ != nullptr) {
+    nighthawk::client::HeaderStreamRequest request;
+    sendRequest(request);
   }
-  nighthawk::client::HeaderStreamRequest request;
-  sendRequest(request);
+  return stream_ != nullptr;
 }
 
 void ReplayGrpcClientImpl::sendRequest(const nighthawk::client::HeaderStreamRequest& request) {
   stream_->sendMessage(request, false);
   ENVOY_LOG(trace, "Sending HeaderStreamRequest: {}", request.DebugString());
-}
-
-void ReplayGrpcClientImpl::handleFailure() {
-  ENVOY_LOG(error, "NighthawkService stream/connection failure.");
 }
 
 void ReplayGrpcClientImpl::onCreateInitialMetadata(Envoy::Http::HeaderMap& metadata) {

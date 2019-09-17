@@ -194,7 +194,8 @@ TEST_P(ServiceTest, Unresolvable) {
 }
 
 // TODO(oschaaf): this is a hello-world test for coverage.
-TEST_P(ServiceTest, HeaderStream) {
+// finish it up.
+TEST_P(ServiceTest, ReplaySourceWithValid) {
   auto options = request_.mutable_start_request()->mutable_options();
   options->mutable_replay_source()->mutable_uri()->set_value(
       fmt::format("http://{}:{}", loopback_address_, grpc_server_port_));

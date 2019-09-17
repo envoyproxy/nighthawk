@@ -28,14 +28,14 @@ ReplayHeaderSourceImpl::ReplayHeaderSourceImpl(Envoy::Upstream::ClusterManagerPt
 
 void ReplayHeaderSourceImpl::connectToReplayGrpcSourceService() {
   auto clusters = cluster_manager_->clusters();
-  if (clusters.find(service_cluster_name_) == clusters.end()) {
-    ENVOY_LOG(critical, "Cluster {} not found.", service_cluster_name_);
-  }
+  RELEASE_ASSERT(clusters.find(service_cluster_name_) != clusters.end(), "Source cluster not found");
   envoy::api::v2::core::GrpcService grpc_service;
   grpc_service.mutable_envoy_grpc()->set_cluster_name(service_cluster_name_);
   auto cm =
       cluster_manager_->grpcAsyncClientManager().factoryForGrpcService(grpc_service, scope_, true);
   grpc_client_ = std::make_unique<ReplayGrpcClientImpl>(cm->create(), dispatcher_);
+  // TODO(oschaaf): handle return value.
+  grpc_client_->establishNewStream();
 }
 
 HeaderGenerator ReplayHeaderSourceImpl::get() {
