@@ -35,6 +35,12 @@ TEST_F(OptionsImplTest, BogusInput) {
                           MalformedArgvException, "Invalid target URI");
 }
 
+TEST_F(OptionsImplTest, BogusReplaySource) {
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(
+                              fmt::format("{} --replay-source --foo http://foo", client_name_)),
+                          MalformedArgvException, "Invalid replay source URI");
+}
+
 // This test should cover every option we offer.
 TEST_F(OptionsImplTest, All) {
   Envoy::MessageUtil util;

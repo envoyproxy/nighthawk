@@ -53,7 +53,7 @@ TEST_F(FactoriesTest, CreateBenchmarkClient) {
 
 TEST_F(FactoriesTest, CreateHeaderSource) {
   EXPECT_CALL(options_, requestMethod()).Times(1);
-  EXPECT_CALL(options_, requestBodySize()).Times(1);
+  EXPECT_CALL(options_, requestBodySize()).Times(1).WillOnce(Return(10));
   EXPECT_CALL(options_, uri()).Times(1).WillOnce(Return("http://foo/"));
   EXPECT_CALL(options_, replaySource()).Times(1);
   auto cmd = std::make_unique<nighthawk::client::CommandLineOptions>();
