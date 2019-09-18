@@ -2,6 +2,7 @@
 
 #include "external/envoy/test/mocks/event/mocks.h"
 #include "external/envoy/test/mocks/stats/mocks.h"
+#include "external/envoy/test/mocks/tracing/mocks.h"
 #include "external/envoy/test/test_common/simulated_time_system.h"
 #include "external/envoy/test/test_common/utility.h"
 
@@ -22,12 +23,15 @@ namespace Client {
 
 class FactoriesTest : public Test {
 public:
-  FactoriesTest() : api_(Envoy::Api::createApiForTest(stats_store_)) {}
+  FactoriesTest()
+      : api_(Envoy::Api::createApiForTest(stats_store_)),
+        http_tracer_(std::make_unique<Envoy::Tracing::MockHttpTracer>()) {}
 
   Envoy::Api::ApiPtr api_;
   Envoy::Stats::MockIsolatedStatsStore stats_store_;
   Envoy::Event::MockDispatcher dispatcher_;
   MockOptions options_;
+  Envoy::Tracing::HttpTracerPtr http_tracer_;
 };
 
 TEST_F(FactoriesTest, CreateBenchmarkClient) {
@@ -43,7 +47,7 @@ TEST_F(FactoriesTest, CreateBenchmarkClient) {
   StaticHeaderSourceImpl header_generator(
       Envoy::Http::HeaderMapPtr{new Envoy::Http::TestHeaderMapImpl{}});
   auto benchmark_client = factory.create(*api_, dispatcher_, stats_store_, cluster_manager,
-                                         "foocluster", header_generator);
+                                         http_tracer_, "foocluster", header_generator);
   EXPECT_NE(nullptr, benchmark_client.get());
 }
 

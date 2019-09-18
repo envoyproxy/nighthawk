@@ -109,4 +109,6 @@ message CommandLineOptions {
   SequencerIdleStrategy sequencer_idle_strategy = 17;
   // See :option:`--uri` for details.
   google.protobuf.StringValue uri = 18; // [(validate.rules).string.uri = true];
+  // See :option:`--trace` for details.
+  google.protobuf.StringValue trace = 20; // [(validate.rules).string.uri = true];
 }
