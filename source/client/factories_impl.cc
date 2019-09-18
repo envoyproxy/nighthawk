@@ -106,7 +106,7 @@ HeaderSourcePtr HeaderSourceFactoryImpl::create(Envoy::Upstream::ClusterManagerP
                                                 Envoy::Event::Dispatcher& dispatcher,
                                                 Envoy::Stats::Scope& scope,
                                                 absl::string_view service_cluster_name) const {
-  if (options_.replaySource() == "") {
+  if (options_.headerSource() == "") {
     // Note: we assume a valid uri.
     // Also, we can't resolve, but we do not need that.
     UriImpl uri(options_.uri());

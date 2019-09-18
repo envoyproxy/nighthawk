@@ -14,7 +14,7 @@ message RequestOptions {
   google.protobuf.UInt32Value request_body_size = 3 [(validate.rules).uint32 = {lte: 4194304}];
 }
 
-message ReplaySource {
+message HeaderSource {
   google.protobuf.StringValue uri = 19; // [(validate.rules).string.uri = true];
 }
 
@@ -95,7 +95,7 @@ message CommandLineOptions {
   oneof oneof_request_options {
     // See :option:`--request_options` for details.
     RequestOptions request_options = 12;
-    ReplaySource replay_source = 19;
+    HeaderSource header_source = 19;
   }
   // See :option:`--tls_context` for details.
   envoy.api.v2.auth.UpstreamTlsContext tls_context = 13;

@@ -55,7 +55,7 @@ TEST_F(FactoriesTest, CreateHeaderSource) {
   EXPECT_CALL(options_, requestMethod()).Times(1);
   EXPECT_CALL(options_, requestBodySize()).Times(1).WillOnce(Return(10));
   EXPECT_CALL(options_, uri()).Times(1).WillOnce(Return("http://foo/"));
-  EXPECT_CALL(options_, replaySource()).Times(1);
+  EXPECT_CALL(options_, headerSource()).Times(1);
   auto cmd = std::make_unique<nighthawk::client::CommandLineOptions>();
   auto request_headers = cmd->mutable_request_options()->add_request_headers();
   request_headers->mutable_header()->set_key("foo");
@@ -64,7 +64,7 @@ TEST_F(FactoriesTest, CreateHeaderSource) {
   HeaderSourceFactoryImpl factory(options_);
   Envoy::Upstream::ClusterManagerPtr cluster_manager;
   auto header_generator = factory.create(
-      cluster_manager, dispatcher_, *stats_store_.createScope("foo."), "replay_source_cluster");
+      cluster_manager, dispatcher_, *stats_store_.createScope("foo."), "header_source_cluster");
   EXPECT_NE(nullptr, header_generator.get());
 }
 

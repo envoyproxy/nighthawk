@@ -42,7 +42,7 @@ public:
   virtual uint32_t maxRequestsPerConnection() const PURE;
   virtual nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions
   sequencerIdleStrategy() const PURE;
-  virtual std::string replaySource() const PURE;
+  virtual std::string headerSource() const PURE;
   virtual std::string trace() const PURE;
 
   /**

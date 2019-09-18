@@ -298,11 +298,11 @@ void ProcessImpl::maybeCreateTracingDriver(const envoy::config::trace::v2::Traci
   }
 }
 
-void ProcessImpl::addReplaySourceCluster(const Uri& uri,
+void ProcessImpl::addHeaderSourceCluster(const Uri& uri,
                                          envoy::config::bootstrap::v2::Bootstrap& bootstrap) const {
   auto* cluster = bootstrap.mutable_static_resources()->add_clusters();
   cluster->mutable_http2_protocol_options();
-  cluster->set_name("replay_source_cluster");
+  cluster->set_name("header_source_cluster");
   cluster->set_type(envoy::api::v2::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
   cluster->mutable_connect_timeout()->set_seconds(options_.timeout().count());
   auto* host = cluster->add_hosts();
@@ -313,16 +313,16 @@ void ProcessImpl::addReplaySourceCluster(const Uri& uri,
 
 bool ProcessImpl::run(OutputCollector& collector) {
   UriImpl uri(options_.uri());
-  UriPtr replay_source_uri;
+  UriPtr header_source_uri;
   UriPtr tracing_uri;
 
   try {
     // TODO(oschaaf): See if we can rid of resolving here.
     // We now only do it to validate.
     uri.resolve(*dispatcher_, Utility::translateFamilyOptionString(options_.addressFamily()));
-    if (options_.replaySource() != "") {
-      replay_source_uri = std::make_unique<UriImpl>(options_.replaySource());
-      replay_source_uri->resolve(*dispatcher_,
+    if (options_.headerSource() != "") {
+      header_source_uri = std::make_unique<UriImpl>(options_.headerSource());
+      header_source_uri->resolve(*dispatcher_,
                                  Utility::translateFamilyOptionString(options_.addressFamily()));
     }
     if (options_.trace() != "") {
@@ -352,8 +352,8 @@ bool ProcessImpl::run(OutputCollector& collector) {
       *singleton_manager_);
   envoy::config::bootstrap::v2::Bootstrap bootstrap;
   createBootstrapConfiguration(bootstrap, uri, number_of_workers);
-  if (replay_source_uri != nullptr) {
-    addReplaySourceCluster(*replay_source_uri, bootstrap);
+  if (header_source_uri != nullptr) {
+    addHeaderSourceCluster(*header_source_uri, bootstrap);
   }
   if (tracing_uri != nullptr) {
     setupTracingImplementation(bootstrap, *tracing_uri);

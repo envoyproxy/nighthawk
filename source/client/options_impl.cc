@@ -163,7 +163,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
                                             "but in case of https no certificates are validated.",
                                             true, "", "uri format", cmd);
 
-  TCLAP::ValueArg<std::string> replay_source(
+  TCLAP::ValueArg<std::string> header_source(
       "", "replay-source", fmt::format("replay source description"), false, "", "string", cmd);
 
   Utility::parseCommand(cmd, argc, argv);
@@ -216,7 +216,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
                        upper_cased, &sequencer_idle_strategy_),
                    "Failed to parse sequencer idle strategy");
   }
-  TCLAP_SET_IF_SPECIFIED(replay_source, replay_source_);
+  TCLAP_SET_IF_SPECIFIED(header_source, header_source_);
   TCLAP_SET_IF_SPECIFIED(trace, trace_);
 
   // CLI-specific tests.
@@ -295,9 +295,9 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
     }
     request_body_size_ =
         PROTOBUF_GET_WRAPPED_OR_DEFAULT(request_options, request_body_size, request_body_size_);
-  } else if (options.has_replay_source()) {
-    const auto& replay_source_options = options.replay_source();
-    replay_source_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(replay_source_options, uri, replay_source_);
+  } else if (options.has_header_source()) {
+    const auto& header_source_options = options.header_source();
+    header_source_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(header_source_options, uri, header_source_);
   }
 
   max_pending_requests_ =
@@ -338,9 +338,9 @@ void OptionsImpl::validate() const {
     throw MalformedArgvException("Invalid target URI");
   }
 
-  if (replay_source_ != "") {
+  if (header_source_ != "") {
     try {
-      UriImpl uri(replay_source_);
+      UriImpl uri(header_source_);
     } catch (const UriException) {
       throw MalformedArgvException("Invalid replay source URI");
     }
@@ -371,9 +371,9 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptions() const {
   command_line_options->mutable_burst_size()->set_value(burstSize());
   command_line_options->mutable_address_family()->set_value(
       static_cast<nighthawk::client::AddressFamily_AddressFamilyOptions>(addressFamily()));
-  if (replaySource() != "") {
-    auto replay_source = command_line_options->mutable_replay_source();
-    replay_source->mutable_uri()->set_value(replaySource());
+  if (headerSource() != "") {
+    auto header_source = command_line_options->mutable_header_source();
+    header_source->mutable_uri()->set_value(headerSource());
   } else {
     auto request_options = command_line_options->mutable_request_options();
     request_options->set_request_method(requestMethod());
