@@ -9,6 +9,7 @@
 #include "external/envoy/source/common/http/headers.h"
 #include "external/envoy/source/common/http/utility.h"
 #include "external/envoy/source/common/network/utility.h"
+#include "external/envoy/source/common/runtime/uuid_util.h"
 
 #include "client/stream_decoder.h"
 
@@ -30,14 +31,14 @@ void Http1PoolImpl::createConnections(const uint32_t connection_limit) {
 BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
     Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
     StatisticPtr&& connect_statistic, StatisticPtr&& response_statistic, bool use_h2,
-    Envoy::Upstream::ClusterManagerPtr& cluster_manager, absl::string_view cluster_name,
-    HeaderGenerator header_generator)
+    Envoy::Upstream::ClusterManagerPtr& cluster_manager, Envoy::Tracing::HttpTracerPtr& http_tracer,
+    absl::string_view cluster_name, HeaderGenerator header_generator)
     : api_(api), dispatcher_(dispatcher), scope_(scope.createScope("benchmark.")),
       connect_statistic_(std::move(connect_statistic)),
       response_statistic_(std::move(response_statistic)), use_h2_(use_h2),
       benchmark_client_stats_({ALL_BENCHMARK_CLIENT_STATS(POOL_COUNTER(*scope_))}),
-      cluster_manager_(cluster_manager), cluster_name_(std::string(cluster_name)),
-      header_generator_(std::move(header_generator)) {
+      cluster_manager_(cluster_manager), http_tracer_(http_tracer),
+      cluster_name_(std::string(cluster_name)), header_generator_(std::move(header_generator)) {
   connect_statistic_->setId("benchmark_http_client.queue_to_connect");
   response_statistic_->setId("benchmark_http_client.request_to_response");
 }
@@ -96,10 +97,11 @@ bool BenchmarkClientHttpImpl::tryStartRequest(CompletionCallback caller_completi
     }
   }
 
-  auto stream_decoder = new StreamDecoder(dispatcher_, api_.timeSource(), *this,
-                                          std::move(caller_completion_callback),
-                                          *connect_statistic_, *response_statistic_,
-                                          std::move(header), measureLatencies(), content_length);
+  std::string x_request_id = generator_.uuid();
+  auto stream_decoder = new StreamDecoder(
+      dispatcher_, api_.timeSource(), *this, std::move(caller_completion_callback),
+      *connect_statistic_, *response_statistic_, std::move(header), measureLatencies(),
+      content_length, x_request_id, http_tracer_);
   requests_initiated_++;
   pool_ptr->newStream(*stream_decoder, *stream_decoder);
   return true;

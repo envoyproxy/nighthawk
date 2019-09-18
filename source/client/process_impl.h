@@ -5,6 +5,7 @@
 #include "envoy/api/api.h"
 #include "envoy/network/address.h"
 #include "envoy/stats/store.h"
+#include "envoy/tracing/http_tracer.h"
 
 #include "nighthawk/client/client_worker.h"
 #include "nighthawk/client/factories.h"
@@ -48,8 +49,12 @@ public:
 
   uint32_t determineConcurrency() const;
   bool run(OutputCollector& collector) override;
-  const envoy::config::bootstrap::v2::Bootstrap
-  createBootstrapConfiguration(const Uri& uri, int number_of_workers) const;
+  void addTracingCluster(envoy::config::bootstrap::v2::Bootstrap& bootstrap, const Uri& uri) const;
+  void setupTracingImplementation(envoy::config::bootstrap::v2::Bootstrap& bootstrap,
+                                  const Uri& uri) const;
+  void createBootstrapConfiguration(envoy::config::bootstrap::v2::Bootstrap& bootstrap,
+                                    const Uri& uri, int number_of_workers) const;
+  void maybeCreateTracingDriver(const envoy::config::trace::v2::Tracing& configuration);
   void shutdown() override;
 
 private:

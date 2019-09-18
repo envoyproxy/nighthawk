@@ -8,6 +8,7 @@
 #include <memory>
 #include <random>
 
+#include "envoy/server/filter_config.h"
 #include "envoy/stats/store.h"
 
 #include "nighthawk/client/output_collector.h"
@@ -23,6 +24,8 @@
 #include "external/envoy/source/common/runtime/runtime_impl.h"
 #include "external/envoy/source/common/singleton/manager_impl.h"
 #include "external/envoy/source/common/thread_local/thread_local_impl.h"
+#include "external/envoy/source/extensions/tracers/well_known_names.h"
+#include "external/envoy/source/extensions/tracers/zipkin/zipkin_tracer_impl.h"
 #include "external/envoy/source/extensions/transport_sockets/well_known_names.h"
 #include "external/envoy/source/server/options_impl_platform.h"
 
@@ -132,7 +135,7 @@ const std::vector<ClientWorkerPtr>& ProcessImpl::createWorkers(const uint32_t co
     workers_.push_back(std::make_unique<ClientWorkerImpl>(
         *api_, tls_, cluster_manager_, benchmark_client_factory_, sequencer_factory_,
         header_generator_factory_, store_root_, worker_number, first_worker_start + worker_delay,
-        prefetch_connections));
+        http_tracer_, prefetch_connections));
     worker_number++;
   }
   return workers_;
@@ -211,10 +214,8 @@ ProcessImpl::mergeWorkerStatistics(const StatisticFactory& statistic_factory,
   return merged_statistics;
 }
 
-const envoy::config::bootstrap::v2::Bootstrap
-ProcessImpl::createBootstrapConfiguration(const Uri& uri, int number_of_clusters) const {
-  envoy::config::bootstrap::v2::Bootstrap bootstrap;
-
+void ProcessImpl::createBootstrapConfiguration(envoy::config::bootstrap::v2::Bootstrap& bootstrap,
+                                               const Uri& uri, int number_of_clusters) const {
   for (int i = 0; i < number_of_clusters; i++) {
     auto* cluster = bootstrap.mutable_static_resources()->add_clusters();
     if (uri.scheme() == "https") {
@@ -245,17 +246,71 @@ ProcessImpl::createBootstrapConfiguration(const Uri& uri, int number_of_clusters
     socket_address->set_address(uri.address()->ip()->addressAsString());
     socket_address->set_port_value(uri.port());
   }
-  ENVOY_LOG(info, "Computed configuration: {}", bootstrap.DebugString());
+}
 
-  return bootstrap;
+void ProcessImpl::addTracingCluster(envoy::config::bootstrap::v2::Bootstrap& bootstrap,
+                                    const Uri& uri) const {
+  auto* cluster = bootstrap.mutable_static_resources()->add_clusters();
+  cluster->set_name("tracing");
+  cluster->mutable_connect_timeout()->set_seconds(options_.timeout().count());
+  cluster->set_type(envoy::api::v2::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
+  auto* host = cluster->add_hosts();
+  auto* socket_address = host->mutable_socket_address();
+  socket_address->set_address(uri.address()->ip()->addressAsString());
+  socket_address->set_port_value(uri.port());
+}
+
+void ProcessImpl::setupTracingImplementation(envoy::config::bootstrap::v2::Bootstrap& bootstrap,
+                                             const Uri& uri) const {
+  auto* http = bootstrap.mutable_tracing()->mutable_http();
+  auto scheme = uri.scheme();
+  const std::string kTracingClusterName = "tracing";
+  http->set_name(fmt::format("envoy.{}", scheme));
+  RELEASE_ASSERT(scheme == "zipkin", "Only zipkin is supported");
+  envoy::config::trace::v2::ZipkinConfig config;
+  config.mutable_collector_cluster()->assign(kTracingClusterName);
+  config.mutable_collector_endpoint()->assign(std::string(uri.path()));
+  config.mutable_shared_span_context()->set_value(true);
+  http->mutable_typed_config()->PackFrom(config);
+}
+
+void ProcessImpl::maybeCreateTracingDriver(const envoy::config::trace::v2::Tracing& configuration) {
+  if (configuration.has_http()) {
+    std::string type = configuration.http().name();
+    ENVOY_LOG(info, "loading tracing driver: {}", type);
+    // Envoy::Server::Configuration::TracerFactory would be useful here to create the right
+    // tracer implementation for us. However that ends up needing a Server::Instance to be passed
+    // in which we do not have, and creating a fake for that means we risk code-churn because of
+    // upstream code changes.
+    auto& factory =
+        Config::Utility::getAndCheckFactory<Envoy::Server::Configuration::TracerFactory>(
+            configuration.http().name());
+    ProtobufTypes::MessagePtr message = Envoy::Config::Utility::translateToFactoryConfig(
+        configuration.http(), Envoy::ProtobufMessage::getStrictValidationVisitor(), factory);
+    auto zipkin_config = dynamic_cast<const envoy::config::trace::v2::ZipkinConfig&>(*message);
+    Envoy::Tracing::DriverPtr zipkin_driver =
+        std::make_unique<Envoy::Extensions::Tracers::Zipkin::Driver>(
+            zipkin_config, *cluster_manager_, store_root_, tls_,
+            Envoy::Runtime::LoaderSingleton::get(), *local_info_, generator_, time_system_);
+    http_tracer_ =
+        std::make_unique<Envoy::Tracing::HttpTracerImpl>(std::move(zipkin_driver), *local_info_);
+    http_context_.setTracer(*http_tracer_);
+  }
 }
 
 bool ProcessImpl::run(OutputCollector& collector) {
   UriImpl uri(options_.uri());
+  UriPtr tracing_uri;
+
   try {
     // TODO(oschaaf): See if we can rid of resolving here.
     // We now only do it to validate.
     uri.resolve(*dispatcher_, Utility::translateFamilyOptionString(options_.addressFamily()));
+    if (options_.trace() != "") {
+      tracing_uri = std::make_unique<UriImpl>(options_.trace());
+      tracing_uri->resolve(*dispatcher_,
+                           Utility::translateFamilyOptionString(options_.addressFamily()));
+    }
   } catch (UriException) {
     return false;
   }
@@ -276,9 +331,18 @@ bool ProcessImpl::run(OutputCollector& collector) {
       dispatcher_->createDnsResolver({}), *ssl_context_manager_, *dispatcher_, *local_info_,
       secret_manager_, validation_context_, *api_, http_context_, access_log_manager_,
       *singleton_manager_);
-  cluster_manager_ = cluster_manager_factory_->clusterManagerFromProto(
-      createBootstrapConfiguration(uri, number_of_workers));
+
+  envoy::config::bootstrap::v2::Bootstrap bootstrap;
+  createBootstrapConfiguration(bootstrap, uri, number_of_workers);
+  if (tracing_uri != nullptr) {
+    setupTracingImplementation(bootstrap, *tracing_uri);
+    addTracingCluster(bootstrap, *tracing_uri);
+  }
+  ENVOY_LOG(debug, "Computed configuration: {}", bootstrap.DebugString());
+  cluster_manager_ = cluster_manager_factory_->clusterManagerFromProto(bootstrap);
+  maybeCreateTracingDriver(bootstrap.tracing());
   cluster_manager_->setInitializedCb([this]() -> void { init_manager_.initialize(init_watcher_); });
+
   Runtime::LoaderSingleton::get().initialize(*cluster_manager_);
 
   for (auto& w : workers_) {

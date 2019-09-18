@@ -25,8 +25,7 @@ public:
                    const SequencerFactory& sequencer_factory,
                    const HeaderSourceFactory& header_generator_factory, Envoy::Stats::Store& store,
                    const int worker_number, const Envoy::MonotonicTime starting_time,
-                   bool prefetch_connections);
-
+                   Envoy::Tracing::HttpTracerPtr& http_tracer, bool prefetch_connections);
   StatisticPtrMap statistics() const override;
   bool success() const override { return success_; }
 
@@ -44,6 +43,7 @@ private:
   const int worker_number_;
   const Envoy::MonotonicTime starting_time_;
   bool success_{};
+  Envoy::Tracing::HttpTracerPtr& http_tracer_;
   HeaderSourcePtr header_generator_;
   BenchmarkClientPtr benchmark_client_;
   const SequencerPtr sequencer_;
