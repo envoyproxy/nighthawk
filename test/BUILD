@@ -33,6 +33,7 @@ envoy_cc_test(
         "@envoy//source/common/stats:isolated_store_lib_with_external_headers",
         "@envoy//source/exe:process_wide_lib",
         "@envoy//test/mocks/runtime:runtime_mocks",
+        "@envoy//test/mocks/stream_info:stream_info_mocks",
         "@envoy//test/mocks/thread_local:thread_local_mocks",
         "@envoy//test/mocks/upstream:upstream_mocks",
         "@envoy//test/test_common:network_utility_lib",
@@ -210,6 +211,7 @@ envoy_cc_test(
         "@envoy//source/common/network:utility_lib_with_external_headers",
         "@envoy//source/common/stats:isolated_store_lib_with_external_headers",
         "@envoy//test/mocks/http:http_mocks",
+        "@envoy//test/mocks/stream_info:stream_info_mocks",
     ],
 )
 

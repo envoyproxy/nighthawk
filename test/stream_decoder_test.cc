@@ -6,6 +6,7 @@
 #include "external/envoy/source/common/runtime/runtime_impl.h"
 #include "external/envoy/source/common/stats/isolated_store_impl.h"
 #include "external/envoy/test/mocks/http/mocks.h"
+#include "external/envoy/test/mocks/stream_info/mocks.h"
 
 #include "common/statistic_impl.h"
 
@@ -100,9 +101,10 @@ TEST_F(StreamDecoderTest, LatencyIsNotMeasured) {
       request_headers_, false, 0, TEST_TRACER_UID, http_tracer_);
   Envoy::Http::MockStreamEncoder stream_encoder;
   Envoy::Upstream::HostDescriptionConstSharedPtr ptr;
+  NiceMock<Envoy::StreamInfo::MockStreamInfo> stream_info;
   EXPECT_CALL(stream_encoder,
               encodeHeaders(Envoy::HeaderMapEqualRef(request_headers_.get()), true));
-  decoder->onPoolReady(stream_encoder, ptr);
+  decoder->onPoolReady(stream_encoder, ptr, stream_info);
   decoder->decodeHeaders(std::move(test_header_), true);
   EXPECT_EQ(0, connect_statistic_.count());
   EXPECT_EQ(0, latency_statistic_.count());
@@ -136,9 +138,10 @@ TEST_F(StreamDecoderTest, LatencyIsMeasured) {
 
   Envoy::Http::MockStreamEncoder stream_encoder;
   Envoy::Upstream::HostDescriptionConstSharedPtr ptr;
+  NiceMock<Envoy::StreamInfo::MockStreamInfo> stream_info;
   EXPECT_CALL(stream_encoder,
               encodeHeaders(Envoy::HeaderMapEqualRef(expected_request_header.get()), true));
-  decoder->onPoolReady(stream_encoder, ptr);
+  decoder->onPoolReady(stream_encoder, ptr, stream_info);
   EXPECT_EQ(1, connect_statistic_.count());
   decoder->decodeHeaders(std::move(test_header_), false);
   decoder->decodeTrailers(std::move(test_header_));
