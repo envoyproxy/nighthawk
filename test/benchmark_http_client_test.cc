@@ -7,6 +7,7 @@
 #include "external/envoy/source/exe/process_wide.h"
 #include "external/envoy/test/mocks/common.h"
 #include "external/envoy/test/mocks/runtime/mocks.h"
+#include "external/envoy/test/mocks/stream_info/mocks.h"
 #include "external/envoy/test/mocks/thread_local/mocks.h"
 #include "external/envoy/test/mocks/upstream/mocks.h"
 #include "external/envoy/test/test_common/network_utility.h"
@@ -68,7 +69,9 @@ public:
                                    Envoy::Http::ConnectionPool::Callbacks& callbacks)
                                    -> Envoy::Http::ConnectionPool::Cancellable* {
           decoders_.push_back(&decoder);
-          callbacks.onPoolReady(stream_encoder_, Envoy::Upstream::HostDescriptionConstSharedPtr{});
+          NiceMock<Envoy::StreamInfo::MockStreamInfo> stream_info;
+          callbacks.onPoolReady(stream_encoder_, Envoy::Upstream::HostDescriptionConstSharedPtr{},
+                                stream_info);
           return nullptr;
         }));
 

@@ -76,7 +76,8 @@ public:
                      absl::string_view transport_failure_reason,
                      Envoy::Upstream::HostDescriptionConstSharedPtr host) override;
   void onPoolReady(Envoy::Http::StreamEncoder& encoder,
-                   Envoy::Upstream::HostDescriptionConstSharedPtr host) override;
+                   Envoy::Upstream::HostDescriptionConstSharedPtr host,
+                   const Envoy::StreamInfo::StreamInfo& stream_info) override;
 
   static Envoy::StreamInfo::ResponseFlag
   streamResetReasonToResponseFlag(Envoy::Http::StreamResetReason reset_reason);
