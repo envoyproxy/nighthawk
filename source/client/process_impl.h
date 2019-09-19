@@ -72,9 +72,9 @@ private:
   StoreFactoryImpl store_factory_;
   Envoy::Stats::SymbolTableImpl symbol_table_;
   Envoy::Stats::AllocatorImpl stats_allocator_;
+  Envoy::ThreadLocal::InstanceImpl tls_;
   Envoy::Stats::ThreadLocalStoreImpl store_root_;
   Envoy::Api::ApiPtr api_;
-  Envoy::ThreadLocal::InstanceImpl tls_;
   Envoy::Event::DispatcherPtr dispatcher_;
   std::vector<ClientWorkerPtr> workers_;
   const BenchmarkClientFactoryImpl benchmark_client_factory_;
