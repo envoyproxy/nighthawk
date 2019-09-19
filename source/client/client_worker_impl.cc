@@ -15,15 +15,14 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
                                    const HeaderSourceFactory& header_generator_factory,
                                    Envoy::Stats::Store& store, const int worker_number,
                                    const Envoy::MonotonicTime starting_time,
-                                   Envoy::Tracing::HttpTracerPtr& http_tracer,
                                    bool prefetch_connections)
     : WorkerImpl(api, tls, store), worker_scope_(store_.createScope("worker.")),
       worker_number_scope_(worker_scope_->createScope(fmt::format("{}.", worker_number))),
-      worker_number_(worker_number), starting_time_(starting_time), http_tracer_(http_tracer),
+      worker_number_(worker_number), starting_time_(starting_time),
       header_generator_(header_generator_factory.create()),
-      benchmark_client_(benchmark_client_factory.create(
-          api, *dispatcher_, *worker_number_scope_, cluster_manager, http_tracer_,
-          fmt::format("{}", worker_number), *header_generator_)),
+      benchmark_client_(
+          benchmark_client_factory.create(api, *dispatcher_, *worker_number_scope_, cluster_manager,
+                                          fmt::format("{}", worker_number), *header_generator_)),
       sequencer_(
           sequencer_factory.create(time_source_, *dispatcher_, starting_time, *benchmark_client_)),
       prefetch_connections_(prefetch_connections) {}

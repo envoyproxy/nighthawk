@@ -31,23 +31,11 @@ public:
   BenchmarkClientHttpTest()
       : api_(Envoy::Api::createApiForTest()), dispatcher_(api_->allocateDispatcher()),
         cluster_manager_(std::make_unique<Envoy::Upstream::MockClusterManager>()),
-        cluster_info_(std::make_unique<Envoy::Upstream::MockClusterInfo>()),
-        http_tracer_(std::make_unique<Envoy::Tracing::MockHttpTracer>()), response_code_("200") {
+        cluster_info_(std::make_unique<Envoy::Upstream::MockClusterInfo>()), response_code_("200") {
     EXPECT_CALL(cluster_manager(), httpConnPoolForCluster(_, _, _, _))
         .WillRepeatedly(Return(&pool_));
     EXPECT_CALL(cluster_manager(), get(_)).WillRepeatedly(Return(&thread_local_cluster_));
     EXPECT_CALL(thread_local_cluster_, info()).WillRepeatedly(Return(cluster_info_));
-
-    auto& tracer = static_cast<Envoy::Tracing::MockHttpTracer&>(*http_tracer_);
-    EXPECT_CALL(tracer, startSpan_(_, _, _, _))
-        .WillRepeatedly(
-            Invoke([&](const Envoy::Tracing::Config& config, const Envoy::Http::HeaderMap&,
-                       const Envoy::StreamInfo::StreamInfo&,
-                       const Envoy::Tracing::Decision) -> Envoy::Tracing::Span* {
-              EXPECT_EQ(Envoy::Tracing::OperationName::Egress, config.operationName());
-              auto* span = new NiceMock<Envoy::Tracing::MockSpan>();
-              return span;
-            }));
     header_generator_ = []() {
       return std::make_shared<Envoy::Http::TestHeaderMapImpl>(
           std::initializer_list<std::pair<std::string, std::string>>(
@@ -115,7 +103,7 @@ public:
   void setupBenchmarkClient() {
     client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
         *api_, *dispatcher_, store_, std::make_unique<StreamingStatistic>(),
-        std::make_unique<StreamingStatistic>(), false, cluster_manager_, http_tracer_, "benchmark",
+        std::make_unique<StreamingStatistic>(), false, cluster_manager_, "benchmark",
         header_generator_);
   }
 
@@ -146,7 +134,6 @@ public:
   Envoy::Http::MockStreamEncoder stream_encoder_;
   Envoy::Upstream::MockThreadLocalCluster thread_local_cluster_;
   Envoy::Upstream::ClusterInfoConstSharedPtr cluster_info_;
-  Envoy::Tracing::HttpTracerPtr http_tracer_;
   std::string response_code_;
   HeaderGenerator header_generator_;
 };
@@ -179,7 +166,7 @@ TEST_F(BenchmarkClientHttpTest, StatusTrackingInOnComplete) {
   auto store = std::make_unique<Envoy::Stats::IsolatedStoreImpl>();
   client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
       *api_, *dispatcher_, *store, std::make_unique<StreamingStatistic>(),
-      std::make_unique<StreamingStatistic>(), false, cluster_manager_, http_tracer_, "foo",
+      std::make_unique<StreamingStatistic>(), false, cluster_manager_, "benchmark",
       header_generator_);
   Envoy::Http::HeaderMapImpl header;
 
@@ -217,8 +204,8 @@ TEST_F(BenchmarkClientHttpTest, ConnectionPrefetching) {
   auto store = std::make_unique<Envoy::Stats::IsolatedStoreImpl>();
   client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
       *api_, *dispatcher_, *store, std::make_unique<StreamingStatistic>(),
-      std::make_unique<StreamingStatistic>(), false, cluster_manager_, http_tracer_, "foo",
-      header_generator_);
+      std::make_unique<StreamingStatistic>(), false, cluster_manager_, "foo", header_generator_);
+
   // Test with the mock pool, which isn't prefetchable. Should be a no-op.
   client_->prefetchPoolConnections();
 

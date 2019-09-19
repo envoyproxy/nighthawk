@@ -50,7 +50,6 @@ public:
   sequencerIdleStrategy() const override {
     return sequencer_idle_strategy_;
   }
-  std::string trace() const override { return trace_; }
 
 private:
   void setNonTrivialDefaults();
@@ -79,7 +78,6 @@ private:
   uint32_t max_requests_per_connection_{largest_acceptable_uint32_option_value};
   nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions sequencer_idle_strategy_{
       nighthawk::client::SequencerIdleStrategy::SPIN};
-  std::string trace_;
 };
 
 } // namespace Client

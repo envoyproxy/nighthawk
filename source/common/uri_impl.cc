@@ -12,8 +12,7 @@
 namespace Nighthawk {
 
 bool UriImpl::isValid() const {
-  return (scheme_ == "http" || scheme_ == "https" || scheme_ == "zipkin") &&
-         (port_ > 0 && port_ <= 65535) &&
+  return (scheme_ == "http" || scheme_ == "https") && (port_ > 0 && port_ <= 65535) &&
          // We check that we do not start with '-' because that overlaps with CLI argument
          // parsing. For other hostname validation, we defer to parseInternetAddressAndPort() and
          // dns resolution later on.

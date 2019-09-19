@@ -22,19 +22,15 @@ namespace Client {
 // want those tests in here, and mock Process in client_test.
 class ProcessTest : public TestWithParam<Envoy::Network::Address::IpVersion> {
 public:
-  enum class RunExpectation { EXPECT_SUCCESS, EXPECT_FAILURE };
-
   ProcessTest()
       : loopback_address_(Envoy::Network::Test::getLoopbackAddressUrlString(GetParam())),
         options_(TestUtility::createOptionsImpl(
             fmt::format("foo --duration 1 -v error --rps 10 https://{}/", loopback_address_))){};
-  void runProcess(RunExpectation expectation) {
+  void runProcess() {
     ProcessPtr process = std::make_unique<ProcessImpl>(*options_, time_system_);
     OutputCollectorFactoryImpl output_format_factory(time_system_, *options_);
     auto collector = output_format_factory.create();
-    const auto result =
-        process->run(*collector) ? RunExpectation::EXPECT_SUCCESS : RunExpectation::EXPECT_FAILURE;
-    EXPECT_EQ(result, expectation);
+    EXPECT_TRUE(process->run(*collector));
     process->shutdown();
   }
 
@@ -48,17 +44,10 @@ INSTANTIATE_TEST_SUITE_P(IpVersions, ProcessTest,
                          Envoy::TestUtility::ipTestParamsToString);
 
 TEST_P(ProcessTest, TwoProcessInSequence) {
-  runProcess(RunExpectation::EXPECT_SUCCESS);
+  runProcess();
   options_ = TestUtility::createOptionsImpl(
       fmt::format("foo --h2 --duration 1 --rps 10 https://{}/", loopback_address_));
-  runProcess(RunExpectation::EXPECT_SUCCESS);
-}
-
-// TODO(oschaaf): move to python int. tests once it adds to coverage.
-TEST_P(ProcessTest, BadTracerSpec) {
-  options_ = TestUtility::createOptionsImpl(
-      fmt::format("foo --trace foo://localhost:79/api/v1/spans https://{}/", loopback_address_));
-  runProcess(RunExpectation::EXPECT_FAILURE);
+  runProcess();
 }
 
 } // namespace Client
