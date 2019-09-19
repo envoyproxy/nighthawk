@@ -75,6 +75,7 @@ envoy_cc_test(
         "//source/client:nighthawk_client_lib",
         "//test:nighthawk_mocks",
         "@envoy//test/mocks/event:event_mocks",
+        "@envoy//test/mocks/tracing:tracing_mocks",
         "@envoy//test/test_common:simulated_time_system_lib",
     ],
 )
