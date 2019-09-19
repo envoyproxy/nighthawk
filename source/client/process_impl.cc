@@ -25,7 +25,10 @@
 #include "external/envoy/source/common/singleton/manager_impl.h"
 #include "external/envoy/source/common/thread_local/thread_local_impl.h"
 #include "external/envoy/source/extensions/tracers/well_known_names.h"
+
+#ifndef zipkin_disabled
 #include "external/envoy/source/extensions/tracers/zipkin/zipkin_tracer_impl.h"
+#endif
 #include "external/envoy/source/extensions/transport_sockets/well_known_names.h"
 #include "external/envoy/source/server/options_impl_platform.h"
 
@@ -262,6 +265,7 @@ void ProcessImpl::addTracingCluster(envoy::config::bootstrap::v2::Bootstrap& boo
 
 void ProcessImpl::setupTracingImplementation(envoy::config::bootstrap::v2::Bootstrap& bootstrap,
                                              const Uri& uri) const {
+#ifndef zipkin_disabled
   auto* http = bootstrap.mutable_tracing()->mutable_http();
   auto scheme = uri.scheme();
   const std::string kTracingClusterName = "tracing";
@@ -272,10 +276,16 @@ void ProcessImpl::setupTracingImplementation(envoy::config::bootstrap::v2::Boots
   config.mutable_collector_endpoint()->assign(std::string(uri.path()));
   config.mutable_shared_span_context()->set_value(true);
   http->mutable_typed_config()->PackFrom(config);
+#else
+  ENVOY_LOG(error, "Not build with any tracing support");
+  UNREFERENCED_PARAMETER(bootstrap);
+  UNREFERENCED_PARAMETER(uri);
+#endif
 }
 
 void ProcessImpl::maybeCreateTracingDriver(const envoy::config::trace::v2::Tracing& configuration) {
   if (configuration.has_http()) {
+#ifndef zipkin_disabled
     std::string type = configuration.http().name();
     ENVOY_LOG(info, "loading tracing driver: {}", type);
     // Envoy::Server::Configuration::TracerFactory would be useful here to create the right
@@ -295,6 +305,9 @@ void ProcessImpl::maybeCreateTracingDriver(const envoy::config::trace::v2::Traci
     http_tracer_ =
         std::make_unique<Envoy::Tracing::HttpTracerImpl>(std::move(zipkin_driver), *local_info_);
     http_context_.setTracer(*http_tracer_);
+#else
+    ENVOY_LOG(error, "Not build with any tracing support");
+#endif
   }
 }
 
