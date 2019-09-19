@@ -39,6 +39,7 @@ message ExecutionResponse {
 }
 
 message HeaderStreamRequest {
+  uint64 amount = 1;
 }
 
 message HeaderStreamResponse {

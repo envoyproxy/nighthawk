@@ -38,7 +38,7 @@ public:
 private:
   void handleExecutionRequest(const nighthawk::client::ExecutionRequest& request);
   void writeResponse(const nighthawk::client::ExecutionResponse& response);
-  void initHeaderSource();
+  HeaderSourcePtr createHeaderSource(const uint32_t amount);
   ::grpc::Status finishGrpcStream(const bool success, absl::string_view description = "");
 
   Envoy::Event::RealTimeSystem time_system_; // NO_CHECK_FORMAT(real_time)
@@ -54,7 +54,6 @@ private:
   // busy_lock_ is used to test from the service thread to query if there's
   // an active test being run.
   Envoy::Thread::MutexBasicLockable busy_lock_;
-  HeaderSourcePtr header_source_;
 };
 
 } // namespace Client

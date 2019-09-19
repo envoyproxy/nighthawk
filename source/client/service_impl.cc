@@ -116,17 +116,16 @@ void addHeader(envoy::api::v2::core::HeaderMap* map, absl::string_view key,
 }
 } // namespace
 
-ServiceImpl::ServiceImpl() { initHeaderSource(); }
+ServiceImpl::ServiceImpl() {}
 
-void ServiceImpl::initHeaderSource() {
-  // XXX(oschaaf): currently just writes a bounded set of foo responses with small pause
-  // in between.
+HeaderSourcePtr ServiceImpl::createHeaderSource(const uint32_t amount) {
+  // XXX(oschaaf):
   Envoy::Http::HeaderMapPtr header = std::make_unique<Envoy::Http::HeaderMapImpl>();
   header->insertMethod().value(envoy::api::v2::core::RequestMethod::GET);
   header->insertPath().value(std::string("/foopath"));
   header->insertHost().value(std::string("127.0.0.1:80"));
   header->insertScheme().value(Envoy::Http::Headers::get().SchemeValues.Http);
-  header_source_ = std::make_unique<StaticHeaderSourceImpl>(std::move(header), 1000);
+  return std::make_unique<StaticHeaderSourceImpl>(std::move(header), amount);
 }
 
 ::grpc::Status ServiceImpl::HeaderStream(
@@ -134,19 +133,16 @@ void ServiceImpl::initHeaderSource() {
     ::grpc::ServerReaderWriter<::nighthawk::client::HeaderStreamResponse,
                                ::nighthawk::client::HeaderStreamRequest>* stream) {
   nighthawk::client::HeaderStreamRequest request;
-  auto header_generator = header_source_->get();
-
   while (stream->Read(&request)) {
-    ENVOY_LOG(debug, "Read HeaderStreamRequest data {}", request.DebugString());
+    ENVOY_LOG(trace, "Read HeaderStreamRequest data {}", request.DebugString());
+    auto header_source = createHeaderSource(request.amount());
+    auto header_generator = header_source->get();
     bool ok = true;
-    for (int i = 0; i < 10000 && ok; i++) {
-      auto headers = header_generator();
-      if (headers == nullptr) {
-        break;
-      }
+    HeaderMapPtr headers;
+
+    while (ok && (headers = header_generator()) != nullptr) {
       nighthawk::client::HeaderStreamResponse response;
       auto* request_headers = response.mutable_request_headers();
-
       headers->iterate(
           [](const Envoy::Http::HeaderEntry& header,
              void* context) -> Envoy::Http::HeaderMap::Iterate {
@@ -155,15 +151,15 @@ void ServiceImpl::initHeaderSource() {
             return Envoy::Http::HeaderMap::Iterate::Continue;
           },
           request_headers);
-
       ok = ok && stream->Write(response);
-      usleep(100000);
     }
+
     if (!ok) {
       ENVOY_LOG(error, "Failed to send the complete set of replay data.");
+      break;
     }
-    break;
   }
+
   return finishGrpcStream(true);
 }
 

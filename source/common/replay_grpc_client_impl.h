@@ -46,13 +46,18 @@ public:
   bool establishNewStream() override;
 
 private:
-  void sendRequest(const nighthawk::client::HeaderStreamRequest& request);
+  static const std::string METHOD_NAME;
+  static const uint32_t QUEUE_LENGTH_WATERMARK;
+
+  void trySendRequest();
   Envoy::Grpc::AsyncClient<nighthawk::client::HeaderStreamRequest,
                            nighthawk::client::HeaderStreamResponse>
       async_client_;
   Envoy::Grpc::AsyncStream<nighthawk::client::HeaderStreamRequest> stream_{};
   const Envoy::Protobuf::MethodDescriptor& service_method_;
   std::queue<std::unique_ptr<nighthawk::client::HeaderStreamResponse>> messages_;
+  void emplaceMessage(std::unique_ptr<nighthawk::client::HeaderStreamResponse>&& message);
+  uint32_t in_flight_headers_{0};
 };
 
 } // namespace Nighthawk
