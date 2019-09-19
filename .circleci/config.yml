@@ -1,7 +1,6 @@
 references:
   envoy-build-image: &envoy-build-image
-    envoyproxy/envoy-build:8246167b9d238797cbc6c03dccc9e3921c37617d
-
+    envoyproxy/envoy-build:cb15cc3d2010aff77d6e022ddf6d723fa8becbc0
 version: 2
 jobs:
   build:
