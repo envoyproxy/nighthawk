@@ -37,7 +37,7 @@ TEST_F(OptionsImplTest, BogusInput) {
 
 TEST_F(OptionsImplTest, BogusHeaderSource) {
   EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(
-                              fmt::format("{} --replay-source --foo http://foo", client_name_)),
+                              fmt::format("{} --header-source --foo http://foo", client_name_)),
                           MalformedArgvException, "Invalid replay source URI");
 }
 

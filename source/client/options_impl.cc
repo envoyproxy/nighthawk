@@ -164,7 +164,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
                                             true, "", "uri format", cmd);
 
   TCLAP::ValueArg<std::string> header_source(
-      "", "replay-source", fmt::format("replay source description"), false, "", "string", cmd);
+      "", "header-source", fmt::format("replay source description"), false, "", "string", cmd);
 
   Utility::parseCommand(cmd, argc, argv);
 
