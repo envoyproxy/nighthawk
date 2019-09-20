@@ -25,7 +25,6 @@ class ServiceImpl final : public nighthawk::client::NighthawkService::Service,
                           public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 
 public:
-  ServiceImpl();
   ::grpc::Status ExecutionStream(
       ::grpc::ServerContext* context,
       ::grpc::ServerReaderWriter<::nighthawk::client::ExecutionResponse,

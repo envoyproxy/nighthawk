@@ -116,8 +116,6 @@ void addHeader(envoy::api::v2::core::HeaderMap* map, absl::string_view key,
 }
 } // namespace
 
-ServiceImpl::ServiceImpl() {}
-
 HeaderSourcePtr ServiceImpl::createHeaderSource(const uint32_t amount) {
   // XXX(oschaaf):
   Envoy::Http::HeaderMapPtr header = std::make_unique<Envoy::Http::HeaderMapImpl>();
@@ -134,11 +132,11 @@ HeaderSourcePtr ServiceImpl::createHeaderSource(const uint32_t amount) {
     ::grpc::ServerReaderWriter<::nighthawk::client::HeaderStreamResponse,
                                ::nighthawk::client::HeaderStreamRequest>* stream) {
   nighthawk::client::HeaderStreamRequest request;
+  bool ok = true;
   while (stream->Read(&request)) {
     ENVOY_LOG(trace, "Inbound HeaderStreamRequest {}", request.DebugString());
     auto header_source = createHeaderSource(request.amount());
     auto header_generator = header_source->get();
-    bool ok = true;
     HeaderMapPtr headers;
 
     while (ok && (headers = header_generator()) != nullptr) {
@@ -161,7 +159,7 @@ HeaderSourcePtr ServiceImpl::createHeaderSource(const uint32_t amount) {
     }
   }
   ENVOY_LOG(trace, "Finishing stream");
-  return finishGrpcStream(true);
+  return ok ? grpc::Status::OK : grpc::Status(grpc::StatusCode::INTERNAL, std::string("error"));
 }
 
 } // namespace Client
