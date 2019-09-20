@@ -9,9 +9,9 @@ load(
 envoy_package()
 
 envoy_cc_library(
-    name = "replay_grpc_client_lib",
-    srcs = ["replay_grpc_client_impl.cc"],
-    hdrs = ["replay_grpc_client_impl.h"],
+    name = "header_stream_grpc_client_lib",
+    srcs = ["header_stream_grpc_client_impl.cc"],
+    hdrs = ["header_stream_grpc_client_impl.h"],
     repository = "@envoy",
     deps = [
         "//api/client:base_cc",
@@ -39,8 +39,8 @@ envoy_cc_library(
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
+        ":header_stream_grpc_client_lib",
         ":nighthawk_common_lib",
-        ":replay_grpc_client_lib",
     ],
 )
 

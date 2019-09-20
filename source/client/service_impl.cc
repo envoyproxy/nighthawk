@@ -124,6 +124,7 @@ HeaderSourcePtr ServiceImpl::createHeaderSource(const uint32_t amount) {
   header->insertMethod().value(envoy::api::v2::core::RequestMethod::GET);
   header->insertPath().value(std::string("/foopath"));
   header->insertHost().value(std::string("127.0.0.1:80"));
+
   header->insertScheme().value(Envoy::Http::Headers::get().SchemeValues.Http);
   return std::make_unique<StaticHeaderSourceImpl>(std::move(header), amount);
 }
@@ -134,7 +135,7 @@ HeaderSourcePtr ServiceImpl::createHeaderSource(const uint32_t amount) {
                                ::nighthawk::client::HeaderStreamRequest>* stream) {
   nighthawk::client::HeaderStreamRequest request;
   while (stream->Read(&request)) {
-    ENVOY_LOG(trace, "Read HeaderStreamRequest data {}", request.DebugString());
+    ENVOY_LOG(trace, "Inbound HeaderStreamRequest {}", request.DebugString());
     auto header_source = createHeaderSource(request.amount());
     auto header_generator = header_source->get();
     bool ok = true;
@@ -159,7 +160,7 @@ HeaderSourcePtr ServiceImpl::createHeaderSource(const uint32_t amount) {
       break;
     }
   }
-
+  ENVOY_LOG(trace, "Finishing stream");
   return finishGrpcStream(true);
 }
 

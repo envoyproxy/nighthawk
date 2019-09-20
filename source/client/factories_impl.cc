@@ -132,7 +132,7 @@ HeaderSourcePtr HeaderSourceFactoryImpl::create(Envoy::Upstream::ClusterManagerP
     return std::make_unique<StaticHeaderSourceImpl>(std::move(header));
   } else {
     RELEASE_ASSERT(!service_cluster_name.empty(), "expected cluster name to be set");
-    return std::make_unique<ReplayHeaderSourceImpl>(cluster_manager, dispatcher, scope,
+    return std::make_unique<RemoteHeaderSourceImpl>(cluster_manager, dispatcher, scope,
                                                     service_cluster_name);
   }
 }

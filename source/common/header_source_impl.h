@@ -6,7 +6,7 @@
 
 #include "external/envoy/source/common/common/logger.h"
 
-#include "common/replay_grpc_client_impl.h"
+#include "common/header_stream_grpc_client_impl.h"
 
 namespace Nighthawk {
 
@@ -25,21 +25,21 @@ private:
   uint64_t yields_left_;
 };
 
-class ReplayHeaderSourceImpl : public BaseHeaderSourceImpl {
+class RemoteHeaderSourceImpl : public BaseHeaderSourceImpl {
 public:
-  ReplayHeaderSourceImpl(Envoy::Upstream::ClusterManagerPtr& cluster_manager,
+  RemoteHeaderSourceImpl(Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                          Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
                          absl::string_view service_cluster_name);
   HeaderGenerator get() override;
-  void initOnThread() override { connectToReplayGrpcSourceService(); };
+  void initOnThread() override;
 
 private:
-  void connectToReplayGrpcSourceService();
+  void connectToHeaderStreamGrpcService();
   Envoy::Upstream::ClusterManagerPtr& cluster_manager_;
   Envoy::Event::Dispatcher& dispatcher_;
   Envoy::Stats::Scope& scope_;
   const std::string service_cluster_name_;
-  ReplayGrpcClientPtr grpc_client_;
+  HeaderStreamGrpcClientPtr grpc_client_;
 };
 
 } // namespace Nighthawk

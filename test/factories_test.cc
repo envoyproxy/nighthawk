@@ -63,8 +63,8 @@ TEST_F(FactoriesTest, CreateHeaderSource) {
   EXPECT_CALL(options_, toCommandLineOptions()).Times(1).WillOnce(Return(ByMove(std::move(cmd))));
   HeaderSourceFactoryImpl factory(options_);
   Envoy::Upstream::ClusterManagerPtr cluster_manager;
-  auto header_generator = factory.create(
-      cluster_manager, dispatcher_, *stats_store_.createScope("foo."), "header_source_cluster");
+  auto header_generator = factory.create(cluster_manager, dispatcher_,
+                                         *stats_store_.createScope("foo."), "headersource");
   EXPECT_NE(nullptr, header_generator.get());
 }
 

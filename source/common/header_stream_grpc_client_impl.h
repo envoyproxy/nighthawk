@@ -9,7 +9,7 @@
 #include "envoy/upstream/cluster_manager.h"
 
 #include "nighthawk/common/header_source.h"
-#include "nighthawk/common/replay_grpc_client.h"
+#include "nighthawk/common/header_stream_grpc_client.h"
 
 #include "external/envoy/source/common/common/logger.h"
 #include "external/envoy/source/common/grpc/typed_async_client.h"
@@ -27,13 +27,13 @@
 
 namespace Nighthawk {
 
-class ReplayGrpcClientImpl
-    : public ReplayGrpcClient,
+class HeaderStreamGrpcClientImpl
+    : public HeaderStreamGrpcClient,
       Envoy::Grpc::AsyncStreamCallbacks<nighthawk::client::HeaderStreamResponse>,
       Envoy::Logger::Loggable<Envoy::Logger::Id::upstream> {
 public:
-  ReplayGrpcClientImpl(Envoy::Grpc::RawAsyncClientPtr async_client,
-                       Envoy::Event::Dispatcher& dispatcher);
+  HeaderStreamGrpcClientImpl(Envoy::Grpc::RawAsyncClientPtr async_client,
+                             Envoy::Event::Dispatcher& dispatcher);
 
   // Grpc::AsyncStreamCallbacks
   void onCreateInitialMetadata(Envoy::Http::HeaderMap& metadata) override;
@@ -43,7 +43,10 @@ public:
   void onReceiveTrailingMetadata(Envoy::Http::HeaderMapPtr&& metadata) override;
   void onRemoteClose(Envoy::Grpc::Status::GrpcStatus status, const std::string& message) override;
   HeaderMapPtr maybeDequeue() override;
-  bool establishNewStream() override;
+  void start() override;
+  bool stream_status_known() const override {
+    return stream_ == nullptr || total_messages_received_ > 0;
+  }
 
 private:
   static const std::string METHOD_NAME;
@@ -58,6 +61,7 @@ private:
   std::queue<std::unique_ptr<nighthawk::client::HeaderStreamResponse>> messages_;
   void emplaceMessage(std::unique_ptr<nighthawk::client::HeaderStreamResponse>&& message);
   uint32_t in_flight_headers_{0};
+  uint32_t total_messages_received_{0};
 };
 
 } // namespace Nighthawk

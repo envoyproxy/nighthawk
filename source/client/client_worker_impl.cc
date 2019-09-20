@@ -20,8 +20,8 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
     : WorkerImpl(api, tls, store), worker_scope_(store_.createScope("worker.")),
       worker_number_scope_(worker_scope_->createScope(fmt::format("{}.", worker_number))),
       worker_number_(worker_number), starting_time_(starting_time), http_tracer_(http_tracer),
-      header_generator_(header_generator_factory.create(
-          cluster_manager, *dispatcher_, *worker_number_scope_, "header_source_cluster")),
+      header_generator_(header_generator_factory.create(cluster_manager, *dispatcher_,
+                                                        *worker_number_scope_, "headersource")),
       benchmark_client_(benchmark_client_factory.create(
           api, *dispatcher_, *worker_number_scope_, cluster_manager, http_tracer_,
           fmt::format("{}", worker_number), *header_generator_)),
@@ -43,7 +43,6 @@ void ClientWorkerImpl::simpleWarmup() {
 }
 
 void ClientWorkerImpl::work() {
-  // connectToControllerService();
   header_generator_->initOnThread();
   simpleWarmup();
   benchmark_client_->setMeasureLatencies(true);

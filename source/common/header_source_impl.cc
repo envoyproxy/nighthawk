@@ -19,14 +19,14 @@ HeaderGenerator StaticHeaderSourceImpl::get() {
   };
 }
 
-ReplayHeaderSourceImpl::ReplayHeaderSourceImpl(Envoy::Upstream::ClusterManagerPtr& cluster_manager,
+RemoteHeaderSourceImpl::RemoteHeaderSourceImpl(Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                                                Envoy::Event::Dispatcher& dispatcher,
                                                Envoy::Stats::Scope& scope,
                                                absl::string_view service_cluster_name)
     : cluster_manager_(cluster_manager), dispatcher_(dispatcher), scope_(scope),
       service_cluster_name_(std::string(service_cluster_name)) {}
 
-void ReplayHeaderSourceImpl::connectToReplayGrpcSourceService() {
+void RemoteHeaderSourceImpl::connectToHeaderStreamGrpcService() {
   auto clusters = cluster_manager_->clusters();
   RELEASE_ASSERT(clusters.find(service_cluster_name_) != clusters.end(),
                  "Source cluster not found");
@@ -34,12 +34,16 @@ void ReplayHeaderSourceImpl::connectToReplayGrpcSourceService() {
   grpc_service.mutable_envoy_grpc()->set_cluster_name(service_cluster_name_);
   auto cm =
       cluster_manager_->grpcAsyncClientManager().factoryForGrpcService(grpc_service, scope_, true);
-  grpc_client_ = std::make_unique<ReplayGrpcClientImpl>(cm->create(), dispatcher_);
-  // TODO(oschaaf): handle return value.
-  grpc_client_->establishNewStream();
+  grpc_client_ = std::make_unique<HeaderStreamGrpcClientImpl>(cm->create(), dispatcher_);
+  grpc_client_->start();
+  while (!grpc_client_->stream_status_known()) {
+    dispatcher_.run(Envoy::Event::Dispatcher::RunType::NonBlock);
+  }
 }
 
-HeaderGenerator ReplayHeaderSourceImpl::get() {
+void RemoteHeaderSourceImpl::initOnThread() { connectToHeaderStreamGrpcService(); }
+
+HeaderGenerator RemoteHeaderSourceImpl::get() {
   return [this]() -> HeaderMapPtr { return grpc_client_->maybeDequeue(); };
 }
 

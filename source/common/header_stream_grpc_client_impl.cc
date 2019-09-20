@@ -1,4 +1,4 @@
-#include "common/replay_grpc_client_impl.h"
+#include "common/header_stream_grpc_client_impl.h"
 
 #include <string>
 
@@ -10,26 +10,24 @@
 
 namespace Nighthawk {
 
-const std::string ReplayGrpcClientImpl::METHOD_NAME =
+const std::string HeaderStreamGrpcClientImpl::METHOD_NAME =
     "nighthawk.client.NighthawkService.HeaderStream";
 
-const uint32_t ReplayGrpcClientImpl::QUEUE_LENGTH_WATERMARK = 50;
+const uint32_t HeaderStreamGrpcClientImpl::QUEUE_LENGTH_WATERMARK = 50;
 
-ReplayGrpcClientImpl::ReplayGrpcClientImpl(Envoy::Grpc::RawAsyncClientPtr async_client,
-                                           Envoy::Event::Dispatcher&)
+HeaderStreamGrpcClientImpl::HeaderStreamGrpcClientImpl(Envoy::Grpc::RawAsyncClientPtr async_client,
+                                                       Envoy::Event::Dispatcher&)
     : async_client_(std::move(async_client)),
       service_method_(
           *Envoy::Protobuf::DescriptorPool::generated_pool()->FindMethodByName(METHOD_NAME)) {}
 
-bool ReplayGrpcClientImpl::establishNewStream() {
+void HeaderStreamGrpcClientImpl::start() {
   stream_ = async_client_->start(service_method_, *this);
-  const bool ok = stream_ != nullptr;
-  ENVOY_LOG(trace, "stream establishment status ok: {}", ok);
+  ENVOY_LOG(trace, "stream establishment status ok: {}", stream_ != nullptr);
   trySendRequest();
-  return ok;
 }
 
-void ReplayGrpcClientImpl::trySendRequest() {
+void HeaderStreamGrpcClientImpl::trySendRequest() {
   if (stream_ != nullptr) {
     nighthawk::client::HeaderStreamRequest request;
     const uint32_t amount = QUEUE_LENGTH_WATERMARK;
@@ -40,25 +38,34 @@ void ReplayGrpcClientImpl::trySendRequest() {
   }
 }
 
-void ReplayGrpcClientImpl::onCreateInitialMetadata(Envoy::Http::HeaderMap&) {}
+void HeaderStreamGrpcClientImpl::onCreateInitialMetadata(Envoy::Http::HeaderMap&) {}
 
-void ReplayGrpcClientImpl::onReceiveInitialMetadata(Envoy::Http::HeaderMapPtr&&) {}
+void HeaderStreamGrpcClientImpl::onReceiveInitialMetadata(Envoy::Http::HeaderMapPtr&&) {}
 
-void ReplayGrpcClientImpl::onReceiveMessage(
+void HeaderStreamGrpcClientImpl::onReceiveMessage(
     std::unique_ptr<nighthawk::client::HeaderStreamResponse>&& message) {
   in_flight_headers_--;
+  total_messages_received_++;
   emplaceMessage(std::move(message));
 }
 
-void ReplayGrpcClientImpl::onReceiveTrailingMetadata(Envoy::Http::HeaderMapPtr&&) {}
+void HeaderStreamGrpcClientImpl::onReceiveTrailingMetadata(Envoy::Http::HeaderMapPtr&&) {}
 
-void ReplayGrpcClientImpl::onRemoteClose(Envoy::Grpc::Status::GrpcStatus status,
-                                         const std::string& message) {
-  ENVOY_LOG(trace, "remote close: {}, {}", status, message);
+void HeaderStreamGrpcClientImpl::onRemoteClose(Envoy::Grpc::Status::GrpcStatus status,
+                                               const std::string& message) {
+  const std::string log_message =
+      fmt::format("Remote close. Status: {}, Message: '{}', amount of in-flight headers {}, "
+                  "total messages received: {}",
+                  status, message, in_flight_headers_, total_messages_received_);
+  if (in_flight_headers_ || total_messages_received_ == 0) {
+    ENVOY_LOG(error, "{}", log_message);
+  } else {
+    ENVOY_LOG(trace, "{}", log_message);
+  }
   stream_ = nullptr;
 }
 
-HeaderMapPtr ReplayGrpcClientImpl::maybeDequeue() {
+HeaderMapPtr HeaderStreamGrpcClientImpl::maybeDequeue() {
   if (!messages_.empty()) {
     const auto& message = messages_.front();
     auto header = std::make_shared<Envoy::Http::HeaderMapImpl>();
@@ -77,7 +84,7 @@ HeaderMapPtr ReplayGrpcClientImpl::maybeDequeue() {
   return nullptr;
 }
 
-void ReplayGrpcClientImpl::emplaceMessage(
+void HeaderStreamGrpcClientImpl::emplaceMessage(
     std::unique_ptr<nighthawk::client::HeaderStreamResponse>&& message) {
   ENVOY_LOG(trace, "message received: {}", message->DebugString());
   messages_.emplace(std::move(message));
