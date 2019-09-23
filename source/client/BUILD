@@ -31,9 +31,8 @@ envoy_cc_library(
         "stream_decoder.h",
     ],
     copts = select({
-        "//bazel:zipkin_disabled": ["-Dzipkin_disabled=1"],
-        "//conditions:default": [
-        ],
+        "//bazel:zipkin_disabled": [],
+        "//conditions:default": ["-DZIPKIN_ENABLED=1"],
     }),
     repository = "@envoy",
     visibility = ["//visibility:public"],

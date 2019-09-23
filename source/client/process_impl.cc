@@ -26,7 +26,9 @@
 #include "external/envoy/source/common/thread_local/thread_local_impl.h"
 #include "external/envoy/source/extensions/tracers/well_known_names.h"
 
-#ifndef zipkin_disabled
+// TODO(oschaaf): See if we can leverage a static module registration like Envoy does to avoid the
+// ifdefs in this file.
+#ifdef ZIPKIN_ENABLED
 #include "external/envoy/source/extensions/tracers/zipkin/zipkin_tracer_impl.h"
 #endif
 #include "external/envoy/source/extensions/transport_sockets/well_known_names.h"
@@ -265,7 +267,7 @@ void ProcessImpl::addTracingCluster(envoy::config::bootstrap::v2::Bootstrap& boo
 
 void ProcessImpl::setupTracingImplementation(envoy::config::bootstrap::v2::Bootstrap& bootstrap,
                                              const Uri& uri) const {
-#ifndef zipkin_disabled
+#ifdef ZIPKIN_ENABLED
   auto* http = bootstrap.mutable_tracing()->mutable_http();
   auto scheme = uri.scheme();
   const std::string kTracingClusterName = "tracing";
@@ -285,7 +287,7 @@ void ProcessImpl::setupTracingImplementation(envoy::config::bootstrap::v2::Boots
 
 void ProcessImpl::maybeCreateTracingDriver(const envoy::config::trace::v2::Tracing& configuration) {
   if (configuration.has_http()) {
-#ifndef zipkin_disabled
+#ifdef ZIPKIN_ENABLED
     std::string type = configuration.http().name();
     ENVOY_LOG(info, "loading tracing driver: {}", type);
     // Envoy::Server::Configuration::TracerFactory would be useful here to create the right
