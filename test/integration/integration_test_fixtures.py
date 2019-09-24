@@ -70,13 +70,19 @@ class IntegrationTestBase():
     """
     assert (os.path.exists(self.nighthawk_test_server_path))
     assert (os.path.exists(self.nighthawk_client_path))
-    self.server_port = self.getFreeListenerPortForAddress(self.server_ip)
-    self.admin_port = self.getFreeListenerPortForAddress(self.server_ip)
-    self.parameters["admin_port"] = self.admin_port
-    self.test_server = NighthawkTestServer(self.nighthawk_test_server_path,
-                                           self.nighthawk_test_config_path, self.server_ip,
-                                           self.server_port, self.ip_version, self.parameters)
-    assert (self.test_server.start())
+    attempts = 10
+    while attempts > 0:
+      self.server_port = self.getFreeListenerPortForAddress(self.server_ip)
+      self.admin_port = self.getFreeListenerPortForAddress(self.server_ip)
+      self.parameters["admin_port"] = self.admin_port
+      self.test_server = NighthawkTestServer(self.nighthawk_test_server_path,
+                                             self.nighthawk_test_config_path, self.server_ip,
+                                             self.server_port, self.ip_version, self.parameters)
+      if self.test_server.start():
+        break
+      else:
+        attempts -= 1
+    assert (attempts > 0)
 
   def tearDown(self):
     """

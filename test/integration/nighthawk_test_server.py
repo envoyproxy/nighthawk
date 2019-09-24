@@ -60,8 +60,14 @@ class TestServerBase(object):
       while tries > 0:
         time.sleep(0.5)
         tries -= 1
-        if sock.connect_ex((self.server_ip, self.server_port)) == 0:
-          return True
+        result = subprocess.run(
+            ["lsof", "-p",
+             str(self.server_process.pid), "-tni",
+             ":%s" % self.server_port],
+            stdout=subprocess.PIPE)
+        if result.stdout.decode('utf-8').strip() == str(self.server_process.pid):
+          if sock.connect_ex((self.server_ip, self.server_port)) == 0:
+            return True
       logging.error("Timeout while waiting for server listener at %s:%s to accept connections.",
                     self.server_ip, self.server_port)
       return False
