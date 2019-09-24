@@ -86,16 +86,18 @@ public:
   MOCK_CONST_METHOD0(toCommandLineOptions, Client::CommandLineOptionsPtr());
   MOCK_CONST_METHOD0(sequencerIdleStrategy,
                      nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions());
+  MOCK_CONST_METHOD0(trace, std::string());
 };
 
 class MockBenchmarkClientFactory : public Client::BenchmarkClientFactory {
 public:
   MockBenchmarkClientFactory();
-  MOCK_CONST_METHOD6(create,
+  MOCK_CONST_METHOD7(create,
                      Client::BenchmarkClientPtr(Envoy::Api::Api&, Envoy::Event::Dispatcher&,
                                                 Envoy::Stats::Scope&,
                                                 Envoy::Upstream::ClusterManagerPtr&,
-                                                absl::string_view, HeaderSource& header_generator));
+                                                Envoy::Tracing::HttpTracerPtr&, absl::string_view,
+                                                HeaderSource& header_generator));
 };
 
 class MockSequencerFactory : public Client::SequencerFactory {

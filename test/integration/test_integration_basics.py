@@ -7,33 +7,10 @@ import pytest
 
 from common import IpVersion
 from integration_test_fixtures import (http_test_server_fixture, https_test_server_fixture)
+from utility import *
 
 # TODO(oschaaf): we mostly verify stats observed from the client-side. Add expectations
 # for the server side as well.
-
-
-def assertEqual(a, b):
-  assert a == b
-
-
-def assertGreater(a, b):
-  assert a > b
-
-
-def assertGreaterEqual(a, b):
-  assert a >= b
-
-
-def assertLessEqual(a, b):
-  assert a <= b
-
-
-def assertNotIn(a, b):
-  assert a not in b
-
-
-def assertIn(a, b):
-  assert a in b
 
 
 def test_http_h1(http_test_server_fixture):
@@ -136,6 +113,8 @@ def test_http_concurrency(http_test_server_fixture):
        http_test_server_fixture.getTestServerRootUri()])
   counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
 
+  # Quite a loose expectation, but this may fluctuate depending on server load.
+  # Ideally we'd see 4 workers * 5 rps * 5s = 100 requests total
   assertGreater(counters["benchmark.http_2xx"], 25)
   assertLessEqual(counters["benchmark.http_2xx"], 100)
   assertEqual(counters["upstream_cx_http1_total"], 4)

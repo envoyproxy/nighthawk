@@ -56,7 +56,6 @@ bool Main::run() {
     ENVOY_LOG(info, "Done.");
     return true;
   }
-
   process.shutdown();
   ENVOY_LOG(critical, "An error ocurred.");
   return false;
