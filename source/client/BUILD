@@ -30,6 +30,10 @@ envoy_cc_library(
         "process_impl.h",
         "stream_decoder.h",
     ],
+    copts = select({
+        "//bazel:zipkin_disabled": [],
+        "//conditions:default": ["-DZIPKIN_ENABLED=1"],
+    }),
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
@@ -71,12 +75,16 @@ envoy_cc_library(
         "@envoy//source/exe:platform_impl_lib",
         "@envoy//source/exe:process_wide_lib_with_external_headers",
         "@envoy//source/extensions/tracers:well_known_names_with_external_headers",
-        "@envoy//source/extensions/tracers/zipkin:zipkin_lib_with_external_headers",
         "@envoy//source/extensions/transport_sockets:well_known_names_with_external_headers",
         "@envoy//source/extensions/transport_sockets/tls:context_lib_with_external_headers",
         "@envoy//source/server:options_lib_with_external_headers",
         "@envoy//source/server/config_validation:admin_lib_with_external_headers",
-    ],
+    ] + select({
+        "//bazel:zipkin_disabled": [],
+        "//conditions:default": [
+            "@envoy//source/extensions/tracers/zipkin:zipkin_lib_with_external_headers",
+        ],
+    }),
 )
 
 envoy_cc_library(
