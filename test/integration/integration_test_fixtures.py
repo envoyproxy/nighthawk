@@ -45,8 +45,6 @@ class IntegrationTestBase():
     self.server_ip = "::1" if ip_version == IpVersion.IPV6 else "127.0.0.1"
     self.socket_type = socket.AF_INET6 if ip_version == IpVersion.IPV6 else socket.AF_INET
     self.test_server = None
-    self.server_port = -1
-    self.admin_port = -1
     self.parameters = {}
     self.ip_version = ip_version
 
@@ -70,19 +68,10 @@ class IntegrationTestBase():
     """
     assert (os.path.exists(self.nighthawk_test_server_path))
     assert (os.path.exists(self.nighthawk_client_path))
-    attempts = 10
-    while attempts > 0:
-      self.server_port = self.getFreeListenerPortForAddress(self.server_ip)
-      self.admin_port = self.getFreeListenerPortForAddress(self.server_ip)
-      self.parameters["admin_port"] = self.admin_port
-      self.test_server = NighthawkTestServer(self.nighthawk_test_server_path,
-                                             self.nighthawk_test_config_path, self.server_ip,
-                                             self.server_port, self.ip_version, self.parameters)
-      if self.test_server.start():
-        break
-      else:
-        attempts -= 1
-    assert (attempts > 0)
+    self.test_server = NighthawkTestServer(self.nighthawk_test_server_path,
+                                           self.nighthawk_test_config_path, self.server_ip,
+                                           self.ip_version, self.parameters)
+    assert (self.test_server.start())
 
   def tearDown(self):
     """
@@ -124,7 +113,7 @@ class IntegrationTestBase():
     uri_host = self.server_ip
     if self.ip_version == IpVersion.IPV6:
       uri_host = "[%s]" % self.server_ip
-    uri = "http://%s:%s/stats?format=json" % (uri_host, self.admin_port)
+    uri = "http://%s:%s/stats?format=json" % (uri_host, self.test_server.admin_port)
     r = requests.get(uri)
     assert (r.status_code == 200)
     return r.json()
