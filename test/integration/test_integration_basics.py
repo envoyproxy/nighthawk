@@ -12,22 +12,25 @@ from utility import *
 # TODO(oschaaf): we mostly verify stats observed from the client-side. Add expectations
 # for the server side as well.
 
+
 def assertCounterEqual(counters, name, value):
   assertIn(name, counters)
   assertEqual(counters[name], value)
+
 
 def assertCounterGreater(counters, name, value):
   assertIn(name, counters)
   assertGreater(counters[name], value)
 
+
 def assertCounterGreaterEqual(counters, name, value):
   assertIn(name, counters)
   assertGreaterEqual(counters[name], value)
 
+
 def assertCounterLessEqual(counters, name, value):
   assertIn(name, counters)
   assertLessEqual(counters[name], value)
-
 
 
 def test_http_h1(http_test_server_fixture):
@@ -45,7 +48,7 @@ def test_http_h1(http_test_server_fixture):
   assertCounterEqual(counters, "upstream_cx_rx_bytes_total", 3400)
   assertCounterEqual(counters, "upstream_cx_total", 1)
   assertCounterEqual(counters, "upstream_cx_tx_bytes_total",
-              1400 if http_test_server_fixture.ip_version == IpVersion.IPV6 else 1500)
+                     1400 if http_test_server_fixture.ip_version == IpVersion.IPV6 else 1500)
   assertCounterEqual(counters, "upstream_rq_pending_total", 1)
   assertCounterEqual(counters, "upstream_rq_total", 25)
   assertEqual(len(counters), 13)
@@ -152,7 +155,7 @@ def test_https_h1(https_test_server_fixture):
   assertCounterEqual(counters, "upstream_cx_rx_bytes_total", 3400)
   assertCounterEqual(counters, "upstream_cx_total", 1)
   assertCounterEqual(counters, "upstream_cx_tx_bytes_total",
-              1400 if https_test_server_fixture.ip_version == IpVersion.IPV6 else 1500)
+                     1400 if https_test_server_fixture.ip_version == IpVersion.IPV6 else 1500)
   assertCounterEqual(counters, "upstream_rq_pending_total", 1)
   assertCounterEqual(counters, "upstream_rq_total", 25)
   assertCounterEqual(counters, "ssl.ciphers.ECDHE-RSA-AES128-GCM-SHA256", 1)

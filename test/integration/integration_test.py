@@ -14,7 +14,7 @@ if __name__ == '__main__':
       [
           "--rootdir=" + path,
           "-vvvv",
-          "--showlocals", # Don't abbreviate/truncate long values in asserts.
+          "--showlocals",  # Don't abbreviate/truncate long values in asserts.
           "-p",
           "no:cacheprovider",  # Avoid a bunch of warnings on readonly filesystems 
           "-k",
