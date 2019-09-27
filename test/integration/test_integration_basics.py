@@ -136,7 +136,7 @@ def test_http_concurrency(http_test_server_fixture):
   # Quite a loose expectation, but this may fluctuate depending on server load.
   # Ideally we'd see 4 workers * 5 rps * 5s = 100 requests total
   assertCounterGreater(counters, "benchmark.http_2xx", 25)
-  assertCounterLessEqual("benchmark.http_2xx", 100)
+  assertCounterLessEqual(counters, "benchmark.http_2xx", 100)
   assertCounterEqual(counters, "upstream_cx_http1_total", 4)
 
 
