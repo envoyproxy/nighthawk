@@ -67,14 +67,16 @@ class TestServerBase(object):
     if len(tmp) < 2:
       return False
     self.admin_port = tmp[len(tmp) - 1]
-    request = requests.get("http://%s/listeners?format=json" % admin_address)
-    if request.status_code == 200:
-      listeners = request.json()
-      # Right now we assume there's only a single listener
-      self.server_port = listeners["listener_statuses"][0]["local_address"]["socket_address"][
-          "port_value"]
-      return True
-    return False
+    try:
+      request = requests.get("http://%s/listeners?format=json" % admin_address)
+      if request.status_code == 200:
+        listeners = request.json()
+        # Right now we assume there's only a single listener
+        self.server_port = listeners["listener_statuses"][0]["local_address"]["socket_address"][
+            "port_value"]
+        return True
+    except ConnectionError:
+      return False
 
   def waitUntilServerListening(self):
     timeout = time.time() + 5
