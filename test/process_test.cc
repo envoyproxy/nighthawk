@@ -61,12 +61,5 @@ TEST_P(ProcessTest, BadTracerSpec) {
   runProcess(RunExpectation::EXPECT_FAILURE);
 }
 
-// TODO(oschaaf): mote to python int. tests once it adds to coverage.
-TEST_P(ProcessTest, DottedString) {
-  options_ = TestUtility::createOptionsImpl(fmt::format(
-      "foo --h2 --duration 1 --output-format dotted --rps 10 https://{}/", loopback_address_));
-  runProcess(RunExpectation::EXPECT_SUCCESS);
-}
-
 } // namespace Client
 } // namespace Nighthawk
