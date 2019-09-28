@@ -250,3 +250,14 @@ envoy_cc_test(
         "//test/client:utility_lib",
     ],
 )
+
+envoy_cc_test(
+    name = "python_test",
+    srcs = ["python_test.cc"],
+    data = ["//test/integration:integration_test"],
+    repository = "@envoy",
+    deps = [
+        "//test/test_common:environment_lib",
+        "@envoy//test/test_common:network_utility_lib",
+    ],
+)
