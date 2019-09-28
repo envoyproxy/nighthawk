@@ -85,6 +85,8 @@ OutputCollectorPtr OutputCollectorFactoryImpl::create() const {
     return std::make_unique<Client::JsonOutputCollectorImpl>(time_source_, options_);
   case nighthawk::client::OutputFormat::YAML:
     return std::make_unique<Client::YamlOutputCollectorImpl>(time_source_, options_);
+  case nighthawk::client::OutputFormat::DOTTED:
+    return std::make_unique<Client::DottedStringOutputCollectorImpl>(time_source_, options_);
   default:
     NOT_REACHED_GCOVR_EXCL_LINE;
   }

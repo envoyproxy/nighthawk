@@ -73,12 +73,12 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
                   verbosity_),
       false, "", &verbosities_allowed, cmd);
 
-  std::vector<std::string> output_formats = {"human", "yaml", "json"};
+  std::vector<std::string> output_formats = {"human", "yaml", "json", "dotted"};
   TCLAP::ValuesConstraint<std::string> output_formats_allowed(output_formats);
 
   TCLAP::ValueArg<std::string> output_format(
       "", "output-format",
-      fmt::format("Verbosity of the output. Possible values: [human, yaml, json]. The "
+      fmt::format("Verbosity of the output. Possible values: [human, yaml, json, dotted]. The "
                   "default output format is '{}'.",
                   output_format_),
       false, "", &output_formats_allowed, cmd);

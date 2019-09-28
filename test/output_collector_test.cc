@@ -73,6 +73,11 @@ TEST_F(OutputCollectorTest, YamlFormatter) {
   expectEqualToGoldFile(collector, "test/test_data/output_collector.yaml.gold");
 }
 
+TEST_F(OutputCollectorTest, DottedFormatter) {
+  DottedStringOutputCollectorImpl collector(time_system_, options_);
+  expectEqualToGoldFile(collector, "test/test_data/output_collector.dotted.gold");
+}
+
 class StatidToNameTest : public Test {};
 
 TEST_F(StatidToNameTest, TestTranslations) {

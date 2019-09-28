@@ -102,6 +102,7 @@ envoy_cc_test(
     name = "output_collector_test",
     srcs = ["output_collector_test.cc"],
     data = [
+        "test_data/output_collector.dotted.gold",
         "test_data/output_collector.json.gold",
         "test_data/output_collector.txt.gold",
         "test_data/output_collector.yaml.gold",

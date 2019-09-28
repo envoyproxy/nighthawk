@@ -1,0 +1,24 @@
+worker_0.stat_id.samples: 3
+worker_0.stat_id.mean: 2000
+worker_0.stat_id.pstdev: 816
+worker_0..samples: 0
+worker_0..mean: 0
+worker_0..pstdev: 0
+worker_0.bar:2
+worker_0.foo:1
+worker_1.stat_id.samples: 3
+worker_1.stat_id.mean: 2000
+worker_1.stat_id.pstdev: 816
+worker_1..samples: 0
+worker_1..mean: 0
+worker_1..pstdev: 0
+worker_1.bar:2
+worker_1.foo:1
+global.stat_id.samples: 3
+global.stat_id.mean: 2000
+global.stat_id.pstdev: 816
+global..samples: 0
+global..mean: 0
+global..pstdev: 0
+global.bar:2
+global.foo:1

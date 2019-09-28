@@ -122,10 +122,10 @@ public:
 
 TEST_P(OutputCollectorFactoryTest, TestCreation) { testOutputCollector(GetParam()); }
 
-INSTANTIATE_TEST_SUITE_P(OutputFormats, OutputCollectorFactoryTest,
-                         ValuesIn({nighthawk::client::OutputFormat::HUMAN,
-                                   nighthawk::client::OutputFormat::JSON,
-                                   nighthawk::client::OutputFormat::YAML}));
+INSTANTIATE_TEST_SUITE_P(
+    OutputFormats, OutputCollectorFactoryTest,
+    ValuesIn({nighthawk::client::OutputFormat::HUMAN, nighthawk::client::OutputFormat::JSON,
+              nighthawk::client::OutputFormat::YAML, nighthawk::client::OutputFormat::DOTTED}));
 
 } // namespace Client
 } // namespace Nighthawk

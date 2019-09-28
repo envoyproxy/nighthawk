@@ -122,5 +122,49 @@ std::string YamlOutputCollectorImpl::toString() const {
   return Envoy::MessageUtil::getYamlStringFromMessage(toProto(), true, true);
 }
 
+DottedStringOutputCollectorImpl::DottedStringOutputCollectorImpl(Envoy::TimeSource& time_source,
+                                                                 const Options& options)
+    : OutputCollectorImpl(time_source, options) {}
+
+std::string DottedStringOutputCollectorImpl::toString() const {
+  std::stringstream ss;
+  const auto& output = toProto();
+  for (const auto& result : output.results()) {
+    for (const auto& statistic : result.statistics()) {
+      const std::string prefix = fmt::format("{}.{}", result.name(), statistic.id());
+
+      ss << fmt::format("{}.samples: {}", prefix, statistic.count()) << std::endl;
+      ss << fmt::format("{}.mean: {}", prefix,
+                        Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(statistic.mean()))
+         << std::endl;
+      ss << fmt::format("{}.pstdev: {}", prefix,
+                        Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(statistic.pstdev()))
+         << std::endl;
+
+      // The proto percentiles are ordered ascending. We write the first match to the stream.
+      double last_percentile = -1.;
+      for (const double p : {.0, .5, .75, .8, .9, .95, .99, .999, 1.}) {
+        for (const auto& percentile : statistic.percentiles()) {
+          const std::string percentile_prefix = fmt::format("{}.{}", prefix, last_percentile);
+          if (percentile.percentile() >= p && last_percentile < percentile.percentile()) {
+            last_percentile = percentile.percentile();
+            ss << fmt::format("{}.count: {}", percentile_prefix, percentile.count()) << std::endl;
+            ss << fmt::format("{}.microseconds: {}", percentile_prefix,
+                              Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(
+                                  percentile.duration()))
+               << std::endl;
+            break;
+          }
+        }
+      }
+    }
+    for (const auto& counter : result.counters()) {
+      const std::string prefix = fmt::format("{}.{}", result.name(), counter.name());
+      ss << fmt::format("{}:{}", prefix, counter.value()) << std::endl;
+    }
+  }
+  return ss.str();
+}
+
 } // namespace Client
 } // namespace Nighthawk
