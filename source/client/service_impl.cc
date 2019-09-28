@@ -40,6 +40,7 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
   if (process.run(*formatter)) {
     response.clear_error_detail();
     *(response.mutable_output()) = formatter->toProto();
+    response.mutable_output()->set_formatted(formatter->toString());
   } else {
     response.mutable_error_detail()->set_message("Unknown failure");
   }

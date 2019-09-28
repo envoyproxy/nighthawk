@@ -59,4 +59,5 @@ results:
         value: 2
       - name: foo
         value: 1
+formatted: ""
 timestamp: 2009-02-13T23:31:31.567Z

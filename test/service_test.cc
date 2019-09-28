@@ -82,6 +82,8 @@ public:
     // to clean this up.
     options->mutable_uri()->set_value("http://127.0.0.1:10001/");
     options->mutable_duration()->set_seconds(2);
+    options->mutable_output_format()->set_value(
+        nighthawk::client::OutputFormat_OutputFormatOptions_JSON);
     options->mutable_requests_per_second()->set_value(3);
   }
 
