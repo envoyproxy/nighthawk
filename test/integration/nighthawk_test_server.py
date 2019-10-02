@@ -12,7 +12,7 @@ import threading
 import time
 from string import Template
 
-from common import IpVersion
+from common import IpVersion, NighthawkException
 
 
 class TestServerBase(object):
@@ -58,6 +58,16 @@ class TestServerBase(object):
     self.server_process = subprocess.Popen(args)
     self.server_process.communicate()
 
+  def fetchJsonFromAdminInterface(self, path):
+    uri_host = self.server_ip
+    if self.ip_version == IpVersion.IPV6:
+      uri_host = "[%s]" % self.server_ip
+    uri = "http://%s:%s%s" % (uri_host, self.admin_port, path)
+    r = requests.get(uri)
+    if r.status_code != 200:
+      raise NighthawkException("Bad status code wile fetching json from admin interface: %s", r.status_code)
+    return r.json()
+
   def tryUpdateFromAdminInterface(self):
     with open(self.admin_address_path) as admin_address_file:
       admin_address = admin_address_file.read()
@@ -68,13 +78,11 @@ class TestServerBase(object):
       return False
     self.admin_port = tmp[len(tmp) - 1]
     try:
-      request = requests.get("http://%s/listeners?format=json" % admin_address)
-      if request.status_code == 200:
-        listeners = request.json()
-        # Right now we assume there's only a single listener
-        self.server_port = listeners["listener_statuses"][0]["local_address"]["socket_address"][
-            "port_value"]
-        return True
+      listeners = self.fetchJsonFromAdminInterface("/listeners?format=json")
+      # Right now we assume there's only a single listener
+      self.server_port = listeners["listener_statuses"][0]["local_address"]["socket_address"][
+          "port_value"]
+      return True
     except ConnectionError:
       return False
 

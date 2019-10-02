@@ -108,15 +108,9 @@ class IntegrationTestBase():
 
   def getTestServerStatisticsJson(self):
     """
-        Uri to grab a server stats snapshot over http from the admin interface.
-        """
-    uri_host = self.server_ip
-    if self.ip_version == IpVersion.IPV6:
-      uri_host = "[%s]" % self.server_ip
-    uri = "http://%s:%s/stats?format=json" % (uri_host, self.test_server.admin_port)
-    r = requests.get(uri)
-    assert (r.status_code == 200)
-    return r.json()
+    Utility to grab a statistics snapshot from the test server.
+    """      
+    return self.test_server.fetchJsonFromAdminInterface("/stats?format=json")
 
   def getServerStatFromJson(self, server_stats_json, name):
     counters = server_stats_json["stats"]
