@@ -109,7 +109,7 @@ class IntegrationTestBase():
   def getTestServerStatisticsJson(self):
     """
     Utility to grab a statistics snapshot from the test server.
-    """      
+    """
     return self.test_server.fetchJsonFromAdminInterface("/stats?format=json")
 
   def getServerStatFromJson(self, server_stats_json, name):

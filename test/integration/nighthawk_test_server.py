@@ -65,7 +65,8 @@ class TestServerBase(object):
     uri = "http://%s:%s%s" % (uri_host, self.admin_port, path)
     r = requests.get(uri)
     if r.status_code != 200:
-      raise NighthawkException("Bad status code wile fetching json from admin interface: %s", r.status_code)
+      raise NighthawkException("Bad status code wile fetching json from admin interface: %s",
+                               r.status_code)
     return r.json()
 
   def tryUpdateFromAdminInterface(self):
