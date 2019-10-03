@@ -212,11 +212,11 @@ def test_https_h1_tls_context_configuration(https_test_server_fixture):
 
   parsed_json, _ = https_test_server_fixture.runNighthawkClient([
       "--h2", "--duration 1",
-      "--tls-context {common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"]}}}",
+      "--tls-context {common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-CHACHA20-POLY1305\"]}}}",
       https_test_server_fixture.getTestServerRootUri()
   ])
   counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-  assertCounterEqual(counters, "ssl.ciphers.ECDHE-RSA-AES256-GCM-SHA384", 1)
+  assertCounterEqual(counters, "ssl.ciphers.ECDHE-RSA-CHACHA20-POLY1305", 1)
 
 
 def test_https_h2_tls_context_configuration(https_test_server_fixture):
@@ -233,11 +233,11 @@ def test_https_h2_tls_context_configuration(https_test_server_fixture):
 
   parsed_json, _ = https_test_server_fixture.runNighthawkClient([
       "--h2", "--duration 1",
-      "--tls-context {common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"]}}}",
+      "--tls-context {common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-CHACHA20-POLY1305\"]}}}",
       https_test_server_fixture.getTestServerRootUri()
   ])
   counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-  assertCounterEqual(counters, "ssl.ciphers.ECDHE-RSA-AES256-GCM-SHA384", 1)
+  assertCounterEqual(counters, "ssl.ciphers.ECDHE-RSA-CHACHA20-POLY1305", 1)
 
 
 def test_https_prefetching(https_test_server_fixture):
