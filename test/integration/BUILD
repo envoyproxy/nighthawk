@@ -61,7 +61,7 @@ py_library(
     deps = [":integration_test_base"],
 )
 
-py_test(
+py_binary(
     name = "integration_test",
     srcs = ["integration_test.py"],
     args = select({
