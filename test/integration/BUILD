@@ -13,6 +13,7 @@ py_library(
     srcs = [
         "common.py",
         "integration_test_fixtures.py",
+        "nighthawk_grpc_service.py",
         "nighthawk_test_server.py",
         "utility.py",
     ],
@@ -20,6 +21,7 @@ py_library(
         "configurations/nighthawk_http_origin.yaml",
         "configurations/nighthawk_https_origin.yaml",
         "//:nighthawk_client",
+        "//:nighthawk_service",
         "//:nighthawk_test_server",
         "@envoy//test/config/integration/certs",
     ],

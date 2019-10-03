@@ -1,5 +1,8 @@
 #include "client/service_main.h"
 
+#include <fstream>
+#include <iostream>
+
 #include "nighthawk/common/exception.h"
 
 #include "common/utility.h"
@@ -21,9 +24,19 @@ ServiceMain::ServiceMain(int argc, const char** argv) {
       "The address:port on which the Nighthawk grpc service should listen. Default: "
       "0.0.0.0:8443.",
       false, "0.0.0.0:8443", "address:port", cmd);
+
+  TCLAP::ValueArg<std::string> address_file_arg(
+      "", "listener-address-file",
+      "Location where the service will write the final address:port on which the Nighthawk grpc "
+      "service listens. Default empty.",
+      false, "", "", cmd);
+
   Utility::parseCommand(cmd, argc, argv);
 
   listener_bound_address_ = appendDefaultPortIfNeeded(listen_arg.getValue());
+  if (address_file_arg.isSet()) {
+    listener_output_path_ = address_file_arg.getValue();
+  }
   ENVOY_LOG(info, "Nighthawk grpc service listener binding to: {}", listener_bound_address_);
   builder_.AddListeningPort(listener_bound_address_, grpc::InsecureServerCredentials(),
                             &listener_port_);
@@ -49,6 +62,13 @@ void ServiceMain::start() {
     absl::StrAppend(&listener_bound_address_, listener_port_);
   }
   ENVOY_LOG(info, "Nighthawk grpc service listening on: {}", listener_bound_address_);
+  if (listener_output_path_ != "") {
+    std::ofstream myfile(listener_output_path_);
+    if (myfile.is_open()) {
+      myfile << listener_bound_address_;
+      myfile.close();
+    }
+  }
   channel_ = grpc::CreateChannel(listener_bound_address_, grpc::InsecureChannelCredentials());
   stub_ = std::make_unique<nighthawk::client::NighthawkService::Stub>(channel_);
 }
