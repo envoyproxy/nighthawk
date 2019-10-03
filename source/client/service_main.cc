@@ -15,6 +15,11 @@
 namespace Nighthawk {
 namespace Client {
 
+namespace {
+std::function<void(int)> signal_handler_delegate;
+void signal_handler(int signal) { signal_handler_delegate(signal); }
+} // namespace
+
 ServiceMain::ServiceMain(int argc, const char** argv) {
   const char* descr = "L7 (HTTP/HTTPS/HTTP2) performance characterization tool.";
   TCLAP::CmdLine cmd(descr, ' ', "PoC"); // NOLINT
@@ -73,9 +78,17 @@ void ServiceMain::start() {
   stub_ = std::make_unique<nighthawk::client::NighthawkService::Stub>(channel_);
 }
 
-void ServiceMain::wait() { server_->Wait(); }
+void ServiceMain::wait() {
+  signal_handler_delegate = [&](int) { shutdown(); };
+  signal(SIGTERM, signal_handler);
+  signal(SIGINT, signal_handler);
+  server_->Wait();
+}
 
-void ServiceMain::shutdown() { server_->Shutdown(); }
+void ServiceMain::shutdown() {
+  ENVOY_LOG(info, "Nighthawk grpc service shutting down");
+  server_->Shutdown();
+}
 
 } // namespace Client
 } // namespace Nighthawk
