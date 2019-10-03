@@ -263,4 +263,4 @@ def test_dotted_output_format(http_test_server_fixture):
       http_test_server_fixture.getTestServerRootUri()
   ],
                                                           as_json=False)
-  assertIn("global.benchmark_http_client.request_to_response.p50.microseconds", output)
+  assertIn("global.benchmark_http_client.request_to_response.permilles-500.microseconds", output)

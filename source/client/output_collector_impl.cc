@@ -149,7 +149,7 @@ std::string DottedStringOutputCollectorImpl::toString() const {
           if (percentile.percentile() >= p && last_percentile < percentile.percentile()) {
             last_percentile = percentile.percentile();
             const std::string percentile_prefix =
-                fmt::format("{}.p{:.{}f}", prefix, last_percentile * 100, 0);
+                fmt::format("{}.permilles-{:.{}f}", prefix, last_percentile * 1000, 0);
             ss << fmt::format("{}.count: {}", percentile_prefix, percentile.count()) << std::endl;
             ss << fmt::format("{}.microseconds: {}", percentile_prefix,
                               Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(
