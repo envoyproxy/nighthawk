@@ -41,7 +41,7 @@ bazel build -c opt //:nighthawk
 ```
 
 ```
-USAGE: 
+USAGE:
 
    bazel-bin/nighthawk_client  [--trace <uri format>]
                                [--sequencer-idle-strategy <spin|poll
@@ -63,7 +63,7 @@ USAGE:
                                [--version] [-h] <uri format>
 
 
-Where: 
+Where:
 
    --trace <uri format>
      Trace uri. Example: zipkin://localhost:9411/api/v1/spans. Default is
@@ -101,8 +101,8 @@ Where:
      Request method used when sending requests. The default is 'GET'.
 
    --address-family <auto|v4|v6>
-     Network address family preference. Possible values: [auto, v4, v6].
-     The default output format is 'AUTO'.
+     Network address family preference. Possible values: [auto, v4, v6]. The
+     default output format is 'v4'.
 
    --burst-size <uint32_t>
      Release requests in bursts of the specified size (default: 0).
@@ -124,7 +124,7 @@ Where:
      'auto' to let Nighthawk leverage all vCPUs that have affinity to the
      Nighthawk process. Note that increasing this results in an effective
      load multiplier combined with the configured --rps and --connections
-     values. Default: 1. 
+     values. Default: 1.
 
    --h2
      Use HTTP/2
