@@ -44,7 +44,7 @@ std::string ConsoleOutputCollectorImpl::toString() const {
 
         // The proto percentiles are ordered ascending. We write the first match to the stream.
         double last_percentile = -1.;
-        for (const double p : {.0, .5, .75, .8, .9, .95, .99, .999, 1.}) {
+        for (const double p : {.5, .75, .8, .9, .95, .99, .999, 1.}) {
           for (const auto& percentile : statistic.percentiles()) {
             if (percentile.percentile() >= p && last_percentile < percentile.percentile()) {
               last_percentile = percentile.percentile();
@@ -142,12 +142,14 @@ std::string DottedStringOutputCollectorImpl::toString() const {
          << std::endl;
 
       // The proto percentiles are ordered ascending. We write the first match to the stream.
+      // Revisit to see if we can factor out a common denominator with the CLI output formatter.
       double last_percentile = -1.;
-      for (const double p : {.0, .5, .75, .8, .9, .95, .99, .999, 1.}) {
+      for (const double p : {.5, .75, .8, .9, .95, .99, .999, 1.}) {
         for (const auto& percentile : statistic.percentiles()) {
-          const std::string percentile_prefix = fmt::format("{}.{}", prefix, last_percentile);
           if (percentile.percentile() >= p && last_percentile < percentile.percentile()) {
             last_percentile = percentile.percentile();
+            const std::string percentile_prefix =
+                fmt::format("{}.p{:.{}f}", prefix, last_percentile * 100, 0);
             ss << fmt::format("{}.count: {}", percentile_prefix, percentile.count()) << std::endl;
             ss << fmt::format("{}.microseconds: {}", percentile_prefix,
                               Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(
