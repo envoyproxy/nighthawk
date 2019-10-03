@@ -120,9 +120,9 @@ StreamDecoder::streamResetReasonToResponseFlag(Envoy::Http::StreamResetReason re
 
 void StreamDecoder::finalizeActiveSpan() {
   if (active_span_ != nullptr) {
-    Envoy::Tracing::HttpTracerUtility::finalizeSpan(*active_span_, request_headers_.get(),
-                                                    response_headers_.get(), trailer_headers_.get(),
-                                                    stream_info_, config_);
+    Envoy::Tracing::HttpTracerUtility::finalizeDownstreamSpan(
+        *active_span_, request_headers_.get(), response_headers_.get(), trailer_headers_.get(),
+        stream_info_, config_);
   }
 }
 
