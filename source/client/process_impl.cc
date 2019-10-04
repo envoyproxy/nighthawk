@@ -60,16 +60,17 @@ class ClusterManagerFactory : public Envoy::Upstream::ProdClusterManagerFactory 
 public:
   using Envoy::Upstream::ProdClusterManagerFactory::ProdClusterManagerFactory;
 
-  Envoy::Http::ConnectionPool::InstancePtr
-  allocateConnPool(Envoy::Event::Dispatcher& dispatcher, Envoy::Upstream::HostConstSharedPtr host,
-                   Envoy::Upstream::ResourcePriority priority, Envoy::Http::Protocol protocol,
-                   const Envoy::Network::ConnectionSocket::OptionsSharedPtr& options) override {
+  Envoy::Http::ConnectionPool::InstancePtr allocateConnPool(
+      Envoy::Event::Dispatcher& dispatcher, Envoy::Upstream::HostConstSharedPtr host,
+      Envoy::Upstream::ResourcePriority priority, Envoy::Http::Protocol protocol,
+      const Envoy::Network::ConnectionSocket::OptionsSharedPtr& options,
+      const Envoy::Network::TransportSocketOptionsSharedPtr& transport_socket_options) override {
     if (protocol == Envoy::Http::Protocol::Http11 || protocol == Envoy::Http::Protocol::Http10) {
       return Envoy::Http::ConnectionPool::InstancePtr{
-          new Http1PoolImpl(dispatcher, host, priority, options)};
+          new Http1PoolImpl(dispatcher, host, priority, options, transport_socket_options)};
     }
-    return Envoy::Upstream::ProdClusterManagerFactory::allocateConnPool(dispatcher, host, priority,
-                                                                        protocol, options);
+    return Envoy::Upstream::ProdClusterManagerFactory::allocateConnPool(
+        dispatcher, host, priority, protocol, options, transport_socket_options);
   }
 };
 
