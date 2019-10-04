@@ -50,5 +50,11 @@ public:
   std::string toString() const override;
 };
 
+class NullOutputCollectorImpl : public OutputCollectorImpl {
+public:
+  NullOutputCollectorImpl(Envoy::TimeSource& time_source, const Options& options);
+  std::string toString() const override;
+};
+
 } // namespace Client
 } // namespace Nighthawk

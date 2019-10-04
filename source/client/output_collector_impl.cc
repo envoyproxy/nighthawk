@@ -122,5 +122,11 @@ std::string YamlOutputCollectorImpl::toString() const {
   return Envoy::MessageUtil::getYamlStringFromMessage(toProto(), true, true);
 }
 
+NullOutputCollectorImpl::NullOutputCollectorImpl(Envoy::TimeSource& time_source,
+                                                 const Options& options)
+    : OutputCollectorImpl(time_source, options) {}
+
+std::string NullOutputCollectorImpl::toString() const { return ""; }
+
 } // namespace Client
 } // namespace Nighthawk

@@ -65,7 +65,7 @@ private:
   std::string concurrency_;
   nighthawk::client::Verbosity::VerbosityOptions verbosity_{nighthawk::client::Verbosity::WARN};
   nighthawk::client::OutputFormat::OutputFormatOptions output_format_{
-      nighthawk::client::OutputFormat::JSON};
+      nighthawk::client::OutputFormat::DEFAULT};
   bool prefetch_connections_{false};
   uint32_t burst_size_{0};
   nighthawk::client::AddressFamily::AddressFamilyOptions address_family_{

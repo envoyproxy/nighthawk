@@ -82,8 +82,6 @@ public:
     // to clean this up.
     options->mutable_uri()->set_value("http://127.0.0.1:10001/");
     options->mutable_duration()->set_seconds(2);
-    options->mutable_output_format()->set_value(
-        nighthawk::client::OutputFormat_OutputFormatOptions_JSON);
     options->mutable_requests_per_second()->set_value(3);
   }
 
@@ -118,12 +116,17 @@ INSTANTIATE_TEST_SUITE_P(IpVersions, ServiceTest,
 
 // Test single NH run
 TEST_P(ServiceTest, Basic) {
+  auto options = request_.mutable_start_request()->mutable_options();
+  options->mutable_output_format()->set_value(
+      nighthawk::client::OutputFormat_OutputFormatOptions_JSON);
   auto r = stub_->ExecutionStream(&context_);
   r->Write(request_, {});
   r->WritesDone();
   EXPECT_TRUE(r->Read(&response_));
   ASSERT_FALSE(response_.has_error_detail());
   EXPECT_TRUE(response_.has_output());
+  // We set the output format option, verify that we have formatted output.
+  EXPECT_NE(response_.output().formatted(), "");
   EXPECT_GE(response_.output().results(0).counters().size(), 8);
   auto status = r->Finish();
   EXPECT_TRUE(status.ok());
@@ -139,6 +142,8 @@ TEST_P(ServiceTest, NoConcurrentStart) {
   EXPECT_TRUE(r->Read(&response_));
   ASSERT_FALSE(response_.has_error_detail());
   EXPECT_TRUE(response_.has_output());
+  // We do not have the output format option set, verify that we do not have formatted output.
+  EXPECT_EQ(response_.output().formatted(), "");
   EXPECT_FALSE(r->Read(&response_));
   auto status = r->Finish();
   EXPECT_FALSE(status.ok());
