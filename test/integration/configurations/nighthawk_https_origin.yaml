@@ -2,13 +2,13 @@ admin:
   access_log_path: /tmp/admin_access.log
   profile_path: /tmp/envoy.prof
   address:
-    socket_address: { address: $server_ip, port_value: $admin_port }
+    socket_address: { address: $server_ip, port_value: 0 }
 static_resources:
   listeners:
   - address:
       socket_address:
         address: $server_ip
-        port_value: $server_port
+        port_value: 0
     filter_chains:
     - filters:
       - name: envoy.http_connection_manager
