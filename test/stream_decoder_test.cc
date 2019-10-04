@@ -121,7 +121,7 @@ TEST_F(StreamDecoderTest, LatencyIsMeasured) {
             EXPECT_EQ(Envoy::Tracing::OperationName::Egress, config.operationName());
             auto* span = new Envoy::Tracing::MockSpan();
             EXPECT_CALL(*span, injectContext(_)).Times(1);
-            EXPECT_CALL(*span, setTag(_, _)).Times(10);
+            EXPECT_CALL(*span, setTag(_, _)).Times(11);
             EXPECT_CALL(*span, finishSpan()).Times(1);
             return span;
           }));
