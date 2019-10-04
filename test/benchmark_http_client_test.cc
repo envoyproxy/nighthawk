@@ -228,8 +228,9 @@ TEST_F(BenchmarkClientHttpTest, ConnectionPrefetching) {
   EXPECT_CALL(*mock_host, cluster()).WillRepeatedly(ReturnRef(*cluster_info_));
   auto* options = new Envoy::Network::ConnectionSocket::Options();
   Envoy::Network::ConnectionSocket::OptionsSharedPtr options_ptr{options};
+  Envoy::Network::TransportSocketOptionsSharedPtr transport_socket_options_ptr;
   Client::Http1PoolImpl pool(*dispatcher_, host_ptr, Envoy::Upstream::ResourcePriority::Default,
-                             options_ptr);
+                             options_ptr, transport_socket_options_ptr);
   EXPECT_CALL(cluster_manager(), httpConnPoolForCluster(_, _, _, _)).WillRepeatedly(Return(&pool));
   // Short circuit actual connection creation to avoids having to wire through more mocking.
   // (We have python integration tests for covering functionality)
