@@ -18,11 +18,9 @@ OutputCollectorImpl::OutputCollectorImpl(Envoy::TimeSource& time_source, const O
   output_.set_allocated_options(options.toCommandLineOptions().release());
 }
 
-nighthawk::client::Output OutputCollectorImpl::toProto() const { return output_; }
+void OutputCollectorImpl::setOutput(const nighthawk::client::Output& output) { output_ = output; }
 
-ConsoleOutputCollectorImpl::ConsoleOutputCollectorImpl(Envoy::TimeSource& time_source,
-                                                       const Options& options)
-    : OutputCollectorImpl(time_source, options) {}
+nighthawk::client::Output OutputCollectorImpl::toProto() const { return output_; }
 
 std::string ConsoleOutputCollectorImpl::toString() const {
   std::stringstream ss;
@@ -106,17 +104,9 @@ void OutputCollectorImpl::addResult(absl::string_view name,
   }
 }
 
-JsonOutputCollectorImpl::JsonOutputCollectorImpl(Envoy::TimeSource& time_source,
-                                                 const Options& options)
-    : OutputCollectorImpl(time_source, options) {}
-
 std::string JsonOutputCollectorImpl::toString() const {
   return Envoy::MessageUtil::getJsonStringFromMessage(toProto(), true, true);
 }
-
-YamlOutputCollectorImpl::YamlOutputCollectorImpl(Envoy::TimeSource& time_source,
-                                                 const Options& options)
-    : OutputCollectorImpl(time_source, options) {}
 
 std::string YamlOutputCollectorImpl::toString() const {
   return Envoy::MessageUtil::getYamlStringFromMessage(toProto(), true, true);

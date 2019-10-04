@@ -41,3 +41,11 @@ envoy_cc_binary(
         "//source/exe:nighthawk_service_entry_lib",
     ],
 )
+
+envoy_cc_binary(
+    name = "nighthawk_output_transform",
+    repository = "@envoy",
+    deps = [
+        "//source/exe:output_transform_main_entry_lib",
+    ],
+)

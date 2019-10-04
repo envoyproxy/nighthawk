@@ -16,6 +16,7 @@ public:
   virtual ~OutputCollector() = default;
   virtual void addResult(absl::string_view name, const std::vector<StatisticPtr>& statistics,
                          const std::map<std::string, uint64_t>& counters) PURE;
+  virtual void setOutput(const nighthawk::client::Output& output) PURE;
   virtual nighthawk::client::Output toProto() const PURE;
   virtual std::string toString() const PURE;
 };

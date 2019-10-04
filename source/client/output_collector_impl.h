@@ -19,6 +19,11 @@ public:
    */
   OutputCollectorImpl(Envoy::TimeSource& time_source, const Options& options);
 
+  /**
+   * @param output to set. Useful for pulling of transforms.
+   */
+  void setOutput(const nighthawk::client::Output& output) override;
+
   void addResult(absl::string_view name, const std::vector<StatisticPtr>& statistics,
                  const std::map<std::string, uint64_t>& counters) override;
 
@@ -30,7 +35,7 @@ private:
 
 class ConsoleOutputCollectorImpl : public OutputCollectorImpl {
 public:
-  ConsoleOutputCollectorImpl(Envoy::TimeSource& time_source, const Options& options);
+  using OutputCollectorImpl::OutputCollectorImpl;
   std::string toString() const override;
   static std::string statIdtoFriendlyStatName(absl::string_view stat_id);
 
@@ -40,13 +45,13 @@ private:
 
 class JsonOutputCollectorImpl : public OutputCollectorImpl {
 public:
-  JsonOutputCollectorImpl(Envoy::TimeSource& time_source, const Options& options);
+  using OutputCollectorImpl::OutputCollectorImpl;
   std::string toString() const override;
 };
 
 class YamlOutputCollectorImpl : public OutputCollectorImpl {
 public:
-  YamlOutputCollectorImpl(Envoy::TimeSource& time_source, const Options& options);
+  using OutputCollectorImpl::OutputCollectorImpl;
   std::string toString() const override;
 };
 
