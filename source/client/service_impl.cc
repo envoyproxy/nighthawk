@@ -117,11 +117,9 @@ void addHeader(envoy::api::v2::core::HeaderMap* map, absl::string_view key,
 } // namespace
 
 HeaderSourcePtr ServiceImpl::createStaticEmptyHeaderSource(const uint32_t amount) {
-  // TODO(oschaaf): We create an empty header source. The client will merge headers we emit here
-  // with any header configuration passed in to it. Until we add the real thing here, this
-  // is all a very elaborate no-op.
-  return std::make_unique<StaticHeaderSourceImpl>(std::make_unique<Envoy::Http::HeaderMapImpl>(),
-                                                  amount);
+  Envoy::Http::HeaderMapPtr header = std::make_unique<Envoy::Http::HeaderMapImpl>();
+  header->addCopy(Envoy::Http::LowerCaseString("x-from-remote-header-source"), "1");
+  return std::make_unique<StaticHeaderSourceImpl>(std::move(header), amount);
 }
 
 ::grpc::Status ServiceImpl::HeaderStream(
@@ -132,6 +130,15 @@ HeaderSourcePtr ServiceImpl::createStaticEmptyHeaderSource(const uint32_t amount
   bool ok = true;
   while (stream->Read(&request)) {
     ENVOY_LOG(trace, "Inbound HeaderStreamRequest {}", request.DebugString());
+
+    // TODO(oschaaf): this is useful for integration testing purposes, but sending
+    // these nearly empty headers will basically be a near no-op (note that the client will merge
+    // headers we send here into into own header configuration). The client can be configured to
+    // connect to a custom grpc service as a remote data source instead of this one, and its workers
+    // will comply. That in itself may be useful. But we could offer the following features here:
+    // 1. Yet another remote header source, so we balance to-be-replayed headers over workers
+    //    and only have a single stream to a remote service here.
+    // 2. Read a and dispatch a header stream from disk.
     auto header_source = createStaticEmptyHeaderSource(request.amount());
     auto header_generator = header_source->get();
     HeaderMapPtr headers;
