@@ -29,7 +29,8 @@ class RemoteHeaderSourceImpl : public BaseHeaderSourceImpl {
 public:
   RemoteHeaderSourceImpl(Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                          Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
-                         absl::string_view service_cluster_name);
+                         absl::string_view service_cluster_name,
+                         Envoy::Http::HeaderMapPtr&& base_header, uint32_t header_buffer_length);
   HeaderGenerator get() override;
   void initOnThread() override;
 
@@ -40,6 +41,8 @@ private:
   Envoy::Stats::Scope& scope_;
   const std::string service_cluster_name_;
   HeaderStreamGrpcClientPtr grpc_client_;
+  const HeaderMapPtr base_header_;
+  const uint32_t header_buffer_length_;
 };
 
 } // namespace Nighthawk

@@ -106,34 +106,36 @@ HeaderSourcePtr HeaderSourceFactoryImpl::create(Envoy::Upstream::ClusterManagerP
                                                 Envoy::Event::Dispatcher& dispatcher,
                                                 Envoy::Stats::Scope& scope,
                                                 absl::string_view service_cluster_name) const {
+  // Note: we assume a valid uri.
+  // Also, we can't resolve, but we do not need that.
+  UriImpl uri(options_.uri());
+  Envoy::Http::HeaderMapPtr header = std::make_unique<Envoy::Http::HeaderMapImpl>();
+
+  header->insertMethod().value(envoy::api::v2::core::RequestMethod_Name(options_.requestMethod()));
+  header->insertPath().value(uri.path());
+  header->insertHost().value(uri.hostAndPort());
+  header->insertScheme().value(uri.scheme() == "https"
+                                   ? Envoy::Http::Headers::get().SchemeValues.Https
+                                   : Envoy::Http::Headers::get().SchemeValues.Http);
+  const uint32_t content_length = options_.requestBodySize();
+  if (content_length > 0) {
+    header->insertContentLength().value(content_length);
+  }
+
+  auto request_options = options_.toCommandLineOptions()->request_options();
+  for (const auto& option_header : request_options.request_headers()) {
+    setRequestHeader(*header, option_header.header().key(), option_header.header().value());
+  }
+
   if (options_.headerSource() == "") {
-    // Note: we assume a valid uri.
-    // Also, we can't resolve, but we do not need that.
-    UriImpl uri(options_.uri());
-    Envoy::Http::HeaderMapPtr header = std::make_unique<Envoy::Http::HeaderMapImpl>();
-
-    header->insertMethod().value(
-        envoy::api::v2::core::RequestMethod_Name(options_.requestMethod()));
-    header->insertPath().value(uri.path());
-    header->insertHost().value(uri.hostAndPort());
-    header->insertScheme().value(uri.scheme() == "https"
-                                     ? Envoy::Http::Headers::get().SchemeValues.Https
-                                     : Envoy::Http::Headers::get().SchemeValues.Http);
-    const uint32_t content_length = options_.requestBodySize();
-    if (content_length > 0) {
-      header->insertContentLength().value(content_length);
-    }
-
-    auto request_options = options_.toCommandLineOptions()->request_options();
-    for (const auto& option_header : request_options.request_headers()) {
-      setRequestHeader(*header, option_header.header().key(), option_header.header().value());
-    }
-
     return std::make_unique<StaticHeaderSourceImpl>(std::move(header));
   } else {
     RELEASE_ASSERT(!service_cluster_name.empty(), "expected cluster name to be set");
+    // We pass in options_.requestsPerSecond() as the header buffer length so the grpc client
+    // will shoot for maintaining an amount of headers of at least one second.
     return std::make_unique<RemoteHeaderSourceImpl>(cluster_manager, dispatcher, scope,
-                                                    service_cluster_name);
+                                                    service_cluster_name, std::move(header),
+                                                    options_.requestsPerSecond());
   }
 }
 

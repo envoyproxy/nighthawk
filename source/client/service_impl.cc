@@ -116,15 +116,12 @@ void addHeader(envoy::api::v2::core::HeaderMap* map, absl::string_view key,
 }
 } // namespace
 
-HeaderSourcePtr ServiceImpl::createHeaderSource(const uint32_t amount) {
-  // XXX(oschaaf):
-  Envoy::Http::HeaderMapPtr header = std::make_unique<Envoy::Http::HeaderMapImpl>();
-  header->insertMethod().value(envoy::api::v2::core::RequestMethod::GET);
-  header->insertPath().value(std::string("/foopath"));
-  header->insertHost().value(std::string("127.0.0.1:80"));
-
-  header->insertScheme().value(Envoy::Http::Headers::get().SchemeValues.Http);
-  return std::make_unique<StaticHeaderSourceImpl>(std::move(header), amount);
+HeaderSourcePtr ServiceImpl::createStaticEmptyHeaderSource(const uint32_t amount) {
+  // TODO(oschaaf): We create an empty header source. The client will merge headers we emit here
+  // with any header configuration passed in to it. Until we add the real thing here, this
+  // is all a very elaborate no-op.
+  return std::make_unique<StaticHeaderSourceImpl>(std::make_unique<Envoy::Http::HeaderMapImpl>(),
+                                                  amount);
 }
 
 ::grpc::Status ServiceImpl::HeaderStream(
@@ -135,10 +132,9 @@ HeaderSourcePtr ServiceImpl::createHeaderSource(const uint32_t amount) {
   bool ok = true;
   while (stream->Read(&request)) {
     ENVOY_LOG(trace, "Inbound HeaderStreamRequest {}", request.DebugString());
-    auto header_source = createHeaderSource(request.amount());
+    auto header_source = createStaticEmptyHeaderSource(request.amount());
     auto header_generator = header_source->get();
     HeaderMapPtr headers;
-
     while (ok && (headers = header_generator()) != nullptr) {
       nighthawk::client::HeaderStreamResponse response;
       auto* request_headers = response.mutable_request_headers();
@@ -152,7 +148,6 @@ HeaderSourcePtr ServiceImpl::createHeaderSource(const uint32_t amount) {
           request_headers);
       ok = ok && stream->Write(response);
     }
-
     if (!ok) {
       ENVOY_LOG(error, "Failed to send the complete set of replay data.");
       break;

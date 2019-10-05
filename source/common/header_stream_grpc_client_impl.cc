@@ -13,13 +13,14 @@ namespace Nighthawk {
 const std::string HeaderStreamGrpcClientImpl::METHOD_NAME =
     "nighthawk.client.NighthawkService.HeaderStream";
 
-const uint32_t HeaderStreamGrpcClientImpl::QUEUE_LENGTH_WATERMARK = 50;
-
 HeaderStreamGrpcClientImpl::HeaderStreamGrpcClientImpl(Envoy::Grpc::RawAsyncClientPtr async_client,
-                                                       Envoy::Event::Dispatcher&)
+                                                       Envoy::Event::Dispatcher&,
+                                                       const Envoy::Http::HeaderMap& base_header,
+                                                       const uint32_t header_buffer_length)
     : async_client_(std::move(async_client)),
       service_method_(
-          *Envoy::Protobuf::DescriptorPool::generated_pool()->FindMethodByName(METHOD_NAME)) {}
+          *Envoy::Protobuf::DescriptorPool::generated_pool()->FindMethodByName(METHOD_NAME)),
+      base_header_(base_header), header_buffer_length_(header_buffer_length) {}
 
 void HeaderStreamGrpcClientImpl::start() {
   stream_ = async_client_->start(service_method_, *this);
@@ -30,10 +31,9 @@ void HeaderStreamGrpcClientImpl::start() {
 void HeaderStreamGrpcClientImpl::trySendRequest() {
   if (stream_ != nullptr) {
     nighthawk::client::HeaderStreamRequest request;
-    const uint32_t amount = QUEUE_LENGTH_WATERMARK;
-    request.set_amount(amount);
+    request.set_amount(header_buffer_length_);
     stream_->sendMessage(request, false);
-    in_flight_headers_ = amount;
+    in_flight_headers_ = header_buffer_length_;
     ENVOY_LOG(trace, "send request: {}", request.DebugString());
   }
 }
@@ -68,7 +68,7 @@ void HeaderStreamGrpcClientImpl::onRemoteClose(Envoy::Grpc::Status::GrpcStatus s
 HeaderMapPtr HeaderStreamGrpcClientImpl::maybeDequeue() {
   if (!messages_.empty()) {
     const auto& message = messages_.front();
-    auto header = std::make_shared<Envoy::Http::HeaderMapImpl>();
+    auto header = std::make_shared<Envoy::Http::HeaderMapImpl>(base_header_);
     if (message->has_request_headers()) {
       const auto& message_request_headers = message->request_headers();
       for (const auto& message_header : message_request_headers.headers()) {
@@ -76,7 +76,7 @@ HeaderMapPtr HeaderStreamGrpcClientImpl::maybeDequeue() {
       }
     }
     messages_.pop();
-    if (in_flight_headers_ == 0 && messages_.size() < QUEUE_LENGTH_WATERMARK) {
+    if (in_flight_headers_ == 0 && messages_.size() < header_buffer_length_) {
       trySendRequest();
     }
     return header;

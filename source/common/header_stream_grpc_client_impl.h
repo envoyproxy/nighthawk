@@ -33,7 +33,9 @@ class HeaderStreamGrpcClientImpl
       Envoy::Logger::Loggable<Envoy::Logger::Id::upstream> {
 public:
   HeaderStreamGrpcClientImpl(Envoy::Grpc::RawAsyncClientPtr async_client,
-                             Envoy::Event::Dispatcher& dispatcher);
+                             Envoy::Event::Dispatcher& dispatcher,
+                             const Envoy::Http::HeaderMap& base_header,
+                             const uint32_t header_buffer_length);
 
   // Grpc::AsyncStreamCallbacks
   void onCreateInitialMetadata(Envoy::Http::HeaderMap& metadata) override;
@@ -50,8 +52,6 @@ public:
 
 private:
   static const std::string METHOD_NAME;
-  static const uint32_t QUEUE_LENGTH_WATERMARK;
-
   void trySendRequest();
   Envoy::Grpc::AsyncClient<nighthawk::client::HeaderStreamRequest,
                            nighthawk::client::HeaderStreamResponse>
@@ -62,6 +62,8 @@ private:
   void emplaceMessage(std::unique_ptr<nighthawk::client::HeaderStreamResponse>&& message);
   uint32_t in_flight_headers_{0};
   uint32_t total_messages_received_{0};
+  const Envoy::Http::HeaderMap& base_header_;
+  const uint32_t header_buffer_length_;
 };
 
 } // namespace Nighthawk

@@ -22,9 +22,12 @@ HeaderGenerator StaticHeaderSourceImpl::get() {
 RemoteHeaderSourceImpl::RemoteHeaderSourceImpl(Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                                                Envoy::Event::Dispatcher& dispatcher,
                                                Envoy::Stats::Scope& scope,
-                                               absl::string_view service_cluster_name)
+                                               absl::string_view service_cluster_name,
+                                               Envoy::Http::HeaderMapPtr&& base_header,
+                                               uint32_t header_buffer_length)
     : cluster_manager_(cluster_manager), dispatcher_(dispatcher), scope_(scope),
-      service_cluster_name_(std::string(service_cluster_name)) {}
+      service_cluster_name_(std::string(service_cluster_name)),
+      base_header_(std::move(base_header)), header_buffer_length_(header_buffer_length) {}
 
 void RemoteHeaderSourceImpl::connectToHeaderStreamGrpcService() {
   auto clusters = cluster_manager_->clusters();
@@ -34,7 +37,8 @@ void RemoteHeaderSourceImpl::connectToHeaderStreamGrpcService() {
   grpc_service.mutable_envoy_grpc()->set_cluster_name(service_cluster_name_);
   auto cm =
       cluster_manager_->grpcAsyncClientManager().factoryForGrpcService(grpc_service, scope_, true);
-  grpc_client_ = std::make_unique<HeaderStreamGrpcClientImpl>(cm->create(), dispatcher_);
+  grpc_client_ = std::make_unique<HeaderStreamGrpcClientImpl>(cm->create(), dispatcher_,
+                                                              *base_header_, header_buffer_length_);
   grpc_client_->start();
   while (!grpc_client_->stream_status_known()) {
     dispatcher_.run(Envoy::Event::Dispatcher::RunType::NonBlock);
