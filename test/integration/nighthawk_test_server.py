@@ -87,6 +87,13 @@ class TestServerBase(object):
     except ConnectionError:
       return False
 
+  def enableCpuProfiler(self):
+    uri_host = self.server_ip
+    if self.ip_version == IpVersion.IPV6:
+      uri_host = "[%s]" % self.server_ip
+    uri = "http://%s:%s%s" % (uri_host, self.admin_port, "/cpuprofiler?enable=y")
+    r = requests.post(uri)
+
   def waitUntilServerListening(self):
     timeout = time.time() + 5
     while time.time() < timeout:
