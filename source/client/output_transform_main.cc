@@ -17,7 +17,8 @@
 namespace Nighthawk {
 namespace Client {
 
-OutputTransformMain::OutputTransformMain(int argc, const char* const* argv) {
+OutputTransformMain::OutputTransformMain(int argc, const char* const* argv, std::istream& input)
+    : input_(input) {
   const char* descr = "L7 (HTTP/HTTPS/HTTP2) performance characterization transformation tool.";
   TCLAP::CmdLine cmd(descr, ' ', "PoC"); // NOLINT
 
@@ -35,7 +36,7 @@ OutputTransformMain::OutputTransformMain(int argc, const char* const* argv) {
 std::string OutputTransformMain::readInput() {
   std::stringstream input;
   std::string line;
-  while (getline(std::cin, line)) {
+  while (getline(input_, line)) {
     input << line << std::endl;
   }
   return input.str();
@@ -55,15 +56,22 @@ uint32_t OutputTransformMain::run() {
     Envoy::MessageUtil::loadFromJson(input, output,
                                      Envoy::ProtobufMessage::getNullValidationVisitor());
   } catch (Envoy::EnvoyException e) {
-    throw MalformedArgvException(e.what());
+    ENVOY_LOG(error, "Error: ", e.what());
+    return -1;
   }
 
   // We override the output format, which will make the OutputCollectorFactory hand us
   // an instance that will output the desired format for us.
   output.mutable_options()->mutable_output_format()->set_value(translated_format);
-  Nighthawk::Client::OptionsImpl options(output.options());
-  OutputCollectorFactoryImpl factory(time_system_, options);
-  auto collector = factory.create();
+  std::unique_ptr<OutputCollectorFactory> factory;
+  try {
+    factory = std::make_unique<OutputCollectorFactoryImpl>(
+        time_system_, Nighthawk::Client::OptionsImpl(output.options()));
+  } catch (NighthawkException e) {
+    ENVOY_LOG(error, "Error: ", e.what());
+    return -2;
+  }
+  auto collector = factory->create();
   collector->setOutput(output);
   std::cout << collector->toString();
   return 0;

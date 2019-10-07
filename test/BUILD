@@ -267,3 +267,14 @@ envoy_cc_test(
         "@envoy//test/test_common:network_utility_lib",
     ],
 )
+
+envoy_cc_test(
+    name = "output_transform_main_test",
+    srcs = ["output_transform_main_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/client:output_transform_main_lib",
+        "//test/test_common:environment_lib",
+        "@envoy//test/test_common:network_utility_lib",
+    ],
+)

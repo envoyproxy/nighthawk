@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
   absl::InitializeSymbolizer(argv[0]);
 #endif
   try {
-    Nighthawk::Client::OutputTransformMain program(argc, argv); // NOLINT
+    Nighthawk::Client::OutputTransformMain program(argc, argv, std::cin); // NOLINT
     return program.run();
   } catch (const Nighthawk::Client::NoServingException& e) {
     return EXIT_SUCCESS;
