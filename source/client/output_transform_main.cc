@@ -63,15 +63,15 @@ uint32_t OutputTransformMain::run() {
   // We override the output format, which will make the OutputCollectorFactory hand us
   // an instance that will output the desired format for us.
   output.mutable_options()->mutable_output_format()->set_value(translated_format);
-  std::unique_ptr<OutputCollectorFactory> factory;
+  OutputCollectorPtr collector;
   try {
-    factory = std::make_unique<OutputCollectorFactoryImpl>(
-        time_system_, Nighthawk::Client::OptionsImpl(output.options()));
+    const auto options = OptionsImpl(output.options());
+    OutputCollectorFactoryImpl factory(time_system_, options);
+    collector = factory.create();
   } catch (NighthawkException e) {
     ENVOY_LOG(error, "Error: ", e.what());
     return 2;
   }
-  auto collector = factory->create();
   collector->setOutput(output);
   std::cout << collector->toString();
   return 0;

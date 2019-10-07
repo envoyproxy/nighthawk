@@ -26,6 +26,11 @@ TEST_F(OutputTransformMainTest, BadArgs) {
   EXPECT_THROW(OutputTransformMain(argv.size(), argv.data(), stream_), std::exception);
 }
 
+TEST_F(OutputTransformMainTest, BadOutputFormat) {
+  std::vector<const char*> argv = {"foo", "--output-format", "nonsense"};
+  EXPECT_THROW(OutputTransformMain(argv.size(), argv.data(), stream_), std::exception);
+}
+
 // Correct args, but empty stdin input
 TEST_F(OutputTransformMainTest, NoInput) {
   std::vector<const char*> argv = {"foo", "--output-format", "human"};
