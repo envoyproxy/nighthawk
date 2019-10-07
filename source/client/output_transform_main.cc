@@ -42,25 +42,26 @@ std::string OutputTransformMain::readInput() {
 }
 
 uint32_t OutputTransformMain::run() {
-  nighthawk::client::CommandLineOptions proto_options;
+  // Figure out the desired output format, and read attempt to read the input proto
+  // from stdin.
   nighthawk::client::OutputFormat_OutputFormatOptions translated_format;
-  RELEASE_ASSERT(nighthawk::client::OutputFormat_OutputFormatOptions_Parse(
-                     absl::AsciiStrToUpper(output_format_), &translated_format),
-                 "Invalid output format");
-
-  proto_options.mutable_output_format()->set_value(translated_format);
-  // required, but not used in this CLI
-  proto_options.mutable_uri()->set_value("http://foo");
-  Nighthawk::Client::OptionsImpl options(proto_options);
   nighthawk::client::Output output;
-  *output.mutable_options() = proto_options;
   try {
+    if (!nighthawk::client::OutputFormat_OutputFormatOptions_Parse(
+            absl::AsciiStrToUpper(output_format_), &translated_format)) {
+      throw MalformedArgvException("Invalid output format");
+    }
     std::string input = readInput();
     Envoy::MessageUtil::loadFromJson(input, output,
-                                     Envoy::ProtobufMessage::getStrictValidationVisitor());
+                                     Envoy::ProtobufMessage::getNullValidationVisitor());
   } catch (Envoy::EnvoyException e) {
     throw MalformedArgvException(e.what());
   }
+
+  // We override the output format, which will make the OutputCollectorFactory hand us
+  // an instance that will output the desired format for us.
+  output.mutable_options()->mutable_output_format()->set_value(translated_format);
+  Nighthawk::Client::OptionsImpl options(output.options());
   OutputCollectorFactoryImpl factory(time_system_, options);
   auto collector = factory.create();
   collector->setOutput(output);
