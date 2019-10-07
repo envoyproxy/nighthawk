@@ -7,7 +7,7 @@ go get -u github.com/google/pprof
 
 ## Envoy build
 
-See “building envoy with bazel”
+See [building envoy with bazel](https://github.com/envoyproxy/envoy/tree/master/bazel#building-envoy-with-bazel).
 
 Envoy’s static build is set up for profiling and can be build with:
 
@@ -19,7 +19,7 @@ More context: https://github.com/envoyproxy/envoy/blob/master/bazel/PPROF.md
 
 ## Nighthawk build
 
-https://github.com/envoyproxy/nighthawk
+See [building Nighthawk](https://github.com/envoyproxy/nighthawk#nighthawk).
 
 ```
 bazel build -c opt //:nighthawk
@@ -56,7 +56,7 @@ curl -X POST http://your-envoy-instance:admin-port/cpuprofiler?enable=y
 
 https://www.envoyproxy.io/docs/envoy/latest/operations/admin#post--cpuprofiler
 
-Note: there’s also https://github.com/envoyproxy/nighthawk/pull/160 which is an invitation for discussing if it would make sense for NH to facilitate consolidation of tests scenarios in its repo.
+Note: there’s also [PR #160](https://github.com/envoyproxy/nighthawk/pull/160) which is an invitation for discussing if it would make sense for NH to facilitate consolidation of tests scenarios in its repo.
 
 ## Run Nighthawk
 
