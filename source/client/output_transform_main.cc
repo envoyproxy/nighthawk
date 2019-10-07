@@ -47,12 +47,11 @@ uint32_t OutputTransformMain::run() {
   // from stdin.
   nighthawk::client::OutputFormat_OutputFormatOptions translated_format;
   nighthawk::client::Output output;
+  RELEASE_ASSERT(nighthawk::client::OutputFormat_OutputFormatOptions_Parse(
+                     absl::AsciiStrToUpper(output_format_), &translated_format),
+                 "Invalid output format");
+  std::string input = readInput();
   try {
-    if (!nighthawk::client::OutputFormat_OutputFormatOptions_Parse(
-            absl::AsciiStrToUpper(output_format_), &translated_format)) {
-      throw MalformedArgvException("Invalid output format");
-    }
-    std::string input = readInput();
     Envoy::MessageUtil::loadFromJson(input, output,
                                      Envoy::ProtobufMessage::getNullValidationVisitor());
   } catch (Envoy::EnvoyException e) {
