@@ -57,7 +57,7 @@ uint32_t OutputTransformMain::run() {
                                      Envoy::ProtobufMessage::getNullValidationVisitor());
   } catch (Envoy::EnvoyException e) {
     ENVOY_LOG(error, "Error: ", e.what());
-    return -1;
+    return 1;
   }
 
   // We override the output format, which will make the OutputCollectorFactory hand us
@@ -69,7 +69,7 @@ uint32_t OutputTransformMain::run() {
         time_system_, Nighthawk::Client::OptionsImpl(output.options()));
   } catch (NighthawkException e) {
     ENVOY_LOG(error, "Error: ", e.what());
-    return -2;
+    return 2;
   }
   auto collector = factory->create();
   collector->setOutput(output);

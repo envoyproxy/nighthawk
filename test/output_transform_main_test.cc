@@ -4,6 +4,8 @@
 #include "external/envoy/test/test_common/network_utility.h"
 #include "external/envoy/test/test_common/utility.h"
 
+#include "api/client/service.pb.h"
+
 #include "client/output_transform_main.h"
 
 #include "gtest/gtest.h"
@@ -15,7 +17,6 @@ namespace Client {
 
 class OutputTransformMainTest : public Test {
 public:
-  OutputTransformMainTest() {}
   std::stringstream stream_;
 };
 
@@ -46,6 +47,15 @@ TEST_F(OutputTransformMainTest, JsonNotValidating) {
   stream_ << "{}";
   OutputTransformMain main(argv.size(), argv.data(), stream_);
   EXPECT_NE(main.run(), 0);
+}
+
+TEST_F(OutputTransformMainTest, HappyFlow) {
+  std::vector<const char*> argv = {"foo", "--output-format", "human"};
+  nighthawk::client::Output output;
+  output.mutable_options()->mutable_uri()->set_value("http://127.0.0.1/");
+  stream_ << Envoy::MessageUtil::getJsonStringFromMessage(output, true, true);
+  OutputTransformMain main(argv.size(), argv.data(), stream_);
+  EXPECT_EQ(main.run(), 0);
 }
 
 } // namespace Client
