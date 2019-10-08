@@ -16,9 +16,9 @@ using TerminationPredicatePtr = std::unique_ptr<TerminationPredicate>;
 class TerminationPredicate {
 public:
   enum class Status {
-    PROCEED,   // indicates a test should proceed
-    TERMINATE, // indicates successful test termination
-    FAIL       // indicates unsuccessful test termination
+    PROCEED,   // indicates execution should proceed
+    TERMINATE, // indicates execution should terminate successfully
+    FAIL       // indicates execution should terminate unsuccessfully
   };
 
   virtual ~TerminationPredicate() = default;
