@@ -42,8 +42,34 @@ message HeaderStreamRequest {
   uint64 amount = 1;
 }
 
+message Predicate {
+  /*
+  TODO(oschaaf): define this, ideally we can express:
+  >, >=, ==, <, <=, in
+  */
+  string name = 1;
+}
+
 message HeaderStreamResponse {
-  envoy.api.v2.core.HeaderMap request_headers = 1 [(validate.rules).message.required = true];
+  // method/path/uri/authority/content_length can all be expressed in request headers.
+  // so technically they are redundant. In case of ambiguity, the explicit fields prevail.
+  // TODO(oschaaf): today we only have request_headers implemented, merge the redundant fields.
+  // Note that as of today, the target upstream/cluster that will be used to replay traffic to
+  // fixes the destination address/port
+  string method = 1;
+  string uri = 2;
+  string authority = 3;
+  envoy.api.v2.core.HeaderMap headers = 4;
+  uint32 content_length = 5;
+
+  // TODO(oschaaf): these fields are for future use, and ignored at this time.
+  Predicate expected_response_code = 6;
+  Predicate expected_response_size = 7;
+  Predicate expected_response_body = 8;
+  envoy.api.v2.core.HeaderMap mandatory_response_headers = 9;
+
+  // TODO(oschaaf): nice to have
+  string sni_hostname = 10;
 }
 
 service NighthawkService {
