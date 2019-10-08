@@ -11,7 +11,7 @@ class TerminationPredicate;
 using TerminationPredicatePtr = std::unique_ptr<TerminationPredicate>;
 
 /**
- * Determines if and how a test is terminated.
+ * Determines if and how execution is terminated.
  */
 class TerminationPredicate {
 public:
