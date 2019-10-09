@@ -23,13 +23,14 @@ OutputTransformMain::OutputTransformMain(int argc, const char* const* argv, std:
   const char* descr = "L7 (HTTP/HTTPS/HTTP2) performance characterization transformation tool.";
   TCLAP::CmdLine cmd(descr, ' ', "PoC"); // NOLINT
 
+  // TODO(oschaaf): create a canonicalize way to get the supported output formats.
+  // De-duplicate the code here arg handling code with the nighthawk_client CLI
   std::vector<std::string> output_formats = {"human", "yaml", "json"};
   TCLAP::ValuesConstraint<std::string> output_formats_allowed(output_formats);
   output_format_ = "";
   TCLAP::ValueArg<std::string> output_format(
-      "", "output-format",
-      fmt::format("Verbosity of the output. Possible values: [human, yaml, json]."), true, "",
-      &output_formats_allowed, cmd);
+      "", "output-format", fmt::format("Output format. Possible values: [human, yaml, json]."),
+      true, "", &output_formats_allowed, cmd);
   Utility::parseCommand(cmd, argc, argv);
   output_format_ = output_format.getValue();
 }

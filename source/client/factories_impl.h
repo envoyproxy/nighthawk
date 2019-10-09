@@ -56,7 +56,6 @@ public:
 
 class OutputFormatterFactoryImpl : public OutputFormatterFactory {
 public:
-  OutputFormatterFactoryImpl();
   OutputFormatterPtr
   create(const nighthawk::client::OutputFormat_OutputFormatOptions output_format) const override;
 };

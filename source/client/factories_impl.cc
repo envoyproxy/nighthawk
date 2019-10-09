@@ -74,8 +74,6 @@ StatisticFactoryImpl::StatisticFactoryImpl(const Options& options)
 
 StatisticPtr StatisticFactoryImpl::create() const { return std::make_unique<HdrStatistic>(); }
 
-OutputFormatterFactoryImpl::OutputFormatterFactoryImpl() {}
-
 OutputFormatterPtr OutputFormatterFactoryImpl::create(
     const nighthawk::client::OutputFormat_OutputFormatOptions output_format) const {
   switch (output_format) {

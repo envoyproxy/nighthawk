@@ -78,7 +78,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
 
   TCLAP::ValueArg<std::string> output_format(
       "", "output-format",
-      fmt::format("Verbosity of the output. Possible values: [human, yaml, json]. The "
+      fmt::format("Output format. Possible values: [human, yaml, json]. The "
                   "default output format is '{}'.",
                   output_format_),
       false, "", &output_formats_allowed, cmd);

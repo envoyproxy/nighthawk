@@ -1,10 +1,10 @@
-licenses(["notice"])  # Apache 2
-
 load(
     "@envoy//bazel:envoy_build_system.bzl",
     "envoy_basic_cc_library",
     "envoy_package",
 )
+
+licenses(["notice"])  # Apache 2
 
 envoy_package()
 
@@ -39,7 +39,10 @@ envoy_basic_cc_library(
     name = "output_collector_lib",
     hdrs = ["output_collector.h"],
     include_prefix = "nighthawk/client",
-    deps = ["@envoy//include/envoy/common:base_includes"],
+    deps = [
+        "//include/nighthawk/common:base_includes",
+        "@envoy//include/envoy/common:base_includes",
+    ],
 )
 
 envoy_basic_cc_library(
