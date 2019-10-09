@@ -2,7 +2,7 @@
 
 #include <memory>
 
-#include "nighthawk/common/request_source.h"
+#include "nighthawk/common/request.h"
 
 namespace Nighthawk {
 class RequestStreamGrpcClient {

@@ -2,6 +2,7 @@
 
 #include "envoy/http/header_map.h"
 
+#include "nighthawk/common/request.h"
 #include "nighthawk/common/request_source.h"
 
 #include "external/envoy/source/common/common/logger.h"

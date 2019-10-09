@@ -9,14 +9,29 @@ load(
 envoy_package()
 
 envoy_cc_library(
+    name = "request_impl_lib",
+    hdrs = [
+        "request_impl.h",
+    ],
+    repository = "@envoy",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":nighthawk_common_lib",
+        "//include/nighthawk/common:request_lib",
+    ],
+)
+
+envoy_cc_library(
     name = "request_stream_grpc_client_lib",
     srcs = ["request_stream_grpc_client_impl.cc"],
     hdrs = ["request_stream_grpc_client_impl.h"],
     repository = "@envoy",
     deps = [
+        ":request_impl_lib",
         "//api/client:base_cc",
         "//api/client:grpc_service_lib",
         "//include/nighthawk/common:base_includes",
+        "//include/nighthawk/common:request_lib",
         "@envoy//include/envoy/grpc:async_client_interface_with_external_headers",
         "@envoy//include/envoy/grpc:async_client_manager_interface_with_external_headers",
         "@envoy//include/envoy/upstream:cluster_manager_interface_with_external_headers",
@@ -29,7 +44,7 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
-    name = "request_source_lib",
+    name = "request_source_impl_lib",
     srcs = [
         "request_source_impl.cc",
     ],
@@ -40,7 +55,9 @@ envoy_cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":nighthawk_common_lib",
+        ":request_impl_lib",
         ":request_stream_grpc_client_lib",
+        "//include/nighthawk/common:request_source_lib",
     ],
 )
 

@@ -15,7 +15,6 @@ envoy_basic_cc_library(
         "operation_callback.h",
         "platform_util.h",
         "rate_limiter.h",
-        "request_source.h",
         "request_stream_grpc_client.h",
         "sequencer.h",
         "statistic.h",
@@ -30,5 +29,28 @@ envoy_basic_cc_library(
         "@envoy//source/common/http:headers_lib",
         "@envoy//source/common/network:dns_lib",
         "@envoy//source/common/protobuf",
+    ],
+)
+
+envoy_basic_cc_library(
+    name = "request_lib",
+    hdrs = [
+        "request.h",
+    ],
+    include_prefix = "nighthawk/common",
+    deps = [
+        "@envoy//source/common/http:headers_lib",
+    ],
+)
+
+envoy_basic_cc_library(
+    name = "request_source_lib",
+    hdrs = [
+        "request_source.h",
+    ],
+    include_prefix = "nighthawk/common",
+    deps = [
+        ":request_lib",
+        "@envoy//source/common/http:headers_lib",
     ],
 )

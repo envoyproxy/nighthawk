@@ -26,6 +26,7 @@ envoy_cc_test(
     srcs = ["benchmark_http_client_test.cc"],
     repository = "@envoy",
     deps = [
+        "//source/common:request_impl_lib",
         "//test:nighthawk_mocks",
         "//test/test_common:environment_lib",
         "@envoy//source/common/http:header_map_lib_with_external_headers",

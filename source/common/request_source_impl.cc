@@ -2,6 +2,8 @@
 
 #include "external/envoy/source/common/common/assert.h"
 
+#include "common/request_impl.h"
+
 namespace Nighthawk {
 
 StaticRequestSourceImpl::StaticRequestSourceImpl(Envoy::Http::HeaderMapPtr&& header,

@@ -12,6 +12,7 @@
 #include "external/envoy/test/mocks/upstream/mocks.h"
 #include "external/envoy/test/test_common/network_utility.h"
 
+#include "common/request_impl.h"
 #include "common/statistic_impl.h"
 #include "common/uri_impl.h"
 #include "common/utility.h"

@@ -8,6 +8,8 @@
 #include "external/envoy/source/common/http/header_map_impl.h"
 #include "external/envoy/source/common/http/headers.h"
 
+#include "common/request_impl.h"
+
 namespace Nighthawk {
 
 const std::string RequestStreamGrpcClientImpl::METHOD_NAME =

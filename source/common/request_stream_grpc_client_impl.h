@@ -8,7 +8,7 @@
 #include "envoy/stats/scope.h"
 #include "envoy/upstream/cluster_manager.h"
 
-#include "nighthawk/common/request_source.h"
+#include "nighthawk/common/request.h"
 #include "nighthawk/common/request_stream_grpc_client.h"
 
 #include "external/envoy/source/common/common/logger.h"
