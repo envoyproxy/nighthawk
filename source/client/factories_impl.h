@@ -54,13 +54,11 @@ public:
   StatisticPtr create() const override;
 };
 
-class OutputCollectorFactoryImpl : public OptionBasedFactoryImpl, public OutputCollectorFactory {
+class OutputFormatterFactoryImpl : public OutputFormatterFactory {
 public:
-  OutputCollectorFactoryImpl(Envoy::TimeSource& time_source, const Options& options);
-  OutputCollectorPtr create() const override;
-
-private:
-  Envoy::TimeSource& time_source_;
+  OutputFormatterFactoryImpl();
+  OutputFormatterPtr
+  create(const nighthawk::client::OutputFormat_OutputFormatOptions output_format) const override;
 };
 
 class HeaderSourceFactoryImpl : public OptionBasedFactoryImpl, public HeaderSourceFactory {

@@ -99,15 +99,16 @@ envoy_cc_test(
 )
 
 envoy_cc_test(
-    name = "output_collector_test",
-    srcs = ["output_collector_test.cc"],
+    name = "output_formatter_test",
+    srcs = ["output_formatter_test.cc"],
     data = [
-        "test_data/output_collector.json.gold",
-        "test_data/output_collector.txt.gold",
-        "test_data/output_collector.yaml.gold",
+        "test_data/output_formatter.json.gold",
+        "test_data/output_formatter.txt.gold",
+        "test_data/output_formatter.yaml.gold",
     ],
     repository = "@envoy",
     deps = [
+        "//source/client:output_formatter_impl_lib",
         "//source/common:nighthawk_common_lib",
         "//test:nighthawk_mocks",
         "//test/test_common:environment_lib",
@@ -151,9 +152,9 @@ envoy_cc_test(
     srcs = ["sequencer_test.cc"],
     data = [
         "test_data/hdr_proto_json.gold",
-        "test_data/output_collector.json.gold",
-        "test_data/output_collector.txt.gold",
-        "test_data/output_collector.yaml.gold",
+        "test_data/output_formatter.json.gold",
+        "test_data/output_formatter.txt.gold",
+        "test_data/output_formatter.yaml.gold",
     ],
     repository = "@envoy",
     deps = [

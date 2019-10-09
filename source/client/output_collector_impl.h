@@ -4,6 +4,7 @@
 
 #include "envoy/common/time.h"
 
+#include "nighthawk/client/options.h"
 #include "nighthawk/client/output_collector.h"
 
 #include "external/envoy/source/common/protobuf/protobuf.h"
@@ -19,11 +20,6 @@ public:
    */
   OutputCollectorImpl(Envoy::TimeSource& time_source, const Options& options);
 
-  /**
-   * @param output to set. Useful for pulling of transforms.
-   */
-  void setOutput(const nighthawk::client::Output& output) override;
-
   void addResult(absl::string_view name, const std::vector<StatisticPtr>& statistics,
                  const std::map<std::string, uint64_t>& counters) override;
 
@@ -31,28 +27,6 @@ public:
 
 private:
   nighthawk::client::Output output_;
-};
-
-class ConsoleOutputCollectorImpl : public OutputCollectorImpl {
-public:
-  using OutputCollectorImpl::OutputCollectorImpl;
-  std::string toString() const override;
-  static std::string statIdtoFriendlyStatName(absl::string_view stat_id);
-
-private:
-  std::string formatProtoDuration(const Envoy::ProtobufWkt::Duration& duration) const;
-};
-
-class JsonOutputCollectorImpl : public OutputCollectorImpl {
-public:
-  using OutputCollectorImpl::OutputCollectorImpl;
-  std::string toString() const override;
-};
-
-class YamlOutputCollectorImpl : public OutputCollectorImpl {
-public:
-  using OutputCollectorImpl::OutputCollectorImpl;
-  std::string toString() const override;
 };
 
 } // namespace Client

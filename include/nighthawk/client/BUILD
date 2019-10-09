@@ -15,11 +15,13 @@ envoy_basic_cc_library(
         "client_worker.h",
         "factories.h",
         "options.h",
-        "output_collector.h",
         "process.h",
     ],
     include_prefix = "nighthawk/client",
     deps = [
+        ":output_collector_lib",
+        ":output_formatter_lib",
+        "//api/client:base_cc",
         "//include/nighthawk/common:base_includes",
         "@envoy//include/envoy/common:base_includes",
         "@envoy//include/envoy/http:conn_pool_interface_with_external_headers",
@@ -31,4 +33,18 @@ envoy_basic_cc_library(
         "@envoy//source/common/runtime:runtime_lib_with_external_headers",
         "@envoy_api//envoy/api/v2:cds_export_cc",
     ],
+)
+
+envoy_basic_cc_library(
+    name = "output_collector_lib",
+    hdrs = ["output_collector.h"],
+    include_prefix = "nighthawk/client",
+    deps = ["@envoy//include/envoy/common:base_includes"],
+)
+
+envoy_basic_cc_library(
+    name = "output_formatter_lib",
+    hdrs = ["output_formatter.h"],
+    include_prefix = "nighthawk/client",
+    deps = ["@envoy//include/envoy/common:base_includes"],
 )

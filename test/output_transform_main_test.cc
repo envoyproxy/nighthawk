@@ -49,7 +49,7 @@ TEST_F(OutputTransformMainTest, BadInput) {
 // Correct args, correct json, but doesn't validate (misses URI).
 TEST_F(OutputTransformMainTest, JsonNotValidating) {
   std::vector<const char*> argv = {"foo", "--output-format", "human"};
-  stream_ << "{}";
+  stream_ << "{invalid_field:1}";
   OutputTransformMain main(argv.size(), argv.data(), stream_);
   EXPECT_NE(main.run(), 0);
 }

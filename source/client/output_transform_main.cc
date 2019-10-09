@@ -10,6 +10,7 @@
 
 #include "client/factories_impl.h"
 #include "client/options_impl.h"
+#include "client/output_collector_impl.h"
 
 #include "absl/strings/strip.h"
 #include "tclap/CmdLine.h"
@@ -53,26 +54,15 @@ uint32_t OutputTransformMain::run() {
   std::string input = readInput();
   try {
     Envoy::MessageUtil::loadFromJson(input, output,
-                                     Envoy::ProtobufMessage::getNullValidationVisitor());
-  } catch (Envoy::EnvoyException e) {
-    ENVOY_LOG(error, "Error: ", e.what());
+                                     Envoy::ProtobufMessage::getStrictValidationVisitor());
+  } catch (Envoy::EnvoyException& e) {
+    std::cerr << "Input error: " << e.what();
     return 1;
   }
-
-  // We override the output format, which will make the OutputCollectorFactory hand us
-  // an instance that will output the desired format for us.
-  output.mutable_options()->mutable_output_format()->set_value(translated_format);
-  OutputCollectorPtr collector;
-  try {
-    const auto options = OptionsImpl(output.options());
-    OutputCollectorFactoryImpl factory(time_system_, options);
-    collector = factory.create();
-  } catch (NighthawkException e) {
-    ENVOY_LOG(error, "Error: ", e.what());
-    return 2;
-  }
-  collector->setOutput(output);
-  std::cout << collector->toString();
+  OutputFormatterFactoryImpl factory;
+  OutputFormatterPtr formatter = factory.create(translated_format);
+  formatter->setProto(output);
+  std::cout << formatter->toString();
   return 0;
 }
 

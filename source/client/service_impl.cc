@@ -4,6 +4,7 @@
 
 #include "client/client.h"
 #include "client/options_impl.h"
+#include "client/output_collector_impl.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -31,15 +32,14 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
   }
 
   ProcessImpl process(*options, time_system_);
-  OutputCollectorFactoryImpl output_format_factory(time_system_, *options);
   auto logging_context = std::make_unique<Envoy::Logger::Context>(
       spdlog::level::from_str(
           nighthawk::client::Verbosity::VerbosityOptions_Name(options->verbosity())),
       "[%T.%f][%t][%L] %v", log_lock_);
-  auto formatter = output_format_factory.create();
-  if (process.run(*formatter)) {
+  OutputCollectorImpl output_collector(time_system_, *options);
+  if (process.run(output_collector)) {
     response.clear_error_detail();
-    *(response.mutable_output()) = formatter->toProto();
+    *(response.mutable_output()) = output_collector.toProto();
   } else {
     response.mutable_error_detail()->set_message("Unknown failure");
   }

@@ -107,22 +107,21 @@ TEST_F(FactoriesTest, CreateStatistic) {
   EXPECT_NE(nullptr, factory.create().get());
 }
 
-class OutputCollectorFactoryTest
+class OutputFormatterFactoryTest
     : public FactoriesTest,
       public WithParamInterface<nighthawk::client::OutputFormat::OutputFormatOptions> {
 public:
   void testOutputCollector(nighthawk::client::OutputFormat::OutputFormatOptions type) {
     Envoy::Event::SimulatedTimeSystem time_source;
-    EXPECT_CALL(options_, toCommandLineOptions());
     EXPECT_CALL(options_, outputFormat()).WillOnce(Return(type));
-    OutputCollectorFactoryImpl factory(time_source, options_);
-    EXPECT_NE(nullptr, factory.create().get());
+    OutputFormatterFactoryImpl factory;
+    EXPECT_NE(nullptr, factory.create(options_.outputFormat()).get());
   }
 };
 
-TEST_P(OutputCollectorFactoryTest, TestCreation) { testOutputCollector(GetParam()); }
+TEST_P(OutputFormatterFactoryTest, TestCreation) { testOutputCollector(GetParam()); }
 
-INSTANTIATE_TEST_SUITE_P(OutputFormats, OutputCollectorFactoryTest,
+INSTANTIATE_TEST_SUITE_P(OutputFormats, OutputFormatterFactoryTest,
                          ValuesIn({nighthawk::client::OutputFormat::HUMAN,
                                    nighthawk::client::OutputFormat::JSON,
                                    nighthawk::client::OutputFormat::YAML}));

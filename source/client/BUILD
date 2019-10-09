@@ -36,6 +36,7 @@ envoy_cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":output_collector_impl_lib",
+        ":output_formatter_impl_lib",
         "//api/client:base_cc",
         "//include/nighthawk/client:client_includes",
         "//include/nighthawk/common:base_includes",
@@ -92,6 +93,24 @@ envoy_cc_library(
     ],
     hdrs = [
         "output_collector_impl.h",
+    ],
+    repository = "@envoy",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//api/client:base_cc",
+        "//include/nighthawk/client:client_includes",
+        "@envoy//source/common/network:utility_lib_with_external_headers",
+        "@envoy//source/common/protobuf:utility_lib_with_external_headers",
+    ],
+)
+
+envoy_cc_library(
+    name = "output_formatter_impl_lib",
+    srcs = [
+        "output_formatter_impl.cc",
+    ],
+    hdrs = [
+        "output_formatter_impl.h",
     ],
     repository = "@envoy",
     visibility = ["//visibility:public"],
