@@ -49,5 +49,8 @@ envoy_basic_cc_library(
     name = "output_formatter_lib",
     hdrs = ["output_formatter.h"],
     include_prefix = "nighthawk/client",
-    deps = ["@envoy//include/envoy/common:base_includes"],
+    deps = [
+        "//api/client:base_cc",
+        "@envoy//include/envoy/common:base_includes",
+    ],
 )
