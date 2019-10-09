@@ -16,7 +16,7 @@
 #include "external/envoy/source/common/event/real_time_system.h"
 
 #include "nighthawk/client/process.h"
-#include "nighthawk/common/header_source.h"
+#include "nighthawk/common/request_source.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -37,7 +37,7 @@ public:
 private:
   void handleExecutionRequest(const nighthawk::client::ExecutionRequest& request);
   void writeResponse(const nighthawk::client::ExecutionResponse& response);
-  HeaderSourcePtr createStaticEmptyHeaderSource(const uint32_t amount);
+  RequestSourcePtr createStaticEmptyRequestSource(const uint32_t amount);
   ::grpc::Status finishGrpcStream(const bool success, absl::string_view description = "");
 
   Envoy::Event::RealTimeSystem time_system_; // NO_CHECK_FORMAT(real_time)

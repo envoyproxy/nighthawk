@@ -8,8 +8,8 @@
 #include "envoy/stats/scope.h"
 #include "envoy/upstream/cluster_manager.h"
 
-#include "nighthawk/common/header_source.h"
 #include "nighthawk/common/header_stream_grpc_client.h"
+#include "nighthawk/common/request_source.h"
 
 #include "external/envoy/source/common/common/logger.h"
 #include "external/envoy/source/common/grpc/typed_async_client.h"
@@ -44,7 +44,7 @@ public:
   onReceiveMessage(std::unique_ptr<nighthawk::client::HeaderStreamResponse>&& message) override;
   void onReceiveTrailingMetadata(Envoy::Http::HeaderMapPtr&& metadata) override;
   void onRemoteClose(Envoy::Grpc::Status::GrpcStatus status, const std::string& message) override;
-  HeaderMapPtr maybeDequeue() override;
+  RequestPtr maybeDequeue() override;
   void start() override;
   bool stream_status_known() const override {
     return stream_ == nullptr || total_messages_received_ > 0;

@@ -12,9 +12,9 @@
 #include "nighthawk/client/benchmark_client.h"
 #include "nighthawk/client/factories.h"
 #include "nighthawk/client/options.h"
-#include "nighthawk/common/header_source.h"
 #include "nighthawk/common/platform_util.h"
 #include "nighthawk/common/rate_limiter.h"
+#include "nighthawk/common/request_source.h"
 #include "nighthawk/common/sequencer.h"
 #include "nighthawk/common/statistic.h"
 #include "nighthawk/common/uri.h"
@@ -98,7 +98,7 @@ public:
                                                 Envoy::Stats::Scope&,
                                                 Envoy::Upstream::ClusterManagerPtr&,
                                                 Envoy::Tracing::HttpTracerPtr&, absl::string_view,
-                                                HeaderSource& header_generator));
+                                                RequestSource& request_generator));
 };
 
 class MockSequencerFactory : public Client::SequencerFactory {
@@ -122,13 +122,13 @@ public:
   MOCK_CONST_METHOD0(create, StatisticPtr());
 };
 
-class MockHeaderSourceFactory : public HeaderSourceFactory {
+class MockRequestSourceFactory : public RequestSourceFactory {
 public:
-  MockHeaderSourceFactory();
-  MOCK_CONST_METHOD4(create, HeaderSourcePtr(Envoy::Upstream::ClusterManagerPtr& cluster_manager,
-                                             Envoy::Event::Dispatcher& dispatcher,
-                                             Envoy::Stats::Scope& scope,
-                                             absl::string_view service_cluster_name));
+  MockRequestSourceFactory();
+  MOCK_CONST_METHOD4(create, RequestSourcePtr(Envoy::Upstream::ClusterManagerPtr& cluster_manager,
+                                              Envoy::Event::Dispatcher& dispatcher,
+                                              Envoy::Stats::Scope& scope,
+                                              absl::string_view service_cluster_name));
 };
 
 class FakeSequencerTarget {
@@ -158,10 +158,10 @@ public:
   MOCK_CONST_METHOD0(requestHeaders, const Envoy::Http::HeaderMap&());
 };
 
-class MockHeaderSource : public HeaderSource {
+class MockRequestSource : public RequestSource {
 public:
-  MockHeaderSource();
-  MOCK_METHOD0(get, HeaderGenerator());
+  MockRequestSource();
+  MOCK_METHOD0(get, RequestGenerator());
   MOCK_METHOD0(initOnThread, void());
 };
 

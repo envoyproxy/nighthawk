@@ -24,10 +24,10 @@ MockStoreFactory::MockStoreFactory() = default;
 
 MockStatisticFactory::MockStatisticFactory() = default;
 
-MockHeaderSourceFactory::MockHeaderSourceFactory() = default;
+MockRequestSourceFactory::MockRequestSourceFactory() = default;
 
 MockBenchmarkClient::MockBenchmarkClient() = default;
 
-MockHeaderSource::MockHeaderSource() = default;
+MockRequestSource::MockRequestSource() = default;
 
 } // namespace Nighthawk

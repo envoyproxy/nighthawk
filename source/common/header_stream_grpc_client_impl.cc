@@ -65,12 +65,12 @@ void HeaderStreamGrpcClientImpl::onRemoteClose(Envoy::Grpc::Status::GrpcStatus s
   stream_ = nullptr;
 }
 
-HeaderMapPtr HeaderStreamGrpcClientImpl::maybeDequeue() {
+RequestPtr HeaderStreamGrpcClientImpl::maybeDequeue() {
   if (!messages_.empty()) {
     const auto& message = messages_.front();
     auto header = std::make_shared<Envoy::Http::HeaderMapImpl>(base_header_);
-    if (message->has_request_headers()) {
-      const auto& message_request_headers = message->request_headers();
+    if (message->has_headers()) {
+      const auto& message_request_headers = message->headers();
       for (const auto& message_header : message_request_headers.headers()) {
         header->addCopy(Envoy::Http::LowerCaseString(message_header.key()), message_header.value());
       }
@@ -79,7 +79,8 @@ HeaderMapPtr HeaderStreamGrpcClientImpl::maybeDequeue() {
     if (in_flight_headers_ == 0 && messages_.size() < header_buffer_length_) {
       trySendRequest();
     }
-    return header;
+
+    return std::make_unique<RequestImpl>(header);
   }
   return nullptr;
 }

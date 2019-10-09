@@ -10,7 +10,7 @@
 #include "envoy/upstream/upstream.h"
 
 #include "nighthawk/client/benchmark_client.h"
-#include "nighthawk/common/header_source.h"
+#include "nighthawk/common/request_source.h"
 #include "nighthawk/common/sequencer.h"
 #include "nighthawk/common/statistic.h"
 
@@ -59,7 +59,7 @@ public:
                           StatisticPtr&& response_statistic, bool use_h2,
                           Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                           Envoy::Tracing::HttpTracerPtr& http_tracer,
-                          absl::string_view cluster_name, HeaderGenerator header_generator);
+                          absl::string_view cluster_name, RequestGenerator request_generator);
 
   void setConnectionLimit(uint32_t connection_limit) { connection_limit_ = connection_limit; }
   void setMaxPendingRequests(uint32_t max_pending_requests) {
@@ -123,7 +123,7 @@ private:
   Envoy::Upstream::ClusterManagerPtr& cluster_manager_;
   Envoy::Tracing::HttpTracerPtr& http_tracer_;
   std::string cluster_name_;
-  const HeaderGenerator header_generator_;
+  const RequestGenerator request_generator_;
 };
 
 } // namespace Client

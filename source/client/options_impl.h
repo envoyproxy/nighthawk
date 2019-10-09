@@ -50,7 +50,7 @@ public:
   sequencerIdleStrategy() const override {
     return sequencer_idle_strategy_;
   }
-  std::string headerSource() const override { return header_source_; }
+  std::string headerSource() const override { return request_source_; }
   std::string trace() const override { return trace_; }
 
 private:
@@ -80,7 +80,7 @@ private:
   uint32_t max_requests_per_connection_{largest_acceptable_uint32_option_value};
   nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions sequencer_idle_strategy_{
       nighthawk::client::SequencerIdleStrategy::SPIN};
-  std::string header_source_;
+  std::string request_source_;
   std::string trace_;
 };
 

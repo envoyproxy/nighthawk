@@ -40,7 +40,7 @@ envoy_cc_library(
         "//api/client:base_cc",
         "//include/nighthawk/client:client_includes",
         "//include/nighthawk/common:base_includes",
-        "//source/common:header_source_lib",
+        "//source/common:request_source_lib",
         "//source/common:nighthawk_common_lib",
         "@envoy//source/common/access_log:access_log_manager_lib_with_external_headers",
         "@envoy//source/common/api:api_lib_with_external_headers",

@@ -29,12 +29,12 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
-    name = "header_source_lib",
+    name = "request_source_lib",
     srcs = [
-        "header_source_impl.cc",
+        "request_source_impl.cc",
     ],
     hdrs = [
-        "header_source_impl.h",
+        "request_source_impl.h",
     ],
     repository = "@envoy",
     visibility = ["//visibility:public"],

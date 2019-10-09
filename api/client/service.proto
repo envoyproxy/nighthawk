@@ -42,18 +42,33 @@ message HeaderStreamRequest {
   uint64 amount = 1;
 }
 
-message Predicate {
-  /*
-  TODO(oschaaf): define this, ideally we can express:
-  >, >=, ==, <, <=, in
-  */
+message Condition {
+  enum ConditionType {
+    EQUALS = 0;
+    LESS_THEN = 1;
+    LESS_OR_EQUAL = 2;
+    GREATER_THEN = 3;
+    GREATER_OR_EQUAL = 4;
+  }
+
   string name = 1;
+  ConditionType type = 2;
+}
+
+message Expectation {
+  enum DataType {
+    TEXT = 0;
+    INT = 1;
+  }
+  string name = 1;
+  string input_header = 2;
+  DataType input_header_data_type = 3;
+  Condition condition = 4;
 }
 
 message HeaderStreamResponse {
   // method/path/uri/authority/content_length can all be expressed in request headers.
   // so technically they are redundant. In case of ambiguity, the explicit fields prevail.
-  // TODO(oschaaf): today we only have request_headers implemented, merge the redundant fields.
   // Note that as of today, the target upstream/cluster that will be used to replay traffic to
   // fixes the destination address/port
   string method = 1;
@@ -62,11 +77,7 @@ message HeaderStreamResponse {
   envoy.api.v2.core.HeaderMap headers = 4;
   uint32 content_length = 5;
 
-  // TODO(oschaaf): these fields are for future use, and ignored at this time.
-  Predicate expected_response_code = 6;
-  Predicate expected_response_size = 7;
-  Predicate expected_response_body = 8;
-  envoy.api.v2.core.HeaderMap mandatory_response_headers = 9;
+  repeated Expectation expectations = 6;
 
   // TODO(oschaaf): nice to have
   string sni_hostname = 10;

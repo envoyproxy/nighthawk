@@ -49,8 +49,8 @@ public:
 
   uint32_t determineConcurrency() const;
   bool run(OutputCollector& collector) override;
-  void addHeaderSourceCluster(const Uri& uri,
-                              envoy::config::bootstrap::v2::Bootstrap& config) const;
+  void addRequestSourceCluster(const Uri& uri,
+                               envoy::config::bootstrap::v2::Bootstrap& config) const;
   void addTracingCluster(envoy::config::bootstrap::v2::Bootstrap& bootstrap, const Uri& uri) const;
   void setupTracingImplementation(envoy::config::bootstrap::v2::Bootstrap& bootstrap,
                                   const Uri& uri) const;
@@ -81,7 +81,7 @@ private:
   std::vector<ClientWorkerPtr> workers_;
   const BenchmarkClientFactoryImpl benchmark_client_factory_;
   const SequencerFactoryImpl sequencer_factory_;
-  const HeaderSourceFactoryImpl header_generator_factory_;
+  const RequestSourceFactoryImpl request_generator_factory_;
   const Options& options_;
 
   Envoy::Init::ManagerImpl init_manager_;

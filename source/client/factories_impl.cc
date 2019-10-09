@@ -3,9 +3,9 @@
 #include "external/envoy/source/common/http/header_map_impl.h"
 #include "external/envoy/source/common/stats/isolated_store_impl.h"
 
-#include "common/header_source_impl.h"
 #include "common/platform_util_impl.h"
 #include "common/rate_limiter_impl.h"
+#include "common/request_source_impl.h"
 #include "common/sequencer_impl.h"
 #include "common/statistic_impl.h"
 #include "common/uri_impl.h"
@@ -25,11 +25,11 @@ BenchmarkClientFactoryImpl::BenchmarkClientFactoryImpl(const Options& options)
 BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
     Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
     Envoy::Upstream::ClusterManagerPtr& cluster_manager, Envoy::Tracing::HttpTracerPtr& http_tracer,
-    absl::string_view cluster_name, HeaderSource& header_generator) const {
+    absl::string_view cluster_name, RequestSource& request_generator) const {
   StatisticFactoryImpl statistic_factory(options_);
   auto benchmark_client = std::make_unique<BenchmarkClientHttpImpl>(
       api, dispatcher, scope, statistic_factory.create(), statistic_factory.create(), options_.h2(),
-      cluster_manager, http_tracer, cluster_name, header_generator.get());
+      cluster_manager, http_tracer, cluster_name, request_generator.get());
   auto request_options = options_.toCommandLineOptions()->request_options();
   benchmark_client->setConnectionLimit(options_.connections());
   benchmark_client->setMaxPendingRequests(options_.maxPendingRequests());
@@ -90,22 +90,22 @@ OutputCollectorPtr OutputCollectorFactoryImpl::create() const {
   }
 }
 
-HeaderSourceFactoryImpl::HeaderSourceFactoryImpl(const Options& options)
+RequestSourceFactoryImpl::RequestSourceFactoryImpl(const Options& options)
     : OptionBasedFactoryImpl(options) {}
 
-void HeaderSourceFactoryImpl::setRequestHeader(Envoy::Http::HeaderMap& header,
-                                               absl::string_view key,
-                                               absl::string_view value) const {
+void RequestSourceFactoryImpl::setRequestHeader(Envoy::Http::HeaderMap& header,
+                                                absl::string_view key,
+                                                absl::string_view value) const {
   auto lower_case_key = Envoy::Http::LowerCaseString(std::string(key));
   header.remove(lower_case_key);
   // TODO(oschaaf): we've performed zero validation on the header key/value.
   header.addCopy(lower_case_key, std::string(value));
 }
 
-HeaderSourcePtr HeaderSourceFactoryImpl::create(Envoy::Upstream::ClusterManagerPtr& cluster_manager,
-                                                Envoy::Event::Dispatcher& dispatcher,
-                                                Envoy::Stats::Scope& scope,
-                                                absl::string_view service_cluster_name) const {
+RequestSourcePtr
+RequestSourceFactoryImpl::create(Envoy::Upstream::ClusterManagerPtr& cluster_manager,
+                                 Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
+                                 absl::string_view service_cluster_name) const {
   // Note: we assume a valid uri.
   // Also, we can't resolve, but we do not need that.
   UriImpl uri(options_.uri());
@@ -128,14 +128,14 @@ HeaderSourcePtr HeaderSourceFactoryImpl::create(Envoy::Upstream::ClusterManagerP
   }
 
   if (options_.headerSource() == "") {
-    return std::make_unique<StaticHeaderSourceImpl>(std::move(header));
+    return std::make_unique<StaticRequestSourceImpl>(std::move(header));
   } else {
     RELEASE_ASSERT(!service_cluster_name.empty(), "expected cluster name to be set");
     // We pass in options_.requestsPerSecond() as the header buffer length so the grpc client
     // will shoot for maintaining an amount of headers of at least one second.
-    return std::make_unique<RemoteHeaderSourceImpl>(cluster_manager, dispatcher, scope,
-                                                    service_cluster_name, std::move(header),
-                                                    options_.requestsPerSecond());
+    return std::make_unique<RemoteRequestSourceImpl>(cluster_manager, dispatcher, scope,
+                                                     service_cluster_name, std::move(header),
+                                                     options_.requestsPerSecond());
   }
 }
 

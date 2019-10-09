@@ -80,7 +80,7 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
       api_(std::make_unique<Envoy::Api::Impl>(platform_impl_.threadFactory(), store_root_,
                                               time_system_, platform_impl_.fileSystem())),
       dispatcher_(api_->allocateDispatcher()), benchmark_client_factory_(options),
-      sequencer_factory_(options), header_generator_factory_(options), options_(options),
+      sequencer_factory_(options), request_generator_factory_(options), options_(options),
       init_manager_("nh_init_manager"),
       local_info_(new Envoy::LocalInfo::LocalInfoImpl(
           {}, Envoy::Network::Utility::getLocalAddress(Envoy::Network::Address::IpVersion::v4),
@@ -140,7 +140,7 @@ const std::vector<ClientWorkerPtr>& ProcessImpl::createWorkers(const uint32_t co
         ((inter_worker_delay_usec * worker_number) * 1us));
     workers_.push_back(std::make_unique<ClientWorkerImpl>(
         *api_, tls_, cluster_manager_, benchmark_client_factory_, sequencer_factory_,
-        header_generator_factory_, store_root_, worker_number, first_worker_start + worker_delay,
+        request_generator_factory_, store_root_, worker_number, first_worker_start + worker_delay,
         http_tracer_, prefetch_connections));
     worker_number++;
   }
@@ -314,8 +314,8 @@ void ProcessImpl::maybeCreateTracingDriver(const envoy::config::trace::v2::Traci
   }
 }
 
-void ProcessImpl::addHeaderSourceCluster(const Uri& uri,
-                                         envoy::config::bootstrap::v2::Bootstrap& bootstrap) const {
+void ProcessImpl::addRequestSourceCluster(
+    const Uri& uri, envoy::config::bootstrap::v2::Bootstrap& bootstrap) const {
   auto* cluster = bootstrap.mutable_static_resources()->add_clusters();
   cluster->mutable_http2_protocol_options();
   cluster->set_name("headersource");
@@ -329,7 +329,7 @@ void ProcessImpl::addHeaderSourceCluster(const Uri& uri,
 
 bool ProcessImpl::run(OutputCollector& collector) {
   UriImpl uri(options_.uri());
-  UriPtr header_source_uri;
+  UriPtr request_source_uri;
   UriPtr tracing_uri;
 
   try {
@@ -337,9 +337,9 @@ bool ProcessImpl::run(OutputCollector& collector) {
     // We now only do it to validate.
     uri.resolve(*dispatcher_, Utility::translateFamilyOptionString(options_.addressFamily()));
     if (options_.headerSource() != "") {
-      header_source_uri = std::make_unique<UriImpl>(options_.headerSource());
-      header_source_uri->resolve(*dispatcher_,
-                                 Utility::translateFamilyOptionString(options_.addressFamily()));
+      request_source_uri = std::make_unique<UriImpl>(options_.headerSource());
+      request_source_uri->resolve(*dispatcher_,
+                                  Utility::translateFamilyOptionString(options_.addressFamily()));
     }
     if (options_.trace() != "") {
       tracing_uri = std::make_unique<UriImpl>(options_.trace());
@@ -368,8 +368,8 @@ bool ProcessImpl::run(OutputCollector& collector) {
       *singleton_manager_);
   envoy::config::bootstrap::v2::Bootstrap bootstrap;
   createBootstrapConfiguration(bootstrap, uri, number_of_workers);
-  if (header_source_uri != nullptr) {
-    addHeaderSourceCluster(*header_source_uri, bootstrap);
+  if (request_source_uri != nullptr) {
+    addRequestSourceCluster(*request_source_uri, bootstrap);
   }
   if (tracing_uri != nullptr) {
     setupTracingImplementation(bootstrap, *tracing_uri);
