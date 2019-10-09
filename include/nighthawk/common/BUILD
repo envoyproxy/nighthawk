@@ -12,11 +12,11 @@ envoy_basic_cc_library(
     name = "base_includes",
     hdrs = [
         "exception.h",
-        "header_stream_grpc_client.h",
         "operation_callback.h",
         "platform_util.h",
         "rate_limiter.h",
         "request_source.h",
+        "request_stream_grpc_client.h",
         "sequencer.h",
         "statistic.h",
         "uri.h",

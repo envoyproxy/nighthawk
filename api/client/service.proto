@@ -38,7 +38,7 @@ message ExecutionResponse {
   }
 }
 
-message HeaderStreamRequest {
+message RequestStreamRequest {
   uint64 amount = 1;
 }
 
@@ -66,7 +66,7 @@ message Expectation {
   Condition condition = 4;
 }
 
-message HeaderStreamResponse {
+message RequestStreamResponse {
   // method/path/uri/authority/content_length can all be expressed in request headers.
   // so technically they are redundant. In case of ambiguity, the explicit fields prevail.
   // Note that as of today, the target upstream/cluster that will be used to replay traffic to
@@ -89,6 +89,6 @@ service NighthawkService {
   //  Nighthawk runs.
   rpc ExecutionStream(stream ExecutionRequest) returns (stream ExecutionResponse) {
   }
-  rpc HeaderStream(stream HeaderStreamRequest) returns (stream HeaderStreamResponse) {
+  rpc RequestStream(stream RequestStreamRequest) returns (stream RequestStreamResponse) {
   }
 }

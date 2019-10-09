@@ -27,7 +27,7 @@ RemoteRequestSourceImpl::RemoteRequestSourceImpl(
       service_cluster_name_(std::string(service_cluster_name)),
       base_header_(std::move(base_header)), header_buffer_length_(header_buffer_length) {}
 
-void RemoteRequestSourceImpl::connectToHeaderStreamGrpcService() {
+void RemoteRequestSourceImpl::connectToRequestStreamGrpcService() {
   auto clusters = cluster_manager_->clusters();
   RELEASE_ASSERT(clusters.find(service_cluster_name_) != clusters.end(),
                  "Source cluster not found");
@@ -35,15 +35,15 @@ void RemoteRequestSourceImpl::connectToHeaderStreamGrpcService() {
   grpc_service.mutable_envoy_grpc()->set_cluster_name(service_cluster_name_);
   auto cm =
       cluster_manager_->grpcAsyncClientManager().factoryForGrpcService(grpc_service, scope_, true);
-  grpc_client_ = std::make_unique<HeaderStreamGrpcClientImpl>(cm->create(), dispatcher_,
-                                                              *base_header_, header_buffer_length_);
+  grpc_client_ = std::make_unique<RequestStreamGrpcClientImpl>(
+      cm->create(), dispatcher_, *base_header_, header_buffer_length_);
   grpc_client_->start();
   while (!grpc_client_->stream_status_known()) {
     dispatcher_.run(Envoy::Event::Dispatcher::RunType::NonBlock);
   }
 }
 
-void RemoteRequestSourceImpl::initOnThread() { connectToHeaderStreamGrpcService(); }
+void RemoteRequestSourceImpl::initOnThread() { connectToRequestStreamGrpcService(); }
 
 RequestGenerator RemoteRequestSourceImpl::get() {
   return [this]() -> RequestPtr { return grpc_client_->maybeDequeue(); };

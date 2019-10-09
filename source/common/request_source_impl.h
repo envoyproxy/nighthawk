@@ -6,7 +6,7 @@
 
 #include "external/envoy/source/common/common/logger.h"
 
-#include "common/header_stream_grpc_client_impl.h"
+#include "common/request_stream_grpc_client_impl.h"
 
 namespace Nighthawk {
 
@@ -35,12 +35,12 @@ public:
   void initOnThread() override;
 
 private:
-  void connectToHeaderStreamGrpcService();
+  void connectToRequestStreamGrpcService();
   Envoy::Upstream::ClusterManagerPtr& cluster_manager_;
   Envoy::Event::Dispatcher& dispatcher_;
   Envoy::Stats::Scope& scope_;
   const std::string service_cluster_name_;
-  HeaderStreamGrpcClientPtr grpc_client_;
+  RequestStreamGrpcClientPtr grpc_client_;
   const HeaderMapPtr base_header_;
   const uint32_t header_buffer_length_;
 };

@@ -29,10 +29,10 @@ public:
       ::grpc::ServerContext* context,
       ::grpc::ServerReaderWriter<::nighthawk::client::ExecutionResponse,
                                  ::nighthawk::client::ExecutionRequest>* stream) override;
-  ::grpc::Status HeaderStream(
+  ::grpc::Status RequestStream(
       ::grpc::ServerContext* context,
-      ::grpc::ServerReaderWriter<::nighthawk::client::HeaderStreamResponse,
-                                 ::nighthawk::client::HeaderStreamRequest>* stream) override;
+      ::grpc::ServerReaderWriter<::nighthawk::client::RequestStreamResponse,
+                                 ::nighthawk::client::RequestStreamRequest>* stream) override;
 
 private:
   void handleExecutionRequest(const nighthawk::client::ExecutionRequest& request);

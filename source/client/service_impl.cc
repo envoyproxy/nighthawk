@@ -122,14 +122,14 @@ RequestSourcePtr ServiceImpl::createStaticEmptyRequestSource(const uint32_t amou
   return std::make_unique<StaticRequestSourceImpl>(std::move(header), amount);
 }
 
-::grpc::Status ServiceImpl::HeaderStream(
+::grpc::Status ServiceImpl::RequestStream(
     ::grpc::ServerContext* /*context*/,
-    ::grpc::ServerReaderWriter<::nighthawk::client::HeaderStreamResponse,
-                               ::nighthawk::client::HeaderStreamRequest>* stream) {
-  nighthawk::client::HeaderStreamRequest request;
+    ::grpc::ServerReaderWriter<::nighthawk::client::RequestStreamResponse,
+                               ::nighthawk::client::RequestStreamRequest>* stream) {
+  nighthawk::client::RequestStreamRequest request;
   bool ok = true;
   while (stream->Read(&request)) {
-    ENVOY_LOG(trace, "Inbound HeaderStreamRequest {}", request.DebugString());
+    ENVOY_LOG(trace, "Inbound RequestStreamRequest {}", request.DebugString());
 
     // TODO(oschaaf): this is useful for integration testing purposes, but sending
     // these nearly empty headers will basically be a near no-op (note that the client will merge
@@ -144,7 +144,7 @@ RequestSourcePtr ServiceImpl::createStaticEmptyRequestSource(const uint32_t amou
     RequestPtr request;
     while (ok && (request = request_generator()) != nullptr) {
       HeaderMapPtr headers = request->header();
-      nighthawk::client::HeaderStreamResponse response;
+      nighthawk::client::RequestStreamResponse response;
       auto* request_headers = response.mutable_headers();
       headers->iterate(
           [](const Envoy::Http::HeaderEntry& header,
