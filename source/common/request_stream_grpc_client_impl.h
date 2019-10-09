@@ -52,6 +52,7 @@ public:
 
 private:
   static const std::string METHOD_NAME;
+  RequestPtr messageToRequest(const nighthawk::client::RequestStreamResponse& message) const;
   void trySendRequest();
   Envoy::Grpc::AsyncClient<nighthawk::client::RequestStreamRequest,
                            nighthawk::client::RequestStreamResponse>

@@ -154,11 +154,14 @@ RequestSourcePtr ServiceImpl::createStaticEmptyRequestSource(const uint32_t amou
             return Envoy::Http::HeaderMap::Iterate::Continue;
           },
           request_headers);
+      // TODO(oschaaf): add static configuration for other fields plus expectations, so we can
+      // go something like the following here:
+      // response.mutable_content_length()->set_value(1);
+      // auto* expectation = response.add_expectations();
+      // expectation->set_input_header(":status");
+      // expectation->set_name("response_code_is_ok");
+      // etc..
       ok = ok && stream->Write(response);
-      response.set_content_length(1);
-      auto* expectation = response.add_expectations();
-      expectation->set_input_header(":status");
-      expectation->set_name("response_code_is_ok");
     }
     if (!ok) {
       ENVOY_LOG(error, "Failed to send the complete set of replay data.");

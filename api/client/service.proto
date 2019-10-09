@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package nighthawk.client;
 
+import "google/protobuf/wrappers.proto";
 import "google/rpc/status.proto";
 import "validate/validate.proto";
 import "envoy/api/v2/core/base.proto";
@@ -68,19 +69,19 @@ message Expectation {
 
 message RequestStreamResponse {
   // method/path/uri/authority/content_length can all be expressed in request headers.
-  // so technically they are redundant. In case of ambiguity, the explicit fields prevail.
+  // so technically they are redundant. In case of ambiguity headers may end up being duplicated.
   // Note that as of today, the target upstream/cluster that will be used to replay traffic to
   // fixes the destination address/port
-  string method = 1;
-  string uri = 2;
-  string authority = 3;
+  google.protobuf.StringValue method = 1;
+  google.protobuf.StringValue uri = 2; // XXX(oschaaf): path?
+  google.protobuf.StringValue authority = 3;
   envoy.api.v2.core.HeaderMap headers = 4;
-  uint32 content_length = 5;
+  google.protobuf.UInt32Value content_length = 5;
 
   repeated Expectation expectations = 6;
 
   // TODO(oschaaf): nice to have
-  string sni_hostname = 10;
+  // google.protobuf.StringValue sni_hostname = 10;
 }
 
 service NighthawkService {

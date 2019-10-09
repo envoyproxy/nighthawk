@@ -66,24 +66,47 @@ void RequestStreamGrpcClientImpl::onRemoteClose(Envoy::Grpc::Status::GrpcStatus 
   stream_ = nullptr;
 }
 
+RequestPtr RequestStreamGrpcClientImpl::messageToRequest(
+    const nighthawk::client::RequestStreamResponse& message) const {
+  auto header = std::make_shared<Envoy::Http::HeaderMapImpl>(base_header_);
+  RequestPtr request = std::make_unique<RequestImpl>(header);
+  if (message.has_headers()) {
+    const auto& message_request_headers = message.headers();
+    for (const auto& message_header : message_request_headers.headers()) {
+      header->addCopy(Envoy::Http::LowerCaseString(message_header.key()), message_header.value());
+    }
+  }
+  if (message.has_content_length()) {
+    std::string s_content_length = absl::StrCat("", message.content_length().value());
+    header->insertContentLength().value(s_content_length);
+  }
+  if (message.has_authority()) {
+    header->insertHost().value(message.authority().value());
+  }
+  if (message.has_uri()) {
+    header->insertPath().value(message.uri().value());
+  }
+  if (message.has_method()) {
+    header->insertMethod().value(message.method().value());
+  }
+
+  // TODO(oschaaf): associate the expectations from the proto to the request,
+  // and process those by verifying expectations on request completion.
+  return request;
+}
+
 RequestPtr RequestStreamGrpcClientImpl::maybeDequeue() {
+  RequestPtr request = nullptr;
   if (!messages_.empty()) {
     const auto& message = messages_.front();
-    auto header = std::make_shared<Envoy::Http::HeaderMapImpl>(base_header_);
-    if (message->has_headers()) {
-      const auto& message_request_headers = message->headers();
-      for (const auto& message_header : message_request_headers.headers()) {
-        header->addCopy(Envoy::Http::LowerCaseString(message_header.key()), message_header.value());
-      }
-    }
+    request = messageToRequest(*message);
     messages_.pop();
     if (in_flight_headers_ == 0 && messages_.size() < header_buffer_length_) {
       trySendRequest();
     }
-
-    return std::make_unique<RequestImpl>(header);
   }
-  return nullptr;
+
+  return request;
 }
 
 void RequestStreamGrpcClientImpl::emplaceMessage(

@@ -8,7 +8,7 @@ namespace Nighthawk {
 
 class RequestImpl : public Request {
 public:
-  RequestImpl(HeaderMapPtr header) : header_(header) {}
+  RequestImpl(HeaderMapPtr header) : header_(std::move(header)) {}
   HeaderMapPtr header() const override { return header_; }
 
 private:
