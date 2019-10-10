@@ -279,3 +279,15 @@ envoy_cc_test(
         "@envoy//test/test_common:network_utility_lib",
     ],
 )
+
+envoy_cc_test(
+    name = "termination_predicate_test",
+    srcs = ["termination_predicate_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/common:nighthawk_common_lib",
+        "//test:nighthawk_mocks",
+        "@envoy//test/mocks/event:event_mocks",
+        "@envoy//test/test_common:simulated_time_system_lib",
+    ],
+)
