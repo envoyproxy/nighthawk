@@ -7,7 +7,7 @@ go get -u github.com/google/pprof
 
 ## Envoy build
 
-See [building envoy with bazel](https://github.com/envoyproxy/envoy/tree/master/bazel#building-envoy-with-bazel).
+See [building Envoy with Bazel](https://github.com/envoyproxy/envoy/tree/master/bazel#building-envoy-with-bazel).
 
 Envoy’s static build is set up for profiling and can be build with:
 
@@ -38,14 +38,16 @@ admin:
   profile_path: /tmp/envoy.prof
   address:
     socket_address: { address: $server_ip, port_value: 0 }
-Static_resources:
+static_resources:
 .. your configuration ..
 ```
+
+Also see some simple complete configuration examples [here](test/integration/configurations).
 
 ## Run Envoy
 
 ```bash
-taskset /path/to/envoy-repo/bazel-bin/envoy-static --config-path /path/to/envoy-config.yaml
+/path/to/envoy-repo/bazel-bin/envoy-static --config-path /path/to/envoy-config.yaml
 ```
 
 Enable cpu profiling through Envoy’s admin interface 
@@ -63,7 +65,7 @@ Note: there’s also [PR #160](https://github.com/envoyproxy/nighthawk/pull/160)
 Run your test. For example Nighthawk.
 
 ```bash
-taskset /path/to/nighthawk-repo/bazel-bin/nighthawk_client --concurrency 5 --rps 10000 --duration 30 http://envoy-cluster-host:envoy-cluster-port
+/path/to/nighthawk-repo/bazel-bin/nighthawk_client --concurrency 5 --rps 10000 --duration 30 http://envoy-cluster-host:envoy-cluster-port
 ```
 
 Run pprof web UI
