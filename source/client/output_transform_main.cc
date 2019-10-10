@@ -14,9 +14,8 @@
 #include "client/output_formatter_impl.h"
 
 #include "absl/strings/strip.h"
-#include "tclap/CmdLine.h"
-
 #include "fmt/ranges.h"
+#include "tclap/CmdLine.h"
 
 namespace Nighthawk {
 namespace Client {

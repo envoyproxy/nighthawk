@@ -5,9 +5,10 @@
 
 #include "api/client/options.pb.validate.h"
 
-#include "client/output_formatter_impl.h"
 #include "common/uri_impl.h"
 #include "common/utility.h"
+
+#include "client/output_formatter_impl.h"
 
 #include "absl/strings/str_split.h"
 #include "fmt/ranges.h"
