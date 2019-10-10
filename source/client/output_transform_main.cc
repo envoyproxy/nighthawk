@@ -11,9 +11,12 @@
 #include "client/factories_impl.h"
 #include "client/options_impl.h"
 #include "client/output_collector_impl.h"
+#include "client/output_formatter_impl.h"
 
 #include "absl/strings/strip.h"
 #include "tclap/CmdLine.h"
+
+#include "fmt/ranges.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -22,15 +25,11 @@ OutputTransformMain::OutputTransformMain(int argc, const char* const* argv, std:
     : input_(input) {
   const char* descr = "L7 (HTTP/HTTPS/HTTP2) performance characterization transformation tool.";
   TCLAP::CmdLine cmd(descr, ' ', "PoC"); // NOLINT
-
-  // TODO(oschaaf): create a canonicalize way to get the supported output formats.
-  // De-duplicate the code here arg handling code with the nighthawk_client CLI
-  std::vector<std::string> output_formats = {"human", "yaml", "json"};
+  std::vector<std::string> output_formats = OutputFormatterImpl::getLowerCaseOutputFormats();
   TCLAP::ValuesConstraint<std::string> output_formats_allowed(output_formats);
-  output_format_ = "";
   TCLAP::ValueArg<std::string> output_format(
-      "", "output-format", fmt::format("Output format. Possible values: [human, yaml, json]."),
-      true, "", &output_formats_allowed, cmd);
+      "", "output-format", fmt::format("Output format. Possible values: {}.", output_formats), true,
+      "", &output_formats_allowed, cmd);
   Utility::parseCommand(cmd, argc, argv);
   output_format_ = output_format.getValue();
 }

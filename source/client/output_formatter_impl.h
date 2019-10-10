@@ -16,6 +16,7 @@ namespace Client {
 class OutputFormatterImpl : public OutputFormatter {
 public:
   void setProto(const nighthawk::client::Output& output) override { output_ = output; }
+  static std::vector<std::string> getLowerCaseOutputFormats();
 
 protected:
   nighthawk::client::Output output_;
