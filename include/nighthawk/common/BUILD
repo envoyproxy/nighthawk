@@ -18,6 +18,7 @@ envoy_basic_cc_library(
         "request_stream_grpc_client.h",
         "sequencer.h",
         "statistic.h",
+        "termination_predicate.h",
         "uri.h",
         "worker.h",
     ],
