@@ -9,7 +9,9 @@
 namespace Nighthawk {
 namespace Client {
 
-// TODO(oschaaf): Consider renaming to outputProtoBuilder or some such.
+/**
+ * Facilitates building up an output proto from Nighthawk's native data structures.
+ */
 class OutputCollector {
 public:
   virtual ~OutputCollector() = default;

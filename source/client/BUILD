@@ -99,7 +99,6 @@ envoy_cc_library(
     deps = [
         "//api/client:base_cc",
         "//include/nighthawk/client:client_includes",
-        "@envoy//source/common/network:utility_lib_with_external_headers",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
     ],
 )

@@ -12,6 +12,7 @@ filegroup(
     name = "nighthawk",
     srcs = [
         ":nighthawk_client",
+        ":nighthawk_output_transform",
         ":nighthawk_service",
         ":nighthawk_test_server",
     ],

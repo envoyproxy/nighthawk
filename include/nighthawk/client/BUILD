@@ -40,6 +40,7 @@ envoy_basic_cc_library(
     hdrs = ["output_collector.h"],
     include_prefix = "nighthawk/client",
     deps = [
+        "//api/client:base_cc",
         "//include/nighthawk/common:base_includes",
         "@envoy//include/envoy/common:base_includes",
     ],

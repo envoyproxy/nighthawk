@@ -9,6 +9,9 @@
 namespace Nighthawk {
 namespace Client {
 
+/**
+ * Transforms from nighthawk::client::Output to an output format.
+ */
 class OutputFormatter {
 public:
   virtual ~OutputFormatter() = default;
