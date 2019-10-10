@@ -21,6 +21,7 @@ envoy_basic_cc_library(
     include_prefix = "nighthawk/client",
     deps = [
         "//include/nighthawk/common:base_includes",
+        "//include/nighthawk/common:request_lib",
         "@envoy//include/envoy/common:base_includes",
         "@envoy//include/envoy/http:conn_pool_interface_with_external_headers",
         "@envoy//source/common/api:api_lib_with_external_headers",
