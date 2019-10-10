@@ -52,8 +52,7 @@ bool Main::run() {
   OutputCollectorImpl output_collector(time_system, *options_);
   if (process.run(output_collector)) {
     auto formatter = output_formatter_factory.create(options_->outputFormat());
-    formatter->setProto(output_collector.toProto());
-    std::cout << formatter->toString();
+    std::cout << formatter->formatProto(output_collector.toProto());
     process.shutdown();
     ENVOY_LOG(info, "Done.");
     return true;

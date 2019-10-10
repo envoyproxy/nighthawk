@@ -17,8 +17,7 @@ namespace Client {
 class OutputFormatter {
 public:
   virtual ~OutputFormatter() = default;
-  virtual void setProto(const nighthawk::client::Output& output) PURE;
-  virtual std::string toString() const PURE;
+  virtual std::string formatProto(const nighthawk::client::Output& output) const PURE;
 };
 
 using OutputFormatterPtr = std::unique_ptr<OutputFormatter>;

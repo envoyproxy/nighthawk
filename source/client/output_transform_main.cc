@@ -35,10 +35,7 @@ OutputTransformMain::OutputTransformMain(int argc, const char* const* argv, std:
 
 std::string OutputTransformMain::readInput() {
   std::stringstream input;
-  std::string line;
-  while (getline(input_, line)) {
-    input << line << std::endl;
-  }
+  input << input_.rdbuf();
   return input.str();
 }
 
@@ -60,8 +57,7 @@ uint32_t OutputTransformMain::run() {
   }
   OutputFormatterFactoryImpl factory;
   OutputFormatterPtr formatter = factory.create(translated_format);
-  formatter->setProto(output);
-  std::cout << formatter->toString();
+  std::cout << formatter->formatProto(output);
   return 0;
 }
 

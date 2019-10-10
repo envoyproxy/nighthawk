@@ -44,10 +44,10 @@ public:
     setupCollector();
   }
 
-  void expectEqualToGoldFile(OutputFormatter& formatter, absl::string_view path) {
+  void expectEqualToGoldFile(absl::string_view output, absl::string_view path) {
     EXPECT_EQ(Envoy::Filesystem::fileSystemForTest().fileReadToEnd(
                   TestEnvironment::runfilesPath(std::string(path))),
-              formatter.toString());
+              output);
   }
 
   void setupCollector() {
@@ -67,20 +67,20 @@ public:
 
 TEST_F(OutputCollectorTest, CliFormatter) {
   ConsoleOutputFormatterImpl formatter;
-  formatter.setProto(collector_->toProto());
-  expectEqualToGoldFile(formatter, "test/test_data/output_formatter.txt.gold");
+  expectEqualToGoldFile(formatter.formatProto(collector_->toProto()),
+                        "test/test_data/output_formatter.txt.gold");
 }
 
 TEST_F(OutputCollectorTest, JsonFormatter) {
   JsonOutputFormatterImpl formatter;
-  formatter.setProto(collector_->toProto());
-  expectEqualToGoldFile(formatter, "test/test_data/output_formatter.json.gold");
+  expectEqualToGoldFile(formatter.formatProto(collector_->toProto()),
+                        "test/test_data/output_formatter.json.gold");
 }
 
 TEST_F(OutputCollectorTest, YamlFormatter) {
   YamlOutputFormatterImpl formatter;
-  formatter.setProto(collector_->toProto());
-  expectEqualToGoldFile(formatter, "test/test_data/output_formatter.yaml.gold");
+  expectEqualToGoldFile(formatter.formatProto(collector_->toProto()),
+                        "test/test_data/output_formatter.yaml.gold");
 }
 
 TEST_F(OutputCollectorTest, getLowerCaseOutputFormats) {

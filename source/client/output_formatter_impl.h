@@ -15,17 +15,12 @@ namespace Client {
 
 class OutputFormatterImpl : public OutputFormatter {
 public:
-  void setProto(const nighthawk::client::Output& output) override { output_ = output; }
   static std::vector<std::string> getLowerCaseOutputFormats();
-
-protected:
-  nighthawk::client::Output output_;
 };
 
 class ConsoleOutputFormatterImpl : public OutputFormatterImpl {
 public:
-  using OutputFormatterImpl::OutputFormatterImpl;
-  std::string toString() const override;
+  std::string formatProto(const nighthawk::client::Output& output) const override;
   static std::string statIdtoFriendlyStatName(absl::string_view stat_id);
 
 private:
@@ -34,14 +29,12 @@ private:
 
 class JsonOutputFormatterImpl : public OutputFormatterImpl {
 public:
-  using OutputFormatterImpl::OutputFormatterImpl;
-  std::string toString() const override;
+  std::string formatProto(const nighthawk::client::Output& output) const override;
 };
 
 class YamlOutputFormatterImpl : public OutputFormatterImpl {
 public:
-  using OutputFormatterImpl::OutputFormatterImpl;
-  std::string toString() const override;
+  std::string formatProto(const nighthawk::client::Output& output) const override;
 };
 
 } // namespace Client

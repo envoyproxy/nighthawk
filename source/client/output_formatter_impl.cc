@@ -25,9 +25,8 @@ std::vector<std::string> OutputFormatterImpl::getLowerCaseOutputFormats() {
   return values;
 }
 
-std::string ConsoleOutputFormatterImpl::toString() const {
+std::string ConsoleOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
   std::stringstream ss;
-  const auto& output = output_;
   ss << "Nighthawk - A layer 7 protocol benchmarking tool." << std::endl << std::endl;
   for (const auto& result : output.results()) {
     if (result.name() == "global") {
@@ -92,12 +91,12 @@ std::string ConsoleOutputFormatterImpl::statIdtoFriendlyStatName(absl::string_vi
   return std::string(stat_id);
 }
 
-std::string JsonOutputFormatterImpl::toString() const {
-  return Envoy::MessageUtil::getJsonStringFromMessage(output_, true, true);
+std::string JsonOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
+  return Envoy::MessageUtil::getJsonStringFromMessage(output, true, true);
 }
 
-std::string YamlOutputFormatterImpl::toString() const {
-  return Envoy::MessageUtil::getYamlStringFromMessage(output_, true, true);
+std::string YamlOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
+  return Envoy::MessageUtil::getYamlStringFromMessage(output, true, true);
 }
 
 } // namespace Client
