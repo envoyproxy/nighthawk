@@ -11,7 +11,7 @@ namespace Nighthawk {
 namespace Client {
 
 std::vector<std::string> OutputFormatterImpl::getLowerCaseOutputFormats() {
-  const google::protobuf::EnumDescriptor* enum_descriptor =
+  const Envoy::Protobuf::EnumDescriptor* enum_descriptor =
       nighthawk::client::OutputFormat::OutputFormatOptions_descriptor();
   std::vector<std::string> values;
   // We skip the first, which is DEFAULT, as it's not selectable.
