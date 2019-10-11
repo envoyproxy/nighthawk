@@ -80,7 +80,6 @@ def test_http_h1_mini_stress_test_with_client_side_queueing(http_test_server_fix
   - upstream_cx_overflow overflows
   - blocking to be reported by the sequencer
   """
-  http_test_server_fixture.test_server.enableCpuProfiler()
   counters = mini_stress_test_h1(http_test_server_fixture, [
       http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--max-pending-requests",
       "10", "--duration 10"
