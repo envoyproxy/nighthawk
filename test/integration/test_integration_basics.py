@@ -5,9 +5,10 @@ import os
 import sys
 import pytest
 
-from common import IpVersion
-from integration_test_fixtures import (http_test_server_fixture, https_test_server_fixture)
-from utility import *
+from test.integration.common import IpVersion
+from test.integration.integration_test_fixtures import (http_test_server_fixture,
+                                                        https_test_server_fixture)
+from test.integration.utility import *
 
 # TODO(oschaaf): we mostly verify stats observed from the client-side. Add expectations
 # for the server side as well.

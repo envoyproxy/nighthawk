@@ -13,8 +13,8 @@ import threading
 import time
 import pytest
 
-from common import IpVersion, NighthawkException
-from nighthawk_test_server import NighthawkTestServer
+from test.integration.common import IpVersion, NighthawkException
+from test.integration.nighthawk_test_server import NighthawkTestServer
 
 
 def determineIpVersionsFromEnvironment():

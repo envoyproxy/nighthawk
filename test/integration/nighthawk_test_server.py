@@ -12,7 +12,7 @@ import threading
 import time
 from string import Template
 
-from common import IpVersion, NighthawkException
+from test.integration.common import IpVersion, NighthawkException
 
 
 class TestServerBase(object):
