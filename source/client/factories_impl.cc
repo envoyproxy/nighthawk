@@ -13,6 +13,7 @@
 
 #include "client/benchmark_client_impl.h"
 #include "client/output_collector_impl.h"
+#include "client/output_formatter_impl.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -73,20 +74,17 @@ StatisticFactoryImpl::StatisticFactoryImpl(const Options& options)
 
 StatisticPtr StatisticFactoryImpl::create() const { return std::make_unique<HdrStatistic>(); }
 
-OutputCollectorFactoryImpl::OutputCollectorFactoryImpl(Envoy::TimeSource& time_source,
-                                                       const Options& options)
-    : OptionBasedFactoryImpl(options), time_source_(time_source) {}
-
-OutputCollectorPtr OutputCollectorFactoryImpl::create() const {
-  switch (options_.outputFormat()) {
+OutputFormatterPtr OutputFormatterFactoryImpl::create(
+    const nighthawk::client::OutputFormat_OutputFormatOptions output_format) const {
+  switch (output_format) {
   case nighthawk::client::OutputFormat::HUMAN:
-    return std::make_unique<Client::ConsoleOutputCollectorImpl>(time_source_, options_);
+    return std::make_unique<Client::ConsoleOutputFormatterImpl>();
   case nighthawk::client::OutputFormat::JSON:
-    return std::make_unique<Client::JsonOutputCollectorImpl>(time_source_, options_);
+    return std::make_unique<Client::JsonOutputFormatterImpl>();
   case nighthawk::client::OutputFormat::YAML:
-    return std::make_unique<Client::YamlOutputCollectorImpl>(time_source_, options_);
+    return std::make_unique<Client::YamlOutputFormatterImpl>();
   case nighthawk::client::OutputFormat::DOTTED:
-    return std::make_unique<Client::DottedStringOutputCollectorImpl>(time_source_, options_);
+    return std::make_unique<Client::DottedStringOutputFormatterImpl>();
   default:
     NOT_REACHED_GCOVR_EXCL_LINE;
   }
