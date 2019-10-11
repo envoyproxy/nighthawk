@@ -149,6 +149,10 @@ case "$1" in
         exit 0
     ;;
     clang_tidy)
+        if [ -n "$CIRCLECI" ]; then
+            # Decrease parallelism to avoid running out of memory
+            NUM_CPUS=7
+        fi
         do_clang_tidy
         exit 0
     ;;
