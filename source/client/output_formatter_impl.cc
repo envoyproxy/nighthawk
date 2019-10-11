@@ -27,7 +27,7 @@ std::vector<std::string> OutputFormatterImpl::getLowerCaseOutputFormats() {
 
 void OutputFormatterImpl::iteratePercentiles(
     const nighthawk::client::Statistic& statistic,
-    std::function<void(const nighthawk::client::Percentile&)> callback) const {
+    const std::function<void(const nighthawk::client::Percentile&)>& callback) const {
   // The proto percentiles are ordered ascending. We write the first match to the stream.
   double last_percentile = -1.;
   for (const double p : {.5, .75, .8, .9, .95, .99, .999, 1.}) {
