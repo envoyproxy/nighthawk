@@ -99,15 +99,16 @@ envoy_cc_test(
 )
 
 envoy_cc_test(
-    name = "output_collector_test",
-    srcs = ["output_collector_test.cc"],
+    name = "output_formatter_test",
+    srcs = ["output_formatter_test.cc"],
     data = [
-        "test_data/output_collector.json.gold",
-        "test_data/output_collector.txt.gold",
-        "test_data/output_collector.yaml.gold",
+        "test_data/output_formatter.json.gold",
+        "test_data/output_formatter.txt.gold",
+        "test_data/output_formatter.yaml.gold",
     ],
     repository = "@envoy",
     deps = [
+        "//source/client:output_formatter_impl_lib",
         "//source/common:nighthawk_common_lib",
         "//test:nighthawk_mocks",
         "//test/test_common:environment_lib",
@@ -151,9 +152,9 @@ envoy_cc_test(
     srcs = ["sequencer_test.cc"],
     data = [
         "test_data/hdr_proto_json.gold",
-        "test_data/output_collector.json.gold",
-        "test_data/output_collector.txt.gold",
-        "test_data/output_collector.yaml.gold",
+        "test_data/output_formatter.json.gold",
+        "test_data/output_formatter.txt.gold",
+        "test_data/output_formatter.yaml.gold",
     ],
     repository = "@envoy",
     deps = [
@@ -265,5 +266,28 @@ envoy_cc_test(
         "//source/server:http_test_server_filter_lib",
         "//test/test_common:environment_lib",
         "@envoy//test/test_common:network_utility_lib",
+    ],
+)
+
+envoy_cc_test(
+    name = "output_transform_main_test",
+    srcs = ["output_transform_main_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/client:output_transform_main_lib",
+        "//test/test_common:environment_lib",
+        "@envoy//test/test_common:network_utility_lib",
+    ],
+)
+
+envoy_cc_test(
+    name = "termination_predicate_test",
+    srcs = ["termination_predicate_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/common:nighthawk_common_lib",
+        "//test:nighthawk_mocks",
+        "@envoy//test/mocks/event:event_mocks",
+        "@envoy//test/test_common:simulated_time_system_lib",
     ],
 )

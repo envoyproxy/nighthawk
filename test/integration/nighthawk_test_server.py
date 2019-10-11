@@ -84,7 +84,7 @@ class TestServerBase(object):
       self.server_port = listeners["listener_statuses"][0]["local_address"]["socket_address"][
           "port_value"]
       return True
-    except ConnectionError:
+    except requests.exceptions.ConnectionError:
       return False
 
   def enableCpuProfiler(self):
@@ -95,7 +95,9 @@ class TestServerBase(object):
     r = requests.post(uri)
 
   def waitUntilServerListening(self):
-    timeout = time.time() + 5
+    # we allow 30 seconds for the server to have its listeners up.
+    # (It seems that in sanitizer-enabled runs this can take a little while)
+    timeout = time.time() + 30
     while time.time() < timeout:
       if self.tryUpdateFromAdminInterface():
         return True
