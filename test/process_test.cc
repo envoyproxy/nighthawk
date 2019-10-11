@@ -5,6 +5,7 @@
 #include "external/envoy/test/test_common/utility.h"
 
 #include "client/options_impl.h"
+#include "client/output_collector_impl.h"
 #include "client/process_impl.h"
 
 #include "test/client/utility.h"
@@ -30,10 +31,9 @@ public:
             fmt::format("foo --duration 1 -v error --rps 10 https://{}/", loopback_address_))){};
   void runProcess(RunExpectation expectation) {
     ProcessPtr process = std::make_unique<ProcessImpl>(*options_, time_system_);
-    OutputCollectorFactoryImpl output_format_factory(time_system_, *options_);
-    auto collector = output_format_factory.create();
+    OutputCollectorImpl collector(time_system_, *options_);
     const auto result =
-        process->run(*collector) ? RunExpectation::EXPECT_SUCCESS : RunExpectation::EXPECT_FAILURE;
+        process->run(collector) ? RunExpectation::EXPECT_SUCCESS : RunExpectation::EXPECT_FAILURE;
     EXPECT_EQ(result, expectation);
     process->shutdown();
   }

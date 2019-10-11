@@ -4,9 +4,8 @@
 
 #include "envoy/common/time.h"
 
+#include "nighthawk/client/options.h"
 #include "nighthawk/client/output_collector.h"
-
-#include "external/envoy/source/common/protobuf/protobuf.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -26,28 +25,6 @@ public:
 
 private:
   nighthawk::client::Output output_;
-};
-
-class ConsoleOutputCollectorImpl : public OutputCollectorImpl {
-public:
-  ConsoleOutputCollectorImpl(Envoy::TimeSource& time_source, const Options& options);
-  std::string toString() const override;
-  static std::string statIdtoFriendlyStatName(absl::string_view stat_id);
-
-private:
-  std::string formatProtoDuration(const Envoy::ProtobufWkt::Duration& duration) const;
-};
-
-class JsonOutputCollectorImpl : public OutputCollectorImpl {
-public:
-  JsonOutputCollectorImpl(Envoy::TimeSource& time_source, const Options& options);
-  std::string toString() const override;
-};
-
-class YamlOutputCollectorImpl : public OutputCollectorImpl {
-public:
-  YamlOutputCollectorImpl(Envoy::TimeSource& time_source, const Options& options);
-  std::string toString() const override;
 };
 
 } // namespace Client
