@@ -16,7 +16,6 @@ envoy_cc_library(
         "client_worker_impl.cc",
         "factories_impl.cc",
         "options_impl.cc",
-        "output_collector_impl.cc",
         "process_impl.cc",
         "stream_decoder.cc",
     ],
@@ -26,7 +25,6 @@ envoy_cc_library(
         "client_worker_impl.h",
         "factories_impl.h",
         "options_impl.h",
-        "output_collector_impl.h",
         "process_impl.h",
         "stream_decoder.h",
     ],
@@ -37,6 +35,8 @@ envoy_cc_library(
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
+        ":output_collector_impl_lib",
+        ":output_formatter_impl_lib",
         "//api/client:base_cc",
         "//include/nighthawk/client:client_includes",
         "//include/nighthawk/common:base_includes",
@@ -88,6 +88,41 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
+    name = "output_collector_impl_lib",
+    srcs = [
+        "output_collector_impl.cc",
+    ],
+    hdrs = [
+        "output_collector_impl.h",
+    ],
+    repository = "@envoy",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//api/client:base_cc",
+        "//include/nighthawk/client:client_includes",
+        "@envoy//source/common/protobuf:utility_lib_with_external_headers",
+    ],
+)
+
+envoy_cc_library(
+    name = "output_formatter_impl_lib",
+    srcs = [
+        "output_formatter_impl.cc",
+    ],
+    hdrs = [
+        "output_formatter_impl.h",
+    ],
+    repository = "@envoy",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//api/client:base_cc",
+        "//include/nighthawk/client:client_includes",
+        "@envoy//source/common/network:utility_lib_with_external_headers",
+        "@envoy//source/common/protobuf:utility_lib_with_external_headers",
+    ],
+)
+
+envoy_cc_library(
     name = "nighthawk_service_lib",
     srcs = [
         "service_impl.cc",
@@ -103,5 +138,22 @@ envoy_cc_library(
         ":nighthawk_client_lib",
         "//api/client:grpc_service_lib",
         "@envoy//source/common/common:thread_lib_with_external_headers",
+    ],
+)
+
+envoy_cc_library(
+    name = "output_transform_main_lib",
+    srcs = [
+        "output_transform_main.cc",
+    ],
+    hdrs = [
+        "output_transform_main.h",
+    ],
+    repository = "@envoy",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":nighthawk_client_lib",
+        ":output_collector_impl_lib",
+        "//source/common:nighthawk_common_lib",
     ],
 )

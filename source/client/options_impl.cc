@@ -8,7 +8,10 @@
 #include "common/uri_impl.h"
 #include "common/utility.h"
 
+#include "client/output_formatter_impl.h"
+
 #include "absl/strings/str_split.h"
+#include "fmt/ranges.h"
 #include "tclap/CmdLine.h"
 
 namespace Nighthawk {
@@ -73,14 +76,15 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
                   verbosity_),
       false, "", &verbosities_allowed, cmd);
 
-  std::vector<std::string> output_formats = {"human", "yaml", "json"};
+  std::vector<std::string> output_formats = OutputFormatterImpl::getLowerCaseOutputFormats();
   TCLAP::ValuesConstraint<std::string> output_formats_allowed(output_formats);
-
   TCLAP::ValueArg<std::string> output_format(
       "", "output-format",
-      fmt::format("Verbosity of the output. Possible values: [human, yaml, json]. The "
+      fmt::format("Output format. Possible values: {}. The "
                   "default output format is '{}'.",
-                  output_format_),
+                  output_formats,
+                  absl::AsciiStrToLower(
+                      nighthawk::client::OutputFormat_OutputFormatOptions_Name(output_format_))),
       false, "", &output_formats_allowed, cmd);
 
   TCLAP::SwitchArg prefetch_connections(                         // NOLINT

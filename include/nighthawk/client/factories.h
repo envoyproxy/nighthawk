@@ -12,6 +12,7 @@
 #include "nighthawk/client/benchmark_client.h"
 #include "nighthawk/client/options.h"
 #include "nighthawk/client/output_collector.h"
+#include "nighthawk/client/output_formatter.h"
 #include "nighthawk/common/platform_util.h"
 #include "nighthawk/common/request_source.h"
 #include "nighthawk/common/sequencer.h"
@@ -52,10 +53,11 @@ public:
   virtual StatisticPtr create() const PURE;
 };
 
-class OutputCollectorFactory {
+class OutputFormatterFactory {
 public:
-  virtual ~OutputCollectorFactory() = default;
-  virtual OutputCollectorPtr create() const PURE;
+  virtual ~OutputFormatterFactory() = default;
+  virtual OutputFormatterPtr
+  create(const nighthawk::client::OutputFormat_OutputFormatOptions) const PURE;
 };
 
 } // namespace Client

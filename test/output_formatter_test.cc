@@ -8,6 +8,7 @@
 #include "common/statistic_impl.h"
 
 #include "client/output_collector_impl.h"
+#include "client/output_formatter_impl.h"
 
 #include "test_common/environment.h"
 
@@ -40,15 +41,20 @@ public:
     EXPECT_CALL(options_, toCommandLineOptions())
         .WillOnce(Return(ByMove(
             std::make_unique<nighthawk::client::CommandLineOptions>(command_line_options_))));
+    setupCollector();
   }
 
-  void expectEqualToGoldFile(OutputCollectorImpl& collector, absl::string_view path) {
-    collector.addResult("worker_0", statistics_, counters_);
-    collector.addResult("worker_1", statistics_, counters_);
-    collector.addResult("global", statistics_, counters_);
+  void expectEqualToGoldFile(absl::string_view output, absl::string_view path) {
     EXPECT_EQ(Envoy::Filesystem::fileSystemForTest().fileReadToEnd(
                   TestEnvironment::runfilesPath(std::string(path))),
-              collector.toString());
+              output);
+  }
+
+  void setupCollector() {
+    collector_ = std::make_unique<OutputCollectorImpl>(time_system_, options_);
+    collector_->addResult("worker_0", statistics_, counters_);
+    collector_->addResult("worker_1", statistics_, counters_);
+    collector_->addResult("global", statistics_, counters_);
   }
 
   nighthawk::client::CommandLineOptions command_line_options_;
@@ -56,33 +62,44 @@ public:
   MockOptions options_;
   std::vector<StatisticPtr> statistics_;
   std::map<std::string, uint64_t> counters_;
+  OutputCollectorPtr collector_;
 };
 
 TEST_F(OutputCollectorTest, CliFormatter) {
-  ConsoleOutputCollectorImpl collector(time_system_, options_);
-  expectEqualToGoldFile(collector, "test/test_data/output_collector.txt.gold");
+  ConsoleOutputFormatterImpl formatter;
+  expectEqualToGoldFile(formatter.formatProto(collector_->toProto()),
+                        "test/test_data/output_formatter.txt.gold");
 }
 
 TEST_F(OutputCollectorTest, JsonFormatter) {
-  JsonOutputCollectorImpl collector(time_system_, options_);
-  expectEqualToGoldFile(collector, "test/test_data/output_collector.json.gold");
+  JsonOutputFormatterImpl formatter;
+  expectEqualToGoldFile(formatter.formatProto(collector_->toProto()),
+                        "test/test_data/output_formatter.json.gold");
 }
 
 TEST_F(OutputCollectorTest, YamlFormatter) {
-  YamlOutputCollectorImpl collector(time_system_, options_);
-  expectEqualToGoldFile(collector, "test/test_data/output_collector.yaml.gold");
+  YamlOutputFormatterImpl formatter;
+  expectEqualToGoldFile(formatter.formatProto(collector_->toProto()),
+                        "test/test_data/output_formatter.yaml.gold");
+}
+
+TEST_F(OutputCollectorTest, getLowerCaseOutputFormats) {
+  auto output_formats = OutputFormatterImpl::getLowerCaseOutputFormats();
+  // When you're looking at this code you probably just added an output format.
+  // This is to point out that you might want to update the list below and add a test above.
+  ASSERT_THAT(output_formats, ElementsAre("json", "human", "yaml"));
 }
 
 class StatidToNameTest : public Test {};
 
 TEST_F(StatidToNameTest, TestTranslations) {
   // Well known id's shouldn't be returned as-is, but unknown ones should.
-  EXPECT_EQ(ConsoleOutputCollectorImpl::statIdtoFriendlyStatName("foo"), "foo");
+  EXPECT_EQ(ConsoleOutputFormatterImpl::statIdtoFriendlyStatName("foo"), "foo");
   const std::vector<std::string> ids = {"benchmark_http_client.queue_to_connect",
                                         "benchmark_http_client.request_to_response",
                                         "sequencer.callback", "sequencer.blocking"};
   for (const std::string& id : ids) {
-    EXPECT_NE(ConsoleOutputCollectorImpl::statIdtoFriendlyStatName(id), id);
+    EXPECT_NE(ConsoleOutputFormatterImpl::statIdtoFriendlyStatName(id), id);
   }
 }
 

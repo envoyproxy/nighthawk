@@ -26,6 +26,7 @@
 #include "client/client_worker_impl.h"
 #include "client/factories_impl.h"
 #include "client/options_impl.h"
+#include "client/output_collector_impl.h"
 #include "client/process_impl.h"
 
 using namespace std::chrono_literals;
@@ -47,11 +48,11 @@ bool Main::run() {
       "[%T.%f][%t][%L] %v", log_lock);
   Envoy::Event::RealTimeSystem time_system; // NO_CHECK_FORMAT(real_time)
   ProcessImpl process(*options_, time_system);
-  OutputCollectorFactoryImpl output_format_factory(time_system, *options_);
-  auto collector = output_format_factory.create();
-  if (process.run(*collector)) {
-    // TODO(oschaaf): the way we output should be optionized.
-    std::cout << collector->toString();
+  OutputFormatterFactoryImpl output_formatter_factory;
+  OutputCollectorImpl output_collector(time_system, *options_);
+  if (process.run(output_collector)) {
+    auto formatter = output_formatter_factory.create(options_->outputFormat());
+    std::cout << formatter->formatProto(output_collector.toProto());
     process.shutdown();
     ENVOY_LOG(info, "Done.");
     return true;
