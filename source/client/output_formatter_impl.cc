@@ -25,6 +25,22 @@ std::vector<std::string> OutputFormatterImpl::getLowerCaseOutputFormats() {
   return values;
 }
 
+void OutputFormatterImpl::iteratePercentiles(
+    const nighthawk::client::Statistic& statistic,
+    std::function<void(const nighthawk::client::Percentile&)> callback) const {
+  // The proto percentiles are ordered ascending. We write the first match to the stream.
+  double last_percentile = -1.;
+  for (const double p : {.5, .75, .8, .9, .95, .99, .999, 1.}) {
+    for (const auto& percentile : statistic.percentiles()) {
+      if (percentile.percentile() >= p && last_percentile < percentile.percentile()) {
+        last_percentile = percentile.percentile();
+        callback(percentile);
+        break;
+      }
+    }
+  }
+}
+
 std::string ConsoleOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
   std::stringstream ss;
   ss << "Nighthawk - A layer 7 protocol benchmarking tool." << std::endl << std::endl;
@@ -41,21 +57,11 @@ std::string ConsoleOutputFormatterImpl::formatProto(const nighthawk::client::Out
         ss << std::endl;
         ss << fmt::format("  {:<{}}{:<{}}{:<{}}", "Percentile", 12, "Count", 12, "Latency", 15)
            << std::endl;
-
-        // The proto percentiles are ordered ascending. We write the first match to the stream.
-        double last_percentile = -1.;
-        for (const double p : {.0, .5, .75, .8, .9, .95, .99, .999, 1.}) {
-          for (const auto& percentile : statistic.percentiles()) {
-            if (percentile.percentile() >= p && last_percentile < percentile.percentile()) {
-              last_percentile = percentile.percentile();
-              ss << fmt::format("  {:<{}}{:<{}}{:<{}}", percentile.percentile(), 12,
-                                percentile.count(), 12, formatProtoDuration(percentile.duration()),
-                                15)
-                 << std::endl;
-              break;
-            }
-          }
-        }
+        iteratePercentiles(statistic, [&ss, this](const nighthawk::client::Percentile& percentile) {
+          ss << fmt::format("  {:<{}}{:<{}}{:<{}}", percentile.percentile(), 12, percentile.count(),
+                            12, formatProtoDuration(percentile.duration()), 15)
+             << std::endl;
+        });
         ss << std::endl;
       }
       ss << fmt::format("{:<{}}{:<{}}{}", "Counter", 40, "Value", 12, "Per second") << std::endl;
@@ -114,24 +120,15 @@ DottedStringOutputFormatterImpl::formatProto(const nighthawk::client::Output& ou
                         Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(statistic.pstdev()))
          << std::endl;
 
-      // The proto percentiles are ordered ascending. We write the first match to the stream.
-      // Revisit to see if we can factor out a common denominator with the CLI output formatter.
-      double last_percentile = -1.;
-      for (const double p : {.5, .75, .8, .9, .95, .99, .999, 1.}) {
-        for (const auto& percentile : statistic.percentiles()) {
-          if (percentile.percentile() >= p && last_percentile < percentile.percentile()) {
-            last_percentile = percentile.percentile();
-            const std::string percentile_prefix =
-                fmt::format("{}.permilles-{:.{}f}", prefix, last_percentile * 1000, 0);
-            ss << fmt::format("{}.count: {}", percentile_prefix, percentile.count()) << std::endl;
-            ss << fmt::format("{}.microseconds: {}", percentile_prefix,
-                              Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(
-                                  percentile.duration()))
-               << std::endl;
-            break;
-          }
-        }
-      }
+      iteratePercentiles(statistic, [&ss, prefix](const nighthawk::client::Percentile& percentile) {
+        const std::string percentile_prefix =
+            fmt::format("{}.permilles-{:.{}f}", prefix, percentile.percentile() * 1000, 0);
+        ss << fmt::format("{}.count: {}", percentile_prefix, percentile.count()) << std::endl;
+        ss << fmt::format(
+                  "{}.microseconds: {}", percentile_prefix,
+                  Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(percentile.duration()))
+           << std::endl;
+      });
     }
     for (const auto& counter : result.counters()) {
       const std::string prefix = fmt::format("{}.{}", result.name(), counter.name());
