@@ -110,7 +110,7 @@ Where:
      Prefetch connections before benchmarking (HTTP/1 only).
 
    --output-format <human|yaml|json>
-     Verbosity of the output. Possible values: [human, yaml, json]. The
+     Output format. Possible values: [human, yaml, json]. The
      default output format is 'human'.
 
    -v <trace|debug|info|warn|error|critical>,  --verbosity <trace|debug
