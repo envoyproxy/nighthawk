@@ -18,7 +18,17 @@ public:
   nighthawk::client::Statistic toProto() override;
   std::string id() const override;
   void setId(absl::string_view id) override;
+  void setInputFilter(const InputFilterDelegate input_filter) override;
+  void addValue(uint64_t value) override {
+    if (input_filter_ == nullptr || input_filter_(value)) {
+      addValueImpl(value);
+    }
+  }
+
+protected:
+  virtual void addValueImpl(uint64_t value) PURE;
   std::string id_;
+  InputFilterDelegate input_filter_;
 };
 
 /**
@@ -28,7 +38,7 @@ public:
 class SimpleStatistic : public StatisticImpl {
 public:
   SimpleStatistic();
-  void addValue(uint64_t value) override;
+  void addValueImpl(uint64_t value) override;
   uint64_t count() const override;
   double mean() const override;
   double pvariance() const override;
@@ -53,7 +63,7 @@ private:
 class StreamingStatistic : public StatisticImpl {
 public:
   StreamingStatistic();
-  void addValue(uint64_t value) override;
+  void addValueImpl(uint64_t value) override;
   uint64_t count() const override;
   double mean() const override;
   double pvariance() const override;
@@ -75,7 +85,7 @@ private:
 class InMemoryStatistic : public StatisticImpl {
 public:
   InMemoryStatistic();
-  void addValue(uint64_t sample_value) override;
+  void addValueImpl(uint64_t sample_value) override;
   uint64_t count() const override;
   double mean() const override;
   double pvariance() const override;
@@ -98,7 +108,7 @@ class HdrStatistic : public StatisticImpl {
 public:
   HdrStatistic();
   ~HdrStatistic() override;
-  void addValue(uint64_t sample_value) override;
+  void addValueImpl(uint64_t sample_value) override;
   uint64_t count() const override;
   double mean() const override;
   double pvariance() const override;

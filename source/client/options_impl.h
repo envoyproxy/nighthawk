@@ -51,6 +51,9 @@ public:
     return sequencer_idle_strategy_;
   }
   std::string trace() const override { return trace_; }
+  std::chrono::nanoseconds latencySamplingGlobalLowPass() const override {
+    return std::chrono::nanoseconds(latency_sampling_global_low_pass_);
+  }
 
 private:
   void setNonTrivialDefaults();
@@ -80,6 +83,7 @@ private:
   nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions sequencer_idle_strategy_{
       nighthawk::client::SequencerIdleStrategy::SPIN};
   std::string trace_;
+  uint64_t latency_sampling_global_low_pass_{0};
 };
 
 } // namespace Client

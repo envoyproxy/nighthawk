@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <string>
 
@@ -19,7 +20,7 @@ class Statistic;
 
 using StatisticPtr = std::unique_ptr<Statistic>;
 using StatisticPtrMap = std::map<std::string, Statistic const*>;
-
+using InputFilterDelegate = std::function<bool(uint64_t)>;
 /**
  * Abstract interface for a statistic.
  */
@@ -31,6 +32,7 @@ public:
    * @param value the value of the sample to add
    */
   virtual void addValue(uint64_t sample_value) PURE;
+  virtual void setInputFilter(const InputFilterDelegate input_filter) PURE;
 
   virtual uint64_t count() const PURE;
   virtual double mean() const PURE;

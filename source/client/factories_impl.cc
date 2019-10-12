@@ -72,7 +72,16 @@ Envoy::Stats::StorePtr StoreFactoryImpl::create() const {
 StatisticFactoryImpl::StatisticFactoryImpl(const Options& options)
     : OptionBasedFactoryImpl(options) {}
 
-StatisticPtr StatisticFactoryImpl::create() const { return std::make_unique<HdrStatistic>(); }
+StatisticPtr StatisticFactoryImpl::create() const {
+  auto stat = std::make_unique<HdrStatistic>();
+  auto low_pass = options_.latencySamplingGlobalLowPass();
+  if (low_pass.count() >= 0) {
+    stat->setInputFilter([low_pass](uint64_t latency) -> bool {
+      return std::chrono::nanoseconds(latency) > low_pass;
+    });
+  }
+  return stat;
+}
 
 OutputFormatterPtr OutputFormatterFactoryImpl::create(
     const nighthawk::client::OutputFormat_OutputFormatOptions output_format) const {

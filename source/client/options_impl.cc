@@ -162,6 +162,12 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "", "trace", "Trace uri. Example: zipkin://localhost:9411/api/v1/spans. Default is empty.",
       false, "", "uri format", cmd);
 
+  TCLAP::ValueArg<uint32_t> latency_sampling_global_low_pass(
+      "", "latency-sampling-global-low-pass",
+      fmt::format("Low pass filter for latency sampling. Default: {}.",
+                  latency_sampling_global_low_pass_),
+      false, 0, "uint64_t, number of nanoseconds", cmd);
+
   TCLAP::UnlabeledValueArg<std::string> uri("uri",
                                             "uri to benchmark. http:// and https:// are supported, "
                                             "but in case of https no certificates are validated.",
@@ -218,7 +224,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
                    "Failed to parse sequencer idle strategy");
   }
   TCLAP_SET_IF_SPECIFIED(trace, trace_);
-
+  TCLAP_SET_IF_SPECIFIED(latency_sampling_global_low_pass, latency_sampling_global_low_pass_);
   // CLI-specific tests.
   // TODO(oschaaf): as per mergconflicts's remark, it would be nice to aggregate
   // these and present everything we couldn't understand to the CLI user in on go.
@@ -307,6 +313,10 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   trace_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, trace, trace_);
 
   tls_context_.MergeFrom(options.tls_context());
+
+  if (options.has_latency_sampling_global_low_pass()) {
+    latency_sampling_global_low_pass_ = options.latency_sampling_global_low_pass().nanos();
+  }
   validate();
 }
 
@@ -380,6 +390,8 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptions() const {
       maxRequestsPerConnection());
   command_line_options->mutable_sequencer_idle_strategy()->set_value(sequencerIdleStrategy());
   command_line_options->mutable_trace()->set_value(trace());
+  command_line_options->mutable_latency_sampling_global_low_pass()->set_nanos(
+      latencySamplingGlobalLowPass().count());
   return command_line_options;
 }
 

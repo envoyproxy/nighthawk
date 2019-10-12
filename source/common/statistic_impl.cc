@@ -34,9 +34,13 @@ std::string StatisticImpl::id() const { return id_; };
 
 void StatisticImpl::setId(absl::string_view id) { id_ = std::string(id); };
 
+void StatisticImpl::setInputFilter(const InputFilterDelegate input_filter) {
+  input_filter_ = input_filter;
+}
+
 SimpleStatistic::SimpleStatistic() : count_(0), sum_x_(0), sum_x2_(0) {}
 
-void SimpleStatistic::addValue(uint64_t value) {
+void SimpleStatistic::addValueImpl(uint64_t value) {
   count_++;
   sum_x_ += value;
   sum_x2_ += 1.0 * value * value;
@@ -65,7 +69,7 @@ StatisticPtr SimpleStatistic::combine(const Statistic& statistic) const {
 
 StreamingStatistic::StreamingStatistic() : count_(0), mean_(0), accumulated_variance_(0) {}
 
-void StreamingStatistic::addValue(uint64_t value) {
+void StreamingStatistic::addValueImpl(uint64_t value) {
   double delta, delta_n;
   count_++;
   delta = value - mean_;
@@ -101,7 +105,7 @@ StatisticPtr StreamingStatistic::combine(const Statistic& statistic) const {
 
 InMemoryStatistic::InMemoryStatistic() : streaming_stats_(std::make_unique<StreamingStatistic>()) {}
 
-void InMemoryStatistic::addValue(uint64_t sample_value) {
+void InMemoryStatistic::addValueImpl(uint64_t sample_value) {
   samples_.push_back(sample_value);
   streaming_stats_->addValue(sample_value);
 }
@@ -143,7 +147,7 @@ HdrStatistic::~HdrStatistic() {
   histogram_ = nullptr;
 }
 
-void HdrStatistic::addValue(uint64_t value) {
+void HdrStatistic::addValueImpl(uint64_t value) {
   // Failure to record a value can happen when it exceeds the configured minimum
   // or maximum value we passed when initializing histogram_.
   if (!hdr_record_value(histogram_, value)) {
