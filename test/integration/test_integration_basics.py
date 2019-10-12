@@ -14,26 +14,6 @@ from test.integration.utility import *
 # for the server side as well.
 
 
-def assertCounterEqual(counters, name, value):
-  assertIn(name, counters)
-  assertEqual(counters[name], value)
-
-
-def assertCounterGreater(counters, name, value):
-  assertIn(name, counters)
-  assertGreater(counters[name], value)
-
-
-def assertCounterGreaterEqual(counters, name, value):
-  assertIn(name, counters)
-  assertGreaterEqual(counters[name], value)
-
-
-def assertCounterLessEqual(counters, name, value):
-  assertIn(name, counters)
-  assertLessEqual(counters[name], value)
-
-
 def test_http_h1(http_test_server_fixture):
   """
   Runs the CLI configured to use plain HTTP/1 against our test server, and sanity

@@ -42,6 +42,8 @@ class TestServerBase(object):
     with open(self.config_template_path) as f:
       config = Template(f.read())
       config = config.substitute(self.parameters)
+      logging.info("Parameterized server configuration: %s", config)
+
     with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".yaml") as tmp:
       self.parameterized_config_path = tmp.name
       tmp.write(config)
@@ -93,6 +95,8 @@ class TestServerBase(object):
       uri_host = "[%s]" % self.server_ip
     uri = "http://%s:%s%s" % (uri_host, self.admin_port, "/cpuprofiler?enable=y")
     r = requests.post(uri)
+    logging.info("Enabled CPU profiling: %s", r.status_code == 200)
+    return r.status_code == 200
 
   def waitUntilServerListening(self):
     # we allow 30 seconds for the server to have its listeners up.

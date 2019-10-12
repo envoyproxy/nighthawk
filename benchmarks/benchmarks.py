@@ -10,8 +10,6 @@ import pytest
 if __name__ == '__main__':
   path = os.path.dirname(os.path.realpath(__file__))
   test_selection_arg = sys.argv[1] if len(sys.argv) > 1 else ""
-  print(path)
-  #exit (1)
   r = pytest.main([
       "--rootdir=" + path,
       "-vvvv",
@@ -20,5 +18,7 @@ if __name__ == '__main__':
       "no:cacheprovider",  # Avoid a bunch of warnings on readonly filesystems 
       "-x",
       path,
+      "--log-cli-level",
+      "info"
   ])
   exit(r)

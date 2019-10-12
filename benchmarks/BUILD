@@ -13,8 +13,6 @@ py_test(
         "benchmarks.py",
         "test_benchmark.py",
     ],
-    python_version = "PY3",
-    srcs_version = "PY3ONLY",
     deps = [
         "//test/integration:integration_test_base",
         "//test/integration:test_integration_basics_lib",
