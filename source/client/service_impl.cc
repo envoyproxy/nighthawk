@@ -145,7 +145,8 @@ RequestSourcePtr ServiceImpl::createStaticEmptyRequestSource(const uint32_t amou
     while (ok && (request = request_generator()) != nullptr) {
       HeaderMapPtr headers = request->header();
       nighthawk::client::RequestStreamResponse response;
-      auto* request_headers = response.mutable_headers();
+      auto* request_specifier = response.mutable_request_specifier();
+      auto* request_headers = request_specifier->mutable_headers();
       headers->iterate(
           [](const Envoy::Http::HeaderEntry& header,
              void* context) -> Envoy::Http::HeaderMap::Iterate {
@@ -154,13 +155,7 @@ RequestSourcePtr ServiceImpl::createStaticEmptyRequestSource(const uint32_t amou
             return Envoy::Http::HeaderMap::Iterate::Continue;
           },
           request_headers);
-      // TODO(oschaaf): add static configuration for other fields plus expectations, so we can
-      // go something like the following here:
-      // response.mutable_content_length()->set_value(1);
-      // auto* expectation = response.add_expectations();
-      // expectation->set_input_header(":status");
-      // expectation->set_name("response_code_is_ok");
-      // etc..
+      // TODO(oschaaf): add static configuration for other fields plus expectations
       ok = ok && stream->Write(response);
     }
     if (!ok) {

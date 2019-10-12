@@ -43,31 +43,7 @@ message RequestStreamRequest {
   uint64 amount = 1;
 }
 
-message Condition {
-  enum ConditionType {
-    EQUALS = 0;
-    LESS_THEN = 1;
-    LESS_OR_EQUAL = 2;
-    GREATER_THEN = 3;
-    GREATER_OR_EQUAL = 4;
-  }
-
-  string name = 1;
-  ConditionType type = 2;
-}
-
-message Expectation {
-  enum DataType {
-    TEXT = 0;
-    INT = 1;
-  }
-  string name = 1;
-  string input_header = 2;
-  DataType input_header_data_type = 3;
-  Condition condition = 4;
-}
-
-message RequestStreamResponse {
+message RequestSpecifier {
   // method/path/uri/authority/content_length can all be expressed in request headers.
   // so technically they are redundant. In case of ambiguity headers may end up being duplicated.
   // Note that as of today, the target upstream/cluster that will be used to replay traffic to
@@ -77,11 +53,18 @@ message RequestStreamResponse {
   google.protobuf.StringValue authority = 3;
   envoy.api.v2.core.HeaderMap headers = 4;
   google.protobuf.UInt32Value content_length = 5;
-
-  repeated Expectation expectations = 6;
-
   // TODO(oschaaf): nice to have
   // google.protobuf.StringValue sni_hostname = 10;
+}
+
+message Expectations {
+  google.protobuf.UInt32Value response_code = 1;
+  google.protobuf.UInt32Value content_length = 2;
+}
+
+message RequestStreamResponse {
+  RequestSpecifier request_specifier = 1;
+  Expectations expectations = 2;
 }
 
 service NighthawkService {

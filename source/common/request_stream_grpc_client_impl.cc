@@ -67,29 +67,38 @@ void RequestStreamGrpcClientImpl::onRemoteClose(Envoy::Grpc::Status::GrpcStatus 
 }
 
 RequestPtr RequestStreamGrpcClientImpl::messageToRequest(
-    const nighthawk::client::RequestStreamResponse& message) const {
+    const nighthawk::client::RequestStreamResponse&) const {
   auto header = std::make_shared<Envoy::Http::HeaderMapImpl>(base_header_);
   RequestPtr request = std::make_unique<RequestImpl>(header);
-  if (message.has_headers()) {
-    const auto& message_request_headers = message.headers();
-    for (const auto& message_header : message_request_headers.headers()) {
-      header->addCopy(Envoy::Http::LowerCaseString(message_header.key()), message_header.value());
-    }
-  }
-  if (message.has_content_length()) {
-    std::string s_content_length = absl::StrCat("", message.content_length().value());
-    header->insertContentLength().value(s_content_length);
-  }
-  if (message.has_authority()) {
-    header->insertHost().value(message.authority().value());
-  }
-  if (message.has_uri()) {
-    header->insertPath().value(message.uri().value());
-  }
-  if (message.has_method()) {
-    header->insertMethod().value(message.method().value());
-  }
 
+  // TODO(oschaaf): extract a method which handles the request specifier based
+  // on the commented code once we have test coverage.
+  /*
+    if (message.has_request_specifier()) {
+      const auto& request_specifier = message.request_specifier();
+      if (request_specifier.has_headers()) {
+        const auto& message_request_headers = request_specifier.headers();
+        for (const auto& message_header : message_request_headers.headers()) {
+          header->addCopy(Envoy::Http::LowerCaseString(message_header.key()),
+    message_header.value());
+        }
+      }
+      if (request_specifier.has_content_length()) {
+        std::string s_content_length = absl::StrCat("", request_specifier.content_length().value());
+        header->insertContentLength().value(s_content_length);
+      }
+      if (request_specifier.has_authority()) {
+        header->insertHost().value(request_specifier.authority().value());
+      }
+      if (request_specifier.has_uri()) {
+        header->insertPath().value(request_specifier.uri().value());
+      }
+      if (request_specifier.has_method()) {
+        header->insertMethod().value(request_specifier.method().value());
+      }
+    }
+
+  */
   // TODO(oschaaf): associate the expectations from the proto to the request,
   // and process those by verifying expectations on request completion.
   return request;
