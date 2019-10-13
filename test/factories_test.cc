@@ -42,6 +42,7 @@ TEST_F(FactoriesTest, CreateBenchmarkClient) {
   EXPECT_CALL(options_, maxPendingRequests()).Times(1);
   EXPECT_CALL(options_, maxActiveRequests()).Times(1);
   EXPECT_CALL(options_, maxRequestsPerConnection()).Times(1);
+  EXPECT_CALL(options_, latencySamplingGlobalLowPass()).Times(2);
   auto cmd = std::make_unique<nighthawk::client::CommandLineOptions>();
   EXPECT_CALL(options_, toCommandLineOptions()).Times(1).WillOnce(Return(ByMove(std::move(cmd))));
   StaticHeaderSourceImpl header_generator(std::make_unique<Envoy::Http::TestHeaderMapImpl>());
@@ -83,6 +84,7 @@ public:
         .Times(1)
         .WillOnce(Return(sequencer_idle_strategy));
     EXPECT_CALL(dispatcher_, createTimer_(_)).Times(2);
+    EXPECT_CALL(options_, latencySamplingGlobalLowPass()).Times(2);
     Envoy::Event::SimulatedTimeSystem time_system;
     auto sequencer = factory.create(api_->timeSource(), dispatcher_, time_system.monotonicTime(),
                                     benchmark_client);
@@ -103,6 +105,7 @@ TEST_F(FactoriesTest, CreateStore) {
 }
 
 TEST_F(FactoriesTest, CreateStatistic) {
+  EXPECT_CALL(options_, latencySamplingGlobalLowPass()).Times(1);
   StatisticFactoryImpl factory(options_);
   EXPECT_NE(nullptr, factory.create().get());
 }

@@ -87,6 +87,7 @@ public:
   MOCK_CONST_METHOD0(sequencerIdleStrategy,
                      nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions());
   MOCK_CONST_METHOD0(trace, std::string());
+  MOCK_CONST_METHOD0(latencySamplingGlobalLowPass, std::chrono::nanoseconds());
 };
 
 class MockBenchmarkClientFactory : public Client::BenchmarkClientFactory {
