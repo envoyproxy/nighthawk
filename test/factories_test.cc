@@ -124,10 +124,10 @@ public:
 
 TEST_P(OutputFormatterFactoryTest, TestCreation) { testOutputCollector(GetParam()); }
 
-INSTANTIATE_TEST_SUITE_P(OutputFormats, OutputFormatterFactoryTest,
-                         ValuesIn({nighthawk::client::OutputFormat::HUMAN,
-                                   nighthawk::client::OutputFormat::JSON,
-                                   nighthawk::client::OutputFormat::YAML}));
+INSTANTIATE_TEST_SUITE_P(
+    OutputFormats, OutputFormatterFactoryTest,
+    ValuesIn({nighthawk::client::OutputFormat::HUMAN, nighthawk::client::OutputFormat::JSON,
+              nighthawk::client::OutputFormat::YAML, nighthawk::client::OutputFormat::DOTTED}));
 
 } // namespace Client
 } // namespace Nighthawk

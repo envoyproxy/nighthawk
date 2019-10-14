@@ -5,32 +5,13 @@ import os
 import sys
 import pytest
 
-from common import IpVersion
-from integration_test_fixtures import (http_test_server_fixture, https_test_server_fixture)
-from utility import *
+from test.integration.common import IpVersion
+from test.integration.integration_test_fixtures import (http_test_server_fixture,
+                                                        https_test_server_fixture)
+from test.integration.utility import *
 
 # TODO(oschaaf): we mostly verify stats observed from the client-side. Add expectations
 # for the server side as well.
-
-
-def assertCounterEqual(counters, name, value):
-  assertIn(name, counters)
-  assertEqual(counters[name], value)
-
-
-def assertCounterGreater(counters, name, value):
-  assertIn(name, counters)
-  assertGreater(counters[name], value)
-
-
-def assertCounterGreaterEqual(counters, name, value):
-  assertIn(name, counters)
-  assertGreaterEqual(counters[name], value)
-
-
-def assertCounterLessEqual(counters, name, value):
-  assertIn(name, counters)
-  assertLessEqual(counters[name], value)
 
 
 def test_http_h1(http_test_server_fixture):
@@ -82,7 +63,7 @@ def test_http_h1_mini_stress_test_with_client_side_queueing(http_test_server_fix
   """
   counters = mini_stress_test_h1(http_test_server_fixture, [
       http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--max-pending-requests",
-      "10", "--duration 2"
+      "10", "--duration 10"
   ])
   assertCounterGreater(counters, "upstream_rq_pending_total", 100)
   assertCounterGreater(counters, "upstream_cx_overflow", 0)
@@ -271,3 +252,16 @@ def test_https_log_verbosity(https_test_server_fixture):
       ["--duration 1", "--rps 1", "-v trace",
        https_test_server_fixture.getTestServerRootUri()])
   assertIn(trace_level_sentinel, logs)
+
+
+def test_dotted_output_format(http_test_server_fixture):
+  """
+  Ensure we get the dotted string output format when requested.
+  and ensure we get latency percentiles.
+  """
+  output, _ = http_test_server_fixture.runNighthawkClient([
+      "--duration 1", "--rps 10", "--output-format dotted",
+      http_test_server_fixture.getTestServerRootUri()
+  ],
+                                                          as_json=False)
+  assertIn("global.benchmark_http_client.request_to_response.permilles-500.microseconds", output)

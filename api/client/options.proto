@@ -50,6 +50,7 @@ message OutputFormat {
     JSON = 1;
     HUMAN = 2;
     YAML = 3;
+    DOTTED = 4;
   }
   OutputFormatOptions value = 1;
 }

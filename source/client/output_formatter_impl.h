@@ -16,6 +16,11 @@ namespace Client {
 class OutputFormatterImpl : public OutputFormatter {
 public:
   static std::vector<std::string> getLowerCaseOutputFormats();
+
+protected:
+  void iteratePercentiles(
+      const nighthawk::client::Statistic& statistic,
+      const std::function<void(const nighthawk::client::Percentile&)>& callback) const;
 };
 
 class ConsoleOutputFormatterImpl : public OutputFormatterImpl {
@@ -33,6 +38,11 @@ public:
 };
 
 class YamlOutputFormatterImpl : public OutputFormatterImpl {
+public:
+  std::string formatProto(const nighthawk::client::Output& output) const override;
+};
+
+class DottedStringOutputFormatterImpl : public OutputFormatterImpl {
 public:
   std::string formatProto(const nighthawk::client::Output& output) const override;
 };
