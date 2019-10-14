@@ -37,7 +37,7 @@ envoy_cc_library(
     deps = [
         ":output_collector_impl_lib",
         ":output_formatter_impl_lib",
-        "//api/client:base_cc",
+        "//api/client:base_cc_proto",
         "//include/nighthawk/client:client_includes",
         "//include/nighthawk/common:base_includes",
         "//source/common:nighthawk_common_lib",
@@ -97,7 +97,7 @@ envoy_cc_library(
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
-        "//api/client:base_cc",
+        "//api/client:base_cc_proto",
         "//include/nighthawk/client:client_includes",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
     ],
@@ -114,7 +114,7 @@ envoy_cc_library(
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
-        "//api/client:base_cc",
+        "//api/client:base_cc_proto",
         "//include/nighthawk/client:client_includes",
         "@envoy//source/common/network:utility_lib_with_external_headers",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
