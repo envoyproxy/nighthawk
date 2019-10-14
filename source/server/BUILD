@@ -14,7 +14,7 @@ envoy_cc_library(
     hdrs = ["http_test_server_filter.h"],
     repository = "@envoy",
     deps = [
-        "//api/server:response_options_proto_cc",
+        "//api/server:response_options_proto_cc_proto",
         "@envoy//source/common/protobuf:message_validator_lib_with_external_headers",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
         "@envoy//source/exe:envoy_common_lib_with_external_headers",
