@@ -1,11 +1,6 @@
 licenses(["notice"])  # Apache 2
 
 load("@com_github_grpc_grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
-
-# TODO(oschaaf): `tools/check_format fix` insists on adding/changing
-# load("bazel:envoy_build_system.bzl", "envoy_package")
-# That breaks the build.
-# load("@envoy//bazel:envoy_build_system.bzl", "envoy_package")
 load("@envoy_api//bazel:api_build_system.bzl", "api_cc_py_proto_library")
 
 api_cc_py_proto_library(
