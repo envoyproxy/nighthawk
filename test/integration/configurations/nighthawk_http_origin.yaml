@@ -1,6 +1,6 @@
 admin:
-  access_log_path: /tmp/admin_access.log
-  profile_path: /tmp/envoy.prof
+  access_log_path: /tmp/admin_access-$test_id.log
+  profile_path: /tmp/envoy-$test_id.prof
   address:
     socket_address: { address: $server_ip, port_value: 0 }
 static_resources:

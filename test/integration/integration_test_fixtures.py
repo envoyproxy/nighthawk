@@ -13,8 +13,8 @@ import threading
 import time
 import pytest
 
-from common import IpVersion, NighthawkException
-from nighthawk_test_server import NighthawkTestServer
+from test.integration.common import IpVersion, NighthawkException
+from test.integration.nighthawk_test_server import NighthawkTestServer
 
 
 def determineIpVersionsFromEnvironment():
@@ -68,6 +68,9 @@ class IntegrationTestBase():
     """
     assert (os.path.exists(self.nighthawk_test_server_path))
     assert (os.path.exists(self.nighthawk_client_path))
+    test_id = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0].replace(
+        "[", "_").replace("]", "")
+    self.parameters["test_id"] = test_id
     self.test_server = NighthawkTestServer(self.nighthawk_test_server_path,
                                            self.nighthawk_test_config_path, self.server_ip,
                                            self.ip_version, self.parameters)
