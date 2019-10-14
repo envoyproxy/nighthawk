@@ -122,25 +122,28 @@ class IntegrationTestBase():
         return int(counter["value"])
     return None
 
-  def runNighthawkClient(self, args, expect_failure=False, timeout=30):
+  def runNighthawkClient(self, args, expect_failure=False, timeout=30, as_json=True):
     """
     Runs Nighthawk against the test server, returning a json-formatted result
     and logs. If the timeout is exceeded an exception will be raised.
     """
     if self.ip_version == IpVersion.IPV6:
       args.insert(0, "--address-family v6")
-    args.insert(0, "--output-format json")
+    if as_json:
+      args.insert(0, "--output-format json")
     args.insert(0, self.nighthawk_client_path)
     logging.info("Nighthawk client popen() args: [%s]" % args)
     client_process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = client_process.communicate()
     logs = stderr.decode('utf-8')
-    json_string = stdout.decode('utf-8')
+    output = stdout.decode('utf-8')
     if expect_failure:
       assert (client_process.returncode == 0)
     else:
+      if as_json:
+        output = json.loads(output)
       assert (client_process.returncode == 0)
-      return json.loads(json_string), logs
+      return output, logs
 
   def assertIsSubset(self, subset, superset):
     self.assertLessEqual(subset.items(), superset.items())

@@ -83,6 +83,8 @@ OutputFormatterPtr OutputFormatterFactoryImpl::create(
     return std::make_unique<Client::JsonOutputFormatterImpl>();
   case nighthawk::client::OutputFormat::YAML:
     return std::make_unique<Client::YamlOutputFormatterImpl>();
+  case nighthawk::client::OutputFormat::DOTTED:
+    return std::make_unique<Client::DottedStringOutputFormatterImpl>();
   default:
     NOT_REACHED_GCOVR_EXCL_LINE;
   }

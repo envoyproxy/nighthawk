@@ -43,19 +43,20 @@ bazel build -c opt //:nighthawk
 ```
 USAGE:
 
-   bazel-bin/nighthawk_client  [--sequencer-idle-strategy <spin|poll
+   bazel-bin/nighthawk_client  [--trace <uri format>]
+                               [--sequencer-idle-strategy <spin|poll
                                |sleep>] [--max-requests-per-connection
                                <uint32_t>] [--max-active-requests
                                <uint32_t>] [--max-pending-requests
                                <uint32_t>] [--tls-context <string>]
                                [--request-body-size <uint32_t>]
-                               [--request-header <string>] ...
+                               [--request-header <string>] ... 
                                [--request-method <GET|HEAD|POST|PUT|DELETE
                                |CONNECT|OPTIONS|TRACE>] [--address-family
                                <auto|v4|v6>] [--burst-size <uint32_t>]
                                [--prefetch-connections] [--output-format
-                               <human|yaml|json>] [-v <trace|debug|info
-                               |warn|error|critical>] [--concurrency
+                               <human|yaml|json|dotted>] [-v <trace|debug
+                               |info|warn|error|critical>] [--concurrency
                                <string>] [--h2] [--timeout <uint32_t>]
                                [--duration <uint32_t>] [--connections
                                <uint32_t>] [--rps <uint32_t>] [--]
@@ -109,9 +110,9 @@ Where:
    --prefetch-connections
      Prefetch connections before benchmarking (HTTP/1 only).
 
-   --output-format <human|yaml|json>
-     Output format. Possible values: [human, yaml, json]. The
-     default output format is 'human'.
+   --output-format <human|yaml|json|dotted>
+     Output format. Possible values: [human, yaml, json, dotted]. The
+     default output format is: 'human'.
 
    -v <trace|debug|info|warn|error|critical>,  --verbosity <trace|debug
       |info|warn|error|critical>
