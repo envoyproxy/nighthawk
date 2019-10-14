@@ -252,3 +252,16 @@ def test_https_log_verbosity(https_test_server_fixture):
       ["--duration 1", "--rps 1", "-v trace",
        https_test_server_fixture.getTestServerRootUri()])
   assertIn(trace_level_sentinel, logs)
+
+
+def test_dotted_output_format(http_test_server_fixture):
+  """
+  Ensure we get the dotted string output format when requested.
+  and ensure we get latency percentiles.
+  """
+  output, _ = http_test_server_fixture.runNighthawkClient([
+      "--duration 1", "--rps 10", "--output-format dotted",
+      http_test_server_fixture.getTestServerRootUri()
+  ],
+                                                          as_json=False)
+  assertIn("global.benchmark_http_client.request_to_response.permilles-500.microseconds", output)
