@@ -24,7 +24,7 @@ RequestStreamGrpcClientImpl::RequestStreamGrpcClientImpl(
       base_header_(base_header), header_buffer_length_(header_buffer_length) {}
 
 void RequestStreamGrpcClientImpl::start() {
-  stream_ = async_client_->start(service_method_, *this);
+  stream_ = async_client_->start(service_method_, *this, Envoy::Http::AsyncClient::StreamOptions());
   ENVOY_LOG(trace, "stream establishment status ok: {}", stream_ != nullptr);
   trySendRequest();
 }

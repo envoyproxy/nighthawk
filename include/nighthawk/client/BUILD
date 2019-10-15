@@ -21,7 +21,7 @@ envoy_basic_cc_library(
     deps = [
         ":output_collector_lib",
         ":output_formatter_lib",
-        "//api/client:base_cc",
+        "//api/client:base_cc_proto",
         "//include/nighthawk/common:base_includes",
         "//include/nighthawk/common:request_source_lib",
         "@envoy//include/envoy/common:base_includes",
@@ -32,7 +32,7 @@ envoy_basic_cc_library(
         "@envoy//source/common/network:dns_lib_with_external_headers",
         "@envoy//source/common/protobuf:protobuf_with_external_headers",
         "@envoy//source/common/runtime:runtime_lib_with_external_headers",
-        "@envoy_api//envoy/api/v2:cds_export_cc",
+        "@envoy_api//envoy/api/v2:pkg_cc_proto",
     ],
 )
 
@@ -41,7 +41,7 @@ envoy_basic_cc_library(
     hdrs = ["output_collector.h"],
     include_prefix = "nighthawk/client",
     deps = [
-        "//api/client:base_cc",
+        "//api/client:base_cc_proto",
         "//include/nighthawk/common:base_includes",
         "@envoy//include/envoy/common:base_includes",
     ],
@@ -52,7 +52,7 @@ envoy_basic_cc_library(
     hdrs = ["output_formatter.h"],
     include_prefix = "nighthawk/client",
     deps = [
-        "//api/client:base_cc",
+        "//api/client:base_cc_proto",
         "@envoy//include/envoy/common:base_includes",
     ],
 )

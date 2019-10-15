@@ -28,7 +28,7 @@ envoy_cc_library(
     repository = "@envoy",
     deps = [
         ":request_impl_lib",
-        "//api/client:base_cc",
+        "//api/client:base_cc_proto",
         "//api/client:grpc_service_lib",
         "//include/nighthawk/common:base_includes",
         "//include/nighthawk/common:request_lib",
@@ -86,7 +86,8 @@ envoy_cc_library(
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
-        "//api/client:base_cc",
+        "//api/client:base_cc_proto",
+        "//api/client:grpc_service_lib",
         "//include/nighthawk/client:client_includes",
         "//include/nighthawk/common:base_includes",
         "@dep_hdrhistogram_c//:hdrhistogram_c",
