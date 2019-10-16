@@ -327,7 +327,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
       tracing_uri->resolve(*dispatcher_,
                            Utility::translateFamilyOptionString(options_.addressFamily()));
     }
-  } catch (UriException) {
+  } catch (const UriException&) {
     return false;
   }
   int number_of_workers = determineConcurrency();
