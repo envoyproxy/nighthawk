@@ -258,7 +258,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
     try {
       Envoy::MessageUtil::loadFromJson(tls_context.getValue(), tls_context_,
                                        Envoy::ProtobufMessage::getStrictValidationVisitor());
-    } catch (Envoy::EnvoyException e) {
+    } catch (const Envoy::EnvoyException& e) {
       throw MalformedArgvException(e.what());
     }
   }
@@ -338,7 +338,7 @@ void OptionsImpl::validate() const {
   }
   try {
     UriImpl uri(uri_);
-  } catch (const UriException) {
+  } catch (const UriException&) {
     throw MalformedArgvException("Invalid target URI");
   }
 

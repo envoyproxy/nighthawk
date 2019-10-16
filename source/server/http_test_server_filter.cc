@@ -34,7 +34,7 @@ bool HttpTestServerDecoderFilter::mergeJsonConfig(absl::string_view json,
     Envoy::MessageUtil::loadFromJson(std::string(json), json_config, validation_visitor);
     config.MergeFrom(json_config);
     Envoy::MessageUtil::validate(config, validation_visitor);
-  } catch (Envoy::EnvoyException exception) {
+  } catch (const Envoy::EnvoyException& exception) {
     error_message.emplace(fmt::format("Error merging json config: {}", exception.what()));
   }
   return error_message == absl::nullopt;
