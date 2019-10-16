@@ -25,7 +25,7 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
   OptionsPtr options;
   try {
     options = std::make_unique<OptionsImpl>(request.start_request().options());
-  } catch (MalformedArgvException e) {
+  } catch (const MalformedArgvException& e) {
     response.mutable_error_detail()->set_message(e.what());
     writeResponse(response);
     return;
