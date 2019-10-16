@@ -14,12 +14,15 @@ SequencerImpl::SequencerImpl(
     Envoy::TimeSource& time_source, Envoy::MonotonicTime start_time, RateLimiterPtr&& rate_limiter,
     SequencerTarget target, StatisticPtr&& latency_statistic, StatisticPtr&& blocked_statistic,
     std::chrono::microseconds duration, std::chrono::microseconds grace_timeout,
-    nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions idle_strategy)
+    nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions idle_strategy,
+    TerminationPredicate& termination_predicate)
     : target_(std::move(target)), platform_util_(platform_util), dispatcher_(dispatcher),
       time_source_(time_source), rate_limiter_(std::move(rate_limiter)),
       latency_statistic_(std::move(latency_statistic)),
       blocked_statistic_(std::move(blocked_statistic)), duration_(duration),
-      grace_timeout_(grace_timeout), start_time_(start_time), idle_strategy_(idle_strategy) {
+      grace_timeout_(grace_timeout), start_time_(start_time), idle_strategy_(idle_strategy),
+      termination_predicate_(termination_predicate),
+      last_termination_status_(TerminationPredicate::Status::PROCEED) {
   ASSERT(target_ != nullptr, "No SequencerTarget");
   periodic_timer_ = dispatcher_.createTimer([this]() { run(true); });
   spin_timer_ = dispatcher_.createTimer([this]() { run(false); });
@@ -83,9 +86,11 @@ void SequencerImpl::run(bool from_periodic_timer) {
   ASSERT(running_);
   const auto now = time_source_.monotonicTime();
   const auto running_duration = now - start_time_;
-
-  // If we exceed the benchmark duration.
-  if (cancelled_ || (running_duration > duration_)) {
+  last_termination_status_ = last_termination_status_ == TerminationPredicate::Status::PROCEED
+                                 ? termination_predicate_.evaluateChain()
+                                 : last_termination_status_;
+  // If we should stop according to termination conditions.
+  if (cancelled_ || (last_termination_status_ != TerminationPredicate::Status::PROCEED)) {
     if (targets_completed_ == targets_initiated_) {
       // All work has completed. Stop this sequencer.
       stop(false);

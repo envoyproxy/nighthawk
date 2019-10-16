@@ -11,6 +11,7 @@
 #include "nighthawk/client/factories.h"
 #include "nighthawk/common/header_source.h"
 #include "nighthawk/common/sequencer.h"
+#include "nighthawk/common/termination_predicate.h"
 
 #include "common/worker_impl.h"
 
@@ -22,6 +23,7 @@ public:
   ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Instance& tls,
                    Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                    const BenchmarkClientFactory& benchmark_client_factory,
+                   const TerminationPredicateFactory& termination_predicate_factory,
                    const SequencerFactory& sequencer_factory,
                    const HeaderSourceFactory& header_generator_factory, Envoy::Stats::Store& store,
                    const int worker_number, const Envoy::MonotonicTime starting_time,
@@ -46,6 +48,7 @@ private:
   Envoy::Tracing::HttpTracerPtr& http_tracer_;
   HeaderSourcePtr header_generator_;
   BenchmarkClientPtr benchmark_client_;
+  TerminationPredicatePtr termination_predicate_;
   const SequencerPtr sequencer_;
   Envoy::LocalInfo::LocalInfoPtr local_info_;
   const bool prefetch_connections_;

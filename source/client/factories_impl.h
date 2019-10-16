@@ -6,6 +6,7 @@
 #include "envoy/upstream/cluster_manager.h"
 
 #include "nighthawk/client/factories.h"
+#include "nighthawk/common/termination_predicate.h"
 #include "nighthawk/common/uri.h"
 
 #include "common/platform_util_impl.h"
@@ -38,8 +39,8 @@ class SequencerFactoryImpl : public OptionBasedFactoryImpl, public SequencerFact
 public:
   SequencerFactoryImpl(const Options& options);
   SequencerPtr create(Envoy::TimeSource& time_source, Envoy::Event::Dispatcher& dispatcher,
-                      Envoy::MonotonicTime start_time,
-                      BenchmarkClient& benchmark_client) const override;
+                      Envoy::MonotonicTime start_time, BenchmarkClient& benchmark_client,
+                      TerminationPredicate& termination_predicate) const override;
 };
 
 class StoreFactoryImpl : public OptionBasedFactoryImpl, public StoreFactory {
@@ -68,6 +69,14 @@ public:
 private:
   void setRequestHeader(Envoy::Http::HeaderMap& header, absl::string_view key,
                         absl::string_view value) const;
+};
+
+class TerminationPredicateFactoryImpl : public OptionBasedFactoryImpl,
+                                        public TerminationPredicateFactory {
+public:
+  TerminationPredicateFactoryImpl(const Options& options);
+  TerminationPredicatePtr create(Envoy::TimeSource& time_source,
+                                 const Envoy::MonotonicTime start) const override;
 };
 
 } // namespace Client

@@ -80,8 +80,8 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
       api_(std::make_unique<Envoy::Api::Impl>(platform_impl_.threadFactory(), store_root_,
                                               time_system_, platform_impl_.fileSystem())),
       dispatcher_(api_->allocateDispatcher()), benchmark_client_factory_(options),
-      sequencer_factory_(options), header_generator_factory_(options), options_(options),
-      init_manager_("nh_init_manager"),
+      termination_predicate_factory_(options), sequencer_factory_(options),
+      header_generator_factory_(options), options_(options), init_manager_("nh_init_manager"),
       local_info_(new Envoy::LocalInfo::LocalInfoImpl(
           {}, Envoy::Network::Utility::getLocalAddress(Envoy::Network::Address::IpVersion::v4),
           "nighthawk_service_zone", "nighthawk_service_cluster", "nighthawk_service_node")),
@@ -139,9 +139,9 @@ const std::vector<ClientWorkerPtr>& ProcessImpl::createWorkers(const uint32_t co
     const auto worker_delay = std::chrono::duration_cast<std::chrono::nanoseconds>(
         ((inter_worker_delay_usec * worker_number) * 1us));
     workers_.push_back(std::make_unique<ClientWorkerImpl>(
-        *api_, tls_, cluster_manager_, benchmark_client_factory_, sequencer_factory_,
-        header_generator_factory_, store_root_, worker_number, first_worker_start + worker_delay,
-        http_tracer_, prefetch_connections));
+        *api_, tls_, cluster_manager_, benchmark_client_factory_, termination_predicate_factory_,
+        sequencer_factory_, header_generator_factory_, store_root_, worker_number,
+        first_worker_start + worker_delay, http_tracer_, prefetch_connections));
     worker_number++;
   }
   return workers_;

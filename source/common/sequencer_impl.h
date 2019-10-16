@@ -9,6 +9,7 @@
 #include "nighthawk/common/rate_limiter.h"
 #include "nighthawk/common/sequencer.h"
 #include "nighthawk/common/statistic.h"
+#include "nighthawk/common/termination_predicate.h"
 
 #include "external/envoy/source/common/common/logger.h"
 
@@ -43,7 +44,8 @@ public:
       RateLimiterPtr&& rate_limiter, SequencerTarget target, StatisticPtr&& latency_statistic,
       StatisticPtr&& blocked_statistic, std::chrono::microseconds duration,
       std::chrono::microseconds grace_timeout,
-      nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions idle_strategy);
+      nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions idle_strategy,
+      TerminationPredicate& termination_predicate);
 
   /**
    * Starts the Sequencer. Should be followed up with a call to waitForCompletion().
@@ -122,6 +124,8 @@ private:
   Envoy::MonotonicTime blocked_start_;
   bool cancelled_{};
   nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions idle_strategy_;
+  TerminationPredicate& termination_predicate_;
+  TerminationPredicate::Status last_termination_status_;
 };
 
 } // namespace Nighthawk

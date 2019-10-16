@@ -18,14 +18,14 @@ private:
 
 class DurationTerminationPredicateImpl : public TerminationPredicateBaseImpl {
 public:
-  DurationTerminationPredicateImpl(Envoy::TimeSource& time_source,
+  DurationTerminationPredicateImpl(Envoy::TimeSource& time_source, const Envoy::MonotonicTime start,
                                    std::chrono::microseconds duration)
-      : time_source_(time_source), start_(time_source.monotonicTime()), duration_(duration) {}
+      : time_source_(time_source), start_(start), duration_(duration) {}
   TerminationPredicate::Status evaluate() override;
 
 private:
   Envoy::TimeSource& time_source_;
-  Envoy::MonotonicTime start_;
+  const Envoy::MonotonicTime start_;
   std::chrono::microseconds duration_;
 };
 
