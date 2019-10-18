@@ -8,9 +8,13 @@ import "google/protobuf/wrappers.proto";
 import "validate/validate.proto";
 
 message FortioResult {
-  google.protobuf.StringValue labels = 1;
+  // Disable validate because it doesn't work well with fields that are not all lowercase.
+  // The field cases must match the final output JSON that fortio-ui expects.
+  option (validate.disabled) = true;
 
-  google.protobuf.Timestamp starttime = 2;
+  google.protobuf.StringValue Labels = 1;
 
-  google.protobuf.UInt32Value requestedqps = 3;
+  google.protobuf.Timestamp StartTime = 2;
+
+  google.protobuf.UInt32Value RequestedQPS = 3;
 }
