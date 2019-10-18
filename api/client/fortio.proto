@@ -7,6 +7,10 @@ import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
 import "validate/validate.proto";
 
+message DurationHistogram {
+
+}
+
 message FortioResult {
   // Disable validate because it doesn't work well with fields that are not all lowercase.
   // The field cases must match the final output JSON that fortio-ui expects.

@@ -162,7 +162,7 @@ FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) 
   result.mutable_numthreads()->set_value(0);
 
   // TODO(nareddyt): Maybe not needed?
-  result.mutable_version()->set_value(0);
+  result.mutable_version()->set_value("");
 
   // TODO(nareddyt): Figure out what this field is...
   result.mutable_exactly()->set_value(0);
