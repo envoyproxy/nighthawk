@@ -37,4 +37,18 @@ message DurationHistogram {
   option (validate.disabled) = true;
 
   google.protobuf.UInt64Value Count = 1;
+
+  repeated DataEntry Data = 2;
+}
+
+message DataEntry {
+  option (validate.disabled) = true;
+
+  google.protobuf.DoubleValue Start = 1;
+
+  google.protobuf.DoubleValue End = 2;
+
+  google.protobuf.DoubleValue Percent = 3;
+
+  google.protobuf.UInt64Value Count = 4;
 }

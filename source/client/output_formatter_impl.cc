@@ -208,9 +208,33 @@ FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) 
   nighthawk::client::DurationHistogram fortio_histogram;
   fortio_histogram.mutable_count()->set_value(nh_stat.count());
 
-//  for (const auto& percentile : nh_stat.percentiles()) {
-//
-//  }
+  // Tracking variables
+  uint64_t prev_fortio_count = 0;
+  double prev_fortio_end = 0;
+
+  for (const auto& nh_percentile : nh_stat.percentiles()) {
+
+    // Create the data entry
+    nighthawk::client::DataEntry fortio_data_entry;
+
+    // fortio_percent = 100 * nh_percentile
+    fortio_data_entry.mutable_percent()->set_value(nh_percentile.percentile() * 100);
+
+    // fortio_count = nh_count - prev_fortio_count
+    fortio_data_entry.mutable_count()->set_value(nh_percentile.count() - prev_fortio_count);
+    prev_fortio_count = nh_percentile.count();
+
+    // fortio_start = prev_fortio_end
+    fortio_data_entry.mutable_start()->set_value(prev_fortio_end);
+
+    // fortio_end = nh_duration (need to convert formats)
+    const double nh_duration_in_double = nh_percentile.duration().nanos() / 1e9;
+    fortio_data_entry.mutable_end()->set_value(nh_duration_in_double);
+    prev_fortio_end = nh_duration_in_double;
+
+    // Set the data entry in the histogram
+    fortio_histogram.add_data()->CopyFrom(fortio_data_entry);
+  }
 
   // Set the histogram in main fortio output
   fortio_output.mutable_durationhistogram()->CopyFrom(fortio_histogram);
