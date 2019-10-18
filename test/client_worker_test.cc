@@ -48,7 +48,7 @@ public:
         .Times(1)
         .WillOnce(Return(ByMove(std::unique_ptr<HeaderSource>(header_generator_))));
 
-    EXPECT_CALL(termination_predicate_factory_, create(_, _))
+    EXPECT_CALL(termination_predicate_factory_, create(_, _, _))
         .Times(1)
         .WillOnce(Return(ByMove(std::unique_ptr<TerminationPredicate>(termination_predicate_))));
   }

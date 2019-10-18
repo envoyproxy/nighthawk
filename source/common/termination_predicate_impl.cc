@@ -1,5 +1,7 @@
 #include "common/termination_predicate_impl.h"
 
+#include <iostream>
+
 namespace Nighthawk {
 
 TerminationPredicate::Status TerminationPredicateBaseImpl::evaluateChain() {

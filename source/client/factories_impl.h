@@ -75,7 +75,7 @@ class TerminationPredicateFactoryImpl : public OptionBasedFactoryImpl,
                                         public TerminationPredicateFactory {
 public:
   TerminationPredicateFactoryImpl(const Options& options);
-  TerminationPredicatePtr create(Envoy::TimeSource& time_source,
+  TerminationPredicatePtr create(Envoy::TimeSource& time_source, Envoy::Stats::Scope& scope,
                                  const Envoy::MonotonicTime start) const override;
 };
 

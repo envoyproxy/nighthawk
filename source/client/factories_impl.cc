@@ -132,10 +132,20 @@ TerminationPredicateFactoryImpl::TerminationPredicateFactoryImpl(const Options& 
     : OptionBasedFactoryImpl(options) {}
 
 TerminationPredicatePtr
-TerminationPredicateFactoryImpl::create(Envoy::TimeSource& time_source,
+TerminationPredicateFactoryImpl::create(Envoy::TimeSource& time_source, Envoy::Stats::Scope& scope,
                                         const Envoy::MonotonicTime start) const {
-  return std::make_unique<DurationTerminationPredicateImpl>(time_source, start,
-                                                            options_.duration());
+  TerminationPredicatePtr duration_predicate =
+      std::make_unique<DurationTerminationPredicateImpl>(time_source, start, options_.duration());
+  // By default, we don't tolerate status code errors & connection-level errors.
+  // TODO(oschaaf): In a follow up, we'll tolerate these when explicit termination predicates are
+  // configured.
+  duration_predicate->link(std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
+      scope.counter("benchmark.http_4xx"), 0, TerminationPredicate::Status::FAIL));
+  duration_predicate->link(std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
+      scope.counter("benchmark.http_5xx"), 0, TerminationPredicate::Status::FAIL));
+  duration_predicate->link(std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
+      scope.counter("benchmark.pool_connection_failure"), 0, TerminationPredicate::Status::FAIL));
+  return duration_predicate;
 }
 
 } // namespace Client

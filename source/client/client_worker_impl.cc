@@ -25,7 +25,8 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
       benchmark_client_(benchmark_client_factory.create(
           api, *dispatcher_, *worker_number_scope_, cluster_manager, http_tracer_,
           fmt::format("{}", worker_number), *header_generator_)),
-      termination_predicate_(termination_predicate_factory.create(time_source_, starting_time)),
+      termination_predicate_(
+          termination_predicate_factory.create(time_source_, *worker_number_scope_, starting_time)),
       sequencer_(sequencer_factory.create(time_source_, *dispatcher_, starting_time,
                                           *benchmark_client_, *termination_predicate_)),
       prefetch_connections_(prefetch_connections) {}
@@ -48,9 +49,7 @@ void ClientWorkerImpl::work() {
   benchmark_client_->setMeasureLatencies(true);
   sequencer_->start();
   sequencer_->waitForCompletion();
-  benchmark_client_->terminate();
   success_ = true;
-  dispatcher_->exit();
   // Save a final snapshot of the worker-specific counter accumulations before
   // we exit the thread.
   for (const auto& stat : store_.counters()) {
@@ -63,6 +62,13 @@ void ClientWorkerImpl::work() {
           stat->value();
     }
   }
+}
+
+void ClientWorkerImpl::shutdownThread() {
+  // Terminate will shut down the pool and run the dispatcher, which may increment certain stats
+  // like the number of connections destroyed. We do that here, so we don't pollute the reported
+  // counters with that.
+  benchmark_client_->terminate();
 }
 
 StatisticPtrMap ClientWorkerImpl::statistics() const {

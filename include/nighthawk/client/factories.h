@@ -71,7 +71,7 @@ public:
 class TerminationPredicateFactory {
 public:
   virtual ~TerminationPredicateFactory() = default;
-  virtual TerminationPredicatePtr create(Envoy::TimeSource& time_source,
+  virtual TerminationPredicatePtr create(Envoy::TimeSource& time_source, Envoy::Stats::Scope& scope,
                                          Envoy::MonotonicTime time) const PURE;
 };
 

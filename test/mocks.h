@@ -132,7 +132,8 @@ public:
 class MockTerminationPredicateFactory : public TerminationPredicateFactory {
 public:
   MockTerminationPredicateFactory();
-  MOCK_CONST_METHOD2(create, TerminationPredicatePtr(Envoy::TimeSource& time_source,
+  MOCK_CONST_METHOD3(create, TerminationPredicatePtr(Envoy::TimeSource& time_source,
+                                                     Envoy::Stats::Scope& scope,
                                                      const Envoy::MonotonicTime start));
 };
 

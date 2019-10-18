@@ -30,6 +30,11 @@ public:
    * and mandatory.
    */
   virtual void shutdown() PURE;
+
+  /*
+  Called just before exitting the thread, allows for the thread to clean up.
+  */
+  virtual void shutdownThread() PURE;
 };
 
 using WorkerPtr = std::unique_ptr<Worker>;

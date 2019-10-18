@@ -41,7 +41,7 @@ void SequencerImpl::start() {
 
 void SequencerImpl::scheduleRun() { periodic_timer_->enableTimer(EnvoyTimerMinResolution); }
 
-void SequencerImpl::stop(bool timed_out) {
+void SequencerImpl::stop(bool failed) {
   const double rate = completionsPerSecond();
 
   ASSERT(running_);
@@ -52,19 +52,20 @@ void SequencerImpl::stop(bool timed_out) {
   spin_timer_.reset();
   dispatcher_.exit();
   unblockAndUpdateStatisticIfNeeded(time_source_.monotonicTime());
-
-  if (timed_out) {
-    ENVOY_LOG(warn,
-              "Timeout waiting for inbound completions. Initiated: {} / Completed: {}. "
-              "(Completion rate was {} per second.)",
-              targets_initiated_, targets_completed_, rate);
-
-  } else {
-    ENVOY_LOG(trace, "Processed {} operations in {} ms. ({} per second)", targets_completed_,
-              std::chrono::duration_cast<std::chrono::milliseconds>(time_source_.monotonicTime() -
-                                                                    start_time_)
-                  .count(),
-              rate);
+  const auto ran_for = std::chrono::duration_cast<std::chrono::milliseconds>(
+      time_source_.monotonicTime() - start_time_);
+  (void)duration_;
+  (void)grace_timeout_;
+  ENVOY_LOG(info,
+            "Stopping after {} ms. Initiated: {} / Completed: {}. "
+            "(Completion rate was {} per second.)",
+            ran_for.count(), targets_initiated_, targets_completed_, rate);
+  if (failed) {
+    // TODO(oschaaf): create a stats counter for the main process to inspect, so it can exit with an
+    // error code based on this. Also, add a description to the predicates so we can emit a more
+    // informative message here, and directly point out a hint to the specific condition that
+    // failed.
+    ENVOY_LOG(error, "Exiting due to failing termination predicate");
   }
 }
 
@@ -86,30 +87,18 @@ void SequencerImpl::run(bool from_periodic_timer) {
   ASSERT(running_);
   const auto now = time_source_.monotonicTime();
   const auto running_duration = now - start_time_;
-  last_termination_status_ = last_termination_status_ == TerminationPredicate::Status::PROCEED
-                                 ? termination_predicate_.evaluateChain()
-                                 : last_termination_status_;
-  // If we should stop according to termination conditions.
-  if (cancelled_ || (last_termination_status_ != TerminationPredicate::Status::PROCEED)) {
-    if (targets_completed_ == targets_initiated_) {
-      // All work has completed. Stop this sequencer.
-      stop(false);
-    } else {
-      // After the benchmark duration has passed, we wait for a grace period for outstanding work
-      // to wrap up. If that takes too long we warn about it and quit.
-      if (running_duration - duration_ > grace_timeout_) {
-        stop(true);
-        return;
-      }
-      if (from_periodic_timer) {
-        scheduleRun();
-      }
-    }
-    return;
-  }
 
   // The running_duration we compute will be negative until it is time to start.
   if (running_duration >= 0ns) {
+    last_termination_status_ = last_termination_status_ == TerminationPredicate::Status::PROCEED
+                                   ? termination_predicate_.evaluateChain()
+                                   : last_termination_status_;
+    // If we should stop according to termination conditions.
+    if (last_termination_status_ != TerminationPredicate::Status::PROCEED) {
+      stop(last_termination_status_ == TerminationPredicate::Status::FAIL);
+      return;
+    }
+
     while (rate_limiter_->tryAcquireOne()) {
       // The rate limiter says it's OK to proceed and call the target. Let's see if the target is OK
       // with that as well.
@@ -118,7 +107,9 @@ void SequencerImpl::run(bool from_periodic_timer) {
         latency_statistic_->addValue(dur.count());
         targets_completed_++;
         // Immediately schedule us to check again, as chances are we can get on with the next task.
-        spin_timer_->enableTimer(0ms);
+        if (spin_timer_ != nullptr) {
+          spin_timer_->enableTimer(0ms);
+        }
       });
 
       if (target_could_start) {

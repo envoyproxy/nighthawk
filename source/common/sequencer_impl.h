@@ -122,7 +122,6 @@ private:
   bool running_{};
   bool blocked_{};
   Envoy::MonotonicTime blocked_start_;
-  bool cancelled_{};
   nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions idle_strategy_;
   TerminationPredicate& termination_predicate_;
   TerminationPredicate::Status last_termination_status_;
