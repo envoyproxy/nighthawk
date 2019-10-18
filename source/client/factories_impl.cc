@@ -3,6 +3,8 @@
 #include "external/envoy/source/common/http/header_map_impl.h"
 #include "external/envoy/source/common/stats/isolated_store_impl.h"
 
+#include "api/client/options.pb.h"
+
 #include "common/header_source_impl.h"
 #include "common/platform_util_impl.h"
 #include "common/rate_limiter_impl.h"
@@ -14,7 +16,6 @@
 #include "client/benchmark_client_impl.h"
 #include "client/output_collector_impl.h"
 #include "client/output_formatter_impl.h"
-#include "api/client/options.pb.h"
 
 namespace Nighthawk {
 namespace Client {

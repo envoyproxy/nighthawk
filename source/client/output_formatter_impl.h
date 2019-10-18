@@ -8,8 +8,9 @@
 
 #include "external/envoy/source/common/protobuf/protobuf.h"
 
-#include "absl/strings/string_view.h"
 #include "api/client/output.pb.h"
+
+#include "absl/strings/string_view.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -51,8 +52,8 @@ public:
 class FortioOutputFormatterImpl : public OutputFormatterImpl {
 public:
   std::string formatProto(const nighthawk::client::Output& output) const override;
- protected:
 
+protected:
   /**
    * Return the result that represents all workers (the one with the "global" name).
    *
@@ -70,7 +71,8 @@ public:
    * @return the corresponding counter
    * @throws NighthawkException if counter with given name is not found
    */
-  const nighthawk::client::Counter& getCounterByName(const nighthawk::client::Result& result, absl::string_view counter_name) const;
+  const nighthawk::client::Counter& getCounterByName(const nighthawk::client::Result& result,
+                                                     absl::string_view counter_name) const;
 
   /**
    * Return the statistic that represents the request/response round-trip times.
@@ -79,7 +81,8 @@ public:
    * @return the corresponding request/response statistic
    * @throws NighthawkException if request/response statistic is not found
    */
-  const nighthawk::client::Statistic& getRequestResponseStatistic(const nighthawk::client::Result& result) const;
+  const nighthawk::client::Statistic&
+  getRequestResponseStatistic(const nighthawk::client::Result& result) const;
 };
 
 } // namespace Client

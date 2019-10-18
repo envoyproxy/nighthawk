@@ -5,10 +5,13 @@
 #include <chrono>
 #include <sstream>
 
-#include "absl/strings/str_cat.h"
-#include "api/client/fortio.pb.h"
 #include "nighthawk/common/exception.h"
+
 #include "external/envoy/source/common/protobuf/utility.h"
+
+#include "api/client/fortio.pb.h"
+
+#include "absl/strings/str_cat.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -141,7 +144,8 @@ DottedStringOutputFormatterImpl::formatProto(const nighthawk::client::Output& ou
   return ss.str();
 }
 
-const nighthawk::client::Result& FortioOutputFormatterImpl::getGlobalResult(const nighthawk::client::Output& output) const {
+const nighthawk::client::Result&
+FortioOutputFormatterImpl::getGlobalResult(const nighthawk::client::Output& output) const {
   for (const auto& nh_result : output.results()) {
     if (nh_result.name() == "global") {
       return nh_result;
@@ -151,28 +155,32 @@ const nighthawk::client::Result& FortioOutputFormatterImpl::getGlobalResult(cons
   throw NighthawkException("Nighthawk output was malformed, contains no 'global' results.");
 }
 
-const nighthawk::client::Counter& FortioOutputFormatterImpl::getCounterByName(const nighthawk::client::Result& result, absl::string_view counter_name) const {
+const nighthawk::client::Counter&
+FortioOutputFormatterImpl::getCounterByName(const nighthawk::client::Result& result,
+                                            absl::string_view counter_name) const {
   for (const auto& nh_counter : result.counters()) {
     if (nh_counter.name() == counter_name) {
       return nh_counter;
     }
   }
 
-  throw NighthawkException(absl::StrCat("Nighthawk result was malformed, contains no counter with name: ", counter_name));
+  throw NighthawkException(absl::StrCat(
+      "Nighthawk result was malformed, contains no counter with name: ", counter_name));
 }
 
-const nighthawk::client::Statistic& FortioOutputFormatterImpl::getRequestResponseStatistic(const nighthawk::client::Result& result) const {
+const nighthawk::client::Statistic& FortioOutputFormatterImpl::getRequestResponseStatistic(
+    const nighthawk::client::Result& result) const {
   for (auto const& nh_stat : result.statistics()) {
     if (nh_stat.id() == "benchmark_http_client.request_to_response") {
       return nh_stat;
     }
   }
 
-  throw NighthawkException("Nighthawk result was malformed, contains no 'benchmark_http_client.request_to_response' statistic.");
+  throw NighthawkException("Nighthawk result was malformed, contains no "
+                           "'benchmark_http_client.request_to_response' statistic.");
 }
 
-std::string
-FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
+std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
   nighthawk::client::FortioResult fortio_output;
 
   // TODO(nareddyt): Not needed but nice to have, displays in the UI
