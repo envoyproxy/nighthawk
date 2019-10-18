@@ -165,24 +165,21 @@ std::string
 FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
   nighthawk::client::FortioResult fortio_output;
 
-  // TODO(nareddyt): Not needed but nice to have
+  // TODO(nareddyt): Not needed but nice to have, displays in the UI
   fortio_output.mutable_labels()->set_value("A random label");
 
   fortio_output.mutable_starttime()->set_seconds(output.timestamp().seconds());
-
   fortio_output.mutable_requestedqps()->set_value(output.options().requests_per_second().value());
-
   fortio_output.mutable_requestedduration()->set_seconds(output.options().duration().seconds());
 
-  // TODO(nareddyt)
-  fortio_output.mutable_actualqps()->set_value(0);
+  // FIXME: Set the actual to the same as the requested since NH does not expose these fields
+  fortio_output.mutable_actualqps()->set_value(output.options().requests_per_second().value());
+  fortio_output.mutable_actualduration()->set_value(output.options().duration().seconds());
 
-  // TODO(nareddyt)
-  fortio_output.mutable_actualduration()->set_value(0);
-
-  // This displays as connections in the UI
+  // This displays as "connections" in the UI, not threads
   fortio_output.mutable_numthreads()->set_value(output.options().connections().value());
 
+  // This displays the endpoint URL in the UI
   fortio_output.mutable_url()->set_value(output.options().uri().value());
 
   // Get the result that represents all workers (global)
@@ -193,7 +190,6 @@ FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) 
   const auto& nh_2xx_counter = this->getCounterByName(nh_global_result, "benchmark.http_2xx");
   fortio_output.mutable_retcodes()->insert({"200", 0});
   fortio_output.mutable_retcodes()->at("200") = nh_2xx_counter.value();
-  // TODO(nareddyt): Nice to have other response codes as well
 
 
 
