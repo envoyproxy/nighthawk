@@ -276,11 +276,10 @@ TEST_F(SequencerIntegrationTest, AlwaysSaturatedTargetTest) {
   EXPECT_EQ(1, sequencer.blockedStatistic().count());
 }
 
-// Test the (grace-)-timeout feature of the Sequencer. The used sequencer target
 // (SequencerIntegrationTest::timeout_test()) will never call back, effectively simulated a
-// stalled benchmark client. Implicitly we test  that we get past
-// sequencer.waitForCompletion(), which would only hold when sequencer enforces the the timeout.
-TEST_F(SequencerIntegrationTest, DISABLED_GraceTimeoutTest) {
+// stalled benchmark client. Implicitly we test  that we get past sequencer.waitForCompletion()
+// timely, and don't hang.
+TEST_F(SequencerIntegrationTest, CallbacksDoNotInfluenceTestDuration) {
   auto grace_timeout = 12345ms;
   SequencerTarget callback =
       std::bind(&SequencerIntegrationTest::timeout_test, this, std::placeholders::_1);
@@ -297,8 +296,7 @@ TEST_F(SequencerIntegrationTest, DISABLED_GraceTimeoutTest) {
 
   auto diff = time_system_.monotonicTime() - pre_timeout;
 
-  auto expected_duration =
-      (test_number_of_intervals_ * interval_) + grace_timeout + EnvoyTimerMinResolution;
+  auto expected_duration = (test_number_of_intervals_ * interval_) + EnvoyTimerMinResolution;
   EXPECT_EQ(expected_duration, diff);
 
   // the test itself should have seen all callbacks...
