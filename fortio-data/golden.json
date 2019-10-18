@@ -9,11 +9,6 @@
    "Version":"0.8.1",
    "DurationHistogram":{
       "Count":12000,
-      "Min":0.003599691,
-      "Max":0.189759494,
-      "Sum":314.280620721,
-      "Avg":0.02619005172675,
-      "StdDev":0.015989459036605817,
       "Data":[
          {
             "Start":0.003599691,
@@ -178,72 +173,11 @@
             "Count":10
          }
       ],
-      "Percentiles":[
-         {
-            "Percentile":50,
-            "Value":0.02316149297856615
-         },
-         {
-            "Percentile":75,
-            "Value":0.031253405994550405
-         },
-         {
-            "Percentile":90,
-            "Value":0.0431190798376184
-         },
-         {
-            "Percentile":99,
-            "Value":0.091081081081081
-         },
-         {
-            "Percentile":99.9,
-            "Value":0.15809523809523834
-         }
-      ]
+      "Percentiles":[]
    },
    "Exactly":0,
    "RetCodes":{
       "200":12000
-   },
-   "Sizes":{
-      "Count":12000,
-      "Min":124,
-      "Max":126,
-      "Sum":1498260,
-      "Avg":124.855,
-      "StdDev":0.3667083309648236,
-      "Data":[
-         {
-            "Start":124,
-            "End":126,
-            "Percent":100,
-            "Count":12000
-         }
-      ],
-      "Percentiles":null
-   },
-   "HeaderSizes":{
-      "Count":12000,
-      "Min":124,
-      "Max":126,
-      "Sum":1498260,
-      "Avg":124.855,
-      "StdDev":0.3667083309648236,
-      "Data":[
-         {
-            "Start":124,
-            "End":125,
-            "Percent":99.475,
-            "Count":11937
-         },
-         {
-            "Start":125,
-            "End":126,
-            "Percent":100,
-            "Count":63
-         }
-      ],
-      "Percentiles":null
    },
    "URL":"http://35.199.42.164/fortio2/echo",
    "SocketCount":48
