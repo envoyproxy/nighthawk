@@ -143,9 +143,35 @@ std::string
 FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
   nighthawk::client::FortioResult result;
 
-  result.mutable_labels()->set_value("TODO label");
-  result.mutable_requestedqps()->set_value(output.options().requests_per_second().value());
+  // TODO(nareddyt): Not needed but nice to have
+  result.mutable_labels()->set_value("A random label");
+
   result.mutable_starttime()->set_seconds(output.timestamp().seconds());
+
+  result.mutable_requestedqps()->set_value(output.options().requests_per_second().value());
+
+  result.mutable_requestedduration()->set_seconds(output.options().duration().seconds());
+
+  // TODO(nareddyt)
+  result.mutable_actualqps()->set_value(0);
+
+  // TODO(nareddyt)
+  result.mutable_actualduration()->set_value(0);
+
+  // TODO(nareddyt): Maybe not needed?
+  result.mutable_numthreads()->set_value(0);
+
+  // TODO(nareddyt): Maybe not needed?
+  result.mutable_version()->set_value(0);
+
+  // TODO(nareddyt): Figure out what this field is...
+  result.mutable_exactly()->set_value(0);
+
+  result.mutable_url()->set_value(output.options().uri().value());
+
+  // TODO(nareddyt): Is this the right mapping?
+  result.mutable_socketcount()->set_value(output.options().connections().value());
+
 
   return Envoy::MessageUtil::getJsonStringFromMessage(result, true, true);
 }
