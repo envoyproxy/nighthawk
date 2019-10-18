@@ -180,22 +180,10 @@ FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) 
   // TODO(nareddyt)
   fortio_output.mutable_actualduration()->set_value(0);
 
-  // TODO(nareddyt): Maybe not needed?
-  fortio_output.mutable_numthreads()->set_value(0);
-
-  // TODO(nareddyt): Maybe not needed?
-  fortio_output.mutable_version()->set_value("");
-
-  // TODO(nareddyt): Figure out what this field is...
-  fortio_output.mutable_exactly()->set_value(0);
+  // This displays as connections in the UI
+  fortio_output.mutable_numthreads()->set_value(output.options().connections().value());
 
   fortio_output.mutable_url()->set_value(output.options().uri().value());
-
-  // TODO(nareddyt): Is this the right mapping?
-  fortio_output.mutable_socketcount()->set_value(output.options().connections().value());
-
-  // TODO(nareddyt)
-  fortio_output.mutable_retcodes()->insert({"200", 0});
 
   // Get the result that represents all workers (global)
   const auto& nh_global_result = this->getGlobalResult(output);
@@ -203,8 +191,11 @@ FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) 
   // Fill in the number of successful responses.
   // Fortio-ui only reads the 200 OK field, other fields are only informational.
   const auto& nh_2xx_counter = this->getCounterByName(nh_global_result, "benchmark.http_2xx");
+  fortio_output.mutable_retcodes()->insert({"200", 0});
   fortio_output.mutable_retcodes()->at("200") = nh_2xx_counter.value();
   // TODO(nareddyt): Nice to have other response codes as well
+
+
 
   return Envoy::MessageUtil::getJsonStringFromMessage(fortio_output, true, true);
 }

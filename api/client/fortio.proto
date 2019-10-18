@@ -30,13 +30,7 @@ message FortioResult {
 
   google.protobuf.UInt32Value NumThreads = 7;
 
-  google.protobuf.StringValue Version = 8;
-
-  google.protobuf.UInt32Value Exactly = 10;
-
   map<string, uint64> RetCodes = 11;
 
   google.protobuf.StringValue URL = 12;
-
-  google.protobuf.UInt32Value SocketCount = 13;
 }
