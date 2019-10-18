@@ -15,7 +15,6 @@
 #include "client/output_collector_impl.h"
 #include "client/output_formatter_impl.h"
 #include "api/client/options.pb.h"
-#include "source/client/_virtual_includes/output_formatter_impl_lib/client/output_formatter_impl.h"
 
 namespace Nighthawk {
 namespace Client {
