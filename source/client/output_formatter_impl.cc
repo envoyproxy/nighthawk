@@ -237,7 +237,11 @@ std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Outp
     const double nh_duration_in_double = nh_percentile.duration().nanos() / 1e9;
     fortio_data_entry.mutable_end()->set_value(nh_duration_in_double);
 
-    // fortio_start = prev_fortio_end (or fortio_end if first entry)
+    // fortio_start = prev_fortio_end
+    if (i == 0) {
+      // If this is the first entry, force the start and end time to be the same
+      prev_fortio_end = nh_duration_in_double;
+    }
     fortio_data_entry.mutable_start()->set_value(prev_fortio_end);
 
     // Update tracking variables
@@ -245,9 +249,7 @@ std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Outp
     prev_fortio_end = nh_duration_in_double;
 
     // Set the data entry in the histogram only if it's not the first entry
-    if (i > 0) {
-      fortio_histogram.add_data()->CopyFrom(fortio_data_entry);
-    }
+    fortio_histogram.add_data()->CopyFrom(fortio_data_entry);
   }
 
   // Set the histogram in main fortio output
