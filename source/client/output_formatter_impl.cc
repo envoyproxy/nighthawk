@@ -161,6 +161,16 @@ const nighthawk::client::Counter& FortioOutputFormatterImpl::getCounterByName(co
   throw NighthawkException(absl::StrCat("Nighthawk result was malformed, contains no counter with name: ", counter_name));
 }
 
+const nighthawk::client::Statistic& FortioOutputFormatterImpl::getRequestResponseStatistic(const nighthawk::client::Result& result) const {
+  for (auto const& nh_stat : result.statistics()) {
+    if (nh_stat.id() == "benchmark_http_client.request_to_response") {
+      return nh_stat;
+    }
+  }
+
+  throw NighthawkException("Nighthawk result was malformed, contains no 'benchmark_http_client.request_to_response' statistic.");
+}
+
 std::string
 FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
   nighthawk::client::FortioResult fortio_output;
@@ -191,7 +201,19 @@ FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) 
   fortio_output.mutable_retcodes()->insert({"200", 0});
   fortio_output.mutable_retcodes()->at("200") = nh_2xx_counter.value();
 
+  // The core of the transformation is here: All the percentiles to display the dashboard
+  const auto& nh_stat = this->getRequestResponseStatistic(nh_global_result);
 
+  // Set the count
+  nighthawk::client::DurationHistogram fortio_histogram;
+  fortio_histogram.mutable_count()->set_value(nh_stat.count());
+
+//  for (const auto& percentile : nh_stat.percentiles()) {
+//
+//  }
+
+  // Set the histogram in main fortio output
+  fortio_output.mutable_durationhistogram()->CopyFrom(fortio_histogram);
 
   return Envoy::MessageUtil::getJsonStringFromMessage(fortio_output, true, true);
 }

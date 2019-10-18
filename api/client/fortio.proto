@@ -7,10 +7,6 @@ import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
 import "validate/validate.proto";
 
-message DurationHistogram {
-
-}
-
 message FortioResult {
   // Disable validate because it doesn't work well with fields that are not all lowercase.
   // The field cases must match the final output JSON that fortio-ui expects.
@@ -30,7 +26,15 @@ message FortioResult {
 
   google.protobuf.UInt32Value NumThreads = 7;
 
+  DurationHistogram DurationHistogram = 8;
+
   map<string, uint64> RetCodes = 11;
 
   google.protobuf.StringValue URL = 12;
+}
+
+message DurationHistogram {
+  option (validate.disabled) = true;
+
+  google.protobuf.UInt64Value Count = 1;
 }

@@ -71,6 +71,15 @@ public:
    * @throws NighthawkException if counter with given name is not found
    */
   const nighthawk::client::Counter& getCounterByName(const nighthawk::client::Result& result, absl::string_view counter_name) const;
+
+  /**
+   * Return the statistic that represents the request/response round-trip times.
+   *
+   * @param result a single Nighthawk result, preferably the global result
+   * @return the corresponding request/response statistic
+   * @throws NighthawkException if request/response statistic is not found
+   */
+  const nighthawk::client::Statistic& getRequestResponseStatistic(const nighthawk::client::Result& result) const;
 };
 
 } // namespace Client
