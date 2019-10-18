@@ -212,7 +212,9 @@ FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) 
   uint64_t prev_fortio_count = 0;
   double prev_fortio_end = 0;
 
-  for (const auto& nh_percentile : nh_stat.percentiles()) {
+  for (int i = 0; i < nh_stat.percentiles().size(); i++) {
+
+    const auto& nh_percentile = nh_stat.percentiles().at(i);
 
     // Create the data entry
     nighthawk::client::DataEntry fortio_data_entry;
@@ -222,18 +224,22 @@ FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) 
 
     // fortio_count = nh_count - prev_fortio_count
     fortio_data_entry.mutable_count()->set_value(nh_percentile.count() - prev_fortio_count);
-    prev_fortio_count = nh_percentile.count();
-
-    // fortio_start = prev_fortio_end
-    fortio_data_entry.mutable_start()->set_value(prev_fortio_end);
 
     // fortio_end = nh_duration (need to convert formats)
     const double nh_duration_in_double = nh_percentile.duration().nanos() / 1e9;
     fortio_data_entry.mutable_end()->set_value(nh_duration_in_double);
+
+    // fortio_start = prev_fortio_end (or fortio_end if first entry)
+    fortio_data_entry.mutable_start()->set_value(prev_fortio_end);
+
+    // Update tracking variables
+    prev_fortio_count = nh_percentile.count();
     prev_fortio_end = nh_duration_in_double;
 
-    // Set the data entry in the histogram
-    fortio_histogram.add_data()->CopyFrom(fortio_data_entry);
+    // Set the data entry in the histogram only if it's not the first entry
+    if (i > 0) {
+      fortio_histogram.add_data()->CopyFrom(fortio_data_entry);
+    }
   }
 
   // Set the histogram in main fortio output
