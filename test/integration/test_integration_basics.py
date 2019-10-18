@@ -43,7 +43,7 @@ def mini_stress_test_h1(fixture, args):
   # test to succeed on a reasonable share of setups (hopefully practically all).
   MIN_EXPECTED_REQUESTS = 100
   assertCounterGreater(counters, "benchmark.http_2xx", MIN_EXPECTED_REQUESTS)
-  #assertCounterEqual(counters, "upstream_cx_http1_total", 1)
+  assertCounterEqual(counters, "upstream_cx_http1_total", 1)
   global_histograms = fixture.getNighthawkGlobalHistogramsbyIdFromJson(parsed_json)
   assertGreater(int(global_histograms["sequencer.blocking"]["count"]), MIN_EXPECTED_REQUESTS)
   assertGreater(

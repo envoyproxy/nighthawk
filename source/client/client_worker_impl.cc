@@ -55,8 +55,9 @@ void ClientWorkerImpl::work() {
   for (const auto& stat : store_.counters()) {
     // First, we strip the cluster prefix
     std::string stat_name = std::string(absl::StripPrefix(stat->name(), "cluster."));
+    stat_name = std::string(absl::StripPrefix(stat_name, "worker."));
     // Second, we strip our own prefix if it's there, else we skip.
-    const std::string worker_prefix = fmt::format("worker.{}.", worker_number_);
+    const std::string worker_prefix = fmt::format("{}.", worker_number_);
     if (stat->value() && absl::StartsWith(stat_name, worker_prefix)) {
       thread_local_counter_values_[std::string(absl::StripPrefix(stat_name, worker_prefix))] =
           stat->value();
