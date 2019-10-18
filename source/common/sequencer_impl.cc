@@ -106,8 +106,9 @@ void SequencerImpl::run(bool from_periodic_timer) {
         const auto dur = time_source_.monotonicTime() - now;
         latency_statistic_->addValue(dur.count());
         targets_completed_++;
-        // Immediately schedule us to check again, as chances are we can get on with the next task.
         if (spin_timer_ != nullptr) {
+          // Immediately schedule us to check again, as chances are we can get on with the next
+          // task.
           spin_timer_->enableTimer(0ms);
         }
       });

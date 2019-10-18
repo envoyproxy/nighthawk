@@ -277,7 +277,7 @@ TEST_F(SequencerIntegrationTest, AlwaysSaturatedTargetTest) {
 }
 
 // (SequencerIntegrationTest::timeout_test()) will never call back, effectively simulated a
-// stalled benchmark client. Implicitly we test  that we get past sequencer.waitForCompletion()
+// stalled benchmark client. Implicitly we test that we get past sequencer.waitForCompletion()
 // timely, and don't hang.
 TEST_F(SequencerIntegrationTest, CallbacksDoNotInfluenceTestDuration) {
   auto grace_timeout = 12345ms;
