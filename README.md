@@ -55,7 +55,7 @@ USAGE:
                                |CONNECT|OPTIONS|TRACE>] [--address-family
                                <auto|v4|v6>] [--burst-size <uint32_t>]
                                [--prefetch-connections] [--output-format
-                               <human|yaml|json|dotted>] [-v <trace|debug
+                               <human|yaml|json|dotted|fortio>] [-v <trace|debug
                                |info|warn|error|critical>] [--concurrency
                                <string>] [--h2] [--timeout <uint32_t>]
                                [--duration <uint32_t>] [--connections
@@ -110,8 +110,8 @@ Where:
    --prefetch-connections
      Prefetch connections before benchmarking (HTTP/1 only).
 
-   --output-format <human|yaml|json|dotted>
-     Output format. Possible values: [human, yaml, json, dotted]. The
+   --output-format <human|yaml|json|dotted|fortio>
+     Output format. Possible values: [human, yaml, json, dotted, fortio]. The
      default output format is: 'human'.
 
    -v <trace|debug|info|warn|error|critical>,  --verbosity <trace|debug
