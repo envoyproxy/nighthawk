@@ -5,6 +5,7 @@
 #include <chrono>
 #include <sstream>
 
+#include "absl/strings/str_cat.h"
 #include "api/client/fortio.pb.h"
 #include "nighthawk/common/exception.h"
 #include "external/envoy/source/common/protobuf/utility.h"
@@ -157,7 +158,7 @@ const nighthawk::client::Counter& FortioOutputFormatterImpl::getCounterByName(co
     }
   }
 
-  throw NighthawkException("Nighthawk result was malformed, contains no counter with name");
+  throw NighthawkException(absl::StrCat("Nighthawk result was malformed, contains no counter with name: ", counter_name));
 }
 
 std::string
@@ -202,7 +203,7 @@ FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) 
   // Fill in the number of successful responses.
   // Fortio-ui only reads the 200 OK field, other fields are only informational.
   const auto& nh_2xx_counter = this->getCounterByName(nh_global_result, "benchmark.http_2xx");
-  fortio_output.mutable_retcodes()->insert({"200", nh_2xx_counter.value()});
+  fortio_output.mutable_retcodes()->at("200") = nh_2xx_counter.value();
   // TODO(nareddyt): Nice to have other response codes as well
 
   return Envoy::MessageUtil::getJsonStringFromMessage(fortio_output, true, true);
