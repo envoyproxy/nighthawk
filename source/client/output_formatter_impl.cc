@@ -6,7 +6,6 @@
 #include <sstream>
 
 #include "api/client/fortio.pb.h"
-#include "api/client/fortio.pb.validate.h"
 #include "external/envoy/source/common/protobuf/utility.h"
 
 namespace Nighthawk {

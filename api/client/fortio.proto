@@ -17,4 +17,20 @@ message FortioResult {
   google.protobuf.Timestamp StartTime = 2;
 
   google.protobuf.UInt32Value RequestedQPS = 3;
+
+  google.protobuf.Duration RequestedDuration = 4;
+
+  google.protobuf.DoubleValue ActualQPS = 5;
+
+  google.protobuf.DoubleValue ActualDuration = 6;
+
+  google.protobuf.UInt32Value NumThreads = 7;
+
+  google.protobuf.StringValue Version = 8;
+
+  google.protobuf.UInt32Value Exactly = 10;
+
+  google.protobuf.StringValue URL = 12;
+
+  google.protobuf.UInt32Value SocketCount = 13;
 }
