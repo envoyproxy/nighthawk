@@ -6,6 +6,7 @@
 #include <sstream>
 
 #include "api/client/fortio.pb.h"
+#include "nighthawk/common/exception.h"
 #include "external/envoy/source/common/protobuf/utility.h"
 
 namespace Nighthawk {
@@ -139,41 +140,72 @@ DottedStringOutputFormatterImpl::formatProto(const nighthawk::client::Output& ou
   return ss.str();
 }
 
+const nighthawk::client::Result& FortioOutputFormatterImpl::getGlobalResult(const nighthawk::client::Output& output) const {
+  for (const auto& nh_result : output.results()) {
+    if (nh_result.name() == "global") {
+      return nh_result;
+    }
+  }
+
+  throw NighthawkException("Nighthawk output was malformed, contains no 'global' results.");
+}
+
+const nighthawk::client::Counter& FortioOutputFormatterImpl::getCounterByName(const nighthawk::client::Result& result, absl::string_view counter_name) const {
+  for (const auto& nh_counter : result.counters()) {
+    if (nh_counter.name() == counter_name) {
+      return nh_counter;
+    }
+  }
+
+  throw NighthawkException("Nighthawk result was malformed, contains no counter with name");
+}
+
 std::string
 FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
-  nighthawk::client::FortioResult result;
+  nighthawk::client::FortioResult fortio_output;
 
   // TODO(nareddyt): Not needed but nice to have
-  result.mutable_labels()->set_value("A random label");
+  fortio_output.mutable_labels()->set_value("A random label");
 
-  result.mutable_starttime()->set_seconds(output.timestamp().seconds());
+  fortio_output.mutable_starttime()->set_seconds(output.timestamp().seconds());
 
-  result.mutable_requestedqps()->set_value(output.options().requests_per_second().value());
+  fortio_output.mutable_requestedqps()->set_value(output.options().requests_per_second().value());
 
-  result.mutable_requestedduration()->set_seconds(output.options().duration().seconds());
-
-  // TODO(nareddyt)
-  result.mutable_actualqps()->set_value(0);
+  fortio_output.mutable_requestedduration()->set_seconds(output.options().duration().seconds());
 
   // TODO(nareddyt)
-  result.mutable_actualduration()->set_value(0);
+  fortio_output.mutable_actualqps()->set_value(0);
+
+  // TODO(nareddyt)
+  fortio_output.mutable_actualduration()->set_value(0);
 
   // TODO(nareddyt): Maybe not needed?
-  result.mutable_numthreads()->set_value(0);
+  fortio_output.mutable_numthreads()->set_value(0);
 
   // TODO(nareddyt): Maybe not needed?
-  result.mutable_version()->set_value("");
+  fortio_output.mutable_version()->set_value("");
 
   // TODO(nareddyt): Figure out what this field is...
-  result.mutable_exactly()->set_value(0);
+  fortio_output.mutable_exactly()->set_value(0);
 
-  result.mutable_url()->set_value(output.options().uri().value());
+  fortio_output.mutable_url()->set_value(output.options().uri().value());
 
   // TODO(nareddyt): Is this the right mapping?
-  result.mutable_socketcount()->set_value(output.options().connections().value());
+  fortio_output.mutable_socketcount()->set_value(output.options().connections().value());
 
+  // TODO(nareddyt)
+  fortio_output.mutable_retcodes()->insert({"200", 0});
 
-  return Envoy::MessageUtil::getJsonStringFromMessage(result, true, true);
+  // Get the result that represents all workers (global)
+  const auto& nh_global_result = this->getGlobalResult(output);
+
+  // Fill in the number of successful responses.
+  // Fortio-ui only reads the 200 OK field, other fields are only informational.
+  const auto& nh_2xx_counter = this->getCounterByName(nh_global_result, "benchmark.http_2xx");
+  fortio_output.mutable_retcodes()->insert({"200", nh_2xx_counter.value()});
+  // TODO(nareddyt): Nice to have other response codes as well
+
+  return Envoy::MessageUtil::getJsonStringFromMessage(fortio_output, true, true);
 }
 
 } // namespace Client
