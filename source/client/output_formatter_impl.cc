@@ -5,6 +5,7 @@
 #include <chrono>
 #include <sstream>
 
+#include "api/client/fortio.pb.h"
 #include "api/client/fortio.pb.validate.h"
 #include "external/envoy/source/common/protobuf/utility.h"
 
@@ -140,8 +141,13 @@ DottedStringOutputFormatterImpl::formatProto(const nighthawk::client::Output& ou
 }
 
 std::string
-FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output&) const {
+FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
   nighthawk::client::FortioResult result;
+
+  result.mutable_labels()->set_value("TODO label");
+  result.mutable_requestedqps()->set_value(output.options().requests_per_second().value());
+  result.mutable_starttime()->set_seconds(output.timestamp().seconds());
+
   return Envoy::MessageUtil::getJsonStringFromMessage(result, true, true);
 }
 
