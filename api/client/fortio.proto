@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package nighthawk.client;
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/wrappers.proto";
+import "envoy/api/v2/auth/cert.proto";
+import "envoy/api/v2/core/base.proto";
+import "validate/validate.proto";
+
+message FortioResult {
+  google.protobuf.StringValue labels = 1;
+}

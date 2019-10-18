@@ -5,6 +5,7 @@
 #include <chrono>
 #include <sstream>
 
+#include "api/client/fortio.pb.validate.h"
 #include "external/envoy/source/common/protobuf/utility.h"
 
 namespace Nighthawk {
@@ -140,8 +141,8 @@ DottedStringOutputFormatterImpl::formatProto(const nighthawk::client::Output& ou
 
 std::string
 FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output&) const {
-  std::stringstream ss;
-  return ss.str();
+  nighthawk::client::FortioResult result;
+  return Envoy::MessageUtil::getJsonStringFromMessage(result, true, true);
 }
 
 } // namespace Client
