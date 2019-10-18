@@ -14,6 +14,8 @@
 #include "client/benchmark_client_impl.h"
 #include "client/output_collector_impl.h"
 #include "client/output_formatter_impl.h"
+#include "api/client/options.pb.h"
+#include "source/client/_virtual_includes/output_formatter_impl_lib/client/output_formatter_impl.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -85,6 +87,8 @@ OutputFormatterPtr OutputFormatterFactoryImpl::create(
     return std::make_unique<Client::YamlOutputFormatterImpl>();
   case nighthawk::client::OutputFormat::DOTTED:
     return std::make_unique<Client::DottedStringOutputFormatterImpl>();
+  case nighthawk::client::OutputFormat::FORTIO:
+    return std::make_unique<Client::FortioOutputFormatterImpl>();
   default:
     NOT_REACHED_GCOVR_EXCL_LINE;
   }

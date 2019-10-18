@@ -47,5 +47,10 @@ public:
   std::string formatProto(const nighthawk::client::Output& output) const override;
 };
 
+class FortioOutputFormatterImpl : public OutputFormatterImpl {
+public:
+  std::string formatProto(const nighthawk::client::Output& output) const override;
+};
+
 } // namespace Client
 } // namespace Nighthawk

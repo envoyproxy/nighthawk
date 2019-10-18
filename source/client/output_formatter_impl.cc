@@ -138,5 +138,11 @@ DottedStringOutputFormatterImpl::formatProto(const nighthawk::client::Output& ou
   return ss.str();
 }
 
+std::string
+FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output&) const {
+  std::stringstream ss;
+  return ss.str();
+}
+
 } // namespace Client
 } // namespace Nighthawk

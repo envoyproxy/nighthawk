@@ -47,6 +47,7 @@ message OutputFormat {
     HUMAN = 2;
     YAML = 3;
     DOTTED = 4;
+    FORTIO = 5;
   }
   OutputFormatOptions value = 1;
 }
