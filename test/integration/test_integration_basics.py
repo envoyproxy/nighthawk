@@ -261,3 +261,16 @@ def test_dotted_output_format(http_test_server_fixture):
   ],
                                                           as_json=False)
   assertIn("global.benchmark_http_client.request_to_response.permilles-500.microseconds", output)
+
+
+# TODO(oschaaf): add percentiles to the gold testing in the C++ output formatter
+# once the fortio formatter has landed (https://github.com/envoyproxy/nighthawk/pull/168)
+def test_cli_output_format(http_test_server_fixture):
+  """
+  Ensure we observe latency percentiles with CLI output.
+  """
+  output, _ = http_test_server_fixture.runNighthawkClient(
+      ["--duration 1", "--rps 10",
+       http_test_server_fixture.getTestServerRootUri()], as_json=False)
+  assertIn("Initiation to completion", output)
+  assertIn("Percentile", output)

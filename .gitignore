@@ -15,3 +15,5 @@ envoy/
 __pycache__
 tools/pyformat
 test/coverage/BUILD
+default.profraw
+
