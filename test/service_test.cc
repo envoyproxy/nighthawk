@@ -85,7 +85,8 @@ public:
     options->mutable_requests_per_second()->set_value(3);
   }
 
-  void runWithFailingValidationExpectations(absl::string_view match_error = "") {
+  void runWithFailingValidationExpectations(bool expect_output,
+                                            absl::string_view match_error = "") {
     auto r = stub_->ExecutionStream(&context_);
     r->Write(request_, {});
     r->WritesDone();
@@ -93,7 +94,7 @@ public:
     auto status = r->Finish();
     ASSERT_FALSE(match_error.empty());
     EXPECT_TRUE(response_.has_error_detail());
-    EXPECT_FALSE(response_.has_output());
+    EXPECT_EQ(response_.has_output(), expect_output);
     EXPECT_EQ(::grpc::StatusCode::INTERNAL, response_.error_detail().code());
     EXPECT_THAT(response_.error_detail().message(), HasSubstr(std::string(match_error)));
     EXPECT_TRUE(status.ok());
@@ -157,8 +158,9 @@ TEST_P(ServiceTest, BackToBackExecution) {
 TEST_P(ServiceTest, InvalidRps) {
   auto options = request_.mutable_start_request()->mutable_options();
   options->mutable_requests_per_second()->set_value(0);
+  // We do not expect output, because the options proto is not valid, and can't be echoed back.
   runWithFailingValidationExpectations(
-      "CommandLineOptionsValidationError.RequestsPerSecond: [\"value must be inside range");
+      false, "CommandLineOptionsValidationError.RequestsPerSecond: [\"value must be inside range");
 }
 
 // We didn't implement updates yet, ensure we indicate so.
@@ -190,7 +192,8 @@ TEST_P(ServiceTest, CancelNotSupported) {
 TEST_P(ServiceTest, Unresolvable) {
   auto options = request_.mutable_start_request()->mutable_options();
   options->mutable_uri()->set_value("http://unresolvable-host/");
-  runWithFailingValidationExpectations("Unknown failure");
+  // We expect output, because the options proto is valid.
+  runWithFailingValidationExpectations(true, "Unknown failure");
 }
 
 } // namespace Client

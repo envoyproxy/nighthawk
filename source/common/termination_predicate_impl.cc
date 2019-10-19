@@ -21,7 +21,6 @@ TerminationPredicate::Status DurationTerminationPredicateImpl::evaluate() {
 }
 
 TerminationPredicate::Status StatsCounterAbsoluteThresholdTerminationPredicateImpl::evaluate() {
-  std::cerr << counter_.name() << ":" << counter_.value() << std::endl;
   return counter_.value() > counter_limit_ ? termination_status_
                                            : TerminationPredicate::Status::PROCEED;
 }

@@ -37,12 +37,13 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
           nighthawk::client::Verbosity::VerbosityOptions_Name(options->verbosity())),
       "[%T.%f][%t][%L] %v", log_lock_);
   OutputCollectorImpl output_collector(time_system_, *options);
-  if (process.run(output_collector)) {
+  bool ok = process.run(output_collector);
+  if (ok) {
     response.clear_error_detail();
-    *(response.mutable_output()) = output_collector.toProto();
   } else {
     response.mutable_error_detail()->set_message("Unknown failure");
   }
+  *(response.mutable_output()) = output_collector.toProto();
   process.shutdown();
   // We release before writing the response to avoid a race with the client's follow up request
   // coming in before we release the lock, which would lead up to us declining service when

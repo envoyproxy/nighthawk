@@ -135,6 +135,9 @@ TerminationPredicateFactoryImpl::TerminationPredicateFactoryImpl(const Options& 
 TerminationPredicatePtr
 TerminationPredicateFactoryImpl::create(Envoy::TimeSource& time_source, Envoy::Stats::Scope& scope,
                                         const Envoy::MonotonicTime start) const {
+  // By default, we don't tolerate status code errors & connection-level errors.
+  // TODO(oschaaf): In a follow up, we'll tolerate these when explicit termination predicates are
+  // configured.
   TerminationPredicatePtr duration_predicate =
       std::make_unique<DurationTerminationPredicateImpl>(time_source, start, options_.duration());
   TerminationPredicatePtr code_4xx_predicate =
@@ -147,10 +150,6 @@ TerminationPredicateFactoryImpl::create(Envoy::TimeSource& time_source, Envoy::S
       std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
           scope.counter("benchmark.pool_connection_failure"), 0,
           TerminationPredicate::Status::FAIL);
-
-  // By default, we don't tolerate status code errors & connection-level errors.
-  // TODO(oschaaf): In a follow up, we'll tolerate these when explicit termination predicates are
-  // configured.
   code_5xx_predicate->link(std::move(pool_failure_predicate));
   code_4xx_predicate->link(std::move(code_5xx_predicate));
   duration_predicate->link(std::move(code_4xx_predicate));
