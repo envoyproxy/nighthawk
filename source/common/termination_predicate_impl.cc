@@ -1,5 +1,7 @@
 #include "common/termination_predicate_impl.h"
 
+#include <iostream>
+
 namespace Nighthawk {
 
 TerminationPredicate::Status TerminationPredicateBaseImpl::evaluateChain() {
@@ -19,6 +21,7 @@ TerminationPredicate::Status DurationTerminationPredicateImpl::evaluate() {
 }
 
 TerminationPredicate::Status StatsCounterAbsoluteThresholdTerminationPredicateImpl::evaluate() {
+  std::cerr << counter_.name() << ":" << counter_.value() << std::endl;
   return counter_.value() > counter_limit_ ? termination_status_
                                            : TerminationPredicate::Status::PROCEED;
 }

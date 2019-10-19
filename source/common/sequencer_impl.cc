@@ -42,9 +42,12 @@ void SequencerImpl::start() {
 void SequencerImpl::scheduleRun() { periodic_timer_->enableTimer(EnvoyTimerMinResolution); }
 
 void SequencerImpl::stop(bool failed) {
-  const double rate = completionsPerSecond();
-
   ASSERT(running_);
+  const double rate = completionsPerSecond();
+  if (failed) {
+    ENVOY_LOG(error, "Exiting due to failing termination predicate");
+    sequencer_stats_.failed_terminations_.inc();
+  }
   running_ = false;
   periodic_timer_->disableTimer();
   spin_timer_->disableTimer();
@@ -58,14 +61,6 @@ void SequencerImpl::stop(bool failed) {
             "Stopping after {} ms. Initiated: {} / Completed: {}. "
             "(Completion rate was {} per second.)",
             ran_for.count(), targets_initiated_, targets_completed_, rate);
-  if (failed) {
-    // TODO(oschaaf): create a stats counter for the main process to inspect, so it can exit with an
-    // error code based on this. Also, add a description to the predicates so we can emit a more
-    // informative message here, and directly point out a hint to the specific condition that
-    // failed.
-    ENVOY_LOG(error, "Exiting due to failing termination predicate");
-    sequencer_stats_.failed_terminations_.inc();
-  }
 }
 
 void SequencerImpl::unblockAndUpdateStatisticIfNeeded(const Envoy::MonotonicTime& now) {
