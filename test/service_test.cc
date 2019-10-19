@@ -47,11 +47,11 @@ public:
     auto r = stub_->ExecutionStream(&context);
     EXPECT_TRUE(r->Write(request_, {}));
     EXPECT_TRUE(r->Read(&response_));
-    ASSERT_FALSE(response_.has_error_detail());
+    ASSERT_TRUE(response_.has_error_detail());
     EXPECT_TRUE(response_.has_output());
     EXPECT_TRUE(r->Write(request_, {}));
     EXPECT_TRUE(r->Read(&response_));
-    EXPECT_FALSE(response_.has_error_detail());
+    EXPECT_TRUE(response_.has_error_detail());
     EXPECT_TRUE(response_.has_output());
     EXPECT_TRUE(r->WritesDone());
     auto status = r->Finish();
@@ -121,7 +121,7 @@ TEST_P(ServiceTest, Basic) {
   r->Write(request_, {});
   r->WritesDone();
   EXPECT_TRUE(r->Read(&response_));
-  ASSERT_FALSE(response_.has_error_detail());
+  ASSERT_TRUE(response_.has_error_detail());
   EXPECT_TRUE(response_.has_output());
   EXPECT_GE(response_.output().results(0).counters().size(), 8);
   auto status = r->Finish();
@@ -136,7 +136,7 @@ TEST_P(ServiceTest, NoConcurrentStart) {
   EXPECT_TRUE(r->Write(request_, {}));
   EXPECT_TRUE(r->WritesDone());
   EXPECT_TRUE(r->Read(&response_));
-  ASSERT_FALSE(response_.has_error_detail());
+  ASSERT_TRUE(response_.has_error_detail());
   EXPECT_TRUE(response_.has_output());
   EXPECT_FALSE(r->Read(&response_));
   auto status = r->Finish();

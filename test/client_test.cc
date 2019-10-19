@@ -23,7 +23,7 @@ class ClientTest : public testing::Test {};
 TEST_F(ClientTest, NormalRun) {
   Main program(Nighthawk::Client::TestUtility::createOptionsImpl(
       "foo --duration 1 --rps 10 http://localhost:63657/"));
-  EXPECT_TRUE(program.run());
+  EXPECT_FALSE(program.run());
 }
 
 TEST_F(ClientTest, AutoConcurrencyRun) {
@@ -39,7 +39,7 @@ TEST_F(ClientTest, AutoConcurrencyRun) {
   argv.push_back("error");
   argv.push_back("http://localhost:63657/");
   Main program(argv.size(), argv.data());
-  EXPECT_TRUE(program.run());
+  EXPECT_FALSE(program.run());
 }
 
 // TODO(https://github.com/envoyproxy/nighthawk/issues/140):
@@ -60,7 +60,7 @@ TEST_F(ClientTest, TracingRun) {
   argv.push_back("--trace");
   argv.push_back("zipkin://localhost:9411/api/v1/spans");
   Main program(argv.size(), argv.data());
-  EXPECT_TRUE(program.run());
+  EXPECT_FALSE(program.run());
 }
 
 TEST_F(ClientTest, BadRun) {

@@ -7,7 +7,7 @@ namespace Nighthawk {
 TerminationPredicate::Status TerminationPredicateBaseImpl::evaluateChain() {
   auto status = TerminationPredicate::Status::PROCEED;
   if (linked_child_ != nullptr) {
-    status = linked_child_->evaluate();
+    status = linked_child_->evaluateChain();
   }
   if (status == TerminationPredicate::Status::PROCEED) {
     return evaluate();

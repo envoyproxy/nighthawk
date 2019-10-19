@@ -48,10 +48,10 @@ INSTANTIATE_TEST_SUITE_P(IpVersions, ProcessTest,
                          Envoy::TestUtility::ipTestParamsToString);
 
 TEST_P(ProcessTest, TwoProcessInSequence) {
-  runProcess(RunExpectation::EXPECT_SUCCESS);
+  runProcess(RunExpectation::EXPECT_FAILURE);
   options_ = TestUtility::createOptionsImpl(
       fmt::format("foo --h2 --duration 1 --rps 10 https://{}/", loopback_address_));
-  runProcess(RunExpectation::EXPECT_SUCCESS);
+  runProcess(RunExpectation::EXPECT_FAILURE);
 }
 
 // TODO(oschaaf): move to python int. tests once it adds to coverage.
