@@ -25,6 +25,14 @@ constexpr std::chrono::milliseconds EnvoyTimerMinResolution = 1ms;
 
 using SequencerTarget = std::function<bool(OperationCallback)>;
 
+using namespace Envoy; // We need this because of macro expectations.
+
+#define ALL_SEQUENCER_STATS(COUNTER) COUNTER(failed_terminations)
+
+struct SequencerStats {
+  ALL_SEQUENCER_STATS(GENERATE_COUNTER_STRUCT)
+};
+
 /**
  * The Sequencer will drive calls to the SequencerTarget at a pace indicated by the associated
  * RateLimiter. The contract with the target is that it will call the provided callback when it is
@@ -42,10 +50,9 @@ public:
       const PlatformUtil& platform_util, Envoy::Event::Dispatcher& dispatcher,
       Envoy::TimeSource& time_source, Envoy::MonotonicTime start_time,
       RateLimiterPtr&& rate_limiter, SequencerTarget target, StatisticPtr&& latency_statistic,
-      StatisticPtr&& blocked_statistic, std::chrono::microseconds duration,
-      std::chrono::microseconds grace_timeout,
+      StatisticPtr&& blocked_statistic,
       nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions idle_strategy,
-      TerminationPredicate& termination_predicate);
+      TerminationPredicate& termination_predicate, Envoy::Stats::Scope& scope);
 
   /**
    * Starts the Sequencer. Should be followed up with a call to waitForCompletion().
@@ -114,8 +121,6 @@ private:
   StatisticPtr blocked_statistic_;
   Envoy::Event::TimerPtr periodic_timer_;
   Envoy::Event::TimerPtr spin_timer_;
-  std::chrono::microseconds duration_;
-  std::chrono::microseconds grace_timeout_;
   Envoy::MonotonicTime start_time_;
   uint64_t targets_initiated_{0};
   uint64_t targets_completed_{0};
@@ -125,6 +130,8 @@ private:
   nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions idle_strategy_;
   TerminationPredicate& termination_predicate_;
   TerminationPredicate::Status last_termination_status_;
+  Envoy::Stats::ScopePtr scope_;
+  SequencerStats sequencer_stats_;
 };
 
 } // namespace Nighthawk

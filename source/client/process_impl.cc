@@ -365,10 +365,8 @@ bool ProcessImpl::run(OutputCollector& collector) {
     w->start();
   }
 
-  bool ok = true;
   for (auto& w : workers_) {
     w->waitForCompletion();
-    ok = ok && w->success();
   }
 
   // We don't write per-worker results if we only have a single worker, because the global results
@@ -376,24 +374,19 @@ bool ProcessImpl::run(OutputCollector& collector) {
   if (workers_.size() > 1) {
     int i = 0;
     for (auto& worker : workers_) {
-      if (worker->success()) {
-        StatisticFactoryImpl statistic_factory(options_);
-        collector.addResult(fmt::format("worker_{}", i),
-                            vectorizeStatisticPtrMap(statistic_factory, worker->statistics()),
-                            worker->thread_local_counter_values());
-      }
+      StatisticFactoryImpl statistic_factory(options_);
+      collector.addResult(fmt::format("worker_{}", i),
+                          vectorizeStatisticPtrMap(statistic_factory, worker->statistics()),
+                          worker->thread_local_counter_values());
       i++;
     }
   }
-  if (ok) {
-    StatisticFactoryImpl statistic_factory(options_);
-    collector.addResult(
-        "global", mergeWorkerStatistics(statistic_factory, workers),
-        Utility().mapCountersFromStore(
-            store_root_, [](absl::string_view, uint64_t value) { return value > 0; }));
-  }
 
-  return ok;
+  const auto& counters = Utility().mapCountersFromStore(
+      store_root_, [](absl::string_view, uint64_t value) { return value > 0; });
+  StatisticFactoryImpl statistic_factory(options_);
+  collector.addResult("global", mergeWorkerStatistics(statistic_factory, workers), counters);
+  return counters.find("sequencer.failed_terminations") == counters.end();
 }
 
 } // namespace Client

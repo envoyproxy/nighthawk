@@ -13,16 +13,16 @@ SequencerImpl::SequencerImpl(
     const PlatformUtil& platform_util, Envoy::Event::Dispatcher& dispatcher,
     Envoy::TimeSource& time_source, Envoy::MonotonicTime start_time, RateLimiterPtr&& rate_limiter,
     SequencerTarget target, StatisticPtr&& latency_statistic, StatisticPtr&& blocked_statistic,
-    std::chrono::microseconds duration, std::chrono::microseconds grace_timeout,
     nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions idle_strategy,
-    TerminationPredicate& termination_predicate)
+    TerminationPredicate& termination_predicate, Envoy::Stats::Scope& scope)
     : target_(std::move(target)), platform_util_(platform_util), dispatcher_(dispatcher),
       time_source_(time_source), rate_limiter_(std::move(rate_limiter)),
       latency_statistic_(std::move(latency_statistic)),
-      blocked_statistic_(std::move(blocked_statistic)), duration_(duration),
-      grace_timeout_(grace_timeout), start_time_(start_time), idle_strategy_(idle_strategy),
-      termination_predicate_(termination_predicate),
-      last_termination_status_(TerminationPredicate::Status::PROCEED) {
+      blocked_statistic_(std::move(blocked_statistic)), start_time_(start_time),
+      idle_strategy_(idle_strategy), termination_predicate_(termination_predicate),
+      last_termination_status_(TerminationPredicate::Status::PROCEED),
+      scope_(scope.createScope("sequencer.")),
+      sequencer_stats_({ALL_SEQUENCER_STATS(POOL_COUNTER(*scope_))}) {
   ASSERT(target_ != nullptr, "No SequencerTarget");
   periodic_timer_ = dispatcher_.createTimer([this]() { run(true); });
   spin_timer_ = dispatcher_.createTimer([this]() { run(false); });
@@ -54,8 +54,6 @@ void SequencerImpl::stop(bool failed) {
   unblockAndUpdateStatisticIfNeeded(time_source_.monotonicTime());
   const auto ran_for = std::chrono::duration_cast<std::chrono::milliseconds>(
       time_source_.monotonicTime() - start_time_);
-  (void)duration_;
-  (void)grace_timeout_;
   ENVOY_LOG(info,
             "Stopping after {} ms. Initiated: {} / Completed: {}. "
             "(Completion rate was {} per second.)",
@@ -66,6 +64,7 @@ void SequencerImpl::stop(bool failed) {
     // informative message here, and directly point out a hint to the specific condition that
     // failed.
     ENVOY_LOG(error, "Exiting due to failing termination predicate");
+    sequencer_stats_.failed_terminations_.inc();
   }
 }
 

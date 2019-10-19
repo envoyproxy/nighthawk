@@ -28,7 +28,8 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
       termination_predicate_(
           termination_predicate_factory.create(time_source_, *worker_number_scope_, starting_time)),
       sequencer_(sequencer_factory.create(time_source_, *dispatcher_, starting_time,
-                                          *benchmark_client_, *termination_predicate_)),
+                                          *benchmark_client_, *termination_predicate_,
+                                          *worker_number_scope_)),
       prefetch_connections_(prefetch_connections) {}
 
 void ClientWorkerImpl::simpleWarmup() {
@@ -49,7 +50,6 @@ void ClientWorkerImpl::work() {
   benchmark_client_->setMeasureLatencies(true);
   sequencer_->start();
   sequencer_->waitForCompletion();
-  success_ = true;
   // Save a final snapshot of the worker-specific counter accumulations before
   // we exit the thread.
   for (const auto& stat : store_.counters()) {

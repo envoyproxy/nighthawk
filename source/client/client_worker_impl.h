@@ -29,7 +29,6 @@ public:
                    const int worker_number, const Envoy::MonotonicTime starting_time,
                    Envoy::Tracing::HttpTracerPtr& http_tracer, bool prefetch_connections);
   StatisticPtrMap statistics() const override;
-  bool success() const override { return success_; }
 
   const std::map<std::string, uint64_t>& thread_local_counter_values() override {
     return thread_local_counter_values_;
@@ -45,7 +44,6 @@ private:
   Envoy::Stats::ScopePtr worker_number_scope_;
   const int worker_number_;
   const Envoy::MonotonicTime starting_time_;
-  bool success_{};
   Envoy::Tracing::HttpTracerPtr& http_tracer_;
   HeaderSourcePtr header_generator_;
   BenchmarkClientPtr benchmark_client_;

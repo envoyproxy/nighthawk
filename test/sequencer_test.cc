@@ -24,7 +24,7 @@ using namespace testing;
 
 namespace Nighthawk {
 
-class SequencerTestBase : public Test {
+class SequencerTestBase : public testing::Test {
 public:
   SequencerTestBase()
       : dispatcher_(std::make_unique<Envoy::Event::MockDispatcher>()), frequency_(10_Hz),
@@ -144,12 +144,11 @@ private:
 TEST_F(SequencerTestWithTimerEmulation, RateLimiterInteraction) {
   SequencerTarget callback =
       std::bind(&MockSequencerTarget::callback, target(), std::placeholders::_1);
-  SequencerImpl sequencer(
-      platform_util_, *dispatcher_, time_system_, time_system_.monotonicTime(),
-      std::move(rate_limiter_), callback, std::make_unique<StreamingStatistic>(),
-      std::make_unique<StreamingStatistic>(),
-      test_number_of_intervals_ * interval_ /* Sequencer run time.*/, 1ms /* Sequencer timeout. */,
-      SequencerIdleStrategy::SLEEP, termination_predicate);
+  SequencerImpl sequencer(platform_util_, *dispatcher_, time_system_, time_system_.monotonicTime(),
+                          std::move(rate_limiter_), callback,
+                          std::make_unique<StreamingStatistic>(),
+                          std::make_unique<StreamingStatistic>(), SequencerIdleStrategy::SLEEP,
+                          termination_predicate, store_);
   // Have the mock rate limiter gate two calls, and block everything else.
   EXPECT_CALL(rate_limiter_unsafe_ref_, tryAcquireOne())
       .Times(AtLeast(3))
@@ -165,12 +164,11 @@ TEST_F(SequencerTestWithTimerEmulation, RateLimiterInteraction) {
 TEST_F(SequencerTestWithTimerEmulation, StartingLate) {
   SequencerTarget callback =
       std::bind(&MockSequencerTarget::callback, target(), std::placeholders::_1);
-  SequencerImpl sequencer(
-      platform_util_, *dispatcher_, time_system_, time_system_.monotonicTime(),
-      std::move(rate_limiter_), callback, std::make_unique<StreamingStatistic>(),
-      std::make_unique<StreamingStatistic>(),
-      test_number_of_intervals_ * interval_ /* Sequencer run time.*/, 1ms /* Sequencer timeout. */,
-      SequencerIdleStrategy::SLEEP, termination_predicate);
+  SequencerImpl sequencer(platform_util_, *dispatcher_, time_system_, time_system_.monotonicTime(),
+                          std::move(rate_limiter_), callback,
+                          std::make_unique<StreamingStatistic>(),
+                          std::make_unique<StreamingStatistic>(), SequencerIdleStrategy::SLEEP,
+                          termination_predicate, store_);
 
   time_system_.setMonotonicTime(time_system_.monotonicTime() + 100s);
   sequencer.start();
@@ -181,12 +179,11 @@ TEST_F(SequencerTestWithTimerEmulation, StartingLate) {
 TEST_F(SequencerTestWithTimerEmulation, RateLimiterSaturatedTargetInteraction) {
   SequencerTarget callback =
       std::bind(&MockSequencerTarget::callback, target(), std::placeholders::_1);
-  SequencerImpl sequencer(
-      platform_util_, *dispatcher_, time_system_, time_system_.monotonicTime(),
-      std::move(rate_limiter_), callback, std::make_unique<StreamingStatistic>(),
-      std::make_unique<StreamingStatistic>(),
-      test_number_of_intervals_ * interval_ /* Sequencer run time.*/, 0ms /* Sequencer timeout. */,
-      SequencerIdleStrategy::SLEEP, termination_predicate);
+  SequencerImpl sequencer(platform_util_, *dispatcher_, time_system_, time_system_.monotonicTime(),
+                          std::move(rate_limiter_), callback,
+                          std::make_unique<StreamingStatistic>(),
+                          std::make_unique<StreamingStatistic>(), SequencerIdleStrategy::SLEEP,
+                          termination_predicate, store_);
 
   EXPECT_CALL(rate_limiter_unsafe_ref_, tryAcquireOne())
       .Times(AtLeast(3))
@@ -226,8 +223,7 @@ public:
     SequencerImpl sequencer(
         platform_util_, *dispatcher_, time_system_, time_system_.monotonicTime(),
         std::move(rate_limiter_), sequencer_target_, std::make_unique<StreamingStatistic>(),
-        std::make_unique<StreamingStatistic>(), test_number_of_intervals_ * interval_, 1s,
-        idle_strategy, termination_predicate);
+        std::make_unique<StreamingStatistic>(), idle_strategy, termination_predicate, store_);
     EXPECT_EQ(0, callback_test_count_);
     EXPECT_EQ(0, sequencer.latencyStatistic().count());
     sequencer.start();
@@ -262,12 +258,11 @@ TEST_F(SequencerIntegrationTest, IdleStrategySleep) {
 TEST_F(SequencerIntegrationTest, AlwaysSaturatedTargetTest) {
   SequencerTarget callback =
       std::bind(&SequencerIntegrationTest::saturated_test, this, std::placeholders::_1);
-  SequencerImpl sequencer(
-      platform_util_, *dispatcher_, time_system_, time_system_.monotonicTime(),
-      std::move(rate_limiter_), callback, std::make_unique<StreamingStatistic>(),
-      std::make_unique<StreamingStatistic>(),
-      test_number_of_intervals_ * interval_ /* Sequencer run time.*/, 1ms /* Sequencer timeout. */,
-      SequencerIdleStrategy::SLEEP, termination_predicate);
+  SequencerImpl sequencer(platform_util_, *dispatcher_, time_system_, time_system_.monotonicTime(),
+                          std::move(rate_limiter_), callback,
+                          std::make_unique<StreamingStatistic>(),
+                          std::make_unique<StreamingStatistic>(), SequencerIdleStrategy::SLEEP,
+                          termination_predicate, store_);
 
   sequencer.start();
   sequencer.waitForCompletion();
@@ -280,15 +275,13 @@ TEST_F(SequencerIntegrationTest, AlwaysSaturatedTargetTest) {
 // stalled benchmark client. Implicitly we test that we get past sequencer.waitForCompletion()
 // timely, and don't hang.
 TEST_F(SequencerIntegrationTest, CallbacksDoNotInfluenceTestDuration) {
-  auto grace_timeout = 12345ms;
   SequencerTarget callback =
       std::bind(&SequencerIntegrationTest::timeout_test, this, std::placeholders::_1);
   SequencerImpl sequencer(platform_util_, *dispatcher_, time_system_, time_system_.monotonicTime(),
                           std::move(rate_limiter_), callback,
                           std::make_unique<StreamingStatistic>(),
-                          std::make_unique<StreamingStatistic>(),
-                          test_number_of_intervals_ * interval_ /* Sequencer run time.*/,
-                          grace_timeout, SequencerIdleStrategy::SLEEP, termination_predicate);
+                          std::make_unique<StreamingStatistic>(), SequencerIdleStrategy::SLEEP,
+                          termination_predicate, store_);
 
   auto pre_timeout = time_system_.monotonicTime();
   sequencer.start();
