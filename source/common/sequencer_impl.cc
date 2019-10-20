@@ -115,6 +115,23 @@ void SequencerImpl::run(bool from_periodic_timer) {
         // proceed. Update the rate limiter.
         updateStartBlockingTimeIfNeeded();
         rate_limiter_->releaseOne();
+        if (now - blocked_start_ > 5s) {
+          // With max pending requests configured to 1 we hit a case where we don't hear back from
+          // the initiated StreamDecoder when killing the server mid-execution. That causes
+          // BenchmarkClient to stop issueing new requests, because it will wait for the in-flight
+          // one to report back to maintain exact pacing.
+          // That needs further looking into [1], as this means neither a stream reset or connection
+          // pool callback occurs in that (edge) case. But meantime, this will avoid hanging for
+          // the remaining execution time and reporting success afterwards.
+          // [1] See
+          // https://github.com/envoyproxy/envoy/blob/master/source/common/http/codec_client.cc#L91
+          // that resets the encoder, but should something explicit happen for the decoder as well
+          // in case of a remote close? probably not the problem, but making note of that so I don't
+          // forget.
+          ENVOY_LOG(error, "Execution stalled for too long");
+          exit(false);
+          return;
+        }
         // Retry later. When all target_ calls have completed we are going to spin until target_
         // stops returning false. Otherwise the periodic timer will wake us up to re-check.
         break;
