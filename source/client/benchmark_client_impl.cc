@@ -80,10 +80,18 @@ bool BenchmarkClientHttpImpl::tryStartRequest(CompletionCallback caller_completi
   }
   // When no client side queueing is disabled (max_pending equals 1) we control the pacing as
   // exactly as possible here.
-  // NOTE: We can't consistently rely on resourceManager()::requests()
-  // because that isn't used for h/1 (it is used in tcp and h2 though).
-  if ((max_pending_requests_ == 1 &&
-       (requests_initiated_ - requests_completed_) >= connection_limit_)) {
+  // NOTE: We used to do our own tracking here based on a comparison of initiated and completed
+  // StreamDecoder instances. However, with max pending requests configured to 1 we hit a case where
+  // we don't hear back from the initiated StreamDecoder when killing the server mid-execution. That
+  // causes BenchmarkClient to stop issueing new requests, because it will wait for the in-flight
+  // one to report back to maintain exact pacing.
+  // That warrants further looking into as this means neither a stream reset or connection
+  // pool callback occurs in that case. But meantime, this will avoid hanging for
+  // the remaining execution time and reporting success afterwards, as Envoy's gauges do provide
+  // the right values.
+  if (max_pending_requests_ == 1 &&
+      ((cluster_info->stats().upstream_rq_active_.value() +
+        cluster_info->stats().upstream_rq_pending_active_.value()) >= connection_limit_)) {
     return false;
   }
   auto header = header_generator_();

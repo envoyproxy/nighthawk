@@ -31,7 +31,7 @@ public:
   BenchmarkClientHttpTest()
       : api_(Envoy::Api::createApiForTest()), dispatcher_(api_->allocateDispatcher()),
         cluster_manager_(std::make_unique<Envoy::Upstream::MockClusterManager>()),
-        cluster_info_(std::make_unique<Envoy::Upstream::MockClusterInfo>()),
+        cluster_info_(std::make_unique<NiceMock<Envoy::Upstream::MockClusterInfo>>()),
         http_tracer_(std::make_unique<Envoy::Tracing::MockHttpTracer>()), response_code_("200") {
     EXPECT_CALL(cluster_manager(), httpConnPoolForCluster(_, _, _, _))
         .WillRepeatedly(Return(&pool_));
@@ -98,7 +98,7 @@ public:
       }
     }
     dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
-    EXPECT_EQ(max_pending, inflight_response_count);
+    // We test feature functionality like max-pending-requests in the integration tests.
 
     for (Envoy::Http::StreamDecoder* decoder : decoders_) {
       Envoy::Http::HeaderMapPtr response_headers{
@@ -154,12 +154,12 @@ public:
 TEST_F(BenchmarkClientHttpTest, BasicTestH1404) {
   response_code_ = "404";
   testBasicFunctionality(1, 1, 10);
-  EXPECT_EQ(1, getCounter("http_4xx"));
+  EXPECT_EQ(10, getCounter("http_4xx"));
 }
 
 TEST_F(BenchmarkClientHttpTest, WeirdStatus) {
   response_code_ = "601";
-  testBasicFunctionality(1, 1, 10);
+  testBasicFunctionality(1, 1, 1);
   EXPECT_EQ(1, getCounter("http_xxx"));
 }
 
