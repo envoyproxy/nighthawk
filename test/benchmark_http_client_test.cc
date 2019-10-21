@@ -143,7 +143,7 @@ public:
   Envoy::Http::ConnectionPool::MockInstance pool_;
   Envoy::ProcessWide process_wide;
   std::vector<Envoy::Http::StreamDecoder*> decoders_;
-  Envoy::Http::MockStreamEncoder stream_encoder_;
+  NiceMock<Envoy::Http::MockStreamEncoder> stream_encoder_;
   Envoy::Upstream::MockThreadLocalCluster thread_local_cluster_;
   Envoy::Upstream::ClusterInfoConstSharedPtr cluster_info_;
   Envoy::Tracing::HttpTracerPtr http_tracer_;
@@ -154,12 +154,12 @@ public:
 TEST_F(BenchmarkClientHttpTest, BasicTestH1404) {
   response_code_ = "404";
   testBasicFunctionality(1, 1, 10);
-  EXPECT_EQ(10, getCounter("http_4xx"));
+  EXPECT_EQ(1, getCounter("http_4xx"));
 }
 
 TEST_F(BenchmarkClientHttpTest, WeirdStatus) {
   response_code_ = "601";
-  testBasicFunctionality(1, 1, 1);
+  testBasicFunctionality(1, 1, 10);
   EXPECT_EQ(1, getCounter("http_xxx"));
 }
 
