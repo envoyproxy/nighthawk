@@ -80,6 +80,8 @@ bool BenchmarkClientHttpImpl::tryStartRequest(CompletionCallback caller_completi
   }
   // When no client side queueing is disabled (max_pending equals 1) we control the pacing as
   // exactly as possible here.
+  // NOTE: We can't consistently rely on resourceManager()::requests()
+  // because that isn't used for h/1 (it is used in tcp and h2 though).
   if (max_pending_requests_ == 1 &&
       ((requests_initiated_ - requests_completed_) >= connection_limit_)) {
     return false;
