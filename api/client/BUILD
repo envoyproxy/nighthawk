@@ -6,7 +6,6 @@ load("@envoy_api//bazel:api_build_system.bzl", "api_cc_py_proto_library")
 api_cc_py_proto_library(
     name = "base",
     srcs = [
-        "fortio.proto",
         "options.proto",
         "output.proto",
         "service.proto",

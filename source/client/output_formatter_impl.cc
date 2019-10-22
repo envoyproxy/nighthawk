@@ -9,7 +9,7 @@
 
 #include "external/envoy/source/common/protobuf/utility.h"
 
-#include "api/client/fortio.pb.h"
+#include "api/client/transform/fortio.pb.h"
 
 #include "absl/strings/str_cat.h"
 
