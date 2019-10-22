@@ -1,9 +1,11 @@
 #include <chrono>
 
+#include "external/envoy/source/common/protobuf/message_validator_impl.h"
 #include "external/envoy/test/test_common/file_system_for_test.h"
 #include "external/envoy/test/test_common/simulated_time_system.h"
 
 #include "api/client/options.pb.h"
+#include "api/client/output.pb.h"
 
 #include "common/statistic_impl.h"
 
@@ -87,6 +89,28 @@ TEST_F(OutputCollectorTest, DottedFormatter) {
   DottedStringOutputFormatterImpl formatter;
   expectEqualToGoldFile(formatter.formatProto(collector_->toProto()),
                         "test/test_data/output_formatter.dotted.gold");
+}
+
+class MediumOutputCollectorTest : public OutputCollectorTest {
+ public:
+
+  nighthawk::client::Output loadProtoFromFile(absl::string_view path) {
+    nighthawk::client::Output proto;
+    const auto contents = Envoy::Filesystem::fileSystemForTest().fileReadToEnd(
+                  TestEnvironment::runfilesPath(std::string(path)));
+        Envoy::MessageUtil::loadFromJson(contents, proto,
+                                     Envoy::ProtobufMessage::getStrictValidationVisitor());
+    return proto;
+  }
+
+};
+
+TEST_F(MediumOutputCollectorTest, FortioFormatter) {
+  const auto input_proto = loadProtoFromFile("test/test_data/output_formatter.medium.proto.gold");
+
+  FortioOutputFormatterImpl formatter;
+  expectEqualToGoldFile(formatter.formatProto(input_proto),
+                        "test/test_data/output_formatter.medium.fortio.gold");
 }
 
 TEST_F(OutputCollectorTest, getLowerCaseOutputFormats) {

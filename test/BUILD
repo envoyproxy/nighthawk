@@ -106,6 +106,8 @@ envoy_cc_test(
         "test_data/output_formatter.json.gold",
         "test_data/output_formatter.txt.gold",
         "test_data/output_formatter.yaml.gold",
+        "test_data/output_formatter.medium.fortio.gold",
+        "test_data/output_formatter.medium.proto.gold"
     ],
     repository = "@envoy",
     deps = [
