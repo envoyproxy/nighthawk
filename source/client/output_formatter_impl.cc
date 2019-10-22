@@ -184,48 +184,51 @@ std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Outp
   nighthawk::client::FortioResult fortio_output;
 
   // TODO(nareddyt): Not needed but nice to have, displays in the UI
-  fortio_output.mutable_labels()->set_value("A random label");
-
+  fortio_output.mutable_labels()->set_value("");
   fortio_output.mutable_starttime()->set_seconds(output.timestamp().seconds());
   fortio_output.mutable_requestedqps()->set_value(output.options().requests_per_second().value());
-  fortio_output.mutable_requestedduration()->set_seconds(output.options().duration().seconds());
+  fortio_output.mutable_url()->set_value(output.options().uri().value());
 
-  // FIXME: Set the actual to the same as the requested since NH does not expose these fields
-  fortio_output.mutable_actualqps()->set_value(output.options().requests_per_second().value());
-  fortio_output.mutable_actualduration()->set_value(output.options().duration().seconds());
+  // Actual and requested durations are the same
+  const auto& nh_duration = output.options().duration().seconds();
+  fortio_output.mutable_requestedduration()->set_seconds(nh_duration);
+  fortio_output.mutable_actualduration()->set_value(nh_duration);
 
   // This displays as "connections" in the UI, not threads
   fortio_output.mutable_numthreads()->set_value(output.options().connections().value());
 
-  // This displays the endpoint URL in the UI
-  fortio_output.mutable_url()->set_value(output.options().uri().value());
-
   // Get the result that represents all workers (global)
   const auto& nh_global_result = this->getGlobalResult(output);
 
+  // Fill in the actual QPS based on the counters
+  const auto& nh_rq_counter = this->getCounterByName(nh_global_result, "upstream_rq_total");
+  const double actual_qps = static_cast<double>(nh_rq_counter.value()) / nh_duration;
+  fortio_output.mutable_actualqps()->set_value(actual_qps);
+
   // Fill in the number of successful responses.
-  // Fortio-ui only reads the 200 OK field, other fields are only informational.
-  const auto& nh_2xx_counter = this->getCounterByName(nh_global_result, "benchmark.http_2xx");
+  // Fortio-ui only reads the 200 OK field, other fields are never displayed.
   fortio_output.mutable_retcodes()->insert({"200", 0});
-  fortio_output.mutable_retcodes()->at("200") = nh_2xx_counter.value();
+  try {
+    const auto& nh_2xx_counter = this->getCounterByName(nh_global_result, "benchmark.http_2xx");
+    fortio_output.mutable_retcodes()->at("200") = nh_2xx_counter.value();
+  } catch (const NighthawkException& e) {
+    // If this field doesn't exist, then there were no 2xx responses
+    fortio_output.mutable_retcodes()->at("200") = 0;
+  }
 
   // The core of the transformation is here: All the percentiles to display the dashboard
   const auto& nh_stat = this->getRequestResponseStatistic(nh_global_result);
 
-  // Set the count
+  // Set the count (number of data points)
   nighthawk::client::DurationHistogram fortio_histogram;
   fortio_histogram.mutable_count()->set_value(nh_stat.count());
 
-  // Tracking variables
   uint64_t prev_fortio_count = 0;
   double prev_fortio_end = 0;
-
   for (int i = 0; i < nh_stat.percentiles().size(); i++) {
 
-    const auto& nh_percentile = nh_stat.percentiles().at(i);
-
-    // Create the data entry
     nighthawk::client::DataEntry fortio_data_entry;
+    const auto& nh_percentile = nh_stat.percentiles().at(i);
 
     // fortio_percent = 100 * nh_percentile
     fortio_data_entry.mutable_percent()->set_value(nh_percentile.percentile() * 100);
@@ -239,7 +242,8 @@ std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Outp
 
     // fortio_start = prev_fortio_end
     if (i == 0) {
-      // If this is the first entry, force the start and end time to be the same
+      // If this is the first entry, force the start and end time to be the same.
+      // This prevents it from starting at 0, making it disproportionally big in the UI.
       prev_fortio_end = nh_duration_in_double;
     }
     fortio_data_entry.mutable_start()->set_value(prev_fortio_end);
