@@ -92,17 +92,15 @@ TEST_F(OutputCollectorTest, DottedFormatter) {
 }
 
 class MediumOutputCollectorTest : public OutputCollectorTest {
- public:
-
+public:
   nighthawk::client::Output loadProtoFromFile(absl::string_view path) {
     nighthawk::client::Output proto;
     const auto contents = Envoy::Filesystem::fileSystemForTest().fileReadToEnd(
-                  TestEnvironment::runfilesPath(std::string(path)));
-        Envoy::MessageUtil::loadFromJson(contents, proto,
+        TestEnvironment::runfilesPath(std::string(path)));
+    Envoy::MessageUtil::loadFromJson(contents, proto,
                                      Envoy::ProtobufMessage::getStrictValidationVisitor());
     return proto;
   }
-
 };
 
 TEST_F(MediumOutputCollectorTest, FortioFormatter) {
