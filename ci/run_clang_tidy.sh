@@ -26,4 +26,4 @@ trap cleanup EXIT
 tools/gen_compilation_database.py --run_bazel_build --include_headers
 
 LLVM_PREFIX=$(llvm-config --prefix)
-"${LLVM_PREFIX}/share/clang/run-clang-tidy.py"
+"${LLVM_PREFIX}/share/clang/run-clang-tidy.py" -extra-arg-before=-xc++ -quiet -j ${NUM_CPUS}
