@@ -143,7 +143,7 @@ public:
   Envoy::Http::ConnectionPool::MockInstance pool_;
   Envoy::ProcessWide process_wide;
   std::vector<Envoy::Http::StreamDecoder*> decoders_;
-  Envoy::Http::MockStreamEncoder stream_encoder_;
+  NiceMock<Envoy::Http::MockStreamEncoder> stream_encoder_;
   Envoy::Upstream::MockThreadLocalCluster thread_local_cluster_;
   Envoy::Upstream::ClusterInfoConstSharedPtr cluster_info_;
   Envoy::Tracing::HttpTracerPtr http_tracer_;
