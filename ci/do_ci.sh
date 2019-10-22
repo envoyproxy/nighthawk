@@ -135,6 +135,7 @@ export BAZEL_TEST_OPTIONS="${BAZEL_BUILD_OPTIONS} --test_env=HOME --test_env=PYT
 [[ -z "${SRCDIR}" ]] && SRCDIR="${PWD}"
 
 setup_clang_toolchain
+export CLANG_FORMAT=clang-format
 
 case "$1" in
     build)
