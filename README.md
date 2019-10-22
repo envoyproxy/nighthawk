@@ -9,7 +9,7 @@ Nighthawk currently offers:
 - A load testing client which supports HTTP/1.1 and HTTP/2 over HTTP and HTTPS.
 (HTTPS certificates are not yet validated).
 - A simple [test server](source/server/README.md) which is capable of generating dynamic response sizes, as well as inject delays.
-
+- A binary to transform nighthawk output to well-known formats, allowing integration with other systems and dashboards.
 
 ## Prerequisites
 
@@ -272,6 +272,21 @@ client.upstream_rq_total                9994        1998.80
 
 [21:28:18.522403][27849][I] [source/client/client.cc:279] Done.
 ```
+
+## Visualizing the output of a benchmark
+
+Nighthawk supports transforming the output into other well-known formats, such as:
+
+- `dotted`: Provides integration with Prometheus
+- `fortio`: Provides integration with [Fortio's report-only UI](https://github.com/fortio/fortio#report-only-ui)
+
+The following is an example of a nighthawk benchmark visualized via the Fortio UI.
+
+```bash
+fortio report --data-dir ./samples/fortio_data
+```
+
+![Fortio Large Report](./samples/fortio_reports/large.png)
 
 ## Accuracy and repeatability considerations when using the Nighthawk client
 
