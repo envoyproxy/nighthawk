@@ -130,7 +130,7 @@ Where:
      Use HTTP/2
 
    --timeout <uint32_t>
-     Connection timeout period in seconds. Default: 30.
+     Connection connect timeout period in seconds. Default: 30.
 
    --duration <uint32_t>
      The number of seconds that the test should run. Default: 5.

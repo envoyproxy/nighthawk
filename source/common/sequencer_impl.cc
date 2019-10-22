@@ -100,6 +100,9 @@ void SequencerImpl::run(bool from_periodic_timer) {
         const auto dur = time_source_.monotonicTime() - now;
         latency_statistic_->addValue(dur.count());
         targets_completed_++;
+        // Callbacks may fire after stop(), as during teardown the dispatcher may run. (Concretely
+        // when BenchmarkClient::terminate() is called, and the connection pool shuts down). Hence
+        // we need to make sure the spin_timer_ is still around before we dereference it.
         if (spin_timer_ != nullptr) {
           // Immediately schedule us to check again, as chances are we can get on with the next
           // task.

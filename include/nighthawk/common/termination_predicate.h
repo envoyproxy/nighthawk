@@ -29,7 +29,7 @@ public:
    *
    * @param child the child predicate to link.
    */
-  virtual void link(TerminationPredicatePtr&& child) PURE;
+  virtual TerminationPredicate& link(TerminationPredicatePtr&& child) PURE;
 
   /**
    * Recursively evaluates chain of linked predicates, this instance last.

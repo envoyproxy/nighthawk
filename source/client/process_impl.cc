@@ -382,6 +382,10 @@ bool ProcessImpl::run(OutputCollector& collector) {
     }
   }
 
+  // Note that above we use use counter values snapshotted by the workers right after its execution
+  // completes. Here we query the live counters to get to the global numbers. To make sure the
+  // global aggregated numbers line up, we must take care not to shut down the benchmark client
+  // before we do this, as that will increment certain counters like connections closed, etc.
   const auto& counters = Utility().mapCountersFromStore(
       store_root_, [](absl::string_view, uint64_t value) { return value > 0; });
   StatisticFactoryImpl statistic_factory(options_);

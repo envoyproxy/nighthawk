@@ -63,14 +63,12 @@ void ClientWorkerImpl::work() {
           stat->value();
     }
   }
+  // Note that benchmark_client_ is not terminated here, but in shutdownThread() below. This is to
+  // prevent it from influencing counters: the main thread still needs to be able to read the
+  // counters for reporting the global numbers, and those should be consistent.
 }
 
-void ClientWorkerImpl::shutdownThread() {
-  // Terminate will shut down the pool and run the dispatcher, which may increment certain stats
-  // like the number of connections destroyed. We do that here, so we don't pollute the reported
-  // counters with that.
-  benchmark_client_->terminate();
-}
+void ClientWorkerImpl::shutdownThread() { benchmark_client_->terminate(); }
 
 StatisticPtrMap ClientWorkerImpl::statistics() const {
   StatisticPtrMap statistics;

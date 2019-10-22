@@ -140,19 +140,14 @@ TerminationPredicateFactoryImpl::create(Envoy::TimeSource& time_source, Envoy::S
   // configured.
   TerminationPredicatePtr duration_predicate =
       std::make_unique<DurationTerminationPredicateImpl>(time_source, start, options_.duration());
-  TerminationPredicatePtr code_4xx_predicate =
-      std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
-          scope.counter("benchmark.http_4xx"), 0, TerminationPredicate::Status::FAIL);
-  TerminationPredicatePtr code_5xx_predicate =
-      std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
-          scope.counter("benchmark.http_5xx"), 0, TerminationPredicate::Status::FAIL);
-  TerminationPredicatePtr pool_failure_predicate =
-      std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
+  duration_predicate
+      ->link(std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
+          scope.counter("benchmark.http_4xx"), 0, TerminationPredicate::Status::FAIL))
+      .link(std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
+          scope.counter("benchmark.http_5xx"), 0, TerminationPredicate::Status::FAIL))
+      .link(std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
           scope.counter("benchmark.pool_connection_failure"), 0,
-          TerminationPredicate::Status::FAIL);
-  code_5xx_predicate->link(std::move(pool_failure_predicate));
-  code_4xx_predicate->link(std::move(code_5xx_predicate));
-  duration_predicate->link(std::move(code_4xx_predicate));
+          TerminationPredicate::Status::FAIL));
   return duration_predicate;
 }
 

@@ -50,7 +50,7 @@ bool Main::run() {
   ProcessImpl process(*options_, time_system);
   OutputFormatterFactoryImpl output_formatter_factory;
   OutputCollectorImpl output_collector(time_system, *options_);
-  bool res = process.run(output_collector);
+  const bool res = process.run(output_collector);
   auto formatter = output_formatter_factory.create(options_->outputFormat());
   std::cout << formatter->formatProto(output_collector.toProto());
   process.shutdown();

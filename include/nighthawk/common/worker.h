@@ -26,13 +26,14 @@ public:
   virtual void waitForCompletion() PURE;
 
   /**
-   * Shuts down the worker. Must be paired with start,
-   * and mandatory.
+   * Shuts down the worker. Must be paired with start, and mandatory. Called from the main thread,
+   * after the worker has cleaned up after itself in shutdownThread().
    */
   virtual void shutdown() PURE;
 
   /*
-  Called just before exitting the thread, allows for the thread to clean up.
+  Called on-thread after its designated task finishes. Last chance to clean up while the associated
+  thread is still running.
   */
   virtual void shutdownThread() PURE;
 };

@@ -9,7 +9,11 @@ namespace Nighthawk {
 
 class TerminationPredicateBaseImpl : public TerminationPredicate {
 public:
-  void link(TerminationPredicatePtr&& child) final { linked_child_ = std::move(child); }
+  TerminationPredicate& link(TerminationPredicatePtr&& child) final {
+    RELEASE_ASSERT(linked_child_ == nullptr, "Linked child already set");
+    linked_child_ = std::move(child);
+    return *linked_child_;
+  }
   TerminationPredicate::Status evaluateChain() final;
 
 private:
