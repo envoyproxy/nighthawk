@@ -152,15 +152,13 @@ TerminationPredicate* TerminationPredicateFactoryImpl::linkConfiguredPredicates(
                  "PROCEED was unexpected");
   TerminationPredicate* current_predicate = &last_predicate;
   for (const auto& predicate : predicates) {
-    std::cerr << "A:" << current_predicate << std::endl;
-    ENVOY_LOG(info, "Adding {} predicate for {} with threshold {}",
+    ENVOY_LOG(trace, "Adding {} predicate for {} with threshold {}",
               termination_status == TerminationPredicate::Status::TERMINATE ? "termination"
                                                                             : "failure",
               predicate.first, predicate.second);
     current_predicate = &current_predicate->link(
         std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
             scope.counter(predicate.first), predicate.second, termination_status));
-    std::cerr << "B:" << current_predicate << std::endl;
   }
   return current_predicate;
 }
