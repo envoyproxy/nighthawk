@@ -107,4 +107,6 @@ message CommandLineOptions {
   google.protobuf.StringValue uri = 18; // [(validate.rules).string.uri = true];
   // See :option:`--trace` for details.
   google.protobuf.StringValue trace = 19; // [(validate.rules).string.uri = true];
+  // See :option:`--termination-predicates` for details.
+  map<string, uint32> termination_predicates = 20;
 }

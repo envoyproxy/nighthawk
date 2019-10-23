@@ -88,6 +88,7 @@ public:
   MOCK_CONST_METHOD0(sequencerIdleStrategy,
                      nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions());
   MOCK_CONST_METHOD0(trace, std::string());
+  MOCK_CONST_METHOD0(terminationPredicates, Client::TerminationPredicateMap());
 };
 
 class MockBenchmarkClientFactory : public Client::BenchmarkClientFactory {

@@ -361,6 +361,10 @@ bool ProcessImpl::run(OutputCollector& collector) {
 
   Runtime::LoaderSingleton::get().initialize(*cluster_manager_);
 
+  for (auto& counter : store_root_.counters()) {
+    std::cerr << counter->name() << std::endl;
+  }
+
   for (auto& w : workers_) {
     w->start();
   }

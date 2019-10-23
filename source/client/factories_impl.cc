@@ -135,19 +135,31 @@ TerminationPredicateFactoryImpl::TerminationPredicateFactoryImpl(const Options& 
 TerminationPredicatePtr
 TerminationPredicateFactoryImpl::create(Envoy::TimeSource& time_source, Envoy::Stats::Scope& scope,
                                         const Envoy::MonotonicTime start) const {
-  // By default, we don't tolerate status code errors & connection-level errors.
-  // TODO(oschaaf): In a follow up, we'll tolerate these when explicit termination predicates are
-  // configured.
   TerminationPredicatePtr duration_predicate =
       std::make_unique<DurationTerminationPredicateImpl>(time_source, start, options_.duration());
-  duration_predicate
-      ->link(std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
-          scope.counter("benchmark.http_4xx"), 0, TerminationPredicate::Status::FAIL))
-      .link(std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
-          scope.counter("benchmark.http_5xx"), 0, TerminationPredicate::Status::FAIL))
-      .link(std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
-          scope.counter("benchmark.pool_connection_failure"), 0,
-          TerminationPredicate::Status::FAIL));
+  const auto& termination_predicate_options = options_.terminationPredicates();
+  if (termination_predicate_options.size() == 0) {
+    // By default, we don't tolerate status code errors & connection-level errors.
+    duration_predicate
+        ->link(std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
+            scope.counter("benchmark.http_4xx"), 0, TerminationPredicate::Status::FAIL))
+        .link(std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
+            scope.counter("benchmark.http_5xx"), 0, TerminationPredicate::Status::FAIL))
+        .link(std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
+            scope.counter("benchmark.pool_connection_failure"), 0,
+            TerminationPredicate::Status::FAIL));
+  } else {
+    auto& last_predicate = *duration_predicate;
+    for (const auto& predicate : termination_predicate_options) {
+      std::cerr << "Adding predicate " << predicate.first << " with threshold " << predicate.second
+                << std::endl;
+      last_predicate = last_predicate.link(
+          std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
+              scope.counter(predicate.first), predicate.second,
+              TerminationPredicate::Status::FAIL));
+    }
+  }
+
   return duration_predicate;
 }
 

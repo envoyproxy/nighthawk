@@ -10,6 +10,7 @@
 
 #include "client/output_formatter_impl.h"
 
+#include "absl/strings/numbers.h"
 #include "absl/strings/str_split.h"
 #include "fmt/ranges.h"
 #include "tclap/CmdLine.h"
@@ -157,6 +158,11 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   TCLAP::ValueArg<std::string> trace(
       "", "trace", "Trace uri. Example: zipkin://localhost:9411/api/v1/spans. Default is empty.",
       false, "", "uri format", cmd);
+  TCLAP::MultiArg<std::string> termination_predicates(
+      "", "termination-predicate",
+      "Termination predicate. Allows specifying a counter name plus threshold value for "
+      "terminating execution.",
+      false, "<string, uint32_t>", cmd);
 
   TCLAP::UnlabeledValueArg<std::string> uri("uri",
                                             "uri to benchmark. http:// and https:// are supported, "
@@ -214,6 +220,22 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
                    "Failed to parse sequencer idle strategy");
   }
   TCLAP_SET_IF_SPECIFIED(trace, trace_);
+  for (const auto& predicate : termination_predicates) {
+    std::vector<std::string> split_predicate =
+        absl::StrSplit(predicate, ':', absl::SkipWhitespace());
+    if (split_predicate.size() != 2) {
+      throw MalformedArgvException(
+          fmt::format("Termination predicate '{}' is badly formatted.", predicate));
+    }
+
+    uint32_t threshold = 0;
+    if (absl::SimpleAtoi(split_predicate[1], &threshold)) {
+      termination_predicates_[split_predicate[0]] = threshold;
+    } else {
+      throw MalformedArgvException(
+          fmt::format("Termination predicate '{}' has an out of range threshold.", predicate));
+    }
+  }
 
   // CLI-specific tests.
   // TODO(oschaaf): as per mergconflicts's remark, it would be nice to aggregate
@@ -303,6 +325,9 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   trace_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, trace, trace_);
 
   tls_context_.MergeFrom(options.tls_context());
+  for (const auto& termination_predicate : options.termination_predicates()) {
+    termination_predicates_[termination_predicate.first] = termination_predicate.second;
+  }
   validate();
 }
 
@@ -376,6 +401,11 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptions() const {
       maxRequestsPerConnection());
   command_line_options->mutable_sequencer_idle_strategy()->set_value(sequencerIdleStrategy());
   command_line_options->mutable_trace()->set_value(trace());
+  auto termination_predicates_option = command_line_options->mutable_termination_predicates();
+  for (const auto& termination_predicate : terminationPredicates()) {
+    termination_predicates_option->insert(
+        {termination_predicate.first, termination_predicate.second});
+  }
   return command_line_options;
 }
 

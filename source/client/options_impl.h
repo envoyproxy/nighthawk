@@ -51,6 +51,7 @@ public:
     return sequencer_idle_strategy_;
   }
   std::string trace() const override { return trace_; }
+  TerminationPredicateMap terminationPredicates() const override { return termination_predicates_; }
 
 private:
   void setNonTrivialDefaults();
@@ -80,6 +81,7 @@ private:
   nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions sequencer_idle_strategy_{
       nighthawk::client::SequencerIdleStrategy::SPIN};
   std::string trace_;
+  TerminationPredicateMap termination_predicates_;
 };
 
 } // namespace Client

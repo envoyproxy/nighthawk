@@ -1,6 +1,7 @@
 #pragma once
 
 #include <chrono>
+#include <map>
 #include <memory>
 #include <string>
 
@@ -13,7 +14,7 @@ namespace Nighthawk {
 namespace Client {
 
 using CommandLineOptionsPtr = std::unique_ptr<nighthawk::client::CommandLineOptions>;
-
+using TerminationPredicateMap = std::map<std::string, uint32_t>;
 /**
  * Abstract options interface.
  */
@@ -43,6 +44,7 @@ public:
   virtual nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions
   sequencerIdleStrategy() const PURE;
   virtual std::string trace() const PURE;
+  virtual TerminationPredicateMap terminationPredicates() const PURE;
 
   /**
    * Converts an Options instance to an equivalent CommandLineOptions instance in terms of option
