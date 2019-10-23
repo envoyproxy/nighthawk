@@ -104,6 +104,7 @@ TEST_F(StreamDecoderTest, LatencyIsNotMeasured) {
   NiceMock<Envoy::StreamInfo::MockStreamInfo> stream_info;
   EXPECT_CALL(stream_encoder,
               encodeHeaders(Envoy::HeaderMapEqualRef(request_headers_.get()), true));
+  EXPECT_CALL(stream_encoder, getStream());
   decoder->onPoolReady(stream_encoder, ptr, stream_info);
   decoder->decodeHeaders(std::move(test_header_), true);
   EXPECT_EQ(0, connect_statistic_.count());
@@ -137,6 +138,7 @@ TEST_F(StreamDecoderTest, LatencyIsMeasured) {
       request_header, true, 0, TEST_TRACER_UID, http_tracer_);
 
   Envoy::Http::MockStreamEncoder stream_encoder;
+  EXPECT_CALL(stream_encoder, getStream());
   Envoy::Upstream::HostDescriptionConstSharedPtr ptr;
   NiceMock<Envoy::StreamInfo::MockStreamInfo> stream_info;
   EXPECT_CALL(stream_encoder,
