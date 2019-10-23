@@ -45,6 +45,7 @@ public:
   sequencerIdleStrategy() const PURE;
   virtual std::string trace() const PURE;
   virtual TerminationPredicateMap terminationPredicates() const PURE;
+  virtual TerminationPredicateMap failurePredicates() const PURE;
 
   /**
    * Converts an Options instance to an equivalent CommandLineOptions instance in terms of option

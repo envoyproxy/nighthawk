@@ -13,7 +13,6 @@
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_split.h"
 #include "fmt/ranges.h"
-#include "tclap/CmdLine.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -163,6 +162,11 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "Termination predicate. Allows specifying a counter name plus threshold value for "
       "terminating execution.",
       false, "<string, uint32_t>", cmd);
+  TCLAP::MultiArg<std::string> failure_predicates(
+      "", "failure-predicate",
+      "Failure predicate. Allows specifying a counter name plus threshold value for "
+      "failing execution.",
+      false, "<string, uint32_t>", cmd);
 
   TCLAP::UnlabeledValueArg<std::string> uri("uri",
                                             "uri to benchmark. http:// and https:// are supported, "
@@ -220,22 +224,8 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
                    "Failed to parse sequencer idle strategy");
   }
   TCLAP_SET_IF_SPECIFIED(trace, trace_);
-  for (const auto& predicate : termination_predicates) {
-    std::vector<std::string> split_predicate =
-        absl::StrSplit(predicate, ':', absl::SkipWhitespace());
-    if (split_predicate.size() != 2) {
-      throw MalformedArgvException(
-          fmt::format("Termination predicate '{}' is badly formatted.", predicate));
-    }
-
-    uint32_t threshold = 0;
-    if (absl::SimpleAtoi(split_predicate[1], &threshold)) {
-      termination_predicates_[split_predicate[0]] = threshold;
-    } else {
-      throw MalformedArgvException(
-          fmt::format("Termination predicate '{}' has an out of range threshold.", predicate));
-    }
-  }
+  parsePredicates(termination_predicates, termination_predicates_);
+  parsePredicates(failure_predicates, failure_predicates_);
 
   // CLI-specific tests.
   // TODO(oschaaf): as per mergconflicts's remark, it would be nice to aggregate
@@ -277,6 +267,29 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
     }
   }
   validate();
+}
+
+void OptionsImpl::parsePredicates(const TCLAP::MultiArg<std::string>& arg,
+                                  TerminationPredicateMap& predicates) {
+  if (arg.isSet()) {
+    predicates.clear();
+  }
+  for (const auto& predicate : arg) {
+    std::vector<std::string> split_predicate =
+        absl::StrSplit(predicate, ':', absl::SkipWhitespace());
+    if (split_predicate.size() != 2) {
+      throw MalformedArgvException(
+          fmt::format("Termination predicate '{}' is badly formatted.", predicate));
+    }
+
+    uint32_t threshold = 0;
+    if (absl::SimpleAtoi(split_predicate[1], &threshold)) {
+      predicates[split_predicate[0]] = threshold;
+    } else {
+      throw MalformedArgvException(
+          fmt::format("Termination predicate '{}' has an out of range threshold.", predicate));
+    }
+  }
 }
 
 OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
@@ -325,13 +338,26 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   trace_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, trace, trace_);
 
   tls_context_.MergeFrom(options.tls_context());
-  for (const auto& termination_predicate : options.termination_predicates()) {
-    termination_predicates_[termination_predicate.first] = termination_predicate.second;
+  for (const auto& predicate : options.termination_predicates()) {
+    termination_predicates_[predicate.first] = predicate.second;
+  }
+  if (options.failure_predicates().size()) {
+    failure_predicates_.clear();
+  }
+  for (const auto& predicate : options.failure_predicates()) {
+    failure_predicates_[predicate.first] = predicate.second;
   }
   validate();
 }
 
-void OptionsImpl::setNonTrivialDefaults() { concurrency_ = "1"; }
+void OptionsImpl::setNonTrivialDefaults() {
+  concurrency_ = "1";
+  // By default, we don't tolerate error status codes and connection failures, and will report
+  // upon observing those.
+  failure_predicates_["benchmark.http_4xx"] = 0;
+  failure_predicates_["benchmark.http_5xx"] = 0;
+  failure_predicates_["benchmark.pool_connection_failure"] = 0;
+}
 
 void OptionsImpl::validate() const {
   // concurrency must be either 'auto' or a positive integer.
@@ -402,9 +428,12 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptions() const {
   command_line_options->mutable_sequencer_idle_strategy()->set_value(sequencerIdleStrategy());
   command_line_options->mutable_trace()->set_value(trace());
   auto termination_predicates_option = command_line_options->mutable_termination_predicates();
-  for (const auto& termination_predicate : terminationPredicates()) {
-    termination_predicates_option->insert(
-        {termination_predicate.first, termination_predicate.second});
+  for (const auto& predicate : terminationPredicates()) {
+    termination_predicates_option->insert({predicate.first, predicate.second});
+  }
+  auto failure_predicates_option = command_line_options->mutable_failure_predicates();
+  for (const auto& predicate : failurePredicates()) {
+    failure_predicates_option->insert({predicate.first, predicate.second});
   }
   return command_line_options;
 }

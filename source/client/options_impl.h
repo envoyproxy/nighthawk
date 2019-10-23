@@ -8,6 +8,8 @@
 #include "nighthawk/client/options.h"
 #include "nighthawk/common/exception.h"
 
+#include "tclap/CmdLine.h"
+
 namespace Nighthawk {
 namespace Client {
 
@@ -52,8 +54,11 @@ public:
   }
   std::string trace() const override { return trace_; }
   TerminationPredicateMap terminationPredicates() const override { return termination_predicates_; }
+  TerminationPredicateMap failurePredicates() const override { return failure_predicates_; }
 
 private:
+  void parsePredicates(const TCLAP::MultiArg<std::string>& arg,
+                       TerminationPredicateMap& predicates);
   void setNonTrivialDefaults();
   void validate() const;
 
@@ -82,6 +87,7 @@ private:
       nighthawk::client::SequencerIdleStrategy::SPIN};
   std::string trace_;
   TerminationPredicateMap termination_predicates_;
+  TerminationPredicateMap failure_predicates_;
 };
 
 } // namespace Client
