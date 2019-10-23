@@ -338,14 +338,14 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   trace_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, trace, trace_);
 
   tls_context_.MergeFrom(options.tls_context());
-  for (const auto& predicate : options.termination_predicates()) {
-    termination_predicates_[predicate.first] = predicate.second;
-  }
   if (options.failure_predicates().size()) {
     failure_predicates_.clear();
   }
   for (const auto& predicate : options.failure_predicates()) {
     failure_predicates_[predicate.first] = predicate.second;
+  }
+  for (const auto& predicate : options.termination_predicates()) {
+    termination_predicates_[predicate.first] = predicate.second;
   }
   validate();
 }

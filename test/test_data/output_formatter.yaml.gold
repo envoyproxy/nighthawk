@@ -1,4 +1,8 @@
 options:
+  termination_predicates:
+    {}
+  failure_predicates:
+    {}
   connections: 0
   duration: 1s
 results:
