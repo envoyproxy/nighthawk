@@ -343,6 +343,23 @@ TEST_F(OptionsImplTest, BadTlsContextSpecification) {
       MalformedArgvException, "envoy.api.v2.auth.UpstreamTlsContext reason INVALID_ARGUMENT");
 }
 
+class OptionsImplPredicateBasedOptionsTest : public OptionsImplTest,
+                                             public WithParamInterface<const char*> {};
+
+TEST_P(OptionsImplPredicateBasedOptionsTest, BadPredicates) {
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                              "{} --{} {} http://foo/", client_name_, GetParam(), "a:b:c")),
+                          MalformedArgvException,
+                          "Termination predicate 'a:b:c' is badly formatted");
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                              "{} --{} {} http://foo/", client_name_, GetParam(), "a:-1")),
+                          MalformedArgvException,
+                          "Termination predicate 'a:-1' has an out of range threshold");
+}
+
+INSTANTIATE_TEST_SUITE_P(PredicateBasedOptionsTest, OptionsImplPredicateBasedOptionsTest,
+                         Values("termination-predicate", "failure-predicate"));
+
 class OptionsImplSequencerIdleStrategyTest : public OptionsImplTest,
                                              public WithParamInterface<const char*> {};
 
