@@ -68,7 +68,6 @@ std::string ConsoleOutputFormatterImpl::formatProto(const nighthawk::client::Out
       for (const auto& counter : result.counters()) {
         const auto nanos =
             Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(result.execution_duration());
-        std::cerr << nanos << std::endl;
         ss << fmt::format("{:<{}}{:<{}}{:.{}f}", counter.name(), 40, counter.value(), 12,
                           counter.value() / (nanos / 1e9), 2)
            << std::endl;
