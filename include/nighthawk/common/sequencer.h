@@ -28,6 +28,11 @@ public:
   virtual void waitForCompletion() PURE;
 
   /**
+   * @return std::chrono::nanoseconds number of seconds that the sequencer has executed.
+   */
+  virtual std::chrono::nanoseconds executionDuration() const PURE;
+
+  /**
    * @return double an up-to-date completions per second rate.
    */
   virtual double completionsPerSecond() const PURE;
