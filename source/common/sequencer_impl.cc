@@ -85,7 +85,7 @@ void SequencerImpl::run(bool from_periodic_timer) {
   const auto running_duration = now - start_time_;
 
   // If we exceed the benchmark duration.
-  if (cancelled_ || (running_duration > duration_)) {
+  if (running_duration > duration_) {
     if (targets_completed_ == targets_initiated_) {
       // All work has completed. Stop this sequencer.
       stop(false);
@@ -112,8 +112,14 @@ void SequencerImpl::run(bool from_periodic_timer) {
         const auto dur = time_source_.monotonicTime() - now;
         latency_statistic_->addValue(dur.count());
         targets_completed_++;
-        // Immediately schedule us to check again, as chances are we can get on with the next task.
-        spin_timer_->enableTimer(0ms);
+        // Callbacks may fire after stop(), as during teardown the dispatcher may run. (Concretely
+        // when BenchmarkClient::terminate() is called, and the connection pool shuts down). Hence
+        // we need to make sure the spin_timer_ is still around before we dereference it.
+        if (spin_timer_ != nullptr) {
+          // Immediately schedule us to check again, as chances are we can get on with the next
+          // task.
+          spin_timer_->enableTimer(0ms);
+        }
       });
 
       if (target_could_start) {
