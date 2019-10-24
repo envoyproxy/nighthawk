@@ -39,10 +39,11 @@ function do_coverage() {
 }
 
 function setup_clang_toolchain() {
-    export PATH=/usr/lib/llvm-8/bin:$PATH
+    export PATH=/opt/llvm/bin:$PATH
     export CC=clang
     export CXX=clang++
-    export ASAN_SYMBOLIZER_PATH=/usr/lib/llvm-8/bin/llvm-symbolizer
+    export ASAN_SYMBOLIZER_PATH=/opt/llvm/bin/llvm-symbolizer
+    export BAZEL_COMPILER=clang
     echo "$CC/$CXX toolchain configured"
 }
 
@@ -134,6 +135,7 @@ export BAZEL_TEST_OPTIONS="${BAZEL_BUILD_OPTIONS} --test_env=HOME --test_env=PYT
 [[ -z "${SRCDIR}" ]] && SRCDIR="${PWD}"
 
 setup_clang_toolchain
+export CLANG_FORMAT=clang-format
 
 case "$1" in
     build)
