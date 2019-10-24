@@ -76,7 +76,7 @@ private:
   uint32_t request_body_size_{0};
   envoy::api::v2::auth::UpstreamTlsContext tls_context_;
   uint32_t max_pending_requests_{1};
-  uint32_t max_active_requests_{largest_acceptable_uint32_option_value};
+  uint32_t max_active_requests_{1};
   uint32_t max_requests_per_connection_{largest_acceptable_uint32_option_value};
   nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions sequencer_idle_strategy_{
       nighthawk::client::SequencerIdleStrategy::SPIN};

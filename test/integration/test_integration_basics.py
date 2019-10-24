@@ -36,16 +36,19 @@ def test_http_h1(http_test_server_fixture):
   assertEqual(len(counters), 14)
 
 
-def mini_stress_test_h1(fixture, args):
+def mini_stress_test(fixture, args):
   # run a test with more rps then we can handle, and a very small client-side queue.
   # we should observe both lots of successfull requests as well as time spend in blocking mode.,
   parsed_json, _ = fixture.runNighthawkClient(args)
   counters = fixture.getNighthawkCounterMapFromJson(parsed_json)
-  # We set a reasonably low expecation of 100 requests. We set it low, because we want this
+  # We set a reasonably low expectation of 100 requests. We set it low, because we want this
   # test to succeed on a reasonable share of setups (hopefully practically all).
   MIN_EXPECTED_REQUESTS = 100
   assertCounterGreater(counters, "benchmark.http_2xx", MIN_EXPECTED_REQUESTS)
-  assertCounterEqual(counters, "upstream_cx_http1_total", 1)
+  if "--h2" in args:
+    assertCounterEqual(counters, "upstream_cx_http2_total", 1)
+  else:
+    assertCounterEqual(counters, "upstream_cx_http1_total", 1)
   global_histograms = fixture.getNighthawkGlobalHistogramsbyIdFromJson(parsed_json)
   assertGreater(int(global_histograms["sequencer.blocking"]["count"]), MIN_EXPECTED_REQUESTS)
   assertGreater(
@@ -53,36 +56,56 @@ def mini_stress_test_h1(fixture, args):
       MIN_EXPECTED_REQUESTS)
   return counters
 
-
+# The mini stress tests below are executing in closed-loop mode. As we guard the pool against
+# overflows, we can set fixed expectations with respect to overflows and anticipated pending
+# totals.
 def test_http_h1_mini_stress_test_with_client_side_queueing(http_test_server_fixture):
   """
   Run a max rps test with the h1 pool against our test server, using a small client-side
-  queue. We expect to observe:
-  - upstream_rq_pending_total increasing
-  - upstream_cx_overflow overflows
-  - blocking to be reported by the sequencer
-  """
-  counters = mini_stress_test_h1(http_test_server_fixture, [
+  queue."""
+  counters = mini_stress_test(http_test_server_fixture, [
       http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--max-pending-requests",
       "10", "--duration 10"
   ])
   assertCounterEqual(counters, "upstream_rq_pending_total", 10)
-  assertCounterGreater(counters, "upstream_cx_overflow", 0)
+  assertCounterEqual(counters, "upstream_cx_overflow", 9)
 
 
 def test_http_h1_mini_stress_test_without_client_side_queueing(http_test_server_fixture):
   """
   Run a max rps test with the h1 pool against our test server, with no client-side
-  queueing. We expect to observe:
-  - upstream_rq_pending_total to be equal to 1
-  - blocking to be reported by the sequencer
-  - no upstream_cx_overflows
+  queueing.
   """
-  counters = mini_stress_test_h1(
+  counters = mini_stress_test(
       http_test_server_fixture,
       [http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--duration 2"])
   assertCounterEqual(counters, "upstream_rq_pending_total", 1)
   assertNotIn("upstream_cx_overflow", counters)
+
+
+def test_http_h2_mini_stress_test_with_client_side_queueing(http_test_server_fixture):
+  """
+  Run a max rps test with the h2 pool against our test server, using a small client-side
+  queue. 
+  """
+  counters = mini_stress_test(http_test_server_fixture, [
+      http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--max-pending-requests",
+      "10", "--duration 10", "--h2"
+  ])
+  assertCounterEqual(counters, "upstream_rq_pending_total", 1)
+  assertCounterEqual(counters, "upstream_rq_pending_overflow", 9)
+
+
+def test_http_h2_mini_stress_test_without_client_side_queueing(http_test_server_fixture):
+  """
+  Run a max rps test with the h2 pool against our test server, with no client-side
+  queueing. 
+  """
+  counters = mini_stress_test(http_test_server_fixture, [
+      http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--duration 2", "--h2"
+  ])
+  assertCounterEqual(counters, "upstream_rq_pending_total", 1)
+  assertNotIn("upstream_rq_pending_overflow", counters)
 
 
 def test_http_h2(http_test_server_fixture):

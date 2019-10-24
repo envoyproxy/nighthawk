@@ -75,9 +75,8 @@ bool BenchmarkClientHttpImpl::tryStartRequest(CompletionCallback caller_completi
       provide_resource_backpressure_
           ? (max_pending_requests_ - 1) + (use_h2_ ? max_active_requests_ : connection_limit_)
           : UINT64_MAX;
-
   if ((requests_initiated_ - requests_completed_ >= max_in_flight) || pool_ptr == nullptr) {
-    // When we allow client-side queuing, we want to have a sense of time spend waiting on that
+    // When we allow client-side queueing, we want to have a sense of time spend waiting on that
     // queue. So we return false here to indicate we couldn't initiate a new request.
     return false;
   }
