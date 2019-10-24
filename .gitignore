@@ -2,7 +2,7 @@ bazel-*
 .DS_Store
 ._.DS_Store
 res.txt
-compile_commands.json
+compile_commands.json*
 .cache
 generated/
 .local
@@ -15,3 +15,5 @@ envoy/
 __pycache__
 tools/pyformat
 test/coverage/BUILD
+*.bak
+default.profraw

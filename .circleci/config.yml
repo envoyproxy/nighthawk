@@ -1,6 +1,6 @@
 references:
   envoy-build-image: &envoy-build-image
-    envoyproxy/envoy-build:cb15cc3d2010aff77d6e022ddf6d723fa8becbc0
+    envoyproxy/envoy-build-ubuntu@sha256:47380d6ec4a83599fc0fce8f6ef5ee216ecb06c643d195fa43ba6c71f878a9ea # October 22th, 2019
 version: 2
 jobs:
   build:
