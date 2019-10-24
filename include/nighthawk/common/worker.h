@@ -31,10 +31,10 @@ public:
    */
   virtual void shutdown() PURE;
 
-  /*
-  Called on-thread after its designated task finishes. Last chance to clean up while the associated
-  thread is still running.
-  */
+  /**
+   * Called on-thread after its designated task finishes. Last chance to clean up while the
+   * associated thread is still running.
+   */
   virtual void shutdownThread() PURE;
 };
 
