@@ -116,7 +116,7 @@ public:
     client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
         *api_, *dispatcher_, store_, std::make_unique<StreamingStatistic>(),
         std::make_unique<StreamingStatistic>(), false, cluster_manager_, http_tracer_, "benchmark",
-        header_generator_);
+        header_generator_, true);
   }
 
   uint64_t getCounter(absl::string_view name) {
@@ -180,7 +180,7 @@ TEST_F(BenchmarkClientHttpTest, StatusTrackingInOnComplete) {
   client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
       *api_, *dispatcher_, *store, std::make_unique<StreamingStatistic>(),
       std::make_unique<StreamingStatistic>(), false, cluster_manager_, http_tracer_, "foo",
-      header_generator_);
+      header_generator_, true);
   Envoy::Http::HeaderMapImpl header;
 
   auto& status = header.insertStatus();
@@ -218,7 +218,7 @@ TEST_F(BenchmarkClientHttpTest, ConnectionPrefetching) {
   client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
       *api_, *dispatcher_, *store, std::make_unique<StreamingStatistic>(),
       std::make_unique<StreamingStatistic>(), false, cluster_manager_, http_tracer_, "foo",
-      header_generator_);
+      header_generator_, true);
   // Test with the mock pool, which isn't prefetchable. Should be a no-op.
   client_->prefetchPoolConnections();
 

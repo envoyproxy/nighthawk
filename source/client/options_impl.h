@@ -51,6 +51,7 @@ public:
     return sequencer_idle_strategy_;
   }
   std::string trace() const override { return trace_; }
+  bool openLoop() const override { return open_loop_; }
 
 private:
   void setNonTrivialDefaults();
@@ -80,6 +81,7 @@ private:
   nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions sequencer_idle_strategy_{
       nighthawk::client::SequencerIdleStrategy::SPIN};
   std::string trace_;
+  bool open_loop_{false};
 };
 
 } // namespace Client

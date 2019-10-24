@@ -66,7 +66,7 @@ def test_http_h1_mini_stress_test_with_client_side_queueing(http_test_server_fix
       http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--max-pending-requests",
       "10", "--duration 10"
   ])
-  assertCounterGreater(counters, "upstream_rq_pending_total", 100)
+  assertCounterEqual(counters, "upstream_rq_pending_total", 10)
   assertCounterGreater(counters, "upstream_cx_overflow", 0)
 
 

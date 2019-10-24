@@ -162,6 +162,12 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "", "trace", "Trace uri. Example: zipkin://localhost:9411/api/v1/spans. Default is empty.",
       false, "", "uri format", cmd);
 
+  TCLAP::SwitchArg open_loop(
+      "", "open-loop",
+      "Enable open loop mode. When enabled, the benchmark client will not provide backpressure"
+      "when resource limits are hit.",
+      cmd);
+
   TCLAP::UnlabeledValueArg<std::string> uri("uri",
                                             "uri to benchmark. http:// and https:// are supported, "
                                             "but in case of https no certificates are validated.",
@@ -218,6 +224,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
                    "Failed to parse sequencer idle strategy");
   }
   TCLAP_SET_IF_SPECIFIED(trace, trace_);
+  TCLAP_SET_IF_SPECIFIED(open_loop, open_loop_);
 
   // CLI-specific tests.
   // TODO(oschaaf): as per mergconflicts's remark, it would be nice to aggregate
@@ -305,6 +312,7 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   sequencer_idle_strategy_ =
       PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, sequencer_idle_strategy, sequencer_idle_strategy_);
   trace_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, trace, trace_);
+  open_loop_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, open_loop, open_loop_);
 
   tls_context_.MergeFrom(options.tls_context());
   validate();
@@ -380,6 +388,7 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptions() const {
       maxRequestsPerConnection());
   command_line_options->mutable_sequencer_idle_strategy()->set_value(sequencerIdleStrategy());
   command_line_options->mutable_trace()->set_value(trace());
+  command_line_options->mutable_open_loop()->set_value(openLoop());
   return command_line_options;
 }
 
