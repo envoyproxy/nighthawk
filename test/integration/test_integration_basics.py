@@ -50,7 +50,12 @@ def mini_stress_test(fixture, args):
   else:
     assertCounterEqual(counters, "upstream_cx_http1_total", 1)
   global_histograms = fixture.getNighthawkGlobalHistogramsbyIdFromJson(parsed_json)
-  assertGreater(int(global_histograms["sequencer.blocking"]["count"]), MIN_EXPECTED_REQUESTS)
+
+  if "--open-loop" in args:
+    assertEqual(int(global_histograms["sequencer.blocking"]["count"]), 0)
+  else:
+    assertGreater(int(global_histograms["sequencer.blocking"]["count"]), MIN_EXPECTED_REQUESTS)
+
   assertGreater(
       int(global_histograms["benchmark_http_client.request_to_response"]["count"]),
       MIN_EXPECTED_REQUESTS)
@@ -107,6 +112,32 @@ def test_http_h2_mini_stress_test_without_client_side_queueing(http_test_server_
       [http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--duration 2", "--h2"])
   assertCounterEqual(counters, "upstream_rq_pending_total", 1)
   assertNotIn("upstream_rq_pending_overflow", counters)
+
+
+def test_http_h1_mini_stress_test_open_loop(http_test_server_fixture):
+  """
+  H1 open loop stress test. We expect higher pending and overflow counts 
+  """
+  counters = mini_stress_test(http_test_server_fixture, [
+      http_test_server_fixture.getTestServerRootUri(), "--rps", "2500", "--max-pending-requests",
+      "10", "--duration 5", "--open-loop"
+  ])
+  assertCounterGreater(counters, "upstream_rq_pending_total", 100)
+  assertCounterGreater(counters, "benchmark.pool_overflow", 100)
+  assertCounterGreater(counters, "upstream_cx_overflow", 100)
+
+
+def test_http_h2_mini_stress_test_open_loop(http_test_server_fixture):
+  """
+  H2 open loop stress test. We expect higher overflow counts 
+  """
+  counters = mini_stress_test(http_test_server_fixture, [
+      http_test_server_fixture.getTestServerRootUri(), "--rps", "2500", "--max-pending-requests",
+      "10", "--duration 5", "--h2", "--open-loop"
+  ])
+  assertCounterEqual(counters, "upstream_rq_pending_total", 1)
+  assertCounterGreater(counters, "upstream_rq_pending_overflow", 100)
+  assertCounterGreater(counters, "benchmark.pool_overflow", 100)
 
 
 def test_http_h2(http_test_server_fixture):
