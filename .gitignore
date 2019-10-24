@@ -16,3 +16,4 @@ __pycache__
 tools/pyformat
 test/coverage/BUILD
 *.bak
+default.profraw
