@@ -140,8 +140,8 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
 
   TCLAP::ValueArg<uint32_t> max_active_requests(
       "", "max-active-requests",
-      fmt::format("Max active requests (default: {}).", max_active_requests_), false, 0, "uint32_t",
-      cmd);
+      fmt::format("Max active requests (default: {}). HTTP/2 only.", max_active_requests_), false,
+      0, "uint32_t", cmd);
   // NOLINTNEXTLINE
   TCLAP::ValueArg<uint32_t> max_requests_per_connection(
       "", "max-requests-per-connection",
