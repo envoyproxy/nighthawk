@@ -1,4 +1,4 @@
-Checks:          'clang-diagnostic-*,clang-analyzer-*,abseil-*,bugprone-*,modernize-*,performance-*,readability-redundant-*,readability-braces-around-statements,-abseil-no-internal-dependencies'
+Checks:          'clang-diagnostic-*,clang-analyzer-*,abseil-*,bugprone-*,modernize-*,performance-*,readability-redundant-*,readability-braces-around-statements,-abseil-no-internal-dependencies,-modernize-use-trailing-return-type'
 
 WarningsAsErrors: 'clang-diagnostic-*,clang-analyzer-*,abseil-*,bugprone-*,modernize-*,performance-*,readability-redundant-*,readability-braces-around-statements'
 
