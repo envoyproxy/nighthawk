@@ -94,11 +94,6 @@ public:
         cluster_name_, Envoy::Upstream::ResourcePriority::Default, proto, nullptr);
   }
 
-  Envoy::Upstream::ClusterInfoConstSharedPtr cluster() {
-    auto* cluster = cluster_manager_->get(cluster_name_);
-    return cluster == nullptr ? nullptr : cluster->info();
-  }
-
   void prefetchPoolConnections() override;
 
 private:
