@@ -110,7 +110,6 @@ def test_http_h2_mini_stress_test_without_client_side_queueing(http_test_server_
   counters = mini_stress_test(
       http_test_server_fixture,
       [http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--duration 2", "--h2"])
-<<<<<<< HEAD
   assertCounterEqual(counters, "upstream_rq_pending_total", 1)
   assertNotIn("upstream_rq_pending_overflow", counters)
 
@@ -135,8 +134,6 @@ def test_http_h2_mini_stress_test_open_loop(http_test_server_fixture):
       http_test_server_fixture.getTestServerRootUri(), "--rps", "2500", "--max-pending-requests",
       "10", "--duration 10", "--h2", "--open-loop"
   ])
-=======
->>>>>>> a30dcf7... Fix format
   assertCounterEqual(counters, "upstream_rq_pending_total", 1)
   assertCounterGreater(counters, "upstream_rq_pending_overflow", 10)
   assertCounterGreater(counters, "benchmark.pool_overflow", 10)
