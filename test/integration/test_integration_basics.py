@@ -56,6 +56,7 @@ def mini_stress_test(fixture, args):
       MIN_EXPECTED_REQUESTS)
   return counters
 
+
 # The mini stress tests below are executing in closed-loop mode. As we guard the pool against
 # overflows, we can set fixed expectations with respect to overflows and anticipated pending
 # totals.
@@ -101,9 +102,9 @@ def test_http_h2_mini_stress_test_without_client_side_queueing(http_test_server_
   Run a max rps test with the h2 pool against our test server, with no client-side
   queueing. 
   """
-  counters = mini_stress_test(http_test_server_fixture, [
-      http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--duration 2", "--h2"
-  ])
+  counters = mini_stress_test(
+      http_test_server_fixture,
+      [http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--duration 2", "--h2"])
   assertCounterEqual(counters, "upstream_rq_pending_total", 1)
   assertNotIn("upstream_rq_pending_overflow", counters)
 
