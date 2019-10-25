@@ -76,7 +76,9 @@ private:
   uint32_t request_body_size_{0};
   envoy::api::v2::auth::UpstreamTlsContext tls_context_;
   uint32_t max_pending_requests_{1};
-  uint32_t max_active_requests_{1};
+  // This default is based the minimum recommendation for SETTINGS_MAX_CONCURRENT_STREAMS over at
+  // https://tools.ietf.org/html/rfc7540#section-6.5.2
+  uint32_t max_active_requests_{100};
   uint32_t max_requests_per_connection_{largest_acceptable_uint32_option_value};
   nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions sequencer_idle_strategy_{
       nighthawk::client::SequencerIdleStrategy::SPIN};
