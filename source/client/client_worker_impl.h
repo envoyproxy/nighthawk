@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "envoy/api/api.h"
 #include "envoy/event/dispatcher.h"
 #include "envoy/stats/store.h"
@@ -9,6 +11,7 @@
 #include "nighthawk/client/benchmark_client.h"
 #include "nighthawk/client/client_worker.h"
 #include "nighthawk/client/factories.h"
+#include "nighthawk/common/phase.h"
 #include "nighthawk/common/request_source.h"
 #include "nighthawk/common/sequencer.h"
 #include "nighthawk/common/termination_predicate.h"
@@ -33,7 +36,10 @@ public:
   const std::map<std::string, uint64_t>& thread_local_counter_values() override {
     return thread_local_counter_values_;
   }
-  const Sequencer& sequencer() const override { return *sequencer_; }
+  // TODO(oschaaf): this is just used by ClientProcessImpl to get the sequencer's execution
+  // duration. Possibly we would want to return the vector of phases here instead, and report
+  // per-phase.
+  const Sequencer& sequencer() const override { return phases_.front()->sequencer(); }
   void shutdownThread() override;
 
 protected:
@@ -49,7 +55,7 @@ private:
   RequestSourcePtr header_generator_;
   BenchmarkClientPtr benchmark_client_;
   TerminationPredicatePtr termination_predicate_;
-  const SequencerPtr sequencer_;
+  std::vector<PhasePtr> phases_;
   Envoy::LocalInfo::LocalInfoPtr local_info_;
   std::map<std::string, uint64_t> thread_local_counter_values_;
 };

@@ -1,8 +1,10 @@
 #include "client/client_worker_impl.h"
 
+#include <vector>
+
 #include "external/envoy/source/common/stats/symbol_table_impl.h"
 
-#include "common/request_source_impl.h"
+#include "common/phase_impl.h"
 #include "common/utility.h"
 
 namespace Nighthawk {
@@ -24,11 +26,22 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
       benchmark_client_(benchmark_client_factory.create(
           api, *dispatcher_, *worker_number_scope_, cluster_manager, http_tracer_,
           fmt::format("{}", worker_number), *header_generator_)),
-      termination_predicate_(
-          termination_predicate_factory.create(time_source_, *worker_number_scope_, starting_time)),
-      sequencer_(sequencer_factory.create(time_source_, *dispatcher_, starting_time,
-                                          *benchmark_client_, *termination_predicate_,
-                                          *worker_number_scope_)) {}
+      termination_predicate_(termination_predicate_factory.create(
+          time_source_, *worker_number_scope_, starting_time)) {
+
+  // later, add warmup/cooldown to the vector.
+  // the idea is that we construct the phases we statically configured here.
+  // if we have incoming on-the-fly changes via grpc, we could insert new phases on the fly,
+  // via a to-be-added ClientWorker::insertPhase(). For this to work well grpc client would
+  // have to specify the target phase (and we fail the call if we have a mismatch).
+  // additionally we can add something to terminate the currently executing phase immediately
+  // afterwards.
+  // todo: uniquely scope these stats per phase
+  phases_.push_back(std::make_unique<PhaseImpl>(
+      "main_phase",
+      sequencer_factory.create(time_source_, *dispatcher_, starting_time, *benchmark_client_,
+                               *termination_predicate_, *worker_number_scope_)));
+}
 
 void ClientWorkerImpl::simpleWarmup() {
   ENVOY_LOG(debug, "> worker {}: warmup start.", worker_number_);
@@ -43,8 +56,20 @@ void ClientWorkerImpl::simpleWarmup() {
 void ClientWorkerImpl::work() {
   simpleWarmup();
   benchmark_client_->setMeasureLatencies(true);
-  sequencer_->start();
-  sequencer_->waitForCompletion();
+
+  // Maybe we'd want something similar to HeaderSource here. We'd not be iterating
+  // a vector, but pulling from a generator function here.
+  // Then we'd have a static `StaticPhaseSourceImpl` to apply configured behavior.
+  // We could then also have a `RemotePhaseSourceImpl`
+  for (auto& phase : phases_) {
+    auto& sequencer = phase->sequencer();
+    sequencer.start();
+    sequencer.waitForCompletion();
+    if (worker_number_scope_->counter("sequencer.failed_terminations").value() > 0) {
+      break;
+    }
+  }
+
   // Save a final snapshot of the worker-specific counter accumulations before
   // we exit the thread.
   for (const auto& stat : store_.counters()) {
@@ -69,9 +94,13 @@ void ClientWorkerImpl::shutdownThread() { benchmark_client_->terminate(); }
 StatisticPtrMap ClientWorkerImpl::statistics() const {
   StatisticPtrMap statistics;
   StatisticPtrMap s1 = benchmark_client_->statistics();
-  StatisticPtrMap s2 = sequencer_->statistics();
-  statistics.insert(s1.begin(), s1.end());
-  statistics.insert(s2.begin(), s2.end());
+  for (auto& phase : phases_) {
+    auto& sequencer = phase->sequencer();
+    // TODO(oschaaf): uniquely scope these latency stats / phase.
+    StatisticPtrMap s2 = sequencer.statistics();
+    statistics.insert(s1.begin(), s1.end());
+    statistics.insert(s2.begin(), s2.end());
+  }
   return statistics;
 }
 
