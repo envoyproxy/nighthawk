@@ -123,7 +123,7 @@ def test_http_h1_mini_stress_test_open_loop(http_test_server_fixture):
       "10", "--duration 10", "--open-loop"
   ])
   assertCounterGreater(counters, "upstream_rq_pending_total", 10)
-  assertCounterGreater(counters, "benchmark.pool_overflow", 10)
+  assertCounterGreater(counters, "upstream_cx_overflow", 10)
 
 
 def test_http_h2_mini_stress_test_open_loop(http_test_server_fixture):
