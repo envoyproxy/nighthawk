@@ -91,7 +91,7 @@ def test_http_h2_mini_stress_test_with_client_side_queueing(http_test_server_fix
   """
   counters = mini_stress_test(http_test_server_fixture, [
       http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--max-pending-requests",
-      "10", "--duration 10", "--h2"
+      "10", "--duration 10", "--h2", "--max-active-requests", "1"
   ])
   assertCounterEqual(counters, "upstream_rq_pending_total", 1)
   assertCounterEqual(counters, "upstream_rq_pending_overflow", 9)
@@ -102,9 +102,10 @@ def test_http_h2_mini_stress_test_without_client_side_queueing(http_test_server_
   Run a max rps test with the h2 pool against our test server, with no client-side
   queueing. 
   """
-  counters = mini_stress_test(
-      http_test_server_fixture,
-      [http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--duration 2", "--h2"])
+  counters = mini_stress_test(http_test_server_fixture, [
+      http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--duration 2", "--h2",
+      "--max-active-requests", "1"
+  ])
   assertCounterEqual(counters, "upstream_rq_pending_total", 1)
   assertNotIn("upstream_rq_pending_overflow", counters)
 

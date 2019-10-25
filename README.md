@@ -77,7 +77,7 @@ Where:
      Max requests per connection (default: 4294937295).
 
    --max-active-requests <uint32_t>
-     Max active requests (default: 1). H2-only, the number of concurrent 
+     Max active requests (default: 100). H2-only, the number of concurrent
      requests that are allowed to run at the same time.
 
    --max-pending-requests <uint32_t>
