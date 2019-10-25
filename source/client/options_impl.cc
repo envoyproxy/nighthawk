@@ -31,6 +31,9 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   const char* descr = "L7 (HTTP/HTTPS/HTTP2) performance characterization tool.";
   TCLAP::CmdLine cmd(descr, ' ', "PoC"); // NOLINT
 
+  // Any default values we pass into TCLAP argument declarations are arbitrary, as we do not rely on
+  // TCLAP for providing default values. Default values are declared in and sourced from
+  // options_impl.h, modulo non-trivial data types (see setNonTrivialDefaults()).
   TCLAP::ValueArg<uint32_t> requests_per_second(
       "", "rps",
       fmt::format("The target requests-per-second rate. Default: {}.", requests_per_second_), false,
@@ -134,13 +137,13 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
 
   TCLAP::ValueArg<uint32_t> max_pending_requests(
       "", "max-pending-requests",
-      "Max pending requests (default: 1, no client side queuing. Specifying any other value will "
+      "Max pending requests (default: 0, no client side queuing. Specifying any other value will "
       "allow client-side queuing of requests).",
       false, 0, "uint32_t", cmd);
 
   TCLAP::ValueArg<uint32_t> max_active_requests(
       "", "max-active-requests",
-      fmt::format("Max active requests (default: {}). HTTP/2 only.", max_active_requests_), false,
+      fmt::format("Max active requests (default: {}). (HTTP/2 only).", max_active_requests_), false,
       0, "uint32_t", cmd);
   // NOLINTNEXTLINE
   TCLAP::ValueArg<uint32_t> max_requests_per_connection(

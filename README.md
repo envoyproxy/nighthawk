@@ -81,7 +81,7 @@ Where:
      requests that are allowed to run at the same time.
 
    --max-pending-requests <uint32_t>
-     Max pending requests (default: 1, no client side queuing. Specifying
+     Max pending requests (default: 0, no client side queuing. Specifying
      any other value will allow client-side queuing of requests).
 
    --tls-context <string>
