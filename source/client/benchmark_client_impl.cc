@@ -56,10 +56,10 @@ void BenchmarkClientHttpImpl::prefetchPoolConnections() {
 
 void BenchmarkClientHttpImpl::terminate() {
   if (pool() != nullptr) {
+    pool()->addDrainedCallback([this]() -> void { dispatcher_.exit(); });
     pool()->drainConnections();
+    dispatcher_.run(Envoy::Event::Dispatcher::RunType::RunUntilExit);
   }
-  dispatcher_.run(Envoy::Event::Dispatcher::RunType::NonBlock);
-  dispatcher_.clearDeferredDeleteList();
 }
 
 StatisticPtrMap BenchmarkClientHttpImpl::statistics() const {

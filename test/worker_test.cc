@@ -25,6 +25,7 @@ public:
     EXPECT_NE(thread_id_, std::this_thread::get_id());
     ran_ = true;
   }
+  void shutdownThread() override {}
 
   bool ran_{};
   Envoy::Stats::IsolatedStoreImpl test_store_;

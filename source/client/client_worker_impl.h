@@ -32,6 +32,7 @@ public:
   const std::map<std::string, uint64_t>& thread_local_counter_values() override {
     return thread_local_counter_values_;
   }
+  void shutdownThread() override;
 
 protected:
   void work() override;

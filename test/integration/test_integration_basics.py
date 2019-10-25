@@ -23,8 +23,6 @@ def test_http_h1(http_test_server_fixture):
       [http_test_server_fixture.getTestServerRootUri()])
   counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   assertCounterEqual(counters, "benchmark.http_2xx", 25)
-  assertCounterEqual(counters, "upstream_cx_destroy", 1)
-  assertCounterEqual(counters, "upstream_cx_destroy_local", 1)
   assertCounterEqual(counters, "upstream_cx_http1_total", 1)
   assertCounterEqual(counters, "upstream_cx_rx_bytes_total", 3400)
   assertCounterEqual(counters, "upstream_cx_total", 1)
@@ -33,7 +31,7 @@ def test_http_h1(http_test_server_fixture):
   assertCounterEqual(counters, "upstream_rq_pending_total", 1)
   assertCounterEqual(counters, "upstream_rq_total", 25)
   assertCounterEqual(counters, "default.total_match_count", 1)
-  assertEqual(len(counters), 14)
+  assertEqual(len(counters), 12)
 
 
 def mini_stress_test(fixture, args):
@@ -149,8 +147,6 @@ def test_http_h2(http_test_server_fixture):
       ["--h2", http_test_server_fixture.getTestServerRootUri()])
   counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   assertCounterEqual(counters, "benchmark.http_2xx", 25)
-  assertCounterEqual(counters, "upstream_cx_destroy", 1)
-  assertCounterEqual(counters, "upstream_cx_destroy_local", 1)
   assertCounterEqual(counters, "upstream_cx_http2_total", 1)
   assertCounterGreaterEqual(counters, "upstream_cx_rx_bytes_total", 1145)
   assertCounterEqual(counters, "upstream_cx_total", 1)
@@ -158,7 +154,7 @@ def test_http_h2(http_test_server_fixture):
   assertCounterEqual(counters, "upstream_rq_pending_total", 1)
   assertCounterEqual(counters, "upstream_rq_total", 25)
   assertCounterEqual(counters, "default.total_match_count", 1)
-  assertEqual(len(counters), 14)
+  assertEqual(len(counters), 12)
 
 
 def test_http_concurrency(http_test_server_fixture):
@@ -187,8 +183,6 @@ def test_https_h1(https_test_server_fixture):
       [https_test_server_fixture.getTestServerRootUri()])
   counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   assertCounterEqual(counters, "benchmark.http_2xx", 25)
-  assertCounterEqual(counters, "upstream_cx_destroy", 1)
-  assertCounterEqual(counters, "upstream_cx_destroy_local", 1)
   assertCounterEqual(counters, "upstream_cx_http1_total", 1)
   assertCounterEqual(counters, "upstream_cx_rx_bytes_total", 3400)
   assertCounterEqual(counters, "upstream_cx_total", 1)
@@ -202,7 +196,7 @@ def test_https_h1(https_test_server_fixture):
   assertCounterEqual(counters, "ssl.sigalgs.rsa_pss_rsae_sha256", 1)
   assertCounterEqual(counters, "ssl.versions.TLSv1.2", 1)
   assertCounterEqual(counters, "default.total_match_count", 1)
-  assertEqual(len(counters), 19)
+  assertEqual(len(counters), 17)
 
   server_stats = https_test_server_fixture.getTestServerStatisticsJson()
   assertEqual(
@@ -220,8 +214,6 @@ def test_https_h2(https_test_server_fixture):
       ["--h2", https_test_server_fixture.getTestServerRootUri()])
   counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   assertCounterEqual(counters, "benchmark.http_2xx", 25)
-  assertCounterEqual(counters, "upstream_cx_destroy", 1)
-  assertCounterEqual(counters, "upstream_cx_destroy_local", 1)
   assertCounterEqual(counters, "upstream_cx_http2_total", 1)
   assertCounterGreaterEqual(counters, "upstream_cx_rx_bytes_total", 1145)
   assertCounterEqual(counters, "upstream_cx_total", 1)
@@ -234,7 +226,7 @@ def test_https_h2(https_test_server_fixture):
   assertCounterEqual(counters, "ssl.sigalgs.rsa_pss_rsae_sha256", 1)
   assertCounterEqual(counters, "ssl.versions.TLSv1.2", 1)
   assertCounterEqual(counters, "default.total_match_count", 1)
-  assertEqual(len(counters), 19)
+  assertEqual(len(counters), 17)
 
 
 def test_https_h1_tls_context_configuration(https_test_server_fixture):
