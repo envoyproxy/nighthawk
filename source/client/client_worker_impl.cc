@@ -48,9 +48,8 @@ void ClientWorkerImpl::work() {
   benchmark_client_->setMeasureLatencies(true);
   sequencer_->start();
   sequencer_->waitForCompletion();
-  benchmark_client_->terminate();
+
   success_ = true;
-  dispatcher_->exit();
   // Save a final snapshot of the worker-specific counter accumulations before
   // we exit the thread.
   for (const auto& stat : store_.counters()) {
@@ -63,7 +62,13 @@ void ClientWorkerImpl::work() {
           stat->value();
     }
   }
+  // Note that benchmark_client_ is not terminated here, but in shutdownThread() below. This is to
+  // to prevent the shutdown artifacts from influencing the test result counters. The main thread
+  // still needs to be able to read the counters for reporting the global numbers, and those should
+  // be consistent.
 }
+
+void ClientWorkerImpl::shutdownThread() { benchmark_client_->terminate(); }
 
 StatisticPtrMap ClientWorkerImpl::statistics() const {
   StatisticPtrMap statistics;

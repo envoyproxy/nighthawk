@@ -31,6 +31,7 @@ void WorkerImpl::start() {
     work();
     complete_.set_value();
     signal_thread_to_exit_.get_future().wait();
+    shutdownThread();
     tls_.shutdownThread();
   });
 }
