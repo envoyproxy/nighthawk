@@ -137,8 +137,10 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
 
   TCLAP::ValueArg<uint32_t> max_pending_requests(
       "", "max-pending-requests",
-      fmt::format("Max pending requests (default: {}, no client side queuing. Specifying any other value will "
-      "allow client-side queuing of requests).", max_pending_requests_),
+      fmt::format("Max pending requests (default: {}, no client side queuing. Specifying any other "
+                  "value will "
+                  "allow client-side queuing of requests).",
+                  max_pending_requests_),
       false, 0, "uint32_t", cmd);
 
   TCLAP::ValueArg<uint32_t> max_active_requests(

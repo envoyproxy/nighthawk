@@ -98,13 +98,13 @@ public:
       }
     }
 
-    // max_pending set to 0, is special: we still expect one to be in flight.
+    // If max_pending is set to 0, and we queued up work, we shouldn't be able to add more.
     if (max_pending == 0 && amount > 0) {
       EXPECT_FALSE(client_->tryStartRequest(f));
     }
 
     dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
-    // If max pending is set > 0, we expect in_flight to be equal to max_pending, including 1.
+    // If max pending is set > 0, we expect in_flight to be equal to max_pending.
     EXPECT_EQ(max_pending == 0 ? 1 : max_pending, inflight_response_count);
 
     for (Envoy::Http::StreamDecoder* decoder : decoders_) {
