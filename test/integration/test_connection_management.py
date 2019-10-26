@@ -50,10 +50,6 @@ def test_http_h1_connection_management_10(http_test_server_fixture):
   run_with_number_of_connections(http_test_server_fixture, 10)
 
 
-def test_http_h1_connection_management_150(http_test_server_fixture):
-  run_with_number_of_connections(http_test_server_fixture, 25)
-
-
 # A series that tests with queueing enabled
 def test_http_h1_connection_management_with_queue_1(http_test_server_fixture):
   run_with_number_of_connections(http_test_server_fixture, 1, max_pending_requests=100)
@@ -65,10 +61,6 @@ def test_http_h1_connection_management_with_queue_2(http_test_server_fixture):
 
 def test_http_h1_connection_management_with_queue_10(http_test_server_fixture):
   run_with_number_of_connections(http_test_server_fixture, 10, max_pending_requests=100)
-
-
-def test_http_h1_connection_management_with_queue_150(http_test_server_fixture):
-  run_with_number_of_connections(http_test_server_fixture, 25, max_pending_requests=100)
 
 
 # Test h1 with a single request_per_connection

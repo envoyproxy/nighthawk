@@ -55,15 +55,15 @@ USAGE:
                                |CONNECT|OPTIONS|TRACE>] [--address-family
                                <auto|v4|v6>] [--burst-size <uint32_t>]
                                [--prefetch-connections] [--output-format
-                               <human|yaml|json|dotted>] [-v <trace|debug
-                               |info|warn|error|critical>] [--concurrency
+                                <human|yaml|json|dotted>] [-v <trace|debug
+                              |info|warn|error|critical>] [--concurrency
                                <string>] [--h2] [--timeout <uint32_t>]
                                [--duration <uint32_t>] [--connections
                                <uint32_t>] [--rps <uint32_t>] [--]
                                [--version] [-h] <uri format>
 
 
-Where:
+Where: 
 
    --trace <uri format>
      Trace uri. Example: zipkin://localhost:9411/api/v1/spans. Default is
@@ -77,8 +77,8 @@ Where:
      Max requests per connection (default: 4294937295).
 
    --max-active-requests <uint32_t>
-     Max active requests (default: 100). H2-only, the number of concurrent
-     requests that are allowed to run at the same time.
+     The maximum allowed number of concurrently active requests. HTTP/2
+     only. (default: 100).
 
    --max-pending-requests <uint32_t>
      Max pending requests (default: 0, no client side queuing. Specifying
@@ -125,7 +125,7 @@ Where:
      'auto' to let Nighthawk leverage all vCPUs that have affinity to the
      Nighthawk process. Note that increasing this results in an effective
      load multiplier combined with the configured --rps and --connections
-     values. Default: 1.
+     values. Default: 1. 
 
    --h2
      Use HTTP/2
@@ -139,8 +139,8 @@ Where:
      The number of seconds that the test should run. Default: 5.
 
    --connections <uint32_t>
-     The number of connections per event loop that the test should
-     maximally use. HTTP/1 only. Default: 1.
+     The maximum allowed number of concurrent connections per event loop.
+     HTTP/1 only. Default: 1.
 
    --rps <uint32_t>
      The target requests-per-second rate. Default: 5.

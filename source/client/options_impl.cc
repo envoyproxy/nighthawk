@@ -40,8 +40,8 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       0, "uint32_t", cmd);
   TCLAP::ValueArg<uint32_t> connections(
       "", "connections",
-      fmt::format("The number of connections per event loop that the test should maximally "
-                  "use. HTTP/1 only. Default: {}.",
+      fmt::format("The maximum allowed number of concurrent connections per event loop. HTTP/1 "
+                  "only. Default: {}.",
                   connections_),
       false, 0, "uint32_t", cmd);
   TCLAP::ValueArg<uint32_t> duration(
@@ -137,14 +137,16 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
 
   TCLAP::ValueArg<uint32_t> max_pending_requests(
       "", "max-pending-requests",
-      "Max pending requests (default: 0, no client side queuing. Specifying any other value will "
-      "allow client-side queuing of requests).",
+      fmt::format("Max pending requests (default: {}, no client side queuing. Specifying any other value will "
+      "allow client-side queuing of requests).", max_pending_requests_),
       false, 0, "uint32_t", cmd);
 
   TCLAP::ValueArg<uint32_t> max_active_requests(
       "", "max-active-requests",
-      fmt::format("Max active requests (default: {}). (HTTP/2 only).", max_active_requests_), false,
-      0, "uint32_t", cmd);
+      fmt::format(
+          "The maximum allowed number of concurrently active requests. HTTP/2 only. (default: {}).",
+          max_active_requests_),
+      false, 0, "uint32_t", cmd);
   // NOLINTNEXTLINE
   TCLAP::ValueArg<uint32_t> max_requests_per_connection(
       "", "max-requests-per-connection",
