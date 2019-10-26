@@ -75,7 +75,7 @@ private:
   std::vector<std::string> request_headers_;
   uint32_t request_body_size_{0};
   envoy::api::v2::auth::UpstreamTlsContext tls_context_;
-  uint32_t max_pending_requests_{1};
+  uint32_t max_pending_requests_{0};
   // This default is based the minimum recommendation for SETTINGS_MAX_CONCURRENT_STREAMS over at
   // https://tools.ietf.org/html/rfc7540#section-6.5.2
   uint32_t max_active_requests_{100};

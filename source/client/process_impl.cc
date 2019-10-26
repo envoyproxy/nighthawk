@@ -243,7 +243,10 @@ void ProcessImpl::createBootstrapConfiguration(envoy::config::bootstrap::v2::Boo
     // We do not support any retrying.
     thresholds->mutable_max_retries()->set_value(0);
     thresholds->mutable_max_connections()->set_value(options_.connections());
-    thresholds->mutable_max_pending_requests()->set_value(options_.maxPendingRequests());
+    // We specialize on 0 below, as that is not supported natively. The benchmark client will track
+    // in flight work and avoid creating pending requests in this case.
+    thresholds->mutable_max_pending_requests()->set_value(
+        options_.maxPendingRequests() == 0 ? 1 : options_.maxPendingRequests());
     thresholds->mutable_max_requests()->set_value(options_.maxActiveRequests());
 
     cluster->set_type(envoy::api::v2::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);

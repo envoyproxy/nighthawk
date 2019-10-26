@@ -97,8 +97,15 @@ public:
         inflight_response_count++;
       }
     }
+
+    // If max_pending is set to 0, and we queued up work, we shouldn't be able to add more.
+    if (max_pending == 0 && amount > 0) {
+      EXPECT_FALSE(client_->tryStartRequest(f));
+    }
+
     dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
-    EXPECT_EQ(max_pending, inflight_response_count);
+    // If max pending is set > 0, we expect in_flight to be equal to max_pending.
+    EXPECT_EQ(max_pending == 0 ? 1 : max_pending, inflight_response_count);
 
     for (Envoy::Http::StreamDecoder* decoder : decoders_) {
       Envoy::Http::HeaderMapPtr response_headers{
@@ -153,13 +160,13 @@ public:
 
 TEST_F(BenchmarkClientHttpTest, BasicTestH1404) {
   response_code_ = "404";
-  testBasicFunctionality(1, 1, 10);
+  testBasicFunctionality(0, 1, 10);
   EXPECT_EQ(1, getCounter("http_4xx"));
 }
 
 TEST_F(BenchmarkClientHttpTest, WeirdStatus) {
   response_code_ = "601";
-  testBasicFunctionality(1, 1, 10);
+  testBasicFunctionality(0, 1, 10);
   EXPECT_EQ(1, getCounter("http_xxx"));
 }
 
