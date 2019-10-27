@@ -1,3 +1,6 @@
+import os
+
+
 def assertEqual(a, b):
   assert a == b
 
@@ -50,3 +53,7 @@ def assertCounterLessEqual(counters, name, value):
 def assertCounterBetweenInclusive(counters, name, min_value, max_value):
   assertIn(name, counters)
   assertBetweenInclusive(counters[name], min_value, max_value)
+
+
+def isSanitizerRun():
+  return True if os.environ.get("NH_INTEGRATION_TEST_SANITIZER_RUN", 0) == "1" else False
