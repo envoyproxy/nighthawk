@@ -64,6 +64,7 @@ def test_http_h1_connection_management_with_queue_10(http_test_server_fixture):
 
 
 # Test h1 with a single request_per_connection
+@pytest.mark.skipif(isSanitizerRun(), reason="Unstable in sanitizer runs")
 def test_http_h1_connection_management_single_request_per_conn_1(http_test_server_fixture):
   counters = run_with_number_of_connections(
       http_test_server_fixture,
@@ -76,6 +77,7 @@ def test_http_h1_connection_management_single_request_per_conn_1(http_test_serve
 
 
 # Test h2 with a single request_per_connection
+@pytest.mark.skipif(isSanitizerRun(), reason="Unstable in sanitizer runs")
 def test_http_h2_connection_management_single_request_per_conn_1(http_test_server_fixture):
   counters = run_with_number_of_connections(
       http_test_server_fixture,
