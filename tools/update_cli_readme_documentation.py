@@ -21,9 +21,10 @@ if __name__ == '__main__':
     sys.exit(exit_code)
 
   with open(readme_md_path, "r") as f:
-    replaced = re.sub("\nUSAGE\:[^b]*.*bazel-bin\/nighthawk_client[^```]*", output.decode(), f.read())
+    replaced = re.sub("\nUSAGE\:[^b]*.*bazel-bin\/nighthawk_client[^```]*", output.decode(),
+                      f.read())
 
   with open(readme_md_path, "w") as f:
-      f.write("%s" % replaced)
+    f.write("%s" % replaced)
 
   print("done")
