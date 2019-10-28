@@ -10,6 +10,9 @@ py_library(
     ],
     data = [
         "//:nighthawk_client",
+        "//:nighthawk_output_transform",
+        "//:nighthawk_service",
+        "//:nighthawk_test_server",
     ],
 )
 
