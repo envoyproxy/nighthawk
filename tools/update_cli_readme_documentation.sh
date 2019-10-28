@@ -1,5 +1,7 @@
 #! /bin/bash
 
+# Updates Nighthakws documentation with generated version of TCLAP --help output.
+
 set -e
 
 bazel run -c dbg //tools:update_cli_readme_documentation -- --binary bazel-bin/nighthawk_client --readme README.md && \

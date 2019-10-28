@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+# Tool to automatically update README.md files that contain --help output of c++ TCLAP binaries
+
 import logging
 import argparse
 import os
@@ -38,3 +40,4 @@ if __name__ == '__main__':
     f.write("%s" % replaced)
 
   print("done")
+  sys.exit(0)
