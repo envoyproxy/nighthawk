@@ -75,3 +75,13 @@ admin:
 
 # Verify the test server with a curl command similar to:
 ➜ curl -H "x-envoy-fault-delay-request: 1000" -H "x-nighthawk-test-server-config: {response_body_size:20}"  -vv 127.0.0.1:10000
+```
+
+```bash
+➜ bazel-bin/nighthawk_test_server --help
+```
+
+```
+USAGE:
+
+```

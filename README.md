@@ -198,6 +198,22 @@ Where:
 
 ```
 
+### Nighthawk output transformation utility
+
+Nighthawk comes with a tool to transform its json output to its other supported output formats.
+
+
+```bash
+➜ bazel-bin/nighthawk_output_transform --help
+```
+
+```
+USAGE:
+
+   bazel-bin/nighthawk_output_transform
+
+```
+
 ## A sample benchmark run
 
 ```bash
