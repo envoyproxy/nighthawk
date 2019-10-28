@@ -41,6 +41,8 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
   if (ok) {
     response.clear_error_detail();
   } else {
+    // TODO(https://github.com/envoyproxy/nighthawk/issues/181): wire through error descriptions, so
+    // we can do better here.
     response.mutable_error_detail()->set_message("Unknown failure");
   }
   *(response.mutable_output()) = output_collector.toProto();
