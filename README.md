@@ -71,7 +71,7 @@ empty.
 
 --sequencer-idle-strategy <spin|poll|sleep>
 Choose between using a busy spin/yield loop or have the thread poll or
-sleep while waiting for the next scheduled request (default: 1).
+sleep while waiting for the next scheduled request (default: spin).
 
 --max-requests-per-connection <uint32_t>
 Max requests per connection (default: 4294937295).
@@ -117,7 +117,7 @@ The default output format is 'human'.
 -v <trace|debug|info|warn|error|critical>,  --verbosity <trace|debug
 |info|warn|error|critical>
 Verbosity of the output. Possible values: [trace, debug, info, warn,
-error, critical]. The default level is '1'.
+error, critical]. The default level is 'info'.
 
 --concurrency <string>
 The number of concurrent event loops that should be used. Specify

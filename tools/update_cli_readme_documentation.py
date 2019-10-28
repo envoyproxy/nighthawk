@@ -10,7 +10,8 @@ from subprocess import Popen, PIPE
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Tool to update README.md CLI documentation.')
   parser.add_argument(
-      '--binary', help='Relative path to the target binary, for example: "bazel-bin/nighthawk_client".')
+      '--binary',
+      help='Relative path to the target binary, for example: "bazel-bin/nighthawk_client".')
   parser.add_argument(
       '--readme', help='Relative path to the target documentation file, for example: "README.md"')
   args = parser.parse_args()
@@ -31,12 +32,9 @@ if __name__ == '__main__':
   cli_help = [s.strip() for s in output.decode().splitlines()]
 
   with open(readme_md_path, "r") as f:
-    replaced = re.sub("\nUSAGE\:[^.]*.*%s[^```]*" % args.binary, str.join("\n", cli_help),
-                      f.read())
-
+    replaced = re.sub("\nUSAGE\:[^.]*.*%s[^```]*" % args.binary, str.join("\n", cli_help), f.read())
 
   with open(readme_md_path, "w") as f:
     f.write("%s" % replaced)
-
 
   print("done")
