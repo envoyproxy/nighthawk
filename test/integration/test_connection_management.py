@@ -75,7 +75,7 @@ def test_http_h1_connection_management_single_request_per_conn_1(http_test_serve
   counters = run_with_number_of_connections(
       http_test_server_fixture,
       1,
-      max_pending_requests=100,
+      max_pending_requests=1,
       requests_per_connection=1,
       run_test_expectation=False)
   requests = counters["upstream_rq_total"]
@@ -88,7 +88,7 @@ def test_http_h2_connection_management_single_request_per_conn_1(http_test_serve
   counters = run_with_number_of_connections(
       http_test_server_fixture,
       1,
-      max_pending_requests=100,
+      max_pending_requests=1,
       h2=True,
       requests_per_connection=1,
       run_test_expectation=False)
