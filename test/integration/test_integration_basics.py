@@ -75,9 +75,10 @@ def test_http_h1_mini_stress_test_without_client_side_queueing(http_test_server_
   Run a max rps test with the h1 pool against our test server, with no client-side
   queueing.
   """
-  counters = mini_stress_test(
-      http_test_server_fixture,
-      [http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--duration 2", "--connections", "1"])
+  counters = mini_stress_test(http_test_server_fixture, [
+      http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--duration 2",
+      "--connections", "1"
+  ])
   assertCounterEqual(counters, "upstream_rq_pending_total", 1)
   assertNotIn("upstream_cx_overflow", counters)
 
