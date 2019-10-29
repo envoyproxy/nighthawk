@@ -194,7 +194,8 @@ std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Outp
   fortio_output.mutable_requestedduration()->set_seconds(nh_duration);
   fortio_output.mutable_actualduration()->set_value(nh_duration);
 
-  // This displays as "connections" in the UI, not threads
+  // This displays as "connections" in the UI, not threads.
+  // TODO(#186): This field may not be accurate for for HTTP2 load tests.
   fortio_output.mutable_numthreads()->set_value(output.options().connections().value());
 
   // Get the result that represents all workers (global)
