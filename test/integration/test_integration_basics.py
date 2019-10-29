@@ -120,7 +120,7 @@ def test_http_h1_mini_stress_test_open_loop(http_test_server_fixture):
   """
   counters = mini_stress_test(http_test_server_fixture, [
       http_test_server_fixture.getTestServerRootUri(), "--rps", "2500", "--max-pending-requests",
-      "10", "--duration 10", "--open-loop", "--max-active-requests", "1"
+      "10", "--duration 10", "--open-loop", "--max-active-requests", "1", "--connections", "1"
   ])
   assertCounterGreater(counters, "upstream_rq_pending_total", 10)
   assertCounterGreater(counters, "upstream_rq_pending_overflow", 10)
