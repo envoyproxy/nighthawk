@@ -262,6 +262,7 @@ def test_dotted_output_format(http_test_server_fixture):
                                                           as_json=False)
   assertIn("global.benchmark_http_client.request_to_response.permilles-500.microseconds", output)
 
+
 def check_upload_expectations(fixture, parsed_json, expected_transmitted_bytes,
                               expected_received_bytes):
   counters = fixture.getNighthawkCounterMapFromJson(parsed_json)
