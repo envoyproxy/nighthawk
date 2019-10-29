@@ -21,11 +21,11 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
   }
 
   nighthawk::client::ExecutionResponse response;
-  response.mutable_error_detail()->set_code(grpc::StatusCode::INTERNAL);
   OptionsPtr options;
   try {
     options = std::make_unique<OptionsImpl>(request.start_request().options());
   } catch (const MalformedArgvException& e) {
+    response.mutable_error_detail()->set_code(grpc::StatusCode::INTERNAL);
     response.mutable_error_detail()->set_message(e.what());
     writeResponse(response);
     return;
@@ -38,9 +38,8 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
       "[%T.%f][%t][%L] %v", log_lock_);
   OutputCollectorImpl output_collector(time_system_, *options);
   bool ok = process.run(output_collector);
-  if (ok) {
-    response.clear_error_detail();
-  } else {
+  if (!ok) {
+    response.mutable_error_detail()->set_code(grpc::StatusCode::INTERNAL);
     // TODO(https://github.com/envoyproxy/nighthawk/issues/181): wire through error descriptions, so
     // we can do better here.
     response.mutable_error_detail()->set_message("Unknown failure");
