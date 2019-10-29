@@ -183,7 +183,7 @@ const nighthawk::client::Statistic& FortioOutputFormatterImpl::getRequestRespons
 std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
   nighthawk::client::FortioResult fortio_output;
 
-  // TODO(nareddyt): Not needed but nice to have, displays in the UI
+  // TODO(#182): Not needed but nice to have, displays in the UI
   fortio_output.mutable_labels()->set_value("");
   fortio_output.mutable_starttime()->set_seconds(output.timestamp().seconds());
   fortio_output.mutable_requestedqps()->set_value(output.options().requests_per_second().value());
@@ -237,20 +237,21 @@ std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Outp
     fortio_data_entry.mutable_count()->set_value(nh_percentile.count() - prev_fortio_count);
 
     // fortio_end = nh_duration (need to convert formats)
-    const double nh_duration_in_double = nh_percentile.duration().nanos() / 1e9;
-    fortio_data_entry.mutable_end()->set_value(nh_duration_in_double);
+    const double nh_percentile_duration_sec =
+        Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(nh_percentile.duration()) / 1e9;
+    fortio_data_entry.mutable_end()->set_value(nh_percentile_duration_sec);
 
     // fortio_start = prev_fortio_end
     if (i == 0) {
       // If this is the first entry, force the start and end time to be the same.
       // This prevents it from starting at 0, making it disproportionally big in the UI.
-      prev_fortio_end = nh_duration_in_double;
+      prev_fortio_end = nh_percentile_duration_sec;
     }
     fortio_data_entry.mutable_start()->set_value(prev_fortio_end);
 
     // Update tracking variables
     prev_fortio_count = nh_percentile.count();
-    prev_fortio_end = nh_duration_in_double;
+    prev_fortio_end = nh_percentile_duration_sec;
 
     // Set the data entry in the histogram only if it's not the first entry
     fortio_histogram.add_data()->CopyFrom(fortio_data_entry);
