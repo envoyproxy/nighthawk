@@ -58,7 +58,7 @@ private:
   void validate() const;
 
   uint32_t requests_per_second_{5};
-  uint32_t connections_{1};
+  uint32_t connections_{100};
   uint32_t duration_{5};
   uint32_t timeout_{30};
   std::string uri_;

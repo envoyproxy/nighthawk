@@ -140,7 +140,7 @@ Where:
 
    --connections <uint32_t>
      The maximum allowed number of concurrent connections per event loop.
-     HTTP/1 only. Default: 1.
+     HTTP/1 only. Default: 100.
 
    --rps <uint32_t>
      The target requests-per-second rate. Default: 5.
