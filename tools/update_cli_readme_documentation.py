@@ -5,9 +5,10 @@
 import logging
 import argparse
 import os
+import pathlib
 import re
 import sys
-from subprocess import Popen, PIPE
+import subprocess
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Tool to update README.md CLI documentation.')
@@ -23,20 +24,16 @@ if __name__ == '__main__':
   # in its help output.
   os.chdir(os.path.realpath(project_root))
   readme_md_path = os.path.join(project_root, args.readme)
-  process = Popen([args.binary, "--help"], stdout=PIPE)
-  (output, err) = process.communicate()
-  exit_code = process.wait()
-  if exit_code != 0:
-    sys.stderr.writelines(["Failure running --help on with target command"])
-    sys.exit(exit_code)
+  process = subprocess.run([args.binary, "--help"], stdout=subprocess.PIPE, check=True)
 
   # Avoid trailing spaces, as they introduce markdown linting errors.
-  cli_help = [s.strip() for s in output.decode().splitlines()]
+  cli_help = [s.strip() for s in process.stdout.decode().splitlines()]
 
-  with open(readme_md_path, "r") as f:
+  target_path = pathlib.Path(readme_md_path)
+  with target_path.open("r") as f:
     replaced = re.sub("\nUSAGE\:[^.]*.*%s[^```]*" % args.binary, str.join("\n", cli_help), f.read())
 
-  with open(readme_md_path, "w") as f:
+  with target_path.open("w") as f:
     f.write("%s" % replaced)
 
   print("done")
