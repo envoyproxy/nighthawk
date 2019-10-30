@@ -14,9 +14,19 @@ if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Tool to update README.md CLI documentation.')
   parser.add_argument(
       '--binary',
+      required=True,
       help='Relative path to the target binary, for example: "bazel-bin/nighthawk_client".')
   parser.add_argument(
-      '--readme', help='Relative path to the target documentation file, for example: "README.md"')
+      '--readme',
+      required=True,
+      help='Relative path to the target documentation file, for example: "README.md"')
+  parser.add_argument(
+      '--mode',
+      default="check",
+      required=True,
+      choices={"check", "fix"},
+      help='Either "check" or "fix"')
+
   args = parser.parse_args()
 
   project_root = os.path.join(os.path.dirname(os.path.join(os.path.realpath(__file__))), "../")
@@ -31,10 +41,22 @@ if __name__ == '__main__':
 
   target_path = pathlib.Path(readme_md_path)
   with target_path.open("r") as f:
-    replaced = re.sub("\nUSAGE\:[^.]*.*%s[^```]*" % args.binary, str.join("\n", cli_help), f.read())
+    original_contents = f.read()
+    replaced = re.sub("\nUSAGE\:[^.]*.*%s[^```]*" % args.binary, str.join("\n", cli_help),
+                      original_contents)
 
-  with target_path.open("w") as f:
-    f.write("%s" % replaced)
+  if replaced != original_contents:
+    if args.mode == "check":
+      logging.log(
+          logging.INFO,
+          "CLI documentation in /%s needs to be updated for %s" % (args.readme, args.binary))
+      sys.exit(-1)
+    elif args.mode == "fix":
+      with target_path.open("w") as f:
+        logging.log(
+            logging.ERROR,
+            "CLI documentation in /%s needs to be updated for %s" % (args.readme, args.binary))
+        f.write("%s" % replaced)
 
-  print("done")
+  logging.log(logging.INFO, "Done")
   sys.exit(0)
