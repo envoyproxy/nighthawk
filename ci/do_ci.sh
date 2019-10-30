@@ -88,6 +88,7 @@ function do_check_format() {
 function do_fix_format() {
     echo "fix_format..."
     cd "${SRCDIR}"
+    go get -u github.com/bazelbuild/buildtools/buildozer
     ./tools/check_format.sh fix
     ./tools/format_python_tools.sh fix
 }
