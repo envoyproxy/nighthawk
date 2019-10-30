@@ -3,6 +3,7 @@
 set -e
 
 export BUILDIFIER_BIN="/usr/local/bin/buildifier"
+export BUILDOZER_BIN="/usr/local/bin/buildozer"
 
 function do_build () {
     bazel build $BAZEL_BUILD_OPTIONS --verbose_failures=true //:nighthawk_client //:nighthawk_test_server \
@@ -88,7 +89,6 @@ function do_check_format() {
 function do_fix_format() {
     echo "fix_format..."
     cd "${SRCDIR}"
-    go get -u github.com/bazelbuild/buildtools/buildozer
     ./tools/check_format.sh fix
     ./tools/format_python_tools.sh fix
 }
