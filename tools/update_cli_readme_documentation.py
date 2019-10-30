@@ -28,6 +28,14 @@ if __name__ == '__main__':
       help='Either "check" or "fix"')
 
   args = parser.parse_args()
+  root = logging.getLogger()
+  root.setLevel(logging.INFO)
+
+  handler = logging.StreamHandler(sys.stdout)
+  handler.setLevel(logging.INFO)
+  formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+  handler.setFormatter(formatter)
+  root.addHandler(handler)
 
   project_root = os.path.join(os.path.dirname(os.path.join(os.path.realpath(__file__))), "../")
   # Change directory to avoid TCLAP outputting a full path specification to the binary
@@ -41,22 +49,20 @@ if __name__ == '__main__':
 
   target_path = pathlib.Path(readme_md_path)
   with target_path.open("r") as f:
-    original_contents = f.read()
+    original_contents = f.read().decode()
     replaced = re.sub("\nUSAGE\:[^.]*.*%s[^```]*" % args.binary, str.join("\n", cli_help),
                       original_contents)
 
   if replaced != original_contents:
     if args.mode == "check":
-      logging.log(
-          logging.INFO,
+      logging.info(
           "CLI documentation in /%s needs to be updated for %s" % (args.readme, args.binary))
       sys.exit(-1)
     elif args.mode == "fix":
       with target_path.open("w") as f:
-        logging.log(
-            logging.ERROR,
+        logging.error(
             "CLI documentation in /%s needs to be updated for %s" % (args.readme, args.binary))
         f.write("%s" % replaced)
 
-  logging.log(logging.INFO, "Done")
+  logging.info("Done")
   sys.exit(0)

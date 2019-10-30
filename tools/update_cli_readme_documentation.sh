@@ -9,3 +9,4 @@ bazel run $BAZEL_BUILD_OPTIONS //tools:update_cli_readme_documentation -- --bina
 bazel run $BAZEL_BUILD_OPTIONS //tools:update_cli_readme_documentation -- --binary bazel-bin/nighthawk_output_transform --readme README.md "$@"
 bazel run $BAZEL_BUILD_OPTIONS //tools:update_cli_readme_documentation -- --binary bazel-bin/nighthawk_test_server --readme source/server/README.md "$@"
 
+echo "Docs are up to date"
