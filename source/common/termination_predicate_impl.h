@@ -11,6 +11,7 @@ class TerminationPredicateBaseImpl : public TerminationPredicate {
 public:
   TerminationPredicate& link(TerminationPredicatePtr&& child) final {
     RELEASE_ASSERT(linked_child_ == nullptr, "Linked child already set");
+    RELEASE_ASSERT(child != nullptr, "child == nullptr");
     linked_child_ = std::move(child);
     return *linked_child_;
   }

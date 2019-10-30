@@ -37,7 +37,7 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
           nighthawk::client::Verbosity::VerbosityOptions_Name(options->verbosity())),
       "[%T.%f][%t][%L] %v", log_lock_);
   OutputCollectorImpl output_collector(time_system_, *options);
-  bool ok = process.run(output_collector);
+  const bool ok = process.run(output_collector);
   if (!ok) {
     response.mutable_error_detail()->set_code(grpc::StatusCode::INTERNAL);
     // TODO(https://github.com/envoyproxy/nighthawk/issues/181): wire through error descriptions, so
