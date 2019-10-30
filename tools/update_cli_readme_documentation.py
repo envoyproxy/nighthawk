@@ -48,8 +48,8 @@ if __name__ == '__main__':
   cli_help = [s.strip() for s in process.stdout.decode().splitlines()]
 
   target_path = pathlib.Path(readme_md_path)
-  with target_path.open("r") as f:
-    original_contents = f.read().decode()
+  with target_path.open("r", encoding="utf-8") as f:
+    original_contents = f.read()
     replaced = re.sub("\nUSAGE\:[^.]*.*%s[^```]*" % args.binary, str.join("\n", cli_help),
                       original_contents)
 
@@ -59,7 +59,7 @@ if __name__ == '__main__':
           "CLI documentation in /%s needs to be updated for %s" % (args.readme, args.binary))
       sys.exit(-1)
     elif args.mode == "fix":
-      with target_path.open("w") as f:
+      with target_path.open("w", encoding="utf-8") as f:
         logging.error(
             "CLI documentation in /%s needs to be updated for %s" % (args.readme, args.binary))
         f.write("%s" % replaced)
