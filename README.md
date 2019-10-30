@@ -68,7 +68,7 @@ Where:
 --trace <uri format>
 Trace uri. Example: zipkin://localhost:9411/api/v1/spans. Default is
 empty.
- 
+
 --sequencer-idle-strategy <spin|poll|sleep>
 Choose between using a busy spin/yield loop or have the thread poll or
 sleep while waiting for the next scheduled request (default: spin).
