@@ -317,3 +317,44 @@ def test_dotted_output_format(http_test_server_fixture):
   ],
                                                           as_json=False)
   assertIn("global.benchmark_http_client.request_to_response.permilles-500.microseconds", output)
+
+
+def test_request_body_gets_transmitted(http_test_server_fixture):
+  """
+  Test that the number of bytes we request for the request body gets reflected in the upstream
+  connection transmitted bytes counter for h1 and h2.
+  """
+
+  def check_upload_expectations(fixture, parsed_json, expected_transmitted_bytes,
+                                expected_received_bytes):
+    counters = fixture.getNighthawkCounterMapFromJson(parsed_json)
+    assertCounterGreaterEqual(counters, "upstream_cx_tx_bytes_total", expected_transmitted_bytes)
+    server_stats = fixture.getTestServerStatisticsJson()
+    assertGreaterEqual(
+        fixture.getServerStatFromJson(server_stats,
+                                      "http.ingress_http.downstream_cx_rx_bytes_total"),
+        expected_received_bytes)
+
+  upload_bytes = 10000
+
+  # test h1
+  parsed_json, _ = http_test_server_fixture.runNighthawkClient([
+      http_test_server_fixture.getTestServerRootUri(), "--duration", "1", "--rps", "2",
+      "--request-body-size",
+      str(upload_bytes)
+  ])
+
+  # We expect rps * upload_bytes to be transferred/received.
+  check_upload_expectations(http_test_server_fixture, parsed_json, upload_bytes * 2,
+                            upload_bytes * 2)
+
+  # test h2
+  # Again, we expect rps * upload_bytes to be transferred/received. However, we didn't reset
+  # the server in between, so our expectation for received bytes on the server side is raised.
+  parsed_json, _ = http_test_server_fixture.runNighthawkClient([
+      http_test_server_fixture.getTestServerRootUri(), "--duration", "1", "--h2", "--rps", "2",
+      "--request-body-size",
+      str(upload_bytes)
+  ])
+  check_upload_expectations(http_test_server_fixture, parsed_json, upload_bytes * 2,
+                            upload_bytes * 4)
