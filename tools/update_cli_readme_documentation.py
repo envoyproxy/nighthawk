@@ -10,33 +10,25 @@ import re
 import sys
 import subprocess
 
-if __name__ == '__main__':
-  parser = argparse.ArgumentParser(description='Tool to update README.md CLI documentation.')
+if __name__ == "__main__":
+  parser = argparse.ArgumentParser(description="Tool to update README.md CLI documentation.")
   parser.add_argument(
-      '--binary',
+      "--binary",
       required=True,
-      help='Relative path to the target binary, for example: "bazel-bin/nighthawk_client".')
+      help="Relative path to the target binary, for example: \"bazel-bin/nighthawk_client\".")
   parser.add_argument(
-      '--readme',
+      "--readme",
       required=True,
-      help='Relative path to the target documentation file, for example: "README.md"')
+      help="Relative path to the target documentation file, for example: \"README.md\"")
   parser.add_argument(
-      '--mode',
+      "--mode",
       default="check",
       required=True,
       choices={"check", "fix"},
-      help='Either "check" or "fix"')
+      help="Either \"check\" or \"fix\"")
 
   args = parser.parse_args()
-  root = logging.getLogger()
-  root.setLevel(logging.INFO)
-
-  handler = logging.StreamHandler(sys.stdout)
-  handler.setLevel(logging.INFO)
-  formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-  handler.setFormatter(formatter)
-  root.addHandler(handler)
-
+  logging.getLogger().setLevel(logging.INFO)
   project_root = os.path.join(os.path.dirname(os.path.join(os.path.realpath(__file__))), "../")
   # Change directory to avoid TCLAP outputting a full path specification to the binary
   # in its help output.
