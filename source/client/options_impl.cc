@@ -70,10 +70,11 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
 
   TCLAP::ValueArg<std::string> verbosity(
       "v", "verbosity",
-      fmt::format("Verbosity of the output. Possible values: [trace, debug, info, warn, error, "
-                  "critical]. The "
-                  "default level is '{}'.",
-                  verbosity_),
+      fmt::format(
+          "Verbosity of the output. Possible values: [trace, debug, info, warn, error, "
+          "critical]. The "
+          "default level is '{}'.",
+          absl::AsciiStrToLower(nighthawk::client::Verbosity_VerbosityOptions_Name(verbosity_))),
       false, "", &verbosities_allowed, cmd);
 
   std::vector<std::string> output_formats = OutputFormatterImpl::getLowerCaseOutputFormats();
@@ -155,7 +156,9 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       fmt::format(
           "Choose between using a busy spin/yield loop or have the thread poll or sleep while "
           "waiting for the next scheduled request (default: {}).",
-          sequencer_idle_strategy_),
+          absl::AsciiStrToLower(
+              nighthawk::client::SequencerIdleStrategy_SequencerIdleStrategyOptions_Name(
+                  sequencer_idle_strategy_))),
       false, "", &sequencer_idle_strategies_allowed, cmd);
 
   TCLAP::ValueArg<std::string> trace(
