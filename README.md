@@ -43,7 +43,9 @@ bazel build -c opt //:nighthawk
 ```
 USAGE:
 
-bazel-bin/nighthawk_client  [--trace <uri format>]
+bazel-bin/nighthawk_client  [--failure-predicate <<string, uint32_t>>]
+...  [--termination-predicate <<string,
+uint32_t>>] ...  [--trace <uri format>]
 [--sequencer-idle-strategy <spin|poll
 |sleep>] [--max-requests-per-connection
 <uint32_t>] [--max-active-requests
@@ -64,6 +66,14 @@ bazel-bin/nighthawk_client  [--trace <uri format>]
 
 
 Where:
+
+--failure-predicate <<string, uint32_t>>  (accepted multiple times)
+Failure predicate. Allows specifying a counter name plus threshold
+value for failing execution.
+
+--termination-predicate <<string, uint32_t>>  (accepted multiple times)
+Termination predicate. Allows specifying a counter name plus threshold
+value for terminating execution.
 
 --trace <uri format>
 Trace uri. Example: zipkin://localhost:9411/api/v1/spans. Default is
