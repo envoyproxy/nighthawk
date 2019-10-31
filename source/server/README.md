@@ -75,3 +75,149 @@ admin:
 
 # Verify the test server with a curl command similar to:
 ➜ curl -H "x-envoy-fault-delay-request: 1000" -H "x-nighthawk-test-server-config: {response_body_size:20}"  -vv 127.0.0.1:10000
+```
+
+```bash
+➜ bazel-bin/nighthawk_test_server --help
+```
+
+```
+USAGE:
+
+bazel-bin/nighthawk_test_server  [--use-fake-symbol-table <bool>]
+[--use-libevent-buffers <bool>]
+[--cpuset-threads]
+[--enable-mutex-tracing]
+[--disable-hot-restart]
+[--max-obj-name-len <uint64_t>]
+[--max-stats <uint64_t>] [--mode
+<string>] [--parent-shutdown-time-s
+<uint32_t>] [--drain-time-s <uint32_t>]
+[--file-flush-interval-msec <uint32_t>]
+[--service-zone <string>]
+[--service-node <string>]
+[--service-cluster <string>]
+[--hot-restart-version]
+[--restart-epoch <uint32_t>]
+[--log-path <string>] [--log-format
+<string>] [--component-log-level
+<string>] [-l <string>]
+[--local-address-ip-version <string>]
+[--admin-address-path <string>]
+[--reject-unknown-dynamic-fields]
+[--allow-unknown-static-fields]
+[--allow-unknown-fields] [--config-yaml
+<string>] [-c <string>] [--concurrency
+<uint32_t>] [--base-id <uint32_t>] [--]
+[--version] [-h]
+
+
+Where:
+
+--use-fake-symbol-table <bool>
+Use fake symbol table implementation
+
+--use-libevent-buffers <bool>
+Use the original libevent buffer implementation
+
+--cpuset-threads
+Get the default # of worker threads from cpuset size
+
+--enable-mutex-tracing
+Enable mutex contention tracing functionality
+
+--disable-hot-restart
+Disable hot restart functionality
+
+--max-obj-name-len <uint64_t>
+Deprecated and unused; please do not specify.
+
+--max-stats <uint64_t>
+Deprecated and unused; please do not specify.
+
+--mode <string>
+One of 'serve' (default; validate configs and then serve traffic
+normally) or 'validate' (validate configs and exit).
+
+--parent-shutdown-time-s <uint32_t>
+Hot restart parent shutdown time in seconds
+
+--drain-time-s <uint32_t>
+Hot restart drain time in seconds
+
+--file-flush-interval-msec <uint32_t>
+Interval for log flushing in msec
+
+--service-zone <string>
+Zone name
+
+--service-node <string>
+Node name
+
+--service-cluster <string>
+Cluster name
+
+--hot-restart-version
+hot restart compatibility version
+
+--restart-epoch <uint32_t>
+hot restart epoch #
+
+--log-path <string>
+Path to logfile
+
+--log-format <string>
+Log message format in spdlog syntax (see
+https://github.com/gabime/spdlog/wiki/3.-Custom-formatting)
+
+Default is "[%Y-%m-%d %T.%e][%t][%l][%n] %v"
+
+--component-log-level <string>
+Comma separated list of component log levels. For example
+upstream:debug,config:trace
+
+-l <string>,  --log-level <string>
+Log levels:
+[trace][debug][info][warning][error][critical][off]
+
+Default is [info]
+
+--local-address-ip-version <string>
+The local IP address version (v4 or v6).
+
+--admin-address-path <string>
+Admin address path
+
+--reject-unknown-dynamic-fields
+reject unknown fields in dynamic configuration
+
+--allow-unknown-static-fields
+allow unknown fields in static configuration
+
+--allow-unknown-fields
+allow unknown fields in static configuration (DEPRECATED)
+
+--config-yaml <string>
+Inline YAML configuration, merges with the contents of --config-path
+
+-c <string>,  --config-path <string>
+Path to configuration file
+
+--concurrency <uint32_t>
+# of worker threads to run
+
+--base-id <uint32_t>
+base ID so that multiple envoys can run on the same host if needed
+
+--,  --ignore_rest
+Ignores the rest of the labeled arguments following this flag.
+
+--version
+Displays version information and exits.
+
+-h,  --help
+Displays usage information and exits.
+
+
+envoy
+```
