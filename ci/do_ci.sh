@@ -8,6 +8,7 @@ export BUILDOZER_BIN="/usr/local/bin/buildozer"
 function do_build () {
     bazel build $BAZEL_BUILD_OPTIONS --verbose_failures=true //:nighthawk_client //:nighthawk_test_server \
         //:nighthawk_service
+    tools/update_cli_readme_documentation.sh --mode check
 }
 
 function do_test() {
