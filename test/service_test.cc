@@ -122,6 +122,7 @@ TEST_P(ServiceTest, Basic) {
   r->WritesDone();
   EXPECT_TRUE(r->Read(&response_));
   ASSERT_TRUE(response_.has_error_detail());
+  EXPECT_THAT(response_.error_detail().message(), HasSubstr(std::string("Unknown failure")));
   EXPECT_TRUE(response_.has_output());
   EXPECT_GE(response_.output().results(0).counters().size(), 8);
   auto status = r->Finish();
@@ -137,6 +138,7 @@ TEST_P(ServiceTest, NoConcurrentStart) {
   EXPECT_TRUE(r->WritesDone());
   EXPECT_TRUE(r->Read(&response_));
   ASSERT_TRUE(response_.has_error_detail());
+  EXPECT_THAT(response_.error_detail().message(), HasSubstr(std::string("Unknown failure")));
   EXPECT_TRUE(response_.has_output());
   EXPECT_FALSE(r->Read(&response_));
   auto status = r->Finish();

@@ -31,7 +31,7 @@ public:
   BenchmarkClientHttpTest()
       : api_(Envoy::Api::createApiForTest()), dispatcher_(api_->allocateDispatcher()),
         cluster_manager_(std::make_unique<Envoy::Upstream::MockClusterManager>()),
-        cluster_info_(std::make_unique<NiceMock<Envoy::Upstream::MockClusterInfo>>()),
+        cluster_info_(std::make_unique<Envoy::Upstream::MockClusterInfo>()),
         http_tracer_(std::make_unique<Envoy::Tracing::MockHttpTracer>()), response_code_("200") {
     EXPECT_CALL(cluster_manager(), httpConnPoolForCluster(_, _, _, _))
         .WillRepeatedly(Return(&pool_));
@@ -229,8 +229,9 @@ TEST_F(BenchmarkClientHttpTest, ConnectionPrefetching) {
   auto* options = new Envoy::Network::ConnectionSocket::Options();
   Envoy::Network::ConnectionSocket::OptionsSharedPtr options_ptr{options};
   Envoy::Network::TransportSocketOptionsSharedPtr transport_socket_options_ptr;
+  Envoy::Http::Http1Settings codec_settings;
   Client::Http1PoolImpl pool(*dispatcher_, host_ptr, Envoy::Upstream::ResourcePriority::Default,
-                             options_ptr, transport_socket_options_ptr);
+                             options_ptr, codec_settings, transport_socket_options_ptr);
   EXPECT_CALL(cluster_manager(), httpConnPoolForCluster(_, _, _, _)).WillRepeatedly(Return(&pool));
   // Short circuit actual connection creation to avoids having to wire through more mocking.
   // (We have python integration tests for covering functionality)

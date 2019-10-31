@@ -46,8 +46,9 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       fmt::format("The number of seconds that the test should run. Default: {}.", duration_), false,
       0, "uint32_t", cmd);
   TCLAP::ValueArg<uint32_t> timeout(
-      "", "timeout", fmt::format("Connection timeout period in seconds. Default: {}.", timeout_),
-      false, 0, "uint32_t", cmd);
+      "", "timeout",
+      fmt::format("Connection connect timeout period in seconds. Default: {}.", timeout_), false, 0,
+      "uint32_t", cmd);
 
   TCLAP::SwitchArg h2("", "h2", "Use HTTP/2", cmd);
 
