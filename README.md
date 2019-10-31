@@ -43,9 +43,9 @@ bazel build -c opt //:nighthawk
 ```
 USAGE:
 
-bazel-bin/nighthawk_client  [--trace <uri format>]
-[--sequencer-idle-strategy <spin|poll
-|sleep>] [--max-requests-per-connection
+bazel-bin/nighthawk_client  [--request-source <string>] [--trace <uri
+format>] [--sequencer-idle-strategy <spin
+|poll|sleep>] [--max-requests-per-connection
 <uint32_t>] [--max-active-requests
 <uint32_t>] [--max-pending-requests
 <uint32_t>] [--tls-context <string>]
@@ -64,6 +64,9 @@ bazel-bin/nighthawk_client  [--trace <uri format>]
 
 
 Where:
+
+--request-source <string>
+replay source description
 
 --trace <uri format>
 Trace uri. Example: zipkin://localhost:9411/api/v1/spans. Default is
@@ -173,11 +176,15 @@ The gRPC service can be used to start a server which is able to perform back-to-
 ```
 USAGE:
 
-bazel-bin/nighthawk_service  [--listen <address:port>] [--] [--version]
-[-h]
+bazel-bin/nighthawk_service  [--listener-address-file <>] [--listen
+<address:port>] [--] [--version] [-h]
 
 
 Where:
+
+--listener-address-file <>
+Location where the service will write the final address:port on which
+the Nighthawk grpc service listens. Default empty.
 
 --listen <address:port>
 The address:port on which the Nighthawk gRPC service should listen.
