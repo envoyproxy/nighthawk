@@ -44,8 +44,8 @@ bazel build -c opt //:nighthawk
 USAGE:
 
 bazel-bin/nighthawk_client  [--failure-predicate <<string, uint32_t>>]
-...  [--termination-predicate <<string,
-uint32_t>>] ...  [--trace <uri format>]
+... [--termination-predicate <<string,
+uint32_t>>] ... [--trace <uri format>]
 [--sequencer-idle-strategy <spin|poll
 |sleep>] [--max-requests-per-connection
 <uint32_t>] [--max-active-requests
