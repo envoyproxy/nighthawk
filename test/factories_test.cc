@@ -75,9 +75,6 @@ public:
                                  sequencer_idle_strategy) {
     SequencerFactoryImpl factory(options_);
     MockBenchmarkClient benchmark_client;
-
-    EXPECT_CALL(options_, timeout()).Times(1);
-    EXPECT_CALL(options_, duration()).Times(1).WillOnce(Return(1s));
     EXPECT_CALL(options_, requestsPerSecond()).Times(1).WillOnce(Return(1));
     EXPECT_CALL(options_, burstSize()).Times(1).WillOnce(Return(2));
     EXPECT_CALL(options_, sequencerIdleStrategy())
@@ -85,8 +82,9 @@ public:
         .WillOnce(Return(sequencer_idle_strategy));
     EXPECT_CALL(dispatcher_, createTimer_(_)).Times(2);
     Envoy::Event::SimulatedTimeSystem time_system;
+    MockTerminationPredicate termination_predicate;
     auto sequencer = factory.create(api_->timeSource(), dispatcher_, time_system.monotonicTime(),
-                                    benchmark_client);
+                                    benchmark_client, termination_predicate, stats_store_);
     EXPECT_NE(nullptr, sequencer.get());
   }
 };

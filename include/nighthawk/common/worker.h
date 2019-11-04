@@ -26,8 +26,8 @@ public:
   virtual void waitForCompletion() PURE;
 
   /**
-   * Shuts down the worker. Must be paired with start,
-   * and mandatory.
+   * Shuts down the worker. Must be paired with start, and mandatory. Called from the main thread,
+   * after the worker has cleaned up after itself in shutdownThread().
    */
   virtual void shutdown() PURE;
 
