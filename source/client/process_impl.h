@@ -78,6 +78,7 @@ private:
   Envoy::Event::DispatcherPtr dispatcher_;
   std::vector<ClientWorkerPtr> workers_;
   const BenchmarkClientFactoryImpl benchmark_client_factory_;
+  const TerminationPredicateFactoryImpl termination_predicate_factory_;
   const SequencerFactoryImpl sequencer_factory_;
   const HeaderSourceFactoryImpl header_generator_factory_;
   const Options& options_;

@@ -25,7 +25,7 @@ public:
 
 TEST_F(TerminationPredicateTest, DurationTerminationPredicateImplTest) {
   const auto duration = 100us;
-  DurationTerminationPredicateImpl pred(time_system, duration);
+  DurationTerminationPredicateImpl pred(time_system, time_system.monotonicTime(), duration);
   EXPECT_EQ(pred.evaluate(), TerminationPredicate::Status::PROCEED);
   // move to the edge.
   time_system.sleep(duration);
