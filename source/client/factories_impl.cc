@@ -138,10 +138,23 @@ TerminationPredicateFactoryImpl::create(Envoy::TimeSource& time_source, Envoy::S
   TerminationPredicatePtr duration_predicate =
       std::make_unique<DurationTerminationPredicateImpl>(time_source, start, options_.duration());
   TerminationPredicate* current_predicate = duration_predicate.get();
-  current_predicate = linkConfiguredPredicates(*current_predicate, options_.failurePredicates(),
-                                               TerminationPredicate::Status::FAIL, scope);
+  if (options_.failurePredicates().size() > 0) {
+    current_predicate = linkConfiguredPredicates(*current_predicate, options_.failurePredicates(),
+                                                 TerminationPredicate::Status::FAIL, scope);
+  } else {
+    // By default, we don't tolerate status code errors & connection-level errors.
+    duration_predicate
+        ->link(std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
+            scope.counter("benchmark.http_4xx"), 0, TerminationPredicate::Status::FAIL))
+        .link(std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
+            scope.counter("benchmark.http_5xx"), 0, TerminationPredicate::Status::FAIL))
+        .link(std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
+            scope.counter("benchmark.pool_connection_failure"), 0,
+            TerminationPredicate::Status::FAIL));
+  }
   linkConfiguredPredicates(*current_predicate, options_.terminationPredicates(),
                            TerminationPredicate::Status::TERMINATE, scope);
+
   return duration_predicate;
 }
 
