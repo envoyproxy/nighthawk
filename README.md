@@ -69,7 +69,8 @@ Where:
 
 --failure-predicate <<string, uint32_t>>  (accepted multiple times)
 Failure predicate. Allows specifying a counter name plus threshold
-value for failing execution.
+value for failing execution. Defaults to not tolerating error status
+codes and connection errors.
 
 --termination-predicate <<string, uint32_t>>  (accepted multiple times)
 Termination predicate. Allows specifying a counter name plus threshold

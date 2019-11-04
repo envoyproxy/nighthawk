@@ -169,7 +169,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   TCLAP::MultiArg<std::string> failure_predicates(
       "", "failure-predicate",
       "Failure predicate. Allows specifying a counter name plus threshold value for "
-      "failing execution.",
+      "failing execution. Defaults to not tolerating error status codes and connection errors.",
       false, "<string, uint32_t>", cmd);
 
   TCLAP::UnlabeledValueArg<std::string> uri("uri",
