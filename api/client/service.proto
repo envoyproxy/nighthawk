@@ -30,11 +30,8 @@ message ExecutionRequest {
 }
 
 message ExecutionResponse {
-  oneof status_specifier {
-    option (validate.required) = true;
-    Output output = 1;
-    google.rpc.Status error_detail = 7;
-  }
+  Output output = 1;
+  google.rpc.Status error_detail = 7;
 }
 
 service NighthawkService {

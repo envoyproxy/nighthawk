@@ -17,13 +17,16 @@ namespace Client {
 
 class ClientTest : public testing::Test {};
 
-// TODO(oschaaf): revisit this, and improve testability of the Main
-// class, so we can mock its dependencies.
-// We now have integration tests covering this much better.
+// TODO(https://github.com/envoyproxy/nighthawk/issues/179): revisit this, and improve testability
+// of the Main class, so we can mock its dependencies. We now have integration tests covering this
+// much better.
+
+// Note: these tests do not have a backend set up to talk to.
+// That's why we expect exit codes indicating failure.
 TEST_F(ClientTest, NormalRun) {
   Main program(Nighthawk::Client::TestUtility::createOptionsImpl(
       "foo --duration 1 --rps 10 http://localhost:63657/"));
-  EXPECT_TRUE(program.run());
+  EXPECT_FALSE(program.run());
 }
 
 TEST_F(ClientTest, AutoConcurrencyRun) {
@@ -39,7 +42,7 @@ TEST_F(ClientTest, AutoConcurrencyRun) {
   argv.push_back("error");
   argv.push_back("http://localhost:63657/");
   Main program(argv.size(), argv.data());
-  EXPECT_TRUE(program.run());
+  EXPECT_FALSE(program.run());
 }
 
 // TODO(https://github.com/envoyproxy/nighthawk/issues/140):
@@ -60,7 +63,7 @@ TEST_F(ClientTest, TracingRun) {
   argv.push_back("--trace");
   argv.push_back("zipkin://localhost:9411/api/v1/spans");
   Main program(argv.size(), argv.data());
-  EXPECT_TRUE(program.run());
+  EXPECT_FALSE(program.run());
 }
 
 TEST_F(ClientTest, BadRun) {

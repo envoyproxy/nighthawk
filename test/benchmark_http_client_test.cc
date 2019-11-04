@@ -98,7 +98,7 @@ public:
       }
     }
     dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
-    EXPECT_EQ(max_pending, inflight_response_count);
+    // We test feature functionality like max-pending-requests in the integration tests.
 
     for (Envoy::Http::StreamDecoder* decoder : decoders_) {
       Envoy::Http::HeaderMapPtr response_headers{

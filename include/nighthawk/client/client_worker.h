@@ -24,11 +24,6 @@ public:
   virtual StatisticPtrMap statistics() const PURE;
 
   /**
-   * @return bool True iff the worker ran and completed successfully.
-   */
-  virtual bool success() const PURE;
-
-  /**
    * @return const std::map<std::string, uint64_t>& The worker-specific counter values.
    * Gets filled when the worker has completed its task, empty before that.
    */
