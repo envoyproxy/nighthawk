@@ -83,8 +83,8 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
       api_(std::make_unique<Envoy::Api::Impl>(platform_impl_.threadFactory(), store_root_,
                                               time_system_, platform_impl_.fileSystem())),
       dispatcher_(api_->allocateDispatcher()), benchmark_client_factory_(options),
-      sequencer_factory_(options), header_generator_factory_(options), options_(options),
-      init_manager_("nh_init_manager"),
+      termination_predicate_factory_(options), sequencer_factory_(options),
+      header_generator_factory_(options), options_(options), init_manager_("nh_init_manager"),
       local_info_(new Envoy::LocalInfo::LocalInfoImpl(
           {}, Envoy::Network::Utility::getLocalAddress(Envoy::Network::Address::IpVersion::v4),
           "nighthawk_service_zone", "nighthawk_service_cluster", "nighthawk_service_node")),
@@ -142,9 +142,9 @@ const std::vector<ClientWorkerPtr>& ProcessImpl::createWorkers(const uint32_t co
     const auto worker_delay = std::chrono::duration_cast<std::chrono::nanoseconds>(
         ((inter_worker_delay_usec * worker_number) * 1us));
     workers_.push_back(std::make_unique<ClientWorkerImpl>(
-        *api_, tls_, cluster_manager_, benchmark_client_factory_, sequencer_factory_,
-        header_generator_factory_, store_root_, worker_number, first_worker_start + worker_delay,
-        http_tracer_, prefetch_connections));
+        *api_, tls_, cluster_manager_, benchmark_client_factory_, termination_predicate_factory_,
+        sequencer_factory_, header_generator_factory_, store_root_, worker_number,
+        first_worker_start + worker_delay, http_tracer_, prefetch_connections));
     worker_number++;
   }
   return workers_;
@@ -371,10 +371,8 @@ bool ProcessImpl::run(OutputCollector& collector) {
     w->start();
   }
 
-  bool ok = true;
   for (auto& w : workers_) {
     w->waitForCompletion();
-    ok = ok && w->success();
   }
 
   // We don't write per-worker results if we only have a single worker, because the global results
@@ -382,24 +380,23 @@ bool ProcessImpl::run(OutputCollector& collector) {
   if (workers_.size() > 1) {
     int i = 0;
     for (auto& worker : workers_) {
-      if (worker->success()) {
-        StatisticFactoryImpl statistic_factory(options_);
-        collector.addResult(fmt::format("worker_{}", i),
-                            vectorizeStatisticPtrMap(statistic_factory, worker->statistics()),
-                            worker->thread_local_counter_values());
-      }
+      StatisticFactoryImpl statistic_factory(options_);
+      collector.addResult(fmt::format("worker_{}", i),
+                          vectorizeStatisticPtrMap(statistic_factory, worker->statistics()),
+                          worker->thread_local_counter_values());
       i++;
     }
   }
-  if (ok) {
-    StatisticFactoryImpl statistic_factory(options_);
-    collector.addResult(
-        "global", mergeWorkerStatistics(statistic_factory, workers),
-        Utility().mapCountersFromStore(
-            store_root_, [](absl::string_view, uint64_t value) { return value > 0; }));
-  }
 
-  return ok;
+  // Note that above we use use counter values snapshotted by the workers right after its execution
+  // completes. Here we query the live counters to get to the global numbers. To make sure the
+  // global aggregated numbers line up, we must take care not to shut down the benchmark client
+  // before we do this, as that will increment certain counters like connections closed, etc.
+  const auto& counters = Utility().mapCountersFromStore(
+      store_root_, [](absl::string_view, uint64_t value) { return value > 0; });
+  StatisticFactoryImpl statistic_factory(options_);
+  collector.addResult("global", mergeWorkerStatistics(statistic_factory, workers), counters);
+  return counters.find("sequencer.failed_terminations") == counters.end();
 }
 
 } // namespace Client

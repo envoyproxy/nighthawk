@@ -17,6 +17,7 @@
 #include "nighthawk/common/rate_limiter.h"
 #include "nighthawk/common/sequencer.h"
 #include "nighthawk/common/statistic.h"
+#include "nighthawk/common/termination_predicate.h"
 #include "nighthawk/common/uri.h"
 
 #include "external/envoy/test/test_common/simulated_time_system.h"
@@ -103,10 +104,12 @@ public:
 class MockSequencerFactory : public Client::SequencerFactory {
 public:
   MockSequencerFactory();
-  MOCK_CONST_METHOD4(create, SequencerPtr(Envoy::TimeSource& time_source,
+  MOCK_CONST_METHOD6(create, SequencerPtr(Envoy::TimeSource& time_source,
                                           Envoy::Event::Dispatcher& dispatcher,
                                           Envoy::MonotonicTime start_time,
-                                          Client::BenchmarkClient& benchmark_client));
+                                          Client::BenchmarkClient& benchmark_client,
+                                          TerminationPredicate& termination_predicate,
+                                          Envoy::Stats::Scope& scope));
 };
 
 class MockStoreFactory : public Client::StoreFactory {
@@ -125,6 +128,14 @@ class MockHeaderSourceFactory : public HeaderSourceFactory {
 public:
   MockHeaderSourceFactory();
   MOCK_CONST_METHOD0(create, HeaderSourcePtr());
+};
+
+class MockTerminationPredicateFactory : public TerminationPredicateFactory {
+public:
+  MockTerminationPredicateFactory();
+  MOCK_CONST_METHOD3(create, TerminationPredicatePtr(Envoy::TimeSource& time_source,
+                                                     Envoy::Stats::Scope& scope,
+                                                     const Envoy::MonotonicTime start));
 };
 
 class FakeSequencerTarget {
@@ -158,6 +169,14 @@ class MockHeaderSource : public HeaderSource {
 public:
   MockHeaderSource();
   MOCK_METHOD0(get, HeaderGenerator());
+};
+
+class MockTerminationPredicate : public TerminationPredicate {
+public:
+  MockTerminationPredicate();
+  MOCK_METHOD1(link, TerminationPredicate&(TerminationPredicatePtr&&));
+  MOCK_METHOD0(evaluateChain, TerminationPredicate::Status());
+  MOCK_METHOD0(evaluate, TerminationPredicate::Status());
 };
 
 } // namespace Nighthawk

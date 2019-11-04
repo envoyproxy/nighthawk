@@ -131,9 +131,7 @@ values. Default: 1.
 Use HTTP/2
 
 --timeout <uint32_t>
-Timeout period in seconds used for both connection timeout and grace
-period waiting for lagging responses to come in after the test run is
-done. Default: 30.
+Connection connect timeout period in seconds. Default: 30.
 
 --duration <uint32_t>
 The number of seconds that the test should run. Default: 5.

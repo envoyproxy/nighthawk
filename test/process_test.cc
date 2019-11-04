@@ -18,9 +18,9 @@ using namespace testing;
 namespace Nighthawk {
 namespace Client {
 
-// TODO(oschaaf): when we have proper integration testing, update this.
-// For now we are covered via the client_tests.cc by proxy. Eventually we
-// want those tests in here, and mock Process in client_test.
+// TODO(https://github.com/envoyproxy/nighthawk/issues/179): Mock Process in client_test, and move
+// it's tests in here. Note: these tests do not have a backend set up to talk to. That's why we
+// expect failure.
 class ProcessTest : public TestWithParam<Envoy::Network::Address::IpVersion> {
 public:
   enum class RunExpectation { EXPECT_SUCCESS, EXPECT_FAILURE };
@@ -48,10 +48,10 @@ INSTANTIATE_TEST_SUITE_P(IpVersions, ProcessTest,
                          Envoy::TestUtility::ipTestParamsToString);
 
 TEST_P(ProcessTest, TwoProcessInSequence) {
-  runProcess(RunExpectation::EXPECT_SUCCESS);
+  runProcess(RunExpectation::EXPECT_FAILURE);
   options_ = TestUtility::createOptionsImpl(
       fmt::format("foo --h2 --duration 1 --rps 10 https://{}/", loopback_address_));
-  runProcess(RunExpectation::EXPECT_SUCCESS);
+  runProcess(RunExpectation::EXPECT_FAILURE);
 }
 
 // TODO(oschaaf): move to python int. tests once it adds to coverage.
