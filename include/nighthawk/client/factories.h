@@ -16,6 +16,7 @@
 #include "nighthawk/common/platform_util.h"
 #include "nighthawk/common/sequencer.h"
 #include "nighthawk/common/statistic.h"
+#include "nighthawk/common/termination_predicate.h"
 #include "nighthawk/common/uri.h"
 
 namespace Nighthawk {
@@ -36,8 +37,9 @@ class SequencerFactory {
 public:
   virtual ~SequencerFactory() = default;
   virtual SequencerPtr create(Envoy::TimeSource& time_source, Envoy::Event::Dispatcher& dispatcher,
-                              Envoy::MonotonicTime start_time,
-                              BenchmarkClient& benchmark_client) const PURE;
+                              Envoy::MonotonicTime start_time, BenchmarkClient& benchmark_client,
+                              TerminationPredicate& termination_predicate,
+                              Envoy::Stats::Scope& scope) const PURE;
 };
 
 class StoreFactory {
@@ -65,6 +67,13 @@ class HeaderSourceFactory {
 public:
   virtual ~HeaderSourceFactory() = default;
   virtual HeaderSourcePtr create() const PURE;
+};
+
+class TerminationPredicateFactory {
+public:
+  virtual ~TerminationPredicateFactory() = default;
+  virtual TerminationPredicatePtr create(Envoy::TimeSource& time_source, Envoy::Stats::Scope& scope,
+                                         Envoy::MonotonicTime time) const PURE;
 };
 
 } // namespace Nighthawk

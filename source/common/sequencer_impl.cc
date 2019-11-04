@@ -13,13 +13,16 @@ SequencerImpl::SequencerImpl(
     const PlatformUtil& platform_util, Envoy::Event::Dispatcher& dispatcher,
     Envoy::TimeSource& time_source, Envoy::MonotonicTime start_time, RateLimiterPtr&& rate_limiter,
     SequencerTarget target, StatisticPtr&& latency_statistic, StatisticPtr&& blocked_statistic,
-    std::chrono::microseconds duration, std::chrono::microseconds grace_timeout,
-    nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions idle_strategy)
+    nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions idle_strategy,
+    TerminationPredicate& termination_predicate, Envoy::Stats::Scope& scope)
     : target_(std::move(target)), platform_util_(platform_util), dispatcher_(dispatcher),
       time_source_(time_source), rate_limiter_(std::move(rate_limiter)),
       latency_statistic_(std::move(latency_statistic)),
-      blocked_statistic_(std::move(blocked_statistic)), duration_(duration),
-      grace_timeout_(grace_timeout), start_time_(start_time), idle_strategy_(idle_strategy) {
+      blocked_statistic_(std::move(blocked_statistic)), start_time_(start_time),
+      idle_strategy_(idle_strategy), termination_predicate_(termination_predicate),
+      last_termination_status_(TerminationPredicate::Status::PROCEED),
+      scope_(scope.createScope("sequencer.")),
+      sequencer_stats_({ALL_SEQUENCER_STATS(POOL_COUNTER(*scope_))}) {
   ASSERT(target_ != nullptr, "No SequencerTarget");
   periodic_timer_ = dispatcher_.createTimer([this]() { run(true); });
   spin_timer_ = dispatcher_.createTimer([this]() { run(false); });
@@ -38,10 +41,13 @@ void SequencerImpl::start() {
 
 void SequencerImpl::scheduleRun() { periodic_timer_->enableTimer(EnvoyTimerMinResolution); }
 
-void SequencerImpl::stop(bool timed_out) {
-  const double rate = completionsPerSecond();
-
+void SequencerImpl::stop(bool failed) {
   ASSERT(running_);
+  const double rate = completionsPerSecond();
+  if (failed) {
+    ENVOY_LOG(error, "Exiting due to failing termination predicate");
+    sequencer_stats_.failed_terminations_.inc();
+  }
   running_ = false;
   periodic_timer_->disableTimer();
   spin_timer_->disableTimer();
@@ -49,20 +55,12 @@ void SequencerImpl::stop(bool timed_out) {
   spin_timer_.reset();
   dispatcher_.exit();
   unblockAndUpdateStatisticIfNeeded(time_source_.monotonicTime());
-
-  if (timed_out) {
-    ENVOY_LOG(warn,
-              "Timeout waiting for inbound completions. Initiated: {} / Completed: {}. "
-              "(Completion rate was {} per second.)",
-              targets_initiated_, targets_completed_, rate);
-
-  } else {
-    ENVOY_LOG(trace, "Processed {} operations in {} ms. ({} per second)", targets_completed_,
-              std::chrono::duration_cast<std::chrono::milliseconds>(time_source_.monotonicTime() -
-                                                                    start_time_)
-                  .count(),
-              rate);
-  }
+  const auto ran_for = std::chrono::duration_cast<std::chrono::milliseconds>(
+      time_source_.monotonicTime() - start_time_);
+  ENVOY_LOG(info,
+            "Stopping after {} ms. Initiated: {} / Completed: {}. "
+            "(Completion rate was {} per second.)",
+            ran_for.count(), targets_initiated_, targets_completed_, rate);
 }
 
 void SequencerImpl::unblockAndUpdateStatisticIfNeeded(const Envoy::MonotonicTime& now) {
@@ -84,27 +82,17 @@ void SequencerImpl::run(bool from_periodic_timer) {
   const auto now = time_source_.monotonicTime();
   const auto running_duration = now - start_time_;
 
-  // If we exceed the benchmark duration.
-  if (running_duration > duration_) {
-    if (targets_completed_ == targets_initiated_) {
-      // All work has completed. Stop this sequencer.
-      stop(false);
-    } else {
-      // After the benchmark duration has passed, we wait for a grace period for outstanding work
-      // to wrap up. If that takes too long we warn about it and quit.
-      if (running_duration - duration_ > grace_timeout_) {
-        stop(true);
-        return;
-      }
-      if (from_periodic_timer) {
-        scheduleRun();
-      }
-    }
-    return;
-  }
-
   // The running_duration we compute will be negative until it is time to start.
   if (running_duration >= 0ns) {
+    last_termination_status_ = last_termination_status_ == TerminationPredicate::Status::PROCEED
+                                   ? termination_predicate_.evaluateChain()
+                                   : last_termination_status_;
+    // If we should stop according to termination conditions.
+    if (last_termination_status_ != TerminationPredicate::Status::PROCEED) {
+      stop(last_termination_status_ == TerminationPredicate::Status::FAIL);
+      return;
+    }
+
     while (rate_limiter_->tryAcquireOne()) {
       // The rate limiter says it's OK to proceed and call the target. Let's see if the target is OK
       // with that as well.
