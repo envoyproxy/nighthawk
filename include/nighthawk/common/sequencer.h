@@ -28,7 +28,7 @@ public:
   virtual void waitForCompletion() PURE;
 
   /**
-   * @return std::chrono::nanoseconds number of seconds that the sequencer has executed.
+   * @return std::chrono::nanoseconds actual sequencer execution duration.
    */
   virtual std::chrono::nanoseconds executionDuration() const PURE;
 
