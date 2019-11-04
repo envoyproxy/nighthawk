@@ -76,7 +76,7 @@ def test_http_h1_mini_stress_test_without_client_side_queueing(http_test_server_
   queueing.
   """
   counters = mini_stress_test(http_test_server_fixture, [
-      http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--duration 2",
+      http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--duration", "2",
       "--connections", "1"
   ])
   assertCounterEqual(counters, "upstream_rq_pending_total", 1)
@@ -102,7 +102,7 @@ def test_http_h2_mini_stress_test_without_client_side_queueing(http_test_server_
   queueing. 
   """
   counters = mini_stress_test(http_test_server_fixture, [
-      http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--duration 2", "--h2",
+      http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--duration", "2", "--h2",
       "--max-active-requests", "1", "--connections", "1"
   ])
   assertCounterEqual(counters, "upstream_rq_pending_total", 1)
