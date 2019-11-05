@@ -58,6 +58,12 @@ py_library(
 )
 
 py_library(
+    name = "test_connection_management_lib",
+    srcs = ["test_connection_management.py"],
+    deps = [":integration_test_base"],
+)
+
+py_library(
     name = "test_integration_zipkin_lib",
     srcs = ["test_integration_zipkin.py"],
     deps = [":integration_test_base"],
@@ -75,6 +81,7 @@ py_binary(
     python_version = "PY3",
     srcs_version = "PY3ONLY",
     deps = [
+        ":test_connection_management_lib",
         ":test_integration_basics_lib",
         ":test_integration_zipkin_lib",
     ],
