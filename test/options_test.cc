@@ -164,8 +164,8 @@ TEST_P(OptionsImplIntTestNonZeroable, NonZeroableOptions) {
 }
 
 INSTANTIATE_TEST_SUITE_P(NonZeroableIntOptionTests, OptionsImplIntTestNonZeroable,
-                         Values("rps", "connections", "duration", "max-pending-requests",
-                                "max-active-requests", "max-requests-per-connection"));
+                         Values("rps", "connections", "duration", "max-active-requests",
+                                "max-requests-per-connection"));
 
 // Check standard expectations for any integer values options we offer.
 TEST_P(OptionsImplIntTest, IntOptionsBadValuesTest) {

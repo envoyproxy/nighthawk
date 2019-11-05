@@ -137,6 +137,7 @@ class IntegrationTestBase():
     stdout, stderr = client_process.communicate()
     logs = stderr.decode('utf-8')
     output = stdout.decode('utf-8')
+    logging.info("Nighthawk client output: [%s]" % output)
     if as_json:
       output = json.loads(output)
     if expect_failure:
