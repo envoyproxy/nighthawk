@@ -69,28 +69,38 @@ def test_http_h1_connection_management_with_queue_10(http_test_server_fixture):
   run_with_number_of_connections(http_test_server_fixture, 10, max_pending_requests=100)
 
 
+def connection_management_test_request_per_connection(fixture, requests_per_connection, use_h2):
+  max_requests_per_conn = 5
+  counters = run_with_number_of_connections(
+      fixture,
+      1,
+      max_pending_requests=1,
+      requests_per_connection=max_requests_per_conn,
+      run_test_expectation=False,
+      h2=use_h2)
+  requests = counters["upstream_rq_total"]
+  assertCounterBetweenInclusive(counters, "upstream_cx_total", (requests / max_requests_per_conn),
+                                (requests / max_requests_per_conn) + 1)
+
+
 # Test h1 with a single request_per_connection
 @pytest.mark.skipif(isSanitizerRun(), reason="Unstable in sanitizer runs")
 def test_http_h1_connection_management_single_request_per_conn_1(http_test_server_fixture):
-  counters = run_with_number_of_connections(
-      http_test_server_fixture,
-      1,
-      max_pending_requests=1,
-      requests_per_connection=1,
-      run_test_expectation=False)
-  requests = counters["upstream_rq_total"]
-  assertCounterBetweenInclusive(counters, "upstream_cx_total", requests, requests + 1)
+  connection_management_test_request_per_connection(http_test_server_fixture, 1, False)
+
+
+# Test h1 with a request_per_connection set to 5
+def test_http_h1_connection_management_single_request_per_conn_5(http_test_server_fixture):
+  connection_management_test_request_per_connection(http_test_server_fixture, 5, False)
 
 
 # Test h2 with a single request_per_connection
 @pytest.mark.skipif(isSanitizerRun(), reason="Unstable in sanitizer runs")
 def test_http_h2_connection_management_single_request_per_conn_1(http_test_server_fixture):
-  counters = run_with_number_of_connections(
-      http_test_server_fixture,
-      1,
-      max_pending_requests=1,
-      h2=True,
-      requests_per_connection=1,
-      run_test_expectation=False)
-  requests = counters["upstream_rq_total"]
-  assertCounterBetweenInclusive(counters, "upstream_cx_total", requests, requests + 1)
+  connection_management_test_request_per_connection(http_test_server_fixture, 1, True)
+
+
+# Test h2 with a request_per_connection set to 5
+@pytest.mark.skipif(isSanitizerRun(), reason="Unstable in sanitizer runs")
+def test_http_h2_connection_management_single_request_per_conn_1(http_test_server_fixture):
+  connection_management_test_request_per_connection(http_test_server_fixture, 5, True)
