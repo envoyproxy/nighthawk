@@ -10,6 +10,7 @@
 
 #include "client/output_formatter_impl.h"
 
+#include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "fmt/ranges.h"
 #include "tclap/CmdLine.h"
@@ -364,13 +365,10 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptions() const {
     // TODO(oschaaf): expose append option in CLI? For now we just set.
     header_value_option->mutable_append()->set_value(false);
     auto request_header = header_value_option->mutable_header();
-    std::vector<std::string> split_header = absl::StrSplit(
-        header, ':',
-        absl::SkipWhitespace()); // TODO(oschaaf): maybe throw when we find > 2 elements.
+    std::vector<std::string> split_header = absl::StrSplit(header, ':', absl::SkipWhitespace());
     request_header->set_key(split_header[0]);
-    if (split_header.size() == 2) {
-      request_header->set_value(split_header[1]);
-    }
+    split_header.erase(split_header.begin(), split_header.begin() + 1);
+    request_header->set_value(absl::StrJoin(split_header, ":"));
   }
   request_options->mutable_request_body_size()->set_value(requestBodySize());
   *(command_line_options->mutable_tls_context()) = tlsContext();
