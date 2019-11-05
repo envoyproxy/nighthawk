@@ -77,10 +77,11 @@ sleep while waiting for the next scheduled request (default: spin).
 Max requests per connection (default: 4294937295).
 
 --max-active-requests <uint32_t>
-Max active requests (default: 4294937295).
+The maximum allowed number of concurrently active requests. HTTP/2
+only. (default: 100).
 
 --max-pending-requests <uint32_t>
-Max pending requests (default: 1, no client side queuing. Specifying
+Max pending requests (default: 0, no client side queuing. Specifying
 any other value will allow client-side queuing of requests).
 
 --tls-context <string>
@@ -136,8 +137,8 @@ Connection connect timeout period in seconds. Default: 30.
 The number of seconds that the test should run. Default: 5.
 
 --connections <uint32_t>
-The number of connections per event loop that the test should
-maximally use. HTTP/1 only. Default: 1.
+The maximum allowed number of concurrent connections per event loop.
+HTTP/1 only. Default: 100.
 
 --rps <uint32_t>
 The target requests-per-second rate. Default: 5.

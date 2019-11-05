@@ -31,14 +31,17 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   const char* descr = "L7 (HTTP/HTTPS/HTTP2) performance characterization tool.";
   TCLAP::CmdLine cmd(descr, ' ', "PoC"); // NOLINT
 
+  // Any default values we pass into TCLAP argument declarations are arbitrary, as we do not rely on
+  // TCLAP for providing default values. Default values are declared in and sourced from
+  // options_impl.h, modulo non-trivial data types (see setNonTrivialDefaults()).
   TCLAP::ValueArg<uint32_t> requests_per_second(
       "", "rps",
       fmt::format("The target requests-per-second rate. Default: {}.", requests_per_second_), false,
       0, "uint32_t", cmd);
   TCLAP::ValueArg<uint32_t> connections(
       "", "connections",
-      fmt::format("The number of connections per event loop that the test should maximally "
-                  "use. HTTP/1 only. Default: {}.",
+      fmt::format("The maximum allowed number of concurrent connections per event loop. HTTP/1 "
+                  "only. Default: {}.",
                   connections_),
       false, 0, "uint32_t", cmd);
   TCLAP::ValueArg<uint32_t> duration(
@@ -132,14 +135,18 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
 
   TCLAP::ValueArg<uint32_t> max_pending_requests(
       "", "max-pending-requests",
-      "Max pending requests (default: 1, no client side queuing. Specifying any other value will "
-      "allow client-side queuing of requests).",
+      fmt::format("Max pending requests (default: {}, no client side queuing. Specifying any other "
+                  "value will "
+                  "allow client-side queuing of requests).",
+                  max_pending_requests_),
       false, 0, "uint32_t", cmd);
 
   TCLAP::ValueArg<uint32_t> max_active_requests(
       "", "max-active-requests",
-      fmt::format("Max active requests (default: {}).", max_active_requests_), false, 0, "uint32_t",
-      cmd);
+      fmt::format(
+          "The maximum allowed number of concurrently active requests. HTTP/2 only. (default: {}).",
+          max_active_requests_),
+      false, 0, "uint32_t", cmd);
   // NOLINTNEXTLINE
   TCLAP::ValueArg<uint32_t> max_requests_per_connection(
       "", "max-requests-per-connection",
