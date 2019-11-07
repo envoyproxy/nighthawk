@@ -42,7 +42,7 @@ TEST_F(OptionsImplTest, All) {
       "{} --rps 4 --connections 5 --duration 6 --timeout 7 --h2 "
       "--concurrency 8 --verbosity error --output-format yaml --prefetch-connections "
       "--burst-size 13 --address-family v6 --request-method POST --request-body-size 1234 "
-      "--tls-context {} --request-header f1:b1 --request-header f2:b2 {} --max-pending-requests 10 "
+      "--tls-context {} --request-header f1:b1 --request-header f2:b2 --request-header f3:b3:b4 {} --max-pending-requests 10 "
       "--max-active-requests 11 --max-requests-per-connection 12 --sequencer-idle-strategy sleep",
       client_name_,
       "{common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"]}}}",
@@ -61,7 +61,7 @@ TEST_F(OptionsImplTest, All) {
   EXPECT_EQ(nighthawk::client::AddressFamily::V6, options->addressFamily());
   EXPECT_EQ(good_test_uri_, options->uri());
   EXPECT_EQ(envoy::api::v2::core::RequestMethod::POST, options->requestMethod());
-  const std::vector<std::string> expected_headers = {"f1:b1", "f2:b2"};
+  const std::vector<std::string> expected_headers = {"f1:b1", "f2:b2", "f3:b3:b4"};
   EXPECT_EQ(expected_headers, options->requestHeaders());
   EXPECT_EQ(1234, options->requestBodySize());
   EXPECT_EQ("common_tls_context {\n  tls_params {\n    cipher_suites: "
