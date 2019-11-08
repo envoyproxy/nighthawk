@@ -55,12 +55,13 @@ bazel-bin/nighthawk_client  [--trace <uri format>]
 |CONNECT|OPTIONS|TRACE>] [--address-family
 <auto|v4|v6>] [--burst-size <uint32_t>]
 [--prefetch-connections] [--output-format
-<json|human|yaml|dotted|fortio>] [-v <trace|debug
-|info|warn|error|critical>] [--concurrency
-<string>] [--h2] [--timeout <uint32_t>]
-[--duration <uint32_t>] [--connections
-<uint32_t>] [--rps <uint32_t>] [--]
-[--version] [-h] <uri format>
+<json|human|yaml|dotted|fortio>] [-v <trace
+|debug|info|warn|error|critical>]
+[--concurrency <string>] [--h2] [--timeout
+<uint32_t>] [--duration <uint32_t>]
+[--connections <uint32_t>] [--rps
+<uint32_t>] [--] [--version] [-h] <uri
+format>
 
 
 Where:
@@ -208,14 +209,15 @@ Nighthawk comes with a tool to transform its json output to its other supported 
 USAGE:
 
 bazel-bin/nighthawk_output_transform  --output-format <json|human|yaml
-|dotted> [--] [--version] [-h]
+|dotted|fortio> [--] [--version]
+[-h]
 
 
 Where:
 
---output-format <json|human|yaml|dotted>
+--output-format <json|human|yaml|dotted|fortio>
 (required)  Output format. Possible values: {"json", "human", "yaml",
-"dotted"}.
+"dotted", "fortio"}.
 
 --,  --ignore_rest
 Ignores the rest of the labeled arguments following this flag.
