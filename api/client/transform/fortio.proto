@@ -7,6 +7,8 @@ import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
 import "validate/validate.proto";
 
+// This proto represents that output format that Fortio expects when converted to JSON.
+// Nighthawk can fill in this proto, and then unmarshal to the Fortio-compatible JSON.
 message FortioResult {
   // Disable validate because it doesn't work well with fields that are not all lowercase.
   // The field cases must match the final output JSON that fortio-ui expects.
