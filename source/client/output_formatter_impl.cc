@@ -184,19 +184,19 @@ std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Outp
   nighthawk::client::FortioResult fortio_output;
 
   // TODO(#182): Not needed but nice to have, displays in the UI
-  fortio_output.mutable_labels()->set_value("");
+  fortio_output.set_labels("");
   fortio_output.mutable_starttime()->set_seconds(output.timestamp().seconds());
-  fortio_output.mutable_requestedqps()->set_value(output.options().requests_per_second().value());
-  fortio_output.mutable_url()->set_value(output.options().uri().value());
+  fortio_output.set_requestedqps(output.options().requests_per_second().value());
+  fortio_output.set_url(output.options().uri().value());
 
   // Actual and requested durations are the same
   const auto& nh_duration = output.options().duration().seconds();
   fortio_output.mutable_requestedduration()->set_seconds(nh_duration);
-  fortio_output.mutable_actualduration()->set_value(nh_duration);
+  fortio_output.set_actualduration(nh_duration);
 
   // This displays as "connections" in the UI, not threads.
   // TODO(#186): This field may not be accurate for for HTTP2 load tests.
-  fortio_output.mutable_numthreads()->set_value(output.options().connections().value());
+  fortio_output.set_numthreads(output.options().connections().value());
 
   // Get the result that represents all workers (global)
   const auto& nh_global_result = this->getGlobalResult(output);
@@ -204,7 +204,7 @@ std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Outp
   // Fill in the actual QPS based on the counters
   const auto& nh_rq_counter = this->getCounterByName(nh_global_result, "upstream_rq_total");
   const double actual_qps = static_cast<double>(nh_rq_counter.value()) / nh_duration;
-  fortio_output.mutable_actualqps()->set_value(actual_qps);
+  fortio_output.set_actualqps(actual_qps);
 
   // Fill in the number of successful responses.
   // Fortio-ui only reads the 200 OK field, other fields are never displayed.
@@ -222,7 +222,7 @@ std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Outp
 
   // Set the count (number of data points)
   nighthawk::client::DurationHistogram fortio_histogram;
-  fortio_histogram.mutable_count()->set_value(nh_stat.count());
+  fortio_histogram.set_count(nh_stat.count());
 
   uint64_t prev_fortio_count = 0;
   double prev_fortio_end = 0;
@@ -232,15 +232,15 @@ std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Outp
     const auto& nh_percentile = nh_stat.percentiles().at(i);
 
     // fortio_percent = 100 * nh_percentile
-    fortio_data_entry.mutable_percent()->set_value(nh_percentile.percentile() * 100);
+    fortio_data_entry.set_percent(nh_percentile.percentile() * 100);
 
     // fortio_count = nh_count - prev_fortio_count
-    fortio_data_entry.mutable_count()->set_value(nh_percentile.count() - prev_fortio_count);
+    fortio_data_entry.set_count(nh_percentile.count() - prev_fortio_count);
 
     // fortio_end = nh_duration (need to convert formats)
     const double nh_percentile_duration_sec =
         Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(nh_percentile.duration()) / 1e9;
-    fortio_data_entry.mutable_end()->set_value(nh_percentile_duration_sec);
+    fortio_data_entry.set_end(nh_percentile_duration_sec);
 
     // fortio_start = prev_fortio_end
     if (i == 0) {
@@ -248,7 +248,7 @@ std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Outp
       // This prevents it from starting at 0, making it disproportionally big in the UI.
       prev_fortio_end = nh_percentile_duration_sec;
     }
-    fortio_data_entry.mutable_start()->set_value(prev_fortio_end);
+    fortio_data_entry.set_start(prev_fortio_end);
 
     // Update tracking variables
     prev_fortio_count = nh_percentile.count();

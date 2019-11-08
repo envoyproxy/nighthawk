@@ -9,36 +9,37 @@ import "validate/validate.proto";
 
 // This proto represents that output format that Fortio expects when converted to JSON.
 // Nighthawk can fill in this proto, and then unmarshal to the Fortio-compatible JSON.
+// Therefore, this proto may not follow conventions. aip.dev/not-precedent
 message FortioResult {
   // Disable validate because it doesn't work well with fields that are not all lowercase.
   // The field cases must match the final output JSON that fortio-ui expects.
   option (validate.disabled) = true;
 
-  google.protobuf.StringValue Labels = 1;
+  string Labels = 1;
 
   google.protobuf.Timestamp StartTime = 2;
 
-  google.protobuf.UInt32Value RequestedQPS = 3;
+  uint32 RequestedQPS = 3;
 
   google.protobuf.Duration RequestedDuration = 4;
 
-  google.protobuf.DoubleValue ActualQPS = 5;
+  double ActualQPS = 5;
 
-  google.protobuf.DoubleValue ActualDuration = 6;
+  double ActualDuration = 6;
 
-  google.protobuf.UInt32Value NumThreads = 7;
+  uint32 NumThreads = 7;
 
   DurationHistogram DurationHistogram = 8;
 
   map<string, uint64> RetCodes = 11;
 
-  google.protobuf.StringValue URL = 12;
+  string URL = 12;
 }
 
 message DurationHistogram {
   option (validate.disabled) = true;
 
-  google.protobuf.UInt64Value Count = 1;
+  uint64 Count = 1;
 
   repeated DataEntry Data = 2;
 }
@@ -46,11 +47,11 @@ message DurationHistogram {
 message DataEntry {
   option (validate.disabled) = true;
 
-  google.protobuf.DoubleValue Start = 1;
+  double Start = 1;
 
-  google.protobuf.DoubleValue End = 2;
+  double End = 2;
 
-  google.protobuf.DoubleValue Percent = 3;
+  double Percent = 3;
 
-  google.protobuf.UInt64Value Count = 4;
+  uint64 Count = 4;
 }

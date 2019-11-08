@@ -1,5 +1,11 @@
 {
+ "Labels": "",
+ "RequestedQPS": 1,
+ "ActualQPS": 12,
+ "ActualDuration": 5,
+ "NumThreads": 1,
  "DurationHistogram": {
+  "Count": "48",
   "Data": [
    {
     "Start": 0.055568383,
@@ -187,18 +193,12 @@
     "Percent": 100,
     "Count": "0"
    }
-  ],
-  "Count": "48"
+  ]
  },
  "RetCodes": {
   "200": "60"
  },
- "Labels": "",
+ "URL": "http://127.0.0.1:10000/",
  "StartTime": "2019-10-16T00:30:12Z",
- "RequestedQPS": 1,
- "RequestedDuration": "5s",
- "ActualQPS": 12,
- "ActualDuration": 5,
- "NumThreads": 1,
- "URL": "http://127.0.0.1:10000/"
+ "RequestedDuration": "5s"
 }
