@@ -140,6 +140,7 @@ class IntegrationTestBase():
     if expect_failure:
       assert (client_process.returncode == 0)
     else:
+      logging.info("Nighthawk client output: [%s]" % output)
       if as_json:
         output = json.loads(output)
       assert (client_process.returncode == 0)

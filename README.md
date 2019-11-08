@@ -43,123 +43,121 @@ bazel build -c opt //:nighthawk
 ```
 USAGE:
 
-   bazel-bin/nighthawk_client  [--trace <uri format>]
-                               [--sequencer-idle-strategy <spin|poll
-                               |sleep>] [--max-requests-per-connection
-                               <uint32_t>] [--max-active-requests
-                               <uint32_t>] [--max-pending-requests
-                               <uint32_t>] [--tls-context <string>]
-                               [--request-body-size <uint32_t>]
-                               [--request-header <string>] ... 
-                               [--request-method <GET|HEAD|POST|PUT|DELETE
-                               |CONNECT|OPTIONS|TRACE>] [--address-family
-                               <auto|v4|v6>] [--burst-size <uint32_t>]
-                               [--prefetch-connections] [--output-format
-                               <human|yaml|json|dotted|fortio>] [-v <trace|debug
-                               |info|warn|error|critical>] [--concurrency
-                               <string>] [--h2] [--timeout <uint32_t>]
-                               [--duration <uint32_t>] [--connections
-                               <uint32_t>] [--rps <uint32_t>] [--]
-                               [--version] [-h] <uri format>
+bazel-bin/nighthawk_client  [--trace <uri format>]
+[--sequencer-idle-strategy <spin|poll
+|sleep>] [--max-requests-per-connection
+<uint32_t>] [--max-active-requests
+<uint32_t>] [--max-pending-requests
+<uint32_t>] [--tls-context <string>]
+[--request-body-size <uint32_t>]
+[--request-header <string>] ...
+[--request-method <GET|HEAD|POST|PUT|DELETE
+|CONNECT|OPTIONS|TRACE>] [--address-family
+<auto|v4|v6>] [--burst-size <uint32_t>]
+[--prefetch-connections] [--output-format
+<json|human|yaml|dotted|fortio>] [-v <trace|debug
+|info|warn|error|critical>] [--concurrency
+<string>] [--h2] [--timeout <uint32_t>]
+[--duration <uint32_t>] [--connections
+<uint32_t>] [--rps <uint32_t>] [--]
+[--version] [-h] <uri format>
 
 
 Where:
 
-   --trace <uri format>
-     Trace uri. Example: zipkin://localhost:9411/api/v1/spans. Default is
-     empty.
+--trace <uri format>
+Trace uri. Example: zipkin://localhost:9411/api/v1/spans. Default is
+empty.
 
-   --sequencer-idle-strategy <spin|poll|sleep>
-     Choose between using a busy spin/yield loop or have the thread poll or
-     sleep while waiting for the next scheduled request (default: spin).
+--sequencer-idle-strategy <spin|poll|sleep>
+Choose between using a busy spin/yield loop or have the thread poll or
+sleep while waiting for the next scheduled request (default: spin).
 
-   --max-requests-per-connection <uint32_t>
-     Max requests per connection (default: 4294937295).
+--max-requests-per-connection <uint32_t>
+Max requests per connection (default: 4294937295).
 
-   --max-active-requests <uint32_t>
-     Max active requests (default: 4294937295).
+--max-active-requests <uint32_t>
+The maximum allowed number of concurrently active requests. HTTP/2
+only. (default: 100).
 
-   --max-pending-requests <uint32_t>
-     Max pending requests (default: 1, no client side queuing. Specifying
-     any other value will allow client-side queuing of requests).
+--max-pending-requests <uint32_t>
+Max pending requests (default: 0, no client side queuing. Specifying
+any other value will allow client-side queuing of requests).
 
-   --tls-context <string>
-     Tls context configuration in yaml or json. Example
-     (json):{common_tls_context:{tls_params:{cipher_suites:["-ALL:ECDHE-RSA
-     -AES128-SHA"]}}}
+--tls-context <string>
+Tls context configuration in yaml or json. Example
+(json):{common_tls_context:{tls_params:{cipher_suites:["-ALL:ECDHE-RSA
+-AES128-SHA"]}}}
 
-   --request-body-size <uint32_t>
-     Size of the request body to send. NH will send a number of consecutive
-     'a' characters equal to the number specified here. (default: 0, no
-     data).
+--request-body-size <uint32_t>
+Size of the request body to send. NH will send a number of consecutive
+'a' characters equal to the number specified here. (default: 0, no
+data).
 
-   --request-header <string>  (accepted multiple times)
-     Raw request headers in the format of 'name: value' pairs. This
-     argument may specified multiple times.
+--request-header <string>  (accepted multiple times)
+Raw request headers in the format of 'name: value' pairs. This
+argument may specified multiple times.
 
-   --request-method <GET|HEAD|POST|PUT|DELETE|CONNECT|OPTIONS|TRACE>
-     Request method used when sending requests. The default is 'GET'.
+--request-method <GET|HEAD|POST|PUT|DELETE|CONNECT|OPTIONS|TRACE>
+Request method used when sending requests. The default is 'GET'.
 
-   --address-family <auto|v4|v6>
-     Network address family preference. Possible values: [auto, v4, v6]. The
-     default output format is 'v4'.
+--address-family <auto|v4|v6>
+Network address family preference. Possible values: [auto, v4, v6].
+The default output format is 'AUTO'.
 
-   --burst-size <uint32_t>
-     Release requests in bursts of the specified size (default: 0).
+--burst-size <uint32_t>
+Release requests in bursts of the specified size (default: 0).
 
-   --prefetch-connections
-     Prefetch connections before benchmarking (HTTP/1 only).
+--prefetch-connections
+Prefetch connections before benchmarking (HTTP/1 only).
 
-   --output-format <human|yaml|json|dotted|fortio>
-     Output format. Possible values: [human, yaml, json, dotted, fortio]. The
-     default output format is: 'human'.
+--output-format <json|human|yaml|dotted|fortio>
+Output format. Possible values: {"json", "human", "yaml", "dotted", "fortio"}.
+The default output format is 'human'.
 
-   -v <trace|debug|info|warn|error|critical>,  --verbosity <trace|debug
-      |info|warn|error|critical>
-     Verbosity of the output. Possible values: [trace, debug, info, warn,
-     error, critical]. The default level is 'info'.
+-v <trace|debug|info|warn|error|critical>,  --verbosity <trace|debug
+|info|warn|error|critical>
+Verbosity of the output. Possible values: [trace, debug, info, warn,
+error, critical]. The default level is 'info'.
 
-   --concurrency <string>
-     The number of concurrent event loops that should be used. Specify
-     'auto' to let Nighthawk leverage all vCPUs that have affinity to the
-     Nighthawk process. Note that increasing this results in an effective
-     load multiplier combined with the configured --rps and --connections
-     values. Default: 1.
+--concurrency <string>
+The number of concurrent event loops that should be used. Specify
+'auto' to let Nighthawk leverage all vCPUs that have affinity to the
+Nighthawk process. Note that increasing this results in an effective
+load multiplier combined with the configured --rps and --connections
+values. Default: 1.
 
-   --h2
-     Use HTTP/2
+--h2
+Use HTTP/2
 
-   --timeout <uint32_t>
-     Timeout period in seconds used for both connection timeout and grace
-     period waiting for lagging responses to come in after the test run is
-     done. Default: 30.
+--timeout <uint32_t>
+Connection connect timeout period in seconds. Default: 30.
 
-   --duration <uint32_t>
-     The number of seconds that the test should run. Default: 5.
+--duration <uint32_t>
+The number of seconds that the test should run. Default: 5.
 
-   --connections <uint32_t>
-     The number of connections per event loop that the test should
-     maximally use. HTTP/1 only. Default: 1.
+--connections <uint32_t>
+The maximum allowed number of concurrent connections per event loop.
+HTTP/1 only. Default: 100.
 
-   --rps <uint32_t>
-     The target requests-per-second rate. Default: 5.
+--rps <uint32_t>
+The target requests-per-second rate. Default: 5.
 
-   --,  --ignore_rest
-     Ignores the rest of the labeled arguments following this flag.
+--,  --ignore_rest
+Ignores the rest of the labeled arguments following this flag.
 
-   --version
-     Displays version information and exits.
+--version
+Displays version information and exits.
 
-   -h,  --help
-     Displays usage information and exits.
+-h,  --help
+Displays usage information and exits.
 
-   <uri format>
-     (required)  uri to benchmark. http:// and https:// are supported, but
-     in case of https no certificates are validated.
+<uri format>
+(required)  uri to benchmark. http:// and https:// are supported, but
+in case of https no certificates are validated.
 
 
-   L7 (HTTP/HTTPS/HTTP2) performance characterization tool.
-
+L7 (HTTP/HTTPS/HTTP2) performance characterization tool.
 ```
 
 ### Nighthawk gRPC service
@@ -174,28 +172,62 @@ The gRPC service can be used to start a server which is able to perform back-to-
 ```
 USAGE:
 
-   bazel-bin/nighthawk_service  [--listen <address:port>] [--] [--version]
-                                [-h]
+bazel-bin/nighthawk_service  [--listen <address:port>] [--] [--version]
+[-h]
 
 
 Where:
 
-   --listen <address:port>
-     The address:port on which the Nighthawk gRPC service should listen.
-     Default: 0.0.0.0:8443.
+--listen <address:port>
+The address:port on which the Nighthawk gRPC service should listen.
+Default: 0.0.0.0:8443.
 
-   --,  --ignore_rest
-     Ignores the rest of the labeled arguments following this flag.
+--,  --ignore_rest
+Ignores the rest of the labeled arguments following this flag.
 
-   --version
-     Displays version information and exits.
+--version
+Displays version information and exits.
 
-   -h,  --help
-     Displays usage information and exits.
+-h,  --help
+Displays usage information and exits.
 
 
-   L7 (HTTP/HTTPS/HTTP2) performance characterization tool.
+L7 (HTTP/HTTPS/HTTP2) performance characterization tool.
+```
 
+### Nighthawk output transformation utility
+
+Nighthawk comes with a tool to transform its json output to its other supported output formats.
+
+
+```bash
+➜ bazel-bin/nighthawk_output_transform --help
+```
+
+```
+USAGE:
+
+bazel-bin/nighthawk_output_transform  --output-format <json|human|yaml
+|dotted> [--] [--version] [-h]
+
+
+Where:
+
+--output-format <json|human|yaml|dotted>
+(required)  Output format. Possible values: {"json", "human", "yaml",
+"dotted"}.
+
+--,  --ignore_rest
+Ignores the rest of the labeled arguments following this flag.
+
+--version
+Displays version information and exits.
+
+-h,  --help
+Displays usage information and exits.
+
+
+L7 (HTTP/HTTPS/HTTP2) performance characterization transformation tool.
 ```
 
 ## A sample benchmark run

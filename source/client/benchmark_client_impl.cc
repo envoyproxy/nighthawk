@@ -54,10 +54,10 @@ void BenchmarkClientHttpImpl::prefetchPoolConnections() {
 
 void BenchmarkClientHttpImpl::terminate() {
   if (pool() != nullptr) {
+    pool()->addDrainedCallback([this]() -> void { dispatcher_.exit(); });
     pool()->drainConnections();
+    dispatcher_.run(Envoy::Event::Dispatcher::RunType::RunUntilExit);
   }
-  dispatcher_.run(Envoy::Event::Dispatcher::RunType::NonBlock);
-  dispatcher_.clearDeferredDeleteList();
 }
 
 StatisticPtrMap BenchmarkClientHttpImpl::statistics() const {
@@ -68,22 +68,15 @@ StatisticPtrMap BenchmarkClientHttpImpl::statistics() const {
 };
 
 bool BenchmarkClientHttpImpl::tryStartRequest(CompletionCallback caller_completion_callback) {
-  // When we allow client-side queuing, we want to have a sense of time spend waiting on that queue.
-  // So we return false here to indicate we couldn't initiate a new request.
+  const uint64_t max_in_flight =
+      max_pending_requests_ + (use_h2_ ? max_active_requests_ : connection_limit_);
   auto* pool_ptr = pool();
-  auto cluster_info = cluster();
-  if (pool_ptr == nullptr || cluster_info == nullptr ||
-      !cluster_info->resourceManager(Envoy::Upstream::ResourcePriority::Default)
-           .pendingRequests()
-           .canCreate()) {
+  if (pool_ptr == nullptr) {
     return false;
   }
-  // When no client side queueing is disabled (max_pending equals 1) we control the pacing as
-  // exactly as possible here.
-  // NOTE: We can't consistently rely on resourceManager()::requests()
-  // because that isn't used for h/1 (it is used in tcp and h2 though).
-  if ((max_pending_requests_ == 1 &&
-       (requests_initiated_ - requests_completed_) >= connection_limit_)) {
+  if (requests_initiated_ - requests_completed_ >= max_in_flight) {
+    // When we allow client-side queueing, we want to have a sense of time spend waiting on that
+    // queue. So we return false here to indicate we couldn't initiate a new request.
     return false;
   }
   auto header = header_generator_();

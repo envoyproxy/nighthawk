@@ -50,16 +50,16 @@ bool Main::run() {
   ProcessImpl process(*options_, time_system);
   OutputFormatterFactoryImpl output_formatter_factory;
   OutputCollectorImpl output_collector(time_system, *options_);
-  if (process.run(output_collector)) {
-    auto formatter = output_formatter_factory.create(options_->outputFormat());
-    std::cout << formatter->formatProto(output_collector.toProto());
-    process.shutdown();
-    ENVOY_LOG(info, "Done.");
-    return true;
-  }
+  const bool res = process.run(output_collector);
+  auto formatter = output_formatter_factory.create(options_->outputFormat());
+  std::cout << formatter->formatProto(output_collector.toProto());
   process.shutdown();
-  ENVOY_LOG(critical, "An error ocurred.");
-  return false;
+  if (!res) {
+    ENVOY_LOG(error, "An error ocurred.");
+  } else {
+    ENVOY_LOG(info, "Done.");
+  }
+  return res;
 }
 
 } // namespace Client

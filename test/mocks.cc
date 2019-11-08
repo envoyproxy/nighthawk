@@ -26,8 +26,12 @@ MockStatisticFactory::MockStatisticFactory() = default;
 
 MockHeaderSourceFactory::MockHeaderSourceFactory() = default;
 
+MockTerminationPredicateFactory::MockTerminationPredicateFactory() = default;
+
 MockBenchmarkClient::MockBenchmarkClient() = default;
 
 MockHeaderSource::MockHeaderSource() = default;
+
+MockTerminationPredicate::MockTerminationPredicate() = default;
 
 } // namespace Nighthawk

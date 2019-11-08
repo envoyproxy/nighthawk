@@ -23,8 +23,6 @@ def test_http_h1(http_test_server_fixture):
       [http_test_server_fixture.getTestServerRootUri()])
   counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   assertCounterEqual(counters, "benchmark.http_2xx", 25)
-  assertCounterEqual(counters, "upstream_cx_destroy", 1)
-  assertCounterEqual(counters, "upstream_cx_destroy_local", 1)
   assertCounterEqual(counters, "upstream_cx_http1_total", 1)
   assertCounterEqual(counters, "upstream_cx_rx_bytes_total", 3400)
   assertCounterEqual(counters, "upstream_cx_total", 1)
@@ -33,19 +31,22 @@ def test_http_h1(http_test_server_fixture):
   assertCounterEqual(counters, "upstream_rq_pending_total", 1)
   assertCounterEqual(counters, "upstream_rq_total", 25)
   assertCounterEqual(counters, "default.total_match_count", 1)
-  assertEqual(len(counters), 14)
+  assertEqual(len(counters), 12)
 
 
-def mini_stress_test_h1(fixture, args):
+def mini_stress_test(fixture, args):
   # run a test with more rps then we can handle, and a very small client-side queue.
   # we should observe both lots of successfull requests as well as time spend in blocking mode.,
   parsed_json, _ = fixture.runNighthawkClient(args)
   counters = fixture.getNighthawkCounterMapFromJson(parsed_json)
-  # We set a reasonably low expecation of 100 requests. We set it low, because we want this
+  # We set a reasonably low expectation of 100 requests. We set it low, because we want this
   # test to succeed on a reasonable share of setups (hopefully practically all).
   MIN_EXPECTED_REQUESTS = 100
   assertCounterGreater(counters, "benchmark.http_2xx", MIN_EXPECTED_REQUESTS)
-  assertCounterEqual(counters, "upstream_cx_http1_total", 1)
+  if "--h2" in args:
+    assertCounterEqual(counters, "upstream_cx_http2_total", 1)
+  else:
+    assertCounterEqual(counters, "upstream_cx_http1_total", 1)
   global_histograms = fixture.getNighthawkGlobalHistogramsbyIdFromJson(parsed_json)
   assertGreater(int(global_histograms["sequencer.blocking"]["count"]), MIN_EXPECTED_REQUESTS)
   assertGreater(
@@ -54,35 +55,58 @@ def mini_stress_test_h1(fixture, args):
   return counters
 
 
+# The mini stress tests below are executing in closed-loop mode. As we guard the pool against
+# overflows, we can set fixed expectations with respect to overflows and anticipated pending
+# totals.
 def test_http_h1_mini_stress_test_with_client_side_queueing(http_test_server_fixture):
   """
   Run a max rps test with the h1 pool against our test server, using a small client-side
-  queue. We expect to observe:
-  - upstream_rq_pending_total increasing
-  - upstream_cx_overflow overflows
-  - blocking to be reported by the sequencer
-  """
-  counters = mini_stress_test_h1(http_test_server_fixture, [
+  queue."""
+  counters = mini_stress_test(http_test_server_fixture, [
       http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--max-pending-requests",
-      "10", "--duration 10"
+      "10", "--duration 10", "--connections", "1"
   ])
-  assertCounterGreater(counters, "upstream_rq_pending_total", 100)
-  assertCounterGreater(counters, "upstream_cx_overflow", 0)
+  assertCounterEqual(counters, "upstream_rq_pending_total", 11)
+  assertCounterEqual(counters, "upstream_cx_overflow", 10)
 
 
 def test_http_h1_mini_stress_test_without_client_side_queueing(http_test_server_fixture):
   """
   Run a max rps test with the h1 pool against our test server, with no client-side
-  queueing. We expect to observe:
-  - upstream_rq_pending_total to be equal to 1
-  - blocking to be reported by the sequencer
-  - no upstream_cx_overflows
+  queueing.
   """
-  counters = mini_stress_test_h1(
-      http_test_server_fixture,
-      [http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--duration 2"])
+  counters = mini_stress_test(http_test_server_fixture, [
+      http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--duration", "2",
+      "--connections", "1"
+  ])
   assertCounterEqual(counters, "upstream_rq_pending_total", 1)
   assertNotIn("upstream_cx_overflow", counters)
+
+
+def test_http_h2_mini_stress_test_with_client_side_queueing(http_test_server_fixture):
+  """
+  Run a max rps test with the h2 pool against our test server, using a small client-side
+  queue. 
+  """
+  counters = mini_stress_test(http_test_server_fixture, [
+      http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--max-pending-requests",
+      "10", "--duration 10", "--h2", "--max-active-requests", "1", "--connections", "1"
+  ])
+  assertCounterEqual(counters, "upstream_rq_pending_total", 1)
+  assertCounterEqual(counters, "upstream_rq_pending_overflow", 10)
+
+
+def test_http_h2_mini_stress_test_without_client_side_queueing(http_test_server_fixture):
+  """
+  Run a max rps test with the h2 pool against our test server, with no client-side
+  queueing. 
+  """
+  counters = mini_stress_test(http_test_server_fixture, [
+      http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--duration", "2", "--h2",
+      "--max-active-requests", "1", "--connections", "1"
+  ])
+  assertCounterEqual(counters, "upstream_rq_pending_total", 1)
+  assertNotIn("upstream_rq_pending_overflow", counters)
 
 
 def test_http_h2(http_test_server_fixture):
@@ -94,8 +118,6 @@ def test_http_h2(http_test_server_fixture):
       ["--h2", http_test_server_fixture.getTestServerRootUri()])
   counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   assertCounterEqual(counters, "benchmark.http_2xx", 25)
-  assertCounterEqual(counters, "upstream_cx_destroy", 1)
-  assertCounterEqual(counters, "upstream_cx_destroy_local", 1)
   assertCounterEqual(counters, "upstream_cx_http2_total", 1)
   assertCounterGreaterEqual(counters, "upstream_cx_rx_bytes_total", 1145)
   assertCounterEqual(counters, "upstream_cx_total", 1)
@@ -103,7 +125,7 @@ def test_http_h2(http_test_server_fixture):
   assertCounterEqual(counters, "upstream_rq_pending_total", 1)
   assertCounterEqual(counters, "upstream_rq_total", 25)
   assertCounterEqual(counters, "default.total_match_count", 1)
-  assertEqual(len(counters), 14)
+  assertEqual(len(counters), 12)
 
 
 def test_http_concurrency(http_test_server_fixture):
@@ -132,8 +154,6 @@ def test_https_h1(https_test_server_fixture):
       [https_test_server_fixture.getTestServerRootUri()])
   counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   assertCounterEqual(counters, "benchmark.http_2xx", 25)
-  assertCounterEqual(counters, "upstream_cx_destroy", 1)
-  assertCounterEqual(counters, "upstream_cx_destroy_local", 1)
   assertCounterEqual(counters, "upstream_cx_http1_total", 1)
   assertCounterEqual(counters, "upstream_cx_rx_bytes_total", 3400)
   assertCounterEqual(counters, "upstream_cx_total", 1)
@@ -147,7 +167,7 @@ def test_https_h1(https_test_server_fixture):
   assertCounterEqual(counters, "ssl.sigalgs.rsa_pss_rsae_sha256", 1)
   assertCounterEqual(counters, "ssl.versions.TLSv1.2", 1)
   assertCounterEqual(counters, "default.total_match_count", 1)
-  assertEqual(len(counters), 19)
+  assertEqual(len(counters), 17)
 
   server_stats = https_test_server_fixture.getTestServerStatisticsJson()
   assertEqual(
@@ -165,8 +185,6 @@ def test_https_h2(https_test_server_fixture):
       ["--h2", https_test_server_fixture.getTestServerRootUri()])
   counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   assertCounterEqual(counters, "benchmark.http_2xx", 25)
-  assertCounterEqual(counters, "upstream_cx_destroy", 1)
-  assertCounterEqual(counters, "upstream_cx_destroy_local", 1)
   assertCounterEqual(counters, "upstream_cx_http2_total", 1)
   assertCounterGreaterEqual(counters, "upstream_cx_rx_bytes_total", 1145)
   assertCounterEqual(counters, "upstream_cx_total", 1)
@@ -179,7 +197,7 @@ def test_https_h2(https_test_server_fixture):
   assertCounterEqual(counters, "ssl.sigalgs.rsa_pss_rsae_sha256", 1)
   assertCounterEqual(counters, "ssl.versions.TLSv1.2", 1)
   assertCounterEqual(counters, "default.total_match_count", 1)
-  assertEqual(len(counters), 19)
+  assertEqual(len(counters), 17)
 
 
 def test_https_h1_tls_context_configuration(https_test_server_fixture):
@@ -269,3 +287,57 @@ def test_dotted_output_format(http_test_server_fixture):
   ],
                                                           as_json=False)
   assertIn("global.benchmark_http_client.request_to_response.permilles-500.microseconds", output)
+
+
+# TODO(oschaaf): add percentiles to the gold testing in the C++ output formatter
+# once the fortio formatter has landed (https://github.com/envoyproxy/nighthawk/pull/168)
+def test_cli_output_format(http_test_server_fixture):
+  """
+  Ensure we observe latency percentiles with CLI output.
+  """
+  output, _ = http_test_server_fixture.runNighthawkClient(
+      ["--duration 1", "--rps 10",
+       http_test_server_fixture.getTestServerRootUri()], as_json=False)
+  assertIn("Initiation to completion", output)
+  assertIn("Percentile", output)
+
+
+def test_request_body_gets_transmitted(http_test_server_fixture):
+  """
+  Test that the number of bytes we request for the request body gets reflected in the upstream
+  connection transmitted bytes counter for h1 and h2.
+  """
+
+  def check_upload_expectations(fixture, parsed_json, expected_transmitted_bytes,
+                                expected_received_bytes):
+    counters = fixture.getNighthawkCounterMapFromJson(parsed_json)
+    assertCounterGreaterEqual(counters, "upstream_cx_tx_bytes_total", expected_transmitted_bytes)
+    server_stats = fixture.getTestServerStatisticsJson()
+    assertGreaterEqual(
+        fixture.getServerStatFromJson(server_stats,
+                                      "http.ingress_http.downstream_cx_rx_bytes_total"),
+        expected_received_bytes)
+
+  upload_bytes = 10000
+
+  # test h1
+  parsed_json, _ = http_test_server_fixture.runNighthawkClient([
+      http_test_server_fixture.getTestServerRootUri(), "--duration", "1", "--rps", "2",
+      "--request-body-size",
+      str(upload_bytes)
+  ])
+
+  # We expect rps * upload_bytes to be transferred/received.
+  check_upload_expectations(http_test_server_fixture, parsed_json, upload_bytes * 2,
+                            upload_bytes * 2)
+
+  # test h2
+  # Again, we expect rps * upload_bytes to be transferred/received. However, we didn't reset
+  # the server in between, so our expectation for received bytes on the server side is raised.
+  parsed_json, _ = http_test_server_fixture.runNighthawkClient([
+      http_test_server_fixture.getTestServerRootUri(), "--duration", "1", "--h2", "--rps", "2",
+      "--request-body-size",
+      str(upload_bytes)
+  ])
+  check_upload_expectations(http_test_server_fixture, parsed_json, upload_bytes * 2,
+                            upload_bytes * 4)

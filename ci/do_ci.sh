@@ -3,10 +3,12 @@
 set -e
 
 export BUILDIFIER_BIN="/usr/local/bin/buildifier"
+export BUILDOZER_BIN="/usr/local/bin/buildozer"
 
 function do_build () {
     bazel build $BAZEL_BUILD_OPTIONS --verbose_failures=true //:nighthawk_client //:nighthawk_test_server \
         //:nighthawk_service
+    tools/update_cli_readme_documentation.sh --mode check
 }
 
 function do_test() {
@@ -39,10 +41,11 @@ function do_coverage() {
 }
 
 function setup_clang_toolchain() {
-    export PATH=/usr/lib/llvm-8/bin:$PATH
+    export PATH=/opt/llvm/bin:$PATH
     export CC=clang
     export CXX=clang++
-    export ASAN_SYMBOLIZER_PATH=/usr/lib/llvm-8/bin/llvm-symbolizer
+    export ASAN_SYMBOLIZER_PATH=/opt/llvm/bin/llvm-symbolizer
+    export BAZEL_COMPILER=clang
     echo "$CC/$CXX toolchain configured"
 }
 
@@ -134,6 +137,7 @@ export BAZEL_TEST_OPTIONS="${BAZEL_BUILD_OPTIONS} --test_env=HOME --test_env=PYT
 [[ -z "${SRCDIR}" ]] && SRCDIR="${PWD}"
 
 setup_clang_toolchain
+export CLANG_FORMAT=clang-format
 
 case "$1" in
     build)

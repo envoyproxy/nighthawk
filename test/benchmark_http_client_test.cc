@@ -97,8 +97,15 @@ public:
         inflight_response_count++;
       }
     }
+
+    // If max_pending is set to 0, and we queued up work, we shouldn't be able to add more.
+    if (max_pending == 0 && amount > 0) {
+      EXPECT_FALSE(client_->tryStartRequest(f));
+    }
+
     dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
-    EXPECT_EQ(max_pending, inflight_response_count);
+    // If max pending is set > 0, we expect in_flight to be equal to max_pending.
+    EXPECT_EQ(max_pending == 0 ? 1 : max_pending, inflight_response_count);
 
     for (Envoy::Http::StreamDecoder* decoder : decoders_) {
       Envoy::Http::HeaderMapPtr response_headers{
@@ -143,7 +150,7 @@ public:
   Envoy::Http::ConnectionPool::MockInstance pool_;
   Envoy::ProcessWide process_wide;
   std::vector<Envoy::Http::StreamDecoder*> decoders_;
-  Envoy::Http::MockStreamEncoder stream_encoder_;
+  NiceMock<Envoy::Http::MockStreamEncoder> stream_encoder_;
   Envoy::Upstream::MockThreadLocalCluster thread_local_cluster_;
   Envoy::Upstream::ClusterInfoConstSharedPtr cluster_info_;
   Envoy::Tracing::HttpTracerPtr http_tracer_;
@@ -153,13 +160,13 @@ public:
 
 TEST_F(BenchmarkClientHttpTest, BasicTestH1404) {
   response_code_ = "404";
-  testBasicFunctionality(1, 1, 10);
+  testBasicFunctionality(0, 1, 10);
   EXPECT_EQ(1, getCounter("http_4xx"));
 }
 
 TEST_F(BenchmarkClientHttpTest, WeirdStatus) {
   response_code_ = "601";
-  testBasicFunctionality(1, 1, 10);
+  testBasicFunctionality(0, 1, 10);
   EXPECT_EQ(1, getCounter("http_xxx"));
 }
 
@@ -229,8 +236,9 @@ TEST_F(BenchmarkClientHttpTest, ConnectionPrefetching) {
   auto* options = new Envoy::Network::ConnectionSocket::Options();
   Envoy::Network::ConnectionSocket::OptionsSharedPtr options_ptr{options};
   Envoy::Network::TransportSocketOptionsSharedPtr transport_socket_options_ptr;
+  Envoy::Http::Http1Settings codec_settings;
   Client::Http1PoolImpl pool(*dispatcher_, host_ptr, Envoy::Upstream::ResourcePriority::Default,
-                             options_ptr, transport_socket_options_ptr);
+                             options_ptr, codec_settings, transport_socket_options_ptr);
   EXPECT_CALL(cluster_manager(), httpConnPoolForCluster(_, _, _, _)).WillRepeatedly(Return(&pool));
   // Short circuit actual connection creation to avoids having to wire through more mocking.
   // (We have python integration tests for covering functionality)

@@ -34,17 +34,22 @@ public:
     benchmark_client_ = new MockBenchmarkClient();
     sequencer_ = new MockSequencer();
     header_generator_ = new MockHeaderSource();
+    termination_predicate_ = new MockTerminationPredicate();
+
     EXPECT_CALL(benchmark_client_factory_, create(_, _, _, _, _, _, _))
         .Times(1)
         .WillOnce(Return(ByMove(std::unique_ptr<BenchmarkClient>(benchmark_client_))));
 
-    EXPECT_CALL(sequencer_factory_, create(_, _, _, _))
+    EXPECT_CALL(sequencer_factory_, create(_, _, _, _, _, _))
         .Times(1)
         .WillOnce(Return(ByMove(std::unique_ptr<Sequencer>(sequencer_))));
 
     EXPECT_CALL(header_generator_factory_, create())
         .Times(1)
         .WillOnce(Return(ByMove(std::unique_ptr<HeaderSource>(header_generator_))));
+
+    EXPECT_CALL(termination_predicate_factory_, create(_, _, _))
+        .WillOnce(Return(ByMove(std::unique_ptr<TerminationPredicate>(termination_predicate_))));
   }
 
   StatisticPtrMap createStatisticPtrMap() const {
@@ -64,6 +69,7 @@ public:
   std::thread::id thread_id_;
   MockOptions options_;
   MockBenchmarkClientFactory benchmark_client_factory_;
+  MockTerminationPredicateFactory termination_predicate_factory_;
   MockSequencerFactory sequencer_factory_;
   MockHeaderSourceFactory header_generator_factory_;
   Envoy::Stats::IsolatedStoreImpl store_;
@@ -80,6 +86,7 @@ public:
   NiceMock<Envoy::ProtobufMessage::MockValidationVisitor> validation_visitor_;
   Envoy::Upstream::ClusterManagerPtr cluster_manager_ptr_;
   Envoy::Tracing::HttpTracerPtr http_tracer_;
+  MockTerminationPredicate* termination_predicate_;
 };
 
 TEST_F(ClientWorkerTest, BasicTest) {
@@ -109,9 +116,9 @@ TEST_F(ClientWorkerTest, BasicTest) {
   int worker_number = 12345;
 
   auto worker = std::make_unique<ClientWorkerImpl>(
-      *api_, tls_, cluster_manager_ptr_, benchmark_client_factory_, sequencer_factory_,
-      header_generator_factory_, store_, worker_number, time_system_.monotonicTime(), http_tracer_,
-      true);
+      *api_, tls_, cluster_manager_ptr_, benchmark_client_factory_, termination_predicate_factory_,
+      sequencer_factory_, header_generator_factory_, store_, worker_number,
+      time_system_.monotonicTime(), http_tracer_, true);
 
   worker->start();
   worker->waitForCompletion();

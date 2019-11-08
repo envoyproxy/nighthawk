@@ -11,10 +11,10 @@ go get -u github.com/google/pprof
 ## Nighthawk's scripted benchmark
 
 Nighthawk comes with a [small framework and experimental benchmark suite](/benchmarks/) that
-will write `.prof` files to `/tmp/`:
+will write `.prof` files to `/tmp/`. Currently it contains a single simple high rps test.
 
 ```bash
-bazel test --cache_test_results=no --compilation_mode=opt --cxxopt=-g --cxxopt=-ggdb3 //benchmarks:*
+bazel test --test_env=ENVOY_IP_TEST_VERSIONS=v4only --test_env=HEAPPROFILE= --test_env=HEAPCHECK= --cache_test_results=no --compilation_mode=opt --cxxopt=-g --cxxopt=-ggdb3 //benchmarks:*
 ```
 
 Note that it is possible to override Nighthawk's Envoy dependency
@@ -24,11 +24,11 @@ to link against a local version, by adding a line to `.bazelrc`:
 build --override_repository envoy=/path/to/local/envoy/
 ```
 
-Note that doing so affects both `nighthawk_client` and `nighthawk_test_server`. 
+Note that doing so affects both `nighthawk_client` and `nighthawk_test_server`.
 
 ### Visualizations: the pprof web UI
 
-After Nighthawk finishes and the server is stopped, you should have `/tmp/envoy.prof`.
+After Nighthawk finishes and the server is stopped, you should have `/tmp/<test-name>.prof`.
 `pprof` comes with a webserver which you can start as follows:
 
 ```bash

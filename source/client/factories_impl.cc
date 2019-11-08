@@ -10,6 +10,7 @@
 #include "common/rate_limiter_impl.h"
 #include "common/sequencer_impl.h"
 #include "common/statistic_impl.h"
+#include "common/termination_predicate_impl.h"
 #include "common/uri_impl.h"
 #include "common/utility.h"
 
@@ -47,7 +48,9 @@ SequencerFactoryImpl::SequencerFactoryImpl(const Options& options)
 SequencerPtr SequencerFactoryImpl::create(Envoy::TimeSource& time_source,
                                           Envoy::Event::Dispatcher& dispatcher,
                                           Envoy::MonotonicTime start_time,
-                                          BenchmarkClient& benchmark_client) const {
+                                          BenchmarkClient& benchmark_client,
+                                          TerminationPredicate& termination_predicate,
+                                          Envoy::Stats::Scope& scope) const {
   StatisticFactoryImpl statistic_factory(options_);
   RateLimiterPtr rate_limiter =
       std::make_unique<LinearRateLimiter>(time_source, Frequency(options_.requestsPerSecond()));
@@ -61,8 +64,8 @@ SequencerPtr SequencerFactoryImpl::create(Envoy::TimeSource& time_source,
   };
   return std::make_unique<SequencerImpl>(
       platform_util_, dispatcher, time_source, start_time, std::move(rate_limiter),
-      sequencer_target, statistic_factory.create(), statistic_factory.create(), options_.duration(),
-      options_.timeout(), options_.sequencerIdleStrategy());
+      sequencer_target, statistic_factory.create(), statistic_factory.create(),
+      options_.sequencerIdleStrategy(), termination_predicate, scope);
 }
 
 StoreFactoryImpl::StoreFactoryImpl(const Options& options) : OptionBasedFactoryImpl(options) {}
@@ -128,6 +131,28 @@ HeaderSourcePtr HeaderSourceFactoryImpl::create() const {
   }
 
   return std::make_unique<StaticHeaderSourceImpl>(std::move(header));
+}
+
+TerminationPredicateFactoryImpl::TerminationPredicateFactoryImpl(const Options& options)
+    : OptionBasedFactoryImpl(options) {}
+
+TerminationPredicatePtr
+TerminationPredicateFactoryImpl::create(Envoy::TimeSource& time_source, Envoy::Stats::Scope& scope,
+                                        const Envoy::MonotonicTime start) const {
+  // By default, we don't tolerate status code errors & connection-level errors.
+  // TODO(oschaaf): In a follow up, we'll tolerate these when explicit termination predicates are
+  // configured.
+  TerminationPredicatePtr duration_predicate =
+      std::make_unique<DurationTerminationPredicateImpl>(time_source, start, options_.duration());
+  duration_predicate
+      ->link(std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
+          scope.counter("benchmark.http_4xx"), 0, TerminationPredicate::Status::FAIL))
+      .link(std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
+          scope.counter("benchmark.http_5xx"), 0, TerminationPredicate::Status::FAIL))
+      .link(std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
+          scope.counter("benchmark.pool_connection_failure"), 0,
+          TerminationPredicate::Status::FAIL));
+  return duration_predicate;
 }
 
 } // namespace Client

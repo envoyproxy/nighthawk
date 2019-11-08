@@ -9,7 +9,12 @@ namespace Nighthawk {
 
 class TerminationPredicateBaseImpl : public TerminationPredicate {
 public:
-  void link(TerminationPredicatePtr&& child) final { linked_child_ = std::move(child); }
+  TerminationPredicate& link(TerminationPredicatePtr&& child) final {
+    RELEASE_ASSERT(linked_child_ == nullptr, "Linked child already set");
+    RELEASE_ASSERT(child != nullptr, "child == nullptr");
+    linked_child_ = std::move(child);
+    return *linked_child_;
+  }
   TerminationPredicate::Status evaluateChain() final;
 
 private:
@@ -18,14 +23,14 @@ private:
 
 class DurationTerminationPredicateImpl : public TerminationPredicateBaseImpl {
 public:
-  DurationTerminationPredicateImpl(Envoy::TimeSource& time_source,
+  DurationTerminationPredicateImpl(Envoy::TimeSource& time_source, const Envoy::MonotonicTime start,
                                    std::chrono::microseconds duration)
-      : time_source_(time_source), start_(time_source.monotonicTime()), duration_(duration) {}
+      : time_source_(time_source), start_(start), duration_(duration) {}
   TerminationPredicate::Status evaluate() override;
 
 private:
   Envoy::TimeSource& time_source_;
-  Envoy::MonotonicTime start_;
+  const Envoy::MonotonicTime start_;
   std::chrono::microseconds duration_;
 };
 

@@ -76,6 +76,8 @@ void StreamDecoder::onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason
 void StreamDecoder::onPoolReady(Envoy::Http::StreamEncoder& encoder,
                                 Envoy::Upstream::HostDescriptionConstSharedPtr,
                                 const Envoy::StreamInfo::StreamInfo&) {
+  // Make sure we hear about stream resets on the encoder.
+  encoder.getStream().addCallbacks(*this);
   upstream_timing_.onFirstUpstreamTxByteSent(time_source_); // XXX(oschaaf): is this correct?
   encoder.encodeHeaders(*request_headers_, request_body_size_ == 0);
   if (request_body_size_ > 0) {

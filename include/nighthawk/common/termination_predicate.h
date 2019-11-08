@@ -24,12 +24,13 @@ public:
   virtual ~TerminationPredicate() = default;
 
   /**
-   * Links a child predicated. Will be evaluated first when evaluateChain()
-   * is called.
+   * Links a child predicated. Will be evaluated first when evaluateChain() is called. Only allowed
+   * to be called a single time per instance.
    *
-   * @param child the child predicate to link.
+   * @param child the child predicate to link. nullptr is not allowed.
+   * @return the dereferenced input child predicate. For convenience, so calls can be chained.
    */
-  virtual void link(TerminationPredicatePtr&& child) PURE;
+  virtual TerminationPredicate& link(TerminationPredicatePtr&& child) PURE;
 
   /**
    * Recursively evaluates chain of linked predicates, this instance last.

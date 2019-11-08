@@ -100,6 +100,7 @@ TEST_F(StreamDecoderTest, LatencyIsNotMeasured) {
       *dispatcher_, time_system_, *this, [](bool, bool) {}, connect_statistic_, latency_statistic_,
       request_headers_, false, 0, TEST_TRACER_UID, http_tracer_);
   Envoy::Http::MockStreamEncoder stream_encoder;
+  EXPECT_CALL(stream_encoder, getStream());
   Envoy::Upstream::HostDescriptionConstSharedPtr ptr;
   NiceMock<Envoy::StreamInfo::MockStreamInfo> stream_info;
   EXPECT_CALL(stream_encoder,
@@ -137,6 +138,7 @@ TEST_F(StreamDecoderTest, LatencyIsMeasured) {
       request_header, true, 0, TEST_TRACER_UID, http_tracer_);
 
   Envoy::Http::MockStreamEncoder stream_encoder;
+  EXPECT_CALL(stream_encoder, getStream());
   Envoy::Upstream::HostDescriptionConstSharedPtr ptr;
   NiceMock<Envoy::StreamInfo::MockStreamInfo> stream_info;
   EXPECT_CALL(stream_encoder,
