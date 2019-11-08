@@ -14,7 +14,7 @@ namespace Nighthawk {
 namespace Client {
 
 using CommandLineOptionsPtr = std::unique_ptr<nighthawk::client::CommandLineOptions>;
-using TerminationPredicateMap = std::map<std::string, uint32_t>;
+using TerminationPredicateMap = std::map<std::string, uint64_t>;
 /**
  * Abstract options interface.
  */

@@ -43,9 +43,9 @@ bazel build -c opt //:nighthawk
 ```
 USAGE:
 
-bazel-bin/nighthawk_client  [--failure-predicate <<string, uint32_t>>]
+bazel-bin/nighthawk_client  [--failure-predicate <<string, uint64_t>>]
 ... [--termination-predicate <<string,
-uint32_t>>] ... [--trace <uri format>]
+uint64_t>>] ... [--trace <uri format>]
 [--sequencer-idle-strategy <spin|poll
 |sleep>] [--max-requests-per-connection
 <uint32_t>] [--max-active-requests
@@ -67,12 +67,12 @@ uint32_t>>] ... [--trace <uri format>]
 
 Where:
 
---failure-predicate <<string, uint32_t>>  (accepted multiple times)
+--failure-predicate <<string, uint64_t>>  (accepted multiple times)
 Failure predicate. Allows specifying a counter name plus threshold
 value for failing execution. Defaults to not tolerating error status
 codes and connection errors.
 
---termination-predicate <<string, uint32_t>>  (accepted multiple times)
+--termination-predicate <<string, uint64_t>>  (accepted multiple times)
 Termination predicate. Allows specifying a counter name plus threshold
 value for terminating execution.
 

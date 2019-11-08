@@ -172,12 +172,12 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "", "termination-predicate",
       "Termination predicate. Allows specifying a counter name plus threshold value for "
       "terminating execution.",
-      false, "<string, uint32_t>", cmd);
+      false, "<string, uint64_t>", cmd);
   TCLAP::MultiArg<std::string> failure_predicates(
       "", "failure-predicate",
       "Failure predicate. Allows specifying a counter name plus threshold value for "
       "failing execution. Defaults to not tolerating error status codes and connection errors.",
-      false, "<string, uint32_t>", cmd);
+      false, "<string, uint64_t>", cmd);
 
   TCLAP::UnlabeledValueArg<std::string> uri("uri",
                                             "uri to benchmark. http:// and https:// are supported, "
