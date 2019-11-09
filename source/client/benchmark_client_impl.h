@@ -46,8 +46,24 @@ struct BenchmarkClientStats {
 
 class Http1PoolImpl : public Envoy::Http::Http1::ProdConnPoolImpl {
 public:
+  enum class ConnectionReuseStrategy {
+    MostRecentlyUsed,
+    LeastRecentlyUsed,
+  };
   using Envoy::Http::Http1::ProdConnPoolImpl::ProdConnPoolImpl;
-  void createConnections(const uint32_t connection_limit);
+  Envoy::Http::ConnectionPool::Cancellable*
+  newStream(Envoy::Http::StreamDecoder& response_decoder,
+            Envoy::Http::ConnectionPool::Callbacks& callbacks) override;
+  void setConnectionReuseStrategy(const ConnectionReuseStrategy connection_reuse_strategy) {
+    connection_reuse_strategy_ = connection_reuse_strategy;
+  }
+  void setPrefetchConnections(const bool prefetch_connections) {
+    prefetch_connections_ = prefetch_connections;
+  }
+
+private:
+  ConnectionReuseStrategy connection_reuse_strategy_{};
+  bool prefetch_connections_{};
 };
 
 class BenchmarkClientHttpImpl : public BenchmarkClient,
@@ -92,8 +108,6 @@ public:
     return cluster_manager_->httpConnPoolForCluster(
         cluster_name_, Envoy::Upstream::ResourcePriority::Default, proto, nullptr);
   }
-
-  void prefetchPoolConnections() override;
 
 private:
   Envoy::Api::Api& api_;

@@ -35,6 +35,7 @@
 namespace Nighthawk {
 namespace Client {
 
+class ClusterManagerFactory;
 /**
  * Only a single instance is allowed at a time machine-wide in this implementation.
  * Running multiple instances at the same might introduce noise into the measurements.
@@ -59,8 +60,7 @@ public:
 
 private:
   void configureComponentLogLevels(spdlog::level::level_enum level);
-  const std::vector<ClientWorkerPtr>& createWorkers(const uint32_t concurrency,
-                                                    bool prefetch_connections);
+  const std::vector<ClientWorkerPtr>& createWorkers(const uint32_t concurrency);
   std::vector<StatisticPtr> vectorizeStatisticPtrMap(const StatisticFactory& statistic_factory,
                                                      const StatisticPtrMap& statistics) const;
   std::vector<StatisticPtr>
@@ -96,7 +96,7 @@ private:
   std::unique_ptr<Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl>
       ssl_context_manager_;
 
-  std::unique_ptr<Envoy::Upstream::ProdClusterManagerFactory> cluster_manager_factory_;
+  std::unique_ptr<ClusterManagerFactory> cluster_manager_factory_;
   Envoy::Upstream::ClusterManagerPtr cluster_manager_{};
   std::unique_ptr<Runtime::ScopedLoaderSingleton> runtime_singleton_;
   Envoy::Init::WatcherImpl init_watcher_;

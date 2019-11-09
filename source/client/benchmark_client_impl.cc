@@ -21,11 +21,33 @@ using namespace std::chrono_literals;
 namespace Nighthawk {
 namespace Client {
 
-void Http1PoolImpl::createConnections(const uint32_t connection_limit) {
-  ENVOY_LOG(error, "Prefetching {} connections.", connection_limit);
-  for (uint32_t i = 0; i < connection_limit; i++) {
-    createNewConnection();
+Envoy::Http::ConnectionPool::Cancellable*
+Http1PoolImpl::newStream(Envoy::Http::StreamDecoder& response_decoder,
+                         Envoy::Http::ConnectionPool::Callbacks& callbacks) {
+  // In prefetch mode we try to keep the amount of connections at the configured limit.
+  if (prefetch_connections_) {
+    while (host_->cluster().resourceManager(priority_).connections().canCreate()) {
+      createNewConnection();
+    }
   }
+
+  // By default, Envoy re-uses the most recent free connection. Here we pop from the back
+  // of ready_clients_, which will pick the oldest one instead. This makes us cycle through
+  // all the available connections.
+  // This represents a different kind of traffic pattern, which may be interesting all by itself to
+  // characterize how servers respond to that. It also may be helpful to avoid backend hotspotting,
+  // as chances are that different connections end up being served on different backend processing
+  // units.
+  // TODO(oschaaf): Add a random strategy?
+  if (!ready_clients_.empty() &&
+      connection_reuse_strategy_ == ConnectionReuseStrategy::LeastRecentlyUsed) {
+    ready_clients_.back()->moveBetweenLists(ready_clients_, busy_clients_);
+    attachRequestToClient(*busy_clients_.front(), response_decoder, callbacks);
+    return nullptr;
+  }
+
+  // Vanilla Envoy pool behavior.
+  return ConnPoolImpl::newStream(response_decoder, callbacks);
 }
 
 BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
@@ -41,15 +63,6 @@ BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
       cluster_name_(std::string(cluster_name)), header_generator_(std::move(header_generator)) {
   connect_statistic_->setId("benchmark_http_client.queue_to_connect");
   response_statistic_->setId("benchmark_http_client.request_to_response");
-}
-
-void BenchmarkClientHttpImpl::prefetchPoolConnections() {
-  auto* prefetchable_pool = dynamic_cast<Http1PoolImpl*>(pool());
-  if (prefetchable_pool == nullptr) {
-    ENVOY_LOG(error, "prefetchPoolConnections() pool not prefetchable");
-    return;
-  }
-  prefetchable_pool->createConnections(connection_limit_);
 }
 
 void BenchmarkClientHttpImpl::terminate() {
