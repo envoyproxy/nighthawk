@@ -47,8 +47,8 @@ struct BenchmarkClientStats {
 class Http1PoolImpl : public Envoy::Http::Http1::ProdConnPoolImpl {
 public:
   enum class ConnectionReuseStrategy {
-    MostRecentlyUsed,
-    LeastRecentlyUsed,
+    HOT,
+    FAIR,
   };
   using Envoy::Http::Http1::ProdConnPoolImpl::ProdConnPoolImpl;
   Envoy::Http::ConnectionPool::Cancellable*

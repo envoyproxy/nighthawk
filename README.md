@@ -43,7 +43,7 @@ bazel build -c opt //:nighthawk
 ```
 USAGE:
 
-bazel-bin/nighthawk_client  [--h1-connection-reuse-strategy <LRU|MRU>]
+bazel-bin/nighthawk_client  [--h1-connection-reuse-strategy <HOT|FAIR>]
 [--trace <uri format>]
 [--sequencer-idle-strategy <spin|poll
 |sleep>] [--max-requests-per-connection
@@ -66,9 +66,9 @@ bazel-bin/nighthawk_client  [--h1-connection-reuse-strategy <LRU|MRU>]
 
 Where:
 
---h1-connection-reuse-strategy <LRU|MRU>
+--h1-connection-reuse-strategy <HOT|FAIR>
 Choose picking the most recently used, or least-recently-used
-connections for re-use.(default: lru).
+connections for re-use.(default: hot).
 
 --trace <uri format>
 Trace uri. Example: zipkin://localhost:9411/api/v1/spans. Default is

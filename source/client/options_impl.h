@@ -87,8 +87,7 @@ private:
       nighthawk::client::SequencerIdleStrategy::SPIN};
   std::string trace_;
   nighthawk::client::H1ConnectionReuseStrategy::H1ConnectionReuseStrategyOptions
-      h1_connection_reuse_strategy_{
-          nighthawk::client::H1ConnectionReuseStrategy::LRU};
+      h1_connection_reuse_strategy_{nighthawk::client::H1ConnectionReuseStrategy::HOT};
 };
 
 } // namespace Client

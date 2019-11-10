@@ -365,9 +365,9 @@ bool ProcessImpl::run(OutputCollector& collector) {
       secret_manager_, validation_context_, *api_, http_context_, access_log_manager_,
       *singleton_manager_);
   cluster_manager_factory_->setConnectionReuseStrategy(
-      options_.h1ConnectionReuseStrategy() == nighthawk::client::H1ConnectionReuseStrategy::LRU
-          ? Http1PoolImpl::ConnectionReuseStrategy::LeastRecentlyUsed
-          : Http1PoolImpl::ConnectionReuseStrategy::MostRecentlyUsed);
+      options_.h1ConnectionReuseStrategy() == nighthawk::client::H1ConnectionReuseStrategy::FAIR
+          ? Http1PoolImpl::ConnectionReuseStrategy::FAIR
+          : Http1PoolImpl::ConnectionReuseStrategy::HOT);
   cluster_manager_factory_->setPrefetchConnections(options_.prefetchConnections());
   envoy::config::bootstrap::v2::Bootstrap bootstrap;
   createBootstrapConfiguration(bootstrap, uri, number_of_workers);

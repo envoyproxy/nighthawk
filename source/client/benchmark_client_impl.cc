@@ -34,10 +34,7 @@ Http1PoolImpl::newStream(Envoy::Http::StreamDecoder& response_decoder,
   // By default, Envoy re-uses the most recent free connection. Here we pop from the back
   // of ready_clients_, which will pick the oldest one instead. This makes us cycle through
   // all the available connections.
-  // This represents a different kind of traffic pattern, which may be interesting all by itself to
-  // characterize how servers respond to that. It also may be helpful for spreading load.
-  if (!ready_clients_.empty() &&
-      connection_reuse_strategy_ == ConnectionReuseStrategy::LeastRecentlyUsed) {
+  if (!ready_clients_.empty() && connection_reuse_strategy_ == ConnectionReuseStrategy::FAIR) {
     ready_clients_.back()->moveBetweenLists(ready_clients_, busy_clients_);
     attachRequestToClient(*busy_clients_.front(), response_decoder, callbacks);
     return nullptr;

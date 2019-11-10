@@ -169,7 +169,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "", "trace", "Trace uri. Example: zipkin://localhost:9411/api/v1/spans. Default is empty.",
       false, "", "uri format", cmd);
 
-  std::vector<std::string> h1_connection_reuse_strategies = {"LRU", "MRU"};
+  std::vector<std::string> h1_connection_reuse_strategies = {"HOT", "FAIR"};
   TCLAP::ValuesConstraint<std::string> h1_connection_reuse_strategies_allowed(
       h1_connection_reuse_strategies);
   TCLAP::ValueArg<std::string> h1_connection_reuse_strategy(
