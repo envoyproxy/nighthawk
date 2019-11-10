@@ -35,10 +35,7 @@ Http1PoolImpl::newStream(Envoy::Http::StreamDecoder& response_decoder,
   // of ready_clients_, which will pick the oldest one instead. This makes us cycle through
   // all the available connections.
   // This represents a different kind of traffic pattern, which may be interesting all by itself to
-  // characterize how servers respond to that. It also may be helpful to avoid backend hotspotting,
-  // as chances are that different connections end up being served on different backend processing
-  // units.
-  // TODO(oschaaf): Add a random strategy?
+  // characterize how servers respond to that. It also may be helpful for spreading load.
   if (!ready_clients_.empty() &&
       connection_reuse_strategy_ == ConnectionReuseStrategy::LeastRecentlyUsed) {
     ready_clients_.back()->moveBetweenLists(ready_clients_, busy_clients_);
