@@ -85,7 +85,7 @@ void LinearRateLimiter::releaseOne() {
 
 RandomDistributingRateLimiter::RandomDistributingRateLimiter(
     Envoy::TimeSource& time_source, RateLimiterPtr&& rate_limiter,
-    const std::function<const std::chrono::nanoseconds()> random_distribution_generator)
+    const std::function<const std::chrono::nanoseconds()>& random_distribution_generator)
     : random_distribution_generator_(random_distribution_generator), time_source_(time_source),
       rate_limiter_(std::move(rate_limiter)) {}
 

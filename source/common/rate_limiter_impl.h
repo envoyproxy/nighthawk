@@ -63,7 +63,7 @@ class RandomDistributingRateLimiter : public RateLimiter,
 public:
   RandomDistributingRateLimiter(
       Envoy::TimeSource& time_source, RateLimiterPtr&& rate_limiter,
-      const std::function<const std::chrono::nanoseconds()> random_distribution_generator);
+      const std::function<const std::chrono::nanoseconds()>& random_distribution_generator);
   bool tryAcquireOne() override;
   void releaseOne() override;
 
