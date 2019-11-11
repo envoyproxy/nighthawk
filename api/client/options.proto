@@ -61,6 +61,15 @@ message SequencerIdleStrategy {
   SequencerIdleStrategyOptions value = 1;
 }
 
+message H1ConnectionReuseStrategy {
+  enum H1ConnectionReuseStrategyOptions {
+    DEFAULT = 0;
+    HOT = 1;
+    FAIR = 2;
+  }
+  H1ConnectionReuseStrategyOptions value = 1;
+}
+
 // TODO(oschaaf): Ultimately this will be a load test specification. The fact that it
 // can arrive via CLI is just a concrete detail. Change this to reflect that.
 message CommandLineOptions {
@@ -107,4 +116,6 @@ message CommandLineOptions {
   google.protobuf.StringValue uri = 18; // [(validate.rules).string.uri = true];
   // See :option:`--trace` for details.
   google.protobuf.StringValue trace = 19; // [(validate.rules).string.uri = true];
+  // See :option:`--h1-connection-reuse-strategy` for details.
+  H1ConnectionReuseStrategy h1_connection_reuse_strategy = 23;
 }
