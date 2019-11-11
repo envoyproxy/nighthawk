@@ -51,10 +51,6 @@ public:
     return sequencer_idle_strategy_;
   }
   std::string trace() const override { return trace_; }
-  nighthawk::client::H1ConnectionReuseStrategy::H1ConnectionReuseStrategyOptions
-  h1ConnectionReuseStrategy() const override {
-    return h1_connection_reuse_strategy_;
-  }
 
 private:
   void setNonTrivialDefaults();
@@ -86,8 +82,6 @@ private:
   nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions sequencer_idle_strategy_{
       nighthawk::client::SequencerIdleStrategy::SPIN};
   std::string trace_;
-  nighthawk::client::H1ConnectionReuseStrategy::H1ConnectionReuseStrategyOptions
-      h1_connection_reuse_strategy_{nighthawk::client::H1ConnectionReuseStrategy::HOT};
 };
 
 } // namespace Client

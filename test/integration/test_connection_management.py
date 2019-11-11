@@ -104,23 +104,3 @@ def test_http_h2_connection_management_single_request_per_conn_1(http_test_serve
 @pytest.mark.skipif(isSanitizerRun(), reason="Unstable in sanitizer runs")
 def test_http_h2_connection_management_single_request_per_conn_1(http_test_server_fixture):
   connection_management_test_request_per_connection(http_test_server_fixture, 5, True)
-
-
-def test_h1_pool_strategy(http_test_server_fixture):
-  """
-  Test that with the "HOT" strategy only the first created connection gets to send requests.
-  Then, with the "FAIR" strategy, we expect the other connection to be used as well.
-  """
-  _, logs = http_test_server_fixture.runNighthawkClient([
-      "--duration 1", "--rps 3", "-v trace", "--connections 2", "--prefetch-connections",
-      "--h1-connection-reuse-strategy", "HOT",
-      http_test_server_fixture.getTestServerRootUri()
-  ])
-  assertIn("[C0] message complete", logs)
-  assertNotIn("[C1] message complete", logs)
-  _, logs = http_test_server_fixture.runNighthawkClient([
-      "--duration 1", "--rps 3", "-v trace", "--connections 2", "--prefetch-connections",
-      "--h1-connection-reuse-strategy", "FAIR",
-      http_test_server_fixture.getTestServerRootUri()
-  ])
-  assertIn("[C1] message complete", logs)
