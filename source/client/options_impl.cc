@@ -376,7 +376,9 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptions() const {
       request_header->set_key(header.substr(0, pos));
       // Any visible char, including ':', is allowed in header values.
       request_header->set_value(header.substr(pos + 1));
-    } // else throw? a ':' is required in a header.
+    } else {
+      throw MalformedArgvException("A ':' is required in a header.");
+    }
   }
   request_options->mutable_request_body_size()->set_value(requestBodySize());
   *(command_line_options->mutable_tls_context()) = tlsContext();

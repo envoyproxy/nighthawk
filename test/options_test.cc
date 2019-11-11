@@ -341,5 +341,24 @@ TEST_F(OptionsImplTest, SequencerIdleStrategyValuesAreConstrained) {
                           MalformedArgvException, "--sequencer-idle-strategy");
 }
 
+TEST_F(OptionsImplTest, RequestHeaderWithoutColon) {
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{} --request-header bar {}",
+                                                                     client_name_, good_test_uri_)),
+                          MalformedArgvException, "is required in a header");
+}
+
+TEST_F(OptionsImplTest, RequestHeaderValueWithColonsAndSpaces) {
+  const std::string header("foo"), value("{ \"bar\": \"baz\" }");
+  const std::string header_option = fmt::format("{}:{}", header, value);
+  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(std::vector<const char*>{
+      client_name_.c_str(), "--request-header", header_option.c_str(), good_test_uri_.c_str()});
+  EXPECT_EQ(std::vector<std::string>{header_option}, options->requestHeaders());
+  auto optionsPtr = options->toCommandLineOptions();
+  const auto& headers = optionsPtr->request_options().request_headers();
+  EXPECT_EQ(1, headers.size());
+  EXPECT_EQ(header, headers[0].header().key());
+  EXPECT_EQ(value, headers[0].header().value());
+}
+
 } // namespace Client
 } // namespace Nighthawk
