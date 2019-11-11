@@ -1,5 +1,7 @@
 #pragma once
 
+#include <random>
+
 #include "envoy/common/time.h"
 
 #include "nighthawk/common/rate_limiter.h"
@@ -52,6 +54,38 @@ private:
   const Frequency frequency_;
   bool started_{};
   Envoy::MonotonicTime started_at_;
+};
+
+// Wraps a rate limiter, and allows plugging in a delegate which will be queried to offset the
+// timing of the underlying rate limiter.
+class RandomDistributingRateLimiter : public RateLimiter,
+                                      public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
+public:
+  RandomDistributingRateLimiter(
+      Envoy::TimeSource& time_source, RateLimiterPtr&& rate_limiter,
+      const std::function<const std::chrono::nanoseconds()> random_distribution_generator);
+  bool tryAcquireOne() override;
+  void releaseOne() override;
+
+protected:
+  const std::function<std::chrono::nanoseconds()> random_distribution_generator_;
+
+private:
+  Envoy::TimeSource& time_source_;
+  const RateLimiterPtr rate_limiter_;
+  Envoy::MonotonicTime distributed_start_;
+  bool distributed_start_set_{};
+};
+
+// Allows adding uniformly distributed random timing offsets to an underlying rate limiter.
+class UniformDistributingRateLimiter : public RandomDistributingRateLimiter {
+public:
+  UniformDistributingRateLimiter(Envoy::TimeSource& time_source, RateLimiterPtr&& rate_limiter,
+                                 const std::chrono::nanoseconds upper_bound);
+
+private:
+  std::default_random_engine generator_;
+  std::uniform_int_distribution<uint64_t> distribution_;
 };
 
 } // namespace Nighthawk

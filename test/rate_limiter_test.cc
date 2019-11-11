@@ -104,4 +104,54 @@ TEST_F(BurstingRateLimiterIntegrationTest, BurstingLinearRateLimiterTest) {
   testBurstSize(100, 50_Hz);
 }
 
+TEST_F(RateLimiterTest, UniformDistributingRateLimiterTest) {
+  const uint64_t tries = 1000;
+  auto mock_rate_limiter = std::make_unique<MockRateLimiter>();
+  MockRateLimiter& unsafe_mock_rate_limiter = *mock_rate_limiter;
+  Envoy::Event::SimulatedTimeSystem time_system;
+  RateLimiterPtr rate_limiter = std::make_unique<UniformDistributingRateLimiter>(
+      time_system, std::move(mock_rate_limiter), 1ns);
+
+  EXPECT_CALL(unsafe_mock_rate_limiter, tryAcquireOne).Times(tries).WillRepeatedly(Return(true));
+  EXPECT_CALL(unsafe_mock_rate_limiter, releaseOne).Times(tries);
+
+  int acquisitions = 0;
+  // We used a 1ns upper bound. That means we can expect around 50% of acquisitions to succeed as
+  // there are only two possibilities: now, or 1ns later in the future.
+  for (uint64_t i = 0; i < tries; i++) {
+    if (rate_limiter->tryAcquireOne()) {
+      acquisitions++;
+    }
+    // We test the release gets propagated to the mock rate limiter.
+    // also, the release will force RandomDistributingRateLimiter to propagate tryAcquireOne.
+    rate_limiter->releaseOne();
+  }
+  // Surely we can expect that we didn't acquire every time we tried, considering we're using a
+  // uniform distributions.
+  EXPECT_LT(acquisitions, tries);
+}
+
+TEST_F(RateLimiterTest, UniformDistributingRateLimiterSchedulingTest) {
+  auto mock_rate_limiter = std::make_unique<NiceMock<MockRateLimiter>>();
+  MockRateLimiter& unsafe_mock_rate_limiter = *mock_rate_limiter;
+  Envoy::Event::SimulatedTimeSystem time_system;
+  RateLimiterPtr rate_limiter = std::make_unique<UniformDistributingRateLimiter>(
+      time_system, std::move(mock_rate_limiter), 1ns);
+
+  EXPECT_CALL(unsafe_mock_rate_limiter, tryAcquireOne)
+      .Times(AtLeast(1))
+      .WillRepeatedly(Return(true));
+
+  // The mock rate limiter will always allow acquisition, but UniformDistributingRateLimiter may
+  // prevent that. When it does that, it ought to always allow it in the next ns (as it has no other
+  // choice).
+  for (int i = 0; i < 1000; i++) {
+    while (rate_limiter->tryAcquireOne()) {
+      rate_limiter->releaseOne();
+    }
+    time_system.sleep(1ns);
+    EXPECT_TRUE(rate_limiter->tryAcquireOne());
+  }
+}
+
 } // namespace Nighthawk
