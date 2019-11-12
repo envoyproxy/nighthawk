@@ -348,7 +348,7 @@ TEST_F(OptionsImplTest, RequestHeaderWithoutColon) {
 }
 
 TEST_F(OptionsImplTest, RequestHeaderValueWithColonsAndSpaces) {
-  const std::string header("foo"), value("{ \"bar\": \"baz\" }");
+  const std::string header("foo"), value(R"({ "bar": "baz" })");
   const std::string header_option = fmt::format("{}:{}", header, value);
   std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(std::vector<const char*>{
       client_name_.c_str(), "--request-header", header_option.c_str(), good_test_uri_.c_str()});
