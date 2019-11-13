@@ -85,7 +85,7 @@ void LinearRateLimiter::releaseOne() {
 
 RandomDistributingRateLimiter::RandomDistributingRateLimiter(
     Envoy::TimeSource& time_source, RateLimiterPtr&& rate_limiter,
-    const std::function<const std::chrono::nanoseconds()>& random_distribution_generator)
+    const RandomDistributionGenerator& random_distribution_generator)
     : random_distribution_generator_(random_distribution_generator), time_source_(time_source),
       rate_limiter_(std::move(rate_limiter)) {}
 
@@ -113,9 +113,11 @@ void RandomDistributingRateLimiter::releaseOne() {
 UniformDistributingRateLimiter::UniformDistributingRateLimiter(
     Envoy::TimeSource& time_source, RateLimiterPtr&& rate_limiter,
     const std::chrono::nanoseconds upper_bound)
-    : RandomDistributingRateLimiter(
-          time_source, std::move(rate_limiter),
-          [this]() { return std::chrono::nanoseconds(distribution_(generator_)); }),
+    : RandomDistributingRateLimiter(time_source, std::move(rate_limiter),
+                                    [this]() {
+                                      return std::chrono::duration<uint64_t, std::nano>(
+                                          distribution_(generator_));
+                                    }),
       distribution_(0, upper_bound.count()) {
   RELEASE_ASSERT(upper_bound > 0ns, "upper_bound == 0");
 }

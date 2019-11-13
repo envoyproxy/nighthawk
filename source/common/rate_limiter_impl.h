@@ -56,19 +56,21 @@ private:
   Envoy::MonotonicTime started_at_;
 };
 
+using RandomDistributionGenerator =
+    std::function<const std::chrono::duration<uint64_t, std::nano>()>;
+
 // Wraps a rate limiter, and allows plugging in a delegate which will be queried to offset the
 // timing of the underlying rate limiter.
 class RandomDistributingRateLimiter : public RateLimiter,
                                       public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
-  RandomDistributingRateLimiter(
-      Envoy::TimeSource& time_source, RateLimiterPtr&& rate_limiter,
-      const std::function<const std::chrono::nanoseconds()>& random_distribution_generator);
+  RandomDistributingRateLimiter(Envoy::TimeSource& time_source, RateLimiterPtr&& rate_limiter,
+                                const RandomDistributionGenerator& random_distribution_generator);
   bool tryAcquireOne() override;
   void releaseOne() override;
 
 protected:
-  const std::function<std::chrono::nanoseconds()> random_distribution_generator_;
+  const RandomDistributionGenerator random_distribution_generator_;
 
 private:
   Envoy::TimeSource& time_source_;
