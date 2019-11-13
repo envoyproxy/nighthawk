@@ -126,9 +126,8 @@ TEST_F(RateLimiterTest, UniformDistributingRateLimiterTest) {
     // also, the release will force RandomDistributingRateLimiter to propagate tryAcquireOne.
     rate_limiter->releaseOne();
   }
-  // Surely we can expect that we didn't acquire every time we tried, considering we're using a
-  // uniform distributions.
-  EXPECT_LT(acquisitions, tries);
+  // 1 in a billion chance of failure.
+  EXPECT_LT(acquisitions, (tries / 2) + 30);
 }
 
 TEST_F(RateLimiterTest, UniformDistributingRateLimiterSchedulingTest) {
