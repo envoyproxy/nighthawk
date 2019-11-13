@@ -69,7 +69,7 @@ def test_http_h1_mini_stress_test_with_client_side_queueing(http_test_server_fix
   queue."""
   counters = mini_stress_test(http_test_server_fixture, [
       http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--max-pending-requests",
-      "10", "--duration 10", "--connections", "1"
+      "10", "--duration", "10", "--connections", "1"
   ])
   assertCounterEqual(counters, "upstream_rq_pending_total", 11)
   assertCounterEqual(counters, "upstream_cx_overflow", 10)
@@ -95,7 +95,7 @@ def test_http_h2_mini_stress_test_with_client_side_queueing(http_test_server_fix
   """
   counters = mini_stress_test(http_test_server_fixture, [
       http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--max-pending-requests",
-      "10", "--duration 10", "--h2", "--max-active-requests", "1", "--connections", "1"
+      "10", "--duration", "10", "--h2", "--max-active-requests", "1", "--connections", "1"
   ])
   assertCounterEqual(counters, "upstream_rq_pending_total", 1)
   assertCounterEqual(counters, "upstream_rq_pending_overflow", 10)
@@ -120,7 +120,7 @@ def test_http_h1_mini_stress_test_open_loop(http_test_server_fixture):
   """
   counters = mini_stress_test(http_test_server_fixture, [
       http_test_server_fixture.getTestServerRootUri(), "--rps", "2500", "--max-pending-requests",
-      "1", "--duration 10", "--open-loop", "--max-active-requests", "1", "--connections", "1"
+      "1", "--duration", "10", "--open-loop", "--max-active-requests", "1", "--connections", "1"
   ])
   # we expect pool overflows
   assertCounterGreater(counters, "benchmark.pool_overflow", 10)
@@ -132,7 +132,7 @@ def test_http_h2_mini_stress_test_open_loop(http_test_server_fixture):
   """
   counters = mini_stress_test(http_test_server_fixture, [
       http_test_server_fixture.getTestServerRootUri(), "--rps", "2500", "--max-pending-requests",
-      "1", "--duration 10", "--h2", "--open-loop", "--max-active-requests", "1"
+      "1", "--duration", "10", "--h2", "--open-loop", "--max-active-requests", "1"
   ])
   # we expect pool overflows
   assertCounterGreater(counters, "benchmark.pool_overflow", 10)
