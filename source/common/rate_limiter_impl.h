@@ -65,7 +65,7 @@ class RandomDistributingRateLimiter : public RateLimiter,
                                       public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
   RandomDistributingRateLimiter(Envoy::TimeSource& time_source, RateLimiterPtr&& rate_limiter,
-                                const RandomDistributionGenerator& random_distribution_generator);
+                                RandomDistributionGenerator random_distribution_generator);
   bool tryAcquireOne() override;
   void releaseOne() override;
 
