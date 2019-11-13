@@ -1,9 +1,13 @@
 #include <chrono>
 
+#include "nighthawk/common/exception.h"
+
+#include "external/envoy/source/common/protobuf/message_validator_impl.h"
 #include "external/envoy/test/test_common/file_system_for_test.h"
 #include "external/envoy/test/test_common/simulated_time_system.h"
 
 #include "api/client/options.pb.h"
+#include "api/client/output.pb.h"
 
 #include "common/statistic_impl.h"
 
@@ -93,7 +97,74 @@ TEST_F(OutputCollectorTest, getLowerCaseOutputFormats) {
   auto output_formats = OutputFormatterImpl::getLowerCaseOutputFormats();
   // When you're looking at this code you probably just added an output format.
   // This is to point out that you might want to update the list below and add a test above.
-  ASSERT_THAT(output_formats, ElementsAre("json", "human", "yaml", "dotted"));
+  ASSERT_THAT(output_formats, ElementsAre("json", "human", "yaml", "dotted", "fortio"));
+}
+
+class FortioOutputCollectorTest : public OutputCollectorTest {
+public:
+  FortioOutputCollectorTest() {
+    counters_["upstream_rq_total"] = 3;
+    counters_["benchmark.http_2xx"] = 4;
+    StatisticPtr used_statistic = std::make_unique<StreamingStatistic>();
+    used_statistic->setId("benchmark_http_client.request_to_response");
+    used_statistic->addValue(4000000);
+    statistics_.push_back(std::move(used_statistic));
+    EXPECT_CALL(options_, toCommandLineOptions())
+        .WillOnce(Return(ByMove(
+            std::make_unique<nighthawk::client::CommandLineOptions>(command_line_options_))));
+    setupCollector();
+  }
+};
+
+TEST_F(FortioOutputCollectorTest, MissingGlobalResult) {
+  nighthawk::client::Output output_proto = collector_->toProto();
+  output_proto.clear_results();
+
+  FortioOutputFormatterImpl formatter;
+  ASSERT_THROW(formatter.formatProto(output_proto), NighthawkException);
+}
+
+TEST_F(FortioOutputCollectorTest, MissingCounter) {
+  nighthawk::client::Output output_proto = collector_->toProto();
+  output_proto.mutable_results(2)->clear_counters();
+
+  FortioOutputFormatterImpl formatter;
+  ASSERT_THROW(formatter.formatProto(output_proto), NighthawkException);
+}
+
+TEST_F(FortioOutputCollectorTest, MissingStatistic) {
+  nighthawk::client::Output output_proto = collector_->toProto();
+  output_proto.mutable_results(2)->clear_statistics();
+
+  FortioOutputFormatterImpl formatter;
+  ASSERT_THROW(formatter.formatProto(output_proto), NighthawkException);
+}
+
+TEST_F(FortioOutputCollectorTest, NoExceptions) {
+  nighthawk::client::Output output_proto = collector_->toProto();
+
+  FortioOutputFormatterImpl formatter;
+  ASSERT_NO_THROW(formatter.formatProto(output_proto));
+}
+
+class MediumOutputCollectorTest : public OutputCollectorTest {
+public:
+  nighthawk::client::Output loadProtoFromFile(absl::string_view path) {
+    nighthawk::client::Output proto;
+    const auto contents = Envoy::Filesystem::fileSystemForTest().fileReadToEnd(
+        TestEnvironment::runfilesPath(std::string(path)));
+    Envoy::MessageUtil::loadFromJson(contents, proto,
+                                     Envoy::ProtobufMessage::getStrictValidationVisitor());
+    return proto;
+  }
+};
+
+TEST_F(MediumOutputCollectorTest, FortioFormatter) {
+  const auto input_proto = loadProtoFromFile("test/test_data/output_formatter.medium.proto.gold");
+
+  FortioOutputFormatterImpl formatter;
+  expectEqualToGoldFile(formatter.formatProto(input_proto),
+                        "test/test_data/output_formatter.medium.fortio.gold");
 }
 
 class StatidToNameTest : public Test {};
