@@ -5,7 +5,13 @@
 #include <chrono>
 #include <sstream>
 
+#include "nighthawk/common/exception.h"
+
 #include "external/envoy/source/common/protobuf/utility.h"
+
+#include "api/client/transform/fortio.pb.h"
+
+#include "absl/strings/str_cat.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -136,6 +142,126 @@ DottedStringOutputFormatterImpl::formatProto(const nighthawk::client::Output& ou
     }
   }
   return ss.str();
+}
+
+const nighthawk::client::Result&
+FortioOutputFormatterImpl::getGlobalResult(const nighthawk::client::Output& output) const {
+  for (const auto& nh_result : output.results()) {
+    if (nh_result.name() == "global") {
+      return nh_result;
+    }
+  }
+
+  throw NighthawkException("Nighthawk output was malformed, contains no 'global' results.");
+}
+
+const nighthawk::client::Counter&
+FortioOutputFormatterImpl::getCounterByName(const nighthawk::client::Result& result,
+                                            absl::string_view counter_name) const {
+  for (const auto& nh_counter : result.counters()) {
+    if (nh_counter.name() == counter_name) {
+      return nh_counter;
+    }
+  }
+
+  throw NighthawkException(absl::StrCat(
+      "Nighthawk result was malformed, contains no counter with name: ", counter_name));
+}
+
+const nighthawk::client::Statistic& FortioOutputFormatterImpl::getRequestResponseStatistic(
+    const nighthawk::client::Result& result) const {
+  for (auto const& nh_stat : result.statistics()) {
+    if (nh_stat.id() == "benchmark_http_client.request_to_response") {
+      return nh_stat;
+    }
+  }
+
+  throw NighthawkException("Nighthawk result was malformed, contains no "
+                           "'benchmark_http_client.request_to_response' statistic.");
+}
+
+std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
+  nighthawk::client::FortioResult fortio_output;
+
+  // TODO(#182): Not needed but nice to have, displays in the UI
+  fortio_output.set_labels("");
+  fortio_output.mutable_starttime()->set_seconds(output.timestamp().seconds());
+  fortio_output.set_requestedqps(output.options().requests_per_second().value());
+  fortio_output.set_url(output.options().uri().value());
+
+  // Actual and requested durations are the same
+  const auto& nh_duration = output.options().duration().seconds();
+  fortio_output.mutable_requestedduration()->set_seconds(nh_duration);
+  fortio_output.set_actualduration(nh_duration);
+
+  // This displays as "connections" in the UI, not threads.
+  // TODO(#186): This field may not be accurate for for HTTP2 load tests.
+  fortio_output.set_numthreads(output.options().connections().value());
+
+  // Get the result that represents all workers (global)
+  const auto& nh_global_result = this->getGlobalResult(output);
+
+  // Fill in the actual QPS based on the counters
+  const auto& nh_rq_counter = this->getCounterByName(nh_global_result, "upstream_rq_total");
+  const double actual_qps = static_cast<double>(nh_rq_counter.value()) / nh_duration;
+  fortio_output.set_actualqps(actual_qps);
+
+  // Fill in the number of successful responses.
+  // Fortio-ui only reads the 200 OK field, other fields are never displayed.
+  fortio_output.mutable_retcodes()->insert({"200", 0});
+  try {
+    const auto& nh_2xx_counter = this->getCounterByName(nh_global_result, "benchmark.http_2xx");
+    fortio_output.mutable_retcodes()->at("200") = nh_2xx_counter.value();
+  } catch (const NighthawkException& e) {
+    // If this field doesn't exist, then there were no 2xx responses
+    fortio_output.mutable_retcodes()->at("200") = 0;
+  }
+
+  // The core of the transformation is here: All the percentiles to display the dashboard
+  const auto& nh_stat = this->getRequestResponseStatistic(nh_global_result);
+
+  // Set the count (number of data points)
+  nighthawk::client::DurationHistogram fortio_histogram;
+  fortio_histogram.set_count(nh_stat.count());
+
+  uint64_t prev_fortio_count = 0;
+  double prev_fortio_end = 0;
+  for (int i = 0; i < nh_stat.percentiles().size(); i++) {
+
+    nighthawk::client::DataEntry fortio_data_entry;
+    const auto& nh_percentile = nh_stat.percentiles().at(i);
+
+    // fortio_percent = 100 * nh_percentile
+    fortio_data_entry.set_percent(nh_percentile.percentile() * 100);
+
+    // fortio_count = nh_count - prev_fortio_count
+    fortio_data_entry.set_count(nh_percentile.count() - prev_fortio_count);
+
+    // fortio_end = nh_duration (need to convert formats)
+    const double nh_percentile_duration_sec =
+        Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(nh_percentile.duration()) / 1e9;
+    fortio_data_entry.set_end(nh_percentile_duration_sec);
+
+    // fortio_start = prev_fortio_end
+    if (i == 0) {
+      // If this is the first entry, force the start and end time to be the same.
+      // This prevents it from starting at 0, making it disproportionally big in the UI.
+      prev_fortio_end = nh_percentile_duration_sec;
+    }
+    fortio_data_entry.set_start(prev_fortio_end);
+
+    // Update tracking variables
+    prev_fortio_count = nh_percentile.count();
+    prev_fortio_end = nh_percentile_duration_sec;
+
+    // Set the data entry in the histogram only if it's not the first entry
+    fortio_histogram.add_data()->CopyFrom(fortio_data_entry);
+  }
+
+  // Set the histogram in main fortio output
+  fortio_output.mutable_durationhistogram()->CopyFrom(fortio_histogram);
+
+  return Envoy::MessageUtil::getJsonStringFromMessage(fortio_output, true, true);
 }
 
 } // namespace Client

@@ -3,6 +3,8 @@
 #include "external/envoy/source/common/http/header_map_impl.h"
 #include "external/envoy/source/common/stats/isolated_store_impl.h"
 
+#include "api/client/options.pb.h"
+
 #include "common/header_source_impl.h"
 #include "common/platform_util_impl.h"
 #include "common/rate_limiter_impl.h"
@@ -88,6 +90,8 @@ OutputFormatterPtr OutputFormatterFactoryImpl::create(
     return std::make_unique<Client::YamlOutputFormatterImpl>();
   case nighthawk::client::OutputFormat::DOTTED:
     return std::make_unique<Client::DottedStringOutputFormatterImpl>();
+  case nighthawk::client::OutputFormat::FORTIO:
+    return std::make_unique<Client::FortioOutputFormatterImpl>();
   default:
     NOT_REACHED_GCOVR_EXCL_LINE;
   }
