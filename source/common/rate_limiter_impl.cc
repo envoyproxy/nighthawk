@@ -6,8 +6,6 @@
 
 namespace Nighthawk {
 
-using namespace std::chrono_literals;
-
 BurstingRateLimiter::BurstingRateLimiter(RateLimiterPtr&& rate_limiter, const uint64_t burst_size)
     : rate_limiter_(std::move(rate_limiter)), burst_size_(burst_size) {
   ASSERT(burst_size_ > 0);
@@ -83,13 +81,13 @@ void LinearRateLimiter::releaseOne() {
   acquired_count_--;
 }
 
-RandomDistributingRateLimiter::RandomDistributingRateLimiter(
-    Envoy::TimeSource& time_source, RateLimiterPtr&& rate_limiter,
-    RandomDistributionGenerator random_distribution_generator)
+DelegatingRateLimiter::DelegatingRateLimiter(Envoy::TimeSource& time_source,
+                                             RateLimiterPtr&& rate_limiter,
+                                             RateLimiterDelegate random_distribution_generator)
     : random_distribution_generator_(std::move(random_distribution_generator)),
       time_source_(time_source), rate_limiter_(std::move(rate_limiter)) {}
 
-bool RandomDistributingRateLimiter::tryAcquireOne() {
+bool DelegatingRateLimiter::tryAcquireOne() {
   if (distributed_start_ == absl::nullopt) {
     if (rate_limiter_->tryAcquireOne()) {
       distributed_start_ = time_source_.monotonicTime() + random_distribution_generator_();
@@ -104,21 +102,17 @@ bool RandomDistributingRateLimiter::tryAcquireOne() {
   return false;
 }
 
-void RandomDistributingRateLimiter::releaseOne() {
+void DelegatingRateLimiter::releaseOne() {
   distributed_start_ = absl::nullopt;
   rate_limiter_->releaseOne();
 }
 
-UniformDistributingRateLimiter::UniformDistributingRateLimiter(
-    Envoy::TimeSource& time_source, RateLimiterPtr&& rate_limiter,
-    const std::chrono::nanoseconds upper_bound)
-    : RandomDistributingRateLimiter(time_source, std::move(rate_limiter),
-                                    [this]() {
-                                      return std::chrono::duration<uint64_t, std::nano>(
-                                          distribution_(generator_));
-                                    }),
-      distribution_(0, upper_bound.count()) {
-  RELEASE_ASSERT(upper_bound > 0ns, "upper_bound == 0");
-}
+DistributionSamplingRateLimiterImpl::DistributionSamplingRateLimiterImpl(
+    Envoy::TimeSource& time_source, DiscreteNumericDistributionSamplerPtr&& provider,
+    RateLimiterPtr&& rate_limiter)
+    : DelegatingRateLimiter(
+          time_source, std::move(rate_limiter),
+          [this]() { return std::chrono::duration<uint64_t, std::nano>(provider_->getValue()); }),
+      provider_(std::move(provider)) {}
 
 } // namespace Nighthawk

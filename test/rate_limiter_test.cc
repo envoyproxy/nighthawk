@@ -104,13 +104,14 @@ TEST_F(BurstingRateLimiterIntegrationTest, BurstingLinearRateLimiterTest) {
   testBurstSize(100, 50_Hz);
 }
 
-TEST_F(RateLimiterTest, UniformDistributingRateLimiterTest) {
+TEST_F(RateLimiterTest, DistributionSamplingRateLimiterImplTest) {
   const uint64_t tries = 1000;
   auto mock_rate_limiter = std::make_unique<MockRateLimiter>();
   MockRateLimiter& unsafe_mock_rate_limiter = *mock_rate_limiter;
   Envoy::Event::SimulatedTimeSystem time_system;
-  RateLimiterPtr rate_limiter = std::make_unique<UniformDistributingRateLimiter>(
-      time_system, std::move(mock_rate_limiter), 1ns);
+  RateLimiterPtr rate_limiter = std::make_unique<DistributionSamplingRateLimiterImpl>(
+      time_system, std::make_unique<UniformRandomDistributionSamplerImpl>(1ns),
+      std::move(mock_rate_limiter));
 
   EXPECT_CALL(unsafe_mock_rate_limiter, tryAcquireOne).Times(tries).WillRepeatedly(Return(true));
   EXPECT_CALL(unsafe_mock_rate_limiter, releaseOne).Times(tries);
@@ -123,34 +124,49 @@ TEST_F(RateLimiterTest, UniformDistributingRateLimiterTest) {
       acquisitions++;
     }
     // We test the release gets propagated to the mock rate limiter.
-    // also, the release will force RandomDistributingRateLimiter to propagate tryAcquireOne.
+    // also, the release will force DelegatingRateLimiter to propagate tryAcquireOne.
     rate_limiter->releaseOne();
   }
   // 1 in a billion chance of failure.
   EXPECT_LT(acquisitions, (tries / 2) + 30);
 }
 
-TEST_F(RateLimiterTest, UniformDistributingRateLimiterSchedulingTest) {
+// A rate limiter determines when acquisition is allowed, but DistributionSamplingRateLimiterImpl
+// may arbitrarily delay that. We test that principle here.
+TEST_F(RateLimiterTest, DistributionSamplingRateLimiterImplSchedulingTest) {
   auto mock_rate_limiter = std::make_unique<NiceMock<MockRateLimiter>>();
   MockRateLimiter& unsafe_mock_rate_limiter = *mock_rate_limiter;
   Envoy::Event::SimulatedTimeSystem time_system;
-  RateLimiterPtr rate_limiter = std::make_unique<UniformDistributingRateLimiter>(
-      time_system, std::move(mock_rate_limiter), 1ns);
+  auto* unsafe_discrete_numeric_distribution_sampler = new MockDiscreteNumericDistributionSampler();
+  RateLimiterPtr rate_limiter = std::make_unique<DistributionSamplingRateLimiterImpl>(
+      time_system,
+      std::unique_ptr<DiscreteNumericDistributionSampler>(
+          unsafe_discrete_numeric_distribution_sampler),
+      std::move(mock_rate_limiter));
 
   EXPECT_CALL(unsafe_mock_rate_limiter, tryAcquireOne)
       .Times(AtLeast(1))
       .WillRepeatedly(Return(true));
+  EXPECT_CALL(unsafe_mock_rate_limiter, releaseOne).Times(1);
+  EXPECT_CALL(*unsafe_discrete_numeric_distribution_sampler, getValue)
+      .Times(3)
+      .WillOnce(Return(1))
+      .WillOnce(Return(0))
+      .WillOnce(Return(1));
 
-  // The mock rate limiter will always allow acquisition, but UniformDistributingRateLimiter may
-  // prevent that. When it does that, it ought to always allow it in the next ns (as it has no other
-  // choice).
-  for (int i = 0; i < 1000; i++) {
-    while (rate_limiter->tryAcquireOne()) {
-      rate_limiter->releaseOne();
-    }
-    time_system.sleep(1ns);
-    EXPECT_TRUE(rate_limiter->tryAcquireOne());
-  }
+  // The distribution first yields a 1 ns offset. So we don't expect to be green lighted.
+  EXPECT_FALSE(rate_limiter->tryAcquireOne());
+  time_system.sleep(1ns);
+  EXPECT_TRUE(rate_limiter->tryAcquireOne());
+  // We expect releaseOne to be propagated.
+  rate_limiter->releaseOne();
+  // The distribution will yield an offset of 0ns, we expect success.
+  EXPECT_TRUE(rate_limiter->tryAcquireOne());
+
+  // We don't sleep, and the distribution will yield a 1ns offset. No green light.
+  EXPECT_FALSE(rate_limiter->tryAcquireOne());
+  time_system.sleep(1ns);
+  EXPECT_TRUE(rate_limiter->tryAcquireOne());
 }
 
 } // namespace Nighthawk
