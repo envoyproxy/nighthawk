@@ -1,0 +1,3522 @@
+{
+ "options": {
+  "verbosity": {
+   "value": "INFO"
+  },
+  "output_format": {
+   "value": "JSON"
+  },
+  "address_family": {
+   "value": "AUTO"
+  },
+  "request_options": {
+   "request_method": "GET",
+   "request_headers": [],
+   "request_body_size": 0
+  },
+  "tls_context": {
+   "sni": "",
+   "allow_renegotiation": false
+  },
+  "sequencer_idle_strategy": {
+   "value": "SPIN"
+  },
+  "requests_per_second": 1,
+  "connections": 1,
+  "duration": "5s",
+  "timeout": "30s",
+  "h2": false,
+  "concurrency": "auto",
+  "prefetch_connections": false,
+  "burst_size": 0,
+  "max_pending_requests": 1,
+  "max_active_requests": 4294937295,
+  "max_requests_per_connection": 4294937295,
+  "uri": "http://127.0.0.1:10000/",
+  "trace": ""
+ },
+ "results": [
+  {
+   "name": "worker_0",
+   "statistics": [
+    {
+     "count": "4",
+     "id": "benchmark_http_client.queue_to_connect",
+     "percentiles": [
+      {
+       "percentile": 0,
+       "count": "1",
+       "duration": "0.000031494s"
+      },
+      {
+       "percentile": 0.1,
+       "count": "1",
+       "duration": "0.000031494s"
+      },
+      {
+       "percentile": 0.2,
+       "count": "1",
+       "duration": "0.000031494s"
+      },
+      {
+       "percentile": 0.3,
+       "count": "2",
+       "duration": "0.000032591s"
+      },
+      {
+       "percentile": 0.4,
+       "count": "2",
+       "duration": "0.000032591s"
+      },
+      {
+       "percentile": 0.5,
+       "count": "2",
+       "duration": "0.000032591s"
+      },
+      {
+       "percentile": 0.55,
+       "count": "3",
+       "duration": "0.000048189s"
+      },
+      {
+       "percentile": 0.6,
+       "count": "3",
+       "duration": "0.000048189s"
+      },
+      {
+       "percentile": 0.65,
+       "count": "3",
+       "duration": "0.000048189s"
+      },
+      {
+       "percentile": 0.7,
+       "count": "3",
+       "duration": "0.000048189s"
+      },
+      {
+       "percentile": 0.75,
+       "count": "3",
+       "duration": "0.000048189s"
+      },
+      {
+       "percentile": 0.775,
+       "count": "4",
+       "duration": "0.000117091s"
+      },
+      {
+       "percentile": 1,
+       "count": "4",
+       "duration": "0.000117091s"
+      }
+     ],
+     "mean": "0.000057341s",
+     "pstdev": "0.000035122s"
+    },
+    {
+     "count": "4",
+     "id": "benchmark_http_client.request_to_response",
+     "percentiles": [
+      {
+       "percentile": 0,
+       "count": "1",
+       "duration": "0.059297791s"
+      },
+      {
+       "percentile": 0.1,
+       "count": "1",
+       "duration": "0.059297791s"
+      },
+      {
+       "percentile": 0.2,
+       "count": "1",
+       "duration": "0.059297791s"
+      },
+      {
+       "percentile": 0.3,
+       "count": "2",
+       "duration": "0.059312127s"
+      },
+      {
+       "percentile": 0.4,
+       "count": "2",
+       "duration": "0.059312127s"
+      },
+      {
+       "percentile": 0.5,
+       "count": "2",
+       "duration": "0.059312127s"
+      },
+      {
+       "percentile": 0.55,
+       "count": "3",
+       "duration": "0.061976575s"
+      },
+      {
+       "percentile": 0.6,
+       "count": "3",
+       "duration": "0.061976575s"
+      },
+      {
+       "percentile": 0.65,
+       "count": "3",
+       "duration": "0.061976575s"
+      },
+      {
+       "percentile": 0.7,
+       "count": "3",
+       "duration": "0.061976575s"
+      },
+      {
+       "percentile": 0.75,
+       "count": "3",
+       "duration": "0.061976575s"
+      },
+      {
+       "percentile": 0.775,
+       "count": "4",
+       "duration": "0.084357119s"
+      },
+      {
+       "percentile": 1,
+       "count": "4",
+       "duration": "0.084357119s"
+      }
+     ],
+     "mean": "0.066234624s",
+     "pstdev": "0.010518547s"
+    },
+    {
+     "count": "0",
+     "id": "sequencer.blocking",
+     "percentiles": [
+      {
+       "percentile": 1,
+       "count": "0",
+       "duration": "0s"
+      }
+     ],
+     "mean": "0s",
+     "pstdev": "0s"
+    },
+    {
+     "count": "4",
+     "id": "sequencer.callback",
+     "percentiles": [
+      {
+       "percentile": 0,
+       "count": "1",
+       "duration": "0.059402239s"
+      },
+      {
+       "percentile": 0.1,
+       "count": "1",
+       "duration": "0.059402239s"
+      },
+      {
+       "percentile": 0.2,
+       "count": "1",
+       "duration": "0.059402239s"
+      },
+      {
+       "percentile": 0.3,
+       "count": "2",
+       "duration": "0.059541503s"
+      },
+      {
+       "percentile": 0.4,
+       "count": "2",
+       "duration": "0.059541503s"
+      },
+      {
+       "percentile": 0.5,
+       "count": "2",
+       "duration": "0.059541503s"
+      },
+      {
+       "percentile": 0.55,
+       "count": "3",
+       "duration": "0.062064639s"
+      },
+      {
+       "percentile": 0.6,
+       "count": "3",
+       "duration": "0.062064639s"
+      },
+      {
+       "percentile": 0.65,
+       "count": "3",
+       "duration": "0.062064639s"
+      },
+      {
+       "percentile": 0.7,
+       "count": "3",
+       "duration": "0.062064639s"
+      },
+      {
+       "percentile": 0.75,
+       "count": "3",
+       "duration": "0.062064639s"
+      },
+      {
+       "percentile": 0.775,
+       "count": "4",
+       "duration": "0.084479999s"
+      },
+      {
+       "percentile": 1,
+       "count": "4",
+       "duration": "0.084479999s"
+      }
+     ],
+     "mean": "0.066370816s",
+     "pstdev": "0.010507725s"
+    }
+   ],
+   "counters": [
+    {
+     "name": "benchmark.http_2xx",
+     "value": "5"
+    }
+   ]
+  },
+  {
+   "name": "worker_1",
+   "statistics": [
+    {
+     "count": "4",
+     "id": "benchmark_http_client.queue_to_connect",
+     "percentiles": [
+      {
+       "percentile": 0,
+       "count": "1",
+       "duration": "0.000033313s"
+      },
+      {
+       "percentile": 0.1,
+       "count": "1",
+       "duration": "0.000033313s"
+      },
+      {
+       "percentile": 0.2,
+       "count": "1",
+       "duration": "0.000033313s"
+      },
+      {
+       "percentile": 0.3,
+       "count": "2",
+       "duration": "0.000035465s"
+      },
+      {
+       "percentile": 0.4,
+       "count": "2",
+       "duration": "0.000035465s"
+      },
+      {
+       "percentile": 0.5,
+       "count": "2",
+       "duration": "0.000035465s"
+      },
+      {
+       "percentile": 0.55,
+       "count": "3",
+       "duration": "0.000051897s"
+      },
+      {
+       "percentile": 0.6,
+       "count": "3",
+       "duration": "0.000051897s"
+      },
+      {
+       "percentile": 0.65,
+       "count": "3",
+       "duration": "0.000051897s"
+      },
+      {
+       "percentile": 0.7,
+       "count": "3",
+       "duration": "0.000051897s"
+      },
+      {
+       "percentile": 0.75,
+       "count": "3",
+       "duration": "0.000051897s"
+      },
+      {
+       "percentile": 0.775,
+       "count": "4",
+       "duration": "0.000070355s"
+      },
+      {
+       "percentile": 1,
+       "count": "4",
+       "duration": "0.000070355s"
+      }
+     ],
+     "mean": "0.000047757s",
+     "pstdev": "0.000014895s"
+    },
+    {
+     "count": "4",
+     "id": "benchmark_http_client.request_to_response",
+     "percentiles": [
+      {
+       "percentile": 0,
+       "count": "1",
+       "duration": "0.064684031s"
+      },
+      {
+       "percentile": 0.1,
+       "count": "1",
+       "duration": "0.064684031s"
+      },
+      {
+       "percentile": 0.2,
+       "count": "1",
+       "duration": "0.064684031s"
+      },
+      {
+       "percentile": 0.3,
+       "count": "2",
+       "duration": "0.065081343s"
+      },
+      {
+       "percentile": 0.4,
+       "count": "2",
+       "duration": "0.065081343s"
+      },
+      {
+       "percentile": 0.5,
+       "count": "2",
+       "duration": "0.065081343s"
+      },
+      {
+       "percentile": 0.55,
+       "count": "3",
+       "duration": "0.066537471s"
+      },
+      {
+       "percentile": 0.6,
+       "count": "3",
+       "duration": "0.066537471s"
+      },
+      {
+       "percentile": 0.65,
+       "count": "3",
+       "duration": "0.066537471s"
+      },
+      {
+       "percentile": 0.7,
+       "count": "3",
+       "duration": "0.066537471s"
+      },
+      {
+       "percentile": 0.75,
+       "count": "3",
+       "duration": "0.066537471s"
+      },
+      {
+       "percentile": 0.775,
+       "count": "4",
+       "duration": "0.068657151s"
+      },
+      {
+       "percentile": 1,
+       "count": "4",
+       "duration": "0.068657151s"
+      }
+     ],
+     "mean": "0.066238720s",
+     "pstdev": "0.001556413s"
+    },
+    {
+     "count": "0",
+     "id": "sequencer.blocking",
+     "percentiles": [
+      {
+       "percentile": 1,
+       "count": "0",
+       "duration": "0s"
+      }
+     ],
+     "mean": "0s",
+     "pstdev": "0s"
+    },
+    {
+     "count": "4",
+     "id": "sequencer.callback",
+     "percentiles": [
+      {
+       "percentile": 0,
+       "count": "1",
+       "duration": "0.064784383s"
+      },
+      {
+       "percentile": 0.1,
+       "count": "1",
+       "duration": "0.064784383s"
+      },
+      {
+       "percentile": 0.2,
+       "count": "1",
+       "duration": "0.064784383s"
+      },
+      {
+       "percentile": 0.3,
+       "count": "2",
+       "duration": "0.065179647s"
+      },
+      {
+       "percentile": 0.4,
+       "count": "2",
+       "duration": "0.065179647s"
+      },
+      {
+       "percentile": 0.5,
+       "count": "2",
+       "duration": "0.065179647s"
+      },
+      {
+       "percentile": 0.55,
+       "count": "3",
+       "duration": "0.066721791s"
+      },
+      {
+       "percentile": 0.6,
+       "count": "3",
+       "duration": "0.066721791s"
+      },
+      {
+       "percentile": 0.65,
+       "count": "3",
+       "duration": "0.066721791s"
+      },
+      {
+       "percentile": 0.7,
+       "count": "3",
+       "duration": "0.066721791s"
+      },
+      {
+       "percentile": 0.75,
+       "count": "3",
+       "duration": "0.066721791s"
+      },
+      {
+       "percentile": 0.775,
+       "count": "4",
+       "duration": "0.068780031s"
+      },
+      {
+       "percentile": 1,
+       "count": "4",
+       "duration": "0.068780031s"
+      }
+     ],
+     "mean": "0.066365184s",
+     "pstdev": "0.001569883s"
+    }
+   ],
+   "counters": [
+    {
+     "name": "benchmark.http_2xx",
+     "value": "5"
+    }
+   ]
+  },
+  {
+   "name": "worker_2",
+   "statistics": [
+    {
+     "count": "4",
+     "id": "benchmark_http_client.queue_to_connect",
+     "percentiles": [
+      {
+       "percentile": 0,
+       "count": "1",
+       "duration": "0.000031796s"
+      },
+      {
+       "percentile": 0.1,
+       "count": "1",
+       "duration": "0.000031796s"
+      },
+      {
+       "percentile": 0.2,
+       "count": "1",
+       "duration": "0.000031796s"
+      },
+      {
+       "percentile": 0.3,
+       "count": "2",
+       "duration": "0.000040337s"
+      },
+      {
+       "percentile": 0.4,
+       "count": "2",
+       "duration": "0.000040337s"
+      },
+      {
+       "percentile": 0.5,
+       "count": "2",
+       "duration": "0.000040337s"
+      },
+      {
+       "percentile": 0.55,
+       "count": "3",
+       "duration": "0.000042679s"
+      },
+      {
+       "percentile": 0.6,
+       "count": "3",
+       "duration": "0.000042679s"
+      },
+      {
+       "percentile": 0.65,
+       "count": "3",
+       "duration": "0.000042679s"
+      },
+      {
+       "percentile": 0.7,
+       "count": "3",
+       "duration": "0.000042679s"
+      },
+      {
+       "percentile": 0.75,
+       "count": "3",
+       "duration": "0.000042679s"
+      },
+      {
+       "percentile": 0.775,
+       "count": "4",
+       "duration": "0.000053019s"
+      },
+      {
+       "percentile": 1,
+       "count": "4",
+       "duration": "0.000053019s"
+      }
+     ],
+     "mean": "0.000041958s",
+     "pstdev": "0.000007562s"
+    },
+    {
+     "count": "4",
+     "id": "benchmark_http_client.request_to_response",
+     "percentiles": [
+      {
+       "percentile": 0,
+       "count": "1",
+       "duration": "0.058099711s"
+      },
+      {
+       "percentile": 0.1,
+       "count": "1",
+       "duration": "0.058099711s"
+      },
+      {
+       "percentile": 0.2,
+       "count": "1",
+       "duration": "0.058099711s"
+      },
+      {
+       "percentile": 0.3,
+       "count": "2",
+       "duration": "0.058902527s"
+      },
+      {
+       "percentile": 0.4,
+       "count": "2",
+       "duration": "0.058902527s"
+      },
+      {
+       "percentile": 0.5,
+       "count": "2",
+       "duration": "0.058902527s"
+      },
+      {
+       "percentile": 0.55,
+       "count": "3",
+       "duration": "0.061583359s"
+      },
+      {
+       "percentile": 0.6,
+       "count": "3",
+       "duration": "0.061583359s"
+      },
+      {
+       "percentile": 0.65,
+       "count": "3",
+       "duration": "0.061583359s"
+      },
+      {
+       "percentile": 0.7,
+       "count": "3",
+       "duration": "0.061583359s"
+      },
+      {
+       "percentile": 0.75,
+       "count": "3",
+       "duration": "0.061583359s"
+      },
+      {
+       "percentile": 0.775,
+       "count": "4",
+       "duration": "0.067194879s"
+      },
+      {
+       "percentile": 1,
+       "count": "4",
+       "duration": "0.067194879s"
+      }
+     ],
+     "mean": "0.061443840s",
+     "pstdev": "0.003561025s"
+    },
+    {
+     "count": "0",
+     "id": "sequencer.blocking",
+     "percentiles": [
+      {
+       "percentile": 1,
+       "count": "0",
+       "duration": "0s"
+      }
+     ],
+     "mean": "0s",
+     "pstdev": "0s"
+    },
+    {
+     "count": "4",
+     "id": "sequencer.callback",
+     "percentiles": [
+      {
+       "percentile": 0,
+       "count": "1",
+       "duration": "0.058212351s"
+      },
+      {
+       "percentile": 0.1,
+       "count": "1",
+       "duration": "0.058212351s"
+      },
+      {
+       "percentile": 0.2,
+       "count": "1",
+       "duration": "0.058212351s"
+      },
+      {
+       "percentile": 0.3,
+       "count": "2",
+       "duration": "0.059029503s"
+      },
+      {
+       "percentile": 0.4,
+       "count": "2",
+       "duration": "0.059029503s"
+      },
+      {
+       "percentile": 0.5,
+       "count": "2",
+       "duration": "0.059029503s"
+      },
+      {
+       "percentile": 0.55,
+       "count": "3",
+       "duration": "0.061698047s"
+      },
+      {
+       "percentile": 0.6,
+       "count": "3",
+       "duration": "0.061698047s"
+      },
+      {
+       "percentile": 0.65,
+       "count": "3",
+       "duration": "0.061698047s"
+      },
+      {
+       "percentile": 0.7,
+       "count": "3",
+       "duration": "0.061698047s"
+      },
+      {
+       "percentile": 0.75,
+       "count": "3",
+       "duration": "0.061698047s"
+      },
+      {
+       "percentile": 0.775,
+       "count": "4",
+       "duration": "0.067289087s"
+      },
+      {
+       "percentile": 1,
+       "count": "4",
+       "duration": "0.067289087s"
+      }
+     ],
+     "mean": "0.061555968s",
+     "pstdev": "0.003551052s"
+    }
+   ],
+   "counters": [
+    {
+     "name": "benchmark.http_2xx",
+     "value": "5"
+    }
+   ]
+  },
+  {
+   "name": "worker_3",
+   "statistics": [
+    {
+     "count": "4",
+     "id": "benchmark_http_client.queue_to_connect",
+     "percentiles": [
+      {
+       "percentile": 0,
+       "count": "1",
+       "duration": "0.000032588s"
+      },
+      {
+       "percentile": 0.1,
+       "count": "1",
+       "duration": "0.000032588s"
+      },
+      {
+       "percentile": 0.2,
+       "count": "1",
+       "duration": "0.000032588s"
+      },
+      {
+       "percentile": 0.3,
+       "count": "2",
+       "duration": "0.000040265s"
+      },
+      {
+       "percentile": 0.4,
+       "count": "2",
+       "duration": "0.000040265s"
+      },
+      {
+       "percentile": 0.5,
+       "count": "2",
+       "duration": "0.000040265s"
+      },
+      {
+       "percentile": 0.55,
+       "count": "3",
+       "duration": "0.000041157s"
+      },
+      {
+       "percentile": 0.6,
+       "count": "3",
+       "duration": "0.000041157s"
+      },
+      {
+       "percentile": 0.65,
+       "count": "3",
+       "duration": "0.000041157s"
+      },
+      {
+       "percentile": 0.7,
+       "count": "3",
+       "duration": "0.000041157s"
+      },
+      {
+       "percentile": 0.75,
+       "count": "3",
+       "duration": "0.000041157s"
+      },
+      {
+       "percentile": 0.775,
+       "count": "4",
+       "duration": "0.000043807s"
+      },
+      {
+       "percentile": 1,
+       "count": "4",
+       "duration": "0.000043807s"
+      }
+     ],
+     "mean": "0.000039454s",
+     "pstdev": "0.000004173s"
+    },
+    {
+     "count": "4",
+     "id": "benchmark_http_client.request_to_response",
+     "percentiles": [
+      {
+       "percentile": 0,
+       "count": "1",
+       "duration": "0.056578047s"
+      },
+      {
+       "percentile": 0.1,
+       "count": "1",
+       "duration": "0.056578047s"
+      },
+      {
+       "percentile": 0.2,
+       "count": "1",
+       "duration": "0.056578047s"
+      },
+      {
+       "percentile": 0.3,
+       "count": "2",
+       "duration": "0.058265599s"
+      },
+      {
+       "percentile": 0.4,
+       "count": "2",
+       "duration": "0.058265599s"
+      },
+      {
+       "percentile": 0.5,
+       "count": "2",
+       "duration": "0.058265599s"
+      },
+      {
+       "percentile": 0.55,
+       "count": "3",
+       "duration": "0.061620223s"
+      },
+      {
+       "percentile": 0.6,
+       "count": "3",
+       "duration": "0.061620223s"
+      },
+      {
+       "percentile": 0.65,
+       "count": "3",
+       "duration": "0.061620223s"
+      },
+      {
+       "percentile": 0.7,
+       "count": "3",
+       "duration": "0.061620223s"
+      },
+      {
+       "percentile": 0.75,
+       "count": "3",
+       "duration": "0.061620223s"
+      },
+      {
+       "percentile": 0.775,
+       "count": "4",
+       "duration": "0.079327231s"
+      },
+      {
+       "percentile": 1,
+       "count": "4",
+       "duration": "0.079327231s"
+      }
+     ],
+     "mean": "0.063946496s",
+     "pstdev": "0.009062473s"
+    },
+    {
+     "count": "0",
+     "id": "sequencer.blocking",
+     "percentiles": [
+      {
+       "percentile": 1,
+       "count": "0",
+       "duration": "0s"
+      }
+     ],
+     "mean": "0s",
+     "pstdev": "0s"
+    },
+    {
+     "count": "4",
+     "id": "sequencer.callback",
+     "percentiles": [
+      {
+       "percentile": 0,
+       "count": "1",
+       "duration": "0.056690687s"
+      },
+      {
+       "percentile": 0.1,
+       "count": "1",
+       "duration": "0.056690687s"
+      },
+      {
+       "percentile": 0.2,
+       "count": "1",
+       "duration": "0.056690687s"
+      },
+      {
+       "percentile": 0.3,
+       "count": "2",
+       "duration": "0.058374143s"
+      },
+      {
+       "percentile": 0.4,
+       "count": "2",
+       "duration": "0.058374143s"
+      },
+      {
+       "percentile": 0.5,
+       "count": "2",
+       "duration": "0.058374143s"
+      },
+      {
+       "percentile": 0.55,
+       "count": "3",
+       "duration": "0.061712383s"
+      },
+      {
+       "percentile": 0.6,
+       "count": "3",
+       "duration": "0.061712383s"
+      },
+      {
+       "percentile": 0.65,
+       "count": "3",
+       "duration": "0.061712383s"
+      },
+      {
+       "percentile": 0.7,
+       "count": "3",
+       "duration": "0.061712383s"
+      },
+      {
+       "percentile": 0.75,
+       "count": "3",
+       "duration": "0.061712383s"
+      },
+      {
+       "percentile": 0.775,
+       "count": "4",
+       "duration": "0.079437823s"
+      },
+      {
+       "percentile": 1,
+       "count": "4",
+       "duration": "0.079437823s"
+      }
+     ],
+     "mean": "0.064052480s",
+     "pstdev": "0.009063565s"
+    }
+   ],
+   "counters": [
+    {
+     "name": "benchmark.http_2xx",
+     "value": "5"
+    }
+   ]
+  },
+  {
+   "name": "worker_4",
+   "statistics": [
+    {
+     "count": "4",
+     "id": "benchmark_http_client.queue_to_connect",
+     "percentiles": [
+      {
+       "percentile": 0,
+       "count": "1",
+       "duration": "0.000033859s"
+      },
+      {
+       "percentile": 0.1,
+       "count": "1",
+       "duration": "0.000033859s"
+      },
+      {
+       "percentile": 0.2,
+       "count": "1",
+       "duration": "0.000033859s"
+      },
+      {
+       "percentile": 0.3,
+       "count": "2",
+       "duration": "0.000035493s"
+      },
+      {
+       "percentile": 0.4,
+       "count": "2",
+       "duration": "0.000035493s"
+      },
+      {
+       "percentile": 0.5,
+       "count": "2",
+       "duration": "0.000035493s"
+      },
+      {
+       "percentile": 0.55,
+       "count": "3",
+       "duration": "0.000048117s"
+      },
+      {
+       "percentile": 0.6,
+       "count": "3",
+       "duration": "0.000048117s"
+      },
+      {
+       "percentile": 0.65,
+       "count": "3",
+       "duration": "0.000048117s"
+      },
+      {
+       "percentile": 0.7,
+       "count": "3",
+       "duration": "0.000048117s"
+      },
+      {
+       "percentile": 0.75,
+       "count": "3",
+       "duration": "0.000048117s"
+      },
+      {
+       "percentile": 0.775,
+       "count": "4",
+       "duration": "0.000051953s"
+      },
+      {
+       "percentile": 1,
+       "count": "4",
+       "duration": "0.000051953s"
+      }
+     ],
+     "mean": "0.000042356s",
+     "pstdev": "0.000007820s"
+    },
+    {
+     "count": "4",
+     "id": "benchmark_http_client.request_to_response",
+     "percentiles": [
+      {
+       "percentile": 0,
+       "count": "1",
+       "duration": "0.056150015s"
+      },
+      {
+       "percentile": 0.1,
+       "count": "1",
+       "duration": "0.056150015s"
+      },
+      {
+       "percentile": 0.2,
+       "count": "1",
+       "duration": "0.056150015s"
+      },
+      {
+       "percentile": 0.3,
+       "count": "2",
+       "duration": "0.056334335s"
+      },
+      {
+       "percentile": 0.4,
+       "count": "2",
+       "duration": "0.056334335s"
+      },
+      {
+       "percentile": 0.5,
+       "count": "2",
+       "duration": "0.056334335s"
+      },
+      {
+       "percentile": 0.55,
+       "count": "3",
+       "duration": "0.058064895s"
+      },
+      {
+       "percentile": 0.6,
+       "count": "3",
+       "duration": "0.058064895s"
+      },
+      {
+       "percentile": 0.65,
+       "count": "3",
+       "duration": "0.058064895s"
+      },
+      {
+       "percentile": 0.7,
+       "count": "3",
+       "duration": "0.058064895s"
+      },
+      {
+       "percentile": 0.75,
+       "count": "3",
+       "duration": "0.058064895s"
+      },
+      {
+       "percentile": 0.775,
+       "count": "4",
+       "duration": "0.061089791s"
+      },
+      {
+       "percentile": 1,
+       "count": "4",
+       "duration": "0.061089791s"
+      }
+     ],
+     "mean": "0.057908736s",
+     "pstdev": "0.001982128s"
+    },
+    {
+     "count": "0",
+     "id": "sequencer.blocking",
+     "percentiles": [
+      {
+       "percentile": 1,
+       "count": "0",
+       "duration": "0s"
+      }
+     ],
+     "mean": "0s",
+     "pstdev": "0s"
+    },
+    {
+     "count": "4",
+     "id": "sequencer.callback",
+     "percentiles": [
+      {
+       "percentile": 0,
+       "count": "1",
+       "duration": "0.056272895s"
+      },
+      {
+       "percentile": 0.1,
+       "count": "1",
+       "duration": "0.056272895s"
+      },
+      {
+       "percentile": 0.2,
+       "count": "1",
+       "duration": "0.056272895s"
+      },
+      {
+       "percentile": 0.3,
+       "count": "2",
+       "duration": "0.056432639s"
+      },
+      {
+       "percentile": 0.4,
+       "count": "2",
+       "duration": "0.056432639s"
+      },
+      {
+       "percentile": 0.5,
+       "count": "2",
+       "duration": "0.056432639s"
+      },
+      {
+       "percentile": 0.55,
+       "count": "3",
+       "duration": "0.058183679s"
+      },
+      {
+       "percentile": 0.6,
+       "count": "3",
+       "duration": "0.058183679s"
+      },
+      {
+       "percentile": 0.65,
+       "count": "3",
+       "duration": "0.058183679s"
+      },
+      {
+       "percentile": 0.7,
+       "count": "3",
+       "duration": "0.058183679s"
+      },
+      {
+       "percentile": 0.75,
+       "count": "3",
+       "duration": "0.058183679s"
+      },
+      {
+       "percentile": 0.775,
+       "count": "4",
+       "duration": "0.061186047s"
+      },
+      {
+       "percentile": 1,
+       "count": "4",
+       "duration": "0.061186047s"
+      }
+     ],
+     "mean": "0.058017792s",
+     "pstdev": "0.001976280s"
+    }
+   ],
+   "counters": [
+    {
+     "name": "benchmark.http_2xx",
+     "value": "5"
+    }
+   ]
+  },
+  {
+   "name": "worker_5",
+   "statistics": [
+    {
+     "count": "4",
+     "id": "benchmark_http_client.queue_to_connect",
+     "percentiles": [
+      {
+       "percentile": 0,
+       "count": "1",
+       "duration": "0.000031978s"
+      },
+      {
+       "percentile": 0.1,
+       "count": "1",
+       "duration": "0.000031978s"
+      },
+      {
+       "percentile": 0.2,
+       "count": "1",
+       "duration": "0.000031978s"
+      },
+      {
+       "percentile": 0.3,
+       "count": "2",
+       "duration": "0.000035205s"
+      },
+      {
+       "percentile": 0.4,
+       "count": "2",
+       "duration": "0.000035205s"
+      },
+      {
+       "percentile": 0.5,
+       "count": "2",
+       "duration": "0.000035205s"
+      },
+      {
+       "percentile": 0.55,
+       "count": "3",
+       "duration": "0.000051767s"
+      },
+      {
+       "percentile": 0.6,
+       "count": "3",
+       "duration": "0.000051767s"
+      },
+      {
+       "percentile": 0.65,
+       "count": "3",
+       "duration": "0.000051767s"
+      },
+      {
+       "percentile": 0.7,
+       "count": "3",
+       "duration": "0.000051767s"
+      },
+      {
+       "percentile": 0.75,
+       "count": "3",
+       "duration": "0.000051767s"
+      },
+      {
+       "percentile": 0.775,
+       "count": "4",
+       "duration": "0.000054551s"
+      },
+      {
+       "percentile": 1,
+       "count": "4",
+       "duration": "0.000054551s"
+      }
+     ],
+     "mean": "0.000043375s",
+     "pstdev": "0.000009899s"
+    },
+    {
+     "count": "4",
+     "id": "benchmark_http_client.request_to_response",
+     "percentiles": [
+      {
+       "percentile": 0,
+       "count": "1",
+       "duration": "0.057862143s"
+      },
+      {
+       "percentile": 0.1,
+       "count": "1",
+       "duration": "0.057862143s"
+      },
+      {
+       "percentile": 0.2,
+       "count": "1",
+       "duration": "0.057862143s"
+      },
+      {
+       "percentile": 0.3,
+       "count": "2",
+       "duration": "0.063868927s"
+      },
+      {
+       "percentile": 0.4,
+       "count": "2",
+       "duration": "0.063868927s"
+      },
+      {
+       "percentile": 0.5,
+       "count": "2",
+       "duration": "0.063868927s"
+      },
+      {
+       "percentile": 0.55,
+       "count": "3",
+       "duration": "0.065679359s"
+      },
+      {
+       "percentile": 0.6,
+       "count": "3",
+       "duration": "0.065679359s"
+      },
+      {
+       "percentile": 0.65,
+       "count": "3",
+       "duration": "0.065679359s"
+      },
+      {
+       "percentile": 0.7,
+       "count": "3",
+       "duration": "0.065679359s"
+      },
+      {
+       "percentile": 0.75,
+       "count": "3",
+       "duration": "0.065679359s"
+      },
+      {
+       "percentile": 0.775,
+       "count": "4",
+       "duration": "0.067862527s"
+      },
+      {
+       "percentile": 1,
+       "count": "4",
+       "duration": "0.067862527s"
+      }
+     ],
+     "mean": "0.063816960s",
+     "pstdev": "0.003717842s"
+    },
+    {
+     "count": "0",
+     "id": "sequencer.blocking",
+     "percentiles": [
+      {
+       "percentile": 1,
+       "count": "0",
+       "duration": "0s"
+      }
+     ],
+     "mean": "0s",
+     "pstdev": "0s"
+    },
+    {
+     "count": "4",
+     "id": "sequencer.callback",
+     "percentiles": [
+      {
+       "percentile": 0,
+       "count": "1",
+       "duration": "0.057999359s"
+      },
+      {
+       "percentile": 0.1,
+       "count": "1",
+       "duration": "0.057999359s"
+      },
+      {
+       "percentile": 0.2,
+       "count": "1",
+       "duration": "0.057999359s"
+      },
+      {
+       "percentile": 0.3,
+       "count": "2",
+       "duration": "0.063999999s"
+      },
+      {
+       "percentile": 0.4,
+       "count": "2",
+       "duration": "0.063999999s"
+      },
+      {
+       "percentile": 0.5,
+       "count": "2",
+       "duration": "0.063999999s"
+      },
+      {
+       "percentile": 0.55,
+       "count": "3",
+       "duration": "0.065777663s"
+      },
+      {
+       "percentile": 0.6,
+       "count": "3",
+       "duration": "0.065777663s"
+      },
+      {
+       "percentile": 0.65,
+       "count": "3",
+       "duration": "0.065777663s"
+      },
+      {
+       "percentile": 0.7,
+       "count": "3",
+       "duration": "0.065777663s"
+      },
+      {
+       "percentile": 0.75,
+       "count": "3",
+       "duration": "0.065777663s"
+      },
+      {
+       "percentile": 0.775,
+       "count": "4",
+       "duration": "0.067960831s"
+      },
+      {
+       "percentile": 1,
+       "count": "4",
+       "duration": "0.067960831s"
+      }
+     ],
+     "mean": "0.063933184s",
+     "pstdev": "0.003702382s"
+    }
+   ],
+   "counters": [
+    {
+     "name": "benchmark.http_2xx",
+     "value": "5"
+    }
+   ]
+  },
+  {
+   "name": "worker_6",
+   "statistics": [
+    {
+     "count": "4",
+     "id": "benchmark_http_client.queue_to_connect",
+     "percentiles": [
+      {
+       "percentile": 0,
+       "count": "1",
+       "duration": "0.000032893s"
+      },
+      {
+       "percentile": 0.1,
+       "count": "1",
+       "duration": "0.000032893s"
+      },
+      {
+       "percentile": 0.2,
+       "count": "1",
+       "duration": "0.000032893s"
+      },
+      {
+       "percentile": 0.3,
+       "count": "2",
+       "duration": "0.000033521s"
+      },
+      {
+       "percentile": 0.4,
+       "count": "2",
+       "duration": "0.000033521s"
+      },
+      {
+       "percentile": 0.5,
+       "count": "2",
+       "duration": "0.000033521s"
+      },
+      {
+       "percentile": 0.55,
+       "count": "3",
+       "duration": "0.000038597s"
+      },
+      {
+       "percentile": 0.6,
+       "count": "3",
+       "duration": "0.000038597s"
+      },
+      {
+       "percentile": 0.65,
+       "count": "3",
+       "duration": "0.000038597s"
+      },
+      {
+       "percentile": 0.7,
+       "count": "3",
+       "duration": "0.000038597s"
+      },
+      {
+       "percentile": 0.75,
+       "count": "3",
+       "duration": "0.000038597s"
+      },
+      {
+       "percentile": 0.775,
+       "count": "4",
+       "duration": "0.000039201s"
+      },
+      {
+       "percentile": 1,
+       "count": "4",
+       "duration": "0.000039201s"
+      }
+     ],
+     "mean": "0.000036053s",
+     "pstdev": "0.000002863s"
+    },
+    {
+     "count": "4",
+     "id": "benchmark_http_client.request_to_response",
+     "percentiles": [
+      {
+       "percentile": 0,
+       "count": "1",
+       "duration": "0.056922111s"
+      },
+      {
+       "percentile": 0.1,
+       "count": "1",
+       "duration": "0.056922111s"
+      },
+      {
+       "percentile": 0.2,
+       "count": "1",
+       "duration": "0.056922111s"
+      },
+      {
+       "percentile": 0.3,
+       "count": "2",
+       "duration": "0.057616383s"
+      },
+      {
+       "percentile": 0.4,
+       "count": "2",
+       "duration": "0.057616383s"
+      },
+      {
+       "percentile": 0.5,
+       "count": "2",
+       "duration": "0.057616383s"
+      },
+      {
+       "percentile": 0.55,
+       "count": "3",
+       "duration": "0.060835839s"
+      },
+      {
+       "percentile": 0.6,
+       "count": "3",
+       "duration": "0.060835839s"
+      },
+      {
+       "percentile": 0.65,
+       "count": "3",
+       "duration": "0.060835839s"
+      },
+      {
+       "percentile": 0.7,
+       "count": "3",
+       "duration": "0.060835839s"
+      },
+      {
+       "percentile": 0.75,
+       "count": "3",
+       "duration": "0.060835839s"
+      },
+      {
+       "percentile": 0.775,
+       "count": "4",
+       "duration": "0.060927999s"
+      },
+      {
+       "percentile": 1,
+       "count": "4",
+       "duration": "0.060927999s"
+      }
+     ],
+     "mean": "0.059074560s",
+     "pstdev": "0.001823229s"
+    },
+    {
+     "count": "0",
+     "id": "sequencer.blocking",
+     "percentiles": [
+      {
+       "percentile": 1,
+       "count": "0",
+       "duration": "0s"
+      }
+     ],
+     "mean": "0s",
+     "pstdev": "0s"
+    },
+    {
+     "count": "4",
+     "id": "sequencer.callback",
+     "percentiles": [
+      {
+       "percentile": 0,
+       "count": "1",
+       "duration": "0.057012223s"
+      },
+      {
+       "percentile": 0.1,
+       "count": "1",
+       "duration": "0.057012223s"
+      },
+      {
+       "percentile": 0.2,
+       "count": "1",
+       "duration": "0.057012223s"
+      },
+      {
+       "percentile": 0.3,
+       "count": "2",
+       "duration": "0.057716735s"
+      },
+      {
+       "percentile": 0.4,
+       "count": "2",
+       "duration": "0.057716735s"
+      },
+      {
+       "percentile": 0.5,
+       "count": "2",
+       "duration": "0.057716735s"
+      },
+      {
+       "percentile": 0.55,
+       "count": "3",
+       "duration": "0.060936191s"
+      },
+      {
+       "percentile": 0.6,
+       "count": "3",
+       "duration": "0.060936191s"
+      },
+      {
+       "percentile": 0.65,
+       "count": "3",
+       "duration": "0.060936191s"
+      },
+      {
+       "percentile": 0.7,
+       "count": "3",
+       "duration": "0.060936191s"
+      },
+      {
+       "percentile": 0.75,
+       "count": "3",
+       "duration": "0.060936191s"
+      },
+      {
+       "percentile": 0.775,
+       "count": "4",
+       "duration": "0.061034495s"
+      },
+      {
+       "percentile": 1,
+       "count": "4",
+       "duration": "0.061034495s"
+      }
+     ],
+     "mean": "0.059173888s",
+     "pstdev": "0.001827817s"
+    }
+   ],
+   "counters": [
+    {
+     "name": "benchmark.http_2xx",
+     "value": "5"
+    }
+   ]
+  },
+  {
+   "name": "worker_7",
+   "statistics": [
+    {
+     "count": "4",
+     "id": "benchmark_http_client.queue_to_connect",
+     "percentiles": [
+      {
+       "percentile": 0,
+       "count": "1",
+       "duration": "0.000031752s"
+      },
+      {
+       "percentile": 0.1,
+       "count": "1",
+       "duration": "0.000031752s"
+      },
+      {
+       "percentile": 0.2,
+       "count": "1",
+       "duration": "0.000031752s"
+      },
+      {
+       "percentile": 0.3,
+       "count": "2",
+       "duration": "0.000032747s"
+      },
+      {
+       "percentile": 0.4,
+       "count": "2",
+       "duration": "0.000032747s"
+      },
+      {
+       "percentile": 0.5,
+       "count": "2",
+       "duration": "0.000032747s"
+      },
+      {
+       "percentile": 0.55,
+       "count": "3",
+       "duration": "0.000044159s"
+      },
+      {
+       "percentile": 0.6,
+       "count": "3",
+       "duration": "0.000044159s"
+      },
+      {
+       "percentile": 0.65,
+       "count": "3",
+       "duration": "0.000044159s"
+      },
+      {
+       "percentile": 0.7,
+       "count": "3",
+       "duration": "0.000044159s"
+      },
+      {
+       "percentile": 0.75,
+       "count": "3",
+       "duration": "0.000044159s"
+      },
+      {
+       "percentile": 0.775,
+       "count": "4",
+       "duration": "0.000057509s"
+      },
+      {
+       "percentile": 1,
+       "count": "4",
+       "duration": "0.000057509s"
+      }
+     ],
+     "mean": "0.000041542s",
+     "pstdev": "0.000010428s"
+    },
+    {
+     "count": "4",
+     "id": "benchmark_http_client.request_to_response",
+     "percentiles": [
+      {
+       "percentile": 0,
+       "count": "1",
+       "duration": "0.055568383s"
+      },
+      {
+       "percentile": 0.1,
+       "count": "1",
+       "duration": "0.055568383s"
+      },
+      {
+       "percentile": 0.2,
+       "count": "1",
+       "duration": "0.055568383s"
+      },
+      {
+       "percentile": 0.3,
+       "count": "2",
+       "duration": "0.059650047s"
+      },
+      {
+       "percentile": 0.4,
+       "count": "2",
+       "duration": "0.059650047s"
+      },
+      {
+       "percentile": 0.5,
+       "count": "2",
+       "duration": "0.059650047s"
+      },
+      {
+       "percentile": 0.55,
+       "count": "3",
+       "duration": "0.067563519s"
+      },
+      {
+       "percentile": 0.6,
+       "count": "3",
+       "duration": "0.067563519s"
+      },
+      {
+       "percentile": 0.65,
+       "count": "3",
+       "duration": "0.067563519s"
+      },
+      {
+       "percentile": 0.7,
+       "count": "3",
+       "duration": "0.067563519s"
+      },
+      {
+       "percentile": 0.75,
+       "count": "3",
+       "duration": "0.067563519s"
+      },
+      {
+       "percentile": 0.775,
+       "count": "4",
+       "duration": "0.069509119s"
+      },
+      {
+       "percentile": 1,
+       "count": "4",
+       "duration": "0.069509119s"
+      }
+     ],
+     "mean": "0.063071232s",
+     "pstdev": "0.005692141s"
+    },
+    {
+     "count": "0",
+     "id": "sequencer.blocking",
+     "percentiles": [
+      {
+       "percentile": 1,
+       "count": "0",
+       "duration": "0s"
+      }
+     ],
+     "mean": "0s",
+     "pstdev": "0s"
+    },
+    {
+     "count": "4",
+     "id": "sequencer.callback",
+     "percentiles": [
+      {
+       "percentile": 0,
+       "count": "1",
+       "duration": "0.055662591s"
+      },
+      {
+       "percentile": 0.1,
+       "count": "1",
+       "duration": "0.055662591s"
+      },
+      {
+       "percentile": 0.2,
+       "count": "1",
+       "duration": "0.055662591s"
+      },
+      {
+       "percentile": 0.3,
+       "count": "2",
+       "duration": "0.059742207s"
+      },
+      {
+       "percentile": 0.4,
+       "count": "2",
+       "duration": "0.059742207s"
+      },
+      {
+       "percentile": 0.5,
+       "count": "2",
+       "duration": "0.059742207s"
+      },
+      {
+       "percentile": 0.55,
+       "count": "3",
+       "duration": "0.067682303s"
+      },
+      {
+       "percentile": 0.6,
+       "count": "3",
+       "duration": "0.067682303s"
+      },
+      {
+       "percentile": 0.65,
+       "count": "3",
+       "duration": "0.067682303s"
+      },
+      {
+       "percentile": 0.7,
+       "count": "3",
+       "duration": "0.067682303s"
+      },
+      {
+       "percentile": 0.75,
+       "count": "3",
+       "duration": "0.067682303s"
+      },
+      {
+       "percentile": 0.775,
+       "count": "4",
+       "duration": "0.069631999s"
+      },
+      {
+       "percentile": 1,
+       "count": "4",
+       "duration": "0.069631999s"
+      }
+     ],
+     "mean": "0.063178240s",
+     "pstdev": "0.005705402s"
+    }
+   ],
+   "counters": [
+    {
+     "name": "benchmark.http_2xx",
+     "value": "5"
+    }
+   ]
+  },
+  {
+   "name": "worker_8",
+   "statistics": [
+    {
+     "count": "4",
+     "id": "benchmark_http_client.queue_to_connect",
+     "percentiles": [
+      {
+       "percentile": 0,
+       "count": "1",
+       "duration": "0.000031168s"
+      },
+      {
+       "percentile": 0.1,
+       "count": "1",
+       "duration": "0.000031168s"
+      },
+      {
+       "percentile": 0.2,
+       "count": "1",
+       "duration": "0.000031168s"
+      },
+      {
+       "percentile": 0.3,
+       "count": "2",
+       "duration": "0.000033925s"
+      },
+      {
+       "percentile": 0.4,
+       "count": "2",
+       "duration": "0.000033925s"
+      },
+      {
+       "percentile": 0.5,
+       "count": "2",
+       "duration": "0.000033925s"
+      },
+      {
+       "percentile": 0.55,
+       "count": "3",
+       "duration": "0.000037663s"
+      },
+      {
+       "percentile": 0.6,
+       "count": "3",
+       "duration": "0.000037663s"
+      },
+      {
+       "percentile": 0.65,
+       "count": "3",
+       "duration": "0.000037663s"
+      },
+      {
+       "percentile": 0.7,
+       "count": "3",
+       "duration": "0.000037663s"
+      },
+      {
+       "percentile": 0.75,
+       "count": "3",
+       "duration": "0.000037663s"
+      },
+      {
+       "percentile": 0.775,
+       "count": "4",
+       "duration": "0.000051237s"
+      },
+      {
+       "percentile": 1,
+       "count": "4",
+       "duration": "0.000051237s"
+      }
+     ],
+     "mean": "0.000038498s",
+     "pstdev": "0.000007707s"
+    },
+    {
+     "count": "4",
+     "id": "benchmark_http_client.request_to_response",
+     "percentiles": [
+      {
+       "percentile": 0,
+       "count": "1",
+       "duration": "0.056958975s"
+      },
+      {
+       "percentile": 0.1,
+       "count": "1",
+       "duration": "0.056958975s"
+      },
+      {
+       "percentile": 0.2,
+       "count": "1",
+       "duration": "0.056958975s"
+      },
+      {
+       "percentile": 0.3,
+       "count": "2",
+       "duration": "0.059041791s"
+      },
+      {
+       "percentile": 0.4,
+       "count": "2",
+       "duration": "0.059041791s"
+      },
+      {
+       "percentile": 0.5,
+       "count": "2",
+       "duration": "0.059041791s"
+      },
+      {
+       "percentile": 0.55,
+       "count": "3",
+       "duration": "0.060012543s"
+      },
+      {
+       "percentile": 0.6,
+       "count": "3",
+       "duration": "0.060012543s"
+      },
+      {
+       "percentile": 0.65,
+       "count": "3",
+       "duration": "0.060012543s"
+      },
+      {
+       "percentile": 0.7,
+       "count": "3",
+       "duration": "0.060012543s"
+      },
+      {
+       "percentile": 0.75,
+       "count": "3",
+       "duration": "0.060012543s"
+      },
+      {
+       "percentile": 0.775,
+       "count": "4",
+       "duration": "0.063830015s"
+      },
+      {
+       "percentile": 1,
+       "count": "4",
+       "duration": "0.063830015s"
+      }
+     ],
+     "mean": "0.059959808s",
+     "pstdev": "0.002491437s"
+    },
+    {
+     "count": "0",
+     "id": "sequencer.blocking",
+     "percentiles": [
+      {
+       "percentile": 1,
+       "count": "0",
+       "duration": "0s"
+      }
+     ],
+     "mean": "0s",
+     "pstdev": "0s"
+    },
+    {
+     "count": "4",
+     "id": "sequencer.callback",
+     "percentiles": [
+      {
+       "percentile": 0,
+       "count": "1",
+       "duration": "0.057055231s"
+      },
+      {
+       "percentile": 0.1,
+       "count": "1",
+       "duration": "0.057055231s"
+      },
+      {
+       "percentile": 0.2,
+       "count": "1",
+       "duration": "0.057055231s"
+      },
+      {
+       "percentile": 0.3,
+       "count": "2",
+       "duration": "0.059162623s"
+      },
+      {
+       "percentile": 0.4,
+       "count": "2",
+       "duration": "0.059162623s"
+      },
+      {
+       "percentile": 0.5,
+       "count": "2",
+       "duration": "0.059162623s"
+      },
+      {
+       "percentile": 0.55,
+       "count": "3",
+       "duration": "0.060102655s"
+      },
+      {
+       "percentile": 0.6,
+       "count": "3",
+       "duration": "0.060102655s"
+      },
+      {
+       "percentile": 0.65,
+       "count": "3",
+       "duration": "0.060102655s"
+      },
+      {
+       "percentile": 0.7,
+       "count": "3",
+       "duration": "0.060102655s"
+      },
+      {
+       "percentile": 0.75,
+       "count": "3",
+       "duration": "0.060102655s"
+      },
+      {
+       "percentile": 0.775,
+       "count": "4",
+       "duration": "0.063930367s"
+      },
+      {
+       "percentile": 1,
+       "count": "4",
+       "duration": "0.063930367s"
+      }
+     ],
+     "mean": "0.060061696s",
+     "pstdev": "0.002490756s"
+    }
+   ],
+   "counters": [
+    {
+     "name": "benchmark.http_2xx",
+     "value": "5"
+    }
+   ]
+  },
+  {
+   "name": "worker_9",
+   "statistics": [
+    {
+     "count": "4",
+     "id": "benchmark_http_client.queue_to_connect",
+     "percentiles": [
+      {
+       "percentile": 0,
+       "count": "1",
+       "duration": "0.000031853s"
+      },
+      {
+       "percentile": 0.1,
+       "count": "1",
+       "duration": "0.000031853s"
+      },
+      {
+       "percentile": 0.2,
+       "count": "1",
+       "duration": "0.000031853s"
+      },
+      {
+       "percentile": 0.3,
+       "count": "2",
+       "duration": "0.000035839s"
+      },
+      {
+       "percentile": 0.4,
+       "count": "2",
+       "duration": "0.000035839s"
+      },
+      {
+       "percentile": 0.5,
+       "count": "2",
+       "duration": "0.000035839s"
+      },
+      {
+       "percentile": 0.55,
+       "count": "3",
+       "duration": "0.000037101s"
+      },
+      {
+       "percentile": 0.6,
+       "count": "3",
+       "duration": "0.000037101s"
+      },
+      {
+       "percentile": 0.65,
+       "count": "3",
+       "duration": "0.000037101s"
+      },
+      {
+       "percentile": 0.7,
+       "count": "3",
+       "duration": "0.000037101s"
+      },
+      {
+       "percentile": 0.75,
+       "count": "3",
+       "duration": "0.000037101s"
+      },
+      {
+       "percentile": 0.775,
+       "count": "4",
+       "duration": "0.000042849s"
+      },
+      {
+       "percentile": 1,
+       "count": "4",
+       "duration": "0.000042849s"
+      }
+     ],
+     "mean": "0.000036911s",
+     "pstdev": "0.000003938s"
+    },
+    {
+     "count": "4",
+     "id": "benchmark_http_client.request_to_response",
+     "percentiles": [
+      {
+       "percentile": 0,
+       "count": "1",
+       "duration": "0.057884671s"
+      },
+      {
+       "percentile": 0.1,
+       "count": "1",
+       "duration": "0.057884671s"
+      },
+      {
+       "percentile": 0.2,
+       "count": "1",
+       "duration": "0.057884671s"
+      },
+      {
+       "percentile": 0.3,
+       "count": "2",
+       "duration": "0.060086271s"
+      },
+      {
+       "percentile": 0.4,
+       "count": "2",
+       "duration": "0.060086271s"
+      },
+      {
+       "percentile": 0.5,
+       "count": "2",
+       "duration": "0.060086271s"
+      },
+      {
+       "percentile": 0.55,
+       "count": "3",
+       "duration": "0.062291967s"
+      },
+      {
+       "percentile": 0.6,
+       "count": "3",
+       "duration": "0.062291967s"
+      },
+      {
+       "percentile": 0.65,
+       "count": "3",
+       "duration": "0.062291967s"
+      },
+      {
+       "percentile": 0.7,
+       "count": "3",
+       "duration": "0.062291967s"
+      },
+      {
+       "percentile": 0.75,
+       "count": "3",
+       "duration": "0.062291967s"
+      },
+      {
+       "percentile": 0.775,
+       "count": "4",
+       "duration": "0.068161535s"
+      },
+      {
+       "percentile": 1,
+       "count": "4",
+       "duration": "0.068161535s"
+      }
+     ],
+     "mean": "0.062104832s",
+     "pstdev": "0.003827225s"
+    },
+    {
+     "count": "0",
+     "id": "sequencer.blocking",
+     "percentiles": [
+      {
+       "percentile": 1,
+       "count": "0",
+       "duration": "0s"
+      }
+     ],
+     "mean": "0s",
+     "pstdev": "0s"
+    },
+    {
+     "count": "4",
+     "id": "sequencer.callback",
+     "percentiles": [
+      {
+       "percentile": 0,
+       "count": "1",
+       "duration": "0.057980927s"
+      },
+      {
+       "percentile": 0.1,
+       "count": "1",
+       "duration": "0.057980927s"
+      },
+      {
+       "percentile": 0.2,
+       "count": "1",
+       "duration": "0.057980927s"
+      },
+      {
+       "percentile": 0.3,
+       "count": "2",
+       "duration": "0.060186623s"
+      },
+      {
+       "percentile": 0.4,
+       "count": "2",
+       "duration": "0.060186623s"
+      },
+      {
+       "percentile": 0.5,
+       "count": "2",
+       "duration": "0.060186623s"
+      },
+      {
+       "percentile": 0.55,
+       "count": "3",
+       "duration": "0.062402559s"
+      },
+      {
+       "percentile": 0.6,
+       "count": "3",
+       "duration": "0.062402559s"
+      },
+      {
+       "percentile": 0.65,
+       "count": "3",
+       "duration": "0.062402559s"
+      },
+      {
+       "percentile": 0.7,
+       "count": "3",
+       "duration": "0.062402559s"
+      },
+      {
+       "percentile": 0.75,
+       "count": "3",
+       "duration": "0.062402559s"
+      },
+      {
+       "percentile": 0.775,
+       "count": "4",
+       "duration": "0.068259839s"
+      },
+      {
+       "percentile": 1,
+       "count": "4",
+       "duration": "0.068259839s"
+      }
+     ],
+     "mean": "0.062206208s",
+     "pstdev": "0.003827673s"
+    }
+   ],
+   "counters": [
+    {
+     "name": "benchmark.http_2xx",
+     "value": "5"
+    }
+   ]
+  },
+  {
+   "name": "worker_10",
+   "statistics": [
+    {
+     "count": "4",
+     "id": "benchmark_http_client.queue_to_connect",
+     "percentiles": [
+      {
+       "percentile": 0,
+       "count": "1",
+       "duration": "0.000031242s"
+      },
+      {
+       "percentile": 0.1,
+       "count": "1",
+       "duration": "0.000031242s"
+      },
+      {
+       "percentile": 0.2,
+       "count": "1",
+       "duration": "0.000031242s"
+      },
+      {
+       "percentile": 0.3,
+       "count": "2",
+       "duration": "0.000035537s"
+      },
+      {
+       "percentile": 0.4,
+       "count": "2",
+       "duration": "0.000035537s"
+      },
+      {
+       "percentile": 0.5,
+       "count": "2",
+       "duration": "0.000035537s"
+      },
+      {
+       "percentile": 0.55,
+       "count": "3",
+       "duration": "0.000037795s"
+      },
+      {
+       "percentile": 0.6,
+       "count": "3",
+       "duration": "0.000037795s"
+      },
+      {
+       "percentile": 0.65,
+       "count": "3",
+       "duration": "0.000037795s"
+      },
+      {
+       "percentile": 0.7,
+       "count": "3",
+       "duration": "0.000037795s"
+      },
+      {
+       "percentile": 0.75,
+       "count": "3",
+       "duration": "0.000037795s"
+      },
+      {
+       "percentile": 0.775,
+       "count": "4",
+       "duration": "0.000051885s"
+      },
+      {
+       "percentile": 1,
+       "count": "4",
+       "duration": "0.000051885s"
+      }
+     ],
+     "mean": "0.000039115s",
+     "pstdev": "0.000007740s"
+    },
+    {
+     "count": "4",
+     "id": "benchmark_http_client.request_to_response",
+     "percentiles": [
+      {
+       "percentile": 0,
+       "count": "1",
+       "duration": "0.057714687s"
+      },
+      {
+       "percentile": 0.1,
+       "count": "1",
+       "duration": "0.057714687s"
+      },
+      {
+       "percentile": 0.2,
+       "count": "1",
+       "duration": "0.057714687s"
+      },
+      {
+       "percentile": 0.3,
+       "count": "2",
+       "duration": "0.060903423s"
+      },
+      {
+       "percentile": 0.4,
+       "count": "2",
+       "duration": "0.060903423s"
+      },
+      {
+       "percentile": 0.5,
+       "count": "2",
+       "duration": "0.060903423s"
+      },
+      {
+       "percentile": 0.55,
+       "count": "3",
+       "duration": "0.065888255s"
+      },
+      {
+       "percentile": 0.6,
+       "count": "3",
+       "duration": "0.065888255s"
+      },
+      {
+       "percentile": 0.65,
+       "count": "3",
+       "duration": "0.065888255s"
+      },
+      {
+       "percentile": 0.7,
+       "count": "3",
+       "duration": "0.065888255s"
+      },
+      {
+       "percentile": 0.75,
+       "count": "3",
+       "duration": "0.065888255s"
+      },
+      {
+       "percentile": 0.775,
+       "count": "4",
+       "duration": "0.073601023s"
+      },
+      {
+       "percentile": 1,
+       "count": "4",
+       "duration": "0.073601023s"
+      }
+     ],
+     "mean": "0.064525568s",
+     "pstdev": "0.005993960s"
+    },
+    {
+     "count": "0",
+     "id": "sequencer.blocking",
+     "percentiles": [
+      {
+       "percentile": 1,
+       "count": "0",
+       "duration": "0s"
+      }
+     ],
+     "mean": "0s",
+     "pstdev": "0s"
+    },
+    {
+     "count": "4",
+     "id": "sequencer.callback",
+     "percentiles": [
+      {
+       "percentile": 0,
+       "count": "1",
+       "duration": "0.057802751s"
+      },
+      {
+       "percentile": 0.1,
+       "count": "1",
+       "duration": "0.057802751s"
+      },
+      {
+       "percentile": 0.2,
+       "count": "1",
+       "duration": "0.057802751s"
+      },
+      {
+       "percentile": 0.3,
+       "count": "2",
+       "duration": "0.061003775s"
+      },
+      {
+       "percentile": 0.4,
+       "count": "2",
+       "duration": "0.061003775s"
+      },
+      {
+       "percentile": 0.5,
+       "count": "2",
+       "duration": "0.061003775s"
+      },
+      {
+       "percentile": 0.55,
+       "count": "3",
+       "duration": "0.066009087s"
+      },
+      {
+       "percentile": 0.6,
+       "count": "3",
+       "duration": "0.066009087s"
+      },
+      {
+       "percentile": 0.65,
+       "count": "3",
+       "duration": "0.066009087s"
+      },
+      {
+       "percentile": 0.7,
+       "count": "3",
+       "duration": "0.066009087s"
+      },
+      {
+       "percentile": 0.75,
+       "count": "3",
+       "duration": "0.066009087s"
+      },
+      {
+       "percentile": 0.775,
+       "count": "4",
+       "duration": "0.073703423s"
+      },
+      {
+       "percentile": 1,
+       "count": "4",
+       "duration": "0.073703423s"
+      }
+     ],
+     "mean": "0.064628480s",
+     "pstdev": "0.005999399s"
+    }
+   ],
+   "counters": [
+    {
+     "name": "benchmark.http_2xx",
+     "value": "5"
+    }
+   ]
+  },
+  {
+   "name": "worker_11",
+   "statistics": [
+    {
+     "count": "4",
+     "id": "benchmark_http_client.queue_to_connect",
+     "percentiles": [
+      {
+       "percentile": 0,
+       "count": "1",
+       "duration": "0.000029928s"
+      },
+      {
+       "percentile": 0.1,
+       "count": "1",
+       "duration": "0.000029928s"
+      },
+      {
+       "percentile": 0.2,
+       "count": "1",
+       "duration": "0.000029928s"
+      },
+      {
+       "percentile": 0.3,
+       "count": "2",
+       "duration": "0.000032191s"
+      },
+      {
+       "percentile": 0.4,
+       "count": "2",
+       "duration": "0.000032191s"
+      },
+      {
+       "percentile": 0.5,
+       "count": "2",
+       "duration": "0.000032191s"
+      },
+      {
+       "percentile": 0.55,
+       "count": "3",
+       "duration": "0.000034547s"
+      },
+      {
+       "percentile": 0.6,
+       "count": "3",
+       "duration": "0.000034547s"
+      },
+      {
+       "percentile": 0.65,
+       "count": "3",
+       "duration": "0.000034547s"
+      },
+      {
+       "percentile": 0.7,
+       "count": "3",
+       "duration": "0.000034547s"
+      },
+      {
+       "percentile": 0.75,
+       "count": "3",
+       "duration": "0.000034547s"
+      },
+      {
+       "percentile": 0.775,
+       "count": "4",
+       "duration": "0.000041621s"
+      },
+      {
+       "percentile": 1,
+       "count": "4",
+       "duration": "0.000041621s"
+      }
+     ],
+     "mean": "0.000034572s",
+     "pstdev": "0.000004385s"
+    },
+    {
+     "count": "4",
+     "id": "benchmark_http_client.request_to_response",
+     "percentiles": [
+      {
+       "percentile": 0,
+       "count": "1",
+       "duration": "0.060487679s"
+      },
+      {
+       "percentile": 0.1,
+       "count": "1",
+       "duration": "0.060487679s"
+      },
+      {
+       "percentile": 0.2,
+       "count": "1",
+       "duration": "0.060487679s"
+      },
+      {
+       "percentile": 0.3,
+       "count": "2",
+       "duration": "0.060641279s"
+      },
+      {
+       "percentile": 0.4,
+       "count": "2",
+       "duration": "0.060641279s"
+      },
+      {
+       "percentile": 0.5,
+       "count": "2",
+       "duration": "0.060641279s"
+      },
+      {
+       "percentile": 0.55,
+       "count": "3",
+       "duration": "0.062892031s"
+      },
+      {
+       "percentile": 0.6,
+       "count": "3",
+       "duration": "0.062892031s"
+      },
+      {
+       "percentile": 0.65,
+       "count": "3",
+       "duration": "0.062892031s"
+      },
+      {
+       "percentile": 0.7,
+       "count": "3",
+       "duration": "0.062892031s"
+      },
+      {
+       "percentile": 0.75,
+       "count": "3",
+       "duration": "0.062892031s"
+      },
+      {
+       "percentile": 0.775,
+       "count": "4",
+       "duration": "0.066994175s"
+      },
+      {
+       "percentile": 1,
+       "count": "4",
+       "duration": "0.066994175s"
+      }
+     ],
+     "mean": "0.062752768s",
+     "pstdev": "0.002626687s"
+    },
+    {
+     "count": "0",
+     "id": "sequencer.blocking",
+     "percentiles": [
+      {
+       "percentile": 1,
+       "count": "0",
+       "duration": "0s"
+      }
+     ],
+     "mean": "0s",
+     "pstdev": "0s"
+    },
+    {
+     "count": "4",
+     "id": "sequencer.callback",
+     "percentiles": [
+      {
+       "percentile": 0,
+       "count": "1",
+       "duration": "0.060577791s"
+      },
+      {
+       "percentile": 0.1,
+       "count": "1",
+       "duration": "0.060577791s"
+      },
+      {
+       "percentile": 0.2,
+       "count": "1",
+       "duration": "0.060577791s"
+      },
+      {
+       "percentile": 0.3,
+       "count": "2",
+       "duration": "0.060735487s"
+      },
+      {
+       "percentile": 0.4,
+       "count": "2",
+       "duration": "0.060735487s"
+      },
+      {
+       "percentile": 0.5,
+       "count": "2",
+       "duration": "0.060735487s"
+      },
+      {
+       "percentile": 0.55,
+       "count": "3",
+       "duration": "0.062975999s"
+      },
+      {
+       "percentile": 0.6,
+       "count": "3",
+       "duration": "0.062975999s"
+      },
+      {
+       "percentile": 0.65,
+       "count": "3",
+       "duration": "0.062975999s"
+      },
+      {
+       "percentile": 0.7,
+       "count": "3",
+       "duration": "0.062975999s"
+      },
+      {
+       "percentile": 0.75,
+       "count": "3",
+       "duration": "0.062975999s"
+      },
+      {
+       "percentile": 0.775,
+       "count": "4",
+       "duration": "0.067102719s"
+      },
+      {
+       "percentile": 1,
+       "count": "4",
+       "duration": "0.067102719s"
+      }
+     ],
+     "mean": "0.062846976s",
+     "pstdev": "0.002633229s"
+    }
+   ],
+   "counters": [
+    {
+     "name": "benchmark.http_2xx",
+     "value": "5"
+    }
+   ]
+  },
+  {
+   "name": "global",
+   "statistics": [
+    {
+     "count": "48",
+     "id": "benchmark_http_client.queue_to_connect",
+     "percentiles": [
+      {
+       "percentile": 0,
+       "count": "1",
+       "duration": "0.000029928s"
+      },
+      {
+       "percentile": 0.1,
+       "count": "5",
+       "duration": "0.000031752s"
+      },
+      {
+       "percentile": 0.2,
+       "count": "10",
+       "duration": "0.000032588s"
+      },
+      {
+       "percentile": 0.3,
+       "count": "15",
+       "duration": "0.000033521s"
+      },
+      {
+       "percentile": 0.4,
+       "count": "20",
+       "duration": "0.000035465s"
+      },
+      {
+       "percentile": 0.5,
+       "count": "24",
+       "duration": "0.000037101s"
+      },
+      {
+       "percentile": 0.55,
+       "count": "27",
+       "duration": "0.000038597s"
+      },
+      {
+       "percentile": 0.6,
+       "count": "29",
+       "duration": "0.000040265s"
+      },
+      {
+       "percentile": 0.65,
+       "count": "32",
+       "duration": "0.000041621s"
+      },
+      {
+       "percentile": 0.7,
+       "count": "34",
+       "duration": "0.000042849s"
+      },
+      {
+       "percentile": 0.75,
+       "count": "36",
+       "duration": "0.000044159s"
+      },
+      {
+       "percentile": 0.775,
+       "count": "38",
+       "duration": "0.000048189s"
+      },
+      {
+       "percentile": 0.8,
+       "count": "39",
+       "duration": "0.000051237s"
+      },
+      {
+       "percentile": 0.825,
+       "count": "40",
+       "duration": "0.000051767s"
+      },
+      {
+       "percentile": 0.85,
+       "count": "41",
+       "duration": "0.000051885s"
+      },
+      {
+       "percentile": 0.875,
+       "count": "42",
+       "duration": "0.000051897s"
+      },
+      {
+       "percentile": 0.8875,
+       "count": "43",
+       "duration": "0.000051953s"
+      },
+      {
+       "percentile": 0.9,
+       "count": "44",
+       "duration": "0.000053019s"
+      },
+      {
+       "percentile": 0.9125,
+       "count": "44",
+       "duration": "0.000053019s"
+      },
+      {
+       "percentile": 0.925,
+       "count": "45",
+       "duration": "0.000054551s"
+      },
+      {
+       "percentile": 0.9375,
+       "count": "45",
+       "duration": "0.000054551s"
+      },
+      {
+       "percentile": 0.94375,
+       "count": "46",
+       "duration": "0.000057509s"
+      },
+      {
+       "percentile": 0.95,
+       "count": "46",
+       "duration": "0.000057509s"
+      },
+      {
+       "percentile": 0.95625,
+       "count": "46",
+       "duration": "0.000057509s"
+      },
+      {
+       "percentile": 0.9625,
+       "count": "47",
+       "duration": "0.000070355s"
+      },
+      {
+       "percentile": 0.96875,
+       "count": "47",
+       "duration": "0.000070355s"
+      },
+      {
+       "percentile": 0.971875,
+       "count": "47",
+       "duration": "0.000070355s"
+      },
+      {
+       "percentile": 0.975,
+       "count": "47",
+       "duration": "0.000070355s"
+      },
+      {
+       "percentile": 0.978125,
+       "count": "47",
+       "duration": "0.000070355s"
+      },
+      {
+       "percentile": 0.98125,
+       "count": "48",
+       "duration": "0.000117091s"
+      },
+      {
+       "percentile": 1,
+       "count": "48",
+       "duration": "0.000117091s"
+      }
+     ],
+     "mean": "0.000041578s",
+     "pstdev": "0.000014060s"
+    },
+    {
+     "count": "48",
+     "id": "benchmark_http_client.request_to_response",
+     "percentiles": [
+      {
+       "percentile": 0,
+       "count": "1",
+       "duration": "0.055568383s"
+      },
+      {
+       "percentile": 0.1,
+       "count": "5",
+       "duration": "0.056922111s"
+      },
+      {
+       "percentile": 0.2,
+       "count": "10",
+       "duration": "0.057884671s"
+      },
+      {
+       "percentile": 0.3,
+       "count": "15",
+       "duration": "0.059041791s"
+      },
+      {
+       "percentile": 0.4,
+       "count": "20",
+       "duration": "0.060086271s"
+      },
+      {
+       "percentile": 0.5,
+       "count": "24",
+       "duration": "0.060903423s"
+      },
+      {
+       "percentile": 0.55,
+       "count": "27",
+       "duration": "0.061583359s"
+      },
+      {
+       "percentile": 0.6,
+       "count": "29",
+       "duration": "0.061976575s"
+      },
+      {
+       "percentile": 0.65,
+       "count": "32",
+       "duration": "0.063830015s"
+      },
+      {
+       "percentile": 0.7,
+       "count": "34",
+       "duration": "0.064684031s"
+      },
+      {
+       "percentile": 0.75,
+       "count": "36",
+       "duration": "0.065679359s"
+      },
+      {
+       "percentile": 0.775,
+       "count": "38",
+       "duration": "0.066537471s"
+      },
+      {
+       "percentile": 0.8,
+       "count": "39",
+       "duration": "0.066994175s"
+      },
+      {
+       "percentile": 0.825,
+       "count": "40",
+       "duration": "0.067194879s"
+      },
+      {
+       "percentile": 0.85,
+       "count": "41",
+       "duration": "0.067563519s"
+      },
+      {
+       "percentile": 0.875,
+       "count": "42",
+       "duration": "0.067862527s"
+      },
+      {
+       "percentile": 0.8875,
+       "count": "43",
+       "duration": "0.068161535s"
+      },
+      {
+       "percentile": 0.9,
+       "count": "44",
+       "duration": "0.068657151s"
+      },
+      {
+       "percentile": 0.9125,
+       "count": "44",
+       "duration": "0.068657151s"
+      },
+      {
+       "percentile": 0.925,
+       "count": "45",
+       "duration": "0.069509119s"
+      },
+      {
+       "percentile": 0.9375,
+       "count": "45",
+       "duration": "0.069509119s"
+      },
+      {
+       "percentile": 0.94375,
+       "count": "46",
+       "duration": "0.073601023s"
+      },
+      {
+       "percentile": 0.95,
+       "count": "46",
+       "duration": "0.073601023s"
+      },
+      {
+       "percentile": 0.95625,
+       "count": "46",
+       "duration": "0.073601023s"
+      },
+      {
+       "percentile": 0.9625,
+       "count": "47",
+       "duration": "0.079327231s"
+      },
+      {
+       "percentile": 0.96875,
+       "count": "47",
+       "duration": "0.079327231s"
+      },
+      {
+       "percentile": 0.971875,
+       "count": "47",
+       "duration": "0.079327231s"
+      },
+      {
+       "percentile": 0.975,
+       "count": "47",
+       "duration": "0.079327231s"
+      },
+      {
+       "percentile": 0.978125,
+       "count": "47",
+       "duration": "0.079327231s"
+      },
+      {
+       "percentile": 0.98125,
+       "count": "48",
+       "duration": "0.084357119s"
+      },
+      {
+       "percentile": 1,
+       "count": "48",
+       "duration": "0.084357119s"
+      }
+     ],
+     "mean": "0.062589845s",
+     "pstdev": "0.005785869s"
+    },
+    {
+     "count": "0",
+     "id": "sequencer.blocking",
+     "percentiles": [
+      {
+       "percentile": 1,
+       "count": "0",
+       "duration": "0s"
+      }
+     ],
+     "mean": "0s",
+     "pstdev": "0s"
+    },
+    {
+     "count": "48",
+     "id": "sequencer.callback",
+     "percentiles": [
+      {
+       "percentile": 0,
+       "count": "1",
+       "duration": "0.055662591s"
+      },
+      {
+       "percentile": 0.1,
+       "count": "5",
+       "duration": "0.057012223s"
+      },
+      {
+       "percentile": 0.2,
+       "count": "10",
+       "duration": "0.057999359s"
+      },
+      {
+       "percentile": 0.3,
+       "count": "15",
+       "duration": "0.059162623s"
+      },
+      {
+       "percentile": 0.4,
+       "count": "20",
+       "duration": "0.060186623s"
+      },
+      {
+       "percentile": 0.5,
+       "count": "24",
+       "duration": "0.061003775s"
+      },
+      {
+       "percentile": 0.55,
+       "count": "27",
+       "duration": "0.061698047s"
+      },
+      {
+       "percentile": 0.6,
+       "count": "29",
+       "duration": "0.062064639s"
+      },
+      {
+       "percentile": 0.65,
+       "count": "32",
+       "duration": "0.063930367s"
+      },
+      {
+       "percentile": 0.7,
+       "count": "34",
+       "duration": "0.064784383s"
+      },
+      {
+       "percentile": 0.75,
+       "count": "36",
+       "duration": "0.065777663s"
+      },
+      {
+       "percentile": 0.775,
+       "count": "38",
+       "duration": "0.066721791s"
+      },
+      {
+       "percentile": 0.8,
+       "count": "39",
+       "duration": "0.067102719s"
+      },
+      {
+       "percentile": 0.825,
+       "count": "40",
+       "duration": "0.067289087s"
+      },
+      {
+       "percentile": 0.85,
+       "count": "41",
+       "duration": "0.067682303s"
+      },
+      {
+       "percentile": 0.875,
+       "count": "42",
+       "duration": "0.067960831s"
+      },
+      {
+       "percentile": 0.8875,
+       "count": "43",
+       "duration": "0.068259839s"
+      },
+      {
+       "percentile": 0.9,
+       "count": "44",
+       "duration": "0.068780031s"
+      },
+      {
+       "percentile": 0.9125,
+       "count": "44",
+       "duration": "0.068780031s"
+      },
+      {
+       "percentile": 0.925,
+       "count": "45",
+       "duration": "0.069631999s"
+      },
+      {
+       "percentile": 0.9375,
+       "count": "45",
+       "duration": "0.069631999s"
+      },
+      {
+       "percentile": 0.94375,
+       "count": "46",
+       "duration": "0.073703423s"
+      },
+      {
+       "percentile": 0.95,
+       "count": "46",
+       "duration": "0.073703423s"
+      },
+      {
+       "percentile": 0.95625,
+       "count": "46",
+       "duration": "0.073703423s"
+      },
+      {
+       "percentile": 0.9625,
+       "count": "47",
+       "duration": "0.079437823s"
+      },
+      {
+       "percentile": 0.96875,
+       "count": "47",
+       "duration": "0.079437823s"
+      },
+      {
+       "percentile": 0.971875,
+       "count": "47",
+       "duration": "0.079437823s"
+      },
+      {
+       "percentile": 0.975,
+       "count": "47",
+       "duration": "0.079437823s"
+      },
+      {
+       "percentile": 0.978125,
+       "count": "47",
+       "duration": "0.079437823s"
+      },
+      {
+       "percentile": 0.98125,
+       "count": "48",
+       "duration": "0.084479999s"
+      },
+      {
+       "percentile": 1,
+       "count": "48",
+       "duration": "0.084479999s"
+      }
+     ],
+     "mean": "0.062699243s",
+     "pstdev": "0.005788063s"
+    }
+   ],
+   "counters": [
+    {
+     "name": "benchmark.http_2xx",
+     "value": "60"
+    },
+    {
+     "name": "cluster_manager.cluster_added",
+     "value": "12"
+    },
+    {
+     "name": "default.total_match_count",
+     "value": "12"
+    },
+    {
+     "name": "membership_change",
+     "value": "12"
+    },
+    {
+     "name": "runtime.load_success",
+     "value": "1"
+    },
+    {
+     "name": "runtime.override_dir_not_exists",
+     "value": "1"
+    },
+    {
+     "name": "upstream_cx_destroy",
+     "value": "12"
+    },
+    {
+     "name": "upstream_cx_destroy_local",
+     "value": "12"
+    },
+    {
+     "name": "upstream_cx_http1_total",
+     "value": "12"
+    },
+    {
+     "name": "upstream_cx_rx_bytes_total",
+     "value": "3338276"
+    },
+    {
+     "name": "upstream_cx_total",
+     "value": "12"
+    },
+    {
+     "name": "upstream_cx_tx_bytes_total",
+     "value": "3600"
+    },
+    {
+     "name": "upstream_rq_pending_total",
+     "value": "12"
+    },
+    {
+     "name": "upstream_rq_total",
+     "value": "60"
+    }
+   ]
+  }
+ ],
+ "timestamp": "2019-10-16T00:30:12.911078318Z"
+}
