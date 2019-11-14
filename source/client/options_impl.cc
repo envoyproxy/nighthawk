@@ -171,7 +171,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
 
   TCLAP::SwitchArg open_loop(
       "", "open-loop",
-      "Enable open loop mode. When enabled, the benchmark client will not provide backpressure"
+      "Enable open loop mode. When enabled, the benchmark client will not provide backpressure "
       "when resource limits are hit.",
       cmd);
 

@@ -68,7 +68,7 @@ Where:
 
 --open-loop
 Enable open loop mode. When enabled, the benchmark client will not
-provide backpressurewhen resource limits are hit.
+provide backpressure when resource limits are hit.
 
 --trace <uri format>
 Trace uri. Example: zipkin://localhost:9411/api/v1/spans. Default is
