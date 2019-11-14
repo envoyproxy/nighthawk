@@ -51,13 +51,12 @@ public:
   void createConnections(const uint32_t connection_limit);
 };
 
-// Experimental pool of h2 pools, with the purpose to scale connections. This helps scale over
-// multiple backend workers/threads/cores by landing multiple connections, even when using a
-// single-worker Nighthawk instance. Vanilla Envoy's H1 pool is single connection only (sometimes
-// dual in connection drainage scenarios).
-// Combining this with --max-requests-per-connection may help balancing load across the backend
-// more, more as doing so gives the target an opportunity to periodically rebalance while it
-// experiencing the workload we are handing it.
+// Vanilla Envoy's HTTP/2 pool is single connection only (or actually sometimes dual in connection
+// drainage scenarios). Http2PoolImpl is an experimental pool, which uses multiple vanilla Envoy
+// HTTP/2 pools under the hood. Using multiple connections is useful when testing backends that need
+// multiple connections to distribute load internally. Combining multiple connections with
+// --max-requests-per-connection may help as well, as doing periodically initiating new connections
+// may help the benchmark target by giving it an opportunity to rebalance.
 class Http2PoolImpl : public Envoy::Http::ConnectionPool::Instance,
                       public Envoy::Http::ConnPoolImplBase {
 public:
