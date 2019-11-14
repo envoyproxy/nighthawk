@@ -69,8 +69,8 @@ public:
       return Envoy::Http::ConnectionPool::InstancePtr{new Http1PoolImpl(
           dispatcher, host, priority, options, h1_settings, transport_socket_options)};
     }
-    return Envoy::Upstream::ProdClusterManagerFactory::allocateConnPool(
-        dispatcher, host, priority, protocol, options, transport_socket_options);
+    return Envoy::Http::ConnectionPool::InstancePtr{
+        new Http2PoolImpl(dispatcher, host, priority, options, transport_socket_options)};
   }
 
 private:

@@ -16,6 +16,7 @@
 
 #include "external/envoy/source/common/common/logger.h"
 #include "external/envoy/source/common/http/http1/conn_pool.h"
+#include "external/envoy/source/common/http/http2/conn_pool.h"
 #include "external/envoy/source/common/runtime/runtime_impl.h"
 
 #include "api/client/options.pb.h"
@@ -48,6 +49,74 @@ class Http1PoolImpl : public Envoy::Http::Http1::ProdConnPoolImpl {
 public:
   using Envoy::Http::Http1::ProdConnPoolImpl::ProdConnPoolImpl;
   void createConnections(const uint32_t connection_limit);
+};
+
+// Experimental pool of h2 pools, with the purpose to scale connections. This helps scale over
+// multiple backend workers/threads/cores by landing multiple connections, even when using a
+// single-worker Nighthawk instance. Vanilla Envoy's H1 pool is single connection only (sometimes
+// dual in connection drainage scenarios).
+// Combining this with --max-requests-per-connection may help balancing load across the backend
+// more, more as doing so gives the target an opportunity to periodically rebalance while it
+// experiencing the workload we are handing it.
+class Http2PoolImpl : public Envoy::Http::ConnectionPool::Instance,
+                      public Envoy::Http::ConnPoolImplBase {
+public:
+  Http2PoolImpl(Envoy::Event::Dispatcher& dispatcher, Envoy::Upstream::HostConstSharedPtr host,
+                Envoy::Upstream::ResourcePriority priority,
+                const Envoy::Network::ConnectionSocket::OptionsSharedPtr& options,
+                const Envoy::Network::TransportSocketOptionsSharedPtr& transport_socket_options)
+      : Envoy::Http::ConnPoolImplBase(std::move(host), std::move(priority)),
+        dispatcher_(dispatcher), socket_options_(options),
+        transport_socket_options_(transport_socket_options) {
+    for (uint32_t i = 0; i < host_->cluster().resourceManager(priority_).connections().max(); i++) {
+      pools_.push_back(std::make_unique<Envoy::Http::Http2::ProdConnPoolImpl>(
+          dispatcher_, host_, priority_, socket_options_, transport_socket_options_));
+    }
+  }
+
+  // Envoy::Http::ConnectionPool::Instance
+  Envoy::Http::Protocol protocol() const override { return Envoy::Http::Protocol::Http2; }
+  void addDrainedCallback(Envoy::Http::ConnectionPool::Instance::DrainedCb cb) override {
+    for (auto& pool : pools_) {
+      pool->addDrainedCallback(cb);
+    }
+  }
+  void drainConnections() override {
+    for (auto& pool : pools_) {
+      pool->drainConnections();
+    }
+  }
+  bool hasActiveConnections() const override {
+    for (auto& pool : pools_) {
+      if (pool->hasActiveConnections()) {
+        return true;
+      }
+    }
+    return false;
+  }
+  Envoy::Http::ConnectionPool::Cancellable*
+  newStream(Envoy::Http::StreamDecoder& response_decoder,
+            Envoy::Http::ConnectionPool::Callbacks& callbacks) override {
+    // Use the simplest but probably naive approach of rotating over the available pool instances
+    // / connections to distrubute requests accross them.
+    return pools_[pool_round_robin_index_++ % pools_.size()]->newStream(response_decoder,
+                                                                        callbacks);
+  };
+  Envoy::Upstream::HostDescriptionConstSharedPtr host() const override { return host_; };
+
+protected:
+  // Envoy::Http::ConnPoolImplBase
+  void checkForDrained() override {
+    // TODO(oschaaf): this one is protected, can't forward it.
+    // pool->checkForDrained();
+  }
+
+private:
+  Envoy::Event::Dispatcher& dispatcher_;
+  const Envoy::Network::ConnectionSocket::OptionsSharedPtr socket_options_;
+  const Envoy::Network::TransportSocketOptionsSharedPtr transport_socket_options_;
+  std::vector<std::unique_ptr<Envoy::Http::Http2::ProdConnPoolImpl>> pools_;
+  uint64_t pool_round_robin_index_{0};
 };
 
 class BenchmarkClientHttpImpl : public BenchmarkClient,
