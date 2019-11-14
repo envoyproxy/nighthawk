@@ -56,6 +56,9 @@ private:
   Envoy::MonotonicTime started_at_;
 };
 
+// We use an unsigned duration here to ensure only future points in time will be yielded.
+// The consuming rate limiter will hold off opening up until the initial point in time plus the
+// offset obtained via the distribution have transpired.
 using RandomDistributionGenerator =
     std::function<const std::chrono::duration<uint64_t, std::nano>()>;
 
@@ -75,8 +78,7 @@ protected:
 private:
   Envoy::TimeSource& time_source_;
   const RateLimiterPtr rate_limiter_;
-  Envoy::MonotonicTime distributed_start_;
-  bool distributed_start_set_{};
+  absl::optional<Envoy::MonotonicTime> distributed_start_;
 };
 
 // Allows adding uniformly distributed random timing offsets to an underlying rate limiter.

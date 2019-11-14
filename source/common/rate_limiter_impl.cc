@@ -90,15 +90,14 @@ RandomDistributingRateLimiter::RandomDistributingRateLimiter(
       time_source_(time_source), rate_limiter_(std::move(rate_limiter)) {}
 
 bool RandomDistributingRateLimiter::tryAcquireOne() {
-  if (!distributed_start_set_) {
+  if (distributed_start_ == absl::nullopt) {
     if (rate_limiter_->tryAcquireOne()) {
       distributed_start_ = time_source_.monotonicTime() + random_distribution_generator_();
-      distributed_start_set_ = true;
     }
   }
 
-  if (distributed_start_set_ && distributed_start_ <= time_source_.monotonicTime()) {
-    distributed_start_set_ = false;
+  if (distributed_start_ != absl::nullopt && distributed_start_ <= time_source_.monotonicTime()) {
+    distributed_start_ = absl::nullopt;
     return true;
   }
 
@@ -106,7 +105,7 @@ bool RandomDistributingRateLimiter::tryAcquireOne() {
 }
 
 void RandomDistributingRateLimiter::releaseOne() {
-  distributed_start_set_ = false;
+  distributed_start_ = absl::nullopt;
   rate_limiter_->releaseOne();
 }
 
