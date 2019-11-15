@@ -81,4 +81,38 @@ void LinearRateLimiter::releaseOne() {
   acquired_count_--;
 }
 
+DelegatingRateLimiter::DelegatingRateLimiter(Envoy::TimeSource& time_source,
+                                             RateLimiterPtr&& rate_limiter,
+                                             RateLimiterDelegate random_distribution_generator)
+    : random_distribution_generator_(std::move(random_distribution_generator)),
+      time_source_(time_source), rate_limiter_(std::move(rate_limiter)) {}
+
+bool DelegatingRateLimiter::tryAcquireOne() {
+  if (distributed_start_ == absl::nullopt) {
+    if (rate_limiter_->tryAcquireOne()) {
+      distributed_start_ = time_source_.monotonicTime() + random_distribution_generator_();
+    }
+  }
+
+  if (distributed_start_ != absl::nullopt && distributed_start_ <= time_source_.monotonicTime()) {
+    distributed_start_ = absl::nullopt;
+    return true;
+  }
+
+  return false;
+}
+
+void DelegatingRateLimiter::releaseOne() {
+  distributed_start_ = absl::nullopt;
+  rate_limiter_->releaseOne();
+}
+
+DistributionSamplingRateLimiterImpl::DistributionSamplingRateLimiterImpl(
+    Envoy::TimeSource& time_source, DiscreteNumericDistributionSamplerPtr&& provider,
+    RateLimiterPtr&& rate_limiter)
+    : DelegatingRateLimiter(
+          time_source, std::move(rate_limiter),
+          [this]() { return std::chrono::duration<uint64_t, std::nano>(provider_->getValue()); }),
+      provider_(std::move(provider)) {}
+
 } // namespace Nighthawk

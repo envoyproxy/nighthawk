@@ -48,7 +48,12 @@ def mini_stress_test(fixture, args):
   else:
     assertCounterEqual(counters, "upstream_cx_http1_total", 1)
   global_histograms = fixture.getNighthawkGlobalHistogramsbyIdFromJson(parsed_json)
-  assertGreater(int(global_histograms["sequencer.blocking"]["count"]), MIN_EXPECTED_REQUESTS)
+
+  if "--open-loop" in args:
+    assertEqual(int(global_histograms["sequencer.blocking"]["count"]), 0)
+  else:
+    assertGreater(int(global_histograms["sequencer.blocking"]["count"]), MIN_EXPECTED_REQUESTS)
+
   assertGreater(
       int(global_histograms["benchmark_http_client.request_to_response"]["count"]),
       MIN_EXPECTED_REQUESTS)
@@ -64,7 +69,7 @@ def test_http_h1_mini_stress_test_with_client_side_queueing(http_test_server_fix
   queue."""
   counters = mini_stress_test(http_test_server_fixture, [
       http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--max-pending-requests",
-      "10", "--duration 10", "--connections", "1"
+      "10", "--duration", "10", "--connections", "1"
   ])
   assertCounterEqual(counters, "upstream_rq_pending_total", 11)
   assertCounterEqual(counters, "upstream_cx_overflow", 10)
@@ -90,7 +95,7 @@ def test_http_h2_mini_stress_test_with_client_side_queueing(http_test_server_fix
   """
   counters = mini_stress_test(http_test_server_fixture, [
       http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--max-pending-requests",
-      "10", "--duration 10", "--h2", "--max-active-requests", "1", "--connections", "1"
+      "10", "--duration", "10", "--h2", "--max-active-requests", "1", "--connections", "1"
   ])
   assertCounterEqual(counters, "upstream_rq_pending_total", 1)
   assertCounterEqual(counters, "upstream_rq_pending_overflow", 10)
@@ -107,6 +112,30 @@ def test_http_h2_mini_stress_test_without_client_side_queueing(http_test_server_
   ])
   assertCounterEqual(counters, "upstream_rq_pending_total", 1)
   assertNotIn("upstream_rq_pending_overflow", counters)
+
+
+def test_http_h1_mini_stress_test_open_loop(http_test_server_fixture):
+  """
+  H1 open loop stress test. We expect higher pending and overflow counts 
+  """
+  counters = mini_stress_test(http_test_server_fixture, [
+      http_test_server_fixture.getTestServerRootUri(), "--rps", "2500", "--max-pending-requests",
+      "1", "--duration", "10", "--open-loop", "--max-active-requests", "1", "--connections", "1"
+  ])
+  # we expect pool overflows
+  assertCounterGreater(counters, "benchmark.pool_overflow", 10)
+
+
+def test_http_h2_mini_stress_test_open_loop(http_test_server_fixture):
+  """
+  H2 open loop stress test. We expect higher overflow counts 
+  """
+  counters = mini_stress_test(http_test_server_fixture, [
+      http_test_server_fixture.getTestServerRootUri(), "--rps", "2500", "--max-pending-requests",
+      "1", "--duration", "10", "--h2", "--open-loop", "--max-active-requests", "1"
+  ])
+  # we expect pool overflows
+  assertCounterGreater(counters, "benchmark.pool_overflow", 10)
 
 
 def test_http_h2(http_test_server_fixture):

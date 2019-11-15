@@ -42,6 +42,7 @@ TEST_F(FactoriesTest, CreateBenchmarkClient) {
   EXPECT_CALL(options_, maxPendingRequests()).Times(1);
   EXPECT_CALL(options_, maxActiveRequests()).Times(1);
   EXPECT_CALL(options_, maxRequestsPerConnection()).Times(1);
+  EXPECT_CALL(options_, openLoop()).Times(1);
   auto cmd = std::make_unique<nighthawk::client::CommandLineOptions>();
   EXPECT_CALL(options_, toCommandLineOptions()).Times(1).WillOnce(Return(ByMove(std::move(cmd))));
   StaticHeaderSourceImpl header_generator(std::make_unique<Envoy::Http::TestHeaderMapImpl>());
@@ -122,7 +123,8 @@ TEST_P(OutputFormatterFactoryTest, TestCreation) { testOutputCollector(GetParam(
 INSTANTIATE_TEST_SUITE_P(
     OutputFormats, OutputFormatterFactoryTest,
     ValuesIn({nighthawk::client::OutputFormat::HUMAN, nighthawk::client::OutputFormat::JSON,
-              nighthawk::client::OutputFormat::YAML, nighthawk::client::OutputFormat::DOTTED}));
+              nighthawk::client::OutputFormat::YAML, nighthawk::client::OutputFormat::DOTTED,
+              nighthawk::client::OutputFormat::FORTIO}));
 
 } // namespace Client
 } // namespace Nighthawk

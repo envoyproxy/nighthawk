@@ -104,6 +104,8 @@ envoy_cc_test(
     data = [
         "test_data/output_formatter.dotted.gold",
         "test_data/output_formatter.json.gold",
+        "test_data/output_formatter.medium.fortio.gold",
+        "test_data/output_formatter.medium.proto.gold",
         "test_data/output_formatter.txt.gold",
         "test_data/output_formatter.yaml.gold",
     ],

@@ -39,13 +39,15 @@ BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
     Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
     StatisticPtr&& connect_statistic, StatisticPtr&& response_statistic, bool use_h2,
     Envoy::Upstream::ClusterManagerPtr& cluster_manager, Envoy::Tracing::HttpTracerPtr& http_tracer,
-    absl::string_view cluster_name, HeaderGenerator header_generator)
+    absl::string_view cluster_name, HeaderGenerator header_generator,
+    const bool provide_resource_backpressure)
     : api_(api), dispatcher_(dispatcher), scope_(scope.createScope("benchmark.")),
       connect_statistic_(std::move(connect_statistic)),
       response_statistic_(std::move(response_statistic)), use_h2_(use_h2),
       benchmark_client_stats_({ALL_BENCHMARK_CLIENT_STATS(POOL_COUNTER(*scope_))}),
       cluster_manager_(cluster_manager), http_tracer_(http_tracer),
-      cluster_name_(std::string(cluster_name)), header_generator_(std::move(header_generator)) {
+      cluster_name_(std::string(cluster_name)), header_generator_(std::move(header_generator)),
+      provide_resource_backpressure_(provide_resource_backpressure) {
   connect_statistic_->setId("benchmark_http_client.queue_to_connect");
   response_statistic_->setId("benchmark_http_client.request_to_response");
 }
@@ -66,16 +68,19 @@ StatisticPtrMap BenchmarkClientHttpImpl::statistics() const {
 };
 
 bool BenchmarkClientHttpImpl::tryStartRequest(CompletionCallback caller_completion_callback) {
-  const uint64_t max_in_flight =
-      max_pending_requests_ + (use_h2_ ? max_active_requests_ : connection_limit_);
   auto* pool_ptr = pool();
   if (pool_ptr == nullptr) {
     return false;
   }
-  if (requests_initiated_ - requests_completed_ >= max_in_flight) {
-    // When we allow client-side queueing, we want to have a sense of time spend waiting on that
-    // queue. So we return false here to indicate we couldn't initiate a new request.
-    return false;
+  if (provide_resource_backpressure_) {
+    const uint64_t max_in_flight =
+        max_pending_requests_ + (use_h2_ ? max_active_requests_ : connection_limit_);
+
+    if (requests_initiated_ - requests_completed_ >= max_in_flight) {
+      // When we allow client-side queueing, we want to have a sense of time spend waiting on that
+      // queue. So we return false here to indicate we couldn't initiate a new request.
+      return false;
+    }
   }
   auto header = header_generator_();
   auto* content_length_header = header->ContentLength();
