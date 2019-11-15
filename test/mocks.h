@@ -57,6 +57,7 @@ public:
   MOCK_METHOD0(start, void());
   MOCK_METHOD0(waitForCompletion, void());
   MOCK_CONST_METHOD0(completionsPerSecond, double());
+  MOCK_CONST_METHOD0(executionDuration, std::chrono::nanoseconds());
   MOCK_CONST_METHOD0(statistics, StatisticPtrMap());
   MOCK_METHOD0(cancel, void());
 };
@@ -89,6 +90,8 @@ public:
                      nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions());
   MOCK_CONST_METHOD0(headerSource, std::string());
   MOCK_CONST_METHOD0(trace, std::string());
+  MOCK_CONST_METHOD0(terminationPredicates, Client::TerminationPredicateMap());
+  MOCK_CONST_METHOD0(failurePredicates, Client::TerminationPredicateMap());
   MOCK_CONST_METHOD0(openLoop, bool());
 };
 

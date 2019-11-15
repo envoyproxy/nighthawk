@@ -34,6 +34,7 @@ public:
   const std::map<std::string, uint64_t>& thread_local_counter_values() override {
     return thread_local_counter_values_;
   }
+  const Sequencer& sequencer() const override { return *sequencer_; }
   void shutdownThread() override;
 
 protected:

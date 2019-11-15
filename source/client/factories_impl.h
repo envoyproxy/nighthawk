@@ -14,7 +14,7 @@
 namespace Nighthawk {
 namespace Client {
 
-class OptionBasedFactoryImpl {
+class OptionBasedFactoryImpl : public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
   OptionBasedFactoryImpl(const Options& options);
   virtual ~OptionBasedFactoryImpl() = default;
@@ -80,6 +80,9 @@ public:
   TerminationPredicateFactoryImpl(const Options& options);
   TerminationPredicatePtr create(Envoy::TimeSource& time_source, Envoy::Stats::Scope& scope,
                                  const Envoy::MonotonicTime start) const override;
+  TerminationPredicate* linkConfiguredPredicates(
+      TerminationPredicate& last_predicate, const TerminationPredicateMap& predicates,
+      const TerminationPredicate::Status termination_status, Envoy::Stats::Scope& scope) const;
 };
 
 } // namespace Client
