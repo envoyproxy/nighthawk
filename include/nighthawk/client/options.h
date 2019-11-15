@@ -43,7 +43,7 @@ public:
   virtual nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions
   sequencerIdleStrategy() const PURE;
   virtual std::string trace() const PURE;
-
+  virtual bool openLoop() const PURE;
   /**
    * Converts an Options instance to an equivalent CommandLineOptions instance in terms of option
    * values.

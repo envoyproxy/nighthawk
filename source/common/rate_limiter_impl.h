@@ -1,5 +1,7 @@
 #pragma once
 
+#include <random>
+
 #include "envoy/common/time.h"
 
 #include "nighthawk/common/rate_limiter.h"
@@ -52,6 +54,52 @@ private:
   const Frequency frequency_;
   bool started_{};
   Envoy::MonotonicTime started_at_;
+};
+
+// We use an unsigned duration here to ensure only future points in time will be yielded.
+// The consuming rate limiter will hold off opening up until the initial point in time plus the
+// offset obtained via the delegate have transpired.
+using RateLimiterDelegate = std::function<const std::chrono::duration<uint64_t, std::nano>()>;
+
+// Wraps a rate limiter, and allows plugging in a delegate which will be queried to offset the
+// timing of the underlying rate limiter.
+class DelegatingRateLimiter : public RateLimiter,
+                              public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
+public:
+  DelegatingRateLimiter(Envoy::TimeSource& time_source, RateLimiterPtr&& rate_limiter,
+                        RateLimiterDelegate random_distribution_generator);
+  bool tryAcquireOne() override;
+  void releaseOne() override;
+
+protected:
+  const RateLimiterDelegate random_distribution_generator_;
+
+private:
+  Envoy::TimeSource& time_source_;
+  const RateLimiterPtr rate_limiter_;
+  absl::optional<Envoy::MonotonicTime> distributed_start_;
+};
+
+class UniformRandomDistributionSamplerImpl : public DiscreteNumericDistributionSampler {
+public:
+  UniformRandomDistributionSamplerImpl(const std::chrono::duration<uint64_t, std::nano> upper_bound)
+      : distribution_(0, upper_bound.count()) {}
+  uint64_t getValue() override { return distribution_(generator_); }
+
+private:
+  std::default_random_engine generator_;
+  std::uniform_int_distribution<uint64_t> distribution_;
+};
+
+// Allows adding uniformly distributed random timing offsets to an underlying rate limiter.
+class DistributionSamplingRateLimiterImpl : public DelegatingRateLimiter {
+public:
+  DistributionSamplingRateLimiterImpl(Envoy::TimeSource& time_source,
+                                      DiscreteNumericDistributionSamplerPtr&& provider,
+                                      RateLimiterPtr&& rate_limiter);
+
+private:
+  DiscreteNumericDistributionSamplerPtr provider_;
 };
 
 } // namespace Nighthawk
