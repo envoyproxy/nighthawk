@@ -21,11 +21,18 @@ using namespace std::chrono_literals;
 namespace Nighthawk {
 namespace Client {
 
-void Http1PoolImpl::createConnections(const uint32_t connection_limit) {
-  ENVOY_LOG(error, "Prefetching {} connections.", connection_limit);
-  for (uint32_t i = 0; i < connection_limit; i++) {
-    createNewConnection();
+Envoy::Http::ConnectionPool::Cancellable*
+Http1PoolImpl::newStream(Envoy::Http::StreamDecoder& response_decoder,
+                         Envoy::Http::ConnectionPool::Callbacks& callbacks) {
+  // In prefetch mode we try to keep the amount of connections at the configured limit.
+  if (prefetch_connections_) {
+    while (host_->cluster().resourceManager(priority_).connections().canCreate()) {
+      createNewConnection();
+    }
   }
+
+  // Vanilla Envoy pool behavior.
+  return ConnPoolImpl::newStream(response_decoder, callbacks);
 }
 
 BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
@@ -43,15 +50,6 @@ BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
       provide_resource_backpressure_(provide_resource_backpressure) {
   connect_statistic_->setId("benchmark_http_client.queue_to_connect");
   response_statistic_->setId("benchmark_http_client.request_to_response");
-}
-
-void BenchmarkClientHttpImpl::prefetchPoolConnections() {
-  auto* prefetchable_pool = dynamic_cast<Http1PoolImpl*>(pool());
-  if (prefetchable_pool == nullptr) {
-    ENVOY_LOG(error, "prefetchPoolConnections() pool not prefetchable");
-    return;
-  }
-  prefetchable_pool->createConnections(connection_limit_);
 }
 
 void BenchmarkClientHttpImpl::terminate() {

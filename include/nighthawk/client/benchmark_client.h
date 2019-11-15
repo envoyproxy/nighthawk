@@ -54,8 +54,6 @@ public:
    */
   virtual Envoy::Stats::Scope& scope() const PURE;
 
-  virtual void prefetchPoolConnections() PURE;
-
   /**
    * Determines if latency measurement is on.
    *

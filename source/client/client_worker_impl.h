@@ -28,7 +28,7 @@ public:
                    const RequestSourceFactory& request_generator_factory,
                    Envoy::Stats::Store& store, const int worker_number,
                    const Envoy::MonotonicTime starting_time,
-                   Envoy::Tracing::HttpTracerPtr& http_tracer, bool prefetch_connections);
+                   Envoy::Tracing::HttpTracerPtr& http_tracer);
   StatisticPtrMap statistics() const override;
 
   const std::map<std::string, uint64_t>& thread_local_counter_values() override {
@@ -52,7 +52,6 @@ private:
   TerminationPredicatePtr termination_predicate_;
   const SequencerPtr sequencer_;
   Envoy::LocalInfo::LocalInfoPtr local_info_;
-  const bool prefetch_connections_;
   std::map<std::string, uint64_t> thread_local_counter_values_;
 };
 

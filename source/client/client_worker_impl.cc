@@ -16,8 +16,7 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
                                    const RequestSourceFactory& request_generator_factory,
                                    Envoy::Stats::Store& store, const int worker_number,
                                    const Envoy::MonotonicTime starting_time,
-                                   Envoy::Tracing::HttpTracerPtr& http_tracer,
-                                   bool prefetch_connections)
+                                   Envoy::Tracing::HttpTracerPtr& http_tracer)
     : WorkerImpl(api, tls, store), worker_scope_(store_.createScope("cluster.")),
       worker_number_scope_(worker_scope_->createScope(fmt::format("{}.", worker_number))),
       worker_number_(worker_number), starting_time_(starting_time), http_tracer_(http_tracer),
@@ -30,14 +29,10 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
           termination_predicate_factory.create(time_source_, *worker_number_scope_, starting_time)),
       sequencer_(sequencer_factory.create(time_source_, *dispatcher_, starting_time,
                                           *benchmark_client_, *termination_predicate_,
-                                          *worker_number_scope_)),
-      prefetch_connections_(prefetch_connections) {}
+                                          *worker_number_scope_)) {}
 
 void ClientWorkerImpl::simpleWarmup() {
   ENVOY_LOG(debug, "> worker {}: warmup start.", worker_number_);
-  if (prefetch_connections_) {
-    benchmark_client_->prefetchPoolConnections();
-  }
   if (benchmark_client_->tryStartRequest([this](bool, bool) { dispatcher_->exit(); })) {
     dispatcher_->run(Envoy::Event::Dispatcher::RunType::RunUntilExit);
   } else {
