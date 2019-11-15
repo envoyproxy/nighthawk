@@ -10,9 +10,9 @@
 
 #include "client/output_formatter_impl.h"
 
+#include "absl/strings/numbers.h"
 #include "absl/strings/str_split.h"
 #include "fmt/ranges.h"
-#include "tclap/CmdLine.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -168,6 +168,16 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   TCLAP::ValueArg<std::string> trace(
       "", "trace", "Trace uri. Example: zipkin://localhost:9411/api/v1/spans. Default is empty.",
       false, "", "uri format", cmd);
+  TCLAP::MultiArg<std::string> termination_predicates(
+      "", "termination-predicate",
+      "Termination predicate. Allows specifying a counter name plus threshold value for "
+      "terminating execution.",
+      false, "<string, uint64_t>", cmd);
+  TCLAP::MultiArg<std::string> failure_predicates(
+      "", "failure-predicate",
+      "Failure predicate. Allows specifying a counter name plus threshold value for "
+      "failing execution. Defaults to not tolerating error status codes and connection errors.",
+      false, "<string, uint64_t>", cmd);
 
   TCLAP::SwitchArg open_loop(
       "", "open-loop",
@@ -231,6 +241,8 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
                    "Failed to parse sequencer idle strategy");
   }
   TCLAP_SET_IF_SPECIFIED(trace, trace_);
+  parsePredicates(termination_predicates, termination_predicates_);
+  parsePredicates(failure_predicates, failure_predicates_);
   TCLAP_SET_IF_SPECIFIED(open_loop, open_loop_);
 
   // CLI-specific tests.
@@ -273,6 +285,29 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
     }
   }
   validate();
+}
+
+void OptionsImpl::parsePredicates(const TCLAP::MultiArg<std::string>& arg,
+                                  TerminationPredicateMap& predicates) {
+  if (arg.isSet()) {
+    predicates.clear();
+  }
+  for (const auto& predicate : arg) {
+    std::vector<std::string> split_predicate =
+        absl::StrSplit(predicate, ':', absl::SkipWhitespace());
+    if (split_predicate.size() != 2) {
+      throw MalformedArgvException(
+          fmt::format("Termination predicate '{}' is badly formatted.", predicate));
+    }
+
+    uint32_t threshold = 0;
+    if (absl::SimpleAtoi(split_predicate[1], &threshold)) {
+      predicates[split_predicate[0]] = threshold;
+    } else {
+      throw MalformedArgvException(
+          fmt::format("Termination predicate '{}' has an out of range threshold.", predicate));
+    }
+  }
 }
 
 OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
@@ -322,10 +357,26 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   open_loop_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, open_loop, open_loop_);
 
   tls_context_.MergeFrom(options.tls_context());
+  if (options.failure_predicates().size()) {
+    failure_predicates_.clear();
+  }
+  for (const auto& predicate : options.failure_predicates()) {
+    failure_predicates_[predicate.first] = predicate.second;
+  }
+  for (const auto& predicate : options.termination_predicates()) {
+    termination_predicates_[predicate.first] = predicate.second;
+  }
   validate();
 }
 
-void OptionsImpl::setNonTrivialDefaults() { concurrency_ = "1"; }
+void OptionsImpl::setNonTrivialDefaults() {
+  concurrency_ = "1";
+  // By default, we don't tolerate error status codes and connection failures, and will report
+  // upon observing those.
+  failure_predicates_["benchmark.http_4xx"] = 0;
+  failure_predicates_["benchmark.http_5xx"] = 0;
+  failure_predicates_["benchmark.pool_connection_failure"] = 0;
+}
 
 void OptionsImpl::validate() const {
   // concurrency must be either 'auto' or a positive integer.
@@ -395,6 +446,14 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptions() const {
       maxRequestsPerConnection());
   command_line_options->mutable_sequencer_idle_strategy()->set_value(sequencerIdleStrategy());
   command_line_options->mutable_trace()->set_value(trace());
+  auto termination_predicates_option = command_line_options->mutable_termination_predicates();
+  for (const auto& predicate : terminationPredicates()) {
+    termination_predicates_option->insert({predicate.first, predicate.second});
+  }
+  auto failure_predicates_option = command_line_options->mutable_failure_predicates();
+  for (const auto& predicate : failurePredicates()) {
+    failure_predicates_option->insert({predicate.first, predicate.second});
+  }
   command_line_options->mutable_open_loop()->set_value(openLoop());
   return command_line_options;
 }

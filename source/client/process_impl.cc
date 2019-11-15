@@ -380,17 +380,20 @@ bool ProcessImpl::run(OutputCollector& collector) {
     w->waitForCompletion();
   }
 
-  // We don't write per-worker results if we only have a single worker, because the global results
-  // will be precisely the same.
-  if (workers_.size() > 1) {
-    int i = 0;
-    for (auto& worker : workers_) {
+  int i = 0;
+  std::chrono::nanoseconds total_execution_duration = 0ns;
+  for (auto& worker : workers_) {
+    auto sequencer_execution_duration = worker->sequencer().executionDuration();
+    // We don't write per-worker results if we only have a single worker, because the global results
+    // will be precisely the same.
+    if (workers_.size() > 1) {
       StatisticFactoryImpl statistic_factory(options_);
       collector.addResult(fmt::format("worker_{}", i),
                           vectorizeStatisticPtrMap(statistic_factory, worker->statistics()),
-                          worker->thread_local_counter_values());
-      i++;
+                          worker->thread_local_counter_values(), sequencer_execution_duration);
     }
+    total_execution_duration += sequencer_execution_duration;
+    i++;
   }
 
   // Note that above we use use counter values snapshotted by the workers right after its execution
@@ -400,7 +403,8 @@ bool ProcessImpl::run(OutputCollector& collector) {
   const auto& counters = Utility().mapCountersFromStore(
       store_root_, [](absl::string_view, uint64_t value) { return value > 0; });
   StatisticFactoryImpl statistic_factory(options_);
-  collector.addResult("global", mergeWorkerStatistics(statistic_factory, workers), counters);
+  collector.addResult("global", mergeWorkerStatistics(statistic_factory, workers), counters,
+                      total_execution_duration / workers_.size());
   return counters.find("sequencer.failed_terminations") == counters.end();
 }
 

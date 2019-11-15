@@ -17,7 +17,7 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
                                    Envoy::Stats::Store& store, const int worker_number,
                                    const Envoy::MonotonicTime starting_time,
                                    Envoy::Tracing::HttpTracerPtr& http_tracer)
-    : WorkerImpl(api, tls, store), worker_scope_(store_.createScope("worker.")),
+    : WorkerImpl(api, tls, store), worker_scope_(store_.createScope("cluster.")),
       worker_number_scope_(worker_scope_->createScope(fmt::format("{}.", worker_number))),
       worker_number_(worker_number), starting_time_(starting_time), http_tracer_(http_tracer),
       header_generator_(header_generator_factory.create()),

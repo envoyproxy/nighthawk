@@ -44,6 +44,8 @@ if __name__ == "__main__":
     original_contents = target_path.read_text(encoding="utf-8")
     replaced = re.sub("\nUSAGE\:[^.]*.*%s[^```]*" % args.binary, str.join("\n", cli_help),
                       original_contents)
+    # Avoid check_format flagging "over-enthousiastic" whitespace
+    replaced = replaced.replace("...  [", "... [")
 
   if replaced != original_contents:
     if args.mode == "check":

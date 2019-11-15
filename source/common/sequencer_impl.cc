@@ -55,8 +55,8 @@ void SequencerImpl::stop(bool failed) {
   spin_timer_.reset();
   dispatcher_.exit();
   unblockAndUpdateStatisticIfNeeded(time_source_.monotonicTime());
-  const auto ran_for = std::chrono::duration_cast<std::chrono::milliseconds>(
-      time_source_.monotonicTime() - start_time_);
+  const auto ran_for =
+      std::chrono::duration_cast<std::chrono::milliseconds>(last_event_time_ - start_time_);
   ENVOY_LOG(info,
             "Stopping after {} ms. Initiated: {} / Completed: {}. "
             "(Completion rate was {} per second.)",
@@ -79,7 +79,7 @@ void SequencerImpl::updateStartBlockingTimeIfNeeded() {
 
 void SequencerImpl::run(bool from_periodic_timer) {
   ASSERT(running_);
-  const auto now = time_source_.monotonicTime();
+  const auto now = last_event_time_ = time_source_.monotonicTime();
   const auto running_duration = now - start_time_;
 
   // The running_duration we compute will be negative until it is time to start.
