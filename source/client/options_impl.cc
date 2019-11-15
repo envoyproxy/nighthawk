@@ -181,6 +181,12 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
               nighthawk::client::H1ConnectionReuseStrategy_H1ConnectionReuseStrategyOptions_Name(
                   h1_connection_reuse_strategy_))),
       false, "", &h1_connection_reuse_strategies_allowed, cmd);
+  TCLAP::SwitchArg open_loop(
+      "", "open-loop",
+      "Enable open loop mode. When enabled, the benchmark client will not provide backpressure "
+      "when resource limits are hit.",
+      cmd);
+
   TCLAP::UnlabeledValueArg<std::string> uri("uri",
                                             "uri to benchmark. http:// and https:// are supported, "
                                             "but in case of https no certificates are validated.",
@@ -247,6 +253,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   }
 
   TCLAP_SET_IF_SPECIFIED(trace, trace_);
+  TCLAP_SET_IF_SPECIFIED(open_loop, open_loop_);
 
   // CLI-specific tests.
   // TODO(oschaaf): as per mergconflicts's remark, it would be nice to aggregate
@@ -336,6 +343,7 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   trace_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, trace, trace_);
   h1_connection_reuse_strategy_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(
       options, h1_connection_reuse_strategy, h1_connection_reuse_strategy_);
+  open_loop_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, open_loop, open_loop_);
 
   tls_context_.MergeFrom(options.tls_context());
   validate();
@@ -413,6 +421,7 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptions() const {
   command_line_options->mutable_trace()->set_value(trace());
   command_line_options->mutable_h1_connection_reuse_strategy()->set_value(
       h1ConnectionReuseStrategy());
+  command_line_options->mutable_open_loop()->set_value(openLoop());
   return command_line_options;
 }
 

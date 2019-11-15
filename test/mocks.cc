@@ -34,4 +34,6 @@ MockHeaderSource::MockHeaderSource() = default;
 
 MockTerminationPredicate::MockTerminationPredicate() = default;
 
+MockDiscreteNumericDistributionSampler::MockDiscreteNumericDistributionSampler() = default;
+
 } // namespace Nighthawk

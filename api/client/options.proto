@@ -47,6 +47,7 @@ message OutputFormat {
     HUMAN = 2;
     YAML = 3;
     DOTTED = 4;
+    FORTIO = 5;
   }
   OutputFormatOptions value = 1;
 }
@@ -118,4 +119,6 @@ message CommandLineOptions {
   google.protobuf.StringValue trace = 19; // [(validate.rules).string.uri = true];
   // See :option:`--h1-connection-reuse-strategy` for details.
   H1ConnectionReuseStrategy h1_connection_reuse_strategy = 23;
+  // See :option:`--open-loop` for details.
+  google.protobuf.BoolValue open_loop = 21;
 }

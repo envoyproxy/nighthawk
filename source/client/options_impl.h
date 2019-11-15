@@ -55,6 +55,7 @@ public:
   h1ConnectionReuseStrategy() const override {
     return h1_connection_reuse_strategy_;
   }
+  bool openLoop() const override { return open_loop_; }
 
 private:
   void setNonTrivialDefaults();
@@ -88,6 +89,7 @@ private:
   std::string trace_;
   nighthawk::client::H1ConnectionReuseStrategy::H1ConnectionReuseStrategyOptions
       h1_connection_reuse_strategy_{nighthawk::client::H1ConnectionReuseStrategy::HOT};
+  bool open_loop_{false};
 };
 
 } // namespace Client

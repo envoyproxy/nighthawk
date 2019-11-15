@@ -91,6 +91,7 @@ public:
   MOCK_CONST_METHOD0(
       h1ConnectionReuseStrategy,
       nighthawk::client::H1ConnectionReuseStrategy::H1ConnectionReuseStrategyOptions());
+  MOCK_CONST_METHOD0(openLoop, bool());
 };
 
 class MockBenchmarkClientFactory : public Client::BenchmarkClientFactory {
@@ -179,6 +180,12 @@ public:
   MOCK_METHOD1(link, TerminationPredicate&(TerminationPredicatePtr&&));
   MOCK_METHOD0(evaluateChain, TerminationPredicate::Status());
   MOCK_METHOD0(evaluate, TerminationPredicate::Status());
+};
+
+class MockDiscreteNumericDistributionSampler : public DiscreteNumericDistributionSampler {
+public:
+  MockDiscreteNumericDistributionSampler();
+  MOCK_METHOD0(getValue, uint64_t());
 };
 
 } // namespace Nighthawk
