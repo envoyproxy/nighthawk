@@ -45,7 +45,9 @@ USAGE:
 
 bazel-bin/nighthawk_client  [--open-loop]
 [--h1-connection-reuse-strategy <HOT|FAIR>]
-[--trace <uri format>]
+[--failure-predicate <<string, uint64_t>>]
+... [--termination-predicate <<string,
+uint64_t>>] ... [--trace <uri format>]
 [--sequencer-idle-strategy <spin|poll
 |sleep>] [--max-requests-per-connection
 <uint32_t>] [--max-active-requests
@@ -75,6 +77,15 @@ provide backpressure when resource limits are hit.
 --h1-connection-reuse-strategy <HOT|FAIR>
 Choose picking the most recently used, or least-recently-used
 connections for re-use.(default: hot).
+
+--failure-predicate <<string, uint64_t>>  (accepted multiple times)
+Failure predicate. Allows specifying a counter name plus threshold
+value for failing execution. Defaults to not tolerating error status
+codes and connection errors.
+
+--termination-predicate <<string, uint64_t>>  (accepted multiple times)
+Termination predicate. Allows specifying a counter name plus threshold
+value for terminating execution.
 
 --trace <uri format>
 Trace uri. Example: zipkin://localhost:9411/api/v1/spans. Default is

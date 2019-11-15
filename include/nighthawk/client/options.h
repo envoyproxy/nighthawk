@@ -1,6 +1,7 @@
 #pragma once
 
 #include <chrono>
+#include <map>
 #include <memory>
 #include <string>
 
@@ -13,7 +14,7 @@ namespace Nighthawk {
 namespace Client {
 
 using CommandLineOptionsPtr = std::unique_ptr<nighthawk::client::CommandLineOptions>;
-
+using TerminationPredicateMap = std::map<std::string, uint64_t>;
 /**
  * Abstract options interface.
  */
@@ -45,6 +46,8 @@ public:
   virtual std::string trace() const PURE;
   virtual nighthawk::client::H1ConnectionReuseStrategy::H1ConnectionReuseStrategyOptions
   h1ConnectionReuseStrategy() const PURE;
+  virtual TerminationPredicateMap terminationPredicates() const PURE;
+  virtual TerminationPredicateMap failurePredicates() const PURE;
   virtual bool openLoop() const PURE;
 
   /**

@@ -57,6 +57,7 @@ public:
   MOCK_METHOD0(start, void());
   MOCK_METHOD0(waitForCompletion, void());
   MOCK_CONST_METHOD0(completionsPerSecond, double());
+  MOCK_CONST_METHOD0(executionDuration, std::chrono::nanoseconds());
   MOCK_CONST_METHOD0(statistics, StatisticPtrMap());
   MOCK_METHOD0(cancel, void());
 };
@@ -91,6 +92,8 @@ public:
   MOCK_CONST_METHOD0(
       h1ConnectionReuseStrategy,
       nighthawk::client::H1ConnectionReuseStrategy::H1ConnectionReuseStrategyOptions());
+  MOCK_CONST_METHOD0(terminationPredicates, Client::TerminationPredicateMap());
+  MOCK_CONST_METHOD0(failurePredicates, Client::TerminationPredicateMap());
   MOCK_CONST_METHOD0(openLoop, bool());
 };
 

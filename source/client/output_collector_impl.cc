@@ -22,7 +22,8 @@ nighthawk::client::Output OutputCollectorImpl::toProto() const { return output_;
 
 void OutputCollectorImpl::addResult(absl::string_view name,
                                     const std::vector<StatisticPtr>& statistics,
-                                    const std::map<std::string, uint64_t>& counters) {
+                                    const std::map<std::string, uint64_t>& counters,
+                                    const std::chrono::nanoseconds execution_duration) {
   auto result = output_.add_results();
   result->set_name(name.data(), name.size());
   for (auto& statistic : statistics) {
@@ -33,6 +34,8 @@ void OutputCollectorImpl::addResult(absl::string_view name,
     new_counters->set_name(counter.first);
     new_counters->set_value(counter.second);
   }
+  *result->mutable_execution_duration() =
+      Envoy::Protobuf::util::TimeUtil::NanosecondsToDuration(execution_duration.count());
 }
 
 } // namespace Client

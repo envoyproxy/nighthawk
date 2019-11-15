@@ -137,14 +137,14 @@ class IntegrationTestBase():
     stdout, stderr = client_process.communicate()
     logs = stderr.decode('utf-8')
     output = stdout.decode('utf-8')
+    logging.info("Nighthawk client output: [%s]" % output)
+    if as_json:
+      output = json.loads(output)
     if expect_failure:
       assert (client_process.returncode == 0)
     else:
-      logging.info("Nighthawk client output: [%s]" % output)
-      if as_json:
-        output = json.loads(output)
       assert (client_process.returncode == 0)
-      return output, logs
+    return output, logs
 
   def assertIsSubset(self, subset, superset):
     self.assertLessEqual(subset.items(), superset.items())
