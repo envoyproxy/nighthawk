@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package nighthawk.client;
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+import "validate/validate.proto";
+
+// This proto represents that output format that Fortio expects when converted to JSON.
+// Nighthawk can fill in this proto, and then unmarshal to the Fortio-compatible JSON.
+// Therefore, this proto may not follow conventions. aip.dev/not-precedent
+message FortioResult {
+  // Disable validate because it doesn't work well with fields that are not all lowercase.
+  // The field cases must match the final output JSON that fortio-ui expects.
+  option (validate.disabled) = true;
+
+  string Labels = 1;
+
+  google.protobuf.Timestamp StartTime = 2;
+
+  uint32 RequestedQPS = 3;
+
+  google.protobuf.Duration RequestedDuration = 4;
+
+  double ActualQPS = 5;
+
+  double ActualDuration = 6;
+
+  uint32 NumThreads = 7;
+
+  DurationHistogram DurationHistogram = 8;
+
+  map<string, uint64> RetCodes = 11;
+
+  string URL = 12;
+}
+
+message DurationHistogram {
+  option (validate.disabled) = true;
+
+  uint64 Count = 1;
+
+  repeated DataEntry Data = 2;
+}
+
+message DataEntry {
+  option (validate.disabled) = true;
+
+  double Start = 1;
+
+  double End = 2;
+
+  double Percent = 3;
+
+  uint64 Count = 4;
+}

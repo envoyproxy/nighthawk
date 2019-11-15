@@ -52,6 +52,7 @@ public:
   }
   std::string headerSource() const override { return request_source_; }
   std::string trace() const override { return trace_; }
+  bool openLoop() const override { return open_loop_; }
 
 private:
   void setNonTrivialDefaults();
@@ -84,6 +85,7 @@ private:
       nighthawk::client::SequencerIdleStrategy::SPIN};
   std::string request_source_;
   std::string trace_;
+  bool open_loop_{false};
 };
 
 } // namespace Client

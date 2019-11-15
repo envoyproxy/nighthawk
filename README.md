@@ -9,7 +9,7 @@ Nighthawk currently offers:
 - A load testing client which supports HTTP/1.1 and HTTP/2 over HTTP and HTTPS.
 (HTTPS certificates are not yet validated).
 - A simple [test server](source/server/README.md) which is capable of generating dynamic response sizes, as well as inject delays.
-
+- A binary to transform nighthawk output to well-known formats, allowing integration with other systems and dashboards.
 
 ## Prerequisites
 
@@ -43,9 +43,10 @@ bazel build -c opt //:nighthawk
 ```
 USAGE:
 
-bazel-bin/nighthawk_client  [--request-source <string>] [--trace <uri
-format>] [--sequencer-idle-strategy <spin
-|poll|sleep>] [--max-requests-per-connection
+bazel-bin/nighthawk_client  [--request-source <string>] [--open-loop]
+[--trace <uri format>]
+[--sequencer-idle-strategy <spin|poll
+|sleep>] [--max-requests-per-connection
 <uint32_t>] [--max-active-requests
 <uint32_t>] [--max-pending-requests
 <uint32_t>] [--tls-context <string>]
@@ -55,18 +56,23 @@ format>] [--sequencer-idle-strategy <spin
 |CONNECT|OPTIONS|TRACE>] [--address-family
 <auto|v4|v6>] [--burst-size <uint32_t>]
 [--prefetch-connections] [--output-format
-<json|human|yaml|dotted>] [-v <trace|debug
-|info|warn|error|critical>] [--concurrency
-<string>] [--h2] [--timeout <uint32_t>]
-[--duration <uint32_t>] [--connections
-<uint32_t>] [--rps <uint32_t>] [--]
-[--version] [-h] <uri format>
+<json|human|yaml|dotted|fortio>] [-v <trace
+|debug|info|warn|error|critical>]
+[--concurrency <string>] [--h2] [--timeout
+<uint32_t>] [--duration <uint32_t>]
+[--connections <uint32_t>] [--rps
+<uint32_t>] [--] [--version] [-h] <uri
+format>
 
 
 Where:
 
 --request-source <string>
 replay source description
+
+--open-loop
+Enable open loop mode. When enabled, the benchmark client will not
+provide backpressure when resource limits are hit.
 
 --trace <uri format>
 Trace uri. Example: zipkin://localhost:9411/api/v1/spans. Default is
@@ -114,9 +120,9 @@ Release requests in bursts of the specified size (default: 0).
 --prefetch-connections
 Prefetch connections before benchmarking (HTTP/1 only).
 
---output-format <json|human|yaml|dotted>
-Output format. Possible values: {"json", "human", "yaml", "dotted"}.
-The default output format is 'human'.
+--output-format <json|human|yaml|dotted|fortio>
+Output format. Possible values: {"json", "human", "yaml", "dotted",
+"fortio"}. The default output format is 'human'.
 
 -v <trace|debug|info|warn|error|critical>,  --verbosity <trace|debug
 |info|warn|error|critical>
@@ -215,14 +221,15 @@ Nighthawk comes with a tool to transform its json output to its other supported 
 USAGE:
 
 bazel-bin/nighthawk_output_transform  --output-format <json|human|yaml
-|dotted> [--] [--version] [-h]
+|dotted|fortio> [--] [--version]
+[-h]
 
 
 Where:
 
---output-format <json|human|yaml|dotted>
+--output-format <json|human|yaml|dotted|fortio>
 (required)  Output format. Possible values: {"json", "human", "yaml",
-"dotted"}.
+"dotted", "fortio"}.
 
 --,  --ignore_rest
 Ignores the rest of the labeled arguments following this flag.
@@ -311,6 +318,21 @@ client.upstream_rq_total                9994        1998.80
 
 [21:28:18.522403][27849][I] [source/client/client.cc:279] Done.
 ```
+
+## Visualizing the output of a benchmark
+
+Nighthawk supports transforming the output into other well-known formats, such as:
+
+- `dotted`: Provides integration with Prometheus
+- `fortio`: Provides integration with [Fortio's report-only UI](https://github.com/fortio/fortio#report-only-ui)
+
+The following is an example of a nighthawk benchmark visualized via the Fortio UI.
+
+```bash
+fortio report --data-dir ./samples/fortio_data
+```
+
+![Fortio Large Report](./samples/fortio_reports/large.png)
 
 ## Accuracy and repeatability considerations when using the Nighthawk client
 
