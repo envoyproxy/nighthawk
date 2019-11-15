@@ -30,6 +30,7 @@ message Result {
   string name = 1;
   repeated Statistic statistics = 2;
   repeated Counter counters = 3;
+  google.protobuf.Duration execution_duration = 4;
 }
 
 message Output {

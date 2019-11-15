@@ -57,6 +57,7 @@ public:
   MOCK_METHOD0(start, void());
   MOCK_METHOD0(waitForCompletion, void());
   MOCK_CONST_METHOD0(completionsPerSecond, double());
+  MOCK_CONST_METHOD0(executionDuration, std::chrono::nanoseconds());
   MOCK_CONST_METHOD0(statistics, StatisticPtrMap());
   MOCK_METHOD0(cancel, void());
 };
@@ -88,6 +89,8 @@ public:
   MOCK_CONST_METHOD0(sequencerIdleStrategy,
                      nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions());
   MOCK_CONST_METHOD0(trace, std::string());
+  MOCK_CONST_METHOD0(terminationPredicates, Client::TerminationPredicateMap());
+  MOCK_CONST_METHOD0(failurePredicates, Client::TerminationPredicateMap());
   MOCK_CONST_METHOD0(openLoop, bool());
 };
 
@@ -161,7 +164,6 @@ public:
   MOCK_CONST_METHOD0(statistics, StatisticPtrMap());
   MOCK_METHOD1(tryStartRequest, bool(Client::CompletionCallback));
   MOCK_CONST_METHOD0(scope, Envoy::Stats::Scope&());
-  MOCK_METHOD0(prefetchPoolConnections, void());
   MOCK_CONST_METHOD0(measureLatencies, bool());
   MOCK_CONST_METHOD0(requestHeaders, const Envoy::Http::HeaderMap&());
 };

@@ -12,7 +12,7 @@ Version history
 
 ### Changelist
 
-- Introducing termination predicates (https://github.com/envoyproxy/nighthawk/pull/167)
+- Introducing termination predicates (https://github.com/envoyproxy/nighthawk/pull/167) and https://github.com/envoyproxy/nighthawk/pull/176
 
 0.2 (July 16, 2019)
 =========================

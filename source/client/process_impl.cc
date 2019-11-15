@@ -66,15 +66,22 @@ public:
       const Envoy::Network::ConnectionSocket::OptionsSharedPtr& options,
       const Envoy::Network::TransportSocketOptionsSharedPtr& transport_socket_options) override {
     if (protocol == Envoy::Http::Protocol::Http11 || protocol == Envoy::Http::Protocol::Http10) {
-      return Envoy::Http::ConnectionPool::InstancePtr{new Http1PoolImpl(
-          dispatcher, host, priority, options, h1_settings, transport_socket_options)};
+      auto* h1_pool = new Http1PoolImpl(dispatcher, host, priority, options, h1_settings,
+                                        transport_socket_options);
+      h1_pool->setPrefetchConnections(prefetch_connections_);
+      return Envoy::Http::ConnectionPool::InstancePtr{h1_pool};
     }
     return Envoy::Http::ConnectionPool::InstancePtr{
         new Http2PoolImpl(dispatcher, host, priority, options, transport_socket_options)};
   }
 
+  void setPrefetchConnections(const bool prefetch_connections) {
+    prefetch_connections_ = prefetch_connections;
+  }
+
 private:
   Envoy::Http::Http1Settings h1_settings;
+  bool prefetch_connections_{};
 };
 
 ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system)
@@ -118,8 +125,7 @@ void ProcessImpl::shutdown() {
   shutdown_ = true;
 }
 
-const std::vector<ClientWorkerPtr>& ProcessImpl::createWorkers(const uint32_t concurrency,
-                                                               const bool prefetch_connections) {
+const std::vector<ClientWorkerPtr>& ProcessImpl::createWorkers(const uint32_t concurrency) {
   // TODO(oschaaf): Expose kMinimalDelay in configuration.
   const std::chrono::milliseconds kMinimalWorkerDelay = 500ms;
   ASSERT(workers_.empty());
@@ -144,7 +150,7 @@ const std::vector<ClientWorkerPtr>& ProcessImpl::createWorkers(const uint32_t co
     workers_.push_back(std::make_unique<ClientWorkerImpl>(
         *api_, tls_, cluster_manager_, benchmark_client_factory_, termination_predicate_factory_,
         sequencer_factory_, header_generator_factory_, store_root_, worker_number,
-        first_worker_start + worker_delay, http_tracer_, prefetch_connections));
+        first_worker_start + worker_delay, http_tracer_));
     worker_number++;
   }
   return workers_;
@@ -338,8 +344,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
   }
   int number_of_workers = determineConcurrency();
   shutdown_ = false;
-  const std::vector<ClientWorkerPtr>& workers =
-      createWorkers(number_of_workers, options_.prefetchConnections());
+  const std::vector<ClientWorkerPtr>& workers = createWorkers(number_of_workers);
   tls_.registerThread(*dispatcher_, true);
   store_root_.initializeThreading(*dispatcher_, tls_);
   runtime_singleton_ = std::make_unique<Envoy::Runtime::ScopedLoaderSingleton>(
@@ -353,7 +358,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
       dispatcher_->createDnsResolver({}), *ssl_context_manager_, *dispatcher_, *local_info_,
       secret_manager_, validation_context_, *api_, http_context_, access_log_manager_,
       *singleton_manager_);
-
+  cluster_manager_factory_->setPrefetchConnections(options_.prefetchConnections());
   envoy::config::bootstrap::v2::Bootstrap bootstrap;
   createBootstrapConfiguration(bootstrap, uri, number_of_workers);
   if (tracing_uri != nullptr) {
@@ -375,17 +380,20 @@ bool ProcessImpl::run(OutputCollector& collector) {
     w->waitForCompletion();
   }
 
-  // We don't write per-worker results if we only have a single worker, because the global results
-  // will be precisely the same.
-  if (workers_.size() > 1) {
-    int i = 0;
-    for (auto& worker : workers_) {
+  int i = 0;
+  std::chrono::nanoseconds total_execution_duration = 0ns;
+  for (auto& worker : workers_) {
+    auto sequencer_execution_duration = worker->sequencer().executionDuration();
+    // We don't write per-worker results if we only have a single worker, because the global results
+    // will be precisely the same.
+    if (workers_.size() > 1) {
       StatisticFactoryImpl statistic_factory(options_);
       collector.addResult(fmt::format("worker_{}", i),
                           vectorizeStatisticPtrMap(statistic_factory, worker->statistics()),
-                          worker->thread_local_counter_values());
-      i++;
+                          worker->thread_local_counter_values(), sequencer_execution_duration);
     }
+    total_execution_duration += sequencer_execution_duration;
+    i++;
   }
 
   // Note that above we use use counter values snapshotted by the workers right after its execution
@@ -395,7 +403,8 @@ bool ProcessImpl::run(OutputCollector& collector) {
   const auto& counters = Utility().mapCountersFromStore(
       store_root_, [](absl::string_view, uint64_t value) { return value > 0; });
   StatisticFactoryImpl statistic_factory(options_);
-  collector.addResult("global", mergeWorkerStatistics(statistic_factory, workers), counters);
+  collector.addResult("global", mergeWorkerStatistics(statistic_factory, workers), counters,
+                      total_execution_duration / workers_.size());
   return counters.find("sequencer.failed_terminations") == counters.end();
 }
 

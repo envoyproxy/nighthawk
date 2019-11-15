@@ -139,20 +139,33 @@ TerminationPredicateFactoryImpl::TerminationPredicateFactoryImpl(const Options& 
 TerminationPredicatePtr
 TerminationPredicateFactoryImpl::create(Envoy::TimeSource& time_source, Envoy::Stats::Scope& scope,
                                         const Envoy::MonotonicTime start) const {
-  // By default, we don't tolerate status code errors & connection-level errors.
-  // TODO(oschaaf): In a follow up, we'll tolerate these when explicit termination predicates are
-  // configured.
   TerminationPredicatePtr duration_predicate =
       std::make_unique<DurationTerminationPredicateImpl>(time_source, start, options_.duration());
-  duration_predicate
-      ->link(std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
-          scope.counter("benchmark.http_4xx"), 0, TerminationPredicate::Status::FAIL))
-      .link(std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
-          scope.counter("benchmark.http_5xx"), 0, TerminationPredicate::Status::FAIL))
-      .link(std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
-          scope.counter("benchmark.pool_connection_failure"), 0,
-          TerminationPredicate::Status::FAIL));
+  TerminationPredicate* current_predicate = duration_predicate.get();
+  current_predicate = linkConfiguredPredicates(*current_predicate, options_.failurePredicates(),
+                                               TerminationPredicate::Status::FAIL, scope);
+  linkConfiguredPredicates(*current_predicate, options_.terminationPredicates(),
+                           TerminationPredicate::Status::TERMINATE, scope);
+
   return duration_predicate;
+}
+
+TerminationPredicate* TerminationPredicateFactoryImpl::linkConfiguredPredicates(
+    TerminationPredicate& last_predicate, const TerminationPredicateMap& predicates,
+    const TerminationPredicate::Status termination_status, Envoy::Stats::Scope& scope) const {
+  RELEASE_ASSERT(termination_status != TerminationPredicate::Status::PROCEED,
+                 "PROCEED was unexpected");
+  TerminationPredicate* current_predicate = &last_predicate;
+  for (const auto& predicate : predicates) {
+    ENVOY_LOG(trace, "Adding {} predicate for {} with threshold {}",
+              termination_status == TerminationPredicate::Status::TERMINATE ? "termination"
+                                                                            : "failure",
+              predicate.first, predicate.second);
+    current_predicate = &current_predicate->link(
+        std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
+            scope.counter(predicate.first), predicate.second, termination_status));
+  }
+  return current_predicate;
 }
 
 } // namespace Client

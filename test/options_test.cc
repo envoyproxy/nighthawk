@@ -43,7 +43,9 @@ TEST_F(OptionsImplTest, All) {
       "--concurrency 8 --verbosity error --output-format yaml --prefetch-connections "
       "--burst-size 13 --address-family v6 --request-method POST --request-body-size 1234 "
       "--tls-context {} --request-header f1:b1 --request-header f2:b2 {} --max-pending-requests 10 "
-      "--max-active-requests 11 --max-requests-per-connection 12 --sequencer-idle-strategy sleep",
+      "--max-active-requests 11 --max-requests-per-connection 12 --sequencer-idle-strategy sleep "
+      "--termination-predicate t1:1 --termination-predicate t2:2 --failure-predicate f1:1 "
+      "--failure-predicate f2:2 ",
       client_name_,
       "{common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"]}}}",
       good_test_uri_));
@@ -71,6 +73,12 @@ TEST_F(OptionsImplTest, All) {
   EXPECT_EQ(11, options->maxActiveRequests());
   EXPECT_EQ(12, options->maxRequestsPerConnection());
   EXPECT_EQ(nighthawk::client::SequencerIdleStrategy::SLEEP, options->sequencerIdleStrategy());
+  ASSERT_EQ(2, options->terminationPredicates().size());
+  EXPECT_EQ(1, options->terminationPredicates()["t1"]);
+  EXPECT_EQ(2, options->terminationPredicates()["t2"]);
+  ASSERT_EQ(2, options->failurePredicates().size());
+  EXPECT_EQ(1, options->failurePredicates()["f1"]);
+  EXPECT_EQ(2, options->failurePredicates()["f2"]);
 
   // Check that our conversion to CommandLineOptionsPtr makes sense.
   CommandLineOptionsPtr cmd = options->toCommandLineOptions();
@@ -101,14 +109,28 @@ TEST_F(OptionsImplTest, All) {
   EXPECT_EQ(cmd->max_requests_per_connection().value(), options->maxRequestsPerConnection());
   EXPECT_EQ(cmd->sequencer_idle_strategy().value(), options->sequencerIdleStrategy());
 
+  ASSERT_EQ(2, cmd->termination_predicates_size());
+  EXPECT_EQ(cmd->termination_predicates().at("t1"), 1);
+  EXPECT_EQ(cmd->termination_predicates().at("t2"), 2);
+  ASSERT_EQ(2, cmd->failure_predicates_size());
+  EXPECT_EQ(cmd->failure_predicates().at("f1"), 1);
+  EXPECT_EQ(cmd->failure_predicates().at("f2"), 2);
+
   // Now we construct a new options from the proto we created above. This should result in an
   // OptionsImpl instance equivalent to options. We test that by converting both to yaml strings,
   // expecting them to be equal. This should provide helpful output when the test fails by showing
   // the unexpected (yaml) diff.
+  // The predicates are defined as proto maps, and these seem to re-serialize into a different
+  // order. Hence we trim the maps to contain a single entry so they don't thwart our textual
+  // comparison below.
+  EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("f1"));
+  EXPECT_EQ(1, cmd->mutable_termination_predicates()->erase("t1"));
+
   OptionsImpl options_from_proto(*cmd);
   std::string s1 = Envoy::MessageUtil::getYamlStringFromMessage(
       *(options_from_proto.toCommandLineOptions()), true, true);
   std::string s2 = Envoy::MessageUtil::getYamlStringFromMessage(*cmd, true, true);
+
   EXPECT_EQ(s1, s2);
   // For good measure, also directly test for proto equivalence, though this should be
   // superfluous.
@@ -320,6 +342,23 @@ TEST_F(OptionsImplTest, BadTlsContextSpecification) {
                                                  "{misspelled_tls_context:{}}")),
       MalformedArgvException, "envoy.api.v2.auth.UpstreamTlsContext reason INVALID_ARGUMENT");
 }
+
+class OptionsImplPredicateBasedOptionsTest : public OptionsImplTest,
+                                             public WithParamInterface<const char*> {};
+
+TEST_P(OptionsImplPredicateBasedOptionsTest, BadPredicates) {
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                              "{} --{} {} http://foo/", client_name_, GetParam(), "a:b:c")),
+                          MalformedArgvException,
+                          "Termination predicate 'a:b:c' is badly formatted");
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                              "{} --{} {} http://foo/", client_name_, GetParam(), "a:-1")),
+                          MalformedArgvException,
+                          "Termination predicate 'a:-1' has an out of range threshold");
+}
+
+INSTANTIATE_TEST_SUITE_P(PredicateBasedOptionsTest, OptionsImplPredicateBasedOptionsTest,
+                         Values("termination-predicate", "failure-predicate"));
 
 class OptionsImplSequencerIdleStrategyTest : public OptionsImplTest,
                                              public WithParamInterface<const char*> {};
