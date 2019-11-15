@@ -1,5 +1,7 @@
 {
  "options": {
+  "termination_predicates": {},
+  "failure_predicates": {},
   "connections": 0,
   "duration": "1s"
  },
@@ -31,7 +33,8 @@
      "name": "foo",
      "value": "1"
     }
-   ]
+   ],
+   "execution_duration": "1s"
   },
   {
    "name": "worker_1",
@@ -60,7 +63,8 @@
      "name": "foo",
      "value": "1"
     }
-   ]
+   ],
+   "execution_duration": "1s"
   },
   {
    "name": "global",
@@ -89,7 +93,8 @@
      "name": "foo",
      "value": "1"
     }
-   ]
+   ],
+   "execution_duration": "1s"
   }
  ],
  "timestamp": "2009-02-13T23:31:31.567Z"

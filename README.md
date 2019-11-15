@@ -43,9 +43,11 @@ bazel build -c opt //:nighthawk
 ```
 USAGE:
 
-bazel-bin/nighthawk_client  [--open-loop] [--trace <uri format>]
-[--sequencer-idle-strategy <spin|poll
-|sleep>] [--max-requests-per-connection
+bazel-bin/nighthawk_client  [--open-loop] [--failure-predicate <<string,
+uint64_t>>] ... [--termination-predicate
+<<string, uint64_t>>] ... [--trace <uri
+format>] [--sequencer-idle-strategy <spin
+|poll|sleep>] [--max-requests-per-connection
 <uint32_t>] [--max-active-requests
 <uint32_t>] [--max-pending-requests
 <uint32_t>] [--tls-context <string>]
@@ -69,6 +71,15 @@ Where:
 --open-loop
 Enable open loop mode. When enabled, the benchmark client will not
 provide backpressure when resource limits are hit.
+
+--failure-predicate <<string, uint64_t>>  (accepted multiple times)
+Failure predicate. Allows specifying a counter name plus threshold
+value for failing execution. Defaults to not tolerating error status
+codes and connection errors.
+
+--termination-predicate <<string, uint64_t>>  (accepted multiple times)
+Termination predicate. Allows specifying a counter name plus threshold
+value for terminating execution.
 
 --trace <uri format>
 Trace uri. Example: zipkin://localhost:9411/api/v1/spans. Default is

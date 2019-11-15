@@ -65,11 +65,14 @@ public:
    */
   void waitForCompletion() override;
 
-  // TODO(oschaaf): calling this after stop() will return broken/unexpected results.
+  std::chrono::nanoseconds executionDuration() const override {
+    return last_event_time_ - start_time_;
+  }
+
   double completionsPerSecond() const override {
-    const double usec = std::chrono::duration_cast<std::chrono::microseconds>(
-                            time_source_.monotonicTime() - start_time_)
-                            .count();
+    const double usec =
+        std::chrono::duration_cast<std::chrono::microseconds>(last_event_time_ - start_time_)
+            .count();
 
     return usec == 0 ? 0 : ((targets_completed_ / usec) * 1000000);
   }
@@ -122,6 +125,7 @@ private:
   Envoy::Event::TimerPtr periodic_timer_;
   Envoy::Event::TimerPtr spin_timer_;
   Envoy::MonotonicTime start_time_;
+  Envoy::MonotonicTime last_event_time_;
   uint64_t targets_initiated_{0};
   uint64_t targets_completed_{0};
   bool running_{};

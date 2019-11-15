@@ -19,7 +19,8 @@ public:
   OutputCollectorImpl(Envoy::TimeSource& time_source, const Options& options);
 
   void addResult(absl::string_view name, const std::vector<StatisticPtr>& statistics,
-                 const std::map<std::string, uint64_t>& counters) override;
+                 const std::map<std::string, uint64_t>& counters,
+                 const std::chrono::nanoseconds execution_duration) override;
 
   nighthawk::client::Output toProto() const override;
 
