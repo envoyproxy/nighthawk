@@ -43,7 +43,7 @@ bazel build -c opt //:nighthawk
 ```
 USAGE:
 
-bazel-bin/nighthawk_client  [--trace <uri format>]
+bazel-bin/nighthawk_client  [--open-loop] [--trace <uri format>]
 [--sequencer-idle-strategy <spin|poll
 |sleep>] [--max-requests-per-connection
 <uint32_t>] [--max-active-requests
@@ -65,6 +65,10 @@ format>
 
 
 Where:
+
+--open-loop
+Enable open loop mode. When enabled, the benchmark client will not
+provide backpressure when resource limits are hit.
 
 --trace <uri format>
 Trace uri. Example: zipkin://localhost:9411/api/v1/spans. Default is

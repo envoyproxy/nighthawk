@@ -90,6 +90,7 @@ def test_http_h1_connection_management_single_request_per_conn_1(http_test_serve
 
 
 # Test h1 with a request_per_connection set to 5
+@pytest.mark.skipif(isSanitizerRun(), reason="Unstable in sanitizer runs")
 def test_http_h1_connection_management_single_request_per_conn_5(http_test_server_fixture):
   connection_management_test_request_per_connection(http_test_server_fixture, 5, False)
 
