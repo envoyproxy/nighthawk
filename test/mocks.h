@@ -179,4 +179,10 @@ public:
   MOCK_METHOD0(evaluate, TerminationPredicate::Status());
 };
 
+class MockDiscreteNumericDistributionSampler : public DiscreteNumericDistributionSampler {
+public:
+  MockDiscreteNumericDistributionSampler();
+  MOCK_METHOD0(getValue, uint64_t());
+};
+
 } // namespace Nighthawk

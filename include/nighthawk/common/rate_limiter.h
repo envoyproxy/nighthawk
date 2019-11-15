@@ -28,4 +28,15 @@ public:
 
 using RateLimiterPtr = std::unique_ptr<RateLimiter>;
 
+/**
+ * Interface to sample discrete numeric distributions.
+ */
+class DiscreteNumericDistributionSampler {
+public:
+  virtual ~DiscreteNumericDistributionSampler() = default;
+  virtual uint64_t getValue() PURE;
+};
+
+using DiscreteNumericDistributionSamplerPtr = std::unique_ptr<DiscreteNumericDistributionSampler>;
+
 } // namespace Nighthawk
