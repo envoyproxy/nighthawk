@@ -179,6 +179,12 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "failing execution. Defaults to not tolerating error status codes and connection errors.",
       false, "<string, uint64_t>", cmd);
 
+  TCLAP::SwitchArg open_loop(
+      "", "open-loop",
+      "Enable open loop mode. When enabled, the benchmark client will not provide backpressure "
+      "when resource limits are hit.",
+      cmd);
+
   TCLAP::UnlabeledValueArg<std::string> uri("uri",
                                             "uri to benchmark. http:// and https:// are supported, "
                                             "but in case of https no certificates are validated.",
@@ -237,6 +243,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   TCLAP_SET_IF_SPECIFIED(trace, trace_);
   parsePredicates(termination_predicates, termination_predicates_);
   parsePredicates(failure_predicates, failure_predicates_);
+  TCLAP_SET_IF_SPECIFIED(open_loop, open_loop_);
 
   // CLI-specific tests.
   // TODO(oschaaf): as per mergconflicts's remark, it would be nice to aggregate
@@ -347,6 +354,7 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   sequencer_idle_strategy_ =
       PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, sequencer_idle_strategy, sequencer_idle_strategy_);
   trace_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, trace, trace_);
+  open_loop_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, open_loop, open_loop_);
 
   tls_context_.MergeFrom(options.tls_context());
   if (options.failure_predicates().size()) {
@@ -446,6 +454,7 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptions() const {
   for (const auto& predicate : failurePredicates()) {
     failure_predicates_option->insert({predicate.first, predicate.second});
   }
+  command_line_options->mutable_open_loop()->set_value(openLoop());
   return command_line_options;
 }
 

@@ -111,5 +111,7 @@ message CommandLineOptions {
   // See :option:`--termination-predicates` for details.
   map<string, uint64> termination_predicates = 20;
   // See :option:`--failure-predicates` for details.
-  map<string, uint64> failure_predicates = 21;
+  map<string, uint64> failure_predicates = 24;
+  // See :option:`--open-loop` for details.
+  google.protobuf.BoolValue open_loop = 21;
 }

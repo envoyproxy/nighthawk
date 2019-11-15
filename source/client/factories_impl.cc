@@ -33,7 +33,7 @@ BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
   StatisticFactoryImpl statistic_factory(options_);
   auto benchmark_client = std::make_unique<BenchmarkClientHttpImpl>(
       api, dispatcher, scope, statistic_factory.create(), statistic_factory.create(), options_.h2(),
-      cluster_manager, http_tracer, cluster_name, header_generator.get());
+      cluster_manager, http_tracer, cluster_name, header_generator.get(), !options_.openLoop());
   auto request_options = options_.toCommandLineOptions()->request_options();
   benchmark_client->setConnectionLimit(options_.connections());
   benchmark_client->setMaxPendingRequests(options_.maxPendingRequests());
