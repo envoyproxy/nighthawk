@@ -125,7 +125,7 @@ The default output format is 'AUTO'.
 Release requests in bursts of the specified size (default: 0).
 
 --prefetch-connections
-Prefetch connections before benchmarking (HTTP/1 only).
+Use proactive connection prefetching (HTTP/1 only).
 
 --output-format <json|human|yaml|dotted|fortio>
 Output format. Possible values: {"json", "human", "yaml", "dotted",
