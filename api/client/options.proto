@@ -97,7 +97,7 @@ message CommandLineOptions {
   oneof oneof_request_options {
     // See :option:`--request_options` for details.
     RequestOptions request_options = 12;
-    RequestSource request_source = 24;
+    RequestSource request_source = 25;
   }
   // See :option:`--tls_context` for details.
   envoy.api.v2.auth.UpstreamTlsContext tls_context = 13;
