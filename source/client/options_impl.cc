@@ -430,12 +430,13 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptions() const {
     // TODO(oschaaf): expose append option in CLI? For now we just set.
     header_value_option->mutable_append()->set_value(false);
     auto request_header = header_value_option->mutable_header();
-    std::vector<std::string> split_header = absl::StrSplit(
-        header, ':',
-        absl::SkipWhitespace()); // TODO(oschaaf): maybe throw when we find > 2 elements.
-    request_header->set_key(split_header[0]);
-    if (split_header.size() == 2) {
-      request_header->set_value(split_header[1]);
+    auto pos = header.find(':');
+    if (pos != std::string::npos) {
+      request_header->set_key(header.substr(0, pos));
+      // Any visible char, including ':', is allowed in header values.
+      request_header->set_value(header.substr(pos + 1));
+    } else {
+      throw MalformedArgvException("A ':' is required in a header.");
     }
   }
   request_options->mutable_request_body_size()->set_value(requestBodySize());
