@@ -47,13 +47,24 @@ public:
   bool tryAcquireOne() override;
   void releaseOne() override;
 
-private:
+protected:
   Envoy::TimeSource& time_source_;
   int64_t acquireable_count_;
   uint64_t acquired_count_;
-  const Frequency frequency_;
+  Frequency frequency_;
   bool started_{};
   Envoy::MonotonicTime started_at_;
+};
+
+class RampingLinearRateLimiter : public LinearRateLimiter {
+public:
+  RampingLinearRateLimiter(Envoy::TimeSource& time_source, const std::chrono::nanoseconds ramp_time,
+                           const Frequency frequency);
+  bool tryAcquireOne() override;
+
+private:
+  const Frequency final_frequency_;
+  const std::chrono::nanoseconds ramp_time_;
 };
 
 // We use an unsigned duration here to ensure only future points in time will be yielded.

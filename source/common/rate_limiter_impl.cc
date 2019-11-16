@@ -81,6 +81,24 @@ void LinearRateLimiter::releaseOne() {
   acquired_count_--;
 }
 
+RampingLinearRateLimiter::RampingLinearRateLimiter(Envoy::TimeSource& time_source,
+                                                   const std::chrono::nanoseconds ramp_time,
+                                                   const Frequency frequency)
+    : LinearRateLimiter(time_source, 1_Hz), final_frequency_(frequency), ramp_time_(ramp_time) {}
+
+bool RampingLinearRateLimiter::tryAcquireOne() {
+  if (started_) {
+    const auto elapsed_since_start = time_source_.monotonicTime() - started_at_;
+    double fraction = 1.0;
+    if (elapsed_since_start < ramp_time_) {
+      fraction =
+          1.0 - ((ramp_time_.count() - elapsed_since_start.count()) / (ramp_time_.count() * 1.0));
+    }
+    frequency_ = Frequency(final_frequency_.value() * fraction);
+  }
+  return LinearRateLimiter::tryAcquireOne();
+}
+
 DelegatingRateLimiter::DelegatingRateLimiter(Envoy::TimeSource& time_source,
                                              RateLimiterPtr&& rate_limiter,
                                              RateLimiterDelegate random_distribution_generator)
