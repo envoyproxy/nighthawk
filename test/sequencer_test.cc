@@ -157,6 +157,7 @@ TEST_F(SequencerTestWithTimerEmulation, RateLimiterInteraction) {
       .WillRepeatedly(Return(false));
   EXPECT_CALL(*target(), callback(_)).Times(2).WillOnce(Return(true)).WillOnce(Return(true));
   expectDispatcherRun();
+  EXPECT_CALL(platform_util_, sleep(_)).Times(AtLeast(1));
   sequencer.start();
   sequencer.waitForCompletion();
 }
@@ -197,6 +198,7 @@ TEST_F(SequencerTestWithTimerEmulation, RateLimiterSaturatedTargetInteraction) {
   EXPECT_CALL(rate_limiter_unsafe_ref_, releaseOne()).Times(1);
   expectDispatcherRun();
 
+  EXPECT_CALL(platform_util_, sleep(_)).Times(AtLeast(1));
   sequencer.start();
   sequencer.waitForCompletion();
 }
@@ -263,7 +265,7 @@ TEST_F(SequencerIntegrationTest, AlwaysSaturatedTargetTest) {
                           std::make_unique<StreamingStatistic>(),
                           std::make_unique<StreamingStatistic>(), SequencerIdleStrategy::SLEEP,
                           termination_predicate, store_);
-
+  EXPECT_CALL(platform_util_, sleep(_)).Times(AtLeast(1));
   sequencer.start();
   sequencer.waitForCompletion();
 
@@ -282,7 +284,7 @@ TEST_F(SequencerIntegrationTest, CallbacksDoNotInfluenceTestDuration) {
                           std::make_unique<StreamingStatistic>(),
                           std::make_unique<StreamingStatistic>(), SequencerIdleStrategy::SLEEP,
                           termination_predicate, store_);
-
+  EXPECT_CALL(platform_util_, sleep(_)).Times(AtLeast(1));
   auto pre_timeout = time_system_.monotonicTime();
   sequencer.start();
   sequencer.waitForCompletion();
