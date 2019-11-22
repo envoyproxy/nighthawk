@@ -344,9 +344,9 @@ def test_request_body_gets_transmitted(http_test_server_fixture):
     server_stats = fixture.getTestServerStatisticsJson()
     # Server side expectations start failing with larger upload sizes
     assertGreaterEqual(
-       fixture.getServerStatFromJson(server_stats,
-                                     "http.ingress_http.downstream_cx_rx_bytes_total"),
-       expected_received_bytes)
+        fixture.getServerStatFromJson(server_stats,
+                                      "http.ingress_http.downstream_cx_rx_bytes_total"),
+        expected_received_bytes)
 
   upload_bytes = 1024 * 1024 * 3
   requests = 10
