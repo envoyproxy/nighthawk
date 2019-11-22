@@ -28,6 +28,5 @@ envoy_cc_library(
     deps = [
         ":http_test_server_filter_lib",
         "@envoy//include/envoy/server:filter_config_interface_with_external_headers",
-        "@envoy//source/common/config:json_utility_lib_with_external_headers",
     ],
 )

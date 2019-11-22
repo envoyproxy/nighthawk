@@ -45,7 +45,7 @@ bool Main::run() {
   auto logging_context = std::make_unique<Envoy::Logger::Context>(
       spdlog::level::from_str(
           nighthawk::client::Verbosity::VerbosityOptions_Name(options_->verbosity())),
-      "[%T.%f][%t][%L] %v", log_lock);
+      "[%T.%f][%t][%L] %v", log_lock, false);
   Envoy::Event::RealTimeSystem time_system; // NO_CHECK_FORMAT(real_time)
   ProcessImpl process(*options_, time_system);
   OutputFormatterFactoryImpl output_formatter_factory;
