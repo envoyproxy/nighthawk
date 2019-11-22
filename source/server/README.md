@@ -85,7 +85,6 @@ admin:
 USAGE:
 
 bazel-bin/nighthawk_test_server  [--use-fake-symbol-table <bool>]
-[--use-libevent-buffers <bool>]
 [--cpuset-threads]
 [--enable-mutex-tracing]
 [--disable-hot-restart]
@@ -99,7 +98,8 @@ bazel-bin/nighthawk_test_server  [--use-fake-symbol-table <bool>]
 [--service-cluster <string>]
 [--hot-restart-version]
 [--restart-epoch <uint32_t>]
-[--log-path <string>] [--log-format
+[--log-path <string>]
+[--log-format-escaped] [--log-format
 <string>] [--component-log-level
 <string>] [-l <string>]
 [--local-address-ip-version <string>]
@@ -116,9 +116,6 @@ Where:
 
 --use-fake-symbol-table <bool>
 Use fake symbol table implementation
-
---use-libevent-buffers <bool>
-Use the original libevent buffer implementation
 
 --cpuset-threads
 Get the default # of worker threads from cpuset size
@@ -143,7 +140,7 @@ normally) or 'validate' (validate configs and exit).
 Hot restart parent shutdown time in seconds
 
 --drain-time-s <uint32_t>
-Hot restart drain time in seconds
+Hot restart and LDS removal drain time in seconds
 
 --file-flush-interval-msec <uint32_t>
 Interval for log flushing in msec
@@ -165,6 +162,9 @@ hot restart epoch #
 
 --log-path <string>
 Path to logfile
+
+--log-format-escaped
+Escape c-style escape sequences in the application logs
 
 --log-format <string>
 Log message format in spdlog syntax (see
