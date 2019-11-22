@@ -15,7 +15,7 @@ def test_grpc_service_happy_flow(http_test_server_fixture):
   ])
   counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   assertGreaterEqual(counters["benchmark.http_2xx"], 10)
-  assertEqual(counters["headersource.internal.upstream_rq_200"], 1)
+  assertEqual(counters["requestSource.internal.upstream_rq_200"], 1)
 
 
 @pytest.mark.skipif(isSanitizerRun(), reason="Slow in sanitizer runs")
@@ -30,4 +30,4 @@ def test_grpc_service_stress(http_test_server_fixture):
   ])
   counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   assertGreaterEqual(counters["benchmark.http_2xx"], 5000)
-  assertEqual(counters["headersource.internal.upstream_rq_200"], 4)
+  assertEqual(counters["requestSource.internal.upstream_rq_200"], 4)

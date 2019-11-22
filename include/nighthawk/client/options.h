@@ -43,7 +43,7 @@ public:
   virtual uint32_t maxRequestsPerConnection() const PURE;
   virtual nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions
   sequencerIdleStrategy() const PURE;
-  virtual std::string headerSource() const PURE;
+  virtual std::string requestSource() const PURE;
   virtual std::string trace() const PURE;
   virtual TerminationPredicateMap terminationPredicates() const PURE;
   virtual TerminationPredicateMap failurePredicates() const PURE;

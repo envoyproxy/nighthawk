@@ -138,7 +138,7 @@ RequestSourcePtr ServiceImpl::createStaticEmptyRequestSource(const uint32_t amou
     // headers we send here into into own header configuration). The client can be configured to
     // connect to a custom grpc service as a remote data source instead of this one, and its workers
     // will comply. That in itself may be useful. But we could offer the following features here:
-    // 1. Yet another remote header source, so we balance to-be-replayed headers over workers
+    // 1. Yet another remote request source, so we balance to-be-replayed headers over workers
     //    and only have a single stream to a remote service here.
     // 2. Read a and dispatch a header stream from disk.
     auto request_source = createStaticEmptyRequestSource(request.amount());

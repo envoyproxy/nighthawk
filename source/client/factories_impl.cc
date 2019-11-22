@@ -134,7 +134,7 @@ RequestSourceFactoryImpl::create(Envoy::Upstream::ClusterManagerPtr& cluster_man
     setRequestHeader(*header, option_header.header().key(), option_header.header().value());
   }
 
-  if (options_.headerSource() == "") {
+  if (options_.requestSource() == "") {
     return std::make_unique<StaticRequestSourceImpl>(std::move(header));
   } else {
     RELEASE_ASSERT(!service_cluster_name.empty(), "expected cluster name to be set");

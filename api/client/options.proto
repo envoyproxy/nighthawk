@@ -15,7 +15,7 @@ message RequestOptions {
 }
 
 message RequestSource {
-  google.protobuf.StringValue uri = 19; // [(validate.rules).string.uri = true];
+  string uri = 19; // [(validate.rules).string.uri = true];
 }
 
 // We wrap all values so we can have a unified way of option handling with respect to

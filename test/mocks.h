@@ -88,7 +88,7 @@ public:
   MOCK_CONST_METHOD0(toCommandLineOptions, Client::CommandLineOptionsPtr());
   MOCK_CONST_METHOD0(sequencerIdleStrategy,
                      nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions());
-  MOCK_CONST_METHOD0(headerSource, std::string());
+  MOCK_CONST_METHOD0(requestSource, std::string());
   MOCK_CONST_METHOD0(trace, std::string());
   MOCK_CONST_METHOD0(terminationPredicates, Client::TerminationPredicateMap());
   MOCK_CONST_METHOD0(failurePredicates, Client::TerminationPredicateMap());

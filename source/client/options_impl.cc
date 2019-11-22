@@ -191,7 +191,9 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
                                             true, "", "uri format", cmd);
 
   TCLAP::ValueArg<std::string> request_source(
-      "", "request-source", fmt::format("replay source description"), false, "", "string", cmd);
+      "", "request-source",
+      "Grpc source that will deliver to-be-replayed traffic. For example 127.0.0.1:8443", false, "",
+      "string", cmd);
 
   Utility::parseCommand(cmd, argc, argv);
 
@@ -350,7 +352,7 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
         PROTOBUF_GET_WRAPPED_OR_DEFAULT(request_options, request_body_size, request_body_size_);
   } else if (options.has_request_source()) {
     const auto& request_source_options = options.request_source();
-    request_source_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(request_source_options, uri, request_source_);
+    request_source_ = request_source_options.uri();
   }
 
   max_pending_requests_ =
@@ -441,9 +443,9 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptions() const {
   command_line_options->mutable_burst_size()->set_value(burstSize());
   command_line_options->mutable_address_family()->set_value(
       static_cast<nighthawk::client::AddressFamily_AddressFamilyOptions>(addressFamily()));
-  if (headerSource() != "") {
+  if (requestSource() != "") {
     auto request_source = command_line_options->mutable_request_source();
-    request_source->mutable_uri()->set_value(headerSource());
+    *request_source->mutable_uri() = requestSource();
   } else {
     auto request_options = command_line_options->mutable_request_options();
     request_options->set_request_method(requestMethod());

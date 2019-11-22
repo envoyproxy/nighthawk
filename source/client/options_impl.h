@@ -52,7 +52,7 @@ public:
   sequencerIdleStrategy() const override {
     return sequencer_idle_strategy_;
   }
-  std::string headerSource() const override { return request_source_; }
+  std::string requestSource() const override { return request_source_; }
   std::string trace() const override { return trace_; }
   TerminationPredicateMap terminationPredicates() const override { return termination_predicates_; }
   TerminationPredicateMap failurePredicates() const override { return failure_predicates_; }
