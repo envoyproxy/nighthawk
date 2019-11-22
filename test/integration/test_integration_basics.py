@@ -348,13 +348,14 @@ def test_request_body_gets_transmitted(http_test_server_fixture):
     #                                  "http.ingress_http.downstream_cx_rx_bytes_total"),
     #    expected_received_bytes)
 
-  upload_bytes = 1024*1024*3
+  upload_bytes = 1024 * 1024 * 3
   requests = 10
   args = [
       http_test_server_fixture.getTestServerRootUri(), "--duration", "100", "--rps", "100",
       "--request-body-size",
-      str(upload_bytes), "--termination-predicate", "benchmark.http_2xx:%s" % str(requests), "--connections", "1",
-      "--request-method", "POST", "--max-active-requests", "1"
+      str(upload_bytes), "--termination-predicate",
+      "benchmark.http_2xx:%s" % str(requests), "--connections", "1", "--request-method", "POST",
+      "--max-active-requests", "1"
   ]
   # Test we transmit the expected amount of bytes with H1
   parsed_json, _ = http_test_server_fixture.runNighthawkClient(args)
