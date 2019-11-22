@@ -57,9 +57,7 @@ public:
   }
 
   // Http::StreamDecoder
-  void decode100ContinueHeaders(Envoy::Http::HeaderMapPtr&&) override {
-    NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
-  }
+  void decode100ContinueHeaders(Envoy::Http::HeaderMapPtr&&) override {}
   void decodeHeaders(Envoy::Http::HeaderMapPtr&& headers, bool end_stream) override;
   void decodeData(Envoy::Buffer::Instance&, bool end_stream) override;
   void decodeTrailers(Envoy::Http::HeaderMapPtr&& trailers) override;
