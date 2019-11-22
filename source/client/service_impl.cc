@@ -37,7 +37,7 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
   auto logging_context = std::make_unique<Envoy::Logger::Context>(
       spdlog::level::from_str(
           nighthawk::client::Verbosity::VerbosityOptions_Name(options->verbosity())),
-      "[%T.%f][%t][%L] %v", log_lock_);
+      "[%T.%f][%t][%L] %v", log_lock_, false);
   OutputCollectorImpl output_collector(time_system_, *options);
   const bool ok = process.run(output_collector);
   if (!ok) {

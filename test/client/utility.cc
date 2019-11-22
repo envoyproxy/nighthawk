@@ -12,6 +12,10 @@ std::unique_ptr<OptionsImpl> TestUtility::createOptionsImpl(absl::string_view ar
   for (const std::string& s : words) {
     argv.push_back(s.c_str());
   }
+  return createOptionsImpl(argv);
+}
+
+std::unique_ptr<OptionsImpl> TestUtility::createOptionsImpl(const std::vector<const char*>& argv) {
   return std::make_unique<OptionsImpl>(argv.size(), argv.data());
 }
 

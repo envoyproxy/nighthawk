@@ -48,7 +48,8 @@ TEST_F(OptionsImplTest, All) {
       "{} --rps 4 --connections 5 --duration 6 --timeout 7 --h2 "
       "--concurrency 8 --verbosity error --output-format yaml --prefetch-connections "
       "--burst-size 13 --address-family v6 --request-method POST --request-body-size 1234 "
-      "--tls-context {} --request-header f1:b1 --request-header f2:b2 {} --max-pending-requests 10 "
+      "--tls-context {} --request-header f1:b1 --request-header f2:b2 --request-header f3:b3:b4 {} "
+      "--max-pending-requests 10 "
       "--max-active-requests 11 --max-requests-per-connection 12 --sequencer-idle-strategy sleep "
       "--termination-predicate t1:1 --termination-predicate t2:2 --failure-predicate f1:1 "
       "--failure-predicate f2:2 ",
@@ -69,7 +70,7 @@ TEST_F(OptionsImplTest, All) {
   EXPECT_EQ(nighthawk::client::AddressFamily::V6, options->addressFamily());
   EXPECT_EQ(good_test_uri_, options->uri());
   EXPECT_EQ(envoy::api::v2::core::RequestMethod::POST, options->requestMethod());
-  const std::vector<std::string> expected_headers = {"f1:b1", "f2:b2"};
+  const std::vector<std::string> expected_headers = {"f1:b1", "f2:b2", "f3:b3:b4"};
   EXPECT_EQ(expected_headers, options->requestHeaders());
   EXPECT_EQ(1234, options->requestBodySize());
   EXPECT_EQ("common_tls_context {\n  tls_params {\n    cipher_suites: "
@@ -383,6 +384,25 @@ TEST_F(OptionsImplTest, SequencerIdleStrategyValuesAreConstrained) {
   EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
                               "{} {} --sequencer-idle-strategy foo", client_name_, good_test_uri_)),
                           MalformedArgvException, "--sequencer-idle-strategy");
+}
+
+TEST_F(OptionsImplTest, RequestHeaderWithoutColon) {
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{} --request-header bar {}",
+                                                                     client_name_, good_test_uri_)),
+                          MalformedArgvException, "is required in a header");
+}
+
+TEST_F(OptionsImplTest, RequestHeaderValueWithColonsAndSpaces) {
+  const std::string header("foo"), value(R"({ "bar": "baz" })");
+  const std::string header_option = fmt::format("{}:{}", header, value);
+  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(std::vector<const char*>{
+      client_name_.c_str(), "--request-header", header_option.c_str(), good_test_uri_.c_str()});
+  EXPECT_EQ(std::vector<std::string>{header_option}, options->requestHeaders());
+  auto optionsPtr = options->toCommandLineOptions();
+  const auto& headers = optionsPtr->request_options().request_headers();
+  EXPECT_EQ(1, headers.size());
+  EXPECT_EQ(header, headers[0].header().key());
+  EXPECT_EQ(value, headers[0].header().value());
 }
 
 } // namespace Client
