@@ -1,7 +1,7 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-ENVOY_COMMIT = "24f44fc0e781cbcd6251f5286bfe4f16600c167c"  # November 5th, 2019
-ENVOY_SHA = "791fe437767f0d58572adf57ee2ad4417ae62baef05ff7489cfb697491a2af76"
+ENVOY_COMMIT = "fb8235971792d924a429577f87cd86ea6cbc1a75"  # November 22th, 2019
+ENVOY_SHA = "5b1d2af625a3b10a879a4be16d4d975e412a2688aa3d3214c8bd2ec1da361f19"
 
 RULES_PYTHON_COMMIT = "fdbb17a4118a1728d19e638a5291b4c4266ea5b8"
 RULES_PYTHON_SHA = "9a3d71e348da504a9c4c5e8abd4cb822f7afb32c613dc6ee8b8535333a81a938"
