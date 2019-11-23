@@ -296,3 +296,12 @@ envoy_cc_test(
         "@envoy//test/test_common:simulated_time_system_lib",
     ],
 )
+
+envoy_cc_test(
+    name = "request_stream_grpc_client_test",
+    srcs = ["request_stream_grpc_client_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/common:request_stream_grpc_client_lib",
+    ],
+)

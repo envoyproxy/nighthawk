@@ -66,9 +66,10 @@ void RequestStreamGrpcClientImpl::onRemoteClose(Envoy::Grpc::Status::GrpcStatus 
   stream_ = nullptr;
 }
 
-RequestPtr RequestStreamGrpcClientImpl::messageToRequest(
-    const nighthawk::client::RequestStreamResponse& message) const {
-  auto header = std::make_shared<Envoy::Http::HeaderMapImpl>(base_header_);
+RequestPtr
+ProtoRequestHelper::messageToRequest(const Envoy::Http::HeaderMap& base_header,
+                                     const nighthawk::client::RequestStreamResponse& message) {
+  auto header = std::make_shared<Envoy::Http::HeaderMapImpl>(base_header);
   RequestPtr request = std::make_unique<RequestImpl>(header);
 
   if (message.has_request_specifier()) {
@@ -103,7 +104,7 @@ RequestPtr RequestStreamGrpcClientImpl::maybeDequeue() {
   RequestPtr request = nullptr;
   if (!messages_.empty()) {
     const auto& message = messages_.front();
-    request = messageToRequest(*message);
+    request = ProtoRequestHelper::messageToRequest(base_header_, *message);
     messages_.pop();
     if (in_flight_headers_ == 0 && messages_.size() < header_buffer_length_) {
       trySendRequest();

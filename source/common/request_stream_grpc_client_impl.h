@@ -27,6 +27,12 @@
 
 namespace Nighthawk {
 
+class ProtoRequestHelper {
+public:
+  static RequestPtr messageToRequest(const Envoy::Http::HeaderMap& base_header,
+                                     const nighthawk::client::RequestStreamResponse& message);
+};
+
 class RequestStreamGrpcClientImpl
     : public RequestStreamGrpcClient,
       Envoy::Grpc::AsyncStreamCallbacks<nighthawk::client::RequestStreamResponse>,
@@ -44,6 +50,8 @@ public:
   onReceiveMessage(std::unique_ptr<nighthawk::client::RequestStreamResponse>&& message) override;
   void onReceiveTrailingMetadata(Envoy::Http::HeaderMapPtr&& metadata) override;
   void onRemoteClose(Envoy::Grpc::Status::GrpcStatus status, const std::string& message) override;
+
+  // RequestStreamGrpcClient
   RequestPtr maybeDequeue() override;
   void start() override;
   bool streamStatusKnown() const override {
@@ -52,7 +60,6 @@ public:
 
 private:
   static const std::string METHOD_NAME;
-  RequestPtr messageToRequest(const nighthawk::client::RequestStreamResponse& message) const;
   void trySendRequest();
   Envoy::Grpc::AsyncClient<nighthawk::client::RequestStreamRequest,
                            nighthawk::client::RequestStreamResponse>
