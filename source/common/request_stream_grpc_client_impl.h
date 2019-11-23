@@ -46,7 +46,7 @@ public:
   void onRemoteClose(Envoy::Grpc::Status::GrpcStatus status, const std::string& message) override;
   RequestPtr maybeDequeue() override;
   void start() override;
-  bool stream_status_known() const override {
+  bool streamStatusKnown() const override {
     return stream_ == nullptr || total_messages_received_ > 0;
   }
 

@@ -87,7 +87,7 @@ service NighthawkService {
   rpc ExecutionStream(stream ExecutionRequest) returns (stream ExecutionResponse) {
   }
 
-  // For obtaining a stream of request specifications and expecatations for replay purposes.
+  // Obtains a stream request-level specifications plus expectations.
   rpc RequestStream(stream RequestStreamRequest) returns (stream RequestStreamResponse) {
   }
 }

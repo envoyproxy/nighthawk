@@ -8,12 +8,15 @@ import "envoy/api/v2/auth/cert.proto";
 import "envoy/api/v2/core/base.proto";
 import "validate/validate.proto";
 
+// Allows for static configuration of requests that should be send by the load generator.
 message RequestOptions {
   envoy.api.v2.core.RequestMethod request_method = 1;
   repeated envoy.api.v2.core.HeaderValueOption request_headers = 2;
   google.protobuf.UInt32Value request_body_size = 3 [(validate.rules).uint32 = {lte: 4194304}];
 }
 
+// Configures a remote gRPC source that will deliver to-be-replayed request data to Nighthawks
+// workers.
 message RequestSource {
   string uri = 19; // [(validate.rules).string.uri = true];
 }
@@ -94,9 +97,11 @@ message CommandLineOptions {
 
   // See :option:`--address-family` for details.
   AddressFamily address_family = 11;
+  // Either requests will be statically configured, or delivered through a remote gRPC service.
   oneof oneof_request_options {
     // See :option:`--request_options` for details.
     RequestOptions request_options = 12;
+    // See :option:`--request_source` for details.
     RequestSource request_source = 25;
   }
   // See :option:`--tls_context` for details.

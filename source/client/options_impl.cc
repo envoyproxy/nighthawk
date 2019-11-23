@@ -192,8 +192,9 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
 
   TCLAP::ValueArg<std::string> request_source(
       "", "request-source",
-      "Grpc source that will deliver to-be-replayed traffic. For example 127.0.0.1:8443", false, "",
-      "string", cmd);
+      "Remote gRPC source that will deliver to-be-replayed traffic. Each worker will separately "
+      "connect to this source. For example 127.0.0.1:8443.",
+      false, "", "string", cmd);
 
   Utility::parseCommand(cmd, argc, argv);
 

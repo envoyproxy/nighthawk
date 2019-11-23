@@ -11,7 +11,6 @@
 
 #include "nighthawk/client/benchmark_client.h"
 #include "nighthawk/client/options.h"
-#include "nighthawk/client/output_collector.h"
 #include "nighthawk/client/output_formatter.h"
 #include "nighthawk/common/platform_util.h"
 #include "nighthawk/common/request_source.h"

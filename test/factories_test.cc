@@ -64,7 +64,7 @@ TEST_F(FactoriesTest, CreateRequestSource) {
   RequestSourceFactoryImpl factory(options_);
   Envoy::Upstream::ClusterManagerPtr cluster_manager;
   auto request_generator = factory.create(cluster_manager, dispatcher_,
-                                          *stats_store_.createScope("foo."), "requestSource");
+                                          *stats_store_.createScope("foo."), "requestsource");
   EXPECT_NE(nullptr, request_generator.get());
 }
 

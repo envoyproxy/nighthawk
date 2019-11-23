@@ -330,7 +330,7 @@ void ProcessImpl::addRequestSourceCluster(
     const Uri& uri, envoy::config::bootstrap::v2::Bootstrap& bootstrap) const {
   auto* cluster = bootstrap.mutable_static_resources()->add_clusters();
   cluster->mutable_http2_protocol_options();
-  cluster->set_name("requestSource");
+  cluster->set_name("requestsource");
   cluster->set_type(envoy::api::v2::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
   cluster->mutable_connect_timeout()->set_seconds(options_.timeout().count());
   auto* host = cluster->add_hosts();

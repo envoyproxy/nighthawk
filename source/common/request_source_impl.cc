@@ -40,7 +40,8 @@ void RemoteRequestSourceImpl::connectToRequestStreamGrpcService() {
   grpc_client_ = std::make_unique<RequestStreamGrpcClientImpl>(
       cm->create(), dispatcher_, *base_header_, header_buffer_length_);
   grpc_client_->start();
-  while (!grpc_client_->stream_status_known()) {
+  // Wait for the client's initial stream setup to complete.
+  while (!grpc_client_->streamStatusKnown()) {
     dispatcher_.run(Envoy::Event::Dispatcher::RunType::NonBlock);
   }
 }

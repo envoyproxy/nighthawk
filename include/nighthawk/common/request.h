@@ -8,6 +8,10 @@ namespace Nighthawk {
 
 using HeaderMapPtr = std::shared_ptr<const Envoy::Http::HeaderMap>;
 
+/**
+ * Defines the specifics of requests to be send by the load generator, as well as
+ * may hold request-level expectations.
+ */
 class Request {
 public:
   virtual ~Request() = default;

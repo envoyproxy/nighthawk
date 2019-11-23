@@ -70,8 +70,9 @@ format>
 Where:
 
 --request-source <string>
-Grpc source that will deliver to-be-replayed traffic. For example
-127.0.0.1:8443
+Remote gRPC source that will deliver to-be-replayed traffic. Each
+worker will separately connect to this source. For example
+127.0.0.1:8443.
 
 --open-loop
 Enable open loop mode. When enabled, the benchmark client will not
