@@ -303,5 +303,6 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         "//source/common:request_stream_grpc_client_lib",
+        "@envoy//test/test_common:utility_lib",
     ],
 )

@@ -77,20 +77,26 @@ ProtoRequestHelper::messageToRequest(const Envoy::Http::HeaderMap& base_header,
     if (request_specifier.has_headers()) {
       const auto& message_request_headers = request_specifier.headers();
       for (const auto& message_header : message_request_headers.headers()) {
-        header->addCopy(Envoy::Http::LowerCaseString(message_header.key()), message_header.value());
+        Envoy::Http::LowerCaseString header_name(message_header.key());
+        header->remove(header_name);
+        header->addCopy(header_name, message_header.value());
       }
     }
     if (request_specifier.has_content_length()) {
       std::string s_content_length = absl::StrCat("", request_specifier.content_length().value());
+      header->remove(Envoy::Http::Headers::get().ContentLength);
       header->insertContentLength().value(s_content_length);
     }
     if (request_specifier.has_authority()) {
+      header->remove(Envoy::Http::Headers::get().Host);
       header->insertHost().value(request_specifier.authority().value());
     }
-    if (request_specifier.has_uri()) {
-      header->insertPath().value(request_specifier.uri().value());
+    if (request_specifier.has_path()) {
+      header->remove(Envoy::Http::Headers::get().Path);
+      header->insertPath().value(request_specifier.path().value());
     }
     if (request_specifier.has_method()) {
+      header->remove(Envoy::Http::Headers::get().Method);
       header->insertMethod().value(request_specifier.method().value());
     }
   }
