@@ -1,0 +1,11 @@
+FROM frolvlad/alpine-glibc
+
+ADD nighthawk_test_server /usr/local/bin/nighthawk_test_server
+
+ADD ci/default-config.yaml /etc/envoy/envoy.yaml
+
+EXPOSE 8080
+
+ENTRYPOINT ["nighthawk_test_server"]
+
+CMD ["-c", "/etc/envoy/envoy.yaml"]

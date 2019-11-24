@@ -90,6 +90,12 @@ function do_check_format() {
     ./tools/format_python_tools.sh check
 }
 
+function do_docker() {
+    echo "docker..."
+    cd "${SRCDIR}"
+    ./ci/docker_build.sh
+}
+
 function do_fix_format() {
     echo "fix_format..."
     cd "${SRCDIR}"
@@ -179,6 +185,10 @@ case "$1" in
         do_tsan
         exit 0
     ;;
+    docker)
+        do_docker
+        exit 0
+    ;;
     check_format)
         do_check_format
         exit 0
@@ -188,7 +198,7 @@ case "$1" in
         exit 0
     ;;
     *)
-        echo "must be one of [build,test,clang_tidy,test_with_valgrind,coverage,asan,tsan]"
+        echo "must be one of [build,test,clang_tidy,test_with_valgrind,coverage,asan,tsan,docker]"
         exit 1
     ;;
 esac
