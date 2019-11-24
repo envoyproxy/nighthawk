@@ -14,11 +14,11 @@ def test_tracing_zipkin(http_test_server_fixture):
   # TODO(https://github.com/envoyproxy/nighthawk/issues/141):
   # Boot up an actual zipkin server to accept spans we send here & validate based on that.
   parsed_json, _ = http_test_server_fixture.runNighthawkClient([
-      "--duration 5", "--rps 10", "--trace zipkin://localhost:79/api/v1/spans",
+      "--duration 5", "--termination-predicate", "benchmark.http_2xx:49", "--rps 100",
+      "--trace zipkin://localhost:79/api/v1/spans",
       http_test_server_fixture.getTestServerRootUri()
   ])
   counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-  assertEqual(counters["benchmark.http_2xx"], 50)
+  assertGreaterEqual(counters["benchmark.http_2xx"], 50)
   assertGreaterEqual(counters["tracing.zipkin.reports_dropped"], 9)
   assertGreaterEqual(counters["tracing.zipkin.spans_sent"], 45)
-  assertEqual(counters["tracing.zipkin.timer_flushed"], 1)
