@@ -144,6 +144,21 @@ TEST_F(OptionsImplTest, All) {
   EXPECT_TRUE(util(*(options_from_proto.toCommandLineOptions()), *cmd));
 }
 
+// We test RequestSource here and not in All above because it is exclusive to some of the other
+// options.
+TEST_F(OptionsImplTest, RequestSource) {
+  Envoy::MessageUtil util;
+  const std::string request_source = "127.9.9.4:32323";
+  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(
+      fmt::format("{} --request-source {} {}", client_name_, request_source, good_test_uri_));
+  EXPECT_EQ(options->requestSource(), request_source);
+  // Check that our conversion to CommandLineOptionsPtr makes sense.
+  CommandLineOptionsPtr cmd = options->toCommandLineOptions();
+  EXPECT_EQ(cmd->request_source().uri(), request_source);
+  OptionsImpl options_from_proto(*cmd);
+  EXPECT_TRUE(util(*(options_from_proto.toCommandLineOptions()), *cmd));
+}
+
 // Test that TCLAP's way of handling --help behaves as expected.
 TEST_F(OptionsImplTest, Help) {
   EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{}  --help", client_name_)),
