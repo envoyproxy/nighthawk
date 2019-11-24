@@ -1,0 +1,5 @@
+FROM frolvlad/alpine-glibc
+
+ADD nighthawk_client /usr/local/bin/nighthawk_client
+
+ENTRYPOINT ["nighthawk_client"]
