@@ -11,7 +11,7 @@ namespace Nighthawk {
 
 // The grpc client itself is tested via the python based integration tests.
 // It is convenient to test message translation here.
-class UtilityTest : public Test {
+class ProtoRequestHelperTest : public Test {
 public:
   void translateExpectingEqual() {
     auto request = ProtoRequestHelper::messageToRequest(base_header_, response_);
@@ -28,10 +28,10 @@ protected:
   Envoy::Http::TestHeaderMapImpl expected_header_;
 };
 
-TEST_F(UtilityTest, EmptyRequestSpecifier) { translateExpectingEqual(); }
+TEST_F(ProtoRequestHelperTest, EmptyRequestSpecifier) { translateExpectingEqual(); }
 
 // Test all explicit headers we offer in the proto api.
-TEST_F(UtilityTest, ExplicitFields) {
+TEST_F(ProtoRequestHelperTest, ExplicitFields) {
   auto* request_specifier = response_.mutable_request_specifier();
   request_specifier->mutable_authority()->set_value("foohost");
   request_specifier->mutable_path()->set_value("/");
@@ -43,7 +43,7 @@ TEST_F(UtilityTest, ExplicitFields) {
 }
 
 // Test the generic header api we offer in the proto api.
-TEST_F(UtilityTest, GenericHeaderFields) {
+TEST_F(ProtoRequestHelperTest, GenericHeaderFields) {
   auto* request_specifier = response_.mutable_request_specifier();
   auto* headers = request_specifier->mutable_headers();
   auto* header_1 = headers->add_headers();
@@ -60,7 +60,7 @@ TEST_F(UtilityTest, GenericHeaderFields) {
 }
 
 // Test ambiguous host configuration behavior yields expected results.
-TEST_F(UtilityTest, AmbiguousHost) {
+TEST_F(ProtoRequestHelperTest, AmbiguousHost) {
   auto* request_specifier = response_.mutable_request_specifier();
   request_specifier->mutable_authority()->set_value("foohost");
   expected_header_ = Envoy::Http::TestHeaderMapImpl{{":authority", "foohost"}};

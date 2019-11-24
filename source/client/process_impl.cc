@@ -230,7 +230,8 @@ ProcessImpl::mergeWorkerStatistics(const StatisticFactory& statistic_factory,
 }
 
 void ProcessImpl::createBootstrapConfiguration(envoy::config::bootstrap::v2::Bootstrap& bootstrap,
-                                               const Uri& uri, int number_of_clusters) const {
+                                               const Uri& uri, const UriPtr& request_source_uri,
+                                               int number_of_clusters) const {
   for (int i = 0; i < number_of_clusters; i++) {
     auto* cluster = bootstrap.mutable_static_resources()->add_clusters();
     if (uri.scheme() == "https") {
@@ -263,6 +264,10 @@ void ProcessImpl::createBootstrapConfiguration(envoy::config::bootstrap::v2::Boo
     auto* socket_address = host->mutable_socket_address();
     socket_address->set_address(uri.address()->ip()->addressAsString());
     socket_address->set_port_value(uri.port());
+
+    if (request_source_uri != nullptr) {
+      addRequestSourceCluster(*request_source_uri, i, bootstrap);
+    }
   }
 }
 
@@ -327,10 +332,10 @@ void ProcessImpl::maybeCreateTracingDriver(const envoy::config::trace::v2::Traci
 }
 
 void ProcessImpl::addRequestSourceCluster(
-    const Uri& uri, envoy::config::bootstrap::v2::Bootstrap& bootstrap) const {
+    const Uri& uri, int worker_number, envoy::config::bootstrap::v2::Bootstrap& bootstrap) const {
   auto* cluster = bootstrap.mutable_static_resources()->add_clusters();
   cluster->mutable_http2_protocol_options();
-  cluster->set_name("requestsource");
+  cluster->set_name(fmt::format("{}.requestsource", worker_number));
   cluster->set_type(envoy::api::v2::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
   cluster->mutable_connect_timeout()->set_seconds(options_.timeout().count());
   auto* host = cluster->add_hosts();
@@ -379,10 +384,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
       *singleton_manager_);
   cluster_manager_factory_->setPrefetchConnections(options_.prefetchConnections());
   envoy::config::bootstrap::v2::Bootstrap bootstrap;
-  createBootstrapConfiguration(bootstrap, uri, number_of_workers);
-  if (request_source_uri != nullptr) {
-    addRequestSourceCluster(*request_source_uri, bootstrap);
-  }
+  createBootstrapConfiguration(bootstrap, uri, request_source_uri, number_of_workers);
   if (tracing_uri != nullptr) {
     setupTracingImplementation(bootstrap, *tracing_uri);
     addTracingCluster(bootstrap, *tracing_uri);

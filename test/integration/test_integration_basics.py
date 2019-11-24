@@ -386,14 +386,15 @@ def test_http_h1_termination_predicate(http_test_server_fixture):
   assertEqual(len(counters), 12)
 
 
-def test_http_h1_termination_predicate(http_test_server_fixture):
+def test_http_h1_failure_predicate(http_test_server_fixture):
   """
   Put in a termination predicate. Should result in failing execution, with 10 successfull requests.
   """
   parsed_json, _ = http_test_server_fixture.runNighthawkClient([
       http_test_server_fixture.getTestServerRootUri(), "--duration", "5", "--rps", "5",
-      "--termination-predicate", "benchmark.http_2xx:0"
-  ], True)
+      "--failure-predicate", "benchmark.http_2xx:0"
+  ],
+                                                               expect_failure=True)
   counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   assertCounterEqual(counters, "benchmark.http_2xx", 1)
-  assertEqual(len(counters), 12)
+  assertEqual(len(counters), 13)

@@ -18,6 +18,17 @@ def test_grpc_service_happy_flow(http_test_server_fixture):
   assertEqual(counters["requestsource.internal.upstream_rq_200"], 1)
 
 
+def test_grpc_service_down(http_test_server_fixture):
+  parsed_json, _ = http_test_server_fixture.runNighthawkClient([
+      "--rps 100",
+      "--request-source %s:%s" % (http_test_server_fixture.server_ip, "34589"),
+      http_test_server_fixture.getTestServerRootUri()
+  ],
+                                                               expect_failure=True)
+  counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
+  assertEqual(counters["requestsource.upstream_rq_pending_failure_eject"], 1)
+
+
 @pytest.mark.skipif(isSanitizerRun(), reason="Slow in sanitizer runs")
 def test_grpc_service_stress(http_test_server_fixture):
   http_test_server_fixture.startNighthawkGrpcService()

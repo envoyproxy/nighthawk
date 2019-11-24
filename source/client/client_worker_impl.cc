@@ -20,8 +20,9 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
     : WorkerImpl(api, tls, store), worker_scope_(store_.createScope("cluster.")),
       worker_number_scope_(worker_scope_->createScope(fmt::format("{}.", worker_number))),
       worker_number_(worker_number), starting_time_(starting_time), http_tracer_(http_tracer),
-      request_generator_(request_generator_factory.create(cluster_manager, *dispatcher_,
-                                                          *worker_number_scope_, "requestsource")),
+      request_generator_(
+          request_generator_factory.create(cluster_manager, *dispatcher_, *worker_number_scope_,
+                                           fmt::format("{}.requestsource", worker_number))),
       benchmark_client_(benchmark_client_factory.create(
           api, *dispatcher_, *worker_number_scope_, cluster_manager, http_tracer_,
           fmt::format("{}", worker_number), *request_generator_)),
