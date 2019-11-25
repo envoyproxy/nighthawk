@@ -68,4 +68,4 @@ class NighthawkGrpcService(object):
   def stop(self):
     self.server_process.terminate()
     self.server_thread.join()
-    return 0  #self.server_process.returncode
+    return self.server_process.returncode
