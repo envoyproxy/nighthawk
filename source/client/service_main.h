@@ -31,6 +31,7 @@ private:
   std::unique_ptr<nighthawk::client::NighthawkService::Stub> stub_;
   int listener_port_{-1};
   std::string listener_bound_address_;
+  std::string listener_output_path_;
 };
 
 } // namespace Client
