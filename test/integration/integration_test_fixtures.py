@@ -15,6 +15,7 @@ import pytest
 
 from test.integration.common import IpVersion, NighthawkException
 from test.integration.nighthawk_test_server import NighthawkTestServer
+from test.integration.nighthawk_grpc_service import NighthawkGrpcService
 
 
 def determineIpVersionsFromEnvironment():
@@ -47,6 +48,7 @@ class IntegrationTestBase():
     self.test_server = None
     self.parameters = {}
     self.ip_version = ip_version
+    self.grpc_service = None
 
   # TODO(oschaaf): For the NH test server, add a way to let it determine a port by itself and pull that
   # out.
@@ -81,6 +83,8 @@ class IntegrationTestBase():
     Stops the server.
     """
     assert (self.test_server.stop() == 0)
+    if not self.grpc_service is None:
+      assert (self.grpc_service.stop() == 0)
 
   def getNighthawkCounterMapFromJson(self, parsed_json):
     """
@@ -148,6 +152,12 @@ class IntegrationTestBase():
 
   def assertIsSubset(self, subset, superset):
     self.assertLessEqual(subset.items(), superset.items())
+
+  def startNighthawkGrpcService(self):
+    host = self.server_ip if self.ip_version == IpVersion.IPV4 else "[%s]" % self.server_ip
+    self.grpc_service = NighthawkGrpcService(
+        os.path.join(self.test_rundir, "nighthawk_service"), host, self.ip_version)
+    assert (self.grpc_service.start())
 
 
 class HttpIntegrationTestBase(IntegrationTestBase):
