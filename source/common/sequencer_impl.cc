@@ -36,7 +36,10 @@ void SequencerImpl::start() {
   if (start_time_ < time_source_.monotonicTime()) {
     ENVOY_LOG(error, "Sequencer start called too late");
   }
-  run(true);
+  // Initiate the periodic timer loop.
+  scheduleRun();
+  // Immediately run.
+  run(false);
 }
 
 void SequencerImpl::scheduleRun() { periodic_timer_->enableTimer(EnvoyTimerMinResolution); }
