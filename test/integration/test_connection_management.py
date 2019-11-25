@@ -44,7 +44,7 @@ def test_http_h1_connection_management_1(http_test_server_fixture):
 
 
 @pytest.mark.skipif(isSanitizerRun(), reason="Unstable in sanitizer runs")
-def test_http_h1_connection_management_5(http_test_server_fixture):
+def test_http_h1_connection_management_2(http_test_server_fixture):
   run_with_number_of_connections(http_test_server_fixture, 2)
 
 
