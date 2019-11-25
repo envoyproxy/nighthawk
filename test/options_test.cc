@@ -399,5 +399,25 @@ TEST_F(OptionsImplTest, RequestHeaderValueWithColonsAndSpaces) {
   EXPECT_EQ(value, headers[0].header().value());
 }
 
+class OptionsImplH1ConnectionReuseStrategyTest : public OptionsImplTest,
+                                                 public WithParamInterface<const char*> {};
+
+// Test we accept all possible --h1-connection-reuse-strategy values.
+TEST_P(OptionsImplH1ConnectionReuseStrategyTest, H1ConnectionReuseStrategyValues) {
+  TestUtility::createOptionsImpl(fmt::format("{} --h1-connection-reuse-strategy {} {}",
+                                             client_name_, GetParam(), good_test_uri_));
+}
+
+INSTANTIATE_TEST_SUITE_P(H1ConnectionReuseStrategyOptionsTest,
+                         OptionsImplH1ConnectionReuseStrategyTest, Values("HOT", "FAIR"));
+
+// Test we don't accept any bad --h1-connection-reuse-strategy values.
+TEST_F(OptionsImplTest, H1ConnectionReuseStrategyValuesAreConstrained) {
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(
+          fmt::format("{} {} --h1-connection-reuse-strategy foo", client_name_, good_test_uri_)),
+      MalformedArgvException, "h1-connection-reuse-strategy");
+}
+
 } // namespace Client
 } // namespace Nighthawk
