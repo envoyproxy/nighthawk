@@ -33,7 +33,7 @@ public:
                                        rand_, validation_visitor_, *api_)});
     benchmark_client_ = new MockBenchmarkClient();
     sequencer_ = new MockSequencer();
-    header_generator_ = new MockHeaderSource();
+    header_generator_ = new MockRequestSource();
     termination_predicate_ = new MockTerminationPredicate();
 
     EXPECT_CALL(benchmark_client_factory_, create(_, _, _, _, _, _, _))
@@ -46,7 +46,7 @@ public:
 
     EXPECT_CALL(header_generator_factory_, create())
         .Times(1)
-        .WillOnce(Return(ByMove(std::unique_ptr<HeaderSource>(header_generator_))));
+        .WillOnce(Return(ByMove(std::unique_ptr<RequestSource>(header_generator_))));
 
     EXPECT_CALL(termination_predicate_factory_, create(_, _, _))
         .WillOnce(Return(ByMove(std::unique_ptr<TerminationPredicate>(termination_predicate_))));
@@ -71,13 +71,13 @@ public:
   MockBenchmarkClientFactory benchmark_client_factory_;
   MockTerminationPredicateFactory termination_predicate_factory_;
   MockSequencerFactory sequencer_factory_;
-  MockHeaderSourceFactory header_generator_factory_;
+  MockRequestSourceFactory header_generator_factory_;
   Envoy::Stats::IsolatedStoreImpl store_;
   NiceMock<Envoy::ThreadLocal::MockInstance> tls_;
   Envoy::Event::TestRealTimeSystem time_system_;
   MockBenchmarkClient* benchmark_client_;
   MockSequencer* sequencer_;
-  MockHeaderSource* header_generator_;
+  MockRequestSource* header_generator_;
   Envoy::Runtime::RandomGeneratorImpl rand_;
   NiceMock<Envoy::Event::MockDispatcher> dispatcher_;
   std::unique_ptr<Envoy::Runtime::ScopedLoaderSingleton> loader_;

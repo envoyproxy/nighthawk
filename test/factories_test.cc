@@ -6,7 +6,7 @@
 #include "external/envoy/test/test_common/simulated_time_system.h"
 #include "external/envoy/test/test_common/utility.h"
 
-#include "common/header_source_impl.h"
+#include "common/request_source_impl.h"
 #include "common/uri_impl.h"
 
 #include "client/factories_impl.h"
@@ -45,13 +45,13 @@ TEST_F(FactoriesTest, CreateBenchmarkClient) {
   EXPECT_CALL(options_, openLoop()).Times(1);
   auto cmd = std::make_unique<nighthawk::client::CommandLineOptions>();
   EXPECT_CALL(options_, toCommandLineOptions()).Times(1).WillOnce(Return(ByMove(std::move(cmd))));
-  StaticHeaderSourceImpl header_generator(std::make_unique<Envoy::Http::TestHeaderMapImpl>());
+  StaticRequestSourceImpl header_generator(std::make_unique<Envoy::Http::TestHeaderMapImpl>());
   auto benchmark_client = factory.create(*api_, dispatcher_, stats_store_, cluster_manager,
                                          http_tracer_, "foocluster", header_generator);
   EXPECT_NE(nullptr, benchmark_client.get());
 }
 
-TEST_F(FactoriesTest, CreateHeaderSource) {
+TEST_F(FactoriesTest, CreateRequestSource) {
   EXPECT_CALL(options_, requestMethod()).Times(1);
   EXPECT_CALL(options_, requestBodySize()).Times(1);
   EXPECT_CALL(options_, uri()).Times(1).WillOnce(Return("http://foo/"));
@@ -60,7 +60,7 @@ TEST_F(FactoriesTest, CreateHeaderSource) {
   request_headers->mutable_header()->set_key("foo");
   request_headers->mutable_header()->set_value("bar");
   EXPECT_CALL(options_, toCommandLineOptions()).Times(1).WillOnce(Return(ByMove(std::move(cmd))));
-  HeaderSourceFactoryImpl factory(options_);
+  RequestSourceFactoryImpl factory(options_);
   auto header_generator = factory.create();
   EXPECT_NE(nullptr, header_generator.get());
 }
