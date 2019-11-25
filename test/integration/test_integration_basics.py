@@ -229,6 +229,8 @@ def test_https_h2(https_test_server_fixture):
   counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   assertCounterEqual(counters, "benchmark.http_2xx", 25)
   assertCounterEqual(counters, "upstream_cx_http2_total", 1)
+  # Through emperical observation, 1030 has been determined to be the minimum of bytes
+  # we can expect to have received when execution has stopped.
   assertCounterGreaterEqual(counters, "upstream_cx_rx_bytes_total", 1030)
   assertCounterEqual(counters, "upstream_cx_total", 1)
   assertCounterGreaterEqual(counters, "upstream_cx_tx_bytes_total", 403)
