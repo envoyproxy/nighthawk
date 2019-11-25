@@ -126,7 +126,7 @@ def test_h1_pool_strategy(http_test_server_fixture):
   requests = 60
   connections = 3
   assertNotIn("[C1] message complete", logs)
-  assertGreaterEqual(countLogLinesWithSubstring(logs, "[C0] message complete"), 10)
+  assertEqual(countLogLinesWithSubstring(logs, "[C0] message complete"), 22)
 
   _, logs = http_test_server_fixture.runNighthawkClient([
       "--rps", "20", "-v trace", "--connections",
@@ -136,5 +136,7 @@ def test_h1_pool_strategy(http_test_server_fixture):
       http_test_server_fixture.getTestServerRootUri()
   ])
   for i in range(1, connections):
-    assertGreaterEqual(
-        countLogLinesWithSubstring(logs, "[C%d] message complete" % i), requests / connections)
+    line_count = countLogLinesWithSubstring(logs, "[C%d] message complete" % i)
+    strict_count = (requests / connections) * 2
+    # We need to mind a single warmup call
+    assertBetweenInclusive(line_count, strict_count, strict_count + 2)
