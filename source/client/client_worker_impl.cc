@@ -2,7 +2,7 @@
 
 #include "external/envoy/source/common/stats/symbol_table_impl.h"
 
-#include "common/header_source_impl.h"
+#include "common/request_source_impl.h"
 #include "common/utility.h"
 
 namespace Nighthawk {
@@ -13,7 +13,7 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
                                    const BenchmarkClientFactory& benchmark_client_factory,
                                    const TerminationPredicateFactory& termination_predicate_factory,
                                    const SequencerFactory& sequencer_factory,
-                                   const HeaderSourceFactory& header_generator_factory,
+                                   const RequestSourceFactory& header_generator_factory,
                                    Envoy::Stats::Store& store, const int worker_number,
                                    const Envoy::MonotonicTime starting_time,
                                    Envoy::Tracing::HttpTracerPtr& http_tracer)

@@ -5,9 +5,9 @@
 
 #include "api/client/options.pb.h"
 
-#include "common/header_source_impl.h"
 #include "common/platform_util_impl.h"
 #include "common/rate_limiter_impl.h"
+#include "common/request_source_impl.h"
 #include "common/sequencer_impl.h"
 #include "common/statistic_impl.h"
 #include "common/termination_predicate_impl.h"
@@ -29,7 +29,7 @@ BenchmarkClientFactoryImpl::BenchmarkClientFactoryImpl(const Options& options)
 BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
     Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
     Envoy::Upstream::ClusterManagerPtr& cluster_manager, Envoy::Tracing::HttpTracerPtr& http_tracer,
-    absl::string_view cluster_name, HeaderSource& header_generator) const {
+    absl::string_view cluster_name, RequestSource& header_generator) const {
   StatisticFactoryImpl statistic_factory(options_);
   auto benchmark_client = std::make_unique<BenchmarkClientHttpImpl>(
       api, dispatcher, scope, statistic_factory.create(), statistic_factory.create(), options_.h2(),
@@ -97,19 +97,19 @@ OutputFormatterPtr OutputFormatterFactoryImpl::create(
   }
 }
 
-HeaderSourceFactoryImpl::HeaderSourceFactoryImpl(const Options& options)
+RequestSourceFactoryImpl::RequestSourceFactoryImpl(const Options& options)
     : OptionBasedFactoryImpl(options) {}
 
-void HeaderSourceFactoryImpl::setRequestHeader(Envoy::Http::HeaderMap& header,
-                                               absl::string_view key,
-                                               absl::string_view value) const {
+void RequestSourceFactoryImpl::setRequestHeader(Envoy::Http::HeaderMap& header,
+                                                absl::string_view key,
+                                                absl::string_view value) const {
   auto lower_case_key = Envoy::Http::LowerCaseString(std::string(key));
   header.remove(lower_case_key);
   // TODO(oschaaf): we've performed zero validation on the header key/value.
   header.addCopy(lower_case_key, std::string(value));
 }
 
-HeaderSourcePtr HeaderSourceFactoryImpl::create() const {
+RequestSourcePtr RequestSourceFactoryImpl::create() const {
   // Note: we assume a valid uri.
   // Also, we can't resolve, but we do not need that.
   UriImpl uri(options_.uri());
@@ -130,7 +130,7 @@ HeaderSourcePtr HeaderSourceFactoryImpl::create() const {
     setRequestHeader(*header, option_header.header().key(), option_header.header().value());
   }
 
-  return std::make_unique<StaticHeaderSourceImpl>(std::move(header));
+  return std::make_unique<StaticRequestSourceImpl>(std::move(header));
 }
 
 TerminationPredicateFactoryImpl::TerminationPredicateFactoryImpl(const Options& options)
