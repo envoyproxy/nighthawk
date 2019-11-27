@@ -143,7 +143,7 @@ class IntegrationTestBase():
     if as_json:
       output = json.loads(output)
     if expect_failure:
-      assert (client_process.returncode == 0)
+      assert (client_process.returncode != 0)
     else:
       assert (client_process.returncode == 0)
     return output, logs
