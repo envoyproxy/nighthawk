@@ -157,7 +157,7 @@ def test_http_h2(http_test_server_fixture):
   counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   assertCounterEqual(counters, "benchmark.http_2xx", 25)
   assertCounterEqual(counters, "upstream_cx_http2_total", 1)
-  #assertCounterGreaterEqual(counters, "upstream_cx_rx_bytes_total", 1145)
+  assertCounterGreaterEqual(counters, "upstream_cx_rx_bytes_total", 1030)
   assertCounterEqual(counters, "upstream_cx_total", 1)
   assertCounterGreaterEqual(counters, "upstream_cx_tx_bytes_total", 403)
   assertCounterEqual(counters, "upstream_rq_pending_total", 1)
