@@ -12,10 +12,10 @@ envoy_basic_cc_library(
     name = "base_includes",
     hdrs = [
         "exception.h",
-        "header_source.h",
         "operation_callback.h",
         "platform_util.h",
         "rate_limiter.h",
+        "request_source.h",
         "sequencer.h",
         "statistic.h",
         "termination_predicate.h",

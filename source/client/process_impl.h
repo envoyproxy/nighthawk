@@ -80,7 +80,7 @@ private:
   const BenchmarkClientFactoryImpl benchmark_client_factory_;
   const TerminationPredicateFactoryImpl termination_predicate_factory_;
   const SequencerFactoryImpl sequencer_factory_;
-  const HeaderSourceFactoryImpl header_generator_factory_;
+  const RequestSourceFactoryImpl request_generator_factory_;
   const Options& options_;
 
   Envoy::Init::ManagerImpl init_manager_;

@@ -9,7 +9,7 @@
 #include "nighthawk/client/benchmark_client.h"
 #include "nighthawk/client/client_worker.h"
 #include "nighthawk/client/factories.h"
-#include "nighthawk/common/header_source.h"
+#include "nighthawk/common/request_source.h"
 #include "nighthawk/common/sequencer.h"
 #include "nighthawk/common/termination_predicate.h"
 
@@ -25,8 +25,9 @@ public:
                    const BenchmarkClientFactory& benchmark_client_factory,
                    const TerminationPredicateFactory& termination_predicate_factory,
                    const SequencerFactory& sequencer_factory,
-                   const HeaderSourceFactory& header_generator_factory, Envoy::Stats::Store& store,
-                   const int worker_number, const Envoy::MonotonicTime starting_time,
+                   const RequestSourceFactory& request_generator_factory,
+                   Envoy::Stats::Store& store, const int worker_number,
+                   const Envoy::MonotonicTime starting_time,
                    Envoy::Tracing::HttpTracerPtr& http_tracer);
   StatisticPtrMap statistics() const override;
 
@@ -46,7 +47,7 @@ private:
   const int worker_number_;
   const Envoy::MonotonicTime starting_time_;
   Envoy::Tracing::HttpTracerPtr& http_tracer_;
-  HeaderSourcePtr header_generator_;
+  RequestSourcePtr request_generator_;
   BenchmarkClientPtr benchmark_client_;
   TerminationPredicatePtr termination_predicate_;
   const SequencerPtr sequencer_;

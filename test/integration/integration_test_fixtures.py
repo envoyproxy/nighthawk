@@ -131,6 +131,8 @@ class IntegrationTestBase():
     Runs Nighthawk against the test server, returning a json-formatted result
     and logs. If the timeout is exceeded an exception will be raised.
     """
+    # Copy the args so our modifications to it stay local.
+    args = args.copy()
     if self.ip_version == IpVersion.IPV6:
       args.insert(0, "--address-family v6")
     if as_json:
@@ -145,7 +147,7 @@ class IntegrationTestBase():
     if as_json:
       output = json.loads(output)
     if expect_failure:
-      assert (client_process.returncode == 0)
+      assert (client_process.returncode != 0)
     else:
       assert (client_process.returncode == 0)
     return output, logs
