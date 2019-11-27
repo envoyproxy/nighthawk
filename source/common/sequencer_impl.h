@@ -15,6 +15,15 @@
 
 namespace Nighthawk {
 
+namespace {
+
+using namespace std::chrono_literals;
+
+// We shoot for a 40kHz resolution.
+constexpr std::chrono::milliseconds NighthawkTimerResolution = 25us;
+
+} // namespace
+
 using SequencerTarget = std::function<bool(OperationCallback)>;
 
 using namespace Envoy; // We need this because of macro expectations.

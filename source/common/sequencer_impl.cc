@@ -42,12 +42,7 @@ void SequencerImpl::start() {
   run(false);
 }
 
-void SequencerImpl::scheduleRun() {
-  // We shoot for a 40kHz resolution.
-  if (!periodic_timer_->enabled()) {
-    periodic_timer_->enableHRTimer(25us);
-  }
-}
+void SequencerImpl::scheduleRun() { periodic_timer_->enableHRTimer(NighthawkTimerResolution); }
 
 void SequencerImpl::stop(bool failed) {
   ASSERT(running_);

@@ -108,7 +108,7 @@ public:
   // Moves time forward 1ms, and runs the ballbacks of set timers.
   void simulateTimerLoop() {
     while (!stopped_) {
-      time_system_.setMonotonicTime(time_system_.monotonicTime() + EnvoyTimerMinResolution);
+      time_system_.setMonotonicTime(time_system_.monotonicTime() + NighthawkTimerResolution);
 
       // TODO(oschaaf): This can be implemented more accurately, by keeping track of timer
       // enablement preserving ordering of which timer should fire first. For now this seems to
@@ -291,7 +291,7 @@ TEST_F(SequencerIntegrationTest, CallbacksDoNotInfluenceTestDuration) {
 
   auto diff = time_system_.monotonicTime() - pre_timeout;
 
-  auto expected_duration = (test_number_of_intervals_ * interval_) + EnvoyTimerMinResolution;
+  auto expected_duration = (test_number_of_intervals_ * interval_) + NighthawkTimerResolution;
   EXPECT_EQ(expected_duration, diff);
 
   // the test itself should have seen all callbacks...
