@@ -30,7 +30,7 @@ public:
                                     Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                                     Envoy::Tracing::HttpTracerPtr& http_tracer,
                                     absl::string_view cluster_name,
-                                    RequestSource& request_source) const PURE;
+                                    RequestSource& request_generator) const PURE;
 };
 
 class SequencerFactory {
