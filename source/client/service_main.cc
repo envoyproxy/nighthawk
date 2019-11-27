@@ -5,8 +5,6 @@
 
 #include "nighthawk/common/exception.h"
 
-#include "external/envoy/source/common/common/lock_guard.h"
-
 #include "common/utility.h"
 
 #include "client/service_impl.h"
@@ -80,8 +78,9 @@ void ServiceMain::start() {
   stub_ = std::make_unique<nighthawk::client::NighthawkService::Stub>(channel_);
   // The shutdown thread will be notified of by our signal handler and take it from there.
   shutdown_thread_ = std::thread([this]() {
-    Envoy::Thread::LockGuard shutdown_lock(shutdown_lock_);
-    shutdown_event_.wait(shutdown_lock_);
+    while (!shutdown_) {
+      usleep(10000);
+    }
     ENVOY_LOG(info, "Nighthawk grpc service shutdown initiating");
     server_->Shutdown();
   });
@@ -92,18 +91,21 @@ void ServiceMain::wait() {
   signal(SIGTERM, signal_handler);
   signal(SIGINT, signal_handler);
   server_->Wait();
-  shutdown_event_.notifyOne();
-  shutdown_thread_.join();
-  ENVOY_LOG(info, "Nighthawk grpc service exits");
+  shutdown();
 }
 
 void ServiceMain::shutdownSignalHandler() {
-  if (!shutdown_initiated_) {
-    shutdown_initiated_ = true;
-    // Signal handling should be lean, so we notify the thread that will handle
-    // shutdown initiation for us.
-    shutdown_event_.notifyOne();
+  // Signal handling should be lean, so we notify the thread that will handle
+  // shutdown initiation for us.
+  shutdown_ = true;
+}
+
+void ServiceMain::shutdown() {
+  shutdown_ = true;
+  if (shutdown_thread_.joinable()) {
+    shutdown_thread_.join();
   }
+  ENVOY_LOG(info, "Nighthawk grpc service exits");
 }
 
 } // namespace Client

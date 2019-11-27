@@ -24,6 +24,7 @@ public:
   void start();
   void wait();
   void shutdownSignalHandler();
+  void shutdown();
   static std::string appendDefaultPortIfNeeded(absl::string_view host_and_maybe_port);
 
 private:
@@ -35,10 +36,8 @@ private:
   int listener_port_{-1};
   std::string listener_bound_address_;
   std::string listener_output_path_;
-  Envoy::Thread::MutexBasicLockable shutdown_lock_;
-  Envoy::Thread::CondVar shutdown_event_;
+  bool shutdown_{false};
   std::thread shutdown_thread_;
-  bool shutdown_initiated_{false};
 };
 
 } // namespace Client
