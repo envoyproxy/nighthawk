@@ -11,7 +11,7 @@ StaticRequestSourceImpl::StaticRequestSourceImpl(Envoy::Http::HeaderMapPtr&& hea
   RELEASE_ASSERT(header_ != nullptr, "header can't equal nullptr");
 }
 
-HeaderGenerator StaticRequestSourceImpl::get() {
+RequestGenerator StaticRequestSourceImpl::get() {
   return [this]() -> HeaderMapPtr {
     while (yields_left_--) {
       return header_;
