@@ -22,7 +22,7 @@ def run_with_number_of_connections(fixture,
   # We add a delay to responses to make sure connections are needed, as the pool creates connections on-demand.
   args = [
       fixture.getTestServerRootUri(), "--rps",
-      str(rps), "--duration", "1", "--request-header", "x-envoy-fault-delay-request:500",
+      str(rps), "--duration", "2", "--request-header", "x-envoy-fault-delay-request:500",
       "--max-pending-requests",
       str(max_pending_requests), "--max-requests-per-connection",
       str(requests_per_connection), "--connections",
@@ -48,25 +48,15 @@ def test_http_h1_connection_management_2(http_test_server_fixture):
   run_with_number_of_connections(http_test_server_fixture, 2)
 
 
-@pytest.mark.skipif(isSanitizerRun(), reason="Unstable in sanitizer runs")
-def test_http_h1_connection_management_10(http_test_server_fixture):
-  run_with_number_of_connections(http_test_server_fixture, 10)
-
-
 # A series that tests with queueing enabled
 @pytest.mark.skipif(isSanitizerRun(), reason="Unstable in sanitizer runs")
 def test_http_h1_connection_management_with_queue_1(http_test_server_fixture):
-  run_with_number_of_connections(http_test_server_fixture, 1, max_pending_requests=100)
+  run_with_number_of_connections(http_test_server_fixture, 1, max_pending_requests=5)
 
 
 @pytest.mark.skipif(isSanitizerRun(), reason="Unstable in sanitizer runs")
-def test_http_h1_connection_management_with_queue_2(http_test_server_fixture):
-  run_with_number_of_connections(http_test_server_fixture, 2, max_pending_requests=100)
-
-
-@pytest.mark.skipif(isSanitizerRun(), reason="Unstable in sanitizer runs")
-def test_http_h1_connection_management_with_queue_10(http_test_server_fixture):
-  run_with_number_of_connections(http_test_server_fixture, 10, max_pending_requests=100)
+def test_http_h1_connection_management_with_queue_5(http_test_server_fixture):
+  run_with_number_of_connections(http_test_server_fixture, 5, max_pending_requests=5)
 
 
 def connection_management_test_request_per_connection(fixture, requests_per_connection, use_h2):

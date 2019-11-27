@@ -2,14 +2,14 @@
 
 #include "envoy/http/header_map.h"
 
-#include "nighthawk/common/header_source.h"
+#include "nighthawk/common/request_source.h"
 
 namespace Nighthawk {
 namespace Client {
 
-class StaticHeaderSourceImpl : public HeaderSource {
+class StaticRequestSourceImpl : public RequestSource {
 public:
-  StaticHeaderSourceImpl(Envoy::Http::HeaderMapPtr&&, const uint64_t max_yields = UINT64_MAX);
+  StaticRequestSourceImpl(Envoy::Http::HeaderMapPtr&&, const uint64_t max_yields = UINT64_MAX);
   HeaderGenerator get() override;
 
 private:

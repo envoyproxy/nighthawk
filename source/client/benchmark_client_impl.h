@@ -10,7 +10,7 @@
 #include "envoy/upstream/upstream.h"
 
 #include "nighthawk/client/benchmark_client.h"
-#include "nighthawk/common/header_source.h"
+#include "nighthawk/common/request_source.h"
 #include "nighthawk/common/sequencer.h"
 #include "nighthawk/common/statistic.h"
 
