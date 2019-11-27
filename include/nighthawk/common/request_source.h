@@ -9,12 +9,12 @@ namespace Nighthawk {
 using HeaderMapPtr = std::shared_ptr<const Envoy::Http::HeaderMap>;
 using HeaderGenerator = std::function<HeaderMapPtr()>;
 
-class HeaderSource {
+class RequestSource {
 public:
-  virtual ~HeaderSource() = default;
+  virtual ~RequestSource() = default;
   virtual HeaderGenerator get() PURE;
 };
 
-using HeaderSourcePtr = std::unique_ptr<HeaderSource>;
+using RequestSourcePtr = std::unique_ptr<RequestSource>;
 
 } // namespace Nighthawk

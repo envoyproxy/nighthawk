@@ -8,8 +8,8 @@
 #include "envoy/http/conn_pool.h"
 #include "envoy/server/tracer_config.h"
 
-#include "nighthawk/common/header_source.h"
 #include "nighthawk/common/operation_callback.h"
+#include "nighthawk/common/request_source.h"
 #include "nighthawk/common/statistic.h"
 
 #include "external/envoy/source/common/http/header_map_impl.h"
@@ -68,8 +68,8 @@ public:
   // Http::StreamCallbacks
   void onResetStream(Envoy::Http::StreamResetReason reason,
                      absl::string_view transport_failure_reason) override;
-  void onAboveWriteBufferHighWatermark() override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; }
-  void onBelowWriteBufferLowWatermark() override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; }
+  void onAboveWriteBufferHighWatermark() override {}
+  void onBelowWriteBufferLowWatermark() override {}
 
   // ConnectionPool::Callbacks
   void onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason reason,
