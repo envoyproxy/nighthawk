@@ -20,7 +20,7 @@ namespace {
 using namespace std::chrono_literals;
 
 // We shoot for a 40kHz resolution.
-constexpr std::chrono::milliseconds NighthawkTimerResolution = 25us;
+constexpr std::chrono::microseconds NighthawkTimerResolution = 25us;
 
 } // namespace
 
