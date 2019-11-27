@@ -28,8 +28,9 @@ public:
                    const BenchmarkClientFactory& benchmark_client_factory,
                    const TerminationPredicateFactory& termination_predicate_factory,
                    const SequencerFactory& sequencer_factory,
-                   const RequestSourceFactory& header_generator_factory, Envoy::Stats::Store& store,
-                   const int worker_number, const Envoy::MonotonicTime starting_time,
+                   const RequestSourceFactory& request_generator_factory,
+                   Envoy::Stats::Store& store, const int worker_number,
+                   const Envoy::MonotonicTime starting_time,
                    Envoy::Tracing::HttpTracerPtr& http_tracer);
   StatisticPtrMap statistics() const override;
 
@@ -52,7 +53,7 @@ private:
   const int worker_number_;
   const Envoy::MonotonicTime starting_time_;
   Envoy::Tracing::HttpTracerPtr& http_tracer_;
-  RequestSourcePtr header_generator_;
+  RequestSourcePtr request_generator_;
   BenchmarkClientPtr benchmark_client_;
   TerminationPredicatePtr termination_predicate_;
   std::vector<PhasePtr> phases_;
