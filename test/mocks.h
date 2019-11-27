@@ -102,7 +102,7 @@ public:
                                                 Envoy::Stats::Scope&,
                                                 Envoy::Upstream::ClusterManagerPtr&,
                                                 Envoy::Tracing::HttpTracerPtr&, absl::string_view,
-                                                RequestSource& header_generator));
+                                                RequestSource& request_generator));
 };
 
 class MockSequencerFactory : public Client::SequencerFactory {
@@ -171,7 +171,7 @@ public:
 class MockRequestSource : public RequestSource {
 public:
   MockRequestSource();
-  MOCK_METHOD0(get, HeaderGenerator());
+  MOCK_METHOD0(get, RequestGenerator());
 };
 
 class MockTerminationPredicate : public TerminationPredicate {

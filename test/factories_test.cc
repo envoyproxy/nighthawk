@@ -45,9 +45,9 @@ TEST_F(FactoriesTest, CreateBenchmarkClient) {
   EXPECT_CALL(options_, openLoop()).Times(1);
   auto cmd = std::make_unique<nighthawk::client::CommandLineOptions>();
   EXPECT_CALL(options_, toCommandLineOptions()).Times(1).WillOnce(Return(ByMove(std::move(cmd))));
-  StaticRequestSourceImpl header_generator(std::make_unique<Envoy::Http::TestHeaderMapImpl>());
+  StaticRequestSourceImpl request_generator(std::make_unique<Envoy::Http::TestHeaderMapImpl>());
   auto benchmark_client = factory.create(*api_, dispatcher_, stats_store_, cluster_manager,
-                                         http_tracer_, "foocluster", header_generator);
+                                         http_tracer_, "foocluster", request_generator);
   EXPECT_NE(nullptr, benchmark_client.get());
 }
 
@@ -61,8 +61,8 @@ TEST_F(FactoriesTest, CreateRequestSource) {
   request_headers->mutable_header()->set_value("bar");
   EXPECT_CALL(options_, toCommandLineOptions()).Times(1).WillOnce(Return(ByMove(std::move(cmd))));
   RequestSourceFactoryImpl factory(options_);
-  auto header_generator = factory.create();
-  EXPECT_NE(nullptr, header_generator.get());
+  auto request_generator = factory.create();
+  EXPECT_NE(nullptr, request_generator.get());
 }
 
 TEST_F(FactoriesTest, CreateSequencer) {}

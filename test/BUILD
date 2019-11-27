@@ -1,11 +1,11 @@
-licenses(["notice"])  # Apache 2
-
 load(
     "@envoy//bazel:envoy_build_system.bzl",
     "envoy_cc_mock",
     "envoy_cc_test",
     "envoy_package",
 )
+
+licenses(["notice"])  # Apache 2
 
 envoy_package()
 
@@ -246,8 +246,8 @@ envoy_cc_test(
 )
 
 envoy_cc_test(
-    name = "header_generator_test",
-    srcs = ["header_generator_test.cc"],
+    name = "request_generator_test",
+    srcs = ["request_generator_test.cc"],
     repository = "@envoy",
     deps = [
         "//source/client:nighthawk_client_lib",
