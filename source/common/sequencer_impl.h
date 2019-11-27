@@ -15,14 +15,6 @@
 
 namespace Nighthawk {
 
-namespace {
-
-using namespace std::chrono_literals;
-
-constexpr std::chrono::milliseconds EnvoyTimerMinResolution = 1ms;
-
-} // namespace
-
 using SequencerTarget = std::function<bool(OperationCallback)>;
 
 using namespace Envoy; // We need this because of macro expectations.

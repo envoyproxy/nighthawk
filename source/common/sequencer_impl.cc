@@ -42,7 +42,12 @@ void SequencerImpl::start() {
   run(false);
 }
 
-void SequencerImpl::scheduleRun() { periodic_timer_->enableTimer(EnvoyTimerMinResolution); }
+void SequencerImpl::scheduleRun() {
+  // We shoot for a 40kHz resolution.
+  if (!periodic_timer_->enabled()) {
+    periodic_timer_->enableHRTimer(25us);
+  }
+}
 
 void SequencerImpl::stop(bool failed) {
   ASSERT(running_);
@@ -82,8 +87,10 @@ void SequencerImpl::updateStartBlockingTimeIfNeeded() {
 
 void SequencerImpl::run(bool from_periodic_timer) {
   ASSERT(running_);
-  const auto now = last_event_time_ = time_source_.monotonicTime();
+  const auto now = time_source_.monotonicTime();
   const auto running_duration = now - start_time_;
+  const auto delta = now - last_event_time_;
+  last_event_time_ = now;
 
   // The running_duration we compute will be negative until it is time to start.
   if (running_duration >= 0ns) {
@@ -129,6 +136,7 @@ void SequencerImpl::run(bool from_periodic_timer) {
   }
 
   if (from_periodic_timer) {
+    std::cerr << delta.count() << std::endl;
     // Re-schedule the periodic timer if it was responsible for waking up this code.
     scheduleRun();
   } else {
