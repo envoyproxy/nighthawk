@@ -81,11 +81,11 @@ public:
         }));
     EXPECT_CALL(*timer1_, disableTimer()).WillOnce(Invoke([&]() { timer1_set_ = false; }));
     EXPECT_CALL(*timer2_, disableTimer()).WillOnce(Invoke([&]() { timer2_set_ = false; }));
-    EXPECT_CALL(*timer1_, enableTimer(_, _))
-        .WillRepeatedly(Invoke([&](const std::chrono::milliseconds,
+    EXPECT_CALL(*timer1_, enableHRTimer(_, _))
+        .WillRepeatedly(Invoke([&](const std::chrono::microseconds,
                                    const Envoy::ScopeTrackedObject*) { timer1_set_ = true; }));
-    EXPECT_CALL(*timer2_, enableTimer(_, _))
-        .WillRepeatedly(Invoke([&](const std::chrono::milliseconds,
+    EXPECT_CALL(*timer2_, enableHRTimer(_, _))
+        .WillRepeatedly(Invoke([&](const std::chrono::microseconds,
                                    const Envoy::ScopeTrackedObject*) { timer2_set_ = true; }));
     EXPECT_CALL(*dispatcher_, exit()).WillOnce(Invoke([&]() { stopped_ = true; }));
     simulation_start_ = time_system_.monotonicTime();

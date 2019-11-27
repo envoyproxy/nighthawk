@@ -111,7 +111,7 @@ void SequencerImpl::run(bool from_periodic_timer) {
         if (this->running_) {
           // Immediately schedule us to check again, as chances are we can get on with the next
           // task.
-          spin_timer_->enableTimer(0ms);
+          spin_timer_->enableHRTimer(0ms);
         }
       });
 
@@ -144,11 +144,11 @@ void SequencerImpl::run(bool from_periodic_timer) {
       // TODO(oschaaf): Ideally we would have much finer grained timers instead.
       // TODO(oschaaf): Optionize performing this spin loop.
       platform_util_.yieldCurrentThread();
-      spin_timer_->enableTimer(0ms);
+      spin_timer_->enableHRTimer(0ms);
     } else if (idle_strategy_ == nighthawk::client::SequencerIdleStrategy::SLEEP) {
       // optionize sleep duration.
       platform_util_.sleep(50us);
-      spin_timer_->enableTimer(0ms);
+      spin_timer_->enableHRTimer(0ms);
     } // .. else we poll, the periodic timer will be active
   }
 }
