@@ -10,7 +10,7 @@ namespace Client {
 class StaticRequestSourceImpl : public RequestSource {
 public:
   StaticRequestSourceImpl(Envoy::Http::HeaderMapPtr&&, const uint64_t max_yields = UINT64_MAX);
-  HeaderGenerator get() override;
+  RequestGenerator get() override;
 
 private:
   const HeaderMapPtr header_;
