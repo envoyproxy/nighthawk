@@ -32,7 +32,7 @@ public:
                             Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                             Envoy::Tracing::HttpTracerPtr& http_tracer,
                             absl::string_view cluster_name,
-                            HeaderSource& header_generator) const override;
+                            RequestSource& header_generator) const override;
 };
 
 class SequencerFactoryImpl : public OptionBasedFactoryImpl, public SequencerFactory {
@@ -62,10 +62,10 @@ public:
   create(const nighthawk::client::OutputFormat_OutputFormatOptions output_format) const override;
 };
 
-class HeaderSourceFactoryImpl : public OptionBasedFactoryImpl, public HeaderSourceFactory {
+class RequestSourceFactoryImpl : public OptionBasedFactoryImpl, public RequestSourceFactory {
 public:
-  HeaderSourceFactoryImpl(const Options& options);
-  HeaderSourcePtr create() const override;
+  RequestSourceFactoryImpl(const Options& options);
+  RequestSourcePtr create() const override;
 
 private:
   void setRequestHeader(Envoy::Http::HeaderMap& header, absl::string_view key,

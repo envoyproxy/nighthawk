@@ -12,9 +12,9 @@
 #include "nighthawk/client/benchmark_client.h"
 #include "nighthawk/client/factories.h"
 #include "nighthawk/client/options.h"
-#include "nighthawk/common/header_source.h"
 #include "nighthawk/common/platform_util.h"
 #include "nighthawk/common/rate_limiter.h"
+#include "nighthawk/common/request_source.h"
 #include "nighthawk/common/sequencer.h"
 #include "nighthawk/common/statistic.h"
 #include "nighthawk/common/termination_predicate.h"
@@ -105,7 +105,7 @@ public:
                                                 Envoy::Stats::Scope&,
                                                 Envoy::Upstream::ClusterManagerPtr&,
                                                 Envoy::Tracing::HttpTracerPtr&, absl::string_view,
-                                                HeaderSource& header_generator));
+                                                RequestSource& header_generator));
 };
 
 class MockSequencerFactory : public Client::SequencerFactory {
@@ -131,10 +131,10 @@ public:
   MOCK_CONST_METHOD0(create, StatisticPtr());
 };
 
-class MockHeaderSourceFactory : public HeaderSourceFactory {
+class MockRequestSourceFactory : public RequestSourceFactory {
 public:
-  MockHeaderSourceFactory();
-  MOCK_CONST_METHOD0(create, HeaderSourcePtr());
+  MockRequestSourceFactory();
+  MOCK_CONST_METHOD0(create, RequestSourcePtr());
 };
 
 class MockTerminationPredicateFactory : public TerminationPredicateFactory {
@@ -171,9 +171,9 @@ public:
   MOCK_CONST_METHOD0(requestHeaders, const Envoy::Http::HeaderMap&());
 };
 
-class MockHeaderSource : public HeaderSource {
+class MockRequestSource : public RequestSource {
 public:
-  MockHeaderSource();
+  MockRequestSource();
   MOCK_METHOD0(get, HeaderGenerator());
 };
 
