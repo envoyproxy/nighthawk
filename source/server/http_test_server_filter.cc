@@ -70,22 +70,22 @@ void HttpTestServerDecoderFilter::sendReply() {
 }
 
 Envoy::Http::FilterHeadersStatus
-HttpTestServerDecoderFilter::decodeHeaders(Envoy::Http::HeaderMap& headers, bool done) {
+HttpTestServerDecoderFilter::decodeHeaders(Envoy::Http::HeaderMap& headers, bool end_stream) {
   // TODO(oschaaf): Add functionality to clear fields
   base_config_ = config_->server_config();
   const auto* request_config_header = headers.get(TestServer::HeaderNames::get().TestServerConfig);
   if (request_config_header) {
     mergeJsonConfig(request_config_header->value().getStringView(), base_config_, error_message_);
   }
-  if (done) {
+  if (end_stream) {
     sendReply();
   }
   return Envoy::Http::FilterHeadersStatus::StopIteration;
 }
 
 Envoy::Http::FilterDataStatus HttpTestServerDecoderFilter::decodeData(Envoy::Buffer::Instance&,
-                                                                      bool done) {
-  if (done) {
+                                                                      bool end_stream) {
+  if (end_stream) {
     sendReply();
   }
   return Envoy::Http::FilterDataStatus::StopIterationNoBuffer;
