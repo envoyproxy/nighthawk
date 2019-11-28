@@ -7,12 +7,10 @@
 
 #include "external/envoy/source/common/common/logger.h"
 
-
 namespace Nighthawk {
 
 class BaseRequestSourceImpl : public RequestSource,
-                              public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
-};
+                              public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {};
 
 class StaticRequestSourceImpl : public BaseRequestSourceImpl {
 public:
