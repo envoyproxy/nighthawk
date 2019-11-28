@@ -117,6 +117,7 @@ def test_http_h2_mini_stress_test_without_client_side_queueing(http_test_server_
   assertCounterEqual(counters, "upstream_rq_pending_total", 1)
   assertNotIn("upstream_rq_pending_overflow", counters)
 
+
 @pytest.mark.skipif(isSanitizerRun(), reason="Unstable and very slow in sanitizer runs")
 def test_http_h1_mini_stress_test_open_loop(http_test_server_fixture):
   """
