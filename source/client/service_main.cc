@@ -81,7 +81,6 @@ void ServiceMain::start() {
     while (!shutdown_) {
       usleep(10000);
     }
-    ENVOY_LOG(info, "Nighthawk grpc service shutdown initiating");
     server_->Shutdown();
   });
 }
