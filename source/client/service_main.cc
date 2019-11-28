@@ -94,7 +94,6 @@ void ServiceMain::wait() {
   signal_handler_delegate = [this](int) { onSignal(); };
   signal(SIGTERM, signal_handler);
   signal(SIGINT, signal_handler);
-  ENVOY_LOG(info, "Signal handling set up. CTRL+C will perform a graceful shutdown");
   server_->Wait();
   shutdown();
 }
