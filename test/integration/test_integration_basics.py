@@ -118,6 +118,7 @@ def test_http_h2_mini_stress_test_without_client_side_queueing(http_test_server_
   assertNotIn("upstream_rq_pending_overflow", counters)
 
 
+@pytest.mark.skipif(isSanitizerRun(), reason="Unstable and very slow in sanitizer runs")
 def test_http_h1_mini_stress_test_open_loop(http_test_server_fixture):
   """
   H1 open loop stress test. We expect higher pending and overflow counts 
@@ -131,6 +132,7 @@ def test_http_h1_mini_stress_test_open_loop(http_test_server_fixture):
   assertCounterGreater(counters, "benchmark.pool_overflow", 10)
 
 
+@pytest.mark.skipif(isSanitizerRun(), reason="Unstable and very slow in sanitizer runs")
 def test_http_h2_mini_stress_test_open_loop(http_test_server_fixture):
   """
   H2 open loop stress test. We expect higher overflow counts 
@@ -399,7 +401,7 @@ def test_http_h1_termination_predicate(http_test_server_fixture):
   assertCounterEqual(counters, "benchmark.http_2xx", 10)
 
 
-def test_http_h1_termination_predicate(http_test_server_fixture):
+def test_http_h1_failure_predicate(http_test_server_fixture):
   """
   Put in a termination predicate. Should result in failing execution, with 10 successfull requests.
   """
