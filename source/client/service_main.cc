@@ -77,10 +77,13 @@ void ServiceMain::start() {
   channel_ = grpc::CreateChannel(listener_bound_address_, grpc::InsecureChannelCredentials());
   stub_ = std::make_unique<nighthawk::client::NighthawkService::Stub>(channel_);
   // The shutdown thread will be notified of by our signal handler and take it from there.
+  RELEASE_ASSERT(pipe(pipe_fds_) == 0, "pipe failed");
+
   shutdown_thread_ = std::thread([this]() {
-    while (!shutdown_) {
-      usleep(10000);
-    }
+    int value;
+    RELEASE_ASSERT(read(pipe_fds_[0], &value, sizeof(int)) >= 0, "read failed");
+    close(pipe_fds_[0]);
+    close(pipe_fds_[1]);
     server_->Shutdown();
   });
 }
@@ -94,14 +97,14 @@ void ServiceMain::wait() {
 }
 
 void ServiceMain::shutdownSignalHandler() {
-  // Signal handling should be lean, so we notify the thread that will handle
-  // shutdown initiation for us.
-  shutdown_ = true;
+  int value;
+  write(pipe_fds_[1], &value, sizeof(int));
 }
 
 void ServiceMain::shutdown() {
-  shutdown_ = true;
   if (shutdown_thread_.joinable()) {
+    int value;
+    write(pipe_fds_[1], &value, sizeof(int));
     shutdown_thread_.join();
   }
   ENVOY_LOG(info, "Nighthawk grpc service exits");

@@ -36,7 +36,7 @@ private:
   int listener_port_{-1};
   std::string listener_bound_address_;
   std::string listener_output_path_;
-  bool shutdown_{false};
+  int pipe_fds_[2];
   std::thread shutdown_thread_;
 };
 
