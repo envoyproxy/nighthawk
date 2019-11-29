@@ -56,6 +56,9 @@ protected:
   Envoy::MonotonicTime started_at_;
 };
 
+/**
+ * A rate limiter which linearly ramps up to the desired frequency over the specified period.
+ */
 class RampingLinearRateLimiter : public LinearRateLimiter {
 public:
   RampingLinearRateLimiter(Envoy::TimeSource& time_source, const std::chrono::nanoseconds ramp_time,

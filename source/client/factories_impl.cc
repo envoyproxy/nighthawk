@@ -52,8 +52,10 @@ SequencerPtr SequencerFactoryImpl::create(Envoy::TimeSource& time_source,
                                           TerminationPredicate& termination_predicate,
                                           Envoy::Stats::Scope& scope) const {
   StatisticFactoryImpl statistic_factory(options_);
-  RateLimiterPtr rate_limiter = std::make_unique<RampingLinearRateLimiter>(
-      time_source, 3s, Frequency(options_.requestsPerSecond()));
+  RateLimiterPtr rate_limiter =
+      std::make_unique<LinearRateLimiter>(time_source, Frequency(options_.requestsPerSecond()));
+  // TODO(oschaaf): If we want to take this forward, conditionally construct the ramping rate
+  // limiter here, e.g..
   const uint64_t burst_size = options_.burstSize();
 
   if (burst_size) {

@@ -169,4 +169,55 @@ TEST_F(RateLimiterTest, DistributionSamplingRateLimiterImplSchedulingTest) {
   EXPECT_TRUE(rate_limiter->tryAcquireOne());
 }
 
+class RampingLinearRateLimiterTest : public Test {
+public:
+  std::vector<int64_t> getAcquisitionTimings(const Frequency frequency,
+                                             const std::chrono::seconds duration) {
+    Envoy::Event::SimulatedTimeSystem time_system;
+    // Note: int64_t, because that yields much more helpful output on test failures compared to
+    // std::duration::milliseconds.
+    std::vector<int64_t> aquisition_timings;
+    RampingLinearRateLimiter rate_limiter(time_system, duration, frequency);
+    auto total_ms_elapsed = 0ms;
+    auto clock_tick = 1ms;
+    EXPECT_FALSE(rate_limiter.tryAcquireOne());
+
+    while (total_ms_elapsed <= duration) {
+      while (rate_limiter.tryAcquireOne()) {
+        aquisition_timings.push_back(total_ms_elapsed.count());
+      }
+      time_system.sleep(clock_tick);
+      total_ms_elapsed += clock_tick;
+    }
+    EXPECT_FALSE(rate_limiter.tryAcquireOne());
+
+    time_system.sleep(1s);
+    // Verify that after the rampup the expected constant pacing is maintained.
+    // Calls should be forwarded to the regular linear rate limiter algorithm with its
+    // corrective behavior so we can expect to acquire a series with that.
+    for (uint64_t i = 0; i < frequency.value(); i++) {
+      EXPECT_TRUE(rate_limiter.tryAcquireOne());
+    }
+    // Verify we acquired everything.
+    EXPECT_FALSE(rate_limiter.tryAcquireOne());
+    return aquisition_timings;
+  }
+};
+
+TEST_F(RateLimiterTest, RampingLinearRateLimiterInvalidArgumentTest) {
+  Envoy::Event::SimulatedTimeSystem time_system;
+  EXPECT_THROW(RampingLinearRateLimiter rate_limiter(time_system, 1s, 0_Hz);, NighthawkException);
+  EXPECT_THROW(RampingLinearRateLimiter rate_limiter(time_system, 0s, 1_Hz);, NighthawkException);
+  EXPECT_THROW(RampingLinearRateLimiter rate_limiter(time_system, -1s, 1_Hz);, NighthawkException);
+}
+
+TEST_F(RampingLinearRateLimiterTest, TimingVerificationTest) {
+  EXPECT_EQ(getAcquisitionTimings(1_Hz, 1s), std::vector<int64_t>({1000}));
+  EXPECT_EQ(getAcquisitionTimings(3_Hz, 3s),
+            std::vector<int64_t>({1000, 1500, 2000, 2500, 2667, 3000}));
+  EXPECT_EQ(getAcquisitionTimings(5_Hz, 5s),
+            std::vector<int64_t>({1000, 1500, 2000, 2500, 2667, 3000, 3334, 3500, 3750, 4000, 4250,
+                                  4500, 4600, 4800, 5000}));
+}
+
 } // namespace Nighthawk

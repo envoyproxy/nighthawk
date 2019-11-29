@@ -84,19 +84,29 @@ void LinearRateLimiter::releaseOne() {
 RampingLinearRateLimiter::RampingLinearRateLimiter(Envoy::TimeSource& time_source,
                                                    const std::chrono::nanoseconds ramp_time,
                                                    const Frequency frequency)
-    : LinearRateLimiter(time_source, 1_Hz), final_frequency_(frequency), ramp_time_(ramp_time) {}
+    : LinearRateLimiter(time_source, frequency), final_frequency_(frequency),
+      ramp_time_(ramp_time) {
+  if (ramp_time.count() <= 0) {
+    throw NighthawkException("ramp_time must be > 0");
+  }
+}
 
 bool RampingLinearRateLimiter::tryAcquireOne() {
-  if (started_) {
+  bool return_value = false;
+  if (!started_ || (frequency_.value() != final_frequency_.value())) {
     const auto elapsed_since_start = time_source_.monotonicTime() - started_at_;
-    double fraction = 1.0;
-    if (elapsed_since_start < ramp_time_) {
-      fraction =
-          1.0 - ((ramp_time_.count() - elapsed_since_start.count()) / (ramp_time_.count() * 1.0));
+    const double fraction =
+        1.0 - ((ramp_time_.count() - elapsed_since_start.count()) / (ramp_time_.count() * 1.0));
+    frequency_ = Frequency(std::round(final_frequency_.value() * fraction));
+    // LinearRateLimiter tracks how many ought to have been acquired and will compensate when we
+    // change the frequency. We're greedy here to disable that corrective behaviour when ramping.
+    while (LinearRateLimiter::tryAcquireOne()) {
+      return_value = true;
     }
-    frequency_ = Frequency(final_frequency_.value() * fraction);
+  } else {
+    return_value = LinearRateLimiter::tryAcquireOne();
   }
-  return LinearRateLimiter::tryAcquireOne();
+  return return_value;
 }
 
 DelegatingRateLimiter::DelegatingRateLimiter(Envoy::TimeSource& time_source,
