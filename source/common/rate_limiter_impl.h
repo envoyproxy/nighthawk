@@ -14,6 +14,20 @@
 
 namespace Nighthawk {
 
+class ForwardingRateLimiterImpl : public RateLimiter {
+public:
+  ForwardingRateLimiterImpl(RateLimiterPtr&& rate_limiter)
+      : rate_limiter_(std::move(rate_limiter)) {}
+  Envoy::TimeSource& timeSource() override { return rate_limiter_->timeSource(); }
+  absl::optional<Envoy::MonotonicTime> timeStarted() const override {
+    return rate_limiter_->timeStarted();
+  }
+  std::chrono::nanoseconds elapsed() const override { return rate_limiter_->elapsed(); }
+
+protected:
+  const RateLimiterPtr rate_limiter_;
+};
+
 /**
  * BurstingRatelimiter can be wrapped around another rate limiter. It has two modes:
  * 1. First it will be accumulating acquisitions by forwarding calls to the wrapped
@@ -22,7 +36,7 @@ namespace Nighthawk {
  *    acquisition calls (returning true and substracting from the accumulated total until
  *    nothing is left, after which mode 1 will be entered again).
  */
-class BurstingRateLimiter : public RateLimiter,
+class BurstingRateLimiter : public ForwardingRateLimiterImpl,
                             public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
   BurstingRateLimiter(RateLimiterPtr&& rate_limiter, const uint64_t burst_size);
@@ -30,7 +44,6 @@ public:
   void releaseOne() override;
 
 private:
-  const RateLimiterPtr rate_limiter_;
   const uint64_t burst_size_;
   uint64_t accumulated_{0};
   bool releasing_{};
@@ -46,28 +59,19 @@ public:
   LinearRateLimiter(Envoy::TimeSource& time_source, const Frequency frequency);
   bool tryAcquireOne() override;
   void releaseOne() override;
+  Envoy::TimeSource& timeSource() override { return time_source_; }
+  absl::optional<Envoy::MonotonicTime> timeStarted() const override { return start_time_; }
+  std::chrono::nanoseconds elapsed() const override {
+    const auto now = time_source_.monotonicTime();
+    return now - start_time_.value_or(now);
+  }
 
 protected:
   Envoy::TimeSource& time_source_;
-  int64_t acquireable_count_;
-  uint64_t acquired_count_;
+  int64_t acquireable_count_{0};
+  uint64_t acquired_count_{0};
   Frequency frequency_;
-  bool started_{};
-  Envoy::MonotonicTime started_at_;
-};
-
-/**
- * A rate limiter which linearly ramps up to the desired frequency over the specified period.
- */
-class RampingLinearRateLimiter : public LinearRateLimiter {
-public:
-  RampingLinearRateLimiter(Envoy::TimeSource& time_source, const std::chrono::nanoseconds ramp_time,
-                           const Frequency frequency);
-  bool tryAcquireOne() override;
-
-private:
-  const Frequency final_frequency_;
-  const std::chrono::nanoseconds ramp_time_;
+  absl::optional<Envoy::MonotonicTime> start_time_;
 };
 
 // We use an unsigned duration here to ensure only future points in time will be yielded.
@@ -75,12 +79,14 @@ private:
 // offset obtained via the delegate have transpired.
 using RateLimiterDelegate = std::function<const std::chrono::duration<uint64_t, std::nano>()>;
 
+using RateLimiterFilter = std::function<bool()>;
+
 // Wraps a rate limiter, and allows plugging in a delegate which will be queried to offset the
 // timing of the underlying rate limiter.
-class DelegatingRateLimiter : public RateLimiter,
+class DelegatingRateLimiter : public ForwardingRateLimiterImpl,
                               public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
-  DelegatingRateLimiter(Envoy::TimeSource& time_source, RateLimiterPtr&& rate_limiter,
+  DelegatingRateLimiter(RateLimiterPtr&& rate_limiter,
                         RateLimiterDelegate random_distribution_generator);
   bool tryAcquireOne() override;
   void releaseOne() override;
@@ -89,9 +95,21 @@ protected:
   const RateLimiterDelegate random_distribution_generator_;
 
 private:
-  Envoy::TimeSource& time_source_;
-  const RateLimiterPtr rate_limiter_;
   absl::optional<Envoy::MonotonicTime> distributed_start_;
+};
+
+/**
+ * A rate limiter which linearly ramps up to the desired frequency over the specified period.
+ */
+class LinearRampingRateLimiter : public LinearRateLimiter {
+public:
+  LinearRampingRateLimiter(Envoy::TimeSource& time_source, const std::chrono::nanoseconds ramp_time,
+                           const Frequency frequency);
+  bool tryAcquireOne() override;
+
+private:
+  const Frequency final_frequency_;
+  const std::chrono::nanoseconds ramp_time_;
 };
 
 class UniformRandomDistributionSamplerImpl : public DiscreteNumericDistributionSampler {
@@ -108,12 +126,34 @@ private:
 // Allows adding uniformly distributed random timing offsets to an underlying rate limiter.
 class DistributionSamplingRateLimiterImpl : public DelegatingRateLimiter {
 public:
-  DistributionSamplingRateLimiterImpl(Envoy::TimeSource& time_source,
-                                      DiscreteNumericDistributionSamplerPtr&& provider,
+  DistributionSamplingRateLimiterImpl(DiscreteNumericDistributionSamplerPtr&& provider,
                                       RateLimiterPtr&& rate_limiter);
 
 private:
   DiscreteNumericDistributionSamplerPtr provider_;
+};
+
+// Wraps a rate limiter, and allows plugging in a delegate which will be queried to apply a
+// filter to acquisitions.
+class FilteringRateLimiter : public ForwardingRateLimiterImpl,
+                             public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
+public:
+  FilteringRateLimiter(RateLimiterPtr&& rate_limiter, RateLimiterFilter filter);
+  bool tryAcquireOne() override;
+  void releaseOne() override { rate_limiter_->releaseOne(); }
+
+protected:
+  const RateLimiterFilter filter_;
+};
+
+class LinearlyOpeningRateLimiterFilter : public FilteringRateLimiter {
+public:
+  LinearlyOpeningRateLimiterFilter(const std::chrono::nanoseconds ramp_time,
+                                   RateLimiterPtr&& rate_limiter);
+
+private:
+  UniformRandomDistributionSamplerImpl sampler_;
+  const std::chrono::nanoseconds ramp_time_;
 };
 
 } // namespace Nighthawk

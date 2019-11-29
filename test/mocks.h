@@ -48,6 +48,9 @@ public:
 
   MOCK_METHOD0(tryAcquireOne, bool());
   MOCK_METHOD0(releaseOne, void());
+  MOCK_METHOD0(timeSource, Envoy::TimeSource&());
+  MOCK_CONST_METHOD0(timeStarted, absl::optional<Envoy::MonotonicTime>());
+  MOCK_CONST_METHOD0(elapsed, std::chrono::nanoseconds());
 };
 
 class MockSequencer : public Sequencer {

@@ -6,8 +6,10 @@
 
 namespace Nighthawk {
 
+using namespace std::chrono_literals;
+
 BurstingRateLimiter::BurstingRateLimiter(RateLimiterPtr&& rate_limiter, const uint64_t burst_size)
-    : rate_limiter_(std::move(rate_limiter)), burst_size_(burst_size) {
+    : ForwardingRateLimiterImpl(std::move(rate_limiter)), burst_size_(burst_size) {
   ASSERT(burst_size_ > 0);
 }
 
@@ -59,9 +61,8 @@ LinearRateLimiter::LinearRateLimiter(Envoy::TimeSource& time_source, const Frequ
 
 bool LinearRateLimiter::tryAcquireOne() {
   // TODO(oschaaf): consider adding an explicit start() call to the interface.
-  if (!started_) {
-    started_at_ = time_source_.monotonicTime();
-    started_ = true;
+  if (start_time_ == absl::nullopt) {
+    start_time_ = time_source_.monotonicTime();
   }
   if (acquireable_count_ > 0) {
     acquireable_count_--;
@@ -69,11 +70,11 @@ bool LinearRateLimiter::tryAcquireOne() {
     return true;
   }
 
-  const auto elapsed_since_start = time_source_.monotonicTime() - started_at_;
   acquireable_count_ =
-      static_cast<int64_t>(std::floor(elapsed_since_start / frequency_.interval())) -
-      acquired_count_;
-  return acquireable_count_ > 0 ? tryAcquireOne() : false;
+      frequency_.value() == 0
+          ? 0
+          : static_cast<int64_t>(std::ceil(elapsed() / frequency_.interval())) - acquired_count_;
+  return acquireable_count_ > 0 ? LinearRateLimiter::tryAcquireOne() : false;
 }
 
 void LinearRateLimiter::releaseOne() {
@@ -81,48 +82,20 @@ void LinearRateLimiter::releaseOne() {
   acquired_count_--;
 }
 
-RampingLinearRateLimiter::RampingLinearRateLimiter(Envoy::TimeSource& time_source,
-                                                   const std::chrono::nanoseconds ramp_time,
-                                                   const Frequency frequency)
-    : LinearRateLimiter(time_source, frequency), final_frequency_(frequency),
-      ramp_time_(ramp_time) {
-  if (ramp_time.count() <= 0) {
-    throw NighthawkException("ramp_time must be > 0");
-  }
-}
-
-bool RampingLinearRateLimiter::tryAcquireOne() {
-  bool return_value = false;
-  if (!started_ || (frequency_.value() != final_frequency_.value())) {
-    const auto elapsed_since_start = time_source_.monotonicTime() - started_at_;
-    const double fraction =
-        1.0 - ((ramp_time_.count() - elapsed_since_start.count()) / (ramp_time_.count() * 1.0));
-    frequency_ = Frequency(std::round(final_frequency_.value() * fraction));
-    // LinearRateLimiter tracks how many ought to have been acquired and will compensate when we
-    // change the frequency. We're greedy here to disable that corrective behaviour when ramping.
-    while (LinearRateLimiter::tryAcquireOne()) {
-      return_value = true;
-    }
-  } else {
-    return_value = LinearRateLimiter::tryAcquireOne();
-  }
-  return return_value;
-}
-
-DelegatingRateLimiter::DelegatingRateLimiter(Envoy::TimeSource& time_source,
-                                             RateLimiterPtr&& rate_limiter,
+DelegatingRateLimiter::DelegatingRateLimiter(RateLimiterPtr&& rate_limiter,
                                              RateLimiterDelegate random_distribution_generator)
-    : random_distribution_generator_(std::move(random_distribution_generator)),
-      time_source_(time_source), rate_limiter_(std::move(rate_limiter)) {}
+    : ForwardingRateLimiterImpl(std::move(rate_limiter)),
+      random_distribution_generator_(std::move(random_distribution_generator)) {}
 
 bool DelegatingRateLimiter::tryAcquireOne() {
+  const auto now = timeSource().monotonicTime();
   if (distributed_start_ == absl::nullopt) {
     if (rate_limiter_->tryAcquireOne()) {
-      distributed_start_ = time_source_.monotonicTime() + random_distribution_generator_();
+      distributed_start_ = now + random_distribution_generator_();
     }
   }
 
-  if (distributed_start_ != absl::nullopt && distributed_start_ <= time_source_.monotonicTime()) {
+  if (distributed_start_ != absl::nullopt && distributed_start_ <= now) {
     distributed_start_ = absl::nullopt;
     return true;
   }
@@ -135,11 +108,59 @@ void DelegatingRateLimiter::releaseOne() {
   rate_limiter_->releaseOne();
 }
 
+FilteringRateLimiter::FilteringRateLimiter(RateLimiterPtr&& rate_limiter, RateLimiterFilter filter)
+    : ForwardingRateLimiterImpl(std::move(rate_limiter)), filter_(std::move(filter)) {}
+
+bool FilteringRateLimiter::tryAcquireOne() {
+  return rate_limiter_->tryAcquireOne() ? filter_() : false;
+}
+
+LinearRampingRateLimiter::LinearRampingRateLimiter(Envoy::TimeSource& time_source,
+                                                   const std::chrono::nanoseconds ramp_time,
+                                                   const Frequency frequency)
+    : LinearRateLimiter(time_source, frequency), final_frequency_(frequency),
+      ramp_time_(ramp_time) {
+  if (ramp_time.count() <= 0) {
+    throw NighthawkException("ramp_time must be > 0");
+  }
+}
+
+bool LinearRampingRateLimiter::tryAcquireOne() {
+  bool return_value = false;
+  if (timeStarted() == absl::nullopt || (frequency_.value() != final_frequency_.value())) {
+    const double fraction =
+        1.0 - ((ramp_time_.count() - elapsed().count()) / (ramp_time_.count() * 1.0));
+    frequency_ = Frequency(std::ceil(final_frequency_.value() * fraction));
+    // LinearRateLimiter tracks how many ought to have been acquired and will compensate when we
+    // change the frequency. We're greedy here to disable that corrective behaviour when ramping.
+    while (LinearRateLimiter::tryAcquireOne()) {
+      return_value = true;
+    }
+  } else {
+    return_value = LinearRateLimiter::tryAcquireOne();
+  }
+  return return_value;
+}
+
+LinearlyOpeningRateLimiterFilter::LinearlyOpeningRateLimiterFilter(
+    const std::chrono::nanoseconds ramp_time, RateLimiterPtr&& rate_limiter)
+    : FilteringRateLimiter(std::move(rate_limiter),
+                           [this]() {
+                             if (elapsed() < ramp_time_) {
+                               const double chance_percentage =
+                                   1.0 - ((ramp_time_.count() - elapsed().count()) /
+                                          (ramp_time_.count() * 1.0)) *
+                                             100;
+                               return chance_percentage >= sampler_.getValue();
+                             }
+                             return true;
+                           }),
+      sampler_(100ns), ramp_time_(ramp_time) {}
+
 DistributionSamplingRateLimiterImpl::DistributionSamplingRateLimiterImpl(
-    Envoy::TimeSource& time_source, DiscreteNumericDistributionSamplerPtr&& provider,
-    RateLimiterPtr&& rate_limiter)
+    DiscreteNumericDistributionSamplerPtr&& provider, RateLimiterPtr&& rate_limiter)
     : DelegatingRateLimiter(
-          time_source, std::move(rate_limiter),
+          std::move(rate_limiter),
           [this]() { return std::chrono::duration<uint64_t, std::nano>(provider_->getValue()); }),
       provider_(std::move(provider)) {}
 

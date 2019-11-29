@@ -4,6 +4,8 @@
 
 #include "envoy/common/pure.h"
 
+#include "absl/types/optional.h"
+
 namespace Nighthawk {
 
 /**
@@ -24,6 +26,13 @@ public:
    * Releases a controlled resource.
    */
   virtual void releaseOne() PURE;
+
+  /**
+   * @return Envoy::TimeSource& time_source
+   */
+  virtual Envoy::TimeSource& timeSource() PURE;
+  virtual absl::optional<Envoy::MonotonicTime> timeStarted() const PURE;
+  virtual std::chrono::nanoseconds elapsed() const PURE;
 };
 
 using RateLimiterPtr = std::unique_ptr<RateLimiter>;
