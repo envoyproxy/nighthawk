@@ -77,29 +77,27 @@ public:
     const auto burst_interval_ms =
         std::chrono::duration_cast<std::chrono::milliseconds>(frequency.interval() * burst_size);
 
-    EXPECT_FALSE(rate_limiter->tryAcquireOne());
-    time_system.sleep(burst_interval_ms);
-    for (uint64_t i = 0; i < burst_size; i++) {
-      EXPECT_TRUE(rate_limiter->tryAcquireOne());
-    }
-    EXPECT_FALSE(rate_limiter->tryAcquireOne());
-    time_system.sleep(burst_interval_ms / 2);
-    EXPECT_FALSE(rate_limiter->tryAcquireOne());
-    time_system.sleep(burst_interval_ms);
-    for (uint64_t i = 0; i < burst_size; i++) {
-      EXPECT_TRUE(rate_limiter->tryAcquireOne());
+    for (uint64_t i = 0; i < 10000; i++) {
+      uint64_t burst_acquired = 0;
+      while (rate_limiter->tryAcquireOne()) {
+        burst_acquired++;
+      }
+      if (burst_acquired) {
+        EXPECT_EQ(burst_acquired, burst_size);
+        EXPECT_EQ(i % burst_interval_ms.count(), 0);
+      }
+      time_system.sleep(1ms);
     }
   }
 };
 
 TEST_F(BurstingRateLimiterIntegrationTest, BurstingLinearRateLimiterTest) {
-  // TODO(oschaaf):
-  // testBurstSize(1, 100_Hz);
+  testBurstSize(1, 100_Hz);
   testBurstSize(2, 100_Hz);
   testBurstSize(13, 100_Hz);
   testBurstSize(100, 100_Hz);
 
-  // testBurstSize(1, 50_Hz);
+  testBurstSize(1, 50_Hz);
   testBurstSize(2, 50_Hz);
   testBurstSize(13, 50_Hz);
   testBurstSize(100, 50_Hz);
@@ -114,7 +112,7 @@ TEST_F(RateLimiterTest, DistributionSamplingRateLimiterImplTest) {
       .Times(AtLeast(1))
       .WillRepeatedly(ReturnRef(time_system));
   RateLimiterPtr rate_limiter = std::make_unique<DistributionSamplingRateLimiterImpl>(
-      std::make_unique<UniformRandomDistributionSamplerImpl>(1ns), std::move(mock_rate_limiter));
+      std::make_unique<UniformRandomDistributionSamplerImpl>(1), std::move(mock_rate_limiter));
 
   EXPECT_CALL(unsafe_mock_rate_limiter, tryAcquireOne).Times(tries).WillRepeatedly(Return(true));
   EXPECT_CALL(unsafe_mock_rate_limiter, releaseOne).Times(tries);
@@ -179,21 +177,19 @@ public:
   std::vector<int64_t> getAcquisitionTimings(const Frequency frequency,
                                              const std::chrono::seconds duration) {
     Envoy::Event::SimulatedTimeSystem time_system;
-    // Note: int64_t, because that yields much more helpful output on test failures compared to
-    // std::duration::milliseconds.
     std::vector<int64_t> aquisition_timings;
     LinearRampingRateLimiter rate_limiter(time_system, duration, frequency);
     auto total_ms_elapsed = 0ms;
     auto clock_tick = 1ms;
     EXPECT_FALSE(rate_limiter.tryAcquireOne());
 
-    while (total_ms_elapsed < duration) {
+    do {
       while (rate_limiter.tryAcquireOne()) {
         aquisition_timings.push_back(total_ms_elapsed.count());
       }
       time_system.sleep(clock_tick);
       total_ms_elapsed += clock_tick;
-    }
+    } while (total_ms_elapsed <= duration);
     EXPECT_FALSE(rate_limiter.tryAcquireOne());
     time_system.sleep(1s);
     // Verify that after the rampup the expected constant pacing is maintained.
@@ -217,32 +213,48 @@ TEST_F(RateLimiterTest, LinearRampingRateLimiterInvalidArgumentTest) {
 
 TEST_F(LinearRampingRateLimiterTest, TimingVerificationTest) {
   EXPECT_EQ(getAcquisitionTimings(5_Hz, 5s),
-            std::vector<int64_t>({1, 1001, 1501, 2001, 2334, 2667, 3001, 3251, 3501, 3751, 4001,
-                                  4201, 4401, 4601, 4801}));
+            std::vector<int64_t>({1000, 1500, 2000, 2500, 2667, 3000, 3334, 3500, 3750, 4000, 4250,
+                                  4500, 4600, 4800, 5000}));
 }
 
-class LinearlyOpeningRateLimiterFilterTest : public Test {
+class GraduallyOpeningRateLimiterFilterTest : public Test {
 public:
   std::vector<int64_t> getAcquisitionTimings(const Frequency frequency,
                                              const std::chrono::seconds duration) {
     Envoy::Event::SimulatedTimeSystem time_system;
-    // Note: int64_t, because that yields much more helpful output on test failures compared to
-    // std::duration::milliseconds.
     std::vector<int64_t> aquisition_timings;
-    RateLimiterPtr rate_limiter = std::make_unique<LinearlyOpeningRateLimiterFilter>(
-        duration, std::make_unique<LinearRateLimiter>(time_system, frequency));
+    auto* unsafe_discrete_numeric_distribution_sampler =
+        new MockDiscreteNumericDistributionSampler();
+    std::mt19937_64 mt(1243);
+    std::uniform_int_distribution<uint64_t> dist(1, 1000000);
+    EXPECT_CALL(*unsafe_discrete_numeric_distribution_sampler, getValue)
+        .Times(AtLeast(1))
+        .WillRepeatedly(Invoke([&dist, &mt]() { return dist(mt); }));
+    EXPECT_CALL(*unsafe_discrete_numeric_distribution_sampler, min)
+        .Times(1)
+        .WillOnce(Return(dist.min()));
+    EXPECT_CALL(*unsafe_discrete_numeric_distribution_sampler, max)
+        .Times(1)
+        .WillOnce(Return(dist.max()));
+
+    RateLimiterPtr rate_limiter = std::make_unique<GraduallyOpeningRateLimiterFilter>(
+        duration,
+        std::unique_ptr<DiscreteNumericDistributionSampler>(
+            unsafe_discrete_numeric_distribution_sampler),
+        std::make_unique<LinearRateLimiter>(time_system, frequency));
     auto total_ms_elapsed = 0ms;
     auto clock_tick = 1ms;
     EXPECT_FALSE(rate_limiter->tryAcquireOne());
 
-    while (total_ms_elapsed <= duration) {
+    do {
       if (rate_limiter->tryAcquireOne()) {
         aquisition_timings.push_back(total_ms_elapsed.count());
         EXPECT_FALSE(rate_limiter->tryAcquireOne());
       }
       time_system.sleep(clock_tick);
       total_ms_elapsed += clock_tick;
-    }
+    } while (total_ms_elapsed <= duration);
+
     EXPECT_FALSE(rate_limiter->tryAcquireOne());
     time_system.sleep(1s);
     // Verify that after the rampup the expected constant pacing is maintained.
@@ -257,9 +269,11 @@ public:
   }
 };
 
-// TODO(oschaaf):
-TEST_F(LinearlyOpeningRateLimiterFilterTest, DISABLED_TimingVerificationTest) {
-  EXPECT_EQ(getAcquisitionTimings(10_Hz, 1s), std::vector<int64_t>({1, 501, 601, 701, 801}));
+TEST_F(GraduallyOpeningRateLimiterFilterTest, TimingVerificationTest) {
+  EXPECT_EQ(getAcquisitionTimings(10_Hz, 10s), std::vector<int64_t>({}));
+  EXPECT_EQ(getAcquisitionTimings(50_Hz, 1s),
+            std::vector<int64_t>({120, 320, 380, 560, 580, 600, 620, 640, 660, 680, 700, 740,
+                                  760, 780, 840, 860, 880, 900, 920, 940, 960, 980, 1000}));
 }
 
 } // namespace Nighthawk

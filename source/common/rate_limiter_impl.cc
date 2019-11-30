@@ -73,7 +73,7 @@ bool LinearRateLimiter::tryAcquireOne() {
   acquireable_count_ =
       frequency_.value() == 0
           ? 0
-          : static_cast<int64_t>(std::ceil(elapsed() / frequency_.interval())) - acquired_count_;
+          : static_cast<int64_t>(std::floor(elapsed() / frequency_.interval())) - acquired_count_;
   return acquireable_count_ > 0 ? LinearRateLimiter::tryAcquireOne() : false;
 }
 
@@ -130,7 +130,7 @@ bool LinearRampingRateLimiter::tryAcquireOne() {
   if (timeStarted() == absl::nullopt || (frequency_.value() != final_frequency_.value())) {
     const double fraction =
         1.0 - ((ramp_time_.count() - elapsed().count()) / (ramp_time_.count() * 1.0));
-    frequency_ = Frequency(std::ceil(final_frequency_.value() * fraction));
+    frequency_ = Frequency(std::round(final_frequency_.value() * fraction));
     // LinearRateLimiter tracks how many ought to have been acquired and will compensate when we
     // change the frequency. We're greedy here to disable that corrective behaviour when ramping.
     while (LinearRateLimiter::tryAcquireOne()) {
@@ -142,20 +142,24 @@ bool LinearRampingRateLimiter::tryAcquireOne() {
   return return_value;
 }
 
-LinearlyOpeningRateLimiterFilter::LinearlyOpeningRateLimiterFilter(
-    const std::chrono::nanoseconds ramp_time, RateLimiterPtr&& rate_limiter)
-    : FilteringRateLimiter(std::move(rate_limiter),
-                           [this]() {
-                             if (elapsed() < ramp_time_) {
-                               const double chance_percentage =
-                                   1.0 - ((ramp_time_.count() - elapsed().count()) /
-                                          (ramp_time_.count() * 1.0)) *
-                                             100;
-                               return chance_percentage >= sampler_.getValue();
-                             }
-                             return true;
-                           }),
-      sampler_(100ns), ramp_time_(ramp_time) {}
+GraduallyOpeningRateLimiterFilter::GraduallyOpeningRateLimiterFilter(
+    const std::chrono::nanoseconds ramp_time, DiscreteNumericDistributionSamplerPtr&& provider,
+    RateLimiterPtr&& rate_limiter)
+    : FilteringRateLimiter(
+          std::move(rate_limiter),
+          [this]() {
+            if (elapsed() < ramp_time_) {
+              const double chance_percentage =
+                  100.0 -
+                  ((ramp_time_.count() - elapsed().count()) / (ramp_time_.count() * 1.0)) * 100.0;
+              return std::round(provider_->getValue() / 10000.0) <= chance_percentage;
+            }
+            return true;
+          }),
+      provider_(std::move(provider)), ramp_time_(ramp_time) {
+  RELEASE_ASSERT(provider_->min() == 1 && provider_->max() == 1000000,
+                 "expected a distribution ranging from 1-1000000");
+}
 
 DistributionSamplingRateLimiterImpl::DistributionSamplingRateLimiterImpl(
     DiscreteNumericDistributionSamplerPtr&& provider, RateLimiterPtr&& rate_limiter)

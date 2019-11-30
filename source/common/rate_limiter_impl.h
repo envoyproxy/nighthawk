@@ -50,9 +50,11 @@ private:
   absl::optional<bool> previously_releasing_; // Solely used for sanity checking.
 };
 
-// Simple rate limiter that will allow acquiring at a linear pace.
-// The average rate is computed over a timeframe that starts at
-// the first call to tryAcquireOne().
+/**
+ * Simple rate limiter that will allow acquiring at a linear pace.
+ * The average rate is computed over a timeframe that starts at
+ * the first call to tryAcquireOne().
+ */
 class LinearRateLimiter : public RateLimiter,
                           public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
@@ -81,8 +83,10 @@ using RateLimiterDelegate = std::function<const std::chrono::duration<uint64_t, 
 
 using RateLimiterFilter = std::function<bool()>;
 
-// Wraps a rate limiter, and allows plugging in a delegate which will be queried to offset the
-// timing of the underlying rate limiter.
+/**
+ * Wraps a rate limiter, and allows plugging in a delegate which will be queried to offset the
+ * timing of the underlying rate limiter.
+ */
 class DelegatingRateLimiter : public ForwardingRateLimiterImpl,
                               public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
@@ -114,9 +118,11 @@ private:
 
 class UniformRandomDistributionSamplerImpl : public DiscreteNumericDistributionSampler {
 public:
-  UniformRandomDistributionSamplerImpl(const std::chrono::duration<uint64_t, std::nano> upper_bound)
-      : distribution_(0, upper_bound.count()) {}
+  UniformRandomDistributionSamplerImpl(const uint64_t upper_bound)
+      : distribution_(0, upper_bound) {}
   uint64_t getValue() override { return distribution_(generator_); }
+  uint64_t min() override { return distribution_.min(); }
+  uint64_t max() override { return distribution_.max(); }
 
 private:
   std::default_random_engine generator_;
@@ -146,13 +152,14 @@ protected:
   const RateLimiterFilter filter_;
 };
 
-class LinearlyOpeningRateLimiterFilter : public FilteringRateLimiter {
+class GraduallyOpeningRateLimiterFilter : public FilteringRateLimiter {
 public:
-  LinearlyOpeningRateLimiterFilter(const std::chrono::nanoseconds ramp_time,
-                                   RateLimiterPtr&& rate_limiter);
+  GraduallyOpeningRateLimiterFilter(const std::chrono::nanoseconds ramp_time,
+                                    DiscreteNumericDistributionSamplerPtr&& provider,
+                                    RateLimiterPtr&& rate_limiter);
 
 private:
-  UniformRandomDistributionSamplerImpl sampler_;
+  DiscreteNumericDistributionSamplerPtr provider_;
   const std::chrono::nanoseconds ramp_time_;
 };
 
