@@ -10,6 +10,8 @@
 
 #include "common/frequency.h"
 
+#include "absl/random/random.h"
+#include "absl/random/zipf_distribution.h"
 #include "absl/types/optional.h"
 
 namespace Nighthawk {
@@ -168,6 +170,9 @@ protected:
   const RateLimiterFilter filter_;
 };
 
+/**
+ * Takes a probabilistic approach to suppress
+ */
 class GraduallyOpeningRateLimiterFilter : public FilteringRateLimiter {
 public:
   GraduallyOpeningRateLimiterFilter(const std::chrono::nanoseconds ramp_time,
@@ -177,6 +182,15 @@ public:
 private:
   DiscreteNumericDistributionSamplerPtr provider_;
   const std::chrono::nanoseconds ramp_time_;
+};
+
+class ZipfRateLimiter : public FilteringRateLimiter {
+public:
+  ZipfRateLimiter(RateLimiterPtr&& rate_limiter);
+
+private:
+  absl::zipf_distribution<uint64_t> dist_;
+  absl::InsecureBitGen g_;
 };
 
 } // namespace Nighthawk

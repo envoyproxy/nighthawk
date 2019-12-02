@@ -1,8 +1,10 @@
 #pragma once
 
+#include <chrono>
 #include <memory>
 
 #include "envoy/common/pure.h"
+#include "envoy/common/time.h"
 
 #include "absl/types/optional.h"
 

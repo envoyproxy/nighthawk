@@ -281,4 +281,10 @@ TEST_F(GraduallyOpeningRateLimiterFilterTest, TimingVerificationTest) {
                                   760, 780, 840, 860, 880, 900, 920, 940, 960, 980, 1000}));
 }
 
+class ZipfRateLimiterTest : public Test {};
+
+TEST_F(ZipfRateLimiterTest, TimingVerificationTest) {
+  // TODO(oschaaf): fix zipf distribution based rate limiter, add the real thing.
+}
+
 } // namespace Nighthawk

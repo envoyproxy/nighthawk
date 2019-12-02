@@ -131,6 +131,13 @@ void DelegatingRateLimiter::releaseOne() {
   rate_limiter_->releaseOne();
 }
 
+DistributionSamplingRateLimiterImpl::DistributionSamplingRateLimiterImpl(
+    DiscreteNumericDistributionSamplerPtr&& provider, RateLimiterPtr&& rate_limiter)
+    : DelegatingRateLimiter(
+          std::move(rate_limiter),
+          [this]() { return std::chrono::duration<uint64_t, std::nano>(provider_->getValue()); }),
+      provider_(std::move(provider)) {}
+
 FilteringRateLimiter::FilteringRateLimiter(RateLimiterPtr&& rate_limiter, RateLimiterFilter filter)
     : ForwardingRateLimiterImpl(std::move(rate_limiter)), filter_(std::move(filter)) {}
 
@@ -146,8 +153,9 @@ GraduallyOpeningRateLimiterFilter::GraduallyOpeningRateLimiterFilter(
           [this]() {
             if (elapsed() < ramp_time_) {
               const double chance_percentage =
-                  100.0 -
-                  ((ramp_time_.count() - elapsed().count()) / (ramp_time_.count() * 1.0)) * 100.0;
+                  100.0 - (static_cast<double>(ramp_time_.count() - elapsed().count()) /
+                           (ramp_time_.count() * 1.0)) *
+                              100.0;
               return std::round(provider_->getValue() / 10000.0) <= chance_percentage;
             }
             return true;
@@ -157,11 +165,7 @@ GraduallyOpeningRateLimiterFilter::GraduallyOpeningRateLimiterFilter(
                  "expected a distribution ranging from 1-1000000");
 }
 
-DistributionSamplingRateLimiterImpl::DistributionSamplingRateLimiterImpl(
-    DiscreteNumericDistributionSamplerPtr&& provider, RateLimiterPtr&& rate_limiter)
-    : DelegatingRateLimiter(
-          std::move(rate_limiter),
-          [this]() { return std::chrono::duration<uint64_t, std::nano>(provider_->getValue()); }),
-      provider_(std::move(provider)) {}
+ZipfRateLimiter::ZipfRateLimiter(RateLimiterPtr&& rate_limiter)
+    : FilteringRateLimiter(std::move(rate_limiter), [this]() { return dist_(g_); }), dist_(1) {}
 
 } // namespace Nighthawk
