@@ -125,7 +125,7 @@ TEST_F(RateLimiterTest, DistributionSamplingRateLimiterImplTest) {
       acquisitions++;
     }
     // We test the release gets propagated to the mock rate limiter.
-    // also, the release will force DelegatingRateLimiter to propagate tryAcquireOne.
+    // also, the release will force DelegatingRateLimiterImpl to propagate tryAcquireOne.
     rate_limiter->releaseOne();
   }
   // 1 in a billion chance of failure.
@@ -173,13 +173,13 @@ TEST_F(RateLimiterTest, DistributionSamplingRateLimiterImplSchedulingTest) {
 }
 
 // TODO(oschaaf): once we have hr sleep, test at a higher res.
-class LinearRampingRateLimiterTest : public Test {
+class LinearRampingRateLimiterImplTest : public Test {
 public:
   std::vector<int64_t> getAcquisitionTimings(const Frequency frequency,
                                              const std::chrono::seconds duration) {
     Envoy::Event::SimulatedTimeSystem time_system;
     std::vector<int64_t> aquisition_timings;
-    LinearRampingRateLimiter rate_limiter(time_system, frequency);
+    LinearRampingRateLimiterImpl rate_limiter(time_system, frequency);
     auto total_ms_elapsed = 0ms;
     const auto clock_tick = 1ms;
     auto last_acquisition_timestamp = 0ms;
@@ -205,12 +205,12 @@ public:
   }
 };
 
-TEST_F(RateLimiterTest, LinearRampingRateLimiterInvalidArgumentTest) {
+TEST_F(RateLimiterTest, LinearRampingRateLimiterImplInvalidArgumentTest) {
   Envoy::Event::SimulatedTimeSystem time_system;
-  EXPECT_THROW(LinearRampingRateLimiter rate_limiter(time_system, 0_Hz);, NighthawkException);
+  EXPECT_THROW(LinearRampingRateLimiterImpl rate_limiter(time_system, 0_Hz);, NighthawkException);
 }
 
-TEST_F(LinearRampingRateLimiterTest, TimingVerificationTest) {
+TEST_F(LinearRampingRateLimiterImplTest, TimingVerificationTest) {
   EXPECT_EQ(getAcquisitionTimings(1_Hz, 5s),
             std::vector<int64_t>(
                 {1000, 1733, 2237, 2646, 3000, 3317, 3606, 3873, 4124, 4359, 4583, 4796, 5000}));
@@ -275,15 +275,14 @@ public:
 };
 
 TEST_F(GraduallyOpeningRateLimiterFilterTest, TimingVerificationTest) {
-  // EXPECT_EQ(getAcquisitionTimings(10_Hz, 10s), std::vector<int64_t>({}));
   EXPECT_EQ(getAcquisitionTimings(50_Hz, 1s),
             std::vector<int64_t>({120, 320, 380, 560, 580, 600, 620, 640, 660, 680, 700, 740,
                                   760, 780, 840, 860, 880, 900, 920, 940, 960, 980, 1000}));
 }
 
-class ZipfRateLimiterTest : public Test {};
+class ZipfRateLimiterImplTest : public Test {};
 
-TEST_F(ZipfRateLimiterTest, TimingVerificationTest) {
+TEST_F(ZipfRateLimiterImplTest, TimingVerificationTest) {
   // TODO(oschaaf): fix zipf distribution based rate limiter, add the real thing.
 }
 

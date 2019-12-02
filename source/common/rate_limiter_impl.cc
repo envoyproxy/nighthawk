@@ -78,15 +78,15 @@ void LinearRateLimiter::releaseOne() {
   acquired_count_--;
 }
 
-LinearRampingRateLimiter::LinearRampingRateLimiter(Envoy::TimeSource& time_source,
-                                                   const Frequency frequency)
+LinearRampingRateLimiterImpl::LinearRampingRateLimiterImpl(Envoy::TimeSource& time_source,
+                                                           const Frequency frequency)
     : RateLimiterBaseImpl(time_source), frequency_(frequency) {
   if (frequency_.value() <= 0) {
     throw NighthawkException("frequency must be > 0");
   }
 }
 
-bool LinearRampingRateLimiter::tryAcquireOne() {
+bool LinearRampingRateLimiterImpl::tryAcquireOne() {
   if (acquireable_count_) {
     acquired_count_++;
     return acquireable_count_--;
@@ -100,17 +100,17 @@ bool LinearRampingRateLimiter::tryAcquireOne() {
   return acquireable_count_ > 0 ? tryAcquireOne() : false;
 }
 
-void LinearRampingRateLimiter::releaseOne() {
+void LinearRampingRateLimiterImpl::releaseOne() {
   acquireable_count_++;
   acquired_count_--;
 }
 
-DelegatingRateLimiter::DelegatingRateLimiter(RateLimiterPtr&& rate_limiter,
-                                             RateLimiterDelegate random_distribution_generator)
+DelegatingRateLimiterImpl::DelegatingRateLimiterImpl(
+    RateLimiterPtr&& rate_limiter, RateLimiterDelegate random_distribution_generator)
     : ForwardingRateLimiterImpl(std::move(rate_limiter)),
       random_distribution_generator_(std::move(random_distribution_generator)) {}
 
-bool DelegatingRateLimiter::tryAcquireOne() {
+bool DelegatingRateLimiterImpl::tryAcquireOne() {
   const auto now = timeSource().monotonicTime();
   if (distributed_start_ == absl::nullopt) {
     if (rate_limiter_->tryAcquireOne()) {
@@ -126,29 +126,30 @@ bool DelegatingRateLimiter::tryAcquireOne() {
   return false;
 }
 
-void DelegatingRateLimiter::releaseOne() {
+void DelegatingRateLimiterImpl::releaseOne() {
   distributed_start_ = absl::nullopt;
   rate_limiter_->releaseOne();
 }
 
 DistributionSamplingRateLimiterImpl::DistributionSamplingRateLimiterImpl(
     DiscreteNumericDistributionSamplerPtr&& provider, RateLimiterPtr&& rate_limiter)
-    : DelegatingRateLimiter(
+    : DelegatingRateLimiterImpl(
           std::move(rate_limiter),
           [this]() { return std::chrono::duration<uint64_t, std::nano>(provider_->getValue()); }),
       provider_(std::move(provider)) {}
 
-FilteringRateLimiter::FilteringRateLimiter(RateLimiterPtr&& rate_limiter, RateLimiterFilter filter)
+FilteringRateLimiterImpl::FilteringRateLimiterImpl(RateLimiterPtr&& rate_limiter,
+                                                   RateLimiterFilter filter)
     : ForwardingRateLimiterImpl(std::move(rate_limiter)), filter_(std::move(filter)) {}
 
-bool FilteringRateLimiter::tryAcquireOne() {
+bool FilteringRateLimiterImpl::tryAcquireOne() {
   return rate_limiter_->tryAcquireOne() ? filter_() : false;
 }
 
 GraduallyOpeningRateLimiterFilter::GraduallyOpeningRateLimiterFilter(
     const std::chrono::nanoseconds ramp_time, DiscreteNumericDistributionSamplerPtr&& provider,
     RateLimiterPtr&& rate_limiter)
-    : FilteringRateLimiter(
+    : FilteringRateLimiterImpl(
           std::move(rate_limiter),
           [this]() {
             if (elapsed() < ramp_time_) {
@@ -165,7 +166,7 @@ GraduallyOpeningRateLimiterFilter::GraduallyOpeningRateLimiterFilter(
                  "expected a distribution ranging from 1-1000000");
 }
 
-ZipfRateLimiter::ZipfRateLimiter(RateLimiterPtr&& rate_limiter)
-    : FilteringRateLimiter(std::move(rate_limiter), [this]() { return dist_(g_); }), dist_(1) {}
+ZipfRateLimiterImpl::ZipfRateLimiterImpl(RateLimiterPtr&& rate_limiter)
+    : FilteringRateLimiterImpl(std::move(rate_limiter), [this]() { return dist_(g_); }), dist_(1) {}
 
 } // namespace Nighthawk

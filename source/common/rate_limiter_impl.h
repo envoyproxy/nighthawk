@@ -16,44 +16,8 @@
 
 namespace Nighthawk {
 
-class ForwardingRateLimiterImpl : public RateLimiter {
-public:
-  ForwardingRateLimiterImpl(RateLimiterPtr&& rate_limiter)
-      : rate_limiter_(std::move(rate_limiter)) {}
-  Envoy::TimeSource& timeSource() override { return rate_limiter_->timeSource(); }
-  absl::optional<Envoy::MonotonicTime> timeStarted() const override {
-    return rate_limiter_->timeStarted();
-  }
-  std::chrono::nanoseconds elapsed() override { return rate_limiter_->elapsed(); }
-
-protected:
-  const RateLimiterPtr rate_limiter_;
-};
-
 /**
- * BurstingRatelimiter can be wrapped around another rate limiter. It has two modes:
- * 1. First it will be accumulating acquisitions by forwarding calls to the wrapped
- *    rate limiter, until the accumulated acquisitions equals the specified burst size.
- * 2. Release mode. In this mode, BatchingRateLimiter is in control and will be handling
- *    acquisition calls (returning true and substracting from the accumulated total until
- *    nothing is left, after which mode 1 will be entered again).
- */
-class BurstingRateLimiter : public ForwardingRateLimiterImpl,
-                            public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
-public:
-  BurstingRateLimiter(RateLimiterPtr&& rate_limiter, const uint64_t burst_size);
-  bool tryAcquireOne() override;
-  void releaseOne() override;
-
-private:
-  const uint64_t burst_size_;
-  uint64_t accumulated_{0};
-  bool releasing_{};
-  absl::optional<bool> previously_releasing_; // Solely used for sanity checking.
-};
-
-/**
- * A rate limiter which linearly ramps up to the desired frequency over the specified period.
+ * Rate limiter base class, which implements some shared functionality.
  */
 class RateLimiterBaseImpl : public RateLimiter {
 public:
@@ -95,10 +59,10 @@ protected:
 /**
  * A rate limiter which linearly ramps up to the desired frequency over the specified period.
  */
-class LinearRampingRateLimiter : public RateLimiterBaseImpl,
-                                 public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
+class LinearRampingRateLimiterImpl : public RateLimiterBaseImpl,
+                                     public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
-  LinearRampingRateLimiter(Envoy::TimeSource& time_source, const Frequency frequency);
+  LinearRampingRateLimiterImpl(Envoy::TimeSource& time_source, const Frequency frequency);
   bool tryAcquireOne() override;
   void releaseOne() override;
 
@@ -108,22 +72,62 @@ private:
   const Frequency frequency_;
 };
 
-// We use an unsigned duration here to ensure only future points in time will be yielded.
-// The consuming rate limiter will hold off opening up until the initial point in time plus the
-// offset obtained via the delegate have transpired.
-using RateLimiterDelegate = std::function<const std::chrono::duration<uint64_t, std::nano>()>;
+/**
+ * Base for a rate limiter which wraps another rate limiter, and forwards
+ * some calls.
+ */
+class ForwardingRateLimiterImpl : public RateLimiter {
+public:
+  ForwardingRateLimiterImpl(RateLimiterPtr&& rate_limiter)
+      : rate_limiter_(std::move(rate_limiter)) {}
+  Envoy::TimeSource& timeSource() override { return rate_limiter_->timeSource(); }
+  absl::optional<Envoy::MonotonicTime> timeStarted() const override {
+    return rate_limiter_->timeStarted();
+  }
+  std::chrono::nanoseconds elapsed() override { return rate_limiter_->elapsed(); }
 
-using RateLimiterFilter = std::function<bool()>;
+protected:
+  const RateLimiterPtr rate_limiter_;
+};
+
+/**
+ * BurstingRatelimiter can be wrapped around another rate limiter. It has two modes:
+ * 1. First it will be accumulating acquisitions by forwarding calls to the wrapped
+ *    rate limiter, until the accumulated acquisitions equals the specified burst size.
+ * 2. Release mode. In this mode, BatchingRateLimiter is in control and will be handling
+ *    acquisition calls (returning true and substracting from the accumulated total until
+ *    nothing is left, after which mode 1 will be entered again).
+ */
+class BurstingRateLimiter : public ForwardingRateLimiterImpl,
+                            public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
+public:
+  BurstingRateLimiter(RateLimiterPtr&& rate_limiter, const uint64_t burst_size);
+  bool tryAcquireOne() override;
+  void releaseOne() override;
+
+private:
+  const uint64_t burst_size_;
+  uint64_t accumulated_{0};
+  bool releasing_{};
+  absl::optional<bool> previously_releasing_; // Solely used for sanity checking.
+};
+
+/**
+ * The consuming rate limiter will hold off opening up until the initial point in time plus the
+ * offset obtained via the delegate have transpired.
+ * We use an unsigned duration here to ensure only future points in time will be yielded.
+ */
+using RateLimiterDelegate = std::function<const std::chrono::duration<uint64_t, std::nano>()>;
 
 /**
  * Wraps a rate limiter, and allows plugging in a delegate which will be queried to offset the
  * timing of the underlying rate limiter.
  */
-class DelegatingRateLimiter : public ForwardingRateLimiterImpl,
-                              public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
+class DelegatingRateLimiterImpl : public ForwardingRateLimiterImpl,
+                                  public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
-  DelegatingRateLimiter(RateLimiterPtr&& rate_limiter,
-                        RateLimiterDelegate random_distribution_generator);
+  DelegatingRateLimiterImpl(RateLimiterPtr&& rate_limiter,
+                            RateLimiterDelegate random_distribution_generator);
   bool tryAcquireOne() override;
   void releaseOne() override;
 
@@ -148,7 +152,7 @@ private:
 };
 
 // Allows adding uniformly distributed random timing offsets to an underlying rate limiter.
-class DistributionSamplingRateLimiterImpl : public DelegatingRateLimiter {
+class DistributionSamplingRateLimiterImpl : public DelegatingRateLimiterImpl {
 public:
   DistributionSamplingRateLimiterImpl(DiscreteNumericDistributionSamplerPtr&& provider,
                                       RateLimiterPtr&& rate_limiter);
@@ -157,12 +161,17 @@ private:
   DiscreteNumericDistributionSamplerPtr provider_;
 };
 
+/**
+ * Callback used to indicate if a rate limiter release should be supressed or not.
+ */
+using RateLimiterFilter = std::function<bool()>;
+
 // Wraps a rate limiter, and allows plugging in a delegate which will be queried to apply a
 // filter to acquisitions.
-class FilteringRateLimiter : public ForwardingRateLimiterImpl,
-                             public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
+class FilteringRateLimiterImpl : public ForwardingRateLimiterImpl,
+                                 public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
-  FilteringRateLimiter(RateLimiterPtr&& rate_limiter, RateLimiterFilter filter);
+  FilteringRateLimiterImpl(RateLimiterPtr&& rate_limiter, RateLimiterFilter filter);
   bool tryAcquireOne() override;
   void releaseOne() override { rate_limiter_->releaseOne(); }
 
@@ -171,9 +180,9 @@ protected:
 };
 
 /**
- * Takes a probabilistic approach to suppress
+ * Takes a probabilistic approach to suppressing an arbitrary wrapper rate limiter.
  */
-class GraduallyOpeningRateLimiterFilter : public FilteringRateLimiter {
+class GraduallyOpeningRateLimiterFilter : public FilteringRateLimiterImpl {
 public:
   GraduallyOpeningRateLimiterFilter(const std::chrono::nanoseconds ramp_time,
                                     DiscreteNumericDistributionSamplerPtr&& provider,
@@ -184,9 +193,9 @@ private:
   const std::chrono::nanoseconds ramp_time_;
 };
 
-class ZipfRateLimiter : public FilteringRateLimiter {
+class ZipfRateLimiterImpl : public FilteringRateLimiterImpl {
 public:
-  ZipfRateLimiter(RateLimiterPtr&& rate_limiter);
+  ZipfRateLimiterImpl(RateLimiterPtr&& rate_limiter);
 
 private:
   absl::zipf_distribution<uint64_t> dist_;
