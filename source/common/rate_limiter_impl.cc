@@ -53,7 +53,8 @@ void BurstingRateLimiter::releaseOne() {
 }
 
 LinearRateLimiter::LinearRateLimiter(Envoy::TimeSource& time_source, const Frequency frequency)
-    : time_source_(time_source), acquireable_count_(0), acquired_count_(0), frequency_(frequency) {
+    : RateLimiterBaseImpl(time_source), acquireable_count_(0), acquired_count_(0),
+      frequency_(frequency) {
   if (frequency.value() <= 0) {
     throw NighthawkException("Frequency must be > 0");
   }
@@ -61,9 +62,6 @@ LinearRateLimiter::LinearRateLimiter(Envoy::TimeSource& time_source, const Frequ
 
 bool LinearRateLimiter::tryAcquireOne() {
   // TODO(oschaaf): consider adding an explicit start() call to the interface.
-  if (start_time_ == absl::nullopt) {
-    start_time_ = time_source_.monotonicTime();
-  }
   if (acquireable_count_ > 0) {
     acquireable_count_--;
     acquired_count_++;
@@ -71,13 +69,38 @@ bool LinearRateLimiter::tryAcquireOne() {
   }
 
   acquireable_count_ =
-      frequency_.value() == 0
-          ? 0
-          : static_cast<int64_t>(std::floor(elapsed() / frequency_.interval())) - acquired_count_;
-  return acquireable_count_ > 0 ? LinearRateLimiter::tryAcquireOne() : false;
+      static_cast<int64_t>(std::floor(elapsed() / frequency_.interval())) - acquired_count_;
+  return acquireable_count_ > 0 ? tryAcquireOne() : false;
 }
 
 void LinearRateLimiter::releaseOne() {
+  acquireable_count_++;
+  acquired_count_--;
+}
+
+LinearRampingRateLimiter::LinearRampingRateLimiter(Envoy::TimeSource& time_source,
+                                                   const Frequency frequency)
+    : RateLimiterBaseImpl(time_source), frequency_(frequency) {
+  if (frequency_.value() <= 0) {
+    throw NighthawkException("frequency must be > 0");
+  }
+}
+
+bool LinearRampingRateLimiter::tryAcquireOne() {
+  if (acquireable_count_) {
+    acquired_count_++;
+    return acquireable_count_--;
+  }
+  const auto elapsed_time = elapsed();
+  const std::chrono::duration<double> chrono_seconds(elapsed_time);
+  const double seconds = chrono_seconds.count();
+  const double frequency = seconds * frequency_.value();
+  const uint64_t total = std::round(seconds * frequency / 2.0);
+  acquireable_count_ = total - acquired_count_;
+  return acquireable_count_ > 0 ? tryAcquireOne() : false;
+}
+
+void LinearRampingRateLimiter::releaseOne() {
   acquireable_count_++;
   acquired_count_--;
 }
@@ -113,33 +136,6 @@ FilteringRateLimiter::FilteringRateLimiter(RateLimiterPtr&& rate_limiter, RateLi
 
 bool FilteringRateLimiter::tryAcquireOne() {
   return rate_limiter_->tryAcquireOne() ? filter_() : false;
-}
-
-LinearRampingRateLimiter::LinearRampingRateLimiter(Envoy::TimeSource& time_source,
-                                                   const std::chrono::nanoseconds ramp_time,
-                                                   const Frequency frequency)
-    : LinearRateLimiter(time_source, frequency), final_frequency_(frequency),
-      ramp_time_(ramp_time) {
-  if (ramp_time.count() <= 0) {
-    throw NighthawkException("ramp_time must be > 0");
-  }
-}
-
-bool LinearRampingRateLimiter::tryAcquireOne() {
-  bool return_value = false;
-  if (timeStarted() == absl::nullopt || (frequency_.value() != final_frequency_.value())) {
-    const double fraction =
-        1.0 - ((ramp_time_.count() - elapsed().count()) / (ramp_time_.count() * 1.0));
-    frequency_ = Frequency(std::round(final_frequency_.value() * fraction));
-    // LinearRateLimiter tracks how many ought to have been acquired and will compensate when we
-    // change the frequency. We're greedy here to disable that corrective behaviour when ramping.
-    while (LinearRateLimiter::tryAcquireOne()) {
-      return_value = true;
-    }
-  } else {
-    return_value = LinearRateLimiter::tryAcquireOne();
-  }
-  return return_value;
 }
 
 GraduallyOpeningRateLimiterFilter::GraduallyOpeningRateLimiterFilter(

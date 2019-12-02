@@ -22,7 +22,7 @@ public:
   absl::optional<Envoy::MonotonicTime> timeStarted() const override {
     return rate_limiter_->timeStarted();
   }
-  std::chrono::nanoseconds elapsed() const override { return rate_limiter_->elapsed(); }
+  std::chrono::nanoseconds elapsed() override { return rate_limiter_->elapsed(); }
 
 protected:
   const RateLimiterPtr rate_limiter_;
@@ -51,29 +51,59 @@ private:
 };
 
 /**
+ * A rate limiter which linearly ramps up to the desired frequency over the specified period.
+ */
+class RateLimiterBaseImpl : public RateLimiter {
+public:
+  RateLimiterBaseImpl(Envoy::TimeSource& time_source) : time_source_(time_source){};
+  Envoy::TimeSource& timeSource() override { return time_source_; }
+  absl::optional<Envoy::MonotonicTime> timeStarted() const override { return start_time_; }
+  std::chrono::nanoseconds elapsed() override {
+    // TODO(oschaaf): consider adding an explicit start() call to the interface.
+    const auto now = time_source_.monotonicTime();
+    if (start_time_ == absl::nullopt) {
+      start_time_ = now;
+    }
+    return now - start_time_.value();
+  }
+
+private:
+  Envoy::TimeSource& time_source_;
+  absl::optional<Envoy::MonotonicTime> start_time_;
+};
+
+/**
  * Simple rate limiter that will allow acquiring at a linear pace.
  * The average rate is computed over a timeframe that starts at
  * the first call to tryAcquireOne().
  */
-class LinearRateLimiter : public RateLimiter,
+class LinearRateLimiter : public RateLimiterBaseImpl,
                           public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
   LinearRateLimiter(Envoy::TimeSource& time_source, const Frequency frequency);
   bool tryAcquireOne() override;
   void releaseOne() override;
-  Envoy::TimeSource& timeSource() override { return time_source_; }
-  absl::optional<Envoy::MonotonicTime> timeStarted() const override { return start_time_; }
-  std::chrono::nanoseconds elapsed() const override {
-    const auto now = time_source_.monotonicTime();
-    return now - start_time_.value_or(now);
-  }
 
 protected:
-  Envoy::TimeSource& time_source_;
   int64_t acquireable_count_{0};
   uint64_t acquired_count_{0};
-  Frequency frequency_;
-  absl::optional<Envoy::MonotonicTime> start_time_;
+  const Frequency frequency_;
+};
+
+/**
+ * A rate limiter which linearly ramps up to the desired frequency over the specified period.
+ */
+class LinearRampingRateLimiter : public RateLimiterBaseImpl,
+                                 public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
+public:
+  LinearRampingRateLimiter(Envoy::TimeSource& time_source, const Frequency frequency);
+  bool tryAcquireOne() override;
+  void releaseOne() override;
+
+private:
+  int64_t acquireable_count_{0};
+  uint64_t acquired_count_{0};
+  const Frequency frequency_;
 };
 
 // We use an unsigned duration here to ensure only future points in time will be yielded.
@@ -102,27 +132,13 @@ private:
   absl::optional<Envoy::MonotonicTime> distributed_start_;
 };
 
-/**
- * A rate limiter which linearly ramps up to the desired frequency over the specified period.
- */
-class LinearRampingRateLimiter : public LinearRateLimiter {
-public:
-  LinearRampingRateLimiter(Envoy::TimeSource& time_source, const std::chrono::nanoseconds ramp_time,
-                           const Frequency frequency);
-  bool tryAcquireOne() override;
-
-private:
-  const Frequency final_frequency_;
-  const std::chrono::nanoseconds ramp_time_;
-};
-
 class UniformRandomDistributionSamplerImpl : public DiscreteNumericDistributionSampler {
 public:
   UniformRandomDistributionSamplerImpl(const uint64_t upper_bound)
       : distribution_(0, upper_bound) {}
   uint64_t getValue() override { return distribution_(generator_); }
-  uint64_t min() override { return distribution_.min(); }
-  uint64_t max() override { return distribution_.max(); }
+  uint64_t min() const override { return distribution_.min(); }
+  uint64_t max() const override { return distribution_.max(); }
 
 private:
   std::default_random_engine generator_;
