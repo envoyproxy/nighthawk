@@ -18,23 +18,25 @@ class NighthawkGrpcService(object):
       .... You can talk to the Nighthawk gRPC service at the 127.0.0.1:grpc_service.server_port ...
 
   Attributes:
-  server_binary_path: A string, path to the server binary.
+  server_ip: IP address used by the gRPC service to listen. 
+  server_port: An integer, indicates the port used by the gRPC service to listen. 
   """
 
   def __init__(self, server_binary_path, server_ip, ip_version):
     """Initializes Nighthawk gRPC service.
 
     Args:
-    server_port: An integer, indicates the port used by the gRPC service to listen. 
-    Updated after the service has started successfully.
+    server_binary_path: A string, indicates where the nighthawk gRPC service binary resides
+    server_ip: IP address, indicates which ip address should be used by the gRPC service listener.
+    ip_version: IP Version, indicates if IPv4 or IPv6 should be used.
     ...
     """
     assert ip_version != IpVersion.UNKNOWN
     self.server_port = 0
+    self.server_ip = server_ip
     self._server_process = None
     self._ip_version = ip_version
     self._server_binary_path = server_binary_path
-    self._server_ip = server_ip
     self._socket_type = socket.AF_INET6 if ip_version == IpVersion.IPV6 else socket.AF_INET
     self._server_thread = threading.Thread(target=self._serverThreadRunner)
     self._address_file = ""
@@ -44,7 +46,7 @@ class NighthawkGrpcService(object):
       self._address_file = tmp.name
     args = [
         self._server_binary_path, "--listener-address-file", self._address_file, "--listen",
-        "%s:0" % str(self._server_ip)
+        "%s:0" % str(self.server_ip)
     ]
     logging.info("Nighthawk grpc service popen() args: [%s]" % args)
     self._server_process = subprocess.Popen(args)
@@ -68,7 +70,7 @@ class NighthawkGrpcService(object):
       tries -= 1
 
     logging.error("Timeout while waiting for server listener at %s:%s to accept connections.",
-                  self._server_ip, self.server_port)
+                  self.server_ip, self.server_port)
     return False
 
   """
