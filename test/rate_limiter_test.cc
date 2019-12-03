@@ -235,13 +235,6 @@ public:
     EXPECT_CALL(*unsafe_discrete_numeric_distribution_sampler, getValue)
         .Times(AtLeast(1))
         .WillRepeatedly(Invoke([&dist, &mt]() { return dist(mt); }));
-    EXPECT_CALL(*unsafe_discrete_numeric_distribution_sampler, min)
-        .Times(1)
-        .WillOnce(Return(dist.min()));
-    EXPECT_CALL(*unsafe_discrete_numeric_distribution_sampler, max)
-        .Times(1)
-        .WillOnce(Return(dist.max()));
-
     RateLimiterPtr rate_limiter = std::make_unique<GraduallyOpeningRateLimiterFilter>(
         duration,
         std::unique_ptr<DiscreteNumericDistributionSampler>(

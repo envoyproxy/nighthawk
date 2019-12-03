@@ -161,10 +161,7 @@ GraduallyOpeningRateLimiterFilter::GraduallyOpeningRateLimiterFilter(
             }
             return true;
           }),
-      provider_(std::move(provider)), ramp_time_(ramp_time) {
-  RELEASE_ASSERT(provider_->min() == 1 && provider_->max() == 1000000,
-                 "expected a distribution ranging from 1-1000000");
-}
+      provider_(std::move(provider)), ramp_time_(ramp_time) {}
 
 ZipfRateLimiterImpl::ZipfRateLimiterImpl(RateLimiterPtr&& rate_limiter)
     : FilteringRateLimiterImpl(std::move(rate_limiter), [this]() { return dist_(g_); }), dist_(1) {}

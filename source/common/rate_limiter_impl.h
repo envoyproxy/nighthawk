@@ -23,7 +23,6 @@ class RateLimiterBaseImpl : public RateLimiter {
 public:
   RateLimiterBaseImpl(Envoy::TimeSource& time_source) : time_source_(time_source){};
   Envoy::TimeSource& timeSource() override { return time_source_; }
-  absl::optional<Envoy::MonotonicTime> timeStarted() const override { return start_time_; }
   std::chrono::nanoseconds elapsed() override {
     // TODO(oschaaf): consider adding an explicit start() call to the interface.
     const auto now = time_source_.monotonicTime();
@@ -81,9 +80,6 @@ public:
   ForwardingRateLimiterImpl(RateLimiterPtr&& rate_limiter)
       : rate_limiter_(std::move(rate_limiter)) {}
   Envoy::TimeSource& timeSource() override { return rate_limiter_->timeSource(); }
-  absl::optional<Envoy::MonotonicTime> timeStarted() const override {
-    return rate_limiter_->timeStarted();
-  }
   std::chrono::nanoseconds elapsed() override { return rate_limiter_->elapsed(); }
 
 protected:
@@ -143,8 +139,6 @@ public:
   UniformRandomDistributionSamplerImpl(const uint64_t upper_bound)
       : distribution_(0, upper_bound) {}
   uint64_t getValue() override { return distribution_(generator_); }
-  uint64_t min() const override { return distribution_.min(); }
-  uint64_t max() const override { return distribution_.max(); }
 
 private:
   std::default_random_engine generator_;

@@ -33,7 +33,6 @@ public:
    * @return Envoy::TimeSource& time_source
    */
   virtual Envoy::TimeSource& timeSource() PURE;
-  virtual absl::optional<Envoy::MonotonicTime> timeStarted() const PURE;
   virtual std::chrono::nanoseconds elapsed() PURE;
 };
 
@@ -45,8 +44,6 @@ using RateLimiterPtr = std::unique_ptr<RateLimiter>;
 class DiscreteNumericDistributionSampler {
 public:
   virtual ~DiscreteNumericDistributionSampler() = default;
-  virtual uint64_t min() const PURE;
-  virtual uint64_t max() const PURE;
   virtual uint64_t getValue() PURE;
 };
 
