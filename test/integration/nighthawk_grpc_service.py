@@ -1,50 +1,61 @@
-import json
 import logging
-import os
 import socket
 import subprocess
-import sys
 import tempfile
 import threading
 import time
-from string import Template
 
 from common import IpVersion
 
 
+# TODO(oschaaf): unify some of this code with the test server wrapper.
 class NighthawkGrpcService(object):
   """
-    Base class for running a server in a separate process.
-    """
+  Class for running the Nighthawk gRPC service in a separate process.
+  Usage:
+    grpc_service = NighthawkGrpcService("/path/to/nighthawk_service"), "127.0.0.1", IpVersion.IPV4)
+    if grpc_service.start():
+      .... You can talk to the Nighthawk gRPC service at the 127.0.0.1:grpc_service.server_port ...
+
+  Attributes:
+  server_binary_path: A string, path to the server binary.
+  """
 
   def __init__(self, server_binary_path, server_ip, ip_version):
-    assert ip_version != IpVersion.UNKNOWN
-    self.ip_version = ip_version
-    self.server_binary_path = server_binary_path
-    self.server_thread = threading.Thread(target=self.serverThreadRunner)
-    self.server_process = None
-    self.server_ip = server_ip
-    self.socket_type = socket.AF_INET6 if ip_version == IpVersion.IPV6 else socket.AF_INET
-    self.server_port = 0
-    self.address_file = ""
+    """Initializes Nighthawk gRPC service.
 
-  def serverThreadRunner(self):
+    Args:
+    server_port: An integer, indicates the port used by the gRPC service to listen. 
+    Updated after the service has started successfully.
+    ...
+    """
+    assert ip_version != IpVersion.UNKNOWN
+    self.server_port = 0
+    self._server_process = None
+    self._ip_version = ip_version
+    self._server_binary_path = server_binary_path
+    self._server_ip = server_ip
+    self._socket_type = socket.AF_INET6 if ip_version == IpVersion.IPV6 else socket.AF_INET
+    self._server_thread = threading.Thread(target=self._serverThreadRunner)
+    self._address_file = ""
+
+  def _serverThreadRunner(self):
     with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".tmp") as tmp:
-      self.address_file = tmp.name
+      self._address_file = tmp.name
     args = [
-        self.server_binary_path, "--listener-address-file", self.address_file, "--listen",
-        "%s:0" % str(self.server_ip)
+        self._server_binary_path, "--listener-address-file", self._address_file, "--listen",
+        "%s:0" % str(self._server_ip)
     ]
     logging.info("Nighthawk grpc service popen() args: [%s]" % args)
-    self.server_process = subprocess.Popen(args)
-    self.server_process.communicate()
+    self._server_process = subprocess.Popen(args)
+    self._server_process.communicate()
 
-  def waitUntilServerListening(self):
-    tries = 10
+  def _waitUntilServerListening(self):
+    tries = 30
     while tries > 0:
       contents = ""
       try:
-        with open(self.address_file) as f:
+        with open(self._address_file) as f:
           contents = f.read().strip()
       except (IOError):
         pass
@@ -57,15 +68,24 @@ class NighthawkGrpcService(object):
       tries -= 1
 
     logging.error("Timeout while waiting for server listener at %s:%s to accept connections.",
-                  self.server_ip, self.server_port)
+                  self._server_ip, self.server_port)
     return False
 
+  """
+  Starts the Nighthawk gRPC service. Returns True upon success, after which the server_port attribute
+  can be queried to get the listening port.
+  """
+
   def start(self):
-    self.server_thread.daemon = True
-    self.server_thread.start()
-    return self.waitUntilServerListening()
+    self._server_thread.daemon = True
+    self._server_thread.start()
+    return self._waitUntilServerListening()
+
+  """
+  Signals the Nighthawk gRPC service to stop, waits for its termination, and returns the exit code of the associated process.
+  """
 
   def stop(self):
-    self.server_process.terminate()
-    self.server_thread.join()
-    return self.server_process.returncode
+    self._server_process.terminate()
+    self._server_thread.join()
+    return self._server_process.returncode

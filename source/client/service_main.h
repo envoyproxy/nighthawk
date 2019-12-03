@@ -24,7 +24,8 @@ public:
   ServiceMain(int argc, const char** argv);
   void start();
   /**
-   * Can be used to wait for the server to exit.
+   * Can be used to block while waiting for the server to exit. Registers to SIGTERM/SIGINT and will
+   * commence shutdown of the gRPC service upon reception of those signals.
    */
   void wait();
 
@@ -55,6 +56,10 @@ private:
   int listener_port_{-1};
   std::string listener_bound_address_;
   std::string listener_output_path_;
+  // Signal handling needs to be lean so we can't directly initiate shutdown while handling a
+  // signal. Therefore we write a bite to a this pipe to propagate signal reception. Subsequently,
+  // the read side will handle the actual shut down of the gRPC service without having to worry
+  // about signal-safety.
   std::vector<int> pipe_fds_;
   std::thread shutdown_thread_;
 };
