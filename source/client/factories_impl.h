@@ -32,7 +32,7 @@ public:
                             Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                             Envoy::Tracing::HttpTracerPtr& http_tracer,
                             absl::string_view cluster_name,
-                            RequestSource& header_generator) const override;
+                            RequestSource& request_generator) const override;
 };
 
 class SequencerFactoryImpl : public OptionBasedFactoryImpl, public SequencerFactory {
