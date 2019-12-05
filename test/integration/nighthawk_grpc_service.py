@@ -19,7 +19,7 @@ class NighthawkGrpcService(object):
 
   Attributes:
   server_ip: IP address used by the gRPC service to listen. 
-  server_port: An integer, indicates the port used by the gRPC service to listen. 
+  server_port: An integer, indicates the port used by the gRPC service to listen. 0 means that the server is not listening.
   """
 
   def __init__(self, server_binary_path, server_ip, ip_version):
@@ -73,21 +73,22 @@ class NighthawkGrpcService(object):
                   self.server_ip, self.server_port)
     return False
 
-  """
-  Starts the Nighthawk gRPC service. Returns True upon success, after which the server_port attribute
-  can be queried to get the listening port.
-  """
-
   def start(self):
+    """
+    Starts the Nighthawk gRPC service. Returns True upon success, after which the server_port attribute
+    can be queried to get the listening port.
+    """
+
     self._server_thread.daemon = True
     self._server_thread.start()
     return self._waitUntilServerListening()
 
-  """
-  Signals the Nighthawk gRPC service to stop, waits for its termination, and returns the exit code of the associated process.
-  """
-
   def stop(self):
+    """
+    Signals the Nighthawk gRPC service to stop, waits for its termination, and returns the exit code of the associated process.
+    """
+
     self._server_process.terminate()
     self._server_thread.join()
+    self.server_port = 0
     return self._server_process.returncode
