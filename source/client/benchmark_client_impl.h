@@ -69,7 +69,6 @@ public:
                           Envoy::Tracing::HttpTracerPtr& http_tracer,
                           absl::string_view cluster_name, RequestGenerator request_generator,
                           const bool provide_resource_backpressure);
-
   void setConnectionLimit(uint32_t connection_limit) { connection_limit_ = connection_limit; }
   void setMaxPendingRequests(uint32_t max_pending_requests) {
     max_pending_requests_ = max_pending_requests;

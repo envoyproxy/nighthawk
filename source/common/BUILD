@@ -9,11 +9,40 @@ load(
 envoy_package()
 
 envoy_cc_library(
+    name = "request_impl_lib",
+    hdrs = [
+        "request_impl.h",
+    ],
+    repository = "@envoy",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":nighthawk_common_lib",
+        "//include/nighthawk/common:request_lib",
+    ],
+)
+
+envoy_cc_library(
+    name = "request_source_impl_lib",
+    srcs = [
+        "request_source_impl.cc",
+    ],
+    hdrs = [
+        "request_source_impl.h",
+    ],
+    repository = "@envoy",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":nighthawk_common_lib",
+        ":request_impl_lib",
+        "//include/nighthawk/common:request_source_lib",
+    ],
+)
+
+envoy_cc_library(
     name = "nighthawk_common_lib",
     srcs = [
         "phase_impl.cc",
         "rate_limiter_impl.cc",
-        "request_source_impl.cc",
         "sequencer_impl.cc",
         "statistic_impl.cc",
         "termination_predicate_impl.cc",
@@ -26,7 +55,6 @@ envoy_cc_library(
         "phase_impl.h",
         "platform_util_impl.h",
         "rate_limiter_impl.h",
-        "request_source_impl.h",
         "sequencer_impl.h",
         "statistic_impl.h",
         "termination_predicate_impl.h",
