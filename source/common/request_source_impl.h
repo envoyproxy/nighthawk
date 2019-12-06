@@ -12,14 +12,13 @@
 namespace Nighthawk {
 
 class BaseRequestSourceImpl : public RequestSource,
-                              public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
-  void initOnThread() override{};
-};
+                              public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {};
 
 class StaticRequestSourceImpl : public BaseRequestSourceImpl {
 public:
   StaticRequestSourceImpl(Envoy::Http::HeaderMapPtr&&, const uint64_t max_yields = UINT64_MAX);
   RequestGenerator get() override;
+  void initOnThread() override{};
 
 private:
   const HeaderMapPtr header_;
