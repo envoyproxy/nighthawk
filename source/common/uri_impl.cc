@@ -53,7 +53,7 @@ UriImpl::UriImpl(absl::string_view uri) : scheme_("http") {
 
 bool UriImpl::performDnsLookup(Envoy::Event::Dispatcher& dispatcher,
                                const Envoy::Network::DnsLookupFamily dns_lookup_family) {
-  auto dns_resolver = dispatcher.createDnsResolver({}, true);
+  auto dns_resolver = dispatcher.createDnsResolver({});
   std::string hostname = std::string(hostWithoutPort());
 
   if (!hostname.empty() && hostname[0] == '[' && hostname[hostname.size() - 1] == ']') {
