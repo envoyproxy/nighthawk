@@ -12,6 +12,7 @@
 #include "external/envoy/test/mocks/upstream/mocks.h"
 #include "external/envoy/test/test_common/network_utility.h"
 
+#include "common/request_impl.h"
 #include "common/statistic_impl.h"
 #include "common/uri_impl.h"
 #include "common/utility.h"
@@ -49,9 +50,10 @@ public:
               return span;
             }));
     request_generator_ = []() {
-      return std::make_shared<Envoy::Http::TestHeaderMapImpl>(
+      auto header = std::make_shared<Envoy::Http::TestHeaderMapImpl>(
           std::initializer_list<std::pair<std::string, std::string>>(
               {{":scheme", "http"}, {":method", "GET"}, {":path", "/"}, {":host", "localhost"}}));
+      return std::make_unique<RequestImpl>(header);
     };
   }
 
@@ -230,7 +232,7 @@ TEST_F(BenchmarkClientHttpTest, PoolFailures) {
 
 TEST_F(BenchmarkClientHttpTest, RequestMethodPost) {
   request_generator_ = []() {
-    return std::make_shared<Envoy::Http::TestHeaderMapImpl>(
+    auto header = std::make_shared<Envoy::Http::TestHeaderMapImpl>(
         std::initializer_list<std::pair<std::string, std::string>>({{":scheme", "http"},
                                                                     {":method", "POST"},
                                                                     {":path", "/"},
@@ -238,6 +240,7 @@ TEST_F(BenchmarkClientHttpTest, RequestMethodPost) {
                                                                     {"a", "b"},
                                                                     {"c", "d"},
                                                                     {"Content-Length", "1313"}}));
+    return std::make_unique<RequestImpl>(header);
   };
 
   EXPECT_CALL(stream_encoder_, encodeData(_, _)).Times(1);
@@ -247,13 +250,15 @@ TEST_F(BenchmarkClientHttpTest, RequestMethodPost) {
 
 TEST_F(BenchmarkClientHttpTest, BadContentLength) {
   request_generator_ = []() {
-    return std::make_shared<Envoy::Http::TestHeaderMapImpl>(
+    auto header = std::make_shared<Envoy::Http::TestHeaderMapImpl>(
         std::initializer_list<std::pair<std::string, std::string>>({{":scheme", "http"},
                                                                     {":method", "POST"},
                                                                     {":path", "/"},
                                                                     {":host", "localhost"},
                                                                     {"Content-Length", "-1313"}}));
+    return std::make_unique<RequestImpl>(header);
   };
+
   // Note we we explicitly do not expect encodeData to be called.
   testBasicFunctionality(1, 1, 1);
   EXPECT_EQ(1, getCounter("http_2xx"));
