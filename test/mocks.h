@@ -108,11 +108,10 @@ public:
 class MockSequencerFactory : public Client::SequencerFactory {
 public:
   MockSequencerFactory();
-  MOCK_CONST_METHOD6(create, SequencerPtr(Envoy::TimeSource& time_source,
+  MOCK_CONST_METHOD5(create, SequencerPtr(Envoy::TimeSource& time_source,
                                           Envoy::Event::Dispatcher& dispatcher,
-                                          Envoy::MonotonicTime start_time,
                                           Client::BenchmarkClient& benchmark_client,
-                                          TerminationPredicate& termination_predicate,
+                                          TerminationPredicatePtr&& termination_predicate,
                                           Envoy::Stats::Scope& scope));
 };
 
@@ -178,6 +177,7 @@ class MockTerminationPredicate : public TerminationPredicate {
 public:
   MockTerminationPredicate();
   MOCK_METHOD1(link, TerminationPredicate&(TerminationPredicatePtr&&));
+  MOCK_METHOD1(appendToChain, TerminationPredicate&(TerminationPredicatePtr&&));
   MOCK_METHOD0(evaluateChain, TerminationPredicate::Status());
   MOCK_METHOD0(evaluate, TerminationPredicate::Status());
 };

@@ -37,8 +37,8 @@ class SequencerFactory {
 public:
   virtual ~SequencerFactory() = default;
   virtual SequencerPtr create(Envoy::TimeSource& time_source, Envoy::Event::Dispatcher& dispatcher,
-                              Envoy::MonotonicTime start_time, BenchmarkClient& benchmark_client,
-                              TerminationPredicate& termination_predicate,
+                              BenchmarkClient& benchmark_client,
+                              TerminationPredicatePtr&& termination_predicate,
                               Envoy::Stats::Scope& scope) const PURE;
 };
 

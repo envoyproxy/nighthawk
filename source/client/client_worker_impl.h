@@ -37,10 +37,9 @@ public:
   const std::map<std::string, uint64_t>& thread_local_counter_values() override {
     return thread_local_counter_values_;
   }
-  // TODO(oschaaf): this is just used by ClientProcessImpl to get the sequencer's execution
-  // duration. Possibly we would want to return the vector of phases here instead, and report
-  // per-phase.
-  const Sequencer& sequencer() const override { return phases_.front()->sequencer(); }
+
+  const std::vector<PhasePtr>& phases() const override { return phases_; }
+
   void shutdownThread() override;
 
 protected:
@@ -48,6 +47,8 @@ protected:
 
 private:
   void simpleWarmup();
+  const TerminationPredicateFactory& termination_predicate_factory_;
+  const SequencerFactory& sequencer_factory_;
   Envoy::Stats::ScopePtr worker_scope_;
   Envoy::Stats::ScopePtr worker_number_scope_;
   const int worker_number_;
@@ -55,7 +56,6 @@ private:
   Envoy::Tracing::HttpTracerPtr& http_tracer_;
   RequestSourcePtr request_generator_;
   BenchmarkClientPtr benchmark_client_;
-  TerminationPredicatePtr termination_predicate_;
   std::vector<PhasePtr> phases_;
   Envoy::LocalInfo::LocalInfoPtr local_info_;
   std::map<std::string, uint64_t> thread_local_counter_values_;

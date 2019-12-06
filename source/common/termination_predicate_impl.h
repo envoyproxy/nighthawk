@@ -15,6 +15,14 @@ public:
     linked_child_ = std::move(child);
     return *linked_child_;
   }
+  TerminationPredicate& appendToChain(TerminationPredicatePtr&& child) final {
+    RELEASE_ASSERT(child != nullptr, "child == nullptr");
+    if (linked_child_ != nullptr) {
+      return linked_child_->appendToChain(std::move(child));
+    } else {
+      return link(std::move(child));
+    }
+  }
   TerminationPredicate::Status evaluateChain() final;
 
 private:

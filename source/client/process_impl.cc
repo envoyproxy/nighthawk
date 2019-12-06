@@ -355,7 +355,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
       std::make_unique<Extensions::TransportSockets::Tls::ContextManagerImpl>(time_system_);
   cluster_manager_factory_ = std::make_unique<ClusterManagerFactory>(
       admin_, Envoy::Runtime::LoaderSingleton::get(), store_root_, tls_, generator_,
-      dispatcher_->createDnsResolver({}), *ssl_context_manager_, *dispatcher_, *local_info_,
+      dispatcher_->createDnsResolver({}, true), *ssl_context_manager_, *dispatcher_, *local_info_,
       secret_manager_, validation_context_, *api_, http_context_, access_log_manager_,
       *singleton_manager_);
   cluster_manager_factory_->setPrefetchConnections(options_.prefetchConnections());
@@ -383,7 +383,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
   int i = 0;
   std::chrono::nanoseconds total_execution_duration = 0ns;
   for (auto& worker : workers_) {
-    auto sequencer_execution_duration = worker->sequencer().executionDuration();
+    auto sequencer_execution_duration = worker->phases().back()->sequencer().executionDuration();
     // We don't write per-worker results if we only have a single worker, because the global results
     // will be precisely the same.
     if (workers_.size() > 1) {

@@ -33,23 +33,24 @@ public:
                                        rand_, validation_visitor_, *api_)});
     benchmark_client_ = new MockBenchmarkClient();
     sequencer_ = new MockSequencer();
+    warmup_sequencer_ = new MockSequencer();
     request_generator_ = new MockRequestSource();
-    termination_predicate_ = new MockTerminationPredicate();
 
     EXPECT_CALL(benchmark_client_factory_, create(_, _, _, _, _, _, _))
         .Times(1)
         .WillOnce(Return(ByMove(std::unique_ptr<BenchmarkClient>(benchmark_client_))));
 
-    EXPECT_CALL(sequencer_factory_, create(_, _, _, _, _, _))
-        .Times(1)
+    EXPECT_CALL(sequencer_factory_, create(_, _, _, _, _))
+        .Times(2)
+        .WillOnce(Return(ByMove(std::unique_ptr<Sequencer>(warmup_sequencer_))))
         .WillOnce(Return(ByMove(std::unique_ptr<Sequencer>(sequencer_))));
 
     EXPECT_CALL(request_generator_factory_, create())
-        .Times(1)
         .WillOnce(Return(ByMove(std::unique_ptr<RequestSource>(request_generator_))));
 
     EXPECT_CALL(termination_predicate_factory_, create(_, _, _))
-        .WillOnce(Return(ByMove(std::unique_ptr<TerminationPredicate>(termination_predicate_))));
+        .WillOnce(Return(ByMove(createMockTerminationPredicate())))
+        .WillOnce(Return(ByMove(createMockTerminationPredicate())));
   }
 
   StatisticPtrMap createStatisticPtrMap() const {
@@ -62,6 +63,17 @@ public:
   bool CheckThreadChanged(const CompletionCallback&) {
     EXPECT_NE(thread_id_, std::this_thread::get_id());
     return false;
+  }
+
+  TerminationPredicatePtr createMockTerminationPredicate() {
+    auto predicate = std::make_unique<NiceMock<MockTerminationPredicate>>();
+    ON_CALL(*predicate, appendToChain(_)).WillByDefault(ReturnRef(*predicate));
+    EXPECT_CALL(*predicate, evaluateChain())
+        .Times(AtLeast(0))
+        .WillOnce(Return(TerminationPredicate::Status::PROCEED))
+        .WillOnce(Return(TerminationPredicate::Status::TERMINATE));
+
+    return predicate;
   }
 
   StreamingStatistic statistic_;
@@ -77,6 +89,7 @@ public:
   Envoy::Event::TestRealTimeSystem time_system_;
   MockBenchmarkClient* benchmark_client_;
   MockSequencer* sequencer_;
+  MockSequencer* warmup_sequencer_;
   MockRequestSource* request_generator_;
   Envoy::Runtime::RandomGeneratorImpl rand_;
   NiceMock<Envoy::Event::MockDispatcher> dispatcher_;
@@ -86,7 +99,6 @@ public:
   NiceMock<Envoy::ProtobufMessage::MockValidationVisitor> validation_visitor_;
   Envoy::Upstream::ClusterManagerPtr cluster_manager_ptr_;
   Envoy::Tracing::HttpTracerPtr http_tracer_;
-  MockTerminationPredicate* termination_predicate_;
 };
 
 TEST_F(ClientWorkerTest, BasicTest) {
@@ -94,24 +106,13 @@ TEST_F(ClientWorkerTest, BasicTest) {
 
   {
     InSequence dummy;
-
+    EXPECT_CALL(*warmup_sequencer_, start).Times(1);
+    EXPECT_CALL(*warmup_sequencer_, waitForCompletion).Times(1);
+    EXPECT_CALL(*benchmark_client_, setMeasureLatencies(true)).Times(1);
     EXPECT_CALL(*sequencer_, start).Times(1);
     EXPECT_CALL(*sequencer_, waitForCompletion).Times(1);
-  }
-
-  {
-    InSequence dummy;
-
-    // warmup
-    EXPECT_CALL(*benchmark_client_, tryStartRequest(_))
-        .Times(1)
-        .WillRepeatedly(Invoke(this, &ClientWorkerTest::CheckThreadChanged));
-
-    // latency measurement will be initiated
-    EXPECT_CALL(*benchmark_client_, setMeasureLatencies(true)).Times(1);
     EXPECT_CALL(*benchmark_client_, terminate()).Times(1);
   }
-
   int worker_number = 12345;
 
   auto worker = std::make_unique<ClientWorkerImpl>(

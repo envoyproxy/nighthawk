@@ -82,9 +82,8 @@ public:
         .WillOnce(Return(sequencer_idle_strategy));
     EXPECT_CALL(dispatcher_, createTimer_(_)).Times(2);
     Envoy::Event::SimulatedTimeSystem time_system;
-    MockTerminationPredicate termination_predicate;
-    auto sequencer = factory.create(api_->timeSource(), dispatcher_, time_system.monotonicTime(),
-                                    benchmark_client, termination_predicate, stats_store_);
+    auto sequencer = factory.create(api_->timeSource(), dispatcher_, benchmark_client,
+                                    std::make_unique<MockTerminationPredicate>(), stats_store_);
     EXPECT_NE(nullptr, sequencer.get());
   }
 };

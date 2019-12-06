@@ -1,12 +1,13 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 
 #include "envoy/common/pure.h"
 #include "envoy/stats/store.h"
 
 #include "nighthawk/client/benchmark_client.h"
-#include "nighthawk/common/sequencer.h"
+#include "nighthawk/common/phase.h"
 #include "nighthawk/common/statistic.h"
 #include "nighthawk/common/worker.h"
 
@@ -31,9 +32,9 @@ public:
   virtual const std::map<std::string, uint64_t>& thread_local_counter_values() PURE;
 
   /**
-   * @return const Sequencer&
+   * @return const std::vector<PhasePtr>& vector of phases that have been executed.
    */
-  virtual const Sequencer& sequencer() const PURE;
+  virtual const std::vector<PhasePtr>& phases() const PURE;
 };
 
 using ClientWorkerPtr = std::unique_ptr<ClientWorker>;

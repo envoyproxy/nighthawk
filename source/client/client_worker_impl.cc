@@ -5,10 +5,13 @@
 #include "external/envoy/source/common/stats/symbol_table_impl.h"
 
 #include "common/phase_impl.h"
+#include "common/termination_predicate_impl.h"
 #include "common/utility.h"
 
 namespace Nighthawk {
 namespace Client {
+
+using namespace std::chrono_literals;
 
 ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Instance& tls,
                                    Envoy::Upstream::ClusterManagerPtr& cluster_manager,
@@ -19,55 +22,47 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
                                    Envoy::Stats::Store& store, const int worker_number,
                                    const Envoy::MonotonicTime starting_time,
                                    Envoy::Tracing::HttpTracerPtr& http_tracer)
-    : WorkerImpl(api, tls, store), worker_scope_(store_.createScope("cluster.")),
+    : WorkerImpl(api, tls, store), termination_predicate_factory_(termination_predicate_factory),
+      sequencer_factory_(sequencer_factory), worker_scope_(store_.createScope("cluster.")),
       worker_number_scope_(worker_scope_->createScope(fmt::format("{}.", worker_number))),
       worker_number_(worker_number), starting_time_(starting_time), http_tracer_(http_tracer),
       request_generator_(request_generator_factory.create()),
       benchmark_client_(benchmark_client_factory.create(
           api, *dispatcher_, *worker_number_scope_, cluster_manager, http_tracer_,
-          fmt::format("{}", worker_number), *request_generator_)),
-      termination_predicate_(termination_predicate_factory.create(
-          time_source_, *worker_number_scope_, starting_time)) {
-
-  // later, add warmup/cooldown to the vector.
-  // the idea is that we construct the phases we statically configured here.
-  // if we have incoming on-the-fly changes via grpc, we could insert new phases on the fly,
-  // via a to-be-added ClientWorker::insertPhase(). For this to work well grpc client would
-  // have to specify the target phase (and we fail the call if we have a mismatch).
-  // additionally we can add something to terminate the currently executing phase immediately
-  // afterwards.
-  // todo: uniquely scope these stats per phase
-  phases_.push_back(std::make_unique<PhaseImpl>(
-      "main_phase",
-      sequencer_factory.create(time_source_, *dispatcher_, starting_time, *benchmark_client_,
-                               *termination_predicate_, *worker_number_scope_)));
-}
+          fmt::format("{}", worker_number), *request_generator_)) {}
 
 void ClientWorkerImpl::simpleWarmup() {
-  ENVOY_LOG(debug, "> worker {}: warmup start.", worker_number_);
-  if (benchmark_client_->tryStartRequest([this](bool, bool) { dispatcher_->exit(); })) {
-    dispatcher_->run(Envoy::Event::Dispatcher::RunType::RunUntilExit);
-  } else {
-    ENVOY_LOG(warn, "> worker {}: failed to initiate warmup request.", worker_number_);
-  }
-  ENVOY_LOG(debug, "> worker {}: warmup done.", worker_number_);
+  TerminationPredicatePtr warmup_predicates = termination_predicate_factory_.create(
+      time_source_, *worker_number_scope_, time_source_.monotonicTime());
+
+  warmup_predicates->appendToChain(
+      std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
+          worker_number_scope_->counter("benchmark.http_2xx"), 0,
+          TerminationPredicate::Status::TERMINATE));
+
+  phases_.emplace_back(std::make_unique<PhaseImpl>(
+      "warmup", sequencer_factory_.create(time_source_, *dispatcher_, *benchmark_client_,
+                                          std::move(warmup_predicates), *worker_number_scope_)));
+  phases_.back()->run();
 }
 
 void ClientWorkerImpl::work() {
+  if (time_source_.monotonicTime() - starting_time_ > 50us) {
+    ENVOY_LOG(error, "phase starting too late - {} ns delta",
+              (time_source_.monotonicTime() - starting_time_).count());
+  }
+  while (starting_time_ > time_source_.monotonicTime()) {
+  }
   simpleWarmup();
-  benchmark_client_->setMeasureLatencies(true);
 
-  // Maybe we'd want something similar to HeaderSource here. We'd not be iterating
-  // a vector, but pulling from a generator function here.
-  // Then we'd have a static `StaticPhaseSourceImpl` to apply configured behavior.
-  // We could then also have a `RemotePhaseSourceImpl`
-  for (auto& phase : phases_) {
-    auto& sequencer = phase->sequencer();
-    sequencer.start();
-    sequencer.waitForCompletion();
-    if (worker_number_scope_->counter("sequencer.failed_terminations").value() > 0) {
-      break;
-    }
+  if (worker_number_scope_->counter("sequencer.failed_terminations").value() == 0) {
+    benchmark_client_->setMeasureLatencies(true);
+    phases_.emplace_back(std::make_unique<PhaseImpl>(
+        "main", sequencer_factory_.create(time_source_, *dispatcher_, *benchmark_client_,
+                                          termination_predicate_factory_.create(
+                                              time_source_, *worker_number_scope_, starting_time_),
+                                          *worker_number_scope_)));
+    phases_.back()->run();
   }
 
   // Save a final snapshot of the worker-specific counter accumulations before
@@ -94,13 +89,10 @@ void ClientWorkerImpl::shutdownThread() { benchmark_client_->terminate(); }
 StatisticPtrMap ClientWorkerImpl::statistics() const {
   StatisticPtrMap statistics;
   StatisticPtrMap s1 = benchmark_client_->statistics();
-  for (auto& phase : phases_) {
-    auto& sequencer = phase->sequencer();
-    // TODO(oschaaf): uniquely scope these latency stats / phase.
-    StatisticPtrMap s2 = sequencer.statistics();
-    statistics.insert(s1.begin(), s1.end());
-    statistics.insert(s2.begin(), s2.end());
-  }
+  auto& sequencer = phases_.back()->sequencer();
+  StatisticPtrMap s2 = sequencer.statistics();
+  statistics.insert(s1.begin(), s1.end());
+  statistics.insert(s2.begin(), s2.end());
   return statistics;
 }
 
