@@ -18,7 +18,7 @@ TEST_F(RequestSourceTest, StaticRequestSourceImpl) {
   StaticRequestSourceImpl impl(std::move(header), yields);
   auto generator = impl.get();
   while (yields--) {
-    ASSERT_EQ(generator().get(), unsafe_header_ptr);
+    ASSERT_EQ(generator()->header().get(), unsafe_header_ptr);
   }
   ASSERT_EQ(generator(), nullptr);
 }
