@@ -10,8 +10,6 @@
 
 #include "common/frequency.h"
 
-#include "absl/random/random.h"
-#include "absl/random/zipf_distribution.h"
 #include "absl/types/optional.h"
 
 namespace Nighthawk {
@@ -50,22 +48,6 @@ public:
   void releaseOne() override;
 
 protected:
-  int64_t acquireable_count_{0};
-  uint64_t acquired_count_{0};
-  const Frequency frequency_;
-};
-
-/**
- * A rate limiter which linearly ramps up to the desired frequency over the specified period.
- */
-class LinearRampingRateLimiterImpl : public RateLimiterBaseImpl,
-                                     public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
-public:
-  LinearRampingRateLimiterImpl(Envoy::TimeSource& time_source, const Frequency frequency);
-  bool tryAcquireOne() override;
-  void releaseOne() override;
-
-private:
   int64_t acquireable_count_{0};
   uint64_t acquired_count_{0};
   const Frequency frequency_;
@@ -171,29 +153,6 @@ public:
 
 protected:
   const RateLimiterFilter filter_;
-};
-
-/**
- * Takes a probabilistic approach to suppressing an arbitrary wrapper rate limiter.
- */
-class GraduallyOpeningRateLimiterFilter : public FilteringRateLimiterImpl {
-public:
-  GraduallyOpeningRateLimiterFilter(const std::chrono::nanoseconds ramp_time,
-                                    DiscreteNumericDistributionSamplerPtr&& provider,
-                                    RateLimiterPtr&& rate_limiter);
-
-private:
-  DiscreteNumericDistributionSamplerPtr provider_;
-  const std::chrono::nanoseconds ramp_time_;
-};
-
-class ZipfRateLimiterImpl : public FilteringRateLimiterImpl {
-public:
-  ZipfRateLimiterImpl(RateLimiterPtr&& rate_limiter);
-
-private:
-  absl::zipf_distribution<uint64_t> dist_;
-  absl::InsecureBitGen g_;
 };
 
 } // namespace Nighthawk

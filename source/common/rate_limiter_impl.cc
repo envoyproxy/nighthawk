@@ -78,33 +78,6 @@ void LinearRateLimiter::releaseOne() {
   acquired_count_--;
 }
 
-LinearRampingRateLimiterImpl::LinearRampingRateLimiterImpl(Envoy::TimeSource& time_source,
-                                                           const Frequency frequency)
-    : RateLimiterBaseImpl(time_source), frequency_(frequency) {
-  if (frequency_.value() <= 0) {
-    throw NighthawkException("frequency must be > 0");
-  }
-}
-
-bool LinearRampingRateLimiterImpl::tryAcquireOne() {
-  if (acquireable_count_) {
-    acquired_count_++;
-    return acquireable_count_--;
-  }
-  const auto elapsed_time = elapsed();
-  const std::chrono::duration<double> chrono_seconds(elapsed_time);
-  const double seconds = chrono_seconds.count();
-  const double frequency = seconds * frequency_.value();
-  const uint64_t total = std::round(seconds * frequency / 2.0);
-  acquireable_count_ = total - acquired_count_;
-  return acquireable_count_ > 0 ? tryAcquireOne() : false;
-}
-
-void LinearRampingRateLimiterImpl::releaseOne() {
-  acquireable_count_++;
-  acquired_count_--;
-}
-
 DelegatingRateLimiterImpl::DelegatingRateLimiterImpl(
     RateLimiterPtr&& rate_limiter, RateLimiterDelegate random_distribution_generator)
     : ForwardingRateLimiterImpl(std::move(rate_limiter)),
@@ -145,25 +118,5 @@ FilteringRateLimiterImpl::FilteringRateLimiterImpl(RateLimiterPtr&& rate_limiter
 bool FilteringRateLimiterImpl::tryAcquireOne() {
   return rate_limiter_->tryAcquireOne() ? filter_() : false;
 }
-
-GraduallyOpeningRateLimiterFilter::GraduallyOpeningRateLimiterFilter(
-    const std::chrono::nanoseconds ramp_time, DiscreteNumericDistributionSamplerPtr&& provider,
-    RateLimiterPtr&& rate_limiter)
-    : FilteringRateLimiterImpl(
-          std::move(rate_limiter),
-          [this]() {
-            if (elapsed() < ramp_time_) {
-              const double chance_percentage =
-                  100.0 - (static_cast<double>(ramp_time_.count() - elapsed().count()) /
-                           (ramp_time_.count() * 1.0)) *
-                              100.0;
-              return std::round(provider_->getValue() / 10000.0) <= chance_percentage;
-            }
-            return true;
-          }),
-      provider_(std::move(provider)), ramp_time_(ramp_time) {}
-
-ZipfRateLimiterImpl::ZipfRateLimiterImpl(RateLimiterPtr&& rate_limiter)
-    : FilteringRateLimiterImpl(std::move(rate_limiter), [this]() { return dist_(g_); }), dist_(1) {}
 
 } // namespace Nighthawk

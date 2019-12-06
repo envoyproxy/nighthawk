@@ -67,7 +67,6 @@ envoy_cc_library(
         "//api/client:grpc_service_lib",
         "//include/nighthawk/client:client_includes",
         "//include/nighthawk/common:base_includes",
-        "@com_google_absl//absl/random",
         "@dep_hdrhistogram_c//:hdrhistogram_c",
         "@envoy//source/common/common:assert_lib_with_external_headers",
         "@envoy//source/common/common:lock_guard_lib_with_external_headers",
