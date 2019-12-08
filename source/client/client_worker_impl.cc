@@ -32,14 +32,17 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
           fmt::format("{}", worker_number), *request_generator_)) {}
 
 void ClientWorkerImpl::simpleWarmup() {
-  TerminationPredicatePtr warmup_predicates = termination_predicate_factory_.create(
-      time_source_, *worker_number_scope_, time_source_.monotonicTime());
-
+  if (time_source_.monotonicTime() - starting_time_ > 50us) {
+    ENVOY_LOG(error, "phase starting too late - {} ns delta",
+              (time_source_.monotonicTime() - starting_time_).count());
+  }
+  while (starting_time_ > time_source_.monotonicTime()) {
+    dispatcher_->run(Envoy::Event::Dispatcher::RunType::NonBlock);
+  }
+  TerminationPredicatePtr warmup_predicates =
+      termination_predicate_factory_.create(time_source_, *worker_number_scope_);
   warmup_predicates->appendToChain(
-      std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
-          worker_number_scope_->counter("benchmark.http_2xx"), 0,
-          TerminationPredicate::Status::TERMINATE));
-
+      std::make_unique<DurationTerminationPredicateImpl>(time_source_, 1s));
   phases_.emplace_back(std::make_unique<PhaseImpl>(
       "warmup", sequencer_factory_.create(time_source_, *dispatcher_, *benchmark_client_,
                                           std::move(warmup_predicates), *worker_number_scope_)));
@@ -47,21 +50,14 @@ void ClientWorkerImpl::simpleWarmup() {
 }
 
 void ClientWorkerImpl::work() {
-  if (time_source_.monotonicTime() - starting_time_ > 50us) {
-    ENVOY_LOG(error, "phase starting too late - {} ns delta",
-              (time_source_.monotonicTime() - starting_time_).count());
-  }
-  while (starting_time_ > time_source_.monotonicTime()) {
-  }
   simpleWarmup();
-
   if (worker_number_scope_->counter("sequencer.failed_terminations").value() == 0) {
     benchmark_client_->setMeasureLatencies(true);
     phases_.emplace_back(std::make_unique<PhaseImpl>(
-        "main", sequencer_factory_.create(time_source_, *dispatcher_, *benchmark_client_,
-                                          termination_predicate_factory_.create(
-                                              time_source_, *worker_number_scope_, starting_time_),
-                                          *worker_number_scope_)));
+        "main", sequencer_factory_.create(
+                    time_source_, *dispatcher_, *benchmark_client_,
+                    termination_predicate_factory_.create(time_source_, *worker_number_scope_),
+                    *worker_number_scope_)));
     phases_.back()->run();
   }
 

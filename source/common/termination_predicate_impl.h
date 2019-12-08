@@ -5,6 +5,8 @@
 
 #include "nighthawk/common/termination_predicate.h"
 
+#include "absl/types/optional.h"
+
 namespace Nighthawk {
 
 class TerminationPredicateBaseImpl : public TerminationPredicate {
@@ -31,14 +33,14 @@ private:
 
 class DurationTerminationPredicateImpl : public TerminationPredicateBaseImpl {
 public:
-  DurationTerminationPredicateImpl(Envoy::TimeSource& time_source, const Envoy::MonotonicTime start,
+  DurationTerminationPredicateImpl(Envoy::TimeSource& time_source,
                                    std::chrono::microseconds duration)
-      : time_source_(time_source), start_(start), duration_(duration) {}
+      : time_source_(time_source), start_(absl::nullopt), duration_(duration) {}
   TerminationPredicate::Status evaluate() override;
 
 private:
   Envoy::TimeSource& time_source_;
-  const Envoy::MonotonicTime start_;
+  absl::optional<Envoy::MonotonicTime> start_;
   std::chrono::microseconds duration_;
 };
 

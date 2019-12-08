@@ -136,11 +136,10 @@ RequestSourcePtr RequestSourceFactoryImpl::create() const {
 TerminationPredicateFactoryImpl::TerminationPredicateFactoryImpl(const Options& options)
     : OptionBasedFactoryImpl(options) {}
 
-TerminationPredicatePtr
-TerminationPredicateFactoryImpl::create(Envoy::TimeSource& time_source, Envoy::Stats::Scope& scope,
-                                        const Envoy::MonotonicTime start) const {
+TerminationPredicatePtr TerminationPredicateFactoryImpl::create(Envoy::TimeSource& time_source,
+                                                                Envoy::Stats::Scope& scope) const {
   TerminationPredicatePtr duration_predicate =
-      std::make_unique<DurationTerminationPredicateImpl>(time_source, start, options_.duration());
+      std::make_unique<DurationTerminationPredicateImpl>(time_source, options_.duration());
   TerminationPredicate* current_predicate = duration_predicate.get();
   current_predicate = linkConfiguredPredicates(*current_predicate, options_.failurePredicates(),
                                                TerminationPredicate::Status::FAIL, scope);

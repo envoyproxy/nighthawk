@@ -18,8 +18,8 @@ SequencerImpl::SequencerImpl(
     : target_(std::move(target)), platform_util_(platform_util), dispatcher_(dispatcher),
       time_source_(time_source), rate_limiter_(std::move(rate_limiter)),
       latency_statistic_(std::move(latency_statistic)),
-      blocked_statistic_(std::move(blocked_statistic)), start_time_(time_source.monotonicTime()),
-      idle_strategy_(idle_strategy), termination_predicate_(std::move(termination_predicate)),
+      blocked_statistic_(std::move(blocked_statistic)), idle_strategy_(idle_strategy),
+      termination_predicate_(std::move(termination_predicate)),
       last_termination_status_(TerminationPredicate::Status::PROCEED),
       scope_(scope.createScope("sequencer.")),
       sequencer_stats_({ALL_SEQUENCER_STATS(POOL_COUNTER(*scope_))}) {
