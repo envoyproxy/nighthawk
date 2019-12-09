@@ -121,8 +121,9 @@ RequestSourcePtr RequestSourceFactoryImpl::create() const {
   header->insertScheme().value(uri.scheme() == "https"
                                    ? Envoy::Http::Headers::get().SchemeValues.Https
                                    : Envoy::Http::Headers::get().SchemeValues.Http);
-  if (options_.requestBodySize()) {
-    header->insertContentLength().value(options_.requestBodySize());
+  const uint32_t content_length = options_.requestBodySize();
+  if (content_length > 0) {
+    header->insertContentLength().value(content_length);
   }
 
   auto request_options = options_.toCommandLineOptions()->request_options();
