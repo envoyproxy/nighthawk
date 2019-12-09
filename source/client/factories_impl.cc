@@ -29,11 +29,11 @@ BenchmarkClientFactoryImpl::BenchmarkClientFactoryImpl(const Options& options)
 BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
     Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
     Envoy::Upstream::ClusterManagerPtr& cluster_manager, Envoy::Tracing::HttpTracerPtr& http_tracer,
-    absl::string_view cluster_name, RequestSource& header_generator) const {
+    absl::string_view cluster_name, RequestSource& request_generator) const {
   StatisticFactoryImpl statistic_factory(options_);
   auto benchmark_client = std::make_unique<BenchmarkClientHttpImpl>(
       api, dispatcher, scope, statistic_factory.create(), statistic_factory.create(), options_.h2(),
-      cluster_manager, http_tracer, cluster_name, header_generator.get(), !options_.openLoop());
+      cluster_manager, http_tracer, cluster_name, request_generator.get(), !options_.openLoop());
   auto request_options = options_.toCommandLineOptions()->request_options();
   benchmark_client->setConnectionLimit(options_.connections());
   benchmark_client->setMaxPendingRequests(options_.maxPendingRequests());
@@ -121,8 +121,9 @@ RequestSourcePtr RequestSourceFactoryImpl::create() const {
   header->insertScheme().value(uri.scheme() == "https"
                                    ? Envoy::Http::Headers::get().SchemeValues.Https
                                    : Envoy::Http::Headers::get().SchemeValues.Http);
-  if (options_.requestBodySize()) {
-    header->insertContentLength().value(options_.requestBodySize());
+  const uint32_t content_length = options_.requestBodySize();
+  if (content_length > 0) {
+    header->insertContentLength().value(content_length);
   }
 
   auto request_options = options_.toCommandLineOptions()->request_options();

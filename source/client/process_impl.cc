@@ -97,7 +97,7 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
                                               time_system_, platform_impl_.fileSystem())),
       dispatcher_(api_->allocateDispatcher()), benchmark_client_factory_(options),
       termination_predicate_factory_(options), sequencer_factory_(options),
-      header_generator_factory_(options), options_(options), init_manager_("nh_init_manager"),
+      request_generator_factory_(options), options_(options), init_manager_("nh_init_manager"),
       local_info_(new Envoy::LocalInfo::LocalInfoImpl(
           {}, Envoy::Network::Utility::getLocalAddress(Envoy::Network::Address::IpVersion::v4),
           "nighthawk_service_zone", "nighthawk_service_cluster", "nighthawk_service_node")),
@@ -155,7 +155,7 @@ const std::vector<ClientWorkerPtr>& ProcessImpl::createWorkers(const uint32_t co
         ((inter_worker_delay_usec * worker_number) * 1us));
     workers_.push_back(std::make_unique<ClientWorkerImpl>(
         *api_, tls_, cluster_manager_, benchmark_client_factory_, termination_predicate_factory_,
-        sequencer_factory_, header_generator_factory_, store_root_, worker_number,
+        sequencer_factory_, request_generator_factory_, store_root_, worker_number,
         first_worker_start + worker_delay, http_tracer_));
     worker_number++;
   }

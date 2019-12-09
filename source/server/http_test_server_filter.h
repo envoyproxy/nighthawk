@@ -68,8 +68,11 @@ public:
                                     nighthawk::server::ResponseOptions& response_options);
 
 private:
+  void sendReply();
   const HttpTestServerDecoderFilterConfigSharedPtr config_;
   Envoy::Http::StreamDecoderFilterCallbacks* decoder_callbacks_;
+  nighthawk::server::ResponseOptions base_config_;
+  absl::optional<std::string> error_message_;
 };
 
 } // namespace Server
