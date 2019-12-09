@@ -26,6 +26,7 @@ envoy_cc_test(
     srcs = ["benchmark_http_client_test.cc"],
     repository = "@envoy",
     deps = [
+        "//source/common:request_impl_lib",
         "//test:nighthawk_mocks",
         "//test/test_common:environment_lib",
         "@envoy//source/common/http:header_map_lib_with_external_headers",
@@ -246,8 +247,8 @@ envoy_cc_test(
 )
 
 envoy_cc_test(
-    name = "header_generator_test",
-    srcs = ["header_generator_test.cc"],
+    name = "request_generator_test",
+    srcs = ["request_generator_test.cc"],
     repository = "@envoy",
     deps = [
         "//source/client:nighthawk_client_lib",
@@ -265,6 +266,7 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         "//source/client:nighthawk_client_lib",
+        "//source/client:nighthawk_service_lib",
         "//source/common:nighthawk_common_lib",
         "//source/server:http_test_server_filter_lib",
         "//test/test_common:environment_lib",
