@@ -184,6 +184,12 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "Enable open loop mode. When enabled, the benchmark client will not provide backpressure "
       "when resource limits are hit.",
       cmd);
+  TCLAP::ValueArg<uint32_t> uniform_distributed_jitter_range(
+      "", "uniform-distributed-jitter-range",
+      fmt::format(
+          "Add uniformly distributed request-release timing jitter in nanoseconds. (default: {}).",
+          uniform_distributed_jitter_range_),
+      false, 0, "uint32_t", cmd);
 
   TCLAP::UnlabeledValueArg<std::string> uri("uri",
                                             "uri to benchmark. http:// and https:// are supported, "

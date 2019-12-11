@@ -43,11 +43,13 @@ bazel build -c opt //:nighthawk
 ```
 USAGE:
 
-bazel-bin/nighthawk_client  [--open-loop] [--failure-predicate <<string,
-uint64_t>>] ... [--termination-predicate
-<<string, uint64_t>>] ... [--trace <uri
-format>] [--sequencer-idle-strategy <spin
-|poll|sleep>] [--max-requests-per-connection
+bazel-bin/nighthawk_client  [--uniform-distributed-jitter-range
+<uint32_t>] [--open-loop]
+[--failure-predicate <<string, uint64_t>>]
+... [--termination-predicate <<string,
+uint64_t>>] ... [--trace <uri format>]
+[--sequencer-idle-strategy <spin|poll
+|sleep>] [--max-requests-per-connection
 <uint32_t>] [--max-active-requests
 <uint32_t>] [--max-pending-requests
 <uint32_t>] [--tls-context <string>]
@@ -67,6 +69,10 @@ format>
 
 
 Where:
+
+--uniform-distributed-jitter-range <uint32_t>
+Add uniformly distributed request-release timing jitter in
+nanoseconds. (default: 0).
 
 --open-loop
 Enable open loop mode. When enabled, the benchmark client will not

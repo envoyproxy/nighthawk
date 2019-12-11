@@ -59,6 +59,16 @@ SequencerPtr SequencerFactoryImpl::create(Envoy::TimeSource& time_source,
   if (burst_size) {
     rate_limiter = std::make_unique<BurstingRateLimiter>(std::move(rate_limiter), burst_size);
   }
+
+  const uint64_t uniform_distributed_jitter_range = options_.uniformDistributedJitterRange();
+  if (uniform_distributed_jitter_range) {
+    rate_limiter = std::make_unique<DistributionSamplingRateLimiterImpl>(
+        time_source,
+        std::make_unique<UniformRandomDistributionSamplerImpl>(
+            std::chrono::nanoseconds(uniform_distributed_jitter_range)),
+        std::move(rate_limiter));
+  }
+
   SequencerTarget sequencer_target = [&benchmark_client](CompletionCallback f) -> bool {
     return benchmark_client.tryStartRequest(std::move(f));
   };

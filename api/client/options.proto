@@ -114,4 +114,6 @@ message CommandLineOptions {
   map<string, uint64> failure_predicates = 24;
   // See :option:`--open-loop` for details.
   google.protobuf.BoolValue open_loop = 21;
+  // See :option:`--uniform-distributed-jitter-range`
+  google.protobuf.UInt32Value uniform_distributed_jitter_range = 25;
 }
