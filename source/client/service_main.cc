@@ -71,7 +71,6 @@ void ServiceMain::start() {
     std::ofstream myfile(listener_output_path_);
     if (myfile.is_open()) {
       myfile << listener_bound_address_;
-      myfile.close();
     }
   }
   channel_ = grpc::CreateChannel(listener_bound_address_, grpc::InsecureChannelCredentials());

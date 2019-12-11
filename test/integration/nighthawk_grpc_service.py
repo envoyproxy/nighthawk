@@ -19,7 +19,7 @@ class NighthawkGrpcService(object):
 
   Attributes:
   server_ip: IP address used by the gRPC service to listen. 
-  server_port: An integer, indicates the port used by the gRPC service to listen. 
+  server_port: An integer, indicates the port used by the gRPC service to listen. 0 means that the server is not listening.
   """
 
   def __init__(self, server_binary_path, server_ip, ip_version):
@@ -39,27 +39,29 @@ class NighthawkGrpcService(object):
     self._server_binary_path = server_binary_path
     self._socket_type = socket.AF_INET6 if ip_version == IpVersion.IPV6 else socket.AF_INET
     self._server_thread = threading.Thread(target=self._serverThreadRunner)
-    self._address_file = ""
+    self._address_file = None
 
   def _serverThreadRunner(self):
     with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".tmp") as tmp:
       self._address_file = tmp.name
-    args = [
-        self._server_binary_path, "--listener-address-file", self._address_file, "--listen",
-        "%s:0" % str(self.server_ip)
-    ]
-    logging.info("Nighthawk grpc service popen() args: [%s]" % args)
-    self._server_process = subprocess.Popen(args)
-    self._server_process.communicate()
+      args = [
+          self._server_binary_path, "--listener-address-file", self._address_file, "--listen",
+          "%s:0" % str(self.server_ip)
+      ]
+      logging.info("Nighthawk grpc service popen() args: [%s]" % args)
+      self._server_process = subprocess.Popen(args)
+      self._server_process.communicate()
+      self._address_file = None
 
   def _waitUntilServerListening(self):
     tries = 30
     while tries > 0:
       contents = ""
+      if not self._address_file : continue
       try:
         with open(self._address_file) as f:
           contents = f.read().strip()
-      except (IOError):
+      except IOError:
         pass
       if contents != "":
         tmp = contents.split(":")
@@ -73,21 +75,23 @@ class NighthawkGrpcService(object):
                   self.server_ip, self.server_port)
     return False
 
-  """
-  Starts the Nighthawk gRPC service. Returns True upon success, after which the server_port attribute
-  can be queried to get the listening port.
-  """
-
   def start(self):
+    """
+    Starts the Nighthawk gRPC service. Returns True upon success, after which the server_port attribute
+    can be queried to get the listening port.
+    """
+
     self._server_thread.daemon = True
     self._server_thread.start()
     return self._waitUntilServerListening()
 
-  """
-  Signals the Nighthawk gRPC service to stop, waits for its termination, and returns the exit code of the associated process.
-  """
-
   def stop(self):
+    """
+    Signals the Nighthawk gRPC service to stop, waits for its termination, and returns the exit code of the associated process.
+    """
+
     self._server_process.terminate()
     self._server_thread.join()
+    self.server_port = 0
     return self._server_process.returncode
+  
