@@ -199,6 +199,7 @@
   "200": "60"
  },
  "URL": "http://127.0.0.1:10000/",
+ "Version": "0.0",
  "StartTime": "2019-10-16T00:30:12Z",
  "RequestedDuration": "5s"
 }

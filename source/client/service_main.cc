@@ -1,6 +1,7 @@
 #include "client/service_main.h"
 
 #include "nighthawk/common/exception.h"
+#include "nighthawk/common/version.h"
 
 #include "common/utility.h"
 
@@ -14,7 +15,7 @@ namespace Client {
 
 ServiceMain::ServiceMain(int argc, const char** argv) {
   const char* descr = "L7 (HTTP/HTTPS/HTTP2) performance characterization tool.";
-  TCLAP::CmdLine cmd(descr, ' ', "PoC"); // NOLINT
+  TCLAP::CmdLine cmd(descr, ' ', Globals::VersionString()); // NOLINT
 
   TCLAP::ValueArg<std::string> listen_arg(
       "", "listen",

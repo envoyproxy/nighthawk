@@ -1,5 +1,7 @@
 #include "client/options_impl.h"
 
+#include "nighthawk/common/version.h"
+
 #include "external/envoy/source/common/protobuf/message_validator_impl.h"
 #include "external/envoy/source/common/protobuf/utility.h"
 
@@ -29,7 +31,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   // TODO(oschaaf): Purge the validation we perform here. Most of it should have become
   // redundant now that we also perform validation of the resulting proto.
   const char* descr = "L7 (HTTP/HTTPS/HTTP2) performance characterization tool.";
-  TCLAP::CmdLine cmd(descr, ' ', "PoC"); // NOLINT
+  TCLAP::CmdLine cmd(descr, ' ', Globals::VersionString()); // NOLINT
 
   // Any default values we pass into TCLAP argument declarations are arbitrary, as we do not rely on
   // TCLAP for providing default values. Default values are declared in and sourced from
