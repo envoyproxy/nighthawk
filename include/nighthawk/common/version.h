@@ -1,6 +1,6 @@
 #pragma once
 
-#include "external/envoy/source/common/common/fmt.h"
+#include "absl/strings/str_cat.h"
 
 namespace Nighthawk {
 
@@ -9,7 +9,7 @@ const int MINOR_VERSION{3};
 
 class Globals {
 public:
-  static std::string VersionString() { return fmt::format("{}.{}", MAJOR_VERSION, MINOR_VERSION); }
+  static std::string VersionString() { return absl::StrCat(MAJOR_VERSION, ".", MINOR_VERSION); }
 };
 
 } // namespace Nighthawk
