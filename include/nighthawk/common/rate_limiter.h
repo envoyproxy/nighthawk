@@ -30,9 +30,13 @@ public:
   virtual void releaseOne() PURE;
 
   /**
-   * @return Envoy::TimeSource& time_source
+   * @return Envoy::TimeSource& time_source used to track time.
    */
   virtual Envoy::TimeSource& timeSource() PURE;
+  /**
+   * @return std::chrono::nanoseconds elapsed since the first call to tryAcquireOne(). Used by some
+   * rate limiter implementations to compute acquisition rate.
+   */
   virtual std::chrono::nanoseconds elapsed() PURE;
 };
 
