@@ -57,7 +57,7 @@ class NighthawkGrpcService(object):
     tries = 30
     while tries > 0:
       contents = ""
-      if not self._address_file : continue
+      if not self._address_file: continue
       try:
         with open(self._address_file) as f:
           contents = f.read().strip()
@@ -94,4 +94,3 @@ class NighthawkGrpcService(object):
     self._server_thread.join()
     self.server_port = 0
     return self._server_process.returncode
-  
