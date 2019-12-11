@@ -39,18 +39,19 @@ class NighthawkGrpcService(object):
     self._server_binary_path = server_binary_path
     self._socket_type = socket.AF_INET6 if ip_version == IpVersion.IPV6 else socket.AF_INET
     self._server_thread = threading.Thread(target=self._serverThreadRunner)
-    self._address_file = ""
+    self._address_file = None
 
   def _serverThreadRunner(self):
     with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".tmp") as tmp:
       self._address_file = tmp.name
-    args = [
-        self._server_binary_path, "--listener-address-file", self._address_file, "--listen",
-        "%s:0" % str(self.server_ip)
-    ]
-    logging.info("Nighthawk grpc service popen() args: [%s]" % args)
-    self._server_process = subprocess.Popen(args)
-    self._server_process.communicate()
+      args = [
+          self._server_binary_path, "--listener-address-file", self._address_file, "--listen",
+          "%s:0" % str(self.server_ip)
+      ]
+      logging.info("Nighthawk grpc service popen() args: [%s]" % args)
+      self._server_process = subprocess.Popen(args)
+      self._server_process.communicate()
+      self._address_file = None
 
   def _waitUntilServerListening(self):
     tries = 30
@@ -59,7 +60,7 @@ class NighthawkGrpcService(object):
       try:
         with open(self._address_file) as f:
           contents = f.read().strip()
-      except (IOError):
+      except IOError:
         pass
       if contents != "":
         tmp = contents.split(":")
