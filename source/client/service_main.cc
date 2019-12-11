@@ -15,7 +15,7 @@ namespace Client {
 
 ServiceMain::ServiceMain(int argc, const char** argv) {
   const char* descr = "L7 (HTTP/HTTPS/HTTP2) performance characterization tool.";
-  TCLAP::CmdLine cmd(descr, ' ', Globals::VersionString()); // NOLINT
+  TCLAP::CmdLine cmd(descr, ' ', VersionUtils::VersionString()); // NOLINT
 
   TCLAP::ValueArg<std::string> listen_arg(
       "", "listen",
