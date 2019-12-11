@@ -15,7 +15,9 @@
 namespace Nighthawk {
 
 /**
- * Rate limiter base class, which implements some shared functionality.
+ * Rate limiter base class, which implements some shared functionality for derivations that
+ * compute acquireable counts based on elapsed time. Rate limiters that apply filters,offsets
+ * or otherwise wrap another rate limiter should derive from ForwardingRateLimiterImpl instead.
  */
 class RateLimiterBaseImpl : public RateLimiter {
 public:

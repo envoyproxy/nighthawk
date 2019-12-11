@@ -84,14 +84,13 @@ DelegatingRateLimiterImpl::DelegatingRateLimiterImpl(
       random_distribution_generator_(std::move(random_distribution_generator)) {}
 
 bool DelegatingRateLimiterImpl::tryAcquireOne() {
-  const auto now = timeSource().monotonicTime();
   if (distributed_start_ == absl::nullopt) {
     if (rate_limiter_->tryAcquireOne()) {
-      distributed_start_ = now + random_distribution_generator_();
+      distributed_start_ = timeSource().monotonicTime() + random_distribution_generator_();
     }
   }
 
-  if (distributed_start_ != absl::nullopt && distributed_start_ <= now) {
+  if (distributed_start_ != absl::nullopt && distributed_start_ <= timeSource().monotonicTime()) {
     distributed_start_ = absl::nullopt;
     return true;
   }
