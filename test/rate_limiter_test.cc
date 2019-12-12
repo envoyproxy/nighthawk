@@ -77,20 +77,17 @@ public:
     const auto burst_interval_ms =
         std::chrono::duration_cast<std::chrono::milliseconds>(frequency.interval() * burst_size);
 
-    EXPECT_FALSE(rate_limiter->tryAcquireOne());
-    time_system.sleep(burst_interval_ms);
-    for (uint64_t i = 0; i < burst_size; i++) {
-      EXPECT_TRUE(rate_limiter->tryAcquireOne());
+    for (uint64_t i = 0; i < 10000; i++) {
+      uint64_t burst_acquired = 0;
+      while (rate_limiter->tryAcquireOne()) {
+        burst_acquired++;
+      }
+      if (burst_acquired) {
+        EXPECT_EQ(burst_acquired, burst_size);
+        EXPECT_EQ(i % burst_interval_ms.count(), 0);
+      }
+      time_system.sleep(1ms);
     }
-    EXPECT_FALSE(rate_limiter->tryAcquireOne());
-    // Note to self: ignore this change here in the phase draft.
-    // this test will be fixed in some of the upcoming rate limiting improvements/features.
-    // time_system.sleep(burst_interval_ms / 3);
-    // EXPECT_FALSE(rate_limiter->tryAcquireOne());
-    // time_system.sleep(burst_interval_ms);
-    // for (uint64_t i = 0; i < burst_size; i++) {
-    //  EXPECT_TRUE(rate_limiter->tryAcquireOne());
-    //}
   }
 };
 
@@ -111,9 +108,11 @@ TEST_F(RateLimiterTest, DistributionSamplingRateLimiterImplTest) {
   auto mock_rate_limiter = std::make_unique<MockRateLimiter>();
   MockRateLimiter& unsafe_mock_rate_limiter = *mock_rate_limiter;
   Envoy::Event::SimulatedTimeSystem time_system;
+  EXPECT_CALL(unsafe_mock_rate_limiter, timeSource)
+      .Times(AtLeast(1))
+      .WillRepeatedly(ReturnRef(time_system));
   RateLimiterPtr rate_limiter = std::make_unique<DistributionSamplingRateLimiterImpl>(
-      time_system, std::make_unique<UniformRandomDistributionSamplerImpl>(1ns),
-      std::move(mock_rate_limiter));
+      std::make_unique<UniformRandomDistributionSamplerImpl>(1), std::move(mock_rate_limiter));
 
   EXPECT_CALL(unsafe_mock_rate_limiter, tryAcquireOne).Times(tries).WillRepeatedly(Return(true));
   EXPECT_CALL(unsafe_mock_rate_limiter, releaseOne).Times(tries);
@@ -126,7 +125,7 @@ TEST_F(RateLimiterTest, DistributionSamplingRateLimiterImplTest) {
       acquisitions++;
     }
     // We test the release gets propagated to the mock rate limiter.
-    // also, the release will force DelegatingRateLimiter to propagate tryAcquireOne.
+    // also, the release will force DelegatingRateLimiterImpl to propagate tryAcquireOne.
     rate_limiter->releaseOne();
   }
   // 1 in a billion chance of failure.
@@ -141,10 +140,12 @@ TEST_F(RateLimiterTest, DistributionSamplingRateLimiterImplSchedulingTest) {
   Envoy::Event::SimulatedTimeSystem time_system;
   auto* unsafe_discrete_numeric_distribution_sampler = new MockDiscreteNumericDistributionSampler();
   RateLimiterPtr rate_limiter = std::make_unique<DistributionSamplingRateLimiterImpl>(
-      time_system,
       std::unique_ptr<DiscreteNumericDistributionSampler>(
           unsafe_discrete_numeric_distribution_sampler),
       std::move(mock_rate_limiter));
+  EXPECT_CALL(unsafe_mock_rate_limiter, timeSource)
+      .Times(AtLeast(1))
+      .WillRepeatedly(ReturnRef(time_system));
 
   EXPECT_CALL(unsafe_mock_rate_limiter, tryAcquireOne)
       .Times(AtLeast(1))

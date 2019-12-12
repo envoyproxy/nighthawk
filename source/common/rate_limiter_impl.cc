@@ -6,8 +6,10 @@
 
 namespace Nighthawk {
 
+using namespace std::chrono_literals;
+
 BurstingRateLimiter::BurstingRateLimiter(RateLimiterPtr&& rate_limiter, const uint64_t burst_size)
-    : rate_limiter_(std::move(rate_limiter)), burst_size_(burst_size) {
+    : ForwardingRateLimiterImpl(std::move(rate_limiter)), burst_size_(burst_size) {
   ASSERT(burst_size_ > 0);
 }
 
@@ -51,7 +53,8 @@ void BurstingRateLimiter::releaseOne() {
 }
 
 LinearRateLimiter::LinearRateLimiter(Envoy::TimeSource& time_source, const Frequency frequency)
-    : time_source_(time_source), acquireable_count_(0), acquired_count_(0), frequency_(frequency) {
+    : RateLimiterBaseImpl(time_source), acquireable_count_(0), acquired_count_(0),
+      frequency_(frequency) {
   if (frequency.value() <= 0) {
     throw NighthawkException("Frequency must be > 0");
   }
@@ -59,20 +62,14 @@ LinearRateLimiter::LinearRateLimiter(Envoy::TimeSource& time_source, const Frequ
 
 bool LinearRateLimiter::tryAcquireOne() {
   // TODO(oschaaf): consider adding an explicit start() call to the interface.
-  if (!started_) {
-    started_at_ = time_source_.monotonicTime();
-    started_ = true;
-  }
   if (acquireable_count_ > 0) {
     acquireable_count_--;
     acquired_count_++;
     return true;
   }
 
-  const auto elapsed_since_start = time_source_.monotonicTime() - started_at_;
   acquireable_count_ =
-      static_cast<int64_t>(std::floor(elapsed_since_start / frequency_.interval())) -
-      acquired_count_;
+      static_cast<int64_t>(std::floor(elapsed() / frequency_.interval())) - acquired_count_;
   return acquireable_count_ > 0 ? tryAcquireOne() : false;
 }
 
@@ -81,20 +78,19 @@ void LinearRateLimiter::releaseOne() {
   acquired_count_--;
 }
 
-DelegatingRateLimiter::DelegatingRateLimiter(Envoy::TimeSource& time_source,
-                                             RateLimiterPtr&& rate_limiter,
-                                             RateLimiterDelegate random_distribution_generator)
-    : random_distribution_generator_(std::move(random_distribution_generator)),
-      time_source_(time_source), rate_limiter_(std::move(rate_limiter)) {}
+DelegatingRateLimiterImpl::DelegatingRateLimiterImpl(
+    RateLimiterPtr&& rate_limiter, RateLimiterDelegate random_distribution_generator)
+    : ForwardingRateLimiterImpl(std::move(rate_limiter)),
+      random_distribution_generator_(std::move(random_distribution_generator)) {}
 
-bool DelegatingRateLimiter::tryAcquireOne() {
+bool DelegatingRateLimiterImpl::tryAcquireOne() {
   if (distributed_start_ == absl::nullopt) {
     if (rate_limiter_->tryAcquireOne()) {
-      distributed_start_ = time_source_.monotonicTime() + random_distribution_generator_();
+      distributed_start_ = timeSource().monotonicTime() + random_distribution_generator_();
     }
   }
 
-  if (distributed_start_ != absl::nullopt && distributed_start_ <= time_source_.monotonicTime()) {
+  if (distributed_start_ != absl::nullopt && distributed_start_ <= timeSource().monotonicTime()) {
     distributed_start_ = absl::nullopt;
     return true;
   }
@@ -102,17 +98,24 @@ bool DelegatingRateLimiter::tryAcquireOne() {
   return false;
 }
 
-void DelegatingRateLimiter::releaseOne() {
+void DelegatingRateLimiterImpl::releaseOne() {
   distributed_start_ = absl::nullopt;
   rate_limiter_->releaseOne();
 }
 
 DistributionSamplingRateLimiterImpl::DistributionSamplingRateLimiterImpl(
-    Envoy::TimeSource& time_source, DiscreteNumericDistributionSamplerPtr&& provider,
-    RateLimiterPtr&& rate_limiter)
-    : DelegatingRateLimiter(
-          time_source, std::move(rate_limiter),
+    DiscreteNumericDistributionSamplerPtr&& provider, RateLimiterPtr&& rate_limiter)
+    : DelegatingRateLimiterImpl(
+          std::move(rate_limiter),
           [this]() { return std::chrono::duration<uint64_t, std::nano>(provider_->getValue()); }),
       provider_(std::move(provider)) {}
+
+FilteringRateLimiterImpl::FilteringRateLimiterImpl(RateLimiterPtr&& rate_limiter,
+                                                   RateLimiterFilter filter)
+    : ForwardingRateLimiterImpl(std::move(rate_limiter)), filter_(std::move(filter)) {}
+
+bool FilteringRateLimiterImpl::tryAcquireOne() {
+  return rate_limiter_->tryAcquireOne() ? filter_() : false;
+}
 
 } // namespace Nighthawk
