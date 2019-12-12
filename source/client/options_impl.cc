@@ -186,8 +186,8 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       cmd);
   TCLAP::ValueArg<std::string> jitter_uniform(
       "", "jitter-uniform",
-      "Add uniformly distributed absolute uniformly distributed request-release timing jitter. For "
-      "example, to add 10 us of jitter, specify .00001s. Default is empty / no uniform jitter.",
+      "Add uniformly distributed absolute request-release timing jitter. For example, to add 10 us "
+      "of jitter, specify .00001s. Default is empty / no uniform jitter.",
       false, "", "duration", cmd);
   TCLAP::UnlabeledValueArg<std::string> uri("uri",
                                             "uri to benchmark. http:// and https:// are supported, "
