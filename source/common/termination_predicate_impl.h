@@ -31,6 +31,10 @@ private:
   TerminationPredicatePtr linked_child_;
 };
 
+/**
+ * Predicate which indicates termination iff the passed in duration has expired.
+ * time tracking starts at the first call to evaluate().
+ */
 class DurationTerminationPredicateImpl : public TerminationPredicateBaseImpl {
 public:
   DurationTerminationPredicateImpl(Envoy::TimeSource& time_source,
