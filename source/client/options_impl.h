@@ -57,9 +57,7 @@ public:
   TerminationPredicateMap failurePredicates() const override { return failure_predicates_; }
   bool openLoop() const override { return open_loop_; }
 
-  uint32_t uniformDistributedJitterRange() const override {
-    return uniform_distributed_jitter_range_;
-  }
+  std::chrono::nanoseconds jitterUniform() const override { return jitter_uniform_; }
 
 private:
   void parsePredicates(const TCLAP::MultiArg<std::string>& arg,
@@ -96,7 +94,7 @@ private:
   TerminationPredicateMap termination_predicates_;
   TerminationPredicateMap failure_predicates_;
   bool open_loop_{false};
-  uint32_t uniform_distributed_jitter_range_{0};
+  std::chrono::nanoseconds jitter_uniform_;
 };
 
 } // namespace Client

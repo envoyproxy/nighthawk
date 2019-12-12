@@ -94,7 +94,7 @@ public:
   MOCK_CONST_METHOD0(terminationPredicates, Client::TerminationPredicateMap());
   MOCK_CONST_METHOD0(failurePredicates, Client::TerminationPredicateMap());
   MOCK_CONST_METHOD0(openLoop, bool());
-  MOCK_CONST_METHOD0(uniformDistributedJitterRange, uint32_t());
+  MOCK_CONST_METHOD0(jitterUniform, std::chrono::nanoseconds());
 };
 
 class MockBenchmarkClientFactory : public Client::BenchmarkClientFactory {

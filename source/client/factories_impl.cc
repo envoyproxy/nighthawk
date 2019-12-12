@@ -60,10 +60,10 @@ SequencerPtr SequencerFactoryImpl::create(Envoy::TimeSource& time_source,
     rate_limiter = std::make_unique<BurstingRateLimiter>(std::move(rate_limiter), burst_size);
   }
 
-  const uint64_t uniform_distributed_jitter_range = options_.uniformDistributedJitterRange();
-  if (uniform_distributed_jitter_range) {
+  const std::chrono::nanoseconds jitter_uniform = options_.jitterUniform();
+  if (jitter_uniform.count() > 0) {
     rate_limiter = std::make_unique<DistributionSamplingRateLimiterImpl>(
-        std::make_unique<UniformRandomDistributionSamplerImpl>(uniform_distributed_jitter_range),
+        std::make_unique<UniformRandomDistributionSamplerImpl>(jitter_uniform.count()),
         std::move(rate_limiter));
   }
 

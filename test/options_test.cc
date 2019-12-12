@@ -46,7 +46,7 @@ TEST_F(OptionsImplTest, All) {
       "--max-pending-requests 10 "
       "--max-active-requests 11 --max-requests-per-connection 12 --sequencer-idle-strategy sleep "
       "--termination-predicate t1:1 --termination-predicate t2:2 --failure-predicate f1:1 "
-      "--failure-predicate f2:2 ",
+      "--failure-predicate f2:2 --jitter-uniform .00001s",
       client_name_,
       "{common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"]}}}",
       good_test_uri_));
@@ -80,6 +80,7 @@ TEST_F(OptionsImplTest, All) {
   ASSERT_EQ(2, options->failurePredicates().size());
   EXPECT_EQ(1, options->failurePredicates()["f1"]);
   EXPECT_EQ(2, options->failurePredicates()["f2"]);
+  EXPECT_EQ(10us, options->jitterUniform());
 
   // Check that our conversion to CommandLineOptionsPtr makes sense.
   CommandLineOptionsPtr cmd = options->toCommandLineOptions();
@@ -126,6 +127,7 @@ TEST_F(OptionsImplTest, All) {
   // comparison below.
   EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("f1"));
   EXPECT_EQ(1, cmd->mutable_termination_predicates()->erase("t1"));
+  EXPECT_EQ(cmd->jitter_uniform().nanos(), options->jitterUniform().count());
 
   OptionsImpl options_from_proto(*cmd);
   std::string s1 = Envoy::MessageUtil::getYamlStringFromMessage(
@@ -239,6 +241,20 @@ TEST_F(OptionsImplTest, BadConcurrencyValuesThrow) {
       TestUtility::createOptionsImpl(
           fmt::format("{} {} --concurrency 999999999999999999999", client_name_, good_test_uri_)),
       MalformedArgvException, "Value out of range: --concurrency");
+}
+
+TEST_F(OptionsImplTest, BadUniformJitterValuesThrow) {
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{} {} --jitter-uniform a",
+                                                                     client_name_, good_test_uri_)),
+                          MalformedArgvException, "Invalid value for --jitter-uniform");
+  // Should end with 's'.
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{} {} --jitter-uniform .1",
+                                                                     client_name_, good_test_uri_)),
+                          MalformedArgvException, "Invalid value for --jitter-uniform");
+  // No negative durations accepted
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{} {} --jitter-uniform -1s",
+                                                                     client_name_, good_test_uri_)),
+                          MalformedArgvException, "--jitter-uniform is out of range");
 }
 
 // Test a relatively large uint value to see if we can get reasonable range
