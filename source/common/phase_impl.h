@@ -15,7 +15,7 @@ public:
   absl::string_view id() const override;
   Sequencer& sequencer() const override;
   void run() const override;
-  virtual bool measureLatencies() const override;
+  bool measureLatencies() const override;
 
 private:
   const std::string id_;

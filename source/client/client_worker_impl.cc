@@ -37,6 +37,9 @@ void ClientWorkerImpl::simpleWarmup() {
   // We add a short warmup phase, which ends when either the first successful response
   // is observed or two seconds have passed, whichever comes first. These warmup conditions are
   // registered on top of the original configured predicates.
+  // # TODO(oschaaf): allow configuration of this phase once the ramping rate limiters land,
+  // or a generic configuration of multiple phases (id, duration, term. predicates, rate
+  // limiting options)
   warmup_predicates
       ->appendToChain(std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
           worker_number_scope_->counter("benchmark.http_2xx"), 0,
