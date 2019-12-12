@@ -294,12 +294,12 @@ def test_https_h2_tls_context_configuration(https_test_server_fixture):
 
 def test_https_prefetching(https_test_server_fixture):
   """
-  Test we prefetch connections. We test for 1 second at 1 rps, which should
+  Test we prefetch connections. We test for 1 second at 2 rps, which should
   result in 1 connection max without prefetching. However, we specify 50 connections
   and the prefetching flag, so we ought to see 50 http1 connections created.
   """
   parsed_json, _ = https_test_server_fixture.runNighthawkClient([
-      "--duration 1", "--rps 1", "--prefetch-connections", "--connections 50",
+      "--duration 1", "--rps 2", "--prefetch-connections", "--connections 50",
       https_test_server_fixture.getTestServerRootUri()
   ])
   counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)

@@ -23,15 +23,20 @@ public:
   virtual ~Phase() = default;
 
   /**
-   * Id of the pase. Should be unique but that is not enforced at this time so take care.
-   * @return absl::string_view
+   * @return absl::string_view Contains the id of the pase. Should be unique but that is not
+   * enforced at this time so take care.
    */
   virtual absl::string_view id() const PURE;
 
   /**
-   * @return Sequencer& associated to this phase.
+   * @return Sequencer& Sequencer associated to this phase.
    */
   virtual Sequencer& sequencer() const PURE;
+
+  /**
+   * @return bool Indicates if latencies should be tracked for this phase.
+   */
+  virtual bool measureLatencies() const PURE;
 
   /**
    * Runs the sequencer associated to this phase and blocks until completion, which means this phase

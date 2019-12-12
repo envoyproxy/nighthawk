@@ -106,6 +106,7 @@ TEST_F(ClientWorkerTest, BasicTest) {
 
   {
     InSequence dummy;
+    EXPECT_CALL(*benchmark_client_, setMeasureLatencies(false)).Times(1);
     EXPECT_CALL(*warmup_sequencer_, start).Times(1);
     EXPECT_CALL(*warmup_sequencer_, waitForCompletion).Times(1);
     EXPECT_CALL(*benchmark_client_, setMeasureLatencies(true)).Times(1);

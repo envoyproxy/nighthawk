@@ -32,33 +32,40 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
           fmt::format("{}", worker_number), *request_generator_)) {}
 
 void ClientWorkerImpl::simpleWarmup() {
-  if (time_source_.monotonicTime() - starting_time_ > 50us) {
-    ENVOY_LOG(error, "phase starting too late - {} ns delta",
-              (time_source_.monotonicTime() - starting_time_).count());
-  }
-  while (starting_time_ > time_source_.monotonicTime()) {
-    dispatcher_->run(Envoy::Event::Dispatcher::RunType::NonBlock);
-  }
   TerminationPredicatePtr warmup_predicates =
       termination_predicate_factory_.create(time_source_, *worker_number_scope_);
-  warmup_predicates->appendToChain(
-      std::make_unique<DurationTerminationPredicateImpl>(time_source_, 1s));
+  // We add a short warmup phase, which ends when either the first successful response
+  // is observed or two seconds have passed, whichever comes first. These warmup conditions are
+  // registered on top of the original configured predicates.
+  warmup_predicates
+      ->appendToChain(std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
+          worker_number_scope_->counter("benchmark.http_2xx"), 0,
+          TerminationPredicate::Status::TERMINATE))
+      .appendToChain(std::make_unique<DurationTerminationPredicateImpl>(time_source_, 2s));
   phases_.emplace_back(std::make_unique<PhaseImpl>(
-      "warmup", sequencer_factory_.create(time_source_, *dispatcher_, *benchmark_client_,
-                                          std::move(warmup_predicates), *worker_number_scope_)));
-  phases_.back()->run();
+      "warmup",
+      sequencer_factory_.create(time_source_, *dispatcher_, *benchmark_client_,
+                                std::move(warmup_predicates), *worker_number_scope_),
+      false));
 }
 
 void ClientWorkerImpl::work() {
   simpleWarmup();
-  if (worker_number_scope_->counter("sequencer.failed_terminations").value() == 0) {
-    benchmark_client_->setMeasureLatencies(true);
-    phases_.emplace_back(std::make_unique<PhaseImpl>(
-        "main", sequencer_factory_.create(
-                    time_source_, *dispatcher_, *benchmark_client_,
-                    termination_predicate_factory_.create(time_source_, *worker_number_scope_),
-                    *worker_number_scope_)));
-    phases_.back()->run();
+
+  phases_.emplace_back(std::make_unique<PhaseImpl>(
+      "main",
+      sequencer_factory_.create(
+          time_source_, *dispatcher_, *benchmark_client_,
+          termination_predicate_factory_.create(time_source_, *worker_number_scope_),
+          *worker_number_scope_),
+      true));
+
+  for (auto& phase : phases_) {
+    benchmark_client_->setMeasureLatencies(phase->measureLatencies());
+    phase->run();
+    if (worker_number_scope_->counter("sequencer.failed_terminations").value() != 0) {
+      break;
+    }
   }
 
   // Save a final snapshot of the worker-specific counter accumulations before
@@ -76,8 +83,8 @@ void ClientWorkerImpl::work() {
   }
   // Note that benchmark_client_ is not terminated here, but in shutdownThread() below. This is to
   // to prevent the shutdown artifacts from influencing the test result counters. The main thread
-  // still needs to be able to read the counters for reporting the global numbers, and those should
-  // be consistent.
+  // still needs to be able to read the counters for reporting the global numbers, and those
+  // should be consistent.
 }
 
 void ClientWorkerImpl::shutdownThread() { benchmark_client_->terminate(); }
