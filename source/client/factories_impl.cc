@@ -63,9 +63,7 @@ SequencerPtr SequencerFactoryImpl::create(Envoy::TimeSource& time_source,
   const uint64_t uniform_distributed_jitter_range = options_.uniformDistributedJitterRange();
   if (uniform_distributed_jitter_range) {
     rate_limiter = std::make_unique<DistributionSamplingRateLimiterImpl>(
-        time_source,
-        std::make_unique<UniformRandomDistributionSamplerImpl>(
-            std::chrono::nanoseconds(uniform_distributed_jitter_range)),
+        std::make_unique<UniformRandomDistributionSamplerImpl>(uniform_distributed_jitter_range),
         std::move(rate_limiter));
   }
 
