@@ -194,11 +194,15 @@ The gRPC service can be used to start a server which is able to perform back-to-
 ```
 USAGE:
 
-bazel-bin/nighthawk_service  [--listen <address:port>] [--] [--version]
-[-h]
+bazel-bin/nighthawk_service  [--listener-address-file <>] [--listen
+<address:port>] [--] [--version] [-h]
 
 
 Where:
+
+--listener-address-file <>
+Location where the service will write the final address:port on which
+the Nighthawk grpc service listens. Default empty.
 
 --listen <address:port>
 The address:port on which the Nighthawk gRPC service should listen.

@@ -77,6 +77,7 @@ TEST_P(ServiceMainTestP, PortZero) {
   std::vector<const char*> argv = {"foo", "--listen", dest.c_str()};
   ServiceMain service_main(argv.size(), argv.data());
   EXPECT_NO_THROW(service_main.start());
+  service_main.shutdown();
 }
 
 } // namespace Client
