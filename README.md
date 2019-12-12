@@ -70,9 +70,9 @@ format>
 Where:
 
 --jitter-uniform <duration>
-Add uniformly distributed absolute request-release timing jitter. For
-example, to add 10 microseconds of jitter, specify .00001setc. Default
-is empty.
+Add uniformly distributed absolute uniformly distributed
+request-release timing jitter. For example, to add 10 us of jitter,
+specify .00001s. Default is empty / no uniform jitter.
 
 --open-loop
 Enable open loop mode. When enabled, the benchmark client will not
