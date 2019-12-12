@@ -4,10 +4,11 @@
 
 #include "envoy/http/header_map.h"
 
+#include "nighthawk/common/request.h"
+
 namespace Nighthawk {
 
-using HeaderMapPtr = std::shared_ptr<const Envoy::Http::HeaderMap>;
-using RequestGenerator = std::function<HeaderMapPtr()>;
+using RequestGenerator = std::function<RequestPtr()>;
 
 class RequestSource {
 public:

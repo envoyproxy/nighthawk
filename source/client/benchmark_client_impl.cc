@@ -82,11 +82,11 @@ bool BenchmarkClientHttpImpl::tryStartRequest(CompletionCallback caller_completi
       return false;
     }
   }
-  auto header = request_generator_();
-  auto* content_length_header = header->ContentLength();
+  auto request = request_generator_();
+  auto* content_length_header = request->header()->ContentLength();
   uint64_t content_length = 0;
   if (content_length_header != nullptr) {
-    auto s_content_length = header->ContentLength()->value().getStringView();
+    auto s_content_length = content_length_header->value().getStringView();
     if (!absl::SimpleAtoi(s_content_length, &content_length)) {
       ENVOY_LOG(error, "Ignoring bad content length of {}", s_content_length);
       content_length = 0;
@@ -96,7 +96,7 @@ bool BenchmarkClientHttpImpl::tryStartRequest(CompletionCallback caller_completi
   std::string x_request_id = generator_.uuid();
   auto stream_decoder = new StreamDecoder(
       dispatcher_, api_.timeSource(), *this, std::move(caller_completion_callback),
-      *connect_statistic_, *response_statistic_, std::move(header), measureLatencies(),
+      *connect_statistic_, *response_statistic_, request->header(), measureLatencies(),
       content_length, x_request_id, http_tracer_);
   requests_initiated_++;
   pool_ptr->newStream(*stream_decoder, *stream_decoder);
