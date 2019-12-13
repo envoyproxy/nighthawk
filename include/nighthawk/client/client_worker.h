@@ -32,7 +32,7 @@ public:
   virtual const std::map<std::string, uint64_t>& thread_local_counter_values() PURE;
 
   /**
-   * @return const std::vector<PhasePtr>& vector of phases that have been executed.
+   * @return const std::vector<PhasePtr>& vector of phases associated to this worker.
    */
   virtual const std::vector<PhasePtr>& phases() const PURE;
 };

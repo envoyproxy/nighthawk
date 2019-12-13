@@ -86,8 +86,8 @@ void ClientWorkerImpl::work() {
   }
   // Note that benchmark_client_ is not terminated here, but in shutdownThread() below. This is to
   // to prevent the shutdown artifacts from influencing the test result counters. The main thread
-  // still needs to be able to read the counters for reporting the global numbers, and those
-  // should be consistent.
+  // still needs to be able to read the counters for reporting the global numbers, and those should
+  // be consistent.
 }
 
 void ClientWorkerImpl::shutdownThread() { benchmark_client_->terminate(); }
