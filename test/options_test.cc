@@ -243,7 +243,7 @@ TEST_F(OptionsImplTest, BadConcurrencyValuesThrow) {
       MalformedArgvException, "Value out of range: --concurrency");
 }
 
-TEST_F(OptionsImplTest, BadUniformJitterValuesThrow) {
+TEST_F(OptionsImplTest, JitterValueRangeTest) {
   EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{} {} --jitter-uniform a",
                                                                      client_name_, good_test_uri_)),
                           MalformedArgvException, "Invalid value for --jitter-uniform");
@@ -259,10 +259,11 @@ TEST_F(OptionsImplTest, BadUniformJitterValuesThrow) {
   EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{} {} --jitter-uniform 0s",
                                                                      client_name_, good_test_uri_)),
                           MalformedArgvException, "--jitter-uniform is out of range");
-  // No durations >= 1s accepted
-  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{} {} --jitter-uniform 1s",
-                                                                     client_name_, good_test_uri_)),
-                          MalformedArgvException, "--jitter-uniform is out of range");
+  // No durations >= 1s are accepted
+  EXPECT_NO_THROW(TestUtility::createOptionsImpl(
+      fmt::format("{} {} --jitter-uniform 1s", client_name_, good_test_uri_)));
+  EXPECT_NO_THROW(TestUtility::createOptionsImpl(
+      fmt::format("{} {} --jitter-uniform 100s", client_name_, good_test_uri_)));
 }
 
 // Test a relatively large uint value to see if we can get reasonable range
