@@ -270,7 +270,25 @@ TEST_F(GraduallyOpeningRateLimiterFilterTest, TimingVerificationTest) {
 class ZipfRateLimiterImplTest : public Test {};
 
 TEST_F(ZipfRateLimiterImplTest, TimingVerificationTest) {
-  // TODO(oschaaf): test once we have the real thing
+  Envoy::Event::SimulatedTimeSystem time_system;
+  auto rate_limiter = std::make_unique<ZipfRateLimiterImpl>(
+      std::make_unique<LinearRateLimiter>(time_system, 10_Hz), true);
+  const std::chrono::seconds duration = 15s;
+  std::vector<int64_t> aquisition_timings;
+  auto total_ms_elapsed = 0ms;
+  auto clock_tick = 1ms;
+
+  do {
+    if (rate_limiter->tryAcquireOne()) {
+      aquisition_timings.push_back(total_ms_elapsed.count());
+    }
+    time_system.sleep(clock_tick);
+    total_ms_elapsed += clock_tick;
+  } while (total_ms_elapsed <= duration);
+  EXPECT_EQ(aquisition_timings,
+            std::vector<int64_t>({500,   800,   1300,  2400,  2900,  3900,  4200,  4400,  4500,
+                                  5800,  6000,  6400,  7900,  8400,  8600,  9900,  10200, 10500,
+                                  10600, 12000, 12300, 12600, 13300, 13600, 13700, 13800, 13900}));
 }
 
 } // namespace Nighthawk
