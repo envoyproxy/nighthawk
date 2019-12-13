@@ -90,9 +90,8 @@ void StreamDecoder::onPoolReady(Envoy::Http::StreamEncoder& encoder,
     // Revisit this when we have non-uniform request distributions and on-the-fly reconfiguration in
     // place. The string size below MUST match the cap we put on RequestOptions::request_body_size
     // in api/client/options.proto!
-    static const std::string body(4194304, 'a');
     auto* fragment = new Envoy::Buffer::BufferFragmentImpl(
-        body.data(), request_body_size_,
+        staticUploadContent().data(), request_body_size_,
         [](const void*, size_t, const Envoy::Buffer::BufferFragmentImpl* frag) { delete frag; });
     Envoy::Buffer::OwnedImpl body_buffer;
     body_buffer.addBufferFragment(*fragment);
