@@ -186,7 +186,7 @@ public:
     EXPECT_FALSE(rate_limiter.tryAcquireOne());
     do {
       if (rate_limiter.tryAcquireOne()) {
-        // EXPECT_FALSE(rate_limiter.tryAcquireOne());
+        EXPECT_FALSE(rate_limiter.tryAcquireOne());
         aquisition_timings.push_back(total_ms_elapsed.count());
         last_acquisition_timestamp = total_ms_elapsed;
       }
