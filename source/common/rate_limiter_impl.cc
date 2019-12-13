@@ -172,7 +172,8 @@ GraduallyOpeningRateLimiterFilter::GraduallyOpeningRateLimiterFilter(
           }),
       provider_(std::move(provider)), ramp_time_(ramp_time) {}
 
-ZipfRateLimiterImpl::ZipfRateLimiterImpl(RateLimiterPtr&& rate_limiter)
-    : FilteringRateLimiterImpl(std::move(rate_limiter), [this]() { return dist_(g_); }), dist_(1) {}
+ZipfRateLimiterImpl::ZipfRateLimiterImpl(RateLimiterPtr&& rate_limiter, double q, double v)
+    : FilteringRateLimiterImpl(std::move(rate_limiter), [this]() { return dist_(g_); }),
+      dist_(1, q, v) {}
 
 } // namespace Nighthawk
