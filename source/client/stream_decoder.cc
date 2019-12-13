@@ -131,10 +131,9 @@ void StreamDecoder::finalizeActiveSpan() {
 void StreamDecoder::setupForTracing(std::string& x_request_id) {
   auto headers_copy = std::make_unique<Envoy::Http::HeaderMapImpl>(*request_headers_);
   Envoy::Tracing::Decision tracing_decision = {Envoy::Tracing::Reason::ClientForced, true};
-  headers_copy->insertClientTraceId();
   RELEASE_ASSERT(Envoy::UuidUtils::setTraceableUuid(x_request_id, Envoy::UuidTraceStatus::Client),
                  "setTraceableUuid failed");
-  headers_copy->ClientTraceId()->value(x_request_id);
+  headers_copy->setClientTraceId(x_request_id);
   active_span_ = http_tracer_->startSpan(config_, *headers_copy, stream_info_, tracing_decision);
   active_span_->injectContext(*headers_copy);
   request_headers_.reset(headers_copy.release());
