@@ -63,13 +63,15 @@ protected:
 class LinearRampingRateLimiterImpl : public RateLimiterBaseImpl,
                                      public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
-  LinearRampingRateLimiterImpl(Envoy::TimeSource& time_source, const Frequency frequency);
+  LinearRampingRateLimiterImpl(Envoy::TimeSource& time_source,
+                               const std::chrono::nanoseconds ramp_time, const Frequency frequency);
   bool tryAcquireOne() override;
   void releaseOne() override;
 
 private:
   int64_t acquireable_count_{0};
   uint64_t acquired_count_{0};
+  const std::chrono::nanoseconds ramp_time_;
   const Frequency frequency_;
 };
 

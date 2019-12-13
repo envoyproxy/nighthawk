@@ -79,10 +79,14 @@ void LinearRateLimiter::releaseOne() {
 }
 
 LinearRampingRateLimiterImpl::LinearRampingRateLimiterImpl(Envoy::TimeSource& time_source,
+                                                           const std::chrono::nanoseconds ramp_time,
                                                            const Frequency frequency)
-    : RateLimiterBaseImpl(time_source), frequency_(frequency) {
+    : RateLimiterBaseImpl(time_source), ramp_time_(ramp_time), frequency_(frequency) {
   if (frequency_.value() <= 0) {
     throw NighthawkException("frequency must be > 0");
+  }
+  if (ramp_time <= 0ns) {
+    throw NighthawkException("duration must be positive");
   }
 }
 
@@ -91,12 +95,18 @@ bool LinearRampingRateLimiterImpl::tryAcquireOne() {
     acquired_count_++;
     return acquireable_count_--;
   }
-  const auto elapsed_time = elapsed();
-  const std::chrono::duration<double> chrono_seconds(elapsed_time);
-  const double seconds = chrono_seconds.count();
-  const double frequency = seconds * frequency_.value();
-  const uint64_t total = std::round(seconds * frequency / 2.0);
-  acquireable_count_ = total - acquired_count_;
+  const auto elapsed_time = elapsed() + 1ns;
+  double elapsed_fraction = 1.0;
+  if (elapsed_time < ramp_time_) {
+    elapsed_fraction -=
+        (ramp_time_.count() - elapsed_time.count()) / static_cast<double>(ramp_time_.count());
+  }
+
+  const double current_frequency = elapsed_fraction * (frequency_.value() * 1.0);
+  const double chrono_seconds =
+      std::chrono::duration_cast<std::chrono::duration<double>>(elapsed_time).count();
+  const double total = chrono_seconds * current_frequency / 2.0;
+  acquireable_count_ = std::round(total) - acquired_count_;
   return acquireable_count_ > 0 ? tryAcquireOne() : false;
 }
 
