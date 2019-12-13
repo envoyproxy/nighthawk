@@ -82,8 +82,8 @@ public:
   void finalizeActiveSpan();
   void setupForTracing(std::string& x_request_id);
   static const std::string& staticUploadContent() {
-    static const std::string s(4194304, 'a');
-    return s;
+    static const auto s = new std::string(4194304, 'a');
+    return *s;
   }
 
 private:
