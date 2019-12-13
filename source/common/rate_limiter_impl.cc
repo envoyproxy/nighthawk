@@ -98,8 +98,8 @@ bool LinearRampingRateLimiterImpl::tryAcquireOne() {
   const auto elapsed_time = elapsed() + 1ns;
   double elapsed_fraction = 1.0;
   if (elapsed_time < ramp_time_) {
-    elapsed_fraction -=
-        (ramp_time_.count() - elapsed_time.count()) / static_cast<double>(ramp_time_.count());
+    elapsed_fraction -= static_cast<double>(ramp_time_.count() - elapsed_time.count()) /
+                        static_cast<double>(ramp_time_.count());
   }
 
   const double current_frequency = elapsed_fraction * (frequency_.value() * 1.0);
