@@ -342,6 +342,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
   } catch (const UriException&) {
     return false;
   }
+  setupForHRTimers();
   int number_of_workers = determineConcurrency();
   shutdown_ = false;
   const std::vector<ClientWorkerPtr>& workers = createWorkers(number_of_workers);
@@ -406,6 +407,15 @@ bool ProcessImpl::run(OutputCollector& collector) {
   collector.addResult("global", mergeWorkerStatistics(statistic_factory, workers), counters,
                       total_execution_duration / workers_.size());
   return counters.find("sequencer.failed_terminations") == counters.end();
+}
+
+void ProcessImpl::setupForHRTimers() {
+  // We override the local environment to indicate to libevent that we favor precision over
+  // efficiency. Note that it is also possible to do this at setup time via libevent's api's.
+  // The upside of the approach below is that we are very loosely coupled and have a one-liner.
+  // Getting to libevent for the other approach is going to introduce more code as we would need to
+  // derive our own customized versions of certain Envoy concepts.
+  putenv(const_cast<char*>("EVENT_PRECISE_TIMER=1"));
 }
 
 } // namespace Client
