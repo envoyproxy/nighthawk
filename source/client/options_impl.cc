@@ -477,7 +477,10 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptions() const {
     failure_predicates_option->insert({predicate.first, predicate.second});
   }
   command_line_options->mutable_open_loop()->set_value(openLoop());
-  command_line_options->mutable_jitter_uniform()->set_nanos(jitterUniform().count());
+  if (jitterUniform().count() > 0) {
+    *command_line_options->mutable_jitter_uniform() =
+        Envoy::Protobuf::util::TimeUtil::NanosecondsToDuration(jitterUniform().count());
+  }
   return command_line_options;
 }
 
