@@ -192,23 +192,21 @@ TEST_F(BenchmarkClientHttpTest, StatusTrackingInOnComplete) {
       request_generator_, true);
   Envoy::Http::HeaderMapImpl header;
 
-  auto& status = header.insertStatus();
-
-  status.value(1);
+  header.setStatus(1);
   client_->onComplete(true, header);
-  status.value(100);
+  header.setStatus(100);
   client_->onComplete(true, header);
-  status.value(200);
+  header.setStatus(200);
   client_->onComplete(true, header);
-  status.value(300);
+  header.setStatus(300);
   client_->onComplete(true, header);
-  status.value(400);
+  header.setStatus(400);
   client_->onComplete(true, header);
-  status.value(500);
+  header.setStatus(500);
   client_->onComplete(true, header);
-  status.value(600);
+  header.setStatus(600);
   client_->onComplete(true, header);
-  status.value(200);
+  header.setStatus(200);
   // Shouldn't be counted by status, should add to stream reset.
   client_->onComplete(false, header);
 
