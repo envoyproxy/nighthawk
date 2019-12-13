@@ -110,11 +110,11 @@ public:
 class MockSequencerFactory : public Client::SequencerFactory {
 public:
   MockSequencerFactory();
-  MOCK_CONST_METHOD5(create, SequencerPtr(Envoy::TimeSource& time_source,
+  MOCK_CONST_METHOD6(create, SequencerPtr(Envoy::TimeSource& time_source,
                                           Envoy::Event::Dispatcher& dispatcher,
                                           Client::BenchmarkClient& benchmark_client,
                                           TerminationPredicatePtr&& termination_predicate,
-                                          Envoy::Stats::Scope& scope));
+                                          Envoy::Stats::Scope& scope, const bool warmup));
 };
 
 class MockStoreFactory : public Client::StoreFactory {

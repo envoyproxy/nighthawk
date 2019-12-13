@@ -73,11 +73,8 @@ def test_http_h1_mini_stress_test_with_client_side_queueing(http_test_server_fix
       "10", "--connections", "1", "--duration", "100", "--termination-predicate",
       "benchmark.http_2xx:99"
   ])
-  # TODO(oschaaf): we disable expectations here and below is our warmup phase has changed
-  # slightly, which makes the counters we are looking at less deterministic.
-  # Once we have a configurable warmup (or an optional one) we can re-enable these expectations.
-  # assertCounterEqual(counters, "upstream_rq_pending_total", 12)
-  # assertCounterEqual(counters, "upstream_cx_overflow", 10)
+  assertCounterEqual(counters, "upstream_rq_pending_total", 11)
+  assertCounterEqual(counters, "upstream_cx_overflow", 10)
 
 
 def test_http_h1_mini_stress_test_without_client_side_queueing(http_test_server_fixture):
@@ -89,8 +86,8 @@ def test_http_h1_mini_stress_test_without_client_side_queueing(http_test_server_
       http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--connections", "1",
       "--duration", "100", "--termination-predicate", "benchmark.http_2xx:99"
   ])
-  # assertCounterEqual(counters, "upstream_rq_pending_total", 1)
-  # assertNotIn("upstream_cx_overflow", counters)
+  assertCounterEqual(counters, "upstream_rq_pending_total", 1)
+  assertNotIn("upstream_cx_overflow", counters)
 
 
 def test_http_h2_mini_stress_test_with_client_side_queueing(http_test_server_fixture):
@@ -103,7 +100,7 @@ def test_http_h2_mini_stress_test_with_client_side_queueing(http_test_server_fix
       "10", "--h2", "--max-active-requests", "1", "--connections", "1", "--duration", "100",
       "--termination-predicate", "benchmark.http_2xx:99"
   ])
-  assertCounterEqual(counters, "upstream_rq_pending_total", 10)
+  assertCounterEqual(counters, "upstream_rq_pending_total", 1)
   assertCounterEqual(counters, "upstream_rq_pending_overflow", 10)
 
 

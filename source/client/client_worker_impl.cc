@@ -32,14 +32,14 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
           fmt::format("{}", worker_number), *request_generator_)) {}
 
 void ClientWorkerImpl::simpleWarmup() {
-  TerminationPredicatePtr warmup_predicates =
-      termination_predicate_factory_.create(time_source_, *worker_number_scope_);
   // We add a short warmup phase, which ends when either the first successful response
   // is observed or two seconds have passed, whichever comes first. These warmup conditions are
   // registered on top of the original configured predicates.
   // TODO(oschaaf): allow configuration of this phase once the ramping rate limiters land,
   // or a generic configuration of multiple phases (id, duration, termination predicates, rate
   // limiting options, etc).
+  TerminationPredicatePtr warmup_predicates =
+      termination_predicate_factory_.create(time_source_, *worker_number_scope_);
   warmup_predicates
       ->appendToChain(std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
           worker_number_scope_->counter("benchmark.http_2xx"), 0,
@@ -48,7 +48,7 @@ void ClientWorkerImpl::simpleWarmup() {
   phases_.emplace_back(std::make_unique<PhaseImpl>(
       "warmup",
       sequencer_factory_.create(time_source_, *dispatcher_, *benchmark_client_,
-                                std::move(warmup_predicates), *worker_number_scope_),
+                                std::move(warmup_predicates), *worker_number_scope_, true),
       false));
 }
 
@@ -60,11 +60,10 @@ void ClientWorkerImpl::work() {
       sequencer_factory_.create(
           time_source_, *dispatcher_, *benchmark_client_,
           termination_predicate_factory_.create(time_source_, *worker_number_scope_),
-          *worker_number_scope_),
+          *worker_number_scope_, false),
       true));
-  dispatcher_.
 
-      for (auto& phase : phases_) {
+  for (auto& phase : phases_) {
     benchmark_client_->setMeasureLatencies(phase->measureLatencies());
     phase->run();
     if (worker_number_scope_->counter("sequencer.failed_terminations").value() != 0) {

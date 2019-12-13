@@ -49,13 +49,13 @@ SequencerPtr SequencerFactoryImpl::create(Envoy::TimeSource& time_source,
                                           Envoy::Event::Dispatcher& dispatcher,
                                           BenchmarkClient& benchmark_client,
                                           TerminationPredicatePtr&& termination_predicate,
-                                          Envoy::Stats::Scope& scope) const {
+                                          Envoy::Stats::Scope& scope, const bool warmup) const {
   StatisticFactoryImpl statistic_factory(options_);
-  RateLimiterPtr rate_limiter =
-      std::make_unique<LinearRateLimiter>(time_source, Frequency(options_.requestsPerSecond()));
+  Frequency frequency(warmup ? 1 : options_.requestsPerSecond());
+  RateLimiterPtr rate_limiter = std::make_unique<LinearRateLimiter>(time_source, frequency);
   const uint64_t burst_size = options_.burstSize();
 
-  if (burst_size) {
+  if (!warmup && burst_size) {
     rate_limiter = std::make_unique<BurstingRateLimiter>(std::move(rate_limiter), burst_size);
   }
   SequencerTarget sequencer_target = [&benchmark_client](CompletionCallback f) -> bool {
