@@ -115,15 +115,14 @@ RequestSourcePtr RequestSourceFactoryImpl::create() const {
   UriImpl uri(options_.uri());
   Envoy::Http::HeaderMapPtr header = std::make_unique<Envoy::Http::HeaderMapImpl>();
 
-  header->insertMethod().value(envoy::api::v2::core::RequestMethod_Name(options_.requestMethod()));
-  header->insertPath().value(uri.path());
-  header->insertHost().value(uri.hostAndPort());
-  header->insertScheme().value(uri.scheme() == "https"
-                                   ? Envoy::Http::Headers::get().SchemeValues.Https
-                                   : Envoy::Http::Headers::get().SchemeValues.Http);
+  header->setMethod(envoy::api::v2::core::RequestMethod_Name(options_.requestMethod()));
+  header->setPath(uri.path());
+  header->setHost(uri.hostAndPort());
+  header->setScheme(uri.scheme() == "https" ? Envoy::Http::Headers::get().SchemeValues.Https
+                                            : Envoy::Http::Headers::get().SchemeValues.Http);
   const uint32_t content_length = options_.requestBodySize();
   if (content_length > 0) {
-    header->insertContentLength().value(content_length);
+    header->setContentLength(content_length);
   }
 
   auto request_options = options_.toCommandLineOptions()->request_options();
