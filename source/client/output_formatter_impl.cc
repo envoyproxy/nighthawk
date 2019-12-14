@@ -217,8 +217,6 @@ std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Outp
       (output.options().h2().value() ? 1 : output.options().connections().value()) *
       number_of_workers;
   // This displays as "connections" in the UI, not threads.
-  // TODO(#186): This field needs maintenance once we support multiple connections in H2-enabled
-  // tests.
   fortio_output.set_numthreads(number_of_connections);
 
   // Get the result that represents all workers (global)
