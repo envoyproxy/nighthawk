@@ -44,6 +44,18 @@ message DurationHistogram {
   uint64 Count = 1;
 
   repeated DataEntry Data = 2;
+
+
+  // TODO(#231): set these to the correct values.
+  double Min = 3;
+
+  double Max = 4;
+
+  double Sum = 5;
+  
+  double Avg = 6;
+  
+  double StdDev = 7;
 }
 
 message DataEntry {
