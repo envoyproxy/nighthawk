@@ -1,10 +1,10 @@
-licenses(["notice"])  # Apache 2
-
 load(
     "@envoy//bazel:envoy_build_system.bzl",
     "envoy_cc_library",
     "envoy_package",
 )
+
+licenses(["notice"])  # Apache 2
 
 envoy_package()
 
@@ -100,6 +100,7 @@ envoy_cc_library(
     deps = [
         "//api/client:base_cc_proto",
         "//include/nighthawk/client:client_includes",
+        "//include/nighthawk/common:base_includes",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
     ],
 )

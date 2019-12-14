@@ -1,6 +1,7 @@
 #include <chrono>
 
 #include "nighthawk/common/exception.h"
+#include "nighthawk/common/version.h"
 
 #include "external/envoy/source/common/protobuf/message_validator_impl.h"
 #include "external/envoy/test/test_common/file_system_for_test.h"
@@ -18,6 +19,7 @@
 
 #include "test/mocks.h"
 
+#include "absl/strings/str_replace.h"
 #include "gtest/gtest.h"
 
 using namespace std::chrono_literals;
@@ -49,9 +51,10 @@ public:
   }
 
   void expectEqualToGoldFile(absl::string_view output, absl::string_view path) {
-    EXPECT_EQ(Envoy::Filesystem::fileSystemForTest().fileReadToEnd(
-                  TestEnvironment::runfilesPath(std::string(path))),
-              output);
+    std::string s = Envoy::Filesystem::fileSystemForTest().fileReadToEnd(
+        TestEnvironment::runfilesPath(std::string(path)));
+    s = absl::StrReplaceAll(s, {{"@version@", VersionUtils::VersionString()}});
+    EXPECT_EQ(s, output);
   }
 
   void setupCollector() {

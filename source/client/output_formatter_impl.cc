@@ -186,7 +186,7 @@ const nighthawk::client::Statistic& FortioOutputFormatterImpl::getRequestRespons
 std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
   nighthawk::client::FortioResult fortio_output;
 
-  fortio_output.set_version("0.0");
+  fortio_output.set_version(output.version());
   fortio_output.set_labels("Nighthawk");
   fortio_output.mutable_starttime()->set_seconds(output.timestamp().seconds());
   fortio_output.set_requestedqps(output.options().requests_per_second().value());

@@ -97,5 +97,6 @@
    "execution_duration": "1s"
   }
  ],
+ "version": "@version@",
  "timestamp": "2009-02-13T23:31:31.567Z"
 }
