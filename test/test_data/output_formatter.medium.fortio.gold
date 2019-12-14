@@ -1,9 +1,9 @@
 {
  "Labels": "Nighthawk",
- "RequestedQPS": 1,
- "ActualQPS": 12,
- "ActualDuration": 5,
- "NumThreads": 1,
+ "RequestedQPS": 12,
+ "ActualQPS": 12.000240004800096,
+ "ActualDuration": 4999900000,
+ "NumThreads": 12,
  "DurationHistogram": {
   "Count": "48",
   "Data": [

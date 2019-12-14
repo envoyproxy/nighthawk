@@ -183,30 +183,51 @@ const nighthawk::client::Statistic& FortioOutputFormatterImpl::getRequestRespons
                            "'benchmark_http_client.request_to_response' statistic.");
 }
 
+std::chrono::nanoseconds FortioOutputFormatterImpl::getAverageExecutionDuration(
+    const nighthawk::client::Output& output) const {
+  if (!output.results_size()) {
+    throw NighthawkException("No results in output");
+  }
+  const auto& r = output.results().at(output.results_size() - 1);
+  ASSERT(r.name() == "global");
+  return std::chrono::nanoseconds(
+      Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(r.execution_duration()));
+}
+
 std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
   nighthawk::client::FortioResult fortio_output;
+  // If there's only a single worker we will have only a single result. If there are multiple
+  // workers, there will be global aggregations next to per-worker results. We use that to
+  // derive the actual number of workers here.
+  const uint32_t number_of_workers = output.results().size() == 1 ? 1 : output.results().size() - 1;
 
   fortio_output.set_version(output.version());
   fortio_output.set_labels("Nighthawk");
   fortio_output.mutable_starttime()->set_seconds(output.timestamp().seconds());
-  fortio_output.set_requestedqps(output.options().requests_per_second().value());
+  fortio_output.set_requestedqps(number_of_workers *
+                                 output.options().requests_per_second().value());
   fortio_output.set_url(output.options().uri().value());
+  *fortio_output.mutable_requestedduration() = output.options().duration();
+  auto actual_duration = getAverageExecutionDuration(output);
+  fortio_output.set_actualduration(actual_duration.count());
 
-  // Actual and requested durations are the same
-  const auto& nh_duration = output.options().duration().seconds();
-  fortio_output.mutable_requestedduration()->set_seconds(nh_duration);
-  fortio_output.set_actualduration(nh_duration);
-
+  // The h2 pool doesn't offer supper for multiple connections here. So we must ignore the
+  // connections setting when h2 is involved. Also, the number of workers acts as a multiplier.
+  const uint32_t number_of_connections =
+      (output.options().h2().value() ? 1 : output.options().connections().value()) *
+      number_of_workers;
   // This displays as "connections" in the UI, not threads.
-  // TODO(#186): This field may not be accurate for for HTTP2 load tests.
-  fortio_output.set_numthreads(output.options().connections().value());
+  // TODO(#186): This field needs maintenance once we support multiple connections in H2-enabled
+  // tests.
+  fortio_output.set_numthreads(number_of_connections);
 
   // Get the result that represents all workers (global)
   const auto& nh_global_result = this->getGlobalResult(output);
 
   // Fill in the actual QPS based on the counters
   const auto& nh_rq_counter = this->getCounterByName(nh_global_result, "upstream_rq_total");
-  const double actual_qps = static_cast<double>(nh_rq_counter.value()) / nh_duration;
+  const double actual_qps = static_cast<double>(
+      nh_rq_counter.value() / std::chrono::duration<double>(actual_duration).count());
   fortio_output.set_actualqps(actual_qps);
 
   // Fill in the number of successful responses.
