@@ -93,6 +93,8 @@ protected:
    */
   std::chrono::nanoseconds
   getAverageExecutionDuration(const nighthawk::client::Output& output) const;
+
+  double durationToSeconds(const Envoy::ProtobufWkt::Duration& duration) const;
 };
 
 } // namespace Client

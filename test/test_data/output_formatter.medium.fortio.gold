@@ -193,6 +193,33 @@
     "Percent": 100,
     "Count": "0"
    }
+  ],
+  "Min": 0.055568383,
+  "Max": 0.084357119,
+  "Sum": 3.0043125600000002,
+  "Avg": 0.062589845,
+  "StdDev": 0.005785869,
+  "Percentiles": [
+   {
+    "Percentile": 0.5,
+    "Value": 0.060903423
+   },
+   {
+    "Percentile": 0.75,
+    "Value": 0.065679359
+   },
+   {
+    "Percentile": 0.8,
+    "Value": 0.066994175
+   },
+   {
+    "Percentile": 0.9,
+    "Value": 0.068657151
+   },
+   {
+    "Percentile": 0.95,
+    "Value": 0.073601023
+   }
   ]
  },
  "RetCodes": {

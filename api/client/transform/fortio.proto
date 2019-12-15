@@ -45,17 +45,17 @@ message DurationHistogram {
 
   repeated DataEntry Data = 2;
 
-
-  // TODO(#231): set these to the correct values.
   double Min = 3;
 
   double Max = 4;
 
   double Sum = 5;
-  
+
   double Avg = 6;
-  
+
   double StdDev = 7;
+
+  repeated FortioPercentile Percentiles = 8;
 }
 
 message DataEntry {
@@ -68,4 +68,12 @@ message DataEntry {
   double Percent = 3;
 
   uint64 Count = 4;
+}
+
+message FortioPercentile {
+  option (validate.disabled) = true;
+
+  double Percentile = 1;
+
+  double Value = 2;
 }

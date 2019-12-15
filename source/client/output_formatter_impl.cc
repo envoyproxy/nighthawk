@@ -194,6 +194,11 @@ std::chrono::nanoseconds FortioOutputFormatterImpl::getAverageExecutionDuration(
       Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(r.execution_duration()));
 }
 
+double
+FortioOutputFormatterImpl::durationToSeconds(const Envoy::ProtobufWkt::Duration& duration) const {
+  return Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(duration) / 1e9;
+}
+
 std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
   nighthawk::client::FortioResult fortio_output;
   // If there's only a single worker we will have only a single result. If there are multiple
@@ -242,14 +247,11 @@ std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Outp
   // The core of the transformation is here: All the percentiles to display the dashboard
   const auto& nh_stat = this->getRequestResponseStatistic(nh_global_result);
 
-  // Set the count (number of data points)
   nighthawk::client::DurationHistogram fortio_histogram;
-  fortio_histogram.set_count(nh_stat.count());
-
   uint64_t prev_fortio_count = 0;
   double prev_fortio_end = 0;
-  for (int i = 0; i < nh_stat.percentiles().size(); i++) {
-
+  const uint32_t percentiles_size = nh_stat.percentiles().size();
+  for (uint32_t i = 0; i < percentiles_size; i++) {
     nighthawk::client::DataEntry fortio_data_entry;
     const auto& nh_percentile = nh_stat.percentiles().at(i);
 
@@ -260,8 +262,7 @@ std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Outp
     fortio_data_entry.set_count(nh_percentile.count() - prev_fortio_count);
 
     // fortio_end = nh_duration (need to convert formats)
-    const double nh_percentile_duration_sec =
-        Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(nh_percentile.duration()) / 1e9;
+    const double nh_percentile_duration_sec = durationToSeconds(nh_percentile.duration());
     fortio_data_entry.set_end(nh_percentile_duration_sec);
 
     // fortio_start = prev_fortio_end
@@ -269,6 +270,7 @@ std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Outp
       // If this is the first entry, force the start and end time to be the same.
       // This prevents it from starting at 0, making it disproportionally big in the UI.
       prev_fortio_end = nh_percentile_duration_sec;
+    } else if (i == percentiles_size - 1) {
     }
     fortio_data_entry.set_start(prev_fortio_end);
 
@@ -280,9 +282,31 @@ std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Outp
     fortio_histogram.add_data()->CopyFrom(fortio_data_entry);
   }
 
+  // Set the count (number of data points)
+  fortio_histogram.set_count(nh_stat.count());
+  fortio_histogram.set_avg(durationToSeconds(nh_stat.mean()));
+  fortio_histogram.set_sum(nh_stat.count() * fortio_histogram.avg());
+  // XXX(oschaaf): We track pstdev whereas fortio seems to use stdev
+  fortio_histogram.set_stddev(durationToSeconds(nh_stat.pstdev()));
+  iteratePercentiles(nh_stat,
+                     [this, &fortio_histogram](const nighthawk::client::Percentile& percentile) {
+                       if (percentile.percentile() == 0) {
+                         fortio_histogram.set_min(durationToSeconds(percentile.duration()));
+                       } else if (percentile.percentile() == 1) {
+                         fortio_histogram.set_max(durationToSeconds(percentile.duration()));
+                       } else {
+                         auto* p = fortio_histogram.add_percentiles();
+                         // We perform some rounding on the percentiles for a better UX while we use
+                         // HdrHistogram. HDR-Histogram uses base-2 arithmetic behind the scenes
+                         // which yields percentiles close to what fortio has, but not perfectly
+                         // on-spot, e.g. 0.990625 and 0.9990234375.
+                         p->set_percentile(std::floor(percentile.percentile() * 1000) / 1000);
+                         p->set_value(durationToSeconds(percentile.duration()));
+                       }
+                     });
+
   // Set the histogram in main fortio output
   fortio_output.mutable_durationhistogram()->CopyFrom(fortio_histogram);
-
   return Envoy::MessageUtil::getJsonStringFromMessage(fortio_output, true, true);
 }
 
