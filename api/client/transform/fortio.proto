@@ -36,6 +36,9 @@ message FortioResult {
   string URL = 12;
 
   string Version = 13;
+
+  // TODO(#235): Fix this once we have a means to add jitter.
+  bool Jitter = 14;
 }
 
 message DurationHistogram {
