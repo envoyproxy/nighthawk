@@ -201,14 +201,14 @@ FortioOutputFormatterImpl::durationToSeconds(const Envoy::ProtobufWkt::Duration&
 
 std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
   nighthawk::client::FortioResult fortio_output;
-  // If there's only a single worker we will have only a single result. If there are multiple
-  // workers, there will be global aggregations next to per-worker results. We use that to
-  // derive the actual number of workers here.
+  // Iff there's only a single worker we will have only a single result. Otherwise the number of
+  // workers can be derived by substracting one from the number of results (for the
+  // aggregated/global result).
   const uint32_t number_of_workers = output.results().size() == 1 ? 1 : output.results().size() - 1;
 
   fortio_output.set_version(output.version());
   fortio_output.set_labels("Nighthawk");
-  fortio_output.mutable_starttime()->set_seconds(output.timestamp().seconds());
+  *fortio_output.mutable_starttime() = output.timestamp();
   fortio_output.set_requestedqps(number_of_workers *
                                  output.options().requests_per_second().value());
   fortio_output.set_url(output.options().uri().value());
@@ -258,8 +258,8 @@ std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Outp
   nighthawk::client::DurationHistogram fortio_histogram;
   uint64_t prev_fortio_count = 0;
   double prev_fortio_end = 0;
-  const uint32_t percentiles_size = nh_stat.percentiles().size();
-  for (uint32_t i = 0; i < percentiles_size; i++) {
+  const int percentiles_size = nh_stat.percentiles().size();
+  for (int i = 0; i < percentiles_size; i++) {
     nighthawk::client::DataEntry fortio_data_entry;
     const auto& nh_percentile = nh_stat.percentiles().at(i);
 
@@ -278,7 +278,6 @@ std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Outp
       // If this is the first entry, force the start and end time to be the same.
       // This prevents it from starting at 0, making it disproportionally big in the UI.
       prev_fortio_end = nh_percentile_duration_sec;
-    } else if (i == percentiles_size - 1) {
     }
     fortio_data_entry.set_start(prev_fortio_end);
 
@@ -294,7 +293,7 @@ std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Outp
   fortio_histogram.set_count(nh_stat.count());
   fortio_histogram.set_avg(durationToSeconds(nh_stat.mean()));
   fortio_histogram.set_sum(nh_stat.count() * fortio_histogram.avg());
-  // XXX(oschaaf): We track pstdev whereas fortio seems to use stdev
+  // Note that Nighthawk tracks pstdev whereas fortio seems to use stdev.
   fortio_histogram.set_stddev(durationToSeconds(nh_stat.pstdev()));
   iteratePercentiles(nh_stat,
                      [this, &fortio_histogram](const nighthawk::client::Percentile& percentile) {
