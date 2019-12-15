@@ -94,6 +94,11 @@ protected:
   std::chrono::nanoseconds
   getAverageExecutionDuration(const nighthawk::client::Output& output) const;
 
+  /**
+   * Converts a proto Duration to seconds
+   * @param duration the proto Duration to convert
+   * @return double the number of seconds
+   */
   double durationToSeconds(const Envoy::ProtobufWkt::Duration& duration) const;
 };
 
