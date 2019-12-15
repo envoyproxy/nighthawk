@@ -146,6 +146,7 @@ case "$1" in
     build)
         do_build
         exit 0
+    ;;
     opt_build)
         do_opt_build
         exit 0
