@@ -6,9 +6,12 @@ export BUILDIFIER_BIN="/usr/local/bin/buildifier"
 export BUILDOZER_BIN="/usr/local/bin/buildozer"
 
 function do_build () {
-    bazel build $BAZEL_BUILD_OPTIONS --verbose_failures=true //:nighthawk_client //:nighthawk_test_server \
-        //:nighthawk_service
+    bazel build $BAZEL_BUILD_OPTIONS --verbose_failures=true //:nighthawk
     tools/update_cli_readme_documentation.sh --mode check
+}
+
+function do_opt_build () {
+    bazel build $BAZEL_BUILD_OPTIONS -c opt --verbose_failures=true //:nighthawk
 }
 
 function do_test() {
@@ -142,6 +145,9 @@ export CLANG_FORMAT=clang-format
 case "$1" in
     build)
         do_build
+        exit 0
+    opt_build)
+        do_opt_build
         exit 0
     ;;
     test)
