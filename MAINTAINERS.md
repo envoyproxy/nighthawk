@@ -1,10 +1,10 @@
 # Maintainers
 
-This document aims to assist maintainers.
+This document aims to assist [maintainers](OWNERS.md).
 
 ## Pre-merge checklist
 
-- Does the PR have breaking changes? Then that should be made explicit and mentioned on top in the [version history](docs/root/version_history.md).
+- Does the PR have breaking changes? Then that should be explicitly mentioned in the [version history](docs/root/version_history.md).
 - New features should be added to the [version history](docs/root/version_history.md).
 - Breaking changes to the [proto apis](api/) are not allowed.
 
