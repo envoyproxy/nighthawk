@@ -65,8 +65,8 @@ message SequencerIdleStrategy {
 message H1ConnectionReuseStrategy {
   enum H1ConnectionReuseStrategyOptions {
     DEFAULT = 0;
-    HOT = 1;
-    FAIR = 2;
+    MRU = 1;
+    LRU = 2;
   }
   H1ConnectionReuseStrategyOptions value = 1;
 }
