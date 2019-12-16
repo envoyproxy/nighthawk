@@ -116,8 +116,8 @@ message CommandLineOptions {
   map<string, uint64> failure_predicates = 24;
   // See :option:`--open-loop` for details.
   google.protobuf.BoolValue open_loop = 21;
-  // See :option:`--transport-socket` for details.
-  envoy.api.v2.core.TransportSocket transport_socket = 26;
   // See :option:`--jitter-uniform`
   google.protobuf.Duration jitter_uniform = 25 [(validate.rules).duration.gte.nanos = 1];
+  // See :option:`--transport-socket` for details.
+  envoy.api.v2.core.TransportSocket transport_socket = 26;
 }
