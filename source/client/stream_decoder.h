@@ -84,6 +84,10 @@ public:
 
 private:
   void onComplete(bool success);
+  static const std::string& staticUploadContent() {
+    static const auto s = new std::string(4194304, 'a');
+    return *s;
+  }
 
   Envoy::Event::Dispatcher& dispatcher_;
   Envoy::TimeSource& time_source_;
