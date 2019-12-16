@@ -87,11 +87,14 @@ void StreamDecoder::onPoolReady(Envoy::Http::StreamEncoder& encoder,
     // we take the risk of erroneously reporting that we did send all the bytes, instead of always
     // reporting 0 bytes.
     stream_info_.addBytesReceived(request_body_size_);
-    // TODO(oschaaf): We can probably get away without allocating/copying here if we pregenerate
-    // potential request-body candidates up front. Revisit this when we have non-uniform request
-    // distributions and on-the-fly reconfiguration in place.
-    std::string body(request_body_size_, 'a');
-    Envoy::Buffer::OwnedImpl body_buffer(body);
+    // Revisit this when we have non-uniform request distributions and on-the-fly reconfiguration in
+    // place. The string size below MUST match the cap we put on RequestOptions::request_body_size
+    // in api/client/options.proto!
+    auto* fragment = new Envoy::Buffer::BufferFragmentImpl(
+        staticUploadContent().data(), request_body_size_,
+        [](const void*, size_t, const Envoy::Buffer::BufferFragmentImpl* frag) { delete frag; });
+    Envoy::Buffer::OwnedImpl body_buffer;
+    body_buffer.addBufferFragment(*fragment);
     encoder.encodeData(body_buffer, true);
   }
   request_start_ = time_source_.monotonicTime();
