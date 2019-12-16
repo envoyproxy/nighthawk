@@ -43,7 +43,7 @@ bazel build -c opt //:nighthawk
 ```
 USAGE:
 
-bazel-bin/nighthawk_client  [--open-loop]
+bazel-bin/nighthawk_client  [--jitter-uniform <duration>] [--open-loop]
 [--h1-connection-reuse-strategy <HOT|FAIR>]
 [--failure-predicate <<string, uint64_t>>]
 ... [--termination-predicate <<string,
@@ -69,6 +69,11 @@ format>
 
 
 Where:
+
+--jitter-uniform <duration>
+Add uniformly distributed absolute request-release timing jitter. For
+example, to add 10 us of jitter, specify .00001s. Default is empty /
+no uniform jitter.
 
 --open-loop
 Enable open loop mode. When enabled, the benchmark client will not
@@ -194,11 +199,15 @@ The gRPC service can be used to start a server which is able to perform back-to-
 ```
 USAGE:
 
-bazel-bin/nighthawk_service  [--listen <address:port>] [--] [--version]
-[-h]
+bazel-bin/nighthawk_service  [--listener-address-file <>] [--listen
+<address:port>] [--] [--version] [-h]
 
 
 Where:
+
+--listener-address-file <>
+Location where the service will write the final address:port on which
+the Nighthawk grpc service listens. Default empty.
 
 --listen <address:port>
 The address:port on which the Nighthawk gRPC service should listen.

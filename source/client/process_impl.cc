@@ -361,7 +361,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
       std::make_unique<Extensions::TransportSockets::Tls::ContextManagerImpl>(time_system_);
   cluster_manager_factory_ = std::make_unique<ClusterManagerFactory>(
       admin_, Envoy::Runtime::LoaderSingleton::get(), store_root_, tls_, generator_,
-      dispatcher_->createDnsResolver({}), *ssl_context_manager_, *dispatcher_, *local_info_,
+      dispatcher_->createDnsResolver({}, true), *ssl_context_manager_, *dispatcher_, *local_info_,
       secret_manager_, validation_context_, *api_, http_context_, access_log_manager_,
       *singleton_manager_);
   cluster_manager_factory_->setConnectionReuseStrategy(

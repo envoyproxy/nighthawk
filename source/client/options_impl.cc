@@ -196,7 +196,11 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "Enable open loop mode. When enabled, the benchmark client will not provide backpressure "
       "when resource limits are hit.",
       cmd);
-
+  TCLAP::ValueArg<std::string> jitter_uniform(
+      "", "jitter-uniform",
+      "Add uniformly distributed absolute request-release timing jitter. For example, to add 10 us "
+      "of jitter, specify .00001s. Default is empty / no uniform jitter.",
+      false, "", "duration", cmd);
   TCLAP::UnlabeledValueArg<std::string> uri("uri",
                                             "uri to benchmark. http:// and https:// are supported, "
                                             "but in case of https no certificates are validated.",
@@ -266,6 +270,19 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   parsePredicates(termination_predicates, termination_predicates_);
   parsePredicates(failure_predicates, failure_predicates_);
   TCLAP_SET_IF_SPECIFIED(open_loop, open_loop_);
+  if (jitter_uniform.isSet()) {
+    Envoy::ProtobufWkt::Duration duration;
+    if (Envoy::Protobuf::util::TimeUtil::FromString(jitter_uniform.getValue(), &duration)) {
+      if (duration.nanos() > 0 || duration.seconds() > 0) {
+        jitter_uniform_ = std::chrono::nanoseconds(
+            Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(duration));
+      } else {
+        throw MalformedArgvException("--jitter-uniform is out of range");
+      }
+    } else {
+      throw MalformedArgvException("Invalid value for --jitter-uniform");
+    }
+  }
 
   // CLI-specific tests.
   // TODO(oschaaf): as per mergconflicts's remark, it would be nice to aggregate
@@ -379,7 +396,6 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   h1_connection_reuse_strategy_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(
       options, h1_connection_reuse_strategy, h1_connection_reuse_strategy_);
   open_loop_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, open_loop, open_loop_);
-
   tls_context_.MergeFrom(options.tls_context());
   if (options.failure_predicates().size()) {
     failure_predicates_.clear();
@@ -389,6 +405,10 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   }
   for (const auto& predicate : options.termination_predicates()) {
     termination_predicates_[predicate.first] = predicate.second;
+  }
+  if (options.has_jitter_uniform()) {
+    jitter_uniform_ = std::chrono::nanoseconds(
+        Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(options.jitter_uniform()));
   }
   validate();
 }
@@ -400,6 +420,7 @@ void OptionsImpl::setNonTrivialDefaults() {
   failure_predicates_["benchmark.http_4xx"] = 0;
   failure_predicates_["benchmark.http_5xx"] = 0;
   failure_predicates_["benchmark.pool_connection_failure"] = 0;
+  jitter_uniform_ = std::chrono::nanoseconds(0);
 }
 
 void OptionsImpl::validate() const {
@@ -482,6 +503,10 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptions() const {
     failure_predicates_option->insert({predicate.first, predicate.second});
   }
   command_line_options->mutable_open_loop()->set_value(openLoop());
+  if (jitterUniform().count() > 0) {
+    *command_line_options->mutable_jitter_uniform() =
+        Envoy::Protobuf::util::TimeUtil::NanosecondsToDuration(jitterUniform().count());
+  }
   return command_line_options;
 }
 
