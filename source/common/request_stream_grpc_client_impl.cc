@@ -85,19 +85,19 @@ ProtoRequestHelper::messageToRequest(const Envoy::Http::HeaderMap& base_header,
     if (request_specifier.has_content_length()) {
       std::string s_content_length = absl::StrCat("", request_specifier.content_length().value());
       header->remove(Envoy::Http::Headers::get().ContentLength);
-      header->insertContentLength().value(s_content_length);
+      header->setContentLength(s_content_length);
     }
     if (request_specifier.has_authority()) {
       header->remove(Envoy::Http::Headers::get().Host);
-      header->insertHost().value(request_specifier.authority().value());
+      header->setHost(request_specifier.authority().value());
     }
     if (request_specifier.has_path()) {
       header->remove(Envoy::Http::Headers::get().Path);
-      header->insertPath().value(request_specifier.path().value());
+      header->setPath(request_specifier.path().value());
     }
     if (request_specifier.has_method()) {
       header->remove(Envoy::Http::Headers::get().Method);
-      header->insertMethod().value(request_specifier.method().value());
+      header->setMethod(request_specifier.method().value());
     }
   }
 

@@ -59,6 +59,14 @@ SequencerPtr SequencerFactoryImpl::create(Envoy::TimeSource& time_source,
   if (burst_size) {
     rate_limiter = std::make_unique<BurstingRateLimiter>(std::move(rate_limiter), burst_size);
   }
+
+  const std::chrono::nanoseconds jitter_uniform = options_.jitterUniform();
+  if (jitter_uniform.count() > 0) {
+    rate_limiter = std::make_unique<DistributionSamplingRateLimiterImpl>(
+        std::make_unique<UniformRandomDistributionSamplerImpl>(jitter_uniform.count()),
+        std::move(rate_limiter));
+  }
+
   SequencerTarget sequencer_target = [&benchmark_client](CompletionCallback f) -> bool {
     return benchmark_client.tryStartRequest(std::move(f));
   };
@@ -118,15 +126,14 @@ RequestSourceFactoryImpl::create(Envoy::Upstream::ClusterManagerPtr& cluster_man
   UriImpl uri(options_.uri());
   Envoy::Http::HeaderMapPtr header = std::make_unique<Envoy::Http::HeaderMapImpl>();
 
-  header->insertMethod().value(envoy::api::v2::core::RequestMethod_Name(options_.requestMethod()));
-  header->insertPath().value(uri.path());
-  header->insertHost().value(uri.hostAndPort());
-  header->insertScheme().value(uri.scheme() == "https"
-                                   ? Envoy::Http::Headers::get().SchemeValues.Https
-                                   : Envoy::Http::Headers::get().SchemeValues.Http);
+  header->setMethod(envoy::api::v2::core::RequestMethod_Name(options_.requestMethod()));
+  header->setPath(uri.path());
+  header->setHost(uri.hostAndPort());
+  header->setScheme(uri.scheme() == "https" ? Envoy::Http::Headers::get().SchemeValues.Https
+                                            : Envoy::Http::Headers::get().SchemeValues.Http);
   const uint32_t content_length = options_.requestBodySize();
   if (content_length > 0) {
-    header->insertContentLength().value(content_length);
+    header->setContentLength(content_length);
   }
 
   auto request_options = options_.toCommandLineOptions()->request_options();

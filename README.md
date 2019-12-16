@@ -43,7 +43,8 @@ bazel build -c opt //:nighthawk
 ```
 USAGE:
 
-bazel-bin/nighthawk_client  [--request-source <string>] [--open-loop]
+bazel-bin/nighthawk_client  [--request-source <string>]
+[--jitter-uniform <duration>] [--open-loop]
 [--failure-predicate <<string, uint64_t>>]
 ... [--termination-predicate <<string,
 uint64_t>>] ... [--trace <uri format>]
@@ -73,6 +74,11 @@ Where:
 Remote gRPC source that will deliver to-be-replayed traffic. Each
 worker will separately connect to this source. For example
 127.0.0.1:8443.
+
+--jitter-uniform <duration>
+Add uniformly distributed absolute request-release timing jitter. For
+example, to add 10 us of jitter, specify .00001s. Default is empty /
+no uniform jitter.
 
 --open-loop
 Enable open loop mode. When enabled, the benchmark client will not
