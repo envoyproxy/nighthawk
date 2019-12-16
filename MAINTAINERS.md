@@ -2,6 +2,16 @@
 
 This document aims to assist [maintainers](OWNERS.md).
 
+## Envoy domain expertise
+
+As a guideline, concepts in Nighthawk that are derived from Envoy
+require someone with Envoy domain expertise in review. Notable examples
+are the way Nighthawk internal computes cluster configuration, its
+connection pool derivations, the `StreamDecoder` class, as well as anything related to the Nighthawk test server.
+
+See [OWNERS.md](OWNERS.md) to find maintainers with expertise of
+Envoy internals.
+
 ## Pre-merge checklist
 
 - Does the PR have breaking changes? Then that should be explicitly mentioned in the [version history](docs/root/version_history.md).
