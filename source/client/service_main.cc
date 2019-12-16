@@ -103,7 +103,7 @@ void ServiceMain::onSignal() { initiateShutdown(); }
 void ServiceMain::initiateShutdown() {
   if (pipe_fds_.size() == 2) {
     const int tmp = 0;
-    write(pipe_fds_[1], &tmp, sizeof(int));
+    RELEASE_ASSERT(write(pipe_fds_[1], &tmp, sizeof(int)) == sizeof(int), "write failed");
   }
 }
 
