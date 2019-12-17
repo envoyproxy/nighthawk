@@ -50,22 +50,22 @@ TEST_F(OptionsImplTest, All) {
       "--failure-predicate f2:2 ",
       client_name_,
       "{"
-        "common_tls_context:{"
-          "tls_params:{"
-            "cipher_suites:[\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"]"
-          "}"
-        "}"
+      "  common_tls_context:{"
+      "    tls_params:{"
+      "      cipher_suites:[\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"]"
+      "    }"
+      "  }"
       "}",
       "{"
-        "name:\"envoy.transport_sockets.tls\","
-        "typed_config:{"
-          "\"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\","
-            "common_tls_context:{"
-              "tls_params:{"
-                "cipher_suites:[\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"]"
-              "}"
-          "}"
-        "}"
+      "  name:\"envoy.transport_sockets.tls\","
+      "  typed_config:{"
+      "    \"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\","
+      "    common_tls_context:{"
+      "      tls_params:{"
+      "        cipher_suites:[\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"]"
+      "      }"
+      "    }"
+      "  }"
       "}",
       good_test_uri_));
 
@@ -379,14 +379,17 @@ TEST_F(OptionsImplTest, BadTlsContextSpecification) {
 
 TEST_F(OptionsImplTest, BadTransportSocketSpecification) {
   // Bad JSON
-  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
-                              "{} --transport-socket {} http://foo/", client_name_, "{broken_json:")),
-                          MalformedArgvException, "Unable to parse JSON as proto");
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(
+          fmt::format("{} --transport-socket {} http://foo/", client_name_, "{broken_json:")),
+      MalformedArgvException, "Unable to parse JSON as proto");
   // Correct JSON, but contents not according to spec.
   EXPECT_THROW_WITH_REGEX(
-      TestUtility::createOptionsImpl(fmt::format("{} --transport-socket {} http://foo/", client_name_,
-                                                 "{misspelled_transport_socket:{}}")),
-      MalformedArgvException, "Protobuf message \\(type envoy.api.v2.core.TransportSocket reason INVALID_ARGUMENT:misspelled_transport_socket: Cannot find field.\\) has unknown fields");
+      TestUtility::createOptionsImpl(fmt::format("{} --transport-socket {} http://foo/",
+                                                 client_name_, "{misspelled_transport_socket:{}}")),
+      MalformedArgvException,
+      "Protobuf message \\(type envoy.api.v2.core.TransportSocket reason "
+      "INVALID_ARGUMENT:misspelled_transport_socket: Cannot find field.\\) has unknown fields");
 }
 
 class OptionsImplPredicateBasedOptionsTest : public OptionsImplTest,
