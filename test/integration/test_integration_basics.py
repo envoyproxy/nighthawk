@@ -361,7 +361,6 @@ def test_https_h2_transport_socket_configuration(https_test_server_fixture):
   assertCounterEqual(counters, "ssl.ciphers.ECDHE-RSA-CHACHA20-POLY1305", 1)
 
 
-
 def test_https_prefetching(https_test_server_fixture):
   """
   Test we prefetch connections. We test for 1 second at 1 rps, which should
