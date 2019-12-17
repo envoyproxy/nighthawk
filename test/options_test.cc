@@ -42,13 +42,17 @@ TEST_F(OptionsImplTest, All) {
       "{} --rps 4 --connections 5 --duration 6 --timeout 7 --h2 "
       "--concurrency 8 --verbosity error --output-format yaml --prefetch-connections "
       "--burst-size 13 --address-family v6 --request-method POST --request-body-size 1234 "
-      "--tls-context {} --request-header f1:b1 --request-header f2:b2 --request-header f3:b3:b4 {} "
+      "--tls-context {} --transport-socket {} "
+      "--request-header f1:b1 --request-header f2:b2 --request-header f3:b3:b4 {} "
       "--max-pending-requests 10 "
       "--max-active-requests 11 --max-requests-per-connection 12 --sequencer-idle-strategy sleep "
       "--termination-predicate t1:1 --termination-predicate t2:2 --failure-predicate f1:1 "
       "--failure-predicate f2:2 ",
       client_name_,
       "{common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"]}}}",
+      "{name:\"envoy.transport_sockets.tls\","
+      "typed_config:{\"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\","
+      "common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"]}}}}",
       good_test_uri_));
 
   EXPECT_EQ(4, options->requestsPerSecond());
@@ -67,9 +71,23 @@ TEST_F(OptionsImplTest, All) {
   const std::vector<std::string> expected_headers = {"f1:b1", "f2:b2", "f3:b3:b4"};
   EXPECT_EQ(expected_headers, options->requestHeaders());
   EXPECT_EQ(1234, options->requestBodySize());
-  EXPECT_EQ("common_tls_context {\n  tls_params {\n    cipher_suites: "
-            "\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"\n  }\n}\n",
+  EXPECT_EQ("common_tls_context {\n"
+            "  tls_params {\n"
+            "    cipher_suites: \"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"\n"
+            "  }\n"
+            "}\n",
             options->tlsContext().DebugString());
+  EXPECT_EQ("name: \"envoy.transport_sockets.tls\"\n"
+            "typed_config {\n"
+            "  [type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext] {\n"
+            "    common_tls_context {\n"
+            "      tls_params {\n"
+            "        cipher_suites: \"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"\n"
+            "      }\n"
+            "    }\n"
+            "  }\n"
+            "}\n",
+            options->transportSocket().value().DebugString());
   EXPECT_EQ(10, options->maxPendingRequests());
   EXPECT_EQ(11, options->maxActiveRequests());
   EXPECT_EQ(12, options->maxRequestsPerConnection());
@@ -105,6 +123,7 @@ TEST_F(OptionsImplTest, All) {
 
   EXPECT_EQ(cmd->request_options().request_body_size().value(), options->requestBodySize());
   EXPECT_TRUE(util(cmd->tls_context(), options->tlsContext()));
+  EXPECT_TRUE(util(cmd->transport_socket(), options->transportSocket().value()));
   EXPECT_EQ(cmd->max_pending_requests().value(), options->maxPendingRequests());
   EXPECT_EQ(cmd->max_active_requests().value(), options->maxActiveRequests());
   EXPECT_EQ(cmd->max_requests_per_connection().value(), options->maxRequestsPerConnection());
@@ -342,6 +361,18 @@ TEST_F(OptionsImplTest, BadTlsContextSpecification) {
       TestUtility::createOptionsImpl(fmt::format("{} --tls-context {} http://foo/", client_name_,
                                                  "{misspelled_tls_context:{}}")),
       MalformedArgvException, "envoy.api.v2.auth.UpstreamTlsContext reason INVALID_ARGUMENT");
+}
+
+TEST_F(OptionsImplTest, BadTransportSocketSpecification) {
+  // Bad JSON
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                              "{} --transport-socket {} http://foo/", client_name_, "{broken_json:")),
+                          MalformedArgvException, "Unable to parse JSON as proto");
+  // Correct JSON, but contents not according to spec.
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(fmt::format("{} --transport-socket {} http://foo/", client_name_,
+                                                 "{misspelled_transport_socket:{}}")),
+      MalformedArgvException, "Protobuf message \\(type envoy.api.v2.core.TransportSocket reason INVALID_ARGUMENT:misspelled_transport_socket: Cannot find field.\\) has unknown fields");
 }
 
 class OptionsImplPredicateBasedOptionsTest : public OptionsImplTest,

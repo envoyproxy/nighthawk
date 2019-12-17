@@ -12,6 +12,7 @@
 
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_split.h"
+#include "absl/types/optional.h"
 #include "fmt/ranges.h"
 
 namespace Nighthawk {
@@ -129,8 +130,18 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
 
   TCLAP::ValueArg<std::string> tls_context(
       "", "tls-context",
-      "Tls context configuration in yaml or json. Example (json):"
+      "DEPRECATED, use --transport-socket instead. "
+      "Tls context configuration in yaml or json. Example (json): "
       "{common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES128-SHA\"]}}}",
+      false, "", "string", cmd);
+
+  TCLAP::ValueArg<std::string> transport_socket(
+      "", "transport-socket",
+      "Transport socket configuration in yaml or json. Example (json): "
+      "{name:\"envoy.transport_sockets.tls\",typed_config:"
+      "\"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\""
+      "{common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES128-SHA\"]}}}"
+      "}",
       false, "", "string", cmd);
 
   TCLAP::ValueArg<uint32_t> max_pending_requests(
@@ -284,6 +295,16 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       throw MalformedArgvException(e.what());
     }
   }
+  if (!transport_socket.getValue().empty()) {
+    try {
+      envoy::api::v2::core::TransportSocket ts;
+      Envoy::MessageUtil::loadFromJson(transport_socket.getValue(), ts,
+                                       Envoy::ProtobufMessage::getStrictValidationVisitor());
+      transport_socket_.emplace(ts);
+    } catch (const Envoy::EnvoyException& e) {
+      throw MalformedArgvException(e.what());
+    }
+  }
   validate();
 }
 
@@ -357,6 +378,16 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   open_loop_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, open_loop, open_loop_);
 
   tls_context_.MergeFrom(options.tls_context());
+
+  if (options.has_transport_socket()) {
+    envoy::api::v2::core::TransportSocket ts;
+    if (transport_socket_.has_value()) {
+      ts = transport_socket_.value();
+    }
+    ts.MergeFrom(options.transport_socket());
+    transport_socket_.emplace(ts);
+  }
+
   if (options.failure_predicates().size()) {
     failure_predicates_.clear();
   }
@@ -441,6 +472,9 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptions() const {
   }
   request_options->mutable_request_body_size()->set_value(requestBodySize());
   *(command_line_options->mutable_tls_context()) = tlsContext();
+  if (transportSocket().has_value()) {
+    *(command_line_options->mutable_transport_socket()) = transportSocket().value();
+  }
   command_line_options->mutable_max_pending_requests()->set_value(maxPendingRequests());
   command_line_options->mutable_max_active_requests()->set_value(maxActiveRequests());
   command_line_options->mutable_max_requests_per_connection()->set_value(
