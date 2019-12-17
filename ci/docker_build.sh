@@ -10,6 +10,9 @@ DOCKER_IMAGE_PREFIX="envoyproxy/${DOCKER_NAME}"
 for BINARY in "${BINARIES[@]}"; do
     # Docker won't follow symlinks
     cp bazel-bin/${BINARY} .
+    chmod +w ${BINARY}
+    strip --strip-debug ${BINARY}
+    chmod -w ${BINARY}
 done
 
 docker build -f ci/Dockerfile-${DOCKER_NAME} -t "${DOCKER_IMAGE_PREFIX}-dev:latest" .
