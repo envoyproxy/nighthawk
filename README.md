@@ -104,14 +104,13 @@ any other value will allow client-side queuing of requests).
 --tls-context <string>
 DEPRECATED, use --transport-socket instead.
 Tls context configuration in yaml or json. Example
-(json):{
-common_tls_context:{tls_params:{cipher_suites:["-ALL:ECDHE-RSA
+(json):{common_tls_context:{tls_params:{cipher_suites:["-ALL:ECDHE-RSA
 -AES128-SHA"]}}}
 
 --transport-socket <string>
 Transport socket configuration in yaml or json. Example
-(json):{name:\"tls\",
-typed_config:{ "@type":"type.googleapis.com/envoy.api.v2.auth.DownstreamTlsContext",
+(json):{name:\"envoy.transport_sockets.tls\",
+typed_config:{ "@type":"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext",
 common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES128-SHA\"]}}}}}"
 
 --request-body-size <uint32_t>

@@ -22,10 +22,9 @@
 
 #include "external/envoy/test/test_common/simulated_time_system.h"
 
-#include "absl/types/optional.h"
-
 #include "common/utility.h"
 
+#include "absl/types/optional.h"
 #include "gmock/gmock.h"
 
 using namespace std::chrono_literals;

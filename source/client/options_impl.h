@@ -8,9 +8,8 @@
 #include "nighthawk/client/options.h"
 #include "nighthawk/common/exception.h"
 
-#include "tclap/CmdLine.h"
-
 #include "absl/types/optional.h"
+#include "tclap/CmdLine.h"
 
 namespace Nighthawk {
 namespace Client {
