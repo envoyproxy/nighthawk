@@ -75,7 +75,6 @@ workflows:
   all:
     jobs:
       - build
-      - opt_build
       - test
       - clang_tidy
 #      - test_with_valgrind
