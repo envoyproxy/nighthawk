@@ -2,7 +2,7 @@
 
 set -ex
 
-for BINARY in nighthawk_client nighthawk_test_server; do
+for BINARY in nighthawk_client nighthawk_service nighthawk_output_transform nighthawk_test_server; do
     DOCKER_NAME=$(echo ${BINARY} | tr _ -)
     DOCKER_IMAGE_PREFIX="envoyproxy/${DOCKER_NAME}"
 

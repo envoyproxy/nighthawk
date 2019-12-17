@@ -10,13 +10,6 @@ jobs:
     steps:
       - checkout
       - run: ci/do_ci.sh build
-  opt_build:
-    docker:
-      - image: *envoy-build-image
-    resource_class: xlarge
-    steps:
-      - checkout
-      - run: ci/do_ci.sh opt_build
   test:
     docker:
       - image: *envoy-build-image

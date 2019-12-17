@@ -93,6 +93,8 @@ function do_check_format() {
 function do_docker() {
     echo "docker..."
     cd "${SRCDIR}"
+    # Note that we implicly test the opt build in CI here
+    do_opt_build
     ./ci/docker_build.sh
 }
 
@@ -151,10 +153,6 @@ export CLANG_FORMAT=clang-format
 case "$1" in
     build)
         do_build
-        exit 0
-    ;;
-    opt_build)
-        do_opt_build
         exit 0
     ;;
     test)

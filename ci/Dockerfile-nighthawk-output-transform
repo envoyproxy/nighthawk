@@ -1,0 +1,5 @@
+FROM frolvlad/alpine-glibc
+
+ADD nighthawk_output_transform /usr/local/bin/nighthawk_output_transform
+
+ENTRYPOINT ["nighthawk_output_transform"]

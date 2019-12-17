@@ -1,0 +1,5 @@
+FROM frolvlad/alpine-glibc
+
+ADD nighthawk_service /usr/local/bin/nighthawk_service
+
+ENTRYPOINT ["nighthawk_service"]
