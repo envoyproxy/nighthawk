@@ -68,7 +68,7 @@ jobs:
     resource_class: xlarge
     steps:
       - checkout
-      - setup_remote_docker
+      - setup_remote_docker:
         docker_layer_caching: true
       - run: ci/do_ci.sh docker
 
