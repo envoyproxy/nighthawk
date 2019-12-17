@@ -32,12 +32,12 @@ function do_clang_tidy() {
 
 function do_coverage() {
     echo "bazel coverage build with tests ${TEST_TARGETS}"
-
+    
     # Reduce the amount of memory Bazel tries to use to prevent it from launching too many subprocesses.
     # This should prevent the system from running out of memory and killing tasks. See discussion on
     # https://github.com/envoyproxy/envoy/pull/5611.
     [ -z "$CIRCLECI" ] || export BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} --local_ram_resources=12288"
-
+    
     export TEST_TARGETS="//test/..."
     test/run_nighthawk_bazel_coverage.sh ${TEST_TARGETS}
     exit 0
@@ -94,8 +94,8 @@ function do_docker() {
     echo "docker..."
     cd "${SRCDIR}"
     # Note that we implicly test the opt build in CI here
-    do_opt_build
-    ./ci/docker_build.sh
+    #do_opt_build
+    ./ci/docker/docker_build.sh
 }
 
 function do_fix_format() {
@@ -112,7 +112,7 @@ if [ -n "$CIRCLECI" ]; then
         mv "${HOME:-/root}/.gitconfig" "${HOME:-/root}/.gitconfig_save"
         echo 1
     fi
-    # We constrain parallelism in CI to avoid running out of memory.	
+    # We constrain parallelism in CI to avoid running out of memory.
     NUM_CPUS=8
 fi
 
@@ -124,14 +124,14 @@ if grep 'docker\|lxc' /proc/1/cgroup; then
     mkdir -p "${FAKE_HOME}"
     export HOME="${FAKE_HOME}"
     export PYTHONUSERBASE="${FAKE_HOME}"
-
+    
     export BUILD_DIR=/build
     if [[ ! -d "${BUILD_DIR}" ]]
     then
         echo "${BUILD_DIR} mount missing - did you forget -v <something>:${BUILD_DIR}? Creating."
         mkdir -p "${BUILD_DIR}"
     fi
-
+    
     # Environment setup.
     export USER=bazel
     export TEST_TMPDIR=/build/tmp
