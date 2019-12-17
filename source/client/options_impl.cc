@@ -138,11 +138,9 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   TCLAP::ValueArg<std::string> transport_socket(
       "", "transport-socket",
       "Transport socket configuration in yaml or json. Example (json): "
-      "{name:\"envoy.transport_sockets.tls\",typed_config:"
+      "{name:\"envoy.transport_sockets.tls\",typed_config:{"
       "\"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\""
-      "{common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES128-SHA\"]}}}"
-      "}",
-      false, "", "string", cmd);
+      "{common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES128-SHA\"]}}}}"
 
   TCLAP::ValueArg<uint32_t> max_pending_requests(
       "", "max-pending-requests",
