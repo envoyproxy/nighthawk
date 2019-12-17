@@ -8,5 +8,7 @@ routing PRs, questions, etc. to the right place.
 * Otto van der Schaaf ([oschaaf](https://github.com/oschaaf)) (oschaaf@we-amp.com)
   * All things Nighthawk
 * Harvey Tuch ([htuch](https://github.com/htuch)) (htuch@google.com)
+  * Envoy internals, architecture and performance methodology.
 * John Plevyak ([jplevyak](https://github.com/jplevyak)) (jplevyak@google.com)
-* Jakub Sobon ([jplevyak](https://github.com/jplevyak)) (???@google.com)
+  * Envoy internals and architecture.
+* Jakub Sobon ([mum4k](https://github.com/mum4k)) (???@google.com)
