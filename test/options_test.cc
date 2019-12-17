@@ -49,24 +49,12 @@ TEST_F(OptionsImplTest, All) {
       "--termination-predicate t1:1 --termination-predicate t2:2 --failure-predicate f1:1 "
       "--failure-predicate f2:2 ",
       client_name_,
-      "{"
-      "  common_tls_context:{"
-      "    tls_params:{"
-      "      cipher_suites:[\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"]"
-      "    }"
-      "  }"
-      "}",
-      "{"
-      "  name:\"envoy.transport_sockets.tls\","
-      "  typed_config:{"
-      "    \"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\","
-      "    common_tls_context:{"
-      "      tls_params:{"
-      "        cipher_suites:[\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"]"
-      "      }"
-      "    }"
-      "  }"
-      "}",
+      "{common_tls_context:{tls_params:{"
+      "cipher_suites:[\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"]}}}",
+      "{name:\"envoy.transport_sockets.tls\","
+      "typed_config:{\"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\","
+      "common_tls_context:{tls_params:{"
+      "cipher_suites:[\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"]}}}}",
       good_test_uri_));
 
   EXPECT_EQ(4, options->requestsPerSecond());
