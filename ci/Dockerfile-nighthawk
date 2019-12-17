@@ -1,0 +1,11 @@
+FROM frolvlad/alpine-glibc
+
+ADD nighthawk_client /usr/local/bin/nighthawk_client
+ADD nighthawk_test_server /usr/local/bin/nighthawk_test_server
+ADD nighthawk_output_transform /usr/local/bin/nighthawk_output_transform
+ADD nighthawk_service /usr/local/bin/nighthawk_service
+ADD ci/default-config.yaml /etc/envoy/envoy.yaml
+
+EXPOSE 10001 10080 8443
+
+CMD ["-c", "/etc/envoy/envoy.yaml"]

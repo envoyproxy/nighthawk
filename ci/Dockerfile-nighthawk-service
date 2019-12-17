@@ -1,7 +1,0 @@
-FROM frolvlad/alpine-glibc
-
-ADD nighthawk_service /usr/local/bin/nighthawk_service
-
-EXPOSE 8443
-
-ENTRYPOINT ["nighthawk_service"]
