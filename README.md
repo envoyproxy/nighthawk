@@ -1,13 +1,13 @@
 # Nighthawk
 
-*A L7 (HTTP/HTTPS/HTTP2) performance characterization tool*
+_A L7 (HTTP/HTTPS/HTTP2) performance characterization tool_
 
 ## Current state
 
 Nighthawk currently offers:
 
 - A load testing client which supports HTTP/1.1 and HTTP/2 over HTTP and HTTPS.
-(HTTPS certificates are not yet validated).
+  (HTTPS certificates are not yet validated).
 - A simple [test server](source/server/README.md) which is capable of generating dynamic response sizes, as well as inject delays.
 - A binary to transform nighthawk output to well-known formats, allowing integration with other systems and dashboards.
 
@@ -16,7 +16,6 @@ Nighthawk currently offers:
 ### Ubuntu
 
 First, follow steps 1 and 2 over at [Quick start Bazel build for developers](https://github.com/envoyproxy/envoy/blob/master/bazel/README.md#quick-start-bazel-build-for-developers).
-
 
 ## Building and using the Nighthawk client CLI
 
@@ -104,14 +103,14 @@ any other value will allow client-side queuing of requests).
 --tls-context <string>
 DEPRECATED, use --transport-socket instead.
 Tls context configuration in yaml or json. Example
-(json):{common_tls_context:{tls_params:{cipher_suites:["-ALL:ECDHE-RSA
+(json): {common_tls_context:{tls_params:{cipher_suites:["-ALL:ECDHE-RSA
 -AES128-SHA"]}}}
 
 --transport-socket <string>
 Transport socket configuration in yaml or json. Example
-(json):{name:\"envoy.transport_sockets.tls\",
-typed_config:{ "@type":"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext",
-common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES128-SHA\"]}}}}}"
+(json): {name:\"envoy.transport_sockets.tls\",
+typed_config:{"@type":"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext",
+common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES128-SHA\"]}}}}
 
 --request-body-size <uint32_t>
 Size of the request body to send. NH will send a number of consecutive
@@ -188,7 +187,6 @@ L7 (HTTP/HTTPS/HTTP2) performance characterization tool.
 
 The gRPC service can be used to start a server which is able to perform back-to-back benchmark runs upon request. The service interface definition [can be found here.](https://github.com/envoyproxy/nighthawk/blob/59a37568783272a6438b5697277d4e56aa16ebbe/api/client/service.proto)
 
-
 ```bash
 ➜ bazel-bin/nighthawk_service --help
 ```
@@ -226,7 +224,6 @@ L7 (HTTP/HTTPS/HTTP2) performance characterization tool.
 ### Nighthawk output transformation utility
 
 Nighthawk comes with a tool to transform its json output to its other supported output formats.
-
 
 ```bash
 ➜ bazel-bin/nighthawk_output_transform --help
@@ -363,7 +360,8 @@ fortio report --data-dir ./samples/fortio_data
 - Consider tuning the benchmarking system for low (network) latency. You can do that manually, or install [tuned](http://manpages.ubuntu.com/manpages/bionic/man8/tuned-adm.8.html) and run:
 
 | As this may change boot flags, take precautions, and familiarize yourself with the tool on systems that you don't mind breaking. For example, running this has been observed to mess up dual-boot systems! |
-| --- |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+
 
 ```bash
 sudo tuned-adm profile network-latency
