@@ -6,7 +6,6 @@
 #include <sstream>
 
 #include "nighthawk/common/exception.h"
-#include "nighthawk/common/version.h"
 
 #include "external/envoy/source/common/protobuf/utility.h"
 

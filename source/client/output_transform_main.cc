@@ -24,7 +24,7 @@ namespace Client {
 OutputTransformMain::OutputTransformMain(int argc, const char* const* argv, std::istream& input)
     : input_(input) {
   const char* descr = "L7 (HTTP/HTTPS/HTTP2) performance characterization transformation tool.";
-  TCLAP::CmdLine cmd(descr, ' ', VersionUtils::VersionString()); // NOLINT
+  TCLAP::CmdLine cmd(descr, ' ', Versioning::VersionString()); // NOLINT
   std::vector<std::string> output_formats = OutputFormatterImpl::getLowerCaseOutputFormats();
   TCLAP::ValuesConstraint<std::string> output_formats_allowed(output_formats);
   TCLAP::ValueArg<std::string> output_format(

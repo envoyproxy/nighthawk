@@ -53,7 +53,7 @@ public:
   void expectEqualToGoldFile(absl::string_view output, absl::string_view path) {
     std::string s = Envoy::Filesystem::fileSystemForTest().fileReadToEnd(
         TestEnvironment::runfilesPath(std::string(path)));
-    s = absl::StrReplaceAll(s, {{"@version@", VersionUtils::VersionString()}});
+    s = absl::StrReplaceAll(s, {{"@version@", Versioning::VersionString()}});
     EXPECT_EQ(s, output);
   }
 
