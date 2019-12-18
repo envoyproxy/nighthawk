@@ -429,3 +429,15 @@ def test_http_h1_failure_predicate(http_test_server_fixture):
                                                                expect_failure=True)
   counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   assertCounterEqual(counters, "benchmark.http_2xx", 1)
+
+
+def test_bad_arg_error_messages(http_test_server_fixture):
+  """
+  Test arguments that pass proto validation, but are found to be no good nonetheless, result in reasonable error
+  messages.
+  """
+  _, err = http_test_server_fixture.runNighthawkClient(
+      [http_test_server_fixture.getTestServerRootUri(), "--termination-predicate ", "a:a"],
+      expect_failure=True,
+      as_json=False)
+  assert "Bad argument: Termination predicate 'a:a' has an out of range threshold." in err
