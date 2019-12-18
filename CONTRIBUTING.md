@@ -3,9 +3,7 @@ maximize the chances of your PR being merged.
 
 # Communication
 
-* Before starting work on a major feature, please reach out to us via GitHub, Slack,
-  email, etc. We will make sure no one else is already working on it and ask you to open a
-  GitHub issue.
+* Before starting work on a major feature, please reach out to us via [GitHub](https://github.com/envoyproxy/nighthawk) or [Slack](https://envoyproxy.slack.com/archives/CDX3CGTT9). We will make sure no one else is already working on it and ask you to open a GitHub issue.
 * Small patches and bug fixes don't need prior communication.
 
 # Coding style
@@ -18,9 +16,9 @@ Both API and implementation stability are important to Nighthawk. Since the API 
 
 # Submitting a PR
 
-* Generally Nighthawk mirrors [Envoy's policy](https://github.com/envoyproxy/envoy/blob/master/CONTRIBUTING.md#pr-review-policy-for-maintainers) with respect to PR submission policy.
+* Generally Nighthawk mirrors [Envoy's policy](https://github.com/envoyproxy/envoy/blob/master/CONTRIBUTING.md#submitting-a-pr) with respect to PR submission policy.
 * Any PR that changes user-facing behavior **must** have associated documentation in [docs](docs) as
-  well as [release notes](docs/root/intro/version_history.rst). 
+  well as [release notes](docs/root/version_history.rst).
 
 # PR review policy for maintainers
 

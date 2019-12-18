@@ -11,4 +11,5 @@ routing PRs, questions, etc. to the right place.
   * Envoy internals, architecture and performance methodology.
 * John Plevyak ([jplevyak](https://github.com/jplevyak)) (jplevyak@google.com)
   * Envoy internals and architecture.
-* Jakub Sobon ([mum4k](https://github.com/mum4k)) (???@google.com)
+* Jakub Sobon ([mum4k](https://github.com/mum4k)) (mumak@google.com)
+  * APIs, general functionality and miscellany.
