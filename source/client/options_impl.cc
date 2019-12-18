@@ -131,13 +131,13 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   TCLAP::ValueArg<std::string> tls_context(
       "", "tls-context",
       "DEPRECATED, use --transport-socket instead. "
-      "Tls context configuration in yaml or json. Example (json): "
+      "Tls context configuration in json or compact yaml. Example (json): "
       "{common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES128-SHA\"]}}}",
       false, "", "string", cmd);
 
   TCLAP::ValueArg<std::string> transport_socket(
       "", "transport-socket",
-      "Transport socket configuration in yaml or json. Example (json): "
+      "Transport socket configuration in json or compact yaml. Example (json): "
       "{name:\"envoy.transport_sockets.tls\",typed_config:{"
       "\"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\","
       "common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES128-SHA\"]}}}}",
