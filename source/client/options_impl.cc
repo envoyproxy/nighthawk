@@ -310,7 +310,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   }
   if (!tls_context.getValue().empty() && !transport_socket.getValue().empty()) {
     ENVOY_LOG(warn, "Setting both --tls-context and --transport-socket "
-      "may produce undefined behavior. ");
+      "may produce undefined behavior.");
   }
   if (!tls_context.getValue().empty()) {
     try {
