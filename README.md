@@ -1,13 +1,13 @@
 # Nighthawk
 
-_A L7 (HTTP/HTTPS/HTTP2) performance characterization tool_
+*A L7 (HTTP/HTTPS/HTTP2) performance characterization tool*
 
 ## Current state
 
 Nighthawk currently offers:
 
 - A load testing client which supports HTTP/1.1 and HTTP/2 over HTTP and HTTPS.
-  (HTTPS certificates are not yet validated).
+(HTTPS certificates are not yet validated).
 - A simple [test server](source/server/README.md) which is capable of generating dynamic response sizes, as well as inject delays.
 - A binary to transform nighthawk output to well-known formats, allowing integration with other systems and dashboards.
 
@@ -16,6 +16,7 @@ Nighthawk currently offers:
 ### Ubuntu
 
 First, follow steps 1 and 2 over at [Quick start Bazel build for developers](https://github.com/envoyproxy/envoy/blob/master/bazel/README.md#quick-start-bazel-build-for-developers).
+
 
 ## Building and using the Nighthawk client CLI
 
@@ -195,6 +196,7 @@ L7 (HTTP/HTTPS/HTTP2) performance characterization tool.
 
 The gRPC service can be used to start a server which is able to perform back-to-back benchmark runs upon request. The service interface definition [can be found here.](https://github.com/envoyproxy/nighthawk/blob/59a37568783272a6438b5697277d4e56aa16ebbe/api/client/service.proto)
 
+
 ```bash
 ➜ bazel-bin/nighthawk_service --help
 ```
@@ -232,6 +234,7 @@ L7 (HTTP/HTTPS/HTTP2) performance characterization tool.
 ### Nighthawk output transformation utility
 
 Nighthawk comes with a tool to transform its json output to its other supported output formats.
+
 
 ```bash
 ➜ bazel-bin/nighthawk_output_transform --help
@@ -368,7 +371,7 @@ fortio report --data-dir ./samples/fortio_data
 - Consider tuning the benchmarking system for low (network) latency. You can do that manually, or install [tuned](http://manpages.ubuntu.com/manpages/bionic/man8/tuned-adm.8.html) and run:
 
 | As this may change boot flags, take precautions, and familiarize yourself with the tool on systems that you don't mind breaking. For example, running this has been observed to mess up dual-boot systems! |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| --- |
 
 
 ```bash
