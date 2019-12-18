@@ -373,7 +373,6 @@ fortio report --data-dir ./samples/fortio_data
 | As this may change boot flags, take precautions, and familiarize yourself with the tool on systems that you don't mind breaking. For example, running this has been observed to mess up dual-boot systems! |
 | --- |
 
-
 ```bash
 sudo tuned-adm profile network-latency
 ```
