@@ -13,7 +13,7 @@ set -e
 DOCKER_NAME="nighthawk"
 DOCKER_IMAGE_PREFIX="envoyproxy/${DOCKER_NAME}"
 BINARIES=(nighthawk_test_server nighthawk_client nighthawk_service nighthawk_output_transform)
-BAZEL_BIN=$(bazel info -c dbg bazel-bin)
+BAZEL_BIN=$(bazel info -c opt bazel-bin)
 WORKSPACE=$(bazel info workspace)
 TMP_DIR=${WORKSPACE}/tmp-docker-build-context
 
