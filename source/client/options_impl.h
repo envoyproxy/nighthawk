@@ -8,13 +8,15 @@
 #include "nighthawk/client/options.h"
 #include "nighthawk/common/exception.h"
 
+#include "external/envoy/source/common/common/logger.h"
+
 #include "absl/types/optional.h"
 #include "tclap/CmdLine.h"
 
 namespace Nighthawk {
 namespace Client {
 
-class OptionsImpl : public Options {
+class OptionsImpl : public Options, public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
   // We cap on negative values. TCLAP accepts negative values which we will get here as very
   // large values. We just cap values, hoping we catch accidental wraparound to a reasonable extent.
