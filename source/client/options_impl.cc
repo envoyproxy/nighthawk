@@ -305,12 +305,12 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
 
   if (!tls_context.getValue().empty()) {
     ENVOY_LOG(warn, "--tls-context is deprecated. "
-      "It can be replaced by an equivalent --transport-socket. "
-      "See --help for an example.");
+                    "It can be replaced by an equivalent --transport-socket. "
+                    "See --help for an example.");
   }
   if (!tls_context.getValue().empty() && !transport_socket.getValue().empty()) {
     ENVOY_LOG(warn, "Setting both --tls-context and --transport-socket "
-      "may produce undefined behavior.");
+                    "may produce undefined behavior.");
   }
   if (!tls_context.getValue().empty()) {
     try {
