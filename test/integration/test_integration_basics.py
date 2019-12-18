@@ -275,38 +275,20 @@ def test_https_h1_transport_socket_configuration(https_test_server_fixture):
   """
 
   parsed_json, _ = https_test_server_fixture.runNighthawkClient([
-      "--termination-predicate", "benchmark.http_2xx:0",
-      "--transport-socket "
-      "{"
-        "name:\"envoy.transport_sockets.tls\","
-        "typed_config:{"
-          "\"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\","
-          "common_tls_context:{"
-            "tls_params:{"
-              "cipher_suites:[\"-ALL:ECDHE-RSA-AES128-SHA\"]"
-            "}"
-          "}"
-        "}"
-      "}",
+      "--termination-predicate", "benchmark.http_2xx:0", "--transport-socket "
+      "{name:\"envoy.transport_sockets.tls\",typed_config:{"
+      "\"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\","
+      "common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES128-SHA\"]}}}}",
       https_test_server_fixture.getTestServerRootUri()
   ])
   counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   assertCounterEqual(counters, "ssl.ciphers.ECDHE-RSA-AES128-SHA", 1)
 
   parsed_json, _ = https_test_server_fixture.runNighthawkClient([
-      "--h2", "--termination-predicate", "benchmark.http_2xx:0",
-      "--transport-socket "
-      "{"
-        "name:\"envoy.transport_sockets.tls\","
-        "typed_config:{"
-          "\"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\","
-          "common_tls_context:{"
-            "tls_params:{"
-              "cipher_suites:[\"-ALL:ECDHE-RSA-CHACHA20-POLY1305\"]"
-            "}"
-          "}"
-        "}"
-      "}",
+      "--h2", "--termination-predicate", "benchmark.http_2xx:0", "--transport-socket "
+      "{name:\"envoy.transport_sockets.tls\",typed_config:{"
+      "\"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\","
+      "common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-CHACHA20-POLY1305\"]}}}}",
       https_test_server_fixture.getTestServerRootUri()
   ])
   counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
@@ -339,38 +321,20 @@ def test_https_h2_transport_socket_configuration(https_test_server_fixture):
   Verifies specifying tls cipher suites via transport socket works with the h2 pool
   """
   parsed_json, _ = https_test_server_fixture.runNighthawkClient([
-      "--termination-predicate", "benchmark.http_2xx:0",
-      "--transport-socket "
-      "{"
-        "name:\"envoy.transport_sockets.tls\","
-        "typed_config:{"
-          "\"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\","
-          "common_tls_context:{"
-            "tls_params:{"
-              "cipher_suites:[\"-ALL:ECDHE-RSA-AES128-SHA\"]"
-            "}"
-          "}"
-        "}"
-      "}",
+      "--termination-predicate", "benchmark.http_2xx:0", "--transport-socket "
+      "{name:\"envoy.transport_sockets.tls\",typed_config:{"
+      "\"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\","
+      "common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES128-SHA\"]}}}}",
       https_test_server_fixture.getTestServerRootUri()
   ])
   counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   assertCounterEqual(counters, "ssl.ciphers.ECDHE-RSA-AES128-SHA", 1)
 
   parsed_json, _ = https_test_server_fixture.runNighthawkClient([
-      "--h2", "--termination-predicate", "benchmark.http_2xx:0",
-      "--transport-socket "
-      "{"
-        "name:\"envoy.transport_sockets.tls\","
-        "typed_config:{"
-          "\"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\","
-          "common_tls_context:{"
-            "tls_params:{"
-              "cipher_suites:[\"-ALL:ECDHE-RSA-CHACHA20-POLY1305\"]"
-            "}"
-          "}"
-        "}"
-      "}",
+      "--h2", "--termination-predicate", "benchmark.http_2xx:0", "--transport-socket "
+      "{name:\"envoy.transport_sockets.tls\",typed_config:{"
+      "\"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\","
+      "common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-CHACHA20-POLY1305\"]}}}}",
       https_test_server_fixture.getTestServerRootUri()
   ])
   counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
