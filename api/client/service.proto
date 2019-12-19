@@ -38,10 +38,11 @@ message ExecutionResponse {
 
 // Used to request a RequestStreamResponse.
 message RequestStreamRequest {
-  // Amount of RequestStreamResponses that should be yielded.
-  // Used to implement basic flow control by the client. Once AsyncClientImpl gets
-  // a way to apply backpressure this could probably be dropped.
-  uint64 amount = 1;
+  // Indicates the amount of RequestStreamResponses that should be yielded by the server
+  // in response to this request.
+  // Used to implement basic flow control by the client. Once AsyncClientImpl gets a way
+  // to apply backpressure this could probably be dropped.
+  uint64 quantity = 1;
 }
 
 message RequestStreamResponse {
@@ -54,8 +55,10 @@ message RequestStreamResponse {
 message RequestSpecifier {
   // method/path/authority/content_length can all be expressed in request headers.
   // so technically they are redundant. In case of ambiguity, the explicit fields will prevail.
+  // When set, these fields will replace the defaults configured on the remote side.
   // Note that as of today, the target upstream/cluster that will be used to replay traffic to
   // fixes the destination address/port.
+
   // Request method
   google.protobuf.StringValue method = 1;
   // Request path
@@ -85,9 +88,11 @@ service NighthawkService {
   //  Accepts a stream of ExecutionRequests, which can be used to initiate, update, or cancel a
   //  test. Returns a stream of ExecutionResponse objects which will contain results for all
   //  Nighthawk runs.
-  rpc ExecutionStream(stream ExecutionRequest) returns (stream ExecutionResponse) {
+  rpc ExecutionStream(stream  ExecutionRequest) returns (stream ExecutionResponse) {
   }
+}
 
+service NighthawkRequestSourceService {
   // Obtains a stream request-level specifications plus expectations.
   rpc RequestStream(stream RequestStreamRequest) returns (stream RequestStreamResponse) {
   }
