@@ -405,9 +405,6 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
 
   if (options.has_transport_socket()) {
     envoy::api::v2::core::TransportSocket ts;
-    if (transport_socket_.has_value()) {
-      ts = transport_socket_.value();
-    }
     ts.MergeFrom(options.transport_socket());
     transport_socket_.emplace(ts);
   }
