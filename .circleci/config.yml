@@ -10,13 +10,6 @@ jobs:
     steps:
       - checkout
       - run: ci/do_ci.sh build
-  opt_build:
-    docker:
-      - image: *envoy-build-image
-    resource_class: xlarge
-    steps:
-      - checkout
-      - run: ci/do_ci.sh opt_build
   test:
     docker:
       - image: *envoy-build-image
@@ -69,13 +62,21 @@ jobs:
     steps:
       - checkout
       - run: ci/do_ci.sh check_format
+  docker:
+    docker:
+      - image: *envoy-build-image
+    resource_class: xlarge
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run: ci/do_ci.sh docker
 
 workflows:
   version: 2
   all:
     jobs:
       - build
-      - opt_build
       - test
       - clang_tidy
 #      - test_with_valgrind
@@ -83,3 +84,4 @@ workflows:
       - asan
       - tsan
       - format
+      - docker
