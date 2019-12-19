@@ -212,8 +212,7 @@ Specifies which service to run. Default 'controller'.
 
 --listener-address-file <>
 Location where the service will write the final address:port on which
-the Nighthawk grpc service listens. Default empty. Not applicable to
-the request source service.
+the Nighthawk grpc service listens. Default empty.
 
 --listen <address:port>
 The address:port on which the Nighthawk gRPC service should listen.
