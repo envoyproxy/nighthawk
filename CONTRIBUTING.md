@@ -22,12 +22,12 @@ Both API and implementation stability are important to Nighthawk. Since the API 
 
 # PR review policy for maintainers
 
-* Generally Nighthawk mirros [Envoy's policy](https://github.com/envoyproxy/envoy/blob/master/CONTRIBUTING.md#pr-review-policy-for-maintainers) with respect to maintainer review policy.
+* Generally Nighthawk mirrors [Envoy's policy](https://github.com/envoyproxy/envoy/blob/master/CONTRIBUTING.md#pr-review-policy-for-maintainers) with respect to maintainer review policy.
 * See [OWNERS.md](OWNERS.md) for the current list of maintainers.
 
 # DCO: Sign your work
 
-Commits need to be signed off. [See here](https://github.com/envoyproxy/envoy/blob/master/CONTRIBUTING.md#dco-sign-your-work).
+Commits need to be signed off. See [here](https://github.com/envoyproxy/envoy/blob/master/CONTRIBUTING.md#dco-sign-your-work).
 
 
 ## Triggering CI re-run without making changes
