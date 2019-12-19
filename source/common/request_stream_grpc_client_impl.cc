@@ -13,7 +13,7 @@
 namespace Nighthawk {
 
 const std::string RequestStreamGrpcClientImpl::METHOD_NAME =
-    "nighthawk.client.NighthawkService.RequestStream";
+    "nighthawk.client.NighthawkRequestSourceService.RequestStream";
 
 RequestStreamGrpcClientImpl::RequestStreamGrpcClientImpl(
     Envoy::Grpc::RawAsyncClientPtr async_client, Envoy::Event::Dispatcher&,
@@ -32,7 +32,7 @@ void RequestStreamGrpcClientImpl::start() {
 void RequestStreamGrpcClientImpl::trySendRequest() {
   if (stream_ != nullptr) {
     nighthawk::client::RequestStreamRequest request;
-    request.set_amount(header_buffer_length_);
+    request.set_quantity(header_buffer_length_);
     stream_->sendMessage(request, false);
     in_flight_headers_ = header_buffer_length_;
     ENVOY_LOG(trace, "send request: {}", request.DebugString());

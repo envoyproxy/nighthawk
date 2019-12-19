@@ -155,10 +155,10 @@ class IntegrationTestBase():
   def assertIsSubset(self, subset, superset):
     self.assertLessEqual(subset.items(), superset.items())
 
-  def startNighthawkGrpcService(self):
+  def startNighthawkGrpcService(self, service_name="controller"):
     host = self.server_ip if self.ip_version == IpVersion.IPV4 else "[%s]" % self.server_ip
     self.grpc_service = NighthawkGrpcService(
-        os.path.join(self.test_rundir, "nighthawk_service"), host, self.ip_version)
+        os.path.join(self.test_rundir, "nighthawk_service"), host, self.ip_version, service_name)
     assert (self.grpc_service.start())
 
 

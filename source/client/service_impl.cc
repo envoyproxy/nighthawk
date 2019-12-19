@@ -118,13 +118,13 @@ void addHeader(envoy::api::v2::core::HeaderMap* map, absl::string_view key,
 }
 } // namespace
 
-RequestSourcePtr ServiceImpl::createStaticEmptyRequestSource(const uint32_t amount) {
+RequestSourcePtr RequestSourceServiceImpl::createStaticEmptyRequestSource(const uint32_t amount) {
   Envoy::Http::HeaderMapPtr header = std::make_unique<Envoy::Http::HeaderMapImpl>();
   header->addCopy(Envoy::Http::LowerCaseString("x-from-remote-request-source"), "1");
   return std::make_unique<StaticRequestSourceImpl>(std::move(header), amount);
 }
 
-::grpc::Status ServiceImpl::RequestStream(
+::grpc::Status RequestSourceServiceImpl::RequestStream(
     ::grpc::ServerContext* /*context*/,
     ::grpc::ServerReaderWriter<::nighthawk::client::RequestStreamResponse,
                                ::nighthawk::client::RequestStreamRequest>* stream) {
@@ -141,7 +141,7 @@ RequestSourcePtr ServiceImpl::createStaticEmptyRequestSource(const uint32_t amou
     // 1. Yet another remote request source, so we balance to-be-replayed headers over workers
     //    and only have a single stream to a remote service here.
     // 2. Read a and dispatch a header stream from disk.
-    auto request_source = createStaticEmptyRequestSource(request.amount());
+    auto request_source = createStaticEmptyRequestSource(request.quantity());
     auto request_generator = request_source->get();
     RequestPtr request;
     while (ok && (request = request_generator()) != nullptr) {

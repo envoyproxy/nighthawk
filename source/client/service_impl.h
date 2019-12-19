@@ -29,15 +29,10 @@ public:
       ::grpc::ServerContext* context,
       ::grpc::ServerReaderWriter<::nighthawk::client::ExecutionResponse,
                                  ::nighthawk::client::ExecutionRequest>* stream) override;
-  ::grpc::Status RequestStream(
-      ::grpc::ServerContext* context,
-      ::grpc::ServerReaderWriter<::nighthawk::client::RequestStreamResponse,
-                                 ::nighthawk::client::RequestStreamRequest>* stream) override;
 
 private:
   void handleExecutionRequest(const nighthawk::client::ExecutionRequest& request);
   void writeResponse(const nighthawk::client::ExecutionResponse& response);
-  RequestSourcePtr createStaticEmptyRequestSource(const uint32_t amount);
   ::grpc::Status finishGrpcStream(const bool success, absl::string_view description = "");
 
   Envoy::Event::RealTimeSystem time_system_; // NO_CHECK_FORMAT(real_time)
@@ -53,6 +48,20 @@ private:
   // busy_lock_ is used to test from the service thread to query if there's
   // an active test being run.
   Envoy::Thread::MutexBasicLockable busy_lock_;
+};
+
+class RequestSourceServiceImpl final
+    : public nighthawk::client::NighthawkRequestSourceService::Service,
+      public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
+
+public:
+  ::grpc::Status RequestStream(
+      ::grpc::ServerContext* context,
+      ::grpc::ServerReaderWriter<::nighthawk::client::RequestStreamResponse,
+                                 ::nighthawk::client::RequestStreamRequest>* stream) override;
+
+private:
+  RequestSourcePtr createStaticEmptyRequestSource(const uint32_t amount);
 };
 
 } // namespace Client
