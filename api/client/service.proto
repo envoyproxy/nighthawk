@@ -42,7 +42,7 @@ message RequestStreamRequest {
   // in response to this request.
   // Used to implement basic flow control by the client. Once AsyncClientImpl gets a way
   // to apply backpressure this could probably be dropped.
-  uint64 amount = 1;
+  uint64 quantity = 1;
 }
 
 message RequestStreamResponse {
