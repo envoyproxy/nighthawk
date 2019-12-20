@@ -35,22 +35,21 @@ TEST_F(OptionsImplTest, BogusInput) {
                           MalformedArgvException, "Invalid URI");
 }
 
-// This test should cover every option we offer.
-TEST_F(OptionsImplTest, All) {
+// This test should cover every option we offer, except --tls-context is covered in TlsContext
+// because it's mutually exclusive with --transport-socket.
+TEST_F(OptionsImplTest, AlmostAll) {
   Envoy::MessageUtil util;
   std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(fmt::format(
       "{} --rps 4 --connections 5 --duration 6 --timeout 7 --h2 "
       "--concurrency 8 --verbosity error --output-format yaml --prefetch-connections "
       "--burst-size 13 --address-family v6 --request-method POST --request-body-size 1234 "
-      "--tls-context {} --transport-socket {} "
+      "--transport-socket {} "
       "--request-header f1:b1 --request-header f2:b2 --request-header f3:b3:b4 {} "
       "--max-pending-requests 10 "
       "--max-active-requests 11 --max-requests-per-connection 12 --sequencer-idle-strategy sleep "
       "--termination-predicate t1:1 --termination-predicate t2:2 --failure-predicate f1:1 "
       "--failure-predicate f2:2 --jitter-uniform .00001s",
       client_name_,
-      "{common_tls_context:{tls_params:{"
-      "cipher_suites:[\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"]}}}",
       "{name:\"envoy.transport_sockets.tls\","
       "typed_config:{\"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\","
       "common_tls_context:{tls_params:{"
@@ -73,12 +72,6 @@ TEST_F(OptionsImplTest, All) {
   const std::vector<std::string> expected_headers = {"f1:b1", "f2:b2", "f3:b3:b4"};
   EXPECT_EQ(expected_headers, options->requestHeaders());
   EXPECT_EQ(1234, options->requestBodySize());
-  EXPECT_EQ("common_tls_context {\n"
-            "  tls_params {\n"
-            "    cipher_suites: \"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"\n"
-            "  }\n"
-            "}\n",
-            options->tlsContext().DebugString());
   EXPECT_EQ("name: \"envoy.transport_sockets.tls\"\n"
             "typed_config {\n"
             "  [type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext] {\n"
@@ -149,6 +142,42 @@ TEST_F(OptionsImplTest, All) {
   EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("f1"));
   EXPECT_EQ(1, cmd->mutable_termination_predicates()->erase("t1"));
   EXPECT_EQ(cmd->jitter_uniform().nanos(), options->jitterUniform().count());
+
+  OptionsImpl options_from_proto(*cmd);
+  std::string s1 = Envoy::MessageUtil::getYamlStringFromMessage(
+      *(options_from_proto.toCommandLineOptions()), true, true);
+  std::string s2 = Envoy::MessageUtil::getYamlStringFromMessage(*cmd, true, true);
+
+  EXPECT_EQ(s1, s2);
+  // For good measure, also directly test for proto equivalence, though this should be
+  // superfluous.
+  EXPECT_TRUE(util(*(options_from_proto.toCommandLineOptions()), *cmd));
+}
+
+// This test covers --tls-context, which can't be tested at the same time as --transport-socket.
+TEST_F(OptionsImplTest, TlsContext) {
+  Envoy::MessageUtil util;
+  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(
+      fmt::format("{} --tls-context {} {}", client_name_,
+                  "{common_tls_context:{tls_params:{"
+                  "cipher_suites:[\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"]}}}",
+                  good_test_uri_));
+
+  EXPECT_EQ("common_tls_context {\n"
+            "  tls_params {\n"
+            "    cipher_suites: \"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"\n"
+            "  }\n"
+            "}\n",
+            options->tlsContext().DebugString());
+
+  // Check that our conversion to CommandLineOptionsPtr makes sense.
+  CommandLineOptionsPtr cmd = options->toCommandLineOptions();
+  EXPECT_TRUE(util(cmd->tls_context(), options->tlsContext()));
+
+  // Now we construct a new options from the proto we created above. This should result in an
+  // OptionsImpl instance equivalent to options. We test that by converting both to yaml strings,
+  // expecting them to be equal. This should provide helpful output when the test fails by showing
+  // the unexpected (yaml) diff.
 
   OptionsImpl options_from_proto(*cmd);
   std::string s1 = Envoy::MessageUtil::getYamlStringFromMessage(

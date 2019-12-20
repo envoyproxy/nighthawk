@@ -131,13 +131,15 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   TCLAP::ValueArg<std::string> tls_context(
       "", "tls-context",
       "DEPRECATED, use --transport-socket instead. "
-      "Tls context configuration in json or compact yaml. Example (json): "
+      "Tls context configuration in json or compact yaml. "
+      "Mutually exclusive with --transport-socket. Example (json): "
       "{common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES128-SHA\"]}}}",
       false, "", "string", cmd);
 
   TCLAP::ValueArg<std::string> transport_socket(
       "", "transport-socket",
-      "Transport socket configuration in json or compact yaml. Example (json): "
+      "Transport socket configuration in json or compact yaml. "
+      "Mutually exclusive with --tls-context. Example (json): "
       "{name:\"envoy.transport_sockets.tls\",typed_config:{"
       "\"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\","
       "common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES128-SHA\"]}}}}",
@@ -309,8 +311,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
                     "See --help for an example.");
   }
   if (!tls_context.getValue().empty() && !transport_socket.getValue().empty()) {
-    ENVOY_LOG(warn, "Setting both --tls-context and --transport-socket "
-                    "may produce undefined behavior.");
+    throw MalformedArgvException("--tls-context and --transport-socket may not both be set.");
   }
   if (!tls_context.getValue().empty()) {
     try {
@@ -322,10 +323,9 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   }
   if (!transport_socket.getValue().empty()) {
     try {
-      envoy::api::v2::core::TransportSocket ts;
-      Envoy::MessageUtil::loadFromJson(transport_socket.getValue(), ts,
+      transport_socket_.emplace(envoy::api::v2::core::TransportSocket());
+      Envoy::MessageUtil::loadFromJson(transport_socket.getValue(), transport_socket_.value(),
                                        Envoy::ProtobufMessage::getStrictValidationVisitor());
-      transport_socket_.emplace(ts);
     } catch (const Envoy::EnvoyException& e) {
       throw MalformedArgvException(e.what());
     }
