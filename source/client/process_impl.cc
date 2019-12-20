@@ -100,6 +100,8 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
       access_log_manager_(std::chrono::milliseconds(1000), *api_, *dispatcher_, access_log_lock_,
                           store_root_),
       init_watcher_("Nighthawk", []() {}), validation_context_(false, false) {
+  // Any dispatchers created after the following call will use hr timers.
+  setupForHRTimers();
   std::string lower = absl::AsciiStrToLower(
       nighthawk::client::Verbosity::VerbosityOptions_Name(options_.verbosity()));
   configureComponentLogLevels(spdlog::level::from_str(lower));
@@ -342,7 +344,6 @@ bool ProcessImpl::run(OutputCollector& collector) {
   } catch (const UriException&) {
     return false;
   }
-  setupForHRTimers();
   int number_of_workers = determineConcurrency();
   shutdown_ = false;
   const std::vector<ClientWorkerPtr>& workers = createWorkers(number_of_workers);

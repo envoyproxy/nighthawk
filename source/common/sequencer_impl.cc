@@ -82,9 +82,8 @@ void SequencerImpl::updateStartBlockingTimeIfNeeded() {
 
 void SequencerImpl::run(bool from_periodic_timer) {
   ASSERT(running_);
-  const auto now = time_source_.monotonicTime();
+  const auto now = last_event_time_ = time_source_.monotonicTime();
   const auto running_duration = now - start_time_;
-  last_event_time_ = now;
 
   // The running_duration we compute will be negative until it is time to start.
   if (running_duration >= 0ns) {
