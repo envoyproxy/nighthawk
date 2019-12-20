@@ -19,9 +19,10 @@
 3. Perform thorough testing of the targeted revision to double down on stability [1]
 4. Create an optimized build for comparing with the previous release. Changes in performance
   and/or measurement accuracy may need to be considered breaking. If in doubt, discuss!
-5. If things look good, [File an issue](https://github.com/envoyproxy/nighthawk/issues/new?title=[VOTE]+Release+v0.x&body=Release%20X%20is%20ready%20for%20review.%20Please%20take%20a%20look%20and%20vote!) to raise a vote on publishing the drafted release, and point contributors to that.
+  TODO(#245): Formalize and/or automate this.
+5. If things look good, [File an issue](https://github.com/envoyproxy/nighthawk/issues/new?title=%5BVOTE%5D+Release+v0.x.x&body=Release+v0.x.x%20is%20ready%20for%20review.%20Please%20take%20a%20look%20and%20vote!!) to raise a vote on publishing the drafted release, and point contributors to that.
 6. Allow sufficient time to transpire for others to provide feedback, before moving on to the next step. If nobody raises blocking issues, it is time to go ahead and publish the drafted release.
-7. |o/ Announce the new release on Slack, Twitter
+7. |o/ Announce the new release on [Slack](https://envoyproxy.slack.com/archives/CDX3CGTT9), Twitter
 
 In case any of the steps above prevent shipping:
 
@@ -35,5 +36,12 @@ is not tried and proven yet. (some of the integration tests are sensitive to tim
 unstable when slowed down due to concurrent runs). A sample command to do this:
 
 ```bash
-bazel test --cache_test_results=no --test_env=ENVOY_IP_TEST_VERSIONS=all --runs_per_test=1000 --jobs 50 -c dbg --local_resources 20000,20,0.25 //test:*
+bazel test \
+  --cache_test_results=no \
+  --test_env=ENVOY_IP_TEST_VERSIONS=all \
+  --runs_per_test=1000 \
+  --jobs 50 \
+  -c dbg \
+  --local_resources 20000,20,0.25 \
+  //test:*
 ```
