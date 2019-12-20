@@ -245,8 +245,7 @@ void ProcessImpl::createBootstrapConfiguration(envoy::config::bootstrap::v2::Boo
     }
 
     if (options_.transportSocket().has_value()) {
-      auto* transport_socket = cluster->mutable_transport_socket();
-      *transport_socket = options_.transportSocket().value();
+      *cluster->mutable_transport_socket() = options_.transportSocket().value();
     }
 
     cluster->set_name(fmt::format("{}", i));
