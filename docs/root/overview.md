@@ -42,7 +42,7 @@ One we have phases, the gRPC service, and perhaps the CLI, would be natural cand
 
 ### RateLimiter
 
-**RateLimiter **is responsible for indicating when it is time to release a request.  **RateLimiter **offers a semaphore-like interaction model, as in closed-loop mode it may be that **BenchmarkClient **is not able to satisfy request-release timings, in which case acquisitions from **RateLimiter** need to be cancelled. Concretely, as of today there is **LinearRateLimiterImpl** which offers a straight-paced plain frequency, as well as work in progress on **DistributionSamplingRateLimiterImpl **(adding uniformly distributed random timing offsets to an underlying **RateLimiter**) and **RampingRateLimiter**. 
+**RateLimiter **is responsible for indicating when it is time to release a request. **RateLimiter **offers a semaphore-like interaction model, as in closed-loop mode it may be that **BenchmarkClient **is not able to satisfy request-release timings, in which case acquisitions from **RateLimiter** need to be cancelled. Concretely, as of today there is **LinearRateLimiterImpl** which offers a straight-paced plain frequency, as well as work in progress on **DistributionSamplingRateLimiterImpl **(adding uniformly distributed random timing offsets to an underlying **RateLimiter**) and **RampingRateLimiter**. 
 
 ### BenchmarkClient
 
