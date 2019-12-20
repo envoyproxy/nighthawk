@@ -18,7 +18,7 @@ Both API and implementation stability are important to Nighthawk. Since the API 
 
 * Generally Nighthawk mirrors [Envoy's policy](https://github.com/envoyproxy/envoy/blob/master/CONTRIBUTING.md#submitting-a-pr) with respect to PR submission policy.
 * Any PR that changes user-facing behavior **must** have associated documentation in [docs](docs) as
-  well as [release notes](docs/root/version_history.rst).
+  well as [release notes](docs/root/version_history.md).
 
 # PR review policy for maintainers
 
