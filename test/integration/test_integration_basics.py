@@ -248,9 +248,15 @@ def test_https_h2(https_test_server_fixture):
 
 
 def _do_tls_configuration_test(https_test_server_fixture, cli_parameter, use_h2):
-  """
+  """Runs tests for different ciphers.
+
   For a given choice of (--tls-context, --transport-socket) x (H1, H2),
   run a series of traffic tests with different ciphers.
+
+  Args:
+    https_test_server_fixture: pytest.fixture that controls a test server and client
+    cli_parameter: string, --tls-context or --transport-socket
+    use_h2: boolean, whether to pass --h2
   """
 
   if cli_parameter == "--tls-context":
