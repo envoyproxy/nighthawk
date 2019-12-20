@@ -126,9 +126,9 @@ RequestSourcePtr RequestSourceServiceImpl::createStaticEmptyRequestSource(const 
 
 ::grpc::Status RequestSourceServiceImpl::RequestStream(
     ::grpc::ServerContext* /*context*/,
-    ::grpc::ServerReaderWriter<::nighthawk::client::RequestStreamResponse,
-                               ::nighthawk::client::RequestStreamRequest>* stream) {
-  nighthawk::client::RequestStreamRequest request;
+    ::grpc::ServerReaderWriter<::nighthawk::request_source::RequestStreamResponse,
+                               ::nighthawk::request_source::RequestStreamRequest>* stream) {
+  nighthawk::request_source::RequestStreamRequest request;
   bool ok = true;
   while (stream->Read(&request)) {
     ENVOY_LOG(trace, "Inbound RequestStreamRequest {}", request.DebugString());
@@ -146,7 +146,7 @@ RequestSourcePtr RequestSourceServiceImpl::createStaticEmptyRequestSource(const 
     RequestPtr request;
     while (ok && (request = request_generator()) != nullptr) {
       HeaderMapPtr headers = request->header();
-      nighthawk::client::RequestStreamResponse response;
+      nighthawk::request_source::RequestStreamResponse response;
       auto* request_specifier = response.mutable_request_specifier();
       auto* request_headers = request_specifier->mutable_headers();
       headers->iterate(

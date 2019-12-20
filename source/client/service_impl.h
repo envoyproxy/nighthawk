@@ -4,7 +4,7 @@
 #pragma clang diagnostic warning "-Wunused-parameter"
 #endif
 #include "api/client/service.grpc.pb.h"
-
+#include "api/request_source/service.grpc.pb.h"
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
@@ -51,14 +51,15 @@ private:
 };
 
 class RequestSourceServiceImpl final
-    : public nighthawk::client::NighthawkRequestSourceService::Service,
+    : public nighthawk::request_source::NighthawkRequestSourceService::Service,
       public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 
 public:
-  ::grpc::Status RequestStream(
-      ::grpc::ServerContext* context,
-      ::grpc::ServerReaderWriter<::nighthawk::client::RequestStreamResponse,
-                                 ::nighthawk::client::RequestStreamRequest>* stream) override;
+  ::grpc::Status
+  RequestStream(::grpc::ServerContext* context,
+                ::grpc::ServerReaderWriter<::nighthawk::request_source::RequestStreamResponse,
+                                           ::nighthawk::request_source::RequestStreamRequest>*
+                    stream) override;
 
 private:
   RequestSourcePtr createStaticEmptyRequestSource(const uint32_t amount);

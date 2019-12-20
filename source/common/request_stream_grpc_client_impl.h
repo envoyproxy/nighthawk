@@ -19,7 +19,7 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic warning "-Wunused-parameter"
 #endif
-#include "api/client/service.grpc.pb.h"
+#include "api/request_source/service.grpc.pb.h"
 
 #ifdef __clang__
 #pragma clang diagnostic pop
@@ -29,13 +29,14 @@ namespace Nighthawk {
 
 class ProtoRequestHelper {
 public:
-  static RequestPtr messageToRequest(const Envoy::Http::HeaderMap& base_header,
-                                     const nighthawk::client::RequestStreamResponse& message);
+  static RequestPtr
+  messageToRequest(const Envoy::Http::HeaderMap& base_header,
+                   const nighthawk::request_source::RequestStreamResponse& message);
 };
 
 class RequestStreamGrpcClientImpl
     : public RequestStreamGrpcClient,
-      Envoy::Grpc::AsyncStreamCallbacks<nighthawk::client::RequestStreamResponse>,
+      Envoy::Grpc::AsyncStreamCallbacks<nighthawk::request_source::RequestStreamResponse>,
       Envoy::Logger::Loggable<Envoy::Logger::Id::upstream> {
 public:
   RequestStreamGrpcClientImpl(Envoy::Grpc::RawAsyncClientPtr async_client,
@@ -46,8 +47,8 @@ public:
   // Grpc::AsyncStreamCallbacks
   void onCreateInitialMetadata(Envoy::Http::HeaderMap& metadata) override;
   void onReceiveInitialMetadata(Envoy::Http::HeaderMapPtr&& metadata) override;
-  void
-  onReceiveMessage(std::unique_ptr<nighthawk::client::RequestStreamResponse>&& message) override;
+  void onReceiveMessage(
+      std::unique_ptr<nighthawk::request_source::RequestStreamResponse>&& message) override;
   void onReceiveTrailingMetadata(Envoy::Http::HeaderMapPtr&& metadata) override;
   void onRemoteClose(Envoy::Grpc::Status::GrpcStatus status, const std::string& message) override;
 
@@ -61,13 +62,13 @@ public:
 private:
   static const std::string METHOD_NAME;
   void trySendRequest();
-  Envoy::Grpc::AsyncClient<nighthawk::client::RequestStreamRequest,
-                           nighthawk::client::RequestStreamResponse>
+  Envoy::Grpc::AsyncClient<nighthawk::request_source::RequestStreamRequest,
+                           nighthawk::request_source::RequestStreamResponse>
       async_client_;
-  Envoy::Grpc::AsyncStream<nighthawk::client::RequestStreamRequest> stream_{};
+  Envoy::Grpc::AsyncStream<nighthawk::request_source::RequestStreamRequest> stream_{};
   const Envoy::Protobuf::MethodDescriptor& service_method_;
-  std::queue<std::unique_ptr<nighthawk::client::RequestStreamResponse>> messages_;
-  void emplaceMessage(std::unique_ptr<nighthawk::client::RequestStreamResponse>&& message);
+  std::queue<std::unique_ptr<nighthawk::request_source::RequestStreamResponse>> messages_;
+  void emplaceMessage(std::unique_ptr<nighthawk::request_source::RequestStreamResponse>&& message);
   uint32_t in_flight_headers_{0};
   uint32_t total_messages_received_{0};
   const Envoy::Http::HeaderMap& base_header_;

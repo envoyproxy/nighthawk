@@ -13,7 +13,7 @@
 namespace Nighthawk {
 
 const std::string RequestStreamGrpcClientImpl::METHOD_NAME =
-    "nighthawk.client.NighthawkRequestSourceService.RequestStream";
+    "nighthawk.request_source.NighthawkRequestSourceService.RequestStream";
 
 RequestStreamGrpcClientImpl::RequestStreamGrpcClientImpl(
     Envoy::Grpc::RawAsyncClientPtr async_client, Envoy::Event::Dispatcher&,
@@ -31,7 +31,7 @@ void RequestStreamGrpcClientImpl::start() {
 
 void RequestStreamGrpcClientImpl::trySendRequest() {
   if (stream_ != nullptr) {
-    nighthawk::client::RequestStreamRequest request;
+    nighthawk::request_source::RequestStreamRequest request;
     request.set_quantity(header_buffer_length_);
     stream_->sendMessage(request, false);
     in_flight_headers_ = header_buffer_length_;
@@ -44,7 +44,7 @@ void RequestStreamGrpcClientImpl::onCreateInitialMetadata(Envoy::Http::HeaderMap
 void RequestStreamGrpcClientImpl::onReceiveInitialMetadata(Envoy::Http::HeaderMapPtr&&) {}
 
 void RequestStreamGrpcClientImpl::onReceiveMessage(
-    std::unique_ptr<nighthawk::client::RequestStreamResponse>&& message) {
+    std::unique_ptr<nighthawk::request_source::RequestStreamResponse>&& message) {
   in_flight_headers_--;
   total_messages_received_++;
   emplaceMessage(std::move(message));
@@ -66,9 +66,9 @@ void RequestStreamGrpcClientImpl::onRemoteClose(Envoy::Grpc::Status::GrpcStatus 
   stream_ = nullptr;
 }
 
-RequestPtr
-ProtoRequestHelper::messageToRequest(const Envoy::Http::HeaderMap& base_header,
-                                     const nighthawk::client::RequestStreamResponse& message) {
+RequestPtr ProtoRequestHelper::messageToRequest(
+    const Envoy::Http::HeaderMap& base_header,
+    const nighthawk::request_source::RequestStreamResponse& message) {
   auto header = std::make_shared<Envoy::Http::HeaderMapImpl>(base_header);
   RequestPtr request = std::make_unique<RequestImpl>(header);
 
@@ -121,7 +121,7 @@ RequestPtr RequestStreamGrpcClientImpl::maybeDequeue() {
 }
 
 void RequestStreamGrpcClientImpl::emplaceMessage(
-    std::unique_ptr<nighthawk::client::RequestStreamResponse>&& message) {
+    std::unique_ptr<nighthawk::request_source::RequestStreamResponse>&& message) {
   ENVOY_LOG(trace, "message received: {}", message->DebugString());
   messages_.emplace(std::move(message));
 }

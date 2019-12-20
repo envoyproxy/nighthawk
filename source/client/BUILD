@@ -138,6 +138,7 @@ envoy_cc_library(
     deps = [
         ":nighthawk_client_lib",
         "//api/client:grpc_service_lib",
+        "//api/request_source:grpc_request_source_service_lib",
         "@envoy//source/common/common:thread_lib_with_external_headers",
     ],
 )

@@ -1,10 +1,10 @@
+licenses(["notice"])  # Apache 2
+
 load(
     "@envoy//bazel:envoy_build_system.bzl",
     "envoy_cc_library",
     "envoy_package",
 )
-
-licenses(["notice"])  # Apache 2
 
 envoy_package()
 
@@ -29,7 +29,7 @@ envoy_cc_library(
     deps = [
         ":request_impl_lib",
         "//api/client:base_cc_proto",
-        "//api/client:grpc_service_lib",
+        "//api/request_source:grpc_request_source_service_lib",
         "//include/nighthawk/common:base_includes",
         "//include/nighthawk/common:request_lib",
         "@envoy//include/envoy/grpc:async_client_interface_with_external_headers",

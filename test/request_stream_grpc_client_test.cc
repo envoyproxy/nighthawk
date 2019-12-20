@@ -23,7 +23,7 @@ public:
   }
 
 protected:
-  nighthawk::client::RequestStreamResponse response_;
+  nighthawk::request_source::RequestStreamResponse response_;
   Envoy::Http::TestHeaderMapImpl base_header_;
   Envoy::Http::TestHeaderMapImpl expected_header_;
 };
