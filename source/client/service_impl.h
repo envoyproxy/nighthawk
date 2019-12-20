@@ -5,6 +5,7 @@
 #endif
 #include "api/client/service.grpc.pb.h"
 #include "api/request_source/service.grpc.pb.h"
+
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif

@@ -5,7 +5,6 @@ package nighthawk.request_source;
 import "google/protobuf/wrappers.proto";
 import "envoy/api/v2/core/base.proto";
 
-
 // Used to request a RequestStreamResponse.
 message RequestStreamRequest {
   // Indicates the amount of RequestStreamResponses that should be yielded by the server
