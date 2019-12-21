@@ -54,7 +54,7 @@ message Expectations {
 }
 
 service NighthawkRequestSourceService {
-  // Obtains a stream request-level specifications plus expectations.
+  // Obtains a stream of request-level specifications plus expectations.
   rpc RequestStream(stream RequestStreamRequest) returns (stream RequestStreamResponse) {
   }
 }
