@@ -141,7 +141,6 @@ TEST_F(OptionsImplTest, AlmostAll) {
   EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("f1"));
   EXPECT_EQ(1, cmd->mutable_termination_predicates()->erase("t1"));
   EXPECT_EQ(cmd->jitter_uniform().nanos(), options->jitterUniform().count());
-<<<<<<< HEAD
 
   OptionsImpl options_from_proto(*cmd);
   std::string s1 = Envoy::MessageUtil::getYamlStringFromMessage(
@@ -178,8 +177,6 @@ TEST_F(OptionsImplTest, TlsContext) {
   // OptionsImpl instance equivalent to options. We test that by converting both to yaml strings,
   // expecting them to be equal. This should provide helpful output when the test fails by showing
   // the unexpected (yaml) diff.
-=======
->>>>>>> Optionize uniformly distributed request-release timing jitter  (#227)
 
   OptionsImpl options_from_proto(*cmd);
   std::string s1 = Envoy::MessageUtil::getYamlStringFromMessage(
