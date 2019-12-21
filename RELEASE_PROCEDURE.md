@@ -22,7 +22,7 @@
   TODO(#245): Formalize and/or automate this.
 5. If things look good, [File an issue](https://github.com/envoyproxy/nighthawk/issues/new?title=%5BVOTE%5D+Release+v0.x.x&body=Release+v0.x.x%20is%20ready%20for%20review.%20Please%20take%20a%20look%20and%20vote!!) to raise a vote on publishing the drafted release, and point contributors to that.
 6. Allow sufficient time to transpire for others to provide feedback, before moving on to the next step. If nobody raises blocking issues, it is time to go ahead and publish the drafted release.
-7. |o/ Announce the new release on [Slack](https://envoyproxy.slack.com/archives/CDX3CGTT9), Twitter
+7. |o/ Announce the new release on [Slack](https://envoyproxy.slack.com/archives/CDX3CGTT9).
 
 In case any of the steps above prevent shipping:
 
