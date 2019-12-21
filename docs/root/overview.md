@@ -19,6 +19,13 @@ when and how to terminate execution. When all **Workers** have finished,
 **OutputCollector**, and run **OutputFormatter** to transform to the requested
 output format.
 
+However, it is said that pictures say more then words, so here is a block
+diagram:
+(TODO(#249): create a real diagram)
+
+![Draft diagram](draft-high-level-diagram.png)
+
+
 ## Notable upcoming changes
 
 Calling out two new concepts that may get proposed in the future, and cause some
