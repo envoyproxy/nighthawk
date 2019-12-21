@@ -404,9 +404,8 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   tls_context_.MergeFrom(options.tls_context());
 
   if (options.has_transport_socket()) {
-    envoy::api::v2::core::TransportSocket ts;
-    ts.MergeFrom(options.transport_socket());
-    transport_socket_.emplace(ts);
+    transport_socket_.emplace(envoy::api::v2::core::TransportSocket());
+    transport_socket_.value().MergeFrom(options.transport_socket());
   }
 
   if (options.failure_predicates().size()) {
