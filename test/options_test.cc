@@ -118,7 +118,6 @@ TEST_F(OptionsImplTest, AlmostAll) {
   }
 
   EXPECT_EQ(cmd->request_options().request_body_size().value(), options->requestBodySize());
-  EXPECT_TRUE(util(cmd->tls_context(), options->tlsContext()));
   EXPECT_TRUE(util(cmd->transport_socket(), options->transportSocket().value()));
   EXPECT_EQ(cmd->max_pending_requests().value(), options->maxPendingRequests());
   EXPECT_EQ(cmd->max_active_requests().value(), options->maxActiveRequests());
