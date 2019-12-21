@@ -56,6 +56,8 @@ back reports per phase.
 
 ## Key concept descriptions
 
+*The c++ interface definitions for the concepts below can be found [here](https://github.com/envoyproxy/nighthawk/tree/master/include/nighthawk)*.
+
 ### Process
 
 **Process** represents the primary entry point to a Nighthawk execution run.
@@ -68,7 +70,7 @@ service.
 ### Worker
 
 **Worker** is responsible for performing correct initialization and termination
-of its thread, as well as execution of it’s designated task and offering a way
+of its thread, as well as execution of its designated task and offering a way
 for consumers to wait for that task to complete.
 
 ### TerminationPredicate
@@ -89,10 +91,11 @@ completion.
 
 **RateLimiter** is responsible for indicating when it is time to release a
 request. **RateLimiter** offers a semaphore-like interaction model, as in
-closed-loop mode it may be that **BenchmarkClient** is not able to satisfy
-request-release timings, in which case acquisitions from **RateLimiter** need to
-be cancelled. Concretely, as of today there is **LinearRateLimiterImpl** which
-offers a straight-paced plain frequency, as well as work in progress on
+[closed-loop](terminology.md#closed-loop) mode it may be that
+**BenchmarkClient** is not able to satisfy request-release timings, in which
+case acquisitions from **RateLimiter** need to be cancelled. Concretely, as of
+today there is **LinearRateLimiterImpl** which offers a straight-paced plain
+frequency, as well as work in progress on
 **DistributionSamplingRateLimiterImpl** (adding uniformly distributed random
 timing offsets to an underlying **RateLimiter**) and **RampingRateLimiter**.
 
@@ -121,9 +124,12 @@ to implement log-replay.
 
 ### StreamDecoder
 
-**StreamDecoder** is a Nighthawk-specific implementation of an Envoy concept. It is
-responsible for coordinating lifetime events of a request to upper abstraction
-layers (**BenchmarkClient**, **Sequencer**) as well as latency recording.
+**StreamDecoder** is a Nighthawk-specific implementation of an [Envoy
+concept](https://github.com/envoyproxy/envoy/blob/3156229006a5340b65c773329070737f67e81826/include/envoy/http/filter.h#L463).
+StreamDecoder will by notified by Envoy as headers and body fragments arrive.
+The Nighthawk implementation of that is responsible for coordinating lifetime
+events of a request to upper abstraction layers (**BenchmarkClient**,
+**Sequencer**) as well as recording latency and reporting that upwards.
 
 ### OutputCollector
 
