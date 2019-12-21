@@ -2,10 +2,8 @@ syntax = "proto3";
 
 package nighthawk.client;
 
-import "google/protobuf/wrappers.proto";
 import "google/rpc/status.proto";
 import "validate/validate.proto";
-import "envoy/api/v2/core/base.proto";
 
 import "api/client/options.proto";
 import "api/client/output.proto";
