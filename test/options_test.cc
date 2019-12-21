@@ -492,10 +492,10 @@ TEST_F(OptionsImplTest, RequestHeaderValueWithColonsAndSpaces) {
 }
 
 TEST_F(OptionsImplTest, BothTlsContextAndTransportSocketSpecified) {
-  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
-                              "{} --tls-context x --transport-socket y {}",
-                              client_name_, good_test_uri_)),
-                          MalformedArgvException, "may not both be set");
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(
+          fmt::format("{} --tls-context x --transport-socket y {}", client_name_, good_test_uri_)),
+      MalformedArgvException, "may not both be set");
 }
 
 } // namespace Client
