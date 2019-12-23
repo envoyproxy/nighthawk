@@ -434,7 +434,7 @@ TEST_P(OptionsImplH1ConnectionReuseStrategyTest, H1ConnectionReuseStrategyValues
 }
 
 INSTANTIATE_TEST_SUITE_P(H1ConnectionReuseStrategyOptionsTest,
-                         OptionsImplH1ConnectionReuseStrategyTest, Values("HOT", "FAIR"));
+                         OptionsImplH1ConnectionReuseStrategyTest, Values("mru", "lru"));
 
 // Test we don't accept any bad --h1-connection-reuse-strategy values.
 TEST_F(OptionsImplTest, H1ConnectionReuseStrategyValuesAreConstrained) {

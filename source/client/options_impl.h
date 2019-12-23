@@ -96,7 +96,7 @@ private:
       nighthawk::client::SequencerIdleStrategy::SPIN};
   std::string trace_;
   nighthawk::client::H1ConnectionReuseStrategy::H1ConnectionReuseStrategyOptions
-      h1_connection_reuse_strategy_{nighthawk::client::H1ConnectionReuseStrategy::HOT};
+      h1_connection_reuse_strategy_{nighthawk::client::H1ConnectionReuseStrategy::MRU};
   TerminationPredicateMap termination_predicates_;
   TerminationPredicateMap failure_predicates_;
   bool open_loop_{false};

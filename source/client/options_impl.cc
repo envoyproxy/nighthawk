@@ -179,7 +179,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "failing execution. Defaults to not tolerating error status codes and connection errors.",
       false, "<string, uint64_t>", cmd);
 
-  std::vector<std::string> h1_connection_reuse_strategies = {"HOT", "FAIR"};
+  std::vector<std::string> h1_connection_reuse_strategies = {"mru", "lru"};
   TCLAP::ValuesConstraint<std::string> h1_connection_reuse_strategies_allowed(
       h1_connection_reuse_strategies);
   TCLAP::ValueArg<std::string> h1_connection_reuse_strategy(
