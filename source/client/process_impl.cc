@@ -100,6 +100,8 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
       access_log_manager_(std::chrono::milliseconds(1000), *api_, *dispatcher_, access_log_lock_,
                           store_root_),
       init_watcher_("Nighthawk", []() {}), validation_context_(false, false) {
+  // Any dispatchers created after the following call will use hr timers.
+  setupForHRTimers();
   std::string lower = absl::AsciiStrToLower(
       nighthawk::client::Verbosity::VerbosityOptions_Name(options_.verbosity()));
   configureComponentLogLevels(spdlog::level::from_str(lower));
@@ -355,7 +357,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
       std::make_unique<Extensions::TransportSockets::Tls::ContextManagerImpl>(time_system_);
   cluster_manager_factory_ = std::make_unique<ClusterManagerFactory>(
       admin_, Envoy::Runtime::LoaderSingleton::get(), store_root_, tls_, generator_,
-      dispatcher_->createDnsResolver({}), *ssl_context_manager_, *dispatcher_, *local_info_,
+      dispatcher_->createDnsResolver({}, true), *ssl_context_manager_, *dispatcher_, *local_info_,
       secret_manager_, validation_context_, *api_, http_context_, access_log_manager_,
       *singleton_manager_);
   cluster_manager_factory_->setPrefetchConnections(options_.prefetchConnections());
@@ -406,6 +408,15 @@ bool ProcessImpl::run(OutputCollector& collector) {
   collector.addResult("global", mergeWorkerStatistics(statistic_factory, workers), counters,
                       total_execution_duration / workers_.size());
   return counters.find("sequencer.failed_terminations") == counters.end();
+}
+
+void ProcessImpl::setupForHRTimers() {
+  // We override the local environment to indicate to libevent that we favor precision over
+  // efficiency. Note that it is also possible to do this at setup time via libevent's api's.
+  // The upside of the approach below is that we are very loosely coupled and have a one-liner.
+  // Getting to libevent for the other approach is going to introduce more code as we would need to
+  // derive our own customized versions of certain Envoy concepts.
+  putenv(const_cast<char*>("EVENT_PRECISE_TIMER=1"));
 }
 
 } // namespace Client

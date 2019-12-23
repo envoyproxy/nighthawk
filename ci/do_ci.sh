@@ -6,9 +6,12 @@ export BUILDIFIER_BIN="/usr/local/bin/buildifier"
 export BUILDOZER_BIN="/usr/local/bin/buildozer"
 
 function do_build () {
-    bazel build $BAZEL_BUILD_OPTIONS --verbose_failures=true //:nighthawk_client //:nighthawk_test_server \
-        //:nighthawk_service
+    bazel build $BAZEL_BUILD_OPTIONS --verbose_failures=true //:nighthawk
     tools/update_cli_readme_documentation.sh --mode check
+}
+
+function do_opt_build () {
+    bazel build $BAZEL_BUILD_OPTIONS -c opt --verbose_failures=true //:nighthawk
 }
 
 function do_test() {
@@ -85,6 +88,14 @@ function do_check_format() {
     cd "${SRCDIR}"
     ./tools/check_format.sh check
     ./tools/format_python_tools.sh check
+}
+
+function do_docker() {
+    echo "docker..."
+    cd "${SRCDIR}"
+    # Note that we implicly test the opt build in CI here
+    do_opt_build
+    ./ci/docker/docker_build.sh
 }
 
 function do_fix_format() {
@@ -172,6 +183,10 @@ case "$1" in
         do_tsan
         exit 0
     ;;
+    docker)
+        do_docker
+        exit 0
+    ;;
     check_format)
         do_check_format
         exit 0
@@ -181,7 +196,7 @@ case "$1" in
         exit 0
     ;;
     *)
-        echo "must be one of [build,test,clang_tidy,test_with_valgrind,coverage,asan,tsan]"
+        echo "must be one of [build,test,clang_tidy,test_with_valgrind,coverage,asan,tsan,docker]"
         exit 1
     ;;
 esac
