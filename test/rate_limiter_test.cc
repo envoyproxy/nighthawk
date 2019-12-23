@@ -182,13 +182,11 @@ public:
     LinearRampingRateLimiterImpl rate_limiter(time_system, duration, frequency);
     auto total_ms_elapsed = 0ms;
     const auto clock_tick = 1ms;
-    auto last_acquisition_timestamp = 0ms;
     EXPECT_FALSE(rate_limiter.tryAcquireOne());
     do {
       if (rate_limiter.tryAcquireOne()) {
         EXPECT_FALSE(rate_limiter.tryAcquireOne());
         aquisition_timings.push_back(total_ms_elapsed.count());
-        last_acquisition_timestamp = total_ms_elapsed;
       }
       time_system.sleep(clock_tick);
       total_ms_elapsed += clock_tick;

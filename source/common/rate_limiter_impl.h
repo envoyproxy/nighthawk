@@ -177,7 +177,7 @@ protected:
 };
 
 /**
- * Takes a probabilistic approach to suppressing an arbitrary wrapper rate limiter.
+ * Takes a probabilistic approach to suppressing an arbitrary wrapped rate limiter.
  */
 class GraduallyOpeningRateLimiterFilter : public FilteringRateLimiterImpl {
 public:
