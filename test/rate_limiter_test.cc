@@ -172,7 +172,6 @@ TEST_F(RateLimiterTest, DistributionSamplingRateLimiterImplSchedulingTest) {
   EXPECT_TRUE(rate_limiter->tryAcquireOne());
 }
 
-// TODO(oschaaf): once we have hr sleep, test at a higher res.
 class LinearRampingRateLimiterImplTest : public Test {
 public:
   std::vector<int64_t> getAcquisitionTimings(const Frequency frequency,
@@ -180,17 +179,17 @@ public:
     Envoy::Event::SimulatedTimeSystem time_system;
     std::vector<int64_t> aquisition_timings;
     LinearRampingRateLimiterImpl rate_limiter(time_system, duration, frequency);
-    auto total_ms_elapsed = 0ms;
-    const auto clock_tick = 1ms;
+    auto total_us_elapsed = 0us;
+    const auto clock_tick = 50us;
     EXPECT_FALSE(rate_limiter.tryAcquireOne());
     do {
       if (rate_limiter.tryAcquireOne()) {
         EXPECT_FALSE(rate_limiter.tryAcquireOne());
-        aquisition_timings.push_back(total_ms_elapsed.count());
+        aquisition_timings.push_back(total_us_elapsed.count());
       }
       time_system.sleep(clock_tick);
-      total_ms_elapsed += clock_tick;
-    } while (total_ms_elapsed <= duration);
+      total_us_elapsed += clock_tick;
+    } while (total_us_elapsed <= duration);
     return aquisition_timings;
   }
 };
@@ -208,10 +207,16 @@ TEST_F(RateLimiterTest, LinearRampingRateLimiterImplInvalidArgumentTest) {
 }
 
 TEST_F(LinearRampingRateLimiterImplTest, TimingVerificationTest) {
+  // The first acquisition timing (1000050) seems slightly off because of floating point
+  // rounding causing the first timing to fall into the next clock tick. This is
+  // a test only issue: in practice we don't have fixed microsecond step sizes,
+  // and the rate limiter computes at nanosecond precision internally. As we
+  // want to have microsecond level precision, this should be more then sufficient.
   EXPECT_EQ(getAcquisitionTimings(5_Hz, 5s),
-            std::vector<int64_t>(
-                {1000, 1733, 2237, 2646, 3000, 3317, 3606, 3873, 4124, 4359, 4583, 4796, 5000}));
-  EXPECT_EQ(getAcquisitionTimings(4_Hz, 2s), std::vector<int64_t>({708, 1225, 1582, 1871}));
+            std::vector<int64_t>({1000050, 1732100, 2236100, 2645800, 3000000, 3316650, 3605600,
+                                  3873000, 4123150, 4358900, 4582600, 4795850, 5000000}));
+  EXPECT_EQ(getAcquisitionTimings(4_Hz, 2s),
+            std::vector<int64_t>({707150, 1224750, 1581150, 1870850}));
 }
 
 class GraduallyOpeningRateLimiterFilterTest : public Test {
