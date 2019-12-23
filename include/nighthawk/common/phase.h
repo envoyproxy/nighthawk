@@ -23,7 +23,7 @@ public:
   virtual ~Phase() = default;
 
   /**
-   * @return absl::string_view Contains the id of the pase. Should be unique but that is not
+   * @return absl::string_view Contains the id of the phase. Should be unique but that is not
    * enforced at this time so take care.
    */
   virtual absl::string_view id() const PURE;
