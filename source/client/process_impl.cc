@@ -267,7 +267,8 @@ void ProcessImpl::createBootstrapConfiguration(envoy::config::bootstrap::v2::Boo
       socket_address->set_address(uri.address()->ip()->addressAsString());
       socket_address->set_port_value(uri.port());
     } else {
-      if (Utility::hostAddressTypeFromHostPort(options_.backendEndpoints()[0]) == HostAddressType::DNS) {
+      if (Utility::hostAddressTypeFromHostPort(options_.backendEndpoints()[0]) ==
+          HostAddressType::DNS) {
         cluster->set_type(envoy::api::v2::Cluster::DiscoveryType::Cluster_DiscoveryType_STRICT_DNS);
       } else {
         cluster->set_type(envoy::api::v2::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
