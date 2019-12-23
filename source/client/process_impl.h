@@ -69,6 +69,7 @@ private:
   std::vector<StatisticPtr>
   mergeWorkerStatistics(const StatisticFactory& statistic_factory,
                         const std::vector<ClientWorkerPtr>& workers) const;
+  void setupForHRTimers();
   Envoy::ProcessWide process_wide_;
   Envoy::PlatformImpl platform_impl_;
   Envoy::Event::TimeSystem& time_system_;
