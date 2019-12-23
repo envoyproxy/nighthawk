@@ -19,8 +19,10 @@ int main(int argc, char** argv) {
   } catch (const Nighthawk::Client::NoServingException& e) {
     return EXIT_SUCCESS;
   } catch (const Nighthawk::Client::MalformedArgvException& e) {
+    std::cerr << "Bad argument: " << e.what() << std::endl;
     return EXIT_FAILURE;
   } catch (const Nighthawk::NighthawkException& e) {
+    std::cerr << "An unknown error occurred: " << e.what() << std::endl;
     return EXIT_FAILURE;
   }
   return client->run() ? EXIT_SUCCESS : EXIT_FAILURE;

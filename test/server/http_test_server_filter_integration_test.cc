@@ -59,12 +59,12 @@ public:
     encoder.getStream().addCallbacks(*response);
 
     Envoy::Http::HeaderMapImpl headers;
-    headers.insertMethod().value(method);
-    headers.insertPath().value(url);
-    headers.insertHost().value(host);
-    headers.insertScheme().value(Envoy::Http::Headers::get().SchemeValues.Http);
+    headers.setMethod(method);
+    headers.setPath(url);
+    headers.setHost(host);
+    headers.setScheme(Envoy::Http::Headers::get().SchemeValues.Http);
     if (!content_type.empty()) {
-      headers.insertContentType().value(content_type);
+      headers.setContentType(content_type);
     }
     request_header_delegate(headers);
     encoder.encodeHeaders(headers, body.empty());

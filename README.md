@@ -43,7 +43,7 @@ bazel build -c opt //:nighthawk
 ```
 USAGE:
 
-bazel-bin/nighthawk_client  [--open-loop]
+bazel-bin/nighthawk_client  [--jitter-uniform <duration>] [--open-loop]
 [--h1-connection-reuse-strategy <HOT|FAIR>]
 [--failure-predicate <<string, uint64_t>>]
 ... [--termination-predicate <<string,
@@ -69,6 +69,11 @@ format>
 
 
 Where:
+
+--jitter-uniform <duration>
+Add uniformly distributed absolute request-release timing jitter. For
+example, to add 10 us of jitter, specify .00001s. Default is empty /
+no uniform jitter.
 
 --open-loop
 Enable open loop mode. When enabled, the benchmark client will not

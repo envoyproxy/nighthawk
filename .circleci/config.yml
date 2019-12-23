@@ -62,6 +62,15 @@ jobs:
     steps:
       - checkout
       - run: ci/do_ci.sh check_format
+  docker:
+    docker:
+      - image: *envoy-build-image
+    resource_class: xlarge
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run: ci/do_ci.sh docker
 
 workflows:
   version: 2
@@ -75,3 +84,4 @@ workflows:
       - asan
       - tsan
       - format
+      - docker
