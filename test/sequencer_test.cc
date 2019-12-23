@@ -81,11 +81,11 @@ public:
         }));
     EXPECT_CALL(*timer1_, disableTimer()).WillOnce(Invoke([&]() { timer1_set_ = false; }));
     EXPECT_CALL(*timer2_, disableTimer()).WillOnce(Invoke([&]() { timer2_set_ = false; }));
-    EXPECT_CALL(*timer1_, enableTimer(_, _))
-        .WillRepeatedly(Invoke([&](const std::chrono::milliseconds,
+    EXPECT_CALL(*timer1_, enableHRTimer(_, _))
+        .WillRepeatedly(Invoke([&](const std::chrono::microseconds,
                                    const Envoy::ScopeTrackedObject*) { timer1_set_ = true; }));
-    EXPECT_CALL(*timer2_, enableTimer(_, _))
-        .WillRepeatedly(Invoke([&](const std::chrono::milliseconds,
+    EXPECT_CALL(*timer2_, enableHRTimer(_, _))
+        .WillRepeatedly(Invoke([&](const std::chrono::microseconds,
                                    const Envoy::ScopeTrackedObject*) { timer2_set_ = true; }));
     EXPECT_CALL(*dispatcher_, exit()).WillOnce(Invoke([&]() { stopped_ = true; }));
     simulation_start_ = time_system_.monotonicTime();
@@ -112,7 +112,7 @@ public:
   // Moves time forward 1ms, and runs the ballbacks of set timers.
   void simulateTimerLoop() {
     while (!stopped_) {
-      time_system_.setMonotonicTime(time_system_.monotonicTime() + EnvoyTimerMinResolution);
+      time_system_.setMonotonicTime(time_system_.monotonicTime() + NighthawkTimerResolution);
 
       // TODO(oschaaf): This can be implemented more accurately, by keeping track of timer
       // enablement preserving ordering of which timer should fire first. For now this seems to
@@ -277,7 +277,7 @@ TEST_F(SequencerIntegrationTest, CallbacksDoNotInfluenceTestDuration) {
 
   auto diff = time_system_.monotonicTime() - pre_timeout;
 
-  auto expected_duration = (test_number_of_intervals_ * interval_) + EnvoyTimerMinResolution;
+  auto expected_duration = (test_number_of_intervals_ * interval_) + NighthawkTimerResolution;
   EXPECT_EQ(expected_duration, diff);
 
   // the test itself should have seen all callbacks...
