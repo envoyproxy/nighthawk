@@ -260,11 +260,29 @@ void ProcessImpl::createBootstrapConfiguration(envoy::config::bootstrap::v2::Boo
         options_.maxPendingRequests() == 0 ? 1 : options_.maxPendingRequests());
     thresholds->mutable_max_requests()->set_value(options_.maxActiveRequests());
 
-    cluster->set_type(envoy::api::v2::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
-    auto* host = cluster->add_hosts();
-    auto* socket_address = host->mutable_socket_address();
-    socket_address->set_address(uri.address()->ip()->addressAsString());
-    socket_address->set_port_value(uri.port());
+    if (options_.backendEndpoints().empty()) {
+      cluster->set_type(envoy::api::v2::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
+      auto* host = cluster->add_hosts();
+      auto* socket_address = host->mutable_socket_address();
+      socket_address->set_address(uri.address()->ip()->addressAsString());
+      socket_address->set_port_value(uri.port());
+    } else {
+      if (Utility::hostAddressTypeFromHostPort(options_.backendEndpoints()[0]) == HostAddressType::DNS) {
+        cluster->set_type(envoy::api::v2::Cluster::DiscoveryType::Cluster_DiscoveryType_STRICT_DNS);
+      } else {
+        cluster->set_type(envoy::api::v2::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
+      }
+      for (const std::string& backend_endpoint : options_.backendEndpoints()) {
+        auto* host = cluster->add_hosts();
+        auto* socket_address = host->mutable_socket_address();
+        std::vector<absl::string_view> parts = absl::StrSplit(backend_endpoint, ':');
+        int port = -1;
+        (void)absl::SimpleAtoi(parts.back(), &port);
+        socket_address->set_port_value(port);
+        parts.pop_back();
+        socket_address->set_address(absl::StrJoin(parts, ":"));
+      }
+    }
   }
 }
 

@@ -3,6 +3,8 @@ options:
     {}
   failure_predicates:
     {}
+  backend_endpoints:
+    []
   connections: 0
   duration: 1s
 results:

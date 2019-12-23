@@ -58,6 +58,7 @@ public:
   bool openLoop() const override { return open_loop_; }
 
   std::chrono::nanoseconds jitterUniform() const override { return jitter_uniform_; }
+  std::vector<std::string> backendEndpoints() const override { return backend_endpoints_; }
 
 private:
   void parsePredicates(const TCLAP::MultiArg<std::string>& arg,
@@ -95,6 +96,7 @@ private:
   TerminationPredicateMap failure_predicates_;
   bool open_loop_{false};
   std::chrono::nanoseconds jitter_uniform_;
+  std::vector<std::string> backend_endpoints_;
 };
 
 } // namespace Client

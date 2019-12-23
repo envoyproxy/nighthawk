@@ -72,4 +72,17 @@ void Utility::parseCommand(TCLAP::CmdLine& cmd, const int argc, const char* cons
   }
 }
 
+HostAddressType Utility::hostAddressTypeFromHostPort(const std::string& host_port) {
+  if (RE2::FullMatch(host_port, R"(\d+\.\d+\.\d+\.\d+:\d+)")) {
+    return HostAddressType::IPV4;
+  }
+  if (RE2::FullMatch(host_port, R"(\[[.:0-9a-fA-F]+\]:\d+)")) {
+    return HostAddressType::IPV6;
+  }
+  if (RE2::FullMatch(host_port, R"([-.0-9a-zA-Z]+:\d+)")) {
+    return HostAddressType::DNS;
+  }
+  return HostAddressType::INVALID;
+}
+
 } // namespace Nighthawk

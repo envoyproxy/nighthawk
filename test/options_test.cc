@@ -46,7 +46,8 @@ TEST_F(OptionsImplTest, All) {
       "--max-pending-requests 10 "
       "--max-active-requests 11 --max-requests-per-connection 12 --sequencer-idle-strategy sleep "
       "--termination-predicate t1:1 --termination-predicate t2:2 --failure-predicate f1:1 "
-      "--failure-predicate f2:2 --jitter-uniform .00001s",
+      "--failure-predicate f2:2 --jitter-uniform .00001s "
+      "--backend-endpoint 1.1.1.1:1 --backend-endpoint 2.2.2.2:2",
       client_name_,
       "{common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"]}}}",
       good_test_uri_));
@@ -117,6 +118,10 @@ TEST_F(OptionsImplTest, All) {
   ASSERT_EQ(2, cmd->failure_predicates_size());
   EXPECT_EQ(cmd->failure_predicates().at("f1"), 1);
   EXPECT_EQ(cmd->failure_predicates().at("f2"), 2);
+
+  ASSERT_EQ(2, cmd->backend_endpoints_size());
+  EXPECT_EQ(cmd->backend_endpoints(0).value(), "1.1.1.1:1");
+  EXPECT_EQ(cmd->backend_endpoints(1).value(), "2.2.2.2:2");
 
   // Now we construct a new options from the proto we created above. This should result in an
   // OptionsImpl instance equivalent to options. We test that by converting both to yaml strings,
@@ -422,6 +427,71 @@ TEST_F(OptionsImplTest, RequestHeaderValueWithColonsAndSpaces) {
   EXPECT_EQ(1, headers.size());
   EXPECT_EQ(header, headers[0].header().key());
   EXPECT_EQ(value, headers[0].header().value());
+}
+
+TEST_F(OptionsImplTest, BackendHostMalformed) {
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(
+          fmt::format("{} --backend-endpoint my.dns.name {}", client_name_, good_test_uri_)),
+      MalformedArgvException, "must be in the form");
+
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(
+          fmt::format("{} --backend-endpoint my.dns.name:xyz {}", client_name_, good_test_uri_)),
+      MalformedArgvException, "must be in the form");
+
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                              "{} --backend-endpoint 1.1.1.1 {}", client_name_, good_test_uri_)),
+                          MalformedArgvException, "must be in the form");
+
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                              "{} --backend-endpoint '[::1]' {}", client_name_, good_test_uri_)),
+                          MalformedArgvException, "must be in the form");
+
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                              "{} --backend-endpoint a.1:a.1:33 {}", client_name_, good_test_uri_)),
+                          MalformedArgvException, "must be in the form");
+
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{} --backend-endpoint :0 {}",
+                                                                     client_name_, good_test_uri_)),
+                          MalformedArgvException, "must be in the form");
+
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{} --backend-endpoint : {}",
+                                                                     client_name_, good_test_uri_)),
+                          MalformedArgvException, "must be in the form");
+}
+
+TEST_F(OptionsImplTest, BackendHostTypeMismatch) {
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                              "{} --backend-endpoint 1.11.111.11:1 --backend-endpoint a:5 {}",
+                              client_name_, good_test_uri_)),
+                          MalformedArgvException, "must be the same address type");
+
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(fmt::format(
+          "{} --backend-endpoint [::1]:1 --backend-endpoint a:5 {}", client_name_, good_test_uri_)),
+      MalformedArgvException, "must be the same address type");
+
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                              "{} --backend-endpoint 1.11.111.11:1 --backend-endpoint [::1]:1 {}",
+                              client_name_, good_test_uri_)),
+                          MalformedArgvException, "must be the same address type");
+
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(fmt::format(
+          "{} --backend-endpoint a:5 --backend-endpoint [::1]:5 {}", client_name_, good_test_uri_)),
+      MalformedArgvException, "must be the same address type");
+
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                              "{} --backend-endpoint a:5 --backend-endpoint 1.1.1.1:1 {}",
+                              client_name_, good_test_uri_)),
+                          MalformedArgvException, "must be the same address type");
+
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(fmt::format(
+          "{} --backend-endpoint a:5 --backend-endpoint b.c:6 --backend-endpoint 1.1.1.1:1 {}",
+          client_name_, good_test_uri_)),
+      MalformedArgvException, "must be the same address type");
 }
 
 } // namespace Client

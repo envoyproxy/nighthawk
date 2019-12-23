@@ -189,6 +189,17 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "Add uniformly distributed absolute request-release timing jitter. For example, to add 10 us "
       "of jitter, specify .00001s. Default is empty / no uniform jitter.",
       false, "", "duration", cmd);
+  TCLAP::MultiArg<std::string> backend_endpoints(
+      "", "backend-endpoint",
+      "Backend endpoint overrides. "
+      "This argument is intended to be specified multiple times. "
+      "Nighthawk will generate the same traffic as usual, but "
+      "will spread it across all backend endpoints with "
+      "round robin distribution. "
+      "Endpoint formats: IPv4:port, [IPv6]:port, DNS:port. "
+      "Note: The host and port from the URI are ignored when "
+      "--backend-endpoint is present. ",
+      false, "string", cmd);
   TCLAP::UnlabeledValueArg<std::string> uri("uri",
                                             "uri to benchmark. http:// and https:// are supported, "
                                             "but in case of https no certificates are validated.",
@@ -261,6 +272,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       throw MalformedArgvException("Invalid value for --jitter-uniform");
     }
   }
+  TCLAP_SET_IF_SPECIFIED(backend_endpoints, backend_endpoints_);
 
   // CLI-specific tests.
   // TODO(oschaaf): as per mergconflicts's remark, it would be nice to aggregate
@@ -386,6 +398,9 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
     jitter_uniform_ = std::chrono::nanoseconds(
         Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(options.jitter_uniform()));
   }
+  for (const auto& backend_endpoint : options.backend_endpoints()) {
+    backend_endpoints_.push_back(backend_endpoint.value());
+  }
   validate();
 }
 
@@ -412,6 +427,22 @@ void OptionsImpl::validate() const {
     }
     if (parsed_concurrency <= 0) {
       throw MalformedArgvException("Value for --concurrency should be greater then 0.");
+    }
+  }
+  if (!backendEndpoints().empty()) {
+    HostAddressType first_host_address_type =
+        Utility::hostAddressTypeFromHostPort(backendEndpoints()[0]);
+    for (const std::string& backend_endpoint : backendEndpoints()) {
+      HostAddressType host_address_type = Utility::hostAddressTypeFromHostPort(backend_endpoint);
+      if (host_address_type == HostAddressType::INVALID) {
+        throw MalformedArgvException(fmt::format("--backend-endpoint addresses must be in the form "
+                                                 "IPv4:port, [IPv6]:port, or DNS:port. Got '{}'.",
+                                                 backend_endpoint));
+      }
+      if (host_address_type != first_host_address_type) {
+        throw MalformedArgvException("All --backend-endpoint values must be the same address type "
+                                     "(IPv4:port, [IPv6]:port, or DNS:port).");
+      }
     }
   }
   try {
@@ -480,6 +511,9 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptions() const {
   if (jitterUniform().count() > 0) {
     *command_line_options->mutable_jitter_uniform() =
         Envoy::Protobuf::util::TimeUtil::NanosecondsToDuration(jitterUniform().count());
+  }
+  for (const std::string& backend_endpoint : backendEndpoints()) {
+    command_line_options->add_backend_endpoints()->set_value(backend_endpoint);
   }
   return command_line_options;
 }
