@@ -49,6 +49,8 @@ class DiscreteNumericDistributionSampler {
 public:
   virtual ~DiscreteNumericDistributionSampler() = default;
   virtual uint64_t getValue() PURE;
+  virtual uint64_t min() const PURE;
+  virtual uint64_t max() const PURE;
 };
 
 using DiscreteNumericDistributionSamplerPtr = std::unique_ptr<DiscreteNumericDistributionSampler>;

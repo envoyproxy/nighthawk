@@ -211,12 +211,45 @@ TEST_F(LinearRampingRateLimiterImplTest, TimingVerificationTest) {
   // rounding causing the first timing to fall into the next clock tick. This is
   // a test only issue: in practice we don't have fixed microsecond step sizes,
   // and the rate limiter computes at nanosecond precision internally. As we
-  // want to have microsecond level precision, this should be more then sufficient.
+  // want to have microsecond level precision, this should be more then
+  // sufficient. Annoyingly, as we are doing continuous math (and not quantized frequency
+  // stepping), the numbers are a bit hard to grok intuitively.
   EXPECT_EQ(getAcquisitionTimings(5_Hz, 5s),
             std::vector<int64_t>({1000050, 1732100, 2236100, 2645800, 3000000, 3316650, 3605600,
                                   3873000, 4123150, 4358900, 4582600, 4795850, 5000000}));
   EXPECT_EQ(getAcquisitionTimings(4_Hz, 2s),
             std::vector<int64_t>({707150, 1224750, 1581150, 1870850}));
+}
+
+TEST_F(RateLimiterTest, GraduallyOpeningRateLimiterFilterInvalidArgumentTest) {
+  // Negative ramp throws.
+  EXPECT_THROW(GraduallyOpeningRateLimiterFilter gorl(
+                   -1s, std::make_unique<NiceMock<MockDiscreteNumericDistributionSampler>>(),
+                   std::make_unique<NiceMock<MockRateLimiter>>());
+               , NighthawkException);
+
+  // zero ramp throws.
+  EXPECT_THROW(GraduallyOpeningRateLimiterFilter gorl(
+                   0s, std::make_unique<NiceMock<MockDiscreteNumericDistributionSampler>>(),
+                   std::make_unique<NiceMock<MockRateLimiter>>());
+               , NighthawkException);
+
+  // Pass in a badly configured distribution sampler.
+  auto bad_distribution_sampler = std::make_unique<MockDiscreteNumericDistributionSampler>();
+  EXPECT_CALL(*bad_distribution_sampler, min).Times(1).WillOnce(Return(0));
+  EXPECT_THROW(
+      GraduallyOpeningRateLimiterFilter gorl(1s, std::move(bad_distribution_sampler),
+                                             std::make_unique<NiceMock<MockRateLimiter>>());
+      , NighthawkException);
+
+  bad_distribution_sampler = std::make_unique<MockDiscreteNumericDistributionSampler>();
+  // Correct min, but now introduce a bad max.
+  EXPECT_CALL(*bad_distribution_sampler, min).Times(1).WillOnce(Return(1));
+  EXPECT_CALL(*bad_distribution_sampler, max).Times(1).WillOnce(Return(99));
+  EXPECT_THROW(
+      GraduallyOpeningRateLimiterFilter gorl(1s, std::move(bad_distribution_sampler),
+                                             std::make_unique<NiceMock<MockRateLimiter>>());
+      , NighthawkException);
 }
 
 class GraduallyOpeningRateLimiterFilterTest : public Test {
@@ -228,10 +261,18 @@ public:
     auto* unsafe_discrete_numeric_distribution_sampler =
         new MockDiscreteNumericDistributionSampler();
     std::mt19937_64 mt(1243);
-    std::uniform_int_distribution<uint64_t> dist(1, 1000000);
+    const uint64_t dist_min = 1;
+    const uint64_t dist_max = 1000000;
+    std::uniform_int_distribution<uint64_t> dist(dist_min, dist_max);
     EXPECT_CALL(*unsafe_discrete_numeric_distribution_sampler, getValue)
         .Times(AtLeast(1))
         .WillRepeatedly(Invoke([&dist, &mt]() { return dist(mt); }));
+    EXPECT_CALL(*unsafe_discrete_numeric_distribution_sampler, min)
+        .Times(1)
+        .WillOnce(Return(dist_min));
+    EXPECT_CALL(*unsafe_discrete_numeric_distribution_sampler, max)
+        .Times(AtLeast(1))
+        .WillRepeatedly(Return(dist_max));
     RateLimiterPtr rate_limiter = std::make_unique<GraduallyOpeningRateLimiterFilter>(
         duration,
         std::unique_ptr<DiscreteNumericDistributionSampler>(

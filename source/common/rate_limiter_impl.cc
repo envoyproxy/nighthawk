@@ -166,15 +166,31 @@ GraduallyOpeningRateLimiterFilter::GraduallyOpeningRateLimiterFilter(
     : FilteringRateLimiterImpl(
           std::move(rate_limiter),
           [this]() {
-            if (elapsed() < ramp_time_) {
-              const double chance_percentage =
-                  100.0 - (static_cast<double>(ramp_time_.count() - elapsed().count()) /
-                           (ramp_time_.count() * 1.0)) *
-                              100.0;
-              return std::round(provider_->getValue() / 10000.0) <= chance_percentage;
+            const auto elapsed_time = elapsed();
+            if (elapsed_time < ramp_time_) {
+              // We want to linearly increase the probability of returning true
+              // below. We can derive that from the elapsed fraction of ramp_time.
+              const double probability =
+                  1.0 - (ramp_time_.count() - elapsed_time.count()) / (ramp_time_.count() * 1.0);
+              // Get a random number r, where 0 < r ≤ 1.
+              const double random_between_0_and_1 = 1.0 * provider_->getValue() / provider_->max();
+              // Given a uniform distribution, the fraction of the ramp
+              // will translate into the probability of opening up we are looking for.
+              return random_between_0_and_1 < probability;
             }
+            // Ramping is complete, and as such this filter has completely opened up.
             return true;
           }),
-      provider_(std::move(provider)), ramp_time_(ramp_time) {}
+      provider_(std::move(provider)), ramp_time_(ramp_time) {
+  if (ramp_time <= 0ns) {
+    throw NighthawkException("ramp_time must be positive and > 0ns");
+  }
+  if (provider_->min() != 1) {
+    throw NighthawkException("min value of the distribution provider must equal 1");
+  }
+  if (provider_->max() != 1000000) {
+    throw NighthawkException("max value of the distribution provider must equal 1000000");
+  }
+}
 
 } // namespace Nighthawk
