@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import itertools
 import logging
 import os
 import sys
@@ -7,7 +8,8 @@ import pytest
 
 from test.integration.common import IpVersion
 from test.integration.integration_test_fixtures import (http_test_server_fixture,
-                                                        https_test_server_fixture)
+                                                        https_test_server_fixture,
+                                                        multi_http_test_server_fixture)
 from test.integration.utility import *
 
 # TODO(oschaaf): we mostly verify stats observed from the client-side. Add expectations
@@ -424,3 +426,36 @@ def test_bad_arg_error_messages(http_test_server_fixture):
       expect_failure=True,
       as_json=False)
   assert "Bad argument: Termination predicate 'a:a' has an out of range threshold." in err
+
+
+def test_multiple_backends_http_h1(multi_http_test_server_fixture):
+  """
+  Runs the CLI configured to use plain HTTP/1 against multiple test servers, and sanity
+  checks statistics from both client and server.
+  """
+  parsed_json, stderr = multi_http_test_server_fixture.runNighthawkClient(
+      [multi_http_test_server_fixture.getTestServerRootUri()] +
+      # URI host/port overridden by --backend-endpoint
+      list(itertools.chain.from_iterable([
+          ("--backend-endpoint", uri.replace("http://", "").replace("/", ""))
+          for uri in multi_http_test_server_fixture.getAllTestServerRootUris()
+      ])) + ["--duration", "100", "--termination-predicate", "benchmark.http_2xx:24"])
+  counters = multi_http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
+  assertCounterEqual(counters, "benchmark.http_2xx", 25)
+  assertCounterEqual(counters, "upstream_cx_http1_total", 3)
+  assertCounterEqual(counters, "upstream_cx_rx_bytes_total", 3400)
+  assertCounterEqual(counters, "upstream_cx_total", 3)
+  assertCounterEqual(counters, "upstream_cx_tx_bytes_total",
+                     1400 if multi_http_test_server_fixture.ip_version == IpVersion.IPV6 else 1500)
+  assertCounterEqual(counters, "upstream_rq_pending_total", 3)
+  assertCounterEqual(counters, "upstream_rq_total", 25)
+  assertCounterEqual(counters, "default.total_match_count", 3)
+  assertEqual(len(counters), 12)
+  total_2xx = 0
+  for parsed_server_json in multi_http_test_server_fixture.getAllTestServerStatisticsJsons():
+    total_2xx += multi_http_test_server_fixture.getServerStatFromJson(
+        parsed_server_json, "http.ingress_http.downstream_rq_2xx")
+  assertBetweenInclusive(total_2xx, 24, 25)
+
+
+

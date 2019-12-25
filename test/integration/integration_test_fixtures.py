@@ -36,7 +36,7 @@ class IntegrationTestBase():
   IntegrationTestBase facilitates testing against the Nighthawk test server, by determining a free port, and starting it up in a separate process in setUp().
   """
 
-  def __init__(self, ip_version):
+  def __init__(self, ip_version, backend_count=1):
     super(IntegrationTestBase, self).__init__()
     self.test_rundir = os.path.join(os.environ["TEST_SRCDIR"], os.environ["TEST_WORKSPACE"])
     self.nighthawk_test_server_path = os.path.join(self.test_rundir, "nighthawk_test_server")
@@ -46,6 +46,8 @@ class IntegrationTestBase():
     self.server_ip = "::1" if ip_version == IpVersion.IPV6 else "127.0.0.1"
     self.socket_type = socket.AF_INET6 if ip_version == IpVersion.IPV6 else socket.AF_INET
     self.test_server = None
+    self.test_servers = []
+    self.backend_count = backend_count
     self.parameters = {}
     self.ip_version = ip_version
     self.grpc_service = None
@@ -73,18 +75,27 @@ class IntegrationTestBase():
     test_id = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0].replace(
         "[", "_").replace("]", "")
     self.parameters["test_id"] = test_id
-    self.test_server = NighthawkTestServer(self.nighthawk_test_server_path,
-                                           self.nighthawk_test_config_path, self.server_ip,
-                                           self.ip_version, self.parameters)
-    assert (self.test_server.start())
+    for i in range(self.backend_count):
+      test_server = NighthawkTestServer(self.nighthawk_test_server_path,
+                                        self.nighthawk_test_config_path, self.server_ip,
+                                        self.ip_version, self.parameters)
+      assert (test_server.start())
+      self.test_servers.append(test_server)
+      if i == 0:
+        self.test_server = test_server
 
   def tearDown(self):
     """
     Stops the server.
     """
-    assert (self.test_server.stop() == 0)
     if not self.grpc_service is None:
       assert (self.grpc_service.stop() == 0)
+
+    any_failed = False
+    for test_server in self.test_servers:
+      if test_server.stop() != 0:
+        any_failed = True
+    assert(not any_failed)
 
   def getNighthawkCounterMapFromJson(self, parsed_json):
     """
@@ -113,11 +124,33 @@ class IntegrationTestBase():
     uri = "%s://%s:%s/" % ("https" if https else "http", uri_host, self.test_server.server_port)
     return uri
 
+  def getAllTestServerRootUris(self, https=False):
+    """
+    Utility for getting the list of http://host:port/ that can be used to query the servers we started
+    in setUp()
+    """
+    uri_host = self.server_ip
+    if self.ip_version == IpVersion.IPV6:
+      uri_host = "[%s]" % self.server_ip
+
+    return ["%s://%s:%s/" % ("https" if https else "http", uri_host, test_server.server_port)
+            for test_server in self.test_servers]
+
+
   def getTestServerStatisticsJson(self):
     """
     Utility to grab a statistics snapshot from the test server.
     """
     return self.test_server.fetchJsonFromAdminInterface("/stats?format=json")
+
+  def getAllTestServerStatisticsJsons(self):
+    """
+    Utility to grab a statistics snapshot from multiple test servers.
+    """
+    return [
+        test_server.fetchJsonFromAdminInterface("/stats?format=json")
+        for test_server in self.test_servers
+    ]
 
   def getServerStatFromJson(self, server_stats_json, name):
     counters = server_stats_json["stats"]
@@ -144,6 +177,8 @@ class IntegrationTestBase():
     logs = stderr.decode('utf-8')
     output = stdout.decode('utf-8')
     logging.info("Nighthawk client output: [%s]" % output)
+    if logs:
+      logging.warning("Nighthawk client stderr: [%s]" % logs)
     if as_json:
       output = json.loads(output)
     if expect_failure:
@@ -176,6 +211,23 @@ class HttpIntegrationTestBase(IntegrationTestBase):
     return super(HttpIntegrationTestBase, self).getTestServerRootUri(False)
 
 
+class MultiServerHttpIntegrationTestBase(IntegrationTestBase):
+  """
+  Base for running plain http tests against multiple Nighthawk test servers
+  """
+
+  def __init__(self, ip_version, backend_count):
+    super(MultiServerHttpIntegrationTestBase, self).__init__(ip_version, backend_count)
+    self.nighthawk_test_config_path = os.path.join(
+        self.test_rundir, "test/integration/configurations/nighthawk_http_origin.yaml")
+
+  def getTestServerRootUri(self):
+    return super(MultiServerHttpIntegrationTestBase, self).getTestServerRootUri(False)
+
+  def getAllTestServerRootUris(self):
+    return super(MultiServerHttpIntegrationTestBase, self).getAllTestServerRootUris(False)
+
+
 class HttpsIntegrationTestBase(IntegrationTestBase):
   """
   Base for https tests against the Nighthawk test server
@@ -205,6 +257,14 @@ def http_test_server_fixture(request):
 @pytest.fixture(params=determineIpVersionsFromEnvironment())
 def https_test_server_fixture(request):
   f = HttpsIntegrationTestBase(request.param)
+  f.setUp()
+  yield f
+  f.tearDown()
+
+
+@pytest.fixture(params=determineIpVersionsFromEnvironment())
+def multi_http_test_server_fixture(request):
+  f = MultiServerHttpIntegrationTestBase(request.param, backend_count=3)
   f.setUp()
   yield f
   f.tearDown()

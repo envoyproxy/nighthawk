@@ -26,6 +26,8 @@
 #include "external/envoy/source/common/thread_local/thread_local_impl.h"
 #include "external/envoy/source/extensions/tracers/well_known_names.h"
 
+#include "absl/strings/str_replace.h"
+
 // TODO(oschaaf): See if we can leverage a static module registration like Envoy does to avoid the
 // ifdefs in this file.
 #ifdef ZIPKIN_ENABLED
@@ -281,7 +283,8 @@ void ProcessImpl::createBootstrapConfiguration(envoy::config::bootstrap::v2::Boo
         (void)absl::SimpleAtoi(parts.back(), &port);
         socket_address->set_port_value(port);
         parts.pop_back();
-        socket_address->set_address(absl::StrJoin(parts, ":"));
+        socket_address->set_address(absl::StrReplaceAll(absl::StrJoin(parts, ":"),
+                                                        {{"[", ""}, {"]", ""}}));
       }
     }
   }
