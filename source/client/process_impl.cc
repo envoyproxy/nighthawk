@@ -71,8 +71,8 @@ public:
       h1_pool->setPrefetchConnections(prefetch_connections_);
       return Envoy::Http::ConnectionPool::InstancePtr{h1_pool};
     } else if (use_multi_conn_h2_pool_ && protocol == Envoy::Http::Protocol::Http2) {
-      return Envoy::Http::ConnectionPool::InstancePtr{new Http2PoolImpl(
-          dispatcher, host, priority, std::move(options), std::move(transport_socket_options))};
+      return Envoy::Http::ConnectionPool::InstancePtr{
+          new Http2PoolImpl(dispatcher, host, priority, options, transport_socket_options)};
     }
     return Envoy::Upstream::ProdClusterManagerFactory::allocateConnPool(
         dispatcher, host, priority, protocol, options, transport_socket_options);
