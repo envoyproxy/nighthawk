@@ -427,21 +427,21 @@ TEST_F(OptionsImplTest, RequestHeaderValueWithColonsAndSpaces) {
 class OptionsImplH1ConnectionReuseStrategyTest : public OptionsImplTest,
                                                  public WithParamInterface<const char*> {};
 
-// Test we accept all possible --h1-connection-reuse-strategy values.
+// Test we accept all possible --experimental-h1-connection-reuse-strategy values.
 TEST_P(OptionsImplH1ConnectionReuseStrategyTest, H1ConnectionReuseStrategyValues) {
-  TestUtility::createOptionsImpl(fmt::format("{} --h1-connection-reuse-strategy {} {}",
+  TestUtility::createOptionsImpl(fmt::format("{} --experimental-h1-connection-reuse-strategy {} {}",
                                              client_name_, GetParam(), good_test_uri_));
 }
 
 INSTANTIATE_TEST_SUITE_P(H1ConnectionReuseStrategyOptionsTest,
                          OptionsImplH1ConnectionReuseStrategyTest, Values("mru", "lru"));
 
-// Test we don't accept any bad --h1-connection-reuse-strategy values.
+// Test we don't accept any bad --experimental-h1-connection-reuse-strategy values.
 TEST_F(OptionsImplTest, H1ConnectionReuseStrategyValuesAreConstrained) {
   EXPECT_THROW_WITH_REGEX(
-      TestUtility::createOptionsImpl(
-          fmt::format("{} {} --h1-connection-reuse-strategy foo", client_name_, good_test_uri_)),
-      MalformedArgvException, "h1-connection-reuse-strategy");
+      TestUtility::createOptionsImpl(fmt::format(
+          "{} {} --experimental-h1-connection-reuse-strategy foo", client_name_, good_test_uri_)),
+      MalformedArgvException, "experimental-h1-connection-reuse-strategy");
 }
 
 } // namespace Client
