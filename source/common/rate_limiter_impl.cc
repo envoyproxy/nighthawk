@@ -168,7 +168,8 @@ GraduallyOpeningRateLimiterFilter::GraduallyOpeningRateLimiterFilter(
               // We want to linearly increase the probability of returning true
               // below. We can derive that from the elapsed fraction of ramp_time.
               const double probability =
-                  1.0 - (ramp_time_.count() - elapsed_time.count()) / (ramp_time_.count() * 1.0);
+                  1.0 - static_cast<double>(ramp_time_.count() - elapsed_time.count()) /
+                            (ramp_time_.count() * 1.0);
               // Get a random number r, where 0 < r ≤ 1.
               const double random_between_0_and_1 = 1.0 * provider_->getValue() / provider_->max();
               // Given a uniform distribution, the fraction of the ramp
