@@ -81,6 +81,8 @@ public:
     }
   }
 
+  // Excluded from coverage, as these don't seem to get used the way we use the pool.
+  // LCOV_EXCL_START
   // Envoy::Http::ConnectionPool::Instance
   Envoy::Http::Protocol protocol() const override { return Envoy::Http::Protocol::Http2; }
   void addDrainedCallback(Envoy::Http::ConnectionPool::Instance::DrainedCb cb) override {
@@ -101,6 +103,9 @@ public:
     }
     return false;
   }
+  Envoy::Upstream::HostDescriptionConstSharedPtr host() const override { return host_; };
+  // LCOV_EXCL_STOP
+
   Envoy::Http::ConnectionPool::Cancellable*
   newStream(Envoy::Http::StreamDecoder& response_decoder,
             Envoy::Http::ConnectionPool::Callbacks& callbacks) override {
@@ -109,7 +114,6 @@ public:
     return pools_[pool_round_robin_index_++ % pools_.size()]->newStream(response_decoder,
                                                                         callbacks);
   };
-  Envoy::Upstream::HostDescriptionConstSharedPtr host() const override { return host_; };
 
 protected:
   // Envoy::Http::ConnPoolImplBase
