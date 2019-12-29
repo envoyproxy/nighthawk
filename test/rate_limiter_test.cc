@@ -174,23 +174,47 @@ TEST_F(RateLimiterTest, DistributionSamplingRateLimiterImplSchedulingTest) {
 
 class LinearRampingRateLimiterImplTest : public Test {
 public:
-  std::vector<int64_t> getAcquisitionTimings(const Frequency frequency,
-                                             const std::chrono::seconds duration) {
+  void checkAcquisitionTimings(const Frequency frequency, const std::chrono::seconds duration) {
     Envoy::Event::SimulatedTimeSystem time_system;
-    std::vector<int64_t> aquisition_timings;
+    std::vector<int64_t> acquisition_timings;
+    std::vector<int64_t> control_timings;
+
     LinearRampingRateLimiterImpl rate_limiter(time_system, duration, frequency);
     auto total_us_elapsed = 0us;
-    const auto clock_tick = 50us;
+    const auto clock_tick = 10us;
     EXPECT_FALSE(rate_limiter.tryAcquireOne());
     do {
       if (rate_limiter.tryAcquireOne()) {
         EXPECT_FALSE(rate_limiter.tryAcquireOne());
-        aquisition_timings.push_back(total_us_elapsed.count());
+        acquisition_timings.push_back(total_us_elapsed.count());
+      }
+      // We use the second law of motion to verify results: ½ * a  * t²
+      // In this formula, 'a' equates to our ramp speed, and t to elapsed time.
+      double t = total_us_elapsed.count() / 1e6;
+      double a = (frequency.value() / (duration.count() * 1.0));
+      // Finally, figure out the ground that we can expect to be covered.
+      uint64_t expected_count = std::round(0.5 * a * t * t);
+      if (expected_count > control_timings.size()) {
+        control_timings.push_back(total_us_elapsed.count());
       }
       time_system.sleep(clock_tick);
       total_us_elapsed += clock_tick;
     } while (total_us_elapsed <= duration);
-    return aquisition_timings;
+
+    // For good measure, verify we saw the expected amount of acquisitions: half
+    // of "frequency times duration".
+    EXPECT_EQ(std::round(duration.count() * frequency.value() / 2.0), acquisition_timings.size());
+    // Sanity check that we have the right number of control timings.
+    ASSERT_EQ(control_timings.size(), acquisition_timings.size());
+    // Verify that all timings are correct.
+    for (uint64_t i = 0; i < acquisition_timings.size(); i++) {
+      // We allow one clock tick of slack in timing expectations, as floating
+      // point math may introduce small errors in some cases.
+      // This is a test only issue: in practice we don't have a fixed microsecond-level step sizes,
+      // and the rate limiter computes at nanosecond precision internally. As we want to have
+      // microsecond level precision, this should be more then sufficient.
+      EXPECT_NEAR(acquisition_timings[i], control_timings[i], clock_tick.count());
+    }
   }
 };
 
@@ -207,18 +231,11 @@ TEST_F(RateLimiterTest, LinearRampingRateLimiterImplInvalidArgumentTest) {
 }
 
 TEST_F(LinearRampingRateLimiterImplTest, TimingVerificationTest) {
-  // The first acquisition timing (1000050) seems slightly off because of floating point
-  // rounding causing the first timing to fall into the next clock tick. This is
-  // a test only issue: in practice we don't have fixed microsecond step sizes,
-  // and the rate limiter computes at nanosecond precision internally. As we
-  // want to have microsecond level precision, this should be more then
-  // sufficient. Annoyingly, as we are doing continuous math (and not quantized frequency
-  // stepping), the numbers are a bit hard to grok intuitively.
-  EXPECT_EQ(getAcquisitionTimings(5_Hz, 5s),
-            std::vector<int64_t>({1000050, 1732100, 2236100, 2645800, 3000000, 3316650, 3605600,
-                                  3873000, 4123150, 4358900, 4582600, 4795850, 5000000}));
-  EXPECT_EQ(getAcquisitionTimings(4_Hz, 2s),
-            std::vector<int64_t>({707150, 1224750, 1581150, 1870850}));
+  checkAcquisitionTimings(1_Hz, 3s);
+  checkAcquisitionTimings(5_Hz, 3s);
+  checkAcquisitionTimings(4_Hz, 2s);
+  checkAcquisitionTimings(1000_Hz, 12s);
+  checkAcquisitionTimings(40000_Hz, 7s);
 }
 
 TEST_F(RateLimiterTest, GraduallyOpeningRateLimiterFilterInvalidArgumentTest) {
@@ -257,7 +274,7 @@ public:
   std::vector<int64_t> getAcquisitionTimings(const Frequency frequency,
                                              const std::chrono::seconds duration) {
     Envoy::Event::SimulatedTimeSystem time_system;
-    std::vector<int64_t> aquisition_timings;
+    std::vector<int64_t> acquisition_timings;
     auto* unsafe_discrete_numeric_distribution_sampler =
         new MockDiscreteNumericDistributionSampler();
     std::mt19937_64 mt(1243);
@@ -284,7 +301,7 @@ public:
 
     do {
       if (rate_limiter->tryAcquireOne()) {
-        aquisition_timings.push_back(total_ms_elapsed.count());
+        acquisition_timings.push_back(total_ms_elapsed.count());
         EXPECT_FALSE(rate_limiter->tryAcquireOne());
       }
       time_system.sleep(clock_tick);
@@ -301,7 +318,7 @@ public:
     }
     // Verify we acquired everything.
     EXPECT_FALSE(rate_limiter->tryAcquireOne());
-    return aquisition_timings;
+    return acquisition_timings;
   }
 };
 

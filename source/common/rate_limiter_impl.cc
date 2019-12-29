@@ -103,15 +103,12 @@ bool LinearRampingRateLimiterImpl::tryAcquireOne() {
     elapsed_fraction -= static_cast<double>(ramp_time_.count() - elapsed_time.count()) /
                         static_cast<double>(ramp_time_.count());
   }
-
-  const double current_frequency = elapsed_fraction * (frequency_.value() * 1.0);
+  const double current_frequency = elapsed_fraction * frequency_.value();
   // If we'd be at a constant pace, we can expect elapsed seconds * frequency requests.
   // However, as we are linearly ramping, we can expect half of that, hence we
   // divide by two.
-  const double chrono_seconds =
-      std::chrono::duration_cast<std::chrono::duration<double>>(elapsed_time).count();
-  const double total = chrono_seconds * current_frequency / 2.0;
-  acquireable_count_ = std::round(total) - acquired_count_;
+  const int64_t total = std::round((elapsed_time.count() / 1e9) * current_frequency / 2.0);
+  acquireable_count_ = total - acquired_count_;
   return acquireable_count_ > 0 ? tryAcquireOne() : false;
 }
 
