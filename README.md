@@ -81,7 +81,8 @@ provide backpressure when resource limits are hit.
 
 --experimental-h1-connection-reuse-strategy <mru|lru>
 Choose picking the most recently used, or least-recently-used
-connections for re-use.(default: mru).
+connections for re-use.(default: mru). WARNING: this option is
+experimental and may be removed or changed in the future!
 
 --failure-predicate <<string, uint64_t>>  (accepted multiple times)
 Failure predicate. Allows specifying a counter name plus threshold

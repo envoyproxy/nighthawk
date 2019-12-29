@@ -261,10 +261,9 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   if (experimental_h1_connection_reuse_strategy.isSet()) {
     std::string upper_cased = experimental_h1_connection_reuse_strategy.getValue();
     absl::AsciiStrToUpper(&upper_cased);
-    RELEASE_ASSERT(
-        nighthawk::client::H1ConnectionReuseStrategy::H1ConnectionReuseStrategyOptions_Parse(
-            upper_cased, &experimental_h1_connection_reuse_strategy_),
-        "Failed to parse h1 connection re-use strategy");
+    ASSERT(nighthawk::client::H1ConnectionReuseStrategy::H1ConnectionReuseStrategyOptions_Parse(
+               upper_cased, &experimental_h1_connection_reuse_strategy_),
+           "Failed to parse h1 connection re-use strategy");
   }
 
   TCLAP_SET_IF_SPECIFIED(trace, trace_);
