@@ -126,9 +126,7 @@ def test_h1_pool_strategy(http_test_server_fixture):
       "benchmark.http_2xx:%d" % requests,
       http_test_server_fixture.getTestServerRootUri()
   ])
-  # Somehow the expectations below fail in coverage runs.
-  if isCoverageRun():
-    return
+
   for i in range(1, connections):
     line_count = countLogLinesWithSubstring(logs, "[C%d] message complete" % i)
     strict_count = (requests / connections) * 2

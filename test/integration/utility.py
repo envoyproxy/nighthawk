@@ -57,7 +57,3 @@ def assertCounterBetweenInclusive(counters, name, min_value, max_value):
 
 def isSanitizerRun():
   return True if os.environ.get("NH_INTEGRATION_TEST_SANITIZER_RUN", 0) == "1" else False
-
-
-def isCoverageRun():
-  return True if os.environ.get("ENVOY_CONFIG_COVERAGE", 0) == "1" else False
