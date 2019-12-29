@@ -109,7 +109,8 @@ def test_h1_pool_strategy(http_test_server_fixture):
 
   _, logs = http_test_server_fixture.runNighthawkClient([
       "--rps 20", "-v", "trace", "--connections", "2", "--prefetch-connections",
-      "--experimental-h1-connection-reuse-strategy", "mru", "--termination-predicate", "benchmark.http_2xx:10",
+      "--experimental-h1-connection-reuse-strategy", "mru", "--termination-predicate",
+      "benchmark.http_2xx:10",
       http_test_server_fixture.getTestServerRootUri()
   ])
 
@@ -120,8 +121,8 @@ def test_h1_pool_strategy(http_test_server_fixture):
 
   _, logs = http_test_server_fixture.runNighthawkClient([
       "--rps", "20", "-v trace", "--connections",
-      str(connections), "--prefetch-connections", "--experimental-h1-connection-reuse-strategy", "lru",
-      "--termination-predicate",
+      str(connections), "--prefetch-connections", "--experimental-h1-connection-reuse-strategy",
+      "lru", "--termination-predicate",
       "benchmark.http_2xx:%d" % requests,
       http_test_server_fixture.getTestServerRootUri()
   ])
