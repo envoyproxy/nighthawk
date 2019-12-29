@@ -71,7 +71,7 @@ public:
   Http2PoolImpl(
       Envoy::Event::Dispatcher& dispatcher, Envoy::Upstream::HostConstSharedPtr host,
       Envoy::Upstream::ResourcePriority priority,
-      const Envoy::Network::ConnectionSocket::OptionsSharedPtr& options,
+      const Envoy::Network::ConnectionSocket::OptionsSharedPtr& options,               // NOLINT
       const Envoy::Network::TransportSocketOptionsSharedPtr& transport_socket_options) // NOLINT
       : Envoy::Http::ConnPoolImplBase(std::move(host), priority), dispatcher_(dispatcher),
         socket_options_(options), transport_socket_options_(transport_socket_options) {
@@ -81,30 +81,16 @@ public:
     }
   }
 
-  // Excluded from coverage, as these don't seem to get used the way we use the pool.
-  // LCOV_EXCL_START
   // Envoy::Http::ConnectionPool::Instance
   Envoy::Http::Protocol protocol() const override { return Envoy::Http::Protocol::Http2; }
-  void addDrainedCallback(Envoy::Http::ConnectionPool::Instance::DrainedCb cb) override {
-    for (auto& pool : pools_) {
-      pool->addDrainedCallback(cb);
-    }
+  void addDrainedCallback(Envoy::Http::ConnectionPool::Instance::DrainedCb) override {
+    NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
   }
-  void drainConnections() override {
-    for (auto& pool : pools_) {
-      pool->drainConnections();
-    }
-  }
-  bool hasActiveConnections() const override {
-    for (auto& pool : pools_) {
-      if (pool->hasActiveConnections()) {
-        return true;
-      }
-    }
-    return false;
-  }
-  Envoy::Upstream::HostDescriptionConstSharedPtr host() const override { return host_; };
-  // LCOV_EXCL_STOP
+  void drainConnections() override {}
+  bool hasActiveConnections() const override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; }
+  Envoy::Upstream::HostDescriptionConstSharedPtr host() const override {
+    NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
+  };
 
   Envoy::Http::ConnectionPool::Cancellable*
   newStream(Envoy::Http::StreamDecoder& response_decoder,
@@ -117,9 +103,7 @@ public:
 
 protected:
   // Envoy::Http::ConnPoolImplBase
-  void checkForDrained() override {
-    // TODO(oschaaf): this one is protected, can't forward it.
-  }
+  void checkForDrained() override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; }
 
 private:
   Envoy::Event::Dispatcher& dispatcher_;
