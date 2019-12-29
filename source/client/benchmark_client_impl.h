@@ -83,27 +83,40 @@ public:
 
   // Envoy::Http::ConnectionPool::Instance
   Envoy::Http::Protocol protocol() const override { return Envoy::Http::Protocol::Http2; }
-  void addDrainedCallback(Envoy::Http::ConnectionPool::Instance::DrainedCb) override {
-    NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
+  void addDrainedCallback(Envoy::Http::ConnectionPool::Instance::DrainedCb cb) override {
+    for (auto& pool : pools_) {
+      pool->addDrainedCallback(cb);
+    }
   }
-  void drainConnections() override {}
-  bool hasActiveConnections() const override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; }
-  Envoy::Upstream::HostDescriptionConstSharedPtr host() const override {
-    NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
-  };
+  void drainConnections() override {
+    for (auto& pool : pools_) {
+      pool->drainConnections();
+    }
+  }
+  bool hasActiveConnections() const override {
+    for (auto& pool : pools_) {
+      if (pool->hasActiveConnections()) {
+        return true;
+      }
+    }
+    return false;
+  }
+  Envoy::Upstream::HostDescriptionConstSharedPtr host() const override { return host_; };
 
   Envoy::Http::ConnectionPool::Cancellable*
   newStream(Envoy::Http::StreamDecoder& response_decoder,
             Envoy::Http::ConnectionPool::Callbacks& callbacks) override {
     // Use the simplest but probably naive approach of rotating over the available pool instances
-    // / connections to distrubute requests accross them.
+    // / connections to distribute requests accross them.
     return pools_[pool_round_robin_index_++ % pools_.size()]->newStream(response_decoder,
                                                                         callbacks);
   };
 
 protected:
   // Envoy::Http::ConnPoolImplBase
-  void checkForDrained() override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; }
+  void checkForDrained() override {
+    // TODO(oschaaf): this one is protected, can't forward it.
+  }
 
 private:
   Envoy::Event::Dispatcher& dispatcher_;
