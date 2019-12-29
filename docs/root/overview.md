@@ -7,7 +7,7 @@ which in turn queries **RateLimiter** for [request-release
 timings](terminology.md#request-release-timings). When it is time to release a
 request, **BenchmarkClient** will be requested to do so by **Sequencer**.
 **BenchMarkClient** will then ask its underlying **Pool** to create a
-**StreamDecoder** release the actual request. **StreamDecoder** will query the
+**StreamDecoder** for releasing the actual request. **StreamDecoder** will query the
 request data it needs to send from the configured **RequestSource**, and send it
 off. **StreamDecoder** will emit events as it progresses (pool ready,
 completion, etc), and timings will subsequently be recorded into **Statistic**
@@ -21,9 +21,11 @@ when and how to terminate execution. When all **Workers** have finished,
 output format.
 
 However, it is said that pictures say more then words, so here is a block
-diagram: (TODO(#249): create a real diagram)
+diagram.
 
 ![Draft diagram](draft-high-level-diagram.png)
+
+[TODO(#249):add a real diagram](https://github.com/envoyproxy/nighthawk/issues/249)
 
 ## Notable upcoming changes
 
@@ -34,7 +36,7 @@ churn in the code base as we inject them.
 
 One notable addition / change that may get proposed in the near future is the
 introduction of **Phase**. **Phase** would represent a distinct stage of an
-execution, like, for example, warm-up. It would then be useful to have
+execution, for example a warm-up. It would then be useful to have
 per-phase reporting of latencies as well as counters and latencies.
 
 Concretely, a warm-up phase could be represented by a distinct duration
@@ -97,7 +99,7 @@ case acquisitions from **RateLimiter** need to be cancelled. Concretely, as of
 today there is **LinearRateLimiterImpl** which offers a straight-paced plain
 frequency, as well as work in progress on
 **DistributionSamplingRateLimiterImpl** (adding uniformly distributed random
-timing offsets to an underlying **RateLimiter**) and **RampingRateLimiter**.
+timing offsets to an underlying **RateLimiter**) and **LinearRampingRateLimiter**.
 
 ### BenchmarkClient
 
@@ -109,7 +111,7 @@ that as an argument. The integration surface between **BenchmarkClient** is
 defined via `BenchmarkClient::tryStartRequest()` and a callback specification
 which will be fired upon completion of a successfully started request.
 
-For H/3, it is anticipated that it will fit into this model, but if all else
+For H3, it is anticipated that it will fit into this model, but if all else
 fails, it will be entirely possible to wire in a new type of
 **BenchmarkClient**.
 
@@ -139,7 +141,7 @@ output formats offered by Nighthawk, including CLI human output.
 
 ### OutputFormatter
 
-**OutputFormatter** is responsible for transformations of nighthawk::client::Output
+**OutputFormatter** is responsible for transformations of `nighthawk::client::Output`
 to requested formats (e.g. human, json, fortio, etc)
 
 ### Statistic
@@ -165,14 +167,14 @@ strategies.
 
 ### nighthawk_client
 
-The CLI interface of the Nighthawk client. It will synthesize traffic according
+The CLI interface of the Nighthawk client. It synthesizes traffic according
 to the requested configuration and report results in the requested output format.
 
 ### nighthawk_service
 
 Nighthawk’s gRPC service is able to execute load tests, and report results.
-Under the hood it shared much of the code of nighthawk_client, and effectively
-it allows you to efficiently perform remote back-to-back executions of that.
+Under the hood it shares much of the code of nighthawk_client, and effectively
+it allows to efficiently perform remote back-to-back executions of that.
 
 ### nighthawk_test_server
 

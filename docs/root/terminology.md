@@ -17,8 +17,9 @@ When significant blocking is observed, measurements are skewed. Therefore,
 open-loop testing should be considered the preferred mode when measuring latency.
 
 Closed-loop testing can be useful to get a sense of the maximum requests per
-second that can be squeezed out of a system, as well as for comparing numbers
-with other load generators that use this methodology.
+second that can be squeezed out of a system (irrespective of the high latency
+incurred), as well as for comparing numbers with other load generators that use
+this methodology.
 
 ## Execution
 
