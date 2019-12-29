@@ -43,7 +43,8 @@ bazel build -c opt //:nighthawk
 ```
 USAGE:
 
-bazel-bin/nighthawk_client  [--jitter-uniform <duration>] [--open-loop]
+bazel-bin/nighthawk_client  [--experimental-h2-use-multiple-connections]
+[--jitter-uniform <duration>] [--open-loop]
 [--failure-predicate <<string, uint64_t>>]
 ... [--termination-predicate <<string,
 uint64_t>>] ... [--trace <uri format>]
@@ -68,6 +69,10 @@ format>
 
 
 Where:
+
+--experimental-h2-use-multiple-connections
+Use experimental HTTP/2 pool which will use multiple connections.
+WARNING: feature may be removed or changed in the future!
 
 --jitter-uniform <duration>
 Add uniformly distributed absolute request-release timing jitter. For

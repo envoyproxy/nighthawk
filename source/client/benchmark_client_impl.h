@@ -70,11 +70,11 @@ class Http2PoolImpl : public Envoy::Http::ConnectionPool::Instance,
 public:
   Http2PoolImpl(Envoy::Event::Dispatcher& dispatcher, Envoy::Upstream::HostConstSharedPtr host,
                 Envoy::Upstream::ResourcePriority priority,
-                const Envoy::Network::ConnectionSocket::OptionsSharedPtr& options,
-                const Envoy::Network::TransportSocketOptionsSharedPtr& transport_socket_options)
-      : Envoy::Http::ConnPoolImplBase(std::move(host), std::move(priority)),
-        dispatcher_(dispatcher), socket_options_(options),
-        transport_socket_options_(transport_socket_options) {
+                const Envoy::Network::ConnectionSocket::OptionsSharedPtr&& options,
+                const Envoy::Network::TransportSocketOptionsSharedPtr&& transport_socket_options)
+      : Envoy::Http::ConnPoolImplBase(std::move(host), priority), dispatcher_(dispatcher),
+        socket_options_(std::move(options)),
+        transport_socket_options_(std::move(transport_socket_options)) {
     for (uint32_t i = 0; i < host_->cluster().resourceManager(priority_).connections().max(); i++) {
       pools_.push_back(std::make_unique<Envoy::Http::Http2::ProdConnPoolImpl>(
           dispatcher_, host_, priority_, socket_options_, transport_socket_options_));

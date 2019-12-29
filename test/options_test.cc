@@ -46,7 +46,8 @@ TEST_F(OptionsImplTest, All) {
       "--max-pending-requests 10 "
       "--max-active-requests 11 --max-requests-per-connection 12 --sequencer-idle-strategy sleep "
       "--termination-predicate t1:1 --termination-predicate t2:2 --failure-predicate f1:1 "
-      "--failure-predicate f2:2 --jitter-uniform .00001s",
+      "--failure-predicate f2:2 --jitter-uniform .00001s "
+      "--experimental-h2-use-multiple-connections",
       client_name_,
       "{common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"]}}}",
       good_test_uri_));
@@ -81,6 +82,7 @@ TEST_F(OptionsImplTest, All) {
   EXPECT_EQ(1, options->failurePredicates()["f1"]);
   EXPECT_EQ(2, options->failurePredicates()["f2"]);
   EXPECT_EQ(10us, options->jitterUniform());
+  EXPECT_EQ(true, options->h2UseMultipleConnections());
 
   // Check that our conversion to CommandLineOptionsPtr makes sense.
   CommandLineOptionsPtr cmd = options->toCommandLineOptions();
@@ -128,6 +130,8 @@ TEST_F(OptionsImplTest, All) {
   EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("f1"));
   EXPECT_EQ(1, cmd->mutable_termination_predicates()->erase("t1"));
   EXPECT_EQ(cmd->jitter_uniform().nanos(), options->jitterUniform().count());
+  EXPECT_EQ(cmd->experimental_h2_use_multiple_connections().value(),
+            options->h2UseMultipleConnections());
 
   OptionsImpl options_from_proto(*cmd);
   std::string s1 = Envoy::MessageUtil::getYamlStringFromMessage(
