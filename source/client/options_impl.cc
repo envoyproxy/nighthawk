@@ -422,7 +422,6 @@ void OptionsImpl::setNonTrivialDefaults() {
   failure_predicates_["benchmark.http_5xx"] = 0;
   failure_predicates_["benchmark.pool_connection_failure"] = 0;
   jitter_uniform_ = std::chrono::nanoseconds(0);
-  experimental_h1_connection_reuse_strategy_ = nighthawk::client::H1ConnectionReuseStrategy::MRU;
 }
 
 void OptionsImpl::validate() const {

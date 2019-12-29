@@ -107,7 +107,7 @@ def test_h1_pool_strategy(http_test_server_fixture):
   def countLogLinesWithSubstring(logs, substring):
     return len([line for line in logs.split(os.linesep) if substring in line])
 
-  _, logs = http_test_server_fixture.runNighthawkClient([
+  _1, logs = http_test_server_fixture.runNighthawkClient([
       "--rps 20", "-v", "trace", "--connections", "2", "--prefetch-connections",
       "--experimental-h1-connection-reuse-strategy", "mru", "--termination-predicate",
       "benchmark.http_2xx:10",
@@ -119,7 +119,7 @@ def test_h1_pool_strategy(http_test_server_fixture):
   assertNotIn("[C1] message complete", logs)
   assertEqual(countLogLinesWithSubstring(logs, "[C0] message complete"), 22)
 
-  _, logs = http_test_server_fixture.runNighthawkClient([
+  _2, logs = http_test_server_fixture.runNighthawkClient([
       "--rps", "20", "-v trace", "--connections",
       str(connections), "--prefetch-connections", "--experimental-h1-connection-reuse-strategy",
       "lru", "--termination-predicate",
