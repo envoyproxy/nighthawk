@@ -115,7 +115,6 @@ protected:
   // Envoy::Http::ConnPoolImplBase
   void checkForDrained() override {
     // TODO(oschaaf): this one is protected, can't forward it.
-    // pool->checkForDrained();
   }
 
 private:

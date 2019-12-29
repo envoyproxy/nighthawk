@@ -70,18 +70,23 @@ public:
                                         transport_socket_options);
       h1_pool->setPrefetchConnections(prefetch_connections_);
       return Envoy::Http::ConnectionPool::InstancePtr{h1_pool};
+    } else if (use_multi_conn_h2_pool_ && protocol == Envoy::Http::Protocol::Http2) {
+      return Envoy::Http::ConnectionPool::InstancePtr{
+          new Http2PoolImpl(dispatcher, host, priority, options, transport_socket_options)};
     }
-    return Envoy::Http::ConnectionPool::InstancePtr{
-        new Http2PoolImpl(dispatcher, host, priority, options, transport_socket_options)};
+    return Envoy::Upstream::ProdClusterManagerFactory::allocateConnPool(
+        dispatcher, host, priority, protocol, options, transport_socket_options);
   }
 
   void setPrefetchConnections(const bool prefetch_connections) {
     prefetch_connections_ = prefetch_connections;
   }
+  void enableMultiConnectionH2Pool() { use_multi_conn_h2_pool_ = true; }
 
 private:
   Envoy::Http::Http1Settings h1_settings;
   bool prefetch_connections_{};
+  bool use_multi_conn_h2_pool_{};
 };
 
 ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system)
