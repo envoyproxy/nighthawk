@@ -19,7 +19,8 @@ namespace {
 
 using namespace std::chrono_literals;
 
-constexpr std::chrono::milliseconds EnvoyTimerMinResolution = 1ms;
+// We shoot for a 40kHz resolution.
+constexpr std::chrono::microseconds NighthawkTimerResolution = 25us;
 
 } // namespace
 
