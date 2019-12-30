@@ -100,14 +100,14 @@ def test_http_h2_connection_management_single_request_per_conn_1(http_test_serve
 @pytest.mark.skipif(isSanitizerRun(), reason="Unstable in sanitizer runs")
 def test_h1_pool_strategy(http_test_server_fixture):
   """
-  Test that with the "MRU" strategy only the first created connection gets to send requests.
-  Then, with the "LRU" strategy, we expect the other connection to be used as well.
+  Test that with the "mru" strategy only the first created connection gets to send requests.
+  Then, with the "lru" strategy, we expect the other connection to be used as well.
   """
 
   def countLogLinesWithSubstring(logs, substring):
     return len([line for line in logs.split(os.linesep) if substring in line])
 
-  _1, logs = http_test_server_fixture.runNighthawkClient([
+  _, logs = http_test_server_fixture.runNighthawkClient([
       "--rps 20", "-v", "trace", "--connections", "2", "--prefetch-connections",
       "--experimental-h1-connection-reuse-strategy", "mru", "--termination-predicate",
       "benchmark.http_2xx:10",
@@ -119,14 +119,13 @@ def test_h1_pool_strategy(http_test_server_fixture):
   assertNotIn("[C1] message complete", logs)
   assertEqual(countLogLinesWithSubstring(logs, "[C0] message complete"), 22)
 
-  _2, logs = http_test_server_fixture.runNighthawkClient([
+  _, logs = http_test_server_fixture.runNighthawkClient([
       "--rps", "20", "-v trace", "--connections",
       str(connections), "--prefetch-connections", "--experimental-h1-connection-reuse-strategy",
       "lru", "--termination-predicate",
       "benchmark.http_2xx:%d" % requests,
       http_test_server_fixture.getTestServerRootUri()
   ])
-
   for i in range(1, connections):
     line_count = countLogLinesWithSubstring(logs, "[C%d] message complete" % i)
     strict_count = (requests / connections) * 2
