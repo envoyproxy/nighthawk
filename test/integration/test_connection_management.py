@@ -97,7 +97,6 @@ def test_http_h2_connection_management_single_request_per_conn_1(http_test_serve
   connection_management_test_request_per_connection(http_test_server_fixture, 5, True)
 
 
-@pytest.mark.skipif(isSanitizerRun(), reason="Unstable in sanitizer runs")
 def test_h1_pool_strategy(http_test_server_fixture):
   """
   Test that with the "mru" strategy only the first created connection gets to send requests.
