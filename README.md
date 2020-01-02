@@ -43,7 +43,8 @@ bazel build -c opt //:nighthawk
 ```
 USAGE:
 
-bazel-bin/nighthawk_client  [--jitter-uniform <duration>] [--open-loop]
+bazel-bin/nighthawk_client  [--backend-endpoint <string>] ...
+[--jitter-uniform <duration>] [--open-loop]
 [--failure-predicate <<string, uint64_t>>]
 ... [--termination-predicate <<string,
 uint64_t>>] ... [--trace <uri format>]
@@ -68,6 +69,14 @@ format>
 
 
 Where:
+
+--backend-endpoint <string>  (accepted multiple times)
+Backend endpoint overrides. This argument is intended to be specified
+multiple times. Nighthawk will generate the same traffic as usual, but
+will spread it across all backend endpoints with round robin
+distribution. Endpoint formats: IPv4:port, [IPv6]:port, DNS:port.
+Note: The host and port from the URI are ignored when
+--backend-endpoint is present.
 
 --jitter-uniform <duration>
 Add uniformly distributed absolute request-release timing jitter. For
