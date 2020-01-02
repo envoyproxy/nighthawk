@@ -43,7 +43,8 @@ bazel build -c opt //:nighthawk
 ```
 USAGE:
 
-bazel-bin/nighthawk_client  [--jitter-uniform <duration>] [--open-loop]
+bazel-bin/nighthawk_client  [--nighthawk-service <uri format>]
+[--jitter-uniform <duration>] [--open-loop]
 [--failure-predicate <<string, uint64_t>>]
 ... [--termination-predicate <<string,
 uint64_t>>] ... [--trace <uri format>]
@@ -68,6 +69,10 @@ format>
 
 
 Where:
+
+--nighthawk-service <uri format>
+Nighthawk service uri. Example: grpc://localhost:8843/. Default is
+empty.
 
 --jitter-uniform <duration>
 Add uniformly distributed absolute request-release timing jitter. For

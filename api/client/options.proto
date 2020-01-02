@@ -128,4 +128,6 @@ message CommandLineOptions {
   google.protobuf.BoolValue open_loop = 21;
   // See :option:`--jitter-uniform`
   google.protobuf.Duration jitter_uniform = 25 [(validate.rules).duration.gte.nanos = 1];
+  // See :option --nighthawk-service
+  google.protobuf.StringValue nighthawk_service = 27; // [(validate.rules).string.uri = true];
 }
