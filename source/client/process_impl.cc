@@ -283,8 +283,8 @@ void ProcessImpl::createBootstrapConfiguration(envoy::config::bootstrap::v2::Boo
         (void)absl::SimpleAtoi(parts.back(), &port);
         socket_address->set_port_value(port);
         parts.pop_back();
-        socket_address->set_address(absl::StrReplaceAll(absl::StrJoin(parts, ":"),
-                                                        {{"[", ""}, {"]", ""}}));
+        socket_address->set_address(
+            absl::StrReplaceAll(absl::StrJoin(parts, ":"), {{"[", ""}, {"]", ""}}));
       }
     }
   }
