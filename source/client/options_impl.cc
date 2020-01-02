@@ -429,10 +429,10 @@ void OptionsImpl::validate() const {
       throw MalformedArgvException("Value for --concurrency should be greater then 0.");
     }
   }
-  if (!backendEndpoints().empty()) {
+  if (!backend_endpoints_.empty()) {
     HostAddressType first_host_address_type =
-        Utility::hostAddressTypeFromHostPort(backendEndpoints()[0]);
-    for (const std::string& backend_endpoint : backendEndpoints()) {
+        Utility::hostAddressTypeFromHostPort(backend_endpoints_[0]);
+    for (const std::string& backend_endpoint : backend_endpoints_) {
       HostAddressType host_address_type = Utility::hostAddressTypeFromHostPort(backend_endpoint);
       if (host_address_type == HostAddressType::INVALID) {
         throw MalformedArgvException(fmt::format("--backend-endpoint addresses must be in the form "
