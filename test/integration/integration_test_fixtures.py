@@ -95,7 +95,7 @@ class IntegrationTestBase():
     for test_server in self.test_servers:
       if test_server.stop() != 0:
         any_failed = True
-    assert(not any_failed)
+    assert (not any_failed)
 
   def getNighthawkCounterMapFromJson(self, parsed_json):
     """
@@ -133,9 +133,10 @@ class IntegrationTestBase():
     if self.ip_version == IpVersion.IPV6:
       uri_host = "[%s]" % self.server_ip
 
-    return ["%s://%s:%s/" % ("https" if https else "http", uri_host, test_server.server_port)
-            for test_server in self.test_servers]
-
+    return [
+        "%s://%s:%s/" % ("https" if https else "http", uri_host, test_server.server_port)
+        for test_server in self.test_servers
+    ]
 
   def getTestServerStatisticsJson(self):
     """

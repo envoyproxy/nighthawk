@@ -7,9 +7,8 @@ import sys
 import pytest
 
 from test.integration.common import IpVersion
-from test.integration.integration_test_fixtures import (http_test_server_fixture,
-                                                        https_test_server_fixture,
-                                                        multi_http_test_server_fixture)
+from test.integration.integration_test_fixtures import (
+    http_test_server_fixture, https_test_server_fixture, multi_http_test_server_fixture)
 from test.integration.utility import *
 
 # TODO(oschaaf): we mostly verify stats observed from the client-side. Add expectations
@@ -436,10 +435,10 @@ def test_multiple_backends_http_h1(multi_http_test_server_fixture):
   parsed_json, stderr = multi_http_test_server_fixture.runNighthawkClient(
       [multi_http_test_server_fixture.getTestServerRootUri()] +
       # URI host/port overridden by --backend-endpoint
-      list(itertools.chain.from_iterable([
-          ("--backend-endpoint", uri.replace("http://", "").replace("/", ""))
-          for uri in multi_http_test_server_fixture.getAllTestServerRootUris()
-      ])) + ["--duration", "100", "--termination-predicate", "benchmark.http_2xx:24"])
+      list(
+          itertools.chain.from_iterable([("--backend-endpoint", uri.replace("http://", "").replace(
+              "/", "")) for uri in multi_http_test_server_fixture.getAllTestServerRootUris()])) +
+      ["--duration", "100", "--termination-predicate", "benchmark.http_2xx:24"])
   counters = multi_http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   assertCounterEqual(counters, "benchmark.http_2xx", 25)
   assertCounterEqual(counters, "upstream_cx_http1_total", 3)
@@ -456,6 +455,3 @@ def test_multiple_backends_http_h1(multi_http_test_server_fixture):
     total_2xx += multi_http_test_server_fixture.getServerStatFromJson(
         parsed_server_json, "http.ingress_http.downstream_rq_2xx")
   assertBetweenInclusive(total_2xx, 24, 25)
-
-
-
