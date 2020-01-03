@@ -53,6 +53,10 @@ public:
     return sequencer_idle_strategy_;
   }
   std::string trace() const override { return trace_; }
+  nighthawk::client::H1ConnectionReuseStrategy::H1ConnectionReuseStrategyOptions
+  h1ConnectionReuseStrategy() const override {
+    return experimental_h1_connection_reuse_strategy_;
+  }
   TerminationPredicateMap terminationPredicates() const override { return termination_predicates_; }
   TerminationPredicateMap failurePredicates() const override { return failure_predicates_; }
   bool openLoop() const override { return open_loop_; }
@@ -91,6 +95,8 @@ private:
   nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions sequencer_idle_strategy_{
       nighthawk::client::SequencerIdleStrategy::SPIN};
   std::string trace_;
+  nighthawk::client::H1ConnectionReuseStrategy::H1ConnectionReuseStrategyOptions
+      experimental_h1_connection_reuse_strategy_{nighthawk::client::H1ConnectionReuseStrategy::MRU};
   TerminationPredicateMap termination_predicates_;
   TerminationPredicateMap failure_predicates_;
   bool open_loop_{false};

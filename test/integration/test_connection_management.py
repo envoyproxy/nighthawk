@@ -95,3 +95,38 @@ def test_http_h2_connection_management_single_request_per_conn_1(http_test_serve
 @pytest.mark.skipif(isSanitizerRun(), reason="Unstable in sanitizer runs")
 def test_http_h2_connection_management_single_request_per_conn_1(http_test_server_fixture):
   connection_management_test_request_per_connection(http_test_server_fixture, 5, True)
+
+
+def test_h1_pool_strategy(http_test_server_fixture):
+  """
+  Test that with the "mru" strategy only the first created connection gets to send requests.
+  Then, with the "lru" strategy, we expect the other connection to be used as well.
+  """
+
+  def countLogLinesWithSubstring(logs, substring):
+    return len([line for line in logs.split(os.linesep) if substring in line])
+
+  _, logs = http_test_server_fixture.runNighthawkClient([
+      "--rps 20", "-v", "trace", "--connections", "2", "--prefetch-connections",
+      "--experimental-h1-connection-reuse-strategy", "mru", "--termination-predicate",
+      "benchmark.http_2xx:10",
+      http_test_server_fixture.getTestServerRootUri()
+  ])
+
+  requests = 60
+  connections = 3
+  assertNotIn("[C1] message complete", logs)
+  assertEqual(countLogLinesWithSubstring(logs, "[C0] message complete"), 22)
+
+  _, logs = http_test_server_fixture.runNighthawkClient([
+      "--rps", "20", "-v trace", "--connections",
+      str(connections), "--prefetch-connections", "--experimental-h1-connection-reuse-strategy",
+      "lru", "--termination-predicate",
+      "benchmark.http_2xx:%d" % requests,
+      http_test_server_fixture.getTestServerRootUri()
+  ])
+  for i in range(1, connections):
+    line_count = countLogLinesWithSubstring(logs, "[C%d] message complete" % i)
+    strict_count = (requests / connections) * 2
+    # We need to mind a single warmup call
+    assertBetweenInclusive(line_count, strict_count, strict_count + 2)
