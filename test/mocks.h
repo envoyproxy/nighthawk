@@ -92,6 +92,9 @@ public:
                      nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions());
   MOCK_CONST_METHOD0(requestSource, std::string());
   MOCK_CONST_METHOD0(trace, std::string());
+  MOCK_CONST_METHOD0(
+      h1ConnectionReuseStrategy,
+      nighthawk::client::H1ConnectionReuseStrategy::H1ConnectionReuseStrategyOptions());
   MOCK_CONST_METHOD0(terminationPredicates, Client::TerminationPredicateMap());
   MOCK_CONST_METHOD0(failurePredicates, Client::TerminationPredicateMap());
   MOCK_CONST_METHOD0(openLoop, bool());
