@@ -43,7 +43,8 @@ bazel build -c opt //:nighthawk
 ```
 USAGE:
 
-bazel-bin/nighthawk_client  [--jitter-uniform <duration>] [--open-loop]
+bazel-bin/nighthawk_client  [--label <<string>>] ... [--jitter-uniform
+<duration>] [--open-loop]
 [--experimental-h1-connection-reuse-strategy
 <mru|lru>] [--failure-predicate <<string,
 uint64_t>>] ... [--termination-predicate
@@ -69,6 +70,10 @@ format>
 
 
 Where:
+
+--label <<string>>  (accepted multiple times)
+Label. Allows specifying multiple labels which will be persisted in
+structured output formats.
 
 --jitter-uniform <duration>
 Add uniformly distributed absolute request-release timing jitter. For
