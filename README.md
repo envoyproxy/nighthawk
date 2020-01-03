@@ -43,7 +43,9 @@ bazel build -c opt //:nighthawk
 ```
 USAGE:
 
-bazel-bin/nighthawk_client  [--open-loop] [--failure-predicate <<string,
+bazel-bin/nighthawk_client  [--jitter-uniform <duration>] [--open-loop]
+[--experimental-h1-connection-reuse-strategy
+<mru|lru>] [--failure-predicate <<string,
 uint64_t>>] ... [--termination-predicate
 <<string, uint64_t>>] ... [--trace <uri
 format>] [--sequencer-idle-strategy <spin
@@ -68,9 +70,19 @@ format>
 
 Where:
 
+--jitter-uniform <duration>
+Add uniformly distributed absolute request-release timing jitter. For
+example, to add 10 us of jitter, specify .00001s. Default is empty /
+no uniform jitter.
+
 --open-loop
 Enable open loop mode. When enabled, the benchmark client will not
 provide backpressure when resource limits are hit.
+
+--experimental-h1-connection-reuse-strategy <mru|lru>
+Choose picking the most recently used, or least-recently-used
+connections for re-use.(default: mru). WARNING: this option is
+experimental and may be removed or changed in the future!
 
 --failure-predicate <<string, uint64_t>>  (accepted multiple times)
 Failure predicate. Allows specifying a counter name plus threshold

@@ -179,12 +179,29 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "failing execution. Defaults to not tolerating error status codes and connection errors.",
       false, "<string, uint64_t>", cmd);
 
+  std::vector<std::string> h1_connection_reuse_strategies = {"mru", "lru"};
+  TCLAP::ValuesConstraint<std::string> h1_connection_reuse_strategies_allowed(
+      h1_connection_reuse_strategies);
+  TCLAP::ValueArg<std::string> experimental_h1_connection_reuse_strategy(
+      "", "experimental-h1-connection-reuse-strategy",
+      fmt::format(
+          "Choose picking the most recently used, or least-recently-used connections for re-use."
+          "(default: {}). WARNING: this option is experimental and may be removed or changed in "
+          "the future!",
+          absl::AsciiStrToLower(
+              nighthawk::client::H1ConnectionReuseStrategy_H1ConnectionReuseStrategyOptions_Name(
+                  experimental_h1_connection_reuse_strategy_))),
+      false, "", &h1_connection_reuse_strategies_allowed, cmd);
   TCLAP::SwitchArg open_loop(
       "", "open-loop",
       "Enable open loop mode. When enabled, the benchmark client will not provide backpressure "
       "when resource limits are hit.",
       cmd);
-
+  TCLAP::ValueArg<std::string> jitter_uniform(
+      "", "jitter-uniform",
+      "Add uniformly distributed absolute request-release timing jitter. For example, to add 10 us "
+      "of jitter, specify .00001s. Default is empty / no uniform jitter.",
+      false, "", "duration", cmd);
   TCLAP::UnlabeledValueArg<std::string> uri("uri",
                                             "uri to benchmark. http:// and https:// are supported, "
                                             "but in case of https no certificates are validated.",
@@ -240,10 +257,34 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
                        upper_cased, &sequencer_idle_strategy_),
                    "Failed to parse sequencer idle strategy");
   }
+
+  if (experimental_h1_connection_reuse_strategy.isSet()) {
+    std::string upper_cased = experimental_h1_connection_reuse_strategy.getValue();
+    absl::AsciiStrToUpper(&upper_cased);
+    const bool ok =
+        nighthawk::client::H1ConnectionReuseStrategy::H1ConnectionReuseStrategyOptions_Parse(
+            upper_cased, &experimental_h1_connection_reuse_strategy_);
+    // TCLAP validation ought to have caught this earlier.
+    RELEASE_ASSERT(ok, "Failed to parse h1 connection reuse strategy");
+  }
+
   TCLAP_SET_IF_SPECIFIED(trace, trace_);
   parsePredicates(termination_predicates, termination_predicates_);
   parsePredicates(failure_predicates, failure_predicates_);
   TCLAP_SET_IF_SPECIFIED(open_loop, open_loop_);
+  if (jitter_uniform.isSet()) {
+    Envoy::ProtobufWkt::Duration duration;
+    if (Envoy::Protobuf::util::TimeUtil::FromString(jitter_uniform.getValue(), &duration)) {
+      if (duration.nanos() > 0 || duration.seconds() > 0) {
+        jitter_uniform_ = std::chrono::nanoseconds(
+            Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(duration));
+      } else {
+        throw MalformedArgvException("--jitter-uniform is out of range");
+      }
+    } else {
+      throw MalformedArgvException("Invalid value for --jitter-uniform");
+    }
+  }
 
   // CLI-specific tests.
   // TODO(oschaaf): as per mergconflicts's remark, it would be nice to aggregate
@@ -354,8 +395,10 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   sequencer_idle_strategy_ =
       PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, sequencer_idle_strategy, sequencer_idle_strategy_);
   trace_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, trace, trace_);
+  experimental_h1_connection_reuse_strategy_ =
+      PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, experimental_h1_connection_reuse_strategy,
+                                      experimental_h1_connection_reuse_strategy_);
   open_loop_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, open_loop, open_loop_);
-
   tls_context_.MergeFrom(options.tls_context());
   if (options.failure_predicates().size()) {
     failure_predicates_.clear();
@@ -365,6 +408,10 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   }
   for (const auto& predicate : options.termination_predicates()) {
     termination_predicates_[predicate.first] = predicate.second;
+  }
+  if (options.has_jitter_uniform()) {
+    jitter_uniform_ = std::chrono::nanoseconds(
+        Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(options.jitter_uniform()));
   }
   validate();
 }
@@ -376,6 +423,7 @@ void OptionsImpl::setNonTrivialDefaults() {
   failure_predicates_["benchmark.http_4xx"] = 0;
   failure_predicates_["benchmark.http_5xx"] = 0;
   failure_predicates_["benchmark.pool_connection_failure"] = 0;
+  jitter_uniform_ = std::chrono::nanoseconds(0);
 }
 
 void OptionsImpl::validate() const {
@@ -447,6 +495,8 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptions() const {
       maxRequestsPerConnection());
   command_line_options->mutable_sequencer_idle_strategy()->set_value(sequencerIdleStrategy());
   command_line_options->mutable_trace()->set_value(trace());
+  command_line_options->mutable_experimental_h1_connection_reuse_strategy()->set_value(
+      h1ConnectionReuseStrategy());
   auto termination_predicates_option = command_line_options->mutable_termination_predicates();
   for (const auto& predicate : terminationPredicates()) {
     termination_predicates_option->insert({predicate.first, predicate.second});
@@ -456,6 +506,10 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptions() const {
     failure_predicates_option->insert({predicate.first, predicate.second});
   }
   command_line_options->mutable_open_loop()->set_value(openLoop());
+  if (jitterUniform().count() > 0) {
+    *command_line_options->mutable_jitter_uniform() =
+        Envoy::Protobuf::util::TimeUtil::NanosecondsToDuration(jitterUniform().count());
+  }
   return command_line_options;
 }
 

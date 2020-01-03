@@ -17,3 +17,4 @@ tools/pyformat
 test/coverage/BUILD
 *.bak
 default.profraw
+tmp-*
