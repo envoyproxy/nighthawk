@@ -79,52 +79,27 @@ public:
   Http2PoolImpl(
       Envoy::Event::Dispatcher& dispatcher, Envoy::Upstream::HostConstSharedPtr host,
       Envoy::Upstream::ResourcePriority priority,
-      const Envoy::Network::ConnectionSocket::OptionsSharedPtr& options,               // NOLINT
-      const Envoy::Network::TransportSocketOptionsSharedPtr& transport_socket_options) // NOLINT
-      : Envoy::Http::ConnPoolImplBase(std::move(host), priority), dispatcher_(dispatcher),
-        socket_options_(options), transport_socket_options_(transport_socket_options) {
-    for (uint32_t i = 0; i < host_->cluster().resourceManager(priority_).connections().max(); i++) {
-      pools_.push_back(std::make_unique<Envoy::Http::Http2::ProdConnPoolImpl>(
-          dispatcher_, host_, priority_, socket_options_, transport_socket_options_));
-    }
-  }
+      const Envoy::Network::ConnectionSocket::OptionsSharedPtr& options,                // NOLINT
+      const Envoy::Network::TransportSocketOptionsSharedPtr& transport_socket_options); // NOLINT
 
   // Envoy::Http::ConnectionPool::Instance
   Envoy::Http::Protocol protocol() const override { return Envoy::Http::Protocol::Http2; }
-  void addDrainedCallback(Envoy::Http::ConnectionPool::Instance::DrainedCb cb) override {
-    for (auto& pool : pools_) {
-      pool->addDrainedCallback(cb);
-    }
-  }
-  void drainConnections() override {
-    for (auto& pool : pools_) {
-      pool->drainConnections();
-    }
-  }
-  bool hasActiveConnections() const override {
-    for (auto& pool : pools_) {
-      if (pool->hasActiveConnections()) {
-        return true;
-      }
-    }
-    return false;
-  }
+
+  void addDrainedCallback(Envoy::Http::ConnectionPool::Instance::DrainedCb cb) override;
+
+  void drainConnections() override;
+
+  bool hasActiveConnections() const override;
+
   Envoy::Upstream::HostDescriptionConstSharedPtr host() const override { return host_; };
 
   Envoy::Http::ConnectionPool::Cancellable*
   newStream(Envoy::Http::StreamDecoder& response_decoder,
-            Envoy::Http::ConnectionPool::Callbacks& callbacks) override {
-    // Use the simplest but probably naive approach of rotating over the available pool instances
-    // / connections to distribute requests accross them.
-    return pools_[pool_round_robin_index_++ % pools_.size()]->newStream(response_decoder,
-                                                                        callbacks);
-  };
+            Envoy::Http::ConnectionPool::Callbacks& callbacks) override;
 
 protected:
   // Envoy::Http::ConnPoolImplBase
-  void checkForDrained() override {
-    // TODO(oschaaf): this one is protected, can't forward it.
-  }
+  void checkForDrained() override;
 
 private:
   Envoy::Event::Dispatcher& dispatcher_;
