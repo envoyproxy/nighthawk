@@ -47,15 +47,23 @@ struct BenchmarkClientStats {
 
 class Http1PoolImpl : public Envoy::Http::Http1::ProdConnPoolImpl {
 public:
+  enum class ConnectionReuseStrategy {
+    MRU,
+    LRU,
+  };
   using Envoy::Http::Http1::ProdConnPoolImpl::ProdConnPoolImpl;
   Envoy::Http::ConnectionPool::Cancellable*
   newStream(Envoy::Http::StreamDecoder& response_decoder,
             Envoy::Http::ConnectionPool::Callbacks& callbacks) override;
+  void setConnectionReuseStrategy(const ConnectionReuseStrategy connection_reuse_strategy) {
+    connection_reuse_strategy_ = connection_reuse_strategy;
+  }
   void setPrefetchConnections(const bool prefetch_connections) {
     prefetch_connections_ = prefetch_connections;
   }
 
 private:
+  ConnectionReuseStrategy connection_reuse_strategy_{};
   bool prefetch_connections_{};
 };
 

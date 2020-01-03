@@ -68,6 +68,7 @@ public:
     if (protocol == Envoy::Http::Protocol::Http11 || protocol == Envoy::Http::Protocol::Http10) {
       auto* h1_pool = new Http1PoolImpl(dispatcher, host, priority, options, h1_settings,
                                         transport_socket_options);
+      h1_pool->setConnectionReuseStrategy(connection_reuse_strategy_);
       h1_pool->setPrefetchConnections(prefetch_connections_);
       return Envoy::Http::ConnectionPool::InstancePtr{h1_pool};
     } else if (use_multi_conn_h2_pool_ && protocol == Envoy::Http::Protocol::Http2) {
@@ -78,6 +79,10 @@ public:
         dispatcher, host, priority, protocol, options, transport_socket_options);
   }
 
+  void setConnectionReuseStrategy(
+      const Http1PoolImpl::ConnectionReuseStrategy connection_reuse_strategy) {
+    connection_reuse_strategy_ = connection_reuse_strategy;
+  }
   void setPrefetchConnections(const bool prefetch_connections) {
     prefetch_connections_ = prefetch_connections;
   }
@@ -85,6 +90,7 @@ public:
 
 private:
   Envoy::Http::Http1Settings h1_settings;
+  Http1PoolImpl::ConnectionReuseStrategy connection_reuse_strategy_{};
   bool prefetch_connections_{};
   bool use_multi_conn_h2_pool_{};
 };
@@ -365,6 +371,10 @@ bool ProcessImpl::run(OutputCollector& collector) {
       dispatcher_->createDnsResolver({}, true), *ssl_context_manager_, *dispatcher_, *local_info_,
       secret_manager_, validation_context_, *api_, http_context_, access_log_manager_,
       *singleton_manager_);
+  cluster_manager_factory_->setConnectionReuseStrategy(
+      options_.h1ConnectionReuseStrategy() == nighthawk::client::H1ConnectionReuseStrategy::LRU
+          ? Http1PoolImpl::ConnectionReuseStrategy::LRU
+          : Http1PoolImpl::ConnectionReuseStrategy::MRU);
   cluster_manager_factory_->setPrefetchConnections(options_.prefetchConnections());
   if (options_.h2UseMultipleConnections()) {
     cluster_manager_factory_->enableMultiConnectionH2Pool();
