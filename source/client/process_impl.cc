@@ -68,6 +68,7 @@ public:
     if (protocol == Envoy::Http::Protocol::Http11 || protocol == Envoy::Http::Protocol::Http10) {
       auto* h1_pool = new Http1PoolImpl(dispatcher, host, priority, options, h1_settings,
                                         transport_socket_options);
+      h1_pool->setConnectionReuseStrategy(connection_reuse_strategy_);
       h1_pool->setPrefetchConnections(prefetch_connections_);
       return Envoy::Http::ConnectionPool::InstancePtr{h1_pool};
     }
@@ -75,12 +76,17 @@ public:
         dispatcher, host, priority, protocol, options, transport_socket_options);
   }
 
+  void setConnectionReuseStrategy(
+      const Http1PoolImpl::ConnectionReuseStrategy connection_reuse_strategy) {
+    connection_reuse_strategy_ = connection_reuse_strategy;
+  }
   void setPrefetchConnections(const bool prefetch_connections) {
     prefetch_connections_ = prefetch_connections;
   }
 
 private:
   Envoy::Http::Http1Settings h1_settings;
+  Http1PoolImpl::ConnectionReuseStrategy connection_reuse_strategy_{};
   bool prefetch_connections_{};
 };
 
@@ -100,6 +106,8 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
       access_log_manager_(std::chrono::milliseconds(1000), *api_, *dispatcher_, access_log_lock_,
                           store_root_),
       init_watcher_("Nighthawk", []() {}), validation_context_(false, false) {
+  // Any dispatchers created after the following call will use hr timers.
+  setupForHRTimers();
   std::string lower = absl::AsciiStrToLower(
       nighthawk::client::Verbosity::VerbosityOptions_Name(options_.verbosity()));
   configureComponentLogLevels(spdlog::level::from_str(lower));
@@ -362,6 +370,10 @@ bool ProcessImpl::run(OutputCollector& collector) {
       dispatcher_->createDnsResolver({}, true), *ssl_context_manager_, *dispatcher_, *local_info_,
       secret_manager_, validation_context_, *api_, http_context_, access_log_manager_,
       *singleton_manager_);
+  cluster_manager_factory_->setConnectionReuseStrategy(
+      options_.h1ConnectionReuseStrategy() == nighthawk::client::H1ConnectionReuseStrategy::LRU
+          ? Http1PoolImpl::ConnectionReuseStrategy::LRU
+          : Http1PoolImpl::ConnectionReuseStrategy::MRU);
   cluster_manager_factory_->setPrefetchConnections(options_.prefetchConnections());
   envoy::config::bootstrap::v2::Bootstrap bootstrap;
   createBootstrapConfiguration(bootstrap, uri, number_of_workers);
@@ -410,6 +422,15 @@ bool ProcessImpl::run(OutputCollector& collector) {
   collector.addResult("global", mergeWorkerStatistics(statistic_factory, workers), counters,
                       total_execution_duration / workers_.size());
   return counters.find("sequencer.failed_terminations") == counters.end();
+}
+
+void ProcessImpl::setupForHRTimers() {
+  // We override the local environment to indicate to libevent that we favor precision over
+  // efficiency. Note that it is also possible to do this at setup time via libevent's api's.
+  // The upside of the approach below is that we are very loosely coupled and have a one-liner.
+  // Getting to libevent for the other approach is going to introduce more code as we would need to
+  // derive our own customized versions of certain Envoy concepts.
+  putenv(const_cast<char*>("EVENT_PRECISE_TIMER=1"));
 }
 
 } // namespace Client
