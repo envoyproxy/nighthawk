@@ -47,8 +47,9 @@ TEST_F(OptionsImplTest, All) {
       "--max-active-requests 11 --max-requests-per-connection 12 --sequencer-idle-strategy sleep "
       "--termination-predicate t1:1 --termination-predicate t2:2 --failure-predicate f1:1 "
       "--failure-predicate f2:2 --jitter-uniform .00001s "
-      "--experimental-h2-use-multiple-connections",
-      "--experimental-h1-connection-reuse-strategy lru ", client_name_,
+      "--experimental-h2-use-multiple-connections "
+      "--experimental-h1-connection-reuse-strategy lru ",
+      client_name_,
       "{common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"]}}}",
       good_test_uri_));
 
