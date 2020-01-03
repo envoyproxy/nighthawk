@@ -172,28 +172,58 @@ TEST_F(RateLimiterTest, DistributionSamplingRateLimiterImplSchedulingTest) {
   EXPECT_TRUE(rate_limiter->tryAcquireOne());
 }
 
-// TODO(oschaaf): once we have hr sleep, test at a higher res.
 class LinearRampingRateLimiterImplTest : public Test {
 public:
-  std::vector<int64_t> getAcquisitionTimings(const Frequency frequency,
-                                             const std::chrono::seconds duration) {
+  /**
+   * @param frequency The final frequency of the ramp.
+   * @param duration The test (and ramp) duration. Frequency will be 0 Hz at the start and
+   * linearly increase as time moves forward, up to the specified frequency.
+   * @return std::vector<uint64_t> an array containing the acquisition timings
+   * in microseconds.
+   */
+  std::vector<int64_t> checkAcquisitionTimings(const Frequency frequency,
+                                               const std::chrono::seconds duration) {
     Envoy::Event::SimulatedTimeSystem time_system;
-    std::vector<int64_t> aquisition_timings;
+    std::vector<int64_t> acquisition_timings;
+    std::vector<int64_t> control_timings;
+
     LinearRampingRateLimiterImpl rate_limiter(time_system, duration, frequency);
-    auto total_ms_elapsed = 0ms;
-    const auto clock_tick = 1ms;
-    auto last_acquisition_timestamp = 0ms;
+    auto total_us_elapsed = 0us;
+    const auto clock_tick = 10us;
     EXPECT_FALSE(rate_limiter.tryAcquireOne());
     do {
       if (rate_limiter.tryAcquireOne()) {
         EXPECT_FALSE(rate_limiter.tryAcquireOne());
-        aquisition_timings.push_back(total_ms_elapsed.count());
-        last_acquisition_timestamp = total_ms_elapsed;
+        acquisition_timings.push_back(total_us_elapsed.count());
+      }
+      // We use the second law of motion to verify results: ½ * a  * t²
+      // In this formula, 'a' equates to our ramp speed, and t to elapsed time.
+      double t = total_us_elapsed.count() / 1e6;
+      double a = (frequency.value() / (duration.count() * 1.0));
+      // Finally, figure out the ground that we can expect to be covered.
+      uint64_t expected_count = std::round(0.5 * a * t * t);
+      if (expected_count > control_timings.size()) {
+        control_timings.push_back(total_us_elapsed.count());
       }
       time_system.sleep(clock_tick);
-      total_ms_elapsed += clock_tick;
-    } while (total_ms_elapsed <= duration);
-    return aquisition_timings;
+      total_us_elapsed += clock_tick;
+    } while (total_us_elapsed <= duration);
+
+    // For good measure, verify we saw the expected amount of acquisitions: half
+    // of "frequency times duration".
+    EXPECT_EQ(std::round(duration.count() * frequency.value() / 2.0), acquisition_timings.size());
+    // Sanity check that we have the right number of control timings.
+    EXPECT_EQ(control_timings.size(), acquisition_timings.size());
+    // Verify that all timings are correct.
+    for (uint64_t i = 0; i < acquisition_timings.size(); i++) {
+      // We allow one clock tick of slack in timing expectations, as floating
+      // point math may introduce small errors in some cases.
+      // This is a test only issue: in practice we don't have a fixed microsecond-level step sizes,
+      // and the rate limiter computes at nanosecond precision internally. As we want to have
+      // microsecond level precision, this should be more then sufficient.
+      EXPECT_NEAR(acquisition_timings[i], control_timings[i], clock_tick.count());
+    }
+    return acquisition_timings;
   }
 };
 
@@ -210,10 +240,45 @@ TEST_F(RateLimiterTest, LinearRampingRateLimiterImplInvalidArgumentTest) {
 }
 
 TEST_F(LinearRampingRateLimiterImplTest, TimingVerificationTest) {
-  EXPECT_EQ(getAcquisitionTimings(5_Hz, 5s),
-            std::vector<int64_t>(
-                {1000, 1733, 2237, 2646, 3000, 3317, 3606, 3873, 4124, 4359, 4583, 4796, 5000}));
-  EXPECT_EQ(getAcquisitionTimings(4_Hz, 2s), std::vector<int64_t>({708, 1225, 1582, 1871}));
+  EXPECT_EQ(checkAcquisitionTimings(5_Hz, 5s),
+            std::vector<int64_t>({1000010, 1732060, 2236070, 2645760, 3000000, 3316630, 3605560,
+                                  3872990, 4123110, 4358900, 4582580, 4795840, 5000000}));
+  checkAcquisitionTimings(1_Hz, 3s);
+  checkAcquisitionTimings(5_Hz, 3s);
+  checkAcquisitionTimings(4_Hz, 2s);
+  checkAcquisitionTimings(1000_Hz, 12s);
+  checkAcquisitionTimings(40000_Hz, 7s);
+}
+
+TEST_F(RateLimiterTest, GraduallyOpeningRateLimiterFilterInvalidArgumentTest) {
+  // Negative ramp throws.
+  EXPECT_THROW(GraduallyOpeningRateLimiterFilter gorl(
+                   -1s, std::make_unique<NiceMock<MockDiscreteNumericDistributionSampler>>(),
+                   std::make_unique<NiceMock<MockRateLimiter>>());
+               , NighthawkException);
+
+  // zero ramp throws.
+  EXPECT_THROW(GraduallyOpeningRateLimiterFilter gorl(
+                   0s, std::make_unique<NiceMock<MockDiscreteNumericDistributionSampler>>(),
+                   std::make_unique<NiceMock<MockRateLimiter>>());
+               , NighthawkException);
+
+  // Pass in a badly configured distribution sampler.
+  auto bad_distribution_sampler = std::make_unique<MockDiscreteNumericDistributionSampler>();
+  EXPECT_CALL(*bad_distribution_sampler, min).Times(1).WillOnce(Return(0));
+  EXPECT_THROW(
+      GraduallyOpeningRateLimiterFilter gorl(1s, std::move(bad_distribution_sampler),
+                                             std::make_unique<NiceMock<MockRateLimiter>>());
+      , NighthawkException);
+
+  bad_distribution_sampler = std::make_unique<MockDiscreteNumericDistributionSampler>();
+  // Correct min, but now introduce a bad max.
+  EXPECT_CALL(*bad_distribution_sampler, min).Times(1).WillOnce(Return(1));
+  EXPECT_CALL(*bad_distribution_sampler, max).Times(1).WillOnce(Return(99));
+  EXPECT_THROW(
+      GraduallyOpeningRateLimiterFilter gorl(1s, std::move(bad_distribution_sampler),
+                                             std::make_unique<NiceMock<MockRateLimiter>>());
+      , NighthawkException);
 }
 
 class GraduallyOpeningRateLimiterFilterTest : public Test {
@@ -221,14 +286,22 @@ public:
   std::vector<int64_t> getAcquisitionTimings(const Frequency frequency,
                                              const std::chrono::seconds duration) {
     Envoy::Event::SimulatedTimeSystem time_system;
-    std::vector<int64_t> aquisition_timings;
+    std::vector<int64_t> acquisition_timings;
     auto* unsafe_discrete_numeric_distribution_sampler =
         new MockDiscreteNumericDistributionSampler();
     std::mt19937_64 mt(1243);
-    std::uniform_int_distribution<uint64_t> dist(1, 1000000);
+    const uint64_t dist_min = 1;
+    const uint64_t dist_max = 1000000;
+    std::uniform_int_distribution<uint64_t> dist(dist_min, dist_max);
     EXPECT_CALL(*unsafe_discrete_numeric_distribution_sampler, getValue)
         .Times(AtLeast(1))
         .WillRepeatedly(Invoke([&dist, &mt]() { return dist(mt); }));
+    EXPECT_CALL(*unsafe_discrete_numeric_distribution_sampler, min)
+        .Times(1)
+        .WillOnce(Return(dist_min));
+    EXPECT_CALL(*unsafe_discrete_numeric_distribution_sampler, max)
+        .Times(AtLeast(1))
+        .WillRepeatedly(Return(dist_max));
     RateLimiterPtr rate_limiter = std::make_unique<GraduallyOpeningRateLimiterFilter>(
         duration,
         std::unique_ptr<DiscreteNumericDistributionSampler>(
@@ -240,7 +313,7 @@ public:
 
     do {
       if (rate_limiter->tryAcquireOne()) {
-        aquisition_timings.push_back(total_ms_elapsed.count());
+        acquisition_timings.push_back(total_ms_elapsed.count());
         EXPECT_FALSE(rate_limiter->tryAcquireOne());
       }
       time_system.sleep(clock_tick);
@@ -257,7 +330,7 @@ public:
     }
     // Verify we acquired everything.
     EXPECT_FALSE(rate_limiter->tryAcquireOne());
-    return aquisition_timings;
+    return acquisition_timings;
   }
 };
 
