@@ -45,11 +45,12 @@ USAGE:
 
 bazel-bin/nighthawk_client  [--nighthawk-service <uri format>]
 [--jitter-uniform <duration>] [--open-loop]
-[--failure-predicate <<string, uint64_t>>]
-... [--termination-predicate <<string,
-uint64_t>>] ... [--trace <uri format>]
-[--sequencer-idle-strategy <spin|poll
-|sleep>] [--max-requests-per-connection
+[--experimental-h1-connection-reuse-strategy
+<mru|lru>] [--failure-predicate <<string,
+uint64_t>>] ... [--termination-predicate
+<<string, uint64_t>>] ... [--trace <uri
+format>] [--sequencer-idle-strategy <spin
+|poll|sleep>] [--max-requests-per-connection
 <uint32_t>] [--max-active-requests
 <uint32_t>] [--max-pending-requests
 <uint32_t>] [--tls-context <string>]
@@ -82,6 +83,11 @@ no uniform jitter.
 --open-loop
 Enable open loop mode. When enabled, the benchmark client will not
 provide backpressure when resource limits are hit.
+
+--experimental-h1-connection-reuse-strategy <mru|lru>
+Choose picking the most recently used, or least-recently-used
+connections for re-use.(default: mru). WARNING: this option is
+experimental and may be removed or changed in the future!
 
 --failure-predicate <<string, uint64_t>>  (accepted multiple times)
 Failure predicate. Allows specifying a counter name plus threshold
