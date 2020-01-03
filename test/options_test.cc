@@ -46,7 +46,8 @@ TEST_F(OptionsImplTest, All) {
       "--max-pending-requests 10 "
       "--max-active-requests 11 --max-requests-per-connection 12 --sequencer-idle-strategy sleep "
       "--termination-predicate t1:1 --termination-predicate t2:2 --failure-predicate f1:1 "
-      "--failure-predicate f2:2 --jitter-uniform .00001s",
+      "--failure-predicate f2:2 --jitter-uniform .00001s "
+      "--experimental-h1-connection-reuse-strategy lru ",
       client_name_,
       "{common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"]}}}",
       good_test_uri_));
@@ -81,6 +82,8 @@ TEST_F(OptionsImplTest, All) {
   EXPECT_EQ(1, options->failurePredicates()["f1"]);
   EXPECT_EQ(2, options->failurePredicates()["f2"]);
   EXPECT_EQ(10us, options->jitterUniform());
+  EXPECT_EQ(nighthawk::client::H1ConnectionReuseStrategy::LRU,
+            options->h1ConnectionReuseStrategy());
 
   // Check that our conversion to CommandLineOptionsPtr makes sense.
   CommandLineOptionsPtr cmd = options->toCommandLineOptions();
@@ -128,6 +131,8 @@ TEST_F(OptionsImplTest, All) {
   EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("f1"));
   EXPECT_EQ(1, cmd->mutable_termination_predicates()->erase("t1"));
   EXPECT_EQ(cmd->jitter_uniform().nanos(), options->jitterUniform().count());
+  EXPECT_EQ(cmd->experimental_h1_connection_reuse_strategy().value(),
+            options->h1ConnectionReuseStrategy());
 
   OptionsImpl options_from_proto(*cmd);
   std::string s1 = Envoy::MessageUtil::getYamlStringFromMessage(
@@ -422,6 +427,26 @@ TEST_F(OptionsImplTest, RequestHeaderValueWithColonsAndSpaces) {
   EXPECT_EQ(1, headers.size());
   EXPECT_EQ(header, headers[0].header().key());
   EXPECT_EQ(value, headers[0].header().value());
+}
+
+class OptionsImplH1ConnectionReuseStrategyTest : public OptionsImplTest,
+                                                 public WithParamInterface<const char*> {};
+
+// Test we accept all possible --experimental-h1-connection-reuse-strategy values.
+TEST_P(OptionsImplH1ConnectionReuseStrategyTest, H1ConnectionReuseStrategyValues) {
+  TestUtility::createOptionsImpl(fmt::format("{} --experimental-h1-connection-reuse-strategy {} {}",
+                                             client_name_, GetParam(), good_test_uri_));
+}
+
+INSTANTIATE_TEST_SUITE_P(H1ConnectionReuseStrategyOptionsTest,
+                         OptionsImplH1ConnectionReuseStrategyTest, Values("mru", "lru"));
+
+// Test we don't accept any bad --experimental-h1-connection-reuse-strategy values.
+TEST_F(OptionsImplTest, H1ConnectionReuseStrategyValuesAreConstrained) {
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(fmt::format(
+          "{} {} --experimental-h1-connection-reuse-strategy foo", client_name_, good_test_uri_)),
+      MalformedArgvException, "experimental-h1-connection-reuse-strategy");
 }
 
 } // namespace Client
