@@ -186,7 +186,7 @@ public:
   /**
    * @param ramp_time Time that should elapse between moving from complete
    * suppression to completely opening the wrapped rate limiter.
-   * @param provider Distrete numberic distribution sampler. To achieve a
+   * @param provider Distrete numeric distribution sampler. To achieve a
    * reasonable precision, the min value of this distribution MUST equal 1. The max value MUST equal
    * 1000000. Configuring otherwise will result in a NighthawkException. Using a uniform
    * distribution will yield an approximately linear ramp from completely closed to completely

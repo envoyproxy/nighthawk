@@ -174,7 +174,15 @@ TEST_F(RateLimiterTest, DistributionSamplingRateLimiterImplSchedulingTest) {
 
 class LinearRampingRateLimiterImplTest : public Test {
 public:
-  void checkAcquisitionTimings(const Frequency frequency, const std::chrono::seconds duration) {
+  /**
+   * @param frequency The final frequency of the ramp.
+   * @param duration The test (and ramp) duration. Frequency will be 0 Hz at the start and
+   * linearly increase as time moves forward, up to the specified frequency.
+   * @return std::vector<uint64_t> an array containing the acquisition timings
+   * in microseconds.
+   */
+  std::vector<int64_t> checkAcquisitionTimings(const Frequency frequency,
+                                               const std::chrono::seconds duration) {
     Envoy::Event::SimulatedTimeSystem time_system;
     std::vector<int64_t> acquisition_timings;
     std::vector<int64_t> control_timings;
@@ -205,7 +213,7 @@ public:
     // of "frequency times duration".
     EXPECT_EQ(std::round(duration.count() * frequency.value() / 2.0), acquisition_timings.size());
     // Sanity check that we have the right number of control timings.
-    ASSERT_EQ(control_timings.size(), acquisition_timings.size());
+    EXPECT_EQ(control_timings.size(), acquisition_timings.size());
     // Verify that all timings are correct.
     for (uint64_t i = 0; i < acquisition_timings.size(); i++) {
       // We allow one clock tick of slack in timing expectations, as floating
@@ -215,6 +223,7 @@ public:
       // microsecond level precision, this should be more then sufficient.
       EXPECT_NEAR(acquisition_timings[i], control_timings[i], clock_tick.count());
     }
+    return acquisition_timings;
   }
 };
 
@@ -231,6 +240,9 @@ TEST_F(RateLimiterTest, LinearRampingRateLimiterImplInvalidArgumentTest) {
 }
 
 TEST_F(LinearRampingRateLimiterImplTest, TimingVerificationTest) {
+  EXPECT_EQ(checkAcquisitionTimings(5_Hz, 5s),
+            std::vector<int64_t>({1000010, 1732060, 2236070, 2645760, 3000000, 3316630, 3605560,
+                                  3872990, 4123110, 4358900, 4582580, 4795840, 5000000}));
   checkAcquisitionTimings(1_Hz, 3s);
   checkAcquisitionTimings(5_Hz, 3s);
   checkAcquisitionTimings(4_Hz, 2s);
