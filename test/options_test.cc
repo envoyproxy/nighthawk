@@ -84,6 +84,8 @@ TEST_F(OptionsImplTest, All) {
   EXPECT_EQ(10us, options->jitterUniform());
   EXPECT_EQ(nighthawk::client::H1ConnectionReuseStrategy::LRU,
             options->h1ConnectionReuseStrategy());
+  const std::vector<std::string> expected_labels{"label1", "label2"};
+  EXPECT_EQ(expected_labels, options->labels());
 
   // Check that our conversion to CommandLineOptionsPtr makes sense.
   CommandLineOptionsPtr cmd = options->toCommandLineOptions();
@@ -133,6 +135,11 @@ TEST_F(OptionsImplTest, All) {
   EXPECT_EQ(cmd->jitter_uniform().nanos(), options->jitterUniform().count());
   EXPECT_EQ(cmd->experimental_h1_connection_reuse_strategy().value(),
             options->h1ConnectionReuseStrategy());
+  i = 0;
+  for (const auto& label : cmd->labels()) {
+    EXPECT_EQ(expected_labels[i++], label);
+  }
+  EXPECT_EQ(expected_labels.size(), i);
 
   OptionsImpl options_from_proto(*cmd);
   std::string s1 = Envoy::MessageUtil::getYamlStringFromMessage(
