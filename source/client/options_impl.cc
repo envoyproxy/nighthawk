@@ -202,6 +202,10 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "Add uniformly distributed absolute request-release timing jitter. For example, to add 10 us "
       "of jitter, specify .00001s. Default is empty / no uniform jitter.",
       false, "", "duration", cmd);
+  TCLAP::MultiArg<std::string> labels("", "label",
+                                      "Label. Allows specifying multiple labels which will be "
+                                      "persisted in structured output formats.",
+                                      false, "<string>", cmd);
   TCLAP::UnlabeledValueArg<std::string> uri("uri",
                                             "uri to benchmark. http:// and https:// are supported, "
                                             "but in case of https no certificates are validated.",
@@ -285,6 +289,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       throw MalformedArgvException("Invalid value for --jitter-uniform");
     }
   }
+  TCLAP_SET_IF_SPECIFIED(labels, labels_);
 
   // CLI-specific tests.
   // TODO(oschaaf): as per mergconflicts's remark, it would be nice to aggregate
@@ -413,6 +418,7 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
     jitter_uniform_ = std::chrono::nanoseconds(
         Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(options.jitter_uniform()));
   }
+  std::copy(options.labels().begin(), options.labels().end(), std::back_inserter(labels_));
   validate();
 }
 
@@ -509,6 +515,9 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptions() const {
   if (jitterUniform().count() > 0) {
     *command_line_options->mutable_jitter_uniform() =
         Envoy::Protobuf::util::TimeUtil::NanosecondsToDuration(jitterUniform().count());
+  }
+  for (const auto& label : labels()) {
+    *command_line_options->add_labels() = label;
   }
   return command_line_options;
 }

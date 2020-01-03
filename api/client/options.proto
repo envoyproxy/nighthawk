@@ -139,4 +139,6 @@ message CommandLineOptions {
   google.protobuf.BoolValue open_loop = 21;
   // See :option:`--jitter-uniform`
   google.protobuf.Duration jitter_uniform = 25 [(validate.rules).duration.gte.nanos = 1];
+  // See :option:`--labels`
+  repeated string labels = 28;
 }
