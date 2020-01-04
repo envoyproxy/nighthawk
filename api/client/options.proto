@@ -141,4 +141,6 @@ message CommandLineOptions {
   google.protobuf.Duration jitter_uniform = 25 [(validate.rules).duration.gte.nanos = 1];
   // See :option:`--labels`
   repeated string labels = 28;
+  // See :option:`--transport-socket` for details.
+  envoy.api.v2.core.TransportSocket transport_socket = 27;
 }
