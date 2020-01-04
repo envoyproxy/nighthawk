@@ -56,7 +56,7 @@ LinearRateLimiter::LinearRateLimiter(Envoy::TimeSource& time_source, const Frequ
     : RateLimiterBaseImpl(time_source), acquireable_count_(0), acquired_count_(0),
       frequency_(frequency) {
   if (frequency.value() <= 0) {
-    throw NighthawkException("Frequency must be > 0");
+    throw NighthawkException(fmt::format("frequency must be <= 0, value: {}", frequency.value()));
   }
 }
 
@@ -74,6 +74,45 @@ bool LinearRateLimiter::tryAcquireOne() {
 }
 
 void LinearRateLimiter::releaseOne() {
+  acquireable_count_++;
+  acquired_count_--;
+}
+
+LinearRampingRateLimiterImpl::LinearRampingRateLimiterImpl(Envoy::TimeSource& time_source,
+                                                           const std::chrono::nanoseconds ramp_time,
+                                                           const Frequency frequency)
+    : RateLimiterBaseImpl(time_source), ramp_time_(ramp_time), frequency_(frequency) {
+  if (frequency_.value() <= 0) {
+    throw NighthawkException(fmt::format("frequency must be > 0, value: {}", frequency.value()));
+  }
+  if (ramp_time <= 0ns) {
+    throw NighthawkException(
+        fmt::format("ramp_time must be positive, value: {}", ramp_time.count()));
+  }
+}
+
+bool LinearRampingRateLimiterImpl::tryAcquireOne() {
+  if (acquireable_count_) {
+    acquired_count_++;
+    return acquireable_count_--;
+  }
+
+  const std::chrono::nanoseconds elapsed_time = elapsed();
+  double elapsed_fraction = 1.0;
+  if (elapsed_time < ramp_time_) {
+    elapsed_fraction -= static_cast<double>(ramp_time_.count() - elapsed_time.count()) /
+                        static_cast<double>(ramp_time_.count());
+  }
+  const double current_frequency = elapsed_fraction * frequency_.value();
+  // If we'd be at a constant pace, we can expect elapsed seconds * frequency requests.
+  // However, as we are linearly ramping, we can expect half of that, hence we
+  // divide by two.
+  const int64_t total = std::round((elapsed_time.count() / 1e9) * current_frequency / 2.0);
+  acquireable_count_ = total - acquired_count_;
+  return acquireable_count_ > 0 ? tryAcquireOne() : false;
+}
+
+void LinearRampingRateLimiterImpl::releaseOne() {
   acquireable_count_++;
   acquired_count_--;
 }
@@ -116,6 +155,40 @@ FilteringRateLimiterImpl::FilteringRateLimiterImpl(RateLimiterPtr&& rate_limiter
 
 bool FilteringRateLimiterImpl::tryAcquireOne() {
   return rate_limiter_->tryAcquireOne() ? filter_() : false;
+}
+
+GraduallyOpeningRateLimiterFilter::GraduallyOpeningRateLimiterFilter(
+    const std::chrono::nanoseconds ramp_time, DiscreteNumericDistributionSamplerPtr&& provider,
+    RateLimiterPtr&& rate_limiter)
+    : FilteringRateLimiterImpl(
+          std::move(rate_limiter),
+          [this]() {
+            const auto elapsed_time = elapsed();
+            if (elapsed_time < ramp_time_) {
+              // We want to linearly increase the probability of returning true
+              // below. We can derive that from the elapsed fraction of ramp_time.
+              const double probability =
+                  1.0 - static_cast<double>(ramp_time_.count() - elapsed_time.count()) /
+                            (ramp_time_.count() * 1.0);
+              // Get a random number r, where 0 < r ≤ 1.
+              const double random_between_0_and_1 = 1.0 * provider_->getValue() / provider_->max();
+              // Given a uniform distribution, the fraction of the ramp
+              // will translate into the probability of opening up we are looking for.
+              return random_between_0_and_1 < probability;
+            }
+            // Ramping is complete, and as such this filter has completely opened up.
+            return true;
+          }),
+      provider_(std::move(provider)), ramp_time_(ramp_time) {
+  if (ramp_time <= 0ns) {
+    throw NighthawkException("ramp_time must be positive and > 0ns");
+  }
+  if (provider_->min() != 1) {
+    throw NighthawkException("min value of the distribution provider must equal 1");
+  }
+  if (provider_->max() != 1000000) {
+    throw NighthawkException("max value of the distribution provider must equal 1000000");
+  }
 }
 
 } // namespace Nighthawk

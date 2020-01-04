@@ -6,9 +6,12 @@
 #include <string>
 
 #include "envoy/api/v2/cds.pb.h"
+#include "envoy/api/v2/core/base.pb.h"
 #include "envoy/common/pure.h"
 
 #include "api/client/options.pb.h"
+
+#include "absl/types/optional.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -38,6 +41,7 @@ public:
   virtual std::vector<std::string> requestHeaders() const PURE;
   virtual uint32_t requestBodySize() const PURE;
   virtual const envoy::api::v2::auth::UpstreamTlsContext& tlsContext() const PURE;
+  virtual const absl::optional<envoy::api::v2::core::TransportSocket>& transportSocket() const PURE;
   virtual uint32_t maxPendingRequests() const PURE;
   virtual uint32_t maxActiveRequests() const PURE;
   virtual uint32_t maxRequestsPerConnection() const PURE;

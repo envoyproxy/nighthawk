@@ -140,5 +140,7 @@ message CommandLineOptions {
   // See :option:`--jitter-uniform`
   google.protobuf.Duration jitter_uniform = 25 [(validate.rules).duration.gte.nanos = 1];
   // See :option:`--experimental-h2-use-multiple-connections` for details.
-  google.protobuf.BoolValue experimental_h2_use_multiple_connections = 27;
+  google.protobuf.BoolValue experimental_h2_use_multiple_connections = 29;
+  // See :option:`--transport-socket` for details.
+  envoy.api.v2.core.TransportSocket transport_socket = 27;
 }

@@ -48,7 +48,18 @@ using RateLimiterPtr = std::unique_ptr<RateLimiter>;
 class DiscreteNumericDistributionSampler {
 public:
   virtual ~DiscreteNumericDistributionSampler() = default;
+  /**
+   * @return uint64_t gets a sample value from the distribution.
+   */
   virtual uint64_t getValue() PURE;
+  /**
+   * @return uint64_t minimum sample value that can be returned by getValue().
+   */
+  virtual uint64_t min() const PURE;
+  /**
+   * @return uint64_t maximum sample value that can returned by getValue().
+   */
+  virtual uint64_t max() const PURE;
 };
 
 using DiscreteNumericDistributionSamplerPtr = std::unique_ptr<DiscreteNumericDistributionSampler>;
