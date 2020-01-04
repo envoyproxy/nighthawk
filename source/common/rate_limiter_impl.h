@@ -10,6 +10,7 @@
 
 #include "common/frequency.h"
 
+#include "absl/random/random.h"
 #include "absl/types/optional.h"
 
 namespace Nighthawk {
@@ -52,6 +53,24 @@ public:
 protected:
   int64_t acquireable_count_{0};
   uint64_t acquired_count_{0};
+  const Frequency frequency_;
+};
+
+/**
+ * A rate limiter which linearly ramps up to the desired frequency over the specified ramp_time.
+ */
+class LinearRampingRateLimiterImpl : public RateLimiterBaseImpl,
+                                     public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
+public:
+  LinearRampingRateLimiterImpl(Envoy::TimeSource& time_source,
+                               const std::chrono::nanoseconds ramp_time, const Frequency frequency);
+  bool tryAcquireOne() override;
+  void releaseOne() override;
+
+private:
+  int64_t acquireable_count_{0};
+  uint64_t acquired_count_{0};
+  const std::chrono::nanoseconds ramp_time_;
   const Frequency frequency_;
 };
 
@@ -123,6 +142,8 @@ public:
   UniformRandomDistributionSamplerImpl(const uint64_t upper_bound)
       : distribution_(0, upper_bound) {}
   uint64_t getValue() override { return distribution_(generator_); }
+  uint64_t min() const override { return distribution_.min(); }
+  uint64_t max() const override { return distribution_.max(); }
 
 private:
   std::default_random_engine generator_;
@@ -155,6 +176,31 @@ public:
 
 protected:
   const RateLimiterFilter filter_;
+};
+
+/**
+ * Takes a probabilistic approach to suppressing an arbitrary wrapped rate limiter.
+ */
+class GraduallyOpeningRateLimiterFilter : public FilteringRateLimiterImpl {
+public:
+  /**
+   * @param ramp_time Time that should elapse between moving from complete
+   * suppression to completely opening the wrapped rate limiter.
+   * @param provider Distrete numeric distribution sampler. To achieve a
+   * reasonable precision, the min value of this distribution MUST equal 1. The max value MUST equal
+   * 1000000. Configuring otherwise will result in a NighthawkException. Using a uniform
+   * distribution will yield an approximately linear ramp from completely closed to completely
+   * opened.
+   * @param rate_limiter The rate limiter that will be wrapped and responsible
+   * for generating the base acquisition pacing that we will operate on.
+   */
+  GraduallyOpeningRateLimiterFilter(const std::chrono::nanoseconds ramp_time,
+                                    DiscreteNumericDistributionSamplerPtr&& provider,
+                                    RateLimiterPtr&& rate_limiter);
+
+private:
+  DiscreteNumericDistributionSamplerPtr provider_;
+  const std::chrono::nanoseconds ramp_time_;
 };
 
 } // namespace Nighthawk

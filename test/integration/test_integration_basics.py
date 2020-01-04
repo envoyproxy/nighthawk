@@ -247,47 +247,64 @@ def test_https_h2(https_test_server_fixture):
   assertEqual(len(counters), 17)
 
 
+def _do_tls_configuration_test(https_test_server_fixture, cli_parameter, use_h2):
+  """Runs tests for different ciphers.
+
+  For a given choice of (--tls-context, --transport-socket) x (H1, H2),
+  run a series of traffic tests with different ciphers.
+
+  Args:
+    https_test_server_fixture: pytest.fixture that controls a test server and client
+    cli_parameter: string, --tls-context or --transport-socket
+    use_h2: boolean, whether to pass --h2
+  """
+
+  if cli_parameter == "--tls-context":
+    json_template = "{common_tls_context:{tls_params:{cipher_suites:[\"-ALL:%s\"]}}}"
+  else:
+    json_template = ("{name:\"envoy.transport_sockets.tls\",typed_config:{" +
+                     "\"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\"," +
+                     "common_tls_context:{tls_params:{cipher_suites:[\"-ALL:%s\"]}}}}")
+
+  for cipher in [
+      "ECDHE-RSA-AES128-SHA",
+      "ECDHE-RSA-CHACHA20-POLY1305",
+  ]:
+    parsed_json, _ = https_test_server_fixture.runNighthawkClient((["--h2"] if use_h2 else []) + [
+        "--termination-predicate", "benchmark.http_2xx:0", cli_parameter, json_template % cipher,
+        https_test_server_fixture.getTestServerRootUri()
+    ])
+    counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
+    assertCounterEqual(counters, "ssl.ciphers.%s" % cipher, 1)
+
+
 def test_https_h1_tls_context_configuration(https_test_server_fixture):
   """
   Verifies specifying tls cipher suites works with the h1 pool
   """
+  _do_tls_configuration_test(https_test_server_fixture, "--tls-context", use_h2=False)
 
-  parsed_json, _ = https_test_server_fixture.runNighthawkClient([
-      "--termination-predicate", "benchmark.http_2xx:0",
-      "--tls-context {common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES128-SHA\"]}}}",
-      https_test_server_fixture.getTestServerRootUri()
-  ])
-  counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-  assertCounterEqual(counters, "ssl.ciphers.ECDHE-RSA-AES128-SHA", 1)
 
-  parsed_json, _ = https_test_server_fixture.runNighthawkClient([
-      "--h2", "--termination-predicate", "benchmark.http_2xx:0",
-      "--tls-context {common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-CHACHA20-POLY1305\"]}}}",
-      https_test_server_fixture.getTestServerRootUri()
-  ])
-  counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-  assertCounterEqual(counters, "ssl.ciphers.ECDHE-RSA-CHACHA20-POLY1305", 1)
+def test_https_h1_transport_socket_configuration(https_test_server_fixture):
+  """
+  Verifies specifying tls cipher suites via transport socket works with the h1 pool
+  """
+
+  _do_tls_configuration_test(https_test_server_fixture, "--transport-socket", use_h2=False)
 
 
 def test_https_h2_tls_context_configuration(https_test_server_fixture):
   """
   Verifies specifying tls cipher suites works with the h2 pool
   """
-  parsed_json, _ = https_test_server_fixture.runNighthawkClient([
-      "--termination-predicate", "benchmark.http_2xx:0",
-      "--tls-context {common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES128-SHA\"]}}}",
-      https_test_server_fixture.getTestServerRootUri()
-  ])
-  counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-  assertCounterEqual(counters, "ssl.ciphers.ECDHE-RSA-AES128-SHA", 1)
+  _do_tls_configuration_test(https_test_server_fixture, "--tls-context", use_h2=True)
 
-  parsed_json, _ = https_test_server_fixture.runNighthawkClient([
-      "--h2", "--termination-predicate", "benchmark.http_2xx:0",
-      "--tls-context {common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-CHACHA20-POLY1305\"]}}}",
-      https_test_server_fixture.getTestServerRootUri()
-  ])
-  counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-  assertCounterEqual(counters, "ssl.ciphers.ECDHE-RSA-CHACHA20-POLY1305", 1)
+
+def test_https_h2_transport_socket_configuration(https_test_server_fixture):
+  """
+  Verifies specifying tls cipher suites via transport socket works with the h2 pool
+  """
+  _do_tls_configuration_test(https_test_server_fixture, "--transport-socket", use_h2=True)
 
 
 def test_https_prefetching(https_test_server_fixture):

@@ -52,7 +52,8 @@ format>] [--sequencer-idle-strategy <spin
 |poll|sleep>] [--max-requests-per-connection
 <uint32_t>] [--max-active-requests
 <uint32_t>] [--max-pending-requests
-<uint32_t>] [--tls-context <string>]
+<uint32_t>] [--transport-socket <string>]
+[--tls-context <string>]
 [--request-body-size <uint32_t>]
 [--request-header <string>] ...
 [--request-method <GET|HEAD|POST|PUT|DELETE
@@ -112,10 +113,21 @@ only. (default: 100).
 Max pending requests (default: 0, no client side queuing. Specifying
 any other value will allow client-side queuing of requests).
 
+--transport-socket <string>
+Transport socket configuration in json or compact yaml. Mutually
+exclusive with --tls-context. Example (json):
+{name:"envoy.transport_sockets.tls"
+,typed_config:{"@type":"type.googleapis.com/envoy.api.v2.auth.Upstream
+TlsContext"
+,common_tls_context:{tls_params:{cipher_suites:["-ALL:ECDHE-RSA-AES128
+-SHA"]}}}}
+
 --tls-context <string>
-Tls context configuration in yaml or json. Example
-(json):{common_tls_context:{tls_params:{cipher_suites:["-ALL:ECDHE-RSA
--AES128-SHA"]}}}
+DEPRECATED, use --transport-socket instead. Tls context configuration
+in json or compact yaml. Mutually exclusive with --transport-socket.
+Example (json):
+{common_tls_context:{tls_params:{cipher_suites:["-ALL:ECDHE-RSA-AES128
+-SHA"]}}}
 
 --request-body-size <uint32_t>
 Size of the request body to send. NH will send a number of consecutive
