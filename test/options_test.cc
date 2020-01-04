@@ -28,23 +28,6 @@ class OptionsImplIntTest : public OptionsImplTest, public WithParamInterface<con
 class OptionsImplIntTestNonZeroable : public OptionsImplTest,
                                       public WithParamInterface<const char*> {};
 
-// TEST_F(OptionsImplTest, Single) {
-//   // TestUtility::createOptionsImpl(fmt::format("{} --rps 4 {}", client_name_, good_test_uri_));
-//   TestUtility::createOptionsImpl(fmt::format(
-//       "{} --rps 4 --connections 5 --duration 6 --timeout 7 --h2 "
-//       "--concurrency 8 --verbosity error --output-format yaml --prefetch-connections "
-//       "--burst-size 13 --address-family v6 --request-method POST --request-body-size 1234 "
-//       "--tls-context {} --request-header f1:b1 --request-header f2:b2 --request-header f3:b3:b4 "
-//       "--max-pending-requests 10 "
-//       "--max-active-requests 11 --max-requests-per-connection 12 --sequencer-idle-strategy sleep
-//       "
-//       "--termination-predicate t1:1 --termination-predicate t2:2 --failure-predicate f1:1 "
-//       "--failure-predicate f2:2 --jitter-uniform .00001s {}",
-//       client_name_,
-//       "{common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"]}}}",
-//       good_test_uri_));
-// }
-
 TEST_F(OptionsImplTest, BogusInput) {
   // When just passing the non-existing argument --foo it would be interpreted as a
   // hostname. However, hostnames shouldn't start with '-', and hence this test should
@@ -62,18 +45,13 @@ TEST_F(OptionsImplTest, AlmostAll) {
       "{} --rps 4 --connections 5 --duration 6 --timeout 7 --h2 "
       "--concurrency 8 --verbosity error --output-format yaml --prefetch-connections "
       "--burst-size 13 --address-family v6 --request-method POST --request-body-size 1234 "
-      "--tls-context {} --request-header f1:b1 --request-header f2:b2 --request-header f3:b3:b4 "
-      "--max-pending-requests 10 "
-      "--max-active-requests 11 --max-requests-per-connection 12 --sequencer-idle-strategy sleep "
-      "--termination-predicate t1:1 --termination-predicate t2:2 --failure-predicate f1:1 "
-      "--failure-predicate f2:2 --jitter-uniform .00001s {}",
       "--transport-socket {} "
-      "--request-header f1:b1 --request-header f2:b2 --request-header f3:b3:b4 {} "
+      "--request-header f1:b1 --request-header f2:b2 --request-header f3:b3:b4 "
       "--max-pending-requests 10 "
       "--max-active-requests 11 --max-requests-per-connection 12 --sequencer-idle-strategy sleep "
       "--termination-predicate t1:1 --termination-predicate t2:2 --failure-predicate f1:1 "
       "--failure-predicate f2:2 --jitter-uniform .00001s "
-      "--experimental-h1-connection-reuse-strategy lru ",
+      "--experimental-h1-connection-reuse-strategy lru {}",
       client_name_,
       "{name:\"envoy.transport_sockets.tls\","
       "typed_config:{\"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\","
@@ -223,7 +201,7 @@ TEST_F(OptionsImplTest, TlsContext) {
   // superfluous.
   EXPECT_TRUE(util(*(options_from_proto.toCommandLineOptions()), *cmd));
 }
-/*
+
 // --multi-target-* args
 TEST_F(OptionsImplTest, MultiTarget) {
   Envoy::MessageUtil util;
@@ -239,25 +217,29 @@ TEST_F(OptionsImplTest, MultiTarget) {
   EXPECT_EQ(true, options->multiTargetUseHttps());
 
   ASSERT_EQ(4, options->multiTargetEndpoints().size());
-  EXPECT_EQ("1.1.1.1", options->multiTargetEndpoints()[0].address());
-  EXPECT_EQ(3, options->multiTargetEndpoints()[0].port());
-  EXPECT_EQ("2.2.2.2", options->multiTargetEndpoints()[1].address());
-  EXPECT_EQ(4, options->multiTargetEndpoints()[1].port());
-  EXPECT_EQ("[::1]", options->multiTargetEndpoints()[2].address());
-  EXPECT_EQ(5, options->multiTargetEndpoints()[2].port());
-  EXPECT_EQ("www.example.com", options->multiTargetEndpoints()[3].address());
-  EXPECT_EQ(6, options->multiTargetEndpoints()[3].port());
+  EXPECT_EQ("1.1.1.1", options->multiTargetEndpoints()[0].address().value());
+  EXPECT_EQ(3, options->multiTargetEndpoints()[0].port().value());
+  EXPECT_EQ("2.2.2.2", options->multiTargetEndpoints()[1].address().value());
+  EXPECT_EQ(4, options->multiTargetEndpoints()[1].port().value());
+  EXPECT_EQ("[::1]", options->multiTargetEndpoints()[2].address().value());
+  EXPECT_EQ(5, options->multiTargetEndpoints()[2].port().value());
+  EXPECT_EQ("www.example.com", options->multiTargetEndpoints()[3].address().value());
+  EXPECT_EQ(6, options->multiTargetEndpoints()[3].port().value());
 
   CommandLineOptionsPtr cmd = options->toCommandLineOptions();
 
   EXPECT_EQ(cmd->multi_target().use_https().value(), options->multiTargetUseHttps());
   EXPECT_EQ(cmd->multi_target().path().value(), options->multiTargetPath());
 
-  ASSERT_EQ(2, cmd->multi_target().endpoints_size());
+  ASSERT_EQ(4, cmd->multi_target().endpoints_size());
   EXPECT_EQ(cmd->multi_target().endpoints(0).address().value(), "1.1.1.1");
   EXPECT_EQ(cmd->multi_target().endpoints(0).port().value(), 3);
   EXPECT_EQ(cmd->multi_target().endpoints(1).address().value(), "2.2.2.2");
   EXPECT_EQ(cmd->multi_target().endpoints(1).port().value(), 4);
+  EXPECT_EQ(cmd->multi_target().endpoints(2).address().value(), "[::1]");
+  EXPECT_EQ(cmd->multi_target().endpoints(2).port().value(), 5);
+  EXPECT_EQ(cmd->multi_target().endpoints(3).address().value(), "www.example.com");
+  EXPECT_EQ(cmd->multi_target().endpoints(3).port().value(), 6);
 
   // Now we construct a new options from the proto we created above. This should result in an
   // OptionsImpl instance equivalent to options. We test that by converting both to yaml strings,
@@ -279,7 +261,7 @@ TEST_F(OptionsImplTest, MultiTarget) {
   // superfluous.
   EXPECT_TRUE(util(*(options_from_proto.toCommandLineOptions()), *cmd));
 }
-*/
+
 // Test that TCLAP's way of handling --help behaves as expected.
 TEST_F(OptionsImplTest, Help) {
   EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{}  --help", client_name_)),
