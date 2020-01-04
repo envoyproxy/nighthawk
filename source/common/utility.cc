@@ -1,4 +1,5 @@
 #include "common/utility.h"
+
 #include "nighthawk/common/exception.h"
 
 #include "external/envoy/source/common/http/utility.h"

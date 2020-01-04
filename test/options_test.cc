@@ -4,7 +4,6 @@
 
 #include "test/client/utility.h"
 
-#include "tclap/CmdLine.h"
 #include "gtest/gtest.h"
 
 using namespace std::chrono_literals;
