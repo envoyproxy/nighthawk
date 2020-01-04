@@ -6,6 +6,7 @@
 #include <string>
 
 #include "envoy/api/v2/cds.pb.h"
+#include "envoy/api/v2/core/base.pb.h"
 #include "envoy/common/pure.h"
 
 #include "api/client/options.pb.h"
@@ -40,12 +41,15 @@ public:
   virtual std::vector<std::string> requestHeaders() const PURE;
   virtual uint32_t requestBodySize() const PURE;
   virtual const envoy::api::v2::auth::UpstreamTlsContext& tlsContext() const PURE;
+  virtual const absl::optional<envoy::api::v2::core::TransportSocket>& transportSocket() const PURE;
   virtual uint32_t maxPendingRequests() const PURE;
   virtual uint32_t maxActiveRequests() const PURE;
   virtual uint32_t maxRequestsPerConnection() const PURE;
   virtual nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions
   sequencerIdleStrategy() const PURE;
   virtual std::string trace() const PURE;
+  virtual nighthawk::client::H1ConnectionReuseStrategy::H1ConnectionReuseStrategyOptions
+  h1ConnectionReuseStrategy() const PURE;
   virtual TerminationPredicateMap terminationPredicates() const PURE;
   virtual TerminationPredicateMap failurePredicates() const PURE;
   virtual bool openLoop() const PURE;

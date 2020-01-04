@@ -12,6 +12,7 @@
 
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_split.h"
+#include "absl/types/optional.h"
 #include "fmt/ranges.h"
 
 namespace Nighthawk {
@@ -130,8 +131,19 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
 
   TCLAP::ValueArg<std::string> tls_context(
       "", "tls-context",
-      "Tls context configuration in yaml or json. Example (json):"
+      "DEPRECATED, use --transport-socket instead. "
+      "Tls context configuration in json or compact yaml. "
+      "Mutually exclusive with --transport-socket. Example (json): "
       "{common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES128-SHA\"]}}}",
+      false, "", "string", cmd);
+
+  TCLAP::ValueArg<std::string> transport_socket(
+      "", "transport-socket",
+      "Transport socket configuration in json or compact yaml. "
+      "Mutually exclusive with --tls-context. Example (json): "
+      "{name:\"envoy.transport_sockets.tls\",typed_config:{"
+      "\"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\","
+      "common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES128-SHA\"]}}}}",
       false, "", "string", cmd);
 
   TCLAP::ValueArg<uint32_t> max_pending_requests(
@@ -180,6 +192,19 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "failing execution. Defaults to not tolerating error status codes and connection errors.",
       false, "<string, uint64_t>", cmd);
 
+  std::vector<std::string> h1_connection_reuse_strategies = {"mru", "lru"};
+  TCLAP::ValuesConstraint<std::string> h1_connection_reuse_strategies_allowed(
+      h1_connection_reuse_strategies);
+  TCLAP::ValueArg<std::string> experimental_h1_connection_reuse_strategy(
+      "", "experimental-h1-connection-reuse-strategy",
+      fmt::format(
+          "Choose picking the most recently used, or least-recently-used connections for re-use."
+          "(default: {}). WARNING: this option is experimental and may be removed or changed in "
+          "the future!",
+          absl::AsciiStrToLower(
+              nighthawk::client::H1ConnectionReuseStrategy_H1ConnectionReuseStrategyOptions_Name(
+                  experimental_h1_connection_reuse_strategy_))),
+      false, "", &h1_connection_reuse_strategies_allowed, cmd);
   TCLAP::SwitchArg open_loop(
       "", "open-loop",
       "Enable open loop mode. When enabled, the benchmark client will not provide backpressure "
@@ -271,6 +296,17 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
                        upper_cased, &sequencer_idle_strategy_),
                    "Failed to parse sequencer idle strategy");
   }
+
+  if (experimental_h1_connection_reuse_strategy.isSet()) {
+    std::string upper_cased = experimental_h1_connection_reuse_strategy.getValue();
+    absl::AsciiStrToUpper(&upper_cased);
+    const bool ok =
+        nighthawk::client::H1ConnectionReuseStrategy::H1ConnectionReuseStrategyOptions_Parse(
+            upper_cased, &experimental_h1_connection_reuse_strategy_);
+    // TCLAP validation ought to have caught this earlier.
+    RELEASE_ASSERT(ok, "Failed to parse h1 connection reuse strategy");
+  }
+
   TCLAP_SET_IF_SPECIFIED(trace, trace_);
   parsePredicates(termination_predicates, termination_predicates_);
   parsePredicates(failure_predicates, failure_predicates_);
@@ -347,8 +383,25 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   }
 
   if (!tls_context.getValue().empty()) {
+    ENVOY_LOG(warn, "--tls-context is deprecated. "
+                    "It can be replaced by an equivalent --transport-socket. "
+                    "See --help for an example.");
+  }
+  if (!tls_context.getValue().empty() && !transport_socket.getValue().empty()) {
+    throw MalformedArgvException("--tls-context and --transport-socket cannot both be set.");
+  }
+  if (!tls_context.getValue().empty()) {
     try {
       Envoy::MessageUtil::loadFromJson(tls_context.getValue(), tls_context_,
+                                       Envoy::ProtobufMessage::getStrictValidationVisitor());
+    } catch (const Envoy::EnvoyException& e) {
+      throw MalformedArgvException(e.what());
+    }
+  }
+  if (!transport_socket.getValue().empty()) {
+    try {
+      transport_socket_.emplace(envoy::api::v2::core::TransportSocket());
+      Envoy::MessageUtil::loadFromJson(transport_socket.getValue(), transport_socket_.value(),
                                        Envoy::ProtobufMessage::getStrictValidationVisitor());
     } catch (const Envoy::EnvoyException& e) {
       throw MalformedArgvException(e.what());
@@ -435,8 +488,17 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   sequencer_idle_strategy_ =
       PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, sequencer_idle_strategy, sequencer_idle_strategy_);
   trace_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, trace, trace_);
+  experimental_h1_connection_reuse_strategy_ =
+      PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, experimental_h1_connection_reuse_strategy,
+                                      experimental_h1_connection_reuse_strategy_);
   open_loop_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, open_loop, open_loop_);
   tls_context_.MergeFrom(options.tls_context());
+
+  if (options.has_transport_socket()) {
+    transport_socket_.emplace(envoy::api::v2::core::TransportSocket());
+    transport_socket_.value().MergeFrom(options.transport_socket());
+  }
+
   if (options.failure_predicates().size()) {
     failure_predicates_.clear();
   }
@@ -548,12 +610,17 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptions() const {
   }
   request_options->mutable_request_body_size()->set_value(requestBodySize());
   *(command_line_options->mutable_tls_context()) = tlsContext();
+  if (transportSocket().has_value()) {
+    *(command_line_options->mutable_transport_socket()) = transportSocket().value();
+  }
   command_line_options->mutable_max_pending_requests()->set_value(maxPendingRequests());
   command_line_options->mutable_max_active_requests()->set_value(maxActiveRequests());
   command_line_options->mutable_max_requests_per_connection()->set_value(
       maxRequestsPerConnection());
   command_line_options->mutable_sequencer_idle_strategy()->set_value(sequencerIdleStrategy());
   command_line_options->mutable_trace()->set_value(trace());
+  command_line_options->mutable_experimental_h1_connection_reuse_strategy()->set_value(
+      h1ConnectionReuseStrategy());
   auto termination_predicates_option = command_line_options->mutable_termination_predicates();
   for (const auto& predicate : terminationPredicates()) {
     termination_predicates_option->insert({predicate.first, predicate.second});

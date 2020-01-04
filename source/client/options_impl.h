@@ -8,13 +8,15 @@
 #include "nighthawk/client/options.h"
 #include "nighthawk/common/exception.h"
 
+#include "external/envoy/source/common/common/logger.h"
+
 #include "absl/types/optional.h"
 #include "tclap/CmdLine.h"
 
 namespace Nighthawk {
 namespace Client {
 
-class OptionsImpl : public Options {
+class OptionsImpl : public Options, public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
   // We cap on negative values. TCLAP accepts negative values which we will get here as very
   // large values. We just cap values, hoping we catch accidental wraparound to a reasonable extent.
@@ -46,6 +48,9 @@ public:
   const envoy::api::v2::auth::UpstreamTlsContext& tlsContext() const override {
     return tls_context_;
   };
+  const absl::optional<envoy::api::v2::core::TransportSocket>& transportSocket() const override {
+    return transport_socket_;
+  }
   uint32_t maxPendingRequests() const override { return max_pending_requests_; }
   uint32_t maxActiveRequests() const override { return max_active_requests_; }
   uint32_t maxRequestsPerConnection() const override { return max_requests_per_connection_; }
@@ -54,6 +59,10 @@ public:
     return sequencer_idle_strategy_;
   }
   std::string trace() const override { return trace_; }
+  nighthawk::client::H1ConnectionReuseStrategy::H1ConnectionReuseStrategyOptions
+  h1ConnectionReuseStrategy() const override {
+    return experimental_h1_connection_reuse_strategy_;
+  }
   TerminationPredicateMap terminationPredicates() const override { return termination_predicates_; }
   TerminationPredicateMap failurePredicates() const override { return failure_predicates_; }
   bool openLoop() const override { return open_loop_; }
@@ -90,6 +99,7 @@ private:
   std::vector<std::string> request_headers_;
   uint32_t request_body_size_{0};
   envoy::api::v2::auth::UpstreamTlsContext tls_context_;
+  absl::optional<envoy::api::v2::core::TransportSocket> transport_socket_;
   uint32_t max_pending_requests_{0};
   // This default is based the minimum recommendation for SETTINGS_MAX_CONCURRENT_STREAMS over at
   // https://tools.ietf.org/html/rfc7540#section-6.5.2
@@ -98,6 +108,8 @@ private:
   nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions sequencer_idle_strategy_{
       nighthawk::client::SequencerIdleStrategy::SPIN};
   std::string trace_;
+  nighthawk::client::H1ConnectionReuseStrategy::H1ConnectionReuseStrategyOptions
+      experimental_h1_connection_reuse_strategy_{nighthawk::client::H1ConnectionReuseStrategy::MRU};
   TerminationPredicateMap termination_predicates_;
   TerminationPredicateMap failure_predicates_;
   bool open_loop_{false};

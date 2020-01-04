@@ -85,6 +85,15 @@ message MultiTarget {
   google.protobuf.StringValue path = 3;
 }
 
+message H1ConnectionReuseStrategy {
+  enum H1ConnectionReuseStrategyOptions {
+    DEFAULT = 0;
+    MRU = 1;
+    LRU = 2;
+  }
+  H1ConnectionReuseStrategyOptions value = 1;
+}
+
 // TODO(oschaaf): Ultimately this will be a load test specification. The fact that it
 // can arrive via CLI is just a concrete detail. Change this to reflect that.
 message CommandLineOptions {
@@ -139,10 +148,12 @@ message CommandLineOptions {
     // - :option:`--multi-target-endpoint`
     // - :option:`--multi-target-path`
     // - :option:`--multi-target-use-https`
-    MultiTarget multi_target = 27;
+    MultiTarget multi_target = 28;
   }
   // See :option:`--trace` for details.
   google.protobuf.StringValue trace = 19; // [(validate.rules).string.uri = true];
+  // See :option:`--experimental-h1-connection-reuse-strategy` for details.
+  H1ConnectionReuseStrategy experimental_h1_connection_reuse_strategy = 23;
   // See :option:`--termination-predicates` for details.
   map<string, uint64> termination_predicates = 20;
   // See :option:`--failure-predicates` for details.
@@ -151,4 +162,6 @@ message CommandLineOptions {
   google.protobuf.BoolValue open_loop = 21;
   // See :option:`--jitter-uniform`
   google.protobuf.Duration jitter_uniform = 25 [(validate.rules).duration.gte.nanos = 1];
+  // See :option:`--transport-socket` for details.
+  envoy.api.v2.core.TransportSocket transport_socket = 27;
 }

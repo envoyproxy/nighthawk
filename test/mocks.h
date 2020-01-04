@@ -24,6 +24,7 @@
 
 #include "common/utility.h"
 
+#include "absl/types/optional.h"
 #include "gmock/gmock.h"
 
 using namespace std::chrono_literals;
@@ -84,6 +85,7 @@ public:
   MOCK_CONST_METHOD0(requestHeaders, std::vector<std::string>());
   MOCK_CONST_METHOD0(requestBodySize, uint32_t());
   MOCK_CONST_METHOD0(tlsContext, envoy::api::v2::auth::UpstreamTlsContext&());
+  MOCK_CONST_METHOD0(transportSocket, absl::optional<envoy::api::v2::core::TransportSocket>&());
   MOCK_CONST_METHOD0(maxPendingRequests, uint32_t());
   MOCK_CONST_METHOD0(maxActiveRequests, uint32_t());
   MOCK_CONST_METHOD0(maxRequestsPerConnection, uint32_t());
@@ -91,6 +93,9 @@ public:
   MOCK_CONST_METHOD0(sequencerIdleStrategy,
                      nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions());
   MOCK_CONST_METHOD0(trace, std::string());
+  MOCK_CONST_METHOD0(
+      h1ConnectionReuseStrategy,
+      nighthawk::client::H1ConnectionReuseStrategy::H1ConnectionReuseStrategyOptions());
   MOCK_CONST_METHOD0(terminationPredicates, Client::TerminationPredicateMap());
   MOCK_CONST_METHOD0(failurePredicates, Client::TerminationPredicateMap());
   MOCK_CONST_METHOD0(openLoop, bool());

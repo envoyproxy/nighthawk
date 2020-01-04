@@ -1,13 +1,13 @@
 # Nighthawk
 
-*A L7 (HTTP/HTTPS/HTTP2) performance characterization tool*
+_A L7 (HTTP/HTTPS/HTTP2) performance characterization tool_
 
 ## Current state
 
 Nighthawk currently offers:
 
 - A load testing client which supports HTTP/1.1 and HTTP/2 over HTTP and HTTPS.
-(HTTPS certificates are not yet validated).
+  (HTTPS certificates are not yet validated).
 - A simple [test server](source/server/README.md) which is capable of generating dynamic response sizes, as well as inject delays.
 - A binary to transform nighthawk output to well-known formats, allowing integration with other systems and dashboards.
 
@@ -16,7 +16,6 @@ Nighthawk currently offers:
 ### Ubuntu
 
 First, follow steps 1 and 2 over at [Quick start Bazel build for developers](https://github.com/envoyproxy/envoy/blob/master/bazel/README.md#quick-start-bazel-build-for-developers).
-
 
 ## Building and using the Nighthawk client CLI
 
@@ -43,16 +42,20 @@ bazel build -c opt //:nighthawk
 ```
 USAGE:
 
-bazel-bin/nighthawk_client  [--backend-endpoint <string>] ...
+bazel-bin/nighthawk_client  [--multi-target-use-https]
+[--multi-target-path <string>]
+[--multi-target-endpoint <string>] ...
 [--jitter-uniform <duration>] [--open-loop]
-[--failure-predicate <<string, uint64_t>>]
-... [--termination-predicate <<string,
-uint64_t>>] ... [--trace <uri format>]
-[--sequencer-idle-strategy <spin|poll
-|sleep>] [--max-requests-per-connection
+[--experimental-h1-connection-reuse-strategy
+<mru|lru>] [--failure-predicate <<string,
+uint64_t>>] ... [--termination-predicate
+<<string, uint64_t>>] ... [--trace <uri
+format>] [--sequencer-idle-strategy <spin
+|poll|sleep>] [--max-requests-per-connection
 <uint32_t>] [--max-active-requests
 <uint32_t>] [--max-pending-requests
-<uint32_t>] [--tls-context <string>]
+<uint32_t>] [--transport-socket <string>]
+[--tls-context <string>]
 [--request-body-size <uint32_t>]
 [--request-header <string>] ...
 [--request-method <GET|HEAD|POST|PUT|DELETE
@@ -70,13 +73,20 @@ format>
 
 Where:
 
---backend-endpoint <string>  (accepted multiple times)
-Backend endpoint overrides. This argument is intended to be specified
-multiple times. Nighthawk will generate the same traffic as usual, but
-will spread it across all backend endpoints with round robin
-distribution. Endpoint formats: IPv4:port, [IPv6]:port, DNS:port.
-Note: The host and port from the URI are ignored when
---backend-endpoint is present.
+--multi-target-use-https
+Use HTTPS to connect to the target endpoints. Otherwise HTTP is used.
+Mutually exclusive with providing a URI.
+
+--multi-target-path <string>
+The single absolute path Nighthawk should request from each target
+endpoint. Required when using --multi-target-endpoint. Mutually
+exclusive with providing a URI.
+
+--multi-target-endpoint <string>  (accepted multiple times)
+Target endpoint in the form IPv4:port, [IPv6]:port, or DNS:port. This
+argument is intended to be specified multiple times. Nighthawk will
+spread traffic across all endpoints with round robin distribution.
+Mutually exclusive with providing a URI.
 
 --jitter-uniform <duration>
 Add uniformly distributed absolute request-release timing jitter. For
@@ -86,6 +96,11 @@ no uniform jitter.
 --open-loop
 Enable open loop mode. When enabled, the benchmark client will not
 provide backpressure when resource limits are hit.
+
+--experimental-h1-connection-reuse-strategy <mru|lru>
+Choose picking the most recently used, or least-recently-used
+connections for re-use.(default: mru). WARNING: this option is
+experimental and may be removed or changed in the future!
 
 --failure-predicate <<string, uint64_t>>  (accepted multiple times)
 Failure predicate. Allows specifying a counter name plus threshold
@@ -115,10 +130,21 @@ only. (default: 100).
 Max pending requests (default: 0, no client side queuing. Specifying
 any other value will allow client-side queuing of requests).
 
+--transport-socket <string>
+Transport socket configuration in json or compact yaml. Mutually
+exclusive with --tls-context. Example (json):
+{name:"envoy.transport_sockets.tls"
+,typed_config:{"@type":"type.googleapis.com/envoy.api.v2.auth.Upstream
+TlsContext"
+,common_tls_context:{tls_params:{cipher_suites:["-ALL:ECDHE-RSA-AES128
+-SHA"]}}}}
+
 --tls-context <string>
-Tls context configuration in yaml or json. Example
-(json):{common_tls_context:{tls_params:{cipher_suites:["-ALL:ECDHE-RSA
--AES128-SHA"]}}}
+DEPRECATED, use --transport-socket instead. Tls context configuration
+in json or compact yaml. Mutually exclusive with --transport-socket.
+Example (json):
+{common_tls_context:{tls_params:{cipher_suites:["-ALL:ECDHE-RSA-AES128
+-SHA"]}}}
 
 --request-body-size <uint32_t>
 Size of the request body to send. NH will send a number of consecutive
@@ -184,8 +210,10 @@ Displays version information and exits.
 Displays usage information and exits.
 
 <uri format>
-(required)  uri to benchmark. http:// and https:// are supported, but
-in case of https no certificates are validated.
+URI to benchmark. http:// and https:// are supported, but in case of
+https no certificates are validated. Provide a URI when you need to
+benchmark a single endpoint. For multiple endpoints, set
+--multi-target-* instead.
 
 
 L7 (HTTP/HTTPS/HTTP2) performance characterization tool.
@@ -194,7 +222,6 @@ L7 (HTTP/HTTPS/HTTP2) performance characterization tool.
 ### Nighthawk gRPC service
 
 The gRPC service can be used to start a server which is able to perform back-to-back benchmark runs upon request. The service interface definition [can be found here.](https://github.com/envoyproxy/nighthawk/blob/59a37568783272a6438b5697277d4e56aa16ebbe/api/client/service.proto)
-
 
 ```bash
 ➜ bazel-bin/nighthawk_service --help
@@ -233,7 +260,6 @@ L7 (HTTP/HTTPS/HTTP2) performance characterization tool.
 ### Nighthawk output transformation utility
 
 Nighthawk comes with a tool to transform its json output to its other supported output formats.
-
 
 ```bash
 ➜ bazel-bin/nighthawk_output_transform --help
@@ -370,7 +396,8 @@ fortio report --data-dir ./samples/fortio_data
 - Consider tuning the benchmarking system for low (network) latency. You can do that manually, or install [tuned](http://manpages.ubuntu.com/manpages/bionic/man8/tuned-adm.8.html) and run:
 
 | As this may change boot flags, take precautions, and familiarize yourself with the tool on systems that you don't mind breaking. For example, running this has been observed to mess up dual-boot systems! |
-| --- |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+
 
 ```bash
 sudo tuned-adm profile network-latency

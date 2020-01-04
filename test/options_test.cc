@@ -53,8 +53,9 @@ TEST_F(OptionsImplTest, BogusInput) {
                           MalformedArgvException, "Invalid URI");
 }
 
-// This test should cover every option we offer, except --multi-target-* which is mutually
-// exclusive with the URI option.
+// This test should cover every option we offer, except:
+//   --multi-target-* is covered in MultiTarget because it's mutually exclusive with URIs.
+//   --tls-context is covered in TlsContext because it's mutually exclusive with --transport-socket.
 TEST_F(OptionsImplTest, AlmostAll) {
   Envoy::MessageUtil util;
   std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(fmt::format(
@@ -66,8 +67,18 @@ TEST_F(OptionsImplTest, AlmostAll) {
       "--max-active-requests 11 --max-requests-per-connection 12 --sequencer-idle-strategy sleep "
       "--termination-predicate t1:1 --termination-predicate t2:2 --failure-predicate f1:1 "
       "--failure-predicate f2:2 --jitter-uniform .00001s {}",
+      "--transport-socket {} "
+      "--request-header f1:b1 --request-header f2:b2 --request-header f3:b3:b4 {} "
+      "--max-pending-requests 10 "
+      "--max-active-requests 11 --max-requests-per-connection 12 --sequencer-idle-strategy sleep "
+      "--termination-predicate t1:1 --termination-predicate t2:2 --failure-predicate f1:1 "
+      "--failure-predicate f2:2 --jitter-uniform .00001s "
+      "--experimental-h1-connection-reuse-strategy lru ",
       client_name_,
-      "{common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"]}}}",
+      "{name:\"envoy.transport_sockets.tls\","
+      "typed_config:{\"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\","
+      "common_tls_context:{tls_params:{"
+      "cipher_suites:[\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"]}}}}",
       good_test_uri_));
 
   EXPECT_EQ(4, options->requestsPerSecond());
@@ -86,9 +97,17 @@ TEST_F(OptionsImplTest, AlmostAll) {
   const std::vector<std::string> expected_headers = {"f1:b1", "f2:b2", "f3:b3:b4"};
   EXPECT_EQ(expected_headers, options->requestHeaders());
   EXPECT_EQ(1234, options->requestBodySize());
-  EXPECT_EQ("common_tls_context {\n  tls_params {\n    cipher_suites: "
-            "\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"\n  }\n}\n",
-            options->tlsContext().DebugString());
+  EXPECT_EQ("name: \"envoy.transport_sockets.tls\"\n"
+            "typed_config {\n"
+            "  [type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext] {\n"
+            "    common_tls_context {\n"
+            "      tls_params {\n"
+            "        cipher_suites: \"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"\n"
+            "      }\n"
+            "    }\n"
+            "  }\n"
+            "}\n",
+            options->transportSocket().value().DebugString());
   EXPECT_EQ(10, options->maxPendingRequests());
   EXPECT_EQ(11, options->maxActiveRequests());
   EXPECT_EQ(12, options->maxRequestsPerConnection());
@@ -100,6 +119,8 @@ TEST_F(OptionsImplTest, AlmostAll) {
   EXPECT_EQ(1, options->failurePredicates()["f1"]);
   EXPECT_EQ(2, options->failurePredicates()["f2"]);
   EXPECT_EQ(10us, options->jitterUniform());
+  EXPECT_EQ(nighthawk::client::H1ConnectionReuseStrategy::LRU,
+            options->h1ConnectionReuseStrategy());
 
   // Check that our conversion to CommandLineOptionsPtr makes sense.
   CommandLineOptionsPtr cmd = options->toCommandLineOptions();
@@ -124,7 +145,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
   }
 
   EXPECT_EQ(cmd->request_options().request_body_size().value(), options->requestBodySize());
-  EXPECT_TRUE(util(cmd->tls_context(), options->tlsContext()));
+  EXPECT_TRUE(util(cmd->transport_socket(), options->transportSocket().value()));
   EXPECT_EQ(cmd->max_pending_requests().value(), options->maxPendingRequests());
   EXPECT_EQ(cmd->max_active_requests().value(), options->maxActiveRequests());
   EXPECT_EQ(cmd->max_requests_per_connection().value(), options->maxRequestsPerConnection());
@@ -147,6 +168,50 @@ TEST_F(OptionsImplTest, AlmostAll) {
   EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("f1"));
   EXPECT_EQ(1, cmd->mutable_termination_predicates()->erase("t1"));
   EXPECT_EQ(cmd->jitter_uniform().nanos(), options->jitterUniform().count());
+  EXPECT_EQ(cmd->experimental_h1_connection_reuse_strategy().value(),
+            options->h1ConnectionReuseStrategy());
+
+  OptionsImpl options_from_proto(*cmd);
+  std::string s1 = Envoy::MessageUtil::getYamlStringFromMessage(
+      *(options_from_proto.toCommandLineOptions()), true, true);
+  std::string s2 = Envoy::MessageUtil::getYamlStringFromMessage(*cmd, true, true);
+
+  EXPECT_EQ(s1, s2);
+  // For good measure, also directly test for proto equivalence, though this should be
+  // superfluous.
+  EXPECT_TRUE(util(*(options_from_proto.toCommandLineOptions()), *cmd));
+}
+
+// This test covers --tls-context, which can't be tested at the same time as --transport-socket.
+TEST_F(OptionsImplTest, TlsContext) {
+  Envoy::MessageUtil util;
+  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(
+      fmt::format("{} --tls-context {} {}", client_name_,
+                  "{common_tls_context:{tls_params:{"
+                  "cipher_suites:[\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"]}}}",
+                  good_test_uri_));
+
+  EXPECT_EQ("common_tls_context {\n"
+            "  tls_params {\n"
+            "    cipher_suites: \"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"\n"
+            "  }\n"
+            "}\n",
+            options->tlsContext().DebugString());
+
+  // Check that our conversion to CommandLineOptionsPtr makes sense.
+  CommandLineOptionsPtr cmd = options->toCommandLineOptions();
+  EXPECT_TRUE(util(cmd->tls_context(), options->tlsContext()));
+
+  // Now we construct a new options from the proto we created above. This should result in an
+  // OptionsImpl instance equivalent to options. We test that by converting both to yaml strings,
+  // expecting them to be equal. This should provide helpful output when the test fails by showing
+  // the unexpected (yaml) diff.
+
+  // The predicates are defined as proto maps, and these seem to re-serialize into a different
+  // order. Hence we trim the maps to contain a single entry so they don't thwart our textual
+  // comparison below.
+  EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("benchmark.http_4xx"));
+  EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("benchmark.http_5xx"));
 
   OptionsImpl options_from_proto(*cmd);
   std::string s1 = Envoy::MessageUtil::getYamlStringFromMessage(
@@ -441,6 +506,21 @@ TEST_F(OptionsImplTest, BadTlsContextSpecification) {
       MalformedArgvException, "envoy.api.v2.auth.UpstreamTlsContext reason INVALID_ARGUMENT");
 }
 
+TEST_F(OptionsImplTest, BadTransportSocketSpecification) {
+  // Bad JSON
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(
+          fmt::format("{} --transport-socket {} http://foo/", client_name_, "{broken_json:")),
+      MalformedArgvException, "Unable to parse JSON as proto");
+  // Correct JSON, but contents not according to spec.
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(fmt::format("{} --transport-socket {} http://foo/",
+                                                 client_name_, "{misspelled_transport_socket:{}}")),
+      MalformedArgvException,
+      "Protobuf message \\(type envoy.api.v2.core.TransportSocket reason "
+      "INVALID_ARGUMENT:misspelled_transport_socket: Cannot find field.\\) has unknown fields");
+}
+
 class OptionsImplPredicateBasedOptionsTest : public OptionsImplTest,
                                              public WithParamInterface<const char*> {};
 
@@ -549,6 +629,33 @@ TEST_F(OptionsImplTest, BothUriAndMultiTargetSpecified) {
                               "{} --multi-target-path /x/y/z --multi-target-use-https {}",
                               client_name_, good_test_uri_)),
                           MalformedArgvException, "cannot both be set");
+}
+
+TEST_F(OptionsImplTest, BothTlsContextAndTransportSocketSpecified) {
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(
+          fmt::format("{} --tls-context x --transport-socket y {}", client_name_, good_test_uri_)),
+      MalformedArgvException, "cannot both be set");
+}
+
+class OptionsImplH1ConnectionReuseStrategyTest : public OptionsImplTest,
+                                                 public WithParamInterface<const char*> {};
+
+// Test we accept all possible --experimental-h1-connection-reuse-strategy values.
+TEST_P(OptionsImplH1ConnectionReuseStrategyTest, H1ConnectionReuseStrategyValues) {
+  TestUtility::createOptionsImpl(fmt::format("{} --experimental-h1-connection-reuse-strategy {} {}",
+                                             client_name_, GetParam(), good_test_uri_));
+}
+
+INSTANTIATE_TEST_SUITE_P(H1ConnectionReuseStrategyOptionsTest,
+                         OptionsImplH1ConnectionReuseStrategyTest, Values("mru", "lru"));
+
+// Test we don't accept any bad --experimental-h1-connection-reuse-strategy values.
+TEST_F(OptionsImplTest, H1ConnectionReuseStrategyValuesAreConstrained) {
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(fmt::format(
+          "{} {} --experimental-h1-connection-reuse-strategy foo", client_name_, good_test_uri_)),
+      MalformedArgvException, "experimental-h1-connection-reuse-strategy");
 }
 
 } // namespace Client
