@@ -205,7 +205,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   TCLAP::MultiArg<std::string> labels("", "label",
                                       "Label. Allows specifying multiple labels which will be "
                                       "persisted in structured output formats.",
-                                      false, "<string>", cmd);
+                                      false, "string", cmd);
   TCLAP::UnlabeledValueArg<std::string> uri("uri",
                                             "uri to benchmark. http:// and https:// are supported, "
                                             "but in case of https no certificates are validated.",

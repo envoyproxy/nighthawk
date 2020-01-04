@@ -135,11 +135,7 @@ TEST_F(OptionsImplTest, All) {
   EXPECT_EQ(cmd->jitter_uniform().nanos(), options->jitterUniform().count());
   EXPECT_EQ(cmd->experimental_h1_connection_reuse_strategy().value(),
             options->h1ConnectionReuseStrategy());
-  i = 0;
-  for (const auto& label : cmd->labels()) {
-    EXPECT_EQ(expected_labels[i++], label);
-  }
-  EXPECT_EQ(expected_labels.size(), i);
+  EXPECT_THAT(cmd->labels(), ElementsAreArray(expected_labels));
 
   OptionsImpl options_from_proto(*cmd);
   std::string s1 = Envoy::MessageUtil::getYamlStringFromMessage(

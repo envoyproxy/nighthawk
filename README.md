@@ -43,7 +43,7 @@ bazel build -c opt //:nighthawk
 ```
 USAGE:
 
-bazel-bin/nighthawk_client  [--label <<string>>] ... [--jitter-uniform
+bazel-bin/nighthawk_client  [--label <string>] ... [--jitter-uniform
 <duration>] [--open-loop]
 [--experimental-h1-connection-reuse-strategy
 <mru|lru>] [--failure-predicate <<string,
@@ -71,7 +71,7 @@ format>
 
 Where:
 
---label <<string>>  (accepted multiple times)
+--label <string>  (accepted multiple times)
 Label. Allows specifying multiple labels which will be persisted in
 structured output formats.
 
