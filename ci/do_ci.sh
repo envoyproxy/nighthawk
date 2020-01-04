@@ -96,6 +96,7 @@ function do_docker() {
     # Note that we implicly test the opt build in CI here
     do_opt_build
     ./ci/docker/docker_build.sh
+    ./ci/docker/docker_push.sh
 }
 
 function do_fix_format() {
