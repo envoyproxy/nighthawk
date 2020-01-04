@@ -140,5 +140,7 @@ message CommandLineOptions {
   // See :option:`--jitter-uniform`
   google.protobuf.Duration jitter_uniform = 25 [(validate.rules).duration.gte.nanos = 1];
   // See :option --nighthawk-service
-  google.protobuf.StringValue nighthawk_service = 27; // [(validate.rules).string.uri = true];
+  google.protobuf.StringValue nighthawk_service = 28; // [(validate.rules).string.uri = true];
+  // See :option:`--transport-socket` for details.
+  envoy.api.v2.core.TransportSocket transport_socket = 27;
 }

@@ -254,6 +254,10 @@ void ProcessImpl::createBootstrapConfiguration(envoy::config::bootstrap::v2::Boo
       }
     }
 
+    if (options_.transportSocket().has_value()) {
+      *cluster->mutable_transport_socket() = options_.transportSocket().value();
+    }
+
     cluster->set_name(fmt::format("{}", i));
     cluster->mutable_connect_timeout()->set_seconds(options_.timeout().count());
     cluster->mutable_max_requests_per_connection()->set_value(options_.maxRequestsPerConnection());
