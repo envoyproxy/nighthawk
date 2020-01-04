@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import itertools
 import logging
 import os
 import sys
@@ -432,20 +431,24 @@ def test_multiple_backends_http_h1(multi_http_test_server_fixture):
   Runs the CLI configured to use plain HTTP/1 against multiple test servers, and sanity
   checks statistics from both client and server.
   """
-  parsed_json, stderr = multi_http_test_server_fixture.runNighthawkClient(
-      [multi_http_test_server_fixture.getTestServerRootUri()] +
-      # URI host/port overridden by --backend-endpoint
-      list(
-          itertools.chain.from_iterable([("--backend-endpoint", uri.replace("http://", "").replace(
-              "/", "")) for uri in multi_http_test_server_fixture.getAllTestServerRootUris()])) +
-      ["--duration", "100", "--termination-predicate", "benchmark.http_2xx:24"])
+  nighthawk_client_args = [
+    "--multi-target-path", "/",
+    "--duration", "100",
+    "--termination-predicate", "benchmark.http_2xx:24"
+  ]
+  for uri in multi_http_test_server_fixture.getAllTestServerRootUris():
+    nighthawk_client_args.append("--multi-target-endpoint")
+    nighthawk_client_args.append(uri.replace("http://", "").replace("/", ""))
+
+  parsed_json, stderr = multi_http_test_server_fixture.runNighthawkClient(nighthawk_client_args)
+
   counters = multi_http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   assertCounterEqual(counters, "benchmark.http_2xx", 25)
   assertCounterEqual(counters, "upstream_cx_http1_total", 3)
   assertCounterEqual(counters, "upstream_cx_rx_bytes_total", 3400)
   assertCounterEqual(counters, "upstream_cx_total", 3)
-  assertCounterEqual(counters, "upstream_cx_tx_bytes_total",
-                     1400 if multi_http_test_server_fixture.ip_version == IpVersion.IPV6 else 1500)
+  assertCounterEqual(counters, "upstream_cx_tx_bytes_total", 1250)
+                    #  1400 if multi_http_test_server_fixture.ip_version == IpVersion.IPV6 else 1500)
   assertCounterEqual(counters, "upstream_rq_pending_total", 3)
   assertCounterEqual(counters, "upstream_rq_total", 25)
   assertCounterEqual(counters, "default.total_match_count", 3)

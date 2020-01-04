@@ -8,6 +8,7 @@
 #include "nighthawk/client/options.h"
 #include "nighthawk/common/exception.h"
 
+#include "absl/types/optional.h"
 #include "tclap/CmdLine.h"
 
 namespace Nighthawk {
@@ -27,7 +28,7 @@ public:
   uint32_t connections() const override { return connections_; }
   std::chrono::seconds duration() const override { return std::chrono::seconds(duration_); }
   std::chrono::seconds timeout() const override { return std::chrono::seconds(timeout_); }
-  std::string uri() const override { return uri_; }
+  absl::optional<std::string> uri() const override { return uri_; }
   bool h2() const override { return h2_; }
   std::string concurrency() const override { return concurrency_; }
   nighthawk::client::Verbosity::VerbosityOptions verbosity() const override { return verbosity_; };
@@ -58,7 +59,12 @@ public:
   bool openLoop() const override { return open_loop_; }
 
   std::chrono::nanoseconds jitterUniform() const override { return jitter_uniform_; }
-  std::vector<std::string> backendEndpoints() const override { return backend_endpoints_; }
+
+  std::vector<nighthawk::client::MultiTarget::Endpoint> multiTargetEndpoints() const override {
+    return multi_target_endpoints_;
+  }
+  std::string multiTargetPath() const override { return multi_target_path_; }
+  bool multiTargetUseHttps() const override { return multi_target_use_https_; }
 
 private:
   void parsePredicates(const TCLAP::MultiArg<std::string>& arg,
@@ -70,7 +76,7 @@ private:
   uint32_t connections_{100};
   uint32_t duration_{5};
   uint32_t timeout_{30};
-  std::string uri_;
+  absl::optional<std::string> uri_;
   bool h2_{false};
   std::string concurrency_;
   nighthawk::client::Verbosity::VerbosityOptions verbosity_{nighthawk::client::Verbosity::WARN};
@@ -96,7 +102,9 @@ private:
   TerminationPredicateMap failure_predicates_;
   bool open_loop_{false};
   std::chrono::nanoseconds jitter_uniform_;
-  std::vector<std::string> backend_endpoints_;
+  std::vector<nighthawk::client::MultiTarget::Endpoint> multi_target_endpoints_;
+  std::string multi_target_path_;
+  bool multi_target_use_https_;
 };
 
 } // namespace Client

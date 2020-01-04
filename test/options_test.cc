@@ -4,6 +4,7 @@
 
 #include "test/client/utility.h"
 
+#include "tclap/CmdLine.h"
 #include "gtest/gtest.h"
 
 using namespace std::chrono_literals;
@@ -27,6 +28,23 @@ class OptionsImplIntTest : public OptionsImplTest, public WithParamInterface<con
 class OptionsImplIntTestNonZeroable : public OptionsImplTest,
                                       public WithParamInterface<const char*> {};
 
+// TEST_F(OptionsImplTest, Single) {
+//   // TestUtility::createOptionsImpl(fmt::format("{} --rps 4 {}", client_name_, good_test_uri_));
+//   TestUtility::createOptionsImpl(fmt::format(
+//       "{} --rps 4 --connections 5 --duration 6 --timeout 7 --h2 "
+//       "--concurrency 8 --verbosity error --output-format yaml --prefetch-connections "
+//       "--burst-size 13 --address-family v6 --request-method POST --request-body-size 1234 "
+//       "--tls-context {} --request-header f1:b1 --request-header f2:b2 --request-header f3:b3:b4 "
+//       "--max-pending-requests 10 "
+//       "--max-active-requests 11 --max-requests-per-connection 12 --sequencer-idle-strategy sleep
+//       "
+//       "--termination-predicate t1:1 --termination-predicate t2:2 --failure-predicate f1:1 "
+//       "--failure-predicate f2:2 --jitter-uniform .00001s {}",
+//       client_name_,
+//       "{common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"]}}}",
+//       good_test_uri_));
+// }
+
 TEST_F(OptionsImplTest, BogusInput) {
   // When just passing the non-existing argument --foo it would be interpreted as a
   // hostname. However, hostnames shouldn't start with '-', and hence this test should
@@ -35,19 +53,19 @@ TEST_F(OptionsImplTest, BogusInput) {
                           MalformedArgvException, "Invalid URI");
 }
 
-// This test should cover every option we offer.
-TEST_F(OptionsImplTest, All) {
+// This test should cover every option we offer, except --multi-target-* which is mutually
+// exclusive with the URI option.
+TEST_F(OptionsImplTest, AlmostAll) {
   Envoy::MessageUtil util;
   std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(fmt::format(
       "{} --rps 4 --connections 5 --duration 6 --timeout 7 --h2 "
       "--concurrency 8 --verbosity error --output-format yaml --prefetch-connections "
       "--burst-size 13 --address-family v6 --request-method POST --request-body-size 1234 "
-      "--tls-context {} --request-header f1:b1 --request-header f2:b2 --request-header f3:b3:b4 {} "
+      "--tls-context {} --request-header f1:b1 --request-header f2:b2 --request-header f3:b3:b4 "
       "--max-pending-requests 10 "
       "--max-active-requests 11 --max-requests-per-connection 12 --sequencer-idle-strategy sleep "
       "--termination-predicate t1:1 --termination-predicate t2:2 --failure-predicate f1:1 "
-      "--failure-predicate f2:2 --jitter-uniform .00001s "
-      "--backend-endpoint 1.1.1.1:1 --backend-endpoint 2.2.2.2:2",
+      "--failure-predicate f2:2 --jitter-uniform .00001s {}",
       client_name_,
       "{common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"]}}}",
       good_test_uri_));
@@ -119,10 +137,6 @@ TEST_F(OptionsImplTest, All) {
   EXPECT_EQ(cmd->failure_predicates().at("f1"), 1);
   EXPECT_EQ(cmd->failure_predicates().at("f2"), 2);
 
-  ASSERT_EQ(2, cmd->backend_endpoints_size());
-  EXPECT_EQ(cmd->backend_endpoints(0).value(), "1.1.1.1:1");
-  EXPECT_EQ(cmd->backend_endpoints(1).value(), "2.2.2.2:2");
-
   // Now we construct a new options from the proto we created above. This should result in an
   // OptionsImpl instance equivalent to options. We test that by converting both to yaml strings,
   // expecting them to be equal. This should provide helpful output when the test fails by showing
@@ -144,7 +158,63 @@ TEST_F(OptionsImplTest, All) {
   // superfluous.
   EXPECT_TRUE(util(*(options_from_proto.toCommandLineOptions()), *cmd));
 }
+/*
+// --multi-target-* args
+TEST_F(OptionsImplTest, MultiTarget) {
+  Envoy::MessageUtil util;
+  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(
+      fmt::format("{} --multi-target-endpoint 1.1.1.1:3 "
+                  "--multi-target-endpoint 2.2.2.2:4 "
+                  "--multi-target-endpoint [::1]:5 "
+                  "--multi-target-endpoint www.example.com:6 "
+                  "--multi-target-path /x/y/z --multi-target-use-https",
+                  client_name_));
 
+  EXPECT_EQ("/x/y/z", options->multiTargetPath());
+  EXPECT_EQ(true, options->multiTargetUseHttps());
+
+  ASSERT_EQ(4, options->multiTargetEndpoints().size());
+  EXPECT_EQ("1.1.1.1", options->multiTargetEndpoints()[0].address());
+  EXPECT_EQ(3, options->multiTargetEndpoints()[0].port());
+  EXPECT_EQ("2.2.2.2", options->multiTargetEndpoints()[1].address());
+  EXPECT_EQ(4, options->multiTargetEndpoints()[1].port());
+  EXPECT_EQ("[::1]", options->multiTargetEndpoints()[2].address());
+  EXPECT_EQ(5, options->multiTargetEndpoints()[2].port());
+  EXPECT_EQ("www.example.com", options->multiTargetEndpoints()[3].address());
+  EXPECT_EQ(6, options->multiTargetEndpoints()[3].port());
+
+  CommandLineOptionsPtr cmd = options->toCommandLineOptions();
+
+  EXPECT_EQ(cmd->multi_target().use_https().value(), options->multiTargetUseHttps());
+  EXPECT_EQ(cmd->multi_target().path().value(), options->multiTargetPath());
+
+  ASSERT_EQ(2, cmd->multi_target().endpoints_size());
+  EXPECT_EQ(cmd->multi_target().endpoints(0).address().value(), "1.1.1.1");
+  EXPECT_EQ(cmd->multi_target().endpoints(0).port().value(), 3);
+  EXPECT_EQ(cmd->multi_target().endpoints(1).address().value(), "2.2.2.2");
+  EXPECT_EQ(cmd->multi_target().endpoints(1).port().value(), 4);
+
+  // Now we construct a new options from the proto we created above. This should result in an
+  // OptionsImpl instance equivalent to options. We test that by converting both to yaml strings,
+  // expecting them to be equal. This should provide helpful output when the test fails by showing
+  // the unexpected (yaml) diff.
+  // The predicates are defined as proto maps, and these seem to re-serialize into a different
+  // order. Hence we trim the maps to contain a single entry so they don't thwart our
+  // textual comparison below.
+  EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("benchmark.http_4xx"));
+  EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("benchmark.http_5xx"));
+
+  OptionsImpl options_from_proto(*cmd);
+  std::string s1 = Envoy::MessageUtil::getYamlStringFromMessage(
+      *(options_from_proto.toCommandLineOptions()), true, true);
+  std::string s2 = Envoy::MessageUtil::getYamlStringFromMessage(*cmd, true, true);
+
+  EXPECT_EQ(s1, s2);
+  // For good measure, also directly test for proto equivalence, though this should be
+  // superfluous.
+  EXPECT_TRUE(util(*(options_from_proto.toCommandLineOptions()), *cmd));
+}
+*/
 // Test that TCLAP's way of handling --help behaves as expected.
 TEST_F(OptionsImplTest, Help) {
   EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{}  --help", client_name_)),
@@ -161,13 +231,13 @@ TEST_F(OptionsImplTest, Version) {
 // We should fail when no arguments are passed.
 TEST_F(OptionsImplTest, NoArguments) {
   EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{}", client_name_)),
-                          MalformedArgvException, "Required argument missing: uri");
+                          MalformedArgvException, "Either URI or --multi-target-\\* must be set.");
 }
 
 TEST_P(OptionsImplIntTestNonZeroable, NonZeroableOptions) {
   const char* option_name = GetParam();
-  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{} {} --{} 0", client_name_,
-                                                                     good_test_uri_, option_name)),
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{} --{} 0 {}", client_name_,
+                                                                     option_name, good_test_uri_)),
                           std::exception, "Proto constraint validation failed");
 }
 
@@ -178,15 +248,15 @@ INSTANTIATE_TEST_SUITE_P(NonZeroableIntOptionTests, OptionsImplIntTestNonZeroabl
 // Check standard expectations for any integer values options we offer.
 TEST_P(OptionsImplIntTest, IntOptionsBadValuesTest) {
   const char* option_name = GetParam();
-  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{} {} --{} -1", client_name_,
-                                                                     good_test_uri_, option_name)),
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{} --{} -1 {}", client_name_,
+                                                                     option_name, good_test_uri_)),
                           MalformedArgvException,
                           fmt::format("Invalid value for --{}", option_name));
   EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(
-                              fmt::format("{} {} --{}", client_name_, good_test_uri_, option_name)),
-                          MalformedArgvException, "Missing a value for this argument");
-  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{} {} --{} foo", client_name_,
-                                                                     good_test_uri_, option_name)),
+                              fmt::format("{} --{} {}", client_name_, option_name, good_test_uri_)),
+                          MalformedArgvException, "Couldn't read argument value from string");
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{} --{} foo {}", client_name_,
+                                                                     option_name, good_test_uri_)),
                           MalformedArgvException, "Couldn't read argument value");
 }
 
@@ -200,13 +270,13 @@ TEST_F(OptionsImplTest, H2Flag) {
   EXPECT_FALSE(
       TestUtility::createOptionsImpl(fmt::format("{} {}", client_name_, good_test_uri_))->h2());
   EXPECT_TRUE(
-      TestUtility::createOptionsImpl(fmt::format("{} {} --h2", client_name_, good_test_uri_))
+      TestUtility::createOptionsImpl(fmt::format("{} --h2 {}", client_name_, good_test_uri_))
           ->h2());
   EXPECT_THROW_WITH_REGEX(
-      TestUtility::createOptionsImpl(fmt::format("{} {} --h2 0", client_name_, good_test_uri_)),
+      TestUtility::createOptionsImpl(fmt::format("{} --h2 0 {}", client_name_, good_test_uri_)),
       MalformedArgvException, "Couldn't find match for argument");
   EXPECT_THROW_WITH_REGEX(
-      TestUtility::createOptionsImpl(fmt::format("{} {} --h2 true", client_name_, good_test_uri_)),
+      TestUtility::createOptionsImpl(fmt::format("{} --h2 true {}", client_name_, good_test_uri_)),
       MalformedArgvException, "Couldn't find match for argument");
 }
 
@@ -214,13 +284,13 @@ TEST_F(OptionsImplTest, PrefetchConnectionsFlag) {
   EXPECT_FALSE(TestUtility::createOptionsImpl(fmt::format("{} {}", client_name_, good_test_uri_))
                    ->prefetchConnections());
   EXPECT_TRUE(TestUtility::createOptionsImpl(
-                  fmt::format("{} {} --prefetch-connections", client_name_, good_test_uri_))
+                  fmt::format("{} --prefetch-connections {}", client_name_, good_test_uri_))
                   ->prefetchConnections());
   EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
-                              "{} {} --prefetch-connections 0", client_name_, good_test_uri_)),
+                              "{} --prefetch-connections 0 {}", client_name_, good_test_uri_)),
                           MalformedArgvException, "Couldn't find match for argument");
   EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
-                              "{} {} --prefetch-connections true", client_name_, good_test_uri_)),
+                              "{} --prefetch-connections true {}", client_name_, good_test_uri_)),
                           MalformedArgvException, "Couldn't find match for argument");
 }
 
@@ -229,46 +299,43 @@ TEST_F(OptionsImplTest, PrefetchConnectionsFlag) {
 // through the OptionsImplIntTest.
 TEST_F(OptionsImplTest, BadConcurrencyValuesThrow) {
   EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(
-                              fmt::format("{} {} --concurrency 0", client_name_, good_test_uri_)),
+                              fmt::format("{} --concurrency 0 {}", client_name_, good_test_uri_)),
                           MalformedArgvException,
                           "Value for --concurrency should be greater then 0.");
   EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(
-                              fmt::format("{} {} --concurrency -1", client_name_, good_test_uri_)),
+                              fmt::format("{} --concurrency -1 {}", client_name_, good_test_uri_)),
                           MalformedArgvException,
                           "Value for --concurrency should be greater then 0.");
   EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(
-                              fmt::format("{} {} --concurrency", client_name_, good_test_uri_)),
-                          MalformedArgvException, "Missing a value for this argument");
-  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(
-                              fmt::format("{} {} --concurrency foo", client_name_, good_test_uri_)),
+                              fmt::format("{} --concurrency foo {}", client_name_, good_test_uri_)),
                           MalformedArgvException, "Invalid value for --concurrency");
   EXPECT_THROW_WITH_REGEX(
       TestUtility::createOptionsImpl(
-          fmt::format("{} {} --concurrency 999999999999999999999", client_name_, good_test_uri_)),
+          fmt::format("{} --concurrency 999999999999999999999 {}", client_name_, good_test_uri_)),
       MalformedArgvException, "Value out of range: --concurrency");
 }
 
 TEST_F(OptionsImplTest, JitterValueRangeTest) {
-  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{} {} --jitter-uniform a",
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{} --jitter-uniform a {}",
                                                                      client_name_, good_test_uri_)),
                           MalformedArgvException, "Invalid value for --jitter-uniform");
   // Should end with 's'.
-  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{} {} --jitter-uniform .1",
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{} --jitter-uniform .1 {}",
                                                                      client_name_, good_test_uri_)),
                           MalformedArgvException, "Invalid value for --jitter-uniform");
   // No negative durations accepted
-  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{} {} --jitter-uniform -1s",
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{} --jitter-uniform -1s {}",
                                                                      client_name_, good_test_uri_)),
                           MalformedArgvException, "--jitter-uniform is out of range");
   // No 0 duration accepted
-  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{} {} --jitter-uniform 0s",
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{} --jitter-uniform 0s {}",
                                                                      client_name_, good_test_uri_)),
                           MalformedArgvException, "--jitter-uniform is out of range");
   // No durations >= 1s are accepted
   EXPECT_NO_THROW(TestUtility::createOptionsImpl(
-      fmt::format("{} {} --jitter-uniform 1s", client_name_, good_test_uri_)));
+      fmt::format("{} --jitter-uniform 1s {}", client_name_, good_test_uri_)));
   EXPECT_NO_THROW(TestUtility::createOptionsImpl(
-      fmt::format("{} {} --jitter-uniform 100s", client_name_, good_test_uri_)));
+      fmt::format("{} --jitter-uniform 100s {}", client_name_, good_test_uri_)));
 }
 
 // Test a relatively large uint value to see if we can get reasonable range
@@ -341,7 +408,7 @@ INSTANTIATE_TEST_SUITE_P(AddressFamilyOptionTests, OptionsImplAddressFamilyTest,
 
 // Test we don't accept any bad --address-family values.
 TEST_F(OptionsImplTest, AddressFamilyValuesAreConstrained) {
-  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{} {} --address-family foo",
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{} --address-family foo {}",
                                                                      client_name_, good_test_uri_)),
                           MalformedArgvException, "Value 'foo' does not meet constraint");
 }
@@ -429,69 +496,59 @@ TEST_F(OptionsImplTest, RequestHeaderValueWithColonsAndSpaces) {
   EXPECT_EQ(value, headers[0].header().value());
 }
 
-TEST_F(OptionsImplTest, BackendHostMalformed) {
+TEST_F(OptionsImplTest, MultiTargetEndpointMalformed) {
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(fmt::format(
+          "{} --multi-target-path /x/y/z --multi-target-endpoint my.dns.name", client_name_)),
+      MalformedArgvException, "must be in the format");
+
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(fmt::format(
+          "{} --multi-target-path /x/y/z --multi-target-endpoint my.dns.name:xyz", client_name_)),
+      MalformedArgvException, "must be in the format");
+
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(fmt::format(
+          "{} --multi-target-path /x/y/z --multi-target-endpoint 1.1.1.1", client_name_)),
+      MalformedArgvException, "must be in the format");
+
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(fmt::format(
+          "{} --multi-target-path /x/y/z --multi-target-endpoint '[::1]'", client_name_)),
+      MalformedArgvException, "must be in the format");
+
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(fmt::format(
+          "{} --multi-target-path /x/y/z --multi-target-endpoint a.1:a.1:33", client_name_)),
+      MalformedArgvException, "must be in the format");
+
   EXPECT_THROW_WITH_REGEX(
       TestUtility::createOptionsImpl(
-          fmt::format("{} --backend-endpoint my.dns.name {}", client_name_, good_test_uri_)),
-      MalformedArgvException, "must be in the form");
+          fmt::format("{} --multi-target-path /x/y/z --multi-target-endpoint :0", client_name_)),
+      MalformedArgvException, "must be in the format");
 
   EXPECT_THROW_WITH_REGEX(
       TestUtility::createOptionsImpl(
-          fmt::format("{} --backend-endpoint my.dns.name:xyz {}", client_name_, good_test_uri_)),
-      MalformedArgvException, "must be in the form");
-
-  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
-                              "{} --backend-endpoint 1.1.1.1 {}", client_name_, good_test_uri_)),
-                          MalformedArgvException, "must be in the form");
-
-  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
-                              "{} --backend-endpoint '[::1]' {}", client_name_, good_test_uri_)),
-                          MalformedArgvException, "must be in the form");
-
-  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
-                              "{} --backend-endpoint a.1:a.1:33 {}", client_name_, good_test_uri_)),
-                          MalformedArgvException, "must be in the form");
-
-  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{} --backend-endpoint :0 {}",
-                                                                     client_name_, good_test_uri_)),
-                          MalformedArgvException, "must be in the form");
-
-  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{} --backend-endpoint : {}",
-                                                                     client_name_, good_test_uri_)),
-                          MalformedArgvException, "must be in the form");
+          fmt::format("{} --multi-target-path /x/y/z --multi-target-endpoint :", client_name_)),
+      MalformedArgvException, "must be in the format");
 }
 
-TEST_F(OptionsImplTest, BackendHostTypeMismatch) {
+TEST_F(OptionsImplTest, BothUriAndMultiTargetSpecified) {
   EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
-                              "{} --backend-endpoint 1.11.111.11:1 --backend-endpoint a:5 {}",
+                              "{} --multi-target-path /x/y/z --multi-target-endpoint 1.2.3.4:5 {}",
                               client_name_, good_test_uri_)),
-                          MalformedArgvException, "must be the same address type");
-
-  EXPECT_THROW_WITH_REGEX(
-      TestUtility::createOptionsImpl(fmt::format(
-          "{} --backend-endpoint [::1]:1 --backend-endpoint a:5 {}", client_name_, good_test_uri_)),
-      MalformedArgvException, "must be the same address type");
-
+                          MalformedArgvException, "cannot both be set");
   EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
-                              "{} --backend-endpoint 1.11.111.11:1 --backend-endpoint [::1]:1 {}",
-                              client_name_, good_test_uri_)),
-                          MalformedArgvException, "must be the same address type");
-
-  EXPECT_THROW_WITH_REGEX(
-      TestUtility::createOptionsImpl(fmt::format(
-          "{} --backend-endpoint a:5 --backend-endpoint [::1]:5 {}", client_name_, good_test_uri_)),
-      MalformedArgvException, "must be the same address type");
-
+                              "{} --multi-target-path /x/y/z {}", client_name_, good_test_uri_)),
+                          MalformedArgvException, "cannot both be set");
   EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
-                              "{} --backend-endpoint a:5 --backend-endpoint 1.1.1.1:1 {}",
+                              "{} --multi-target-path /x/y/z --multi-target-use-https {}",
                               client_name_, good_test_uri_)),
-                          MalformedArgvException, "must be the same address type");
-
-  EXPECT_THROW_WITH_REGEX(
-      TestUtility::createOptionsImpl(fmt::format(
-          "{} --backend-endpoint a:5 --backend-endpoint b.c:6 --backend-endpoint 1.1.1.1:1 {}",
-          client_name_, good_test_uri_)),
-      MalformedArgvException, "must be the same address type");
+                          MalformedArgvException, "cannot both be set");
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                              "{} --multi-target-path /x/y/z --multi-target-use-https {}",
+                              client_name_, good_test_uri_)),
+                          MalformedArgvException, "cannot both be set");
 }
 
 } // namespace Client

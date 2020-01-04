@@ -2,7 +2,6 @@
  "options": {
   "termination_predicates": {},
   "failure_predicates": {},
-  "backend_endpoints": [],
   "connections": 0,
   "duration": "1s"
  },

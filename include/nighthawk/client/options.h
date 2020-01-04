@@ -10,6 +10,8 @@
 
 #include "api/client/options.pb.h"
 
+#include "absl/types/optional.h"
+
 namespace Nighthawk {
 namespace Client {
 
@@ -26,7 +28,7 @@ public:
   virtual uint32_t connections() const PURE;
   virtual std::chrono::seconds duration() const PURE;
   virtual std::chrono::seconds timeout() const PURE;
-  virtual std::string uri() const PURE;
+  virtual absl::optional<std::string> uri() const PURE;
   virtual bool h2() const PURE;
   virtual std::string concurrency() const PURE;
   virtual nighthawk::client::Verbosity::VerbosityOptions verbosity() const PURE;
@@ -48,7 +50,9 @@ public:
   virtual TerminationPredicateMap failurePredicates() const PURE;
   virtual bool openLoop() const PURE;
   virtual std::chrono::nanoseconds jitterUniform() const PURE;
-  virtual std::vector<std::string> backendEndpoints() const PURE;
+  virtual std::vector<nighthawk::client::MultiTarget::Endpoint> multiTargetEndpoints() const PURE;
+  virtual std::string multiTargetPath() const PURE;
+  virtual bool multiTargetUseHttps() const PURE;
   /**
    * Converts an Options instance to an equivalent CommandLineOptions instance in terms of option
    * values.

@@ -22,6 +22,7 @@ namespace Client {
 
 OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   setNonTrivialDefaults();
+  TCLAP::OptionalUnlabeledTracker::alreadyOptional() = false;
   // Override some defaults, we are in CLI-mode.
   verbosity_ = nighthawk::client::Verbosity::INFO;
   output_format_ = nighthawk::client::OutputFormat::HUMAN;
@@ -189,21 +190,34 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "Add uniformly distributed absolute request-release timing jitter. For example, to add 10 us "
       "of jitter, specify .00001s. Default is empty / no uniform jitter.",
       false, "", "duration", cmd);
-  TCLAP::MultiArg<std::string> backend_endpoints(
-      "", "backend-endpoint",
-      "Backend endpoint overrides. "
+
+  TCLAP::MultiArg<std::string> multi_target_endpoints(
+      "", "multi-target-endpoint",
+      "Target endpoint in the form IPv4:port, [IPv6]:port, or DNS:port. "
       "This argument is intended to be specified multiple times. "
-      "Nighthawk will generate the same traffic as usual, but "
-      "will spread it across all backend endpoints with "
+      "Nighthawk will spread traffic across all endpoints with "
       "round robin distribution. "
-      "Endpoint formats: IPv4:port, [IPv6]:port, DNS:port. "
-      "Note: The host and port from the URI are ignored when "
-      "--backend-endpoint is present. ",
+      "Mutually exclusive with providing a URI.",
       false, "string", cmd);
-  TCLAP::UnlabeledValueArg<std::string> uri("uri",
-                                            "uri to benchmark. http:// and https:// are supported, "
-                                            "but in case of https no certificates are validated.",
-                                            true, "", "uri format", cmd);
+  TCLAP::ValueArg<std::string> multi_target_path(
+      "", "multi-target-path",
+      "The single absolute path Nighthawk should request from each target endpoint. "
+      "Required when using --multi-target-endpoint. "
+      "Mutually exclusive with providing a URI.",
+      false, "", "string", cmd);
+  TCLAP::SwitchArg multi_target_use_https(
+      "", "multi-target-use-https",
+      "Use HTTPS to connect to the target endpoints. Otherwise HTTP is used. "
+      "Mutually exclusive with providing a URI.",
+      cmd);
+
+  TCLAP::UnlabeledValueArg<std::string> uri(
+      "uri",
+      "URI to benchmark. http:// and https:// are supported, "
+      "but in case of https no certificates are validated. "
+      "Provide a URI when you need to benchmark a single endpoint. For multiple "
+      "endpoints, set --multi-target-* instead.",
+      false, "", "uri format", cmd);
 
   Utility::parseCommand(cmd, argc, argv);
 
@@ -211,7 +225,9 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   TCLAP_SET_IF_SPECIFIED(connections, connections_);
   TCLAP_SET_IF_SPECIFIED(duration, duration_);
   TCLAP_SET_IF_SPECIFIED(timeout, timeout_);
-  uri_ = uri.getValue();
+  if (uri.isSet()) {
+    uri_ = uri.getValue();
+  }
   TCLAP_SET_IF_SPECIFIED(h2, h2_);
   TCLAP_SET_IF_SPECIFIED(concurrency, concurrency_);
   // TODO(oschaaf): is there a generic way to set these enum values?
@@ -272,7 +288,32 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       throw MalformedArgvException("Invalid value for --jitter-uniform");
     }
   }
-  TCLAP_SET_IF_SPECIFIED(backend_endpoints, backend_endpoints_);
+  if (uri.isSet()) {
+    if (multi_target_use_https.isSet() || multi_target_path.isSet() ||
+        multi_target_endpoints.isSet()) {
+      throw MalformedArgvException("URI and --multi-target-* options cannot both be set.");
+    }
+  } else {
+    if (!multi_target_endpoints.isSet()) {
+      throw MalformedArgvException("Either URI or --multi-target-* must be set.");
+    }
+    if (!multi_target_path.isSet()) {
+      throw MalformedArgvException("--multi-target-path must be set.");
+    }
+  }
+  TCLAP_SET_IF_SPECIFIED(multi_target_use_https, multi_target_use_https_);
+  TCLAP_SET_IF_SPECIFIED(multi_target_path, multi_target_path_);
+  if (multi_target_endpoints.isSet()) {
+    for (const std::string& host_port : multi_target_endpoints.getValue()) {
+      nighthawk::client::MultiTarget::Endpoint endpoint;
+      if (!Utility::parseHostPort(host_port, &endpoint)) {
+        throw MalformedArgvException(fmt::format("--multi-target-endpoint must be in the format "
+                                                 "IPv4:port, [IPv6]:port, or DNS:port. Got '{}'",
+                                                 host_port));
+      }
+      multi_target_endpoints_.push_back(endpoint);
+    }
+  }
 
   // CLI-specific tests.
   // TODO(oschaaf): as per mergconflicts's remark, it would be nice to aggregate
@@ -356,7 +397,18 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   if (options.has_timeout()) {
     timeout_ = options.timeout().seconds();
   }
-  uri_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, uri, uri_);
+  if (options.has_uri()) {
+    uri_ = options.uri().value();
+  } else {
+    multi_target_path_ =
+        PROTOBUF_GET_WRAPPED_OR_DEFAULT(options.multi_target(), path, multi_target_path_);
+    multi_target_use_https_ =
+        PROTOBUF_GET_WRAPPED_OR_DEFAULT(options.multi_target(), use_https, multi_target_use_https_);
+    for (const nighthawk::client::MultiTarget::Endpoint& endpoint :
+         options.multi_target().endpoints()) {
+      multi_target_endpoints_.push_back(endpoint);
+    }
+  }
   h2_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, h2, h2_);
   concurrency_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, concurrency, concurrency_);
   verbosity_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, verbosity, verbosity_);
@@ -398,9 +450,7 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
     jitter_uniform_ = std::chrono::nanoseconds(
         Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(options.jitter_uniform()));
   }
-  for (const auto& backend_endpoint : options.backend_endpoints()) {
-    backend_endpoints_.push_back(backend_endpoint.value());
-  }
+
   validate();
 }
 
@@ -429,26 +479,20 @@ void OptionsImpl::validate() const {
       throw MalformedArgvException("Value for --concurrency should be greater then 0.");
     }
   }
-  if (!backend_endpoints_.empty()) {
-    HostAddressType first_host_address_type =
-        Utility::hostAddressTypeFromHostPort(backend_endpoints_[0]);
-    for (const std::string& backend_endpoint : backend_endpoints_) {
-      HostAddressType host_address_type = Utility::hostAddressTypeFromHostPort(backend_endpoint);
-      if (host_address_type == HostAddressType::INVALID) {
-        throw MalformedArgvException(fmt::format("--backend-endpoint addresses must be in the form "
-                                                 "IPv4:port, [IPv6]:port, or DNS:port. Got '{}'.",
-                                                 backend_endpoint));
-      }
-      if (host_address_type != first_host_address_type) {
-        throw MalformedArgvException("All --backend-endpoint values must be the same address type "
-                                     "(IPv4:port, [IPv6]:port, or DNS:port).");
-      }
+  if (uri_.has_value()) {
+    try {
+      UriImpl uri(uri_.value());
+    } catch (const UriException&) {
+      throw MalformedArgvException("Invalid URI");
     }
-  }
-  try {
-    UriImpl uri(uri_);
-  } catch (const UriException&) {
-    throw MalformedArgvException("Invalid URI");
+  } else {
+    if (multi_target_endpoints_.empty()) {
+      throw MalformedArgvException(
+          "A URI or at least one --multi-target-endpoint must be specified.");
+    }
+    if (multi_target_path_.empty()) {
+      throw MalformedArgvException("--multi-target-path must be specifiedf.");
+    }
   }
   try {
     Envoy::MessageUtil::validate(*toCommandLineOptions(),
@@ -467,7 +511,18 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptions() const {
   command_line_options->mutable_requests_per_second()->set_value(requestsPerSecond());
   command_line_options->mutable_timeout()->set_seconds(timeout().count());
   command_line_options->mutable_h2()->set_value(h2());
-  command_line_options->mutable_uri()->set_value(uri());
+  if (uri().has_value()) {
+    command_line_options->mutable_uri()->set_value(uri().value());
+  } else {
+    nighthawk::client::MultiTarget* multi_target = command_line_options->mutable_multi_target();
+    multi_target->mutable_path()->set_value(multiTargetPath());
+    multi_target->mutable_use_https()->set_value(multiTargetUseHttps());
+    for (const nighthawk::client::MultiTarget::Endpoint& endpoint : multiTargetEndpoints()) {
+      nighthawk::client::MultiTarget::Endpoint* proto_endpoint = multi_target->add_endpoints();
+      proto_endpoint->mutable_address()->set_value(endpoint.address().value());
+      proto_endpoint->mutable_port()->set_value(endpoint.port().value());
+    }
+  }
   command_line_options->mutable_concurrency()->set_value(concurrency());
   command_line_options->mutable_verbosity()->set_value(verbosity());
   command_line_options->mutable_output_format()->set_value(outputFormat());
@@ -511,9 +566,6 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptions() const {
   if (jitterUniform().count() > 0) {
     *command_line_options->mutable_jitter_uniform() =
         Envoy::Protobuf::util::TimeUtil::NanosecondsToDuration(jitterUniform().count());
-  }
-  for (const std::string& backend_endpoint : backendEndpoints()) {
-    command_line_options->add_backend_endpoints()->set_value(backend_endpoint);
   }
   return command_line_options;
 }

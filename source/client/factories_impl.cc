@@ -118,16 +118,24 @@ void RequestSourceFactoryImpl::setRequestHeader(Envoy::Http::HeaderMap& header,
 }
 
 RequestSourcePtr RequestSourceFactoryImpl::create() const {
-  // Note: we assume a valid uri.
-  // Also, we can't resolve, but we do not need that.
-  UriImpl uri(options_.uri());
   Envoy::Http::HeaderMapPtr header = std::make_unique<Envoy::Http::HeaderMapImpl>();
+  if (options_.uri().has_value()) {
+    // Note: we assume a valid uri.
+    // Also, we can't resolve, but we do not need that.
+    UriImpl uri(options_.uri().value());
+    header->setPath(uri.path());
+    header->setHost(uri.hostAndPort());
+    header->setScheme(uri.scheme() == "https" ? Envoy::Http::Headers::get().SchemeValues.Https
+                                              : Envoy::Http::Headers::get().SchemeValues.Http);
+  } else {
+    header->setPath(options_.multiTargetPath());
+    header->setHost("dummy");
+    header->setScheme(options_.multiTargetUseHttps()
+                          ? Envoy::Http::Headers::get().SchemeValues.Https
+                          : Envoy::Http::Headers::get().SchemeValues.Http);
+  }
 
   header->setMethod(envoy::api::v2::core::RequestMethod_Name(options_.requestMethod()));
-  header->setPath(uri.path());
-  header->setHost(uri.hostAndPort());
-  header->setScheme(uri.scheme() == "https" ? Envoy::Http::Headers::get().SchemeValues.Https
-                                            : Envoy::Http::Headers::get().SchemeValues.Http);
   const uint32_t content_length = options_.requestBodySize();
   if (content_length > 0) {
     header->setContentLength(content_length);

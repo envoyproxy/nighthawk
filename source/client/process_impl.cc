@@ -234,10 +234,11 @@ ProcessImpl::mergeWorkerStatistics(const StatisticFactory& statistic_factory,
 }
 
 void ProcessImpl::createBootstrapConfiguration(envoy::config::bootstrap::v2::Bootstrap& bootstrap,
-                                               const Uri& uri, int number_of_clusters) const {
+                                               const std::vector<UriPtr>& uris,
+                                               int number_of_clusters) const {
   for (int i = 0; i < number_of_clusters; i++) {
     auto* cluster = bootstrap.mutable_static_resources()->add_clusters();
-    if (uri.scheme() == "https") {
+    if (uris[0]->scheme() == "https") {
       auto* tls_context = cluster->mutable_tls_context();
       *tls_context = options_.tlsContext();
       auto* common_tls_context = tls_context->mutable_common_tls_context();
@@ -262,30 +263,12 @@ void ProcessImpl::createBootstrapConfiguration(envoy::config::bootstrap::v2::Boo
         options_.maxPendingRequests() == 0 ? 1 : options_.maxPendingRequests());
     thresholds->mutable_max_requests()->set_value(options_.maxActiveRequests());
 
-    if (options_.backendEndpoints().empty()) {
-      cluster->set_type(envoy::api::v2::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
+    cluster->set_type(envoy::api::v2::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
+    for (const UriPtr& uri : uris) {
       auto* host = cluster->add_hosts();
       auto* socket_address = host->mutable_socket_address();
-      socket_address->set_address(uri.address()->ip()->addressAsString());
-      socket_address->set_port_value(uri.port());
-    } else {
-      if (Utility::hostAddressTypeFromHostPort(options_.backendEndpoints()[0]) ==
-          HostAddressType::DNS) {
-        cluster->set_type(envoy::api::v2::Cluster::DiscoveryType::Cluster_DiscoveryType_STRICT_DNS);
-      } else {
-        cluster->set_type(envoy::api::v2::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
-      }
-      for (const std::string& backend_endpoint : options_.backendEndpoints()) {
-        auto* host = cluster->add_hosts();
-        auto* socket_address = host->mutable_socket_address();
-        std::vector<absl::string_view> parts = absl::StrSplit(backend_endpoint, ':');
-        int port = -1;
-        (void)absl::SimpleAtoi(parts.back(), &port);
-        socket_address->set_port_value(port);
-        parts.pop_back();
-        socket_address->set_address(
-            absl::StrReplaceAll(absl::StrJoin(parts, ":"), {{"[", ""}, {"]", ""}}));
-      }
+      socket_address->set_address(uri->address()->ip()->addressAsString());
+      socket_address->set_port_value(uri->port());
     }
   }
 }
@@ -351,13 +334,25 @@ void ProcessImpl::maybeCreateTracingDriver(const envoy::config::trace::v2::Traci
 }
 
 bool ProcessImpl::run(OutputCollector& collector) {
-  UriImpl uri(options_.uri());
+  std::vector<UriPtr> uris;
   UriPtr tracing_uri;
 
   try {
     // TODO(oschaaf): See if we can rid of resolving here.
     // We now only do it to validate.
-    uri.resolve(*dispatcher_, Utility::translateFamilyOptionString(options_.addressFamily()));
+    if (options_.uri().has_value()) {
+      uris.emplace_back(std::make_unique<UriImpl>(options_.uri().value()));
+    } else {
+      for (const nighthawk::client::MultiTarget::Endpoint& endpoint :
+           options_.multiTargetEndpoints()) {
+        uris.emplace_back(std::make_unique<UriImpl>(fmt::format(
+            "{}://{}:{}{}", options_.multiTargetUseHttps() ? "https" : "http",
+            endpoint.address().value(), endpoint.port().value(), options_.multiTargetPath())));
+      }
+    }
+    for (const UriPtr& uri : uris) {
+      uri->resolve(*dispatcher_, Utility::translateFamilyOptionString(options_.addressFamily()));
+    }
     if (options_.trace() != "") {
       tracing_uri = std::make_unique<UriImpl>(options_.trace());
       tracing_uri->resolve(*dispatcher_,
@@ -366,6 +361,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
   } catch (const UriException&) {
     return false;
   }
+
   int number_of_workers = determineConcurrency();
   shutdown_ = false;
   const std::vector<ClientWorkerPtr>& workers = createWorkers(number_of_workers);
@@ -384,7 +380,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
       *singleton_manager_);
   cluster_manager_factory_->setPrefetchConnections(options_.prefetchConnections());
   envoy::config::bootstrap::v2::Bootstrap bootstrap;
-  createBootstrapConfiguration(bootstrap, uri, number_of_workers);
+  createBootstrapConfiguration(bootstrap, uris, number_of_workers);
   if (tracing_uri != nullptr) {
     setupTracingImplementation(bootstrap, *tracing_uri);
     addTracingCluster(bootstrap, *tracing_uri);

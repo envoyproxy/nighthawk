@@ -1,5 +1,4 @@
 #include "common/utility.h"
-
 #include "nighthawk/common/exception.h"
 
 #include "external/envoy/source/common/http/utility.h"
@@ -72,17 +71,19 @@ void Utility::parseCommand(TCLAP::CmdLine& cmd, const int argc, const char* cons
   }
 }
 
-HostAddressType Utility::hostAddressTypeFromHostPort(const std::string& host_port) {
-  if (RE2::FullMatch(host_port, R"(\d+\.\d+\.\d+\.\d+:\d+)")) {
-    return HostAddressType::IPV4;
+bool Utility::parseHostPort(const std::string& host_port,
+                            nighthawk::client::MultiTarget::Endpoint* endpoint) {
+  std::string address;
+  int port;
+  if (!RE2::FullMatch(host_port, R"((\d+\.\d+\.\d+\.\d+):(\d+))", &address, &port) &&
+      !RE2::FullMatch(host_port, R"((\[[.:0-9a-fA-F]+\]):(\d+))", &address, &port) &&
+      !RE2::FullMatch(host_port, R"(([-.0-9a-zA-Z]+):(\d+))", &address, &port)) {
+    return false;
   }
-  if (RE2::FullMatch(host_port, R"(\[[.:0-9a-fA-F]+\]:\d+)")) {
-    return HostAddressType::IPV6;
+  if (endpoint != nullptr) {
+    endpoint->mutable_address()->set_value(address);
+    endpoint->mutable_port()->set_value(port);
   }
-  if (RE2::FullMatch(host_port, R"([-.0-9a-zA-Z]+:\d+)")) {
-    return HostAddressType::DNS;
-  }
-  return HostAddressType::INVALID;
+  return true;
 }
-
 } // namespace Nighthawk
