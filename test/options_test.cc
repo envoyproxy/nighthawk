@@ -36,9 +36,8 @@ TEST_F(OptionsImplTest, BogusInput) {
                           MalformedArgvException, "Invalid URI");
 }
 
-// This test should cover every option we offer, except:
-//   --multi-target-* is covered in MultiTarget because it's mutually exclusive with URIs.
-//   --tls-context is covered in TlsContext because it's mutually exclusive with --transport-socket.
+// This test should cover every option we offer, except some mutually exclusive ones that
+// have separate tests.
 TEST_F(OptionsImplTest, AlmostAll) {
   Envoy::MessageUtil util;
   std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(fmt::format(
@@ -160,7 +159,8 @@ TEST_F(OptionsImplTest, AlmostAll) {
   EXPECT_TRUE(util(*(options_from_proto.toCommandLineOptions()), *cmd));
 }
 
-// This test covers --tls-context, which can't be tested at the same time as --transport-socket.
+// We test --tls-context here and not in AlmostAll above because it is mutually
+// exclusive with --transport-socket.
 TEST_F(OptionsImplTest, TlsContext) {
   Envoy::MessageUtil util;
   std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(
@@ -202,7 +202,8 @@ TEST_F(OptionsImplTest, TlsContext) {
   EXPECT_TRUE(util(*(options_from_proto.toCommandLineOptions()), *cmd));
 }
 
-// --multi-target-* args
+// We test --multi-target-* options here and not in AlmostAll above because they are mutually
+// exclusive with the URI arg.
 TEST_F(OptionsImplTest, MultiTarget) {
   Envoy::MessageUtil util;
   std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(
@@ -278,7 +279,8 @@ TEST_F(OptionsImplTest, Version) {
 // We should fail when no arguments are passed.
 TEST_F(OptionsImplTest, NoArguments) {
   EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{}", client_name_)),
-                          MalformedArgvException, "Either URI or --multi-target-\\* must be set.");
+                          MalformedArgvException,
+                          "A URI or --multi-target-\\* options must be specified.");
 }
 
 TEST_P(OptionsImplIntTestNonZeroable, NonZeroableOptions) {
@@ -599,18 +601,42 @@ TEST_F(OptionsImplTest, BothUriAndMultiTargetSpecified) {
   EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
                               "{} --multi-target-path /x/y/z --multi-target-endpoint 1.2.3.4:5 {}",
                               client_name_, good_test_uri_)),
-                          MalformedArgvException, "cannot both be set");
+                          MalformedArgvException,
+                          "URI and --multi-target-\\* options cannot both be specified.");
   EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
                               "{} --multi-target-path /x/y/z {}", client_name_, good_test_uri_)),
-                          MalformedArgvException, "cannot both be set");
+                          MalformedArgvException,
+                          "URI and --multi-target-\\* options cannot both be specified.");
   EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
                               "{} --multi-target-path /x/y/z --multi-target-use-https {}",
                               client_name_, good_test_uri_)),
-                          MalformedArgvException, "cannot both be set");
+                          MalformedArgvException,
+                          "URI and --multi-target-\\* options cannot both be specified.");
   EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
                               "{} --multi-target-path /x/y/z --multi-target-use-https {}",
                               client_name_, good_test_uri_)),
-                          MalformedArgvException, "cannot both be set");
+                          MalformedArgvException,
+                          "URI and --multi-target-\\* options cannot both be specified.");
+}
+
+TEST_F(OptionsImplTest, IncorrectMultiTargetCombination) {
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(
+                              fmt::format("{} --multi-target-endpoint 1.2.3.4:5", client_name_)),
+                          MalformedArgvException, "--multi-target-path must be specified.");
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(fmt::format("{} --multi-target-path /x/y/z", client_name_)),
+      MalformedArgvException, "A URI or --multi-target-\\* options must be specified.");
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(fmt::format("{} --multi-target-use-https", client_name_)),
+      MalformedArgvException, "A URI or --multi-target-\\* options must be specified.");
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(
+          fmt::format("{} --multi-target-path /x/y/z --multi-target-use-https", client_name_)),
+      MalformedArgvException, "A URI or --multi-target-\\* options must be specified.");
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(
+          fmt::format("{} --multi-target-path /x/y/z --multi-target-use-https", client_name_)),
+      MalformedArgvException, "A URI or --multi-target-\\* options must be specified.");
 }
 
 TEST_F(OptionsImplTest, BothTlsContextAndTransportSocketSpecified) {

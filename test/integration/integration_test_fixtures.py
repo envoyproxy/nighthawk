@@ -247,6 +247,27 @@ class HttpsIntegrationTestBase(IntegrationTestBase):
     return super(HttpsIntegrationTestBase, self).getTestServerRootUri(True)
 
 
+class MultiServerHttpsIntegrationTestBase(IntegrationTestBase):
+  """
+  Base for https tests against multiple Nighthawk test servers
+  """
+
+  def __init__(self, ip_version, backend_count):
+    super(MultiServerHttpsIntegrationTestBase, self).__init__(ip_version, backend_count)
+    self.parameters["ssl_key_path"] = os.path.join(
+        self.test_rundir, "external/envoy/test/config/integration/certs/serverkey.pem")
+    self.parameters["ssl_cert_path"] = os.path.join(
+        self.test_rundir, "external/envoy/test/config/integration/certs/servercert.pem")
+    self.nighthawk_test_config_path = os.path.join(
+        self.test_rundir, "test/integration/configurations/nighthawk_https_origin.yaml")
+
+  def getTestServerRootUri(self):
+    return super(MultiServerHttpsIntegrationTestBase, self).getTestServerRootUri(True)
+
+  def getAllTestServerRootUris(self):
+    return super(MultiServerHttpsIntegrationTestBase, self).getAllTestServerRootUris(True)
+
+
 @pytest.fixture(params=determineIpVersionsFromEnvironment())
 def http_test_server_fixture(request):
   f = HttpIntegrationTestBase(request.param)
@@ -266,6 +287,14 @@ def https_test_server_fixture(request):
 @pytest.fixture(params=determineIpVersionsFromEnvironment())
 def multi_http_test_server_fixture(request):
   f = MultiServerHttpIntegrationTestBase(request.param, backend_count=3)
+  f.setUp()
+  yield f
+  f.tearDown()
+
+
+@pytest.fixture(params=determineIpVersionsFromEnvironment())
+def multi_https_test_server_fixture(request):
+  f = MultiServerHttpsIntegrationTestBase(request.param, backend_count=3)
   f.setUp()
   yield f
   f.tearDown()

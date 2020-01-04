@@ -324,29 +324,20 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       throw MalformedArgvException("Invalid value for --jitter-uniform");
     }
   }
-  if (uri.isSet()) {
-    if (multi_target_use_https.isSet() || multi_target_path.isSet() ||
-        multi_target_endpoints.isSet()) {
-      throw MalformedArgvException("URI and --multi-target-* options cannot both be set.");
-    }
-  } else {
-    if (!multi_target_endpoints.isSet()) {
-      throw MalformedArgvException("Either URI or --multi-target-* must be set.");
-    }
-    if (!multi_target_path.isSet()) {
-      throw MalformedArgvException("--multi-target-path must be set.");
-    }
-  }
   TCLAP_SET_IF_SPECIFIED(multi_target_use_https, multi_target_use_https_);
   TCLAP_SET_IF_SPECIFIED(multi_target_path, multi_target_path_);
   if (multi_target_endpoints.isSet()) {
     for (const std::string& host_port : multi_target_endpoints.getValue()) {
-      nighthawk::client::MultiTarget::Endpoint endpoint;
-      if (!Utility::parseHostPort(host_port, &endpoint)) {
+      std::string host;
+      int port;
+      if (!Utility::parseHostPort(host_port, &host, &port)) {
         throw MalformedArgvException(fmt::format("--multi-target-endpoint must be in the format "
                                                  "IPv4:port, [IPv6]:port, or DNS:port. Got '{}'",
                                                  host_port));
       }
+      nighthawk::client::MultiTarget::Endpoint endpoint;
+      endpoint.mutable_address()->set_value(host);
+      endpoint.mutable_port()->set_value(port);
       multi_target_endpoints_.push_back(endpoint);
     }
   }
@@ -547,13 +538,16 @@ void OptionsImpl::validate() const {
     } catch (const UriException&) {
       throw MalformedArgvException("Invalid URI");
     }
+    if (!multi_target_endpoints_.empty() || !multi_target_path_.empty() ||
+        multi_target_use_https_) {
+      throw MalformedArgvException("URI and --multi-target-* options cannot both be specified.");
+    }
   } else {
     if (multi_target_endpoints_.empty()) {
-      throw MalformedArgvException(
-          "A URI or at least one --multi-target-endpoint must be specified.");
+      throw MalformedArgvException("A URI or --multi-target-* options must be specified.");
     }
     if (multi_target_path_.empty()) {
-      throw MalformedArgvException("--multi-target-path must be specifiedf.");
+      throw MalformedArgvException("--multi-target-path must be specified.");
     }
   }
   try {

@@ -59,11 +59,11 @@ public:
   /**
    * @param host_port host:port as a string, where host can be IPv4, [IPv6], or a DNS
    * name.
-   * @param endpoint Endpoint* proto to populate with host and port if parse was successful
+   * @param host string* to receive the host if the parse succeeds
+   * @param port int* to receive the port if the parse succeeds
    * @return bool true if the input could be parsed as host:port
    */
-  static bool parseHostPort(const std::string& host_port,
-                            nighthawk::client::MultiTarget::Endpoint* endpoint);
+  static bool parseHostPort(const std::string& host_port, std::string* host, int* port);
 };
 
 } // namespace Nighthawk

@@ -116,7 +116,7 @@ private:
   std::chrono::nanoseconds jitter_uniform_;
   std::vector<nighthawk::client::MultiTarget::Endpoint> multi_target_endpoints_;
   std::string multi_target_path_;
-  bool multi_target_use_https_;
+  bool multi_target_use_https_{false};
 };
 
 } // namespace Client

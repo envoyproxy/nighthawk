@@ -71,19 +71,10 @@ void Utility::parseCommand(TCLAP::CmdLine& cmd, const int argc, const char* cons
   }
 }
 
-bool Utility::parseHostPort(const std::string& host_port,
-                            nighthawk::client::MultiTarget::Endpoint* endpoint) {
-  std::string address;
-  int port;
-  if (!RE2::FullMatch(host_port, R"((\d+\.\d+\.\d+\.\d+):(\d+))", &address, &port) &&
-      !RE2::FullMatch(host_port, R"((\[[.:0-9a-fA-F]+\]):(\d+))", &address, &port) &&
-      !RE2::FullMatch(host_port, R"(([-.0-9a-zA-Z]+):(\d+))", &address, &port)) {
-    return false;
-  }
-  if (endpoint != nullptr) {
-    endpoint->mutable_address()->set_value(address);
-    endpoint->mutable_port()->set_value(port);
-  }
-  return true;
+bool Utility::parseHostPort(const std::string& host_port, std::string* address, int* port) {
+  return RE2::FullMatch(host_port, R"((\d+\.\d+\.\d+\.\d+):(\d+))", address, port) ||
+         RE2::FullMatch(host_port, R"((\[[.:0-9a-fA-F]+\]):(\d+))", address, port) ||
+         RE2::FullMatch(host_port, R"(([-.0-9a-zA-Z]+):(\d+))", address, port);
 }
+
 } // namespace Nighthawk
