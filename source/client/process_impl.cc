@@ -244,6 +244,7 @@ void ProcessImpl::createBootstrapConfiguration(envoy::config::bootstrap::v2::Boo
                                                int number_of_clusters) const {
   for (int i = 0; i < number_of_clusters; i++) {
     auto* cluster = bootstrap.mutable_static_resources()->add_clusters();
+    RELEASE_ASSERT(!uris.empty(), "illegal configuration with zero endpoints");
     if (uris[0]->scheme() == "https") {
       auto* tls_context = cluster->mutable_tls_context();
       *tls_context = options_.tlsContext();
