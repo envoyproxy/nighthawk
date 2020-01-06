@@ -30,6 +30,7 @@ TEST_F(ClientTest, NormalRun) {
 }
 
 TEST_F(ClientTest, AutoConcurrencyRun) {
+  TCLAP::OptionalUnlabeledTracker::alreadyOptional() = false;
   std::vector<const char*> argv;
   argv.push_back("foo");
   argv.push_back("--concurrency");
@@ -51,6 +52,7 @@ TEST_F(ClientTest, AutoConcurrencyRun) {
 // counted as code-coverage. Ideally, the code hit during the python test runs would count for
 // coverage, and we use unit-tests here to hit any edge cases we can't easily hit otherwise.
 TEST_F(ClientTest, TracingRun) {
+  TCLAP::OptionalUnlabeledTracker::alreadyOptional() = false;
   std::vector<const char*> argv;
   argv.push_back("foo");
   argv.push_back("--duration");
