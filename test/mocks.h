@@ -103,6 +103,7 @@ public:
   MOCK_CONST_METHOD0(multiTargetEndpoints, std::vector<nighthawk::client::MultiTarget::Endpoint>());
   MOCK_CONST_METHOD0(multiTargetPath, std::string());
   MOCK_CONST_METHOD0(multiTargetUseHttps, bool());
+  MOCK_CONST_METHOD0(labels, std::vector<std::string>());
 };
 
 class MockBenchmarkClientFactory : public Client::BenchmarkClientFactory {

@@ -43,7 +43,8 @@ bazel build -c opt //:nighthawk
 ```
 USAGE:
 
-bazel-bin/nighthawk_client  [--multi-target-use-https]
+bazel-bin/nighthawk_client  [--label <string>] ...
+[--multi-target-use-https]
 [--multi-target-path <string>]
 [--multi-target-endpoint <string>] ...
 [--jitter-uniform <duration>] [--open-loop]
@@ -88,6 +89,9 @@ Target endpoint in the form IPv4:port, [IPv6]:port, or DNS:port. This
 argument is intended to be specified multiple times. Nighthawk will
 spread traffic across all endpoints with round robin distribution.
 Mutually exclusive with providing a URI.
+--label <string>  (accepted multiple times)
+Label. Allows specifying multiple labels which will be persisted in
+structured output formats.
 
 --jitter-uniform <duration>
 Add uniformly distributed absolute request-release timing jitter. For
@@ -223,7 +227,6 @@ L7 (HTTP/HTTPS/HTTP2) performance characterization tool.
 ### Nighthawk gRPC service
 
 The gRPC service can be used to start a server which is able to perform back-to-back benchmark runs upon request. The service interface definition [can be found here.](https://github.com/envoyproxy/nighthawk/blob/59a37568783272a6438b5697277d4e56aa16ebbe/api/client/service.proto)
-
 
 ```bash
 ➜ bazel-bin/nighthawk_service --help
@@ -379,6 +382,7 @@ Nighthawk supports transforming the output into other well-known formats, such a
 
 The following is an example of a nighthawk benchmark visualized via the Fortio UI.
 
+
 ```bash
 fortio report --data-dir ./samples/fortio_data
 ```
@@ -400,6 +404,7 @@ fortio report --data-dir ./samples/fortio_data
 
 | As this may change boot flags, take precautions, and familiarize yourself with the tool on systems that you don't mind breaking. For example, running this has been observed to mess up dual-boot systems! |
 | --- |
+
 
 ```bash
 sudo tuned-adm profile network-latency

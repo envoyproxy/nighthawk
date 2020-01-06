@@ -235,6 +235,11 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "Mutually exclusive with providing a URI.",
       cmd);
 
+  TCLAP::MultiArg<std::string> labels("", "label",
+                                      "Label. Allows specifying multiple labels which will be "
+                                      "persisted in structured output formats.",
+                                      false, "string", cmd);
+
   TCLAP::UnlabeledValueArg<std::string> uri(
       "uri",
       "URI to benchmark. http:// and https:// are supported, "
@@ -340,6 +345,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       multi_target_endpoints_.push_back(endpoint);
     }
   }
+  TCLAP_SET_IF_SPECIFIED(labels, labels_);
 
   // CLI-specific tests.
   // TODO(oschaaf): as per mergconflicts's remark, it would be nice to aggregate
@@ -503,6 +509,7 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
         Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(options.jitter_uniform()));
   }
 
+  std::copy(options.labels().begin(), options.labels().end(), std::back_inserter(labels_));
   validate();
 }
 
@@ -630,6 +637,9 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
   if (jitter_uniform_.count() > 0) {
     *command_line_options->mutable_jitter_uniform() =
         Envoy::Protobuf::util::TimeUtil::NanosecondsToDuration(jitter_uniform_.count());
+  }
+  for (const auto& label : labels_) {
+    *command_line_options->add_labels() = label;
   }
   return command_line_options;
 }

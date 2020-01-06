@@ -68,6 +68,7 @@ public:
   bool openLoop() const override { return open_loop_; }
 
   std::chrono::nanoseconds jitterUniform() const override { return jitter_uniform_; }
+  std::vector<std::string> labels() const override { return labels_; };
 
   std::vector<nighthawk::client::MultiTarget::Endpoint> multiTargetEndpoints() const override {
     return multi_target_endpoints_;
@@ -118,6 +119,7 @@ private:
   std::vector<nighthawk::client::MultiTarget::Endpoint> multi_target_endpoints_;
   std::string multi_target_path_;
   bool multi_target_use_https_{false};
+  std::vector<std::string> labels_;
 };
 
 } // namespace Client

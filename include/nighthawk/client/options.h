@@ -57,6 +57,7 @@ public:
   virtual std::vector<nighthawk::client::MultiTarget::Endpoint> multiTargetEndpoints() const PURE;
   virtual std::string multiTargetPath() const PURE;
   virtual bool multiTargetUseHttps() const PURE;
+  virtual std::vector<std::string> labels() const PURE;
   /**
    * Converts an Options instance to an equivalent CommandLineOptions instance in terms of option
    * values.
