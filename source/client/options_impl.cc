@@ -556,9 +556,11 @@ void OptionsImpl::validate() const {
     throw MalformedArgvException(e.what());
   }
 }
+
 CommandLineOptionsPtr OptionsImpl::toCommandLineOptions() const {
   return toCommandLineOptionsInternal();
 }
+
 CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
   CommandLineOptionsPtr command_line_options =
       std::make_unique<nighthawk::client::CommandLineOptions>();
