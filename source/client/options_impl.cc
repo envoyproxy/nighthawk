@@ -605,7 +605,7 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
   }
   request_options->mutable_request_body_size()->set_value(request_body_size_);
   *(command_line_options->mutable_tls_context()) = tls_context_;
-  if (transportSocket().has_value()) {
+  if (transport_socket_.has_value()) {
     *(command_line_options->mutable_transport_socket()) = transport_socket_.value();
   }
   command_line_options->mutable_max_pending_requests()->set_value(max_pending_requests_);
