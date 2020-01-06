@@ -80,6 +80,7 @@ private:
                        TerminationPredicateMap& predicates);
   void setNonTrivialDefaults();
   void validate() const;
+  Client::CommandLineOptionsPtr toCommandLineOptionsInternal() const;
 
   uint32_t requests_per_second_{5};
   uint32_t connections_{100};
