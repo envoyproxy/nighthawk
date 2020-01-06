@@ -43,8 +43,9 @@ bazel build -c opt //:nighthawk
 ```
 USAGE:
 
-bazel-bin/nighthawk_client  [--nighthawk-service <uri format>]
-[--jitter-uniform <duration>] [--open-loop]
+bazel-bin/nighthawk_client  [--label <string>] ... [--nighthawk-service
+<uri format>] [--jitter-uniform <duration>]
+[--open-loop]
 [--experimental-h1-connection-reuse-strategy
 <mru|lru>] [--failure-predicate <<string,
 uint64_t>>] ... [--termination-predicate
@@ -71,6 +72,10 @@ format>
 
 
 Where:
+
+--label <string>  (accepted multiple times)
+Label. Allows specifying multiple labels which will be persisted in
+structured output formats.
 
 --nighthawk-service <uri format>
 Nighthawk service uri. Example: grpc://localhost:8843/. Default is

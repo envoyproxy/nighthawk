@@ -33,7 +33,8 @@
   "max_active_requests": 4294937295,
   "max_requests_per_connection": 4294937295,
   "uri": "http://127.0.0.1:10000/",
-  "trace": ""
+  "trace": "",
+  "labels": "Nighthawk",
  },
  "results": [
   {

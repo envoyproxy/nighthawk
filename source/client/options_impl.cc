@@ -219,6 +219,10 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "Nighthawk service uri. Example: grpc://localhost:8843/. Default is empty.", false, "",
       "uri format", cmd);
 
+  TCLAP::MultiArg<std::string> labels("", "label",
+                                      "Label. Allows specifying multiple labels which will be "
+                                      "persisted in structured output formats.",
+                                      false, "string", cmd);
   TCLAP::UnlabeledValueArg<std::string> uri("uri",
                                             "uri to benchmark. http:// and https:// are supported, "
                                             "but in case of https no certificates are validated.",
@@ -303,7 +307,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
     }
   }
   TCLAP_SET_IF_SPECIFIED(nighthawk_service, nighthawk_service_);
-
+  TCLAP_SET_IF_SPECIFIED(labels, labels_);
   // CLI-specific tests.
   // TODO(oschaaf): as per mergconflicts's remark, it would be nice to aggregate
   // these and present everything we couldn't understand to the CLI user in on go.
@@ -456,6 +460,7 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   }
   nighthawk_service_ =
       PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, nighthawk_service, nighthawk_service_);
+  std::copy(options.labels().begin(), options.labels().end(), std::back_inserter(labels_));
   validate();
 }
 
@@ -557,6 +562,9 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptions() const {
         Envoy::Protobuf::util::TimeUtil::NanosecondsToDuration(jitterUniform().count());
   }
   command_line_options->mutable_nighthawk_service()->set_value(nighthawkService());
+  for (const auto& label : labels()) {
+    *command_line_options->add_labels() = label;
+  }
   return command_line_options;
 }
 

@@ -69,6 +69,7 @@ public:
 
   std::chrono::nanoseconds jitterUniform() const override { return jitter_uniform_; }
   std::string nighthawkService() const override { return nighthawk_service_; }
+  std::vector<std::string> labels() const override { return labels_; };
 
 private:
   void parsePredicates(const TCLAP::MultiArg<std::string>& arg,
@@ -110,6 +111,7 @@ private:
   bool open_loop_{false};
   std::chrono::nanoseconds jitter_uniform_;
   std::string nighthawk_service_;
+  std::vector<std::string> labels_;
 };
 
 } // namespace Client
