@@ -43,8 +43,9 @@ bazel build -c opt //:nighthawk
 ```
 USAGE:
 
-bazel-bin/nighthawk_client  [--request-source <string>]
-[--jitter-uniform <duration>] [--open-loop]
+bazel-bin/nighthawk_client  [--request-source <string>] [--label
+<string>] ... [--jitter-uniform <duration>]
+[--open-loop]
 [--experimental-h1-connection-reuse-strategy
 <mru|lru>] [--failure-predicate <<string,
 uint64_t>>] ... [--termination-predicate
@@ -76,6 +77,10 @@ Where:
 Remote gRPC source that will deliver to-be-replayed traffic. Each
 worker will separately connect to this source. For example
 127.0.0.1:8443.
+
+--label <string>  (accepted multiple times)
+Label. Allows specifying multiple labels which will be persisted in
+structured output formats.
 
 --jitter-uniform <duration>
 Add uniformly distributed absolute request-release timing jitter. For
