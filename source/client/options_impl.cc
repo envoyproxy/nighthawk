@@ -23,7 +23,6 @@ namespace Client {
 
 OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   setNonTrivialDefaults();
-  TCLAP::OptionalUnlabeledTracker::alreadyOptional() = false;
   // Override some defaults, we are in CLI-mode.
   verbosity_ = nighthawk::client::Verbosity::INFO;
   output_format_ = nighthawk::client::OutputFormat::HUMAN;

@@ -16,6 +16,7 @@ std::unique_ptr<OptionsImpl> TestUtility::createOptionsImpl(absl::string_view ar
 }
 
 std::unique_ptr<OptionsImpl> TestUtility::createOptionsImpl(const std::vector<const char*>& argv) {
+  TCLAP::OptionalUnlabeledTracker::alreadyOptional() = false;
   return std::make_unique<OptionsImpl>(argv.size(), argv.data());
 }
 
