@@ -30,7 +30,12 @@ TEST_F(ClientTest, NormalRun) {
 }
 
 TEST_F(ClientTest, AutoConcurrencyRun) {
+  // This works around an error thrown by TCLAP about multiple unlabeled optional args not being
+  // allowed. TCLAP has a global flag that detects multiple unlabeled optional args. It assumes
+  // there will be only one command line in the lifetime of the process. In unit tests we parse
+  // multiple TCLAP command lines, so we need to reset TCLAP's flag to simulate a fresh process.
   TCLAP::OptionalUnlabeledTracker::alreadyOptional() = false;
+
   std::vector<const char*> argv;
   argv.push_back("foo");
   argv.push_back("--concurrency");
