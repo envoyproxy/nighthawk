@@ -352,11 +352,11 @@ bool ProcessImpl::run(OutputCollector& collector) {
     // TODO(oschaaf): See if we can rid of resolving here.
     // We now only do it to validate.
     if (options_.uri().has_value()) {
-      uris.emplace_back(std::make_unique<UriImpl>(options_.uri().value()));
+      uris.push_back(std::make_unique<UriImpl>(options_.uri().value()));
     } else {
       for (const nighthawk::client::MultiTarget::Endpoint& endpoint :
            options_.multiTargetEndpoints()) {
-        uris.emplace_back(std::make_unique<UriImpl>(fmt::format(
+        uris.push_back(std::make_unique<UriImpl>(fmt::format(
             "{}://{}:{}{}", options_.multiTargetUseHttps() ? "https" : "http",
             endpoint.address().value(), endpoint.port().value(), options_.multiTargetPath())));
       }
