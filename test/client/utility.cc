@@ -16,7 +16,12 @@ std::unique_ptr<OptionsImpl> TestUtility::createOptionsImpl(absl::string_view ar
 }
 
 std::unique_ptr<OptionsImpl> TestUtility::createOptionsImpl(const std::vector<const char*>& argv) {
+  // This works around an error thrown by TCLAP about multiple unlabeled optional args not being
+  // allowed. TCLAP has a global flag that detects multiple unlabeled optional args. It assumes
+  // there will be only one command line in the lifetime of the process. In unit tests we parse
+  // multiple TCLAP command lines, so we need to reset TCLAP's flag to simulate a fresh process.
   TCLAP::OptionalUnlabeledTracker::alreadyOptional() = false;
+
   return std::make_unique<OptionsImpl>(argv.size(), argv.data());
 }
 
