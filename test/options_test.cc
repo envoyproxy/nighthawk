@@ -50,7 +50,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
       "--termination-predicate t1:1 --termination-predicate t2:2 --failure-predicate f1:1 "
       "--failure-predicate f2:2 --jitter-uniform .00001s "
       "--experimental-h2-use-multiple-connections "
-      "--experimental-h1-connection-reuse-strategy lru ",
+      "--experimental-h1-connection-reuse-strategy lru --label label1 --label label2 ",
       client_name_,
       "{name:\"envoy.transport_sockets.tls\","
       "typed_config:{\"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\","
@@ -99,6 +99,8 @@ TEST_F(OptionsImplTest, AlmostAll) {
   EXPECT_EQ(true, options->h2UseMultipleConnections());
   EXPECT_EQ(nighthawk::client::H1ConnectionReuseStrategy::LRU,
             options->h1ConnectionReuseStrategy());
+  const std::vector<std::string> expected_labels{"label1", "label2"};
+  EXPECT_EQ(expected_labels, options->labels());
 
   // Check that our conversion to CommandLineOptionsPtr makes sense.
   CommandLineOptionsPtr cmd = options->toCommandLineOptions();
@@ -150,6 +152,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
             options->h2UseMultipleConnections());
   EXPECT_EQ(cmd->experimental_h1_connection_reuse_strategy().value(),
             options->h1ConnectionReuseStrategy());
+  EXPECT_THAT(cmd->labels(), ElementsAreArray(expected_labels));
 
   OptionsImpl options_from_proto(*cmd);
   std::string s1 = Envoy::MessageUtil::getYamlStringFromMessage(

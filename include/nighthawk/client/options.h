@@ -55,6 +55,7 @@ public:
   virtual bool openLoop() const PURE;
   virtual std::chrono::nanoseconds jitterUniform() const PURE;
   virtual bool h2UseMultipleConnections() const PURE;
+  virtual std::vector<std::string> labels() const PURE;
   /**
    * Converts an Options instance to an equivalent CommandLineOptions instance in terms of option
    * values.

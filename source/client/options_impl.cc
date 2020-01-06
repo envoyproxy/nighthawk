@@ -219,6 +219,10 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "Use experimental HTTP/2 pool which will use multiple connections. WARNING: feature may be "
       "removed or changed in the future!",
       cmd);
+  TCLAP::MultiArg<std::string> labels("", "label",
+                                      "Label. Allows specifying multiple labels which will be "
+                                      "persisted in structured output formats.",
+                                      false, "string", cmd);
   TCLAP::UnlabeledValueArg<std::string> uri("uri",
                                             "uri to benchmark. http:// and https:// are supported, "
                                             "but in case of https no certificates are validated.",
@@ -303,6 +307,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
     }
   }
   TCLAP_SET_IF_SPECIFIED(h2_use_multiple_connections, h2_use_multiple_connections_);
+  TCLAP_SET_IF_SPECIFIED(labels, labels_);
 
   // CLI-specific tests.
   // TODO(oschaaf): as per mergconflicts's remark, it would be nice to aggregate
@@ -456,6 +461,7 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   }
   h2_use_multiple_connections_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(
       options, experimental_h2_use_multiple_connections, h2_use_multiple_connections_);
+  std::copy(options.labels().begin(), options.labels().end(), std::back_inserter(labels_));
   validate();
 }
 
@@ -558,6 +564,9 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptions() const {
   }
   command_line_options->mutable_experimental_h2_use_multiple_connections()->set_value(
       h2UseMultipleConnections());
+  for (const auto& label : labels()) {
+    *command_line_options->add_labels() = label;
+  }
   return command_line_options;
 }
 

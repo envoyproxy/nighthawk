@@ -43,7 +43,8 @@ bazel build -c opt //:nighthawk
 ```
 USAGE:
 
-bazel-bin/nighthawk_client  [--experimental-h2-use-multiple-connections]
+bazel-bin/nighthawk_client  [--label <string>] ...
+[--experimental-h2-use-multiple-connections]
 [--jitter-uniform <duration>] [--open-loop]
 [--experimental-h1-connection-reuse-strategy
 <mru|lru>] [--failure-predicate <<string,
@@ -71,6 +72,10 @@ format>
 
 
 Where:
+
+--label <string>  (accepted multiple times)
+Label. Allows specifying multiple labels which will be persisted in
+structured output formats.
 
 --experimental-h2-use-multiple-connections
 Use experimental HTTP/2 pool which will use multiple connections.

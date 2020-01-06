@@ -101,6 +101,7 @@ public:
   MOCK_CONST_METHOD0(openLoop, bool());
   MOCK_CONST_METHOD0(jitterUniform, std::chrono::nanoseconds());
   MOCK_CONST_METHOD0(h2UseMultipleConnections, bool());
+  MOCK_CONST_METHOD0(labels, std::vector<std::string>());
 };
 
 class MockBenchmarkClientFactory : public Client::BenchmarkClientFactory {

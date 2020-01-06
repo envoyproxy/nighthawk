@@ -2,6 +2,7 @@
  "options": {
   "termination_predicates": {},
   "failure_predicates": {},
+  "labels": [],
   "connections": 0,
   "duration": "1s"
  },
