@@ -75,6 +75,10 @@ format>
 
 Where:
 
+--label <string>  (accepted multiple times)
+Label. Allows specifying multiple labels which will be persisted in
+structured output formats.
+
 --multi-target-use-https
 Use HTTPS to connect to the target endpoints. Otherwise HTTP is used.
 Mutually exclusive with providing a URI.
@@ -89,9 +93,6 @@ Target endpoint in the form IPv4:port, [IPv6]:port, or DNS:port. This
 argument is intended to be specified multiple times. Nighthawk will
 spread traffic across all endpoints with round robin distribution.
 Mutually exclusive with providing a URI.
---label <string>  (accepted multiple times)
-Label. Allows specifying multiple labels which will be persisted in
-structured output formats.
 
 --jitter-uniform <duration>
 Add uniformly distributed absolute request-release timing jitter. For
