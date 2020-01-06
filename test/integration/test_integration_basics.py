@@ -465,7 +465,6 @@ def test_multiple_backends_http_h1(multi_http_test_server_fixture):
   assertCounterEqual(counters, "upstream_cx_rx_bytes_total", 3400)
   assertCounterEqual(counters, "upstream_cx_total", 3)
   assertCounterEqual(counters, "upstream_cx_tx_bytes_total", 1250)
-  #  1400 if multi_http_test_server_fixture.ip_version == IpVersion.IPV6 else 1500)
   assertCounterEqual(counters, "upstream_rq_pending_total", 3)
   assertCounterEqual(counters, "upstream_rq_total", 25)
   assertCounterEqual(counters, "default.total_match_count", 3)
