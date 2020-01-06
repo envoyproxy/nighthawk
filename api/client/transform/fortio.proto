@@ -15,6 +15,13 @@ message FortioResult {
   // The field cases must match the final output JSON that fortio-ui expects.
   option (validate.disabled) = true;
 
+  // From https://github.com/fortio/fortio/wiki/FAQ:
+  // If using the command line, don't forget to use -a to auto save the json results in the current
+  // data directory. And to use labels -labels "x y z" so the file name and the json include some
+  // description of your run. You can later run fortio report to browse
+  // graphically your results.
+  // The Nighthawk equivalent of this field is structured as a repeated string, which will be
+  // concatenated into this field, using ' ' as a separator.
   string Labels = 1;
 
   google.protobuf.Timestamp StartTime = 2;

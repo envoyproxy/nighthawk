@@ -12,6 +12,7 @@
 #include "api/client/transform/fortio.pb.h"
 
 #include "absl/strings/str_cat.h"
+#include "absl/strings/strip.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -204,9 +205,12 @@ std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Outp
   // workers can be derived by substracting one from the number of results (for the
   // aggregated/global result).
   const uint32_t number_of_workers = output.results().size() == 1 ? 1 : output.results().size() - 1;
-
+  std::string labels;
+  for (const auto& label : output.options().labels()) {
+    labels += label + " ";
+  }
+  fortio_output.set_labels(std::string(absl::StripSuffix(labels, " ")));
   fortio_output.set_version(output.version());
-  fortio_output.set_labels("Nighthawk");
   *fortio_output.mutable_starttime() = output.timestamp();
   fortio_output.set_requestedqps(number_of_workers *
                                  output.options().requests_per_second().value());
