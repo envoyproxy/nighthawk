@@ -68,6 +68,7 @@ public:
   bool openLoop() const override { return open_loop_; }
 
   std::chrono::nanoseconds jitterUniform() const override { return jitter_uniform_; }
+  std::vector<std::string> labels() const override { return labels_; };
 
 private:
   void parsePredicates(const TCLAP::MultiArg<std::string>& arg,
@@ -108,6 +109,7 @@ private:
   TerminationPredicateMap failure_predicates_;
   bool open_loop_{false};
   std::chrono::nanoseconds jitter_uniform_;
+  std::vector<std::string> labels_;
 };
 
 } // namespace Client
