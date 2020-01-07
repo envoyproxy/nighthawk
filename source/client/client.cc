@@ -42,7 +42,7 @@ Main::Main(Client::OptionsPtr&& options) : options_(std::move(options)) {}
 
 bool Main::run() {
   Envoy::Thread::MutexBasicLockable log_lock;
-  std::string lower = absl::AsciiStrToLower(
+  const std::string lower = absl::AsciiStrToLower(
       nighthawk::client::Verbosity::VerbosityOptions_Name(options_->verbosity()));
   auto logging_context = std::make_unique<Envoy::Logger::Context>(
       spdlog::level::from_str(lower), "[%T.%f][%t][%L] %v", log_lock, false);
