@@ -229,6 +229,7 @@ L7 (HTTP/HTTPS/HTTP2) performance characterization tool.
 
 The gRPC service can be used to start a server which is able to perform back-to-back benchmark runs upon request. The service interface definition [can be found here.](https://github.com/envoyproxy/nighthawk/blob/59a37568783272a6438b5697277d4e56aa16ebbe/api/client/service.proto)
 
+
 ```bash
 ➜ bazel-bin/nighthawk_service --help
 ```
@@ -383,7 +384,6 @@ Nighthawk supports transforming the output into other well-known formats, such a
 
 The following is an example of a nighthawk benchmark visualized via the Fortio UI.
 
-
 ```bash
 fortio report --data-dir ./samples/fortio_data
 ```
@@ -405,7 +405,6 @@ fortio report --data-dir ./samples/fortio_data
 
 | As this may change boot flags, take precautions, and familiarize yourself with the tool on systems that you don't mind breaking. For example, running this has been observed to mess up dual-boot systems! |
 | --- |
-
 
 ```bash
 sudo tuned-adm profile network-latency
