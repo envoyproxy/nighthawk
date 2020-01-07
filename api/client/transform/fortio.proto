@@ -44,8 +44,17 @@ message FortioResult {
 
   string Version = 13;
 
-  // TODO(#235): Fix this once we have a means to add jitter.
   bool Jitter = 14;
+
+  string RunType = 15;
+
+  // Exactly can be used to stop fortio after a fixed amount of replies.
+  // We don't seem to need this, and going forward it might be hard/annoying to
+  // translate this field as Nighthawk's concepts diverge a bit. If end up
+  // needing to we can probably inspect the main phase and then figure out if there's a
+  // termination predicate configured for a fixed number of responses observed
+  // via stats. For now, however, skip this field.
+  // uint64 Exactly = 16;
 }
 
 message DurationHistogram {

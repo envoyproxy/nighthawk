@@ -226,8 +226,9 @@
   "200": "48"
  },
  "URL": "http://127.0.0.1:10000/",
- "Version": "0.0",
- "Jitter": false,
+ "Version": "testversion",
+ "Jitter": true,
+ "RunType": "HTTP",
  "StartTime": "2019-10-16T00:30:12.911078318Z",
  "RequestedDuration": "5s"
 }

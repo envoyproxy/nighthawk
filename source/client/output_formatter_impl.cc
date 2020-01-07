@@ -218,6 +218,8 @@ std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Outp
   *fortio_output.mutable_requestedduration() = output.options().duration();
   auto actual_duration = getAverageExecutionDuration(output);
   fortio_output.set_actualduration(actual_duration.count());
+  fortio_output.set_jitter(output.options().has_jitter_uniform());
+  fortio_output.set_runtype("HTTP");
 
   // The h2 pool doesn't offer supper for multiple connections here. So we must ignore the
   // connections setting when h2 is involved. Also, the number of workers acts as a multiplier.
