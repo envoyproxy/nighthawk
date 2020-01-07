@@ -212,22 +212,22 @@ private:
  */
 class ZipfRateLimiterImpl : public FilteringRateLimiterImpl {
 public:
+  enum class ZipfBehavior { ZIPF_PSEUDO_RANDOM, ZIPF_RANDOM };
   /**
    * From the absl header associated to the zipf distribution:
-   * Preconditions: v > 0, q > 1
-   * The precondidtions are validated when NDEBUG is not defined via
-   * a pair of assert() directives.
-   * If NDEBUG is defined and either or both of these parameters take invalid
-   * values, the behavior of the class is undefined.
+   * The parameters v and q determine the skew of the distribution.
+   * zipf_distribution produces random integer-values in the range [0, k],
+   * distributed according to the discrete probability function: P(x) = (v + x) ^ -q.
+   * Preconditions: v > 0, q > 1, configuring otherwise throws a NighthawkException.
    */
-  ZipfRateLimiterImpl(RateLimiterPtr&& rate_limiter, bool deterministic, double q = 2.0,
-                      double v = 1.0);
+  ZipfRateLimiterImpl(RateLimiterPtr&& rate_limiter, double q = 2.0, double v = 1.0,
+                      ZipfBehavior behavior = ZipfBehavior::ZIPF_RANDOM);
 
 private:
   absl::zipf_distribution<uint64_t> dist_;
   absl::InsecureBitGen g_;
   std::mt19937_64 mt_;
-  bool deterministic_;
+  ZipfBehavior behavior_;
 };
 
 } // namespace Nighthawk

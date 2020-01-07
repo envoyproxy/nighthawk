@@ -190,10 +190,21 @@ GraduallyOpeningRateLimiterFilter::GraduallyOpeningRateLimiterFilter(
   }
 }
 
-ZipfRateLimiterImpl::ZipfRateLimiterImpl(RateLimiterPtr&& rate_limiter, bool deterministic,
-                                         double q, double v)
+ZipfRateLimiterImpl::ZipfRateLimiterImpl(RateLimiterPtr&& rate_limiter, double q, double v,
+                                         ZipfBehavior behavior)
     : FilteringRateLimiterImpl(std::move(rate_limiter),
-                               [this]() { return deterministic_ ? dist_(mt_) : dist_(g_); }),
-      dist_(1, q, v), deterministic_(deterministic) {}
+                               [this]() {
+                                 return behavior_ == ZipfBehavior::ZIPF_PSEUDO_RANDOM ? dist_(mt_)
+                                                                                      : dist_(g_);
+                               }),
+      behavior_(behavior) {
+  if (v <= 0) {
+    throw NighthawkException("v should be > 0");
+  }
+  if (q <= 1) {
+    throw NighthawkException("q should be > 1");
+  }
+  dist_ = absl::zipf_distribution<uint64_t>(1, q, v);
+}
 
 } // namespace Nighthawk
