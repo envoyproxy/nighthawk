@@ -312,7 +312,7 @@ std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Outp
                          // HdrHistogram. HDR-Histogram uses base-2 arithmetic behind the scenes
                          // which yields percentiles close to what fortio has, but not perfectly
                          // on-spot, e.g. 0.990625 and 0.9990234375.
-                         p->set_percentile(std::floor(percentile.percentile() * 1000) / 1000);
+                         p->set_percentile(std::floor(percentile.percentile() * 1000) / 10);
                          p->set_value(durationToSeconds(percentile.duration()));
                        }
                      });
