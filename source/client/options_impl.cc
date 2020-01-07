@@ -508,7 +508,6 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
     jitter_uniform_ = std::chrono::nanoseconds(
         Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(options.jitter_uniform()));
   }
-
   std::copy(options.labels().begin(), options.labels().end(), std::back_inserter(labels_));
   validate();
 }

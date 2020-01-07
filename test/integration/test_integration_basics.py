@@ -471,8 +471,10 @@ def test_multiple_backends_http_h1(multi_http_test_server_fixture):
   assertEqual(len(counters), 12)
   total_2xx = 0
   for parsed_server_json in multi_http_test_server_fixture.getAllTestServerStatisticsJsons():
-    total_2xx += multi_http_test_server_fixture.getServerStatFromJson(
+    single_2xx = multi_http_test_server_fixture.getServerStatFromJson(
         parsed_server_json, "http.ingress_http.downstream_rq_2xx")
+    assertBetweenInclusive(single_2xx, 8, 9)
+    total_2xx += single_2xx
   assertBetweenInclusive(total_2xx, 24, 25)
 
 
@@ -503,6 +505,8 @@ def test_multiple_backends_https_h1(multi_https_test_server_fixture):
   assertEqual(len(counters), 17)
   total_2xx = 0
   for parsed_server_json in multi_https_test_server_fixture.getAllTestServerStatisticsJsons():
-    total_2xx += multi_https_test_server_fixture.getServerStatFromJson(
+    single_2xx = multi_https_test_server_fixture.getServerStatFromJson(
         parsed_server_json, "http.ingress_http.downstream_rq_2xx")
+    assertBetweenInclusive(single_2xx, 8, 9)
+    total_2xx += single_2xx
   assertBetweenInclusive(total_2xx, 24, 25)
