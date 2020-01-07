@@ -201,23 +201,23 @@
   "StdDev": 0.005785869,
   "Percentiles": [
    {
-    "Percentile": 0.5,
+    "Percentile": 50,
     "Value": 0.060903423
    },
    {
-    "Percentile": 0.75,
+    "Percentile": 75,
     "Value": 0.065679359
    },
    {
-    "Percentile": 0.8,
+    "Percentile": 80,
     "Value": 0.066994175
    },
    {
-    "Percentile": 0.9,
+    "Percentile": 90,
     "Value": 0.068657151
    },
    {
-    "Percentile": 0.95,
+    "Percentile": 95,
     "Value": 0.073601023
    }
   ]
