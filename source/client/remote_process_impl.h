@@ -14,8 +14,19 @@ namespace Client {
  */
 class RemoteProcessImpl : public Process, public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
+  /**
+   * @param options Options to send to the remote nighthawk service, as well as
+   * containing information to connect to it (which won't be forwarded).
+   */
   RemoteProcessImpl(const Options& options);
+  /**
+   * @param collector Collects the output from the remote nighthawk service.
+   * @return true iff the remote execution should be considered successful.
+   */
   bool run(OutputCollector& collector) override;
+  /**
+   * Shuts down the service, a no-op in this implementation.
+   */
   void shutdown() override{};
 
 private:
