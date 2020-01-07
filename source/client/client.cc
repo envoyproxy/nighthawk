@@ -28,6 +28,7 @@
 #include "client/options_impl.h"
 #include "client/output_collector_impl.h"
 #include "client/process_impl.h"
+#include "client/remote_process_impl.h"
 
 using namespace std::chrono_literals;
 
