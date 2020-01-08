@@ -462,13 +462,12 @@ def test_multiple_backends_http_h1(multi_http_test_server_fixture):
   counters = multi_http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   assertCounterEqual(counters, "benchmark.http_2xx", 25)
   assertCounterEqual(counters, "upstream_cx_http1_total", 3)
-  assertCounterEqual(counters, "upstream_cx_rx_bytes_total", 3400)
+  assertCounterGreater(counters, "upstream_cx_rx_bytes_total", 0)
   assertCounterEqual(counters, "upstream_cx_total", 3)
-  assertCounterEqual(counters, "upstream_cx_tx_bytes_total", 1250)
+  assertCounterGreater(counters, "upstream_cx_tx_bytes_total", 0)
   assertCounterEqual(counters, "upstream_rq_pending_total", 3)
   assertCounterEqual(counters, "upstream_rq_total", 25)
   assertCounterEqual(counters, "default.total_match_count", 3)
-  assertEqual(len(counters), 12)
   total_2xx = 0
   for parsed_server_json in multi_http_test_server_fixture.getAllTestServerStatisticsJsons():
     single_2xx = multi_http_test_server_fixture.getServerStatFromJson(
@@ -496,13 +495,12 @@ def test_multiple_backends_https_h1(multi_https_test_server_fixture):
   counters = multi_https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   assertCounterEqual(counters, "benchmark.http_2xx", 25)
   assertCounterEqual(counters, "upstream_cx_http1_total", 3)
-  assertCounterEqual(counters, "upstream_cx_rx_bytes_total", 3400)
+  assertCounterGreater(counters, "upstream_cx_rx_bytes_total", 0)
   assertCounterEqual(counters, "upstream_cx_total", 3)
-  assertCounterEqual(counters, "upstream_cx_tx_bytes_total", 1250)
+  assertCounterGreater(counters, "upstream_cx_tx_bytes_total", 0)
   assertCounterEqual(counters, "upstream_rq_pending_total", 3)
   assertCounterEqual(counters, "upstream_rq_total", 25)
   assertCounterEqual(counters, "default.total_match_count", 3)
-  assertEqual(len(counters), 17)
   total_2xx = 0
   for parsed_server_json in multi_https_test_server_fixture.getAllTestServerStatisticsJsons():
     single_2xx = multi_https_test_server_fixture.getServerStatFromJson(

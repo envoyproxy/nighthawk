@@ -29,6 +29,7 @@ public:
   virtual uint32_t connections() const PURE;
   virtual std::chrono::seconds duration() const PURE;
   virtual std::chrono::seconds timeout() const PURE;
+  // URI is absent when the user specified --multi-target-* instead.
   virtual absl::optional<std::string> uri() const PURE;
   virtual bool h2() const PURE;
   virtual std::string concurrency() const PURE;

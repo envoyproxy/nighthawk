@@ -541,7 +541,7 @@ void OptionsImpl::validate() const {
     try {
       UriImpl uri(uri_.value());
     } catch (const UriException&) {
-      throw MalformedArgvException("Invalid URI");
+      throw MalformedArgvException(fmt::format("Invalid URI: ''", uri_.value()));
     }
     if (!multi_target_endpoints_.empty() || !multi_target_path_.empty() ||
         multi_target_use_https_) {

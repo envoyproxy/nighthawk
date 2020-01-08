@@ -80,7 +80,7 @@ message MultiTarget {
   google.protobuf.BoolValue use_https = 1;
   // One or more address-port pairs to receive traffic distributed with round robin.
   repeated Endpoint endpoints = 2;
-  // The absolute HTTP request path (the part of the URL after host:port).
+  // The absolute HTTP request path (the part of the URL after host:port, e.g. /x/y/z).
   // A single path is requested from all backends. Ignored when using a RequestSource.
   google.protobuf.StringValue path = 3;
 }

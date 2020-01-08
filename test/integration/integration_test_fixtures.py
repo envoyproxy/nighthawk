@@ -33,10 +33,24 @@ def determineIpVersionsFromEnvironment():
 
 class IntegrationTestBase():
   """
-  IntegrationTestBase facilitates testing against the Nighthawk test server, by determining a free port, and starting it up in a separate process in setUp().
+  IntegrationTestBase facilitates testing against the Nighthawk test server, by determining a free port,
+  and starting it up in a separate process in setUp().
+
+  Support for multiple test servers has been added in a way that minimizes impact to existing tests.
+  self.test_server always points to the first test server, and methods assuming a single backend such
+  as getTestServerRootUri were left intact. self.test_servers contains all test servers, including the
+  first. Methods such as getTestServerRootUris that are aware of multiple test servers will also
+  work when there is only one test server.
+
+  This class will be refactored (https://github.com/envoyproxy/nighthawk/issues/258).
   """
 
   def __init__(self, ip_version, backend_count=1):
+    """
+    Args:
+      ip_version: a single IP mode that this instance will test: IpVersion.IPV4 or IpVersion.IPV6
+      backend_count: number of Nighthawk Test Server backends to run, to allow testing MultiTarget mode
+    """
     super(IntegrationTestBase, self).__init__()
     self.test_rundir = os.path.join(os.environ["TEST_SRCDIR"], os.environ["TEST_WORKSPACE"])
     self.nighthawk_test_server_path = os.path.join(self.test_rundir, "nighthawk_test_server")
@@ -154,6 +168,9 @@ class IntegrationTestBase():
     ]
 
   def getServerStatFromJson(self, server_stats_json, name):
+    """
+    Utility to extract one statistic from a single json snapshot.
+    """
     counters = server_stats_json["stats"]
     for counter in counters:
       if counter["name"] == name:
@@ -204,11 +221,13 @@ class HttpIntegrationTestBase(IntegrationTestBase):
   """
 
   def __init__(self, ip_version):
+    """See base class."""
     super(HttpIntegrationTestBase, self).__init__(ip_version)
     self.nighthawk_test_config_path = os.path.join(
         self.test_rundir, "test/integration/configurations/nighthawk_http_origin.yaml")
 
   def getTestServerRootUri(self):
+    """See base class."""
     return super(HttpIntegrationTestBase, self).getTestServerRootUri(False)
 
 
@@ -218,14 +237,17 @@ class MultiServerHttpIntegrationTestBase(IntegrationTestBase):
   """
 
   def __init__(self, ip_version, backend_count):
+    """See base class."""
     super(MultiServerHttpIntegrationTestBase, self).__init__(ip_version, backend_count)
     self.nighthawk_test_config_path = os.path.join(
         self.test_rundir, "test/integration/configurations/nighthawk_http_origin.yaml")
 
   def getTestServerRootUri(self):
+    """See base class."""
     return super(MultiServerHttpIntegrationTestBase, self).getTestServerRootUri(False)
 
   def getAllTestServerRootUris(self):
+    """See base class."""
     return super(MultiServerHttpIntegrationTestBase, self).getAllTestServerRootUris(False)
 
 
@@ -235,6 +257,7 @@ class HttpsIntegrationTestBase(IntegrationTestBase):
   """
 
   def __init__(self, ip_version):
+    """See base class."""
     super(HttpsIntegrationTestBase, self).__init__(ip_version)
     self.parameters["ssl_key_path"] = os.path.join(
         self.test_rundir, "external/envoy/test/config/integration/certs/serverkey.pem")
@@ -244,6 +267,7 @@ class HttpsIntegrationTestBase(IntegrationTestBase):
         self.test_rundir, "test/integration/configurations/nighthawk_https_origin.yaml")
 
   def getTestServerRootUri(self):
+    """See base class."""
     return super(HttpsIntegrationTestBase, self).getTestServerRootUri(True)
 
 
@@ -262,9 +286,11 @@ class MultiServerHttpsIntegrationTestBase(IntegrationTestBase):
         self.test_rundir, "test/integration/configurations/nighthawk_https_origin.yaml")
 
   def getTestServerRootUri(self):
+    """See base class."""
     return super(MultiServerHttpsIntegrationTestBase, self).getTestServerRootUri(True)
 
   def getAllTestServerRootUris(self):
+    """See base class."""
     return super(MultiServerHttpsIntegrationTestBase, self).getAllTestServerRootUris(True)
 
 
