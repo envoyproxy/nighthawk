@@ -22,7 +22,11 @@ class NighthawkGrpcService(object):
   server_port: An integer, indicates the port used by the gRPC service to listen. 0 means that the server is not listening.
   """
 
-  def __init__(self, server_binary_path, server_ip, ip_version, service_name="traffic-generator-service"):
+  def __init__(self,
+               server_binary_path,
+               server_ip,
+               ip_version,
+               service_name="traffic-generator-service"):
     """Initializes Nighthawk gRPC service.
 
     Args:
