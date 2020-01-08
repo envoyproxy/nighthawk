@@ -36,8 +36,13 @@ TEST_F(OptionsImplTest, BogusInput) {
 }
 
 TEST_F(OptionsImplTest, BogusRequestSource) {
+  // Request source that looks like an accidental --arg
   EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(
                               fmt::format("{} --request-source --foo http://foo", client_name_)),
+                          MalformedArgvException, "Invalid replay source URI");
+  // Request source that specifies a bad scheme
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                              "{} --request-source http://bar http://foo", client_name_)),
                           MalformedArgvException, "Invalid replay source URI");
 }
 

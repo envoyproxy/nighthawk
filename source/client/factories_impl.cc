@@ -118,7 +118,7 @@ void RequestSourceFactoryImpl::setRequestHeader(Envoy::Http::HeaderMap& header,
 }
 
 RequestSourcePtr
-RequestSourceFactoryImpl::create(Envoy::Upstream::ClusterManagerPtr& cluster_manager,
+RequestSourceFactoryImpl::create(const Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                                  Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
                                  absl::string_view service_cluster_name) const {
   // Note: we assume a valid uri.

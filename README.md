@@ -43,7 +43,7 @@ bazel build -c opt //:nighthawk
 ```
 USAGE:
 
-bazel-bin/nighthawk_client  [--request-source <string>] [--label
+bazel-bin/nighthawk_client  [--request-source <uri format>] [--label
 <string>] ... [--jitter-uniform <duration>]
 [--open-loop]
 [--experimental-h1-connection-reuse-strategy
@@ -73,10 +73,10 @@ format>
 
 Where:
 
---request-source <string>
+--request-source <uri format>
 Remote gRPC source that will deliver to-be-replayed traffic. Each
 worker will separately connect to this source. For example
-127.0.0.1:8443.
+grpc://127.0.0.1:8443/.
 
 --label <string>  (accepted multiple times)
 Label. Allows specifying multiple labels which will be persisted in
@@ -223,15 +223,16 @@ The gRPC service can be used to start a server which is able to perform back-to-
 ```
 USAGE:
 
-bazel-bin/nighthawk_service  [--service <controller|request-source>]
+bazel-bin/nighthawk_service  [--service <traffic-generator-service
+|dummy-request-source>]
 [--listener-address-file <>] [--listen
 <address:port>] [--] [--version] [-h]
 
 
 Where:
 
---service <controller|request-source>
-Specifies which service to run. Default 'controller'.
+--service <traffic-generator-service|dummy-request-source>
+Specifies which service to run. Default 'traffic-generator-service'.
 
 --listener-address-file <>
 Location where the service will write the final address:port on which

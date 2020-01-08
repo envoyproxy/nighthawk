@@ -27,7 +27,7 @@ private:
 
 class RemoteRequestSourceImpl : public BaseRequestSourceImpl {
 public:
-  RemoteRequestSourceImpl(Envoy::Upstream::ClusterManagerPtr& cluster_manager,
+  RemoteRequestSourceImpl(const Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                           Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
                           absl::string_view service_cluster_name,
                           Envoy::Http::HeaderMapPtr&& base_header, uint32_t header_buffer_length);
@@ -36,7 +36,7 @@ public:
 
 private:
   void connectToRequestStreamGrpcService();
-  Envoy::Upstream::ClusterManagerPtr& cluster_manager_;
+  const Envoy::Upstream::ClusterManagerPtr& cluster_manager_;
   Envoy::Event::Dispatcher& dispatcher_;
   Envoy::Stats::Scope& scope_;
   const std::string service_cluster_name_;

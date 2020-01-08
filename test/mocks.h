@@ -141,10 +141,11 @@ public:
 class MockRequestSourceFactory : public RequestSourceFactory {
 public:
   MockRequestSourceFactory();
-  MOCK_CONST_METHOD4(create, RequestSourcePtr(Envoy::Upstream::ClusterManagerPtr& cluster_manager,
-                                              Envoy::Event::Dispatcher& dispatcher,
-                                              Envoy::Stats::Scope& scope,
-                                              absl::string_view service_cluster_name));
+  MOCK_CONST_METHOD4(create,
+                     RequestSourcePtr(const Envoy::Upstream::ClusterManagerPtr& cluster_manager,
+                                      Envoy::Event::Dispatcher& dispatcher,
+                                      Envoy::Stats::Scope& scope,
+                                      absl::string_view service_cluster_name));
 };
 
 class MockTerminationPredicateFactory : public TerminationPredicateFactory {

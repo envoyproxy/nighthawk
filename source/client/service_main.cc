@@ -36,16 +36,16 @@ ServiceMain::ServiceMain(int argc, const char** argv) {
       "service listens. Default empty.",
       false, "", "", cmd);
 
-  std::vector<std::string> service_names{"controller", "request-source"};
+  std::vector<std::string> service_names{"traffic-generator-service", "dummy-request-source"};
   TCLAP::ValuesConstraint<std::string> service_names_allowed(service_names);
-  TCLAP::ValueArg<std::string> service_arg("", "service",
-                                           "Specifies which service to run. Default 'controller'.",
-                                           false, "controller", &service_names_allowed, cmd);
+  TCLAP::ValueArg<std::string> service_arg(
+      "", "service", "Specifies which service to run. Default 'traffic-generator-service'.", false,
+      "traffic-generator-service", &service_names_allowed, cmd);
   Utility::parseCommand(cmd, argc, argv);
 
-  if (service_arg.getValue() == "controller") {
+  if (service_arg.getValue() == "traffic-generator-service") {
     service_ = std::make_unique<ServiceImpl>();
-  } else if (service_arg.getValue() == "request-source") {
+  } else if (service_arg.getValue() == "dummy-request-source") {
     service_ = std::make_unique<RequestSourceServiceImpl>();
   }
   RELEASE_ASSERT(service_ != nullptr, "Service mapping failed");

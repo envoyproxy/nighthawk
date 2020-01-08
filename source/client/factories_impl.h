@@ -65,7 +65,7 @@ public:
 class RequestSourceFactoryImpl : public OptionBasedFactoryImpl, public RequestSourceFactory {
 public:
   RequestSourceFactoryImpl(const Options& options);
-  RequestSourcePtr create(Envoy::Upstream::ClusterManagerPtr& cluster_manager,
+  RequestSourcePtr create(const Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                           Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
                           absl::string_view service_cluster_name) const override;
 

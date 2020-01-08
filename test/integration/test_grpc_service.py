@@ -6,7 +6,7 @@ from utility import *
 
 
 def test_grpc_service_happy_flow(http_test_server_fixture):
-  http_test_server_fixture.startNighthawkGrpcService("request-source")
+  http_test_server_fixture.startNighthawkGrpcService("dummy-request-source")
   parsed_json, _ = http_test_server_fixture.runNighthawkClient([
       "--termination-predicate", "benchmark.http_2xx:10", "--rps 100",
       "--request-source %s:%s" % (http_test_server_fixture.grpc_service.server_ip,
@@ -31,7 +31,7 @@ def test_grpc_service_down(http_test_server_fixture):
 
 @pytest.mark.skipif(isSanitizerRun(), reason="Slow in sanitizer runs")
 def test_grpc_service_stress(http_test_server_fixture):
-  http_test_server_fixture.startNighthawkGrpcService("request-source")
+  http_test_server_fixture.startNighthawkGrpcService("dummy-request-source")
   parsed_json, _ = http_test_server_fixture.runNighthawkClient([
       "--duration 100", "--rps 10000", "--concurrency 4", "--termination-predicate",
       "benchmark.http_2xx:5000",

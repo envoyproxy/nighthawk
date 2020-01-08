@@ -19,8 +19,10 @@ public:
   UtilityTest() = default;
   void checkUriParsing(absl::string_view uri_to_test, absl::string_view hostAndPort,
                        absl::string_view hostWithoutPort, const uint64_t port,
-                       absl::string_view scheme, absl::string_view path) {
-    const UriImpl uri = UriImpl(uri_to_test);
+                       absl::string_view scheme, absl::string_view path,
+                       absl::string_view uri_default_protocol = "") {
+    const UriImpl uri = uri_default_protocol == "" ? UriImpl(uri_to_test)
+                                                   : UriImpl(uri_to_test, uri_default_protocol);
     EXPECT_EQ(hostAndPort, uri.hostAndPort());
     EXPECT_EQ(hostWithoutPort, uri.hostWithoutPort());
     EXPECT_EQ(port, uri.port());
@@ -37,6 +39,8 @@ TEST_F(UtilityTest, Defaults) {
   checkUriParsing("a", "a:80", "a", 80, "http", "/");
   checkUriParsing("a/", "a:80", "a", 80, "http", "/");
   checkUriParsing("https://a", "a:443", "a", 443, "https", "/");
+  checkUriParsing("grpc://a", "a:8443", "a", 8443, "grpc", "/");
+  checkUriParsing("a", "a:8443", "a", 8443, "grpc", "/", "grpc");
 }
 
 TEST_F(UtilityTest, SchemeIsLowerCased) {

@@ -226,8 +226,8 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   TCLAP::ValueArg<std::string> request_source(
       "", "request-source",
       "Remote gRPC source that will deliver to-be-replayed traffic. Each worker will separately "
-      "connect to this source. For example 127.0.0.1:8443.",
-      false, "", "string", cmd);
+      "connect to this source. For example grpc://127.0.0.1:8443/.",
+      false, "", "uri format", cmd);
 
   Utility::parseCommand(cmd, argc, argv);
 
@@ -505,7 +505,10 @@ void OptionsImpl::validate() const {
 
   if (request_source_ != "") {
     try {
-      UriImpl uri(request_source_);
+      UriImpl uri(request_source_, "grpc");
+      if (uri.scheme() != "grpc") {
+        throw MalformedArgvException("Invalid replay source URI");
+      }
     } catch (const UriException) {
       throw MalformedArgvException("Invalid replay source URI");
     }
