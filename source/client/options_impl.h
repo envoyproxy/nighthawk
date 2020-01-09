@@ -42,7 +42,9 @@ public:
   nighthawk::client::AddressFamily::AddressFamilyOptions addressFamily() const override {
     return address_family_;
   };
-  envoy::api::v2::core::RequestMethod requestMethod() const override { return request_method_; };
+  envoy::config::core::v3alpha::RequestMethod requestMethod() const override {
+    return request_method_;
+  };
   std::vector<std::string> requestHeaders() const override { return request_headers_; };
   uint32_t requestBodySize() const override { return request_body_size_; };
   const envoy::extensions::transport_sockets::tls::v3alpha::UpstreamTlsContext&
@@ -92,7 +94,8 @@ private:
   uint32_t burst_size_{0};
   nighthawk::client::AddressFamily::AddressFamilyOptions address_family_{
       nighthawk::client::AddressFamily::AUTO};
-  envoy::api::v2::core::RequestMethod request_method_{envoy::api::v2::core::RequestMethod::GET};
+  envoy::config::core::v3alpha::RequestMethod request_method_{
+      envoy::config::core::v3alpha::RequestMethod::GET};
   std::vector<std::string> request_headers_;
   uint32_t request_body_size_{0};
   envoy::extensions::transport_sockets::tls::v3alpha::UpstreamTlsContext tls_context_;

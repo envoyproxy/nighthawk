@@ -5,8 +5,6 @@
 #include <memory>
 #include <string>
 
-#include "envoy/api/v2/cds.pb.h"
-#include "envoy/api/v2/core/base.pb.h"
 #include "envoy/common/pure.h"
 #include "envoy/config/cluster/v3alpha/cluster.pb.h"
 #include "envoy/config/core/v3alpha/base.pb.h"
@@ -39,7 +37,7 @@ public:
   virtual bool prefetchConnections() const PURE;
   virtual uint32_t burstSize() const PURE;
   virtual nighthawk::client::AddressFamily::AddressFamilyOptions addressFamily() const PURE;
-  virtual envoy::api::v2::core::RequestMethod requestMethod() const PURE;
+  virtual envoy::config::core::v3alpha::RequestMethod requestMethod() const PURE;
   virtual std::vector<std::string> requestHeaders() const PURE;
   virtual uint32_t requestBodySize() const PURE;
   virtual const envoy::extensions::transport_sockets::tls::v3alpha::UpstreamTlsContext&

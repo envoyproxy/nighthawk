@@ -12,9 +12,6 @@ api_cc_py_proto_library(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "@envoy_api//envoy/api/v2/auth:pkg",
-        "@envoy_api//envoy/api/v2/cluster:pkg",
-        "@envoy_api//envoy/api/v2/core:pkg",
         "@envoy_api//envoy/config/core/v3alpha:pkg",
         "@envoy_api//envoy/extensions/transport_sockets/tls/v3alpha:pkg",
     ],

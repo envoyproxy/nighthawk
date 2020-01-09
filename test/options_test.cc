@@ -69,7 +69,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
   EXPECT_EQ(13, options->burstSize());
   EXPECT_EQ(nighthawk::client::AddressFamily::V6, options->addressFamily());
   EXPECT_EQ(good_test_uri_, options->uri());
-  EXPECT_EQ(envoy::api::v2::core::RequestMethod::POST, options->requestMethod());
+  EXPECT_EQ(envoy::config::core::v3alpha::RequestMethod::POST, options->requestMethod());
   const std::vector<std::string> expected_headers = {"f1:b1", "f2:b2", "f3:b3:b4"};
   EXPECT_EQ(expected_headers, options->requestHeaders());
   EXPECT_EQ(1234, options->requestBodySize());
