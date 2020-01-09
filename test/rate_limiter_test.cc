@@ -289,14 +289,11 @@ public:
     std::vector<int64_t> acquisition_timings;
     auto* unsafe_discrete_numeric_distribution_sampler =
         new MockDiscreteNumericDistributionSampler();
-    std::mt19937_64 mt(1243);
+    // TODO(#263): Fix test determinism across all environments and restore deleted lines
     const uint64_t dist_min = 1;
     const uint64_t dist_max = 1000000;
-    std::uniform_int_distribution<uint64_t> dist(dist_min, dist_max);
     EXPECT_CALL(*unsafe_discrete_numeric_distribution_sampler, getValue)
         .Times(AtLeast(1))
-        // TODO(#263): Fix test determinism across all environments and restore:
-        // .WillRepeatedly(Invoke([&dist, &mt]() { return dist(mt); }));
         .WillRepeatedly(Invoke([]() { return (dist_min + dist_max) / 2; }));
     EXPECT_CALL(*unsafe_discrete_numeric_distribution_sampler, min)
         .Times(1)
