@@ -25,7 +25,7 @@ envoy::config::core::v3alpha::BuildVersion VersionInfo::makeBuildVersion(const c
   // Rewritten from the Envoy version to avoid using std/regex.
   // TODO(#262): Add a generic means to Envoy's check_format.py to allow line-level
   // exclusion for this checking as an escape latch.
-  std::vector<std::string> tmp = absl::StrSplit(version, ".");
+  std::vector<std::string> tmp = absl::StrSplit(version, '.');
   envoy::config::core::v3alpha::BuildVersion result;
   int major, minor, patch = -1;
   if (absl::SimpleAtoi(tmp[0], &major) && absl::SimpleAtoi(tmp[1], &minor) &&
