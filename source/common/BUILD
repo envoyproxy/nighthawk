@@ -73,6 +73,7 @@ envoy_cc_library(
         "@dep_hdrhistogram_c//:hdrhistogram_c",
         "@envoy//source/common/common:assert_lib_with_external_headers",
         "@envoy//source/common/common:lock_guard_lib_with_external_headers",
+        "@envoy//source/common/common:macros_with_external_headers",
         "@envoy//source/common/common:minimal_logger_lib_with_external_headers",
         "@envoy//source/common/common:thread_lib_with_external_headers",
         "@envoy//source/common/common:version_includes_with_external_headers",
