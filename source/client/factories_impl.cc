@@ -31,10 +31,6 @@ BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
     Envoy::Upstream::ClusterManagerPtr& cluster_manager, Envoy::Tracing::HttpTracerPtr& http_tracer,
     absl::string_view cluster_name, RequestSource& request_generator) const {
   StatisticFactoryImpl statistic_factory(options_);
-  // TODO(oschaaf): pass in statistic id's here to the factorie's create call.
-  // Then, based on that id, decide which type of statistic should be backing:
-  // HdrHistogram (latency tracking), or the simple StreamingStatistic (sizes),
-  // or maybe null for optional statistics.
   auto benchmark_client = std::make_unique<BenchmarkClientHttpImpl>(
       api, dispatcher, scope, statistic_factory.create(), statistic_factory.create(),
       statistic_factory.create(), statistic_factory.create(), options_.h2(), cluster_manager,

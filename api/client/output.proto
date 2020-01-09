@@ -24,6 +24,8 @@ message Statistic {
   google.protobuf.Duration mean = 3;
   google.protobuf.Duration pstdev = 4;
   repeated Percentile percentiles = 5;
+  google.protobuf.Duration min = 6;
+  google.protobuf.Duration max = 7;
 }
 
 message Result {

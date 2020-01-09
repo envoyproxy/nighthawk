@@ -49,7 +49,7 @@ void StreamDecoder::onComplete(bool success) {
     latency_statistic_.addValue((time_source_.monotonicTime() - request_start_).count());
   }
   upstream_timing_.onLastUpstreamRxByteReceived(time_source_);
-  response_body_sizes_statistic_.addValue(stream_info_.bytesReceived());
+  response_body_sizes_statistic_.addValue(stream_info_.bytesSent());
   stream_info_.onRequestComplete();
   stream_info_.setUpstreamTiming(upstream_timing_);
   decoder_completion_callback_.onComplete(success, *response_headers_);
