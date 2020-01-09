@@ -31,7 +31,7 @@ public:
     return Envoy::ProtobufTypes::MessagePtr{new nighthawk::server::ResponseOptions()};
   }
 
-  std::string name() override { return "test-server"; }
+  std::string name() const override { return "test-server"; }
 
 private:
   Envoy::Http::FilterFactoryCb createFilter(const nighthawk::server::ResponseOptions& proto_config,
