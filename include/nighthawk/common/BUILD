@@ -20,7 +20,6 @@ envoy_basic_cc_library(
         "statistic.h",
         "termination_predicate.h",
         "uri.h",
-        "version.h",
         "worker.h",
     ],
     include_prefix = "nighthawk/common",

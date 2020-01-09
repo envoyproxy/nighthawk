@@ -3521,6 +3521,12 @@
    ]
   }
  ],
- "version": "testversion",
+ "version": {
+  "version": {
+   "major": 9,
+   "minor": 9,
+   "patch": 9
+  }
+ },
  "timestamp": "2019-10-16T00:30:12.911078318Z"
 }

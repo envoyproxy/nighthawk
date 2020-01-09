@@ -4,9 +4,9 @@
 #include <iostream>
 
 #include "nighthawk/common/exception.h"
-#include "nighthawk/common/version.h"
 
 #include "common/utility.h"
+#include "common/version_info.h"
 
 #include "client/service_impl.h"
 
@@ -23,7 +23,7 @@ void signal_handler(int signal) { signal_handler_delegate(signal); }
 
 ServiceMain::ServiceMain(int argc, const char** argv) {
   const char* descr = "L7 (HTTP/HTTPS/HTTP2) performance characterization tool.";
-  TCLAP::CmdLine cmd(descr, ' ', Versioning::VersionString()); // NOLINT
+  TCLAP::CmdLine cmd(descr, ' ', VersionInfo::version()); // NOLINT
 
   TCLAP::ValueArg<std::string> listen_arg(
       "", "listen",

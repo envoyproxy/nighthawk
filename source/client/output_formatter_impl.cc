@@ -11,6 +11,8 @@
 
 #include "api/client/transform/fortio.pb.h"
 
+#include "common/version_info.h"
+
 #include "absl/strings/str_cat.h"
 #include "absl/strings/strip.h"
 
@@ -210,7 +212,7 @@ std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Outp
     labels += label + " ";
   }
   fortio_output.set_labels(std::string(absl::StripSuffix(labels, " ")));
-  fortio_output.set_version(output.version());
+  fortio_output.set_version(VersionInfo::toVersionString(output.version()));
   *fortio_output.mutable_starttime() = output.timestamp();
   fortio_output.set_requestedqps(number_of_workers *
                                  output.options().requests_per_second().value());

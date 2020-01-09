@@ -101,6 +101,7 @@ envoy_cc_library(
         "//api/client:base_cc_proto",
         "//include/nighthawk/client:client_includes",
         "//include/nighthawk/common:base_includes",
+        "//source/common:nighthawk_common_lib",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
     ],
 )
@@ -119,6 +120,7 @@ envoy_cc_library(
         "//api/client:base_cc_proto",
         "//api/client/transform:transform_cc_proto",
         "//include/nighthawk/client:client_includes",
+        "//source/common:nighthawk_common_lib",
         "@envoy//source/common/network:utility_lib_with_external_headers",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
     ],

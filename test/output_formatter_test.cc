@@ -1,7 +1,6 @@
 #include <chrono>
 
 #include "nighthawk/common/exception.h"
-#include "nighthawk/common/version.h"
 
 #include "external/envoy/source/common/protobuf/message_validator_impl.h"
 #include "external/envoy/test/test_common/file_system_for_test.h"
@@ -11,6 +10,7 @@
 #include "api/client/output.pb.h"
 
 #include "common/statistic_impl.h"
+#include "common/version_info.h"
 
 #include "client/output_collector_impl.h"
 #include "client/output_formatter_impl.h"
@@ -53,7 +53,13 @@ public:
   void expectEqualToGoldFile(absl::string_view output, absl::string_view path) {
     std::string s = Envoy::Filesystem::fileSystemForTest().fileReadToEnd(
         TestEnvironment::runfilesPath(std::string(path)));
-    s = absl::StrReplaceAll(s, {{"@version@", Versioning::VersionString()}});
+    const auto version = VersionInfo::buildVersion().version();
+    const std::string major = fmt::format("{}", version.major());
+    const std::string minor = fmt::format("{}", version.minor());
+    const std::string patch = fmt::format("{}", version.patch());
+    s = absl::StrReplaceAll(s, {{"@version_major@", major}});
+    s = absl::StrReplaceAll(s, {{"@version_minor@", minor}});
+    s = absl::StrReplaceAll(s, {{"@version_patch@", patch}});
     EXPECT_EQ(s, output);
   }
 

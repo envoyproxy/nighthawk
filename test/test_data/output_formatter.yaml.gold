@@ -68,5 +68,9 @@ results:
       - name: foo
         value: 1
     execution_duration: 1s
-version: @version@
+version:
+  version:
+    major: @version_major@
+    minor: @version_minor@
+    patch: @version_patch@
 timestamp: 2009-02-13T23:31:31.567Z

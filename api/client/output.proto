@@ -4,6 +4,7 @@ package nighthawk.client;
 
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
+import "envoy/config/core/v3alpha/base.proto";
 
 import "api/client/options.proto";
 
@@ -37,5 +38,5 @@ message Output {
   google.protobuf.Timestamp timestamp = 1;
   nighthawk.client.CommandLineOptions options = 2;
   repeated Result results = 3;
-  string version = 4;
+  envoy.config.core.v3alpha.BuildVersion version = 4;
 }

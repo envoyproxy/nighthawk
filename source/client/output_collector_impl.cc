@@ -5,9 +5,9 @@
 #include <chrono>
 #include <sstream>
 
-#include "nighthawk/common/version.h"
-
 #include "external/envoy/source/common/protobuf/utility.h"
+
+#include "common/version_info.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -18,7 +18,7 @@ OutputCollectorImpl::OutputCollectorImpl(Envoy::TimeSource& time_source, const O
           time_source.systemTime().time_since_epoch())
           .count());
   output_.set_allocated_options(options.toCommandLineOptions().release());
-  output_.mutable_version()->assign(Versioning::VersionString());
+  *output_.mutable_version() = VersionInfo::buildVersion();
 }
 
 nighthawk::client::Output OutputCollectorImpl::toProto() const { return output_; }
