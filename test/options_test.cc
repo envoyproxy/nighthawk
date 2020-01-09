@@ -429,7 +429,8 @@ TEST_F(OptionsImplTest, BadTlsContextSpecification) {
   EXPECT_THROW_WITH_REGEX(
       TestUtility::createOptionsImpl(fmt::format("{} --tls-context {} http://foo/", client_name_,
                                                  "{misspelled_tls_context:{}}")),
-      MalformedArgvException, "envoy.api.v2.auth.UpstreamTlsContext reason INVALID_ARGUMENT");
+      MalformedArgvException,
+      "envoy.extensions.transport_sockets.tls.v3alpha.UpstreamTlsContext reason INVALID_ARGUMENT");
 }
 
 TEST_F(OptionsImplTest, BadTransportSocketSpecification) {

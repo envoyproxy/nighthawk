@@ -246,10 +246,7 @@ void ProcessImpl::createBootstrapConfiguration(
       auto* transport_socket = cluster->mutable_transport_socket();
       transport_socket->set_name("envoy.transport_sockets.tls");
       envoy::extensions::transport_sockets::tls::v3alpha::UpstreamTlsContext context;
-      // auto* validation_context =
-      // context.mutable_common_tls_context()->mutable_validation_context();
-      // auto* tls_context = &context;
-      //*tls_context = options_.tlsContext();
+      context = options_.tlsContext();
       auto* common_tls_context = context.mutable_common_tls_context();
       if (options_.h2()) {
         common_tls_context->add_alpn_protocols("h2");
