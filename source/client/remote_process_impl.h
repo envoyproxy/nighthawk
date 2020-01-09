@@ -6,6 +6,8 @@
 
 #include "external/envoy/source/common/common/logger.h"
 
+#include "api/client/service.grpc.pb.h"
+
 namespace Nighthawk {
 namespace Client {
 
@@ -18,7 +20,7 @@ public:
    * @param options Options to send to the remote nighthawk service, as well as
    * containing information to connect to it (which won't be forwarded).
    */
-  RemoteProcessImpl(const Options& options);
+  RemoteProcessImpl(const Options& options, nighthawk::client::NighthawkService::Stub& stub);
   /**
    * @param collector Collects the output from the remote nighthawk service.
    * @return true iff the remote execution should be considered successful.
@@ -31,6 +33,7 @@ public:
 
 private:
   const Options& options_;
+  nighthawk::client::NighthawkService::Stub& stub_;
 };
 
 } // namespace Client

@@ -8,7 +8,6 @@
 
 #include "api/client/options.pb.h"
 #include "api/client/output.pb.h"
-#include "api/client/service.grpc.pb.h"
 
 #include "common/uri_impl.h"
 
@@ -17,25 +16,15 @@
 namespace Nighthawk {
 namespace Client {
 
-RemoteProcessImpl::RemoteProcessImpl(const Options& options) : options_(options) {}
+RemoteProcessImpl::RemoteProcessImpl(const Options& options,
+                                     nighthawk::client::NighthawkService::Stub& stub)
+    : options_(options), stub_(stub) {}
 
 bool RemoteProcessImpl::run(OutputCollector& collector) {
-  UriPtr uri;
-
-  try {
-    uri = std::make_unique<UriImpl>(options_.nighthawkService());
-  } catch (const UriException&) {
-    ENVOY_LOG(error, "Bad service uri: {}", options_.nighthawkService());
-    return false;
-  }
-
-  auto channel = grpc::CreateChannel(fmt::format("{}:{}", uri->hostWithoutPort(), uri->port()),
-                                     grpc::InsecureChannelCredentials());
-  auto stub = std::make_unique<nighthawk::client::NighthawkService::Stub>(channel);
-  grpc::ClientContext context;
   nighthawk::client::ExecutionRequest request;
   nighthawk::client::ExecutionResponse response;
-  auto r = stub->ExecutionStream(&context);
+  grpc::ClientContext context;
+  auto r = stub_.ExecutionStream(&context);
 
   *request.mutable_start_request()->mutable_options() = *options_.toCommandLineOptions();
   // We don't forward the option that requests remote execution. Today,

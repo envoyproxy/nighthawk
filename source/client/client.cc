@@ -1,5 +1,7 @@
 #include "client/client.h"
 
+#include <grpc++/grpc++.h>
+
 #include <chrono>
 #include <fstream>
 #include <iostream>
@@ -18,6 +20,7 @@
 #include "external/envoy/source/common/thread_local/thread_local_impl.h"
 
 #include "api/client/output.pb.h"
+#include "api/client/service.grpc.pb.h"
 
 #include "common/frequency.h"
 #include "common/uri_impl.h"
@@ -48,8 +51,23 @@ bool Main::run() {
       spdlog::level::from_str(lower), "[%T.%f][%t][%L] %v", log_lock, false);
   Envoy::Event::RealTimeSystem time_system; // NO_CHECK_FORMAT(real_time)
   ProcessPtr process;
+  std::unique_ptr<nighthawk::client::NighthawkService::Stub> stub;
+  std::shared_ptr<::grpc::Channel> channel;
+
   if (options_->nighthawkService() != "") {
-    process = std::make_unique<RemoteProcessImpl>(*options_);
+    UriPtr uri;
+
+    try {
+      uri = std::make_unique<UriImpl>(options_->nighthawkService());
+    } catch (const UriException&) {
+      ENVOY_LOG(error, "Bad service uri: {}", options_->nighthawkService());
+      return false;
+    }
+
+    channel = grpc::CreateChannel(fmt::format("{}:{}", uri->hostWithoutPort(), uri->port()),
+                                  grpc::InsecureChannelCredentials());
+    stub = std::make_unique<nighthawk::client::NighthawkService::Stub>(channel);
+    process = std::make_unique<RemoteProcessImpl>(*options_, *stub);
   } else {
     process = std::make_unique<ProcessImpl>(*options_, time_system);
   }
