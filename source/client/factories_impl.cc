@@ -123,7 +123,7 @@ RequestSourcePtr RequestSourceFactoryImpl::create() const {
   UriImpl uri(options_.uri());
   Envoy::Http::HeaderMapPtr header = std::make_unique<Envoy::Http::HeaderMapImpl>();
 
-  header->setMethod(envoy::api::v2::core::RequestMethod_Name(options_.requestMethod()));
+  header->setMethod(envoy::config::core::v3alpha::RequestMethod_Name(options_.requestMethod()));
   header->setPath(uri.path());
   header->setHost(uri.hostAndPort());
   header->setScheme(uri.scheme() == "https" ? Envoy::Http::Headers::get().SchemeValues.Https

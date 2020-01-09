@@ -237,25 +237,27 @@ ProcessImpl::mergeWorkerStatistics(const StatisticFactory& statistic_factory,
   return merged_statistics;
 }
 
-void ProcessImpl::createBootstrapConfiguration(envoy::config::bootstrap::v2::Bootstrap& bootstrap,
-                                               const Uri& uri, int number_of_clusters) const {
+void ProcessImpl::createBootstrapConfiguration(
+    envoy::config::bootstrap::v3alpha::Bootstrap& bootstrap, const Uri& uri,
+    int number_of_clusters) const {
   for (int i = 0; i < number_of_clusters; i++) {
     auto* cluster = bootstrap.mutable_static_resources()->add_clusters();
     if (uri.scheme() == "https") {
-      auto* tls_context = cluster->mutable_tls_context();
-      *tls_context = options_.tlsContext();
-      auto* common_tls_context = tls_context->mutable_common_tls_context();
+      auto* transport_socket = cluster->mutable_transport_socket();
+      transport_socket->set_name("envoy.transport_sockets.tls");
+      envoy::extensions::transport_sockets::tls::v3alpha::UpstreamTlsContext context =
+          options_.tlsContext();
+      auto* common_tls_context = context.mutable_common_tls_context();
       if (options_.h2()) {
         common_tls_context->add_alpn_protocols("h2");
       } else {
         common_tls_context->add_alpn_protocols("http/1.1");
       }
+      transport_socket->mutable_typed_config()->PackFrom(context);
     }
-
     if (options_.transportSocket().has_value()) {
       *cluster->mutable_transport_socket() = options_.transportSocket().value();
     }
-
     cluster->set_name(fmt::format("{}", i));
     cluster->mutable_connect_timeout()->set_seconds(options_.timeout().count());
     cluster->mutable_max_requests_per_connection()->set_value(options_.maxRequestsPerConnection());
@@ -270,7 +272,8 @@ void ProcessImpl::createBootstrapConfiguration(envoy::config::bootstrap::v2::Boo
         options_.maxPendingRequests() == 0 ? 1 : options_.maxPendingRequests());
     thresholds->mutable_max_requests()->set_value(options_.maxActiveRequests());
 
-    cluster->set_type(envoy::api::v2::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
+    cluster->set_type(
+        envoy::config::cluster::v3alpha::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
     auto* host = cluster->add_hosts();
     auto* socket_address = host->mutable_socket_address();
     socket_address->set_address(uri.address()->ip()->addressAsString());
@@ -278,27 +281,28 @@ void ProcessImpl::createBootstrapConfiguration(envoy::config::bootstrap::v2::Boo
   }
 }
 
-void ProcessImpl::addTracingCluster(envoy::config::bootstrap::v2::Bootstrap& bootstrap,
+void ProcessImpl::addTracingCluster(envoy::config::bootstrap::v3alpha::Bootstrap& bootstrap,
                                     const Uri& uri) const {
   auto* cluster = bootstrap.mutable_static_resources()->add_clusters();
   cluster->set_name("tracing");
   cluster->mutable_connect_timeout()->set_seconds(options_.timeout().count());
-  cluster->set_type(envoy::api::v2::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
+  cluster->set_type(
+      envoy::config::cluster::v3alpha::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
   auto* host = cluster->add_hosts();
   auto* socket_address = host->mutable_socket_address();
   socket_address->set_address(uri.address()->ip()->addressAsString());
   socket_address->set_port_value(uri.port());
 }
 
-void ProcessImpl::setupTracingImplementation(envoy::config::bootstrap::v2::Bootstrap& bootstrap,
-                                             const Uri& uri) const {
+void ProcessImpl::setupTracingImplementation(
+    envoy::config::bootstrap::v3alpha::Bootstrap& bootstrap, const Uri& uri) const {
 #ifdef ZIPKIN_ENABLED
   auto* http = bootstrap.mutable_tracing()->mutable_http();
   auto scheme = uri.scheme();
   const std::string kTracingClusterName = "tracing";
   http->set_name(fmt::format("envoy.{}", scheme));
   RELEASE_ASSERT(scheme == "zipkin", "Only zipkin is supported");
-  envoy::config::trace::v2::ZipkinConfig config;
+  envoy::config::trace::v3alpha::ZipkinConfig config;
   config.mutable_collector_cluster()->assign(kTracingClusterName);
   config.mutable_collector_endpoint()->assign(std::string(uri.path()));
   config.mutable_shared_span_context()->set_value(true);
@@ -310,7 +314,8 @@ void ProcessImpl::setupTracingImplementation(envoy::config::bootstrap::v2::Boots
 #endif
 }
 
-void ProcessImpl::maybeCreateTracingDriver(const envoy::config::trace::v2::Tracing& configuration) {
+void ProcessImpl::maybeCreateTracingDriver(
+    const envoy::config::trace::v3alpha::Tracing& configuration) {
   if (configuration.has_http()) {
 #ifdef ZIPKIN_ENABLED
     std::string type = configuration.http().name();
@@ -321,10 +326,10 @@ void ProcessImpl::maybeCreateTracingDriver(const envoy::config::trace::v2::Traci
     // upstream code changes.
     auto& factory =
         Config::Utility::getAndCheckFactory<Envoy::Server::Configuration::TracerFactory>(
-            configuration.http().name());
+            configuration.http());
     ProtobufTypes::MessagePtr message = Envoy::Config::Utility::translateToFactoryConfig(
         configuration.http(), Envoy::ProtobufMessage::getStrictValidationVisitor(), factory);
-    auto zipkin_config = dynamic_cast<const envoy::config::trace::v2::ZipkinConfig&>(*message);
+    auto zipkin_config = dynamic_cast<const envoy::config::trace::v3alpha::ZipkinConfig&>(*message);
     Envoy::Tracing::DriverPtr zipkin_driver =
         std::make_unique<Envoy::Extensions::Tracers::Zipkin::Driver>(
             zipkin_config, *cluster_manager_, store_root_, tls_,
@@ -375,7 +380,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
           ? Http1PoolImpl::ConnectionReuseStrategy::LRU
           : Http1PoolImpl::ConnectionReuseStrategy::MRU);
   cluster_manager_factory_->setPrefetchConnections(options_.prefetchConnections());
-  envoy::config::bootstrap::v2::Bootstrap bootstrap;
+  envoy::config::bootstrap::v3alpha::Bootstrap bootstrap;
   createBootstrapConfiguration(bootstrap, uri, number_of_workers);
   if (tracing_uri != nullptr) {
     setupTracingImplementation(bootstrap, *tracing_uri);

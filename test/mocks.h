@@ -81,11 +81,13 @@ public:
   MOCK_CONST_METHOD0(prefetchConnections, bool());
   MOCK_CONST_METHOD0(burstSize, uint32_t());
   MOCK_CONST_METHOD0(addressFamily, nighthawk::client::AddressFamily::AddressFamilyOptions());
-  MOCK_CONST_METHOD0(requestMethod, envoy::api::v2::core::RequestMethod());
+  MOCK_CONST_METHOD0(requestMethod, envoy::config::core::v3alpha::RequestMethod());
   MOCK_CONST_METHOD0(requestHeaders, std::vector<std::string>());
   MOCK_CONST_METHOD0(requestBodySize, uint32_t());
-  MOCK_CONST_METHOD0(tlsContext, envoy::api::v2::auth::UpstreamTlsContext&());
-  MOCK_CONST_METHOD0(transportSocket, absl::optional<envoy::api::v2::core::TransportSocket>&());
+  MOCK_CONST_METHOD0(tlsContext,
+                     envoy::extensions::transport_sockets::tls::v3alpha::UpstreamTlsContext&());
+  MOCK_CONST_METHOD0(transportSocket,
+                     absl::optional<envoy::config::core::v3alpha::TransportSocket>&());
   MOCK_CONST_METHOD0(maxPendingRequests, uint32_t());
   MOCK_CONST_METHOD0(maxActiveRequests, uint32_t());
   MOCK_CONST_METHOD0(maxRequestsPerConnection, uint32_t());
