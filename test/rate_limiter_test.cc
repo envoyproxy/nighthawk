@@ -295,7 +295,9 @@ public:
     std::uniform_int_distribution<uint64_t> dist(dist_min, dist_max);
     EXPECT_CALL(*unsafe_discrete_numeric_distribution_sampler, getValue)
         .Times(AtLeast(1))
-        .WillRepeatedly(Invoke([&dist, &mt]() { return dist(mt); }));
+        // TODO(#263): Fix test determinism across all environments and restore:
+        // .WillRepeatedly(Invoke([&dist, &mt]() { return dist(mt); }));
+        .WillRepeatedly(Invoke([]() { return (dist_min + dist_max) / 2; }));
     EXPECT_CALL(*unsafe_discrete_numeric_distribution_sampler, min)
         .Times(1)
         .WillOnce(Return(dist_min));
@@ -334,11 +336,10 @@ public:
   }
 };
 
-// TODO(#263): Fix test determinism across all environments and re-enable
-TEST_F(GraduallyOpeningRateLimiterFilterTest, DISABLED_TimingVerificationTest) {
+TEST_F(GraduallyOpeningRateLimiterFilterTest, TimingVerificationTest) {
   EXPECT_EQ(getAcquisitionTimings(50_Hz, 1s),
-            std::vector<int64_t>({120, 320, 380, 560, 580, 600, 620, 640, 660, 680, 700, 740,
-                                  760, 780, 840, 860, 880, 900, 920, 940, 960, 980, 1000}));
+            std::vector<int64_t>({520, 540, 560, 580, 600, 620, 640, 660, 680, 700, 720, 740, 760,
+                                  780, 800, 820, 840, 860, 880, 900, 920, 940, 960, 980, 1000}));
 }
 
 } // namespace Nighthawk
