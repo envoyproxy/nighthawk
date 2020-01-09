@@ -334,7 +334,7 @@ public:
   }
 };
 
-TEST_F(GraduallyOpeningRateLimiterFilterTest, TimingVerificationTest) {
+TEST_F(GraduallyOpeningRateLimiterFilterTest, DISABLED_TimingVerificationTest) {
   EXPECT_EQ(getAcquisitionTimings(50_Hz, 1s),
             std::vector<int64_t>({120, 320, 380, 560, 580, 600, 620, 640, 660, 680, 700, 740,
                                   760, 780, 840, 860, 880, 900, 920, 940, 960, 980, 1000}));
