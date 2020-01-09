@@ -245,8 +245,8 @@ void ProcessImpl::createBootstrapConfiguration(
     if (uri.scheme() == "https") {
       auto* transport_socket = cluster->mutable_transport_socket();
       transport_socket->set_name("envoy.transport_sockets.tls");
-      envoy::extensions::transport_sockets::tls::v3alpha::UpstreamTlsContext context;
-      context = options_.tlsContext();
+      envoy::extensions::transport_sockets::tls::v3alpha::UpstreamTlsContext context =
+          options_.tlsContext();
       auto* common_tls_context = context.mutable_common_tls_context();
       if (options_.h2()) {
         common_tls_context->add_alpn_protocols("h2");
