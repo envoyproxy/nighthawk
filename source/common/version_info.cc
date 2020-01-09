@@ -24,9 +24,7 @@ const envoy::config::core::v3alpha::BuildVersion& VersionInfo::buildVersion() {
 }
 
 envoy::config::core::v3alpha::BuildVersion VersionInfo::makeBuildVersion(const char* version) {
-  // Rewritten from the Envoy version to avoid using std::regex.
-  // Check_format will flag this as user-facing code relying on std:: regex to process untrusted
-  // input.
+  // Rewritten from the Envoy version to avoid using std/regex.
   // TODO(#262): Add a generic means to Envoy's check_format.py to allow line-level
   // exclusion for this checking as an escape latch.
   std::vector<std::string> tmp = absl::StrSplit(version, ".");
