@@ -98,10 +98,10 @@ TEST_F(StreamDecoderTest, TrailerTest) {
 }
 
 TEST_F(StreamDecoderTest, LatencyIsNotMeasured) {
-  auto decoder = new StreamDecoder(*dispatcher_, time_system_, *this, [](bool, bool) {},
-                                   connect_statistic_, latency_statistic_,
-                                   response_header_size_statistic_, response_body_size_statistic_,
-                                   request_headers_, false, 0, TEST_TRACER_UID, http_tracer_);
+  auto decoder = new StreamDecoder(
+      *dispatcher_, time_system_, *this, [](bool, bool) {}, connect_statistic_, latency_statistic_,
+      response_header_size_statistic_, response_body_size_statistic_, request_headers_, false, 0,
+      TEST_TRACER_UID, http_tracer_);
   Envoy::Http::MockStreamEncoder stream_encoder;
   EXPECT_CALL(stream_encoder, getStream());
   Envoy::Upstream::HostDescriptionConstSharedPtr ptr;
@@ -136,10 +136,10 @@ TEST_F(StreamDecoderTest, LatencyIsMeasured) {
   auto expected_request_header = std::make_shared<Envoy::Http::TestHeaderMapImpl>(
       std::initializer_list<std::pair<std::string, std::string>>(
           {{":method", "GET"}, {":path", "/"}, {"x-client-trace-id", TEST_TRACER_UID_BIT_SET}}));
-  auto decoder = new StreamDecoder(*dispatcher_, time_system_, *this, [](bool, bool) {},
-                                   connect_statistic_, latency_statistic_,
-                                   response_header_size_statistic_, response_body_size_statistic_,
-                                   request_header, true, 0, TEST_TRACER_UID, http_tracer_);
+  auto decoder = new StreamDecoder(
+      *dispatcher_, time_system_, *this, [](bool, bool) {}, connect_statistic_, latency_statistic_,
+      response_header_size_statistic_, response_body_size_statistic_, request_header, true, 0,
+      TEST_TRACER_UID, http_tracer_);
 
   Envoy::Http::MockStreamEncoder stream_encoder;
   EXPECT_CALL(stream_encoder, getStream());
