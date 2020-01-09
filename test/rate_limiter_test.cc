@@ -334,6 +334,7 @@ public:
   }
 };
 
+// TODO(#263): Fix test determinism across all environments and re-enable
 TEST_F(GraduallyOpeningRateLimiterFilterTest, DISABLED_TimingVerificationTest) {
   EXPECT_EQ(getAcquisitionTimings(50_Hz, 1s),
             std::vector<int64_t>({120, 320, 380, 560, 580, 600, 620, 640, 660, 680, 700, 740,
