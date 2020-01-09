@@ -259,7 +259,7 @@ void ProcessImpl::createBootstrapConfiguration(
       transport_socket->mutable_typed_config()->PackFrom(context);
     }
     if (options_.transportSocket().has_value()) {
-      //*cluster->mutable_transport_socket() = options_.transportSocket().value();
+      *cluster->mutable_transport_socket() = options_.transportSocket().value();
     }
     cluster->set_name(fmt::format("{}", i));
     cluster->mutable_connect_timeout()->set_seconds(options_.timeout().count());

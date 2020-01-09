@@ -6,6 +6,7 @@ import "google/protobuf/duration.proto";
 import "google/protobuf/wrappers.proto";
 import "envoy/api/v2/auth/cert.proto";
 import "envoy/api/v2/core/base.proto";
+import "envoy/config/core/v3alpha/base.proto";
 import "validate/validate.proto";
 
 // Allows for static configuration of requests that should be send by the load generator.
@@ -142,5 +143,5 @@ message CommandLineOptions {
   // See :option:`--labels`
   repeated string labels = 28;
   // See :option:`--transport-socket` for details.
-  envoy.api.v2.core.TransportSocket transport_socket = 27;
+  envoy.config.core.v3alpha.TransportSocket transport_socket = 27;
 }

@@ -443,7 +443,7 @@ TEST_F(OptionsImplTest, BadTransportSocketSpecification) {
       TestUtility::createOptionsImpl(fmt::format("{} --transport-socket {} http://foo/",
                                                  client_name_, "{misspelled_transport_socket:{}}")),
       MalformedArgvException,
-      "Protobuf message \\(type envoy.api.v2.core.TransportSocket reason "
+      "Protobuf message \\(type envoy.config.core.v3alpha.TransportSocket reason "
       "INVALID_ARGUMENT:misspelled_transport_socket: Cannot find field.\\) has unknown fields");
 }
 
