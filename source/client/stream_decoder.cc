@@ -14,6 +14,7 @@ void StreamDecoder::decodeHeaders(Envoy::Http::HeaderMapPtr&& headers, bool end_
   upstream_timing_.onFirstUpstreamRxByteReceived(time_source_);
   complete_ = end_stream;
   response_headers_ = std::move(headers);
+  response_header_sizes_statistic_.addValue(response_headers_->byteSize());
   const uint64_t response_code = Envoy::Http::Utility::getResponseStatus(*response_headers_);
   stream_info_.response_code_ = static_cast<uint32_t>(response_code);
   if (complete_) {
@@ -48,6 +49,7 @@ void StreamDecoder::onComplete(bool success) {
     latency_statistic_.addValue((time_source_.monotonicTime() - request_start_).count());
   }
   upstream_timing_.onLastUpstreamRxByteReceived(time_source_);
+  response_body_sizes_statistic_.addValue(stream_info_.bytesReceived());
   stream_info_.onRequestComplete();
   stream_info_.setUpstreamTiming(upstream_timing_);
   decoder_completion_callback_.onComplete(success, *response_headers_);
