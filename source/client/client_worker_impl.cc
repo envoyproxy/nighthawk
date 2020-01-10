@@ -35,7 +35,7 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
           sequencer_factory_.create(
               time_source_, *dispatcher_, *benchmark_client_,
               termination_predicate_factory_.create(time_source_, *worker_number_scope_),
-              *worker_number_scope_, false),
+              *worker_number_scope_),
           true, time_source_, starting_time_)) {}
 
 void ClientWorkerImpl::simpleWarmup() {
