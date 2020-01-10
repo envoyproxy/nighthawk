@@ -7,10 +7,9 @@
 namespace Nighthawk {
 
 /*
- * This class is heavily based on Envoy's source/common/common/version.h
+ * TODO(#267): This class is heavily based on Envoy's source/common/common/version.h
  * There's some code duplication going on as we cannot easily directly fully
  * re-use it. It would be great if we can make that happen.
- * TODO(#XXX): make that happen.
  */
 class VersionInfo {
 public:
