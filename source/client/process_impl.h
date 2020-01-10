@@ -54,7 +54,7 @@ public:
   void setupTracingImplementation(envoy::config::bootstrap::v2::Bootstrap& bootstrap,
                                   const Uri& uri) const;
   void createBootstrapConfiguration(envoy::config::bootstrap::v2::Bootstrap& bootstrap,
-                                    const Uri& uri, int number_of_workers) const;
+                                    const std::vector<UriPtr>& uris, int number_of_workers) const;
   void maybeCreateTracingDriver(const envoy::config::trace::v2::Tracing& configuration);
   void shutdown() override;
 

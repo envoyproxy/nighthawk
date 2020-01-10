@@ -72,4 +72,10 @@ void Utility::parseCommand(TCLAP::CmdLine& cmd, const int argc, const char* cons
   }
 }
 
+bool Utility::parseHostPort(const std::string& host_port, std::string* address, int* port) {
+  return RE2::FullMatch(host_port, R"((\d+\.\d+\.\d+\.\d+):(\d+))", address, port) ||
+         RE2::FullMatch(host_port, R"((\[[.:0-9a-fA-F]+\]):(\d+))", address, port) ||
+         RE2::FullMatch(host_port, R"(([-.0-9a-zA-Z]+):(\d+))", address, port);
+}
+
 } // namespace Nighthawk
