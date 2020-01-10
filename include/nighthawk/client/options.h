@@ -57,6 +57,7 @@ public:
   virtual TerminationPredicateMap failurePredicates() const PURE;
   virtual bool openLoop() const PURE;
   virtual std::chrono::nanoseconds jitterUniform() const PURE;
+  virtual bool h2UseMultipleConnections() const PURE;
   virtual std::vector<nighthawk::client::MultiTarget::Endpoint> multiTargetEndpoints() const PURE;
   virtual std::string multiTargetPath() const PURE;
   virtual bool multiTargetUseHttps() const PURE;

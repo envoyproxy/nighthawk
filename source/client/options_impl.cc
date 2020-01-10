@@ -214,6 +214,11 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "Add uniformly distributed absolute request-release timing jitter. For example, to add 10 us "
       "of jitter, specify .00001s. Default is empty / no uniform jitter.",
       false, "", "duration", cmd);
+  TCLAP::SwitchArg h2_use_multiple_connections(
+      "", "experimental-h2-use-multiple-connections",
+      "Use experimental HTTP/2 pool which will use multiple connections. WARNING: feature may be "
+      "removed or changed in the future!",
+      cmd);
 
   TCLAP::MultiArg<std::string> multi_target_endpoints(
       "", "multi-target-endpoint",
@@ -328,6 +333,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       throw MalformedArgvException("Invalid value for --jitter-uniform");
     }
   }
+  TCLAP_SET_IF_SPECIFIED(h2_use_multiple_connections, h2_use_multiple_connections_);
   TCLAP_SET_IF_SPECIFIED(multi_target_use_https, multi_target_use_https_);
   TCLAP_SET_IF_SPECIFIED(multi_target_path, multi_target_path_);
   if (multi_target_endpoints.isSet()) {
@@ -508,6 +514,8 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
     jitter_uniform_ = std::chrono::nanoseconds(
         Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(options.jitter_uniform()));
   }
+  h2_use_multiple_connections_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(
+      options, experimental_h2_use_multiple_connections, h2_use_multiple_connections_);
   std::copy(options.labels().begin(), options.labels().end(), std::back_inserter(labels_));
   validate();
 }
@@ -637,6 +645,8 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
     *command_line_options->mutable_jitter_uniform() =
         Envoy::Protobuf::util::TimeUtil::NanosecondsToDuration(jitter_uniform_.count());
   }
+  command_line_options->mutable_experimental_h2_use_multiple_connections()->set_value(
+      h2_use_multiple_connections_);
   for (const auto& label : labels_) {
     *command_line_options->add_labels() = label;
   }
