@@ -43,9 +43,12 @@ bazel build -c opt //:nighthawk
 ```
 USAGE:
 
-bazel-bin/nighthawk_client  [--label <string>] ... [--nighthawk-service
-<uri format>] [--jitter-uniform <duration>]
-[--open-loop]
+bazel-bin/nighthawk_client  [--label <string>] ...
+[--multi-target-use-https]
+[--multi-target-path <string>]
+[--multi-target-endpoint <string>] ...
+[--nighthawk-service <uri format>]
+[--jitter-uniform <duration>] [--open-loop]
 [--experimental-h1-connection-reuse-strategy
 <mru|lru>] [--failure-predicate <<string,
 uint64_t>>] ... [--termination-predicate
@@ -76,6 +79,21 @@ Where:
 --label <string>  (accepted multiple times)
 Label. Allows specifying multiple labels which will be persisted in
 structured output formats.
+
+--multi-target-use-https
+Use HTTPS to connect to the target endpoints. Otherwise HTTP is used.
+Mutually exclusive with providing a URI.
+
+--multi-target-path <string>
+The single absolute path Nighthawk should request from each target
+endpoint. Required when using --multi-target-endpoint. Mutually
+exclusive with providing a URI.
+
+--multi-target-endpoint <string>  (accepted multiple times)
+Target endpoint in the form IPv4:port, [IPv6]:port, or DNS:port. This
+argument is intended to be specified multiple times. Nighthawk will
+spread traffic across all endpoints with round robin distribution.
+Mutually exclusive with providing a URI.
 
 --nighthawk-service <uri format>
 Nighthawk service uri. Example: grpc://localhost:8843/. Default is
@@ -203,8 +221,10 @@ Displays version information and exits.
 Displays usage information and exits.
 
 <uri format>
-(required)  uri to benchmark. http:// and https:// are supported, but
-in case of https no certificates are validated.
+URI to benchmark. http:// and https:// are supported, but in case of
+https no certificates are validated. Provide a URI when you need to
+benchmark a single endpoint. For multiple endpoints, set
+--multi-target-* instead.
 
 
 L7 (HTTP/HTTPS/HTTP2) performance characterization tool.
