@@ -76,6 +76,7 @@ private:
 class Http2PoolImpl : public Envoy::Http::ConnectionPool::Instance,
                       public Envoy::Http::ConnPoolImplBase {
 public:
+  // For doc comments, see  Envoy::Http::ConnectionPool::Instance & Envoy::Http::ConnPoolImplBase
   Http2PoolImpl(
       Envoy::Event::Dispatcher& dispatcher, Envoy::Upstream::HostConstSharedPtr host,
       Envoy::Upstream::ResourcePriority priority,
