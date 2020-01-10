@@ -71,6 +71,20 @@ message SequencerIdleStrategy {
   SequencerIdleStrategyOptions value = 1;
 }
 
+message MultiTarget {
+  message Endpoint {
+    google.protobuf.StringValue address = 1;
+    google.protobuf.UInt32Value port = 2 [(validate.rules).uint32 = {gte: 1, lte: 65535}];
+  }
+  // Whether to use HTTPS in requests to all backends; otherwise HTTP.
+  google.protobuf.BoolValue use_https = 1;
+  // One or more address-port pairs to receive traffic distributed with round robin.
+  repeated Endpoint endpoints = 2;
+  // The absolute HTTP request path (the part of the URL after host:port, e.g. /x/y/z).
+  // A single path is requested from all backends. Ignored when using a RequestSource.
+  google.protobuf.StringValue path = 3;
+}
+
 message H1ConnectionReuseStrategy {
   enum H1ConnectionReuseStrategyOptions {
     DEFAULT = 0;
@@ -125,8 +139,17 @@ message CommandLineOptions {
   google.protobuf.UInt32Value max_requests_per_connection = 16 [(validate.rules).uint32 = {gte: 1}];
   // See :option:`--sequencer-idle-strategy` for details.
   SequencerIdleStrategy sequencer_idle_strategy = 17;
-  // See :option:`--uri` for details.
-  google.protobuf.StringValue uri = 18; // [(validate.rules).string.uri = true];
+  // Either a single URI is configured, or the same traffic can be spread across a static
+  // set of backends.
+  oneof oneof_uri {
+    // See :option:`--uri` for details.
+    google.protobuf.StringValue uri = 18; // [(validate.rules).string.uri = true];
+    // For details see:
+    // - :option:`--multi-target-endpoint`
+    // - :option:`--multi-target-path`
+    // - :option:`--multi-target-use-https`
+    MultiTarget multi_target = 29;
+  }
   // See :option:`--trace` for details.
   google.protobuf.StringValue trace = 19; // [(validate.rules).string.uri = true];
   // See :option:`--experimental-h1-connection-reuse-strategy` for details.
@@ -140,7 +163,7 @@ message CommandLineOptions {
   // See :option:`--jitter-uniform`
   google.protobuf.Duration jitter_uniform = 25 [(validate.rules).duration.gte.nanos = 1];
   // See :option:`--experimental-h2-use-multiple-connections` for details.
-  google.protobuf.BoolValue experimental_h2_use_multiple_connections = 29;
+  google.protobuf.BoolValue experimental_h2_use_multiple_connections = 30;
   // See :option:`--labels`
   repeated string labels = 28;
   // See :option:`--transport-socket` for details.
