@@ -214,14 +214,39 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "Add uniformly distributed absolute request-release timing jitter. For example, to add 10 us "
       "of jitter, specify .00001s. Default is empty / no uniform jitter.",
       false, "", "duration", cmd);
+
+  TCLAP::MultiArg<std::string> multi_target_endpoints(
+      "", "multi-target-endpoint",
+      "Target endpoint in the form IPv4:port, [IPv6]:port, or DNS:port. "
+      "This argument is intended to be specified multiple times. "
+      "Nighthawk will spread traffic across all endpoints with "
+      "round robin distribution. "
+      "Mutually exclusive with providing a URI.",
+      false, "string", cmd);
+  TCLAP::ValueArg<std::string> multi_target_path(
+      "", "multi-target-path",
+      "The single absolute path Nighthawk should request from each target endpoint. "
+      "Required when using --multi-target-endpoint. "
+      "Mutually exclusive with providing a URI.",
+      false, "", "string", cmd);
+  TCLAP::SwitchArg multi_target_use_https(
+      "", "multi-target-use-https",
+      "Use HTTPS to connect to the target endpoints. Otherwise HTTP is used. "
+      "Mutually exclusive with providing a URI.",
+      cmd);
+
   TCLAP::MultiArg<std::string> labels("", "label",
                                       "Label. Allows specifying multiple labels which will be "
                                       "persisted in structured output formats.",
                                       false, "string", cmd);
-  TCLAP::UnlabeledValueArg<std::string> uri("uri",
-                                            "uri to benchmark. http:// and https:// are supported, "
-                                            "but in case of https no certificates are validated.",
-                                            true, "", "uri format", cmd);
+
+  TCLAP::UnlabeledValueArg<std::string> uri(
+      "uri",
+      "URI to benchmark. http:// and https:// are supported, "
+      "but in case of https no certificates are validated. "
+      "Provide a URI when you need to benchmark a single endpoint. For multiple "
+      "endpoints, set --multi-target-* instead.",
+      false, "", "uri format", cmd);
 
   TCLAP::ValueArg<std::string> request_source(
       "", "request-source",
@@ -235,7 +260,9 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   TCLAP_SET_IF_SPECIFIED(connections, connections_);
   TCLAP_SET_IF_SPECIFIED(duration, duration_);
   TCLAP_SET_IF_SPECIFIED(timeout, timeout_);
-  uri_ = uri.getValue();
+  if (uri.isSet()) {
+    uri_ = uri.getValue();
+  }
   TCLAP_SET_IF_SPECIFIED(h2, h2_);
   TCLAP_SET_IF_SPECIFIED(concurrency, concurrency_);
   // TODO(oschaaf): is there a generic way to set these enum values?
@@ -306,6 +333,23 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       }
     } else {
       throw MalformedArgvException("Invalid value for --jitter-uniform");
+    }
+  }
+  TCLAP_SET_IF_SPECIFIED(multi_target_use_https, multi_target_use_https_);
+  TCLAP_SET_IF_SPECIFIED(multi_target_path, multi_target_path_);
+  if (multi_target_endpoints.isSet()) {
+    for (const std::string& host_port : multi_target_endpoints.getValue()) {
+      std::string host;
+      int port;
+      if (!Utility::parseHostPort(host_port, &host, &port)) {
+        throw MalformedArgvException(fmt::format("--multi-target-endpoint must be in the format "
+                                                 "IPv4:port, [IPv6]:port, or DNS:port. Got '{}'",
+                                                 host_port));
+      }
+      nighthawk::client::MultiTarget::Endpoint endpoint;
+      endpoint.mutable_address()->set_value(host);
+      endpoint.mutable_port()->set_value(port);
+      multi_target_endpoints_.push_back(endpoint);
     }
   }
   TCLAP_SET_IF_SPECIFIED(labels, labels_);
@@ -403,7 +447,18 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   if (options.has_timeout()) {
     timeout_ = options.timeout().seconds();
   }
-  uri_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, uri, uri_);
+  if (options.has_uri()) {
+    uri_ = options.uri().value();
+  } else {
+    multi_target_path_ =
+        PROTOBUF_GET_WRAPPED_OR_DEFAULT(options.multi_target(), path, multi_target_path_);
+    multi_target_use_https_ =
+        PROTOBUF_GET_WRAPPED_OR_DEFAULT(options.multi_target(), use_https, multi_target_use_https_);
+    for (const nighthawk::client::MultiTarget::Endpoint& endpoint :
+         options.multi_target().endpoints()) {
+      multi_target_endpoints_.push_back(endpoint);
+    }
+  }
   h2_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, h2, h2_);
   concurrency_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, concurrency, concurrency_);
   verbosity_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, verbosity, verbosity_);
@@ -497,12 +552,6 @@ void OptionsImpl::validate() const {
       throw MalformedArgvException("Value for --concurrency should be greater then 0.");
     }
   }
-  try {
-    UriImpl uri(uri_);
-  } catch (const UriException&) {
-    throw MalformedArgvException("Invalid target URI");
-  }
-
   if (request_source_ != "") {
     try {
       UriImpl uri(request_source_, "grpc");
@@ -513,9 +562,27 @@ void OptionsImpl::validate() const {
       throw MalformedArgvException("Invalid replay source URI");
     }
   }
+  if (uri_.has_value()) {
+    try {
+      UriImpl uri(uri_.value());
+    } catch (const UriException&) {
+      throw MalformedArgvException(fmt::format("Invalid target URI: ''", uri_.value()));
+    }
+    if (!multi_target_endpoints_.empty() || !multi_target_path_.empty() ||
+        multi_target_use_https_) {
+      throw MalformedArgvException("URI and --multi-target-* options cannot both be specified.");
+    }
+  } else {
+    if (multi_target_endpoints_.empty()) {
+      throw MalformedArgvException("A URI or --multi-target-* options must be specified.");
+    }
+    if (multi_target_path_.empty()) {
+      throw MalformedArgvException("--multi-target-path must be specified.");
+    }
+  }
 
   try {
-    Envoy::MessageUtil::validate(*toCommandLineOptions(),
+    Envoy::MessageUtil::validate(*toCommandLineOptionsInternal(),
                                  Envoy::ProtobufMessage::getStrictValidationVisitor());
   } catch (const Envoy::ProtoValidationException& e) {
     throw MalformedArgvException(e.what());
@@ -523,29 +590,45 @@ void OptionsImpl::validate() const {
 }
 
 CommandLineOptionsPtr OptionsImpl::toCommandLineOptions() const {
+  return toCommandLineOptionsInternal();
+}
+
+CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
   CommandLineOptionsPtr command_line_options =
       std::make_unique<nighthawk::client::CommandLineOptions>();
 
-  command_line_options->mutable_connections()->set_value(connections());
-  command_line_options->mutable_duration()->set_seconds(duration().count());
-  command_line_options->mutable_requests_per_second()->set_value(requestsPerSecond());
-  command_line_options->mutable_timeout()->set_seconds(timeout().count());
-  command_line_options->mutable_h2()->set_value(h2());
-  command_line_options->mutable_uri()->set_value(uri());
-  command_line_options->mutable_concurrency()->set_value(concurrency());
-  command_line_options->mutable_verbosity()->set_value(verbosity());
-  command_line_options->mutable_output_format()->set_value(outputFormat());
-  command_line_options->mutable_prefetch_connections()->set_value(prefetchConnections());
-  command_line_options->mutable_burst_size()->set_value(burstSize());
+  command_line_options->mutable_connections()->set_value(connections_);
+  command_line_options->mutable_duration()->set_seconds(duration_);
+  command_line_options->mutable_requests_per_second()->set_value(requests_per_second_);
+  command_line_options->mutable_timeout()->set_seconds(timeout_);
+  command_line_options->mutable_h2()->set_value(h2_);
+  if (uri_.has_value()) {
+    command_line_options->mutable_uri()->set_value(uri_.value());
+  } else {
+    nighthawk::client::MultiTarget* multi_target = command_line_options->mutable_multi_target();
+    multi_target->mutable_path()->set_value(multi_target_path_);
+    multi_target->mutable_use_https()->set_value(multi_target_use_https_);
+    for (const nighthawk::client::MultiTarget::Endpoint& endpoint : multi_target_endpoints_) {
+      nighthawk::client::MultiTarget::Endpoint* proto_endpoint = multi_target->add_endpoints();
+      proto_endpoint->mutable_address()->set_value(endpoint.address().value());
+      proto_endpoint->mutable_port()->set_value(endpoint.port().value());
+    }
+  }
+  command_line_options->mutable_concurrency()->set_value(concurrency_);
+  command_line_options->mutable_verbosity()->set_value(verbosity_);
+  command_line_options->mutable_output_format()->set_value(output_format_);
+  command_line_options->mutable_prefetch_connections()->set_value(prefetch_connections_);
+  command_line_options->mutable_burst_size()->set_value(burst_size_);
   command_line_options->mutable_address_family()->set_value(
-      static_cast<nighthawk::client::AddressFamily_AddressFamilyOptions>(addressFamily()));
+      static_cast<nighthawk::client::AddressFamily_AddressFamilyOptions>(address_family_));
+
   if (requestSource() != "") {
     auto request_source = command_line_options->mutable_request_source();
-    *request_source->mutable_uri() = requestSource();
+    *request_source->mutable_uri() = request_source_;
   } else {
     auto request_options = command_line_options->mutable_request_options();
-    request_options->set_request_method(requestMethod());
-    for (const auto& header : requestHeaders()) {
+    request_options->set_request_method(request_method_);
+    for (const auto& header : request_headers_) {
       auto header_value_option = request_options->add_request_headers();
       // TODO(oschaaf): expose append option in CLI? For now we just set.
       header_value_option->mutable_append()->set_value(false);
@@ -558,35 +641,35 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptions() const {
       } else {
         throw MalformedArgvException("A ':' is required in a header.");
       }
+      request_options->mutable_request_body_size()->set_value(requestBodySize());
     }
-    request_options->mutable_request_body_size()->set_value(requestBodySize());
   }
-  *(command_line_options->mutable_tls_context()) = tlsContext();
-  if (transportSocket().has_value()) {
-    *(command_line_options->mutable_transport_socket()) = transportSocket().value();
+  *(command_line_options->mutable_tls_context()) = tls_context_;
+  if (transport_socket_.has_value()) {
+    *(command_line_options->mutable_transport_socket()) = transport_socket_.value();
   }
-  command_line_options->mutable_max_pending_requests()->set_value(maxPendingRequests());
-  command_line_options->mutable_max_active_requests()->set_value(maxActiveRequests());
+  command_line_options->mutable_max_pending_requests()->set_value(max_pending_requests_);
+  command_line_options->mutable_max_active_requests()->set_value(max_active_requests_);
   command_line_options->mutable_max_requests_per_connection()->set_value(
-      maxRequestsPerConnection());
-  command_line_options->mutable_sequencer_idle_strategy()->set_value(sequencerIdleStrategy());
-  command_line_options->mutable_trace()->set_value(trace());
+      max_requests_per_connection_);
+  command_line_options->mutable_sequencer_idle_strategy()->set_value(sequencer_idle_strategy_);
+  command_line_options->mutable_trace()->set_value(trace_);
   command_line_options->mutable_experimental_h1_connection_reuse_strategy()->set_value(
-      h1ConnectionReuseStrategy());
+      experimental_h1_connection_reuse_strategy_);
   auto termination_predicates_option = command_line_options->mutable_termination_predicates();
-  for (const auto& predicate : terminationPredicates()) {
+  for (const auto& predicate : termination_predicates_) {
     termination_predicates_option->insert({predicate.first, predicate.second});
   }
   auto failure_predicates_option = command_line_options->mutable_failure_predicates();
-  for (const auto& predicate : failurePredicates()) {
+  for (const auto& predicate : failure_predicates_) {
     failure_predicates_option->insert({predicate.first, predicate.second});
   }
-  command_line_options->mutable_open_loop()->set_value(openLoop());
-  if (jitterUniform().count() > 0) {
+  command_line_options->mutable_open_loop()->set_value(open_loop_);
+  if (jitter_uniform_.count() > 0) {
     *command_line_options->mutable_jitter_uniform() =
-        Envoy::Protobuf::util::TimeUtil::NanosecondsToDuration(jitterUniform().count());
+        Envoy::Protobuf::util::TimeUtil::NanosecondsToDuration(jitter_uniform_.count());
   }
-  for (const auto& label : labels()) {
+  for (const auto& label : labels_) {
     *command_line_options->add_labels() = label;
   }
   return command_line_options;
