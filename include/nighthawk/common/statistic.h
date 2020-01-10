@@ -36,6 +36,9 @@ public:
   virtual double mean() const PURE;
   virtual double pvariance() const PURE;
   virtual double pstdev() const PURE;
+  virtual uint64_t min() const PURE;
+  virtual uint64_t max() const PURE;
+  virtual StatisticPtr createNewInstance() const PURE;
 
   /**
    * Only used in tests to match expectations to the right precision level.
@@ -75,6 +78,8 @@ public:
    * @return std::string The id of the Statistic instance.
    */
   virtual std::string id() const PURE;
+
+  // virtual StatisticPtr clone() const PURE;
 
   /**
    * Sets the id of the Statistic instance.

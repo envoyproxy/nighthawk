@@ -16,12 +16,16 @@ results:
           []
         mean: 0.002s
         pstdev: 0.000816497s
+        min: 0.001s
+        max: 0.003s
       - count: 0
         id: ""
         percentiles:
           []
         mean: 0s
         pstdev: 0s
+        min: -0.000000001s
+        max: 0s
     counters:
       - name: bar
         value: 2
@@ -36,12 +40,16 @@ results:
           []
         mean: 0.002s
         pstdev: 0.000816497s
+        min: 0.001s
+        max: 0.003s
       - count: 0
         id: ""
         percentiles:
           []
         mean: 0s
         pstdev: 0s
+        min: -0.000000001s
+        max: 0s
     counters:
       - name: bar
         value: 2
@@ -56,12 +64,16 @@ results:
           []
         mean: 0.002s
         pstdev: 0.000816497s
+        min: 0.001s
+        max: 0.003s
       - count: 0
         id: ""
         percentiles:
           []
         mean: 0s
         pstdev: 0s
+        min: -0.000000001s
+        max: 0s
     counters:
       - name: bar
         value: 2

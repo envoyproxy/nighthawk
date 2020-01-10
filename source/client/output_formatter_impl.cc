@@ -59,6 +59,8 @@ std::string ConsoleOutputFormatterImpl::formatProto(const nighthawk::client::Out
         }
         ss << fmt::format("{}", statIdtoFriendlyStatName(statistic.id())) << std::endl;
         ss << fmt::format("  samples: {}", statistic.count()) << std::endl;
+        ss << fmt::format("  min:    {}", formatProtoDuration(statistic.min())) << std::endl;
+        ss << fmt::format("  max:    {}", formatProtoDuration(statistic.max())) << std::endl;
         ss << fmt::format("  mean:    {}", formatProtoDuration(statistic.mean())) << std::endl;
         ss << fmt::format("  pstdev:  {}", formatProtoDuration(statistic.pstdev())) << std::endl;
         ss << std::endl;
@@ -127,6 +129,12 @@ DottedStringOutputFormatterImpl::formatProto(const nighthawk::client::Output& ou
          << std::endl;
       ss << fmt::format("{}.pstdev: {}", prefix,
                         Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(statistic.pstdev()))
+         << std::endl;
+      ss << fmt::format("{}.min: {}", prefix,
+                        Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(statistic.min()))
+         << std::endl;
+      ss << fmt::format("{}.max: {}", prefix,
+                        Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(statistic.max()))
          << std::endl;
 
       iteratePercentiles(statistic, [&ss, prefix](const nighthawk::client::Percentile& percentile) {

@@ -57,11 +57,18 @@ TYPED_TEST(TypedStatisticTest, Simple) {
     a.addValue(value);
   }
   EXPECT_EQ(3, a.count());
+  EXPECT_EQ(1, a.min());
+  EXPECT_EQ(3, a.max());
 
   for (int value : b_values) {
     b.addValue(value);
   }
   EXPECT_EQ(3, b.count());
+  EXPECT_EQ(1234, b.min());
+  // We substract one from the expected precision with respect to significant digits for
+  // HdrHistogram. (More context in comments over at the the HdrStatisticProtoOutputLargeValues test
+  // below).
+  Helper::expectNear(6543456, b.max(), b.significantDigits() - 1);
 
   Helper::expectNear(2.0, a.mean(), a.significantDigits());
   Helper::expectNear(0.6666666666666666, a.pvariance(), a.significantDigits());
@@ -73,6 +80,8 @@ TYPED_TEST(TypedStatisticTest, Simple) {
 
   auto c = a.combine(b);
   EXPECT_EQ(6, c->count());
+  EXPECT_EQ(1, c->min());
+  Helper::expectNear(6543456, c->max(), c->significantDigits() - 1);
   Helper::expectNear(1147838.5, c->mean(), c->significantDigits());
   Helper::expectNear(5838135311072.917, c->pvariance(), c->significantDigits());
   Helper::expectNear(2416223.357033227, c->pstdev(), c->significantDigits());
@@ -84,6 +93,8 @@ TYPED_TEST(TypedStatisticTest, Empty) {
   EXPECT_TRUE(std::isnan(a.mean()));
   EXPECT_TRUE(std::isnan(a.pvariance()));
   EXPECT_TRUE(std::isnan(a.pstdev()));
+  EXPECT_EQ(a.min(), UINT64_MAX);
+  EXPECT_EQ(a.max(), 0);
 }
 
 TYPED_TEST(TypedStatisticTest, SingleAndDoubleValue) {

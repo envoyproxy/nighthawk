@@ -9,8 +9,9 @@
 namespace Nighthawk {
 
 std::string StatisticImpl::toString() const {
-  return fmt::format("Count: {}. Mean: {:.{}f} μs. pstdev: {:.{}f} μs.\n", count(), mean() / 1000,
-                     2, pstdev() / 1000, 2);
+  return fmt::format(
+      "Count: {}. Mean: {:.{}f} μs. pstdev: {:.{}f} μs. Min: {:.{}f} μs. Max: {:.{}f} μs.\n",
+      count(), mean() / 1000, 2, pstdev() / 1000, 2, min() / 1000.0, 2, max() / 1000.0, 2);
 }
 
 nighthawk::client::Statistic StatisticImpl::toProto() {
@@ -26,7 +27,12 @@ nighthawk::client::Statistic StatisticImpl::toProto() {
   nanos = count() == 0 ? 0 : static_cast<int64_t>(std::round(std::isnan(pstdev()) ? 0 : pstdev()));
   statistic.mutable_pstdev()->set_seconds(nanos / 1000000000);
   statistic.mutable_pstdev()->set_nanos(nanos % 1000000000);
-
+  nanos = min();
+  statistic.mutable_min()->set_seconds(nanos / 1000000000);
+  statistic.mutable_min()->set_nanos(nanos % 1000000000);
+  nanos = max();
+  statistic.mutable_max()->set_seconds(nanos / 1000000000);
+  statistic.mutable_max()->set_nanos(nanos % 1000000000);
   return statistic;
 }
 
@@ -34,15 +40,23 @@ std::string StatisticImpl::id() const { return id_; };
 
 void StatisticImpl::setId(absl::string_view id) { id_ = std::string(id); };
 
-SimpleStatistic::SimpleStatistic() : count_(0), sum_x_(0), sum_x2_(0) {}
+void StatisticImpl::addValue(uint64_t value) {
+  min_ = value < min_ ? value : min_;
+  max_ = value > max_ ? value : max_;
+  count_++;
+};
+
+uint64_t StatisticImpl::count() const { return count_; }
+
+uint64_t StatisticImpl::min() const { return min_; };
+
+uint64_t StatisticImpl::max() const { return max_; };
 
 void SimpleStatistic::addValue(uint64_t value) {
-  count_++;
+  StatisticImpl::addValue(value);
   sum_x_ += value;
   sum_x2_ += 1.0 * value * value;
 }
-
-uint64_t SimpleStatistic::count() const { return count_; }
 
 double SimpleStatistic::mean() const { return count() == 0 ? std::nan("") : sum_x_ / count_; }
 
@@ -56,25 +70,22 @@ StatisticPtr SimpleStatistic::combine(const Statistic& statistic) const {
   const SimpleStatistic& a = *this;
   const auto& b = dynamic_cast<const SimpleStatistic&>(statistic);
   auto combined = std::make_unique<SimpleStatistic>();
-
+  combined->min_ = a.min() > b.min() ? b.min() : a.min();
+  combined->max_ = a.max() > b.max() ? a.max() : b.max();
   combined->count_ = a.count() + b.count();
   combined->sum_x_ = a.sum_x_ + b.sum_x_;
   combined->sum_x2_ = a.sum_x2_ + b.sum_x2_;
   return combined;
 }
 
-StreamingStatistic::StreamingStatistic() : count_(0), mean_(0), accumulated_variance_(0) {}
-
 void StreamingStatistic::addValue(uint64_t value) {
+  StatisticImpl::addValue(value);
   double delta, delta_n;
-  count_++;
   delta = value - mean_;
   delta_n = delta / count_;
   mean_ += delta_n;
   accumulated_variance_ += delta * delta_n * (count_ - 1.0);
 }
-
-uint64_t StreamingStatistic::count() const { return count_; }
 
 double StreamingStatistic::mean() const { return count_ == 0 ? std::nan("") : mean_; }
 
@@ -91,6 +102,8 @@ StatisticPtr StreamingStatistic::combine(const Statistic& statistic) const {
   const auto& b = dynamic_cast<const StreamingStatistic&>(statistic);
   auto combined = std::make_unique<StreamingStatistic>();
 
+  combined->min_ = a.min() > b.min() ? b.min() : a.min();
+  combined->max_ = a.max() > b.max() ? a.max() : b.max();
   combined->count_ = a.count() + b.count();
   combined->mean_ = ((a.count() * a.mean()) + (b.count() * b.mean())) / combined->count_;
   combined->accumulated_variance_ =
@@ -102,14 +115,11 @@ StatisticPtr StreamingStatistic::combine(const Statistic& statistic) const {
 InMemoryStatistic::InMemoryStatistic() : streaming_stats_(std::make_unique<StreamingStatistic>()) {}
 
 void InMemoryStatistic::addValue(uint64_t sample_value) {
+  StatisticImpl::addValue(sample_value);
   samples_.push_back(sample_value);
   streaming_stats_->addValue(sample_value);
 }
 
-uint64_t InMemoryStatistic::count() const {
-  ASSERT(streaming_stats_->count() == samples_.size());
-  return streaming_stats_->count();
-}
 double InMemoryStatistic::mean() const { return streaming_stats_->mean(); }
 double InMemoryStatistic::pvariance() const { return streaming_stats_->pvariance(); }
 double InMemoryStatistic::pstdev() const { return streaming_stats_->pstdev(); }
@@ -118,9 +128,12 @@ StatisticPtr InMemoryStatistic::combine(const Statistic& statistic) const {
   auto combined = std::make_unique<InMemoryStatistic>();
   const auto& b = dynamic_cast<const InMemoryStatistic&>(statistic);
 
+  combined->min_ = this->min() > b.min() ? b.min() : this->min();
+  combined->max_ = this->max() > b.max() ? this->max() : b.max();
   combined->samples_.insert(combined->samples_.end(), this->samples_.begin(), this->samples_.end());
   combined->samples_.insert(combined->samples_.end(), b.samples_.begin(), b.samples_.end());
   combined->streaming_stats_ = this->streaming_stats_->combine(*b.streaming_stats_);
+  combined->count_ = combined->samples_.size();
   return combined;
 }
 
@@ -148,13 +161,21 @@ void HdrStatistic::addValue(uint64_t value) {
   // or maximum value we passed when initializing histogram_.
   if (!hdr_record_value(histogram_, value)) {
     ENVOY_LOG(warn, "Failed to record value into HdrHistogram.");
+  } else {
+    StatisticImpl::addValue(value);
   }
 }
 
+// We override count for the Hdr statistics, because it may have dropped
+// out of range values. hence our own tracking may be inaccurate.
 uint64_t HdrStatistic::count() const { return histogram_->total_count; }
 double HdrStatistic::mean() const { return count() == 0 ? std::nan("") : hdr_mean(histogram_); }
 double HdrStatistic::pvariance() const { return pstdev() * pstdev(); }
 double HdrStatistic::pstdev() const { return count() == 0 ? std::nan("") : hdr_stddev(histogram_); }
+uint64_t HdrStatistic::min() const {
+  return count() == 0 ? UINT64_MAX : hdr_value_at_percentile(histogram_, 0);
+}
+uint64_t HdrStatistic::max() const { return hdr_value_at_percentile(histogram_, 100); }
 
 StatisticPtr HdrStatistic::combine(const Statistic& statistic) const {
   auto combined = std::make_unique<HdrStatistic>();

@@ -2,6 +2,8 @@ Nighthawk - A layer 7 protocol benchmarking tool.
 
 stat_id
   samples: 3
+  min:    0s 001ms 000us
+  max:    0s 003ms 000us
   mean:    0s 002ms 000us
   pstdev:  0s 000ms 816us
 

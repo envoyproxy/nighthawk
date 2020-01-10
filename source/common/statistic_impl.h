@@ -14,11 +14,20 @@ namespace Nighthawk {
 
 class StatisticImpl : public Statistic, public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
+  void addValue(uint64_t value) override;
   std::string toString() const override;
   nighthawk::client::Statistic toProto() override;
   std::string id() const override;
   void setId(absl::string_view id) override;
+  uint64_t count() const override;
+  uint64_t max() const override;
+  uint64_t min() const override;
+
+protected:
   std::string id_;
+  uint64_t min_{UINT64_MAX};
+  uint64_t max_{0};
+  uint64_t count_{0};
 };
 
 /**
@@ -27,19 +36,17 @@ public:
  */
 class SimpleStatistic : public StatisticImpl {
 public:
-  SimpleStatistic();
   void addValue(uint64_t value) override;
-  uint64_t count() const override;
   double mean() const override;
   double pvariance() const override;
   double pstdev() const override;
   StatisticPtr combine(const Statistic& statistic) const override;
   uint64_t significantDigits() const override { return 8; }
+  StatisticPtr createNewInstance() const override { return std::make_unique<SimpleStatistic>(); };
 
 private:
-  uint64_t count_;
-  double sum_x_;
-  double sum_x2_;
+  double sum_x_{0};
+  double sum_x2_{0};
 };
 
 /**
@@ -52,19 +59,19 @@ private:
  */
 class StreamingStatistic : public StatisticImpl {
 public:
-  StreamingStatistic();
   void addValue(uint64_t value) override;
-  uint64_t count() const override;
   double mean() const override;
   double pvariance() const override;
   double pstdev() const override;
   StatisticPtr combine(const Statistic& statistic) const override;
   bool resistsCatastrophicCancellation() const override { return true; }
+  StatisticPtr createNewInstance() const override {
+    return std::make_unique<StreamingStatistic>();
+  };
 
 private:
-  uint64_t count_;
-  double mean_;
-  double accumulated_variance_;
+  double mean_{0};
+  double accumulated_variance_{0};
 };
 
 /**
@@ -76,7 +83,6 @@ class InMemoryStatistic : public StatisticImpl {
 public:
   InMemoryStatistic();
   void addValue(uint64_t sample_value) override;
-  uint64_t count() const override;
   double mean() const override;
   double pvariance() const override;
   double pstdev() const override;
@@ -85,6 +91,7 @@ public:
     return streaming_stats_->resistsCatastrophicCancellation();
   }
   uint64_t significantDigits() const override { return streaming_stats_->significantDigits(); }
+  StatisticPtr createNewInstance() const override { return std::make_unique<InMemoryStatistic>(); };
 
 private:
   std::vector<int64_t> samples_;
@@ -103,11 +110,14 @@ public:
   double mean() const override;
   double pvariance() const override;
   double pstdev() const override;
+  uint64_t max() const override;
+  uint64_t min() const override;
 
   StatisticPtr combine(const Statistic& statistic) const override;
   std::string toString() const override;
   nighthawk::client::Statistic toProto() override;
   uint64_t significantDigits() const override { return SignificantDigits; }
+  StatisticPtr createNewInstance() const override { return std::make_unique<HdrStatistic>(); };
 
 private:
   static const int SignificantDigits;
