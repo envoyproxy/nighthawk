@@ -19,6 +19,8 @@ public:
   /**
    * @param options Options to send to the remote nighthawk service, as well as
    * containing information to connect to it (which won't be forwarded).
+   * @param stub Stub that will be used to communicate with the remote
+   * gRPC server.
    */
   RemoteProcessImpl(const Options& options, nighthawk::client::NighthawkService::Stub& stub);
   /**
