@@ -13,10 +13,19 @@ namespace Nighthawk {
 
 class PhaseImpl : public Phase, public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
-  PhaseImpl(absl::string_view id, SequencerPtr&& sequencer, bool measure_latencies,
+  /**
+   * @param id Unique identifier of the pase (uniqueness not enforced).
+   * @param sequencer Sequencer that will be used to execute this phase.
+   * @param should_measure_latencies Indicates if latencies should be tracked for requests issued
+   * during execution of this phase.
+   * @param time_source Time source that will be used to query the clock.
+   * @param start_time Optional starting time of the phase. Can be used to schedule phases ahead.
+   */
+  PhaseImpl(absl::string_view id, SequencerPtr&& sequencer, bool should_measure_latencies,
             Envoy::TimeSource& time_source, absl::optional<Envoy::MonotonicTime> start_time)
       : id_(std::string(id)), sequencer_(std::move(sequencer)),
-        measure_latencies_(measure_latencies), time_source_(time_source), start_time_(start_time) {}
+        should_measure_latencies_(should_measure_latencies), time_source_(time_source),
+        start_time_(start_time) {}
   absl::string_view id() const override;
   Sequencer& sequencer() const override;
   void run() const override;
@@ -25,7 +34,7 @@ public:
 private:
   const std::string id_;
   const SequencerPtr sequencer_;
-  const bool measure_latencies_;
+  const bool should_measure_latencies_;
   Envoy::TimeSource& time_source_;
   absl::optional<Envoy::MonotonicTime> start_time_;
 };

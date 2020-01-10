@@ -6,7 +6,7 @@ absl::string_view PhaseImpl::id() const { return id_; }
 
 Sequencer& PhaseImpl::sequencer() const { return *sequencer_; }
 
-bool PhaseImpl::shouldMeasureLatencies() const { return measure_latencies_; }
+bool PhaseImpl::shouldMeasureLatencies() const { return should_measure_latencies_; }
 
 void PhaseImpl::run() const {
   ENVOY_LOG(trace, "starting '{}' phase", id_);
