@@ -42,13 +42,17 @@ public:
   nighthawk::client::AddressFamily::AddressFamilyOptions addressFamily() const override {
     return address_family_;
   };
-  envoy::api::v2::core::RequestMethod requestMethod() const override { return request_method_; };
+  envoy::config::core::v3alpha::RequestMethod requestMethod() const override {
+    return request_method_;
+  };
   std::vector<std::string> requestHeaders() const override { return request_headers_; };
   uint32_t requestBodySize() const override { return request_body_size_; };
-  const envoy::api::v2::auth::UpstreamTlsContext& tlsContext() const override {
+  const envoy::extensions::transport_sockets::tls::v3alpha::UpstreamTlsContext&
+  tlsContext() const override {
     return tls_context_;
   };
-  const absl::optional<envoy::api::v2::core::TransportSocket>& transportSocket() const override {
+  const absl::optional<envoy::config::core::v3alpha::TransportSocket>&
+  transportSocket() const override {
     return transport_socket_;
   }
   uint32_t maxPendingRequests() const override { return max_pending_requests_; }
@@ -99,11 +103,12 @@ private:
   uint32_t burst_size_{0};
   nighthawk::client::AddressFamily::AddressFamilyOptions address_family_{
       nighthawk::client::AddressFamily::AUTO};
-  envoy::api::v2::core::RequestMethod request_method_{envoy::api::v2::core::RequestMethod::GET};
+  envoy::config::core::v3alpha::RequestMethod request_method_{
+      envoy::config::core::v3alpha::RequestMethod::GET};
   std::vector<std::string> request_headers_;
   uint32_t request_body_size_{0};
-  envoy::api::v2::auth::UpstreamTlsContext tls_context_;
-  absl::optional<envoy::api::v2::core::TransportSocket> transport_socket_;
+  envoy::extensions::transport_sockets::tls::v3alpha::UpstreamTlsContext tls_context_;
+  absl::optional<envoy::config::core::v3alpha::TransportSocket> transport_socket_;
   uint32_t max_pending_requests_{0};
   // This default is based the minimum recommendation for SETTINGS_MAX_CONCURRENT_STREAMS over at
   // https://tools.ietf.org/html/rfc7540#section-6.5.2

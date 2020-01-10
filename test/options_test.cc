@@ -81,7 +81,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
   EXPECT_EQ(13, options->burstSize());
   EXPECT_EQ(nighthawk::client::AddressFamily::V6, options->addressFamily());
   EXPECT_EQ(good_test_uri_, options->uri());
-  EXPECT_EQ(envoy::api::v2::core::RequestMethod::POST, options->requestMethod());
+  EXPECT_EQ(envoy::config::core::v3alpha::RequestMethod::POST, options->requestMethod());
   const std::vector<std::string> expected_headers = {"f1:b1", "f2:b2", "f3:b3:b4"};
   EXPECT_EQ(expected_headers, options->requestHeaders());
   EXPECT_EQ(1234, options->requestBodySize());
@@ -522,7 +522,8 @@ TEST_F(OptionsImplTest, BadTlsContextSpecification) {
   EXPECT_THROW_WITH_REGEX(
       TestUtility::createOptionsImpl(fmt::format("{} --tls-context {} http://foo/", client_name_,
                                                  "{misspelled_tls_context:{}}")),
-      MalformedArgvException, "envoy.api.v2.auth.UpstreamTlsContext reason INVALID_ARGUMENT");
+      MalformedArgvException,
+      "envoy.extensions.transport_sockets.tls.v3alpha.UpstreamTlsContext reason INVALID_ARGUMENT");
 }
 
 TEST_F(OptionsImplTest, BadTransportSocketSpecification) {
@@ -536,7 +537,7 @@ TEST_F(OptionsImplTest, BadTransportSocketSpecification) {
       TestUtility::createOptionsImpl(fmt::format("{} --transport-socket {} http://foo/",
                                                  client_name_, "{misspelled_transport_socket:{}}")),
       MalformedArgvException,
-      "Protobuf message \\(type envoy.api.v2.core.TransportSocket reason "
+      "Protobuf message \\(type envoy.config.core.v3alpha.TransportSocket reason "
       "INVALID_ARGUMENT:misspelled_transport_socket: Cannot find field.\\) has unknown fields");
 }
 
