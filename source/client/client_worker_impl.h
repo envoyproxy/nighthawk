@@ -38,7 +38,7 @@ public:
     return thread_local_counter_values_;
   }
 
-  const std::vector<PhasePtr>& phases() const override { return phases_; }
+  const Phase& phase() const override { return *phase_; }
 
   void shutdownThread() override;
 
@@ -56,7 +56,7 @@ private:
   Envoy::Tracing::HttpTracerPtr& http_tracer_;
   RequestSourcePtr request_generator_;
   BenchmarkClientPtr benchmark_client_;
-  std::vector<PhasePtr> phases_;
+  PhasePtr phase_;
   Envoy::LocalInfo::LocalInfoPtr local_info_;
   std::map<std::string, uint64_t> thread_local_counter_values_;
 };

@@ -40,7 +40,7 @@ TEST_F(ClientTest, AutoConcurrencyRun) {
   argv.push_back("--duration");
   argv.push_back("1");
   argv.push_back("--rps");
-  argv.push_back("10");
+  argv.push_back("1");
   argv.push_back("--verbosity");
   argv.push_back("error");
   argv.push_back("http://localhost:63657/");

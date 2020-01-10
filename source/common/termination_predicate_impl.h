@@ -13,12 +13,10 @@ class TerminationPredicateBaseImpl : public TerminationPredicate {
 public:
   TerminationPredicate& link(TerminationPredicatePtr&& child) final {
     RELEASE_ASSERT(linked_child_ == nullptr, "Linked child already set");
-    RELEASE_ASSERT(child != nullptr, "child == nullptr");
     linked_child_ = std::move(child);
     return *linked_child_;
   }
   TerminationPredicate& appendToChain(TerminationPredicatePtr&& child) final {
-    RELEASE_ASSERT(child != nullptr, "child == nullptr");
     if (linked_child_ != nullptr) {
       return linked_child_->appendToChain(std::move(child));
     } else {

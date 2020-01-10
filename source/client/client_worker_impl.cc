@@ -29,47 +29,30 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
       request_generator_(request_generator_factory.create()),
       benchmark_client_(benchmark_client_factory.create(
           api, *dispatcher_, *worker_number_scope_, cluster_manager, http_tracer_,
-          fmt::format("{}", worker_number), *request_generator_)) {}
+          fmt::format("{}", worker_number), *request_generator_)),
+      phase_(std::make_unique<PhaseImpl>(
+          "main",
+          sequencer_factory_.create(
+              time_source_, *dispatcher_, *benchmark_client_,
+              termination_predicate_factory_.create(time_source_, *worker_number_scope_),
+              *worker_number_scope_, false),
+          true, time_source_, starting_time_)) {}
 
 void ClientWorkerImpl::simpleWarmup() {
-  // We add a short warmup phase, which ends when either the first successful response
-  // is observed or two seconds have passed, whichever comes first. These warmup conditions are
-  // registered on top of the original configured predicates.
-  // TODO(oschaaf): allow configuration of this phase once the ramping rate limiters land,
-  // or a generic configuration of multiple phases (id, duration, termination predicates, rate
-  // limiting options, etc).
-  TerminationPredicatePtr warmup_predicates =
-      termination_predicate_factory_.create(time_source_, *worker_number_scope_);
-  warmup_predicates
-      ->appendToChain(std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
-          worker_number_scope_->counter("benchmark.http_2xx"), 0,
-          TerminationPredicate::Status::TERMINATE))
-      .appendToChain(std::make_unique<DurationTerminationPredicateImpl>(time_source_, 2s));
-  phases_.emplace_back(std::make_unique<PhaseImpl>(
-      "warmup",
-      sequencer_factory_.create(time_source_, *dispatcher_, *benchmark_client_,
-                                std::move(warmup_predicates), *worker_number_scope_, true),
-      false));
+  ENVOY_LOG(debug, "> worker {}: warmup start.", worker_number_);
+  if (benchmark_client_->tryStartRequest([this](bool, bool) { dispatcher_->exit(); })) {
+    dispatcher_->run(Envoy::Event::Dispatcher::RunType::RunUntilExit);
+  } else {
+    ENVOY_LOG(warn, "> worker {}: failed to initiate warmup request.", worker_number_);
+  }
+  ENVOY_LOG(debug, "> worker {}: warmup done.", worker_number_);
 }
 
 void ClientWorkerImpl::work() {
+  benchmark_client_->setShouldMeasureLatencies(false);
   simpleWarmup();
-
-  phases_.emplace_back(std::make_unique<PhaseImpl>(
-      "main",
-      sequencer_factory_.create(
-          time_source_, *dispatcher_, *benchmark_client_,
-          termination_predicate_factory_.create(time_source_, *worker_number_scope_),
-          *worker_number_scope_, false),
-      true));
-
-  for (auto& phase : phases_) {
-    benchmark_client_->setMeasureLatencies(phase->measureLatencies());
-    phase->run();
-    if (worker_number_scope_->counter("sequencer.failed_terminations").value() != 0) {
-      break;
-    }
-  }
+  benchmark_client_->setShouldMeasureLatencies(phase_->shouldMeasureLatencies());
+  phase_->run();
 
   // Save a final snapshot of the worker-specific counter accumulations before
   // we exit the thread.
@@ -95,7 +78,7 @@ void ClientWorkerImpl::shutdownThread() { benchmark_client_->terminate(); }
 StatisticPtrMap ClientWorkerImpl::statistics() const {
   StatisticPtrMap statistics;
   StatisticPtrMap s1 = benchmark_client_->statistics();
-  auto& sequencer = phases_.back()->sequencer();
+  Sequencer& sequencer = phase_->sequencer();
   StatisticPtrMap s2 = sequencer.statistics();
   statistics.insert(s1.begin(), s1.end());
   statistics.insert(s2.begin(), s2.end());

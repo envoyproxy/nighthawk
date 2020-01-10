@@ -36,11 +36,12 @@ public:
   /**
    * @return bool Indicates if latencies should be tracked for this phase.
    */
-  virtual bool measureLatencies() const PURE;
+  virtual bool shouldMeasureLatencies() const PURE;
 
   /**
    * Runs the sequencer associated to this phase and blocks until completion, which means this phase
    * has ended as well.
+   * Execution failure can be observed via the sequencer.failed_terminations counter.
    */
   virtual void run() const PURE;
 };
