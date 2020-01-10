@@ -26,6 +26,8 @@
 #include "external/envoy/source/common/thread_local/thread_local_impl.h"
 #include "external/envoy/source/extensions/tracers/well_known_names.h"
 
+#include "absl/strings/str_replace.h"
+
 // TODO(oschaaf): See if we can leverage a static module registration like Envoy does to avoid the
 // ifdefs in this file.
 #ifdef ZIPKIN_ENABLED
@@ -238,11 +240,12 @@ ProcessImpl::mergeWorkerStatistics(const StatisticFactory& statistic_factory,
 }
 
 void ProcessImpl::createBootstrapConfiguration(
-    envoy::config::bootstrap::v3alpha::Bootstrap& bootstrap, const Uri& uri,
+    envoy::config::bootstrap::v3alpha::Bootstrap& bootstrap, const std::vector<UriPtr>& uris,
     int number_of_clusters) const {
   for (int i = 0; i < number_of_clusters; i++) {
     auto* cluster = bootstrap.mutable_static_resources()->add_clusters();
-    if (uri.scheme() == "https") {
+    RELEASE_ASSERT(!uris.empty(), "illegal configuration with zero endpoints");
+    if (uris[0]->scheme() == "https") {
       auto* transport_socket = cluster->mutable_transport_socket();
       transport_socket->set_name("envoy.transport_sockets.tls");
       envoy::extensions::transport_sockets::tls::v3alpha::UpstreamTlsContext context =
@@ -274,10 +277,12 @@ void ProcessImpl::createBootstrapConfiguration(
 
     cluster->set_type(
         envoy::config::cluster::v3alpha::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
-    auto* host = cluster->add_hosts();
-    auto* socket_address = host->mutable_socket_address();
-    socket_address->set_address(uri.address()->ip()->addressAsString());
-    socket_address->set_port_value(uri.port());
+    for (const UriPtr& uri : uris) {
+      auto* host = cluster->add_hosts();
+      auto* socket_address = host->mutable_socket_address();
+      socket_address->set_address(uri->address()->ip()->addressAsString());
+      socket_address->set_port_value(uri->port());
+    }
   }
 }
 
@@ -344,13 +349,25 @@ void ProcessImpl::maybeCreateTracingDriver(
 }
 
 bool ProcessImpl::run(OutputCollector& collector) {
-  UriImpl uri(options_.uri());
+  std::vector<UriPtr> uris;
   UriPtr tracing_uri;
 
   try {
     // TODO(oschaaf): See if we can rid of resolving here.
     // We now only do it to validate.
-    uri.resolve(*dispatcher_, Utility::translateFamilyOptionString(options_.addressFamily()));
+    if (options_.uri().has_value()) {
+      uris.push_back(std::make_unique<UriImpl>(options_.uri().value()));
+    } else {
+      for (const nighthawk::client::MultiTarget::Endpoint& endpoint :
+           options_.multiTargetEndpoints()) {
+        uris.push_back(std::make_unique<UriImpl>(fmt::format(
+            "{}://{}:{}{}", options_.multiTargetUseHttps() ? "https" : "http",
+            endpoint.address().value(), endpoint.port().value(), options_.multiTargetPath())));
+      }
+    }
+    for (const UriPtr& uri : uris) {
+      uri->resolve(*dispatcher_, Utility::translateFamilyOptionString(options_.addressFamily()));
+    }
     if (options_.trace() != "") {
       tracing_uri = std::make_unique<UriImpl>(options_.trace());
       tracing_uri->resolve(*dispatcher_,
@@ -359,6 +376,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
   } catch (const UriException&) {
     return false;
   }
+
   int number_of_workers = determineConcurrency();
   shutdown_ = false;
   const std::vector<ClientWorkerPtr>& workers = createWorkers(number_of_workers);
@@ -381,7 +399,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
           : Http1PoolImpl::ConnectionReuseStrategy::MRU);
   cluster_manager_factory_->setPrefetchConnections(options_.prefetchConnections());
   envoy::config::bootstrap::v3alpha::Bootstrap bootstrap;
-  createBootstrapConfiguration(bootstrap, uri, number_of_workers);
+  createBootstrapConfiguration(bootstrap, uris, number_of_workers);
   if (tracing_uri != nullptr) {
     setupTracingImplementation(bootstrap, *tracing_uri);
     addTracingCluster(bootstrap, *tracing_uri);
