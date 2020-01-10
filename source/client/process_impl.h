@@ -64,8 +64,7 @@ private:
   std::vector<StatisticPtr> vectorizeStatisticPtrMap(const StatisticFactory& statistic_factory,
                                                      const StatisticPtrMap& statistics) const;
   std::vector<StatisticPtr>
-  mergeWorkerStatistics(const StatisticFactory& statistic_factory,
-                        const std::vector<ClientWorkerPtr>& workers) const;
+  mergeWorkerStatistics(const std::vector<ClientWorkerPtr>& workers) const;
   void setupForHRTimers();
   Envoy::ProcessWide process_wide_;
   Envoy::PlatformImpl platform_impl_;

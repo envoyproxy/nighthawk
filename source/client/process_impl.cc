@@ -212,8 +212,7 @@ ProcessImpl::vectorizeStatisticPtrMap(const StatisticFactory& statistic_factory,
 }
 
 std::vector<StatisticPtr>
-ProcessImpl::mergeWorkerStatistics(const StatisticFactory& statistic_factory,
-                                   const std::vector<ClientWorkerPtr>& workers) const {
+ProcessImpl::mergeWorkerStatistics(const std::vector<ClientWorkerPtr>& workers) const {
   // First we init merged_statistics with newly created statistics instances.
   // We do that by adding the same amount of Statistic instances that the first worker has.
   // (We always have at least one worker, and all workers have the same number of Statistic
@@ -221,7 +220,7 @@ ProcessImpl::mergeWorkerStatistics(const StatisticFactory& statistic_factory,
   std::vector<StatisticPtr> merged_statistics;
   StatisticPtrMap w0_statistics = workers[0]->statistics();
   for (const auto& w0_statistic : w0_statistics) {
-    auto new_statistic = statistic_factory.create();
+    auto new_statistic = w0_statistic.second->createNewInstance();
     new_statistic->setId(w0_statistic.first);
     merged_statistics.push_back(std::move(new_statistic));
   }
@@ -438,7 +437,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
   const auto& counters = Utility().mapCountersFromStore(
       store_root_, [](absl::string_view, uint64_t value) { return value > 0; });
   StatisticFactoryImpl statistic_factory(options_);
-  collector.addResult("global", mergeWorkerStatistics(statistic_factory, workers), counters,
+  collector.addResult("global", mergeWorkerStatistics(workers), counters,
                       total_execution_duration / workers_.size());
   return counters.find("sequencer.failed_terminations") == counters.end();
 }

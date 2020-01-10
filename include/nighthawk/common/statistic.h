@@ -79,8 +79,6 @@ public:
    */
   virtual std::string id() const PURE;
 
-  // virtual StatisticPtr clone() const PURE;
-
   /**
    * Sets the id of the Statistic instance.
    * @param id The id that should be set for the Statistic instance.
