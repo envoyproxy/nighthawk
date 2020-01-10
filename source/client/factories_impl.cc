@@ -118,16 +118,32 @@ void RequestSourceFactoryImpl::setRequestHeader(Envoy::Http::HeaderMap& header,
 }
 
 RequestSourcePtr RequestSourceFactoryImpl::create() const {
-  // Note: we assume a valid uri.
-  // Also, we can't resolve, but we do not need that.
-  UriImpl uri(options_.uri());
   Envoy::Http::HeaderMapPtr header = std::make_unique<Envoy::Http::HeaderMapImpl>();
-
+  if (options_.uri().has_value()) {
+    // We set headers based on the URI, but we don't have all the prerequisites to call the
+    // resolver to validate the address at this stage. Resolving is performed during a later stage
+    // and it will fail if the address is incorrect.
+    UriImpl uri(options_.uri().value());
+    header->setPath(uri.path());
+    header->setHost(uri.hostAndPort());
+    header->setScheme(uri.scheme() == "https" ? Envoy::Http::Headers::get().SchemeValues.Https
+                                              : Envoy::Http::Headers::get().SchemeValues.Http);
+  } else {
+    header->setPath(options_.multiTargetPath());
+    header->setHost(
+        "host-not-supported-in-multitarget-mode"); // We set a default here because Nighthawk Test
+                                                   // Server fails when Host is not set. If you send
+                                                   // traffic to non-Nighthawk Test Server backends,
+                                                   // you can override this with a custom Host on
+                                                   // the command line, provided that your system
+                                                   // works with the same Host value sent to all
+                                                   // backends.
+    header->setScheme(options_.multiTargetUseHttps()
+                          ? Envoy::Http::Headers::get().SchemeValues.Https
+                          : Envoy::Http::Headers::get().SchemeValues.Http);
+  }
   header->setMethod(envoy::config::core::v3alpha::RequestMethod_Name(options_.requestMethod()));
-  header->setPath(uri.path());
-  header->setHost(uri.hostAndPort());
-  header->setScheme(uri.scheme() == "https" ? Envoy::Http::Headers::get().SchemeValues.Https
-                                            : Envoy::Http::Headers::get().SchemeValues.Http);
+
   const uint32_t content_length = options_.requestBodySize();
   if (content_length > 0) {
     header->setContentLength(content_length);
