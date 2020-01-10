@@ -281,6 +281,7 @@ TEST_F(OptionsImplTest, MultiTarget) {
   // textual comparison below.
   EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("benchmark.http_4xx"));
   EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("benchmark.http_5xx"));
+  EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("requestsource.upstream_rq_5xx"));
 
   OptionsImpl options_from_proto(*cmd);
   std::string s1 = Envoy::MessageUtil::getYamlStringFromMessage(
