@@ -646,7 +646,7 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
         Envoy::Protobuf::util::TimeUtil::NanosecondsToDuration(jitter_uniform_.count());
   }
   command_line_options->mutable_experimental_h2_use_multiple_connections()->set_value(
-      h2UseMultipleConnections());
+      h2_use_multiple_connections_);
   for (const auto& label : labels_) {
     *command_line_options->add_labels() = label;
   }
