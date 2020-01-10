@@ -73,6 +73,9 @@ public:
       h1_pool->setConnectionReuseStrategy(connection_reuse_strategy_);
       h1_pool->setPrefetchConnections(prefetch_connections_);
       return Envoy::Http::ConnectionPool::InstancePtr{h1_pool};
+    } else if (use_multi_conn_h2_pool_ && protocol == Envoy::Http::Protocol::Http2) {
+      return Envoy::Http::ConnectionPool::InstancePtr{
+          new Http2PoolImpl(dispatcher, host, priority, options, transport_socket_options)};
     }
     return Envoy::Upstream::ProdClusterManagerFactory::allocateConnPool(
         dispatcher, host, priority, protocol, options, transport_socket_options);
@@ -85,11 +88,13 @@ public:
   void setPrefetchConnections(const bool prefetch_connections) {
     prefetch_connections_ = prefetch_connections;
   }
+  void enableMultiConnectionH2Pool() { use_multi_conn_h2_pool_ = true; }
 
 private:
   Envoy::Http::Http1Settings h1_settings;
   Http1PoolImpl::ConnectionReuseStrategy connection_reuse_strategy_{};
   bool prefetch_connections_{};
+  bool use_multi_conn_h2_pool_{};
 };
 
 ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system)
@@ -417,6 +422,9 @@ bool ProcessImpl::run(OutputCollector& collector) {
           ? Http1PoolImpl::ConnectionReuseStrategy::LRU
           : Http1PoolImpl::ConnectionReuseStrategy::MRU);
   cluster_manager_factory_->setPrefetchConnections(options_.prefetchConnections());
+  if (options_.h2UseMultipleConnections()) {
+    cluster_manager_factory_->enableMultiConnectionH2Pool();
+  }
   envoy::config::bootstrap::v2::Bootstrap bootstrap;
   createBootstrapConfiguration(bootstrap, uris, request_source_uri, number_of_workers);
   if (tracing_uri != nullptr) {

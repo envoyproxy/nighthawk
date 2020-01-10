@@ -47,6 +47,7 @@ bazel-bin/nighthawk_client  [--request-source <uri format>] [--label
 <string>] ... [--multi-target-use-https]
 [--multi-target-path <string>]
 [--multi-target-endpoint <string>] ...
+[--experimental-h2-use-multiple-connections]
 [--jitter-uniform <duration>] [--open-loop]
 [--experimental-h1-connection-reuse-strategy
 <mru|lru>] [--failure-predicate <<string,
@@ -98,6 +99,10 @@ Target endpoint in the form IPv4:port, [IPv6]:port, or DNS:port. This
 argument is intended to be specified multiple times. Nighthawk will
 spread traffic across all endpoints with round robin distribution.
 Mutually exclusive with providing a URI.
+
+--experimental-h2-use-multiple-connections
+Use experimental HTTP/2 pool which will use multiple connections.
+WARNING: feature may be removed or changed in the future!
 
 --jitter-uniform <duration>
 Add uniformly distributed absolute request-release timing jitter. For
