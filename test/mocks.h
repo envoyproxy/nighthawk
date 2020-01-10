@@ -100,6 +100,7 @@ public:
   MOCK_CONST_METHOD0(failurePredicates, Client::TerminationPredicateMap());
   MOCK_CONST_METHOD0(openLoop, bool());
   MOCK_CONST_METHOD0(jitterUniform, std::chrono::nanoseconds());
+  MOCK_CONST_METHOD0(h2UseMultipleConnections, bool());
   MOCK_CONST_METHOD0(multiTargetEndpoints, std::vector<nighthawk::client::MultiTarget::Endpoint>());
   MOCK_CONST_METHOD0(multiTargetPath, std::string());
   MOCK_CONST_METHOD0(multiTargetUseHttps, bool());

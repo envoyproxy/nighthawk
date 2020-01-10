@@ -248,6 +248,21 @@ def test_https_h2(https_test_server_fixture):
   assertEqual(len(counters), 17)
 
 
+def test_https_h2_multiple_connections(https_test_server_fixture):
+  """
+  Test that the experimental h2 pool uses multiple connections.
+  """
+  parsed_json, _ = https_test_server_fixture.runNighthawkClient([
+      "--h2",
+      https_test_server_fixture.getTestServerRootUri(), "--rps", "100", "--duration", "100",
+      "--termination-predicate", "benchmark.http_2xx:9", "--max-active-requests", "1",
+      "--experimental-h2-use-multiple-connections"
+  ])
+  counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
+  assertCounterEqual(counters, "benchmark.http_2xx", 10)
+  assertCounterEqual(counters, "upstream_cx_http2_total", 10)
+
+
 def _do_tls_configuration_test(https_test_server_fixture, cli_parameter, use_h2):
   """Runs tests for different ciphers.
 
