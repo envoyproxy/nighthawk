@@ -218,6 +218,11 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "", "nighthawk-service",
       "Nighthawk service uri. Example: grpc://localhost:8843/. Default is empty.", false, "",
       "uri format", cmd);
+  TCLAP::SwitchArg h2_use_multiple_connections(
+      "", "experimental-h2-use-multiple-connections",
+      "Use experimental HTTP/2 pool which will use multiple connections. WARNING: feature may be "
+      "removed or changed in the future!",
+      cmd);
 
   TCLAP::MultiArg<std::string> multi_target_endpoints(
       "", "multi-target-endpoint",
@@ -333,6 +338,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
     }
   }
   TCLAP_SET_IF_SPECIFIED(nighthawk_service, nighthawk_service_);
+  TCLAP_SET_IF_SPECIFIED(h2_use_multiple_connections, h2_use_multiple_connections_);
   TCLAP_SET_IF_SPECIFIED(multi_target_use_https, multi_target_use_https_);
   TCLAP_SET_IF_SPECIFIED(multi_target_path, multi_target_path_);
   if (multi_target_endpoints.isSet()) {
@@ -514,6 +520,8 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   }
   nighthawk_service_ =
       PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, nighthawk_service, nighthawk_service_);
+  h2_use_multiple_connections_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(
+      options, experimental_h2_use_multiple_connections, h2_use_multiple_connections_);
   std::copy(options.labels().begin(), options.labels().end(), std::back_inserter(labels_));
   validate();
 }
@@ -644,6 +652,8 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
         Envoy::Protobuf::util::TimeUtil::NanosecondsToDuration(jitter_uniform_.count());
   }
   command_line_options->mutable_nighthawk_service()->set_value(nighthawk_service_);
+  command_line_options->mutable_experimental_h2_use_multiple_connections()->set_value(
+      h2_use_multiple_connections_);
   for (const auto& label : labels_) {
     *command_line_options->add_labels() = label;
   }

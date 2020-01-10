@@ -163,7 +163,9 @@ message CommandLineOptions {
   // See :option:`--jitter-uniform`
   google.protobuf.Duration jitter_uniform = 25 [(validate.rules).duration.gte.nanos = 1];
   // See :option --nighthawk-service
-  google.protobuf.StringValue nighthawk_service = 30; // [(validate.rules).string.uri = true];
+  google.protobuf.StringValue nighthawk_service = 31; // [(validate.rules).string.uri = true];
+  // See :option:`--experimental-h2-use-multiple-connections` for details.
+  google.protobuf.BoolValue experimental_h2_use_multiple_connections = 30;
   // See :option:`--labels`
   repeated string labels = 28;
   // See :option:`--transport-socket` for details.

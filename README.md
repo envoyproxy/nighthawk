@@ -47,6 +47,7 @@ bazel-bin/nighthawk_client  [--label <string>] ...
 [--multi-target-use-https]
 [--multi-target-path <string>]
 [--multi-target-endpoint <string>] ...
+[--experimental-h2-use-multiple-connections]
 [--nighthawk-service <uri format>]
 [--jitter-uniform <duration>] [--open-loop]
 [--experimental-h1-connection-reuse-strategy
@@ -94,6 +95,10 @@ Target endpoint in the form IPv4:port, [IPv6]:port, or DNS:port. This
 argument is intended to be specified multiple times. Nighthawk will
 spread traffic across all endpoints with round robin distribution.
 Mutually exclusive with providing a URI.
+
+--experimental-h2-use-multiple-connections
+Use experimental HTTP/2 pool which will use multiple connections.
+WARNING: feature may be removed or changed in the future!
 
 --nighthawk-service <uri format>
 Nighthawk service uri. Example: grpc://localhost:8843/. Default is

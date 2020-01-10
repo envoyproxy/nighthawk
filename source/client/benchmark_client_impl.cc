@@ -44,6 +44,52 @@ Http1PoolImpl::newStream(Envoy::Http::StreamDecoder& response_decoder,
   return ConnPoolImpl::newStream(response_decoder, callbacks);
 }
 
+Http2PoolImpl::Http2PoolImpl(
+    Envoy::Event::Dispatcher& dispatcher, Envoy::Upstream::HostConstSharedPtr host,
+    Envoy::Upstream::ResourcePriority priority,
+    const Envoy::Network::ConnectionSocket::OptionsSharedPtr& options,               // NOLINT
+    const Envoy::Network::TransportSocketOptionsSharedPtr& transport_socket_options) // NOLINT
+    : Envoy::Http::ConnPoolImplBase(std::move(host), priority), dispatcher_(dispatcher),
+      socket_options_(options), transport_socket_options_(transport_socket_options) {
+  for (uint32_t i = 0; i < host_->cluster().resourceManager(priority_).connections().max(); i++) {
+    pools_.push_back(std::make_unique<Envoy::Http::Http2::ProdConnPoolImpl>(
+        dispatcher_, host_, priority_, socket_options_, transport_socket_options_));
+  }
+}
+
+void Http2PoolImpl::addDrainedCallback(Envoy::Http::ConnectionPool::Instance::DrainedCb cb) {
+  for (auto& pool : pools_) {
+    pool->addDrainedCallback(cb);
+  }
+}
+
+void Http2PoolImpl::drainConnections() {
+  for (auto& pool : pools_) {
+    pool->drainConnections();
+  }
+}
+
+bool Http2PoolImpl::hasActiveConnections() const {
+  for (auto& pool : pools_) {
+    if (pool->hasActiveConnections()) {
+      return true;
+    }
+  }
+  return false;
+}
+
+Envoy::Http::ConnectionPool::Cancellable*
+Http2PoolImpl::newStream(Envoy::Http::StreamDecoder& response_decoder,
+                         Envoy::Http::ConnectionPool::Callbacks& callbacks) {
+  // Use the simplest but probably naive approach of rotating over the available pool instances
+  // / connections to distribute requests accross them.
+  return pools_[pool_round_robin_index_++ % pools_.size()]->newStream(response_decoder, callbacks);
+};
+
+void Http2PoolImpl::checkForDrained() {
+  // TODO(oschaaf): this one is protected, can't forward it.
+}
+
 BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
     Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
     StatisticPtr&& connect_statistic, StatisticPtr&& response_statistic, bool use_h2,
