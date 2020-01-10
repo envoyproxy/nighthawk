@@ -530,7 +530,7 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
       options, experimental_h2_use_multiple_connections, h2_use_multiple_connections_);
   std::copy(options.labels().begin(), options.labels().end(), std::back_inserter(labels_));
   validate();
-} // namespace Client
+}
 
 void OptionsImpl::setNonTrivialDefaults() {
   concurrency_ = "1";
