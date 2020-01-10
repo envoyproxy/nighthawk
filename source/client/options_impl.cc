@@ -290,7 +290,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   if (request_method.isSet()) {
     std::string upper_cased = request_method.getValue();
     absl::AsciiStrToUpper(&upper_cased);
-    RELEASE_ASSERT(envoy::api::v2::core::RequestMethod_Parse(upper_cased, &request_method_),
+    RELEASE_ASSERT(envoy::config::core::v3alpha::RequestMethod_Parse(upper_cased, &request_method_),
                    "Failed to parse request method");
   }
   TCLAP_SET_IF_SPECIFIED(request_headers, request_headers_);
@@ -402,7 +402,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   }
   if (!transport_socket.getValue().empty()) {
     try {
-      transport_socket_.emplace(envoy::api::v2::core::TransportSocket());
+      transport_socket_.emplace(envoy::config::core::v3alpha::TransportSocket());
       Envoy::MessageUtil::loadFromJson(transport_socket.getValue(), transport_socket_.value(),
                                        Envoy::ProtobufMessage::getStrictValidationVisitor());
     } catch (const Envoy::EnvoyException& e) {
@@ -475,7 +475,7 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
 
   const auto& request_options = options.request_options();
   if (request_options.request_method() !=
-      ::envoy::api::v2::core::RequestMethod::METHOD_UNSPECIFIED) {
+      ::envoy::config::core::v3alpha::RequestMethod::METHOD_UNSPECIFIED) {
     request_method_ = request_options.request_method();
   }
   request_body_size_ =
@@ -497,7 +497,7 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   tls_context_.MergeFrom(options.tls_context());
 
   if (options.has_transport_socket()) {
-    transport_socket_.emplace(envoy::api::v2::core::TransportSocket());
+    transport_socket_.emplace(envoy::config::core::v3alpha::TransportSocket());
     transport_socket_.value().MergeFrom(options.transport_socket());
   }
 

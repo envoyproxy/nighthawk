@@ -4,14 +4,14 @@ package nighthawk.client;
 
 import "google/protobuf/duration.proto";
 import "google/protobuf/wrappers.proto";
-import "envoy/api/v2/auth/cert.proto";
-import "envoy/api/v2/core/base.proto";
+import "envoy/config/core/v3alpha/base.proto";
+import "envoy/extensions/transport_sockets/tls/v3alpha/cert.proto";
 import "validate/validate.proto";
 
 // Allows for static configuration of requests that should be send by the load generator.
 message RequestOptions {
-  envoy.api.v2.core.RequestMethod request_method = 1;
-  repeated envoy.api.v2.core.HeaderValueOption request_headers = 2;
+  envoy.config.core.v3alpha.RequestMethod request_method = 1;
+  repeated envoy.config.core.v3alpha.HeaderValueOption request_headers = 2;
   // Our StreamDecoder depends on bounding the size here, so if this changes, an amendment
   // to that is needed as well.
   google.protobuf.UInt32Value request_body_size = 3 [(validate.rules).uint32 = {lte: 4194304}];
@@ -130,7 +130,7 @@ message CommandLineOptions {
     RequestSource request_source = 26;
   }
   // See :option:`--tls_context` for details.
-  envoy.api.v2.auth.UpstreamTlsContext tls_context = 13;
+  envoy.extensions.transport_sockets.tls.v3alpha.UpstreamTlsContext tls_context = 13;
   // See :option:`--max-pending_requests` for details.
   google.protobuf.UInt32Value max_pending_requests = 14;
   // See :option:`--max-active_requests` for details.
@@ -167,5 +167,5 @@ message CommandLineOptions {
   // See :option:`--labels`
   repeated string labels = 28;
   // See :option:`--transport-socket` for details.
-  envoy.api.v2.core.TransportSocket transport_socket = 27;
+  envoy.config.core.v3alpha.TransportSocket transport_socket = 27;
 }
