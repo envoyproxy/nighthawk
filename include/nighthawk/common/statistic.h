@@ -26,19 +26,48 @@ using StatisticPtrMap = std::map<std::string, Statistic const*>;
 class Statistic : Envoy::NonCopyable {
 public:
   enum class SerializationDomain { RAW, DURATION };
+
   virtual ~Statistic() = default;
+
   /**
    * Method for adding a sample value.
    * @param value the value of the sample to add
    */
   virtual void addValue(uint64_t sample_value) PURE;
 
+  /**
+   * @return uint64_t The number of sampled values.
+   */
   virtual uint64_t count() const PURE;
+
+  /**
+   * @return double Mean derived from the sampled values.
+   */
   virtual double mean() const PURE;
+
+  /**
+   * @return double Variance derived from the sampled values.
+   */
   virtual double pvariance() const PURE;
+
+  /**
+   * @return double Standard deviation derived from the sampled values.
+   */
   virtual double pstdev() const PURE;
+
+  /**
+   * @return uint64_t The smallest sampled value.
+   */
   virtual uint64_t min() const PURE;
+
+  /**
+   * @return uint64_t The largest sampled value.
+   */
   virtual uint64_t max() const PURE;
+
+  /**
+   * @return StatisticPtr Yields a new instance of the same type as the instance this is called on.
+   */
   virtual StatisticPtr createNewInstance() const PURE;
 
   /**
@@ -55,11 +84,12 @@ public:
   virtual bool resistsCatastrophicCancellation() const { return false; }
 
   /**
-   * @return std::string a representation of the statistic as a std::string.
+   * @return std::string Gets a string representation of the statistic as a std::string.
    */
   virtual std::string toString() const PURE;
 
   /**
+   * @param domain Used to indicate if serialization should represent durations or raw values.
    * @return nighthawk::client::Statistic a representation of the statistic as a protobuf message.
    */
   virtual nighthawk::client::Statistic toProto(SerializationDomain domain) const PURE;
