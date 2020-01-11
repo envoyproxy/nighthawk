@@ -54,44 +54,48 @@ std::string ConsoleOutputFormatterImpl::formatProto(const nighthawk::client::Out
   for (const auto& result : output.results()) {
     if (result.name() == "global") {
       for (const auto& statistic : result.statistics()) {
+        // Don't show output for statistics that have no samples.
         if (statistic.count() == 0) {
           continue;
         }
-        ss << fmt::format("{}", statIdtoFriendlyStatName(statistic.id()));
-        ss << fmt::format(" ({} samples)", statistic.count()) << std::endl;
-        if (statistic.domain() == nighthawk::client::Statistic_StatisticDomain_DURATION) {
-          ss << fmt::format("min: {}", formatProtoDuration(statistic.min())) << " | ";
-          ss << fmt::format("mean: {}", formatProtoDuration(statistic.mean())) << " | ";
-          ss << fmt::format("max: {}", formatProtoDuration(statistic.max())) << " | ";
-          ss << fmt::format("pstdev: {}", formatProtoDuration(statistic.pstdev())) << std::endl;
-          if (statistic.percentiles().size() > 2) {
-            ss << std::endl
-               << fmt::format("  {:<{}}{:<{}}{:<{}}", "Percentile", 12, "Count", 12, "Latency", 15)
-               << std::endl;
-            iteratePercentiles(statistic,
-                               [&ss, this](const nighthawk::client::Percentile& percentile) {
-                                 ss << fmt::format("  {:<{}}{:<{}}{:<{}}", percentile.percentile(),
-                                                   12, percentile.count(), 12,
-                                                   formatProtoDuration(percentile.duration()), 15)
-                                    << std::endl;
-                               });
-          }
-        } else {
-          ss << fmt::format("min: {}", statistic.raw_min()) << " | ";
-          ss << fmt::format("mean: {}", statistic.raw_mean()) << " | ";
-          ss << fmt::format("max: {}", statistic.raw_max()) << " | ";
-          ss << fmt::format("pstdev: {}", statistic.raw_pstdev()) << std::endl;
-          if (statistic.percentiles().size() > 2) {
-            ss << std::endl
-               << fmt::format("  {:<{}}{:<{}}{:<{}}", "Percentile", 12, "Count", 12, "Value", 15)
-               << std::endl;
-            iteratePercentiles(statistic, [&ss](const nighthawk::client::Percentile& percentile) {
-              ss << fmt::format("  {:<{}}{:<{}}{:<{}}", percentile.percentile(), 12,
-                                percentile.count(), 12, percentile.raw_value(), 15)
+        const bool duration_valued =
+            statistic.domain() == nighthawk::client::Statistic_StatisticDomain_DURATION;
+        const std::string s_min = duration_valued ? formatProtoDuration(statistic.min())
+                                                  : fmt::format("{}", statistic.raw_min());
+        const std::string s_max = duration_valued ? formatProtoDuration(statistic.max())
+                                                  : fmt::format("{}", statistic.raw_max());
+        const std::string s_mean = duration_valued ? formatProtoDuration(statistic.mean())
+                                                   : fmt::format("{}", statistic.raw_mean());
+        const std::string s_pstdev = duration_valued ? formatProtoDuration(statistic.pstdev())
+                                                     : fmt::format("{}", statistic.pstdev());
+
+        ss << fmt::format("{}({} samples) ", statIdtoFriendlyStatName(statistic.id()),
+                          statistic.count())
+           << std::endl;
+        ss << fmt::format("  min: {} | ", s_min);
+        ss << fmt::format("mean: {} | ", s_mean);
+        ss << fmt::format("max: {} | ", s_max);
+        ss << fmt::format("pstdev: {}", s_pstdev) << std::endl;
+
+        bool header_written = false;
+        iteratePercentiles(statistic, [&ss, this, duration_valued, &header_written](
+                                          const nighthawk::client::Percentile& percentile) {
+          const auto p = percentile.percentile();
+          // Don't show the min / max, as we already show that above.
+          if (p > 0 && p < 1) {
+            if (!header_written) {
+              ss << std::endl
+                 << fmt::format("  {:<{}}{:<{}}{:<{}}", "Percentile", 12, "Count", 12, "Value", 15)
                  << std::endl;
-            });
+              header_written = true;
+            }
+            ss << fmt::format("  {:<{}}{:<{}}{:<{}}", p, 12, percentile.count(), 12,
+                              duration_valued ? formatProtoDuration(percentile.duration())
+                                              : fmt::format("{}", percentile.raw_value()),
+                              15)
+               << std::endl;
           }
-        }
+        });
         ss << std::endl;
       }
       ss << fmt::format("{:<{}}{:<{}}{}", "Counter", 40, "Value", 12, "Per second") << std::endl;
