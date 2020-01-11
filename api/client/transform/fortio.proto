@@ -42,9 +42,23 @@ message FortioResult {
 
   string URL = 12;
 
-  DurationHistogram Sizes = 13;
+  string Version = 13;
 
-  DurationHistogram HeaderSizes = 14;
+  bool Jitter = 14;
+
+  string RunType = 15;
+
+  DurationHistogram Sizes = 16;
+
+  DurationHistogram HeaderSizes = 17;
+
+  // Exactly can be used to stop fortio after a fixed amount of replies.
+  // We don't seem to need this, and going forward it might be hard/annoying to
+  // translate this field as Nighthawk's concepts diverge a bit. If end up
+  // needing to we can probably inspect the main phase and then figure out if there's a
+  // termination predicate configured for a fixed number of responses observed
+  // via stats. For now, however, skip this field.
+  // uint64 Exactly = 16;
 }
 
 message DurationHistogram {
@@ -53,6 +67,18 @@ message DurationHistogram {
   uint64 Count = 1;
 
   repeated DataEntry Data = 2;
+
+  double Min = 3;
+
+  double Max = 4;
+
+  double Sum = 5;
+
+  double Avg = 6;
+
+  double StdDev = 7;
+
+  repeated FortioPercentile Percentiles = 8;
 }
 
 message DataEntry {
@@ -65,4 +91,12 @@ message DataEntry {
   double Percent = 3;
 
   uint64 Count = 4;
+}
+
+message FortioPercentile {
+  option (validate.disabled) = true;
+
+  double Percentile = 1;
+
+  double Value = 2;
 }

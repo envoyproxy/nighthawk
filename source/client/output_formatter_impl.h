@@ -88,6 +88,23 @@ protected:
 
   const nighthawk::client::DurationHistogram
   renderFortioDurationHistogram(const nighthawk::client::Statistic& statistic) const;
+
+  /**
+   * Gets the average execution duration based on averaging all worker sequencer execution
+   * durations.
+   *
+   * @param output the Nighthawk output proto
+   * @return the corresponding average execution duration in nanoseconds
+   */
+  std::chrono::nanoseconds
+  getAverageExecutionDuration(const nighthawk::client::Output& output) const;
+
+  /**
+   * Converts a proto Duration to seconds
+   * @param duration the proto Duration to convert
+   * @return double the number of seconds
+   */
+  double durationToSeconds(const Envoy::ProtobufWkt::Duration& duration) const;
 };
 
 } // namespace Client

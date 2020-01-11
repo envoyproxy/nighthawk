@@ -289,7 +289,6 @@ public:
     std::vector<int64_t> acquisition_timings;
     auto* unsafe_discrete_numeric_distribution_sampler =
         new MockDiscreteNumericDistributionSampler();
-    // TODO(#263): Fix test determinism across all environments and restore deleted lines
     const uint64_t dist_min = 1;
     const uint64_t dist_max = 1000000;
     EXPECT_CALL(*unsafe_discrete_numeric_distribution_sampler, getValue)

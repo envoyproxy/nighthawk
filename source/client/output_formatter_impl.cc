@@ -238,6 +238,11 @@ FortioOutputFormatterImpl::findStatistic(const nighthawk::client::Result& result
   return nullptr;
 }
 
+double
+FortioOutputFormatterImpl::durationToSeconds(const Envoy::ProtobufWkt::Duration& duration) const {
+  return Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(duration) / 1e9;
+}
+
 std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
   nighthawk::client::FortioResult fortio_output;
   std::string labels;
@@ -297,26 +302,26 @@ std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Outp
 
 const nighthawk::client::DurationHistogram FortioOutputFormatterImpl::renderFortioDurationHistogram(
     const nighthawk::client::Statistic& nh_stat) const {
-  // Set the count (number of data points)
   nighthawk::client::DurationHistogram fortio_histogram;
-  fortio_histogram.set_count(nh_stat.count());
   uint64_t prev_fortio_count = 0;
   double prev_fortio_end = 0;
-  for (int i = 0; i < nh_stat.percentiles().size(); i++) {
-
+  const int percentiles_size = nh_stat.percentiles().size();
+  const bool duration_valued =
+      nh_stat.domain() == nighthawk::client::Statistic_StatisticDomain_DURATION;
+  for (int i = 0; i < percentiles_size; i++) {
     nighthawk::client::DataEntry fortio_data_entry;
     const auto& nh_percentile = nh_stat.percentiles().at(i);
-
     // fortio_percent = 100 * nh_percentile
     fortio_data_entry.set_percent(nh_percentile.percentile() * 100);
 
     // fortio_count = nh_count - prev_fortio_count
     fortio_data_entry.set_count(nh_percentile.count() - prev_fortio_count);
+
+    // fortio_end = nh_duration (need to convert formats)
     double value;
-    if (nh_stat.domain() == nighthawk::client::Statistic_StatisticDomain_DURATION) {
+    if (duration_valued) {
       // fortio_end = nh_duration (need to convert formats)
-      value =
-          Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(nh_percentile.duration()) / 1e9;
+      value = durationToSeconds(nh_percentile.duration());
     } else {
       value = nh_percentile.raw_value();
     }
@@ -337,6 +342,33 @@ const nighthawk::client::DurationHistogram FortioOutputFormatterImpl::renderFort
     // Set the data entry in the histogram only if it's not the first entry
     fortio_histogram.add_data()->CopyFrom(fortio_data_entry);
   }
+
+  // Set the count (number of data points)
+  fortio_histogram.set_count(nh_stat.count());
+  fortio_histogram.set_avg(duration_valued ? durationToSeconds(nh_stat.mean())
+                                           : nh_stat.raw_mean());
+  fortio_histogram.set_min(duration_valued ? durationToSeconds(nh_stat.min()) : nh_stat.raw_min());
+  fortio_histogram.set_sum(nh_stat.count() * fortio_histogram.avg());
+  fortio_histogram.set_max(duration_valued ? durationToSeconds(nh_stat.max()) : nh_stat.raw_max());
+  // Note that Nighthawk tracks pstdev whereas fortio seems to use stdev.
+  fortio_histogram.set_stddev(duration_valued ? durationToSeconds(nh_stat.pstdev())
+                                              : nh_stat.raw_pstdev());
+  iteratePercentiles(nh_stat, [this, &fortio_histogram,
+                               &duration_valued](const nighthawk::client::Percentile& percentile) {
+    if (percentile.percentile() > 0 && percentile.percentile() < 1) {
+      auto* p = fortio_histogram.add_percentiles();
+      // We perform some rounding on the percentiles for a better UX while we use
+      // HdrHistogram. HDR-Histogram uses base-2 arithmetic behind the scenes
+      // which yields percentiles close to what fortio has, but not perfectly
+      // on-spot, e.g. 0.990625 and 0.9990234375.
+      p->set_percentile(std::floor(percentile.percentile() * 1000) / 10);
+      if (duration_valued) {
+        p->set_value(durationToSeconds(percentile.duration()));
+      } else {
+        p->set_value(percentile.raw_value());
+      }
+    }
+  });
   return fortio_histogram;
 }
 

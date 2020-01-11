@@ -193,12 +193,42 @@
     "Percent": 100,
     "Count": "0"
    }
+  ],
+  "Min": 0.053798911,
+  "Max": 0.310886399,
+  "Sum": 4.156954618,
+  "Avg": 0.078433106,
+  "StdDev": 0.05052302,
+  "Percentiles": [
+   {
+    "Percentile": 50,
+    "Value": 0.065077247
+   },
+   {
+    "Percentile": 75,
+    "Value": 0.074465279
+   },
+   {
+    "Percentile": 80,
+    "Value": 0.078065663
+   },
+   {
+    "Percentile": 90,
+    "Value": 0.085045247
+   },
+   {
+    "Percentile": 95,
+    "Value": 0.247513087
+   }
   ]
  },
  "RetCodes": {
   "200": "56"
  },
  "URL": "https://www.google.com/",
+ "Version": "",
+ "Jitter": false,
+ "RunType": "",
  "Sizes": {
   "Count": "56",
   "Data": [
@@ -214,7 +244,13 @@
     "Percent": 100,
     "Count": "0"
    }
-  ]
+  ],
+  "Min": 847,
+  "Max": 847,
+  "Sum": 47432,
+  "Avg": 847,
+  "StdDev": 0,
+  "Percentiles": []
  },
  "HeaderSizes": {
   "Count": "56",
@@ -410,6 +446,33 @@
     "End": 47357,
     "Percent": 100,
     "Count": "0"
+   }
+  ],
+  "Min": 47257,
+  "Max": 47357,
+  "Sum": 2649612,
+  "Avg": 47314.5,
+  "StdDev": 20.799210149838451,
+  "Percentiles": [
+   {
+    "Percentile": 50,
+    "Value": 47317
+   },
+   {
+    "Percentile": 75,
+    "Value": 47327
+   },
+   {
+    "Percentile": 80,
+    "Value": 47331
+   },
+   {
+    "Percentile": 90,
+    "Value": 47339
+   },
+   {
+    "Percentile": 95,
+    "Value": 47353
    }
   ]
  },
