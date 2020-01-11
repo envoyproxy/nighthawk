@@ -85,6 +85,14 @@ TYPED_TEST(TypedStatisticTest, Simple) {
   Helper::expectNear(1147838.5, c->mean(), c->significantDigits());
   Helper::expectNear(5838135311072.917, c->pvariance(), c->significantDigits());
   Helper::expectNear(2416223.357033227, c->pstdev(), c->significantDigits());
+
+  auto d = b.combine(a);
+  EXPECT_EQ(c.count(), d->count());
+  EXPECT_EQ(c.min(), d->min());
+  EXPECT_EQ(c.max(), d->max());
+  EXPECT_EQ(c.mean(), d->mean());
+  EXPECT_EQ(c.variance(), d->variance());
+  EXPECT_EQ(c.pstdev(), d->pstdev());
 }
 
 TYPED_TEST(TypedStatisticTest, createNewInstance) {
