@@ -1,204 +1,418 @@
 {
- "Labels": "Nighthawk",
- "RequestedQPS": 1,
- "ActualQPS": 12,
- "ActualDuration": 5,
- "NumThreads": 1,
+ "Labels": "",
+ "RequestedQPS": 10,
+ "ActualQPS": 28,
+ "ActualDuration": 2,
+ "NumThreads": 100,
  "DurationHistogram": {
-  "Count": "48",
+  "Count": "53",
   "Data": [
    {
-    "Start": 0.055568383,
-    "End": 0.055568383,
+    "Start": 0.053798911,
+    "End": 0.053798911,
     "Percent": 0,
     "Count": "1"
    },
    {
-    "Start": 0.055568383,
-    "End": 0.056922111,
+    "Start": 0.053798911,
+    "End": 0.056340479,
     "Percent": 10,
-    "Count": "4"
+    "Count": "5"
    },
    {
-    "Start": 0.056922111,
-    "End": 0.057884671,
+    "Start": 0.056340479,
+    "End": 0.057706495,
     "Percent": 20,
     "Count": "5"
    },
    {
-    "Start": 0.057884671,
-    "End": 0.059041791,
+    "Start": 0.057706495,
+    "End": 0.060055551,
     "Percent": 30,
     "Count": "5"
    },
    {
-    "Start": 0.059041791,
-    "End": 0.060086271,
+    "Start": 0.060055551,
+    "End": 0.062949375,
     "Percent": 40,
+    "Count": "6"
+   },
+   {
+    "Start": 0.062949375,
+    "End": 0.065077247,
+    "Percent": 50,
     "Count": "5"
    },
    {
-    "Start": 0.060086271,
-    "End": 0.060903423,
-    "Percent": 50,
-    "Count": "4"
-   },
-   {
-    "Start": 0.060903423,
-    "End": 0.061583359,
+    "Start": 0.065077247,
+    "End": 0.066666495,
     "Percent": 55.000000000000007,
     "Count": "3"
    },
    {
-    "Start": 0.061583359,
-    "End": 0.061976575,
+    "Start": 0.066666495,
+    "End": 0.067948543,
     "Percent": 60,
     "Count": "2"
    },
    {
-    "Start": 0.061976575,
-    "End": 0.063830015,
+    "Start": 0.067948543,
+    "End": 0.068751359,
     "Percent": 65,
     "Count": "3"
    },
    {
-    "Start": 0.063830015,
-    "End": 0.064684031,
+    "Start": 0.068751359,
+    "End": 0.072949759,
     "Percent": 70,
-    "Count": "2"
+    "Count": "3"
    },
    {
-    "Start": 0.064684031,
-    "End": 0.065679359,
+    "Start": 0.072949759,
+    "End": 0.074465279,
     "Percent": 75,
     "Count": "2"
    },
    {
-    "Start": 0.065679359,
-    "End": 0.066537471,
+    "Start": 0.074465279,
+    "End": 0.075792383,
     "Percent": 77.5,
     "Count": "2"
    },
    {
-    "Start": 0.066537471,
-    "End": 0.066994175,
+    "Start": 0.075792383,
+    "End": 0.078065663,
     "Percent": 80,
     "Count": "1"
    },
    {
-    "Start": 0.066994175,
-    "End": 0.067194879,
+    "Start": 0.078065663,
+    "End": 0.078168063,
     "Percent": 82.5,
     "Count": "1"
    },
    {
-    "Start": 0.067194879,
-    "End": 0.067563519,
+    "Start": 0.078168063,
+    "End": 0.080400383,
     "Percent": 85,
-    "Count": "1"
+    "Count": "2"
    },
    {
-    "Start": 0.067563519,
-    "End": 0.067862527,
+    "Start": 0.080400383,
+    "End": 0.082427903,
     "Percent": 87.5,
     "Count": "1"
    },
    {
-    "Start": 0.067862527,
-    "End": 0.068161535,
+    "Start": 0.082427903,
+    "End": 0.085045247,
     "Percent": 88.75,
     "Count": "1"
    },
    {
-    "Start": 0.068161535,
-    "End": 0.068657151,
+    "Start": 0.085045247,
+    "End": 0.085045247,
     "Percent": 90,
-    "Count": "1"
-   },
-   {
-    "Start": 0.068657151,
-    "End": 0.068657151,
-    "Percent": 91.25,
     "Count": "0"
    },
    {
-    "Start": 0.068657151,
-    "End": 0.069509119,
+    "Start": 0.085045247,
+    "End": 0.085626879,
+    "Percent": 91.25,
+    "Count": "1"
+   },
+   {
+    "Start": 0.085626879,
+    "End": 0.090656767,
     "Percent": 92.5,
     "Count": "1"
    },
    {
-    "Start": 0.069509119,
-    "End": 0.069509119,
+    "Start": 0.090656767,
+    "End": 0.090656767,
     "Percent": 93.75,
     "Count": "0"
    },
    {
-    "Start": 0.069509119,
-    "End": 0.073601023,
+    "Start": 0.090656767,
+    "End": 0.247513087,
     "Percent": 94.375,
     "Count": "1"
    },
    {
-    "Start": 0.073601023,
-    "End": 0.073601023,
+    "Start": 0.247513087,
+    "End": 0.247513087,
     "Percent": 95,
     "Count": "0"
    },
    {
-    "Start": 0.073601023,
-    "End": 0.073601023,
+    "Start": 0.247513087,
+    "End": 0.247513087,
     "Percent": 95.625,
     "Count": "0"
    },
    {
-    "Start": 0.073601023,
-    "End": 0.079327231,
+    "Start": 0.247513087,
+    "End": 0.281362431,
     "Percent": 96.25,
     "Count": "1"
    },
    {
-    "Start": 0.079327231,
-    "End": 0.079327231,
+    "Start": 0.281362431,
+    "End": 0.281362431,
     "Percent": 96.875,
     "Count": "0"
    },
    {
-    "Start": 0.079327231,
-    "End": 0.079327231,
+    "Start": 0.281362431,
+    "End": 0.281362431,
     "Percent": 97.1875,
     "Count": "0"
    },
    {
-    "Start": 0.079327231,
-    "End": 0.079327231,
+    "Start": 0.281362431,
+    "End": 0.281362431,
     "Percent": 97.5,
     "Count": "0"
    },
    {
-    "Start": 0.079327231,
-    "End": 0.079327231,
+    "Start": 0.281362431,
+    "End": 0.281362431,
     "Percent": 97.8125,
     "Count": "0"
    },
    {
-    "Start": 0.079327231,
-    "End": 0.084357119,
+    "Start": 0.281362431,
+    "End": 0.310886399,
     "Percent": 98.125,
     "Count": "1"
    },
    {
-    "Start": 0.084357119,
-    "End": 0.084357119,
+    "Start": 0.310886399,
+    "End": 0.310886399,
     "Percent": 100,
     "Count": "0"
    }
   ]
  },
  "RetCodes": {
-  "200": "60"
+  "200": "56"
  },
- "URL": "http://127.0.0.1:10000/",
- "StartTime": "2019-10-16T00:30:12Z",
- "RequestedDuration": "5s"
+ "URL": "https://www.google.com/",
+ "Sizes": {
+  "Count": "56",
+  "Data": [
+   {
+    "Start": 847,
+    "End": 847,
+    "Percent": 0,
+    "Count": "56"
+   },
+   {
+    "Start": 847,
+    "End": 847,
+    "Percent": 100,
+    "Count": "0"
+   }
+  ]
+ },
+ "HeaderSizes": {
+  "Count": "56",
+  "Data": [
+   {
+    "Start": 47257,
+    "End": 47257,
+    "Percent": 0,
+    "Count": "1"
+   },
+   {
+    "Start": 47257,
+    "End": 47289,
+    "Percent": 10,
+    "Count": "5"
+   },
+   {
+    "Start": 47289,
+    "End": 47299,
+    "Percent": 20,
+    "Count": "6"
+   },
+   {
+    "Start": 47299,
+    "End": 47305,
+    "Percent": 30,
+    "Count": "5"
+   },
+   {
+    "Start": 47305,
+    "End": 47311,
+    "Percent": 40,
+    "Count": "7"
+   },
+   {
+    "Start": 47311,
+    "End": 47317,
+    "Percent": 50,
+    "Count": "7"
+   },
+   {
+    "Start": 47317,
+    "End": 47317,
+    "Percent": 55.000000000000007,
+    "Count": "0"
+   },
+   {
+    "Start": 47317,
+    "End": 47321,
+    "Percent": 60,
+    "Count": "4"
+   },
+   {
+    "Start": 47321,
+    "End": 47323,
+    "Percent": 65,
+    "Count": "2"
+   },
+   {
+    "Start": 47323,
+    "End": 47327,
+    "Percent": 70,
+    "Count": "5"
+   },
+   {
+    "Start": 47327,
+    "End": 47327,
+    "Percent": 75,
+    "Count": "0"
+   },
+   {
+    "Start": 47327,
+    "End": 47329,
+    "Percent": 77.5,
+    "Count": "2"
+   },
+   {
+    "Start": 47329,
+    "End": 47331,
+    "Percent": 80,
+    "Count": "3"
+   },
+   {
+    "Start": 47331,
+    "End": 47331,
+    "Percent": 82.5,
+    "Count": "0"
+   },
+   {
+    "Start": 47331,
+    "End": 47333,
+    "Percent": 85,
+    "Count": "2"
+   },
+   {
+    "Start": 47333,
+    "End": 47333,
+    "Percent": 87.5,
+    "Count": "0"
+   },
+   {
+    "Start": 47333,
+    "End": 47335,
+    "Percent": 88.75,
+    "Count": "1"
+   },
+   {
+    "Start": 47335,
+    "End": 47339,
+    "Percent": 90,
+    "Count": "1"
+   },
+   {
+    "Start": 47339,
+    "End": 47341,
+    "Percent": 91.25,
+    "Count": "1"
+   },
+   {
+    "Start": 47341,
+    "End": 47341,
+    "Percent": 92.5,
+    "Count": "0"
+   },
+   {
+    "Start": 47341,
+    "End": 47347,
+    "Percent": 93.75,
+    "Count": "1"
+   },
+   {
+    "Start": 47347,
+    "End": 47347,
+    "Percent": 94.375,
+    "Count": "0"
+   },
+   {
+    "Start": 47347,
+    "End": 47353,
+    "Percent": 95,
+    "Count": "2"
+   },
+   {
+    "Start": 47353,
+    "End": 47353,
+    "Percent": 95.625,
+    "Count": "0"
+   },
+   {
+    "Start": 47353,
+    "End": 47353,
+    "Percent": 96.25,
+    "Count": "0"
+   },
+   {
+    "Start": 47353,
+    "End": 47353,
+    "Percent": 96.875,
+    "Count": "0"
+   },
+   {
+    "Start": 47353,
+    "End": 47353,
+    "Percent": 97.1875,
+    "Count": "0"
+   },
+   {
+    "Start": 47353,
+    "End": 47353,
+    "Percent": 97.5,
+    "Count": "0"
+   },
+   {
+    "Start": 47353,
+    "End": 47353,
+    "Percent": 97.8125,
+    "Count": "0"
+   },
+   {
+    "Start": 47353,
+    "End": 47353,
+    "Percent": 98.125,
+    "Count": "0"
+   },
+   {
+    "Start": 47353,
+    "End": 47357,
+    "Percent": 98.4375,
+    "Count": "1"
+   },
+   {
+    "Start": 47357,
+    "End": 47357,
+    "Percent": 100,
+    "Count": "0"
+   }
+  ]
+ },
+ "StartTime": "2020-01-11T12:47:57Z",
+ "RequestedDuration": "2s"
 }

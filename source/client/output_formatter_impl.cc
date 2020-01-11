@@ -125,6 +125,10 @@ std::string ConsoleOutputFormatterImpl::statIdtoFriendlyStatName(absl::string_vi
     return "Initiation to completion";
   } else if (stat_id == "sequencer.blocking") {
     return "Blocking. Results are skewed when significant numbers are reported here.";
+  } else if (stat_id == "benchmark_http_client.response_body_size") {
+    return "Response body size in bytes";
+  } else if (stat_id == "benchmark_http_client.response_header_size") {
+    return "Response header size in bytes";
   }
   return std::string(stat_id);
 }
@@ -145,28 +149,44 @@ DottedStringOutputFormatterImpl::formatProto(const nighthawk::client::Output& ou
       const std::string prefix = fmt::format("{}.{}", result.name(), statistic.id());
 
       ss << fmt::format("{}.samples: {}", prefix, statistic.count()) << std::endl;
-      ss << fmt::format("{}.mean: {}", prefix,
-                        Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(statistic.mean()))
-         << std::endl;
-      ss << fmt::format("{}.pstdev: {}", prefix,
-                        Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(statistic.pstdev()))
-         << std::endl;
-      ss << fmt::format("{}.min: {}", prefix,
-                        Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(statistic.min()))
-         << std::endl;
-      ss << fmt::format("{}.max: {}", prefix,
-                        Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(statistic.max()))
-         << std::endl;
 
-      iteratePercentiles(statistic, [&ss, prefix](const nighthawk::client::Percentile& percentile) {
-        const std::string percentile_prefix =
-            fmt::format("{}.permilles-{:.{}f}", prefix, percentile.percentile() * 1000, 0);
-        ss << fmt::format("{}.count: {}", percentile_prefix, percentile.count()) << std::endl;
-        ss << fmt::format(
-                  "{}.microseconds: {}", percentile_prefix,
-                  Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(percentile.duration()))
+      if (statistic.domain() == nighthawk::client::Statistic_StatisticDomain_DURATION) {
+        ss << fmt::format("{}.mean: {}", prefix,
+                          Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(statistic.mean()))
            << std::endl;
-      });
+        ss << fmt::format(
+                  "{}.pstdev: {}", prefix,
+                  Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(statistic.pstdev()))
+           << std::endl;
+        ss << fmt::format("{}.min: {}", prefix,
+                          Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(statistic.min()))
+           << std::endl;
+        ss << fmt::format("{}.max: {}", prefix,
+                          Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(statistic.max()))
+           << std::endl;
+        iteratePercentiles(statistic, [&ss,
+                                       prefix](const nighthawk::client::Percentile& percentile) {
+          const std::string percentile_prefix =
+              fmt::format("{}.permilles-{:.{}f}", prefix, percentile.percentile() * 1000, 0);
+          ss << fmt::format("{}.count: {}", percentile_prefix, percentile.count()) << std::endl;
+          ss << fmt::format(
+                    "{}.microseconds: {}", percentile_prefix,
+                    Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(percentile.duration()))
+             << std::endl;
+        });
+      } else {
+        ss << fmt::format("{}.mean: {}", prefix, statistic.raw_mean()) << std::endl;
+        ss << fmt::format("{}.pstdev: {}", prefix, statistic.raw_pstdev()) << std::endl;
+        ss << fmt::format("{}.min: {}", prefix, statistic.raw_min()) << std::endl;
+        ss << fmt::format("{}.max: {}", prefix, statistic.raw_max()) << std::endl;
+        iteratePercentiles(statistic, [&ss,
+                                       prefix](const nighthawk::client::Percentile& percentile) {
+          const std::string percentile_prefix =
+              fmt::format("{}.permilles-{:.{}f}", prefix, percentile.percentile() * 1000, 0);
+          ss << fmt::format("{}.count: {}", percentile_prefix, percentile.count()) << std::endl;
+          ss << fmt::format("{}.value: {}", percentile_prefix, percentile.raw_value()) << std::endl;
+        });
+      }
     }
     for (const auto& counter : result.counters()) {
       const std::string prefix = fmt::format("{}.{}", result.name(), counter.name());
@@ -200,16 +220,15 @@ FortioOutputFormatterImpl::getCounterByName(const nighthawk::client::Result& res
       "Nighthawk result was malformed, contains no counter with name: ", counter_name));
 }
 
-const nighthawk::client::Statistic& FortioOutputFormatterImpl::getRequestResponseStatistic(
-    const nighthawk::client::Result& result) const {
+const nighthawk::client::Statistic*
+FortioOutputFormatterImpl::findStatistic(const nighthawk::client::Result& result,
+                                         absl::string_view stat_id) const {
   for (auto const& nh_stat : result.statistics()) {
-    if (nh_stat.id() == "benchmark_http_client.request_to_response") {
-      return nh_stat;
+    if (nh_stat.id() == stat_id) {
+      return &nh_stat;
     }
   }
-
-  throw NighthawkException("Nighthawk result was malformed, contains no "
-                           "'benchmark_http_client.request_to_response' statistic.");
+  return nullptr;
 }
 
 std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
@@ -251,13 +270,29 @@ std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Outp
     fortio_output.mutable_retcodes()->at("200") = 0;
   }
 
-  // The core of the transformation is here: All the percentiles to display the dashboard
-  const auto& nh_stat = this->getRequestResponseStatistic(nh_global_result);
+  auto* statistic =
+      this->findStatistic(nh_global_result, "benchmark_http_client.request_to_response");
+  if (statistic == nullptr) {
+    throw NighthawkException("Nighthawk result was malformed, contains no "
+                             "'benchmark_http_client.request_to_response' statistic.");
+  }
+  fortio_output.mutable_durationhistogram()->CopyFrom(renderFortioDurationHistogram(*statistic));
+  statistic = this->findStatistic(nh_global_result, "benchmark_http_client.response_body_size");
+  if (statistic != nullptr) {
+    fortio_output.mutable_sizes()->CopyFrom(renderFortioDurationHistogram(*statistic));
+  }
+  statistic = this->findStatistic(nh_global_result, "benchmark_http_client.response_header_size");
+  if (statistic != nullptr) {
+    fortio_output.mutable_headersizes()->CopyFrom(renderFortioDurationHistogram(*statistic));
+  }
+  return Envoy::MessageUtil::getJsonStringFromMessage(fortio_output, true, true);
+}
 
+const nighthawk::client::DurationHistogram FortioOutputFormatterImpl::renderFortioDurationHistogram(
+    const nighthawk::client::Statistic& nh_stat) const {
   // Set the count (number of data points)
   nighthawk::client::DurationHistogram fortio_histogram;
   fortio_histogram.set_count(nh_stat.count());
-
   uint64_t prev_fortio_count = 0;
   double prev_fortio_end = 0;
   for (int i = 0; i < nh_stat.percentiles().size(); i++) {
@@ -270,32 +305,32 @@ std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Outp
 
     // fortio_count = nh_count - prev_fortio_count
     fortio_data_entry.set_count(nh_percentile.count() - prev_fortio_count);
-
-    // fortio_end = nh_duration (need to convert formats)
-    const double nh_percentile_duration_sec =
-        Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(nh_percentile.duration()) / 1e9;
-    fortio_data_entry.set_end(nh_percentile_duration_sec);
+    double value;
+    if (nh_stat.domain() == nighthawk::client::Statistic_StatisticDomain_DURATION) {
+      // fortio_end = nh_duration (need to convert formats)
+      value =
+          Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(nh_percentile.duration()) / 1e9;
+    } else {
+      value = nh_percentile.raw_value();
+    }
+    fortio_data_entry.set_end(value);
 
     // fortio_start = prev_fortio_end
     if (i == 0) {
       // If this is the first entry, force the start and end time to be the same.
       // This prevents it from starting at 0, making it disproportionally big in the UI.
-      prev_fortio_end = nh_percentile_duration_sec;
+      prev_fortio_end = value;
     }
     fortio_data_entry.set_start(prev_fortio_end);
 
     // Update tracking variables
     prev_fortio_count = nh_percentile.count();
-    prev_fortio_end = nh_percentile_duration_sec;
+    prev_fortio_end = value;
 
     // Set the data entry in the histogram only if it's not the first entry
     fortio_histogram.add_data()->CopyFrom(fortio_data_entry);
   }
-
-  // Set the histogram in main fortio output
-  fortio_output.mutable_durationhistogram()->CopyFrom(fortio_histogram);
-
-  return Envoy::MessageUtil::getJsonStringFromMessage(fortio_output, true, true);
+  return fortio_histogram;
 }
 
 } // namespace Client

@@ -41,6 +41,10 @@ message FortioResult {
   map<string, uint64> RetCodes = 11;
 
   string URL = 12;
+
+  DurationHistogram Sizes = 13;
+
+  DurationHistogram HeaderSizes = 14;
 }
 
 message DurationHistogram {

@@ -28,8 +28,8 @@ void OutputCollectorImpl::addResult(absl::string_view name,
   result->set_name(name.data(), name.size());
   for (auto& statistic : statistics) {
     Statistic::SerializationDomain serialization_domain =
-        (absl::EndsWith(statistic->id(), "_size")) ? Statistic::SerializationDomain::RAW
-                                                   : Statistic::SerializationDomain::DURATION;
+        absl::EndsWith(statistic->id(), "_size") ? Statistic::SerializationDomain::RAW
+                                                 : Statistic::SerializationDomain::DURATION;
     *(result->add_statistics()) = statistic->toProto(serialization_domain);
   }
   for (const auto& counter : counters) {
