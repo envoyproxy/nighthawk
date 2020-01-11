@@ -87,6 +87,11 @@ TYPED_TEST(TypedStatisticTest, Simple) {
   Helper::expectNear(2416223.357033227, c->pstdev(), c->significantDigits());
 }
 
+TYPED_TEST(TypedStatisticTest, createNewInstance) {
+  TypeParam a;
+  EXPECT_NE(a.createNewInstance(), nullptr);
+}
+
 TYPED_TEST(TypedStatisticTest, Empty) {
   TypeParam a;
   EXPECT_EQ(0, a.count());

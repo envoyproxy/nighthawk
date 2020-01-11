@@ -1,5 +1,5 @@
 {
- "Labels": "",
+ "Labels": "label-a label-b",
  "RequestedQPS": 10,
  "ActualQPS": 28,
  "ActualDuration": 2,
