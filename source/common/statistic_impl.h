@@ -16,7 +16,7 @@ class StatisticImpl : public Statistic, public Envoy::Logger::Loggable<Envoy::Lo
 public:
   void addValue(uint64_t value) override;
   std::string toString() const override;
-  nighthawk::client::Statistic toProto(SerializationDomain domain) override;
+  nighthawk::client::Statistic toProto(SerializationDomain domain) const override;
   std::string id() const override;
   void setId(absl::string_view id) override;
   uint64_t count() const override;
@@ -114,8 +114,7 @@ public:
   uint64_t min() const override;
 
   StatisticPtr combine(const Statistic& statistic) const override;
-  std::string toString() const override;
-  nighthawk::client::Statistic toProto(SerializationDomain domain) override;
+  nighthawk::client::Statistic toProto(SerializationDomain domain) const override;
   uint64_t significantDigits() const override { return SignificantDigits; }
   StatisticPtr createNewInstance() const override { return std::make_unique<HdrStatistic>(); };
 

@@ -9,12 +9,10 @@
 namespace Nighthawk {
 
 std::string StatisticImpl::toString() const {
-  return fmt::format(
-      "Count: {}. Mean: {:.{}f} μs. pstdev: {:.{}f} μs. Min: {:.{}f} μs. Max: {:.{}f} μs.\n",
-      count(), mean() / 1000, 2, pstdev() / 1000, 2, min() / 1000.0, 2, max() / 1000.0, 2);
+  return toProto(SerializationDomain::RAW).DebugString();
 }
 
-nighthawk::client::Statistic StatisticImpl::toProto(SerializationDomain domain) {
+nighthawk::client::Statistic StatisticImpl::toProto(SerializationDomain domain) const {
   nighthawk::client::Statistic statistic;
 
   statistic.set_id(id());
@@ -202,23 +200,7 @@ StatisticPtr HdrStatistic::combine(const Statistic& statistic) const {
   return combined;
 }
 
-std::string HdrStatistic::toString() const {
-  std::stringstream stream;
-
-  stream << StatisticImpl::toString();
-  stream << fmt::format("{:>12} {:>14} (usec)", "Percentile", "Value") << std::endl;
-
-  std::vector<double> percentiles{50.0, 75.0, 90.0, 99.0, 99.9, 99.99, 99.999, 100.0};
-  for (double p : percentiles) {
-    const int64_t n = hdr_value_at_percentile(histogram_, p);
-
-    // We scale from nanoseconds to microseconds in the output.
-    stream << fmt::format("{:>12}% {:>14}", p, n / 1000.0) << std::endl;
-  }
-  return stream.str();
-}
-
-nighthawk::client::Statistic HdrStatistic::toProto(SerializationDomain domain) {
+nighthawk::client::Statistic HdrStatistic::toProto(SerializationDomain domain) const {
   nighthawk::client::Statistic proto = StatisticImpl::toProto(domain);
 
   struct hdr_iter iter;

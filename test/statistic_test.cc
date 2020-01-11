@@ -213,9 +213,11 @@ TYPED_TEST(TypedStatisticTest, StringOutput) {
   a.addValue(342335);
 
   std::string s = a.toString();
-  EXPECT_NE(std::string::npos, s.find("Count: 2."));
-  EXPECT_NE(std::string::npos, s.find("Mean: 3442.9"));
-  EXPECT_NE(std::string::npos, s.find("pstdev: 3100.5"));
+  std::vector<std::string> matches{
+      "count: ", "raw_mean: ", "raw_pstdev: ", "raw_min: ", "raw_max: "};
+  for (const auto& match : matches) {
+    EXPECT_NE(std::string::npos, s.find(match));
+  }
 }
 
 class StatisticTest : public Test {};

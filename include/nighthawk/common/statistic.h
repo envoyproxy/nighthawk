@@ -62,7 +62,7 @@ public:
   /**
    * @return nighthawk::client::Statistic a representation of the statistic as a protobuf message.
    */
-  virtual nighthawk::client::Statistic toProto(SerializationDomain domain) PURE;
+  virtual nighthawk::client::Statistic toProto(SerializationDomain domain) const PURE;
 
   /**
    * Combines two Statistics into one, and returns a new, merged, Statistic.
