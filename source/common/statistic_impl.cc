@@ -14,25 +14,35 @@ std::string StatisticImpl::toString() const {
       count(), mean() / 1000, 2, pstdev() / 1000, 2, min() / 1000.0, 2, max() / 1000.0, 2);
 }
 
-nighthawk::client::Statistic StatisticImpl::toProto() {
+nighthawk::client::Statistic StatisticImpl::toProto(SerializationDomain domain) {
   nighthawk::client::Statistic statistic;
 
   statistic.set_id(id());
   statistic.set_count(count());
+  if (domain == Statistic::SerializationDomain::DURATION) {
+    int64_t nanos;
+    statistic.set_domain(nighthawk::client::Statistic_StatisticDomain_DURATION);
+    nanos = count() == 0 ? 0 : static_cast<int64_t>(std::round(mean()));
+    statistic.mutable_mean()->set_seconds(nanos / 1000000000);
+    statistic.mutable_mean()->set_nanos(nanos % 1000000000);
+    nanos =
+        count() == 0 ? 0 : static_cast<int64_t>(std::round(std::isnan(pstdev()) ? 0 : pstdev()));
+    statistic.mutable_pstdev()->set_seconds(nanos / 1000000000);
+    statistic.mutable_pstdev()->set_nanos(nanos % 1000000000);
+    nanos = min();
+    statistic.mutable_min()->set_seconds(nanos / 1000000000);
+    statistic.mutable_min()->set_nanos(nanos % 1000000000);
+    nanos = max();
+    statistic.mutable_max()->set_seconds(nanos / 1000000000);
+    statistic.mutable_max()->set_nanos(nanos % 1000000000);
+  } else {
+    statistic.set_domain(nighthawk::client::Statistic_StatisticDomain_RAW);
+    statistic.set_raw_mean(mean());
+    statistic.set_raw_pstdev(pstdev());
+    statistic.set_raw_min(min());
+    statistic.set_raw_max(max());
+  }
 
-  int64_t nanos = count() == 0 ? 0 : static_cast<int64_t>(std::round(mean()));
-  statistic.mutable_mean()->set_seconds(nanos / 1000000000);
-  statistic.mutable_mean()->set_nanos(nanos % 1000000000);
-
-  nanos = count() == 0 ? 0 : static_cast<int64_t>(std::round(std::isnan(pstdev()) ? 0 : pstdev()));
-  statistic.mutable_pstdev()->set_seconds(nanos / 1000000000);
-  statistic.mutable_pstdev()->set_nanos(nanos % 1000000000);
-  nanos = min();
-  statistic.mutable_min()->set_seconds(nanos / 1000000000);
-  statistic.mutable_min()->set_nanos(nanos % 1000000000);
-  nanos = max();
-  statistic.mutable_max()->set_seconds(nanos / 1000000000);
-  statistic.mutable_max()->set_nanos(nanos % 1000000000);
   return statistic;
 }
 
@@ -208,8 +218,8 @@ std::string HdrStatistic::toString() const {
   return stream.str();
 }
 
-nighthawk::client::Statistic HdrStatistic::toProto() {
-  nighthawk::client::Statistic proto = StatisticImpl::toProto();
+nighthawk::client::Statistic HdrStatistic::toProto(SerializationDomain domain) {
+  nighthawk::client::Statistic proto = StatisticImpl::toProto(domain);
 
   struct hdr_iter iter;
   struct hdr_iter_percentiles* percentiles;
@@ -220,10 +230,12 @@ nighthawk::client::Statistic HdrStatistic::toProto() {
     nighthawk::client::Percentile* percentile;
 
     percentile = proto.add_percentiles();
-
-    percentile->mutable_duration()->set_seconds(iter.highest_equivalent_value / 1000000000);
-    percentile->mutable_duration()->set_nanos(iter.highest_equivalent_value % 1000000000);
-
+    if (domain == Statistic::SerializationDomain::DURATION) {
+      percentile->mutable_duration()->set_seconds(iter.highest_equivalent_value / 1000000000);
+      percentile->mutable_duration()->set_nanos(iter.highest_equivalent_value % 1000000000);
+    } else {
+      percentile->set_raw_value(iter.highest_equivalent_value);
+    }
     percentile->set_percentile(percentiles->percentile / 100.0);
     percentile->set_count(iter.cumulative_count);
   }

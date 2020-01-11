@@ -25,6 +25,7 @@ using StatisticPtrMap = std::map<std::string, Statistic const*>;
  */
 class Statistic : Envoy::NonCopyable {
 public:
+  enum class SerializationDomain { RAW, DURATION };
   virtual ~Statistic() = default;
   /**
    * Method for adding a sample value.
@@ -61,7 +62,7 @@ public:
   /**
    * @return nighthawk::client::Statistic a representation of the statistic as a protobuf message.
    */
-  virtual nighthawk::client::Statistic toProto() PURE;
+  virtual nighthawk::client::Statistic toProto(SerializationDomain domain) PURE;
 
   /**
    * Combines two Statistics into one, and returns a new, merged, Statistic.

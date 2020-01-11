@@ -13,19 +13,39 @@ message Counter {
 }
 
 message Percentile {
-  google.protobuf.Duration duration = 1;
+  oneof duration_type {
+    google.protobuf.Duration duration = 1;
+    double raw_value = 4;
+  }
   double percentile = 2;
   uint64 count = 3;
 }
 
 message Statistic {
+  enum StatisticDomain {
+    RAW = 0;
+    DURATION = 1;
+  }
   uint64 count = 1;
   string id = 2;
-  google.protobuf.Duration mean = 3;
-  google.protobuf.Duration pstdev = 4;
+  oneof mean_type {
+    google.protobuf.Duration mean = 3;
+    double raw_mean = 8;
+  }
+  oneof pstdev_type {
+    google.protobuf.Duration pstdev = 4;
+    double raw_pstdev = 10;
+  }
   repeated Percentile percentiles = 5;
-  google.protobuf.Duration min = 6;
-  google.protobuf.Duration max = 7;
+  oneof min_type {
+    google.protobuf.Duration min = 6;
+    uint64 raw_min = 12;
+  }
+  oneof max_type {
+    google.protobuf.Duration max = 7;
+    uint64 raw_max = 13;
+  }
+  StatisticDomain domain = 9;
 }
 
 message Result {

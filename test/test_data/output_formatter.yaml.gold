@@ -14,6 +14,7 @@ results:
         id: stat_id
         percentiles:
           []
+        domain: DURATION
         mean: 0.002s
         pstdev: 0.000816497s
         min: 0.001s
@@ -22,6 +23,7 @@ results:
         id: ""
         percentiles:
           []
+        domain: DURATION
         mean: 0s
         pstdev: 0s
         min: -0.000000001s
@@ -38,6 +40,7 @@ results:
         id: stat_id
         percentiles:
           []
+        domain: DURATION
         mean: 0.002s
         pstdev: 0.000816497s
         min: 0.001s
@@ -46,6 +49,7 @@ results:
         id: ""
         percentiles:
           []
+        domain: DURATION
         mean: 0s
         pstdev: 0s
         min: -0.000000001s
@@ -62,6 +66,7 @@ results:
         id: stat_id
         percentiles:
           []
+        domain: DURATION
         mean: 0.002s
         pstdev: 0.000816497s
         min: 0.001s
@@ -70,6 +75,7 @@ results:
         id: ""
         percentiles:
           []
+        domain: DURATION
         mean: 0s
         pstdev: 0s
         min: -0.000000001s

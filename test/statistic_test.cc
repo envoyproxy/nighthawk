@@ -175,7 +175,7 @@ TYPED_TEST(TypedStatisticTest, ProtoOutput) {
   a.addValue(6543456);
   a.addValue(342335);
 
-  const nighthawk::client::Statistic proto = a.toProto();
+  const nighthawk::client::Statistic proto = a.toProto(Statistic::SerializationDomain::DURATION);
 
   EXPECT_EQ("foo", proto.id());
   EXPECT_EQ(2, proto.count());
@@ -185,7 +185,7 @@ TYPED_TEST(TypedStatisticTest, ProtoOutput) {
 
 TYPED_TEST(TypedStatisticTest, ProtoOutputEmptyStats) {
   TypeParam a;
-  const nighthawk::client::Statistic proto = a.toProto();
+  const nighthawk::client::Statistic proto = a.toProto(Statistic::SerializationDomain::DURATION);
 
   EXPECT_EQ(proto.count(), 0);
   EXPECT_EQ(proto.mean().nanos(), 0);
@@ -213,7 +213,7 @@ TEST(StatisticTest, SimpleStatisticProtoOutputLargeValues) {
   uint64_t value = 100ul + 0xFFFFFFFF; // 100 + the max for uint32_t
   a.addValue(value);
   a.addValue(value);
-  const nighthawk::client::Statistic proto = a.toProto();
+  const nighthawk::client::Statistic proto = a.toProto(Statistic::SerializationDomain::DURATION);
 
   EXPECT_EQ(proto.count(), 2);
   Helper::expectNear(((1.0 * proto.mean().seconds() * 1000 * 1000 * 1000) + proto.mean().nanos()),
@@ -227,7 +227,7 @@ TEST(StatisticTest, HdrStatisticProtoOutputLargeValues) {
   uint64_t value = 100ul + 0xFFFFFFFF;
   a.addValue(value);
   a.addValue(value);
-  const nighthawk::client::Statistic proto = a.toProto();
+  const nighthawk::client::Statistic proto = a.toProto(Statistic::SerializationDomain::DURATION);
 
   EXPECT_EQ(proto.count(), 2);
   // TODO(oschaaf): hdr doesn't seem to the promised precision in this scenario.
@@ -243,7 +243,7 @@ TEST(StatisticTest, StreamingStatProtoOutputLargeValues) {
   uint64_t value = 100ul + 0xFFFFFFFF;
   a.addValue(value);
   a.addValue(value);
-  const nighthawk::client::Statistic proto = a.toProto();
+  const nighthawk::client::Statistic proto = a.toProto(Statistic::SerializationDomain::DURATION);
 
   EXPECT_EQ(proto.count(), 2);
 
@@ -265,7 +265,12 @@ TEST(StatisticTest, HdrStatisticPercentilesProto) {
   util.loadFromJson(Envoy::Filesystem::fileSystemForTest().fileReadToEnd(
                         TestEnvironment::runfilesPath("test/test_data/hdr_proto_json.gold")),
                     parsed_json_proto, Envoy::ProtobufMessage::getStrictValidationVisitor());
-  EXPECT_TRUE(util(parsed_json_proto, statistic.toProto()));
+  // Instead of comparing proto's, we perform a string-based comparison, because that emits a
+  // helpful diff when this fails.
+  const std::string json = util.getJsonStringFromMessage(
+      statistic.toProto(Statistic::SerializationDomain::DURATION), true, true);
+  const std::string golden_json = util.getJsonStringFromMessage(parsed_json_proto, true, true);
+  EXPECT_EQ(json, golden_json);
 }
 
 TEST(StatisticTest, CombineAcrossTypesFails) {
