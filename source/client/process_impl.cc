@@ -205,11 +205,11 @@ uint32_t ProcessImpl::determineConcurrency() const {
 }
 
 std::vector<StatisticPtr>
-ProcessImpl::vectorizeStatisticPtrMap(const StatisticFactory& statistic_factory,
-                                      const StatisticPtrMap& statistics) const {
+ProcessImpl::vectorizeStatisticPtrMap(const StatisticPtrMap& statistics) const {
   std::vector<StatisticPtr> v;
   for (const auto& statistic : statistics) {
-    auto new_statistic = statistic_factory.create()->combine(*(statistic.second));
+    // Clone the orinal statistic into a new one.
+    auto new_statistic = statistic.second->createNewInstance()->combine(*(statistic.second));
     new_statistic->setId(statistic.first);
     v.push_back(std::move(new_statistic));
   }
@@ -431,7 +431,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
     if (workers_.size() > 1) {
       StatisticFactoryImpl statistic_factory(options_);
       collector.addResult(fmt::format("worker_{}", i),
-                          vectorizeStatisticPtrMap(statistic_factory, worker->statistics()),
+                          vectorizeStatisticPtrMap(worker->statistics()),
                           worker->thread_local_counter_values(), sequencer_execution_duration);
     }
     total_execution_duration += sequencer_execution_duration;

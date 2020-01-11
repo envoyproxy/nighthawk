@@ -87,8 +87,8 @@ StatisticPtr SimpleStatistic::combine(const Statistic& statistic) const {
 }
 
 void StreamingStatistic::addValue(uint64_t value) {
-  StatisticImpl::addValue(value);
   double delta, delta_n;
+  StatisticImpl::addValue(value);
   delta = value - mean_;
   delta_n = delta / count_;
   mean_ += delta_n;
@@ -113,10 +113,14 @@ StatisticPtr StreamingStatistic::combine(const Statistic& statistic) const {
   combined->min_ = a.min() > b.min() ? b.min() : a.min();
   combined->max_ = a.max() > b.max() ? a.max() : b.max();
   combined->count_ = a.count() + b.count();
-  combined->mean_ = ((a.count() * a.mean()) + (b.count() * b.mean())) / combined->count_;
+  // A statistic instance with zero samples will return std::isnan() as its mean.
+  // For the the merge we are doing here we need to treat that as 0.
+  auto a_mean = std::isnan(a.mean()) ? 0 : a.mean();
+  auto b_mean = std::isnan(b.mean()) ? 0 : b.mean();
+  combined->mean_ = ((a.count() * a_mean) + (b.count() * b_mean)) / combined->count_;
   combined->accumulated_variance_ =
       a.accumulated_variance_ + b.accumulated_variance_ +
-      pow(a.mean() - b.mean(), 2) * a.count() * b.count() / combined->count();
+      pow(a_mean - b.mean(), 2) * a.count() * b.count() / combined->count();
   return combined;
 }
 

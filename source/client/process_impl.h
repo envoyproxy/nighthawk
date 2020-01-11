@@ -61,8 +61,7 @@ public:
 private:
   void configureComponentLogLevels(spdlog::level::level_enum level);
   const std::vector<ClientWorkerPtr>& createWorkers(const uint32_t concurrency);
-  std::vector<StatisticPtr> vectorizeStatisticPtrMap(const StatisticFactory& statistic_factory,
-                                                     const StatisticPtrMap& statistics) const;
+  std::vector<StatisticPtr> vectorizeStatisticPtrMap(const StatisticPtrMap& statistics) const;
   std::vector<StatisticPtr>
   mergeWorkerStatistics(const std::vector<ClientWorkerPtr>& workers) const;
   void setupForHRTimers();

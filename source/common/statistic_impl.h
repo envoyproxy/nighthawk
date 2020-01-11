@@ -12,6 +12,9 @@
 
 namespace Nighthawk {
 
+/**
+ * Base class for all statistics implementations.
+ */
 class StatisticImpl : public Statistic, public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
   void addValue(uint64_t value) override;
@@ -28,6 +31,22 @@ protected:
   uint64_t min_{UINT64_MAX};
   uint64_t max_{0};
   uint64_t count_{0};
+};
+
+/**
+ * Dummy statistic for future use.
+ * Intended be plugged into the system as a no-op in cases where statistic tracking
+ * is not desired.
+ */
+class NullStatistic : public StatisticImpl {
+public:
+  void addValue(uint64_t) override {}
+  double mean() const override { return 0.0; }
+  double pvariance() const override { return 0.0; }
+  double pstdev() const override { return 0.0; }
+  StatisticPtr combine(const Statistic&) const override { return createNewInstance(); };
+  uint64_t significantDigits() const override { return 0; }
+  StatisticPtr createNewInstance() const override { return std::make_unique<NullStatistic>(); };
 };
 
 /**

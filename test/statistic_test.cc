@@ -316,4 +316,11 @@ TEST(StatisticTest, HdrStatisticOutOfRange) {
   EXPECT_EQ(0, a.count());
 }
 
+TEST(StatisticTest, NullStatistic) {
+  NullStatistic stat;
+  EXPECT_EQ(0, stat.count());
+  stat.addValue(1);
+  EXPECT_EQ(0, stat.count());
+}
+
 } // namespace Nighthawk
