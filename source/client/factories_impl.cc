@@ -35,7 +35,7 @@ BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
   // StreamingStatistic for the stats that track response sizes. Ideally we would have options
   // for this to route the right stat to the right backend (HdrStatistic, SimpleStatistic,
   // NullStatistic).
-  // TODO(XXX): Create options and have the StatisticFactory consider those when instantiating
+  // TODO(#XXX): Create options and have the StatisticFactory consider those when instantiating
   // statistics.
   auto benchmark_client = std::make_unique<BenchmarkClientHttpImpl>(
       api, dispatcher, scope, statistic_factory.create(), statistic_factory.create(),
