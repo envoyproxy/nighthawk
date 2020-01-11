@@ -120,7 +120,7 @@ StatisticPtr StreamingStatistic::combine(const Statistic& statistic) const {
   combined->mean_ = ((a.count() * a_mean) + (b.count() * b_mean)) / combined->count_;
   combined->accumulated_variance_ =
       a.accumulated_variance_ + b.accumulated_variance_ +
-      pow(a_mean - b.mean(), 2) * a.count() * b.count() / combined->count();
+      pow(a_mean - b_mean, 2) * a.count() * b.count() / combined->count();
   return combined;
 }
 

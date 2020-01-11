@@ -23,8 +23,8 @@ message Percentile {
 
 message Statistic {
   enum StatisticDomain {
-    RAW = 0;
-    DURATION = 1;
+    RAW = 0;      // When this is set, the raw_* uint64 valued fields will be populated.
+    DURATION = 1; // When this is set, the duration-valued fields will be populated.
   }
   uint64 count = 1;
   string id = 2;
