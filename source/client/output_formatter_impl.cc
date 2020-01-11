@@ -67,9 +67,9 @@ std::string ConsoleOutputFormatterImpl::formatProto(const nighthawk::client::Out
         const std::string s_mean = duration_valued ? formatProtoDuration(statistic.mean())
                                                    : fmt::format("{}", statistic.raw_mean());
         const std::string s_pstdev = duration_valued ? formatProtoDuration(statistic.pstdev())
-                                                     : fmt::format("{}", statistic.pstdev());
+                                                     : fmt::format("{}", statistic.raw_pstdev());
 
-        ss << fmt::format("{}({} samples) ", statIdtoFriendlyStatName(statistic.id()),
+        ss << fmt::format("{} ({} samples)", statIdtoFriendlyStatName(statistic.id()),
                           statistic.count())
            << std::endl;
         ss << fmt::format("  min: {} | ", s_min);
@@ -151,46 +151,49 @@ DottedStringOutputFormatterImpl::formatProto(const nighthawk::client::Output& ou
   for (const auto& result : output.results()) {
     for (const auto& statistic : result.statistics()) {
       const std::string prefix = fmt::format("{}.{}", result.name(), statistic.id());
+      const bool duration_valued =
+          statistic.domain() == nighthawk::client::Statistic_StatisticDomain_DURATION;
+      const std::string s_min =
+          duration_valued
+              ? fmt::format(
+                    "{}", Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(statistic.min()))
+              : fmt::format("{}", statistic.raw_min());
+      const std::string s_max =
+          duration_valued
+              ? fmt::format(
+                    "{}", Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(statistic.max()))
+              : fmt::format("{}", statistic.raw_max());
+      const std::string s_mean =
+          duration_valued
+              ? fmt::format(
+                    "{}", Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(statistic.mean()))
+              : fmt::format("{}", statistic.raw_mean());
+      const std::string s_pstdev =
+          duration_valued
+              ? fmt::format("{}", Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(
+                                      statistic.pstdev()))
+              : fmt::format("{}", statistic.raw_pstdev());
 
       ss << fmt::format("{}.samples: {}", prefix, statistic.count()) << std::endl;
+      ss << fmt::format("{}.mean: {}", prefix, s_mean) << std::endl;
+      ss << fmt::format("{}.pstdev: {}", prefix, s_pstdev) << std::endl;
+      ss << fmt::format("{}.min: {}", prefix, s_min) << std::endl;
+      ss << fmt::format("{}.max: {}", prefix, s_max) << std::endl;
 
-      if (statistic.domain() == nighthawk::client::Statistic_StatisticDomain_DURATION) {
-        ss << fmt::format("{}.mean: {}", prefix,
-                          Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(statistic.mean()))
-           << std::endl;
-        ss << fmt::format(
-                  "{}.pstdev: {}", prefix,
-                  Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(statistic.pstdev()))
-           << std::endl;
-        ss << fmt::format("{}.min: {}", prefix,
-                          Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(statistic.min()))
-           << std::endl;
-        ss << fmt::format("{}.max: {}", prefix,
-                          Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(statistic.max()))
-           << std::endl;
-        iteratePercentiles(statistic, [&ss,
-                                       prefix](const nighthawk::client::Percentile& percentile) {
-          const std::string percentile_prefix =
-              fmt::format("{}.permilles-{:.{}f}", prefix, percentile.percentile() * 1000, 0);
-          ss << fmt::format("{}.count: {}", percentile_prefix, percentile.count()) << std::endl;
+      iteratePercentiles(statistic, [&ss, prefix, duration_valued](
+                                        const nighthawk::client::Percentile& percentile) {
+        const std::string percentile_prefix =
+            fmt::format("{}.permilles-{:.{}f}", prefix, percentile.percentile() * 1000, 0);
+        ss << fmt::format("{}.count: {}", percentile_prefix, percentile.count()) << std::endl;
+        if (duration_valued) {
           ss << fmt::format(
-                    "{}.microseconds: {}", percentile_prefix,
-                    Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(percentile.duration()))
-             << std::endl;
-        });
-      } else {
-        ss << fmt::format("{}.mean: {}", prefix, statistic.raw_mean()) << std::endl;
-        ss << fmt::format("{}.pstdev: {}", prefix, statistic.raw_pstdev()) << std::endl;
-        ss << fmt::format("{}.min: {}", prefix, statistic.raw_min()) << std::endl;
-        ss << fmt::format("{}.max: {}", prefix, statistic.raw_max()) << std::endl;
-        iteratePercentiles(statistic, [&ss,
-                                       prefix](const nighthawk::client::Percentile& percentile) {
-          const std::string percentile_prefix =
-              fmt::format("{}.permilles-{:.{}f}", prefix, percentile.percentile() * 1000, 0);
-          ss << fmt::format("{}.count: {}", percentile_prefix, percentile.count()) << std::endl;
-          ss << fmt::format("{}.value: {}", percentile_prefix, percentile.raw_value()) << std::endl;
-        });
-      }
+              "{}.microseconds: {}", percentile_prefix,
+              Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(percentile.duration()));
+        } else {
+          ss << fmt::format("{}.value: {}", percentile_prefix, percentile.raw_value());
+        }
+        ss << std::endl;
+      });
     }
     for (const auto& counter : result.counters()) {
       const std::string prefix = fmt::format("{}.{}", result.name(), counter.name());
