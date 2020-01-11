@@ -64,4 +64,18 @@ TEST_F(TerminationPredicateTest, LinkedPredicates) {
   EXPECT_EQ(fail_pred.evaluateChain(), TerminationPredicate::Status::TERMINATE);
 }
 
+TEST_F(TerminationPredicateTest, AppendToChain) {
+  auto& foo_counter = stats_store_.counter("foo");
+  foo_counter.inc();
+  StatsCounterAbsoluteThresholdTerminationPredicateImpl predicate(
+      foo_counter, 1, TerminationPredicate::Status::TERMINATE);
+  // The counter doesn't exceed the predicate threshold, so we shouldn't see TERMINATE
+  EXPECT_EQ(predicate.evaluateChain(), TerminationPredicate::Status::PROCEED);
+  auto child_predicate = std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
+      foo_counter, 0, TerminationPredicate::Status::FAIL);
+  EXPECT_EQ(child_predicate.get(), &(predicate.appendToChain(std::move(child_predicate))));
+  // This ought to evaluate to FAIL as the counter threshold is exceeded.
+  EXPECT_EQ(predicate.evaluateChain(), TerminationPredicate::Status::FAIL);
+}
+
 } // namespace Nighthawk
