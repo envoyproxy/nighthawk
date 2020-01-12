@@ -425,7 +425,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
       StatisticFactoryImpl statistic_factory(options_);
       collector.addResult(fmt::format("worker_{}", i),
                           vectorizeStatisticPtrMap(statistic_factory, worker->statistics()),
-                          worker->thread_local_counter_values(), sequencer_execution_duration);
+                          worker->threadLocalCounterValues(), sequencer_execution_duration);
     }
     total_execution_duration += sequencer_execution_duration;
     i++;

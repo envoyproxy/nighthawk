@@ -31,8 +31,8 @@ public:
                    Envoy::Tracing::HttpTracerPtr& http_tracer);
   StatisticPtrMap statistics() const override;
 
-  const std::map<std::string, uint64_t>& thread_local_counter_values() override {
-    return thread_local_counter_values_;
+  const std::map<std::string, uint64_t>& threadLocalCounterValues() override {
+    return threadLocalCounterValues_;
   }
   const Sequencer& sequencer() const override { return *sequencer_; }
   void shutdownThread() override;
@@ -52,7 +52,7 @@ private:
   TerminationPredicatePtr termination_predicate_;
   const SequencerPtr sequencer_;
   Envoy::LocalInfo::LocalInfoPtr local_info_;
-  std::map<std::string, uint64_t> thread_local_counter_values_;
+  std::map<std::string, uint64_t> threadLocalCounterValues_;
 };
 
 using ClientWorkerImplPtr = std::unique_ptr<ClientWorkerImpl>;

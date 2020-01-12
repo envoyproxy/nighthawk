@@ -28,7 +28,7 @@ public:
    * @return const std::map<std::string, uint64_t>& The worker-specific counter values.
    * Gets filled when the worker has completed its task, empty before that.
    */
-  virtual const std::map<std::string, uint64_t>& thread_local_counter_values() PURE;
+  virtual const std::map<std::string, uint64_t>& threadLocalCounterValues() PURE;
 
   /**
    * @return const Sequencer&

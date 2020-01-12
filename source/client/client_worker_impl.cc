@@ -54,7 +54,7 @@ void ClientWorkerImpl::work() {
     // Second, we strip our own prefix if it's there, else we skip.
     const std::string worker_prefix = fmt::format("{}.", worker_number_);
     if (stat->value() && absl::StartsWith(stat_name, worker_prefix)) {
-      thread_local_counter_values_[std::string(absl::StripPrefix(stat_name, worker_prefix))] =
+      threadLocalCounterValues_[std::string(absl::StripPrefix(stat_name, worker_prefix))] =
           stat->value();
     }
   }
