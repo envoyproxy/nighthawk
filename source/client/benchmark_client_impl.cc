@@ -108,8 +108,8 @@ BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
       provide_resource_backpressure_(provide_resource_backpressure) {
   connect_statistic_->setId("benchmark_http_client.queue_to_connect");
   response_statistic_->setId("benchmark_http_client.request_to_response");
-  response_header_size_statistic_->setId("benchmark_http_client.response_body_size");
-  response_body_size_statistic_->setId("benchmark_http_client.response_header_size");
+  response_header_size_statistic_->setId("benchmark_http_client.response_header_size");
+  response_body_size_statistic_->setId("benchmark_http_client.response_body_size");
 }
 
 void BenchmarkClientHttpImpl::terminate() {
