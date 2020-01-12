@@ -49,9 +49,9 @@ bazel-bin/nighthawk_client  [--label <string>] ...
 [--multi-target-endpoint <string>] ...
 [--jitter-uniform <duration>] [--open-loop]
 [--experimental-h1-connection-reuse-strategy
-<mru|lru>] [--failure-predicate <<string,
-uint64_t>>] ... [--termination-predicate
-<<string, uint64_t>>] ... [--trace <uri
+<mru|lru>] [--failure-predicate <string,
+uint64_t>] ... [--termination-predicate
+<string, uint64_t>] ... [--trace <uri
 format>] [--sequencer-idle-strategy <spin
 |poll|sleep>] [--max-requests-per-connection
 <uint32_t>] [--max-active-requests
@@ -108,12 +108,12 @@ Choose picking the most recently used, or least-recently-used
 connections for re-use.(default: mru). WARNING: this option is
 experimental and may be removed or changed in the future!
 
---failure-predicate <<string, uint64_t>>  (accepted multiple times)
+--failure-predicate <string, uint64_t>  (accepted multiple times)
 Failure predicate. Allows specifying a counter name plus threshold
 value for failing execution. Defaults to not tolerating error status
 codes and connection errors.
 
---termination-predicate <<string, uint64_t>>  (accepted multiple times)
+--termination-predicate <string, uint64_t>  (accepted multiple times)
 Termination predicate. Allows specifying a counter name plus threshold
 value for terminating execution.
 
