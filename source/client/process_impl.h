@@ -53,6 +53,14 @@ public:
   void addTracingCluster(envoy::config::bootstrap::v2::Bootstrap& bootstrap, const Uri& uri) const;
   void setupTracingImplementation(envoy::config::bootstrap::v2::Bootstrap& bootstrap,
                                   const Uri& uri) const;
+  /**
+   * @param uris The parsed target Uris configured for the load test.
+   * @param options Options of the load test
+   * @return std::string the sni-host derived from the configured load test target Uris and any
+   * Host: request-header passed in the options. Empty if no (unambiguous) sni host could be
+   * derived.
+   */
+  static std::string computeSniHost(const std::vector<UriPtr>& uris, const Options& options);
   void createBootstrapConfiguration(envoy::config::bootstrap::v2::Bootstrap& bootstrap,
                                     const std::vector<UriPtr>& uris, int number_of_workers) const;
   void maybeCreateTracingDriver(const envoy::config::trace::v2::Tracing& configuration);

@@ -27,6 +27,7 @@
 #include "external/envoy/source/extensions/tracers/well_known_names.h"
 
 #include "absl/strings/str_replace.h"
+#include "absl/strings/strip.h"
 
 // TODO(oschaaf): See if we can leverage a static module registration like Envoy does to avoid the
 // ifdefs in this file.
@@ -239,6 +240,39 @@ ProcessImpl::mergeWorkerStatistics(const StatisticFactory& statistic_factory,
   return merged_statistics;
 }
 
+std::string ProcessImpl::computeSniHost(const std::vector<UriPtr>& uris, const Options& options) {
+  std::string uri_sni;
+  std::string request_sni;
+  bool ambiguous = false;
+  // If we only have a single target uri, we set ourselves up for sni based on the
+  // host from the uri.
+  if (uris.size() == 1) {
+    uri_sni = std::string(uris[0]->hostWithoutPort());
+  }
+
+  // A Host: request=header overrides what we came up with above. Notably this also applies
+  // when multiple target uris are involved.
+  for (const std::string& header : options.requestHeaders()) {
+    const std::string lowered_header = absl::AsciiStrToLower(header);
+    if (absl::StartsWithIgnoreCase(lowered_header, "host:") ||
+        (absl::StartsWithIgnoreCase(lowered_header, ":authority:") && options.h2())) {
+      ambiguous = ambiguous || !request_sni.empty();
+      absl::string_view host = absl::StripPrefix(lowered_header, "host:");
+      host = absl::StripPrefix(host, ":authority:");
+      host = absl::StripAsciiWhitespace(host);
+      request_sni = std::string(host);
+    }
+  }
+  std::string sni_host;
+  if (ambiguous) {
+    ENVOY_LOG(warn, "Ambiguous host request headers detected");
+  } else {
+    sni_host = request_sni.empty() ? uri_sni : request_sni;
+  }
+  ENVOY_LOG(debug, "computed sni header: '{}'", sni_host);
+  return sni_host;
+}
+
 void ProcessImpl::createBootstrapConfiguration(envoy::config::bootstrap::v2::Bootstrap& bootstrap,
                                                const std::vector<UriPtr>& uris,
                                                int number_of_clusters) const {
@@ -248,6 +282,10 @@ void ProcessImpl::createBootstrapConfiguration(envoy::config::bootstrap::v2::Boo
     if (uris[0]->scheme() == "https") {
       auto* tls_context = cluster->mutable_tls_context();
       *tls_context = options_.tlsContext();
+      const std::string sni_host = computeSniHost(uris, options_);
+      if (!sni_host.empty()) {
+        *tls_context->mutable_sni() = sni_host;
+      }
       auto* common_tls_context = tls_context->mutable_common_tls_context();
       if (options_.h2()) {
         common_tls_context->add_alpn_protocols("h2");
