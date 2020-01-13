@@ -24,7 +24,7 @@ bool RemoteProcessImpl::run(OutputCollector& collector) {
   nighthawk::client::ExecutionRequest request;
   nighthawk::client::ExecutionResponse response;
   grpc::ClientContext context;
-  auto r = stub_.ExecutionStream(&context);
+  auto execution_stream = stub_.ExecutionStream(&context);
 
   *request.mutable_start_request()->mutable_options() = *options_.toCommandLineOptions();
   // We don't forward the option that requests remote execution. Today,
@@ -32,7 +32,7 @@ bool RemoteProcessImpl::run(OutputCollector& collector) {
   // is probably desireable.
   request.mutable_start_request()->mutable_options()->mutable_nighthawk_service()->Clear();
 
-  if (r->Write(request, {}) && r->Read(&response)) {
+  if (execution_stream->Write(request, {}) && execution_stream->Read(&response)) {
     if (response.has_output()) {
       collector.setOutput(response.output());
     } else {
@@ -41,10 +41,10 @@ bool RemoteProcessImpl::run(OutputCollector& collector) {
     if (response.has_error_detail()) {
       ENVOY_LOG(error, "have error detail: {}", response.error_detail().DebugString());
     }
-    if (!r->WritesDone()) {
+    if (!execution_stream->WritesDone()) {
       ENVOY_LOG(warn, "writeDone() failed");
     } else {
-      auto status = r->Finish();
+      auto status = execution_stream->Finish();
       return status.ok();
     }
   } else {
