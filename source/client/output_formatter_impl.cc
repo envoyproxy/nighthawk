@@ -223,7 +223,7 @@ std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Outp
   fortio_output.set_jitter(output.options().has_jitter_uniform());
   fortio_output.set_runtype("HTTP");
 
-  // The stock Envoy h2 pool doesn't offer supper for multiple connections here. So we must ignore
+  // The stock Envoy h2 pool doesn't offer support for multiple connections here. So we must ignore
   // the connections setting when h2 is enabled and the experimental h2-pool which supports multiple
   // connections isn't enabled. Also, the number of workers acts as a multiplier.
   const uint32_t number_of_connections =
@@ -269,11 +269,9 @@ std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Outp
   nighthawk::client::DurationHistogram fortio_histogram;
   uint64_t prev_fortio_count = 0;
   double prev_fortio_end = 0;
-  const int percentiles_size = nh_stat.percentiles().size();
-  for (int i = 0; i < percentiles_size; i++) {
+  int i = 0;
+  for (const auto& nh_percentile : nh_stat.percentiles()) {
     nighthawk::client::DataEntry fortio_data_entry;
-    const auto& nh_percentile = nh_stat.percentiles().at(i);
-
     // fortio_percent = 100 * nh_percentile
     fortio_data_entry.set_percent(nh_percentile.percentile() * 100);
 
@@ -285,7 +283,7 @@ std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Outp
     fortio_data_entry.set_end(nh_percentile_duration_sec);
 
     // fortio_start = prev_fortio_end
-    if (i == 0) {
+    if (i++ == 0) {
       // If this is the first entry, force the start and end time to be the same.
       // This prevents it from starting at 0, making it disproportionally big in the UI.
       prev_fortio_end = nh_percentile_duration_sec;

@@ -16,9 +16,8 @@ const std::string& VersionInfo::version() {
 }
 
 const envoy::config::core::v3alpha::BuildVersion& VersionInfo::buildVersion() {
-  static const auto* result = new envoy::config::core::v3alpha::BuildVersion(
-      makeBuildVersion(NIGHTHAWK_BUILD_VERSION_NUMBER));
-  return *result;
+  CONSTRUCT_ON_FIRST_USE(envoy::config::core::v3alpha::BuildVersion,
+                         makeBuildVersion(NIGHTHAWK_BUILD_VERSION_NUMBER));
 }
 
 envoy::config::core::v3alpha::BuildVersion VersionInfo::makeBuildVersion(const char* version) {
