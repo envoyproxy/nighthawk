@@ -47,6 +47,7 @@ public:
                                const Envoy::Http::Protocol protocol,
                                absl::string_view expected_sni_host) {
     std::vector<UriPtr> parsed_uris;
+    parsed_uris.reserve(uris.size());
     for (const std::string& uri : uris) {
       parsed_uris.push_back(std::make_unique<UriImpl>(uri));
     }
