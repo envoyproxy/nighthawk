@@ -23,7 +23,7 @@ public:
     std::string s_header_option(header_option);
     std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(std::vector<const char*>{
         client_name_.c_str(), "--request-header", s_header_option.c_str(), good_test_uri_.c_str()});
-    EXPECT_EQ(std::vector<std::string>{s_header_option.c_str()}, options->requestHeaders());
+    EXPECT_EQ(std::vector<std::string>{s_header_option}, options->requestHeaders());
     auto optionsPtr = options->toCommandLineOptions();
     const auto& headers = optionsPtr->request_options().request_headers();
     EXPECT_EQ(1, headers.size());
