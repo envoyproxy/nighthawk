@@ -18,6 +18,19 @@ public:
       : client_name_("nighthawk_client"), good_test_uri_("http://127.0.0.1/"),
         no_arg_match_("Couldn't find match for argument") {}
 
+  void verifyHeaderOptionParse(absl::string_view header_option, absl::string_view expected_key,
+                               absl::string_view expected_value) {
+    std::string s_header_option(header_option);
+    std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(std::vector<const char*>{
+        client_name_.c_str(), "--request-header", s_header_option.c_str(), good_test_uri_.c_str()});
+    EXPECT_EQ(std::vector<std::string>{s_header_option.c_str()}, options->requestHeaders());
+    auto optionsPtr = options->toCommandLineOptions();
+    const auto& headers = optionsPtr->request_options().request_headers();
+    EXPECT_EQ(1, headers.size());
+    EXPECT_EQ(expected_key, headers[0].header().key());
+    EXPECT_EQ(expected_value, headers[0].header().value());
+  }
+
   std::string client_name_;
   std::string good_test_uri_;
   std::string no_arg_match_;
@@ -550,16 +563,9 @@ TEST_F(OptionsImplTest, RequestHeaderWithoutColon) {
 }
 
 TEST_F(OptionsImplTest, RequestHeaderValueWithColonsAndSpaces) {
-  const std::string header("foo"), value(R"({ "bar": "baz" })");
-  const std::string header_option = fmt::format("{}:{}", header, value);
-  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(std::vector<const char*>{
-      client_name_.c_str(), "--request-header", header_option.c_str(), good_test_uri_.c_str()});
-  EXPECT_EQ(std::vector<std::string>{header_option}, options->requestHeaders());
-  auto optionsPtr = options->toCommandLineOptions();
-  const auto& headers = optionsPtr->request_options().request_headers();
-  EXPECT_EQ(1, headers.size());
-  EXPECT_EQ(header, headers[0].header().key());
-  EXPECT_EQ(value, headers[0].header().value());
+  verifyHeaderOptionParse("bar: baz", "bar", "baz");
+  verifyHeaderOptionParse("\t\n bar:  baz  \t\n", "bar", "baz");
+  verifyHeaderOptionParse(":authority: baz", ":authority", "baz");
 }
 
 TEST_F(OptionsImplTest, MultiTargetEndpointMalformed) {

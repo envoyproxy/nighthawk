@@ -53,14 +53,23 @@ public:
   void addTracingCluster(envoy::config::bootstrap::v2::Bootstrap& bootstrap, const Uri& uri) const;
   void setupTracingImplementation(envoy::config::bootstrap::v2::Bootstrap& bootstrap,
                                   const Uri& uri) const;
+
   /**
-   * @param uris The parsed target Uris configured for the load test.
-   * @param options Options of the load test
-   * @return std::string the sni-host derived from the configured load test target Uris and any
-   * Host: request-header passed in the options. Empty if no (unambiguous) sni host could be
-   * derived.
+   * Computes the SNI host based on the passed in uri(s), request headers, and protocol.
+   * Given a vector of Uris containing a single entry, its host fragment will be considered.
+   * Subsequently the passed request headers will be scanned for any host headers to override any
+   * Uri-derived sni host. If the passed in protocol is HTTP/2 or higher, next to host, :authority
+   * will be considered as well.
+   *
+   * @param parsed_uris The parsed target uris configured for the load test.
+   * @param request_headers Request headers to scan.
+   * @param protocol The anticipated protocol that will be used.
+   * @return std::string The sni-host derived from the configured load test target Uris and any
+   * host/authority request-headers found. Empty if no (unambiguous) sni host could be derived.
    */
-  static std::string computeSniHost(const std::vector<UriPtr>& uris, const Options& options);
+  static std::string computeSniHost(const std::vector<UriPtr>& parsed_uris,
+                                    const std::vector<std::string>& request_headers,
+                                    const Envoy::Http::Protocol protocol);
   void createBootstrapConfiguration(envoy::config::bootstrap::v2::Bootstrap& bootstrap,
                                     const std::vector<UriPtr>& uris, int number_of_workers) const;
   void maybeCreateTracingDriver(const envoy::config::trace::v2::Tracing& configuration);
