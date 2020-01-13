@@ -42,13 +42,17 @@ public:
   nighthawk::client::AddressFamily::AddressFamilyOptions addressFamily() const override {
     return address_family_;
   };
-  envoy::api::v2::core::RequestMethod requestMethod() const override { return request_method_; };
+  envoy::config::core::v3alpha::RequestMethod requestMethod() const override {
+    return request_method_;
+  };
   std::vector<std::string> requestHeaders() const override { return request_headers_; };
   uint32_t requestBodySize() const override { return request_body_size_; };
-  const envoy::api::v2::auth::UpstreamTlsContext& tlsContext() const override {
+  const envoy::extensions::transport_sockets::tls::v3alpha::UpstreamTlsContext&
+  tlsContext() const override {
     return tls_context_;
   };
-  const absl::optional<envoy::api::v2::core::TransportSocket>& transportSocket() const override {
+  const absl::optional<envoy::config::core::v3alpha::TransportSocket>&
+  transportSocket() const override {
     return transport_socket_;
   }
   uint32_t maxPendingRequests() const override { return max_pending_requests_; }
@@ -68,6 +72,7 @@ public:
   bool openLoop() const override { return open_loop_; }
 
   std::chrono::nanoseconds jitterUniform() const override { return jitter_uniform_; }
+  bool h2UseMultipleConnections() const override { return h2_use_multiple_connections_; }
   std::vector<std::string> labels() const override { return labels_; };
 
   std::vector<nighthawk::client::MultiTarget::Endpoint> multiTargetEndpoints() const override {
@@ -97,11 +102,12 @@ private:
   uint32_t burst_size_{0};
   nighthawk::client::AddressFamily::AddressFamilyOptions address_family_{
       nighthawk::client::AddressFamily::AUTO};
-  envoy::api::v2::core::RequestMethod request_method_{envoy::api::v2::core::RequestMethod::GET};
+  envoy::config::core::v3alpha::RequestMethod request_method_{
+      envoy::config::core::v3alpha::RequestMethod::GET};
   std::vector<std::string> request_headers_;
   uint32_t request_body_size_{0};
-  envoy::api::v2::auth::UpstreamTlsContext tls_context_;
-  absl::optional<envoy::api::v2::core::TransportSocket> transport_socket_;
+  envoy::extensions::transport_sockets::tls::v3alpha::UpstreamTlsContext tls_context_;
+  absl::optional<envoy::config::core::v3alpha::TransportSocket> transport_socket_;
   uint32_t max_pending_requests_{0};
   // This default is based the minimum recommendation for SETTINGS_MAX_CONCURRENT_STREAMS over at
   // https://tools.ietf.org/html/rfc7540#section-6.5.2
@@ -116,6 +122,7 @@ private:
   TerminationPredicateMap failure_predicates_;
   bool open_loop_{false};
   std::chrono::nanoseconds jitter_uniform_;
+  bool h2_use_multiple_connections_{false};
   std::vector<nighthawk::client::MultiTarget::Endpoint> multi_target_endpoints_;
   std::string multi_target_path_;
   bool multi_target_use_https_{false};

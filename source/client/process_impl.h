@@ -50,8 +50,9 @@ public:
 
   uint32_t determineConcurrency() const;
   bool run(OutputCollector& collector) override;
-  void addTracingCluster(envoy::config::bootstrap::v2::Bootstrap& bootstrap, const Uri& uri) const;
-  void setupTracingImplementation(envoy::config::bootstrap::v2::Bootstrap& bootstrap,
+  void addTracingCluster(envoy::config::bootstrap::v3alpha::Bootstrap& bootstrap,
+                         const Uri& uri) const;
+  void setupTracingImplementation(envoy::config::bootstrap::v3alpha::Bootstrap& bootstrap,
                                   const Uri& uri) const;
 
   /**
@@ -70,9 +71,9 @@ public:
   static std::string computeSniHost(const std::vector<UriPtr>& parsed_uris,
                                     const std::vector<std::string>& request_headers,
                                     const Envoy::Http::Protocol protocol);
-  void createBootstrapConfiguration(envoy::config::bootstrap::v2::Bootstrap& bootstrap,
+  void createBootstrapConfiguration(envoy::config::bootstrap::v3alpha::Bootstrap& bootstrap,
                                     const std::vector<UriPtr>& uris, int number_of_workers) const;
-  void maybeCreateTracingDriver(const envoy::config::trace::v2::Tracing& configuration);
+  void maybeCreateTracingDriver(const envoy::config::trace::v3alpha::Tracing& configuration);
   void shutdown() override;
 
 private:
