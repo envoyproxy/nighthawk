@@ -48,9 +48,9 @@ cc_library(
     visibility = ["//visibility:public"],
 )
   """,
-        sha256 = "43859763552a5cda0d3c8b0d81b2ae15d3e341df73b6c959095434fd0e2239e7",
-        strip_prefix = "HdrHistogram_c-0.9.11",
-        url = "https://github.com/HdrHistogram/HdrHistogram_c/archive/0.9.11.tar.gz",
+        sha256 = "c94fa16bde2104bc75321829b39399bd755488e079e63c5d362b7ed7c96b3275",
+        strip_prefix = "HdrHistogram_c-0.9.12",
+        url = "https://github.com/HdrHistogram/HdrHistogram_c/archive/0.9.12.tar.gz",
     )
 
     http_archive(
