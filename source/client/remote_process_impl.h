@@ -25,7 +25,8 @@ public:
   RemoteProcessImpl(const Options& options, nighthawk::client::NighthawkService::Stub& stub);
   /**
    * @param collector Collects the output from the remote nighthawk service.
-   * @return true iff the remote execution should be considered successful.
+   * @return true iff the remote execution should be considered successful. Unsuccessful execution
+   * will log available error details.
    */
   bool run(OutputCollector& collector) override;
   /**
