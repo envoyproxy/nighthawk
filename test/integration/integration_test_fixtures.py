@@ -285,6 +285,7 @@ class SniIntegrationTestBase(HttpsIntegrationTestBase):
     """See base class."""
     return super(HttpsIntegrationTestBase, self).getTestServerRootUri(True)
 
+
 class MultiServerHttpsIntegrationTestBase(IntegrationTestBase):
   """
   Base for https tests against multiple Nighthawk test servers
@@ -338,6 +339,7 @@ def multi_https_test_server_fixture(request):
   f.setUp()
   yield f
   f.tearDown()
+
 
 @pytest.fixture(params=determineIpVersionsFromEnvironment())
 def sni_test_server_fixture(request):
