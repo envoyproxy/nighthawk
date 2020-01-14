@@ -47,11 +47,13 @@ bazel-bin/nighthawk_client  [--label <string>] ...
 [--multi-target-use-https]
 [--multi-target-path <string>]
 [--multi-target-endpoint <string>] ...
+[--experimental-h2-use-multiple-connections]
+[--nighthawk-service <uri format>]
 [--jitter-uniform <duration>] [--open-loop]
 [--experimental-h1-connection-reuse-strategy
-<mru|lru>] [--failure-predicate <<string,
-uint64_t>>] ... [--termination-predicate
-<<string, uint64_t>>] ... [--trace <uri
+<mru|lru>] [--failure-predicate <string,
+uint64_t>] ... [--termination-predicate
+<string, uint64_t>] ... [--trace <uri
 format>] [--sequencer-idle-strategy <spin
 |poll|sleep>] [--max-requests-per-connection
 <uint32_t>] [--max-active-requests
@@ -94,6 +96,14 @@ argument is intended to be specified multiple times. Nighthawk will
 spread traffic across all endpoints with round robin distribution.
 Mutually exclusive with providing a URI.
 
+--experimental-h2-use-multiple-connections
+Use experimental HTTP/2 pool which will use multiple connections.
+WARNING: feature may be removed or changed in the future!
+
+--nighthawk-service <uri format>
+Nighthawk service uri. Example: grpc://localhost:8843/. Default is
+empty.
+
 --jitter-uniform <duration>
 Add uniformly distributed absolute request-release timing jitter. For
 example, to add 10 us of jitter, specify .00001s. Default is empty /
@@ -108,12 +118,12 @@ Choose picking the most recently used, or least-recently-used
 connections for re-use.(default: mru). WARNING: this option is
 experimental and may be removed or changed in the future!
 
---failure-predicate <<string, uint64_t>>  (accepted multiple times)
+--failure-predicate <string, uint64_t>  (accepted multiple times)
 Failure predicate. Allows specifying a counter name plus threshold
 value for failing execution. Defaults to not tolerating error status
 codes and connection errors.
 
---termination-predicate <<string, uint64_t>>  (accepted multiple times)
+--termination-predicate <string, uint64_t>  (accepted multiple times)
 Termination predicate. Allows specifying a counter name plus threshold
 value for terminating execution.
 
