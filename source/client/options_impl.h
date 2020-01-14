@@ -73,6 +73,7 @@ public:
   bool openLoop() const override { return open_loop_; }
 
   std::chrono::nanoseconds jitterUniform() const override { return jitter_uniform_; }
+  std::string nighthawkService() const override { return nighthawk_service_; }
   bool h2UseMultipleConnections() const override { return h2_use_multiple_connections_; }
   std::vector<std::string> labels() const override { return labels_; };
 
@@ -124,6 +125,7 @@ private:
   TerminationPredicateMap failure_predicates_;
   bool open_loop_{false};
   std::chrono::nanoseconds jitter_uniform_;
+  std::string nighthawk_service_;
   bool h2_use_multiple_connections_{false};
   std::vector<nighthawk::client::MultiTarget::Endpoint> multi_target_endpoints_;
   std::string multi_target_path_;

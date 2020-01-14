@@ -76,6 +76,12 @@ py_library(
     deps = [":integration_test_base"],
 )
 
+py_library(
+    name = "test_remote_execution_lib",
+    srcs = ["test_remote_execution.py"],
+    deps = [":integration_test_base"],
+)
+
 py_binary(
     name = "integration_test",
     srcs = ["integration_test.py"],
@@ -92,5 +98,6 @@ py_binary(
         ":test_grpc_service_lib",
         ":test_integration_basics_lib",
         ":test_integration_zipkin_lib",
+        ":test_remote_execution_lib",
     ],
 )

@@ -17,6 +17,7 @@ envoy_cc_library(
         "factories_impl.cc",
         "options_impl.cc",
         "process_impl.cc",
+        "remote_process_impl.cc",
         "stream_decoder.cc",
     ],
     hdrs = [
@@ -26,6 +27,7 @@ envoy_cc_library(
         "factories_impl.h",
         "options_impl.h",
         "process_impl.h",
+        "remote_process_impl.h",
         "stream_decoder.h",
     ],
     copts = select({

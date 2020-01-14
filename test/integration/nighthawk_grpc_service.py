@@ -63,12 +63,12 @@ class NighthawkGrpcService(object):
     tries = 30
     while tries > 0:
       contents = ""
-      if not self._address_file: continue
-      try:
-        with open(self._address_file) as f:
-          contents = f.read().strip()
-      except IOError:
-        pass
+      if not self._address_file is None:
+        try:
+          with open(self._address_file) as f:
+            contents = f.read().strip()
+        except IOError:
+          pass
       if contents != "":
         tmp = contents.split(":")
         assert (len(tmp) >= 2)
