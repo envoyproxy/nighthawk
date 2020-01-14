@@ -338,4 +338,49 @@ TEST_F(GraduallyOpeningRateLimiterFilterTest, TimingVerificationTest) {
                                   780, 800, 820, 840, 860, 880, 900, 920, 940, 960, 980, 1000}));
 }
 
+class ZipfRateLimiterImplTest : public Test {};
+
+TEST_F(ZipfRateLimiterImplTest, TimingVerificationTest) {
+  Envoy::Event::SimulatedTimeSystem time_system;
+  const double q = 2.0;
+  const double v = 1.0;
+  auto rate_limiter = std::make_unique<ZipfRateLimiterImpl>(
+      std::make_unique<LinearRateLimiter>(time_system, 10_Hz), q, v,
+      ZipfRateLimiterImpl::ZipfBehavior::ZIPF_PSEUDO_RANDOM);
+  const std::chrono::seconds duration = 15s;
+  std::vector<int64_t> aquisition_timings;
+  auto total_ms_elapsed = 0ms;
+  auto clock_tick = 1ms;
+
+  do {
+    if (rate_limiter->tryAcquireOne()) {
+      aquisition_timings.push_back(total_ms_elapsed.count());
+    }
+    time_system.sleep(clock_tick);
+    total_ms_elapsed += clock_tick;
+  } while (total_ms_elapsed <= duration);
+  EXPECT_EQ(aquisition_timings,
+            std::vector<int64_t>({500,   800,   1300,  2400,  2900,  3900,  4200,  4400,  4500,
+                                  5800,  6000,  6400,  7900,  8400,  8600,  9900,  10200, 10500,
+                                  10600, 12000, 12300, 12600, 13300, 13600, 13700, 13800, 13900}));
+}
+
+TEST_F(ZipfRateLimiterImplTest, BadArgumentsTest) {
+  // Zipf preconditions are q > 1, v > 0, verify we guard appropriately.
+  std::list<std::tuple<double, double>> bad_q_v_pairs{
+      {1.0, 1.0} /*borderline bad q*/,
+      {1.1, 0.0} /*borderline bad v*/,
+      {1.0, 0.0} /*borderline bad both*/,
+      {0.9, 1.0},
+      {1.1, -1.0},
+      {-1, 1.0},
+  };
+
+  for (const auto& pair : bad_q_v_pairs) {
+    EXPECT_THROW(ZipfRateLimiterImpl rate_limiter(std::make_unique<NiceMock<MockRateLimiter>>(),
+                                                  std::get<0>(pair), std::get<1>(pair)),
+                 NighthawkException);
+  }
+}
+
 } // namespace Nighthawk
