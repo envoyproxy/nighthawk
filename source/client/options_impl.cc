@@ -184,12 +184,12 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "", "termination-predicate",
       "Termination predicate. Allows specifying a counter name plus threshold value for "
       "terminating execution.",
-      false, "<string, uint64_t>", cmd);
+      false, "string, uint64_t", cmd);
   TCLAP::MultiArg<std::string> failure_predicates(
       "", "failure-predicate",
       "Failure predicate. Allows specifying a counter name plus threshold value for "
       "failing execution. Defaults to not tolerating error status codes and connection errors.",
-      false, "<string, uint64_t>", cmd);
+      false, "string, uint64_t", cmd);
 
   std::vector<std::string> h1_connection_reuse_strategies = {"mru", "lru"};
   TCLAP::ValuesConstraint<std::string> h1_connection_reuse_strategies_allowed(
@@ -214,6 +214,10 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "Add uniformly distributed absolute request-release timing jitter. For example, to add 10 us "
       "of jitter, specify .00001s. Default is empty / no uniform jitter.",
       false, "", "duration", cmd);
+  TCLAP::ValueArg<std::string> nighthawk_service(
+      "", "nighthawk-service",
+      "Nighthawk service uri. Example: grpc://localhost:8843/. Default is empty.", false, "",
+      "uri format", cmd);
   TCLAP::SwitchArg h2_use_multiple_connections(
       "", "experimental-h2-use-multiple-connections",
       "Use experimental HTTP/2 pool which will use multiple connections. WARNING: feature may be "
@@ -333,6 +337,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       throw MalformedArgvException("Invalid value for --jitter-uniform");
     }
   }
+  TCLAP_SET_IF_SPECIFIED(nighthawk_service, nighthawk_service_);
   TCLAP_SET_IF_SPECIFIED(h2_use_multiple_connections, h2_use_multiple_connections_);
   TCLAP_SET_IF_SPECIFIED(multi_target_use_https, multi_target_use_https_);
   TCLAP_SET_IF_SPECIFIED(multi_target_path, multi_target_path_);
@@ -352,7 +357,6 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
     }
   }
   TCLAP_SET_IF_SPECIFIED(labels, labels_);
-
   // CLI-specific tests.
   // TODO(oschaaf): as per mergconflicts's remark, it would be nice to aggregate
   // these and present everything we couldn't understand to the CLI user in on go.
@@ -514,6 +518,8 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
     jitter_uniform_ = std::chrono::nanoseconds(
         Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(options.jitter_uniform()));
   }
+  nighthawk_service_ =
+      PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, nighthawk_service, nighthawk_service_);
   h2_use_multiple_connections_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(
       options, experimental_h2_use_multiple_connections, h2_use_multiple_connections_);
   std::copy(options.labels().begin(), options.labels().end(), std::back_inserter(labels_));
@@ -646,6 +652,7 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
     *command_line_options->mutable_jitter_uniform() =
         Envoy::Protobuf::util::TimeUtil::NanosecondsToDuration(jitter_uniform_.count());
   }
+  command_line_options->mutable_nighthawk_service()->set_value(nighthawk_service_);
   command_line_options->mutable_experimental_h2_use_multiple_connections()->set_value(
       h2_use_multiple_connections_);
   for (const auto& label : labels_) {
