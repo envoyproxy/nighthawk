@@ -49,6 +49,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
       "--max-active-requests 11 --max-requests-per-connection 12 --sequencer-idle-strategy sleep "
       "--termination-predicate t1:1 --termination-predicate t2:2 --failure-predicate f1:1 "
       "--failure-predicate f2:2 --jitter-uniform .00001s "
+      "--experimental-h2-use-multiple-connections "
       "--experimental-h1-connection-reuse-strategy lru --label label1 --label label2 {}",
       client_name_,
       "{name:\"envoy.transport_sockets.tls\","
@@ -69,7 +70,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
   EXPECT_EQ(13, options->burstSize());
   EXPECT_EQ(nighthawk::client::AddressFamily::V6, options->addressFamily());
   EXPECT_EQ(good_test_uri_, options->uri());
-  EXPECT_EQ(envoy::api::v2::core::RequestMethod::POST, options->requestMethod());
+  EXPECT_EQ(envoy::config::core::v3alpha::RequestMethod::POST, options->requestMethod());
   const std::vector<std::string> expected_headers = {"f1:b1", "f2:b2", "f3:b3:b4"};
   EXPECT_EQ(expected_headers, options->requestHeaders());
   EXPECT_EQ(1234, options->requestBodySize());
@@ -95,6 +96,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
   EXPECT_EQ(1, options->failurePredicates()["f1"]);
   EXPECT_EQ(2, options->failurePredicates()["f2"]);
   EXPECT_EQ(10us, options->jitterUniform());
+  EXPECT_EQ(true, options->h2UseMultipleConnections());
   EXPECT_EQ(nighthawk::client::H1ConnectionReuseStrategy::LRU,
             options->h1ConnectionReuseStrategy());
   const std::vector<std::string> expected_labels{"label1", "label2"};
@@ -146,6 +148,8 @@ TEST_F(OptionsImplTest, AlmostAll) {
   EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("f1"));
   EXPECT_EQ(1, cmd->mutable_termination_predicates()->erase("t1"));
   EXPECT_EQ(cmd->jitter_uniform().nanos(), options->jitterUniform().count());
+  EXPECT_EQ(cmd->experimental_h2_use_multiple_connections().value(),
+            options->h2UseMultipleConnections());
   EXPECT_EQ(cmd->experimental_h1_connection_reuse_strategy().value(),
             options->h1ConnectionReuseStrategy());
   EXPECT_THAT(cmd->labels(), ElementsAreArray(expected_labels));
@@ -489,7 +493,8 @@ TEST_F(OptionsImplTest, BadTlsContextSpecification) {
   EXPECT_THROW_WITH_REGEX(
       TestUtility::createOptionsImpl(fmt::format("{} --tls-context {} http://foo/", client_name_,
                                                  "{misspelled_tls_context:{}}")),
-      MalformedArgvException, "envoy.api.v2.auth.UpstreamTlsContext reason INVALID_ARGUMENT");
+      MalformedArgvException,
+      "envoy.extensions.transport_sockets.tls.v3alpha.UpstreamTlsContext reason INVALID_ARGUMENT");
 }
 
 TEST_F(OptionsImplTest, BadTransportSocketSpecification) {
@@ -503,7 +508,7 @@ TEST_F(OptionsImplTest, BadTransportSocketSpecification) {
       TestUtility::createOptionsImpl(fmt::format("{} --transport-socket {} http://foo/",
                                                  client_name_, "{misspelled_transport_socket:{}}")),
       MalformedArgvException,
-      "Protobuf message \\(type envoy.api.v2.core.TransportSocket reason "
+      "Protobuf message \\(type envoy.config.core.v3alpha.TransportSocket reason "
       "INVALID_ARGUMENT:misspelled_transport_socket: Cannot find field.\\) has unknown fields");
 }
 
