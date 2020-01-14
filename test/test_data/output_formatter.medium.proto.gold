@@ -172,7 +172,6 @@
        "duration": "0.210903039s"
       }
      ],
-     "domain": "DURATION",
      "mean": "0.012425896s",
      "pstdev": "0.049618263s",
      "min": "0.000015223s",
@@ -298,7 +297,6 @@
        "duration": "0.310886399s"
       }
      ],
-     "domain": "DURATION",
      "mean": "0.078798788s",
      "pstdev": "0.058588866s",
      "min": "0.054640639s",
@@ -319,7 +317,6 @@
        "raw_value": 847
       }
      ],
-     "domain": "RAW",
      "raw_mean": 847,
      "raw_pstdev": 0,
      "raw_min": "847",
@@ -450,7 +447,6 @@
        "raw_value": 47347
       }
      ],
-     "domain": "RAW",
      "raw_mean": 47320.333333333336,
      "raw_pstdev": 16.996731711975951,
      "raw_min": "47281",
@@ -466,7 +462,6 @@
        "duration": "0s"
       }
      ],
-     "domain": "DURATION",
      "mean": "0s",
      "pstdev": "0s",
      "min": "-0.000000001s",
@@ -597,7 +592,6 @@
        "duration": "0.310935551s"
       }
      ],
-     "domain": "DURATION",
      "mean": "0.081648149s",
      "pstdev": "0.078351068s",
      "min": "0.000025572s",
@@ -804,7 +798,6 @@
        "duration": "0.181387263s"
       }
      ],
-     "domain": "DURATION",
      "mean": "0.010097459s",
      "pstdev": "0.041542887s",
      "min": "0.000015953s",
@@ -935,7 +928,6 @@
        "duration": "0.281362431s"
       }
      ],
-     "domain": "DURATION",
      "mean": "0.079610937s",
      "pstdev": "0.049821561s",
      "min": "0.053798911s",
@@ -956,7 +948,6 @@
        "raw_value": 847
       }
      ],
-     "domain": "RAW",
      "raw_mean": 847,
      "raw_pstdev": 0,
      "raw_min": "847",
@@ -1087,7 +1078,6 @@
        "raw_value": 47353
       }
      ],
-     "domain": "RAW",
      "raw_mean": 47305.105263157893,
      "raw_pstdev": 23.516835485382323,
      "raw_min": "47257",
@@ -1103,7 +1093,6 @@
        "duration": "0s"
       }
      ],
-     "domain": "DURATION",
      "mean": "0s",
      "pstdev": "0s",
      "min": "-0.000000001s",
@@ -1234,7 +1223,6 @@
        "duration": "0.281395199s"
       }
      ],
-     "domain": "DURATION",
      "mean": "0.085009485s",
      "pstdev": "0.066108238s",
      "min": "0.000028082s",
@@ -1441,7 +1429,6 @@
        "duration": "0.147341311s"
       }
      ],
-     "domain": "DURATION",
      "mean": "0.008205027s",
      "pstdev": "0.033744513s",
      "min": "0.000015754s",
@@ -1572,7 +1559,6 @@
        "duration": "0.247513087s"
       }
      ],
-     "domain": "DURATION",
      "mean": "0.076909909s",
      "pstdev": "0.042284076s",
      "min": "0.055316479s",
@@ -1593,7 +1579,6 @@
        "raw_value": 847
       }
      ],
-     "domain": "RAW",
      "raw_mean": 847,
      "raw_pstdev": 0,
      "raw_min": "847",
@@ -1724,7 +1709,6 @@
        "raw_value": 47357
       }
      ],
-     "domain": "RAW",
      "raw_mean": 47318.368421052633,
      "raw_pstdev": 17.687969525301028,
      "raw_min": "47289",
@@ -1740,7 +1724,6 @@
        "duration": "0s"
       }
      ],
-     "domain": "DURATION",
      "mean": "0s",
      "pstdev": "0s",
      "min": "-0.000000001s",
@@ -1871,7 +1854,6 @@
        "duration": "0.247554047s"
       }
      ],
-     "domain": "DURATION",
      "mean": "0.080659065s",
      "pstdev": "0.057852211s",
      "min": "0.000046843s",
@@ -2113,7 +2095,6 @@
        "duration": "0.210903039s"
       }
      ],
-     "domain": "DURATION",
      "mean": "0.010201603s",
      "pstdev": "0.042017661s",
      "min": "0.000015223s",
@@ -2279,7 +2260,6 @@
        "duration": "0.310886399s"
       }
      ],
-     "domain": "DURATION",
      "mean": "0.078433106s",
      "pstdev": "0.050523020s",
      "min": "0.053798911s",
@@ -2300,7 +2280,6 @@
        "raw_value": 847
       }
      ],
-     "domain": "RAW",
      "raw_mean": 847,
      "raw_pstdev": 0,
      "raw_min": "847",
@@ -2471,7 +2450,6 @@
        "raw_value": 47357
       }
      ],
-     "domain": "RAW",
      "raw_mean": 47314.5,
      "raw_pstdev": 20.799210149838451,
      "raw_min": "47257",
@@ -2487,7 +2465,6 @@
        "duration": "0s"
       }
      ],
-     "domain": "DURATION",
      "mean": "0s",
      "pstdev": "0s",
      "min": "-0.000000001s",
@@ -2658,7 +2635,6 @@
        "duration": "0.310935551s"
       }
      ],
-     "domain": "DURATION",
      "mean": "0.082438899s",
      "pstdev": "0.067986441s",
      "min": "0.000025572s",

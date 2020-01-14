@@ -14,7 +14,6 @@ results:
         id: stat_id
         percentiles:
           []
-        domain: DURATION
         mean: 0.002s
         pstdev: 0.000816497s
         min: 0.001s
@@ -23,7 +22,6 @@ results:
         id: ""
         percentiles:
           []
-        domain: DURATION
         mean: 0s
         pstdev: 0s
         min: -0.000000001s
@@ -70,7 +68,6 @@ results:
           - percentile: 1
             count: 4
             raw_value: 17
-        domain: RAW
         raw_mean: 15.5
         raw_pstdev: 1.1180339887498949
         raw_min: 14
@@ -117,7 +114,6 @@ results:
           - percentile: 1
             count: 4
             duration: 0.000210007s
-        domain: DURATION
         mean: 0.000195004s
         pstdev: 0.000011180s
         min: 0.000180007s
@@ -134,7 +130,6 @@ results:
         id: stat_id
         percentiles:
           []
-        domain: DURATION
         mean: 0.002s
         pstdev: 0.000816497s
         min: 0.001s
@@ -143,7 +138,6 @@ results:
         id: ""
         percentiles:
           []
-        domain: DURATION
         mean: 0s
         pstdev: 0s
         min: -0.000000001s
@@ -190,7 +184,6 @@ results:
           - percentile: 1
             count: 4
             raw_value: 17
-        domain: RAW
         raw_mean: 15.5
         raw_pstdev: 1.1180339887498949
         raw_min: 14
@@ -237,7 +230,6 @@ results:
           - percentile: 1
             count: 4
             duration: 0.000210007s
-        domain: DURATION
         mean: 0.000195004s
         pstdev: 0.000011180s
         min: 0.000180007s
@@ -254,7 +246,6 @@ results:
         id: stat_id
         percentiles:
           []
-        domain: DURATION
         mean: 0.002s
         pstdev: 0.000816497s
         min: 0.001s
@@ -263,7 +254,6 @@ results:
         id: ""
         percentiles:
           []
-        domain: DURATION
         mean: 0s
         pstdev: 0s
         min: -0.000000001s
@@ -310,7 +300,6 @@ results:
           - percentile: 1
             count: 4
             raw_value: 17
-        domain: RAW
         raw_mean: 15.5
         raw_pstdev: 1.1180339887498949
         raw_min: 14
@@ -357,7 +346,6 @@ results:
           - percentile: 1
             count: 4
             duration: 0.000210007s
-        domain: DURATION
         mean: 0.000195004s
         pstdev: 0.000011180s
         min: 0.000180007s

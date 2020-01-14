@@ -58,16 +58,15 @@ std::string ConsoleOutputFormatterImpl::formatProto(const nighthawk::client::Out
         if (statistic.count() == 0) {
           continue;
         }
-        const bool duration_valued =
-            statistic.domain() == nighthawk::client::Statistic_StatisticDomain_DURATION;
-        const std::string s_min = duration_valued ? formatProtoDuration(statistic.min())
-                                                  : fmt::format("{}", statistic.raw_min());
-        const std::string s_max = duration_valued ? formatProtoDuration(statistic.max())
-                                                  : fmt::format("{}", statistic.raw_max());
-        const std::string s_mean = duration_valued ? formatProtoDuration(statistic.mean())
-                                                   : fmt::format("{}", statistic.raw_mean());
-        const std::string s_pstdev = duration_valued ? formatProtoDuration(statistic.pstdev())
-                                                     : fmt::format("{}", statistic.raw_pstdev());
+        const std::string s_min = statistic.has_min() ? formatProtoDuration(statistic.min())
+                                                      : fmt::format("{}", statistic.raw_min());
+        const std::string s_max = statistic.has_max() ? formatProtoDuration(statistic.max())
+                                                      : fmt::format("{}", statistic.raw_max());
+        const std::string s_mean = statistic.has_mean() ? formatProtoDuration(statistic.mean())
+                                                        : fmt::format("{}", statistic.raw_mean());
+        const std::string s_pstdev = statistic.has_pstdev()
+                                         ? formatProtoDuration(statistic.pstdev())
+                                         : fmt::format("{}", statistic.raw_pstdev());
 
         ss << fmt::format("{} ({} samples)", statIdtoFriendlyStatName(statistic.id()),
                           statistic.count())
@@ -78,7 +77,7 @@ std::string ConsoleOutputFormatterImpl::formatProto(const nighthawk::client::Out
         ss << fmt::format("pstdev: {}", s_pstdev) << std::endl;
 
         bool header_written = false;
-        iteratePercentiles(statistic, [&ss, this, duration_valued, &header_written](
+        iteratePercentiles(statistic, [&ss, this, &header_written](
                                           const nighthawk::client::Percentile& percentile) {
           const auto p = percentile.percentile();
           // Don't show the min / max, as we already show that above.
@@ -90,8 +89,8 @@ std::string ConsoleOutputFormatterImpl::formatProto(const nighthawk::client::Out
               header_written = true;
             }
             ss << fmt::format("  {:<{}}{:<{}}{:<{}}", p, 12, percentile.count(), 12,
-                              duration_valued ? formatProtoDuration(percentile.duration())
-                                              : fmt::format("{}", percentile.raw_value()),
+                              percentile.has_duration() ? formatProtoDuration(percentile.duration())
+                                                        : fmt::format("{}", percentile.raw_value()),
                               15)
                << std::endl;
           }
@@ -151,25 +150,23 @@ DottedStringOutputFormatterImpl::formatProto(const nighthawk::client::Output& ou
   for (const auto& result : output.results()) {
     for (const auto& statistic : result.statistics()) {
       const std::string prefix = fmt::format("{}.{}", result.name(), statistic.id());
-      const bool duration_valued =
-          statistic.domain() == nighthawk::client::Statistic_StatisticDomain_DURATION;
       const std::string s_min =
-          duration_valued
+          statistic.has_min()
               ? fmt::format(
                     "{}", Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(statistic.min()))
               : fmt::format("{}", statistic.raw_min());
       const std::string s_max =
-          duration_valued
+          statistic.has_max()
               ? fmt::format(
                     "{}", Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(statistic.max()))
               : fmt::format("{}", statistic.raw_max());
       const std::string s_mean =
-          duration_valued
+          statistic.has_mean()
               ? fmt::format(
                     "{}", Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(statistic.mean()))
               : fmt::format("{}", statistic.raw_mean());
       const std::string s_pstdev =
-          duration_valued
+          statistic.has_pstdev()
               ? fmt::format("{}", Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(
                                       statistic.pstdev()))
               : fmt::format("{}", statistic.raw_pstdev());
@@ -180,12 +177,11 @@ DottedStringOutputFormatterImpl::formatProto(const nighthawk::client::Output& ou
       ss << fmt::format("{}.min: {}", prefix, s_min) << std::endl;
       ss << fmt::format("{}.max: {}", prefix, s_max) << std::endl;
 
-      iteratePercentiles(statistic, [&ss, prefix, duration_valued](
-                                        const nighthawk::client::Percentile& percentile) {
+      iteratePercentiles(statistic, [&ss, prefix](const nighthawk::client::Percentile& percentile) {
         const std::string percentile_prefix =
             fmt::format("{}.permilles-{:.{}f}", prefix, percentile.percentile() * 1000, 0);
         ss << fmt::format("{}.count: {}", percentile_prefix, percentile.count()) << std::endl;
-        if (duration_valued) {
+        if (percentile.has_duration()) {
           ss << fmt::format(
               "{}.microseconds: {}", percentile_prefix,
               Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(percentile.duration()));
@@ -306,8 +302,6 @@ const nighthawk::client::DurationHistogram FortioOutputFormatterImpl::renderFort
   uint64_t prev_fortio_count = 0;
   double prev_fortio_end = 0;
   const int percentiles_size = nh_stat.percentiles().size();
-  const bool duration_valued =
-      nh_stat.domain() == nighthawk::client::Statistic_StatisticDomain_DURATION;
   for (int i = 0; i < percentiles_size; i++) {
     nighthawk::client::DataEntry fortio_data_entry;
     const auto& nh_percentile = nh_stat.percentiles().at(i);
@@ -319,7 +313,7 @@ const nighthawk::client::DurationHistogram FortioOutputFormatterImpl::renderFort
 
     // fortio_end = nh_duration (need to convert formats)
     double value;
-    if (duration_valued) {
+    if (nh_percentile.has_duration()) {
       // fortio_end = nh_duration (need to convert formats)
       value = durationToSeconds(nh_percentile.duration());
     } else {
@@ -345,30 +339,32 @@ const nighthawk::client::DurationHistogram FortioOutputFormatterImpl::renderFort
 
   // Set the count (number of data points)
   fortio_histogram.set_count(nh_stat.count());
-  fortio_histogram.set_avg(duration_valued ? durationToSeconds(nh_stat.mean())
-                                           : nh_stat.raw_mean());
-  fortio_histogram.set_min(duration_valued ? durationToSeconds(nh_stat.min()) : nh_stat.raw_min());
+  fortio_histogram.set_avg(nh_stat.has_mean() ? durationToSeconds(nh_stat.mean())
+                                              : nh_stat.raw_mean());
+  fortio_histogram.set_min(nh_stat.has_min() ? durationToSeconds(nh_stat.min())
+                                             : nh_stat.raw_min());
   fortio_histogram.set_sum(nh_stat.count() * fortio_histogram.avg());
-  fortio_histogram.set_max(duration_valued ? durationToSeconds(nh_stat.max()) : nh_stat.raw_max());
+  fortio_histogram.set_max(nh_stat.has_max() ? durationToSeconds(nh_stat.max())
+                                             : nh_stat.raw_max());
   // Note that Nighthawk tracks pstdev whereas fortio seems to use stdev.
-  fortio_histogram.set_stddev(duration_valued ? durationToSeconds(nh_stat.pstdev())
-                                              : nh_stat.raw_pstdev());
-  iteratePercentiles(nh_stat, [this, &fortio_histogram,
-                               &duration_valued](const nighthawk::client::Percentile& percentile) {
-    if (percentile.percentile() > 0 && percentile.percentile() < 1) {
-      auto* p = fortio_histogram.add_percentiles();
-      // We perform some rounding on the percentiles for a better UX while we use
-      // HdrHistogram. HDR-Histogram uses base-2 arithmetic behind the scenes
-      // which yields percentiles close to what fortio has, but not perfectly
-      // on-spot, e.g. 0.990625 and 0.9990234375.
-      p->set_percentile(std::floor(percentile.percentile() * 1000) / 10);
-      if (duration_valued) {
-        p->set_value(durationToSeconds(percentile.duration()));
-      } else {
-        p->set_value(percentile.raw_value());
-      }
-    }
-  });
+  fortio_histogram.set_stddev(nh_stat.has_pstdev() ? durationToSeconds(nh_stat.pstdev())
+                                                   : nh_stat.raw_pstdev());
+  iteratePercentiles(nh_stat,
+                     [this, &fortio_histogram](const nighthawk::client::Percentile& percentile) {
+                       if (percentile.percentile() > 0 && percentile.percentile() < 1) {
+                         auto* p = fortio_histogram.add_percentiles();
+                         // We perform some rounding on the percentiles for a better UX while we use
+                         // HdrHistogram. HDR-Histogram uses base-2 arithmetic behind the scenes
+                         // which yields percentiles close to what fortio has, but not perfectly
+                         // on-spot, e.g. 0.990625 and 0.9990234375.
+                         p->set_percentile(std::floor(percentile.percentile() * 1000) / 10);
+                         if (percentile.has_duration()) {
+                           p->set_value(durationToSeconds(percentile.duration()));
+                         } else {
+                           p->set_value(percentile.raw_value());
+                         }
+                       }
+                     });
   return fortio_histogram;
 }
 

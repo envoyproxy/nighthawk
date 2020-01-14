@@ -19,7 +19,6 @@ nighthawk::client::Statistic StatisticImpl::toProto(SerializationDomain domain) 
   statistic.set_count(count());
   if (domain == Statistic::SerializationDomain::DURATION) {
     int64_t nanos;
-    statistic.set_domain(nighthawk::client::Statistic_StatisticDomain_DURATION);
     nanos = count() == 0 ? 0 : static_cast<int64_t>(std::round(mean()));
     statistic.mutable_mean()->set_seconds(nanos / 1000000000);
     statistic.mutable_mean()->set_nanos(nanos % 1000000000);
@@ -34,7 +33,6 @@ nighthawk::client::Statistic StatisticImpl::toProto(SerializationDomain domain) 
     statistic.mutable_max()->set_seconds(nanos / 1000000000);
     statistic.mutable_max()->set_nanos(nanos % 1000000000);
   } else {
-    statistic.set_domain(nighthawk::client::Statistic_StatisticDomain_RAW);
     statistic.set_raw_mean(mean());
     statistic.set_raw_pstdev(pstdev());
     statistic.set_raw_min(min());

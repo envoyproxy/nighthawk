@@ -23,10 +23,6 @@ message Percentile {
 }
 
 message Statistic {
-  enum StatisticDomain {
-    RAW = 0;      // When this is set, the raw_* uint64 valued fields will be populated.
-    DURATION = 1; // When this is set, the duration-valued fields will be populated.
-  }
   uint64 count = 1;
   string id = 2;
   oneof mean_type {
@@ -46,7 +42,6 @@ message Statistic {
     google.protobuf.Duration max = 7;
     uint64 raw_max = 13;
   }
-  StatisticDomain domain = 9;
 }
 
 message Result {
