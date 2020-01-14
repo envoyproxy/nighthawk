@@ -1,9 +1,9 @@
 {
  "Labels": "Nighthawk",
- "RequestedQPS": 1,
- "ActualQPS": 12,
- "ActualDuration": 5,
- "NumThreads": 1,
+ "RequestedQPS": 12,
+ "ActualQPS": 12.000240004800096,
+ "ActualDuration": 4999900000,
+ "NumThreads": 12,
  "DurationHistogram": {
   "Count": "48",
   "Data": [
@@ -193,12 +193,42 @@
     "Percent": 100,
     "Count": "0"
    }
+  ],
+  "Min": 0.055568383,
+  "Max": 0.084357119,
+  "Sum": 3.0043125600000002,
+  "Avg": 0.062589845,
+  "StdDev": 0.005785869,
+  "Percentiles": [
+   {
+    "Percentile": 50,
+    "Value": 0.060903423
+   },
+   {
+    "Percentile": 75,
+    "Value": 0.065679359
+   },
+   {
+    "Percentile": 80,
+    "Value": 0.066994175
+   },
+   {
+    "Percentile": 90,
+    "Value": 0.068657151
+   },
+   {
+    "Percentile": 95,
+    "Value": 0.073601023
+   }
   ]
  },
  "RetCodes": {
-  "200": "60"
+  "200": "48"
  },
  "URL": "http://127.0.0.1:10000/",
- "StartTime": "2019-10-16T00:30:12Z",
+ "Version": "9.9.9",
+ "Jitter": true,
+ "RunType": "HTTP",
+ "StartTime": "2019-10-16T00:30:12.911078318Z",
  "RequestedDuration": "5s"
 }
