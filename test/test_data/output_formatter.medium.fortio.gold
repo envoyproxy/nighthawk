@@ -1,9 +1,9 @@
 {
  "Labels": "label-a label-b",
- "RequestedQPS": 10,
- "ActualQPS": 28,
- "ActualDuration": 2,
- "NumThreads": 100,
+ "RequestedQPS": 30,
+ "ActualQPS": 27.99999399400129,
+ "ActualDuration": 2000000429,
+ "NumThreads": 300,
  "DurationHistogram": {
   "Count": "53",
   "Data": [
@@ -223,12 +223,12 @@
   ]
  },
  "RetCodes": {
-  "200": "56"
+  "200": "53"
  },
  "URL": "https://www.google.com/",
- "Version": "",
+ "Version": "0.0.0",
  "Jitter": false,
- "RunType": "",
+ "RunType": "HTTP",
  "Sizes": {
   "Count": "56",
   "Data": [
@@ -476,6 +476,6 @@
    }
   ]
  },
- "StartTime": "2020-01-11T12:47:57Z",
+ "StartTime": "2020-01-11T12:47:57.259885200Z",
  "RequestedDuration": "2s"
 }

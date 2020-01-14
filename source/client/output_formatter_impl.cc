@@ -11,6 +11,8 @@
 
 #include "api/client/transform/fortio.pb.h"
 
+#include "common/version_info.h"
+
 #include "absl/strings/str_cat.h"
 #include "absl/strings/strip.h"
 
@@ -133,6 +135,7 @@ std::string ConsoleOutputFormatterImpl::statIdtoFriendlyStatName(absl::string_vi
   } else if (stat_id == "benchmark_http_client.response_header_size") {
     return "Response header size in bytes";
   }
+
   return std::string(stat_id);
 }
 
@@ -234,6 +237,17 @@ FortioOutputFormatterImpl::findStatistic(const nighthawk::client::Result& result
   return nullptr;
 }
 
+std::chrono::nanoseconds FortioOutputFormatterImpl::getAverageExecutionDuration(
+    const nighthawk::client::Output& output) const {
+  if (!output.results_size()) {
+    throw NighthawkException("No results in output");
+  }
+  const auto& r = output.results().at(output.results_size() - 1);
+  ASSERT(r.name() == "global");
+  return std::chrono::nanoseconds(
+      Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(r.execution_duration()));
+}
+
 double
 FortioOutputFormatterImpl::durationToSeconds(const Envoy::ProtobufWkt::Duration& duration) const {
   return Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(duration) / 1e9;
@@ -241,30 +255,45 @@ FortioOutputFormatterImpl::durationToSeconds(const Envoy::ProtobufWkt::Duration&
 
 std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
   nighthawk::client::FortioResult fortio_output;
+  // Iff there's only a single worker we will have only a single result. Otherwise the number of
+  // workers can be derived by substracting one from the number of results (for the
+  // aggregated/global result).
+  const uint32_t number_of_workers = output.results().size() == 1 ? 1 : output.results().size() - 1;
   std::string labels;
   for (const auto& label : output.options().labels()) {
     labels += label + " ";
   }
   fortio_output.set_labels(std::string(absl::StripSuffix(labels, " ")));
-  fortio_output.mutable_starttime()->set_seconds(output.timestamp().seconds());
-  fortio_output.set_requestedqps(output.options().requests_per_second().value());
+  fortio_output.set_version(VersionInfo::toVersionString(output.version()));
+  *fortio_output.mutable_starttime() = output.timestamp();
+  fortio_output.set_requestedqps(number_of_workers *
+                                 output.options().requests_per_second().value());
   fortio_output.set_url(output.options().uri().value());
+  *fortio_output.mutable_requestedduration() = output.options().duration();
+  auto actual_duration = getAverageExecutionDuration(output);
+  fortio_output.set_actualduration(actual_duration.count());
+  fortio_output.set_jitter(output.options().has_jitter_uniform());
+  fortio_output.set_runtype("HTTP");
 
-  // Actual and requested durations are the same
-  const auto& nh_duration = output.options().duration().seconds();
-  fortio_output.mutable_requestedduration()->set_seconds(nh_duration);
-  fortio_output.set_actualduration(nh_duration);
-
+  // The stock Envoy h2 pool doesn't offer support for multiple connections here. So we must ignore
+  // the connections setting when h2 is enabled and the experimental h2-pool which supports multiple
+  // connections isn't enabled. Also, the number of workers acts as a multiplier.
+  const uint32_t number_of_connections =
+      ((output.options().h2().value() &&
+        !output.options().experimental_h2_use_multiple_connections().value())
+           ? 1
+           : output.options().connections().value()) *
+      number_of_workers;
   // This displays as "connections" in the UI, not threads.
-  // TODO(#186): This field may not be accurate for for HTTP2 load tests.
-  fortio_output.set_numthreads(output.options().connections().value());
+  fortio_output.set_numthreads(number_of_connections);
 
   // Get the result that represents all workers (global)
   const auto& nh_global_result = this->getGlobalResult(output);
 
   // Fill in the actual QPS based on the counters
   const auto& nh_rq_counter = this->getCounterByName(nh_global_result, "upstream_rq_total");
-  const double actual_qps = static_cast<double>(nh_rq_counter.value()) / nh_duration;
+  const double actual_qps = static_cast<double>(
+      nh_rq_counter.value() / std::chrono::duration<double>(actual_duration).count());
   fortio_output.set_actualqps(actual_qps);
 
   // Fill in the number of successful responses.
@@ -272,7 +301,15 @@ std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Outp
   fortio_output.mutable_retcodes()->insert({"200", 0});
   try {
     const auto& nh_2xx_counter = this->getCounterByName(nh_global_result, "benchmark.http_2xx");
-    fortio_output.mutable_retcodes()->at("200") = nh_2xx_counter.value();
+    // So Fortio computes the error percentage based on:
+    // - the sample count in the histogram
+    // - the number of 200 responses
+    // Nighthawk workers perform a single-request as a warmup, and doesn't measure latency for that.
+    // So we do an approximation here: we substract number_of_workers from the observed 2xx
+    // responses.
+    // TODO(oschaaf): It would be better to compute the actual ratio of error codes vs success
+    // codes.. and possibly also factor in connection failures, etc.
+    fortio_output.mutable_retcodes()->at("200") = nh_2xx_counter.value() - number_of_workers;
   } catch (const NighthawkException& e) {
     // If this field doesn't exist, then there were no 2xx responses
     fortio_output.mutable_retcodes()->at("200") = 0;
@@ -301,10 +338,9 @@ const nighthawk::client::DurationHistogram FortioOutputFormatterImpl::renderFort
   nighthawk::client::DurationHistogram fortio_histogram;
   uint64_t prev_fortio_count = 0;
   double prev_fortio_end = 0;
-  const int percentiles_size = nh_stat.percentiles().size();
-  for (int i = 0; i < percentiles_size; i++) {
+  int i = 0;
+  for (const auto& nh_percentile : nh_stat.percentiles()) {
     nighthawk::client::DataEntry fortio_data_entry;
-    const auto& nh_percentile = nh_stat.percentiles().at(i);
     // fortio_percent = 100 * nh_percentile
     fortio_data_entry.set_percent(nh_percentile.percentile() * 100);
 
@@ -322,7 +358,7 @@ const nighthawk::client::DurationHistogram FortioOutputFormatterImpl::renderFort
     fortio_data_entry.set_end(value);
 
     // fortio_start = prev_fortio_end
-    if (i == 0) {
+    if (i++ == 0) {
       // If this is the first entry, force the start and end time to be the same.
       // This prevents it from starting at 0, making it disproportionally big in the UI.
       prev_fortio_end = value;
