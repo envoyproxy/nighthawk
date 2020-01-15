@@ -5,21 +5,15 @@
 
 #include "nighthawk/common/exception.h"
 
+#include "client/service_impl.h"
 #include "common/utility.h"
 #include "common/version_info.h"
-
-#include "client/service_impl.h"
 
 #include "absl/strings/strip.h"
 #include "tclap/CmdLine.h"
 
 namespace Nighthawk {
 namespace Client {
-
-namespace {
-std::function<void(int)> signal_handler_delegate;
-void signal_handler(int signal) { signal_handler_delegate(signal); }
-} // namespace
 
 ServiceMain::ServiceMain(int argc, const char** argv) {
   const char* descr = "L7 (HTTP/HTTPS/HTTP2) performance characterization tool.";
@@ -76,43 +70,17 @@ void ServiceMain::start() {
   }
   channel_ = grpc::CreateChannel(listener_bound_address_, grpc::InsecureChannelCredentials());
   stub_ = std::make_unique<nighthawk::client::NighthawkService::Stub>(channel_);
-  pipe_fds_.resize(2);
-  // The shutdown thread will be notified of by our signal handler and take it from there.
-  RELEASE_ASSERT(pipe(pipe_fds_.data()) == 0, "pipe failed");
-
-  shutdown_thread_ = std::thread([this]() {
-    int tmp;
-    RELEASE_ASSERT(read(pipe_fds_[0], &tmp, sizeof(int)) >= 0, "read failed");
-    RELEASE_ASSERT(close(pipe_fds_[0]) == 0, "read side close failed");
-    RELEASE_ASSERT(close(pipe_fds_[1]) == 0, "write side close failed");
-    pipe_fds_.clear();
-    server_->Shutdown();
-  });
+  signal_handler_ = std::make_unique<SignalHandler>([this]() { server_->Shutdown(); });
 }
 
 void ServiceMain::wait() {
-  signal_handler_delegate = [this](int) { onSignal(); };
-  signal(SIGTERM, signal_handler);
-  signal(SIGINT, signal_handler);
   server_->Wait();
   shutdown();
 }
 
-void ServiceMain::onSignal() { initiateShutdown(); }
-
-void ServiceMain::initiateShutdown() {
-  if (pipe_fds_.size() == 2) {
-    const int tmp = 0;
-    RELEASE_ASSERT(write(pipe_fds_[1], &tmp, sizeof(int)) == sizeof(int), "write failed");
-  }
-}
-
 void ServiceMain::shutdown() {
-  initiateShutdown();
-  if (shutdown_thread_.joinable()) {
-    shutdown_thread_.join();
-  }
   ENVOY_LOG(info, "Nighthawk grpc service exits");
+  std::cerr << "3" << std::endl;
 }
 
 } // namespace Client

@@ -43,6 +43,7 @@ envoy_cc_library(
     srcs = [
         "rate_limiter_impl.cc",
         "sequencer_impl.cc",
+        "signal_handler.cc",
         "statistic_impl.cc",
         "termination_predicate_impl.cc",
         "uri_impl.cc",
@@ -55,6 +56,7 @@ envoy_cc_library(
         "platform_util_impl.h",
         "rate_limiter_impl.h",
         "sequencer_impl.h",
+        "signal_handler.h",
         "statistic_impl.h",
         "termination_predicate_impl.h",
         "uri_impl.h",
