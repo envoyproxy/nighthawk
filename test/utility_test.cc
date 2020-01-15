@@ -164,15 +164,15 @@ TEST_F(UtilityTest, translateAddressFamilyGoodValues) {
 TEST_F(UtilityTest, mapCountersFromStore) {
   Envoy::Stats::IsolatedStoreImpl store;
   store.counter("foo").inc();
-  store.counter("bar").inc();
-  store.counter("bar").inc();
-  bool filter_delegate_hit = false;
-  const auto& counters =
-      Utility().mapCountersFromStore(store, [&was_filtered](absl::string_view name, uint64_t) {
-        filter_delegate_hit = true;
-        return name == "bar";
+  store.counter("worker.2.bar").inc();
+  store.counter("worker.1.bar").inc();
+  uint64_t filter_delegate_hit_count = 0;
+  const auto& counters = Utility().mapCountersFromStore(
+      store, [&filter_delegate_hit_count](absl::string_view name, uint64_t value) {
+        filter_delegate_hit_count++;
+        return value == 1 && (name == "worker.2.bar" || name == "worker.1.bar");
       });
-  EXPECT_TRUE(filter_delegate_hit);
+  EXPECT_EQ(filter_delegate_hit_count, 3);
   ASSERT_EQ(counters.size(), 1);
   EXPECT_EQ(counters.begin()->second, 2);
 }
