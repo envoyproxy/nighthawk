@@ -78,10 +78,7 @@ void ServiceMain::wait() {
   shutdown();
 }
 
-void ServiceMain::shutdown() {
-  ENVOY_LOG(info, "Nighthawk grpc service exits");
-  std::cerr << "3" << std::endl;
-}
+void ServiceMain::shutdown() { ENVOY_LOG(info, "Nighthawk grpc service exits"); }
 
 } // namespace Client
 } // namespace Nighthawk
