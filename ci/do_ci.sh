@@ -177,6 +177,10 @@ case "$1" in
         exit 0
     ;;
     asan)
+        if [ -n "$CIRCLECI" ]; then
+            # Decrease parallelism to avoid running out of memory
+            NUM_CPUS=7
+        fi
         do_asan
         exit 0
     ;;
