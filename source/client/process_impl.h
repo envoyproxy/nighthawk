@@ -48,18 +48,45 @@ public:
   ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system);
   ~ProcessImpl() override;
 
+  /**
+   * @return uint32_t the concurrency we determined should run at based on configuration and
+   * available machine resources.
+   */
   uint32_t determineConcurrency() const;
+
+  /**
+   * Runs the process.
+   *
+   * @param collector output collector implementation which will collect and hold the native output
+   * format.
+   * @return true iff execution should be considered successful.
+   */
   bool run(OutputCollector& collector) override;
+
+  /**
+   * Should be called before destruction to cleanly shut down.
+   */
+  void shutdown() override;
+
+private:
+  /**
+   * @brief Creates a cluster for usage by a remote request source.
+   *
+   * @param uri The parsed uri of the remote request source.
+   * @param worker_number The worker number that we are creating this cluster for.
+   * @param config The bootstrap configuration that will be modified.
+   */
+  void addRequestSourceCluster(const Uri& uri, int worker_number,
+                               envoy::config::bootstrap::v3alpha::Bootstrap& config) const;
   void addTracingCluster(envoy::config::bootstrap::v3alpha::Bootstrap& bootstrap,
                          const Uri& uri) const;
   void setupTracingImplementation(envoy::config::bootstrap::v3alpha::Bootstrap& bootstrap,
                                   const Uri& uri) const;
   void createBootstrapConfiguration(envoy::config::bootstrap::v3alpha::Bootstrap& bootstrap,
-                                    const std::vector<UriPtr>& uris, int number_of_workers) const;
+                                    const std::vector<UriPtr>& uris,
+                                    const UriPtr& request_source_uri, int number_of_workers) const;
   void maybeCreateTracingDriver(const envoy::config::trace::v3alpha::Tracing& configuration);
-  void shutdown() override;
 
-private:
   void configureComponentLogLevels(spdlog::level::level_enum level);
   const std::vector<ClientWorkerPtr>& createWorkers(const uint32_t concurrency);
   std::vector<StatisticPtr> vectorizeStatisticPtrMap(const StatisticFactory& statistic_factory,
