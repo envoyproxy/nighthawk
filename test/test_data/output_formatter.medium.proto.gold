@@ -46,7 +46,9 @@
   "uri": "https://www.google.com/",
   "trace": "",
   "open_loop": false,
-  "experimental_h2_use_multiple_connections": false
+  "experimental_h2_use_multiple_connections": false,
+  "labels": "Nighthawk",
+  "jitter_uniform": "0.000000494s",
  },
  "results": [
   {

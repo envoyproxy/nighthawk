@@ -1,5 +1,5 @@
 {
- "Labels": "label-a label-b",
+ "Labels": "label-a label-b Nighthawk",
  "RequestedQPS": 30,
  "ActualQPS": 27.99999399400129,
  "ActualDuration": 2000000429,
@@ -227,7 +227,7 @@
  },
  "URL": "https://www.google.com/",
  "Version": "0.0.0",
- "Jitter": false,
+ "Jitter": true,
  "RunType": "HTTP",
  "Sizes": {
   "Count": "56",
