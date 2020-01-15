@@ -32,7 +32,18 @@ TEST_F(OptionsImplTest, BogusInput) {
   // hostname. However, hostnames shouldn't start with '-', and hence this test should
   // not pass.
   EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{} --foo", client_name_)),
-                          MalformedArgvException, "Invalid URI");
+                          MalformedArgvException, "Invalid target URI: ''");
+}
+
+TEST_F(OptionsImplTest, BogusRequestSource) {
+  // Request source that looks like an accidental --arg
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(
+                              fmt::format("{} --request-source --foo http://foo", client_name_)),
+                          MalformedArgvException, "Invalid replay source URI");
+  // Request source that specifies a bad scheme
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                              "{} --request-source http://bar http://foo", client_name_)),
+                          MalformedArgvException, "Invalid replay source URI");
 }
 
 // This test should cover every option we offer, except some mutually exclusive ones that
@@ -165,6 +176,22 @@ TEST_F(OptionsImplTest, AlmostAll) {
   EXPECT_TRUE(util(*(options_from_proto.toCommandLineOptions()), *cmd));
 }
 
+// We test RequestSource here and not in All above because it is exclusive to some of the other
+// options.
+TEST_F(OptionsImplTest, RequestSource) {
+  Envoy::MessageUtil util;
+  const std::string request_source = "127.9.9.4:32323";
+  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(
+      fmt::format("{} --request-source {} {}", client_name_, request_source, good_test_uri_));
+  EXPECT_EQ(options->requestSource(), request_source);
+  // Check that our conversion to CommandLineOptionsPtr makes sense.
+  CommandLineOptionsPtr cmd = options->toCommandLineOptions();
+  EXPECT_EQ(cmd->request_source().uri(), request_source);
+  OptionsImpl options_from_proto(*cmd);
+  EXPECT_TRUE(util(*(options_from_proto.toCommandLineOptions()), *cmd));
+}
+
+// This test covers --tls-context, which can't be tested at the same time as --transport-socket.
 // We test --tls-context here and not in AlmostAll above because it is mutually
 // exclusive with --transport-socket.
 TEST_F(OptionsImplTest, TlsContext) {
@@ -196,6 +223,7 @@ TEST_F(OptionsImplTest, TlsContext) {
   // comparison below.
   EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("benchmark.http_4xx"));
   EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("benchmark.http_5xx"));
+  EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("requestsource.upstream_rq_5xx"));
 
   OptionsImpl options_from_proto(*cmd);
   std::string s1 = Envoy::MessageUtil::getYamlStringFromMessage(
@@ -257,6 +285,7 @@ TEST_F(OptionsImplTest, MultiTarget) {
   // textual comparison below.
   EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("benchmark.http_4xx"));
   EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("benchmark.http_5xx"));
+  EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("requestsource.upstream_rq_5xx"));
 
   OptionsImpl options_from_proto(*cmd);
   std::string s1 = Envoy::MessageUtil::getYamlStringFromMessage(
@@ -472,7 +501,7 @@ TEST_F(OptionsImplTest, AddressFamilyValuesAreConstrained) {
 TEST_F(OptionsImplTest, InacceptibleUri) {
   EXPECT_THROW_WITH_REGEX(
       TestUtility::createOptionsImpl(fmt::format("{} bad://127.0.0.1/", client_name_)),
-      MalformedArgvException, "Invalid URI");
+      MalformedArgvException, "Invalid target URI: ''");
 }
 
 TEST_F(OptionsImplTest, ProtoConstructorValidation) {

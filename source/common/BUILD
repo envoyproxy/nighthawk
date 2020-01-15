@@ -22,6 +22,28 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
+    name = "request_stream_grpc_client_lib",
+    srcs = ["request_stream_grpc_client_impl.cc"],
+    hdrs = ["request_stream_grpc_client_impl.h"],
+    repository = "@envoy",
+    deps = [
+        ":request_impl_lib",
+        "//api/client:base_cc_proto",
+        "//api/request_source:grpc_request_source_service_lib",
+        "//include/nighthawk/common:base_includes",
+        "//include/nighthawk/common:request_lib",
+        "@envoy//include/envoy/grpc:async_client_interface_with_external_headers",
+        "@envoy//include/envoy/grpc:async_client_manager_interface_with_external_headers",
+        "@envoy//include/envoy/upstream:cluster_manager_interface_with_external_headers",
+        "@envoy//source/common/common:assert_lib_with_external_headers",
+        "@envoy//source/common/common:minimal_logger_lib_with_external_headers",
+        "@envoy//source/common/grpc:typed_async_client_lib_with_external_headers",
+        "@envoy//source/common/http:header_map_lib_with_external_headers",
+        "@envoy//source/common/http:headers_lib_with_external_headers",
+    ],
+)
+
+envoy_cc_library(
     name = "request_source_impl_lib",
     srcs = [
         "request_source_impl.cc",
@@ -34,6 +56,7 @@ envoy_cc_library(
     deps = [
         ":nighthawk_common_lib",
         ":request_impl_lib",
+        ":request_stream_grpc_client_lib",
         "//include/nighthawk/common:request_source_lib",
     ],
 )

@@ -246,7 +246,7 @@ ProcessImpl::mergeWorkerStatistics(const StatisticFactory& statistic_factory,
 
 void ProcessImpl::createBootstrapConfiguration(
     envoy::config::bootstrap::v3alpha::Bootstrap& bootstrap, const std::vector<UriPtr>& uris,
-    int number_of_clusters) const {
+    const UriPtr& request_source_uri, int number_of_clusters) const {
   for (int i = 0; i < number_of_clusters; i++) {
     auto* cluster = bootstrap.mutable_static_resources()->add_clusters();
     RELEASE_ASSERT(!uris.empty(), "illegal configuration with zero endpoints");
@@ -287,6 +287,9 @@ void ProcessImpl::createBootstrapConfiguration(
       auto* socket_address = host->mutable_socket_address();
       socket_address->set_address(uri->address()->ip()->addressAsString());
       socket_address->set_port_value(uri->port());
+    }
+    if (request_source_uri != nullptr) {
+      addRequestSourceCluster(*request_source_uri, i, bootstrap);
     }
   }
 }
@@ -353,8 +356,24 @@ void ProcessImpl::maybeCreateTracingDriver(
   }
 }
 
+void ProcessImpl::addRequestSourceCluster(
+    const Uri& uri, int worker_number,
+    envoy::config::bootstrap::v3alpha::Bootstrap& bootstrap) const {
+  auto* cluster = bootstrap.mutable_static_resources()->add_clusters();
+  cluster->mutable_http2_protocol_options();
+  cluster->set_name(fmt::format("{}.requestsource", worker_number));
+  cluster->set_type(
+      envoy::config::cluster::v3alpha::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
+  cluster->mutable_connect_timeout()->set_seconds(options_.timeout().count());
+  auto* host = cluster->add_hosts();
+  auto* socket_address = host->mutable_socket_address();
+  socket_address->set_address(uri.address()->ip()->addressAsString());
+  socket_address->set_port_value(uri.port());
+}
+
 bool ProcessImpl::run(OutputCollector& collector) {
   std::vector<UriPtr> uris;
+  UriPtr request_source_uri;
   UriPtr tracing_uri;
 
   try {
@@ -372,6 +391,11 @@ bool ProcessImpl::run(OutputCollector& collector) {
     }
     for (const UriPtr& uri : uris) {
       uri->resolve(*dispatcher_, Utility::translateFamilyOptionString(options_.addressFamily()));
+    }
+    if (options_.requestSource() != "") {
+      request_source_uri = std::make_unique<UriImpl>(options_.requestSource());
+      request_source_uri->resolve(*dispatcher_,
+                                  Utility::translateFamilyOptionString(options_.addressFamily()));
     }
     if (options_.trace() != "") {
       tracing_uri = std::make_unique<UriImpl>(options_.trace());
@@ -407,7 +431,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
     cluster_manager_factory_->enableMultiConnectionH2Pool();
   }
   envoy::config::bootstrap::v3alpha::Bootstrap bootstrap;
-  createBootstrapConfiguration(bootstrap, uris, number_of_workers);
+  createBootstrapConfiguration(bootstrap, uris, request_source_uri, number_of_workers);
   if (tracing_uri != nullptr) {
     setupTracingImplementation(bootstrap, *tracing_uri);
     addTracingCluster(bootstrap, *tracing_uri);

@@ -22,10 +22,14 @@ Utility::mapCountersFromStore(const Envoy::Stats::Store& store,
       std::string stat_name = stat->name();
       // Strip off cluster.[x]. & worker.[x]. prefixes.
       std::vector<std::string> v = absl::StrSplit(stat_name, '.');
-      if ((v[0] == "cluster" || v[0] == "worker") && v.size() > 1) {
-        v.erase(v.begin(), v.begin() + 2);
-        stat_name = absl::StrJoin(v, ".");
+      if (v[0] == "cluster" || v[0] == "worker") {
+        v.erase(v.begin());
       }
+      int tmp;
+      if (absl::SimpleAtoi(v[0], &tmp)) {
+        v.erase(v.begin());
+      }
+      stat_name = absl::StrJoin(v, ".");
       results[stat_name] += stat->value();
     }
   }

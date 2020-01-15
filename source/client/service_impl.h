@@ -4,6 +4,7 @@
 #pragma clang diagnostic warning "-Wunused-parameter"
 #endif
 #include "api/client/service.grpc.pb.h"
+#include "api/request_source/service.grpc.pb.h"
 
 #ifdef __clang__
 #pragma clang diagnostic pop
@@ -16,6 +17,7 @@
 #include "external/envoy/source/common/event/real_time_system.h"
 
 #include "nighthawk/client/process.h"
+#include "nighthawk/common/request_source.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -47,6 +49,25 @@ private:
   // busy_lock_ is used to test from the service thread to query if there's
   // an active test being run.
   Envoy::Thread::MutexBasicLockable busy_lock_;
+};
+
+/**
+ * Dummy implementation of our request-source gRPC service definition, for testing and experimental
+ * purposes.
+ */
+class RequestSourceServiceImpl final
+    : public nighthawk::request_source::NighthawkRequestSourceService::Service,
+      public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
+
+public:
+  ::grpc::Status
+  RequestStream(::grpc::ServerContext* context,
+                ::grpc::ServerReaderWriter<::nighthawk::request_source::RequestStreamResponse,
+                                           ::nighthawk::request_source::RequestStreamRequest>*
+                    stream) override;
+
+private:
+  RequestSourcePtr createStaticEmptyRequestSource(const uint32_t amount);
 };
 
 } // namespace Client
