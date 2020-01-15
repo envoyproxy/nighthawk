@@ -45,14 +45,14 @@ BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
 SequencerFactoryImpl::SequencerFactoryImpl(const Options& options)
     : OptionBasedFactoryImpl(options) {}
 
-SequencerPtr SequencerFactoryImpl::create(Envoy::TimeSource& time_source,
-                                          Envoy::Event::Dispatcher& dispatcher,
-                                          BenchmarkClient& benchmark_client,
-                                          TerminationPredicatePtr&& termination_predicate,
-                                          Envoy::Stats::Scope& scope) const {
+SequencerPtr SequencerFactoryImpl::create(
+    Envoy::TimeSource& time_source, Envoy::Event::Dispatcher& dispatcher,
+    BenchmarkClient& benchmark_client, TerminationPredicatePtr&& termination_predicate,
+    Envoy::Stats::Scope& scope, const Envoy::MonotonicTime scheduled_starting_time) const {
   StatisticFactoryImpl statistic_factory(options_);
   Frequency frequency(options_.requestsPerSecond());
-  RateLimiterPtr rate_limiter = std::make_unique<LinearRateLimiter>(time_source, frequency);
+  RateLimiterPtr rate_limiter = std::make_unique<ScheduledStartingRateLimiter>(
+      std::make_unique<LinearRateLimiter>(time_source, frequency), scheduled_starting_time);
   const uint64_t burst_size = options_.burstSize();
 
   if (burst_size) {

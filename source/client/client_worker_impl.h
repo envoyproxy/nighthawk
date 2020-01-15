@@ -52,7 +52,6 @@ private:
   Envoy::Stats::ScopePtr worker_scope_;
   Envoy::Stats::ScopePtr worker_number_scope_;
   const int worker_number_;
-  const Envoy::MonotonicTime starting_time_;
   Envoy::Tracing::HttpTracerPtr& http_tracer_;
   RequestSourcePtr request_generator_;
   BenchmarkClientPtr benchmark_client_;

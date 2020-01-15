@@ -20,7 +20,7 @@
 #include "gtest/gtest.h"
 
 using namespace testing;
-
+using namespace std::chrono_literals;
 namespace Nighthawk {
 namespace Client {
 
@@ -39,7 +39,7 @@ public:
         .Times(1)
         .WillOnce(Return(ByMove(std::unique_ptr<BenchmarkClient>(benchmark_client_))));
 
-    EXPECT_CALL(sequencer_factory_, create(_, _, _, _, _))
+    EXPECT_CALL(sequencer_factory_, create(_, _, _, _, _, _))
         .Times(1)
         .WillOnce(Return(ByMove(std::unique_ptr<Sequencer>(sequencer_))));
 
@@ -118,7 +118,7 @@ TEST_F(ClientWorkerTest, BasicTest) {
   auto worker = std::make_unique<ClientWorkerImpl>(
       *api_, tls_, cluster_manager_ptr_, benchmark_client_factory_, termination_predicate_factory_,
       sequencer_factory_, request_generator_factory_, store_, worker_number,
-      time_system_.monotonicTime(), http_tracer_);
+      time_system_.monotonicTime() + 10ms, http_tracer_);
 
   worker->start();
   worker->waitForCompletion();

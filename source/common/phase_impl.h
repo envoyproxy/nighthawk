@@ -21,11 +21,9 @@ public:
    * @param time_source Time source that will be used to query the clock.
    * @param start_time Optional starting time of the phase. Can be used to schedule phases ahead.
    */
-  PhaseImpl(absl::string_view id, SequencerPtr&& sequencer, bool should_measure_latencies,
-            Envoy::TimeSource& time_source, absl::optional<Envoy::MonotonicTime> start_time)
+  PhaseImpl(absl::string_view id, SequencerPtr&& sequencer, bool should_measure_latencies)
       : id_(std::string(id)), sequencer_(std::move(sequencer)),
-        should_measure_latencies_(should_measure_latencies), time_source_(time_source),
-        start_time_(start_time) {}
+        should_measure_latencies_(should_measure_latencies) {}
   absl::string_view id() const override;
   Sequencer& sequencer() const override;
   void run() const override;
@@ -35,8 +33,6 @@ private:
   const std::string id_;
   const SequencerPtr sequencer_;
   const bool should_measure_latencies_;
-  Envoy::TimeSource& time_source_;
-  absl::optional<Envoy::MonotonicTime> start_time_;
 };
 
 } // namespace Nighthawk

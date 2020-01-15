@@ -39,7 +39,8 @@ public:
   virtual SequencerPtr create(Envoy::TimeSource& time_source, Envoy::Event::Dispatcher& dispatcher,
                               BenchmarkClient& benchmark_client,
                               TerminationPredicatePtr&& termination_predicate,
-                              Envoy::Stats::Scope& scope) const PURE;
+                              Envoy::Stats::Scope& scope,
+                              const Envoy::MonotonicTime scheduled_starting_time) const PURE;
 };
 
 class StoreFactory {

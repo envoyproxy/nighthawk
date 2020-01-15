@@ -40,8 +40,8 @@ public:
   SequencerFactoryImpl(const Options& options);
   SequencerPtr create(Envoy::TimeSource& time_source, Envoy::Event::Dispatcher& dispatcher,
                       BenchmarkClient& benchmark_client,
-                      TerminationPredicatePtr&& termination_predicate,
-                      Envoy::Stats::Scope& scope) const override;
+                      TerminationPredicatePtr&& termination_predicate, Envoy::Stats::Scope& scope,
+                      const Envoy::MonotonicTime scheduled_starting_time) const override;
 };
 
 class StoreFactoryImpl : public OptionBasedFactoryImpl, public StoreFactory {

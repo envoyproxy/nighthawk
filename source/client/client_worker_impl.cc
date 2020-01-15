@@ -23,7 +23,7 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
     : WorkerImpl(api, tls, store), termination_predicate_factory_(termination_predicate_factory),
       sequencer_factory_(sequencer_factory), worker_scope_(store_.createScope("cluster.")),
       worker_number_scope_(worker_scope_->createScope(fmt::format("{}.", worker_number))),
-      worker_number_(worker_number), starting_time_(starting_time), http_tracer_(http_tracer),
+      worker_number_(worker_number), http_tracer_(http_tracer),
       request_generator_(
           request_generator_factory.create(cluster_manager, *dispatcher_, *worker_number_scope_,
                                            fmt::format("{}.requestsource", worker_number))),
@@ -35,8 +35,8 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
           sequencer_factory_.create(
               time_source_, *dispatcher_, *benchmark_client_,
               termination_predicate_factory_.create(time_source_, *worker_number_scope_),
-              *worker_number_scope_),
-          true, time_source_, starting_time_)) {}
+              *worker_number_scope_, starting_time),
+          true)) {}
 
 void ClientWorkerImpl::simpleWarmup() {
   ENVOY_LOG(debug, "> worker {}: warmup start.", worker_number_);

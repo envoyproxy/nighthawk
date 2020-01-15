@@ -87,7 +87,8 @@ public:
     EXPECT_CALL(options_, jitterUniform()).Times(1).WillOnce(Return(1ns));
     Envoy::Event::SimulatedTimeSystem time_system;
     auto sequencer = factory.create(api_->timeSource(), dispatcher_, benchmark_client,
-                                    std::make_unique<MockTerminationPredicate>(), stats_store_);
+                                    std::make_unique<MockTerminationPredicate>(), stats_store_,
+                                    time_system.monotonicTime() + 10ms);
     EXPECT_NE(nullptr, sequencer.get());
   }
 };
