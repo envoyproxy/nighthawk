@@ -12,7 +12,7 @@ std::function<void(int)> signal_handler_delegate;
 void signal_handler(int signal) { signal_handler_delegate(signal); }
 } // namespace
 
-SignalHandler::SignalHandler(const std::function<void()> signal_callback) {
+SignalHandler::SignalHandler(const std::function<void()>& signal_callback) {
   pipe_fds_.resize(2);
   // The shutdown thread will be notified of by our signal handler and take it from there.
   RELEASE_ASSERT(pipe(pipe_fds_.data()) == 0, "pipe failed");
