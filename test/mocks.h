@@ -94,6 +94,7 @@ public:
   MOCK_CONST_METHOD0(toCommandLineOptions, Client::CommandLineOptionsPtr());
   MOCK_CONST_METHOD0(sequencerIdleStrategy,
                      nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions());
+  MOCK_CONST_METHOD0(requestSource, std::string());
   MOCK_CONST_METHOD0(trace, std::string());
   MOCK_CONST_METHOD0(
       h1ConnectionReuseStrategy,
@@ -147,7 +148,11 @@ public:
 class MockRequestSourceFactory : public RequestSourceFactory {
 public:
   MockRequestSourceFactory();
-  MOCK_CONST_METHOD0(create, RequestSourcePtr());
+  MOCK_CONST_METHOD4(create,
+                     RequestSourcePtr(const Envoy::Upstream::ClusterManagerPtr& cluster_manager,
+                                      Envoy::Event::Dispatcher& dispatcher,
+                                      Envoy::Stats::Scope& scope,
+                                      absl::string_view service_cluster_name));
 };
 
 class MockTerminationPredicateFactory : public TerminationPredicateFactory {
@@ -188,6 +193,7 @@ class MockRequestSource : public RequestSource {
 public:
   MockRequestSource();
   MOCK_METHOD0(get, RequestGenerator());
+  MOCK_METHOD0(initOnThread, void());
 };
 
 class MockTerminationPredicate : public TerminationPredicate {

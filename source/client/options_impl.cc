@@ -258,6 +258,12 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "endpoints, set --multi-target-* instead.",
       false, "", "uri format", cmd);
 
+  TCLAP::ValueArg<std::string> request_source(
+      "", "request-source",
+      "Remote gRPC source that will deliver to-be-replayed traffic. Each worker will separately "
+      "connect to this source. For example grpc://127.0.0.1:8443/.",
+      false, "", "uri format", cmd);
+
   Utility::parseCommand(cmd, argc, argv);
 
   TCLAP_SET_IF_SPECIFIED(requests_per_second, requests_per_second_);
@@ -310,6 +316,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
                        upper_cased, &sequencer_idle_strategy_),
                    "Failed to parse sequencer idle strategy");
   }
+  TCLAP_SET_IF_SPECIFIED(request_source, request_source_);
 
   if (experimental_h1_connection_reuse_strategy.isSet()) {
     std::string upper_cased = experimental_h1_connection_reuse_strategy.getValue();
@@ -443,12 +450,6 @@ void OptionsImpl::parsePredicates(const TCLAP::MultiArg<std::string>& arg,
 OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   setNonTrivialDefaults();
 
-  for (const auto& header : options.request_options().request_headers()) {
-    std::string header_string =
-        fmt::format("{}:{}", header.header().key(), header.header().value());
-    request_headers_.push_back(header_string);
-  }
-
   requests_per_second_ =
       PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, requests_per_second, requests_per_second_);
   if (options.has_duration()) {
@@ -478,13 +479,24 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   burst_size_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, burst_size, burst_size_);
   address_family_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, address_family, address_family_);
 
-  const auto& request_options = options.request_options();
-  if (request_options.request_method() !=
-      ::envoy::config::core::v3alpha::RequestMethod::METHOD_UNSPECIFIED) {
-    request_method_ = request_options.request_method();
+  if (options.has_request_options()) {
+    const auto& request_options = options.request_options();
+    for (const auto& header : request_options.request_headers()) {
+      std::string header_string =
+          fmt::format("{}:{}", header.header().key(), header.header().value());
+      request_headers_.push_back(header_string);
+    }
+    if (request_options.request_method() !=
+        ::envoy::config::core::v3alpha::RequestMethod::METHOD_UNSPECIFIED) {
+      request_method_ = request_options.request_method();
+    }
+    request_body_size_ =
+        PROTOBUF_GET_WRAPPED_OR_DEFAULT(request_options, request_body_size, request_body_size_);
+  } else if (options.has_request_source()) {
+    const auto& request_source_options = options.request_source();
+    request_source_ = request_source_options.uri();
   }
-  request_body_size_ =
-      PROTOBUF_GET_WRAPPED_OR_DEFAULT(request_options, request_body_size, request_body_size_);
+
   max_pending_requests_ =
       PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, max_pending_requests, max_pending_requests_);
   max_active_requests_ =
@@ -534,6 +546,9 @@ void OptionsImpl::setNonTrivialDefaults() {
   failure_predicates_["benchmark.http_4xx"] = 0;
   failure_predicates_["benchmark.http_5xx"] = 0;
   failure_predicates_["benchmark.pool_connection_failure"] = 0;
+  // Also, fail fast when a remote request source is specified that we can't connect to or otherwise
+  // fails.
+  failure_predicates_["requestsource.upstream_rq_5xx"] = 0;
   jitter_uniform_ = std::chrono::nanoseconds(0);
 }
 
@@ -552,11 +567,21 @@ void OptionsImpl::validate() const {
       throw MalformedArgvException("Value for --concurrency should be greater then 0.");
     }
   }
+  if (request_source_ != "") {
+    try {
+      UriImpl uri(request_source_, "grpc");
+      if (uri.scheme() != "grpc") {
+        throw MalformedArgvException("Invalid replay source URI");
+      }
+    } catch (const UriException) {
+      throw MalformedArgvException("Invalid replay source URI");
+    }
+  }
   if (uri_.has_value()) {
     try {
       UriImpl uri(uri_.value());
     } catch (const UriException&) {
-      throw MalformedArgvException(fmt::format("Invalid URI: ''", uri_.value()));
+      throw MalformedArgvException(fmt::format("Invalid target URI: ''", uri_.value()));
     }
     if (!multi_target_endpoints_.empty() || !multi_target_path_.empty() ||
         multi_target_use_https_) {
@@ -570,6 +595,7 @@ void OptionsImpl::validate() const {
       throw MalformedArgvException("--multi-target-path must be specified.");
     }
   }
+
   try {
     Envoy::MessageUtil::validate(*toCommandLineOptionsInternal(),
                                  Envoy::ProtobufMessage::getStrictValidationVisitor());
@@ -610,23 +636,29 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
   command_line_options->mutable_burst_size()->set_value(burst_size_);
   command_line_options->mutable_address_family()->set_value(
       static_cast<nighthawk::client::AddressFamily_AddressFamilyOptions>(address_family_));
-  auto request_options = command_line_options->mutable_request_options();
-  request_options->set_request_method(request_method_);
-  for (const auto& header : request_headers_) {
-    auto header_value_option = request_options->add_request_headers();
-    // TODO(oschaaf): expose append option in CLI? For now we just set.
-    header_value_option->mutable_append()->set_value(false);
-    auto request_header = header_value_option->mutable_header();
-    auto pos = header.find(':');
-    if (pos != std::string::npos) {
-      request_header->set_key(header.substr(0, pos));
-      // Any visible char, including ':', is allowed in header values.
-      request_header->set_value(header.substr(pos + 1));
-    } else {
-      throw MalformedArgvException("A ':' is required in a header.");
+
+  if (requestSource() != "") {
+    auto request_source = command_line_options->mutable_request_source();
+    *request_source->mutable_uri() = request_source_;
+  } else {
+    auto request_options = command_line_options->mutable_request_options();
+    request_options->set_request_method(request_method_);
+    for (const auto& header : request_headers_) {
+      auto header_value_option = request_options->add_request_headers();
+      // TODO(oschaaf): expose append option in CLI? For now we just set.
+      header_value_option->mutable_append()->set_value(false);
+      auto request_header = header_value_option->mutable_header();
+      auto pos = header.find(':');
+      if (pos != std::string::npos) {
+        request_header->set_key(header.substr(0, pos));
+        // Any visible char, including ':', is allowed in header values.
+        request_header->set_value(header.substr(pos + 1));
+      } else {
+        throw MalformedArgvException("A ':' is required in a header.");
+      }
+      request_options->mutable_request_body_size()->set_value(requestBodySize());
     }
   }
-  request_options->mutable_request_body_size()->set_value(request_body_size_);
   *(command_line_options->mutable_tls_context()) = tls_context_;
   if (transport_socket_.has_value()) {
     *(command_line_options->mutable_transport_socket()) = transport_socket_.value();

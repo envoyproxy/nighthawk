@@ -37,8 +37,19 @@ ServiceMain::ServiceMain(int argc, const char** argv) {
       "service listens. Default empty.",
       false, "", "", cmd);
 
+  std::vector<std::string> service_names{"traffic-generator-service", "dummy-request-source"};
+  TCLAP::ValuesConstraint<std::string> service_names_allowed(service_names);
+  TCLAP::ValueArg<std::string> service_arg(
+      "", "service", "Specifies which service to run. Default 'traffic-generator-service'.", false,
+      "traffic-generator-service", &service_names_allowed, cmd);
   Utility::parseCommand(cmd, argc, argv);
 
+  if (service_arg.getValue() == "traffic-generator-service") {
+    service_ = std::make_unique<ServiceImpl>();
+  } else if (service_arg.getValue() == "dummy-request-source") {
+    service_ = std::make_unique<RequestSourceServiceImpl>();
+  }
+  RELEASE_ASSERT(service_ != nullptr, "Service mapping failed");
   listener_bound_address_ = appendDefaultPortIfNeeded(listen_arg.getValue());
   if (address_file_arg.isSet()) {
     listener_output_path_ = address_file_arg.getValue();
@@ -46,7 +57,7 @@ ServiceMain::ServiceMain(int argc, const char** argv) {
   ENVOY_LOG(info, "Nighthawk grpc service listener binding to: {}", listener_bound_address_);
   builder_.AddListeningPort(listener_bound_address_, grpc::InsecureServerCredentials(),
                             &listener_port_);
-  builder_.RegisterService(&service_);
+  builder_.RegisterService(service_.get());
 }
 
 std::string ServiceMain::appendDefaultPortIfNeeded(absl::string_view host_and_maybe_port) {
