@@ -22,13 +22,18 @@ class NighthawkGrpcService(object):
   server_port: An integer, indicates the port used by the gRPC service to listen. 0 means that the server is not listening.
   """
 
-  def __init__(self, server_binary_path, server_ip, ip_version):
+  def __init__(self,
+               server_binary_path,
+               server_ip,
+               ip_version,
+               service_name="traffic-generator-service"):
     """Initializes Nighthawk gRPC service.
 
     Args:
     server_binary_path: A string, indicates where the nighthawk gRPC service binary resides
     server_ip: IP address, indicates which ip address should be used by the gRPC service listener.
     ip_version: IP Version, indicates if IPv4 or IPv6 should be used.
+    service_name: The Nighthawk service to run.
     ...
     """
     assert ip_version != IpVersion.UNKNOWN
@@ -40,13 +45,14 @@ class NighthawkGrpcService(object):
     self._socket_type = socket.AF_INET6 if ip_version == IpVersion.IPV6 else socket.AF_INET
     self._server_thread = threading.Thread(target=self._serverThreadRunner)
     self._address_file = None
+    self._service_name = service_name
 
   def _serverThreadRunner(self):
     with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".tmp") as tmp:
       self._address_file = tmp.name
       args = [
           self._server_binary_path, "--listener-address-file", self._address_file, "--listen",
-          "%s:0" % str(self.server_ip)
+          "%s:0" % str(self.server_ip), "--service", self._service_name
       ]
       logging.info("Nighthawk grpc service popen() args: [%s]" % args)
       self._server_process = subprocess.Popen(args)

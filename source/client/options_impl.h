@@ -62,6 +62,7 @@ public:
   sequencerIdleStrategy() const override {
     return sequencer_idle_strategy_;
   }
+  std::string requestSource() const override { return request_source_; }
   std::string trace() const override { return trace_; }
   nighthawk::client::H1ConnectionReuseStrategy::H1ConnectionReuseStrategyOptions
   h1ConnectionReuseStrategy() const override {
@@ -116,6 +117,7 @@ private:
   uint32_t max_requests_per_connection_{largest_acceptable_uint32_option_value};
   nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions sequencer_idle_strategy_{
       nighthawk::client::SequencerIdleStrategy::SPIN};
+  std::string request_source_;
   std::string trace_;
   nighthawk::client::H1ConnectionReuseStrategy::H1ConnectionReuseStrategyOptions
       experimental_h1_connection_reuse_strategy_{nighthawk::client::H1ConnectionReuseStrategy::MRU};
