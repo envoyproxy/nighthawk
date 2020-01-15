@@ -70,7 +70,7 @@ bool ScheduledStartingRateLimiter::tryAcquireOne() {
   // about this happening in the logs.
   if (!aquisition_attempted_) {
     aquisition_attempted_ = true;
-    ENVOY_LOG(warn, "First acquisition attempt was late");
+    ENVOY_LOG(warn, "ScheduledStartingRateLimiter: first acquisition attempt was late");
   }
   return rate_limiter_->tryAcquireOne();
 }
