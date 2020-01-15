@@ -537,7 +537,7 @@ def test_https_h1_sni(sni_test_server_fixture):
   counters = sni_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   assertCounterGreaterEqual(counters, "benchmark.http_2xx", 1)
   assertCounterGreaterEqual(counters, "upstream_cx_http1_total", 1)
-  assertCounterEqual(counters, "ssl.handshake", 1)
+  assertCounterGreaterEqual(counters, "ssl.handshake", 1)
 
   # Verify failure when we set no host (will get plain http)
   parsed_json, _ = sni_test_server_fixture.runNighthawkClient(
