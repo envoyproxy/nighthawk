@@ -116,7 +116,10 @@ void RequestSourceFactoryImpl::setRequestHeader(Envoy::Http::HeaderMap& header,
   header.addCopy(lower_case_key, std::string(value));
 }
 
-RequestSourcePtr RequestSourceFactoryImpl::create() const {
+RequestSourcePtr
+RequestSourceFactoryImpl::create(const Envoy::Upstream::ClusterManagerPtr& cluster_manager,
+                                 Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
+                                 absl::string_view service_cluster_name) const {
   Envoy::Http::HeaderMapPtr header = std::make_unique<Envoy::Http::HeaderMapImpl>();
   if (options_.uri().has_value()) {
     // We set headers based on the URI, but we don't have all the prerequisites to call the
@@ -153,7 +156,16 @@ RequestSourcePtr RequestSourceFactoryImpl::create() const {
     setRequestHeader(*header, option_header.header().key(), option_header.header().value());
   }
 
-  return std::make_unique<StaticRequestSourceImpl>(std::move(header));
+  if (options_.requestSource() == "") {
+    return std::make_unique<StaticRequestSourceImpl>(std::move(header));
+  } else {
+    RELEASE_ASSERT(!service_cluster_name.empty(), "expected cluster name to be set");
+    // We pass in options_.requestsPerSecond() as the header buffer length so the grpc client
+    // will shoot for maintaining an amount of headers of at least one second.
+    return std::make_unique<RemoteRequestSourceImpl>(cluster_manager, dispatcher, scope,
+                                                     service_cluster_name, std::move(header),
+                                                     options_.requestsPerSecond());
+  }
 }
 
 TerminationPredicateFactoryImpl::TerminationPredicateFactoryImpl(const Options& options)
