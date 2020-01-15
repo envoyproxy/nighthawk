@@ -35,6 +35,7 @@
   "uri": "http://127.0.0.1:10000/",
   "trace": "",
   "labels": "Nighthawk",
+  "jitter_uniform": "0.000000494s",
  },
  "results": [
   {
@@ -2955,6 +2956,7 @@
   },
   {
    "name": "global",
+   "execution_duration": "4.9999s",
    "statistics": [
     {
      "count": "48",
@@ -3519,5 +3521,12 @@
    ]
   }
  ],
+ "version": {
+  "version": {
+   "major": 9,
+   "minor": 9,
+   "patch": 9
+  }
+ },
  "timestamp": "2019-10-16T00:30:12.911078318Z"
 }

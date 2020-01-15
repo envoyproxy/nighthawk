@@ -84,7 +84,8 @@ admin:
 ```
 USAGE:
 
-bazel-bin/nighthawk_test_server  [--use-fake-symbol-table <bool>]
+bazel-bin/nighthawk_test_server  [--disable-extensions <string>]
+[--use-fake-symbol-table <bool>]
 [--cpuset-threads]
 [--enable-mutex-tracing]
 [--disable-hot-restart]
@@ -113,6 +114,9 @@ bazel-bin/nighthawk_test_server  [--use-fake-symbol-table <bool>]
 
 
 Where:
+
+--disable-extensions <string>
+Comma-separated list of extensions to disable
 
 --use-fake-symbol-table <bool>
 Use fake symbol table implementation

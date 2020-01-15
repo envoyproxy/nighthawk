@@ -11,6 +11,7 @@
 #include "common/frequency.h"
 
 #include "absl/random/random.h"
+#include "absl/random/zipf_distribution.h"
 #include "absl/types/optional.h"
 
 namespace Nighthawk {
@@ -201,6 +202,32 @@ public:
 private:
   DiscreteNumericDistributionSamplerPtr provider_;
   const std::chrono::nanoseconds ramp_time_;
+};
+
+/**
+ * Thin wrapper around absl::zipf_distribution that will pull zeroes and ones from the distribution
+ * with the intent to probabilistically suppress the wrapped rate limiter.
+ * This may need further consideration, because it will shoot holes in the pacing, lowering the
+ * actual achieved frequency.
+ */
+class ZipfRateLimiterImpl : public FilteringRateLimiterImpl {
+public:
+  enum class ZipfBehavior { ZIPF_PSEUDO_RANDOM, ZIPF_RANDOM };
+  /**
+   * From the absl header associated to the zipf distribution:
+   * The parameters v and q determine the skew of the distribution.
+   * zipf_distribution produces random integer-values in the range [0, k],
+   * distributed according to the discrete probability function: P(x) = (v + x) ^ -q.
+   * Preconditions: v > 0, q > 1, configuring otherwise throws a NighthawkException.
+   */
+  ZipfRateLimiterImpl(RateLimiterPtr&& rate_limiter, double q = 2.0, double v = 1.0,
+                      ZipfBehavior behavior = ZipfBehavior::ZIPF_RANDOM);
+
+private:
+  absl::zipf_distribution<uint64_t> dist_;
+  absl::InsecureBitGen g_;
+  std::mt19937_64 mt_;
+  ZipfBehavior behavior_;
 };
 
 } // namespace Nighthawk

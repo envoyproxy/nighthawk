@@ -18,6 +18,12 @@ public:
   virtual void addResult(absl::string_view name, const std::vector<StatisticPtr>& statistics,
                          const std::map<std::string, uint64_t>& counters,
                          const std::chrono::nanoseconds execution_duration) PURE;
+  /**
+   * Directly sets the output value.
+   *
+   * @param output the output value to set.
+   */
+  virtual void setOutput(const nighthawk::client::Output& output) PURE;
   virtual nighthawk::client::Output toProto() const PURE;
 };
 

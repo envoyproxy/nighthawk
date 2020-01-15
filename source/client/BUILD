@@ -17,6 +17,7 @@ envoy_cc_library(
         "factories_impl.cc",
         "options_impl.cc",
         "process_impl.cc",
+        "remote_process_impl.cc",
         "stream_decoder.cc",
     ],
     hdrs = [
@@ -26,6 +27,7 @@ envoy_cc_library(
         "factories_impl.h",
         "options_impl.h",
         "process_impl.h",
+        "remote_process_impl.h",
         "stream_decoder.h",
     ],
     copts = select({
@@ -53,6 +55,7 @@ envoy_cc_library(
         "@envoy//source/common/http:headers_lib_with_external_headers",
         "@envoy//source/common/http/http1:codec_lib_with_external_headers",
         "@envoy//source/common/http/http1:conn_pool_lib_with_external_headers",
+        "@envoy//source/common/http/http2:conn_pool_lib_with_external_headers",
         "@envoy//source/common/init:manager_lib_with_external_headers",
         "@envoy//source/common/local_info:local_info_lib_with_external_headers",
         "@envoy//source/common/network:dns_lib_with_external_headers",
@@ -100,6 +103,8 @@ envoy_cc_library(
     deps = [
         "//api/client:base_cc_proto",
         "//include/nighthawk/client:client_includes",
+        "//include/nighthawk/common:base_includes",
+        "//source/common:nighthawk_common_lib",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
     ],
 )
@@ -118,6 +123,7 @@ envoy_cc_library(
         "//api/client:base_cc_proto",
         "//api/client/transform:transform_cc_proto",
         "//include/nighthawk/client:client_includes",
+        "//source/common:nighthawk_common_lib",
         "@envoy//source/common/network:utility_lib_with_external_headers",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
     ],

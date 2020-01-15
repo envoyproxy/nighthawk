@@ -96,7 +96,6 @@ bool LinearRampingRateLimiterImpl::tryAcquireOne() {
     acquired_count_++;
     return acquireable_count_--;
   }
-
   const std::chrono::nanoseconds elapsed_time = elapsed();
   double elapsed_fraction = 1.0;
   if (elapsed_time < ramp_time_) {
@@ -189,6 +188,23 @@ GraduallyOpeningRateLimiterFilter::GraduallyOpeningRateLimiterFilter(
   if (provider_->max() != 1000000) {
     throw NighthawkException("max value of the distribution provider must equal 1000000");
   }
+}
+
+ZipfRateLimiterImpl::ZipfRateLimiterImpl(RateLimiterPtr&& rate_limiter, double q, double v,
+                                         ZipfBehavior behavior)
+    : FilteringRateLimiterImpl(std::move(rate_limiter),
+                               [this]() {
+                                 return behavior_ == ZipfBehavior::ZIPF_PSEUDO_RANDOM ? dist_(mt_)
+                                                                                      : dist_(g_);
+                               }),
+      behavior_(behavior) {
+  if (v <= 0) {
+    throw NighthawkException("v should be > 0");
+  }
+  if (q <= 1) {
+    throw NighthawkException("q should be > 1");
+  }
+  dist_ = absl::zipf_distribution<uint64_t>(1, q, v);
 }
 
 } // namespace Nighthawk

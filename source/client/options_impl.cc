@@ -7,6 +7,7 @@
 
 #include "common/uri_impl.h"
 #include "common/utility.h"
+#include "common/version_info.h"
 
 #include "client/output_formatter_impl.h"
 
@@ -30,7 +31,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   // TODO(oschaaf): Purge the validation we perform here. Most of it should have become
   // redundant now that we also perform validation of the resulting proto.
   const char* descr = "L7 (HTTP/HTTPS/HTTP2) performance characterization tool.";
-  TCLAP::CmdLine cmd(descr, ' ', "PoC"); // NOLINT
+  TCLAP::CmdLine cmd(descr, ' ', VersionInfo::version()); // NOLINT
 
   // Any default values we pass into TCLAP argument declarations are arbitrary, as we do not rely on
   // TCLAP for providing default values. Default values are declared in and sourced from
@@ -184,12 +185,12 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "", "termination-predicate",
       "Termination predicate. Allows specifying a counter name plus threshold value for "
       "terminating execution.",
-      false, "<string, uint64_t>", cmd);
+      false, "string, uint64_t", cmd);
   TCLAP::MultiArg<std::string> failure_predicates(
       "", "failure-predicate",
       "Failure predicate. Allows specifying a counter name plus threshold value for "
       "failing execution. Defaults to not tolerating error status codes and connection errors.",
-      false, "<string, uint64_t>", cmd);
+      false, "string, uint64_t", cmd);
 
   std::vector<std::string> h1_connection_reuse_strategies = {"mru", "lru"};
   TCLAP::ValuesConstraint<std::string> h1_connection_reuse_strategies_allowed(
@@ -214,6 +215,15 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "Add uniformly distributed absolute request-release timing jitter. For example, to add 10 us "
       "of jitter, specify .00001s. Default is empty / no uniform jitter.",
       false, "", "duration", cmd);
+  TCLAP::ValueArg<std::string> nighthawk_service(
+      "", "nighthawk-service",
+      "Nighthawk service uri. Example: grpc://localhost:8843/. Default is empty.", false, "",
+      "uri format", cmd);
+  TCLAP::SwitchArg h2_use_multiple_connections(
+      "", "experimental-h2-use-multiple-connections",
+      "Use experimental HTTP/2 pool which will use multiple connections. WARNING: feature may be "
+      "removed or changed in the future!",
+      cmd);
 
   TCLAP::MultiArg<std::string> multi_target_endpoints(
       "", "multi-target-endpoint",
@@ -285,7 +295,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   if (request_method.isSet()) {
     std::string upper_cased = request_method.getValue();
     absl::AsciiStrToUpper(&upper_cased);
-    RELEASE_ASSERT(envoy::api::v2::core::RequestMethod_Parse(upper_cased, &request_method_),
+    RELEASE_ASSERT(envoy::config::core::v3alpha::RequestMethod_Parse(upper_cased, &request_method_),
                    "Failed to parse request method");
   }
   TCLAP_SET_IF_SPECIFIED(request_headers, request_headers_);
@@ -328,6 +338,8 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       throw MalformedArgvException("Invalid value for --jitter-uniform");
     }
   }
+  TCLAP_SET_IF_SPECIFIED(nighthawk_service, nighthawk_service_);
+  TCLAP_SET_IF_SPECIFIED(h2_use_multiple_connections, h2_use_multiple_connections_);
   TCLAP_SET_IF_SPECIFIED(multi_target_use_https, multi_target_use_https_);
   TCLAP_SET_IF_SPECIFIED(multi_target_path, multi_target_path_);
   if (multi_target_endpoints.isSet()) {
@@ -346,7 +358,6 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
     }
   }
   TCLAP_SET_IF_SPECIFIED(labels, labels_);
-
   // CLI-specific tests.
   // TODO(oschaaf): as per mergconflicts's remark, it would be nice to aggregate
   // these and present everything we couldn't understand to the CLI user in on go.
@@ -396,7 +407,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   }
   if (!transport_socket.getValue().empty()) {
     try {
-      transport_socket_.emplace(envoy::api::v2::core::TransportSocket());
+      transport_socket_.emplace(envoy::config::core::v3alpha::TransportSocket());
       Envoy::MessageUtil::loadFromJson(transport_socket.getValue(), transport_socket_.value(),
                                        Envoy::ProtobufMessage::getStrictValidationVisitor());
     } catch (const Envoy::EnvoyException& e) {
@@ -469,7 +480,7 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
 
   const auto& request_options = options.request_options();
   if (request_options.request_method() !=
-      ::envoy::api::v2::core::RequestMethod::METHOD_UNSPECIFIED) {
+      ::envoy::config::core::v3alpha::RequestMethod::METHOD_UNSPECIFIED) {
     request_method_ = request_options.request_method();
   }
   request_body_size_ =
@@ -491,7 +502,7 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   tls_context_.MergeFrom(options.tls_context());
 
   if (options.has_transport_socket()) {
-    transport_socket_.emplace(envoy::api::v2::core::TransportSocket());
+    transport_socket_.emplace(envoy::config::core::v3alpha::TransportSocket());
     transport_socket_.value().MergeFrom(options.transport_socket());
   }
 
@@ -508,6 +519,10 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
     jitter_uniform_ = std::chrono::nanoseconds(
         Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(options.jitter_uniform()));
   }
+  nighthawk_service_ =
+      PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, nighthawk_service, nighthawk_service_);
+  h2_use_multiple_connections_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(
+      options, experimental_h2_use_multiple_connections, h2_use_multiple_connections_);
   std::copy(options.labels().begin(), options.labels().end(), std::back_inserter(labels_));
   validate();
 }
@@ -637,6 +652,9 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
     *command_line_options->mutable_jitter_uniform() =
         Envoy::Protobuf::util::TimeUtil::NanosecondsToDuration(jitter_uniform_.count());
   }
+  command_line_options->mutable_nighthawk_service()->set_value(nighthawk_service_);
+  command_line_options->mutable_experimental_h2_use_multiple_connections()->set_value(
+      h2_use_multiple_connections_);
   for (const auto& label : labels_) {
     *command_line_options->add_labels() = label;
   }
