@@ -145,6 +145,12 @@ bool BenchmarkClientHttpImpl::tryStartRequest(CompletionCallback caller_completi
     }
   }
   auto request = request_generator_();
+  // The header generator may not have something for us to send. We'll try next time.
+  // TODO(oschaaf): track occurrences of this via a counter & consider setting up a default failure
+  // condition for when this happens.
+  if (request == nullptr) {
+    return false;
+  }
   auto* content_length_header = request->header()->ContentLength();
   uint64_t content_length = 0;
   if (content_length_header != nullptr) {

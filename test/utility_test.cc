@@ -1,6 +1,7 @@
 #include <string>
 
 #include "external/envoy/source/common/network/utility.h"
+#include "external/envoy/source/common/stats/isolated_store_impl.h"
 #include "external/envoy/test/test_common/utility.h"
 
 #include "common/uri_impl.h"
@@ -19,8 +20,10 @@ public:
   UtilityTest() = default;
   void checkUriParsing(absl::string_view uri_to_test, absl::string_view hostAndPort,
                        absl::string_view hostWithoutPort, const uint64_t port,
-                       absl::string_view scheme, absl::string_view path) {
-    const UriImpl uri = UriImpl(uri_to_test);
+                       absl::string_view scheme, absl::string_view path,
+                       absl::string_view uri_default_protocol = "") {
+    const UriImpl uri = uri_default_protocol == "" ? UriImpl(uri_to_test)
+                                                   : UriImpl(uri_to_test, uri_default_protocol);
     EXPECT_EQ(hostAndPort, uri.hostAndPort());
     EXPECT_EQ(hostWithoutPort, uri.hostWithoutPort());
     EXPECT_EQ(port, uri.port());
@@ -37,6 +40,8 @@ TEST_F(UtilityTest, Defaults) {
   checkUriParsing("a", "a:80", "a", 80, "http", "/");
   checkUriParsing("a/", "a:80", "a", 80, "http", "/");
   checkUriParsing("https://a", "a:443", "a", 443, "https", "/");
+  checkUriParsing("grpc://a", "a:8443", "a", 8443, "grpc", "/");
+  checkUriParsing("a", "a:8443", "a", 8443, "grpc", "/", "grpc");
 }
 
 TEST_F(UtilityTest, SchemeIsLowerCased) {
@@ -154,6 +159,22 @@ TEST_F(UtilityTest, translateAddressFamilyGoodValues) {
   EXPECT_EQ(Envoy::Network::DnsLookupFamily::Auto,
             Utility::translateFamilyOptionString(
                 nighthawk::client::AddressFamily_AddressFamilyOptions_AUTO));
+}
+
+TEST_F(UtilityTest, mapCountersFromStore) {
+  Envoy::Stats::IsolatedStoreImpl store;
+  store.counter("foo").inc();
+  store.counter("worker.2.bar").inc();
+  store.counter("worker.1.bar").inc();
+  uint64_t filter_delegate_hit_count = 0;
+  const auto& counters = Utility().mapCountersFromStore(
+      store, [&filter_delegate_hit_count](absl::string_view name, uint64_t value) {
+        filter_delegate_hit_count++;
+        return value == 1 && (name == "worker.2.bar" || name == "worker.1.bar");
+      });
+  EXPECT_EQ(filter_delegate_hit_count, 3);
+  ASSERT_EQ(counters.size(), 1);
+  EXPECT_EQ(counters.begin()->second, 2);
 }
 
 } // namespace Nighthawk

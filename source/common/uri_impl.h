@@ -17,7 +17,7 @@ namespace Nighthawk {
 
 class UriImpl : public Uri, public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
-  UriImpl(absl::string_view uri);
+  UriImpl(absl::string_view uri, absl::string_view default_scheme = "http");
   absl::string_view hostAndPort() const override { return host_and_port_; }
   absl::string_view hostWithoutPort() const override { return host_without_port_; }
   absl::string_view path() const override { return path_; }
