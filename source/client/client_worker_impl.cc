@@ -1,7 +1,5 @@
 #include "client/client_worker_impl.h"
 
-#include <vector>
-
 #include "external/envoy/source/common/stats/symbol_table_impl.h"
 
 #include "common/phase_impl.h"

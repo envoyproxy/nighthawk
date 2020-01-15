@@ -1,7 +1,6 @@
 #pragma once
 
 #include <memory>
-#include <vector>
 
 #include "envoy/common/pure.h"
 #include "envoy/stats/store.h"
