@@ -13,7 +13,7 @@ using SignalCallback = std::function<void()>;
 
 class SignalHandler final : public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
-  SignalHandler(SignalCallback signal_callback);
+  SignalHandler(const SignalCallback signal_callback);
   SignalHandler(SignalHandler const&) = delete;
   void operator=(SignalHandler const&) = delete;
   ~SignalHandler();
