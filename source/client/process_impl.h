@@ -68,21 +68,6 @@ public:
    */
   void shutdown() override;
 
-private:
-  /**
-   * @brief Creates a cluster for usage by a remote request source.
-   *
-   * @param uri The parsed uri of the remote request source.
-   * @param worker_number The worker number that we are creating this cluster for.
-   * @param config The bootstrap configuration that will be modified.
-   */
-  void addRequestSourceCluster(const Uri& uri, int worker_number,
-                               envoy::config::bootstrap::v3alpha::Bootstrap& config) const;
-  void addTracingCluster(envoy::config::bootstrap::v3alpha::Bootstrap& bootstrap,
-                         const Uri& uri) const;
-  void setupTracingImplementation(envoy::config::bootstrap::v3alpha::Bootstrap& bootstrap,
-                                  const Uri& uri) const;
-
   /**
    * Computes the SNI host based on the passed in uri(s), request headers, and protocol.
    * Given a vector of Uris containing a single entry, its host fragment will be considered.
@@ -99,6 +84,21 @@ private:
   static std::string computeSniHost(const std::vector<UriPtr>& parsed_uris,
                                     const std::vector<std::string>& request_headers,
                                     const Envoy::Http::Protocol protocol);
+
+private:
+  /**
+   * @brief Creates a cluster for usage by a remote request source.
+   *
+   * @param uri The parsed uri of the remote request source.
+   * @param worker_number The worker number that we are creating this cluster for.
+   * @param config The bootstrap configuration that will be modified.
+   */
+  void addRequestSourceCluster(const Uri& uri, int worker_number,
+                               envoy::config::bootstrap::v3alpha::Bootstrap& config) const;
+  void addTracingCluster(envoy::config::bootstrap::v3alpha::Bootstrap& bootstrap,
+                         const Uri& uri) const;
+  void setupTracingImplementation(envoy::config::bootstrap::v3alpha::Bootstrap& bootstrap,
+                                  const Uri& uri) const;
   void createBootstrapConfiguration(envoy::config::bootstrap::v3alpha::Bootstrap& bootstrap,
                                     const std::vector<UriPtr>& uris,
                                     const UriPtr& request_source_uri, int number_of_workers) const;
