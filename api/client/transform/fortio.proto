@@ -24,41 +24,66 @@ message FortioResult {
   // concatenated into this field, using ' ' as a separator.
   string Labels = 1;
 
+  // Start time of the load test execution.
   google.protobuf.Timestamp StartTime = 2;
 
+  // Configured qps
   uint32 RequestedQPS = 3;
 
+  // Configured duration
   google.protobuf.Duration RequestedDuration = 4;
 
+  // Effective qps
   double ActualQPS = 5;
 
+  // Effective duration
   double ActualDuration = 6;
 
+  // The configured number of used connections
   uint32 NumThreads = 7;
 
+  // Latency histogram
   DurationHistogram DurationHistogram = 8;
 
+  // Fortio tracks per-return-code. We group by 2xx,3xx, etc.
   map<string, uint64> RetCodes = 11;
 
+  // Effective URI.
   string URL = 12;
 
+  // (Unstructured) version. We serialize a representation of the Nighthawk version into this field.
   string Version = 13;
 
+  // Was jitter used Y/N.
   bool Jitter = 14;
 
+  // Run type. Can be "HTTP", "GRPC", and an empty string has also been observed.
+  // We only set HTTP for now.
   string RunType = 15;
 
+  // Sizes and HeaderSizes seems to mean different things in Fortio depending on if the go stdclient
+  // or DIY fastclient was used. We populate this field with response body sizes, and HeaderSizes
+  // with header sizes. Both are tracked in bytes. Note: we don't use full histograms here, but
+  // rather rely on StreamingStatistic. This means we don't populate percentiles, and only populate
+  // min/mean/max/etc with respect to DurationHistogram.
   DurationHistogram Sizes = 16;
 
+  // See the 'Sizes' field for detals.
   DurationHistogram HeaderSizes = 17;
 
-  // Exactly can be used to stop fortio after a fixed amount of replies.
+  // Some notes on fields that we do not populate today:
+
+  // "Exactly" can be used to stop fortio after a fixed amount of replies.
   // We don't seem to need this, and going forward it might be hard/annoying to
   // translate this field as Nighthawk's concepts diverge a bit. If end up
   // needing to we can probably inspect the main phase and then figure out if there's a
   // termination predicate configured for a fixed number of responses observed
   // via stats. For now, however, skip this field.
-  // uint64 Exactly = 16;
+
+  // We don't populate SocketCount (sometimes used to track #connections)
+
+  // We don't populate AbortOn (a status code that may abort termination) for reasons
+  // similar to Exactly.
 }
 
 message DurationHistogram {

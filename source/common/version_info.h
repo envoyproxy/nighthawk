@@ -13,8 +13,21 @@ namespace Nighthawk {
  */
 class VersionInfo {
 public:
+  /**
+   * @return const std::string& a representation of the current version.
+   */
   static const std::string& version();
+  /**
+   * @return const envoy::config::core::v3alpha::BuildVersion& a representation of the current
+   * version.
+   */
   static const envoy::config::core::v3alpha::BuildVersion& buildVersion();
+  /**
+   * @brief Transforms a proto representation of a build version into a string representation.
+   *
+   * @param build_version proto build-version input that should be transformed.
+   * @return const std::string representation of the transformed proto input.
+   */
   static const std::string
   toVersionString(const envoy::config::core::v3alpha::BuildVersion& build_version);
 
