@@ -12,7 +12,7 @@
 namespace Nighthawk {
 
 bool UriImpl::isValid() const {
-  return (scheme_ == "http" || scheme_ == "https" || scheme_ == "zipkin") &&
+  return (scheme_ == "http" || scheme_ == "https" || scheme_ == "zipkin" || scheme_ == "grpc") &&
          (port_ > 0 && port_ <= 65535) &&
          // We check that we do not start with '-' because that overlaps with CLI argument
          // parsing. For other hostname validation, we defer to parseInternetAddressAndPort() and
@@ -20,7 +20,8 @@ bool UriImpl::isValid() const {
          !host_without_port_.empty() && host_without_port_[0] != '-';
 }
 
-UriImpl::UriImpl(absl::string_view uri) : scheme_("http") {
+UriImpl::UriImpl(absl::string_view uri, absl::string_view default_scheme)
+    : scheme_(default_scheme) {
   absl::string_view host, path;
   Envoy::Http::Utility::extractHostPathFromUri(uri, host, path);
 
@@ -30,16 +31,21 @@ UriImpl::UriImpl(absl::string_view uri) : scheme_("http") {
 
   host_and_port_ = std::string(host);
   path_ = std::string(path);
-  const bool is_https = absl::StartsWith(uri, "https://");
   const size_t scheme_end = uri.find("://", 0);
   if (scheme_end != std::string::npos) {
     scheme_ = absl::AsciiStrToLower(uri.substr(0, scheme_end));
+  }
+  uint32_t default_port = 80;
+  if (scheme_ == "https") {
+    default_port = 443;
+  } else if (scheme_ == "grpc") {
+    default_port = 8443;
   }
 
   const size_t colon_index = Utility::findPortSeparator(host_and_port_);
 
   if (colon_index == absl::string_view::npos) {
-    port_ = is_https ? 443 : 80;
+    port_ = default_port;
     host_without_port_ = host_and_port_;
     host_and_port_ = fmt::format("{}:{}", host_and_port_, port_);
   } else {

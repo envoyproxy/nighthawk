@@ -44,10 +44,11 @@ public:
         .Times(1)
         .WillOnce(Return(ByMove(std::unique_ptr<Sequencer>(sequencer_))));
 
-    EXPECT_CALL(request_generator_factory_, create())
+    EXPECT_CALL(request_generator_factory_, create(_, _, _, _))
         .Times(1)
         .WillOnce(Return(ByMove(std::unique_ptr<RequestSource>(request_generator_))));
 
+    EXPECT_CALL(*request_generator_, initOnThread()).Times(1);
     EXPECT_CALL(termination_predicate_factory_, create(_, _, _))
         .WillOnce(Return(ByMove(std::unique_ptr<TerminationPredicate>(termination_predicate_))));
   }

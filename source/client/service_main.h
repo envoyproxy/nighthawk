@@ -40,7 +40,7 @@ public:
 
 private:
   grpc::ServerBuilder builder_;
-  ServiceImpl service_;
+  std::unique_ptr<grpc::Service> service_;
   std::unique_ptr<grpc::Server> server_;
   std::shared_ptr<grpc::Channel> channel_;
   std::unique_ptr<nighthawk::client::NighthawkService::Stub> stub_;

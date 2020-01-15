@@ -228,6 +228,7 @@ envoy_cc_test(
         "//source/common:nighthawk_common_lib",
         "//test/test_common:environment_lib",
         "@envoy//source/common/network:utility_lib_with_external_headers",
+        "@envoy//source/common/stats:isolated_store_lib_with_external_headers",
     ],
 )
 
@@ -294,5 +295,15 @@ envoy_cc_test(
         "//test:nighthawk_mocks",
         "@envoy//test/mocks/event:event_mocks",
         "@envoy//test/test_common:simulated_time_system_lib",
+    ],
+)
+
+envoy_cc_test(
+    name = "request_stream_grpc_client_test",
+    srcs = ["request_stream_grpc_client_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/common:request_stream_grpc_client_lib",
+        "@envoy//test/test_common:utility_lib",
     ],
 )
