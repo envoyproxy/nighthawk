@@ -115,7 +115,6 @@ TEST_F(RateLimiterTest, ScheduledStartingRateLimiterTestBadArgs) {
     EXPECT_CALL(unsafe_mock_rate_limiter, timeSource)
         .Times(AtLeast(1))
         .WillRepeatedly(ReturnRef(time_system));
-    // Verify scheduling "now" is not allowed.
     EXPECT_THROW(ScheduledStartingRateLimiter(std::move(mock_rate_limiter), timing);
                  , NighthawkException);
   }
