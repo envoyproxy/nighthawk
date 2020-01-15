@@ -4,7 +4,7 @@ load("@com_github_grpc_grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
 load("@envoy_api//bazel:api_build_system.bzl", "api_cc_py_proto_library")
 
 api_cc_py_proto_library(
-    name = "base",
+    name = "service",
     srcs = [
         "service.proto",
     ],
@@ -19,7 +19,7 @@ api_cc_py_proto_library(
 cc_grpc_library(
     name = "grpc_request_source_service_lib",
     srcs = [
-        ":base",
+        ":service",
     ],
     grpc_only = True,
     proto_only = False,
@@ -27,6 +27,6 @@ cc_grpc_library(
     visibility = ["//visibility:public"],
     well_known_protos = True,
     deps = [
-        ":base_cc_proto",
+        ":service_cc_proto",
     ],
 )

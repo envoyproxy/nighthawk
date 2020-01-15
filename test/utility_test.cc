@@ -1,6 +1,7 @@
 #include <string>
 
 #include "external/envoy/source/common/network/utility.h"
+#include "external/envoy/source/common/stats/isolated_store_impl.h"
 #include "external/envoy/test/test_common/utility.h"
 
 #include "common/uri_impl.h"
@@ -158,6 +159,22 @@ TEST_F(UtilityTest, translateAddressFamilyGoodValues) {
   EXPECT_EQ(Envoy::Network::DnsLookupFamily::Auto,
             Utility::translateFamilyOptionString(
                 nighthawk::client::AddressFamily_AddressFamilyOptions_AUTO));
+}
+
+TEST_F(UtilityTest, mapCountersFromStore) {
+  Envoy::Stats::IsolatedStoreImpl store;
+  store.counter("foo").inc();
+  store.counter("bar").inc();
+  store.counter("bar").inc();
+  bool filter_delegate_hit = false;
+  const auto& counters =
+      Utility().mapCountersFromStore(store, [&was_filtered](absl::string_view name, uint64_t) {
+        filter_delegate_hit = true;
+        return name == "bar";
+      });
+  EXPECT_TRUE(filter_delegate_hit);
+  ASSERT_EQ(counters.size(), 1);
+  EXPECT_EQ(counters.begin()->second, 2);
 }
 
 } // namespace Nighthawk

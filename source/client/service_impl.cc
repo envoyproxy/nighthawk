@@ -141,8 +141,8 @@ RequestSourcePtr RequestSourceServiceImpl::createStaticEmptyRequestSource(const 
     // 1. Yet another remote request source, so we balance to-be-replayed headers over workers
     //    and only have a single stream to a remote service here.
     // 2. Read a and dispatch a header stream from disk.
-    auto request_source = createStaticEmptyRequestSource(request.quantity());
-    auto request_generator = request_source->get();
+    RequestSourcePtr request_source = createStaticEmptyRequestSource(request.quantity());
+    RequestGenerator request_generator = request_source->get();
     RequestPtr request;
     while (ok && (request = request_generator()) != nullptr) {
       HeaderMapPtr headers = request->header();

@@ -228,6 +228,7 @@ envoy_cc_test(
         "//source/common:nighthawk_common_lib",
         "//test/test_common:environment_lib",
         "@envoy//source/common/network:utility_lib_with_external_headers",
+        "@envoy//source/common/stats:isolated_store_lib_with_external_headers",
     ],
 )
 

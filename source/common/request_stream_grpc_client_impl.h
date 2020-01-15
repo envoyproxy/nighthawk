@@ -34,11 +34,21 @@ public:
                    const nighthawk::request_source::RequestStreamResponse& message);
 };
 
+/**
+ * gRPC client for communicating with a remote request-source service.
+ */
 class RequestStreamGrpcClientImpl
     : public RequestStreamGrpcClient,
       Envoy::Grpc::AsyncStreamCallbacks<nighthawk::request_source::RequestStreamResponse>,
       Envoy::Logger::Loggable<Envoy::Logger::Id::upstream> {
 public:
+  /**
+   * @param async_client Raw async client that we can use.
+   * @param dispatcher Dispatcher that will be used.
+   * @param base_header Any headers in request specifiers yielded by the remote request
+   * source service will override what is specified here.
+   * @param header_buffer_length The number of messages to buffer.
+   */
   RequestStreamGrpcClientImpl(Envoy::Grpc::RawAsyncClientPtr async_client,
                               Envoy::Event::Dispatcher& dispatcher,
                               const Envoy::Http::HeaderMap& base_header,

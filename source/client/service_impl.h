@@ -51,6 +51,10 @@ private:
   Envoy::Thread::MutexBasicLockable busy_lock_;
 };
 
+/**
+ * Dummy implementation of our request-source gRPC service definition, for testing and experimental
+ * purposes.
+ */
 class RequestSourceServiceImpl final
     : public nighthawk::request_source::NighthawkRequestSourceService::Service,
       public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
