@@ -91,7 +91,7 @@ TEST_F(RateLimiterTest, ScheduledStartingRateLimiterTest) {
         .WillRepeatedly(Return(true));
 
     if (starting_late) {
-      time_system.sleep(schedule_delay + 1ms);
+      time_system.sleep(schedule_delay);
     }
 
     // We should expect zero releases until it is time to start.
