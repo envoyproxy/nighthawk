@@ -454,14 +454,14 @@ bool ProcessImpl::run(OutputCollector& collector) {
   int i = 0;
   std::chrono::nanoseconds total_execution_duration = 0ns;
   for (auto& worker : workers_) {
-    auto sequencer_execution_duration = worker->sequencer().executionDuration();
+    auto sequencer_execution_duration = worker->phase().sequencer().executionDuration();
     // We don't write per-worker results if we only have a single worker, because the global results
     // will be precisely the same.
     if (workers_.size() > 1) {
       StatisticFactoryImpl statistic_factory(options_);
       collector.addResult(fmt::format("worker_{}", i),
                           vectorizeStatisticPtrMap(statistic_factory, worker->statistics()),
-                          worker->thread_local_counter_values(), sequencer_execution_duration);
+                          worker->threadLocalCounterValues(), sequencer_execution_duration);
     }
     total_execution_duration += sequencer_execution_duration;
     i++;

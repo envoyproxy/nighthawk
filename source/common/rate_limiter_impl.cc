@@ -52,6 +52,36 @@ void BurstingRateLimiter::releaseOne() {
   previously_releasing_ = absl::nullopt;
 }
 
+ScheduledStartingRateLimiter::ScheduledStartingRateLimiter(
+    RateLimiterPtr&& rate_limiter, Envoy::MonotonicTime scheduled_starting_time)
+    : ForwardingRateLimiterImpl(std::move(rate_limiter)),
+      scheduled_starting_time_(scheduled_starting_time) {
+  if (timeSource().monotonicTime() >= scheduled_starting_time_) {
+    throw NighthawkException("Scheduled starting time needs to be in the future");
+  }
+}
+
+bool ScheduledStartingRateLimiter::tryAcquireOne() {
+  if (timeSource().monotonicTime() < scheduled_starting_time_) {
+    aquisition_attempted_ = true;
+    return false;
+  }
+  // If we start forwarding right away on the first attempt that is remarkable, so leave a hint
+  // about this happening in the logs.
+  if (!aquisition_attempted_) {
+    aquisition_attempted_ = true;
+    ENVOY_LOG(warn, "ScheduledStartingRateLimiter: first acquisition attempt was late");
+  }
+  return rate_limiter_->tryAcquireOne();
+}
+
+void ScheduledStartingRateLimiter::releaseOne() {
+  if (timeSource().monotonicTime() < scheduled_starting_time_) {
+    throw NighthawkException("Unexpected call to releaseOne()");
+  }
+  return rate_limiter_->releaseOne();
+}
+
 LinearRateLimiter::LinearRateLimiter(Envoy::TimeSource& time_source, const Frequency frequency)
     : RateLimiterBaseImpl(time_source), acquireable_count_(0), acquired_count_(0),
       frequency_(frequency) {

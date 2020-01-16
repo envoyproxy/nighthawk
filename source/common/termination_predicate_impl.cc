@@ -16,8 +16,12 @@ TerminationPredicate::Status TerminationPredicateBaseImpl::evaluateChain() {
 }
 
 TerminationPredicate::Status DurationTerminationPredicateImpl::evaluate() {
-  return time_source_.monotonicTime() - start_ > duration_ ? TerminationPredicate::Status::TERMINATE
-                                                           : TerminationPredicate::Status::PROCEED;
+  const auto now = time_source_.monotonicTime();
+  if (!start_.has_value()) {
+    start_ = now;
+  }
+  return now - start_.value() > duration_ ? TerminationPredicate::Status::TERMINATE
+                                          : TerminationPredicate::Status::PROCEED;
 }
 
 TerminationPredicate::Status StatsCounterAbsoluteThresholdTerminationPredicateImpl::evaluate() {
