@@ -27,7 +27,6 @@
 #include "external/envoy/source/extensions/tracers/well_known_names.h"
 
 #include "absl/strings/str_replace.h"
-#include "absl/strings/strip.h"
 
 // TODO(oschaaf): See if we can leverage a static module registration like Envoy does to avoid the
 // ifdefs in this file.
@@ -49,6 +48,7 @@
 #include "client/client_worker_impl.h"
 #include "client/factories_impl.h"
 #include "client/options_impl.h"
+#include "client/sni_utility.h"
 
 #include "ares.h"
 
@@ -245,43 +245,6 @@ ProcessImpl::mergeWorkerStatistics(const StatisticFactory& statistic_factory,
   return merged_statistics;
 }
 
-std::string ProcessImpl::computeSniHost(const std::vector<UriPtr>& uris,
-                                        const std::vector<std::string>& request_headers,
-                                        const Envoy::Http::Protocol protocol) {
-  std::string uri_sni;
-  std::string request_sni;
-  bool ambiguous = false;
-  const bool consider_authority_header =
-      protocol == Envoy::Http::Protocol::Http2 || protocol == Envoy::Http::Protocol::Http3;
-  // If we only have a single target uri, we set ourselves up for sni based on the
-  // host from the uri.
-  if (uris.size() == 1) {
-    uri_sni = std::string(uris[0]->hostWithoutPort());
-  }
-
-  // A Host: request-header overrides what we came up with above. Notably this also applies
-  // when multiple target uris are involved.
-  for (const std::string& header : request_headers) {
-    const std::string lowered_header = absl::AsciiStrToLower(header);
-    if (absl::StartsWithIgnoreCase(lowered_header, "host:") ||
-        (absl::StartsWithIgnoreCase(lowered_header, ":authority:") && consider_authority_header)) {
-      ambiguous = ambiguous || !request_sni.empty();
-      absl::string_view host = absl::StripPrefix(lowered_header, "host:");
-      host = absl::StripPrefix(host, ":authority:");
-      host = absl::StripAsciiWhitespace(host);
-      request_sni = std::string(host);
-    }
-  }
-  std::string sni_host;
-  if (ambiguous) {
-    ENVOY_LOG(warn, "Ambiguous host request headers detected");
-  } else {
-    sni_host = request_sni.empty() ? uri_sni : request_sni;
-  }
-  ENVOY_LOG(debug, "computed server name indication: '{}'", sni_host);
-  return sni_host;
-}
-
 void ProcessImpl::createBootstrapConfiguration(
     envoy::config::bootstrap::v3alpha::Bootstrap& bootstrap, const std::vector<UriPtr>& uris,
     const UriPtr& request_source_uri, int number_of_clusters) const {
@@ -293,9 +256,9 @@ void ProcessImpl::createBootstrapConfiguration(
       transport_socket->set_name("envoy.transport_sockets.tls");
       envoy::extensions::transport_sockets::tls::v3alpha::UpstreamTlsContext context =
           options_.tlsContext();
-      const std::string sni_host = computeSniHost(uris, options_.requestHeaders(),
-                                                  options_.h2() ? Envoy::Http::Protocol::Http2
-                                                                : Envoy::Http::Protocol::Http11);
+      const std::string sni_host = SniUtility::computeSniHost(
+          uris, options_.requestHeaders(),
+          options_.h2() ? Envoy::Http::Protocol::Http2 : Envoy::Http::Protocol::Http11);
       if (!sni_host.empty()) {
         *context.mutable_sni() = sni_host;
       }
