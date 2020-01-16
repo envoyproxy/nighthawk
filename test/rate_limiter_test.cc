@@ -68,6 +68,58 @@ TEST_F(RateLimiterTest, BurstingRateLimiterTest) {
   EXPECT_FALSE(rate_limiter->tryAcquireOne());
 }
 
+TEST_F(RateLimiterTest, ScheduledStartingRateLimiterTest) {
+  Envoy::Event::SimulatedTimeSystem time_system;
+  const auto schedule_delay = 10ms;
+  // We test regular flow, but also the flow where the first aquisition attempt comes after the
+  // scheduled delay. This should be business as usual from a functional perspective, but internally
+  // this rate limiter specializes on this case to log a warning message, and we want to cover that.
+  for (const bool starting_late : std::vector<bool>{false, true}) {
+    const Envoy::MonotonicTime scheduled_starting_time =
+        time_system.monotonicTime() + schedule_delay;
+    std::unique_ptr<MockRateLimiter> mock_rate_limiter = std::make_unique<MockRateLimiter>();
+    MockRateLimiter& unsafe_mock_rate_limiter = *mock_rate_limiter;
+    InSequence s;
+
+    EXPECT_CALL(unsafe_mock_rate_limiter, timeSource)
+        .Times(AtLeast(1))
+        .WillRepeatedly(ReturnRef(time_system));
+    RateLimiterPtr rate_limiter = std::make_unique<ScheduledStartingRateLimiter>(
+        std::move(mock_rate_limiter), scheduled_starting_time);
+    EXPECT_CALL(unsafe_mock_rate_limiter, tryAcquireOne)
+        .Times(AtLeast(1))
+        .WillRepeatedly(Return(true));
+
+    if (starting_late) {
+      time_system.sleep(schedule_delay);
+    }
+
+    // We should expect zero releases until it is time to start.
+    while (time_system.monotonicTime() < scheduled_starting_time) {
+      EXPECT_FALSE(rate_limiter->tryAcquireOne());
+      time_system.sleep(1ms);
+    }
+
+    // Now that is time to start, the rate limiter should propagate to the mock rate limiter.
+    EXPECT_TRUE(rate_limiter->tryAcquireOne());
+  }
+}
+
+TEST_F(RateLimiterTest, ScheduledStartingRateLimiterTestBadArgs) {
+  Envoy::Event::SimulatedTimeSystem time_system;
+  // Verify we enforce future-only scheduling.
+  for (const auto timing : std::vector<Envoy::MonotonicTime>{time_system.monotonicTime(),
+                                                             time_system.monotonicTime() - 10ms}) {
+    std::unique_ptr<MockRateLimiter> mock_rate_limiter = std::make_unique<MockRateLimiter>();
+    MockRateLimiter& unsafe_mock_rate_limiter = *mock_rate_limiter;
+    EXPECT_CALL(unsafe_mock_rate_limiter, timeSource)
+        .Times(AtLeast(1))
+        .WillRepeatedly(ReturnRef(time_system));
+    EXPECT_THROW(ScheduledStartingRateLimiter(std::move(mock_rate_limiter), timing);
+                 , NighthawkException);
+  }
+}
+
 class BurstingRateLimiterIntegrationTest : public Test {
 public:
   void testBurstSize(const uint64_t burst_size, const Frequency frequency) {

@@ -39,9 +39,9 @@ class SequencerFactoryImpl : public OptionBasedFactoryImpl, public SequencerFact
 public:
   SequencerFactoryImpl(const Options& options);
   SequencerPtr create(Envoy::TimeSource& time_source, Envoy::Event::Dispatcher& dispatcher,
-                      Envoy::MonotonicTime start_time, BenchmarkClient& benchmark_client,
-                      TerminationPredicate& termination_predicate,
-                      Envoy::Stats::Scope& scope) const override;
+                      BenchmarkClient& benchmark_client,
+                      TerminationPredicatePtr&& termination_predicate, Envoy::Stats::Scope& scope,
+                      const Envoy::MonotonicTime scheduled_starting_time) const override;
 };
 
 class StoreFactoryImpl : public OptionBasedFactoryImpl, public StoreFactory {
@@ -78,8 +78,8 @@ class TerminationPredicateFactoryImpl : public OptionBasedFactoryImpl,
                                         public TerminationPredicateFactory {
 public:
   TerminationPredicateFactoryImpl(const Options& options);
-  TerminationPredicatePtr create(Envoy::TimeSource& time_source, Envoy::Stats::Scope& scope,
-                                 const Envoy::MonotonicTime start) const override;
+  TerminationPredicatePtr create(Envoy::TimeSource& time_source,
+                                 Envoy::Stats::Scope& scope) const override;
   TerminationPredicate* linkConfiguredPredicates(
       TerminationPredicate& last_predicate, const TerminationPredicateMap& predicates,
       const TerminationPredicate::Status termination_status, Envoy::Stats::Scope& scope) const;

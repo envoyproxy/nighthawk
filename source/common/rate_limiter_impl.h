@@ -113,6 +113,27 @@ private:
 };
 
 /**
+ * Rate limiter that only starts forwarding calls to the wrapped rate limiter
+ * after it is time to start.
+ */
+class ScheduledStartingRateLimiter : public ForwardingRateLimiterImpl,
+                                     public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
+public:
+  /**
+   * @param rate_limiter The rate limiter that will be forwarded to once it is time to start.
+   * @param scheduled_starting_time The starting time
+   */
+  ScheduledStartingRateLimiter(RateLimiterPtr&& rate_limiter,
+                               Envoy::MonotonicTime scheduled_starting_time);
+  bool tryAcquireOne() override;
+  void releaseOne() override;
+
+private:
+  const Envoy::MonotonicTime scheduled_starting_time_;
+  bool aquisition_attempted_{false};
+};
+
+/**
  * The consuming rate limiter will hold off opening up until the initial point in time plus the
  * offset obtained via the delegate have transpired.
  * We use an unsigned duration here to ensure only future points in time will be yielded.

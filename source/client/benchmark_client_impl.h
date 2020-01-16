@@ -137,8 +137,8 @@ public:
   // BenchmarkClient
   void terminate() override;
   StatisticPtrMap statistics() const override;
-  bool measureLatencies() const override { return measure_latencies_; }
-  void setMeasureLatencies(bool measure_latencies) override {
+  bool shouldMeasureLatencies() const override { return measure_latencies_; }
+  void setShouldMeasureLatencies(bool measure_latencies) override {
     measure_latencies_ = measure_latencies;
   }
   bool tryStartRequest(CompletionCallback caller_completion_callback) override;

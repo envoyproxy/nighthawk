@@ -175,11 +175,11 @@ TEST_F(BenchmarkClientHttpTest, WeirdStatus) {
 
 TEST_F(BenchmarkClientHttpTest, EnableLatencyMeasurement) {
   setupBenchmarkClient();
-  EXPECT_EQ(false, client_->measureLatencies());
+  EXPECT_EQ(false, client_->shouldMeasureLatencies());
   testBasicFunctionality(10, 1, 10);
   EXPECT_EQ(0, client_->statistics()["benchmark_http_client.queue_to_connect"]->count());
   EXPECT_EQ(0, client_->statistics()["benchmark_http_client.request_to_response"]->count());
-  client_->setMeasureLatencies(true);
+  client_->setShouldMeasureLatencies(true);
   testBasicFunctionality(10, 1, 10);
   EXPECT_EQ(10, client_->statistics()["benchmark_http_client.queue_to_connect"]->count());
   EXPECT_EQ(10, client_->statistics()["benchmark_http_client.request_to_response"]->count());
