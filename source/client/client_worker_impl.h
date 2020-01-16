@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "envoy/api/api.h"
 #include "envoy/event/dispatcher.h"
 #include "envoy/stats/store.h"
@@ -9,6 +11,7 @@
 #include "nighthawk/client/benchmark_client.h"
 #include "nighthawk/client/client_worker.h"
 #include "nighthawk/client/factories.h"
+#include "nighthawk/common/phase.h"
 #include "nighthawk/common/request_source.h"
 #include "nighthawk/common/sequencer.h"
 #include "nighthawk/common/termination_predicate.h"
@@ -34,7 +37,9 @@ public:
   const std::map<std::string, uint64_t>& threadLocalCounterValues() override {
     return threadLocalCounterValues_;
   }
-  const Sequencer& sequencer() const override { return *sequencer_; }
+
+  const Phase& phase() const override { return *phase_; }
+
   void shutdownThread() override;
 
 protected:
@@ -42,15 +47,15 @@ protected:
 
 private:
   void simpleWarmup();
+  const TerminationPredicateFactory& termination_predicate_factory_;
+  const SequencerFactory& sequencer_factory_;
   Envoy::Stats::ScopePtr worker_scope_;
   Envoy::Stats::ScopePtr worker_number_scope_;
   const int worker_number_;
-  const Envoy::MonotonicTime starting_time_;
   Envoy::Tracing::HttpTracerPtr& http_tracer_;
   RequestSourcePtr request_generator_;
   BenchmarkClientPtr benchmark_client_;
-  TerminationPredicatePtr termination_predicate_;
-  const SequencerPtr sequencer_;
+  PhasePtr phase_;
   Envoy::LocalInfo::LocalInfoPtr local_info_;
   std::map<std::string, uint64_t> threadLocalCounterValues_;
 };
