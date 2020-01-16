@@ -33,6 +33,14 @@ public:
   virtual TerminationPredicate& link(TerminationPredicatePtr&& child) PURE;
 
   /**
+   * Appends a predicate to the last element of the chain.
+   *
+   * @param child the child predicate to link. nullptr is not allowed.
+   * @return the dereferenced input child predicate. For convenience, so calls can be chained.
+   */
+  virtual TerminationPredicate& appendToChain(TerminationPredicatePtr&& child) PURE;
+
+  /**
    * Recursively evaluates chain of linked predicates, this instance last.
    * If any linked element returns anything other then PROCEED that status will
    * be returned.
