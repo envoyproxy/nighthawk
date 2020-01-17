@@ -13,7 +13,6 @@ envoy_basic_cc_library(
     hdrs = [
         "exception.h",
         "operation_callback.h",
-        "phase.h",
         "platform_util.h",
         "rate_limiter.h",
         "request_source.h",

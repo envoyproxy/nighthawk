@@ -48,6 +48,7 @@
 #include "client/client_worker_impl.h"
 #include "client/factories_impl.h"
 #include "client/options_impl.h"
+#include "client/sni_utility.h"
 
 #include "ares.h"
 
@@ -254,6 +255,12 @@ void ProcessImpl::createBootstrapConfiguration(
       transport_socket->set_name("envoy.transport_sockets.tls");
       envoy::extensions::transport_sockets::tls::v3alpha::UpstreamTlsContext context =
           options_.tlsContext();
+      const std::string sni_host = SniUtility::computeSniHost(
+          uris, options_.requestHeaders(),
+          options_.h2() ? Envoy::Http::Protocol::Http2 : Envoy::Http::Protocol::Http11);
+      if (!sni_host.empty()) {
+        *context.mutable_sni() = sni_host;
+      }
       auto* common_tls_context = context.mutable_common_tls_context();
       if (options_.h2()) {
         common_tls_context->add_alpn_protocols("h2");
@@ -453,7 +460,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
   int i = 0;
   std::chrono::nanoseconds total_execution_duration = 0ns;
   for (auto& worker : workers_) {
-    auto sequencer_execution_duration = worker->phase().sequencer().executionDuration();
+    auto sequencer_execution_duration = worker->sequencer().executionDuration();
     // We don't write per-worker results if we only have a single worker, because the global results
     // will be precisely the same.
     if (workers_.size() > 1) {

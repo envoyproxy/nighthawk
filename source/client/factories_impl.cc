@@ -52,14 +52,15 @@ BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
 SequencerFactoryImpl::SequencerFactoryImpl(const Options& options)
     : OptionBasedFactoryImpl(options) {}
 
-SequencerPtr SequencerFactoryImpl::create(
-    Envoy::TimeSource& time_source, Envoy::Event::Dispatcher& dispatcher,
-    BenchmarkClient& benchmark_client, TerminationPredicatePtr&& termination_predicate,
-    Envoy::Stats::Scope& scope, const Envoy::MonotonicTime scheduled_starting_time) const {
+SequencerPtr SequencerFactoryImpl::create(Envoy::TimeSource& time_source,
+                                          Envoy::Event::Dispatcher& dispatcher,
+                                          Envoy::MonotonicTime start_time,
+                                          BenchmarkClient& benchmark_client,
+                                          TerminationPredicate& termination_predicate,
+                                          Envoy::Stats::Scope& scope) const {
   StatisticFactoryImpl statistic_factory(options_);
-  Frequency frequency(options_.requestsPerSecond());
-  RateLimiterPtr rate_limiter = std::make_unique<ScheduledStartingRateLimiter>(
-      std::make_unique<LinearRateLimiter>(time_source, frequency), scheduled_starting_time);
+  RateLimiterPtr rate_limiter =
+      std::make_unique<LinearRateLimiter>(time_source, Frequency(options_.requestsPerSecond()));
   const uint64_t burst_size = options_.burstSize();
 
   if (burst_size) {
@@ -77,9 +78,9 @@ SequencerPtr SequencerFactoryImpl::create(
     return benchmark_client.tryStartRequest(std::move(f));
   };
   return std::make_unique<SequencerImpl>(
-      platform_util_, dispatcher, time_source, std::move(rate_limiter), sequencer_target,
-      statistic_factory.create(), statistic_factory.create(), options_.sequencerIdleStrategy(),
-      std::move(termination_predicate), scope);
+      platform_util_, dispatcher, time_source, start_time, std::move(rate_limiter),
+      sequencer_target, statistic_factory.create(), statistic_factory.create(),
+      options_.sequencerIdleStrategy(), termination_predicate, scope);
 }
 
 StoreFactoryImpl::StoreFactoryImpl(const Options& options) : OptionBasedFactoryImpl(options) {}
@@ -178,10 +179,11 @@ RequestSourceFactoryImpl::create(const Envoy::Upstream::ClusterManagerPtr& clust
 TerminationPredicateFactoryImpl::TerminationPredicateFactoryImpl(const Options& options)
     : OptionBasedFactoryImpl(options) {}
 
-TerminationPredicatePtr TerminationPredicateFactoryImpl::create(Envoy::TimeSource& time_source,
-                                                                Envoy::Stats::Scope& scope) const {
+TerminationPredicatePtr
+TerminationPredicateFactoryImpl::create(Envoy::TimeSource& time_source, Envoy::Stats::Scope& scope,
+                                        const Envoy::MonotonicTime start) const {
   TerminationPredicatePtr duration_predicate =
-      std::make_unique<DurationTerminationPredicateImpl>(time_source, options_.duration());
+      std::make_unique<DurationTerminationPredicateImpl>(time_source, start, options_.duration());
   TerminationPredicate* current_predicate = duration_predicate.get();
   current_predicate = linkConfiguredPredicates(*current_predicate, options_.failurePredicates(),
                                                TerminationPredicate::Status::FAIL, scope);

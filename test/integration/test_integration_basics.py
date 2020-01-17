@@ -8,7 +8,7 @@ import pytest
 from test.integration.common import IpVersion
 from test.integration.integration_test_fixtures import (
     http_test_server_fixture, https_test_server_fixture, multi_http_test_server_fixture,
-    multi_https_test_server_fixture)
+    multi_https_test_server_fixture, sni_test_server_fixture)
 from test.integration.utility import *
 
 # TODO(oschaaf): we mostly verify stats observed from the client-side. Add expectations
@@ -338,12 +338,12 @@ def test_https_h2_transport_socket_configuration(https_test_server_fixture):
 
 def test_https_prefetching(https_test_server_fixture):
   """
-  Test we prefetch connections. We test for 1 second at 2 rps, which should
+  Test we prefetch connections. We test for 1 second at 1 rps, which should
   result in 1 connection max without prefetching. However, we specify 50 connections
   and the prefetching flag, so we ought to see 50 http1 connections created.
   """
   parsed_json, _ = https_test_server_fixture.runNighthawkClient([
-      "--duration 1", "--rps 2", "--prefetch-connections", "--connections 50",
+      "--duration 1", "--rps 1", "--prefetch-connections", "--connections 50",
       https_test_server_fixture.getTestServerRootUri()
   ])
   counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
@@ -536,3 +536,76 @@ def test_multiple_backends_https_h1(multi_https_test_server_fixture):
     assertBetweenInclusive(single_2xx, 8, 9)
     total_2xx += single_2xx
   assertBetweenInclusive(total_2xx, 24, 25)
+
+
+def test_https_h1_sni(sni_test_server_fixture):
+  """
+  Tests SNI indication works on https/h1
+  """
+  # Verify success when we set the right host
+  parsed_json, _ = sni_test_server_fixture.runNighthawkClient([
+      sni_test_server_fixture.getTestServerRootUri(), "--rps", "100", "--duration", "100",
+      "--termination-predicate", "benchmark.http_2xx:2", "--request-header", "host: sni.com"
+  ])
+  counters = sni_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
+  assertCounterGreaterEqual(counters, "benchmark.http_2xx", 1)
+  assertCounterGreaterEqual(counters, "upstream_cx_http1_total", 1)
+  assertCounterGreaterEqual(counters, "ssl.handshake", 1)
+
+  # Verify failure when we set no host (will get plain http)
+  parsed_json, _ = sni_test_server_fixture.runNighthawkClient(
+      [sni_test_server_fixture.getTestServerRootUri(), "--rps", "100", "--duration", "100"],
+      expect_failure=True)
+
+  # Verify success when we use plain http and don't request the sni host
+  parsed_json, _ = sni_test_server_fixture.runNighthawkClient(
+      [sni_test_server_fixture.getTestServerRootUri(), "--rps", "100", "--duration", "100"],
+      expect_failure=True)
+
+  parsed_json, _ = sni_test_server_fixture.runNighthawkClient([
+      sni_test_server_fixture.getTestServerRootUri().replace("https://", "http://"), "--rps", "100",
+      "--duration", "100", "--termination-predicate", "benchmark.http_2xx:2"
+  ],
+                                                              expect_failure=False)
+  counters = sni_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
+  assertCounterGreaterEqual(counters, "benchmark.http_2xx", 1)
+  assertCounterGreaterEqual(counters, "upstream_cx_http1_total", 1)
+  assertNotIn("ssl.handshake", counters)
+
+
+def test_https_h2_sni(sni_test_server_fixture):
+  """
+  Tests SNI indication works on https/h1
+  """
+  # Verify success when we set the right host
+  parsed_json, _ = sni_test_server_fixture.runNighthawkClient([
+      sni_test_server_fixture.getTestServerRootUri(), "--rps", "100", "--duration", "100",
+      "--termination-predicate", "benchmark.http_2xx:2", "--request-header", ":authority: sni.com",
+      "--h2"
+  ])
+  counters = sni_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
+  assertCounterGreaterEqual(counters, "benchmark.http_2xx", 1)
+  assertCounterGreaterEqual(counters, "upstream_cx_http2_total", 1)
+  assertCounterEqual(counters, "ssl.handshake", 1)
+
+  # Verify success when we set the right host
+  parsed_json, _ = sni_test_server_fixture.runNighthawkClient([
+      sni_test_server_fixture.getTestServerRootUri(), "--rps", "100", "--duration", "100",
+      "--termination-predicate", "benchmark.http_2xx:2", "--request-header", "host: sni.com", "--h2"
+  ])
+  counters = sni_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
+  assertCounterGreaterEqual(counters, "benchmark.http_2xx", 1)
+  assertCounterGreaterEqual(counters, "upstream_cx_http2_total", 1)
+  assertCounterEqual(counters, "ssl.handshake", 1)
+
+  # Verify failure when we set no host (will get plain http)
+  parsed_json, _ = sni_test_server_fixture.runNighthawkClient(
+      [sni_test_server_fixture.getTestServerRootUri(), "--rps", "100", "--duration", "100", "--h2"],
+      expect_failure=True)
+
+  # Verify failure when we provide both host and :authority: (will get plain http)
+  parsed_json, _ = sni_test_server_fixture.runNighthawkClient([
+      sni_test_server_fixture.getTestServerRootUri(), "--rps", "100", "--duration", "100", "--h2",
+      "--request-header", "host: sni.com", "--request-header", ":authority: sni.com"
+  ],
+                                                              expect_failure=True)

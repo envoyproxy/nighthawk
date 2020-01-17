@@ -1,0 +1,81 @@
+admin:
+  access_log_path: /tmp/admin_access-$test_id.log
+  profile_path: /tmp/envoy-$test_id.prof
+  address:
+    socket_address: { address: $server_ip, port_value: 0 }
+static_resources:
+  listeners:
+  - address:
+      socket_address:
+        address: $server_ip
+        port_value: 0
+    listener_filters:
+    - name: "envoy.listener.tls_inspector"
+      typed_config: {}
+    filter_chains:
+    - filter_chain_match:
+        server_names: ["sni.com"]
+      transport_socket:
+        name: envoy.transport_sockets.tls
+        typed_config:
+          "@type": type.googleapis.com/envoy.api.v2.auth.DownstreamTlsContext
+          common_tls_context:
+            tls_certificates:
+            - certificate_chain: { filename: "$ssl_cert_path" }
+              private_key: { filename: "$ssl_key_path" }     
+    listener_filters:
+    - name: "envoy.listener.tls_inspector"
+      typed_config: {}
+    filter_chains:
+    - filter_chain_match:
+        server_names: ["sni.com"]
+      transport_socket:
+        name: envoy.transport_sockets.tls
+        typed_config:
+          "@type": type.googleapis.com/envoy.api.v2.auth.DownstreamTlsContext
+          common_tls_context:
+            tls_certificates:
+            - certificate_chain: { filename: "$ssl_cert_path" }
+              private_key: { filename: "$ssl_key_path" }     
+      filters:
+      - name: envoy.http_connection_manager
+        config:
+          generate_request_id: false
+          codec_type: auto
+          stat_prefix: ingress_http
+          route_config:
+            name: local_route
+            virtual_hosts:
+            - name: service
+              domains:
+              - "sni.com"
+          http_filters:
+          - name: test-server
+            config:
+              response_body_size: 10
+              response_headers:
+              - { header: { key: "x-nh", value: "1"}}
+          - name: envoy.router
+            config:
+              dynamic_stats: false
+    - filters:
+      - name: envoy.http_connection_manager
+        config:
+          generate_request_id: false
+          codec_type: auto
+          stat_prefix: ingress_http
+          route_config:
+            name: local_route
+            virtual_hosts:
+            - name: service
+              domains:
+              - "*"
+          http_filters:
+          - name: test-server
+            config:
+              response_body_size: 10
+              response_headers:
+              - { header: { key: "x-nh", value: "1"}}
+          - name: envoy.router
+            config:
+              dynamic_stats: false
