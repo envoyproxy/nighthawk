@@ -11,20 +11,19 @@ namespace Nighthawk {
 
 SequencerImpl::SequencerImpl(
     const PlatformUtil& platform_util, Envoy::Event::Dispatcher& dispatcher,
-    Envoy::TimeSource& time_source, RateLimiterPtr&& rate_limiter, SequencerTarget target,
-    StatisticPtr&& latency_statistic, StatisticPtr&& blocked_statistic,
+    Envoy::TimeSource& time_source, Envoy::MonotonicTime start_time, RateLimiterPtr&& rate_limiter,
+    SequencerTarget target, StatisticPtr&& latency_statistic, StatisticPtr&& blocked_statistic,
     nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions idle_strategy,
-    TerminationPredicatePtr&& termination_predicate, Envoy::Stats::Scope& scope)
+    TerminationPredicate& termination_predicate, Envoy::Stats::Scope& scope)
     : target_(std::move(target)), platform_util_(platform_util), dispatcher_(dispatcher),
       time_source_(time_source), rate_limiter_(std::move(rate_limiter)),
       latency_statistic_(std::move(latency_statistic)),
-      blocked_statistic_(std::move(blocked_statistic)), idle_strategy_(idle_strategy),
-      termination_predicate_(std::move(termination_predicate)),
+      blocked_statistic_(std::move(blocked_statistic)), start_time_(start_time),
+      idle_strategy_(idle_strategy), termination_predicate_(termination_predicate),
       last_termination_status_(TerminationPredicate::Status::PROCEED),
       scope_(scope.createScope("sequencer.")),
       sequencer_stats_({ALL_SEQUENCER_STATS(POOL_COUNTER(*scope_))}) {
   ASSERT(target_ != nullptr, "No SequencerTarget");
-  ASSERT(termination_predicate_ != nullptr, "null termination predicate");
   periodic_timer_ = dispatcher_.createTimer([this]() { run(true); });
   spin_timer_ = dispatcher_.createTimer([this]() { run(false); });
   latency_statistic_->setId("sequencer.callback");
@@ -34,7 +33,9 @@ SequencerImpl::SequencerImpl(
 void SequencerImpl::start() {
   ASSERT(!running_);
   running_ = true;
-  start_time_ = time_source_.monotonicTime();
+  if (start_time_ < time_source_.monotonicTime()) {
+    ENVOY_LOG(error, "Sequencer start called too late");
+  }
   // Initiate the periodic timer loop.
   scheduleRun();
   // Immediately run.
@@ -82,43 +83,48 @@ void SequencerImpl::updateStartBlockingTimeIfNeeded() {
 void SequencerImpl::run(bool from_periodic_timer) {
   ASSERT(running_);
   const auto now = last_event_time_ = time_source_.monotonicTime();
-  last_termination_status_ = last_termination_status_ == TerminationPredicate::Status::PROCEED
-                                 ? termination_predicate_->evaluateChain()
-                                 : last_termination_status_;
-  // If we should stop according to termination conditions.
-  if (last_termination_status_ != TerminationPredicate::Status::PROCEED) {
-    stop(last_termination_status_ == TerminationPredicate::Status::FAIL);
-    return;
-  }
+  const auto running_duration = now - start_time_;
 
-  while (rate_limiter_->tryAcquireOne()) {
-    // The rate limiter says it's OK to proceed and call the target. Let's see if the target is OK
-    // with that as well.
-    const bool target_could_start = target_([this, now](bool, bool) {
-      const auto dur = time_source_.monotonicTime() - now;
-      latency_statistic_->addValue(dur.count());
-      targets_completed_++;
-      // Callbacks may fire after stop() is called. When the worker teardown runs the dispatcher,
-      // in-flight work might wrap up and fire this callback. By then we wouldn't want to
-      // re-enable any timers here.
-      if (this->running_) {
-        // Immediately schedule us to check again, as chances are we can get on with the next
-        // task.
-        spin_timer_->enableHRTimer(0ms);
+  // The running_duration we compute will be negative until it is time to start.
+  if (running_duration >= 0ns) {
+    last_termination_status_ = last_termination_status_ == TerminationPredicate::Status::PROCEED
+                                   ? termination_predicate_.evaluateChain()
+                                   : last_termination_status_;
+    // If we should stop according to termination conditions.
+    if (last_termination_status_ != TerminationPredicate::Status::PROCEED) {
+      stop(last_termination_status_ == TerminationPredicate::Status::FAIL);
+      return;
+    }
+
+    while (rate_limiter_->tryAcquireOne()) {
+      // The rate limiter says it's OK to proceed and call the target. Let's see if the target is OK
+      // with that as well.
+      const bool target_could_start = target_([this, now](bool, bool) {
+        const auto dur = time_source_.monotonicTime() - now;
+        latency_statistic_->addValue(dur.count());
+        targets_completed_++;
+        // Callbacks may fire after stop() is called. When the worker teardown runs the dispatcher,
+        // in-flight work might wrap up and fire this callback. By then we wouldn't want to
+        // re-enable any timers here.
+        if (this->running_) {
+          // Immediately schedule us to check again, as chances are we can get on with the next
+          // task.
+          spin_timer_->enableHRTimer(0ms);
+        }
+      });
+
+      if (target_could_start) {
+        unblockAndUpdateStatisticIfNeeded(now);
+        targets_initiated_++;
+      } else {
+        // This should only happen when we are running in closed-loop mode.The target wasn't able to
+        // proceed. Update the rate limiter.
+        updateStartBlockingTimeIfNeeded();
+        rate_limiter_->releaseOne();
+        // Retry later. When all target_ calls have completed we are going to spin until target_
+        // stops returning false. Otherwise the periodic timer will wake us up to re-check.
+        break;
       }
-    });
-
-    if (target_could_start) {
-      unblockAndUpdateStatisticIfNeeded(now);
-      targets_initiated_++;
-    } else {
-      // This should only happen when we are running in closed-loop mode.The target wasn't able to
-      // proceed. Update the rate limiter.
-      updateStartBlockingTimeIfNeeded();
-      rate_limiter_->releaseOne();
-      // Retry later. When all target_ calls have completed we are going to spin until target_
-      // stops returning false. Otherwise the periodic timer will wake us up to re-check.
-      break;
     }
   }
 

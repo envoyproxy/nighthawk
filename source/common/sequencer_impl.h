@@ -49,10 +49,11 @@ class SequencerImpl : public Sequencer, public Envoy::Logger::Loggable<Envoy::Lo
 public:
   SequencerImpl(
       const PlatformUtil& platform_util, Envoy::Event::Dispatcher& dispatcher,
-      Envoy::TimeSource& time_source, RateLimiterPtr&& rate_limiter, SequencerTarget target,
-      StatisticPtr&& latency_statistic, StatisticPtr&& blocked_statistic,
+      Envoy::TimeSource& time_source, Envoy::MonotonicTime start_time,
+      RateLimiterPtr&& rate_limiter, SequencerTarget target, StatisticPtr&& latency_statistic,
+      StatisticPtr&& blocked_statistic,
       nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions idle_strategy,
-      TerminationPredicatePtr&& termination_predicate, Envoy::Stats::Scope& scope);
+      TerminationPredicate& termination_predicate, Envoy::Stats::Scope& scope);
 
   /**
    * Starts the Sequencer. Should be followed up with a call to waitForCompletion().
@@ -132,7 +133,7 @@ private:
   bool blocked_{};
   Envoy::MonotonicTime blocked_start_;
   nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions idle_strategy_;
-  TerminationPredicatePtr termination_predicate_;
+  TerminationPredicate& termination_predicate_;
   TerminationPredicate::Status last_termination_status_;
   Envoy::Stats::ScopePtr scope_;
   SequencerStats sequencer_stats_;
