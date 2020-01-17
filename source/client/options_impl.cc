@@ -648,11 +648,12 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
       // TODO(oschaaf): expose append option in CLI? For now we just set.
       header_value_option->mutable_append()->set_value(false);
       auto request_header = header_value_option->mutable_header();
-      auto pos = header.find(':');
+      // Skip past the first colon so we propagate ':authority: foo` correctly.
+      auto pos = header.empty() ? std::string::npos : header.find(':', 1);
       if (pos != std::string::npos) {
-        request_header->set_key(header.substr(0, pos));
+        request_header->set_key(std::string(absl::StripAsciiWhitespace(header.substr(0, pos))));
         // Any visible char, including ':', is allowed in header values.
-        request_header->set_value(header.substr(pos + 1));
+        request_header->set_value(std::string(absl::StripAsciiWhitespace(header.substr(pos + 1))));
       } else {
         throw MalformedArgvException("A ':' is required in a header.");
       }

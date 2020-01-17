@@ -271,6 +271,21 @@ class HttpsIntegrationTestBase(IntegrationTestBase):
     return super(HttpsIntegrationTestBase, self).getTestServerRootUri(True)
 
 
+class SniIntegrationTestBase(HttpsIntegrationTestBase):
+  """
+  Base for https/sni tests against the Nighthawk test server
+  """
+
+  def __init__(self, ip_version):
+    super(SniIntegrationTestBase, self).__init__(ip_version)
+    self.nighthawk_test_config_path = os.path.join(
+        self.test_rundir, "test/integration/configurations/sni_origin.yaml")
+
+  def getTestServerRootUri(self):
+    """See base class."""
+    return super(HttpsIntegrationTestBase, self).getTestServerRootUri(True)
+
+
 class MultiServerHttpsIntegrationTestBase(IntegrationTestBase):
   """
   Base for https tests against multiple Nighthawk test servers
@@ -321,6 +336,14 @@ def multi_http_test_server_fixture(request):
 @pytest.fixture(params=determineIpVersionsFromEnvironment())
 def multi_https_test_server_fixture(request):
   f = MultiServerHttpsIntegrationTestBase(request.param, backend_count=3)
+  f.setUp()
+  yield f
+  f.tearDown()
+
+
+@pytest.fixture(params=determineIpVersionsFromEnvironment())
+def sni_test_server_fixture(request):
+  f = SniIntegrationTestBase(request.param)
   f.setUp()
   yield f
   f.tearDown()

@@ -18,6 +18,7 @@ envoy_cc_library(
         "options_impl.cc",
         "process_impl.cc",
         "remote_process_impl.cc",
+        "sni_utility.cc",
         "stream_decoder.cc",
     ],
     hdrs = [
@@ -28,6 +29,7 @@ envoy_cc_library(
         "options_impl.h",
         "process_impl.h",
         "remote_process_impl.h",
+        "sni_utility.h",
         "stream_decoder.h",
     ],
     copts = select({
@@ -82,6 +84,7 @@ envoy_cc_library(
         "@envoy//source/extensions/transport_sockets/tls:context_lib_with_external_headers",
         "@envoy//source/server:options_lib_with_external_headers",
         "@envoy//source/server/config_validation:admin_lib_with_external_headers",
+        "@envoy//include/envoy/http:protocol_interface_with_external_headers",
     ] + select({
         "//bazel:zipkin_disabled": [],
         "//conditions:default": [

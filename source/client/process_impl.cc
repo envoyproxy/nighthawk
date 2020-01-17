@@ -48,6 +48,7 @@
 #include "client/client_worker_impl.h"
 #include "client/factories_impl.h"
 #include "client/options_impl.h"
+#include "client/sni_utility.h"
 
 #include "ares.h"
 
@@ -255,6 +256,12 @@ void ProcessImpl::createBootstrapConfiguration(
       transport_socket->set_name("envoy.transport_sockets.tls");
       envoy::extensions::transport_sockets::tls::v3alpha::UpstreamTlsContext context =
           options_.tlsContext();
+      const std::string sni_host = SniUtility::computeSniHost(
+          uris, options_.requestHeaders(),
+          options_.h2() ? Envoy::Http::Protocol::Http2 : Envoy::Http::Protocol::Http11);
+      if (!sni_host.empty()) {
+        *context.mutable_sni() = sni_host;
+      }
       auto* common_tls_context = context.mutable_common_tls_context();
       if (options_.h2()) {
         common_tls_context->add_alpn_protocols("h2");
