@@ -325,12 +325,12 @@ def test_https_h2_transport_socket_configuration(https_test_server_fixture):
 
 def test_https_prefetching(https_test_server_fixture):
   """
-  Test we prefetch connections. We test for 1 second at 2 rps, which should
+  Test we prefetch connections. We test for 1 second at 1 rps, which should
   result in 1 connection max without prefetching. However, we specify 50 connections
   and the prefetching flag, so we ought to see 50 http1 connections created.
   """
   parsed_json, _ = https_test_server_fixture.runNighthawkClient([
-      "--duration 1", "--rps 2", "--prefetch-connections", "--connections 50",
+      "--duration 1", "--rps 1", "--prefetch-connections", "--connections 50",
       https_test_server_fixture.getTestServerRootUri()
   ])
   counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
@@ -596,3 +596,45 @@ def test_https_h2_sni(sni_test_server_fixture):
       "--request-header", "host: sni.com", "--request-header", ":authority: sni.com"
   ],
                                                               expect_failure=True)
+
+
+@pytest.fixture(scope="function", params=[1, 25])
+def qps_parameterization_fixture(request):
+  param = request.param
+  yield param
+
+
+@pytest.fixture(scope="function", params=[1, 3])
+def duration_parameterization_fixture(request):
+  param = request.param
+  yield param
+
+
+@pytest.mark.skipif(isSanitizerRun(), reason="Unstable in sanitizer runs")
+def test_http_request_release_timing(http_test_server_fixture, qps_parameterization_fixture,
+                                     duration_parameterization_fixture):
+  '''
+  Verify latency-sample-, query- and reply- counts in various configurations.
+  '''
+
+  for concurrency in [1, 2]:
+    parsed_json, _ = http_test_server_fixture.runNighthawkClient([
+        http_test_server_fixture.getTestServerRootUri(), "--duration",
+        str(duration_parameterization_fixture), "--rps",
+        str(qps_parameterization_fixture), "--concurrency",
+        str(concurrency)
+    ])
+
+    total_requests = qps_parameterization_fixture * concurrency * duration_parameterization_fixture
+    global_histograms = http_test_server_fixture.getNighthawkGlobalHistogramsbyIdFromJson(
+        parsed_json)
+    counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
+    assertEqual(
+        int(global_histograms["benchmark_http_client.request_to_response"]["count"]),
+        total_requests)
+    assertEqual(
+        int(global_histograms["benchmark_http_client.queue_to_connect"]["count"]), total_requests)
+
+    # When it comes to qps/rps we also expect one warmup call per worker. We'll get rid
+    # of this when we land the next part of the work with respect to phases.
+    assertCounterEqual(counters, "benchmark.http_2xx", (total_requests) + concurrency)

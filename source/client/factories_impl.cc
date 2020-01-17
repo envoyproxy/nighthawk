@@ -72,7 +72,7 @@ SequencerPtr SequencerFactoryImpl::create(
   return std::make_unique<SequencerImpl>(
       platform_util_, dispatcher, time_source, std::move(rate_limiter), sequencer_target,
       statistic_factory.create(), statistic_factory.create(), options_.sequencerIdleStrategy(),
-      std::move(termination_predicate), scope);
+      std::move(termination_predicate), scope, scheduled_starting_time);
 }
 
 StoreFactoryImpl::StoreFactoryImpl(const Options& options) : OptionBasedFactoryImpl(options) {}
@@ -171,10 +171,11 @@ RequestSourceFactoryImpl::create(const Envoy::Upstream::ClusterManagerPtr& clust
 TerminationPredicateFactoryImpl::TerminationPredicateFactoryImpl(const Options& options)
     : OptionBasedFactoryImpl(options) {}
 
-TerminationPredicatePtr TerminationPredicateFactoryImpl::create(Envoy::TimeSource& time_source,
-                                                                Envoy::Stats::Scope& scope) const {
-  TerminationPredicatePtr duration_predicate =
-      std::make_unique<DurationTerminationPredicateImpl>(time_source, options_.duration());
+TerminationPredicatePtr
+TerminationPredicateFactoryImpl::create(Envoy::TimeSource& time_source, Envoy::Stats::Scope& scope,
+                                        const Envoy::MonotonicTime scheduled_starting_time) const {
+  TerminationPredicatePtr duration_predicate = std::make_unique<DurationTerminationPredicateImpl>(
+      time_source, options_.duration(), scheduled_starting_time);
   TerminationPredicate* current_predicate = duration_predicate.get();
   current_predicate = linkConfiguredPredicates(*current_predicate, options_.failurePredicates(),
                                                TerminationPredicate::Status::FAIL, scope);

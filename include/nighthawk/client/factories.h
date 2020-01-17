@@ -75,8 +75,9 @@ public:
 class TerminationPredicateFactory {
 public:
   virtual ~TerminationPredicateFactory() = default;
-  virtual TerminationPredicatePtr create(Envoy::TimeSource& time_source,
-                                         Envoy::Stats::Scope& scope) const PURE;
+  virtual TerminationPredicatePtr
+  create(Envoy::TimeSource& time_source, Envoy::Stats::Scope& scope,
+         const Envoy::MonotonicTime scheduled_starting_time) const PURE;
 };
 
 } // namespace Nighthawk

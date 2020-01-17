@@ -111,21 +111,30 @@ class IntegrationTestBase():
         any_failed = True
     assert (not any_failed)
 
+  def getGlobalResults(self, parsed_json):
+    """
+    Utility to find the global/aggregated result in the json output
+    """
+    global_result = [x for x in parsed_json["results"] if x["name"] == "global"]
+    assert (len(global_result) == 1)
+    return global_result[0]
+
   def getNighthawkCounterMapFromJson(self, parsed_json):
     """
     Utility method to get the counters from the json indexed by name.
     """
-    global_results_index = len(parsed_json["results"]) - 1
     return {
         counter["name"]: int(counter["value"])
-        for counter in parsed_json["results"][global_results_index]["counters"]
+        for counter in self.getGlobalResults(parsed_json)["counters"]
     }
 
   def getNighthawkGlobalHistogramsbyIdFromJson(self, parsed_json):
     """
     Utility method to get the global histograms from the json indexed by id.
     """
-    return {statistic["id"]: statistic for statistic in parsed_json["results"][0]["statistics"]}
+    return {
+        statistic["id"]: statistic for statistic in self.getGlobalResults(parsed_json)["statistics"]
+    }
 
   def getTestServerRootUri(self, https=False):
     """
