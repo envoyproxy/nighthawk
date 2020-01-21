@@ -116,7 +116,9 @@ class BenchmarkClientHttpImpl : public BenchmarkClient,
 public:
   BenchmarkClientHttpImpl(Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher,
                           Envoy::Stats::Scope& scope, StatisticPtr&& connect_statistic,
-                          StatisticPtr&& response_statistic, bool use_h2,
+                          StatisticPtr&& response_statistic,
+                          StatisticPtr&& response_header_size_statistic,
+                          StatisticPtr&& response_body_size_statistic, bool use_h2,
                           Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                           Envoy::Tracing::HttpTracerPtr& http_tracer,
                           absl::string_view cluster_name, RequestGenerator request_generator,
@@ -161,6 +163,8 @@ private:
   // destruction when tls has been involved during usage.
   StatisticPtr connect_statistic_;
   StatisticPtr response_statistic_;
+  StatisticPtr response_header_size_statistic_;
+  StatisticPtr response_body_size_statistic_;
   const bool use_h2_;
   std::chrono::seconds timeout_{5s};
   uint32_t connection_limit_{1};

@@ -57,11 +57,18 @@ TYPED_TEST(TypedStatisticTest, Simple) {
     a.addValue(value);
   }
   EXPECT_EQ(3, a.count());
+  EXPECT_EQ(1, a.min());
+  EXPECT_EQ(3, a.max());
 
   for (int value : b_values) {
     b.addValue(value);
   }
   EXPECT_EQ(3, b.count());
+  EXPECT_EQ(1234, b.min());
+  // We substract one from the expected precision with respect to significant digits for
+  // HdrHistogram. (More context in comments over at the the HdrStatisticProtoOutputLargeValues test
+  // below).
+  Helper::expectNear(6543456, b.max(), b.significantDigits() - 1);
 
   Helper::expectNear(2.0, a.mean(), a.significantDigits());
   Helper::expectNear(0.6666666666666666, a.pvariance(), a.significantDigits());
@@ -73,9 +80,25 @@ TYPED_TEST(TypedStatisticTest, Simple) {
 
   auto c = a.combine(b);
   EXPECT_EQ(6, c->count());
+  EXPECT_EQ(1, c->min());
+  Helper::expectNear(6543456, c->max(), c->significantDigits() - 1);
   Helper::expectNear(1147838.5, c->mean(), c->significantDigits());
   Helper::expectNear(5838135311072.917, c->pvariance(), c->significantDigits());
   Helper::expectNear(2416223.357033227, c->pstdev(), c->significantDigits());
+
+  // A reverse combine should be exactly equivalent.
+  auto d = b.combine(a);
+  EXPECT_EQ(c->count(), d->count());
+  EXPECT_EQ(c->min(), d->min());
+  EXPECT_EQ(c->max(), d->max());
+  EXPECT_EQ(c->mean(), d->mean());
+  EXPECT_EQ(c->pvariance(), d->pvariance());
+  EXPECT_EQ(c->pstdev(), d->pstdev());
+}
+
+TYPED_TEST(TypedStatisticTest, createNewInstanceOfSameType) {
+  TypeParam a;
+  EXPECT_NE(a.createNewInstanceOfSameType(), nullptr);
 }
 
 TYPED_TEST(TypedStatisticTest, Empty) {
@@ -84,6 +107,8 @@ TYPED_TEST(TypedStatisticTest, Empty) {
   EXPECT_TRUE(std::isnan(a.mean()));
   EXPECT_TRUE(std::isnan(a.pvariance()));
   EXPECT_TRUE(std::isnan(a.pstdev()));
+  EXPECT_EQ(a.min(), UINT64_MAX);
+  EXPECT_EQ(a.max(), 0);
 }
 
 TYPED_TEST(TypedStatisticTest, SingleAndDoubleValue) {
@@ -164,7 +189,7 @@ TYPED_TEST(TypedStatisticTest, ProtoOutput) {
   a.addValue(6543456);
   a.addValue(342335);
 
-  const nighthawk::client::Statistic proto = a.toProto();
+  const nighthawk::client::Statistic proto = a.toProto(Statistic::SerializationDomain::DURATION);
 
   EXPECT_EQ("foo", proto.id());
   EXPECT_EQ(2, proto.count());
@@ -174,7 +199,7 @@ TYPED_TEST(TypedStatisticTest, ProtoOutput) {
 
 TYPED_TEST(TypedStatisticTest, ProtoOutputEmptyStats) {
   TypeParam a;
-  const nighthawk::client::Statistic proto = a.toProto();
+  const nighthawk::client::Statistic proto = a.toProto(Statistic::SerializationDomain::DURATION);
 
   EXPECT_EQ(proto.count(), 0);
   EXPECT_EQ(proto.mean().nanos(), 0);
@@ -188,9 +213,11 @@ TYPED_TEST(TypedStatisticTest, StringOutput) {
   a.addValue(342335);
 
   std::string s = a.toString();
-  EXPECT_NE(std::string::npos, s.find("Count: 2."));
-  EXPECT_NE(std::string::npos, s.find("Mean: 3442.9"));
-  EXPECT_NE(std::string::npos, s.find("pstdev: 3100.5"));
+  std::vector<std::string> matches{
+      "count: ", "raw_mean: ", "raw_pstdev: ", "raw_min: ", "raw_max: "};
+  for (const auto& match : matches) {
+    EXPECT_NE(std::string::npos, s.find(match));
+  }
 }
 
 class StatisticTest : public Test {};
@@ -202,7 +229,7 @@ TEST(StatisticTest, SimpleStatisticProtoOutputLargeValues) {
   uint64_t value = 100ul + 0xFFFFFFFF; // 100 + the max for uint32_t
   a.addValue(value);
   a.addValue(value);
-  const nighthawk::client::Statistic proto = a.toProto();
+  const nighthawk::client::Statistic proto = a.toProto(Statistic::SerializationDomain::DURATION);
 
   EXPECT_EQ(proto.count(), 2);
   Helper::expectNear(((1.0 * proto.mean().seconds() * 1000 * 1000 * 1000) + proto.mean().nanos()),
@@ -216,7 +243,7 @@ TEST(StatisticTest, HdrStatisticProtoOutputLargeValues) {
   uint64_t value = 100ul + 0xFFFFFFFF;
   a.addValue(value);
   a.addValue(value);
-  const nighthawk::client::Statistic proto = a.toProto();
+  const nighthawk::client::Statistic proto = a.toProto(Statistic::SerializationDomain::DURATION);
 
   EXPECT_EQ(proto.count(), 2);
   // TODO(oschaaf): hdr doesn't seem to the promised precision in this scenario.
@@ -232,7 +259,7 @@ TEST(StatisticTest, StreamingStatProtoOutputLargeValues) {
   uint64_t value = 100ul + 0xFFFFFFFF;
   a.addValue(value);
   a.addValue(value);
-  const nighthawk::client::Statistic proto = a.toProto();
+  const nighthawk::client::Statistic proto = a.toProto(Statistic::SerializationDomain::DURATION);
 
   EXPECT_EQ(proto.count(), 2);
 
@@ -254,7 +281,12 @@ TEST(StatisticTest, HdrStatisticPercentilesProto) {
   util.loadFromJson(Envoy::Filesystem::fileSystemForTest().fileReadToEnd(
                         TestEnvironment::runfilesPath("test/test_data/hdr_proto_json.gold")),
                     parsed_json_proto, Envoy::ProtobufMessage::getStrictValidationVisitor());
-  EXPECT_TRUE(util(parsed_json_proto, statistic.toProto()));
+  // Instead of comparing proto's, we perform a string-based comparison, because that emits a
+  // helpful diff when this fails.
+  const std::string json = util.getJsonStringFromMessage(
+      statistic.toProto(Statistic::SerializationDomain::DURATION), true, true);
+  const std::string golden_json = util.getJsonStringFromMessage(parsed_json_proto, true, true);
+  EXPECT_EQ(json, golden_json);
 }
 
 TEST(StatisticTest, CombineAcrossTypesFails) {
@@ -282,6 +314,13 @@ TEST(StatisticTest, HdrStatisticOutOfRange) {
   HdrStatistic a;
   a.addValue(INT64_MAX);
   EXPECT_EQ(0, a.count());
+}
+
+TEST(StatisticTest, NullStatistic) {
+  NullStatistic stat;
+  EXPECT_EQ(0, stat.count());
+  stat.addValue(1);
+  EXPECT_EQ(0, stat.count());
 }
 
 } // namespace Nighthawk
