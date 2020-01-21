@@ -68,7 +68,7 @@ public:
   /**
    * @return StatisticPtr Yields a new instance of the same type as the instance this is called on.
    */
-  virtual StatisticPtr createNewInstance() const PURE;
+  virtual StatisticPtr createNewInstanceOfSameType() const PURE;
 
   /**
    * Only used in tests to match expectations to the right precision level.

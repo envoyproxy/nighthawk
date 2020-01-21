@@ -24,7 +24,7 @@ results:
           []
         mean: 0s
         pstdev: 0s
-        min: -0.000000001s
+        min: 0s
         max: 0s
       - count: 4
         id: foo_size
@@ -140,7 +140,7 @@ results:
           []
         mean: 0s
         pstdev: 0s
-        min: -0.000000001s
+        min: 0s
         max: 0s
       - count: 4
         id: foo_size
@@ -256,7 +256,7 @@ results:
           []
         mean: 0s
         pstdev: 0s
-        min: -0.000000001s
+        min: 0s
         max: 0s
       - count: 4
         id: foo_size

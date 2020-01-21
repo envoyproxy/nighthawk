@@ -210,7 +210,8 @@ ProcessImpl::vectorizeStatisticPtrMap(const StatisticPtrMap& statistics) const {
   std::vector<StatisticPtr> v;
   for (const auto& statistic : statistics) {
     // Clone the orinal statistic into a new one.
-    auto new_statistic = statistic.second->createNewInstance()->combine(*(statistic.second));
+    auto new_statistic =
+        statistic.second->createNewInstanceOfSameType()->combine(*(statistic.second));
     new_statistic->setId(statistic.first);
     v.push_back(std::move(new_statistic));
   }
@@ -226,7 +227,7 @@ ProcessImpl::mergeWorkerStatistics(const std::vector<ClientWorkerPtr>& workers) 
   std::vector<StatisticPtr> merged_statistics;
   StatisticPtrMap w0_statistics = workers[0]->statistics();
   for (const auto& w0_statistic : w0_statistics) {
-    auto new_statistic = w0_statistic.second->createNewInstance();
+    auto new_statistic = w0_statistic.second->createNewInstanceOfSameType();
     new_statistic->setId(w0_statistic.first);
     merged_statistics.push_back(std::move(new_statistic));
   }

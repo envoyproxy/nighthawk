@@ -5,8 +5,24 @@
 #include <sstream>
 
 #include "external/envoy/source/common/common/assert.h"
+#include "external/envoy/source/common/protobuf/utility.h"
 
 namespace Nighthawk {
+
+namespace {
+
+/**
+ * @param mutable_duration The proto duration that will be updated to reflect the passed in nanos.
+ * @param nanos The number of nanoseconds.
+ */
+static void setDurationFromNanos(Envoy::ProtobufWkt::Duration& mutable_duration,
+                                 const uint64_t nanos) {
+  constexpr uint64_t one_billion = 1e9;
+  mutable_duration.set_seconds(nanos / one_billion);
+  mutable_duration.set_nanos(nanos % one_billion);
+}
+
+} // namespace
 
 std::string StatisticImpl::toString() const {
   return toProto(SerializationDomain::RAW).DebugString();
@@ -20,18 +36,12 @@ nighthawk::client::Statistic StatisticImpl::toProto(SerializationDomain domain) 
   if (domain == Statistic::SerializationDomain::DURATION) {
     int64_t nanos;
     nanos = count() == 0 ? 0 : static_cast<int64_t>(std::round(mean()));
-    statistic.mutable_mean()->set_seconds(nanos / 1000000000);
-    statistic.mutable_mean()->set_nanos(nanos % 1000000000);
+    setDurationFromNanos(*statistic.mutable_mean(), nanos);
     nanos =
         count() == 0 ? 0 : static_cast<int64_t>(std::round(std::isnan(pstdev()) ? 0 : pstdev()));
-    statistic.mutable_pstdev()->set_seconds(nanos / 1000000000);
-    statistic.mutable_pstdev()->set_nanos(nanos % 1000000000);
-    nanos = min();
-    statistic.mutable_min()->set_seconds(nanos / 1000000000);
-    statistic.mutable_min()->set_nanos(nanos % 1000000000);
-    nanos = max();
-    statistic.mutable_max()->set_seconds(nanos / 1000000000);
-    statistic.mutable_max()->set_nanos(nanos % 1000000000);
+    setDurationFromNanos(*statistic.mutable_pstdev(), nanos);
+    setDurationFromNanos(*statistic.mutable_min(), min() == UINT64_MAX ? 0 : min());
+    setDurationFromNanos(*statistic.mutable_max(), max());
   } else {
     statistic.set_raw_mean(mean());
     statistic.set_raw_pstdev(pstdev());
@@ -47,8 +57,8 @@ std::string StatisticImpl::id() const { return id_; };
 void StatisticImpl::setId(absl::string_view id) { id_ = std::string(id); };
 
 void StatisticImpl::addValue(uint64_t value) {
-  min_ = value < min_ ? value : min_;
-  max_ = value > max_ ? value : max_;
+  min_ = std::min(min_, value);
+  max_ = std::max(max_, value);
   count_++;
 };
 
@@ -76,8 +86,8 @@ StatisticPtr SimpleStatistic::combine(const Statistic& statistic) const {
   const SimpleStatistic& a = *this;
   const auto& b = dynamic_cast<const SimpleStatistic&>(statistic);
   auto combined = std::make_unique<SimpleStatistic>();
-  combined->min_ = a.min() > b.min() ? b.min() : a.min();
-  combined->max_ = a.max() > b.max() ? a.max() : b.max();
+  combined->min_ = std::min(a.min(), b.min());
+  combined->max_ = std::max(a.max(), b.max());
   combined->count_ = a.count() + b.count();
   combined->sum_x_ = a.sum_x_ + b.sum_x_;
   combined->sum_x2_ = a.sum_x2_ + b.sum_x2_;
@@ -108,8 +118,8 @@ StatisticPtr StreamingStatistic::combine(const Statistic& statistic) const {
   const auto& b = dynamic_cast<const StreamingStatistic&>(statistic);
   auto combined = std::make_unique<StreamingStatistic>();
 
-  combined->min_ = a.min() > b.min() ? b.min() : a.min();
-  combined->max_ = a.max() > b.max() ? a.max() : b.max();
+  combined->min_ = std::min(a.min(), b.min());
+  combined->max_ = std::max(a.max(), b.max());
   combined->count_ = a.count() + b.count();
   // A statistic instance with zero samples will return std::isnan() as its mean.
   // For the the merge we are doing here we need to treat that as 0.
@@ -138,8 +148,8 @@ StatisticPtr InMemoryStatistic::combine(const Statistic& statistic) const {
   auto combined = std::make_unique<InMemoryStatistic>();
   const auto& b = dynamic_cast<const InMemoryStatistic&>(statistic);
 
-  combined->min_ = this->min() > b.min() ? b.min() : this->min();
-  combined->max_ = this->max() > b.max() ? this->max() : b.max();
+  combined->min_ = std::min(this->min(), b.min());
+  combined->max_ = std::max(this->max(), b.max());
   combined->samples_.insert(combined->samples_.end(), this->samples_.begin(), this->samples_.end());
   combined->samples_.insert(combined->samples_.end(), b.samples_.begin(), b.samples_.end());
   combined->streaming_stats_ = this->streaming_stats_->combine(*b.streaming_stats_);
@@ -215,8 +225,7 @@ nighthawk::client::Statistic HdrStatistic::toProto(SerializationDomain domain) c
 
     percentile = proto.add_percentiles();
     if (domain == Statistic::SerializationDomain::DURATION) {
-      percentile->mutable_duration()->set_seconds(iter.highest_equivalent_value / 1000000000);
-      percentile->mutable_duration()->set_nanos(iter.highest_equivalent_value % 1000000000);
+      setDurationFromNanos(*percentile->mutable_duration(), iter.highest_equivalent_value);
     } else {
       percentile->set_raw_value(iter.highest_equivalent_value);
     }

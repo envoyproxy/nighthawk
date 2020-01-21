@@ -96,9 +96,9 @@ TYPED_TEST(TypedStatisticTest, Simple) {
   EXPECT_EQ(c->pstdev(), d->pstdev());
 }
 
-TYPED_TEST(TypedStatisticTest, createNewInstance) {
+TYPED_TEST(TypedStatisticTest, createNewInstanceOfSameType) {
   TypeParam a;
-  EXPECT_NE(a.createNewInstance(), nullptr);
+  EXPECT_NE(a.createNewInstanceOfSameType(), nullptr);
 }
 
 TYPED_TEST(TypedStatisticTest, Empty) {

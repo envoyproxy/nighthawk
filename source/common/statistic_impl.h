@@ -44,9 +44,11 @@ public:
   double mean() const override { return 0.0; }
   double pvariance() const override { return 0.0; }
   double pstdev() const override { return 0.0; }
-  StatisticPtr combine(const Statistic&) const override { return createNewInstance(); };
+  StatisticPtr combine(const Statistic&) const override { return createNewInstanceOfSameType(); };
   uint64_t significantDigits() const override { return 0; }
-  StatisticPtr createNewInstance() const override { return std::make_unique<NullStatistic>(); };
+  StatisticPtr createNewInstanceOfSameType() const override {
+    return std::make_unique<NullStatistic>();
+  };
 };
 
 /**
@@ -61,7 +63,9 @@ public:
   double pstdev() const override;
   StatisticPtr combine(const Statistic& statistic) const override;
   uint64_t significantDigits() const override { return 8; }
-  StatisticPtr createNewInstance() const override { return std::make_unique<SimpleStatistic>(); };
+  StatisticPtr createNewInstanceOfSameType() const override {
+    return std::make_unique<SimpleStatistic>();
+  };
 
 private:
   double sum_x_{0};
@@ -84,7 +88,7 @@ public:
   double pstdev() const override;
   StatisticPtr combine(const Statistic& statistic) const override;
   bool resistsCatastrophicCancellation() const override { return true; }
-  StatisticPtr createNewInstance() const override {
+  StatisticPtr createNewInstanceOfSameType() const override {
     return std::make_unique<StreamingStatistic>();
   };
 
@@ -110,7 +114,9 @@ public:
     return streaming_stats_->resistsCatastrophicCancellation();
   }
   uint64_t significantDigits() const override { return streaming_stats_->significantDigits(); }
-  StatisticPtr createNewInstance() const override { return std::make_unique<InMemoryStatistic>(); };
+  StatisticPtr createNewInstanceOfSameType() const override {
+    return std::make_unique<InMemoryStatistic>();
+  };
 
 private:
   std::vector<int64_t> samples_;
@@ -135,7 +141,9 @@ public:
   StatisticPtr combine(const Statistic& statistic) const override;
   nighthawk::client::Statistic toProto(SerializationDomain domain) const override;
   uint64_t significantDigits() const override { return SignificantDigits; }
-  StatisticPtr createNewInstance() const override { return std::make_unique<HdrStatistic>(); };
+  StatisticPtr createNewInstanceOfSameType() const override {
+    return std::make_unique<HdrStatistic>();
+  };
 
 private:
   static const int SignificantDigits;
