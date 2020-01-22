@@ -30,7 +30,14 @@ void OutputCollectorImpl::addResult(absl::string_view name,
   auto result = output_.add_results();
   result->set_name(name.data(), name.size());
   for (auto& statistic : statistics) {
-    *(result->add_statistics()) = statistic->toProto();
+    // TODO(#292): Looking at if the statistic id ends with "_size" to determine how it should be
+    // serialized is kind of hacky. Maybe we should have a lookup table of sorts, to determine how
+    // statistics should we serialized. Doing so may give us a canonical place to consolidate their
+    // ids as well too.
+    Statistic::SerializationDomain serialization_domain =
+        absl::EndsWith(statistic->id(), "_size") ? Statistic::SerializationDomain::RAW
+                                                 : Statistic::SerializationDomain::DURATION;
+    *(result->add_statistics()) = statistic->toProto(serialization_domain);
   }
   for (const auto& counter : counters) {
     auto new_counters = result->add_counters();

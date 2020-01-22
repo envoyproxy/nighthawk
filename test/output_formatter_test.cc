@@ -33,12 +33,31 @@ public:
   OutputCollectorTest() {
     StatisticPtr used_statistic = std::make_unique<StreamingStatistic>();
     StatisticPtr empty_statistic = std::make_unique<StreamingStatistic>();
+    StatisticPtr size_statistic = std::make_unique<HdrStatistic>();
+    StatisticPtr latency_statistic = std::make_unique<HdrStatistic>();
+
     used_statistic->setId("stat_id");
     used_statistic->addValue(1000000);
     used_statistic->addValue(2000000);
     used_statistic->addValue(3000000);
+
+    size_statistic->addValue(14);
+    size_statistic->addValue(15);
+    size_statistic->addValue(16);
+    size_statistic->addValue(17);
+    size_statistic->setId("foo_size");
+
+    latency_statistic->addValue(180000);
+    latency_statistic->addValue(190000);
+    latency_statistic->addValue(200000);
+    latency_statistic->addValue(210000);
+    latency_statistic->setId("foo_latency");
+
     statistics_.push_back(std::move(used_statistic));
     statistics_.push_back(std::move(empty_statistic));
+    statistics_.push_back(std::move(size_statistic));
+    statistics_.push_back(std::move(latency_statistic));
+
     counters_["foo"] = 1;
     counters_["bar"] = 2;
     time_system_.setSystemTime(std::chrono::milliseconds(1234567891567));
@@ -170,7 +189,6 @@ public:
 
 TEST_F(MediumOutputCollectorTest, FortioFormatter) {
   const auto input_proto = loadProtoFromFile("test/test_data/output_formatter.medium.proto.gold");
-
   FortioOutputFormatterImpl formatter;
   expectEqualToGoldFile(formatter.formatProto(input_proto),
                         "test/test_data/output_formatter.medium.fortio.gold");
@@ -183,7 +201,10 @@ TEST_F(StatidToNameTest, TestTranslations) {
   EXPECT_EQ(ConsoleOutputFormatterImpl::statIdtoFriendlyStatName("foo"), "foo");
   const std::vector<std::string> ids = {"benchmark_http_client.queue_to_connect",
                                         "benchmark_http_client.request_to_response",
-                                        "sequencer.callback", "sequencer.blocking"};
+                                        "benchmark_http_client.response_body_size",
+                                        "benchmark_http_client.response_header_size",
+                                        "sequencer.callback",
+                                        "sequencer.blocking"};
   for (const std::string& id : ids) {
     EXPECT_NE(ConsoleOutputFormatterImpl::statIdtoFriendlyStatName(id), id);
   }

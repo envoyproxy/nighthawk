@@ -124,6 +124,7 @@ public:
   void setupBenchmarkClient() {
     client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
         *api_, *dispatcher_, store_, std::make_unique<StreamingStatistic>(),
+        std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
         std::make_unique<StreamingStatistic>(), false, cluster_manager_, http_tracer_, "benchmark",
         request_generator_, true);
   }
@@ -188,6 +189,7 @@ TEST_F(BenchmarkClientHttpTest, StatusTrackingInOnComplete) {
   auto store = std::make_unique<Envoy::Stats::IsolatedStoreImpl>();
   client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
       *api_, *dispatcher_, *store, std::make_unique<StreamingStatistic>(),
+      std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
       std::make_unique<StreamingStatistic>(), false, cluster_manager_, http_tracer_, "foo",
       request_generator_, true);
   Envoy::Http::HeaderMapImpl header;

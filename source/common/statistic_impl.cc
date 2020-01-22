@@ -5,27 +5,49 @@
 #include <sstream>
 
 #include "external/envoy/source/common/common/assert.h"
+#include "external/envoy/source/common/protobuf/utility.h"
 
 namespace Nighthawk {
 
-std::string StatisticImpl::toString() const {
-  return fmt::format("Count: {}. Mean: {:.{}f} μs. pstdev: {:.{}f} μs.\n", count(), mean() / 1000,
-                     2, pstdev() / 1000, 2);
+namespace {
+
+/**
+ * @param mutable_duration The proto duration that will be updated to reflect the passed in nanos.
+ * @param nanos The number of nanoseconds.
+ */
+static void setDurationFromNanos(Envoy::ProtobufWkt::Duration& mutable_duration,
+                                 const uint64_t nanos) {
+  constexpr uint64_t one_billion = 1e9;
+  mutable_duration.set_seconds(nanos / one_billion);
+  mutable_duration.set_nanos(nanos % one_billion);
 }
 
-nighthawk::client::Statistic StatisticImpl::toProto() {
+} // namespace
+
+std::string StatisticImpl::toString() const {
+  return toProto(SerializationDomain::RAW).DebugString();
+}
+
+nighthawk::client::Statistic StatisticImpl::toProto(SerializationDomain domain) const {
   nighthawk::client::Statistic statistic;
 
   statistic.set_id(id());
   statistic.set_count(count());
-
-  int64_t nanos = count() == 0 ? 0 : static_cast<int64_t>(std::round(mean()));
-  statistic.mutable_mean()->set_seconds(nanos / 1000000000);
-  statistic.mutable_mean()->set_nanos(nanos % 1000000000);
-
-  nanos = count() == 0 ? 0 : static_cast<int64_t>(std::round(std::isnan(pstdev()) ? 0 : pstdev()));
-  statistic.mutable_pstdev()->set_seconds(nanos / 1000000000);
-  statistic.mutable_pstdev()->set_nanos(nanos % 1000000000);
+  if (domain == Statistic::SerializationDomain::DURATION) {
+    int64_t nanos;
+    nanos = count() == 0 ? 0 : static_cast<int64_t>(std::round(mean()));
+    setDurationFromNanos(*statistic.mutable_mean(), nanos);
+    nanos =
+        count() == 0 ? 0 : static_cast<int64_t>(std::round(std::isnan(pstdev()) ? 0 : pstdev()));
+    setDurationFromNanos(*statistic.mutable_pstdev(), nanos);
+    setDurationFromNanos(*statistic.mutable_min(), min() == UINT64_MAX ? 0 : min());
+    setDurationFromNanos(*statistic.mutable_max(), max());
+  } else {
+    statistic.set_raw_mean(mean());
+    statistic.set_raw_pstdev(pstdev());
+    statistic.set_raw_min(min());
+    statistic.set_raw_max(max());
+  }
 
   return statistic;
 }
@@ -34,15 +56,23 @@ std::string StatisticImpl::id() const { return id_; };
 
 void StatisticImpl::setId(absl::string_view id) { id_ = std::string(id); };
 
-SimpleStatistic::SimpleStatistic() : count_(0), sum_x_(0), sum_x2_(0) {}
+void StatisticImpl::addValue(uint64_t value) {
+  min_ = std::min(min_, value);
+  max_ = std::max(max_, value);
+  count_++;
+};
+
+uint64_t StatisticImpl::count() const { return count_; }
+
+uint64_t StatisticImpl::min() const { return min_; };
+
+uint64_t StatisticImpl::max() const { return max_; };
 
 void SimpleStatistic::addValue(uint64_t value) {
-  count_++;
+  StatisticImpl::addValue(value);
   sum_x_ += value;
   sum_x2_ += 1.0 * value * value;
 }
-
-uint64_t SimpleStatistic::count() const { return count_; }
 
 double SimpleStatistic::mean() const { return count() == 0 ? std::nan("") : sum_x_ / count_; }
 
@@ -56,25 +86,22 @@ StatisticPtr SimpleStatistic::combine(const Statistic& statistic) const {
   const SimpleStatistic& a = *this;
   const auto& b = dynamic_cast<const SimpleStatistic&>(statistic);
   auto combined = std::make_unique<SimpleStatistic>();
-
+  combined->min_ = std::min(a.min(), b.min());
+  combined->max_ = std::max(a.max(), b.max());
   combined->count_ = a.count() + b.count();
   combined->sum_x_ = a.sum_x_ + b.sum_x_;
   combined->sum_x2_ = a.sum_x2_ + b.sum_x2_;
   return combined;
 }
 
-StreamingStatistic::StreamingStatistic() : count_(0), mean_(0), accumulated_variance_(0) {}
-
 void StreamingStatistic::addValue(uint64_t value) {
   double delta, delta_n;
-  count_++;
+  StatisticImpl::addValue(value);
   delta = value - mean_;
   delta_n = delta / count_;
   mean_ += delta_n;
   accumulated_variance_ += delta * delta_n * (count_ - 1.0);
 }
-
-uint64_t StreamingStatistic::count() const { return count_; }
 
 double StreamingStatistic::mean() const { return count_ == 0 ? std::nan("") : mean_; }
 
@@ -91,25 +118,28 @@ StatisticPtr StreamingStatistic::combine(const Statistic& statistic) const {
   const auto& b = dynamic_cast<const StreamingStatistic&>(statistic);
   auto combined = std::make_unique<StreamingStatistic>();
 
+  combined->min_ = std::min(a.min(), b.min());
+  combined->max_ = std::max(a.max(), b.max());
   combined->count_ = a.count() + b.count();
-  combined->mean_ = ((a.count() * a.mean()) + (b.count() * b.mean())) / combined->count_;
+  // A statistic instance with zero samples will return std::isnan() as its mean.
+  // For the the merge we are doing here we need to treat that as 0.
+  auto a_mean = std::isnan(a.mean()) ? 0 : a.mean();
+  auto b_mean = std::isnan(b.mean()) ? 0 : b.mean();
+  combined->mean_ = ((a.count() * a_mean) + (b.count() * b_mean)) / combined->count_;
   combined->accumulated_variance_ =
       a.accumulated_variance_ + b.accumulated_variance_ +
-      pow(a.mean() - b.mean(), 2) * a.count() * b.count() / combined->count();
+      pow(a_mean - b_mean, 2) * a.count() * b.count() / combined->count();
   return combined;
 }
 
 InMemoryStatistic::InMemoryStatistic() : streaming_stats_(std::make_unique<StreamingStatistic>()) {}
 
 void InMemoryStatistic::addValue(uint64_t sample_value) {
+  StatisticImpl::addValue(sample_value);
   samples_.push_back(sample_value);
   streaming_stats_->addValue(sample_value);
 }
 
-uint64_t InMemoryStatistic::count() const {
-  ASSERT(streaming_stats_->count() == samples_.size());
-  return streaming_stats_->count();
-}
 double InMemoryStatistic::mean() const { return streaming_stats_->mean(); }
 double InMemoryStatistic::pvariance() const { return streaming_stats_->pvariance(); }
 double InMemoryStatistic::pstdev() const { return streaming_stats_->pstdev(); }
@@ -118,9 +148,12 @@ StatisticPtr InMemoryStatistic::combine(const Statistic& statistic) const {
   auto combined = std::make_unique<InMemoryStatistic>();
   const auto& b = dynamic_cast<const InMemoryStatistic&>(statistic);
 
+  combined->min_ = std::min(this->min(), b.min());
+  combined->max_ = std::max(this->max(), b.max());
   combined->samples_.insert(combined->samples_.end(), this->samples_.begin(), this->samples_.end());
   combined->samples_.insert(combined->samples_.end(), b.samples_.begin(), b.samples_.end());
   combined->streaming_stats_ = this->streaming_stats_->combine(*b.streaming_stats_);
+  combined->count_ = combined->samples_.size();
   return combined;
 }
 
@@ -148,13 +181,21 @@ void HdrStatistic::addValue(uint64_t value) {
   // or maximum value we passed when initializing histogram_.
   if (!hdr_record_value(histogram_, value)) {
     ENVOY_LOG(warn, "Failed to record value into HdrHistogram.");
+  } else {
+    StatisticImpl::addValue(value);
   }
 }
 
+// We override count for the Hdr statistics, because it may have dropped
+// out of range values. hence our own tracking may be inaccurate.
 uint64_t HdrStatistic::count() const { return histogram_->total_count; }
 double HdrStatistic::mean() const { return count() == 0 ? std::nan("") : hdr_mean(histogram_); }
 double HdrStatistic::pvariance() const { return pstdev() * pstdev(); }
 double HdrStatistic::pstdev() const { return count() == 0 ? std::nan("") : hdr_stddev(histogram_); }
+uint64_t HdrStatistic::min() const {
+  return count() == 0 ? UINT64_MAX : hdr_value_at_percentile(histogram_, 0);
+}
+uint64_t HdrStatistic::max() const { return hdr_value_at_percentile(histogram_, 100); }
 
 StatisticPtr HdrStatistic::combine(const Statistic& statistic) const {
   auto combined = std::make_unique<HdrStatistic>();
@@ -171,24 +212,8 @@ StatisticPtr HdrStatistic::combine(const Statistic& statistic) const {
   return combined;
 }
 
-std::string HdrStatistic::toString() const {
-  std::stringstream stream;
-
-  stream << StatisticImpl::toString();
-  stream << fmt::format("{:>12} {:>14} (usec)", "Percentile", "Value") << std::endl;
-
-  std::vector<double> percentiles{50.0, 75.0, 90.0, 99.0, 99.9, 99.99, 99.999, 100.0};
-  for (double p : percentiles) {
-    const int64_t n = hdr_value_at_percentile(histogram_, p);
-
-    // We scale from nanoseconds to microseconds in the output.
-    stream << fmt::format("{:>12}% {:>14}", p, n / 1000.0) << std::endl;
-  }
-  return stream.str();
-}
-
-nighthawk::client::Statistic HdrStatistic::toProto() {
-  nighthawk::client::Statistic proto = StatisticImpl::toProto();
+nighthawk::client::Statistic HdrStatistic::toProto(SerializationDomain domain) const {
+  nighthawk::client::Statistic proto = StatisticImpl::toProto(domain);
 
   struct hdr_iter iter;
   struct hdr_iter_percentiles* percentiles;
@@ -199,10 +224,11 @@ nighthawk::client::Statistic HdrStatistic::toProto() {
     nighthawk::client::Percentile* percentile;
 
     percentile = proto.add_percentiles();
-
-    percentile->mutable_duration()->set_seconds(iter.highest_equivalent_value / 1000000000);
-    percentile->mutable_duration()->set_nanos(iter.highest_equivalent_value % 1000000000);
-
+    if (domain == Statistic::SerializationDomain::DURATION) {
+      setDurationFromNanos(*percentile->mutable_duration(), iter.highest_equivalent_value);
+    } else {
+      percentile->set_raw_value(iter.highest_equivalent_value);
+    }
     percentile->set_percentile(percentiles->percentile / 100.0);
     percentile->set_count(iter.cumulative_count);
   }
