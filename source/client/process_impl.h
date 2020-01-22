@@ -77,15 +77,14 @@ private:
    * @param config The bootstrap configuration that will be modified.
    */
   void addRequestSourceCluster(const Uri& uri, int worker_number,
-                               envoy::config::bootstrap::v3alpha::Bootstrap& config) const;
-  void addTracingCluster(envoy::config::bootstrap::v3alpha::Bootstrap& bootstrap,
-                         const Uri& uri) const;
-  void setupTracingImplementation(envoy::config::bootstrap::v3alpha::Bootstrap& bootstrap,
+                               envoy::config::bootstrap::v3::Bootstrap& config) const;
+  void addTracingCluster(envoy::config::bootstrap::v3::Bootstrap& bootstrap, const Uri& uri) const;
+  void setupTracingImplementation(envoy::config::bootstrap::v3::Bootstrap& bootstrap,
                                   const Uri& uri) const;
-  void createBootstrapConfiguration(envoy::config::bootstrap::v3alpha::Bootstrap& bootstrap,
+  void createBootstrapConfiguration(envoy::config::bootstrap::v3::Bootstrap& bootstrap,
                                     const std::vector<UriPtr>& uris,
                                     const UriPtr& request_source_uri, int number_of_workers) const;
-  void maybeCreateTracingDriver(const envoy::config::trace::v3alpha::Tracing& configuration);
+  void maybeCreateTracingDriver(const envoy::config::trace::v3::Tracing& configuration);
 
   void configureComponentLogLevels(spdlog::level::level_enum level);
   const std::vector<ClientWorkerPtr>& createWorkers(const uint32_t concurrency);

@@ -245,16 +245,17 @@ ProcessImpl::mergeWorkerStatistics(const std::vector<ClientWorkerPtr>& workers) 
   return merged_statistics;
 }
 
-void ProcessImpl::createBootstrapConfiguration(
-    envoy::config::bootstrap::v3alpha::Bootstrap& bootstrap, const std::vector<UriPtr>& uris,
-    const UriPtr& request_source_uri, int number_of_clusters) const {
+void ProcessImpl::createBootstrapConfiguration(envoy::config::bootstrap::v3::Bootstrap& bootstrap,
+                                               const std::vector<UriPtr>& uris,
+                                               const UriPtr& request_source_uri,
+                                               int number_of_clusters) const {
   for (int i = 0; i < number_of_clusters; i++) {
     auto* cluster = bootstrap.mutable_static_resources()->add_clusters();
     RELEASE_ASSERT(!uris.empty(), "illegal configuration with zero endpoints");
     if (uris[0]->scheme() == "https") {
       auto* transport_socket = cluster->mutable_transport_socket();
       transport_socket->set_name("envoy.transport_sockets.tls");
-      envoy::extensions::transport_sockets::tls::v3alpha::UpstreamTlsContext context =
+      envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext context =
           options_.tlsContext();
       const std::string sni_host = SniUtility::computeSniHost(
           uris, options_.requestHeaders(),
@@ -288,9 +289,9 @@ void ProcessImpl::createBootstrapConfiguration(
     thresholds->mutable_max_requests()->set_value(options_.maxActiveRequests());
 
     cluster->set_type(
-        envoy::config::cluster::v3alpha::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
+        envoy::config::cluster::v3::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
     for (const UriPtr& uri : uris) {
-      auto* host = cluster->add_hosts();
+      auto* host = cluster->add_hidden_envoy_deprecated_hosts();
       auto* socket_address = host->mutable_socket_address();
       socket_address->set_address(uri->address()->ip()->addressAsString());
       socket_address->set_port_value(uri->port());
@@ -301,28 +302,28 @@ void ProcessImpl::createBootstrapConfiguration(
   }
 }
 
-void ProcessImpl::addTracingCluster(envoy::config::bootstrap::v3alpha::Bootstrap& bootstrap,
+void ProcessImpl::addTracingCluster(envoy::config::bootstrap::v3::Bootstrap& bootstrap,
                                     const Uri& uri) const {
   auto* cluster = bootstrap.mutable_static_resources()->add_clusters();
   cluster->set_name("tracing");
   cluster->mutable_connect_timeout()->set_seconds(options_.timeout().count());
   cluster->set_type(
-      envoy::config::cluster::v3alpha::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
-  auto* host = cluster->add_hosts();
+      envoy::config::cluster::v3::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
+  auto* host = cluster->add_hidden_envoy_deprecated_hosts();
   auto* socket_address = host->mutable_socket_address();
   socket_address->set_address(uri.address()->ip()->addressAsString());
   socket_address->set_port_value(uri.port());
 }
 
-void ProcessImpl::setupTracingImplementation(
-    envoy::config::bootstrap::v3alpha::Bootstrap& bootstrap, const Uri& uri) const {
+void ProcessImpl::setupTracingImplementation(envoy::config::bootstrap::v3::Bootstrap& bootstrap,
+                                             const Uri& uri) const {
 #ifdef ZIPKIN_ENABLED
   auto* http = bootstrap.mutable_tracing()->mutable_http();
   auto scheme = uri.scheme();
   const std::string kTracingClusterName = "tracing";
   http->set_name(fmt::format("envoy.{}", scheme));
   RELEASE_ASSERT(scheme == "zipkin", "Only zipkin is supported");
-  envoy::config::trace::v3alpha::ZipkinConfig config;
+  envoy::config::trace::v3::ZipkinConfig config;
   config.mutable_collector_cluster()->assign(kTracingClusterName);
   config.mutable_collector_endpoint()->assign(std::string(uri.path()));
   config.mutable_shared_span_context()->set_value(true);
@@ -334,8 +335,7 @@ void ProcessImpl::setupTracingImplementation(
 #endif
 }
 
-void ProcessImpl::maybeCreateTracingDriver(
-    const envoy::config::trace::v3alpha::Tracing& configuration) {
+void ProcessImpl::maybeCreateTracingDriver(const envoy::config::trace::v3::Tracing& configuration) {
   if (configuration.has_http()) {
 #ifdef ZIPKIN_ENABLED
     std::string type = configuration.http().name();
@@ -349,7 +349,7 @@ void ProcessImpl::maybeCreateTracingDriver(
             configuration.http());
     ProtobufTypes::MessagePtr message = Envoy::Config::Utility::translateToFactoryConfig(
         configuration.http(), Envoy::ProtobufMessage::getStrictValidationVisitor(), factory);
-    auto zipkin_config = dynamic_cast<const envoy::config::trace::v3alpha::ZipkinConfig&>(*message);
+    auto zipkin_config = dynamic_cast<const envoy::config::trace::v3::ZipkinConfig&>(*message);
     Envoy::Tracing::DriverPtr zipkin_driver =
         std::make_unique<Envoy::Extensions::Tracers::Zipkin::Driver>(
             zipkin_config, *cluster_manager_, store_root_, tls_,
@@ -364,15 +364,14 @@ void ProcessImpl::maybeCreateTracingDriver(
 }
 
 void ProcessImpl::addRequestSourceCluster(
-    const Uri& uri, int worker_number,
-    envoy::config::bootstrap::v3alpha::Bootstrap& bootstrap) const {
+    const Uri& uri, int worker_number, envoy::config::bootstrap::v3::Bootstrap& bootstrap) const {
   auto* cluster = bootstrap.mutable_static_resources()->add_clusters();
   cluster->mutable_http2_protocol_options();
   cluster->set_name(fmt::format("{}.requestsource", worker_number));
   cluster->set_type(
-      envoy::config::cluster::v3alpha::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
+      envoy::config::cluster::v3::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
   cluster->mutable_connect_timeout()->set_seconds(options_.timeout().count());
-  auto* host = cluster->add_hosts();
+  auto* host = cluster->add_hidden_envoy_deprecated_hosts();
   auto* socket_address = host->mutable_socket_address();
   socket_address->set_address(uri.address()->ip()->addressAsString());
   socket_address->set_port_value(uri.port());
@@ -437,7 +436,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
   if (options_.h2UseMultipleConnections()) {
     cluster_manager_factory_->enableMultiConnectionH2Pool();
   }
-  envoy::config::bootstrap::v3alpha::Bootstrap bootstrap;
+  envoy::config::bootstrap::v3::Bootstrap bootstrap;
   createBootstrapConfiguration(bootstrap, uris, request_source_uri, number_of_workers);
   if (tracing_uri != nullptr) {
     setupTracingImplementation(bootstrap, *tracing_uri);
