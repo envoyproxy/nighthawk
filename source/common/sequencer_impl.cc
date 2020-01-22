@@ -81,9 +81,6 @@ void SequencerImpl::updateStartBlockingTimeIfNeeded() {
 
 void SequencerImpl::run(bool from_periodic_timer) {
   ASSERT(running_);
-  // Update time so that our time source will yield an up-to-date monotonic time sample to work with
-  // during this function call.
-  dispatcher_.updateApproximateMonotonicTime();
   const auto now = last_event_time_ = time_source_.monotonicTime();
 
   last_termination_status_ = last_termination_status_ == TerminationPredicate::Status::PROCEED
@@ -100,8 +97,6 @@ void SequencerImpl::run(bool from_periodic_timer) {
     // The rate limiter says it's OK to proceed and call the target. Let's see if the target is OK
     // with that as well.
     const bool target_could_start = target_([this, now](bool, bool) {
-      // Update cached time, as we need an accurate value for latency reporting.
-      dispatcher_.updateApproximateMonotonicTime();
       const auto dur = time_source_.monotonicTime() - now;
       latency_statistic_->addValue(dur.count());
       targets_completed_++;
