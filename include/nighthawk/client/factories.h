@@ -37,9 +37,10 @@ class SequencerFactory {
 public:
   virtual ~SequencerFactory() = default;
   virtual SequencerPtr create(Envoy::TimeSource& time_source, Envoy::Event::Dispatcher& dispatcher,
-                              Envoy::MonotonicTime start_time, BenchmarkClient& benchmark_client,
-                              TerminationPredicate& termination_predicate,
-                              Envoy::Stats::Scope& scope) const PURE;
+                              BenchmarkClient& benchmark_client,
+                              TerminationPredicatePtr&& termination_predicate,
+                              Envoy::Stats::Scope& scope,
+                              const Envoy::MonotonicTime scheduled_starting_time) const PURE;
 };
 
 class StoreFactory {
@@ -74,8 +75,9 @@ public:
 class TerminationPredicateFactory {
 public:
   virtual ~TerminationPredicateFactory() = default;
-  virtual TerminationPredicatePtr create(Envoy::TimeSource& time_source, Envoy::Stats::Scope& scope,
-                                         Envoy::MonotonicTime time) const PURE;
+  virtual TerminationPredicatePtr
+  create(Envoy::TimeSource& time_source, Envoy::Stats::Scope& scope,
+         const Envoy::MonotonicTime scheduled_starting_time) const PURE;
 };
 
 } // namespace Nighthawk

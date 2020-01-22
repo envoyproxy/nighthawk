@@ -165,7 +165,7 @@ bool BenchmarkClientHttpImpl::tryStartRequest(CompletionCallback caller_completi
   auto stream_decoder = new StreamDecoder(
       dispatcher_, api_.timeSource(), *this, std::move(caller_completion_callback),
       *connect_statistic_, *response_statistic_, *response_header_size_statistic_,
-      *response_body_size_statistic_, request->header(), measureLatencies(), content_length,
+      *response_body_size_statistic_, request->header(), shouldMeasureLatencies(), content_length,
       x_request_id, http_tracer_);
   requests_initiated_++;
   pool_ptr->newStream(*stream_decoder, *stream_decoder);

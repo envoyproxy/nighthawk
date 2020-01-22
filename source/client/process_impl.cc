@@ -460,7 +460,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
   int i = 0;
   std::chrono::nanoseconds total_execution_duration = 0ns;
   for (auto& worker : workers_) {
-    auto sequencer_execution_duration = worker->sequencer().executionDuration();
+    auto sequencer_execution_duration = worker->phase().sequencer().executionDuration();
     // We don't write per-worker results if we only have a single worker, because the global results
     // will be precisely the same.
     if (workers_.size() > 1) {

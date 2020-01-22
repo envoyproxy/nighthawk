@@ -49,11 +49,11 @@ class SequencerImpl : public Sequencer, public Envoy::Logger::Loggable<Envoy::Lo
 public:
   SequencerImpl(
       const PlatformUtil& platform_util, Envoy::Event::Dispatcher& dispatcher,
-      Envoy::TimeSource& time_source, Envoy::MonotonicTime start_time,
-      RateLimiterPtr&& rate_limiter, SequencerTarget target, StatisticPtr&& latency_statistic,
-      StatisticPtr&& blocked_statistic,
+      Envoy::TimeSource& time_source, RateLimiterPtr&& rate_limiter, SequencerTarget target,
+      StatisticPtr&& latency_statistic, StatisticPtr&& blocked_statistic,
       nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions idle_strategy,
-      TerminationPredicate& termination_predicate, Envoy::Stats::Scope& scope);
+      TerminationPredicatePtr&& termination_predicate, Envoy::Stats::Scope& scope,
+      const Envoy::MonotonicTime scheduled_starting_time);
 
   /**
    * Starts the Sequencer. Should be followed up with a call to waitForCompletion().
@@ -125,7 +125,7 @@ private:
   StatisticPtr blocked_statistic_;
   Envoy::Event::TimerPtr periodic_timer_;
   Envoy::Event::TimerPtr spin_timer_;
-  Envoy::MonotonicTime start_time_;
+  const Envoy::MonotonicTime start_time_;
   Envoy::MonotonicTime last_event_time_;
   uint64_t targets_initiated_{0};
   uint64_t targets_completed_{0};
@@ -133,7 +133,7 @@ private:
   bool blocked_{};
   Envoy::MonotonicTime blocked_start_;
   nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions idle_strategy_;
-  TerminationPredicate& termination_predicate_;
+  TerminationPredicatePtr termination_predicate_;
   TerminationPredicate::Status last_termination_status_;
   Envoy::Stats::ScopePtr scope_;
   SequencerStats sequencer_stats_;

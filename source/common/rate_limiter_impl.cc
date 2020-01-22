@@ -53,7 +53,7 @@ void BurstingRateLimiter::releaseOne() {
 }
 
 ScheduledStartingRateLimiter::ScheduledStartingRateLimiter(
-    RateLimiterPtr&& rate_limiter, Envoy::MonotonicTime scheduled_starting_time)
+    RateLimiterPtr&& rate_limiter, const Envoy::MonotonicTime scheduled_starting_time)
     : ForwardingRateLimiterImpl(std::move(rate_limiter)),
       scheduled_starting_time_(scheduled_starting_time) {
   if (timeSource().monotonicTime() >= scheduled_starting_time_) {
@@ -98,8 +98,13 @@ bool LinearRateLimiter::tryAcquireOne() {
     return true;
   }
 
+  // As the common case for configured execution duration is in seconds, we shift phase so that
+  // acquisitions timed at one second boundaries will be avoided.
+  // For example, at three rps our timings should look like [0.16667s, 0.5s, 0.83333s,...].
+  // This helps produce more intuitive/steady counter values.
+  const auto phase_shifted = elapsed() + (frequency_.interval() / 2);
   acquireable_count_ =
-      static_cast<int64_t>(std::floor(elapsed() / frequency_.interval())) - acquired_count_;
+      static_cast<int64_t>(std::floor(phase_shifted / frequency_.interval())) - acquired_count_;
   return acquireable_count_ > 0 ? tryAcquireOne() : false;
 }
 

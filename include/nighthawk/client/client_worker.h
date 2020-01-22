@@ -6,7 +6,7 @@
 #include "envoy/stats/store.h"
 
 #include "nighthawk/client/benchmark_client.h"
-#include "nighthawk/common/sequencer.h"
+#include "nighthawk/common/phase.h"
 #include "nighthawk/common/statistic.h"
 #include "nighthawk/common/worker.h"
 
@@ -31,9 +31,9 @@ public:
   virtual const std::map<std::string, uint64_t>& threadLocalCounterValues() PURE;
 
   /**
-   * @return const Sequencer&
+   * @return const Phase& associated to this worker.
    */
-  virtual const Sequencer& sequencer() const PURE;
+  virtual const Phase& phase() const PURE;
 };
 
 using ClientWorkerPtr = std::unique_ptr<ClientWorker>;

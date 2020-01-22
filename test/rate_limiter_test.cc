@@ -129,14 +129,16 @@ public:
     const auto burst_interval_ms =
         std::chrono::duration_cast<std::chrono::milliseconds>(frequency.interval() * burst_size);
 
-    for (uint64_t i = 0; i < 10000; i++) {
+    int first_burst = -1;
+    for (int i = 0; i < 10000; i++) {
       uint64_t burst_acquired = 0;
       while (rate_limiter->tryAcquireOne()) {
         burst_acquired++;
       }
       if (burst_acquired) {
+        first_burst = first_burst == -1 ? i : first_burst;
         EXPECT_EQ(burst_acquired, burst_size);
-        EXPECT_EQ(i % burst_interval_ms.count(), 0);
+        EXPECT_EQ(i % (burst_interval_ms.count() - first_burst), 0);
       }
       time_system.sleep(1ms);
     }
@@ -386,8 +388,8 @@ public:
 
 TEST_F(GraduallyOpeningRateLimiterFilterTest, TimingVerificationTest) {
   EXPECT_EQ(getAcquisitionTimings(50_Hz, 1s),
-            std::vector<int64_t>({520, 540, 560, 580, 600, 620, 640, 660, 680, 700, 720, 740, 760,
-                                  780, 800, 820, 840, 860, 880, 900, 920, 940, 960, 980, 1000}));
+            std::vector<int64_t>({510, 530, 550, 570, 590, 610, 630, 650, 670, 690, 710, 730, 750,
+                                  770, 790, 810, 830, 850, 870, 890, 910, 930, 950, 970, 990}));
 }
 
 class ZipfRateLimiterImplTest : public Test {};
@@ -412,9 +414,9 @@ TEST_F(ZipfRateLimiterImplTest, TimingVerificationTest) {
     total_ms_elapsed += clock_tick;
   } while (total_ms_elapsed <= duration);
   EXPECT_EQ(aquisition_timings,
-            std::vector<int64_t>({500,   800,   1300,  2400,  2900,  3900,  4200,  4400,  4500,
-                                  5800,  6000,  6400,  7900,  8400,  8600,  9900,  10200, 10500,
-                                  10600, 12000, 12300, 12600, 13300, 13600, 13700, 13800, 13900}));
+            std::vector<int64_t>({450,   750,   1250,  2350,  2850,  3850,  4150,  4350,  4450,
+                                  5750,  5950,  6350,  7850,  8350,  8550,  9850,  10150, 10450,
+                                  10550, 11950, 12250, 12550, 13250, 13550, 13650, 13750, 13850}));
 }
 
 TEST_F(ZipfRateLimiterImplTest, BadArgumentsTest) {

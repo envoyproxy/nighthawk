@@ -11,9 +11,15 @@ class TerminationPredicateBaseImpl : public TerminationPredicate {
 public:
   TerminationPredicate& link(TerminationPredicatePtr&& child) final {
     RELEASE_ASSERT(linked_child_ == nullptr, "Linked child already set");
-    RELEASE_ASSERT(child != nullptr, "child == nullptr");
     linked_child_ = std::move(child);
     return *linked_child_;
+  }
+  TerminationPredicate& appendToChain(TerminationPredicatePtr&& child) final {
+    if (linked_child_ != nullptr) {
+      return linked_child_->appendToChain(std::move(child));
+    } else {
+      return link(std::move(child));
+    }
   }
   TerminationPredicate::Status evaluateChain() final;
 
@@ -21,10 +27,15 @@ private:
   TerminationPredicatePtr linked_child_;
 };
 
+/**
+ * Predicate which indicates termination iff the passed in duration has expired.
+ * time tracking starts at the first call to evaluate().
+ */
 class DurationTerminationPredicateImpl : public TerminationPredicateBaseImpl {
 public:
-  DurationTerminationPredicateImpl(Envoy::TimeSource& time_source, const Envoy::MonotonicTime start,
-                                   std::chrono::microseconds duration)
+  DurationTerminationPredicateImpl(Envoy::TimeSource& time_source,
+                                   std::chrono::microseconds duration,
+                                   const Envoy::MonotonicTime start)
       : time_source_(time_source), start_(start), duration_(duration) {}
   TerminationPredicate::Status evaluate() override;
 

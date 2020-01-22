@@ -126,10 +126,10 @@ public:
   MockSequencerFactory();
   MOCK_CONST_METHOD6(create, SequencerPtr(Envoy::TimeSource& time_source,
                                           Envoy::Event::Dispatcher& dispatcher,
-                                          Envoy::MonotonicTime start_time,
                                           Client::BenchmarkClient& benchmark_client,
-                                          TerminationPredicate& termination_predicate,
-                                          Envoy::Stats::Scope& scope));
+                                          TerminationPredicatePtr&& termination_predicate,
+                                          Envoy::Stats::Scope& scope,
+                                          const Envoy::MonotonicTime scheduled_starting_time));
 };
 
 class MockStoreFactory : public Client::StoreFactory {
@@ -157,9 +157,10 @@ public:
 class MockTerminationPredicateFactory : public TerminationPredicateFactory {
 public:
   MockTerminationPredicateFactory();
-  MOCK_CONST_METHOD3(create, TerminationPredicatePtr(Envoy::TimeSource& time_source,
-                                                     Envoy::Stats::Scope& scope,
-                                                     const Envoy::MonotonicTime start));
+  MOCK_CONST_METHOD3(create,
+                     TerminationPredicatePtr(Envoy::TimeSource& time_source,
+                                             Envoy::Stats::Scope& scope,
+                                             const Envoy::MonotonicTime scheduled_starting_time));
 };
 
 class FakeSequencerTarget {
@@ -180,11 +181,11 @@ public:
   MockBenchmarkClient();
 
   MOCK_METHOD0(terminate, void());
-  MOCK_METHOD1(setMeasureLatencies, void(bool));
+  MOCK_METHOD1(setShouldMeasureLatencies, void(bool));
   MOCK_CONST_METHOD0(statistics, StatisticPtrMap());
   MOCK_METHOD1(tryStartRequest, bool(Client::CompletionCallback));
   MOCK_CONST_METHOD0(scope, Envoy::Stats::Scope&());
-  MOCK_CONST_METHOD0(measureLatencies, bool());
+  MOCK_CONST_METHOD0(shouldMeasureLatencies, bool());
   MOCK_CONST_METHOD0(requestHeaders, const Envoy::Http::HeaderMap&());
 };
 
@@ -199,6 +200,7 @@ class MockTerminationPredicate : public TerminationPredicate {
 public:
   MockTerminationPredicate();
   MOCK_METHOD1(link, TerminationPredicate&(TerminationPredicatePtr&&));
+  MOCK_METHOD1(appendToChain, TerminationPredicate&(TerminationPredicatePtr&&));
   MOCK_METHOD0(evaluateChain, TerminationPredicate::Status());
   MOCK_METHOD0(evaluate, TerminationPredicate::Status());
 };
