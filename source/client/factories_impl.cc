@@ -153,7 +153,7 @@ RequestSourceFactoryImpl::create(const Envoy::Upstream::ClusterManagerPtr& clust
                           : Envoy::Http::Headers::get().SchemeValues.Http);
   }
 
-  header->setMethod(envoy::config::core::v3alpha::RequestMethod_Name(options_.requestMethod()));
+  header->setMethod(envoy::config::core::v3::RequestMethod_Name(options_.requestMethod()));
   const uint32_t content_length = options_.requestBodySize();
   if (content_length > 0) {
     header->setContentLength(content_length);

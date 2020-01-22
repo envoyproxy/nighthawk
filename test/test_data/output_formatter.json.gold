@@ -562,8 +562,8 @@
  ],
  "version": {
   "version": {
-   "major": 0,
-   "minor": 3,
+   "major_number": 0,
+   "minor_number": 3,
    "patch": 0
   }
  },

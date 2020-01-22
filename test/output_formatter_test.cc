@@ -73,8 +73,8 @@ public:
     std::string s = Envoy::Filesystem::fileSystemForTest().fileReadToEnd(
         TestEnvironment::runfilesPath(std::string(path)));
     const auto version = VersionInfo::buildVersion().version();
-    const std::string major = fmt::format("{}", version.major());
-    const std::string minor = fmt::format("{}", version.minor());
+    const std::string major = fmt::format("{}", version.major_number());
+    const std::string minor = fmt::format("{}", version.minor_number());
     const std::string patch = fmt::format("{}", version.patch());
     s = absl::StrReplaceAll(s, {{"@version_major@", major}});
     s = absl::StrReplaceAll(s, {{"@version_minor@", minor}});
