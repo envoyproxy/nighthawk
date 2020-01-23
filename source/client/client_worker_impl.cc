@@ -22,7 +22,7 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
                                    const Envoy::MonotonicTime starting_time,
                                    Envoy::Tracing::HttpTracerPtr& http_tracer)
     : WorkerImpl(api, tls, store),
-      cached_time_source_(std::make_unique<CachedTimeSourceImpl>(*dispatcher_)),
+      time_source_(std::make_unique<CachedTimeSourceImpl>(*dispatcher_)),
       termination_predicate_factory_(termination_predicate_factory),
       sequencer_factory_(sequencer_factory), worker_scope_(store_.createScope("cluster.")),
       worker_number_scope_(worker_scope_->createScope(fmt::format("{}.", worker_number))),
@@ -35,9 +35,9 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
           fmt::format("{}", worker_number), *request_generator_)),
       phase_(std::make_unique<PhaseImpl>(
           "main",
-          sequencer_factory_.create(*cached_time_source_, *dispatcher_, *benchmark_client_,
+          sequencer_factory_.create(*time_source_, *dispatcher_, *benchmark_client_,
                                     termination_predicate_factory_.create(
-                                        *cached_time_source_, *worker_number_scope_, starting_time),
+                                        *time_source_, *worker_number_scope_, starting_time),
                                     *worker_number_scope_, starting_time),
           true)) {}
 

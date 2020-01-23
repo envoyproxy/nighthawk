@@ -81,8 +81,17 @@ void SequencerImpl::updateStartBlockingTimeIfNeeded() {
 
 void SequencerImpl::run(bool from_periodic_timer) {
   ASSERT(running_);
-  // Update time so that our time source will yield an up-to-date monotonic time sample to work with
-  // during this function call.
+  // CachedTimeSource relies on the dispatcher's updateApproximateMonotonicTime() /
+  // approximateMonotonicTime() for the actual caching. We refresh its stored time-value here so
+  // that our cached time source will yield an up-to-date monotonic time sample to work with. This
+  // time sample value will then be consistent accross usage here, plus any RateLimiter(s) and/or
+  // TerminationPredicate(s) associated to this sequencer that perform computations based on the
+  // current time. Having a consistent value accross these usages avoids certain edge cases. For
+  // example: A duration predicate determines it is time to stop execution at 1s. A rate limiter
+  // determines it is time to release a new request at 1.00001s. While this is a benign example, and
+  // would be explainable, it probably has potential to raise eyebrows.
+  // More importantly, it may help avoid a class of bugs that could be more serious, depending on
+  // functionality (TOC/TOU).
   dispatcher_.updateApproximateMonotonicTime();
   const auto now = last_event_time_ = time_source_.monotonicTime();
 
