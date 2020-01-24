@@ -109,7 +109,7 @@ def test_h1_pool_strategy(http_test_server_fixture):
   _, logs = http_test_server_fixture.runNighthawkClient([
       "--rps 20", "-v", "trace", "--connections", "2", "--prefetch-connections",
       "--experimental-h1-connection-reuse-strategy", "mru", "--termination-predicate",
-      "benchmark.http_2xx:10",
+      "benchmark.http_2xx:10", "--simple-warmup",
       http_test_server_fixture.getTestServerRootUri()
   ])
 
