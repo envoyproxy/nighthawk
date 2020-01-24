@@ -140,7 +140,7 @@ def test_http_h1_mini_stress_test_open_loop(http_test_server_fixture):
   counters = mini_stress_test(http_test_server_fixture, [
       http_test_server_fixture.getTestServerRootUri(), "--rps", "10000", "--max-pending-requests",
       "1", "--open-loop", "--max-active-requests", "1", "--connections", "1", "--duration", "100",
-      "--termination-predicate", "benchmark.http_2xx:99"
+      "--termination-predicate", "benchmark.http_2xx:99", "--simple-warmup"
   ])
   # we expect pool overflows
   assertCounterGreater(counters, "benchmark.pool_overflow", 10)
@@ -154,7 +154,7 @@ def test_http_h2_mini_stress_test_open_loop(http_test_server_fixture):
   counters = mini_stress_test(http_test_server_fixture, [
       http_test_server_fixture.getTestServerRootUri(), "--rps", "10000", "--max-pending-requests",
       "1", "--h2", "--open-loop", "--max-active-requests", "1", "--duration", "100",
-      "--termination-predicate", "benchmark.http_2xx:99"
+      "--termination-predicate", "benchmark.http_2xx:99", "--simple-warmup"
   ])
   # we expect pool overflows
   assertCounterGreater(counters, "benchmark.pool_overflow", 10)
