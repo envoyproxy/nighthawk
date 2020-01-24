@@ -166,7 +166,9 @@ const std::vector<ClientWorkerPtr>& ProcessImpl::createWorkers(const uint32_t co
     workers_.push_back(std::make_unique<ClientWorkerImpl>(
         *api_, tls_, cluster_manager_, benchmark_client_factory_, termination_predicate_factory_,
         sequencer_factory_, request_generator_factory_, store_root_, worker_number,
-        first_worker_start + worker_delay, http_tracer_, !options_.noSimpleWarmup()));
+        first_worker_start + worker_delay, http_tracer_,
+        options_.simpleWarmup() ? ClientWorkerImpl::HardCodedWarmupStyle::ON
+                                : ClientWorkerImpl::HardCodedWarmupStyle::OFF));
     worker_number++;
   }
   return workers_;

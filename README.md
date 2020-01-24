@@ -43,7 +43,7 @@ bazel build -c opt //:nighthawk
 ```
 USAGE:
 
-bazel-bin/nighthawk_client  [--no-simple-warmup] [--request-source <uri
+bazel-bin/nighthawk_client  [--simple-warmup] [--request-source <uri
 format>] [--label <string>] ...
 [--multi-target-use-https]
 [--multi-target-path <string>]
@@ -78,7 +78,7 @@ format>
 
 Where:
 
---no-simple-warmup
+--simple-warmup
 Do not perform the simple warmup call.
 
 --request-source <uri format>

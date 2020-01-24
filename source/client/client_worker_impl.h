@@ -23,6 +23,8 @@ namespace Client {
 
 class ClientWorkerImpl : public WorkerImpl, virtual public ClientWorker {
 public:
+  enum class HardCodedWarmupStyle { OFF, ON };
+
   ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Instance& tls,
                    Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                    const BenchmarkClientFactory& benchmark_client_factory,
@@ -31,7 +33,8 @@ public:
                    const RequestSourceFactory& request_generator_factory,
                    Envoy::Stats::Store& store, const int worker_number,
                    const Envoy::MonotonicTime starting_time,
-                   Envoy::Tracing::HttpTracerPtr& http_tracer, const bool simple_warmup);
+                   Envoy::Tracing::HttpTracerPtr& http_tracer,
+                   const HardCodedWarmupStyle hardcoded_warmup_style);
   StatisticPtrMap statistics() const override;
 
   const std::map<std::string, uint64_t>& threadLocalCounterValues() override {
@@ -59,7 +62,7 @@ private:
   PhasePtr phase_;
   Envoy::LocalInfo::LocalInfoPtr local_info_;
   std::map<std::string, uint64_t> threadLocalCounterValues_;
-  const bool simple_warmup_;
+  const HardCodedWarmupStyle hardcoded_warmup_style_;
 };
 
 using ClientWorkerImplPtr = std::unique_ptr<ClientWorkerImpl>;

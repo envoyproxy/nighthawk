@@ -85,7 +85,7 @@ def test_http_h1_mini_stress_test_with_client_side_queueing(http_test_server_fix
   counters = mini_stress_test(http_test_server_fixture, [
       http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--max-pending-requests",
       "10", "--connections", "1", "--duration", "100", "--termination-predicate",
-      "benchmark.http_2xx:99"
+      "benchmark.http_2xx:99", "--simple-warmup"
   ])
   assertCounterEqual(counters, "upstream_rq_pending_total", 11)
   assertCounterEqual(counters, "upstream_cx_overflow", 10)
@@ -112,7 +112,7 @@ def test_http_h2_mini_stress_test_with_client_side_queueing(http_test_server_fix
   counters = mini_stress_test(http_test_server_fixture, [
       http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--max-pending-requests",
       "10", "--h2", "--max-active-requests", "1", "--connections", "1", "--duration", "100",
-      "--termination-predicate", "benchmark.http_2xx:99"
+      "--termination-predicate", "benchmark.http_2xx:99", "--simple-warmup"
   ])
   assertCounterEqual(counters, "upstream_rq_pending_total", 1)
   assertCounterEqual(counters, "upstream_rq_pending_overflow", 10)
@@ -635,7 +635,7 @@ def test_http_request_release_timing(http_test_server_fixture, qps_parameterizat
         http_test_server_fixture.getTestServerRootUri(), "--duration",
         str(duration_parameterization_fixture), "--rps",
         str(qps_parameterization_fixture), "--concurrency",
-        str(concurrency), "--no-simple-warmup"
+        str(concurrency)
     ])
 
     total_requests = qps_parameterization_fixture * concurrency * duration_parameterization_fixture

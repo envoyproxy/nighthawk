@@ -188,5 +188,5 @@ message CommandLineOptions {
   // TransportSocket configuration to use in every request
   envoy.config.core.v3.TransportSocket transport_socket = 27;
   // Do not perform the simple warmup call.
-  google.protobuf.BoolValue no_simple_warmup = 32;
+  google.protobuf.BoolValue simple_warmup = 32;
 }

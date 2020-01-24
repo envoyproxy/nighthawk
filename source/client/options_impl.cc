@@ -264,8 +264,8 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "connect to this source. For example grpc://127.0.0.1:8443/.",
       false, "", "uri format", cmd);
 
-  TCLAP::SwitchArg no_simple_warmup("", "no-simple-warmup",
-                                    "Do not perform the simple warmup call.", cmd);
+  TCLAP::SwitchArg simple_warmup("", "simple-warmup", "Do not perform the simple warmup call.",
+                                 cmd);
 
   Utility::parseCommand(cmd, argc, argv);
 
@@ -368,7 +368,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
     }
   }
   TCLAP_SET_IF_SPECIFIED(labels, labels_);
-  TCLAP_SET_IF_SPECIFIED(no_simple_warmup, no_simple_warmup_);
+  TCLAP_SET_IF_SPECIFIED(simple_warmup, simple_warmup_);
 
   // CLI-specific tests.
   // TODO(oschaaf): as per mergconflicts's remark, it would be nice to aggregate
@@ -541,7 +541,7 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
       PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, nighthawk_service, nighthawk_service_);
   h2_use_multiple_connections_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(
       options, experimental_h2_use_multiple_connections, h2_use_multiple_connections_);
-  no_simple_warmup_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, no_simple_warmup, no_simple_warmup_);
+  simple_warmup_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, simple_warmup, simple_warmup_);
   std::copy(options.labels().begin(), options.labels().end(), std::back_inserter(labels_));
   validate();
 }
@@ -698,7 +698,7 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
   for (const auto& label : labels_) {
     *command_line_options->add_labels() = label;
   }
-  command_line_options->mutable_no_simple_warmup()->set_value(no_simple_warmup_);
+  command_line_options->mutable_simple_warmup()->set_value(simple_warmup_);
   return command_line_options;
 }
 

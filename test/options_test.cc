@@ -75,7 +75,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
       "--failure-predicate f2:2 --jitter-uniform .00001s "
       "--experimental-h2-use-multiple-connections "
       "--experimental-h1-connection-reuse-strategy lru --label label1 --label label2 {} "
-      "--no-simple-warmup",
+      "--simple-warmup",
       client_name_,
       "{name:\"envoy.transport_sockets.tls\","
       "typed_config:{\"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\","
@@ -127,7 +127,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
             options->h1ConnectionReuseStrategy());
   const std::vector<std::string> expected_labels{"label1", "label2"};
   EXPECT_EQ(expected_labels, options->labels());
-  EXPECT_TRUE(options->noSimpleWarmup());
+  EXPECT_TRUE(options->simpleWarmup());
   // Check that our conversion to CommandLineOptionsPtr makes sense.
   CommandLineOptionsPtr cmd = options->toCommandLineOptions();
   EXPECT_EQ(cmd->requests_per_second().value(), options->requestsPerSecond());
@@ -179,7 +179,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
   EXPECT_EQ(cmd->experimental_h1_connection_reuse_strategy().value(),
             options->h1ConnectionReuseStrategy());
   EXPECT_THAT(cmd->labels(), ElementsAreArray(expected_labels));
-  EXPECT_EQ(cmd->no_simple_warmup().value(), options->noSimpleWarmup());
+  EXPECT_EQ(cmd->simple_warmup().value(), options->simpleWarmup());
 
   OptionsImpl options_from_proto(*cmd);
   std::string s1 = Envoy::MessageUtil::getYamlStringFromMessage(

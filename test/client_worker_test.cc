@@ -118,7 +118,8 @@ TEST_F(ClientWorkerTest, BasicTest) {
   auto worker = std::make_unique<ClientWorkerImpl>(
       *api_, tls_, cluster_manager_ptr_, benchmark_client_factory_, termination_predicate_factory_,
       sequencer_factory_, request_generator_factory_, store_, worker_number,
-      time_system_.monotonicTime() + 10ms, http_tracer_, true);
+      time_system_.monotonicTime() + 10ms, http_tracer_,
+      ClientWorkerImpl::HardCodedWarmupStyle::ON);
 
   worker->start();
   worker->waitForCompletion();
