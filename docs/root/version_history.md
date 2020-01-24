@@ -8,7 +8,9 @@ Version history
 
 - In `service.proto` a change was made to allow both `Output` and `error_detail` to co-exist at the same time.
 - Both `nighthawk_client` and `nighthawk_service` will indicate execution failure (respectively through exit code or grpc reply) when connection errors and/or status code errors are observed by default.
-
+- The simple warmup we performed earlier has been removed, to eliminate counter pollution. This will be restored
+  when configuration of phases lands in a next release. For those who need the old behavior, `--simple-warmup`
+  can be configured to opt-in to the old-style behavior again.
 
 ### Changelist
 

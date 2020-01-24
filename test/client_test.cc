@@ -43,6 +43,7 @@ TEST_F(ClientTest, AutoConcurrencyRun) {
   argv.push_back("1");
   argv.push_back("--verbosity");
   argv.push_back("error");
+  argv.push_back("--simple-warmup");
   argv.push_back("http://localhost:63657/");
   Main program(argv.size(), argv.data());
   EXPECT_FALSE(program.run());

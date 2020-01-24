@@ -108,6 +108,7 @@ public:
   MOCK_CONST_METHOD0(multiTargetPath, std::string());
   MOCK_CONST_METHOD0(multiTargetUseHttps, bool());
   MOCK_CONST_METHOD0(labels, std::vector<std::string>());
+  MOCK_CONST_METHOD0(simpleWarmup, bool());
 };
 
 class MockBenchmarkClientFactory : public Client::BenchmarkClientFactory {

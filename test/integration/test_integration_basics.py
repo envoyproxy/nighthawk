@@ -85,7 +85,7 @@ def test_http_h1_mini_stress_test_with_client_side_queueing(http_test_server_fix
   counters = mini_stress_test(http_test_server_fixture, [
       http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--max-pending-requests",
       "10", "--connections", "1", "--duration", "100", "--termination-predicate",
-      "benchmark.http_2xx:99"
+      "benchmark.http_2xx:99", "--simple-warmup"
   ])
   assertCounterEqual(counters, "upstream_rq_pending_total", 11)
   assertCounterEqual(counters, "upstream_cx_overflow", 10)
@@ -112,7 +112,7 @@ def test_http_h2_mini_stress_test_with_client_side_queueing(http_test_server_fix
   counters = mini_stress_test(http_test_server_fixture, [
       http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--max-pending-requests",
       "10", "--h2", "--max-active-requests", "1", "--connections", "1", "--duration", "100",
-      "--termination-predicate", "benchmark.http_2xx:99"
+      "--termination-predicate", "benchmark.http_2xx:99", "--simple-warmup"
   ])
   assertCounterEqual(counters, "upstream_rq_pending_total", 1)
   assertCounterEqual(counters, "upstream_rq_pending_overflow", 10)
@@ -140,7 +140,7 @@ def test_http_h1_mini_stress_test_open_loop(http_test_server_fixture):
   counters = mini_stress_test(http_test_server_fixture, [
       http_test_server_fixture.getTestServerRootUri(), "--rps", "10000", "--max-pending-requests",
       "1", "--open-loop", "--max-active-requests", "1", "--connections", "1", "--duration", "100",
-      "--termination-predicate", "benchmark.http_2xx:99"
+      "--termination-predicate", "benchmark.http_2xx:99", "--simple-warmup"
   ])
   # we expect pool overflows
   assertCounterGreater(counters, "benchmark.pool_overflow", 10)
@@ -154,7 +154,7 @@ def test_http_h2_mini_stress_test_open_loop(http_test_server_fixture):
   counters = mini_stress_test(http_test_server_fixture, [
       http_test_server_fixture.getTestServerRootUri(), "--rps", "10000", "--max-pending-requests",
       "1", "--h2", "--open-loop", "--max-active-requests", "1", "--duration", "100",
-      "--termination-predicate", "benchmark.http_2xx:99"
+      "--termination-predicate", "benchmark.http_2xx:99", "--simple-warmup"
   ])
   # we expect pool overflows
   assertCounterGreater(counters, "benchmark.pool_overflow", 10)
@@ -648,6 +648,4 @@ def test_http_request_release_timing(http_test_server_fixture, qps_parameterizat
     assertEqual(
         int(global_histograms["benchmark_http_client.queue_to_connect"]["count"]), total_requests)
 
-    # When it comes to qps/rps we also expect one warmup call per worker. We'll get rid
-    # of this when we land the next part of the work with respect to phases.
-    assertCounterEqual(counters, "benchmark.http_2xx", (total_requests) + concurrency)
+    assertCounterEqual(counters, "benchmark.http_2xx", (total_requests))
