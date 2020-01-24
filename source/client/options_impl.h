@@ -79,6 +79,7 @@ public:
   }
   std::string multiTargetPath() const override { return multi_target_path_; }
   bool multiTargetUseHttps() const override { return multi_target_use_https_; }
+  bool noSimpleWarmup() const override { return no_simple_warmup_; }
 
 private:
   void parsePredicates(const TCLAP::MultiArg<std::string>& arg,
@@ -128,6 +129,7 @@ private:
   std::string multi_target_path_;
   bool multi_target_use_https_{false};
   std::vector<std::string> labels_;
+  bool no_simple_warmup_{false};
 };
 
 } // namespace Client

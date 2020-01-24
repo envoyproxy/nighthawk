@@ -635,7 +635,7 @@ def test_http_request_release_timing(http_test_server_fixture, qps_parameterizat
         http_test_server_fixture.getTestServerRootUri(), "--duration",
         str(duration_parameterization_fixture), "--rps",
         str(qps_parameterization_fixture), "--concurrency",
-        str(concurrency)
+        str(concurrency), "--no-simple-warmup"
     ])
 
     total_requests = qps_parameterization_fixture * concurrency * duration_parameterization_fixture
@@ -648,6 +648,4 @@ def test_http_request_release_timing(http_test_server_fixture, qps_parameterizat
     assertEqual(
         int(global_histograms["benchmark_http_client.queue_to_connect"]["count"]), total_requests)
 
-    # When it comes to qps/rps we also expect one warmup call per worker. We'll get rid
-    # of this when we land the next part of the work with respect to phases.
-    assertCounterEqual(counters, "benchmark.http_2xx", (total_requests) + concurrency)
+    assertCounterEqual(counters, "benchmark.http_2xx", (total_requests))

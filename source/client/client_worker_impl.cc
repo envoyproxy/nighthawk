@@ -19,7 +19,8 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
                                    const RequestSourceFactory& request_generator_factory,
                                    Envoy::Stats::Store& store, const int worker_number,
                                    const Envoy::MonotonicTime starting_time,
-                                   Envoy::Tracing::HttpTracerPtr& http_tracer)
+                                   Envoy::Tracing::HttpTracerPtr& http_tracer,
+                                   const bool simple_warmup)
     : WorkerImpl(api, tls, store), termination_predicate_factory_(termination_predicate_factory),
       sequencer_factory_(sequencer_factory), worker_scope_(store_.createScope("cluster.")),
       worker_number_scope_(worker_scope_->createScope(fmt::format("{}.", worker_number))),
@@ -36,7 +37,8 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
                                     termination_predicate_factory_.create(
                                         time_source_, *worker_number_scope_, starting_time),
                                     *worker_number_scope_, starting_time),
-          true)) {}
+          true)),
+      simple_warmup_(simple_warmup) {}
 
 void ClientWorkerImpl::simpleWarmup() {
   ENVOY_LOG(debug, "> worker {}: warmup start.", worker_number_);
@@ -51,7 +53,9 @@ void ClientWorkerImpl::simpleWarmup() {
 void ClientWorkerImpl::work() {
   benchmark_client_->setShouldMeasureLatencies(false);
   request_generator_->initOnThread();
-  simpleWarmup();
+  if (simple_warmup_) {
+    simpleWarmup();
+  }
   benchmark_client_->setShouldMeasureLatencies(phase_->shouldMeasureLatencies());
   phase_->run();
 

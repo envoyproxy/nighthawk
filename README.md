@@ -43,8 +43,9 @@ bazel build -c opt //:nighthawk
 ```
 USAGE:
 
-bazel-bin/nighthawk_client  [--request-source <uri format>] [--label
-<string>] ... [--multi-target-use-https]
+bazel-bin/nighthawk_client  [--no-simple-warmup] [--request-source <uri
+format>] [--label <string>] ...
+[--multi-target-use-https]
 [--multi-target-path <string>]
 [--multi-target-endpoint <string>] ...
 [--experimental-h2-use-multiple-connections]
@@ -76,6 +77,9 @@ format>
 
 
 Where:
+
+--no-simple-warmup
+Do not perform the simple warmup call.
 
 --request-source <uri format>
 Remote gRPC source that will deliver to-be-replayed traffic. Each
