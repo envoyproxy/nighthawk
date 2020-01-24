@@ -79,7 +79,9 @@ format>
 Where:
 
 --simple-warmup
-Do not perform the simple warmup call.
+Perform a simple single warmup request (per worker) before starting
+execution. Note that this will be reflected in the counters that
+Nighthawk writes to the output. Default is false.
 
 --request-source <uri format>
 Remote gRPC source that will deliver to-be-replayed traffic. Each

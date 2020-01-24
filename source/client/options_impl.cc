@@ -264,8 +264,12 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "connect to this source. For example grpc://127.0.0.1:8443/.",
       false, "", "uri format", cmd);
 
-  TCLAP::SwitchArg simple_warmup("", "simple-warmup", "Do not perform the simple warmup call.",
-                                 cmd);
+  TCLAP::SwitchArg simple_warmup(
+      "", "simple-warmup",
+      "Perform a simple single warmup request (per worker) before starting execution. Note that "
+      "this will be reflected in the counters that Nighthawk writes to the output. Default is "
+      "false.",
+      cmd);
 
   Utility::parseCommand(cmd, argc, argv);
 

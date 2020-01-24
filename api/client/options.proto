@@ -187,6 +187,8 @@ message CommandLineOptions {
   repeated string labels = 28;
   // TransportSocket configuration to use in every request
   envoy.config.core.v3.TransportSocket transport_socket = 27;
-  // Do not perform the simple warmup call.
+  // Perform a simple single warmup request (per worker) before starting
+  // execution. Note that this will be reflected in the counters that
+  // Nighthawk writes to the output. Default is false.
   google.protobuf.BoolValue simple_warmup = 32;
 }
