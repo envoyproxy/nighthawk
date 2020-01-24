@@ -81,6 +81,18 @@ void SequencerImpl::updateStartBlockingTimeIfNeeded() {
 
 void SequencerImpl::run(bool from_periodic_timer) {
   ASSERT(running_);
+  // CachedTimeSource relies on the dispatcher's updateApproximateMonotonicTime() /
+  // approximateMonotonicTime() for the actual caching. We refresh its stored time-value here so
+  // that our cached time source will yield an up-to-date monotonic time sample to work with. This
+  // time sample value will then be consistent accross usage here, plus any RateLimiter(s) and/or
+  // TerminationPredicate(s) associated to this sequencer that perform computations based on the
+  // current time. Having a consistent value accross these usages avoids certain edge cases. For
+  // example: A duration predicate determines it is time to stop execution at 1s. A rate limiter
+  // determines it is time to release a new request at 1.00001s. While this is a benign example, and
+  // would be explainable, it probably has potential to raise eyebrows.
+  // More importantly, it may help avoid a class of bugs that could be more serious, depending on
+  // functionality (TOC/TOU).
+  dispatcher_.updateApproximateMonotonicTime();
   const auto now = last_event_time_ = time_source_.monotonicTime();
 
   last_termination_status_ = last_termination_status_ == TerminationPredicate::Status::PROCEED
@@ -97,6 +109,8 @@ void SequencerImpl::run(bool from_periodic_timer) {
     // The rate limiter says it's OK to proceed and call the target. Let's see if the target is OK
     // with that as well.
     const bool target_could_start = target_([this, now](bool, bool) {
+      // Update cached time, as we need an accurate value for latency reporting.
+      dispatcher_.updateApproximateMonotonicTime();
       const auto dur = time_source_.monotonicTime() - now;
       latency_statistic_->addValue(dur.count());
       targets_completed_++;

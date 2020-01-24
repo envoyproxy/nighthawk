@@ -51,6 +51,7 @@ protected:
 private:
   void simpleWarmup();
 
+  std::unique_ptr<Envoy::TimeSource> time_source_;
   const TerminationPredicateFactory& termination_predicate_factory_;
   const SequencerFactory& sequencer_factory_;
   Envoy::Stats::ScopePtr worker_scope_;
