@@ -2,6 +2,7 @@
 
 #include "external/envoy/source/common/stats/symbol_table_impl.h"
 
+#include "common/cached_time_source_impl.h"
 #include "common/phase_impl.h"
 #include "common/termination_predicate_impl.h"
 #include "common/utility.h"
@@ -20,7 +21,9 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
                                    Envoy::Stats::Store& store, const int worker_number,
                                    const Envoy::MonotonicTime starting_time,
                                    Envoy::Tracing::HttpTracerPtr& http_tracer)
-    : WorkerImpl(api, tls, store), termination_predicate_factory_(termination_predicate_factory),
+    : WorkerImpl(api, tls, store),
+      time_source_(std::make_unique<CachedTimeSourceImpl>(*dispatcher_)),
+      termination_predicate_factory_(termination_predicate_factory),
       sequencer_factory_(sequencer_factory), worker_scope_(store_.createScope("cluster.")),
       worker_number_scope_(worker_scope_->createScope(fmt::format("{}.", worker_number))),
       worker_number_(worker_number), http_tracer_(http_tracer),
@@ -32,9 +35,9 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
           fmt::format("{}", worker_number), *request_generator_)),
       phase_(std::make_unique<PhaseImpl>(
           "main",
-          sequencer_factory_.create(time_source_, *dispatcher_, *benchmark_client_,
+          sequencer_factory_.create(*time_source_, *dispatcher_, *benchmark_client_,
                                     termination_predicate_factory_.create(
-                                        time_source_, *worker_number_scope_, starting_time),
+                                        *time_source_, *worker_number_scope_, starting_time),
                                     *worker_number_scope_, starting_time),
           true)) {}
 
@@ -70,8 +73,8 @@ void ClientWorkerImpl::work() {
   }
   // Note that benchmark_client_ is not terminated here, but in shutdownThread() below. This is to
   // to prevent the shutdown artifacts from influencing the test result counters. The main thread
-  // still needs to be able to read the counters for reporting the global numbers, and those should
-  // be consistent.
+  // still needs to be able to read the counters for reporting the global numbers, and those
+  // should be consistent.
 }
 
 void ClientWorkerImpl::shutdownThread() { benchmark_client_->terminate(); }

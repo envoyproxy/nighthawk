@@ -88,6 +88,7 @@ public:
         .WillRepeatedly(Invoke([&](const std::chrono::microseconds,
                                    const Envoy::ScopeTrackedObject*) { timer2_set_ = true; }));
     EXPECT_CALL(*dispatcher_, exit()).WillOnce(Invoke([&]() { stopped_ = true; }));
+    EXPECT_CALL(*dispatcher_, updateApproximateMonotonicTime()).Times(AtLeast(1));
     simulation_start_ = time_system_.monotonicTime();
     auto* unsafe_mock_termination_predicate = new MockTerminationPredicate();
     termination_predicate_ =

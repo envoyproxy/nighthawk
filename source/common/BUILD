@@ -75,6 +75,7 @@ envoy_cc_library(
         "worker_impl.cc",
     ],
     hdrs = [
+        "cached_time_source_impl.h",
         "frequency.h",
         "phase_impl.h",
         "platform_util_impl.h",
