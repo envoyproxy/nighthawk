@@ -584,7 +584,7 @@ void OptionsImpl::validate() const {
       if (uri.scheme() != "grpc") {
         throw MalformedArgvException("Invalid replay source URI");
       }
-    } catch (const UriException) {
+    } catch (const UriException&) {
       throw MalformedArgvException("Invalid replay source URI");
     }
   }
