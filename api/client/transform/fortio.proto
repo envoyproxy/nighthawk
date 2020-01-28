@@ -90,8 +90,8 @@ message FortioResult {
   // equivalent).
   uint64 BytesSent = 18;
 
-  // Bytes sent should reflect the bytes sent after protocol serialization, compression, and
-  // encryption are applied (i.e., the size of the buffers passed to the send() system call or its
+  // Bytes received should reflect the bytes read before decryption, de-compression, and protocol
+  // de-serialization are applied (i.e., the size of bytes read from the recv() system call or its
   // equivalent).
   uint64 BytesReceived = 19;
 }
