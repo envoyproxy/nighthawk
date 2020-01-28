@@ -476,6 +476,8 @@
    }
   ]
  },
+ "BytesSent": "3528",
+ "BytesReceived": "2702142",
  "StartTime": "2020-01-11T12:47:57.259885200Z",
  "RequestedDuration": "2s"
 }
