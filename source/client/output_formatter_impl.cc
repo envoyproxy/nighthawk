@@ -215,7 +215,7 @@ FortioOutputFormatterImpl::getGlobalResult(const nighthawk::client::Output& outp
 
 bool FortioOutputFormatterImpl::visitCounter(
     const nighthawk::client::Result& result, absl::string_view counter_name,
-    std::function<void(const nighthawk::client::Counter&)> callback) const {
+    const std::function<void(const nighthawk::client::Counter&)> callback) const {
   for (const auto& nh_counter : result.counters()) {
     if (nh_counter.name() == counter_name) {
       callback(nh_counter);
