@@ -73,7 +73,7 @@ protected:
    * @return True iff a counter was found.
    */
   bool visitCounter(const nighthawk::client::Result& result, absl::string_view counter_name,
-                    const std::function<void(const nighthawk::client::Counter&)> callback) const;
+                    const std::function<void(const nighthawk::client::Counter&)>& callback) const;
 
   /**
    * Return the statistic that represents the request/response round-trip times.
