@@ -314,18 +314,14 @@ std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Outp
   // If this field doesn't exist, then there were no 2xx responses
   fortio_output.mutable_retcodes()->insert({"200", 0});
   visitCounter(nh_global_result, "benchmark.http_2xx",
-               [&fortio_output, number_of_workers](const nighthawk::client::Counter& nh_counter) {
+               [&fortio_output](const nighthawk::client::Counter& nh_counter) {
                  // So Fortio computes the error percentage based on:
                  // - the sample count in the histogram
                  // - the number of 200 responses
-                 // Nighthawk workers perform a single-request as a warmup, and
-                 // doesn't measure latency for that. So we do an approximation here:
-                 // we substract number_of_workers from the observed 2xx responses.
                  // TODO(oschaaf): It would be better to compute the actual ratio of
                  // error codes vs success codes.. and possibly also factor in
                  // connection failures, etc.
-                 fortio_output.mutable_retcodes()->at("200") =
-                     nh_counter.value() - number_of_workers;
+                 fortio_output.mutable_retcodes()->at("200") = nh_counter.value();
                });
 
   auto* statistic = findStatistic(nh_global_result, "benchmark_http_client.request_to_response");
