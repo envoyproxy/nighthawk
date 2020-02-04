@@ -15,7 +15,7 @@
 #include "nighthawk/common/statistic.h"
 
 #include "external/envoy/source/common/common/logger.h"
-#include "external/envoy/source/common/http/http1/conn_pool.h"
+#include "external/envoy/source/common/http/http1/conn_pool_legacy.h"
 #include "external/envoy/source/common/http/http2/conn_pool.h"
 #include "external/envoy/source/common/runtime/runtime_impl.h"
 
@@ -45,13 +45,13 @@ struct BenchmarkClientStats {
   ALL_BENCHMARK_CLIENT_STATS(GENERATE_COUNTER_STRUCT)
 };
 
-class Http1PoolImpl : public Envoy::Http::Http1::ProdConnPoolImpl {
+class Http1PoolImpl : public Envoy::Http::Legacy::Http1::ProdConnPoolImpl {
 public:
   enum class ConnectionReuseStrategy {
     MRU,
     LRU,
   };
-  using Envoy::Http::Http1::ProdConnPoolImpl::ProdConnPoolImpl;
+  using Envoy::Http::Legacy::Http1::ProdConnPoolImpl::ProdConnPoolImpl;
   Envoy::Http::ConnectionPool::Cancellable*
   newStream(Envoy::Http::StreamDecoder& response_decoder,
             Envoy::Http::ConnectionPool::Callbacks& callbacks) override;
@@ -74,7 +74,7 @@ private:
 // --max-requests-per-connection may help as well, as doing periodically initiating new connections
 // may help the benchmark target by giving it an opportunity to rebalance.
 class Http2PoolImpl : public Envoy::Http::ConnectionPool::Instance,
-                      public Envoy::Http::ConnPoolImplBase {
+                      public Envoy::Http::Legacy::ConnPoolImplBase {
 public:
   // For doc comments, see  Envoy::Http::ConnectionPool::Instance & Envoy::Http::ConnPoolImplBase
   Http2PoolImpl(
