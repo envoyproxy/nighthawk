@@ -69,8 +69,8 @@ public:
       const Envoy::Network::ConnectionSocket::OptionsSharedPtr& options,
       const Envoy::Network::TransportSocketOptionsSharedPtr& transport_socket_options) override {
     if (protocol == Envoy::Http::Protocol::Http11 || protocol == Envoy::Http::Protocol::Http10) {
-      auto* h1_pool = new Http1PoolImpl(dispatcher, host, priority, options, h1_settings,
-                                        transport_socket_options);
+      auto* h1_pool =
+          new Http1PoolImpl(dispatcher, host, priority, options, transport_socket_options);
       h1_pool->setConnectionReuseStrategy(connection_reuse_strategy_);
       h1_pool->setPrefetchConnections(prefetch_connections_);
       return Envoy::Http::ConnectionPool::InstancePtr{h1_pool};
@@ -92,7 +92,6 @@ public:
   void enableMultiConnectionH2Pool() { use_multi_conn_h2_pool_ = true; }
 
 private:
-  Envoy::Http::Http1Settings h1_settings;
   Http1PoolImpl::ConnectionReuseStrategy connection_reuse_strategy_{};
   bool prefetch_connections_{};
   bool use_multi_conn_h2_pool_{};

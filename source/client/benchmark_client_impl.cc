@@ -49,7 +49,7 @@ Http2PoolImpl::Http2PoolImpl(
     Envoy::Upstream::ResourcePriority priority,
     const Envoy::Network::ConnectionSocket::OptionsSharedPtr& options,               // NOLINT
     const Envoy::Network::TransportSocketOptionsSharedPtr& transport_socket_options) // NOLINT
-    : Envoy::Http::ConnPoolImplBase(std::move(host), priority), dispatcher_(dispatcher),
+    : Envoy::Http::Legacy::ConnPoolImplBase(std::move(host), priority), dispatcher_(dispatcher),
       socket_options_(options), transport_socket_options_(transport_socket_options) {
   for (uint32_t i = 0; i < host_->cluster().resourceManager(priority_).connections().max(); i++) {
     pools_.push_back(std::make_unique<Envoy::Http::Http2::ProdConnPoolImpl>(
