@@ -213,16 +213,15 @@ FortioOutputFormatterImpl::getGlobalResult(const nighthawk::client::Output& outp
   throw NighthawkException("Nighthawk output was malformed, contains no 'global' results.");
 }
 
-bool FortioOutputFormatterImpl::visitCounter(
-    const nighthawk::client::Result& result, absl::string_view counter_name,
-    const std::function<void(const nighthawk::client::Counter&)>& callback) const {
+uint64_t FortioOutputFormatterImpl::getCounterValue(const nighthawk::client::Result& result,
+                                                    absl::string_view counter_name,
+                                                    const uint64_t value_if_not_found) const {
   for (const auto& nh_counter : result.counters()) {
     if (nh_counter.name() == counter_name) {
-      callback(nh_counter);
-      return true;
+      return nh_counter.value();
     }
   }
-  return false;
+  return value_if_not_found;
 }
 
 const nighthawk::client::Statistic*
@@ -290,46 +289,23 @@ std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Outp
   const auto& nh_global_result = getGlobalResult(output);
 
   // Fill in the actual QPS based on the counters
-  if (!visitCounter(
-          nh_global_result, "upstream_rq_total",
-          [&fortio_output, actual_duration](const nighthawk::client::Counter& nh_counter) {
-            const double actual_qps = static_cast<double>(
-                nh_counter.value() / std::chrono::duration<double>(actual_duration).count());
-            fortio_output.set_actualqps(actual_qps);
-          })) {
-    throw NighthawkException(
-        "Nighthawk result was malformed, contains no counter with name: upstream_rq_total");
-  };
-  visitCounter(nh_global_result, "upstream_cx_rx_bytes_total",
-               [&fortio_output](const nighthawk::client::Counter& nh_counter) {
-                 fortio_output.set_bytesreceived(nh_counter.value());
-               });
-  visitCounter(nh_global_result, "upstream_cx_tx_bytes_total",
-               [&fortio_output](const nighthawk::client::Counter& nh_counter) {
-                 fortio_output.set_bytessent(nh_counter.value());
-               });
-
-  // Fill in the number of successful responses.
+  const double actual_qps =
+      static_cast<double>(getCounterValue(nh_global_result, "upstream_rq_total", 0) /
+                          std::chrono::duration<double>(actual_duration).count());
+  fortio_output.set_actualqps(actual_qps);
+  fortio_output.set_bytesreceived(
+      getCounterValue(nh_global_result, "upstream_cx_rx_bytes_total", 0));
+  fortio_output.set_bytessent(getCounterValue(nh_global_result, "upstream_cx_tx_bytes_total", 0));
   // Fortio-ui only reads the 200 OK field, other fields are never displayed.
-  // If this field doesn't exist, then there were no 2xx responses
-  fortio_output.mutable_retcodes()->insert({"200", 0});
-  visitCounter(nh_global_result, "benchmark.http_2xx",
-               [&fortio_output](const nighthawk::client::Counter& nh_counter) {
-                 // So Fortio computes the error percentage based on:
-                 // - the sample count in the histogram
-                 // - the number of 200 responses
-                 // TODO(oschaaf): It would be better to compute the actual ratio of
-                 // error codes vs success codes.. and possibly also factor in
-                 // connection failures, etc.
-                 fortio_output.mutable_retcodes()->at("200") = nh_counter.value();
-               });
-
+  // Fortio computes the error percentage based on:
+  // - the sample count in the histogram
+  // - the number of 200 responses
+  fortio_output.mutable_retcodes()->insert(
+      {"200", getCounterValue(nh_global_result, "benchmark.http_2xx", 0)});
   auto* statistic = findStatistic(nh_global_result, "benchmark_http_client.request_to_response");
-  if (statistic == nullptr) {
-    throw NighthawkException("Nighthawk result was malformed, contains no "
-                             "'benchmark_http_client.request_to_response' statistic.");
+  if (statistic != nullptr) {
+    fortio_output.mutable_durationhistogram()->CopyFrom(renderFortioDurationHistogram(*statistic));
   }
-  fortio_output.mutable_durationhistogram()->CopyFrom(renderFortioDurationHistogram(*statistic));
   statistic = findStatistic(nh_global_result, "benchmark_http_client.response_body_size");
   if (statistic != nullptr) {
     fortio_output.mutable_sizes()->CopyFrom(renderFortioDurationHistogram(*statistic));

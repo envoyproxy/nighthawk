@@ -69,11 +69,12 @@ protected:
    *
    * @param result a single Nighthawk result, preferably the global result
    * @param counter_name the name of the counter to return
-   * @param callback The callback to run iff a counter is found, passing the counter as an argument.
+   * @param value_if_not_found value that will be returned when the counter does not exist in the
+   * output.
    * @return True iff a counter was found.
    */
-  bool visitCounter(const nighthawk::client::Result& result, absl::string_view counter_name,
-                    const std::function<void(const nighthawk::client::Counter&)>& callback) const;
+  uint64_t getCounterValue(const nighthawk::client::Result& result, absl::string_view counter_name,
+                           const uint64_t value_if_not_found = 0) const;
 
   /**
    * Return the statistic that represents the request/response round-trip times.
