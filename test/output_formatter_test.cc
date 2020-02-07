@@ -163,7 +163,7 @@ TEST_F(FortioOutputCollectorTest, MissingStatistic) {
   nighthawk::client::Output output_proto = collector_->toProto();
   output_proto.mutable_results(2)->clear_statistics();
   FortioOutputFormatterImpl formatter;
-  ASSERT_NO_THROW(formatter.formatProto(output_proto);
+  ASSERT_NO_THROW(formatter.formatProto(output_proto));
 }
 
 TEST_F(FortioOutputCollectorTest, NoExceptions) {
