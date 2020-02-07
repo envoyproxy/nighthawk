@@ -56,7 +56,7 @@ envoy_cc_library(
         "@envoy//source/common/http:header_map_lib_with_external_headers",
         "@envoy//source/common/http:headers_lib_with_external_headers",
         "@envoy//source/common/http/http1:codec_lib_with_external_headers",
-        "@envoy//source/common/http/http1:conn_pool_lib_with_external_headers",
+        "@envoy//source/common/http/http1:conn_pool_legacy_lib_with_external_headers",
         "@envoy//source/common/http/http2:conn_pool_lib_with_external_headers",
         "@envoy//source/common/init:manager_lib_with_external_headers",
         "@envoy//source/common/local_info:local_info_lib_with_external_headers",
