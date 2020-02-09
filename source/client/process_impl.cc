@@ -26,6 +26,8 @@
 #include "external/envoy/source/common/thread_local/thread_local_impl.h"
 #include "external/envoy/source/extensions/tracers/well_known_names.h"
 
+#include "api/client/socket.pb.h"
+
 #include "absl/strings/str_replace.h"
 
 // TODO(oschaaf): See if we can leverage a static module registration like Envoy does to avoid the
@@ -275,6 +277,16 @@ void ProcessImpl::createBootstrapConfiguration(envoy::config::bootstrap::v3::Boo
     if (options_.transportSocket().has_value()) {
       *cluster->mutable_transport_socket() = options_.transportSocket().value();
     }
+    // Now we wrap whatever Envoy-native transport socket config we came up up with into our own
+    // transport socket extension configuration from socket.h.
+    nighthawk::transport_socket::TransportSocket socket;
+    if (cluster->has_transport_socket()) {
+      *socket.mutable_transport_socket() = cluster->transport_socket();
+    } else {
+      socket.mutable_transport_socket()->set_name("envoy.transport_sockets.raw_buffer");
+    }
+    cluster->mutable_transport_socket()->mutable_typed_config()->PackFrom(socket);
+
     cluster->set_name(fmt::format("{}", i));
     cluster->mutable_connect_timeout()->set_seconds(options_.timeout().count());
     cluster->mutable_max_requests_per_connection()->set_value(options_.maxRequestsPerConnection());

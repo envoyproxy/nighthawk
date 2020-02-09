@@ -9,6 +9,7 @@ api_cc_py_proto_library(
         "options.proto",
         "output.proto",
         "service.proto",
+        "socket.proto",
     ],
     visibility = ["//visibility:public"],
     deps = [
