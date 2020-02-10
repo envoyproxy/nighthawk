@@ -237,9 +237,9 @@ def test_https_h1(https_test_server_fixture):
   assertCounterEqual(counters, "default.total_match_count", 1)
   assertCounterEqual(counters, "upstream_socket.connects", 1)
   assertCounterEqual(counters, "upstream_socket.read_bytes", 3400)
-  assertCounterEqual(counters, "upstream_socket.reads", 27)
+  assertCounterGreaterEqual(counters, "upstream_socket.reads", 25)
   assertCounterEqual(counters, "upstream_socket.write_bytes", 1500)
-  assertCounterEqual(counters, "upstream_socket.writes", 54)
+  assertCounterGreaterEqual(counters, "upstream_socket.writes", 50)
   assertEqual(len(counters), 22)
 
   server_stats = https_test_server_fixture.getTestServerStatisticsJson()
@@ -276,9 +276,9 @@ def test_https_h2(https_test_server_fixture):
   assertCounterEqual(counters, "default.total_match_count", 1)
   assertCounterEqual(counters, "upstream_socket.connects", 1)
   assertCounterEqual(counters, "upstream_socket.read_bytes", 1030)
-  assertCounterEqual(counters, "upstream_socket.reads", 27)
+  assertCounterGreaterEqual(counters, "upstream_socket.reads", 25)
   assertCounterEqual(counters, "upstream_socket.write_bytes", 404)
-  assertCounterEqual(counters, "upstream_socket.writes", 54)
+  assertCounterGreaterEqual(counters, "upstream_socket.writes", 50)
   assertEqual(len(counters), 22)
 
 
