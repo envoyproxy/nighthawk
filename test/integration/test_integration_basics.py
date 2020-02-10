@@ -34,6 +34,11 @@ def test_http_h1(http_test_server_fixture):
   assertCounterEqual(counters, "upstream_rq_pending_total", 1)
   assertCounterEqual(counters, "upstream_rq_total", 25)
   assertCounterEqual(counters, "default.total_match_count", 1)
+  assertCounterEqual(counters, "upstream_socket.connects", 1)
+  assertCounterEqual(counters, "upstream_socket.read_bytes", 3400)
+  assertCounterEqual(counters, "upstream_socket.reads", 25)
+  assertCounterEqual(counters, "upstream_socket.write_bytes", 1500)
+  assertCounterEqual(counters, "upstream_socket.writes", 52)
 
   global_histograms = http_test_server_fixture.getNighthawkGlobalHistogramsbyIdFromJson(parsed_json)
   assertEqual(int(global_histograms["benchmark_http_client.response_body_size"]["count"]), 25)
@@ -47,7 +52,7 @@ def test_http_h1(http_test_server_fixture):
   assertEqual(int(global_histograms["benchmark_http_client.response_body_size"]["raw_pstdev"]), 0)
   assertEqual(int(global_histograms["benchmark_http_client.response_header_size"]["raw_pstdev"]), 0)
 
-  assertEqual(len(counters), 12)
+  assertEqual(len(counters), 17)
 
 
 def mini_stress_test(fixture, args):
@@ -179,7 +184,13 @@ def test_http_h2(http_test_server_fixture):
   assertCounterEqual(counters, "upstream_rq_pending_total", 1)
   assertCounterEqual(counters, "upstream_rq_total", 25)
   assertCounterEqual(counters, "default.total_match_count", 1)
-  assertEqual(len(counters), 12)
+  assertCounterEqual(counters, "upstream_socket.connects", 1)
+  assertCounterGreaterEqual(counters, "upstream_socket.read_bytes", 1030)
+  assertCounterEqual(counters, "upstream_socket.reads", 25)
+  assertCounterGreaterEqual(counters, "upstream_socket.write_bytes", 404)
+  assertCounterEqual(counters, "upstream_socket.writes", 52)
+
+  assertEqual(len(counters), 17)
 
 
 def test_http_concurrency(http_test_server_fixture):
@@ -224,7 +235,12 @@ def test_https_h1(https_test_server_fixture):
   assertCounterEqual(counters, "ssl.sigalgs.rsa_pss_rsae_sha256", 1)
   assertCounterEqual(counters, "ssl.versions.TLSv1.2", 1)
   assertCounterEqual(counters, "default.total_match_count", 1)
-  assertEqual(len(counters), 17)
+  assertCounterEqual(counters, "upstream_socket.connects", 1)
+  assertCounterEqual(counters, "upstream_socket.read_bytes", 3400)
+  assertCounterEqual(counters, "upstream_socket.reads", 27)
+  assertCounterEqual(counters, "upstream_socket.write_bytes", 1500)
+  assertCounterEqual(counters, "upstream_socket.writes", 54)
+  assertEqual(len(counters), 22)
 
   server_stats = https_test_server_fixture.getTestServerStatisticsJson()
   assertEqual(
@@ -258,7 +274,12 @@ def test_https_h2(https_test_server_fixture):
   assertCounterEqual(counters, "ssl.sigalgs.rsa_pss_rsae_sha256", 1)
   assertCounterEqual(counters, "ssl.versions.TLSv1.2", 1)
   assertCounterEqual(counters, "default.total_match_count", 1)
-  assertEqual(len(counters), 17)
+  assertCounterEqual(counters, "upstream_socket.connects", 1)
+  assertCounterEqual(counters, "upstream_socket.read_bytes", 1030)
+  assertCounterEqual(counters, "upstream_socket.reads", 27)
+  assertCounterEqual(counters, "upstream_socket.write_bytes", 404)
+  assertCounterEqual(counters, "upstream_socket.writes", 54)
+  assertEqual(len(counters), 22)
 
 
 def test_https_h2_multiple_connections(https_test_server_fixture):

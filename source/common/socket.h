@@ -1,10 +1,26 @@
 #include "envoy/registry/registry.h"
 #include "envoy/server/transport_socket_config.h"
+#include "envoy/stats/scope.h"
+#include "envoy/stats/store.h"
 
 #include "api/client/socket.pb.h"
 #include "api/client/socket.pb.validate.h"
 
 namespace Nighthawk {
+
+using namespace Envoy; // We need this because of macro expectations.
+
+#define ALL_SOCKET_STATS(COUNTER)                                                                  \
+  COUNTER(closes)                                                                                  \
+  COUNTER(connects)                                                                                \
+  COUNTER(write_bytes)                                                                             \
+  COUNTER(writes)                                                                                  \
+  COUNTER(read_bytes)                                                                              \
+  COUNTER(reads)
+
+struct SocketStats {
+  ALL_SOCKET_STATS(GENERATE_COUNTER_STRUCT)
+};
 
 class SocketConfigFactory
     : public virtual Envoy::Server::Configuration::TransportSocketConfigFactory {
@@ -26,10 +42,7 @@ public:
 class SocketFactory : public Envoy::Network::TransportSocketFactory {
 public:
   SocketFactory(const nighthawk::transport_socket::TransportSocket& proto_config,
-                SocketConfigFactory&& config_factory, Envoy::Server::Admin& admin,
-                Envoy::Singleton::Manager& singleton_manager,
-                Envoy::ThreadLocal::SlotAllocator& tls,
-                Envoy::Event::Dispatcher& main_thread_dispatcher,
+                SocketConfigFactory&& config_factory, Envoy::Stats::ScopePtr&& scope,
                 Envoy::Network::TransportSocketFactoryPtr&& transport_socket_factory);
 
   // Network::TransportSocketFactory
@@ -38,12 +51,13 @@ public:
   bool implementsSecureTransport() const override;
 
 private:
+  Envoy::Stats::ScopePtr scope_;
   Envoy::Network::TransportSocketFactoryPtr transport_socket_factory_;
 };
 
 class Socket : public Envoy::Network::TransportSocket {
 public:
-  Socket(Envoy::Network::TransportSocketPtr&& transport_socket);
+  Socket(Envoy::Stats::Scope& scope, Envoy::Network::TransportSocketPtr&& transport_socket);
 
   // Network::TransportSocket
   void setTransportSocketCallbacks(Envoy::Network::TransportSocketCallbacks& callbacks) override;
@@ -57,7 +71,9 @@ public:
   Envoy::Ssl::ConnectionInfoConstSharedPtr ssl() const override;
 
 private:
+  Envoy::Stats::Scope& scope_;
   Envoy::Network::TransportSocketPtr transport_socket_;
+  SocketStats socket_stats_;
 };
 
 } // namespace Nighthawk

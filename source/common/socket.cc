@@ -25,30 +25,30 @@ Envoy::Network::TransportSocketFactoryPtr UpstreamSocketConfigFactory::createTra
                                                        inner_config_factory);
   auto inner_transport_factory =
       inner_config_factory.createTransportSocketFactory(*inner_factory_config, context);
-  return std::make_unique<SocketFactory>(outer_config, SocketConfigFactoryImpl(), context.admin(),
-                                         context.singletonManager(), context.threadLocal(),
-                                         context.dispatcher(), std::move(inner_transport_factory));
+  return std::make_unique<SocketFactory>(outer_config, SocketConfigFactoryImpl(),
+                                         context.scope().createScope("upstream_socket."),
+                                         std::move(inner_transport_factory));
 }
 
 SocketFactory::SocketFactory(const nighthawk::transport_socket::TransportSocket&,
-                             SocketConfigFactory&&, Envoy::Server::Admin&,
-                             Envoy::Singleton::Manager&, Envoy::ThreadLocal::SlotAllocator&,
-                             Envoy::Event::Dispatcher&,
+                             SocketConfigFactory&&, Envoy::Stats::ScopePtr&& scope,
                              Envoy::Network::TransportSocketFactoryPtr&& transport_socket_factory)
-    : transport_socket_factory_(std::move(transport_socket_factory)) {}
+    : scope_(std::move(scope)), transport_socket_factory_(std::move(transport_socket_factory)) {}
 
 // Network::TransportSocketFactory
 Envoy::Network::TransportSocketPtr SocketFactory::createTransportSocket(
     Envoy::Network::TransportSocketOptionsSharedPtr options) const {
-  return std::make_unique<Socket>(transport_socket_factory_->createTransportSocket(options));
+  return std::make_unique<Socket>(*scope_,
+                                  transport_socket_factory_->createTransportSocket(options));
 }
 
 bool SocketFactory::implementsSecureTransport() const {
   return transport_socket_factory_->implementsSecureTransport();
 }
 
-Socket::Socket(Envoy::Network::TransportSocketPtr&& transport_socket)
-    : transport_socket_(std::move(transport_socket)) {}
+Socket::Socket(Envoy::Stats::Scope& scope, Envoy::Network::TransportSocketPtr&& transport_socket)
+    : scope_(scope), transport_socket_(std::move(transport_socket)),
+      socket_stats_({ALL_SOCKET_STATS(POOL_COUNTER(scope_))}) {}
 
 void Socket::setTransportSocketCallbacks(Envoy::Network::TransportSocketCallbacks& callbacks) {
   transport_socket_->setTransportSocketCallbacks(callbacks);
@@ -57,31 +57,35 @@ void Socket::setTransportSocketCallbacks(Envoy::Network::TransportSocketCallback
 std::string Socket::protocol() const { return transport_socket_->protocol(); }
 absl::string_view Socket::failureReason() const { return transport_socket_->failureReason(); }
 
-// TODO(oschaaf): Clean up the std::err writes and forward that to new nighthawk i/o
-// counters to track the number of bytes we read and write here.
 bool Socket::canFlushClose() { return transport_socket_->canFlushClose(); }
 
 void Socket::closeSocket(Envoy::Network::ConnectionEvent event) {
+  socket_stats_.closes_.inc();
   transport_socket_->closeSocket(event);
 }
 
 Envoy::Network::IoResult Socket::doRead(Envoy::Buffer::Instance& buffer) {
   Envoy::Network::IoResult result = transport_socket_->doRead(buffer);
+  socket_stats_.reads_.inc();
   if (result.bytes_processed_) {
-    std::cerr << "Read " << result.bytes_processed_ << std::endl;
+    socket_stats_.read_bytes_.add(result.bytes_processed_);
   }
   return result;
 }
 
 Envoy::Network::IoResult Socket::doWrite(Envoy::Buffer::Instance& buffer, bool end_stream) {
   Envoy::Network::IoResult result = transport_socket_->doWrite(buffer, end_stream);
+  socket_stats_.writes_.inc();
   if (result.bytes_processed_) {
-    std::cerr << "Write " << result.bytes_processed_ << std::endl;
+    socket_stats_.write_bytes_.add(result.bytes_processed_);
   }
   return result;
 }
 
-void Socket::onConnected() { transport_socket_->onConnected(); }
+void Socket::onConnected() {
+  socket_stats_.connects_.inc();
+  transport_socket_->onConnected();
+}
 
 Envoy::Ssl::ConnectionInfoConstSharedPtr Socket::ssl() const { return transport_socket_->ssl(); }
 
