@@ -14,8 +14,6 @@ MockSequencerTarget::MockSequencerTarget() = default;
 
 MockSequencer::MockSequencer() = default;
 
-MockOptions::MockOptions() = default;
-
 MockBenchmarkClientFactory::MockBenchmarkClientFactory() = default;
 
 MockSequencerFactory::MockSequencerFactory() = default;

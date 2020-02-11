@@ -12,6 +12,7 @@
 #include "client/factories_impl.h"
 
 #include "test/mocks.h"
+#include "test/mocks/client/mock_options.h"
 
 #include "gtest/gtest.h"
 

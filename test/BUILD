@@ -59,6 +59,7 @@ envoy_cc_test(
     deps = [
         "//source/client:nighthawk_client_lib",
         "//test:nighthawk_mocks",
+        "//test/mocks/client:mock_options",
         "@envoy//source/common/api:api_lib",
         "@envoy//source/common/stats:isolated_store_lib_with_external_headers",
         "@envoy//test/mocks/init:init_mocks",
@@ -75,6 +76,7 @@ envoy_cc_test(
     deps = [
         "//source/client:nighthawk_client_lib",
         "//test:nighthawk_mocks",
+        "//test/mocks/client:mock_options",
         "@envoy//test/mocks/event:event_mocks",
         "@envoy//test/mocks/tracing:tracing_mocks",
         "@envoy//test/test_common:simulated_time_system_lib",
@@ -114,7 +116,7 @@ envoy_cc_test(
     deps = [
         "//source/client:output_formatter_impl_lib",
         "//source/common:nighthawk_common_lib",
-        "//test:nighthawk_mocks",
+        "//test/mocks/client:mock_options",
         "//test/test_common:environment_lib",
         "@envoy//test/test_common:simulated_time_system_lib",
     ],

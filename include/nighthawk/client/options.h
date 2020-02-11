@@ -9,6 +9,8 @@
 #include "envoy/config/cluster/v3/cluster.pb.h"
 #include "envoy/config/core/v3/base.pb.h"
 
+#include "nighthawk/common/termination_predicate.h"
+
 #include "api/client/options.pb.h"
 
 #include "absl/types/optional.h"
