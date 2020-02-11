@@ -69,11 +69,12 @@ protected:
    *
    * @param result a single Nighthawk result, preferably the global result
    * @param counter_name the name of the counter to return
-   * @return the corresponding counter
-   * @throws NighthawkException if counter with given name is not found
+   * @param value_if_not_found value that will be returned when the counter does not exist in the
+   * output.
+   * @return True iff a counter was found.
    */
-  const nighthawk::client::Counter& getCounterByName(const nighthawk::client::Result& result,
-                                                     absl::string_view counter_name) const;
+  uint64_t getCounterValue(const nighthawk::client::Result& result, absl::string_view counter_name,
+                           const uint64_t value_if_not_found = 0) const;
 
   /**
    * Return the statistic that represents the request/response round-trip times.
