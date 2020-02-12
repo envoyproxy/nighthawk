@@ -1,7 +1,5 @@
 #include "test/mocks/client/mock_options.h"
 
-#include <memory>
-
 #include "gmock/gmock.h"
 
 namespace Nighthawk {
