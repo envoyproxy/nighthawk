@@ -9,6 +9,6 @@ import "validate/validate.proto";
 // [#extension: nighthawk.transport_sockets.transport_socket]
 message TransportSocket {
   // The underlying transport socket being wrapped.
-  envoy.config.core.v3.TransportSocket transport_socket = 2
-      [(validate.rules).message = {required: true}];
+  envoy.config.core.v3.TransportSocket transport_socket = 1
+      [ (validate.rules).message = {required : true} ];
 }
