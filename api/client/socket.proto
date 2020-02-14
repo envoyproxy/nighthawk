@@ -10,5 +10,5 @@ import "validate/validate.proto";
 message TransportSocket {
   // The underlying transport socket being wrapped.
   envoy.config.core.v3.TransportSocket transport_socket = 1
-      [ (validate.rules).message = {required : true} ];
+      [(validate.rules).message = {required: true}];
 }
