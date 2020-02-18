@@ -3,6 +3,7 @@
 #include "nighthawk/common/exception.h"
 
 #include "external/envoy/source/common/protobuf/message_validator_impl.h"
+#include "external/envoy/source/common/protobuf/utility.h"
 #include "external/envoy/test/test_common/file_system_for_test.h"
 #include "external/envoy/test/test_common/simulated_time_system.h"
 
@@ -17,7 +18,7 @@
 
 #include "test_common/environment.h"
 
-#include "test/mocks.h"
+#include "test/mocks/client/mock_options.h"
 
 #include "absl/strings/str_replace.h"
 #include "gtest/gtest.h"
@@ -155,22 +156,19 @@ TEST_F(FortioOutputCollectorTest, MissingGlobalResult) {
 TEST_F(FortioOutputCollectorTest, MissingCounter) {
   nighthawk::client::Output output_proto = collector_->toProto();
   output_proto.mutable_results(2)->clear_counters();
-
   FortioOutputFormatterImpl formatter;
-  ASSERT_THROW(formatter.formatProto(output_proto), NighthawkException);
+  ASSERT_NO_THROW(formatter.formatProto(output_proto));
 }
 
 TEST_F(FortioOutputCollectorTest, MissingStatistic) {
   nighthawk::client::Output output_proto = collector_->toProto();
   output_proto.mutable_results(2)->clear_statistics();
-
   FortioOutputFormatterImpl formatter;
-  ASSERT_THROW(formatter.formatProto(output_proto), NighthawkException);
+  ASSERT_NO_THROW(formatter.formatProto(output_proto));
 }
 
 TEST_F(FortioOutputCollectorTest, NoExceptions) {
   nighthawk::client::Output output_proto = collector_->toProto();
-
   FortioOutputFormatterImpl formatter;
   ASSERT_NO_THROW(formatter.formatProto(output_proto));
 }
