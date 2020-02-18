@@ -9,7 +9,6 @@
 #include "envoy/stats/store.h"
 #include "envoy/upstream/cluster_manager.h"
 
-#include "nighthawk/client/benchmark_client.h"
 #include "nighthawk/client/factories.h"
 #include "nighthawk/common/platform_util.h"
 #include "nighthawk/common/rate_limiter.h"
@@ -126,19 +125,6 @@ class MockSequencerTarget : public FakeSequencerTarget {
 public:
   MockSequencerTarget();
   MOCK_METHOD1(callback, bool(OperationCallback));
-};
-
-class MockBenchmarkClient : public Client::BenchmarkClient {
-public:
-  MockBenchmarkClient();
-
-  MOCK_METHOD0(terminate, void());
-  MOCK_METHOD1(setShouldMeasureLatencies, void(bool));
-  MOCK_CONST_METHOD0(statistics, StatisticPtrMap());
-  MOCK_METHOD1(tryStartRequest, bool(Client::CompletionCallback));
-  MOCK_CONST_METHOD0(scope, Envoy::Stats::Scope&());
-  MOCK_CONST_METHOD0(shouldMeasureLatencies, bool());
-  MOCK_CONST_METHOD0(requestHeaders, const Envoy::Http::HeaderMap&());
 };
 
 class MockRequestSource : public RequestSource {

@@ -27,12 +27,9 @@ envoy_basic_cc_library(
     include_prefix = "nighthawk/common",
     deps = [
         ":request_lib",
-        "@envoy//include/envoy/common:base_includes",
-        "@envoy//source/common/common:minimal_logger_lib",
-        "@envoy//source/common/common:non_copyable",
-        "@envoy//source/common/http:headers_lib",
-        "@envoy//source/common/network:dns_lib",
-        "@envoy//source/common/protobuf",
+        "@envoy//source/common/common:minimal_logger_lib_with_external_headers",
+        "@envoy//source/common/common:non_copyable_with_external_headers",
+        "@envoy//source/common/network:utility_lib_with_external_headers",
     ],
 )
 

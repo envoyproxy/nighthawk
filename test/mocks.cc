@@ -26,8 +26,6 @@ MockRequestSourceFactory::MockRequestSourceFactory() = default;
 
 MockTerminationPredicateFactory::MockTerminationPredicateFactory() = default;
 
-MockBenchmarkClient::MockBenchmarkClient() = default;
-
 MockRequestSource::MockRequestSource() = default;
 
 MockTerminationPredicate::MockTerminationPredicate() = default;
