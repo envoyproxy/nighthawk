@@ -19,8 +19,6 @@
 
 #include "client/benchmark_client_impl.h"
 
-#include "test/mocks.h"
-
 #include "gtest/gtest.h"
 
 using namespace testing;

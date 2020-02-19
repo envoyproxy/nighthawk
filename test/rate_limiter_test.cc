@@ -7,7 +7,7 @@
 #include "common/frequency.h"
 #include "common/rate_limiter_impl.h"
 
-#include "test/mocks.h"
+#include "test/mocks/common/mock_rate_limiter.h"
 
 #include "gtest/gtest.h"
 

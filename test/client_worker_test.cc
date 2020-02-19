@@ -16,7 +16,10 @@
 #include "client/client_worker_impl.h"
 
 #include "test/mocks.h"
+#include "test/mocks/client/mock_benchmark_client.h"
 #include "test/mocks/client/mock_options.h"
+#include "test/mocks/common/mock_sequencer.h"
+#include "test/mocks/common/mock_termination_predicate.h"
 
 #include "gtest/gtest.h"
 
