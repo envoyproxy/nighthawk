@@ -61,6 +61,8 @@ envoy_cc_test(
         "//test:nighthawk_mocks",
         "//test/mocks/client:mock_benchmark_client",
         "//test/mocks/client:mock_options",
+        "//test/mocks/common:mock_sequencer",
+        "//test/mocks/common:mock_termination_predicate",
         "@envoy//source/common/api:api_lib",
         "@envoy//source/common/stats:isolated_store_lib_with_external_headers",
         "@envoy//test/mocks/init:init_mocks",
@@ -79,6 +81,7 @@ envoy_cc_test(
         "//test:nighthawk_mocks",
         "//test/mocks/client:mock_benchmark_client",
         "//test/mocks/client:mock_options",
+        "//test/mocks/common:mock_termination_predicate",
         "@envoy//test/mocks/event:event_mocks",
         "@envoy//test/mocks/tracing:tracing_mocks",
         "@envoy//test/test_common:simulated_time_system_lib",
@@ -151,7 +154,7 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         "//source/common:nighthawk_common_lib",
-        "//test:nighthawk_mocks",
+        "//test/mocks/common:mock_rate_limiter",
         "@envoy//test/test_common:simulated_time_system_lib",
     ],
 )
@@ -169,7 +172,10 @@ envoy_cc_test(
     deps = [
         "//source/common:nighthawk_common_lib",
         "//test:nighthawk_mocks",
+        "//test/mocks/common:mock_rate_limiter",
+        "//test/mocks/common:mock_termination_predicate",
         "@envoy//source/common/event:dispatcher_includes_with_external_headers",
+        "@envoy//source/common/stats:isolated_store_lib_with_external_headers",
         "@envoy//test/mocks/event:event_mocks",
         "@envoy//test/test_common:simulated_time_system_lib",
     ],
