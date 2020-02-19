@@ -17,7 +17,6 @@ envoy_cc_mock(
     deps = [
         "//include/nighthawk/common:base_includes",
         "//source/client:nighthawk_client_lib",
-        "@envoy//test/test_common:simulated_time_system_lib",
     ],
 )
 
@@ -61,6 +60,7 @@ envoy_cc_test(
         "//test:nighthawk_mocks",
         "//test/mocks/client:mock_benchmark_client",
         "//test/mocks/client:mock_options",
+        "//test/mocks/common:mock_request_source",
         "//test/mocks/common:mock_sequencer",
         "//test/mocks/common:mock_termination_predicate",
         "@envoy//source/common/api:api_lib",
@@ -171,7 +171,7 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         "//source/common:nighthawk_common_lib",
-        "//test:nighthawk_mocks",
+        "//test/mocks/common:mock_platform_util",
         "//test/mocks/common:mock_rate_limiter",
         "//test/mocks/common:mock_termination_predicate",
         "@envoy//source/common/event:dispatcher_includes_with_external_headers",

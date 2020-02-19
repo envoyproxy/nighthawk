@@ -13,7 +13,7 @@
 #include "common/sequencer_impl.h"
 #include "common/statistic_impl.h"
 
-#include "test/mocks.h"
+#include "test/mocks/common/mock_platform_util.h"
 #include "test/mocks/common/mock_rate_limiter.h"
 #include "test/mocks/common/mock_termination_predicate.h"
 
