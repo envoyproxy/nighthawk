@@ -144,12 +144,15 @@ void StreamDecoder::setupForTracing(std::string& x_request_id) {
   active_span_ = http_tracer_->startSpan(config_, *headers_copy, stream_info_, tracing_decision);
   active_span_->injectContext(*headers_copy);
   request_headers_.reset(headers_copy.release());
-  // We pass in a fake remote address as we don't really care; but recently trace finalization
-  // started segfaulting without one.
-  // TODO(oschaaf): dig into this some more to see if there's something more we should do here.
+  // We pass in a fake remote address; recently trace finalization mandates setting this, and will
+  // segfault without it.
   const auto remote_address = Envoy::Network::Address::InstanceConstSharedPtr{
       new Envoy::Network::Address::Ipv4Instance("127.0.0.1", 0)};
   stream_info_.setDownstreamDirectRemoteAddress(remote_address);
+  // For good measure, we also set DownstreamRemoteAddress, as the associated getter will crash
+  // if we don't. So this is just in case anyone calls that (or Envoy starts doing so in the
+  // future).
+  stream_info_.setDownstreamRemoteAddress(remote_address);
 }
 
 } // namespace Client
