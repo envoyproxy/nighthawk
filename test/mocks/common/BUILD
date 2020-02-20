@@ -37,3 +37,23 @@ envoy_cc_mock(
         "//include/nighthawk/common:base_includes",
     ],
 )
+
+envoy_cc_mock(
+    name = "mock_platform_util",
+    srcs = ["mock_platform_util.cc"],
+    hdrs = ["mock_platform_util.h"],
+    repository = "@envoy",
+    deps = [
+        "//include/nighthawk/common:base_includes",
+    ],
+)
+
+envoy_cc_mock(
+    name = "mock_request_source",
+    srcs = ["mock_request_source.cc"],
+    hdrs = ["mock_request_source.h"],
+    repository = "@envoy",
+    deps = [
+        "//include/nighthawk/common:base_includes",
+    ],
+)

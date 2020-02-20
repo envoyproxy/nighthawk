@@ -18,6 +18,7 @@
 #include "test/mocks.h"
 #include "test/mocks/client/mock_benchmark_client.h"
 #include "test/mocks/client/mock_options.h"
+#include "test/mocks/common/mock_request_source.h"
 #include "test/mocks/common/mock_sequencer.h"
 #include "test/mocks/common/mock_termination_predicate.h"
 
@@ -25,6 +26,7 @@
 
 using namespace testing;
 using namespace std::chrono_literals;
+
 namespace Nighthawk {
 namespace Client {
 
