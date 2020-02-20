@@ -30,8 +30,9 @@ static const std::string TEST_TRACER_UID_BIT_SET = "f4dca0a9-12c7-b307-8002-9694
 class StreamDecoderTest : public Test, public StreamDecoderCompletionCallback {
 public:
   StreamDecoderTest()
-      : api_(Envoy::Api::createApiForTest()), dispatcher_(api_->allocateDispatcher()),
-        request_headers_(std::make_shared<Envoy::Http::RequestHeaderMapImpl>()),
+      : api_(Envoy::Api::createApiForTest(time_system_)), dispatcher_(api_->allocateDispatcher()),
+        request_headers_(std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(
+            std::initializer_list<std::pair<std::string, std::string>>({{":method", "GET"}}))),
         http_tracer_(std::make_unique<Envoy::Tracing::HttpNullTracer>()),
         test_header_(std::make_unique<Envoy::Http::TestResponseHeaderMapImpl>(
             std::initializer_list<std::pair<std::string, std::string>>({{":status", "200"}}))),
@@ -101,7 +102,7 @@ TEST_F(StreamDecoderTest, TrailerTest) {
   EXPECT_EQ(1, stream_decoder_completion_callbacks_);
 }
 
-TEST_F(StreamDecoderTest, DISABLED_LatencyIsNotMeasured) {
+TEST_F(StreamDecoderTest, LatencyIsNotMeasured) {
   auto decoder = new StreamDecoder(
       *dispatcher_, time_system_, *this, [](bool, bool) {}, connect_statistic_, latency_statistic_,
       response_header_size_statistic_, response_body_size_statistic_, request_headers_, false, 0,
@@ -118,7 +119,7 @@ TEST_F(StreamDecoderTest, DISABLED_LatencyIsNotMeasured) {
   EXPECT_EQ(0, latency_statistic_.count());
 }
 
-TEST_F(StreamDecoderTest, DISABLED_LatencyIsMeasured) {
+TEST_F(StreamDecoderTest, LatencyIsMeasured) {
   http_tracer_ = std::make_unique<Envoy::Tracing::MockHttpTracer>();
   EXPECT_CALL(*dynamic_cast<Envoy::Tracing::MockHttpTracer*>(http_tracer_.get()),
               startSpan_(_, _, _, _))
@@ -129,7 +130,7 @@ TEST_F(StreamDecoderTest, DISABLED_LatencyIsMeasured) {
             EXPECT_EQ(Envoy::Tracing::OperationName::Egress, config.operationName());
             auto* span = new Envoy::Tracing::MockSpan();
             EXPECT_CALL(*span, injectContext(_)).Times(1);
-            EXPECT_CALL(*span, setTag(_, _)).Times(11);
+            EXPECT_CALL(*span, setTag(_, _)).Times(12);
             EXPECT_CALL(*span, finishSpan()).Times(1);
             return span;
           }));

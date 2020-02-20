@@ -28,7 +28,7 @@ namespace Nighthawk {
 class BenchmarkClientHttpTest : public Test {
 public:
   BenchmarkClientHttpTest()
-      : api_(Envoy::Api::createApiForTest()), dispatcher_(api_->allocateDispatcher()),
+      : api_(Envoy::Api::createApiForTest(time_system_)), dispatcher_(api_->allocateDispatcher()),
         cluster_manager_(std::make_unique<Envoy::Upstream::MockClusterManager>()),
         cluster_info_(std::make_unique<Envoy::Upstream::MockClusterInfo>()),
         http_tracer_(std::make_unique<Envoy::Tracing::MockHttpTracer>()), response_code_("200") {

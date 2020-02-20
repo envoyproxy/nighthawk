@@ -4,6 +4,7 @@
 
 #include "external/envoy/source/common/http/http1/codec_impl.h"
 #include "external/envoy/source/common/http/utility.h"
+#include "external/envoy/source/common/network/address_impl.h"
 #include "external/envoy/source/common/stream_info/stream_info_impl.h"
 
 namespace Nighthawk {
@@ -143,6 +144,12 @@ void StreamDecoder::setupForTracing(std::string& x_request_id) {
   active_span_ = http_tracer_->startSpan(config_, *headers_copy, stream_info_, tracing_decision);
   active_span_->injectContext(*headers_copy);
   request_headers_.reset(headers_copy.release());
+  // We pass in a fake remote address as we don't really care; but recently trace finalization
+  // started segfaulting without one.
+  // TODO(oschaaf): dig into this some more to see if there's something more we should do here.
+  const auto remote_address = Envoy::Network::Address::InstanceConstSharedPtr{
+      new Envoy::Network::Address::Ipv4Instance("127.0.0.1", 0)};
+  stream_info_.setDownstreamDirectRemoteAddress(remote_address);
 }
 
 } // namespace Client
