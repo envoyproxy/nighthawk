@@ -53,7 +53,7 @@ public:
   };
   using Envoy::Http::Legacy::Http1::ProdConnPoolImpl::ProdConnPoolImpl;
   Envoy::Http::ConnectionPool::Cancellable*
-  newStream(Envoy::Http::StreamDecoder& response_decoder,
+  newStream(Envoy::Http::ResponseDecoder& response_decoder,
             Envoy::Http::ConnectionPool::Callbacks& callbacks) override;
   void setConnectionReuseStrategy(const ConnectionReuseStrategy connection_reuse_strategy) {
     connection_reuse_strategy_ = connection_reuse_strategy;
@@ -95,7 +95,7 @@ public:
   Envoy::Upstream::HostDescriptionConstSharedPtr host() const override { return host_; };
 
   Envoy::Http::ConnectionPool::Cancellable*
-  newStream(Envoy::Http::StreamDecoder& response_decoder,
+  newStream(Envoy::Http::ResponseDecoder& response_decoder,
             Envoy::Http::ConnectionPool::Callbacks& callbacks) override;
 
 protected:
@@ -145,7 +145,7 @@ public:
   Envoy::Stats::Scope& scope() const override { return *scope_; }
 
   // StreamDecoderCompletionCallback
-  void onComplete(bool success, const Envoy::Http::HeaderMap& headers) override;
+  void onComplete(bool success, const Envoy::Http::ResponseHeaderMap& headers) override;
   void onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason reason) override;
 
   // Helpers

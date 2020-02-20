@@ -114,7 +114,7 @@ OutputFormatterPtr OutputFormatterFactoryImpl::create(
 RequestSourceFactoryImpl::RequestSourceFactoryImpl(const Options& options)
     : OptionBasedFactoryImpl(options) {}
 
-void RequestSourceFactoryImpl::setRequestHeader(Envoy::Http::HeaderMap& header,
+void RequestSourceFactoryImpl::setRequestHeader(Envoy::Http::RequestHeaderMap& header,
                                                 absl::string_view key,
                                                 absl::string_view value) const {
   auto lower_case_key = Envoy::Http::LowerCaseString(std::string(key));
@@ -127,7 +127,7 @@ RequestSourcePtr
 RequestSourceFactoryImpl::create(const Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                                  Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
                                  absl::string_view service_cluster_name) const {
-  Envoy::Http::HeaderMapPtr header = std::make_unique<Envoy::Http::HeaderMapImpl>();
+  Envoy::Http::RequestHeaderMapPtr header = std::make_unique<Envoy::Http::RequestHeaderMapImpl>();
   if (options_.uri().has_value()) {
     // We set headers based on the URI, but we don't have all the prerequisites to call the
     // resolver to validate the address at this stage. Resolving is performed during a later stage

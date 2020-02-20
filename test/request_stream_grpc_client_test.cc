@@ -24,8 +24,8 @@ public:
 
 protected:
   nighthawk::request_source::RequestStreamResponse response_;
-  Envoy::Http::TestHeaderMapImpl base_header_;
-  Envoy::Http::TestHeaderMapImpl expected_header_;
+  Envoy::Http::TestRequestHeaderMapImpl base_header_;
+  Envoy::Http::TestRequestHeaderMapImpl expected_header_;
 };
 
 TEST_F(ProtoRequestHelperTest, EmptyRequestSpecifier) { translateExpectingEqual(); }
@@ -37,7 +37,7 @@ TEST_F(ProtoRequestHelperTest, ExplicitFields) {
   request_specifier->mutable_path()->set_value("/");
   request_specifier->mutable_method()->set_value("GET");
   request_specifier->mutable_content_length()->set_value(999);
-  expected_header_ = Envoy::Http::TestHeaderMapImpl{
+  expected_header_ = Envoy::Http::TestRequestHeaderMapImpl{
       {":method", "GET"}, {"content-length", "999"}, {":path", "/"}, {":authority", "foohost"}};
   translateExpectingEqual();
 }
@@ -55,7 +55,8 @@ TEST_F(ProtoRequestHelperTest, GenericHeaderFields) {
   // We re-add the same header, but do not expect that to show up in the translation because we
   // always replace.
   headers->add_headers()->MergeFrom(*header_2);
-  expected_header_ = Envoy::Http::TestHeaderMapImpl{{"header1", "value1"}, {"header2", "value2"}};
+  expected_header_ =
+      Envoy::Http::TestRequestHeaderMapImpl{{"header1", "value1"}, {"header2", "value2"}};
   translateExpectingEqual();
 }
 
@@ -63,7 +64,7 @@ TEST_F(ProtoRequestHelperTest, GenericHeaderFields) {
 TEST_F(ProtoRequestHelperTest, AmbiguousHost) {
   auto* request_specifier = response_.mutable_request_specifier();
   request_specifier->mutable_authority()->set_value("foohost");
-  expected_header_ = Envoy::Http::TestHeaderMapImpl{{":authority", "foohost"}};
+  expected_header_ = Envoy::Http::TestRequestHeaderMapImpl{{":authority", "foohost"}};
   // We also set the host via the headers. The explicit field we use above for that
   // should prevail.
   auto* headers = request_specifier->mutable_headers();

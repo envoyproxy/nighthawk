@@ -41,9 +41,9 @@ public:
   void onDestroy() override;
 
   // Http::StreamDecoderFilter
-  Envoy::Http::FilterHeadersStatus decodeHeaders(Envoy::Http::HeaderMap&, bool) override;
+  Envoy::Http::FilterHeadersStatus decodeHeaders(Envoy::Http::RequestHeaderMap&, bool) override;
   Envoy::Http::FilterDataStatus decodeData(Envoy::Buffer::Instance&, bool) override;
-  Envoy::Http::FilterTrailersStatus decodeTrailers(Envoy::Http::HeaderMap&) override;
+  Envoy::Http::FilterTrailersStatus decodeTrailers(Envoy::Http::RequestTrailerMap&) override;
   void setDecoderFilterCallbacks(Envoy::Http::StreamDecoderFilterCallbacks&) override;
 
   /**
@@ -64,7 +64,7 @@ public:
    * options.
    * @param response_options Configuration specifying how to transform the header map.
    */
-  void applyConfigToResponseHeaders(Envoy::Http::HeaderMap& response_headers,
+  void applyConfigToResponseHeaders(Envoy::Http::ResponseHeaderMap& response_headers,
                                     nighthawk::server::ResponseOptions& response_options);
 
 private:

@@ -23,7 +23,7 @@ namespace Client {
 class StreamDecoderCompletionCallback {
 public:
   virtual ~StreamDecoderCompletionCallback() = default;
-  virtual void onComplete(bool success, const Envoy::Http::HeaderMap& headers) PURE;
+  virtual void onComplete(bool success, const Envoy::Http::ResponseHeaderMap& headers) PURE;
   virtual void onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason reason) PURE;
 };
 
@@ -32,7 +32,7 @@ public:
 /**
  * A self destructing response decoder that discards the response body.
  */
-class StreamDecoder : public Envoy::Http::StreamDecoder,
+class StreamDecoder : public Envoy::Http::ResponseDecoder,
                       public Envoy::Http::StreamCallbacks,
                       public Envoy::Http::ConnectionPool::Callbacks,
                       public Envoy::Event::DeferredDeletable {
@@ -60,10 +60,10 @@ public:
   }
 
   // Http::StreamDecoder
-  void decode100ContinueHeaders(Envoy::Http::HeaderMapPtr&&) override {}
-  void decodeHeaders(Envoy::Http::HeaderMapPtr&& headers, bool end_stream) override;
+  void decode100ContinueHeaders(Envoy::Http::ResponseHeaderMapPtr&&) override {}
+  void decodeHeaders(Envoy::Http::ResponseHeaderMapPtr&& headers, bool end_stream) override;
   void decodeData(Envoy::Buffer::Instance&, bool end_stream) override;
-  void decodeTrailers(Envoy::Http::HeaderMapPtr&& trailers) override;
+  void decodeTrailers(Envoy::Http::ResponseTrailerMapPtr&& trailers) override;
   void decodeMetadata(Envoy::Http::MetadataMapPtr&&) override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; }
 
   // Http::StreamCallbacks
@@ -76,7 +76,7 @@ public:
   void onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason reason,
                      absl::string_view transport_failure_reason,
                      Envoy::Upstream::HostDescriptionConstSharedPtr host) override;
-  void onPoolReady(Envoy::Http::StreamEncoder& encoder,
+  void onPoolReady(Envoy::Http::RequestEncoder& encoder,
                    Envoy::Upstream::HostDescriptionConstSharedPtr host,
                    const Envoy::StreamInfo::StreamInfo& stream_info) override;
 
@@ -101,8 +101,8 @@ private:
   Statistic& response_header_sizes_statistic_;
   Statistic& response_body_sizes_statistic_;
   HeaderMapPtr request_headers_;
-  Envoy::Http::HeaderMapPtr response_headers_;
-  Envoy::Http::HeaderMapPtr trailer_headers_;
+  Envoy::Http::ResponseHeaderMapPtr response_headers_;
+  Envoy::Http::ResponseTrailerMapPtr trailer_headers_;
   const Envoy::MonotonicTime connect_start_;
   Envoy::MonotonicTime request_start_;
   bool complete_;

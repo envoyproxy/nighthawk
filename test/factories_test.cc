@@ -48,7 +48,8 @@ TEST_F(FactoriesTest, CreateBenchmarkClient) {
   EXPECT_CALL(options_, openLoop()).Times(1);
   auto cmd = std::make_unique<nighthawk::client::CommandLineOptions>();
   EXPECT_CALL(options_, toCommandLineOptions()).Times(1).WillOnce(Return(ByMove(std::move(cmd))));
-  StaticRequestSourceImpl request_generator(std::make_unique<Envoy::Http::TestHeaderMapImpl>());
+  StaticRequestSourceImpl request_generator(
+      std::make_unique<Envoy::Http::TestRequestHeaderMapImpl>());
   auto benchmark_client = factory.create(*api_, dispatcher_, stats_store_, cluster_manager,
                                          http_tracer_, "foocluster", request_generator);
   EXPECT_NE(nullptr, benchmark_client.get());

@@ -30,7 +30,7 @@ namespace Nighthawk {
 class ProtoRequestHelper {
 public:
   static RequestPtr
-  messageToRequest(const Envoy::Http::HeaderMap& base_header,
+  messageToRequest(const Envoy::Http::RequestHeaderMap& base_header,
                    const nighthawk::request_source::RequestStreamResponse& message);
 };
 
@@ -51,15 +51,15 @@ public:
    */
   RequestStreamGrpcClientImpl(Envoy::Grpc::RawAsyncClientPtr async_client,
                               Envoy::Event::Dispatcher& dispatcher,
-                              const Envoy::Http::HeaderMap& base_header,
+                              const Envoy::Http::RequestHeaderMap& base_header,
                               const uint32_t header_buffer_length);
 
   // Grpc::AsyncStreamCallbacks
-  void onCreateInitialMetadata(Envoy::Http::HeaderMap& metadata) override;
-  void onReceiveInitialMetadata(Envoy::Http::HeaderMapPtr&& metadata) override;
+  void onCreateInitialMetadata(Envoy::Http::RequestHeaderMap& metadata) override;
+  void onReceiveInitialMetadata(Envoy::Http::ResponseHeaderMapPtr&& metadata) override;
   void onReceiveMessage(
       std::unique_ptr<nighthawk::request_source::RequestStreamResponse>&& message) override;
-  void onReceiveTrailingMetadata(Envoy::Http::HeaderMapPtr&& metadata) override;
+  void onReceiveTrailingMetadata(Envoy::Http::ResponseTrailerMapPtr&& metadata) override;
   void onRemoteClose(Envoy::Grpc::Status::GrpcStatus status, const std::string& message) override;
 
   // RequestStreamGrpcClient
@@ -81,7 +81,7 @@ private:
   void emplaceMessage(std::unique_ptr<nighthawk::request_source::RequestStreamResponse>&& message);
   uint32_t in_flight_headers_{0};
   uint32_t total_messages_received_{0};
-  const Envoy::Http::HeaderMap& base_header_;
+  const Envoy::Http::RequestHeaderMap& base_header_;
   const uint32_t header_buffer_length_;
 };
 
