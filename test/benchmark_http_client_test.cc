@@ -28,7 +28,7 @@ namespace Nighthawk {
 class BenchmarkClientHttpTest : public Test {
 public:
   BenchmarkClientHttpTest()
-      : api_(Envoy::Api::createApiForTest()), dispatcher_(api_->allocateDispatcher()),
+      : api_(Envoy::Api::createApiForTest(time_system_)), dispatcher_(api_->allocateDispatcher()),
         cluster_manager_(std::make_unique<Envoy::Upstream::MockClusterManager>()),
         cluster_info_(std::make_unique<Envoy::Upstream::MockClusterInfo>()),
         http_tracer_(std::make_unique<Envoy::Tracing::MockHttpTracer>()), response_code_("200") {
@@ -48,7 +48,7 @@ public:
               return span;
             }));
     request_generator_ = []() {
-      auto header = std::make_shared<Envoy::Http::TestHeaderMapImpl>(
+      auto header = std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(
           std::initializer_list<std::pair<std::string, std::string>>(
               {{":scheme", "http"}, {":method", "GET"}, {":path", "/"}, {":host", "localhost"}}));
       return std::make_unique<RequestImpl>(header);
@@ -65,7 +65,7 @@ public:
     EXPECT_CALL(stream_encoder_, encodeHeaders(_, _)).Times(AtLeast(1));
 
     EXPECT_CALL(pool_, newStream(_, _))
-        .WillRepeatedly(Invoke([&](Envoy::Http::StreamDecoder& decoder,
+        .WillRepeatedly(Invoke([&](Envoy::Http::ResponseDecoder& decoder,
                                    Envoy::Http::ConnectionPool::Callbacks& callbacks)
                                    -> Envoy::Http::ConnectionPool::Cancellable* {
           decoders_.push_back(&decoder);
@@ -107,9 +107,9 @@ public:
     // If max pending is set > 0, we expect in_flight to be equal to max_pending.
     EXPECT_EQ(max_pending == 0 ? 1 : max_pending, inflight_response_count);
 
-    for (Envoy::Http::StreamDecoder* decoder : decoders_) {
-      Envoy::Http::HeaderMapPtr response_headers{
-          new Envoy::Http::TestHeaderMapImpl{{":status", response_code_}}};
+    for (Envoy::Http::ResponseDecoder* decoder : decoders_) {
+      Envoy::Http::ResponseHeaderMapPtr response_headers{
+          new Envoy::Http::TestResponseHeaderMapImpl{{":status", response_code_}}};
       decoder->decodeHeaders(std::move(response_headers), false);
       Envoy::Buffer::OwnedImpl buffer(std::string(97, 'a'));
       decoder->decodeData(buffer, true);
@@ -150,8 +150,8 @@ public:
   Envoy::Upstream::ClusterManagerPtr cluster_manager_;
   Envoy::Http::ConnectionPool::MockInstance pool_;
   Envoy::ProcessWide process_wide;
-  std::vector<Envoy::Http::StreamDecoder*> decoders_;
-  NiceMock<Envoy::Http::MockStreamEncoder> stream_encoder_;
+  std::vector<Envoy::Http::ResponseDecoder*> decoders_;
+  NiceMock<Envoy::Http::MockRequestEncoder> stream_encoder_;
   Envoy::Upstream::MockThreadLocalCluster thread_local_cluster_;
   Envoy::Upstream::ClusterInfoConstSharedPtr cluster_info_;
   Envoy::Tracing::HttpTracerPtr http_tracer_;
@@ -190,7 +190,7 @@ TEST_F(BenchmarkClientHttpTest, StatusTrackingInOnComplete) {
       std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
       std::make_unique<StreamingStatistic>(), false, cluster_manager_, http_tracer_, "foo",
       request_generator_, true);
-  Envoy::Http::HeaderMapImpl header;
+  Envoy::Http::ResponseHeaderMapImpl header;
 
   header.setStatus(1);
   client_->onComplete(true, header);
@@ -230,7 +230,7 @@ TEST_F(BenchmarkClientHttpTest, PoolFailures) {
 
 TEST_F(BenchmarkClientHttpTest, RequestMethodPost) {
   request_generator_ = []() {
-    auto header = std::make_shared<Envoy::Http::TestHeaderMapImpl>(
+    auto header = std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(
         std::initializer_list<std::pair<std::string, std::string>>({{":scheme", "http"},
                                                                     {":method", "POST"},
                                                                     {":path", "/"},
@@ -248,7 +248,7 @@ TEST_F(BenchmarkClientHttpTest, RequestMethodPost) {
 
 TEST_F(BenchmarkClientHttpTest, BadContentLength) {
   request_generator_ = []() {
-    auto header = std::make_shared<Envoy::Http::TestHeaderMapImpl>(
+    auto header = std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(
         std::initializer_list<std::pair<std::string, std::string>>({{":scheme", "http"},
                                                                     {":method", "POST"},
                                                                     {":path", "/"},

@@ -27,7 +27,7 @@ public:
       uint32_t port, absl::string_view method, absl::string_view url, absl::string_view body,
       Envoy::Http::CodecClient::Type type, Envoy::Network::Address::IpVersion ip_version,
       absl::string_view host, absl::string_view content_type,
-      const std::function<void(Envoy::Http::HeaderMapImpl&)>& request_header_delegate) {
+      const std::function<void(Envoy::Http::RequestHeaderMapImpl&)>& request_header_delegate) {
     auto addr = Envoy::Network::Utility::resolveUrl(fmt::format(
         "tcp://{}:{}", Envoy::Network::Test::getLoopbackAddressUrlString(ip_version), port));
     return makeSingleRequest(addr, method, url, body, type, host, content_type,
@@ -38,7 +38,7 @@ public:
       const Envoy::Network::Address::InstanceConstSharedPtr& addr, absl::string_view method,
       absl::string_view url, absl::string_view body, Envoy::Http::CodecClient::Type type,
       absl::string_view host, absl::string_view content_type,
-      const std::function<void(Envoy::Http::HeaderMapImpl&)>& request_header_delegate) {
+      const std::function<void(Envoy::Http::RequestHeaderMapImpl&)>& request_header_delegate) {
     Envoy::Api::ApiPtr api = Envoy::Api::createApiForTest();
     Envoy::Event::DispatcherPtr dispatcher(api->allocateDispatcher());
     std::shared_ptr<Envoy::Upstream::MockClusterInfo> cluster{
@@ -55,10 +55,10 @@ public:
           client.close();
           dispatcher->exit();
         }));
-    Envoy::Http::StreamEncoder& encoder = client.newStream(*response);
+    Envoy::Http::RequestEncoder& encoder = client.newStream(*response);
     encoder.getStream().addCallbacks(*response);
 
-    Envoy::Http::HeaderMapImpl headers;
+    Envoy::Http::RequestHeaderMapImpl headers;
     headers.setMethod(method);
     headers.setPath(url);
     headers.setHost(host);
@@ -80,7 +80,7 @@ public:
   void testWithResponseSize(int response_body_size, bool expect_header = true) {
     Envoy::BufferingStreamDecoderPtr response = makeSingleRequest(
         lookupPort("http"), "GET", "/", "", downstream_protocol_, version_, "foo.com", "",
-        [response_body_size](Envoy::Http::HeaderMapImpl& request_headers) {
+        [response_body_size](Envoy::Http::RequestHeaderMapImpl& request_headers) {
           const std::string header_config =
               fmt::format("{{response_body_size:{}}}", response_body_size);
           request_headers.addCopy(
@@ -104,7 +104,7 @@ public:
   void testBadResponseSize(int response_body_size) {
     Envoy::BufferingStreamDecoderPtr response = makeSingleRequest(
         lookupPort("http"), "GET", "/", "", downstream_protocol_, version_, "foo.com", "",
-        [response_body_size](Envoy::Http::HeaderMapImpl& request_headers) {
+        [response_body_size](Envoy::Http::RequestHeaderMapImpl& request_headers) {
           const std::string header_config =
               fmt::format("{{response_body_size:{}}}", response_body_size);
           request_headers.addCopy(
@@ -143,7 +143,7 @@ INSTANTIATE_TEST_SUITE_P(IpVersions, HttpTestServerIntegrationTest,
 TEST_P(HttpTestServerIntegrationTest, TestNoHeaderConfig) {
   Envoy::BufferingStreamDecoderPtr response =
       makeSingleRequest(lookupPort("http"), "GET", "/", "", downstream_protocol_, version_,
-                        "foo.com", "", [](Envoy::Http::HeaderMapImpl&) {});
+                        "foo.com", "", [](Envoy::Http::RequestHeaderMapImpl&) {});
   ASSERT_TRUE(response->complete());
   EXPECT_EQ("200", response->headers().Status()->value().getStringView());
   EXPECT_EQ(std::string(10, 'a'), response->body());
@@ -175,7 +175,7 @@ TEST_P(HttpTestServerIntegrationTest, TestTooLarge) {
 TEST_P(HttpTestServerIntegrationTest, TestHeaderConfig) {
   Envoy::BufferingStreamDecoderPtr response = makeSingleRequest(
       lookupPort("http"), "GET", "/", "", downstream_protocol_, version_, "foo.com", "",
-      [](Envoy::Http::HeaderMapImpl& request_headers) {
+      [](Envoy::Http::RequestHeaderMapImpl& request_headers) {
         const std::string header_config =
             R"({response_headers: [ { header: { key: "foo", value: "bar2"}, append: true } ]})";
         request_headers.addCopy(Nighthawk::Server::TestServer::HeaderNames::get().TestServerConfig,
@@ -212,7 +212,7 @@ INSTANTIATE_TEST_SUITE_P(IpVersions, HttpTestServerIntegrationNoConfigTest,
 TEST_P(HttpTestServerIntegrationNoConfigTest, TestNoHeaderConfig) {
   Envoy::BufferingStreamDecoderPtr response =
       makeSingleRequest(lookupPort("http"), "GET", "/", "", downstream_protocol_, version_,
-                        "foo.com", "", [](Envoy::Http::HeaderMapImpl&) {});
+                        "foo.com", "", [](Envoy::Http::RequestHeaderMapImpl&) {});
   ASSERT_TRUE(response->complete());
   EXPECT_EQ("200", response->headers().Status()->value().getStringView());
   EXPECT_EQ("", response->body());
@@ -245,7 +245,7 @@ TEST_P(HttpTestServerIntegrationNoConfigTest, TestTooLarge) {
 TEST_P(HttpTestServerIntegrationNoConfigTest, TestHeaderConfig) {
   Envoy::BufferingStreamDecoderPtr response = makeSingleRequest(
       lookupPort("http"), "GET", "/", "", downstream_protocol_, version_, "foo.com", "",
-      [](Envoy::Http::HeaderMapImpl& request_headers) {
+      [](Envoy::Http::RequestHeaderMapImpl& request_headers) {
         const std::string header_config =
             R"({response_headers: [ { header: { key: "foo", value: "bar2"}, append: true } ]})";
         request_headers.addCopy(Nighthawk::Server::TestServer::HeaderNames::get().TestServerConfig,
@@ -280,10 +280,10 @@ TEST_F(HttpTestServerDecoderFilterTest, HeaderMerge) {
   EXPECT_EQ("bar1", options.response_headers(0).header().value());
   EXPECT_EQ(false, options.response_headers(0).append().value());
 
-  Envoy::Http::TestHeaderMapImpl header_map{{":status", "200"}, {"foo", "bar"}};
+  Envoy::Http::TestResponseHeaderMapImpl header_map{{":status", "200"}, {"foo", "bar"}};
   f.applyConfigToResponseHeaders(header_map, options);
   EXPECT_TRUE(Envoy::TestUtility::headerMapEqualIgnoreOrder(
-      header_map, Envoy::Http::TestHeaderMapImpl{{":status", "200"}, {"foo", "bar1"}}));
+      header_map, Envoy::Http::TestResponseHeaderMapImpl{{":status", "200"}, {"foo", "bar1"}}));
 
   EXPECT_TRUE(f.mergeJsonConfig(
       R"({response_headers: [ { header: { key: "foo", value: "bar2"}, append: false } ]})", options,
@@ -297,7 +297,7 @@ TEST_F(HttpTestServerDecoderFilterTest, HeaderMerge) {
 
   f.applyConfigToResponseHeaders(header_map, options);
   EXPECT_TRUE(Envoy::TestUtility::headerMapEqualIgnoreOrder(
-      header_map, Envoy::Http::TestHeaderMapImpl{{":status", "200"}, {"foo", "bar2"}}));
+      header_map, Envoy::Http::TestRequestHeaderMapImpl{{":status", "200"}, {"foo", "bar2"}}));
 
   EXPECT_TRUE(f.mergeJsonConfig(
       R"({response_headers: [ { header: { key: "foo2", value: "bar3"}, append: true } ]})", options,
@@ -311,8 +311,8 @@ TEST_F(HttpTestServerDecoderFilterTest, HeaderMerge) {
 
   f.applyConfigToResponseHeaders(header_map, options);
   EXPECT_TRUE(Envoy::TestUtility::headerMapEqualIgnoreOrder(
-      header_map,
-      Envoy::Http::TestHeaderMapImpl{{":status", "200"}, {"foo", "bar2"}, {"foo2", "bar3"}}));
+      header_map, Envoy::Http::TestResponseHeaderMapImpl{
+                      {":status", "200"}, {"foo", "bar2"}, {"foo2", "bar3"}}));
 
   EXPECT_FALSE(f.mergeJsonConfig(R"(bad_json)", options, error_message));
   EXPECT_EQ("Error merging json config: Unable to parse JSON as proto (INVALID_ARGUMENT:Unexpected "

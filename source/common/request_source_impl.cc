@@ -10,7 +10,7 @@ namespace Nighthawk {
 
 using namespace std::chrono_literals;
 
-StaticRequestSourceImpl::StaticRequestSourceImpl(Envoy::Http::HeaderMapPtr&& header,
+StaticRequestSourceImpl::StaticRequestSourceImpl(Envoy::Http::RequestHeaderMapPtr&& header,
                                                  const uint64_t max_yields)
     : header_(std::move(header)), yields_left_(max_yields) {
   RELEASE_ASSERT(header_ != nullptr, "header can't equal nullptr");
@@ -28,7 +28,7 @@ RequestGenerator StaticRequestSourceImpl::get() {
 RemoteRequestSourceImpl::RemoteRequestSourceImpl(
     const Envoy::Upstream::ClusterManagerPtr& cluster_manager, Envoy::Event::Dispatcher& dispatcher,
     Envoy::Stats::Scope& scope, absl::string_view service_cluster_name,
-    Envoy::Http::HeaderMapPtr&& base_header, uint32_t header_buffer_length)
+    Envoy::Http::RequestHeaderMapPtr&& base_header, uint32_t header_buffer_length)
     : cluster_manager_(cluster_manager), dispatcher_(dispatcher), scope_(scope),
       service_cluster_name_(std::string(service_cluster_name)),
       base_header_(std::move(base_header)), header_buffer_length_(header_buffer_length) {}

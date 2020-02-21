@@ -17,7 +17,7 @@ const std::string RequestStreamGrpcClientImpl::METHOD_NAME =
 
 RequestStreamGrpcClientImpl::RequestStreamGrpcClientImpl(
     Envoy::Grpc::RawAsyncClientPtr async_client, Envoy::Event::Dispatcher&,
-    const Envoy::Http::HeaderMap& base_header, const uint32_t header_buffer_length)
+    const Envoy::Http::RequestHeaderMap& base_header, const uint32_t header_buffer_length)
     : async_client_(std::move(async_client)),
       service_method_(
           *Envoy::Protobuf::DescriptorPool::generated_pool()->FindMethodByName(METHOD_NAME)),
@@ -39,9 +39,9 @@ void RequestStreamGrpcClientImpl::trySendRequest() {
   }
 }
 
-void RequestStreamGrpcClientImpl::onCreateInitialMetadata(Envoy::Http::HeaderMap&) {}
+void RequestStreamGrpcClientImpl::onCreateInitialMetadata(Envoy::Http::RequestHeaderMap&) {}
 
-void RequestStreamGrpcClientImpl::onReceiveInitialMetadata(Envoy::Http::HeaderMapPtr&&) {}
+void RequestStreamGrpcClientImpl::onReceiveInitialMetadata(Envoy::Http::ResponseHeaderMapPtr&&) {}
 
 void RequestStreamGrpcClientImpl::onReceiveMessage(
     std::unique_ptr<nighthawk::request_source::RequestStreamResponse>&& message) {
@@ -50,7 +50,7 @@ void RequestStreamGrpcClientImpl::onReceiveMessage(
   emplaceMessage(std::move(message));
 }
 
-void RequestStreamGrpcClientImpl::onReceiveTrailingMetadata(Envoy::Http::HeaderMapPtr&&) {}
+void RequestStreamGrpcClientImpl::onReceiveTrailingMetadata(Envoy::Http::ResponseTrailerMapPtr&&) {}
 
 void RequestStreamGrpcClientImpl::onRemoteClose(Envoy::Grpc::Status::GrpcStatus status,
                                                 const std::string& message) {
@@ -67,9 +67,10 @@ void RequestStreamGrpcClientImpl::onRemoteClose(Envoy::Grpc::Status::GrpcStatus 
 }
 
 RequestPtr ProtoRequestHelper::messageToRequest(
-    const Envoy::Http::HeaderMap& base_header,
+    const Envoy::Http::RequestHeaderMap& base_header,
     const nighthawk::request_source::RequestStreamResponse& message) {
-  auto header = std::make_shared<Envoy::Http::HeaderMapImpl>(base_header);
+  auto header = std::make_shared<Envoy::Http::RequestHeaderMapImpl>();
+  header->copyFrom(*header, base_header);
   RequestPtr request = std::make_unique<RequestImpl>(header);
 
   if (message.has_request_specifier()) {

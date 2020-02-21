@@ -41,7 +41,7 @@ bool HttpTestServerDecoderFilter::mergeJsonConfig(absl::string_view json,
 }
 
 void HttpTestServerDecoderFilter::applyConfigToResponseHeaders(
-    Envoy::Http::HeaderMap& response_headers,
+    Envoy::Http::ResponseHeaderMap& response_headers,
     nighthawk::server::ResponseOptions& response_options) {
   for (const auto& header_value_option : response_options.response_headers()) {
     const auto& header = header_value_option.header();
@@ -57,7 +57,7 @@ void HttpTestServerDecoderFilter::sendReply() {
   if (error_message_ == absl::nullopt) {
     decoder_callbacks_->sendLocalReply(
         static_cast<Envoy::Http::Code>(200), std::string(base_config_.response_body_size(), 'a'),
-        [this](Envoy::Http::HeaderMap& direct_response_headers) {
+        [this](Envoy::Http::ResponseHeaderMap& direct_response_headers) {
           applyConfigToResponseHeaders(direct_response_headers, base_config_);
         },
         absl::nullopt, "");
@@ -70,7 +70,8 @@ void HttpTestServerDecoderFilter::sendReply() {
 }
 
 Envoy::Http::FilterHeadersStatus
-HttpTestServerDecoderFilter::decodeHeaders(Envoy::Http::HeaderMap& headers, bool end_stream) {
+HttpTestServerDecoderFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& headers,
+                                           bool end_stream) {
   // TODO(oschaaf): Add functionality to clear fields
   base_config_ = config_->server_config();
   const auto* request_config_header = headers.get(TestServer::HeaderNames::get().TestServerConfig);
@@ -92,7 +93,7 @@ Envoy::Http::FilterDataStatus HttpTestServerDecoderFilter::decodeData(Envoy::Buf
 }
 
 Envoy::Http::FilterTrailersStatus
-HttpTestServerDecoderFilter::decodeTrailers(Envoy::Http::HeaderMap&) {
+HttpTestServerDecoderFilter::decodeTrailers(Envoy::Http::RequestTrailerMap&) {
   return Envoy::Http::FilterTrailersStatus::Continue;
 }
 

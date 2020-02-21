@@ -70,7 +70,7 @@ public:
                           absl::string_view service_cluster_name) const override;
 
 private:
-  void setRequestHeader(Envoy::Http::HeaderMap& header, absl::string_view key,
+  void setRequestHeader(Envoy::Http::RequestHeaderMap& header, absl::string_view key,
                         absl::string_view value) const;
 };
 

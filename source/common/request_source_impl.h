@@ -23,7 +23,8 @@ public:
    * @param max_yields the number of request specifiers to yield. The source will start yielding
    * nullptr when exceeded.
    */
-  StaticRequestSourceImpl(Envoy::Http::HeaderMapPtr&&, const uint64_t max_yields = UINT64_MAX);
+  StaticRequestSourceImpl(Envoy::Http::RequestHeaderMapPtr&&,
+                          const uint64_t max_yields = UINT64_MAX);
   RequestGenerator get() override;
   void initOnThread() override{};
 
@@ -50,7 +51,8 @@ public:
   RemoteRequestSourceImpl(const Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                           Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
                           absl::string_view service_cluster_name,
-                          Envoy::Http::HeaderMapPtr&& base_header, uint32_t header_buffer_length);
+                          Envoy::Http::RequestHeaderMapPtr&& base_header,
+                          uint32_t header_buffer_length);
   RequestGenerator get() override;
   void initOnThread() override;
 

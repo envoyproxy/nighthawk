@@ -17,7 +17,7 @@ public:
   MOCK_METHOD1(tryStartRequest, bool(Client::CompletionCallback));
   MOCK_CONST_METHOD0(scope, Envoy::Stats::Scope&());
   MOCK_CONST_METHOD0(shouldMeasureLatencies, bool());
-  MOCK_CONST_METHOD0(requestHeaders, const Envoy::Http::HeaderMap&());
+  MOCK_CONST_METHOD0(requestHeaders, const Envoy::Http::RequestHeaderMap&());
 };
 
 } // namespace Client

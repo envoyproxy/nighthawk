@@ -22,7 +22,7 @@ namespace Nighthawk {
 namespace Client {
 
 Envoy::Http::ConnectionPool::Cancellable*
-Http1PoolImpl::newStream(Envoy::Http::StreamDecoder& response_decoder,
+Http1PoolImpl::newStream(Envoy::Http::ResponseDecoder& response_decoder,
                          Envoy::Http::ConnectionPool::Callbacks& callbacks) {
   // In prefetch mode we try to keep the amount of connections at the configured limit.
   if (prefetch_connections_) {
@@ -79,7 +79,7 @@ bool Http2PoolImpl::hasActiveConnections() const {
 }
 
 Envoy::Http::ConnectionPool::Cancellable*
-Http2PoolImpl::newStream(Envoy::Http::StreamDecoder& response_decoder,
+Http2PoolImpl::newStream(Envoy::Http::ResponseDecoder& response_decoder,
                          Envoy::Http::ConnectionPool::Callbacks& callbacks) {
   // Use the simplest but probably naive approach of rotating over the available pool instances
   // / connections to distribute requests accross them.
@@ -172,7 +172,8 @@ bool BenchmarkClientHttpImpl::tryStartRequest(CompletionCallback caller_completi
   return true;
 }
 
-void BenchmarkClientHttpImpl::onComplete(bool success, const Envoy::Http::HeaderMap& headers) {
+void BenchmarkClientHttpImpl::onComplete(bool success,
+                                         const Envoy::Http::ResponseHeaderMap& headers) {
   requests_completed_++;
   if (!success) {
     benchmark_client_stats_.stream_resets_.inc();

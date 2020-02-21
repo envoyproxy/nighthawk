@@ -181,8 +181,8 @@ Comma separated list of component log levels. For example
 upstream:debug,config:trace
 
 -l <string>,  --log-level <string>
-Log levels:
-[trace][debug][info][warning][error][critical][off]
+Log levels: [trace][debug][info][warning
+|warn][error][critical][off]
 
 Default is [info]
 
