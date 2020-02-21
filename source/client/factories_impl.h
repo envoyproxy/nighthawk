@@ -2,7 +2,6 @@
 
 #include "envoy/api/api.h"
 #include "envoy/event/dispatcher.h"
-#include "envoy/stats/store.h"
 #include "envoy/upstream/cluster_manager.h"
 
 #include "nighthawk/client/factories.h"
@@ -42,12 +41,6 @@ public:
                       BenchmarkClient& benchmark_client,
                       TerminationPredicatePtr&& termination_predicate, Envoy::Stats::Scope& scope,
                       const Envoy::MonotonicTime scheduled_starting_time) const override;
-};
-
-class StoreFactoryImpl : public OptionBasedFactoryImpl, public StoreFactory {
-public:
-  StoreFactoryImpl(const Options& options);
-  Envoy::Stats::StorePtr create() const override;
 };
 
 class StatisticFactoryImpl : public OptionBasedFactoryImpl, public StatisticFactory {

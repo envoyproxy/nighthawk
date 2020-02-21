@@ -95,7 +95,6 @@ private:
   Envoy::ProcessWide process_wide_;
   Envoy::PlatformImpl platform_impl_;
   Envoy::Event::TimeSystem& time_system_;
-  StoreFactoryImpl store_factory_;
   Envoy::Stats::SymbolTableImpl symbol_table_;
   Envoy::Stats::AllocatorImpl stats_allocator_;
   Envoy::ThreadLocal::InstanceImpl tls_;
