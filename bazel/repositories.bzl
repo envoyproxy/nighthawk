@@ -3,8 +3,8 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 ENVOY_COMMIT = "5be15b31aa46e3c3776a15fd3d399c67ac432598"  # Feb 21st, 2020
 ENVOY_SHA = "cb8169e869c205edb410f4384771efe81a23e7ce1388f28ad39af9f26d00cad6"
 
-RULES_PYTHON_COMMIT = "fdbb17a4118a1728d19e638a5291b4c4266ea5b8"
-RULES_PYTHON_SHA = "9a3d71e348da504a9c4c5e8abd4cb822f7afb32c613dc6ee8b8535333a81a938"
+RULES_PYTHON_COMMIT = "dd7f9c5f01bafbfea08c44092b6b0c8fc8fcb77f"  # Feb 22nd, 2020
+RULES_PYTHON_SHA = "0aa9ec790a58053e3ab5af397879b267a625955f8297c239b2d8559c6773397b"
 
 def nighthawk_dependencies():
     http_archive(
