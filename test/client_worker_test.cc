@@ -11,13 +11,12 @@
 #include "external/envoy/test/mocks/thread_local/mocks.h"
 
 #include "common/statistic_impl.h"
-#include "common/uri_impl.h"
 
 #include "client/client_worker_impl.h"
 
 #include "test/mocks.h"
 #include "test/mocks/client/mock_benchmark_client.h"
-#include "test/mocks/client/mock_options.h"
+#include "test/mocks/client/mock_benchmark_client_factory.h"
 #include "test/mocks/common/mock_request_source.h"
 #include "test/mocks/common/mock_sequencer.h"
 #include "test/mocks/common/mock_termination_predicate.h"
@@ -84,7 +83,6 @@ public:
   StreamingStatistic statistic_;
   Envoy::Api::ApiPtr api_;
   std::thread::id thread_id_;
-  MockOptions options_;
   MockBenchmarkClientFactory benchmark_client_factory_;
   MockTerminationPredicateFactory termination_predicate_factory_;
   MockSequencerFactory sequencer_factory_;

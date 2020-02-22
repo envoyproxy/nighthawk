@@ -14,17 +14,6 @@ namespace Nighthawk {
 
 // TODO(oschaaf): split this out in files for common/ and client/ mocks
 
-class MockBenchmarkClientFactory : public Client::BenchmarkClientFactory {
-public:
-  MockBenchmarkClientFactory();
-  MOCK_CONST_METHOD7(create,
-                     Client::BenchmarkClientPtr(Envoy::Api::Api&, Envoy::Event::Dispatcher&,
-                                                Envoy::Stats::Scope&,
-                                                Envoy::Upstream::ClusterManagerPtr&,
-                                                Envoy::Tracing::HttpTracerPtr&, absl::string_view,
-                                                RequestSource& request_generator));
-};
-
 class MockSequencerFactory : public Client::SequencerFactory {
 public:
   MockSequencerFactory();

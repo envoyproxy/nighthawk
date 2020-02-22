@@ -1,5 +1,3 @@
-#include <chrono>
-
 #include "external/envoy/test/mocks/event/mocks.h"
 #include "external/envoy/test/mocks/stats/mocks.h"
 #include "external/envoy/test/mocks/tracing/mocks.h"
@@ -7,7 +5,6 @@
 #include "external/envoy/test/test_common/utility.h"
 
 #include "common/request_source_impl.h"
-#include "common/uri_impl.h"
 
 #include "client/factories_impl.h"
 
@@ -18,7 +15,6 @@
 
 #include "gtest/gtest.h"
 
-using namespace std::chrono_literals;
 using namespace testing;
 
 namespace Nighthawk {
