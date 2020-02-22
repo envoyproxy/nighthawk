@@ -6,6 +6,9 @@ ENVOY_SHA = "cb8169e869c205edb410f4384771efe81a23e7ce1388f28ad39af9f26d00cad6"
 RULES_PYTHON_COMMIT = "fdbb17a4118a1728d19e638a5291b4c4266ea5b8"
 RULES_PYTHON_SHA = "9a3d71e348da504a9c4c5e8abd4cb822f7afb32c613dc6ee8b8535333a81a938"
 
+HDR_HISTOGRAM_C_VERSION = "0.9.13"  # Feb 22nd, 2020
+HDR_HISTOGRAM_C_SHA = "2bd4a4631b64f2f8cf968ef49dd03ff3c51b487c3c98a01217ae4cf4a35b8310"
+
 def nighthawk_dependencies():
     http_archive(
         name = "envoy",
@@ -48,9 +51,9 @@ cc_library(
     visibility = ["//visibility:public"],
 )
   """,
-        sha256 = "c94fa16bde2104bc75321829b39399bd755488e079e63c5d362b7ed7c96b3275",
-        strip_prefix = "HdrHistogram_c-0.9.12",
-        url = "https://github.com/HdrHistogram/HdrHistogram_c/archive/0.9.12.tar.gz",
+        sha256 = HDR_HISTOGRAM_C_SHA,
+        strip_prefix = "HdrHistogram_c-%s" % HDR_HISTOGRAM_C_VERSION,
+        url = "https://github.com/HdrHistogram/HdrHistogram_c/archive/%s.tar.gz" % HDR_HISTOGRAM_C_VERSION,
     )
 
     http_archive(
