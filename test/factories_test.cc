@@ -104,11 +104,6 @@ INSTANTIATE_TEST_SUITE_P(SequencerIdleStrategies, SequencerFactoryTest,
                                    nighthawk::client::SequencerIdleStrategy::SLEEP,
                                    nighthawk::client::SequencerIdleStrategy::SPIN}));
 
-TEST_F(FactoriesTest, CreateStore) {
-  StoreFactoryImpl factory(options_);
-  EXPECT_NE(nullptr, factory.create().get());
-}
-
 TEST_F(FactoriesTest, CreateStatistic) {
   StatisticFactoryImpl factory(options_);
   EXPECT_NE(nullptr, factory.create().get());

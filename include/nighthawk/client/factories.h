@@ -6,7 +6,6 @@
 #include "envoy/common/pure.h"
 #include "envoy/common/time.h"
 #include "envoy/event/dispatcher.h"
-#include "envoy/stats/store.h"
 #include "envoy/upstream/cluster_manager.h"
 
 #include "nighthawk/client/benchmark_client.h"
@@ -41,12 +40,6 @@ public:
                               TerminationPredicatePtr&& termination_predicate,
                               Envoy::Stats::Scope& scope,
                               const Envoy::MonotonicTime scheduled_starting_time) const PURE;
-};
-
-class StoreFactory {
-public:
-  virtual ~StoreFactory() = default;
-  virtual Envoy::Stats::StorePtr create() const PURE;
 };
 
 class StatisticFactory {

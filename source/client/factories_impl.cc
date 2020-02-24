@@ -1,7 +1,6 @@
 #include "client/factories_impl.h"
 
 #include "external/envoy/source/common/http/header_map_impl.h"
-#include "external/envoy/source/common/stats/isolated_store_impl.h"
 
 #include "api/client/options.pb.h"
 
@@ -80,12 +79,6 @@ SequencerPtr SequencerFactoryImpl::create(
       platform_util_, dispatcher, time_source, std::move(rate_limiter), sequencer_target,
       statistic_factory.create(), statistic_factory.create(), options_.sequencerIdleStrategy(),
       std::move(termination_predicate), scope, scheduled_starting_time);
-}
-
-StoreFactoryImpl::StoreFactoryImpl(const Options& options) : OptionBasedFactoryImpl(options) {}
-
-Envoy::Stats::StorePtr StoreFactoryImpl::create() const {
-  return std::make_unique<Envoy::Stats::IsolatedStoreImpl>();
 }
 
 StatisticFactoryImpl::StatisticFactoryImpl(const Options& options)

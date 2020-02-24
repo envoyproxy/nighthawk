@@ -69,7 +69,6 @@ envoy_cc_library(
         "@envoy//source/common/secret:secret_manager_impl_lib_with_external_headers",
         "@envoy//source/common/singleton:manager_impl_lib_with_external_headers",
         "@envoy//source/common/stats:allocator_lib_with_external_headers",
-        "@envoy//source/common/stats:isolated_store_lib_with_external_headers",
         "@envoy//source/common/stats:symbol_table_lib_with_external_headers",
         "@envoy//source/common/stats:thread_local_store_lib_with_external_headers",
         "@envoy//source/common/stream_info:stream_info_lib_with_external_headers",
