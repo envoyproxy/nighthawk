@@ -8,7 +8,6 @@
 
 #include "client/factories_impl.h"
 
-#include "test/mocks.h"
 #include "test/mocks/client/mock_benchmark_client.h"
 #include "test/mocks/client/mock_options.h"
 #include "test/mocks/common/mock_termination_predicate.h"
@@ -86,7 +85,10 @@ public:
     EXPECT_CALL(dispatcher_, createTimer_(_)).Times(2);
     EXPECT_CALL(options_, jitterUniform()).Times(1).WillOnce(Return(1ns));
     Envoy::Event::SimulatedTimeSystem time_system;
-    auto sequencer = factory.create(api_->timeSource(), dispatcher_, benchmark_client,
+    const SequencerTarget dummy_sequencer_target = [](const CompletionCallback&) -> bool {
+      return true;
+    };
+    auto sequencer = factory.create(api_->timeSource(), dispatcher_, dummy_sequencer_target,
                                     std::make_unique<MockTerminationPredicate>(), stats_store_,
                                     time_system.monotonicTime() + 10ms);
     EXPECT_NE(nullptr, sequencer.get());

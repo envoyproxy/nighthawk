@@ -53,7 +53,7 @@ SequencerFactoryImpl::SequencerFactoryImpl(const Options& options)
 
 SequencerPtr SequencerFactoryImpl::create(
     Envoy::TimeSource& time_source, Envoy::Event::Dispatcher& dispatcher,
-    BenchmarkClient& benchmark_client, TerminationPredicatePtr&& termination_predicate,
+    const SequencerTarget& sequencer_target, TerminationPredicatePtr&& termination_predicate,
     Envoy::Stats::Scope& scope, const Envoy::MonotonicTime scheduled_starting_time) const {
   StatisticFactoryImpl statistic_factory(options_);
   Frequency frequency(options_.requestsPerSecond());
@@ -72,9 +72,6 @@ SequencerPtr SequencerFactoryImpl::create(
         std::move(rate_limiter));
   }
 
-  SequencerTarget sequencer_target = [&benchmark_client](CompletionCallback f) -> bool {
-    return benchmark_client.tryStartRequest(std::move(f));
-  };
   return std::make_unique<SequencerImpl>(
       platform_util_, dispatcher, time_source, std::move(rate_limiter), sequencer_target,
       statistic_factory.create(), statistic_factory.create(), options_.sequencerIdleStrategy(),

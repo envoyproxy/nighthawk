@@ -12,6 +12,7 @@ envoy_basic_cc_library(
     name = "base_includes",
     hdrs = [
         "exception.h",
+        "factories.h",
         "operation_callback.h",
         "phase.h",
         "platform_util.h",
@@ -28,6 +29,7 @@ envoy_basic_cc_library(
     deps = [
         ":request_lib",
         "//api/client:base_cc_proto",
+        "@envoy//include/envoy/upstream:cluster_manager_interface_with_external_headers",
         "@envoy//source/common/common:minimal_logger_lib",
         "@envoy//source/common/common:non_copyable_with_external_headers",
         "@envoy//source/common/event:dispatcher_lib_with_external_headers",
