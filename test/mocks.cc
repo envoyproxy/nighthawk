@@ -4,8 +4,6 @@
 
 namespace Nighthawk {
 
-MockBenchmarkClientFactory::MockBenchmarkClientFactory() = default;
-
 MockSequencerFactory::MockSequencerFactory() = default;
 
 MockStatisticFactory::MockStatisticFactory() = default;

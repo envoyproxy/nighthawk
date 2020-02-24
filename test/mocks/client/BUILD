@@ -28,3 +28,13 @@ envoy_cc_mock(
         "//include/nighthawk/client:client_includes",
     ],
 )
+
+envoy_cc_mock(
+    name = "mock_benchmark_client_factory",
+    srcs = ["mock_benchmark_client_factory.cc"],
+    hdrs = ["mock_benchmark_client_factory.h"],
+    repository = "@envoy",
+    deps = [
+        "//include/nighthawk/client:client_includes",
+    ],
+)

@@ -59,7 +59,7 @@ envoy_cc_test(
         "//source/client:nighthawk_client_lib",
         "//test:nighthawk_mocks",
         "//test/mocks/client:mock_benchmark_client",
-        "//test/mocks/client:mock_options",
+        "//test/mocks/client:mock_benchmark_client_factory",
         "//test/mocks/common:mock_request_source",
         "//test/mocks/common:mock_sequencer",
         "//test/mocks/common:mock_termination_predicate",
