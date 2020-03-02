@@ -5,6 +5,7 @@
 #include "envoy/upstream/cluster_manager.h"
 
 #include "nighthawk/client/factories.h"
+#include "nighthawk/common/factories.h"
 #include "nighthawk/common/termination_predicate.h"
 #include "nighthawk/common/uri.h"
 
@@ -38,7 +39,7 @@ class SequencerFactoryImpl : public OptionBasedFactoryImpl, public SequencerFact
 public:
   SequencerFactoryImpl(const Options& options);
   SequencerPtr create(Envoy::TimeSource& time_source, Envoy::Event::Dispatcher& dispatcher,
-                      BenchmarkClient& benchmark_client,
+                      const SequencerTarget& sequencer_target,
                       TerminationPredicatePtr&& termination_predicate, Envoy::Stats::Scope& scope,
                       const Envoy::MonotonicTime scheduled_starting_time) const override;
 };

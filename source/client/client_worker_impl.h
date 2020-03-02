@@ -11,6 +11,7 @@
 #include "nighthawk/client/benchmark_client.h"
 #include "nighthawk/client/client_worker.h"
 #include "nighthawk/client/factories.h"
+#include "nighthawk/common/factories.h"
 #include "nighthawk/common/phase.h"
 #include "nighthawk/common/request_source.h"
 #include "nighthawk/common/sequencer.h"

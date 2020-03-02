@@ -9,17 +9,6 @@ load(
 
 envoy_package()
 
-envoy_cc_mock(
-    name = "nighthawk_mocks",
-    srcs = ["mocks.cc"],
-    hdrs = ["mocks.h"],
-    repository = "@envoy",
-    deps = [
-        "//include/nighthawk/common:base_includes",
-        "//source/client:nighthawk_client_lib",
-    ],
-)
-
 envoy_cc_test(
     name = "benchmark_http_client_test",
     srcs = ["benchmark_http_client_test.cc"],
@@ -57,12 +46,14 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         "//source/client:nighthawk_client_lib",
-        "//test:nighthawk_mocks",
         "//test/mocks/client:mock_benchmark_client",
         "//test/mocks/client:mock_benchmark_client_factory",
         "//test/mocks/common:mock_request_source",
+        "//test/mocks/common:mock_request_source_factory",
         "//test/mocks/common:mock_sequencer",
+        "//test/mocks/common:mock_sequencer_factory",
         "//test/mocks/common:mock_termination_predicate",
+        "//test/mocks/common:mock_termination_predicate_factory",
         "@envoy//source/common/api:api_lib",
         "@envoy//source/common/stats:isolated_store_lib_with_external_headers",
         "@envoy//test/mocks/init:init_mocks",
@@ -78,7 +69,6 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         "//source/client:nighthawk_client_lib",
-        "//test:nighthawk_mocks",
         "//test/mocks/client:mock_benchmark_client",
         "//test/mocks/client:mock_options",
         "//test/mocks/common:mock_termination_predicate",
@@ -141,7 +131,6 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         "//source/client:nighthawk_client_lib",
-        "//test:nighthawk_mocks",
         "//test/client:utility_lib",
         "//test/test_common:environment_lib",
         "@envoy//test/test_common:network_utility_lib",
@@ -221,7 +210,6 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         "//source/client:nighthawk_client_lib",
-        "//test:nighthawk_mocks",
         "@envoy//source/common/event:dispatcher_includes_with_external_headers",
         "@envoy//source/common/http:header_map_lib_with_external_headers",
         "@envoy//source/common/network:utility_lib_with_external_headers",
@@ -249,7 +237,6 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         "//source/common:nighthawk_common_lib",
-        "//test:nighthawk_mocks",
         "@envoy//source/common/stats:isolated_store_lib_with_external_headers",
         "@envoy//test/mocks/init:init_mocks",
         "@envoy//test/mocks/local_info:local_info_mocks",
@@ -303,7 +290,6 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         "//source/common:nighthawk_common_lib",
-        "//test:nighthawk_mocks",
         "@envoy//test/mocks/event:event_mocks",
         "@envoy//test/test_common:simulated_time_system_lib",
     ],

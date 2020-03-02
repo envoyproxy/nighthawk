@@ -12,8 +12,6 @@
 
 #include "client/stream_decoder.h"
 
-#include "test/mocks.h"
-
 #include "gtest/gtest.h"
 
 using namespace std::chrono_literals;

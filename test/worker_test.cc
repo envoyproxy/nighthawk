@@ -9,8 +9,6 @@
 
 #include "common/worker_impl.h"
 
-#include "test/mocks.h"
-
 #include "gtest/gtest.h"
 
 using namespace testing;

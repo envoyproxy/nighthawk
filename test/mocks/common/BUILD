@@ -29,9 +29,29 @@ envoy_cc_mock(
 )
 
 envoy_cc_mock(
+    name = "mock_sequencer_factory",
+    srcs = ["mock_sequencer_factory.cc"],
+    hdrs = ["mock_sequencer_factory.h"],
+    repository = "@envoy",
+    deps = [
+        "//include/nighthawk/common:base_includes",
+    ],
+)
+
+envoy_cc_mock(
     name = "mock_termination_predicate",
     srcs = ["mock_termination_predicate.cc"],
     hdrs = ["mock_termination_predicate.h"],
+    repository = "@envoy",
+    deps = [
+        "//include/nighthawk/common:base_includes",
+    ],
+)
+
+envoy_cc_mock(
+    name = "mock_termination_predicate_factory",
+    srcs = ["mock_termination_predicate_factory.cc"],
+    hdrs = ["mock_termination_predicate_factory.h"],
     repository = "@envoy",
     deps = [
         "//include/nighthawk/common:base_includes",
@@ -52,6 +72,16 @@ envoy_cc_mock(
     name = "mock_request_source",
     srcs = ["mock_request_source.cc"],
     hdrs = ["mock_request_source.h"],
+    repository = "@envoy",
+    deps = [
+        "//include/nighthawk/common:base_includes",
+    ],
+)
+
+envoy_cc_mock(
+    name = "mock_request_source_factory",
+    srcs = ["mock_request_source_factory.cc"],
+    hdrs = ["mock_request_source_factory.h"],
     repository = "@envoy",
     deps = [
         "//include/nighthawk/common:base_includes",
