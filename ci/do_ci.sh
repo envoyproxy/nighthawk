@@ -73,6 +73,11 @@ function do_asan() {
     echo "bazel ASAN/UBSAN debug build with tests"
     echo "Building and testing envoy tests..."
     cd "${SRCDIR}"
+    # We build this in steps to avoid running out of memory in CI
+    run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-asan -- //source/exe/...
+    run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-asan -- //source/server/...
+    run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-asan -- //test/mocks/...
+    run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-asan -- //test/...
     run_bazel test ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-asan //test/...
 }
 
@@ -177,10 +182,6 @@ case "$1" in
         exit 0
     ;;
     asan)
-        if [ -n "$CIRCLECI" ]; then
-            # Decrease parallelism to avoid running out of memory
-            NUM_CPUS=7
-        fi
         do_asan
         exit 0
     ;;
