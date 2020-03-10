@@ -108,6 +108,7 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
           {}, Envoy::Network::Utility::getLocalAddress(Envoy::Network::Address::IpVersion::v4),
           "nighthawk_service_zone", "nighthawk_service_cluster", "nighthawk_service_node")),
       secret_manager_(config_tracker_), http_context_(store_root_.symbolTable()),
+      grpc_context_(store_root_.symbolTable()),
       singleton_manager_(std::make_unique<Envoy::Singleton::ManagerImpl>(api_->threadFactory())),
       access_log_manager_(std::chrono::milliseconds(1000), *api_, *dispatcher_, access_log_lock_,
                           store_root_),
@@ -426,8 +427,8 @@ bool ProcessImpl::run(OutputCollector& collector) {
   cluster_manager_factory_ = std::make_unique<ClusterManagerFactory>(
       admin_, Envoy::Runtime::LoaderSingleton::get(), store_root_, tls_, generator_,
       dispatcher_->createDnsResolver({}, false), *ssl_context_manager_, *dispatcher_, *local_info_,
-      secret_manager_, validation_context_, *api_, http_context_, access_log_manager_,
-      *singleton_manager_);
+      secret_manager_, validation_context_, *api_, http_context_, grpc_context_,
+      access_log_manager_, *singleton_manager_);
   cluster_manager_factory_->setConnectionReuseStrategy(
       options_.h1ConnectionReuseStrategy() == nighthawk::client::H1ConnectionReuseStrategy::LRU
           ? Http1PoolImpl::ConnectionReuseStrategy::LRU
