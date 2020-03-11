@@ -149,7 +149,7 @@ TEST_P(UtilityAddressResolutionTest, ResolveTwiceReturnsCached) {
             u.resolve(*dispatcher, address_family).get());
 }
 
-TEST_F(UtilityTest, translateAddressFamilyGoodValues) {
+TEST_F(UtilityTest, TranslateAddressFamilyGoodValues) {
   EXPECT_EQ(Envoy::Network::DnsLookupFamily::V6Only,
             Utility::translateFamilyOptionString(
                 nighthawk::client::AddressFamily_AddressFamilyOptions_V6));
@@ -161,7 +161,7 @@ TEST_F(UtilityTest, translateAddressFamilyGoodValues) {
                 nighthawk::client::AddressFamily_AddressFamilyOptions_AUTO));
 }
 
-TEST_F(UtilityTest, mapCountersFromStore) {
+TEST_F(UtilityTest, MapCountersFromStore) {
   Envoy::Stats::IsolatedStoreImpl store;
   store.counter("foo").inc();
   store.counter("worker.2.bar").inc();

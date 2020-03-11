@@ -52,6 +52,7 @@ envoy_cc_library(
         "@envoy//source/common/config:utility_lib_with_external_headers",
         "@envoy//source/common/event:dispatcher_includes_with_external_headers",
         "@envoy//source/common/event:real_time_system_lib_with_external_headers",
+        "@envoy//source/common/grpc:context_lib_with_external_headers",
         "@envoy//source/common/http:context_lib_with_external_headers",
         "@envoy//source/common/http:header_map_lib_with_external_headers",
         "@envoy//source/common/http:headers_lib_with_external_headers",

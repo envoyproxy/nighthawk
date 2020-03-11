@@ -17,6 +17,7 @@
 #include "external/envoy/source/common/access_log/access_log_manager_impl.h"
 #include "external/envoy/source/common/common/logger.h"
 #include "external/envoy/source/common/event/real_time_system.h"
+#include "external/envoy/source/common/grpc/context_impl.h"
 #include "external/envoy/source/common/http/context_impl.h"
 #include "external/envoy/source/common/protobuf/message_validator_impl.h"
 #include "external/envoy/source/common/secret/secret_manager_impl.h"
@@ -114,6 +115,7 @@ private:
   Envoy::Server::ConfigTrackerImpl config_tracker_;
   Envoy::Secret::SecretManagerImpl secret_manager_;
   Envoy::Http::ContextImpl http_context_;
+  Envoy::Grpc::ContextImpl grpc_context_;
   Envoy::Thread::MutexBasicLockable access_log_lock_;
   Envoy::Singleton::ManagerPtr singleton_manager_;
   Envoy::AccessLog::AccessLogManagerImpl access_log_manager_;
