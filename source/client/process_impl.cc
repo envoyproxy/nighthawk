@@ -357,7 +357,6 @@ void ProcessImpl::maybeCreateTracingDriver(const envoy::config::trace::v3::Traci
             Envoy::Runtime::LoaderSingleton::get(), *local_info_, generator_, time_system_);
     http_tracer_ =
         std::make_unique<Envoy::Tracing::HttpTracerImpl>(std::move(zipkin_driver), *local_info_);
-    http_context_.setTracer(*http_tracer_);
 #else
     ENVOY_LOG(error, "Not build with any tracing support");
 #endif
