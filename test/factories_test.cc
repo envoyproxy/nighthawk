@@ -29,7 +29,7 @@ public:
   Envoy::Stats::MockIsolatedStatsStore stats_store_;
   Envoy::Event::MockDispatcher dispatcher_;
   MockOptions options_;
-  Envoy::Tracing::HttpTracerPtr http_tracer_;
+  Envoy::Tracing::HttpTracerSharedPtr http_tracer_;
 };
 
 TEST_F(FactoriesTest, CreateBenchmarkClient) {

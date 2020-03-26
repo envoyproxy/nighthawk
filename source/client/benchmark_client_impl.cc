@@ -95,7 +95,7 @@ BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
     StatisticPtr&& connect_statistic, StatisticPtr&& response_statistic,
     StatisticPtr&& response_header_size_statistic, StatisticPtr&& response_body_size_statistic,
     bool use_h2, Envoy::Upstream::ClusterManagerPtr& cluster_manager,
-    Envoy::Tracing::HttpTracerPtr& http_tracer, absl::string_view cluster_name,
+    Envoy::Tracing::HttpTracerSharedPtr& http_tracer, absl::string_view cluster_name,
     RequestGenerator request_generator, const bool provide_resource_backpressure)
     : api_(api), dispatcher_(dispatcher), scope_(scope.createScope("benchmark.")),
       connect_statistic_(std::move(connect_statistic)),
