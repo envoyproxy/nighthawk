@@ -127,7 +127,7 @@ private:
   Envoy::Upstream::ClusterManagerPtr cluster_manager_{};
   std::unique_ptr<Runtime::ScopedLoaderSingleton> runtime_singleton_;
   Envoy::Init::WatcherImpl init_watcher_;
-  Tracing::HttpTracerPtr http_tracer_;
+  Tracing::HttpTracerSharedPtr http_tracer_;
   Envoy::Server::ValidationAdmin admin_;
   Envoy::ProtobufMessage::ProdValidationContextImpl validation_context_;
   bool shutdown_{true};

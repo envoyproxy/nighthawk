@@ -43,7 +43,7 @@ public:
                 Statistic& latency_statistic, Statistic& response_header_sizes_statistic,
                 Statistic& response_body_sizes_statistic, HeaderMapPtr request_headers,
                 bool measure_latencies, uint32_t request_body_size, std::string x_request_id,
-                Envoy::Tracing::HttpTracerPtr& http_tracer)
+                Envoy::Tracing::HttpTracerSharedPtr& http_tracer)
       : dispatcher_(dispatcher), time_source_(time_source),
         decoder_completion_callback_(decoder_completion_callback),
         caller_completion_callback_(std::move(caller_completion_callback)),
@@ -110,7 +110,7 @@ private:
   const uint32_t request_body_size_;
   Envoy::Tracing::EgressConfigImpl config_;
   Envoy::StreamInfo::StreamInfoImpl stream_info_;
-  Envoy::Tracing::HttpTracerPtr& http_tracer_;
+  Envoy::Tracing::HttpTracerSharedPtr& http_tracer_;
   Envoy::Tracing::SpanPtr active_span_;
   Envoy::StreamInfo::UpstreamTiming upstream_timing_;
 };

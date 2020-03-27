@@ -30,7 +30,7 @@ public:
   BenchmarkClientPtr create(Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher,
                             Envoy::Stats::Scope& scope,
                             Envoy::Upstream::ClusterManagerPtr& cluster_manager,
-                            Envoy::Tracing::HttpTracerPtr& http_tracer,
+                            Envoy::Tracing::HttpTracerSharedPtr& http_tracer,
                             absl::string_view cluster_name,
                             RequestSource& request_generator) const override;
 };

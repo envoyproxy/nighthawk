@@ -120,7 +120,7 @@ public:
                           StatisticPtr&& response_header_size_statistic,
                           StatisticPtr&& response_body_size_statistic, bool use_h2,
                           Envoy::Upstream::ClusterManagerPtr& cluster_manager,
-                          Envoy::Tracing::HttpTracerPtr& http_tracer,
+                          Envoy::Tracing::HttpTracerSharedPtr& http_tracer,
                           absl::string_view cluster_name, RequestGenerator request_generator,
                           const bool provide_resource_backpressure);
   void setConnectionLimit(uint32_t connection_limit) { connection_limit_ = connection_limit; }
@@ -178,7 +178,7 @@ private:
   bool measure_latencies_{};
   BenchmarkClientStats benchmark_client_stats_;
   Envoy::Upstream::ClusterManagerPtr& cluster_manager_;
-  Envoy::Tracing::HttpTracerPtr& http_tracer_;
+  Envoy::Tracing::HttpTracerSharedPtr& http_tracer_;
   std::string cluster_name_;
   const RequestGenerator request_generator_;
   const bool provide_resource_backpressure_;

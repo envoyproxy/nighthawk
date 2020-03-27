@@ -102,7 +102,7 @@ public:
   Envoy::Init::MockManager init_manager_;
   NiceMock<Envoy::ProtobufMessage::MockValidationVisitor> validation_visitor_;
   Envoy::Upstream::ClusterManagerPtr cluster_manager_ptr_;
-  Envoy::Tracing::HttpTracerPtr http_tracer_;
+  Envoy::Tracing::HttpTracerSharedPtr http_tracer_;
 };
 
 TEST_F(ClientWorkerTest, BasicTest) {

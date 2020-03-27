@@ -154,7 +154,7 @@ public:
   NiceMock<Envoy::Http::MockRequestEncoder> stream_encoder_;
   Envoy::Upstream::MockThreadLocalCluster thread_local_cluster_;
   Envoy::Upstream::ClusterInfoConstSharedPtr cluster_info_;
-  Envoy::Tracing::HttpTracerPtr http_tracer_;
+  Envoy::Tracing::HttpTracerSharedPtr http_tracer_;
   std::string response_code_;
   RequestGenerator request_generator_;
 };
