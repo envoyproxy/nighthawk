@@ -13,7 +13,6 @@
 #include "nighthawk/common/statistic.h"
 
 #include "external/envoy/source/common/http/header_map_impl.h"
-#include "external/envoy/source/common/runtime/uuid_util.h"
 #include "external/envoy/source/common/stream_info/stream_info_impl.h"
 #include "external/envoy/source/common/tracing/http_tracer_impl.h"
 
@@ -42,7 +41,8 @@ public:
                 OperationCallback caller_completion_callback, Statistic& connect_statistic,
                 Statistic& latency_statistic, Statistic& response_header_sizes_statistic,
                 Statistic& response_body_sizes_statistic, HeaderMapPtr request_headers,
-                bool measure_latencies, uint32_t request_body_size, std::string x_request_id,
+                bool measure_latencies, uint32_t request_body_size,
+                Envoy::Runtime::RandomGenerator& random_generator,
                 Envoy::Tracing::HttpTracerSharedPtr& http_tracer)
       : dispatcher_(dispatcher), time_source_(time_source),
         decoder_completion_callback_(decoder_completion_callback),
@@ -53,9 +53,9 @@ public:
         request_headers_(std::move(request_headers)), connect_start_(time_source_.monotonicTime()),
         complete_(false), measure_latencies_(measure_latencies),
         request_body_size_(request_body_size), stream_info_(time_source_),
-        http_tracer_(http_tracer) {
+        random_generator_(random_generator), http_tracer_(http_tracer) {
     if (measure_latencies_ && http_tracer_ != nullptr) {
-      setupForTracing(x_request_id);
+      setupForTracing();
     }
   }
 
@@ -83,7 +83,7 @@ public:
   static Envoy::StreamInfo::ResponseFlag
   streamResetReasonToResponseFlag(Envoy::Http::StreamResetReason reset_reason);
   void finalizeActiveSpan();
-  void setupForTracing(std::string& x_request_id);
+  void setupForTracing();
 
 private:
   void onComplete(bool success);
@@ -110,6 +110,7 @@ private:
   const uint32_t request_body_size_;
   Envoy::Tracing::EgressConfigImpl config_;
   Envoy::StreamInfo::StreamInfoImpl stream_info_;
+  Envoy::Runtime::RandomGenerator& random_generator_;
   Envoy::Tracing::HttpTracerSharedPtr& http_tracer_;
   Envoy::Tracing::SpanPtr active_span_;
   Envoy::StreamInfo::UpstreamTiming upstream_timing_;
