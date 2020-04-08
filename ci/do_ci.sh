@@ -150,7 +150,6 @@ export BAZEL_EXTRA_TEST_OPTIONS="--test_env=ENVOY_IP_TEST_VERSIONS=v4only ${BAZE
 export BAZEL_BUILD_OPTIONS=" \
 --verbose_failures ${BAZEL_OPTIONS} --action_env=HOME --action_env=PYTHONUSERBASE \
 --show_task_finish --experimental_generate_json_trace_profile ${BAZEL_BUILD_EXTRA_OPTIONS}"
-[ -z "$CIRCLECI" ] || export BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} --local_ram_resources=12288 --jobs=${NUM_CPUS}"
 export BAZEL_TEST_OPTIONS="${BAZEL_BUILD_OPTIONS} --test_env=HOME --test_env=PYTHONUSERBASE \
 --test_env=UBSAN_OPTIONS=print_stacktrace=1 \
 --cache_test_results=no --test_output=all ${BAZEL_EXTRA_TEST_OPTIONS}"
@@ -185,6 +184,7 @@ case "$1" in
         exit 0
     ;;
     asan)
+        [ -z "$CIRCLECI" ] || export BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} --local_ram_resources=12288 --jobs=6"
         do_asan
         exit 0
     ;;
