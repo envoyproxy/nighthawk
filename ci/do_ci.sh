@@ -80,6 +80,7 @@ function do_asan() {
     run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-asan -- //source/server/...
     run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-asan -- //test/mocks/...
     run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-asan -- //test/...
+    [ -z "$CIRCLECI" ] || export BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} --local_ram_resources=12288 --jobs=6"
     run_bazel test ${BAZEL_TEST_OPTIONS} -c dbg --build_tests_only --config=clang-asan //test/...
 }
 
@@ -184,7 +185,6 @@ case "$1" in
         exit 0
     ;;
     asan)
-        [ -z "$CIRCLECI" ] || export BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} --local_ram_resources=12288 --jobs=6"
         do_asan
         exit 0
     ;;
