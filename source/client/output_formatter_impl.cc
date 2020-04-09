@@ -93,7 +93,7 @@ std::string ConsoleOutputFormatterImpl::formatProto(const nighthawk::client::Out
             ss << fmt::format("  {:<{}}{:<{}}{:<{}}", p, 12, percentile.count(), 12,
                               percentile.has_duration()
                                   ? formatProtoDuration(percentile.duration())
-                                  : fmt::format("{}", static_cast<int>(percentile.raw_value())),
+                                  : fmt::format("{}", static_cast<int64_t>(percentile.raw_value())),
                               15)
                << std::endl;
           }
@@ -191,7 +191,7 @@ DottedStringOutputFormatterImpl::formatProto(const nighthawk::client::Output& ou
               Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(percentile.duration()));
         } else {
           ss << fmt::format("{}.value: {}", percentile_prefix,
-                            static_cast<int>(percentile.raw_value()));
+                            static_cast<int64_t>(percentile.raw_value()));
         }
         ss << std::endl;
       });
