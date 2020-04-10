@@ -196,7 +196,7 @@ TerminationPredicate* TerminationPredicateFactoryImpl::linkConfiguredPredicates(
               predicate.first, predicate.second);
     current_predicate = &current_predicate->link(
         std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
-            scope.counter(predicate.first), predicate.second, termination_status));
+            scope.counterFromString(predicate.first), predicate.second, termination_status));
   }
   return current_predicate;
 }

@@ -9,7 +9,6 @@
 #include "external/envoy/source/common/http/headers.h"
 #include "external/envoy/source/common/http/utility.h"
 #include "external/envoy/source/common/network/utility.h"
-#include "external/envoy/source/common/runtime/uuid_util.h"
 
 #include "client/stream_decoder.h"
 
@@ -161,12 +160,11 @@ bool BenchmarkClientHttpImpl::tryStartRequest(CompletionCallback caller_completi
     }
   }
 
-  std::string x_request_id = generator_.uuid();
   auto stream_decoder = new StreamDecoder(
       dispatcher_, api_.timeSource(), *this, std::move(caller_completion_callback),
       *connect_statistic_, *response_statistic_, *response_header_size_statistic_,
       *response_body_size_statistic_, request->header(), shouldMeasureLatencies(), content_length,
-      x_request_id, http_tracer_);
+      generator_, http_tracer_);
   requests_initiated_++;
   pool_ptr->newStream(*stream_decoder, *stream_decoder);
   return true;

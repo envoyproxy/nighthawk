@@ -163,9 +163,9 @@ TEST_F(UtilityTest, TranslateAddressFamilyGoodValues) {
 
 TEST_F(UtilityTest, MapCountersFromStore) {
   Envoy::Stats::IsolatedStoreImpl store;
-  store.counter("foo").inc();
-  store.counter("worker.2.bar").inc();
-  store.counter("worker.1.bar").inc();
+  store.counterFromString("foo").inc();
+  store.counterFromString("worker.2.bar").inc();
+  store.counterFromString("worker.1.bar").inc();
   uint64_t filter_delegate_hit_count = 0;
   const auto& counters = Utility().mapCountersFromStore(
       store, [&filter_delegate_hit_count](absl::string_view name, uint64_t value) {

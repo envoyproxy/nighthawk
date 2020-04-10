@@ -128,7 +128,7 @@ public:
   }
 
   uint64_t getCounter(absl::string_view name) {
-    return client_->scope().counter(std::string(name)).value();
+    return client_->scope().counterFromString(std::string(name)).value();
   }
 
   Envoy::Upstream::MockClusterManager& cluster_manager() {
