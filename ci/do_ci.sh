@@ -73,7 +73,7 @@ function do_asan() {
     echo "bazel ASAN/UBSAN debug build with tests"
     echo "Building and testing envoy tests..."
     cd "${SRCDIR}"
-    [ -z "$CIRCLECI" ] || export BAZEL_BUILD_OPTIONS="${BAZEL_TEST_OPTIONS} --jobs=6 --local_ram_resources=12288"
+    [ -z "$CIRCLECI" ] || export BAZEL_BUILD_OPTIONS="${BAZEL_TEST_OPTIONS} --jobs=4 --local_ram_resources=12288"
 
     # We build this in steps to avoid running out of memory in CI
     run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-asan -- //source/exe/... && \
