@@ -40,7 +40,7 @@ public:
       absl::string_view host, absl::string_view content_type,
       const std::function<void(Envoy::Http::RequestHeaderMapImpl&)>& request_header_delegate) {
     Envoy::Api::ApiPtr api = Envoy::Api::createApiForTest();
-    Envoy::Event::DispatcherPtr dispatcher(api->allocateDispatcher());
+    Envoy::Event::DispatcherPtr dispatcher(api->allocateDispatcher("test_thread"));
     std::shared_ptr<Envoy::Upstream::MockClusterInfo> cluster{
         new NiceMock<Envoy::Upstream::MockClusterInfo>()};
     Envoy::Upstream::HostDescriptionConstSharedPtr host_description{
