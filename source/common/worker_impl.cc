@@ -7,8 +7,8 @@ namespace Nighthawk {
 
 WorkerImpl::WorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Instance& tls,
                        Envoy::Stats::Store& store)
-    : thread_factory_(api.threadFactory()), dispatcher_(api.allocateDispatcher()), tls_(tls),
-      store_(store), time_source_(api.timeSource()) {
+    : thread_factory_(api.threadFactory()), dispatcher_(api.allocateDispatcher("worker_thread")),
+      tls_(tls), store_(store), time_source_(api.timeSource()) {
   tls.registerThread(*dispatcher_, false);
 }
 

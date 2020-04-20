@@ -23,7 +23,8 @@ namespace Client {
 class StreamDecoderTest : public Test, public StreamDecoderCompletionCallback {
 public:
   StreamDecoderTest()
-      : api_(Envoy::Api::createApiForTest(time_system_)), dispatcher_(api_->allocateDispatcher()),
+      : api_(Envoy::Api::createApiForTest(time_system_)),
+        dispatcher_(api_->allocateDispatcher("test_thread")),
         request_headers_(std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(
             std::initializer_list<std::pair<std::string, std::string>>({{":method", "GET"}}))),
         http_tracer_(std::make_unique<Envoy::Tracing::HttpNullTracer>()),
