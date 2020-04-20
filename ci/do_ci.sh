@@ -73,7 +73,6 @@ function do_asan() {
     echo "bazel ASAN/UBSAN debug build with tests"
     echo "Building and testing envoy tests..."
     cd "${SRCDIR}"
-    [ -z "$CIRCLECI" ] || export BAZEL_BUILD_OPTIONS="${BAZEL_TEST_OPTIONS} --jobs=4 --local_ram_resources=12288"
 
     # We build this in steps to avoid running out of memory in CI
     run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-asan -- //source/exe/... && \
@@ -123,6 +122,9 @@ if [ -n "$CIRCLECI" ]; then
     fi
     # We constrain parallelism in CI to avoid running out of memory.	
     NUM_CPUS=8
+    if [ "$1" == "asan" ]; then
+        NUM_CPUS=5
+    fi
 fi
 
 if grep 'docker\|lxc' /proc/1/cgroup; then
