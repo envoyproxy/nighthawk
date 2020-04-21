@@ -377,6 +377,82 @@ void ProcessImpl::addRequestSourceCluster(
   socket_address->set_port_value(uri.port());
 }
 
+bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriPtr>& uris,
+                              const UriPtr& request_source_uri, const UriPtr& tracing_uri) {
+  int number_of_workers = determineConcurrency();
+  shutdown_ = false;
+  const std::vector<ClientWorkerPtr>& workers = createWorkers(number_of_workers);
+  tls_.registerThread(*dispatcher_, true);
+  store_root_.initializeThreading(*dispatcher_, tls_);
+  runtime_singleton_ = std::make_unique<Envoy::Runtime::ScopedLoaderSingleton>(
+      Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl(
+          *dispatcher_, tls_, {}, *local_info_, init_manager_, store_root_, generator_,
+          Envoy::ProtobufMessage::getStrictValidationVisitor(), *api_)});
+  ssl_context_manager_ =
+      std::make_unique<Extensions::TransportSockets::Tls::ContextManagerImpl>(time_system_);
+  cluster_manager_factory_ = std::make_unique<ClusterManagerFactory>(
+      admin_, Envoy::Runtime::LoaderSingleton::get(), store_root_, tls_, generator_,
+      dispatcher_->createDnsResolver({}, false), *ssl_context_manager_, *dispatcher_, *local_info_,
+      secret_manager_, validation_context_, *api_, http_context_, grpc_context_,
+      access_log_manager_, *singleton_manager_);
+  cluster_manager_factory_->setConnectionReuseStrategy(
+      options_.h1ConnectionReuseStrategy() == nighthawk::client::H1ConnectionReuseStrategy::LRU
+          ? Http1PoolImpl::ConnectionReuseStrategy::LRU
+          : Http1PoolImpl::ConnectionReuseStrategy::MRU);
+  cluster_manager_factory_->setPrefetchConnections(options_.prefetchConnections());
+  if (options_.h2UseMultipleConnections()) {
+    cluster_manager_factory_->enableMultiConnectionH2Pool();
+  }
+  envoy::config::bootstrap::v3::Bootstrap bootstrap;
+  createBootstrapConfiguration(bootstrap, uris, request_source_uri, number_of_workers);
+  if (tracing_uri != nullptr) {
+    setupTracingImplementation(bootstrap, *tracing_uri);
+    addTracingCluster(bootstrap, *tracing_uri);
+  }
+  ENVOY_LOG(debug, "Computed configuration: {}", bootstrap.DebugString());
+  cluster_manager_ = cluster_manager_factory_->clusterManagerFromProto(bootstrap);
+  maybeCreateTracingDriver(bootstrap.tracing());
+  cluster_manager_->setInitializedCb([this]() -> void { init_manager_.initialize(init_watcher_); });
+
+  Runtime::LoaderSingleton::get().initialize(*cluster_manager_);
+
+  for (auto& w : workers_) {
+    w->start();
+  }
+
+  for (auto& w : workers_) {
+    w->waitForCompletion();
+  }
+
+  int i = 0;
+  std::chrono::nanoseconds total_execution_duration = 0ns;
+  for (auto& worker : workers_) {
+    auto sequencer_execution_duration = worker->phase().sequencer().executionDuration();
+    // We don't write per-worker results if we only have a single worker, because the global
+    // results will be precisely the same.
+    if (workers_.size() > 1) {
+      StatisticFactoryImpl statistic_factory(options_);
+      collector.addResult(fmt::format("worker_{}", i),
+                          vectorizeStatisticPtrMap(worker->statistics()),
+                          worker->threadLocalCounterValues(), sequencer_execution_duration);
+    }
+    total_execution_duration += sequencer_execution_duration;
+    i++;
+  }
+
+  // Note that above we use use counter values snapshotted by the workers right after its
+  // execution completes. Here we query the live counters to get to the global numbers. To make
+  // sure the global aggregated numbers line up, we must take care not to shut down the benchmark
+  // client before we do this, as that will increment certain counters like connections closed,
+  // etc.
+  const auto& counters = Utility().mapCountersFromStore(
+      store_root_, [](absl::string_view, uint64_t value) { return value > 0; });
+  StatisticFactoryImpl statistic_factory(options_);
+  collector.addResult("global", mergeWorkerStatistics(workers), counters,
+                      total_execution_duration / workers_.size());
+  return counters.find("sequencer.failed_terminations") == counters.end();
+}
+
 bool ProcessImpl::run(OutputCollector& collector) {
   std::vector<UriPtr> uris;
   UriPtr request_source_uri;
@@ -412,80 +488,8 @@ bool ProcessImpl::run(OutputCollector& collector) {
     return false;
   }
 
-  int number_of_workers = determineConcurrency();
-  shutdown_ = false;
   try {
-    const std::vector<ClientWorkerPtr>& workers = createWorkers(number_of_workers);
-    tls_.registerThread(*dispatcher_, true);
-    store_root_.initializeThreading(*dispatcher_, tls_);
-    runtime_singleton_ = std::make_unique<Envoy::Runtime::ScopedLoaderSingleton>(
-        Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl(
-            *dispatcher_, tls_, {}, *local_info_, init_manager_, store_root_, generator_,
-            Envoy::ProtobufMessage::getStrictValidationVisitor(), *api_)});
-    ssl_context_manager_ =
-        std::make_unique<Extensions::TransportSockets::Tls::ContextManagerImpl>(time_system_);
-    cluster_manager_factory_ = std::make_unique<ClusterManagerFactory>(
-        admin_, Envoy::Runtime::LoaderSingleton::get(), store_root_, tls_, generator_,
-        dispatcher_->createDnsResolver({}, false), *ssl_context_manager_, *dispatcher_,
-        *local_info_, secret_manager_, validation_context_, *api_, http_context_, grpc_context_,
-        access_log_manager_, *singleton_manager_);
-    cluster_manager_factory_->setConnectionReuseStrategy(
-        options_.h1ConnectionReuseStrategy() == nighthawk::client::H1ConnectionReuseStrategy::LRU
-            ? Http1PoolImpl::ConnectionReuseStrategy::LRU
-            : Http1PoolImpl::ConnectionReuseStrategy::MRU);
-    cluster_manager_factory_->setPrefetchConnections(options_.prefetchConnections());
-    if (options_.h2UseMultipleConnections()) {
-      cluster_manager_factory_->enableMultiConnectionH2Pool();
-    }
-    envoy::config::bootstrap::v3::Bootstrap bootstrap;
-    createBootstrapConfiguration(bootstrap, uris, request_source_uri, number_of_workers);
-    if (tracing_uri != nullptr) {
-      setupTracingImplementation(bootstrap, *tracing_uri);
-      addTracingCluster(bootstrap, *tracing_uri);
-    }
-    ENVOY_LOG(debug, "Computed configuration: {}", bootstrap.DebugString());
-    cluster_manager_ = cluster_manager_factory_->clusterManagerFromProto(bootstrap);
-    maybeCreateTracingDriver(bootstrap.tracing());
-    cluster_manager_->setInitializedCb(
-        [this]() -> void { init_manager_.initialize(init_watcher_); });
-
-    Runtime::LoaderSingleton::get().initialize(*cluster_manager_);
-
-    for (auto& w : workers_) {
-      w->start();
-    }
-
-    for (auto& w : workers_) {
-      w->waitForCompletion();
-    }
-
-    int i = 0;
-    std::chrono::nanoseconds total_execution_duration = 0ns;
-    for (auto& worker : workers_) {
-      auto sequencer_execution_duration = worker->phase().sequencer().executionDuration();
-      // We don't write per-worker results if we only have a single worker, because the global
-      // results will be precisely the same.
-      if (workers_.size() > 1) {
-        StatisticFactoryImpl statistic_factory(options_);
-        collector.addResult(fmt::format("worker_{}", i),
-                            vectorizeStatisticPtrMap(worker->statistics()),
-                            worker->threadLocalCounterValues(), sequencer_execution_duration);
-      }
-      total_execution_duration += sequencer_execution_duration;
-      i++;
-    }
-
-    // Note that above we use use counter values snapshotted by the workers right after its
-    // execution completes. Here we query the live counters to get to the global numbers. To make
-    // sure the global aggregated numbers line up, we must take care not to shut down the benchmark
-    // client before we do this, as that will increment certain counters like connections closed,
-    // etc.
-    const auto& counters = Utility().mapCountersFromStore(
-        store_root_, [](absl::string_view, uint64_t value) { return value > 0; });
-    StatisticFactoryImpl statistic_factory(options_);
-    collector.addResult("global", mergeWorkerStatistics(workers), counters,
-                        total_execution_duration / workers_.size());
-    return counters.find("sequencer.failed_terminations") == counters.end();
+    return runInternal(collector, uris, request_source_uri, tracing_uri);
   } catch (Envoy::EnvoyException& ex) {
     ENVOY_LOG(error, "Fatal exception: {}", ex.what());
     throw;
