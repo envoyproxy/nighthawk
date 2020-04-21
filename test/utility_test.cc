@@ -93,7 +93,7 @@ public:
   Envoy::Network::Address::InstanceConstSharedPtr
   testResolution(absl::string_view uri, Envoy::Network::DnsLookupFamily address_family) {
     Envoy::Api::ApiPtr api = Envoy::Api::createApiForTest();
-    auto dispatcher = api->allocateDispatcher();
+    auto dispatcher = api->allocateDispatcher("uri_resolution_thread");
     auto u = UriImpl(uri);
     return u.resolve(*dispatcher, address_family);
   }
@@ -142,7 +142,7 @@ TEST_P(UtilityAddressResolutionTest, ResolveTwiceReturnsCached) {
           : Envoy::Network::DnsLookupFamily::V4Only;
 
   Envoy::Api::ApiPtr api = Envoy::Api::createApiForTest();
-  auto dispatcher = api->allocateDispatcher();
+  auto dispatcher = api->allocateDispatcher("test_thread");
   auto u = UriImpl("localhost");
 
   EXPECT_EQ(u.resolve(*dispatcher, address_family).get(),
