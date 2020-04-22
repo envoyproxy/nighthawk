@@ -377,41 +377,8 @@ void ProcessImpl::addRequestSourceCluster(
   socket_address->set_port_value(uri.port());
 }
 
-bool ProcessImpl::run(OutputCollector& collector) {
-  std::vector<UriPtr> uris;
-  UriPtr request_source_uri;
-  UriPtr tracing_uri;
-
-  try {
-    // TODO(oschaaf): See if we can rid of resolving here.
-    // We now only do it to validate.
-    if (options_.uri().has_value()) {
-      uris.push_back(std::make_unique<UriImpl>(options_.uri().value()));
-    } else {
-      for (const nighthawk::client::MultiTarget::Endpoint& endpoint :
-           options_.multiTargetEndpoints()) {
-        uris.push_back(std::make_unique<UriImpl>(fmt::format(
-            "{}://{}:{}{}", options_.multiTargetUseHttps() ? "https" : "http",
-            endpoint.address().value(), endpoint.port().value(), options_.multiTargetPath())));
-      }
-    }
-    for (const UriPtr& uri : uris) {
-      uri->resolve(*dispatcher_, Utility::translateFamilyOptionString(options_.addressFamily()));
-    }
-    if (options_.requestSource() != "") {
-      request_source_uri = std::make_unique<UriImpl>(options_.requestSource());
-      request_source_uri->resolve(*dispatcher_,
-                                  Utility::translateFamilyOptionString(options_.addressFamily()));
-    }
-    if (options_.trace() != "") {
-      tracing_uri = std::make_unique<UriImpl>(options_.trace());
-      tracing_uri->resolve(*dispatcher_,
-                           Utility::translateFamilyOptionString(options_.addressFamily()));
-    }
-  } catch (const UriException&) {
-    return false;
-  }
-
+bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriPtr>& uris,
+                              const UriPtr& request_source_uri, const UriPtr& tracing_uri) {
   int number_of_workers = determineConcurrency();
   shutdown_ = false;
   const std::vector<ClientWorkerPtr>& workers = createWorkers(number_of_workers);
@@ -461,8 +428,8 @@ bool ProcessImpl::run(OutputCollector& collector) {
   std::chrono::nanoseconds total_execution_duration = 0ns;
   for (auto& worker : workers_) {
     auto sequencer_execution_duration = worker->phase().sequencer().executionDuration();
-    // We don't write per-worker results if we only have a single worker, because the global results
-    // will be precisely the same.
+    // We don't write per-worker results if we only have a single worker, because the global
+    // results will be precisely the same.
     if (workers_.size() > 1) {
       StatisticFactoryImpl statistic_factory(options_);
       collector.addResult(fmt::format("worker_{}", i),
@@ -473,16 +440,60 @@ bool ProcessImpl::run(OutputCollector& collector) {
     i++;
   }
 
-  // Note that above we use use counter values snapshotted by the workers right after its execution
-  // completes. Here we query the live counters to get to the global numbers. To make sure the
-  // global aggregated numbers line up, we must take care not to shut down the benchmark client
-  // before we do this, as that will increment certain counters like connections closed, etc.
+  // Note that above we use use counter values snapshotted by the workers right after its
+  // execution completes. Here we query the live counters to get to the global numbers. To make
+  // sure the global aggregated numbers line up, we must take care not to shut down the benchmark
+  // client before we do this, as that will increment certain counters like connections closed,
+  // etc.
   const auto& counters = Utility().mapCountersFromStore(
       store_root_, [](absl::string_view, uint64_t value) { return value > 0; });
   StatisticFactoryImpl statistic_factory(options_);
   collector.addResult("global", mergeWorkerStatistics(workers), counters,
                       total_execution_duration / workers_.size());
   return counters.find("sequencer.failed_terminations") == counters.end();
+}
+
+bool ProcessImpl::run(OutputCollector& collector) {
+  std::vector<UriPtr> uris;
+  UriPtr request_source_uri;
+  UriPtr tracing_uri;
+
+  try {
+    // TODO(oschaaf): See if we can rid of resolving here.
+    // We now only do it to validate.
+    if (options_.uri().has_value()) {
+      uris.push_back(std::make_unique<UriImpl>(options_.uri().value()));
+    } else {
+      for (const nighthawk::client::MultiTarget::Endpoint& endpoint :
+           options_.multiTargetEndpoints()) {
+        uris.push_back(std::make_unique<UriImpl>(fmt::format(
+            "{}://{}:{}{}", options_.multiTargetUseHttps() ? "https" : "http",
+            endpoint.address().value(), endpoint.port().value(), options_.multiTargetPath())));
+      }
+    }
+    for (const UriPtr& uri : uris) {
+      uri->resolve(*dispatcher_, Utility::translateFamilyOptionString(options_.addressFamily()));
+    }
+    if (options_.requestSource() != "") {
+      request_source_uri = std::make_unique<UriImpl>(options_.requestSource());
+      request_source_uri->resolve(*dispatcher_,
+                                  Utility::translateFamilyOptionString(options_.addressFamily()));
+    }
+    if (options_.trace() != "") {
+      tracing_uri = std::make_unique<UriImpl>(options_.trace());
+      tracing_uri->resolve(*dispatcher_,
+                           Utility::translateFamilyOptionString(options_.addressFamily()));
+    }
+  } catch (const UriException&) {
+    return false;
+  }
+
+  try {
+    return runInternal(collector, uris, request_source_uri, tracing_uri);
+  } catch (Envoy::EnvoyException& ex) {
+    ENVOY_LOG(error, "Fatal exception: {}", ex.what());
+    throw;
+  }
 }
 
 void ProcessImpl::setupForHRTimers() {

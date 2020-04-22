@@ -93,6 +93,9 @@ private:
   std::vector<StatisticPtr>
   mergeWorkerStatistics(const std::vector<ClientWorkerPtr>& workers) const;
   void setupForHRTimers();
+  bool runInternal(OutputCollector& collector, const std::vector<UriPtr>& uris,
+                   const UriPtr& request_source_uri, const UriPtr& tracing_uri);
+
   Envoy::ProcessWide process_wide_;
   Envoy::PlatformImpl platform_impl_;
   Envoy::Event::TimeSystem& time_system_;

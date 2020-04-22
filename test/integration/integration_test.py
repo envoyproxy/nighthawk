@@ -24,7 +24,7 @@ if __name__ == '__main__':
           "-x",
           path,
           "-n",
-          "2" if isSanitizerRun() else "20"  # Number of tests to run in parallel
+          "4" if isSanitizerRun() else "20"  # Number of tests to run in parallel
       ],
       plugins=["xdist"])
   exit(r)
