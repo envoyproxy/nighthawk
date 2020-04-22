@@ -561,7 +561,8 @@ def test_https_h1_sni(sni_test_server_fixture):
   parsed_json, _ = sni_test_server_fixture.runNighthawkClient([
       sni_test_server_fixture.getTestServerRootUri().replace("https://", "http://"), "--rps", "100",
       "--duration", "20", "--termination-predicate", "benchmark.http_2xx:2"
-  ], expect_failure=False)
+  ],
+                                                              expect_failure=False)
 
   counters = sni_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   assertCounterGreaterEqual(counters, "benchmark.http_2xx", 1)
