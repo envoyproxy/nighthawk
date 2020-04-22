@@ -9,6 +9,7 @@
 #include "external/envoy/test/mocks/local_info/mocks.h"
 #include "external/envoy/test/mocks/protobuf/mocks.h"
 #include "external/envoy/test/mocks/thread_local/mocks.h"
+#include "external/envoy/test/test_common/simulated_time_system.h"
 
 #include "common/statistic_impl.h"
 
@@ -74,11 +75,6 @@ public:
   TerminationPredicatePtr createMockTerminationPredicate() {
     auto predicate = std::make_unique<NiceMock<MockTerminationPredicate>>();
     ON_CALL(*predicate, appendToChain(_)).WillByDefault(ReturnRef(*predicate));
-    EXPECT_CALL(*predicate, evaluateChain())
-        .Times(AtLeast(0))
-        .WillOnce(Return(TerminationPredicate::Status::PROCEED))
-        .WillOnce(Return(TerminationPredicate::Status::TERMINATE));
-
     return predicate;
   }
 
@@ -91,7 +87,7 @@ public:
   MockRequestSourceFactory request_generator_factory_;
   Envoy::Stats::IsolatedStoreImpl store_;
   NiceMock<Envoy::ThreadLocal::MockInstance> tls_;
-  Envoy::Event::TestRealTimeSystem time_system_;
+  Envoy::Event::SimulatedTimeSystem time_system_;
   MockBenchmarkClient* benchmark_client_;
   MockSequencer* sequencer_;
   MockRequestSource* request_generator_;
@@ -112,8 +108,7 @@ TEST_F(ClientWorkerTest, BasicTest) {
     InSequence dummy;
     EXPECT_CALL(*benchmark_client_, setShouldMeasureLatencies(false)).Times(1);
     EXPECT_CALL(*benchmark_client_, tryStartRequest(_))
-        .Times(1)
-        .WillRepeatedly(Invoke(this, &ClientWorkerTest::CheckThreadChanged));
+        .WillOnce(Invoke(this, &ClientWorkerTest::CheckThreadChanged));
     EXPECT_CALL(*benchmark_client_, setShouldMeasureLatencies(true)).Times(1);
     EXPECT_CALL(*sequencer_, start).Times(1);
     EXPECT_CALL(*sequencer_, waitForCompletion).Times(1);
@@ -124,8 +119,7 @@ TEST_F(ClientWorkerTest, BasicTest) {
   auto worker = std::make_unique<ClientWorkerImpl>(
       *api_, tls_, cluster_manager_ptr_, benchmark_client_factory_, termination_predicate_factory_,
       sequencer_factory_, request_generator_factory_, store_, worker_number,
-      time_system_.monotonicTime() + 10ms, http_tracer_,
-      ClientWorkerImpl::HardCodedWarmupStyle::ON);
+      time_system_.monotonicTime(), http_tracer_, ClientWorkerImpl::HardCodedWarmupStyle::ON);
 
   worker->start();
   worker->waitForCompletion();

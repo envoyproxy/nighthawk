@@ -554,19 +554,16 @@ def test_https_h1_sni(sni_test_server_fixture):
 
   # Verify failure when we set no host (will get plain http)
   parsed_json, _ = sni_test_server_fixture.runNighthawkClient(
-      [sni_test_server_fixture.getTestServerRootUri(), "--rps", "100", "--duration", "100"],
+      [sni_test_server_fixture.getTestServerRootUri(), "--rps", "20", "--duration", "100"],
       expect_failure=True)
 
   # Verify success when we use plain http and don't request the sni host
-  parsed_json, _ = sni_test_server_fixture.runNighthawkClient(
-      [sni_test_server_fixture.getTestServerRootUri(), "--rps", "100", "--duration", "100"],
-      expect_failure=True)
-
   parsed_json, _ = sni_test_server_fixture.runNighthawkClient([
       sni_test_server_fixture.getTestServerRootUri().replace("https://", "http://"), "--rps", "100",
-      "--duration", "100", "--termination-predicate", "benchmark.http_2xx:2"
+      "--duration", "20", "--termination-predicate", "benchmark.http_2xx:2"
   ],
                                                               expect_failure=False)
+
   counters = sni_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   assertCounterGreaterEqual(counters, "benchmark.http_2xx", 1)
   assertCounterGreaterEqual(counters, "upstream_cx_http1_total", 1)
