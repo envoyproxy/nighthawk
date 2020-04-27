@@ -15,6 +15,10 @@ using HeaderMapPtr = std::shared_ptr<const Envoy::Http::RequestHeaderMap>;
 class Request {
 public:
   virtual ~Request() = default;
+
+  /**
+   * @return HeaderMapPtr shared pointer to a request header specification.
+   */
   virtual HeaderMapPtr header() const PURE;
   // TODO(oschaaf): expectations
 };
