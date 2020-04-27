@@ -74,9 +74,6 @@ public:
       h1_pool->setConnectionReuseStrategy(connection_reuse_strategy_);
       h1_pool->setPrefetchConnections(prefetch_connections_);
       return Envoy::Http::ConnectionPool::InstancePtr{h1_pool};
-    } else if (use_multi_conn_h2_pool_ && protocol == Envoy::Http::Protocol::Http2) {
-      return Envoy::Http::ConnectionPool::InstancePtr{
-          new Http2PoolImpl(dispatcher, host, priority, options, transport_socket_options)};
     }
     return Envoy::Upstream::ProdClusterManagerFactory::allocateConnPool(
         dispatcher, host, priority, protocol, options, transport_socket_options);
@@ -278,6 +275,7 @@ void ProcessImpl::createBootstrapConfiguration(envoy::config::bootstrap::v3::Boo
     cluster->set_name(fmt::format("{}", i));
     cluster->mutable_connect_timeout()->set_seconds(options_.timeout().count());
     cluster->mutable_max_requests_per_connection()->set_value(options_.maxRequestsPerConnection());
+    cluster->mutable_http2_protocol_options()->mutable_max_concurrent_streams()->set_value(2);
 
     auto thresholds = cluster->mutable_circuit_breakers()->add_thresholds();
     // We do not support any retrying.
