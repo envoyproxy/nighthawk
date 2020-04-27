@@ -32,7 +32,7 @@ public:
    * @param dispatcher supplies the owning thread's dispatcher.
    * @param scope stats scope for any stats tracked by the benchmark client.
    * @param cluster_manager Cluster manager preconfigured with our target cluster.
-   * @param http_tracer http tracer
+   * @param http_tracer Shared pointer to an http tracer implementation (e.g. Zipkin).
    * @param cluster_name Name of the cluster that this benchmark client will use. In conjunction
    * with cluster_manager this will allow the this BenchmarkClient to access the target connection
    * pool.
