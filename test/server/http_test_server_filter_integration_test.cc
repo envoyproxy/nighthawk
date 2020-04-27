@@ -14,6 +14,7 @@
 namespace Nighthawk {
 
 using namespace testing;
+constexpr absl::string_view kBadJson = "bad_json";
 
 class HttpTestServerIntegrationTestBase : public Envoy::HttpIntegrationTest,
                                           public TestWithParam<Envoy::Network::Address::IpVersion> {
@@ -258,6 +259,20 @@ TEST_P(HttpTestServerIntegrationNoConfigTest, TestHeaderConfig) {
   EXPECT_EQ("", response->body());
 }
 
+TEST_P(HttpTestServerIntegrationNoConfigTest, BadTestHeaderConfig) {
+  Envoy::BufferingStreamDecoderPtr response = makeSingleRequest(
+      lookupPort("http"), "GET", "/", "", downstream_protocol_, version_, "foo.com", "",
+      [](Envoy::Http::RequestHeaderMapImpl& request_headers) {
+        request_headers.addCopy(Nighthawk::Server::TestServer::HeaderNames::get().TestServerConfig,
+                                kBadJson);
+      });
+  ASSERT_TRUE(response->complete());
+  EXPECT_EQ("500", response->headers().Status()->value().getStringView());
+  EXPECT_EQ("test-server didn't understand the request: Error merging json config: Unable to parse "
+            "JSON as proto (INVALID_ARGUMENT:Unexpected token.\nbad_json\n^): bad_json",
+            response->body());
+}
+
 class HttpTestServerDecoderFilterTest : public Test {};
 
 // Here we test config-level merging as well as its application at the response-header level.
@@ -314,7 +329,7 @@ TEST_F(HttpTestServerDecoderFilterTest, HeaderMerge) {
       header_map, Envoy::Http::TestResponseHeaderMapImpl{
                       {":status", "200"}, {"foo", "bar2"}, {"foo2", "bar3"}}));
 
-  EXPECT_FALSE(f.mergeJsonConfig(R"(bad_json)", options, error_message));
+  EXPECT_FALSE(f.mergeJsonConfig(kBadJson, options, error_message));
   EXPECT_EQ("Error merging json config: Unable to parse JSON as proto (INVALID_ARGUMENT:Unexpected "
             "token.\nbad_json\n^): bad_json",
             error_message);
