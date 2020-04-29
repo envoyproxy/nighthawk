@@ -275,7 +275,10 @@ void ProcessImpl::createBootstrapConfiguration(envoy::config::bootstrap::v3::Boo
     cluster->set_name(fmt::format("{}", i));
     cluster->mutable_connect_timeout()->set_seconds(options_.timeout().count());
     cluster->mutable_max_requests_per_connection()->set_value(options_.maxRequestsPerConnection());
-    cluster->mutable_http2_protocol_options()->mutable_max_concurrent_streams()->set_value(2);
+    // TODO(oschaaf): expose this in configuration to allow (easy access to) using multiple h2
+    // connections. if (options_.connections() > 1) {
+    //  cluster->mutable_http2_protocol_options()->mutable_max_concurrent_streams()->set_value(1);
+    //}
 
     auto thresholds = cluster->mutable_circuit_breakers()->add_thresholds();
     // We do not support any retrying.

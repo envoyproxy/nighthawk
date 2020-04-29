@@ -26,7 +26,11 @@ Http1PoolImpl::newStream(Envoy::Http::ResponseDecoder& response_decoder,
   // In prefetch mode we try to keep the amount of connections at the configured limit.
   if (prefetch_connections_) {
     while (host_->cluster().resourceManager(priority_).connections().canCreate()) {
-      tryCreateNewConnection();
+      // We cannot rely on ::tryCreateConnection here, because that might decline without
+      // updating connections().canCreate() above, which would loop indefinitly.
+      ActiveClientPtr client = instantiateActiveClient();
+      connecting_request_capacity_ += client->effectiveConcurrentRequestLimit();
+      client->moveIntoList(std::move(client), owningList(client->state_));
     }
   }
 
@@ -34,8 +38,7 @@ Http1PoolImpl::newStream(Envoy::Http::ResponseDecoder& response_decoder,
   // of ready_clients_, which will pick the oldest one instead. This makes us cycle through
   // all the available connections.
   if (!ready_clients_.empty() && connection_reuse_strategy_ == ConnectionReuseStrategy::LRU) {
-    ready_clients_.back()->moveBetweenLists(ready_clients_, busy_clients_);
-    attachRequestToClient(*busy_clients_.front(), response_decoder, callbacks);
+    attachRequestToClient(*ready_clients_.back(), response_decoder, callbacks);
     return nullptr;
   }
 
