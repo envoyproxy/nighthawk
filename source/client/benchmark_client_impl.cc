@@ -27,7 +27,7 @@ Http1PoolImpl::newStream(Envoy::Http::ResponseDecoder& response_decoder,
   if (prefetch_connections_) {
     while (host_->cluster().resourceManager(priority_).connections().canCreate()) {
       // We cannot rely on ::tryCreateConnection here, because that might decline without
-      // updating connections().canCreate() above, which would loop indefinitly.
+      // updating connections().canCreate() above. We would risk an infinite loop.
       ActiveClientPtr client = instantiateActiveClient();
       connecting_request_capacity_ += client->effectiveConcurrentRequestLimit();
       client->moveIntoList(std::move(client), owningList(client->state_));

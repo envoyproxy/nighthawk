@@ -265,17 +265,15 @@ def test_https_h2_multiple_connections(https_test_server_fixture):
   """
   Test that the experimental h2 pool uses multiple connections.
   """
-  # TODO(oschaaf): fix h2 & re-enable this with the new behavior based on the
-  # updated connection pools.
-  return
   parsed_json, _ = https_test_server_fixture.runNighthawkClient([
       "--h2",
       https_test_server_fixture.getTestServerRootUri(), "--rps", "100", "--duration", "100",
-      "--termination-predicate", "benchmark.http_2xx:9", "--max-active-requests", "100",
-      "--experimental-h2-use-multiple-connections", "--connections 10"
+      "--termination-predicate", "benchmark.http_2xx:99", "--max-active-requests", "10",
+      "--max-pending-requests", "10", "--experimental-h2-use-multiple-connections",
+      "--burst-size", "10"
   ])
   counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-  assertCounterEqual(counters, "benchmark.http_2xx", 10)
+  assertCounterEqual(counters, "benchmark.http_2xx", 100)
   assertCounterEqual(counters, "upstream_cx_http2_total", 10)
 
 

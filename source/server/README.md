@@ -100,17 +100,20 @@ bazel-bin/nighthawk_test_server  [--disable-extensions <string>]
 [--hot-restart-version]
 [--restart-epoch <uint32_t>]
 [--log-path <string>]
-[--log-format-escaped] [--log-format
-<string>] [--component-log-level
-<string>] [-l <string>]
-[--local-address-ip-version <string>]
-[--admin-address-path <string>]
+[--log-format-prefix-with-location
+<bool>] [--log-format-escaped]
+[--log-format <string>]
+[--component-log-level <string>] [-l
+<string>] [--local-address-ip-version
+<string>] [--admin-address-path
+<string>]
 [--reject-unknown-dynamic-fields]
 [--allow-unknown-static-fields]
-[--allow-unknown-fields] [--config-yaml
-<string>] [-c <string>] [--concurrency
-<uint32_t>] [--base-id <uint32_t>] [--]
-[--version] [-h]
+[--allow-unknown-fields]
+[--bootstrap-version <string>]
+[--config-yaml <string>] [-c <string>]
+[--concurrency <uint32_t>] [--base-id
+<uint32_t>] [--] [--version] [-h]
 
 
 Where:
@@ -167,6 +170,10 @@ hot restart epoch #
 --log-path <string>
 Path to logfile
 
+--log-format-prefix-with-location <bool>
+Prefix all occurrences of '%v' in log format with with '[%g:%#] '
+('[path/to/file.cc:99] ').
+
 --log-format-escaped
 Escape c-style escape sequences in the application logs
 
@@ -200,6 +207,10 @@ allow unknown fields in static configuration
 
 --allow-unknown-fields
 allow unknown fields in static configuration (DEPRECATED)
+
+--bootstrap-version <string>
+API version to parse the bootstrap config as (e.g. 3). If unset, all
+known versions will be attempted
 
 --config-yaml <string>
 Inline YAML configuration, merges with the contents of --config-path

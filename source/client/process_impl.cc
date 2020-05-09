@@ -86,12 +86,10 @@ public:
   void setPrefetchConnections(const bool prefetch_connections) {
     prefetch_connections_ = prefetch_connections;
   }
-  void enableMultiConnectionH2Pool() { use_multi_conn_h2_pool_ = true; }
 
 private:
   Http1PoolImpl::ConnectionReuseStrategy connection_reuse_strategy_{};
   bool prefetch_connections_{};
-  bool use_multi_conn_h2_pool_{};
 };
 
 ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system)
@@ -275,10 +273,9 @@ void ProcessImpl::createBootstrapConfiguration(envoy::config::bootstrap::v3::Boo
     cluster->set_name(fmt::format("{}", i));
     cluster->mutable_connect_timeout()->set_seconds(options_.timeout().count());
     cluster->mutable_max_requests_per_connection()->set_value(options_.maxRequestsPerConnection());
-    // TODO(oschaaf): expose this in configuration to allow (easy access to) using multiple h2
-    // connections. if (options_.connections() > 1) {
-    //  cluster->mutable_http2_protocol_options()->mutable_max_concurrent_streams()->set_value(1);
-    //}
+    if (options_.h2() && options_.h2UseMultipleConnections()) {
+      cluster->mutable_http2_protocol_options()->mutable_max_concurrent_streams()->set_value(1);
+    }
 
     auto thresholds = cluster->mutable_circuit_breakers()->add_thresholds();
     // We do not support any retrying.
@@ -401,9 +398,6 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
           ? Http1PoolImpl::ConnectionReuseStrategy::LRU
           : Http1PoolImpl::ConnectionReuseStrategy::MRU);
   cluster_manager_factory_->setPrefetchConnections(options_.prefetchConnections());
-  if (options_.h2UseMultipleConnections()) {
-    cluster_manager_factory_->enableMultiConnectionH2Pool();
-  }
   envoy::config::bootstrap::v3::Bootstrap bootstrap;
   createBootstrapConfiguration(bootstrap, uris, request_source_uri, number_of_workers);
   if (tracing_uri != nullptr) {
