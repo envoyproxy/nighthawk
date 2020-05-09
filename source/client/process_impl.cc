@@ -384,7 +384,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
   store_root_.initializeThreading(*dispatcher_, tls_);
   runtime_singleton_ = std::make_unique<Envoy::Runtime::ScopedLoaderSingleton>(
       Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl(
-          *dispatcher_, tls_, {}, *local_info_, init_manager_, store_root_, generator_,
+          *dispatcher_, tls_, {}, *local_info_, store_root_, generator_,
           Envoy::ProtobufMessage::getStrictValidationVisitor(), *api_)});
   ssl_context_manager_ =
       std::make_unique<Extensions::TransportSockets::Tls::ContextManagerImpl>(time_system_);
