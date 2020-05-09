@@ -269,8 +269,8 @@ def test_https_h2_multiple_connections(https_test_server_fixture):
       "--h2",
       https_test_server_fixture.getTestServerRootUri(), "--rps", "100", "--duration", "100",
       "--termination-predicate", "benchmark.http_2xx:99", "--max-active-requests", "10",
-      "--max-pending-requests", "10", "--experimental-h2-use-multiple-connections",
-      "--burst-size", "10"
+      "--max-pending-requests", "10", "--experimental-h2-use-multiple-connections", "--burst-size",
+      "10"
   ])
   counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   assertCounterEqual(counters, "benchmark.http_2xx", 100)
