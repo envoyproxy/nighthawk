@@ -264,6 +264,9 @@ def test_https_h2(https_test_server_fixture):
 def test_https_h2_multiple_connections(https_test_server_fixture):
   """
   Test that the experimental h2 pool uses multiple connections.
+  The burst we send ensures we will need 10 connections right away, as we 
+  limit max active streams per connection to 1 by setting the experimental
+  flag to use multiple h2 connections.
   """
   parsed_json, _ = https_test_server_fixture.runNighthawkClient([
       "--h2",
@@ -274,7 +277,9 @@ def test_https_h2_multiple_connections(https_test_server_fixture):
   ])
   counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   assertCounterEqual(counters, "benchmark.http_2xx", 100)
-  assertCounterEqual(counters, "upstream_cx_http2_total", 10)
+  # Empirical observation shows we may end up creating more then 10 connections.
+  # This is stock Envoy h/2 pool behavior.
+  assertCounterGreaterEqual(counters, "upstream_cx_http2_total", 10)
 
 
 def _do_tls_configuration_test(https_test_server_fixture, cli_parameter, use_h2):
