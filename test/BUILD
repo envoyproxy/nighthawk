@@ -55,7 +55,6 @@ envoy_cc_test(
         "//test/mocks/common:mock_termination_predicate_factory",
         "@envoy//source/common/api:api_lib",
         "@envoy//source/common/stats:isolated_store_lib_with_external_headers",
-        "@envoy//test/mocks/init:init_mocks",
         "@envoy//test/mocks/local_info:local_info_mocks",
         "@envoy//test/mocks/protobuf:protobuf_mocks",
         "@envoy//test/mocks/thread_local:thread_local_mocks",
@@ -238,7 +237,6 @@ envoy_cc_test(
     deps = [
         "//source/common:nighthawk_common_lib",
         "@envoy//source/common/stats:isolated_store_lib_with_external_headers",
-        "@envoy//test/mocks/init:init_mocks",
         "@envoy//test/mocks/local_info:local_info_mocks",
         "@envoy//test/mocks/protobuf:protobuf_mocks",
         "@envoy//test/mocks/thread_local:thread_local_mocks",

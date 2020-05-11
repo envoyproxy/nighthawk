@@ -26,7 +26,11 @@ Http1PoolImpl::newStream(Envoy::Http::ResponseDecoder& response_decoder,
   // In prefetch mode we try to keep the amount of connections at the configured limit.
   if (prefetch_connections_) {
     while (host_->cluster().resourceManager(priority_).connections().canCreate()) {
-      createNewConnection();
+      // We cannot rely on ::tryCreateConnection here, because that might decline without
+      // updating connections().canCreate() above. We would risk an infinite loop.
+      ActiveClientPtr client = instantiateActiveClient();
+      connecting_request_capacity_ += client->effectiveConcurrentRequestLimit();
+      client->moveIntoList(std::move(client), owningList(client->state_));
     }
   }
 
@@ -34,59 +38,12 @@ Http1PoolImpl::newStream(Envoy::Http::ResponseDecoder& response_decoder,
   // of ready_clients_, which will pick the oldest one instead. This makes us cycle through
   // all the available connections.
   if (!ready_clients_.empty() && connection_reuse_strategy_ == ConnectionReuseStrategy::LRU) {
-    ready_clients_.back()->moveBetweenLists(ready_clients_, busy_clients_);
-    attachRequestToClient(*busy_clients_.front(), response_decoder, callbacks);
+    attachRequestToClient(*ready_clients_.back(), response_decoder, callbacks);
     return nullptr;
   }
 
   // Vanilla Envoy pool behavior.
   return ConnPoolImpl::newStream(response_decoder, callbacks);
-}
-
-Http2PoolImpl::Http2PoolImpl(
-    Envoy::Event::Dispatcher& dispatcher, Envoy::Upstream::HostConstSharedPtr host,
-    Envoy::Upstream::ResourcePriority priority,
-    const Envoy::Network::ConnectionSocket::OptionsSharedPtr& options,               // NOLINT
-    const Envoy::Network::TransportSocketOptionsSharedPtr& transport_socket_options) // NOLINT
-    : Envoy::Http::Legacy::ConnPoolImplBase(std::move(host), priority), dispatcher_(dispatcher),
-      socket_options_(options), transport_socket_options_(transport_socket_options) {
-  for (uint32_t i = 0; i < host_->cluster().resourceManager(priority_).connections().max(); i++) {
-    pools_.push_back(std::make_unique<Envoy::Http::Http2::ProdConnPoolImpl>(
-        dispatcher_, host_, priority_, socket_options_, transport_socket_options_));
-  }
-}
-
-void Http2PoolImpl::addDrainedCallback(Envoy::Http::ConnectionPool::Instance::DrainedCb cb) {
-  for (auto& pool : pools_) {
-    pool->addDrainedCallback(cb);
-  }
-}
-
-void Http2PoolImpl::drainConnections() {
-  for (auto& pool : pools_) {
-    pool->drainConnections();
-  }
-}
-
-bool Http2PoolImpl::hasActiveConnections() const {
-  for (auto& pool : pools_) {
-    if (pool->hasActiveConnections()) {
-      return true;
-    }
-  }
-  return false;
-}
-
-Envoy::Http::ConnectionPool::Cancellable*
-Http2PoolImpl::newStream(Envoy::Http::ResponseDecoder& response_decoder,
-                         Envoy::Http::ConnectionPool::Callbacks& callbacks) {
-  // Use the simplest but probably naive approach of rotating over the available pool instances
-  // / connections to distribute requests accross them.
-  return pools_[pool_round_robin_index_++ % pools_.size()]->newStream(response_decoder, callbacks);
-};
-
-void Http2PoolImpl::checkForDrained() {
-  // TODO(oschaaf): this one is protected, can't forward it.
 }
 
 BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
@@ -200,8 +157,11 @@ void BenchmarkClientHttpImpl::onPoolFailure(Envoy::Http::ConnectionPool::PoolFai
   case Envoy::Http::ConnectionPool::PoolFailureReason::Overflow:
     benchmark_client_stats_.pool_overflow_.inc();
     break;
-  case Envoy::Http::ConnectionPool::PoolFailureReason::ConnectionFailure:
+  case Envoy::Http::ConnectionPool::PoolFailureReason::LocalConnectionFailure:
+  case Envoy::Http::ConnectionPool::PoolFailureReason::RemoteConnectionFailure:
     benchmark_client_stats_.pool_connection_failure_.inc();
+    break;
+  case Envoy::Http::ConnectionPool::PoolFailureReason::Timeout:
     break;
   default:
     NOT_REACHED_GCOVR_EXCL_LINE;

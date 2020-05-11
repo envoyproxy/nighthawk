@@ -223,10 +223,12 @@ TEST_F(BenchmarkClientHttpTest, StatusTrackingInOnComplete) {
 
 TEST_F(BenchmarkClientHttpTest, PoolFailures) {
   setupBenchmarkClient();
-  client_->onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason::ConnectionFailure);
+  client_->onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason::LocalConnectionFailure);
+  client_->onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason::RemoteConnectionFailure);
   client_->onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason::Overflow);
+  client_->onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason::Timeout);
   EXPECT_EQ(1, getCounter("pool_overflow"));
-  EXPECT_EQ(1, getCounter("pool_connection_failure"));
+  EXPECT_EQ(2, getCounter("pool_connection_failure"));
 }
 
 TEST_F(BenchmarkClientHttpTest, RequestMethodPost) {

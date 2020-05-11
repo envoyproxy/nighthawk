@@ -5,7 +5,6 @@
 
 #include "external/envoy/source/common/runtime/runtime_impl.h"
 #include "external/envoy/source/common/stats/isolated_store_impl.h"
-#include "external/envoy/test/mocks/init/mocks.h"
 #include "external/envoy/test/mocks/local_info/mocks.h"
 #include "external/envoy/test/mocks/protobuf/mocks.h"
 #include "external/envoy/test/mocks/thread_local/mocks.h"
@@ -36,9 +35,9 @@ class ClientWorkerTest : public Test {
 public:
   ClientWorkerTest()
       : api_(Envoy::Api::createApiForTest()), thread_id_(std::this_thread::get_id()) {
-    loader_ = std::make_unique<Envoy::Runtime::ScopedLoaderSingleton>(Envoy::Runtime::LoaderPtr{
-        new Envoy::Runtime::LoaderImpl(dispatcher_, tls_, {}, local_info_, init_manager_, store_,
-                                       rand_, validation_visitor_, *api_)});
+    loader_ = std::make_unique<Envoy::Runtime::ScopedLoaderSingleton>(
+        Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl(
+            dispatcher_, tls_, {}, local_info_, store_, rand_, validation_visitor_, *api_)});
     benchmark_client_ = new MockBenchmarkClient();
     sequencer_ = new MockSequencer();
     request_generator_ = new MockRequestSource();
@@ -95,7 +94,6 @@ public:
   NiceMock<Envoy::Event::MockDispatcher> dispatcher_;
   std::unique_ptr<Envoy::Runtime::ScopedLoaderSingleton> loader_;
   NiceMock<Envoy::LocalInfo::MockLocalInfo> local_info_;
-  Envoy::Init::MockManager init_manager_;
   NiceMock<Envoy::ProtobufMessage::MockValidationVisitor> validation_visitor_;
   Envoy::Upstream::ClusterManagerPtr cluster_manager_ptr_;
   Envoy::Tracing::HttpTracerSharedPtr http_tracer_;
