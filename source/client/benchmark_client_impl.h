@@ -15,7 +15,7 @@
 #include "nighthawk/common/statistic.h"
 
 #include "external/envoy/source/common/common/logger.h"
-#include "external/envoy/source/common/http/http1/conn_pool_legacy.h"
+#include "external/envoy/source/common/http/http1/conn_pool.h"
 #include "external/envoy/source/common/http/http2/conn_pool.h"
 #include "external/envoy/source/common/runtime/runtime_impl.h"
 
@@ -45,13 +45,13 @@ struct BenchmarkClientStats {
   ALL_BENCHMARK_CLIENT_STATS(GENERATE_COUNTER_STRUCT)
 };
 
-class Http1PoolImpl : public Envoy::Http::Legacy::Http1::ProdConnPoolImpl {
+class Http1PoolImpl : public Envoy::Http::Http1::ProdConnPoolImpl {
 public:
   enum class ConnectionReuseStrategy {
     MRU,
     LRU,
   };
-  using Envoy::Http::Legacy::Http1::ProdConnPoolImpl::ProdConnPoolImpl;
+  using Envoy::Http::Http1::ProdConnPoolImpl::ProdConnPoolImpl;
   Envoy::Http::ConnectionPool::Cancellable*
   newStream(Envoy::Http::ResponseDecoder& response_decoder,
             Envoy::Http::ConnectionPool::Callbacks& callbacks) override;
@@ -65,49 +65,6 @@ public:
 private:
   ConnectionReuseStrategy connection_reuse_strategy_{};
   bool prefetch_connections_{};
-};
-
-// Vanilla Envoy's HTTP/2 pool is single connection only (or actually sometimes dual in connection
-// drainage scenarios). Http2PoolImpl is an experimental pool, which uses multiple vanilla Envoy
-// HTTP/2 pools under the hood. Using multiple connections is useful when testing backends that need
-// multiple connections to distribute load internally. Combining multiple connections with
-// --max-requests-per-connection may help as well, as doing periodically initiating new connections
-// may help the benchmark target by giving it an opportunity to rebalance.
-class Http2PoolImpl : public Envoy::Http::ConnectionPool::Instance,
-                      public Envoy::Http::Legacy::ConnPoolImplBase {
-public:
-  // For doc comments, see  Envoy::Http::ConnectionPool::Instance & Envoy::Http::ConnPoolImplBase
-  Http2PoolImpl(
-      Envoy::Event::Dispatcher& dispatcher, Envoy::Upstream::HostConstSharedPtr host,
-      Envoy::Upstream::ResourcePriority priority,
-      const Envoy::Network::ConnectionSocket::OptionsSharedPtr& options,                // NOLINT
-      const Envoy::Network::TransportSocketOptionsSharedPtr& transport_socket_options); // NOLINT
-
-  // Envoy::Http::ConnectionPool::Instance
-  Envoy::Http::Protocol protocol() const override { return Envoy::Http::Protocol::Http2; }
-
-  void addDrainedCallback(Envoy::Http::ConnectionPool::Instance::DrainedCb cb) override;
-
-  void drainConnections() override;
-
-  bool hasActiveConnections() const override;
-
-  Envoy::Upstream::HostDescriptionConstSharedPtr host() const override { return host_; };
-
-  Envoy::Http::ConnectionPool::Cancellable*
-  newStream(Envoy::Http::ResponseDecoder& response_decoder,
-            Envoy::Http::ConnectionPool::Callbacks& callbacks) override;
-
-protected:
-  // Envoy::Http::ConnPoolImplBase
-  void checkForDrained() override;
-
-private:
-  Envoy::Event::Dispatcher& dispatcher_;
-  const Envoy::Network::ConnectionSocket::OptionsSharedPtr socket_options_;
-  const Envoy::Network::TransportSocketOptionsSharedPtr transport_socket_options_;
-  std::vector<std::unique_ptr<Envoy::Http::Http2::ProdConnPoolImpl>> pools_;
-  uint64_t pool_round_robin_index_{0};
 };
 
 class BenchmarkClientHttpImpl : public BenchmarkClient,
