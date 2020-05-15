@@ -36,7 +36,7 @@ function do_coverage() {
     # Reduce the amount of memory Bazel tries to use to prevent it from launching too many subprocesses.
     # This should prevent the system from running out of memory and killing tasks. See discussion on
     # https://github.com/envoyproxy/envoy/pull/5611.
-    [ -z "$CIRCLECI" ] || export BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} --local_ram_resources=10000"
+    [ -z "$CIRCLECI" ] || export BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} --local_ram_resources=12288"
 
     export TEST_TARGETS="//test/..."
     test/run_nighthawk_bazel_coverage.sh ${TEST_TARGETS}
@@ -122,7 +122,7 @@ if [ -n "$CIRCLECI" ]; then
     fi
     # We constrain parallelism in CI to avoid running out of memory.	
     NUM_CPUS=8
-    if [ "$1" == "asan" ]; then
+    if [[ "$1" == "asan" || "$1" == "coverage" ]]; then
         NUM_CPUS=5
     fi
 fi
