@@ -4,7 +4,7 @@ stat_id (3 samples)
   min: 0s 001ms 000us | mean: 0s 002ms 000us | max: 0s 003ms 000us | pstdev: 0s 000ms 816us
 
 foo_size (4 samples)
-  min: 14 | mean: 15.5 | max: 17 | pstdev: 1.11803
+  min: 14 | mean: 15.5 | max: 17 | pstdev: 1.118033988749895
 
   Percentile  Count       Value          
   0.5         2           15             

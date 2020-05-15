@@ -10,7 +10,7 @@ worker_0..min: 0
 worker_0..max: 0
 worker_0.foo_size.samples: 4
 worker_0.foo_size.mean: 15.5
-worker_0.foo_size.pstdev: 1.11803
+worker_0.foo_size.pstdev: 1.118033988749895
 worker_0.foo_size.min: 14
 worker_0.foo_size.max: 17
 worker_0.foo_size.permilles-0.count: 1
@@ -48,7 +48,7 @@ worker_1..min: 0
 worker_1..max: 0
 worker_1.foo_size.samples: 4
 worker_1.foo_size.mean: 15.5
-worker_1.foo_size.pstdev: 1.11803
+worker_1.foo_size.pstdev: 1.118033988749895
 worker_1.foo_size.min: 14
 worker_1.foo_size.max: 17
 worker_1.foo_size.permilles-0.count: 1
@@ -86,7 +86,7 @@ global..min: 0
 global..max: 0
 global.foo_size.samples: 4
 global.foo_size.mean: 15.5
-global.foo_size.pstdev: 1.11803
+global.foo_size.pstdev: 1.118033988749895
 global.foo_size.min: 14
 global.foo_size.max: 17
 global.foo_size.permilles-0.count: 1
