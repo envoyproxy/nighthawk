@@ -6,9 +6,12 @@ export BUILDIFIER_BIN="/usr/local/bin/buildifier"
 export BUILDOZER_BIN="/usr/local/bin/buildozer"
 
 function do_build () {
-    bazel build $BAZEL_BUILD_OPTIONS --verbose_failures=true //:nighthawk_client //:nighthawk_test_server \
-        //:nighthawk_service
+    bazel build $BAZEL_BUILD_OPTIONS --verbose_failures=true //:nighthawk
     tools/update_cli_readme_documentation.sh --mode check
+}
+
+function do_opt_build () {
+    bazel build $BAZEL_BUILD_OPTIONS -c opt --verbose_failures=true //:nighthawk
 }
 
 function do_test() {
@@ -70,13 +73,20 @@ function do_asan() {
     echo "bazel ASAN/UBSAN debug build with tests"
     echo "Building and testing envoy tests..."
     cd "${SRCDIR}"
-    run_bazel test ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-asan //test/...
+
+    # We build this in steps to avoid running out of memory in CI
+    run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-asan -- //source/exe/... && \
+    run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-asan -- //source/server/... && \
+    run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-asan -- //test/mocks/... && \
+    run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-asan -- //test/... && \
+    run_bazel test ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-asan -- //test/...
 }
 
 function do_tsan() {
     echo "bazel TSAN debug build with tests"
     echo "Building and testing envoy tests..."
     cd "${SRCDIR}"
+    [ -z "$CIRCLECI" ] || export BAZEL_BUILD_OPTIONS="${BAZEL_TEST_OPTIONS} --local_ram_resources=12288"
     run_bazel test ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-tsan //test/...
 }
 
@@ -85,6 +95,15 @@ function do_check_format() {
     cd "${SRCDIR}"
     ./tools/check_format.sh check
     ./tools/format_python_tools.sh check
+}
+
+function do_docker() {
+    echo "docker..."
+    cd "${SRCDIR}"
+    # Note that we implicly test the opt build in CI here
+    do_opt_build
+    ./ci/docker/docker_build.sh
+    ./ci/docker/docker_push.sh
 }
 
 function do_fix_format() {
@@ -103,6 +122,9 @@ if [ -n "$CIRCLECI" ]; then
     fi
     # We constrain parallelism in CI to avoid running out of memory.	
     NUM_CPUS=8
+    if [ "$1" == "asan" ]; then
+        NUM_CPUS=5
+    fi
 fi
 
 if grep 'docker\|lxc' /proc/1/cgroup; then
@@ -172,6 +194,10 @@ case "$1" in
         do_tsan
         exit 0
     ;;
+    docker)
+        do_docker
+        exit 0
+    ;;
     check_format)
         do_check_format
         exit 0
@@ -181,7 +207,7 @@ case "$1" in
         exit 0
     ;;
     *)
-        echo "must be one of [build,test,clang_tidy,test_with_valgrind,coverage,asan,tsan]"
+        echo "must be one of [build,test,clang_tidy,test_with_valgrind,coverage,asan,tsan,docker,check_format,fix_format]"
         exit 1
     ;;
 esac

@@ -6,9 +6,12 @@
 
 #include "envoy/common/pure.h"
 
+#include "nighthawk/common/operation_callback.h"
 #include "nighthawk/common/statistic.h"
 
 namespace Nighthawk {
+
+using SequencerTarget = std::function<bool(OperationCallback)>;
 
 /**
  * Abstract Sequencer interface.
@@ -26,6 +29,11 @@ public:
    * Wait until the sequencer has finished.
    */
   virtual void waitForCompletion() PURE;
+
+  /**
+   * @return std::chrono::nanoseconds actual sequencer execution duration.
+   */
+  virtual std::chrono::nanoseconds executionDuration() const PURE;
 
   /**
    * @return double an up-to-date completions per second rate.

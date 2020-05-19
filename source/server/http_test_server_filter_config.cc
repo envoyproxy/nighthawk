@@ -2,7 +2,6 @@
 
 #include "envoy/registry/registry.h"
 
-#include "external/envoy/source/common/config/json_utility.h"
 #include "external/envoy/source/common/protobuf/message_validator_impl.h"
 
 #include "api/server/response_options.pb.h"
@@ -18,12 +17,6 @@ class HttpTestServerDecoderFilterConfig
     : public Envoy::Server::Configuration::NamedHttpFilterConfigFactory {
 public:
   Envoy::Http::FilterFactoryCb
-  createFilterFactory(const Envoy::Json::Object&, const std::string&,
-                      Envoy::Server::Configuration::FactoryContext&) override {
-    NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
-  }
-
-  Envoy::Http::FilterFactoryCb
   createFilterFactoryFromProto(const Envoy::Protobuf::Message& proto_config, const std::string&,
                                Envoy::Server::Configuration::FactoryContext& context) override {
 
@@ -38,7 +31,7 @@ public:
     return Envoy::ProtobufTypes::MessagePtr{new nighthawk::server::ResponseOptions()};
   }
 
-  std::string name() override { return "test-server"; }
+  std::string name() const override { return "test-server"; }
 
 private:
   Envoy::Http::FilterFactoryCb createFilter(const nighthawk::server::ResponseOptions& proto_config,

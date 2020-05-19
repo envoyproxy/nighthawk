@@ -41,7 +41,7 @@ bool HttpTestServerDecoderFilter::mergeJsonConfig(absl::string_view json,
 }
 
 void HttpTestServerDecoderFilter::applyConfigToResponseHeaders(
-    Envoy::Http::HeaderMap& response_headers,
+    Envoy::Http::ResponseHeaderMap& response_headers,
     nighthawk::server::ResponseOptions& response_options) {
   for (const auto& header_value_option : response_options.response_headers()) {
     const auto& header = header_value_option.header();
@@ -53,37 +53,47 @@ void HttpTestServerDecoderFilter::applyConfigToResponseHeaders(
   }
 }
 
-Envoy::Http::FilterHeadersStatus
-HttpTestServerDecoderFilter::decodeHeaders(Envoy::Http::HeaderMap& headers, bool) {
-  const auto* request_config_header = headers.get(TestServer::HeaderNames::get().TestServerConfig);
-  nighthawk::server::ResponseOptions base_config = config_->server_config();
-  absl::optional<std::string> error_message;
-
-  // TODO(oschaaf): Add functionality to clear fields
-  if (!request_config_header ||
-      mergeJsonConfig(request_config_header->value().getStringView(), base_config, error_message)) {
+void HttpTestServerDecoderFilter::sendReply() {
+  if (error_message_ == absl::nullopt) {
     decoder_callbacks_->sendLocalReply(
-        static_cast<Envoy::Http::Code>(200), std::string(base_config.response_body_size(), 'a'),
-        [this, &base_config](Envoy::Http::HeaderMap& direct_response_headers) {
-          applyConfigToResponseHeaders(direct_response_headers, base_config);
+        static_cast<Envoy::Http::Code>(200), std::string(base_config_.response_body_size(), 'a'),
+        [this](Envoy::Http::ResponseHeaderMap& direct_response_headers) {
+          applyConfigToResponseHeaders(direct_response_headers, base_config_);
         },
         absl::nullopt, "");
   } else {
     decoder_callbacks_->sendLocalReply(
         static_cast<Envoy::Http::Code>(500),
-        fmt::format("test-server didn't understand the request: {}", *error_message), nullptr,
+        fmt::format("test-server didn't understand the request: {}", *error_message_), nullptr,
         absl::nullopt, "");
+  }
+}
+
+Envoy::Http::FilterHeadersStatus
+HttpTestServerDecoderFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& headers,
+                                           bool end_stream) {
+  // TODO(oschaaf): Add functionality to clear fields
+  base_config_ = config_->server_config();
+  const auto* request_config_header = headers.get(TestServer::HeaderNames::get().TestServerConfig);
+  if (request_config_header) {
+    mergeJsonConfig(request_config_header->value().getStringView(), base_config_, error_message_);
+  }
+  if (end_stream) {
+    sendReply();
   }
   return Envoy::Http::FilterHeadersStatus::StopIteration;
 }
 
 Envoy::Http::FilterDataStatus HttpTestServerDecoderFilter::decodeData(Envoy::Buffer::Instance&,
-                                                                      bool) {
-  return Envoy::Http::FilterDataStatus::Continue;
+                                                                      bool end_stream) {
+  if (end_stream) {
+    sendReply();
+  }
+  return Envoy::Http::FilterDataStatus::StopIterationNoBuffer;
 }
 
 Envoy::Http::FilterTrailersStatus
-HttpTestServerDecoderFilter::decodeTrailers(Envoy::Http::HeaderMap&) {
+HttpTestServerDecoderFilter::decodeTrailers(Envoy::Http::RequestTrailerMap&) {
   return Envoy::Http::FilterTrailersStatus::Continue;
 }
 

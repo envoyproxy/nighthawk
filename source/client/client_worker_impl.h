@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "envoy/api/api.h"
 #include "envoy/event/dispatcher.h"
 #include "envoy/stats/store.h"
@@ -9,7 +11,9 @@
 #include "nighthawk/client/benchmark_client.h"
 #include "nighthawk/client/client_worker.h"
 #include "nighthawk/client/factories.h"
-#include "nighthawk/common/header_source.h"
+#include "nighthawk/common/factories.h"
+#include "nighthawk/common/phase.h"
+#include "nighthawk/common/request_source.h"
 #include "nighthawk/common/sequencer.h"
 #include "nighthawk/common/termination_predicate.h"
 
@@ -20,19 +24,26 @@ namespace Client {
 
 class ClientWorkerImpl : public WorkerImpl, virtual public ClientWorker {
 public:
+  enum class HardCodedWarmupStyle { OFF, ON };
+
   ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Instance& tls,
                    Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                    const BenchmarkClientFactory& benchmark_client_factory,
                    const TerminationPredicateFactory& termination_predicate_factory,
                    const SequencerFactory& sequencer_factory,
-                   const HeaderSourceFactory& header_generator_factory, Envoy::Stats::Store& store,
-                   const int worker_number, const Envoy::MonotonicTime starting_time,
-                   Envoy::Tracing::HttpTracerPtr& http_tracer, bool prefetch_connections);
+                   const RequestSourceFactory& request_generator_factory,
+                   Envoy::Stats::Store& store, const int worker_number,
+                   const Envoy::MonotonicTime starting_time,
+                   Envoy::Tracing::HttpTracerSharedPtr& http_tracer,
+                   const HardCodedWarmupStyle hardcoded_warmup_style);
   StatisticPtrMap statistics() const override;
 
-  const std::map<std::string, uint64_t>& thread_local_counter_values() override {
-    return thread_local_counter_values_;
+  const std::map<std::string, uint64_t>& threadLocalCounterValues() override {
+    return threadLocalCounterValues_;
   }
+
+  const Phase& phase() const override { return *phase_; }
+
   void shutdownThread() override;
 
 protected:
@@ -40,18 +51,20 @@ protected:
 
 private:
   void simpleWarmup();
+
+  std::unique_ptr<Envoy::TimeSource> time_source_;
+  const TerminationPredicateFactory& termination_predicate_factory_;
+  const SequencerFactory& sequencer_factory_;
   Envoy::Stats::ScopePtr worker_scope_;
   Envoy::Stats::ScopePtr worker_number_scope_;
   const int worker_number_;
-  const Envoy::MonotonicTime starting_time_;
-  Envoy::Tracing::HttpTracerPtr& http_tracer_;
-  HeaderSourcePtr header_generator_;
+  Envoy::Tracing::HttpTracerSharedPtr& http_tracer_;
+  RequestSourcePtr request_generator_;
   BenchmarkClientPtr benchmark_client_;
-  TerminationPredicatePtr termination_predicate_;
-  const SequencerPtr sequencer_;
+  PhasePtr phase_;
   Envoy::LocalInfo::LocalInfoPtr local_info_;
-  const bool prefetch_connections_;
-  std::map<std::string, uint64_t> thread_local_counter_values_;
+  std::map<std::string, uint64_t> threadLocalCounterValues_;
+  const HardCodedWarmupStyle hardcoded_warmup_style_;
 };
 
 using ClientWorkerImplPtr = std::unique_ptr<ClientWorkerImpl>;

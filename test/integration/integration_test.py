@@ -7,6 +7,8 @@ import os
 import sys
 import pytest
 
+from utility import isSanitizerRun
+
 if __name__ == '__main__':
   path = os.path.dirname(os.path.realpath(__file__))
   test_selection_arg = sys.argv[1] if len(sys.argv) > 1 else ""
@@ -22,7 +24,7 @@ if __name__ == '__main__':
           "-x",
           path,
           "-n",
-          "20"  # Number of tests to run in parallel
+          "4" if isSanitizerRun() else "20"  # Number of tests to run in parallel
       ],
       plugins=["xdist"])
   exit(r)

@@ -22,10 +22,14 @@ Utility::mapCountersFromStore(const Envoy::Stats::Store& store,
       std::string stat_name = stat->name();
       // Strip off cluster.[x]. & worker.[x]. prefixes.
       std::vector<std::string> v = absl::StrSplit(stat_name, '.');
-      if ((v[0] == "cluster" || v[0] == "worker") && v.size() > 1) {
-        v.erase(v.begin(), v.begin() + 2);
-        stat_name = absl::StrJoin(v, ".");
+      if (v[0] == "cluster" || v[0] == "worker") {
+        v.erase(v.begin());
       }
+      int tmp;
+      if (absl::SimpleAtoi(v[0], &tmp)) {
+        v.erase(v.begin());
+      }
+      stat_name = absl::StrJoin(v, ".");
       results[stat_name] += stat->value();
     }
   }
@@ -70,6 +74,12 @@ void Utility::parseCommand(TCLAP::CmdLine& cmd, const int argc, const char* cons
     // --version.
     throw Client::NoServingException();
   }
+}
+
+bool Utility::parseHostPort(const std::string& host_port, std::string* address, int* port) {
+  return RE2::FullMatch(host_port, R"((\d+\.\d+\.\d+\.\d+):(\d+))", address, port) ||
+         RE2::FullMatch(host_port, R"((\[[.:0-9a-fA-F]+\]):(\d+))", address, port) ||
+         RE2::FullMatch(host_port, R"(([-.0-9a-zA-Z]+):(\d+))", address, port);
 }
 
 } // namespace Nighthawk

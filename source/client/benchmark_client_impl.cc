@@ -9,7 +9,6 @@
 #include "external/envoy/source/common/http/headers.h"
 #include "external/envoy/source/common/http/utility.h"
 #include "external/envoy/source/common/network/utility.h"
-#include "external/envoy/source/common/runtime/uuid_util.h"
 
 #include "client/stream_decoder.h"
 
@@ -21,35 +20,52 @@ using namespace std::chrono_literals;
 namespace Nighthawk {
 namespace Client {
 
-void Http1PoolImpl::createConnections(const uint32_t connection_limit) {
-  ENVOY_LOG(error, "Prefetching {} connections.", connection_limit);
-  for (uint32_t i = 0; i < connection_limit; i++) {
-    createNewConnection();
+Envoy::Http::ConnectionPool::Cancellable*
+Http1PoolImpl::newStream(Envoy::Http::ResponseDecoder& response_decoder,
+                         Envoy::Http::ConnectionPool::Callbacks& callbacks) {
+  // In prefetch mode we try to keep the amount of connections at the configured limit.
+  if (prefetch_connections_) {
+    while (host_->cluster().resourceManager(priority_).connections().canCreate()) {
+      // We cannot rely on ::tryCreateConnection here, because that might decline without
+      // updating connections().canCreate() above. We would risk an infinite loop.
+      ActiveClientPtr client = instantiateActiveClient();
+      connecting_request_capacity_ += client->effectiveConcurrentRequestLimit();
+      client->moveIntoList(std::move(client), owningList(client->state_));
+    }
   }
+
+  // By default, Envoy re-uses the most recent free connection. Here we pop from the back
+  // of ready_clients_, which will pick the oldest one instead. This makes us cycle through
+  // all the available connections.
+  if (!ready_clients_.empty() && connection_reuse_strategy_ == ConnectionReuseStrategy::LRU) {
+    attachRequestToClient(*ready_clients_.back(), response_decoder, callbacks);
+    return nullptr;
+  }
+
+  // Vanilla Envoy pool behavior.
+  return ConnPoolImpl::newStream(response_decoder, callbacks);
 }
 
 BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
     Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
-    StatisticPtr&& connect_statistic, StatisticPtr&& response_statistic, bool use_h2,
-    Envoy::Upstream::ClusterManagerPtr& cluster_manager, Envoy::Tracing::HttpTracerPtr& http_tracer,
-    absl::string_view cluster_name, HeaderGenerator header_generator)
+    StatisticPtr&& connect_statistic, StatisticPtr&& response_statistic,
+    StatisticPtr&& response_header_size_statistic, StatisticPtr&& response_body_size_statistic,
+    bool use_h2, Envoy::Upstream::ClusterManagerPtr& cluster_manager,
+    Envoy::Tracing::HttpTracerSharedPtr& http_tracer, absl::string_view cluster_name,
+    RequestGenerator request_generator, const bool provide_resource_backpressure)
     : api_(api), dispatcher_(dispatcher), scope_(scope.createScope("benchmark.")),
       connect_statistic_(std::move(connect_statistic)),
-      response_statistic_(std::move(response_statistic)), use_h2_(use_h2),
+      response_statistic_(std::move(response_statistic)),
+      response_header_size_statistic_(std::move(response_header_size_statistic)),
+      response_body_size_statistic_(std::move(response_body_size_statistic)), use_h2_(use_h2),
       benchmark_client_stats_({ALL_BENCHMARK_CLIENT_STATS(POOL_COUNTER(*scope_))}),
       cluster_manager_(cluster_manager), http_tracer_(http_tracer),
-      cluster_name_(std::string(cluster_name)), header_generator_(std::move(header_generator)) {
+      cluster_name_(std::string(cluster_name)), request_generator_(std::move(request_generator)),
+      provide_resource_backpressure_(provide_resource_backpressure) {
   connect_statistic_->setId("benchmark_http_client.queue_to_connect");
   response_statistic_->setId("benchmark_http_client.request_to_response");
-}
-
-void BenchmarkClientHttpImpl::prefetchPoolConnections() {
-  auto* prefetchable_pool = dynamic_cast<Http1PoolImpl*>(pool());
-  if (prefetchable_pool == nullptr) {
-    ENVOY_LOG(error, "prefetchPoolConnections() pool not prefetchable");
-    return;
-  }
-  prefetchable_pool->createConnections(connection_limit_);
+  response_header_size_statistic_->setId("benchmark_http_client.response_header_size");
+  response_body_size_statistic_->setId("benchmark_http_client.response_body_size");
 }
 
 void BenchmarkClientHttpImpl::terminate() {
@@ -64,50 +80,55 @@ StatisticPtrMap BenchmarkClientHttpImpl::statistics() const {
   StatisticPtrMap statistics;
   statistics[connect_statistic_->id()] = connect_statistic_.get();
   statistics[response_statistic_->id()] = response_statistic_.get();
+  statistics[response_header_size_statistic_->id()] = response_header_size_statistic_.get();
+  statistics[response_body_size_statistic_->id()] = response_body_size_statistic_.get();
   return statistics;
 };
 
 bool BenchmarkClientHttpImpl::tryStartRequest(CompletionCallback caller_completion_callback) {
-  // When we allow client-side queuing, we want to have a sense of time spend waiting on that queue.
-  // So we return false here to indicate we couldn't initiate a new request.
   auto* pool_ptr = pool();
-  auto cluster_info = cluster();
-  if (pool_ptr == nullptr || cluster_info == nullptr ||
-      !cluster_info->resourceManager(Envoy::Upstream::ResourcePriority::Default)
-           .pendingRequests()
-           .canCreate()) {
+  if (pool_ptr == nullptr) {
     return false;
   }
-  // When no client side queueing is disabled (max_pending equals 1) we control the pacing as
-  // exactly as possible here.
-  // NOTE: We can't consistently rely on resourceManager()::requests()
-  // because that isn't used for h/1 (it is used in tcp and h2 though).
-  if ((max_pending_requests_ == 1 &&
-       (requests_initiated_ - requests_completed_) >= connection_limit_)) {
+  if (provide_resource_backpressure_) {
+    const uint64_t max_in_flight =
+        max_pending_requests_ + (use_h2_ ? max_active_requests_ : connection_limit_);
+
+    if (requests_initiated_ - requests_completed_ >= max_in_flight) {
+      // When we allow client-side queueing, we want to have a sense of time spend waiting on that
+      // queue. So we return false here to indicate we couldn't initiate a new request.
+      return false;
+    }
+  }
+  auto request = request_generator_();
+  // The header generator may not have something for us to send. We'll try next time.
+  // TODO(oschaaf): track occurrences of this via a counter & consider setting up a default failure
+  // condition for when this happens.
+  if (request == nullptr) {
     return false;
   }
-  auto header = header_generator_();
-  auto* content_length_header = header->ContentLength();
+  auto* content_length_header = request->header()->ContentLength();
   uint64_t content_length = 0;
   if (content_length_header != nullptr) {
-    auto s_content_length = header->ContentLength()->value().getStringView();
+    auto s_content_length = content_length_header->value().getStringView();
     if (!absl::SimpleAtoi(s_content_length, &content_length)) {
       ENVOY_LOG(error, "Ignoring bad content length of {}", s_content_length);
       content_length = 0;
     }
   }
 
-  std::string x_request_id = generator_.uuid();
   auto stream_decoder = new StreamDecoder(
       dispatcher_, api_.timeSource(), *this, std::move(caller_completion_callback),
-      *connect_statistic_, *response_statistic_, std::move(header), measureLatencies(),
-      content_length, x_request_id, http_tracer_);
+      *connect_statistic_, *response_statistic_, *response_header_size_statistic_,
+      *response_body_size_statistic_, request->header(), shouldMeasureLatencies(), content_length,
+      generator_, http_tracer_);
   requests_initiated_++;
   pool_ptr->newStream(*stream_decoder, *stream_decoder);
   return true;
 }
 
-void BenchmarkClientHttpImpl::onComplete(bool success, const Envoy::Http::HeaderMap& headers) {
+void BenchmarkClientHttpImpl::onComplete(bool success,
+                                         const Envoy::Http::ResponseHeaderMap& headers) {
   requests_completed_++;
   if (!success) {
     benchmark_client_stats_.stream_resets_.inc();
@@ -136,8 +157,11 @@ void BenchmarkClientHttpImpl::onPoolFailure(Envoy::Http::ConnectionPool::PoolFai
   case Envoy::Http::ConnectionPool::PoolFailureReason::Overflow:
     benchmark_client_stats_.pool_overflow_.inc();
     break;
-  case Envoy::Http::ConnectionPool::PoolFailureReason::ConnectionFailure:
+  case Envoy::Http::ConnectionPool::PoolFailureReason::LocalConnectionFailure:
+  case Envoy::Http::ConnectionPool::PoolFailureReason::RemoteConnectionFailure:
     benchmark_client_stats_.pool_connection_failure_.inc();
+    break;
+  case Envoy::Http::ConnectionPool::PoolFailureReason::Timeout:
     break;
   default:
     NOT_REACHED_GCOVR_EXCL_LINE;

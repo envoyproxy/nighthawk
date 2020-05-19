@@ -30,6 +30,9 @@ TEST_F(ClientTest, NormalRun) {
 }
 
 TEST_F(ClientTest, AutoConcurrencyRun) {
+  // See the comment in TestUtility::createOptionsImpl()
+  TCLAP::OptionalUnlabeledTracker::alreadyOptional() = false;
+
   std::vector<const char*> argv;
   argv.push_back("foo");
   argv.push_back("--concurrency");
@@ -40,6 +43,7 @@ TEST_F(ClientTest, AutoConcurrencyRun) {
   argv.push_back("1");
   argv.push_back("--verbosity");
   argv.push_back("error");
+  argv.push_back("--simple-warmup");
   argv.push_back("http://localhost:63657/");
   Main program(argv.size(), argv.data());
   EXPECT_FALSE(program.run());
@@ -51,6 +55,9 @@ TEST_F(ClientTest, AutoConcurrencyRun) {
 // counted as code-coverage. Ideally, the code hit during the python test runs would count for
 // coverage, and we use unit-tests here to hit any edge cases we can't easily hit otherwise.
 TEST_F(ClientTest, TracingRun) {
+  // See the comment in TestUtility::createOptionsImpl()
+  TCLAP::OptionalUnlabeledTracker::alreadyOptional() = false;
+
   std::vector<const char*> argv;
   argv.push_back("foo");
   argv.push_back("--duration");

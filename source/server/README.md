@@ -84,8 +84,8 @@ admin:
 ```
 USAGE:
 
-bazel-bin/nighthawk_test_server  [--use-fake-symbol-table <bool>]
-[--use-libevent-buffers <bool>]
+bazel-bin/nighthawk_test_server  [--disable-extensions <string>]
+[--use-fake-symbol-table <bool>]
 [--cpuset-threads]
 [--enable-mutex-tracing]
 [--disable-hot-restart]
@@ -99,26 +99,30 @@ bazel-bin/nighthawk_test_server  [--use-fake-symbol-table <bool>]
 [--service-cluster <string>]
 [--hot-restart-version]
 [--restart-epoch <uint32_t>]
-[--log-path <string>] [--log-format
-<string>] [--component-log-level
-<string>] [-l <string>]
-[--local-address-ip-version <string>]
-[--admin-address-path <string>]
+[--log-path <string>]
+[--log-format-prefix-with-location
+<bool>] [--log-format-escaped]
+[--log-format <string>]
+[--component-log-level <string>] [-l
+<string>] [--local-address-ip-version
+<string>] [--admin-address-path
+<string>]
 [--reject-unknown-dynamic-fields]
 [--allow-unknown-static-fields]
-[--allow-unknown-fields] [--config-yaml
-<string>] [-c <string>] [--concurrency
-<uint32_t>] [--base-id <uint32_t>] [--]
-[--version] [-h]
+[--allow-unknown-fields]
+[--bootstrap-version <string>]
+[--config-yaml <string>] [-c <string>]
+[--concurrency <uint32_t>] [--base-id
+<uint32_t>] [--] [--version] [-h]
 
 
 Where:
 
+--disable-extensions <string>
+Comma-separated list of extensions to disable
+
 --use-fake-symbol-table <bool>
 Use fake symbol table implementation
-
---use-libevent-buffers <bool>
-Use the original libevent buffer implementation
 
 --cpuset-threads
 Get the default # of worker threads from cpuset size
@@ -143,7 +147,7 @@ normally) or 'validate' (validate configs and exit).
 Hot restart parent shutdown time in seconds
 
 --drain-time-s <uint32_t>
-Hot restart drain time in seconds
+Hot restart and LDS removal drain time in seconds
 
 --file-flush-interval-msec <uint32_t>
 Interval for log flushing in msec
@@ -166,6 +170,13 @@ hot restart epoch #
 --log-path <string>
 Path to logfile
 
+--log-format-prefix-with-location <bool>
+Prefix all occurrences of '%v' in log format with with '[%g:%#] '
+('[path/to/file.cc:99] ').
+
+--log-format-escaped
+Escape c-style escape sequences in the application logs
+
 --log-format <string>
 Log message format in spdlog syntax (see
 https://github.com/gabime/spdlog/wiki/3.-Custom-formatting)
@@ -177,8 +188,8 @@ Comma separated list of component log levels. For example
 upstream:debug,config:trace
 
 -l <string>,  --log-level <string>
-Log levels:
-[trace][debug][info][warning][error][critical][off]
+Log levels: [trace][debug][info][warning
+|warn][error][critical][off]
 
 Default is [info]
 
@@ -196,6 +207,10 @@ allow unknown fields in static configuration
 
 --allow-unknown-fields
 allow unknown fields in static configuration (DEPRECATED)
+
+--bootstrap-version <string>
+API version to parse the bootstrap config as (e.g. 3). If unset, all
+known versions will be attempted
 
 --config-yaml <string>
 Inline YAML configuration, merges with the contents of --config-path

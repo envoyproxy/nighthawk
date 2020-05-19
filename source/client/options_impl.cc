@@ -7,13 +7,14 @@
 
 #include "common/uri_impl.h"
 #include "common/utility.h"
+#include "common/version_info.h"
 
 #include "client/output_formatter_impl.h"
 
-#include "absl/strings/str_join.h"
+#include "absl/strings/numbers.h"
 #include "absl/strings/str_split.h"
+#include "absl/types/optional.h"
 #include "fmt/ranges.h"
-#include "tclap/CmdLine.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -30,16 +31,19 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   // TODO(oschaaf): Purge the validation we perform here. Most of it should have become
   // redundant now that we also perform validation of the resulting proto.
   const char* descr = "L7 (HTTP/HTTPS/HTTP2) performance characterization tool.";
-  TCLAP::CmdLine cmd(descr, ' ', "PoC"); // NOLINT
+  TCLAP::CmdLine cmd(descr, ' ', VersionInfo::version()); // NOLINT
 
+  // Any default values we pass into TCLAP argument declarations are arbitrary, as we do not rely
+  // on TCLAP for providing default values. Default values are declared in and sourced from
+  // options_impl.h, modulo non-trivial data types (see setNonTrivialDefaults()).
   TCLAP::ValueArg<uint32_t> requests_per_second(
       "", "rps",
       fmt::format("The target requests-per-second rate. Default: {}.", requests_per_second_), false,
       0, "uint32_t", cmd);
   TCLAP::ValueArg<uint32_t> connections(
       "", "connections",
-      fmt::format("The number of connections per event loop that the test should maximally "
-                  "use. HTTP/1 only. Default: {}.",
+      fmt::format("The maximum allowed number of concurrent connections per event loop. HTTP/1 "
+                  "only. Default: {}.",
                   connections_),
       false, 0, "uint32_t", cmd);
   TCLAP::ValueArg<uint32_t> duration(
@@ -86,10 +90,10 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
                       nighthawk::client::OutputFormat_OutputFormatOptions_Name(output_format_))),
       false, "", &output_formats_allowed, cmd);
 
-  TCLAP::SwitchArg prefetch_connections(                         // NOLINT
-      "", "prefetch-connections",                                // NOLINT
-      "Prefetch connections before benchmarking (HTTP/1 only).", // NOLINT
-      cmd);                                                      // NOLINT
+  TCLAP::SwitchArg prefetch_connections(                     // NOLINT
+      "", "prefetch-connections",                            // NOLINT
+      "Use proactive connection prefetching (HTTP/1 only).", // NOLINT
+      cmd);                                                  // NOLINT
 
   // Note: we allow a burst size of 1, which intuitively may not make sense. However, allowing it
   // doesn't hurt either, and it does allow one to use a the same code-execution-paths in test
@@ -121,26 +125,42 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
                                                false, "string", cmd);
   TCLAP::ValueArg<uint32_t> request_body_size(
       "", "request-body-size",
-      "Size of the request body to send. NH will send a number of consecutive 'a' characters equal "
+      "Size of the request body to send. NH will send a number of consecutive 'a' characters "
+      "equal "
       "to the number specified here. (default: 0, no data).",
       false, 0, "uint32_t", cmd);
 
   TCLAP::ValueArg<std::string> tls_context(
       "", "tls-context",
-      "Tls context configuration in yaml or json. Example (json):"
+      "DEPRECATED, use --transport-socket instead. "
+      "Tls context configuration in json or compact yaml. "
+      "Mutually exclusive with --transport-socket. Example (json): "
       "{common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES128-SHA\"]}}}",
+      false, "", "string", cmd);
+
+  TCLAP::ValueArg<std::string> transport_socket(
+      "", "transport-socket",
+      "Transport socket configuration in json or compact yaml. "
+      "Mutually exclusive with --tls-context. Example (json): "
+      "{name:\"envoy.transport_sockets.tls\",typed_config:{"
+      "\"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\","
+      "common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES128-SHA\"]}}}}",
       false, "", "string", cmd);
 
   TCLAP::ValueArg<uint32_t> max_pending_requests(
       "", "max-pending-requests",
-      "Max pending requests (default: 1, no client side queuing. Specifying any other value will "
-      "allow client-side queuing of requests).",
+      fmt::format("Max pending requests (default: {}, no client side queuing. Specifying any other "
+                  "value will "
+                  "allow client-side queuing of requests).",
+                  max_pending_requests_),
       false, 0, "uint32_t", cmd);
 
   TCLAP::ValueArg<uint32_t> max_active_requests(
       "", "max-active-requests",
-      fmt::format("Max active requests (default: {}).", max_active_requests_), false, 0, "uint32_t",
-      cmd);
+      fmt::format("The maximum allowed number of concurrently active requests. HTTP/2 only. "
+                  "(default: {}).",
+                  max_active_requests_),
+      false, 0, "uint32_t", cmd);
   // NOLINTNEXTLINE
   TCLAP::ValueArg<uint32_t> max_requests_per_connection(
       "", "max-requests-per-connection",
@@ -162,11 +182,96 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   TCLAP::ValueArg<std::string> trace(
       "", "trace", "Trace uri. Example: zipkin://localhost:9411/api/v1/spans. Default is empty.",
       false, "", "uri format", cmd);
+  TCLAP::MultiArg<std::string> termination_predicates(
+      "", "termination-predicate",
+      "Termination predicate. Allows specifying a counter name plus threshold value for "
+      "terminating execution.",
+      false, "string, uint64_t", cmd);
+  TCLAP::MultiArg<std::string> failure_predicates(
+      "", "failure-predicate",
+      "Failure predicate. Allows specifying a counter name plus threshold value for "
+      "failing execution. Defaults to not tolerating error status codes and connection errors.",
+      false, "string, uint64_t", cmd);
 
-  TCLAP::UnlabeledValueArg<std::string> uri("uri",
-                                            "uri to benchmark. http:// and https:// are supported, "
-                                            "but in case of https no certificates are validated.",
-                                            true, "", "uri format", cmd);
+  std::vector<std::string> h1_connection_reuse_strategies = {"mru", "lru"};
+  TCLAP::ValuesConstraint<std::string> h1_connection_reuse_strategies_allowed(
+      h1_connection_reuse_strategies);
+  TCLAP::ValueArg<std::string> experimental_h1_connection_reuse_strategy(
+      "", "experimental-h1-connection-reuse-strategy",
+      fmt::format(
+          "Choose picking the most recently used, or least-recently-used connections for re-use."
+          "(default: {}). WARNING: this option is experimental and may be removed or changed in "
+          "the future!",
+          absl::AsciiStrToLower(
+              nighthawk::client::H1ConnectionReuseStrategy_H1ConnectionReuseStrategyOptions_Name(
+                  experimental_h1_connection_reuse_strategy_))),
+      false, "", &h1_connection_reuse_strategies_allowed, cmd);
+  TCLAP::SwitchArg open_loop(
+      "", "open-loop",
+      "Enable open loop mode. When enabled, the benchmark client will not provide backpressure "
+      "when resource limits are hit.",
+      cmd);
+  TCLAP::ValueArg<std::string> jitter_uniform(
+      "", "jitter-uniform",
+      "Add uniformly distributed absolute request-release timing jitter. For example, to add 10 "
+      "us "
+      "of jitter, specify .00001s. Default is empty / no uniform jitter.",
+      false, "", "duration", cmd);
+  TCLAP::ValueArg<std::string> nighthawk_service(
+      "", "nighthawk-service",
+      "Nighthawk service uri. Example: grpc://localhost:8843/. Default is empty.", false, "",
+      "uri format", cmd);
+  TCLAP::SwitchArg h2_use_multiple_connections(
+      "", "experimental-h2-use-multiple-connections",
+      "Use experimental HTTP/2 pool which will use multiple connections. WARNING: feature may be "
+      "removed or changed in the future!",
+      cmd);
+
+  TCLAP::MultiArg<std::string> multi_target_endpoints(
+      "", "multi-target-endpoint",
+      "Target endpoint in the form IPv4:port, [IPv6]:port, or DNS:port. "
+      "This argument is intended to be specified multiple times. "
+      "Nighthawk will spread traffic across all endpoints with "
+      "round robin distribution. "
+      "Mutually exclusive with providing a URI.",
+      false, "string", cmd);
+  TCLAP::ValueArg<std::string> multi_target_path(
+      "", "multi-target-path",
+      "The single absolute path Nighthawk should request from each target endpoint. "
+      "Required when using --multi-target-endpoint. "
+      "Mutually exclusive with providing a URI.",
+      false, "", "string", cmd);
+  TCLAP::SwitchArg multi_target_use_https(
+      "", "multi-target-use-https",
+      "Use HTTPS to connect to the target endpoints. Otherwise HTTP is used. "
+      "Mutually exclusive with providing a URI.",
+      cmd);
+
+  TCLAP::MultiArg<std::string> labels("", "label",
+                                      "Label. Allows specifying multiple labels which will be "
+                                      "persisted in structured output formats.",
+                                      false, "string", cmd);
+
+  TCLAP::UnlabeledValueArg<std::string> uri(
+      "uri",
+      "URI to benchmark. http:// and https:// are supported, "
+      "but in case of https no certificates are validated. "
+      "Provide a URI when you need to benchmark a single endpoint. For multiple "
+      "endpoints, set --multi-target-* instead.",
+      false, "", "uri format", cmd);
+
+  TCLAP::ValueArg<std::string> request_source(
+      "", "request-source",
+      "Remote gRPC source that will deliver to-be-replayed traffic. Each worker will separately "
+      "connect to this source. For example grpc://127.0.0.1:8443/.",
+      false, "", "uri format", cmd);
+
+  TCLAP::SwitchArg simple_warmup(
+      "", "simple-warmup",
+      "Perform a simple single warmup request (per worker) before starting execution. Note that "
+      "this will be reflected in the counters that Nighthawk writes to the output. Default is "
+      "false.",
+      cmd);
 
   Utility::parseCommand(cmd, argc, argv);
 
@@ -174,7 +279,9 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   TCLAP_SET_IF_SPECIFIED(connections, connections_);
   TCLAP_SET_IF_SPECIFIED(duration, duration_);
   TCLAP_SET_IF_SPECIFIED(timeout, timeout_);
-  uri_ = uri.getValue();
+  if (uri.isSet()) {
+    uri_ = uri.getValue();
+  }
   TCLAP_SET_IF_SPECIFIED(h2, h2_);
   TCLAP_SET_IF_SPECIFIED(concurrency, concurrency_);
   // TODO(oschaaf): is there a generic way to set these enum values?
@@ -203,7 +310,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   if (request_method.isSet()) {
     std::string upper_cased = request_method.getValue();
     absl::AsciiStrToUpper(&upper_cased);
-    RELEASE_ASSERT(envoy::api::v2::core::RequestMethod_Parse(upper_cased, &request_method_),
+    RELEASE_ASSERT(envoy::config::core::v3::RequestMethod_Parse(upper_cased, &request_method_),
                    "Failed to parse request method");
   }
   TCLAP_SET_IF_SPECIFIED(request_headers, request_headers_);
@@ -218,7 +325,56 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
                        upper_cased, &sequencer_idle_strategy_),
                    "Failed to parse sequencer idle strategy");
   }
+  TCLAP_SET_IF_SPECIFIED(request_source, request_source_);
+
+  if (experimental_h1_connection_reuse_strategy.isSet()) {
+    std::string upper_cased = experimental_h1_connection_reuse_strategy.getValue();
+    absl::AsciiStrToUpper(&upper_cased);
+    const bool ok =
+        nighthawk::client::H1ConnectionReuseStrategy::H1ConnectionReuseStrategyOptions_Parse(
+            upper_cased, &experimental_h1_connection_reuse_strategy_);
+    // TCLAP validation ought to have caught this earlier.
+    RELEASE_ASSERT(ok, "Failed to parse h1 connection reuse strategy");
+  }
+
   TCLAP_SET_IF_SPECIFIED(trace, trace_);
+  parsePredicates(termination_predicates, termination_predicates_);
+  parsePredicates(failure_predicates, failure_predicates_);
+  TCLAP_SET_IF_SPECIFIED(open_loop, open_loop_);
+  if (jitter_uniform.isSet()) {
+    Envoy::ProtobufWkt::Duration duration;
+    if (Envoy::Protobuf::util::TimeUtil::FromString(jitter_uniform.getValue(), &duration)) {
+      if (duration.nanos() > 0 || duration.seconds() > 0) {
+        jitter_uniform_ = std::chrono::nanoseconds(
+            Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(duration));
+      } else {
+        throw MalformedArgvException("--jitter-uniform is out of range");
+      }
+    } else {
+      throw MalformedArgvException("Invalid value for --jitter-uniform");
+    }
+  }
+  TCLAP_SET_IF_SPECIFIED(nighthawk_service, nighthawk_service_);
+  TCLAP_SET_IF_SPECIFIED(h2_use_multiple_connections, h2_use_multiple_connections_);
+  TCLAP_SET_IF_SPECIFIED(multi_target_use_https, multi_target_use_https_);
+  TCLAP_SET_IF_SPECIFIED(multi_target_path, multi_target_path_);
+  if (multi_target_endpoints.isSet()) {
+    for (const std::string& host_port : multi_target_endpoints.getValue()) {
+      std::string host;
+      int port;
+      if (!Utility::parseHostPort(host_port, &host, &port)) {
+        throw MalformedArgvException(fmt::format("--multi-target-endpoint must be in the format "
+                                                 "IPv4:port, [IPv6]:port, or DNS:port. Got '{}'",
+                                                 host_port));
+      }
+      nighthawk::client::MultiTarget::Endpoint endpoint;
+      endpoint.mutable_address()->set_value(host);
+      endpoint.mutable_port()->set_value(port);
+      multi_target_endpoints_.push_back(endpoint);
+    }
+  }
+  TCLAP_SET_IF_SPECIFIED(labels, labels_);
+  TCLAP_SET_IF_SPECIFIED(simple_warmup, simple_warmup_);
 
   // CLI-specific tests.
   // TODO(oschaaf): as per mergconflicts's remark, it would be nice to aggregate
@@ -252,8 +408,25 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   }
 
   if (!tls_context.getValue().empty()) {
+    ENVOY_LOG(warn, "--tls-context is deprecated. "
+                    "It can be replaced by an equivalent --transport-socket. "
+                    "See --help for an example.");
+  }
+  if (!tls_context.getValue().empty() && !transport_socket.getValue().empty()) {
+    throw MalformedArgvException("--tls-context and --transport-socket cannot both be set.");
+  }
+  if (!tls_context.getValue().empty()) {
     try {
       Envoy::MessageUtil::loadFromJson(tls_context.getValue(), tls_context_,
+                                       Envoy::ProtobufMessage::getStrictValidationVisitor());
+    } catch (const Envoy::EnvoyException& e) {
+      throw MalformedArgvException(e.what());
+    }
+  }
+  if (!transport_socket.getValue().empty()) {
+    try {
+      transport_socket_.emplace(envoy::config::core::v3::TransportSocket());
+      Envoy::MessageUtil::loadFromJson(transport_socket.getValue(), transport_socket_.value(),
                                        Envoy::ProtobufMessage::getStrictValidationVisitor());
     } catch (const Envoy::EnvoyException& e) {
       throw MalformedArgvException(e.what());
@@ -262,14 +435,31 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   validate();
 }
 
+void OptionsImpl::parsePredicates(const TCLAP::MultiArg<std::string>& arg,
+                                  TerminationPredicateMap& predicates) {
+  if (arg.isSet()) {
+    predicates.clear();
+  }
+  for (const auto& predicate : arg) {
+    std::vector<std::string> split_predicate =
+        absl::StrSplit(predicate, ':', absl::SkipWhitespace());
+    if (split_predicate.size() != 2) {
+      throw MalformedArgvException(
+          fmt::format("Termination predicate '{}' is badly formatted.", predicate));
+    }
+
+    uint32_t threshold = 0;
+    if (absl::SimpleAtoi(split_predicate[1], &threshold)) {
+      predicates[split_predicate[0]] = threshold;
+    } else {
+      throw MalformedArgvException(
+          fmt::format("Termination predicate '{}' has an out of range threshold.", predicate));
+    }
+  }
+}
+
 OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   setNonTrivialDefaults();
-
-  for (const auto& header : options.request_options().request_headers()) {
-    std::string header_string =
-        fmt::format("{}:{}", header.header().key(), header.header().value());
-    request_headers_.push_back(header_string);
-  }
 
   requests_per_second_ =
       PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, requests_per_second, requests_per_second_);
@@ -279,7 +469,18 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   if (options.has_timeout()) {
     timeout_ = options.timeout().seconds();
   }
-  uri_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, uri, uri_);
+  if (options.has_uri()) {
+    uri_ = options.uri().value();
+  } else {
+    multi_target_path_ =
+        PROTOBUF_GET_WRAPPED_OR_DEFAULT(options.multi_target(), path, multi_target_path_);
+    multi_target_use_https_ =
+        PROTOBUF_GET_WRAPPED_OR_DEFAULT(options.multi_target(), use_https, multi_target_use_https_);
+    for (const nighthawk::client::MultiTarget::Endpoint& endpoint :
+         options.multi_target().endpoints()) {
+      multi_target_endpoints_.push_back(endpoint);
+    }
+  }
   h2_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, h2, h2_);
   concurrency_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, concurrency, concurrency_);
   verbosity_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, verbosity, verbosity_);
@@ -289,13 +490,24 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   burst_size_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, burst_size, burst_size_);
   address_family_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, address_family, address_family_);
 
-  const auto& request_options = options.request_options();
-  if (request_options.request_method() !=
-      ::envoy::api::v2::core::RequestMethod::METHOD_UNSPECIFIED) {
-    request_method_ = request_options.request_method();
+  if (options.has_request_options()) {
+    const auto& request_options = options.request_options();
+    for (const auto& header : request_options.request_headers()) {
+      std::string header_string =
+          fmt::format("{}:{}", header.header().key(), header.header().value());
+      request_headers_.push_back(header_string);
+    }
+    if (request_options.request_method() !=
+        ::envoy::config::core::v3::RequestMethod::METHOD_UNSPECIFIED) {
+      request_method_ = request_options.request_method();
+    }
+    request_body_size_ =
+        PROTOBUF_GET_WRAPPED_OR_DEFAULT(request_options, request_body_size, request_body_size_);
+  } else if (options.has_request_source()) {
+    const auto& request_source_options = options.request_source();
+    request_source_ = request_source_options.uri();
   }
-  request_body_size_ =
-      PROTOBUF_GET_WRAPPED_OR_DEFAULT(request_options, request_body_size, request_body_size_);
+
   max_pending_requests_ =
       PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, max_pending_requests, max_pending_requests_);
   max_active_requests_ =
@@ -306,12 +518,52 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   sequencer_idle_strategy_ =
       PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, sequencer_idle_strategy, sequencer_idle_strategy_);
   trace_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, trace, trace_);
+  experimental_h1_connection_reuse_strategy_ =
+      PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, experimental_h1_connection_reuse_strategy,
+                                      experimental_h1_connection_reuse_strategy_);
+  open_loop_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, open_loop, open_loop_);
 
   tls_context_.MergeFrom(options.tls_context());
+
+  if (options.has_transport_socket()) {
+    transport_socket_.emplace(envoy::config::core::v3::TransportSocket());
+    transport_socket_.value().MergeFrom(options.transport_socket());
+  }
+
+  if (options.failure_predicates().size()) {
+    failure_predicates_.clear();
+  }
+  for (const auto& predicate : options.failure_predicates()) {
+    failure_predicates_[predicate.first] = predicate.second;
+  }
+  for (const auto& predicate : options.termination_predicates()) {
+    termination_predicates_[predicate.first] = predicate.second;
+  }
+  if (options.has_jitter_uniform()) {
+    jitter_uniform_ = std::chrono::nanoseconds(
+        Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(options.jitter_uniform()));
+  }
+  nighthawk_service_ =
+      PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, nighthawk_service, nighthawk_service_);
+  h2_use_multiple_connections_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(
+      options, experimental_h2_use_multiple_connections, h2_use_multiple_connections_);
+  simple_warmup_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, simple_warmup, simple_warmup_);
+  std::copy(options.labels().begin(), options.labels().end(), std::back_inserter(labels_));
   validate();
 }
 
-void OptionsImpl::setNonTrivialDefaults() { concurrency_ = "1"; }
+void OptionsImpl::setNonTrivialDefaults() {
+  concurrency_ = "1";
+  // By default, we don't tolerate error status codes and connection failures, and will report
+  // upon observing those.
+  failure_predicates_["benchmark.http_4xx"] = 0;
+  failure_predicates_["benchmark.http_5xx"] = 0;
+  failure_predicates_["benchmark.pool_connection_failure"] = 0;
+  // Also, fail fast when a remote request source is specified that we can't connect to or
+  // otherwise fails.
+  failure_predicates_["requestsource.upstream_rq_5xx"] = 0;
+  jitter_uniform_ = std::chrono::nanoseconds(0);
+}
 
 void OptionsImpl::validate() const {
   // concurrency must be either 'auto' or a positive integer.
@@ -328,13 +580,37 @@ void OptionsImpl::validate() const {
       throw MalformedArgvException("Value for --concurrency should be greater then 0.");
     }
   }
-  try {
-    UriImpl uri(uri_);
-  } catch (const UriException&) {
-    throw MalformedArgvException("Invalid URI");
+  if (request_source_ != "") {
+    try {
+      UriImpl uri(request_source_, "grpc");
+      if (uri.scheme() != "grpc") {
+        throw MalformedArgvException("Invalid replay source URI");
+      }
+    } catch (const UriException&) {
+      throw MalformedArgvException("Invalid replay source URI");
+    }
   }
+  if (uri_.has_value()) {
+    try {
+      UriImpl uri(uri_.value());
+    } catch (const UriException&) {
+      throw MalformedArgvException(fmt::format("Invalid target URI: ''", uri_.value()));
+    }
+    if (!multi_target_endpoints_.empty() || !multi_target_path_.empty() ||
+        multi_target_use_https_) {
+      throw MalformedArgvException("URI and --multi-target-* options cannot both be specified.");
+    }
+  } else {
+    if (multi_target_endpoints_.empty()) {
+      throw MalformedArgvException("A URI or --multi-target-* options must be specified.");
+    }
+    if (multi_target_path_.empty()) {
+      throw MalformedArgvException("--multi-target-path must be specified.");
+    }
+  }
+
   try {
-    Envoy::MessageUtil::validate(*toCommandLineOptions(),
+    Envoy::MessageUtil::validate(*toCommandLineOptionsInternal(),
                                  Envoy::ProtobufMessage::getStrictValidationVisitor());
   } catch (const Envoy::ProtoValidationException& e) {
     throw MalformedArgvException(e.what());
@@ -342,42 +618,93 @@ void OptionsImpl::validate() const {
 }
 
 CommandLineOptionsPtr OptionsImpl::toCommandLineOptions() const {
+  return toCommandLineOptionsInternal();
+}
+
+CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
   CommandLineOptionsPtr command_line_options =
       std::make_unique<nighthawk::client::CommandLineOptions>();
 
-  command_line_options->mutable_connections()->set_value(connections());
-  command_line_options->mutable_duration()->set_seconds(duration().count());
-  command_line_options->mutable_requests_per_second()->set_value(requestsPerSecond());
-  command_line_options->mutable_timeout()->set_seconds(timeout().count());
-  command_line_options->mutable_h2()->set_value(h2());
-  command_line_options->mutable_uri()->set_value(uri());
-  command_line_options->mutable_concurrency()->set_value(concurrency());
-  command_line_options->mutable_verbosity()->set_value(verbosity());
-  command_line_options->mutable_output_format()->set_value(outputFormat());
-  command_line_options->mutable_prefetch_connections()->set_value(prefetchConnections());
-  command_line_options->mutable_burst_size()->set_value(burstSize());
-  command_line_options->mutable_address_family()->set_value(
-      static_cast<nighthawk::client::AddressFamily_AddressFamilyOptions>(addressFamily()));
-  auto request_options = command_line_options->mutable_request_options();
-  request_options->set_request_method(requestMethod());
-  for (const auto& header : requestHeaders()) {
-    auto header_value_option = request_options->add_request_headers();
-    // TODO(oschaaf): expose append option in CLI? For now we just set.
-    header_value_option->mutable_append()->set_value(false);
-    auto request_header = header_value_option->mutable_header();
-    std::vector<std::string> split_header = absl::StrSplit(header, ':', absl::SkipWhitespace());
-    request_header->set_key(split_header[0]);
-    split_header.erase(split_header.begin(), split_header.begin() + 1);
-    request_header->set_value(absl::StrJoin(split_header, ":"));
+  command_line_options->mutable_connections()->set_value(connections_);
+  command_line_options->mutable_duration()->set_seconds(duration_);
+  command_line_options->mutable_requests_per_second()->set_value(requests_per_second_);
+  command_line_options->mutable_timeout()->set_seconds(timeout_);
+  command_line_options->mutable_h2()->set_value(h2_);
+  if (uri_.has_value()) {
+    command_line_options->mutable_uri()->set_value(uri_.value());
+  } else {
+    nighthawk::client::MultiTarget* multi_target = command_line_options->mutable_multi_target();
+    multi_target->mutable_path()->set_value(multi_target_path_);
+    multi_target->mutable_use_https()->set_value(multi_target_use_https_);
+    for (const nighthawk::client::MultiTarget::Endpoint& endpoint : multi_target_endpoints_) {
+      nighthawk::client::MultiTarget::Endpoint* proto_endpoint = multi_target->add_endpoints();
+      proto_endpoint->mutable_address()->set_value(endpoint.address().value());
+      proto_endpoint->mutable_port()->set_value(endpoint.port().value());
+    }
   }
-  request_options->mutable_request_body_size()->set_value(requestBodySize());
-  *(command_line_options->mutable_tls_context()) = tlsContext();
-  command_line_options->mutable_max_pending_requests()->set_value(maxPendingRequests());
-  command_line_options->mutable_max_active_requests()->set_value(maxActiveRequests());
+  command_line_options->mutable_concurrency()->set_value(concurrency_);
+  command_line_options->mutable_verbosity()->set_value(verbosity_);
+  command_line_options->mutable_output_format()->set_value(output_format_);
+  command_line_options->mutable_prefetch_connections()->set_value(prefetch_connections_);
+  command_line_options->mutable_burst_size()->set_value(burst_size_);
+  command_line_options->mutable_address_family()->set_value(
+      static_cast<nighthawk::client::AddressFamily_AddressFamilyOptions>(address_family_));
+
+  if (requestSource() != "") {
+    auto request_source = command_line_options->mutable_request_source();
+    *request_source->mutable_uri() = request_source_;
+  } else {
+    auto request_options = command_line_options->mutable_request_options();
+    request_options->set_request_method(request_method_);
+    for (const auto& header : request_headers_) {
+      auto header_value_option = request_options->add_request_headers();
+      // TODO(oschaaf): expose append option in CLI? For now we just set.
+      header_value_option->mutable_append()->set_value(false);
+      auto request_header = header_value_option->mutable_header();
+      // Skip past the first colon so we propagate ':authority: foo` correctly.
+      auto pos = header.empty() ? std::string::npos : header.find(':', 1);
+      if (pos != std::string::npos) {
+        request_header->set_key(std::string(absl::StripAsciiWhitespace(header.substr(0, pos))));
+        // Any visible char, including ':', is allowed in header values.
+        request_header->set_value(std::string(absl::StripAsciiWhitespace(header.substr(pos + 1))));
+      } else {
+        throw MalformedArgvException("A ':' is required in a header.");
+      }
+      request_options->mutable_request_body_size()->set_value(requestBodySize());
+    }
+  }
+  *(command_line_options->mutable_tls_context()) = tls_context_;
+  if (transport_socket_.has_value()) {
+    *(command_line_options->mutable_transport_socket()) = transport_socket_.value();
+  }
+  command_line_options->mutable_max_pending_requests()->set_value(max_pending_requests_);
+  command_line_options->mutable_max_active_requests()->set_value(max_active_requests_);
   command_line_options->mutable_max_requests_per_connection()->set_value(
-      maxRequestsPerConnection());
-  command_line_options->mutable_sequencer_idle_strategy()->set_value(sequencerIdleStrategy());
-  command_line_options->mutable_trace()->set_value(trace());
+      max_requests_per_connection_);
+  command_line_options->mutable_sequencer_idle_strategy()->set_value(sequencer_idle_strategy_);
+  command_line_options->mutable_trace()->set_value(trace_);
+  command_line_options->mutable_experimental_h1_connection_reuse_strategy()->set_value(
+      experimental_h1_connection_reuse_strategy_);
+  auto termination_predicates_option = command_line_options->mutable_termination_predicates();
+  for (const auto& predicate : termination_predicates_) {
+    termination_predicates_option->insert({predicate.first, predicate.second});
+  }
+  auto failure_predicates_option = command_line_options->mutable_failure_predicates();
+  for (const auto& predicate : failure_predicates_) {
+    failure_predicates_option->insert({predicate.first, predicate.second});
+  }
+  command_line_options->mutable_open_loop()->set_value(open_loop_);
+  if (jitter_uniform_.count() > 0) {
+    *command_line_options->mutable_jitter_uniform() =
+        Envoy::Protobuf::util::TimeUtil::NanosecondsToDuration(jitter_uniform_.count());
+  }
+  command_line_options->mutable_nighthawk_service()->set_value(nighthawk_service_);
+  command_line_options->mutable_experimental_h2_use_multiple_connections()->set_value(
+      h2_use_multiple_connections_);
+  for (const auto& label : labels_) {
+    *command_line_options->add_labels() = label;
+  }
+  command_line_options->mutable_simple_warmup()->set_value(simple_warmup_);
   return command_line_options;
 }
 

@@ -4,7 +4,6 @@
 #include "envoy/common/time.h"
 #include "envoy/event/dispatcher.h"
 
-#include "nighthawk/common/operation_callback.h"
 #include "nighthawk/common/platform_util.h"
 #include "nighthawk/common/rate_limiter.h"
 #include "nighthawk/common/sequencer.h"
@@ -19,11 +18,10 @@ namespace {
 
 using namespace std::chrono_literals;
 
-constexpr std::chrono::milliseconds EnvoyTimerMinResolution = 1ms;
+// We shoot for a 40kHz resolution.
+constexpr std::chrono::microseconds NighthawkTimerResolution = 25us;
 
 } // namespace
-
-using SequencerTarget = std::function<bool(OperationCallback)>;
 
 using namespace Envoy; // We need this because of macro expectations.
 
@@ -48,11 +46,11 @@ class SequencerImpl : public Sequencer, public Envoy::Logger::Loggable<Envoy::Lo
 public:
   SequencerImpl(
       const PlatformUtil& platform_util, Envoy::Event::Dispatcher& dispatcher,
-      Envoy::TimeSource& time_source, Envoy::MonotonicTime start_time,
-      RateLimiterPtr&& rate_limiter, SequencerTarget target, StatisticPtr&& latency_statistic,
-      StatisticPtr&& blocked_statistic,
+      Envoy::TimeSource& time_source, RateLimiterPtr&& rate_limiter, SequencerTarget target,
+      StatisticPtr&& latency_statistic, StatisticPtr&& blocked_statistic,
       nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions idle_strategy,
-      TerminationPredicate& termination_predicate, Envoy::Stats::Scope& scope);
+      TerminationPredicatePtr&& termination_predicate, Envoy::Stats::Scope& scope,
+      const Envoy::MonotonicTime scheduled_starting_time);
 
   /**
    * Starts the Sequencer. Should be followed up with a call to waitForCompletion().
@@ -65,11 +63,14 @@ public:
    */
   void waitForCompletion() override;
 
-  // TODO(oschaaf): calling this after stop() will return broken/unexpected results.
+  std::chrono::nanoseconds executionDuration() const override {
+    return last_event_time_ - start_time_;
+  }
+
   double completionsPerSecond() const override {
-    const double usec = std::chrono::duration_cast<std::chrono::microseconds>(
-                            time_source_.monotonicTime() - start_time_)
-                            .count();
+    const double usec =
+        std::chrono::duration_cast<std::chrono::microseconds>(last_event_time_ - start_time_)
+            .count();
 
     return usec == 0 ? 0 : ((targets_completed_ / usec) * 1000000);
   }
@@ -121,14 +122,15 @@ private:
   StatisticPtr blocked_statistic_;
   Envoy::Event::TimerPtr periodic_timer_;
   Envoy::Event::TimerPtr spin_timer_;
-  Envoy::MonotonicTime start_time_;
+  const Envoy::MonotonicTime start_time_;
+  Envoy::MonotonicTime last_event_time_;
   uint64_t targets_initiated_{0};
   uint64_t targets_completed_{0};
   bool running_{};
   bool blocked_{};
   Envoy::MonotonicTime blocked_start_;
   nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions idle_strategy_;
-  TerminationPredicate& termination_predicate_;
+  TerminationPredicatePtr termination_predicate_;
   TerminationPredicate::Status last_termination_status_;
   Envoy::Stats::ScopePtr scope_;
   SequencerStats sequencer_stats_;

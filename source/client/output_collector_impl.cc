@@ -7,6 +7,8 @@
 
 #include "external/envoy/source/common/protobuf/utility.h"
 
+#include "common/version_info.h"
+
 namespace Nighthawk {
 namespace Client {
 
@@ -16,23 +18,34 @@ OutputCollectorImpl::OutputCollectorImpl(Envoy::TimeSource& time_source, const O
           time_source.systemTime().time_since_epoch())
           .count());
   output_.set_allocated_options(options.toCommandLineOptions().release());
+  *output_.mutable_version() = VersionInfo::buildVersion();
 }
 
 nighthawk::client::Output OutputCollectorImpl::toProto() const { return output_; }
 
 void OutputCollectorImpl::addResult(absl::string_view name,
                                     const std::vector<StatisticPtr>& statistics,
-                                    const std::map<std::string, uint64_t>& counters) {
+                                    const std::map<std::string, uint64_t>& counters,
+                                    const std::chrono::nanoseconds execution_duration) {
   auto result = output_.add_results();
   result->set_name(name.data(), name.size());
   for (auto& statistic : statistics) {
-    *(result->add_statistics()) = statistic->toProto();
+    // TODO(#292): Looking at if the statistic id ends with "_size" to determine how it should be
+    // serialized is kind of hacky. Maybe we should have a lookup table of sorts, to determine how
+    // statistics should we serialized. Doing so may give us a canonical place to consolidate their
+    // ids as well too.
+    Statistic::SerializationDomain serialization_domain =
+        absl::EndsWith(statistic->id(), "_size") ? Statistic::SerializationDomain::RAW
+                                                 : Statistic::SerializationDomain::DURATION;
+    *(result->add_statistics()) = statistic->toProto(serialization_domain);
   }
   for (const auto& counter : counters) {
     auto new_counters = result->add_counters();
     new_counters->set_name(counter.first);
     new_counters->set_value(counter.second);
   }
+  *result->mutable_execution_duration() =
+      Envoy::Protobuf::util::TimeUtil::NanosecondsToDuration(execution_duration.count());
 }
 
 } // namespace Client

@@ -1,10 +1,13 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-ENVOY_COMMIT = "54b5f4050b8b4161b5b73a3976030614d3ac259b"  # October 31th, 2019
-ENVOY_SHA = "cc8bc879db161a570f2f10b60559171204453b8bfd264ca2eeb906e01316270c"
+ENVOY_COMMIT = "888e0e28900a470df448c65d7b99d8065fd60251"  # May 9th, 2020
+ENVOY_SHA = "9a4e2342d1ddaf2c9ff6f819f2010d35871f8c19a93b58ee63f2e0fc57fc9fe6"
 
-RULES_PYTHON_COMMIT = "fdbb17a4118a1728d19e638a5291b4c4266ea5b8"
-RULES_PYTHON_SHA = "9a3d71e348da504a9c4c5e8abd4cb822f7afb32c613dc6ee8b8535333a81a938"
+RULES_PYTHON_COMMIT = "dd7f9c5f01bafbfea08c44092b6b0c8fc8fcb77f"  # Feb 22nd, 2020
+RULES_PYTHON_SHA = "0aa9ec790a58053e3ab5af397879b267a625955f8297c239b2d8559c6773397b"
+
+HDR_HISTOGRAM_C_VERSION = "0.9.13"  # Feb 22nd, 2020
+HDR_HISTOGRAM_C_SHA = "2bd4a4631b64f2f8cf968ef49dd03ff3c51b487c3c98a01217ae4cf4a35b8310"
 
 def nighthawk_dependencies():
     http_archive(
@@ -48,9 +51,9 @@ cc_library(
     visibility = ["//visibility:public"],
 )
   """,
-        sha256 = "43859763552a5cda0d3c8b0d81b2ae15d3e341df73b6c959095434fd0e2239e7",
-        strip_prefix = "HdrHistogram_c-0.9.11",
-        url = "https://github.com/HdrHistogram/HdrHistogram_c/archive/0.9.11.tar.gz",
+        sha256 = HDR_HISTOGRAM_C_SHA,
+        strip_prefix = "HdrHistogram_c-%s" % HDR_HISTOGRAM_C_VERSION,
+        url = "https://github.com/HdrHistogram/HdrHistogram_c/archive/%s.tar.gz" % HDR_HISTOGRAM_C_VERSION,
     )
 
     http_archive(

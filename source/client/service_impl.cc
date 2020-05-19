@@ -2,6 +2,8 @@
 
 #include <grpc++/grpc++.h>
 
+#include "common/request_source_impl.h"
+
 #include "client/client.h"
 #include "client/options_impl.h"
 #include "client/output_collector_impl.h"
@@ -35,7 +37,7 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
   auto logging_context = std::make_unique<Envoy::Logger::Context>(
       spdlog::level::from_str(
           nighthawk::client::Verbosity::VerbosityOptions_Name(options->verbosity())),
-      "[%T.%f][%t][%L] %v", log_lock_);
+      "[%T.%f][%t][%L] %v", log_lock_, false);
   OutputCollectorImpl output_collector(time_system_, *options);
   const bool ok = process.run(output_collector);
   if (!ok) {
@@ -105,6 +107,66 @@ void ServiceImpl::writeResponse(const nighthawk::client::ExecutionResponse& resp
     }
   }
   return finishGrpcStream(true);
+}
+
+namespace {
+void addHeader(envoy::api::v2::core::HeaderMap* map, absl::string_view key,
+               absl::string_view value) {
+  auto* request_header = map->add_headers();
+  request_header->set_key(std::string(key));
+  request_header->set_value(std::string(value));
+}
+} // namespace
+
+RequestSourcePtr RequestSourceServiceImpl::createStaticEmptyRequestSource(const uint32_t amount) {
+  Envoy::Http::RequestHeaderMapPtr header = std::make_unique<Envoy::Http::RequestHeaderMapImpl>();
+  header->addCopy(Envoy::Http::LowerCaseString("x-from-remote-request-source"), "1");
+  return std::make_unique<StaticRequestSourceImpl>(std::move(header), amount);
+}
+
+::grpc::Status RequestSourceServiceImpl::RequestStream(
+    ::grpc::ServerContext* /*context*/,
+    ::grpc::ServerReaderWriter<::nighthawk::request_source::RequestStreamResponse,
+                               ::nighthawk::request_source::RequestStreamRequest>* stream) {
+  nighthawk::request_source::RequestStreamRequest request;
+  bool ok = true;
+  while (stream->Read(&request)) {
+    ENVOY_LOG(trace, "Inbound RequestStreamRequest {}", request.DebugString());
+
+    // TODO(oschaaf): this is useful for integration testing purposes, but sending
+    // these nearly empty headers will basically be a near no-op (note that the client will merge
+    // headers we send here into into own header configuration). The client can be configured to
+    // connect to a custom grpc service as a remote data source instead of this one, and its workers
+    // will comply. That in itself may be useful. But we could offer the following features here:
+    // 1. Yet another remote request source, so we balance to-be-replayed headers over workers
+    //    and only have a single stream to a remote service here.
+    // 2. Read a and dispatch a header stream from disk.
+    RequestSourcePtr request_source = createStaticEmptyRequestSource(request.quantity());
+    RequestGenerator request_generator = request_source->get();
+    RequestPtr request;
+    while (ok && (request = request_generator()) != nullptr) {
+      HeaderMapPtr headers = request->header();
+      nighthawk::request_source::RequestStreamResponse response;
+      auto* request_specifier = response.mutable_request_specifier();
+      auto* request_headers = request_specifier->mutable_headers();
+      headers->iterate(
+          [](const Envoy::Http::HeaderEntry& header,
+             void* context) -> Envoy::Http::RequestHeaderMap::Iterate {
+            addHeader(static_cast<envoy::api::v2::core::HeaderMap*>(context),
+                      header.key().getStringView(), header.value().getStringView());
+            return Envoy::Http::RequestHeaderMap::Iterate::Continue;
+          },
+          request_headers);
+      // TODO(oschaaf): add static configuration for other fields plus expectations
+      ok = ok && stream->Write(response);
+    }
+    if (!ok) {
+      ENVOY_LOG(error, "Failed to send the complete set of replay data.");
+      break;
+    }
+  }
+  ENVOY_LOG(trace, "Finishing stream");
+  return ok ? grpc::Status::OK : grpc::Status(grpc::StatusCode::INTERNAL, std::string("error"));
 }
 
 } // namespace Client

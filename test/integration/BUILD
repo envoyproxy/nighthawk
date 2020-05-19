@@ -1,5 +1,6 @@
 licenses(["notice"])  # Apache 2
 
+load("@rules_python//python:defs.bzl", "py_binary", "py_library")
 load(
     "@envoy//bazel:envoy_build_system.bzl",
     "envoy_package",
@@ -13,13 +14,16 @@ py_library(
     srcs = [
         "common.py",
         "integration_test_fixtures.py",
+        "nighthawk_grpc_service.py",
         "nighthawk_test_server.py",
         "utility.py",
     ],
     data = [
         "configurations/nighthawk_http_origin.yaml",
         "configurations/nighthawk_https_origin.yaml",
+        "configurations/sni_origin.yaml",
         "//:nighthawk_client",
+        "//:nighthawk_service",
         "//:nighthawk_test_server",
         "@envoy//test/config/integration/certs",
     ],
@@ -56,8 +60,26 @@ py_library(
 )
 
 py_library(
+    name = "test_connection_management_lib",
+    srcs = ["test_connection_management.py"],
+    deps = [":integration_test_base"],
+)
+
+py_library(
     name = "test_integration_zipkin_lib",
     srcs = ["test_integration_zipkin.py"],
+    deps = [":integration_test_base"],
+)
+
+py_library(
+    name = "test_grpc_service_lib",
+    srcs = ["test_grpc_service.py"],
+    deps = [":integration_test_base"],
+)
+
+py_library(
+    name = "test_remote_execution_lib",
+    srcs = ["test_remote_execution.py"],
     deps = [":integration_test_base"],
 )
 
@@ -73,7 +95,10 @@ py_binary(
     python_version = "PY3",
     srcs_version = "PY3ONLY",
     deps = [
+        ":test_connection_management_lib",
+        ":test_grpc_service_lib",
         ":test_integration_basics_lib",
         ":test_integration_zipkin_lib",
+        ":test_remote_execution_lib",
     ],
 )
