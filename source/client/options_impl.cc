@@ -33,8 +33,8 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   const char* descr = "L7 (HTTP/HTTPS/HTTP2) performance characterization tool.";
   TCLAP::CmdLine cmd(descr, ' ', VersionInfo::version()); // NOLINT
 
-  // Any default values we pass into TCLAP argument declarations are arbitrary, as we do not rely
-  // on TCLAP for providing default values. Default values are declared in and sourced from
+  // Any default values we pass into TCLAP argument declarations are arbitrary, as we do not rely on
+  // TCLAP for providing default values. Default values are declared in and sourced from
   // options_impl.h, modulo non-trivial data types (see setNonTrivialDefaults()).
   TCLAP::ValueArg<uint32_t> requests_per_second(
       "", "rps",
@@ -125,8 +125,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
                                                false, "string", cmd);
   TCLAP::ValueArg<uint32_t> request_body_size(
       "", "request-body-size",
-      "Size of the request body to send. NH will send a number of consecutive 'a' characters "
-      "equal "
+      "Size of the request body to send. NH will send a number of consecutive 'a' characters equal "
       "to the number specified here. (default: 0, no data).",
       false, 0, "uint32_t", cmd);
 
@@ -157,9 +156,9 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
 
   TCLAP::ValueArg<uint32_t> max_active_requests(
       "", "max-active-requests",
-      fmt::format("The maximum allowed number of concurrently active requests. HTTP/2 only. "
-                  "(default: {}).",
-                  max_active_requests_),
+      fmt::format(
+          "The maximum allowed number of concurrently active requests. HTTP/2 only. (default: {}).",
+          max_active_requests_),
       false, 0, "uint32_t", cmd);
   // NOLINTNEXTLINE
   TCLAP::ValueArg<uint32_t> max_requests_per_connection(
@@ -213,8 +212,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       cmd);
   TCLAP::ValueArg<std::string> jitter_uniform(
       "", "jitter-uniform",
-      "Add uniformly distributed absolute request-release timing jitter. For example, to add 10 "
-      "us "
+      "Add uniformly distributed absolute request-release timing jitter. For example, to add 10 us "
       "of jitter, specify .00001s. Default is empty / no uniform jitter.",
       false, "", "duration", cmd);
   TCLAP::ValueArg<std::string> nighthawk_service(
@@ -559,8 +557,8 @@ void OptionsImpl::setNonTrivialDefaults() {
   failure_predicates_["benchmark.http_4xx"] = 0;
   failure_predicates_["benchmark.http_5xx"] = 0;
   failure_predicates_["benchmark.pool_connection_failure"] = 0;
-  // Also, fail fast when a remote request source is specified that we can't connect to or
-  // otherwise fails.
+  // Also, fail fast when a remote request source is specified that we can't connect to or otherwise
+  // fails.
   failure_predicates_["requestsource.upstream_rq_5xx"] = 0;
   jitter_uniform_ = std::chrono::nanoseconds(0);
 }
