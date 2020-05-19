@@ -19,7 +19,7 @@ bazel build -c opt //benchmarks:*
 ## Testing the suite
 
 ```bash
-ENVOY_IP_TEST_VERSIONS=v4only NH_CERTDIR=bazel-bin/benchmarks/benchmarks.runfiles/nighthawk/external/envoy/test/config/integration/certs/ NH_RUNDIR="bazel-bin/" NH_CONFDIR="$(pwd)/bazel-bin/benchmarks/benchmarks.runfiles/nighthawk/test/integration/configurations/" bazel-bin/benchmarks/benchmarks
+bazel test --test_env=ENVOY_IP_TEST_VERSIONS=v4only //benchmarks:*
 ```
 
 ## Using the suite
@@ -35,11 +35,16 @@ to be overriden:
 
 # TODO
 - Facilitate injection of an Envoy running in a docker container between the test client and test server. 
+  We could add a helper to the test fixture that accepts an Envoy sha, and reroutes traffic behind the
+  scenes through the Envoy docker build that is associated to the passed in revision.
 - Copy out the artifacts and push those to a gcp bucket. Current status:
-   - cpu profiles are dumped to tmp per test
-   - raw json is send to the output on stderr
+   - cpu profiles are dumped to tmp per test (named according to the test)
+   - raw json is send to the output on stderr. ideally we'd persist in fortio format,
+     raw yaml/json, and human readable output.
 - Allow pointing out a directory for the suite to scaffold tests, thereby overriding the 
   stock suite that we come with. This allows consumers to script their own testsuite.
+- A UI -- though we may be able to get by with just a uri structure conventioned around the envoy
+  sha. e.g. http://perf-ci-host/gcpsync/<envoy-sha>/ to link CI
 
 # Sample 
 
@@ -72,7 +77,12 @@ def test_http_h2_1mb_request_small_reply(http_test_server_fixture):
 Run it:
 
 ```
- ENVOY_IP_TEST_VERSIONS=v4only NH_CERTDIR=bazel-bin/benchmarks/benchmarks.runfiles/nighthawk/external/envoy/test/config/integration/certs/ NH_RUNDIR="bazel-bin/" NH_CONFDIR="$(pwd)/bazel-bin/benchmarks/benchmarks.runfiles/nighthawk/test/integration/configurations/" bazel-bin/benchmarks/benchmarks
+export ENVOY_IP_TEST_VERSIONS=v4only
+export NH_RUNDIR="$(pwd)/bazel-bin/"
+export NH_CERTDIR="${NH_RUNDIR}benchmarks/benchmarks.runfiles/nighthawk/external/envoy/test/config/integration/certs/"
+export NH_CONFDIR="${NH_RUNDIR}/benchmarks/benchmarks.runfiles/nighthawk/test/integration/configurations/"
+
+bazel-bin/benchmarks/benchmarks
 ```
 
 ```bash
