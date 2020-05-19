@@ -27,10 +27,10 @@ bazel test --test_env=ENVOY_IP_TEST_VERSIONS=v4only //benchmarks:*
 To use the benchmark suite, there are a couple of environment variables that need
 to be overriden:
 
-- ENVOY_IP_TEST_VERSIONS=v4only|v6only (optional)
-- NH_CERTDIR points the suite to the Envoy test ssl certificate directory.
-- NH_RUNDIR points to the directory where the nighthawk binaries exist
-- NH_CONFDIR points the suite to the backend configuration files that belong
+- `ENVOY_IP_TEST_VERSIONS` (optional), e.g. v4only|v6only
+- `NH_CERTDIR` points the suite to the Envoy test ssl certificate directory.
+- `NH_RUNDIR` points to the directory where the nighthawk binaries exist
+- `NH_CONFDIR` points the suite to the backend configuration files that belong
   to any pre-provided test fixtures used to bootstrap test servers.
 
 # TODO
@@ -38,13 +38,22 @@ to be overriden:
   We could add a helper to the test fixture that accepts an Envoy sha, and reroutes traffic behind the
   scenes through the Envoy docker build that is associated to the passed in revision.
 - Copy out the artifacts and push those to a gcp bucket. Current status:
-   - cpu profiles are dumped to tmp per test (named according to the test)
+   - cpu profiles are dumped to tmp per test (named according to the test). ideally we'd
+     also dump flamegraph svg's
    - raw json is send to the output on stderr. ideally we'd persist in fortio format,
      raw yaml/json, and human readable output.
 - Allow pointing out a directory for the suite to scaffold tests, thereby overriding the 
   stock suite that we come with. This allows consumers to script their own testsuite.
 - A UI -- though we may be able to get by with just a uri structure conventioned around the envoy
-  sha. e.g. http://perf-ci-host/gcpsync/<envoy-sha>/ to link CI
+  sha. e.g. http://perf-ci-host/gcpsync/[envoy-sha]-[timestamp]/ to link CI, and directory index the 
+  artifacts.
+
+# FUTURE
+
+- Allow scavenging a separate repo for tests
+- profiling / flamegraphing via perf/bcc tools; include the proxy-wasm flamegraphing research r&d
+- Allow injection of other proxies: nginx, haproxy
+- an app that integrates fortios UI, pprof's web UI
 
 # Sample 
 
