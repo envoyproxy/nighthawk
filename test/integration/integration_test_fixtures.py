@@ -52,10 +52,22 @@ class IntegrationTestBase():
       backend_count: number of Nighthawk Test Server backends to run, to allow testing MultiTarget mode
     """
     super(IntegrationTestBase, self).__init__()
-    self.test_rundir = os.path.join(os.environ["TEST_SRCDIR"], os.environ["TEST_WORKSPACE"])
+    self.rundir_override = os.environ["NH_RUNDIR"]
+    self.confdir_override = os.environ["NH_CONFDIR"]
+    self.certdir_override = os.environ["NH_CERTDIR"]
+    self.test_rundir = os.path.join(
+        os.environ["TEST_SRCDIR"],
+        os.environ["TEST_WORKSPACE"]) if self.rundir_override is None else self.rundir_override
+    self.confdir = os.path.join(self.test_rundir, "test/integration/configurations/"
+                               ) if self.confdir_override is None else self.confdir_override
+    self.certdir = os.path.join(self.test_rundir,
+                                "external/envoy/test/config/integration/certs/serverkey.pem"
+                               ) if self.certdir_override is None else self.certdir_override
     self.nighthawk_test_server_path = os.path.join(self.test_rundir, "nighthawk_test_server")
     self.nighthawk_test_config_path = None
     self.nighthawk_client_path = os.path.join(self.test_rundir, "nighthawk_client")
+    self.nighthawk_output_transform_path = os.path.join(self.test_rundir,
+                                                        "nighthawk_output_transform")
     assert ip_version != IpVersion.UNKNOWN
     self.server_ip = "::1" if ip_version == IpVersion.IPV6 else "127.0.0.1"
     self.socket_type = socket.AF_INET6 if ip_version == IpVersion.IPV6 else socket.AF_INET
@@ -65,6 +77,7 @@ class IntegrationTestBase():
     self.parameters = {}
     self.ip_version = ip_version
     self.grpc_service = None
+    print(repr(self))
 
   # TODO(oschaaf): For the NH test server, add a way to let it determine a port by itself and pull that
   # out.
@@ -203,7 +216,7 @@ class IntegrationTestBase():
     stdout, stderr = client_process.communicate()
     logs = stderr.decode('utf-8')
     output = stdout.decode('utf-8')
-    logging.info("Nighthawk client stdout: [%s]" % output)
+    logging.debug("Nighthawk client stdout: [%s]" % output)
     if logs:
       logging.warning("Nighthawk client stderr: [%s]" % logs)
     if as_json:
@@ -213,6 +226,18 @@ class IntegrationTestBase():
     else:
       assert (client_process.returncode == 0)
     return output, logs
+
+  def transformNighthawkJsonToHumanReadable(self, json):
+    args = [self.nighthawk_output_transform_path, "--output-format", "human"]
+    logging.info("Nighthawk output transform popen() args: [%s]" % args)
+    client_process = subprocess.Popen(
+        args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    logging.info("Nighthawk client popen() args: [%s]" % args)
+    stdout, stderr = client_process.communicate(input=json.encode())
+    logs = stderr.decode('utf-8')
+    output = stdout.decode('utf-8')
+    assert (client_process.returncode == 0)
+    return stdout.decode('utf-8')
 
   def assertIsSubset(self, subset, superset):
     self.assertLessEqual(subset.items(), superset.items())
@@ -233,7 +258,7 @@ class HttpIntegrationTestBase(IntegrationTestBase):
     """See base class."""
     super(HttpIntegrationTestBase, self).__init__(ip_version)
     self.nighthawk_test_config_path = os.path.join(
-        self.test_rundir, "test/integration/configurations/nighthawk_http_origin.yaml")
+        self.test_rundir, "{dir}/nighthawk_http_origin.yaml".format(dir=self.confdir_override))
 
   def getTestServerRootUri(self):
     """See base class."""
@@ -248,8 +273,7 @@ class MultiServerHttpIntegrationTestBase(IntegrationTestBase):
   def __init__(self, ip_version, backend_count):
     """See base class."""
     super(MultiServerHttpIntegrationTestBase, self).__init__(ip_version, backend_count)
-    self.nighthawk_test_config_path = os.path.join(
-        self.test_rundir, "test/integration/configurations/nighthawk_http_origin.yaml")
+    self.nighthawk_test_config_path = os.path.join(self.confdir, "nighthawk_http_origin.yaml")
 
   def getTestServerRootUri(self):
     """See base class."""
@@ -268,12 +292,9 @@ class HttpsIntegrationTestBase(IntegrationTestBase):
   def __init__(self, ip_version):
     """See base class."""
     super(HttpsIntegrationTestBase, self).__init__(ip_version)
-    self.parameters["ssl_key_path"] = os.path.join(
-        self.test_rundir, "external/envoy/test/config/integration/certs/serverkey.pem")
-    self.parameters["ssl_cert_path"] = os.path.join(
-        self.test_rundir, "external/envoy/test/config/integration/certs/servercert.pem")
-    self.nighthawk_test_config_path = os.path.join(
-        self.test_rundir, "test/integration/configurations/nighthawk_https_origin.yaml")
+    self.parameters["ssl_key_path"] = os.path.join(self.certdir, "serverkey.pem")
+    self.parameters["ssl_cert_path"] = os.path.join(self.certdir, "servercert.pem")
+    self.nighthawk_test_config_path = os.path.join(self.confdir, "nighthawk_https_origin.yaml")
 
   def getTestServerRootUri(self):
     """See base class."""
@@ -287,8 +308,7 @@ class SniIntegrationTestBase(HttpsIntegrationTestBase):
 
   def __init__(self, ip_version):
     super(SniIntegrationTestBase, self).__init__(ip_version)
-    self.nighthawk_test_config_path = os.path.join(
-        self.test_rundir, "test/integration/configurations/sni_origin.yaml")
+    self.nighthawk_test_config_path = os.path.join(self.confdir, "sni_origin.yaml")
 
   def getTestServerRootUri(self):
     """See base class."""
@@ -302,12 +322,9 @@ class MultiServerHttpsIntegrationTestBase(IntegrationTestBase):
 
   def __init__(self, ip_version, backend_count):
     super(MultiServerHttpsIntegrationTestBase, self).__init__(ip_version, backend_count)
-    self.parameters["ssl_key_path"] = os.path.join(
-        self.test_rundir, "external/envoy/test/config/integration/certs/serverkey.pem")
-    self.parameters["ssl_cert_path"] = os.path.join(
-        self.test_rundir, "external/envoy/test/config/integration/certs/servercert.pem")
-    self.nighthawk_test_config_path = os.path.join(
-        self.test_rundir, "test/integration/configurations/nighthawk_https_origin.yaml")
+    self.parameters["ssl_key_path"] = os.path.join(self.certdir, "serverkey.pem")
+    self.parameters["ssl_cert_path"] = os.path.join(self.certdir, "servercert.pem")
+    self.nighthawk_test_config_path = os.path.join(self.confdir, "nighthawk_https_origin.yaml")
 
   def getTestServerRootUri(self):
     """See base class."""

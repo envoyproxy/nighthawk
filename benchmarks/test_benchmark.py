@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import logging
+import json
 import os
 import sys
 import pytest
@@ -65,7 +66,7 @@ def run_with_cpu_profiler(fixture,
       int(global_histograms["benchmark_http_client.request_to_response"]["count"]),
       MIN_EXPECTED_REQUESTS)
   # dump output
-  logging.info(str(parsed_json))
+  logging.info(fixture.transformNighthawkJsonToHumanReadable(json.dumps(parsed_json)))
 
 
 def test_http_h1_small_request_small_reply(http_test_server_fixture):

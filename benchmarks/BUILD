@@ -7,7 +7,7 @@ load(
 
 envoy_package()
 
-py_test(
+py_binary(
     name = "benchmarks",
     srcs = [
         "benchmarks.py",

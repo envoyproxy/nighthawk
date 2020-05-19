@@ -23,6 +23,7 @@ py_library(
         "configurations/nighthawk_https_origin.yaml",
         "configurations/sni_origin.yaml",
         "//:nighthawk_client",
+        "//:nighthawk_output_transform",
         "//:nighthawk_service",
         "//:nighthawk_test_server",
         "@envoy//test/config/integration/certs",
