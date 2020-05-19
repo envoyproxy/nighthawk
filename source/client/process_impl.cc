@@ -107,7 +107,7 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
       singleton_manager_(std::make_unique<Envoy::Singleton::ManagerImpl>(api_->threadFactory())),
       access_log_manager_(std::chrono::milliseconds(1000), *api_, *dispatcher_, access_log_lock_,
                           store_root_),
-      init_watcher_("Nighthawk", []() {}), validation_context_(false, false) {
+      init_watcher_("Nighthawk", []() {}), validation_context_(false, false, false) {
   // Any dispatchers created after the following call will use hr timers.
   setupForHRTimers();
   std::string lower = absl::AsciiStrToLower(
