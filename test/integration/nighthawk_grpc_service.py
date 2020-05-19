@@ -5,7 +5,7 @@ import tempfile
 import threading
 import time
 
-from common import IpVersion
+from test.integration.common import IpVersion
 
 
 # TODO(oschaaf): unify some of this code with the test server wrapper.
