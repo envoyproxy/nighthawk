@@ -107,6 +107,7 @@ bazel-bin/nighthawk_test_server  [--disable-extensions <string>]
 <string>] [--local-address-ip-version
 <string>] [--admin-address-path
 <string>]
+[--ignore-unknown-dynamic-fields]
 [--reject-unknown-dynamic-fields]
 [--allow-unknown-static-fields]
 [--allow-unknown-fields]
@@ -198,6 +199,9 @@ The local IP address version (v4 or v6).
 
 --admin-address-path <string>
 Admin address path
+
+--ignore-unknown-dynamic-fields
+ignore unknown fields in dynamic configuration
 
 --reject-unknown-dynamic-fields
 reject unknown fields in dynamic configuration
