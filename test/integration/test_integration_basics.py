@@ -30,7 +30,7 @@ def test_http_h1(http_test_server_fixture):
   assertCounterEqual(counters, "upstream_cx_rx_bytes_total", 3400)
   assertCounterEqual(counters, "upstream_cx_total", 1)
   assertCounterEqual(counters, "upstream_cx_tx_bytes_total",
-                     1400 if http_test_server_fixture.ip_version == IpVersion.IPV6 else 1500)
+                     1400 if http_test_server_fixture.ip_version == IpVersion.IPV6 else 1450)
   assertCounterEqual(counters, "upstream_rq_pending_total", 1)
   assertCounterEqual(counters, "upstream_rq_total", 25)
   assertCounterEqual(counters, "default.total_match_count", 1)
@@ -215,7 +215,7 @@ def test_https_h1(https_test_server_fixture):
   assertCounterEqual(counters, "upstream_cx_rx_bytes_total", 3400)
   assertCounterEqual(counters, "upstream_cx_total", 1)
   assertCounterEqual(counters, "upstream_cx_tx_bytes_total",
-                     1400 if https_test_server_fixture.ip_version == IpVersion.IPV6 else 1500)
+                     1400 if https_test_server_fixture.ip_version == IpVersion.IPV6 else 1450)
   assertCounterEqual(counters, "upstream_rq_pending_total", 1)
   assertCounterEqual(counters, "upstream_rq_total", 25)
   assertCounterEqual(counters, "ssl.ciphers.ECDHE-RSA-AES128-GCM-SHA256", 1)

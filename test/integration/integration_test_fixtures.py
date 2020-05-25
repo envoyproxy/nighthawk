@@ -45,7 +45,7 @@ class IntegrationTestBase():
   This class will be refactored (https://github.com/envoyproxy/nighthawk/issues/258).
   """
 
-  def __init__(self, ip_version, admin_port = 0, server_port = 0, backend_count=1):
+  def __init__(self, ip_version, backend_count=1):
     """
     Args:
       ip_version: a single IP mode that this instance will test: IpVersion.IPV4 or IpVersion.IPV6
@@ -62,8 +62,6 @@ class IntegrationTestBase():
     assert ip_version != IpVersion.UNKNOWN
     self.server_ip = "::/0" if ip_version == IpVersion.IPV6 else "0.0.0.0"
     self.server_ip = os.getenv("TEST_SERVER_EXTERNAL_IP", self.server_ip)
-    self.admin_port = admin_port
-    self.server_port = server_port
     self.socket_type = socket.AF_INET6 if ip_version == IpVersion.IPV6 else socket.AF_INET
     self.test_server = None
     self.test_servers = []
