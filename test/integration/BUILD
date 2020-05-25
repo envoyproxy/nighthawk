@@ -11,6 +11,21 @@ envoy_package()
 
 py_library(
     name = "integration_test_base",
+    data = [
+        "configurations/nighthawk_http_origin.yaml",
+        "configurations/nighthawk_https_origin.yaml",
+        "configurations/sni_origin.yaml",
+        "//:nighthawk_client",
+        "//:nighthawk_output_transform",
+        "//:nighthawk_service",
+        "//:nighthawk_test_server",
+        "@envoy//test/config/integration/certs",
+    ],
+    deps = [":integration_test_base_lean"],
+)
+
+py_library(
+    name = "integration_test_base_lean",
     srcs = [
         "common.py",
         "integration_test_fixtures.py",
@@ -22,10 +37,6 @@ py_library(
         "configurations/nighthawk_http_origin.yaml",
         "configurations/nighthawk_https_origin.yaml",
         "configurations/sni_origin.yaml",
-        "//:nighthawk_client",
-        "//:nighthawk_output_transform",
-        "//:nighthawk_service",
-        "//:nighthawk_test_server",
         "@envoy//test/config/integration/certs",
     ],
     deps = [

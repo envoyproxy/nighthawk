@@ -8,20 +8,25 @@ import pytest
 
 from test.integration.common import IpVersion
 from test.integration.integration_test_fixtures import (http_test_server_fixture,
-                                                        https_test_server_fixture)
+                                                        https_test_server_fixture,
+                                                        HttpIntegrationTestBase,
+                                                        determineIpVersionsFromEnvironment)
 from test.integration.utility import *
+from test.integration.nighthawk_test_server import NighthawkTestServer
 
 
 def run_with_cpu_profiler(fixture,
                           rps=999999,
                           use_h2=False,
-                          duration=10,
+                          duration=5,
                           max_connections=1,
                           max_active_requests=1,
                           request_body_size=0,
                           response_size=10,
                           concurrency=1):
-  assert (fixture.test_server.enableCpuProfiler())
+  # TODO(oschaaf): refactor
+  if hasattr(fixture, "proxy_server"):
+    assert (fixture.proxy_server.enableCpuProfiler())
   MIN_EXPECTED_REQUESTS = 100
   args = [
       fixture.getTestServerRootUri(), "--rps",
@@ -69,10 +74,65 @@ def run_with_cpu_profiler(fixture,
   logging.info(fixture.transformNighthawkJsonToHumanReadable(json.dumps(parsed_json)))
 
 
-def test_http_h1_small_request_small_reply(http_test_server_fixture):
-  run_with_cpu_profiler(http_test_server_fixture)
+class EnvoyProxyServer(NighthawkTestServer):
+  def __init__(self,
+               server_binary_path,
+               config_template_path,
+               server_ip,
+               ip_version,
+               parameters=dict()):
+    super(EnvoyProxyServer, self).__init__(server_binary_path, config_template_path, server_ip,
+                                              ip_version, parameters)
+    self.docker_image = os.getenv("ENVOY_DOCKER_IMAGE_TO_TEST")
+
+class InjectHttpProxyIntegrationTestBase(HttpIntegrationTestBase):
+  """
+  Base for running plain http tests against the Nighthawk test server
+  """
+
+  def __init__(self, ip_version):
+    """See base class."""
+    super(InjectHttpProxyIntegrationTestBase, self).__init__(ip_version)
+
+  def setUp(self):
+    super(InjectHttpProxyIntegrationTestBase, self).setUp()
+    logging.info("injecting envoy proxy ...")
+    # TODO(oschaaf): how should this interact with multiple backends?
+    self.parameters["proxy_ip"] = self.test_server.server_ip
+    self.parameters["server_port"] = self.test_server.server_port
+    proxy_server = EnvoyProxyServer("envoy",
+                                    "benchmarks/configurations/envoy_proxy.yaml", self.server_ip,
+                                    self.ip_version, self.parameters)
+    assert (proxy_server.start())
+    logging.info("envoy proxy listening at {ip}:{port}".format(ip=proxy_server.server_ip, port=proxy_server.server_port))
+    self.proxy_server = proxy_server
+
+  def getTestServerRootUri(self):
+    """See base class."""
+    r = super(InjectHttpProxyIntegrationTestBase, self).getTestServerRootUri()
+    # TODO(oschaaf): fix, kind of a hack.
+    r = r.replace(":%s" % self.test_server.server_port, ":%s" % self.proxy_server.server_port)
+    return r
+
+@pytest.fixture(params=determineIpVersionsFromEnvironment())
+def inject_envoy_http_proxy_fixture(request):
+  '''
+  Injects an Envoy proxy.
+  '''
+  f = InjectHttpProxyIntegrationTestBase(request.param)
+  f.setUp()
+  yield f
+  f.tearDown()
 
 
+# Plain http: baseline vs running via Envoy
+def test_http_h1_small_request_small_reply_via(inject_envoy_http_proxy_fixture):
+  run_with_cpu_profiler(inject_envoy_http_proxy_fixture)
+
+#def test_http_h1_small_request_small_reply_direct(http_test_server_fixture):
+#  run_with_cpu_profiler(http_test_server_fixture)
+
+# Some more samples. These don't run via an injected Envoy (yet).
 def test_https_h1_small_request_small_reply(https_test_server_fixture):
   run_with_cpu_profiler(https_test_server_fixture)
 

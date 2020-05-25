@@ -45,31 +45,25 @@ class IntegrationTestBase():
   This class will be refactored (https://github.com/envoyproxy/nighthawk/issues/258).
   """
 
-  def __init__(self, ip_version, backend_count=1):
+  def __init__(self, ip_version, admin_port = 0, server_port = 0, backend_count=1):
     """
     Args:
       ip_version: a single IP mode that this instance will test: IpVersion.IPV4 or IpVersion.IPV6
       backend_count: number of Nighthawk Test Server backends to run, to allow testing MultiTarget mode
     """
     super(IntegrationTestBase, self).__init__()
-    self.rundir_override = os.environ["NH_RUNDIR"]
-    self.confdir_override = os.environ["NH_CONFDIR"]
-    self.certdir_override = os.environ["NH_CERTDIR"]
-    self.test_rundir = os.path.join(
-        os.environ["TEST_SRCDIR"],
-        os.environ["TEST_WORKSPACE"]) if self.rundir_override is None else self.rundir_override
-    self.confdir = os.path.join(self.test_rundir, "test/integration/configurations/"
-                               ) if self.confdir_override is None else self.confdir_override
-    self.certdir = os.path.join(self.test_rundir,
-                                "external/envoy/test/config/integration/certs/serverkey.pem"
-                               ) if self.certdir_override is None else self.certdir_override
-    self.nighthawk_test_server_path = os.path.join(self.test_rundir, "nighthawk_test_server")
+    self.test_rundir = os.getenv("NH_RUNDIR", os.path.join(os.getenv("TEST_SRCDIR",""), os.getenv("TEST_WORKSPACE","")))
+    self.confdir = os.getenv("NH_CONFDIR", os.path.join(self.test_rundir, "test/integration/configurations/"))
+    self.certdir = os.getenv("NH_CERTDIR", os.path.join(self.test_rundir, "external/envoy/test/config/integration/certs/"))
+    self.nighthawk_test_server_path = os.getenv("NH_TEST_SERVER_PATH", os.path.join(self.test_rundir, "nighthawk_test_server"))
     self.nighthawk_test_config_path = None
-    self.nighthawk_client_path = os.path.join(self.test_rundir, "nighthawk_client")
-    self.nighthawk_output_transform_path = os.path.join(self.test_rundir,
-                                                        "nighthawk_output_transform")
+    self.nighthawk_client_path = os.getenv("NH_CLIENT_PATH", os.path.join(self.test_rundir, "nighthawk_client"))
+    self.nighthawk_output_transform_path = os.getenv("NH_OUTPUT_TRANSFORM_PATH", os.path.join(self.test_rundir, "nighthawk_output_transform"))
     assert ip_version != IpVersion.UNKNOWN
-    self.server_ip = "::1" if ip_version == IpVersion.IPV6 else "127.0.0.1"
+    self.server_ip = "::/0" if ip_version == IpVersion.IPV6 else "0.0.0.0"
+    self.server_ip = os.getenv("TEST_SERVER_EXTERNAL_IP", self.server_ip)
+    self.admin_port = admin_port
+    self.server_port = server_port
     self.socket_type = socket.AF_INET6 if ip_version == IpVersion.IPV6 else socket.AF_INET
     self.test_server = None
     self.test_servers = []
@@ -77,7 +71,6 @@ class IntegrationTestBase():
     self.parameters = {}
     self.ip_version = ip_version
     self.grpc_service = None
-    print(repr(self))
 
   # TODO(oschaaf): For the NH test server, add a way to let it determine a port by itself and pull that
   # out.
@@ -97,8 +90,9 @@ class IntegrationTestBase():
     """
     Performs sanity checks and starts up the server. Upon exit the server is ready to accept connections.
     """
-    assert (os.path.exists(self.nighthawk_test_server_path))
-    assert (os.path.exists(self.nighthawk_client_path))
+    if os.getenv("NH_NH_DOCKER_IMAGE", "") == "":
+      assert (os.path.exists(self.nighthawk_test_server_path))
+      assert (os.path.exists(self.nighthawk_client_path))
     test_id = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0].replace(
         "[", "_").replace("]", "")
     self.parameters["test_id"] = test_id
@@ -206,11 +200,14 @@ class IntegrationTestBase():
     """
     # Copy the args so our modifications to it stay local.
     args = args.copy()
+    if os.getenv("NH_NH_DOCKER_IMAGE", "") != "":
+      args = ["docker", "run", "--network=host", "--rm", os.getenv("NH_NH_DOCKER_IMAGE"), self.nighthawk_client_path] + args
+    else:
+      args = [self.nighthawk_client_path] + args
     if self.ip_version == IpVersion.IPV6:
-      args.insert(0, "--address-family v6")
+      args.append("--address-family v6")
     if as_json:
-      args.insert(0, "--output-format json")
-    args.insert(0, self.nighthawk_client_path)
+      args.append("--output-format json")
     logging.info("Nighthawk client popen() args: [%s]" % args)
     client_process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = client_process.communicate()
@@ -228,8 +225,11 @@ class IntegrationTestBase():
     return output, logs
 
   def transformNighthawkJsonToHumanReadable(self, json):
-    args = [self.nighthawk_output_transform_path, "--output-format", "human"]
-    logging.info("Nighthawk output transform popen() args: [%s]" % args)
+    args = []
+    if os.getenv("NH_NH_DOCKER_IMAGE", "") != "":
+      args = ["docker", "run", "--rm", "-i", os.getenv("NH_NH_DOCKER_IMAGE")]
+    args = args + [self.nighthawk_output_transform_path, "--output-format", "human"]
+    logging.info("Nighthawk output transform popen() args: %s" % args)
     client_process = subprocess.Popen(
         args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     logging.info("Nighthawk client popen() args: [%s]" % args)
@@ -258,7 +258,7 @@ class HttpIntegrationTestBase(IntegrationTestBase):
     """See base class."""
     super(HttpIntegrationTestBase, self).__init__(ip_version)
     self.nighthawk_test_config_path = os.path.join(
-        self.test_rundir, "{dir}/nighthawk_http_origin.yaml".format(dir=self.confdir_override))
+        self.test_rundir, "{dir}/nighthawk_http_origin.yaml".format(dir=self.confdir))
 
   def getTestServerRootUri(self):
     """See base class."""

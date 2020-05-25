@@ -11,6 +11,7 @@ import tempfile
 import threading
 import time
 from string import Template
+from pathlib import Path
 
 from test.integration.common import IpVersion, NighthawkException
 
@@ -30,35 +31,52 @@ class TestServerBase(object):
     self.server_process = None
     self.server_ip = server_ip
     self.socket_type = socket.AF_INET6 if ip_version == IpVersion.IPV6 else socket.AF_INET
-    self.server_port = -1
-    self.admin_port = -1
     self.admin_address_path = ""
     self.parameterized_config_path = ""
     self.instance_id = str(random.randint(1, 1024 * 1024 * 1024))
     self.parameters = parameters
     self.server_binary_config_path_arg = server_binary_config_path_arg
-
     self.parameters["server_ip"] = self.server_ip
+    self.docker_image = os.getenv("NH_NH_DOCKER_IMAGE", "")
+    tmpdir = os.getenv("TMPDIR", "/tmp")
+    self.parameters["tmpdir"] = tmpdir
     with open(self.config_template_path) as f:
       config = Template(f.read())
       config = config.substitute(self.parameters)
       logging.info("Parameterized server configuration: %s", config)
 
-    with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".yaml") as tmp:
+    Path(tmpdir).mkdir(parents=False, exist_ok=True)
+
+    test_id = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0].replace(
+        "[", "_").replace("]", "")
+
+    with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=test_id + ".yaml", dir=tmpdir) as tmp:
       self.parameterized_config_path = tmp.name
       tmp.write(config)
-    with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".adminpath") as tmp:
+    with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=test_id + ".adminpath", dir=tmpdir) as tmp:
       self.admin_address_path = tmp.name
 
   def serverThreadRunner(self):
-    args = [
+    args = []
+    if self.docker_image != "":
+      tmpdir = os.getenv("TMPDIR", "/tmp")
+      args = ["docker", "run", 
+              "--network=host", 
+              "--rm",
+              "-v", tmpdir + ":" + tmpdir, 
+              "-v", "/Users/oschaaf/tmp/nh_benchmarks:/Users/oschaaf/tmp/nh_benchmarks", 
+              #"-v", os.getenv("NH_CERTDIR") + ":" + os.getenv("NH_CERTDIR"), 
+              self.docker_image]
+    args = args + [
         self.server_binary_path, self.server_binary_config_path_arg, self.parameterized_config_path,
-        "-l", "error", "--base-id", self.instance_id, "--admin-address-path",
+        "-l", "warning", "--base-id", self.instance_id, "--admin-address-path",
         self.admin_address_path
     ]
-    logging.info("Test server popen() args: [%s]" % args)
-    self.server_process = subprocess.Popen(args)
-    self.server_process.communicate()
+    logging.info("Test server popen() args: %s" % args)
+    self.server_process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout, stderr = self.server_process.communicate()
+    logging.info(stdout.decode("utf-8"))
+    logging.info(stderr.decode("utf-8"))
 
   def fetchJsonFromAdminInterface(self, path):
     uri_host = self.server_ip
@@ -101,7 +119,7 @@ class TestServerBase(object):
   def waitUntilServerListening(self):
     # we allow 30 seconds for the server to have its listeners up.
     # (It seems that in sanitizer-enabled runs this can take a little while)
-    timeout = time.time() + 30
+    timeout = time.time() + 10
     while time.time() < timeout:
       if self.tryUpdateFromAdminInterface():
         return True
