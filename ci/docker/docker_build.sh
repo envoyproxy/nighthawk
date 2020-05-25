@@ -22,9 +22,6 @@ rm -rf "${TMP_DIR}"
 echo "Preparing docker build context in ${TMP_DIR}"
 cp -r "${WORKSPACE}/ci/docker/" "${TMP_DIR}/"
 
-set -x
-cp -r "${BAZEL_BIN}/benchmarks" "${TMP_DIR}"
-
 for BINARY in "${BINARIES[@]}"; do
     echo "Copy and strip ${BINARY}"
     TARGET="${TMP_DIR}/${BINARY}"
