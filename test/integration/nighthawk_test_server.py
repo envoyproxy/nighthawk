@@ -64,8 +64,6 @@ class TestServerBase(object):
               "--network=host", 
               "--rm",
               "-v", tmpdir + ":" + tmpdir, 
-              "-v", "/Users/oschaaf/tmp/nh_benchmarks:/Users/oschaaf/tmp/nh_benchmarks", 
-              #"-v", os.getenv("NH_CERTDIR") + ":" + os.getenv("NH_CERTDIR"), 
               self.docker_image]
     args = args + [
         self.server_binary_path, self.server_binary_config_path_arg, self.parameterized_config_path,
