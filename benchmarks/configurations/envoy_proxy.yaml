@@ -1,6 +1,6 @@
 admin:
-  access_log_path: $tmpdir/envoyproxy-admin_access-$test_id.log
-  profile_path: $tmpdir/envoyproxy-envoy-$test_id.prof
+  access_log_path: $tmpdir/envoyproxy-admin-access.log
+  profile_path: $tmpdir/envoyproxy.prof
   address:
     socket_address: { address: $proxy_ip, port_value: 0 }
 static_resources:

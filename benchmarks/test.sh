@@ -8,7 +8,6 @@ function cleanup() {
     if [[ "$OSTYPE" == "darwin"* ]]; then
         #docker-machine stop default
         docker rm -f "$(docker ps -a -q)" || true
-        echo "cleanup"
     fi
 }
 

@@ -91,13 +91,12 @@ class IntegrationTestBase():
     if os.getenv("NH_NH_DOCKER_IMAGE", "") == "":
       assert (os.path.exists(self.nighthawk_test_server_path))
       assert (os.path.exists(self.nighthawk_client_path))
-    test_id = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0].replace(
-        "[", "_").replace("]", "")
-    self.parameters["test_id"] = test_id
+    self.test_id = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0].replace(
+        "[", "_").replace("]", "")[5:]
     for i in range(self.backend_count):
       test_server = NighthawkTestServer(self.nighthawk_test_server_path,
                                         self.nighthawk_test_config_path, self.server_ip,
-                                        self.ip_version, self.parameters)
+                                        self.ip_version, parameters = self.parameters, tag = self.test_id)
       assert (test_server.start())
       self.test_servers.append(test_server)
       if i == 0:
@@ -213,7 +212,7 @@ class IntegrationTestBase():
     output = stdout.decode('utf-8')
     logging.debug("Nighthawk client stdout: [%s]" % output)
     if logs:
-      logging.warning("Nighthawk client stderr: [%s]" % logs)
+      logging.debug("Nighthawk client stderr: [%s]" % logs)
     if as_json:
       output = json.loads(output)
     if expect_failure:
@@ -222,11 +221,12 @@ class IntegrationTestBase():
       assert (client_process.returncode == 0)
     return output, logs
 
-  def transformNighthawkJsonToHumanReadable(self, json):
+  def transformNighthawkJson(self, json, format="human"):
+    # TODO(oschaaf): validate format arg.
     args = []
     if os.getenv("NH_NH_DOCKER_IMAGE", "") != "":
       args = ["docker", "run", "--rm", "-i", os.getenv("NH_NH_DOCKER_IMAGE")]
-    args = args + [self.nighthawk_output_transform_path, "--output-format", "human"]
+    args = args + [self.nighthawk_output_transform_path, "--output-format", format]
     logging.info("Nighthawk output transform popen() args: %s" % args)
     client_process = subprocess.Popen(
         args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

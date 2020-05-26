@@ -71,7 +71,8 @@ def run_with_cpu_profiler(fixture,
       int(global_histograms["benchmark_http_client.request_to_response"]["count"]),
       MIN_EXPECTED_REQUESTS)
   # dump output
-  logging.info(fixture.transformNighthawkJsonToHumanReadable(json.dumps(parsed_json)))
+  logging.info(fixture.transformNighthawkJson(json.dumps(parsed_json)))
+  #logging.error(fixture.test_server.tmpdir)
 
 
 class EnvoyProxyServer(NighthawkTestServer):
@@ -80,9 +81,10 @@ class EnvoyProxyServer(NighthawkTestServer):
                config_template_path,
                server_ip,
                ip_version,
-               parameters=dict()):
+               parameters=dict(),
+               tag=""):
     super(EnvoyProxyServer, self).__init__(server_binary_path, config_template_path, server_ip,
-                                              ip_version, parameters)
+                                              ip_version, parameters=parameters, tag=tag)
     self.docker_image = os.getenv("ENVOY_DOCKER_IMAGE_TO_TEST")
 
 class InjectHttpProxyIntegrationTestBase(HttpIntegrationTestBase):
@@ -102,7 +104,7 @@ class InjectHttpProxyIntegrationTestBase(HttpIntegrationTestBase):
     self.parameters["server_port"] = self.test_server.server_port
     proxy_server = EnvoyProxyServer("envoy",
                                     "benchmarks/configurations/envoy_proxy.yaml", self.server_ip,
-                                    self.ip_version, self.parameters)
+                                    self.ip_version, parameters=self.parameters, tag=self.test_id)
     assert (proxy_server.start())
     logging.info("envoy proxy listening at {ip}:{port}".format(ip=proxy_server.server_ip, port=proxy_server.server_port))
     self.proxy_server = proxy_server

@@ -22,7 +22,7 @@ class TestServerBase(object):
     """
 
   def __init__(self, server_binary_path, config_template_path, server_ip, ip_version,
-               server_binary_config_path_arg, parameters):
+               server_binary_config_path_arg, parameters, tag):
     assert ip_version != IpVersion.UNKNOWN
     self.ip_version = ip_version
     self.server_binary_path = server_binary_path
@@ -38,33 +38,27 @@ class TestServerBase(object):
     self.server_binary_config_path_arg = server_binary_config_path_arg
     self.parameters["server_ip"] = self.server_ip
     self.docker_image = os.getenv("NH_NH_DOCKER_IMAGE", "")
-    tmpdir = os.getenv("TMPDIR", "/tmp")
-    self.parameters["tmpdir"] = tmpdir
+    self.tmpdir = os.path.join(os.getenv("TMPDIR", "/tmp/nighthawk_benchmark/"), tag + "/")
+    self.parameters["tmpdir"] = self.tmpdir
+    self.parameters["tag"] = tag
+
     with open(self.config_template_path) as f:
       config = Template(f.read())
       config = config.substitute(self.parameters)
-      logging.info("Parameterized server configuration: %s", config)
+      logging.debug("Parameterized server configuration: %s", config)
 
-    Path(tmpdir).mkdir(parents=False, exist_ok=True)
+    Path(self.tmpdir).mkdir(parents=True, exist_ok=True)
 
-    test_id = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0].replace(
-        "[", "_").replace("]", "")
-
-    with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=test_id + ".yaml", dir=tmpdir) as tmp:
+    with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".config.yaml", dir=self.tmpdir) as tmp:
       self.parameterized_config_path = tmp.name
       tmp.write(config)
-    with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=test_id + ".adminpath", dir=tmpdir) as tmp:
+    with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".adminport", dir=self.tmpdir) as tmp:
       self.admin_address_path = tmp.name
 
   def serverThreadRunner(self):
     args = []
     if self.docker_image != "":
-      tmpdir = os.getenv("TMPDIR", "/tmp")
-      args = ["docker", "run", 
-              "--network=host", 
-              "--rm",
-              "-v", tmpdir + ":" + tmpdir, 
-              self.docker_image]
+      args = ["docker", "run", "--network=host", "--rm", "-v", "{t}:{t}".format(t=self.tmpdir), self.docker_image]
     args = args + [
         self.server_binary_path, self.server_binary_config_path_arg, self.parameterized_config_path,
         "-l", "warning", "--base-id", self.instance_id, "--admin-address-path",
@@ -73,8 +67,8 @@ class TestServerBase(object):
     logging.info("Test server popen() args: %s" % args)
     self.server_process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = self.server_process.communicate()
-    logging.info(stdout.decode("utf-8"))
-    logging.info(stderr.decode("utf-8"))
+    logging.debug(stdout.decode("utf-8"))
+    logging.debug(stderr.decode("utf-8"))
 
   def fetchJsonFromAdminInterface(self, path):
     uri_host = self.server_ip
@@ -147,6 +141,7 @@ class NighthawkTestServer(TestServerBase):
                config_template_path,
                server_ip,
                ip_version,
-               parameters=dict()):
+               parameters=dict(),
+               tag=""):
     super(NighthawkTestServer, self).__init__(server_binary_path, config_template_path, server_ip,
-                                              ip_version, "--config-path", parameters)
+                                              ip_version, "--config-path", parameters, tag)
