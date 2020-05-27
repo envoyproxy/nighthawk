@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """@package integration_test.py
-Entry point benchmark tests
+
+Entry point for benchmark execution
 """
 import os
 import sys

@@ -6,6 +6,7 @@ py_binary(
     name = "benchmarks",
     srcs = [
         "benchmarks.py",
+        "infra.py",
         "test_benchmark.py",
     ],
     deps = [
