@@ -67,6 +67,7 @@ class IntegrationTestBase():
     self.test_servers = []
     self.backend_count = backend_count
     self.parameters = {}
+    self.tag = ""
     self.ip_version = ip_version
     self.grpc_service = None
 
@@ -91,12 +92,15 @@ class IntegrationTestBase():
     if os.getenv("NH_NH_DOCKER_IMAGE", "") == "":
       assert (os.path.exists(self.nighthawk_test_server_path))
       assert (os.path.exists(self.nighthawk_client_path))
+
     self.test_id = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0].replace(
         "[", "_").replace("]", "")[5:]
+    self.tag = "{timestamp}_{test_id}".format(timestamp=time.strftime('%Y%m%d%H%M%S'), test_id=self.test_id)
+    
     for i in range(self.backend_count):
       test_server = NighthawkTestServer(self.nighthawk_test_server_path,
                                         self.nighthawk_test_config_path, self.server_ip,
-                                        self.ip_version, parameters = self.parameters, tag = self.test_id)
+                                        self.ip_version, parameters = self.parameters, tag = self.tag)
       assert (test_server.start())
       self.test_servers.append(test_server)
       if i == 0:

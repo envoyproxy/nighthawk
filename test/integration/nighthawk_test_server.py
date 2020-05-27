@@ -75,6 +75,7 @@ class TestServerBase(object):
     if self.ip_version == IpVersion.IPV6:
       uri_host = "[%s]" % self.server_ip
     uri = "http://%s:%s%s" % (uri_host, self.admin_port, path)
+    logging.info("Fetch listeners via %s" % uri)
     r = requests.get(uri)
     if r.status_code != 200:
       raise NighthawkException("Bad status code wile fetching json from admin interface: %s",
@@ -105,7 +106,7 @@ class TestServerBase(object):
       uri_host = "[%s]" % self.server_ip
     uri = "http://%s:%s%s" % (uri_host, self.admin_port, "/cpuprofiler?enable=y")
     r = requests.post(uri)
-    logging.info("Enabled CPU profiling: %s", r.status_code == 200)
+    logging.info("Enabled CPU profiling via %s: %s", uri, r.status_code == 200)
     return r.status_code == 200
 
   def waitUntilServerListening(self):
