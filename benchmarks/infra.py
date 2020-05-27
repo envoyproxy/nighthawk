@@ -45,7 +45,7 @@ class InjectHttpProxyIntegrationTestBase(HttpIntegrationTestBase):
     # TODO(oschaaf): how should this interact with multiple backends?
     self.parameters["proxy_ip"] = self.test_server.server_ip
     self.parameters["server_port"] = self.test_server.server_port
-    proxy_server = EnvoyProxyServer("benchmarks/configurations/envoy_proxy.yaml", self.server_ip,
+    proxy_server = EnvoyProxyServer(os.path.join(self.test_rundir, "benchmarks/configurations/envoy_proxy.yaml"), self.server_ip,
                                     self.ip_version, parameters=self.parameters, tag=self.tag)
     assert (proxy_server.start())
     logging.info("envoy proxy listening at {ip}:{port}".format(ip=proxy_server.server_ip, port=proxy_server.server_port))
