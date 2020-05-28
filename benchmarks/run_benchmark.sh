@@ -33,6 +33,7 @@ export NH_CONFDIR="${NH_RUNDIR}benchmarks/benchmarks.runfiles/nighthawk/test/int
 export NH_TEST_SERVER_PATH=nighthawk_test_server
 export NH_CLIENT_PATH=nighthawk_client
 export NH_OUTPUT_TRANSFORM_PATH=nighthawk_output_transform
+export ENVOY_PATH="envoy"
 export TMPDIR="$(pwd)/benchmarks/tmp"
 export NH_NH_DOCKER_IMAGE="envoyproxy/nighthawk-dev:latest"
 export ENVOY_DOCKER_IMAGE_TO_TEST="envoyproxy/envoy-dev:f61b096f6a2dd3a9c74b9a9369a6ea398dbe1f0f"

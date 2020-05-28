@@ -14,10 +14,10 @@ from test.integration.utility import *
 from infra import *
 
 def run_with_cpu_profiler(fixture,
-                          rps=999999,
-                          duration=1,
+                          rps=10000,
+                          duration=30,
                           max_connections=100,
-                          max_active_requests=1,
+                          max_active_requests=100,
                           request_body_size=0,
                           response_size=10,
                           concurrency=1):
@@ -63,6 +63,6 @@ def test_http_h1_small_request_small_reply_via(inject_envoy_http_proxy_fixture):
   run_with_cpu_profiler(inject_envoy_http_proxy_fixture)
 
 # Test the origin directly, using a stock fixture 
-def test_http_h1_small_request_small_reply_direct(http_test_server_fixture):
+def DISABLED_test_http_h1_small_request_small_reply_direct(http_test_server_fixture):
   run_with_cpu_profiler(http_test_server_fixture)
 

@@ -9,6 +9,9 @@ py_binary(
         "infra.py",
         "test_benchmark.py",
     ],
+    data = [
+        "configurations/envoy_proxy.yaml",
+    ],
     deps = [
         "//test/integration:integration_test_base_lean",
     ],
@@ -21,7 +24,9 @@ py_test(
         "infra.py",
         "test_benchmark.py",
     ],
-    data = ["configurations/envoy_proxy.yaml"],
+    data = [
+        "configurations/envoy_proxy.yaml",
+    ],
     main = "benchmarks.py",
     deps = [
         "//test/integration:integration_test_base",
