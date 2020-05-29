@@ -44,26 +44,28 @@ class TestServerBase(object):
     self.parameters["tmpdir"] = self.tmpdir
     self.parameters["tag"] = tag
 
-    def replace_items(obj, params):
+    def substitute_yaml_values(obj, params):
       if isinstance(obj, dict):
         for k, v in obj.items():
-          obj[k] = replace_items(v, params)
+          obj[k] = substitute_yaml_values(v, params)
       elif isinstance(obj, list):
         for i in range(len(obj)):
-          obj[i] = replace_items(obj[i], params)
+          obj[i] = substitute_yaml_values(obj[i], params)
       else:
         if isinstance(obj, str):
+          # Inspect string values and substitute where applicable.
+          INJECT_RUNFILE_MARKER = '@inject-runfile:'
           if obj[0] == '$':
             return Template(obj).substitute(params)
-          elif obj[0] == '@':
+          elif obj.startswith(INJECT_RUNFILE_MARKER):
             r = runfiles.Create()
-            with open(r.Rlocation(obj[1:].strip()), 'r') as file:
+            with open(r.Rlocation(obj[len(INJECT_RUNFILE_MARKER):].strip()), 'r') as file:
               return file.read()
       return obj
 
     with open(self.config_template_path) as f:
       data = yaml.load(f, Loader=yaml.FullLoader)
-      data = replace_items(data, self.parameters)
+      data = substitute_yaml_values(data, self.parameters)
 
     Path(self.tmpdir).mkdir(parents=True, exist_ok=True)
 

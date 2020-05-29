@@ -36,8 +36,8 @@ static_resources:
           tls_certificates:
             - certificate_chain: 
                 inline_string: |
-                  @envoy/test/config/integration/certs/servercert.pem
+                  @inject-runfile:envoy/test/config/integration/certs/servercert.pem
               private_key: 
                 inline_string: |
-                  @envoy/test/config/integration/certs/serverkey.pem
+                  @inject-runfile:envoy/test/config/integration/certs/serverkey.pem
 

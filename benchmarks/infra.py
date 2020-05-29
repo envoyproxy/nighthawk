@@ -41,9 +41,9 @@ class InjectHttpProxyIntegrationTestBase(HttpIntegrationTestBase):
   and set up an Envoy instances to proxy to that, als listening on plain http.
   """
 
-  def __init__(self, ip_version, proxy_config):
+  def __init__(self, ip_version, server_config, proxy_config):
     """See base class."""
-    super(InjectHttpProxyIntegrationTestBase, self).__init__(ip_version)
+    super(InjectHttpProxyIntegrationTestBase, self).__init__(ip_version, server_config)
     self.proxy_config = proxy_config
 
   def setUp(self):
@@ -70,11 +70,11 @@ class InjectHttpProxyIntegrationTestBase(HttpIntegrationTestBase):
     return r
 
 @pytest.fixture(params=determineIpVersionsFromEnvironment())
-def inject_envoy_http_proxy_fixture(request, proxy_config):
+def inject_envoy_http_proxy_fixture(request, server_config, proxy_config):
   '''
   Injects an Envoy proxy.
   '''
-  f = InjectHttpProxyIntegrationTestBase(request.param, proxy_config)
+  f = InjectHttpProxyIntegrationTestBase(request.param, server_config, proxy_config)
   f.setUp()
   yield f
   f.tearDown()

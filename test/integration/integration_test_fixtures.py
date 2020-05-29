@@ -45,7 +45,7 @@ class IntegrationTestBase():
   This class will be refactored (https://github.com/envoyproxy/nighthawk/issues/258).
   """
 
-  def __init__(self, ip_version, backend_count=1):
+  def __init__(self, ip_version, server_config, backend_count=1):
     """
     Args:
       ip_version: a single IP mode that this instance will test: IpVersion.IPV4 or IpVersion.IPV6
@@ -54,7 +54,7 @@ class IntegrationTestBase():
     super(IntegrationTestBase, self).__init__()
     self.confdir = "test/integration/configurations/"
     self.nighthawk_test_server_path = "nighthawk_test_server"
-    self.nighthawk_test_config_path = None
+    self.nighthawk_test_config_path = server_config
     self.nighthawk_client_path = "nighthawk_client"
     self.nighthawk_service_path = "nighthawk_service"
     self.nighthawk_output_transform_path = "nighthawk_output_transform"
@@ -254,10 +254,9 @@ class HttpIntegrationTestBase(IntegrationTestBase):
   Base for running plain http tests against the Nighthawk test server
   """
 
-  def __init__(self, ip_version):
+  def __init__(self, ip_version, server_config):
     """See base class."""
-    super(HttpIntegrationTestBase, self).__init__(ip_version)
-    self.nighthawk_test_config_path = "{dir}/nighthawk_http_origin.yaml".format(dir=self.confdir)
+    super(HttpIntegrationTestBase, self).__init__(ip_version, server_config)
 
   def getTestServerRootUri(self):
     """See base class."""
@@ -269,10 +268,9 @@ class MultiServerHttpIntegrationTestBase(IntegrationTestBase):
   Base for running plain http tests against multiple Nighthawk test servers
   """
 
-  def __init__(self, ip_version, backend_count):
+  def __init__(self, ip_version, server_config, backend_count):
     """See base class."""
-    super(MultiServerHttpIntegrationTestBase, self).__init__(ip_version, backend_count)
-    self.nighthawk_test_config_path = os.path.join(self.confdir, "nighthawk_http_origin.yaml")
+    super(MultiServerHttpIntegrationTestBase, self).__init__(ip_version, server_config, backend_count)
 
   def getTestServerRootUri(self):
     """See base class."""
@@ -288,10 +286,9 @@ class HttpsIntegrationTestBase(IntegrationTestBase):
   Base for https tests against the Nighthawk test server
   """
 
-  def __init__(self, ip_version):
+  def __init__(self, ip_version, server_config):
     """See base class."""
-    super(HttpsIntegrationTestBase, self).__init__(ip_version)
-    self.nighthawk_test_config_path = os.path.join(self.confdir, "nighthawk_https_origin.yaml")
+    super(HttpsIntegrationTestBase, self).__init__(ip_version, server_config)
 
   def getTestServerRootUri(self):
     """See base class."""
@@ -303,9 +300,8 @@ class SniIntegrationTestBase(HttpsIntegrationTestBase):
   Base for https/sni tests against the Nighthawk test server
   """
 
-  def __init__(self, ip_version):
-    super(SniIntegrationTestBase, self).__init__(ip_version)
-    self.nighthawk_test_config_path = os.path.join(self.confdir, "sni_origin.yaml")
+  def __init__(self, ip_version, server_config):
+    super(SniIntegrationTestBase, self).__init__(ip_version, server_config)
 
   def getTestServerRootUri(self):
     """See base class."""
@@ -317,9 +313,8 @@ class MultiServerHttpsIntegrationTestBase(IntegrationTestBase):
   Base for https tests against multiple Nighthawk test servers
   """
 
-  def __init__(self, ip_version, backend_count):
-    super(MultiServerHttpsIntegrationTestBase, self).__init__(ip_version, backend_count)
-    self.nighthawk_test_config_path = os.path.join(self.confdir, "nighthawk_https_origin.yaml")
+  def __init__(self, ip_version, server_config, backend_count):
+    super(MultiServerHttpsIntegrationTestBase, self).__init__(ip_version, server_config, backend_count)
 
   def getTestServerRootUri(self):
     """See base class."""
@@ -329,42 +324,37 @@ class MultiServerHttpsIntegrationTestBase(IntegrationTestBase):
     """See base class."""
     return super(MultiServerHttpsIntegrationTestBase, self).getAllTestServerRootUris(True)
 
+@pytest.fixture()
+def server_config():
+  yield "test/integration/configurations/nighthawk_http_origin.yaml"
 
 @pytest.fixture(params=determineIpVersionsFromEnvironment())
-def http_test_server_fixture(request):
-  f = HttpIntegrationTestBase(request.param)
+def http_test_server_fixture(request, server_config):
+  f = HttpIntegrationTestBase(request.param, server_config)
   f.setUp()
   yield f
   f.tearDown()
 
 
 @pytest.fixture(params=determineIpVersionsFromEnvironment())
-def https_test_server_fixture(request):
-  f = HttpsIntegrationTestBase(request.param)
+def https_test_server_fixture(request, server_config):
+  f = HttpsIntegrationTestBase(request.param, server_config)
   f.setUp()
   yield f
   f.tearDown()
 
 
 @pytest.fixture(params=determineIpVersionsFromEnvironment())
-def multi_http_test_server_fixture(request):
-  f = MultiServerHttpIntegrationTestBase(request.param, backend_count=3)
+def multi_http_test_server_fixture(request, server_config):
+  f = MultiServerHttpIntegrationTestBase(request.param, server_config, backend_count=3)
   f.setUp()
   yield f
   f.tearDown()
 
 
 @pytest.fixture(params=determineIpVersionsFromEnvironment())
-def multi_https_test_server_fixture(request):
-  f = MultiServerHttpsIntegrationTestBase(request.param, backend_count=3)
-  f.setUp()
-  yield f
-  f.tearDown()
-
-
-@pytest.fixture(params=determineIpVersionsFromEnvironment())
-def sni_test_server_fixture(request):
-  f = SniIntegrationTestBase(request.param)
+def multi_https_test_server_fixture(request, server_config):
+  f = MultiServerHttpsIntegrationTestBase(request.param, server_config, backend_count=3)
   f.setUp()
   yield f
   f.tearDown()
