@@ -25,21 +25,10 @@ bazel build //benchmarks:benchmarks
 
 # Specify the ip address family we'll be using. [v4only|v6only|all]
 export ENVOY_IP_TEST_VERSIONS=v4only
-# The bazel rundir
-export NH_RUNDIR="$(${BAZEL} info bazel-bin)/"
-# https certificate location for the stock fixtures
-export NH_CERTDIR="${NH_RUNDIR}benchmarks/benchmarks.runfiles/nighthawk/external/envoy/test/config/integration/certs/"
-# configurations for the stock fixtures
-export NH_CONFDIR="${NH_RUNDIR}benchmarks/benchmarks.runfiles/nighthawk/test/integration/configurations/"
-# locations of the Nighthawk binaries. When running via docker, we don't use paths.
-export NH_TEST_SERVER_PATH=nighthawk_test_server
-export NH_CLIENT_PATH=nighthawk_client
-export NH_OUTPUT_TRANSFORM_PATH=nighthawk_output_transform
 # Explicit tmpdir for OSX docker, to make sure we'll use a volume that works when
 export TMPDIR="$(pwd)/benchmarks/tmp"
 # Nighthawk tools will be sourced from this docker image
 export NH_NH_DOCKER_IMAGE="envoyproxy/nighthawk-dev:latest"
-
 # Envoy docker image that we'll use to inject the Envoy proxy
 export ENVOY_DOCKER_IMAGE_TO_TEST="envoyproxy/envoy-dev:74290ef76a76fbbf50f072dc33438791f93f68c7"
 

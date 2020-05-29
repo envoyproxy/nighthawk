@@ -9,13 +9,13 @@ integration test framework to run benchmark executions.
 import logging
 import json
 import pytest
-from test.integration.integration_test_fixtures import http_test_server_fixture
+from test.integration.integration_test_fixtures import (http_test_server_fixture, https_test_server_fixture)
 from test.integration.utility import *
 from infra import *
 
 def run_with_cpu_profiler(fixture,
                           rps=10000,
-                          duration=30,
+                          duration=1,
                           max_connections=100,
                           max_active_requests=100,
                           request_body_size=0,
@@ -59,10 +59,13 @@ def run_with_cpu_profiler(fixture,
   # TODO(oschaaf): dump fortio/json/yaml/human output formats as artifacts
 
 # Test via injected Envoy
-def test_http_h1_small_request_small_reply_via(inject_envoy_http_proxy_fixture):
+@pytest.mark.parametrize('proxy_config', ["benchmarks/configurations/envoy_proxy.yaml"])
+def test_http_h1_small_request_small_reply_via(inject_envoy_http_proxy_fixture, proxy_config):
   run_with_cpu_profiler(inject_envoy_http_proxy_fixture)
 
 # Test the origin directly, using a stock fixture 
-def DISABLED_test_http_h1_small_request_small_reply_direct(http_test_server_fixture):
+def test_http_h1_small_request_small_reply_direct(http_test_server_fixture):
   run_with_cpu_profiler(http_test_server_fixture)
 
+def test_http_h1_small_request_small_reply_direct_s(https_test_server_fixture):
+  run_with_cpu_profiler(https_test_server_fixture)

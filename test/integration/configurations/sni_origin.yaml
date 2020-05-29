@@ -21,8 +21,12 @@ static_resources:
           "@type": type.googleapis.com/envoy.api.v2.auth.DownstreamTlsContext
           common_tls_context:
             tls_certificates:
-            - certificate_chain: { filename: "$ssl_cert_path" }
-              private_key: { filename: "$ssl_key_path" }     
+              - certificate_chain:
+                  inline_string: |
+                    @envoy/test/config/integration/certs/servercert.pem
+                private_key:
+                  inline_string: |
+                    @envoy/test/config/integration/certs/serverkey.pem
     listener_filters:
     - name: "envoy.listener.tls_inspector"
       typed_config: {}
@@ -35,8 +39,12 @@ static_resources:
           "@type": type.googleapis.com/envoy.api.v2.auth.DownstreamTlsContext
           common_tls_context:
             tls_certificates:
-            - certificate_chain: { filename: "$ssl_cert_path" }
-              private_key: { filename: "$ssl_key_path" }     
+              - certificate_chain: 
+                  inline_string: |
+                    @envoy/test/config/integration/certs/servercert.pem
+                private_key:
+                  inline_string: |
+                    @envoy/test/config/integration/certs/serverkey.pem
       filters:
       - name: envoy.http_connection_manager
         config:

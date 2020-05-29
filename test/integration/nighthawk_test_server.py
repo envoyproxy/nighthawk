@@ -10,8 +10,10 @@ import requests
 import tempfile
 import threading
 import time
+import yaml
 from string import Template
 from pathlib import Path
+from rules_python.python.runfiles import runfiles
 
 from test.integration.common import IpVersion, NighthawkException
 
@@ -42,16 +44,34 @@ class TestServerBase(object):
     self.parameters["tmpdir"] = self.tmpdir
     self.parameters["tag"] = tag
 
+    def replace_items(obj, params):
+      if isinstance(obj, dict):
+        for k, v in obj.items():
+          obj[k] = replace_items(v, params)
+      elif isinstance(obj, list):
+        for i in range(len(obj)):
+          obj[i] = replace_items(obj[i], params)
+      else:
+        if isinstance(obj, str):
+          if obj[0] == '$':
+            return Template(obj).substitute(params)
+          elif obj[0] == '@':
+            r = runfiles.Create()
+            with open(r.Rlocation(obj[1:].strip()), 'r') as file:
+              return file.read()
+      return obj
+
     with open(self.config_template_path) as f:
-      config = Template(f.read())
-      config = config.substitute(self.parameters)
-      logging.debug("Parameterized server configuration: %s", config)
+      data = yaml.load(f, Loader=yaml.FullLoader)
+      data = replace_items(data, self.parameters)
 
     Path(self.tmpdir).mkdir(parents=True, exist_ok=True)
 
     with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".config.yaml", dir=self.tmpdir) as tmp:
       self.parameterized_config_path = tmp.name
-      tmp.write(config)
+      yaml.safe_dump(data, tmp, default_flow_style=False, 
+                      explicit_start=True, allow_unicode=True, encoding='utf-8')
+
     with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".adminport", dir=self.tmpdir) as tmp:
       self.admin_address_path = tmp.name
 
@@ -64,7 +84,7 @@ class TestServerBase(object):
         "-l", "warning", "--base-id", self.instance_id, "--admin-address-path",
         self.admin_address_path
     ]
-    logging.info("Test server popen() args: %s" % args)
+    logging.info("Test server popen() args: %s" % str.join(" ", args))
     self.server_process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = self.server_process.communicate()
     logging.debug(stdout.decode("utf-8"))

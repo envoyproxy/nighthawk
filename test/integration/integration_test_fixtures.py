@@ -52,13 +52,12 @@ class IntegrationTestBase():
       backend_count: number of Nighthawk Test Server backends to run, to allow testing MultiTarget mode
     """
     super(IntegrationTestBase, self).__init__()
-    self.test_rundir = os.getenv("NH_RUNDIR", os.path.join(os.getenv("TEST_SRCDIR",""), os.getenv("TEST_WORKSPACE","")))
-    self.confdir = os.getenv("NH_CONFDIR", os.path.join(self.test_rundir, "test/integration/configurations/"))
-    self.certdir = os.getenv("NH_CERTDIR", os.path.join(self.test_rundir, "external/envoy/test/config/integration/certs/"))
-    self.nighthawk_test_server_path = os.getenv("NH_TEST_SERVER_PATH", os.path.join(self.test_rundir, "nighthawk_test_server"))
+    self.confdir = "test/integration/configurations/"
+    self.nighthawk_test_server_path = "nighthawk_test_server"
     self.nighthawk_test_config_path = None
-    self.nighthawk_client_path = os.getenv("NH_CLIENT_PATH", os.path.join(self.test_rundir, "nighthawk_client"))
-    self.nighthawk_output_transform_path = os.getenv("NH_OUTPUT_TRANSFORM_PATH", os.path.join(self.test_rundir, "nighthawk_output_transform"))
+    self.nighthawk_client_path = "nighthawk_client"
+    self.nighthawk_service_path = "nighthawk_service"
+    self.nighthawk_output_transform_path = "nighthawk_output_transform"
     assert ip_version != IpVersion.UNKNOWN
     self.server_ip = "::/0" if ip_version == IpVersion.IPV6 else "0.0.0.0"
     self.server_ip = os.getenv("TEST_SERVER_EXTERNAL_IP", self.server_ip)
@@ -100,7 +99,7 @@ class IntegrationTestBase():
     for i in range(self.backend_count):
       test_server = NighthawkTestServer(self.nighthawk_test_server_path,
                                         self.nighthawk_test_config_path, self.server_ip,
-                                        self.ip_version, parameters = self.parameters, tag = self.tag)
+                                        self.ip_version, parameters=self.parameters, tag=self.tag)
       assert (test_server.start())
       self.test_servers.append(test_server)
       if i == 0:
@@ -246,8 +245,7 @@ class IntegrationTestBase():
 
   def startNighthawkGrpcService(self, service_name="traffic-generator-service"):
     host = self.server_ip if self.ip_version == IpVersion.IPV4 else "[%s]" % self.server_ip
-    self.grpc_service = NighthawkGrpcService(
-        os.path.join(self.test_rundir, "nighthawk_service"), host, self.ip_version, service_name)
+    self.grpc_service = NighthawkGrpcService(self.nighthawk_service_path, host, self.ip_version, service_name)
     assert (self.grpc_service.start())
 
 
@@ -259,8 +257,7 @@ class HttpIntegrationTestBase(IntegrationTestBase):
   def __init__(self, ip_version):
     """See base class."""
     super(HttpIntegrationTestBase, self).__init__(ip_version)
-    self.nighthawk_test_config_path = os.path.join(
-        self.test_rundir, "{dir}/nighthawk_http_origin.yaml".format(dir=self.confdir))
+    self.nighthawk_test_config_path = "{dir}/nighthawk_http_origin.yaml".format(dir=self.confdir)
 
   def getTestServerRootUri(self):
     """See base class."""
@@ -294,8 +291,6 @@ class HttpsIntegrationTestBase(IntegrationTestBase):
   def __init__(self, ip_version):
     """See base class."""
     super(HttpsIntegrationTestBase, self).__init__(ip_version)
-    self.parameters["ssl_key_path"] = os.path.join(self.certdir, "serverkey.pem")
-    self.parameters["ssl_cert_path"] = os.path.join(self.certdir, "servercert.pem")
     self.nighthawk_test_config_path = os.path.join(self.confdir, "nighthawk_https_origin.yaml")
 
   def getTestServerRootUri(self):
@@ -324,8 +319,6 @@ class MultiServerHttpsIntegrationTestBase(IntegrationTestBase):
 
   def __init__(self, ip_version, backend_count):
     super(MultiServerHttpsIntegrationTestBase, self).__init__(ip_version, backend_count)
-    self.parameters["ssl_key_path"] = os.path.join(self.certdir, "serverkey.pem")
-    self.parameters["ssl_cert_path"] = os.path.join(self.certdir, "servercert.pem")
     self.nighthawk_test_config_path = os.path.join(self.confdir, "nighthawk_https_origin.yaml")
 
   def getTestServerRootUri(self):
