@@ -80,11 +80,11 @@ def test_http_h1_small_request_small_reply_via(inject_envoy_http_proxy_fixture, 
 # Test the origin directly, using a stock fixture
 @pytest.mark.parametrize('server_config',
                          ["test/integration/configurations/nighthawk_http_origin.yaml"])
-def DISABLED_test_http_h1_small_request_small_reply_direct(http_test_server_fixture):
+def test_http_h1_small_request_small_reply_direct(http_test_server_fixture):
   run_with_cpu_profiler(http_test_server_fixture)
 
 
 @pytest.mark.parametrize('server_config',
                          ["test/integration/configurations/nighthawk_https_origin.yaml"])
-def DISABLED_test_http_h1_small_request_small_reply_direct_s(https_test_server_fixture):
+def test_http_h1_small_request_small_reply_direct_s(https_test_server_fixture):
   run_with_cpu_profiler(https_test_server_fixture)

@@ -1,0 +1,10 @@
+FROM frolvlad/alpine-glibc
+
+RUN apk add --update python3 docker openrc
+RUN rc-update add docker boot
+
+ADD benchmarks /usr/local/bin/benchmarks
+
+WORKDIR /usr/local/bin/benchmarks/benchmarks.runfiles/nighthawk/
+
+CMD ["python3", "../../benchmarks"] 
