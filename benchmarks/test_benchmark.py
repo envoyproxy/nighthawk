@@ -5,13 +5,15 @@ Just a demo for now. Show how to tap into Nighthawk's
 integration test framework to run benchmark executions.
 """
 
-
 import logging
 import json
 import pytest
-from test.integration.integration_test_fixtures import (http_test_server_fixture, https_test_server_fixture)
+import os
+from test.integration.integration_test_fixtures import (http_test_server_fixture,
+                                                        https_test_server_fixture)
 from test.integration.utility import *
-from infra import *
+from infra import (inject_envoy_http_proxy_fixture, proxy_config)
+
 
 def run_with_cpu_profiler(fixture,
                           rps=10000,
@@ -25,15 +27,14 @@ def run_with_cpu_profiler(fixture,
     assert (fixture.proxy_server.enableCpuProfiler())
   assert (fixture.test_server.enableCpuProfiler())
   args = [
-      fixture.getTestServerRootUri(),
-      "--rps", str(rps),
-      "--duration", str(duration),
-      "--connections", str(max_connections),
-      "--max-active-requests", str(max_active_requests),
-      "--concurrency", str(concurrency),
-      "--request-header", "x-nighthawk-test-server-config:{response_body_size:%s}" % response_size,
-      "--experimental-h1-connection-reuse-strategy", "lru",
-      "--prefetch-connections"
+      fixture.getTestServerRootUri(), "--rps",
+      str(rps), "--duration",
+      str(duration), "--connections",
+      str(max_connections), "--max-active-requests",
+      str(max_active_requests), "--concurrency",
+      str(concurrency), "--request-header",
+      "x-nighthawk-test-server-config:{response_body_size:%s}" % response_size,
+      "--experimental-h1-connection-reuse-strategy", "lru", "--prefetch-connections"
   ]
   if request_body_size > 0:
     args.append("--request-body-size")
@@ -45,7 +46,7 @@ def run_with_cpu_profiler(fixture,
   request_count = counters["upstream_rq_total"]
   connection_counter = "upstream_cx_http1_total"
 
-  # Some arbitrary sanity checks 
+  # Some arbitrary sanity checks
   assertCounterGreater(counters, "benchmark.http_2xx", 1000)
   assertGreater(counters["upstream_cx_rx_bytes_total"], response_count * response_size)
   assertGreater(counters["upstream_cx_tx_bytes_total"], request_count * request_body_size)
@@ -54,21 +55,36 @@ def run_with_cpu_profiler(fixture,
   # Could potentially set thresholds on acceptable latency here.
 
   # dump human readably output to logs
-  logging.info(fixture.transformNighthawkJson(json.dumps(parsed_json), "human"))
+  json_as_string = json.dumps(parsed_json)
+  human_output = fixture.transformNighthawkJson(json_as_string, "human")
+  logging.info(human_output)
 
-  # TODO(oschaaf): dump fortio/json/yaml/human output formats as artifacts
+  with open(os.path.join(fixture.test_server.tmpdir, "nighthawk-human.txt"), "w") as f:
+    f.write(human_output)
+  with open(os.path.join(fixture.test_server.tmpdir, "nighthawk.json"), "w") as f:
+    f.write(json_as_string)
+  with open(os.path.join(fixture.test_server.tmpdir, "nighthawk.yaml"), "w") as f:
+    f.write(fixture.transformNighthawkJson(json_as_string, "yaml"))
+  with open(os.path.join(fixture.test_server.tmpdir, "fortio.json"), "w") as f:
+    f.write(fixture.transformNighthawkJson(json_as_string, "fortio"))
+
 
 # Test via injected Envoy
 @pytest.mark.parametrize('proxy_config', ["benchmarks/configurations/envoy_proxy.yaml"])
-@pytest.mark.parametrize('server_config', ["test/integration/configurations/nighthawk_http_origin.yaml"])
+@pytest.mark.parametrize('server_config',
+                         ["test/integration/configurations/nighthawk_http_origin.yaml"])
 def test_http_h1_small_request_small_reply_via(inject_envoy_http_proxy_fixture, proxy_config):
   run_with_cpu_profiler(inject_envoy_http_proxy_fixture)
 
-# Test the origin directly, using a stock fixture 
-@pytest.mark.parametrize('server_config', ["test/integration/configurations/nighthawk_http_origin.yaml"])
-def test_http_h1_small_request_small_reply_direct(http_test_server_fixture):
+
+# Test the origin directly, using a stock fixture
+@pytest.mark.parametrize('server_config',
+                         ["test/integration/configurations/nighthawk_http_origin.yaml"])
+def DISABLED_test_http_h1_small_request_small_reply_direct(http_test_server_fixture):
   run_with_cpu_profiler(http_test_server_fixture)
 
-@pytest.mark.parametrize('server_config', ["test/integration/configurations/nighthawk_https_origin.yaml"])
-def test_http_h1_small_request_small_reply_direct_s(https_test_server_fixture):
+
+@pytest.mark.parametrize('server_config',
+                         ["test/integration/configurations/nighthawk_https_origin.yaml"])
+def DISABLED_test_http_h1_small_request_small_reply_direct_s(https_test_server_fixture):
   run_with_cpu_profiler(https_test_server_fixture)

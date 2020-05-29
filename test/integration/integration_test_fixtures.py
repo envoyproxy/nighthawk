@@ -17,6 +17,8 @@ from test.integration.common import IpVersion, NighthawkException
 from test.integration.nighthawk_test_server import NighthawkTestServer
 from test.integration.nighthawk_grpc_service import NighthawkGrpcService
 
+TIMESTAMP = time.strftime('%Y-%m-%d-%H-%M-%S')
+
 
 def determineIpVersionsFromEnvironment():
   env_versions = os.environ.get("ENVOY_IP_TEST_VERSIONS", "all")
@@ -93,13 +95,17 @@ class IntegrationTestBase():
       assert (os.path.exists(self.nighthawk_client_path))
 
     self.test_id = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0].replace(
-        "[", "_").replace("]", "")[5:]
-    self.tag = "{timestamp}_{test_id}".format(timestamp=time.strftime('%Y%m%d%H%M%S'), test_id=self.test_id)
-    
+        "[", "_").replace("]", "").replace("/", "_")[5:]
+    self.tag = "{timestamp}/{test_id}".format(timestamp=TIMESTAMP, test_id=self.test_id)
+
     for i in range(self.backend_count):
-      test_server = NighthawkTestServer(self.nighthawk_test_server_path,
-                                        self.nighthawk_test_config_path, self.server_ip,
-                                        self.ip_version, parameters=self.parameters, tag=self.tag)
+      test_server = NighthawkTestServer(
+          self.nighthawk_test_server_path,
+          self.nighthawk_test_config_path,
+          self.server_ip,
+          self.ip_version,
+          parameters=self.parameters,
+          tag=self.tag)
       assert (test_server.start())
       self.test_servers.append(test_server)
       if i == 0:
@@ -201,7 +207,10 @@ class IntegrationTestBase():
     # Copy the args so our modifications to it stay local.
     args = args.copy()
     if os.getenv("NH_NH_DOCKER_IMAGE", "") != "":
-      args = ["docker", "run", "--network=host", "--rm", os.getenv("NH_NH_DOCKER_IMAGE"), self.nighthawk_client_path] + args
+      args = [
+          "docker", "run", "--network=host", "--rm",
+          os.getenv("NH_NH_DOCKER_IMAGE"), self.nighthawk_client_path
+      ] + args
     else:
       args = [self.nighthawk_client_path] + args
     if self.ip_version == IpVersion.IPV6:
@@ -245,7 +254,8 @@ class IntegrationTestBase():
 
   def startNighthawkGrpcService(self, service_name="traffic-generator-service"):
     host = self.server_ip if self.ip_version == IpVersion.IPV4 else "[%s]" % self.server_ip
-    self.grpc_service = NighthawkGrpcService(self.nighthawk_service_path, host, self.ip_version, service_name)
+    self.grpc_service = NighthawkGrpcService(self.nighthawk_service_path, host, self.ip_version,
+                                             service_name)
     assert (self.grpc_service.start())
 
 
@@ -270,7 +280,8 @@ class MultiServerHttpIntegrationTestBase(IntegrationTestBase):
 
   def __init__(self, ip_version, server_config, backend_count):
     """See base class."""
-    super(MultiServerHttpIntegrationTestBase, self).__init__(ip_version, server_config, backend_count)
+    super(MultiServerHttpIntegrationTestBase, self).__init__(ip_version, server_config,
+                                                             backend_count)
 
   def getTestServerRootUri(self):
     """See base class."""
@@ -314,7 +325,8 @@ class MultiServerHttpsIntegrationTestBase(IntegrationTestBase):
   """
 
   def __init__(self, ip_version, server_config, backend_count):
-    super(MultiServerHttpsIntegrationTestBase, self).__init__(ip_version, server_config, backend_count)
+    super(MultiServerHttpsIntegrationTestBase, self).__init__(ip_version, server_config,
+                                                              backend_count)
 
   def getTestServerRootUri(self):
     """See base class."""
@@ -324,9 +336,11 @@ class MultiServerHttpsIntegrationTestBase(IntegrationTestBase):
     """See base class."""
     return super(MultiServerHttpsIntegrationTestBase, self).getAllTestServerRootUris(True)
 
+
 @pytest.fixture()
 def server_config():
   yield "test/integration/configurations/nighthawk_http_origin.yaml"
+
 
 @pytest.fixture(params=determineIpVersionsFromEnvironment())
 def http_test_server_fixture(request, server_config):

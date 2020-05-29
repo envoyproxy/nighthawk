@@ -11,7 +11,7 @@ The goal is te be able to:
 - run the nighthawk tools via docker
 - offer stock tests, but also allow scaffolding consumer-specific tests
 
-## Example: scavaging a selection of stock tests.
+## Example: Docker based execution, scavaging benchmark/
 
 This scripts shows how to use the benchmarking suite.
 It will run a selection of an example [benchmarks](test_benchmark.py)
@@ -31,9 +31,25 @@ export TMPDIR="$(pwd)/benchmarks/tmp"
 export NH_NH_DOCKER_IMAGE="envoyproxy/nighthawk-dev:latest"
 # Envoy docker image that we'll use to inject the Envoy proxy
 export ENVOY_DOCKER_IMAGE_TO_TEST="envoyproxy/envoy-dev:74290ef76a76fbbf50f072dc33438791f93f68c7"
+# Envoy is called 'Envoy' in the Envoy docker image.
+export ENVOY_PATH="envoy"
 
 # run all tests starting with test_http_h1_small in benchmarks/
 bazel-bin/benchmarks/benchmarks --log-cli-level=info -vvvv -k test_http_h1_small benchmarks/
+```
+
+## Example: running with binaries
+
+This will build the Nighthawk binaries from the c++ code, and use those to
+execute the benchmarks. Environment variable `ENVOY_PATH` can be used to
+specify a custom Envoy binary to use to inject as a proxy between the test
+client and server. If not set, the benchmark suite will fall back to configuring
+Nighthawk's test server for that. Note that the build can be a lengthy process.
+
+```bash
+git clone https://github.com/oschaaf/nighthawk.git benchmark-test
+cd benchmark-test
+bazel test --test_summary=detailed --test_output=all --test_arg=--log-cli-level=info --test_env=ENVOY_IP_TEST_VERSIONS=v4only --test_env=HEAPPROFILE= --test_env=HEAPCHECK= --cache_test_results=no --compilation_mode=opt --cxxopt=-g --cxxopt=-ggdb3 //benchmarks:*
 ```
 
 # TODOs

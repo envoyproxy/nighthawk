@@ -69,18 +69,28 @@ class TestServerBase(object):
 
     Path(self.tmpdir).mkdir(parents=True, exist_ok=True)
 
-    with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".config.yaml", dir=self.tmpdir) as tmp:
+    with tempfile.NamedTemporaryFile(
+        mode="w", delete=False, suffix=".config.yaml", dir=self.tmpdir) as tmp:
       self.parameterized_config_path = tmp.name
-      yaml.safe_dump(data, tmp, default_flow_style=False, 
-                      explicit_start=True, allow_unicode=True, encoding='utf-8')
+      yaml.safe_dump(
+          data,
+          tmp,
+          default_flow_style=False,
+          explicit_start=True,
+          allow_unicode=True,
+          encoding='utf-8')
 
-    with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".adminport", dir=self.tmpdir) as tmp:
+    with tempfile.NamedTemporaryFile(
+        mode="w", delete=False, suffix=".adminport", dir=self.tmpdir) as tmp:
       self.admin_address_path = tmp.name
 
   def serverThreadRunner(self):
     args = []
     if self.docker_image != "":
-      args = ["docker", "run", "--network=host", "--rm", "-v", "{t}:{t}".format(t=self.tmpdir), self.docker_image]
+      args = [
+          "docker", "run", "--network=host", "--rm", "-v", "{t}:{t}".format(t=self.tmpdir),
+          self.docker_image
+      ]
     args = args + [
         self.server_binary_path, self.server_binary_config_path_arg, self.parameterized_config_path,
         "-l", "warning", "--base-id", self.instance_id, "--admin-address-path",
@@ -148,6 +158,7 @@ class TestServerBase(object):
     return self.waitUntilServerListening()
 
   def stop(self):
+    os.remove(self.admin_address_path)
     self.server_process.terminate()
     self.server_thread.join()
     return self.server_process.returncode
