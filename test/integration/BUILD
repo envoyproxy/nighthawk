@@ -56,15 +56,14 @@ py_library(
         requirement("pluggy"),
         requirement("zipp"),
         requirement("six"),
-        requirement("atomicwrites"),
         requirement("py"),
         requirement("more_itertools"),
         requirement("importlib_metadata"),
-        requirement("pathlib2"),
         requirement("packaging"),
         requirement("pytest-xdist"),
         requirement("execnet"),
         requirement("apipkg"),
+        requirement("pyyaml"),
     ],
 )
 
@@ -107,8 +106,6 @@ py_binary(
         ],
         "//conditions:default": [],
     }),
-    python_version = "PY3",
-    srcs_version = "PY3ONLY",
     deps = [
         ":test_connection_management_lib",
         ":test_grpc_service_lib",
