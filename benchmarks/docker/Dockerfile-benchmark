@@ -1,10 +1,14 @@
-FROM frolvlad/alpine-glibc
+FROM frolvlad/alpine-python3
 
-RUN apk add --update python3 docker openrc
+RUN apk add docker openrc
 RUN rc-update add docker boot
 
 ADD benchmarks /usr/local/bin/benchmarks
 
 WORKDIR /usr/local/bin/benchmarks
 
-CMD ["python3", "./benchmarks"] 
+ENV ENVOY_PATH="envoy" \
+    RUNFILES_DIR="/usr/local/bin/benchmarks/benchmarks.runfiles/" \
+    ENVOY_IP_TEST_VERSIONS="v4only"
+
+CMD ["./benchmarks", "--help"]

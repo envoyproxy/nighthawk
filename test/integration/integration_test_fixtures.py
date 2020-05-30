@@ -90,7 +90,7 @@ class IntegrationTestBase():
     """
     Performs sanity checks and starts up the server. Upon exit the server is ready to accept connections.
     """
-    if os.getenv("NH_NH_DOCKER_IMAGE", "") == "":
+    if os.getenv("NH_DOCKER_IMAGE", "") == "":
       assert (os.path.exists(self.nighthawk_test_server_path))
       assert (os.path.exists(self.nighthawk_client_path))
 
@@ -206,10 +206,10 @@ class IntegrationTestBase():
     """
     # Copy the args so our modifications to it stay local.
     args = args.copy()
-    if os.getenv("NH_NH_DOCKER_IMAGE", "") != "":
+    if os.getenv("NH_DOCKER_IMAGE", "") != "":
       args = [
           "docker", "run", "--network=host", "--rm",
-          os.getenv("NH_NH_DOCKER_IMAGE"), self.nighthawk_client_path
+          os.getenv("NH_DOCKER_IMAGE"), self.nighthawk_client_path
       ] + args
     else:
       args = [self.nighthawk_client_path] + args
@@ -236,8 +236,8 @@ class IntegrationTestBase():
   def transformNighthawkJson(self, json, format="human"):
     # TODO(oschaaf): validate format arg.
     args = []
-    if os.getenv("NH_NH_DOCKER_IMAGE", "") != "":
-      args = ["docker", "run", "--rm", "-i", os.getenv("NH_NH_DOCKER_IMAGE")]
+    if os.getenv("NH_DOCKER_IMAGE", "") != "":
+      args = ["docker", "run", "--rm", "-i", os.getenv("NH_DOCKER_IMAGE")]
     args = args + [self.nighthawk_output_transform_path, "--output-format", format]
     logging.info("Nighthawk output transform popen() args: %s" % args)
     client_process = subprocess.Popen(

@@ -29,7 +29,7 @@ $BAZEL build //benchmarks:benchmarks
 export ENVOY_IP_TEST_VERSIONS=v4only
 export ENVOY_PATH="envoy"
 export TMPDIR="$(pwd)/benchmarks/tmp"
-export NH_NH_DOCKER_IMAGE="envoyproxy/nighthawk-dev:latest"
+export NH_DOCKER_IMAGE="envoyproxy/nighthawk-dev:latest"
 export ENVOY_DOCKER_IMAGE_TO_TEST="envoyproxy/envoy-dev:f61b096f6a2dd3a9c74b9a9369a6ea398dbe1f0f"
 
 # run all tests starting with test_http_h1_small

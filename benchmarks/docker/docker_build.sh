@@ -30,3 +30,10 @@ echo "running docker build ... "
 docker build -f "${TMP_DIR}/Dockerfile-${DOCKER_NAME}" -t "${DOCKER_IMAGE_PREFIX}-dev:latest" .
 rm -rf "${TMP_DIR}"
 echo "docker build finished"
+
+if [[ $PUSH == "1" ]]; then
+    echo "pushing ${DOCKER_IMAGE_PREFIX}-dev:latest .."
+    docker tag "${DOCKER_IMAGE_PREFIX}-dev:latest" "${DOCKER_IMAGE_PREFIX}-dev:latest"
+    docker push "${DOCKER_IMAGE_PREFIX}-dev:latest"
+    echo "docker image pushed"
+fi

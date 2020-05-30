@@ -39,7 +39,7 @@ class TestServerBase(object):
     self.parameters = parameters
     self.server_binary_config_path_arg = server_binary_config_path_arg
     self.parameters["server_ip"] = self.server_ip
-    self.docker_image = os.getenv("NH_NH_DOCKER_IMAGE", "")
+    self.docker_image = os.getenv("NH_DOCKER_IMAGE", "")
     self.tmpdir = os.path.join(os.getenv("TMPDIR", "/tmp/nighthawk_benchmark/"), tag + "/")
     self.parameters["tmpdir"] = self.tmpdir
     self.parameters["tag"] = tag

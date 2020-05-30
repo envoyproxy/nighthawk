@@ -28,7 +28,7 @@ export ENVOY_IP_TEST_VERSIONS=v4only
 # Explicit tmpdir for OSX docker, to make sure we'll use a volume that works when
 export TMPDIR="$(pwd)/benchmarks/tmp"
 # Nighthawk tools will be sourced from this docker image
-export NH_NH_DOCKER_IMAGE="envoyproxy/nighthawk-dev:latest"
+export NH_DOCKER_IMAGE="envoyproxy/nighthawk-dev:latest"
 # Envoy docker image that we'll use to inject the Envoy proxy
 export ENVOY_DOCKER_IMAGE_TO_TEST="envoyproxy/envoy-dev:74290ef76a76fbbf50f072dc33438791f93f68c7"
 # Envoy is called 'Envoy' in the Envoy docker image.
