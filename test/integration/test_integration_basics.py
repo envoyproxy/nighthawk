@@ -201,7 +201,7 @@ def test_http_concurrency(http_test_server_fixture):
 
 
 @pytest.mark.parametrize('server_config',
-                         ["test/integration/configurations/nighthawk_https_origin.yaml"])
+                         ["nighthawk/test/integration/configurations/nighthawk_https_origin.yaml"])
 def test_https_h1(https_test_server_fixture):
   """
   Runs the CLI configured to use HTTP/1 over https against our test server, and sanity
@@ -235,7 +235,7 @@ def test_https_h1(https_test_server_fixture):
 
 
 @pytest.mark.parametrize('server_config',
-                         ["test/integration/configurations/nighthawk_https_origin.yaml"])
+                         ["nighthawk/test/integration/configurations/nighthawk_https_origin.yaml"])
 def test_https_h2(https_test_server_fixture):
   """
   Runs the CLI configured to use HTTP/2 (using https) against our test server, and sanity
@@ -266,7 +266,7 @@ def test_https_h2(https_test_server_fixture):
 
 
 @pytest.mark.parametrize('server_config',
-                         ["test/integration/configurations/nighthawk_https_origin.yaml"])
+                         ["nighthawk/test/integration/configurations/nighthawk_https_origin.yaml"])
 def test_https_h2_multiple_connections(https_test_server_fixture):
   """
   Test that the experimental h2 pool uses multiple connections.
@@ -320,7 +320,7 @@ def _do_tls_configuration_test(https_test_server_fixture, cli_parameter, use_h2)
 
 
 @pytest.mark.parametrize('server_config',
-                         ["test/integration/configurations/nighthawk_https_origin.yaml"])
+                         ["nighthawk/test/integration/configurations/nighthawk_https_origin.yaml"])
 def test_https_h1_tls_context_configuration(https_test_server_fixture):
   """
   Verifies specifying tls cipher suites works with the h1 pool
@@ -329,7 +329,7 @@ def test_https_h1_tls_context_configuration(https_test_server_fixture):
 
 
 @pytest.mark.parametrize('server_config',
-                         ["test/integration/configurations/nighthawk_https_origin.yaml"])
+                         ["nighthawk/test/integration/configurations/nighthawk_https_origin.yaml"])
 def test_https_h1_transport_socket_configuration(https_test_server_fixture):
   """
   Verifies specifying tls cipher suites via transport socket works with the h1 pool
@@ -339,7 +339,7 @@ def test_https_h1_transport_socket_configuration(https_test_server_fixture):
 
 
 @pytest.mark.parametrize('server_config',
-                         ["test/integration/configurations/nighthawk_https_origin.yaml"])
+                         ["nighthawk/test/integration/configurations/nighthawk_https_origin.yaml"])
 def test_https_h2_tls_context_configuration(https_test_server_fixture):
   """
   Verifies specifying tls cipher suites works with the h2 pool
@@ -348,7 +348,7 @@ def test_https_h2_tls_context_configuration(https_test_server_fixture):
 
 
 @pytest.mark.parametrize('server_config',
-                         ["test/integration/configurations/nighthawk_https_origin.yaml"])
+                         ["nighthawk/test/integration/configurations/nighthawk_https_origin.yaml"])
 def test_https_h2_transport_socket_configuration(https_test_server_fixture):
   """
   Verifies specifying tls cipher suites via transport socket works with the h2 pool
@@ -357,7 +357,7 @@ def test_https_h2_transport_socket_configuration(https_test_server_fixture):
 
 
 @pytest.mark.parametrize('server_config',
-                         ["test/integration/configurations/nighthawk_https_origin.yaml"])
+                         ["nighthawk/test/integration/configurations/nighthawk_https_origin.yaml"])
 def test_https_prefetching(https_test_server_fixture):
   """
   Test we prefetch connections. We test for 1 second at 1 rps, which should
@@ -373,7 +373,7 @@ def test_https_prefetching(https_test_server_fixture):
 
 
 @pytest.mark.parametrize('server_config',
-                         ["test/integration/configurations/nighthawk_https_origin.yaml"])
+                         ["nighthawk/test/integration/configurations/nighthawk_https_origin.yaml"])
 def test_https_log_verbosity(https_test_server_fixture):
   """
   Test that that the specified log verbosity level is respected.
@@ -530,7 +530,7 @@ def test_multiple_backends_http_h1(multi_http_test_server_fixture):
 
 
 @pytest.mark.parametrize('server_config',
-                         ["test/integration/configurations/nighthawk_https_origin.yaml"])
+                         ["nighthawk/test/integration/configurations/nighthawk_https_origin.yaml"])
 def test_multiple_backends_https_h1(multi_https_test_server_fixture):
   """
   Runs the CLI configured to use HTTP/1 with TLS against multiple test servers, and sanity

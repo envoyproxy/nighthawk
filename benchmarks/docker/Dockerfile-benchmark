@@ -5,6 +5,6 @@ RUN rc-update add docker boot
 
 ADD benchmarks /usr/local/bin/benchmarks
 
-WORKDIR /usr/local/bin/benchmarks/benchmarks.runfiles/nighthawk/
+WORKDIR /usr/local/bin/benchmarks
 
-CMD ["python3", "../../benchmarks"] 
+CMD ["python3", "./benchmarks"] 

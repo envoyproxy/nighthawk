@@ -35,7 +35,7 @@ class EnvoyProxyServer(NighthawkTestServer):
 
 @pytest.fixture()
 def proxy_config():
-  yield "benchmarks/configurations/envoy_proxy.yaml"
+  yield "nighthawk/benchmarks/configurations/envoy_proxy.yaml"
 
 
 class InjectHttpProxyIntegrationTestBase(HttpIntegrationTestBase):

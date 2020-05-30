@@ -63,7 +63,8 @@ class TestServerBase(object):
               return file.read()
       return obj
 
-    with open(self.config_template_path) as f:
+    r = runfiles.Create()
+    with open(r.Rlocation(self.config_template_path)) as f:
       data = yaml.load(f, Loader=yaml.FullLoader)
       data = substitute_yaml_values(data, self.parameters)
 

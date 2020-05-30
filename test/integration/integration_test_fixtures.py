@@ -339,7 +339,7 @@ class MultiServerHttpsIntegrationTestBase(IntegrationTestBase):
 
 @pytest.fixture()
 def server_config():
-  yield "test/integration/configurations/nighthawk_http_origin.yaml"
+  yield "nighthawk/test/integration/configurations/nighthawk_http_origin.yaml"
 
 
 @pytest.fixture(params=determineIpVersionsFromEnvironment())
