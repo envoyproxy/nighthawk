@@ -54,7 +54,7 @@ class IntegrationTestBase():
       backend_count: number of Nighthawk Test Server backends to run, to allow testing MultiTarget mode
     """
     super(IntegrationTestBase, self).__init__()
-    self.confdir = "test/integration/configurations/"
+    self.confdir = "nighthawk/test/integration/configurations/"
     self.nighthawk_test_server_path = "nighthawk_test_server"
     self.nighthawk_test_config_path = server_config
     self.nighthawk_client_path = "nighthawk_client"
