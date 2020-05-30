@@ -20,8 +20,9 @@ TMP_DIR="${WORKSPACE}/tmp-docker-build-context"
 rm -rf "${TMP_DIR}"
 
 echo "Preparing docker build context in ${TMP_DIR}"
-cp -r "${WORKSPACE}/benchmarks/docker/" "${TMP_DIR}/"
-cp -r "${BAZEL_BIN}/benchmarks" "${TMP_DIR}/"
+# We flatten any symlinks to make this work on Linux (OSX doesn't need this)
+cp -Lr "${WORKSPACE}/benchmarks/docker/" "${TMP_DIR}/"
+cp -Lr "${BAZEL_BIN}/benchmarks" "${TMP_DIR}/"
 
 
 cd "${TMP_DIR}"
