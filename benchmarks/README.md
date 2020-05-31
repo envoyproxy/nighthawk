@@ -14,7 +14,7 @@ The goal is te be able to:
 ## Example: Docker based execution, scavaging benchmark/
 
 This scripts shows how to use the benchmarking suite.
-It will run a selection of an example [benchmarks](test_benchmark.py)
+It will run a selection of an example [benchmarks](test/test_discovery.py)
 scavenged from `/benchmarks`, which injects Envoy between the 
 benchmark client and test server.
 

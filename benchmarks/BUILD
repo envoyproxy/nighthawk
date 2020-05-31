@@ -7,7 +7,6 @@ py_binary(
     srcs = [
         "benchmarks.py",
         "infra.py",
-        "test_benchmark.py",
     ],
     data = [
         "configurations/envoy_proxy.yaml",
@@ -22,7 +21,7 @@ py_test(
     srcs = [
         "benchmarks.py",
         "infra.py",
-        "test_benchmark.py",
+        "test/test_discovery.py",
     ],
     data = [
         "configurations/envoy_proxy.yaml",

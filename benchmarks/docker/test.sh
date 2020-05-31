@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# This script runs the dockerized benchmarking framework, which in
+# turn will pull Nighthawk and Envoy in via docker. 
+
 set -eo pipefail
 set +x
 set -u
