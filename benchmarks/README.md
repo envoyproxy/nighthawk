@@ -52,6 +52,39 @@ cd benchmark-test
 bazel test --test_summary=detailed --test_output=all --test_arg=--log-cli-level=info --test_env=ENVOY_IP_TEST_VERSIONS=v4only --test_env=HEAPPROFILE= --test_env=HEAPCHECK= --cache_test_results=no --compilation_mode=opt --cxxopt=-g --cxxopt=-ggdb3 //benchmarks:*
 ```
 
+## Example: fully dockerized flow
+
+The framework can be run via docker and used that way to execute
+python benchmarks scripts not sourced from this repository, but
+elsewhere. An example:
+
+```bash
+# This script runs the dockerized benchmarking framework, which in
+# turn will pull Nighthawk and Envoy in via docker. 
+
+set -eo pipefail
+set +x
+set -u
+
+# The benchmark logs and artifacts will be dropped here
+OUTDIR="/home/oschaaf/code/envoy-perf-vscode/nighthawk/benchmarks/tmp/"
+# Used to map the test that we want to see executed into the docker container
+# Note: the contents could be fetched via http, for example.
+TEST_DIR="/home/oschaaf/code/envoy-perf-vscode/nighthawk/benchmarks/test/"
+
+# Rebuild the docker in case something changed.
+./docker_build.sh && 
+docker run -it --rm \
+  -v "/var/run/docker.sock:/var/run/docker.sock:rw" \
+  -v "${OUTDIR}:${OUTDIR}:rw" \
+  -v "${TEST_DIR}:/usr/local/bin/benchmarks/benchmarks.runfiles/nighthawk/benchmarks/external_tests/" \
+  --network=host \
+  --env NH_DOCKER_IMAGE="envoyproxy/nighthawk-dev:latest" \
+  --env ENVOY_DOCKER_IMAGE_TO_TEST="envoyproxy/envoy-dev:f61b096f6a2dd3a9c74b9a9369a6ea398dbe1f0f" \
+  --env TMPDIR="${OUTDIR}" \
+  oschaaf/benchmark-dev:latest ./benchmarks --log-cli-level=info -vvvv 
+```
+
 # TODOs
 
 - Copy out the artifacts and push those to a gcp bucket. Current status:

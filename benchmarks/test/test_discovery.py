@@ -86,5 +86,5 @@ def DISABLED_test_http_h1_small_request_small_reply_direct(http_test_server_fixt
 
 @pytest.mark.parametrize('server_config',
                          ["nighthawk/test/integration/configurations/nighthawk_https_origin.yaml"])
-def DISABLED_test_http_h1_small_request_small_reply_direct_s(https_test_server_fixture):
+def DISABLED_test_https_h1_small_request_small_reply_direct_s(https_test_server_fixture):
   run_with_cpu_profiler(https_test_server_fixture)
