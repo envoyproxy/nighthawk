@@ -90,18 +90,12 @@ docker run -it --rm \
 - Copy out the artifacts and push those to a gcp bucket. Current status:
    - cpu profiles are dumped to tmp per test (named according to the test). ideally we'd
      also dump flamegraph svg's
-   - raw json is send to the output on stderr. ideally we'd persist in fortio format,
-     raw yaml/json, and human readable output.
 - A UI -- though we may be able to get by with just a uri structure conventioned around the envoy
   sha. e.g. http://perf-ci-host/gcpsync/[envoy-sha]-[timestamp]/ to link CI, and directory index the 
   artifacts.
-- Generally tidy up, possibly some refactoring
-- Consider offering a prebuild version of the test suite itself in a docker image.
 
 # FUTURE
 
-- Allow scavenging a separate repo for tests. Currently locally sourcing tests
-  by specifying one or more directories is facilitated.
 - profiling / flamegraphing via perf/bcc tools; include the proxy-wasm flamegraphing research r&d
 - Allow injection of other proxies: nginx, haproxy
 - Allow using alt clients, like Fortio & wrk2
