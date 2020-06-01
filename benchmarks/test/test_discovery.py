@@ -17,7 +17,7 @@ from infra import (inject_envoy_http_proxy_fixture, proxy_config)
 
 def run_with_cpu_profiler(fixture,
                           rps=10000,
-                          duration=1,
+                          duration=30,
                           max_connections=100,
                           max_active_requests=100,
                           request_body_size=0,
@@ -67,6 +67,12 @@ def run_with_cpu_profiler(fixture,
     f.write(fixture.transformNighthawkJson(json_as_string, "yaml"))
   with open(os.path.join(fixture.test_server.tmpdir, "fortio.json"), "w") as f:
     f.write(fixture.transformNighthawkJson(json_as_string, "fortio"))
+  with open("benchmarks/templates/simple_plot.html", "r") as r:
+    txt = r.readlines()
+    with open(os.path.join(fixture.test_server.tmpdir, "simple_plot.html"), "w") as w:
+      # This will source nighthawk.json over http from the same dir.
+      # TODO(oschaaf): consider injecting the json directly into a html script source.
+      w.write(str.join("", txt))
 
 
 # Test via injected Envoy
@@ -80,11 +86,11 @@ def test_http_h1_small_request_small_reply_via(inject_envoy_http_proxy_fixture, 
 # Test the origin directly, using a stock fixture
 @pytest.mark.parametrize('server_config',
                          ["nighthawk/test/integration/configurations/nighthawk_http_origin.yaml"])
-def DISABLED_test_http_h1_small_request_small_reply_direct(http_test_server_fixture):
+def test_http_h1_small_request_small_reply_direct(http_test_server_fixture):
   run_with_cpu_profiler(http_test_server_fixture)
 
 
 @pytest.mark.parametrize('server_config',
                          ["nighthawk/test/integration/configurations/nighthawk_https_origin.yaml"])
-def DISABLED_test_https_h1_small_request_small_reply_direct_s(https_test_server_fixture):
+def test_https_h1_small_request_small_reply_direct_s(https_test_server_fixture):
   run_with_cpu_profiler(https_test_server_fixture)

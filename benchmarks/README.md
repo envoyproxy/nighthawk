@@ -1,4 +1,4 @@
-# WIP - Benchmarking testsuite
+# Benchmarking testsuite
 
 The NH benchmark test suite builds on top Nighthawk's integration test framework, and
 can be used to scaffold tests and obtain latency reports as well as flamegraphs.

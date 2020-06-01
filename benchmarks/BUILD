@@ -10,6 +10,7 @@ py_binary(
     ],
     data = [
         "configurations/envoy_proxy.yaml",
+        "templates/simple_plot.html",
     ],
     deps = [
         "//test/integration:integration_test_base_lean",
