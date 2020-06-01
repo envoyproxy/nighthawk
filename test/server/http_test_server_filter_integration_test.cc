@@ -189,6 +189,29 @@ TEST_P(HttpTestServerIntegrationTest, TestHeaderConfig) {
   EXPECT_EQ(std::string(10, 'a'), response->body());
 }
 
+TEST_P(HttpTestServerIntegrationTest, TestEchoHeaders) {
+  for (auto unique_header : {"one", "two", "three"}) {
+    Envoy::BufferingStreamDecoderPtr response = makeSingleRequest(
+        lookupPort("http"), "GET", "/somepath", "", downstream_protocol_, version_, "foo.com", "",
+        [unique_header](Envoy::Http::RequestHeaderMapImpl& request_headers) {
+          request_headers.addCopy(Envoy::Http::LowerCaseString("gray"), "pidgeon");
+          request_headers.addCopy(Envoy::Http::LowerCaseString("red"), "fox");
+          request_headers.addCopy(Envoy::Http::LowerCaseString("unique_header"), unique_header);
+          request_headers.addCopy(
+              Nighthawk::Server::TestServer::HeaderNames::get().TestServerConfig,
+              "{echo_request_headers: true}");
+        });
+    ASSERT_TRUE(response->complete());
+    EXPECT_EQ("200", response->headers().Status()->value().getStringView());
+    EXPECT_THAT(response->body(), HasSubstr(R"(':authority', 'foo.com')"));
+    EXPECT_THAT(response->body(), HasSubstr(R"(':path', '/somepath')"));
+    EXPECT_THAT(response->body(), HasSubstr(R"(':method', 'GET')"));
+    EXPECT_THAT(response->body(), HasSubstr(R"('gray', 'pidgeon')"));
+    EXPECT_THAT(response->body(), HasSubstr(R"('red', 'fox')"));
+    EXPECT_THAT(response->body(), HasSubstr(unique_header));
+  }
+}
+
 class HttpTestServerIntegrationNoConfigTest : public HttpTestServerIntegrationTestBase {
 public:
   void SetUp() override { initialize(); }
