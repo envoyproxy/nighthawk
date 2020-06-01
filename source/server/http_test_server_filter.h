@@ -73,6 +73,7 @@ private:
   Envoy::Http::StreamDecoderFilterCallbacks* decoder_callbacks_;
   nighthawk::server::ResponseOptions base_config_;
   absl::optional<std::string> error_message_;
+  absl::optional<std::string> request_headers_dump_;
 };
 
 } // namespace Server

@@ -189,6 +189,22 @@ TEST_P(HttpTestServerIntegrationTest, TestHeaderConfig) {
   EXPECT_EQ(std::string(10, 'a'), response->body());
 }
 
+TEST_P(HttpTestServerIntegrationTest, TestEchoHeaders) {
+  Envoy::BufferingStreamDecoderPtr response = makeSingleRequest(
+      lookupPort("http"), "GET", "/echoheaders", "", downstream_protocol_, version_, "foo.com", "",
+      [](Envoy::Http::RequestHeaderMapImpl& request_headers) {
+        request_headers.addCopy(Envoy::Http::LowerCaseString("gray"), "pidgeon");
+        request_headers.addCopy(Envoy::Http::LowerCaseString("red"), "fox");
+      });
+  ASSERT_TRUE(response->complete());
+  EXPECT_EQ("200", response->headers().Status()->value().getStringView());
+  EXPECT_THAT(response->body(), HasSubstr(R"(':authority', 'foo.com')"));
+  EXPECT_THAT(response->body(), HasSubstr(R"(':path', '/echoheaders')"));
+  EXPECT_THAT(response->body(), HasSubstr(R"(':method', 'GET')"));
+  EXPECT_THAT(response->body(), HasSubstr(R"('gray', 'pidgeon')"));
+  EXPECT_THAT(response->body(), HasSubstr(R"('red', 'fox')"));
+}
+
 class HttpTestServerIntegrationNoConfigTest : public HttpTestServerIntegrationTestBase {
 public:
   void SetUp() override { initialize(); }
