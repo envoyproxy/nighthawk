@@ -17,6 +17,7 @@
 #include "external/envoy/source/common/access_log/access_log_manager_impl.h"
 #include "external/envoy/source/common/common/logger.h"
 #include "external/envoy/source/common/event/real_time_system.h"
+#include "external/envoy/source/common/grpc/context_impl.h"
 #include "external/envoy/source/common/http/context_impl.h"
 #include "external/envoy/source/common/protobuf/message_validator_impl.h"
 #include "external/envoy/source/common/secret/secret_manager_impl.h"
@@ -92,6 +93,9 @@ private:
   std::vector<StatisticPtr>
   mergeWorkerStatistics(const std::vector<ClientWorkerPtr>& workers) const;
   void setupForHRTimers();
+  bool runInternal(OutputCollector& collector, const std::vector<UriPtr>& uris,
+                   const UriPtr& request_source_uri, const UriPtr& tracing_uri);
+
   Envoy::ProcessWide process_wide_;
   Envoy::PlatformImpl platform_impl_;
   Envoy::Event::TimeSystem& time_system_;
@@ -114,6 +118,7 @@ private:
   Envoy::Server::ConfigTrackerImpl config_tracker_;
   Envoy::Secret::SecretManagerImpl secret_manager_;
   Envoy::Http::ContextImpl http_context_;
+  Envoy::Grpc::ContextImpl grpc_context_;
   Envoy::Thread::MutexBasicLockable access_log_lock_;
   Envoy::Singleton::ManagerPtr singleton_manager_;
   Envoy::AccessLog::AccessLogManagerImpl access_log_manager_;
@@ -125,7 +130,7 @@ private:
   Envoy::Upstream::ClusterManagerPtr cluster_manager_{};
   std::unique_ptr<Runtime::ScopedLoaderSingleton> runtime_singleton_;
   Envoy::Init::WatcherImpl init_watcher_;
-  Tracing::HttpTracerPtr http_tracer_;
+  Tracing::HttpTracerSharedPtr http_tracer_;
   Envoy::Server::ValidationAdmin admin_;
   Envoy::ProtobufMessage::ProdValidationContextImpl validation_context_;
   bool shutdown_{true};

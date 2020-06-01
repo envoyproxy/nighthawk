@@ -28,7 +28,8 @@ namespace Nighthawk {
 class BenchmarkClientHttpTest : public Test {
 public:
   BenchmarkClientHttpTest()
-      : api_(Envoy::Api::createApiForTest(time_system_)), dispatcher_(api_->allocateDispatcher()),
+      : api_(Envoy::Api::createApiForTest(time_system_)),
+        dispatcher_(api_->allocateDispatcher("test_thread")),
         cluster_manager_(std::make_unique<Envoy::Upstream::MockClusterManager>()),
         cluster_info_(std::make_unique<Envoy::Upstream::MockClusterInfo>()),
         http_tracer_(std::make_unique<Envoy::Tracing::MockHttpTracer>()), response_code_("200") {
@@ -128,7 +129,7 @@ public:
   }
 
   uint64_t getCounter(absl::string_view name) {
-    return client_->scope().counter(std::string(name)).value();
+    return client_->scope().counterFromString(std::string(name)).value();
   }
 
   Envoy::Upstream::MockClusterManager& cluster_manager() {
@@ -154,7 +155,7 @@ public:
   NiceMock<Envoy::Http::MockRequestEncoder> stream_encoder_;
   Envoy::Upstream::MockThreadLocalCluster thread_local_cluster_;
   Envoy::Upstream::ClusterInfoConstSharedPtr cluster_info_;
-  Envoy::Tracing::HttpTracerPtr http_tracer_;
+  Envoy::Tracing::HttpTracerSharedPtr http_tracer_;
   std::string response_code_;
   RequestGenerator request_generator_;
 };
@@ -222,10 +223,12 @@ TEST_F(BenchmarkClientHttpTest, StatusTrackingInOnComplete) {
 
 TEST_F(BenchmarkClientHttpTest, PoolFailures) {
   setupBenchmarkClient();
-  client_->onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason::ConnectionFailure);
+  client_->onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason::LocalConnectionFailure);
+  client_->onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason::RemoteConnectionFailure);
   client_->onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason::Overflow);
+  client_->onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason::Timeout);
   EXPECT_EQ(1, getCounter("pool_overflow"));
-  EXPECT_EQ(1, getCounter("pool_connection_failure"));
+  EXPECT_EQ(2, getCounter("pool_connection_failure"));
 }
 
 TEST_F(BenchmarkClientHttpTest, RequestMethodPost) {

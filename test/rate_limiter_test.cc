@@ -25,11 +25,11 @@ TEST_F(RateLimiterTest, LinearRateLimiterTest) {
 
   EXPECT_FALSE(rate_limiter.tryAcquireOne());
 
-  time_system.sleep(100ms);
+  time_system.advanceTimeWait(100ms);
   EXPECT_TRUE(rate_limiter.tryAcquireOne());
   EXPECT_FALSE(rate_limiter.tryAcquireOne());
 
-  time_system.sleep(1s);
+  time_system.advanceTimeWait(1s);
   for (int i = 0; i < 10; i++) {
     EXPECT_TRUE(rate_limiter.tryAcquireOne());
   }
@@ -91,13 +91,13 @@ TEST_F(RateLimiterTest, ScheduledStartingRateLimiterTest) {
         .WillRepeatedly(Return(true));
 
     if (starting_late) {
-      time_system.sleep(schedule_delay);
+      time_system.advanceTimeWait(schedule_delay);
     }
 
     // We should expect zero releases until it is time to start.
     while (time_system.monotonicTime() < scheduled_starting_time) {
       EXPECT_FALSE(rate_limiter->tryAcquireOne());
-      time_system.sleep(1ms);
+      time_system.advanceTimeWait(1ms);
     }
 
     // Now that is time to start, the rate limiter should propagate to the mock rate limiter.
@@ -140,7 +140,7 @@ public:
         EXPECT_EQ(burst_acquired, burst_size);
         EXPECT_EQ(i % (burst_interval_ms.count() - first_burst), 0);
       }
-      time_system.sleep(1ms);
+      time_system.advanceTimeWait(1ms);
     }
   }
 };
@@ -213,16 +213,16 @@ TEST_F(RateLimiterTest, DistributionSamplingRateLimiterImplSchedulingTest) {
 
   // The distribution first yields a 1 ns offset. So we don't expect to be green lighted.
   EXPECT_FALSE(rate_limiter->tryAcquireOne());
-  time_system.sleep(1ns);
+  time_system.advanceTimeWait(1ns);
   EXPECT_TRUE(rate_limiter->tryAcquireOne());
   // We expect releaseOne to be propagated.
   rate_limiter->releaseOne();
   // The distribution will yield an offset of 0ns, we expect success.
   EXPECT_TRUE(rate_limiter->tryAcquireOne());
 
-  // We don't sleep, and the distribution will yield a 1ns offset. No green light.
+  // We don't advanceTimeWait, and the distribution will yield a 1ns offset. No green light.
   EXPECT_FALSE(rate_limiter->tryAcquireOne());
-  time_system.sleep(1ns);
+  time_system.advanceTimeWait(1ns);
   EXPECT_TRUE(rate_limiter->tryAcquireOne());
 }
 
@@ -259,7 +259,7 @@ public:
       if (expected_count > control_timings.size()) {
         control_timings.push_back(total_us_elapsed.count());
       }
-      time_system.sleep(clock_tick);
+      time_system.advanceTimeWait(clock_tick);
       total_us_elapsed += clock_tick;
     } while (total_us_elapsed <= duration);
 
@@ -368,12 +368,12 @@ public:
         acquisition_timings.push_back(total_ms_elapsed.count());
         EXPECT_FALSE(rate_limiter->tryAcquireOne());
       }
-      time_system.sleep(clock_tick);
+      time_system.advanceTimeWait(clock_tick);
       total_ms_elapsed += clock_tick;
     } while (total_ms_elapsed <= duration);
 
     EXPECT_FALSE(rate_limiter->tryAcquireOne());
-    time_system.sleep(1s);
+    time_system.advanceTimeWait(1s);
     // Verify that after the rampup the expected constant pacing is maintained.
     // Calls should be forwarded to the regular linear rate limiter algorithm with its
     // corrective behavior so we can expect to acquire a series with that.
@@ -410,7 +410,7 @@ TEST_F(ZipfRateLimiterImplTest, TimingVerificationTest) {
     if (rate_limiter->tryAcquireOne()) {
       aquisition_timings.push_back(total_ms_elapsed.count());
     }
-    time_system.sleep(clock_tick);
+    time_system.advanceTimeWait(clock_tick);
     total_ms_elapsed += clock_tick;
   } while (total_ms_elapsed <= duration);
   EXPECT_EQ(aquisition_timings,

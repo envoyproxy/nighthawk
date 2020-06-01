@@ -122,7 +122,7 @@ TEST_F(OutputCollectorTest, DottedFormatter) {
                         "test/test_data/output_formatter.dotted.gold");
 }
 
-TEST_F(OutputCollectorTest, getLowerCaseOutputFormats) {
+TEST_F(OutputCollectorTest, GetLowerCaseOutputFormats) {
   auto output_formats = OutputFormatterImpl::getLowerCaseOutputFormats();
   // When you're looking at this code you probably just added an output format.
   // This is to point out that you might want to update the list below and add a test above.

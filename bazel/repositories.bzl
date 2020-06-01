@@ -1,10 +1,7 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-ENVOY_COMMIT = "3a2512d923e2eee1fce9f4f6a23cf93f2e7ed93f"  # March 1st, 2020
-ENVOY_SHA = "6a643ae3141762c403aa031cc19e65c441759785fd7dda51dcf5ad5f149283d0"
-
-RULES_PYTHON_COMMIT = "dd7f9c5f01bafbfea08c44092b6b0c8fc8fcb77f"  # Feb 22nd, 2020
-RULES_PYTHON_SHA = "0aa9ec790a58053e3ab5af397879b267a625955f8297c239b2d8559c6773397b"
+ENVOY_COMMIT = "74290ef76a76fbbf50f072dc33438791f93f68c7"  # May 25th, 2020
+ENVOY_SHA = "123ad63c7081f2575aa08a5038d2302d7def3ea5d86cc4dd274757b597212446"
 
 HDR_HISTOGRAM_C_VERSION = "0.9.13"  # Feb 22nd, 2020
 HDR_HISTOGRAM_C_SHA = "2bd4a4631b64f2f8cf968ef49dd03ff3c51b487c3c98a01217ae4cf4a35b8310"
@@ -54,11 +51,4 @@ cc_library(
         sha256 = HDR_HISTOGRAM_C_SHA,
         strip_prefix = "HdrHistogram_c-%s" % HDR_HISTOGRAM_C_VERSION,
         url = "https://github.com/HdrHistogram/HdrHistogram_c/archive/%s.tar.gz" % HDR_HISTOGRAM_C_VERSION,
-    )
-
-    http_archive(
-        name = "io_bazel_rules_python",
-        sha256 = RULES_PYTHON_SHA,
-        strip_prefix = "rules_python-%s" % RULES_PYTHON_COMMIT,
-        url = "https://github.com/bazelbuild/rules_python/archive/%s.tar.gz" % RULES_PYTHON_COMMIT,
     )
