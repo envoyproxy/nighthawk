@@ -564,7 +564,8 @@ def test_multiple_backends_https_h1(multi_https_test_server_fixture):
   assertBetweenInclusive(total_2xx, 24, 25)
 
 
-@pytest.mark.parametrize('server_config', ["nighthawk/test/integration/configurations/sni_origin.yaml"])
+@pytest.mark.parametrize('server_config',
+                         ["nighthawk/test/integration/configurations/sni_origin.yaml"])
 def test_https_h1_sni(https_test_server_fixture):
   """
   Tests SNI indication works on https/h1
@@ -597,7 +598,8 @@ def test_https_h1_sni(https_test_server_fixture):
   assertNotIn("ssl.handshake", counters)
 
 
-@pytest.mark.parametrize('server_config', ["nighthawk/test/integration/configurations/sni_origin.yaml"])
+@pytest.mark.parametrize('server_config',
+                         ["nighthawk/test/integration/configurations/sni_origin.yaml"])
 def test_https_h2_sni(https_test_server_fixture):
   """
   Tests SNI indication works on https/h1

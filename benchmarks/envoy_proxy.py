@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""@package infra.py
+"""@package envoy_proxy.py
 
 Contains customized fixture & EnvoyProxyServer abstraction for use in tests.
 """

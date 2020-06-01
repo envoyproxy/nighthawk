@@ -12,7 +12,7 @@ import os
 from test.integration.integration_test_fixtures import (http_test_server_fixture,
                                                         https_test_server_fixture)
 from test.integration.utility import *
-from infra import (inject_envoy_http_proxy_fixture, proxy_config)
+from envoy_proxy import (inject_envoy_http_proxy_fixture, proxy_config)
 
 
 def run_with_cpu_profiler(fixture,
