@@ -1,0 +1,150 @@
+<head>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+
+<body>
+    <div id="perWorkerDiv"></div>
+    <pre id="humanReadable"></pre>
+
+    <script>
+        function findGlobalResult(data) {
+            var results = data["results"];
+            for (var i = 0; i < results.length; i++) {
+                if (results[i].name == "global") {
+                    return results[i];
+                }
+            }
+            return null;
+        }
+        function findWorkersResults(data) {
+            var results = data["results"];
+            var a = []
+            for (var i = 0; i < results.length; i++) {
+                if (results[i].name != "global") {
+                    a.push(results[i]);
+                }
+            }
+            return a;
+        }
+
+        function findStatisticsById(data, id) {
+            var statistics = data["statistics"];
+            for (var i = 0; i < statistics.length; i++) {
+                if (statistics[i].id == id) {
+                    return statistics[i];
+                }
+            }
+            return null;
+        }
+        function getPoints(percentiles) {
+            var r = [[], []];
+            x = r[0];
+            y = r[1];
+            for (var i = 0; i < percentiles.length; i++) {
+                var p = percentiles[i];
+                x.push(p["percentile"] * 100);
+                y.push(Math.round(parseFloat(p["duration"]) * 1000.0 * 1000.0)); // rounded to microseconds
+            }
+            return r;
+        }
+        function getTraces(results, name, stat, linex) {
+            var a = [];
+            for (var i = 0; i < results.length; i++) {
+                var result = results[i];
+                var statistic = findStatisticsById(result, stat);
+                var percentiles = statistic["percentiles"];
+                var points = getPoints(percentiles);
+                //var samples = statistic["count"]
+                a.push({
+                    y: points[0],
+                    x: points[1],
+                    name: name,
+                    showlegend: true,
+                    type: "scatter",
+                    mode: 'lines',
+                    line: linex || { shape: 'spline' },
+                });
+            }
+            a.push({
+                y: [0, 0],
+                x: [50, 1000 * 3],
+                name: "fake",
+                showlegend: false,
+                type: "scatter",
+                mode: 'lines',
+                line: linex || { shape: 'spline' },
+            });
+            return a;
+        }
+
+        function update(contents, name) {
+            eval("nhdata = " + contents);
+            var global_result = findGlobalResult(nhdata);
+            var worker_result = findWorkersResults(nhdata);
+
+            traces = getTraces([global_result], "global." + name, name, {
+                color: 'rgb(32, 32, 32)',
+                width: 3,
+                shape: 'spline'
+            });
+            traces = traces.concat(getTraces(worker_result, "workers", name, {
+                color: 'rgb(192, 192, 192)',
+                width: 3,
+                shape: 'spline'
+            }));
+
+            var d = document.createElement("div");
+            document.getElementById("perWorkerDiv").appendChild(d);
+            Plotly.newPlot(d, traces, layout);
+        }
+
+        var data = [];
+        var layout = {
+            yaxis: {
+                range: [0, 100],
+                label: "percentile",
+                title: {
+                    text: 'percentile',
+                    font: {
+                        family: 'Courier New, monospace',
+                        size: 18,
+                        color: '#7f7f7f'
+                    }
+                },
+            },
+            xaxis: {
+                type: "log",
+                autorange: true,
+                title: {
+                    text: 'microseconds',
+                    font: {
+                        family: 'Courier New, monospace',
+                        size: 18,
+                        color: '#7f7f7f'
+                    }
+                },
+            }
+        };
+
+        var xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                update(this.responseText, "benchmark_http_client.request_to_response")
+            }
+        };
+        xmlhttp.open("GET", "nighthawk.json", true);
+        xmlhttp.send();
+
+
+        var xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                document.getElementById("humanReadable").innerText = this.responseText;
+            }
+        };
+        xmlhttp.open("GET", "nighthawk-human.txt", true);
+        xmlhttp.send();
+
+    </script>
+
+</body>
