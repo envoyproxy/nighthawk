@@ -1,5 +1,4 @@
 #!/bin/bash
-
 set -e
 
 export BUILDIFIER_BIN="${BUILDIFIER_BIN:=/usr/local/bin/buildifier}"
