@@ -66,6 +66,17 @@ admin:
       port_value: 8081
 ```
 
+## Response Options config
+
+The ResponseOptions proto can be used in the test server config or passed in `x-nighthawk-test-server-config`request header.
+The following parameters are available:
+
+* `response_body_size` - number of 'a' characters repeated in the response body.
+* `response_headers` - list of headers to add to response. If `append` is set to
+  `true`, then the header is appended.
+* `echo_request_headers` - return the dump of request headers in the response
+  body.
+
 ## Running the test server
 
 

@@ -55,10 +55,12 @@ void HttpTestServerDecoderFilter::applyConfigToResponseHeaders(
 
 void HttpTestServerDecoderFilter::sendReply() {
   if (error_message_ == absl::nullopt) {
+    std::string response_body(base_config_.response_body_size(), 'a');
+    if (request_headers_dump_.has_value()) {
+      response_body += *request_headers_dump_;
+    }
     decoder_callbacks_->sendLocalReply(
-        static_cast<Envoy::Http::Code>(200),
-        request_headers_dump_.has_value() ? *request_headers_dump_
-                                          : std::string(base_config_.response_body_size(), 'a'),
+        static_cast<Envoy::Http::Code>(200), response_body,
         [this](Envoy::Http::ResponseHeaderMap& direct_response_headers) {
           applyConfigToResponseHeaders(direct_response_headers, base_config_);
         },
@@ -80,8 +82,7 @@ HttpTestServerDecoderFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& header
   if (request_config_header) {
     mergeJsonConfig(request_config_header->value().getStringView(), base_config_, error_message_);
   }
-  absl::string_view request_path = headers.Path()->value().getStringView();
-  if (request_path.find("/echoheaders") != absl::string_view::npos) {
+  if (base_config_.echo_request_headers()) {
     std::stringstream headers_dump;
     headers_dump << "\nRequest Headers:\n" << headers;
     request_headers_dump_ = headers_dump.str();
