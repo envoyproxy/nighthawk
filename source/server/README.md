@@ -84,7 +84,7 @@ example, to verify request headers that are added by intermediate proxy:
 
 ```
 $ curl -6 -v [::1]:8080/nighthawk
-```
+
 *   Trying ::1:8080...
 * TCP_NODELAY set
 * Connected to ::1 (::1) port 8080 (#0)
@@ -118,6 +118,7 @@ Request Headers:
 'x-forwarded-for', '::1,::1'
 * Connection #0 to host ::1 left intact
 ```
+
 This example shows that intermediate proxy has added `x-forwarded-proto` and
 `x-forwarded-for` request headers.
 
