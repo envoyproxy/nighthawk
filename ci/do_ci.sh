@@ -2,8 +2,8 @@
 
 set -e
 
-export BUILDIFIER_BIN="/usr/local/bin/buildifier"
-export BUILDOZER_BIN="/usr/local/bin/buildozer"
+export BUILDIFIER_BIN="${BUILDIFIER_BIN:=/usr/local/bin/buildifier}"
+export BUILDOZER_BIN="${BUILDOZER_BIN:=/usr/local/bin/buildozer}"
 
 function do_build () {
     bazel build $BAZEL_BUILD_OPTIONS --verbose_failures=true //:nighthawk
