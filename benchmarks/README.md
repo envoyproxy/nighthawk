@@ -67,7 +67,7 @@ bazel test \
 ## Example: fully dockerized flow
 
 The framework can be run via Docker and used that way to execute
-python benchmarks scripts not sourced from this repository, but
+Python benchmarks scripts not sourced from this repository, but
 elsewhere. An example:
 
 ```bash

@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import pytest
 
+# server_config needs to be explicitly imported to avoid an error, as http_test_server_fixture
+# relies on it.
 from integration_test_fixtures import (http_test_server_fixture, server_config)
 from utility import *
 

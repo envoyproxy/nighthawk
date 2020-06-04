@@ -16,12 +16,12 @@ from envoy_proxy import (inject_envoy_http_proxy_fixture, proxy_config)
 
 
 def run_with_cpu_profiler(fixture,
-                          rps=10000,
+                          rps=1000,
                           duration=1,
-                          max_connections=100,
-                          max_active_requests=100,
+                          max_connections=1,
+                          max_active_requests=1,
                           request_body_size=0,
-                          response_size=10,
+                          response_size=1024,
                           concurrency=1):
   if hasattr(fixture, "proxy_server"):
     assert (fixture.proxy_server.enableCpuProfiler())
@@ -47,14 +47,14 @@ def run_with_cpu_profiler(fixture,
   connection_counter = "upstream_cx_http1_total"
 
   # Some arbitrary sanity checks
-  assertCounterGreater(counters, "benchmark.http_2xx", 1000)
+  assertCounterGreaterEqual(counters, "benchmark.http_2xx", rps * duration)
   assertGreater(counters["upstream_cx_rx_bytes_total"], response_count * response_size)
   assertGreater(counters["upstream_cx_tx_bytes_total"], request_count * request_body_size)
   assertCounterEqual(counters, connection_counter, max_connections)
 
   # Could potentially set thresholds on acceptable latency here.
 
-  # dump human readably output to logs
+  # dump human readable output to logs
   json_as_string = json.dumps(parsed_json)
   human_output = fixture.transformNighthawkJson(json_as_string, "human")
   logging.info(human_output)
@@ -67,6 +67,11 @@ def run_with_cpu_profiler(fixture,
     f.write(fixture.transformNighthawkJson(json_as_string, "yaml"))
   with open(os.path.join(fixture.test_server.tmpdir, "fortio.json"), "w") as f:
     f.write(fixture.transformNighthawkJson(json_as_string, "fortio"))
+  with open(os.path.join(fixture.test_server.tmpdir, "server_version.txt"), "w") as f:
+    f.write(fixture.test_server.getCliVersionString())
+  if hasattr(fixture, "proxy_server"):
+    with open(os.path.join(fixture.test_server.tmpdir, "proxy_version.txt"), "w") as f:
+      f.write(fixture.proxy_server.getCliVersionString())
 
 
 # Test via injected Envoy

@@ -262,6 +262,9 @@ class IntegrationTestBase():
 class HttpIntegrationTestBase(IntegrationTestBase):
   """
   Base for running plain http tests against the Nighthawk test server
+  NOTE: any script that consumes derivations of this, needs to needs also explictly
+  import server_config, to avoid errors caused by the server_config not being found
+  by pytest.
   """
 
   def __init__(self, ip_version, server_config):

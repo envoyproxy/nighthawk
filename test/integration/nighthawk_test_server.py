@@ -95,7 +95,7 @@ class TestServerBase(object):
     args = args + [
         self.server_binary_path, self.server_binary_config_path_arg, self.parameterized_config_path,
         "-l", "warning", "--base-id", self.instance_id, "--admin-address-path",
-        self.admin_address_path
+        self.admin_address_path, "--concurrency", "1"
     ]
     logging.info("Test server popen() args: %s" % str.join(" ", args))
     self.server_process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -180,3 +180,14 @@ class NighthawkTestServer(TestServerBase):
                tag=""):
     super(NighthawkTestServer, self).__init__(server_binary_path, config_template_path, server_ip,
                                               ip_version, "--config-path", parameters, tag)
+
+  def getCliVersionString(self):
+    args = []
+    if self.docker_image != "":
+      args = ["docker", "run", "--rm", self.docker_image]
+    args = args + [self.server_binary_path, "--base-id", self.instance_id, "--version"]
+
+    process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout, stderr = process.communicate()
+    assert process.wait() == 0
+    return stdout.decode("utf-8").strip()

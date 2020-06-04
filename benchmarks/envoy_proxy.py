@@ -16,7 +16,7 @@ from test.integration.nighthawk_test_server import NighthawkTestServer
 class EnvoyProxyServer(NighthawkTestServer):
   """
   Envoy proxy server abstraction. Note that it derives from NighthawkTestServer, as that
-  is implemented as a custimized Envoy, which is convenient here: the CLI and admin interface
+  is implemented as a customized Envoy, which is convenient here: the CLI and admin interface
   mechanics that we rely on are the same. So all we do here, is specialize so we can override
   the docker image and binary name.
   """
