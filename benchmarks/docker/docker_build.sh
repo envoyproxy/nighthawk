@@ -16,10 +16,8 @@ DOCKER_IMAGE_PREFIX="${USER}/${DOCKER_NAME}"
 BAZEL_BIN="$(bazel info bazel-bin)"
 WORKSPACE="$(bazel info workspace)"
 bazel build //benchmarks:benchmarks
-TMP_DIR="${WORKSPACE}/tmp-docker-build-context"
+TMP_DIR="$(mktemp -d)"
 PUSH=${PUSH:-0}  
-
-rm -rf "${TMP_DIR}"
 
 echo "Preparing docker build context in ${TMP_DIR}"
 # We flatten any symlinks to make this work on Linux (OSX doesn't need this)
@@ -29,7 +27,7 @@ cp -Lr "${BAZEL_BIN}/benchmarks" "${TMP_DIR}/"
 
 cd "${TMP_DIR}"
 echo "running docker build ... "
-docker build -f "${TMP_DIR}/Dockerfile-${DOCKER_NAME}" -t "${DOCKER_IMAGE_PREFIX}-dev:latest" .
+docker build -f "${TMP_DIR}/docker/Dockerfile-${DOCKER_NAME}" -t "${DOCKER_IMAGE_PREFIX}-dev:latest" .
 rm -rf "${TMP_DIR}"
 echo "docker build finished"
 

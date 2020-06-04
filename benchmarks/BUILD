@@ -33,6 +33,6 @@ py_library(
     ],
     data = [
         "configurations/envoy_proxy.yaml",
-        "templates/simple_plot.html",
+        "test/templates/simple_plot.html",
     ],
 )

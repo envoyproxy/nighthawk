@@ -13,16 +13,17 @@ from test.integration.integration_test_fixtures import (http_test_server_fixture
                                                         https_test_server_fixture)
 from test.integration.utility import *
 from envoy_proxy import (inject_envoy_http_proxy_fixture, proxy_config)
+from rules_python.python.runfiles import runfiles
 
 
-def run_with_cpu_profiler(fixture,
-                          rps=1000,
-                          duration=1,
-                          max_connections=1,
-                          max_active_requests=1,
-                          request_body_size=0,
-                          response_size=1024,
-                          concurrency=1):
+def run_benchmark(fixture,
+                  rps=1000,
+                  duration=1,
+                  max_connections=1,
+                  max_active_requests=1,
+                  request_body_size=0,
+                  response_size=1024,
+                  concurrency=1):
   if hasattr(fixture, "proxy_server"):
     assert (fixture.proxy_server.enableCpuProfiler())
   assert (fixture.test_server.enableCpuProfiler())
@@ -72,7 +73,8 @@ def run_with_cpu_profiler(fixture,
   if hasattr(fixture, "proxy_server"):
     with open(os.path.join(fixture.test_server.tmpdir, "proxy_version.txt"), "w") as f:
       f.write(fixture.proxy_server.getCliVersionString())
-  with open("benchmarks/templates/simple_plot.html", "r") as r:
+  r = runfiles.Create()
+  with open(r.Rlocation("nighthawk/benchmarks/test/templates/simple_plot.html"), "r") as r:
     txt = r.readlines()
     with open(os.path.join(fixture.test_server.tmpdir, "simple_plot.html"), "w") as w:
       # This will source nighthawk.json over http from the same dir.
@@ -85,17 +87,17 @@ def run_with_cpu_profiler(fixture,
 @pytest.mark.parametrize('server_config',
                          ["nighthawk/test/integration/configurations/nighthawk_http_origin.yaml"])
 def test_http_h1_small_request_small_reply_via(inject_envoy_http_proxy_fixture, proxy_config):
-  run_with_cpu_profiler(inject_envoy_http_proxy_fixture)
+  run_benchmark(inject_envoy_http_proxy_fixture)
 
 
 # Test the origin directly, using a stock fixture
 @pytest.mark.parametrize('server_config',
                          ["nighthawk/test/integration/configurations/nighthawk_http_origin.yaml"])
 def test_http_h1_small_request_small_reply_direct(http_test_server_fixture):
-  run_with_cpu_profiler(http_test_server_fixture)
+  run_benchmark(http_test_server_fixture)
 
 
 @pytest.mark.parametrize('server_config',
                          ["nighthawk/test/integration/configurations/nighthawk_https_origin.yaml"])
 def test_https_h1_small_request_small_reply_direct_s(https_test_server_fixture):
-  run_with_cpu_profiler(https_test_server_fixture)
+  run_benchmark(https_test_server_fixture)

@@ -105,12 +105,18 @@ docker run -it --rm \
 - A UI -- though we may be able to get by with just a uri structure conventioned around the envoy
   sha. e.g. http://perf-ci-host/gcpsync/[envoy-sha]-[timestamp]/ to link CI, and directory index the
   artifacts.
+- Use taskset/cpuset when starting processes.
+- Offer a docker image with binaries pre-built for profiling + the python test framework.
 
 # FUTURE
 
-- profiling / flamegraphing via perf/bcc tools; include the proxy-wasm flamegraphing research r&d
+- The current status can collect CPU profiles, but these are useless
+  without access to the binary & libs that have been involved in producing them.
+- profiling / flamegraphing via perf/bcc tools
 - Allow injection of other proxies: nginx, haproxy
 - Allow using alt clients, like Fortio & wrk2
 - An app that integrates fortios UI, pprof's web UI
 - Have a mode where nighthawk_test_server provides high-res control timings in its
   access logs
+- The ability to repeat the runs multiple times and obtain stats, e.g. how much variance there is, mean, etc.
+- The ability to do A/B testing, similar to https://github.com/envoyproxy/envoy-perf/blob/master/siege/siege.py#L3.
