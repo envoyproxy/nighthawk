@@ -113,7 +113,9 @@ bazel-bin/nighthawk_test_server  [--disable-extensions <string>]
 [--allow-unknown-fields]
 [--bootstrap-version <string>]
 [--config-yaml <string>] [-c <string>]
-[--concurrency <uint32_t>] [--base-id
+[--concurrency <uint32_t>]
+[--base-id-path <string>]
+[--use-dynamic-base-id] [--base-id
 <uint32_t>] [--] [--version] [-h]
 
 
@@ -224,6 +226,13 @@ Path to configuration file
 
 --concurrency <uint32_t>
 # of worker threads to run
+
+--base-id-path <string>
+path to which the base ID is written
+
+--use-dynamic-base-id
+the server chooses a base ID dynamically. Supersedes a static base ID.
+May not be used when the restart epoch is non-zero.
 
 --base-id <uint32_t>
 base ID so that multiple envoys can run on the same host if needed
