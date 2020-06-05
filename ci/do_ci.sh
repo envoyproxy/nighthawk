@@ -106,14 +106,13 @@ function do_benchmark_with_own_binaries() {
         --cxxopt=-g \
         --cxxopt=-ggdb3 \
         //benchmarks:*
-    find "${TMPDIR}"
-    rm -rf "${TMPDIR}/tmp.*"
     # TODO(oschaaf): we clean the tmp dir above from uninteresting stuff
     # that crept into the tmp/output directory. The cruft gets in there because
     # other tooling also responds to the TMPDIR environment variable, which in retrospect
     # was a bad choice.
     # Consider using a different environment variable for the benchmark tooling
     # to use for this.
+    rm -rf ${TMPDIR}/tmp.*
 }
 
 function do_check_format() {
@@ -139,7 +138,12 @@ function do_fix_format() {
     ./tools/format_python_tools.sh fix
 }
 
-[ -z "${NUM_CPUS}" ] && export NUM_CPUS=`grep -c ^processor /proc/cpuinfo`
+NUM_CPUS=${NUM_CPUS:=$(grep -c ^processor /proc/cpuinfo)}
+CIRCLECI=${CIRCLECI:="")}
+BAZEL_EXTRA_TEST_OPTIONS=${BAZEL_EXTRA_TEST_OPTIONS:=""}
+BAZEL_OPTIONS=${BAZEL_OPTIONS:=""}
+BAZEL_BUILD_EXTRA_OPTIONS=${BAZEL_BUILD_EXTRA_OPTIONS:=""}
+SRCDIR=${SRCDIR:="${PWD}"}
 
 if [ -n "$CIRCLECI" ]; then
     if [[ -f "${HOME:-/root}/.gitconfig" ]]; then
@@ -185,7 +189,6 @@ export BAZEL_BUILD_OPTIONS=" \
 export BAZEL_TEST_OPTIONS="${BAZEL_BUILD_OPTIONS} --test_env=HOME --test_env=PYTHONUSERBASE \
 --test_env=UBSAN_OPTIONS=print_stacktrace=1 \
 --cache_test_results=no --test_output=all ${BAZEL_EXTRA_TEST_OPTIONS}"
-[[ -z "${SRCDIR}" ]] && SRCDIR="${PWD}"
 
 setup_clang_toolchain
 export CLANG_FORMAT=clang-format
