@@ -33,4 +33,4 @@ export NH_DOCKER_IMAGE="envoyproxy/nighthawk-dev:latest"
 export ENVOY_DOCKER_IMAGE_TO_TEST="envoyproxy/envoy-dev:latest"
 
 # run all tests starting with test_http_h1_small
-bazel-bin/benchmarks/benchmarks --log-cli-level=info -vvvv -k test_http_h1_small benchmarks/
+bazel-bin/benchmarks/benchmarks --log-cli-level=info -vvvv benchmarks/
