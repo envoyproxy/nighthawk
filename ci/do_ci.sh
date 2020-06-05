@@ -91,14 +91,14 @@ function do_tsan() {
 }
 
 function do_benchmark_with_own_binaries() {
-    bazel test --test_summary=detailed \
-        --test_output=all \
+    echo "Running benchmark framework with own binaries"
+    cd "${SRCDIR}"
+    
+    run_bazel test ${BAZEL_TEST_OPTIONS} --test_summary=detailed \
         --test_arg=--log-cli-level=info \
-        --test_env=ENVOY_IP_TEST_VERSIONS=v4only \
         --test_env=HEAPPROFILE= \
         --test_env=HEAPCHECK= \
         --test_env=TMPDIR="${SRCDIR}\generated" \
-        --cache_test_results=no \
         --compilation_mode=opt \
         --cxxopt=-g \
         --cxxopt=-ggdb3 \
