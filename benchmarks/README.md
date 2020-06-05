@@ -79,10 +79,10 @@ set +x
 set -u
 
 # The benchmark logs and artifacts will be dropped here
-OUTDIR="/home/oschaaf/code/envoy-perf-vscode/nighthawk/benchmarks/tmp/"
+OUTDIR="/my-artifacts-dir/"
 # Used to map the test that we want to see executed into the Docker container
 # Note: the contents could be fetched via http, for example.
-TEST_DIR="/home/oschaaf/code/envoy-perf-vscode/nighthawk/benchmarks/test/"
+TEST_DIR="/dir-that-has-my-tests/"
 
 # Rebuild the Docker in case something changed.
 ./docker_build.sh &&
