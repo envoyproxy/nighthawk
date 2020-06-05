@@ -23,7 +23,6 @@ if __name__ == '__main__':
           test_selection_arg,  # Passed in via BUILD/py_test()
           "-x",
           path,
-          "--log-cli-level=debug",
           "-n",
           "4" if isSanitizerRun() else "20"  # Number of tests to run in parallel
       ],

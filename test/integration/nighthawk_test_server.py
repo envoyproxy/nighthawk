@@ -145,7 +145,7 @@ class TestServerBase(object):
   def waitUntilServerListening(self):
     # we allow 30 seconds for the server to have its listeners up.
     # (It seems that in sanitizer-enabled runs this can take a little while)
-    timeout = time.time() + 10
+    timeout = time.time() + 30
     while time.time() < timeout:
       if self.tryUpdateFromAdminInterface():
         return True
