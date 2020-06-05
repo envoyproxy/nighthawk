@@ -90,6 +90,20 @@ function do_tsan() {
     run_bazel test ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-tsan //test/...
 }
 
+function do_benchmark_with_own_binaries() {
+    bazel test --test_summary=detailed \
+        --test_output=all \
+        --test_arg=--log-cli-level=info \
+        --test_env=ENVOY_IP_TEST_VERSIONS=v4only \
+        --test_env=HEAPPROFILE= \
+        --test_env=HEAPCHECK= \
+        --cache_test_results=no \
+        --compilation_mode=opt \
+        --cxxopt=-g \
+        --cxxopt=-ggdb3 \
+        //benchmarks:*    
+}
+
 function do_check_format() {
     echo "check_format..."
     cd "${SRCDIR}"
@@ -209,8 +223,12 @@ case "$1" in
         do_fix_format
         exit 0
     ;;
+    benchmark_with_own_binaries)
+        do_benchmark_with_own_binaries
+        exit 0
+    ;;
     *)
-        echo "must be one of [build,test,clang_tidy,test_with_valgrind,coverage,asan,tsan,docker,check_format,fix_format]"
+        echo "must be one of [build,test,clang_tidy,test_with_valgrind,coverage,asan,tsan,benchmark_with_own_binaries,docker,check_format,fix_format]"
         exit 1
     ;;
 esac
