@@ -1,6 +1,8 @@
 #!/bin/bash
 
-set -e
+set -eo pipefail
+set +x
+set -u
 
 export BUILDIFIER_BIN="${BUILDIFIER_BIN:=/usr/local/bin/buildifier}"
 export BUILDOZER_BIN="${BUILDOZER_BIN:=/usr/local/bin/buildozer}"
@@ -94,8 +96,8 @@ function do_benchmark_with_own_binaries() {
     echo "Running benchmark framework with own binaries"
     cd "${SRCDIR}"
     # Benchmark artifacts will be dropped into this directory:
-    export TMPDIR="${SRCDIR}/generated" && \
-    mkdir -p "${TMPDIR}" && \
+    export TMPDIR="${SRCDIR}/generated"
+    mkdir -p "${TMPDIR}"
     run_bazel test ${BAZEL_TEST_OPTIONS} --test_summary=detailed \
         --test_arg=--log-cli-level=info \
         --test_env=HEAPPROFILE= \
@@ -103,7 +105,8 @@ function do_benchmark_with_own_binaries() {
         --compilation_mode=opt \
         --cxxopt=-g \
         --cxxopt=-ggdb3 \
-        //benchmarks:* && \
+        //benchmarks:*
+    find "${TMPDIR}"
     rm -rf "${TMPDIR}/tmp.*"
     # TODO(oschaaf): we clean the tmp dir above from uninteresting stuff
     # that crept into the tmp/output directory. The cruft gets in there because
