@@ -93,16 +93,17 @@ function do_tsan() {
 function do_benchmark_with_own_binaries() {
     echo "Running benchmark framework with own binaries"
     cd "${SRCDIR}"
-    
+    # Benchmark artifacts will be dropped into this directory:
+    export TMPDIR="${SRCDIR}/generated"
+    mkdir -p "${TMPDIR}"
     run_bazel test ${BAZEL_TEST_OPTIONS} --test_summary=detailed \
         --test_arg=--log-cli-level=info \
         --test_env=HEAPPROFILE= \
         --test_env=HEAPCHECK= \
-        --test_env=TMPDIR="${SRCDIR}\generated" \
         --compilation_mode=opt \
         --cxxopt=-g \
         --cxxopt=-ggdb3 \
-        //benchmarks:*    
+        //benchmarks:*
 }
 
 function do_check_format() {
