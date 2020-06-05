@@ -48,7 +48,7 @@ jobs:
     resource_class: xlarge
     steps:
       - checkout
-      - run: TMPDIR=/root/project/generated ci/do_ci.sh benchmark_with_own_binaries
+      - run: ci/do_ci.sh benchmark_with_own_binaries
       - store_artifacts:
           path: /root/project/generated
           destination: /

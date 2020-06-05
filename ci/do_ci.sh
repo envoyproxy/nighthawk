@@ -97,6 +97,7 @@ function do_benchmark_with_own_binaries() {
         --test_env=ENVOY_IP_TEST_VERSIONS=v4only \
         --test_env=HEAPPROFILE= \
         --test_env=HEAPCHECK= \
+        --test_env=TMPDIR="${SRCDIR}\generated" \
         --cache_test_results=no \
         --compilation_mode=opt \
         --cxxopt=-g \
