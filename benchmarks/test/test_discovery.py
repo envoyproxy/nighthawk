@@ -18,7 +18,7 @@ from rules_python.python.runfiles import runfiles
 
 def run_benchmark(fixture,
                   rps=1000,
-                  duration=1,
+                  duration=30,
                   max_connections=1,
                   max_active_requests=1,
                   request_body_size=0,

@@ -6,6 +6,12 @@ set -u
 
 export BUILDIFIER_BIN="${BUILDIFIER_BIN:=/usr/local/bin/buildifier}"
 export BUILDOZER_BIN="${BUILDOZER_BIN:=/usr/local/bin/buildozer}"
+export NUM_CPUS=${NUM_CPUS:=$(grep -c ^processor /proc/cpuinfo)}
+export CIRCLECI=${CIRCLECI:="")}
+export BAZEL_EXTRA_TEST_OPTIONS=${BAZEL_EXTRA_TEST_OPTIONS:=""}
+export BAZEL_OPTIONS=${BAZEL_OPTIONS:=""}
+export BAZEL_BUILD_EXTRA_OPTIONS=${BAZEL_BUILD_EXTRA_OPTIONS:=""}
+export SRCDIR=${SRCDIR:="${PWD}"}
 
 function do_build () {
     bazel build $BAZEL_BUILD_OPTIONS --verbose_failures=true //:nighthawk
@@ -33,14 +39,13 @@ function do_clang_tidy() {
 }
 
 function do_coverage() {
+    export TEST_TARGETS="//test/..."
     echo "bazel coverage build with tests ${TEST_TARGETS}"
 
     # Reduce the amount of memory Bazel tries to use to prevent it from launching too many subprocesses.
     # This should prevent the system from running out of memory and killing tasks. See discussion on
     # https://github.com/envoyproxy/envoy/pull/5611.
     [ -z "$CIRCLECI" ] || export BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} --local_ram_resources=12288"
-
-    export TEST_TARGETS="//test/..."
     test/run_nighthawk_bazel_coverage.sh ${TEST_TARGETS}
     exit 0
 }
@@ -137,13 +142,6 @@ function do_fix_format() {
     ./tools/check_format.sh fix
     ./tools/format_python_tools.sh fix
 }
-
-NUM_CPUS=${NUM_CPUS:=$(grep -c ^processor /proc/cpuinfo)}
-CIRCLECI=${CIRCLECI:="")}
-BAZEL_EXTRA_TEST_OPTIONS=${BAZEL_EXTRA_TEST_OPTIONS:=""}
-BAZEL_OPTIONS=${BAZEL_OPTIONS:=""}
-BAZEL_BUILD_EXTRA_OPTIONS=${BAZEL_BUILD_EXTRA_OPTIONS:=""}
-SRCDIR=${SRCDIR:="${PWD}"}
 
 if [ -n "$CIRCLECI" ]; then
     if [[ -f "${HOME:-/root}/.gitconfig" ]]; then
