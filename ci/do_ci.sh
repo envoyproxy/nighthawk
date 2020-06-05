@@ -97,12 +97,23 @@ function do_tsan() {
     run_bazel test ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-tsan //test/...
 }
 
+function cleanup_benchmark_artifacts {
+    # TODO(oschaaf): we clean the tmp dir above from uninteresting stuff
+    # that crept into the tmp/output directory. The cruft gets in there because
+    # other tooling also responds to the TMPDIR environment variable, which in retrospect
+    # was a bad choice.
+    # Consider using a different environment variable for the benchmark tooling
+    # to use for this.
+    rm -rf ${TMPDIR}/tmp.*
+}
+
 function do_benchmark_with_own_binaries() {
     echo "Running benchmark framework with own binaries"
     cd "${SRCDIR}"
     # Benchmark artifacts will be dropped into this directory:
     export TMPDIR="${SRCDIR}/generated"
     mkdir -p "${TMPDIR}"
+    trap cleanup_benchmark_artifacts EXIT
     run_bazel test ${BAZEL_TEST_OPTIONS} --test_summary=detailed \
         --test_arg=--log-cli-level=info \
         --test_env=HEAPPROFILE= \
@@ -111,13 +122,6 @@ function do_benchmark_with_own_binaries() {
         --cxxopt=-g \
         --cxxopt=-ggdb3 \
         //benchmarks:*
-    # TODO(oschaaf): we clean the tmp dir above from uninteresting stuff
-    # that crept into the tmp/output directory. The cruft gets in there because
-    # other tooling also responds to the TMPDIR environment variable, which in retrospect
-    # was a bad choice.
-    # Consider using a different environment variable for the benchmark tooling
-    # to use for this.
-    rm -rf ${TMPDIR}/tmp.*
 }
 
 function do_check_format() {

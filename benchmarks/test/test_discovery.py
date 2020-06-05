@@ -48,7 +48,7 @@ def run_benchmark(fixture,
   connection_counter = "upstream_cx_http1_total"
 
   # Some arbitrary sanity checks
-  assertCounterGreaterEqual(counters, "benchmark.http_2xx", rps * duration)
+  assertCounterGreaterEqual(counters, "benchmark.http_2xx", (rps * duration) * 0.99)
   assertGreater(counters["upstream_cx_rx_bytes_total"], response_count * response_size)
   assertGreater(counters["upstream_cx_tx_bytes_total"], request_count * request_body_size)
   assertCounterEqual(counters, connection_counter, max_connections)
