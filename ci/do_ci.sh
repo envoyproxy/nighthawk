@@ -104,7 +104,10 @@ function cleanup_benchmark_artifacts {
     # was a bad choice.
     # Consider using a different environment variable for the benchmark tooling
     # to use for this.
-    rm -rf ${TMPDIR}/tmp.*
+    size=${#TMPDIR}
+    if [ $size -gt 4 ] && [ -d "${TMPDIR}" ]; then
+        rm -rf ${TMPDIR}/tmp.*
+    fi
 }
 
 function do_benchmark_with_own_binaries() {

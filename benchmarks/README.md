@@ -13,6 +13,12 @@ The goal is to be able to:
 - persist profile dumps, flamegraphs, and latency numbers per test
 - offer stock tests, but also allow scaffolding consumer-specific tests
 
+## Example output visualization
+
+The benchmark will drop a visual in each test directory.
+
+![Example visualization](benchmark-visual-example.png)
+
 ## Example: Docker based execution, scavaging benchmark/
 
 This scripts shows how to use the benchmarking suite.

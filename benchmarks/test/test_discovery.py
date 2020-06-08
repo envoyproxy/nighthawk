@@ -14,13 +14,14 @@ from test.integration.integration_test_fixtures import (http_test_server_fixture
 from test.integration.utility import *
 from envoy_proxy import (inject_envoy_http_proxy_fixture, proxy_config)
 from rules_python.python.runfiles import runfiles
+from shutil import copyfile
 
 
 def run_benchmark(fixture,
                   rps=1000,
                   duration=30,
                   max_connections=1,
-                  max_active_requests=1,
+                  max_active_requests=100,
                   request_body_size=0,
                   response_size=1024,
                   concurrency=1):
@@ -48,10 +49,10 @@ def run_benchmark(fixture,
   connection_counter = "upstream_cx_http1_total"
 
   # Some arbitrary sanity checks
-  assertCounterGreaterEqual(counters, "benchmark.http_2xx", (rps * duration) * 0.99)
+  assertCounterGreaterEqual(counters, "benchmark.http_2xx", (concurrency * rps * duration) * 0.99)
   assertGreater(counters["upstream_cx_rx_bytes_total"], response_count * response_size)
   assertGreater(counters["upstream_cx_tx_bytes_total"], request_count * request_body_size)
-  assertCounterEqual(counters, connection_counter, max_connections)
+  assertCounterEqual(counters, connection_counter, concurrency * max_connections)
 
   # Could potentially set thresholds on acceptable latency here.
 
@@ -74,12 +75,9 @@ def run_benchmark(fixture,
     with open(os.path.join(fixture.test_server.tmpdir, "proxy_version.txt"), "w") as f:
       f.write(fixture.proxy_server.getCliVersionString())
   r = runfiles.Create()
-  with open(r.Rlocation("nighthawk/benchmarks/test/templates/simple_plot.html"), "r") as r:
-    txt = r.readlines()
-    with open(os.path.join(fixture.test_server.tmpdir, "simple_plot.html"), "w") as w:
-      # This will source nighthawk.json over http from the same dir.
-      # TODO(oschaaf): consider injecting the json directly into a html script source.
-      w.write(str.join("", txt))
+  copyfile(
+      r.Rlocation("nighthawk/benchmarks/test/templates/simple_plot.html"),
+      os.path.join(fixture.test_server.tmpdir, "simple_plot.html"))
 
 
 # Test via injected Envoy
@@ -90,11 +88,27 @@ def test_http_h1_small_request_small_reply_via(inject_envoy_http_proxy_fixture, 
   run_benchmark(inject_envoy_http_proxy_fixture)
 
 
+# via Envoy, 4 workers. global targets: 1000 qps / 4 connections.
+@pytest.mark.parametrize('proxy_config', ["nighthawk/benchmarks/configurations/envoy_proxy.yaml"])
+@pytest.mark.parametrize('server_config',
+                         ["nighthawk/test/integration/configurations/nighthawk_http_origin.yaml"])
+def test_http_h1_small_request_small_reply_via_multiple_workers(inject_envoy_http_proxy_fixture,
+                                                                proxy_config):
+  run_benchmark(inject_envoy_http_proxy_fixture, rps=250, concurrency=4)
+
+
 # Test the origin directly, using a stock fixture
 @pytest.mark.parametrize('server_config',
                          ["nighthawk/test/integration/configurations/nighthawk_http_origin.yaml"])
 def test_http_h1_small_request_small_reply_direct(http_test_server_fixture):
   run_benchmark(http_test_server_fixture)
+
+
+# Direct, 4 workers. global targets: 1000 qps / 4 connections.
+@pytest.mark.parametrize('server_config',
+                         ["nighthawk/test/integration/configurations/nighthawk_http_origin.yaml"])
+def test_http_h1_small_request_small_reply_direct_multiple_workers(http_test_server_fixture):
+  run_benchmark(http_test_server_fixture, rps=250, concurrency=4)
 
 
 @pytest.mark.parametrize('server_config',

@@ -4,14 +4,6 @@ set -eo pipefail
 set +x
 set -u
 
-function cleanup() {
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        docker rm -f $(docker ps -a -q) || true
-    fi
-}
-
-trap cleanup EXIT
-
 BAZEL="bazel"
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -32,5 +24,5 @@ export TMPDIR="$(pwd)/benchmarks/tmp"
 export NH_DOCKER_IMAGE="envoyproxy/nighthawk-dev:latest"
 export ENVOY_DOCKER_IMAGE_TO_TEST="envoyproxy/envoy-dev:latest"
 
-# run all tests starting with test_http_h1_small
+# run all tests
 bazel-bin/benchmarks/benchmarks --log-cli-level=info -vvvv benchmarks/

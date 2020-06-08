@@ -1,5 +1,5 @@
 references:
-  envoy-build-image: &envoy-build-image 
+  envoy-build-image: &envoy-build-image
     # Jan 9th, 2020
     envoyproxy/envoy-build-ubuntu:04f06115b6ee7cfea74930353fb47a41149cbec3
 version: 2
@@ -42,7 +42,7 @@ jobs:
       - store_artifacts:
           path: /root/project/generated
           destination: /
-  benchmark_with_own_binaries:
+  benchmark:
     docker:
       - image: *envoy-build-image
     resource_class: xlarge
@@ -94,6 +94,6 @@ workflows:
       - coverage
       - asan
       - tsan
-      - benchmark_with_own_binaries
+      - benchmark
       - format
       - docker
