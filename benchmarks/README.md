@@ -108,11 +108,13 @@ docker run -it --rm \
 - Copy out the artifacts and push those to a gcp bucket. Current status:
   - cpu profiles are dumped to tmp per test (named according to the test). ideally we'd
     also dump flamegraph svg's
-- A UI -- though we may be able to get by with just a uri structure conventioned around the envoy
-  sha. e.g. http://perf-ci-host/gcpsync/[envoy-sha]-[timestamp]/ to link CI, and directory index the
-  artifacts.
+- Enhance the UI. Currently we rely on CircleCI to directory-list our artifacts. This is
+  is pretty bare-bones, ideally we'd have something more fancy and we would be able to
+  visualize test data historically.
 - Use taskset/cpuset when starting processes.
 - Offer a docker image with binaries pre-built for profiling + the python test framework.
+- Multi-origin support. The integration tests support it, but this isn't fitted into
+  the benchmark framework yet. This _might_ just be a doc issue.
 
 # FUTURE
 
