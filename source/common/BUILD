@@ -96,6 +96,7 @@ envoy_cc_library(
         "//include/nighthawk/client:client_includes",
         "//include/nighthawk/common:base_includes",
         "@com_google_absl//absl/random",
+        "@com_google_absl//absl/strings",
         "@dep_hdrhistogram_c//:hdrhistogram_c",
         "@envoy//source/common/common:assert_lib_with_external_headers",
         "@envoy//source/common/common:lock_guard_lib_with_external_headers",
