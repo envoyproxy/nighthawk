@@ -37,13 +37,17 @@
       return null;
     }
     function getPoints(percentiles) {
-      var r = [[], []];
+      var r = [[], [], []];
       x = r[0];
       y = r[1];
+      z = r[2];
+      last = 0;
       for (var i = 0; i < percentiles.length; i++) {
         var p = percentiles[i];
         x.push(p["percentile"] * 100);
         y.push(Math.round(parseFloat(p["duration"]) * 1000.0 * 1000.0)); // rounded to microseconds
+        z.push(parseInt(p["count"]) - last);
+        last = parseInt(p["count"]);
       }
       return r;
     }
@@ -57,22 +61,25 @@
         a.push({
           y: points[0],
           x: points[1],
-          name: name,
+          name: name + " latency",
           showlegend: true,
           type: "scatter",
           mode: "lines",
           line: linex || { shape: "spline" },
+          xaxis: "x1",
+        });
+        a.push({
+          x: points[1],
+          y: points[2],
+          name: name + " count",
+          showlegend: true,
+          type: "bar",
+          //mode: "lines",
+          line: linex || { shape: "spline" },
+          yaxis: "y2",
+          shape: "",
         });
       }
-      a.push({
-        y: [0, 0],
-        x: [50, 1000 * 3],
-        name: "fake",
-        showlegend: false,
-        type: "scatter",
-        mode: "lines",
-        line: linex || { shape: "spline" },
-      });
       return a;
     }
 
@@ -113,11 +120,24 @@
           },
         },
       },
-      xaxis: {
+      xaxis1: {
         type: "log",
         autorange: true,
         title: {
           text: "microseconds",
+          font: {
+            family: "Courier New, monospace",
+            size: 18,
+            color: "#7f7f7f",
+          },
+        },
+      },
+      yaxis2: {
+        autorange: true,
+        overlaying: "y",
+        side: "right",
+        title: {
+          text: "count",
           font: {
             family: "Courier New, monospace",
             size: 18,
