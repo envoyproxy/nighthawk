@@ -6,7 +6,12 @@ import "google/protobuf/wrappers.proto";
 import "validate/validate.proto";
 import "envoy/api/v2/core/base.proto";
 
+// Options that control the test server response.
 message ResponseOptions {
+  // List of additional response headers.
   repeated envoy.api.v2.core.HeaderValueOption response_headers = 1;
+  // Number of 'a' characters in the the response body.
   uint32 response_body_size = 2 [(validate.rules).uint32 = {lte: 4194304}];
+  // If true, then echo request headers in the response body.
+  bool echo_request_headers = 3;
 }
