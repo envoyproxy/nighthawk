@@ -64,6 +64,7 @@ py_library(
         requirement("execnet"),
         requirement("apipkg"),
         requirement("wcwidth"),
+        requirement("pyyaml"),
     ],
 )
 

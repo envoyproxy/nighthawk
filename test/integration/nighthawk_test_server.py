@@ -10,6 +10,7 @@ import requests
 import tempfile
 import threading
 import time
+import yaml
 from string import Template
 from pathlib import Path
 from rules_python.python.runfiles import runfiles
@@ -43,18 +44,42 @@ class TestServerBase(object):
     self.parameters["tmpdir"] = self.tmpdir
     self.parameters["tag"] = tag
 
+    def substitute_yaml_values(obj, params):
+      if isinstance(obj, dict):
+        for k, v in obj.items():
+          obj[k] = substitute_yaml_values(v, params)
+      elif isinstance(obj, list):
+        for i in range(len(obj)):
+          obj[i] = substitute_yaml_values(obj[i], params)
+      else:
+        if isinstance(obj, str):
+          # Inspect string values and substitute where applicable.
+          INJECT_RUNFILE_MARKER = '@inject-runfile:'
+          if obj[0] == '$':
+            return Template(obj).substitute(params)
+          elif obj.startswith(INJECT_RUNFILE_MARKER):
+            r = runfiles.Create()
+            with open(r.Rlocation(obj[len(INJECT_RUNFILE_MARKER):].strip()), 'r') as file:
+              return file.read()
+      return obj
+
     r = runfiles.Create()
-    with open(r.Rlocation(self.config_template_path), "r") as f:
-      config = Template(f.read())
-      config = config.substitute(self.parameters)
-      logging.info("Parameterized server configuration: %s", config)
+    with open(r.Rlocation(self.config_template_path)) as f:
+      data = yaml.load(f, Loader=yaml.FullLoader)
+      data = substitute_yaml_values(data, self.parameters)
 
     Path(self.tmpdir).mkdir(parents=True, exist_ok=True)
 
     with tempfile.NamedTemporaryFile(
         mode="w", delete=False, suffix=".config.yaml", dir=self.tmpdir) as tmp:
       self.parameterized_config_path = tmp.name
-      tmp.write(config)
+      yaml.safe_dump(
+          data,
+          tmp,
+          default_flow_style=False,
+          explicit_start=True,
+          allow_unicode=True,
+          encoding='utf-8')
 
     with tempfile.NamedTemporaryFile(
         mode="w", delete=False, suffix=".adminport", dir=self.tmpdir) as tmp:
