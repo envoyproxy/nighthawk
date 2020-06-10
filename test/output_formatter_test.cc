@@ -193,10 +193,10 @@ TEST_F(MediumOutputCollectorTest, FortioFormatter) {
 }
 
 TEST_F(MediumOutputCollectorTest, ConsoleOutputFormatter) {
-  const auto input_proto = loadProtoFromFile("test/test_data/output_formatter.medium.proto.gold");
+  const auto input_proto = loadProtoFromFile("test/test_data/large-sample.json");
   ConsoleOutputFormatterImpl formatter;
   expectEqualToGoldFile(formatter.formatProto(input_proto),
-                        "test/test_data/output_formatter.medium.txt.gold");
+                        "test/test_data/output_formatter.large.txt.gold");
 }
 
 class StatidToNameTest : public Test {};
