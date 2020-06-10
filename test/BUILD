@@ -1,10 +1,10 @@
-licenses(["notice"])  # Apache 2
-
 load(
     "@envoy//bazel:envoy_build_system.bzl",
     "envoy_cc_test",
     "envoy_package",
 )
+
+licenses(["notice"])  # Apache 2
 
 envoy_package()
 
@@ -103,6 +103,7 @@ envoy_cc_test(
         "test_data/output_formatter.json.gold",
         "test_data/output_formatter.medium.fortio.gold",
         "test_data/output_formatter.medium.proto.gold",
+        "test_data/output_formatter.medium.txt.gold",
         "test_data/output_formatter.txt.gold",
         "test_data/output_formatter.yaml.gold",
     ],
