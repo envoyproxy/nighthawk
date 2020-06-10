@@ -99,14 +99,14 @@ envoy_cc_test(
     name = "output_formatter_test",
     srcs = ["output_formatter_test.cc"],
     data = [
-        "test_data/large-sample.json",
         "test_data/output_formatter.dotted.gold",
         "test_data/output_formatter.json.gold",
-        "test_data/output_formatter.large.txt.gold",
         "test_data/output_formatter.medium.fortio.gold",
         "test_data/output_formatter.medium.proto.gold",
         "test_data/output_formatter.txt.gold",
         "test_data/output_formatter.yaml.gold",
+        "test_data/percentile-column-overflow.json",
+        "test_data/percentile-column-overflow.txt.gold",
     ],
     repository = "@envoy",
     deps = [
