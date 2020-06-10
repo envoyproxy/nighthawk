@@ -115,8 +115,9 @@ TEST_F(RateLimiterTest, ScheduledStartingRateLimiterTestBadArgs) {
     EXPECT_CALL(unsafe_mock_rate_limiter, timeSource)
         .Times(AtLeast(1))
         .WillRepeatedly(ReturnRef(time_system));
-    EXPECT_THROW(ScheduledStartingRateLimiter(std::move(mock_rate_limiter), timing);
-                 , NighthawkException);
+    EXPECT_NO_THROW(ScheduledStartingRateLimiter(std::move(mock_rate_limiter), timing));
+    // TODO(XXX): once we can, verify a warning gets logged while running the line
+    // above.
   }
 }
 
