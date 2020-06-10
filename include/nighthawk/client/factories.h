@@ -6,7 +6,6 @@
 #include "envoy/common/pure.h"
 #include "envoy/common/time.h"
 #include "envoy/event/dispatcher.h"
-#include "envoy/stats/store.h"
 #include "envoy/upstream/cluster_manager.h"
 
 #include "nighthawk/client/benchmark_client.h"
@@ -25,58 +24,45 @@ namespace Client {
 class BenchmarkClientFactory {
 public:
   virtual ~BenchmarkClientFactory() = default;
+
+  /**
+   * Constructs a BenchmarkClient
+   *
+   * @param api reference to the Api object.
+   * @param dispatcher supplies the owning thread's dispatcher.
+   * @param scope stats scope for any stats tracked by the benchmark client.
+   * @param cluster_manager Cluster manager preconfigured with our target cluster.
+   * @param http_tracer Shared pointer to an http tracer implementation (e.g. Zipkin).
+   * @param cluster_name Name of the cluster that this benchmark client will use. In conjunction
+   * with cluster_manager this will allow the this BenchmarkClient to access the target connection
+   * pool.
+   * @param request_source Source of request-specifiers. Will be queries every time the
+   * BenchmarkClient is asked to issue a request.
+   *
+   * @return BenchmarkClientPtr pointer to a BenchmarkClient instance.
+   */
   virtual BenchmarkClientPtr create(Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher,
                                     Envoy::Stats::Scope& scope,
                                     Envoy::Upstream::ClusterManagerPtr& cluster_manager,
-                                    Envoy::Tracing::HttpTracerPtr& http_tracer,
+                                    Envoy::Tracing::HttpTracerSharedPtr& http_tracer,
                                     absl::string_view cluster_name,
-                                    RequestSource& request_generator) const PURE;
-};
-
-class SequencerFactory {
-public:
-  virtual ~SequencerFactory() = default;
-  virtual SequencerPtr create(Envoy::TimeSource& time_source, Envoy::Event::Dispatcher& dispatcher,
-                              BenchmarkClient& benchmark_client,
-                              TerminationPredicatePtr&& termination_predicate,
-                              Envoy::Stats::Scope& scope,
-                              const Envoy::MonotonicTime scheduled_starting_time) const PURE;
-};
-
-class StoreFactory {
-public:
-  virtual ~StoreFactory() = default;
-  virtual Envoy::Stats::StorePtr create() const PURE;
-};
-
-class StatisticFactory {
-public:
-  virtual ~StatisticFactory() = default;
-  virtual StatisticPtr create() const PURE;
+                                    RequestSource& request_source) const PURE;
 };
 
 class OutputFormatterFactory {
 public:
   virtual ~OutputFormatterFactory() = default;
+
+  /**
+   * Constructs an OutputFormatter instance according to the requested output format.
+   *
+   * @param options Proto configuration object indicating the desired output format.
+   *
+   * @return OutputFormatterPtr pointer to an OutputFormatter instance.
+   */
   virtual OutputFormatterPtr
-  create(const nighthawk::client::OutputFormat_OutputFormatOptions) const PURE;
+  create(const nighthawk::client::OutputFormat_OutputFormatOptions options) const PURE;
 };
 
 } // namespace Client
-
-class RequestSourceFactory {
-public:
-  virtual ~RequestSourceFactory() = default;
-  virtual RequestSourcePtr create(const Envoy::Upstream::ClusterManagerPtr& cluster_manager,
-                                  Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
-                                  absl::string_view service_cluster_name) const PURE;
-};
-
-class TerminationPredicateFactory {
-public:
-  virtual ~TerminationPredicateFactory() = default;
-  virtual TerminationPredicatePtr create(Envoy::TimeSource& time_source,
-                                         Envoy::Stats::Scope& scope) const PURE;
-};
-
 } // namespace Nighthawk

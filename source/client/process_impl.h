@@ -17,6 +17,7 @@
 #include "external/envoy/source/common/access_log/access_log_manager_impl.h"
 #include "external/envoy/source/common/common/logger.h"
 #include "external/envoy/source/common/event/real_time_system.h"
+#include "external/envoy/source/common/grpc/context_impl.h"
 #include "external/envoy/source/common/http/context_impl.h"
 #include "external/envoy/source/common/protobuf/message_validator_impl.h"
 #include "external/envoy/source/common/secret/secret_manager_impl.h"
@@ -77,28 +78,27 @@ private:
    * @param config The bootstrap configuration that will be modified.
    */
   void addRequestSourceCluster(const Uri& uri, int worker_number,
-                               envoy::config::bootstrap::v3alpha::Bootstrap& config) const;
-  void addTracingCluster(envoy::config::bootstrap::v3alpha::Bootstrap& bootstrap,
-                         const Uri& uri) const;
-  void setupTracingImplementation(envoy::config::bootstrap::v3alpha::Bootstrap& bootstrap,
+                               envoy::config::bootstrap::v3::Bootstrap& config) const;
+  void addTracingCluster(envoy::config::bootstrap::v3::Bootstrap& bootstrap, const Uri& uri) const;
+  void setupTracingImplementation(envoy::config::bootstrap::v3::Bootstrap& bootstrap,
                                   const Uri& uri) const;
-  void createBootstrapConfiguration(envoy::config::bootstrap::v3alpha::Bootstrap& bootstrap,
+  void createBootstrapConfiguration(envoy::config::bootstrap::v3::Bootstrap& bootstrap,
                                     const std::vector<UriPtr>& uris,
                                     const UriPtr& request_source_uri, int number_of_workers) const;
-  void maybeCreateTracingDriver(const envoy::config::trace::v3alpha::Tracing& configuration);
+  void maybeCreateTracingDriver(const envoy::config::trace::v3::Tracing& configuration);
 
   void configureComponentLogLevels(spdlog::level::level_enum level);
   const std::vector<ClientWorkerPtr>& createWorkers(const uint32_t concurrency);
-  std::vector<StatisticPtr> vectorizeStatisticPtrMap(const StatisticFactory& statistic_factory,
-                                                     const StatisticPtrMap& statistics) const;
+  std::vector<StatisticPtr> vectorizeStatisticPtrMap(const StatisticPtrMap& statistics) const;
   std::vector<StatisticPtr>
-  mergeWorkerStatistics(const StatisticFactory& statistic_factory,
-                        const std::vector<ClientWorkerPtr>& workers) const;
+  mergeWorkerStatistics(const std::vector<ClientWorkerPtr>& workers) const;
   void setupForHRTimers();
+  bool runInternal(OutputCollector& collector, const std::vector<UriPtr>& uris,
+                   const UriPtr& request_source_uri, const UriPtr& tracing_uri);
+
   Envoy::ProcessWide process_wide_;
   Envoy::PlatformImpl platform_impl_;
   Envoy::Event::TimeSystem& time_system_;
-  StoreFactoryImpl store_factory_;
   Envoy::Stats::SymbolTableImpl symbol_table_;
   Envoy::Stats::AllocatorImpl stats_allocator_;
   Envoy::ThreadLocal::InstanceImpl tls_;
@@ -118,6 +118,7 @@ private:
   Envoy::Server::ConfigTrackerImpl config_tracker_;
   Envoy::Secret::SecretManagerImpl secret_manager_;
   Envoy::Http::ContextImpl http_context_;
+  Envoy::Grpc::ContextImpl grpc_context_;
   Envoy::Thread::MutexBasicLockable access_log_lock_;
   Envoy::Singleton::ManagerPtr singleton_manager_;
   Envoy::AccessLog::AccessLogManagerImpl access_log_manager_;
@@ -129,7 +130,7 @@ private:
   Envoy::Upstream::ClusterManagerPtr cluster_manager_{};
   std::unique_ptr<Runtime::ScopedLoaderSingleton> runtime_singleton_;
   Envoy::Init::WatcherImpl init_watcher_;
-  Tracing::HttpTracerPtr http_tracer_;
+  Tracing::HttpTracerSharedPtr http_tracer_;
   Envoy::Server::ValidationAdmin admin_;
   Envoy::ProtobufMessage::ProdValidationContextImpl validation_context_;
   bool shutdown_{true};

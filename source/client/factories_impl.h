@@ -2,10 +2,10 @@
 
 #include "envoy/api/api.h"
 #include "envoy/event/dispatcher.h"
-#include "envoy/stats/store.h"
 #include "envoy/upstream/cluster_manager.h"
 
 #include "nighthawk/client/factories.h"
+#include "nighthawk/common/factories.h"
 #include "nighthawk/common/termination_predicate.h"
 #include "nighthawk/common/uri.h"
 
@@ -30,7 +30,7 @@ public:
   BenchmarkClientPtr create(Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher,
                             Envoy::Stats::Scope& scope,
                             Envoy::Upstream::ClusterManagerPtr& cluster_manager,
-                            Envoy::Tracing::HttpTracerPtr& http_tracer,
+                            Envoy::Tracing::HttpTracerSharedPtr& http_tracer,
                             absl::string_view cluster_name,
                             RequestSource& request_generator) const override;
 };
@@ -39,15 +39,9 @@ class SequencerFactoryImpl : public OptionBasedFactoryImpl, public SequencerFact
 public:
   SequencerFactoryImpl(const Options& options);
   SequencerPtr create(Envoy::TimeSource& time_source, Envoy::Event::Dispatcher& dispatcher,
-                      BenchmarkClient& benchmark_client,
+                      const SequencerTarget& sequencer_target,
                       TerminationPredicatePtr&& termination_predicate, Envoy::Stats::Scope& scope,
                       const Envoy::MonotonicTime scheduled_starting_time) const override;
-};
-
-class StoreFactoryImpl : public OptionBasedFactoryImpl, public StoreFactory {
-public:
-  StoreFactoryImpl(const Options& options);
-  Envoy::Stats::StorePtr create() const override;
 };
 
 class StatisticFactoryImpl : public OptionBasedFactoryImpl, public StatisticFactory {
@@ -70,7 +64,7 @@ public:
                           absl::string_view service_cluster_name) const override;
 
 private:
-  void setRequestHeader(Envoy::Http::HeaderMap& header, absl::string_view key,
+  void setRequestHeader(Envoy::Http::RequestHeaderMap& header, absl::string_view key,
                         absl::string_view value) const;
 };
 
@@ -78,8 +72,8 @@ class TerminationPredicateFactoryImpl : public OptionBasedFactoryImpl,
                                         public TerminationPredicateFactory {
 public:
   TerminationPredicateFactoryImpl(const Options& options);
-  TerminationPredicatePtr create(Envoy::TimeSource& time_source,
-                                 Envoy::Stats::Scope& scope) const override;
+  TerminationPredicatePtr create(Envoy::TimeSource& time_source, Envoy::Stats::Scope& scope,
+                                 const Envoy::MonotonicTime scheduled_starting_time) const override;
   TerminationPredicate* linkConfiguredPredicates(
       TerminationPredicate& last_predicate, const TerminationPredicateMap& predicates,
       const TerminationPredicate::Status termination_status, Envoy::Stats::Scope& scope) const;

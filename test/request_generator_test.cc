@@ -12,8 +12,8 @@ namespace Client {
 class RequestSourceTest : public testing::Test {};
 
 TEST_F(RequestSourceTest, StaticRequestSourceImpl) {
-  Envoy::Http::HeaderMapPtr header{new Envoy::Http::TestHeaderMapImpl()};
-  Envoy::Http::HeaderMap* unsafe_header_ptr = header.get();
+  Envoy::Http::RequestHeaderMapPtr header{new Envoy::Http::TestRequestHeaderMapImpl()};
+  Envoy::Http::RequestHeaderMap* unsafe_header_ptr = header.get();
   uint32_t yields = 5;
   StaticRequestSourceImpl impl(std::move(header), yields);
   auto generator = impl.get();

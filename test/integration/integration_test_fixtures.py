@@ -111,21 +111,30 @@ class IntegrationTestBase():
         any_failed = True
     assert (not any_failed)
 
+  def getGlobalResults(self, parsed_json):
+    """
+    Utility to find the global/aggregated result in the json output
+    """
+    global_result = [x for x in parsed_json["results"] if x["name"] == "global"]
+    assert (len(global_result) == 1)
+    return global_result[0]
+
   def getNighthawkCounterMapFromJson(self, parsed_json):
     """
     Utility method to get the counters from the json indexed by name.
     """
-    global_results_index = len(parsed_json["results"]) - 1
     return {
         counter["name"]: int(counter["value"])
-        for counter in parsed_json["results"][global_results_index]["counters"]
+        for counter in self.getGlobalResults(parsed_json)["counters"]
     }
 
   def getNighthawkGlobalHistogramsbyIdFromJson(self, parsed_json):
     """
     Utility method to get the global histograms from the json indexed by id.
     """
-    return {statistic["id"]: statistic for statistic in parsed_json["results"][0]["statistics"]}
+    return {
+        statistic["id"]: statistic for statistic in self.getGlobalResults(parsed_json)["statistics"]
+    }
 
   def getTestServerRootUri(self, https=False):
     """
@@ -271,6 +280,21 @@ class HttpsIntegrationTestBase(IntegrationTestBase):
     return super(HttpsIntegrationTestBase, self).getTestServerRootUri(True)
 
 
+class SniIntegrationTestBase(HttpsIntegrationTestBase):
+  """
+  Base for https/sni tests against the Nighthawk test server
+  """
+
+  def __init__(self, ip_version):
+    super(SniIntegrationTestBase, self).__init__(ip_version)
+    self.nighthawk_test_config_path = os.path.join(
+        self.test_rundir, "test/integration/configurations/sni_origin.yaml")
+
+  def getTestServerRootUri(self):
+    """See base class."""
+    return super(HttpsIntegrationTestBase, self).getTestServerRootUri(True)
+
+
 class MultiServerHttpsIntegrationTestBase(IntegrationTestBase):
   """
   Base for https tests against multiple Nighthawk test servers
@@ -321,6 +345,14 @@ def multi_http_test_server_fixture(request):
 @pytest.fixture(params=determineIpVersionsFromEnvironment())
 def multi_https_test_server_fixture(request):
   f = MultiServerHttpsIntegrationTestBase(request.param, backend_count=3)
+  f.setUp()
+  yield f
+  f.tearDown()
+
+
+@pytest.fixture(params=determineIpVersionsFromEnvironment())
+def sni_test_server_fixture(request):
+  f = SniIntegrationTestBase(request.param)
   f.setUp()
   yield f
   f.tearDown()

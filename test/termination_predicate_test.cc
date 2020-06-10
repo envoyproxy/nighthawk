@@ -25,13 +25,13 @@ public:
 
 TEST_F(TerminationPredicateTest, DurationTerminationPredicateImplTest) {
   const auto duration = 100us;
-  DurationTerminationPredicateImpl pred(time_system, duration);
+  DurationTerminationPredicateImpl pred(time_system, duration, time_system.monotonicTime());
   EXPECT_EQ(pred.evaluate(), TerminationPredicate::Status::PROCEED);
   // move to the edge.
-  time_system.sleep(duration);
+  time_system.advanceTimeWait(duration);
   EXPECT_EQ(pred.evaluate(), TerminationPredicate::Status::PROCEED);
   // move past the edge, we expect the predicate to return TERMINATE.
-  time_system.sleep(1us);
+  time_system.advanceTimeWait(1us);
   EXPECT_EQ(pred.evaluate(), TerminationPredicate::Status::TERMINATE);
 }
 

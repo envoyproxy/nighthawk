@@ -48,6 +48,7 @@
 #include "client/client_worker_impl.h"
 #include "client/factories_impl.h"
 #include "client/options_impl.h"
+#include "client/sni_utility.h"
 
 #include "ares.h"
 
@@ -68,14 +69,11 @@ public:
       const Envoy::Network::ConnectionSocket::OptionsSharedPtr& options,
       const Envoy::Network::TransportSocketOptionsSharedPtr& transport_socket_options) override {
     if (protocol == Envoy::Http::Protocol::Http11 || protocol == Envoy::Http::Protocol::Http10) {
-      auto* h1_pool = new Http1PoolImpl(dispatcher, host, priority, options, h1_settings,
-                                        transport_socket_options);
+      auto* h1_pool =
+          new Http1PoolImpl(dispatcher, host, priority, options, transport_socket_options);
       h1_pool->setConnectionReuseStrategy(connection_reuse_strategy_);
       h1_pool->setPrefetchConnections(prefetch_connections_);
       return Envoy::Http::ConnectionPool::InstancePtr{h1_pool};
-    } else if (use_multi_conn_h2_pool_ && protocol == Envoy::Http::Protocol::Http2) {
-      return Envoy::Http::ConnectionPool::InstancePtr{
-          new Http2PoolImpl(dispatcher, host, priority, options, transport_socket_options)};
     }
     return Envoy::Upstream::ProdClusterManagerFactory::allocateConnPool(
         dispatcher, host, priority, protocol, options, transport_socket_options);
@@ -88,31 +86,28 @@ public:
   void setPrefetchConnections(const bool prefetch_connections) {
     prefetch_connections_ = prefetch_connections;
   }
-  void enableMultiConnectionH2Pool() { use_multi_conn_h2_pool_ = true; }
 
 private:
-  Envoy::Http::Http1Settings h1_settings;
   Http1PoolImpl::ConnectionReuseStrategy connection_reuse_strategy_{};
   bool prefetch_connections_{};
-  bool use_multi_conn_h2_pool_{};
 };
 
 ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system)
-    : time_system_(time_system), store_factory_(options), stats_allocator_(symbol_table_),
-      store_root_(stats_allocator_),
+    : time_system_(time_system), stats_allocator_(symbol_table_), store_root_(stats_allocator_),
       api_(std::make_unique<Envoy::Api::Impl>(platform_impl_.threadFactory(), store_root_,
                                               time_system_, platform_impl_.fileSystem())),
-      dispatcher_(api_->allocateDispatcher()), benchmark_client_factory_(options),
+      dispatcher_(api_->allocateDispatcher("main_thread")), benchmark_client_factory_(options),
       termination_predicate_factory_(options), sequencer_factory_(options),
       request_generator_factory_(options), options_(options), init_manager_("nh_init_manager"),
       local_info_(new Envoy::LocalInfo::LocalInfoImpl(
           {}, Envoy::Network::Utility::getLocalAddress(Envoy::Network::Address::IpVersion::v4),
           "nighthawk_service_zone", "nighthawk_service_cluster", "nighthawk_service_node")),
       secret_manager_(config_tracker_), http_context_(store_root_.symbolTable()),
+      grpc_context_(store_root_.symbolTable()),
       singleton_manager_(std::make_unique<Envoy::Singleton::ManagerImpl>(api_->threadFactory())),
       access_log_manager_(std::chrono::milliseconds(1000), *api_, *dispatcher_, access_log_lock_,
                           store_root_),
-      init_watcher_("Nighthawk", []() {}), validation_context_(false, false) {
+      init_watcher_("Nighthawk", []() {}), validation_context_(false, false, false) {
   // Any dispatchers created after the following call will use hr timers.
   setupForHRTimers();
   std::string lower = absl::AsciiStrToLower(
@@ -142,7 +137,7 @@ void ProcessImpl::shutdown() {
 
 const std::vector<ClientWorkerPtr>& ProcessImpl::createWorkers(const uint32_t concurrency) {
   // TODO(oschaaf): Expose kMinimalDelay in configuration.
-  const std::chrono::milliseconds kMinimalWorkerDelay = 500ms;
+  const std::chrono::milliseconds kMinimalWorkerDelay = 500ms + (concurrency * 50ms);
   ASSERT(workers_.empty());
 
   // We try to offset the start of each thread so that workers will execute tasks evenly spaced in
@@ -165,7 +160,9 @@ const std::vector<ClientWorkerPtr>& ProcessImpl::createWorkers(const uint32_t co
     workers_.push_back(std::make_unique<ClientWorkerImpl>(
         *api_, tls_, cluster_manager_, benchmark_client_factory_, termination_predicate_factory_,
         sequencer_factory_, request_generator_factory_, store_root_, worker_number,
-        first_worker_start + worker_delay, http_tracer_));
+        first_worker_start + worker_delay, http_tracer_,
+        options_.simpleWarmup() ? ClientWorkerImpl::HardCodedWarmupStyle::ON
+                                : ClientWorkerImpl::HardCodedWarmupStyle::OFF));
     worker_number++;
   }
   return workers_;
@@ -205,11 +202,12 @@ uint32_t ProcessImpl::determineConcurrency() const {
 }
 
 std::vector<StatisticPtr>
-ProcessImpl::vectorizeStatisticPtrMap(const StatisticFactory& statistic_factory,
-                                      const StatisticPtrMap& statistics) const {
+ProcessImpl::vectorizeStatisticPtrMap(const StatisticPtrMap& statistics) const {
   std::vector<StatisticPtr> v;
   for (const auto& statistic : statistics) {
-    auto new_statistic = statistic_factory.create()->combine(*(statistic.second));
+    // Clone the orinal statistic into a new one.
+    auto new_statistic =
+        statistic.second->createNewInstanceOfSameType()->combine(*(statistic.second));
     new_statistic->setId(statistic.first);
     v.push_back(std::move(new_statistic));
   }
@@ -217,8 +215,7 @@ ProcessImpl::vectorizeStatisticPtrMap(const StatisticFactory& statistic_factory,
 }
 
 std::vector<StatisticPtr>
-ProcessImpl::mergeWorkerStatistics(const StatisticFactory& statistic_factory,
-                                   const std::vector<ClientWorkerPtr>& workers) const {
+ProcessImpl::mergeWorkerStatistics(const std::vector<ClientWorkerPtr>& workers) const {
   // First we init merged_statistics with newly created statistics instances.
   // We do that by adding the same amount of Statistic instances that the first worker has.
   // (We always have at least one worker, and all workers have the same number of Statistic
@@ -226,7 +223,7 @@ ProcessImpl::mergeWorkerStatistics(const StatisticFactory& statistic_factory,
   std::vector<StatisticPtr> merged_statistics;
   StatisticPtrMap w0_statistics = workers[0]->statistics();
   for (const auto& w0_statistic : w0_statistics) {
-    auto new_statistic = statistic_factory.create();
+    auto new_statistic = w0_statistic.second->createNewInstanceOfSameType();
     new_statistic->setId(w0_statistic.first);
     merged_statistics.push_back(std::move(new_statistic));
   }
@@ -244,17 +241,24 @@ ProcessImpl::mergeWorkerStatistics(const StatisticFactory& statistic_factory,
   return merged_statistics;
 }
 
-void ProcessImpl::createBootstrapConfiguration(
-    envoy::config::bootstrap::v3alpha::Bootstrap& bootstrap, const std::vector<UriPtr>& uris,
-    const UriPtr& request_source_uri, int number_of_clusters) const {
+void ProcessImpl::createBootstrapConfiguration(envoy::config::bootstrap::v3::Bootstrap& bootstrap,
+                                               const std::vector<UriPtr>& uris,
+                                               const UriPtr& request_source_uri,
+                                               int number_of_clusters) const {
   for (int i = 0; i < number_of_clusters; i++) {
     auto* cluster = bootstrap.mutable_static_resources()->add_clusters();
     RELEASE_ASSERT(!uris.empty(), "illegal configuration with zero endpoints");
     if (uris[0]->scheme() == "https") {
       auto* transport_socket = cluster->mutable_transport_socket();
       transport_socket->set_name("envoy.transport_sockets.tls");
-      envoy::extensions::transport_sockets::tls::v3alpha::UpstreamTlsContext context =
+      envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext context =
           options_.tlsContext();
+      const std::string sni_host = SniUtility::computeSniHost(
+          uris, options_.requestHeaders(),
+          options_.h2() ? Envoy::Http::Protocol::Http2 : Envoy::Http::Protocol::Http11);
+      if (!sni_host.empty()) {
+        *context.mutable_sni() = sni_host;
+      }
       auto* common_tls_context = context.mutable_common_tls_context();
       if (options_.h2()) {
         common_tls_context->add_alpn_protocols("h2");
@@ -269,6 +273,9 @@ void ProcessImpl::createBootstrapConfiguration(
     cluster->set_name(fmt::format("{}", i));
     cluster->mutable_connect_timeout()->set_seconds(options_.timeout().count());
     cluster->mutable_max_requests_per_connection()->set_value(options_.maxRequestsPerConnection());
+    if (options_.h2() && options_.h2UseMultipleConnections()) {
+      cluster->mutable_http2_protocol_options()->mutable_max_concurrent_streams()->set_value(1);
+    }
 
     auto thresholds = cluster->mutable_circuit_breakers()->add_thresholds();
     // We do not support any retrying.
@@ -281,9 +288,9 @@ void ProcessImpl::createBootstrapConfiguration(
     thresholds->mutable_max_requests()->set_value(options_.maxActiveRequests());
 
     cluster->set_type(
-        envoy::config::cluster::v3alpha::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
+        envoy::config::cluster::v3::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
     for (const UriPtr& uri : uris) {
-      auto* host = cluster->add_hosts();
+      auto* host = cluster->add_hidden_envoy_deprecated_hosts();
       auto* socket_address = host->mutable_socket_address();
       socket_address->set_address(uri->address()->ip()->addressAsString());
       socket_address->set_port_value(uri->port());
@@ -294,28 +301,28 @@ void ProcessImpl::createBootstrapConfiguration(
   }
 }
 
-void ProcessImpl::addTracingCluster(envoy::config::bootstrap::v3alpha::Bootstrap& bootstrap,
+void ProcessImpl::addTracingCluster(envoy::config::bootstrap::v3::Bootstrap& bootstrap,
                                     const Uri& uri) const {
   auto* cluster = bootstrap.mutable_static_resources()->add_clusters();
   cluster->set_name("tracing");
   cluster->mutable_connect_timeout()->set_seconds(options_.timeout().count());
   cluster->set_type(
-      envoy::config::cluster::v3alpha::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
-  auto* host = cluster->add_hosts();
+      envoy::config::cluster::v3::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
+  auto* host = cluster->add_hidden_envoy_deprecated_hosts();
   auto* socket_address = host->mutable_socket_address();
   socket_address->set_address(uri.address()->ip()->addressAsString());
   socket_address->set_port_value(uri.port());
 }
 
-void ProcessImpl::setupTracingImplementation(
-    envoy::config::bootstrap::v3alpha::Bootstrap& bootstrap, const Uri& uri) const {
+void ProcessImpl::setupTracingImplementation(envoy::config::bootstrap::v3::Bootstrap& bootstrap,
+                                             const Uri& uri) const {
 #ifdef ZIPKIN_ENABLED
   auto* http = bootstrap.mutable_tracing()->mutable_http();
   auto scheme = uri.scheme();
   const std::string kTracingClusterName = "tracing";
   http->set_name(fmt::format("envoy.{}", scheme));
   RELEASE_ASSERT(scheme == "zipkin", "Only zipkin is supported");
-  envoy::config::trace::v3alpha::ZipkinConfig config;
+  envoy::config::trace::v3::ZipkinConfig config;
   config.mutable_collector_cluster()->assign(kTracingClusterName);
   config.mutable_collector_endpoint()->assign(std::string(uri.path()));
   config.mutable_shared_span_context()->set_value(true);
@@ -327,8 +334,7 @@ void ProcessImpl::setupTracingImplementation(
 #endif
 }
 
-void ProcessImpl::maybeCreateTracingDriver(
-    const envoy::config::trace::v3alpha::Tracing& configuration) {
+void ProcessImpl::maybeCreateTracingDriver(const envoy::config::trace::v3::Tracing& configuration) {
   if (configuration.has_http()) {
 #ifdef ZIPKIN_ENABLED
     std::string type = configuration.http().name();
@@ -342,14 +348,13 @@ void ProcessImpl::maybeCreateTracingDriver(
             configuration.http());
     ProtobufTypes::MessagePtr message = Envoy::Config::Utility::translateToFactoryConfig(
         configuration.http(), Envoy::ProtobufMessage::getStrictValidationVisitor(), factory);
-    auto zipkin_config = dynamic_cast<const envoy::config::trace::v3alpha::ZipkinConfig&>(*message);
+    auto zipkin_config = dynamic_cast<const envoy::config::trace::v3::ZipkinConfig&>(*message);
     Envoy::Tracing::DriverPtr zipkin_driver =
         std::make_unique<Envoy::Extensions::Tracers::Zipkin::Driver>(
             zipkin_config, *cluster_manager_, store_root_, tls_,
             Envoy::Runtime::LoaderSingleton::get(), *local_info_, generator_, time_system_);
     http_tracer_ =
         std::make_unique<Envoy::Tracing::HttpTracerImpl>(std::move(zipkin_driver), *local_info_);
-    http_context_.setTracer(*http_tracer_);
 #else
     ENVOY_LOG(error, "Not build with any tracing support");
 #endif
@@ -357,18 +362,90 @@ void ProcessImpl::maybeCreateTracingDriver(
 }
 
 void ProcessImpl::addRequestSourceCluster(
-    const Uri& uri, int worker_number,
-    envoy::config::bootstrap::v3alpha::Bootstrap& bootstrap) const {
+    const Uri& uri, int worker_number, envoy::config::bootstrap::v3::Bootstrap& bootstrap) const {
   auto* cluster = bootstrap.mutable_static_resources()->add_clusters();
   cluster->mutable_http2_protocol_options();
   cluster->set_name(fmt::format("{}.requestsource", worker_number));
   cluster->set_type(
-      envoy::config::cluster::v3alpha::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
+      envoy::config::cluster::v3::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
   cluster->mutable_connect_timeout()->set_seconds(options_.timeout().count());
-  auto* host = cluster->add_hosts();
+  auto* host = cluster->add_hidden_envoy_deprecated_hosts();
   auto* socket_address = host->mutable_socket_address();
   socket_address->set_address(uri.address()->ip()->addressAsString());
   socket_address->set_port_value(uri.port());
+}
+
+bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriPtr>& uris,
+                              const UriPtr& request_source_uri, const UriPtr& tracing_uri) {
+  int number_of_workers = determineConcurrency();
+  shutdown_ = false;
+  const std::vector<ClientWorkerPtr>& workers = createWorkers(number_of_workers);
+  tls_.registerThread(*dispatcher_, true);
+  store_root_.initializeThreading(*dispatcher_, tls_);
+  runtime_singleton_ = std::make_unique<Envoy::Runtime::ScopedLoaderSingleton>(
+      Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl(
+          *dispatcher_, tls_, {}, *local_info_, store_root_, generator_,
+          Envoy::ProtobufMessage::getStrictValidationVisitor(), *api_)});
+  ssl_context_manager_ =
+      std::make_unique<Extensions::TransportSockets::Tls::ContextManagerImpl>(time_system_);
+  cluster_manager_factory_ = std::make_unique<ClusterManagerFactory>(
+      admin_, Envoy::Runtime::LoaderSingleton::get(), store_root_, tls_, generator_,
+      dispatcher_->createDnsResolver({}, false), *ssl_context_manager_, *dispatcher_, *local_info_,
+      secret_manager_, validation_context_, *api_, http_context_, grpc_context_,
+      access_log_manager_, *singleton_manager_);
+  cluster_manager_factory_->setConnectionReuseStrategy(
+      options_.h1ConnectionReuseStrategy() == nighthawk::client::H1ConnectionReuseStrategy::LRU
+          ? Http1PoolImpl::ConnectionReuseStrategy::LRU
+          : Http1PoolImpl::ConnectionReuseStrategy::MRU);
+  cluster_manager_factory_->setPrefetchConnections(options_.prefetchConnections());
+  envoy::config::bootstrap::v3::Bootstrap bootstrap;
+  createBootstrapConfiguration(bootstrap, uris, request_source_uri, number_of_workers);
+  if (tracing_uri != nullptr) {
+    setupTracingImplementation(bootstrap, *tracing_uri);
+    addTracingCluster(bootstrap, *tracing_uri);
+  }
+  ENVOY_LOG(debug, "Computed configuration: {}", bootstrap.DebugString());
+  cluster_manager_ = cluster_manager_factory_->clusterManagerFromProto(bootstrap);
+  maybeCreateTracingDriver(bootstrap.tracing());
+  cluster_manager_->setInitializedCb([this]() -> void { init_manager_.initialize(init_watcher_); });
+
+  Runtime::LoaderSingleton::get().initialize(*cluster_manager_);
+
+  for (auto& w : workers_) {
+    w->start();
+  }
+
+  for (auto& w : workers_) {
+    w->waitForCompletion();
+  }
+
+  int i = 0;
+  std::chrono::nanoseconds total_execution_duration = 0ns;
+  for (auto& worker : workers_) {
+    auto sequencer_execution_duration = worker->phase().sequencer().executionDuration();
+    // We don't write per-worker results if we only have a single worker, because the global
+    // results will be precisely the same.
+    if (workers_.size() > 1) {
+      StatisticFactoryImpl statistic_factory(options_);
+      collector.addResult(fmt::format("worker_{}", i),
+                          vectorizeStatisticPtrMap(worker->statistics()),
+                          worker->threadLocalCounterValues(), sequencer_execution_duration);
+    }
+    total_execution_duration += sequencer_execution_duration;
+    i++;
+  }
+
+  // Note that above we use use counter values snapshotted by the workers right after its
+  // execution completes. Here we query the live counters to get to the global numbers. To make
+  // sure the global aggregated numbers line up, we must take care not to shut down the benchmark
+  // client before we do this, as that will increment certain counters like connections closed,
+  // etc.
+  const auto& counters = Utility().mapCountersFromStore(
+      store_root_, [](absl::string_view, uint64_t value) { return value > 0; });
+  StatisticFactoryImpl statistic_factory(options_);
+  collector.addResult("global", mergeWorkerStatistics(workers), counters,
+                      total_execution_duration / workers_.size());
+  return counters.find("sequencer.failed_terminations") == counters.end();
 }
 
 bool ProcessImpl::run(OutputCollector& collector) {
@@ -406,77 +483,12 @@ bool ProcessImpl::run(OutputCollector& collector) {
     return false;
   }
 
-  int number_of_workers = determineConcurrency();
-  shutdown_ = false;
-  const std::vector<ClientWorkerPtr>& workers = createWorkers(number_of_workers);
-  tls_.registerThread(*dispatcher_, true);
-  store_root_.initializeThreading(*dispatcher_, tls_);
-  runtime_singleton_ = std::make_unique<Envoy::Runtime::ScopedLoaderSingleton>(
-      Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl(
-          *dispatcher_, tls_, {}, *local_info_, init_manager_, store_root_, generator_,
-          Envoy::ProtobufMessage::getStrictValidationVisitor(), *api_)});
-  ssl_context_manager_ =
-      std::make_unique<Extensions::TransportSockets::Tls::ContextManagerImpl>(time_system_);
-  cluster_manager_factory_ = std::make_unique<ClusterManagerFactory>(
-      admin_, Envoy::Runtime::LoaderSingleton::get(), store_root_, tls_, generator_,
-      dispatcher_->createDnsResolver({}, true), *ssl_context_manager_, *dispatcher_, *local_info_,
-      secret_manager_, validation_context_, *api_, http_context_, access_log_manager_,
-      *singleton_manager_);
-  cluster_manager_factory_->setConnectionReuseStrategy(
-      options_.h1ConnectionReuseStrategy() == nighthawk::client::H1ConnectionReuseStrategy::LRU
-          ? Http1PoolImpl::ConnectionReuseStrategy::LRU
-          : Http1PoolImpl::ConnectionReuseStrategy::MRU);
-  cluster_manager_factory_->setPrefetchConnections(options_.prefetchConnections());
-  if (options_.h2UseMultipleConnections()) {
-    cluster_manager_factory_->enableMultiConnectionH2Pool();
+  try {
+    return runInternal(collector, uris, request_source_uri, tracing_uri);
+  } catch (Envoy::EnvoyException& ex) {
+    ENVOY_LOG(error, "Fatal exception: {}", ex.what());
+    throw;
   }
-  envoy::config::bootstrap::v3alpha::Bootstrap bootstrap;
-  createBootstrapConfiguration(bootstrap, uris, request_source_uri, number_of_workers);
-  if (tracing_uri != nullptr) {
-    setupTracingImplementation(bootstrap, *tracing_uri);
-    addTracingCluster(bootstrap, *tracing_uri);
-  }
-  ENVOY_LOG(debug, "Computed configuration: {}", bootstrap.DebugString());
-  cluster_manager_ = cluster_manager_factory_->clusterManagerFromProto(bootstrap);
-  maybeCreateTracingDriver(bootstrap.tracing());
-  cluster_manager_->setInitializedCb([this]() -> void { init_manager_.initialize(init_watcher_); });
-
-  Runtime::LoaderSingleton::get().initialize(*cluster_manager_);
-
-  for (auto& w : workers_) {
-    w->start();
-  }
-
-  for (auto& w : workers_) {
-    w->waitForCompletion();
-  }
-
-  int i = 0;
-  std::chrono::nanoseconds total_execution_duration = 0ns;
-  for (auto& worker : workers_) {
-    auto sequencer_execution_duration = worker->phase().sequencer().executionDuration();
-    // We don't write per-worker results if we only have a single worker, because the global results
-    // will be precisely the same.
-    if (workers_.size() > 1) {
-      StatisticFactoryImpl statistic_factory(options_);
-      collector.addResult(fmt::format("worker_{}", i),
-                          vectorizeStatisticPtrMap(statistic_factory, worker->statistics()),
-                          worker->threadLocalCounterValues(), sequencer_execution_duration);
-    }
-    total_execution_duration += sequencer_execution_duration;
-    i++;
-  }
-
-  // Note that above we use use counter values snapshotted by the workers right after its execution
-  // completes. Here we query the live counters to get to the global numbers. To make sure the
-  // global aggregated numbers line up, we must take care not to shut down the benchmark client
-  // before we do this, as that will increment certain counters like connections closed, etc.
-  const auto& counters = Utility().mapCountersFromStore(
-      store_root_, [](absl::string_view, uint64_t value) { return value > 0; });
-  StatisticFactoryImpl statistic_factory(options_);
-  collector.addResult("global", mergeWorkerStatistics(statistic_factory, workers), counters,
-                      total_execution_duration / workers_.size());
-  return counters.find("sequencer.failed_terminations") == counters.end();
 }
 
 void ProcessImpl::setupForHRTimers() {

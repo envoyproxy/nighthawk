@@ -59,7 +59,7 @@ UriImpl::UriImpl(absl::string_view uri, absl::string_view default_scheme)
 
 bool UriImpl::performDnsLookup(Envoy::Event::Dispatcher& dispatcher,
                                const Envoy::Network::DnsLookupFamily dns_lookup_family) {
-  auto dns_resolver = dispatcher.createDnsResolver({}, true);
+  auto dns_resolver = dispatcher.createDnsResolver({}, false);
   std::string hostname = std::string(hostWithoutPort());
 
   if (!hostname.empty() && hostname[0] == '[' && hostname[hostname.size() - 1] == ']') {
@@ -69,9 +69,10 @@ bool UriImpl::performDnsLookup(Envoy::Event::Dispatcher& dispatcher,
   Envoy::Network::ActiveDnsQuery* active_dns_query_ = dns_resolver->resolve(
       hostname, dns_lookup_family,
       [this, &dispatcher,
-       &active_dns_query_](std::list<Envoy::Network::DnsResponse>&& response) -> void {
+       &active_dns_query_](Envoy::Network::DnsResolver::ResolutionStatus status,
+                           std::list<Envoy::Network::DnsResponse>&& response) -> void {
         active_dns_query_ = nullptr;
-        if (!response.empty()) {
+        if (!response.empty() && status == Envoy::Network::DnsResolver::ResolutionStatus::Success) {
           address_ =
               Envoy::Network::Utility::getAddressWithPort(*response.front().address_, port());
           ENVOY_LOG(debug, "DNS resolution complete for {} ({} entries, using {}).",

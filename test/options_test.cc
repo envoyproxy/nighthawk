@@ -18,6 +18,19 @@ public:
       : client_name_("nighthawk_client"), good_test_uri_("http://127.0.0.1/"),
         no_arg_match_("Couldn't find match for argument") {}
 
+  void verifyHeaderOptionParse(absl::string_view header_option, absl::string_view expected_key,
+                               absl::string_view expected_value) {
+    std::string s_header_option(header_option);
+    std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(std::vector<const char*>{
+        client_name_.c_str(), "--request-header", s_header_option.c_str(), good_test_uri_.c_str()});
+    EXPECT_EQ(std::vector<std::string>{s_header_option}, options->requestHeaders());
+    auto optionsPtr = options->toCommandLineOptions();
+    const auto& headers = optionsPtr->request_options().request_headers();
+    EXPECT_EQ(1, headers.size());
+    EXPECT_EQ(expected_key, headers[0].header().key());
+    EXPECT_EQ(expected_value, headers[0].header().value());
+  }
+
   std::string client_name_;
   std::string good_test_uri_;
   std::string no_arg_match_;
@@ -61,7 +74,8 @@ TEST_F(OptionsImplTest, AlmostAll) {
       "--termination-predicate t1:1 --termination-predicate t2:2 --failure-predicate f1:1 "
       "--failure-predicate f2:2 --jitter-uniform .00001s "
       "--experimental-h2-use-multiple-connections "
-      "--experimental-h1-connection-reuse-strategy lru --label label1 --label label2 {}",
+      "--experimental-h1-connection-reuse-strategy lru --label label1 --label label2 {} "
+      "--simple-warmup",
       client_name_,
       "{name:\"envoy.transport_sockets.tls\","
       "typed_config:{\"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\","
@@ -81,7 +95,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
   EXPECT_EQ(13, options->burstSize());
   EXPECT_EQ(nighthawk::client::AddressFamily::V6, options->addressFamily());
   EXPECT_EQ(good_test_uri_, options->uri());
-  EXPECT_EQ(envoy::config::core::v3alpha::RequestMethod::POST, options->requestMethod());
+  EXPECT_EQ(envoy::config::core::v3::RequestMethod::POST, options->requestMethod());
   const std::vector<std::string> expected_headers = {"f1:b1", "f2:b2", "f3:b3:b4"};
   EXPECT_EQ(expected_headers, options->requestHeaders());
   EXPECT_EQ(1234, options->requestBodySize());
@@ -94,7 +108,8 @@ TEST_F(OptionsImplTest, AlmostAll) {
             "      }\n"
             "    }\n"
             "  }\n"
-            "}\n",
+            "}\n"
+            "183412668: \"envoy.api.v2.core.TransportSocket\"\n",
             options->transportSocket().value().DebugString());
   EXPECT_EQ(10, options->maxPendingRequests());
   EXPECT_EQ(11, options->maxActiveRequests());
@@ -112,7 +127,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
             options->h1ConnectionReuseStrategy());
   const std::vector<std::string> expected_labels{"label1", "label2"};
   EXPECT_EQ(expected_labels, options->labels());
-
+  EXPECT_TRUE(options->simpleWarmup());
   // Check that our conversion to CommandLineOptionsPtr makes sense.
   CommandLineOptionsPtr cmd = options->toCommandLineOptions();
   EXPECT_EQ(cmd->requests_per_second().value(), options->requestsPerSecond());
@@ -164,6 +179,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
   EXPECT_EQ(cmd->experimental_h1_connection_reuse_strategy().value(),
             options->h1ConnectionReuseStrategy());
   EXPECT_THAT(cmd->labels(), ElementsAreArray(expected_labels));
+  EXPECT_EQ(cmd->simple_warmup().value(), options->simpleWarmup());
 
   OptionsImpl options_from_proto(*cmd);
   std::string s1 = Envoy::MessageUtil::getYamlStringFromMessage(
@@ -205,8 +221,11 @@ TEST_F(OptionsImplTest, TlsContext) {
   EXPECT_EQ("common_tls_context {\n"
             "  tls_params {\n"
             "    cipher_suites: \"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"\n"
+            "    183412668: \"envoy.api.v2.auth.TlsParameters\"\n"
             "  }\n"
-            "}\n",
+            "  183412668: \"envoy.api.v2.auth.CommonTlsContext\"\n"
+            "}\n"
+            "183412668: \"envoy.api.v2.auth.UpstreamTlsContext\"\n",
             options->tlsContext().DebugString());
 
   // Check that our conversion to CommandLineOptionsPtr makes sense.
@@ -523,7 +542,7 @@ TEST_F(OptionsImplTest, BadTlsContextSpecification) {
       TestUtility::createOptionsImpl(fmt::format("{} --tls-context {} http://foo/", client_name_,
                                                  "{misspelled_tls_context:{}}")),
       MalformedArgvException,
-      "envoy.extensions.transport_sockets.tls.v3alpha.UpstreamTlsContext reason INVALID_ARGUMENT");
+      "envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext reason INVALID_ARGUMENT");
 }
 
 TEST_F(OptionsImplTest, BadTransportSocketSpecification) {
@@ -537,7 +556,7 @@ TEST_F(OptionsImplTest, BadTransportSocketSpecification) {
       TestUtility::createOptionsImpl(fmt::format("{} --transport-socket {} http://foo/",
                                                  client_name_, "{misspelled_transport_socket:{}}")),
       MalformedArgvException,
-      "Protobuf message \\(type envoy.config.core.v3alpha.TransportSocket reason "
+      "Protobuf message \\(type envoy.config.core.v3.TransportSocket reason "
       "INVALID_ARGUMENT:misspelled_transport_socket: Cannot find field.\\) has unknown fields");
 }
 
@@ -584,16 +603,9 @@ TEST_F(OptionsImplTest, RequestHeaderWithoutColon) {
 }
 
 TEST_F(OptionsImplTest, RequestHeaderValueWithColonsAndSpaces) {
-  const std::string header("foo"), value(R"({ "bar": "baz" })");
-  const std::string header_option = fmt::format("{}:{}", header, value);
-  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(std::vector<const char*>{
-      client_name_.c_str(), "--request-header", header_option.c_str(), good_test_uri_.c_str()});
-  EXPECT_EQ(std::vector<std::string>{header_option}, options->requestHeaders());
-  auto optionsPtr = options->toCommandLineOptions();
-  const auto& headers = optionsPtr->request_options().request_headers();
-  EXPECT_EQ(1, headers.size());
-  EXPECT_EQ(header, headers[0].header().key());
-  EXPECT_EQ(value, headers[0].header().value());
+  verifyHeaderOptionParse("bar: baz", "bar", "baz");
+  verifyHeaderOptionParse("\t\n bar:  baz  \t\n", "bar", "baz");
+  verifyHeaderOptionParse(":authority: baz", ":authority", "baz");
 }
 
 TEST_F(OptionsImplTest, MultiTargetEndpointMalformed) {

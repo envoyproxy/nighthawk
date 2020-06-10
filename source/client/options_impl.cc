@@ -264,6 +264,13 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "connect to this source. For example grpc://127.0.0.1:8443/.",
       false, "", "uri format", cmd);
 
+  TCLAP::SwitchArg simple_warmup(
+      "", "simple-warmup",
+      "Perform a simple single warmup request (per worker) before starting execution. Note that "
+      "this will be reflected in the counters that Nighthawk writes to the output. Default is "
+      "false.",
+      cmd);
+
   Utility::parseCommand(cmd, argc, argv);
 
   TCLAP_SET_IF_SPECIFIED(requests_per_second, requests_per_second_);
@@ -301,7 +308,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   if (request_method.isSet()) {
     std::string upper_cased = request_method.getValue();
     absl::AsciiStrToUpper(&upper_cased);
-    RELEASE_ASSERT(envoy::config::core::v3alpha::RequestMethod_Parse(upper_cased, &request_method_),
+    RELEASE_ASSERT(envoy::config::core::v3::RequestMethod_Parse(upper_cased, &request_method_),
                    "Failed to parse request method");
   }
   TCLAP_SET_IF_SPECIFIED(request_headers, request_headers_);
@@ -365,6 +372,8 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
     }
   }
   TCLAP_SET_IF_SPECIFIED(labels, labels_);
+  TCLAP_SET_IF_SPECIFIED(simple_warmup, simple_warmup_);
+
   // CLI-specific tests.
   // TODO(oschaaf): as per mergconflicts's remark, it would be nice to aggregate
   // these and present everything we couldn't understand to the CLI user in on go.
@@ -414,7 +423,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   }
   if (!transport_socket.getValue().empty()) {
     try {
-      transport_socket_.emplace(envoy::config::core::v3alpha::TransportSocket());
+      transport_socket_.emplace(envoy::config::core::v3::TransportSocket());
       Envoy::MessageUtil::loadFromJson(transport_socket.getValue(), transport_socket_.value(),
                                        Envoy::ProtobufMessage::getStrictValidationVisitor());
     } catch (const Envoy::EnvoyException& e) {
@@ -487,7 +496,7 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
       request_headers_.push_back(header_string);
     }
     if (request_options.request_method() !=
-        ::envoy::config::core::v3alpha::RequestMethod::METHOD_UNSPECIFIED) {
+        ::envoy::config::core::v3::RequestMethod::METHOD_UNSPECIFIED) {
       request_method_ = request_options.request_method();
     }
     request_body_size_ =
@@ -511,10 +520,11 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
       PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, experimental_h1_connection_reuse_strategy,
                                       experimental_h1_connection_reuse_strategy_);
   open_loop_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, open_loop, open_loop_);
+
   tls_context_.MergeFrom(options.tls_context());
 
   if (options.has_transport_socket()) {
-    transport_socket_.emplace(envoy::config::core::v3alpha::TransportSocket());
+    transport_socket_.emplace(envoy::config::core::v3::TransportSocket());
     transport_socket_.value().MergeFrom(options.transport_socket());
   }
 
@@ -535,6 +545,7 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
       PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, nighthawk_service, nighthawk_service_);
   h2_use_multiple_connections_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(
       options, experimental_h2_use_multiple_connections, h2_use_multiple_connections_);
+  simple_warmup_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, simple_warmup, simple_warmup_);
   std::copy(options.labels().begin(), options.labels().end(), std::back_inserter(labels_));
   validate();
 }
@@ -573,7 +584,7 @@ void OptionsImpl::validate() const {
       if (uri.scheme() != "grpc") {
         throw MalformedArgvException("Invalid replay source URI");
       }
-    } catch (const UriException) {
+    } catch (const UriException&) {
       throw MalformedArgvException("Invalid replay source URI");
     }
   }
@@ -648,11 +659,12 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
       // TODO(oschaaf): expose append option in CLI? For now we just set.
       header_value_option->mutable_append()->set_value(false);
       auto request_header = header_value_option->mutable_header();
-      auto pos = header.find(':');
+      // Skip past the first colon so we propagate ':authority: foo` correctly.
+      auto pos = header.empty() ? std::string::npos : header.find(':', 1);
       if (pos != std::string::npos) {
-        request_header->set_key(header.substr(0, pos));
+        request_header->set_key(std::string(absl::StripAsciiWhitespace(header.substr(0, pos))));
         // Any visible char, including ':', is allowed in header values.
-        request_header->set_value(header.substr(pos + 1));
+        request_header->set_value(std::string(absl::StripAsciiWhitespace(header.substr(pos + 1))));
       } else {
         throw MalformedArgvException("A ':' is required in a header.");
       }
@@ -690,6 +702,7 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
   for (const auto& label : labels_) {
     *command_line_options->add_labels() = label;
   }
+  command_line_options->mutable_simple_warmup()->set_value(simple_warmup_);
   return command_line_options;
 }
 

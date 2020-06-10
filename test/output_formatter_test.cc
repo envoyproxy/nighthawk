@@ -3,6 +3,7 @@
 #include "nighthawk/common/exception.h"
 
 #include "external/envoy/source/common/protobuf/message_validator_impl.h"
+#include "external/envoy/source/common/protobuf/utility.h"
 #include "external/envoy/test/test_common/file_system_for_test.h"
 #include "external/envoy/test/test_common/simulated_time_system.h"
 
@@ -17,7 +18,7 @@
 
 #include "test_common/environment.h"
 
-#include "test/mocks.h"
+#include "test/mocks/client/mock_options.h"
 
 #include "absl/strings/str_replace.h"
 #include "gtest/gtest.h"
@@ -33,12 +34,31 @@ public:
   OutputCollectorTest() {
     StatisticPtr used_statistic = std::make_unique<StreamingStatistic>();
     StatisticPtr empty_statistic = std::make_unique<StreamingStatistic>();
+    StatisticPtr size_statistic = std::make_unique<HdrStatistic>();
+    StatisticPtr latency_statistic = std::make_unique<HdrStatistic>();
+
     used_statistic->setId("stat_id");
     used_statistic->addValue(1000000);
     used_statistic->addValue(2000000);
     used_statistic->addValue(3000000);
+
+    size_statistic->addValue(14);
+    size_statistic->addValue(15);
+    size_statistic->addValue(16);
+    size_statistic->addValue(17);
+    size_statistic->setId("foo_size");
+
+    latency_statistic->addValue(180000);
+    latency_statistic->addValue(190000);
+    latency_statistic->addValue(200000);
+    latency_statistic->addValue(210000);
+    latency_statistic->setId("foo_latency");
+
     statistics_.push_back(std::move(used_statistic));
     statistics_.push_back(std::move(empty_statistic));
+    statistics_.push_back(std::move(size_statistic));
+    statistics_.push_back(std::move(latency_statistic));
+
     counters_["foo"] = 1;
     counters_["bar"] = 2;
     time_system_.setSystemTime(std::chrono::milliseconds(1234567891567));
@@ -54,8 +74,8 @@ public:
     std::string s = Envoy::Filesystem::fileSystemForTest().fileReadToEnd(
         TestEnvironment::runfilesPath(std::string(path)));
     const auto version = VersionInfo::buildVersion().version();
-    const std::string major = fmt::format("{}", version.major());
-    const std::string minor = fmt::format("{}", version.minor());
+    const std::string major = fmt::format("{}", version.major_number());
+    const std::string minor = fmt::format("{}", version.minor_number());
     const std::string patch = fmt::format("{}", version.patch());
     s = absl::StrReplaceAll(s, {{"@version_major@", major}});
     s = absl::StrReplaceAll(s, {{"@version_minor@", minor}});
@@ -102,7 +122,7 @@ TEST_F(OutputCollectorTest, DottedFormatter) {
                         "test/test_data/output_formatter.dotted.gold");
 }
 
-TEST_F(OutputCollectorTest, getLowerCaseOutputFormats) {
+TEST_F(OutputCollectorTest, GetLowerCaseOutputFormats) {
   auto output_formats = OutputFormatterImpl::getLowerCaseOutputFormats();
   // When you're looking at this code you probably just added an output format.
   // This is to point out that you might want to update the list below and add a test above.
@@ -136,22 +156,19 @@ TEST_F(FortioOutputCollectorTest, MissingGlobalResult) {
 TEST_F(FortioOutputCollectorTest, MissingCounter) {
   nighthawk::client::Output output_proto = collector_->toProto();
   output_proto.mutable_results(2)->clear_counters();
-
   FortioOutputFormatterImpl formatter;
-  ASSERT_THROW(formatter.formatProto(output_proto), NighthawkException);
+  ASSERT_NO_THROW(formatter.formatProto(output_proto));
 }
 
 TEST_F(FortioOutputCollectorTest, MissingStatistic) {
   nighthawk::client::Output output_proto = collector_->toProto();
   output_proto.mutable_results(2)->clear_statistics();
-
   FortioOutputFormatterImpl formatter;
-  ASSERT_THROW(formatter.formatProto(output_proto), NighthawkException);
+  ASSERT_NO_THROW(formatter.formatProto(output_proto));
 }
 
 TEST_F(FortioOutputCollectorTest, NoExceptions) {
   nighthawk::client::Output output_proto = collector_->toProto();
-
   FortioOutputFormatterImpl formatter;
   ASSERT_NO_THROW(formatter.formatProto(output_proto));
 }
@@ -170,7 +187,6 @@ public:
 
 TEST_F(MediumOutputCollectorTest, FortioFormatter) {
   const auto input_proto = loadProtoFromFile("test/test_data/output_formatter.medium.proto.gold");
-
   FortioOutputFormatterImpl formatter;
   expectEqualToGoldFile(formatter.formatProto(input_proto),
                         "test/test_data/output_formatter.medium.fortio.gold");
@@ -183,7 +199,10 @@ TEST_F(StatidToNameTest, TestTranslations) {
   EXPECT_EQ(ConsoleOutputFormatterImpl::statIdtoFriendlyStatName("foo"), "foo");
   const std::vector<std::string> ids = {"benchmark_http_client.queue_to_connect",
                                         "benchmark_http_client.request_to_response",
-                                        "sequencer.callback", "sequencer.blocking"};
+                                        "benchmark_http_client.response_body_size",
+                                        "benchmark_http_client.response_header_size",
+                                        "sequencer.callback",
+                                        "sequencer.blocking"};
   for (const std::string& id : ids) {
     EXPECT_NE(ConsoleOutputFormatterImpl::statIdtoFriendlyStatName(id), id);
   }

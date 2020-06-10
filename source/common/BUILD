@@ -1,10 +1,10 @@
-licenses(["notice"])  # Apache 2
-
 load(
     "@envoy//bazel:envoy_build_system.bzl",
     "envoy_cc_library",
     "envoy_package",
 )
+
+licenses(["notice"])  # Apache 2
 
 envoy_package()
 
@@ -76,6 +76,7 @@ envoy_cc_library(
         "worker_impl.cc",
     ],
     hdrs = [
+        "cached_time_source_impl.h",
         "frequency.h",
         "phase_impl.h",
         "platform_util_impl.h",
@@ -97,6 +98,7 @@ envoy_cc_library(
         "//include/nighthawk/client:client_includes",
         "//include/nighthawk/common:base_includes",
         "@com_google_absl//absl/random",
+        "@com_google_absl//absl/strings",
         "@dep_hdrhistogram_c//:hdrhistogram_c",
         "@envoy//source/common/common:assert_lib_with_external_headers",
         "@envoy//source/common/common:lock_guard_lib_with_external_headers",
@@ -106,6 +108,7 @@ envoy_cc_library(
         "@envoy//source/common/common:version_includes_with_external_headers",
         "@envoy//source/common/http:utility_lib_with_external_headers",
         "@envoy//source/common/network:utility_lib_with_external_headers",
+        "@envoy//source/common/protobuf:utility_lib_with_external_headers",
         "@envoy//source/common/stats:stats_lib_with_external_headers",
         "@envoy//source/exe:envoy_common_lib_with_external_headers",
         "@envoy//source/server/config_validation:server_lib_with_external_headers",

@@ -4,7 +4,6 @@
 #include "envoy/common/time.h"
 #include "envoy/event/dispatcher.h"
 
-#include "nighthawk/common/operation_callback.h"
 #include "nighthawk/common/platform_util.h"
 #include "nighthawk/common/rate_limiter.h"
 #include "nighthawk/common/sequencer.h"
@@ -23,8 +22,6 @@ using namespace std::chrono_literals;
 constexpr std::chrono::microseconds NighthawkTimerResolution = 25us;
 
 } // namespace
-
-using SequencerTarget = std::function<bool(OperationCallback)>;
 
 using namespace Envoy; // We need this because of macro expectations.
 
@@ -52,7 +49,8 @@ public:
       Envoy::TimeSource& time_source, RateLimiterPtr&& rate_limiter, SequencerTarget target,
       StatisticPtr&& latency_statistic, StatisticPtr&& blocked_statistic,
       nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions idle_strategy,
-      TerminationPredicatePtr&& termination_predicate, Envoy::Stats::Scope& scope);
+      TerminationPredicatePtr&& termination_predicate, Envoy::Stats::Scope& scope,
+      const Envoy::MonotonicTime scheduled_starting_time);
 
   /**
    * Starts the Sequencer. Should be followed up with a call to waitForCompletion().
@@ -124,7 +122,7 @@ private:
   StatisticPtr blocked_statistic_;
   Envoy::Event::TimerPtr periodic_timer_;
   Envoy::Event::TimerPtr spin_timer_;
-  Envoy::MonotonicTime start_time_;
+  const Envoy::MonotonicTime start_time_;
   Envoy::MonotonicTime last_event_time_;
   uint64_t targets_initiated_{0};
   uint64_t targets_completed_{0};

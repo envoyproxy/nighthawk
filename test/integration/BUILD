@@ -1,11 +1,11 @@
-licenses(["notice"])  # Apache 2
-
 load("@rules_python//python:defs.bzl", "py_binary", "py_library")
 load(
     "@envoy//bazel:envoy_build_system.bzl",
     "envoy_package",
 )
 load("@python_pip_deps//:requirements.bzl", "requirement")
+
+licenses(["notice"])  # Apache 2
 
 envoy_package()
 
@@ -21,6 +21,7 @@ py_library(
     data = [
         "configurations/nighthawk_http_origin.yaml",
         "configurations/nighthawk_https_origin.yaml",
+        "configurations/sni_origin.yaml",
         "//:nighthawk_client",
         "//:nighthawk_service",
         "//:nighthawk_test_server",

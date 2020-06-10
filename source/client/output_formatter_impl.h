@@ -9,6 +9,7 @@
 #include "external/envoy/source/common/protobuf/protobuf.h"
 
 #include "api/client/output.pb.h"
+#include "api/client/transform/fortio.pb.h"
 
 #include "absl/strings/string_view.h"
 
@@ -68,21 +69,26 @@ protected:
    *
    * @param result a single Nighthawk result, preferably the global result
    * @param counter_name the name of the counter to return
-   * @return the corresponding counter
-   * @throws NighthawkException if counter with given name is not found
+   * @param value_if_not_found value that will be returned when the counter does not exist in the
+   * output.
+   * @return True iff a counter was found.
    */
-  const nighthawk::client::Counter& getCounterByName(const nighthawk::client::Result& result,
-                                                     absl::string_view counter_name) const;
+  uint64_t getCounterValue(const nighthawk::client::Result& result, absl::string_view counter_name,
+                           const uint64_t value_if_not_found = 0) const;
 
   /**
    * Return the statistic that represents the request/response round-trip times.
    *
    * @param result a single Nighthawk result, preferably the global result
-   * @return the corresponding request/response statistic
-   * @throws NighthawkException if request/response statistic is not found
+   * @param stat_id the id of the statistic that we are looking for
+   * @return a pointer to the corresponding request/response statistic, or
+   * nullptr if no statistic with the request id was found
    */
-  const nighthawk::client::Statistic&
-  getRequestResponseStatistic(const nighthawk::client::Result& result) const;
+  const nighthawk::client::Statistic* findStatistic(const nighthawk::client::Result& result,
+                                                    absl::string_view stat_id) const;
+
+  const nighthawk::client::DurationHistogram
+  renderFortioDurationHistogram(const nighthawk::client::Statistic& statistic) const;
 
   /**
    * Gets the average execution duration based on averaging all worker sequencer execution

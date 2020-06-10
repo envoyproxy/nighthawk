@@ -16,12 +16,108 @@ results:
           []
         mean: 0.002s
         pstdev: 0.000816497s
+        min: 0.001s
+        max: 0.003s
       - count: 0
         id: ""
         percentiles:
           []
         mean: 0s
         pstdev: 0s
+        min: 0s
+        max: 0s
+      - count: 4
+        id: foo_size
+        percentiles:
+          - percentile: 0
+            count: 1
+            raw_value: 14
+          - percentile: 0.1
+            count: 1
+            raw_value: 14
+          - percentile: 0.2
+            count: 1
+            raw_value: 14
+          - percentile: 0.3
+            count: 2
+            raw_value: 15
+          - percentile: 0.4
+            count: 2
+            raw_value: 15
+          - percentile: 0.5
+            count: 2
+            raw_value: 15
+          - percentile: 0.55
+            count: 3
+            raw_value: 16
+          - percentile: 0.6
+            count: 3
+            raw_value: 16
+          - percentile: 0.65
+            count: 3
+            raw_value: 16
+          - percentile: 0.7
+            count: 3
+            raw_value: 16
+          - percentile: 0.75
+            count: 3
+            raw_value: 16
+          - percentile: 0.775
+            count: 4
+            raw_value: 17
+          - percentile: 1
+            count: 4
+            raw_value: 17
+        raw_mean: 15.5
+        raw_pstdev: 1.1180339887498949
+        raw_min: 14
+        raw_max: 17
+      - count: 4
+        id: foo_latency
+        percentiles:
+          - percentile: 0
+            count: 1
+            duration: 0.000180007s
+          - percentile: 0.1
+            count: 1
+            duration: 0.000180007s
+          - percentile: 0.2
+            count: 1
+            duration: 0.000180007s
+          - percentile: 0.3
+            count: 2
+            duration: 0.000190007s
+          - percentile: 0.4
+            count: 2
+            duration: 0.000190007s
+          - percentile: 0.5
+            count: 2
+            duration: 0.000190007s
+          - percentile: 0.55
+            count: 3
+            duration: 0.000200007s
+          - percentile: 0.6
+            count: 3
+            duration: 0.000200007s
+          - percentile: 0.65
+            count: 3
+            duration: 0.000200007s
+          - percentile: 0.7
+            count: 3
+            duration: 0.000200007s
+          - percentile: 0.75
+            count: 3
+            duration: 0.000200007s
+          - percentile: 0.775
+            count: 4
+            duration: 0.000210007s
+          - percentile: 1
+            count: 4
+            duration: 0.000210007s
+        mean: 0.000195004s
+        pstdev: 0.000011180s
+        min: 0.000180007s
+        max: 0.000210007s
     counters:
       - name: bar
         value: 2
@@ -36,12 +132,108 @@ results:
           []
         mean: 0.002s
         pstdev: 0.000816497s
+        min: 0.001s
+        max: 0.003s
       - count: 0
         id: ""
         percentiles:
           []
         mean: 0s
         pstdev: 0s
+        min: 0s
+        max: 0s
+      - count: 4
+        id: foo_size
+        percentiles:
+          - percentile: 0
+            count: 1
+            raw_value: 14
+          - percentile: 0.1
+            count: 1
+            raw_value: 14
+          - percentile: 0.2
+            count: 1
+            raw_value: 14
+          - percentile: 0.3
+            count: 2
+            raw_value: 15
+          - percentile: 0.4
+            count: 2
+            raw_value: 15
+          - percentile: 0.5
+            count: 2
+            raw_value: 15
+          - percentile: 0.55
+            count: 3
+            raw_value: 16
+          - percentile: 0.6
+            count: 3
+            raw_value: 16
+          - percentile: 0.65
+            count: 3
+            raw_value: 16
+          - percentile: 0.7
+            count: 3
+            raw_value: 16
+          - percentile: 0.75
+            count: 3
+            raw_value: 16
+          - percentile: 0.775
+            count: 4
+            raw_value: 17
+          - percentile: 1
+            count: 4
+            raw_value: 17
+        raw_mean: 15.5
+        raw_pstdev: 1.1180339887498949
+        raw_min: 14
+        raw_max: 17
+      - count: 4
+        id: foo_latency
+        percentiles:
+          - percentile: 0
+            count: 1
+            duration: 0.000180007s
+          - percentile: 0.1
+            count: 1
+            duration: 0.000180007s
+          - percentile: 0.2
+            count: 1
+            duration: 0.000180007s
+          - percentile: 0.3
+            count: 2
+            duration: 0.000190007s
+          - percentile: 0.4
+            count: 2
+            duration: 0.000190007s
+          - percentile: 0.5
+            count: 2
+            duration: 0.000190007s
+          - percentile: 0.55
+            count: 3
+            duration: 0.000200007s
+          - percentile: 0.6
+            count: 3
+            duration: 0.000200007s
+          - percentile: 0.65
+            count: 3
+            duration: 0.000200007s
+          - percentile: 0.7
+            count: 3
+            duration: 0.000200007s
+          - percentile: 0.75
+            count: 3
+            duration: 0.000200007s
+          - percentile: 0.775
+            count: 4
+            duration: 0.000210007s
+          - percentile: 1
+            count: 4
+            duration: 0.000210007s
+        mean: 0.000195004s
+        pstdev: 0.000011180s
+        min: 0.000180007s
+        max: 0.000210007s
     counters:
       - name: bar
         value: 2
@@ -56,12 +248,108 @@ results:
           []
         mean: 0.002s
         pstdev: 0.000816497s
+        min: 0.001s
+        max: 0.003s
       - count: 0
         id: ""
         percentiles:
           []
         mean: 0s
         pstdev: 0s
+        min: 0s
+        max: 0s
+      - count: 4
+        id: foo_size
+        percentiles:
+          - percentile: 0
+            count: 1
+            raw_value: 14
+          - percentile: 0.1
+            count: 1
+            raw_value: 14
+          - percentile: 0.2
+            count: 1
+            raw_value: 14
+          - percentile: 0.3
+            count: 2
+            raw_value: 15
+          - percentile: 0.4
+            count: 2
+            raw_value: 15
+          - percentile: 0.5
+            count: 2
+            raw_value: 15
+          - percentile: 0.55
+            count: 3
+            raw_value: 16
+          - percentile: 0.6
+            count: 3
+            raw_value: 16
+          - percentile: 0.65
+            count: 3
+            raw_value: 16
+          - percentile: 0.7
+            count: 3
+            raw_value: 16
+          - percentile: 0.75
+            count: 3
+            raw_value: 16
+          - percentile: 0.775
+            count: 4
+            raw_value: 17
+          - percentile: 1
+            count: 4
+            raw_value: 17
+        raw_mean: 15.5
+        raw_pstdev: 1.1180339887498949
+        raw_min: 14
+        raw_max: 17
+      - count: 4
+        id: foo_latency
+        percentiles:
+          - percentile: 0
+            count: 1
+            duration: 0.000180007s
+          - percentile: 0.1
+            count: 1
+            duration: 0.000180007s
+          - percentile: 0.2
+            count: 1
+            duration: 0.000180007s
+          - percentile: 0.3
+            count: 2
+            duration: 0.000190007s
+          - percentile: 0.4
+            count: 2
+            duration: 0.000190007s
+          - percentile: 0.5
+            count: 2
+            duration: 0.000190007s
+          - percentile: 0.55
+            count: 3
+            duration: 0.000200007s
+          - percentile: 0.6
+            count: 3
+            duration: 0.000200007s
+          - percentile: 0.65
+            count: 3
+            duration: 0.000200007s
+          - percentile: 0.7
+            count: 3
+            duration: 0.000200007s
+          - percentile: 0.75
+            count: 3
+            duration: 0.000200007s
+          - percentile: 0.775
+            count: 4
+            duration: 0.000210007s
+          - percentile: 1
+            count: 4
+            duration: 0.000210007s
+        mean: 0.000195004s
+        pstdev: 0.000011180s
+        min: 0.000180007s
+        max: 0.000210007s
     counters:
       - name: bar
         value: 2
@@ -70,7 +358,7 @@ results:
     execution_duration: 1s
 version:
   version:
-    major: @version_major@
-    minor: @version_minor@
+    major_number: @version_major@
+    minor_number: @version_minor@
     patch: @version_patch@
 timestamp: 2009-02-13T23:31:31.567Z

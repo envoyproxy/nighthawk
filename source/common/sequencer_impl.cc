@@ -14,12 +14,13 @@ SequencerImpl::SequencerImpl(
     Envoy::TimeSource& time_source, RateLimiterPtr&& rate_limiter, SequencerTarget target,
     StatisticPtr&& latency_statistic, StatisticPtr&& blocked_statistic,
     nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions idle_strategy,
-    TerminationPredicatePtr&& termination_predicate, Envoy::Stats::Scope& scope)
+    TerminationPredicatePtr&& termination_predicate, Envoy::Stats::Scope& scope,
+    const Envoy::MonotonicTime scheduled_starting_time)
     : target_(std::move(target)), platform_util_(platform_util), dispatcher_(dispatcher),
       time_source_(time_source), rate_limiter_(std::move(rate_limiter)),
       latency_statistic_(std::move(latency_statistic)),
-      blocked_statistic_(std::move(blocked_statistic)), idle_strategy_(idle_strategy),
-      termination_predicate_(std::move(termination_predicate)),
+      blocked_statistic_(std::move(blocked_statistic)), start_time_(scheduled_starting_time),
+      idle_strategy_(idle_strategy), termination_predicate_(std::move(termination_predicate)),
       last_termination_status_(TerminationPredicate::Status::PROCEED),
       scope_(scope.createScope("sequencer.")),
       sequencer_stats_({ALL_SEQUENCER_STATS(POOL_COUNTER(*scope_))}) {
@@ -34,7 +35,6 @@ SequencerImpl::SequencerImpl(
 void SequencerImpl::start() {
   ASSERT(!running_);
   running_ = true;
-  start_time_ = time_source_.monotonicTime();
   // Initiate the periodic timer loop.
   scheduleRun();
   // Immediately run.
@@ -81,10 +81,24 @@ void SequencerImpl::updateStartBlockingTimeIfNeeded() {
 
 void SequencerImpl::run(bool from_periodic_timer) {
   ASSERT(running_);
+  // CachedTimeSource relies on the dispatcher's updateApproximateMonotonicTime() /
+  // approximateMonotonicTime() for the actual caching. We refresh its stored time-value here so
+  // that our cached time source will yield an up-to-date monotonic time sample to work with. This
+  // time sample value will then be consistent accross usage here, plus any RateLimiter(s) and/or
+  // TerminationPredicate(s) associated to this sequencer that perform computations based on the
+  // current time. Having a consistent value accross these usages avoids certain edge cases. For
+  // example: A duration predicate determines it is time to stop execution at 1s. A rate limiter
+  // determines it is time to release a new request at 1.00001s. While this is a benign example, and
+  // would be explainable, it probably has potential to raise eyebrows.
+  // More importantly, it may help avoid a class of bugs that could be more serious, depending on
+  // functionality (TOC/TOU).
+  dispatcher_.updateApproximateMonotonicTime();
   const auto now = last_event_time_ = time_source_.monotonicTime();
+
   last_termination_status_ = last_termination_status_ == TerminationPredicate::Status::PROCEED
                                  ? termination_predicate_->evaluateChain()
                                  : last_termination_status_;
+
   // If we should stop according to termination conditions.
   if (last_termination_status_ != TerminationPredicate::Status::PROCEED) {
     stop(last_termination_status_ == TerminationPredicate::Status::FAIL);
@@ -95,6 +109,8 @@ void SequencerImpl::run(bool from_periodic_timer) {
     // The rate limiter says it's OK to proceed and call the target. Let's see if the target is OK
     // with that as well.
     const bool target_could_start = target_([this, now](bool, bool) {
+      // Update cached time, as we need an accurate value for latency reporting.
+      dispatcher_.updateApproximateMonotonicTime();
       const auto dur = time_source_.monotonicTime() - now;
       latency_statistic_->addValue(dur.count());
       targets_completed_++;
@@ -107,7 +123,6 @@ void SequencerImpl::run(bool from_periodic_timer) {
         spin_timer_->enableHRTimer(0ms);
       }
     });
-
     if (target_could_start) {
       unblockAndUpdateStatisticIfNeeded(now);
       targets_initiated_++;

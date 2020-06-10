@@ -6,8 +6,10 @@
 #include <string>
 
 #include "envoy/common/pure.h"
-#include "envoy/config/cluster/v3alpha/cluster.pb.h"
-#include "envoy/config/core/v3alpha/base.pb.h"
+#include "envoy/config/cluster/v3/cluster.pb.h"
+#include "envoy/config/core/v3/base.pb.h"
+
+#include "nighthawk/common/termination_predicate.h"
 
 #include "api/client/options.pb.h"
 
@@ -38,12 +40,12 @@ public:
   virtual bool prefetchConnections() const PURE;
   virtual uint32_t burstSize() const PURE;
   virtual nighthawk::client::AddressFamily::AddressFamilyOptions addressFamily() const PURE;
-  virtual envoy::config::core::v3alpha::RequestMethod requestMethod() const PURE;
+  virtual envoy::config::core::v3::RequestMethod requestMethod() const PURE;
   virtual std::vector<std::string> requestHeaders() const PURE;
   virtual uint32_t requestBodySize() const PURE;
-  virtual const envoy::extensions::transport_sockets::tls::v3alpha::UpstreamTlsContext&
+  virtual const envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext&
   tlsContext() const PURE;
-  virtual const absl::optional<envoy::config::core::v3alpha::TransportSocket>&
+  virtual const absl::optional<envoy::config::core::v3::TransportSocket>&
   transportSocket() const PURE;
   virtual uint32_t maxPendingRequests() const PURE;
   virtual uint32_t maxActiveRequests() const PURE;
@@ -64,6 +66,7 @@ public:
   virtual std::string multiTargetPath() const PURE;
   virtual bool multiTargetUseHttps() const PURE;
   virtual std::vector<std::string> labels() const PURE;
+  virtual bool simpleWarmup() const PURE;
   /**
    * Converts an Options instance to an equivalent CommandLineOptions instance in terms of option
    * values.

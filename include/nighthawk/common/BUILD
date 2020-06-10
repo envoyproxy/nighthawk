@@ -1,10 +1,10 @@
-licenses(["notice"])  # Apache 2
-
 load(
     "@envoy//bazel:envoy_build_system.bzl",
     "envoy_basic_cc_library",
     "envoy_package",
 )
+
+licenses(["notice"])  # Apache 2
 
 envoy_package()
 
@@ -12,6 +12,7 @@ envoy_basic_cc_library(
     name = "base_includes",
     hdrs = [
         "exception.h",
+        "factories.h",
         "operation_callback.h",
         "phase.h",
         "platform_util.h",
@@ -27,12 +28,12 @@ envoy_basic_cc_library(
     include_prefix = "nighthawk/common",
     deps = [
         ":request_lib",
-        "@envoy//include/envoy/common:base_includes",
+        "//api/client:base_cc_proto",
+        "@envoy//include/envoy/upstream:cluster_manager_interface_with_external_headers",
         "@envoy//source/common/common:minimal_logger_lib",
-        "@envoy//source/common/common:non_copyable",
-        "@envoy//source/common/http:headers_lib",
-        "@envoy//source/common/network:dns_lib",
-        "@envoy//source/common/protobuf",
+        "@envoy//source/common/common:non_copyable_with_external_headers",
+        "@envoy//source/common/event:dispatcher_lib_with_external_headers",
+        "@envoy//source/common/network:utility_lib_with_external_headers",
     ],
 )
 

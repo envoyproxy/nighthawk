@@ -1,38 +1,25 @@
-licenses(["notice"])  # Apache 2
-
 load(
     "@envoy//bazel:envoy_build_system.bzl",
-    "envoy_cc_mock",
     "envoy_cc_test",
     "envoy_package",
 )
 
-envoy_package()
+licenses(["notice"])  # Apache 2
 
-envoy_cc_mock(
-    name = "nighthawk_mocks",
-    srcs = ["mocks.cc"],
-    hdrs = ["mocks.h"],
-    repository = "@envoy",
-    deps = [
-        "//include/nighthawk/common:base_includes",
-        "//source/client:nighthawk_client_lib",
-        "@envoy//test/test_common:simulated_time_system_lib",
-    ],
-)
+envoy_package()
 
 envoy_cc_test(
     name = "benchmark_http_client_test",
     srcs = ["benchmark_http_client_test.cc"],
     repository = "@envoy",
     deps = [
+        "//source/client:nighthawk_client_lib",
         "//source/common:request_impl_lib",
-        "//test:nighthawk_mocks",
         "//test/test_common:environment_lib",
         "@envoy//source/common/http:header_map_lib_with_external_headers",
         "@envoy//source/common/network:utility_lib_with_external_headers",
         "@envoy//source/common/stats:isolated_store_lib_with_external_headers",
-        "@envoy//source/exe:process_wide_lib",
+        "@envoy//source/exe:process_wide_lib_with_external_headers",
         "@envoy//test/mocks/runtime:runtime_mocks",
         "@envoy//test/mocks/stream_info:stream_info_mocks",
         "@envoy//test/mocks/thread_local:thread_local_mocks",
@@ -58,13 +45,20 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         "//source/client:nighthawk_client_lib",
-        "//test:nighthawk_mocks",
+        "//test/mocks/client:mock_benchmark_client",
+        "//test/mocks/client:mock_benchmark_client_factory",
+        "//test/mocks/common:mock_request_source",
+        "//test/mocks/common:mock_request_source_factory",
+        "//test/mocks/common:mock_sequencer",
+        "//test/mocks/common:mock_sequencer_factory",
+        "//test/mocks/common:mock_termination_predicate",
+        "//test/mocks/common:mock_termination_predicate_factory",
         "@envoy//source/common/api:api_lib",
         "@envoy//source/common/stats:isolated_store_lib_with_external_headers",
-        "@envoy//test/mocks/init:init_mocks",
         "@envoy//test/mocks/local_info:local_info_mocks",
         "@envoy//test/mocks/protobuf:protobuf_mocks",
         "@envoy//test/mocks/thread_local:thread_local_mocks",
+        "@envoy//test/test_common:simulated_time_system_lib",
     ],
 )
 
@@ -74,7 +68,9 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         "//source/client:nighthawk_client_lib",
-        "//test:nighthawk_mocks",
+        "//test/mocks/client:mock_benchmark_client",
+        "//test/mocks/client:mock_options",
+        "//test/mocks/common:mock_termination_predicate",
         "@envoy//test/mocks/event:event_mocks",
         "@envoy//test/mocks/tracing:tracing_mocks",
         "@envoy//test/test_common:simulated_time_system_lib",
@@ -112,9 +108,10 @@ envoy_cc_test(
     ],
     repository = "@envoy",
     deps = [
+        "//source/client:output_collector_impl_lib",
         "//source/client:output_formatter_impl_lib",
         "//source/common:nighthawk_common_lib",
-        "//test:nighthawk_mocks",
+        "//test/mocks/client:mock_options",
         "//test/test_common:environment_lib",
         "@envoy//test/test_common:simulated_time_system_lib",
     ],
@@ -133,7 +130,6 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         "//source/client:nighthawk_client_lib",
-        "//test:nighthawk_mocks",
         "//test/client:utility_lib",
         "//test/test_common:environment_lib",
         "@envoy//test/test_common:network_utility_lib",
@@ -146,7 +142,7 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         "//source/common:nighthawk_common_lib",
-        "//test:nighthawk_mocks",
+        "//test/mocks/common:mock_rate_limiter",
         "@envoy//test/test_common:simulated_time_system_lib",
     ],
 )
@@ -163,8 +159,11 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         "//source/common:nighthawk_common_lib",
-        "//test:nighthawk_mocks",
+        "//test/mocks/common:mock_platform_util",
+        "//test/mocks/common:mock_rate_limiter",
+        "//test/mocks/common:mock_termination_predicate",
         "@envoy//source/common/event:dispatcher_includes_with_external_headers",
+        "@envoy//source/common/stats:isolated_store_lib_with_external_headers",
         "@envoy//test/mocks/event:event_mocks",
         "@envoy//test/test_common:simulated_time_system_lib",
     ],
@@ -210,7 +209,6 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         "//source/client:nighthawk_client_lib",
-        "//test:nighthawk_mocks",
         "@envoy//source/common/event:dispatcher_includes_with_external_headers",
         "@envoy//source/common/http:header_map_lib_with_external_headers",
         "@envoy//source/common/network:utility_lib_with_external_headers",
@@ -238,9 +236,7 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         "//source/common:nighthawk_common_lib",
-        "//test:nighthawk_mocks",
         "@envoy//source/common/stats:isolated_store_lib_with_external_headers",
-        "@envoy//test/mocks/init:init_mocks",
         "@envoy//test/mocks/local_info:local_info_mocks",
         "@envoy//test/mocks/protobuf:protobuf_mocks",
         "@envoy//test/mocks/thread_local:thread_local_mocks",
@@ -292,7 +288,6 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         "//source/common:nighthawk_common_lib",
-        "//test:nighthawk_mocks",
         "@envoy//test/mocks/event:event_mocks",
         "@envoy//test/test_common:simulated_time_system_lib",
     ],
@@ -304,6 +299,16 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         "//source/common:request_stream_grpc_client_lib",
+        "@envoy//test/test_common:utility_lib",
+    ],
+)
+
+envoy_cc_test(
+    name = "sni_utility_test",
+    srcs = ["sni_utility_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/client:nighthawk_client_lib",
         "@envoy//test/test_common:utility_lib",
     ],
 )

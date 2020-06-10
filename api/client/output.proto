@@ -4,7 +4,7 @@ package nighthawk.client;
 
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
-import "envoy/config/core/v3alpha/base.proto";
+import "envoy/config/core/v3/base.proto";
 
 import "api/client/options.proto";
 
@@ -14,7 +14,10 @@ message Counter {
 }
 
 message Percentile {
-  google.protobuf.Duration duration = 1;
+  oneof duration_type {
+    google.protobuf.Duration duration = 1;
+    double raw_value = 4;
+  }
   double percentile = 2;
   uint64 count = 3;
 }
@@ -22,9 +25,23 @@ message Percentile {
 message Statistic {
   uint64 count = 1;
   string id = 2;
-  google.protobuf.Duration mean = 3;
-  google.protobuf.Duration pstdev = 4;
+  oneof mean_type {
+    google.protobuf.Duration mean = 3;
+    double raw_mean = 8;
+  }
+  oneof pstdev_type {
+    google.protobuf.Duration pstdev = 4;
+    double raw_pstdev = 10;
+  }
   repeated Percentile percentiles = 5;
+  oneof min_type {
+    google.protobuf.Duration min = 6;
+    uint64 raw_min = 12;
+  }
+  oneof max_type {
+    google.protobuf.Duration max = 7;
+    uint64 raw_max = 13;
+  }
 }
 
 message Result {
@@ -38,5 +55,5 @@ message Output {
   google.protobuf.Timestamp timestamp = 1;
   nighthawk.client.CommandLineOptions options = 2;
   repeated Result results = 3;
-  envoy.config.core.v3alpha.BuildVersion version = 4;
+  envoy.config.core.v3.BuildVersion version = 4;
 }

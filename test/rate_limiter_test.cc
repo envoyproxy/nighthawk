@@ -7,7 +7,7 @@
 #include "common/frequency.h"
 #include "common/rate_limiter_impl.h"
 
-#include "test/mocks.h"
+#include "test/mocks/common/mock_rate_limiter.h"
 
 #include "gtest/gtest.h"
 
@@ -25,11 +25,11 @@ TEST_F(RateLimiterTest, LinearRateLimiterTest) {
 
   EXPECT_FALSE(rate_limiter.tryAcquireOne());
 
-  time_system.sleep(100ms);
+  time_system.advanceTimeWait(100ms);
   EXPECT_TRUE(rate_limiter.tryAcquireOne());
   EXPECT_FALSE(rate_limiter.tryAcquireOne());
 
-  time_system.sleep(1s);
+  time_system.advanceTimeWait(1s);
   for (int i = 0; i < 10; i++) {
     EXPECT_TRUE(rate_limiter.tryAcquireOne());
   }
@@ -91,13 +91,13 @@ TEST_F(RateLimiterTest, ScheduledStartingRateLimiterTest) {
         .WillRepeatedly(Return(true));
 
     if (starting_late) {
-      time_system.sleep(schedule_delay);
+      time_system.advanceTimeWait(schedule_delay);
     }
 
     // We should expect zero releases until it is time to start.
     while (time_system.monotonicTime() < scheduled_starting_time) {
       EXPECT_FALSE(rate_limiter->tryAcquireOne());
-      time_system.sleep(1ms);
+      time_system.advanceTimeWait(1ms);
     }
 
     // Now that is time to start, the rate limiter should propagate to the mock rate limiter.
@@ -115,8 +115,9 @@ TEST_F(RateLimiterTest, ScheduledStartingRateLimiterTestBadArgs) {
     EXPECT_CALL(unsafe_mock_rate_limiter, timeSource)
         .Times(AtLeast(1))
         .WillRepeatedly(ReturnRef(time_system));
-    EXPECT_THROW(ScheduledStartingRateLimiter(std::move(mock_rate_limiter), timing);
-                 , NighthawkException);
+    EXPECT_NO_THROW(ScheduledStartingRateLimiter(std::move(mock_rate_limiter), timing));
+    // TODO(XXX): once we can, verify a warning gets logged while running the line
+    // above.
   }
 }
 
@@ -129,16 +130,18 @@ public:
     const auto burst_interval_ms =
         std::chrono::duration_cast<std::chrono::milliseconds>(frequency.interval() * burst_size);
 
-    for (uint64_t i = 0; i < 10000; i++) {
+    int first_burst = -1;
+    for (int i = 0; i < 10000; i++) {
       uint64_t burst_acquired = 0;
       while (rate_limiter->tryAcquireOne()) {
         burst_acquired++;
       }
       if (burst_acquired) {
+        first_burst = first_burst == -1 ? i : first_burst;
         EXPECT_EQ(burst_acquired, burst_size);
-        EXPECT_EQ(i % burst_interval_ms.count(), 0);
+        EXPECT_EQ(i % (burst_interval_ms.count() - first_burst), 0);
       }
-      time_system.sleep(1ms);
+      time_system.advanceTimeWait(1ms);
     }
   }
 };
@@ -211,16 +214,16 @@ TEST_F(RateLimiterTest, DistributionSamplingRateLimiterImplSchedulingTest) {
 
   // The distribution first yields a 1 ns offset. So we don't expect to be green lighted.
   EXPECT_FALSE(rate_limiter->tryAcquireOne());
-  time_system.sleep(1ns);
+  time_system.advanceTimeWait(1ns);
   EXPECT_TRUE(rate_limiter->tryAcquireOne());
   // We expect releaseOne to be propagated.
   rate_limiter->releaseOne();
   // The distribution will yield an offset of 0ns, we expect success.
   EXPECT_TRUE(rate_limiter->tryAcquireOne());
 
-  // We don't sleep, and the distribution will yield a 1ns offset. No green light.
+  // We don't advanceTimeWait, and the distribution will yield a 1ns offset. No green light.
   EXPECT_FALSE(rate_limiter->tryAcquireOne());
-  time_system.sleep(1ns);
+  time_system.advanceTimeWait(1ns);
   EXPECT_TRUE(rate_limiter->tryAcquireOne());
 }
 
@@ -257,7 +260,7 @@ public:
       if (expected_count > control_timings.size()) {
         control_timings.push_back(total_us_elapsed.count());
       }
-      time_system.sleep(clock_tick);
+      time_system.advanceTimeWait(clock_tick);
       total_us_elapsed += clock_tick;
     } while (total_us_elapsed <= duration);
 
@@ -366,12 +369,12 @@ public:
         acquisition_timings.push_back(total_ms_elapsed.count());
         EXPECT_FALSE(rate_limiter->tryAcquireOne());
       }
-      time_system.sleep(clock_tick);
+      time_system.advanceTimeWait(clock_tick);
       total_ms_elapsed += clock_tick;
     } while (total_ms_elapsed <= duration);
 
     EXPECT_FALSE(rate_limiter->tryAcquireOne());
-    time_system.sleep(1s);
+    time_system.advanceTimeWait(1s);
     // Verify that after the rampup the expected constant pacing is maintained.
     // Calls should be forwarded to the regular linear rate limiter algorithm with its
     // corrective behavior so we can expect to acquire a series with that.
@@ -386,8 +389,8 @@ public:
 
 TEST_F(GraduallyOpeningRateLimiterFilterTest, TimingVerificationTest) {
   EXPECT_EQ(getAcquisitionTimings(50_Hz, 1s),
-            std::vector<int64_t>({520, 540, 560, 580, 600, 620, 640, 660, 680, 700, 720, 740, 760,
-                                  780, 800, 820, 840, 860, 880, 900, 920, 940, 960, 980, 1000}));
+            std::vector<int64_t>({510, 530, 550, 570, 590, 610, 630, 650, 670, 690, 710, 730, 750,
+                                  770, 790, 810, 830, 850, 870, 890, 910, 930, 950, 970, 990}));
 }
 
 class ZipfRateLimiterImplTest : public Test {};
@@ -408,13 +411,13 @@ TEST_F(ZipfRateLimiterImplTest, TimingVerificationTest) {
     if (rate_limiter->tryAcquireOne()) {
       aquisition_timings.push_back(total_ms_elapsed.count());
     }
-    time_system.sleep(clock_tick);
+    time_system.advanceTimeWait(clock_tick);
     total_ms_elapsed += clock_tick;
   } while (total_ms_elapsed <= duration);
   EXPECT_EQ(aquisition_timings,
-            std::vector<int64_t>({500,   800,   1300,  2400,  2900,  3900,  4200,  4400,  4500,
-                                  5800,  6000,  6400,  7900,  8400,  8600,  9900,  10200, 10500,
-                                  10600, 12000, 12300, 12600, 13300, 13600, 13700, 13800, 13900}));
+            std::vector<int64_t>({450,   750,   1250,  2350,  2850,  3850,  4150,  4350,  4450,
+                                  5750,  5950,  6350,  7850,  8350,  8550,  9850,  10150, 10450,
+                                  10550, 11950, 12250, 12550, 13250, 13550, 13650, 13750, 13850}));
 }
 
 TEST_F(ZipfRateLimiterImplTest, BadArgumentsTest) {
