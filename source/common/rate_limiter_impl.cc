@@ -57,7 +57,7 @@ ScheduledStartingRateLimiter::ScheduledStartingRateLimiter(
     : ForwardingRateLimiterImpl(std::move(rate_limiter)),
       scheduled_starting_time_(scheduled_starting_time) {
   if (timeSource().monotonicTime() >= scheduled_starting_time_) {
-    throw NighthawkException("Scheduled starting time needs to be in the future");
+    ENVOY_LOG(error, "Scheduled starting time exceeded. This may cause unintended bursty traffic.");
   }
 }
 
