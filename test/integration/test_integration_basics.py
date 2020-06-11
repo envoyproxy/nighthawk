@@ -310,7 +310,7 @@ def _do_tls_configuration_test(https_test_server_fixture, cli_parameter, use_h2)
         https_test_server_fixture.getTestServerRootUri()
     ])
     counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-    assertCounterEqual(counters, "ssl.ciphers.%s" % cipher, 1)
+    assertCounterGreaterEqual(counters, "ssl.ciphers.%s" % cipher, 1)
 
 
 def test_https_h1_tls_context_configuration(https_test_server_fixture):
