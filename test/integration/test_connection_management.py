@@ -127,5 +127,4 @@ def test_h1_pool_strategy(http_test_server_fixture):
   for i in range(1, connections):
     line_count = countLogLinesWithSubstring(logs, "[C%d] message complete" % i)
     strict_count = (requests / connections) * 2
-    # We need to mind a single warmup call
     assertBetweenInclusive(line_count, strict_count, strict_count)
