@@ -53,7 +53,7 @@ class TestServerBase(object):
   def serverThreadRunner(self):
     args = [
         self.server_binary_path, self.server_binary_config_path_arg, self.parameterized_config_path,
-        "-l", "error", "--concurrency", "1", "--base-id", self.instance_id, "--admin-address-path",
+        "-l", "error", "--base-id", self.instance_id, "--admin-address-path",
         self.admin_address_path
     ]
     logging.info("Test server popen() args: [%s]" % args)
