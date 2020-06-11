@@ -109,7 +109,8 @@ def test_h1_pool_strategy(http_test_server_fixture):
   _, logs = http_test_server_fixture.runNighthawkClient([
       "--rps 5", "-v", "trace", "--connections", "2", "--prefetch-connections",
       "--experimental-h1-connection-reuse-strategy", "mru", "--termination-predicate",
-      "benchmark.http_2xx:4", http_test_server_fixture.getTestServerRootUri()
+      "benchmark.http_2xx:4",
+      http_test_server_fixture.getTestServerRootUri()
   ])
 
   assertNotIn("[C1] message complete", logs)
@@ -121,7 +122,7 @@ def test_h1_pool_strategy(http_test_server_fixture):
       "--rps", "5", "-v trace", "--connections",
       str(connections), "--prefetch-connections", "--experimental-h1-connection-reuse-strategy",
       "lru", "--termination-predicate",
-      "benchmark.http_2xx:%d" % (requests-1),
+      "benchmark.http_2xx:%d" % (requests - 1),
       http_test_server_fixture.getTestServerRootUri()
   ])
   for i in range(1, connections):
