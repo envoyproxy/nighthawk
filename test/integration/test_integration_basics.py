@@ -138,7 +138,7 @@ def test_http_h1_mini_stress_test_open_loop(http_test_server_fixture):
   H1 open loop stress test. We expect higher pending and overflow counts 
   """
   counters = mini_stress_test(http_test_server_fixture, [
-      http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--max-pending-requests",
+      http_test_server_fixture.getTestServerRootUri(), "--rps", "10000", "--max-pending-requests",
       "1", "--open-loop", "--max-active-requests", "1", "--connections", "1", "--duration", "100",
       "--termination-predicate", "benchmark.http_2xx:99", "--simple-warmup"
   ])
