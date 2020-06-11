@@ -53,7 +53,7 @@ class TestServerBase(object):
   def serverThreadRunner(self):
     args = [
         self.server_binary_path, self.server_binary_config_path_arg, self.parameterized_config_path,
-        "-l", "error", "--base-id", self.instance_id, "--admin-address-path",
+        "-l", "error", "--concurrency", "1", "--base-id", self.instance_id, "--admin-address-path",
         self.admin_address_path
     ]
     logging.info("Test server popen() args: [%s]" % args)
@@ -101,7 +101,7 @@ class TestServerBase(object):
   def waitUntilServerListening(self):
     # we allow 30 seconds for the server to have its listeners up.
     # (It seems that in sanitizer-enabled runs this can take a little while)
-    timeout = time.time() + 30
+    timeout = time.time() + 60
     while time.time() < timeout:
       if self.tryUpdateFromAdminInterface():
         return True

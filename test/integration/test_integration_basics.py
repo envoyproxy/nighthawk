@@ -87,8 +87,8 @@ def test_http_h1_mini_stress_test_with_client_side_queueing(http_test_server_fix
       "10", "--connections", "1", "--duration", "100", "--termination-predicate",
       "benchmark.http_2xx:99", "--simple-warmup"
   ])
-  assertCounterEqual(counters, "upstream_rq_pending_total", 11)
-  assertCounterEqual(counters, "upstream_cx_overflow", 10)
+  assertCounterGreaterEqual(counters, "upstream_rq_pending_total", 11)
+  assertCounterGreaterEqual(counters, "upstream_cx_overflow", 10)
 
 
 def test_http_h1_mini_stress_test_without_client_side_queueing(http_test_server_fixture):
@@ -115,7 +115,7 @@ def test_http_h2_mini_stress_test_with_client_side_queueing(http_test_server_fix
       "--termination-predicate", "benchmark.http_2xx:99", "--simple-warmup"
   ])
   assertCounterEqual(counters, "upstream_rq_pending_total", 1)
-  assertCounterEqual(counters, "upstream_rq_pending_overflow", 10)
+  assertCounterGreaterEqual(counters, "upstream_rq_pending_overflow", 10)
 
 
 def test_http_h2_mini_stress_test_without_client_side_queueing(http_test_server_fixture):
@@ -124,7 +124,7 @@ def test_http_h2_mini_stress_test_without_client_side_queueing(http_test_server_
   queueing. 
   """
   counters = mini_stress_test(http_test_server_fixture, [
-      http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--h2",
+      http_test_server_fixture.getTestServerRootUri(), "--rps", "1000", "--h2",
       "--max-active-requests", "1", "--connections", "1", "--duration", "100",
       "--termination-predicate", "benchmark.http_2xx:99"
   ])
@@ -276,7 +276,7 @@ def test_https_h2_multiple_connections(https_test_server_fixture):
       "10"
   ])
   counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-  assertCounterEqual(counters, "benchmark.http_2xx", 100)
+  assertCounterGreaterEqual(counters, "benchmark.http_2xx", 100)
   # Empirical observation shows we may end up creating more then 10 connections.
   # This is stock Envoy h/2 pool behavior.
   assertCounterGreaterEqual(counters, "upstream_cx_http2_total", 10)
