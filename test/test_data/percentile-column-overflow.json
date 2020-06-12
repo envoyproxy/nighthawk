@@ -1,0 +1,20 @@
+{
+  "results": [
+    {
+      "name": "global",
+      "statistics": [
+        {
+          "count": "1",
+          "id": "foo",
+          "percentiles": [
+            {
+              "percentile": 0.99931640625,
+              "count": "1",
+              "duration": "0s"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
