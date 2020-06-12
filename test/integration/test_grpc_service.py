@@ -45,15 +45,18 @@ def test_grpc_service_stress(http_test_server_fixture):
   assertGreaterEqual(counters["benchmark.http_2xx"], 5000)
   assertEqual(counters["requestsource.internal.upstream_rq_200"], 4)
 
+
 def run_service_with_arg(arg):
   test_rundir = os.path.join(os.environ["TEST_SRCDIR"], os.environ["TEST_WORKSPACE"])
   args = "%s %s" % (os.path.join(test_rundir, "nighthawk_service"), arg)
   return subprocess.getstatusoutput(args)
 
+
 def test_grpc_service_help():
   (exit_code, output) = run_service_with_arg("--help")
   assert (exit_code == 0)
   assert ("USAGE" in output)
+
 
 def test_grpc_service_bad_arguments():
   (exit_code, output) = run_service_with_arg("--foo")

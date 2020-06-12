@@ -2,16 +2,22 @@
 
 # derived from test/run_envoy_bazel_coverage.sh over the Envoy repo.
 
-set -e
-set -x
+set -eo pipefail
+set +x
+set -u
 
-[[ -z "${SRCDIR}" ]] && SRCDIR="${PWD}"
-[[ -z "${VALIDATE_COVERAGE}" ]] && VALIDATE_COVERAGE=true
+SRCDIR="${SRCDIR:=${PWD}}"
+VALIDATE_COVERAGE="${VALIDATE_COVERAGE:=true}"
+ENVOY_COVERAGE_DIR="${ENVOY_COVERAGE_DIR:=}"
 
 echo "Starting run_nighthawk_bazel_coverage.sh..."
 echo "    PWD=$(pwd)"
 echo "    SRCDIR=${SRCDIR}"
 echo "    VALIDATE_COVERAGE=${VALIDATE_COVERAGE}"
+
+COVERAGE_DIR="${SRCDIR}"/generated/coverage
+rm -rf "${COVERAGE_DIR}"
+mkdir -p "${COVERAGE_DIR}"
 
 # This is the target that will be run to generate coverage data. It can be overridden by consumer
 # projects that want to run coverage on a different/combined target.
@@ -25,11 +31,7 @@ else
 fi
 
 BAZEL_BUILD_OPTIONS+=" --config=test-coverage --test_tag_filters=-nocoverage --test_env=ENVOY_IP_TEST_VERSIONS=v4only"
-bazel coverage ${BAZEL_BUILD_OPTIONS} --test_output=all ${COVERAGE_TARGETS}
-
-COVERAGE_DIR="${SRCDIR}"/generated/coverage
-mkdir -p "${COVERAGE_DIR}"
-
+bazel coverage ${BAZEL_BUILD_OPTIONS} --cache_test_results=no --test_output=all ${COVERAGE_TARGETS}
 COVERAGE_DATA="${COVERAGE_DIR}/coverage.dat"
 
 cp bazel-out/_coverage/_coverage_report.dat "${COVERAGE_DATA}"
