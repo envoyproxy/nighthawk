@@ -30,13 +30,15 @@ else
   COVERAGE_TARGETS=//test/...
 fi
 
+COVERAGE_TARGETS=//test:python_test
+
 BAZEL_BUILD_OPTIONS+=" --config=test-coverage --test_tag_filters=-nocoverage --test_env=ENVOY_IP_TEST_VERSIONS=v4only"
 bazel coverage ${BAZEL_BUILD_OPTIONS} --cache_test_results=no --test_output=all ${COVERAGE_TARGETS}
 COVERAGE_DATA="${COVERAGE_DIR}/coverage.dat"
 
 cp bazel-out/_coverage/_coverage_report.dat "${COVERAGE_DATA}"
 
-COVERAGE_VALUE=$(genhtml --prefix ${PWD} --output "${COVERAGE_DIR}" "${COVERAGE_DATA}" | tee /dev/stderr | grep lines... | cut -d ' ' -f 4)
+COVERAGE_VALUE=$(genhtml --prefix ${PWD} --output "${COVERAGE_DIR}" "${COVERAGE_DATA}" | grep lines... | cut -d ' ' -f 4)
 COVERAGE_VALUE=${COVERAGE_VALUE%?}
 
 [[ -z "${ENVOY_COVERAGE_DIR}" ]] || rsync -av "${COVERAGE_DIR}"/ "${ENVOY_COVERAGE_DIR}"
