@@ -30,7 +30,6 @@ else
   COVERAGE_TARGETS=//test/...
 fi
 
-bazel build --config=coverage ${BAZEL_BUILD_OPTIONS} ${COVERAGE_TARGETS}
 bazel coverage ${BAZEL_BUILD_OPTIONS} --cache_test_results=no --test_output=all ${COVERAGE_TARGETS}
 COVERAGE_DATA="${COVERAGE_DIR}/coverage.dat"
 
