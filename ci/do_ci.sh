@@ -126,7 +126,7 @@ if [ -n "$CIRCLECI" ]; then
         NUM_CPUS=5
     fi
     if [[ "$1" == "coverage" ]]; then
-        NUM_CPUS=3
+        NUM_CPUS=5
     fi
 fi
 
