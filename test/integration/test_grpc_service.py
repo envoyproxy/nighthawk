@@ -4,7 +4,6 @@ import pytest
 from integration_test_fixtures import (http_test_server_fixture)
 from utility import *
 import subprocess
-import logging
 
 
 def test_grpc_service_happy_flow(http_test_server_fixture):

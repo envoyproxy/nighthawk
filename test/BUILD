@@ -253,19 +253,12 @@ envoy_cc_test(
     ],
 )
 
-# We wrap the python integration tests here so we run the instrumented
-# code in coverage tests. To make that work, we need to declare the top-level
-# libraries as dependencies.
 envoy_cc_test(
     name = "python_test",
     srcs = ["python_test.cc"],
     data = ["//test/integration:integration_test"],
     repository = "@envoy",
     deps = [
-        "//source/client:nighthawk_client_lib",
-        "//source/client:nighthawk_service_lib",
-        "//source/common:nighthawk_common_lib",
-        "//source/server:http_test_server_filter_lib",
         "//test/test_common:environment_lib",
         "@envoy//test/test_common:network_utility_lib",
     ],

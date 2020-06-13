@@ -30,9 +30,7 @@ else
   COVERAGE_TARGETS=//test/...
 fi
 
-COVERAGE_TARGETS=//test:python_test
-
-BAZEL_BUILD_OPTIONS+=" --config=test-coverage --test_tag_filters=-nocoverage --test_env=ENVOY_IP_TEST_VERSIONS=v4only"
+bazel build --config=coverage ${BAZEL_BUILD_OPTIONS} ${COVERAGE_TARGETS}
 bazel coverage ${BAZEL_BUILD_OPTIONS} --cache_test_results=no --test_output=all ${COVERAGE_TARGETS}
 COVERAGE_DATA="${COVERAGE_DIR}/coverage.dat"
 
