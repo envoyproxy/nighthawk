@@ -1,7 +1,8 @@
 # The following .bazelrc content is forked from the main Envoy repository. This is necessary since	
 # this needs to be available before we can access the Envoy repository contents via Bazel.
 
-build:asan --test_timeout=900
+build:clang-asan --test_timeout=900
+build:clang-tsan --test_timeout=900
 
 # Envoy specific Bazel build/test options.
 
