@@ -1,10 +1,10 @@
-licenses(["notice"])  # Apache 2
-
 load(
     "@envoy//bazel:envoy_build_system.bzl",
     "envoy_cc_library",
     "envoy_package",
 )
+
+licenses(["notice"])  # Apache 2
 
 envoy_package()
 
@@ -52,23 +52,23 @@ envoy_cc_library(
         "@envoy//source/common/config:utility_lib_with_external_headers",
         "@envoy//source/common/event:dispatcher_includes_with_external_headers",
         "@envoy//source/common/event:real_time_system_lib_with_external_headers",
+        "@envoy//source/common/grpc:context_lib_with_external_headers",
         "@envoy//source/common/http:context_lib_with_external_headers",
         "@envoy//source/common/http:header_map_lib_with_external_headers",
         "@envoy//source/common/http:headers_lib_with_external_headers",
         "@envoy//source/common/http/http1:codec_lib_with_external_headers",
-        "@envoy//source/common/http/http1:conn_pool_legacy_lib_with_external_headers",
+        "@envoy//source/common/http/http1:conn_pool_lib_with_external_headers",
         "@envoy//source/common/http/http2:conn_pool_lib_with_external_headers",
         "@envoy//source/common/init:manager_lib_with_external_headers",
         "@envoy//source/common/local_info:local_info_lib_with_external_headers",
         "@envoy//source/common/network:dns_lib_with_external_headers",
+        "@envoy//source/common/network:address_lib_with_external_headers",
         "@envoy//source/common/protobuf:message_validator_lib_with_external_headers",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
         "@envoy//source/common/runtime:runtime_lib_with_external_headers",
-        "@envoy//source/common/runtime:uuid_util_lib_with_external_headers",
         "@envoy//source/common/secret:secret_manager_impl_lib_with_external_headers",
         "@envoy//source/common/singleton:manager_impl_lib_with_external_headers",
         "@envoy//source/common/stats:allocator_lib_with_external_headers",
-        "@envoy//source/common/stats:isolated_store_lib_with_external_headers",
         "@envoy//source/common/stats:symbol_table_lib_with_external_headers",
         "@envoy//source/common/stats:thread_local_store_lib_with_external_headers",
         "@envoy//source/common/stream_info:stream_info_lib_with_external_headers",
@@ -79,6 +79,7 @@ envoy_cc_library(
         "@envoy//source/exe:platform_header_lib_with_external_headers",
         "@envoy//source/exe:platform_impl_lib",
         "@envoy//source/exe:process_wide_lib_with_external_headers",
+        "@envoy//source/common/http:request_id_extension_lib_with_external_headers",
         "@envoy//source/extensions/tracers:well_known_names_with_external_headers",
         "@envoy//source/extensions/transport_sockets:well_known_names_with_external_headers",
         "@envoy//source/extensions/transport_sockets/tls:context_lib_with_external_headers",

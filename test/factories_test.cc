@@ -1,5 +1,3 @@
-#include <chrono>
-
 #include "external/envoy/test/mocks/event/mocks.h"
 #include "external/envoy/test/mocks/stats/mocks.h"
 #include "external/envoy/test/mocks/tracing/mocks.h"
@@ -7,16 +5,15 @@
 #include "external/envoy/test/test_common/utility.h"
 
 #include "common/request_source_impl.h"
-#include "common/uri_impl.h"
 
 #include "client/factories_impl.h"
 
-#include "test/mocks.h"
+#include "test/mocks/client/mock_benchmark_client.h"
 #include "test/mocks/client/mock_options.h"
+#include "test/mocks/common/mock_termination_predicate.h"
 
 #include "gtest/gtest.h"
 
-using namespace std::chrono_literals;
 using namespace testing;
 
 namespace Nighthawk {
@@ -32,7 +29,7 @@ public:
   Envoy::Stats::MockIsolatedStatsStore stats_store_;
   Envoy::Event::MockDispatcher dispatcher_;
   MockOptions options_;
-  Envoy::Tracing::HttpTracerPtr http_tracer_;
+  Envoy::Tracing::HttpTracerSharedPtr http_tracer_;
 };
 
 TEST_F(FactoriesTest, CreateBenchmarkClient) {
@@ -46,7 +43,8 @@ TEST_F(FactoriesTest, CreateBenchmarkClient) {
   EXPECT_CALL(options_, openLoop()).Times(1);
   auto cmd = std::make_unique<nighthawk::client::CommandLineOptions>();
   EXPECT_CALL(options_, toCommandLineOptions()).Times(1).WillOnce(Return(ByMove(std::move(cmd))));
-  StaticRequestSourceImpl request_generator(std::make_unique<Envoy::Http::TestHeaderMapImpl>());
+  StaticRequestSourceImpl request_generator(
+      std::make_unique<Envoy::Http::TestRequestHeaderMapImpl>());
   auto benchmark_client = factory.create(*api_, dispatcher_, stats_store_, cluster_manager,
                                          http_tracer_, "foocluster", request_generator);
   EXPECT_NE(nullptr, benchmark_client.get());
@@ -87,7 +85,10 @@ public:
     EXPECT_CALL(dispatcher_, createTimer_(_)).Times(2);
     EXPECT_CALL(options_, jitterUniform()).Times(1).WillOnce(Return(1ns));
     Envoy::Event::SimulatedTimeSystem time_system;
-    auto sequencer = factory.create(api_->timeSource(), dispatcher_, benchmark_client,
+    const SequencerTarget dummy_sequencer_target = [](const CompletionCallback&) -> bool {
+      return true;
+    };
+    auto sequencer = factory.create(api_->timeSource(), dispatcher_, dummy_sequencer_target,
                                     std::make_unique<MockTerminationPredicate>(), stats_store_,
                                     time_system.monotonicTime() + 10ms);
     EXPECT_NE(nullptr, sequencer.get());
@@ -100,11 +101,6 @@ INSTANTIATE_TEST_SUITE_P(SequencerIdleStrategies, SequencerFactoryTest,
                          ValuesIn({nighthawk::client::SequencerIdleStrategy::POLL,
                                    nighthawk::client::SequencerIdleStrategy::SLEEP,
                                    nighthawk::client::SequencerIdleStrategy::SPIN}));
-
-TEST_F(FactoriesTest, CreateStore) {
-  StoreFactoryImpl factory(options_);
-  EXPECT_NE(nullptr, factory.create().get());
-}
 
 TEST_F(FactoriesTest, CreateStatistic) {
   StatisticFactoryImpl factory(options_);

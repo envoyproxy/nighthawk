@@ -66,6 +66,62 @@ admin:
       port_value: 8081
 ```
 
+## Response Options config
+
+The ResponseOptions proto can be used in the test-server filter config or passed in `x-nighthawk-test-server-config``
+request header.
+
+The following parameters are available:
+
+* `response_body_size` - number of 'a' characters repeated in the response body.
+* `response_headers` - list of headers to add to response. If `append` is set to
+  `true`, then the header is appended.
+* `echo_request_headers` - if set to `true`, then append the dump of request headers to the response
+  body.
+
+The response options could be used to test and debug proxy or server configuration, for
+example, to verify request headers that are added by intermediate proxy:
+
+```
+$ curl -6 -v [::1]:8080/nighthawk
+
+*   Trying ::1:8080...
+* TCP_NODELAY set
+* Connected to ::1 (::1) port 8080 (#0)
+> GET /nighthawk
+> Host: [::1]:8080
+> User-Agent: curl/7.68.0
+> Accept: */*
+>
+* Mark bundle as not supporting multiuse
+< HTTP/1.1 200 OK
+< content-length: 254
+< content-type: text/plain
+< foo: bar
+< foo: bar2
+< x-nh: 1
+< date: Wed, 03 Jun 2020 13:34:41 GMT
+< server: envoy
+< x-service: nighthawk_cluster
+< via: 1.1 envoy
+<
+aaaaaaaaaa
+Request Headers:
+':authority', '[::1]:8080'
+':path', '/nighthawk'
+':method', 'GET'
+':scheme', 'https'
+'user-agent', 'curl/7.68.0'
+'accept', '*/*'
+'x-forwarded-proto', 'http'
+'via', '1.1 google'
+'x-forwarded-for', '::1,::1'
+* Connection #0 to host ::1 left intact
+```
+
+This example shows that intermediate proxy has added `x-forwarded-proto` and
+`x-forwarded-for` request headers.
+
 ## Running the test server
 
 
@@ -100,17 +156,23 @@ bazel-bin/nighthawk_test_server  [--disable-extensions <string>]
 [--hot-restart-version]
 [--restart-epoch <uint32_t>]
 [--log-path <string>]
-[--log-format-escaped] [--log-format
-<string>] [--component-log-level
-<string>] [-l <string>]
-[--local-address-ip-version <string>]
-[--admin-address-path <string>]
+[--log-format-prefix-with-location
+<bool>] [--log-format-escaped]
+[--log-format <string>]
+[--component-log-level <string>] [-l
+<string>] [--local-address-ip-version
+<string>] [--admin-address-path
+<string>]
+[--ignore-unknown-dynamic-fields]
 [--reject-unknown-dynamic-fields]
 [--allow-unknown-static-fields]
-[--allow-unknown-fields] [--config-yaml
-<string>] [-c <string>] [--concurrency
-<uint32_t>] [--base-id <uint32_t>] [--]
-[--version] [-h]
+[--allow-unknown-fields]
+[--bootstrap-version <string>]
+[--config-yaml <string>] [-c <string>]
+[--concurrency <uint32_t>]
+[--base-id-path <string>]
+[--use-dynamic-base-id] [--base-id
+<uint32_t>] [--] [--version] [-h]
 
 
 Where:
@@ -167,6 +229,10 @@ hot restart epoch #
 --log-path <string>
 Path to logfile
 
+--log-format-prefix-with-location <bool>
+Prefix all occurrences of '%v' in log format with with '[%g:%#] '
+('[path/to/file.cc:99] ').
+
 --log-format-escaped
 Escape c-style escape sequences in the application logs
 
@@ -181,8 +247,8 @@ Comma separated list of component log levels. For example
 upstream:debug,config:trace
 
 -l <string>,  --log-level <string>
-Log levels:
-[trace][debug][info][warning][error][critical][off]
+Log levels: [trace][debug][info][warning
+|warn][error][critical][off]
 
 Default is [info]
 
@@ -191,6 +257,9 @@ The local IP address version (v4 or v6).
 
 --admin-address-path <string>
 Admin address path
+
+--ignore-unknown-dynamic-fields
+ignore unknown fields in dynamic configuration
 
 --reject-unknown-dynamic-fields
 reject unknown fields in dynamic configuration
@@ -201,6 +270,10 @@ allow unknown fields in static configuration
 --allow-unknown-fields
 allow unknown fields in static configuration (DEPRECATED)
 
+--bootstrap-version <string>
+API version to parse the bootstrap config as (e.g. 3). If unset, all
+known versions will be attempted
+
 --config-yaml <string>
 Inline YAML configuration, merges with the contents of --config-path
 
@@ -209,6 +282,13 @@ Path to configuration file
 
 --concurrency <uint32_t>
 # of worker threads to run
+
+--base-id-path <string>
+path to which the base ID is written
+
+--use-dynamic-base-id
+the server chooses a base ID dynamically. Supersedes a static base ID.
+May not be used when the restart epoch is non-zero.
 
 --base-id <uint32_t>
 base ID so that multiple envoys can run on the same host if needed

@@ -93,7 +93,7 @@ public:
   Envoy::Network::Address::InstanceConstSharedPtr
   testResolution(absl::string_view uri, Envoy::Network::DnsLookupFamily address_family) {
     Envoy::Api::ApiPtr api = Envoy::Api::createApiForTest();
-    auto dispatcher = api->allocateDispatcher();
+    auto dispatcher = api->allocateDispatcher("uri_resolution_thread");
     auto u = UriImpl(uri);
     return u.resolve(*dispatcher, address_family);
   }
@@ -142,14 +142,14 @@ TEST_P(UtilityAddressResolutionTest, ResolveTwiceReturnsCached) {
           : Envoy::Network::DnsLookupFamily::V4Only;
 
   Envoy::Api::ApiPtr api = Envoy::Api::createApiForTest();
-  auto dispatcher = api->allocateDispatcher();
+  auto dispatcher = api->allocateDispatcher("test_thread");
   auto u = UriImpl("localhost");
 
   EXPECT_EQ(u.resolve(*dispatcher, address_family).get(),
             u.resolve(*dispatcher, address_family).get());
 }
 
-TEST_F(UtilityTest, translateAddressFamilyGoodValues) {
+TEST_F(UtilityTest, TranslateAddressFamilyGoodValues) {
   EXPECT_EQ(Envoy::Network::DnsLookupFamily::V6Only,
             Utility::translateFamilyOptionString(
                 nighthawk::client::AddressFamily_AddressFamilyOptions_V6));
@@ -161,11 +161,11 @@ TEST_F(UtilityTest, translateAddressFamilyGoodValues) {
                 nighthawk::client::AddressFamily_AddressFamilyOptions_AUTO));
 }
 
-TEST_F(UtilityTest, mapCountersFromStore) {
+TEST_F(UtilityTest, MapCountersFromStore) {
   Envoy::Stats::IsolatedStoreImpl store;
-  store.counter("foo").inc();
-  store.counter("worker.2.bar").inc();
-  store.counter("worker.1.bar").inc();
+  store.counterFromString("foo").inc();
+  store.counterFromString("worker.2.bar").inc();
+  store.counterFromString("worker.1.bar").inc();
   uint64_t filter_delegate_hit_count = 0;
   const auto& counters = Utility().mapCountersFromStore(
       store, [&filter_delegate_hit_count](absl::string_view name, uint64_t value) {

@@ -13,9 +13,10 @@
 #include "common/sequencer_impl.h"
 #include "common/statistic_impl.h"
 
-#include "test/mocks.h"
+#include "test/mocks/common/mock_platform_util.h"
+#include "test/mocks/common/mock_rate_limiter.h"
+#include "test/mocks/common/mock_termination_predicate.h"
 
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 using namespace std::chrono_literals;
@@ -23,6 +24,18 @@ using namespace nighthawk::client;
 using namespace testing;
 
 namespace Nighthawk {
+
+class FakeSequencerTarget {
+public:
+  virtual ~FakeSequencerTarget() = default;
+  // A fake method that matches the sequencer target signature.
+  virtual bool callback(OperationCallback) PURE;
+};
+
+class MockSequencerTarget : public FakeSequencerTarget {
+public:
+  MOCK_METHOD1(callback, bool(OperationCallback));
+};
 
 class SequencerTestBase : public testing::Test {
 public:

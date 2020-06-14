@@ -1,7 +1,6 @@
 #include "client/factories_impl.h"
 
 #include "external/envoy/source/common/http/header_map_impl.h"
-#include "external/envoy/source/common/stats/isolated_store_impl.h"
 
 #include "api/client/options.pb.h"
 
@@ -28,8 +27,9 @@ BenchmarkClientFactoryImpl::BenchmarkClientFactoryImpl(const Options& options)
 
 BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
     Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
-    Envoy::Upstream::ClusterManagerPtr& cluster_manager, Envoy::Tracing::HttpTracerPtr& http_tracer,
-    absl::string_view cluster_name, RequestSource& request_generator) const {
+    Envoy::Upstream::ClusterManagerPtr& cluster_manager,
+    Envoy::Tracing::HttpTracerSharedPtr& http_tracer, absl::string_view cluster_name,
+    RequestSource& request_generator) const {
   StatisticFactoryImpl statistic_factory(options_);
   // While we lack options to configure which statistic backend goes where, we directly pass
   // StreamingStatistic for the stats that track response sizes. Ideally we would have options
@@ -54,7 +54,7 @@ SequencerFactoryImpl::SequencerFactoryImpl(const Options& options)
 
 SequencerPtr SequencerFactoryImpl::create(
     Envoy::TimeSource& time_source, Envoy::Event::Dispatcher& dispatcher,
-    BenchmarkClient& benchmark_client, TerminationPredicatePtr&& termination_predicate,
+    const SequencerTarget& sequencer_target, TerminationPredicatePtr&& termination_predicate,
     Envoy::Stats::Scope& scope, const Envoy::MonotonicTime scheduled_starting_time) const {
   StatisticFactoryImpl statistic_factory(options_);
   Frequency frequency(options_.requestsPerSecond());
@@ -73,19 +73,10 @@ SequencerPtr SequencerFactoryImpl::create(
         std::move(rate_limiter));
   }
 
-  SequencerTarget sequencer_target = [&benchmark_client](CompletionCallback f) -> bool {
-    return benchmark_client.tryStartRequest(std::move(f));
-  };
   return std::make_unique<SequencerImpl>(
       platform_util_, dispatcher, time_source, std::move(rate_limiter), sequencer_target,
       statistic_factory.create(), statistic_factory.create(), options_.sequencerIdleStrategy(),
       std::move(termination_predicate), scope, scheduled_starting_time);
-}
-
-StoreFactoryImpl::StoreFactoryImpl(const Options& options) : OptionBasedFactoryImpl(options) {}
-
-Envoy::Stats::StorePtr StoreFactoryImpl::create() const {
-  return std::make_unique<Envoy::Stats::IsolatedStoreImpl>();
 }
 
 StatisticFactoryImpl::StatisticFactoryImpl(const Options& options)
@@ -114,7 +105,7 @@ OutputFormatterPtr OutputFormatterFactoryImpl::create(
 RequestSourceFactoryImpl::RequestSourceFactoryImpl(const Options& options)
     : OptionBasedFactoryImpl(options) {}
 
-void RequestSourceFactoryImpl::setRequestHeader(Envoy::Http::HeaderMap& header,
+void RequestSourceFactoryImpl::setRequestHeader(Envoy::Http::RequestHeaderMap& header,
                                                 absl::string_view key,
                                                 absl::string_view value) const {
   auto lower_case_key = Envoy::Http::LowerCaseString(std::string(key));
@@ -127,7 +118,7 @@ RequestSourcePtr
 RequestSourceFactoryImpl::create(const Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                                  Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
                                  absl::string_view service_cluster_name) const {
-  Envoy::Http::HeaderMapPtr header = std::make_unique<Envoy::Http::HeaderMapImpl>();
+  Envoy::Http::RequestHeaderMapPtr header = std::make_unique<Envoy::Http::RequestHeaderMapImpl>();
   if (options_.uri().has_value()) {
     // We set headers based on the URI, but we don't have all the prerequisites to call the
     // resolver to validate the address at this stage. Resolving is performed during a later stage
@@ -205,7 +196,7 @@ TerminationPredicate* TerminationPredicateFactoryImpl::linkConfiguredPredicates(
               predicate.first, predicate.second);
     current_predicate = &current_predicate->link(
         std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
-            scope.counter(predicate.first), predicate.second, termination_status));
+            scope.counterFromString(predicate.first), predicate.second, termination_status));
   }
   return current_predicate;
 }

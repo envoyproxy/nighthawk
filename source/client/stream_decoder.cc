@@ -3,13 +3,15 @@
 #include <memory>
 
 #include "external/envoy/source/common/http/http1/codec_impl.h"
+#include "external/envoy/source/common/http/request_id_extension_uuid_impl.h"
 #include "external/envoy/source/common/http/utility.h"
+#include "external/envoy/source/common/network/address_impl.h"
 #include "external/envoy/source/common/stream_info/stream_info_impl.h"
 
 namespace Nighthawk {
 namespace Client {
 
-void StreamDecoder::decodeHeaders(Envoy::Http::HeaderMapPtr&& headers, bool end_stream) {
+void StreamDecoder::decodeHeaders(Envoy::Http::ResponseHeaderMapPtr&& headers, bool end_stream) {
   ASSERT(!complete_);
   upstream_timing_.onFirstUpstreamRxByteReceived(time_source_);
   complete_ = end_stream;
@@ -33,7 +35,7 @@ void StreamDecoder::decodeData(Envoy::Buffer::Instance& data, bool end_stream) {
   }
 }
 
-void StreamDecoder::decodeTrailers(Envoy::Http::HeaderMapPtr&& headers) {
+void StreamDecoder::decodeTrailers(Envoy::Http::ResponseTrailerMapPtr&& headers) {
   ASSERT(!complete_);
   complete_ = true;
   if (active_span_ != nullptr) {
@@ -75,7 +77,7 @@ void StreamDecoder::onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason
   dispatcher_.deferredDelete(std::unique_ptr<StreamDecoder>(this));
 }
 
-void StreamDecoder::onPoolReady(Envoy::Http::StreamEncoder& encoder,
+void StreamDecoder::onPoolReady(Envoy::Http::RequestEncoder& encoder,
                                 Envoy::Upstream::HostDescriptionConstSharedPtr,
                                 const Envoy::StreamInfo::StreamInfo&) {
   // Make sure we hear about stream resets on the encoder.
@@ -133,15 +135,25 @@ void StreamDecoder::finalizeActiveSpan() {
   }
 }
 
-void StreamDecoder::setupForTracing(std::string& x_request_id) {
-  auto headers_copy = std::make_unique<Envoy::Http::HeaderMapImpl>(*request_headers_);
+void StreamDecoder::setupForTracing() {
+  auto headers_copy = std::make_unique<Envoy::Http::RequestHeaderMapImpl>();
+  Envoy::Http::HeaderMapImpl::copyFrom(*headers_copy, *request_headers_);
   Envoy::Tracing::Decision tracing_decision = {Envoy::Tracing::Reason::ClientForced, true};
-  RELEASE_ASSERT(Envoy::UuidUtils::setTraceableUuid(x_request_id, Envoy::UuidTraceStatus::Client),
-                 "setTraceableUuid failed");
-  headers_copy->setClientTraceId(x_request_id);
+  Envoy::Http::UUIDRequestIDExtension uuid_generator(random_generator_);
+  uuid_generator.set(*headers_copy, true);
+  uuid_generator.setTraceStatus(*headers_copy, Envoy::Http::TraceStatus::Client);
   active_span_ = http_tracer_->startSpan(config_, *headers_copy, stream_info_, tracing_decision);
   active_span_->injectContext(*headers_copy);
   request_headers_.reset(headers_copy.release());
+  // We pass in a fake remote address; recently trace finalization mandates setting this, and will
+  // segfault without it.
+  const auto remote_address = Envoy::Network::Address::InstanceConstSharedPtr{
+      new Envoy::Network::Address::Ipv4Instance("127.0.0.1", 0)};
+  stream_info_.setDownstreamDirectRemoteAddress(remote_address);
+  // For good measure, we also set DownstreamRemoteAddress, as the associated getter will crash
+  // if we don't. So this is just in case anyone calls that (or Envoy starts doing so in the
+  // future).
+  stream_info_.setDownstreamRemoteAddress(remote_address);
 }
 
 } // namespace Client

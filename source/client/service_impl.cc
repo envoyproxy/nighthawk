@@ -119,7 +119,7 @@ void addHeader(envoy::api::v2::core::HeaderMap* map, absl::string_view key,
 } // namespace
 
 RequestSourcePtr RequestSourceServiceImpl::createStaticEmptyRequestSource(const uint32_t amount) {
-  Envoy::Http::HeaderMapPtr header = std::make_unique<Envoy::Http::HeaderMapImpl>();
+  Envoy::Http::RequestHeaderMapPtr header = std::make_unique<Envoy::Http::RequestHeaderMapImpl>();
   header->addCopy(Envoy::Http::LowerCaseString("x-from-remote-request-source"), "1");
   return std::make_unique<StaticRequestSourceImpl>(std::move(header), amount);
 }
@@ -151,10 +151,10 @@ RequestSourcePtr RequestSourceServiceImpl::createStaticEmptyRequestSource(const 
       auto* request_headers = request_specifier->mutable_headers();
       headers->iterate(
           [](const Envoy::Http::HeaderEntry& header,
-             void* context) -> Envoy::Http::HeaderMap::Iterate {
+             void* context) -> Envoy::Http::RequestHeaderMap::Iterate {
             addHeader(static_cast<envoy::api::v2::core::HeaderMap*>(context),
                       header.key().getStringView(), header.value().getStringView());
-            return Envoy::Http::HeaderMap::Iterate::Continue;
+            return Envoy::Http::RequestHeaderMap::Iterate::Continue;
           },
           request_headers);
       // TODO(oschaaf): add static configuration for other fields plus expectations
