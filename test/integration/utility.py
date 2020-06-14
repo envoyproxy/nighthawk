@@ -1,4 +1,5 @@
 import os
+import subprocess
 
 
 def assertEqual(a, b):
@@ -57,3 +58,9 @@ def assertCounterBetweenInclusive(counters, name, min_value, max_value):
 
 def isSanitizerRun():
   return True if os.environ.get("NH_INTEGRATION_TEST_SANITIZER_RUN", 0) == "1" else False
+
+
+def run_binary_with_args(binary, args):
+  test_rundir = os.path.join(os.environ["TEST_SRCDIR"], os.environ["TEST_WORKSPACE"])
+  args = "%s %s" % (os.path.join(test_rundir, binary), args)
+  return subprocess.getstatusoutput(args)

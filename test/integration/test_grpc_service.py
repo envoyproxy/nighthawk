@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 import pytest
 
-from integration_test_fixtures import (http_test_server_fixture)
-from utility import *
-import subprocess
+from test.integration.integration_test_fixtures import http_test_server_fixture
+from test.integration.utility import *
 
 
 def test_grpc_service_happy_flow(http_test_server_fixture):
@@ -45,19 +44,23 @@ def test_grpc_service_stress(http_test_server_fixture):
   assertEqual(counters["requestsource.internal.upstream_rq_200"], 4)
 
 
-def run_service_with_arg(arg):
-  test_rundir = os.path.join(os.environ["TEST_SRCDIR"], os.environ["TEST_WORKSPACE"])
-  args = "%s %s" % (os.path.join(test_rundir, "nighthawk_service"), arg)
-  return subprocess.getstatusoutput(args)
+def run_service_with_args(args):
+  return run_binary_with_args("nighthawk_service", args)
 
 
 def test_grpc_service_help():
-  (exit_code, output) = run_service_with_arg("--help")
+  (exit_code, output) = run_service_with_args("--help")
   assert (exit_code == 0)
   assert ("USAGE" in output)
 
 
 def test_grpc_service_bad_arguments():
-  (exit_code, output) = run_service_with_arg("--foo")
+  (exit_code, output) = run_service_with_args("--foo")
   assert (exit_code == 1)
   assert ("PARSE ERROR: Argument: --foo" in output)
+
+
+def test_grpc_service_nonexisting_listener_address():
+  (exit_code, output) = run_service_with_args("--listen 1.1.1.1:1")
+  assert (exit_code == 1)
+  assert ("Failure: Could not start the grpc service" in output)
