@@ -320,7 +320,7 @@ TEST(StatisticTest, NullStatistic) {
   NullStatistic stat;
   EXPECT_EQ(0, stat.count());
   stat.addValue(1);
-  EXPECT_EQ(0, stat.count());
+  EXPECT_EQ(0, stat.mean());
   EXPECT_EQ(0, stat.pvariance());
   EXPECT_EQ(0, stat.pstdev());
   EXPECT_NE(nullptr, stat.combine(stat));
