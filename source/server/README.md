@@ -148,7 +148,8 @@ bazel-bin/nighthawk_test_server  [--disable-extensions <string>]
 [--max-obj-name-len <uint64_t>]
 [--max-stats <uint64_t>] [--mode
 <string>] [--parent-shutdown-time-s
-<uint32_t>] [--drain-time-s <uint32_t>]
+<uint32_t>] [--drain-strategy <string>]
+[--drain-time-s <uint32_t>]
 [--file-flush-interval-msec <uint32_t>]
 [--service-zone <string>]
 [--service-node <string>]
@@ -204,6 +205,10 @@ normally) or 'validate' (validate configs and exit).
 
 --parent-shutdown-time-s <uint32_t>
 Hot restart parent shutdown time in seconds
+
+--drain-strategy <string>
+Hot restart drain sequence behaviour, one of 'gradual' (default) or
+'immediate'.
 
 --drain-time-s <uint32_t>
 Hot restart and LDS removal drain time in seconds
