@@ -90,7 +90,8 @@ std::string ConsoleOutputFormatterImpl::formatProto(const nighthawk::client::Out
                  << std::endl;
               header_written = true;
             }
-            ss << fmt::format("  {:<{}}{:<{}}{:<{}}", p, 12, percentile.count(), 12,
+            auto s_percentile = fmt::format("{:.{}g}", p, 8);
+            ss << fmt::format("  {:<{}}{:<{}}{:<{}}", s_percentile, 12, percentile.count(), 12,
                               percentile.has_duration()
                                   ? formatProtoDuration(percentile.duration())
                                   : fmt::format("{}", static_cast<int64_t>(percentile.raw_value())),

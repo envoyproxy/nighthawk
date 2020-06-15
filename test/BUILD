@@ -105,6 +105,8 @@ envoy_cc_test(
         "test_data/output_formatter.medium.proto.gold",
         "test_data/output_formatter.txt.gold",
         "test_data/output_formatter.yaml.gold",
+        "test_data/percentile-column-overflow.json",
+        "test_data/percentile-column-overflow.txt.gold",
     ],
     repository = "@envoy",
     deps = [
