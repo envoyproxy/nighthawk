@@ -107,26 +107,25 @@ def test_h1_pool_strategy(http_test_server_fixture):
     return len([line for line in logs.split(os.linesep) if substring in line])
 
   _, logs = http_test_server_fixture.runNighthawkClient([
-      "--rps 20", "-v", "trace", "--connections", "2", "--prefetch-connections",
+      "--rps 5", "-v", "trace", "--connections", "2", "--prefetch-connections",
       "--experimental-h1-connection-reuse-strategy", "mru", "--termination-predicate",
-      "benchmark.http_2xx:10", "--simple-warmup",
+      "benchmark.http_2xx:4",
       http_test_server_fixture.getTestServerRootUri()
   ])
 
-  requests = 60
-  connections = 3
   assertNotIn("[C1] message complete", logs)
-  assertEqual(countLogLinesWithSubstring(logs, "[C0] message complete"), 22)
+  assertEqual(countLogLinesWithSubstring(logs, "[C0] message complete"), 10)
 
+  requests = 12
+  connections = 3
   _, logs = http_test_server_fixture.runNighthawkClient([
-      "--rps", "20", "-v trace", "--connections",
+      "--rps", "5", "-v trace", "--connections",
       str(connections), "--prefetch-connections", "--experimental-h1-connection-reuse-strategy",
       "lru", "--termination-predicate",
-      "benchmark.http_2xx:%d" % requests,
+      "benchmark.http_2xx:%d" % (requests - 1),
       http_test_server_fixture.getTestServerRootUri()
   ])
   for i in range(1, connections):
     line_count = countLogLinesWithSubstring(logs, "[C%d] message complete" % i)
     strict_count = (requests / connections) * 2
-    # We need to mind a single warmup call
-    assertBetweenInclusive(line_count, strict_count, strict_count + 2)
+    assertBetweenInclusive(line_count, strict_count, strict_count)

@@ -20,7 +20,7 @@ def test_remote_execution_basics(http_test_server_fixture):
   ]
   parsed_json, _ = http_test_server_fixture.runNighthawkClient(args)
   counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-  assertCounterEqual(counters, "benchmark.http_2xx", 25)
+  assertCounterGreaterEqual(counters, "benchmark.http_2xx", 25)
 
   # As a control step, prove we are actually performing remote execution: re-run the command without an
   # operational gRPC service. That ought to fail.

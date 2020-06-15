@@ -8,13 +8,13 @@ from utility import *
 def test_grpc_service_happy_flow(http_test_server_fixture):
   http_test_server_fixture.startNighthawkGrpcService("dummy-request-source")
   parsed_json, _ = http_test_server_fixture.runNighthawkClient([
-      "--termination-predicate", "benchmark.http_2xx:10", "--rps 100",
+      "--termination-predicate", "benchmark.http_2xx:5", "--rps 10",
       "--request-source %s:%s" % (http_test_server_fixture.grpc_service.server_ip,
                                   http_test_server_fixture.grpc_service.server_port),
       http_test_server_fixture.getTestServerRootUri()
   ])
   counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-  assertGreaterEqual(counters["benchmark.http_2xx"], 10)
+  assertGreaterEqual(counters["benchmark.http_2xx"], 5)
   assertEqual(counters["requestsource.internal.upstream_rq_200"], 1)
 
 
