@@ -10,6 +10,7 @@
 #include "api/server/response_options.pb.validate.h"
 
 #include "absl/strings/numbers.h"
+#include "absl/strings/str_cat.h"
 
 namespace Nighthawk {
 namespace Server {
@@ -63,6 +64,11 @@ void HttpTestServerDecoderFilter::sendReply() {
         static_cast<Envoy::Http::Code>(200), response_body,
         [this](Envoy::Http::ResponseHeaderMap& direct_response_headers) {
           applyConfigToResponseHeaders(direct_response_headers, base_config_);
+          const auto timing_header = Envoy::Http::LowerCaseString("x-nh-origin-timings");
+          auto delta = time_source_->monotonicTime() - request_time_;
+          std::string timing_value =
+              absl::StrCat(request_time_.time_since_epoch().count(), ",", delta.count());
+          direct_response_headers.appendCopy(timing_header, timing_value);
         },
         absl::nullopt, "");
   } else {
@@ -78,6 +84,7 @@ HttpTestServerDecoderFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& header
                                            bool end_stream) {
   // TODO(oschaaf): Add functionality to clear fields
   base_config_ = config_->server_config();
+  request_time_ = time_source_->monotonicTime();
   const auto* request_config_header = headers.get(TestServer::HeaderNames::get().TestServerConfig);
   if (request_config_header) {
     mergeJsonConfig(request_config_header->value().getStringView(), base_config_, error_message_);
@@ -109,6 +116,7 @@ HttpTestServerDecoderFilter::decodeTrailers(Envoy::Http::RequestTrailerMap&) {
 void HttpTestServerDecoderFilter::setDecoderFilterCallbacks(
     Envoy::Http::StreamDecoderFilterCallbacks& callbacks) {
   decoder_callbacks_ = &callbacks;
+  time_source_ = &callbacks.dispatcher().timeSource();
 }
 
 } // namespace Server

@@ -19,6 +19,24 @@ void StreamDecoder::decodeHeaders(Envoy::Http::ResponseHeaderMapPtr&& headers, b
   response_header_sizes_statistic_.addValue(response_headers_->byteSize());
   const uint64_t response_code = Envoy::Http::Utility::getResponseStatus(*response_headers_);
   stream_info_.response_code_ = static_cast<uint32_t>(response_code);
+  const auto timing_header_name = Envoy::Http::LowerCaseString("x-nh-origin-timings");
+  const auto* timing_header = response_headers_->get(timing_header_name);
+  if (timing_header != nullptr) {
+    auto timing_value = timing_header->value().getStringView();
+    std::vector<std::string> split_result = absl::StrSplit(timing_value, ",");
+    if (split_result.size() == 2) {
+      int64_t origin_start, origin_delta;
+      bool ok = absl::SimpleAtoi(split_result[0], &origin_start) &&
+                absl::SimpleAtoi(split_result[1], &origin_delta);
+      if (ok) {
+        origin_receipt_statistic_.addValue(origin_start - request_start_.time_since_epoch().count());
+        origin_latency_statistic_.addValue(origin_delta);
+      } else {
+        // TODO(oschaaf): dispatch warning. watch out for high frequency logging.
+      }
+    }
+  }
+
   if (complete_) {
     onComplete(true);
   }

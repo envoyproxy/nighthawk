@@ -2,6 +2,7 @@
 
 #include <string>
 
+#include "envoy/common/time.h"
 #include "envoy/server/filter_config.h"
 
 #include "api/server/response_options.pb.h"
@@ -74,6 +75,8 @@ private:
   nighthawk::server::ResponseOptions base_config_;
   absl::optional<std::string> error_message_;
   absl::optional<std::string> request_headers_dump_;
+  Envoy::TimeSource* time_source_{nullptr};
+  Envoy::MonotonicTime request_time_;
 };
 
 } // namespace Server
