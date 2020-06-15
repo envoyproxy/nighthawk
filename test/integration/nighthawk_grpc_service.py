@@ -60,7 +60,7 @@ class NighthawkGrpcService(object):
       self._address_file = None
 
   def _waitUntilServerListening(self):
-    tries = 30
+    tries = 90
     while tries > 0:
       contents = ""
       if not self._address_file is None:
