@@ -47,7 +47,7 @@ class ClusterManagerFactory;
 class ProcessImpl : public Process, public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
   ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
-              std::shared_ptr<Envoy::ProcessWide> process_wide = nullptr);
+              const std::shared_ptr<Envoy::ProcessWide>& process_wide = nullptr);
   ~ProcessImpl() override;
 
   /**

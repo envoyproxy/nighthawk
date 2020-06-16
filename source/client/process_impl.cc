@@ -93,7 +93,7 @@ private:
 };
 
 ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
-                         std::shared_ptr<Envoy::ProcessWide> process_wide)
+                         const std::shared_ptr<Envoy::ProcessWide>& process_wide)
     : process_wide_(process_wide == nullptr ? std::make_shared<Envoy::ProcessWide>()
                                             : process_wide),
       time_system_(time_system), stats_allocator_(symbol_table_), store_root_(stats_allocator_),
