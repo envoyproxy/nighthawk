@@ -102,8 +102,8 @@ message CommandLineOptions {
       [(validate.rules).uint32 = {gte: 1, lte: 1000000}];
   // The maximum allowed number of concurrent connections per event loop. HTTP/1 only. Default: 100.
   google.protobuf.UInt32Value connections = 2 [(validate.rules).uint32 = {gte: 1, lte: 1000000}];
-  // The number of seconds that the test should run. Default: 5.
-  google.protobuf.Duration duration = 3 [(validate.rules).duration.gte.nanos = 1];
+  // The number of seconds that the test should run. Default: 5. 0 will be treated as infinite.
+  google.protobuf.Duration duration = 3 [(validate.rules).duration.gte.nanos = 0];
   // Connection connect timeout period in seconds. Default: 30.
   google.protobuf.Duration timeout = 4 [(validate.rules).duration.gte.seconds = 0];
   // Use HTTP/2

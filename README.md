@@ -218,7 +218,8 @@ Use HTTP/2
 Connection connect timeout period in seconds. Default: 30.
 
 --duration <uint32_t>
-The number of seconds that the test should run. Default: 5.
+The number of seconds that the test should run. Default: 5. 0 will be
+treated as infinite.
 
 --connections <uint32_t>
 The maximum allowed number of concurrent connections per event loop.

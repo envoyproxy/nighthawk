@@ -46,10 +46,11 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
                   "only. Default: {}.",
                   connections_),
       false, 0, "uint32_t", cmd);
-  TCLAP::ValueArg<uint32_t> duration(
-      "", "duration",
-      fmt::format("The number of seconds that the test should run. Default: {}.", duration_), false,
-      0, "uint32_t", cmd);
+  TCLAP::ValueArg<uint32_t> duration("", "duration",
+                                     fmt::format("The number of seconds that the test should run. "
+                                                 "Default: {}. 0 will be treated as infinite.",
+                                                 duration_),
+                                     false, 0, "uint32_t", cmd);
   TCLAP::ValueArg<uint32_t> timeout(
       "", "timeout",
       fmt::format("Connection connect timeout period in seconds. Default: {}.", timeout_), false, 0,
