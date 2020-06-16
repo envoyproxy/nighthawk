@@ -29,7 +29,7 @@ namespace Client {
 using namespace std::chrono_literals;
 
 using namespace Envoy; // We need this because of macro expectations.
-```
+
 #define ALL_BENCHMARK_CLIENT_STATS(COUNTER, HISTOGRAM)                                             \
   COUNTER(stream_resets)                                                                           \
   COUNTER(http_1xx)                                                                                \
@@ -39,11 +39,11 @@ using namespace Envoy; // We need this because of macro expectations.
   COUNTER(http_5xx)                                                                                \
   COUNTER(http_xxx)                                                                                \
   COUNTER(pool_overflow)                                                                           \
-  COUNTER(pool_connection_failure)  \
-  COUNTER(total_req_sent) \
-  HISTOGRAM(latency_on_success_req_us, Microseconds)   \
+  COUNTER(pool_connection_failure)                                                                 \
+  COUNTER(total_req_sent)                                                                          \
+  HISTOGRAM(latency_on_success_req_us, Microseconds)                                               \
   HISTOGRAM(latency_on_error_req_us, Microseconds)
-```
+
 struct BenchmarkClientStats {
   ALL_BENCHMARK_CLIENT_STATS(GENERATE_COUNTER_STRUCT, GENERATE_HISTOGRAM_STRUCT)
 };
@@ -107,8 +107,7 @@ public:
   // StreamDecoderCompletionCallback
   void onComplete(bool success, const Envoy::Http::ResponseHeaderMap& headers) override;
   void onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason reason) override;
-                                  void exportLatency(const uint32_t response_code,
-                     const uint64_t latency_us) override;
+  void exportLatency(const uint32_t response_code, const uint64_t latency_us) override;
 
   // Helpers
   Envoy::Http::ConnectionPool::Instance* pool() {
