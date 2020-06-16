@@ -29,8 +29,8 @@ namespace Client {
 using namespace std::chrono_literals;
 
 using namespace Envoy; // We need this because of macro expectations.
-
-#define ALL_BENCHMARK_CLIENT_STATS(COUNTER, HISTOGRAM)                                                        \
+```
+#define ALL_BENCHMARK_CLIENT_STATS(COUNTER, HISTOGRAM)                                             \
   COUNTER(stream_resets)                                                                           \
   COUNTER(http_1xx)                                                                                \
   COUNTER(http_2xx)                                                                                \
@@ -43,7 +43,7 @@ using namespace Envoy; // We need this because of macro expectations.
   COUNTER(total_req_sent) \
   HISTOGRAM(latency_on_success_req_us, Microseconds)   \
   HISTOGRAM(latency_on_error_req_us, Microseconds)
-
+```
 struct BenchmarkClientStats {
   ALL_BENCHMARK_CLIENT_STATS(GENERATE_COUNTER_STRUCT, GENERATE_HISTOGRAM_STRUCT)
 };
