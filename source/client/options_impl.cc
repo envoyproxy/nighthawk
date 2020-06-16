@@ -671,7 +671,10 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
       request_options->mutable_request_body_size()->set_value(requestBodySize());
     }
   }
-  *(command_line_options->mutable_tls_context()) = tls_context_;
+  if (!Envoy::MessageUtil()(tls_context_,
+                           envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext())) {
+    *(command_line_options->mutable_tls_context()) = tls_context_;
+  }
   if (transport_socket_.has_value()) {
     *(command_line_options->mutable_transport_socket()) = transport_socket_.value();
   }
