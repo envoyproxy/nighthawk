@@ -46,7 +46,8 @@ class ClusterManagerFactory;
  */
 class ProcessImpl : public Process, public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
-  ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system);
+  ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
+              std::shared_ptr<Envoy::ProcessWide> process_wide = nullptr);
   ~ProcessImpl() override;
 
   /**
@@ -96,7 +97,7 @@ private:
   bool runInternal(OutputCollector& collector, const std::vector<UriPtr>& uris,
                    const UriPtr& request_source_uri, const UriPtr& tracing_uri);
 
-  Envoy::ProcessWide process_wide_;
+  std::shared_ptr<Envoy::ProcessWide> process_wide_;
   Envoy::PlatformImpl platform_impl_;
   Envoy::Event::TimeSystem& time_system_;
   Envoy::Stats::SymbolTableImpl symbol_table_;
