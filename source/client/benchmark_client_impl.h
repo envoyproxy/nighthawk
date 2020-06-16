@@ -71,16 +71,14 @@ class BenchmarkClientHttpImpl : public BenchmarkClient,
                                 public StreamDecoderCompletionCallback,
                                 public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
-  BenchmarkClientHttpImpl(Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher,
-                          Envoy::Stats::Scope& scope, StatisticPtr&& connect_statistic,
-                          StatisticPtr&& response_statistic,
-                          StatisticPtr&& response_header_size_statistic,
-                          StatisticPtr&& response_body_size_statistic,
-                          StatisticPtr&& origin_latency_statistic, StatisticPtr&& origin_receipt_statistic,
-                          bool use_h2, Envoy::Upstream::ClusterManagerPtr& cluster_manager,
-                          Envoy::Tracing::HttpTracerSharedPtr& http_tracer,
-                          absl::string_view cluster_name, RequestGenerator request_generator,
-                          const bool provide_resource_backpressure);
+  BenchmarkClientHttpImpl(
+      Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
+      StatisticPtr&& connect_statistic, StatisticPtr&& response_statistic,
+      StatisticPtr&& response_header_size_statistic, StatisticPtr&& response_body_size_statistic,
+      StatisticPtr&& origin_latency_statistic, StatisticPtr&& origin_receipt_statistic, bool use_h2,
+      Envoy::Upstream::ClusterManagerPtr& cluster_manager,
+      Envoy::Tracing::HttpTracerSharedPtr& http_tracer, absl::string_view cluster_name,
+      RequestGenerator request_generator, const bool provide_resource_backpressure);
   void setConnectionLimit(uint32_t connection_limit) { connection_limit_ = connection_limit; }
   void setMaxPendingRequests(uint32_t max_pending_requests) {
     max_pending_requests_ = max_pending_requests;

@@ -23,13 +23,14 @@ void StreamDecoder::decodeHeaders(Envoy::Http::ResponseHeaderMapPtr&& headers, b
   const auto* timing_header = response_headers_->get(timing_header_name);
   if (timing_header != nullptr) {
     auto timing_value = timing_header->value().getStringView();
-    std::vector<std::string> split_result = absl::StrSplit(timing_value, ",");
+    std::vector<std::string> split_result = absl::StrSplit(timing_value, ',');
     if (split_result.size() == 2) {
       int64_t origin_start, origin_delta;
       bool ok = absl::SimpleAtoi(split_result[0], &origin_start) &&
                 absl::SimpleAtoi(split_result[1], &origin_delta);
       if (ok) {
-        origin_receipt_statistic_.addValue(origin_start - request_start_.time_since_epoch().count());
+        origin_receipt_statistic_.addValue(origin_start -
+                                           request_start_.time_since_epoch().count());
         origin_latency_statistic_.addValue(origin_delta);
       } else {
         // TODO(oschaaf): dispatch warning. watch out for high frequency logging.
