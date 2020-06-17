@@ -1,3 +1,4 @@
+#include <thread>
 #include <vector>
 
 #include "nighthawk/common/exception.h"
@@ -32,12 +33,35 @@ public:
       : loopback_address_(Envoy::Network::Test::getLoopbackAddressUrlString(GetParam())),
         options_(TestUtility::createOptionsImpl(
             fmt::format("foo --duration 1 -v error --rps 10 https://{}/", loopback_address_))){};
-  void runProcess(RunExpectation expectation) {
+  void runProcess(RunExpectation expectation, bool do_cancel = false) {
     ProcessPtr process = std::make_unique<ProcessImpl>(*options_, time_system_);
     OutputCollectorImpl collector(time_system_, *options_);
+    std::thread cancel_thread;
+    if (do_cancel) {
+      cancel_thread = std::thread([&process] {
+        sleep(5);
+        std::cerr << "request cancel" << std::endl;
+        process->requestExecutionCancellation();
+      });
+    }
     const auto result =
         process->run(collector) ? RunExpectation::EXPECT_SUCCESS : RunExpectation::EXPECT_FAILURE;
     EXPECT_EQ(result, expectation);
+    if (cancel_thread.joinable()) {
+      cancel_thread.join();
+    }
+    if (do_cancel) {
+      auto proto = collector.toProto();
+      int cancel_requests = 0;
+      for (const auto& result : proto.results()) {
+        for (const auto& counter : result.counters()) {
+          if (counter.name() == "cancel_requests") {
+            cancel_requests++;
+          }
+        }
+      }
+      EXPECT_EQ(3, cancel_requests); // global results + two workers
+    }
     process->shutdown();
   }
 
@@ -62,6 +86,13 @@ TEST_P(ProcessTest, BadTracerSpec) {
   options_ = TestUtility::createOptionsImpl(
       fmt::format("foo --trace foo://localhost:79/api/v1/spans https://{}/", loopback_address_));
   runProcess(RunExpectation::EXPECT_FAILURE);
+}
+
+TEST_P(ProcessTest, CancelExecution) {
+  options_ = TestUtility::createOptionsImpl(
+      fmt::format("foo --duration 10 --failure-predicate foo:0 --concurrency 2 https://{}/",
+                  loopback_address_));
+  runProcess(RunExpectation::EXPECT_SUCCESS, true);
 }
 
 } // namespace Client

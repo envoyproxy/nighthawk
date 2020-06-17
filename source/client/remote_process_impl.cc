@@ -56,6 +56,7 @@ bool RemoteProcessImpl::run(OutputCollector& collector) {
 
 bool RemoteProcessImpl::requestExecutionCancellation() {
   ENVOY_LOG(error, "Remote process cancellation not supported yet");
+  // TODO(XXX): Send a cancel request to the gRPC service.
   return false;
 }
 

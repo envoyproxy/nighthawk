@@ -659,7 +659,9 @@ def test_http_request_release_timing(http_test_server_fixture, qps_parameterizat
 
 
 def send_sigterm(p):
-  time.sleep(2)
+  # Sleep for a while, under tsan the client needs a lot of time
+  # to start up.
+  time.sleep(10)
   p.terminate()
 
 

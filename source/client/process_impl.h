@@ -90,7 +90,7 @@ private:
   void maybeCreateTracingDriver(const envoy::config::trace::v3::Tracing& configuration);
 
   void configureComponentLogLevels(spdlog::level::level_enum level);
-  const std::vector<ClientWorkerPtr>& createWorkers(const uint32_t concurrency);
+  void createWorkers(const uint32_t concurrency);
   std::vector<StatisticPtr> vectorizeStatisticPtrMap(const StatisticPtrMap& statistics) const;
   std::vector<StatisticPtr>
   mergeWorkerStatistics(const std::vector<ClientWorkerPtr>& workers) const;
@@ -136,6 +136,8 @@ private:
   Envoy::Server::ValidationAdmin admin_;
   Envoy::ProtobufMessage::ProdValidationContextImpl validation_context_;
   bool shutdown_{true};
+  Envoy::Thread::MutexBasicLockable workers_lock_;
+  bool cancelled_{false};
 };
 
 } // namespace Client
