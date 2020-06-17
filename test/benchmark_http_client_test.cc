@@ -170,7 +170,7 @@ TEST_F(BenchmarkClientHttpTest, BasicTestH1200) {
 TEST_F(BenchmarkClientHttpTest, BasicTestH1300) {
   response_code_ = "300";
   testBasicFunctionality(0, 11, 10);
-  EXPECT_EQ(10, getCounter("http_2xx"));
+  EXPECT_EQ(10, getCounter("http_3xx"));
 }
   
 TEST_F(BenchmarkClientHttpTest, BasicTestH1404) {
