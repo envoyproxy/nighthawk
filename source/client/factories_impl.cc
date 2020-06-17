@@ -178,7 +178,7 @@ TerminationPredicateFactoryImpl::create(Envoy::TimeSource& time_source, Envoy::S
   if (options_.duration() > 0s) {
     root_predicate = std::make_unique<DurationTerminationPredicateImpl>(
         time_source, options_.duration(), scheduled_starting_time);
-  } 
+  }
 
   TerminationPredicate* current_predicate = root_predicate.get();
   current_predicate = linkConfiguredPredicates(*current_predicate, options_.failurePredicates(),
