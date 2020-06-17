@@ -69,6 +69,8 @@ public:
    */
   void shutdown() override;
 
+  bool requestExecutionCancellation() override;
+
 private:
   /**
    * @brief Creates a cluster for usage by a remote request source.

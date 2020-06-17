@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 
+import json
 import logging
 import os
+import subprocess
 import sys
 import pytest
+import time
+from threading import Thread
 
 from test.integration.common import IpVersion
 from test.integration.integration_test_fixtures import (
@@ -652,3 +656,28 @@ def test_http_request_release_timing(http_test_server_fixture, qps_parameterizat
         int(global_histograms["benchmark_http_client.queue_to_connect"]["count"]), total_requests)
 
     assertCounterEqual(counters, "benchmark.http_2xx", (total_requests))
+
+
+def send_sigterm(p):
+  time.sleep(2)
+  p.terminate()
+
+
+def test_cancellation(http_test_server_fixture):
+  """
+  That that we can use signals to cancel execution.
+  """
+  args = [
+      http_test_server_fixture.nighthawk_client_path, "--concurrency", "2",
+      http_test_server_fixture.getTestServerRootUri(), "--duration", "1000", "--output-format",
+      "json"
+  ]
+  client_process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  Thread(target=(lambda: send_sigterm(client_process))).start()
+  stdout, stderr = client_process.communicate()
+  client_process.wait()
+  output = stdout.decode('utf-8')
+  assert (client_process.returncode == 0)
+  parsed_json = json.loads(output)
+  counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
+  assertCounterEqual(counters, "cancel_requests", 2)

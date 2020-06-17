@@ -54,5 +54,10 @@ bool RemoteProcessImpl::run(OutputCollector& collector) {
   return false;
 }
 
+bool RemoteProcessImpl::requestExecutionCancellation() {
+  ENVOY_LOG(error, "Remote process cancellation not supported yet");
+  return false;
+}
+
 } // namespace Client
 } // namespace Nighthawk

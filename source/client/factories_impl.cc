@@ -175,6 +175,12 @@ TerminationPredicateFactoryImpl::create(Envoy::TimeSource& time_source, Envoy::S
   TerminationPredicatePtr duration_predicate = std::make_unique<DurationTerminationPredicateImpl>(
       time_source, options_.duration(), scheduled_starting_time);
   TerminationPredicate* current_predicate = duration_predicate.get();
+
+  // We'll always link a predicate which checks for requests to cancel.
+  current_predicate = &current_predicate->link(
+      std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
+          scope.counterFromString("cancel_requests"), 0, TerminationPredicate::Status::TERMINATE));
+
   current_predicate = linkConfiguredPredicates(*current_predicate, options_.failurePredicates(),
                                                TerminationPredicate::Status::FAIL, scope);
   linkConfiguredPredicates(*current_predicate, options_.terminationPredicates(),

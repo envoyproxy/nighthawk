@@ -135,6 +135,14 @@ void ProcessImpl::shutdown() {
   shutdown_ = true;
 }
 
+bool ProcessImpl::requestExecutionCancellation() {
+  ENVOY_LOG(debug, "Requesting workers to cancel execution");
+  for (auto& worker : workers_) {
+    worker->requestExecutionCancellation();
+  }
+  return true;
+}
+
 const std::vector<ClientWorkerPtr>& ProcessImpl::createWorkers(const uint32_t concurrency) {
   // TODO(oschaaf): Expose kMinimalDelay in configuration.
   const std::chrono::milliseconds kMinimalWorkerDelay = 500ms + (concurrency * 50ms);
