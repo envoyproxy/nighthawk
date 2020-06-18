@@ -15,6 +15,10 @@ TerminationPredicate::Status TerminationPredicateBaseImpl::evaluateChain() {
   return status;
 }
 
+TerminationPredicate::Status NullTerminationPredicateImpl::evaluate() {
+  return TerminationPredicate::Status::PROCEED;
+}
+
 TerminationPredicate::Status DurationTerminationPredicateImpl::evaluate() {
   return time_source_.monotonicTime() - start_ > duration_ ? TerminationPredicate::Status::TERMINATE
                                                            : TerminationPredicate::Status::PROCEED;
