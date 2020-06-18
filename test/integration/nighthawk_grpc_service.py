@@ -39,6 +39,7 @@ class NighthawkGrpcService(object):
     assert ip_version != IpVersion.UNKNOWN
     self.server_port = 0
     self.server_ip = server_ip
+    self.log_lines = None
     self._server_process = None
     self._ip_version = ip_version
     self._server_binary_path = server_binary_path
@@ -55,8 +56,9 @@ class NighthawkGrpcService(object):
           "%s:0" % str(self.server_ip), "--service", self._service_name
       ]
       logging.info("Nighthawk grpc service popen() args: [%s]" % args)
-      self._server_process = subprocess.Popen(args)
-      self._server_process.communicate()
+      self._server_process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+      _, stderr = self._server_process.communicate()
+      self.log_lines = stderr.decode("utf-8").splitlines()
       self._address_file = None
 
   def _waitUntilServerListening(self):
@@ -89,6 +91,7 @@ class NighthawkGrpcService(object):
 
     self._server_thread.daemon = True
     self._server_thread.start()
+    self.log_lines = None
     return self._waitUntilServerListening()
 
   def stop(self):
