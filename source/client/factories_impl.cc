@@ -17,6 +17,8 @@
 #include "client/output_collector_impl.h"
 #include "client/output_formatter_impl.h"
 
+using namespace std::chrono_literals;
+
 namespace Nighthawk {
 namespace Client {
 
@@ -172,15 +174,20 @@ TerminationPredicateFactoryImpl::TerminationPredicateFactoryImpl(const Options& 
 TerminationPredicatePtr
 TerminationPredicateFactoryImpl::create(Envoy::TimeSource& time_source, Envoy::Stats::Scope& scope,
                                         const Envoy::MonotonicTime scheduled_starting_time) const {
-  TerminationPredicatePtr duration_predicate = std::make_unique<DurationTerminationPredicateImpl>(
-      time_source, options_.duration(), scheduled_starting_time);
-  TerminationPredicate* current_predicate = duration_predicate.get();
+  TerminationPredicatePtr root_predicate;
+  if (options_.noDuration()) {
+    root_predicate = std::make_unique<NullTerminationPredicateImpl>();
+  } else {
+    root_predicate = std::make_unique<DurationTerminationPredicateImpl>(
+        time_source, options_.duration(), scheduled_starting_time);
+  }
+  TerminationPredicate* current_predicate = root_predicate.get();
   current_predicate = linkConfiguredPredicates(*current_predicate, options_.failurePredicates(),
                                                TerminationPredicate::Status::FAIL, scope);
   linkConfiguredPredicates(*current_predicate, options_.terminationPredicates(),
                            TerminationPredicate::Status::TERMINATE, scope);
 
-  return duration_predicate;
+  return root_predicate;
 }
 
 TerminationPredicate* TerminationPredicateFactoryImpl::linkConfiguredPredicates(

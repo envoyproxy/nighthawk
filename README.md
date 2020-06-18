@@ -43,9 +43,9 @@ bazel build -c opt //:nighthawk
 ```
 USAGE:
 
-bazel-bin/nighthawk_client  [--simple-warmup] [--request-source <uri
-format>] [--label <string>] ...
-[--multi-target-use-https]
+bazel-bin/nighthawk_client  [--no-duration] [--simple-warmup]
+[--request-source <uri format>] [--label
+<string>] ... [--multi-target-use-https]
 [--multi-target-path <string>]
 [--multi-target-endpoint <string>] ...
 [--experimental-h2-use-multiple-connections]
@@ -77,6 +77,10 @@ format>
 
 
 Where:
+
+--no-duration
+Request infinite execution. Note that the default failure predicates
+will still be added. Mutually exclusive with --duration.
 
 --simple-warmup
 Perform a simple single warmup request (per worker) before starting
@@ -218,7 +222,8 @@ Use HTTP/2
 Connection connect timeout period in seconds. Default: 30.
 
 --duration <uint32_t>
-The number of seconds that the test should run. Default: 5.
+The number of seconds that the test should run. Default: 5. Mutually
+exclusive with --no-duration.
 
 --connections <uint32_t>
 The maximum allowed number of concurrent connections per event loop.

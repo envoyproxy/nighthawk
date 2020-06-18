@@ -51,6 +51,7 @@ public:
   MOCK_CONST_METHOD0(multiTargetUseHttps, bool());
   MOCK_CONST_METHOD0(labels, std::vector<std::string>());
   MOCK_CONST_METHOD0(simpleWarmup, bool());
+  MOCK_CONST_METHOD0(noDuration, bool());
 };
 
 } // namespace Client
