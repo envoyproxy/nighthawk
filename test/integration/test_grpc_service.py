@@ -2,8 +2,7 @@
 import pytest
 
 from test.integration.integration_test_fixtures import http_test_server_fixture
-from test.integration.utility import (isSanitizerRun, assertEqual, assertIn, assertGreaterEqual,
-                                      run_binary_with_args)
+from test.integration import utility
 
 
 def test_grpc_service_happy_flow(http_test_server_fixture):
@@ -15,8 +14,8 @@ def test_grpc_service_happy_flow(http_test_server_fixture):
       http_test_server_fixture.getTestServerRootUri()
   ])
   counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-  assertGreaterEqual(counters["benchmark.http_2xx"], 5)
-  assertEqual(counters["requestsource.internal.upstream_rq_200"], 1)
+  utility.assertGreaterEqual(counters["benchmark.http_2xx"], 5)
+  utility.assertEqual(counters["requestsource.internal.upstream_rq_200"], 1)
 
 
 def test_grpc_service_down(http_test_server_fixture):
@@ -27,10 +26,10 @@ def test_grpc_service_down(http_test_server_fixture):
   ],
                                                                expect_failure=True)
   counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-  assertEqual(counters["requestsource.upstream_rq_pending_failure_eject"], 1)
+  utility.assertEqual(counters["requestsource.upstream_rq_pending_failure_eject"], 1)
 
 
-@pytest.mark.skipif(isSanitizerRun(), reason="Slow in sanitizer runs")
+@pytest.mark.skipif(utility.isSanitizerRun(), reason="Slow in sanitizer runs")
 def test_grpc_service_stress(http_test_server_fixture):
   http_test_server_fixture.startNighthawkGrpcService("dummy-request-source")
   parsed_json, _ = http_test_server_fixture.runNighthawkClient([
@@ -41,27 +40,27 @@ def test_grpc_service_stress(http_test_server_fixture):
       http_test_server_fixture.getTestServerRootUri()
   ])
   counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-  assertGreaterEqual(counters["benchmark.http_2xx"], 5000)
-  assertEqual(counters["requestsource.internal.upstream_rq_200"], 4)
+  utility.assertGreaterEqual(counters["benchmark.http_2xx"], 5000)
+  utility.assertEqual(counters["requestsource.internal.upstream_rq_200"], 4)
 
 
 def _run_service_with_args(args):
-  return run_binary_with_args("nighthawk_service", args)
+  return utility.run_binary_with_args("nighthawk_service", args)
 
 
 def test_grpc_service_help():
   (exit_code, output) = _run_service_with_args("--help")
-  assertEqual(exit_code, 0)
-  assertIn("USAGE", output)
+  utility.assertEqual(exit_code, 0)
+  utility.assertIn("USAGE", output)
 
 
 def test_grpc_service_bad_arguments():
   (exit_code, output) = _run_service_with_args("--foo")
-  assertEqual(exit_code, 1)
-  assertIn("PARSE ERROR: Argument: --foo", output)
+  utility.assertEqual(exit_code, 1)
+  utility.assertIn("PARSE ERROR: Argument: --foo", output)
 
 
 def test_grpc_service_nonexisting_listener_address():
   (exit_code, output) = _run_service_with_args("--listen 1.1.1.1:1")
-  assertEqual(exit_code, 1)
-  assertIn("Failure: Could not start the grpc service", output)
+  utility.assertEqual(exit_code, 1)
+  utility.assertIn("Failure: Could not start the grpc service", output)
