@@ -20,6 +20,7 @@ class NighthawkGrpcService(object):
   Attributes:
   server_ip: IP address used by the gRPC service to listen. 
   server_port: An integer, indicates the port used by the gRPC service to listen. 0 means that the server is not listening.
+  log_lines: An array of log lines emitted by the service. Available after stop() is called, reset to None on start().
   """
 
   def __init__(self,
@@ -89,9 +90,9 @@ class NighthawkGrpcService(object):
     can be queried to get the listening port.
     """
 
+    self.log_lines = None
     self._server_thread.daemon = True
     self._server_thread.start()
-    self.log_lines = None
     return self._waitUntilServerListening()
 
   def stop(self):
