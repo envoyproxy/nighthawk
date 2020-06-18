@@ -107,7 +107,8 @@ public:
 
     dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
     // Expect inflight_response_count to be equal to min(amount, max_in_flight_allowed).
-    EXPECT_EQ(amount < max_in_flight_allowed ? amount : max_in_flight_allowed, inflight_response_count);
+    EXPECT_EQ(amount < max_in_flight_allowed ? amount : max_in_flight_allowed,
+              inflight_response_count);
 
     for (Envoy::Http::ResponseDecoder* decoder : decoders_) {
       Envoy::Http::ResponseHeaderMapPtr response_headers{
@@ -166,13 +167,13 @@ TEST_F(BenchmarkClientHttpTest, BasicTestH1200) {
   testBasicFunctionality(2, 3, 10);
   EXPECT_EQ(5, getCounter("http_2xx"));
 }
-  
+
 TEST_F(BenchmarkClientHttpTest, BasicTestH1300) {
   response_code_ = "300";
   testBasicFunctionality(0, 11, 10);
   EXPECT_EQ(10, getCounter("http_3xx"));
 }
-  
+
 TEST_F(BenchmarkClientHttpTest, BasicTestH1404) {
   response_code_ = "404";
   testBasicFunctionality(0, 1, 10);
