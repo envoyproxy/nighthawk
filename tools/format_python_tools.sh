@@ -16,3 +16,9 @@ python format_python_tools.py $1
 
 echo "Running Python3 flake8 check..."
 flake8 . --exclude=*/venv/* --count --select=E901,E999,F821,F822,F823 --show-source --statistics
+# We raise the bar higher for benchmarks/ overall, but especially when it comes to docstrings.
+# Check everything, except indentation and line length for now.
+# Also, we ignore unused imports and redefinitions of unused, as those seems to raise false flags in test definitions.
+flake8 ../benchmarks/ --docstring-convention pep257 --exclude=*/venv/* --ignore=E114,E111,E501,F401,F811 --count --show-source --statistics
+# Check imperative mood
+flake8 ../benchmarks/ --docstring-convention google --select=D401 --count --show-source --statistics
