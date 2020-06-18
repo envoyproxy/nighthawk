@@ -255,6 +255,9 @@ envoy_cc_test(
     ],
 )
 
+# We wrap the python integration tests here so we run the instrumented
+# code in coverage tests. To make that work, we need to declare the top-level
+# libraries as dependencies.
 envoy_cc_test(
     name = "python_test",
     srcs = ["python_test.cc"],

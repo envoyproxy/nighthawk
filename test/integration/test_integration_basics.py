@@ -654,17 +654,17 @@ def test_http_request_release_timing(http_test_server_fixture, qps_parameterizat
     assertCounterEqual(counters, "benchmark.http_2xx", (total_requests))
 
 
-def run_client_with_args(args):
+def _run_client_with_args(args):
   return run_binary_with_args("nighthawk_client", args)
 
 
 def test_client_help():
-  (exit_code, output) = run_client_with_args("--help")
-  assert (exit_code == 0)
-  assert ("USAGE" in output)
+  (exit_code, output) = _run_client_with_args("--help")
+  assertEqual(exit_code, 0)
+  assertIn("USAGE", output)
 
 
 def test_client_bad_arg():
-  (exit_code, output) = run_client_with_args("127.0.0.1 --foo")
-  assert (exit_code == 1)
-  assert ("PARSE ERROR: Argument: --foo" in output)
+  (exit_code, output) = _run_client_with_args("127.0.0.1 --foo")
+  assertEqual(exit_code, 1)
+  assertIn("PARSE ERROR: Argument: --foo", output)

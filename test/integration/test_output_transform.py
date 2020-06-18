@@ -1,25 +1,25 @@
 #!/usr/bin/env python3
 import pytest
 
-from test.integration.utility import *
+from test.integration.utility import (run_binary_with_args, assertEqual, assertIn)
 import os
 import subprocess
 
 
-def run_output_transform_with_args(args):
+def _run_output_transform_with_args(args):
   return run_binary_with_args("nighthawk_output_transform", args)
 
 
 def test_output_transform_help():
-  (exit_code, output) = run_output_transform_with_args("--help")
-  assert (exit_code == 0)
-  assert ("USAGE" in output)
+  (exit_code, output) = _run_output_transform_with_args("--help")
+  assertEqual(exit_code, 0)
+  assertIn("USAGE", output)
 
 
 def test_output_transform_bad_arguments():
-  (exit_code, output) = run_output_transform_with_args("--foo")
-  assert (exit_code == 1)
-  assert ("PARSE ERROR: Argument: --foo" in output)
+  (exit_code, output) = _run_output_transform_with_args("--foo")
+  assertEqual(exit_code, 1)
+  assertIn("PARSE ERROR: Argument: --foo", output)
 
 
 def test_output_transform_101():
@@ -39,5 +39,5 @@ def test_output_transform_101():
       [os.path.join(test_rundir, "nighthawk_output_transform"), "--output-format", "human"],
       stdout=subprocess.PIPE,
       input=output)
-  assert (process.returncode == 0)
-  assert ("Nighthawk - A layer 7 protocol benchmarking tool" in process.stdout.decode("utf-8"))
+  assertEqual(process.returncode, 0)
+  assertIn("Nighthawk - A layer 7 protocol benchmarking tool", process.stdout.decode("utf-8"))
