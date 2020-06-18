@@ -52,15 +52,15 @@ public:
     }
     if (do_cancel) {
       auto proto = collector.toProto();
-      int cancel_requests = 0;
+      int graceful_stop_requested = 0;
       for (const auto& result : proto.results()) {
         for (const auto& counter : result.counters()) {
-          if (counter.name() == "cancel_requests") {
-            cancel_requests++;
+          if (counter.name() == "graceful_stop_requested") {
+            graceful_stop_requested++;
           }
         }
       }
-      EXPECT_EQ(3, cancel_requests); // global results + two workers
+      EXPECT_EQ(3, graceful_stop_requested); // global results + two workers
     }
     process->shutdown();
   }

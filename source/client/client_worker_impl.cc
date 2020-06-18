@@ -91,7 +91,8 @@ void ClientWorkerImpl::requestExecutionCancellation() {
   // We just bump a counter, which is watched by a static termination predicate.
   // A useful side effect is that this counter will propagate to the output, which leaves
   // a note about that execution was subject to cancellation.
-  dispatcher_->post([this]() { worker_number_scope_->counterFromString("cancel_requests").inc(); });
+  dispatcher_->post(
+      [this]() { worker_number_scope_->counterFromString("graceful_stop_requested").inc(); });
 }
 
 StatisticPtrMap ClientWorkerImpl::statistics() const {

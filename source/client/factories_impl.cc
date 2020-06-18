@@ -177,7 +177,8 @@ TerminationPredicateFactoryImpl::create(Envoy::TimeSource& time_source, Envoy::S
   // We'll always link a predicate which checks for requests to cancel.
   TerminationPredicatePtr root_predicate =
       std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
-          scope.counterFromString("cancel_requests"), 0, TerminationPredicate::Status::TERMINATE);
+          scope.counterFromString("graceful_stop_requested"), 0,
+          TerminationPredicate::Status::TERMINATE);
 
   TerminationPredicate* current_predicate = root_predicate.get();
   if (!options_.noDuration()) {

@@ -682,4 +682,4 @@ def test_cancellation(http_test_server_fixture):
   assert (client_process.returncode == 0)
   parsed_json = json.loads(output)
   counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-  assertCounterEqual(counters, "cancel_requests", 2)
+  assertCounterEqual(counters, "graceful_stop_requested", 2)
