@@ -672,11 +672,11 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
     }
   }
 
-  // Only set the tls context if it looks non-empty, to avoid a warning being logged about field
-  // deprecation. Ideally this would follow the way transport_socket uses absl::optional below.
+  // Only set the tls context if needed, to avoid a warning being logged about field deprecation.
+  // Ideally this would follow the way transport_socket uses absl::optional below.
   // But as this field is about to get eliminated this minimal effort shortcut may be more suitable.
-  if (!Envoy::MessageUtil()(tls_context_,
-                            envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext())) {
+  if (!Envoy::Protobuf::util::MessageDifferencer::Equivalent(
+          tls_context_, envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext())) {
     *(command_line_options->mutable_tls_context()) = tls_context_;
   }
   if (transport_socket_.has_value()) {
