@@ -24,10 +24,17 @@
 namespace Nighthawk {
 namespace Client {
 
+/**
+ * Implements Nighthawk's gRPC service. This service allows load generation to be
+ * controlled by gRPC clients.
+ */
 class ServiceImpl final : public nighthawk::client::NighthawkService::Service,
                           public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 
 public:
+  /**
+   * Constructs a new ServiceImpl instance
+   */
   ServiceImpl() : process_wide_(std::make_shared<Envoy::ProcessWide>()) {
     logging_context_ = std::make_unique<Envoy::Logger::Context>(
         spdlog::level::from_str("info"), "[%T.%f][%t][%L] %v", log_lock_, false);
