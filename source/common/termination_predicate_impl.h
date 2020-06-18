@@ -28,6 +28,14 @@ private:
 };
 
 /**
+ * Predicate which always returns TerminationPredicate::Status::PROCEED.
+ */
+class NullTerminationPredicateImpl : public TerminationPredicateBaseImpl {
+public:
+  TerminationPredicate::Status evaluate() override;
+};
+
+/**
  * Predicate which indicates termination iff the passed in duration has expired.
  * time tracking starts at the first call to evaluate().
  */

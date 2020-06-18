@@ -190,9 +190,10 @@ uint32_t ProcessImpl::determineConcurrency() const {
   if (autoscale) {
     ENVOY_LOG(info, "Detected {} (v)CPUs with affinity..", cpu_cores_with_affinity);
   }
-
-  ENVOY_LOG(info, "Starting {} threads / event loops. Test duration: {} seconds.", concurrency,
-            options_.duration().count());
+  std::string duration_as_string =
+      options_.noDuration() ? "No time limit"
+                            : fmt::format("Time limit: {} seconds", options_.duration().count());
+  ENVOY_LOG(info, "Starting {} threads / event loops. {}.", concurrency, duration_as_string);
   ENVOY_LOG(info, "Global targets: {} connections and {} calls per second.",
             options_.connections() * concurrency, options_.requestsPerSecond() * concurrency);
 
