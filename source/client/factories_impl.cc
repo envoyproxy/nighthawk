@@ -174,12 +174,13 @@ TerminationPredicateFactoryImpl::TerminationPredicateFactoryImpl(const Options& 
 TerminationPredicatePtr
 TerminationPredicateFactoryImpl::create(Envoy::TimeSource& time_source, Envoy::Stats::Scope& scope,
                                         const Envoy::MonotonicTime scheduled_starting_time) const {
-  TerminationPredicatePtr root_predicate = std::make_unique<NullTerminationPredicateImpl>();
-  if (options_.duration() > 0s) {
+  TerminationPredicatePtr root_predicate;
+  if (options_.noDuration()) {
+    root_predicate = std::make_unique<NullTerminationPredicateImpl>();
+  } else {
     root_predicate = std::make_unique<DurationTerminationPredicateImpl>(
         time_source, options_.duration(), scheduled_starting_time);
   }
-
   TerminationPredicate* current_predicate = root_predicate.get();
   current_predicate = linkConfiguredPredicates(*current_predicate, options_.failurePredicates(),
                                                TerminationPredicate::Status::FAIL, scope);

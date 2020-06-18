@@ -67,6 +67,8 @@ public:
   virtual bool multiTargetUseHttps() const PURE;
   virtual std::vector<std::string> labels() const PURE;
   virtual bool simpleWarmup() const PURE;
+  virtual bool noDuration() const PURE;
+
   /**
    * Converts an Options instance to an equivalent CommandLineOptions instance in terms of option
    * values.

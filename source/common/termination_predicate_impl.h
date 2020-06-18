@@ -28,7 +28,7 @@ private:
 };
 
 /**
- * Predicate which always returns the passed in termination status.
+ * Predicate which always returns TerminationPredicate::Status::PROCEED.
  */
 class NullTerminationPredicateImpl : public TerminationPredicateBaseImpl {
 public:

@@ -41,6 +41,7 @@ COVERAGE_VALUE=${COVERAGE_VALUE%?}
 
 if [ "$VALIDATE_COVERAGE" == "true" ]
 then
+  # TODO(#370): restore the coverage threshold.
   COVERAGE_THRESHOLD=98.1
   COVERAGE_FAILED=$(echo "${COVERAGE_VALUE}<${COVERAGE_THRESHOLD}" | bc)
   if test ${COVERAGE_FAILED} -eq 1; then

@@ -59,6 +59,31 @@ TEST_F(OptionsImplTest, BogusRequestSource) {
                           MalformedArgvException, "Invalid replay source URI");
 }
 
+TEST_F(OptionsImplTest, NoDurationAndDurationAreMutuallyExclusive) {
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                              "{} --duration 5 --no-duration http://foo", client_name_)),
+                          MalformedArgvException, "mutually exclusive");
+}
+
+TEST_F(OptionsImplTest, DurationAndNoDurationSanity) {
+  std::unique_ptr<OptionsImpl> options =
+      TestUtility::createOptionsImpl(fmt::format("{} http://foo", client_name_));
+  EXPECT_FALSE(options->noDuration());
+  EXPECT_EQ(5s, options->duration());
+
+  CommandLineOptionsPtr cmd = options->toCommandLineOptions();
+  EXPECT_FALSE(cmd->has_no_duration());
+  ASSERT_TRUE(cmd->has_duration());
+  EXPECT_EQ(5, cmd->duration().seconds());
+
+  options =
+      TestUtility::createOptionsImpl(fmt::format("{} --no-duration http://foo", client_name_));
+  EXPECT_TRUE(options->noDuration());
+  cmd = options->toCommandLineOptions();
+  ASSERT_TRUE(cmd->has_no_duration());
+  EXPECT_TRUE(cmd->no_duration().value());
+}
+
 // This test should cover every option we offer, except some mutually exclusive ones that
 // have separate tests.
 TEST_F(OptionsImplTest, AlmostAll) {
