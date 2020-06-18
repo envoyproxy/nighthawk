@@ -40,7 +40,6 @@ public:
     if (do_cancel) {
       cancel_thread = std::thread([&process] {
         sleep(5);
-        std::cerr << "request cancel" << std::endl;
         process->requestExecutionCancellation();
       });
     }
