@@ -274,7 +274,6 @@ TEST_F(BenchmarkClientHttpTest, BadContentLength) {
     return std::make_unique<RequestImpl>(header);
   };
 
-  // Note we we explicitly do not expect encodeData to be called.
   EXPECT_CALL(stream_encoder_, encodeData(_, _)).Times(0);
   testBasicFunctionality(1, 1, 1);
   EXPECT_EQ(1, getCounter("http_2xx"));
