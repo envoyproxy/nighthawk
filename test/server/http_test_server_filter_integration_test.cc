@@ -59,7 +59,7 @@ public:
     Envoy::Http::RequestEncoder& encoder = client.newStream(*response);
     encoder.getStream().addCallbacks(*response);
 
-    Envoy::Http::RequestHeaderMapPtr headers = Envoy::Http::RequestHeaderMapImpl::create();
+    auto headers = Envoy::Http::RequestHeaderMapImpl::create();
     headers->setMethod(method);
     headers->setPath(url);
     headers->setHost(host);
