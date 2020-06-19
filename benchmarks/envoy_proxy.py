@@ -23,6 +23,9 @@ class EnvoyProxyServer(NighthawkTestServer):
 
   Attributes:
     See base class
+
+  Example:
+    See InjectHttpProxyIntegrationTestBase below for usage.
   """
 
   def __init__(self, config_template_path, server_ip, ip_version, parameters=dict(), tag=""):
@@ -117,7 +120,6 @@ def inject_envoy_http_proxy_fixture(request, server_config, proxy_config):
     proxy_config: path to the proxy configuration template.
 
   Yields: a successfully set up InjectHttpProxyIntegrationTestBase instance.
-
   """
   fixture = InjectHttpProxyIntegrationTestBase(request.param, server_config, proxy_config)
   fixture.setUp()
