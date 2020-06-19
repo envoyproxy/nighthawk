@@ -88,13 +88,16 @@ class TestServerBase(object):
   def serverThreadRunner(self):
     args = []
     if self.docker_image != "":
+      # TODO(XXX): As of https://github.com/envoyproxy/envoy/commit/e8a2d1e24dc9a0da5273442204ec3cdfad1e7ca8
+      # we need to have ENVOY_UID=0 in the environment, or this will break on docker runs, as Envoy
+      # will not be able to read the configuration files we stub here in docker runs.
       args = [
-          "docker", "run", "--network=host", "--rm", "-v", "{t}:{t}".format(t=self.tmpdir),
-          self.docker_image
+          "docker", "run", "--network=host", "--rm", "-v", "{t}:{t}".format(t=self.tmpdir), "-e",
+          "ENVOY_UID=0", self.docker_image
       ]
     args = args + [
         self.server_binary_path, self.server_binary_config_path_arg, self.parameterized_config_path,
-        "-l", "warning", "--base-id", self.instance_id, "--admin-address-path",
+        "-l", "debug", "--base-id", self.instance_id, "--admin-address-path",
         self.admin_address_path, "--concurrency", "1"
     ]
     logging.info("Test server popen() args: %s" % str.join(" ", args))

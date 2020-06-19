@@ -16,10 +16,10 @@ from test.integration.nighthawk_test_server import NighthawkTestServer
 class EnvoyProxyServer(NighthawkTestServer):
   """Envoy proxy server abstraction.
 
-  Note that it derives from NighthawkTestServer, as that
-  is implemented as a customized Envoy, which is convenient here: the CLI and admin interface
-  mechanics that we rely on are the same. So all we do here, is specialize so we can override
-  the docker image and binary name.
+  Note that it derives from NighthawkTestServer, as that is implemented as a customized
+  Envoy, which is convenient here: the CLI and admin interface mechanics that we rely on
+  are the same. So all we do here, is specialize so we can override the docker image and
+  binary name.
 
   Attributes:
     See base class
@@ -29,11 +29,11 @@ class EnvoyProxyServer(NighthawkTestServer):
     """Initialize an EnvoyProxyServer instance.
 
     Arguments:
-      config_template_path: Path to the configuration template.
-      server_ip: IP address of that the server should use
-      ip_version: IP version that the server should use when listening
-      parameters: Optional dictionary. Use (optional)
-      tag: (optional)
+      config_template_path: Configuration template for the proxy.
+      server_ip: PIP address for the proxy to use.
+      ip_version: IP version that the proxy should use when listening.
+      parameters: Dictionary. Supply this to provide template parameter replacement values (optional).
+      tag: String. Supply this to get recognizeable output locations (optional).
     """
     # If no explicit envoy path is passed, we'll use nighthawk_test_server.
     super(EnvoyProxyServer, self).__init__(
@@ -48,7 +48,7 @@ class EnvoyProxyServer(NighthawkTestServer):
 
 @pytest.fixture()
 def proxy_config():
-  """Yield a single Envoy proxy configuration."""
+  """Yield the stock Envoy proxy configuration."""
   yield "nighthawk/benchmarks/configurations/envoy_proxy.yaml"
 
 
@@ -98,10 +98,10 @@ class InjectHttpProxyIntegrationTestBase(HttpIntegrationTestBase):
 
   def getTestServerRootUri(self):
     """Get the root uri, pointing to the proxy address and port."""
-    r = super(InjectHttpProxyIntegrationTestBase, self).getTestServerRootUri()
-    # TODO(oschaaf): fix, kind of a hack.
-    r = r.replace(":%s" % self.test_server.server_port, ":%s" % self.proxy_server.server_port)
-    return r
+    root_uri = super(InjectHttpProxyIntegrationTestBase, self).getTestServerRootUri()
+    root_uri = root_uri.replace(":%s" % self.test_server.server_port,
+                                ":%s" % self.proxy_server.server_port)
+    return root_uri
 
 
 @pytest.fixture(params=determineIpVersionsFromEnvironment())
@@ -110,8 +110,16 @@ def inject_envoy_http_proxy_fixture(request, server_config, proxy_config):
 
   NOTE: Depends on the proxy_config fixture, which must be explicitly imported
   into the consuming module when using this fixture.
+
+  Arguments:
+    request: supplies the ip version.
+    server_config: path to the server configuration template.
+    proxy_config: path to the proxy configuration template.
+
+  Yields: a successfully set up InjectHttpProxyIntegrationTestBase instance.
+
   """
-  f = InjectHttpProxyIntegrationTestBase(request.param, server_config, proxy_config)
-  f.setUp()
-  yield f
-  f.tearDown()
+  fixture = InjectHttpProxyIntegrationTestBase(request.param, server_config, proxy_config)
+  fixture.setUp()
+  yield fixture
+  fixture.tearDown()
