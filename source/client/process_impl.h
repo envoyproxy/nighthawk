@@ -46,7 +46,18 @@ class ClusterManagerFactory;
  */
 class ProcessImpl : public Process, public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
-  ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system);
+  /**
+   * Instantiates a ProcessImpl
+   * @param options provides the options configuration to be used.
+   * @param time_system provides the Envoy::Event::TimeSystem implementation that will be used.
+   * @param process_wide optional parameter which can be used to pass a pre-setup reference to
+   * an active Envoy::ProcessWide instance. ProcessImpl will add a reference to this when passed,
+   * and hold on that that throughout its lifetime.
+   * If this parameter is not supplied, ProcessImpl will contruct its own Envoy::ProcessWide
+   * instance.
+   */
+  ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
+              const std::shared_ptr<Envoy::ProcessWide>& process_wide = nullptr);
   ~ProcessImpl() override;
 
   /**
@@ -98,7 +109,7 @@ private:
   bool runInternal(OutputCollector& collector, const std::vector<UriPtr>& uris,
                    const UriPtr& request_source_uri, const UriPtr& tracing_uri);
 
-  Envoy::ProcessWide process_wide_;
+  std::shared_ptr<Envoy::ProcessWide> process_wide_;
   Envoy::PlatformImpl platform_impl_;
   Envoy::Event::TimeSystem& time_system_;
   Envoy::Stats::SymbolTableImpl symbol_table_;

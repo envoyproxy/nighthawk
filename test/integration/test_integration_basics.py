@@ -683,3 +683,19 @@ def test_cancellation(http_test_server_fixture):
   parsed_json = json.loads(output)
   counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   assertCounterEqual(counters, "graceful_stop_requested", 2)
+
+
+def _run_client_with_args(args):
+  return run_binary_with_args("nighthawk_client", args)
+
+
+def test_client_help():
+  (exit_code, output) = _run_client_with_args("--help")
+  assertEqual(exit_code, 0)
+  assertIn("USAGE", output)
+
+
+def test_client_bad_arg():
+  (exit_code, output) = _run_client_with_args("127.0.0.1 --foo")
+  assertEqual(exit_code, 1)
+  assertIn("PARSE ERROR: Argument: --foo", output)
