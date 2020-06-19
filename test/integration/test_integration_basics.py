@@ -652,3 +652,19 @@ def test_http_request_release_timing(http_test_server_fixture, qps_parameterizat
         int(global_histograms["benchmark_http_client.queue_to_connect"]["count"]), total_requests)
 
     assertCounterEqual(counters, "benchmark.http_2xx", (total_requests))
+
+
+def _run_client_with_args(args):
+  return run_binary_with_args("nighthawk_client", args)
+
+
+def test_client_help():
+  (exit_code, output) = _run_client_with_args("--help")
+  assertEqual(exit_code, 0)
+  assertIn("USAGE", output)
+
+
+def test_client_bad_arg():
+  (exit_code, output) = _run_client_with_args("127.0.0.1 --foo")
+  assertEqual(exit_code, 1)
+  assertIn("PARSE ERROR: Argument: --foo", output)
