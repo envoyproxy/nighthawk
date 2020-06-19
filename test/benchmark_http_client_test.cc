@@ -196,10 +196,13 @@ TEST_F(BenchmarkClientHttpTest, EnableLatencyMeasurement) {
   testBasicFunctionality(10, 1, 10);
   EXPECT_EQ(0, client_->statistics()["benchmark_http_client.queue_to_connect"]->count());
   EXPECT_EQ(0, client_->statistics()["benchmark_http_client.request_to_response"]->count());
+  EXPECT_EQ(10, getCounter("total_req_sent"));
   client_->setShouldMeasureLatencies(true);
+  EXPECT_CALL(mock_store_, deliverHistogramToSinks(_, _)).Times(10);
   testBasicFunctionality(10, 1, 10);
   EXPECT_EQ(10, client_->statistics()["benchmark_http_client.queue_to_connect"]->count());
   EXPECT_EQ(10, client_->statistics()["benchmark_http_client.request_to_response"]->count());
+  EXPECT_EQ(20, getCounter("total_req_sent"));
 }
   
 TEST_F(BenchmarkClientHttpTest, ExportSuccessLatency) {
