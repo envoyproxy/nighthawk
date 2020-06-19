@@ -266,6 +266,7 @@ envoy_cc_test(
     deps = [
         "//source/client:nighthawk_client_lib",
         "//source/client:nighthawk_service_lib",
+        "//source/client:output_transform_main_lib",
         "//source/common:nighthawk_common_lib",
         "//source/server:http_test_server_filter_lib",
         "//test/test_common:environment_lib",
