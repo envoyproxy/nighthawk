@@ -693,7 +693,13 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
       request_options->mutable_request_body_size()->set_value(requestBodySize());
     }
   }
-  *(command_line_options->mutable_tls_context()) = tls_context_;
+
+  // Only set the tls context if needed, to avoid a warning being logged about field deprecation.
+  // Ideally this would follow the way transport_socket uses absl::optional below.
+  // But as this field is about to get eliminated this minimal effort shortcut may be more suitable.
+  if (tls_context_.ByteSizeLong() > 0) {
+    *(command_line_options->mutable_tls_context()) = tls_context_;
+  }
   if (transport_socket_.has_value()) {
     *(command_line_options->mutable_transport_socket()) = transport_socket_.value();
   }

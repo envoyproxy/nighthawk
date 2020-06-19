@@ -92,8 +92,11 @@ private:
   bool prefetch_connections_{};
 };
 
-ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system)
-    : time_system_(time_system), stats_allocator_(symbol_table_), store_root_(stats_allocator_),
+ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
+                         const std::shared_ptr<Envoy::ProcessWide>& process_wide)
+    : process_wide_(process_wide == nullptr ? std::make_shared<Envoy::ProcessWide>()
+                                            : process_wide),
+      time_system_(time_system), stats_allocator_(symbol_table_), store_root_(stats_allocator_),
       api_(std::make_unique<Envoy::Api::Impl>(platform_impl_.threadFactory(), store_root_,
                                               time_system_, platform_impl_.fileSystem())),
       dispatcher_(api_->allocateDispatcher("main_thread")), benchmark_client_factory_(options),
