@@ -115,7 +115,7 @@ void addHeader(envoy::api::v2::core::HeaderMap* map, absl::string_view key,
 } // namespace
 
 RequestSourcePtr RequestSourceServiceImpl::createStaticEmptyRequestSource(const uint32_t amount) {
-  Envoy::Http::RequestHeaderMapPtr header = std::make_unique<Envoy::Http::RequestHeaderMapImpl>();
+  Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
   header->addCopy(Envoy::Http::LowerCaseString("x-from-remote-request-source"), "1");
   return std::make_unique<StaticRequestSourceImpl>(std::move(header), amount);
 }

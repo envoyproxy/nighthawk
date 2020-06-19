@@ -91,7 +91,7 @@ TEST_F(StreamDecoderTest, TrailerTest) {
   Envoy::Http::ResponseHeaderMapPtr headers{
       new Envoy::Http::TestResponseHeaderMapImpl{{":status", "200"}}};
   decoder->decodeHeaders(std::move(headers), false);
-  auto trailers = std::make_unique<Envoy::Http::ResponseTrailerMapImpl>();
+  Envoy::Http::ResponseTrailerMapPtr trailers = Envoy::Http::ResponseTrailerMapImpl::create();
   decoder->decodeTrailers(std::move(trailers));
   EXPECT_TRUE(is_complete);
   EXPECT_EQ(1, stream_decoder_completion_callbacks_);
