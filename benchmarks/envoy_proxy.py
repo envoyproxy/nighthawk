@@ -68,7 +68,7 @@ class InjectHttpProxyIntegrationTestBase(HttpIntegrationTestBase):
       proxy_config: Path to the proxy configuration.
     """
     super(InjectHttpProxyIntegrationTestBase, self).__init__(ip_version, server_config)
-    self.proxy_config = proxy_config
+    self._proxy_config = proxy_config
 
   def setUp(self):
     """Set up the injected Envoy proxy as well as the test server.
@@ -81,7 +81,7 @@ class InjectHttpProxyIntegrationTestBase(HttpIntegrationTestBase):
     self.parameters["proxy_ip"] = self.test_server.server_ip
     self.parameters["server_port"] = self.test_server.server_port
     proxy_server = EnvoyProxyServer(
-        self.proxy_config,
+        self._proxy_config,
         self.server_ip,
         self.ip_version,
         parameters=self.parameters,
