@@ -123,7 +123,8 @@ public:
   void initialize() override {
     config_helper_.addFilter(R"EOF(
 name: test-server
-config:
+typed_config:
+  "@type": type.googleapis.com/nighthawk.server.ResponseOptions
   response_body_size: 10
   response_headers:
   - { header: { key: "x-supplied-by", value: "nighthawk-test-server"} }
