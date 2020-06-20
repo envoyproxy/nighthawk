@@ -39,7 +39,6 @@ public:
 
 class SequencerTestBase : public testing::Test {
 public:
-  // NOLINTNEXTLINE(modernize-avoid-bind)
   SequencerTestBase()
       : dispatcher_(std::make_unique<Envoy::Event::MockDispatcher>()), frequency_(10_Hz),
         interval_(std::chrono::duration_cast<std::chrono::milliseconds>(frequency_.interval())),
@@ -161,7 +160,6 @@ private:
 
 // Basic rate limiter interaction test.
 TEST_F(SequencerTestWithTimerEmulation, RateLimiterInteraction) {
-  // NOLINTNEXTLINE(modernize-avoid-bind)
   SequencerTarget callback =
       std::bind(&MockSequencerTarget::callback, target(), std::placeholders::_1);
   SequencerImpl sequencer(platform_util_, *dispatcher_, time_system_, std::move(rate_limiter_),
@@ -183,7 +181,6 @@ TEST_F(SequencerTestWithTimerEmulation, RateLimiterInteraction) {
 
 // Saturated rate limiter interaction test.
 TEST_F(SequencerTestWithTimerEmulation, RateLimiterSaturatedTargetInteraction) {
-  // NOLINTNEXTLINE(modernize-avoid-bind)
   SequencerTarget callback =
       std::bind(&MockSequencerTarget::callback, target(), std::placeholders::_1);
   SequencerImpl sequencer(platform_util_, *dispatcher_, time_system_, std::move(rate_limiter_),
@@ -263,7 +260,6 @@ TEST_F(SequencerIntegrationTest, IdleStrategySleep) {
 // Test an always saturated sequencer target. A concrete example would be a http benchmark client
 // not being able to start any requests, for example due to misconfiguration or system conditions.
 TEST_F(SequencerIntegrationTest, AlwaysSaturatedTargetTest) {
-  // NOLINTNEXTLINE(modernize-avoid-bind)
   SequencerTarget callback =
       std::bind(&SequencerIntegrationTest::saturated_test, this, std::placeholders::_1);
   SequencerImpl sequencer(platform_util_, *dispatcher_, time_system_, std::move(rate_limiter_),
@@ -282,7 +278,6 @@ TEST_F(SequencerIntegrationTest, AlwaysSaturatedTargetTest) {
 // stalled benchmark client. Implicitly we test that we get past sequencer.waitForCompletion()
 // timely, and don't hang.
 TEST_F(SequencerIntegrationTest, CallbacksDoNotInfluenceTestDuration) {
-  // NOLINTNEXTLINE(modernize-avoid-bind)
   SequencerTarget callback =
       std::bind(&SequencerIntegrationTest::timeout_test, this, std::placeholders::_1);
   SequencerImpl sequencer(platform_util_, *dispatcher_, time_system_, std::move(rate_limiter_),
