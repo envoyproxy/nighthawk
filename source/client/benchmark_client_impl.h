@@ -41,7 +41,7 @@ using namespace Envoy; // We need this because of macro expectations.
   COUNTER(pool_overflow)                                                                           \
   COUNTER(pool_connection_failure)                                                                 \
   COUNTER(total_req_sent)                                                                          \
-  HISTOGRAM(latency_on_success_req, Microseconds)                                               \
+  HISTOGRAM(latency_on_success_req, Microseconds)                                                  \
   HISTOGRAM(latency_on_error_req, Microseconds)
 
 struct BenchmarkClientStats {
