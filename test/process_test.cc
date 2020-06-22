@@ -34,33 +34,43 @@ public:
         options_(TestUtility::createOptionsImpl(
             fmt::format("foo --duration 1 -v error --rps 10 https://{}/", loopback_address_))){};
 
-  void runProcess(RunExpectation expectation, bool do_cancel = false) {
+  void runProcess(RunExpectation expectation, bool do_cancel = false,
+                  bool terminate_right_away = false) {
     ProcessPtr process = std::make_unique<ProcessImpl>(*options_, time_system_);
     OutputCollectorImpl collector(time_system_, *options_);
     std::thread cancel_thread;
     if (do_cancel) {
-      cancel_thread = std::thread([&process] {
-        sleep(5);
+      cancel_thread = std::thread([&process, terminate_right_away] {
+        if (!terminate_right_away) {
+          sleep(5);
+        }
         process->requestExecutionCancellation();
       });
+      if (terminate_right_away) {
+        cancel_thread.join();
+      }
     }
     const auto result =
         process->run(collector) ? RunExpectation::EXPECT_SUCCESS : RunExpectation::EXPECT_FAILURE;
     EXPECT_EQ(result, expectation);
-    if (cancel_thread.joinable()) {
-      cancel_thread.join();
-    }
     if (do_cancel) {
+      if (cancel_thread.joinable()) {
+        cancel_thread.join();
+      }
       auto proto = collector.toProto();
-      int graceful_stop_requested = 0;
-      for (const auto& result : proto.results()) {
-        for (const auto& counter : result.counters()) {
-          if (counter.name() == "graceful_stop_requested") {
-            graceful_stop_requested++;
+      if (terminate_right_away) {
+        EXPECT_EQ(0, proto.results().size());
+      } else {
+        int graceful_stop_requested = 0;
+        for (const auto& result : proto.results()) {
+          for (const auto& counter : result.counters()) {
+            if (counter.name() == "graceful_stop_requested") {
+              graceful_stop_requested++;
+            }
           }
         }
+        EXPECT_EQ(3, graceful_stop_requested); // global results + two workers
       }
-      EXPECT_EQ(3, graceful_stop_requested); // global results + two workers
     }
     process->shutdown();
   }
@@ -88,7 +98,7 @@ TEST_P(ProcessTest, BadTracerSpec) {
   runProcess(RunExpectation::EXPECT_FAILURE);
 }
 
-TEST_P(ProcessTest, CancelExecution) {
+TEST_P(ProcessTest, CancelDuringLoadTest) {
   // The failure predicate below is there to wipe out any stock ones. We want this to run for a long
   // time, even if the upstream fails (there is no live upstream in this test, we send traffic into
   // the void), so we can check cancellation works.
@@ -96,6 +106,13 @@ TEST_P(ProcessTest, CancelExecution) {
       fmt::format("foo --duration 300 --failure-predicate foo:0 --concurrency 2 https://{}/",
                   loopback_address_));
   runProcess(RunExpectation::EXPECT_SUCCESS, true);
+}
+
+TEST_P(ProcessTest, CancelExecutionBeforeBeginLoadTest) {
+  options_ = TestUtility::createOptionsImpl(
+      fmt::format("foo --duration 300 --failure-predicate foo:0 --concurrency 2 https://{}/",
+                  loopback_address_));
+  runProcess(RunExpectation::EXPECT_SUCCESS, true, true);
 }
 
 } // namespace Client
