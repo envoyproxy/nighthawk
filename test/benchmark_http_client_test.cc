@@ -3,10 +3,10 @@
 #include "external/envoy/source/common/http/header_map_impl.h"
 #include "external/envoy/source/common/network/utility.h"
 #include "external/envoy/source/common/runtime/runtime_impl.h"
-#include "external/envoy/source/common/stats/isolated_store_impl.h"
 #include "external/envoy/source/exe/process_wide.h"
 #include "external/envoy/test/mocks/common.h"
 #include "external/envoy/test/mocks/runtime/mocks.h"
+#include "external/envoy/test/mocks/stats/mocks.h"
 #include "external/envoy/test/mocks/stream_info/mocks.h"
 #include "external/envoy/test/mocks/thread_local/mocks.h"
 #include "external/envoy/test/mocks/upstream/mocks.h"
@@ -124,7 +124,7 @@ public:
 
   void setupBenchmarkClient() {
     client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
-        *api_, *dispatcher_, store_, std::make_unique<StreamingStatistic>(),
+        *api_, *dispatcher_, mock_store_, std::make_unique<StreamingStatistic>(),
         std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
         std::make_unique<StreamingStatistic>(), false, cluster_manager_, http_tracer_, "benchmark",
         request_generator_, true);
@@ -143,7 +143,8 @@ public:
   }
 
   Envoy::Event::TestRealTimeSystem time_system_;
-  Envoy::Stats::IsolatedStoreImpl store_;
+  // deliverHistogramToSinks() is not implemented in IsolatedStoreImpl so test with a mock store.
+  Envoy::Stats::MockIsolatedStatsStore mock_store_;
   Envoy::Api::ApiPtr api_;
   Envoy::Event::DispatcherPtr dispatcher_;
   Envoy::Runtime::RandomGeneratorImpl generator_;
@@ -166,45 +167,76 @@ TEST_F(BenchmarkClientHttpTest, BasicTestH1200) {
   response_code_ = "200";
   testBasicFunctionality(2, 3, 10);
   EXPECT_EQ(5, getCounter("http_2xx"));
+  EXPECT_EQ(5, getCounter("total_req_sent"));
 }
 
 TEST_F(BenchmarkClientHttpTest, BasicTestH1300) {
   response_code_ = "300";
   testBasicFunctionality(0, 11, 10);
   EXPECT_EQ(10, getCounter("http_3xx"));
+  EXPECT_EQ(10, getCounter("total_req_sent"));
 }
 
 TEST_F(BenchmarkClientHttpTest, BasicTestH1404) {
   response_code_ = "404";
   testBasicFunctionality(0, 1, 10);
   EXPECT_EQ(1, getCounter("http_4xx"));
+  EXPECT_EQ(1, getCounter("total_req_sent"));
 }
 
 TEST_F(BenchmarkClientHttpTest, WeirdStatus) {
   response_code_ = "601";
   testBasicFunctionality(0, 1, 10);
   EXPECT_EQ(1, getCounter("http_xxx"));
+  EXPECT_EQ(1, getCounter("total_req_sent"));
 }
 
 TEST_F(BenchmarkClientHttpTest, EnableLatencyMeasurement) {
   setupBenchmarkClient();
   EXPECT_EQ(false, client_->shouldMeasureLatencies());
+  EXPECT_CALL(mock_store_, deliverHistogramToSinks(_, _)).Times(0);
   testBasicFunctionality(10, 1, 10);
   EXPECT_EQ(0, client_->statistics()["benchmark_http_client.queue_to_connect"]->count());
   EXPECT_EQ(0, client_->statistics()["benchmark_http_client.request_to_response"]->count());
+  EXPECT_EQ(10, getCounter("total_req_sent"));
   client_->setShouldMeasureLatencies(true);
+  EXPECT_CALL(mock_store_, deliverHistogramToSinks(_, _)).Times(10);
   testBasicFunctionality(10, 1, 10);
   EXPECT_EQ(10, client_->statistics()["benchmark_http_client.queue_to_connect"]->count());
   EXPECT_EQ(10, client_->statistics()["benchmark_http_client.request_to_response"]->count());
+  EXPECT_EQ(20, getCounter("total_req_sent"));
+}
+
+TEST_F(BenchmarkClientHttpTest, ExportSuccessLatency) {
+  setupBenchmarkClient();
+  uint64_t latency = 10;
+  EXPECT_CALL(mock_store_, deliverHistogramToSinks(Property(&Envoy::Stats::Metric::name,
+                                                            "benchmark.latency_on_success_req"),
+                                                   latency))
+      .Times(1);
+  EXPECT_CALL(mock_store_,
+              deliverHistogramToSinks(
+                  Property(&Envoy::Stats::Metric::name, "benchmark.latency_on_error_req"), latency))
+      .Times(0);
+  client_->exportLatency(/*response_code=*/200, /*latency_us=*/latency);
+}
+
+TEST_F(BenchmarkClientHttpTest, ExportErrorLatency) {
+  setupBenchmarkClient();
+  uint64_t latency = 10;
+  EXPECT_CALL(mock_store_, deliverHistogramToSinks(Property(&Envoy::Stats::Metric::name,
+                                                            "benchmark.latency_on_success_req"),
+                                                   latency))
+      .Times(0);
+  EXPECT_CALL(mock_store_,
+              deliverHistogramToSinks(
+                  Property(&Envoy::Stats::Metric::name, "benchmark.latency_on_error_req"), latency))
+      .Times(1);
+  client_->exportLatency(/*response_code=*/500, /*latency_us=*/latency);
 }
 
 TEST_F(BenchmarkClientHttpTest, StatusTrackingInOnComplete) {
-  auto store = std::make_unique<Envoy::Stats::IsolatedStoreImpl>();
-  client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
-      *api_, *dispatcher_, *store, std::make_unique<StreamingStatistic>(),
-      std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
-      std::make_unique<StreamingStatistic>(), false, cluster_manager_, http_tracer_, "foo",
-      request_generator_, true);
+  setupBenchmarkClient();
   Envoy::Http::ResponseHeaderMapPtr header = Envoy::Http::ResponseHeaderMapImpl::create();
 
   header->setStatus(1);
