@@ -42,6 +42,9 @@ public:
     if (do_cancel) {
       cancel_thread = std::thread([&process, terminate_right_away] {
         if (!terminate_right_away) {
+          // We sleep to give the the load test execution in the other thread a change to get
+          // started before we request cancellation. Five seconds has been determined to work with
+          // the sanitizer runs in CI through emperical observation.
           sleep(5);
         }
         process->requestExecutionCancellation();

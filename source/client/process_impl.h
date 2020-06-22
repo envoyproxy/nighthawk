@@ -101,6 +101,12 @@ private:
   void maybeCreateTracingDriver(const envoy::config::trace::v3::Tracing& configuration);
 
   void configureComponentLogLevels(spdlog::level::level_enum level);
+  /**
+   * Prepare the ProcessImpl instance by creating and configuring the workers it needs for execution
+   * of the load test.
+   *
+   * @param concurrency the amount of workers that should be created.
+   */
   void createWorkers(const uint32_t concurrency);
   std::vector<StatisticPtr> vectorizeStatisticPtrMap(const StatisticPtrMap& statistics) const;
   std::vector<StatisticPtr>

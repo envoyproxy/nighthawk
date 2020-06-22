@@ -658,16 +658,17 @@ def test_http_request_release_timing(http_test_server_fixture, qps_parameterizat
     assertCounterEqual(counters, "benchmark.http_2xx", (total_requests))
 
 
-def send_sigterm(p):
+def _send_sigterm(process):
   # Sleep for a while, under tsan the client needs a lot of time
-  # to start up.
+  # to start up. 10 seconds has been determined to work through
+  # emperical observation.
   time.sleep(10)
-  p.terminate()
+  process.terminate()
 
 
 def test_cancellation(http_test_server_fixture):
   """
-  That that we can use signals to cancel execution.
+  Make sure that we can use signals to cancel execution.
   """
   args = [
       http_test_server_fixture.nighthawk_client_path, "--concurrency", "2",
@@ -675,11 +676,11 @@ def test_cancellation(http_test_server_fixture):
       "json"
   ]
   client_process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-  Thread(target=(lambda: send_sigterm(client_process))).start()
+  Thread(target=(lambda: _send_sigterm(client_process))).start()
   stdout, stderr = client_process.communicate()
   client_process.wait()
   output = stdout.decode('utf-8')
-  assert (client_process.returncode == 0)
+  assertEqual(client_process.returncode, 0)
   parsed_json = json.loads(output)
   counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   assertCounterEqual(counters, "graceful_stop_requested", 2)

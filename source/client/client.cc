@@ -74,21 +74,21 @@ bool Main::run() {
   }
   OutputFormatterFactoryImpl output_formatter_factory;
   OutputCollectorImpl output_collector(time_system, *options_);
-  bool res;
+  bool result;
   {
     auto signal_handler =
         std::make_unique<SignalHandler>([&process]() { process->requestExecutionCancellation(); });
-    res = process->run(output_collector);
+    result = process->run(output_collector);
   }
   auto formatter = output_formatter_factory.create(options_->outputFormat());
   std::cout << formatter->formatProto(output_collector.toProto());
   process->shutdown();
-  if (!res) {
+  if (!result) {
     ENVOY_LOG(error, "An error ocurred.");
   } else {
     ENVOY_LOG(info, "Done.");
   }
-  return res;
+  return result;
 }
 
 } // namespace Client
