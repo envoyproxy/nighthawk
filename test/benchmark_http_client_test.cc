@@ -211,11 +211,11 @@ TEST_F(BenchmarkClientHttpTest, ExportSuccessLatency) {
   setupBenchmarkClient();
   uint64_t latency = 10;
   EXPECT_CALL(mock_store_, deliverHistogramToSinks(Property(&Envoy::Stats::Metric::name,
-                                                            "benchmark.latency_on_success_req_us"),
+                                                            "benchmark.latency_on_success_req"),
                                                    latency))
       .Times(1);
   EXPECT_CALL(mock_store_, deliverHistogramToSinks(Property(&Envoy::Stats::Metric::name,
-                                                            "benchmark.latency_on_error_req_us"),
+                                                            "benchmark.latency_on_error_req"),
                                                    latency))
       .Times(0);
   client_->exportLatency(/*response_code=*/200, /*latency_us=*/latency);
@@ -225,11 +225,11 @@ TEST_F(BenchmarkClientHttpTest, ExportErrorLatency) {
   setupBenchmarkClient();
   uint64_t latency = 10;
   EXPECT_CALL(mock_store_, deliverHistogramToSinks(Property(&Envoy::Stats::Metric::name,
-                                                            "benchmark.latency_on_success_req_us"),
+                                                            "benchmark.latency_on_success_req"),
                                                    latency))
       .Times(0);
   EXPECT_CALL(mock_store_, deliverHistogramToSinks(Property(&Envoy::Stats::Metric::name,
-                                                            "benchmark.latency_on_error_req_us"),
+                                                            "benchmark.latency_on_error_req"),
                                                    latency))
       .Times(1);
   client_->exportLatency(/*response_code=*/500, /*latency_us=*/latency);
