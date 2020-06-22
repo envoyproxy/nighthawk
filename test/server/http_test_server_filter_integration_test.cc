@@ -59,16 +59,16 @@ public:
     Envoy::Http::RequestEncoder& encoder = client.newStream(*response);
     encoder.getStream().addCallbacks(*response);
 
-    Envoy::Http::RequestHeaderMapImpl headers;
-    headers.setMethod(method);
-    headers.setPath(url);
-    headers.setHost(host);
-    headers.setScheme(Envoy::Http::Headers::get().SchemeValues.Http);
+    auto headers = Envoy::Http::RequestHeaderMapImpl::create();
+    headers->setMethod(method);
+    headers->setPath(url);
+    headers->setHost(host);
+    headers->setScheme(Envoy::Http::Headers::get().SchemeValues.Http);
     if (!content_type.empty()) {
-      headers.setContentType(content_type);
+      headers->setContentType(content_type);
     }
-    request_header_delegate(headers);
-    encoder.encodeHeaders(headers, body.empty());
+    request_header_delegate(*headers);
+    encoder.encodeHeaders(*headers, body.empty());
     if (!body.empty()) {
       Envoy::Buffer::OwnedImpl body_buffer(body);
       encoder.encodeData(body_buffer, true);
@@ -123,7 +123,8 @@ public:
   void initialize() override {
     config_helper_.addFilter(R"EOF(
 name: test-server
-config:
+typed_config:
+  "@type": type.googleapis.com/nighthawk.server.ResponseOptions
   response_body_size: 10
   response_headers:
   - { header: { key: "x-supplied-by", value: "nighthawk-test-server"} }
