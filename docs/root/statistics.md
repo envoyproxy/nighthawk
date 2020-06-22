@@ -14,8 +14,8 @@ http_xxx | Counter | Total number of response with code xxx
 stream_resets | Counter | Total number of sream reset
 pool_overflow | Counter | Total number of times connection pool overflowed
 pool_connection_failure | Counter | Total number of times pool connection failed
-latency_on_success_req_us | Histogram | Latency (in Microseconds) histogram of successful request with code 2xx
-latency_on_error_req_us | Histogram | Latency (in Microseconds) histogram of error request with code other than 2xx
+latency_on_success_req | Histogram | Latency (in Microseconds) histogram of successful request with code 2xx
+latency_on_error_req | Histogram | Latency (in Microseconds) histogram of error request with code other than 2xx
 
 ## Envoy Metrics Model
 Since Nighthawk is built on top of [Envoy](https://github.com/envoyproxy/envoy) and similar metrics have been exported from Envoy, it is natural to follow the example in Envoy. Furthermore ***Envoy typed metrics are already being used in Nighthawk*** ([example](https://github.com/envoyproxy/nighthawk/blob/master/source/client/benchmark_client_impl.h#L33-L46)).
@@ -34,7 +34,7 @@ Envoy metrics can be defined using a macro, e.g.
 #define ALL_CLUSTER_STATS(COUNTER, GAUGE, HISTOGRAM)
   COUNTER(upstream_cx_total)
   GAUGE(upstream_cx_active, NeverImport)
-  HISTOGRAM(upstream_cx_length_ms, Milliseconds)
+  HISTOGRAM(upstream_cx_length, Milliseconds)
 
 struct ClusterStats {
   ALL_CLUSTER_STATS(GENERATE_COUNTER_STRUCT, GENERATE_GAUGE_STRUCT, GENERATE_HISTOGRAM_STRUCT)
