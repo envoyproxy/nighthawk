@@ -33,6 +33,7 @@ public:
       : loopback_address_(Envoy::Network::Test::getLoopbackAddressUrlString(GetParam())),
         options_(TestUtility::createOptionsImpl(
             fmt::format("foo --duration 1 -v error --rps 10 https://{}/", loopback_address_))){};
+
   void runProcess(RunExpectation expectation, bool do_cancel = false) {
     ProcessPtr process = std::make_unique<ProcessImpl>(*options_, time_system_);
     OutputCollectorImpl collector(time_system_, *options_);
@@ -88,8 +89,11 @@ TEST_P(ProcessTest, BadTracerSpec) {
 }
 
 TEST_P(ProcessTest, CancelExecution) {
+  // The failure predicate below is there to wipe out any stock ones. We want this to run for a long
+  // time, even if the upstream fails (there is no live upstream in this test, we send traffic into
+  // the void), so we can check cancellation works.
   options_ = TestUtility::createOptionsImpl(
-      fmt::format("foo --duration 10 --failure-predicate foo:0 --concurrency 2 https://{}/",
+      fmt::format("foo --duration 300 --failure-predicate foo:0 --concurrency 2 https://{}/",
                   loopback_address_));
   runProcess(RunExpectation::EXPECT_SUCCESS, true);
 }
