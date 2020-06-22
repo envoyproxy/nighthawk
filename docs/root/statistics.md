@@ -18,7 +18,7 @@ latency_on_success_req | Histogram | Latency (in Microseconds) histogram of succ
 latency_on_error_req | Histogram | Latency (in Microseconds) histogram of error request with code other than 2xx
 
 ## Envoy Metrics Model
-Since Nighthawk is built on top of [Envoy](https://github.com/envoyproxy/envoy) and similar metrics have been exported from Envoy, it is natural to follow the example in Envoy. Furthermore ***Envoy typed metrics are already being used in Nighthawk*** ([example](https://github.com/envoyproxy/nighthawk/blob/master/source/client/benchmark_client_impl.h#L33-L46)).
+Since Nighthawk is built on top of [Envoy](https://github.com/envoyproxy/envoy) and similar metrics have been exported from Envoy, it is natural to follow the example in Envoy. Furthermore *Envoy typed metrics are already being used in Nighthawk* ([example](https://github.com/envoyproxy/nighthawk/blob/master/source/client/benchmark_client_impl.h#L33-L46)).
 
 
 Envoy has 3 types of metrics
