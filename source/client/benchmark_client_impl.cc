@@ -58,7 +58,8 @@ BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
       response_statistic_(std::move(response_statistic)),
       response_header_size_statistic_(std::move(response_header_size_statistic)),
       response_body_size_statistic_(std::move(response_body_size_statistic)), use_h2_(use_h2),
-      benchmark_client_stats_({ALL_BENCHMARK_CLIENT_STATS(POOL_COUNTER(*scope_), POOL_HISTOGRAM(*scope_))}),
+      benchmark_client_stats_(
+          {ALL_BENCHMARK_CLIENT_STATS(POOL_COUNTER(*scope_), POOL_HISTOGRAM(*scope_))}),
       cluster_manager_(cluster_manager), http_tracer_(http_tracer),
       cluster_name_(std::string(cluster_name)), request_generator_(std::move(request_generator)),
       provide_resource_backpressure_(provide_resource_backpressure) {
@@ -168,8 +169,9 @@ void BenchmarkClientHttpImpl::onPoolFailure(Envoy::Http::ConnectionPool::PoolFai
     NOT_REACHED_GCOVR_EXCL_LINE;
   }
 }
-  
-void BenchmarkClientHttpImpl::exportLatency(const uint32_t response_code, const uint64_t latency_us) {
+
+void BenchmarkClientHttpImpl::exportLatency(const uint32_t response_code,
+                                            const uint64_t latency_us) {
   if (response_code > 199 && response_code <= 299) {
     benchmark_client_stats_.latency_on_success_req_us_.recordValue(latency_us);
   } else {

@@ -73,7 +73,8 @@ TEST_F(TerminationPredicateTest, AppendToChain) {
   EXPECT_EQ(predicate.evaluateChain(), TerminationPredicate::Status::PROCEED);
   auto child_predicate = std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
       foo_counter, 0, TerminationPredicate::Status::FAIL);
-  EXPECT_EQ(child_predicate.get(), &(predicate.appendToChain(std::move(child_predicate))));
+  const auto* unsafe_child_predicate_ptr = child_predicate.get();
+  EXPECT_EQ(unsafe_child_predicate_ptr, &(predicate.appendToChain(std::move(child_predicate))));
   // This ought to evaluate to FAIL as the counter threshold is exceeded.
   EXPECT_EQ(predicate.evaluateChain(), TerminationPredicate::Status::FAIL);
 }

@@ -107,7 +107,8 @@ public:
 
     dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
     // Expect inflight_response_count to be equal to min(amount, max_in_flight_allowed).
-    EXPECT_EQ(amount < max_in_flight_allowed ? amount : max_in_flight_allowed, inflight_response_count);
+    EXPECT_EQ(amount < max_in_flight_allowed ? amount : max_in_flight_allowed,
+              inflight_response_count);
 
     for (Envoy::Http::ResponseDecoder* decoder : decoders_) {
       Envoy::Http::ResponseHeaderMapPtr response_headers{
@@ -142,7 +143,8 @@ public:
   }
 
   Envoy::Event::TestRealTimeSystem time_system_;
-  // deliverHistogramToSinks() is currently not implemented in IsolatedStoreImpl so test with a mock store.
+  // deliverHistogramToSinks() is currently not implemented in IsolatedStoreImpl so test with a mock
+  // store.
   Envoy::Stats::MockIsolatedStatsStore mock_store_;
   Envoy::Api::ApiPtr api_;
   Envoy::Event::DispatcherPtr dispatcher_;
@@ -175,7 +177,7 @@ TEST_F(BenchmarkClientHttpTest, BasicTestH1300) {
   EXPECT_EQ(10, getCounter("http_3xx"));
   EXPECT_EQ(10, getCounter("total_req_sent"));
 }
-  
+
 TEST_F(BenchmarkClientHttpTest, BasicTestH1404) {
   response_code_ = "404";
   testBasicFunctionality(0, 1, 10);
@@ -204,20 +206,32 @@ TEST_F(BenchmarkClientHttpTest, EnableLatencyMeasurement) {
   EXPECT_EQ(10, client_->statistics()["benchmark_http_client.request_to_response"]->count());
   EXPECT_EQ(20, getCounter("total_req_sent"));
 }
-  
+
 TEST_F(BenchmarkClientHttpTest, ExportSuccessLatency) {
   setupBenchmarkClient();
   uint64_t latency = 10;
-  EXPECT_CALL(mock_store_, deliverHistogramToSinks(Property(&Envoy::Stats::Metric::name, "benchmark.latency_on_success_req_us"), latency)).Times(1);
-  EXPECT_CALL(mock_store_, deliverHistogramToSinks(Property(&Envoy::Stats::Metric::name, "benchmark.latency_on_error_req_us"), latency)).Times(0);
+  EXPECT_CALL(mock_store_, deliverHistogramToSinks(Property(&Envoy::Stats::Metric::name,
+                                                            "benchmark.latency_on_success_req_us"),
+                                                   latency))
+      .Times(1);
+  EXPECT_CALL(mock_store_, deliverHistogramToSinks(Property(&Envoy::Stats::Metric::name,
+                                                            "benchmark.latency_on_error_req_us"),
+                                                   latency))
+      .Times(0);
   client_->exportLatency(/*response_code=*/200, /*latency_us=*/latency);
 }
-  
+
 TEST_F(BenchmarkClientHttpTest, ExportErrorLatency) {
   setupBenchmarkClient();
   uint64_t latency = 10;
-  EXPECT_CALL(mock_store_, deliverHistogramToSinks(Property(&Envoy::Stats::Metric::name, "benchmark.latency_on_success_req_us"), latency)).Times(0);
-  EXPECT_CALL(mock_store_, deliverHistogramToSinks(Property(&Envoy::Stats::Metric::name, "benchmark.latency_on_error_req_us"), latency)).Times(1);
+  EXPECT_CALL(mock_store_, deliverHistogramToSinks(Property(&Envoy::Stats::Metric::name,
+                                                            "benchmark.latency_on_success_req_us"),
+                                                   latency))
+      .Times(0);
+  EXPECT_CALL(mock_store_, deliverHistogramToSinks(Property(&Envoy::Stats::Metric::name,
+                                                            "benchmark.latency_on_error_req_us"),
+                                                   latency))
+      .Times(1);
   client_->exportLatency(/*response_code=*/500, /*latency_us=*/latency);
 }
 
@@ -292,7 +306,6 @@ TEST_F(BenchmarkClientHttpTest, BadContentLength) {
     return std::make_unique<RequestImpl>(header);
   };
 
-  // Note we we explicitly do not expect encodeData to be called.
   EXPECT_CALL(stream_encoder_, encodeData(_, _)).Times(0);
   testBasicFunctionality(1, 1, 1);
   EXPECT_EQ(1, getCounter("http_2xx"));

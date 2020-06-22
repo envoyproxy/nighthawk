@@ -23,6 +23,7 @@ py_library(
         "configurations/nighthawk_https_origin.yaml",
         "configurations/sni_origin.yaml",
         "//:nighthawk_client",
+        "//:nighthawk_output_transform",
         "//:nighthawk_service",
         "//:nighthawk_test_server",
         "@envoy//test/config/integration/certs",
@@ -83,6 +84,12 @@ py_library(
     deps = [":integration_test_base"],
 )
 
+py_library(
+    name = "test_output_transform_lib",
+    srcs = ["test_output_transform.py"],
+    deps = [":integration_test_base"],
+)
+
 py_binary(
     name = "integration_test",
     srcs = ["integration_test.py"],
@@ -99,6 +106,7 @@ py_binary(
         ":test_grpc_service_lib",
         ":test_integration_basics_lib",
         ":test_integration_zipkin_lib",
+        ":test_output_transform_lib",
         ":test_remote_execution_lib",
     ],
 )

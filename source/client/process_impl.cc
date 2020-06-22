@@ -92,8 +92,11 @@ private:
   bool prefetch_connections_{};
 };
 
-ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system)
-    : time_system_(time_system), stats_allocator_(symbol_table_), store_root_(stats_allocator_),
+ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
+                         const std::shared_ptr<Envoy::ProcessWide>& process_wide)
+    : process_wide_(process_wide == nullptr ? std::make_shared<Envoy::ProcessWide>()
+                                            : process_wide),
+      time_system_(time_system), stats_allocator_(symbol_table_), store_root_(stats_allocator_),
       api_(std::make_unique<Envoy::Api::Impl>(platform_impl_.threadFactory(), store_root_,
                                               time_system_, platform_impl_.fileSystem())),
       dispatcher_(api_->allocateDispatcher("main_thread")), benchmark_client_factory_(options),
@@ -187,9 +190,10 @@ uint32_t ProcessImpl::determineConcurrency() const {
   if (autoscale) {
     ENVOY_LOG(info, "Detected {} (v)CPUs with affinity..", cpu_cores_with_affinity);
   }
-
-  ENVOY_LOG(info, "Starting {} threads / event loops. Test duration: {} seconds.", concurrency,
-            options_.duration().count());
+  std::string duration_as_string =
+      options_.noDuration() ? "No time limit"
+                            : fmt::format("Time limit: {} seconds", options_.duration().count());
+  ENVOY_LOG(info, "Starting {} threads / event loops. {}.", concurrency, duration_as_string);
   ENVOY_LOG(info, "Global targets: {} connections and {} calls per second.",
             options_.connections() * concurrency, options_.requestsPerSecond() * concurrency);
 
