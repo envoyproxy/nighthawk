@@ -69,7 +69,8 @@ void RequestStreamGrpcClientImpl::onRemoteClose(Envoy::Grpc::Status::GrpcStatus 
 RequestPtr ProtoRequestHelper::messageToRequest(
     const Envoy::Http::RequestHeaderMap& base_header,
     const nighthawk::request_source::RequestStreamResponse& message) {
-  auto header = std::make_shared<Envoy::Http::RequestHeaderMapImpl>();
+  std::shared_ptr<Envoy::Http::RequestHeaderMapImpl> header(
+      Envoy::Http::RequestHeaderMapImpl::create().release());
   header->copyFrom(*header, base_header);
   RequestPtr request = std::make_unique<RequestImpl>(header);
 

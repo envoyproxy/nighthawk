@@ -83,8 +83,7 @@ void ScheduledStartingRateLimiter::releaseOne() {
 }
 
 LinearRateLimiter::LinearRateLimiter(Envoy::TimeSource& time_source, const Frequency frequency)
-    : RateLimiterBaseImpl(time_source), acquireable_count_(0), acquired_count_(0),
-      frequency_(frequency) {
+    : RateLimiterBaseImpl(time_source), frequency_(frequency) {
   if (frequency.value() <= 0) {
     throw NighthawkException(fmt::format("frequency must be <= 0, value: {}", frequency.value()));
   }

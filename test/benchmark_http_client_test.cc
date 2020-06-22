@@ -205,25 +205,25 @@ TEST_F(BenchmarkClientHttpTest, StatusTrackingInOnComplete) {
       std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
       std::make_unique<StreamingStatistic>(), false, cluster_manager_, http_tracer_, "foo",
       request_generator_, true);
-  Envoy::Http::ResponseHeaderMapImpl header;
+  Envoy::Http::ResponseHeaderMapPtr header = Envoy::Http::ResponseHeaderMapImpl::create();
 
-  header.setStatus(1);
-  client_->onComplete(true, header);
-  header.setStatus(100);
-  client_->onComplete(true, header);
-  header.setStatus(200);
-  client_->onComplete(true, header);
-  header.setStatus(300);
-  client_->onComplete(true, header);
-  header.setStatus(400);
-  client_->onComplete(true, header);
-  header.setStatus(500);
-  client_->onComplete(true, header);
-  header.setStatus(600);
-  client_->onComplete(true, header);
-  header.setStatus(200);
+  header->setStatus(1);
+  client_->onComplete(true, *header);
+  header->setStatus(100);
+  client_->onComplete(true, *header);
+  header->setStatus(200);
+  client_->onComplete(true, *header);
+  header->setStatus(300);
+  client_->onComplete(true, *header);
+  header->setStatus(400);
+  client_->onComplete(true, *header);
+  header->setStatus(500);
+  client_->onComplete(true, *header);
+  header->setStatus(600);
+  client_->onComplete(true, *header);
+  header->setStatus(200);
   // Shouldn't be counted by status, should add to stream reset.
-  client_->onComplete(false, header);
+  client_->onComplete(false, *header);
 
   EXPECT_EQ(1, getCounter("http_2xx"));
   EXPECT_EQ(1, getCounter("http_3xx"));
