@@ -173,9 +173,9 @@ void BenchmarkClientHttpImpl::onPoolFailure(Envoy::Http::ConnectionPool::PoolFai
 void BenchmarkClientHttpImpl::exportLatency(const uint32_t response_code,
                                             const uint64_t latency_us) {
   if (response_code > 199 && response_code <= 299) {
-    benchmark_client_stats_.latency_on_success_req_us_.recordValue(latency_us);
+    benchmark_client_stats_.latency_on_success_req_.recordValue(latency_us);
   } else {
-    benchmark_client_stats_.latency_on_error_req_us_.recordValue(latency_us);
+    benchmark_client_stats_.latency_on_error_req_.recordValue(latency_us);
   }
 }
 
