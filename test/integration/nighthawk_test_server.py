@@ -18,61 +18,79 @@ from rules_python.python.runfiles import runfiles
 from test.integration.common import IpVersion, NighthawkException
 
 
+def _substitute_yaml_values(runfiles_instance, obj, params):
+  if isinstance(obj, dict):
+    for k, v in obj.items():
+      obj[k] = _substitute_yaml_values(runfiles_instance, v, params)
+  elif isinstance(obj, list):
+    for i in range(len(obj)):
+      obj[i] = _substitute_yaml_values(runfiles_instance, obj[i], params)
+  else:
+    if isinstance(obj, str):
+      # Inspect string values and substitute where applicable.
+      INJECT_RUNFILE_MARKER = '@inject-runfile:'
+      if obj[0] == '$':
+        return Template(obj).substitute(params)
+      elif obj.startswith(INJECT_RUNFILE_MARKER):
+        with open(runfiles_instance.Rlocation(obj[len(INJECT_RUNFILE_MARKER):].strip()),
+                  'r') as file:
+          return file.read()
+  return obj
+
+
 class TestServerBase(object):
   """
     Base class for running a server in a separate process.
+
+    Arguments:
+      server_binary_path: String, specify the path to the test server binary.
+      config_template_path: String, specify the path to the test server configuration template.
+      server_ip: String, specify the ip address the test server should use to listen for traffic.
+      server_binary_config_path_arg: String, specify the name of the CLI argument the test server binary uses to accept a configuration path.
+      parameters: Dictionary. Supply this to provide configuration template parameter replacement values.
+      tag: String. Supply this to get recognizeable output locations.
+    
+    Attributes:
+      ip_version: IP version that the proxy should use when listening.
+      server_ip: string containing the server ip that will be used to listen
+      server_port: Integer, get the port used by the server to listen for traffic.
+      docker_image: String, supplies a docker image for execution of the test server binary. Sourced from environment variable NH_DOCKER_IMAGE.
+      tmpdir: String, indicates the location used to store outputs like logs.
     """
 
   def __init__(self, server_binary_path, config_template_path, server_ip, ip_version,
                server_binary_config_path_arg, parameters, tag):
     assert ip_version != IpVersion.UNKNOWN
     self.ip_version = ip_version
-    self.server_binary_path = server_binary_path
-    self.config_template_path = config_template_path
-    self.server_thread = threading.Thread(target=self.serverThreadRunner)
-    self.server_process = None
     self.server_ip = server_ip
-    self.socket_type = socket.AF_INET6 if ip_version == IpVersion.IPV6 else socket.AF_INET
-    self.admin_address_path = ""
-    self.parameterized_config_path = ""
-    self.instance_id = str(random.randint(1, 1024 * 1024 * 1024))
-    self.parameters = parameters
-    self.server_binary_config_path_arg = server_binary_config_path_arg
-    self.parameters["server_ip"] = self.server_ip
+    self.server_port = -1
     self.docker_image = os.getenv("NH_DOCKER_IMAGE", "")
     self.tmpdir = os.path.join(os.getenv("TMPDIR", "/tmp/nighthawk_benchmark/"), tag + "/")
-    self.parameters["tmpdir"] = self.tmpdir
-    self.parameters["tag"] = tag
+    self._server_binary_path = server_binary_path
+    self._config_template_path = config_template_path
+    self._parameters = dict(parameters)
+    self._parameters["server_ip"] = self.server_ip
+    self._parameters["tmpdir"] = self.tmpdir
+    self._parameters["tag"] = tag
+    self._server_process = None
+    self._server_thread = threading.Thread(target=self.serverThreadRunner)
+    self._admin_address_path = ""
+    self._parameterized_config_path = ""
+    self._instance_id = str(random.randint(1, 1024 * 1024 * 1024))
+    self._server_binary_config_path_arg = server_binary_config_path_arg
+    self._prepareForExecution()
 
-    def substitute_yaml_values(obj, params):
-      if isinstance(obj, dict):
-        for k, v in obj.items():
-          obj[k] = substitute_yaml_values(v, params)
-      elif isinstance(obj, list):
-        for i in range(len(obj)):
-          obj[i] = substitute_yaml_values(obj[i], params)
-      else:
-        if isinstance(obj, str):
-          # Inspect string values and substitute where applicable.
-          INJECT_RUNFILE_MARKER = '@inject-runfile:'
-          if obj[0] == '$':
-            return Template(obj).substitute(params)
-          elif obj.startswith(INJECT_RUNFILE_MARKER):
-            r = runfiles.Create()
-            with open(r.Rlocation(obj[len(INJECT_RUNFILE_MARKER):].strip()), 'r') as file:
-              return file.read()
-      return obj
-
-    r = runfiles.Create()
-    with open(r.Rlocation(self.config_template_path)) as f:
+  def _prepareForExecution(self):
+    runfiles_instance = runfiles.Create()
+    with open(runfiles_instance.Rlocation(self._config_template_path)) as f:
       data = yaml.load(f, Loader=yaml.FullLoader)
-      data = substitute_yaml_values(data, self.parameters)
+      data = _substitute_yaml_values(runfiles_instance, data, self._parameters)
 
     Path(self.tmpdir).mkdir(parents=True, exist_ok=True)
 
     with tempfile.NamedTemporaryFile(
         mode="w", delete=False, suffix=".config.yaml", dir=self.tmpdir) as tmp:
-      self.parameterized_config_path = tmp.name
+      self._parameterized_config_path = tmp.name
       yaml.safe_dump(
           data,
           tmp,
@@ -83,12 +101,12 @@ class TestServerBase(object):
 
     with tempfile.NamedTemporaryFile(
         mode="w", delete=False, suffix=".adminport", dir=self.tmpdir) as tmp:
-      self.admin_address_path = tmp.name
+      self._admin_address_path = tmp.name
 
   def serverThreadRunner(self):
     args = []
     if self.docker_image != "":
-      # TODO(XXX): As of https://github.com/envoyproxy/envoy/commit/e8a2d1e24dc9a0da5273442204ec3cdfad1e7ca8
+      # TODO(#383): As of https://github.com/envoyproxy/envoy/commit/e8a2d1e24dc9a0da5273442204ec3cdfad1e7ca8
       # we need to have ENVOY_UID=0 in the environment, or this will break on docker runs, as Envoy
       # will not be able to read the configuration files we stub here in docker runs.
       args = [
@@ -96,13 +114,13 @@ class TestServerBase(object):
           "ENVOY_UID=0", self.docker_image
       ]
     args = args + [
-        self.server_binary_path, self.server_binary_config_path_arg, self.parameterized_config_path,
-        "-l", "debug", "--base-id", self.instance_id, "--admin-address-path",
-        self.admin_address_path, "--concurrency", "1"
+        self._server_binary_path, self._server_binary_config_path_arg,
+        self._parameterized_config_path, "-l", "debug", "--base-id", self._instance_id,
+        "--admin-address-path", self._admin_address_path, "--concurrency", "1"
     ]
     logging.info("Test server popen() args: %s" % str.join(" ", args))
-    self.server_process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr = self.server_process.communicate()
+    self._server_process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout, stderr = self._server_process.communicate()
     logging.debug(stdout.decode("utf-8"))
     logging.debug(stderr.decode("utf-8"))
 
@@ -119,7 +137,7 @@ class TestServerBase(object):
     return r.json()
 
   def tryUpdateFromAdminInterface(self):
-    with open(self.admin_address_path) as admin_address_file:
+    with open(self._admin_address_path) as admin_address_file:
       admin_address = admin_address_file.read()
     tmp = admin_address.split(":")
     # we expect at least two elements (host:port). This might still be an empty file
@@ -157,15 +175,15 @@ class TestServerBase(object):
     return False
 
   def start(self):
-    self.server_thread.daemon = True
-    self.server_thread.start()
+    self._server_thread.daemon = True
+    self._server_thread.start()
     return self.waitUntilServerListening()
 
   def stop(self):
-    os.remove(self.admin_address_path)
-    self.server_process.terminate()
-    self.server_thread.join()
-    return self.server_process.returncode
+    os.remove(self._admin_address_path)
+    self._server_process.terminate()
+    self._server_thread.join()
+    return self._server_process.returncode
 
 
 class NighthawkTestServer(TestServerBase):
@@ -185,10 +203,13 @@ class NighthawkTestServer(TestServerBase):
                                               ip_version, "--config-path", parameters, tag)
 
   def getCliVersionString(self):
+    """ Get the version string as written to the output by the CLI.
+    """
+
     args = []
     if self.docker_image != "":
       args = ["docker", "run", "--rm", self.docker_image]
-    args = args + [self.server_binary_path, "--base-id", self.instance_id, "--version"]
+    args = args + [self._server_binary_path, "--base-id", self._instance_id, "--version"]
 
     process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = process.communicate()

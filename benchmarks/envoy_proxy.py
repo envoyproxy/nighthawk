@@ -33,7 +33,7 @@ class EnvoyProxyServer(NighthawkTestServer):
 
     Arguments:
       config_template_path: Configuration template for the proxy.
-      server_ip: PIP address for the proxy to use.
+      server_ip: IP address for the proxy to use.
       ip_version: IP version that the proxy should use when listening.
       parameters: Dictionary. Supply this to provide template parameter replacement values (optional).
       tag: String. Supply this to get recognizeable output locations (optional).

@@ -17,7 +17,7 @@ from test.integration.common import IpVersion, NighthawkException
 from test.integration.nighthawk_test_server import NighthawkTestServer
 from test.integration.nighthawk_grpc_service import NighthawkGrpcService
 
-TIMESTAMP = time.strftime('%Y-%m-%d-%H-%M-%S')
+_TIMESTAMP = time.strftime('%Y-%m-%d-%H-%M-%S')
 
 
 def determineIpVersionsFromEnvironment():
@@ -40,7 +40,7 @@ class IntegrationTestBase():
 
   Support for multiple test servers has been added in a way that minimizes impact to existing tests.
   self.test_server always points to the first test server, and methods assuming a single backend such
-  as getTestServerRootUri were left intact. self.test_servers contains all test servers, including the
+  as getTestServerRootUri were left intact. self._test_servers contains all test servers, including the
   first. Methods such as getTestServerRootUris that are aware of multiple test servers will also
   work when there is only one test server.
 
@@ -51,26 +51,34 @@ class IntegrationTestBase():
     """
     Args:
       ip_version: a single IP mode that this instance will test: IpVersion.IPV4 or IpVersion.IPV6
+      server_config: path to the server configuration
       backend_count: number of Nighthawk Test Server backends to run, to allow testing MultiTarget mode
+    Attributes:
+      ip_version: IP version that the proxy should use when listening.
+      server_ip: string containing the server ip that will be used to listen
+      tag: String. Supply this to get recognizeable output locations.
+      parameters: Dictionary. Supply this to provide template parameter replacement values.
+      grpc_service: NighthawkGrpcService instance or None. Set by startNighthawkGrpcService().  
+      test_server: NighthawkTestServer instance, set during setUp().
     """
     super(IntegrationTestBase, self).__init__()
-    self.confdir = "nighthawk/test/integration/configurations/"
-    self.nighthawk_test_server_path = "nighthawk_test_server"
-    self.nighthawk_test_config_path = server_config
-    self.nighthawk_client_path = "nighthawk_client"
-    self.nighthawk_service_path = "nighthawk_service"
-    self.nighthawk_output_transform_path = "nighthawk_output_transform"
     assert ip_version != IpVersion.UNKNOWN
+    self.ip_version = ip_version
     self.server_ip = "::/0" if ip_version == IpVersion.IPV6 else "0.0.0.0"
     self.server_ip = os.getenv("TEST_SERVER_EXTERNAL_IP", self.server_ip)
-    self.socket_type = socket.AF_INET6 if ip_version == IpVersion.IPV6 else socket.AF_INET
-    self.test_server = None
-    self.test_servers = []
-    self.backend_count = backend_count
-    self.parameters = {}
     self.tag = ""
-    self.ip_version = ip_version
+    self.parameters = {}
     self.grpc_service = None
+    self.test_server = None
+    self._nighthawk_test_server_path = "nighthawk_test_server"
+    self._nighthawk_test_config_path = server_config
+    self._nighthawk_client_path = "nighthawk_client"
+    self._nighthawk_service_path = "nighthawk_service"
+    self._nighthawk_output_transform_path = "nighthawk_output_transform"
+    self._socket_type = socket.AF_INET6 if ip_version == IpVersion.IPV6 else socket.AF_INET
+    self._test_servers = []
+    self._backend_count = backend_count
+    self._test_id = ""
 
   # TODO(oschaaf): For the NH test server, add a way to let it determine a port by itself and pull that
   # out.
@@ -81,7 +89,7 @@ class IntegrationTestBase():
     The upside is that we can push the port upon the server we are about to start through configuration
     which is compatible accross servers.
     """
-    with socket.socket(self.socket_type, socket.SOCK_STREAM) as sock:
+    with socket.socket(self._socket_type, socket.SOCK_STREAM) as sock:
       sock.bind((address, 0))
       port = sock.getsockname()[1]
     return port
@@ -91,25 +99,17 @@ class IntegrationTestBase():
     Performs sanity checks and starts up the server. Upon exit the server is ready to accept connections.
     """
     if os.getenv("NH_DOCKER_IMAGE", "") == "":
-      assert (os.path.exists(self.nighthawk_test_server_path))
-      assert (os.path.exists(self.nighthawk_client_path))
+      assert os.path.exists(
+          self._nighthawk_test_server_path
+      ), "Test server binary not found: '%s'" % self._nighthawk_test_server_path
+      assert os.path.exists(
+          self._nighthawk_client_path
+      ), "Nighthawk client binary not found: '%s'" % self.__nighthawk_client_path
 
-    self.test_id = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0].replace(
+    self._test_id = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0].replace(
         "[", "_").replace("]", "").replace("/", "_")[5:]
-    self.tag = "{timestamp}/{test_id}".format(timestamp=TIMESTAMP, test_id=self.test_id)
-
-    for i in range(self.backend_count):
-      test_server = NighthawkTestServer(
-          self.nighthawk_test_server_path,
-          self.nighthawk_test_config_path,
-          self.server_ip,
-          self.ip_version,
-          parameters=self.parameters,
-          tag=self.tag)
-      assert (test_server.start())
-      self.test_servers.append(test_server)
-      if i == 0:
-        self.test_server = test_server
+    self.tag = "{timestamp}/{test_id}".format(timestamp=_TIMESTAMP, test_id=self._test_id)
+    assert self._tryStartTestServers(), "Test server(s) failed to start"
 
   def tearDown(self):
     """
@@ -119,10 +119,26 @@ class IntegrationTestBase():
       assert (self.grpc_service.stop() == 0)
 
     any_failed = False
-    for test_server in self.test_servers:
+    for test_server in self._test_servers:
       if test_server.stop() != 0:
         any_failed = True
     assert (not any_failed)
+
+  def _tryStartTestServers(self):
+    for i in range(self._backend_count):
+      test_server = NighthawkTestServer(
+          self._nighthawk_test_server_path,
+          self._nighthawk_test_config_path,
+          self.server_ip,
+          self.ip_version,
+          parameters=self.parameters,
+          tag=self.tag)
+      if not test_server.start():
+        return False
+      self._test_servers.append(test_server)
+      if i == 0:
+        self.test_server = test_server
+    return True
 
   def getGlobalResults(self, parsed_json):
     """
@@ -171,7 +187,7 @@ class IntegrationTestBase():
 
     return [
         "%s://%s:%s/" % ("https" if https else "http", uri_host, test_server.server_port)
-        for test_server in self.test_servers
+        for test_server in self._test_servers
     ]
 
   def getTestServerStatisticsJson(self):
@@ -186,7 +202,7 @@ class IntegrationTestBase():
     """
     return [
         test_server.fetchJsonFromAdminInterface("/stats?format=json")
-        for test_server in self.test_servers
+        for test_server in self._test_servers
     ]
 
   def getServerStatFromJson(self, server_stats_json, name):
@@ -209,10 +225,10 @@ class IntegrationTestBase():
     if os.getenv("NH_DOCKER_IMAGE", "") != "":
       args = [
           "docker", "run", "--network=host", "--rm",
-          os.getenv("NH_DOCKER_IMAGE"), self.nighthawk_client_path
+          os.getenv("NH_DOCKER_IMAGE"), self._nighthawk_client_path
       ] + args
     else:
-      args = [self.nighthawk_client_path] + args
+      args = [self._nighthawk_client_path] + args
     if self.ip_version == IpVersion.IPV6:
       args.append("--address-family v6")
     if as_json:
@@ -234,11 +250,18 @@ class IntegrationTestBase():
     return output, logs
 
   def transformNighthawkJson(self, json, format="human"):
+    """Use to obtain one of the supported output from Nighthawk's raw json output.
+
+    Arguments:
+      json: String containing raw json output obtained via nighthawk_client --output-format=json
+      format: String that specifies the desired output format. Must be one of [human|yaml|dotted-string|fortio]. Optional, defaults to "human".
+    """
+
     # TODO(oschaaf): validate format arg.
     args = []
     if os.getenv("NH_DOCKER_IMAGE", "") != "":
       args = ["docker", "run", "--rm", "-i", os.getenv("NH_DOCKER_IMAGE")]
-    args = args + [self.nighthawk_output_transform_path, "--output-format", format]
+    args = args + [self._nighthawk_output_transform_path, "--output-format", format]
     logging.info("Nighthawk output transform popen() args: %s" % args)
     client_process = subprocess.Popen(
         args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -254,7 +277,7 @@ class IntegrationTestBase():
 
   def startNighthawkGrpcService(self, service_name="traffic-generator-service"):
     host = self.server_ip if self.ip_version == IpVersion.IPV4 else "[%s]" % self.server_ip
-    self.grpc_service = NighthawkGrpcService(self.nighthawk_service_path, host, self.ip_version,
+    self.grpc_service = NighthawkGrpcService(self._nighthawk_service_path, host, self.ip_version,
                                              service_name)
     assert (self.grpc_service.start())
 
