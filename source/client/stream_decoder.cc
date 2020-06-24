@@ -51,10 +51,10 @@ void StreamDecoder::onComplete(bool success) {
     latency_statistic_.addValue((time_source_.monotonicTime() - request_start_).count());
     // At this point StreamDecoder::decodeHeaders() should have been called.
     if (stream_info_.response_code_.has_value()) {
-      const uint64_t latency_us =
-        std::chrono::duration_cast<std::chrono::microseconds>(time_source_.monotonicTime() - request_start_).count();
-      decoder_completion_callback_.exportLatency(
-          stream_info_.response_code_.value(), latency_us);
+      const uint64_t latency_us = std::chrono::duration_cast<std::chrono::microseconds>(
+                                      time_source_.monotonicTime() - request_start_)
+                                      .count();
+      decoder_completion_callback_.exportLatency(stream_info_.response_code_.value(), latency_us);
     }
   }
   upstream_timing_.onLastUpstreamRxByteReceived(time_source_);
