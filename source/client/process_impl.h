@@ -80,6 +80,8 @@ public:
    */
   void shutdown() override;
 
+  bool requestExecutionCancellation() override;
+
 private:
   /**
    * @brief Creates a cluster for usage by a remote request source.
@@ -99,7 +101,13 @@ private:
   void maybeCreateTracingDriver(const envoy::config::trace::v3::Tracing& configuration);
 
   void configureComponentLogLevels(spdlog::level::level_enum level);
-  const std::vector<ClientWorkerPtr>& createWorkers(const uint32_t concurrency);
+  /**
+   * Prepare the ProcessImpl instance by creating and configuring the workers it needs for execution
+   * of the load test.
+   *
+   * @param concurrency the amount of workers that should be created.
+   */
+  void createWorkers(const uint32_t concurrency);
   std::vector<StatisticPtr> vectorizeStatisticPtrMap(const StatisticPtrMap& statistics) const;
   std::vector<StatisticPtr>
   mergeWorkerStatistics(const std::vector<ClientWorkerPtr>& workers) const;
@@ -145,6 +153,8 @@ private:
   Envoy::Server::ValidationAdmin admin_;
   Envoy::ProtobufMessage::ProdValidationContextImpl validation_context_;
   bool shutdown_{true};
+  Envoy::Thread::MutexBasicLockable workers_lock_;
+  bool cancelled_{false};
 };
 
 } // namespace Client

@@ -34,6 +34,8 @@ public:
    */
   void shutdown() override{};
 
+  bool requestExecutionCancellation() override;
+
 private:
   const Options& options_;
   nighthawk::client::NighthawkService::Stub& stub_;
