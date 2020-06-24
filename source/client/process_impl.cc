@@ -126,11 +126,15 @@ void ProcessImpl::shutdown() {
   // Before we shut down the worker threads, stop threading.
   tls_.shutdownGlobalThreading();
   store_root_.shutdownThreading();
-  // Before shutting down the cluster manager, stop the workers.
-  for (auto& worker : workers_) {
-    worker->shutdown();
+
+  {
+    auto guard = std::make_unique<Envoy::Thread::LockGuard>(workers_lock_);
+    // Before shutting down the cluster manager, stop the workers.
+    for (auto& worker : workers_) {
+      worker->shutdown();
+    }
+    workers_.clear();
   }
-  workers_.clear();
   if (cluster_manager_ != nullptr) {
     cluster_manager_->shutdown();
   }
@@ -138,7 +142,17 @@ void ProcessImpl::shutdown() {
   shutdown_ = true;
 }
 
-const std::vector<ClientWorkerPtr>& ProcessImpl::createWorkers(const uint32_t concurrency) {
+bool ProcessImpl::requestExecutionCancellation() {
+  ENVOY_LOG(debug, "Requesting workers to cancel execution");
+  auto guard = std::make_unique<Envoy::Thread::LockGuard>(workers_lock_);
+  for (auto& worker : workers_) {
+    worker->requestExecutionCancellation();
+  }
+  cancelled_ = true;
+  return true;
+}
+
+void ProcessImpl::createWorkers(const uint32_t concurrency) {
   // TODO(oschaaf): Expose kMinimalDelay in configuration.
   const std::chrono::milliseconds kMinimalWorkerDelay = 500ms + (concurrency * 50ms);
   ASSERT(workers_.empty());
@@ -168,7 +182,6 @@ const std::vector<ClientWorkerPtr>& ProcessImpl::createWorkers(const uint32_t co
                                 : ClientWorkerImpl::HardCodedWarmupStyle::OFF));
     worker_number++;
   }
-  return workers_;
 }
 
 void ProcessImpl::configureComponentLogLevels(spdlog::level::level_enum level) {
@@ -381,44 +394,50 @@ void ProcessImpl::addRequestSourceCluster(
 
 bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriPtr>& uris,
                               const UriPtr& request_source_uri, const UriPtr& tracing_uri) {
-  int number_of_workers = determineConcurrency();
-  shutdown_ = false;
-  const std::vector<ClientWorkerPtr>& workers = createWorkers(number_of_workers);
-  tls_.registerThread(*dispatcher_, true);
-  store_root_.initializeThreading(*dispatcher_, tls_);
-  runtime_singleton_ = std::make_unique<Envoy::Runtime::ScopedLoaderSingleton>(
-      Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl(
-          *dispatcher_, tls_, {}, *local_info_, store_root_, generator_,
-          Envoy::ProtobufMessage::getStrictValidationVisitor(), *api_)});
-  ssl_context_manager_ =
-      std::make_unique<Extensions::TransportSockets::Tls::ContextManagerImpl>(time_system_);
-  cluster_manager_factory_ = std::make_unique<ClusterManagerFactory>(
-      admin_, Envoy::Runtime::LoaderSingleton::get(), store_root_, tls_, generator_,
-      dispatcher_->createDnsResolver({}, false), *ssl_context_manager_, *dispatcher_, *local_info_,
-      secret_manager_, validation_context_, *api_, http_context_, grpc_context_,
-      access_log_manager_, *singleton_manager_);
-  cluster_manager_factory_->setConnectionReuseStrategy(
-      options_.h1ConnectionReuseStrategy() == nighthawk::client::H1ConnectionReuseStrategy::LRU
-          ? Http1PoolImpl::ConnectionReuseStrategy::LRU
-          : Http1PoolImpl::ConnectionReuseStrategy::MRU);
-  cluster_manager_factory_->setPrefetchConnections(options_.prefetchConnections());
-  envoy::config::bootstrap::v3::Bootstrap bootstrap;
-  createBootstrapConfiguration(bootstrap, uris, request_source_uri, number_of_workers);
-  if (tracing_uri != nullptr) {
-    setupTracingImplementation(bootstrap, *tracing_uri);
-    addTracingCluster(bootstrap, *tracing_uri);
+  {
+    auto guard = std::make_unique<Envoy::Thread::LockGuard>(workers_lock_);
+    if (cancelled_) {
+      return true;
+    }
+    int number_of_workers = determineConcurrency();
+    shutdown_ = false;
+    createWorkers(number_of_workers);
+    tls_.registerThread(*dispatcher_, true);
+    store_root_.initializeThreading(*dispatcher_, tls_);
+    runtime_singleton_ = std::make_unique<Envoy::Runtime::ScopedLoaderSingleton>(
+        Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl(
+            *dispatcher_, tls_, {}, *local_info_, store_root_, generator_,
+            Envoy::ProtobufMessage::getStrictValidationVisitor(), *api_)});
+    ssl_context_manager_ =
+        std::make_unique<Extensions::TransportSockets::Tls::ContextManagerImpl>(time_system_);
+    cluster_manager_factory_ = std::make_unique<ClusterManagerFactory>(
+        admin_, Envoy::Runtime::LoaderSingleton::get(), store_root_, tls_, generator_,
+        dispatcher_->createDnsResolver({}, false), *ssl_context_manager_, *dispatcher_,
+        *local_info_, secret_manager_, validation_context_, *api_, http_context_, grpc_context_,
+        access_log_manager_, *singleton_manager_);
+    cluster_manager_factory_->setConnectionReuseStrategy(
+        options_.h1ConnectionReuseStrategy() == nighthawk::client::H1ConnectionReuseStrategy::LRU
+            ? Http1PoolImpl::ConnectionReuseStrategy::LRU
+            : Http1PoolImpl::ConnectionReuseStrategy::MRU);
+    cluster_manager_factory_->setPrefetchConnections(options_.prefetchConnections());
+    envoy::config::bootstrap::v3::Bootstrap bootstrap;
+    createBootstrapConfiguration(bootstrap, uris, request_source_uri, number_of_workers);
+    if (tracing_uri != nullptr) {
+      setupTracingImplementation(bootstrap, *tracing_uri);
+      addTracingCluster(bootstrap, *tracing_uri);
+    }
+    ENVOY_LOG(debug, "Computed configuration: {}", bootstrap.DebugString());
+    cluster_manager_ = cluster_manager_factory_->clusterManagerFromProto(bootstrap);
+    maybeCreateTracingDriver(bootstrap.tracing());
+    cluster_manager_->setInitializedCb(
+        [this]() -> void { init_manager_.initialize(init_watcher_); });
+
+    Runtime::LoaderSingleton::get().initialize(*cluster_manager_);
+
+    for (auto& w : workers_) {
+      w->start();
+    }
   }
-  ENVOY_LOG(debug, "Computed configuration: {}", bootstrap.DebugString());
-  cluster_manager_ = cluster_manager_factory_->clusterManagerFromProto(bootstrap);
-  maybeCreateTracingDriver(bootstrap.tracing());
-  cluster_manager_->setInitializedCb([this]() -> void { init_manager_.initialize(init_watcher_); });
-
-  Runtime::LoaderSingleton::get().initialize(*cluster_manager_);
-
-  for (auto& w : workers_) {
-    w->start();
-  }
-
   for (auto& w : workers_) {
     w->waitForCompletion();
   }
@@ -447,7 +466,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
   const auto& counters = Utility().mapCountersFromStore(
       store_root_, [](absl::string_view, uint64_t value) { return value > 0; });
   StatisticFactoryImpl statistic_factory(options_);
-  collector.addResult("global", mergeWorkerStatistics(workers), counters,
+  collector.addResult("global", mergeWorkerStatistics(workers_), counters,
                       total_execution_duration / workers_.size());
   return counters.find("sequencer.failed_terminations") == counters.end();
 }
