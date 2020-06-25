@@ -666,14 +666,13 @@ def _send_sigterm(process):
   process.terminate()
 
 
-def test_cancellation(http_test_server_fixture):
+def test_cancellation_with_infinite_duration(http_test_server_fixture):
   """
   Make sure that we can use signals to cancel execution.
   """
   args = [
       http_test_server_fixture.nighthawk_client_path, "--concurrency", "2",
-      http_test_server_fixture.getTestServerRootUri(), "--duration", "1000", "--output-format",
-      "json"
+      http_test_server_fixture.getTestServerRootUri(), "--no-duration", "--output-format", "json"
   ]
   client_process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   Thread(target=(lambda: _send_sigterm(client_process))).start()

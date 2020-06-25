@@ -232,6 +232,18 @@ TEST_F(OptionsImplTest, RequestSource) {
   EXPECT_TRUE(util(*(options_from_proto.toCommandLineOptions()), *cmd));
 }
 
+// We test --no-duration here and not in All above because it is exclusive to --duration.
+TEST_F(OptionsImplTest, NoDuration) {
+  Envoy::MessageUtil util;
+  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(
+      fmt::format("{} --no-duration {}", client_name_, good_test_uri_));
+  EXPECT_TRUE(options->noDuration());
+  // Check that our conversion to CommandLineOptionsPtr makes sense.
+  CommandLineOptionsPtr cmd = options->toCommandLineOptions();
+  OptionsImpl options_from_proto(*cmd);
+  EXPECT_TRUE(util(*(options_from_proto.toCommandLineOptions()), *cmd));
+}
+
 // This test covers --tls-context, which can't be tested at the same time as --transport-socket.
 // We test --tls-context here and not in AlmostAll above because it is mutually
 // exclusive with --transport-socket.
