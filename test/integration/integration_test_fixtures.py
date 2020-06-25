@@ -60,6 +60,7 @@ class IntegrationTestBase():
       parameters: Dictionary. Supply this to provide template parameter replacement values.
       grpc_service: NighthawkGrpcService instance or None. Set by startNighthawkGrpcService().  
       test_server: NighthawkTestServer instance, set during setUp().
+      nighthawk_client_path: String, path to the nighthawk_client binary.
     """
     super(IntegrationTestBase, self).__init__()
     assert ip_version != IpVersion.UNKNOWN
@@ -70,9 +71,9 @@ class IntegrationTestBase():
     self.parameters = {}
     self.grpc_service = None
     self.test_server = None
+    self.nighthawk_client_path = "nighthawk_client"
     self._nighthawk_test_server_path = "nighthawk_test_server"
     self._nighthawk_test_config_path = server_config
-    self._nighthawk_client_path = "nighthawk_client"
     self._nighthawk_service_path = "nighthawk_service"
     self._nighthawk_output_transform_path = "nighthawk_output_transform"
     self._socket_type = socket.AF_INET6 if ip_version == IpVersion.IPV6 else socket.AF_INET
@@ -102,9 +103,8 @@ class IntegrationTestBase():
       assert os.path.exists(
           self._nighthawk_test_server_path
       ), "Test server binary not found: '%s'" % self._nighthawk_test_server_path
-      assert os.path.exists(
-          self._nighthawk_client_path
-      ), "Nighthawk client binary not found: '%s'" % self.__nighthawk_client_path
+      assert os.path.exists(self.nighthawk_client_path
+                           ), "Nighthawk client binary not found: '%s'" % self.nighthawk_client_path
 
     self._test_id = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0].replace(
         "[", "_").replace("]", "").replace("/", "_")[5:]
@@ -225,10 +225,10 @@ class IntegrationTestBase():
     if os.getenv("NH_DOCKER_IMAGE", "") != "":
       args = [
           "docker", "run", "--network=host", "--rm",
-          os.getenv("NH_DOCKER_IMAGE"), self._nighthawk_client_path
+          os.getenv("NH_DOCKER_IMAGE"), self.nighthawk_client_path
       ] + args
     else:
-      args = [self._nighthawk_client_path] + args
+      args = [self.nighthawk_client_path] + args
     if self.ip_version == IpVersion.IPV6:
       args.append("--address-family v6")
     if as_json:
