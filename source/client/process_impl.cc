@@ -290,8 +290,11 @@ void ProcessImpl::createBootstrapConfiguration(envoy::config::bootstrap::v3::Boo
     cluster->set_name(fmt::format("{}", i));
     cluster->mutable_connect_timeout()->set_seconds(options_.timeout().count());
     cluster->mutable_max_requests_per_connection()->set_value(options_.maxRequestsPerConnection());
-    if (options_.h2() && options_.h2UseMultipleConnections()) {
-      cluster->mutable_http2_protocol_options()->mutable_max_concurrent_streams()->set_value(1);
+    if (options_.h2()) {
+      auto* cluster_http2_protocol_options = cluster->mutable_http2_protocol_options();
+      if (options_.h2UseMultipleConnections()) {
+        cluster_http2_protocol_options->mutable_max_concurrent_streams()->set_value(1);
+      }
     }
 
     auto thresholds = cluster->mutable_circuit_breakers()->add_thresholds();
@@ -306,11 +309,17 @@ void ProcessImpl::createBootstrapConfiguration(envoy::config::bootstrap::v3::Boo
 
     cluster->set_type(
         envoy::config::cluster::v3::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
+
+    auto* load_assignment = cluster->mutable_load_assignment();
+    load_assignment->set_cluster_name(cluster->name());
+    auto* endpoints = cluster->mutable_load_assignment()->add_endpoints();
     for (const UriPtr& uri : uris) {
-      auto* host = cluster->add_hidden_envoy_deprecated_hosts();
-      auto* socket_address = host->mutable_socket_address();
-      socket_address->set_address(uri->address()->ip()->addressAsString());
-      socket_address->set_port_value(uri->port());
+      auto* socket = endpoints->add_lb_endpoints()
+                         ->mutable_endpoint()
+                         ->mutable_address()
+                         ->mutable_socket_address();
+      socket->set_address(uri->address()->ip()->addressAsString());
+      socket->set_port_value(uri->port());
     }
     if (request_source_uri != nullptr) {
       addRequestSourceCluster(*request_source_uri, i, bootstrap);
@@ -325,10 +334,16 @@ void ProcessImpl::addTracingCluster(envoy::config::bootstrap::v3::Bootstrap& boo
   cluster->mutable_connect_timeout()->set_seconds(options_.timeout().count());
   cluster->set_type(
       envoy::config::cluster::v3::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
-  auto* host = cluster->add_hidden_envoy_deprecated_hosts();
-  auto* socket_address = host->mutable_socket_address();
-  socket_address->set_address(uri.address()->ip()->addressAsString());
-  socket_address->set_port_value(uri.port());
+  auto* load_assignment = cluster->mutable_load_assignment();
+  load_assignment->set_cluster_name(cluster->name());
+  auto* socket = cluster->mutable_load_assignment()
+                     ->add_endpoints()
+                     ->add_lb_endpoints()
+                     ->mutable_endpoint()
+                     ->mutable_address()
+                     ->mutable_socket_address();
+  socket->set_address(uri.address()->ip()->addressAsString());
+  socket->set_port_value(uri.port());
 }
 
 void ProcessImpl::setupTracingImplementation(envoy::config::bootstrap::v3::Bootstrap& bootstrap,
@@ -386,10 +401,17 @@ void ProcessImpl::addRequestSourceCluster(
   cluster->set_type(
       envoy::config::cluster::v3::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
   cluster->mutable_connect_timeout()->set_seconds(options_.timeout().count());
-  auto* host = cluster->add_hidden_envoy_deprecated_hosts();
-  auto* socket_address = host->mutable_socket_address();
-  socket_address->set_address(uri.address()->ip()->addressAsString());
-  socket_address->set_port_value(uri.port());
+
+  auto* load_assignment = cluster->mutable_load_assignment();
+  load_assignment->set_cluster_name(cluster->name());
+  auto* socket = cluster->mutable_load_assignment()
+                     ->add_endpoints()
+                     ->add_lb_endpoints()
+                     ->mutable_endpoint()
+                     ->mutable_address()
+                     ->mutable_socket_address();
+  socket->set_address(uri.address()->ip()->addressAsString());
+  socket->set_port_value(uri.port());
 }
 
 bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriPtr>& uris,
