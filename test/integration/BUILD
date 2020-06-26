@@ -11,13 +11,6 @@ envoy_package()
 
 py_library(
     name = "integration_test_base",
-    srcs = [
-        "common.py",
-        "integration_test_fixtures.py",
-        "nighthawk_grpc_service.py",
-        "nighthawk_test_server.py",
-        "utility.py",
-    ],
     data = [
         "configurations/nighthawk_http_origin.yaml",
         "configurations/nighthawk_https_origin.yaml",
@@ -29,6 +22,27 @@ py_library(
         "@envoy//test/config/integration/certs",
     ],
     deps = [
+        ":integration_test_base_lean",
+    ],
+)
+
+py_library(
+    name = "integration_test_base_lean",
+    srcs = [
+        "common.py",
+        "integration_test_fixtures.py",
+        "nighthawk_grpc_service.py",
+        "nighthawk_test_server.py",
+        "utility.py",
+    ],
+    data = [
+        "configurations/nighthawk_http_origin.yaml",
+        "configurations/nighthawk_https_origin.yaml",
+        "configurations/sni_origin.yaml",
+        "@envoy//test/config/integration/certs",
+    ],
+    deps = [
+        "@rules_python//python/runfiles",
         requirement("requests"),
         # The following are implied by 'request'.
         requirement("urllib3"),
@@ -42,15 +56,15 @@ py_library(
         requirement("pluggy"),
         requirement("zipp"),
         requirement("six"),
-        requirement("atomicwrites"),
         requirement("py"),
         requirement("more_itertools"),
         requirement("importlib_metadata"),
-        requirement("pathlib2"),
         requirement("packaging"),
         requirement("pytest-xdist"),
         requirement("execnet"),
         requirement("apipkg"),
+        requirement("wcwidth"),
+        requirement("pyyaml"),
     ],
 )
 
@@ -99,8 +113,6 @@ py_binary(
         ],
         "//conditions:default": [],
     }),
-    python_version = "PY3",
-    srcs_version = "PY3ONLY",
     deps = [
         ":test_connection_management_lib",
         ":test_grpc_service_lib",

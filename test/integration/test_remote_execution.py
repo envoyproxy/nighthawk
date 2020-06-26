@@ -2,7 +2,7 @@
 
 import pytest
 
-from test.integration.integration_test_fixtures import http_test_server_fixture
+from test.integration.integration_test_fixtures import (http_test_server_fixture, server_config)
 from test.integration.utility import *
 
 
