@@ -2,3 +2,4 @@ requests
 pytest
 pytest-dependency
 pytest-xdist
+pyyaml

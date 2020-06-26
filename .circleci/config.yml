@@ -41,6 +41,16 @@ jobs:
       - store_artifacts:
           path: /root/project/generated
           destination: /
+  benchmark:
+    docker:
+      - image: *envoy-build-image
+    resource_class: xlarge
+    steps:
+      - checkout
+      - run: ci/do_ci.sh benchmark_with_own_binaries
+      - store_artifacts:
+          path: /root/project/generated
+          destination: /
   asan:
     docker:
       - image: *envoy-build-image
@@ -83,5 +93,6 @@ workflows:
       - coverage
       - asan
       - tsan
+      - benchmark
       - format
       - docker
