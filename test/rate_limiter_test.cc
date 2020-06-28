@@ -115,8 +115,9 @@ TEST_F(RateLimiterTest, ScheduledStartingRateLimiterTestBadArgs) {
     EXPECT_CALL(unsafe_mock_rate_limiter, timeSource)
         .Times(AtLeast(1))
         .WillRepeatedly(ReturnRef(time_system));
-    EXPECT_THROW(ScheduledStartingRateLimiter(std::move(mock_rate_limiter), timing);
-                 , NighthawkException);
+    EXPECT_NO_THROW(ScheduledStartingRateLimiter(std::move(mock_rate_limiter), timing));
+    // TODO(XXX): once we can, verify a warning gets logged while running the line
+    // above.
   }
 }
 
@@ -165,8 +166,11 @@ TEST_F(RateLimiterTest, DistributionSamplingRateLimiterImplTest) {
   EXPECT_CALL(unsafe_mock_rate_limiter, timeSource)
       .Times(AtLeast(1))
       .WillRepeatedly(ReturnRef(time_system));
+  auto sampler = std::make_unique<UniformRandomDistributionSamplerImpl>(1);
+  EXPECT_EQ(sampler->min(), 0);
+  EXPECT_EQ(sampler->max(), 1);
   RateLimiterPtr rate_limiter = std::make_unique<DistributionSamplingRateLimiterImpl>(
-      std::make_unique<UniformRandomDistributionSamplerImpl>(1), std::move(mock_rate_limiter));
+      std::move(sampler), std::move(mock_rate_limiter));
 
   EXPECT_CALL(unsafe_mock_rate_limiter, tryAcquireOne).Times(tries).WillRepeatedly(Return(true));
   EXPECT_CALL(unsafe_mock_rate_limiter, releaseOne).Times(tries);
@@ -381,6 +385,10 @@ public:
       EXPECT_TRUE(rate_limiter->tryAcquireOne());
     }
     // Verify we acquired everything.
+    EXPECT_FALSE(rate_limiter->tryAcquireOne());
+    // Verify releaseOne works.
+    rate_limiter->releaseOne();
+    EXPECT_TRUE(rate_limiter->tryAcquireOne());
     EXPECT_FALSE(rate_limiter->tryAcquireOne());
     return acquisition_timings;
   }

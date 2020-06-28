@@ -66,6 +66,62 @@ admin:
       port_value: 8081
 ```
 
+## Response Options config
+
+The ResponseOptions proto can be used in the test-server filter config or passed in `x-nighthawk-test-server-config``
+request header.
+
+The following parameters are available:
+
+* `response_body_size` - number of 'a' characters repeated in the response body.
+* `response_headers` - list of headers to add to response. If `append` is set to
+  `true`, then the header is appended.
+* `echo_request_headers` - if set to `true`, then append the dump of request headers to the response
+  body.
+
+The response options could be used to test and debug proxy or server configuration, for
+example, to verify request headers that are added by intermediate proxy:
+
+```
+$ curl -6 -v [::1]:8080/nighthawk
+
+*   Trying ::1:8080...
+* TCP_NODELAY set
+* Connected to ::1 (::1) port 8080 (#0)
+> GET /nighthawk
+> Host: [::1]:8080
+> User-Agent: curl/7.68.0
+> Accept: */*
+>
+* Mark bundle as not supporting multiuse
+< HTTP/1.1 200 OK
+< content-length: 254
+< content-type: text/plain
+< foo: bar
+< foo: bar2
+< x-nh: 1
+< date: Wed, 03 Jun 2020 13:34:41 GMT
+< server: envoy
+< x-service: nighthawk_cluster
+< via: 1.1 envoy
+<
+aaaaaaaaaa
+Request Headers:
+':authority', '[::1]:8080'
+':path', '/nighthawk'
+':method', 'GET'
+':scheme', 'https'
+'user-agent', 'curl/7.68.0'
+'accept', '*/*'
+'x-forwarded-proto', 'http'
+'via', '1.1 google'
+'x-forwarded-for', '::1,::1'
+* Connection #0 to host ::1 left intact
+```
+
+This example shows that intermediate proxy has added `x-forwarded-proto` and
+`x-forwarded-for` request headers.
+
 ## Running the test server
 
 
@@ -92,7 +148,8 @@ bazel-bin/nighthawk_test_server  [--disable-extensions <string>]
 [--max-obj-name-len <uint64_t>]
 [--max-stats <uint64_t>] [--mode
 <string>] [--parent-shutdown-time-s
-<uint32_t>] [--drain-time-s <uint32_t>]
+<uint32_t>] [--drain-strategy <string>]
+[--drain-time-s <uint32_t>]
 [--file-flush-interval-msec <uint32_t>]
 [--service-zone <string>]
 [--service-node <string>]
@@ -113,7 +170,9 @@ bazel-bin/nighthawk_test_server  [--disable-extensions <string>]
 [--allow-unknown-fields]
 [--bootstrap-version <string>]
 [--config-yaml <string>] [-c <string>]
-[--concurrency <uint32_t>] [--base-id
+[--concurrency <uint32_t>]
+[--base-id-path <string>]
+[--use-dynamic-base-id] [--base-id
 <uint32_t>] [--] [--version] [-h]
 
 
@@ -146,6 +205,10 @@ normally) or 'validate' (validate configs and exit).
 
 --parent-shutdown-time-s <uint32_t>
 Hot restart parent shutdown time in seconds
+
+--drain-strategy <string>
+Hot restart drain sequence behaviour, one of 'gradual' (default) or
+'immediate'.
 
 --drain-time-s <uint32_t>
 Hot restart and LDS removal drain time in seconds
@@ -224,6 +287,13 @@ Path to configuration file
 
 --concurrency <uint32_t>
 # of worker threads to run
+
+--base-id-path <string>
+path to which the base ID is written
+
+--use-dynamic-base-id
+the server chooses a base ID dynamically. Supersedes a static base ID.
+May not be used when the restart epoch is non-zero.
 
 --base-id <uint32_t>
 base ID so that multiple envoys can run on the same host if needed

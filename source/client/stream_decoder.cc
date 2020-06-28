@@ -136,7 +136,7 @@ void StreamDecoder::finalizeActiveSpan() {
 }
 
 void StreamDecoder::setupForTracing() {
-  auto headers_copy = std::make_unique<Envoy::Http::RequestHeaderMapImpl>();
+  Envoy::Http::RequestHeaderMapPtr headers_copy = Envoy::Http::RequestHeaderMapImpl::create();
   Envoy::Http::HeaderMapImpl::copyFrom(*headers_copy, *request_headers_);
   Envoy::Tracing::Decision tracing_decision = {Envoy::Tracing::Reason::ClientForced, true};
   Envoy::Http::UUIDRequestIDExtension uuid_generator(random_generator_);

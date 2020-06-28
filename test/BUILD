@@ -1,10 +1,10 @@
-licenses(["notice"])  # Apache 2
-
 load(
     "@envoy//bazel:envoy_build_system.bzl",
     "envoy_cc_test",
     "envoy_package",
 )
+
+licenses(["notice"])  # Apache 2
 
 envoy_package()
 
@@ -105,6 +105,8 @@ envoy_cc_test(
         "test_data/output_formatter.medium.proto.gold",
         "test_data/output_formatter.txt.gold",
         "test_data/output_formatter.yaml.gold",
+        "test_data/percentile-column-overflow.json",
+        "test_data/percentile-column-overflow.txt.gold",
     ],
     repository = "@envoy",
     deps = [
@@ -264,6 +266,7 @@ envoy_cc_test(
     deps = [
         "//source/client:nighthawk_client_lib",
         "//source/client:nighthawk_service_lib",
+        "//source/client:output_transform_main_lib",
         "//source/common:nighthawk_common_lib",
         "//source/server:http_test_server_filter_lib",
         "//test/test_common:environment_lib",

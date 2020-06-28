@@ -1,7 +1,6 @@
 references:
-  envoy-build-image: &envoy-build-image
-    # Jan 9th, 2020
-    envoyproxy/envoy-build-ubuntu:04f06115b6ee7cfea74930353fb47a41149cbec3
+  envoy-build-image: &envoy-build-image # June 19th, 2020
+    envoyproxy/envoy-build-ubuntu:12b3d2c2ffa582507e5d6dd34632b2b990f1b195
 version: 2
 jobs:
   build:
@@ -39,6 +38,16 @@ jobs:
     steps:
       - checkout
       - run: ci/do_ci.sh coverage
+      - store_artifacts:
+          path: /root/project/generated
+          destination: /
+  benchmark:
+    docker:
+      - image: *envoy-build-image
+    resource_class: xlarge
+    steps:
+      - checkout
+      - run: ci/do_ci.sh benchmark_with_own_binaries
       - store_artifacts:
           path: /root/project/generated
           destination: /
@@ -80,9 +89,10 @@ workflows:
       - build
       - test
       - clang_tidy
-#      - test_with_valgrind
+      #      - test_with_valgrind
       - coverage
       - asan
       - tsan
+      - benchmark
       - format
       - docker

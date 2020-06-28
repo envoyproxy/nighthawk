@@ -99,14 +99,16 @@ public:
       }
     }
 
-    // If max_pending is set to 0, and we queued up work, we shouldn't be able to add more.
-    if (max_pending == 0 && amount > 0) {
+    const uint64_t max_in_flight_allowed = max_pending + connection_limit;
+    // If amount_of_request >= max_in_flight_allowed, we are not able to add more request.
+    if (amount >= max_in_flight_allowed) {
       EXPECT_FALSE(client_->tryStartRequest(f));
     }
 
     dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
-    // If max pending is set > 0, we expect in_flight to be equal to max_pending.
-    EXPECT_EQ(max_pending == 0 ? 1 : max_pending, inflight_response_count);
+    // Expect inflight_response_count to be equal to min(amount, max_in_flight_allowed).
+    EXPECT_EQ(amount < max_in_flight_allowed ? amount : max_in_flight_allowed,
+              inflight_response_count);
 
     for (Envoy::Http::ResponseDecoder* decoder : decoders_) {
       Envoy::Http::ResponseHeaderMapPtr response_headers{
@@ -160,6 +162,18 @@ public:
   RequestGenerator request_generator_;
 };
 
+TEST_F(BenchmarkClientHttpTest, BasicTestH1200) {
+  response_code_ = "200";
+  testBasicFunctionality(2, 3, 10);
+  EXPECT_EQ(5, getCounter("http_2xx"));
+}
+
+TEST_F(BenchmarkClientHttpTest, BasicTestH1300) {
+  response_code_ = "300";
+  testBasicFunctionality(0, 11, 10);
+  EXPECT_EQ(10, getCounter("http_3xx"));
+}
+
 TEST_F(BenchmarkClientHttpTest, BasicTestH1404) {
   response_code_ = "404";
   testBasicFunctionality(0, 1, 10);
@@ -191,25 +205,25 @@ TEST_F(BenchmarkClientHttpTest, StatusTrackingInOnComplete) {
       std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
       std::make_unique<StreamingStatistic>(), false, cluster_manager_, http_tracer_, "foo",
       request_generator_, true);
-  Envoy::Http::ResponseHeaderMapImpl header;
+  Envoy::Http::ResponseHeaderMapPtr header = Envoy::Http::ResponseHeaderMapImpl::create();
 
-  header.setStatus(1);
-  client_->onComplete(true, header);
-  header.setStatus(100);
-  client_->onComplete(true, header);
-  header.setStatus(200);
-  client_->onComplete(true, header);
-  header.setStatus(300);
-  client_->onComplete(true, header);
-  header.setStatus(400);
-  client_->onComplete(true, header);
-  header.setStatus(500);
-  client_->onComplete(true, header);
-  header.setStatus(600);
-  client_->onComplete(true, header);
-  header.setStatus(200);
+  header->setStatus(1);
+  client_->onComplete(true, *header);
+  header->setStatus(100);
+  client_->onComplete(true, *header);
+  header->setStatus(200);
+  client_->onComplete(true, *header);
+  header->setStatus(300);
+  client_->onComplete(true, *header);
+  header->setStatus(400);
+  client_->onComplete(true, *header);
+  header->setStatus(500);
+  client_->onComplete(true, *header);
+  header->setStatus(600);
+  client_->onComplete(true, *header);
+  header->setStatus(200);
   // Shouldn't be counted by status, should add to stream reset.
-  client_->onComplete(false, header);
+  client_->onComplete(false, *header);
 
   EXPECT_EQ(1, getCounter("http_2xx"));
   EXPECT_EQ(1, getCounter("http_3xx"));
@@ -260,7 +274,7 @@ TEST_F(BenchmarkClientHttpTest, BadContentLength) {
     return std::make_unique<RequestImpl>(header);
   };
 
-  // Note we we explicitly do not expect encodeData to be called.
+  EXPECT_CALL(stream_encoder_, encodeData(_, _)).Times(0);
   testBasicFunctionality(1, 1, 1);
   EXPECT_EQ(1, getCounter("http_2xx"));
 }

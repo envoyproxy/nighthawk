@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
 
+import json
 import logging
 import os
+import subprocess
 import sys
 import pytest
+import time
+from threading import Thread
 
 from test.integration.common import IpVersion
 from test.integration.integration_test_fixtures import (
     http_test_server_fixture, https_test_server_fixture, multi_http_test_server_fixture,
-    multi_https_test_server_fixture, sni_test_server_fixture)
+    multi_https_test_server_fixture, server_config)
 from test.integration.utility import *
 
 # TODO(oschaaf): we mostly verify stats observed from the client-side. Add expectations
@@ -30,7 +34,7 @@ def test_http_h1(http_test_server_fixture):
   assertCounterEqual(counters, "upstream_cx_rx_bytes_total", 3400)
   assertCounterEqual(counters, "upstream_cx_total", 1)
   assertCounterEqual(counters, "upstream_cx_tx_bytes_total",
-                     1400 if http_test_server_fixture.ip_version == IpVersion.IPV6 else 1500)
+                     1400 if http_test_server_fixture.ip_version == IpVersion.IPV6 else 1450)
   assertCounterEqual(counters, "upstream_rq_pending_total", 1)
   assertCounterEqual(counters, "upstream_rq_total", 25)
   assertCounterEqual(counters, "default.total_match_count", 1)
@@ -87,8 +91,8 @@ def test_http_h1_mini_stress_test_with_client_side_queueing(http_test_server_fix
       "10", "--connections", "1", "--duration", "100", "--termination-predicate",
       "benchmark.http_2xx:99", "--simple-warmup"
   ])
-  assertCounterEqual(counters, "upstream_rq_pending_total", 11)
-  assertCounterEqual(counters, "upstream_cx_overflow", 10)
+  assertCounterGreaterEqual(counters, "upstream_rq_pending_total", 11)
+  assertCounterGreaterEqual(counters, "upstream_cx_overflow", 10)
 
 
 def test_http_h1_mini_stress_test_without_client_side_queueing(http_test_server_fixture):
@@ -115,7 +119,7 @@ def test_http_h2_mini_stress_test_with_client_side_queueing(http_test_server_fix
       "--termination-predicate", "benchmark.http_2xx:99", "--simple-warmup"
   ])
   assertCounterEqual(counters, "upstream_rq_pending_total", 1)
-  assertCounterEqual(counters, "upstream_rq_pending_overflow", 10)
+  assertCounterGreaterEqual(counters, "upstream_rq_pending_overflow", 10)
 
 
 def test_http_h2_mini_stress_test_without_client_side_queueing(http_test_server_fixture):
@@ -200,6 +204,8 @@ def test_http_concurrency(http_test_server_fixture):
   assertCounterEqual(counters, "upstream_cx_http1_total", 4)
 
 
+@pytest.mark.parametrize('server_config',
+                         ["nighthawk/test/integration/configurations/nighthawk_https_origin.yaml"])
 def test_https_h1(https_test_server_fixture):
   """
   Runs the CLI configured to use HTTP/1 over https against our test server, and sanity
@@ -215,7 +221,7 @@ def test_https_h1(https_test_server_fixture):
   assertCounterEqual(counters, "upstream_cx_rx_bytes_total", 3400)
   assertCounterEqual(counters, "upstream_cx_total", 1)
   assertCounterEqual(counters, "upstream_cx_tx_bytes_total",
-                     1400 if https_test_server_fixture.ip_version == IpVersion.IPV6 else 1500)
+                     1400 if https_test_server_fixture.ip_version == IpVersion.IPV6 else 1450)
   assertCounterEqual(counters, "upstream_rq_pending_total", 1)
   assertCounterEqual(counters, "upstream_rq_total", 25)
   assertCounterEqual(counters, "ssl.ciphers.ECDHE-RSA-AES128-GCM-SHA256", 1)
@@ -232,6 +238,8 @@ def test_https_h1(https_test_server_fixture):
                                                       "http.ingress_http.downstream_rq_2xx"), 25)
 
 
+@pytest.mark.parametrize('server_config',
+                         ["nighthawk/test/integration/configurations/nighthawk_https_origin.yaml"])
 def test_https_h2(https_test_server_fixture):
   """
   Runs the CLI configured to use HTTP/2 (using https) against our test server, and sanity
@@ -261,6 +269,8 @@ def test_https_h2(https_test_server_fixture):
   assertEqual(len(counters), 17)
 
 
+@pytest.mark.parametrize('server_config',
+                         ["nighthawk/test/integration/configurations/nighthawk_https_origin.yaml"])
 def test_https_h2_multiple_connections(https_test_server_fixture):
   """
   Test that the experimental h2 pool uses multiple connections.
@@ -276,7 +286,7 @@ def test_https_h2_multiple_connections(https_test_server_fixture):
       "10"
   ])
   counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-  assertCounterEqual(counters, "benchmark.http_2xx", 100)
+  assertCounterGreaterEqual(counters, "benchmark.http_2xx", 100)
   # Empirical observation shows we may end up creating more then 10 connections.
   # This is stock Envoy h/2 pool behavior.
   assertCounterGreaterEqual(counters, "upstream_cx_http2_total", 10)
@@ -310,9 +320,11 @@ def _do_tls_configuration_test(https_test_server_fixture, cli_parameter, use_h2)
         https_test_server_fixture.getTestServerRootUri()
     ])
     counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-    assertCounterEqual(counters, "ssl.ciphers.%s" % cipher, 1)
+    assertCounterGreaterEqual(counters, "ssl.ciphers.%s" % cipher, 1)
 
 
+@pytest.mark.parametrize('server_config',
+                         ["nighthawk/test/integration/configurations/nighthawk_https_origin.yaml"])
 def test_https_h1_tls_context_configuration(https_test_server_fixture):
   """
   Verifies specifying tls cipher suites works with the h1 pool
@@ -320,6 +332,8 @@ def test_https_h1_tls_context_configuration(https_test_server_fixture):
   _do_tls_configuration_test(https_test_server_fixture, "--tls-context", use_h2=False)
 
 
+@pytest.mark.parametrize('server_config',
+                         ["nighthawk/test/integration/configurations/nighthawk_https_origin.yaml"])
 def test_https_h1_transport_socket_configuration(https_test_server_fixture):
   """
   Verifies specifying tls cipher suites via transport socket works with the h1 pool
@@ -328,6 +342,8 @@ def test_https_h1_transport_socket_configuration(https_test_server_fixture):
   _do_tls_configuration_test(https_test_server_fixture, "--transport-socket", use_h2=False)
 
 
+@pytest.mark.parametrize('server_config',
+                         ["nighthawk/test/integration/configurations/nighthawk_https_origin.yaml"])
 def test_https_h2_tls_context_configuration(https_test_server_fixture):
   """
   Verifies specifying tls cipher suites works with the h2 pool
@@ -335,6 +351,8 @@ def test_https_h2_tls_context_configuration(https_test_server_fixture):
   _do_tls_configuration_test(https_test_server_fixture, "--tls-context", use_h2=True)
 
 
+@pytest.mark.parametrize('server_config',
+                         ["nighthawk/test/integration/configurations/nighthawk_https_origin.yaml"])
 def test_https_h2_transport_socket_configuration(https_test_server_fixture):
   """
   Verifies specifying tls cipher suites via transport socket works with the h2 pool
@@ -342,6 +360,8 @@ def test_https_h2_transport_socket_configuration(https_test_server_fixture):
   _do_tls_configuration_test(https_test_server_fixture, "--transport-socket", use_h2=True)
 
 
+@pytest.mark.parametrize('server_config',
+                         ["nighthawk/test/integration/configurations/nighthawk_https_origin.yaml"])
 def test_https_prefetching(https_test_server_fixture):
   """
   Test we prefetch connections. We test for 1 second at 1 rps, which should
@@ -356,6 +376,8 @@ def test_https_prefetching(https_test_server_fixture):
   assertCounterEqual(counters, "upstream_cx_http1_total", 50)
 
 
+@pytest.mark.parametrize('server_config',
+                         ["nighthawk/test/integration/configurations/nighthawk_https_origin.yaml"])
 def test_https_log_verbosity(https_test_server_fixture):
   """
   Test that that the specified log verbosity level is respected.
@@ -511,6 +533,8 @@ def test_multiple_backends_http_h1(multi_http_test_server_fixture):
   assertBetweenInclusive(total_2xx, 24, 25)
 
 
+@pytest.mark.parametrize('server_config',
+                         ["nighthawk/test/integration/configurations/nighthawk_https_origin.yaml"])
 def test_multiple_backends_https_h1(multi_https_test_server_fixture):
   """
   Runs the CLI configured to use HTTP/1 with TLS against multiple test servers, and sanity
@@ -544,74 +568,79 @@ def test_multiple_backends_https_h1(multi_https_test_server_fixture):
   assertBetweenInclusive(total_2xx, 24, 25)
 
 
-def test_https_h1_sni(sni_test_server_fixture):
+@pytest.mark.parametrize('server_config',
+                         ["nighthawk/test/integration/configurations/sni_origin.yaml"])
+def test_https_h1_sni(https_test_server_fixture):
   """
   Tests SNI indication works on https/h1
   """
   # Verify success when we set the right host
-  parsed_json, _ = sni_test_server_fixture.runNighthawkClient([
-      sni_test_server_fixture.getTestServerRootUri(), "--rps", "100", "--duration", "100",
+  parsed_json, _ = https_test_server_fixture.runNighthawkClient([
+      https_test_server_fixture.getTestServerRootUri(), "--rps", "100", "--duration", "100",
       "--termination-predicate", "benchmark.http_2xx:2", "--request-header", "host: sni.com"
   ])
-  counters = sni_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
+  counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   assertCounterGreaterEqual(counters, "benchmark.http_2xx", 1)
   assertCounterGreaterEqual(counters, "upstream_cx_http1_total", 1)
   assertCounterGreaterEqual(counters, "ssl.handshake", 1)
 
   # Verify failure when we set no host (will get plain http)
-  parsed_json, _ = sni_test_server_fixture.runNighthawkClient(
-      [sni_test_server_fixture.getTestServerRootUri(), "--rps", "20", "--duration", "100"],
+  parsed_json, _ = https_test_server_fixture.runNighthawkClient(
+      [https_test_server_fixture.getTestServerRootUri(), "--rps", "20", "--duration", "100"],
       expect_failure=True)
 
   # Verify success when we use plain http and don't request the sni host
-  parsed_json, _ = sni_test_server_fixture.runNighthawkClient([
-      sni_test_server_fixture.getTestServerRootUri().replace("https://", "http://"), "--rps", "100",
-      "--duration", "20", "--termination-predicate", "benchmark.http_2xx:2"
+  parsed_json, _ = https_test_server_fixture.runNighthawkClient([
+      https_test_server_fixture.getTestServerRootUri().replace("https://", "http://"), "--rps",
+      "100", "--duration", "20", "--termination-predicate", "benchmark.http_2xx:2"
   ],
-                                                              expect_failure=False)
+                                                                expect_failure=False)
 
-  counters = sni_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
+  counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   assertCounterGreaterEqual(counters, "benchmark.http_2xx", 1)
   assertCounterGreaterEqual(counters, "upstream_cx_http1_total", 1)
   assertNotIn("ssl.handshake", counters)
 
 
-def test_https_h2_sni(sni_test_server_fixture):
+@pytest.mark.parametrize('server_config',
+                         ["nighthawk/test/integration/configurations/sni_origin.yaml"])
+def test_https_h2_sni(https_test_server_fixture):
   """
   Tests SNI indication works on https/h1
   """
   # Verify success when we set the right host
-  parsed_json, _ = sni_test_server_fixture.runNighthawkClient([
-      sni_test_server_fixture.getTestServerRootUri(), "--rps", "100", "--duration", "100",
+  parsed_json, _ = https_test_server_fixture.runNighthawkClient([
+      https_test_server_fixture.getTestServerRootUri(), "--rps", "100", "--duration", "100",
       "--termination-predicate", "benchmark.http_2xx:2", "--request-header", ":authority: sni.com",
       "--h2"
   ])
-  counters = sni_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
+  counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   assertCounterGreaterEqual(counters, "benchmark.http_2xx", 1)
   assertCounterGreaterEqual(counters, "upstream_cx_http2_total", 1)
   assertCounterEqual(counters, "ssl.handshake", 1)
 
   # Verify success when we set the right host
-  parsed_json, _ = sni_test_server_fixture.runNighthawkClient([
-      sni_test_server_fixture.getTestServerRootUri(), "--rps", "100", "--duration", "100",
+  parsed_json, _ = https_test_server_fixture.runNighthawkClient([
+      https_test_server_fixture.getTestServerRootUri(), "--rps", "100", "--duration", "100",
       "--termination-predicate", "benchmark.http_2xx:2", "--request-header", "host: sni.com", "--h2"
   ])
-  counters = sni_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
+  counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   assertCounterGreaterEqual(counters, "benchmark.http_2xx", 1)
   assertCounterGreaterEqual(counters, "upstream_cx_http2_total", 1)
   assertCounterEqual(counters, "ssl.handshake", 1)
 
   # Verify failure when we set no host (will get plain http)
-  parsed_json, _ = sni_test_server_fixture.runNighthawkClient(
-      [sni_test_server_fixture.getTestServerRootUri(), "--rps", "100", "--duration", "100", "--h2"],
-      expect_failure=True)
+  parsed_json, _ = https_test_server_fixture.runNighthawkClient([
+      https_test_server_fixture.getTestServerRootUri(), "--rps", "100", "--duration", "100", "--h2"
+  ],
+                                                                expect_failure=True)
 
   # Verify failure when we provide both host and :authority: (will get plain http)
-  parsed_json, _ = sni_test_server_fixture.runNighthawkClient([
-      sni_test_server_fixture.getTestServerRootUri(), "--rps", "100", "--duration", "100", "--h2",
+  parsed_json, _ = https_test_server_fixture.runNighthawkClient([
+      https_test_server_fixture.getTestServerRootUri(), "--rps", "100", "--duration", "100", "--h2",
       "--request-header", "host: sni.com", "--request-header", ":authority: sni.com"
   ],
-                                                              expect_failure=True)
+                                                                expect_failure=True)
 
 
 @pytest.fixture(scope="function", params=[1, 25])
@@ -652,3 +681,47 @@ def test_http_request_release_timing(http_test_server_fixture, qps_parameterizat
         int(global_histograms["benchmark_http_client.queue_to_connect"]["count"]), total_requests)
 
     assertCounterEqual(counters, "benchmark.http_2xx", (total_requests))
+
+
+def _send_sigterm(process):
+  # Sleep for a while, under tsan the client needs a lot of time
+  # to start up. 10 seconds has been determined to work through
+  # emperical observation.
+  time.sleep(10)
+  process.terminate()
+
+
+def test_cancellation_with_infinite_duration(http_test_server_fixture):
+  """
+  Make sure that we can use signals to cancel execution.
+  """
+  args = [
+      http_test_server_fixture.nighthawk_client_path, "--concurrency", "2",
+      http_test_server_fixture.getTestServerRootUri(), "--no-duration", "--output-format", "json"
+  ]
+  client_process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  Thread(target=(lambda: _send_sigterm(client_process))).start()
+  stdout, stderr = client_process.communicate()
+  client_process.wait()
+  output = stdout.decode('utf-8')
+  assertEqual(client_process.returncode, 0)
+  parsed_json = json.loads(output)
+  counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
+  assertCounterEqual(counters, "graceful_stop_requested", 2)
+  assertCounterGreaterEqual(counters, "benchmark.http_2xx", 1)
+
+
+def _run_client_with_args(args):
+  return run_binary_with_args("nighthawk_client", args)
+
+
+def test_client_help():
+  (exit_code, output) = _run_client_with_args("--help")
+  assertEqual(exit_code, 0)
+  assertIn("USAGE", output)
+
+
+def test_client_bad_arg():
+  (exit_code, output) = _run_client_with_args("127.0.0.1 --foo")
+  assertEqual(exit_code, 1)
+  assertIn("PARSE ERROR: Argument: --foo", output)

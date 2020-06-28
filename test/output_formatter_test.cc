@@ -192,6 +192,13 @@ TEST_F(MediumOutputCollectorTest, FortioFormatter) {
                         "test/test_data/output_formatter.medium.fortio.gold");
 }
 
+TEST_F(MediumOutputCollectorTest, ConsoleOutputFormatter) {
+  const auto input_proto = loadProtoFromFile("test/test_data/percentile-column-overflow.json");
+  ConsoleOutputFormatterImpl formatter;
+  expectEqualToGoldFile(formatter.formatProto(input_proto),
+                        "test/test_data/percentile-column-overflow.txt.gold");
+}
+
 class StatidToNameTest : public Test {};
 
 TEST_F(StatidToNameTest, TestTranslations) {

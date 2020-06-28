@@ -59,6 +59,31 @@ TEST_F(OptionsImplTest, BogusRequestSource) {
                           MalformedArgvException, "Invalid replay source URI");
 }
 
+TEST_F(OptionsImplTest, NoDurationAndDurationAreMutuallyExclusive) {
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                              "{} --duration 5 --no-duration http://foo", client_name_)),
+                          MalformedArgvException, "mutually exclusive");
+}
+
+TEST_F(OptionsImplTest, DurationAndNoDurationSanity) {
+  std::unique_ptr<OptionsImpl> options =
+      TestUtility::createOptionsImpl(fmt::format("{} http://foo", client_name_));
+  EXPECT_FALSE(options->noDuration());
+  EXPECT_EQ(5s, options->duration());
+
+  CommandLineOptionsPtr cmd = options->toCommandLineOptions();
+  EXPECT_FALSE(cmd->has_no_duration());
+  ASSERT_TRUE(cmd->has_duration());
+  EXPECT_EQ(5, cmd->duration().seconds());
+
+  options =
+      TestUtility::createOptionsImpl(fmt::format("{} --no-duration http://foo", client_name_));
+  EXPECT_TRUE(options->noDuration());
+  cmd = options->toCommandLineOptions();
+  ASSERT_TRUE(cmd->has_no_duration());
+  EXPECT_TRUE(cmd->no_duration().value());
+}
+
 // This test should cover every option we offer, except some mutually exclusive ones that
 // have separate tests.
 TEST_F(OptionsImplTest, AlmostAll) {
@@ -207,6 +232,18 @@ TEST_F(OptionsImplTest, RequestSource) {
   EXPECT_TRUE(util(*(options_from_proto.toCommandLineOptions()), *cmd));
 }
 
+// We test --no-duration here and not in All above because it is exclusive to --duration.
+TEST_F(OptionsImplTest, NoDuration) {
+  Envoy::MessageUtil util;
+  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(
+      fmt::format("{} --no-duration {}", client_name_, good_test_uri_));
+  EXPECT_TRUE(options->noDuration());
+  // Check that our conversion to CommandLineOptionsPtr makes sense.
+  CommandLineOptionsPtr cmd = options->toCommandLineOptions();
+  OptionsImpl options_from_proto(*cmd);
+  EXPECT_TRUE(util(*(options_from_proto.toCommandLineOptions()), *cmd));
+}
+
 // This test covers --tls-context, which can't be tested at the same time as --transport-socket.
 // We test --tls-context here and not in AlmostAll above because it is mutually
 // exclusive with --transport-socket.
@@ -345,7 +382,7 @@ TEST_P(OptionsImplIntTestNonZeroable, NonZeroableOptions) {
 }
 
 INSTANTIATE_TEST_SUITE_P(NonZeroableIntOptionTests, OptionsImplIntTestNonZeroable,
-                         Values("rps", "connections", "duration", "max-active-requests",
+                         Values("rps", "connections", "max-active-requests",
                                 "max-requests-per-connection"));
 
 // Check standard expectations for any integer values options we offer.

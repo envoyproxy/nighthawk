@@ -46,7 +46,18 @@ class ClusterManagerFactory;
  */
 class ProcessImpl : public Process, public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
-  ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system);
+  /**
+   * Instantiates a ProcessImpl
+   * @param options provides the options configuration to be used.
+   * @param time_system provides the Envoy::Event::TimeSystem implementation that will be used.
+   * @param process_wide optional parameter which can be used to pass a pre-setup reference to
+   * an active Envoy::ProcessWide instance. ProcessImpl will add a reference to this when passed,
+   * and hold on that that throughout its lifetime.
+   * If this parameter is not supplied, ProcessImpl will contruct its own Envoy::ProcessWide
+   * instance.
+   */
+  ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
+              const std::shared_ptr<Envoy::ProcessWide>& process_wide = nullptr);
   ~ProcessImpl() override;
 
   /**
@@ -69,6 +80,8 @@ public:
    */
   void shutdown() override;
 
+  bool requestExecutionCancellation() override;
+
 private:
   /**
    * @brief Creates a cluster for usage by a remote request source.
@@ -88,7 +101,13 @@ private:
   void maybeCreateTracingDriver(const envoy::config::trace::v3::Tracing& configuration);
 
   void configureComponentLogLevels(spdlog::level::level_enum level);
-  const std::vector<ClientWorkerPtr>& createWorkers(const uint32_t concurrency);
+  /**
+   * Prepare the ProcessImpl instance by creating and configuring the workers it needs for execution
+   * of the load test.
+   *
+   * @param concurrency the amount of workers that should be created.
+   */
+  void createWorkers(const uint32_t concurrency);
   std::vector<StatisticPtr> vectorizeStatisticPtrMap(const StatisticPtrMap& statistics) const;
   std::vector<StatisticPtr>
   mergeWorkerStatistics(const std::vector<ClientWorkerPtr>& workers) const;
@@ -96,7 +115,7 @@ private:
   bool runInternal(OutputCollector& collector, const std::vector<UriPtr>& uris,
                    const UriPtr& request_source_uri, const UriPtr& tracing_uri);
 
-  Envoy::ProcessWide process_wide_;
+  std::shared_ptr<Envoy::ProcessWide> process_wide_;
   Envoy::PlatformImpl platform_impl_;
   Envoy::Event::TimeSystem& time_system_;
   Envoy::Stats::SymbolTableImpl symbol_table_;
@@ -134,6 +153,8 @@ private:
   Envoy::Server::ValidationAdmin admin_;
   Envoy::ProtobufMessage::ProdValidationContextImpl validation_context_;
   bool shutdown_{true};
+  Envoy::Thread::MutexBasicLockable workers_lock_;
+  bool cancelled_{false};
 };
 
 } // namespace Client

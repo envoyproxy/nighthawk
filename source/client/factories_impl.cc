@@ -17,6 +17,8 @@
 #include "client/output_collector_impl.h"
 #include "client/output_formatter_impl.h"
 
+using namespace std::chrono_literals;
+
 namespace Nighthawk {
 namespace Client {
 
@@ -118,7 +120,7 @@ RequestSourcePtr
 RequestSourceFactoryImpl::create(const Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                                  Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
                                  absl::string_view service_cluster_name) const {
-  Envoy::Http::RequestHeaderMapPtr header = std::make_unique<Envoy::Http::RequestHeaderMapImpl>();
+  Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
   if (options_.uri().has_value()) {
     // We set headers based on the URI, but we don't have all the prerequisites to call the
     // resolver to validate the address at this stage. Resolving is performed during a later stage
@@ -172,15 +174,24 @@ TerminationPredicateFactoryImpl::TerminationPredicateFactoryImpl(const Options& 
 TerminationPredicatePtr
 TerminationPredicateFactoryImpl::create(Envoy::TimeSource& time_source, Envoy::Stats::Scope& scope,
                                         const Envoy::MonotonicTime scheduled_starting_time) const {
-  TerminationPredicatePtr duration_predicate = std::make_unique<DurationTerminationPredicateImpl>(
-      time_source, options_.duration(), scheduled_starting_time);
-  TerminationPredicate* current_predicate = duration_predicate.get();
+  // We'll always link a predicate which checks for requests to cancel.
+  TerminationPredicatePtr root_predicate =
+      std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
+          scope.counterFromString("graceful_stop_requested"), 0,
+          TerminationPredicate::Status::TERMINATE);
+
+  TerminationPredicate* current_predicate = root_predicate.get();
+  if (!options_.noDuration()) {
+    current_predicate = &current_predicate->link(std::make_unique<DurationTerminationPredicateImpl>(
+        time_source, options_.duration(), scheduled_starting_time));
+  }
+
   current_predicate = linkConfiguredPredicates(*current_predicate, options_.failurePredicates(),
                                                TerminationPredicate::Status::FAIL, scope);
   linkConfiguredPredicates(*current_predicate, options_.terminationPredicates(),
                            TerminationPredicate::Status::TERMINATE, scope);
 
-  return duration_predicate;
+  return root_predicate;
 }
 
 TerminationPredicate* TerminationPredicateFactoryImpl::linkConfiguredPredicates(

@@ -2,7 +2,7 @@
 
 import pytest
 
-from test.integration.integration_test_fixtures import http_test_server_fixture
+from test.integration.integration_test_fixtures import (http_test_server_fixture, server_config)
 from test.integration.utility import *
 
 
@@ -18,13 +18,22 @@ def test_remote_execution_basics(http_test_server_fixture):
       "%s:%s" % (http_test_server_fixture.grpc_service.server_ip,
                  http_test_server_fixture.grpc_service.server_port)
   ]
-  parsed_json, _ = http_test_server_fixture.runNighthawkClient(args)
-  counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-  assertCounterEqual(counters, "benchmark.http_2xx", 25)
+  repeats = 3
+  for i in range(repeats):
+    parsed_json, _ = http_test_server_fixture.runNighthawkClient(args)
+    counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
+    assertCounterGreaterEqual(counters, "benchmark.http_2xx", 25)
+
+  http_test_server_fixture.grpc_service.stop()
+  # Ensure the gRPC service logs looks right. Specifically these logs ought to have sentinels
+  # indicative of the right number of executions. (Avoids regression of #289).
+  assertEqual(
+      repeats,
+      sum("Starting 1 threads / event loops" in line
+          for line in http_test_server_fixture.grpc_service.log_lines))
 
   # As a control step, prove we are actually performing remote execution: re-run the command without an
   # operational gRPC service. That ought to fail.
-  http_test_server_fixture.grpc_service.stop()
   http_test_server_fixture.runNighthawkClient(args, expect_failure=True)
 
 

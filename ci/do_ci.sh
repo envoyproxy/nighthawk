@@ -1,9 +1,17 @@
 #!/bin/bash
 
-set -e
+set -eo pipefail
+set +x
+set -u
 
-export BUILDIFIER_BIN="/usr/local/bin/buildifier"
-export BUILDOZER_BIN="/usr/local/bin/buildozer"
+export BUILDIFIER_BIN="${BUILDIFIER_BIN:=/usr/local/bin/buildifier}"
+export BUILDOZER_BIN="${BUILDOZER_BIN:=/usr/local/bin/buildozer}"
+export NUM_CPUS=${NUM_CPUS:=$(grep -c ^processor /proc/cpuinfo)}
+export CIRCLECI=${CIRCLECI:="")}
+export BAZEL_EXTRA_TEST_OPTIONS=${BAZEL_EXTRA_TEST_OPTIONS:=""}
+export BAZEL_OPTIONS=${BAZEL_OPTIONS:=""}
+export BAZEL_BUILD_EXTRA_OPTIONS=${BAZEL_BUILD_EXTRA_OPTIONS:=""}
+export SRCDIR=${SRCDIR:="${PWD}"}
 
 function do_build () {
     bazel build $BAZEL_BUILD_OPTIONS --verbose_failures=true //:nighthawk
@@ -31,14 +39,13 @@ function do_clang_tidy() {
 }
 
 function do_coverage() {
+    export TEST_TARGETS="//test/..."
     echo "bazel coverage build with tests ${TEST_TARGETS}"
 
     # Reduce the amount of memory Bazel tries to use to prevent it from launching too many subprocesses.
     # This should prevent the system from running out of memory and killing tasks. See discussion on
     # https://github.com/envoyproxy/envoy/pull/5611.
     [ -z "$CIRCLECI" ] || export BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} --local_ram_resources=12288"
-
-    export TEST_TARGETS="//test/..."
     test/run_nighthawk_bazel_coverage.sh ${TEST_TARGETS}
     exit 0
 }
@@ -90,6 +97,36 @@ function do_tsan() {
     run_bazel test ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-tsan //test/...
 }
 
+function cleanup_benchmark_artifacts {
+    # TODO(oschaaf): we clean the tmp dir above from uninteresting stuff
+    # that crept into the tmp/output directory. The cruft gets in there because
+    # other tooling also responds to the TMPDIR environment variable, which in retrospect
+    # was a bad choice.
+    # Consider using a different environment variable for the benchmark tooling
+    # to use for this.
+    size=${#TMPDIR}
+    if [ $size -gt 4 ] && [ -d "${TMPDIR}" ]; then
+        rm -rf ${TMPDIR}/tmp.*
+    fi
+}
+
+function do_benchmark_with_own_binaries() {
+    echo "Running benchmark framework with own binaries"
+    cd "${SRCDIR}"
+    # Benchmark artifacts will be dropped into this directory:
+    export TMPDIR="${SRCDIR}/generated"
+    mkdir -p "${TMPDIR}"
+    trap cleanup_benchmark_artifacts EXIT
+    run_bazel test ${BAZEL_TEST_OPTIONS} --test_summary=detailed \
+        --test_arg=--log-cli-level=info \
+        --test_env=HEAPPROFILE= \
+        --test_env=HEAPCHECK= \
+        --compilation_mode=opt \
+        --cxxopt=-g \
+        --cxxopt=-ggdb3 \
+        //benchmarks:*
+}
+
 function do_check_format() {
     echo "check_format..."
     cd "${SRCDIR}"
@@ -112,8 +149,6 @@ function do_fix_format() {
     ./tools/check_format.sh fix
     ./tools/format_python_tools.sh fix
 }
-
-[ -z "${NUM_CPUS}" ] && export NUM_CPUS=`grep -c ^processor /proc/cpuinfo`
 
 if [ -n "$CIRCLECI" ]; then
     if [[ -f "${HOME:-/root}/.gitconfig" ]]; then
@@ -159,7 +194,6 @@ export BAZEL_BUILD_OPTIONS=" \
 export BAZEL_TEST_OPTIONS="${BAZEL_BUILD_OPTIONS} --test_env=HOME --test_env=PYTHONUSERBASE \
 --test_env=UBSAN_OPTIONS=print_stacktrace=1 \
 --cache_test_results=no --test_output=all ${BAZEL_EXTRA_TEST_OPTIONS}"
-[[ -z "${SRCDIR}" ]] && SRCDIR="${PWD}"
 
 setup_clang_toolchain
 export CLANG_FORMAT=clang-format
@@ -209,8 +243,12 @@ case "$1" in
         do_fix_format
         exit 0
     ;;
+    benchmark_with_own_binaries)
+        do_benchmark_with_own_binaries
+        exit 0
+    ;;
     *)
-        echo "must be one of [build,test,clang_tidy,test_with_valgrind,coverage,asan,tsan,docker,check_format,fix_format]"
+        echo "must be one of [build,test,clang_tidy,test_with_valgrind,coverage,asan,tsan,benchmark_with_own_binaries,docker,check_format,fix_format]"
         exit 1
     ;;
 esac

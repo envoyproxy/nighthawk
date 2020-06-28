@@ -57,7 +57,7 @@ ScheduledStartingRateLimiter::ScheduledStartingRateLimiter(
     : ForwardingRateLimiterImpl(std::move(rate_limiter)),
       scheduled_starting_time_(scheduled_starting_time) {
   if (timeSource().monotonicTime() >= scheduled_starting_time_) {
-    throw NighthawkException("Scheduled starting time needs to be in the future");
+    ENVOY_LOG(error, "Scheduled starting time exceeded. This may cause unintended bursty traffic.");
   }
 }
 
@@ -83,8 +83,7 @@ void ScheduledStartingRateLimiter::releaseOne() {
 }
 
 LinearRateLimiter::LinearRateLimiter(Envoy::TimeSource& time_source, const Frequency frequency)
-    : RateLimiterBaseImpl(time_source), acquireable_count_(0), acquired_count_(0),
-      frequency_(frequency) {
+    : RateLimiterBaseImpl(time_source), frequency_(frequency) {
   if (frequency.value() <= 0) {
     throw NighthawkException(fmt::format("frequency must be <= 0, value: {}", frequency.value()));
   }

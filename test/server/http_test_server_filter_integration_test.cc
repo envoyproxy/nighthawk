@@ -59,16 +59,16 @@ public:
     Envoy::Http::RequestEncoder& encoder = client.newStream(*response);
     encoder.getStream().addCallbacks(*response);
 
-    Envoy::Http::RequestHeaderMapImpl headers;
-    headers.setMethod(method);
-    headers.setPath(url);
-    headers.setHost(host);
-    headers.setScheme(Envoy::Http::Headers::get().SchemeValues.Http);
+    auto headers = Envoy::Http::RequestHeaderMapImpl::create();
+    headers->setMethod(method);
+    headers->setPath(url);
+    headers->setHost(host);
+    headers->setScheme(Envoy::Http::Headers::get().SchemeValues.Http);
     if (!content_type.empty()) {
-      headers.setContentType(content_type);
+      headers->setContentType(content_type);
     }
-    request_header_delegate(headers);
-    encoder.encodeHeaders(headers, body.empty());
+    request_header_delegate(*headers);
+    encoder.encodeHeaders(*headers, body.empty());
     if (!body.empty()) {
       Envoy::Buffer::OwnedImpl body_buffer(body);
       encoder.encodeData(body_buffer, true);
@@ -123,7 +123,8 @@ public:
   void initialize() override {
     config_helper_.addFilter(R"EOF(
 name: test-server
-config:
+typed_config:
+  "@type": type.googleapis.com/nighthawk.server.ResponseOptions
   response_body_size: 10
   response_headers:
   - { header: { key: "x-supplied-by", value: "nighthawk-test-server"} }
@@ -187,6 +188,29 @@ TEST_P(HttpTestServerIntegrationTest, TestHeaderConfig) {
   EXPECT_EQ("bar2",
             response->headers().get(Envoy::Http::LowerCaseString("foo"))->value().getStringView());
   EXPECT_EQ(std::string(10, 'a'), response->body());
+}
+
+TEST_P(HttpTestServerIntegrationTest, TestEchoHeaders) {
+  for (auto unique_header : {"one", "two", "three"}) {
+    Envoy::BufferingStreamDecoderPtr response = makeSingleRequest(
+        lookupPort("http"), "GET", "/somepath", "", downstream_protocol_, version_, "foo.com", "",
+        [unique_header](Envoy::Http::RequestHeaderMapImpl& request_headers) {
+          request_headers.addCopy(Envoy::Http::LowerCaseString("gray"), "pidgeon");
+          request_headers.addCopy(Envoy::Http::LowerCaseString("red"), "fox");
+          request_headers.addCopy(Envoy::Http::LowerCaseString("unique_header"), unique_header);
+          request_headers.addCopy(
+              Nighthawk::Server::TestServer::HeaderNames::get().TestServerConfig,
+              "{echo_request_headers: true}");
+        });
+    ASSERT_TRUE(response->complete());
+    EXPECT_EQ("200", response->headers().Status()->value().getStringView());
+    EXPECT_THAT(response->body(), HasSubstr(R"(':authority', 'foo.com')"));
+    EXPECT_THAT(response->body(), HasSubstr(R"(':path', '/somepath')"));
+    EXPECT_THAT(response->body(), HasSubstr(R"(':method', 'GET')"));
+    EXPECT_THAT(response->body(), HasSubstr(R"('gray', 'pidgeon')"));
+    EXPECT_THAT(response->body(), HasSubstr(R"('red', 'fox')"));
+    EXPECT_THAT(response->body(), HasSubstr(unique_header));
+  }
 }
 
 class HttpTestServerIntegrationNoConfigTest : public HttpTestServerIntegrationTestBase {
