@@ -10,21 +10,26 @@ namespace Nighthawk {
 namespace Server {
 
 // Basically this is left in as a placeholder for further configuration.
-class HttpTestServerDecoderFilterConfig {
+class HttpDynamicDelayDecoderFilterConfig {
 public:
-  HttpTestServerDecoderFilterConfig(nighthawk::server::ResponseOptions proto_config);
+  HttpDynamicDelayDecoderFilterConfig(nighthawk::server::ResponseOptions proto_config,
+                                      Envoy::Stats::Scope& stats_scope);
   const nighthawk::server::ResponseOptions& server_config() { return server_config_; }
+
+  // Can't const this because of using gaugeFromString()
+  Envoy::Stats::Scope& statsScope() { return stats_scope_; }
 
 private:
   const nighthawk::server::ResponseOptions server_config_;
+  Envoy::Stats::Scope& stats_scope_;
 };
 
-using HttpTestServerDecoderFilterConfigSharedPtr =
-    std::shared_ptr<HttpTestServerDecoderFilterConfig>;
+using HttpDynamicDelayDecoderFilterConfigSharedPtr =
+    std::shared_ptr<HttpDynamicDelayDecoderFilterConfig>;
 
-class HttpTestServerDecoderFilter : public Envoy::Http::StreamDecoderFilter {
+class HttpDynamicDelayDecoderFilter : public Envoy::Http::StreamDecoderFilter {
 public:
-  HttpTestServerDecoderFilter(HttpTestServerDecoderFilterConfigSharedPtr);
+  HttpDynamicDelayDecoderFilter(HttpDynamicDelayDecoderFilterConfigSharedPtr);
 
   // Http::StreamFilterBase
   void onDestroy() override;
@@ -36,12 +41,10 @@ public:
   void setDecoderFilterCallbacks(Envoy::Http::StreamDecoderFilterCallbacks&) override;
 
 private:
-  void sendReply();
-  const HttpTestServerDecoderFilterConfigSharedPtr config_;
+  const HttpDynamicDelayDecoderFilterConfigSharedPtr config_;
   Envoy::Http::StreamDecoderFilterCallbacks* decoder_callbacks_;
   nighthawk::server::ResponseOptions base_config_;
   absl::optional<std::string> error_message_;
-  absl::optional<std::string> request_headers_dump_;
 };
 
 } // namespace Server
