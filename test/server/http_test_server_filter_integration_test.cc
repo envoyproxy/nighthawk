@@ -7,6 +7,7 @@
 #include "api/server/response_options.pb.h"
 #include "api/server/response_options.pb.validate.h"
 
+#include "server/common.h"
 #include "server/http_test_server_filter.h"
 
 #include "gtest/gtest.h"
@@ -320,11 +321,11 @@ TEST_F(HttpTestServerDecoderFilterTest, HeaderMerge) {
   EXPECT_EQ(false, options.response_headers(0).append().value());
 
   Envoy::Http::TestResponseHeaderMapImpl header_map{{":status", "200"}, {"foo", "bar"}};
-  f.applyConfigToResponseHeaders(header_map, options);
+  Server::Utility::applyConfigToResponseHeaders(header_map, options);
   EXPECT_TRUE(Envoy::TestUtility::headerMapEqualIgnoreOrder(
       header_map, Envoy::Http::TestResponseHeaderMapImpl{{":status", "200"}, {"foo", "bar1"}}));
 
-  EXPECT_TRUE(f.mergeJsonConfig(
+  EXPECT_TRUE(Server::Utility::mergeJsonConfig(
       R"({response_headers: [ { header: { key: "foo", value: "bar2"}, append: false } ]})", options,
       error_message));
   EXPECT_EQ(absl::nullopt, error_message);
@@ -334,11 +335,11 @@ TEST_F(HttpTestServerDecoderFilterTest, HeaderMerge) {
   EXPECT_EQ("bar2", options.response_headers(1).header().value());
   EXPECT_EQ(false, options.response_headers(1).append().value());
 
-  f.applyConfigToResponseHeaders(header_map, options);
+  Server::Utility::applyConfigToResponseHeaders(header_map, options);
   EXPECT_TRUE(Envoy::TestUtility::headerMapEqualIgnoreOrder(
       header_map, Envoy::Http::TestRequestHeaderMapImpl{{":status", "200"}, {"foo", "bar2"}}));
 
-  EXPECT_TRUE(f.mergeJsonConfig(
+  EXPECT_TRUE(Server::Utility::mergeJsonConfig(
       R"({response_headers: [ { header: { key: "foo2", value: "bar3"}, append: true } ]})", options,
       error_message));
   EXPECT_EQ(absl::nullopt, error_message);
@@ -348,12 +349,12 @@ TEST_F(HttpTestServerDecoderFilterTest, HeaderMerge) {
   EXPECT_EQ("bar3", options.response_headers(2).header().value());
   EXPECT_EQ(true, options.response_headers(2).append().value());
 
-  f.applyConfigToResponseHeaders(header_map, options);
+  Server::Utility::applyConfigToResponseHeaders(header_map, options);
   EXPECT_TRUE(Envoy::TestUtility::headerMapEqualIgnoreOrder(
       header_map, Envoy::Http::TestResponseHeaderMapImpl{
                       {":status", "200"}, {"foo", "bar2"}, {"foo2", "bar3"}}));
 
-  EXPECT_FALSE(f.mergeJsonConfig(kBadJson, options, error_message));
+  EXPECT_FALSE(Server::Utility::mergeJsonConfig(kBadJson, options, error_message));
   EXPECT_EQ("Error merging json config: Unable to parse JSON as proto (INVALID_ARGUMENT:Unexpected "
             "token.\nbad_json\n^): bad_json",
             error_message);

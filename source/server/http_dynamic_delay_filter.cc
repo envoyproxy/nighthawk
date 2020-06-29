@@ -41,16 +41,16 @@ HttpDynamicDelayDecoderFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& head
   absl::optional<int64_t> delay;
   if (base_config_.has_static_delay()) {
     delay = Envoy::Protobuf::util::TimeUtil::DurationToMilliseconds(base_config_.static_delay());
-  } else if (base_config_.has_stats_based_delay()) {
-    auto& stats_based_delay = base_config_.stats_based_delay();
-    const std::string guage_name = stats_based_delay.guage_name();
+  } else if (base_config_.has_guage_based_delay()) {
+    auto& guage_based_delay = base_config_.guage_based_delay();
+    const std::string guage_name = guage_based_delay.guage_name();
     const uint64_t guage_value =
         config_->statsScope()
             .gaugeFromString(guage_name, Envoy::Stats::Gauge::ImportMode::Uninitialized)
             .value();
-    const uint64_t guage_target_value = stats_based_delay.guage_target_value();
+    const uint64_t guage_target_value = guage_based_delay.guage_target_value();
     const int64_t delay_delta =
-        Envoy::Protobuf::util::TimeUtil::DurationToMilliseconds(stats_based_delay.delay_delta());
+        Envoy::Protobuf::util::TimeUtil::DurationToMilliseconds(guage_based_delay.delay_delta());
     // Compute a delay which linearly decreases with the delta betwen the current and target values
     // of the guage. We do so by multipling the delta with the configured delta delay.
     // Note that we substract one from the guage value to avoid inclusion of the the current request

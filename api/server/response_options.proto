@@ -28,6 +28,6 @@ message ResponseOptions {
     // Static delay duration.
     google.protobuf.Duration static_delay = 4 [(validate.rules).duration.gte.nanos = 0];
     // Guage based delay configuration.
-    GaugeBasedDelay stats_based_delay = 5;
+    GaugeBasedDelay guage_based_delay = 5;
   }
 }
