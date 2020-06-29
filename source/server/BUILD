@@ -41,7 +41,6 @@ envoy_cc_library(
     deps = [
         ":common_lib",
         "//api/server:response_options_proto_cc_proto",
-        "@envoy//source/common/stats:symbol_table_lib_with_external_headers",
         "@envoy//source/exe:envoy_common_lib_with_external_headers",
     ],
 )

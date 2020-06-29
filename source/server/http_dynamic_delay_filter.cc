@@ -4,8 +4,6 @@
 
 #include "envoy/server/filter_config.h"
 
-#include "external/envoy/source/common/stats/symbol_table_impl.h" // For StatName
-
 #include "server/common.h"
 
 #include "absl/strings/str_cat.h"
@@ -13,15 +11,19 @@
 namespace Nighthawk {
 namespace Server {
 
+std::atomic<uint64_t> HttpDynamicDelayDecoderFilterConfig::instances_(0);
+
 HttpDynamicDelayDecoderFilterConfig::HttpDynamicDelayDecoderFilterConfig(
-    nighthawk::server::ResponseOptions proto_config, Envoy::Stats::Scope& stats_scope)
-    : server_config_(std::move(proto_config)), stats_scope_(stats_scope) {}
+    nighthawk::server::ResponseOptions proto_config)
+    : server_config_(std::move(proto_config)) {}
 
 HttpDynamicDelayDecoderFilter::HttpDynamicDelayDecoderFilter(
     HttpDynamicDelayDecoderFilterConfigSharedPtr config)
-    : config_(std::move(config)) {}
+    : config_(std::move(config)) {
+  config_->incrementInstanceCount();
+}
 
-void HttpDynamicDelayDecoderFilter::onDestroy() {}
+void HttpDynamicDelayDecoderFilter::onDestroy() { config_->decrementInstanceCount(); }
 
 Envoy::Http::FilterHeadersStatus
 HttpDynamicDelayDecoderFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& headers, bool) {
@@ -41,26 +43,14 @@ HttpDynamicDelayDecoderFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& head
   absl::optional<int64_t> delay;
   if (base_config_.has_static_delay()) {
     delay = Envoy::Protobuf::util::TimeUtil::DurationToMilliseconds(base_config_.static_delay());
-  } else if (base_config_.has_gauge_based_delay()) {
-    auto& gauge_based_delay = base_config_.gauge_based_delay();
-    const std::string gauge_name = gauge_based_delay.gauge_name();
-    const uint64_t gauge_value =
-        config_->statsScope()
-            .gaugeFromString(gauge_name, Envoy::Stats::Gauge::ImportMode::Uninitialized)
-            .value();
-    const uint64_t gauge_target_value = gauge_based_delay.gauge_target_value();
-    const int64_t delay_delta =
-        Envoy::Protobuf::util::TimeUtil::DurationToMilliseconds(gauge_based_delay.delay_delta());
-    // Compute a delay which linearly decreases with the delta betwen the current and target values
-    // of the gauge. We do so by multipling the delta with the configured delta delay.
-    // Note that we substract one from the gauge value to avoid inclusion of the the current request
-    // in the computation.
-    delay = (gauge_target_value - (gauge_value - 1)) * delay_delta;
-    if (delay <= 0) {
-      delay = absl::nullopt;
-    }
+  } else if (base_config_.has_concurrency_based_delay()) {
+    auto& concurrency = base_config_.concurrency_based_delay();
+    const uint64_t current_value = config_->approximateInstances();
+    delay = Envoy::Protobuf::util::TimeUtil::DurationToMilliseconds(
+        concurrency.minimal_delay() + (current_value * concurrency.concurrency_delay_factor()));
+    std::cerr << current_value << ":" << delay.value() << std::endl;
   }
-  if (delay.has_value()) {
+  if (delay.has_value() && delay > 0) {
     // Emit header to communicate the delay we desire to the fault filter extension.
     const Envoy::Http::LowerCaseString key("x-envoy-fault-delay-request");
     headers.setCopy(key, absl::StrCat(*delay));

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <string>
 
 #include "envoy/server/filter_config.h"
@@ -12,16 +13,15 @@ namespace Server {
 // Basically this is left in as a placeholder for further configuration.
 class HttpDynamicDelayDecoderFilterConfig {
 public:
-  HttpDynamicDelayDecoderFilterConfig(nighthawk::server::ResponseOptions proto_config,
-                                      Envoy::Stats::Scope& stats_scope);
+  HttpDynamicDelayDecoderFilterConfig(nighthawk::server::ResponseOptions proto_config);
   const nighthawk::server::ResponseOptions& server_config() { return server_config_; }
-
-  // Can't const this because of using gaugeFromString()
-  Envoy::Stats::Scope& statsScope() { return stats_scope_; }
+  void incrementInstanceCount() { instances_++; }
+  void decrementInstanceCount() { instances_--; }
+  uint64_t approximateInstances() const { return instances_; }
 
 private:
   const nighthawk::server::ResponseOptions server_config_;
-  Envoy::Stats::Scope& stats_scope_;
+  static std::atomic<uint64_t> instances_;
 };
 
 using HttpDynamicDelayDecoderFilterConfigSharedPtr =

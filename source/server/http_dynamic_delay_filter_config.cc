@@ -34,13 +34,11 @@ public:
   std::string name() const override { return "dynamic-delay"; }
 
 private:
-  Envoy::Http::FilterFactoryCb
-  createFilter(const nighthawk::server::ResponseOptions& proto_config,
-               Envoy::Server::Configuration::FactoryContext& factory_context) {
+  Envoy::Http::FilterFactoryCb createFilter(const nighthawk::server::ResponseOptions& proto_config,
+                                            Envoy::Server::Configuration::FactoryContext&) {
     Nighthawk::Server::HttpDynamicDelayDecoderFilterConfigSharedPtr config =
         std::make_shared<Nighthawk::Server::HttpDynamicDelayDecoderFilterConfig>(
-            Nighthawk::Server::HttpDynamicDelayDecoderFilterConfig(proto_config,
-                                                                   factory_context.scope()));
+            Nighthawk::Server::HttpDynamicDelayDecoderFilterConfig(proto_config));
 
     return [config](Envoy::Http::FilterChainFactoryCallbacks& callbacks) -> void {
       auto* filter = new Nighthawk::Server::HttpDynamicDelayDecoderFilter(config);
