@@ -46,6 +46,8 @@ public:
 
   void shutdownThread() override;
 
+  void requestExecutionCancellation() override;
+
 protected:
   void work() override;
 

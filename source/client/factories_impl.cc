@@ -174,14 +174,18 @@ TerminationPredicateFactoryImpl::TerminationPredicateFactoryImpl(const Options& 
 TerminationPredicatePtr
 TerminationPredicateFactoryImpl::create(Envoy::TimeSource& time_source, Envoy::Stats::Scope& scope,
                                         const Envoy::MonotonicTime scheduled_starting_time) const {
-  TerminationPredicatePtr root_predicate;
-  if (options_.noDuration()) {
-    root_predicate = std::make_unique<NullTerminationPredicateImpl>();
-  } else {
-    root_predicate = std::make_unique<DurationTerminationPredicateImpl>(
-        time_source, options_.duration(), scheduled_starting_time);
-  }
+  // We'll always link a predicate which checks for requests to cancel.
+  TerminationPredicatePtr root_predicate =
+      std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
+          scope.counterFromString("graceful_stop_requested"), 0,
+          TerminationPredicate::Status::TERMINATE);
+
   TerminationPredicate* current_predicate = root_predicate.get();
+  if (!options_.noDuration()) {
+    current_predicate = &current_predicate->link(std::make_unique<DurationTerminationPredicateImpl>(
+        time_source, options_.duration(), scheduled_starting_time));
+  }
+
   current_predicate = linkConfiguredPredicates(*current_predicate, options_.failurePredicates(),
                                                TerminationPredicate::Status::FAIL, scope);
   linkConfiguredPredicates(*current_predicate, options_.terminationPredicates(),
