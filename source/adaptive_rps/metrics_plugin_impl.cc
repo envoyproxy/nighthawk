@@ -12,7 +12,7 @@ InternalMetricsPlugin::InternalMetricsPlugin(const nighthawk::client::Output& ni
                                   nighthawk_output.options().duration().seconds();
     int64 total_sent = 0;
     int64 total_2xx = 0;
-    for (const client::Counter& counter : result.counters()) {
+    for (const nighthawk::client::Counter& counter : result.counters()) {
       if (counter.name() == "benchmark.http_2xx") {
         total_2xx = counter.value();
       } else if (counter.name() == "upstream_rq_total") {
