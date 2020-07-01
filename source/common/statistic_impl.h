@@ -7,6 +7,7 @@
 
 #include "external/dep_hdrhistogram_c/src/hdr_histogram.h"
 #include "external/envoy/source/common/common/logger.h"
+#include "external/envoy/source/common/stats/histogram_impl.h"
 
 #include "common/frequency.h"
 
@@ -148,6 +149,89 @@ public:
 private:
   static const int SignificantDigits;
   struct hdr_histogram* histogram_;
+};
+
+/**
+ * CircllhistStatistic uses Circllhist under the hood to compute statistics.
+ * Circllhist is used in the implementation of Envoy Histograms, compared to HdrHistogram it trades
+ * precision for fast performance in merge and insertion. For more info, please see
+ * https://github.com/circonus-labs/libcircllhist
+ */
+class CircllhistStatistic : public StatisticImpl {
+public:
+  CircllhistStatistic() {
+    histogram_ = hist_alloc();
+    ASSERT(histogram_ != nullptr);
+  }
+  ~CircllhistStatistic() override { hist_free(histogram_); }
+
+  void addValue(uint64_t value) override {
+    hist_insert_intscale(histogram_, value, 0, 1);
+    StatisticImpl::addValue(value);
+  }
+  double mean() const override { return hist_approx_mean(histogram_); }
+  double pvariance() const override { return pstdev() * pstdev(); }
+  double pstdev() const override {
+    return count() == 0 ? std::nan("") : hist_approx_stddev(histogram_);
+  }
+  StatisticPtr combine(const Statistic& statistic) const override;
+  uint64_t significantDigits() const override { return 1; }
+  StatisticPtr createNewInstanceOfSameType() const override {
+    return std::make_unique<CircllhistStatistic>();
+  }
+  nighthawk::client::Statistic toProto(SerializationDomain domain) const override;
+
+private:
+  histogram_t* histogram_;
+};
+
+/**
+ * In order to be able to flush histogram value to downstream Envoy stats Sinks, Per worker
+ * SinkableCircllhistStatistic takes the Scope reference in the constructor and wraps the
+ * Envoy::Stats::Histogram interface.
+ */
+class SinkableCircllhistStatistic : public CircllhistStatistic,
+                                    public Envoy::Stats::HistogramImplHelper {
+public:
+  // Calling HistogramImplHelper(SymbolTable& symbol_table) constructor to construct an empty
+  // MetricImpl. This is to bypass the complicated logic of setting up SymbolTable/StatName in
+  // Envoy. Instead, SinkableCircllhistStatistic overrides name() and tagExtractedName() method to
+  // return Nighthawk::Statistic::id().
+  SinkableCircllhistStatistic(Envoy::Stats::Scope& scope,
+                              const absl::optional<int> worker_id = absl::nullopt)
+      : CircllhistStatistic(), Envoy::Stats::HistogramImplHelper(scope.symbolTable()),
+        scope_(scope), worker_id_(worker_id) {}
+
+  ~SinkableCircllhistStatistic() override {
+    // We must explicitly free the StatName here in order to supply the
+    // SymbolTable reference.
+    MetricImpl::clear(symbolTable());
+  }
+
+  // Envoy::Stats::Histogram
+  void recordValue(uint64_t value) override {
+    addValue(value);
+    // Currently in Envoy Scope implementation, deliverHistogramToSinks() will flush the histogram
+    // value directly to stats Sinks.
+    scope_.deliverHistogramToSinks(*this, value);
+  }
+  Envoy::Stats::Histogram::Unit unit() const override {
+    return Envoy::Stats::Histogram::Unit::Unspecified;
+  };
+  bool used() const override { return count() > 0; }
+  Envoy::Stats::SymbolTable& symbolTable() override { return scope_.symbolTable(); }
+  // Overriding name() and tagExtractedName() method in Envoy::Stats::MetricImpl to return
+  // Statistic::id().
+  std::string name() const override { return id(); }
+  std::string tagExtractedName() const override { return id(); }
+
+  const absl::optional<int> worker_id() { return worker_id_; }
+
+private:
+  // This is used for delivering the histogram data to sinks.
+  Envoy::Stats::Scope& scope_;
+  // worker_id can be used in downstream stats Sinks as the stats tag.
+  absl::optional<int> worker_id_;
 };
 
 } // namespace Nighthawk
