@@ -236,4 +236,39 @@ nighthawk::client::Statistic HdrStatistic::toProto(SerializationDomain domain) c
   return proto;
 }
 
+StatisticPtr CircllhistStatistic::combine(const Statistic& statistic) const {
+  auto combined = std::make_unique<CircllhistStatistic>();
+  const auto& b = dynamic_cast<const CircllhistStatistic&>(statistic);
+  hist_accumulate(combined->histogram_, &this->histogram_, 1);
+  hist_accumulate(combined->histogram_, &b.histogram_, 1);
+
+  combined->min_ = std::min(this->min(), b.min());
+  combined->max_ = std::max(this->max(), b.max());
+  combined->count_ = this->count() + b.count();
+  return combined;
+}
+
+nighthawk::client::Statistic CircllhistStatistic::toProto(SerializationDomain domain) const {
+  nighthawk::client::Statistic proto = StatisticImpl::toProto(domain);
+  if (count() == 0)
+    return proto;
+
+  std::vector<double> quantiles{0, 0.25, 0.5, 0.75, 0.90, 0.95, 0.99, 0.995, 0.999, 1};
+  std::vector<double> computed_quantiles(quantiles.size(), 0.0);
+  hist_approx_quantile(histogram_, quantiles.data(), quantiles.size(), computed_quantiles.data());
+  for (size_t i = 0; i < quantiles.size(); i++) {
+    nighthawk::client::Percentile* percentile = proto.add_percentiles();
+    if (domain == Statistic::SerializationDomain::DURATION) {
+      setDurationFromNanos(*percentile->mutable_duration(),
+                           static_cast<int64_t>(computed_quantiles[i]));
+    } else {
+      percentile->set_raw_value(computed_quantiles[i]);
+    }
+    percentile->set_percentile(quantiles[i]);
+    percentile->set_count(hist_approx_count_below(histogram_, computed_quantiles[i]));
+  }
+
+  return proto;
+}
+
 } // namespace Nighthawk
