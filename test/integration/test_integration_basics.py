@@ -711,6 +711,19 @@ def test_cancellation_with_infinite_duration(http_test_server_fixture):
   assertCounterGreaterEqual(counters, "benchmark.http_2xx", 1)
 
 
+def test_dynamic_delay_bad_config(http_test_server_fixture):
+  """
+  That bad configuration gets treated as such by our dynamic-delay filter.
+  """
+  parsed_json, _ = http_test_server_fixture.runNighthawkClient([
+      http_test_server_fixture.getTestServerRootUri(), "--no-duration", "--request-header",
+      "x-nighthawk-test-server-config:bad_json"
+  ],
+                                                               expect_failure=True)
+  counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
+  assertCounterEqual(counters, "benchmark.http_5xx", 1)
+
+
 def _run_client_with_args(args):
   return run_binary_with_args("nighthawk_client", args)
 

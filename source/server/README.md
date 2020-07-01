@@ -16,48 +16,55 @@ bazel build -c opt :nighthawk_test_server
 
 ## Configuring the test server
 
-
 `test-server.yaml` sample content
 
 ```yaml
 static_resources:
   listeners:
-  # define an origin server on :10000 that always returns "lorem ipsum..."
-  - address:
-      socket_address:
-        address: 0.0.0.0
-        port_value: 10000
-    filter_chains:
-    - filters:
-      - name: envoy.http_connection_manager
-        config:
-          generate_request_id: false
-          codec_type: auto
-          stat_prefix: ingress_http
-          route_config:
-            name: local_route
-            virtual_hosts:
-            - name: service
-              domains:
-              - "*"
-          http_filters:
-          - name: envoy.fault
-            config:
-              max_active_faults: 100
-              delay:
-                header_delay: {}
-                percentage:
-                  numerator: 100
-          - name: test-server   # before envoy.router because order matters!
-            config:
-              response_body_size: 10
-              response_headers:
-              - { header: { key: "foo", value: "bar"} }
-              - { header: { key: "foo", value: "bar2"}, append: true }
-              - { header: { key: "x-nh", value: "1"}}
-          - name: envoy.router
-            config:
-              dynamic_stats: false
+    # define an origin server on :10000 that always returns "lorem ipsum..."
+    - address:
+        socket_address:
+          address: 0.0.0.0
+          port_value: 10000
+      filter_chains:
+        - filters:
+            - name: envoy.http_connection_manager
+              config:
+                generate_request_id: false
+                codec_type: auto
+                stat_prefix: ingress_http
+                route_config:
+                  name: local_route
+                  virtual_hosts:
+                    - name: service
+                      domains:
+                        - "*"
+                http_filters:
+                  - name: dynamic-delay
+                    config:
+                      concurrency_based_delay:
+                        minimal_delay: 0.05s
+                        concurrency_delay_factor: 0.010s
+                  - name: envoy.fault
+                    config:
+                      max_active_faults: 100
+                      delay:
+                        header_delay: {}
+                        percentage:
+                          numerator: 100
+                  - name: test-server # before envoy.router because order matters!
+                    config:
+                      response_body_size: 10
+                      response_headers:
+                        - { header: { key: "foo", value: "bar" } }
+                        - {
+                            header: { key: "foo", value: "bar2" },
+                            append: true,
+                          }
+                        - { header: { key: "x-nh", value: "1" } }
+                  - name: envoy.router
+                    config:
+                      dynamic_stats: false
 admin:
   access_log_path: /tmp/envoy.log
   address:
@@ -68,15 +75,15 @@ admin:
 
 ## Response Options config
 
-The ResponseOptions proto can be used in the test-server filter config or passed in `x-nighthawk-test-server-config``
-request header.
+The [ResponseOptions proto](/api/server/response_options.proto) can be used in the test-server
+and dynamic-delay filter config or passed in `x-nighthawk-test-server-config`` request header.
 
 The following parameters are available:
 
-* `response_body_size` - number of 'a' characters repeated in the response body.
-* `response_headers` - list of headers to add to response. If `append` is set to
+- `response_body_size` - number of 'a' characters repeated in the response body.
+- `response_headers` - list of headers to add to response. If `append` is set to
   `true`, then the header is appended.
-* `echo_request_headers` - if set to `true`, then append the dump of request headers to the response
+- `echo_request_headers` - if set to `true`, then append the dump of request headers to the response
   body.
 
 The response options could be used to test and debug proxy or server configuration, for
@@ -122,8 +129,11 @@ Request Headers:
 This example shows that intermediate proxy has added `x-forwarded-proto` and
 `x-forwarded-for` request headers.
 
-## Running the test server
+The dynamic delay filter (configuration) can be used to inject either a static delay,
+or a delay which linearly increases as the number of active requests grows as specified
+by the response options configuration.
 
+## Running the test server
 
 ```
 # If you already have Envoy running, you might need to set --base-id to allow the test-server to start.

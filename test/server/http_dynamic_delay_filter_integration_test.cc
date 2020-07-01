@@ -83,7 +83,7 @@ typed_config:
   EXPECT_EQ(upstream_request_->headers().get(delay_header_string_)->value().getStringView(),
             "1330");
   getResponse("{static_delay: \"0.2s\"}");
-  // TODO(XXX): This fails, because the duration is a two-field message: it would make here to see
+  // TODO(#392): This fails, because the duration is a two-field message: it would make here to see
   // both the number of seconds and nanoseconds to be overridden.
   // However, the seconds part is set to '0', which equates to the default of the underlying int
   // type, and the fact that we are using proto3, which doesn't merge default values.
