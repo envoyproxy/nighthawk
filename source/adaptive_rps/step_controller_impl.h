@@ -2,8 +2,8 @@
 
 #include "api/adaptive_rps/adaptive_rps.pb.h"
 #include "api/adaptive_rps/benchmark_result.pb.h"
-#include "adaptive_rps/step_controller.h"
 #include "api/adaptive_rps/step_controller_impl.pb.h"
+#include "nighthawk/adaptive_rps/step_controller.h"
 
 namespace Nighthawk {
 namespace AdaptiveRps {
@@ -22,7 +22,7 @@ public:
 
   int GetCurrentRps() const override;
   bool IsConverged() const override;
-  void UpdateAndRecompute(const adaptive_rps::BenchmarkResult& result) override;
+  void UpdateAndRecompute(const nighthawk::adaptive_rps::BenchmarkResult& result) override;
 
 private:
   const nighthawk::adaptive_rps::LinearSearchStepControllerConfig config_;

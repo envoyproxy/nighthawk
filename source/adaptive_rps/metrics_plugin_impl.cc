@@ -8,10 +8,10 @@ InternalMetricsPlugin::InternalMetricsPlugin(const nighthawk::client::Output& ni
     if (result.name() != "global") {
       continue;
     }
-    const int64 total_specified = nighthawk_output.options().requests_per_second().value() *
+    const int total_specified = nighthawk_output.options().requests_per_second().value() *
                                   nighthawk_output.options().duration().seconds();
-    int64 total_sent = 0;
-    int64 total_2xx = 0;
+    int total_sent = 0;
+    int total_2xx = 0;
     for (const nighthawk::client::Counter& counter : result.counters()) {
       if (counter.name() == "benchmark.http_2xx") {
         total_2xx = counter.value();

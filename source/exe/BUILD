@@ -9,6 +9,19 @@ licenses(["notice"])  # Apache 2
 envoy_package()
 
 envoy_cc_library(
+    name = "adaptive_rps_client_entry_lib",
+    srcs = ["adaptive_rps_main.cc"],
+    external_deps = [
+        "abseil_symbolize",
+    ],
+    repository = "@envoy",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//source/adaptive_rps:adaptive_rps_lib",
+    ],
+)
+
+envoy_cc_library(
     name = "nighthawk_client_entry_lib",
     srcs = ["client_main_entry.cc"],
     external_deps = [

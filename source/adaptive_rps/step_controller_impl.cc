@@ -1,4 +1,6 @@
-#include "nighthawk/adaptive_rps/plugin_util.h"
+#include "adaptive_rps/step_controller_impl.h"
+
+#include "adaptive_rps/plugin_util.h"
 
 #include "api/adaptive_rps/adaptive_rps.pb.h"
 #include "api/adaptive_rps/metric_spec.pb.h"
@@ -55,7 +57,7 @@ double TotalWeightedScore(const BenchmarkResult& benchmark_result) {
 std::string LinearSearchStepControllerConfigFactory::name() const { return "linear-search"; }
 
 Envoy::ProtobufTypes::MessagePtr LinearSearchStepControllerConfigFactory::createEmptyConfigProto() {
-  return std::make_unique<adaptive_rps::LinearSearchStepControllerConfig>();
+  return std::make_unique<nighthawk::adaptive_rps::LinearSearchStepControllerConfig>();
 }
 
 StepControllerPtr LinearSearchStepControllerConfigFactory::createStepController(
@@ -79,7 +81,7 @@ bool LinearSearchStepController::IsConverged() const {
 }
 
 void LinearSearchStepController::UpdateAndRecompute(
-    const adaptive_rps::BenchmarkResult& benchmark_result) {
+    const nighthawk::adaptive_rps::BenchmarkResult& benchmark_result) {
   double score = TotalWeightedScore(benchmark_result);
   if (score < 0.0) {
     reached_unhealthy_rps_ = true;
@@ -92,7 +94,7 @@ void LinearSearchStepController::UpdateAndRecompute(
 }
 
 Envoy::ProtobufTypes::MessagePtr BinarySearchStepControllerConfigFactory::createEmptyConfigProto() {
-  return std::make_unique<adaptive_rps::BinarySearchStepControllerConfig>();
+  return std::make_unique<nighthawk::adaptive_rps::BinarySearchStepControllerConfig>();
 }
 
 std::string BinarySearchStepControllerConfigFactory::name() const { return "binary-search"; }

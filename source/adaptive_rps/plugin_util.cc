@@ -1,6 +1,7 @@
 #include "nighthawk/adaptive_rps/custom_metric_evaluator.h"
 #include "nighthawk/adaptive_rps/metrics_plugin.h"
 #include "nighthawk/adaptive_rps/step_controller.h"
+#include "external/envoy/source/common/config/utility.h"
 
 namespace Nighthawk {
 namespace AdaptiveRps {
