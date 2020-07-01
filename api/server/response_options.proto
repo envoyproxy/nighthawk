@@ -12,11 +12,12 @@ message ConcurrencyBasedDelay {
   google.protobuf.Duration minimal_delay = 1 [(validate.rules).duration.gte.nanos = 0];
   // Factor to use when adding latency as concurrency increases.
   google.protobuf.Duration concurrency_delay_factor = 2 [(validate.rules).duration.gte.nanos = 0];
-  // Multiplier.
-  uint64 concurrency_delay_multiplier = 3;
 }
 
-// Options that control the test server response.
+// Options that control the test server response. Can be provided via request
+// headers as well as via static file-based configuration. In case both are
+// provided, a merge will happen, in which case the header-provided
+// configuration will override.
 message ResponseOptions {
   // List of additional response headers.
   repeated envoy.api.v2.core.HeaderValueOption response_headers = 1;

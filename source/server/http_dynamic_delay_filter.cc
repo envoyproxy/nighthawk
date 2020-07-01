@@ -11,8 +11,6 @@
 namespace Nighthawk {
 namespace Server {
 
-std::atomic<uint64_t> HttpDynamicDelayDecoderFilterConfig::instances_(0);
-
 HttpDynamicDelayDecoderFilterConfig::HttpDynamicDelayDecoderFilterConfig(
     nighthawk::server::ResponseOptions proto_config)
     : server_config_(std::move(proto_config)) {}
@@ -40,20 +38,20 @@ HttpDynamicDelayDecoderFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& head
         absl::nullopt, "");
     return Envoy::Http::FilterHeadersStatus::StopIteration;
   }
-  absl::optional<int64_t> delay;
+  absl::optional<int64_t> delay_ms;
   if (base_config_.has_static_delay()) {
-    delay = Envoy::Protobuf::util::TimeUtil::DurationToMilliseconds(base_config_.static_delay());
+    delay_ms = Envoy::Protobuf::util::TimeUtil::DurationToMilliseconds(base_config_.static_delay());
   } else if (base_config_.has_concurrency_based_delay()) {
-    auto& concurrency = base_config_.concurrency_based_delay();
+    const nighthawk::server::ConcurrencyBasedDelay& concurrency_config =
+        base_config_.concurrency_based_delay();
     const uint64_t current_value = config_->approximateInstances();
-    delay = Envoy::Protobuf::util::TimeUtil::DurationToMilliseconds(
-        concurrency.minimal_delay() + (current_value * concurrency.concurrency_delay_factor()));
-    std::cerr << current_value << ":" << delay.value() << std::endl;
+    delay_ms = computeDelayMilliseconds(current_value, concurrency_config.minimal_delay(),
+                                        concurrency_config.concurrency_delay_factor());
   }
-  if (delay.has_value() && delay > 0) {
+  if (delay_ms.has_value() && delay_ms > 0) {
     // Emit header to communicate the delay we desire to the fault filter extension.
     const Envoy::Http::LowerCaseString key("x-envoy-fault-delay-request");
-    headers.setCopy(key, absl::StrCat(*delay));
+    headers.setCopy(key, absl::StrCat(*delay_ms));
   }
   return Envoy::Http::FilterHeadersStatus::Continue;
 }

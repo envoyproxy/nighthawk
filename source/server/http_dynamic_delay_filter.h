@@ -15,13 +15,16 @@ class HttpDynamicDelayDecoderFilterConfig {
 public:
   HttpDynamicDelayDecoderFilterConfig(nighthawk::server::ResponseOptions proto_config);
   const nighthawk::server::ResponseOptions& server_config() { return server_config_; }
-  void incrementInstanceCount() { instances_++; }
-  void decrementInstanceCount() { instances_--; }
-  uint64_t approximateInstances() const { return instances_; }
+  void incrementInstanceCount() { instances()++; }
+  void decrementInstanceCount() { instances()--; }
+  uint64_t approximateInstances() const { return instances(); }
 
 private:
   const nighthawk::server::ResponseOptions server_config_;
-  static std::atomic<uint64_t> instances_;
+  static std::atomic<uint64_t>& instances() {
+    static std::atomic<uint64_t> a(0);
+    return a;
+  }
 };
 
 using HttpDynamicDelayDecoderFilterConfigSharedPtr =
@@ -39,6 +42,14 @@ public:
   Envoy::Http::FilterDataStatus decodeData(Envoy::Buffer::Instance&, bool) override;
   Envoy::Http::FilterTrailersStatus decodeTrailers(Envoy::Http::RequestTrailerMap&) override;
   void setDecoderFilterCallbacks(Envoy::Http::StreamDecoderFilterCallbacks&) override;
+
+  static int64_t computeDelayMilliseconds(const uint64_t& current_value,
+                                          const Envoy::ProtobufWkt::Duration& minimal_delay,
+                                          const Envoy::ProtobufWkt::Duration& delay_factor) {
+    return std::round(Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(
+                          minimal_delay + (current_value * delay_factor)) /
+                      1e6);
+  }
 
 private:
   const HttpDynamicDelayDecoderFilterConfigSharedPtr config_;
