@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package nighthawk.adaptive_rps;
+
+import "api/adaptive_rps/custom_metric_evaluator.proto";
+
+// Identifies a feedback metric and how to evaluate it.
+message MetricSpec {
+  // Name of the metric to evaluate.
+  string metric_name = 1;
+
+  // Name of the MetricsPlugin providing the metric ("builtin" for built-in).
+  string metrics_plugin_name = 2;
+
+  // A threshold for evaluating a metric value.
+  oneof threshold_spec {
+    // Simple upper threshold:
+    //   metric <= upper_threshold -> HEALTHY
+    //   metric > upper_threshold -> UNHEALTHY
+    double upper_threshold = 3;
+
+    // Simple lower threshold:
+    //   metric >= lower_threshold -> HEALTHY
+    //   metric < lower_threshold -> UNHEALTHY
+    double lower_threshold = 4;
+
+    // A CustomMetricEvaluator plugin that gives a numerical measure of health
+    // according to an arbitrary formula with configurable thresholds and
+    // constants.
+    CustomMetricEvaluatorConfig custom_metric_evaluator = 5;
+  }
+
+  // Relative weight for this MetricSpec when evaluating performance against
+  // multiple MetricSpecs. Can be any nonnegative number. Set to 0.0 to record
+  // the metric in the output without using it to influence adaptive RPS.
+  double weight = 6;
+}

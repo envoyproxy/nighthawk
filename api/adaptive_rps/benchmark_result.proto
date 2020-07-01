@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package nighthawk.adaptive_rps;
+
+import "api/adaptive_rps/metric_spec.proto";
+import "api/client/output.proto";
+
+// Binary health status from checking a value against a threshold.
+enum HealthStatus {
+  UNKNOWN_HEALTH = 0;
+  HEALTHY = 1;
+  UNHEALTHY = 2;
+}
+
+// Records the status of a feedback metric during this benchmark session.
+message MetricEvaluation {
+  // Plugin name, metric name, thresholds.
+  MetricSpec metric_spec = 1;
+
+  // The numerical value of the metric measured during this benchmark session.
+  double metric_value = 2;
+
+  // A measure of health based on this metric value.
+  oneof health {
+    // Binary health status from checking the value against a threshold.
+    HealthStatus health_status = 3;
+    // Health score returned by a CustomMetricEvaluator plugin, between -1.0
+    // and 1.0 from least to most healthy.
+    double health_score = 4;
+  }
+}
+
+// Summary of a single Nighthawk Service benchmark session with evaluation
+// results.
+message BenchmarkResult {
+  oneof output {
+    // Raw Nighthawk Service output. Includes start/end times and full Nighthawk
+    // Service input spec. May contain an error status.
+    nighthawk.client.Output nighthawk_service_output = 1;
+
+    // Error message if Nighthawk Service response was not obtained.
+    string error_message = 2;
+  }
+  // Status of all defined adaptive RPS feedback metrics during this benchmark
+  // session. Not present in the event of errors.
+  repeated MetricEvaluation metric_evaluations = 3;
+}

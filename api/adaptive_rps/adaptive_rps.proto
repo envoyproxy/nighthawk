@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package nighthawk.adaptive_rps;
+
+import "api/adaptive_rps/benchmark_result.proto";
+import "api/adaptive_rps/metrics_plugin.proto";
+import "api/adaptive_rps/metric_spec.proto";
+import "api/adaptive_rps/step_controller.proto";
+import "google/protobuf/duration.proto";
+import "api/client/options.proto";
+
+// import "third_party/protoc_gen_validate/validate/validate.proto";
+
+// Parameters describing the adjusting and testing stages of an adaptive RPS
+// session, which consists of a series of Nighthawk benchmarks probing for
+// the optimal RPS, followed by a longer benchmark to validate the optimal RPS.
+message AdaptiveRpsSessionSpec {
+  // Settings for any MetricsPlugin referenced from MetricSpecs, other than
+  // "builtin".
+  repeated MetricsPluginConfig metrics_plugin_configs = 1;
+  // Metric specs for determining whether the system under test was healthy when
+  // tested at some RPS level. One or more metric specs must be provided.
+  repeated MetricSpec metric_specs = 2;
+  // A proto describing Nighthawk Service traffic. See
+  // https://github.com/envoyproxy/nighthawk/blob/master/api/client/options.proto
+  //
+  // The adaptive RPS controller will throw an error if the |duration|,
+  // |requests_per_second|,  or |open_loop| fields are set within
+  // |nighthawk_traffic_options|; the controller sets these values dynamically.
+  //
+  // All other fields in |nighthawk_traffic_options| are passed through to the
+  // Nighthawk Service.
+  //
+  // Note that |concurrency| multiplies the total RPS sent.
+  nighthawk.client.CommandLineOptions nighthawk_traffic_template = 3;
+  // The length of each short benchmark during the adjusting stage. Default 4s.
+  google.protobuf.Duration measuring_period = 4;
+  // The length of the single benchmark session of the testing stage. Must be
+  // set.
+  google.protobuf.Duration testing_stage_duration = 5;
+  // Maximum amount of time the adjusting stage should wait for convergence
+  // before throwing an error.
+  google.protobuf.Duration convergence_deadline = 6;
+  // Select and configure a StepController.
+  StepControllerConfig step_controller_config = 7;
+}
+
+// Complete description of an adaptive RPS session, including metric evaluations
+// for every RPS value attempted during the adjusting stage.
+message AdaptiveRpsSessionOutput {
+  // The result of every short benchmark performed during the adjusting stage.
+  repeated BenchmarkResult adjusting_stage_results = 1;
+  // Result of the single benchmark of the testing stage.
+  BenchmarkResult testing_stage_result = 2;
+}

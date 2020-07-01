@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package nighthawk.adaptive_rps;
+
+// Configuration for a CustomMetricEvaluator that calculates the metric score
+// as 1+2/(1+exp(-k(metric-threshold))), a sigmoid curve centered on an upper
+// threshold that approaches -1.0 for values far below the threshold and 1.0 for
+// values far above the threshold.
+message SigmoidCustomMetricEvaluatorConfig {
+  // The threshold metric value. The function outputs 0.0 when the metric equals
+  // the threshold. Below the threshold is healthy, approaching -1.0 for values
+  // far below the threshold; above the threshold is unhealthy, approaching 1.0
+  // for values far above the threshold.
+  double threshold = 1;
+  // Tuning constant, k in 1 + 2 / (1 + exp(-k(metric - threshold))).
+  double k = 2;
+}
