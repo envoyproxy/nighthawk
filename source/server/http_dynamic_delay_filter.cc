@@ -21,7 +21,14 @@ HttpDynamicDelayDecoderFilter::HttpDynamicDelayDecoderFilter(
   config_->incrementInstanceCount();
 }
 
-void HttpDynamicDelayDecoderFilter::onDestroy() { config_->decrementInstanceCount(); }
+HttpDynamicDelayDecoderFilter::~HttpDynamicDelayDecoderFilter() {
+  RELEASE_ASSERT(destroyed_, "onDestroy() not called");
+}
+
+void HttpDynamicDelayDecoderFilter::onDestroy() {
+  destroyed_ = true;
+  config_->decrementInstanceCount();
+}
 
 Envoy::Http::FilterHeadersStatus
 HttpDynamicDelayDecoderFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& headers, bool) {
