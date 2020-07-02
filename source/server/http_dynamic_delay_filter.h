@@ -60,7 +60,7 @@ using HttpDynamicDelayDecoderFilterConfigSharedPtr =
 class HttpDynamicDelayDecoderFilter : public Envoy::Http::StreamDecoderFilter {
 public:
   HttpDynamicDelayDecoderFilter(HttpDynamicDelayDecoderFilterConfigSharedPtr);
-  ~HttpDynamicDelayDecoderFilter();
+  ~HttpDynamicDelayDecoderFilter() override;
 
   // Http::StreamFilterBase
   void onDestroy() override;
