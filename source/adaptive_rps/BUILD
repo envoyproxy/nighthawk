@@ -12,6 +12,7 @@ envoy_cc_library(
     name = "adaptive_rps_lib",
     srcs = [
         "adaptive_rps_controller.cc",
+        "adaptive_rps_client_main.cc",
         "custom_metric_evaluator_impl.cc",
         "metrics_plugin_impl.cc",
         "plugin_util.cc",
@@ -19,6 +20,7 @@ envoy_cc_library(
     ],
     hdrs = [
         "adaptive_rps_controller.h",
+        "adaptive_rps_client_main.h",
         "custom_metric_evaluator_impl.h",
         "metrics_plugin_impl.h",
         "plugin_util.h",
@@ -33,8 +35,8 @@ envoy_cc_library(
         "//include/nighthawk/adaptive_rps:adaptive_rps_includes",
         "@com_google_absl//absl/status",
 
-        # "//include/nighthawk/common:base_includes",
-        # "//source/common:nighthawk_common_lib",
+        "//include/nighthawk/common:base_includes",
+        "//source/common:nighthawk_common_lib",
         # "@envoy//source/common/api:api_lib_with_external_headers",
         # "@envoy//source/common/common:cleanup_lib_with_external_headers",
         # "@envoy//source/common/config:utility_lib_with_external_headers",

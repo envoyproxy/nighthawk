@@ -3,7 +3,7 @@
 
 #include "nighthawk/common/exception.h"
 
-#include "client/output_transform_main.h"
+#include "adaptive_rps/adaptive_rps_client_main.h"
 
 #include "absl/debugging/symbolize.h"
 
@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
   absl::InitializeSymbolizer(argv[0]);
 #endif
    try {
-    Nighthawk::Client::OutputTransformMain program(argc, argv, std::cin); // NOLINT
+    Nighthawk::AdaptiveRps::AdaptiveRpsMain program(argc, argv); // NOLINT
     return program.run();
   } catch (const Nighthawk::Client::NoServingException& e) {
     return EXIT_SUCCESS;

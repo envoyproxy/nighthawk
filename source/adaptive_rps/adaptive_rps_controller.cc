@@ -27,11 +27,11 @@ namespace {
 using nighthawk::adaptive_rps::AdaptiveRpsSessionOutput;
 using nighthawk::adaptive_rps::AdaptiveRpsSessionSpec;
 using nighthawk::adaptive_rps::BenchmarkResult;
-using nighthawk::adaptive_rps::HEALTHY;
+using nighthawk::adaptive_rps::WITHIN_THRESHOLD;
 using nighthawk::adaptive_rps::MetricEvaluation;
 using nighthawk::adaptive_rps::MetricSpec;
 using nighthawk::adaptive_rps::MetricsPluginConfig;
-using nighthawk::adaptive_rps::UNHEALTHY;
+using nighthawk::adaptive_rps::OUTSIDE_THRESHOLD;
 
 nighthawk::client::ExecutionResponse
 PerformNighthawkBenchmark(nighthawk::client::NighthawkService::Stub* nighthawk_service_stub,
@@ -66,9 +66,9 @@ PerformNighthawkBenchmark(nighthawk::client::NighthawkService::Stub* nighthawk_s
   return response;
 }
 
-BenchmarkResult AnalyzeNighthawkBenchmark(
-    const nighthawk::client::ExecutionResponse& nighthawk_response,
-    const AdaptiveRpsSessionSpec& spec) {
+BenchmarkResult
+AnalyzeNighthawkBenchmark(const nighthawk::client::ExecutionResponse& nighthawk_response,
+                          const AdaptiveRpsSessionSpec& spec) {
   BenchmarkResult benchmark_result;
 
   *benchmark_result.mutable_nighthawk_service_output() = nighthawk_response.output();
@@ -91,15 +91,15 @@ BenchmarkResult AnalyzeNighthawkBenchmark(
         metric_spec.metric_name());
     evaluation.set_metric_value(metric_value);
     if (metric_spec.lower_threshold() > 0) {
-      evaluation.set_health_status(metric_value >= metric_spec.lower_threshold() ? HEALTHY
-                                                                                 : UNHEALTHY);
+      evaluation.set_threshold_status(
+          metric_value >= metric_spec.lower_threshold() ? WITHIN_THRESHOLD : OUTSIDE_THRESHOLD);
     } else if (metric_spec.upper_threshold() > 0) {
-      evaluation.set_health_status(metric_value <= metric_spec.upper_threshold() ? HEALTHY
-                                                                                 : UNHEALTHY);
+      evaluation.set_threshold_status(
+          metric_value <= metric_spec.upper_threshold() ? WITHIN_THRESHOLD : OUTSIDE_THRESHOLD);
     } else {
       CustomMetricEvaluatorPtr metric_evaluator =
           LoadCustomMetricEvaluatorPlugin(metric_spec.custom_metric_evaluator());
-      evaluation.set_health_score(metric_evaluator->EvaluateMetric(metric_value));
+      evaluation.set_threshold_score(metric_evaluator->EvaluateMetric(metric_value));
     }
     *benchmark_result.mutable_metric_evaluations()->Add() = evaluation;
   }

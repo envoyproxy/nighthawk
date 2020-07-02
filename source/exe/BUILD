@@ -10,7 +10,7 @@ envoy_package()
 
 envoy_cc_library(
     name = "adaptive_rps_client_entry_lib",
-    srcs = ["adaptive_rps_main.cc"],
+    srcs = ["adaptive_rps_client_main_entry.cc"],
     external_deps = [
         "abseil_symbolize",
     ],

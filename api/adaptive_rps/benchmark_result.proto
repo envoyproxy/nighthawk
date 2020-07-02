@@ -5,11 +5,11 @@ package nighthawk.adaptive_rps;
 import "api/adaptive_rps/metric_spec.proto";
 import "api/client/output.proto";
 
-// Binary health status from checking a value against a threshold.
-enum HealthStatus {
-  UNKNOWN_HEALTH = 0;
-  HEALTHY = 1;
-  UNHEALTHY = 2;
+// Binary status from checking the value against a threshold.
+enum ThresholdStatus {
+  UNKNOWN_THRESHOLD_STATUS = 0;
+  WITHIN_THRESHOLD = 1;
+  OUTSIDE_THRESHOLD = 2;
 }
 
 // Records the status of a feedback metric during this benchmark session.
@@ -20,13 +20,16 @@ message MetricEvaluation {
   // The numerical value of the metric measured during this benchmark session.
   double metric_value = 2;
 
-  // A measure of health based on this metric value.
-  oneof health {
-    // Binary health status from checking the value against a threshold.
-    HealthStatus health_status = 3;
-    // Health score returned by a CustomMetricEvaluator plugin, between -1.0
-    // and 1.0 from least to most healthy.
-    double health_score = 4;
+  // A measure of threshold compliance based on this metric value.
+  oneof threshold_evaluation {
+    // Binary status from checking the value against a threshold.
+    ThresholdStatus threshold_status = 3;
+    // Evaluation score returned by a CustomMetricEvaluator plugin, between
+    // -1.0 and 1.0. This expresses how close the metric was to the threshold
+    // by an arbitrary formula selected and configured in the MetricSpec,
+    // such as a sigmoid curve. The controller can choose to make larger RPS
+    // adjustments when farther away to converge faster.
+    double threshold_score = 4;
   }
 }
 

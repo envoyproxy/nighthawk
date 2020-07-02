@@ -11,9 +11,9 @@ public:
   uint32_t run();
 
 private:
-  std::string api_server_;
-  std::stringspec_filename_;
-  std::stringoutput_filename_;
+  std::string nighthawk_service_address_;
+  std::string spec_filename_;
+  std::string output_filename_;
 };
 
 } // namespace AdaptiveRps
