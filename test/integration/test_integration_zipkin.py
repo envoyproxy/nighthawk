@@ -4,7 +4,7 @@ import pytest
 # server_config needs to be explicitly imported to avoid an error, as http_test_server_fixture
 # relies on it.
 from integration_test_fixtures import (http_test_server_fixture, server_config)
-from utility import *
+from test.integration import asserts
 
 
 def test_tracing_zipkin(http_test_server_fixture):
@@ -21,6 +21,6 @@ def test_tracing_zipkin(http_test_server_fixture):
       http_test_server_fixture.getTestServerRootUri()
   ])
   counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-  assertGreaterEqual(counters["benchmark.http_2xx"], 50)
-  assertGreaterEqual(counters["tracing.zipkin.reports_dropped"], 9)
-  assertGreaterEqual(counters["tracing.zipkin.spans_sent"], 45)
+  asserts.assertGreaterEqual(counters["benchmark.http_2xx"], 50)
+  asserts.assertGreaterEqual(counters["tracing.zipkin.reports_dropped"], 9)
+  asserts.assertGreaterEqual(counters["tracing.zipkin.spans_sent"], 45)

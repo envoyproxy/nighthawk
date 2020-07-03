@@ -13,7 +13,8 @@ from test.integration.common import IpVersion
 from test.integration.integration_test_fixtures import (
     http_test_server_fixture, https_test_server_fixture, multi_http_test_server_fixture,
     multi_https_test_server_fixture, server_config)
-from test.integration.utility import *
+from test.integration import asserts
+from test.integration import utility
 
 # TODO(oschaaf): we mostly verify stats observed from the client-side. Add expectations
 # for the server side as well.
@@ -29,29 +30,40 @@ def test_http_h1(http_test_server_fixture):
       "--termination-predicate", "benchmark.http_2xx:24"
   ])
   counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-  assertCounterEqual(counters, "benchmark.http_2xx", 25)
-  assertCounterEqual(counters, "upstream_cx_http1_total", 1)
-  assertCounterEqual(counters, "upstream_cx_rx_bytes_total", 3400)
-  assertCounterEqual(counters, "upstream_cx_total", 1)
-  assertCounterEqual(counters, "upstream_cx_tx_bytes_total",
-                     1400 if http_test_server_fixture.ip_version == IpVersion.IPV6 else 1450)
-  assertCounterEqual(counters, "upstream_rq_pending_total", 1)
-  assertCounterEqual(counters, "upstream_rq_total", 25)
-  assertCounterEqual(counters, "default.total_match_count", 1)
+  asserts.assertCounterEqual(counters, "benchmark.http_2xx", 25)
+  asserts.assertCounterEqual(counters, "upstream_cx_http1_total", 1)
+  asserts.assertCounterEqual(counters, "upstream_cx_rx_bytes_total", 3400)
+  asserts.assertCounterEqual(counters, "upstream_cx_total", 1)
+  asserts.assertCounterEqual(
+      counters, "upstream_cx_tx_bytes_total",
+      1400 if http_test_server_fixture.ip_version == IpVersion.IPV6 else 1450)
+  asserts.assertCounterEqual(counters, "upstream_rq_pending_total", 1)
+  asserts.assertCounterEqual(counters, "upstream_rq_total", 25)
+  asserts.assertCounterEqual(counters, "default.total_match_count", 1)
 
   global_histograms = http_test_server_fixture.getNighthawkGlobalHistogramsbyIdFromJson(parsed_json)
-  assertEqual(int(global_histograms["benchmark_http_client.response_body_size"]["count"]), 25)
-  assertEqual(int(global_histograms["benchmark_http_client.response_header_size"]["count"]), 25)
-  assertEqual(int(global_histograms["benchmark_http_client.response_body_size"]["raw_mean"]), 10)
-  assertEqual(int(global_histograms["benchmark_http_client.response_header_size"]["raw_mean"]), 97)
-  assertEqual(int(global_histograms["benchmark_http_client.response_body_size"]["raw_min"]), 10)
-  assertEqual(int(global_histograms["benchmark_http_client.response_header_size"]["raw_min"]), 97)
-  assertEqual(int(global_histograms["benchmark_http_client.response_body_size"]["raw_max"]), 10)
-  assertEqual(int(global_histograms["benchmark_http_client.response_header_size"]["raw_max"]), 97)
-  assertEqual(int(global_histograms["benchmark_http_client.response_body_size"]["raw_pstdev"]), 0)
-  assertEqual(int(global_histograms["benchmark_http_client.response_header_size"]["raw_pstdev"]), 0)
+  asserts.assertEqual(
+      int(global_histograms["benchmark_http_client.response_body_size"]["count"]), 25)
+  asserts.assertEqual(
+      int(global_histograms["benchmark_http_client.response_header_size"]["count"]), 25)
+  asserts.assertEqual(
+      int(global_histograms["benchmark_http_client.response_body_size"]["raw_mean"]), 10)
+  asserts.assertEqual(
+      int(global_histograms["benchmark_http_client.response_header_size"]["raw_mean"]), 97)
+  asserts.assertEqual(
+      int(global_histograms["benchmark_http_client.response_body_size"]["raw_min"]), 10)
+  asserts.assertEqual(
+      int(global_histograms["benchmark_http_client.response_header_size"]["raw_min"]), 97)
+  asserts.assertEqual(
+      int(global_histograms["benchmark_http_client.response_body_size"]["raw_max"]), 10)
+  asserts.assertEqual(
+      int(global_histograms["benchmark_http_client.response_header_size"]["raw_max"]), 97)
+  asserts.assertEqual(
+      int(global_histograms["benchmark_http_client.response_body_size"]["raw_pstdev"]), 0)
+  asserts.assertEqual(
+      int(global_histograms["benchmark_http_client.response_header_size"]["raw_pstdev"]), 0)
 
-  assertEqual(len(counters), 12)
+  asserts.assertEqual(len(counters), 12)
 
 
 def mini_stress_test(fixture, args):
@@ -62,19 +74,19 @@ def mini_stress_test(fixture, args):
   # We set a reasonably low expectation of 100 requests. We set it low, because we want this
   # test to succeed on a reasonable share of setups (hopefully practically all).
   MIN_EXPECTED_REQUESTS = 100
-  assertCounterEqual(counters, "benchmark.http_2xx", MIN_EXPECTED_REQUESTS)
+  asserts.assertCounterEqual(counters, "benchmark.http_2xx", MIN_EXPECTED_REQUESTS)
   if "--h2" in args:
-    assertCounterEqual(counters, "upstream_cx_http2_total", 1)
+    asserts.assertCounterEqual(counters, "upstream_cx_http2_total", 1)
   else:
-    assertCounterEqual(counters, "upstream_cx_http1_total", 1)
+    asserts.assertCounterEqual(counters, "upstream_cx_http1_total", 1)
   global_histograms = fixture.getNighthawkGlobalHistogramsbyIdFromJson(parsed_json)
 
   if "--open-loop" in args:
-    assertEqual(int(global_histograms["sequencer.blocking"]["count"]), 0)
+    asserts.assertEqual(int(global_histograms["sequencer.blocking"]["count"]), 0)
   else:
-    assertGreaterEqual(int(global_histograms["sequencer.blocking"]["count"]), 1)
+    asserts.assertGreaterEqual(int(global_histograms["sequencer.blocking"]["count"]), 1)
 
-  assertGreaterEqual(
+  asserts.assertGreaterEqual(
       int(global_histograms["benchmark_http_client.request_to_response"]["count"]), 1)
   return counters
 
@@ -91,8 +103,8 @@ def test_http_h1_mini_stress_test_with_client_side_queueing(http_test_server_fix
       "10", "--connections", "1", "--duration", "100", "--termination-predicate",
       "benchmark.http_2xx:99", "--simple-warmup"
   ])
-  assertCounterGreaterEqual(counters, "upstream_rq_pending_total", 11)
-  assertCounterGreaterEqual(counters, "upstream_cx_overflow", 10)
+  asserts.assertCounterGreaterEqual(counters, "upstream_rq_pending_total", 11)
+  asserts.assertCounterGreaterEqual(counters, "upstream_cx_overflow", 10)
 
 
 def test_http_h1_mini_stress_test_without_client_side_queueing(http_test_server_fixture):
@@ -104,8 +116,8 @@ def test_http_h1_mini_stress_test_without_client_side_queueing(http_test_server_
       http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--connections", "1",
       "--duration", "100", "--termination-predicate", "benchmark.http_2xx:99"
   ])
-  assertCounterEqual(counters, "upstream_rq_pending_total", 1)
-  assertNotIn("upstream_cx_overflow", counters)
+  asserts.assertCounterEqual(counters, "upstream_rq_pending_total", 1)
+  asserts.assertNotIn("upstream_cx_overflow", counters)
 
 
 def test_http_h2_mini_stress_test_with_client_side_queueing(http_test_server_fixture):
@@ -118,8 +130,8 @@ def test_http_h2_mini_stress_test_with_client_side_queueing(http_test_server_fix
       "10", "--h2", "--max-active-requests", "1", "--connections", "1", "--duration", "100",
       "--termination-predicate", "benchmark.http_2xx:99", "--simple-warmup"
   ])
-  assertCounterEqual(counters, "upstream_rq_pending_total", 1)
-  assertCounterGreaterEqual(counters, "upstream_rq_pending_overflow", 10)
+  asserts.assertCounterEqual(counters, "upstream_rq_pending_total", 1)
+  asserts.assertCounterGreaterEqual(counters, "upstream_rq_pending_overflow", 10)
 
 
 def test_http_h2_mini_stress_test_without_client_side_queueing(http_test_server_fixture):
@@ -132,11 +144,11 @@ def test_http_h2_mini_stress_test_without_client_side_queueing(http_test_server_
       "--max-active-requests", "1", "--connections", "1", "--duration", "100",
       "--termination-predicate", "benchmark.http_2xx:99"
   ])
-  assertCounterEqual(counters, "upstream_rq_pending_total", 1)
-  assertNotIn("upstream_rq_pending_overflow", counters)
+  asserts.assertCounterEqual(counters, "upstream_rq_pending_total", 1)
+  asserts.assertNotIn("upstream_rq_pending_overflow", counters)
 
 
-@pytest.mark.skipif(isSanitizerRun(), reason="Unstable and very slow in sanitizer runs")
+@pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable and very slow in sanitizer runs")
 def test_http_h1_mini_stress_test_open_loop(http_test_server_fixture):
   """
   H1 open loop stress test. We expect higher pending and overflow counts 
@@ -147,10 +159,10 @@ def test_http_h1_mini_stress_test_open_loop(http_test_server_fixture):
       "--termination-predicate", "benchmark.http_2xx:99", "--simple-warmup"
   ])
   # we expect pool overflows
-  assertCounterGreater(counters, "benchmark.pool_overflow", 10)
+  asserts.assertCounterGreater(counters, "benchmark.pool_overflow", 10)
 
 
-@pytest.mark.skipif(isSanitizerRun(), reason="Unstable and very slow in sanitizer runs")
+@pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable and very slow in sanitizer runs")
 def test_http_h2_mini_stress_test_open_loop(http_test_server_fixture):
   """
   H2 open loop stress test. We expect higher overflow counts 
@@ -161,7 +173,7 @@ def test_http_h2_mini_stress_test_open_loop(http_test_server_fixture):
       "--termination-predicate", "benchmark.http_2xx:99", "--simple-warmup"
   ])
   # we expect pool overflows
-  assertCounterGreater(counters, "benchmark.pool_overflow", 10)
+  asserts.assertCounterGreater(counters, "benchmark.pool_overflow", 10)
 
 
 def test_http_h2(http_test_server_fixture):
@@ -175,15 +187,15 @@ def test_http_h2(http_test_server_fixture):
       "100", "--termination-predicate", "benchmark.http_2xx:24", "--rps", "100"
   ])
   counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-  assertCounterEqual(counters, "benchmark.http_2xx", 25)
-  assertCounterEqual(counters, "upstream_cx_http2_total", 1)
-  assertCounterGreaterEqual(counters, "upstream_cx_rx_bytes_total", 1030)
-  assertCounterEqual(counters, "upstream_cx_total", 1)
-  assertCounterGreaterEqual(counters, "upstream_cx_tx_bytes_total", 403)
-  assertCounterEqual(counters, "upstream_rq_pending_total", 1)
-  assertCounterEqual(counters, "upstream_rq_total", 25)
-  assertCounterEqual(counters, "default.total_match_count", 1)
-  assertEqual(len(counters), 12)
+  asserts.assertCounterEqual(counters, "benchmark.http_2xx", 25)
+  asserts.assertCounterEqual(counters, "upstream_cx_http2_total", 1)
+  asserts.assertCounterGreaterEqual(counters, "upstream_cx_rx_bytes_total", 1030)
+  asserts.assertCounterEqual(counters, "upstream_cx_total", 1)
+  asserts.assertCounterGreaterEqual(counters, "upstream_cx_tx_bytes_total", 403)
+  asserts.assertCounterEqual(counters, "upstream_rq_pending_total", 1)
+  asserts.assertCounterEqual(counters, "upstream_rq_total", 25)
+  asserts.assertCounterEqual(counters, "default.total_match_count", 1)
+  asserts.assertEqual(len(counters), 12)
 
 
 def test_http_concurrency(http_test_server_fixture):
@@ -200,8 +212,8 @@ def test_http_concurrency(http_test_server_fixture):
 
   # Quite a loose expectation, but this may fluctuate depending on server load.
   # Ideally we'd see 4 workers * 5 rps * 5s = 100 requests total
-  assertCounterEqual(counters, "benchmark.http_2xx", 100)
-  assertCounterEqual(counters, "upstream_cx_http1_total", 4)
+  asserts.assertCounterEqual(counters, "benchmark.http_2xx", 100)
+  asserts.assertCounterEqual(counters, "upstream_cx_http1_total", 4)
 
 
 @pytest.mark.parametrize('server_config',
@@ -216,24 +228,25 @@ def test_https_h1(https_test_server_fixture):
       "--duration", "100", "--termination-predicate", "benchmark.http_2xx:24"
   ])
   counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-  assertCounterEqual(counters, "benchmark.http_2xx", 25)
-  assertCounterEqual(counters, "upstream_cx_http1_total", 1)
-  assertCounterEqual(counters, "upstream_cx_rx_bytes_total", 3400)
-  assertCounterEqual(counters, "upstream_cx_total", 1)
-  assertCounterEqual(counters, "upstream_cx_tx_bytes_total",
-                     1400 if https_test_server_fixture.ip_version == IpVersion.IPV6 else 1450)
-  assertCounterEqual(counters, "upstream_rq_pending_total", 1)
-  assertCounterEqual(counters, "upstream_rq_total", 25)
-  assertCounterEqual(counters, "ssl.ciphers.ECDHE-RSA-AES128-GCM-SHA256", 1)
-  assertCounterEqual(counters, "ssl.curves.X25519", 1)
-  assertCounterEqual(counters, "ssl.handshake", 1)
-  assertCounterEqual(counters, "ssl.sigalgs.rsa_pss_rsae_sha256", 1)
-  assertCounterEqual(counters, "ssl.versions.TLSv1.2", 1)
-  assertCounterEqual(counters, "default.total_match_count", 1)
-  assertEqual(len(counters), 17)
+  asserts.assertCounterEqual(counters, "benchmark.http_2xx", 25)
+  asserts.assertCounterEqual(counters, "upstream_cx_http1_total", 1)
+  asserts.assertCounterEqual(counters, "upstream_cx_rx_bytes_total", 3400)
+  asserts.assertCounterEqual(counters, "upstream_cx_total", 1)
+  asserts.assertCounterEqual(
+      counters, "upstream_cx_tx_bytes_total",
+      1400 if https_test_server_fixture.ip_version == IpVersion.IPV6 else 1450)
+  asserts.assertCounterEqual(counters, "upstream_rq_pending_total", 1)
+  asserts.assertCounterEqual(counters, "upstream_rq_total", 25)
+  asserts.assertCounterEqual(counters, "ssl.ciphers.ECDHE-RSA-AES128-GCM-SHA256", 1)
+  asserts.assertCounterEqual(counters, "ssl.curves.X25519", 1)
+  asserts.assertCounterEqual(counters, "ssl.handshake", 1)
+  asserts.assertCounterEqual(counters, "ssl.sigalgs.rsa_pss_rsae_sha256", 1)
+  asserts.assertCounterEqual(counters, "ssl.versions.TLSv1.2", 1)
+  asserts.assertCounterEqual(counters, "default.total_match_count", 1)
+  asserts.assertEqual(len(counters), 17)
 
   server_stats = https_test_server_fixture.getTestServerStatisticsJson()
-  assertEqual(
+  asserts.assertEqual(
       https_test_server_fixture.getServerStatFromJson(server_stats,
                                                       "http.ingress_http.downstream_rq_2xx"), 25)
 
@@ -251,22 +264,22 @@ def test_https_h2(https_test_server_fixture):
       "--termination-predicate", "benchmark.http_2xx:24", "--max-active-requests", "1"
   ])
   counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-  assertCounterEqual(counters, "benchmark.http_2xx", 25)
-  assertCounterEqual(counters, "upstream_cx_http2_total", 1)
+  asserts.assertCounterEqual(counters, "benchmark.http_2xx", 25)
+  asserts.assertCounterEqual(counters, "upstream_cx_http2_total", 1)
   # Through emperical observation, 1030 has been determined to be the minimum of bytes
   # we can expect to have received when execution has stopped.
-  assertCounterGreaterEqual(counters, "upstream_cx_rx_bytes_total", 1030)
-  assertCounterEqual(counters, "upstream_cx_total", 1)
-  assertCounterGreaterEqual(counters, "upstream_cx_tx_bytes_total", 403)
-  assertCounterEqual(counters, "upstream_rq_pending_total", 1)
-  assertCounterEqual(counters, "upstream_rq_total", 25)
-  assertCounterEqual(counters, "ssl.ciphers.ECDHE-RSA-AES128-GCM-SHA256", 1)
-  assertCounterEqual(counters, "ssl.curves.X25519", 1)
-  assertCounterEqual(counters, "ssl.handshake", 1)
-  assertCounterEqual(counters, "ssl.sigalgs.rsa_pss_rsae_sha256", 1)
-  assertCounterEqual(counters, "ssl.versions.TLSv1.2", 1)
-  assertCounterEqual(counters, "default.total_match_count", 1)
-  assertEqual(len(counters), 17)
+  asserts.assertCounterGreaterEqual(counters, "upstream_cx_rx_bytes_total", 1030)
+  asserts.assertCounterEqual(counters, "upstream_cx_total", 1)
+  asserts.assertCounterGreaterEqual(counters, "upstream_cx_tx_bytes_total", 403)
+  asserts.assertCounterEqual(counters, "upstream_rq_pending_total", 1)
+  asserts.assertCounterEqual(counters, "upstream_rq_total", 25)
+  asserts.assertCounterEqual(counters, "ssl.ciphers.ECDHE-RSA-AES128-GCM-SHA256", 1)
+  asserts.assertCounterEqual(counters, "ssl.curves.X25519", 1)
+  asserts.assertCounterEqual(counters, "ssl.handshake", 1)
+  asserts.assertCounterEqual(counters, "ssl.sigalgs.rsa_pss_rsae_sha256", 1)
+  asserts.assertCounterEqual(counters, "ssl.versions.TLSv1.2", 1)
+  asserts.assertCounterEqual(counters, "default.total_match_count", 1)
+  asserts.assertEqual(len(counters), 17)
 
 
 @pytest.mark.parametrize('server_config',
@@ -286,10 +299,10 @@ def test_https_h2_multiple_connections(https_test_server_fixture):
       "10"
   ])
   counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-  assertCounterGreaterEqual(counters, "benchmark.http_2xx", 100)
+  asserts.assertCounterGreaterEqual(counters, "benchmark.http_2xx", 100)
   # Empirical observation shows we may end up creating more then 10 connections.
   # This is stock Envoy h/2 pool behavior.
-  assertCounterGreaterEqual(counters, "upstream_cx_http2_total", 10)
+  asserts.assertCounterGreaterEqual(counters, "upstream_cx_http2_total", 10)
 
 
 def _do_tls_configuration_test(https_test_server_fixture, cli_parameter, use_h2):
@@ -320,7 +333,7 @@ def _do_tls_configuration_test(https_test_server_fixture, cli_parameter, use_h2)
         https_test_server_fixture.getTestServerRootUri()
     ])
     counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-    assertCounterGreaterEqual(counters, "ssl.ciphers.%s" % cipher, 1)
+    asserts.assertCounterGreaterEqual(counters, "ssl.ciphers.%s" % cipher, 1)
 
 
 @pytest.mark.parametrize('server_config',
@@ -373,7 +386,7 @@ def test_https_prefetching(https_test_server_fixture):
       https_test_server_fixture.getTestServerRootUri()
   ])
   counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-  assertCounterEqual(counters, "upstream_cx_http1_total", 50)
+  asserts.assertCounterEqual(counters, "upstream_cx_http1_total", 50)
 
 
 @pytest.mark.parametrize('server_config',
@@ -389,12 +402,12 @@ def test_https_log_verbosity(https_test_server_fixture):
   _, logs = https_test_server_fixture.runNighthawkClient(
       ["--duration 1", "--rps 1", "-v debug",
        https_test_server_fixture.getTestServerRootUri()])
-  assertNotIn(trace_level_sentinel, logs)
+  asserts.assertNotIn(trace_level_sentinel, logs)
 
   _, logs = https_test_server_fixture.runNighthawkClient(
       ["--duration 1", "--rps 1", "-v trace",
        https_test_server_fixture.getTestServerRootUri()])
-  assertIn(trace_level_sentinel, logs)
+  asserts.assertIn(trace_level_sentinel, logs)
 
 
 def test_dotted_output_format(http_test_server_fixture):
@@ -407,7 +420,8 @@ def test_dotted_output_format(http_test_server_fixture):
       http_test_server_fixture.getTestServerRootUri()
   ],
                                                           as_json=False)
-  assertIn("global.benchmark_http_client.request_to_response.permilles-500.microseconds", output)
+  asserts.assertIn("global.benchmark_http_client.request_to_response.permilles-500.microseconds",
+                   output)
 
 
 # TODO(oschaaf): add percentiles to the gold testing in the C++ output formatter
@@ -419,8 +433,8 @@ def test_cli_output_format(http_test_server_fixture):
   output, _ = http_test_server_fixture.runNighthawkClient(
       ["--duration 1", "--rps 10",
        http_test_server_fixture.getTestServerRootUri()], as_json=False)
-  assertIn("Initiation to completion", output)
-  assertIn("Percentile", output)
+  asserts.assertIn("Initiation to completion", output)
+  asserts.assertIn("Percentile", output)
 
 
 def test_request_body_gets_transmitted(http_test_server_fixture):
@@ -432,10 +446,11 @@ def test_request_body_gets_transmitted(http_test_server_fixture):
   def check_upload_expectations(fixture, parsed_json, expected_transmitted_bytes,
                                 expected_received_bytes):
     counters = fixture.getNighthawkCounterMapFromJson(parsed_json)
-    assertCounterGreaterEqual(counters, "upstream_cx_tx_bytes_total", expected_transmitted_bytes)
+    asserts.assertCounterGreaterEqual(counters, "upstream_cx_tx_bytes_total",
+                                      expected_transmitted_bytes)
     server_stats = fixture.getTestServerStatisticsJson()
     # Server side expectations start failing with larger upload sizes
-    assertGreaterEqual(
+    asserts.assertGreaterEqual(
         fixture.getServerStatFromJson(server_stats,
                                       "http.ingress_http.downstream_cx_rx_bytes_total"),
         expected_received_bytes)
@@ -472,7 +487,7 @@ def test_http_h1_termination_predicate(http_test_server_fixture):
       "--connections", "1", "--termination-predicate", "benchmark.http_2xx:9"
   ])
   counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-  assertCounterEqual(counters, "benchmark.http_2xx", 10)
+  asserts.assertCounterEqual(counters, "benchmark.http_2xx", 10)
 
 
 def test_http_h1_failure_predicate(http_test_server_fixture):
@@ -485,7 +500,7 @@ def test_http_h1_failure_predicate(http_test_server_fixture):
   ],
                                                                expect_failure=True)
   counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-  assertCounterEqual(counters, "benchmark.http_2xx", 1)
+  asserts.assertCounterEqual(counters, "benchmark.http_2xx", 1)
 
 
 def test_bad_arg_error_messages(http_test_server_fixture):
@@ -516,21 +531,21 @@ def test_multiple_backends_http_h1(multi_http_test_server_fixture):
   parsed_json, stderr = multi_http_test_server_fixture.runNighthawkClient(nighthawk_client_args)
 
   counters = multi_http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-  assertCounterEqual(counters, "benchmark.http_2xx", 25)
-  assertCounterEqual(counters, "upstream_cx_http1_total", 3)
-  assertCounterGreater(counters, "upstream_cx_rx_bytes_total", 0)
-  assertCounterEqual(counters, "upstream_cx_total", 3)
-  assertCounterGreater(counters, "upstream_cx_tx_bytes_total", 0)
-  assertCounterEqual(counters, "upstream_rq_pending_total", 3)
-  assertCounterEqual(counters, "upstream_rq_total", 25)
-  assertCounterEqual(counters, "default.total_match_count", 3)
+  asserts.assertCounterEqual(counters, "benchmark.http_2xx", 25)
+  asserts.assertCounterEqual(counters, "upstream_cx_http1_total", 3)
+  asserts.assertCounterGreater(counters, "upstream_cx_rx_bytes_total", 0)
+  asserts.assertCounterEqual(counters, "upstream_cx_total", 3)
+  asserts.assertCounterGreater(counters, "upstream_cx_tx_bytes_total", 0)
+  asserts.assertCounterEqual(counters, "upstream_rq_pending_total", 3)
+  asserts.assertCounterEqual(counters, "upstream_rq_total", 25)
+  asserts.assertCounterEqual(counters, "default.total_match_count", 3)
   total_2xx = 0
   for parsed_server_json in multi_http_test_server_fixture.getAllTestServerStatisticsJsons():
     single_2xx = multi_http_test_server_fixture.getServerStatFromJson(
         parsed_server_json, "http.ingress_http.downstream_rq_2xx")
-    assertBetweenInclusive(single_2xx, 8, 9)
+    asserts.assertBetweenInclusive(single_2xx, 8, 9)
     total_2xx += single_2xx
-  assertBetweenInclusive(total_2xx, 24, 25)
+  asserts.assertBetweenInclusive(total_2xx, 24, 25)
 
 
 @pytest.mark.parametrize('server_config',
@@ -551,21 +566,21 @@ def test_multiple_backends_https_h1(multi_https_test_server_fixture):
   parsed_json, stderr = multi_https_test_server_fixture.runNighthawkClient(nighthawk_client_args)
 
   counters = multi_https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-  assertCounterEqual(counters, "benchmark.http_2xx", 25)
-  assertCounterEqual(counters, "upstream_cx_http1_total", 3)
-  assertCounterGreater(counters, "upstream_cx_rx_bytes_total", 0)
-  assertCounterEqual(counters, "upstream_cx_total", 3)
-  assertCounterGreater(counters, "upstream_cx_tx_bytes_total", 0)
-  assertCounterEqual(counters, "upstream_rq_pending_total", 3)
-  assertCounterEqual(counters, "upstream_rq_total", 25)
-  assertCounterEqual(counters, "default.total_match_count", 3)
+  asserts.assertCounterEqual(counters, "benchmark.http_2xx", 25)
+  asserts.assertCounterEqual(counters, "upstream_cx_http1_total", 3)
+  asserts.assertCounterGreater(counters, "upstream_cx_rx_bytes_total", 0)
+  asserts.assertCounterEqual(counters, "upstream_cx_total", 3)
+  asserts.assertCounterGreater(counters, "upstream_cx_tx_bytes_total", 0)
+  asserts.assertCounterEqual(counters, "upstream_rq_pending_total", 3)
+  asserts.assertCounterEqual(counters, "upstream_rq_total", 25)
+  asserts.assertCounterEqual(counters, "default.total_match_count", 3)
   total_2xx = 0
   for parsed_server_json in multi_https_test_server_fixture.getAllTestServerStatisticsJsons():
     single_2xx = multi_https_test_server_fixture.getServerStatFromJson(
         parsed_server_json, "http.ingress_http.downstream_rq_2xx")
-    assertBetweenInclusive(single_2xx, 8, 9)
+    asserts.assertBetweenInclusive(single_2xx, 8, 9)
     total_2xx += single_2xx
-  assertBetweenInclusive(total_2xx, 24, 25)
+  asserts.assertBetweenInclusive(total_2xx, 24, 25)
 
 
 @pytest.mark.parametrize('server_config',
@@ -580,9 +595,9 @@ def test_https_h1_sni(https_test_server_fixture):
       "--termination-predicate", "benchmark.http_2xx:2", "--request-header", "host: sni.com"
   ])
   counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-  assertCounterGreaterEqual(counters, "benchmark.http_2xx", 1)
-  assertCounterGreaterEqual(counters, "upstream_cx_http1_total", 1)
-  assertCounterGreaterEqual(counters, "ssl.handshake", 1)
+  asserts.assertCounterGreaterEqual(counters, "benchmark.http_2xx", 1)
+  asserts.assertCounterGreaterEqual(counters, "upstream_cx_http1_total", 1)
+  asserts.assertCounterGreaterEqual(counters, "ssl.handshake", 1)
 
   # Verify failure when we set no host (will get plain http)
   parsed_json, _ = https_test_server_fixture.runNighthawkClient(
@@ -597,9 +612,9 @@ def test_https_h1_sni(https_test_server_fixture):
                                                                 expect_failure=False)
 
   counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-  assertCounterGreaterEqual(counters, "benchmark.http_2xx", 1)
-  assertCounterGreaterEqual(counters, "upstream_cx_http1_total", 1)
-  assertNotIn("ssl.handshake", counters)
+  asserts.assertCounterGreaterEqual(counters, "benchmark.http_2xx", 1)
+  asserts.assertCounterGreaterEqual(counters, "upstream_cx_http1_total", 1)
+  asserts.assertNotIn("ssl.handshake", counters)
 
 
 @pytest.mark.parametrize('server_config',
@@ -615,9 +630,9 @@ def test_https_h2_sni(https_test_server_fixture):
       "--h2"
   ])
   counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-  assertCounterGreaterEqual(counters, "benchmark.http_2xx", 1)
-  assertCounterGreaterEqual(counters, "upstream_cx_http2_total", 1)
-  assertCounterEqual(counters, "ssl.handshake", 1)
+  asserts.assertCounterGreaterEqual(counters, "benchmark.http_2xx", 1)
+  asserts.assertCounterGreaterEqual(counters, "upstream_cx_http2_total", 1)
+  asserts.assertCounterEqual(counters, "ssl.handshake", 1)
 
   # Verify success when we set the right host
   parsed_json, _ = https_test_server_fixture.runNighthawkClient([
@@ -625,9 +640,9 @@ def test_https_h2_sni(https_test_server_fixture):
       "--termination-predicate", "benchmark.http_2xx:2", "--request-header", "host: sni.com", "--h2"
   ])
   counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-  assertCounterGreaterEqual(counters, "benchmark.http_2xx", 1)
-  assertCounterGreaterEqual(counters, "upstream_cx_http2_total", 1)
-  assertCounterEqual(counters, "ssl.handshake", 1)
+  asserts.assertCounterGreaterEqual(counters, "benchmark.http_2xx", 1)
+  asserts.assertCounterGreaterEqual(counters, "upstream_cx_http2_total", 1)
+  asserts.assertCounterEqual(counters, "ssl.handshake", 1)
 
   # Verify failure when we set no host (will get plain http)
   parsed_json, _ = https_test_server_fixture.runNighthawkClient([
@@ -655,7 +670,7 @@ def duration_parameterization_fixture(request):
   yield param
 
 
-@pytest.mark.skipif(isSanitizerRun(), reason="Unstable in sanitizer runs")
+@pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable in sanitizer runs")
 def test_http_request_release_timing(http_test_server_fixture, qps_parameterization_fixture,
                                      duration_parameterization_fixture):
   '''
@@ -674,13 +689,13 @@ def test_http_request_release_timing(http_test_server_fixture, qps_parameterizat
     global_histograms = http_test_server_fixture.getNighthawkGlobalHistogramsbyIdFromJson(
         parsed_json)
     counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-    assertEqual(
+    asserts.assertEqual(
         int(global_histograms["benchmark_http_client.request_to_response"]["count"]),
         total_requests)
-    assertEqual(
+    asserts.assertEqual(
         int(global_histograms["benchmark_http_client.queue_to_connect"]["count"]), total_requests)
 
-    assertCounterEqual(counters, "benchmark.http_2xx", (total_requests))
+    asserts.assertCounterEqual(counters, "benchmark.http_2xx", (total_requests))
 
 
 def _send_sigterm(process):
@@ -704,24 +719,24 @@ def test_cancellation_with_infinite_duration(http_test_server_fixture):
   stdout, stderr = client_process.communicate()
   client_process.wait()
   output = stdout.decode('utf-8')
-  assertEqual(client_process.returncode, 0)
+  asserts.assertEqual(client_process.returncode, 0)
   parsed_json = json.loads(output)
   counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-  assertCounterEqual(counters, "graceful_stop_requested", 2)
-  assertCounterGreaterEqual(counters, "benchmark.http_2xx", 1)
+  asserts.assertCounterEqual(counters, "graceful_stop_requested", 2)
+  asserts.assertCounterGreaterEqual(counters, "benchmark.http_2xx", 1)
 
 
 def _run_client_with_args(args):
-  return run_binary_with_args("nighthawk_client", args)
+  return utility.run_binary_with_args("nighthawk_client", args)
 
 
 def test_client_help():
   (exit_code, output) = _run_client_with_args("--help")
-  assertEqual(exit_code, 0)
-  assertIn("USAGE", output)
+  asserts.assertEqual(exit_code, 0)
+  asserts.assertIn("USAGE", output)
 
 
 def test_client_bad_arg():
   (exit_code, output) = _run_client_with_args("127.0.0.1 --foo")
-  assertEqual(exit_code, 1)
-  assertIn("PARSE ERROR: Argument: --foo", output)
+  asserts.assertEqual(exit_code, 1)
+  asserts.assertIn("PARSE ERROR: Argument: --foo", output)

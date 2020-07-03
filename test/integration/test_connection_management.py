@@ -6,7 +6,8 @@ import sys
 import pytest
 
 from test.integration.integration_test_fixtures import (http_test_server_fixture, server_config)
-from test.integration.utility import *
+from test.integration import asserts
+from test.integration import utility
 
 
 def run_with_number_of_connections(fixture,
@@ -33,28 +34,28 @@ def run_with_number_of_connections(fixture,
   parsed_json, _ = fixture.runNighthawkClient(args)
   counters = fixture.getNighthawkCounterMapFromJson(parsed_json)
   if run_test_expectation:
-    assertCounterEqual(counters, "upstream_cx_total", expected_connections)
+    asserts.assertCounterEqual(counters, "upstream_cx_total", expected_connections)
   return counters
 
 
 # A series that tests with queueing disabled
-@pytest.mark.skipif(isSanitizerRun(), reason="Unstable in sanitizer runs")
+@pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable in sanitizer runs")
 def test_http_h1_connection_management_1(http_test_server_fixture):
   run_with_number_of_connections(http_test_server_fixture, 1)
 
 
-@pytest.mark.skipif(isSanitizerRun(), reason="Unstable in sanitizer runs")
+@pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable in sanitizer runs")
 def test_http_h1_connection_management_2(http_test_server_fixture):
   run_with_number_of_connections(http_test_server_fixture, 2)
 
 
 # A series that tests with queueing enabled
-@pytest.mark.skipif(isSanitizerRun(), reason="Unstable in sanitizer runs")
+@pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable in sanitizer runs")
 def test_http_h1_connection_management_with_queue_1(http_test_server_fixture):
   run_with_number_of_connections(http_test_server_fixture, 1, max_pending_requests=5)
 
 
-@pytest.mark.skipif(isSanitizerRun(), reason="Unstable in sanitizer runs")
+@pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable in sanitizer runs")
 def test_http_h1_connection_management_with_queue_5(http_test_server_fixture):
   run_with_number_of_connections(http_test_server_fixture, 5, max_pending_requests=5)
 
@@ -69,30 +70,31 @@ def connection_management_test_request_per_connection(fixture, requests_per_conn
       run_test_expectation=False,
       h2=use_h2)
   requests = counters["upstream_rq_total"]
-  assertCounterBetweenInclusive(counters, "upstream_cx_total", (requests / max_requests_per_conn),
-                                (requests / max_requests_per_conn) + 1)
+  asserts.assertCounterBetweenInclusive(counters, "upstream_cx_total",
+                                        (requests / max_requests_per_conn),
+                                        (requests / max_requests_per_conn) + 1)
 
 
 # Test h1 with a single request_per_connection
-@pytest.mark.skipif(isSanitizerRun(), reason="Unstable in sanitizer runs")
+@pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable in sanitizer runs")
 def test_http_h1_connection_management_single_request_per_conn_1(http_test_server_fixture):
   connection_management_test_request_per_connection(http_test_server_fixture, 1, False)
 
 
 # Test h1 with a request_per_connection set to 5
-@pytest.mark.skipif(isSanitizerRun(), reason="Unstable in sanitizer runs")
+@pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable in sanitizer runs")
 def test_http_h1_connection_management_single_request_per_conn_5(http_test_server_fixture):
   connection_management_test_request_per_connection(http_test_server_fixture, 5, False)
 
 
 # Test h2 with a single request_per_connection
-@pytest.mark.skipif(isSanitizerRun(), reason="Unstable in sanitizer runs")
+@pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable in sanitizer runs")
 def test_http_h2_connection_management_single_request_per_conn_1(http_test_server_fixture):
   connection_management_test_request_per_connection(http_test_server_fixture, 1, True)
 
 
 # Test h2 with a request_per_connection set to 5
-@pytest.mark.skipif(isSanitizerRun(), reason="Unstable in sanitizer runs")
+@pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable in sanitizer runs")
 def test_http_h2_connection_management_single_request_per_conn_1(http_test_server_fixture):
   connection_management_test_request_per_connection(http_test_server_fixture, 5, True)
 
@@ -113,8 +115,8 @@ def test_h1_pool_strategy(http_test_server_fixture):
       http_test_server_fixture.getTestServerRootUri()
   ])
 
-  assertNotIn("[C1] message complete", logs)
-  assertEqual(countLogLinesWithSubstring(logs, "[C0] message complete"), 10)
+  asserts.assertNotIn("[C1] message complete", logs)
+  asserts.assertEqual(countLogLinesWithSubstring(logs, "[C0] message complete"), 10)
 
   requests = 12
   connections = 3
@@ -128,4 +130,4 @@ def test_h1_pool_strategy(http_test_server_fixture):
   for i in range(1, connections):
     line_count = countLogLinesWithSubstring(logs, "[C%d] message complete" % i)
     strict_count = (requests / connections) * 2
-    assertBetweenInclusive(line_count, strict_count, strict_count)
+    asserts.assertBetweenInclusive(line_count, strict_count, strict_count)
