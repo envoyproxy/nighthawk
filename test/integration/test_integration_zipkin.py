@@ -8,7 +8,8 @@ from test.integration import asserts
 
 
 def test_tracing_zipkin(http_test_server_fixture):
-  """
+  """Test zipkin tracing.
+
   Test that we send spans when our zipkin tracing feature
   is enabled. Note there's no actual zipkin server started, so
   traffic will get (hopefully) get send into the void.

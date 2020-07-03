@@ -100,7 +100,8 @@ def test_http_h2_connection_management_single_request_per_conn_1(http_test_serve
 
 
 def test_h1_pool_strategy(http_test_server_fixture):
-  """
+  """Test connection re-use strategies of the http 1 connection pool.
+
   Test that with the "mru" strategy only the first created connection gets to send requests.
   Then, with the "lru" strategy, we expect the other connection to be used as well.
   """

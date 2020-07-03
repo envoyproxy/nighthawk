@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+"""Tests for the remote execution feature."""
 
 import pytest
 
@@ -7,9 +7,9 @@ from test.integration import asserts
 
 
 def test_remote_execution_basics(http_test_server_fixture):
-  """
-  Verify remote execution via gRPC works as intended. We do that by running
-  nighthawk_service and configuring nighthawk_client to request execution via that.
+  """Verify remote execution via gRPC works as intended.
+
+  We do that by running nighthawk_service and configuring nighthawk_client to request execution via that.
   """
   http_test_server_fixture.startNighthawkGrpcService()
   args = [
@@ -38,9 +38,7 @@ def test_remote_execution_basics(http_test_server_fixture):
 
 
 def test_bad_service_uri(http_test_server_fixture):
-  """
-  Test configuring a bad service uri.
-  """
+  """Test configuring a bad service uri."""
   args = [http_test_server_fixture.getTestServerRootUri(), "--nighthawk-service", "a:-1"]
   parsed_json, err = http_test_server_fixture.runNighthawkClient(
       args, expect_failure=True, as_json=False)

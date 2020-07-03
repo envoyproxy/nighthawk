@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-
-# Tool to automatically update README.md files that contain --help output of c++ TCLAP binaries
+"""Tool to automatically update README.md files that contain --help output of c++ TCLAP binaries."""
 
 import logging
 import argparse

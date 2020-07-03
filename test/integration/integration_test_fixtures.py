@@ -1,6 +1,4 @@
-"""@package integration_test_fixtures
-Base classes for Nighthawk integration tests
-"""
+"""Base classes for Nighthawk integration tests."""
 
 import json
 import logging
@@ -34,7 +32,8 @@ def determineIpVersionsFromEnvironment():
 
 
 class IntegrationTestBase():
-  """
+  """Base class for integration test fixtures.
+
   IntegrationTestBase facilitates testing against the Nighthawk test server, by determining a free port,
   and starting it up in a separate process in setUp().
 
@@ -48,7 +47,8 @@ class IntegrationTestBase():
   """
 
   def __init__(self, ip_version, server_config, backend_count=1):
-    """
+    """Initialize the IntegrationTestBase instance.
+
     Args:
       ip_version: a single IP mode that this instance will test: IpVersion.IPV4 or IpVersion.IPV6
       server_config: path to the server configuration
@@ -58,7 +58,7 @@ class IntegrationTestBase():
       server_ip: string containing the server ip that will be used to listen
       tag: String. Supply this to get recognizeable output locations.
       parameters: Dictionary. Supply this to provide template parameter replacement values.
-      grpc_service: NighthawkGrpcService instance or None. Set by startNighthawkGrpcService().  
+      grpc_service: NighthawkGrpcService instance or None. Set by startNighthawkGrpcService().
       test_server: NighthawkTestServer instance, set during setUp().
       nighthawk_client_path: String, path to the nighthawk_client binary.
     """
@@ -84,8 +84,9 @@ class IntegrationTestBase():
   # TODO(oschaaf): For the NH test server, add a way to let it determine a port by itself and pull that
   # out.
   def getFreeListenerPortForAddress(self, address):
-    """
-    Determines a free port and returns that. Theoretically it is possible that another process
+    """Determine a free port and returns that.
+
+    Theoretically it is possible that another process
     will steal the port before our caller is able to leverage it, but we take that chance.
     The upside is that we can push the port upon the server we are about to start through configuration
     which is compatible accross servers.
@@ -96,8 +97,9 @@ class IntegrationTestBase():
     return port
 
   def setUp(self):
-    """
-    Performs sanity checks and starts up the server. Upon exit the server is ready to accept connections.
+    """Perform sanity checks and start up the server.
+
+    Upon exit the server is ready to accept connections.
     """
     if os.getenv("NH_DOCKER_IMAGE", "") == "":
       assert os.path.exists(
@@ -112,10 +114,8 @@ class IntegrationTestBase():
     assert self._tryStartTestServers(), "Test server(s) failed to start"
 
   def tearDown(self):
-    """
-    Stops the server.
-    """
-    if not self.grpc_service is None:
+    """Stop the server."""
+    if self.grpc_service is not None:
       assert (self.grpc_service.stop() == 0)
 
     any_failed = False
@@ -141,34 +141,26 @@ class IntegrationTestBase():
     return True
 
   def getGlobalResults(self, parsed_json):
-    """
-    Utility to find the global/aggregated result in the json output
-    """
+    """Find the global/aggregated result in the json output."""
     global_result = [x for x in parsed_json["results"] if x["name"] == "global"]
     assert (len(global_result) == 1)
     return global_result[0]
 
   def getNighthawkCounterMapFromJson(self, parsed_json):
-    """
-    Utility method to get the counters from the json indexed by name.
-    """
+    """Get the counters from the json indexed by name."""
     return {
         counter["name"]: int(counter["value"])
         for counter in self.getGlobalResults(parsed_json)["counters"]
     }
 
   def getNighthawkGlobalHistogramsbyIdFromJson(self, parsed_json):
-    """
-    Utility method to get the global histograms from the json indexed by id.
-    """
+    """Get the global histograms from the json indexed by id."""
     return {
         statistic["id"]: statistic for statistic in self.getGlobalResults(parsed_json)["statistics"]
     }
 
   def getTestServerRootUri(self, https=False):
-    """
-    Utility for getting the http://host:port/ that can be used to query the server we started in setUp()
-    """
+    """Get the http://host:port/ that can be used to query the server we started in setUp()."""
     uri_host = self.server_ip
     if self.ip_version == IpVersion.IPV6:
       uri_host = "[%s]" % self.server_ip
@@ -177,10 +169,7 @@ class IntegrationTestBase():
     return uri
 
   def getAllTestServerRootUris(self, https=False):
-    """
-    Utility for getting the list of http://host:port/ that can be used to query the servers we started
-    in setUp()
-    """
+    """Get the list of http://host:port/ that can be used to query the servers we started in setUp()."""
     uri_host = self.server_ip
     if self.ip_version == IpVersion.IPV6:
       uri_host = "[%s]" % self.server_ip
@@ -191,24 +180,18 @@ class IntegrationTestBase():
     ]
 
   def getTestServerStatisticsJson(self):
-    """
-    Utility to grab a statistics snapshot from the test server.
-    """
+    """Grab a statistics snapshot from the test server."""
     return self.test_server.fetchJsonFromAdminInterface("/stats?format=json")
 
   def getAllTestServerStatisticsJsons(self):
-    """
-    Utility to grab a statistics snapshot from multiple test servers.
-    """
+    """Grab a statistics snapshot from multiple test servers."""
     return [
         test_server.fetchJsonFromAdminInterface("/stats?format=json")
         for test_server in self._test_servers
     ]
 
   def getServerStatFromJson(self, server_stats_json, name):
-    """
-    Utility to extract one statistic from a single json snapshot.
-    """
+    """Extract one statistic from a single json snapshot."""
     counters = server_stats_json["stats"]
     for counter in counters:
       if counter["name"] == name:
@@ -216,9 +199,10 @@ class IntegrationTestBase():
     return None
 
   def runNighthawkClient(self, args, expect_failure=False, timeout=30, as_json=True):
-    """
-    Runs Nighthawk against the test server, returning a json-formatted result
-    and logs. If the timeout is exceeded an exception will be raised.
+    """Run Nighthawk against the test server.
+
+    Returns a string containing json-formatted result plus logs.
+    If the timeout is exceeded an exception will be raised.
     """
     # Copy the args so our modifications to it stay local.
     args = args.copy()
@@ -256,7 +240,6 @@ class IntegrationTestBase():
       json: String containing raw json output obtained via nighthawk_client --output-format=json
       format: String that specifies the desired output format. Must be one of [human|yaml|dotted-string|fortio]. Optional, defaults to "human".
     """
-
     # TODO(oschaaf): validate format arg.
     args = []
     if os.getenv("NH_DOCKER_IMAGE", "") != "":
@@ -267,8 +250,10 @@ class IntegrationTestBase():
         args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     logging.info("Nighthawk client popen() args: [%s]" % args)
     stdout, stderr = client_process.communicate(input=json.encode())
-    logs = stderr.decode('utf-8')
-    output = stdout.decode('utf-8')
+    # We suppress declared but not used warnings below, as these may produce helpful
+    # in test failures (via pytests introspection and logging).
+    logs = stderr.decode('utf-8')  # noqa(F841)
+    output = stdout.decode('utf-8')  # noqa(F841)
     assert (client_process.returncode == 0)
     return stdout.decode('utf-8')
 
@@ -283,8 +268,8 @@ class IntegrationTestBase():
 
 
 class HttpIntegrationTestBase(IntegrationTestBase):
-  """
-  Base for running plain http tests against the Nighthawk test server
+  """Base for running plain http tests against the Nighthawk test server.
+
   NOTE: any script that consumes derivations of this, needs to needs also explictly
   import server_config, to avoid errors caused by the server_config not being found
   by pytest.
@@ -300,9 +285,7 @@ class HttpIntegrationTestBase(IntegrationTestBase):
 
 
 class MultiServerHttpIntegrationTestBase(IntegrationTestBase):
-  """
-  Base for running plain http tests against multiple Nighthawk test servers
-  """
+  """Base for running plain http tests against multiple Nighthawk test servers."""
 
   def __init__(self, ip_version, server_config, backend_count):
     """See base class."""
@@ -319,9 +302,7 @@ class MultiServerHttpIntegrationTestBase(IntegrationTestBase):
 
 
 class HttpsIntegrationTestBase(IntegrationTestBase):
-  """
-  Base for https tests against the Nighthawk test server
-  """
+  """Base for https tests against the Nighthawk test server."""
 
   def __init__(self, ip_version, server_config):
     """See base class."""
@@ -333,9 +314,7 @@ class HttpsIntegrationTestBase(IntegrationTestBase):
 
 
 class SniIntegrationTestBase(HttpsIntegrationTestBase):
-  """
-  Base for https/sni tests against the Nighthawk test server
-  """
+  """Base for https/sni tests against the Nighthawk test server."""
 
   def __init__(self, ip_version, server_config):
     super(SniIntegrationTestBase, self).__init__(ip_version, server_config)
@@ -346,9 +325,7 @@ class SniIntegrationTestBase(HttpsIntegrationTestBase):
 
 
 class MultiServerHttpsIntegrationTestBase(IntegrationTestBase):
-  """
-  Base for https tests against multiple Nighthawk test servers
-  """
+  """Base for https tests against multiple Nighthawk test servers."""
 
   def __init__(self, ip_version, server_config, backend_count):
     super(MultiServerHttpsIntegrationTestBase, self).__init__(ip_version, server_config,

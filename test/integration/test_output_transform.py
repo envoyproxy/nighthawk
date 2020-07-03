@@ -25,10 +25,10 @@ def test_output_transform_bad_arguments():
 
 def test_output_transform_101():
   """
-  Runs an arbitrary load test, which outputs to json.
+  Run an arbitrary load test, which outputs to json.
+
   This json output is then transformed to human readable output.
   """
-
   test_rundir = os.path.join(os.environ["TEST_SRCDIR"], os.environ["TEST_WORKSPACE"])
   process = subprocess.run([
       os.path.join(test_rundir, "nighthawk_client"), "--duration", "1", "--rps", "1", "127.0.0.1",

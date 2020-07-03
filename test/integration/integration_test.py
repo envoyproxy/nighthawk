@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""@package integration_test.py
-Entry point for our integration testing
-"""
+"""Entry point for our integration testing."""
 import logging
 import os
 import sys
@@ -18,7 +16,7 @@ if __name__ == '__main__':
           "-vvvv",
           "--showlocals",  # Don't abbreviate/truncate long values in asserts.
           "-p",
-          "no:cacheprovider",  # Avoid a bunch of warnings on readonly filesystems 
+          "no:cacheprovider",  # Avoid a bunch of warnings on readonly filesystems
           "-k",
           test_selection_arg,  # Passed in via BUILD/py_test()
           "-x",

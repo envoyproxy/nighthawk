@@ -21,7 +21,8 @@ from test.integration import utility
 
 
 def test_http_h1(http_test_server_fixture):
-  """
+  """Test http1 over plain http.
+
   Runs the CLI configured to use plain HTTP/1 against our test server, and sanity
   checks statistics from both client and server.
   """
@@ -95,9 +96,7 @@ def mini_stress_test(fixture, args):
 # overflows, we can set fixed expectations with respect to overflows and anticipated pending
 # totals.
 def test_http_h1_mini_stress_test_with_client_side_queueing(http_test_server_fixture):
-  """
-  Run a max rps test with the h1 pool against our test server, using a small client-side
-  queue."""
+  """Run a max rps test with the h1 pool against our test server, using a small client-side queue."""
   counters = mini_stress_test(http_test_server_fixture, [
       http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--max-pending-requests",
       "10", "--connections", "1", "--duration", "100", "--termination-predicate",
@@ -108,10 +107,7 @@ def test_http_h1_mini_stress_test_with_client_side_queueing(http_test_server_fix
 
 
 def test_http_h1_mini_stress_test_without_client_side_queueing(http_test_server_fixture):
-  """
-  Run a max rps test with the h1 pool against our test server, with no client-side
-  queueing.
-  """
+  """Run a max rps test with the h1 pool against our test server, with no client-side queueing."""
   counters = mini_stress_test(http_test_server_fixture, [
       http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--connections", "1",
       "--duration", "100", "--termination-predicate", "benchmark.http_2xx:99"
@@ -121,10 +117,7 @@ def test_http_h1_mini_stress_test_without_client_side_queueing(http_test_server_
 
 
 def test_http_h2_mini_stress_test_with_client_side_queueing(http_test_server_fixture):
-  """
-  Run a max rps test with the h2 pool against our test server, using a small client-side
-  queue. 
-  """
+  """Run a max rps test with the h2 pool against our test server, using a small client-side queue."""
   counters = mini_stress_test(http_test_server_fixture, [
       http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--max-pending-requests",
       "10", "--h2", "--max-active-requests", "1", "--connections", "1", "--duration", "100",
@@ -135,10 +128,7 @@ def test_http_h2_mini_stress_test_with_client_side_queueing(http_test_server_fix
 
 
 def test_http_h2_mini_stress_test_without_client_side_queueing(http_test_server_fixture):
-  """
-  Run a max rps test with the h2 pool against our test server, with no client-side
-  queueing. 
-  """
+  """Run a max rps test with the h2 pool against our test server, with no client-side queueing."""
   counters = mini_stress_test(http_test_server_fixture, [
       http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--h2",
       "--max-active-requests", "1", "--connections", "1", "--duration", "100",
@@ -150,9 +140,7 @@ def test_http_h2_mini_stress_test_without_client_side_queueing(http_test_server_
 
 @pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable and very slow in sanitizer runs")
 def test_http_h1_mini_stress_test_open_loop(http_test_server_fixture):
-  """
-  H1 open loop stress test. We expect higher pending and overflow counts 
-  """
+  """Run an H1 open loop stress test. We expect higher pending and overflow counts."""
   counters = mini_stress_test(http_test_server_fixture, [
       http_test_server_fixture.getTestServerRootUri(), "--rps", "10000", "--max-pending-requests",
       "1", "--open-loop", "--max-active-requests", "1", "--connections", "1", "--duration", "100",
@@ -164,9 +152,7 @@ def test_http_h1_mini_stress_test_open_loop(http_test_server_fixture):
 
 @pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable and very slow in sanitizer runs")
 def test_http_h2_mini_stress_test_open_loop(http_test_server_fixture):
-  """
-  H2 open loop stress test. We expect higher overflow counts 
-  """
+  """Run an H2 open loop stress test. We expect higher overflow counts."""
   counters = mini_stress_test(http_test_server_fixture, [
       http_test_server_fixture.getTestServerRootUri(), "--rps", "10000", "--max-pending-requests",
       "1", "--h2", "--open-loop", "--max-active-requests", "1", "--duration", "100",
@@ -177,7 +163,8 @@ def test_http_h2_mini_stress_test_open_loop(http_test_server_fixture):
 
 
 def test_http_h2(http_test_server_fixture):
-  """
+  """Test h2 over plain http.
+
   Runs the CLI configured to use h2c against our test server, and sanity
   checks statistics from both client and server.
   """
@@ -199,10 +186,7 @@ def test_http_h2(http_test_server_fixture):
 
 
 def test_http_concurrency(http_test_server_fixture):
-  """
-  Concurrency should act like a multiplier.
-  """
-
+  """Test that concurrency acts like a multiplier."""
   parsed_json, _ = http_test_server_fixture.runNighthawkClient([
       "--concurrency 4 --rps 100 --connections 1", "--duration", "100", "--termination-predicate",
       "benchmark.http_2xx:24",
@@ -219,7 +203,8 @@ def test_http_concurrency(http_test_server_fixture):
 @pytest.mark.parametrize('server_config',
                          ["nighthawk/test/integration/configurations/nighthawk_https_origin.yaml"])
 def test_https_h1(https_test_server_fixture):
-  """
+  """Test h1 over https.
+
   Runs the CLI configured to use HTTP/1 over https against our test server, and sanity
   checks statistics from both client and server.
   """
@@ -254,7 +239,8 @@ def test_https_h1(https_test_server_fixture):
 @pytest.mark.parametrize('server_config',
                          ["nighthawk/test/integration/configurations/nighthawk_https_origin.yaml"])
 def test_https_h2(https_test_server_fixture):
-  """
+  """Test http2 over https.
+
   Runs the CLI configured to use HTTP/2 (using https) against our test server, and sanity
   checks statistics from both client and server.
   """
@@ -287,7 +273,8 @@ def test_https_h2(https_test_server_fixture):
 def test_https_h2_multiple_connections(https_test_server_fixture):
   """
   Test that the experimental h2 pool uses multiple connections.
-  The burst we send ensures we will need 10 connections right away, as we 
+
+  The burst we send ensures we will need 10 connections right away, as we
   limit max active streams per connection to 1 by setting the experimental
   flag to use multiple h2 connections.
   """
@@ -306,7 +293,7 @@ def test_https_h2_multiple_connections(https_test_server_fixture):
 
 
 def _do_tls_configuration_test(https_test_server_fixture, cli_parameter, use_h2):
-  """Runs tests for different ciphers.
+  """Test with different ciphers.
 
   For a given choice of (--tls-context, --transport-socket) x (H1, H2),
   run a series of traffic tests with different ciphers.
@@ -316,13 +303,13 @@ def _do_tls_configuration_test(https_test_server_fixture, cli_parameter, use_h2)
     cli_parameter: string, --tls-context or --transport-socket
     use_h2: boolean, whether to pass --h2
   """
-
   if cli_parameter == "--tls-context":
     json_template = "{common_tls_context:{tls_params:{cipher_suites:[\"-ALL:%s\"]}}}"
   else:
-    json_template = ("{name:\"envoy.transport_sockets.tls\",typed_config:{" +
-                     "\"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\"," +
-                     "common_tls_context:{tls_params:{cipher_suites:[\"-ALL:%s\"]}}}}")
+    json_template = "%s%s%s" % (
+        "{name:\"envoy.transport_sockets.tls\",typed_config:{",
+        "\"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\",",
+        "common_tls_context:{tls_params:{cipher_suites:[\"-ALL:%s\"]}}}}")
 
   for cipher in [
       "ECDHE-RSA-AES128-SHA",
@@ -339,45 +326,37 @@ def _do_tls_configuration_test(https_test_server_fixture, cli_parameter, use_h2)
 @pytest.mark.parametrize('server_config',
                          ["nighthawk/test/integration/configurations/nighthawk_https_origin.yaml"])
 def test_https_h1_tls_context_configuration(https_test_server_fixture):
-  """
-  Verifies specifying tls cipher suites works with the h1 pool
-  """
+  """Test that specifying tls cipher suites works with the h1 pool."""
   _do_tls_configuration_test(https_test_server_fixture, "--tls-context", use_h2=False)
 
 
 @pytest.mark.parametrize('server_config',
                          ["nighthawk/test/integration/configurations/nighthawk_https_origin.yaml"])
 def test_https_h1_transport_socket_configuration(https_test_server_fixture):
-  """
-  Verifies specifying tls cipher suites via transport socket works with the h1 pool
-  """
-
+  """Test that specifying tls cipher suites via transport socket works with the h1 pool."""
   _do_tls_configuration_test(https_test_server_fixture, "--transport-socket", use_h2=False)
 
 
 @pytest.mark.parametrize('server_config',
                          ["nighthawk/test/integration/configurations/nighthawk_https_origin.yaml"])
 def test_https_h2_tls_context_configuration(https_test_server_fixture):
-  """
-  Verifies specifying tls cipher suites works with the h2 pool
-  """
+  """Test that specifying tls cipher suites works with the h2 pool."""
   _do_tls_configuration_test(https_test_server_fixture, "--tls-context", use_h2=True)
 
 
 @pytest.mark.parametrize('server_config',
                          ["nighthawk/test/integration/configurations/nighthawk_https_origin.yaml"])
 def test_https_h2_transport_socket_configuration(https_test_server_fixture):
-  """
-  Verifies specifying tls cipher suites via transport socket works with the h2 pool
-  """
+  """Test that specifying tls cipher suites via transport socket works with the h2 pool."""
   _do_tls_configuration_test(https_test_server_fixture, "--transport-socket", use_h2=True)
 
 
 @pytest.mark.parametrize('server_config',
                          ["nighthawk/test/integration/configurations/nighthawk_https_origin.yaml"])
 def test_https_prefetching(https_test_server_fixture):
-  """
-  Test we prefetch connections. We test for 1 second at 1 rps, which should
+  """Test we prefetch connections.
+
+  We test for 1 second at 1 rps, which should
   result in 1 connection max without prefetching. However, we specify 50 connections
   and the prefetching flag, so we ought to see 50 http1 connections created.
   """
@@ -392,8 +371,8 @@ def test_https_prefetching(https_test_server_fixture):
 @pytest.mark.parametrize('server_config',
                          ["nighthawk/test/integration/configurations/nighthawk_https_origin.yaml"])
 def test_https_log_verbosity(https_test_server_fixture):
-  """
-  Test that that the specified log verbosity level is respected.
+  """Test that the specified log verbosity level is respected.
+
   This tests for a sentinel we know is only right when the level
   is set to 'trace'.
   """
@@ -411,10 +390,7 @@ def test_https_log_verbosity(https_test_server_fixture):
 
 
 def test_dotted_output_format(http_test_server_fixture):
-  """
-  Ensure we get the dotted string output format when requested.
-  and ensure we get latency percentiles.
-  """
+  """Test that we get the dotted string output format when requested, and ensure we get latency percentiles."""
   output, _ = http_test_server_fixture.runNighthawkClient([
       "--duration 1", "--rps 10", "--output-format dotted",
       http_test_server_fixture.getTestServerRootUri()
@@ -427,9 +403,7 @@ def test_dotted_output_format(http_test_server_fixture):
 # TODO(oschaaf): add percentiles to the gold testing in the C++ output formatter
 # once the fortio formatter has landed (https://github.com/envoyproxy/nighthawk/pull/168)
 def test_cli_output_format(http_test_server_fixture):
-  """
-  Ensure we observe latency percentiles with CLI output.
-  """
+  """Test that we observe latency percentiles with CLI output."""
   output, _ = http_test_server_fixture.runNighthawkClient(
       ["--duration 1", "--rps 10",
        http_test_server_fixture.getTestServerRootUri()], as_json=False)
@@ -438,8 +412,9 @@ def test_cli_output_format(http_test_server_fixture):
 
 
 def test_request_body_gets_transmitted(http_test_server_fixture):
-  """
-  Test that the number of bytes we request for the request body gets reflected in the upstream
+  """Test request body transmission.
+
+  Ensure that the number of bytes we request for the request body gets reflected in the upstream
   connection transmitted bytes counter for h1 and h2.
   """
 
@@ -478,8 +453,9 @@ def test_request_body_gets_transmitted(http_test_server_fixture):
 
 
 def test_http_h1_termination_predicate(http_test_server_fixture):
-  """
-  Put in a termination predicate. Should result in successfull execution, with 10 successfull requests.
+  """Test with a termination predicate.
+
+  Should result in successfull execution, with 10 successfull requests.
   We would expect 25 based on rps and duration.
   """
   parsed_json, _ = http_test_server_fixture.runNighthawkClient([
@@ -491,8 +467,9 @@ def test_http_h1_termination_predicate(http_test_server_fixture):
 
 
 def test_http_h1_failure_predicate(http_test_server_fixture):
-  """
-  Put in a termination predicate. Should result in failing execution, with 10 successfull requests.
+  """Test with a failure predicate.
+
+  Should result in failing execution, with 10 successfull requests.
   """
   parsed_json, _ = http_test_server_fixture.runNighthawkClient([
       http_test_server_fixture.getTestServerRootUri(), "--duration", "5", "--rps", "500",
@@ -504,10 +481,7 @@ def test_http_h1_failure_predicate(http_test_server_fixture):
 
 
 def test_bad_arg_error_messages(http_test_server_fixture):
-  """
-  Test arguments that pass proto validation, but are found to be no good nonetheless, result in reasonable error
-  messages.
-  """
+  """Test arguments that pass proto validation, but are found to be no good nonetheless, result in reasonable error messages."""
   _, err = http_test_server_fixture.runNighthawkClient(
       [http_test_server_fixture.getTestServerRootUri(), "--termination-predicate ", "a:a"],
       expect_failure=True,
@@ -516,7 +490,8 @@ def test_bad_arg_error_messages(http_test_server_fixture):
 
 
 def test_multiple_backends_http_h1(multi_http_test_server_fixture):
-  """
+  """Test that we can load-test multiple backends on http.
+
   Runs the CLI configured to use plain HTTP/1 against multiple test servers, and sanity
   checks statistics from both client and server.
   """
@@ -551,7 +526,8 @@ def test_multiple_backends_http_h1(multi_http_test_server_fixture):
 @pytest.mark.parametrize('server_config',
                          ["nighthawk/test/integration/configurations/nighthawk_https_origin.yaml"])
 def test_multiple_backends_https_h1(multi_https_test_server_fixture):
-  """
+  """Test that we can load-test multiple backends on https.
+
   Runs the CLI configured to use HTTP/1 with TLS against multiple test servers, and sanity
   checks statistics from both client and server.
   """
@@ -586,9 +562,7 @@ def test_multiple_backends_https_h1(multi_https_test_server_fixture):
 @pytest.mark.parametrize('server_config',
                          ["nighthawk/test/integration/configurations/sni_origin.yaml"])
 def test_https_h1_sni(https_test_server_fixture):
-  """
-  Tests SNI indication works on https/h1
-  """
+  """Test that SNI indication works on https/h1."""
   # Verify success when we set the right host
   parsed_json, _ = https_test_server_fixture.runNighthawkClient([
       https_test_server_fixture.getTestServerRootUri(), "--rps", "100", "--duration", "100",
@@ -620,9 +594,7 @@ def test_https_h1_sni(https_test_server_fixture):
 @pytest.mark.parametrize('server_config',
                          ["nighthawk/test/integration/configurations/sni_origin.yaml"])
 def test_https_h2_sni(https_test_server_fixture):
-  """
-  Tests SNI indication works on https/h1
-  """
+  """Tests that SNI indication works on https/h1."""
   # Verify success when we set the right host
   parsed_json, _ = https_test_server_fixture.runNighthawkClient([
       https_test_server_fixture.getTestServerRootUri(), "--rps", "100", "--duration", "100",
@@ -673,10 +645,7 @@ def duration_parameterization_fixture(request):
 @pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable in sanitizer runs")
 def test_http_request_release_timing(http_test_server_fixture, qps_parameterization_fixture,
                                      duration_parameterization_fixture):
-  '''
-  Verify latency-sample-, query- and reply- counts in various configurations.
-  '''
-
+  """Test latency-sample-, query- and reply- counts in various configurations."""
   for concurrency in [1, 2]:
     parsed_json, _ = http_test_server_fixture.runNighthawkClient([
         http_test_server_fixture.getTestServerRootUri(), "--duration",
@@ -707,9 +676,7 @@ def _send_sigterm(process):
 
 
 def test_cancellation_with_infinite_duration(http_test_server_fixture):
-  """
-  Make sure that we can use signals to cancel execution.
-  """
+  """Test that we can use signals to cancel execution."""
   args = [
       http_test_server_fixture.nighthawk_client_path, "--concurrency", "2",
       http_test_server_fixture.getTestServerRootUri(), "--no-duration", "--output-format", "json"

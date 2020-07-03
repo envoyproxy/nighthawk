@@ -7,7 +7,7 @@ def isSanitizerRun():
 
 
 def run_binary_with_args(binary, args):
-  """Executes a Nighthawk binary with the provided arguments.
+  """Execute a Nighthawk binary with the provided arguments.
 
   Args:
     binary: A string, the name of the to-be-called binary, e.g. "nighthawk_client".

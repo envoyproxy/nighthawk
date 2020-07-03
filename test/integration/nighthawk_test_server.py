@@ -39,24 +39,23 @@ def _substitute_yaml_values(runfiles_instance, obj, params):
 
 
 class TestServerBase(object):
-  """
-    Base class for running a server in a separate process.
+  """Base class for running a server in a separate process.
 
-    Arguments:
-      server_binary_path: String, specify the path to the test server binary.
-      config_template_path: String, specify the path to the test server configuration template.
-      server_ip: String, specify the ip address the test server should use to listen for traffic.
-      server_binary_config_path_arg: String, specify the name of the CLI argument the test server binary uses to accept a configuration path.
-      parameters: Dictionary. Supply this to provide configuration template parameter replacement values.
-      tag: String. Supply this to get recognizeable output locations.
-    
-    Attributes:
-      ip_version: IP version that the proxy should use when listening.
-      server_ip: string containing the server ip that will be used to listen
-      server_port: Integer, get the port used by the server to listen for traffic.
-      docker_image: String, supplies a docker image for execution of the test server binary. Sourced from environment variable NH_DOCKER_IMAGE.
-      tmpdir: String, indicates the location used to store outputs like logs.
-    """
+  Arguments:
+    server_binary_path: String, specify the path to the test server binary.
+    config_template_path: String, specify the path to the test server configuration template.
+    server_ip: String, specify the ip address the test server should use to listen for traffic.
+    server_binary_config_path_arg: String, specify the name of the CLI argument the test server binary uses to accept a configuration path.
+    parameters: Dictionary. Supply this to provide configuration template parameter replacement values.
+    tag: String. Supply this to get recognizeable output locations.
+
+  Attributes:
+    ip_version: IP version that the proxy should use when listening.
+    server_ip: string containing the server ip that will be used to listen
+    server_port: Integer, get the port used by the server to listen for traffic.
+    docker_image: String, supplies a docker image for execution of the test server binary. Sourced from environment variable NH_DOCKER_IMAGE.
+    tmpdir: String, indicates the location used to store outputs like logs.
+  """
 
   def __init__(self, server_binary_path, config_template_path, server_ip, ip_version,
                server_binary_config_path_arg, parameters, tag):
@@ -187,10 +186,11 @@ class TestServerBase(object):
 
 
 class NighthawkTestServer(TestServerBase):
+  """Run the Nighthawk test server in a separate process.
+
+  Passes in the right cli-arg to point it to its
+  configuration. For, say, NGINX this would be '-c' instead.
   """
-    Will run the Nighthawk test server in a separate process. Passes in the right cli-arg to point it to its
-    configuration. For, say, NGINX this would be '-c' instead.
-    """
 
   def __init__(self,
                server_binary_path,
@@ -203,9 +203,7 @@ class NighthawkTestServer(TestServerBase):
                                               ip_version, "--config-path", parameters, tag)
 
   def getCliVersionString(self):
-    """ Get the version string as written to the output by the CLI.
-    """
-
+    """Get the version string as written to the output by the CLI."""
     args = []
     if self.docker_image != "":
       args = ["docker", "run", "--rm", self.docker_image]
