@@ -165,7 +165,7 @@ if [ -n "$CIRCLECI" ]; then
     # We constrain parallelism in CI to avoid running out of memory.	
     NUM_CPUS=6
     if [[ "$1" == "asan" ]]; then
-        NUM_CPUS=5
+        NUM_CPUS=3
     fi
     if [[ "$1" == "coverage" ]]; then
         NUM_CPUS=3
