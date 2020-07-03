@@ -51,20 +51,19 @@ function do_coverage() {
 }
 
 function setup_gcc_toolchain() {
-  ENVOY_STDLIB="${ENVOY_STDLIB:-libstdc++}"
-  export CC=gcc
-  export CXX=g++
-  export BAZEL_COMPILER=gcc
-  echo "$CC/$CXX toolchain configured"
+    export CC=gcc
+    export CXX=g++
+    export BAZEL_COMPILER=gcc
+    echo "$CC/$CXX toolchain configured"
 }
 
 function setup_clang_toolchain() {
-  export PATH=/opt/llvm/bin:$PATH
-  export CC=clang
-  export CXX=clang++
-  export ASAN_SYMBOLIZER_PATH=/opt/llvm/bin/llvm-symbolizer
-  export BAZEL_COMPILER=clang
-  echo "clang toolchain configured"
+    export PATH=/opt/llvm/bin:$PATH
+    export CC=clang
+    export CXX=clang++
+    export ASAN_SYMBOLIZER_PATH=/opt/llvm/bin/llvm-symbolizer
+    export BAZEL_COMPILER=clang
+    echo "$CC/$CXX toolchain configured"
 }
 
 function run_bazel() {
