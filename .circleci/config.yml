@@ -23,8 +23,8 @@ jobs:
     resource_class: xlarge
     steps:
       - checkout
-      - run: ci/do_ci.sh clang_tidy
-  test_with_valgrind:
+      - run: ci/do_ci.sh test_gcc
+  test_gcc:
     docker:
       - image: *envoy-build-image
     resource_class: xlarge
@@ -88,8 +88,8 @@ workflows:
     jobs:
       - build
       - test
+      - test_gcc
       - clang_tidy
-      #      - test_with_valgrind
       - coverage
       - asan
       - tsan

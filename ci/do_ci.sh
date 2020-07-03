@@ -50,13 +50,22 @@ function do_coverage() {
     exit 0
 }
 
+function setup_gcc_toolchain() {
+  ENVOY_STDLIB="${ENVOY_STDLIB:-libstdc++}"
+  export CC=gcc
+  export CXX=g++
+  export BAZEL_COMPILER=gcc
+  echo "$CC/$CXX toolchain configured"
+}
+
 function setup_clang_toolchain() {
-    export PATH=/opt/llvm/bin:$PATH
-    export CC=clang
-    export CXX=clang++
-    export ASAN_SYMBOLIZER_PATH=/opt/llvm/bin/llvm-symbolizer
-    export BAZEL_COMPILER=clang
-    echo "$CC/$CXX toolchain configured"
+  ENVOY_STDLIB="${ENVOY_STDLIB:-libc++}"
+  if [[ "${ENVOY_STDLIB}" == "libc++" ]]; then
+    export BAZEL_BUILD_OPTIONS="--config=libc++ ${BAZEL_BUILD_OPTIONS}"
+  else
+    export BAZEL_BUILD_OPTIONS="--config=clang ${BAZEL_BUILD_OPTIONS}"
+  fi
+  echo "clang toolchain with ${ENVOY_STDLIB} configured"
 }
 
 function run_bazel() {
@@ -150,7 +159,7 @@ function do_fix_format() {
     ./tools/format_python_tools.sh fix
 }
 
-if [ -n "$CIRCLECI" ]; then
+if [ -z "$CIRCLECI" ]; then
     if [[ -f "${HOME:-/root}/.gitconfig" ]]; then
         mv "${HOME:-/root}/.gitconfig" "${HOME:-/root}/.gitconfig_save"
         echo 1
@@ -195,24 +204,32 @@ export BAZEL_TEST_OPTIONS="${BAZEL_BUILD_OPTIONS} --test_env=HOME --test_env=PYT
 --test_env=UBSAN_OPTIONS=print_stacktrace=1 \
 --cache_test_results=no --test_output=all ${BAZEL_EXTRA_TEST_OPTIONS}"
 
-setup_clang_toolchain
 export CLANG_FORMAT=clang-format
 
 case "$1" in
     build)
+        setup_clang_toolchain
         do_build
         exit 0
     ;;
     test)
+        setup_clang_toolchain
         do_test
         exit 0
     ;;
-    test_with_valgrind)
-        do_test_with_valgrind
+    test_gcc)
+        if [ -z "$CIRCLECI" ]; then
+            NUM_CPUS=7
+        fi
+        setup_gcc_toolchain
+        # TODO(#362): change the line below to do_test once the upstream merges the gcc build fix
+        # for our tests.
+        do_build
         exit 0
     ;;
     clang_tidy)
-        if [ -n "$CIRCLECI" ]; then
+        setup_clang_toolchain
+        if [ -z "$CIRCLECI" ]; then
             # Decrease parallelism to avoid running out of memory
             NUM_CPUS=7
         fi
@@ -220,18 +237,22 @@ case "$1" in
         exit 0
     ;;
     coverage)
+        setup_clang_toolchain
         do_coverage
         exit 0
     ;;
     asan)
+        setup_clang_toolchain
         do_asan
         exit 0
     ;;
     tsan)
+        setup_clang_toolchain
         do_tsan
         exit 0
     ;;
     docker)
+        setup_clang_toolchain
         do_docker
         exit 0
     ;;
@@ -244,11 +265,12 @@ case "$1" in
         exit 0
     ;;
     benchmark_with_own_binaries)
+        setup_clang_toolchain
         do_benchmark_with_own_binaries
         exit 0
     ;;
     *)
-        echo "must be one of [build,test,clang_tidy,test_with_valgrind,coverage,asan,tsan,benchmark_with_own_binaries,docker,check_format,fix_format]"
+        echo "must be one of [build,test,clang_tidy,coverage,asan,tsan,benchmark_with_own_binaries,docker,check_format,fix_format,test_gcc]"
         exit 1
     ;;
 esac
