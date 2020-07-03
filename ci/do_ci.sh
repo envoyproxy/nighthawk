@@ -59,6 +59,7 @@ function setup_gcc_toolchain() {
 }
 
 function setup_clang_toolchain() {
+  bazel/setup_clang.sh /usr/lib/llvm-10
   ENVOY_STDLIB="${ENVOY_STDLIB:-libc++}"
   if [[ "${ENVOY_STDLIB}" == "libc++" ]]; then
     export BAZEL_BUILD_OPTIONS="--config=libc++ ${BAZEL_BUILD_OPTIONS}"
@@ -222,8 +223,8 @@ case "$1" in
             NUM_CPUS=7
         fi
         setup_gcc_toolchain
-        # TODO(#362): change the line below to do_test once the upstream merges the gcc build fix
-        # for our tests.
+        # TODO(#362): change the line below to do_test once the upstream merges
+        # https://github.com/envoyproxy/envoy/pull/10236
         do_build
         exit 0
     ;;

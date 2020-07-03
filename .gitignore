@@ -18,3 +18,4 @@ test/coverage/BUILD
 *.bak
 default.profraw
 tmp-*
+clang.bazelrc
