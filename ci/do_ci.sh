@@ -7,7 +7,7 @@ set -u
 export BUILDIFIER_BIN="${BUILDIFIER_BIN:=/usr/local/bin/buildifier}"
 export BUILDOZER_BIN="${BUILDOZER_BIN:=/usr/local/bin/buildozer}"
 export NUM_CPUS=${NUM_CPUS:=$(grep -c ^processor /proc/cpuinfo)}
-export CIRCLECI=${CIRCLECI:="")}
+export CIRCLECI=${CIRCLECI:=""}
 export BAZEL_EXTRA_TEST_OPTIONS=${BAZEL_EXTRA_TEST_OPTIONS:=""}
 export BAZEL_OPTIONS=${BAZEL_OPTIONS:=""}
 export BAZEL_BUILD_EXTRA_OPTIONS=${BAZEL_BUILD_EXTRA_OPTIONS:=""}
@@ -158,7 +158,7 @@ function do_fix_format() {
     ./tools/format_python_tools.sh fix
 }
 
-if [ -z "$CIRCLECI" ]; then
+if [ -n "$CIRCLECI" ]; then
     if [[ -f "${HOME:-/root}/.gitconfig" ]]; then
         mv "${HOME:-/root}/.gitconfig" "${HOME:-/root}/.gitconfig_save"
         echo 1
@@ -217,7 +217,7 @@ case "$1" in
         exit 0
     ;;
     test_gcc)
-        if [ -z "$CIRCLECI" ]; then
+        if [ -n "$CIRCLECI" ]; then
             NUM_CPUS=7
         fi
         setup_gcc_toolchain
@@ -228,7 +228,7 @@ case "$1" in
     ;;
     clang_tidy)
         setup_clang_toolchain
-        if [ -z "$CIRCLECI" ]; then
+        if [ -n "$CIRCLECI" ]; then
             # Decrease parallelism to avoid running out of memory
             NUM_CPUS=7
         fi
