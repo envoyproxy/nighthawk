@@ -163,7 +163,7 @@ if [ -n "$CIRCLECI" ]; then
         echo 1
     fi
     # We constrain parallelism in CI to avoid running out of memory.	
-    NUM_CPUS=8
+    NUM_CPUS=6
     if [[ "$1" == "asan" ]]; then
         NUM_CPUS=5
     fi
@@ -216,9 +216,6 @@ case "$1" in
         exit 0
     ;;
     test_gcc)
-        if [ -n "$CIRCLECI" ]; then
-            NUM_CPUS=7
-        fi
         setup_gcc_toolchain
         # TODO(#362): change the line below to do_test once the upstream merges
         # https://github.com/envoyproxy/envoy/pull/10236
@@ -227,10 +224,6 @@ case "$1" in
     ;;
     clang_tidy)
         setup_clang_toolchain
-        if [ -n "$CIRCLECI" ]; then
-            # Decrease parallelism to avoid running out of memory
-            NUM_CPUS=7
-        fi
         do_clang_tidy
         exit 0
     ;;
@@ -255,10 +248,12 @@ case "$1" in
         exit 0
     ;;
     check_format)
+        setup_clang_toolchain
         do_check_format
         exit 0
     ;;
     fix_format)
+        setup_clang_toolchain
         do_fix_format
         exit 0
     ;;
