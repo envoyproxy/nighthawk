@@ -1,0 +1,51 @@
+# Basic Nighthawk Test Server config, returning "aaaaaaaaaa" to any HTTP request on port 12345.
+
+# Mostly based on the example at https://github.com/envoyproxy/nighthawk/blob/master/source/server/README.md
+
+# Administrative and diagnostic page served on :8081
+admin:
+  access_log_path: /tmp/envoy.log
+  address:
+    socket_address:
+      address: '::'
+      port_value: 8081
+static_resources:
+  listeners:
+  - address:
+      socket_address:
+        address: '::' # Listen on all addresses; compatible with IPv6-only environments like Borg.
+        port_value: 12345
+    filter_chains:
+    - filters:
+      - name: envoy.http_connection_manager
+        typed_config:
+          "@type": type.googleapis.com/envoy.config.filter.network.http_connection_manager.v2.HttpConnectionManager
+          generate_request_id: false
+          codec_type: auto
+          stat_prefix: ingress_http
+          route_config:
+            name: local_route
+            virtual_hosts:
+            - name: service
+              domains:
+              - "*"
+          http_filters:
+          - name: envoy.fault
+            config:
+              max_active_faults: 100
+              delay:
+                header_delay: {}
+                percentage:
+                  numerator: 100
+          # The test-server filter generates a response within Envoy rather than routing the request
+          # to a backend.
+          - name: test-server   # before envoy.router because order matters!
+            config:
+              response_body_size: 10
+              response_headers:
+              - { header: { key: "foo", value: "bar"} }
+              - { header: { key: "foo", value: "bar2"}, append: true }
+              - { header: { key: "x-nh", value: "1"}}
+          - name: envoy.router
+            config:
+              dynamic_stats: false

@@ -1,5 +1,7 @@
 #include "adaptive_rps/adaptive_rps_controller.h"
 
+#include <chrono>
+
 #include "nighthawk/adaptive_rps/custom_metric_evaluator.h"
 #include "nighthawk/adaptive_rps/metrics_plugin.h"
 #include "nighthawk/adaptive_rps/step_controller.h"
@@ -27,11 +29,11 @@ namespace {
 using nighthawk::adaptive_rps::AdaptiveRpsSessionOutput;
 using nighthawk::adaptive_rps::AdaptiveRpsSessionSpec;
 using nighthawk::adaptive_rps::BenchmarkResult;
-using nighthawk::adaptive_rps::WITHIN_THRESHOLD;
 using nighthawk::adaptive_rps::MetricEvaluation;
 using nighthawk::adaptive_rps::MetricSpec;
 using nighthawk::adaptive_rps::MetricsPluginConfig;
 using nighthawk::adaptive_rps::OUTSIDE_THRESHOLD;
+using nighthawk::adaptive_rps::WITHIN_THRESHOLD;
 
 nighthawk::client::ExecutionResponse
 PerformNighthawkBenchmark(nighthawk::client::NighthawkService::Stub* nighthawk_service_stub,
@@ -116,14 +118,25 @@ BenchmarkResult PerformAndAnalyzeNighthawkBenchmark(
 
 } // namespace
 
-AdaptiveRpsSessionOutput
-PerformAdaptiveRpsSession(nighthawk::client::NighthawkService::Stub* nighthawk_service_stub,
-                          const AdaptiveRpsSessionSpec& spec) {
+AdaptiveRpsSessionOutput PerformAdaptiveRpsSession(
+    nighthawk::client::NighthawkService::Stub* nighthawk_service_stub,
+    const AdaptiveRpsSessionSpec& spec) {
+  auto time_source = std::make_unique<Envoy::RealTimeSource>();
   AdaptiveRpsSessionOutput output;
 
   StepControllerPtr step_controller = LoadStepControllerPlugin(spec.step_controller_config());
 
+  Envoy::MonotonicTime start_time = time_source->monotonicTime();
   while (!step_controller->IsConverged()) {
+    if (
+      
+      std::chrono::duration_cast<std::chrono::seconds>(
+        time_source->monotonicTime() - start_time).count()
+        
+            > spec.convergence_deadline().seconds()) {
+      throw Envoy::EnvoyException("Reached convergence deadline");
+    }
+    std::cerr << "Loop rps=" << step_controller->GetCurrentRps() << "\n";
     BenchmarkResult result = PerformAndAnalyzeNighthawkBenchmark(
         nighthawk_service_stub, spec, step_controller->GetCurrentRps(), spec.measuring_period());
     *output.mutable_adjusting_stage_results()->Add() = result;

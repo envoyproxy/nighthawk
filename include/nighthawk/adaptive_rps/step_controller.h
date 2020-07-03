@@ -31,10 +31,7 @@ using StepControllerPtr = std::unique_ptr<StepController>;
 class StepControllerConfigFactory : public Envoy::Config::TypedFactory {
 public:
   ~StepControllerConfigFactory() override = default;
-  std::string name() const override {return "";
-  }
   std::string category() const override { return "nighthawk.step_controller"; }
-  // Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
   virtual StepControllerPtr createStepController(const Envoy::Protobuf::Message&) PURE;
 };
 

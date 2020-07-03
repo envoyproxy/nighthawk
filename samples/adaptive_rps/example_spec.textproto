@@ -1,0 +1,38 @@
+# proto-file: adaptive_rps/adaptive_rps.proto
+# proto-message: AdaptiveRpsSessionSpec
+
+metric_specs {
+  metric_name: "latency-ns-max"
+  metrics_plugin_name: "builtin"
+  upper_threshold: 32000000
+  weight: 1
+}
+
+nighthawk_traffic_template {
+  uri {
+    value: "[::1]:12345"
+  }
+}
+
+measuring_period {
+  seconds: 4
+}
+
+testing_stage_duration {
+  seconds: 30
+}
+
+convergence_deadline {
+  seconds: 60
+}
+
+step_controller_config {
+  name: "linear-search"
+  typed_config {
+    [type.googleapis.com/nighthawk.adaptive_rps.LinearSearchStepControllerConfig] {
+      step: 100
+      minimum_rps: 500
+      maximum_rps: 10000
+    }
+  }
+}
