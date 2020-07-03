@@ -59,14 +59,12 @@ function setup_gcc_toolchain() {
 }
 
 function setup_clang_toolchain() {
-  bazel/setup_clang.sh /usr/lib/llvm-10
-  ENVOY_STDLIB="${ENVOY_STDLIB:-libc++}"
-  if [[ "${ENVOY_STDLIB}" == "libc++" ]]; then
-    export BAZEL_BUILD_OPTIONS="--config=libc++ ${BAZEL_BUILD_OPTIONS}"
-  else
-    export BAZEL_BUILD_OPTIONS="--config=clang ${BAZEL_BUILD_OPTIONS}"
-  fi
-  echo "clang toolchain with ${ENVOY_STDLIB} configured"
+  export PATH=/opt/llvm/bin:$PATH
+  export CC=clang
+  export CXX=clang++
+  export ASAN_SYMBOLIZER_PATH=/opt/llvm/bin/llvm-symbolizer
+  export BAZEL_COMPILER=clang
+  echo "clang toolchain configured"
 }
 
 function run_bazel() {
