@@ -1,5 +1,6 @@
 #include "adaptive_rps/adaptive_rps_client_main.h"
 
+#include "adaptive_rps/adaptive_rps_controller.h"
 #include "nighthawk/common/exception.h"
 // #include "external/envoy/source/common/protobuf/message_validator_impl.h"
 #include "api/client/service.pb.h"
@@ -8,9 +9,13 @@
 #include "fmt/ranges.h"
 #include "tclap/CmdLine.h"
 #include "api/client/service.grpc.pb.h"
+#include "api/adaptive_rps/adaptive_rps.pb.h"
+
+#include "common/grpc/google_grpc_utils.h"
 
 #include <cstring>
 #include <iostream>
+#include <fstream>
 #include <memory>
 #include <string>
 #include <utility>
@@ -22,6 +27,15 @@
 
 #include "common/utility.h"
 #include "common/version_info.h"
+
+// #include "third_party/envoy/src/source/common/protobuf/message_validator_impl.h"
+// #include "third_party/envoy/src/source/common/protobuf/protobuf.h"
+// #include "third_party/envoy/src/source/common/protobuf/visitor.h"
+// #include "third_party/envoy/src/source/common/protobuf/well_known.h"
+
+// #include "external/envoy/source/common/protobuf/message_validator_impl.h"
+#include "external/envoy/source/common/protobuf/protobuf.h"
+// #include "external/envoy/source/common/protobuf/utility.h"
 
 namespace Nighthawk {
 namespace AdaptiveRps {
@@ -49,12 +63,12 @@ uint32_t AdaptiveRpsMain::run() {
                              std::istreambuf_iterator<char>());
 
   nighthawk::adaptive_rps::AdaptiveRpsSessionSpec spec;
-  if (!Protobuf::TextFormat::ParseFromString(spec_textproto, &spec)) {
-    throw EnvoyException("Unable to parse file \"" + spec_filename_ + "\" as a text protobuf (type " +
+  if (!Envoy::Protobuf::TextFormat::ParseFromString(spec_textproto, &spec)) {
+    throw Envoy::EnvoyException("Unable to parse file \"" + spec_filename_ + "\" as a text protobuf (type " +
                          spec.GetTypeName() + ")");
   }
 
-  std::shared_ptr<grpc_impl::Channel> channel = grpc::CreateChannel(nighthawk_service_address_, grpc::InsecureChannelCredentials());
+  std::shared_ptr<grpc_impl::Channel> channel = ::grpc::CreateChannel(nighthawk_service_address_, ::grpc::InsecureChannelCredentials());
 
   // std::shared_ptr<grpc_impl::ChannelCredentials> credentials;
   // credentials = grpc::experimental::LocalCredentials(LOCAL_TCP);
@@ -65,14 +79,13 @@ uint32_t AdaptiveRpsMain::run() {
   std::unique_ptr<nighthawk::client::NighthawkService::Stub> stub(
       nighthawk::client::NighthawkService::NewStub(channel));
 
-  nighthawk::adaptive_rps::AdaptiveRpsSessionOutput output =
-      nighthawk::PerformAdaptiveRpsSession(stub.get(), spec);
+  nighthawk::adaptive_rps::AdaptiveRpsSessionOutput output = PerformAdaptiveRpsSession(stub.get(), spec);
 
   std::ofstream ofs(output_filename_);
   if (ofs.is_open()) {
     ofs << output.DebugString();
   } else {
-    throw EnvoyException("Unable to open output file \"" + output_filename_ + "\"");
+    throw Envoy::EnvoyException("Unable to open output file \"" + output_filename_ + "\"");
   }
   return 0;
 }

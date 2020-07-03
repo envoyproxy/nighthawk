@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 #include "api/adaptive_rps/benchmark_result.pb.h"
 #include "api/adaptive_rps/step_controller.pb.h"
 // #include "third_party/envoy/src/source/common/config/utility.h"
@@ -8,6 +10,8 @@
 #include "api/adaptive_rps/metrics_plugin.pb.h"
 #include "envoy/common/pure.h"
 #include "envoy/config/typed_config.h"
+#include "envoy/registry/registry.h"
+
 // #include "envoy/common/config/utility.h"
 // #include "envoy/common/protobuf/protobuf.h"
 
@@ -27,8 +31,10 @@ using StepControllerPtr = std::unique_ptr<StepController>;
 class StepControllerConfigFactory : public Envoy::Config::TypedFactory {
 public:
   ~StepControllerConfigFactory() override = default;
+  std::string name() const override {return "";
+  }
   std::string category() const override { return "nighthawk.step_controller"; }
-  Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
+  // Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
   virtual StepControllerPtr createStepController(const Envoy::Protobuf::Message&) PURE;
 };
 

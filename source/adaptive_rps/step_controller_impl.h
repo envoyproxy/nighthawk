@@ -10,6 +10,8 @@ namespace AdaptiveRps {
 
 class LinearSearchStepControllerConfigFactory : public StepControllerConfigFactory {
 public:
+  LinearSearchStepControllerConfigFactory() {}
+  ~LinearSearchStepControllerConfigFactory() override = default;
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
   StepControllerPtr createStepController(const Envoy::Protobuf::Message& config) override;
@@ -33,6 +35,8 @@ private:
 
 class BinarySearchStepControllerConfigFactory : public StepControllerConfigFactory {
 public:
+BinarySearchStepControllerConfigFactory() {}
+  ~BinarySearchStepControllerConfigFactory() override = default;
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
   StepControllerPtr createStepController(const Envoy::Protobuf::Message& config) override;

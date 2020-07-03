@@ -11,16 +11,16 @@ envoy_package()
 envoy_cc_library(
     name = "adaptive_rps_lib",
     srcs = [
-        "adaptive_rps_controller.cc",
         "adaptive_rps_client_main.cc",
+        "adaptive_rps_controller.cc",
         "custom_metric_evaluator_impl.cc",
         "metrics_plugin_impl.cc",
         "plugin_util.cc",
         "step_controller_impl.cc",
     ],
     hdrs = [
-        "adaptive_rps_controller.h",
         "adaptive_rps_client_main.h",
+        "adaptive_rps_controller.h",
         "custom_metric_evaluator_impl.h",
         "metrics_plugin_impl.h",
         "plugin_util.h",
@@ -34,7 +34,6 @@ envoy_cc_library(
         "//api/client:grpc_service_lib",
         "//include/nighthawk/adaptive_rps:adaptive_rps_includes",
         "@com_google_absl//absl/status",
-
         "//include/nighthawk/common:base_includes",
         "//source/common:nighthawk_common_lib",
         # "@envoy//source/common/api:api_lib_with_external_headers",
@@ -49,8 +48,8 @@ envoy_cc_library(
         # "@envoy//source/common/local_info:local_info_lib_with_external_headers",
         # "@envoy//source/common/network:dns_lib_with_external_headers",
         # "@envoy//source/common/network:address_lib_with_external_headers",
-        # "@envoy//source/common/protobuf:message_validator_lib_with_external_headers",
-        # "@envoy//source/common/protobuf:utility_lib_with_external_headers",
+        "@envoy//source/common/protobuf:message_validator_lib_with_external_headers",
+        "@envoy//source/common/protobuf:utility_lib_with_external_headers",
         # "@envoy//source/common/runtime:runtime_lib_with_external_headers",
         # "@envoy//source/common/secret:secret_manager_impl_lib_with_external_headers",
         # "@envoy//source/common/singleton:manager_impl_lib_with_external_headers",
@@ -69,7 +68,6 @@ envoy_cc_library(
         # "@envoy//source/server:options_lib_with_external_headers",
         # "@envoy//source/server/config_validation:admin_lib_with_external_headers",
         # "@envoy//include/envoy/http:protocol_interface_with_external_headers",
-
         "@envoy//source/common/config:utility_lib_with_external_headers",
     ],
 )
