@@ -11,8 +11,6 @@
 
 namespace Nighthawk {
 
-using namespace testing;
-
 /**
  * Support class for testing the dynamic delay filter. We rely on the fault filter for
  * inducing the actual delay, so this aims to prove that:

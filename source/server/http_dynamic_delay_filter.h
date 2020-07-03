@@ -41,8 +41,7 @@ private:
   const nighthawk::server::ResponseOptions server_config_;
   static std::atomic<uint64_t>& instances() {
     // We lazy-init the atomic to avoid static initialization / a fiasco.
-    static std::atomic<uint64_t> a(0);
-    return a;
+    MUTABLE_CONSTRUCT_ON_FIRST_USE(std::atomic<uint64_t>, 0);
   }
 };
 
