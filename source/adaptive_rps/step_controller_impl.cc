@@ -62,8 +62,6 @@ Envoy::ProtobufTypes::MessagePtr LinearSearchStepControllerConfigFactory::create
 
 StepControllerPtr LinearSearchStepControllerConfigFactory::createStepController(
     const Envoy::Protobuf::Message& message) {
-  // const LinearSearchStepControllerConfig& config =
-  //     dynamic_cast<const LinearSearchStepControllerConfig&>(config_any);
   const google::protobuf::Any& any = dynamic_cast<const google::protobuf::Any&>(message);
   LinearSearchStepControllerConfig config;
   any.UnpackTo(&config);
@@ -104,8 +102,6 @@ std::string BinarySearchStepControllerConfigFactory::name() const { return "bina
 
 StepControllerPtr BinarySearchStepControllerConfigFactory::createStepController(
     const Envoy::Protobuf::Message& message) {
-  // const BinarySearchStepControllerConfig& config =
-  //     dynamic_cast<const BinarySearchStepControllerConfig&>(config_any);
   const google::protobuf::Any& any = dynamic_cast<const google::protobuf::Any&>(message);
   BinarySearchStepControllerConfig config;
   any.UnpackTo(&config);

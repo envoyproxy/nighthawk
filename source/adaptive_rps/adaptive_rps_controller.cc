@@ -120,8 +120,8 @@ BenchmarkResult PerformAndAnalyzeNighthawkBenchmark(
 
 AdaptiveRpsSessionOutput PerformAdaptiveRpsSession(
     nighthawk::client::NighthawkService::Stub* nighthawk_service_stub,
-    const AdaptiveRpsSessionSpec& spec) {
-  auto time_source = std::make_unique<Envoy::RealTimeSource>();
+    const AdaptiveRpsSessionSpec& spec,
+    std::unique_ptr<Envoy::TimeSource> time_source = std::make_unique<Envoy::RealTimeSource>()) {
   AdaptiveRpsSessionOutput output;
 
   StepControllerPtr step_controller = LoadStepControllerPlugin(spec.step_controller_config());

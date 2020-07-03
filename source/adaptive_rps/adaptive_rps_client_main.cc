@@ -46,9 +46,9 @@ AdaptiveRpsMain::AdaptiveRpsMain(int argc, const char* const* argv) {
 
   TCLAP::CmdLine cmd(descr, ' ', VersionInfo::version()); // NOLINT
 
-  TCLAP::ValueArg<std::string> nighthawk_service_address(
-      "", "nighthawk-service-address", "host:port for Nighthawk Service.", false, "localhost:8443",
-      "string", cmd);
+  TCLAP::ValueArg<std::string> nighthawk_service_address("", "nighthawk-service-address",
+                                                         "host:port for Nighthawk Service.", false,
+                                                         "localhost:8443", "string", cmd);
   TCLAP::ValueArg<std::string> spec_filename(
       "", "spec-file",
       "Path to a textproto file describing the adaptive RPS session "
