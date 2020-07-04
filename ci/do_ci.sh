@@ -89,7 +89,10 @@ function do_tsan() {
     echo "bazel TSAN debug build with tests"
     echo "Building and testing envoy tests..."
     cd "${SRCDIR}"
-    run_bazel build ${BAZEL_BUILD_OPTIONS} -c dbg --config=clang-tsan -- //test/... && \
+    run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-tsan -- //source/exe/... && \
+    run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-tsan -- //source/server/... && \
+    run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-tsan -- //test/mocks/... && \
+    run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-tsan -- //test/... && \
     run_bazel test ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-tsan //test/...
 }
 
@@ -179,9 +182,17 @@ if [ -n "$CIRCLECI" ]; then
         mv "${HOME:-/root}/.gitconfig" "${HOME:-/root}/.gitconfig_save"
         echo 1
     fi
-    export NUM_CPUS=6
+    
+    # Asan has huge memory requirements in its link steps.
+    # As of the new coverage methodology introduced in Envoy, that has grown memory requirements too.
+    # Hence we heavily reduce parallellism, to avoid being OOM killed.
+    if [[ "$1" == "asan" ]] || [[ "$1" == "coverage" ]]; then
+        NUM_CPUS=3
+    else 
+        NUM_CPUS=8
+    fi
 fi
-
+echo "Running with ${NUM_CPUS} cpus"
 BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} --jobs=${NUM_CPUS}"
 
 export BAZEL_TEST_OPTIONS="${BAZEL_BUILD_OPTIONS} --test_env=HOME --test_env=PYTHONUSERBASE \
