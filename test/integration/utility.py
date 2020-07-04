@@ -1,8 +1,15 @@
+"""Packages utility methods for tests."""
+
 import os
 import subprocess
 
 
 def isSanitizerRun():
+  """Determine if the current execution is a tsan/asan/ubsan run.
+
+  Returns:
+      bool: True iff the current execution is determined to be a sanitizer run.
+  """
   return True if os.environ.get("NH_INTEGRATION_TEST_SANITIZER_RUN", 0) == "1" else False
 
 

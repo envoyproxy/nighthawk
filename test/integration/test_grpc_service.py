@@ -1,4 +1,5 @@
-#!/usr/bin/env python3
+"""Tests for the nighthawk_service binary."""
+
 import pytest
 
 from test.integration.integration_test_fixtures import (http_test_server_fixture, server_config)
@@ -7,6 +8,7 @@ from test.integration import asserts
 
 
 def test_grpc_service_happy_flow(http_test_server_fixture):
+  """Test that the gRPC service is able to execute a load test against the test server."""
   http_test_server_fixture.startNighthawkGrpcService("dummy-request-source")
   parsed_json, _ = http_test_server_fixture.runNighthawkClient([
       "--termination-predicate", "benchmark.http_2xx:5", "--rps 10",
@@ -20,6 +22,7 @@ def test_grpc_service_happy_flow(http_test_server_fixture):
 
 
 def test_grpc_service_down(http_test_server_fixture):
+  """Test that the gRPC service detects that a test server is down."""
   parsed_json, _ = http_test_server_fixture.runNighthawkClient([
       "--rps 100",
       "--request-source %s:%s" % (http_test_server_fixture.server_ip, "34589"),
@@ -32,6 +35,7 @@ def test_grpc_service_down(http_test_server_fixture):
 
 @pytest.mark.skipif(utility.isSanitizerRun(), reason="Slow in sanitizer runs")
 def test_grpc_service_stress(http_test_server_fixture):
+  """Test high load."""
   http_test_server_fixture.startNighthawkGrpcService("dummy-request-source")
   parsed_json, _ = http_test_server_fixture.runNighthawkClient([
       "--duration 100", "--rps 10000", "--concurrency 4", "--termination-predicate",
@@ -50,18 +54,21 @@ def _run_service_with_args(args):
 
 
 def test_grpc_service_help():
+  """Test that the gRPC service behaves as expected when --help is passed."""
   (exit_code, output) = _run_service_with_args("--help")
   asserts.assertEqual(exit_code, 0)
   asserts.assertIn("USAGE", output)
 
 
 def test_grpc_service_bad_arguments():
+  """Test that the gRPC service behaves as expected with bad cli arguments."""
   (exit_code, output) = _run_service_with_args("--foo")
   asserts.assertEqual(exit_code, 1)
   asserts.assertIn("PARSE ERROR: Argument: --foo", output)
 
 
 def test_grpc_service_nonexisting_listener_address():
+  """Test that the gRPC service behaves as expected when an address is passed that it can't listen to."""
   (exit_code, output) = _run_service_with_args("--listen 1.1.1.1:1")
   asserts.assertEqual(exit_code, 1)
   asserts.assertIn("Failure: Could not start the grpc service", output)

@@ -19,6 +19,15 @@ _TIMESTAMP = time.strftime('%Y-%m-%d-%H-%M-%S')
 
 
 def determineIpVersionsFromEnvironment():
+  """Determine the IP version(s) for test execution from the environment.
+
+  Raises:
+      NighthawkException: raised when no ip version could be determined, or
+      an invalid one was encountered.
+
+  Returns:
+      test.integration.common.IpVersion: Array with ip versions obtained from the ENVOY_IP_TEST_VERSIONS environment variable.
+  """
   env_versions = os.environ.get("ENVOY_IP_TEST_VERSIONS", "all")
   if env_versions == "v4only":
     versions = [IpVersion.IPV4]
@@ -257,10 +266,12 @@ class IntegrationTestBase():
     assert (client_process.returncode == 0)
     return stdout.decode('utf-8')
 
-  def assertIsSubset(self, subset, superset):
-    self.assertLessEqual(subset.items(), superset.items())
-
   def startNighthawkGrpcService(self, service_name="traffic-generator-service"):
+    """Start the Nighthawk gRPC service.
+
+    Args:
+        service_name (String, optional): Service type to start. Defaults to "traffic-generator-service".
+    """
     host = self.server_ip if self.ip_version == IpVersion.IPV4 else "[%s]" % self.server_ip
     self.grpc_service = NighthawkGrpcService(self._nighthawk_service_path, host, self.ip_version,
                                              service_name)
@@ -317,6 +328,7 @@ class SniIntegrationTestBase(HttpsIntegrationTestBase):
   """Base for https/sni tests against the Nighthawk test server."""
 
   def __init__(self, ip_version, server_config):
+    """See base class."""
     super(SniIntegrationTestBase, self).__init__(ip_version, server_config)
 
   def getTestServerRootUri(self):
@@ -328,6 +340,7 @@ class MultiServerHttpsIntegrationTestBase(IntegrationTestBase):
   """Base for https tests against multiple Nighthawk test servers."""
 
   def __init__(self, ip_version, server_config, backend_count):
+    """See base class."""
     super(MultiServerHttpsIntegrationTestBase, self).__init__(ip_version, server_config,
                                                               backend_count)
 
@@ -342,11 +355,21 @@ class MultiServerHttpsIntegrationTestBase(IntegrationTestBase):
 
 @pytest.fixture()
 def server_config():
+  """Fixture which yields the path to the stock server configuration.
+
+  Yields:
+      String: Path to the stock server configuration.
+  """
   yield "nighthawk/test/integration/configurations/nighthawk_http_origin.yaml"
 
 
 @pytest.fixture(params=determineIpVersionsFromEnvironment())
 def http_test_server_fixture(request, server_config):
+  """Fixture for setting up a test environment with the stock http server configuration.
+
+  Yields:
+      HttpIntegrationTestBase: A fully set up instance. Tear down will happen automatically.
+  """
   f = HttpIntegrationTestBase(request.param, server_config)
   f.setUp()
   yield f
@@ -355,6 +378,11 @@ def http_test_server_fixture(request, server_config):
 
 @pytest.fixture(params=determineIpVersionsFromEnvironment())
 def https_test_server_fixture(request, server_config):
+  """Fixture for setting up a test environment with the stock https server configuration.
+
+  Yields:
+      HttpsIntegrationTestBase: A fully set up instance. Tear down will happen automatically.
+  """
   f = HttpsIntegrationTestBase(request.param, server_config)
   f.setUp()
   yield f
@@ -363,6 +391,11 @@ def https_test_server_fixture(request, server_config):
 
 @pytest.fixture(params=determineIpVersionsFromEnvironment())
 def multi_http_test_server_fixture(request, server_config):
+  """Fixture for setting up a test environment with multiple servers, using the stock http server configuration.
+
+  Yields:
+      MultiServerHttpIntegrationTestBase: A fully set up instance. Tear down will happen automatically.
+  """
   f = MultiServerHttpIntegrationTestBase(request.param, server_config, backend_count=3)
   f.setUp()
   yield f
@@ -371,6 +404,11 @@ def multi_http_test_server_fixture(request, server_config):
 
 @pytest.fixture(params=determineIpVersionsFromEnvironment())
 def multi_https_test_server_fixture(request, server_config):
+  """Fixture for setting up a test environment with multiple servers, using the stock https server configuration.
+
+  Yields:
+      MultiServerHttpsIntegrationTestBase: A fully set up instance. Tear down will happen automatically.
+  """
   f = MultiServerHttpsIntegrationTestBase(request.param, server_config, backend_count=3)
   f.setUp()
   yield f

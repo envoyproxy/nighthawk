@@ -1,4 +1,5 @@
-#!/usr/bin/env python3
+"""Test the Zipkin tracing feature of Nighthawk's load generator."""
+
 import pytest
 
 # server_config needs to be explicitly imported to avoid an error, as http_test_server_fixture

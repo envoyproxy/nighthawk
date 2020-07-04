@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+"""Tests Nighthawk's basic functionality."""
 
 import json
 import logging
@@ -67,7 +67,7 @@ def test_http_h1(http_test_server_fixture):
   asserts.assertEqual(len(counters), 12)
 
 
-def mini_stress_test(fixture, args):
+def _mini_stress_test(fixture, args):
   # run a test with more rps then we can handle, and a very small client-side queue.
   # we should observe both lots of successfull requests as well as time spend in blocking mode.,
   parsed_json, _ = fixture.runNighthawkClient(args)
@@ -97,7 +97,7 @@ def mini_stress_test(fixture, args):
 # totals.
 def test_http_h1_mini_stress_test_with_client_side_queueing(http_test_server_fixture):
   """Run a max rps test with the h1 pool against our test server, using a small client-side queue."""
-  counters = mini_stress_test(http_test_server_fixture, [
+  counters = _mini_stress_test(http_test_server_fixture, [
       http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--max-pending-requests",
       "10", "--connections", "1", "--duration", "100", "--termination-predicate",
       "benchmark.http_2xx:99", "--simple-warmup"
@@ -108,7 +108,7 @@ def test_http_h1_mini_stress_test_with_client_side_queueing(http_test_server_fix
 
 def test_http_h1_mini_stress_test_without_client_side_queueing(http_test_server_fixture):
   """Run a max rps test with the h1 pool against our test server, with no client-side queueing."""
-  counters = mini_stress_test(http_test_server_fixture, [
+  counters = _mini_stress_test(http_test_server_fixture, [
       http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--connections", "1",
       "--duration", "100", "--termination-predicate", "benchmark.http_2xx:99"
   ])
@@ -118,7 +118,7 @@ def test_http_h1_mini_stress_test_without_client_side_queueing(http_test_server_
 
 def test_http_h2_mini_stress_test_with_client_side_queueing(http_test_server_fixture):
   """Run a max rps test with the h2 pool against our test server, using a small client-side queue."""
-  counters = mini_stress_test(http_test_server_fixture, [
+  counters = _mini_stress_test(http_test_server_fixture, [
       http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--max-pending-requests",
       "10", "--h2", "--max-active-requests", "1", "--connections", "1", "--duration", "100",
       "--termination-predicate", "benchmark.http_2xx:99", "--simple-warmup"
@@ -129,7 +129,7 @@ def test_http_h2_mini_stress_test_with_client_side_queueing(http_test_server_fix
 
 def test_http_h2_mini_stress_test_without_client_side_queueing(http_test_server_fixture):
   """Run a max rps test with the h2 pool against our test server, with no client-side queueing."""
-  counters = mini_stress_test(http_test_server_fixture, [
+  counters = _mini_stress_test(http_test_server_fixture, [
       http_test_server_fixture.getTestServerRootUri(), "--rps", "999999", "--h2",
       "--max-active-requests", "1", "--connections", "1", "--duration", "100",
       "--termination-predicate", "benchmark.http_2xx:99"
@@ -141,7 +141,7 @@ def test_http_h2_mini_stress_test_without_client_side_queueing(http_test_server_
 @pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable and very slow in sanitizer runs")
 def test_http_h1_mini_stress_test_open_loop(http_test_server_fixture):
   """Run an H1 open loop stress test. We expect higher pending and overflow counts."""
-  counters = mini_stress_test(http_test_server_fixture, [
+  counters = _mini_stress_test(http_test_server_fixture, [
       http_test_server_fixture.getTestServerRootUri(), "--rps", "10000", "--max-pending-requests",
       "1", "--open-loop", "--max-active-requests", "1", "--connections", "1", "--duration", "100",
       "--termination-predicate", "benchmark.http_2xx:99", "--simple-warmup"
@@ -153,7 +153,7 @@ def test_http_h1_mini_stress_test_open_loop(http_test_server_fixture):
 @pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable and very slow in sanitizer runs")
 def test_http_h2_mini_stress_test_open_loop(http_test_server_fixture):
   """Run an H2 open loop stress test. We expect higher overflow counts."""
-  counters = mini_stress_test(http_test_server_fixture, [
+  counters = _mini_stress_test(http_test_server_fixture, [
       http_test_server_fixture.getTestServerRootUri(), "--rps", "10000", "--max-pending-requests",
       "1", "--h2", "--open-loop", "--max-active-requests", "1", "--duration", "100",
       "--termination-predicate", "benchmark.http_2xx:99", "--simple-warmup"
@@ -271,8 +271,7 @@ def test_https_h2(https_test_server_fixture):
 @pytest.mark.parametrize('server_config',
                          ["nighthawk/test/integration/configurations/nighthawk_https_origin.yaml"])
 def test_https_h2_multiple_connections(https_test_server_fixture):
-  """
-  Test that the experimental h2 pool uses multiple connections.
+  """Test that the experimental h2 pool uses multiple connections.
 
   The burst we send ensures we will need 10 connections right away, as we
   limit max active streams per connection to 1 by setting the experimental
@@ -632,12 +631,14 @@ def test_https_h2_sni(https_test_server_fixture):
 
 @pytest.fixture(scope="function", params=[1, 25])
 def qps_parameterization_fixture(request):
+  """Yield queries per second values to iterate test parameterization on."""
   param = request.param
   yield param
 
 
 @pytest.fixture(scope="function", params=[1, 3])
 def duration_parameterization_fixture(request):
+  """Yield duration values to iterate test parameterization on."""
   param = request.param
   yield param
 
@@ -698,12 +699,14 @@ def _run_client_with_args(args):
 
 
 def test_client_help():
+  """Test that passing --help behaves as expected."""
   (exit_code, output) = _run_client_with_args("--help")
   asserts.assertEqual(exit_code, 0)
   asserts.assertIn("USAGE", output)
 
 
 def test_client_bad_arg():
+  """Test that passing bad arguments behaves as expected."""
   (exit_code, output) = _run_client_with_args("127.0.0.1 --foo")
   asserts.assertEqual(exit_code, 1)
   asserts.assertIn("PARSE ERROR: Argument: --foo", output)

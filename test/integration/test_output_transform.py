@@ -1,4 +1,5 @@
-#!/usr/bin/env python3
+"""Tests for nighthawk_output_transform."""
+
 import pytest
 
 from test.integration import utility
@@ -12,20 +13,21 @@ def _run_output_transform_with_args(args):
 
 
 def test_output_transform_help():
+  """Test that the output transform binary behaves as expected when --help is passed."""
   (exit_code, output) = _run_output_transform_with_args("--help")
   asserts.assertEqual(exit_code, 0)
   asserts.assertIn("USAGE", output)
 
 
 def test_output_transform_bad_arguments():
+  """Test that the output transform binary behaves as expected when bad arguments are passed."""
   (exit_code, output) = _run_output_transform_with_args("--foo")
   asserts.assertEqual(exit_code, 1)
   asserts.assertIn("PARSE ERROR: Argument: --foo", output)
 
 
 def test_output_transform_101():
-  """
-  Run an arbitrary load test, which outputs to json.
+  """Run an arbitrary load test, which outputs to json.
 
   This json output is then transformed to human readable output.
   """
