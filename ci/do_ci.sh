@@ -12,6 +12,7 @@ export BAZEL_EXTRA_TEST_OPTIONS=${BAZEL_EXTRA_TEST_OPTIONS:=""}
 export BAZEL_OPTIONS=${BAZEL_OPTIONS:=""}
 export BAZEL_BUILD_EXTRA_OPTIONS=${BAZEL_BUILD_EXTRA_OPTIONS:=""}
 export SRCDIR=${SRCDIR:="${PWD}"}
+export CLANG_FORMAT=clang-format
 
 function do_build () {
     bazel build $BAZEL_BUILD_OPTIONS //:nighthawk
@@ -23,8 +24,8 @@ function do_opt_build () {
 }
 
 function do_test() {
-    bazel build $BAZEL_BUILD_OPTIONS $BAZEL_TEST_OPTIONS //test/...
-    bazel test $BAZEL_BUILD_OPTIONS $BAZEL_TEST_OPTIONS --test_output=all //test/...
+    bazel build $BAZEL_BUILD_OPTIONS //test/...
+    bazel test $BAZEL_TEST_OPTIONS --test_output=all //test/...
 }
 
 function do_clang_tidy() {
@@ -88,7 +89,7 @@ function do_tsan() {
     echo "bazel TSAN debug build with tests"
     echo "Building and testing envoy tests..."
     cd "${SRCDIR}"
-    run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-tsan -- //test/... && \
+    run_bazel build ${BAZEL_BUILD_OPTIONS} -c dbg --config=clang-tsan -- //test/... && \
     run_bazel test ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-tsan //test/...
 }
 
@@ -170,23 +171,22 @@ fi
 export BAZEL_EXTRA_TEST_OPTIONS="--test_env=ENVOY_IP_TEST_VERSIONS=v4only ${BAZEL_EXTRA_TEST_OPTIONS}"
 export BAZEL_BUILD_OPTIONS=" \
 --verbose_failures ${BAZEL_OPTIONS} --action_env=HOME --action_env=PYTHONUSERBASE \
---jobs=${NUM_CPUS} --show_task_finish --experimental_generate_json_trace_profile ${BAZEL_BUILD_EXTRA_OPTIONS}"
-export BAZEL_TEST_OPTIONS="${BAZEL_BUILD_OPTIONS} --test_env=HOME --test_env=PYTHONUSERBASE \
---test_env=UBSAN_OPTIONS=print_stacktrace=1 \
---cache_test_results=no --test_output=all ${BAZEL_EXTRA_TEST_OPTIONS}"
-
-export CLANG_FORMAT=clang-format
+--experimental_local_memory_estimate \
+--show_task_finish --experimental_generate_json_trace_profile ${BAZEL_BUILD_EXTRA_OPTIONS}"
 
 if [ -n "$CIRCLECI" ]; then
     if [[ -f "${HOME:-/root}/.gitconfig" ]]; then
         mv "${HOME:-/root}/.gitconfig" "${HOME:-/root}/.gitconfig_save"
         echo 1
     fi
-    # Reduce the amount of memory Bazel tries to use to prevent it from launching too many subprocesses.
-    # This should prevent the system from running out of memory and killing tasks. See discussion on
-    # https://github.com/envoyproxy/envoy/pull/5611.
-    export BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} --experimental_local_memory_estimate"
+    export NUM_CPUS=6
 fi
+
+BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} --jobs=${NUM_CPUS}"
+
+export BAZEL_TEST_OPTIONS="${BAZEL_BUILD_OPTIONS} --test_env=HOME --test_env=PYTHONUSERBASE \
+--test_env=UBSAN_OPTIONS=print_stacktrace=1 \
+--cache_test_results=no --test_output=all ${BAZEL_EXTRA_TEST_OPTIONS}"
 
 case "$1" in
     build)
