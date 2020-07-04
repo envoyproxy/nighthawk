@@ -14,24 +14,17 @@ export BAZEL_BUILD_EXTRA_OPTIONS=${BAZEL_BUILD_EXTRA_OPTIONS:=""}
 export SRCDIR=${SRCDIR:="${PWD}"}
 
 function do_build () {
-    bazel build $BAZEL_BUILD_OPTIONS --verbose_failures=true //:nighthawk
+    bazel build $BAZEL_BUILD_OPTIONS //:nighthawk
     tools/update_cli_readme_documentation.sh --mode check
 }
 
 function do_opt_build () {
-    bazel build $BAZEL_BUILD_OPTIONS -c opt --verbose_failures=true //:nighthawk
+    bazel build $BAZEL_BUILD_OPTIONS -c opt //:nighthawk
 }
 
 function do_test() {
-    bazel test $BAZEL_BUILD_OPTIONS $BAZEL_TEST_OPTIONS \
-    --test_output=all \
-    //test/...
-}
-
-function do_test_with_valgrind() {
-    apt-get update && apt-get install valgrind && \
-    bazel build $BAZEL_BUILD_OPTIONS -c dbg //test/... && \
-    nighthawk/tools/valgrind-tests.sh
+    bazel build $BAZEL_BUILD_OPTIONS $BAZEL_TEST_OPTIONS //test/...
+    bazel test $BAZEL_BUILD_OPTIONS $BAZEL_TEST_OPTIONS --test_output=all //test/...
 }
 
 function do_clang_tidy() {
@@ -41,11 +34,6 @@ function do_clang_tidy() {
 function do_coverage() {
     export TEST_TARGETS="//test/..."
     echo "bazel coverage build with tests ${TEST_TARGETS}"
-
-    # Reduce the amount of memory Bazel tries to use to prevent it from launching too many subprocesses.
-    # This should prevent the system from running out of memory and killing tasks. See discussion on
-    # https://github.com/envoyproxy/envoy/pull/5611.
-    [ -z "$CIRCLECI" ] || export BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} --local_ram_resources=12288"
     test/run_nighthawk_bazel_coverage.sh ${TEST_TARGETS}
     exit 0
 }
@@ -100,7 +88,7 @@ function do_tsan() {
     echo "bazel TSAN debug build with tests"
     echo "Building and testing envoy tests..."
     cd "${SRCDIR}"
-    [ -z "$CIRCLECI" ] || export BAZEL_BUILD_OPTIONS="${BAZEL_TEST_OPTIONS} --local_ram_resources=12288"
+    run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-tsan -- //test/... && \
     run_bazel test ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-tsan //test/...
 }
 
@@ -157,21 +145,6 @@ function do_fix_format() {
     ./tools/format_python_tools.sh fix
 }
 
-if [ -n "$CIRCLECI" ]; then
-    if [[ -f "${HOME:-/root}/.gitconfig" ]]; then
-        mv "${HOME:-/root}/.gitconfig" "${HOME:-/root}/.gitconfig_save"
-        echo 1
-    fi
-    # We constrain parallelism in CI to avoid running out of memory.	
-    NUM_CPUS=6
-    if [[ "$1" == "asan" ]]; then
-        NUM_CPUS=3
-    fi
-    if [[ "$1" == "coverage" ]]; then
-        NUM_CPUS=3
-    fi
-fi
-
 if grep 'docker\|lxc' /proc/1/cgroup; then
     # Create a fake home. Python site libs tries to do getpwuid(3) if we don't and the CI
     # Docker image gets confused as it has no passwd entry when running non-root
@@ -203,6 +176,17 @@ export BAZEL_TEST_OPTIONS="${BAZEL_BUILD_OPTIONS} --test_env=HOME --test_env=PYT
 --cache_test_results=no --test_output=all ${BAZEL_EXTRA_TEST_OPTIONS}"
 
 export CLANG_FORMAT=clang-format
+
+if [ -n "$CIRCLECI" ]; then
+    if [[ -f "${HOME:-/root}/.gitconfig" ]]; then
+        mv "${HOME:-/root}/.gitconfig" "${HOME:-/root}/.gitconfig_save"
+        echo 1
+    fi
+    # Reduce the amount of memory Bazel tries to use to prevent it from launching too many subprocesses.
+    # This should prevent the system from running out of memory and killing tasks. See discussion on
+    # https://github.com/envoyproxy/envoy/pull/5611.
+    export BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} --experimental_local_memory_estimate"
+fi
 
 case "$1" in
     build)
