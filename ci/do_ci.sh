@@ -186,9 +186,11 @@ if [ -n "$CIRCLECI" ]; then
     # Asan has huge memory requirements in its link steps.
     # As of the new coverage methodology introduced in Envoy, that has grown memory requirements too.
     # Hence we heavily reduce parallellism, to avoid being OOM killed.
-    if [[ "$1" == "asan" ]] || [[ "$1" == "coverage" ]]; then
+    if [[ "$1" == "coverage" ]]; then
+        NUM_CPUS=4
+    elif [[ "$1" == "asan" ]]; then
         NUM_CPUS=3
-    else 
+    else
         NUM_CPUS=8
     fi
 fi

@@ -57,7 +57,9 @@ jobs:
     resource_class: xlarge
     steps:
       - checkout
-      - run: ci/do_ci.sh asan
+      - run:
+          command: ci/do_ci.sh asan
+          no_output_timeout: 30m
   tsan:
     docker:
       - image: *envoy-build-image
