@@ -11,7 +11,7 @@ public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
   CustomMetricEvaluatorPtr
-  createCustomMetricEvaluator(const Envoy::Protobuf::Message& config) override;
+  createCustomMetricEvaluator(const Envoy::Protobuf::Message& message) override;
 };
 
 class SigmoidCustomMetricEvaluator : public CustomMetricEvaluator {

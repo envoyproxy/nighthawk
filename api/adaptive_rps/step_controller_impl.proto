@@ -5,9 +5,9 @@ syntax = "proto3";
 package nighthawk.adaptive_rps;
 
 message LinearSearchStepControllerConfig {
-  int32 step = 1;
-  int32 minimum_rps = 2;
-  int32 maximum_rps = 3;
+  int32 minimum_rps = 1;
+  int32 maximum_rps = 2;
+  int32 step = 3;
 }
 
 message BinarySearchStepControllerConfig {
