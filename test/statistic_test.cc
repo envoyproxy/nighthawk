@@ -273,16 +273,15 @@ TEST(StatisticTest, StreamingStatProtoOutputLargeValues) {
 }
 
 TEST(StatisticTest, CircllhistStatisticProtoOutputLargeValues) {
-  CircllhistStatistic a;
+  CircllhistStatistic statistic;
   uint64_t value = 100ul + 0xFFFFFFFF;
-  a.addValue(value);
-  a.addValue(value);
-  const nighthawk::client::Statistic proto = a.toProto(Statistic::SerializationDomain::DURATION);
+  statistic.addValue(value);
+  statistic.addValue(value);
+  const nighthawk::client::Statistic proto = statistic.toProto(Statistic::SerializationDomain::DURATION);
 
   EXPECT_EQ(proto.count(), 2);
-  Helper::expectNear(((1.0 * proto.mean().seconds() * 1000 * 1000 * 1000) + proto.mean().nanos()),
-                     value, a.significantDigits());
-  EXPECT_EQ(proto.pstdev().nanos(), 0);
+  Helper::expectNear(Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(proto.mean()), value, statistic.significantDigits());
+  EXPECT_EQ(Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(proto.pstdev()), 0);
 }
 
 TEST(StatisticTest, HdrStatisticPercentilesProto) {
@@ -367,9 +366,15 @@ TEST(StatisticTest, NullStatistic) {
   EXPECT_NE(nullptr, stat.createNewInstanceOfSameType());
 }
 
-TEST(StatisticTest, EmptySinkableCircllhistStatistic) {
+using SinkableTypes = Types<SinkableHdrStatistic, SinkableCircllhistStatistic>;
+
+template <typename T> class SinkableStatisticTest : public Test {};
+
+TYPED_TEST_SUITE(SinkableStatisticTest, SinkableTypes);
+
+TYPED_TEST(SinkableStatisticTest, EmptySinkableStatistic) {
   Envoy::Stats::MockIsolatedStatsStore mock_store;
-  SinkableCircllhistStatistic stat(mock_store);
+  TypeParam stat(mock_store);
   EXPECT_EQ(Envoy::Stats::Histogram::Unit::Unspecified, stat.unit());
   EXPECT_FALSE(stat.used());
   EXPECT_EQ("", stat.name());
@@ -377,10 +382,10 @@ TEST(StatisticTest, EmptySinkableCircllhistStatistic) {
   EXPECT_EQ(absl::nullopt, stat.worker_id());
 }
 
-TEST(StatisticTest, SimpleSinkableCircllhistStatistic) {
+TYPED_TEST(SinkableStatisticTest, SimpleSinkableStatistic) {
   Envoy::Stats::MockIsolatedStatsStore mock_store;
   const int worker_id = 0;
-  SinkableCircllhistStatistic stat(mock_store, worker_id);
+  TypeParam stat(mock_store, worker_id);
 
   const uint64_t sample_value = 123;
   const std::string stat_name = "stat_name";
