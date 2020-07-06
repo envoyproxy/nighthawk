@@ -6,8 +6,9 @@ import "api/adaptive_rps/benchmark_result.proto";
 import "api/adaptive_rps/metrics_plugin.proto";
 import "api/adaptive_rps/metric_spec.proto";
 import "api/adaptive_rps/step_controller.proto";
-import "google/protobuf/duration.proto";
 import "api/client/options.proto";
+import "google/protobuf/duration.proto";
+import "google/rpc/status.proto";
 
 // import "third_party/protoc_gen_validate/validate/validate.proto";
 
@@ -31,15 +32,17 @@ message AdaptiveRpsSessionSpec {
   // All other fields in |nighthawk_traffic_options| are passed through to the
   // Nighthawk Service.
   //
-  // Note that |concurrency| multiplies the total RPS sent.
+  // Note that |concurrency| in |nighthawk_traffic_options| multiplies the total
+  // RPS sent.
   nighthawk.client.CommandLineOptions nighthawk_traffic_template = 3;
-  // The length of each short benchmark during the adjusting stage. Default 4s.
+  // The duration of each short benchmark during the adjusting stage. Default
+  // 4s.
   google.protobuf.Duration measuring_period = 4;
-  // The length of the single benchmark session of the testing stage. Must be
+  // The duration of the single benchmark session of the testing stage. Must be
   // set.
   google.protobuf.Duration testing_stage_duration = 5;
   // Maximum amount of time the adjusting stage should wait for convergence
-  // before throwing an error.
+  // before returning an error.
   google.protobuf.Duration convergence_deadline = 6;
   // Select and configure a StepController.
   StepControllerConfig step_controller_config = 7;
@@ -48,8 +51,10 @@ message AdaptiveRpsSessionSpec {
 // Complete description of an adaptive RPS session, including metric evaluations
 // for every RPS value attempted during the adjusting stage.
 message AdaptiveRpsSessionOutput {
-  // The result of every short benchmark performed during the adjusting stage.
-  repeated BenchmarkResult adjusting_stage_results = 1;
+  // Overall status of the session with error detail.
+  google.rpc.Status session_status = 1;
+  // Results of each short benchmark performed during the adjusting stage.
+  repeated BenchmarkResult adjusting_stage_results = 2;
   // Result of the single benchmark of the testing stage.
-  BenchmarkResult testing_stage_result = 2;
+  BenchmarkResult testing_stage_result = 3;
 }

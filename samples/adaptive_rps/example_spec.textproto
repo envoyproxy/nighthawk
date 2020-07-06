@@ -4,10 +4,21 @@
 metric_specs {
   metric_name: "latency-ns-max"
   metrics_plugin_name: "builtin"
-  upper_threshold: 32000000
+  upper_threshold {
+    value: 50000000
+  }
   weight: 1
 }
 
+# metric_specs {
+#   metric_name: "latency-ns-mean-plus-2stdev"
+#   metrics_plugin_name: "builtin"
+#   upper_threshold: 32000000
+#   weight: 1
+# }
+
+# CommandLineOptions proto describing the traffic,but without
+# requests_per_second, duration, or open_loop.
 nighthawk_traffic_template {
   uri {
     value: "[::1]:12345"
@@ -36,3 +47,13 @@ step_controller_config {
     }
   }
 }
+
+# step_controller_config {
+#   name: "binary-search"
+#   typed_config {
+#     [type.googleapis.com/nighthawk.adaptive_rps.BinarySearchStepControllerConfig] {
+#       minimum_rps: 500
+#       maximum_rps: 10000
+#     }
+#   }
+# }

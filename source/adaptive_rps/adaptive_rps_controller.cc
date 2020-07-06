@@ -80,7 +80,8 @@ AnalyzeNighthawkBenchmark(const nighthawk::client::ExecutionResponse& nighthawk_
   }
 
   absl::flat_hash_map<std::string, MetricsPluginPtr> name_to_plugin;
-  name_to_plugin["builtin"] = std::make_unique<InternalMetricsPlugin>(nighthawk_response.output());
+  name_to_plugin["builtin"] =
+      std::make_unique<InternalEmulatedMetricsPlugin>(nighthawk_response.output());
   for (const MetricsPluginConfig& config : spec.metrics_plugin_configs()) {
     name_to_plugin[config.name()] = LoadMetricsPlugin(config);
   }
@@ -92,12 +93,12 @@ AnalyzeNighthawkBenchmark(const nighthawk::client::ExecutionResponse& nighthawk_
     double metric_value = name_to_plugin[metric_spec.metrics_plugin_name()]->GetMetricByName(
         metric_spec.metric_name());
     evaluation.set_metric_value(metric_value);
-    if (metric_spec.lower_threshold() > 0) {
+    if (metric_spec.has_lower_threshold()) {
       evaluation.set_threshold_status(
-          metric_value >= metric_spec.lower_threshold() ? WITHIN_THRESHOLD : OUTSIDE_THRESHOLD);
-    } else if (metric_spec.upper_threshold() > 0) {
+          metric_value >= metric_spec.lower_threshold().value() ? WITHIN_THRESHOLD : OUTSIDE_THRESHOLD);
+    } else if (metric_spec.has_upper_threshold()) {
       evaluation.set_threshold_status(
-          metric_value <= metric_spec.upper_threshold() ? WITHIN_THRESHOLD : OUTSIDE_THRESHOLD);
+          metric_value <= metric_spec.upper_threshold().value() ? WITHIN_THRESHOLD : OUTSIDE_THRESHOLD);
     } else {
       CustomMetricEvaluatorPtr metric_evaluator =
           LoadCustomMetricEvaluatorPlugin(metric_spec.custom_metric_evaluator());
@@ -118,33 +119,39 @@ BenchmarkResult PerformAndAnalyzeNighthawkBenchmark(
 
 } // namespace
 
-AdaptiveRpsSessionOutput PerformAdaptiveRpsSession(
-    nighthawk::client::NighthawkService::Stub* nighthawk_service_stub,
-    const AdaptiveRpsSessionSpec& spec,
-    std::unique_ptr<Envoy::TimeSource> time_source = std::make_unique<Envoy::RealTimeSource>()) {
+AdaptiveRpsSessionOutput
+PerformAdaptiveRpsSession(nighthawk::client::NighthawkService::Stub* nighthawk_service_stub,
+                          const AdaptiveRpsSessionSpec& spec, std::ostream& diagnostic_ostream,
+                          std::unique_ptr<Envoy::TimeSource> time_source) {
   AdaptiveRpsSessionOutput output;
 
   StepControllerPtr step_controller = LoadStepControllerPlugin(spec.step_controller_config());
 
   Envoy::MonotonicTime start_time = time_source->monotonicTime();
   while (!step_controller->IsConverged()) {
-    if (
-      
-      std::chrono::duration_cast<std::chrono::seconds>(
-        time_source->monotonicTime() - start_time).count()
-        
-            > spec.convergence_deadline().seconds()) {
-      throw Envoy::EnvoyException("Reached convergence deadline");
+    if (std::chrono::duration_cast<std::chrono::seconds>(time_source->monotonicTime() - start_time)
+            .count() > spec.convergence_deadline().seconds()) {
+      output.mutable_session_status()->set_code(grpc::DEADLINE_EXCEEDED);
+      output.mutable_session_status()->set_message(absl::StrCat(
+          "Reached convergence deadline  of ", spec.convergence_deadline().seconds(), " seconds"));
+      return output;
     }
-    std::cerr << "Loop rps=" << step_controller->GetCurrentRps() << "\n";
+    diagnostic_ostream << "Trying " << step_controller->GetCurrentRps() << " rps...\n";
     BenchmarkResult result = PerformAndAnalyzeNighthawkBenchmark(
         nighthawk_service_stub, spec, step_controller->GetCurrentRps(), spec.measuring_period());
+    for (const MetricEvaluation& evaluation : result.metric_evaluations()) {
+      diagnostic_ostream << evaluation.DebugString() << "\n";
+    }
     *output.mutable_adjusting_stage_results()->Add() = result;
     step_controller->UpdateAndRecompute(result);
   }
+  diagnostic_ostream << "Testing stage: " << step_controller->GetCurrentRps() << " rps...\n";
   *output.mutable_testing_stage_result() = PerformAndAnalyzeNighthawkBenchmark(
       nighthawk_service_stub, spec, step_controller->GetCurrentRps(),
       spec.testing_stage_duration());
+  for (const MetricEvaluation& evaluation : output.testing_stage_result().metric_evaluations()) {
+    diagnostic_ostream << evaluation.DebugString() << "\n";
+  }
   return output;
 }
 

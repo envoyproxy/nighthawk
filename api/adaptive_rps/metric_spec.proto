@@ -3,6 +3,7 @@ syntax = "proto3";
 package nighthawk.adaptive_rps;
 
 import "api/adaptive_rps/custom_metric_evaluator.proto";
+import "google/protobuf/wrappers.proto";
 
 // Identifies a feedback metric and how to evaluate it.
 message MetricSpec {
@@ -15,14 +16,14 @@ message MetricSpec {
   // A threshold for evaluating a metric value.
   oneof threshold_spec {
     // Simple upper threshold:
-    //   metric <= upper_threshold -> HEALTHY
-    //   metric > upper_threshold -> UNHEALTHY
-    double upper_threshold = 3;
+    //   metric <= upper_threshold -> WITHIN_THRESHOLD
+    //   metric > upper_threshold -> OUTSIDE_THRESHOLD
+    google.protobuf.DoubleValue upper_threshold = 3;
 
     // Simple lower threshold:
-    //   metric >= lower_threshold -> HEALTHY
-    //   metric < lower_threshold -> UNHEALTHY
-    double lower_threshold = 4;
+    //   metric >= lower_threshold -> WITHIN_THRESHOLD
+    //   metric < lower_threshold -> OUTSIDE_THRESHOLD
+    google.protobuf.DoubleValue lower_threshold = 4;
 
     // A CustomMetricEvaluator plugin that gives a numerical measure of health
     // according to an arbitrary formula with configurable thresholds and
@@ -31,7 +32,9 @@ message MetricSpec {
   }
 
   // Relative weight for this MetricSpec when evaluating performance against
-  // multiple MetricSpecs. Can be any nonnegative number. Set to 0.0 to record
-  // the metric in the output without using it to influence adaptive RPS.
+  // multiple MetricSpecs. Can be any nonnegative number.
+  //
+  // Set the weight to 0.0 to record the metric in the output without using it
+  // to influence adaptive RPS.
   double weight = 6;
 }

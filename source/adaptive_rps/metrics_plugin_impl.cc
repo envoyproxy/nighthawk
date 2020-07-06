@@ -3,13 +3,14 @@
 namespace Nighthawk {
 namespace AdaptiveRps {
 
-InternalMetricsPlugin::InternalMetricsPlugin(const nighthawk::client::Output& nighthawk_output) {
+InternalEmulatedMetricsPlugin::InternalEmulatedMetricsPlugin(
+    const nighthawk::client::Output& nighthawk_output) {
   for (const nighthawk::client::Result& result : nighthawk_output.results()) {
     if (result.name() != "global") {
       continue;
     }
     const int total_specified = nighthawk_output.options().requests_per_second().value() *
-                                  nighthawk_output.options().duration().seconds();
+                                nighthawk_output.options().duration().seconds();
     int total_sent = 0;
     int total_2xx = 0;
     for (const nighthawk::client::Counter& counter : result.counters()) {
@@ -44,11 +45,11 @@ InternalMetricsPlugin::InternalMetricsPlugin(const nighthawk::client::Output& ni
   }
 }
 
-double InternalMetricsPlugin::GetMetricByName(const std::string& metric_name) {
+double InternalEmulatedMetricsPlugin::GetMetricByName(const std::string& metric_name) {
   return metric_from_name_[metric_name];
 }
 
-// Note: Don't use REGISTER_FACTORY for InternalMetricsPlugin.
+// Note: Don't use REGISTER_FACTORY for InternalEmulatedMetricsPlugin. See header for details.
 
 } // namespace AdaptiveRps
 } // namespace Nighthawk

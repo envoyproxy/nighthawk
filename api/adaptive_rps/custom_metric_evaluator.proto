@@ -9,6 +9,7 @@ import "google/protobuf/any.proto";
 message CustomMetricEvaluatorConfig {
   // Name used to locate the plugin in the Envoy registry.
   string name = 1;
+
   // Plugin-specific config such as thresholds and constants.
   google.protobuf.Any typed_config = 2;
 }

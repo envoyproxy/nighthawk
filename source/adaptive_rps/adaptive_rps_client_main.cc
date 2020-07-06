@@ -81,17 +81,11 @@ uint32_t AdaptiveRpsMain::run() {
   std::shared_ptr<grpc_impl::Channel> channel =
       ::grpc::CreateChannel(nighthawk_service_address_, ::grpc::InsecureChannelCredentials());
 
-  // std::shared_ptr<grpc_impl::ChannelCredentials> credentials;
-  // credentials = grpc::experimental::LocalCredentials(LOCAL_TCP);
-
-  // std::shared_ptr<grpc_impl::Channel> channel =
-  //     grpc::CreateChannel(nighthawk_service_address_, credentials);
-
   std::unique_ptr<nighthawk::client::NighthawkService::Stub> stub(
       nighthawk::client::NighthawkService::NewStub(channel));
 
   nighthawk::adaptive_rps::AdaptiveRpsSessionOutput output =
-      PerformAdaptiveRpsSession(stub.get(), spec);
+      PerformAdaptiveRpsSession(stub.get(), spec, std::cerr);
 
   std::ofstream ofs(output_filename_);
   if (ofs.is_open()) {

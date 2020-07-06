@@ -1,3 +1,5 @@
+// Plugin-specific config protos for step controllers.
+
 syntax = "proto3";
 
 package nighthawk.adaptive_rps;
