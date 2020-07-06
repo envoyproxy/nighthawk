@@ -48,9 +48,9 @@ HttpDynamicDelayDecoderFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& head
   absl::optional<int64_t> delay_ms;
   if (base_config_.has_static_delay()) {
     delay_ms = Envoy::Protobuf::util::TimeUtil::DurationToMilliseconds(base_config_.static_delay());
-  } else if (base_config_.has_concurrency_based_delay()) {
-    const nighthawk::server::ConcurrencyBasedDelay& concurrency_config =
-        base_config_.concurrency_based_delay();
+  } else if (base_config_.has_concurrency_based_linear_delay()) {
+    const nighthawk::server::ConcurrencyBasedLinearDelay& concurrency_config =
+        base_config_.concurrency_based_linear_delay();
     const uint64_t current_value = config_->approximateInstances();
     delay_ms = computeDelayMilliseconds(current_value, concurrency_config.minimal_delay(),
                                         concurrency_config.concurrency_delay_factor());

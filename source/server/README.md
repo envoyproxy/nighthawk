@@ -42,7 +42,7 @@ static_resources:
                 http_filters:
                   - name: dynamic-delay
                     config:
-                      concurrency_based_delay:
+                      concurrency_based_linear_delay:
                         minimal_delay: 0.05s
                         concurrency_delay_factor: 0.010s
                   - name: envoy.fault
@@ -75,10 +75,13 @@ admin:
 
 ## Response Options config
 
-The [ResponseOptions proto](/api/server/response_options.proto) can be used in the test-server
-and dynamic-delay filter config or passed in `x-nighthawk-test-server-config`` request header.
+The [ResponseOptions proto](/api/server/response_options.proto) is shared by
+the `Test Server` and `Dynamic Delay` filter extensions. Each filter will
+interpret the parts that are relevant to it. This allows specifying a what
+a response should look like in a single message, which can be done at request
+time via the optional `x-nighthawk-test-server-config` request-header.
 
-The following parameters are available:
+### Test Server
 
 - `response_body_size` - number of 'a' characters repeated in the response body.
 - `response_headers` - list of headers to add to response. If `append` is set to
@@ -86,10 +89,9 @@ The following parameters are available:
 - `echo_request_headers` - if set to `true`, then append the dump of request headers to the response
   body.
 
-The response options could be used to test and debug proxy or server configuration, for
-example, to verify request headers that are added by intermediate proxy:
+The response options above could be used to test and debug proxy or server configuration, for example, to verify request headers that are added by intermediate proxy:
 
-```
+```bash
 $ curl -6 -v [::1]:8080/nighthawk
 
 *   Trying ::1:8080...
@@ -129,9 +131,14 @@ Request Headers:
 This example shows that intermediate proxy has added `x-forwarded-proto` and
 `x-forwarded-for` request headers.
 
-The dynamic delay filter (configuration) can be used to inject either a static delay,
-or a delay which linearly increases as the number of active requests grows as specified
-by the response options configuration.
+### Dynamic Delay
+
+The Dynamic Delay interprets the `oneof_delay_options` part in the [ResponseOptions proto](/api/server/response_options.proto). If specified, it can be used to:
+
+- Configure a static delay via `static_delay`.
+- Configure a delay which linearly increase as the number of active requests grows, representing a simplified model of an overloaded server, via `concurrency_based_linear_delay`.
+
+All delays have a millisecond-level granularity.
 
 ## Running the test server
 

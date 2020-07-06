@@ -74,7 +74,7 @@ public:
    * Compute the delay in milliseconds based on the parameters provided.
    *
    * @param concurrency indicating the number of active requests.
-   * @param minimal_delay gets unconditoinally included in the return value.
+   * @param minimal_delay gets unconditionally included in the return value.
    * @param delay_factor added for each increase in the number of active requests.
    * @return int64_t the computed delay in milliseconds.
    */

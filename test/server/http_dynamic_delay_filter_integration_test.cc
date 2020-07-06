@@ -138,13 +138,13 @@ typed_config:
             "2200");
 }
 
-// Verify expectations with static/file-based concurrency_based_delay configuration.
+// Verify expectations with static/file-based concurrency_based_linear_delay configuration.
 TEST_P(HttpDynamicDelayIntegrationTest, StaticConfigurationConcurrentDelay) {
   setup(R"EOF(
 name: dynamic-delay
 typed_config:
   "@type": type.googleapis.com/nighthawk.server.ResponseOptions
-  concurrency_based_delay:
+  concurrency_based_linear_delay:
     minimal_delay: 0.05s
     concurrency_delay_factor: 0.01s
 )EOF");

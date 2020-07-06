@@ -7,7 +7,7 @@ import "validate/validate.proto";
 import "envoy/api/v2/core/base.proto";
 import "google/protobuf/duration.proto";
 
-message ConcurrencyBasedDelay {
+message ConcurrencyBasedLinearDelay {
   // Minimal delay to add to replies.
   google.protobuf.Duration minimal_delay = 1 [(validate.rules).duration.gte.nanos = 0];
   // Factor to use when adding latency as concurrency increases.
@@ -29,7 +29,7 @@ message ResponseOptions {
   oneof oneof_delay_options {
     // Static delay duration.
     google.protobuf.Duration static_delay = 4 [(validate.rules).duration.gte.nanos = 0];
-    // Concurrency based delay configuration.
-    ConcurrencyBasedDelay concurrency_based_delay = 5;
+    // Concurrency based linear delay configuration.
+    ConcurrencyBasedLinearDelay concurrency_based_linear_delay = 5;
   }
 }
