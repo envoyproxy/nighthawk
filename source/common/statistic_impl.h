@@ -240,9 +240,9 @@ class SinkableHdrStatistic : public SinkableStatistic, public HdrStatistic {
     scope_.deliverHistogramToSinks(*this, value);
   }
   bool used() const override { return count() > 0; }
-  // Overriding name() and tagExtractedName() method to return Nighthawk::Statistic::id().
+  // Overriding name() to return Nighthawk::Statistic::id().
   std::string name() const override { return id(); }
-  std::string tagExtractedName() const override { return id(); }
+  std::string tagExtractedName() const override { ASSERT(false, "tagExtractedName() should not be called in Nighthawk Statistic"); }
 };
 
 // Implementation of sinkable Nighthawk Statistic with Circllhist Histogram.
@@ -260,9 +260,9 @@ class SinkableCircllhistStatistic : public SinkableStatistic, public CircllhistS
     scope_.deliverHistogramToSinks(*this, value);
   }
   bool used() const override { return count() > 0; }
-  // Overriding name() and tagExtractedName() method to return Nighthawk::Statistic::id().
+  // Overriding name() to return Nighthawk::Statistic::id().
   std::string name() const override { return id(); }
-  std::string tagExtractedName() const override { return id(); }
+  std::string tagExtractedName() const override { ASSERT(false, "tagExtractedName() should not be called in Nighthawk Statistic"); }
 };
 
 } // namespace Nighthawk
