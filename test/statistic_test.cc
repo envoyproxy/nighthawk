@@ -277,10 +277,12 @@ TEST(StatisticTest, CircllhistStatisticProtoOutputLargeValues) {
   uint64_t value = 100ul + 0xFFFFFFFF;
   statistic.addValue(value);
   statistic.addValue(value);
-  const nighthawk::client::Statistic proto = statistic.toProto(Statistic::SerializationDomain::DURATION);
+  const nighthawk::client::Statistic proto =
+      statistic.toProto(Statistic::SerializationDomain::DURATION);
 
   EXPECT_EQ(proto.count(), 2);
-  Helper::expectNear(Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(proto.mean()), value, statistic.significantDigits());
+  Helper::expectNear(Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(proto.mean()), value,
+                     statistic.significantDigits());
   EXPECT_EQ(Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(proto.pstdev()), 0);
 }
 

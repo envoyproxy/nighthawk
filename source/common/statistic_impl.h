@@ -186,18 +186,18 @@ private:
 };
 
 /**
- * In order to be able to flush a histogram value to downstream Envoy stats Sinks, abstract class SinkableStatistic takes the Scope reference in the constructor and wraps the
- * Envoy::Stats::HistogramHelper interface. Implementation of sinkable Nighthawk Statistic class will inherit from this class.
+ * In order to be able to flush a histogram value to downstream Envoy stats Sinks, abstract class
+ * SinkableStatistic takes the Scope reference in the constructor and wraps the
+ * Envoy::Stats::HistogramHelper interface. Implementation of sinkable Nighthawk Statistic class
+ * will inherit from this class.
  */
 class SinkableStatistic : public Envoy::Stats::HistogramImplHelper {
- public:
+public:
   // Calling HistogramImplHelper(SymbolTable& symbol_table) constructor to construct an empty
   // MetricImpl. This is to bypass the complicated logic of setting up SymbolTable/StatName in
   // Envoy.
-  SinkableStatistic(Envoy::Stats::Scope& scope,
-                      const absl::optional<int> worker_id)
-      : Envoy::Stats::HistogramImplHelper(scope.symbolTable()),
-        scope_(scope),
+  SinkableStatistic(Envoy::Stats::Scope& scope, const absl::optional<int> worker_id)
+      : Envoy::Stats::HistogramImplHelper(scope.symbolTable()), scope_(scope),
         worker_id_(worker_id) {}
 
   ~SinkableStatistic() override {
@@ -206,30 +206,30 @@ class SinkableStatistic : public Envoy::Stats::HistogramImplHelper {
     MetricImpl::clear(scope_.symbolTable());
   }
 
-  // Currently Envoy Histogram Unit supports {Unspecified, Bytes, Microseconds, Milliseconds}. By default, Nighthawk::Statistic uses nanosecond as the unit of latency histograms, so Unspecified is returned here to isolate Nighthawk Statistic from Envoy Histogram Unit.
+  // Currently Envoy Histogram Unit supports {Unspecified, Bytes, Microseconds, Milliseconds}. By
+  // default, Nighthawk::Statistic uses nanosecond as the unit of latency histograms, so Unspecified
+  // is returned here to isolate Nighthawk Statistic from Envoy Histogram Unit.
   Envoy::Stats::Histogram::Unit unit() const override {
     return Envoy::Stats::Histogram::Unit::Unspecified;
   };
-  Envoy::Stats::SymbolTable& symbolTable() override {
-    return scope_.symbolTable();
-  }
+  Envoy::Stats::SymbolTable& symbolTable() override { return scope_.symbolTable(); }
 
   const absl::optional<int> worker_id() { return worker_id_; }
 
- protected:
+protected:
   // This is used for delivering the histogram data to sinks.
   Envoy::Stats::Scope& scope_;
 
- private:
+private:
   // worker_id can be used in downstream stats Sinks as the stats tag.
   absl::optional<int> worker_id_;
 };
 
 // Implementation of sinkable Nighthawk Statistic with HdrHistogram.
 class SinkableHdrStatistic : public SinkableStatistic, public HdrStatistic {
- public:
+public:
   SinkableHdrStatistic(Envoy::Stats::Scope& scope,
-                      const absl::optional<int> worker_id = absl::nullopt)
+                       const absl::optional<int> worker_id = absl::nullopt)
       : SinkableStatistic(scope, worker_id) {}
 
   // Envoy::Stats::Histogram
@@ -242,14 +242,16 @@ class SinkableHdrStatistic : public SinkableStatistic, public HdrStatistic {
   bool used() const override { return count() > 0; }
   // Overriding name() to return Nighthawk::Statistic::id().
   std::string name() const override { return id(); }
-  std::string tagExtractedName() const override { ASSERT(false, "tagExtractedName() should not be called in Nighthawk Statistic"); }
+  std::string tagExtractedName() const override {
+    ASSERT(false, "tagExtractedName() should not be called in Nighthawk Statistic");
+  }
 };
 
 // Implementation of sinkable Nighthawk Statistic with Circllhist Histogram.
 class SinkableCircllhistStatistic : public SinkableStatistic, public CircllhistStatistic {
- public:
+public:
   SinkableCircllhistStatistic(Envoy::Stats::Scope& scope,
-                      const absl::optional<int> worker_id = absl::nullopt)
+                              const absl::optional<int> worker_id = absl::nullopt)
       : SinkableStatistic(scope, worker_id) {}
 
   // Envoy::Stats::Histogram
@@ -262,7 +264,9 @@ class SinkableCircllhistStatistic : public SinkableStatistic, public CircllhistS
   bool used() const override { return count() > 0; }
   // Overriding name() to return Nighthawk::Statistic::id().
   std::string name() const override { return id(); }
-  std::string tagExtractedName() const override { ASSERT(false, "tagExtractedName() should not be called in Nighthawk Statistic"); }
+  std::string tagExtractedName() const override {
+    ASSERT(false, "tagExtractedName() should not be called in Nighthawk Statistic");
+  }
 };
 
 } // namespace Nighthawk
