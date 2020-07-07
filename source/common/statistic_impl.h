@@ -244,6 +244,7 @@ public:
   std::string name() const override { return id(); }
   std::string tagExtractedName() const override {
     ASSERT(false, "tagExtractedName() should not be called in Nighthawk Statistic");
+    return id();
   }
 };
 
@@ -266,6 +267,7 @@ public:
   std::string name() const override { return id(); }
   std::string tagExtractedName() const override {
     ASSERT(false, "tagExtractedName() should not be called in Nighthawk Statistic");
+    return id();
   }
 };
 

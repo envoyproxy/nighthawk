@@ -250,8 +250,9 @@ StatisticPtr CircllhistStatistic::combine(const Statistic& statistic) const {
 
 nighthawk::client::Statistic CircllhistStatistic::toProto(SerializationDomain domain) const {
   nighthawk::client::Statistic proto = StatisticImpl::toProto(domain);
-  if (count() == 0)
+  if (count() == 0) {
     return proto;
+  }
 
   std::vector<double> quantiles{0,    0.1,   0.2,  0.3,   0.4,  0.5,   0.55,  0.6,
                                 0.65, 0.7,   0.75, 0.775, 0.8,  0.825, 0.85,  0.875,
