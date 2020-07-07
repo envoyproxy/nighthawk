@@ -380,6 +380,7 @@ TYPED_TEST(SinkableStatisticTest, EmptySinkableStatistic) {
   EXPECT_EQ(Envoy::Stats::Histogram::Unit::Unspecified, stat.unit());
   EXPECT_FALSE(stat.used());
   EXPECT_EQ("", stat.name());
+  EXPECT_DEATH(stat.tagExtractedName(), ".*should not be called in Nighthawk Statistic");
   EXPECT_EQ(absl::nullopt, stat.worker_id());
 }
 
@@ -398,6 +399,7 @@ TYPED_TEST(SinkableStatisticTest, SimpleSinkableStatistic) {
   EXPECT_EQ(Envoy::Stats::Histogram::Unit::Unspecified, stat.unit());
   EXPECT_TRUE(stat.used());
   EXPECT_EQ(stat_name, stat.name());
+  EXPECT_DEATH(stat.tagExtractedName(), ".*should not be called in Nighthawk Statistic");
   EXPECT_TRUE(stat.worker_id().has_value());
   EXPECT_EQ(worker_id, stat.worker_id().value());
 }
