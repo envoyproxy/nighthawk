@@ -3,9 +3,11 @@
 #include <atomic>
 #include <string>
 
+#include "api/server/response_options.pb.h"
 #include "envoy/server/filter_config.h"
 
-#include "api/server/response_options.pb.h"
+// TODO(XXX): oschaaf -- extension include isn't routed through external/envoy.
+#include "extensions/filters/http/fault/fault_filter.h"
 
 namespace Nighthawk {
 namespace Server {
@@ -16,7 +18,10 @@ namespace Server {
 class HttpDynamicDelayDecoderFilterConfig {
 
 public:
-  HttpDynamicDelayDecoderFilterConfig(nighthawk::server::ResponseOptions proto_config);
+  HttpDynamicDelayDecoderFilterConfig(nighthawk::server::ResponseOptions proto_config,
+                                      Envoy::Runtime::Loader& runtime,
+                                      const std::string& stats_prefix, Envoy::Stats::Scope& scope,
+                                      Envoy::TimeSource& time_source);
 
   /**
    * @return const nighthawk::server::ResponseOptions& read-only reference to the proto config
@@ -37,12 +42,22 @@ public:
    */
   uint64_t approximateInstances() const { return instances(); }
 
+  Envoy::Runtime::Loader& runtime() { return runtime_; }
+  Envoy::Stats::Scope& scope() { return scope_; }
+  Envoy::TimeSource& time_source() { return time_source_; }
+  std::string stats_prefix() { return stats_prefix_; }
+
 private:
   const nighthawk::server::ResponseOptions server_config_;
   static std::atomic<uint64_t>& instances() {
     // We lazy-init the atomic to avoid static initialization / a fiasco.
     MUTABLE_CONSTRUCT_ON_FIRST_USE(std::atomic<uint64_t>, 0); // NOLINT
   }
+
+  Envoy::Runtime::Loader& runtime_;
+  const std::string stats_prefix_;
+  Envoy::Stats::Scope& scope_;
+  Envoy::TimeSource& time_source_;
 };
 
 using HttpDynamicDelayDecoderFilterConfigSharedPtr =
@@ -56,7 +71,7 @@ using HttpDynamicDelayDecoderFilterConfigSharedPtr =
  * this code base, thereby making it all transparant to the user / eliminating the need
  * to configure the fault filter and make NH take full ownership at the feature level.
  */
-class HttpDynamicDelayDecoderFilter : public Envoy::Http::StreamDecoderFilter {
+class HttpDynamicDelayDecoderFilter : public Envoy::Extensions::HttpFilters::Fault::FaultFilter {
 public:
   HttpDynamicDelayDecoderFilter(HttpDynamicDelayDecoderFilterConfigSharedPtr);
   ~HttpDynamicDelayDecoderFilter() override;
@@ -66,8 +81,6 @@ public:
 
   // Http::StreamDecoderFilter
   Envoy::Http::FilterHeadersStatus decodeHeaders(Envoy::Http::RequestHeaderMap&, bool) override;
-  Envoy::Http::FilterDataStatus decodeData(Envoy::Buffer::Instance&, bool) override;
-  Envoy::Http::FilterTrailersStatus decodeTrailers(Envoy::Http::RequestTrailerMap&) override;
   void setDecoderFilterCallbacks(Envoy::Http::StreamDecoderFilterCallbacks&) override;
 
   /**

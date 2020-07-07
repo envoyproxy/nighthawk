@@ -12,26 +12,37 @@ namespace Nighthawk {
 namespace Server {
 
 HttpDynamicDelayDecoderFilterConfig::HttpDynamicDelayDecoderFilterConfig(
-    nighthawk::server::ResponseOptions proto_config)
-    : server_config_(std::move(proto_config)) {}
+    nighthawk::server::ResponseOptions proto_config, Envoy::Runtime::Loader& runtime,
+    const std::string& stats_prefix, Envoy::Stats::Scope& scope, Envoy::TimeSource& time_source)
+    : server_config_(std::move(proto_config)), runtime_(runtime), stats_prefix_(stats_prefix),
+      scope_(scope), time_source_(time_source) {
+  (void)stats_prefix_;
+}
 
 HttpDynamicDelayDecoderFilter::HttpDynamicDelayDecoderFilter(
     HttpDynamicDelayDecoderFilterConfigSharedPtr config)
-    : config_(std::move(config)) {
+    : Envoy::Extensions::HttpFilters::Fault::FaultFilter(
+          std::make_shared<Envoy::Extensions::HttpFilters::Fault::FaultFilterConfig>(
+              envoy::extensions::filters::http::fault::v3::HTTPFault(), config->runtime(),
+              config->stats_prefix(), config->scope(), config->time_source())),
+      config_(std::move(config)) {
   config_->incrementInstanceCount();
 }
 
 HttpDynamicDelayDecoderFilter::~HttpDynamicDelayDecoderFilter() {
   RELEASE_ASSERT(destroyed_, "onDestroy() not called");
+  Envoy::Extensions::HttpFilters::Fault::FaultFilter::~FaultFilter();
 }
 
 void HttpDynamicDelayDecoderFilter::onDestroy() {
   destroyed_ = true;
   config_->decrementInstanceCount();
+  Envoy::Extensions::HttpFilters::Fault::FaultFilter::onDestroy();
 }
 
 Envoy::Http::FilterHeadersStatus
-HttpDynamicDelayDecoderFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& headers, bool) {
+HttpDynamicDelayDecoderFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& headers,
+                                             bool end_stream) {
   base_config_ = config_->server_config();
   const auto* request_config_header = headers.get(TestServer::HeaderNames::get().TestServerConfig);
   if (request_config_header) {
@@ -60,22 +71,13 @@ HttpDynamicDelayDecoderFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& head
     const Envoy::Http::LowerCaseString key("x-envoy-fault-delay-request");
     headers.setCopy(key, absl::StrCat(*delay_ms));
   }
-  return Envoy::Http::FilterHeadersStatus::Continue;
-}
-
-Envoy::Http::FilterDataStatus HttpDynamicDelayDecoderFilter::decodeData(Envoy::Buffer::Instance&,
-                                                                        bool) {
-  return Envoy::Http::FilterDataStatus::Continue;
-}
-
-Envoy::Http::FilterTrailersStatus
-HttpDynamicDelayDecoderFilter::decodeTrailers(Envoy::Http::RequestTrailerMap&) {
-  return Envoy::Http::FilterTrailersStatus::Continue;
+  return Envoy::Extensions::HttpFilters::Fault::FaultFilter::decodeHeaders(headers, end_stream);
 }
 
 void HttpDynamicDelayDecoderFilter::setDecoderFilterCallbacks(
     Envoy::Http::StreamDecoderFilterCallbacks& callbacks) {
   decoder_callbacks_ = &callbacks;
+  Envoy::Extensions::HttpFilters::Fault::FaultFilter::setDecoderFilterCallbacks(callbacks);
 }
 
 } // namespace Server

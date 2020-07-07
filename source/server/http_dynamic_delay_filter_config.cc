@@ -35,10 +35,12 @@ public:
 
 private:
   Envoy::Http::FilterFactoryCb createFilter(const nighthawk::server::ResponseOptions& proto_config,
-                                            Envoy::Server::Configuration::FactoryContext&) {
+                                            Envoy::Server::Configuration::FactoryContext& context) {
     Nighthawk::Server::HttpDynamicDelayDecoderFilterConfigSharedPtr config =
         std::make_shared<Nighthawk::Server::HttpDynamicDelayDecoderFilterConfig>(
-            Nighthawk::Server::HttpDynamicDelayDecoderFilterConfig(proto_config));
+            Nighthawk::Server::HttpDynamicDelayDecoderFilterConfig(
+                proto_config, context.runtime(), "" /*stats_prefix*/, context.scope(),
+                context.timeSource()));
 
     return [config](Envoy::Http::FilterChainFactoryCallbacks& callbacks) -> void {
       auto* filter = new Nighthawk::Server::HttpDynamicDelayDecoderFilter(config);
