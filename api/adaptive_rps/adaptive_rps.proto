@@ -14,20 +14,23 @@ import "validate/validate.proto";
 // Parameters describing the adjusting and testing stages of an adaptive RPS
 // session, which consists of a series of Nighthawk benchmarks probing for
 // the optimal RPS, followed by a longer benchmark to validate the optimal RPS.
+// RPS calculations are implemented by the selected StepController plugin.
+// Metrics can eb
 message AdaptiveRpsSessionSpec {
-  // Settings for any MetricsPlugin referenced from MetricSpecs, other than
-  // "builtin".
+  // Settings for MetricsPlugins that obtain metrics from outside sources.
+  // An entry is required for every plugin referred to by metric_thresholds,
+  // other than the "builtin" plugin.
   repeated MetricsPluginConfig metrics_plugin_configs = 1;
-  // Identifies metrics and thresholds that determine RPS adjustments. One or
-  // more metrics with thresholds must be provided.
-  repeated MetricSpecWithThreshold metric_thresholds = 2;
+  // Metrics and thresholds that determine RPS adjustments.
+  repeated MetricSpecWithThreshold metric_thresholds = 2
+      [ (validate.rules).repeated.min_items = 1 ];
   // Metrics that are collected and included in the output but not taken into
   // account when adjusting the RPS.
   repeated MetricSpec informational_metric_specs = 3;
   // A proto describing Nighthawk Service traffic. See
   // https://github.com/envoyproxy/nighthawk/blob/master/api/client/options.proto
   //
-  // The adaptive RPS controller will throw an error if the |duration|,
+  // The adaptive RPS controller will return an error if the |duration|,
   // |requests_per_second|,  or |open_loop| fields are set within
   // |nighthawk_traffic_options|; the controller sets these values dynamically.
   //
@@ -38,14 +41,15 @@ message AdaptiveRpsSessionSpec {
   // RPS sent.
   nighthawk.client.CommandLineOptions nighthawk_traffic_template = 4;
   // The duration of each short benchmark during the adjusting stage. Must be
-  // set. Suggested value: 10 seconds.
+  // set. O(10 seconds).
   google.protobuf.Duration measuring_period = 5
       [ (validate.rules).duration.gt.seconds = 0 ];
   // Maximum amount of time the adjusting stage should wait for convergence
-  // before returning an error. Suggested value: 300 seconds.
+  // before returning an error. O(300 seconds).
   google.protobuf.Duration convergence_deadline = 6
       [ (validate.rules).duration.gt.seconds = 0 ];
-  // The duration of the single benchmark session of the testing stage. Must be
+  // The duration of the single benchmark session of the testing stage to
+  // confirm the performance at the RPS found by the adjusting stage. Must be
   // set.
   google.protobuf.Duration testing_stage_duration = 7
       [ (validate.rules).duration.gt.seconds = 0 ];

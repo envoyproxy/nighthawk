@@ -10,9 +10,9 @@ import "validate/validate.proto";
 message MetricSpec {
   // Name of the metric to evaluate. For the set of built-in metric names, see
   // source/adaptive_rps/metrics_plugin_impl.cc.
-  string metric_name = 1;
+  string metric_name = 1 [ (validate.rules).string.min_len = 1 ];
   // Name of the MetricsPlugin providing the metric ("builtin" for built-in).
-  string metrics_plugin_name = 2;
+  string metrics_plugin_name = 2 [ (validate.rules).string.min_len = 1 ];
 }
 
 // Specifies a simple upper or lower threshold, or configures a custom
@@ -35,10 +35,10 @@ message ThresholdSpec {
     // to the threshold, -1.0 meaning far above the threshold.
     CustomMetricEvaluatorConfig custom_metric_evaluator = 3;
   }
-  // Relative importance of this threshold when calculating adaptive RPS based on
-  // multiple metrics. Must be a positive number if set. If any threshold has a
-  // weight, all must have a weight. If no weights are set, all thresholds have
-  // equal weight.
+  // Relative importance of this threshold when calculating adaptive RPS based
+  // on multiple metrics. Must be a positive number if set. If any threshold has
+  // a weight, all must have a weight. If no weights are set, all thresholds
+  // have equal weight.
   google.protobuf.DoubleValue weight = 4
       [ (validate.rules).double = {gt : 0.0} ];
 }

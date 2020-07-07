@@ -5,39 +5,14 @@ metrics_plugin_configs {
   name: "example-metrics-plugin"
   typed_config {
     [type.googleapis.com/nighthawk.adaptive_rps.ExampleMetricsPluginConfig] {
-      address: "x"
-      credentials: "y"
+      address: "x.y.z"
+      credentials: "key-id-123"
     }
   }
 }
 
-# metrics_plugin_configs {
-#   name: "bogus"
-#   typed_config {
-#     [type.googleapis.com/nighthawk.adaptive_rps.ExampleMetricsPluginConfig] {
-#       address: "x"
-#       credentials: "y"
-#     }
-#   }
-# }
-
 # For the full list of built-in metric names, see
 # source/adaptive_rps/metrics_plugin_impl.cc.
-
-# metric_thresholds {
-#   metric_spec {
-#     metric_name: "latency-ns-mean-plus-2stdev"
-#     metrics_plugin_name: "builtin"
-#   }
-#   threshold_spec {
-#     upper_threshold {
-#       value: 32000000.0
-#     }
-#   }
-#   weight {
-#     value: 1.0
-#   }
-# }
 
 metric_thresholds {
   metric_spec {
@@ -45,15 +20,18 @@ metric_thresholds {
     metrics_plugin_name: "builtin"
   }
   threshold_spec {
-    #upper_threshold {
-    #  value: 32000000.0
-    #}
+    ## Simple binary threshold.
+    # upper_threshold {
+    #   value: 300000000.0  # 300ms
+    # }
+    # 
+    # Custom threshold function.
     custom_metric_evaluator {
       name: "sigmoid"
       typed_config {
         [type.googleapis.com/nighthawk.adaptive_rps.SigmoidCustomMetricEvaluatorConfig] {
-          threshold: 32000000.0
-          k: 0.0000001
+          threshold: 5000000.0  # 5ms
+          k: 0.0000001  # Should be around 1/threshold
         }
       }
     }
@@ -63,16 +41,11 @@ metric_thresholds {
   }
 }
 
-# Metrics that are recorded in the output proto but are not taken into account
+# Informational metrics are recorded in the output but are not taken into account
 # when adjusting the RPS.
-informational_metric_specs {
-  metric_name: "attempted-rps"
-  metrics_plugin_name: "builtin"
-}
-
 # informational_metric_specs {
-#   metric_name: "bogus3"
-#   metrics_plugin_name: "bogus21"
+#   metric_name: "attempted-rps"
+#   metrics_plugin_name: "builtin"
 # }
 
 informational_metric_specs {
@@ -80,21 +53,21 @@ informational_metric_specs {
   metrics_plugin_name: "builtin"
 }
 
-informational_metric_specs {
-  metric_name: "send-rate"
-  metrics_plugin_name: "builtin"
-}
+# informational_metric_specs {
+#   metric_name: "send-rate"
+#   metrics_plugin_name: "builtin"
+# }
 
-informational_metric_specs {
-  metric_name: "success-rate"
-  metrics_plugin_name: "builtin"
-}
+# informational_metric_specs {
+#   metric_name: "success-rate"
+#   metrics_plugin_name: "builtin"
+# }
 
-# Metric defined in example custom plugin.
-informational_metric_specs {
-  metric_name: "example_metric1"
-  metrics_plugin_name: "example-metrics-plugin"
-}
+# Metric defined in example metrics plugin.
+# informational_metric_specs {
+#   metric_name: "example_metric1"
+#   metrics_plugin_name: "example-metrics-plugin"
+# }
 
 # CommandLineOptions proto describing the traffic to generate, but without
 # requests_per_second, duration, or open_loop, which will all be set dynamically.
@@ -108,21 +81,21 @@ measuring_period {
   seconds: 4
 }
 
-testing_stage_duration {
-  seconds: 30
+convergence_deadline {
+  seconds: 180
 }
 
-convergence_deadline {
-  seconds: 60
+testing_stage_duration {
+  seconds: 30
 }
 
 step_controller_config {
   name: "linear-search"
   typed_config {
     [type.googleapis.com/nighthawk.adaptive_rps.LinearSearchStepControllerConfig] {
-      rps_step: 100
+      rps_step: 1000
       minimum_rps: 500
-      maximum_rps: 10000
+      maximum_rps: 50000
     }
   }
 }

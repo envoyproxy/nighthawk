@@ -175,10 +175,6 @@ absl::Status CheckSessionSpec(const nighthawk::adaptive_rps::AdaptiveRpsSessionS
     plugin_names.push_back(config.name());
   }
 
-  if (spec.metric_thresholds_size() == 0) {
-    errors += "One or more metrics_thresholds required.\n";
-  }
-
   std::vector<MetricSpec> all_metric_specs;
 
   int count_with_weight = 0;

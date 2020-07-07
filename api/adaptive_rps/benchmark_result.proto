@@ -22,24 +22,24 @@ message ThresholdCheckResult {
     SimpleThresholdStatus simple_threshold_status = 1;
     // Evaluation score returned by a CustomMetricEvaluator plugin, between
     // -1.0 and 1.0. This expresses how close the metric was to the threshold
-    // by an arbitrary formula selected and configured in the MetricSpec,
+    // by an arbitrary formula selected and configured in the ThresholdSpec,
     // such as a sigmoid curve. The controller can choose to make larger RPS
-    // adjustments when farther away to converge faster.
+    // adjustments when the score is larger, in order to converge faster.
     double threshold_score = 2;
   }
 }
 
-// Records the status of a feedback metric during a benchmark session.
+// Records the status of a single metric during a benchmark session.
 message MetricEvaluation {
   // Original metric specification (plugin name, metric name).
   MetricSpec metric_spec = 1;
-  // The numerical value of the metric measured during this benchmark session.
+  // Numerical value of the metric measured during this benchmark session.
   double metric_value = 2;
   // Threshold that was used to check this metric value. Not set if the metric
   // was only informational.
   ThresholdSpec threshold_spec = 3;
-  // A measure of threshold compliance based on this metric value. Not set if
-  // the metric was only informational.
+  // The result of checking this metric value against the configured threshold.
+  // Not set if the metric was only informational.
   ThresholdCheckResult threshold_check_result = 4;
 }
 
