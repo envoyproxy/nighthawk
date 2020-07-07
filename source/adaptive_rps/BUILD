@@ -12,7 +12,7 @@ envoy_cc_library(
     name = "adaptive_rps_lib",
     srcs = [
         "adaptive_rps_client_main.cc",
-        "adaptive_rps_controller.cc",
+        "adaptive_rps_controller_impl.cc",
         "custom_metric_evaluator_impl.cc",
         "metrics_plugin_impl.cc",
         "plugin_util.cc",
@@ -20,7 +20,6 @@ envoy_cc_library(
     ],
     hdrs = [
         "adaptive_rps_client_main.h",
-        "adaptive_rps_controller.h",
         "custom_metric_evaluator_impl.h",
         "metrics_plugin_impl.h",
         "plugin_util.h",
@@ -39,6 +38,7 @@ envoy_cc_library(
         "@envoy//source/common/common:cleanup_lib_with_external_headers",
         "@envoy//source/common/config:utility_lib_with_external_headers",
         "@envoy//source/common/event:real_time_system_lib_with_external_headers",
+        "@envoy//source/common/grpc:google_grpc_utils_lib_with_external_headers",
         "@envoy//source/common/protobuf:message_validator_lib_with_external_headers",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
     ],

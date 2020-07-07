@@ -1,6 +1,7 @@
 #pragma once
 
 #include "nighthawk/adaptive_rps/custom_metric_evaluator.h"
+
 #include "api/adaptive_rps/custom_metric_evaluator_impl.pb.h"
 
 namespace Nighthawk {
@@ -25,5 +26,5 @@ private:
   double k_;
 };
 
-}  // namespace AdaptiveRps
-}  // namespace Nighthawk
+} // namespace AdaptiveRps
+} // namespace Nighthawk

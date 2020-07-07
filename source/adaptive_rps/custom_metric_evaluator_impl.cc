@@ -1,8 +1,12 @@
+#include "adaptive_rps/custom_metric_evaluator_impl.h"
+
 #include <math.h>
 
-#include "adaptive_rps/custom_metric_evaluator_impl.h"
-#include "api/adaptive_rps/custom_metric_evaluator_impl.pb.h"
 #include "envoy/registry/registry.h"
+
+#include "external/envoy/source/common/protobuf/protobuf.h"
+
+#include "api/adaptive_rps/custom_metric_evaluator_impl.pb.h"
 
 namespace Nighthawk {
 namespace AdaptiveRps {
@@ -16,9 +20,9 @@ SigmoidCustomMetricEvaluatorConfigFactory::createEmptyConfigProto() {
 
 CustomMetricEvaluatorPtr SigmoidCustomMetricEvaluatorConfigFactory::createCustomMetricEvaluator(
     const Envoy::Protobuf::Message& message) {
-  const google::protobuf::Any& any = dynamic_cast<const google::protobuf::Any&>(message);
+  const Envoy::ProtobufWkt::Any& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
   nighthawk::adaptive_rps::SigmoidCustomMetricEvaluatorConfig config;
-  any.UnpackTo(&config);
+  Envoy::MessageUtil::unpackTo(any, config);
   return std::make_unique<SigmoidCustomMetricEvaluator>(config);
 }
 
@@ -32,5 +36,5 @@ double SigmoidCustomMetricEvaluator::EvaluateMetric(double value) const {
   return 1.0 - 2.0 / (1.0 + exp(-k_ * (value - threshold_)));
 }
 
-}  // namespace AdaptiveRps
-}  // namespace Nighthawk
+} // namespace AdaptiveRps
+} // namespace Nighthawk

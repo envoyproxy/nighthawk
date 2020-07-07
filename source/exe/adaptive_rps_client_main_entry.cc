@@ -3,12 +3,12 @@
 
 #include "nighthawk/common/exception.h"
 
-#include "adaptive_rps/adaptive_rps_client_main.h"
+#include "external/envoy/source/common/event/real_time_system.h"
 
 #include "absl/debugging/symbolize.h"
+#include "adaptive_rps/adaptive_rps_client_main.h"
 
 // NOLINT(namespace-nighthawk)
-
 
 int main(int argc, char* argv[]) {
 #ifndef __APPLE__
@@ -16,8 +16,9 @@ int main(int argc, char* argv[]) {
   // handling, such as running in a chroot jail.
   absl::InitializeSymbolizer(argv[0]);
 #endif
-   try {
-    Nighthawk::AdaptiveRps::AdaptiveRpsMain program(argc, argv); // NOLINT
+  Envoy::Event::RealTimeSystem time_system; // NO_CHECK_FORMAT(real_time)
+  try {
+    Nighthawk::AdaptiveRps::AdaptiveRpsMain program(argc, argv, &time_system); // NOLINT
     return program.run();
   } catch (const Nighthawk::Client::NoServingException& e) {
     return EXIT_SUCCESS;

@@ -2,6 +2,8 @@
 
 #include "envoy/registry/registry.h"
 
+#include "external/envoy/source/common/protobuf/protobuf.h"
+
 namespace Nighthawk {
 namespace AdaptiveRps {
 
@@ -19,9 +21,9 @@ Envoy::ProtobufTypes::MessagePtr ExampleMetricsPluginConfigFactory::createEmptyC
 // ExampleMetricsPlugin with the strongly typed config object.
 MetricsPluginPtr
 ExampleMetricsPluginConfigFactory::createMetricsPlugin(const Envoy::Protobuf::Message& message) {
-  const google::protobuf::Any& any = dynamic_cast<const google::protobuf::Any&>(message);
+  const Envoy::ProtobufWkt::Any& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
   nighthawk::adaptive_rps::ExampleMetricsPluginConfig config;
-  any.UnpackTo(&config);
+  Envoy::MessageUtil::unpackTo(any, config);
   return std::make_unique<ExampleMetricsPlugin>(config);
 }
 

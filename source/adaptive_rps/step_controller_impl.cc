@@ -1,11 +1,13 @@
 #include "adaptive_rps/step_controller_impl.h"
 
-#include "adaptive_rps/step_controller_impl.h"
+#include "envoy/registry/registry.h"
+
+#include "external/envoy/source/common/protobuf/protobuf.h"
+
 #include "api/adaptive_rps/adaptive_rps.pb.h"
 #include "api/adaptive_rps/benchmark_result.pb.h"
 #include "api/adaptive_rps/metric_spec.pb.h"
 #include "api/adaptive_rps/step_controller_impl.pb.h"
-#include "envoy/registry/registry.h"
 
 namespace Nighthawk {
 namespace AdaptiveRps {
@@ -19,23 +21,28 @@ using nighthawk::adaptive_rps::MetricEvaluation;
 using nighthawk::adaptive_rps::UNKNOWN_THRESHOLD_STATUS;
 using nighthawk::adaptive_rps::WITHIN_THRESHOLD;
 
+// Ensures that *value is not below minimum.
 template <typename T> inline void ClampBelow(T* value, T minimum) {
   if (*value < minimum) {
     *value = minimum;
   }
 }
 
+// Ensures that *value is not above maximum.
 template <typename T> inline void ClampAbove(T* value, T maximum) {
   if (*value > maximum) {
     *value = maximum;
   }
 }
 
+// Ensures that *value is between minimum and maximum, inclusive.
 template <typename T> inline void Clamp(T* value, T minimum, T maximum) {
   ClampBelow(value, minimum);
   ClampAbove(value, maximum);
 }
 
+// Adds all collected metric results according to their weights, counting within threshold as 1.0
+// and outside threshold as -1.0. Output ranges from -1.0 to 1.0.
 double TotalWeightedScore(const BenchmarkResult& benchmark_result) {
   double score = 0.0;
   double total_weight = 0.0;
@@ -71,9 +78,9 @@ Envoy::ProtobufTypes::MessagePtr LinearSearchStepControllerConfigFactory::create
 
 StepControllerPtr LinearSearchStepControllerConfigFactory::createStepController(
     const Envoy::Protobuf::Message& message) {
-  const google::protobuf::Any& any = dynamic_cast<const google::protobuf::Any&>(message);
+  const Envoy::ProtobufWkt::Any& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
   LinearSearchStepControllerConfig config;
-  any.UnpackTo(&config);
+  Envoy::MessageUtil::unpackTo(any, config);
   return std::make_unique<LinearSearchStepController>(config);
 }
 
@@ -110,10 +117,9 @@ std::string BinarySearchStepControllerConfigFactory::name() const { return "bina
 
 StepControllerPtr BinarySearchStepControllerConfigFactory::createStepController(
     const Envoy::Protobuf::Message& message) {
-  const google::protobuf::Any& any = dynamic_cast<const google::protobuf::Any&>(message);
+  const Envoy::ProtobufWkt::Any& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
   BinarySearchStepControllerConfig config;
-  any.UnpackTo(&config);
-
+  Envoy::MessageUtil::unpackTo(any, config);
   return std::make_unique<BinarySearchStepController>(config);
 }
 
