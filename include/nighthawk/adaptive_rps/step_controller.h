@@ -12,16 +12,13 @@
 #include "envoy/config/typed_config.h"
 #include "envoy/registry/registry.h"
 
-// #include "envoy/common/config/utility.h"
-// #include "envoy/common/protobuf/protobuf.h"
-
 namespace Nighthawk {
 namespace AdaptiveRps {
 
 class StepController {
 public:
   virtual ~StepController() = default;
-  virtual int GetCurrentRps() const PURE;
+  virtual unsigned int GetCurrentRps() const PURE;
   virtual bool IsConverged() const PURE;
   virtual void UpdateAndRecompute(const nighthawk::adaptive_rps::BenchmarkResult& result) PURE;
 };
@@ -35,5 +32,5 @@ public:
   virtual StepControllerPtr createStepController(const Envoy::Protobuf::Message&) PURE;
 };
 
-} // namespace AdaptiveRps
-} // namespace Nighthawk
+}  // namespace AdaptiveRps
+}  // namespace Nighthawk

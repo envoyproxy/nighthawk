@@ -25,5 +25,5 @@ private:
   double k_;
 };
 
-} // namespace AdaptiveRps
-} // namespace Nighthawk
+}  // namespace AdaptiveRps
+}  // namespace Nighthawk

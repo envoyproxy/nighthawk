@@ -4,37 +4,48 @@ package nighthawk.adaptive_rps;
 
 import "api/adaptive_rps/custom_metric_evaluator.proto";
 import "google/protobuf/wrappers.proto";
+import "validate/validate.proto";
 
-// Identifies a feedback metric and how to evaluate it.
+// Identifies a feedback metric.
 message MetricSpec {
-  // Name of the metric to evaluate.
+  // Name of the metric to evaluate. For the set of built-in metric names, see
+  // source/adaptive_rps/metrics_plugin_impl.cc.
   string metric_name = 1;
-
   // Name of the MetricsPlugin providing the metric ("builtin" for built-in).
   string metrics_plugin_name = 2;
+}
 
+// Specifies a simple upper or lower threshold, or configures a custom
+// evaluator.
+message ThresholdSpec {
   // A threshold for evaluating a metric value.
   oneof threshold_spec {
     // Simple upper threshold:
     //   metric <= upper_threshold -> WITHIN_THRESHOLD
     //   metric > upper_threshold -> OUTSIDE_THRESHOLD
-    google.protobuf.DoubleValue upper_threshold = 3;
-
+    google.protobuf.DoubleValue upper_threshold = 1;
     // Simple lower threshold:
     //   metric >= lower_threshold -> WITHIN_THRESHOLD
     //   metric < lower_threshold -> OUTSIDE_THRESHOLD
-    google.protobuf.DoubleValue lower_threshold = 4;
-
-    // A CustomMetricEvaluator plugin that gives a numerical measure of health
-    // according to an arbitrary formula with configurable thresholds and
-    // constants.
-    CustomMetricEvaluatorConfig custom_metric_evaluator = 5;
+    google.protobuf.DoubleValue lower_threshold = 2;
+    // Selection and configuration of a CustomMetricEvaluator plugin that gives
+    // a numerical measure of proximity to a threshold according to an arbitrary
+    // formula with configurable threshold and constants. The measure can range
+    // from -1.0 to 1.0: 1.0 meaning far below the threshold, 0.0 meaning equal
+    // to the threshold, -1.0 meaning far above the threshold.
+    CustomMetricEvaluatorConfig custom_metric_evaluator = 3;
   }
+  // Relative importance of this threshold when calculating adaptive RPS based on
+  // multiple metrics. Must be a positive number if set. If any threshold has a
+  // weight, all must have a weight. If no weights are set, all thresholds have
+  // equal weight.
+  google.protobuf.DoubleValue weight = 4
+      [ (validate.rules).double = {gt : 0.0} ];
+}
 
-  // Relative weight for this MetricSpec when evaluating performance against
-  // multiple MetricSpecs. Can be any nonnegative number.
-  //
-  // Set the weight to 0.0 to record the metric in the output without using it
-  // to influence adaptive RPS.
-  double weight = 6;
+message MetricSpecWithThreshold {
+  // Identifies a metric to collect and evaluate.
+  MetricSpec metric_spec = 1;
+  // Specifies a threshold for this metric.
+  ThresholdSpec threshold_spec = 2;
 }

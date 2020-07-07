@@ -1,9 +1,53 @@
 #include "adaptive_rps/metrics_plugin_impl.h"
 
+#include "envoy/registry/registry.h"
+
 namespace Nighthawk {
 namespace AdaptiveRps {
 
-InternalEmulatedMetricsPlugin::InternalEmulatedMetricsPlugin(
+// The name of the plugin, to be referenced from AdaptiveRpsSessionSpec.
+std::string ExampleMetricsPluginConfigFactory::name() const { return "example-metrics-plugin"; }
+
+// A method required by the Envoy plugin system. The proto created here is only ever used to display
+// its type name. The config proto actually used to initialize the plugin is created on the stack in
+// ExampleMetricsPluginConfigFactory::createMetricsPlugin().
+Envoy::ProtobufTypes::MessagePtr ExampleMetricsPluginConfigFactory::createEmptyConfigProto() {
+  return std::make_unique<nighthawk::adaptive_rps::ExampleMetricsPluginConfig>();
+}
+
+// Unpacks the Any config proto to the plugin-specific ExampleMetricsPluginConfig, then instantiates
+// ExampleMetricsPlugin with the strongly typed config object.
+MetricsPluginPtr
+ExampleMetricsPluginConfigFactory::createMetricsPlugin(const Envoy::Protobuf::Message& message) {
+  const google::protobuf::Any& any = dynamic_cast<const google::protobuf::Any&>(message);
+  nighthawk::adaptive_rps::ExampleMetricsPluginConfig config;
+  any.UnpackTo(&config);
+  return std::make_unique<ExampleMetricsPlugin>(config);
+}
+
+// Registers the factory for ExampleMetricsPlugin in the Envoy registry.
+//
+// !!! Don't forget this line !!!
+//
+REGISTER_FACTORY(ExampleMetricsPluginConfigFactory, MetricsPluginConfigFactory);
+
+ExampleMetricsPlugin::ExampleMetricsPlugin(
+    const nighthawk::adaptive_rps::ExampleMetricsPluginConfig& config)
+    : address_{config.address()}, credentials_{config.credentials()} {}
+
+double ExampleMetricsPlugin::GetMetricByName(const std::string& metric_name) {
+  if (metric_name == "example_metric1") {
+    return 5.0;
+  } else {
+    return 15.0;
+  }
+}
+
+std::vector<std::string> ExampleMetricsPlugin::GetAllSupportedMetricNames() {
+  return {"example_metric1", "example_metric2"};
+}
+
+NighthawkStatsEmulatedMetricsPlugin::NighthawkStatsEmulatedMetricsPlugin(
     const nighthawk::client::Output& nighthawk_output) {
   for (const nighthawk::client::Result& result : nighthawk_output.results()) {
     if (result.name() != "global") {
@@ -45,11 +89,26 @@ InternalEmulatedMetricsPlugin::InternalEmulatedMetricsPlugin(
   }
 }
 
-double InternalEmulatedMetricsPlugin::GetMetricByName(const std::string& metric_name) {
+double NighthawkStatsEmulatedMetricsPlugin::GetMetricByName(const std::string& metric_name) {
   return metric_from_name_[metric_name];
 }
 
-// Note: Don't use REGISTER_FACTORY for InternalEmulatedMetricsPlugin. See header for details.
+std::vector<std::string> NighthawkStatsEmulatedMetricsPlugin::GetAllSupportedMetricNames() {
+  return {
+      "attempted-rps",
+      "achieved-rps",
+      "send-rate",
+      "success-rate",
+      "latency-ns-min",
+      "latency-ns-mean",
+      "latency-ns-max",
+      "latency-ns-mean-plus-1stdev",
+      "latency-ns-mean-plus-2stdev",
+      "latency-ns-mean-plus-3stdev",
+  };
+}
+
+// Note: Don't use REGISTER_FACTORY for NighthawkStatsEmulatedMetricsPlugin. See header for details.
 
 } // namespace AdaptiveRps
 } // namespace Nighthawk

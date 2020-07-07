@@ -16,5 +16,5 @@ private:
   std::string output_filename_;
 };
 
-} // namespace AdaptiveRps
-} // namespace Nighthawk
+}  // namespace AdaptiveRps
+}  // namespace Nighthawk

@@ -15,5 +15,5 @@ MetricsPluginPtr LoadMetricsPlugin(const nighthawk::adaptive_rps::MetricsPluginC
 StepControllerPtr
 LoadStepControllerPlugin(const nighthawk::adaptive_rps::StepControllerConfig& config);
 
-} // namespace AdaptiveRps
-} // namespace Nighthawk
+}  // namespace AdaptiveRps
+}  // namespace Nighthawk

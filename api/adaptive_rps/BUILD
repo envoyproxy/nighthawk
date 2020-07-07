@@ -11,6 +11,7 @@ api_cc_py_proto_library(
         "custom_metric_evaluator_impl.proto",
         "metric_spec.proto",
         "metrics_plugin.proto",
+        "metrics_plugin_impl.proto",
         "step_controller.proto",
         "step_controller_impl.proto",
     ],

@@ -31,10 +31,16 @@ using nighthawk::adaptive_rps::AdaptiveRpsSessionSpec;
 using nighthawk::adaptive_rps::BenchmarkResult;
 using nighthawk::adaptive_rps::MetricEvaluation;
 using nighthawk::adaptive_rps::MetricSpec;
+using nighthawk::adaptive_rps::MetricSpecWithThreshold;
 using nighthawk::adaptive_rps::MetricsPluginConfig;
+using nighthawk::adaptive_rps::ThresholdSpec;
 using nighthawk::adaptive_rps::OUTSIDE_THRESHOLD;
 using nighthawk::adaptive_rps::WITHIN_THRESHOLD;
 
+// Runs a single benchmark using a Nighthawk Service. Unconditionally returns a
+// nighthawk::client::ExecutionResponse. The ExecutionResponse may contain an error reported by the
+// Nighthawk Service. If we encounter a gRPC error communicating with the Nighthawk Service, we
+// insert the error code and message into the ExecutionResponse.
 nighthawk::client::ExecutionResponse
 PerformNighthawkBenchmark(nighthawk::client::NighthawkService::Stub* nighthawk_service_stub,
                           const AdaptiveRpsSessionSpec& spec, int rps,
@@ -47,9 +53,9 @@ PerformNighthawkBenchmark(nighthawk::client::NighthawkService::Stub* nighthawk_s
   nighthawk::client::ExecutionRequest request;
   *request.mutable_start_request()->mutable_options() = options;
 
-  grpc::ClientContext context;
-  std::shared_ptr<grpc::ClientReaderWriter<nighthawk::client::ExecutionRequest,
-                                           nighthawk::client::ExecutionResponse>>
+  ::grpc::ClientContext context;
+  std::shared_ptr<::grpc::ClientReaderWriter<nighthawk::client::ExecutionRequest,
+                                             nighthawk::client::ExecutionResponse>>
       stream(nighthawk_service_stub->ExecutionStream(&context));
 
   stream->Write(request);
@@ -68,6 +74,9 @@ PerformNighthawkBenchmark(nighthawk::client::NighthawkService::Stub* nighthawk_s
   return response;
 }
 
+// Analyzes a single Nighthawk Service benchmark result by applying configured MetricSpec
+// thresholds. Queries outside MetricsPlugins if configured and/or uses built-in Nighthawk Service
+// stats.
 BenchmarkResult
 AnalyzeNighthawkBenchmark(const nighthawk::client::ExecutionResponse& nighthawk_response,
                           const AdaptiveRpsSessionSpec& spec) {
@@ -75,40 +84,57 @@ AnalyzeNighthawkBenchmark(const nighthawk::client::ExecutionResponse& nighthawk_
 
   *benchmark_result.mutable_nighthawk_service_output() = nighthawk_response.output();
 
-  if (nighthawk_response.error_detail().code() > 0) {
+  if (nighthawk_response.error_detail().code() != ::grpc::OK) {
     return benchmark_result;
   }
 
   absl::flat_hash_map<std::string, MetricsPluginPtr> name_to_plugin;
   name_to_plugin["builtin"] =
-      std::make_unique<InternalEmulatedMetricsPlugin>(nighthawk_response.output());
+      std::make_unique<NighthawkStatsEmulatedMetricsPlugin>(nighthawk_response.output());
   for (const MetricsPluginConfig& config : spec.metrics_plugin_configs()) {
     name_to_plugin[config.name()] = LoadMetricsPlugin(config);
   }
 
-  for (const MetricSpec& metric_spec : spec.metric_specs()) {
+  for (const MetricSpecWithThreshold& metric_threshold : spec.metric_thresholds()) {
+    MetricEvaluation evaluation;
+    *evaluation.mutable_metric_spec() = metric_threshold.metric_spec();
+    *evaluation.mutable_threshold_spec() = metric_threshold.threshold_spec();
+
+    double metric_value =
+        name_to_plugin[metric_threshold.metric_spec().metrics_plugin_name()]->GetMetricByName(
+            metric_threshold.metric_spec().metric_name());
+    evaluation.set_metric_value(metric_value);
+    if (metric_threshold.threshold_spec().has_lower_threshold()) {
+      evaluation.mutable_threshold_check_result()->set_simple_threshold_status(
+          metric_value >= metric_threshold.threshold_spec().lower_threshold().value()
+              ? WITHIN_THRESHOLD
+              : OUTSIDE_THRESHOLD);
+    } else if (metric_threshold.threshold_spec().has_upper_threshold()) {
+      evaluation.mutable_threshold_check_result()->set_simple_threshold_status(
+          metric_value <= metric_threshold.threshold_spec().upper_threshold().value()
+              ? WITHIN_THRESHOLD
+              : OUTSIDE_THRESHOLD);
+    } else if (metric_threshold.threshold_spec().has_custom_metric_evaluator()) {
+      CustomMetricEvaluatorPtr metric_evaluator = LoadCustomMetricEvaluatorPlugin(
+          metric_threshold.threshold_spec().custom_metric_evaluator());
+      evaluation.mutable_threshold_check_result()->set_threshold_score(
+          metric_evaluator->EvaluateMetric(metric_value));
+    }
+    *benchmark_result.mutable_metric_evaluations()->Add() = evaluation;
+  }
+  for (const MetricSpec& metric_spec : spec.informational_metric_specs()) {
     MetricEvaluation evaluation;
     *evaluation.mutable_metric_spec() = metric_spec;
 
     double metric_value = name_to_plugin[metric_spec.metrics_plugin_name()]->GetMetricByName(
         metric_spec.metric_name());
     evaluation.set_metric_value(metric_value);
-    if (metric_spec.has_lower_threshold()) {
-      evaluation.set_threshold_status(
-          metric_value >= metric_spec.lower_threshold().value() ? WITHIN_THRESHOLD : OUTSIDE_THRESHOLD);
-    } else if (metric_spec.has_upper_threshold()) {
-      evaluation.set_threshold_status(
-          metric_value <= metric_spec.upper_threshold().value() ? WITHIN_THRESHOLD : OUTSIDE_THRESHOLD);
-    } else {
-      CustomMetricEvaluatorPtr metric_evaluator =
-          LoadCustomMetricEvaluatorPlugin(metric_spec.custom_metric_evaluator());
-      evaluation.set_threshold_score(metric_evaluator->EvaluateMetric(metric_value));
-    }
     *benchmark_result.mutable_metric_evaluations()->Add() = evaluation;
   }
   return benchmark_result;
 }
 
+// Performs a benchmark against a Nighthawk Service, then hands the result off for analysis.
 BenchmarkResult PerformAndAnalyzeNighthawkBenchmark(
     nighthawk::client::NighthawkService::Stub* nighthawk_service_stub,
     const AdaptiveRpsSessionSpec& spec, int rps, google::protobuf::Duration duration) {
@@ -117,13 +143,107 @@ BenchmarkResult PerformAndAnalyzeNighthawkBenchmark(
   return AnalyzeNighthawkBenchmark(response, spec);
 }
 
+// Checks whether a session spec is valid: No forbidden fields in Nighthawk traffic spec; no
+// references to missing plugins (step controller, metric, custom metric evaluator); no nonexistent
+// metric names; at least one threshold set; all weights set or no weights set.
+absl::Status CheckSessionSpec(const nighthawk::adaptive_rps::AdaptiveRpsSessionSpec& spec) {
+  std::string errors;
+
+  if (spec.nighthawk_traffic_template().has_duration()) {
+    errors += "nighthawk_traffic_template should not have |duration| set. Set |measuring_period| "
+              "and |testing_stage_duration| in the AdaptiveRpsSessionSpec proto instead.\n";
+  }
+  if (spec.nighthawk_traffic_template().has_requests_per_second()) {
+    errors += "nighthawk_traffic_template should not have |requests_per_second| set. RPS will be "
+              "set dynamically according to limits set in |step_controller_config|.\n";
+  }
+  if (spec.nighthawk_traffic_template().has_open_loop()) {
+    errors += "nighthawk_traffic_template should not have |open_loop| set. Adaptive RPS always "
+              "operates in open loop mode.\n";
+  }
+
+  absl::flat_hash_map<std::string, MetricsPluginPtr> plugin_from_name;
+  plugin_from_name["builtin"] =
+      std::make_unique<NighthawkStatsEmulatedMetricsPlugin>(nighthawk::client::Output());
+  for (const MetricsPluginConfig& config : spec.metrics_plugin_configs()) {
+    try {
+      plugin_from_name[config.name()] = LoadMetricsPlugin(config);
+    } catch (Envoy::EnvoyException exception) {
+      errors += exception.what();
+      errors += "\n";
+    }
+  }
+
+  if (spec.metric_thresholds_size() == 0) {
+    errors += "One or more metrics_thresholds required.\n";
+  }
+  
+  std::vector<MetricSpec> all_metric_specs;
+
+  int count_with_weight = 0;
+  int count_without_weight = 0;
+  for (const MetricSpecWithThreshold& metric_threshold : spec.metric_thresholds()) {
+    if (metric_threshold.threshold_spec().has_weight()) {
+      ++count_with_weight;
+    } else {
+      ++count_without_weight;
+    }
+    all_metric_specs.push_back(metric_threshold.metric_spec());
+  }
+  if (count_with_weight > 0 && count_without_weight > 0) {
+    errors += "Either all metric thresholds or none must have a weight.\n";
+  }
+
+  for (const MetricSpec& metric_spec : spec.informational_metric_specs()) {
+    all_metric_specs.push_back(metric_spec);
+  }
+
+  for (const MetricSpec& metric_spec : all_metric_specs) {
+    if (plugin_from_name.contains(metric_spec.metrics_plugin_name())) {
+      std::vector<std::string> supported_metrics =
+          plugin_from_name[metric_spec.metrics_plugin_name()]->GetAllSupportedMetricNames();
+      if (std::find(supported_metrics.begin(), supported_metrics.end(),
+                    metric_spec.metric_name()) == supported_metrics.end()) {
+        errors += "Metric '" + metric_spec.metric_name() + "' not implemented by plugin '" +
+                  metric_spec.metrics_plugin_name() + "'.\n";
+      }
+    } else {
+      errors += "MetricSpec referred to nonexistent metrics_plugin_name '" +
+                metric_spec.metrics_plugin_name() +
+                "'. You must declare the plugin in metrics_plugins or use plugin 'builtin'.";
+    }
+  }
+
+  if (errors.length() > 0) {
+    return absl::InvalidArgumentError(errors);
+  }
+  return absl::OkStatus();
+}
+
+class RealTimeSource : public Envoy::TimeSource {
+  Envoy::SystemTime systemTime() override { return std::chrono::system_clock::now(); }
+  Envoy::MonotonicTime monotonicTime() override { return std::chrono::steady_clock::now(); }
+};
+
 } // namespace
 
 AdaptiveRpsSessionOutput
 PerformAdaptiveRpsSession(nighthawk::client::NighthawkService::Stub* nighthawk_service_stub,
-                          const AdaptiveRpsSessionSpec& spec, std::ostream& diagnostic_ostream,
-                          std::unique_ptr<Envoy::TimeSource> time_source) {
+                          const AdaptiveRpsSessionSpec& spec, std::ostream* diagnostic_ostream,
+                          Envoy::TimeSource* time_source) {
   AdaptiveRpsSessionOutput output;
+
+  absl::Status validation_status = CheckSessionSpec(spec);
+  if (!validation_status.ok()) {
+    output.mutable_session_status()->set_code(static_cast<int>(validation_status.code()));
+    output.mutable_session_status()->set_message(std::string(validation_status.message()));
+    return output;
+  }
+
+  RealTimeSource real_time_source;
+  if (time_source == nullptr) {
+    time_source = &real_time_source;
+  }
 
   StepControllerPtr step_controller = LoadStepControllerPlugin(spec.step_controller_config());
 
@@ -132,25 +252,34 @@ PerformAdaptiveRpsSession(nighthawk::client::NighthawkService::Stub* nighthawk_s
     if (std::chrono::duration_cast<std::chrono::seconds>(time_source->monotonicTime() - start_time)
             .count() > spec.convergence_deadline().seconds()) {
       output.mutable_session_status()->set_code(grpc::DEADLINE_EXCEEDED);
-      output.mutable_session_status()->set_message(absl::StrCat(
-          "Reached convergence deadline  of ", spec.convergence_deadline().seconds(), " seconds"));
+      output.mutable_session_status()->set_message(
+          absl::StrCat("Failed to converge before deadline of ",
+                       spec.convergence_deadline().seconds(), " seconds."));
       return output;
     }
-    diagnostic_ostream << "Trying " << step_controller->GetCurrentRps() << " rps...\n";
+    if (diagnostic_ostream != nullptr) {
+      *diagnostic_ostream << "Trying " << step_controller->GetCurrentRps() << " rps...\n";
+    }
     BenchmarkResult result = PerformAndAnalyzeNighthawkBenchmark(
         nighthawk_service_stub, spec, step_controller->GetCurrentRps(), spec.measuring_period());
-    for (const MetricEvaluation& evaluation : result.metric_evaluations()) {
-      diagnostic_ostream << evaluation.DebugString() << "\n";
+    if (diagnostic_ostream != nullptr) {
+      for (const MetricEvaluation& evaluation : result.metric_evaluations()) {
+        *diagnostic_ostream << evaluation.DebugString() << "\n";
+      }
     }
     *output.mutable_adjusting_stage_results()->Add() = result;
     step_controller->UpdateAndRecompute(result);
   }
-  diagnostic_ostream << "Testing stage: " << step_controller->GetCurrentRps() << " rps...\n";
+  if (diagnostic_ostream != nullptr) {
+    *diagnostic_ostream << "Testing stage: " << step_controller->GetCurrentRps() << " rps...\n";
+  }
   *output.mutable_testing_stage_result() = PerformAndAnalyzeNighthawkBenchmark(
       nighthawk_service_stub, spec, step_controller->GetCurrentRps(),
       spec.testing_stage_duration());
-  for (const MetricEvaluation& evaluation : output.testing_stage_result().metric_evaluations()) {
-    diagnostic_ostream << evaluation.DebugString() << "\n";
+  if (diagnostic_ostream != nullptr) {
+    for (const MetricEvaluation& evaluation : output.testing_stage_result().metric_evaluations()) {
+      *diagnostic_ostream << evaluation.DebugString() << "\n";
+    }
   }
   return output;
 }

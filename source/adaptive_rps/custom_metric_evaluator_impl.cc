@@ -15,9 +15,10 @@ SigmoidCustomMetricEvaluatorConfigFactory::createEmptyConfigProto() {
 }
 
 CustomMetricEvaluatorPtr SigmoidCustomMetricEvaluatorConfigFactory::createCustomMetricEvaluator(
-    const Envoy::Protobuf::Message& config_any) {
-  const nighthawk::adaptive_rps::SigmoidCustomMetricEvaluatorConfig& config =
-      dynamic_cast<const nighthawk::adaptive_rps::SigmoidCustomMetricEvaluatorConfig&>(config_any);
+    const Envoy::Protobuf::Message& message) {
+  const google::protobuf::Any& any = dynamic_cast<const google::protobuf::Any&>(message);
+  nighthawk::adaptive_rps::SigmoidCustomMetricEvaluatorConfig config;
+  any.UnpackTo(&config);
   return std::make_unique<SigmoidCustomMetricEvaluator>(config);
 }
 
@@ -31,5 +32,5 @@ double SigmoidCustomMetricEvaluator::EvaluateMetric(double value) const {
   return 1.0 - 2.0 / (1.0 + exp(-k_ * (value - threshold_)));
 }
 
-} // namespace AdaptiveRps
-} // namespace Nighthawk
+}  // namespace AdaptiveRps
+}  // namespace Nighthawk

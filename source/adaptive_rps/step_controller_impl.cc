@@ -37,17 +37,26 @@ template <typename T> inline void Clamp(T* value, T minimum, T maximum) {
 }
 
 double TotalWeightedScore(const BenchmarkResult& benchmark_result) {
-  double score = 0;
-  double total_weight = 0;
+  double score = 0.0;
+  double total_weight = 0.0;
   for (const MetricEvaluation& evaluation : benchmark_result.metric_evaluations()) {
-    if (evaluation.threshold_status() == UNKNOWN_THRESHOLD_STATUS) {
-      score += evaluation.threshold_score() * evaluation.metric_spec().weight();
-    } else {
-      score += (evaluation.threshold_status() == WITHIN_THRESHOLD ? 1.0 : -1.0) *
-               evaluation.metric_spec().weight();
+    if (!(evaluation.has_threshold_spec() && evaluation.has_threshold_check_result())) {
+      // Metric was recorded for display purposes only.
+      continue;
     }
-
-    total_weight += evaluation.metric_spec().weight();
+    // Either all weights or no weights will be set. If no weights are set, all are equal.
+    double weight = evaluation.threshold_spec().has_weight()
+                        ? evaluation.threshold_spec().weight().value()
+                        : 1.0;
+    if (evaluation.threshold_check_result().simple_threshold_status() == UNKNOWN_THRESHOLD_STATUS) {
+      score += weight * evaluation.threshold_check_result().threshold_score();
+    } else {
+      score += weight *
+               (evaluation.threshold_check_result().simple_threshold_status() == WITHIN_THRESHOLD
+                    ? 1.0
+                    : -1.0);
+    }
+    total_weight += weight;
   }
   return score / total_weight;
 }
@@ -57,7 +66,7 @@ double TotalWeightedScore(const BenchmarkResult& benchmark_result) {
 std::string LinearSearchStepControllerConfigFactory::name() const { return "linear-search"; }
 
 Envoy::ProtobufTypes::MessagePtr LinearSearchStepControllerConfigFactory::createEmptyConfigProto() {
-  return std::make_unique<nighthawk::adaptive_rps::LinearSearchStepControllerConfig>();
+  return std::make_unique<LinearSearchStepControllerConfig>();
 }
 
 StepControllerPtr LinearSearchStepControllerConfigFactory::createStepController(
@@ -75,14 +84,13 @@ LinearSearchStepController::LinearSearchStepController(
     : config_{config}, current_rps_{config.minimum_rps()}, latest_cycle_healthy_{false},
       reached_unhealthy_rps_{false} {}
 
-int LinearSearchStepController::GetCurrentRps() const { return current_rps_; }
+unsigned int LinearSearchStepController::GetCurrentRps() const { return current_rps_; }
 
 bool LinearSearchStepController::IsConverged() const {
   return latest_cycle_healthy_ && reached_unhealthy_rps_;
 }
 
-void LinearSearchStepController::UpdateAndRecompute(
-    const nighthawk::adaptive_rps::BenchmarkResult& benchmark_result) {
+void LinearSearchStepController::UpdateAndRecompute(const BenchmarkResult& benchmark_result) {
   double score = TotalWeightedScore(benchmark_result);
   if (score < 0.0) {
     latest_cycle_healthy_ = false;
@@ -90,12 +98,12 @@ void LinearSearchStepController::UpdateAndRecompute(
   } else {
     latest_cycle_healthy_ = true;
   }
-  current_rps_ += config_.step() * score;
+  current_rps_ += config_.rps_step() * score;
   Clamp(&current_rps_, config_.minimum_rps(), config_.maximum_rps());
 }
 
 Envoy::ProtobufTypes::MessagePtr BinarySearchStepControllerConfigFactory::createEmptyConfigProto() {
-  return std::make_unique<nighthawk::adaptive_rps::BinarySearchStepControllerConfig>();
+  return std::make_unique<BinarySearchStepControllerConfig>();
 }
 
 std::string BinarySearchStepControllerConfigFactory::name() const { return "binary-search"; }
@@ -114,9 +122,9 @@ REGISTER_FACTORY(BinarySearchStepControllerConfigFactory, StepControllerConfigFa
 BinarySearchStepController::BinarySearchStepController(
     const BinarySearchStepControllerConfig& config)
     : config_{config}, bottom_rps_{config_.minimum_rps()}, top_rps_{config_.maximum_rps()},
-      previous_rps_{-1}, current_rps_{(top_rps_ + bottom_rps_) / 2} {}
+      previous_rps_{0}, current_rps_{(top_rps_ + bottom_rps_) / 2} {}
 
-int BinarySearchStepController::GetCurrentRps() const { return current_rps_; }
+unsigned int BinarySearchStepController::GetCurrentRps() const { return current_rps_; }
 
 bool BinarySearchStepController::IsConverged() const { return previous_rps_ == current_rps_; }
 

@@ -1,7 +1,7 @@
+#include "external/envoy/source/common/config/utility.h"
 #include "nighthawk/adaptive_rps/custom_metric_evaluator.h"
 #include "nighthawk/adaptive_rps/metrics_plugin.h"
 #include "nighthawk/adaptive_rps/step_controller.h"
-#include "external/envoy/source/common/config/utility.h"
 
 namespace Nighthawk {
 namespace AdaptiveRps {
@@ -27,5 +27,5 @@ LoadStepControllerPlugin(const nighthawk::adaptive_rps::StepControllerConfig& co
   return config_factory.createStepController(config.typed_config());
 }
 
-} // namespace AdaptiveRps
-} // namespace Nighthawk
+}  // namespace AdaptiveRps
+}  // namespace Nighthawk

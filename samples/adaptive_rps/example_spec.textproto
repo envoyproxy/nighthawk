@@ -1,24 +1,87 @@
 # proto-file: adaptive_rps/adaptive_rps.proto
 # proto-message: AdaptiveRpsSessionSpec
 
-metric_specs {
-  metric_name: "latency-ns-max"
-  metrics_plugin_name: "builtin"
-  upper_threshold {
-    value: 50000000
+metrics_plugin_configs {
+  name: "example-metrics-plugin"
+  typed_config {
+    [type.googleapis.com/nighthawk.adaptive_rps.ExampleMetricsPluginConfig] {
+      address: "x"
+      credentials: "y"
+    }
   }
-  weight: 1
 }
 
-# metric_specs {
-#   metric_name: "latency-ns-mean-plus-2stdev"
-#   metrics_plugin_name: "builtin"
-#   upper_threshold: 32000000
-#   weight: 1
+# For the full list of built-in metric names, see
+# source/adaptive_rps/metrics_plugin_impl.cc.
+
+# metric_thresholds {
+#   metric_spec {
+#     metric_name: "latency-ns-mean-plus-2stdev"
+#     metrics_plugin_name: "builtin"
+#   }
+#   threshold_spec {
+#     upper_threshold {
+#       value: 32000000.0
+#     }
+#   }
+#   weight {
+#     value: 1.0
+#   }
 # }
 
-# CommandLineOptions proto describing the traffic,but without
-# requests_per_second, duration, or open_loop.
+metric_thresholds {
+  metric_spec {
+    metric_name: "latency-ns-mean-plus-2stdev"
+    metrics_plugin_name: "builtin"
+  }
+  threshold_spec {
+    #upper_threshold {
+    #  value: 32000000.0
+    #}
+    custom_metric_evaluator {
+      name: "sigmoid"
+      typed_config {
+        [type.googleapis.com/nighthawk.adaptive_rps.SigmoidCustomMetricEvaluatorConfig] {
+          threshold: 32000000.0
+          k: 1
+        }
+      }
+    }
+    weight {
+      value: 1.0
+    }
+  }
+}
+
+# Metrics that are recorded in the output proto but are not taken into account
+# when adjusting the RPS.
+informational_metric_specs {
+  metric_name: "attempted-rps"
+  metrics_plugin_name: "builtin"
+}
+
+informational_metric_specs {
+  metric_name: "achieved-rps"
+  metrics_plugin_name: "builtin"
+}
+
+informational_metric_specs {
+  metric_name: "send-rate"
+  metrics_plugin_name: "builtin"
+}
+
+informational_metric_specs {
+  metric_name: "success-rate"
+  metrics_plugin_name: "builtin"
+}
+
+informational_metric_specs {
+  metric_name: "example_metric1"
+  metrics_plugin_name: "example-metrics-plugin"
+}
+
+# CommandLineOptions proto describing the traffic to generate, but without
+# requests_per_second, duration, or open_loop, which will all be set dynamically.
 nighthawk_traffic_template {
   uri {
     value: "[::1]:12345"
@@ -41,7 +104,7 @@ step_controller_config {
   name: "linear-search"
   typed_config {
     [type.googleapis.com/nighthawk.adaptive_rps.LinearSearchStepControllerConfig] {
-      step: 100
+      rps_step: 100
       minimum_rps: 500
       maximum_rps: 10000
     }

@@ -85,7 +85,7 @@ uint32_t AdaptiveRpsMain::run() {
       nighthawk::client::NighthawkService::NewStub(channel));
 
   nighthawk::adaptive_rps::AdaptiveRpsSessionOutput output =
-      PerformAdaptiveRpsSession(stub.get(), spec, std::cerr);
+      PerformAdaptiveRpsSession(stub.get(), spec, &std::cerr);
 
   std::ofstream ofs(output_filename_);
   if (ofs.is_open()) {
@@ -93,8 +93,11 @@ uint32_t AdaptiveRpsMain::run() {
   } else {
     throw Envoy::EnvoyException("Unable to open output file \"" + output_filename_ + "\"");
   }
+  if (output.session_status().code() != 0) {
+    std::cerr << output.session_status().message() << "\n";
+  }
   return 0;
 }
 
-} // namespace AdaptiveRps
-} // namespace Nighthawk
+}  // namespace AdaptiveRps
+}  // namespace Nighthawk
