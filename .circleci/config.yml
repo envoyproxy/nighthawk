@@ -24,13 +24,13 @@ jobs:
     steps:
       - checkout
       - run: ci/do_ci.sh clang_tidy
-  test_with_valgrind:
+  test_gcc:
     docker:
       - image: *envoy-build-image
     resource_class: xlarge
     steps:
       - checkout
-      - run: ci/do_ci.sh test_with_valgrind
+      - run: ci/do_ci.sh test_gcc
   coverage:
     docker:
       - image: *envoy-build-image
@@ -57,7 +57,9 @@ jobs:
     resource_class: xlarge
     steps:
       - checkout
-      - run: ci/do_ci.sh asan
+      - run:
+          command: ci/do_ci.sh asan
+          no_output_timeout: 30m
   tsan:
     docker:
       - image: *envoy-build-image
@@ -88,8 +90,8 @@ workflows:
     jobs:
       - build
       - test
+      - test_gcc
       - clang_tidy
-      #      - test_with_valgrind
       - coverage
       - asan
       - tsan
