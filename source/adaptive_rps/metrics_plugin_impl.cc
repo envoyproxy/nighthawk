@@ -9,8 +9,8 @@ namespace AdaptiveRps {
 std::string ExampleMetricsPluginConfigFactory::name() const { return "example-metrics-plugin"; }
 
 // A method required by the Envoy plugin system. The proto created here is only ever used to display
-// its type name. The config proto actually used to initialize the plugin is created on the stack in
-// ExampleMetricsPluginConfigFactory::createMetricsPlugin().
+// its type name. The config proto actually passed to the plugin's constructor is created on the
+// stack in ExampleMetricsPluginConfigFactory::createMetricsPlugin().
 Envoy::ProtobufTypes::MessagePtr ExampleMetricsPluginConfigFactory::createEmptyConfigProto() {
   return std::make_unique<nighthawk::adaptive_rps::ExampleMetricsPluginConfig>();
 }
@@ -27,7 +27,7 @@ ExampleMetricsPluginConfigFactory::createMetricsPlugin(const Envoy::Protobuf::Me
 
 // Registers the factory for ExampleMetricsPlugin in the Envoy registry.
 //
-// !!! Don't forget this line !!!
+// !!! Don't forget REGISTER_FACTORY !!!
 //
 REGISTER_FACTORY(ExampleMetricsPluginConfigFactory, MetricsPluginConfigFactory);
 
@@ -36,6 +36,7 @@ ExampleMetricsPlugin::ExampleMetricsPlugin(
     : address_{config.address()}, credentials_{config.credentials()} {}
 
 double ExampleMetricsPlugin::GetMetricByName(const std::string& metric_name) {
+  // Real plugin would query an outside server or other data source.
   if (metric_name == "example_metric1") {
     return 5.0;
   } else {

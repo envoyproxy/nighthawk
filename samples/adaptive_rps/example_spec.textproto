@@ -11,6 +11,16 @@ metrics_plugin_configs {
   }
 }
 
+# metrics_plugin_configs {
+#   name: "bogus"
+#   typed_config {
+#     [type.googleapis.com/nighthawk.adaptive_rps.ExampleMetricsPluginConfig] {
+#       address: "x"
+#       credentials: "y"
+#     }
+#   }
+# }
+
 # For the full list of built-in metric names, see
 # source/adaptive_rps/metrics_plugin_impl.cc.
 
@@ -43,7 +53,7 @@ metric_thresholds {
       typed_config {
         [type.googleapis.com/nighthawk.adaptive_rps.SigmoidCustomMetricEvaluatorConfig] {
           threshold: 32000000.0
-          k: 1
+          k: 0.0000001
         }
       }
     }
@@ -60,6 +70,11 @@ informational_metric_specs {
   metrics_plugin_name: "builtin"
 }
 
+# informational_metric_specs {
+#   metric_name: "bogus3"
+#   metrics_plugin_name: "bogus21"
+# }
+
 informational_metric_specs {
   metric_name: "achieved-rps"
   metrics_plugin_name: "builtin"
@@ -75,6 +90,7 @@ informational_metric_specs {
   metrics_plugin_name: "builtin"
 }
 
+# Metric defined in example custom plugin.
 informational_metric_specs {
   metric_name: "example_metric1"
   metrics_plugin_name: "example-metrics-plugin"

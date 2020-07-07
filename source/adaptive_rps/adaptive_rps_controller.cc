@@ -33,8 +33,8 @@ using nighthawk::adaptive_rps::MetricEvaluation;
 using nighthawk::adaptive_rps::MetricSpec;
 using nighthawk::adaptive_rps::MetricSpecWithThreshold;
 using nighthawk::adaptive_rps::MetricsPluginConfig;
-using nighthawk::adaptive_rps::ThresholdSpec;
 using nighthawk::adaptive_rps::OUTSIDE_THRESHOLD;
+using nighthawk::adaptive_rps::ThresholdSpec;
 using nighthawk::adaptive_rps::WITHIN_THRESHOLD;
 
 // Runs a single benchmark using a Nighthawk Service. Unconditionally returns a
@@ -155,7 +155,7 @@ absl::Status CheckSessionSpec(const nighthawk::adaptive_rps::AdaptiveRpsSessionS
   }
   if (spec.nighthawk_traffic_template().has_requests_per_second()) {
     errors += "nighthawk_traffic_template should not have |requests_per_second| set. RPS will be "
-              "set dynamically according to limits set in |step_controller_config|.\n";
+              "set dynamically according to limits in |step_controller_config|.\n";
   }
   if (spec.nighthawk_traffic_template().has_open_loop()) {
     errors += "nighthawk_traffic_template should not have |open_loop| set. Adaptive RPS always "
@@ -163,21 +163,22 @@ absl::Status CheckSessionSpec(const nighthawk::adaptive_rps::AdaptiveRpsSessionS
   }
 
   absl::flat_hash_map<std::string, MetricsPluginPtr> plugin_from_name;
+  std::vector<std::string> plugin_names = {"builtin"};
   plugin_from_name["builtin"] =
       std::make_unique<NighthawkStatsEmulatedMetricsPlugin>(nighthawk::client::Output());
   for (const MetricsPluginConfig& config : spec.metrics_plugin_configs()) {
     try {
       plugin_from_name[config.name()] = LoadMetricsPlugin(config);
     } catch (Envoy::EnvoyException exception) {
-      errors += exception.what();
-      errors += "\n";
+      errors += absl::StrCat("Plugin not found: ", exception.what(), "\n");
     }
+    plugin_names.push_back(config.name());
   }
 
   if (spec.metric_thresholds_size() == 0) {
     errors += "One or more metrics_thresholds required.\n";
   }
-  
+
   std::vector<MetricSpec> all_metric_specs;
 
   int count_with_weight = 0;
@@ -191,7 +192,7 @@ absl::Status CheckSessionSpec(const nighthawk::adaptive_rps::AdaptiveRpsSessionS
     all_metric_specs.push_back(metric_threshold.metric_spec());
   }
   if (count_with_weight > 0 && count_without_weight > 0) {
-    errors += "Either all metric thresholds or none must have a weight.\n";
+    errors += "Either all metric thresholds or none must have weights set.\n";
   }
 
   for (const MetricSpec& metric_spec : spec.informational_metric_specs()) {
@@ -204,13 +205,16 @@ absl::Status CheckSessionSpec(const nighthawk::adaptive_rps::AdaptiveRpsSessionS
           plugin_from_name[metric_spec.metrics_plugin_name()]->GetAllSupportedMetricNames();
       if (std::find(supported_metrics.begin(), supported_metrics.end(),
                     metric_spec.metric_name()) == supported_metrics.end()) {
-        errors += "Metric '" + metric_spec.metric_name() + "' not implemented by plugin '" +
-                  metric_spec.metrics_plugin_name() + "'.\n";
+        errors += "Metric named '" + metric_spec.metric_name() + "' not implemented by plugin '" +
+                  metric_spec.metrics_plugin_name() +
+                  "'. Metrics implemented: " + absl::StrJoin(supported_metrics, ", ") + ".\n";
       }
     } else {
       errors += "MetricSpec referred to nonexistent metrics_plugin_name '" +
                 metric_spec.metrics_plugin_name() +
-                "'. You must declare the plugin in metrics_plugins or use plugin 'builtin'.";
+                "'. You must declare the plugin in metrics_plugin_configs or use plugin 'builtin'. "
+                "Available plugins: " +
+                absl::StrJoin(plugin_names, ", ") + ".\n";
     }
   }
 

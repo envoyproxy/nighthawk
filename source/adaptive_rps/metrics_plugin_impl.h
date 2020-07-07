@@ -9,9 +9,9 @@
 namespace Nighthawk {
 namespace AdaptiveRps {
 
-// A factory that creates an ExampleMetricsPlugin initialized with a custom config proto unpacked
-// from an Any proto. You must implement a similar factory for your MetricsPlugin. Part of an
-// example showing how to create and register a MetricsPlugin.
+// A factory that creates an ExampleMetricsPlugin from a custom config proto unpacked from an Any
+// proto. You must implement a similar factory for your MetricsPlugin. Part of an example showing
+// how to create and register a MetricsPlugin.
 class ExampleMetricsPluginConfigFactory : public MetricsPluginConfigFactory {
 public:
   std::string name() const override;
@@ -19,9 +19,9 @@ public:
   MetricsPluginPtr createMetricsPlugin(const Envoy::Protobuf::Message& config) override;
 };
 
-// An example MetricsPlugin that configures itself with server info from a custom config proto.
-// Instead of connecting to a server, it returns a dummy value 5.0 for any metric name. Part of an
-// example showing how to create and register a MetricsPlugin.
+// An example MetricsPlugin configured with server info from a custom config proto. Instead of
+// contacting to a server, it returns dummy values. Part of an example showing how to create and
+// register a MetricsPlugin.
 class ExampleMetricsPlugin : public MetricsPlugin {
 public:
   explicit ExampleMetricsPlugin(const nighthawk::adaptive_rps::ExampleMetricsPluginConfig& config);

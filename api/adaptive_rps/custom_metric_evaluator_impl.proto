@@ -12,6 +12,7 @@ package nighthawk.adaptive_rps;
 message SigmoidCustomMetricEvaluatorConfig {
   // The threshold metric value.
   double threshold = 1;
-  // Tuning constant: k in 1 - 2 / (1 + exp(-k(metric - threshold))).
+  // Tuning constant: k in 1 - 2 / (1 + exp(-k(metric - threshold))). k should
+  // be around the same size as 1/threshold.
   double k = 2;
 }
