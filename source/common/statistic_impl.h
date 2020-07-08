@@ -242,9 +242,7 @@ public:
   bool used() const override { return count() > 0; }
   // Overriding name() to return Nighthawk::Statistic::id().
   std::string name() const override { return id(); }
-  std::string tagExtractedName() const override {
-    NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
-  }
+  std::string tagExtractedName() const override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; }
 };
 
 // Implementation of sinkable Nighthawk Statistic with Circllhist Histogram.
@@ -264,9 +262,7 @@ public:
   bool used() const override { return count() > 0; }
   // Overriding name() to return Nighthawk::Statistic::id().
   std::string name() const override { return id(); }
-  std::string tagExtractedName() const override {
-    NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
-  }
+  std::string tagExtractedName() const override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; }
 };
 
 } // namespace Nighthawk
