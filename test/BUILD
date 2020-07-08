@@ -305,15 +305,6 @@ envoy_cc_test(
         "@envoy//test/test_common:utility_lib",
     ],
 )
-envoy_cc_test(
-    name = "request_source_unit_test",
-    srcs = ["request_source_unit_test.cc"],
-    repository = "@envoy",
-    deps = [
-        "//source/client:nighthawk_client_lib",
-        "//test/client:utility_lib",
-    ],
-)
 
 envoy_cc_test(
     name = "sni_utility_test",

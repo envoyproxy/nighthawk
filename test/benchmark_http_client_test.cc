@@ -278,5 +278,43 @@ TEST_F(BenchmarkClientHttpTest, BadContentLength) {
   testBasicFunctionality(1, 1, 1);
   EXPECT_EQ(1, getCounter("http_2xx"));
 }
+// TEST_F(BenchmarkClientHttpTest, MultipleRequestsDifferentPath) {
+//   std::queue<std::initializer_list<std::pair<std::string, std::string>>> requests_queue;  
+//   auto header1 = std::initializer_list<std::pair<std::string, std::string>>({{":scheme", "http"},
+//                                                                     {":method", "GET"},
+//                                                                     {":path", "/a"},
+//                                                                     {":host", "localhost"},
+//                                                                 {"Content-Length", "1313"}});
+//   auto header2 = std::initializer_list<std::pair<std::string, std::string>>({{":scheme", "http"},
+//                                                                     {":method", "GET"},
+//                                                                     {":path", "/b"},
+//                                                                     {":host", "localhost"},
+//                                                                 {"Content-Length", "1313"}});
+//   requests_queue.push(header1);
+//   requests_queue.push(header2);
+//   request_generator_ = [&]() {
+//     auto item = requests_queue.front();
+//     requests_queue.pop();
+//     return std::make_unique<RequestImpl>(std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(item));
+//   };
 
+//   EXPECT_CALL(stream_encoder_, encodeData(_, _)).Times(2);
+//   testBasicFunctionality(1, 1, 1);
+//   EXPECT_EQ(1, getCounter("http_2xx"));
+//   // request_generator_ = []() {
+//   //   auto header = std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(
+//   //       std::initializer_list<std::pair<std::string, std::string>>({{":scheme", "http"},
+//   //                                                                   {":method", "POST"},
+//   //                                                                   {":path", "/b"},
+//   //                                                                   {":host", "localhost"},
+//   //                                                                   {"a", "b"},
+//   //                                                                   {"c", "d"},
+//   //                                                                   {"Content-Length", "1313"}}));
+//   //   return std::make_unique<RequestImpl>(header);
+//   // };
+
+//   // EXPECT_CALL(stream_encoder_, encodeData(_, _)).Times(0);
+//   // testBasicFunctionality(1, 1, 1);
+//   // EXPECT_EQ(1, getCounter("http_2xx"));
+// }
 } // namespace Nighthawk
