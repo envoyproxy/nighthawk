@@ -86,6 +86,17 @@ public:
                       1e6);
   }
 
+  /**
+   * Communicate to the fault filter, which should be running after this filter, that a delay should
+   * be inserted. The request is only made when the passed delay is set to a value > 0.
+   *
+   * @param delay_ms The delay that should be propagated, if any. When not set or <= 0, the call
+   * will be a no-op.
+   * @param request_headers The request headers that will be modified to instruct the faul filter.
+   */
+  static void maybeRequestFaultFilterDelay(const absl::optional<int64_t> delay_ms,
+                                           Envoy::Http::RequestHeaderMap& request_headers);
+
 private:
   const HttpDynamicDelayDecoderFilterConfigSharedPtr config_;
   Envoy::Http::StreamDecoderFilterCallbacks* decoder_callbacks_;

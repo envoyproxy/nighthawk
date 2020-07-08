@@ -77,7 +77,7 @@ admin:
 
 The [ResponseOptions proto](/api/server/response_options.proto) is shared by
 the `Test Server` and `Dynamic Delay` filter extensions. Each filter will
-interpret the parts that are relevant to it. This allows specifying a what
+interpret the parts that are relevant to it. This allows specifying what
 a response should look like in a single message, which can be done at request
 time via the optional `x-nighthawk-test-server-config` request-header.
 

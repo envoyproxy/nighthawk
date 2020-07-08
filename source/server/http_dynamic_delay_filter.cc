@@ -55,21 +55,30 @@ HttpDynamicDelayDecoderFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& head
     delay_ms = computeDelayMilliseconds(current_value, concurrency_config.minimal_delay(),
                                         concurrency_config.concurrency_delay_factor());
   }
+  maybeRequestFaultFilterDelay(delay_ms, headers);
+  return Envoy::Http::FilterHeadersStatus::Continue;
+}
+
+void HttpDynamicDelayDecoderFilter::maybeRequestFaultFilterDelay(
+    const absl::optional<int64_t> delay_ms, Envoy::Http::RequestHeaderMap& headers) {
   if (delay_ms.has_value() && delay_ms > 0) {
     // Emit header to communicate the delay we desire to the fault filter extension.
     const Envoy::Http::LowerCaseString key("x-envoy-fault-delay-request");
     headers.setCopy(key, absl::StrCat(*delay_ms));
   }
-  return Envoy::Http::FilterHeadersStatus::Continue;
 }
 
 Envoy::Http::FilterDataStatus HttpDynamicDelayDecoderFilter::decodeData(Envoy::Buffer::Instance&,
                                                                         bool) {
+  // Minimal implementation that satisfies the contract imposed by Http::StreamDecoderFilter:
+  // we do nothing, and request the state machine that drives us to continue.
   return Envoy::Http::FilterDataStatus::Continue;
 }
 
 Envoy::Http::FilterTrailersStatus
 HttpDynamicDelayDecoderFilter::decodeTrailers(Envoy::Http::RequestTrailerMap&) {
+  // Minimal implementation that satisfies the contract imposed by Http::StreamDecoderFilter:
+  // we do nothing, and request the state machine that drives us to continue.
   return Envoy::Http::FilterTrailersStatus::Continue;
 }
 

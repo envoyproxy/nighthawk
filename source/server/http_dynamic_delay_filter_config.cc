@@ -12,6 +12,7 @@
 namespace Nighthawk {
 namespace Server {
 namespace Configuration {
+namespace {
 
 class HttpDynamicDelayDecoderFilterConfigFactory
     : public Envoy::Server::Configuration::NamedHttpFilterConfigFactory {
@@ -46,6 +47,8 @@ private:
     };
   }
 };
+
+} // namespace
 
 static Envoy::Registry::RegisterFactory<HttpDynamicDelayDecoderFilterConfigFactory,
                                         Envoy::Server::Configuration::NamedHttpFilterConfigFactory>
