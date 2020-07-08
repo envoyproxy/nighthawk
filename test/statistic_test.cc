@@ -223,6 +223,15 @@ TYPED_TEST(TypedStatisticTest, StringOutput) {
   }
 }
 
+TYPED_TEST(TypedStatisticTest, IdFieldWorks) {
+  TypeParam statistic;
+  std::string id = "fooid";
+
+  EXPECT_EQ("", statistic.id());
+  statistic.setId(id);
+  EXPECT_EQ(id, statistic.id());
+}
+
 class StatisticTest : public Test {};
 
 // Note that we explicitly subject SimpleStatistic to the large
@@ -341,15 +350,6 @@ TEST(StatisticTest, CombineAcrossTypesFails) {
   EXPECT_THROW(d.combine(a), std::bad_cast);
 }
 
-TEST(StatisticTest, IdFieldWorks) {
-  StreamingStatistic c;
-  std::string id = "fooid";
-
-  EXPECT_EQ("", c.id());
-  c.setId(id);
-  EXPECT_EQ(id, c.id());
-}
-
 TEST(StatisticTest, HdrStatisticOutOfRange) {
   HdrStatistic a;
   a.addValue(INT64_MAX);
@@ -359,13 +359,26 @@ TEST(StatisticTest, HdrStatisticOutOfRange) {
 TEST(StatisticTest, NullStatistic) {
   NullStatistic stat;
   EXPECT_EQ(0, stat.count());
+  std::string id = "fooid";
+  stat.setId(id);
+  EXPECT_EQ(id, stat.id());
   stat.addValue(1);
+  EXPECT_EQ(0, stat.count());
+  EXPECT_EQ(0, stat.max());
+  EXPECT_EQ(UINT64_MAX, stat.min());
   EXPECT_EQ(0, stat.mean());
   EXPECT_EQ(0, stat.pvariance());
   EXPECT_EQ(0, stat.pstdev());
   EXPECT_NE(nullptr, stat.combine(stat));
   EXPECT_EQ(0, stat.significantDigits());
   EXPECT_NE(nullptr, stat.createNewInstanceOfSameType());
+  const nighthawk::client::Statistic proto = stat.toProto(Statistic::SerializationDomain::RAW);
+  EXPECT_EQ(id, proto.id());
+  EXPECT_EQ(0, proto.count());
+  EXPECT_EQ(0, proto.raw_mean());
+  EXPECT_EQ(0, proto.raw_pstdev());
+  EXPECT_EQ(0, proto.raw_max());
+  EXPECT_EQ(UINT64_MAX, proto.raw_min());
 }
 
 using SinkableTypes = Types<SinkableHdrStatistic, SinkableCircllhistStatistic>;
@@ -377,6 +390,12 @@ TYPED_TEST_SUITE(SinkableStatisticTest, SinkableTypes);
 TYPED_TEST(SinkableStatisticTest, EmptySinkableStatistic) {
   Envoy::Stats::MockIsolatedStatsStore mock_store;
   TypeParam stat(mock_store);
+  EXPECT_EQ(0, stat.count());
+  EXPECT_TRUE(std::isnan(stat.mean()));
+  EXPECT_TRUE(std::isnan(stat.pvariance()));
+  EXPECT_TRUE(std::isnan(stat.pstdev()));
+  EXPECT_EQ(stat.min(), UINT64_MAX);
+  EXPECT_EQ(stat.max(), 0);
   EXPECT_EQ(Envoy::Stats::Histogram::Unit::Unspecified, stat.unit());
   EXPECT_FALSE(stat.used());
   EXPECT_EQ("", stat.name());
@@ -388,14 +407,19 @@ TYPED_TEST(SinkableStatisticTest, SimpleSinkableStatistic) {
   Envoy::Stats::MockIsolatedStatsStore mock_store;
   const int worker_id = 0;
   TypeParam stat(mock_store, worker_id);
-
   const uint64_t sample_value = 123;
   const std::string stat_name = "stat_name";
 
   EXPECT_CALL(mock_store, deliverHistogramToSinks(_, sample_value)).Times(1);
   stat.recordValue(sample_value);
-
   stat.setId(stat_name);
+
+  EXPECT_EQ(1, stat.count());
+  Helper::expectNear(123.0, stat.mean(), stat.significantDigits());
+  EXPECT_DOUBLE_EQ(0, stat.pvariance());
+  EXPECT_DOUBLE_EQ(0, stat.pstdev());
+  EXPECT_EQ(123, stat.min());
+  EXPECT_EQ(123, stat.max());
   EXPECT_EQ(Envoy::Stats::Histogram::Unit::Unspecified, stat.unit());
   EXPECT_TRUE(stat.used());
   EXPECT_EQ(stat_name, stat.name());
