@@ -243,8 +243,7 @@ public:
   // Overriding name() to return Nighthawk::Statistic::id().
   std::string name() const override { return id(); }
   std::string tagExtractedName() const override {
-    RELEASE_ASSERT(false, "tagExtractedName() should not be called in Nighthawk Statistic");
-    return id();
+    NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
   }
 };
 
@@ -266,8 +265,7 @@ public:
   // Overriding name() to return Nighthawk::Statistic::id().
   std::string name() const override { return id(); }
   std::string tagExtractedName() const override {
-    RELEASE_ASSERT(false, "tagExtractedName() should not be called in Nighthawk Statistic");
-    return id();
+    NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
   }
 };
 
