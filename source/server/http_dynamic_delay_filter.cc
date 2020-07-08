@@ -68,17 +68,17 @@ void HttpDynamicDelayDecoderFilter::maybeRequestFaultFilterDelay(
   }
 }
 
+// Minimal implementation that satisfies the contract imposed by Http::StreamDecoderFilter:
+// we do nothing, and request the state machine that drives us to continue.
 Envoy::Http::FilterDataStatus HttpDynamicDelayDecoderFilter::decodeData(Envoy::Buffer::Instance&,
                                                                         bool) {
-  // Minimal implementation that satisfies the contract imposed by Http::StreamDecoderFilter:
-  // we do nothing, and request the state machine that drives us to continue.
   return Envoy::Http::FilterDataStatus::Continue;
 }
 
+// Minimal implementation that satisfies the contract imposed by Http::StreamDecoderFilter:
+// we do nothing, and request the state machine that drives us to continue.
 Envoy::Http::FilterTrailersStatus
 HttpDynamicDelayDecoderFilter::decodeTrailers(Envoy::Http::RequestTrailerMap&) {
-  // Minimal implementation that satisfies the contract imposed by Http::StreamDecoderFilter:
-  // we do nothing, and request the state machine that drives us to continue.
   return Envoy::Http::FilterTrailersStatus::Continue;
 }
 
