@@ -7,11 +7,11 @@ api_cc_py_proto_library(
     srcs = [
         "adaptive_rps.proto",
         "benchmark_result.proto",
-        "custom_metric_evaluator.proto",
-        "custom_metric_evaluator_impl.proto",
         "metric_spec.proto",
         "metrics_plugin.proto",
         "metrics_plugin_impl.proto",
+        "scoring_function.proto",
+        "scoring_function_impl.proto",
         "step_controller.proto",
         "step_controller_impl.proto",
     ],

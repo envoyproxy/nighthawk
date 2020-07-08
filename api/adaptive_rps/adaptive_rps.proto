@@ -53,7 +53,7 @@ message AdaptiveRpsSessionSpec {
   StepControllerConfig step_controller_config = 8;
 }
 
-// Complete description of an adaptive RPS session, including metric evaluations
+// Complete description of an adaptive RPS session, including metric scores
 // for every RPS value attempted during the adjusting stage.
 message AdaptiveRpsSessionOutput {
   // Overall status of the session with error detail.

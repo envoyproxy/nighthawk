@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package nighthawk.adaptive_rps;
 
-import "api/adaptive_rps/custom_metric_evaluator.proto";
+import "api/adaptive_rps/scoring_function.proto";
 import "google/protobuf/wrappers.proto";
 import "validate/validate.proto";
 
@@ -15,8 +15,8 @@ message MetricSpec {
   string metrics_plugin_name = 2 [(validate.rules).string.min_len = 1];
 }
 
-// Specifies a simple upper or lower threshold, or configures a custom
-// evaluator.
+// Specifies a simple upper or lower threshold, or configures a scoring
+// function.
 message ThresholdSpec {
   // A threshold for evaluating a metric value.
   oneof threshold_spec {
@@ -28,12 +28,12 @@ message ThresholdSpec {
     //   metric >= lower_threshold -> WITHIN_THRESHOLD
     //   metric < lower_threshold -> OUTSIDE_THRESHOLD
     google.protobuf.DoubleValue lower_threshold = 2;
-    // Selection and configuration of a CustomMetricEvaluator plugin that gives
-    // a numerical measure of proximity to a threshold according to an arbitrary
-    // formula with configurable threshold and constants. The measure can range
-    // from -1.0 to 1.0: 1.0 meaning far below the threshold, 0.0 meaning equal
-    // to the threshold, -1.0 meaning far above the threshold.
-    CustomMetricEvaluatorConfig custom_metric_evaluator = 3;
+    // Selection and configuration of a ScoringFunction that gives a numerical
+    // measure of proximity to a threshold according to an arbitrary formula.
+    // 0.0 means the value equals the threshold, positive means the value is
+    // below the threshold so RPS should increase, and negative means the value
+    // is above the threshold so RPS should decrease.
+    ScoringFunctionConfig scoring_function = 3;
   }
   // Relative importance of this threshold when calculating adaptive RPS based
   // on multiple metrics. Must be a positive number if set. If any threshold has

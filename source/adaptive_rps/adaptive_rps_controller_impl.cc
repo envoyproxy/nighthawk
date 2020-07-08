@@ -3,8 +3,8 @@
 #include "envoy/common/exception.h"
 
 #include "nighthawk/adaptive_rps/adaptive_rps_controller.h"
-#include "nighthawk/adaptive_rps/custom_metric_evaluator.h"
 #include "nighthawk/adaptive_rps/metrics_plugin.h"
+#include "nighthawk/adaptive_rps/scoring_function.h"
 #include "nighthawk/adaptive_rps/step_controller.h"
 
 #include "external/envoy/source/common/protobuf/protobuf.h"
@@ -114,11 +114,11 @@ AnalyzeNighthawkBenchmark(const nighthawk::client::ExecutionResponse& nighthawk_
           metric_value <= metric_threshold.threshold_spec().upper_threshold().value()
               ? WITHIN_THRESHOLD
               : OUTSIDE_THRESHOLD);
-    } else if (metric_threshold.threshold_spec().has_custom_metric_evaluator()) {
-      CustomMetricEvaluatorPtr metric_evaluator = LoadCustomMetricEvaluatorPlugin(
-          metric_threshold.threshold_spec().custom_metric_evaluator());
+    } else if (metric_threshold.threshold_spec().has_scoring_function()) {
+      ScoringFunctionPtr scoring_function =
+          LoadScoringFunctionPlugin(metric_threshold.threshold_spec().scoring_function());
       evaluation.mutable_threshold_check_result()->set_threshold_score(
-          metric_evaluator->EvaluateMetric(metric_value));
+          scoring_function->EvaluateMetric(metric_value));
     }
     *benchmark_result.mutable_metric_evaluations()->Add() = evaluation;
   }
@@ -144,7 +144,7 @@ BenchmarkResult PerformAndAnalyzeNighthawkBenchmark(
 }
 
 // Checks whether a session spec is valid: No forbidden fields in Nighthawk traffic spec; no
-// references to missing plugins (step controller, metric, custom metric evaluator); no nonexistent
+// references to missing plugins (step controller, metric, scoring function); no nonexistent
 // metric names; all weights set or no weights set.
 absl::Status
 CheckSessionSpec(const nighthawk::adaptive_rps::AdaptiveRpsSessionSpec& spec) noexcept {
@@ -195,12 +195,11 @@ CheckSessionSpec(const nighthawk::adaptive_rps::AdaptiveRpsSessionSpec& spec) no
       ++count_without_weight;
     }
 
-    if (metric_threshold.threshold_spec().has_custom_metric_evaluator()) {
+    if (metric_threshold.threshold_spec().has_scoring_function()) {
       try {
-        LoadCustomMetricEvaluatorPlugin(
-            metric_threshold.threshold_spec().custom_metric_evaluator());
+        LoadScoringFunctionPlugin(metric_threshold.threshold_spec().scoring_function());
       } catch (Envoy::EnvoyException exception) {
-        errors += absl::StrCat("CustomMetricEvaluator plugin not found: ", exception.what(), "\n");
+        errors += absl::StrCat("ScoringFunction plugin not found: ", exception.what(), "\n");
       }
     }
   }

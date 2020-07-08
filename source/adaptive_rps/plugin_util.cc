@@ -1,5 +1,5 @@
-#include "nighthawk/adaptive_rps/custom_metric_evaluator.h"
 #include "nighthawk/adaptive_rps/metrics_plugin.h"
+#include "nighthawk/adaptive_rps/scoring_function.h"
 #include "nighthawk/adaptive_rps/step_controller.h"
 
 #include "external/envoy/source/common/config/utility.h"
@@ -7,12 +7,11 @@
 namespace Nighthawk {
 namespace AdaptiveRps {
 
-CustomMetricEvaluatorPtr LoadCustomMetricEvaluatorPlugin(
-    const nighthawk::adaptive_rps::CustomMetricEvaluatorConfig& config) {
-  CustomMetricEvaluatorConfigFactory& config_factory =
-      Envoy::Config::Utility::getAndCheckFactoryByName<CustomMetricEvaluatorConfigFactory>(
-          config.name());
-  return config_factory.createCustomMetricEvaluator(config.typed_config());
+ScoringFunctionPtr
+LoadScoringFunctionPlugin(const nighthawk::adaptive_rps::ScoringFunctionConfig& config) {
+  ScoringFunctionConfigFactory& config_factory =
+      Envoy::Config::Utility::getAndCheckFactoryByName<ScoringFunctionConfigFactory>(config.name());
+  return config_factory.createScoringFunction(config.typed_config());
 }
 
 MetricsPluginPtr LoadMetricsPlugin(const nighthawk::adaptive_rps::MetricsPluginConfig& config) {

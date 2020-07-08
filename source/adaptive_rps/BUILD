@@ -13,16 +13,16 @@ envoy_cc_library(
     srcs = [
         "adaptive_rps_client_main.cc",
         "adaptive_rps_controller_impl.cc",
-        "custom_metric_evaluator_impl.cc",
         "metrics_plugin_impl.cc",
         "plugin_util.cc",
+        "scoring_function_impl.cc",
         "step_controller_impl.cc",
     ],
     hdrs = [
         "adaptive_rps_client_main.h",
-        "custom_metric_evaluator_impl.h",
         "metrics_plugin_impl.h",
         "plugin_util.h",
+        "scoring_function_impl.h",
         "step_controller_impl.h",
     ],
     repository = "@envoy",

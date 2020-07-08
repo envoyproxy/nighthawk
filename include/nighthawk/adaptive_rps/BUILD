@@ -12,8 +12,8 @@ envoy_basic_cc_library(
     name = "adaptive_rps_includes",
     hdrs = [
         "adaptive_rps_controller.h",
-        "custom_metric_evaluator.h",
         "metrics_plugin.h",
+        "scoring_function.h",
         "step_controller.h",
     ],
     include_prefix = "nighthawk/adaptive_rps",

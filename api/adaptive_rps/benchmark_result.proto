@@ -20,11 +20,11 @@ message ThresholdCheckResult {
   oneof threshold_check_result {
     // Binary status from checking the value against a threshold.
     SimpleThresholdStatus simple_threshold_status = 1;
-    // Evaluation score returned by a CustomMetricEvaluator plugin, between
-    // -1.0 and 1.0. This expresses how close the metric was to the threshold
-    // by an arbitrary formula selected and configured in the ThresholdSpec,
-    // such as a sigmoid curve. The controller can choose to make larger RPS
-    // adjustments when the score is larger, in order to converge faster.
+    // Score returned by a ScoringFunction plugin. This expresses how close the
+    // metric was to the threshold by an arbitrary formula selected and
+    // configured in the ThresholdSpec, such as a sigmoid curve. The controller
+    // can choose to make larger RPS adjustments when the score is larger, in
+    // order to converge faster.
     double threshold_score = 2;
   }
 }
