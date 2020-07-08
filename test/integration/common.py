@@ -4,13 +4,7 @@ from enum import Enum
 
 
 class NighthawkException(Exception):
-  """Base exception class for Nighthawk's python code.
-
-  Args:
-      Exception (string): exception message.
-  """
-
-  pass
+  """Base exception class for Nighthawk's python code."""
 
 
 # TODO(oschaaf): When we're on python 3 teach IpVersion below how to render itself to a string.

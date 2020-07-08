@@ -26,7 +26,8 @@ def determineIpVersionsFromEnvironment():
       an invalid one was encountered.
 
   Returns:
-      test.integration.common.IpVersion: Array with ip versions obtained from the ENVOY_IP_TEST_VERSIONS environment variable.
+      A list of test.integration.common.IpVersion with ip versions obtained from the
+      ENVOY_IP_TEST_VERSIONS environment variable.
   """
   env_versions = os.environ.get("ENVOY_IP_TEST_VERSIONS", "all")
   if env_versions == "v4only":
