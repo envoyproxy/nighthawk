@@ -29,11 +29,11 @@ public:
    *
    * @param json Json-formatted seralization of ResponseOptions to merge into the configuration.
    * @param config The target that the json string should be merged into.
-   * @param error_message Will contain an error message iff an error occurred.
-   * @return bool false iff an error occurred.
+   * @param error_message Set to an error message if one occurred, else set to an empty string.
+   * @return bool false if an error occurred.
    */
   static bool mergeJsonConfig(absl::string_view json, nighthawk::server::ResponseOptions& config,
-                              absl::optional<std::string>& error_message);
+                              std::string& error_message);
 
   /**
    * Applies ResponseOptions onto a HeaderMap containing response headers.

@@ -311,7 +311,7 @@ TEST_F(HttpTestServerDecoderFilterTest, HeaderMerge) {
   Server::HttpTestServerDecoderFilterConfigSharedPtr config =
       std::make_shared<Server::HttpTestServerDecoderFilterConfig>(initial_options);
   Server::HttpTestServerDecoderFilter f(config);
-  absl::optional<std::string> error_message;
+  std::string error_message;
   nighthawk::server::ResponseOptions options = config->server_config();
 
   EXPECT_EQ(1, options.response_headers_size());
@@ -328,7 +328,7 @@ TEST_F(HttpTestServerDecoderFilterTest, HeaderMerge) {
   EXPECT_TRUE(Server::Utility::mergeJsonConfig(
       R"({response_headers: [ { header: { key: "foo", value: "bar2"}, append: false } ]})", options,
       error_message));
-  EXPECT_EQ(absl::nullopt, error_message);
+  EXPECT_EQ("", error_message);
   EXPECT_EQ(2, options.response_headers_size());
 
   EXPECT_EQ("foo", options.response_headers(1).header().key());
@@ -342,7 +342,7 @@ TEST_F(HttpTestServerDecoderFilterTest, HeaderMerge) {
   EXPECT_TRUE(Server::Utility::mergeJsonConfig(
       R"({response_headers: [ { header: { key: "foo2", value: "bar3"}, append: true } ]})", options,
       error_message));
-  EXPECT_EQ(absl::nullopt, error_message);
+  EXPECT_EQ("", error_message);
   EXPECT_EQ(3, options.response_headers_size());
 
   EXPECT_EQ("foo2", options.response_headers(2).header().key());

@@ -22,7 +22,7 @@ HttpTestServerDecoderFilter::HttpTestServerDecoderFilter(
 void HttpTestServerDecoderFilter::onDestroy() {}
 
 void HttpTestServerDecoderFilter::sendReply() {
-  if (error_message_ == absl::nullopt) {
+  if (!json_merge_error_) {
     std::string response_body(base_config_.response_body_size(), 'a');
     if (request_headers_dump_.has_value()) {
       response_body += *request_headers_dump_;
@@ -36,7 +36,7 @@ void HttpTestServerDecoderFilter::sendReply() {
   } else {
     decoder_callbacks_->sendLocalReply(
         static_cast<Envoy::Http::Code>(500),
-        fmt::format("test-server didn't understand the request: {}", *error_message_), nullptr,
+        fmt::format("test-server didn't understand the request: {}", error_message_), nullptr,
         absl::nullopt, "");
   }
 }
@@ -48,8 +48,8 @@ HttpTestServerDecoderFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& header
   base_config_ = config_->server_config();
   const auto* request_config_header = headers.get(TestServer::HeaderNames::get().TestServerConfig);
   if (request_config_header) {
-    Utility::mergeJsonConfig(request_config_header->value().getStringView(), base_config_,
-                             error_message_);
+    json_merge_error_ = !Utility::mergeJsonConfig(request_config_header->value().getStringView(),
+                                                  base_config_, error_message_);
   }
   if (base_config_.echo_request_headers()) {
     std::stringstream headers_dump;

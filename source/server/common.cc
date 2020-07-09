@@ -13,8 +13,8 @@ namespace Nighthawk {
 namespace Server {
 
 bool Utility::mergeJsonConfig(absl::string_view json, nighthawk::server::ResponseOptions& config,
-                              absl::optional<std::string>& error_message) {
-  error_message = absl::nullopt;
+                              std::string& error_message) {
+  error_message = "";
   try {
     nighthawk::server::ResponseOptions json_config;
     auto& validation_visitor = Envoy::ProtobufMessage::getStrictValidationVisitor();
@@ -22,9 +22,9 @@ bool Utility::mergeJsonConfig(absl::string_view json, nighthawk::server::Respons
     config.MergeFrom(json_config);
     Envoy::MessageUtil::validate(config, validation_visitor);
   } catch (const Envoy::EnvoyException& exception) {
-    error_message.emplace(fmt::format("Error merging json config: {}", exception.what()));
+    error_message = fmt::format("Error merging json config: {}", exception.what());
   }
-  return error_message == absl::nullopt;
+  return error_message == "";
 }
 
 void Utility::applyConfigToResponseHeaders(Envoy::Http::ResponseHeaderMap& response_headers,

@@ -163,13 +163,13 @@ public:
     minimal_delay.set_nanos(minimal_delay_nanos);
     delay_factor.set_seconds(delay_factor_seconds);
     delay_factor.set_nanos(delay_factor_nanos);
-    return Server::HttpDynamicDelayDecoderFilter::computeDelayMilliseconds(
+    return Server::HttpDynamicDelayDecoderFilter::computeConcurrencyBasedLinearDelayMs(
         concurrency, minimal_delay, delay_factor);
   }
 };
 
 // Test that the delay looks as expected with various parameterizations.
-TEST_F(ComputeTest, ComputeDelayMilliseconds) {
+TEST_F(ComputeTest, ComputeConcurrencyBasedLinearDelayMs) {
   EXPECT_EQ(compute(1, 1, 0, 0, 0), 1000);
   EXPECT_EQ(compute(2, 1, 0, 0, 0), 1000);
   EXPECT_EQ(compute(1, 2, 0, 0, 0), 2000);

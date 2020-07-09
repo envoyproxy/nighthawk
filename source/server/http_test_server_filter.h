@@ -40,7 +40,8 @@ private:
   const HttpTestServerDecoderFilterConfigSharedPtr config_;
   Envoy::Http::StreamDecoderFilterCallbacks* decoder_callbacks_;
   nighthawk::server::ResponseOptions base_config_;
-  absl::optional<std::string> error_message_;
+  bool json_merge_error_{false};
+  std::string error_message_;
   absl::optional<std::string> request_headers_dump_;
 };
 
