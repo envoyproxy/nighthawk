@@ -28,17 +28,15 @@ message ThresholdSpec {
     //   metric >= lower_threshold -> WITHIN_THRESHOLD
     //   metric < lower_threshold -> OUTSIDE_THRESHOLD
     google.protobuf.DoubleValue lower_threshold = 2;
-    // Selection and configuration of a ScoringFunction that gives a numerical
-    // measure of proximity to a threshold according to an arbitrary formula.
-    // 0.0 means the value equals the threshold, positive means the value is
-    // below the threshold so RPS should increase, and negative means the value
-    // is above the threshold so RPS should decrease.
+    // Selection and configuration of a ScoringFunction that measures proximity
+    // to a threshold. 0.0 means the value equals the threshold, positive means
+    // the value is below the threshold so RPS should increase, and negative
+    // means the value is above the threshold so RPS should decrease.
     ScoringFunctionConfig scoring_function = 3;
   }
   // Relative importance of this threshold when calculating adaptive RPS based
-  // on multiple metrics. Must be a positive number if set. If any threshold has
-  // a weight, all must have a weight. If no weights are set, all thresholds
-  // have equal weight.
+  // on multiple metrics. If any threshold has a weight, all must have a weight.
+  // If no weights are set, all thresholds have equal weight.
   google.protobuf.DoubleValue weight = 4 [(validate.rules).double = {gt: 0.0}];
 }
 
