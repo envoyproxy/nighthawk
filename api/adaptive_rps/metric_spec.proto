@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package nighthawk.adaptive_rps;
+
+import "api/adaptive_rps/scoring_function.proto";
+import "google/protobuf/wrappers.proto";
+import "validate/validate.proto";
+
+// Identifies a feedback metric.
+message MetricSpec {
+  // Name of the metric to evaluate. For the set of built-in metric names, see
+  // source/adaptive_rps/metrics_plugin_impl.cc.
+  string metric_name = 1 [(validate.rules).string.min_len = 1];
+  // Name of the MetricsPlugin providing the metric ("builtin" for built-in).
+  string metrics_plugin_name = 2 [(validate.rules).string.min_len = 1];
+}
+
+// Specifies a simple upper or lower threshold, or configures a scoring
+// function.
+message ThresholdSpec {
+  // A threshold for evaluating a metric value.
+  oneof threshold_spec {
+    // Simple upper threshold:
+    //   metric <= upper_threshold -> WITHIN_THRESHOLD
+    //   metric > upper_threshold -> OUTSIDE_THRESHOLD
+    google.protobuf.DoubleValue upper_threshold = 1;
+    // Simple lower threshold:
+    //   metric >= lower_threshold -> WITHIN_THRESHOLD
+    //   metric < lower_threshold -> OUTSIDE_THRESHOLD
+    google.protobuf.DoubleValue lower_threshold = 2;
+    // Selection and configuration of a ScoringFunction that gives a numerical
+    // measure of proximity to a threshold according to an arbitrary formula.
+    // 0.0 means the value equals the threshold, positive means the value is
+    // below the threshold so RPS should increase, and negative means the value
+    // is above the threshold so RPS should decrease.
+    ScoringFunctionConfig scoring_function = 3;
+  }
+  // Relative importance of this threshold when calculating adaptive RPS based
+  // on multiple metrics. Must be a positive number if set. If any threshold has
+  // a weight, all must have a weight. If no weights are set, all thresholds
+  // have equal weight.
+  google.protobuf.DoubleValue weight = 4 [(validate.rules).double = {gt: 0.0}];
+}
+
+message MetricSpecWithThreshold {
+  // Identifies a metric to collect and evaluate.
+  MetricSpec metric_spec = 1;
+  // Specifies a threshold for this metric.
+  ThresholdSpec threshold_spec = 2;
+}
