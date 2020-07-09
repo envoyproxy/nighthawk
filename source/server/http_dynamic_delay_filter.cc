@@ -28,7 +28,6 @@ HttpDynamicDelayDecoderFilter::HttpDynamicDelayDecoderFilter(
 
 HttpDynamicDelayDecoderFilter::~HttpDynamicDelayDecoderFilter() {
   RELEASE_ASSERT(destroyed_, "onDestroy() not called");
-  Envoy::Extensions::HttpFilters::Fault::FaultFilter::~FaultFilter();
 }
 
 void HttpDynamicDelayDecoderFilter::onDestroy() {

@@ -42,16 +42,7 @@ static_resources:
                 http_filters:
                   - name: dynamic-delay
                     config:
-                      concurrency_based_linear_delay:
-                        minimal_delay: 0.05s
-                        concurrency_delay_factor: 0.010s
-                  - name: envoy.fault
-                    config:
-                      max_active_faults: 100
-                      delay:
-                        header_delay: {}
-                        percentage:
-                          numerator: 100
+                      static_delay: 0.5s
                   - name: test-server # before envoy.router because order matters!
                     config:
                       response_body_size: 10
@@ -140,6 +131,11 @@ The Dynamic Delay interprets the `oneof_delay_options` part in the [ResponseOpti
 
 All delays have a millisecond-level granularity.
 
+At the time of writing this, there is a [known issue](https://github.com/envoyproxy/nighthawk/issues/392) with merging configuration provided via
+request headers into the statically configured configuration. The current recommendation is to
+use either static, or dynamic configuration (delivered per request header), but not both at the
+same time.
+
 ## Running the test server
 
 ```
@@ -147,7 +143,7 @@ All delays have a millisecond-level granularity.
 ➜ /bazel-bin/nighthawk/source/server/server --config-path /path/to/test-server-server.yaml
 
 # Verify the test server with a curl command similar to:
-➜ curl -H "x-envoy-fault-delay-request: 1000" -H "x-nighthawk-test-server-config: {response_body_size:20}"  -vv 127.0.0.1:10000
+➜ curl -H "x-nighthawk-test-server-config: {response_body_size:20, static_delay: \"0s\"}" -vv 127.0.0.1:10000
 ```
 
 ```bash
