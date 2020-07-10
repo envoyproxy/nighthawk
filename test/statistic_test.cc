@@ -307,12 +307,14 @@ TEST(StatisticTest, HdrStatisticPercentilesProto) {
   util.loadFromJson(Envoy::Filesystem::fileSystemForTest().fileReadToEnd(
                         TestEnvironment::runfilesPath("test/test_data/hdr_proto_json.gold")),
                     parsed_json_proto, Envoy::ProtobufMessage::getStrictValidationVisitor());
-  // Instead of comparing proto's, we perform a string-based comparison, because that emits a
-  // helpful diff when this fails.
   const std::string json = util.getJsonStringFromMessage(
       statistic.toProto(Statistic::SerializationDomain::DURATION), true, true);
   const std::string golden_json = util.getJsonStringFromMessage(parsed_json_proto, true, true);
-  EXPECT_EQ(json, golden_json);
+  EXPECT_THAT(statistic.toProto(Statistic::SerializationDomain::DURATION),
+              Envoy::ProtoEq(parsed_json_proto))
+      << json << "\n"
+      << "is not equal to golden file:\n"
+      << golden_json;
 }
 
 TEST(StatisticTest, CircllhistStatisticPercentilesProto) {
@@ -327,12 +329,14 @@ TEST(StatisticTest, CircllhistStatisticPercentilesProto) {
   util.loadFromJson(Envoy::Filesystem::fileSystemForTest().fileReadToEnd(
                         TestEnvironment::runfilesPath("test/test_data/circllhist_proto_json.gold")),
                     parsed_json_proto, Envoy::ProtobufMessage::getStrictValidationVisitor());
-  // Instead of comparing proto's, we perform a string-based comparison, because that emits a
-  // helpful diff when this fails.
   const std::string json = util.getJsonStringFromMessage(
       statistic.toProto(Statistic::SerializationDomain::DURATION), true, true);
   const std::string golden_json = util.getJsonStringFromMessage(parsed_json_proto, true, true);
-  EXPECT_EQ(json, golden_json);
+  EXPECT_THAT(statistic.toProto(Statistic::SerializationDomain::DURATION),
+              Envoy::ProtoEq(parsed_json_proto))
+      << json << "\n"
+      << "is not equal to golden file:\n"
+      << golden_json;
 }
 
 TEST(StatisticTest, CombineAcrossTypesFails) {
