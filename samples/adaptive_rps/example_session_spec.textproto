@@ -75,7 +75,8 @@ informational_metric_specs {
 }
 
 # CommandLineOptions proto describing the traffic to generate, but without
-# requests_per_second, duration, or open_loop, which will all be set dynamically.
+# duration, open_loop, or the field to be varied (e.g. requests_per_second),
+# which will be managed by the adaptive load controller.
 nighthawk_traffic_template {
   uri {
     value: "[::1]:12345"
