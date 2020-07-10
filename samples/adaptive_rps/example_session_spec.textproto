@@ -98,9 +98,10 @@ step_controller_config {
   name: "linear-search"
   typed_config {
     [type.googleapis.com/nighthawk.adaptive_load.LinearSearchStepControllerConfig] {
-      rps_step: 100
-      minimum_rps: 500
-      maximum_rps: 5000
+      field_selector: REQUESTS_PER_SECOND
+      minimum_field_value: 500
+      maximum_field_value: 5000
+      field_value_step: 100
     }
   }
 }
@@ -109,8 +110,9 @@ step_controller_config {
 #   name : "binary-search"
 #   typed_config {
 #     [type.googleapis.com/nighthawk.adaptive_load.BinarySearchStepControllerConfig] {
-#       minimum_rps : 500
-#       maximum_rps : 10000
+#       field_selector: REQUESTS_PER_SECOND
+#       minimum_field_value : 500
+#       maximum_field_value : 10000
 #     }
 #   }
 # }
