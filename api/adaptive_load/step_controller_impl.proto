@@ -6,35 +6,21 @@ package nighthawk.adaptive_load;
 
 import "api/adaptive_load/step_controller.proto";
 
-// Configuration for a step controller that performs a linear search for the
-// optimal value of a single Nighthawk input variable (e.g. RPS), starting from
-// the minimum value and incrementing by a fixed amount until reaching the point
-// where measured performance declines.
-message LinearSearchStepControllerConfig {
+// Configuration for a step controller that performs an exponential search for
+// the optimal value of a single Nighthawk input variable (e.g. RPS).
+// Exponential search starts with the input set to |initial_value| and increases
+// the input by |exponential_factor| until a metric fails the threshold, then
+// performs a binary search with input values between X/2 and X, where X is the
+// input value where the metric failed the threshold.
+message ExponentialSearchStepControllerConfig {
   // Selects the single variable within Nighthawk Service CommandLineOptions
   // that this StepController should vary, in pursuit of the optimal field
   // value. For example, to find the optimal RPS, set variable_spec.simple_field
   // to REQUESTS_PER_SECOND.
   NighthawkInputVariableSpec variable_spec = 1;
-  // Minimum field value that should be attempted, regardless of performance.
-  // Also used as the initial field value.
-  int64 minimum = 2;
-  // Maximum field value that should be attempted, regardless of performance.
-  int64 maximum = 3;
-  // Constant step to be used for all field value adjustments.
-  int64 field_value_step = 4;
-}
-
-// Configuration for a step controller that performs a binary search for the
-// optimal value of a single Nighthawk input field, such as RPS.
-message BinarySearchStepControllerConfig {
-  // Selects the single Nighthawk Service CommandLineOptions field that this
-  // StepController should vary, in pursuit of the optimal field value.
-  // For example, to find the optimal RPS, set variable_spec.simple_field
-  // to REQUESTS_PER_SECOND.
-  NighthawkInputVariableSpec variable_spec = 1;
-  // Minimum of the field value binary search range.
-  int64 minimum = 2;
-  // Maximum of the field value binary search range.
-  int64 maximum = 3;
+  // Initial value of the input variable that should be attempted.
+  int64 initial_value = 2;
+  // Factor to increase the input variable during the exponential phase. Typical
+  // value: 2.0.
+  double exponential_factor = 3;
 }
