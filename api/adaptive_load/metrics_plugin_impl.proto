@@ -2,7 +2,7 @@
 
 syntax = "proto3";
 
-package nighthawk.adaptive_rps;
+package nighthawk.adaptive_load;
 
 import "validate/validate.proto";
 

@@ -1,0 +1,38 @@
+// Plugin-specific config protos for StepControllers.
+
+syntax = "proto3";
+
+package nighthawk.adaptive_load;
+
+import "api/adaptive_load/step_controller.proto";
+
+// Configuration for a step controller that performs a linear search for the
+// optimal value of a single Nighthawk input field (e.g. RPS), starting from the
+// minimum value and incrementing by a fixed amount until reaching the point
+// where measured performance declines.
+message LinearSearchStepControllerConfig {
+  // Selects the single Nighthawk Service CommandLineOptions field that this
+  // StepController should vary, in pursuit of the optimal field value.
+  // For example, to find the optimal RPS, set to REQUESTS_PER_SECOND.
+  NighthawkFieldSelector field_selector = 1;
+  // Minimum field value that should be attempted, regardless of performance.
+  // Also used as the initial field value.
+  int64 minimum_field_value = 2;
+  // Maximum field value that should be attempted, regardless of performance.
+  int64 maximum_field_value = 3;
+  // Constant step to be used for all field value adjustments.
+  int64 field_value_step = 4;
+}
+
+// Configuration for a step controller that performs a binary search for the
+// optimal value of a single Nighthawk input field, such as RPS.
+message BinarySearchStepControllerConfig {
+  // Selects the single Nighthawk Service CommandLineOptions field that this
+  // StepController should vary, in pursuit of the optimal field value.
+  // For example, to find the optimal RPS, set to REQUESTS_PER_SECOND.
+  NighthawkFieldSelector field_selector = 1;
+  // Minimum of the field value binary search range.
+  int64 minimum_field_value = 2;
+  // Maximum of the field value binary search range.
+  int64 maximum_field_value = 3;
+}

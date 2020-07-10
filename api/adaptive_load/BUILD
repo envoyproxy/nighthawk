@@ -5,7 +5,7 @@ licenses(["notice"])  # Apache 2
 api_cc_py_proto_library(
     name = "base",
     srcs = [
-        "adaptive_rps.proto",
+        "adaptive_load.proto",
         "benchmark_result.proto",
         "metric_spec.proto",
         "metrics_plugin.proto",

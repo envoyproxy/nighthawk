@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package nighthawk.adaptive_rps;
+package nighthawk.adaptive_load;
 
-import "api/adaptive_rps/metric_spec.proto";
+import "api/adaptive_load/metric_spec.proto";
 import "api/client/output.proto";
 
 // Binary result of checking a metric value against a threshold.
@@ -23,7 +23,7 @@ message ThresholdCheckResult {
     // Score returned by a ScoringFunction plugin. This expresses how close the
     // metric was to the threshold by an arbitrary formula selected and
     // configured in the ThresholdSpec, such as a sigmoid curve. The controller
-    // can choose to make larger RPS adjustments when the score is larger, in
+    // can choose to make larger input adjustments when the score is larger, in
     // order to converge faster.
     double threshold_score = 2;
   }
@@ -49,7 +49,7 @@ message BenchmarkResult {
   // Raw Nighthawk Service output. Includes start/end times and full Nighthawk
   // Service input spec. May contain an error status.
   nighthawk.client.Output nighthawk_service_output = 1;
-  // Status of all defined adaptive RPS feedback metrics during this benchmark
-  // session. Not present in the event of Nighthawk errors.
+  // Status of all declared metrics during this benchmark session. Not present
+  // in the event of Nighthawk errors.
   repeated MetricEvaluation metric_evaluations = 3;
 }

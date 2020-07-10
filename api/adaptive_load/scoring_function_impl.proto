@@ -2,18 +2,18 @@
 
 syntax = "proto3";
 
-package nighthawk.adaptive_rps;
+package nighthawk.adaptive_load;
 
 // Configuration for a linear ScoringFunction that calculates a metric score
 // as k * (threshold - value), where k is a scaling constant. The score is 0.0
 // when the value exactly equals the threshold, positive below the threshold
-// (meaning RPS should increase), and negative above the threshold. The score is
+// (meaning input should ramp up), and negative above the threshold. The score is
 // proportional to the difference from the threshold.
 message LinearScoringFunctionConfig {
   // The target value of the metric.
   double threshold = 1;
   // Scaling constant: k in k * (threshold - value). Use this in combination
-  // with step controller constants to produce reasonable RPS increments for
+  // with step controller constants to produce reasonable input increments for
   // reasonable differences from the threshold.
   double k = 2;
 }

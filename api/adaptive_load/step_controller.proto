@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package nighthawk.adaptive_load;
+
+import "google/protobuf/any.proto";
+
+// Identifies a Nighthawk CommandLineOptions proto field that the StepController
+// should vary, in pursuit of the optimal field value. For example, for the
+// basic case of finding the optimal RPS, the NighthawkFieldIdentifier would be
+// REQUESTS_PER_SECOND. Enables the same StepController algorithm to be used to
+// find the optimal RPS, optimal concurrency, etc.
+enum NighthawkFieldSelector {
+  UNKNOWN_FIELD = 0;
+  REQUESTS_PER_SECOND = 1;
+  NUMBER_OF_CONNECTIONS = 2;
+  CONCURRENCY = 3;
+  BURST_SIZE = 4;
+  MAX_PENDING_REQUESTS = 5;
+  MAX_ACTIVE_REQUESTS = 6;
+  MAX_REQUESTS_PER_CONNECTION = 7;
+}
+
+// Selects and configures a StepController plugin.
+message StepControllerConfig {
+  // Name used to locate the plugin in the Envoy registry.
+  string name = 1;
+  // Plugin-specific config.
+  google.protobuf.Any typed_config = 2;
+}
