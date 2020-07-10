@@ -256,8 +256,8 @@ double CircllhistStatistic::pstdev() const {
 StatisticPtr CircllhistStatistic::combine(const Statistic& statistic) const {
   auto combined = std::make_unique<CircllhistStatistic>();
   const auto& stat = dynamic_cast<const CircllhistStatistic&>(statistic);
-  hist_accumulate(combined->histogram_, &this->histogram_, /*histogram_count=*/1);
-  hist_accumulate(combined->histogram_, &stat.histogram_, /*histogram_count=*/1);
+  hist_accumulate(combined->histogram_, &this->histogram_, /*cnt=*/1);
+  hist_accumulate(combined->histogram_, &stat.histogram_, /*cnt=*/1);
 
   combined->min_ = std::min(this->min(), stat.min());
   combined->max_ = std::max(this->max(), stat.max());
