@@ -7,6 +7,8 @@ api_cc_py_proto_library(
     srcs = [
         "adaptive_load.proto",
         "benchmark_result.proto",
+        "input_variable_setter.proto",
+        "input_variable_setter_impl.proto",
         "metric_spec.proto",
         "metrics_plugin.proto",
         "metrics_plugin_impl.proto",
