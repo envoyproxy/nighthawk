@@ -4,6 +4,7 @@ syntax = "proto3";
 
 package nighthawk.adaptive_load;
 
+import "api/adaptive_load/input_variable_setter.proto";
 import "api/adaptive_load/step_controller.proto";
 
 // Configuration for a step controller that performs an exponential search for

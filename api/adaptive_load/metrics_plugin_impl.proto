@@ -4,8 +4,6 @@ syntax = "proto3";
 
 package nighthawk.adaptive_load;
 
-import "validate/validate.proto";
-
 // Example plugin-specific config proto, representing connection info for an
 // outside source of metrics. Part of an example showing how to create and
 // register a MetricsPlugin.
