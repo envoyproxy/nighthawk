@@ -16,63 +16,67 @@ metrics_plugin_configs {
 
 metric_thresholds {
   metric_spec {
-    metric_name: "latency-ns-mean-plus-2stdev"
+    metric_name: "latency-ns-max"
+    # metric_name: "latency-ns-mean-plus-2stdev"
     metrics_plugin_name: "builtin"
   }
   threshold_spec {
-    scoring_function {
-      name: "sigmoid"
-      typed_config {
-        [type.googleapis.com/nighthawk.adaptive_load.SigmoidScoringFunctionConfig] {
-          threshold: 50000000.0  # 50 ms
-          k: 0.00000001  # Should be around 1/threshold
-        }
-      }
+    upper_threshold {
+      value: 10000000.0  # 10 ms
     }
+    # scoring_function {
+    #   name: "sigmoid"
+    #  typed_config {
+    #    [type.googleapis.com/nighthawk.adaptive_load.SigmoidScoringFunctionConfig] {
+    #      threshold: 5000000.0  # 5 ms
+    #      k: 0.00000001  # Should be around 1/threshold
+    #    }
+    #  }
+    #}
     weight {
       value: 1.0
     }
   }
 }
 
-metric_thresholds {
-  metric_spec {
-    metric_name: "success-rate"
-    metrics_plugin_name: "builtin"
-  }
-  threshold_spec {
-    lower_threshold {
-      value : 0.95
-    }
-    weight {
-      value: 1.0
-    }
-  }
-}
+#metric_thresholds {
+#  metric_spec {
+#    metric_name: "success-rate"
+#    metrics_plugin_name: "builtin"
+#  }
+#  threshold_spec {
+#    lower_threshold {
+#      value : 0.95
+#    }
+#    weight {
+#      value: 0.10
+#    }
+#  }
+#}
 
 # Informational metrics are recorded in the output but are not taken into account
 # when adjusting the load.
 
-informational_metric_specs {
-  metric_name: "attempted-rps"
-  metrics_plugin_name: "builtin"
-}
+#informational_metric_specs {
+#  metric_name: "attempted-rps"
+#  metrics_plugin_name: "builtin"
+#}
 
-informational_metric_specs {
-  metric_name: "achieved-rps"
-  metrics_plugin_name: "builtin"
-}
+#informational_metric_specs {
+#  metric_name: "achieved-rps"
+#  metrics_plugin_name: "builtin"
+#}
 
-informational_metric_specs {
-  metric_name: "send-rate"
-  metrics_plugin_name: "builtin"
-}
+#informational_metric_specs {
+#  metric_name: "send-rate"
+#  metrics_plugin_name: "builtin"
+#}
 
 # Metric defined in example metrics plugin:
-informational_metric_specs {
-  metric_name: "example_metric1"
-  metrics_plugin_name: "example-metrics-plugin"
-}
+#informational_metric_specs {
+#  metric_name: "example_metric1"
+#  metrics_plugin_name: "example-metrics-plugin"
+#}
 
 # CommandLineOptions proto describing the traffic to generate, but without
 # duration, open_loop, or the field to be varied (e.g. requests_per_second),
@@ -84,7 +88,7 @@ nighthawk_traffic_template {
 }
 
 measuring_period {
-  seconds: 4
+  seconds: 10
 }
 
 convergence_deadline {
@@ -102,7 +106,7 @@ step_controller_config {
       input_variable_setter {
         name: "rps"
       }
-      initial_value: 500
+      initial_value: 10
       exponential_factor: 2.0
     }
   }

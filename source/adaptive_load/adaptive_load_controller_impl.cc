@@ -237,7 +237,7 @@ CheckSessionSpec(const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec) 
 
 AdaptiveLoadSessionOutput
 PerformAdaptiveLoadSession(nighthawk::client::NighthawkService::Stub* nighthawk_service_stub,
-                           const AdaptiveLoadSessionSpec& spec, std::ostream* diagnostic_ostream,
+                           const AdaptiveLoadSessionSpec& spec, std::ostream& diagnostic_ostream,
                            Envoy::TimeSource* time_source) noexcept {
   AdaptiveLoadSessionOutput output;
 
@@ -262,38 +262,30 @@ PerformAdaptiveLoadSession(nighthawk::client::NighthawkService::Stub* nighthawk_
       return output;
     }
 
-    if (diagnostic_ostream != nullptr) {
-      *diagnostic_ostream << "Trying load: "
+      diagnostic_ostream << "Trying load: "
                           << step_controller->GetCurrentCommandLineOptions().DebugString() << "\n";
-    }
 
     BenchmarkResult result = PerformAndAnalyzeNighthawkBenchmark(
         nighthawk_service_stub, spec, step_controller->GetCurrentCommandLineOptions(),
         spec.measuring_period());
 
-    if (diagnostic_ostream != nullptr) {
-      for (const MetricEvaluation& evaluation : result.metric_evaluations()) {
-        *diagnostic_ostream << evaluation.DebugString() << "\n";
-      }
+    for (const MetricEvaluation& evaluation : result.metric_evaluations()) {
+      diagnostic_ostream << evaluation.DebugString() << "\n";
     }
 
     *output.mutable_adjusting_stage_results()->Add() = result;
     step_controller->UpdateAndRecompute(result);
   }
 
-  if (diagnostic_ostream != nullptr) {
-    *diagnostic_ostream << "Testing stage: "
+  diagnostic_ostream << "Testing stage: "
                         << step_controller->GetCurrentCommandLineOptions().DebugString() << "\n";
-  }
 
   *output.mutable_testing_stage_result() = PerformAndAnalyzeNighthawkBenchmark(
       nighthawk_service_stub, spec, step_controller->GetCurrentCommandLineOptions(),
       spec.testing_stage_duration());
 
-  if (diagnostic_ostream != nullptr) {
-    for (const MetricEvaluation& evaluation : output.testing_stage_result().metric_evaluations()) {
-      *diagnostic_ostream << evaluation.DebugString() << "\n";
-    }
+  for (const MetricEvaluation& evaluation : output.testing_stage_result().metric_evaluations()) {
+    diagnostic_ostream << evaluation.DebugString() << "\n";
   }
   return output;
 }

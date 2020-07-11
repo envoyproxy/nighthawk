@@ -83,13 +83,14 @@ nighthawk::client::CommandLineOptions
 ExponentialSearchStepController::GetCurrentCommandLineOptions() const {
   nighthawk::client::CommandLineOptions options = command_line_options_template_;
   input_variable_setter_->SetInputVariable(&options, current_load_value_);
-  std::cerr << options.DebugString() << "\n";
+  // std::cerr << options.DebugString() << "\n";
   return options;
 }
 
 bool ExponentialSearchStepController::IsConverged() const {
-  bool x = abs(previous_load_value_ - current_load_value_) < 0.0001;
-  std::cerr << "Is converged " << x << "\n";
+  bool x = abs(previous_load_value_ / current_load_value_ - 1.0) < 0.01;
+  std::cerr << "Is converged " << previous_load_value_ << ", " << current_load_value_ << " : " << x
+            << "\n";
   return x;
 }
 
