@@ -11,7 +11,7 @@ envoy_package()
 filegroup(
     name = "nighthawk",
     srcs = [
-        ":nighthawk_adaptive_rps_client",
+        ":nighthawk_adaptive_load_client",
         ":nighthawk_client",
         ":nighthawk_output_transform",
         ":nighthawk_service",
@@ -20,10 +20,10 @@ filegroup(
 )
 
 envoy_cc_binary(
-    name = "nighthawk_adaptive_rps_client",
+    name = "nighthawk_adaptive_load_client",
     repository = "@envoy",
     deps = [
-        "//source/exe:adaptive_rps_client_entry_lib",
+        "//source/exe:adaptive_load_client_entry_lib",
     ],
 )
 

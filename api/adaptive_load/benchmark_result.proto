@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package nighthawk.adaptive_load;
+
+import "api/adaptive_load/metric_spec.proto";
+import "api/client/output.proto";
+
+// Binary result of checking a metric value against a threshold.
+enum SimpleThresholdStatus {
+  // Value should only occur when the field is unset.
+  UNKNOWN_THRESHOLD_STATUS = 0;
+  // The metric was below an upper threshold or above a lower threshold.
+  WITHIN_THRESHOLD = 1;
+  // The metric was above an upper threshold or below a lower threshold.
+  OUTSIDE_THRESHOLD = 2;
+}
+
+// Encapsulates results of simple and custom threshold checks.
+message ThresholdCheckResult {
+  oneof threshold_check_result {
+    // Binary status from checking the value against a threshold.
+    SimpleThresholdStatus simple_threshold_status = 1;
+    // Score returned by a ScoringFunction plugin. This expresses how close the
+    // metric was to the threshold by an arbitrary formula selected and
+    // configured in the ThresholdSpec, such as a sigmoid curve. The controller
+    // can choose to make larger input adjustments when the score is larger, in
+    // order to converge faster.
+    double threshold_score = 2;
+  }
+}
+
+// Records the status of a single metric during a benchmark session.
+message MetricEvaluation {
+  // Original metric specification (plugin name, metric name).
+  MetricSpec metric_spec = 1;
+  // Numerical value of the metric measured during this benchmark session.
+  double metric_value = 2;
+  // Threshold that was used to check this metric value. Not set if the metric
+  // was only informational.
+  ThresholdSpec threshold_spec = 3;
+  // The result of checking this metric value against the configured threshold.
+  // Not set if the metric was only informational.
+  ThresholdCheckResult threshold_check_result = 4;
+}
+
+// Summary of a single Nighthawk Service benchmark session with evaluation
+// results.
+message BenchmarkResult {
+  // Raw Nighthawk Service output. Includes start/end times and full Nighthawk
+  // Service input spec. May contain an error status.
+  nighthawk.client.Output nighthawk_service_output = 1;
+  // Status of all declared metrics during this benchmark session. Not present
+  // in the event of Nighthawk errors.
+  repeated MetricEvaluation metric_evaluations = 3;
+}

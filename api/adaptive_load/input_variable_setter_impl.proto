@@ -1,0 +1,18 @@
+// Plugin-specific config protos for InputVariableSetter plugins.
+
+syntax = "proto3";
+
+package nighthawk.adaptive_load;
+
+// Note: RequestsPerSecondInputVariableSetter aka "rps" does not define a
+// custom config proto.
+
+// Configuration for an InputVariableSetter plugin that sets an HTTP header
+// within CommandLineOptions to a numeric value being varied by a
+// StepController.
+message HttpHeaderInputVariableSetterConfig {
+  // The name of an HTTP header that can be set to a numeric value, such as one
+  // of the headers supported by the Envoy fault injection filter on Nighthawk
+  // Test Server.
+  string header_name = 1;
+}
