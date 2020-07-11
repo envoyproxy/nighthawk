@@ -96,24 +96,14 @@ testing_stage_duration {
 }
 
 step_controller_config {
-  name: "linear-search"
+  name: "exponential-search"
   typed_config {
-    [type.googleapis.com/nighthawk.adaptive_load.LinearSearchStepControllerConfig] {
-      field_selector: REQUESTS_PER_SECOND
-      minimum_field_value: 500
-      maximum_field_value: 5000
-      field_value_step: 100
+    [type.googleapis.com/nighthawk.adaptive_load.ExponentialSearchStepControllerConfig] {
+      input_variable_setter {
+        name: "rps"
+      }
+      initial_value: 500
+      exponential_factor: 2.0
     }
   }
 }
-
-# step_controller_config {
-#   name : "binary-search"
-#   typed_config {
-#     [type.googleapis.com/nighthawk.adaptive_load.BinarySearchStepControllerConfig] {
-#       field_selector: REQUESTS_PER_SECOND
-#       minimum_field_value : 500
-#       maximum_field_value : 10000
-#     }
-#   }
-# }

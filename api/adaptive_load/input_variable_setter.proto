@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package nighthawk.adaptive_load;
+
+import "google/protobuf/any.proto";
+
+// Selects and configures an InputVariableSetter plugin, which encapsulates
+// knowledge of how to apply a varying numeric input value to a
+// CommandLineOptions proto. For example, RequestsPerSecondInputVariableSetter
+// aka "rps" writes the value to the |requests_per_second| field in
+// CommandLineOptions. Some InputVariableSetter plugins such as "rps" will not
+// define a config proto, in which case typed_config should be unset.
+message InputVariableSetterConfig {
+  // Name used to locate the plugin in the Envoy registry.
+  string name = 1;
+  // Plugin-specific config.
+  google.protobuf.Any typed_config = 2;
+}
