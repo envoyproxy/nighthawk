@@ -31,11 +31,11 @@ InputVariableSetterPtr RequestsPerSecondInputVariableSetterConfigFactory::create
 REGISTER_FACTORY(RequestsPerSecondInputVariableSetterConfigFactory,
                  InputVariableSetterConfigFactory);
 
-HttpHeaderInputVariableSetter::HttpHeaderInputVariableSetter(
-    const nighthawk::adaptive_load::HttpHeaderInputVariableSetterConfig& config)
+NumericHttpHeaderInputVariableSetter::NumericHttpHeaderInputVariableSetter(
+    const nighthawk::adaptive_load::NumericHttpHeaderInputVariableSetterConfig& config)
     : header_name_{config.header_name()} {}
 
-void HttpHeaderInputVariableSetter::SetInputVariable(
+void NumericHttpHeaderInputVariableSetter::SetInputVariable(
     nighthawk::client::CommandLineOptions* command_line_options, double input_value) {
   envoy::config::core::v3::HeaderValueOption* header_value_option =
       command_line_options->mutable_request_options()->mutable_request_headers()->Add();
@@ -44,21 +44,24 @@ void HttpHeaderInputVariableSetter::SetInputVariable(
   header_value_option->mutable_header()->set_value(absl::StrCat(static_cast<int>(input_value)));
 }
 
-std::string HttpHeaderInputVariableSetterConfigFactory::name() const { return "http_header"; }
+std::string NumericHttpHeaderInputVariableSetterConfigFactory::name() const {
+  return "http_header";
+}
 Envoy::ProtobufTypes::MessagePtr
-HttpHeaderInputVariableSetterConfigFactory::createEmptyConfigProto() {
-  return std::make_unique<nighthawk::adaptive_load::HttpHeaderInputVariableSetterConfig>();
+NumericHttpHeaderInputVariableSetterConfigFactory::createEmptyConfigProto() {
+  return std::make_unique<nighthawk::adaptive_load::NumericHttpHeaderInputVariableSetterConfig>();
 }
 
-InputVariableSetterPtr HttpHeaderInputVariableSetterConfigFactory::createInputVariableSetter(
+InputVariableSetterPtr NumericHttpHeaderInputVariableSetterConfigFactory::createInputVariableSetter(
     const Envoy::Protobuf::Message& message) {
   const Envoy::ProtobufWkt::Any& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
-  nighthawk::adaptive_load::HttpHeaderInputVariableSetterConfig config;
+  nighthawk::adaptive_load::NumericHttpHeaderInputVariableSetterConfig config;
   Envoy::MessageUtil::unpackTo(any, config);
-  return std::make_unique<HttpHeaderInputVariableSetter>(config);
+  return std::make_unique<NumericHttpHeaderInputVariableSetter>(config);
 }
 
-REGISTER_FACTORY(HttpHeaderInputVariableSetterConfigFactory, InputVariableSetterConfigFactory);
+REGISTER_FACTORY(NumericHttpHeaderInputVariableSetterConfigFactory,
+                 InputVariableSetterConfigFactory);
 
 } // namespace AdaptiveLoad
 } // namespace Nighthawk

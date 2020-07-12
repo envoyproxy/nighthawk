@@ -27,10 +27,10 @@ public:
 
 // An InputVariableSetter that sets an HTTP header in the CommandLineOptions proto to the string
 // representation of the input variable.
-class HttpHeaderInputVariableSetter : public InputVariableSetter {
+class NumericHttpHeaderInputVariableSetter : public InputVariableSetter {
 public:
-  HttpHeaderInputVariableSetter(
-      const nighthawk::adaptive_load::HttpHeaderInputVariableSetterConfig& config);
+  NumericHttpHeaderInputVariableSetter(
+      const nighthawk::adaptive_load::NumericHttpHeaderInputVariableSetterConfig& config);
   void SetInputVariable(nighthawk::client::CommandLineOptions* command_line_options,
                         double input_value) override;
 
@@ -38,9 +38,9 @@ private:
   std::string header_name_;
 };
 
-// A factory that creates an HttpHeaderInputVariableSetter from an
-// HttpHeaderInputVariableSetterConfig proto.
-class HttpHeaderInputVariableSetterConfigFactory : public InputVariableSetterConfigFactory {
+// A factory that creates an NumericHttpHeaderInputVariableSetter from an
+// NumericHttpHeaderInputVariableSetterConfig proto.
+class NumericHttpHeaderInputVariableSetterConfigFactory : public InputVariableSetterConfigFactory {
 public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;

@@ -262,8 +262,8 @@ PerformAdaptiveLoadSession(nighthawk::client::NighthawkService::Stub* nighthawk_
       return output;
     }
 
-      diagnostic_ostream << "Trying load: "
-                          << step_controller->GetCurrentCommandLineOptions().DebugString() << "\n";
+    diagnostic_ostream << "Trying load: "
+                       << step_controller->GetCurrentCommandLineOptions().DebugString() << "\n";
 
     BenchmarkResult result = PerformAndAnalyzeNighthawkBenchmark(
         nighthawk_service_stub, spec, step_controller->GetCurrentCommandLineOptions(),
@@ -278,7 +278,7 @@ PerformAdaptiveLoadSession(nighthawk::client::NighthawkService::Stub* nighthawk_
   }
 
   diagnostic_ostream << "Testing stage: "
-                        << step_controller->GetCurrentCommandLineOptions().DebugString() << "\n";
+                     << step_controller->GetCurrentCommandLineOptions().DebugString() << "\n";
 
   *output.mutable_testing_stage_result() = PerformAndAnalyzeNighthawkBenchmark(
       nighthawk_service_stub, spec, step_controller->GetCurrentCommandLineOptions(),
