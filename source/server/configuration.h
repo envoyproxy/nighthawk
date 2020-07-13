@@ -4,8 +4,6 @@
 
 #include "envoy/http/header_map.h"
 
-#include "external/envoy/source/common/singleton/const_singleton.h"
-
 #include "api/server/response_options.pb.h"
 
 namespace Nighthawk {
