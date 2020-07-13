@@ -9,7 +9,6 @@
 
 #include "server/configuration.h"
 #include "server/http_test_server_filter.h"
-
 #include "server/well_known_headers.h"
 
 #include "gtest/gtest.h"

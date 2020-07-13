@@ -26,7 +26,7 @@ class ClientTest : public testing::Test {};
 TEST_F(ClientTest, NormalRun) {
   Main program(Nighthawk::Client::TestUtility::createOptionsImpl(
       "foo --duration 1 --rps 10 http://localhost:63657/"));
-  
+
   EXPECT_FALSE(program.run());
 }
 

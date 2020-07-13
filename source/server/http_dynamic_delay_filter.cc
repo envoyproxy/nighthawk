@@ -24,7 +24,7 @@ HttpDynamicDelayDecoderFilter::HttpDynamicDelayDecoderFilter(
     : Envoy::Extensions::HttpFilters::Fault::FaultFilter(
           translateOurConfigIntoFaultFilterConfig(*config)),
       config_(std::move(config)) {
-  config_->incrementInstanceCount();
+  config_->incrementFilterInstanceCount();
 }
 
 HttpDynamicDelayDecoderFilter::~HttpDynamicDelayDecoderFilter() {
@@ -33,7 +33,7 @@ HttpDynamicDelayDecoderFilter::~HttpDynamicDelayDecoderFilter() {
 
 void HttpDynamicDelayDecoderFilter::onDestroy() {
   destroyed_ = true;
-  config_->decrementInstanceCount();
+  config_->decrementFilterInstanceCount();
   Envoy::Extensions::HttpFilters::Fault::FaultFilter::onDestroy();
 }
 
@@ -50,7 +50,7 @@ HttpDynamicDelayDecoderFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& head
     return Envoy::Http::FilterHeadersStatus::StopIteration;
   }
   const absl::optional<int64_t> delay_ms =
-      computeDelayMs(response_options_, config_->approximateInstances());
+      computeDelayMs(response_options_, config_->approximateFilterInstances());
   maybeRequestFaultFilterDelay(delay_ms, headers);
   return Envoy::Extensions::HttpFilters::Fault::FaultFilter::decodeHeaders(headers, end_stream);
 }

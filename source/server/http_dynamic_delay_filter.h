@@ -14,10 +14,23 @@ namespace Server {
 
 /**
  * Filter configuration container class for the dynamic delay extension.
+ * Instances of this class will be shared accross instances of HttpDynamicDelayDecoderFilter.
+ * The methods for getting and manipulating (global) active filter instance counts are thread safe.
  */
 class HttpDynamicDelayDecoderFilterConfig {
 
 public:
+  /**
+   * Constructs a new HttpDynamicDelayDecoderFilterConfig instance.
+   *
+   * @param proto_config The proto configuration of the filter. Will be tranlated internally into
+   * the right configuration for the base class structure (the failt filter and config).
+   * @param runtime Envoy runtime to be used by the filter.
+   * @param stats_prefix Prefix to use by the filter when it names statistics. E.g.
+   * dynamic-delay.fault.delays_injected: 1
+   * @param scope Statistics scope to be used by the filter.
+   * @param time_source Time source to be used by the filter.
+   */
   HttpDynamicDelayDecoderFilterConfig(nighthawk::server::ResponseOptions proto_config,
                                       Envoy::Runtime::Loader& runtime,
                                       const std::string& stats_prefix, Envoy::Stats::Scope& scope,
@@ -27,24 +40,42 @@ public:
    * @return const nighthawk::server::ResponseOptions& read-only reference to the proto config
    * object.
    */
-  const nighthawk::server::ResponseOptions& server_config() { return server_config_; }
+  const nighthawk::server::ResponseOptions& server_config() const { return server_config_; }
 
   /**
-   * Increments the number of active instances.
+   * Increments the number of globally active filter instances.
    */
-  void incrementInstanceCount() { instances()++; }
-  /**
-   * Decrements the number of active instances.
-   */
-  void decrementInstanceCount() { instances()--; }
-  /**
-   * @return uint64_t the approximate number of active instances.
-   */
-  uint64_t approximateInstances() const { return instances(); }
+  void incrementFilterInstanceCount() { instances()++; }
 
+  /**
+   * Decrements the number of globally active filter instances.
+   */
+  void decrementFilterInstanceCount() { instances()--; }
+
+  /**
+   * @return uint64_t the approximate number of globally active HttpDynamicDelayDecoderFilter
+   * instances. Approximate, because by the time the value is consumed it might have changed.
+   */
+  uint64_t approximateFilterInstances() const { return instances(); }
+
+  /**
+   * @return Envoy::Runtime::Loader& to be used by filter instantiations associated to this.
+   */
   Envoy::Runtime::Loader& runtime() { return runtime_; }
+
+  /**
+   * @return Envoy::Stats::Scope& to be used by filter instantiations associated to this.
+   */
   Envoy::Stats::Scope& scope() { return scope_; }
+
+  /**
+   * @return Envoy::TimeSource& to be used by filter instantiations associated to this.
+   */
   Envoy::TimeSource& time_source() { return time_source_; }
+
+  /**
+   * @return std::string to be used by filter instantiations associated to this.
+   */
   std::string stats_prefix() { return stats_prefix_; }
 
 private:
