@@ -1,0 +1,130 @@
+{
+ "count": "10",
+ "id": "",
+ "percentiles": [
+  {
+   "percentile": 0,
+   "count": "0",
+   "duration": "0.000000001s"
+  },
+  {
+   "percentile": 0.1,
+   "count": "1",
+   "duration": "0.000000001s"
+  },
+  {
+   "percentile": 0.2,
+   "count": "2",
+   "duration": "0.000000002s"
+  },
+  {
+   "percentile": 0.3,
+   "count": "3",
+   "duration": "0.000000003s"
+  },
+  {
+   "percentile": 0.4,
+   "count": "4",
+   "duration": "0.000000004s"
+  },
+  {
+   "percentile": 0.5,
+   "count": "5",
+   "duration": "0.000000005s"
+  },
+  {
+   "percentile": 0.55,
+   "count": "5",
+   "duration": "0.000000006s"
+  },
+  {
+   "percentile": 0.6,
+   "count": "6",
+   "duration": "0.000000006s"
+  },
+  {
+   "percentile": 0.65,
+   "count": "6",
+   "duration": "0.000000007s"
+  },
+  {
+   "percentile": 0.7,
+   "count": "7",
+   "duration": "0.000000007s"
+  },
+  {
+   "percentile": 0.75,
+   "count": "7",
+   "duration": "0.000000008s"
+  },
+  {
+   "percentile": 0.775,
+   "count": "7",
+   "duration": "0.000000008s"
+  },
+  {
+   "percentile": 0.8,
+   "count": "8",
+   "duration": "0.000000008s"
+  },
+  {
+   "percentile": 0.825,
+   "count": "8",
+   "duration": "0.000000009s"
+  },
+  {
+   "percentile": 0.85,
+   "count": "8",
+   "duration": "0.000000009s"
+  },
+  {
+   "percentile": 0.875,
+   "count": "8",
+   "duration": "0.000000009s"
+  },
+  {
+   "percentile": 0.9,
+   "count": "9",
+   "duration": "0.000000009s"
+  },
+  {
+   "percentile": 0.925,
+   "count": "9",
+   "duration": "0.000000010s"
+  },
+  {
+   "percentile": 0.95,
+   "count": "9",
+   "duration": "0.000000010s"
+  },
+  {
+   "percentile": 0.975,
+   "count": "9",
+   "duration": "0.000000010s"
+  },
+  {
+   "percentile": 0.99,
+   "count": "9",
+   "duration": "0.000000010s"
+  },
+  {
+   "percentile": 0.995,
+   "count": "9",
+   "duration": "0.000000010s"
+  },
+  {
+   "percentile": 0.999,
+   "count": "9",
+   "duration": "0.000000010s"
+  },
+  {
+   "percentile": 1,
+   "count": "10",
+   "duration": "0.000000011s"
+  }
+ ],
+ "mean": "0.000000006s",
+ "pstdev": "0.000000003s",
+ "min": "0.000000001s",
+ "max": "0.000000010s"
+}
