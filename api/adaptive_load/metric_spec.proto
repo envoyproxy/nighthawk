@@ -36,9 +36,9 @@ message ThresholdSpec {
     ScoringFunctionConfig scoring_function = 3;
   }
   // Relative importance of this threshold when adjusting based on multiple
-  // metrics. If any threshold has a weight, all must have a weight. If no
-  // weights are set, all thresholds have equal weight.
-  google.protobuf.DoubleValue weight = 4 [(validate.rules).double = {gt: 0.0}];
+  // metrics.
+  google.protobuf.DoubleValue weight = 4
+      [(validate.rules).double.gt = 0.0, (validate.rules).message.required = true];
 }
 
 // Identifies a feedback metric and specifies a threshold for it.
