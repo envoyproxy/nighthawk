@@ -4,7 +4,8 @@
 
 #include "envoy/server/filter_config.h"
 
-#include "server/common.h"
+#include "server/configuration.h"
+#include "server/well_known_headers.h"
 
 #include "absl/strings/numbers.h"
 
@@ -30,7 +31,7 @@ void HttpTestServerDecoderFilter::sendReply() {
     decoder_callbacks_->sendLocalReply(
         static_cast<Envoy::Http::Code>(200), response_body,
         [this](Envoy::Http::ResponseHeaderMap& direct_response_headers) {
-          Utility::applyConfigToResponseHeaders(direct_response_headers, base_config_);
+          Configuration::applyConfigToResponseHeaders(direct_response_headers, base_config_);
         },
         absl::nullopt, "");
   } else {
@@ -48,8 +49,8 @@ HttpTestServerDecoderFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& header
   base_config_ = config_->server_config();
   const auto* request_config_header = headers.get(TestServer::HeaderNames::get().TestServerConfig);
   if (request_config_header) {
-    json_merge_error_ = !Utility::mergeJsonConfig(request_config_header->value().getStringView(),
-                                                  base_config_, error_message_);
+    json_merge_error_ = !Configuration::mergeJsonConfig(
+        request_config_header->value().getStringView(), base_config_, error_message_);
   }
   if (base_config_.echo_request_headers()) {
     std::stringstream headers_dump;

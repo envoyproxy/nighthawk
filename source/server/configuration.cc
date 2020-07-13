@@ -1,4 +1,4 @@
-#include "server/common.h"
+#include "server/configuration.h"
 
 #include <string>
 
@@ -11,9 +11,10 @@
 
 namespace Nighthawk {
 namespace Server {
+namespace Configuration {
 
-bool Utility::mergeJsonConfig(absl::string_view json, nighthawk::server::ResponseOptions& config,
-                              std::string& error_message) {
+bool mergeJsonConfig(absl::string_view json, nighthawk::server::ResponseOptions& config,
+                     std::string& error_message) {
   error_message = "";
   try {
     nighthawk::server::ResponseOptions json_config;
@@ -27,8 +28,8 @@ bool Utility::mergeJsonConfig(absl::string_view json, nighthawk::server::Respons
   return error_message == "";
 }
 
-void Utility::applyConfigToResponseHeaders(Envoy::Http::ResponseHeaderMap& response_headers,
-                                           nighthawk::server::ResponseOptions& response_options) {
+void applyConfigToResponseHeaders(Envoy::Http::ResponseHeaderMap& response_headers,
+                                  nighthawk::server::ResponseOptions& response_options) {
   for (const auto& header_value_option : response_options.response_headers()) {
     const auto& header = header_value_option.header();
     auto lower_case_key = Envoy::Http::LowerCaseString(header.key());
@@ -39,5 +40,6 @@ void Utility::applyConfigToResponseHeaders(Envoy::Http::ResponseHeaderMap& respo
   }
 }
 
+} // namespace Configuration
 } // namespace Server
 } // namespace Nighthawk

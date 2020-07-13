@@ -4,7 +4,8 @@
 
 #include "envoy/server/filter_config.h"
 
-#include "server/common.h"
+#include "server/configuration.h"
+#include "server/well_known_headers.h"
 
 #include "absl/strings/str_cat.h"
 
@@ -59,8 +60,8 @@ bool HttpDynamicDelayDecoderFilter::computeResponseOptions(
   response_options_ = config_->server_config();
   const auto* request_config_header = headers.get(TestServer::HeaderNames::get().TestServerConfig);
   if (request_config_header) {
-    if (!Utility::mergeJsonConfig(request_config_header->value().getStringView(), response_options_,
-                                  error_message)) {
+    if (!Configuration::mergeJsonConfig(request_config_header->value().getStringView(),
+                                        response_options_, error_message)) {
       return false;
     }
   }

@@ -4,7 +4,7 @@
 
 #include "api/server/response_options.pb.h"
 
-#include "server/common.h"
+#include "server/configuration.h"
 #include "server/http_dynamic_delay_filter.h"
 
 #include "gtest/gtest.h"
