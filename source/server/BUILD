@@ -13,6 +13,7 @@ envoy_cc_library(
     hdrs = ["well_known_headers.h"],
     repository = "@envoy",
     deps = [
+        "@envoy//source/common/http:headers_lib_with_external_headers",
         "@envoy//source/common/singleton:const_singleton_with_external_headers",
     ],
 )
