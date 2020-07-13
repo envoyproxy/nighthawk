@@ -51,6 +51,8 @@ BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
     Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
     StatisticPtr&& connect_statistic, StatisticPtr&& response_statistic,
     StatisticPtr&& response_header_size_statistic, StatisticPtr&& response_body_size_statistic,
+    std::unique_ptr<SinkableHdrStatistic>&& latency_2xx_statistic,
+    std::unique_ptr<SinkableHdrStatistic>&& latency_xxx_statistic,
     bool use_h2, Envoy::Upstream::ClusterManagerPtr& cluster_manager,
     Envoy::Tracing::HttpTracerSharedPtr& http_tracer, absl::string_view cluster_name,
     RequestGenerator request_generator, const bool provide_resource_backpressure)
@@ -58,9 +60,11 @@ BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
       connect_statistic_(std::move(connect_statistic)),
       response_statistic_(std::move(response_statistic)),
       response_header_size_statistic_(std::move(response_header_size_statistic)),
-      response_body_size_statistic_(std::move(response_body_size_statistic)), use_h2_(use_h2),
-      benchmark_client_stats_(
-          {ALL_BENCHMARK_CLIENT_STATS(POOL_COUNTER(*scope_), POOL_HISTOGRAM(*scope_))}),
+      response_body_size_statistic_(std::move(response_body_size_statistic)),
+      latency_2xx_statistic_(std::move(latency_2xx_statistic)),
+      latency_xxx_statistic_(std::move(latency_xxx_statistic)),
+      use_h2_(use_h2),
+      benchmark_client_stats_({ALL_BENCHMARK_CLIENT_STATS(POOL_COUNTER(*scope_))}),
       cluster_manager_(cluster_manager), http_tracer_(http_tracer),
       cluster_name_(std::string(cluster_name)), request_generator_(std::move(request_generator)),
       provide_resource_backpressure_(provide_resource_backpressure) {
@@ -68,6 +72,8 @@ BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
   response_statistic_->setId("benchmark_http_client.request_to_response");
   response_header_size_statistic_->setId("benchmark_http_client.response_header_size");
   response_body_size_statistic_->setId("benchmark_http_client.response_body_size");
+  latency_2xx_statistic_->setId("benchmark_http_client.latency_2xx");
+  latency_xxx_statistic_->setId("benchmark_http_client.latency_xxx");
 }
 
 void BenchmarkClientHttpImpl::terminate() {
@@ -84,6 +90,8 @@ StatisticPtrMap BenchmarkClientHttpImpl::statistics() const {
   statistics[response_statistic_->id()] = response_statistic_.get();
   statistics[response_header_size_statistic_->id()] = response_header_size_statistic_.get();
   statistics[response_body_size_statistic_->id()] = response_body_size_statistic_.get();
+  statistics[latency_2xx_statistic_->id()] = latency_2xx_statistic_.get();
+  statistics[latency_xxx_statistic_->id()] = latency_xxx_statistic_.get();
   return statistics;
 };
 
@@ -125,7 +133,6 @@ bool BenchmarkClientHttpImpl::tryStartRequest(CompletionCallback caller_completi
       *response_body_size_statistic_, request->header(), shouldMeasureLatencies(), content_length,
       generator_, http_tracer_);
   requests_initiated_++;
-  benchmark_client_stats_.total_req_sent_.inc();
   pool_ptr->newStream(*stream_decoder, *stream_decoder);
   return true;
 }
@@ -172,11 +179,11 @@ void BenchmarkClientHttpImpl::onPoolFailure(Envoy::Http::ConnectionPool::PoolFai
 }
 
 void BenchmarkClientHttpImpl::exportLatency(const uint32_t response_code,
-                                            const uint64_t latency_us) {
+                                            const uint64_t latency_ns) {
   if (response_code > 199 && response_code <= 299) {
-    benchmark_client_stats_.latency_on_success_req_.recordValue(latency_us);
+    latency_2xx_statistic_->recordValue(latency_ns);
   } else {
-    benchmark_client_stats_.latency_on_error_req_.recordValue(latency_us);
+    latency_xxx_statistic_->recordValue(latency_ns);
   }
 }
 

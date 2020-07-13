@@ -13,6 +13,7 @@
 #include "nighthawk/common/request_source.h"
 #include "nighthawk/common/sequencer.h"
 #include "nighthawk/common/statistic.h"
+#include "nighthawk/source/common/statistic_impl.h"
 
 #include "external/envoy/source/common/common/logger.h"
 #include "external/envoy/source/common/http/http1/conn_pool.h"
@@ -39,13 +40,10 @@ using namespace Envoy; // We need this because of macro expectations.
   COUNTER(http_5xx)                                                                                \
   COUNTER(http_xxx)                                                                                \
   COUNTER(pool_overflow)                                                                           \
-  COUNTER(pool_connection_failure)                                                                 \
-  COUNTER(total_req_sent)                                                                          \
-  HISTOGRAM(latency_on_success_req, Microseconds)                                                  \
-  HISTOGRAM(latency_on_error_req, Microseconds)
+  COUNTER(pool_connection_failure)
 
 struct BenchmarkClientStats {
-  ALL_BENCHMARK_CLIENT_STATS(GENERATE_COUNTER_STRUCT, GENERATE_HISTOGRAM_STRUCT)
+  ALL_BENCHMARK_CLIENT_STATS(GENERATE_COUNTER_STRUCT)
 };
 
 class Http1PoolImpl : public Envoy::Http::Http1::ProdConnPoolImpl {
@@ -78,7 +76,10 @@ public:
                           Envoy::Stats::Scope& scope, StatisticPtr&& connect_statistic,
                           StatisticPtr&& response_statistic,
                           StatisticPtr&& response_header_size_statistic,
-                          StatisticPtr&& response_body_size_statistic, bool use_h2,
+                          StatisticPtr&& response_body_size_statistic,
+                          std::unique_ptr<SinkableHdrStatistic>&& latency_2xx_statistic,
+                          std::unique_ptr<SinkableHdrStatistic>&& latency_xxx_statistic,
+                          bool use_h2,
                           Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                           Envoy::Tracing::HttpTracerSharedPtr& http_tracer,
                           absl::string_view cluster_name, RequestGenerator request_generator,
@@ -107,7 +108,7 @@ public:
   // StreamDecoderCompletionCallback
   void onComplete(bool success, const Envoy::Http::ResponseHeaderMap& headers) override;
   void onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason reason) override;
-  void exportLatency(const uint32_t response_code, const uint64_t latency_us) override;
+  void exportLatency(const uint32_t response_code, const uint64_t latency_ns) override;
 
   // Helpers
   Envoy::Http::ConnectionPool::Instance* pool() {
@@ -126,6 +127,8 @@ private:
   StatisticPtr response_statistic_;
   StatisticPtr response_header_size_statistic_;
   StatisticPtr response_body_size_statistic_;
+  std::unique_ptr<SinkableHdrStatistic> latency_2xx_statistic_;
+  std::unique_ptr<SinkableHdrStatistic> latency_xxx_statistic_;
   const bool use_h2_;
   std::chrono::seconds timeout_{5s};
   uint32_t connection_limit_{1};

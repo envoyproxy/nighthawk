@@ -30,7 +30,7 @@ BenchmarkClientFactoryImpl::BenchmarkClientFactoryImpl(const Options& options)
 BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
     Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
     Envoy::Upstream::ClusterManagerPtr& cluster_manager,
-    Envoy::Tracing::HttpTracerSharedPtr& http_tracer, absl::string_view cluster_name,
+    Envoy::Tracing::HttpTracerSharedPtr& http_tracer, const int worker_number,
     RequestSource& request_generator) const {
   StatisticFactoryImpl statistic_factory(options_);
   // While we lack options to configure which statistic backend goes where, we directly pass
@@ -41,8 +41,11 @@ BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
   // statistics.
   auto benchmark_client = std::make_unique<BenchmarkClientHttpImpl>(
       api, dispatcher, scope, statistic_factory.create(), statistic_factory.create(),
-      std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(), options_.h2(),
-      cluster_manager, http_tracer, cluster_name, request_generator.get(), !options_.openLoop());
+      std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(), 
+      std::make_unique<SinkableHdrStatistic>(scope, worker_number),
+      std::make_unique<SinkableHdrStatistic>(scope, worker_number),
+      options_.h2(),
+      cluster_manager, http_tracer, fmt::format("{}", worker_number), request_generator.get(), !options_.openLoop());
   auto request_options = options_.toCommandLineOptions()->request_options();
   benchmark_client->setConnectionLimit(options_.connections());
   benchmark_client->setMaxPendingRequests(options_.maxPendingRequests());
