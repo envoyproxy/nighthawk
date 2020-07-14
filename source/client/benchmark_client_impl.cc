@@ -38,8 +38,8 @@ Http1PoolImpl::newStream(Envoy::Http::ResponseDecoder& response_decoder,
   // of ready_clients_, which will pick the oldest one instead. This makes us cycle through
   // all the available connections.
   if (!ready_clients_.empty() && connection_reuse_strategy_ == ConnectionReuseStrategy::LRU) {
-    auto context = std::make_pair(&response_decoder, &callbacks);
-    attachRequestToClientImpl(*ready_clients_.back(), &context);
+    Envoy::Http::HttpAttachContext context({&response_decoder, &callbacks});
+    attachRequestToClient(*ready_clients_.back(), context);
     return nullptr;
   }
 

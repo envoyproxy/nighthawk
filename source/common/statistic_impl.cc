@@ -275,8 +275,7 @@ nighthawk::client::Statistic CircllhistStatistic::toProto(SerializationDomain do
     return proto;
   }
 
-  // List of quantiles is based on hdr_proto_json.gold which lists the quantiles provided by
-  // HdrHistogram.
+  // List of quantiles is based on hdr_proto_json.gold.
   const std::vector<double> quantiles{0,    0.1,   0.2,  0.3,   0.4,  0.5,   0.55,  0.6,
                                       0.65, 0.7,   0.75, 0.775, 0.8,  0.825, 0.85,  0.875,
                                       0.90, 0.925, 0.95, 0.975, 0.99, 0.995, 0.999, 1};

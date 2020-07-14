@@ -167,6 +167,8 @@ public:
   double pvariance() const override;
   double pstdev() const override;
   StatisticPtr combine(const Statistic& statistic) const override;
+  // circllhist has low significant digit precision as a result of base 10
+  // algorithm.
   uint64_t significantDigits() const override { return 1; }
   StatisticPtr createNewInstanceOfSameType() const override;
   nighthawk::client::Statistic toProto(SerializationDomain domain) const override;
@@ -200,7 +202,7 @@ public:
   const absl::optional<int> worker_id() { return worker_id_; }
 
 protected:
-  // This is used for delivering the histogram data to sinks.
+  // This is used in child class for delivering the histogram data to sinks.
   Envoy::Stats::Scope& scope_;
 
 private:

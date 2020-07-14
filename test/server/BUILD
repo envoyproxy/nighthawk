@@ -19,3 +19,14 @@ envoy_cc_test(
         "@envoy//test/integration:http_integration_lib",
     ],
 )
+
+envoy_cc_test(
+    name = "http_dynamic_delay_filter_integration_test",
+    srcs = ["http_dynamic_delay_filter_integration_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/server:http_dynamic_delay_filter_config",
+        "@envoy//source/common/api:api_lib_with_external_headers",
+        "@envoy//test/integration:http_integration_lib",
+    ],
+)

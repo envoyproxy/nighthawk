@@ -4,10 +4,8 @@
 
 #include "envoy/server/filter_config.h"
 
-#include "external/envoy/source/common/protobuf/message_validator_impl.h"
-#include "external/envoy/source/common/protobuf/utility.h"
-
-#include "api/server/response_options.pb.validate.h"
+#include "server/configuration.h"
+#include "server/well_known_headers.h"
 
 #include "absl/strings/numbers.h"
 
@@ -24,37 +22,8 @@ HttpTestServerDecoderFilter::HttpTestServerDecoderFilter(
 
 void HttpTestServerDecoderFilter::onDestroy() {}
 
-bool HttpTestServerDecoderFilter::mergeJsonConfig(absl::string_view json,
-                                                  nighthawk::server::ResponseOptions& config,
-                                                  absl::optional<std::string>& error_message) {
-  error_message = absl::nullopt;
-  try {
-    nighthawk::server::ResponseOptions json_config;
-    auto& validation_visitor = Envoy::ProtobufMessage::getStrictValidationVisitor();
-    Envoy::MessageUtil::loadFromJson(std::string(json), json_config, validation_visitor);
-    config.MergeFrom(json_config);
-    Envoy::MessageUtil::validate(config, validation_visitor);
-  } catch (const Envoy::EnvoyException& exception) {
-    error_message.emplace(fmt::format("Error merging json config: {}", exception.what()));
-  }
-  return error_message == absl::nullopt;
-}
-
-void HttpTestServerDecoderFilter::applyConfigToResponseHeaders(
-    Envoy::Http::ResponseHeaderMap& response_headers,
-    nighthawk::server::ResponseOptions& response_options) {
-  for (const auto& header_value_option : response_options.response_headers()) {
-    const auto& header = header_value_option.header();
-    auto lower_case_key = Envoy::Http::LowerCaseString(header.key());
-    if (!header_value_option.append().value()) {
-      response_headers.remove(lower_case_key);
-    }
-    response_headers.addCopy(lower_case_key, header.value());
-  }
-}
-
 void HttpTestServerDecoderFilter::sendReply() {
-  if (error_message_ == absl::nullopt) {
+  if (!json_merge_error_) {
     std::string response_body(base_config_.response_body_size(), 'a');
     if (request_headers_dump_.has_value()) {
       response_body += *request_headers_dump_;
@@ -62,13 +31,13 @@ void HttpTestServerDecoderFilter::sendReply() {
     decoder_callbacks_->sendLocalReply(
         static_cast<Envoy::Http::Code>(200), response_body,
         [this](Envoy::Http::ResponseHeaderMap& direct_response_headers) {
-          applyConfigToResponseHeaders(direct_response_headers, base_config_);
+          Configuration::applyConfigToResponseHeaders(direct_response_headers, base_config_);
         },
         absl::nullopt, "");
   } else {
     decoder_callbacks_->sendLocalReply(
         static_cast<Envoy::Http::Code>(500),
-        fmt::format("test-server didn't understand the request: {}", *error_message_), nullptr,
+        fmt::format("test-server didn't understand the request: {}", error_message_), nullptr,
         absl::nullopt, "");
   }
 }
@@ -80,7 +49,8 @@ HttpTestServerDecoderFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& header
   base_config_ = config_->server_config();
   const auto* request_config_header = headers.get(TestServer::HeaderNames::get().TestServerConfig);
   if (request_config_header) {
-    mergeJsonConfig(request_config_header->value().getStringView(), base_config_, error_message_);
+    json_merge_error_ = !Configuration::mergeJsonConfig(
+        request_config_header->value().getStringView(), base_config_, error_message_);
   }
   if (base_config_.echo_request_headers()) {
     std::stringstream headers_dump;
