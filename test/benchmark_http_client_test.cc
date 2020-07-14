@@ -140,9 +140,8 @@ public:
 
   void setupBenchmarkClient() {
     client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
-        *api_, *dispatcher_, mock_store_, statistic_,
-        false, cluster_manager_, http_tracer_, "benchmark",
-        request_generator_, true);
+        *api_, *dispatcher_, mock_store_, statistic_, false, cluster_manager_, http_tracer_,
+        "benchmark", request_generator_, true);
   }
 
   uint64_t getCounter(absl::string_view name) {
@@ -223,15 +222,13 @@ TEST_F(BenchmarkClientHttpTest, EnableLatencyMeasurement) {
 TEST_F(BenchmarkClientHttpTest, ExportSuccessLatency) {
   setupBenchmarkClient();
   uint64_t latency = 10;
-  EXPECT_CALL(mock_store_, deliverHistogramToSinks(
-                               Property(&Envoy::Stats::Metric::name,
-                                        "benchmark_http_client.latency_2xx"),
-                               latency))
+  EXPECT_CALL(mock_store_, deliverHistogramToSinks(Property(&Envoy::Stats::Metric::name,
+                                                            "benchmark_http_client.latency_2xx"),
+                                                   latency))
       .Times(2);
-  EXPECT_CALL(mock_store_, deliverHistogramToSinks(
-                               Property(&Envoy::Stats::Metric::name,
-                                        "benchmark_http_client.latency_xxx"),
-                               latency))
+  EXPECT_CALL(mock_store_, deliverHistogramToSinks(Property(&Envoy::Stats::Metric::name,
+                                                            "benchmark_http_client.latency_xxx"),
+                                                   latency))
       .Times(0);
   client_->exportLatency(/*response_code=*/200, /*latency_ns=*/latency);
   client_->exportLatency(/*response_code=*/200, /*latency_ns=*/latency);
@@ -241,30 +238,25 @@ TEST_F(BenchmarkClientHttpTest, ExportSuccessLatency) {
 
 TEST_F(BenchmarkClientHttpTest, ExportErrorLatency) {
   setupBenchmarkClient();
-  EXPECT_CALL(mock_store_, deliverHistogramToSinks(
-                               Property(&Envoy::Stats::Metric::name,
-                                        "benchmark_http_client.latency_1xx"),
-                               _))
+  EXPECT_CALL(mock_store_,
+              deliverHistogramToSinks(
+                  Property(&Envoy::Stats::Metric::name, "benchmark_http_client.latency_1xx"), _))
       .Times(1);
-  EXPECT_CALL(mock_store_, deliverHistogramToSinks(
-                               Property(&Envoy::Stats::Metric::name,
-                                        "benchmark_http_client.latency_3xx"),
-                               _))
+  EXPECT_CALL(mock_store_,
+              deliverHistogramToSinks(
+                  Property(&Envoy::Stats::Metric::name, "benchmark_http_client.latency_3xx"), _))
       .Times(1);
-  EXPECT_CALL(mock_store_, deliverHistogramToSinks(
-                               Property(&Envoy::Stats::Metric::name,
-                                        "benchmark_http_client.latency_4xx"),
-                               _))
+  EXPECT_CALL(mock_store_,
+              deliverHistogramToSinks(
+                  Property(&Envoy::Stats::Metric::name, "benchmark_http_client.latency_4xx"), _))
       .Times(1);
-  EXPECT_CALL(mock_store_, deliverHistogramToSinks(
-                               Property(&Envoy::Stats::Metric::name,
-                                        "benchmark_http_client.latency_5xx"),
-                               _))
+  EXPECT_CALL(mock_store_,
+              deliverHistogramToSinks(
+                  Property(&Envoy::Stats::Metric::name, "benchmark_http_client.latency_5xx"), _))
       .Times(1);
-  EXPECT_CALL(mock_store_, deliverHistogramToSinks(
-                               Property(&Envoy::Stats::Metric::name,
-                                        "benchmark_http_client.latency_xxx"),
-                               _))
+  EXPECT_CALL(mock_store_,
+              deliverHistogramToSinks(
+                  Property(&Envoy::Stats::Metric::name, "benchmark_http_client.latency_xxx"), _))
       .Times(1);
   client_->exportLatency(/*response_code=*/100, /*latency_ns=*/1);
   client_->exportLatency(/*response_code=*/300, /*latency_ns=*/3);
@@ -282,7 +274,6 @@ TEST_F(BenchmarkClientHttpTest, ExportErrorLatency) {
   EXPECT_EQ(1, client_->statistics()["benchmark_http_client.latency_xxx"]->count());
   EXPECT_DOUBLE_EQ(6, client_->statistics()["benchmark_http_client.latency_xxx"]->mean());
 }
-
 
 TEST_F(BenchmarkClientHttpTest, StatusTrackingInOnComplete) {
   setupBenchmarkClient();

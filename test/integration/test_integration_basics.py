@@ -10,9 +10,11 @@ import time
 from threading import Thread
 
 from test.integration.common import IpVersion
-from test.integration.integration_test_fixtures import (
-    http_test_server_fixture, https_test_server_fixture, multi_http_test_server_fixture,
-    multi_https_test_server_fixture, server_config)
+from test.integration.integration_test_fixtures import (http_test_server_fixture,
+                                                        https_test_server_fixture,
+                                                        multi_http_test_server_fixture,
+                                                        multi_https_test_server_fixture,
+                                                        server_config)
 from test.integration.utility import *
 
 # TODO(oschaaf): we mostly verify stats observed from the client-side. Add expectations
@@ -74,8 +76,9 @@ def mini_stress_test(fixture, args):
   else:
     assertGreaterEqual(int(global_histograms["sequencer.blocking"]["count"]), 1)
 
-  assertGreaterEqual(
-      int(global_histograms["benchmark_http_client.request_to_response"]["count"]), 1)
+  assertGreaterEqual(int(global_histograms["benchmark_http_client.request_to_response"]["count"]),
+                     1)
+  assertGreaterEqual(int(global_histograms["benchmark_http_client.latency_2xx"]["count"]), 1)
   return counters
 
 
@@ -674,11 +677,12 @@ def test_http_request_release_timing(http_test_server_fixture, qps_parameterizat
     global_histograms = http_test_server_fixture.getNighthawkGlobalHistogramsbyIdFromJson(
         parsed_json)
     counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-    assertEqual(
-        int(global_histograms["benchmark_http_client.request_to_response"]["count"]),
-        total_requests)
-    assertEqual(
-        int(global_histograms["benchmark_http_client.queue_to_connect"]["count"]), total_requests)
+    assertEqual(int(global_histograms["benchmark_http_client.request_to_response"]["count"]),
+                total_requests)
+    assertEqual(int(global_histograms["benchmark_http_client.queue_to_connect"]["count"]),
+                total_requests)
+    assertEqual(int(global_histograms["benchmark_http_client.latency_2xx"]["count"]),
+                total_requests)
 
     assertCounterEqual(counters, "benchmark.http_2xx", (total_requests))
 

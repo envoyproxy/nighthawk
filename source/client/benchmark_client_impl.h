@@ -21,8 +21,9 @@
 
 #include "api/client/options.pb.h"
 
-#include "client/stream_decoder.h"
 #include "common/statistic_impl.h"
+
+#include "client/stream_decoder.h"
 
 namespace Nighthawk {
 namespace Client {

@@ -51,8 +51,8 @@ BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
   statistic.latency_5xx_statistic = std::make_unique<SinkableHdrStatistic>(scope, worker_number);
   statistic.latency_xxx_statistic = std::make_unique<SinkableHdrStatistic>(scope, worker_number);
   auto benchmark_client = std::make_unique<BenchmarkClientHttpImpl>(
-      api, dispatcher, scope, statistic, options_.h2(),
-      cluster_manager, http_tracer, fmt::format("{}", worker_number), request_generator.get(), !options_.openLoop());
+      api, dispatcher, scope, statistic, options_.h2(), cluster_manager, http_tracer,
+      fmt::format("{}", worker_number), request_generator.get(), !options_.openLoop());
   auto request_options = options_.toCommandLineOptions()->request_options();
   benchmark_client->setConnectionLimit(options_.connections());
   benchmark_client->setMaxPendingRequests(options_.maxPendingRequests());
