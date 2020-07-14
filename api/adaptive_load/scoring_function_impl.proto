@@ -11,11 +11,11 @@ package nighthawk.adaptive_load;
 // above the threshold. The score is proportional to the difference from the
 // threshold.
 message LinearScoringFunctionConfig {
-  // The target value of the metric.
+  // The target value of the metric. Required.
   double threshold = 1;
   // Scaling constant: k in k * (threshold - value). Use this in combination
   // with step controller constants to produce reasonable input increments for
-  // reasonable differences from the threshold.
+  // reasonable differences from the threshold. Required.
   double k = 2;
 }
 
@@ -25,9 +25,9 @@ message LinearScoringFunctionConfig {
 // metric equals the threshold, approaches 1.0 for values far below the
 // threshold, and approaches -1.0 for values far above the threshold.
 message SigmoidScoringFunctionConfig {
-  // The target value of the metric.
+  // The target value of the metric. Required.
   double threshold = 1;
   // Tuning constant: k in 1 - 2 / (1 + exp(-k(value - threshold))). k should
-  // be around the same size as 1/threshold.
+  // be around the same size as 1/threshold. Required.
   double k = 2;
 }
