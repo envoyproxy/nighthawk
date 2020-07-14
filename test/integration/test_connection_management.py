@@ -61,13 +61,12 @@ def test_http_h1_connection_management_with_queue_5(http_test_server_fixture):
 
 def connection_management_test_request_per_connection(fixture, requests_per_connection, use_h2):
   max_requests_per_conn = 5
-  counters = run_with_number_of_connections(
-      fixture,
-      1,
-      max_pending_requests=1,
-      requests_per_connection=max_requests_per_conn,
-      run_test_expectation=False,
-      h2=use_h2)
+  counters = run_with_number_of_connections(fixture,
+                                            1,
+                                            max_pending_requests=1,
+                                            requests_per_connection=max_requests_per_conn,
+                                            run_test_expectation=False,
+                                            h2=use_h2)
   requests = counters["upstream_rq_total"]
   assertCounterBetweenInclusive(counters, "upstream_cx_total", (requests / max_requests_per_conn),
                                 (requests / max_requests_per_conn) + 1)

@@ -1,23 +1,23 @@
 #include <chrono>
 
 #include "external/envoy/test/test_common/utility.h"
-#include "test/mocks/common/mock_request_source.h"
+
 #include "common/request_source_impl.h"
+
+#include "test/mocks/common/mock_request_source.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 namespace Nighthawk {
 
-class MockRPCRequestSource : public MockRequestSource {
-
-};
+class MockRPCRequestSource : public MockRequestSource {};
 
 class RequestSourceUnitTest : public testing::Test {
 protected:
   // You can remove any or all of the following functions if their bodies would
   // be empty.
-//  RequestSource* request_generator_;
+  //  RequestSource* request_generator_;
   const RequestGenerator request_generator_;
   RequestSourceUnitTest() {
     // You can do set-up work for each test here.
@@ -43,7 +43,6 @@ protected:
 
   // Class members declared here can be used by all tests in the test suite
   // for Foo.
-  
 };
 TEST_F(RequestSourceUnitTest, MockRPCRequestSource) {
   auto request = request_generator_();

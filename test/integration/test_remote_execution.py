@@ -42,6 +42,7 @@ def test_bad_service_uri(http_test_server_fixture):
   Test configuring a bad service uri.
   """
   args = [http_test_server_fixture.getTestServerRootUri(), "--nighthawk-service", "a:-1"]
-  parsed_json, err = http_test_server_fixture.runNighthawkClient(
-      args, expect_failure=True, as_json=False)
+  parsed_json, err = http_test_server_fixture.runNighthawkClient(args,
+                                                                 expect_failure=True,
+                                                                 as_json=False)
   assert "Bad service uri" in err

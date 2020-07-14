@@ -23,8 +23,7 @@ def test_http_h1_maxrps_no_client_side_queueing(http_test_server_fixture):
   assertCounterEqual(counters, "upstream_cx_http1_total", 1)
   global_histograms = http_test_server_fixture.getNighthawkGlobalHistogramsbyIdFromJson(parsed_json)
   assertGreater(int(global_histograms["sequencer.blocking"]["count"]), MIN_EXPECTED_REQUESTS)
-  assertGreater(
-      int(global_histograms["benchmark_http_client.request_to_response"]["count"]),
-      MIN_EXPECTED_REQUESTS)
+  assertGreater(int(global_histograms["benchmark_http_client.request_to_response"]["count"]),
+                MIN_EXPECTED_REQUESTS)
   # dump output
   logging.info(str(parsed_json))
