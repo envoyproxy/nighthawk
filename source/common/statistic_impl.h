@@ -200,13 +200,12 @@ public:
   // statistic should always set worker_id. Return absl::nullopt when the
   // statistic is not defined per worker.
   const absl::optional<int> worker_id() { return worker_id_; }
-  // Return the Scope reference used for delivering the histogram data to sinks.
-  Envoy::Stats::Scope& scope() { return scope_; }
 
-private:
-  // This is used for delivering the histogram data to sinks.
+protected:
+  // This is used in child class for delivering the histogram data to sinks.
   Envoy::Stats::Scope& scope_;
 
+private:
   // worker_id can be used in downstream stats Sinks as the stats tag.
   absl::optional<int> worker_id_;
 };

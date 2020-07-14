@@ -320,7 +320,7 @@ void SinkableHdrStatistic::recordValue(uint64_t value) {
   addValue(value);
   // Currently in Envoy Scope implementation, deliverHistogramToSinks() will flush the histogram
   // value directly to stats Sinks.
-  scope().deliverHistogramToSinks(*this, value);
+  scope_.deliverHistogramToSinks(*this, value);
 }
 
 SinkableCircllhistStatistic::SinkableCircllhistStatistic(Envoy::Stats::Scope& scope,
@@ -331,7 +331,7 @@ void SinkableCircllhistStatistic::recordValue(uint64_t value) {
   addValue(value);
   // Currently in Envoy Scope implementation, deliverHistogramToSinks() will flush the histogram
   // value directly to stats Sinks.
-  scope().deliverHistogramToSinks(*this, value);
+  scope_.deliverHistogramToSinks(*this, value);
 }
 
 } // namespace Nighthawk
