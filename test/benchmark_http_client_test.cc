@@ -63,28 +63,20 @@ public:
   // }
   void testBasicFunctionality(
       const uint64_t max_pending, const uint64_t connection_limit, const uint64_t amount_of_request,
-      const std::vector<absl::flat_hash_map<std::string, std::string>>& header_expectations = std::vector<absl::flat_hash_map<std::string, std::string>>()) {
-    //, const std::vector<HeaderMapPtr>& header_expectations = std::vector<HeaderMapPtr>()
+      const std::vector<absl::flat_hash_map<std::string, std::string>>& header_expectations =
+          std::vector<absl::flat_hash_map<std::string, std::string>>()) {
     if (client_ == nullptr) {
       setupBenchmarkClient();
       cluster_info().resetResourceManager(connection_limit, max_pending, 1024, 0, 1024);
     }
-
-    //    EXPECT_CALL(stream_encoder_, encodeHeaders(_, _)).Times(AtLeast(1));
-    //    std::Vector<Envoy::Http::RequestHeaderMap>
-    // std::vector<Envoy::Http::RequestHeaderMapImpl> called_headers;
+    // this is where we store the properties of headers that are passed to the stream encoder. We
+    // verify later that these match expected headers.
     std::vector<absl::flat_hash_map<std::string, std::string>> called_headers;
     ON_CALL(stream_encoder_, encodeHeaders(_, _))
         .WillByDefault(WithArgs<0>(
             ([this, &called_headers](const Envoy::Http::RequestHeaderMap& specific_request) {
-              // called_headers.push_back(
-              // std::make_unique<Envoy::Http::RequestHeaderMap>(specific_request));
-              // const Envoy::Http::RequestHeaderMapImpl& testHeaderMap =
-              // dynamic_cast<const Envoy::Http::RequestHeaderMapImpl&>(specific_request);
-              // called_headers.push_back(testHeaderMap);
-//              called_headers.push_back(std::string(specific_request.getPathValue()));
               called_headers.push_back(getTestRecordedProperties(specific_request));
-  })));
+            })));
 
     EXPECT_CALL(pool_, newStream(_, _))
         .WillRepeatedly(Invoke([&](Envoy::Http::ResponseDecoder& decoder,
@@ -141,40 +133,17 @@ public:
     decoders_.clear();
     dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
     EXPECT_EQ(0, inflight_response_count);
-    // std::cerr << "called_headers length: " << called_headers.size() << std::endl;
-    // for (absl::flat_hash_map<std::string, std::string> uri : called_headers)
-    // {
-    //   std::cerr << uri << std::endl;
-    // }
-    if (header_expectations.size() != 0)
-    {
+    // If we have no expectations, then we don't test.
+    if (header_expectations.size() != 0) {
       EXPECT_THAT(header_expectations, UnorderedElementsAreArray(called_headers));
     }
-//    EXPECT_TRUE(matchHeaders(header_expectations, called_uri));
   }
-  absl::flat_hash_map<std::string, std::string> getTestRecordedProperties(const Envoy::Http::RequestHeaderMap& header) { 
-    absl::flat_hash_map<std::string, std::string> properties_map;   
+  absl::flat_hash_map<std::string, std::string>
+  getTestRecordedProperties(const Envoy::Http::RequestHeaderMap& header) {
+    absl::flat_hash_map<std::string, std::string> properties_map;
     properties_map["uri"] = std::string(header.getPathValue());
     return properties_map;
   }
-
-  // bool matchHeaders(const std::vector<HeaderMapPtr>& expected_headers,
-  //                   const std::vector<std::string>& received_uris) {
-  //   if (expected_headers.size() == 0) {
-  //     return true;
-  //   }
-
-  //   if (expected_headers.size() != received_uris.size()) {
-  //     return false;
-  //   }
-  //   for (HeaderMapPtr expected_header : expected_headers) {
-  //     auto test = expected_header->getPathValue();
-  //     if (std::find(received_uris.begin(), received_uris.end(), test) == received_uris.end()) {
-  //       return false;
-  //     }
-  //   }
-  //   return true;
-  // }
 
   void setupBenchmarkClient() {
     client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
@@ -333,7 +302,6 @@ TEST_F(BenchmarkClientHttpTest, BadContentLength) {
   EXPECT_EQ(1, getCounter("http_2xx"));
 }
 TEST_F(BenchmarkClientHttpTest, MultipleRequestsDifferentPath) {
-  // std::queue<std::initializer_list<std::pair<std::string, std::string>>> requests_queue;
   std::vector<HeaderMapPtr> requests_vector;
   auto header1 =
       std::initializer_list<std::pair<std::string, std::string>>({{":scheme", "http"},
@@ -347,8 +315,6 @@ TEST_F(BenchmarkClientHttpTest, MultipleRequestsDifferentPath) {
                                                                   {":path", "/b"},
                                                                   {":host", "localhost"},
                                                                   {"Content-Length", "1313"}});
-  // requests_queue.push(header1);
-  // requests_queue.push(header2);
   requests_vector.push_back(std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(header1));
   requests_vector.push_back(std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(header2));
   std::vector<HeaderMapPtr>::iterator request_iterator;
@@ -357,18 +323,15 @@ TEST_F(BenchmarkClientHttpTest, MultipleRequestsDifferentPath) {
     auto item = *request_iterator;
     request_iterator++;
     return std::make_unique<RequestImpl>(item);
-    // requests_queue.pop();
-    // return std::make_unique<RequestImpl>(
-    //     std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(item));
   };
-  //  std::vector<HeaderMapPtr> expected_headers;
-  // expected_headers.push_back()
-  std::vector<absl::flat_hash_map<std::string, std::string>> bad_requests_vector;
-  bad_requests_vector.push_back(getTestRecordedProperties(Envoy::Http::TestRequestHeaderMapImpl(header1)));
-  bad_requests_vector.push_back(getTestRecordedProperties(Envoy::Http::TestRequestHeaderMapImpl(header2)));
+  std::vector<absl::flat_hash_map<std::string, std::string>> expected_requests_vector;
+  expected_requests_vector.push_back(
+      getTestRecordedProperties(Envoy::Http::TestRequestHeaderMapImpl(header1)));
+  expected_requests_vector.push_back(
+      getTestRecordedProperties(Envoy::Http::TestRequestHeaderMapImpl(header2)));
 
   EXPECT_CALL(stream_encoder_, encodeData(_, _)).Times(2);
-  testBasicFunctionality(1, 1, 2, bad_requests_vector);
+  testBasicFunctionality(1, 1, 2, expected_requests_vector);
   EXPECT_EQ(2, getCounter("http_2xx"));
 }
 } // namespace Nighthawk
