@@ -1,3 +1,5 @@
+// Top-level session spec and output protos for the adaptive load controller.
+
 syntax = "proto3";
 
 package nighthawk.adaptive_load;
@@ -20,12 +22,13 @@ import "validate/validate.proto";
 message AdaptiveLoadSessionSpec {
   // Settings for MetricsPlugins that obtain metrics from outside sources.
   // An entry is required for every plugin referred to by metric_thresholds,
-  // other than the "builtin" plugin.
+  // other than the "builtin" plugin. Optional.
   repeated MetricsPluginConfig metrics_plugin_configs = 1;
-  // Metrics and thresholds that determine load adjustments.
+  // Metrics and thresholds that determine load adjustments. Required.
   repeated MetricSpecWithThreshold metric_thresholds = 2 [(validate.rules).repeated .min_items = 1];
   // Metrics that are collected and included in the output but not taken into
-  // account when adjusting the load.
+  // account when adjusting the load. May be used for debugging or
+  // visualization. Optional.
   repeated MetricSpec informational_metric_specs = 3;
   // A proto describing Nighthawk Service traffic. See
   // https://github.com/envoyproxy/nighthawk/blob/master/api/client/options.proto
@@ -41,22 +44,24 @@ message AdaptiveLoadSessionSpec {
   //
   // Note that |concurrency| in |nighthawk_traffic_options| multiplies the total
   // RPS sent.
+  //
+  // Required.
   nighthawk.client.CommandLineOptions nighthawk_traffic_template = 4
       [(validate.rules).message.required = true];
   // The duration of each short benchmark during the adjusting stage. Must be
-  // set. Reasonable value: 10 seconds.
+  // set. Optional, default 10 seconds.
   google.protobuf.Duration measuring_period = 5
       [(validate.rules).duration.gt.seconds = 0, (validate.rules).duration.required = true];
   // Maximum amount of time the adjusting stage should wait for convergence
-  // before returning an error. Reasonable value: 300 seconds.
+  // before returning an error. Optional, default 300 seconds.
   google.protobuf.Duration convergence_deadline = 6
       [(validate.rules).duration.gt.seconds = 0, (validate.rules).duration.required = true];
   // The duration of the single benchmark session of the testing stage to
   // confirm the performance at the level of load found in the adjusting stage.
-  // Must be set.
+  // Required.
   google.protobuf.Duration testing_stage_duration = 7
       [(validate.rules).duration.gt.seconds = 0, (validate.rules).duration.required = true];
-  // Selects and configures a StepController plugin.
+  // Selects and configures a StepController plugin. Required.
   StepControllerConfig step_controller_config = 8 [(validate.rules).message.required = true];
 }
 

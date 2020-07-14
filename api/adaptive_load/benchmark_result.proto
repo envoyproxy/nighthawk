@@ -1,3 +1,6 @@
+// Protos describing the results of running a single Nighthawk benchmark and
+// scoring the resulting metrics against thresholds.
+
 syntax = "proto3";
 
 package nighthawk.adaptive_load;
