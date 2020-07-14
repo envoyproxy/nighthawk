@@ -55,15 +55,35 @@ public:
       return std::make_unique<RequestImpl>(header);
     };
   }
-
-  void testBasicFunctionality(const uint64_t max_pending, const uint64_t connection_limit,
-                              const uint64_t amount_of_request) {
+  // void testHeaderFunctionality(vector, basicargs)
+  // {
+  //   On_Call here
+  //   testBasicFunctionality(basicargs)
+  //   check on call.
+  // }
+  void testBasicFunctionality(
+      const uint64_t max_pending, const uint64_t connection_limit, const uint64_t amount_of_request,
+      const std::vector<HeaderMapPtr>& header_expectations = std::vector<HeaderMapPtr>()) {
+    //, const std::vector<HeaderMapPtr>& header_expectations = std::vector<HeaderMapPtr>()
     if (client_ == nullptr) {
       setupBenchmarkClient();
       cluster_info().resetResourceManager(connection_limit, max_pending, 1024, 0, 1024);
     }
 
-    EXPECT_CALL(stream_encoder_, encodeHeaders(_, _)).Times(AtLeast(1));
+    //    EXPECT_CALL(stream_encoder_, encodeHeaders(_, _)).Times(AtLeast(1));
+    //    std::Vector<Envoy::Http::RequestHeaderMap>
+    // std::vector<Envoy::Http::RequestHeaderMapImpl> called_headers;
+    std::vector<std::string> called_uri;
+    ON_CALL(stream_encoder_, encodeHeaders(_, _))
+        .WillByDefault(WithArgs<0>(
+            ([&called_uri](const Envoy::Http::RequestHeaderMap& specific_request) {
+              // called_headers.push_back(
+              // std::make_unique<Envoy::Http::RequestHeaderMap>(specific_request));
+              // const Envoy::Http::RequestHeaderMapImpl& testHeaderMap =
+              // dynamic_cast<const Envoy::Http::RequestHeaderMapImpl&>(specific_request);
+              // called_headers.push_back(testHeaderMap);
+              called_uri.push_back(std::string(specific_request.getPathValue()));
+  })));
 
     EXPECT_CALL(pool_, newStream(_, _))
         .WillRepeatedly(Invoke([&](Envoy::Http::ResponseDecoder& decoder,
@@ -120,6 +140,24 @@ public:
     decoders_.clear();
     dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
     EXPECT_EQ(0, inflight_response_count);
+    EXPECT_TRUE(matchHeaders(header_expectations, called_uri));
+  }
+  bool matchHeaders(const std::vector<HeaderMapPtr>& expected_headers,
+                    const std::vector<std::string>& received_uris) {
+    if (expected_headers.size() == 0) {
+      return true;
+    }
+
+    if (expected_headers.size() != received_uris.size()) {
+      return false;
+    }
+    for (HeaderMapPtr expected_header : expected_headers) {
+      auto test = expected_header->getPathValue();
+      if (std::find(received_uris.begin(), received_uris.end(), test) == received_uris.end()) {
+        return false;
+      }
+    }
+    return true;
   }
 
   void setupBenchmarkClient() {
@@ -278,43 +316,35 @@ TEST_F(BenchmarkClientHttpTest, BadContentLength) {
   testBasicFunctionality(1, 1, 1);
   EXPECT_EQ(1, getCounter("http_2xx"));
 }
-// TEST_F(BenchmarkClientHttpTest, MultipleRequestsDifferentPath) {
-//   std::queue<std::initializer_list<std::pair<std::string, std::string>>> requests_queue;  
-//   auto header1 = std::initializer_list<std::pair<std::string, std::string>>({{":scheme", "http"},
-//                                                                     {":method", "GET"},
-//                                                                     {":path", "/a"},
-//                                                                     {":host", "localhost"},
-//                                                                 {"Content-Length", "1313"}});
-//   auto header2 = std::initializer_list<std::pair<std::string, std::string>>({{":scheme", "http"},
-//                                                                     {":method", "GET"},
-//                                                                     {":path", "/b"},
-//                                                                     {":host", "localhost"},
-//                                                                 {"Content-Length", "1313"}});
-//   requests_queue.push(header1);
-//   requests_queue.push(header2);
-//   request_generator_ = [&]() {
-//     auto item = requests_queue.front();
-//     requests_queue.pop();
-//     return std::make_unique<RequestImpl>(std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(item));
-//   };
-
-//   EXPECT_CALL(stream_encoder_, encodeData(_, _)).Times(2);
-//   testBasicFunctionality(1, 1, 1);
-//   EXPECT_EQ(1, getCounter("http_2xx"));
-//   // request_generator_ = []() {
-//   //   auto header = std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(
-//   //       std::initializer_list<std::pair<std::string, std::string>>({{":scheme", "http"},
-//   //                                                                   {":method", "POST"},
-//   //                                                                   {":path", "/b"},
-//   //                                                                   {":host", "localhost"},
-//   //                                                                   {"a", "b"},
-//   //                                                                   {"c", "d"},
-//   //                                                                   {"Content-Length", "1313"}}));
-//   //   return std::make_unique<RequestImpl>(header);
-//   // };
-
-//   // EXPECT_CALL(stream_encoder_, encodeData(_, _)).Times(0);
-//   // testBasicFunctionality(1, 1, 1);
-//   // EXPECT_EQ(1, getCounter("http_2xx"));
-// }
+TEST_F(BenchmarkClientHttpTest, MultipleRequestsDifferentPath) {
+  std::queue<std::initializer_list<std::pair<std::string, std::string>>> requests_queue;
+  std::vector<HeaderMapPtr> requests_vector;
+  auto header1 =
+      std::initializer_list<std::pair<std::string, std::string>>({{":scheme", "http"},
+                                                                  {":method", "GET"},
+                                                                  {":path", "/a"},
+                                                                  {":host", "localhost"},
+                                                                  {"Content-Length", "1313"}});
+  auto header2 =
+      std::initializer_list<std::pair<std::string, std::string>>({{":scheme", "http"},
+                                                                  {":method", "GET"},
+                                                                  {":path", "/b"},
+                                                                  {":host", "localhost"},
+                                                                  {"Content-Length", "1313"}});
+  requests_queue.push(header1);
+  requests_queue.push(header2);
+  requests_vector.push_back(std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(header1));
+  requests_vector.push_back(std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(header2));
+  request_generator_ = [&]() {
+    auto item = requests_queue.front();
+    requests_queue.pop();
+    return std::make_unique<RequestImpl>(
+        std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(item));
+  };
+  //  std::vector<HeaderMapPtr> expected_headers;
+  // expected_headers.push_back()
+  EXPECT_CALL(stream_encoder_, encodeData(_, _)).Times(2);
+  testBasicFunctionality(1, 1, 2);
+  EXPECT_EQ(2, getCounter("http_2xx"));
+}
 } // namespace Nighthawk
