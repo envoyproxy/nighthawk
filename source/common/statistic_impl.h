@@ -167,6 +167,8 @@ public:
   double pvariance() const override;
   double pstdev() const override;
   StatisticPtr combine(const Statistic& statistic) const override;
+  // circllhist has low significant digit precision as a result of base 10
+  // algorithm.
   uint64_t significantDigits() const override { return 1; }
   StatisticPtr createNewInstanceOfSameType() const override;
   nighthawk::client::Statistic toProto(SerializationDomain domain) const override;
@@ -198,11 +200,13 @@ public:
   // statistic should always set worker_id. Return absl::nullopt when the
   // statistic is not defined per worker.
   const absl::optional<int> worker_id() { return worker_id_; }
+  // Return the Scope reference.
+  Envoy::Stats::Scope& scope() { return scope_; }
 
+private:
   // This is used for delivering the histogram data to sinks.
   Envoy::Stats::Scope& scope_;
 
-private:
   // worker_id can be used in downstream stats Sinks as the stats tag.
   absl::optional<int> worker_id_;
 };
