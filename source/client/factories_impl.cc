@@ -39,12 +39,19 @@ BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
   // NullStatistic).
   // TODO(#292): Create options and have the StatisticFactory consider those when instantiating
   // statistics.
+  BenchmarkClientStatistic statistic;
+  statistic.connect_statistic = statistic_factory.create();
+  statistic.response_statistic = statistic_factory.create();
+  statistic.response_header_size_statistic = std::make_unique<StreamingStatistic>();
+  statistic.response_body_size_statistic = std::make_unique<StreamingStatistic>();
+  statistic.latency_1xx_statistic = std::make_unique<SinkableHdrStatistic>(scope, worker_number);
+  statistic.latency_2xx_statistic = std::make_unique<SinkableHdrStatistic>(scope, worker_number);
+  statistic.latency_3xx_statistic = std::make_unique<SinkableHdrStatistic>(scope, worker_number);
+  statistic.latency_4xx_statistic = std::make_unique<SinkableHdrStatistic>(scope, worker_number);
+  statistic.latency_5xx_statistic = std::make_unique<SinkableHdrStatistic>(scope, worker_number);
+  statistic.latency_xxx_statistic = std::make_unique<SinkableHdrStatistic>(scope, worker_number);
   auto benchmark_client = std::make_unique<BenchmarkClientHttpImpl>(
-      api, dispatcher, scope, statistic_factory.create(), statistic_factory.create(),
-      std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(), 
-      std::make_unique<SinkableHdrStatistic>(scope, worker_number),
-      std::make_unique<SinkableHdrStatistic>(scope, worker_number),
-      options_.h2(),
+      api, dispatcher, scope, statistic, options_.h2(),
       cluster_manager, http_tracer, fmt::format("{}", worker_number), request_generator.get(), !options_.openLoop());
   auto request_options = options_.toCommandLineOptions()->request_options();
   benchmark_client->setConnectionLimit(options_.connections());

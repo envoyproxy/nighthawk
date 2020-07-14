@@ -46,6 +46,20 @@ struct BenchmarkClientStats {
   ALL_BENCHMARK_CLIENT_STATS(GENERATE_COUNTER_STRUCT)
 };
 
+// For histogram metrics, Nighthawk Statistic is used instead of Envoy Histogram.
+struct BenchmarkClientStatistic {
+  StatisticPtr connect_statistic;
+  StatisticPtr response_statistic;
+  StatisticPtr response_header_size_statistic;
+  StatisticPtr response_body_size_statistic;
+  std::unique_ptr<SinkableHdrStatistic> latency_1xx_statistic;
+  std::unique_ptr<SinkableHdrStatistic> latency_2xx_statistic;
+  std::unique_ptr<SinkableHdrStatistic> latency_3xx_statistic;
+  std::unique_ptr<SinkableHdrStatistic> latency_4xx_statistic;
+  std::unique_ptr<SinkableHdrStatistic> latency_5xx_statistic;
+  std::unique_ptr<SinkableHdrStatistic> latency_xxx_statistic;
+};
+
 class Http1PoolImpl : public Envoy::Http::Http1::ProdConnPoolImpl {
 public:
   enum class ConnectionReuseStrategy {
@@ -73,14 +87,8 @@ class BenchmarkClientHttpImpl : public BenchmarkClient,
                                 public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
   BenchmarkClientHttpImpl(Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher,
-                          Envoy::Stats::Scope& scope, StatisticPtr&& connect_statistic,
-                          StatisticPtr&& response_statistic,
-                          StatisticPtr&& response_header_size_statistic,
-                          StatisticPtr&& response_body_size_statistic,
-                          std::unique_ptr<SinkableHdrStatistic>&& latency_2xx_statistic,
-                          std::unique_ptr<SinkableHdrStatistic>&& latency_xxx_statistic,
-                          bool use_h2,
-                          Envoy::Upstream::ClusterManagerPtr& cluster_manager,
+                          Envoy::Stats::Scope& scope, BenchmarkClientStatistic& statistic,
+                          bool use_h2, Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                           Envoy::Tracing::HttpTracerSharedPtr& http_tracer,
                           absl::string_view cluster_name, RequestGenerator request_generator,
                           const bool provide_resource_backpressure);
@@ -127,7 +135,11 @@ private:
   StatisticPtr response_statistic_;
   StatisticPtr response_header_size_statistic_;
   StatisticPtr response_body_size_statistic_;
+  std::unique_ptr<SinkableHdrStatistic> latency_1xx_statistic_;
   std::unique_ptr<SinkableHdrStatistic> latency_2xx_statistic_;
+  std::unique_ptr<SinkableHdrStatistic> latency_3xx_statistic_;
+  std::unique_ptr<SinkableHdrStatistic> latency_4xx_statistic_;
+  std::unique_ptr<SinkableHdrStatistic> latency_5xx_statistic_;
   std::unique_ptr<SinkableHdrStatistic> latency_xxx_statistic_;
   const bool use_h2_;
   std::chrono::seconds timeout_{5s};

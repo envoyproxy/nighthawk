@@ -199,6 +199,7 @@ public:
   // statistic is not defined per worker.
   const absl::optional<int> worker_id() { return worker_id_; }
 
+protected:
   // This is used for delivering the histogram data to sinks.
   Envoy::Stats::Scope& scope_;
 

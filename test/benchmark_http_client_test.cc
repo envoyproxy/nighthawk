@@ -54,6 +54,22 @@ public:
               {{":scheme", "http"}, {":method", "GET"}, {":path", "/"}, {":host", "localhost"}}));
       return std::make_unique<RequestImpl>(header);
     };
+    statistic_.connect_statistic = std::make_unique<StreamingStatistic>();
+    statistic_.response_statistic = std::make_unique<StreamingStatistic>();
+    statistic_.response_header_size_statistic = std::make_unique<StreamingStatistic>();
+    statistic_.response_body_size_statistic = std::make_unique<StreamingStatistic>();
+    statistic_.latency_1xx_statistic =
+        std::make_unique<SinkableHdrStatistic>(mock_store_, worker_number_);
+    statistic_.latency_2xx_statistic =
+        std::make_unique<SinkableHdrStatistic>(mock_store_, worker_number_);
+    statistic_.latency_3xx_statistic =
+        std::make_unique<SinkableHdrStatistic>(mock_store_, worker_number_);
+    statistic_.latency_4xx_statistic =
+        std::make_unique<SinkableHdrStatistic>(mock_store_, worker_number_);
+    statistic_.latency_5xx_statistic =
+        std::make_unique<SinkableHdrStatistic>(mock_store_, worker_number_);
+    statistic_.latency_xxx_statistic =
+        std::make_unique<SinkableHdrStatistic>(mock_store_, worker_number_);
   }
 
   void testBasicFunctionality(const uint64_t max_pending, const uint64_t connection_limit,
@@ -124,11 +140,7 @@ public:
 
   void setupBenchmarkClient() {
     client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
-        *api_, *dispatcher_, mock_store_, std::make_unique<StreamingStatistic>(),
-        std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
-        std::make_unique<StreamingStatistic>(),
-        std::make_unique<SinkableHdrStatistic>(mock_store_, worker_number_),
-        std::make_unique<SinkableHdrStatistic>(mock_store_, worker_number_),
+        *api_, *dispatcher_, mock_store_, statistic_,
         false, cluster_manager_, http_tracer_, "benchmark",
         request_generator_, true);
   }
@@ -165,6 +177,7 @@ public:
   std::string response_code_;
   RequestGenerator request_generator_;
   int worker_number_{0};
+  Client::BenchmarkClientStatistic statistic_;
 };
 
 TEST_F(BenchmarkClientHttpTest, BasicTestH1200) {
@@ -223,27 +236,53 @@ TEST_F(BenchmarkClientHttpTest, ExportSuccessLatency) {
   client_->exportLatency(/*response_code=*/200, /*latency_ns=*/latency);
   client_->exportLatency(/*response_code=*/200, /*latency_ns=*/latency);
   EXPECT_EQ(2, client_->statistics()["benchmark_http_client.latency_2xx"]->count());
-  EXPECT_DOUBLE_EQ(10, client_->statistics()["benchmark_http_client.latency_2xx"]->mean());
+  EXPECT_DOUBLE_EQ(latency, client_->statistics()["benchmark_http_client.latency_2xx"]->mean());
 }
 
 TEST_F(BenchmarkClientHttpTest, ExportErrorLatency) {
   setupBenchmarkClient();
   EXPECT_CALL(mock_store_, deliverHistogramToSinks(
                                Property(&Envoy::Stats::Metric::name,
-                                        "benchmark_http_client.latency_xxx"),
+                                        "benchmark_http_client.latency_1xx"),
                                _))
-      .Times(3);
+      .Times(1);
   EXPECT_CALL(mock_store_, deliverHistogramToSinks(
                                Property(&Envoy::Stats::Metric::name,
-                                        "benchmark_http_client.latency_2xx"),
+                                        "benchmark_http_client.latency_3xx"),
                                _))
-      .Times(0);
-  client_->exportLatency(/*response_code=*/500, /*latency_ns=*/1);
-  client_->exportLatency(/*response_code=*/100, /*latency_ns=*/2);
-  client_->exportLatency(/*response_code=*/600, /*latency_ns=*/3);
-  EXPECT_EQ(3, client_->statistics()["benchmark_http_client.latency_xxx"]->count());
-  EXPECT_DOUBLE_EQ(2, client_->statistics()["benchmark_http_client.latency_xxx"]->mean());
+      .Times(1);
+  EXPECT_CALL(mock_store_, deliverHistogramToSinks(
+                               Property(&Envoy::Stats::Metric::name,
+                                        "benchmark_http_client.latency_4xx"),
+                               _))
+      .Times(1);
+  EXPECT_CALL(mock_store_, deliverHistogramToSinks(
+                               Property(&Envoy::Stats::Metric::name,
+                                        "benchmark_http_client.latency_5xx"),
+                               _))
+      .Times(1);
+  EXPECT_CALL(mock_store_, deliverHistogramToSinks(
+                               Property(&Envoy::Stats::Metric::name,
+                                        "benchmark_http_client.latency_xxx"),
+                               _))
+      .Times(1);
+  client_->exportLatency(/*response_code=*/100, /*latency_ns=*/1);
+  client_->exportLatency(/*response_code=*/300, /*latency_ns=*/3);
+  client_->exportLatency(/*response_code=*/400, /*latency_ns=*/4);
+  client_->exportLatency(/*response_code=*/500, /*latency_ns=*/5);
+  client_->exportLatency(/*response_code=*/600, /*latency_ns=*/6);
+  EXPECT_EQ(1, client_->statistics()["benchmark_http_client.latency_1xx"]->count());
+  EXPECT_DOUBLE_EQ(1, client_->statistics()["benchmark_http_client.latency_1xx"]->mean());
+  EXPECT_EQ(1, client_->statistics()["benchmark_http_client.latency_xxx"]->count());
+  EXPECT_DOUBLE_EQ(3, client_->statistics()["benchmark_http_client.latency_3xx"]->mean());
+  EXPECT_EQ(1, client_->statistics()["benchmark_http_client.latency_xxx"]->count());
+  EXPECT_DOUBLE_EQ(4, client_->statistics()["benchmark_http_client.latency_4xx"]->mean());
+  EXPECT_EQ(1, client_->statistics()["benchmark_http_client.latency_xxx"]->count());
+  EXPECT_DOUBLE_EQ(5, client_->statistics()["benchmark_http_client.latency_5xx"]->mean());
+  EXPECT_EQ(1, client_->statistics()["benchmark_http_client.latency_xxx"]->count());
+  EXPECT_DOUBLE_EQ(6, client_->statistics()["benchmark_http_client.latency_xxx"]->mean());
 }
+
 
 TEST_F(BenchmarkClientHttpTest, StatusTrackingInOnComplete) {
   setupBenchmarkClient();

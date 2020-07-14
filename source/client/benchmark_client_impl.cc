@@ -49,20 +49,21 @@ Http1PoolImpl::newStream(Envoy::Http::ResponseDecoder& response_decoder,
 
 BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
     Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
-    StatisticPtr&& connect_statistic, StatisticPtr&& response_statistic,
-    StatisticPtr&& response_header_size_statistic, StatisticPtr&& response_body_size_statistic,
-    std::unique_ptr<SinkableHdrStatistic>&& latency_2xx_statistic,
-    std::unique_ptr<SinkableHdrStatistic>&& latency_xxx_statistic,
-    bool use_h2, Envoy::Upstream::ClusterManagerPtr& cluster_manager,
+    BenchmarkClientStatistic& statistic, bool use_h2,
+    Envoy::Upstream::ClusterManagerPtr& cluster_manager,
     Envoy::Tracing::HttpTracerSharedPtr& http_tracer, absl::string_view cluster_name,
     RequestGenerator request_generator, const bool provide_resource_backpressure)
     : api_(api), dispatcher_(dispatcher), scope_(scope.createScope("benchmark.")),
-      connect_statistic_(std::move(connect_statistic)),
-      response_statistic_(std::move(response_statistic)),
-      response_header_size_statistic_(std::move(response_header_size_statistic)),
-      response_body_size_statistic_(std::move(response_body_size_statistic)),
-      latency_2xx_statistic_(std::move(latency_2xx_statistic)),
-      latency_xxx_statistic_(std::move(latency_xxx_statistic)),
+      connect_statistic_(std::move(statistic.connect_statistic)),
+      response_statistic_(std::move(statistic.response_statistic)),
+      response_header_size_statistic_(std::move(statistic.response_header_size_statistic)),
+      response_body_size_statistic_(std::move(statistic.response_body_size_statistic)),
+      latency_1xx_statistic_(std::move(statistic.latency_1xx_statistic)),
+      latency_2xx_statistic_(std::move(statistic.latency_2xx_statistic)),
+      latency_3xx_statistic_(std::move(statistic.latency_3xx_statistic)),
+      latency_4xx_statistic_(std::move(statistic.latency_4xx_statistic)),
+      latency_5xx_statistic_(std::move(statistic.latency_5xx_statistic)),
+      latency_xxx_statistic_(std::move(statistic.latency_xxx_statistic)),
       use_h2_(use_h2),
       benchmark_client_stats_({ALL_BENCHMARK_CLIENT_STATS(POOL_COUNTER(*scope_))}),
       cluster_manager_(cluster_manager), http_tracer_(http_tracer),
@@ -72,7 +73,11 @@ BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
   response_statistic_->setId("benchmark_http_client.request_to_response");
   response_header_size_statistic_->setId("benchmark_http_client.response_header_size");
   response_body_size_statistic_->setId("benchmark_http_client.response_body_size");
+  latency_1xx_statistic_->setId("benchmark_http_client.latency_1xx");
   latency_2xx_statistic_->setId("benchmark_http_client.latency_2xx");
+  latency_3xx_statistic_->setId("benchmark_http_client.latency_3xx");
+  latency_4xx_statistic_->setId("benchmark_http_client.latency_4xx");
+  latency_5xx_statistic_->setId("benchmark_http_client.latency_5xx");
   latency_xxx_statistic_->setId("benchmark_http_client.latency_xxx");
 }
 
@@ -90,7 +95,11 @@ StatisticPtrMap BenchmarkClientHttpImpl::statistics() const {
   statistics[response_statistic_->id()] = response_statistic_.get();
   statistics[response_header_size_statistic_->id()] = response_header_size_statistic_.get();
   statistics[response_body_size_statistic_->id()] = response_body_size_statistic_.get();
+  statistics[latency_1xx_statistic_->id()] = latency_1xx_statistic_.get();
   statistics[latency_2xx_statistic_->id()] = latency_2xx_statistic_.get();
+  statistics[latency_3xx_statistic_->id()] = latency_3xx_statistic_.get();
+  statistics[latency_4xx_statistic_->id()] = latency_4xx_statistic_.get();
+  statistics[latency_5xx_statistic_->id()] = latency_5xx_statistic_.get();
   statistics[latency_xxx_statistic_->id()] = latency_xxx_statistic_.get();
   return statistics;
 };
@@ -180,8 +189,16 @@ void BenchmarkClientHttpImpl::onPoolFailure(Envoy::Http::ConnectionPool::PoolFai
 
 void BenchmarkClientHttpImpl::exportLatency(const uint32_t response_code,
                                             const uint64_t latency_ns) {
-  if (response_code > 199 && response_code <= 299) {
+  if (response_code > 99 && response_code <= 199) {
+    latency_1xx_statistic_->recordValue(latency_ns);
+  } else if (response_code > 199 && response_code <= 299) {
     latency_2xx_statistic_->recordValue(latency_ns);
+  } else if (response_code > 299 && response_code <= 399) {
+    latency_3xx_statistic_->recordValue(latency_ns);
+  } else if (response_code > 399 && response_code <= 499) {
+    latency_4xx_statistic_->recordValue(latency_ns);
+  } else if (response_code > 499 && response_code <= 599) {
+    latency_5xx_statistic_->recordValue(latency_ns);
   } else {
     latency_xxx_statistic_->recordValue(latency_ns);
   }
