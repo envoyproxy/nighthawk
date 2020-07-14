@@ -13,7 +13,6 @@
 #include "nighthawk/common/request_source.h"
 #include "nighthawk/common/sequencer.h"
 #include "nighthawk/common/statistic.h"
-#include "nighthawk/source/common/statistic_impl.h"
 
 #include "external/envoy/source/common/common/logger.h"
 #include "external/envoy/source/common/http/http1/conn_pool.h"
@@ -23,6 +22,7 @@
 #include "api/client/options.pb.h"
 
 #include "client/stream_decoder.h"
+#include "common/statistic_impl.h"
 
 namespace Nighthawk {
 namespace Client {
