@@ -10,9 +10,11 @@ import time
 from threading import Thread
 
 from test.integration.common import IpVersion
-from test.integration.integration_test_fixtures import (
-    http_test_server_fixture, https_test_server_fixture, multi_http_test_server_fixture,
-    multi_https_test_server_fixture, server_config)
+from test.integration.integration_test_fixtures import (http_test_server_fixture,
+                                                        https_test_server_fixture,
+                                                        multi_http_test_server_fixture,
+                                                        multi_https_test_server_fixture,
+                                                        server_config)
 from test.integration import asserts
 from test.integration import utility
 
@@ -43,20 +45,20 @@ def test_http_h1(http_test_server_fixture):
   asserts.assertCounterEqual(counters, "default.total_match_count", 1)
 
   global_histograms = http_test_server_fixture.getNighthawkGlobalHistogramsbyIdFromJson(parsed_json)
-  asserts.assertEqual(
-      int(global_histograms["benchmark_http_client.response_body_size"]["count"]), 25)
-  asserts.assertEqual(
-      int(global_histograms["benchmark_http_client.response_header_size"]["count"]), 25)
+  asserts.assertEqual(int(global_histograms["benchmark_http_client.response_body_size"]["count"]),
+                      25)
+  asserts.assertEqual(int(global_histograms["benchmark_http_client.response_header_size"]["count"]),
+                      25)
   asserts.assertEqual(
       int(global_histograms["benchmark_http_client.response_body_size"]["raw_mean"]), 10)
   asserts.assertEqual(
       int(global_histograms["benchmark_http_client.response_header_size"]["raw_mean"]), 97)
-  asserts.assertEqual(
-      int(global_histograms["benchmark_http_client.response_body_size"]["raw_min"]), 10)
+  asserts.assertEqual(int(global_histograms["benchmark_http_client.response_body_size"]["raw_min"]),
+                      10)
   asserts.assertEqual(
       int(global_histograms["benchmark_http_client.response_header_size"]["raw_min"]), 97)
-  asserts.assertEqual(
-      int(global_histograms["benchmark_http_client.response_body_size"]["raw_max"]), 10)
+  asserts.assertEqual(int(global_histograms["benchmark_http_client.response_body_size"]["raw_max"]),
+                      10)
   asserts.assertEqual(
       int(global_histograms["benchmark_http_client.response_header_size"]["raw_max"]), 97)
   asserts.assertEqual(
@@ -662,8 +664,8 @@ def test_http_request_release_timing(http_test_server_fixture, qps_parameterizat
     asserts.assertEqual(
         int(global_histograms["benchmark_http_client.request_to_response"]["count"]),
         total_requests)
-    asserts.assertEqual(
-        int(global_histograms["benchmark_http_client.queue_to_connect"]["count"]), total_requests)
+    asserts.assertEqual(int(global_histograms["benchmark_http_client.queue_to_connect"]["count"]),
+                        total_requests)
 
     asserts.assertCounterEqual(counters, "benchmark.http_2xx", (total_requests))
 

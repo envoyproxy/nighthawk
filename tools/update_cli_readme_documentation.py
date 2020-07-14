@@ -19,12 +19,11 @@ if __name__ == "__main__":
       "--readme",
       required=True,
       help="Relative path to the target documentation file, for example: \"README.md\"")
-  parser.add_argument(
-      "--mode",
-      default="check",
-      required=True,
-      choices={"check", "fix"},
-      help="Either \"check\" or \"fix\"")
+  parser.add_argument("--mode",
+                      default="check",
+                      required=True,
+                      choices={"check", "fix"},
+                      help="Either \"check\" or \"fix\"")
 
   args = parser.parse_args()
   logging.getLogger().setLevel(logging.INFO)
@@ -48,13 +47,13 @@ if __name__ == "__main__":
 
   if replaced != original_contents:
     if args.mode == "check":
-      logging.info(
-          "CLI documentation in /%s needs to be updated for %s" % (args.readme, args.binary))
+      logging.info("CLI documentation in /%s needs to be updated for %s" %
+                   (args.readme, args.binary))
       sys.exit(-1)
     elif args.mode == "fix":
       with target_path.open("w", encoding="utf-8") as f:
-        logging.error(
-            "CLI documentation in /%s needs to be updated for %s" % (args.readme, args.binary))
+        logging.error("CLI documentation in /%s needs to be updated for %s" %
+                      (args.readme, args.binary))
         f.write("%s" % replaced)
 
   logging.info("Done")

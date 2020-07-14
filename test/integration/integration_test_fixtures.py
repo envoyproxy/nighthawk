@@ -136,13 +136,12 @@ class IntegrationTestBase():
 
   def _tryStartTestServers(self):
     for i in range(self._backend_count):
-      test_server = NighthawkTestServer(
-          self._nighthawk_test_server_path,
-          self._nighthawk_test_config_path,
-          self.server_ip,
-          self.ip_version,
-          parameters=self.parameters,
-          tag=self.tag)
+      test_server = NighthawkTestServer(self._nighthawk_test_server_path,
+                                        self._nighthawk_test_config_path,
+                                        self.server_ip,
+                                        self.ip_version,
+                                        parameters=self.parameters,
+                                        tag=self.tag)
       if not test_server.start():
         return False
       self._test_servers.append(test_server)
@@ -256,8 +255,10 @@ class IntegrationTestBase():
       args = ["docker", "run", "--rm", "-i", os.getenv("NH_DOCKER_IMAGE")]
     args = args + [self._nighthawk_output_transform_path, "--output-format", format]
     logging.info("Nighthawk output transform popen() args: %s" % args)
-    client_process = subprocess.Popen(
-        args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    client_process = subprocess.Popen(args,
+                                      stdin=subprocess.PIPE,
+                                      stdout=subprocess.PIPE,
+                                      stderr=subprocess.PIPE)
     logging.info("Nighthawk client popen() args: [%s]" % args)
     stdout, stderr = client_process.communicate(input=json.encode())
     # We suppress declared but not used warnings below, as these may produce helpful

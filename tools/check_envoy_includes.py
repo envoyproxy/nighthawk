@@ -34,8 +34,8 @@ def _inspect_line(bazel_output_base, file_path, line):
 
       if alternative_found:
         sys.stderr.writelines("Bad include in file " + str(file_path) + ": " + path)
-        sys.stderr.writelines(
-            " (Possible fixed path: %s" % potential_envoy_path[len(bazel_output_base) + 1:] + ")\n")
+        sys.stderr.writelines(" (Possible fixed path: %s" %
+                              potential_envoy_path[len(bazel_output_base) + 1:] + ")\n")
         return False
 
   return True
@@ -46,7 +46,7 @@ def _inspect_file(bazel_output_base, file_path):
   with open(str(file_path), encoding='utf-8') as f:
     lines = f.readlines()
     offending_lines.extend(
-        l for l in lines if not _inspect_line(bazel_output_base, file_path, l.strip()))
+        line for line in lines if not _inspect_line(bazel_output_base, file_path, line.strip()))
   return offending_lines
 
 
