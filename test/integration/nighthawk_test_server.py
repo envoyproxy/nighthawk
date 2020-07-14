@@ -88,19 +88,18 @@ class TestServerBase(object):
 
     Path(self.tmpdir).mkdir(parents=True, exist_ok=True)
 
-    with tempfile.NamedTemporaryFile(
-        mode="w", delete=False, suffix=".config.yaml", dir=self.tmpdir) as tmp:
+    with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".config.yaml",
+                                     dir=self.tmpdir) as tmp:
       self._parameterized_config_path = tmp.name
-      yaml.safe_dump(
-          data,
-          tmp,
-          default_flow_style=False,
-          explicit_start=True,
-          allow_unicode=True,
-          encoding='utf-8')
+      yaml.safe_dump(data,
+                     tmp,
+                     default_flow_style=False,
+                     explicit_start=True,
+                     allow_unicode=True,
+                     encoding='utf-8')
 
-    with tempfile.NamedTemporaryFile(
-        mode="w", delete=False, suffix=".adminport", dir=self.tmpdir) as tmp:
+    with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".adminport",
+                                     dir=self.tmpdir) as tmp:
       self._admin_address_path = tmp.name
 
   def serverThreadRunner(self):

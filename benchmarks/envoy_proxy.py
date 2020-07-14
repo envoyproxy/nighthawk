@@ -39,13 +39,12 @@ class EnvoyProxyServer(NighthawkTestServer):
       tag: String. Supply this to get recognizeable output locations (optional).
     """
     # If no explicit envoy path is passed, we'll use nighthawk_test_server.
-    super(EnvoyProxyServer, self).__init__(
-        os.getenv("ENVOY_PATH", "nighthawk_test_server"),
-        config_template_path,
-        server_ip,
-        ip_version,
-        parameters=parameters,
-        tag=tag)
+    super(EnvoyProxyServer, self).__init__(os.getenv("ENVOY_PATH", "nighthawk_test_server"),
+                                           config_template_path,
+                                           server_ip,
+                                           ip_version,
+                                           parameters=parameters,
+                                           tag=tag)
     self.docker_image = os.getenv("ENVOY_DOCKER_IMAGE_TO_TEST", "")
 
 
@@ -83,15 +82,14 @@ class InjectHttpProxyIntegrationTestBase(HttpIntegrationTestBase):
     # TODO(oschaaf): how should this interact with multiple backends?
     self.parameters["proxy_ip"] = self.test_server.server_ip
     self.parameters["server_port"] = self.test_server.server_port
-    proxy_server = EnvoyProxyServer(
-        self._proxy_config,
-        self.server_ip,
-        self.ip_version,
-        parameters=self.parameters,
-        tag=self.tag)
+    proxy_server = EnvoyProxyServer(self._proxy_config,
+                                    self.server_ip,
+                                    self.ip_version,
+                                    parameters=self.parameters,
+                                    tag=self.tag)
     assert (proxy_server.start())
-    logging.info("envoy proxy listening at {ip}:{port}".format(
-        ip=proxy_server.server_ip, port=proxy_server.server_port))
+    logging.info("envoy proxy listening at {ip}:{port}".format(ip=proxy_server.server_ip,
+                                                               port=proxy_server.server_port))
     self.proxy_server = proxy_server
 
   def tearDown(self):

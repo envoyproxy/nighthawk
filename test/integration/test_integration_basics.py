@@ -10,9 +10,11 @@ import time
 from threading import Thread
 
 from test.integration.common import IpVersion
-from test.integration.integration_test_fixtures import (
-    http_test_server_fixture, https_test_server_fixture, multi_http_test_server_fixture,
-    multi_https_test_server_fixture, server_config)
+from test.integration.integration_test_fixtures import (http_test_server_fixture,
+                                                        https_test_server_fixture,
+                                                        multi_http_test_server_fixture,
+                                                        multi_https_test_server_fixture,
+                                                        server_config)
 from test.integration.utility import *
 
 # TODO(oschaaf): we mostly verify stats observed from the client-side. Add expectations
