@@ -5,9 +5,8 @@ syntax = "proto3";
 package nighthawk.adaptive_load;
 
 import "api/adaptive_load/benchmark_result.proto";
-import "api/adaptive_load/metrics_plugin.proto";
+import "api/adaptive_load/config.proto";
 import "api/adaptive_load/metric_spec.proto";
-import "api/adaptive_load/step_controller.proto";
 import "api/client/options.proto";
 import "google/protobuf/duration.proto";
 import "google/rpc/status.proto";
@@ -24,8 +23,10 @@ message AdaptiveLoadSessionSpec {
   // An entry is required for every plugin referred to by metric_thresholds,
   // other than the "builtin" plugin. Optional.
   repeated MetricsPluginConfig metrics_plugin_configs = 1;
-  // Metrics and thresholds that determine load adjustments. Required.
-  repeated MetricSpecWithThreshold metric_thresholds = 2 [(validate.rules).repeated .min_items = 1];
+  // Metrics and thresholds that determine load adjustments. The order of
+  // metrics is not significant. Required.
+  repeated MetricSpecWithThreshold metric_thresholds = 2
+      [ (validate.rules).repeated .min_items = 1 ];
   // Metrics that are collected and included in the output but not taken into
   // account when adjusting the load. May be used for debugging or
   // visualization. Optional.
@@ -47,22 +48,29 @@ message AdaptiveLoadSessionSpec {
   //
   // Required.
   nighthawk.client.CommandLineOptions nighthawk_traffic_template = 4
-      [(validate.rules).message.required = true];
+      [ (validate.rules).message.required = true ];
   // The duration of each short benchmark during the adjusting stage. Must be
   // set. Optional, default 10 seconds.
-  google.protobuf.Duration measuring_period = 5
-      [(validate.rules).duration.gt.seconds = 0, (validate.rules).duration.required = true];
+  google.protobuf.Duration measuring_period = 5 [
+    (validate.rules).duration.gt.seconds = 0,
+    (validate.rules).duration.required = true
+  ];
   // Maximum amount of time the adjusting stage should wait for convergence
   // before returning an error. Optional, default 300 seconds.
-  google.protobuf.Duration convergence_deadline = 6
-      [(validate.rules).duration.gt.seconds = 0, (validate.rules).duration.required = true];
+  google.protobuf.Duration convergence_deadline = 6 [
+    (validate.rules).duration.gt.seconds = 0,
+    (validate.rules).duration.required = true
+  ];
   // The duration of the single benchmark session of the testing stage to
   // confirm the performance at the level of load found in the adjusting stage.
   // Required.
-  google.protobuf.Duration testing_stage_duration = 7
-      [(validate.rules).duration.gt.seconds = 0, (validate.rules).duration.required = true];
+  google.protobuf.Duration testing_stage_duration = 7 [
+    (validate.rules).duration.gt.seconds = 0,
+    (validate.rules).duration.required = true
+  ];
   // Selects and configures a StepController plugin. Required.
-  StepControllerConfig step_controller_config = 8 [(validate.rules).message.required = true];
+  StepControllerConfig step_controller_config = 8
+      [ (validate.rules).message.required = true ];
 }
 
 // Complete description of an adaptive load session, including metric scores
