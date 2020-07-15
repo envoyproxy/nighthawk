@@ -74,15 +74,12 @@ nighthawk::client::CommandLineOptions
 ExponentialSearchStepController::GetCurrentCommandLineOptions() const {
   nighthawk::client::CommandLineOptions options = command_line_options_template_;
   input_variable_setter_->SetInputVariable(&options, current_load_value_);
-  // std::cerr << options.DebugString() << "\n";
   return options;
 }
 
 bool ExponentialSearchStepController::IsConverged() const {
-  bool x = abs(previous_load_value_ / current_load_value_ - 1.0) < 0.01;
-  std::cerr << "Is converged " << previous_load_value_ << ", " << current_load_value_ << " : " << x
-            << "\n";
-  return x;
+  // Binary search has brought successive input values to within 1% of each other.
+  return !is_exponential_phase_ && abs(current_load_value_ / previous_load_value_ - 1.0) < 0.01;
 }
 
 void ExponentialSearchStepController::UpdateAndRecompute(const BenchmarkResult& benchmark_result) {

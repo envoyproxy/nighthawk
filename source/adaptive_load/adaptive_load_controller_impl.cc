@@ -138,6 +138,11 @@ void SetDefaults(nighthawk::adaptive_load::AdaptiveLoadSessionSpec* spec) {
   if (!spec->has_convergence_deadline()) {
     spec->mutable_convergence_deadline()->set_seconds(300);
   }
+  for (nighthawk::adaptive_load::MetricSpecWithThreshold* threshold : spec->mutable_thresholds()) {
+    if (!threshold->has_weight()) {
+      threshold->mutable_weight()->set_value(1.0);
+    }
+  }
 }
 
 // Checks whether a session spec is valid: No forbidden fields in Nighthawk traffic spec; no

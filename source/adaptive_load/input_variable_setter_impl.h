@@ -15,37 +15,14 @@ public:
                         double input_value) override;
 };
 
-// A factory that creates a RequestsPerSecondInputVariableSetter. Ignores |message| because
-// InputVariableSetter does not define a config proto.
+// A factory that creates an RequestsPerSecondInputVariableSetter from an
+// RequestsPerSecondInputVariableSetterConfig proto.
 class RequestsPerSecondInputVariableSetterConfigFactory : public InputVariableSetterConfigFactory {
 public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
   // Ignores |message| because RequestsPerSecondInputVariableSetter does not use a config proto.
   InputVariableSetterPtr createInputVariableSetter(const Envoy::Protobuf::Message&) override;
-};
-
-// An InputVariableSetter that sets an HTTP header in the CommandLineOptions proto to the string
-// representation of the input variable.
-class NumericHttpHeaderInputVariableSetter : public InputVariableSetter {
-public:
-  NumericHttpHeaderInputVariableSetter(
-      const nighthawk::adaptive_load::NumericHttpHeaderInputVariableSetterConfig& config);
-  void SetInputVariable(nighthawk::client::CommandLineOptions* command_line_options,
-                        double input_value) override;
-
-private:
-  std::string header_name_;
-};
-
-// A factory that creates an NumericHttpHeaderInputVariableSetter from an
-// NumericHttpHeaderInputVariableSetterConfig proto.
-class NumericHttpHeaderInputVariableSetterConfigFactory : public InputVariableSetterConfigFactory {
-public:
-  std::string name() const override;
-  Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
-  InputVariableSetterPtr
-  createInputVariableSetter(const Envoy::Protobuf::Message& message) override;
 };
 
 } // namespace AdaptiveLoad
