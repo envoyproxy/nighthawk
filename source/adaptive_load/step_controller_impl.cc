@@ -22,28 +22,19 @@ using nighthawk::adaptive_load::MetricEvaluation;
 using nighthawk::adaptive_load::UNKNOWN_THRESHOLD_STATUS;
 using nighthawk::adaptive_load::WITHIN_THRESHOLD;
 
-// Adds all collected metric results according to their weights, counting within threshold as 1.0
-// and outside threshold as -1.0. Output ranges from -1.0 to 1.0.
+// Adds all collected metric results according to their weights.
 double TotalWeightedScore(const BenchmarkResult& benchmark_result) {
   double score = 0.0;
   double total_weight = 0.0;
   for (const MetricEvaluation& evaluation : benchmark_result.metric_evaluations()) {
-    if (!(evaluation.has_threshold_spec() && evaluation.has_threshold_check_result())) {
+    if (!evaluation.has_threshold_spec()) {
       // Metric was recorded for display purposes only.
       continue;
     }
-    // Either all weights or no weights will be set. If no weights are set, all are equal.
     double weight = evaluation.threshold_spec().has_weight()
                         ? evaluation.threshold_spec().weight().value()
                         : 1.0;
-    if (evaluation.threshold_check_result().simple_threshold_status() == UNKNOWN_THRESHOLD_STATUS) {
-      score += weight * evaluation.threshold_check_result().threshold_score();
-    } else {
-      score += weight *
-               (evaluation.threshold_check_result().simple_threshold_status() == WITHIN_THRESHOLD
-                    ? 1.0
-                    : -1.0);
-    }
+    score += weight * evaluation.threshold_check_result().threshold_score();
     total_weight += weight;
   }
   return score / total_weight;

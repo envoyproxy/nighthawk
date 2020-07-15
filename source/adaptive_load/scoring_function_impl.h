@@ -7,6 +7,30 @@
 namespace Nighthawk {
 namespace AdaptiveLoad {
 
+// ScoringFunction that returns 1.0 when a metric is within thresholds and -1.0 otherwise.
+// Supports upper or lower threshold or both.
+class BinaryScoringFunction : public ScoringFunction {
+public:
+  explicit BinaryScoringFunction(
+      const nighthawk::adaptive_load::BinaryScoringFunctionConfig& config);
+  double EvaluateMetric(double value) const override;
+
+private:
+  // Upper threshold for the metric.
+  double upper_threshold_;
+  // Lower threshold for the metric.
+  double lower_threshold_;
+};
+
+// Factory that creates a BinaryScoringFunction from a BinaryScoringFunctionConfig proto.
+// Registered as an Envoy plugin.
+class BinaryScoringFunctionConfigFactory : public ScoringFunctionConfigFactory {
+public:
+  std::string name() const override;
+  Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
+  ScoringFunctionPtr createScoringFunction(const Envoy::Protobuf::Message& message) override;
+};
+
 // ScoringFunction that calculates a metric score as k * (threshold - value), where k is a scaling
 // constant. The score is 0.0 when the value exactly equals the threshold, positive below the
 // threshold (meaning load should increase), and negative above the threshold. The score is

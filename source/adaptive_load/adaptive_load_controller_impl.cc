@@ -33,9 +33,7 @@ using nighthawk::adaptive_load::MetricEvaluation;
 using nighthawk::adaptive_load::MetricSpec;
 using nighthawk::adaptive_load::MetricSpecWithThreshold;
 using nighthawk::adaptive_load::MetricsPluginConfig;
-using nighthawk::adaptive_load::OUTSIDE_THRESHOLD;
 using nighthawk::adaptive_load::ThresholdSpec;
-using nighthawk::adaptive_load::WITHIN_THRESHOLD;
 
 // Runs a single benchmark using a Nighthawk Service. Unconditionally returns a
 // nighthawk::client::ExecutionResponse. The ExecutionResponse may contain an error reported by the
@@ -103,22 +101,10 @@ AnalyzeNighthawkBenchmark(const nighthawk::client::ExecutionResponse& nighthawk_
         name_to_plugin[metric_threshold.metric_spec().metrics_plugin_name()]->GetMetricByName(
             metric_threshold.metric_spec().metric_name());
     evaluation.set_metric_value(metric_value);
-    if (metric_threshold.threshold_spec().has_lower_threshold()) {
-      evaluation.mutable_threshold_check_result()->set_simple_threshold_status(
-          metric_value >= metric_threshold.threshold_spec().lower_threshold().value()
-              ? WITHIN_THRESHOLD
-              : OUTSIDE_THRESHOLD);
-    } else if (metric_threshold.threshold_spec().has_upper_threshold()) {
-      evaluation.mutable_threshold_check_result()->set_simple_threshold_status(
-          metric_value <= metric_threshold.threshold_spec().upper_threshold().value()
-              ? WITHIN_THRESHOLD
-              : OUTSIDE_THRESHOLD);
-    } else if (metric_threshold.threshold_spec().has_scoring_function()) {
-      ScoringFunctionPtr scoring_function =
-          LoadScoringFunctionPlugin(metric_threshold.threshold_spec().scoring_function());
-      evaluation.mutable_threshold_check_result()->set_threshold_score(
-          scoring_function->EvaluateMetric(metric_value));
-    }
+    ScoringFunctionPtr scoring_function =
+        LoadScoringFunctionPlugin(metric_threshold.threshold_spec().scoring_function());
+    evaluation.mutable_threshold_check_result()->set_threshold_score(
+        scoring_function->EvaluateMetric(metric_value));
     *benchmark_result.mutable_metric_evaluations()->Add() = evaluation;
   }
   for (const MetricSpec& metric_spec : spec.informational_metric_specs()) {
@@ -144,9 +130,19 @@ BenchmarkResult PerformAndAnalyzeNighthawkBenchmark(
   return AnalyzeNighthawkBenchmark(response, spec);
 }
 
+// Sets default values in the input spec proto.
+void SetDefaults(nighthawk::adaptive_load::AdaptiveLoadSessionSpec* spec) {
+  if (!spec->has_measuring_period()) {
+    spec->mutable_measuring_period()->set_seconds(10);
+  }
+  if (!spec->has_convergence_deadline()) {
+    spec->mutable_convergence_deadline()->set_seconds(300);
+  }
+}
+
 // Checks whether a session spec is valid: No forbidden fields in Nighthawk traffic spec; no
 // references to missing plugins (step controller, metric, scoring function); no nonexistent metric
-// names; all weights set or no weights set.
+// names.
 absl::Status
 CheckSessionSpec(const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec) noexcept {
   std::string errors;
@@ -181,27 +177,14 @@ CheckSessionSpec(const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec) 
 
   std::vector<MetricSpec> all_metric_specs;
 
-  int count_with_weight = 0;
-  int count_without_weight = 0;
   for (const MetricSpecWithThreshold& metric_threshold : spec.metric_thresholds()) {
     all_metric_specs.push_back(metric_threshold.metric_spec());
 
-    if (metric_threshold.threshold_spec().has_weight()) {
-      ++count_with_weight;
-    } else {
-      ++count_without_weight;
+    try {
+      LoadScoringFunctionPlugin(metric_threshold.threshold_spec().scoring_function());
+    } catch (Envoy::EnvoyException exception) {
+      errors += absl::StrCat("ScoringFunction plugin not found: ", exception.what(), "\n");
     }
-
-    if (metric_threshold.threshold_spec().has_scoring_function()) {
-      try {
-        LoadScoringFunctionPlugin(metric_threshold.threshold_spec().scoring_function());
-      } catch (Envoy::EnvoyException exception) {
-        errors += absl::StrCat("ScoringFunction plugin not found: ", exception.what(), "\n");
-      }
-    }
-  }
-  if (count_with_weight > 0 && count_without_weight > 0) {
-    errors += "Either all metric thresholds or none must have weights set.\n";
   }
 
   for (const MetricSpec& metric_spec : spec.informational_metric_specs()) {
@@ -241,6 +224,7 @@ PerformAdaptiveLoadSession(nighthawk::client::NighthawkService::Stub* nighthawk_
                            Envoy::TimeSource* time_source) noexcept {
   AdaptiveLoadSessionOutput output;
 
+  SetDefaults(&spec);
   absl::Status validation_status = CheckSessionSpec(spec);
   if (!validation_status.ok()) {
     output.mutable_session_status()->set_code(static_cast<int>(validation_status.code()));

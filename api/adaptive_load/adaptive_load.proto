@@ -5,9 +5,8 @@ syntax = "proto3";
 package nighthawk.adaptive_load;
 
 import "api/adaptive_load/benchmark_result.proto";
-import "api/adaptive_load/metrics_plugin.proto";
+import "api/adaptive_load/config.proto";
 import "api/adaptive_load/metric_spec.proto";
-import "api/adaptive_load/step_controller.proto";
 import "api/client/options.proto";
 import "google/protobuf/duration.proto";
 import "google/rpc/status.proto";
@@ -24,7 +23,8 @@ message AdaptiveLoadSessionSpec {
   // An entry is required for every plugin referred to by metric_thresholds,
   // other than the "builtin" plugin. Optional.
   repeated MetricsPluginConfig metrics_plugin_configs = 1;
-  // Metrics and thresholds that determine load adjustments. Required.
+  // Metrics and thresholds that determine load adjustments. The order of
+  // metrics is not significant. Required.
   repeated MetricSpecWithThreshold metric_thresholds = 2 [(validate.rules).repeated .min_items = 1];
   // Metrics that are collected and included in the output but not taken into
   // account when adjusting the load. May be used for debugging or
