@@ -48,14 +48,11 @@ message AdaptiveLoadSessionSpec {
   // Required.
   nighthawk.client.CommandLineOptions nighthawk_traffic_template = 4
       [(validate.rules).message.required = true];
-  // The duration of each short benchmark during the adjusting stage. Must be
-  // set. Optional, default 10 seconds.
-  google.protobuf.Duration measuring_period = 5
-      [(validate.rules).duration.gt.seconds = 0, (validate.rules).duration.required = true];
+  // The duration of each short benchmark during the adjusting stage. Optional, default 10 seconds.
+  google.protobuf.Duration measuring_period = 5 [(validate.rules).duration.gt.seconds = 0];
   // Maximum amount of time the adjusting stage should wait for convergence
   // before returning an error. Optional, default 300 seconds.
-  google.protobuf.Duration convergence_deadline = 6
-      [(validate.rules).duration.gt.seconds = 0, (validate.rules).duration.required = true];
+  google.protobuf.Duration convergence_deadline = 6 [(validate.rules).duration.gt.seconds = 0];
   // The duration of the single benchmark session of the testing stage to
   // confirm the performance at the level of load found in the adjusting stage.
   // Required.
