@@ -157,9 +157,7 @@ bazel-bin/nighthawk_test_server  [--disable-extensions <string>]
 [--use-fake-symbol-table <bool>]
 [--cpuset-threads]
 [--enable-mutex-tracing]
-[--disable-hot-restart]
-[--max-obj-name-len <uint64_t>]
-[--max-stats <uint64_t>] [--mode
+[--disable-hot-restart] [--mode
 <string>] [--parent-shutdown-time-s
 <uint32_t>] [--drain-strategy <string>]
 [--drain-time-s <uint32_t>]
@@ -205,12 +203,6 @@ Enable mutex contention tracing functionality
 
 --disable-hot-restart
 Disable hot restart functionality
-
---max-obj-name-len <uint64_t>
-Deprecated and unused; please do not specify.
-
---max-stats <uint64_t>
-Deprecated and unused; please do not specify.
 
 --mode <string>
 One of 'serve' (default; validate configs and then serve traffic

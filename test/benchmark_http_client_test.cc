@@ -1,5 +1,6 @@
 #include <vector>
 
+#include "external/envoy/source/common/common/random_generator.h"
 #include "external/envoy/source/common/http/header_map_impl.h"
 #include "external/envoy/source/common/network/utility.h"
 #include "external/envoy/source/common/runtime/runtime_impl.h"
@@ -161,7 +162,7 @@ public:
   Envoy::Stats::MockIsolatedStatsStore mock_store_;
   Envoy::Api::ApiPtr api_;
   Envoy::Event::DispatcherPtr dispatcher_;
-  Envoy::Runtime::RandomGeneratorImpl generator_;
+  Envoy::Random::RandomGeneratorImpl generator_;
   NiceMock<Envoy::ThreadLocal::MockInstance> tls_;
   NiceMock<Envoy::Runtime::MockLoader> runtime_;
   std::unique_ptr<Client::BenchmarkClientHttpImpl> client_;

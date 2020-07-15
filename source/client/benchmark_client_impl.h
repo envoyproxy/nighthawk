@@ -15,6 +15,7 @@
 #include "nighthawk/common/statistic.h"
 
 #include "external/envoy/source/common/common/logger.h"
+#include "external/envoy/source/common/common/random_generator.h"
 #include "external/envoy/source/common/http/http1/conn_pool.h"
 #include "external/envoy/source/common/http/http2/conn_pool.h"
 #include "external/envoy/source/common/runtime/runtime_impl.h"
@@ -149,7 +150,7 @@ private:
   uint32_t max_active_requests_{UINT32_MAX};
   uint32_t max_requests_per_connection_{UINT32_MAX};
   Envoy::Event::TimerPtr timer_;
-  Envoy::Runtime::RandomGeneratorImpl generator_;
+  Envoy::Random::RandomGeneratorImpl generator_;
   uint64_t requests_completed_{};
   uint64_t requests_initiated_{};
   bool measure_latencies_{};

@@ -16,6 +16,7 @@
 
 #include "external/envoy/source/common/access_log/access_log_manager_impl.h"
 #include "external/envoy/source/common/common/logger.h"
+#include "external/envoy/source/common/common/random_generator.h"
 #include "external/envoy/source/common/event/real_time_system.h"
 #include "external/envoy/source/common/grpc/context_impl.h"
 #include "external/envoy/source/common/http/context_impl.h"
@@ -133,7 +134,7 @@ private:
 
   Envoy::Init::ManagerImpl init_manager_;
   Envoy::LocalInfo::LocalInfoPtr local_info_;
-  Envoy::Runtime::RandomGeneratorImpl generator_;
+  Envoy::Random::RandomGeneratorImpl generator_;
   Envoy::Server::ConfigTrackerImpl config_tracker_;
   Envoy::Secret::SecretManagerImpl secret_manager_;
   Envoy::Http::ContextImpl http_context_;
