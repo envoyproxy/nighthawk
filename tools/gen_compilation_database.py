@@ -54,8 +54,8 @@ def generateCompilationDatabase(args):
 
   compdb = []
   for compdb_file in Path(execroot).glob("**/*.compile_commands.json"):
-    compdb.extend(json.loads("[" + compdb_file.read_text().replace("__EXEC_ROOT__", execroot) +
-                             "]"))
+    compdb.extend(
+        json.loads("[" + compdb_file.read_text().replace("__EXEC_ROOT__", execroot) + "]"))
   return compdb
 
 
@@ -119,8 +119,6 @@ if __name__ == "__main__":
   parser.add_argument('--include_headers', action='store_true')
   parser.add_argument('--vscode', action='store_true')
   # @@@
-  parser.add_argument('bazel_targets',
-                      nargs='*',
-                      default=["//..."])
+  parser.add_argument('bazel_targets', nargs='*', default=["//..."])
   args = parser.parse_args()
   fixCompilationDatabase(args, generateCompilationDatabase(args))
