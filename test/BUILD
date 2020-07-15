@@ -242,6 +242,7 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         "//source/common:nighthawk_common_lib",
+        "@envoy//source/common/common:random_generator_lib_with_external_headers",
         "@envoy//source/common/stats:isolated_store_lib_with_external_headers",
         "@envoy//test/mocks/local_info:local_info_mocks",
         "@envoy//test/mocks/protobuf:protobuf_mocks",
