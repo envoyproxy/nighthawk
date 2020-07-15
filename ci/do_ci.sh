@@ -214,9 +214,7 @@ case "$1" in
     ;;
     test_gcc)
         setup_gcc_toolchain
-        # TODO(#362): change the line below to do_test once the upstream merges
-        # https://github.com/envoyproxy/envoy/pull/10236
-        do_build
+        do_test
         exit 0
     ;;
     clang_tidy)

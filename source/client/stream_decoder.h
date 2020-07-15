@@ -12,6 +12,7 @@
 #include "nighthawk/common/request_source.h"
 #include "nighthawk/common/statistic.h"
 
+#include "external/envoy/source/common/common/random_generator.h"
 #include "external/envoy/source/common/http/header_map_impl.h"
 #include "external/envoy/source/common/stream_info/stream_info_impl.h"
 #include "external/envoy/source/common/tracing/http_tracer_impl.h"
@@ -42,7 +43,7 @@ public:
                 Statistic& latency_statistic, Statistic& response_header_sizes_statistic,
                 Statistic& response_body_sizes_statistic, HeaderMapPtr request_headers,
                 bool measure_latencies, uint32_t request_body_size,
-                Envoy::Runtime::RandomGenerator& random_generator,
+                Envoy::Random::RandomGenerator& random_generator,
                 Envoy::Tracing::HttpTracerSharedPtr& http_tracer)
       : dispatcher_(dispatcher), time_source_(time_source),
         decoder_completion_callback_(decoder_completion_callback),
@@ -110,7 +111,7 @@ private:
   const uint32_t request_body_size_;
   Envoy::Tracing::EgressConfigImpl config_;
   Envoy::StreamInfo::StreamInfoImpl stream_info_;
-  Envoy::Runtime::RandomGenerator& random_generator_;
+  Envoy::Random::RandomGenerator& random_generator_;
   Envoy::Tracing::HttpTracerSharedPtr& http_tracer_;
   Envoy::Tracing::SpanPtr active_span_;
   Envoy::StreamInfo::UpstreamTiming upstream_timing_;
