@@ -36,7 +36,8 @@ public:
 class StreamDecoder : public Envoy::Http::ResponseDecoder,
                       public Envoy::Http::StreamCallbacks,
                       public Envoy::Http::ConnectionPool::Callbacks,
-                      public Envoy::Event::DeferredDeletable {
+                      public Envoy::Event::DeferredDeletable,
+                      public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
   StreamDecoder(Envoy::Event::Dispatcher& dispatcher, Envoy::TimeSource& time_source,
                 StreamDecoderCompletionCallback& decoder_completion_callback,

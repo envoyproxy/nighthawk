@@ -17,8 +17,8 @@ public:
   MOCK_CONST_METHOD7(create,
                      BenchmarkClientPtr(Envoy::Api::Api&, Envoy::Event::Dispatcher&,
                                         Envoy::Stats::Scope&, Envoy::Upstream::ClusterManagerPtr&,
-                                        Envoy::Tracing::HttpTracerSharedPtr&, const int,
-                                        RequestSource& request_generator));
+                                        Envoy::Tracing::HttpTracerSharedPtr&, absl::string_view,
+                                        const int, RequestSource& request_generator));
 };
 
 } // namespace Client

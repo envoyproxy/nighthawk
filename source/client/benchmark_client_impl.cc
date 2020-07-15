@@ -189,17 +189,17 @@ void BenchmarkClientHttpImpl::onPoolFailure(Envoy::Http::ConnectionPool::PoolFai
 void BenchmarkClientHttpImpl::exportLatency(const uint32_t response_code,
                                             const uint64_t latency_ns) {
   if (response_code > 99 && response_code <= 199) {
-    latency_1xx_statistic_->recordValue(latency_ns);
+    latency_1xx_statistic_->addValue(latency_ns);
   } else if (response_code > 199 && response_code <= 299) {
-    latency_2xx_statistic_->recordValue(latency_ns);
+    latency_2xx_statistic_->addValue(latency_ns);
   } else if (response_code > 299 && response_code <= 399) {
-    latency_3xx_statistic_->recordValue(latency_ns);
+    latency_3xx_statistic_->addValue(latency_ns);
   } else if (response_code > 399 && response_code <= 499) {
-    latency_4xx_statistic_->recordValue(latency_ns);
+    latency_4xx_statistic_->addValue(latency_ns);
   } else if (response_code > 499 && response_code <= 599) {
-    latency_5xx_statistic_->recordValue(latency_ns);
+    latency_5xx_statistic_->addValue(latency_ns);
   } else {
-    latency_xxx_statistic_->recordValue(latency_ns);
+    latency_xxx_statistic_->addValue(latency_ns);
   }
 }
 

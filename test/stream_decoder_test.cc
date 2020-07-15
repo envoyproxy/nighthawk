@@ -53,7 +53,7 @@ public:
   uint64_t stream_decoder_completion_callbacks_{0};
   uint64_t pool_failures_{0};
   uint64_t stream_decoder_export_latency_callbacks_{0};
-  Envoy::Runtime::RandomGeneratorImpl random_generator_;
+  Envoy::Random::RandomGeneratorImpl random_generator_;
   Envoy::Tracing::HttpTracerSharedPtr http_tracer_;
   Envoy::Http::ResponseHeaderMapPtr test_header_;
   Envoy::Http::ResponseTrailerMapPtr test_trailer_;

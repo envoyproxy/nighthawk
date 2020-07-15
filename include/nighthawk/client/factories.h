@@ -33,9 +33,10 @@ public:
    * @param scope stats scope for any stats tracked by the benchmark client.
    * @param cluster_manager Cluster manager preconfigured with our target cluster.
    * @param http_tracer Shared pointer to an http tracer implementation (e.g. Zipkin).
-   * @param worker_number Worker id which is also the name of the cluster that this benchmark client
+   * @param cluster_name Name of the cluster that this benchmark client
    * will use. In conjunction with cluster_manager this will allow the this BenchmarkClient to
    * access the target connection pool.
+   * @param sink_stat_prefix Prefix of the stat (e.g. worker id).
    * @param request_source Source of request-specifiers. Will be queries every time the
    * BenchmarkClient is asked to issue a request.
    *
@@ -45,7 +46,7 @@ public:
                                     Envoy::Stats::Scope& scope,
                                     Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                                     Envoy::Tracing::HttpTracerSharedPtr& http_tracer,
-                                    const int worker_number,
+                                    absl::string_view cluster_name, const int sink_stat_prefix,
                                     RequestSource& request_source) const PURE;
 };
 

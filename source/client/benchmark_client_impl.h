@@ -54,12 +54,12 @@ struct BenchmarkClientStatistic {
   StatisticPtr response_statistic;
   StatisticPtr response_header_size_statistic;
   StatisticPtr response_body_size_statistic;
-  std::unique_ptr<SinkableHdrStatistic> latency_1xx_statistic;
-  std::unique_ptr<SinkableHdrStatistic> latency_2xx_statistic;
-  std::unique_ptr<SinkableHdrStatistic> latency_3xx_statistic;
-  std::unique_ptr<SinkableHdrStatistic> latency_4xx_statistic;
-  std::unique_ptr<SinkableHdrStatistic> latency_5xx_statistic;
-  std::unique_ptr<SinkableHdrStatistic> latency_xxx_statistic;
+  StatisticPtr latency_1xx_statistic;
+  StatisticPtr latency_2xx_statistic;
+  StatisticPtr latency_3xx_statistic;
+  StatisticPtr latency_4xx_statistic;
+  StatisticPtr latency_5xx_statistic;
+  StatisticPtr latency_xxx_statistic;
 };
 
 class Http1PoolImpl : public Envoy::Http::Http1::ProdConnPoolImpl {
@@ -137,12 +137,12 @@ private:
   StatisticPtr response_statistic_;
   StatisticPtr response_header_size_statistic_;
   StatisticPtr response_body_size_statistic_;
-  std::unique_ptr<SinkableHdrStatistic> latency_1xx_statistic_;
-  std::unique_ptr<SinkableHdrStatistic> latency_2xx_statistic_;
-  std::unique_ptr<SinkableHdrStatistic> latency_3xx_statistic_;
-  std::unique_ptr<SinkableHdrStatistic> latency_4xx_statistic_;
-  std::unique_ptr<SinkableHdrStatistic> latency_5xx_statistic_;
-  std::unique_ptr<SinkableHdrStatistic> latency_xxx_statistic_;
+  StatisticPtr latency_1xx_statistic_;
+  StatisticPtr latency_2xx_statistic_;
+  StatisticPtr latency_3xx_statistic_;
+  StatisticPtr latency_4xx_statistic_;
+  StatisticPtr latency_5xx_statistic_;
+  StatisticPtr latency_xxx_statistic_;
   const bool use_h2_;
   std::chrono::seconds timeout_{5s};
   uint32_t connection_limit_{1};

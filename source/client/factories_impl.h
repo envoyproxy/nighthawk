@@ -31,7 +31,7 @@ public:
                             Envoy::Stats::Scope& scope,
                             Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                             Envoy::Tracing::HttpTracerSharedPtr& http_tracer,
-                            const int worker_number,
+                            absl::string_view cluster_name, const int sink_stat_prefix,
                             RequestSource& request_generator) const override;
 };
 

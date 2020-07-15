@@ -54,6 +54,8 @@ void StreamDecoder::onComplete(bool success) {
       decoder_completion_callback_.exportLatency(
           stream_info_.response_code_.value(),
           (time_source_.monotonicTime() - request_start_).count());
+    } else {
+      ENVOY_LOG(warn, "response_code is not available in onComplete");
     }
   }
   upstream_timing_.onLastUpstreamRxByteReceived(time_source_);
