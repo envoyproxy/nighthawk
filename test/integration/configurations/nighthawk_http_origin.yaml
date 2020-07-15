@@ -23,6 +23,7 @@ static_resources:
               domains:
               - "*"
           http_filters:
+          - name: dynamic-delay
           - name: envoy.fault
             config:
               max_active_faults: 100
