@@ -3,3 +3,5 @@ pytest
 pytest-dependency
 pytest-xdist
 pyyaml
+zipp
+importlib_metadata
