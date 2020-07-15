@@ -1,0 +1,686 @@
+{
+  // See https://go.microsoft.com/fwlink/?LinkId=733558
+  // for the documentation about the tasks.json format
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "debug-build",
+      "type": "shell",
+      "command": "bazel build  -c dbg //:nighthawk",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "debug-build-nighthawk-client",
+      "type": "shell",
+      "command": "bazel build  -c dbg //:nighthawk_client",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "debug-build (zipkin disabled)",
+      "type": "shell",
+      "command": "bazel build -c dbg --define zipkin_disabled=1 //:nighthawk_client nighthawk_test_server nighthawk_service",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "opt-build",
+      "type": "shell",
+      "command": "bazel build  -c opt //:nighthawk",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "bazel ci coverage",
+      "type": "shell",
+      "command": "ci/run_envoy_docker.sh 'ci/do_ci.sh coverage'",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "docker build and push",
+      "type": "shell",
+      "command": "ci/do_ci.sh docker && ../tools/push_nighthawk_docker.sh",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "bazel ci tsan",
+      "type": "shell",
+      "command": "../tools/run_docker.sh 'ci/do_ci.sh tsan'",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "bazel ci asan",
+      "type": "shell",
+      "command": "../tools/run_docker.sh 'ci/do_ci.sh asan'",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "clang-tidy via docker",
+      "type": "shell",
+      "command": "../tools/run_docker.sh 'ci/do_ci.sh clang_tidy'",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "asan test direct",
+      "type": "shell",
+      "command": "ci/do_ci.sh asan",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "tsan test direct",
+      "type": "shell",
+      "command": "ci/do_ci.sh tsan",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "opt-build-test",
+      "type": "shell",
+      "command": "bazel build  -c opt //test:nighthawk_test",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "debug-build-test",
+      "type": "shell",
+      "command": "bazel build  -c dbg //test/...",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "build all",
+      "type": "shell",
+      "command": "bazel build  -c fastbuild //:nighthawk_client nighthawk_test_server nighthawk_service nighthawk_output_transform",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "build nighthawk_client",
+      "type": "shell",
+      "command": "bazel build -c fastbuild //:nighthawk_client",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "build-test",
+      "type": "shell",
+      "command": "bazel build  -c fastbuild //test/...",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "bazel-run-all-tests-direct",
+      "type": "shell",
+      "command": "bazel test --cache_test_results=no -c dbg //test/...",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "build benchmarks",
+      "type": "shell",
+      "command": "bazel build -c fastbuild \"//benchmarks:*\"",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "benchmark execution with binaries from this repo",
+      "type": "shell",
+      "command": "bazel test --test_summary=detailed --test_output=all --test_arg=--log-cli-level=info --test_env=ENVOY_IP_TEST_VERSIONS=v4only --test_env=HEAPPROFILE= --test_env=HEAPCHECK= --cache_test_results=no --compilation_mode=opt --cxxopt=-g --cxxopt=-ggdb3 //benchmarks:*",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk",
+        "env": {
+          "TMPDIR": "${workspaceRoot}/nighthawk/benchmarks/tmp",
+          "ENVOY_IP_TEST_VERSIONS": "v4only"
+        }
+      },
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "benchmark execution with NH & Envoy docker images",
+      "type": "shell",
+      "command": "benchmarks/run_benchmark.sh",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "bazel //test:nighthawk_test repeat ServiceTest.BackToBackExecution",
+      "type": "shell",
+      "command": "bazel test --cache_test_results=no --test_env=ENVOY_IP_TEST_VERSIONS=all --runs_per_test=2500 --test_arg=--gtest_filter='IpVersions/ServiceTest.BackToBackExecution/IPv6' --jobs 50 -c dbg --local_resources 20000,50,0.25 //test:service_test",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "bazel //test:nighthawk_test repeat ClientWorkerTest all 5000x",
+      "type": "shell",
+      "command": "bazel test --cache_test_results=no --test_env=ENVOY_IP_TEST_VERSIONS=all --runs_per_test=1000 --test_arg=--gtest_filter='IpVersions/ClientWorkerTest.*/*' --jobs 50 -c fastbuild --local_resources 20000,50,0.25 //test:client_worker_test",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "bazel //test:python_test",
+      "type": "shell",
+      "command": "bazel test --cache_test_results=no --test_env=ENVOY_IP_TEST_VERSIONS=v4only -c dbg //test:python_test",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "bazel //test:process_test",
+      "type": "shell",
+      "command": "bazel test --cache_test_results=no --test_env=ENVOY_IP_TEST_VERSIONS=all -c dbg //test:process_test",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "bazel //test:python_test repeat python_test all 50x",
+      "type": "shell",
+      "command": "bazel test --cache_test_results=no --test_env=ENVOY_IP_TEST_VERSIONS=all --runs_per_test=10 -c dbg --local_resources 20000,50,0.25 //test:python_test",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "bazel //test:nighthawk_test repeat barring ServiceTest all 5000x",
+      "type": "shell",
+      "command": "bazel test --cache_test_results=no --test_env=ENVOY_IP_TEST_VERSIONS=all --runs_per_test=1000 --test_arg=--gtest_filter='-IpVersions/ServiceTest.*/*' --jobs 50 -c dbg --local_resources 20000,50,0.25 //test:*",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "bazel //test:nighthawk_test repeat all",
+      "type": "shell",
+      "command": "bazel test --cache_test_results=no --test_env=ENVOY_IP_TEST_VERSIONS=all --runs_per_test=1000 --jobs 50 -c dbg --local_resources 20000,20,0.25 //test:*",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "bazel-integration-test",
+      "type": "shell",
+      "command": "bazel test --test_env=ENVOY_IP_TEST_VERSIONS=all --cache_test_results=no  -c dbg //test/integration:integration_test",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "update_cli_readme_documentation",
+      "type": "shell",
+      "command": "BAZEL_BUILD_OPTIONS=\"-c fastbuild\" tools/update_cli_readme_documentation.sh --mode fix",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "check_cli_readme_documentation",
+      "type": "shell",
+      "command": "BAZEL_BUILD_OPTIONS=\"-c fastbuild\" tools/update_cli_readme_documentation.sh --mode check",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "bazel-test-server-tests",
+      "type": "shell",
+      "command": "bazel test --cache_test_results=no -c dbg //test/server:http_test_server_filter_integration_test",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "bazel //test/...",
+      "type": "shell",
+      "command": "bazel test --cache_test_results=no --test_env=ENVOY_IP_TEST_VERSIONS=v4only --local_resources 16000,6,0.25 -c dbg //test/...",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "bazel //test:statistic_test",
+      "type": "shell",
+      "command": "bazel test --cache_test_results=no -c dbg //test:statistic_test",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "bazel //test:rate_limiter_test",
+      "type": "shell",
+      "command": "bazel test --cache_test_results=no -c dbg //test:rate_limiter_test",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "bazel //test:client_worker_test",
+      "type": "shell",
+      "command": "bazel test --cache_test_results=no -c dbg //test:client_worker_test",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "bazel //test:termination_predicate_test",
+      "type": "shell",
+      "command": "bazel test --cache_test_results=no -c dbg //test:termination_predicate_test",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "bazel //test:options_test",
+      "type": "shell",
+      "command": "bazel test --cache_test_results=no -c dbg //test:options_test",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "bazel //test:utility_test",
+      "type": "shell",
+      "command": "bazel test --cache_test_results=no -c dbg //test:utility_test",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "bazel //test:output_formatter_test",
+      "type": "shell",
+      "command": "bazel test --cache_test_results=no -c dbg //test:output_formatter_test",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "bazel //test:request_stream_grpc_client_test",
+      "type": "shell",
+      "command": "bazel test --cache_test_results=no -c dbg //test:request_stream_grpc_client_test",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "bazel //test/... no zipkin",
+      "type": "shell",
+      "command": "bazel test --define zipkin_disabled=1 --cache_test_results=no -c dbg //test/...",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "do-ci-test",
+      "type": "shell",
+      "command": "../tools/run_docker.sh 'ci/do_ci.sh test'",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "fix-format-docker",
+      "type": "shell",
+      "command": "../tools/run_docker.sh 'ci/do_ci.sh check_format'",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "fix-format-direct",
+      "type": "shell",
+      "command": "ci/do_ci.sh fix_format",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "direct-run-test",
+      "type": "shell",
+      "dependsOn": "debug-build-test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "options": {
+        "env": {
+          "TEST_WORKSPACE": ".",
+          "TEST_TMPDIR": "/tmp/foo",
+          "TEST_SRCDIR": "${workspaceRoot}/nighthawk",
+          "ENVOY_IP_TEST_VERSIONS": "all"
+        },
+        "cwd": "${workspaceRoot}/nighthawk"
+      },
+      "command": "bazel-bin/test/nighthawk_test",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "direct-run-test-with-gdb",
+      "type": "shell",
+      "dependsOn": "debug-build-test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "options": {
+        "env": {
+          "TEST_WORKSPACE": ".",
+          "TEST_TMPDIR": "/tmp/foo",
+          "TEST_SRCDIR": "${workspaceRoot}/nighthawk",
+          "ENVOY_IP_TEST_VERSIONS": ""
+        },
+        "cwd": "nighthawk/nighthawk"
+      },
+      "command": "gdb --args bazel-bin/nighthawk/test/nighthawk_test",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "test-fastbuild",
+      "type": "shell",
+      "command": "bazel",
+      "args": [
+        "test",
+        "-c",
+        "fastbuild",
+        "--test_env=ENVOY_IP_TEST_VERSIONS=v4only",
+        "--cache_test_results=no",
+        "${input:testTarget}"
+      ],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    }
+  ],
+  "inputs": [
+    {
+      "type": "pickString",
+      "id": "testTarget",
+      "description": "type",
+      "options": [
+        "//test:benchmark_http_client_test",
+        "//test:client_test",
+        "//test:client_worker_test",
+        "//test:factories_test",
+        "//test:frequency_test",
+        "//test:options_test",
+        "//test:output_formatter_test",
+        "//test:output_transform_main_test",
+        "//test:platform_util_test",
+        "//test:process_test",
+        "//test:python_test",
+        "//test:rate_limiter_test",
+        "//test:request_generator_test",
+        "//test:sequencer_test",
+        "//test:service_main_test",
+        "//test:service_test",
+        "//test:statistic_test",
+        "//test:stream_decoder_test",
+        "//test:termination_predicate_test",
+        "//test:utility_test",
+        "//test:worker_test",
+        "//test:sni_utility_test",
+        "//test/server:http_test_server_filter_integration_test",
+        "//test/server:http_dynamic_delay_filter_integration_test",
+        "//test/..."
+      ],
+      "default": "//test/..."
+    }
+  ]
+}

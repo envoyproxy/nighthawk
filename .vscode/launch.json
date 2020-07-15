@@ -1,0 +1,148 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "(gdb) Launch",
+      "type": "cppdbg",
+      "request": "launch",
+      "preLaunchTask": "debug-build",
+      "program": "${workspaceRoot}/bazel-bin/nighthawk_client",
+      "args": ["--rps", "5", "http://foo.we-amp.com/"],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "sourceFileMap": {
+        "/proc/self/cwd/external": "${workspaceFolder}/bazel-nighthawk/external/"
+      },
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ]
+    },
+    {
+      "name": "(gdb) Client Test",
+      "type": "cppdbg",
+      "request": "launch",
+      "preLaunchTask": "debug-build-test",
+      "program": "${workspaceRoot}/bazel-bin/test/client_test",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/",
+      "environment": [
+        {
+          "name": "TEST_TMPDIR",
+          "value": "/tmp/foo"
+        },
+        {
+          "name": "TEST_WORKSPACE",
+          "value": "."
+        },
+        {
+          "name": "TEST_SRCDIR",
+          "value": "${workspaceRoot}/"
+        },
+        {
+          "name": "ENVOY_IP_TEST_VERSIONS",
+          "value": ""
+        }
+      ],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "sourceFileMap": {
+        "/proc/self/cwd/external": "${workspaceFolder}/bazel-nighthawk/external/"
+      },
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ]
+    },
+    {
+      "name": "(gdb) client_worker_test",
+      "type": "cppdbg",
+      "request": "launch",
+      "preLaunchTask": "debug-build-test",
+      "program": "${workspaceRoot}/bazel-bin/test/client_worker_test",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/",
+      "environment": [
+        {
+          "name": "TEST_TMPDIR",
+          "value": "/tmp/foo"
+        },
+        {
+          "name": "TEST_WORKSPACE",
+          "value": "."
+        },
+        {
+          "name": "TEST_SRCDIR",
+          "value": "${workspaceRoot}/"
+        },
+        {
+          "name": "ENVOY_IP_TEST_VERSIONS",
+          "value": ""
+        }
+      ],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "sourceFileMap": {
+        "/proc/self/cwd/external": "${workspaceFolder}/bazel-nighthawk/external/"
+      },
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ]
+    },
+    {
+      "name": "(gdb) test-server tests",
+      "type": "cppdbg",
+      "request": "launch",
+      "preLaunchTask": "bazel-test-server-tests",
+      "program": "${workspaceRoot}/bazel-bin/test/server/http_test_server_filter_integration_test",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/",
+      "environment": [
+        {
+          "name": "TEST_TMPDIR",
+          "value": "/tmp/foo"
+        },
+        {
+          "name": "TEST_WORKSPACE",
+          "value": "."
+        },
+        {
+          "name": "TEST_SRCDIR",
+          "value": "${workspaceRoot}/"
+        },
+        {
+          "name": "ENVOY_IP_TEST_VERSIONS",
+          "value": ""
+        }
+      ],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "sourceFileMap": {
+        "/proc/self/cwd/external": "${workspaceFolder}/bazel-nighthawk/external/"
+      },
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ]
+    }
+  ]
+}
