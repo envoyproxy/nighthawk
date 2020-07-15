@@ -1,6 +1,6 @@
-# Nighthawk Statistics	
+# Nighthawk Statistics
 
-## Background	
+## Background
 Currently Nighthawk only outputs metrics at the end of a test run and there are no metrics streamed during a test run.
 The work to stream its metrics is in progress.	
 
