@@ -21,7 +21,6 @@ class RequestsPerSecondInputVariableSetterConfigFactory : public InputVariableSe
 public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
-  // Ignores |message| because RequestsPerSecondInputVariableSetter does not use a config proto.
   InputVariableSetterPtr createInputVariableSetter(const Envoy::Protobuf::Message&) override;
 };
 

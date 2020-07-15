@@ -66,9 +66,17 @@ ExponentialSearchStepController::ExponentialSearchStepController(
     const ExponentialSearchStepControllerConfig& config,
     const nighthawk::client::CommandLineOptions& command_line_options_template)
     : config_{config}, command_line_options_template_{command_line_options_template},
-      input_variable_setter_{LoadInputVariableSetterPlugin(config.input_variable_setter())},
-      is_exponential_phase_{true}, previous_load_value_{-1},
-      current_load_value_{config_.initial_value()}, bottom_load_value_{-1}, top_load_value_{-1} {}
+      input_variable_setter_{
+          config.has_input_variable_setter()
+              ? LoadInputVariableSetterPlugin(config.input_variable_setter())
+              : std::make_unique<RequestsPerSecondInputVariableSetter>(
+                    nighthawk::adaptive_load::RequestsPerSecondInputVariableSetterConfig())},
+      is_exponential_phase_{true},
+      exponential_factor_{config_.exponential_factor() > 0.0 ? config_.exponential_factor() : 2.0},
+      previous_load_value_{std::numeric_limits<double>::signaling_NaN()},
+      current_load_value_{config_.initial_value()},
+      bottom_load_value_{std::numeric_limits<double>::signaling_NaN()},
+      top_load_value_{std::numeric_limits<double>::signaling_NaN()} {}
 
 nighthawk::client::CommandLineOptions
 ExponentialSearchStepController::GetCurrentCommandLineOptions() const {
@@ -78,7 +86,7 @@ ExponentialSearchStepController::GetCurrentCommandLineOptions() const {
 }
 
 bool ExponentialSearchStepController::IsConverged() const {
-  // Binary search has brought successive input values to within 1% of each other.
+  // Binary search has brought successive input values within 1% of each other.
   return !is_exponential_phase_ && abs(current_load_value_ / previous_load_value_ - 1.0) < 0.01;
 }
 
@@ -102,10 +110,10 @@ void ExponentialSearchStepController::UpdateAndRecompute(const BenchmarkResult& 
   } else {
     // Binary search phase.
     if (score > 0.0) {
-      // Below threshold, shift range up.
+      // Within threshold, go higher.
       bottom_load_value_ = current_load_value_;
     } else {
-      // Above threshold, shift range down.
+      // Outside threshold, go lower.
       top_load_value_ = current_load_value_;
     }
     previous_load_value_ = current_load_value_;
