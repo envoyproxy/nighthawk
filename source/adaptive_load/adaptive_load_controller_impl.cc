@@ -103,8 +103,7 @@ AnalyzeNighthawkBenchmark(const nighthawk::client::ExecutionResponse& nighthawk_
     evaluation.set_metric_value(metric_value);
     ScoringFunctionPtr scoring_function =
         LoadScoringFunctionPlugin(metric_threshold.threshold_spec().scoring_function());
-    evaluation.mutable_threshold_check_result()->set_threshold_score(
-        scoring_function->EvaluateMetric(metric_value));
+    evaluation.set_threshold_score(scoring_function->EvaluateMetric(metric_value));
     *benchmark_result.mutable_metric_evaluations()->Add() = evaluation;
   }
   for (const MetricSpec& metric_spec : spec.informational_metric_specs()) {
@@ -130,19 +129,22 @@ BenchmarkResult PerformAndAnalyzeNighthawkBenchmark(
   return AnalyzeNighthawkBenchmark(response, spec);
 }
 
-// Sets default values in the input spec proto.
-void SetDefaults(nighthawk::adaptive_load::AdaptiveLoadSessionSpec* spec) {
-  if (!spec->has_measuring_period()) {
-    spec->mutable_measuring_period()->set_seconds(10);
+// Returns a copy of the input spec with default values inserted.
+AdaptiveLoadSessionSpec SetDefaults(const AdaptiveLoadSessionSpec& spec) {
+  AdaptiveLoadSessionSpec spec2 = spec;
+  if (!spec2.has_measuring_period()) {
+    spec2.mutable_measuring_period()->set_seconds(10);
   }
-  if (!spec->has_convergence_deadline()) {
-    spec->mutable_convergence_deadline()->set_seconds(300);
+  if (!spec2.has_convergence_deadline()) {
+    spec2.mutable_convergence_deadline()->set_seconds(300);
   }
-  for (nighthawk::adaptive_load::MetricSpecWithThreshold* threshold : spec->mutable_thresholds()) {
-    if (!threshold->has_weight()) {
-      threshold->mutable_weight()->set_value(1.0);
+  for (nighthawk::adaptive_load::MetricSpecWithThreshold& threshold :
+       *spec2.mutable_metric_thresholds()) {
+    if (!threshold.threshold_spec().has_weight()) {
+      threshold.mutable_threshold_spec()->mutable_weight()->set_value(1.0);
     }
   }
+  return spec2;
 }
 
 // Checks whether a session spec is valid: No forbidden fields in Nighthawk traffic spec; no
@@ -168,7 +170,7 @@ CheckSessionSpec(const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec) 
   for (const MetricsPluginConfig& config : spec.metrics_plugin_configs()) {
     try {
       plugin_from_name[config.name()] = LoadMetricsPlugin(config);
-    } catch (Envoy::EnvoyException exception) {
+    } catch (const Envoy::EnvoyException& exception) {
       errors += absl::StrCat("MetricsPlugin not found: ", exception.what(), "\n");
     }
     plugin_names.push_back(config.name());
@@ -176,7 +178,7 @@ CheckSessionSpec(const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec) 
 
   try {
     LoadStepControllerPlugin(spec.step_controller_config(), spec.nighthawk_traffic_template());
-  } catch (Envoy::EnvoyException exception) {
+  } catch (const Envoy::EnvoyException& exception) {
     errors += absl::StrCat("StepController plugin not found: ", exception.what(), "\n");
   }
 
@@ -187,7 +189,7 @@ CheckSessionSpec(const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec) 
 
     try {
       LoadScoringFunctionPlugin(metric_threshold.threshold_spec().scoring_function());
-    } catch (Envoy::EnvoyException exception) {
+    } catch (const Envoy::EnvoyException& exception) {
       errors += absl::StrCat("ScoringFunction plugin not found: ", exception.what(), "\n");
     }
   }
@@ -225,11 +227,11 @@ CheckSessionSpec(const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec) 
 
 AdaptiveLoadSessionOutput
 PerformAdaptiveLoadSession(nighthawk::client::NighthawkService::Stub* nighthawk_service_stub,
-                           const AdaptiveLoadSessionSpec& spec, std::ostream& diagnostic_ostream,
+                           const AdaptiveLoadSessionSpec& spec0, std::ostream& diagnostic_ostream,
                            Envoy::TimeSource* time_source) noexcept {
   AdaptiveLoadSessionOutput output;
 
-  SetDefaults(&spec);
+  AdaptiveLoadSessionSpec spec = SetDefaults(spec0);
   absl::Status validation_status = CheckSessionSpec(spec);
   if (!validation_status.ok()) {
     output.mutable_session_status()->set_code(static_cast<int>(validation_status.code()));

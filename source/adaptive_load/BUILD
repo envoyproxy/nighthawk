@@ -30,7 +30,7 @@ envoy_cc_library(
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
-        "//api/adaptive_load:base_cc_proto",
+        "//api/adaptive_load:adaptive_load_proto_cc_proto",
         "//api/client:base_cc_proto",
         "//api/client:grpc_service_lib",
         "//include/nighthawk/adaptive_load:adaptive_load_includes",

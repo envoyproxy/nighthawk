@@ -9,6 +9,7 @@
 #include "api/adaptive_load/metric_spec.pb.h"
 #include "api/adaptive_load/step_controller_impl.pb.h"
 
+#include "adaptive_load/input_variable_setter_impl.h"
 #include "adaptive_load/plugin_util.h"
 
 namespace Nighthawk {
@@ -19,8 +20,6 @@ namespace {
 using nighthawk::adaptive_load::BenchmarkResult;
 using nighthawk::adaptive_load::ExponentialSearchStepControllerConfig;
 using nighthawk::adaptive_load::MetricEvaluation;
-using nighthawk::adaptive_load::UNKNOWN_THRESHOLD_STATUS;
-using nighthawk::adaptive_load::WITHIN_THRESHOLD;
 
 // Adds all collected metric results according to their weights.
 double TotalWeightedScore(const BenchmarkResult& benchmark_result) {
@@ -34,7 +33,7 @@ double TotalWeightedScore(const BenchmarkResult& benchmark_result) {
     double weight = evaluation.threshold_spec().has_weight()
                         ? evaluation.threshold_spec().weight().value()
                         : 1.0;
-    score += weight * evaluation.threshold_check_result().threshold_score();
+    score += weight * evaluation.threshold_score();
     total_weight += weight;
   }
   return score / total_weight;

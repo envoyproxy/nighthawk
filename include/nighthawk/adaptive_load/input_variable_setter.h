@@ -5,7 +5,7 @@
 
 #include "external/envoy/source/common/protobuf/protobuf.h"
 
-#include "api/adaptive_load/input_variable_setter.pb.h"
+#include "api/adaptive_load/config.pb.h"
 #include "api/client/options.pb.h"
 
 namespace Nighthawk {

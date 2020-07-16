@@ -3,7 +3,7 @@
 #include "envoy/common/pure.h"
 #include "envoy/config/typed_config.h"
 
-#include "api/adaptive_load/metrics_plugin.pb.h"
+#include "api/adaptive_load/config.pb.h"
 
 namespace Nighthawk {
 namespace AdaptiveLoad {

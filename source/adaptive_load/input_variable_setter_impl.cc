@@ -7,7 +7,9 @@
 namespace Nighthawk {
 namespace AdaptiveLoad {
 
-RequestsPerSecondInputVariableSetter::RequestsPerSecondInputVariableSetter() {}
+RequestsPerSecondInputVariableSetter::RequestsPerSecondInputVariableSetter(
+    const nighthawk::adaptive_load::RequestsPerSecondInputVariableSetterConfig&) {}
+
 void RequestsPerSecondInputVariableSetter::SetInputVariable(
     nighthawk::client::CommandLineOptions* command_line_options, double input_value) {
   command_line_options->mutable_requests_per_second()->set_value(
@@ -22,9 +24,9 @@ RequestsPerSecondInputVariableSetterConfigFactory::createEmptyConfigProto() {
 }
 
 InputVariableSetterPtr RequestsPerSecondInputVariableSetterConfigFactory::createInputVariableSetter(
-    const Envoy::Protobuf::Message&) {
+    const Envoy::Protobuf::Message& message) {
   const Envoy::ProtobufWkt::Any& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
-  nighthawk::adaptive_load::NumericHttpHeaderInputVariableSetterConfig config;
+  nighthawk::adaptive_load::RequestsPerSecondInputVariableSetterConfig config;
   Envoy::MessageUtil::unpackTo(any, config);
   return std::make_unique<RequestsPerSecondInputVariableSetter>(config);
 }

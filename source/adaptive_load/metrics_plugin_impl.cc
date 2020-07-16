@@ -13,8 +13,8 @@ NighthawkStatsEmulatedMetricsPlugin::NighthawkStatsEmulatedMetricsPlugin(
     if (result.name() != "global") {
       continue;
     }
-    const int total_specified = nighthawk_output.options().requests_per_second().value() *
-                                nighthawk_output.options().duration().seconds();
+    const long total_specified = nighthawk_output.options().requests_per_second().value() *
+                                 nighthawk_output.options().duration().seconds();
     int total_sent = 0;
     int total_2xx = 0;
     for (const nighthawk::client::Counter& counter : result.counters()) {
