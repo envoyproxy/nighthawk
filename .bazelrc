@@ -3,6 +3,8 @@
 
 build:clang-asan --test_timeout=900
 build:clang-tsan --test_timeout=900
+# See https://github.com/envoyproxy/nighthawk/issues/405
+build:macos --copt -UDEBUG
 
 # Envoy specific Bazel build/test options.
 
