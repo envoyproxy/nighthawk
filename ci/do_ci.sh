@@ -187,9 +187,11 @@ if [ -n "$CIRCLECI" ]; then
     # As of the new coverage methodology introduced in Envoy, that has grown memory requirements too.
     # Hence we heavily reduce parallellism, to avoid being OOM killed.
     if [[ "$1" == "coverage" ]]; then
-        NUM_CPUS=4
+        NUM_CPUS=3
     elif [[ "$1" == "asan" ]]; then
         NUM_CPUS=3
+    elif [[ "$1" == "test_gcc" ]]; then
+        NUM_CPUS=4
     else
         NUM_CPUS=8
     fi
