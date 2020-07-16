@@ -6,7 +6,7 @@ no metrics streamed during a test run. The work to stream its metrics is in
 progress.	
 
 
-## Statistics in Nighthawk	
+## Statistics in Nighthawk
 All statistics below defined in Nighthawk are per worker.
 
 For counter metric, Nighthawk use Envoy's Counter directly. For histogram
