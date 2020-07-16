@@ -91,8 +91,8 @@ def _mini_stress_test(fixture, args):
 
   asserts.assertGreaterEqual(
       int(global_histograms["benchmark_http_client.request_to_response"]["count"]), 1)
-  asserts.assertGreaterEqual(
-      int(global_histograms["benchmark_http_client.latency_2xx"]["count"]), 1)
+  asserts.assertGreaterEqual(int(global_histograms["benchmark_http_client.latency_2xx"]["count"]),
+                             1)
   return counters
 
 
