@@ -45,8 +45,9 @@ TEST_F(FactoriesTest, CreateBenchmarkClient) {
   EXPECT_CALL(options_, toCommandLineOptions()).Times(1).WillOnce(Return(ByMove(std::move(cmd))));
   StaticRequestSourceImpl request_generator(
       std::make_unique<Envoy::Http::TestRequestHeaderMapImpl>());
-  auto benchmark_client = factory.create(*api_, dispatcher_, stats_store_, cluster_manager,
-                                         http_tracer_, "foocluster", /*sink_stat_prefix=*/0, request_generator);
+  auto benchmark_client =
+      factory.create(*api_, dispatcher_, stats_store_, cluster_manager, http_tracer_, "foocluster",
+                     /*sink_stat_prefix=*/0, request_generator);
   EXPECT_NE(nullptr, benchmark_client.get());
 }
 
