@@ -109,7 +109,7 @@ envoy_cc_library(
         "@envoy//source/common/http:utility_lib_with_external_headers",
         "@envoy//source/common/network:utility_lib_with_external_headers",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
-        "@envoy//source/common/stats:stats_lib_with_external_headers",
+        "@envoy//source/common/stats:histogram_lib_with_external_headers",
         "@envoy//source/exe:envoy_common_lib_with_external_headers",
         "@envoy//source/server/config_validation:server_lib_with_external_headers",
     ],

@@ -1,9 +1,9 @@
 #include <chrono>
 
+#include "external/envoy/source/common/common/random_generator.h"
 #include "external/envoy/source/common/event/dispatcher_impl.h"
 #include "external/envoy/source/common/http/header_map_impl.h"
 #include "external/envoy/source/common/network/utility.h"
-#include "external/envoy/source/common/runtime/runtime_impl.h"
 #include "external/envoy/source/common/stats/isolated_store_impl.h"
 #include "external/envoy/test/mocks/http/mocks.h"
 #include "external/envoy/test/mocks/stream_info/mocks.h"
@@ -49,7 +49,7 @@ public:
   HeaderMapPtr request_headers_;
   uint64_t stream_decoder_completion_callbacks_{0};
   uint64_t pool_failures_{0};
-  Envoy::Runtime::RandomGeneratorImpl random_generator_;
+  Envoy::Random::RandomGeneratorImpl random_generator_;
   Envoy::Tracing::HttpTracerSharedPtr http_tracer_;
   Envoy::Http::ResponseHeaderMapPtr test_header_;
   Envoy::Http::ResponseTrailerMapPtr test_trailer_;

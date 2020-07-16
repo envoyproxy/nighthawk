@@ -43,7 +43,7 @@ COVERAGE_VALUE=${COVERAGE_VALUE%?}
 
 if [ "$VALIDATE_COVERAGE" == "true" ]
 then
-  COVERAGE_THRESHOLD=98.6
+  COVERAGE_THRESHOLD=98.4
   COVERAGE_FAILED=$(echo "${COVERAGE_VALUE}<${COVERAGE_THRESHOLD}" | bc)
   if test ${COVERAGE_FAILED} -eq 1; then
       echo Code coverage ${COVERAGE_VALUE} is lower than limit of ${COVERAGE_THRESHOLD}
