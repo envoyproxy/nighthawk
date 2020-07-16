@@ -217,7 +217,7 @@ TEST_F(BenchmarkClientHttpTest, ExportSuccessLatency) {
   client_->exportLatency(/*response_code=*/200, latency_ns);
   client_->exportLatency(/*response_code=*/200, latency_ns);
   EXPECT_EQ(2, client_->statistics()["benchmark_http_client.latency_2xx"]->count());
-  EXPECT_DOUBLE_EQ(latency, client_->statistics()["benchmark_http_client.latency_2xx"]->mean());
+  EXPECT_DOUBLE_EQ(latency_ns, client_->statistics()["benchmark_http_client.latency_2xx"]->mean());
 }
 
 TEST_F(BenchmarkClientHttpTest, ExportErrorLatency) {

@@ -43,7 +43,7 @@ public:
     sequencer_ = new MockSequencer();
     request_generator_ = new MockRequestSource();
 
-    EXPECT_CALL(benchmark_client_factory_, create(_, _, _, _, _, _, _))
+    EXPECT_CALL(benchmark_client_factory_, create(_, _, _, _, _, _, _, _))
         .Times(1)
         .WillOnce(Return(ByMove(std::unique_ptr<BenchmarkClient>(benchmark_client_))));
 
