@@ -13,7 +13,7 @@ For counter metric, Nighthawk use Envoy's Counter directly. For histogram
 metric, Nighthawk wraps Envoy's Histogram into its own Statistic concept (see
 [#391](https://github.com/envoyproxy/nighthawk/pull/391)).
 
-Name | Type | Description	
+Name | Type | Description
 -----| ----- | ----------------	
 upstream_rq_total | Counter | Total number of requests sent from Nighthawk
 http_1xx | Counter | Total number of response with code 1xx
