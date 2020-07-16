@@ -31,7 +31,7 @@ public:
   std::string category() const override { return "nighthawk.metrics_plugin"; }
   // Instantiates the specific MetricsPlugin class. Casts |message| to Any, unpacks it to the
   // plugin-specific proto, and passes the strongly typed proto to the constructor.
-  virtual MetricsPluginPtr createMetricsPlugin(const Envoy::Protobuf::Message&) PURE;
+  virtual MetricsPluginPtr createMetricsPlugin(const Envoy::Protobuf::Message& message) PURE;
 };
 
 } // namespace AdaptiveLoad

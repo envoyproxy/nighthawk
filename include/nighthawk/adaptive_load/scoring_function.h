@@ -28,7 +28,7 @@ public:
   std::string category() const override { return "nighthawk.scoring_function"; }
   // Instantiates the specific ScoringFunction class. Casts |message| to Any, unpacks it to
   // the plugin-specific proto, and passes the strongly typed proto to the constructor.
-  virtual ScoringFunctionPtr createScoringFunction(const Envoy::Protobuf::Message& config_any) = 0;
+  virtual ScoringFunctionPtr createScoringFunction(const Envoy::Protobuf::Message& message) PURE;
 };
 
 } // namespace AdaptiveLoad

@@ -320,3 +320,25 @@ envoy_cc_test(
         "@envoy//test/test_common:utility_lib",
     ],
 )
+
+envoy_cc_test(
+    name = "input_variable_setter_test",
+    srcs = ["input_variable_setter_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/adaptive_load:adaptive_load_lib",
+        "@envoy//test/test_common:utility_lib",
+        "@envoy//source/common/protobuf:utility_lib_with_external_headers",
+    ],
+)
+
+envoy_cc_test(
+    name = "scoring_function_test",
+    srcs = ["scoring_function_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/adaptive_load:adaptive_load_lib",
+        "@envoy//test/test_common:utility_lib",
+        "@envoy//source/common/protobuf:utility_lib_with_external_headers",
+    ],
+)
