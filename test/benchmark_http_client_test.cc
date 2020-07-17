@@ -41,14 +41,13 @@ public:
 
     auto& tracer = static_cast<Envoy::Tracing::MockHttpTracer&>(*http_tracer_);
     EXPECT_CALL(tracer, startSpan_(_, _, _, _))
-        .WillRepeatedly(
-            Invoke([&](const Envoy::Tracing::Config& config, const Envoy::Http::HeaderMap&,
-                       const Envoy::StreamInfo::StreamInfo&,
-                       const Envoy::Tracing::Decision) -> Envoy::Tracing::Span* {
-              EXPECT_EQ(Envoy::Tracing::OperationName::Egress, config.operationName());
-              auto* span = new NiceMock<Envoy::Tracing::MockSpan>();
-              return span;
-            }));
+        .WillRepeatedly([&](const Envoy::Tracing::Config& config, const Envoy::Http::HeaderMap&,
+                            const Envoy::StreamInfo::StreamInfo&,
+                            const Envoy::Tracing::Decision) -> Envoy::Tracing::Span* {
+          EXPECT_EQ(Envoy::Tracing::OperationName::Egress, config.operationName());
+          auto* span = new NiceMock<Envoy::Tracing::MockSpan>();
+          return span;
+        });
     request_generator_ = []() {
       auto header = std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(
           std::initializer_list<std::pair<std::string, std::string>>(
@@ -76,15 +75,15 @@ public:
             })));
 
     EXPECT_CALL(pool_, newStream(_, _))
-        .WillRepeatedly(Invoke([&](Envoy::Http::ResponseDecoder& decoder,
-                                   Envoy::Http::ConnectionPool::Callbacks& callbacks)
-                                   -> Envoy::Http::ConnectionPool::Cancellable* {
+        .WillRepeatedly([&](Envoy::Http::ResponseDecoder& decoder,
+                            Envoy::Http::ConnectionPool::Callbacks& callbacks)
+                            -> Envoy::Http::ConnectionPool::Cancellable* {
           decoders_.push_back(&decoder);
           NiceMock<Envoy::StreamInfo::MockStreamInfo> stream_info;
           callbacks.onPoolReady(stream_encoder_, Envoy::Upstream::HostDescriptionConstSharedPtr{},
                                 stream_info);
           return nullptr;
-        }));
+        });
 
     client_->setMaxPendingRequests(max_pending);
     client_->setConnectionLimit(connection_limit);
