@@ -311,8 +311,6 @@ TEST_F(BenchmarkClientHttpTest, MultipleRequestsDifferentPath) {
                                                                      {":path", "/b"},
                                                                      {":host", "localhost"},
                                                                      {"Content-Length", "1313"}};
-  // HeaderMapPtr sharedHeader1 = std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(header1);
-  // HeaderMapPtr sharedHeader2 = std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(header2);
   requests_vector.push_back(std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(header1));
   requests_vector.push_back(std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(header2));
   std::vector<HeaderMapPtr>::iterator request_iterator;
