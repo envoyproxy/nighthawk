@@ -1,4 +1,5 @@
 #include <vector>
+
 #include "external/envoy/source/common/common/random_generator.h"
 #include "external/envoy/source/common/http/header_map_impl.h"
 #include "external/envoy/source/common/network/utility.h"
@@ -67,11 +68,13 @@ public:
     // this is where we store the properties of headers that are passed to the stream encoder. We
     // verify later that these match expected headers.
     std::vector<absl::flat_hash_map<std::string, std::string>> called_headers;
+    EXPECT_CALL(stream_encoder_, encodeHeaders(_, _)).Times(AtLeast(1));
     ON_CALL(stream_encoder_, encodeHeaders(_, _))
         .WillByDefault(WithArgs<0>(
             ([this, &called_headers](const Envoy::Http::RequestHeaderMap& specific_request) {
               called_headers.push_back(getTestRecordedProperties(specific_request));
-            })));
+            }
+            )));
 
     EXPECT_CALL(pool_, newStream(_, _))
         .WillRepeatedly(Invoke([&](Envoy::Http::ResponseDecoder& decoder,
@@ -133,6 +136,7 @@ public:
       EXPECT_THAT(header_expectations, UnorderedElementsAreArray(called_headers));
     }
   }
+
   absl::flat_hash_map<std::string, std::string>
   getTestRecordedProperties(const Envoy::Http::RequestHeaderMap& header) {
     absl::flat_hash_map<std::string, std::string> properties_map;
@@ -298,18 +302,18 @@ TEST_F(BenchmarkClientHttpTest, BadContentLength) {
 }
 TEST_F(BenchmarkClientHttpTest, MultipleRequestsDifferentPath) {
   std::vector<HeaderMapPtr> requests_vector;
-  auto header1 =
-      std::initializer_list<std::pair<std::string, std::string>>({{":scheme", "http"},
-                                                                  {":method", "GET"},
-                                                                  {":path", "/a"},
-                                                                  {":host", "localhost"},
-                                                                  {"Content-Length", "1313"}});
-  auto header2 =
-      std::initializer_list<std::pair<std::string, std::string>>({{":scheme", "http"},
-                                                                  {":method", "GET"},
-                                                                  {":path", "/b"},
-                                                                  {":host", "localhost"},
-                                                                  {"Content-Length", "1313"}});
+  std::initializer_list<std::pair<std::string, std::string>> header1{{":scheme", "http"},
+                                                                     {":method", "GET"},
+                                                                     {":path", "/a"},
+                                                                     {":host", "localhost"},
+                                                                     {"Content-Length", "1313"}};
+  std::initializer_list<std::pair<std::string, std::string>> header2{{":scheme", "http"},
+                                                                     {":method", "GET"},
+                                                                     {":path", "/b"},
+                                                                     {":host", "localhost"},
+                                                                     {"Content-Length", "1313"}};
+  // HeaderMapPtr sharedHeader1 = std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(header1);
+  // HeaderMapPtr sharedHeader2 = std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(header2);
   requests_vector.push_back(std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(header1));
   requests_vector.push_back(std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(header2));
   std::vector<HeaderMapPtr>::iterator request_iterator;
