@@ -73,8 +73,7 @@ public:
         .WillByDefault(WithArgs<0>(
             ([this, &called_headers](const Envoy::Http::RequestHeaderMap& specific_request) {
               called_headers.push_back(getTestRecordedProperties(specific_request));
-            }
-            )));
+            })));
 
     EXPECT_CALL(pool_, newStream(_, _))
         .WillRepeatedly(Invoke([&](Envoy::Http::ResponseDecoder& decoder,
