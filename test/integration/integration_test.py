@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
-"""@package integration_test.py
-Entry point for our integration testing
-"""
+"""Entry point for our integration testing."""
 import logging
 import os
 import sys
 import pytest
 
-from utility import isSanitizerRun
+from test.integration import utility
 
 if __name__ == '__main__':
   path = os.path.dirname(os.path.realpath(__file__))
@@ -18,13 +16,13 @@ if __name__ == '__main__':
           "-vvvv",
           "--showlocals",  # Don't abbreviate/truncate long values in asserts.
           "-p",
-          "no:cacheprovider",  # Avoid a bunch of warnings on readonly filesystems 
+          "no:cacheprovider",  # Avoid a bunch of warnings on readonly filesystems
           "-k",
           test_selection_arg,  # Passed in via BUILD/py_test()
           "-x",
           path,
           "-n",
-          "4" if isSanitizerRun() else "20"  # Number of tests to run in parallel
+          "4" if utility.isSanitizerRun() else "20"  # Number of tests to run in parallel
       ],
       plugins=["xdist"])
   exit(r)
