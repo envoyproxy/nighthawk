@@ -1,15 +1,15 @@
-#!/usr/bin/env python3
+"""Tests for the remote execution feature."""
 
 import pytest
 
 from test.integration.integration_test_fixtures import (http_test_server_fixture, server_config)
-from test.integration.utility import *
+from test.integration import asserts
 
 
 def test_remote_execution_basics(http_test_server_fixture):
-  """
-  Verify remote execution via gRPC works as intended. We do that by running
-  nighthawk_service and configuring nighthawk_client to request execution via that.
+  """Verify remote execution via gRPC works as intended.
+
+  We do that by running nighthawk_service and configuring nighthawk_client to request execution via that.
   """
   http_test_server_fixture.startNighthawkGrpcService()
   args = [
@@ -22,12 +22,12 @@ def test_remote_execution_basics(http_test_server_fixture):
   for i in range(repeats):
     parsed_json, _ = http_test_server_fixture.runNighthawkClient(args)
     counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-    assertCounterGreaterEqual(counters, "benchmark.http_2xx", 25)
+    asserts.assertCounterGreaterEqual(counters, "benchmark.http_2xx", 25)
 
   http_test_server_fixture.grpc_service.stop()
   # Ensure the gRPC service logs looks right. Specifically these logs ought to have sentinels
   # indicative of the right number of executions. (Avoids regression of #289).
-  assertEqual(
+  asserts.assertEqual(
       repeats,
       sum("Starting 1 threads / event loops" in line
           for line in http_test_server_fixture.grpc_service.log_lines))
@@ -38,9 +38,7 @@ def test_remote_execution_basics(http_test_server_fixture):
 
 
 def test_bad_service_uri(http_test_server_fixture):
-  """
-  Test configuring a bad service uri.
-  """
+  """Test configuring a bad service uri."""
   args = [http_test_server_fixture.getTestServerRootUri(), "--nighthawk-service", "a:-1"]
   parsed_json, err = http_test_server_fixture.runNighthawkClient(args,
                                                                  expect_failure=True,

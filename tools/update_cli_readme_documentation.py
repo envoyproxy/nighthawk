@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-
-# Tool to automatically update README.md files that contain --help output of c++ TCLAP binaries
+"""Tool to automatically update README.md files that contain --help output of c++ TCLAP binaries."""
 
 import logging
 import argparse
@@ -41,7 +40,7 @@ if __name__ == "__main__":
   target_path = pathlib.Path(readme_md_path)
   with target_path.open("r", encoding="utf-8") as f:
     original_contents = target_path.read_text(encoding="utf-8")
-    replaced = re.sub("\nUSAGE\:[^.]*.*%s[^```]*" % args.binary, str.join("\n", cli_help),
+    replaced = re.sub("\nUSAGE\\:[^.]*.*%s[^```]*" % args.binary, str.join("\n", cli_help),
                       original_contents)
     # Avoid check_format flagging "over-enthousiastic" whitespace
     replaced = replaced.replace("...  [", "... [")

@@ -1,3 +1,5 @@
+"""Contains the NighthawkTestServer class, which wraps the nighthawk_test_servern binary."""
+
 import http.client
 import json
 import logging
@@ -39,27 +41,29 @@ def _substitute_yaml_values(runfiles_instance, obj, params):
 
 
 class TestServerBase(object):
-  """
-    Base class for running a server in a separate process.
+  """Base class for running a server in a separate process.
 
-    Arguments:
-      server_binary_path: String, specify the path to the test server binary.
-      config_template_path: String, specify the path to the test server configuration template.
-      server_ip: String, specify the ip address the test server should use to listen for traffic.
-      server_binary_config_path_arg: String, specify the name of the CLI argument the test server binary uses to accept a configuration path.
-      parameters: Dictionary. Supply this to provide configuration template parameter replacement values.
-      tag: String. Supply this to get recognizeable output locations.
-    
-    Attributes:
-      ip_version: IP version that the proxy should use when listening.
-      server_ip: string containing the server ip that will be used to listen
-      server_port: Integer, get the port used by the server to listen for traffic.
-      docker_image: String, supplies a docker image for execution of the test server binary. Sourced from environment variable NH_DOCKER_IMAGE.
-      tmpdir: String, indicates the location used to store outputs like logs.
-    """
+  Attributes:
+    ip_version: IP version that the proxy should use when listening.
+    server_ip: string containing the server ip that will be used to listen
+    server_port: Integer, get the port used by the server to listen for traffic.
+    docker_image: String, supplies a docker image for execution of the test server binary. Sourced from environment variable NH_DOCKER_IMAGE.
+    tmpdir: String, indicates the location used to store outputs like logs.
+  """
 
   def __init__(self, server_binary_path, config_template_path, server_ip, ip_version,
                server_binary_config_path_arg, parameters, tag):
+    """Initialize a TestServerBase instance.
+
+    Args:
+        server_binary_path (str): specify the path to the server binary.
+        config_template_path (str): specify the path to the test server configuration template.
+        server_ip (str): Specify the ip address the test server should use to listen for traffic.
+        ip_version (IPAddress): Specify the ip version the server should use to listen for traffic.
+        server_binary_config_path_arg (str): Specify the name of the CLI argument the test server binary uses to accept a configuration path.
+        parameters (dict): Supply to provide configuration template parameter replacement values.
+        tag (str): Supply to get recognizeable output locations.
+    """
     assert ip_version != IpVersion.UNKNOWN
     self.ip_version = ip_version
     self.server_ip = server_ip
@@ -73,7 +77,7 @@ class TestServerBase(object):
     self._parameters["tmpdir"] = self.tmpdir
     self._parameters["tag"] = tag
     self._server_process = None
-    self._server_thread = threading.Thread(target=self.serverThreadRunner)
+    self._server_thread = threading.Thread(target=self._serverThreadRunner)
     self._admin_address_path = ""
     self._parameterized_config_path = ""
     self._instance_id = str(random.randint(1, 1024 * 1024 * 1024))
@@ -102,7 +106,7 @@ class TestServerBase(object):
                                      dir=self.tmpdir) as tmp:
       self._admin_address_path = tmp.name
 
-  def serverThreadRunner(self):
+  def _serverThreadRunner(self):
     args = []
     if self.docker_image != "":
       # TODO(#383): As of https://github.com/envoyproxy/envoy/commit/e8a2d1e24dc9a0da5273442204ec3cdfad1e7ca8
@@ -124,6 +128,17 @@ class TestServerBase(object):
     logging.debug(stderr.decode("utf-8"))
 
   def fetchJsonFromAdminInterface(self, path):
+    """Fetch and parse json from the admin interface.
+
+    Args:
+        path (str): Request uri path and query to use when fetching. E.g. "/stats?format=json"
+
+    Raises:
+        NighthawkException: Raised when the fetch resulted in any http status code other then 200.
+
+    Returns:
+        json: Parsed json object.
+    """
     uri_host = self.server_ip
     if self.ip_version == IpVersion.IPV6:
       uri_host = "[%s]" % self.server_ip
@@ -135,7 +150,7 @@ class TestServerBase(object):
                                r.status_code)
     return r.json()
 
-  def tryUpdateFromAdminInterface(self):
+  def _tryUpdateFromAdminInterface(self):
     with open(self._admin_address_path) as admin_address_file:
       admin_address = admin_address_file.read()
     tmp = admin_address.split(":")
@@ -154,6 +169,11 @@ class TestServerBase(object):
       return False
 
   def enableCpuProfiler(self):
+    """Enable the built-in cpu profiler of the test server.
+
+    Returns:
+        Bool: True iff the cpu profiler was succesfully enabled.
+    """
     uri_host = self.server_ip
     if self.ip_version == IpVersion.IPV6:
       uri_host = "[%s]" % self.server_ip
@@ -162,23 +182,33 @@ class TestServerBase(object):
     logging.info("Enabled CPU profiling via %s: %s", uri, r.status_code == 200)
     return r.status_code == 200
 
-  def waitUntilServerListening(self):
+  def _waitUntilServerListening(self):
     # we allow 30 seconds for the server to have its listeners up.
     # (It seems that in sanitizer-enabled runs this can take a little while)
     timeout = time.time() + 60
     while time.time() < timeout:
-      if self.tryUpdateFromAdminInterface():
+      if self._tryUpdateFromAdminInterface():
         return True
       time.sleep(0.1)
-    logging.error("Timeout in waitUntilServerListening()")
+    logging.error("Timeout in _waitUntilServerListening()")
     return False
 
   def start(self):
+    """Start the server.
+
+    Returns:
+        Bool: True iff the server started successfully.
+    """
     self._server_thread.daemon = True
     self._server_thread.start()
-    return self.waitUntilServerListening()
+    return self._waitUntilServerListening()
 
   def stop(self):
+    """Stop the server.
+
+    Returns:
+        Int: exit code of the server process.
+    """
     os.remove(self._admin_address_path)
     self._server_process.terminate()
     self._server_thread.join()
@@ -186,10 +216,11 @@ class TestServerBase(object):
 
 
 class NighthawkTestServer(TestServerBase):
+  """Run the Nighthawk test server in a separate process.
+
+  Passes in the right cli-arg to point it to its
+  configuration. For, say, NGINX this would be '-c' instead.
   """
-    Will run the Nighthawk test server in a separate process. Passes in the right cli-arg to point it to its
-    configuration. For, say, NGINX this would be '-c' instead.
-    """
 
   def __init__(self,
                server_binary_path,
@@ -198,13 +229,21 @@ class NighthawkTestServer(TestServerBase):
                ip_version,
                parameters=dict(),
                tag=""):
+    """Initialize a NighthawkTestServer instance.
+
+    Args:
+        server_binary_path (String): Path to the nighthawk test server binary.
+        config_template_path (String): Path to the nighthawk test server configuration template.
+        server_ip (String): Ip address for the server to use when listening.
+        ip_version (IPVersion): IPVersion enum member indicating the ip version that the server should use when listening.
+        parameters (dictionary, optional): Directionary with replacement values for substition purposes in the server configuration template. Defaults to dict().
+        tag (str, optional): Tags. Supply this to get recognizeable output locations. Defaults to "".
+    """
     super(NighthawkTestServer, self).__init__(server_binary_path, config_template_path, server_ip,
                                               ip_version, "--config-path", parameters, tag)
 
   def getCliVersionString(self):
-    """ Get the version string as written to the output by the CLI.
-    """
-
+    """Get the version string as written to the output by the CLI."""
     args = []
     if self.docker_image != "":
       args = ["docker", "run", "--rm", self.docker_image]
