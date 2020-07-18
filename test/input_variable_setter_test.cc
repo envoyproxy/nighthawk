@@ -1,5 +1,3 @@
-#include <typeinfo> // std::bad_cast
-
 #include "adaptive_load/input_variable_setter_impl.h"
 #include "adaptive_load/plugin_util.h"
 #include "external/envoy/source/common/config/utility.h"
@@ -8,28 +6,29 @@
 
 namespace Nighthawk {
 namespace AdaptiveLoad {
+namespace {
 
-TEST(RequestsPerSecondInputVariableSetterFactoryTest, GeneratesEmptyConfigProto) {
+TEST(RequestsPerSecondInputVariableSetterConfigFactoryTest, GeneratesEmptyConfigProto) {
   InputVariableSetterConfigFactory& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<InputVariableSetterConfigFactory>("rps");
 
   Envoy::ProtobufTypes::MessagePtr message = config_factory.createEmptyConfigProto();
-  
+
   nighthawk::adaptive_load::RequestsPerSecondInputVariableSetterConfig expected_config;
 
   EXPECT_EQ(message->DebugString(), expected_config.DebugString());
 }
 
-TEST(RequestsPerSecondInputVariableSetterFactoryTest, CreatesRpsPlugin) {
+TEST(RequestsPerSecondInputVariableSetterConfigFactoryTest, CreatesPlugin) {
   nighthawk::adaptive_load::RequestsPerSecondInputVariableSetterConfig config;
-  Envoy::ProtobufWkt::Any any;
-  any.PackFrom(config);
+  Envoy::ProtobufWkt::Any config_any;
+  config_any.PackFrom(config);
 
   InputVariableSetterConfigFactory& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<InputVariableSetterConfigFactory>("rps");
-  InputVariableSetterPtr rps_plugin = config_factory.createInputVariableSetter(any);
+  InputVariableSetterPtr plugin = config_factory.createInputVariableSetter(config_any);
 
-  EXPECT_NE(dynamic_cast<RequestsPerSecondInputVariableSetter*>(rps_plugin.get()), nullptr);
+  EXPECT_NE(dynamic_cast<RequestsPerSecondInputVariableSetter*>(plugin.get()), nullptr);
 }
 
 TEST(RequestsPerSecondInputVariableSetterTest, SetsCommandLineOptionsRpsValue) {
@@ -40,5 +39,6 @@ TEST(RequestsPerSecondInputVariableSetterTest, SetsCommandLineOptionsRpsValue) {
   EXPECT_EQ(options.requests_per_second().value(), 5);
 }
 
+} // namespace
 } // namespace AdaptiveLoad
 } // namespace Nighthawk

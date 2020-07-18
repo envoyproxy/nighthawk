@@ -342,3 +342,25 @@ envoy_cc_test(
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
     ],
 )
+
+envoy_cc_test(
+    name = "step_controller_test",
+    srcs = ["step_controller_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/adaptive_load:adaptive_load_lib",
+        "@envoy//test/test_common:utility_lib",
+        "@envoy//source/common/protobuf:utility_lib_with_external_headers",
+    ],
+)
+
+envoy_cc_test(
+    name = "metrics_plugin_test",
+    srcs = ["metrics_plugin_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/adaptive_load:adaptive_load_lib",
+        "@envoy//test/test_common:utility_lib",
+        "@envoy//source/common/protobuf:utility_lib_with_external_headers",
+    ],
+)

@@ -227,11 +227,12 @@ CheckSessionSpec(const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec) 
 
 AdaptiveLoadSessionOutput
 PerformAdaptiveLoadSession(nighthawk::client::NighthawkService::Stub* nighthawk_service_stub,
-                           const AdaptiveLoadSessionSpec& spec0, std::ostream& diagnostic_ostream,
+                           const AdaptiveLoadSessionSpec& user_spec,
+                           std::ostream& diagnostic_ostream,
                            Envoy::TimeSource* time_source) noexcept {
   AdaptiveLoadSessionOutput output;
 
-  AdaptiveLoadSessionSpec spec = SetDefaults(spec0);
+  AdaptiveLoadSessionSpec spec = SetDefaults(user_spec);
   absl::Status validation_status = CheckSessionSpec(spec);
   if (!validation_status.ok()) {
     output.mutable_session_status()->set_code(static_cast<int>(validation_status.code()));
@@ -244,6 +245,13 @@ PerformAdaptiveLoadSession(nighthawk::client::NighthawkService::Stub* nighthawk_
 
   Envoy::MonotonicTime start_time = time_source->monotonicTime();
   while (!step_controller->IsConverged()) {
+    std::string doom_reason;
+    if (step_controller->IsDoomed(&doom_reason)) {
+      output.mutable_session_status()->set_code(grpc::ABORTED);
+      output.mutable_session_status()->set_message(
+          "Step controller determined that it can never converge: " + doom_reason);
+      return output;
+    }
     if (std::chrono::duration_cast<std::chrono::seconds>(time_source->monotonicTime() - start_time)
             .count() > spec.convergence_deadline().seconds()) {
       output.mutable_session_status()->set_code(grpc::DEADLINE_EXCEEDED);

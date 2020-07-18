@@ -20,13 +20,14 @@ public:
 
   nighthawk::client::CommandLineOptions GetCurrentCommandLineOptions() const override;
   bool IsConverged() const override;
+  bool IsDoomed(std::string* doom_reason) const override;
   void UpdateAndRecompute(const nighthawk::adaptive_load::BenchmarkResult& result) override;
 
 private:
-  const nighthawk::adaptive_load::ExponentialSearchStepControllerConfig config_;
   const nighthawk::client::CommandLineOptions command_line_options_template_;
   InputVariableSetterPtr input_variable_setter_;
   bool is_exponential_phase_;
+  bool is_doomed_;
   double exponential_factor_;
   double previous_load_value_;
   double current_load_value_;

@@ -17,9 +17,14 @@ public:
   virtual ~StepController() = default;
   // Returns the current CommandLineOptions load specification that the StepController recommends.
   virtual nighthawk::client::CommandLineOptions GetCurrentCommandLineOptions() const PURE;
-  // Determines whether the search for the optimal load has converged, based on the StepController's
+  // Reports if the search for the optimal load has converged, based on the StepController's
   // internal state variables.
   virtual bool IsConverged() const PURE;
+  // Reports if the algorithm has determined it can never succeed as configured, e.g. because
+  // metrics were outside thresholds at input values throughout the configured search range.
+  // If returning true, sets |doom_reason| to an explanation of why it can never succeed; otherwise
+  // does not touch |doom_reason|.
+  virtual bool IsDoomed(std::string* doom_reason) const PURE;
   // Reports the result of the latest Nighthawk benchmark to the StepController so that the
   // StepController can add data to its history (if any), recompute any internal state, and
   // recompute its load recommendation.

@@ -1,5 +1,7 @@
 #include "adaptive_load/step_controller_impl.h"
 
+#include <memory>
+
 #include "envoy/registry/registry.h"
 
 #include "external/envoy/source/common/protobuf/protobuf.h"
@@ -64,16 +66,16 @@ REGISTER_FACTORY(ExponentialSearchStepControllerConfigFactory, StepControllerCon
 ExponentialSearchStepController::ExponentialSearchStepController(
     const ExponentialSearchStepControllerConfig& config,
     const nighthawk::client::CommandLineOptions& command_line_options_template)
-    : config_{config}, command_line_options_template_{command_line_options_template},
+    : command_line_options_template_{command_line_options_template},
       input_variable_setter_{
           config.has_input_variable_setter()
               ? LoadInputVariableSetterPlugin(config.input_variable_setter())
               : std::make_unique<RequestsPerSecondInputVariableSetter>(
                     nighthawk::adaptive_load::RequestsPerSecondInputVariableSetterConfig())},
-      is_exponential_phase_{true},
-      exponential_factor_{config_.exponential_factor() > 0.0 ? config_.exponential_factor() : 2.0},
+      is_exponential_phase_{true}, is_doomed_{false},
+      exponential_factor_{config.exponential_factor() > 0.0 ? config.exponential_factor() : 2.0},
       previous_load_value_{std::numeric_limits<double>::signaling_NaN()},
-      current_load_value_{config_.initial_value()},
+      current_load_value_{config.initial_value()},
       bottom_load_value_{std::numeric_limits<double>::signaling_NaN()},
       top_load_value_{std::numeric_limits<double>::signaling_NaN()} {}
 
@@ -86,7 +88,16 @@ ExponentialSearchStepController::GetCurrentCommandLineOptions() const {
 
 bool ExponentialSearchStepController::IsConverged() const {
   // Binary search has brought successive input values within 1% of each other.
-  return !is_exponential_phase_ && abs(current_load_value_ / previous_load_value_ - 1.0) < 0.01;
+  return !is_doomed_ && !is_exponential_phase_ &&
+         abs(current_load_value_ / previous_load_value_ - 1.0) < 0.01;
+}
+
+bool ExponentialSearchStepController::IsDoomed(std::string* doom_reason) const {
+  if (!is_doomed_) {
+    return false;
+  }
+  *doom_reason = "Outside threshold on initial input";
+  return true;
 }
 
 void ExponentialSearchStepController::UpdateAndRecompute(const BenchmarkResult& benchmark_result) {
@@ -96,13 +107,20 @@ void ExponentialSearchStepController::UpdateAndRecompute(const BenchmarkResult& 
     if (score > 0.0) {
       // Have not reached the threshold yet; continue increasing the load exponentially.
       previous_load_value_ = current_load_value_;
-      current_load_value_ *= config_.exponential_factor();
+      current_load_value_ *= exponential_factor_;
     } else {
       // We have found a value that exceeded the threshold.
       // Prepare for the binary search phase.
+      if (std::isnan(previous_load_value_)) {
+        // Cannot continue if the initial value already exceeds metric thresholds.
+        is_doomed_ = true;
+        return;
+      }
       is_exponential_phase_ = false;
+      // Binary search between previous load (ok) and current load (too high).
       bottom_load_value_ = previous_load_value_;
       top_load_value_ = current_load_value_;
+
       previous_load_value_ = current_load_value_;
       current_load_value_ = (bottom_load_value_ + top_load_value_) / 2;
     }
