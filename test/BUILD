@@ -364,3 +364,14 @@ envoy_cc_test(
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
     ],
 )
+
+envoy_cc_test(
+    name = "plugin_util_test",
+    srcs = ["plugin_util_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/adaptive_load:adaptive_load_lib",
+        "@envoy//test/test_common:utility_lib",
+        "@envoy//source/common/protobuf:utility_lib_with_external_headers",
+    ],
+)

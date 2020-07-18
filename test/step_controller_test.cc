@@ -1,4 +1,3 @@
-
 #include "nighthawk/adaptive_load/input_variable_setter.h"
 #include "adaptive_load/plugin_util.h"
 #include "adaptive_load/step_controller_impl.h"

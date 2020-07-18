@@ -53,7 +53,8 @@ double NighthawkStatsEmulatedMetricsPlugin::GetMetricByName(const std::string& m
   return metric_from_name_[metric_name];
 }
 
-std::vector<std::string> NighthawkStatsEmulatedMetricsPlugin::GetAllSupportedMetricNames() {
+const std::vector<std::string>
+NighthawkStatsEmulatedMetricsPlugin::GetAllSupportedMetricNames() const {
   return {
       "attempted-rps",
       "achieved-rps",

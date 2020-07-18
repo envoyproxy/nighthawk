@@ -18,7 +18,7 @@ class NighthawkStatsEmulatedMetricsPlugin : public MetricsPlugin {
 public:
   explicit NighthawkStatsEmulatedMetricsPlugin(const nighthawk::client::Output& nighthawk_output);
   double GetMetricByName(const std::string& metric_name) override;
-  std::vector<std::string> GetAllSupportedMetricNames() override;
+  const std::vector<std::string> GetAllSupportedMetricNames() const override;
 
 private:
   absl::flat_hash_map<std::string, double> metric_from_name_;

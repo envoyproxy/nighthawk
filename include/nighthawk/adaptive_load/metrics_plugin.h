@@ -18,7 +18,7 @@ public:
   // Obtain the numeric metric with the given name, usually by querying an outside system.
   virtual double GetMetricByName(const std::string& metric_name) PURE;
   // All metric names implemented by this plugin, for use in input validation.
-  virtual std::vector<std::string> GetAllSupportedMetricNames() PURE;
+  virtual const std::vector<std::string> GetAllSupportedMetricNames() const PURE;
 };
 
 using MetricsPluginPtr = std::unique_ptr<MetricsPlugin>;
