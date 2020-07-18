@@ -10,7 +10,8 @@ namespace AdaptiveLoad {
 // An InputVariableSetter that sets the |requests_per_second| field in the CommandLineOptions proto.
 class RequestsPerSecondInputVariableSetter : public InputVariableSetter {
 public:
-  RequestsPerSecondInputVariableSetter(const nighthawk::adaptive_load::RequestsPerSecondInputVariableSetterConfig& config);
+  RequestsPerSecondInputVariableSetter(
+      const nighthawk::adaptive_load::RequestsPerSecondInputVariableSetterConfig& config);
   void SetInputVariable(nighthawk::client::CommandLineOptions* command_line_options,
                         double input_value) override;
 };
@@ -21,7 +22,8 @@ class RequestsPerSecondInputVariableSetterConfigFactory : public InputVariableSe
 public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
-  InputVariableSetterPtr createInputVariableSetter(const Envoy::Protobuf::Message& message) override;
+  InputVariableSetterPtr
+  createInputVariableSetter(const Envoy::Protobuf::Message& message) override;
 };
 
 } // namespace AdaptiveLoad

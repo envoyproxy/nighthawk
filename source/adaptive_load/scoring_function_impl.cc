@@ -29,8 +29,10 @@ REGISTER_FACTORY(BinaryScoringFunctionConfigFactory, ScoringFunctionConfigFactor
 
 BinaryScoringFunction::BinaryScoringFunction(
     const nighthawk::adaptive_load::BinaryScoringFunctionConfig& config)
-    : upper_threshold_{config.has_upper_threshold() ? config.upper_threshold().value() : std::numeric_limits<double>::infinity()},
-    lower_threshold_{config.has_lower_threshold() ? config.lower_threshold().value() : -std::numeric_limits<double>::infinity()} {}
+    : upper_threshold_{config.has_upper_threshold() ? config.upper_threshold().value()
+                                                    : std::numeric_limits<double>::infinity()},
+      lower_threshold_{config.has_lower_threshold() ? config.lower_threshold().value()
+                                                    : -std::numeric_limits<double>::infinity()} {}
 
 double BinaryScoringFunction::EvaluateMetric(double value) const {
   return value <= upper_threshold_ && value >= lower_threshold_ ? 1.0 : -1.0;

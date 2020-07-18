@@ -1,7 +1,7 @@
-#include "adaptive_load/plugin_util.h"
-#include "adaptive_load/scoring_function_impl.h"
 #include "external/envoy/source/common/config/utility.h"
 
+#include "adaptive_load/plugin_util.h"
+#include "adaptive_load/scoring_function_impl.h"
 #include "gtest/gtest.h"
 
 namespace Nighthawk {

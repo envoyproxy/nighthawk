@@ -327,8 +327,8 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         "//source/adaptive_load:adaptive_load_lib",
-        "@envoy//test/test_common:utility_lib",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
+        "@envoy//test/test_common:utility_lib",
     ],
 )
 
@@ -338,8 +338,8 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         "//source/adaptive_load:adaptive_load_lib",
-        "@envoy//test/test_common:utility_lib",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
+        "@envoy//test/test_common:utility_lib",
     ],
 )
 
@@ -349,8 +349,8 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         "//source/adaptive_load:adaptive_load_lib",
-        "@envoy//test/test_common:utility_lib",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
+        "@envoy//test/test_common:utility_lib",
     ],
 )
 
@@ -360,8 +360,8 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         "//source/adaptive_load:adaptive_load_lib",
-        "@envoy//test/test_common:utility_lib",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
+        "@envoy//test/test_common:utility_lib",
     ],
 )
 
@@ -371,7 +371,7 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         "//source/adaptive_load:adaptive_load_lib",
-        "@envoy//test/test_common:utility_lib",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
+        "@envoy//test/test_common:utility_lib",
     ],
 )

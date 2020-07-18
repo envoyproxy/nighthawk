@@ -1,14 +1,17 @@
+#include "envoy/registry/registry.h"
+
 #include "nighthawk/adaptive_load/input_variable_setter.h"
 #include "nighthawk/adaptive_load/metrics_plugin.h"
 #include "nighthawk/adaptive_load/scoring_function.h"
 #include "nighthawk/adaptive_load/step_controller.h"
-#include "adaptive_load/plugin_util.h"
+
+#include "external/envoy/source/common/config/utility.h"
+
 #include "api/adaptive_load/benchmark_result.pb.h"
 #include "api/adaptive_load/scoring_function_impl.pb.h"
 #include "api/client/options.pb.h"
-#include "envoy/registry/registry.h"
 
-#include "external/envoy/source/common/config/utility.h"
+#include "adaptive_load/plugin_util.h"
 #include "gtest/gtest.h"
 
 namespace Nighthawk {
@@ -20,7 +23,8 @@ class TestInputVariableSetter : public InputVariableSetter {
 public:
   // Any plugin in the adaptive load system can freely choose an arbitrary single proto as its
   // config type. We use LinearScoringFunctionConfig for all plugins in this test.
-  TestInputVariableSetter(const nighthawk::adaptive_load::LinearScoringFunctionConfig& config) : config_{config} {}
+  TestInputVariableSetter(const nighthawk::adaptive_load::LinearScoringFunctionConfig& config)
+      : config_{config} {}
   void SetInputVariable(nighthawk::client::CommandLineOptions* command_line_options,
                         double input_value) override {
     command_line_options->mutable_connections()->set_value(static_cast<unsigned int>(input_value));
@@ -51,7 +55,8 @@ class TestScoringFunction : public ScoringFunction {
 public:
   // Any plugin in the adaptive load system can freely choose an arbitrary single proto as its
   // config type. We use LinearScoringFunctionConfig for all plugins in this test.
-  TestScoringFunction(const nighthawk::adaptive_load::LinearScoringFunctionConfig& config) : config_{config} {}
+  TestScoringFunction(const nighthawk::adaptive_load::LinearScoringFunctionConfig& config)
+      : config_{config} {}
   double EvaluateMetric(double) const override { return 1.0; }
   const nighthawk::adaptive_load::LinearScoringFunctionConfig config_;
 };
@@ -78,7 +83,8 @@ class TestMetricsPlugin : public MetricsPlugin {
 public:
   // Any plugin in the adaptive load system can freely choose an arbitrary single proto as its
   // config type. We use LinearScoringFunctionConfig for all plugins in this test.
-  TestMetricsPlugin(const nighthawk::adaptive_load::LinearScoringFunctionConfig& config) : config_{config} {}
+  TestMetricsPlugin(const nighthawk::adaptive_load::LinearScoringFunctionConfig& config)
+      : config_{config} {}
   double GetMetricByName(const std::string&) override { return 5.0; }
   const std::vector<std::string> GetAllSupportedMetricNames() const override { return {}; }
   const nighthawk::adaptive_load::LinearScoringFunctionConfig config_;
