@@ -190,6 +190,8 @@ if [ -n "$CIRCLECI" ]; then
         NUM_CPUS=4
     elif [[ "$1" == "asan" ]]; then
         NUM_CPUS=3
+    elif [[ "$1" == "test_gcc" ]]; then
+        NUM_CPUS=4
     else
         NUM_CPUS=8
     fi
