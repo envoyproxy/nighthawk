@@ -1,36 +1,31 @@
-#include "envoy/registry/registry.h"
+#include <grpc++/grpc++.h>
 
 #include <chrono>
 #include <initializer_list>
 #include <iostream>
 
-#include "nighthawk/adaptive_load/input_variable_setter.h"
+#include "envoy/registry/registry.h"
 
-#include "external/envoy/source/common/config/utility.h"
-
-#include "api/adaptive_load/benchmark_result.pb.h"
-#include "api/adaptive_load/input_variable_setter_impl.pb.h"
-#include "api/adaptive_load/metrics_plugin_impl.pb.h"
-#include "api/adaptive_load/scoring_function_impl.pb.h"
-#include "api/adaptive_load/step_controller_impl.pb.h"
-#include "api/client/options.pb.h"
 #include "nighthawk/adaptive_load/adaptive_load_controller.h"
+#include "nighthawk/adaptive_load/input_variable_setter.h"
 #include "nighthawk/adaptive_load/metrics_plugin.h"
 #include "nighthawk/adaptive_load/scoring_function.h"
 #include "nighthawk/adaptive_load/step_controller.h"
 
-#include "api/client/service.grpc.pb.h"
-#include "api/client/service_mock.grpc.pb.h"
-#include "grpcpp/test/mock_stream.h"
-#include <grpc++/grpc++.h>
-
+#include "external/envoy/source/common/config/utility.h"
 #include "external/envoy/source/common/protobuf/protobuf.h"
 
 #include "api/adaptive_load/adaptive_load.pb.h"
+#include "api/adaptive_load/benchmark_result.pb.h"
+#include "api/adaptive_load/input_variable_setter_impl.pb.h"
 #include "api/adaptive_load/metric_spec.pb.h"
+#include "api/adaptive_load/metrics_plugin_impl.pb.h"
+#include "api/adaptive_load/scoring_function_impl.pb.h"
+#include "api/adaptive_load/step_controller_impl.pb.h"
 #include "api/client/options.pb.h"
 #include "api/client/output.pb.h"
 #include "api/client/service.grpc.pb.h"
+#include "api/client/service_mock.grpc.pb.h"
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
@@ -38,6 +33,7 @@
 #include "adaptive_load/metrics_plugin_impl.h"
 #include "adaptive_load/plugin_util.h"
 #include "adaptive_load/step_controller_impl.h"
+#include "grpcpp/test/mock_stream.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -566,7 +562,8 @@ TEST(AdaptiveLoadControllerTest, SetsBenchmarkErrorStatusIfNighthawkServiceDoesN
             "Nighthawk Service did not send a response.");
 }
 
-TEST(AdaptiveLoadControllerTest, SetsBenchmarkErrorStatusIfNighthawkServiceGrpcStreamClosesAbnormally) {
+TEST(AdaptiveLoadControllerTest,
+     SetsBenchmarkErrorStatusIfNighthawkServiceGrpcStreamClosesAbnormally) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
 
   spec.mutable_nighthawk_traffic_template();

@@ -382,8 +382,8 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         "//source/adaptive_load:adaptive_load_lib",
+        "@com_github_grpc_grpc//:grpc++_test",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
         "@envoy//test/test_common:utility_lib",
-        "@com_github_grpc_grpc//:grpc++_test",
     ],
 )
