@@ -1,7 +1,6 @@
 #include <grpc++/grpc++.h>
 
 #include <chrono>
-#include <initializer_list>
 #include <iostream>
 
 #include "envoy/registry/registry.h"
@@ -64,53 +63,6 @@ public:
 private:
   int64_t unix_time_{0};
 };
-
-// class FakeNighthawkServiceStub : public nighthawk::client::NighthawkService::StubInterface {
-// public:
-//   std::unique_ptr<::grpc::ClientReaderWriterInterface<::nighthawk::client::ExecutionRequest,
-//                                                       ::nighthawk::client::ExecutionResponse>>
-//   ExecutionStream(::grpc::ClientContext* context) override {
-//     return std::unique_ptr<::grpc::ClientReaderWriterInterface<
-//         ::nighthawk::client::ExecutionRequest, ::nighthawk::client::ExecutionResponse>>(
-//         ExecutionStreamRaw(context));
-//   }
-// };
-
-// class FakeNighthawkService final : public nighthawk::client::NighthawkService::Service {
-// public:
-//   FakeNighthawkService(
-//       std::initializer_list<std::pair<grpc::Status, nighthawk::client::ExecutionResponse>>&
-//           return_values) {
-//     for (const std::pair<grpc::Status, nighthawk::client::ExecutionResponse>& return_value :
-//          return_values) {
-//       statuses_.push_back(return_value.first());
-//       responses_.push_back(return_value.second());
-//     }
-//   }
-//   grpc::Status
-//   ExecutionStream(grpc::ServerContext* context,
-//                   grpc::ServerReaderWriter<nighthawk::client::ExecutionResponse,
-//                                            nighthawk::client::ExecutionRequest>* stream) override
-//                                            {
-//     nighthawk::client::ExecutionRequest request;
-//     stream->Read(&request);
-//     stream->Write(responses_[index_]);
-//     grpc::Status status = statuses_[index_];
-//     ++index_;
-//     return status;
-//   }
-
-//   // void SetNextReturnStatus(grpc::Status status) { return_status_ = status; }
-
-//   // void SetNextExecutionResponse(const nighthawk::client::ExecutionResponse& response) {
-//   //   execution_response_ = response;
-//   // }
-
-// private:
-//   int index_{0};
-//   std::vector<nighthawk::client::ExecutionResponse> responses_{};
-//   std::vector<grpc::Status> statuses_{};
-// };
 
 // MetricsPlugin for testing, supporting a single metric named 'metric1'.
 class FakeMetricsPlugin : public MetricsPlugin {
