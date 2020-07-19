@@ -82,9 +82,8 @@ AnalyzeNighthawkBenchmark(const nighthawk::client::ExecutionResponse& nighthawk_
   BenchmarkResult benchmark_result;
   *benchmark_result.mutable_nighthawk_service_output() = nighthawk_response.output();
 
-  benchmark_result.mutable_status()->set_code(nighthawk_response.error_detail().code());
+  *benchmark_result.mutable_status() = nighthawk_response.error_detail();
   if (nighthawk_response.error_detail().code() != ::grpc::OK) {
-    benchmark_result.mutable_status()->set_message(nighthawk_response.error_detail().message());
     return benchmark_result;
   }
 
