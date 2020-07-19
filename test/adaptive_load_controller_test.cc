@@ -181,9 +181,10 @@ TEST(AdaptiveLoadControllerTest, FailsWithTrafficTemplateDurationSet) {
   spec.mutable_nighthawk_traffic_template()->mutable_duration()->set_seconds(1);
 
   std::ostringstream diagnostic_ostream;
+  FakeTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
       /*nighthawk_service_stub=*/nullptr, spec, diagnostic_ostream,
-      /*time_source=*/nullptr);
+      time_source);
   EXPECT_THAT(output.session_status().message(), HasSubstr("should not have |duration| set"));
 }
 
@@ -192,9 +193,10 @@ TEST(AdaptiveLoadControllerTest, FailsWithOpenLoopSet) {
   spec.mutable_nighthawk_traffic_template()->mutable_open_loop()->set_value(false);
 
   std::ostringstream diagnostic_ostream;
+  FakeTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
       /*nighthawk_service_stub=*/nullptr, spec, diagnostic_ostream,
-      /*time_source=*/nullptr);
+      time_source);
 
   EXPECT_THAT(output.session_status().message(), HasSubstr("should not have |open_loop| set"));
 }
@@ -208,9 +210,10 @@ TEST(AdaptiveLoadControllerTest, FailsWithNonexistentMetricsPluginName) {
   *metrics_plugin_config->mutable_typed_config() = Envoy::ProtobufWkt::Any();
 
   std::ostringstream diagnostic_ostream;
+  FakeTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
       /*nighthawk_service_stub=*/nullptr, spec, diagnostic_ostream,
-      /*time_source=*/nullptr);
+      time_source);
 
   EXPECT_THAT(output.session_status().message(), HasSubstr("MetricsPlugin not found"));
 }
@@ -224,9 +227,10 @@ TEST(AdaptiveLoadControllerTest, FailsWithNonexistentStepControllerPluginName) {
   *spec.mutable_step_controller_config() = config;
 
   std::ostringstream diagnostic_ostream;
+  FakeTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
       /*nighthawk_service_stub=*/nullptr, spec, diagnostic_ostream,
-      /*time_source=*/nullptr);
+      time_source);
 
   EXPECT_THAT(output.session_status().message(), HasSubstr("StepController plugin not found"));
 }
@@ -242,9 +246,10 @@ TEST(AdaptiveLoadControllerTest, FailsWithNonexistentScoringFunctionPluginName) 
   *threshold->mutable_threshold_spec()->mutable_scoring_function() = scoring_function_config;
 
   std::ostringstream diagnostic_ostream;
+  FakeTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
       /*nighthawk_service_stub=*/nullptr, spec, diagnostic_ostream,
-      /*time_source=*/nullptr);
+      time_source);
 
   EXPECT_THAT(output.session_status().message(), HasSubstr("ScoringFunction plugin not found"));
 }
@@ -260,9 +265,10 @@ TEST(AdaptiveLoadControllerTest, FailsWithNonexistentMetricsPluginNameInMetricTh
   threshold->mutable_metric_spec()->set_metrics_plugin_name("nonexistent-metrics-plugin");
 
   std::ostringstream diagnostic_ostream;
+  FakeTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
       /*nighthawk_service_stub=*/nullptr, spec, diagnostic_ostream,
-      /*time_source=*/nullptr);
+      time_source);
 
   EXPECT_THAT(output.session_status().message(), HasSubstr("nonexistent metrics_plugin_name"));
 }
@@ -279,9 +285,10 @@ TEST(AdaptiveLoadControllerTest, FailsWithUndeclaredMetricsPluginNameInMetricThr
   threshold->mutable_metric_spec()->set_metrics_plugin_name("fake-metrics-plugin");
 
   std::ostringstream diagnostic_ostream;
+  FakeTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
       /*nighthawk_service_stub=*/nullptr, spec, diagnostic_ostream,
-      /*time_source=*/nullptr);
+      time_source);
 
   EXPECT_THAT(output.session_status().message(), HasSubstr("nonexistent metrics_plugin_name"));
 }
@@ -298,9 +305,10 @@ TEST(AdaptiveLoadControllerTest, FailsWithNonexistentMetricsPluginNameInInformat
   metric_spec->set_metrics_plugin_name("nonexistent-metrics-plugin");
 
   std::ostringstream diagnostic_ostream;
+  FakeTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
       /*nighthawk_service_stub=*/nullptr, spec, diagnostic_ostream,
-      /*time_source=*/nullptr);
+      time_source);
 
   EXPECT_THAT(output.session_status().message(), HasSubstr("nonexistent metrics_plugin_name"));
 }
@@ -315,9 +323,10 @@ TEST(AdaptiveLoadControllerTest, FailsWithUndeclaredMetricsPluginNameInInformati
   metric_spec->set_metrics_plugin_name("fake-metrics-plugin");
 
   std::ostringstream diagnostic_ostream;
+  FakeTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
       /*nighthawk_service_stub=*/nullptr, spec, diagnostic_ostream,
-      /*time_source=*/nullptr);
+      time_source);
 
   EXPECT_THAT(output.session_status().message(), HasSubstr("nonexistent metrics_plugin_name"));
 }
@@ -333,9 +342,10 @@ TEST(AdaptiveLoadControllerTest, FailsWithNonexistentBuiltinMetricNameInMetricTh
   threshold->mutable_metric_spec()->set_metrics_plugin_name("builtin");
 
   std::ostringstream diagnostic_ostream;
+  FakeTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
       /*nighthawk_service_stub=*/nullptr, spec, diagnostic_ostream,
-      /*time_source=*/nullptr);
+      time_source);
 
   EXPECT_THAT(output.session_status().message(), HasSubstr("not implemented by plugin"));
 }
@@ -353,9 +363,10 @@ TEST(AdaptiveLoadControllerTest, FailsWithNonexistentCustomMetricNameInMetricThr
   threshold->mutable_metric_spec()->set_metrics_plugin_name("fake-metrics-plugin");
 
   std::ostringstream diagnostic_ostream;
+  FakeTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
       /*nighthawk_service_stub=*/nullptr, spec, diagnostic_ostream,
-      /*time_source=*/nullptr);
+      time_source);
 
   EXPECT_THAT(output.session_status().message(), HasSubstr("not implemented by plugin"));
 }
@@ -369,9 +380,10 @@ TEST(AdaptiveLoadControllerTest, FailsWithNonexistentBuiltinMetricNameInInformat
   metric_spec->set_metrics_plugin_name("builtin");
 
   std::ostringstream diagnostic_ostream;
+  FakeTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
       /*nighthawk_service_stub=*/nullptr, spec, diagnostic_ostream,
-      /*time_source=*/nullptr);
+      time_source);
 
   EXPECT_THAT(output.session_status().message(), HasSubstr("not implemented by plugin"));
 }
@@ -387,9 +399,10 @@ TEST(AdaptiveLoadControllerTest, FailsWithNonexistentCustomMetricNameInInformati
   metric_spec->set_metrics_plugin_name("fake-metrics-plugin");
 
   std::ostringstream diagnostic_ostream;
+  FakeTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
       /*nighthawk_service_stub=*/nullptr, spec, diagnostic_ostream,
-      /*time_source=*/nullptr);
+      time_source);
 
   EXPECT_THAT(output.session_status().message(), HasSubstr("not implemented by plugin"));
 }
@@ -418,7 +431,7 @@ TEST(AdaptiveLoadControllerTest, TimesOutIfNeverConverged) {
   std::ostringstream diagnostic_ostream;
   FakeTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
-      &mock_nighthawk_service_stub, spec, diagnostic_ostream, &time_source);
+      &mock_nighthawk_service_stub, spec, diagnostic_ostream, time_source);
 
   EXPECT_THAT(output.session_status().message(), HasSubstr("Failed to converge before deadline"));
 }
@@ -447,7 +460,7 @@ TEST(AdaptiveLoadControllerTest, ExitsWhenDoomed) {
   std::ostringstream diagnostic_ostream;
   FakeTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
-      &mock_nighthawk_service_stub, spec, diagnostic_ostream, &time_source);
+      &mock_nighthawk_service_stub, spec, diagnostic_ostream, time_source);
 
   EXPECT_THAT(output.session_status().message(),
               HasSubstr("Step controller determined that it can never converge"));
@@ -477,7 +490,7 @@ TEST(AdaptiveLoadControllerTest, PerformsTestingStageAfterConvergence) {
   std::ostringstream diagnostic_ostream;
   FakeTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
-      &mock_nighthawk_service_stub, spec, diagnostic_ostream, &time_source);
+      &mock_nighthawk_service_stub, spec, diagnostic_ostream, time_source);
 
   EXPECT_TRUE(output.has_testing_stage_result());
 }
@@ -496,6 +509,7 @@ TEST(AdaptiveLoadControllerTest, SetsBenchmarkErrorStatusIfNighthawkServiceDoesN
       nighthawk::client::ExecutionRequest, nighthawk::client::ExecutionResponse>>();
   EXPECT_CALL(*mock_reader_writer.get(), Write(_, _)).WillRepeatedly(Return(true));
   EXPECT_CALL(*mock_reader_writer.get(), WritesDone()).WillRepeatedly(Return(true));
+  // Simulate gRPC Read() failing:
   EXPECT_CALL(*mock_reader_writer.get(), Read(_)).WillRepeatedly(Return(false));
   EXPECT_CALL(*mock_reader_writer, Finish()).WillRepeatedly(Return(::grpc::Status::OK));
 
@@ -506,7 +520,7 @@ TEST(AdaptiveLoadControllerTest, SetsBenchmarkErrorStatusIfNighthawkServiceDoesN
   std::ostringstream diagnostic_ostream;
   FakeTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
-      &mock_nighthawk_service_stub, spec, diagnostic_ostream, &time_source);
+      &mock_nighthawk_service_stub, spec, diagnostic_ostream, time_source);
 
   ASSERT_GT(output.adjusting_stage_results_size(), 0);
   EXPECT_EQ(output.adjusting_stage_results()[0].status().code(), ::grpc::UNKNOWN);
@@ -530,6 +544,7 @@ TEST(AdaptiveLoadControllerTest,
   EXPECT_CALL(*mock_reader_writer.get(), Write(_, _)).WillRepeatedly(Return(true));
   EXPECT_CALL(*mock_reader_writer.get(), WritesDone()).WillRepeatedly(Return(true));
   EXPECT_CALL(*mock_reader_writer.get(), Read(_)).WillRepeatedly(Return(true));
+  // Simulate gRPC abnormal stream shutdown:
   EXPECT_CALL(*mock_reader_writer, Finish())
       .WillRepeatedly(Return(::grpc::Status(::grpc::UNKNOWN, "status message")));
 
@@ -540,7 +555,7 @@ TEST(AdaptiveLoadControllerTest,
   std::ostringstream diagnostic_ostream;
   FakeTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
-      &mock_nighthawk_service_stub, spec, diagnostic_ostream, &time_source);
+      &mock_nighthawk_service_stub, spec, diagnostic_ostream, time_source);
 
   ASSERT_GT(output.adjusting_stage_results_size(), 0);
   EXPECT_EQ(output.adjusting_stage_results()[0].status().code(), ::grpc::UNKNOWN);
@@ -577,7 +592,7 @@ TEST(AdaptiveLoadControllerTest,
 //   std::ostringstream diagnostic_ostream;
 //   FakeTimeSource time_source;
 //   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
-//       &mock_nighthawk_service_stub, spec, diagnostic_ostream, &time_source);
+//       &mock_nighthawk_service_stub, spec, diagnostic_ostream, time_source);
 
 //   EXPECT_TRUE(output.has_testing_stage_result());
 // }

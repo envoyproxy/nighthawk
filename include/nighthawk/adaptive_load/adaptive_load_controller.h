@@ -20,7 +20,7 @@ namespace AdaptiveLoad {
 nighthawk::adaptive_load::AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
     nighthawk::client::NighthawkService::StubInterface* nighthawk_service_stub,
     const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec, std::ostream& diagnostic_ostream,
-    Envoy::TimeSource* time_source) noexcept;
+    Envoy::TimeSource& time_source);
 
 } // namespace AdaptiveLoad
 } // namespace Nighthawk

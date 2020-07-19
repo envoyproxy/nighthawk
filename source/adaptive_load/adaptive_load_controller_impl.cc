@@ -42,7 +42,7 @@ using nighthawk::adaptive_load::ThresholdSpec;
 nighthawk::client::ExecutionResponse PerformNighthawkBenchmark(
     nighthawk::client::NighthawkService::StubInterface* nighthawk_service_stub,
     const nighthawk::client::CommandLineOptions& command_line_options,
-    Envoy::Protobuf::Duration duration) noexcept {
+    Envoy::Protobuf::Duration duration) {
   nighthawk::client::CommandLineOptions options = command_line_options;
   *options.mutable_duration() = duration;
   options.mutable_open_loop()->set_value(false);
@@ -78,7 +78,7 @@ nighthawk::client::ExecutionResponse PerformNighthawkBenchmark(
 // Service stats and counters.
 BenchmarkResult
 AnalyzeNighthawkBenchmark(const nighthawk::client::ExecutionResponse& nighthawk_response,
-                          const AdaptiveLoadSessionSpec& spec) noexcept {
+                          const AdaptiveLoadSessionSpec& spec) {
   BenchmarkResult benchmark_result;
   *benchmark_result.mutable_nighthawk_service_output() = nighthawk_response.output();
 
@@ -153,7 +153,7 @@ AdaptiveLoadSessionSpec SetDefaults(const AdaptiveLoadSessionSpec& original_spec
 // references to missing plugins (step controller, metric, scoring function); no nonexistent metric
 // names.
 absl::Status
-CheckSessionSpec(const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec) noexcept {
+CheckSessionSpec(const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec) {
   std::string errors;
 
   if (spec.nighthawk_traffic_template().has_duration()) {
@@ -230,7 +230,7 @@ CheckSessionSpec(const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec) 
 AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
     nighthawk::client::NighthawkService::StubInterface* nighthawk_service_stub,
     const AdaptiveLoadSessionSpec& input_spec, std::ostream& diagnostic_ostream,
-    Envoy::TimeSource* time_source) noexcept {
+    Envoy::TimeSource& time_source) {
   AdaptiveLoadSessionOutput output;
 
   AdaptiveLoadSessionSpec spec = SetDefaults(input_spec);
@@ -244,7 +244,7 @@ AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
   StepControllerPtr step_controller =
       LoadStepControllerPlugin(spec.step_controller_config(), spec.nighthawk_traffic_template());
 
-  Envoy::MonotonicTime start_time = time_source->monotonicTime();
+  Envoy::MonotonicTime start_time = time_source.monotonicTime();
   while (!step_controller->IsConverged()) {
     std::string doom_reason;
     if (step_controller->IsDoomed(&doom_reason)) {
@@ -253,7 +253,7 @@ AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
           "Step controller determined that it can never converge: " + doom_reason);
       return output;
     }
-    if (std::chrono::duration_cast<std::chrono::seconds>(time_source->monotonicTime() - start_time)
+    if (std::chrono::duration_cast<std::chrono::seconds>(time_source.monotonicTime() - start_time)
             .count() > spec.convergence_deadline().seconds()) {
       output.mutable_session_status()->set_code(grpc::DEADLINE_EXCEEDED);
       output.mutable_session_status()->set_message(

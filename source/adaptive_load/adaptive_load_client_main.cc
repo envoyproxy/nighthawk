@@ -75,7 +75,7 @@ uint32_t AdaptiveLoadMain::run() {
       nighthawk::client::NighthawkService::NewStub(channel));
 
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output =
-      PerformAdaptiveLoadSession(stub.get(), spec, std::cerr, time_source_);
+      PerformAdaptiveLoadSession(stub.get(), spec, std::cerr, *time_source_);
 
   std::ofstream ofs(output_filename_);
   if (ofs.is_open()) {
