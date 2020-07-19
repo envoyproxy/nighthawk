@@ -39,26 +39,28 @@ using nighthawk::adaptive_load::ThresholdSpec;
 // nighthawk::client::ExecutionResponse. The ExecutionResponse may contain an error reported by the
 // Nighthawk Service. If we encounter a gRPC error communicating with the Nighthawk Service, we
 // insert the error code and message into the ExecutionResponse.
-nighthawk::client::ExecutionResponse
-PerformNighthawkBenchmark(nighthawk::client::NighthawkService::Stub* nighthawk_service_stub,
-                          const nighthawk::client::CommandLineOptions& command_line_options,
-                          Envoy::Protobuf::Duration duration) noexcept {
+nighthawk::client::ExecutionResponse PerformNighthawkBenchmark(
+    nighthawk::client::NighthawkService::StubInterface* nighthawk_service_stub,
+    const nighthawk::client::CommandLineOptions& command_line_options,
+    Envoy::Protobuf::Duration duration) noexcept {
   nighthawk::client::CommandLineOptions options = command_line_options;
   *options.mutable_duration() = duration;
   options.mutable_open_loop()->set_value(false);
 
   nighthawk::client::ExecutionRequest request;
+  nighthawk::client::ExecutionResponse response;
   *request.mutable_start_request()->mutable_options() = options;
 
   ::grpc::ClientContext context;
-  std::shared_ptr<::grpc::ClientReaderWriter<nighthawk::client::ExecutionRequest,
-                                             nighthawk::client::ExecutionResponse>>
-      stream(nighthawk_service_stub->ExecutionStream(&context));
-
+  std::unique_ptr<::grpc::ClientReaderWriterInterface<nighthawk::client::ExecutionRequest,
+                                                      nighthawk::client::ExecutionResponse>>
+      stream2 = nighthawk_service_stub->ExecutionStream(&context);
+  ::grpc::ClientReaderWriterInterface<nighthawk::client::ExecutionRequest,
+                                      nighthawk::client::ExecutionResponse>* stream = stream2.get();
+  stream2.release();
   stream->Write(request);
   stream->WritesDone();
 
-  nighthawk::client::ExecutionResponse response;
   if (!stream->Read(&response)) {
     response.mutable_error_detail()->set_code(::grpc::UNKNOWN);
     response.mutable_error_detail()->set_message("Nighthawk Service did not send a response.");
@@ -78,10 +80,11 @@ BenchmarkResult
 AnalyzeNighthawkBenchmark(const nighthawk::client::ExecutionResponse& nighthawk_response,
                           const AdaptiveLoadSessionSpec& spec) noexcept {
   BenchmarkResult benchmark_result;
-
   *benchmark_result.mutable_nighthawk_service_output() = nighthawk_response.output();
 
+  benchmark_result.mutable_status()->set_code(nighthawk_response.error_detail().code());
   if (nighthawk_response.error_detail().code() != ::grpc::OK) {
+    benchmark_result.mutable_status()->set_message(nighthawk_response.error_detail().message());
     return benchmark_result;
   }
 
@@ -120,7 +123,7 @@ AnalyzeNighthawkBenchmark(const nighthawk::client::ExecutionResponse& nighthawk_
 
 // Performs a benchmark via a Nighthawk Service, then hands the result off for analysis.
 BenchmarkResult PerformAndAnalyzeNighthawkBenchmark(
-    nighthawk::client::NighthawkService::Stub* nighthawk_service_stub,
+    nighthawk::client::NighthawkService::StubInterface* nighthawk_service_stub,
     const AdaptiveLoadSessionSpec& spec,
     const nighthawk::client::CommandLineOptions& command_line_options,
     Envoy::Protobuf::Duration duration) {
@@ -130,21 +133,21 @@ BenchmarkResult PerformAndAnalyzeNighthawkBenchmark(
 }
 
 // Returns a copy of the input spec with default values inserted.
-AdaptiveLoadSessionSpec SetDefaults(const AdaptiveLoadSessionSpec& spec) {
-  AdaptiveLoadSessionSpec spec2 = spec;
-  if (!spec2.has_measuring_period()) {
-    spec2.mutable_measuring_period()->set_seconds(10);
+AdaptiveLoadSessionSpec SetDefaults(const AdaptiveLoadSessionSpec& original_spec) {
+  AdaptiveLoadSessionSpec spec = original_spec;
+  if (!spec.has_measuring_period()) {
+    spec.mutable_measuring_period()->set_seconds(10);
   }
-  if (!spec2.has_convergence_deadline()) {
-    spec2.mutable_convergence_deadline()->set_seconds(300);
+  if (!spec.has_convergence_deadline()) {
+    spec.mutable_convergence_deadline()->set_seconds(300);
   }
   for (nighthawk::adaptive_load::MetricSpecWithThreshold& threshold :
-       *spec2.mutable_metric_thresholds()) {
+       *spec.mutable_metric_thresholds()) {
     if (!threshold.threshold_spec().has_weight()) {
       threshold.mutable_threshold_spec()->mutable_weight()->set_value(1.0);
     }
   }
-  return spec2;
+  return spec;
 }
 
 // Checks whether a session spec is valid: No forbidden fields in Nighthawk traffic spec; no
@@ -225,14 +228,13 @@ CheckSessionSpec(const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec) 
 
 } // namespace
 
-AdaptiveLoadSessionOutput
-PerformAdaptiveLoadSession(nighthawk::client::NighthawkService::Stub* nighthawk_service_stub,
-                           const AdaptiveLoadSessionSpec& user_spec,
-                           std::ostream& diagnostic_ostream,
-                           Envoy::TimeSource* time_source) noexcept {
+AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
+    nighthawk::client::NighthawkService::StubInterface* nighthawk_service_stub,
+    const AdaptiveLoadSessionSpec& input_spec, std::ostream& diagnostic_ostream,
+    Envoy::TimeSource* time_source) noexcept {
   AdaptiveLoadSessionOutput output;
 
-  AdaptiveLoadSessionSpec spec = SetDefaults(user_spec);
+  AdaptiveLoadSessionSpec spec = SetDefaults(input_spec);
   absl::Status validation_status = CheckSessionSpec(spec);
   if (!validation_status.ok()) {
     output.mutable_session_status()->set_code(static_cast<int>(validation_status.code()));

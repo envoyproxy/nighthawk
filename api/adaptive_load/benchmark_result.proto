@@ -7,6 +7,7 @@ package nighthawk.adaptive_load;
 
 import "api/adaptive_load/metric_spec.proto";
 import "api/client/output.proto";
+import "google/rpc/status.proto";
 
 // Records the status of a single metric during a benchmark session.
 message MetricEvaluation {
@@ -30,8 +31,10 @@ message MetricEvaluation {
 // results.
 message BenchmarkResult {
   // Raw Nighthawk Service output. Includes start/end times and full Nighthawk
-  // Service input spec. May contain an error status.
+  // Service input spec.
   nighthawk.client.Output nighthawk_service_output = 1;
+  // Status of the Nighthawk benchmark.
+  google.rpc.Status status = 2;
   // Status of all declared metrics during this benchmark session. Not present
   // in the event of Nighthawk errors.
   repeated MetricEvaluation metric_evaluations = 3;

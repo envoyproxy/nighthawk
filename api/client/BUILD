@@ -25,6 +25,7 @@ cc_grpc_library(
     grpc_only = True,
     proto_only = False,
     use_external = False,
+    generate_mocks = True,
     visibility = ["//visibility:public"],
     well_known_protos = True,
     deps = [

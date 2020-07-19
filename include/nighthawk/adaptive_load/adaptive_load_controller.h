@@ -15,13 +15,12 @@ namespace AdaptiveLoad {
 // not detected before the deadline in the spec. Load adjustments and convergence detection are
 // computed by a StepController plugin. Metric values are obtained through MetricsPlugins. Testing
 // Stage: When the optimal load is found, runs one long benchmark to validate it. Progress messages
-// are written to |diagnostic_ostream| such as std::cerr or a std::stringstream. |time_source| can
+// are written to |diagnostic_ostream| such as std::cerr or a std::ostringstream. |time_source| can
 // be an Envoy::Event::RealTimeSystem constructed from scratch. NO_CHECK_FORMAT(real_time)
-nighthawk::adaptive_load::AdaptiveLoadSessionOutput
-PerformAdaptiveLoadSession(nighthawk::client::NighthawkService::Stub* nighthawk_service_stub,
-                           const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec,
-                           std::ostream& diagnostic_ostream,
-                           Envoy::TimeSource* time_source) noexcept;
+nighthawk::adaptive_load::AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
+    nighthawk::client::NighthawkService::StubInterface* nighthawk_service_stub,
+    const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec, std::ostream& diagnostic_ostream,
+    Envoy::TimeSource* time_source) noexcept;
 
 } // namespace AdaptiveLoad
 } // namespace Nighthawk

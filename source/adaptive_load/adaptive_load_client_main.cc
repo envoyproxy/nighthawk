@@ -71,7 +71,7 @@ uint32_t AdaptiveLoadMain::run() {
   std::shared_ptr<::grpc_impl::Channel> channel =
       ::grpc::CreateChannel(nighthawk_service_address_, ::grpc::InsecureChannelCredentials());
 
-  std::unique_ptr<nighthawk::client::NighthawkService::Stub> stub(
+  std::unique_ptr<nighthawk::client::NighthawkService::StubInterface> stub(
       nighthawk::client::NighthawkService::NewStub(channel));
 
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output =

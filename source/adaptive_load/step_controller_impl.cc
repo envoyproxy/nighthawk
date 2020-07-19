@@ -93,11 +93,10 @@ bool ExponentialSearchStepController::IsConverged() const {
 }
 
 bool ExponentialSearchStepController::IsDoomed(std::string* doom_reason) const {
-  if (!is_doomed_) {
-    return false;
+  if (is_doomed_) {
+    *doom_reason = "Outside threshold on initial input";
   }
-  *doom_reason = "Outside threshold on initial input";
-  return true;
+  return is_doomed_;
 }
 
 void ExponentialSearchStepController::UpdateAndRecompute(const BenchmarkResult& benchmark_result) {
