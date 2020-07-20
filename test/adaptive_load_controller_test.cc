@@ -3,7 +3,6 @@
 #include <chrono>
 #include <iostream>
 
-#include "api/client/service.pb.h"
 #include "envoy/registry/registry.h"
 
 #include "nighthawk/adaptive_load/adaptive_load_controller.h"
@@ -25,7 +24,10 @@
 #include "api/client/options.pb.h"
 #include "api/client/output.pb.h"
 #include "api/client/service.grpc.pb.h"
+#include "api/client/service.pb.h"
 #include "api/client/service_mock.grpc.pb.h"
+
+#include "test/adaptive_load/utility.h"
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
@@ -36,8 +38,6 @@
 #include "grpcpp/test/mock_stream.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-
-#include "test/adaptive_load/utility.h"
 
 namespace Nighthawk {
 namespace AdaptiveLoad {
@@ -541,8 +541,7 @@ TEST(AdaptiveLoadControllerTest, ExitsWhenDoomed) {
 
   EXPECT_THAT(output.session_status().message(),
               HasSubstr("Step controller determined that it can never converge"));
-  EXPECT_THAT(output.session_status().message(),
-              HasSubstr("fake doom reason"));
+  EXPECT_THAT(output.session_status().message(), HasSubstr("fake doom reason"));
 }
 
 TEST(AdaptiveLoadControllerTest, PerformsTestingStageAfterConvergence) {
@@ -731,9 +730,7 @@ TEST(AdaptiveLoadControllerTest, EvaluatesCustomMetric) {
 
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
-      .WillRepeatedly([](grpc_impl::ClientContext*) {
-        return MakeSimpleMockClientReaderWriter();
-      });
+      .WillRepeatedly([](grpc_impl::ClientContext*) { return MakeSimpleMockClientReaderWriter(); });
 
   std::ostringstream diagnostic_ostream;
   FakeTimeSource time_source;
@@ -765,9 +762,7 @@ TEST(AdaptiveLoadControllerTest, StoresInformationalCustomMetric) {
 
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
-      .WillRepeatedly([](grpc_impl::ClientContext*) {
-        return MakeSimpleMockClientReaderWriter();
-      });
+      .WillRepeatedly([](grpc_impl::ClientContext*) { return MakeSimpleMockClientReaderWriter(); });
 
   std::ostringstream diagnostic_ostream;
   FakeTimeSource time_source;

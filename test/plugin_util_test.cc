@@ -1,4 +1,3 @@
-#include "api/adaptive_load/config.pb.h"
 #include "envoy/registry/registry.h"
 
 #include "nighthawk/adaptive_load/input_variable_setter.h"
@@ -9,6 +8,7 @@
 #include "external/envoy/source/common/config/utility.h"
 
 #include "api/adaptive_load/benchmark_result.pb.h"
+#include "api/adaptive_load/config.pb.h"
 #include "api/adaptive_load/scoring_function_impl.pb.h"
 #include "api/client/options.pb.h"
 
