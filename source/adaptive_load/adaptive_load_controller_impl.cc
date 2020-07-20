@@ -55,12 +55,7 @@ nighthawk::client::ExecutionResponse PerformNighthawkBenchmark(
   std::shared_ptr<::grpc::ClientReaderWriterInterface<nighthawk::client::ExecutionRequest,
                                                       nighthawk::client::ExecutionResponse>>
       stream(nighthawk_service_stub->ExecutionStream(&context));
-  // std::unique_ptr<::grpc::ClientReaderWriterInterface<nighthawk::client::ExecutionRequest,
-  //                                                     nighthawk::client::ExecutionResponse>>
-  //     stream2 = nighthawk_service_stub->ExecutionStream(&context);
-  // ::grpc::ClientReaderWriterInterface<nighthawk::client::ExecutionRequest,
-  //                                     nighthawk::client::ExecutionResponse>* stream = stream2.get();
-  // stream2.release();
+
   stream->Write(request);
   stream->WritesDone();
 

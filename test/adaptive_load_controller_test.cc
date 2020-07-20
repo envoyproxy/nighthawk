@@ -3,6 +3,7 @@
 #include <chrono>
 #include <iostream>
 
+#include "api/client/service.pb.h"
 #include "envoy/registry/registry.h"
 
 #include "nighthawk/adaptive_load/adaptive_load_controller.h"
@@ -36,11 +37,14 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+#include "test/adaptive_load/utility.h"
+
 namespace Nighthawk {
 namespace AdaptiveLoad {
 namespace {
 
 using ::testing::_;
+using ::testing::DoAll;
 using ::testing::Eq;
 using ::testing::HasSubstr;
 using ::testing::Return;
@@ -162,7 +166,7 @@ MakeBinaryScoringFunctionConfig(double upper_threshold) {
   config.set_name("binary");
 
   nighthawk::adaptive_load::BinaryScoringFunctionConfig inner_config;
-  inner_config.mutable_upper_threshold()->set_value(upper_threshold);
+  inner_config.mutable_lower_threshold()->set_value(upper_threshold);
   Envoy::ProtobufWkt::Any inner_config_any;
   inner_config_any.PackFrom(inner_config);
   *config.mutable_typed_config() = inner_config_any;
@@ -627,41 +631,46 @@ TEST(AdaptiveLoadControllerTest,
   EXPECT_EQ(output.adjusting_stage_results()[0].status().message(), "status message");
 }
 
-// TEST(AdaptiveLoadControllerTest, EvaluatesBuiltinMetric) {
-//   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
+TEST(AdaptiveLoadControllerTest, EvaluatesBuiltinMetric) {
+  nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
 
-//   spec.mutable_nighthawk_traffic_template();
-//   *spec.mutable_step_controller_config() = MakeFakeStepControllerConfig();
+  spec.mutable_nighthawk_traffic_template();
+  *spec.mutable_step_controller_config() = MakeFakeStepControllerConfig();
 
-//   // *spec.mutable_metric_thresholds()->Add() = MakeBinaryScoringFunctionConfig(15.0);
+  nighthawk::adaptive_load::MetricSpecWithThreshold* threshold = spec.mutable_metric_thresholds()->Add();
+  threshold->mutable_metric_spec()->set_metric_name("success-rate");
+  threshold->mutable_metric_spec()->set_metrics_plugin_name("builtin");
+  *threshold->mutable_threshold_spec()->mutable_scoring_function() = MakeBinaryScoringFunctionConfig(0.9);
 
-//   spec.mutable_convergence_deadline()->set_seconds(5);
-//   global_convergence_countdown = 3;
-//   global_doom_countdown = 1000;
+  spec.mutable_convergence_deadline()->set_seconds(5);
+  global_convergence_countdown = 2;
+  global_doom_countdown = 1000;
 
-//   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
-// todo fixme
-//   auto mock_reader_writer = new grpc::testing::MockClientReaderWriter<
-//       nighthawk::client::ExecutionRequest, nighthawk::client::ExecutionResponse>();
+  nighthawk::client::ExecutionResponse low_success_nighthawk_response;
+  // Success rate of 0.125.
+  *low_success_nighthawk_response.mutable_output() = MakeStandardNighthawkOutput();
 
-//   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw(_))
-//       .WillRepeatedly(Return(mock_reader_writer.get()));
+  nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
+  EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
+      .WillRepeatedly([&low_success_nighthawk_response](grpc_impl::ClientContext*) {
+        auto* mock_reader_writer = MakeSimpleMockClientReaderWriter();
+        // Simulated Nighthawk Service output:
+        EXPECT_CALL(*mock_reader_writer, Read(_))
+            .WillRepeatedly(DoAll(SetArgPointee<0>(low_success_nighthawk_response), Return(true)));
+        return mock_reader_writer;
+      });
 
-//   nighthawk::client::ExecutionResponse execution_response;
+  std::ostringstream diagnostic_ostream;
+  FakeTimeSource time_source;
+  nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
+      &mock_nighthawk_service_stub, spec, diagnostic_ostream, time_source);
 
-//   EXPECT_CALL(*mock_reader_writer, Write(_, _)).WillRepeatedly(Return(true));
-//   EXPECT_CALL(*mock_reader_writer, WritesDone()).WillRepeatedly(Return(true));
-//   EXPECT_CALL(*mock_reader_writer,
-//   Read(_)).WillRepeatedly(DoAll(SetArgPointee<0>(execution_response), Return(true){});
-//   EXPECT_CALL(*mock_reader_writer, Finish()).WillRepeatedly(Return(::grpc::Status::OK));
-
-//   std::ostringstream diagnostic_ostream;
-//   FakeTimeSource time_source;
-//   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
-//       &mock_nighthawk_service_stub, spec, diagnostic_ostream, time_source);
-
-//   EXPECT_TRUE(output.has_testing_stage_result());
-// }
+std::cerr << output.DebugString() << "\n";
+  ASSERT_GT(output.adjusting_stage_results_size(), 0);
+  ASSERT_GT(output.adjusting_stage_results()[0].metric_evaluations_size(), 0);
+  // Requested a lower threshold of 0.9 but only achieved 0.125.
+  EXPECT_EQ(output.adjusting_stage_results()[0].metric_evaluations()[0].threshold_score(), -1.0);
+}
 
 } // namespace
 } // namespace AdaptiveLoad
