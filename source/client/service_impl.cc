@@ -145,14 +145,11 @@ RequestSourcePtr RequestSourceServiceImpl::createStaticEmptyRequestSource(const 
       nighthawk::request_source::RequestStreamResponse response;
       auto* request_specifier = response.mutable_request_specifier();
       auto* request_headers = request_specifier->mutable_headers();
-      headers->iterate(
-          [](const Envoy::Http::HeaderEntry& header,
-             void* context) -> Envoy::Http::RequestHeaderMap::Iterate {
-            addHeader(static_cast<envoy::api::v2::core::HeaderMap*>(context),
-                      header.key().getStringView(), header.value().getStringView());
-            return Envoy::Http::RequestHeaderMap::Iterate::Continue;
-          },
-          request_headers);
+      headers->iterate([&request_headers](const Envoy::Http::HeaderEntry& header)
+                           -> Envoy::Http::HeaderMap::Iterate {
+        addHeader(request_headers, header.key().getStringView(), header.value().getStringView());
+        return Envoy::Http::RequestHeaderMap::Iterate::Continue;
+      });
       // TODO(oschaaf): add static configuration for other fields plus expectations
       ok = ok && stream->Write(response);
     }
