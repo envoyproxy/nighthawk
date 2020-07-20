@@ -7,6 +7,7 @@
 
 #include "external/dep_hdrhistogram_c/src/hdr_histogram.h"
 #include "external/envoy/source/common/common/logger.h"
+#include "external/envoy/source/common/stats/histogram_impl.h"
 
 #include "common/frequency.h"
 
@@ -148,6 +149,96 @@ public:
 private:
   static const int SignificantDigits;
   struct hdr_histogram* histogram_;
+};
+
+/**
+ * CircllhistStatistic uses Circllhist under the hood to compute statistics.
+ * Circllhist is used in the implementation of Envoy Histograms, compared to HdrHistogram it trades
+ * precision for fast performance in merge and insertion. For more info, please see
+ * https://github.com/circonus-labs/libcircllhist
+ */
+class CircllhistStatistic : public StatisticImpl {
+public:
+  CircllhistStatistic();
+  ~CircllhistStatistic() override;
+
+  void addValue(uint64_t value) override;
+  double mean() const override;
+  double pvariance() const override;
+  double pstdev() const override;
+  StatisticPtr combine(const Statistic& statistic) const override;
+  // circllhist has low significant digit precision as a result of base 10
+  // algorithm.
+  uint64_t significantDigits() const override { return 1; }
+  StatisticPtr createNewInstanceOfSameType() const override;
+  nighthawk::client::Statistic toProto(SerializationDomain domain) const override;
+
+private:
+  histogram_t* histogram_;
+};
+
+/**
+ * In order to be able to flush a histogram value to downstream Envoy stats Sinks, abstract class
+ * SinkableStatistic takes the Scope reference in the constructor and wraps the
+ * Envoy::Stats::HistogramHelper interface. Implementation of sinkable Nighthawk Statistic class
+ * will inherit from this class.
+ */
+class SinkableStatistic : public Envoy::Stats::HistogramImplHelper {
+public:
+  // Calling HistogramImplHelper(SymbolTable& symbol_table) constructor to construct an empty
+  // MetricImpl. This is to bypass the complicated logic of setting up SymbolTable/StatName in
+  // Envoy.
+  SinkableStatistic(Envoy::Stats::Scope& scope, absl::optional<int> worker_id);
+  ~SinkableStatistic() override;
+
+  // Currently Envoy Histogram Unit supports {Unspecified, Bytes, Microseconds, Milliseconds}. By
+  // default, Nighthawk::Statistic uses nanosecond as the unit of latency histograms, so Unspecified
+  // is returned here to isolate Nighthawk Statistic from Envoy Histogram Unit.
+  Envoy::Stats::Histogram::Unit unit() const override;
+  Envoy::Stats::SymbolTable& symbolTable() override;
+  // Return the id of the worker where this statistic is defined. Per worker
+  // statistic should always set worker_id. Return absl::nullopt when the
+  // statistic is not defined per worker.
+  const absl::optional<int> worker_id() { return worker_id_; }
+
+protected:
+  // This is used in child class for delivering the histogram data to sinks.
+  Envoy::Stats::Scope& scope_;
+
+private:
+  // worker_id can be used in downstream stats Sinks as the stats tag.
+  absl::optional<int> worker_id_;
+};
+
+// Implementation of sinkable Nighthawk Statistic with HdrHistogram.
+class SinkableHdrStatistic : public SinkableStatistic, public HdrStatistic {
+public:
+  // The constructor takes the Scope reference which is used to flush a histogram value to
+  // downstream stats Sinks through deliverHistogramToSinks().
+  SinkableHdrStatistic(Envoy::Stats::Scope& scope, absl::optional<int> worker_id = absl::nullopt);
+
+  // Envoy::Stats::Histogram
+  void recordValue(uint64_t value) override;
+  bool used() const override { return count() > 0; }
+  // Overriding name() to return Nighthawk::Statistic::id().
+  std::string name() const override { return id(); }
+  std::string tagExtractedName() const override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; }
+};
+
+// Implementation of sinkable Nighthawk Statistic with Circllhist Histogram.
+class SinkableCircllhistStatistic : public SinkableStatistic, public CircllhistStatistic {
+public:
+  // The constructor takes the Scope reference which is used to flush a histogram value to
+  // downstream stats Sinks through deliverHistogramToSinks().
+  SinkableCircllhistStatistic(Envoy::Stats::Scope& scope,
+                              absl::optional<int> worker_id = absl::nullopt);
+
+  // Envoy::Stats::Histogram
+  void recordValue(uint64_t value) override;
+  bool used() const override { return count() > 0; }
+  // Overriding name() to return Nighthawk::Statistic::id().
+  std::string name() const override { return id(); }
+  std::string tagExtractedName() const override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; }
 };
 
 } // namespace Nighthawk

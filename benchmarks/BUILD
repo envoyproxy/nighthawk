@@ -7,6 +7,7 @@ py_binary(
     srcs = [
         "benchmarks.py",
     ],
+    srcs_version = "PY2AND3",
     deps = [
         ":benchmarks_envoy_proxy_lib",
         "//test/integration:integration_test_base_lean",
@@ -20,6 +21,7 @@ py_test(
         "test/test_discovery.py",
     ],
     main = "benchmarks.py",
+    srcs_version = "PY2AND3",
     deps = [
         ":benchmarks_envoy_proxy_lib",
         "//test/integration:integration_test_base",
@@ -35,4 +37,5 @@ py_library(
         "configurations/envoy_proxy.yaml",
         "test/templates/simple_plot.html",
     ],
+    srcs_version = "PY2AND3",
 )
