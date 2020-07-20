@@ -60,7 +60,7 @@ public:
   }
   void testBasicFunctionality(
       const uint64_t max_pending, const uint64_t connection_limit, const uint64_t amount_of_request,
-      RequestGenerator request_generator,
+      const RequestGenerator& request_generator,
       const std::vector<absl::flat_hash_map<std::string, std::string>>& header_expectations =
           std::vector<absl::flat_hash_map<std::string, std::string>>()) {
     if (client_ == nullptr) {
@@ -145,7 +145,7 @@ public:
     return properties_map;
   }
 
-  void setupBenchmarkClient(RequestGenerator request_generator) {
+  void setupBenchmarkClient(const RequestGenerator& request_generator) {
     client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
         *api_, *dispatcher_, store_, std::make_unique<StreamingStatistic>(),
         std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
