@@ -52,12 +52,15 @@ nighthawk::client::ExecutionResponse PerformNighthawkBenchmark(
   *request.mutable_start_request()->mutable_options() = options;
 
   ::grpc::ClientContext context;
-  std::unique_ptr<::grpc::ClientReaderWriterInterface<nighthawk::client::ExecutionRequest,
+  std::shared_ptr<::grpc::ClientReaderWriterInterface<nighthawk::client::ExecutionRequest,
                                                       nighthawk::client::ExecutionResponse>>
-      stream2 = nighthawk_service_stub->ExecutionStream(&context);
-  ::grpc::ClientReaderWriterInterface<nighthawk::client::ExecutionRequest,
-                                      nighthawk::client::ExecutionResponse>* stream = stream2.get();
-  stream2.release();
+      stream(nighthawk_service_stub->ExecutionStream(&context));
+  // std::unique_ptr<::grpc::ClientReaderWriterInterface<nighthawk::client::ExecutionRequest,
+  //                                                     nighthawk::client::ExecutionResponse>>
+  //     stream2 = nighthawk_service_stub->ExecutionStream(&context);
+  // ::grpc::ClientReaderWriterInterface<nighthawk::client::ExecutionRequest,
+  //                                     nighthawk::client::ExecutionResponse>* stream = stream2.get();
+  // stream2.release();
   stream->Write(request);
   stream->WritesDone();
 
@@ -152,8 +155,7 @@ AdaptiveLoadSessionSpec SetDefaults(const AdaptiveLoadSessionSpec& original_spec
 // Checks whether a session spec is valid: No forbidden fields in Nighthawk traffic spec; no
 // references to missing plugins (step controller, metric, scoring function); no nonexistent metric
 // names.
-absl::Status
-CheckSessionSpec(const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec) {
+absl::Status CheckSessionSpec(const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec) {
   std::string errors;
 
   if (spec.nighthawk_traffic_template().has_duration()) {
@@ -249,20 +251,22 @@ AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
     std::string doom_reason;
     if (step_controller->IsDoomed(&doom_reason)) {
       output.mutable_session_status()->set_code(grpc::ABORTED);
-      output.mutable_session_status()->set_message(
-          "Step controller determined that it can never converge: " + doom_reason);
+      std::string message = "Step controller determined that it can never converge: " + doom_reason;
+      output.mutable_session_status()->set_message(message);
+      diagnostic_ostream << message << "\n";
       return output;
     }
     if (std::chrono::duration_cast<std::chrono::seconds>(time_source.monotonicTime() - start_time)
             .count() > spec.convergence_deadline().seconds()) {
       output.mutable_session_status()->set_code(grpc::DEADLINE_EXCEEDED);
-      output.mutable_session_status()->set_message(
-          absl::StrCat("Failed to converge before deadline of ",
-                       spec.convergence_deadline().seconds(), " seconds."));
+      std::string message = absl::StrCat("Failed to converge before deadline of ",
+                                         spec.convergence_deadline().seconds(), " seconds.");
+      output.mutable_session_status()->set_message(message);
+      diagnostic_ostream << message << "\n";
       return output;
     }
 
-    diagnostic_ostream << "Trying load: "
+    diagnostic_ostream << "Adjusting Stage: Trying load: "
                        << step_controller->GetCurrentCommandLineOptions().DebugString() << "\n";
 
     BenchmarkResult result = PerformAndAnalyzeNighthawkBenchmark(
@@ -277,7 +281,7 @@ AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
     step_controller->UpdateAndRecompute(result);
   }
 
-  diagnostic_ostream << "Testing stage: "
+  diagnostic_ostream << "Testing Stage with load: "
                      << step_controller->GetCurrentCommandLineOptions().DebugString() << "\n";
 
   *output.mutable_testing_stage_result() = PerformAndAnalyzeNighthawkBenchmark(

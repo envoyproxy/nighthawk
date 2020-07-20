@@ -46,22 +46,22 @@ using ::testing::HasSubstr;
 using ::testing::Return;
 using ::testing::SetArgPointee;
 
+// Time source that ticks 1 second on every query, starting from the Unix epoch.
 class FakeTimeSource : public Envoy::TimeSource {
 public:
   Envoy::SystemTime systemTime() override {
+    ++unix_time_;
     Envoy::SystemTime epoch;
     return epoch + std::chrono::seconds(unix_time_);
   }
   Envoy::MonotonicTime monotonicTime() override {
-    AdvanceUnixTime(1);
+    ++unix_time_;
     Envoy::MonotonicTime epoch;
     return epoch + std::chrono::seconds(unix_time_);
   }
-  void AdvanceUnixTime(int increment_seconds) { unix_time_ += increment_seconds; }
-  void SetUnixTime(int64_t unix_time) { unix_time_ = unix_time; }
 
 private:
-  int64_t unix_time_{0};
+  int unix_time_{0};
 };
 
 // MetricsPlugin for testing, supporting a single metric named 'metric1'.
@@ -93,18 +93,22 @@ public:
 
 REGISTER_FACTORY(FakeMetricsPluginConfigFactory, MetricsPluginConfigFactory);
 
-static int global_convergence_countdown;
-static int global_doom_countdown;
+static int global_convergence_countdown{};
+static int global_doom_countdown{};
 
 // StepController for testing.
 class FakeStepController : public StepController {
 public:
   FakeStepController() {}
-  bool IsConverged() const override { return --global_convergence_countdown <= 0; }
+  // Returns false until global_convergence_countdown reaches 0. Updates global variable
+  // global_convergence_countdown.
+  bool IsConverged() const override { return global_convergence_countdown-- <= 0; }
+  // Returns false until global_doom_countdown reaches 0. Updates global variable
+  // global_doom_countdown.
   bool IsDoomed(std::string* doomed_reason) const override {
-    bool doomed = --global_doom_countdown <= 0;
+    bool doomed = global_doom_countdown-- <= 0;
     if (doomed) {
-      *doomed_reason = doomed_reason_;
+      *doomed_reason = "fake doomed reason";
     }
     return doomed;
   }
@@ -113,17 +117,7 @@ public:
   }
   void UpdateAndRecompute(const nighthawk::adaptive_load::BenchmarkResult&) override {}
 
-  // // Setters for fake responses.
-  // void SetIsConverged(bool is_converged) { is_converged_ = is_converged; }
-  // void SetIsDoomed(bool is_doomed) { is_doomed_ = is_doomed; }
-  // void SetCurrentCommandLineOptions(nighthawk::client::CommandLineOptions command_line_options) {
-  //   command_line_options_ = command_line_options;
-  // }
-
 private:
-  // bool is_converged_{false};
-  // bool is_doomed_{false};
-  std::string doomed_reason_{};
   nighthawk::client::CommandLineOptions command_line_options_{};
 };
 
@@ -183,8 +177,7 @@ TEST(AdaptiveLoadControllerTest, FailsWithTrafficTemplateDurationSet) {
   std::ostringstream diagnostic_ostream;
   FakeTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
-      /*nighthawk_service_stub=*/nullptr, spec, diagnostic_ostream,
-      time_source);
+      /*nighthawk_service_stub=*/nullptr, spec, diagnostic_ostream, time_source);
   EXPECT_THAT(output.session_status().message(), HasSubstr("should not have |duration| set"));
 }
 
@@ -195,8 +188,7 @@ TEST(AdaptiveLoadControllerTest, FailsWithOpenLoopSet) {
   std::ostringstream diagnostic_ostream;
   FakeTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
-      /*nighthawk_service_stub=*/nullptr, spec, diagnostic_ostream,
-      time_source);
+      /*nighthawk_service_stub=*/nullptr, spec, diagnostic_ostream, time_source);
 
   EXPECT_THAT(output.session_status().message(), HasSubstr("should not have |open_loop| set"));
 }
@@ -212,8 +204,7 @@ TEST(AdaptiveLoadControllerTest, FailsWithNonexistentMetricsPluginName) {
   std::ostringstream diagnostic_ostream;
   FakeTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
-      /*nighthawk_service_stub=*/nullptr, spec, diagnostic_ostream,
-      time_source);
+      /*nighthawk_service_stub=*/nullptr, spec, diagnostic_ostream, time_source);
 
   EXPECT_THAT(output.session_status().message(), HasSubstr("MetricsPlugin not found"));
 }
@@ -229,8 +220,7 @@ TEST(AdaptiveLoadControllerTest, FailsWithNonexistentStepControllerPluginName) {
   std::ostringstream diagnostic_ostream;
   FakeTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
-      /*nighthawk_service_stub=*/nullptr, spec, diagnostic_ostream,
-      time_source);
+      /*nighthawk_service_stub=*/nullptr, spec, diagnostic_ostream, time_source);
 
   EXPECT_THAT(output.session_status().message(), HasSubstr("StepController plugin not found"));
 }
@@ -248,8 +238,7 @@ TEST(AdaptiveLoadControllerTest, FailsWithNonexistentScoringFunctionPluginName) 
   std::ostringstream diagnostic_ostream;
   FakeTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
-      /*nighthawk_service_stub=*/nullptr, spec, diagnostic_ostream,
-      time_source);
+      /*nighthawk_service_stub=*/nullptr, spec, diagnostic_ostream, time_source);
 
   EXPECT_THAT(output.session_status().message(), HasSubstr("ScoringFunction plugin not found"));
 }
@@ -267,8 +256,7 @@ TEST(AdaptiveLoadControllerTest, FailsWithNonexistentMetricsPluginNameInMetricTh
   std::ostringstream diagnostic_ostream;
   FakeTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
-      /*nighthawk_service_stub=*/nullptr, spec, diagnostic_ostream,
-      time_source);
+      /*nighthawk_service_stub=*/nullptr, spec, diagnostic_ostream, time_source);
 
   EXPECT_THAT(output.session_status().message(), HasSubstr("nonexistent metrics_plugin_name"));
 }
@@ -287,8 +275,7 @@ TEST(AdaptiveLoadControllerTest, FailsWithUndeclaredMetricsPluginNameInMetricThr
   std::ostringstream diagnostic_ostream;
   FakeTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
-      /*nighthawk_service_stub=*/nullptr, spec, diagnostic_ostream,
-      time_source);
+      /*nighthawk_service_stub=*/nullptr, spec, diagnostic_ostream, time_source);
 
   EXPECT_THAT(output.session_status().message(), HasSubstr("nonexistent metrics_plugin_name"));
 }
@@ -307,8 +294,7 @@ TEST(AdaptiveLoadControllerTest, FailsWithNonexistentMetricsPluginNameInInformat
   std::ostringstream diagnostic_ostream;
   FakeTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
-      /*nighthawk_service_stub=*/nullptr, spec, diagnostic_ostream,
-      time_source);
+      /*nighthawk_service_stub=*/nullptr, spec, diagnostic_ostream, time_source);
 
   EXPECT_THAT(output.session_status().message(), HasSubstr("nonexistent metrics_plugin_name"));
 }
@@ -325,8 +311,7 @@ TEST(AdaptiveLoadControllerTest, FailsWithUndeclaredMetricsPluginNameInInformati
   std::ostringstream diagnostic_ostream;
   FakeTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
-      /*nighthawk_service_stub=*/nullptr, spec, diagnostic_ostream,
-      time_source);
+      /*nighthawk_service_stub=*/nullptr, spec, diagnostic_ostream, time_source);
 
   EXPECT_THAT(output.session_status().message(), HasSubstr("nonexistent metrics_plugin_name"));
 }
@@ -344,8 +329,7 @@ TEST(AdaptiveLoadControllerTest, FailsWithNonexistentBuiltinMetricNameInMetricTh
   std::ostringstream diagnostic_ostream;
   FakeTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
-      /*nighthawk_service_stub=*/nullptr, spec, diagnostic_ostream,
-      time_source);
+      /*nighthawk_service_stub=*/nullptr, spec, diagnostic_ostream, time_source);
 
   EXPECT_THAT(output.session_status().message(), HasSubstr("not implemented by plugin"));
 }
@@ -365,8 +349,7 @@ TEST(AdaptiveLoadControllerTest, FailsWithNonexistentCustomMetricNameInMetricThr
   std::ostringstream diagnostic_ostream;
   FakeTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
-      /*nighthawk_service_stub=*/nullptr, spec, diagnostic_ostream,
-      time_source);
+      /*nighthawk_service_stub=*/nullptr, spec, diagnostic_ostream, time_source);
 
   EXPECT_THAT(output.session_status().message(), HasSubstr("not implemented by plugin"));
 }
@@ -382,8 +365,7 @@ TEST(AdaptiveLoadControllerTest, FailsWithNonexistentBuiltinMetricNameInInformat
   std::ostringstream diagnostic_ostream;
   FakeTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
-      /*nighthawk_service_stub=*/nullptr, spec, diagnostic_ostream,
-      time_source);
+      /*nighthawk_service_stub=*/nullptr, spec, diagnostic_ostream, time_source);
 
   EXPECT_THAT(output.session_status().message(), HasSubstr("not implemented by plugin"));
 }
@@ -401,10 +383,22 @@ TEST(AdaptiveLoadControllerTest, FailsWithNonexistentCustomMetricNameInInformati
   std::ostringstream diagnostic_ostream;
   FakeTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
-      /*nighthawk_service_stub=*/nullptr, spec, diagnostic_ostream,
-      time_source);
+      /*nighthawk_service_stub=*/nullptr, spec, diagnostic_ostream, time_source);
 
   EXPECT_THAT(output.session_status().message(), HasSubstr("not implemented by plugin"));
+}
+
+grpc::testing::MockClientReaderWriter<nighthawk::client::ExecutionRequest,
+                                      nighthawk::client::ExecutionResponse>*
+MakeSimpleMockClientReaderWriter() {
+  auto* mock_reader_writer =
+      new grpc::testing::MockClientReaderWriter<nighthawk::client::ExecutionRequest,
+                                                nighthawk::client::ExecutionResponse>();
+  EXPECT_CALL(*mock_reader_writer, Write(_, _)).WillRepeatedly(Return(true));
+  EXPECT_CALL(*mock_reader_writer, WritesDone()).WillRepeatedly(Return(true));
+  EXPECT_CALL(*mock_reader_writer, Read(_)).WillRepeatedly(Return(true));
+  EXPECT_CALL(*mock_reader_writer, Finish()).WillRepeatedly(Return(::grpc::Status::OK));
+  return mock_reader_writer;
 }
 
 TEST(AdaptiveLoadControllerTest, TimesOutIfNeverConverged) {
@@ -415,18 +409,11 @@ TEST(AdaptiveLoadControllerTest, TimesOutIfNeverConverged) {
 
   spec.mutable_convergence_deadline()->set_seconds(5);
   global_convergence_countdown = 100;
-  global_doom_countdown = 1000;
-
-  auto mock_reader_writer = std::make_shared<grpc::testing::MockClientReaderWriter<
-      nighthawk::client::ExecutionRequest, nighthawk::client::ExecutionResponse>>();
-  EXPECT_CALL(*mock_reader_writer.get(), Write(_, _)).WillRepeatedly(Return(true));
-  EXPECT_CALL(*mock_reader_writer.get(), WritesDone()).WillRepeatedly(Return(true));
-  EXPECT_CALL(*mock_reader_writer.get(), Read(_)).WillRepeatedly(Return(true));
-  EXPECT_CALL(*mock_reader_writer, Finish()).WillRepeatedly(Return(::grpc::Status::OK));
+  global_doom_countdown = 100;
 
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
-  EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw(_))
-      .WillRepeatedly(Return(mock_reader_writer.get()));
+  EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
+      .WillRepeatedly([](grpc_impl::ClientContext*) { return MakeSimpleMockClientReaderWriter(); });
 
   std::ostringstream diagnostic_ostream;
   FakeTimeSource time_source;
@@ -434,6 +421,102 @@ TEST(AdaptiveLoadControllerTest, TimesOutIfNeverConverged) {
       &mock_nighthawk_service_stub, spec, diagnostic_ostream, time_source);
 
   EXPECT_THAT(output.session_status().message(), HasSubstr("Failed to converge before deadline"));
+}
+
+TEST(AdaptiveLoadControllerTest, UsesDefaultConvergenceDeadline) {
+  nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
+
+  spec.mutable_nighthawk_traffic_template();
+  *spec.mutable_step_controller_config() = MakeFakeStepControllerConfig();
+
+  // Not setting convergence deadline, should default to 300 seconds.
+
+  global_convergence_countdown = 1000;
+  global_doom_countdown = 1000;
+
+  nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
+  EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
+      .WillRepeatedly([](grpc_impl::ClientContext*) { return MakeSimpleMockClientReaderWriter(); });
+
+  FakeTimeSource time_source;
+  Envoy::MonotonicTime start_time = time_source.monotonicTime();
+  std::ostringstream diagnostic_ostream;
+  nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
+      &mock_nighthawk_service_stub, spec, diagnostic_ostream, time_source);
+
+  EXPECT_THAT(
+      std::chrono::duration_cast<std::chrono::seconds>(time_source.monotonicTime() - start_time)
+          .count(),
+      303); // 300 ticks plus 2 monotonicTime() calls here and 1 within the controller when it
+            // recorded the start time.
+}
+
+TEST(AdaptiveLoadControllerTest, UsesDefaultMeasuringPeriod) {
+  nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
+
+  spec.mutable_nighthawk_traffic_template();
+  *spec.mutable_step_controller_config() = MakeFakeStepControllerConfig();
+
+  global_convergence_countdown = 1000;
+  global_doom_countdown = 1000;
+
+  nighthawk::client::ExecutionRequest request;
+
+  nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
+  EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
+      .WillRepeatedly([&request](grpc_impl::ClientContext*) {
+        auto* mock_reader_writer = new grpc::testing::MockClientReaderWriter<
+            nighthawk::client::ExecutionRequest, nighthawk::client::ExecutionResponse>();
+        EXPECT_CALL(*mock_reader_writer, Write(_, _))
+            .WillRepeatedly(::testing::DoAll(::testing::SaveArg<0>(&request), Return(true)));
+        EXPECT_CALL(*mock_reader_writer, WritesDone()).WillRepeatedly(Return(true));
+        EXPECT_CALL(*mock_reader_writer, Read(_)).WillRepeatedly(Return(true));
+        EXPECT_CALL(*mock_reader_writer, Finish()).WillRepeatedly(Return(::grpc::Status::OK));
+        return mock_reader_writer;
+      });
+
+  FakeTimeSource time_source;
+  std::ostringstream diagnostic_ostream;
+  nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
+      &mock_nighthawk_service_stub, spec, diagnostic_ostream, time_source);
+
+  EXPECT_EQ(request.start_request().options().duration().seconds(), 10);
+}
+
+TEST(AdaptiveLoadControllerTest, UsesDefaultMetricWeight) {
+  nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
+
+  spec.mutable_nighthawk_traffic_template();
+  *spec.mutable_step_controller_config() = MakeFakeStepControllerConfig();
+
+  *spec.mutable_metrics_plugin_configs()->Add() = MakeFakeMetricsPluginConfig();
+
+  nighthawk::adaptive_load::MetricSpecWithThreshold* threshold =
+      spec.mutable_metric_thresholds()->Add();
+  threshold->mutable_metric_spec()->set_metric_name("metric1");
+  threshold->mutable_metric_spec()->set_metrics_plugin_name("fake-metrics-plugin");
+  *threshold->mutable_threshold_spec()->mutable_scoring_function() =
+      MakeBinaryScoringFunctionConfig(0.0);
+
+  global_convergence_countdown = 3;
+  global_doom_countdown = 1000;
+
+  nighthawk::client::ExecutionRequest request;
+
+  nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
+  EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
+      .WillRepeatedly([](grpc_impl::ClientContext*) { return MakeSimpleMockClientReaderWriter(); });
+
+  FakeTimeSource time_source;
+  std::ostringstream diagnostic_ostream;
+  nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
+      &mock_nighthawk_service_stub, spec, diagnostic_ostream, time_source);
+
+  ASSERT_GT(output.adjusting_stage_results_size(), 0);
+  ASSERT_GT(output.adjusting_stage_results()[0].metric_evaluations_size(), 0);
+  EXPECT_EQ(
+      output.adjusting_stage_results()[0].metric_evaluations()[0].threshold_spec().weight().value(),
+      1.0);
 }
 
 TEST(AdaptiveLoadControllerTest, ExitsWhenDoomed) {
@@ -446,16 +529,9 @@ TEST(AdaptiveLoadControllerTest, ExitsWhenDoomed) {
   global_convergence_countdown = 1000;
   global_doom_countdown = 3;
 
-  auto mock_reader_writer = std::make_shared<grpc::testing::MockClientReaderWriter<
-      nighthawk::client::ExecutionRequest, nighthawk::client::ExecutionResponse>>();
-  EXPECT_CALL(*mock_reader_writer.get(), Write(_, _)).WillRepeatedly(Return(true));
-  EXPECT_CALL(*mock_reader_writer.get(), WritesDone()).WillRepeatedly(Return(true));
-  EXPECT_CALL(*mock_reader_writer.get(), Read(_)).WillRepeatedly(Return(true));
-  EXPECT_CALL(*mock_reader_writer, Finish()).WillRepeatedly(Return(::grpc::Status::OK));
-
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
-  EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw(_))
-      .WillRepeatedly(Return(mock_reader_writer.get()));
+  EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
+      .WillRepeatedly([](grpc_impl::ClientContext*) { return MakeSimpleMockClientReaderWriter(); });
 
   std::ostringstream diagnostic_ostream;
   FakeTimeSource time_source;
@@ -476,16 +552,9 @@ TEST(AdaptiveLoadControllerTest, PerformsTestingStageAfterConvergence) {
   global_convergence_countdown = 3;
   global_doom_countdown = 1000;
 
-  auto mock_reader_writer = std::make_shared<grpc::testing::MockClientReaderWriter<
-      nighthawk::client::ExecutionRequest, nighthawk::client::ExecutionResponse>>();
-  EXPECT_CALL(*mock_reader_writer.get(), Write(_, _)).WillRepeatedly(Return(true));
-  EXPECT_CALL(*mock_reader_writer.get(), WritesDone()).WillRepeatedly(Return(true));
-  EXPECT_CALL(*mock_reader_writer.get(), Read(_)).WillRepeatedly(Return(true));
-  EXPECT_CALL(*mock_reader_writer, Finish()).WillRepeatedly(Return(::grpc::Status::OK));
-
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
-  EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw(_))
-      .WillRepeatedly(Return(mock_reader_writer.get()));
+  EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
+      .WillRepeatedly([](grpc_impl::ClientContext*) { return MakeSimpleMockClientReaderWriter(); });
 
   std::ostringstream diagnostic_ostream;
   FakeTimeSource time_source;
@@ -505,17 +574,18 @@ TEST(AdaptiveLoadControllerTest, SetsBenchmarkErrorStatusIfNighthawkServiceDoesN
   global_convergence_countdown = 2;
   global_doom_countdown = 1000;
 
-  auto mock_reader_writer = std::make_shared<grpc::testing::MockClientReaderWriter<
-      nighthawk::client::ExecutionRequest, nighthawk::client::ExecutionResponse>>();
-  EXPECT_CALL(*mock_reader_writer.get(), Write(_, _)).WillRepeatedly(Return(true));
-  EXPECT_CALL(*mock_reader_writer.get(), WritesDone()).WillRepeatedly(Return(true));
-  // Simulate gRPC Read() failing:
-  EXPECT_CALL(*mock_reader_writer.get(), Read(_)).WillRepeatedly(Return(false));
-  EXPECT_CALL(*mock_reader_writer, Finish()).WillRepeatedly(Return(::grpc::Status::OK));
-
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
-  EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw(_))
-      .WillRepeatedly(Return(mock_reader_writer.get()));
+  EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
+      .WillRepeatedly([](grpc_impl::ClientContext*) {
+        auto mock_reader_writer = new grpc::testing::MockClientReaderWriter<
+            nighthawk::client::ExecutionRequest, nighthawk::client::ExecutionResponse>();
+        EXPECT_CALL(*mock_reader_writer, Write(_, _)).WillRepeatedly(Return(true));
+        EXPECT_CALL(*mock_reader_writer, WritesDone()).WillRepeatedly(Return(true));
+        // Simulate gRPC Read() failing:
+        EXPECT_CALL(*mock_reader_writer, Read(_)).WillRepeatedly(Return(false));
+        EXPECT_CALL(*mock_reader_writer, Finish()).WillRepeatedly(Return(::grpc::Status::OK));
+        return mock_reader_writer;
+      });
 
   std::ostringstream diagnostic_ostream;
   FakeTimeSource time_source;
@@ -539,18 +609,19 @@ TEST(AdaptiveLoadControllerTest,
   global_convergence_countdown = 2;
   global_doom_countdown = 1000;
 
-  auto mock_reader_writer = std::make_shared<grpc::testing::MockClientReaderWriter<
-      nighthawk::client::ExecutionRequest, nighthawk::client::ExecutionResponse>>();
-  EXPECT_CALL(*mock_reader_writer.get(), Write(_, _)).WillRepeatedly(Return(true));
-  EXPECT_CALL(*mock_reader_writer.get(), WritesDone()).WillRepeatedly(Return(true));
-  EXPECT_CALL(*mock_reader_writer.get(), Read(_)).WillRepeatedly(Return(true));
-  // Simulate gRPC abnormal stream shutdown:
-  EXPECT_CALL(*mock_reader_writer, Finish())
-      .WillRepeatedly(Return(::grpc::Status(::grpc::UNKNOWN, "status message")));
-
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
-  EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw(_))
-      .WillRepeatedly(Return(mock_reader_writer.get()));
+  EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
+      .WillRepeatedly([](grpc_impl::ClientContext*) {
+        auto* mock_reader_writer = new grpc::testing::MockClientReaderWriter<
+            nighthawk::client::ExecutionRequest, nighthawk::client::ExecutionResponse>();
+        EXPECT_CALL(*mock_reader_writer, Write(_, _)).WillRepeatedly(Return(true));
+        EXPECT_CALL(*mock_reader_writer, WritesDone()).WillRepeatedly(Return(true));
+        EXPECT_CALL(*mock_reader_writer, Read(_)).WillRepeatedly(Return(true));
+        // Simulate gRPC abnormal stream shutdown:
+        EXPECT_CALL(*mock_reader_writer, Finish())
+            .WillRepeatedly(Return(::grpc::Status(::grpc::UNKNOWN, "status message")));
+        return mock_reader_writer;
+      });
 
   std::ostringstream diagnostic_ostream;
   FakeTimeSource time_source;
@@ -561,6 +632,7 @@ TEST(AdaptiveLoadControllerTest,
   EXPECT_EQ(output.adjusting_stage_results()[0].status().code(), ::grpc::UNKNOWN);
   EXPECT_EQ(output.adjusting_stage_results()[0].status().message(), "status message");
 }
+
 // TEST(AdaptiveLoadControllerTest, EvaluatesBuiltinMetric) {
 //   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
 
@@ -574,18 +646,18 @@ TEST(AdaptiveLoadControllerTest,
 //   global_doom_countdown = 1000;
 
 //   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
-
-//   auto mock_reader_writer = std::make_shared<grpc::testing::MockClientReaderWriter<
-//       nighthawk::client::ExecutionRequest, nighthawk::client::ExecutionResponse>>();
+// todo fixme
+//   auto mock_reader_writer = new grpc::testing::MockClientReaderWriter<
+//       nighthawk::client::ExecutionRequest, nighthawk::client::ExecutionResponse>();
 
 //   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw(_))
 //       .WillRepeatedly(Return(mock_reader_writer.get()));
 
 //   nighthawk::client::ExecutionResponse execution_response;
 
-//   EXPECT_CALL(*mock_reader_writer.get(), Write(_, _)).WillRepeatedly(Return(true));
-//   EXPECT_CALL(*mock_reader_writer.get(), WritesDone()).WillRepeatedly(Return(true));
-//   EXPECT_CALL(*mock_reader_writer.get(),
+//   EXPECT_CALL(*mock_reader_writer, Write(_, _)).WillRepeatedly(Return(true));
+//   EXPECT_CALL(*mock_reader_writer, WritesDone()).WillRepeatedly(Return(true));
+//   EXPECT_CALL(*mock_reader_writer,
 //   Read(_)).WillRepeatedly(DoAll(SetArgPointee<0>(execution_response), Return(true){});
 //   EXPECT_CALL(*mock_reader_writer, Finish()).WillRepeatedly(Return(::grpc::Status::OK));
 
