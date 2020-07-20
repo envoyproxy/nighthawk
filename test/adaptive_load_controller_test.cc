@@ -388,6 +388,12 @@ TEST(AdaptiveLoadControllerTest, FailsWithNonexistentCustomMetricNameInInformati
   EXPECT_THAT(output.session_status().message(), HasSubstr("not implemented by plugin"));
 }
 
+// Sets up a minimal working mock to be returned from the mock stub. To customize a method, start
+// with the result of this function and then do another EXPECT_CALL on that method which will
+// overwrite the behavior configured here.
+//
+// Note that this returns a bare pointer that the PerformAdaptiveLoadSession implementation must
+// take ownership of.
 grpc::testing::MockClientReaderWriter<nighthawk::client::ExecutionRequest,
                                       nighthawk::client::ExecutionResponse>*
 MakeSimpleMockClientReaderWriter() {
@@ -465,13 +471,9 @@ TEST(AdaptiveLoadControllerTest, UsesDefaultMeasuringPeriod) {
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
       .WillRepeatedly([&request](grpc_impl::ClientContext*) {
-        auto* mock_reader_writer = new grpc::testing::MockClientReaderWriter<
-            nighthawk::client::ExecutionRequest, nighthawk::client::ExecutionResponse>();
+        auto* mock_reader_writer = MakeSimpleMockClientReaderWriter();
         EXPECT_CALL(*mock_reader_writer, Write(_, _))
             .WillRepeatedly(::testing::DoAll(::testing::SaveArg<0>(&request), Return(true)));
-        EXPECT_CALL(*mock_reader_writer, WritesDone()).WillRepeatedly(Return(true));
-        EXPECT_CALL(*mock_reader_writer, Read(_)).WillRepeatedly(Return(true));
-        EXPECT_CALL(*mock_reader_writer, Finish()).WillRepeatedly(Return(::grpc::Status::OK));
         return mock_reader_writer;
       });
 
@@ -577,13 +579,9 @@ TEST(AdaptiveLoadControllerTest, SetsBenchmarkErrorStatusIfNighthawkServiceDoesN
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
       .WillRepeatedly([](grpc_impl::ClientContext*) {
-        auto mock_reader_writer = new grpc::testing::MockClientReaderWriter<
-            nighthawk::client::ExecutionRequest, nighthawk::client::ExecutionResponse>();
-        EXPECT_CALL(*mock_reader_writer, Write(_, _)).WillRepeatedly(Return(true));
-        EXPECT_CALL(*mock_reader_writer, WritesDone()).WillRepeatedly(Return(true));
+        auto* mock_reader_writer = MakeSimpleMockClientReaderWriter();
         // Simulate gRPC Read() failing:
         EXPECT_CALL(*mock_reader_writer, Read(_)).WillRepeatedly(Return(false));
-        EXPECT_CALL(*mock_reader_writer, Finish()).WillRepeatedly(Return(::grpc::Status::OK));
         return mock_reader_writer;
       });
 
@@ -612,11 +610,7 @@ TEST(AdaptiveLoadControllerTest,
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
       .WillRepeatedly([](grpc_impl::ClientContext*) {
-        auto* mock_reader_writer = new grpc::testing::MockClientReaderWriter<
-            nighthawk::client::ExecutionRequest, nighthawk::client::ExecutionResponse>();
-        EXPECT_CALL(*mock_reader_writer, Write(_, _)).WillRepeatedly(Return(true));
-        EXPECT_CALL(*mock_reader_writer, WritesDone()).WillRepeatedly(Return(true));
-        EXPECT_CALL(*mock_reader_writer, Read(_)).WillRepeatedly(Return(true));
+        auto* mock_reader_writer = MakeSimpleMockClientReaderWriter();
         // Simulate gRPC abnormal stream shutdown:
         EXPECT_CALL(*mock_reader_writer, Finish())
             .WillRepeatedly(Return(::grpc::Status(::grpc::UNKNOWN, "status message")));
