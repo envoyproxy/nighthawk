@@ -48,20 +48,23 @@ public:
           auto* span = new NiceMock<Envoy::Tracing::MockSpan>();
           return span;
         });
-    request_generator_ = []() {
+  }
+  RequestGenerator getDefaultRequestGenerator() {
+    RequestGenerator request_generator = []() {
       auto header = std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(
           std::initializer_list<std::pair<std::string, std::string>>(
               {{":scheme", "http"}, {":method", "GET"}, {":path", "/"}, {":host", "localhost"}}));
       return std::make_unique<RequestImpl>(header);
     };
+    return request_generator;
   }
-
   void testBasicFunctionality(
       const uint64_t max_pending, const uint64_t connection_limit, const uint64_t amount_of_request,
+      RequestGenerator request_generator,
       const std::vector<absl::flat_hash_map<std::string, std::string>>& header_expectations =
           std::vector<absl::flat_hash_map<std::string, std::string>>()) {
     if (client_ == nullptr) {
-      setupBenchmarkClient();
+      setupBenchmarkClient(request_generator);
       cluster_info().resetResourceManager(connection_limit, max_pending, 1024, 0, 1024);
     }
     // this is where we store the properties of headers that are passed to the stream encoder. We
@@ -142,12 +145,12 @@ public:
     return properties_map;
   }
 
-  void setupBenchmarkClient() {
+  void setupBenchmarkClient(RequestGenerator request_generator) {
     client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
         *api_, *dispatcher_, store_, std::make_unique<StreamingStatistic>(),
         std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
         std::make_unique<StreamingStatistic>(), false, cluster_manager_, http_tracer_, "benchmark",
-        request_generator_, true);
+        request_generator, true);
   }
 
   uint64_t getCounter(absl::string_view name) {
@@ -179,41 +182,40 @@ public:
   Envoy::Upstream::ClusterInfoConstSharedPtr cluster_info_;
   Envoy::Tracing::HttpTracerSharedPtr http_tracer_;
   std::string response_code_;
-  RequestGenerator request_generator_;
 };
 
 TEST_F(BenchmarkClientHttpTest, BasicTestH1200) {
   response_code_ = "200";
-  testBasicFunctionality(2, 3, 10);
+  testBasicFunctionality(2, 3, 10, getDefaultRequestGenerator());
   EXPECT_EQ(5, getCounter("http_2xx"));
 }
 
 TEST_F(BenchmarkClientHttpTest, BasicTestH1300) {
   response_code_ = "300";
-  testBasicFunctionality(0, 11, 10);
+  testBasicFunctionality(0, 11, 10, getDefaultRequestGenerator());
   EXPECT_EQ(10, getCounter("http_3xx"));
 }
 
 TEST_F(BenchmarkClientHttpTest, BasicTestH1404) {
   response_code_ = "404";
-  testBasicFunctionality(0, 1, 10);
+  testBasicFunctionality(0, 1, 10, getDefaultRequestGenerator());
   EXPECT_EQ(1, getCounter("http_4xx"));
 }
 
 TEST_F(BenchmarkClientHttpTest, WeirdStatus) {
   response_code_ = "601";
-  testBasicFunctionality(0, 1, 10);
+  testBasicFunctionality(0, 1, 10, getDefaultRequestGenerator());
   EXPECT_EQ(1, getCounter("http_xxx"));
 }
 
 TEST_F(BenchmarkClientHttpTest, EnableLatencyMeasurement) {
-  setupBenchmarkClient();
+  setupBenchmarkClient(getDefaultRequestGenerator());
   EXPECT_EQ(false, client_->shouldMeasureLatencies());
-  testBasicFunctionality(10, 1, 10);
+  testBasicFunctionality(10, 1, 10, getDefaultRequestGenerator());
   EXPECT_EQ(0, client_->statistics()["benchmark_http_client.queue_to_connect"]->count());
   EXPECT_EQ(0, client_->statistics()["benchmark_http_client.request_to_response"]->count());
   client_->setShouldMeasureLatencies(true);
-  testBasicFunctionality(10, 1, 10);
+  testBasicFunctionality(10, 1, 10, getDefaultRequestGenerator());
   EXPECT_EQ(10, client_->statistics()["benchmark_http_client.queue_to_connect"]->count());
   EXPECT_EQ(10, client_->statistics()["benchmark_http_client.request_to_response"]->count());
 }
@@ -224,7 +226,7 @@ TEST_F(BenchmarkClientHttpTest, StatusTrackingInOnComplete) {
       *api_, *dispatcher_, *store, std::make_unique<StreamingStatistic>(),
       std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
       std::make_unique<StreamingStatistic>(), false, cluster_manager_, http_tracer_, "foo",
-      request_generator_, true);
+      getDefaultRequestGenerator(), true);
   Envoy::Http::ResponseHeaderMapPtr header = Envoy::Http::ResponseHeaderMapImpl::create();
 
   header->setStatus(1);
@@ -256,7 +258,7 @@ TEST_F(BenchmarkClientHttpTest, StatusTrackingInOnComplete) {
 }
 
 TEST_F(BenchmarkClientHttpTest, PoolFailures) {
-  setupBenchmarkClient();
+  setupBenchmarkClient(getDefaultRequestGenerator());
   client_->onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason::LocalConnectionFailure);
   client_->onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason::RemoteConnectionFailure);
   client_->onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason::Overflow);
@@ -266,7 +268,7 @@ TEST_F(BenchmarkClientHttpTest, PoolFailures) {
 }
 
 TEST_F(BenchmarkClientHttpTest, RequestMethodPost) {
-  request_generator_ = []() {
+  RequestGenerator request_generator = []() {
     auto header = std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(
         std::initializer_list<std::pair<std::string, std::string>>({{":scheme", "http"},
                                                                     {":method", "POST"},
@@ -279,12 +281,12 @@ TEST_F(BenchmarkClientHttpTest, RequestMethodPost) {
   };
 
   EXPECT_CALL(stream_encoder_, encodeData(_, _)).Times(1);
-  testBasicFunctionality(1, 1, 1);
+  testBasicFunctionality(1, 1, 1, request_generator);
   EXPECT_EQ(1, getCounter("http_2xx"));
 }
 
 TEST_F(BenchmarkClientHttpTest, BadContentLength) {
-  request_generator_ = []() {
+  RequestGenerator request_generator = []() {
     auto header = std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(
         std::initializer_list<std::pair<std::string, std::string>>({{":scheme", "http"},
                                                                     {":method", "POST"},
@@ -295,7 +297,7 @@ TEST_F(BenchmarkClientHttpTest, BadContentLength) {
   };
 
   EXPECT_CALL(stream_encoder_, encodeData(_, _)).Times(0);
-  testBasicFunctionality(1, 1, 1);
+  testBasicFunctionality(1, 1, 1, request_generator);
   EXPECT_EQ(1, getCounter("http_2xx"));
 }
 TEST_F(BenchmarkClientHttpTest, MultipleRequestsDifferentPath) {
@@ -314,7 +316,7 @@ TEST_F(BenchmarkClientHttpTest, MultipleRequestsDifferentPath) {
   requests_vector.push_back(std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(header2));
   std::vector<HeaderMapPtr>::iterator request_iterator;
   request_iterator = requests_vector.begin();
-  request_generator_ = [&]() {
+  RequestGenerator request_generator = [&]() {
     auto item = *request_iterator;
     request_iterator++;
     return std::make_unique<RequestImpl>(item);
@@ -326,7 +328,7 @@ TEST_F(BenchmarkClientHttpTest, MultipleRequestsDifferentPath) {
       getTestRecordedProperties(Envoy::Http::TestRequestHeaderMapImpl(header2)));
 
   EXPECT_CALL(stream_encoder_, encodeData(_, _)).Times(2);
-  testBasicFunctionality(1, 1, 2, expected_requests_vector);
+  testBasicFunctionality(1, 1, 2, request_generator, expected_requests_vector);
   EXPECT_EQ(2, getCounter("http_2xx"));
 }
 } // namespace Nighthawk
