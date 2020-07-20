@@ -68,18 +68,13 @@ private:
   int unix_time_{0};
 };
 
-// MetricsPlugin for testing, supporting a single metric named 'metric1'.
+// MetricsPlugin for testing, supporting a single metric named 'metric1' with the constant
+// value 5.0.
 class FakeMetricsPlugin : public MetricsPlugin {
 public:
   FakeMetricsPlugin() {}
-  double GetMetricByName(const std::string&) override { return metric_value_; }
+  double GetMetricByName(const std::string&) override { return 5.0; }
   const std::vector<std::string> GetAllSupportedMetricNames() const override { return {"metric1"}; }
-
-  // Setters for fake responses.
-  void SetMetricValue(double metric_value) { metric_value_ = metric_value; }
-
-private:
-  double metric_value_{0.0};
 };
 
 // A factory that creates a FakeMetricsPlugin with no config proto, registered under the name
@@ -112,7 +107,7 @@ public:
   bool IsDoomed(std::string* doomed_reason) const override {
     bool doomed = global_doom_countdown-- <= 0;
     if (doomed) {
-      *doomed_reason = "fake doomed reason";
+      *doomed_reason = "fake doom reason";
     }
     return doomed;
   }
@@ -161,7 +156,7 @@ nighthawk::adaptive_load::StepControllerConfig MakeFakeStepControllerConfig() {
 // Creates a valid ScoringFunctionConfig proto selecting the real BinaryScoringFunction plugin
 // and configuring it with a threshold.
 nighthawk::adaptive_load::ScoringFunctionConfig
-MakeBinaryScoringFunctionConfig(double upper_threshold) {
+MakeLowerThresholdBinaryScoringFunctionConfig(double upper_threshold) {
   nighthawk::adaptive_load::ScoringFunctionConfig config;
   config.set_name("binary");
 
@@ -253,7 +248,7 @@ TEST(AdaptiveLoadControllerTest, FailsWithNonexistentMetricsPluginNameInMetricTh
   nighthawk::adaptive_load::MetricSpecWithThreshold* threshold =
       spec.mutable_metric_thresholds()->Add();
   *threshold->mutable_threshold_spec()->mutable_scoring_function() =
-      MakeBinaryScoringFunctionConfig(0.0);
+      MakeLowerThresholdBinaryScoringFunctionConfig(0.0);
   threshold->mutable_metric_spec()->set_metric_name("x");
   threshold->mutable_metric_spec()->set_metrics_plugin_name("nonexistent-metrics-plugin");
 
@@ -271,7 +266,7 @@ TEST(AdaptiveLoadControllerTest, FailsWithUndeclaredMetricsPluginNameInMetricThr
   nighthawk::adaptive_load::MetricSpecWithThreshold* threshold =
       spec.mutable_metric_thresholds()->Add();
   *threshold->mutable_threshold_spec()->mutable_scoring_function() =
-      MakeBinaryScoringFunctionConfig(0.0);
+      MakeLowerThresholdBinaryScoringFunctionConfig(0.0);
   threshold->mutable_metric_spec()->set_metric_name("x");
   // Valid plugin name, but plugin not declared in the spec.
   threshold->mutable_metric_spec()->set_metrics_plugin_name("fake-metrics-plugin");
@@ -326,7 +321,7 @@ TEST(AdaptiveLoadControllerTest, FailsWithNonexistentBuiltinMetricNameInMetricTh
   nighthawk::adaptive_load::MetricSpecWithThreshold* threshold =
       spec.mutable_metric_thresholds()->Add();
   *threshold->mutable_threshold_spec()->mutable_scoring_function() =
-      MakeBinaryScoringFunctionConfig(0.0);
+      MakeLowerThresholdBinaryScoringFunctionConfig(0.0);
   threshold->mutable_metric_spec()->set_metric_name("nonexistent-metric-name");
   threshold->mutable_metric_spec()->set_metrics_plugin_name("builtin");
 
@@ -346,7 +341,7 @@ TEST(AdaptiveLoadControllerTest, FailsWithNonexistentCustomMetricNameInMetricThr
   nighthawk::adaptive_load::MetricSpecWithThreshold* threshold =
       spec.mutable_metric_thresholds()->Add();
   *threshold->mutable_threshold_spec()->mutable_scoring_function() =
-      MakeBinaryScoringFunctionConfig(0.0);
+      MakeLowerThresholdBinaryScoringFunctionConfig(0.0);
   threshold->mutable_metric_spec()->set_metric_name("nonexistent-metric-name");
   threshold->mutable_metric_spec()->set_metrics_plugin_name("fake-metrics-plugin");
 
@@ -502,7 +497,7 @@ TEST(AdaptiveLoadControllerTest, UsesDefaultMetricWeight) {
   threshold->mutable_metric_spec()->set_metric_name("metric1");
   threshold->mutable_metric_spec()->set_metrics_plugin_name("fake-metrics-plugin");
   *threshold->mutable_threshold_spec()->mutable_scoring_function() =
-      MakeBinaryScoringFunctionConfig(0.0);
+      MakeLowerThresholdBinaryScoringFunctionConfig(0.0);
 
   global_convergence_countdown = 3;
   global_doom_countdown = 1000;
@@ -546,6 +541,8 @@ TEST(AdaptiveLoadControllerTest, ExitsWhenDoomed) {
 
   EXPECT_THAT(output.session_status().message(),
               HasSubstr("Step controller determined that it can never converge"));
+  EXPECT_THAT(output.session_status().message(),
+              HasSubstr("fake doom reason"));
 }
 
 TEST(AdaptiveLoadControllerTest, PerformsTestingStageAfterConvergence) {
@@ -637,26 +634,28 @@ TEST(AdaptiveLoadControllerTest, EvaluatesBuiltinMetric) {
   spec.mutable_nighthawk_traffic_template();
   *spec.mutable_step_controller_config() = MakeFakeStepControllerConfig();
 
-  nighthawk::adaptive_load::MetricSpecWithThreshold* threshold = spec.mutable_metric_thresholds()->Add();
+  nighthawk::adaptive_load::MetricSpecWithThreshold* threshold =
+      spec.mutable_metric_thresholds()->Add();
   threshold->mutable_metric_spec()->set_metric_name("success-rate");
   threshold->mutable_metric_spec()->set_metrics_plugin_name("builtin");
-  *threshold->mutable_threshold_spec()->mutable_scoring_function() = MakeBinaryScoringFunctionConfig(0.9);
+  *threshold->mutable_threshold_spec()->mutable_scoring_function() =
+      MakeLowerThresholdBinaryScoringFunctionConfig(0.9);
 
   spec.mutable_convergence_deadline()->set_seconds(5);
   global_convergence_countdown = 2;
   global_doom_countdown = 1000;
 
-  nighthawk::client::ExecutionResponse low_success_nighthawk_response;
+  nighthawk::client::ExecutionResponse nighthawk_service_response;
   // Success rate of 0.125.
-  *low_success_nighthawk_response.mutable_output() = MakeStandardNighthawkOutput();
+  *nighthawk_service_response.mutable_output() = MakeStandardNighthawkOutput();
 
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
-      .WillRepeatedly([&low_success_nighthawk_response](grpc_impl::ClientContext*) {
+      .WillRepeatedly([&nighthawk_service_response](grpc_impl::ClientContext*) {
         auto* mock_reader_writer = MakeSimpleMockClientReaderWriter();
         // Simulated Nighthawk Service output:
         EXPECT_CALL(*mock_reader_writer, Read(_))
-            .WillRepeatedly(DoAll(SetArgPointee<0>(low_success_nighthawk_response), Return(true)));
+            .WillRepeatedly(DoAll(SetArgPointee<0>(nighthawk_service_response), Return(true)));
         return mock_reader_writer;
       });
 
@@ -665,11 +664,119 @@ TEST(AdaptiveLoadControllerTest, EvaluatesBuiltinMetric) {
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
       &mock_nighthawk_service_stub, spec, diagnostic_ostream, time_source);
 
-std::cerr << output.DebugString() << "\n";
   ASSERT_GT(output.adjusting_stage_results_size(), 0);
   ASSERT_GT(output.adjusting_stage_results()[0].metric_evaluations_size(), 0);
+  EXPECT_EQ(output.adjusting_stage_results()[0].metric_evaluations()[0].metric_value(), 0.125);
   // Requested a lower threshold of 0.9 but only achieved 0.125.
   EXPECT_EQ(output.adjusting_stage_results()[0].metric_evaluations()[0].threshold_score(), -1.0);
+}
+
+TEST(AdaptiveLoadControllerTest, StoresInformationalBuiltinMetric) {
+  nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
+
+  spec.mutable_nighthawk_traffic_template();
+  *spec.mutable_step_controller_config() = MakeFakeStepControllerConfig();
+
+  nighthawk::adaptive_load::MetricSpec* metric_spec =
+      spec.mutable_informational_metric_specs()->Add();
+  metric_spec->set_metric_name("success-rate");
+  metric_spec->set_metrics_plugin_name("builtin");
+
+  spec.mutable_convergence_deadline()->set_seconds(5);
+  global_convergence_countdown = 2;
+  global_doom_countdown = 1000;
+
+  nighthawk::client::ExecutionResponse nighthawk_service_response;
+  // Success rate of 0.125.
+  *nighthawk_service_response.mutable_output() = MakeStandardNighthawkOutput();
+
+  nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
+  EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
+      .WillRepeatedly([&nighthawk_service_response](grpc_impl::ClientContext*) {
+        auto* mock_reader_writer = MakeSimpleMockClientReaderWriter();
+        // Simulated Nighthawk Service output:
+        EXPECT_CALL(*mock_reader_writer, Read(_))
+            .WillRepeatedly(DoAll(SetArgPointee<0>(nighthawk_service_response), Return(true)));
+        return mock_reader_writer;
+      });
+
+  std::ostringstream diagnostic_ostream;
+  FakeTimeSource time_source;
+  nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
+      &mock_nighthawk_service_stub, spec, diagnostic_ostream, time_source);
+
+  ASSERT_GT(output.adjusting_stage_results_size(), 0);
+  ASSERT_GT(output.adjusting_stage_results()[0].metric_evaluations_size(), 0);
+  EXPECT_EQ(output.adjusting_stage_results()[0].metric_evaluations()[0].metric_value(), 0.125);
+}
+
+TEST(AdaptiveLoadControllerTest, EvaluatesCustomMetric) {
+  nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
+
+  spec.mutable_nighthawk_traffic_template();
+  *spec.mutable_step_controller_config() = MakeFakeStepControllerConfig();
+
+  *spec.mutable_metrics_plugin_configs()->Add() = MakeFakeMetricsPluginConfig();
+
+  nighthawk::adaptive_load::MetricSpecWithThreshold* threshold =
+      spec.mutable_metric_thresholds()->Add();
+  threshold->mutable_metric_spec()->set_metric_name("metric1");
+  threshold->mutable_metric_spec()->set_metrics_plugin_name("fake-metrics-plugin");
+  *threshold->mutable_threshold_spec()->mutable_scoring_function() =
+      MakeLowerThresholdBinaryScoringFunctionConfig(6.0);
+
+  spec.mutable_convergence_deadline()->set_seconds(5);
+  global_convergence_countdown = 2;
+  global_doom_countdown = 1000;
+
+  nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
+  EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
+      .WillRepeatedly([](grpc_impl::ClientContext*) {
+        return MakeSimpleMockClientReaderWriter();
+      });
+
+  std::ostringstream diagnostic_ostream;
+  FakeTimeSource time_source;
+  nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
+      &mock_nighthawk_service_stub, spec, diagnostic_ostream, time_source);
+
+  ASSERT_GT(output.adjusting_stage_results_size(), 0);
+  ASSERT_GT(output.adjusting_stage_results()[0].metric_evaluations_size(), 0);
+  // Requested a lower threshold of 6.0 but only achieved 5.0.
+  EXPECT_EQ(output.adjusting_stage_results()[0].metric_evaluations()[0].threshold_score(), -1.0);
+}
+
+TEST(AdaptiveLoadControllerTest, StoresInformationalCustomMetric) {
+  nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
+
+  spec.mutable_nighthawk_traffic_template();
+  *spec.mutable_step_controller_config() = MakeFakeStepControllerConfig();
+
+  *spec.mutable_metrics_plugin_configs()->Add() = MakeFakeMetricsPluginConfig();
+
+  nighthawk::adaptive_load::MetricSpec* metric_spec =
+      spec.mutable_informational_metric_specs()->Add();
+  metric_spec->set_metric_name("metric1");
+  metric_spec->set_metrics_plugin_name("fake-metrics-plugin");
+
+  spec.mutable_convergence_deadline()->set_seconds(5);
+  global_convergence_countdown = 2;
+  global_doom_countdown = 1000;
+
+  nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
+  EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
+      .WillRepeatedly([](grpc_impl::ClientContext*) {
+        return MakeSimpleMockClientReaderWriter();
+      });
+
+  std::ostringstream diagnostic_ostream;
+  FakeTimeSource time_source;
+  nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
+      &mock_nighthawk_service_stub, spec, diagnostic_ostream, time_source);
+
+  ASSERT_GT(output.adjusting_stage_results_size(), 0);
+  ASSERT_GT(output.adjusting_stage_results()[0].metric_evaluations_size(), 0);
+  EXPECT_EQ(output.adjusting_stage_results()[0].metric_evaluations()[0].metric_value(), 5.0);
 }
 
 } // namespace
