@@ -33,7 +33,12 @@ public:
         dispatcher_(api_->allocateDispatcher("test_thread")),
         cluster_manager_(std::make_unique<Envoy::Upstream::MockClusterManager>()),
         cluster_info_(std::make_unique<Envoy::Upstream::MockClusterInfo>()),
-        http_tracer_(std::make_unique<Envoy::Tracing::MockHttpTracer>()), response_code_("200") {
+        http_tracer_(std::make_unique<Envoy::Tracing::MockHttpTracer>()), response_code_("200"),
+        statistic_(std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
+                   std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
+                   std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
+                   std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
+                   std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>()) {
     EXPECT_CALL(cluster_manager(), httpConnPoolForCluster(_, _, _, _))
         .WillRepeatedly(Return(&pool_));
     EXPECT_CALL(cluster_manager(), get(_)).WillRepeatedly(Return(&thread_local_cluster_));
@@ -55,16 +60,6 @@ public:
               {{":scheme", "http"}, {":method", "GET"}, {":path", "/"}, {":host", "localhost"}}));
       return std::make_unique<RequestImpl>(header);
     };
-    statistic_.connect_statistic = std::make_unique<StreamingStatistic>();
-    statistic_.response_statistic = std::make_unique<StreamingStatistic>();
-    statistic_.response_header_size_statistic = std::make_unique<StreamingStatistic>();
-    statistic_.response_body_size_statistic = std::make_unique<StreamingStatistic>();
-    statistic_.latency_1xx_statistic = std::make_unique<StreamingStatistic>();
-    statistic_.latency_2xx_statistic = std::make_unique<StreamingStatistic>();
-    statistic_.latency_3xx_statistic = std::make_unique<StreamingStatistic>();
-    statistic_.latency_4xx_statistic = std::make_unique<StreamingStatistic>();
-    statistic_.latency_5xx_statistic = std::make_unique<StreamingStatistic>();
-    statistic_.latency_xxx_statistic = std::make_unique<StreamingStatistic>();
   }
 
   void testBasicFunctionality(const uint64_t max_pending, const uint64_t connection_limit,
@@ -203,11 +198,15 @@ TEST_F(BenchmarkClientHttpTest, EnableLatencyMeasurement) {
   testBasicFunctionality(10, 1, 10);
   EXPECT_EQ(0, client_->statistics()["benchmark_http_client.queue_to_connect"]->count());
   EXPECT_EQ(0, client_->statistics()["benchmark_http_client.request_to_response"]->count());
+  EXPECT_EQ(10, client_->statistics()["benchmark_http_client.response_header_size"]->count());
+  EXPECT_EQ(10, client_->statistics()["benchmark_http_client.response_body_size"]->count());
   EXPECT_EQ(0, client_->statistics()["benchmark_http_client.latency_2xx"]->count());
   client_->setShouldMeasureLatencies(true);
   testBasicFunctionality(10, 1, 10);
   EXPECT_EQ(10, client_->statistics()["benchmark_http_client.queue_to_connect"]->count());
   EXPECT_EQ(10, client_->statistics()["benchmark_http_client.request_to_response"]->count());
+  EXPECT_EQ(20, client_->statistics()["benchmark_http_client.response_header_size"]->count());
+  EXPECT_EQ(20, client_->statistics()["benchmark_http_client.response_body_size"]->count());
   EXPECT_EQ(10, client_->statistics()["benchmark_http_client.latency_2xx"]->count());
 }
 

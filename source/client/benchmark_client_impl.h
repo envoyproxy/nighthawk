@@ -44,12 +44,25 @@ using namespace Envoy; // We need this because of macro expectations.
   COUNTER(pool_overflow)                                                                           \
   COUNTER(pool_connection_failure)
 
+// For counter metrics, Nighthawk use Envoy Counter directly. For histogram metrics, Nighthawk use
+// its own Statistic instead of Envoy Histogram. Here BenchmarkClientStats contains only counters
+// while BenchmarkClientStatistic contains only histograms.
 struct BenchmarkClientStats {
   ALL_BENCHMARK_CLIENT_STATS(GENERATE_COUNTER_STRUCT)
 };
 
-// For histogram metrics, Nighthawk Statistic is used instead of Envoy Histogram.
+// BenchmarkClientStatistic contains only histogram metrics.
 struct BenchmarkClientStatistic {
+  BenchmarkClientStatistic(BenchmarkClientStatistic& statistic);
+  BenchmarkClientStatistic(StatisticPtr&& connect_stat, StatisticPtr&& response_stat,
+                           StatisticPtr&& response_header_size_stat,
+                           StatisticPtr&& response_body_size_stat, StatisticPtr&& latency_1xx_stat,
+                           StatisticPtr&& latency_2xx_stat, StatisticPtr&& latency_3xx_stat,
+                           StatisticPtr&& latency_4xx_stat, StatisticPtr&& latency_5xx_stat,
+                           StatisticPtr&& latency_xxx_stat);
+
+  // These are declared order dependent. Changing ordering may trigger on assert upon
+  // destruction when tls has been involved during usage.
   StatisticPtr connect_statistic;
   StatisticPtr response_statistic;
   StatisticPtr response_header_size_statistic;
@@ -131,18 +144,7 @@ private:
   Envoy::Api::Api& api_;
   Envoy::Event::Dispatcher& dispatcher_;
   Envoy::Stats::ScopePtr scope_;
-  // These are declared order dependent. Changing ordering may trigger on assert upon
-  // destruction when tls has been involved during usage.
-  StatisticPtr connect_statistic_;
-  StatisticPtr response_statistic_;
-  StatisticPtr response_header_size_statistic_;
-  StatisticPtr response_body_size_statistic_;
-  StatisticPtr latency_1xx_statistic_;
-  StatisticPtr latency_2xx_statistic_;
-  StatisticPtr latency_3xx_statistic_;
-  StatisticPtr latency_4xx_statistic_;
-  StatisticPtr latency_5xx_statistic_;
-  StatisticPtr latency_xxx_statistic_;
+  BenchmarkClientStatistic statistic_;
   const bool use_h2_;
   std::chrono::seconds timeout_{5s};
   uint32_t connection_limit_{1};

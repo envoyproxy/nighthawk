@@ -31,7 +31,7 @@ BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
     Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
     Envoy::Upstream::ClusterManagerPtr& cluster_manager,
     Envoy::Tracing::HttpTracerSharedPtr& http_tracer, absl::string_view cluster_name,
-    const int sink_stat_prefix, RequestSource& request_generator) const {
+    int sink_stat_prefix, RequestSource& request_generator) const {
   StatisticFactoryImpl statistic_factory(options_);
   // While we lack options to configure which statistic backend goes where, we directly pass
   // StreamingStatistic for the stats that track response sizes. Ideally we would have options
@@ -39,17 +39,15 @@ BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
   // NullStatistic).
   // TODO(#292): Create options and have the StatisticFactory consider those when instantiating
   // statistics.
-  BenchmarkClientStatistic statistic;
-  statistic.connect_statistic = statistic_factory.create();
-  statistic.response_statistic = statistic_factory.create();
-  statistic.response_header_size_statistic = std::make_unique<StreamingStatistic>();
-  statistic.response_body_size_statistic = std::make_unique<StreamingStatistic>();
-  statistic.latency_1xx_statistic = std::make_unique<SinkableHdrStatistic>(scope, sink_stat_prefix);
-  statistic.latency_2xx_statistic = std::make_unique<SinkableHdrStatistic>(scope, sink_stat_prefix);
-  statistic.latency_3xx_statistic = std::make_unique<SinkableHdrStatistic>(scope, sink_stat_prefix);
-  statistic.latency_4xx_statistic = std::make_unique<SinkableHdrStatistic>(scope, sink_stat_prefix);
-  statistic.latency_5xx_statistic = std::make_unique<SinkableHdrStatistic>(scope, sink_stat_prefix);
-  statistic.latency_xxx_statistic = std::make_unique<SinkableHdrStatistic>(scope, sink_stat_prefix);
+  BenchmarkClientStatistic statistic(
+      statistic_factory.create(), statistic_factory.create(),
+      std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
+      std::make_unique<SinkableHdrStatistic>(scope, sink_stat_prefix),
+      std::make_unique<SinkableHdrStatistic>(scope, sink_stat_prefix),
+      std::make_unique<SinkableHdrStatistic>(scope, sink_stat_prefix),
+      std::make_unique<SinkableHdrStatistic>(scope, sink_stat_prefix),
+      std::make_unique<SinkableHdrStatistic>(scope, sink_stat_prefix),
+      std::make_unique<SinkableHdrStatistic>(scope, sink_stat_prefix));
   auto benchmark_client = std::make_unique<BenchmarkClientHttpImpl>(
       api, dispatcher, scope, statistic, options_.h2(), cluster_manager, http_tracer, cluster_name,
       request_generator.get(), !options_.openLoop());
