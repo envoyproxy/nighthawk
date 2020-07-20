@@ -1,3 +1,4 @@
+#include "api/adaptive_load/config.pb.h"
 #include "envoy/registry/registry.h"
 
 #include "nighthawk/adaptive_load/input_variable_setter.h"
@@ -145,7 +146,9 @@ public:
 REGISTER_FACTORY(TestStepControllerConfigFactory, StepControllerConfigFactory);
 
 // Creates an Any wrapping a LinearScoringFunctionConfig for use in the |typed_config| of all test
-// plugins in this file.
+// plugins in this file. The choice of the particular proto LinearScoringFunctionConfig is
+// arbitrary. We don't leave the Any empty because we need to check that the plugin utils can
+// correctly pass the proto through to the plugin.
 Envoy::ProtobufWkt::Any CreateTypedConfigAny(double threshold) {
   nighthawk::adaptive_load::LinearScoringFunctionConfig config;
   config.set_threshold(threshold);
@@ -177,6 +180,14 @@ TEST(PluginUtilTest, PropagatesConfigProtoToInputVariableSetter) {
   EXPECT_EQ(typed_plugin->config_.threshold(), 12.0);
 }
 
+TEST(PluginUtilTest, ThrowsExceptionWhenInputVariableSetterPluginNotFound) {
+  nighthawk::adaptive_load::InputVariableSetterConfig config;
+  config.set_name("nonexistent-input-variable-setter");
+  *config.mutable_typed_config() = CreateTypedConfigAny(0.0);
+
+  EXPECT_THROW(LoadInputVariableSetterPlugin(config), Envoy::EnvoyException);
+}
+
 TEST(PluginUtilTest, CreatesCorrectScoringFunctionType) {
   nighthawk::adaptive_load::ScoringFunctionConfig config;
   config.set_name("test-scoring-function");
@@ -200,6 +211,14 @@ TEST(PluginUtilTest, PropagatesConfigProtoToScoringFunction) {
   EXPECT_EQ(typed_plugin->config_.threshold(), 34.0);
 }
 
+TEST(PluginUtilTest, ThrowsExceptionWhenScoringFunctionPluginNotFound) {
+  nighthawk::adaptive_load::ScoringFunctionConfig config;
+  config.set_name("nonexistent-scoring-function");
+  *config.mutable_typed_config() = CreateTypedConfigAny(0.0);
+
+  EXPECT_THROW(LoadScoringFunctionPlugin(config), Envoy::EnvoyException);
+}
+
 TEST(PluginUtilTest, CreatesCorrectMetricsPluginType) {
   nighthawk::adaptive_load::MetricsPluginConfig config;
   config.set_name("test-metrics-plugin");
@@ -221,6 +240,14 @@ TEST(PluginUtilTest, PropagatesConfigProtoToMetricsPlugin) {
   TestMetricsPlugin* typed_plugin = dynamic_cast<TestMetricsPlugin*>(plugin.get());
   ASSERT_NE(typed_plugin, nullptr);
   EXPECT_EQ(typed_plugin->config_.threshold(), 56.0);
+}
+
+TEST(PluginUtilTest, ThrowsExceptionWhenMetricsPluginNotFound) {
+  nighthawk::adaptive_load::MetricsPluginConfig config;
+  config.set_name("nonexistent-metrics-plugin");
+  *config.mutable_typed_config() = CreateTypedConfigAny(0.0);
+
+  EXPECT_THROW(LoadMetricsPlugin(config), Envoy::EnvoyException);
 }
 
 TEST(PluginUtilTest, CreatesCorrectStepControllerType) {
@@ -263,6 +290,15 @@ TEST(PluginUtilTest, PropagatesCommandLineOptionsTemplateToStepController) {
   TestStepController* typed_plugin = dynamic_cast<TestStepController*>(plugin.get());
   ASSERT_NE(typed_plugin, nullptr);
   EXPECT_EQ(typed_plugin->command_line_options_template_.requests_per_second().value(), 9);
+}
+
+TEST(PluginUtilTest, ThrowsExceptionWhenStepControllerPluginNotFound) {
+  nighthawk::adaptive_load::StepControllerConfig config;
+  config.set_name("nonexistent-step-controller");
+  *config.mutable_typed_config() = CreateTypedConfigAny(0.0);
+  nighthawk::client::CommandLineOptions options_template;
+
+  EXPECT_THROW(LoadStepControllerPlugin(config, options_template), Envoy::EnvoyException);
 }
 
 } // namespace
