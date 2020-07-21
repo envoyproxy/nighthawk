@@ -301,14 +301,14 @@ TEST_F(BenchmarkClientHttpTest, BadContentLength) {
   testBenchmarkClientFunctionality(1, 1, 1, request_generator);
   EXPECT_EQ(1, getCounter("http_2xx"));
 }
-TEST_F(BenchmarkClientHttpTest, MultipleRequestsDifferentPath) {
+TEST_F(BenchmarkClientHttpTest, ShouldSupportRequestSupportThatGoesToDifferentPaths) {
   std::vector<HeaderMapPtr> requests_for_generator_to_send;
-  std::initializer_list<std::pair<std::string, std::string>> first_header_map_to_send{{":scheme", "http"},
+  const std::initializer_list<std::pair<std::string, std::string>> first_header_map_to_send{{":scheme", "http"},
                                                                      {":method", "GET"},
                                                                      {":path", "/a"},
                                                                      {":host", "localhost"},
                                                                      {"Content-Length", "1313"}};
-  std::initializer_list<std::pair<std::string, std::string>> second_header_map_to_send{{":scheme", "http"},
+  const std::initializer_list<std::pair<std::string, std::string>> second_header_map_to_send{{":scheme", "http"},
                                                                      {":method", "GET"},
                                                                      {":path", "/b"},
                                                                      {":host", "localhost"},
@@ -329,6 +329,7 @@ TEST_F(BenchmarkClientHttpTest, MultipleRequestsDifferentPath) {
       getTestRecordedProperties(Envoy::Http::TestRequestHeaderMapImpl(second_header_map_to_send)));
 
   EXPECT_CALL(stream_encoder_, encodeData(_, _)).Times(2);
+  //Most of the testing happens inside of this call. Will confirm that the requests received match the expected requests vector.
   testBenchmarkClientFunctionality(1, 1, 2, request_generator, expected_requests_vector);
   EXPECT_EQ(2, getCounter("http_2xx"));
 }
