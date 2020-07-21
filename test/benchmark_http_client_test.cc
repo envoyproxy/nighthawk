@@ -65,7 +65,7 @@ public:
     properties_map["uri"] = std::string(header.getPathValue());
     return properties_map;
   }
-
+  ///Used to set up benchmarkclient. Especially from within the testBenchmarkClientFunctionality.
   void setupBenchmarkClient(const RequestGenerator& request_generator) {
     client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
         *api_, *dispatcher_, store_, std::make_unique<StreamingStatistic>(),
@@ -73,7 +73,8 @@ public:
         std::make_unique<StreamingStatistic>(), false, cluster_manager_, http_tracer_, "benchmark",
         request_generator, true);
   }
-  void testBasicFunctionality(
+  ///Primary testing method. Confirms that connection limits are met and number of requests are correct. If specified, also checks the header expectations, if not specified, it is ignored.
+  void testBenchmarkClientFunctionality(
       const uint64_t max_pending, const uint64_t connection_limit, const uint64_t amount_of_request,
       const RequestGenerator& request_generator,
       const std::vector<absl::flat_hash_map<std::string, std::string>>& header_expectations =
@@ -186,36 +187,36 @@ public:
 
 TEST_F(BenchmarkClientHttpTest, BasicTestH1200) {
   response_code_ = "200";
-  testBasicFunctionality(2, 3, 10, getDefaultRequestGenerator());
+  testBenchmarkClientFunctionality(2, 3, 10, getDefaultRequestGenerator());
   EXPECT_EQ(5, getCounter("http_2xx"));
 }
 
 TEST_F(BenchmarkClientHttpTest, BasicTestH1300) {
   response_code_ = "300";
-  testBasicFunctionality(0, 11, 10, getDefaultRequestGenerator());
+  testBenchmarkClientFunctionality(0, 11, 10, getDefaultRequestGenerator());
   EXPECT_EQ(10, getCounter("http_3xx"));
 }
 
 TEST_F(BenchmarkClientHttpTest, BasicTestH1404) {
   response_code_ = "404";
-  testBasicFunctionality(0, 1, 10, getDefaultRequestGenerator());
+  testBenchmarkClientFunctionality(0, 1, 10, getDefaultRequestGenerator());
   EXPECT_EQ(1, getCounter("http_4xx"));
 }
 
 TEST_F(BenchmarkClientHttpTest, WeirdStatus) {
   response_code_ = "601";
-  testBasicFunctionality(0, 1, 10, getDefaultRequestGenerator());
+  testBenchmarkClientFunctionality(0, 1, 10, getDefaultRequestGenerator());
   EXPECT_EQ(1, getCounter("http_xxx"));
 }
 
 TEST_F(BenchmarkClientHttpTest, EnableLatencyMeasurement) {
   setupBenchmarkClient(getDefaultRequestGenerator());
   EXPECT_EQ(false, client_->shouldMeasureLatencies());
-  testBasicFunctionality(10, 1, 10, getDefaultRequestGenerator());
+  testBenchmarkClientFunctionality(10, 1, 10, getDefaultRequestGenerator());
   EXPECT_EQ(0, client_->statistics()["benchmark_http_client.queue_to_connect"]->count());
   EXPECT_EQ(0, client_->statistics()["benchmark_http_client.request_to_response"]->count());
   client_->setShouldMeasureLatencies(true);
-  testBasicFunctionality(10, 1, 10, getDefaultRequestGenerator());
+  testBenchmarkClientFunctionality(10, 1, 10, getDefaultRequestGenerator());
   EXPECT_EQ(10, client_->statistics()["benchmark_http_client.queue_to_connect"]->count());
   EXPECT_EQ(10, client_->statistics()["benchmark_http_client.request_to_response"]->count());
 }
@@ -281,7 +282,7 @@ TEST_F(BenchmarkClientHttpTest, RequestMethodPost) {
   };
 
   EXPECT_CALL(stream_encoder_, encodeData(_, _)).Times(1);
-  testBasicFunctionality(1, 1, 1, request_generator);
+  testBenchmarkClientFunctionality(1, 1, 1, request_generator);
   EXPECT_EQ(1, getCounter("http_2xx"));
 }
 
@@ -297,7 +298,7 @@ TEST_F(BenchmarkClientHttpTest, BadContentLength) {
   };
 
   EXPECT_CALL(stream_encoder_, encodeData(_, _)).Times(0);
-  testBasicFunctionality(1, 1, 1, request_generator);
+  testBenchmarkClientFunctionality(1, 1, 1, request_generator);
   EXPECT_EQ(1, getCounter("http_2xx"));
 }
 TEST_F(BenchmarkClientHttpTest, MultipleRequestsDifferentPath) {
@@ -328,7 +329,7 @@ TEST_F(BenchmarkClientHttpTest, MultipleRequestsDifferentPath) {
       getTestRecordedProperties(Envoy::Http::TestRequestHeaderMapImpl(second_header_map_to_send)));
 
   EXPECT_CALL(stream_encoder_, encodeData(_, _)).Times(2);
-  testBasicFunctionality(1, 1, 2, request_generator, expected_requests_vector);
+  testBenchmarkClientFunctionality(1, 1, 2, request_generator, expected_requests_vector);
   EXPECT_EQ(2, getCounter("http_2xx"));
 }
 } // namespace Nighthawk
