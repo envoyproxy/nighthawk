@@ -49,7 +49,7 @@ public:
           return span;
         });
   }
-  RequestGenerator getDefaultRequestGenerator() {
+  RequestGenerator getDefaultRequestGenerator() const {
     RequestGenerator request_generator = []() {
       auto header = std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(
           std::initializer_list<std::pair<std::string, std::string>>(
@@ -57,6 +57,21 @@ public:
       return std::make_unique<RequestImpl>(header);
     };
     return request_generator;
+  }
+  /// Helper function to get properties in a map that should be verified during the test
+  absl::flat_hash_map<std::string, std::string>
+  getTestRecordedProperties(const Envoy::Http::RequestHeaderMap& header) {
+    absl::flat_hash_map<std::string, std::string> properties_map;
+    properties_map["uri"] = std::string(header.getPathValue());
+    return properties_map;
+  }
+
+  void setupBenchmarkClient(const RequestGenerator& request_generator) {
+    client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
+        *api_, *dispatcher_, store_, std::make_unique<StreamingStatistic>(),
+        std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
+        std::make_unique<StreamingStatistic>(), false, cluster_manager_, http_tracer_, "benchmark",
+        request_generator, true);
   }
   void testBasicFunctionality(
       const uint64_t max_pending, const uint64_t connection_limit, const uint64_t amount_of_request,
@@ -136,21 +151,6 @@ public:
     if (header_expectations.size() != 0) {
       EXPECT_THAT(header_expectations, UnorderedElementsAreArray(called_headers));
     }
-  }
-
-  absl::flat_hash_map<std::string, std::string>
-  getTestRecordedProperties(const Envoy::Http::RequestHeaderMap& header) {
-    absl::flat_hash_map<std::string, std::string> properties_map;
-    properties_map["uri"] = std::string(header.getPathValue());
-    return properties_map;
-  }
-
-  void setupBenchmarkClient(const RequestGenerator& request_generator) {
-    client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
-        *api_, *dispatcher_, store_, std::make_unique<StreamingStatistic>(),
-        std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
-        std::make_unique<StreamingStatistic>(), false, cluster_manager_, http_tracer_, "benchmark",
-        request_generator, true);
   }
 
   uint64_t getCounter(absl::string_view name) {
@@ -301,21 +301,21 @@ TEST_F(BenchmarkClientHttpTest, BadContentLength) {
   EXPECT_EQ(1, getCounter("http_2xx"));
 }
 TEST_F(BenchmarkClientHttpTest, MultipleRequestsDifferentPath) {
-  std::vector<HeaderMapPtr> requests_vector;
-  std::initializer_list<std::pair<std::string, std::string>> header1{{":scheme", "http"},
+  std::vector<HeaderMapPtr> requests_for_generator_to_send;
+  std::initializer_list<std::pair<std::string, std::string>> first_header_map_to_send{{":scheme", "http"},
                                                                      {":method", "GET"},
                                                                      {":path", "/a"},
                                                                      {":host", "localhost"},
                                                                      {"Content-Length", "1313"}};
-  std::initializer_list<std::pair<std::string, std::string>> header2{{":scheme", "http"},
+  std::initializer_list<std::pair<std::string, std::string>> second_header_map_to_send{{":scheme", "http"},
                                                                      {":method", "GET"},
                                                                      {":path", "/b"},
                                                                      {":host", "localhost"},
                                                                      {"Content-Length", "1313"}};
-  requests_vector.push_back(std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(header1));
-  requests_vector.push_back(std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(header2));
+  requests_for_generator_to_send.push_back(std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(first_header_map_to_send));
+  requests_for_generator_to_send.push_back(std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(second_header_map_to_send));
   std::vector<HeaderMapPtr>::iterator request_iterator;
-  request_iterator = requests_vector.begin();
+  request_iterator = requests_for_generator_to_send.begin();
   RequestGenerator request_generator = [&]() {
     auto item = *request_iterator;
     request_iterator++;
@@ -323,9 +323,9 @@ TEST_F(BenchmarkClientHttpTest, MultipleRequestsDifferentPath) {
   };
   std::vector<absl::flat_hash_map<std::string, std::string>> expected_requests_vector;
   expected_requests_vector.push_back(
-      getTestRecordedProperties(Envoy::Http::TestRequestHeaderMapImpl(header1)));
+      getTestRecordedProperties(Envoy::Http::TestRequestHeaderMapImpl(first_header_map_to_send)));
   expected_requests_vector.push_back(
-      getTestRecordedProperties(Envoy::Http::TestRequestHeaderMapImpl(header2)));
+      getTestRecordedProperties(Envoy::Http::TestRequestHeaderMapImpl(second_header_map_to_send)));
 
   EXPECT_CALL(stream_encoder_, encodeData(_, _)).Times(2);
   testBasicFunctionality(1, 1, 2, request_generator, expected_requests_vector);
