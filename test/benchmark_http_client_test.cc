@@ -65,7 +65,7 @@ public:
     properties_map["uri"] = std::string(header.getPathValue());
     return properties_map;
   }
-  ///Used to set up benchmarkclient. Especially from within the testBenchmarkClientFunctionality.
+  /// Used to set up benchmarkclient. Especially from within the testBenchmarkClientFunctionality.
   void setupBenchmarkClient(const RequestGenerator& request_generator) {
     client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
         *api_, *dispatcher_, store_, std::make_unique<StreamingStatistic>(),
@@ -73,7 +73,8 @@ public:
         std::make_unique<StreamingStatistic>(), false, cluster_manager_, http_tracer_, "benchmark",
         request_generator, true);
   }
-  ///Primary testing method. Confirms that connection limits are met and number of requests are correct. If specified, also checks the header expectations, if not specified, it is ignored.
+  /// Primary testing method. Confirms that connection limits are met and number of requests are
+  /// correct. If specified, also checks the header expectations, if not specified, it is ignored.
   void testBenchmarkClientFunctionality(
       const uint64_t max_pending, const uint64_t connection_limit, const uint64_t amount_of_request,
       const RequestGenerator& request_generator,
@@ -303,18 +304,22 @@ TEST_F(BenchmarkClientHttpTest, BadContentLength) {
 }
 TEST_F(BenchmarkClientHttpTest, ShouldSupportRequestSupportThatGoesToDifferentPaths) {
   std::vector<HeaderMapPtr> requests_for_generator_to_send;
-  const std::initializer_list<std::pair<std::string, std::string>> first_header_map_to_send{{":scheme", "http"},
-                                                                     {":method", "GET"},
-                                                                     {":path", "/a"},
-                                                                     {":host", "localhost"},
-                                                                     {"Content-Length", "1313"}};
-  const std::initializer_list<std::pair<std::string, std::string>> second_header_map_to_send{{":scheme", "http"},
-                                                                     {":method", "GET"},
-                                                                     {":path", "/b"},
-                                                                     {":host", "localhost"},
-                                                                     {"Content-Length", "1313"}};
-  requests_for_generator_to_send.push_back(std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(first_header_map_to_send));
-  requests_for_generator_to_send.push_back(std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(second_header_map_to_send));
+  const std::initializer_list<std::pair<std::string, std::string>> first_header_map_to_send{
+      {":scheme", "http"},
+      {":method", "GET"},
+      {":path", "/a"},
+      {":host", "localhost"},
+      {"Content-Length", "1313"}};
+  const std::initializer_list<std::pair<std::string, std::string>> second_header_map_to_send{
+      {":scheme", "http"},
+      {":method", "GET"},
+      {":path", "/b"},
+      {":host", "localhost"},
+      {"Content-Length", "1313"}};
+  requests_for_generator_to_send.push_back(
+      std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(first_header_map_to_send));
+  requests_for_generator_to_send.push_back(
+      std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(second_header_map_to_send));
   std::vector<HeaderMapPtr>::iterator request_iterator;
   request_iterator = requests_for_generator_to_send.begin();
   RequestGenerator request_generator = [&]() {
@@ -329,7 +334,8 @@ TEST_F(BenchmarkClientHttpTest, ShouldSupportRequestSupportThatGoesToDifferentPa
       getTestRecordedProperties(Envoy::Http::TestRequestHeaderMapImpl(second_header_map_to_send)));
 
   EXPECT_CALL(stream_encoder_, encodeData(_, _)).Times(2);
-  //Most of the testing happens inside of this call. Will confirm that the requests received match the expected requests vector.
+  // Most of the testing happens inside of this call. Will confirm that the requests received match
+  // the expected requests vector.
   testBenchmarkClientFunctionality(1, 1, 2, request_generator, expected_requests_vector);
   EXPECT_EQ(2, getCounter("http_2xx"));
 }
