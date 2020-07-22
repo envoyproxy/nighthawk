@@ -277,6 +277,22 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "Request infinite execution. Note that the default failure "
       "predicates will still be added. Mutually exclusive with --duration.",
       cmd);
+  TCLAP::MultiArg<std::string> stats_sinks(
+      "", "stats-sinks",
+      "Stats sinks (in json or compact yaml) where Nighthawk "
+      "metrics will be flushed. This argument is intended to "
+      "be specified multiple times. Example (json): "
+      "{name:\"envoy.stat_sinks.statsd\",typed_config:{\"@type\":\"type."
+      "googleapis.com/"
+      "envoy.config.metrics.v3.StatsdSink\",tcp_cluster_name:\"statsd\"}}",
+      false, "string", cmd);
+
+  TCLAP::ValueArg<uint32_t> stats_flush_interval(
+      "", "stats-flush-interval",
+      fmt::format("Time interval (in seconds) between flushes to configured "
+                  "stats sinks. Default: {}.",
+                  stats_flush_interval_),
+      false, 5, "uint32_t", cmd);
 
   Utility::parseCommand(cmd, argc, argv);
 
@@ -390,6 +406,19 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   TCLAP_SET_IF_SPECIFIED(labels, labels_);
   TCLAP_SET_IF_SPECIFIED(simple_warmup, simple_warmup_);
   TCLAP_SET_IF_SPECIFIED(no_duration, no_duration_);
+  if (stats_sinks.isSet()) {
+    envoy::config::metrics::v3::StatsSink sink;
+    for (const std::string& stats_sink : stats_sinks.getValue()) {
+      try {
+        Envoy::MessageUtil::loadFromJson(stats_sink, sink,
+                                         Envoy::ProtobufMessage::getStrictValidationVisitor());
+      } catch (const Envoy::EnvoyException& e) {
+        throw MalformedArgvException(e.what());
+      }
+      stats_sinks_.push_back(sink);
+    }
+  }
+  TCLAP_SET_IF_SPECIFIED(stats_flush_interval, stats_flush_interval_);
 
   // CLI-specific tests.
   // TODO(oschaaf): as per mergconflicts's remark, it would be nice to aggregate
@@ -420,6 +449,9 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   }
   if (max_requests_per_connection_ > largest_acceptable_uint32_option_value) {
     throw MalformedArgvException("Invalid value for --max-requests-per-connection");
+  }
+  if (stats_flush_interval_ > largest_acceptable_uint32_option_value) {
+    throw MalformedArgvException("Invalid value for --stats-flush-interval");
   }
 
   if (!tls_context.getValue().empty()) {
@@ -558,6 +590,11 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
     jitter_uniform_ = std::chrono::nanoseconds(
         Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(options.jitter_uniform()));
   }
+  for (const envoy::config::metrics::v3::StatsSink& stats_sink : options.stats_sinks()) {
+    stats_sinks_.push_back(stats_sink);
+  }
+  stats_flush_interval_ =
+      PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, stats_flush_interval, stats_flush_interval_);
   nighthawk_service_ =
       PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, nighthawk_service, nighthawk_service_);
   h2_use_multiple_connections_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(
@@ -734,6 +771,10 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
   if (no_duration_) {
     command_line_options->mutable_no_duration()->set_value(no_duration_);
   }
+  for (const envoy::config::metrics::v3::StatsSink& stats_sink : stats_sinks_) {
+    *command_line_options->add_stats_sinks() = stats_sink;
+  }
+  command_line_options->mutable_stats_flush_interval()->set_value(stats_flush_interval_);
   return command_line_options;
 }
 

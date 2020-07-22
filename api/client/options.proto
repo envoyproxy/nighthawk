@@ -5,6 +5,7 @@ package nighthawk.client;
 import "google/protobuf/duration.proto";
 import "google/protobuf/wrappers.proto";
 import "envoy/config/core/v3/base.proto";
+import "envoy/config/metrics/v3/stats.proto";
 import "envoy/extensions/transport_sockets/tls/v3/cert.proto";
 import "validate/validate.proto";
 
@@ -195,4 +196,10 @@ message CommandLineOptions {
   // execution. Note that this will be reflected in the counters that
   // Nighthawk writes to the output. Default is false.
   google.protobuf.BoolValue simple_warmup = 32;
+  // Optional set of stats sinks where Nighthawk metrics will be flushed to.
+  repeated envoy.config.metrics.v3.StatsSink stats_sinks = 34;
+  // Time interval (number of seconds) between periodical flushes to configured stats sinks. If not
+  // specified the default is 5 seconds. Time interval must be at least 1s and at most 300s.
+  google.protobuf.UInt32Value stats_flush_interval = 35
+      [(validate.rules).uint32 = {gte: 1, lte: 300}];
 }
