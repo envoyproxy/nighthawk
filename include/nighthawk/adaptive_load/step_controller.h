@@ -1,12 +1,12 @@
 #pragma once
 
 #include "envoy/common/pure.h"
+#include "envoy/config/core/v3/base.pb.h"
 #include "envoy/config/typed_config.h"
 
 #include "external/envoy/source/common/protobuf/protobuf.h"
 
 #include "api/adaptive_load/benchmark_result.pb.h"
-#include "envoy/config/core/v3/base.pb.h"
 
 namespace Nighthawk {
 namespace AdaptiveLoad {

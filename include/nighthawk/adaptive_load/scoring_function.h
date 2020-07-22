@@ -1,9 +1,8 @@
 #pragma once
 
 #include "envoy/common/pure.h"
-#include "envoy/config/typed_config.h"
-
 #include "envoy/config/core/v3/base.pb.h"
+#include "envoy/config/typed_config.h"
 
 namespace Nighthawk {
 namespace AdaptiveLoad {
