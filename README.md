@@ -72,8 +72,9 @@ format>] [--sequencer-idle-strategy <spin
 [--concurrency <string>] [--h2] [--timeout
 <uint32_t>] [--duration <uint32_t>]
 [--connections <uint32_t>] [--rps
-<uint32_t>] [--] [--version] [-h] <uri
-format>
+<uint32_t>] [--stats-sinks <string>] ...
+[--stats-flush-interval <uint32_t>] [--]
+[--version] [-h] <uri format>
 
 
 Where:
@@ -231,6 +232,17 @@ HTTP/1 only. Default: 100.
 
 --rps <uint32_t>
 The target requests-per-second rate. Default: 5.
+
+--stats-sinks <string>  (accepted multiple times)
+Stats sinks (in json or compact yaml) where Nighthawk metrics will be flushed.
+This argument is intended to be specified multiple times. Example (json):
+{name:"envoy.stat_sinks.statsd",
+typed_config:{"@type":"type.googleapis.com/envoy.config.metrics.v3.StatsdSink",
+tcp_cluster_name:"statsd"}}
+
+--stats-flush-interval <uint32_t>
+Time interval (in seconds) between flushes to configured stats sinks.
+Default: 5 (seconds).
 
 --,  --ignore_rest
 Ignores the rest of the labeled arguments following this flag.
