@@ -291,7 +291,7 @@ AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
     BenchmarkResult result = PerformAndAnalyzeNighthawkBenchmark(
         nighthawk_service_stub, spec, name_to_custom_plugin_map,
         step_controller->GetCurrentCommandLineOptions(), spec.measuring_period());
-    
+
     for (const MetricEvaluation& evaluation : result.metric_evaluations()) {
       diagnostic_ostream << evaluation.DebugString() << "\n";
     }

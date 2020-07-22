@@ -1,6 +1,7 @@
 #pragma once
 
 #include "envoy/config/core/v3/base.pb.h"
+
 #include "nighthawk/adaptive_load/input_variable_setter.h"
 #include "nighthawk/adaptive_load/metrics_plugin.h"
 #include "nighthawk/adaptive_load/scoring_function.h"

@@ -1,11 +1,11 @@
 #pragma once
 
 #include "envoy/common/pure.h"
+#include "envoy/config/core/v3/base.pb.h"
 #include "envoy/config/typed_config.h"
 
 #include "external/envoy/source/common/protobuf/protobuf.h"
 
-#include "envoy/config/core/v3/base.pb.h"
 #include "api/client/options.pb.h"
 
 namespace Nighthawk {

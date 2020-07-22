@@ -63,7 +63,7 @@ envoy_cc_test(
         "//test/adaptive_load:utility_lib",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
         "@envoy//test/test_common:utility_lib",
-   ],
+    ],
 )
 
 envoy_cc_test(
