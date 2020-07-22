@@ -5,9 +5,9 @@ syntax = "proto3";
 package nighthawk.adaptive_load;
 
 import "api/adaptive_load/benchmark_result.proto";
-import "api/adaptive_load/config.proto";
 import "api/adaptive_load/metric_spec.proto";
 import "api/client/options.proto";
+import "envoy/config/core/v3/extension.proto";
 import "google/protobuf/duration.proto";
 import "google/rpc/status.proto";
 import "validate/validate.proto";
@@ -21,8 +21,8 @@ import "validate/validate.proto";
 message AdaptiveLoadSessionSpec {
   // Settings for MetricsPlugins that obtain metrics from outside sources.
   // An entry is required for every plugin referred to by metric_thresholds,
-  // other than the "builtin" plugin. Optional.
-  repeated MetricsPluginConfig metrics_plugin_configs = 1;
+  // other than the "nighthawk.builtin" plugin. Optional.
+  repeated envoy.config.core.v3.TypedExtensionConfig metrics_plugin_configs = 1;
   // Metrics and thresholds that determine load adjustments. The order of
   // metrics is not significant. Required.
   repeated MetricSpecWithThreshold metric_thresholds = 2 [(validate.rules).repeated .min_items = 1];
@@ -59,7 +59,8 @@ message AdaptiveLoadSessionSpec {
   google.protobuf.Duration testing_stage_duration = 7
       [(validate.rules).duration.gt.seconds = 0, (validate.rules).duration.required = true];
   // Selects and configures a StepController plugin. Required.
-  StepControllerConfig step_controller_config = 8 [(validate.rules).message.required = true];
+  envoy.config.core.v3.TypedExtensionConfig step_controller_config = 8
+      [(validate.rules).message.required = true];
 }
 
 // Complete description of an adaptive load session, including metric scores
@@ -71,4 +72,7 @@ message AdaptiveLoadSessionOutput {
   repeated BenchmarkResult adjusting_stage_results = 2;
   // Result of the single benchmark of the testing stage.
   BenchmarkResult testing_stage_result = 3;
+  // Metrics and thresholds that were used to determine load adjustments, as referenced in the
+  // BenchmarkResults.
+  repeated MetricSpecWithThreshold metric_thresholds = 4;
 }

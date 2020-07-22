@@ -6,7 +6,7 @@
 #include "external/envoy/source/common/protobuf/protobuf.h"
 
 #include "api/adaptive_load/benchmark_result.pb.h"
-#include "api/adaptive_load/config.pb.h"
+#include "envoy/config/core/v3/base.pb.h"
 
 namespace Nighthawk {
 namespace AdaptiveLoad {

@@ -6,7 +6,7 @@ namespace Nighthawk {
 namespace AdaptiveLoad {
 
 // Creates a Nighthawk output proto containing minimal counters and statistics for analysis by the
-// builtin MetricsPlugin:
+// nighthawk.builtin MetricsPlugin:
 //   - 1024 RPS attempted
 //   - 10 second duration attempted
 //   - 10240 requests attempted

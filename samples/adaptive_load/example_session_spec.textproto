@@ -18,14 +18,14 @@ metric_thresholds {
   metric_spec {
     metric_name: "latency-ns-max"
     # metric_name: "latency-ns-mean-plus-2stdev"
-    metrics_plugin_name: "builtin"
+    metrics_plugin_name: "nighthawk.builtin"
   }
   threshold_spec {
     upper_threshold {
       value: 10000000.0  # 10 ms
     }
     # scoring_function {
-    #   name: "sigmoid"
+    #   name: "nighthawk.sigmoid"
     #  typed_config {
     #    [type.googleapis.com/nighthawk.adaptive_load.SigmoidScoringFunctionConfig] {
     #      threshold: 5000000.0  # 5 ms
@@ -42,7 +42,7 @@ metric_thresholds {
 #metric_thresholds {
 #  metric_spec {
 #    metric_name: "success-rate"
-#    metrics_plugin_name: "builtin"
+#    metrics_plugin_name: "nighthawk.builtin"
 #  }
 #  threshold_spec {
 #    lower_threshold {
@@ -59,17 +59,17 @@ metric_thresholds {
 
 #informational_metric_specs {
 #  metric_name: "attempted-rps"
-#  metrics_plugin_name: "builtin"
+#  metrics_plugin_name: "nighthawk.builtin"
 #}
 
 #informational_metric_specs {
 #  metric_name: "achieved-rps"
-#  metrics_plugin_name: "builtin"
+#  metrics_plugin_name: "nighthawk.builtin"
 #}
 
 #informational_metric_specs {
 #  metric_name: "send-rate"
-#  metrics_plugin_name: "builtin"
+#  metrics_plugin_name: "nighthawk.builtin"
 #}
 
 # Metric defined in example metrics plugin:
@@ -100,7 +100,7 @@ testing_stage_duration {
 }
 
 step_controller_config {
-  name: "exponential-search"
+  name: "nighthawk.exponential-search"
   typed_config {
     [type.googleapis.com/nighthawk.adaptive_load.ExponentialSearchStepControllerConfig] {
       input_variable_setter {

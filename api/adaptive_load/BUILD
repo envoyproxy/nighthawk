@@ -7,7 +7,6 @@ api_cc_py_proto_library(
     srcs = [
         "adaptive_load.proto",
         "benchmark_result.proto",
-        "config.proto",
         "input_variable_setter_impl.proto",
         "metric_spec.proto",
         "metrics_plugin_impl.proto",
@@ -16,6 +15,7 @@ api_cc_py_proto_library(
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "@envoy_api//envoy/config/core/v3:pkg",
         "@nighthawk//api/client:base",
     ],
 )

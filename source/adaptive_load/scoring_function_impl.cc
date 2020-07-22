@@ -11,7 +11,7 @@
 namespace Nighthawk {
 namespace AdaptiveLoad {
 
-std::string BinaryScoringFunctionConfigFactory::name() const { return "binary"; }
+std::string BinaryScoringFunctionConfigFactory::name() const { return "nighthawk.binary"; }
 
 Envoy::ProtobufTypes::MessagePtr BinaryScoringFunctionConfigFactory::createEmptyConfigProto() {
   return std::make_unique<nighthawk::adaptive_load::BinaryScoringFunctionConfig>();
@@ -38,7 +38,7 @@ double BinaryScoringFunction::EvaluateMetric(double value) const {
   return value <= upper_threshold_ && value >= lower_threshold_ ? 1.0 : -1.0;
 }
 
-std::string LinearScoringFunctionConfigFactory::name() const { return "linear"; }
+std::string LinearScoringFunctionConfigFactory::name() const { return "nighthawk.linear"; }
 
 Envoy::ProtobufTypes::MessagePtr LinearScoringFunctionConfigFactory::createEmptyConfigProto() {
   return std::make_unique<nighthawk::adaptive_load::LinearScoringFunctionConfig>();
@@ -62,7 +62,7 @@ double LinearScoringFunction::EvaluateMetric(double value) const {
   return k_ * (threshold_ - value);
 }
 
-std::string SigmoidScoringFunctionConfigFactory::name() const { return "sigmoid"; }
+std::string SigmoidScoringFunctionConfigFactory::name() const { return "nighthawk.sigmoid"; }
 
 Envoy::ProtobufTypes::MessagePtr SigmoidScoringFunctionConfigFactory::createEmptyConfigProto() {
   return std::make_unique<nighthawk::adaptive_load::SigmoidScoringFunctionConfig>();

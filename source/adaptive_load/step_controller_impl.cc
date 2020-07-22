@@ -23,20 +23,14 @@ using nighthawk::adaptive_load::BenchmarkResult;
 using nighthawk::adaptive_load::ExponentialSearchStepControllerConfig;
 using nighthawk::adaptive_load::MetricEvaluation;
 
-// Adds all collected metric results according to their weights.
+// Adds all collected metric results according to their weights. Informational metrics will be
+// weight 0.0.
 double TotalWeightedScore(const BenchmarkResult& benchmark_result) {
   double score = 0.0;
   double total_weight = 0.0;
   for (const MetricEvaluation& evaluation : benchmark_result.metric_evaluations()) {
-    if (!evaluation.has_threshold_spec()) {
-      // Metric was recorded for display purposes only.
-      continue;
-    }
-    double weight = evaluation.threshold_spec().has_weight()
-                        ? evaluation.threshold_spec().weight().value()
-                        : 1.0;
-    score += weight * evaluation.threshold_score();
-    total_weight += weight;
+    score += evaluation.weight() * evaluation.threshold_score();
+    total_weight += evaluation.weight();
   }
   return score / total_weight;
 }
@@ -49,7 +43,7 @@ ExponentialSearchStepControllerConfigFactory::createEmptyConfigProto() {
 }
 
 std::string ExponentialSearchStepControllerConfigFactory::name() const {
-  return "exponential-search";
+  return "nighthawk.exponential-search";
 }
 
 StepControllerPtr ExponentialSearchStepControllerConfigFactory::createStepController(

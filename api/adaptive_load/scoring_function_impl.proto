@@ -6,7 +6,7 @@ package nighthawk.adaptive_load;
 
 import "google/protobuf/wrappers.proto";
 
-// Configuration for BinaryScoringFunction (plugin name: "binary") that is 1.0
+// Configuration for BinaryScoringFunction (plugin name: "nighthawk.binary") that is 1.0
 // when the value is within thresholds and -1.0 otherwise.
 message BinaryScoringFunctionConfig {
   // The minimum allowed value of the metric. Optional, default -infinity.
@@ -15,7 +15,7 @@ message BinaryScoringFunctionConfig {
   google.protobuf.DoubleValue upper_threshold = 2;
 }
 
-// Configuration for LinearScoringFunction (plugin name: "linear") that
+// Configuration for LinearScoringFunction (plugin name: "nighthawk.linear") that
 // calculates a metric score as k * (threshold - value), where k is a scaling
 // constant. The score is 0.0 when the value exactly equals the threshold,
 // positive below the threshold (meaning input should ramp up), and negative
@@ -30,7 +30,7 @@ message LinearScoringFunctionConfig {
   double k = 2;
 }
 
-// Configuration for SigmoidScoringFunction (plugin name: "sigmoid") that
+// Configuration for SigmoidScoringFunction (plugin name: "nighthawk.sigmoid") that
 // calculates a metric score as 1 - 2 / (1 + exp(-k(value - threshold))), an
 // upside-down sigmoid curve centered on a threshold. The output is 0.0 when the
 // metric equals the threshold, approaches 1.0 for values far below the

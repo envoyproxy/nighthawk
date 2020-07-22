@@ -3,15 +3,13 @@
 #include "envoy/common/pure.h"
 #include "envoy/config/typed_config.h"
 
-#include "api/adaptive_load/config.pb.h"
+#include "envoy/config/core/v3/base.pb.h"
 
 namespace Nighthawk {
 namespace AdaptiveLoad {
 
 // An interface for plugins that retrieve platform-specific metrics from outside data sources.
 // Connection info is passed via a plugin-specific config proto.
-//
-// See source/adaptive_load/metrics_plugin_impl.h for an example plugin.
 class MetricsPlugin {
 public:
   virtual ~MetricsPlugin() = default;

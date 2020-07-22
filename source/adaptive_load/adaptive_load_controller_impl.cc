@@ -1,6 +1,7 @@
 #include <chrono>
 
 #include "envoy/common/exception.h"
+#include "envoy/config/core/v3/base.pb.h"
 
 #include "nighthawk/adaptive_load/adaptive_load_controller.h"
 #include "nighthawk/adaptive_load/metrics_plugin.h"
@@ -32,7 +33,6 @@ using nighthawk::adaptive_load::BenchmarkResult;
 using nighthawk::adaptive_load::MetricEvaluation;
 using nighthawk::adaptive_load::MetricSpec;
 using nighthawk::adaptive_load::MetricSpecWithThreshold;
-using nighthawk::adaptive_load::MetricsPluginConfig;
 using nighthawk::adaptive_load::ThresholdSpec;
 
 // Runs a single benchmark using a Nighthawk Service. Unconditionally returns a
@@ -72,47 +72,57 @@ nighthawk::client::ExecutionResponse PerformNighthawkBenchmark(
 }
 
 // Analyzes a single Nighthawk Service benchmark result against configured MetricThresholds.
-// Queries outside MetricsPlugins if configured and/or uses "builtin" plugin to check Nighthawk
-// Service stats and counters.
-BenchmarkResult
-AnalyzeNighthawkBenchmark(const nighthawk::client::ExecutionResponse& nighthawk_response,
-                          const AdaptiveLoadSessionSpec& spec) {
+// Queries outside MetricsPlugins if configured and/or uses "nighthawk.builtin" plugin to check
+// Nighthawk Service stats and counters.
+BenchmarkResult AnalyzeNighthawkBenchmark(
+    const nighthawk::client::ExecutionResponse& nighthawk_response,
+    const AdaptiveLoadSessionSpec& spec,
+    const absl::flat_hash_map<std::string, MetricsPluginPtr>& name_to_custom_plugin_map) {
   BenchmarkResult benchmark_result;
+
   *benchmark_result.mutable_nighthawk_service_output() = nighthawk_response.output();
+
+  absl::flat_hash_map<std::string, MetricsPlugin*> name_to_plugin_map;
+  for (const auto& pair : name_to_custom_plugin_map) {
+    name_to_plugin_map[pair.first] = pair.second.get();
+  }
+  auto builtin_plugin =
+      std::make_unique<NighthawkStatsEmulatedMetricsPlugin>(nighthawk_response.output());
+  name_to_plugin_map["nighthawk.builtin"] = builtin_plugin.get();
 
   *benchmark_result.mutable_status() = nighthawk_response.error_detail();
   if (nighthawk_response.error_detail().code() != ::grpc::OK) {
     return benchmark_result;
   }
 
-  absl::flat_hash_map<std::string, MetricsPluginPtr> name_to_plugin;
-  name_to_plugin["builtin"] =
-      std::make_unique<NighthawkStatsEmulatedMetricsPlugin>(nighthawk_response.output());
-  for (const MetricsPluginConfig& config : spec.metrics_plugin_configs()) {
-    name_to_plugin[config.name()] = LoadMetricsPlugin(config);
-  }
-
   for (const MetricSpecWithThreshold& metric_threshold : spec.metric_thresholds()) {
     MetricEvaluation evaluation;
-    *evaluation.mutable_metric_spec() = metric_threshold.metric_spec();
-    *evaluation.mutable_threshold_spec() = metric_threshold.threshold_spec();
+    evaluation.set_metric_id(absl::StrCat(metric_threshold.metric_spec().metrics_plugin_name(), "/",
+                                          metric_threshold.metric_spec().metric_name()));
 
     double metric_value =
-        name_to_plugin[metric_threshold.metric_spec().metrics_plugin_name()]->GetMetricByName(
+        name_to_plugin_map[metric_threshold.metric_spec().metrics_plugin_name()]->GetMetricByName(
             metric_threshold.metric_spec().metric_name());
     evaluation.set_metric_value(metric_value);
     ScoringFunctionPtr scoring_function =
         LoadScoringFunctionPlugin(metric_threshold.threshold_spec().scoring_function());
     evaluation.set_threshold_score(scoring_function->EvaluateMetric(metric_value));
+    if (metric_threshold.threshold_spec().has_weight()) {
+      evaluation.set_weight(metric_threshold.threshold_spec().weight().value());
+    } else {
+      evaluation.set_weight(1.0);
+    }
     *benchmark_result.mutable_metric_evaluations()->Add() = evaluation;
   }
   for (const MetricSpec& metric_spec : spec.informational_metric_specs()) {
     MetricEvaluation evaluation;
-    *evaluation.mutable_metric_spec() = metric_spec;
+    evaluation.set_metric_id(
+        absl::StrCat(metric_spec.metrics_plugin_name(), "/", metric_spec.metric_name()));
 
-    double metric_value = name_to_plugin[metric_spec.metrics_plugin_name()]->GetMetricByName(
+    double metric_value = name_to_plugin_map[metric_spec.metrics_plugin_name()]->GetMetricByName(
         metric_spec.metric_name());
     evaluation.set_metric_value(metric_value);
+    evaluation.set_weight(0.0);
     *benchmark_result.mutable_metric_evaluations()->Add() = evaluation;
   }
   return benchmark_result;
@@ -122,11 +132,12 @@ AnalyzeNighthawkBenchmark(const nighthawk::client::ExecutionResponse& nighthawk_
 BenchmarkResult PerformAndAnalyzeNighthawkBenchmark(
     nighthawk::client::NighthawkService::StubInterface* nighthawk_service_stub,
     const AdaptiveLoadSessionSpec& spec,
+    const absl::flat_hash_map<std::string, MetricsPluginPtr>& name_to_custom_plugin_map,
     const nighthawk::client::CommandLineOptions& command_line_options,
     Envoy::Protobuf::Duration duration) {
   nighthawk::client::ExecutionResponse response =
       PerformNighthawkBenchmark(nighthawk_service_stub, command_line_options, duration);
-  return AnalyzeNighthawkBenchmark(response, spec);
+  return AnalyzeNighthawkBenchmark(response, spec, name_to_custom_plugin_map);
 }
 
 // Returns a copy of the input spec with default values inserted.
@@ -163,10 +174,11 @@ absl::Status CheckSessionSpec(const nighthawk::adaptive_load::AdaptiveLoadSessio
   }
 
   absl::flat_hash_map<std::string, MetricsPluginPtr> plugin_from_name;
-  std::vector<std::string> plugin_names = {"builtin"};
-  plugin_from_name["builtin"] =
+  std::vector<std::string> plugin_names = {"nighthawk.builtin"};
+  plugin_from_name["nighthawk.builtin"] =
       std::make_unique<NighthawkStatsEmulatedMetricsPlugin>(nighthawk::client::Output());
-  for (const MetricsPluginConfig& config : spec.metrics_plugin_configs()) {
+  for (const envoy::config::core::v3::TypedExtensionConfig& config :
+       spec.metrics_plugin_configs()) {
     try {
       plugin_from_name[config.name()] = LoadMetricsPlugin(config);
     } catch (const Envoy::EnvoyException& exception) {
@@ -203,16 +215,17 @@ absl::Status CheckSessionSpec(const nighthawk::adaptive_load::AdaptiveLoadSessio
           plugin_from_name[metric_spec.metrics_plugin_name()]->GetAllSupportedMetricNames();
       if (std::find(supported_metrics.begin(), supported_metrics.end(),
                     metric_spec.metric_name()) == supported_metrics.end()) {
-        errors += "Metric named '" + metric_spec.metric_name() + "' not implemented by plugin '" +
-                  metric_spec.metrics_plugin_name() +
-                  "'. Metrics implemented: " + absl::StrJoin(supported_metrics, ", ") + ".\n";
+        errors +=
+            absl::StrCat("Metric named '", metric_spec.metric_name(),
+                         "' not implemented by plugin '", metric_spec.metrics_plugin_name(),
+                         "'. Metrics implemented: ", absl::StrJoin(supported_metrics, ", "), ".\n");
       }
     } else {
-      errors += "MetricSpec referred to nonexistent metrics_plugin_name '" +
-                metric_spec.metrics_plugin_name() +
-                "'. You must declare the plugin in metrics_plugin_configs or use plugin 'builtin'. "
-                "Available plugins: " +
-                absl::StrJoin(plugin_names, ", ") + ".\n";
+      errors += absl::StrCat(
+          "MetricSpec referred to nonexistent metrics_plugin_name '",
+          metric_spec.metrics_plugin_name(),
+          "'. You must declare the plugin in metrics_plugin_configs or use plugin ",
+          "'nighthawk.builtin'. Available plugins: ", absl::StrJoin(plugin_names, ", "), ".\n");
     }
   }
 
@@ -238,8 +251,19 @@ AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
     return output;
   }
 
+  absl::flat_hash_map<std::string, MetricsPluginPtr> name_to_custom_plugin_map;
+  for (const envoy::config::core::v3::TypedExtensionConfig& config :
+       spec.metrics_plugin_configs()) {
+    name_to_custom_plugin_map[config.name()] = LoadMetricsPlugin(config);
+  }
+
   StepControllerPtr step_controller =
       LoadStepControllerPlugin(spec.step_controller_config(), spec.nighthawk_traffic_template());
+
+  for (const nighthawk::adaptive_load::MetricSpecWithThreshold& threshold :
+       spec.metric_thresholds()) {
+    *output.mutable_metric_thresholds()->Add() = threshold;
+  }
 
   Envoy::MonotonicTime start_time = time_source.monotonicTime();
   while (!step_controller->IsConverged()) {
@@ -265,9 +289,9 @@ AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
                        << step_controller->GetCurrentCommandLineOptions().DebugString() << "\n";
 
     BenchmarkResult result = PerformAndAnalyzeNighthawkBenchmark(
-        nighthawk_service_stub, spec, step_controller->GetCurrentCommandLineOptions(),
-        spec.measuring_period());
-
+        nighthawk_service_stub, spec, name_to_custom_plugin_map,
+        step_controller->GetCurrentCommandLineOptions(), spec.measuring_period());
+    
     for (const MetricEvaluation& evaluation : result.metric_evaluations()) {
       diagnostic_ostream << evaluation.DebugString() << "\n";
     }
@@ -280,8 +304,8 @@ AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
                      << step_controller->GetCurrentCommandLineOptions().DebugString() << "\n";
 
   *output.mutable_testing_stage_result() = PerformAndAnalyzeNighthawkBenchmark(
-      nighthawk_service_stub, spec, step_controller->GetCurrentCommandLineOptions(),
-      spec.testing_stage_duration());
+      nighthawk_service_stub, spec, name_to_custom_plugin_map,
+      step_controller->GetCurrentCommandLineOptions(), spec.testing_stage_duration());
 
   for (const MetricEvaluation& evaluation : output.testing_stage_result().metric_evaluations()) {
     diagnostic_ostream << evaluation.DebugString() << "\n";
