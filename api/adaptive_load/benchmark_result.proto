@@ -5,26 +5,23 @@ syntax = "proto3";
 
 package nighthawk.adaptive_load;
 
-import "api/adaptive_load/metric_spec.proto";
 import "api/client/output.proto";
 import "google/rpc/status.proto";
 
 // Records the status of a single metric during a benchmark session.
 message MetricEvaluation {
-  // Original metric specification (plugin name, metric name).
-  MetricSpec metric_spec = 1;
+  // Identifier for the metric that was evaluated (<plugin name>/<metric name>).
+  string metric_id = 1;
   // Numerical value of the metric measured during this benchmark session.
   double metric_value = 2;
-  // Threshold that was used to check this metric value. Not set if the metric
-  // was only informational.
-  ThresholdSpec threshold_spec = 3;
   // Score returned by a ScoringFunction plugin. This expresses how close the
   // metric was to the threshold by an arbitrary formula selected and
   // configured in the ThresholdSpec, such as a sigmoid curve. The controller
   // can choose to make larger input adjustments when the score is larger, in
-  // order to converge faster.
-  // Not set if the metric was only informational.
-  double threshold_score = 4;
+  // order to converge faster. Not set if the metric was only informational.
+  double threshold_score = 3;
+  // Configured weight of the metric. 0.0 if the metric was only informational.
+  double weight = 4;
 }
 
 // Summary of a single Nighthawk Service benchmark session with evaluation
