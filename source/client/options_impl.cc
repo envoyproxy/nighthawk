@@ -407,8 +407,8 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   TCLAP_SET_IF_SPECIFIED(simple_warmup, simple_warmup_);
   TCLAP_SET_IF_SPECIFIED(no_duration, no_duration_);
   if (stats_sinks.isSet()) {
-    envoy::config::metrics::v3::StatsSink sink;
     for (const std::string& stats_sink : stats_sinks.getValue()) {
+      envoy::config::metrics::v3::StatsSink sink;
       try {
         Envoy::MessageUtil::loadFromJson(stats_sink, sink,
                                          Envoy::ProtobufMessage::getStrictValidationVisitor());
