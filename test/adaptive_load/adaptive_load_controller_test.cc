@@ -69,6 +69,25 @@ private:
   int unix_time_{0};
 };
 
+// Sets up a minimal working mock to be returned from the mock stub. To customize a method, start
+// with the result of this function and then do another EXPECT_CALL on that method which will
+// overwrite the behavior configured here.
+//
+// Note that this returns a bare pointer that the PerformAdaptiveLoadSession implementation must
+// take ownership of.
+grpc::testing::MockClientReaderWriter<nighthawk::client::ExecutionRequest,
+                                      nighthawk::client::ExecutionResponse>*
+MakeSimpleMockClientReaderWriter() {
+  auto* mock_reader_writer =
+      new grpc::testing::MockClientReaderWriter<nighthawk::client::ExecutionRequest,
+                                                nighthawk::client::ExecutionResponse>();
+  EXPECT_CALL(*mock_reader_writer, Write(_, _)).WillRepeatedly(Return(true));
+  EXPECT_CALL(*mock_reader_writer, WritesDone()).WillRepeatedly(Return(true));
+  EXPECT_CALL(*mock_reader_writer, Read(_)).WillRepeatedly(Return(true));
+  EXPECT_CALL(*mock_reader_writer, Finish()).WillRepeatedly(Return(::grpc::Status::OK));
+  return mock_reader_writer;
+}
+
 // MetricsPlugin for testing, supporting a single metric named 'metric1' with the constant
 // value 5.0.
 class FakeMetricsPlugin : public MetricsPlugin {
@@ -404,25 +423,6 @@ TEST(AdaptiveLoadControllerTest, FailsWithNonexistentCustomMetricNameInInformati
       /*nighthawk_service_stub=*/nullptr, spec, diagnostic_ostream, time_source);
 
   EXPECT_THAT(output.session_status().message(), HasSubstr("not implemented by plugin"));
-}
-
-// Sets up a minimal working mock to be returned from the mock stub. To customize a method, start
-// with the result of this function and then do another EXPECT_CALL on that method which will
-// overwrite the behavior configured here.
-//
-// Note that this returns a bare pointer that the PerformAdaptiveLoadSession implementation must
-// take ownership of.
-grpc::testing::MockClientReaderWriter<nighthawk::client::ExecutionRequest,
-                                      nighthawk::client::ExecutionResponse>*
-MakeSimpleMockClientReaderWriter() {
-  auto* mock_reader_writer =
-      new grpc::testing::MockClientReaderWriter<nighthawk::client::ExecutionRequest,
-                                                nighthawk::client::ExecutionResponse>();
-  EXPECT_CALL(*mock_reader_writer, Write(_, _)).WillRepeatedly(Return(true));
-  EXPECT_CALL(*mock_reader_writer, WritesDone()).WillRepeatedly(Return(true));
-  EXPECT_CALL(*mock_reader_writer, Read(_)).WillRepeatedly(Return(true));
-  EXPECT_CALL(*mock_reader_writer, Finish()).WillRepeatedly(Return(::grpc::Status::OK));
-  return mock_reader_writer;
 }
 
 TEST(AdaptiveLoadControllerTest, TimesOutIfNeverConverged) {
