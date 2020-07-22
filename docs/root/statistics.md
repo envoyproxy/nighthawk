@@ -32,7 +32,7 @@ benchmark_http_client.latency_4xx | HdrStatistic | Latency (in Nanosecond) histo
 benchmark_http_client.latency_5xx | HdrStatistic | Latency (in Nanosecond) histogram of request with code 5xx	
 benchmark_http_client.latency_xxx | HdrStatistic | Latency (in Nanosecond) histogram of request with code <100 or >=600
 benchmark_http_client.queue_to_connect | HdrStatistic | Histogram of request connection time	(in Nanosecond)
-benchmark_http_client.request_to_response | HdrStatistic | Latency (in Nanosecond) histogram of all requests (include requests with stream reset or pool failure)
+benchmark_http_client.request_to_response | HdrStatistic | Latency (in Nanosecond) histogram include requests with stream reset or pool failure
 benchmark_http_client.response_header_size | StreamingStatistic | Statistic of response header size (min, max, mean, pstdev values in bytes)
 benchmark_http_client.response_body_size | StreamingStatistic | Statistic of response body size (min, max, mean, pstdev values in bytes)
 sequencer.callback | HdrStatistic | Latency (in Nanosecond) histogram of unblocked requests
@@ -65,20 +65,30 @@ backend-specific format.
 
 Envoy metrics can be defined using a macro, e.g.	
 ```cc
+// Define Envoy stats.
 #define ALL_CLUSTER_STATS(COUNTER, GAUGE, HISTOGRAM)	
   COUNTER(upstream_cx_total)	
   GAUGE(upstream_cx_active, NeverImport)	
-  HISTOGRAM(upstream_cx_length, Milliseconds)	
+  HISTOGRAM(upstream_cx_length, Milliseconds)
+// Put these stats as members of a struct.
 struct ClusterStats {	
   ALL_CLUSTER_STATS(GENERATE_COUNTER_STRUCT, GENERATE_GAUGE_STRUCT, GENERATE_HISTOGRAM_STRUCT)	
-};	
+};
+// Instantiate the above struct using a Stats::Pool.
+ClusterStats stats{
+  ALL_CLUSTER_STATS(POOL_COUNTER(...), POOL_GAUGE(...), POOL_HISTOGRAM(...))};
+
+// Stats can be updated in the code:
+stats.upstream_cx_total_.inc();
+stats.upstream_cx_active_.set(...);
+stats.upstream_cx_length_.recordValue(...);
 ```	
 
 ## Envoy Metrics Limitation	
 Currently Envoy metrics don't support key-value map. As a result, for metrics to
 be broken down by certain dimensions, we need to define a separate metric for
-each dimension. For example, currently Nighthawk defines separate
-[counters](https://github.com/envoyproxy/nighthawk/blob/master/source/client/benchmark_client_impl.h#L35-L40)
+each dimension. For example, currently Nighthawk defines 
+[separate counters](https://github.com/envoyproxy/nighthawk/blob/master/source/client/benchmark_client_impl.h#L35-L40)
 to monitor the number of responses with corresponding response code.
 
 ## Envoy Metrics Flush	
@@ -100,7 +110,8 @@ metrics (aggregated across all workers).
 - Per worker level metrics provide information about the performance of each
   worker which will be hidden by the global level metrics.	
 - Keep the workers independent which makes it easier/efficient to scale up to
-  multiple Nighthawks with large numbers of workers.	
+  multiple Nighthawks with large numbers of workers. (The work to scale up to
+  multiple Nighthawks is still under development).
 
 Envoy metrics can be defined at per worker level using
 [Scope](https://github.com/envoyproxy/envoy/blob/e9c2c8c4a0141c9634316e8283f98f412d0dd207/include/envoy/stats/scope.h#L35)

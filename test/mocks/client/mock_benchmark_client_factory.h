@@ -18,7 +18,7 @@ public:
                      BenchmarkClientPtr(Envoy::Api::Api&, Envoy::Event::Dispatcher&,
                                         Envoy::Stats::Scope&, Envoy::Upstream::ClusterManagerPtr&,
                                         Envoy::Tracing::HttpTracerSharedPtr&, absl::string_view,
-                                        const int, RequestSource& request_generator));
+                                        int, RequestSource& request_generator));
 };
 
 } // namespace Client

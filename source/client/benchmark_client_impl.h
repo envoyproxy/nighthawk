@@ -33,7 +33,7 @@ using namespace std::chrono_literals;
 
 using namespace Envoy; // We need this because of macro expectations.
 
-#define ALL_BENCHMARK_CLIENT_STATS(COUNTER)                                                        \
+#define ALL_BENCHMARK_CLIENT_COUNTERS(COUNTER)                                                     \
   COUNTER(stream_resets)                                                                           \
   COUNTER(http_1xx)                                                                                \
   COUNTER(http_2xx)                                                                                \
@@ -44,16 +44,16 @@ using namespace Envoy; // We need this because of macro expectations.
   COUNTER(pool_overflow)                                                                           \
   COUNTER(pool_connection_failure)
 
-// For counter metrics, Nighthawk use Envoy Counter directly. For histogram metrics, Nighthawk use
-// its own Statistic instead of Envoy Histogram. Here BenchmarkClientStats contains only counters
+// For counter metrics, Nighthawk use Envoy Counter directly. For histogram metrics, Nighthawk uses
+// its own Statistic instead of Envoy Histogram. Here BenchmarkClientCounters contains only counters
 // while BenchmarkClientStatistic contains only histograms.
-struct BenchmarkClientStats {
-  ALL_BENCHMARK_CLIENT_STATS(GENERATE_COUNTER_STRUCT)
+struct BenchmarkClientCounters {
+  ALL_BENCHMARK_CLIENT_COUNTERS(GENERATE_COUNTER_STRUCT)
 };
 
 // BenchmarkClientStatistic contains only histogram metrics.
 struct BenchmarkClientStatistic {
-  BenchmarkClientStatistic(BenchmarkClientStatistic& statistic);
+  BenchmarkClientStatistic(BenchmarkClientStatistic&& statistic);
   BenchmarkClientStatistic(StatisticPtr&& connect_stat, StatisticPtr&& response_stat,
                            StatisticPtr&& response_header_size_stat,
                            StatisticPtr&& response_body_size_stat, StatisticPtr&& latency_1xx_stat,
@@ -156,7 +156,7 @@ private:
   uint64_t requests_completed_{};
   uint64_t requests_initiated_{};
   bool measure_latencies_{};
-  BenchmarkClientStats benchmark_client_stats_;
+  BenchmarkClientCounters benchmark_client_counters_;
   Envoy::Upstream::ClusterManagerPtr& cluster_manager_;
   Envoy::Tracing::HttpTracerSharedPtr& http_tracer_;
   std::string cluster_name_;

@@ -47,7 +47,7 @@ TEST_F(FactoriesTest, CreateBenchmarkClient) {
       std::make_unique<Envoy::Http::TestRequestHeaderMapImpl>());
   auto benchmark_client =
       factory.create(*api_, dispatcher_, stats_store_, cluster_manager, http_tracer_, "foocluster",
-                     /*sink_stat_prefix=*/0, request_generator);
+                     /*worker_id=*/0, request_generator);
   EXPECT_NE(nullptr, benchmark_client.get());
 }
 
