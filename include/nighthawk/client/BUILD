@@ -24,7 +24,6 @@ envoy_basic_cc_library(
         "//api/client:base_cc_proto",
         "//include/nighthawk/common:base_includes",
         "//include/nighthawk/common:request_source_lib",
-        "@envoy//api/envoy/config/metrics/v3:pkg_cc_proto_library",
         "@envoy//include/envoy/common:base_includes",
         "@envoy//include/envoy/http:conn_pool_interface_with_external_headers",
         "@envoy//source/common/api:api_lib_with_external_headers",
@@ -34,6 +33,7 @@ envoy_basic_cc_library(
         "@envoy//source/common/protobuf:protobuf_with_external_headers",
         "@envoy//source/common/runtime:runtime_lib_with_external_headers",
         "@envoy_api//envoy/api/v2:pkg_cc_proto",
+        "@envoy_api//envoy/config/metrics/v3:pkg_cc_proto",
     ],
 )
 
