@@ -3,6 +3,7 @@
   "termination_predicates": {},
   "failure_predicates": {},
   "labels": [],
+  "stats_sinks": [],
   "connections": 0,
   "duration": "1s"
  },
