@@ -11,7 +11,7 @@ import pytest
 import os
 from test.integration.integration_test_fixtures import (http_test_server_fixture,
                                                         https_test_server_fixture)
-from test.integration import utility
+from test.integration import asserts
 from envoy_proxy import (inject_envoy_http_proxy_fixture, proxy_config)
 from rules_python.python.runfiles import runfiles
 from shutil import copyfile
@@ -49,11 +49,11 @@ def _run_benchmark(fixture,
   connection_counter = "upstream_cx_http1_total"
 
   # Some arbitrary sanity checks
-  utility.assertCounterGreaterEqual(counters, "benchmark.http_2xx",
+  asserts.assertCounterGreaterEqual(counters, "benchmark.http_2xx",
                                     (concurrency * rps * duration) * 0.99)
-  utility.assertGreater(counters["upstream_cx_rx_bytes_total"], response_count * response_size)
-  utility.assertGreater(counters["upstream_cx_tx_bytes_total"], request_count * request_body_size)
-  utility.assertCounterEqual(counters, connection_counter, concurrency * max_connections)
+  asserts.assertGreater(counters["upstream_cx_rx_bytes_total"], response_count * response_size)
+  asserts.assertGreater(counters["upstream_cx_tx_bytes_total"], request_count * request_body_size)
+  asserts.assertCounterEqual(counters, connection_counter, concurrency * max_connections)
 
   # Could potentially set thresholds on acceptable latency here.
 
@@ -76,9 +76,8 @@ def _run_benchmark(fixture,
     with open(os.path.join(fixture.test_server.tmpdir, "proxy_version.txt"), "w") as f:
       f.write(fixture.proxy_server.getCliVersionString())
   r = runfiles.Create()
-  copyfile(
-      r.Rlocation("nighthawk/benchmarks/test/templates/simple_plot.html"),
-      os.path.join(fixture.test_server.tmpdir, "simple_plot.html"))
+  copyfile(r.Rlocation("nighthawk/benchmarks/test/templates/simple_plot.html"),
+           os.path.join(fixture.test_server.tmpdir, "simple_plot.html"))
 
 
 # Test via injected Envoy
