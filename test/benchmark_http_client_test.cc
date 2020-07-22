@@ -49,6 +49,7 @@ public:
           return span;
         });
   }
+  //Default function for request generator when the content doesn't matter.
   RequestGenerator getDefaultRequestGenerator() const {
     RequestGenerator request_generator = []() {
       auto header = std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(
