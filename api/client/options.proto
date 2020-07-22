@@ -196,7 +196,7 @@ message CommandLineOptions {
   // execution. Note that this will be reflected in the counters that
   // Nighthawk writes to the output. Default is false.
   google.protobuf.BoolValue simple_warmup = 32;
-  // Optional set of stats sinks where Nighthawk metrics will be flushed to.
+  // Optional set of stat sinks where Nighthawk metrics will be flushed to.
   repeated envoy.config.metrics.v3.StatsSink stats_sinks = 34;
   // Time interval (number of seconds) between periodical flushes to configured stats sinks. If not
   // specified the default is 5 seconds. Time interval must be at least 1s and at most 300s.
