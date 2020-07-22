@@ -8,10 +8,10 @@ namespace Nighthawk {
 namespace AdaptiveLoad {
 
 /**
-  * An interface for custom functions that score a metric relative to a threshold.
-  *
-  * See source/adaptive_load/scoring_function_impl.h for example plugins.
-  */
+ * An interface for custom functions that score a metric relative to a threshold.
+ *
+ * See source/adaptive_load/scoring_function_impl.h for example plugins.
+ */
 class ScoringFunction {
 public:
   virtual ~ScoringFunction() = default;
