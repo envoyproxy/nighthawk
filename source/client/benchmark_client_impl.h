@@ -53,7 +53,7 @@ struct BenchmarkClientCounters {
 
 // BenchmarkClientStatistic contains only histogram metrics.
 struct BenchmarkClientStatistic {
-  BenchmarkClientStatistic(BenchmarkClientStatistic&& statistic);
+  BenchmarkClientStatistic(BenchmarkClientStatistic&& statistic) noexcept;
   BenchmarkClientStatistic(StatisticPtr&& connect_stat, StatisticPtr&& response_stat,
                            StatisticPtr&& response_header_size_stat,
                            StatisticPtr&& response_body_size_stat, StatisticPtr&& latency_1xx_stat,

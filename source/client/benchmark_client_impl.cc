@@ -20,7 +20,7 @@ using namespace std::chrono_literals;
 namespace Nighthawk {
 namespace Client {
 
-BenchmarkClientStatistic::BenchmarkClientStatistic(BenchmarkClientStatistic&& statistic)
+BenchmarkClientStatistic::BenchmarkClientStatistic(BenchmarkClientStatistic&& statistic) noexcept
     : connect_statistic(std::move(statistic.connect_statistic)),
       response_statistic(std::move(statistic.response_statistic)),
       response_header_size_statistic(std::move(statistic.response_header_size_statistic)),

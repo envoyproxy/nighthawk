@@ -52,9 +52,11 @@ sequencer.blocking | HdrStatistic | Latency (in Nanosecond) histogram of blocked
 In Envoy, the stat
 [Store](https://github.com/envoyproxy/envoy/blob/74530c92cfa3682b49b540fddf2aba40ac10c68e/include/envoy/stats/store.h#L29)
 is a singleton and provides a simple interface by which the rest of the code can
-obtain handles to scopes, counters, gauges, and histograms. Envoy counters and
-gauges are periodically (configured at ~5 sec interval) flushed to the sinks.
-Note that currently histogram values are sent directly to the sinks. A stat
+obtain handles to
+[scopes](https://github.com/envoyproxy/envoy/blob/958745d658752f90f544296d9e75030519a9fb84/include/envoy/stats/scope.h#L37),
+counters, gauges, and histograms. Envoy counters and gauges are periodically
+(configured at ~5 sec interval) flushed to the sinks. Note that currently
+histogram values are sent directly to the sinks. A stat
 [Sink](https://github.com/envoyproxy/envoy/blob/74530c92cfa3682b49b540fddf2aba40ac10c68e/include/envoy/stats/sink.h#L48)
 is an interface that takes generic stat data and translates it into a
 backend-specific wire format. Currently Envoy supports the TCP and UDP
