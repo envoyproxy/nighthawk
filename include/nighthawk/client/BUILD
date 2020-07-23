@@ -33,6 +33,7 @@ envoy_basic_cc_library(
         "@envoy//source/common/protobuf:protobuf_with_external_headers",
         "@envoy//source/common/runtime:runtime_lib_with_external_headers",
         "@envoy_api//envoy/api/v2:pkg_cc_proto",
+        "@envoy_api//envoy/config/metrics/v3:pkg_cc_proto",
     ],
 )
 
