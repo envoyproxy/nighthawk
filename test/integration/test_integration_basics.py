@@ -91,6 +91,8 @@ def _mini_stress_test(fixture, args):
 
   asserts.assertGreaterEqual(
       int(global_histograms["benchmark_http_client.request_to_response"]["count"]), 1)
+  asserts.assertGreaterEqual(int(global_histograms["benchmark_http_client.latency_2xx"]["count"]),
+                             1)
   return counters
 
 
@@ -665,6 +667,8 @@ def test_http_request_release_timing(http_test_server_fixture, qps_parameterizat
         int(global_histograms["benchmark_http_client.request_to_response"]["count"]),
         total_requests)
     asserts.assertEqual(int(global_histograms["benchmark_http_client.queue_to_connect"]["count"]),
+                        total_requests)
+    asserts.assertEqual(int(global_histograms["benchmark_http_client.latency_2xx"]["count"]),
                         total_requests)
 
     asserts.assertCounterEqual(counters, "benchmark.http_2xx", (total_requests))

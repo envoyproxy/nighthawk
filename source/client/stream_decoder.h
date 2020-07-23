@@ -25,6 +25,7 @@ public:
   virtual ~StreamDecoderCompletionCallback() = default;
   virtual void onComplete(bool success, const Envoy::Http::ResponseHeaderMap& headers) PURE;
   virtual void onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason reason) PURE;
+  virtual void exportLatency(const uint32_t response_code, const uint64_t latency_ns) PURE;
 };
 
 // TODO(oschaaf): create a StreamDecoderPool?
@@ -35,7 +36,8 @@ public:
 class StreamDecoder : public Envoy::Http::ResponseDecoder,
                       public Envoy::Http::StreamCallbacks,
                       public Envoy::Http::ConnectionPool::Callbacks,
-                      public Envoy::Event::DeferredDeletable {
+                      public Envoy::Event::DeferredDeletable,
+                      public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
   StreamDecoder(Envoy::Event::Dispatcher& dispatcher, Envoy::TimeSource& time_source,
                 StreamDecoderCompletionCallback& decoder_completion_callback,

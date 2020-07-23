@@ -22,6 +22,8 @@
 
 #include "api/client/options.pb.h"
 
+#include "common/statistic_impl.h"
+
 #include "client/stream_decoder.h"
 
 namespace Nighthawk {
@@ -31,7 +33,7 @@ using namespace std::chrono_literals;
 
 using namespace Envoy; // We need this because of macro expectations.
 
-#define ALL_BENCHMARK_CLIENT_STATS(COUNTER)                                                        \
+#define ALL_BENCHMARK_CLIENT_COUNTERS(COUNTER)                                                     \
   COUNTER(stream_resets)                                                                           \
   COUNTER(http_1xx)                                                                                \
   COUNTER(http_2xx)                                                                                \
@@ -42,8 +44,35 @@ using namespace Envoy; // We need this because of macro expectations.
   COUNTER(pool_overflow)                                                                           \
   COUNTER(pool_connection_failure)
 
-struct BenchmarkClientStats {
-  ALL_BENCHMARK_CLIENT_STATS(GENERATE_COUNTER_STRUCT)
+// For counter metrics, Nighthawk use Envoy Counter directly. For histogram metrics, Nighthawk uses
+// its own Statistic instead of Envoy Histogram. Here BenchmarkClientCounters contains only counters
+// while BenchmarkClientStatistic contains only histograms.
+struct BenchmarkClientCounters {
+  ALL_BENCHMARK_CLIENT_COUNTERS(GENERATE_COUNTER_STRUCT)
+};
+
+// BenchmarkClientStatistic contains only histogram metrics.
+struct BenchmarkClientStatistic {
+  BenchmarkClientStatistic(BenchmarkClientStatistic&& statistic) noexcept;
+  BenchmarkClientStatistic(StatisticPtr&& connect_stat, StatisticPtr&& response_stat,
+                           StatisticPtr&& response_header_size_stat,
+                           StatisticPtr&& response_body_size_stat, StatisticPtr&& latency_1xx_stat,
+                           StatisticPtr&& latency_2xx_stat, StatisticPtr&& latency_3xx_stat,
+                           StatisticPtr&& latency_4xx_stat, StatisticPtr&& latency_5xx_stat,
+                           StatisticPtr&& latency_xxx_stat);
+
+  // These are declared order dependent. Changing ordering may trigger on assert upon
+  // destruction when tls has been involved during usage.
+  StatisticPtr connect_statistic;
+  StatisticPtr response_statistic;
+  StatisticPtr response_header_size_statistic;
+  StatisticPtr response_body_size_statistic;
+  StatisticPtr latency_1xx_statistic;
+  StatisticPtr latency_2xx_statistic;
+  StatisticPtr latency_3xx_statistic;
+  StatisticPtr latency_4xx_statistic;
+  StatisticPtr latency_5xx_statistic;
+  StatisticPtr latency_xxx_statistic;
 };
 
 class Http1PoolImpl : public Envoy::Http::Http1::ProdConnPoolImpl {
@@ -73,11 +102,8 @@ class BenchmarkClientHttpImpl : public BenchmarkClient,
                                 public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
   BenchmarkClientHttpImpl(Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher,
-                          Envoy::Stats::Scope& scope, StatisticPtr&& connect_statistic,
-                          StatisticPtr&& response_statistic,
-                          StatisticPtr&& response_header_size_statistic,
-                          StatisticPtr&& response_body_size_statistic, bool use_h2,
-                          Envoy::Upstream::ClusterManagerPtr& cluster_manager,
+                          Envoy::Stats::Scope& scope, BenchmarkClientStatistic& statistic,
+                          bool use_h2, Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                           Envoy::Tracing::HttpTracerSharedPtr& http_tracer,
                           absl::string_view cluster_name, RequestGenerator request_generator,
                           const bool provide_resource_backpressure);
@@ -105,6 +131,7 @@ public:
   // StreamDecoderCompletionCallback
   void onComplete(bool success, const Envoy::Http::ResponseHeaderMap& headers) override;
   void onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason reason) override;
+  void exportLatency(const uint32_t response_code, const uint64_t latency_ns) override;
 
   // Helpers
   Envoy::Http::ConnectionPool::Instance* pool() {
@@ -117,12 +144,7 @@ private:
   Envoy::Api::Api& api_;
   Envoy::Event::Dispatcher& dispatcher_;
   Envoy::Stats::ScopePtr scope_;
-  // These are declared order dependent. Changing ordering may trigger on assert upon
-  // destruction when tls has been involved during usage.
-  StatisticPtr connect_statistic_;
-  StatisticPtr response_statistic_;
-  StatisticPtr response_header_size_statistic_;
-  StatisticPtr response_body_size_statistic_;
+  BenchmarkClientStatistic statistic_;
   const bool use_h2_;
   std::chrono::seconds timeout_{5s};
   uint32_t connection_limit_{1};
@@ -134,7 +156,7 @@ private:
   uint64_t requests_completed_{};
   uint64_t requests_initiated_{};
   bool measure_latencies_{};
-  BenchmarkClientStats benchmark_client_stats_;
+  BenchmarkClientCounters benchmark_client_counters_;
   Envoy::Upstream::ClusterManagerPtr& cluster_manager_;
   Envoy::Tracing::HttpTracerSharedPtr& http_tracer_;
   std::string cluster_name_;
