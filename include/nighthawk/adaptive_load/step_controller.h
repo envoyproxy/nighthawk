@@ -48,9 +48,9 @@ public:
    * StepController can add data to its history (if any), recompute any internal state, and
    * recompute its load recommendation.
    *
-   * @param result The result of running Nighthawk Service, calling any MetricsPlugins, and scoring
-   * all metrics against configured thresholds. Some StepFunction plugins will store this value in a
-   * history internally.
+   * @param result The result of running a benchmark with Nighthawk Service, calling any
+   * MetricsPlugins, and scoring all metrics against configured thresholds. Some StepController
+   * plugins will store this value in a history internally.
    */
   virtual void UpdateAndRecompute(const nighthawk::adaptive_load::BenchmarkResult& result) PURE;
 };
