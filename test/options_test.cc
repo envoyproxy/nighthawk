@@ -84,6 +84,13 @@ TEST_F(OptionsImplTest, DurationAndNoDurationSanity) {
   EXPECT_TRUE(cmd->no_duration().value());
 }
 
+TEST_F(OptionsImplTest, StatsSinksMustBeSetWhenStatsFlushIntervalSet) {
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(fmt::format("{} --stats-flush-interval 10", client_name_)),
+      MalformedArgvException,
+      "if --stats-flush-interval is set, then --stats-sinks must also be set");
+}
+
 // This test should cover every option we offer, except some mutually exclusive ones that
 // have separate tests.
 TEST_F(OptionsImplTest, AlmostAll) {
@@ -410,8 +417,9 @@ TEST_F(OptionsImplTest, NoArguments) {
 
 TEST_P(OptionsImplIntTestNonZeroable, NonZeroableOptions) {
   const char* option_name = GetParam();
-  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{} --{} 0 {}", client_name_,
-                                                                     option_name, good_test_uri_)),
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                              "{} --{} 0 --stats-sinks {} {}", client_name_, option_name,
+                              "{name:\"envoy.stat_sinks.statsd\"}", good_test_uri_)),
                           std::exception, "Proto constraint validation failed");
 }
 

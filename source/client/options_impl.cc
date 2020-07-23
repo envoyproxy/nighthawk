@@ -305,6 +305,12 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
     throw MalformedArgvException("--duration and --no-duration are mutually exclusive");
   }
 
+  // Verify that if --stats-flush-interval is set, then --stats-sinks must also be set.
+  if (stats_flush_interval.isSet() && !stats_sinks.isSet()) {
+    throw MalformedArgvException(
+        "if --stats-flush-interval is set, then --stats-sinks must also be set");
+  }
+
   TCLAP_SET_IF_SPECIFIED(requests_per_second, requests_per_second_);
   TCLAP_SET_IF_SPECIFIED(connections, connections_);
   TCLAP_SET_IF_SPECIFIED(duration, duration_);
