@@ -49,7 +49,7 @@ public:
           return span;
         });
   }
-  //Default function for request generator when the content doesn't matter.
+  // Default function for request generator when the content doesn't matter.
   RequestGenerator getDefaultRequestGenerator() const {
     RequestGenerator request_generator = []() {
       auto header = std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(
@@ -85,7 +85,7 @@ public:
       setupBenchmarkClient(request_generator);
       cluster_info().resetResourceManager(connection_limit, max_pending, 1024, 0, 1024);
     }
-    // this is where we store the properties of headers that are passed to the stream encoder. We
+    // This is where we store the properties of headers that are passed to the stream encoder. We
     // verify later that these match expected headers.
     std::vector<absl::flat_hash_map<std::string, std::string>> called_headers;
     EXPECT_CALL(stream_encoder_, encodeHeaders(_, _)).Times(AtLeast(1));
