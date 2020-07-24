@@ -59,14 +59,14 @@ public:
     };
     return request_generator;
   }
-  /// Helper function to get properties in a map that should be verified during the test
-  absl::flat_hash_map<std::string, std::string>
+  // Helper function to get properties in a map that should be verified during the test
+  absl::flat_hash_set<std::string>
   getTestRecordedProperties(const Envoy::Http::RequestHeaderMap& header) {
-    absl::flat_hash_map<std::string, std::string> properties_map;
-    properties_map["uri"] = std::string(header.getPathValue());
+    absl::flat_hash_set<std::string> properties_map;
+    properties_map.insert(std::string(header.getPathValue()));
     return properties_map;
   }
-  /// Used to set up benchmarkclient. Especially from within the testBenchmarkClientFunctionality.
+  // Used to set up benchmarkclient. Especially from within the testBenchmarkClientFunctionality.
   void setupBenchmarkClient(const RequestGenerator& request_generator) {
     client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
         *api_, *dispatcher_, store_, std::make_unique<StreamingStatistic>(),
@@ -74,20 +74,20 @@ public:
         std::make_unique<StreamingStatistic>(), false, cluster_manager_, http_tracer_, "benchmark",
         request_generator, true);
   }
-  /// Primary testing method. Confirms that connection limits are met and number of requests are
-  /// correct. If specified, also checks the header expectations, if not specified, it is ignored.
+  // Primary testing method. Confirms that connection limits are met and number of requests are
+  // correct. If specified, also checks the header expectations, if not specified, it is ignored.
   void TestBenchmarkClientProcessesExpectedInflightRequests(
       const uint64_t max_pending, const uint64_t connection_limit, const uint64_t amount_of_request,
       const RequestGenerator& request_generator,
-      const std::vector<absl::flat_hash_map<std::string, std::string>>& header_expectations =
-          std::vector<absl::flat_hash_map<std::string, std::string>>()) {
+      const std::vector<absl::flat_hash_set<std::string>>& header_expectations =
+          std::vector<absl::flat_hash_set<std::string>>()) {
     if (client_ == nullptr) {
       setupBenchmarkClient(request_generator);
       cluster_info().resetResourceManager(connection_limit, max_pending, 1024, 0, 1024);
     }
     // This is where we store the properties of headers that are passed to the stream encoder. We
     // verify later that these match expected headers.
-    std::vector<absl::flat_hash_map<std::string, std::string>> called_headers;
+    std::vector<absl::flat_hash_set<std::string>> called_headers;
     EXPECT_CALL(stream_encoder_, encodeHeaders(_, _)).Times(AtLeast(1));
     ON_CALL(stream_encoder_, encodeHeaders(_, _))
         .WillByDefault(WithArgs<0>(
@@ -303,7 +303,7 @@ TEST_F(BenchmarkClientHttpTest, BadContentLength) {
   TestBenchmarkClientProcessesExpectedInflightRequests(1, 1, 1, request_generator);
   EXPECT_EQ(1, getCounter("http_2xx"));
 }
-TEST_F(BenchmarkClientHttpTest, ShouldSupportRequestSupportThatGoesToDifferentPaths) {
+TEST_F(BenchmarkClientHttpTest, RequestGeneratorProvidingDifferentPathsSendsRequestsOnThosePaths) {
   std::vector<HeaderMapPtr> requests_for_generator_to_send;
   const std::initializer_list<std::pair<std::string, std::string>> first_header_map_to_send{
       {":scheme", "http"},
@@ -328,7 +328,7 @@ TEST_F(BenchmarkClientHttpTest, ShouldSupportRequestSupportThatGoesToDifferentPa
     request_iterator++;
     return std::make_unique<RequestImpl>(item);
   };
-  std::vector<absl::flat_hash_map<std::string, std::string>> expected_requests_vector;
+  std::vector<absl::flat_hash_set<std::string>> expected_requests_vector;
   expected_requests_vector.push_back(
       getTestRecordedProperties(Envoy::Http::TestRequestHeaderMapImpl(first_header_map_to_send)));
   expected_requests_vector.push_back(
