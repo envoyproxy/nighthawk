@@ -1,7 +1,7 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-ENVOY_COMMIT = "13da8f415c372e7fde3b0105f58f57348e84acb5"  # July 17th, 2020
-ENVOY_SHA = "525307fb73125c8c6e4ce4761c9f09b781cd7b7602a8711afe07be45ad55de52"
+ENVOY_COMMIT = "08464ecdc0c93846f3d039d0f0c6fed935f5bdc8"  # July 24th, 2020
+ENVOY_SHA = "027e0a01c5edf8ecc6a478396308bb2189d3bed920945ca50e6995d5b8289d69"
 
 HDR_HISTOGRAM_C_VERSION = "0.11.0"  # July 14th, 2020
 HDR_HISTOGRAM_C_SHA = "c00696b3d81776675aa2bc62d3642e31bd8a48cc9619c9bd7d4a78762896e353"
@@ -12,6 +12,7 @@ def nighthawk_dependencies():
         sha256 = ENVOY_SHA,
         strip_prefix = "envoy-%s" % ENVOY_COMMIT,
         url = "https://github.com/envoyproxy/envoy/archive/%s.tar.gz" % ENVOY_COMMIT,
+        patches = ["envoy.patch"],
     )
     http_archive(
         name = "dep_hdrhistogram_c",
