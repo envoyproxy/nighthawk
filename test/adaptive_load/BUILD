@@ -15,9 +15,9 @@ envoy_cc_test_library(
     hdrs = ["utility.h"],
     repository = "@envoy",
     deps = [
-        "//source/adaptive_load:adaptive_load_lib",
         "//source/client:nighthawk_client_lib",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
+        "@envoy//test/test_common:utility_lib",
     ],
 )
 
@@ -26,7 +26,8 @@ envoy_cc_test(
     srcs = ["input_variable_setter_test.cc"],
     repository = "@envoy",
     deps = [
-        "//source/adaptive_load:adaptive_load_lib",
+        "//source/adaptive_load:input_variable_setter_impl_lib",
+        "//source/adaptive_load:plugin_util_lib",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
         "@envoy//test/test_common:utility_lib",
     ],
@@ -37,7 +38,8 @@ envoy_cc_test(
     srcs = ["scoring_function_test.cc"],
     repository = "@envoy",
     deps = [
-        "//source/adaptive_load:adaptive_load_lib",
+        "//source/adaptive_load:plugin_util_lib",
+        "//source/adaptive_load:scoring_function_impl_lib",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
         "@envoy//test/test_common:utility_lib",
     ],
@@ -48,7 +50,8 @@ envoy_cc_test(
     srcs = ["step_controller_test.cc"],
     repository = "@envoy",
     deps = [
-        "//source/adaptive_load:adaptive_load_lib",
+        "//source/adaptive_load:plugin_util_lib",
+        "//source/adaptive_load:step_controller_impl_lib",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
         "@envoy//test/test_common:utility_lib",
     ],
@@ -59,7 +62,8 @@ envoy_cc_test(
     srcs = ["metrics_plugin_test.cc"],
     repository = "@envoy",
     deps = [
-        "//source/adaptive_load:adaptive_load_lib",
+        "//source/adaptive_load:metrics_plugin_impl_lib",
+        "//source/adaptive_load:plugin_util_lib",
         "//test/adaptive_load:utility_lib",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
         "@envoy//test/test_common:utility_lib",
@@ -71,7 +75,11 @@ envoy_cc_test(
     srcs = ["plugin_util_test.cc"],
     repository = "@envoy",
     deps = [
-        "//source/adaptive_load:adaptive_load_lib",
+        "//source/adaptive_load:input_variable_setter_impl_lib",
+        "//source/adaptive_load:metrics_plugin_impl_lib",
+        "//source/adaptive_load:plugin_util_lib",
+        "//source/adaptive_load:scoring_function_impl_lib",
+        "//source/adaptive_load:step_controller_impl_lib",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
         "@envoy//test/test_common:utility_lib",
     ],
@@ -82,7 +90,26 @@ envoy_cc_test(
     srcs = ["adaptive_load_controller_test.cc"],
     repository = "@envoy",
     deps = [
-        "//source/adaptive_load:adaptive_load_lib",
+        "//include/nighthawk/adaptive_load:step_controller_include",
+        "//source/adaptive_load:adaptive_load_controller_impl_lib",
+        "//source/adaptive_load:scoring_function_impl_lib",
+        "//test/adaptive_load:utility_lib",
+        "@com_github_grpc_grpc//:grpc++_test",
+        "@envoy//source/common/protobuf:utility_lib_with_external_headers",
+        "@envoy//test/test_common:utility_lib",
+    ],
+)
+
+envoy_cc_test(
+    name = "adaptive_load_client_main_test",
+    srcs = ["adaptive_load_client_main_test.cc"],
+    data = [
+        "test_data/invalid_session_spec.textproto",
+        "test_data/valid_session_spec.textproto",
+    ],
+    repository = "@envoy",
+    deps = [
+        "//source/adaptive_load:adaptive_load_client_main_lib",
         "//test/adaptive_load:utility_lib",
         "@com_github_grpc_grpc//:grpc++_test",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",

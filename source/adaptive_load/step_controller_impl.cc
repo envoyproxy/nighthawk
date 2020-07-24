@@ -60,37 +60,46 @@ REGISTER_FACTORY(ExponentialSearchStepControllerConfigFactory, StepControllerCon
 ExponentialSearchStepController::ExponentialSearchStepController(
     const ExponentialSearchStepControllerConfig& config,
     const nighthawk::client::CommandLineOptions& command_line_options_template)
-    : command_line_options_template_{command_line_options_template},
-      input_variable_setter_{
-          config.has_input_variable_setter()
-              ? LoadInputVariableSetterPlugin(config.input_variable_setter())
-              : std::make_unique<RequestsPerSecondInputVariableSetter>(
-                    nighthawk::adaptive_load::RequestsPerSecondInputVariableSetterConfig())},
-      is_exponential_phase_{true}, is_doomed_{false},
+    : command_line_options_template_{command_line_options_template}, is_exponential_phase_{true},
       exponential_factor_{config.exponential_factor() > 0.0 ? config.exponential_factor() : 2.0},
       previous_load_value_{std::numeric_limits<double>::signaling_NaN()},
       current_load_value_{config.initial_value()},
       bottom_load_value_{std::numeric_limits<double>::signaling_NaN()},
-      top_load_value_{std::numeric_limits<double>::signaling_NaN()} {}
+      top_load_value_{std::numeric_limits<double>::signaling_NaN()} {
+  doom_reason_ = "";
+  if (config.has_input_variable_setter()) {
+    try {
+      input_variable_setter_ = LoadInputVariableSetterPlugin(config.input_variable_setter());
+    } catch (const Envoy::EnvoyException& e) {
+      doom_reason_ = absl::StrCat("Error loading plugin ",
+                                  config.input_variable_setter().DebugString(), ": ", e.what());
+    }
+  } else {
+    input_variable_setter_ = std::make_unique<RequestsPerSecondInputVariableSetter>(
+        nighthawk::adaptive_load::RequestsPerSecondInputVariableSetterConfig());
+  }
+}
 
 nighthawk::client::CommandLineOptions
 ExponentialSearchStepController::GetCurrentCommandLineOptions() const {
   nighthawk::client::CommandLineOptions options = command_line_options_template_;
-  input_variable_setter_->SetInputVariable(&options, current_load_value_);
+  input_variable_setter_->SetInputVariable(options, current_load_value_);
   return options;
 }
 
 bool ExponentialSearchStepController::IsConverged() const {
   // Binary search has brought successive input values within 1% of each other.
-  return !is_doomed_ && !is_exponential_phase_ &&
+  return doom_reason_ == "" && !is_exponential_phase_ &&
          abs(current_load_value_ / previous_load_value_ - 1.0) < 0.01;
 }
 
 bool ExponentialSearchStepController::IsDoomed(std::string* doom_reason) const {
-  if (is_doomed_) {
-    *doom_reason = "Outside threshold on initial input";
+  if (doom_reason_ == "") {
+    return false;
+  } else {
+    *doom_reason = doom_reason_;
+    return true;
   }
-  return is_doomed_;
 }
 
 void ExponentialSearchStepController::UpdateAndRecompute(const BenchmarkResult& benchmark_result) {
@@ -106,7 +115,7 @@ void ExponentialSearchStepController::UpdateAndRecompute(const BenchmarkResult& 
       // Prepare for the binary search phase.
       if (std::isnan(previous_load_value_)) {
         // Cannot continue if the initial value already exceeds metric thresholds.
-        is_doomed_ = true;
+        doom_reason_ = "Outside threshold on initial input";
         return;
       }
       is_exponential_phase_ = false;

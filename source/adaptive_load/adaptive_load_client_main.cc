@@ -7,6 +7,9 @@
 #include <string>
 #include <utility>
 
+//  "third_party/envoy/src/include/envoy/filesystem/filesystem.h"
+// #include "envoy/filesystem/filesystem.h"
+#include "envoy/common/exception.h"
 #include "nighthawk/adaptive_load/adaptive_load_controller.h"
 #include "nighthawk/common/exception.h"
 
@@ -27,8 +30,40 @@
 namespace Nighthawk {
 namespace AdaptiveLoad {
 
-AdaptiveLoadMain::AdaptiveLoadMain(int argc, const char* const* argv,
-                                   Envoy::TimeSource* time_source) {
+namespace {
+
+/**
+ * Writes a string to a file.
+ *
+ * @throw Nighthawk::NighthawkException For any filesystem error.
+ */
+void WriteFileOrThrow(Envoy::Filesystem::Instance& filesystem, std::string& path,
+                      std::string& contents) {
+  Envoy::Filesystem::FilePtr out_file = filesystem.createFile(path);
+  const Envoy::Api::IoCallBoolResult open_result =
+      out_file->open(1 << Envoy::Filesystem::File::Operation::Write);
+  if (!open_result.ok()) {
+    throw Nighthawk::NighthawkException("Unable to open output file \"" + path +
+                                        "\": " + open_result.err_->getErrorDetails());
+  }
+  const Envoy::Api::IoCallSizeResult write_result = out_file->write(contents);
+  if (!write_result.ok()) {
+    throw Nighthawk::NighthawkException("Unable to write output file \"" + path +
+                                        "\": " + write_result.err_->getErrorDetails());
+  }
+  const Envoy::Api::IoCallBoolResult close_result = out_file->close();
+  if (!close_result.ok()) {
+    throw Nighthawk::NighthawkException("Unable to close output file \"" + path +
+                                        "\": " + close_result.err_->getErrorDetails());
+  }
+}
+
+} // namespace
+
+AdaptiveLoadClientMain::AdaptiveLoadClientMain(int argc, const char* const* argv,
+                                               Envoy::Filesystem::Instance& filesystem,
+                                               Envoy::TimeSource& time_source)
+    : filesystem_{filesystem}, time_source_{time_source} {
   const char* descr =
       "Adaptive Load Controller tool that finds optimal load by sending a series of requests to "
       "a Nighthawk Service.";
@@ -54,18 +89,21 @@ AdaptiveLoadMain::AdaptiveLoadMain(int argc, const char* const* argv,
   nighthawk_service_address_ = nighthawk_service_address.getValue();
   spec_filename_ = spec_filename.getValue();
   output_filename_ = output_filename.getValue();
-  time_source_ = time_source;
 }
 
-uint32_t AdaptiveLoadMain::run() {
-  std::ifstream ifs(spec_filename_);
-  std::string spec_textproto((std::istreambuf_iterator<char>(ifs)),
-                             std::istreambuf_iterator<char>());
+uint32_t AdaptiveLoadClientMain::run() {
+  std::string spec_textproto;
+  try {
+    spec_textproto = filesystem_.fileReadToEnd(spec_filename_);
+  } catch (const Envoy::EnvoyException& e) {
+    throw Nighthawk::NighthawkException("Failed to read spec textproto file \"" + spec_filename_ +
+                                        "\": " + e.what());
+  }
 
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
   if (!Envoy::Protobuf::TextFormat::ParseFromString(spec_textproto, &spec)) {
-    throw Envoy::EnvoyException("Unable to parse file \"" + spec_filename_ +
-                                "\" as a text protobuf (type " + spec.GetTypeName() + ")");
+    throw Nighthawk::NighthawkException("Unable to parse file \"" + spec_filename_ +
+                                        "\" as a text protobuf (type " + spec.GetTypeName() + ")");
   }
 
   std::shared_ptr<::grpc_impl::Channel> channel =
@@ -75,14 +113,12 @@ uint32_t AdaptiveLoadMain::run() {
       nighthawk::client::NighthawkService::NewStub(channel));
 
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output =
-      PerformAdaptiveLoadSession(stub.get(), spec, std::cerr, *time_source_);
+      PerformAdaptiveLoadSession(stub.get(), spec, time_source_);
 
-  std::ofstream ofs(output_filename_);
-  if (ofs.is_open()) {
-    ofs << output.DebugString();
-  } else {
-    throw Envoy::EnvoyException("Unable to open output file \"" + output_filename_ + "\"");
-  }
+  std::string output_textproto = output.DebugString();
+
+  WriteFileOrThrow(filesystem_, output_filename_, output_textproto);
+
   if (output.session_status().code() != 0) {
     std::cerr << output.session_status().message() << "\n";
   }

@@ -11,12 +11,14 @@ RequestsPerSecondInputVariableSetter::RequestsPerSecondInputVariableSetter(
     const nighthawk::adaptive_load::RequestsPerSecondInputVariableSetterConfig&) {}
 
 void RequestsPerSecondInputVariableSetter::SetInputVariable(
-    nighthawk::client::CommandLineOptions* command_line_options, double input_value) {
-  command_line_options->mutable_requests_per_second()->set_value(
+    nighthawk::client::CommandLineOptions& command_line_options, double input_value) {
+  command_line_options.mutable_requests_per_second()->set_value(
       static_cast<unsigned int>(input_value));
 }
 
-std::string RequestsPerSecondInputVariableSetterConfigFactory::name() const { return "rps"; }
+std::string RequestsPerSecondInputVariableSetterConfigFactory::name() const {
+  return "nighthawk.rps";
+}
 
 Envoy::ProtobufTypes::MessagePtr
 RequestsPerSecondInputVariableSetterConfigFactory::createEmptyConfigProto() {

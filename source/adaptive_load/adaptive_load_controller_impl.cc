@@ -2,6 +2,7 @@
 
 #include "envoy/common/exception.h"
 #include "envoy/config/core/v3/base.pb.h"
+#include "external/envoy/source/common/common/logger.h"
 
 #include "nighthawk/adaptive_load/adaptive_load_controller.h"
 #include "nighthawk/adaptive_load/metrics_plugin.h"
@@ -26,6 +27,8 @@ namespace Nighthawk {
 namespace AdaptiveLoad {
 
 namespace {
+
+using namespace Envoy; // for Envoy::Logger
 
 using nighthawk::adaptive_load::AdaptiveLoadSessionOutput;
 using nighthawk::adaptive_load::AdaptiveLoadSessionSpec;
@@ -71,9 +74,11 @@ nighthawk::client::ExecutionResponse PerformNighthawkBenchmark(
   return response;
 }
 
-// Analyzes a single Nighthawk Service benchmark result against configured MetricThresholds.
-// Queries outside MetricsPlugins if configured and/or uses "nighthawk.builtin" plugin to check
-// Nighthawk Service stats and counters.
+/**
+ * Analyzes a single Nighthawk Service benchmark result against configured MetricThresholds.
+ * Queries outside MetricsPlugins if configured and/or uses "nighthawk.builtin" plugin to check
+ * Nighthawk Service stats and counters.
+ */
 BenchmarkResult AnalyzeNighthawkBenchmark(
     const nighthawk::client::ExecutionResponse& nighthawk_response,
     const AdaptiveLoadSessionSpec& spec,
@@ -239,8 +244,7 @@ absl::Status CheckSessionSpec(const nighthawk::adaptive_load::AdaptiveLoadSessio
 
 AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
     nighthawk::client::NighthawkService::StubInterface* nighthawk_service_stub,
-    const AdaptiveLoadSessionSpec& input_spec, std::ostream& diagnostic_ostream,
-    Envoy::TimeSource& time_source) {
+    const AdaptiveLoadSessionSpec& input_spec, Envoy::TimeSource& time_source) {
   AdaptiveLoadSessionOutput output;
 
   AdaptiveLoadSessionSpec spec = SetDefaults(input_spec);
@@ -272,7 +276,7 @@ AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
       output.mutable_session_status()->set_code(grpc::ABORTED);
       std::string message = "Step controller determined that it can never converge: " + doom_reason;
       output.mutable_session_status()->set_message(message);
-      diagnostic_ostream << message << "\n";
+      ENVOY_LOG_MISC(info, message);
       return output;
     }
     if (std::chrono::duration_cast<std::chrono::seconds>(time_source.monotonicTime() - start_time)
@@ -281,34 +285,32 @@ AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
       std::string message = absl::StrCat("Failed to converge before deadline of ",
                                          spec.convergence_deadline().seconds(), " seconds.");
       output.mutable_session_status()->set_message(message);
-      diagnostic_ostream << message << "\n";
+      ENVOY_LOG_MISC(info, message);
       return output;
     }
 
-    diagnostic_ostream << "Adjusting Stage: Trying load: "
-                       << step_controller->GetCurrentCommandLineOptions().DebugString() << "\n";
+    ENVOY_LOG_MISC(info, "Adjusting Stage: Trying load: {}", step_controller->GetCurrentCommandLineOptions().DebugString());
 
     BenchmarkResult result = PerformAndAnalyzeNighthawkBenchmark(
         nighthawk_service_stub, spec, name_to_custom_plugin_map,
         step_controller->GetCurrentCommandLineOptions(), spec.measuring_period());
 
     for (const MetricEvaluation& evaluation : result.metric_evaluations()) {
-      diagnostic_ostream << evaluation.DebugString() << "\n";
+      ENVOY_LOG_MISC(info, "Evaluation: {}", evaluation.DebugString());
     }
 
     *output.mutable_adjusting_stage_results()->Add() = result;
     step_controller->UpdateAndRecompute(result);
   }
 
-  diagnostic_ostream << "Testing Stage with load: "
-                     << step_controller->GetCurrentCommandLineOptions().DebugString() << "\n";
+  ENVOY_LOG_MISC(info, "Testing Stage with load: {}", step_controller->GetCurrentCommandLineOptions().DebugString());
 
   *output.mutable_testing_stage_result() = PerformAndAnalyzeNighthawkBenchmark(
       nighthawk_service_stub, spec, name_to_custom_plugin_map,
       step_controller->GetCurrentCommandLineOptions(), spec.testing_stage_duration());
 
   for (const MetricEvaluation& evaluation : output.testing_stage_result().metric_evaluations()) {
-    diagnostic_ostream << evaluation.DebugString() << "\n";
+    ENVOY_LOG_MISC(info, "Evaluation: {}", evaluation.DebugString());
   }
   return output;
 }

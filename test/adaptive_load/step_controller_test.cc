@@ -37,9 +37,9 @@ nighthawk::adaptive_load::BenchmarkResult MakeBenchmarkResultWithinThreshold() {
 class ConnectionsInputVariableSetter : public InputVariableSetter {
 public:
   ConnectionsInputVariableSetter() {}
-  void SetInputVariable(nighthawk::client::CommandLineOptions* command_line_options,
+  void SetInputVariable(nighthawk::client::CommandLineOptions& command_line_options,
                         double input_value) override {
-    command_line_options->mutable_connections()->set_value(static_cast<unsigned int>(input_value));
+    command_line_options.mutable_connections()->set_value(static_cast<unsigned int>(input_value));
   }
 };
 

@@ -42,5 +42,16 @@ nighthawk::client::Output MakeStandardNighthawkOutput() {
   return output;
 }
 
+Envoy::SystemTime FakeIncrementingMonotonicTimeSource::systemTime() {
+  Envoy::SystemTime epoch;
+  return epoch;
+}
+
+Envoy::MonotonicTime FakeIncrementingMonotonicTimeSource::monotonicTime() {
+  ++unix_time_;
+  Envoy::MonotonicTime epoch;
+  return epoch + std::chrono::seconds(unix_time_);
+}
+
 } // namespace AdaptiveLoad
 } // namespace Nighthawk

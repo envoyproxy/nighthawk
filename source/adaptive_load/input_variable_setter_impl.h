@@ -12,7 +12,7 @@ class RequestsPerSecondInputVariableSetter : public InputVariableSetter {
 public:
   RequestsPerSecondInputVariableSetter(
       const nighthawk::adaptive_load::RequestsPerSecondInputVariableSetterConfig& config);
-  void SetInputVariable(nighthawk::client::CommandLineOptions* command_line_options,
+  void SetInputVariable(nighthawk::client::CommandLineOptions& command_line_options,
                         double input_value) override;
 };
 

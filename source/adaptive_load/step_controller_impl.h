@@ -27,12 +27,12 @@ private:
   const nighthawk::client::CommandLineOptions command_line_options_template_;
   InputVariableSetterPtr input_variable_setter_;
   bool is_exponential_phase_;
-  bool is_doomed_;
   double exponential_factor_;
   double previous_load_value_;
   double current_load_value_;
   double bottom_load_value_;
   double top_load_value_;
+  std::string doom_reason_;
 };
 
 // Factory that creates an ExponentialSearchStepController from an

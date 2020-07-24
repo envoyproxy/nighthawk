@@ -4,6 +4,7 @@
 #include "nighthawk/common/exception.h"
 
 #include "external/envoy/source/common/event/real_time_system.h"
+#include "external/envoy/source/exe/platform_impl.h"
 
 #include "absl/debugging/symbolize.h"
 #include "adaptive_load/adaptive_load_client_main.h"
@@ -17,8 +18,10 @@ int main(int argc, char* argv[]) {
   absl::InitializeSymbolizer(argv[0]);
 #endif
   Envoy::Event::RealTimeSystem time_system; // NO_CHECK_FORMAT(real_time)
+  Envoy::PlatformImpl platform_impl;
   try {
-    Nighthawk::AdaptiveLoad::AdaptiveLoadMain program(argc, argv, &time_system); // NOLINT
+    Nighthawk::AdaptiveLoad::AdaptiveLoadClientMain program(argc, argv, platform_impl.fileSystem(),
+                                                            time_system); // NOLINT
     return program.run();
   } catch (const Nighthawk::Client::NoServingException& e) {
     return EXIT_SUCCESS;

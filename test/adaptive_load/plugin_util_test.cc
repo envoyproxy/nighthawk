@@ -26,9 +26,9 @@ public:
   // config type. We use LinearScoringFunctionConfig for all plugins in this test.
   TestInputVariableSetter(const nighthawk::adaptive_load::LinearScoringFunctionConfig& config)
       : config_{config} {}
-  void SetInputVariable(nighthawk::client::CommandLineOptions* command_line_options,
+  void SetInputVariable(nighthawk::client::CommandLineOptions& command_line_options,
                         double input_value) override {
-    command_line_options->mutable_connections()->set_value(static_cast<unsigned int>(input_value));
+    command_line_options.mutable_connections()->set_value(static_cast<unsigned int>(input_value));
   }
   const nighthawk::adaptive_load::LinearScoringFunctionConfig config_;
 };

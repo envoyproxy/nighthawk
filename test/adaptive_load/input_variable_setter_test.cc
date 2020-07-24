@@ -10,7 +10,8 @@ namespace {
 
 TEST(RequestsPerSecondInputVariableSetterConfigFactoryTest, GeneratesEmptyConfigProto) {
   InputVariableSetterConfigFactory& config_factory =
-      Envoy::Config::Utility::getAndCheckFactoryByName<InputVariableSetterConfigFactory>("rps");
+      Envoy::Config::Utility::getAndCheckFactoryByName<InputVariableSetterConfigFactory>(
+          "nighthawk.rps");
 
   Envoy::ProtobufTypes::MessagePtr message = config_factory.createEmptyConfigProto();
 
@@ -25,7 +26,8 @@ TEST(RequestsPerSecondInputVariableSetterConfigFactoryTest, CreatesPlugin) {
   config_any.PackFrom(config);
 
   InputVariableSetterConfigFactory& config_factory =
-      Envoy::Config::Utility::getAndCheckFactoryByName<InputVariableSetterConfigFactory>("rps");
+      Envoy::Config::Utility::getAndCheckFactoryByName<InputVariableSetterConfigFactory>(
+          "nighthawk.rps");
   InputVariableSetterPtr plugin = config_factory.createInputVariableSetter(config_any);
 
   EXPECT_NE(dynamic_cast<RequestsPerSecondInputVariableSetter*>(plugin.get()), nullptr);
@@ -35,7 +37,7 @@ TEST(RequestsPerSecondInputVariableSetterTest, SetsCommandLineOptionsRpsValue) {
   nighthawk::adaptive_load::RequestsPerSecondInputVariableSetterConfig config;
   RequestsPerSecondInputVariableSetter setter(config);
   nighthawk::client::CommandLineOptions options;
-  setter.SetInputVariable(&options, 5.0);
+  setter.SetInputVariable(options, 5.0);
   EXPECT_EQ(options.requests_per_second().value(), 5);
 }
 

@@ -17,8 +17,10 @@ envoy_cc_library(
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
-        "//source/adaptive_load:adaptive_load_lib",
-    ],
+        "//source/adaptive_load:adaptive_load_client_main_lib",
+        "@envoy//source/exe:platform_header_lib_with_external_headers",
+          "@envoy//source/exe:platform_impl_lib",
+  ],
 )
 
 envoy_cc_library(

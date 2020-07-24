@@ -1,3 +1,5 @@
+// Interfaces for MetricsPlugin plugins and plugin factories.
+
 #pragma once
 
 #include "envoy/common/pure.h"
