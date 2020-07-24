@@ -1,0 +1,24 @@
+diff --git source/common/version/BUILD source/common/version/BUILD
+index 9d72656..bc79c6a 100644
+--- source/common/version/BUILD
++++ source/common/version/BUILD
+@@ -81,3 +81,19 @@ envoy_basic_cc_library(
+     }),
+     alwayslink = 1,
+ )
++
++envoy_basic_cc_library(
++    name = "external_version_linkstamp",
++    linkstamp = select({
++        "//bazel:manual_stamp": None,
++        "//conditions:default": "version_linkstamp.cc",
++    }),
++    # Linking this library makes build cache inefficient, limiting this to //source/exe package only.
++    # Tests are linked with //test/test_common:test_version_linkstamp.
++    visibility = ["//visibility:public"],
++    deps = select({
++        "//bazel:manual_stamp": [":manual_version_linkstamp"],
++        "//conditions:default": [],
++    }),
++    alwayslink = 1,
++)
