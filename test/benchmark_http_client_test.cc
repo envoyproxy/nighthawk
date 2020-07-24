@@ -75,7 +75,7 @@ public:
         request_generator, true);
   }
   // Primary testing method. Confirms that connection limits are met and number of requests are
-  // correct. If specified, also checks the header expectations, if not specified, it is ignored.
+  // correct. If not empty, also checks the header expectations, if empty, it is ignored.
   void TestBenchmarkClientProcessesExpectedInflightRequests(
       const uint64_t max_pending, const uint64_t connection_limit, const uint64_t amount_of_request,
       const RequestGenerator& request_generator,
