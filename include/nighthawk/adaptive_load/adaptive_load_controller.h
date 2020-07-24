@@ -19,21 +19,18 @@ namespace AdaptiveLoad {
  * @param nighthawk_service_stub A Nighthawk Service gRPC stub.
  * @param spec A proto that defines all aspects of the adaptive load session, including metrics,
  * threshold, duration of adjusting stage benchmarks, and underlying Nighthawk traffic parameters.
- * @param diagnostic_ostream A place to write progress messages, such as std::cerr to write to the
- * console, a std::ostringstream to store the message in memory, or a std::ostream adapter around a
- * custom logging system.
  * @param time_source An abstraction of the system clock. Normally, just construct an
  * Envoy::Event::RealTimeSystem and pass it. NO_CHECK_FORMAT(real_time). If calling from an
  * Envoy-based process, there may be an existing TimeSource or TimeSystem to use. If calling
  * from a test, pass a fake TimeSource.
  *
  * @return AdaptiveLoadSessionOutput a proto logging the result of all traffic attempted and all
- * corresponding metric values and scores.
+ * corresponding metric values and scores. Any errors that occur will be recorded in the
+ * |session_status| field.
  */
 nighthawk::adaptive_load::AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
     nighthawk::client::NighthawkService::StubInterface* nighthawk_service_stub,
-    const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec, std::ostream& diagnostic_ostream,
-    Envoy::TimeSource& time_source);
+    const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec, Envoy::TimeSource& time_source);
 
 } // namespace AdaptiveLoad
 } // namespace Nighthawk
