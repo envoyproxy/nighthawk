@@ -13,9 +13,8 @@ message MetricSpec {
   // Name of the metric to evaluate. For the set of built-in metric names, see
   // source/adaptive_load/metrics_plugin_impl.cc. Required.
   string metric_name = 1 [(validate.rules).string.min_len = 1];
-  // Name of the MetricsPlugin providing the metric ("nighthawk.builtin" for built-in).
-  // Required.
-  string metrics_plugin_name = 2 [(validate.rules).string.min_len = 1];
+  // Name of the MetricsPlugin providing the metric. Optional, default "nighthawk.builtin".
+  string metrics_plugin_name = 2;
 }
 
 // Specifies how to score a metric against a threshold.
