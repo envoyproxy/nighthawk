@@ -154,10 +154,21 @@ AdaptiveLoadSessionSpec SetDefaults(const AdaptiveLoadSessionSpec& original_spec
   if (!spec.has_convergence_deadline()) {
     spec.mutable_convergence_deadline()->set_seconds(300);
   }
+  if (!spec.has_testing_stage_duration()) {
+    spec.mutable_testing_stage_duration()->set_seconds(30);
+  }
   for (nighthawk::adaptive_load::MetricSpecWithThreshold& threshold :
        *spec.mutable_metric_thresholds()) {
+    if (threshold.metric_spec().metrics_plugin_name().empty()) {
+      threshold.mutable_metric_spec()->set_metrics_plugin_name("nighthawk.builtin");
+    }
     if (!threshold.threshold_spec().has_weight()) {
       threshold.mutable_threshold_spec()->mutable_weight()->set_value(1.0);
+    }
+  }
+  for (nighthawk::adaptive_load::MetricSpec& metric_spec : *spec.mutable_informational_metric_specs()) {
+    if (metric_spec.metrics_plugin_name().empty()) {
+      metric_spec.set_metrics_plugin_name("nighthawk.builtin");
     }
   }
   return spec;
