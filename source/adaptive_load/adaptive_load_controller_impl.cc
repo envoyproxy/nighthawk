@@ -2,13 +2,13 @@
 
 #include "envoy/common/exception.h"
 #include "envoy/config/core/v3/base.pb.h"
-#include "external/envoy/source/common/common/logger.h"
 
 #include "nighthawk/adaptive_load/adaptive_load_controller.h"
 #include "nighthawk/adaptive_load/metrics_plugin.h"
 #include "nighthawk/adaptive_load/scoring_function.h"
 #include "nighthawk/adaptive_load/step_controller.h"
 
+#include "external/envoy/source/common/common/logger.h"
 #include "external/envoy/source/common/protobuf/protobuf.h"
 
 #include "api/adaptive_load/adaptive_load.pb.h"
@@ -24,7 +24,6 @@
 #include "adaptive_load/plugin_util.h"
 
 namespace Nighthawk {
-namespace AdaptiveLoad {
 
 namespace {
 
@@ -166,7 +165,8 @@ AdaptiveLoadSessionSpec SetDefaults(const AdaptiveLoadSessionSpec& original_spec
       threshold.mutable_threshold_spec()->mutable_weight()->set_value(1.0);
     }
   }
-  for (nighthawk::adaptive_load::MetricSpec& metric_spec : *spec.mutable_informational_metric_specs()) {
+  for (nighthawk::adaptive_load::MetricSpec& metric_spec :
+       *spec.mutable_informational_metric_specs()) {
     if (metric_spec.metrics_plugin_name().empty()) {
       metric_spec.set_metrics_plugin_name("nighthawk.builtin");
     }
@@ -300,7 +300,8 @@ AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
       return output;
     }
 
-    ENVOY_LOG_MISC(info, "Adjusting Stage: Trying load: {}", step_controller->GetCurrentCommandLineOptions().DebugString());
+    ENVOY_LOG_MISC(info, "Adjusting Stage: Trying load: {}",
+                   step_controller->GetCurrentCommandLineOptions().DebugString());
 
     BenchmarkResult result = PerformAndAnalyzeNighthawkBenchmark(
         nighthawk_service_stub, spec, name_to_custom_plugin_map,
@@ -314,7 +315,8 @@ AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
     step_controller->UpdateAndRecompute(result);
   }
 
-  ENVOY_LOG_MISC(info, "Testing Stage with load: {}", step_controller->GetCurrentCommandLineOptions().DebugString());
+  ENVOY_LOG_MISC(info, "Testing Stage with load: {}",
+                 step_controller->GetCurrentCommandLineOptions().DebugString());
 
   *output.mutable_testing_stage_result() = PerformAndAnalyzeNighthawkBenchmark(
       nighthawk_service_stub, spec, name_to_custom_plugin_map,
@@ -326,5 +328,4 @@ AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
   return output;
 }
 
-} // namespace AdaptiveLoad
 } // namespace Nighthawk

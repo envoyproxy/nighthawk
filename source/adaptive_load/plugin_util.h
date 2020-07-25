@@ -8,7 +8,6 @@
 #include "nighthawk/adaptive_load/step_controller.h"
 
 namespace Nighthawk {
-namespace AdaptiveLoad {
 
 // Instantiates an InputVariableSetter plugin based on the plugin name in |config|, unpacking the
 // plugin-specific config proto within |config|. Throws Envoy::EnvoyException if the plugin is not
@@ -35,5 +34,4 @@ StepControllerPtr LoadStepControllerPlugin(
     const envoy::config::core::v3::TypedExtensionConfig& config,
     const nighthawk::client::CommandLineOptions& command_line_options_template);
 
-} // namespace AdaptiveLoad
 } // namespace Nighthawk

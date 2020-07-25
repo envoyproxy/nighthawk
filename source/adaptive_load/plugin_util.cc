@@ -8,7 +8,6 @@
 #include "external/envoy/source/common/config/utility.h"
 
 namespace Nighthawk {
-namespace AdaptiveLoad {
 
 InputVariableSetterPtr
 LoadInputVariableSetterPlugin(const envoy::config::core::v3::TypedExtensionConfig& config) {
@@ -39,5 +38,4 @@ StepControllerPtr LoadStepControllerPlugin(
   return config_factory.createStepController(config.typed_config(), command_line_options_template);
 }
 
-} // namespace AdaptiveLoad
 } // namespace Nighthawk

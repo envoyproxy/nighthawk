@@ -1,7 +1,6 @@
 #include "test/adaptive_load/utility.h"
 
 namespace Nighthawk {
-namespace AdaptiveLoad {
 
 namespace {
 
@@ -53,5 +52,4 @@ Envoy::MonotonicTime FakeIncrementingMonotonicTimeSource::monotonicTime() {
   return epoch + std::chrono::seconds(unix_time_);
 }
 
-} // namespace AdaptiveLoad
 } // namespace Nighthawk

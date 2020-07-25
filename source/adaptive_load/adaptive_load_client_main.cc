@@ -28,7 +28,6 @@
 #include "tclap/CmdLine.h"
 
 namespace Nighthawk {
-namespace AdaptiveLoad {
 
 namespace {
 
@@ -125,5 +124,4 @@ uint32_t AdaptiveLoadClientMain::run() {
   return 0;
 }
 
-} // namespace AdaptiveLoad
 } // namespace Nighthawk

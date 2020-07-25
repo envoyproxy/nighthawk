@@ -8,7 +8,6 @@
 #include "api/adaptive_load/step_controller_impl.pb.h"
 
 namespace Nighthawk {
-namespace AdaptiveLoad {
 
 // A StepController that performs an exponential search for the highest load that keeps metrics
 // within thresholds.
@@ -46,5 +45,4 @@ public:
       const nighthawk::client::CommandLineOptions& command_line_options_template) override;
 };
 
-} // namespace AdaptiveLoad
 } // namespace Nighthawk

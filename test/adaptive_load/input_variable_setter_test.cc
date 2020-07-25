@@ -5,7 +5,7 @@
 #include "gtest/gtest.h"
 
 namespace Nighthawk {
-namespace AdaptiveLoad {
+
 namespace {
 
 TEST(RequestsPerSecondInputVariableSetterConfigFactoryTest, GeneratesEmptyConfigProto) {
@@ -42,5 +42,5 @@ TEST(RequestsPerSecondInputVariableSetterTest, SetsCommandLineOptionsRpsValue) {
 }
 
 } // namespace
-} // namespace AdaptiveLoad
+
 } // namespace Nighthawk

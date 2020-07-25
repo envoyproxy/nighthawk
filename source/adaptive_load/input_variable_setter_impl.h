@@ -5,7 +5,6 @@
 #include "api/adaptive_load/input_variable_setter_impl.pb.h"
 
 namespace Nighthawk {
-namespace AdaptiveLoad {
 
 // An InputVariableSetter that sets the |requests_per_second| field in the CommandLineOptions proto.
 class RequestsPerSecondInputVariableSetter : public InputVariableSetter {
@@ -26,5 +25,4 @@ public:
   createInputVariableSetter(const Envoy::Protobuf::Message& message) override;
 };
 
-} // namespace AdaptiveLoad
 } // namespace Nighthawk

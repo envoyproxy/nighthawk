@@ -9,7 +9,6 @@
 #include "api/adaptive_load/scoring_function_impl.pb.h"
 
 namespace Nighthawk {
-namespace AdaptiveLoad {
 
 std::string BinaryScoringFunctionConfigFactory::name() const { return "nighthawk.binary"; }
 
@@ -86,5 +85,4 @@ double SigmoidScoringFunction::EvaluateMetric(double value) const {
   return 1.0 - 2.0 / (1.0 + exp(-k_ * (value - threshold_)));
 }
 
-} // namespace AdaptiveLoad
 } // namespace Nighthawk

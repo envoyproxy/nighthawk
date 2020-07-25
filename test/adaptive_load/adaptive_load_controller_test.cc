@@ -37,7 +37,7 @@
 #include "gtest/gtest.h"
 
 namespace Nighthawk {
-namespace AdaptiveLoad {
+
 namespace {
 
 using ::testing::_;
@@ -1023,5 +1023,5 @@ TEST(AdaptiveLoadControllerTest, CopiesThresholdSpecToOutput) {
 }
 
 } // namespace
-} // namespace AdaptiveLoad
+
 } // namespace Nighthawk

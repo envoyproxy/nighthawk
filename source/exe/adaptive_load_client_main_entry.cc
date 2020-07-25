@@ -20,8 +20,8 @@ int main(int argc, char* argv[]) {
   Envoy::Event::RealTimeSystem time_system; // NO_CHECK_FORMAT(real_time)
   Envoy::PlatformImpl platform_impl;
   try {
-    Nighthawk::AdaptiveLoad::AdaptiveLoadClientMain program(argc, argv, platform_impl.fileSystem(),
-                                                            time_system); // NOLINT
+    Nighthawk::AdaptiveLoadClientMain program(argc, argv, platform_impl.fileSystem(),
+                                              time_system); // NOLINT
     return program.run();
   } catch (const Nighthawk::Client::NoServingException& e) {
     return EXIT_SUCCESS;

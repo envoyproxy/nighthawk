@@ -1,13 +1,11 @@
 #pragma once
 
 #include "envoy/common/time.h"
+#include "envoy/filesystem/filesystem.h"
 
 #include "external/envoy/source/common/common/logger.h"
 
-#include "envoy/filesystem/filesystem.h"
-
 namespace Nighthawk {
-namespace AdaptiveLoad {
 
 /**
  * Main implementation of the CLI wrapper around the adaptive load controller library.
@@ -46,5 +44,4 @@ private:
   Envoy::TimeSource& time_source_;
 };
 
-} // namespace AdaptiveLoad
 } // namespace Nighthawk

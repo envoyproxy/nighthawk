@@ -1,11 +1,8 @@
-#include "adaptive_load/adaptive_load_client_main.h"
-
-#include "nighthawk/common/exception.h"
 #include <chrono>
 #include <iostream>
 
-#include "adaptive_load/adaptive_load_client_main.h"
 #include "envoy/config/core/v3/base.pb.h"
+#include "envoy/filesystem/filesystem.h"
 #include "envoy/registry/registry.h"
 
 #include "nighthawk/adaptive_load/adaptive_load_controller.h"
@@ -13,11 +10,15 @@
 #include "nighthawk/adaptive_load/metrics_plugin.h"
 #include "nighthawk/adaptive_load/scoring_function.h"
 #include "nighthawk/adaptive_load/step_controller.h"
+#include "nighthawk/common/exception.h"
 
 #include "external/envoy/source/common/config/utility.h"
+#include "external/envoy/source/common/protobuf/message_validator_impl.h"
 #include "external/envoy/source/common/protobuf/protobuf.h"
-
-#include "envoy/filesystem/filesystem.h"
+#include "external/envoy/source/common/protobuf/utility.h"
+#include "external/envoy/test/test_common/environment.h"
+#include "external/envoy/test/test_common/file_system_for_test.h"
+#include "external/envoy/test/test_common/utility.h"
 
 #include "api/adaptive_load/adaptive_load.pb.h"
 #include "api/adaptive_load/benchmark_result.pb.h"
@@ -32,11 +33,19 @@
 #include "api/client/service.pb.h"
 #include "api/client/service_mock.grpc.pb.h"
 
+#include "common/statistic_impl.h"
+#include "common/version_info.h"
+
+#include "client/output_collector_impl.h"
+#include "client/output_formatter_impl.h"
+
 #include "test/adaptive_load/utility.h"
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_join.h"
+#include "absl/strings/str_replace.h"
+#include "adaptive_load/adaptive_load_client_main.h"
 #include "adaptive_load/metrics_plugin_impl.h"
 #include "adaptive_load/plugin_util.h"
 #include "adaptive_load/step_controller_impl.h"
@@ -44,29 +53,8 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-#include "nighthawk/common/exception.h"
-
-#include "external/envoy/source/common/protobuf/message_validator_impl.h"
-#include "external/envoy/source/common/protobuf/utility.h"
-#include "external/envoy/test/test_common/file_system_for_test.h"
-#include "external/envoy/test/test_common/utility.h"
-
-#include "api/client/options.pb.h"
-#include "api/client/output.pb.h"
-
-#include "common/statistic_impl.h"
-#include "common/version_info.h"
-
-#include "client/output_collector_impl.h"
-#include "client/output_formatter_impl.h"
-
-#include "external/envoy/test/test_common/environment.h"
-
-#include "absl/strings/str_replace.h"
-#include "gtest/gtest.h"
-
 namespace Nighthawk {
-namespace AdaptiveLoad {
+
 namespace {
 
 using ::testing::_;
@@ -150,7 +138,6 @@ TEST(AdaptiveLoadClientMainTest, FailsWithUnparseableInputFile) {
   EXPECT_THROW_WITH_REGEX(main.run(), Nighthawk::NighthawkException, "Unable to parse file");
 }
 
-
 TEST(AdaptiveLoadClientMainTest, FailsWithUnwritableOutputFile) {
   std::string infile = Envoy::TestEnvironment::runfilesPath(
       std::string("test/adaptive_load/test_data/valid_session_spec.textproto"));
@@ -168,5 +155,5 @@ TEST(AdaptiveLoadClientMainTest, FailsWithUnwritableOutputFile) {
 }
 
 } // namespace
-} // namespace AdaptiveLoad
+
 } // namespace Nighthawk

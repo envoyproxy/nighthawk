@@ -15,7 +15,6 @@
 #include "adaptive_load/plugin_util.h"
 
 namespace Nighthawk {
-namespace AdaptiveLoad {
 
 namespace {
 
@@ -140,5 +139,4 @@ void ExponentialSearchStepController::UpdateAndRecompute(const BenchmarkResult& 
   }
 }
 
-} // namespace AdaptiveLoad
 } // namespace Nighthawk

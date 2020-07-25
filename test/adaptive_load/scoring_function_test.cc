@@ -5,7 +5,7 @@
 #include "gtest/gtest.h"
 
 namespace Nighthawk {
-namespace AdaptiveLoad {
+
 namespace {
 
 TEST(BinaryScoringFunctionConfigFactoryTest, GeneratesEmptyConfigProto) {
@@ -224,5 +224,5 @@ TEST(SigmoidScoringFunctionTest, ReturnsValueCloseToNegativeOneForValueFarAboveT
 }
 
 } // namespace
-} // namespace AdaptiveLoad
+
 } // namespace Nighthawk

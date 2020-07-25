@@ -14,7 +14,7 @@
 #include "gtest/gtest.h"
 
 namespace Nighthawk {
-namespace AdaptiveLoad {
+
 namespace {
 
 nighthawk::adaptive_load::BenchmarkResult MakeBenchmarkResultOutsideThreshold() {
@@ -210,5 +210,5 @@ TEST(ExponentialSearchStepControllerTest, BinarySearchFindsBottomOfRange) {
 }
 
 } // namespace
-} // namespace AdaptiveLoad
+
 } // namespace Nighthawk

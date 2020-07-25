@@ -9,7 +9,6 @@
 #include "absl/container/flat_hash_map.h"
 
 namespace Nighthawk {
-namespace AdaptiveLoad {
 
 // Emulated MetricPlugin that wraps already collected Nighthawk Service counters and stats in a
 // MetricPlugin interface. This class is not registered with the Envoy registry mechanism. It will
@@ -24,5 +23,4 @@ private:
   absl::flat_hash_map<std::string, double> metric_from_name_;
 };
 
-} // namespace AdaptiveLoad
 } // namespace Nighthawk

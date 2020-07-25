@@ -8,7 +8,7 @@
 #include "gtest/gtest.h"
 
 namespace Nighthawk {
-namespace AdaptiveLoad {
+
 namespace {
 
 TEST(NighthawkStatsEmulatedMetricsPluginTest, ComputesCorrectAttemptedRps) {
@@ -100,5 +100,5 @@ TEST(NighthawkStatsEmulatedMetricsPluginTest, ReturnsCorrectSupportedMetricNames
 }
 
 } // namespace
-} // namespace AdaptiveLoad
+
 } // namespace Nighthawk

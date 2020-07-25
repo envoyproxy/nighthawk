@@ -5,7 +5,6 @@
 #include "api/adaptive_load/scoring_function_impl.pb.h"
 
 namespace Nighthawk {
-namespace AdaptiveLoad {
 
 // ScoringFunction that returns 1.0 when a metric is within thresholds and -1.0 otherwise.
 // Supports upper or lower threshold or both.
@@ -87,5 +86,4 @@ public:
   ScoringFunctionPtr createScoringFunction(const Envoy::Protobuf::Message& message) override;
 };
 
-} // namespace AdaptiveLoad
 } // namespace Nighthawk

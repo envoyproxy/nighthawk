@@ -5,7 +5,6 @@
 #include "external/envoy/source/common/protobuf/protobuf.h"
 
 namespace Nighthawk {
-namespace AdaptiveLoad {
 
 NighthawkStatsEmulatedMetricsPlugin::NighthawkStatsEmulatedMetricsPlugin(
     const nighthawk::client::Output& nighthawk_output) {
@@ -71,5 +70,4 @@ NighthawkStatsEmulatedMetricsPlugin::GetAllSupportedMetricNames() const {
 
 // Note: Don't use REGISTER_FACTORY for NighthawkStatsEmulatedMetricsPlugin. See header for details.
 
-} // namespace AdaptiveLoad
 } // namespace Nighthawk

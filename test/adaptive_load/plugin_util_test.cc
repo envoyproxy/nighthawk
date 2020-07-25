@@ -16,7 +16,7 @@
 #include "gtest/gtest.h"
 
 namespace Nighthawk {
-namespace AdaptiveLoad {
+
 namespace {
 
 // InputVariableSetter for testing.
@@ -302,5 +302,5 @@ TEST(PluginUtilTest, ThrowsExceptionWhenStepControllerPluginNotFound) {
 }
 
 } // namespace
-} // namespace AdaptiveLoad
+
 } // namespace Nighthawk

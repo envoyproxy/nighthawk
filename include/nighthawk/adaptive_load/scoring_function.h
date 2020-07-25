@@ -7,7 +7,6 @@
 #include "envoy/config/typed_config.h"
 
 namespace Nighthawk {
-namespace AdaptiveLoad {
 
 /**
  * An interface for custom functions that score a metric relative to a threshold.
@@ -51,5 +50,4 @@ public:
   virtual ScoringFunctionPtr createScoringFunction(const Envoy::Protobuf::Message& message) PURE;
 };
 
-} // namespace AdaptiveLoad
 } // namespace Nighthawk
