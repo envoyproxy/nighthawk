@@ -11,7 +11,6 @@
 #include "api/client/options.pb.h"
 
 namespace Nighthawk {
-namespace AdaptiveLoad {
 
 /**
  * An interface for plugins that apply a StepController-computed input value to a CommandLineOptions
@@ -56,5 +55,4 @@ public:
   createInputVariableSetter(const Envoy::Protobuf::Message& message) PURE;
 };
 
-} // namespace AdaptiveLoad
 } // namespace Nighthawk

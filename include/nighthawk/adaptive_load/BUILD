@@ -9,7 +9,7 @@ licenses(["notice"])  # Apache 2
 envoy_package()
 
 envoy_basic_cc_library(
-    name = "adaptive_load_controller_include",
+    name = "adaptive_load_controller",
     hdrs = [
         "adaptive_load_controller.h",
     ],
@@ -20,7 +20,7 @@ envoy_basic_cc_library(
 )
 
 envoy_basic_cc_library(
-    name = "input_variable_setter_include",
+    name = "input_variable_setter",
     hdrs = [
         "input_variable_setter.h",
     ],
@@ -31,7 +31,7 @@ envoy_basic_cc_library(
 )
 
 envoy_basic_cc_library(
-    name = "metrics_plugin_include",
+    name = "metrics_plugin",
     hdrs = [
         "metrics_plugin.h",
     ],
@@ -42,7 +42,7 @@ envoy_basic_cc_library(
 )
 
 envoy_basic_cc_library(
-    name = "scoring_function_include",
+    name = "scoring_function",
     hdrs = [
         "scoring_function.h",
     ],
@@ -53,7 +53,7 @@ envoy_basic_cc_library(
 )
 
 envoy_basic_cc_library(
-    name = "step_controller_include",
+    name = "step_controller",
     hdrs = [
         "step_controller.h",
     ],
