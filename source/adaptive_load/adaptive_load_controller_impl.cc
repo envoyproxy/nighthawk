@@ -77,17 +77,26 @@ nighthawk::client::ExecutionResponse PerformNighthawkBenchmark(
  * Analyzes a single Nighthawk Service benchmark result against configured MetricThresholds.
  * Queries outside MetricsPlugins if configured and/or uses "nighthawk.builtin" plugin to check
  * Nighthawk Service stats and counters.
+ *
+ * @param nighthawk_response Proto returned from Nighthawk Service describing a single benchmark
+ * session.
+ * @param spec Top-level proto defining the entire adaptive load session.
+ * @param name_to_custom_metrics_plugin_map Map from plugin names to MetricsPlugins that were loaded
+ * and initialized at startup.
+ *
+ * @return BenchmarkResult Proto containing metric scores for this Nighthawk Service benchmark
+ * session.
  */
 BenchmarkResult AnalyzeNighthawkBenchmark(
     const nighthawk::client::ExecutionResponse& nighthawk_response,
     const AdaptiveLoadSessionSpec& spec,
-    const absl::flat_hash_map<std::string, MetricsPluginPtr>& name_to_custom_plugin_map) {
+    const absl::flat_hash_map<std::string, MetricsPluginPtr>& name_to_custom_metrics_plugin_map) {
   BenchmarkResult benchmark_result;
 
   *benchmark_result.mutable_nighthawk_service_output() = nighthawk_response.output();
 
   absl::flat_hash_map<std::string, MetricsPlugin*> name_to_plugin_map;
-  for (const auto& pair : name_to_custom_plugin_map) {
+  for (const auto& pair : name_to_custom_metrics_plugin_map) {
     name_to_plugin_map[pair.first] = pair.second.get();
   }
   auto builtin_plugin =
@@ -266,10 +275,10 @@ AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
     return output;
   }
 
-  absl::flat_hash_map<std::string, MetricsPluginPtr> name_to_custom_plugin_map;
+  absl::flat_hash_map<std::string, MetricsPluginPtr> name_to_custom_metrics_plugin_map;
   for (const envoy::config::core::v3::TypedExtensionConfig& config :
        spec.metrics_plugin_configs()) {
-    name_to_custom_plugin_map[config.name()] = LoadMetricsPlugin(config);
+    name_to_custom_metrics_plugin_map[config.name()] = LoadMetricsPlugin(config);
   }
 
   StepControllerPtr step_controller =
@@ -304,7 +313,7 @@ AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
                    step_controller->GetCurrentCommandLineOptions().DebugString());
 
     BenchmarkResult result = PerformAndAnalyzeNighthawkBenchmark(
-        nighthawk_service_stub, spec, name_to_custom_plugin_map,
+        nighthawk_service_stub, spec, name_to_custom_metrics_plugin_map,
         step_controller->GetCurrentCommandLineOptions(), spec.measuring_period());
 
     for (const MetricEvaluation& evaluation : result.metric_evaluations()) {
@@ -319,7 +328,7 @@ AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
                  step_controller->GetCurrentCommandLineOptions().DebugString());
 
   *output.mutable_testing_stage_result() = PerformAndAnalyzeNighthawkBenchmark(
-      nighthawk_service_stub, spec, name_to_custom_plugin_map,
+      nighthawk_service_stub, spec, name_to_custom_metrics_plugin_map,
       step_controller->GetCurrentCommandLineOptions(), spec.testing_stage_duration());
 
   for (const MetricEvaluation& evaluation : output.testing_stage_result().metric_evaluations()) {

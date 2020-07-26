@@ -2,30 +2,20 @@
 
 #include "nighthawk/common/exception.h"
 
+#include "external/envoy/source/common/filesystem/file_shared_impl.h"
+#include "external/envoy/test/mocks/filesystem/mocks.h"
 #include "external/envoy/test/test_common/file_system_for_test.h"
 #include "external/envoy/test/test_common/utility.h"
 
-// #include "external/envoy/test/mocks/event/mocks.h"
-#include "external/envoy/test/mocks/filesystem/mocks.h"
-
-// #include "envoy/source/common/filesystem/file_shared_impl.h"
-// #include "external/envoy/source/common/filesystem/posix/filesystem_impl.h"
-#include "envoy/filesystem/filesystem.h"
-// #include "external/envoy/source/common/filesystem/file_shared_impl.h"
-
-#include "common/filesystem/file_shared_impl.h"
+#include "api/adaptive_load/adaptive_load.pb.h"
 
 #include "test/adaptive_load/utility.h"
 #include "test/test_common/environment.h"
 
-#include "adaptive_load/adaptive_load_client_main.h"
-
 #include "absl/strings/string_view.h"
-
+#include "adaptive_load/adaptive_load_client_main.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-
-#include "api/adaptive_load/adaptive_load.pb.h"
 
 namespace Nighthawk {
 
