@@ -1,4 +1,4 @@
-// Command line adaptive RPS controller driving a Nighthawk Service.
+// Command line adaptive load controller driving a Nighthawk Service.
 #include <iostream>
 
 #include "nighthawk/common/exception.h"

@@ -194,7 +194,7 @@ absl::Status CheckSessionSpec(const nighthawk::adaptive_load::AdaptiveLoadSessio
               "and |testing_stage_duration| in the AdaptiveLoadSessionSpec proto instead.\n";
   }
   if (spec.nighthawk_traffic_template().has_open_loop()) {
-    errors += "nighthawk_traffic_template should not have |open_loop| set. Adaptive RPS always "
+    errors += "nighthawk_traffic_template should not have |open_loop| set. Adaptive Load always "
               "operates in open loop mode.\n";
   }
 
