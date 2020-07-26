@@ -36,8 +36,8 @@ public:
    */
   uint32_t run();
   /**
-    * Describes the program inputs as parsed from the command line.
-    */
+   * Describes the program inputs as parsed from the command line.
+   */
   std::string DescribeInputs();
 
 private:

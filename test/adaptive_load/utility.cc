@@ -1,7 +1,8 @@
 #include "test/adaptive_load/utility.h"
 
-#include "absl/time/time.h"
 #include "envoy/filesystem/filesystem.h"
+
+#include "absl/time/time.h"
 
 namespace Nighthawk {
 

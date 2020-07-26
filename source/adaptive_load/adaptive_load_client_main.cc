@@ -6,6 +6,7 @@
 #include <utility>
 
 #include "envoy/common/exception.h"
+
 #include "nighthawk/adaptive_load/adaptive_load_controller.h"
 #include "nighthawk/common/exception.h"
 
