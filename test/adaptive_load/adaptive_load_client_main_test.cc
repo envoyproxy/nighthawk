@@ -1,66 +1,40 @@
-#include <chrono>
-#include <iostream>
-
-#include "envoy/config/core/v3/base.pb.h"
 #include "envoy/filesystem/filesystem.h"
-#include "envoy/registry/registry.h"
-
-#include "nighthawk/adaptive_load/adaptive_load_controller.h"
-#include "nighthawk/adaptive_load/input_variable_setter.h"
-#include "nighthawk/adaptive_load/metrics_plugin.h"
-#include "nighthawk/adaptive_load/scoring_function.h"
-#include "nighthawk/adaptive_load/step_controller.h"
 #include "nighthawk/common/exception.h"
 
-#include "external/envoy/source/common/config/utility.h"
-#include "external/envoy/source/common/protobuf/message_validator_impl.h"
-#include "external/envoy/source/common/protobuf/protobuf.h"
-#include "external/envoy/source/common/protobuf/utility.h"
-#include "external/envoy/test/test_common/environment.h"
 #include "external/envoy/test/test_common/file_system_for_test.h"
 #include "external/envoy/test/test_common/utility.h"
+// #include "external/envoy/test/mocks/event/mocks.h"
+#include "external/envoy/test/mocks/filesystem/mocks.h"
 
-#include "api/adaptive_load/adaptive_load.pb.h"
-#include "api/adaptive_load/benchmark_result.pb.h"
-#include "api/adaptive_load/input_variable_setter_impl.pb.h"
-#include "api/adaptive_load/metric_spec.pb.h"
-#include "api/adaptive_load/metrics_plugin_impl.pb.h"
-#include "api/adaptive_load/scoring_function_impl.pb.h"
-#include "api/adaptive_load/step_controller_impl.pb.h"
-#include "api/client/options.pb.h"
-#include "api/client/output.pb.h"
-#include "api/client/service.grpc.pb.h"
-#include "api/client/service.pb.h"
-#include "api/client/service_mock.grpc.pb.h"
+// #include "envoy/source/common/filesystem/file_shared_impl.h"
+// #include "external/envoy/source/common/filesystem/posix/filesystem_impl.h"
+#include "envoy/filesystem/filesystem.h"
+// #include "external/envoy/source/common/filesystem/file_shared_impl.h"
 
-#include "common/statistic_impl.h"
-#include "common/version_info.h"
-
-#include "client/output_collector_impl.h"
-#include "client/output_formatter_impl.h"
+#include "common/filesystem/file_shared_impl.h"
 
 #include "test/adaptive_load/utility.h"
+#include "test/test_common/environment.h"
 
-#include "absl/container/flat_hash_map.h"
-#include "absl/status/status.h"
-#include "absl/strings/str_join.h"
-#include "absl/strings/str_replace.h"
 #include "adaptive_load/adaptive_load_client_main.h"
-#include "adaptive_load/metrics_plugin_impl.h"
-#include "adaptive_load/plugin_util.h"
-#include "adaptive_load/step_controller_impl.h"
-#include "grpcpp/test/mock_stream.h"
+
+#include "absl/strings/string_view.h"
+
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+
+#include "api/adaptive_load/adaptive_load.pb.h"
 
 namespace Nighthawk {
 
 namespace {
 
 using ::testing::_;
+using ::testing::ByMove;
 using ::testing::DoAll;
 using ::testing::Eq;
 using ::testing::HasSubstr;
+using ::testing::NiceMock;
 using ::testing::Return;
 using ::testing::SetArgPointee;
 
@@ -77,7 +51,7 @@ TEST(AdaptiveLoadClientMainTest, FailsWithNoInputs) {
 }
 
 TEST(AdaptiveLoadClientMainTest, FailsIfSpecFileNotSet) {
-  std::string outfile = Envoy::TestEnvironment::runfilesPath(std::string("nonexistent.textproto"));
+  std::string outfile = Nighthawk::TestEnvironment::runfilesPath("unused.textproto");
   const char* const argv[] = {
       "executable-name-here",
       "--output-file",
@@ -93,7 +67,7 @@ TEST(AdaptiveLoadClientMainTest, FailsIfSpecFileNotSet) {
 }
 
 TEST(AdaptiveLoadClientMainTest, FailsIfOutputFileNotSet) {
-  std::string infile = Envoy::TestEnvironment::runfilesPath(std::string("nonexistent.textproto"));
+  std::string infile = Nighthawk::TestEnvironment::runfilesPath("unused.textproto");
   const char* const argv[] = {
       "executable-name-here",
       "--spec-file",
@@ -109,8 +83,8 @@ TEST(AdaptiveLoadClientMainTest, FailsIfOutputFileNotSet) {
 }
 
 TEST(AdaptiveLoadClientMainTest, FailsWithNonexistentInputFile) {
-  std::string infile = Envoy::TestEnvironment::runfilesPath(std::string("nonexistent.textproto"));
-  std::string outfile = Envoy::TestEnvironment::runfilesPath(std::string("nonexistent.textproto"));
+  std::string infile = Nighthawk::TestEnvironment::runfilesPath("nonexistent.textproto");
+  std::string outfile = Nighthawk::TestEnvironment::runfilesPath("unused.textproto");
   const char* const argv[] = {
       "executable-name-here", "--spec-file", infile.c_str(), "--output-file", outfile.c_str(),
   };
@@ -124,9 +98,9 @@ TEST(AdaptiveLoadClientMainTest, FailsWithNonexistentInputFile) {
 }
 
 TEST(AdaptiveLoadClientMainTest, FailsWithUnparseableInputFile) {
-  std::string infile = Envoy::TestEnvironment::runfilesPath(
-      std::string("test/adaptive_load/test_data/invalid_session_spec.textproto"));
-  std::string outfile = Envoy::TestEnvironment::runfilesPath(std::string("nonexistent.textproto"));
+  std::string infile = Nighthawk::TestEnvironment::runfilesPath(
+      "test/adaptive_load/test_data/invalid_session_spec.textproto");
+  std::string outfile = Nighthawk::TestEnvironment::runfilesPath("unused.textproto");
   const char* const argv[] = {
       "executable-name-here", "--spec-file", infile.c_str(), "--output-file", outfile.c_str(),
   };
@@ -139,10 +113,10 @@ TEST(AdaptiveLoadClientMainTest, FailsWithUnparseableInputFile) {
 }
 
 TEST(AdaptiveLoadClientMainTest, FailsWithUnwritableOutputFile) {
-  std::string infile = Envoy::TestEnvironment::runfilesPath(
-      std::string("test/adaptive_load/test_data/valid_session_spec.textproto"));
-  std::string outfile = Envoy::TestEnvironment::runfilesPath(
-      std::string("test/adaptive_load/nonexistent-dir/out.textproto"));
+  std::string infile = Nighthawk::TestEnvironment::runfilesPath(
+      "test/adaptive_load/test_data/valid_session_spec.textproto");
+  std::string outfile = Nighthawk::TestEnvironment::runfilesPath(
+      "test/adaptive_load/test_data/nonexistent-dir/out.textproto");
   const char* const argv[] = {
       "executable-name-here", "--spec-file", infile.c_str(), "--output-file", outfile.c_str(),
   };
@@ -152,6 +126,115 @@ TEST(AdaptiveLoadClientMainTest, FailsWithUnwritableOutputFile) {
 
   AdaptiveLoadClientMain main(5, argv, filesystem, time_source);
   EXPECT_THROW_WITH_REGEX(main.run(), Nighthawk::NighthawkException, "Unable to .* output file");
+}
+
+void ConfigureMockInputFile(NiceMock<Envoy::Filesystem::MockInstance>& filesystem,
+                            const std::string& file_contents) {
+  EXPECT_CALL(filesystem, fileReadToEnd(_)).WillOnce(Return(file_contents));
+}
+
+void ConfigureMockOutputFile(NiceMock<Envoy::Filesystem::MockInstance>& filesystem,
+                             std::string& outfile_contents) {
+  NiceMock<Envoy::Filesystem::MockFile>* file = new NiceMock<Envoy::Filesystem::MockFile>;
+  EXPECT_CALL(filesystem, createFile(_))
+      .WillOnce(Return(ByMove(std::unique_ptr<NiceMock<Envoy::Filesystem::MockFile>>(file))));
+
+  EXPECT_CALL(*file, open_(_))
+      .WillOnce(Return(ByMove(Envoy::Filesystem::resultSuccess<bool>(true))));
+  EXPECT_CALL(*file, write_(_))
+      .WillRepeatedly(
+          Invoke([&outfile_contents](absl::string_view data) -> Envoy::Api::IoCallSizeResult {
+            outfile_contents += data;
+            return Envoy::Filesystem::resultSuccess<ssize_t>(static_cast<ssize_t>(data.length()));
+          }));
+
+  EXPECT_CALL(*file, close_())
+      .WillOnce(Return(ByMove(Envoy::Filesystem::resultSuccess<bool>(true))));
+}
+
+TEST(AdaptiveLoadClientMainTest, WritesOutputProtoToFile) {
+  const char* const argv[] = {
+      "executable-name-here", "--spec-file",         "in-dummy.textproto",
+      "--output-file",        "out-dummy.textproto",
+  };
+
+  FakeIncrementingMonotonicTimeSource time_source;
+
+  NiceMock<Envoy::Filesystem::MockInstance> filesystem;
+
+  std::string infile_contents =
+      Envoy::Filesystem::fileSystemForTest().fileReadToEnd(Nighthawk::TestEnvironment::runfilesPath(
+          std::string("test/adaptive_load/test_data/valid_session_spec.textproto")));
+  ConfigureMockInputFile(filesystem, infile_contents);
+
+  std::string actual_outfile_contents;
+  ConfigureMockOutputFile(filesystem, actual_outfile_contents);
+
+  AdaptiveLoadClientMain main(5, argv, filesystem, time_source);
+  main.run();
+
+  std::string golden_output =
+      Envoy::Filesystem::fileSystemForTest().fileReadToEnd(Nighthawk::TestEnvironment::runfilesPath(
+          std::string("test/adaptive_load/test_data/golden_output.textproto")));
+  EXPECT_EQ(actual_outfile_contents, golden_output);
+}
+
+TEST(AdaptiveLoadClientMainTest, DefaultsToInsecureConnection) {
+  const char* const argv[] = {
+      "executable-name-here", "--spec-file", "a", "--output-file", "b",
+  };
+
+  Envoy::Filesystem::Instance& filesystem = Envoy::Filesystem::fileSystemForTest();
+  FakeIncrementingMonotonicTimeSource time_source;
+
+  AdaptiveLoadClientMain main(5, argv, filesystem, time_source);
+
+  EXPECT_THAT(main.DescribeInputs(), HasSubstr("insecure"));
+}
+
+TEST(AdaptiveLoadClientMainTest, UsesTlsConnectionWhenSpecified) {
+  const char* const argv[] = {
+      "executable-name-here", "--use-tls", "--spec-file", "a", "--output-file", "b",
+  };
+
+  Envoy::Filesystem::Instance& filesystem = Envoy::Filesystem::fileSystemForTest();
+  FakeIncrementingMonotonicTimeSource time_source;
+
+  AdaptiveLoadClientMain main(6, argv, filesystem, time_source);
+
+  EXPECT_THAT(main.DescribeInputs(), HasSubstr("TLS"));
+}
+
+TEST(AdaptiveLoadClientMainTest, UsesDefaultNighthawkServiceAddress) {
+  const char* const argv[] = {
+      "executable-name-here", "--spec-file", "a", "--output-file", "b",
+  };
+
+  Envoy::Filesystem::Instance& filesystem = Envoy::Filesystem::fileSystemForTest();
+  FakeIncrementingMonotonicTimeSource time_source;
+
+  AdaptiveLoadClientMain main(5, argv, filesystem, time_source);
+
+  EXPECT_THAT(main.DescribeInputs(), HasSubstr("localhost:8443"));
+}
+
+TEST(AdaptiveLoadClientMainTest, UsesCustomNighthawkServiceAddress) {
+  const char* const argv[] = {
+      "executable-name-here",
+      "--nighthawk-service-address",
+      "1.2.3.4:5678",
+      "--spec-file",
+      "a",
+      "--output-file",
+      "b",
+  };
+
+  Envoy::Filesystem::Instance& filesystem = Envoy::Filesystem::fileSystemForTest();
+  FakeIncrementingMonotonicTimeSource time_source;
+
+  AdaptiveLoadClientMain main(7, argv, filesystem, time_source);
+
+  EXPECT_THAT(main.DescribeInputs(), HasSubstr("1.2.3.4:5678"));
 }
 
 } // namespace

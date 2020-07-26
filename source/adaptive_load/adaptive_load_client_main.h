@@ -35,9 +35,14 @@ public:
    * @throw Nighthawk::NighthawkException If a file read or write error occurs.
    */
   uint32_t run();
+  /**
+    * Describes the program inputs as parsed from the command line.
+    */
+  std::string DescribeInputs();
 
 private:
   std::string nighthawk_service_address_;
+  bool use_tls_;
   std::string spec_filename_;
   std::string output_filename_;
   Envoy::Filesystem::Instance& filesystem_;

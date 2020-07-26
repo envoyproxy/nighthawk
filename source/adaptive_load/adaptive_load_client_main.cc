@@ -1,14 +1,10 @@
 #include "adaptive_load/adaptive_load_client_main.h"
 
 #include <cstring>
-#include <fstream>
-#include <iostream>
 #include <memory>
 #include <string>
 #include <utility>
 
-//  "third_party/envoy/src/include/envoy/filesystem/filesystem.h"
-// #include "envoy/filesystem/filesystem.h"
 #include "envoy/common/exception.h"
 #include "nighthawk/adaptive_load/adaptive_load_controller.h"
 #include "nighthawk/common/exception.h"
@@ -38,19 +34,19 @@ namespace {
  */
 void WriteFileOrThrow(Envoy::Filesystem::Instance& filesystem, std::string& path,
                       std::string& contents) {
-  Envoy::Filesystem::FilePtr out_file = filesystem.createFile(path);
+  Envoy::Filesystem::FilePtr file = filesystem.createFile(path);
   const Envoy::Api::IoCallBoolResult open_result =
-      out_file->open(1 << Envoy::Filesystem::File::Operation::Write);
+      file->open(1 << Envoy::Filesystem::File::Operation::Write);
   if (!open_result.ok()) {
     throw Nighthawk::NighthawkException("Unable to open output file \"" + path +
                                         "\": " + open_result.err_->getErrorDetails());
   }
-  const Envoy::Api::IoCallSizeResult write_result = out_file->write(contents);
+  const Envoy::Api::IoCallSizeResult write_result = file->write(contents);
   if (!write_result.ok()) {
     throw Nighthawk::NighthawkException("Unable to write output file \"" + path +
                                         "\": " + write_result.err_->getErrorDetails());
   }
-  const Envoy::Api::IoCallBoolResult close_result = out_file->close();
+  const Envoy::Api::IoCallBoolResult close_result = file->close();
   if (!close_result.ok()) {
     throw Nighthawk::NighthawkException("Unable to close output file \"" + path +
                                         "\": " + close_result.err_->getErrorDetails());
@@ -63,34 +59,41 @@ AdaptiveLoadClientMain::AdaptiveLoadClientMain(int argc, const char* const* argv
                                                Envoy::Filesystem::Instance& filesystem,
                                                Envoy::TimeSource& time_source)
     : filesystem_{filesystem}, time_source_{time_source} {
-  const char* descr =
-      "Adaptive Load Controller tool that finds optimal load by sending a series of requests to "
-      "a Nighthawk Service.";
+  TCLAP::CmdLine cmd(
+      "Adaptive Load Controller tool that finds optimal load by sending a series of requests via "
+      "a Nighthawk Service.",
+      /*delimiter=*/' ', VersionInfo::version());
 
-  TCLAP::CmdLine cmd(descr, ' ', VersionInfo::version()); // NOLINT
-
-  TCLAP::ValueArg<std::string> nighthawk_service_address("", "nighthawk-service-address",
-                                                         "host:port for Nighthawk Service.", false,
-                                                         "localhost:8443", "string", cmd);
+  TCLAP::ValueArg<std::string> nighthawk_service_address(
+      /*flag_name=*/"", "nighthawk-service-address",
+      "host:port for Nighthawk Service. To enable TLS, set --use-tls.",
+      /*required=*/false, "localhost:8443", "string", cmd);
+  TCLAP::SwitchArg use_tls(
+      /*flag_name=*/"", "use-tls",
+      "Use TLS for the gRPC connection from this program to the Nighthawk Service. Set environment "
+      "variable GRPC_DEFAULT_SSL_ROOTS_FILE_PATH to override the default root certificates.",
+      cmd);
   TCLAP::ValueArg<std::string> spec_filename(
-      "", "spec-file",
+      /*flag_name=*/"", "spec-file",
       "Path to a textproto file describing the adaptive load session "
       "(nighthawk::adaptive_load::AdaptiveLoadSessionSpec).",
-      true, "", "string", cmd);
+      /*required=*/true, /*default_value=*/"", "string", cmd);
   TCLAP::ValueArg<std::string> output_filename(
-      "", "output-file",
+      /*flag_name=*/"", "output-file",
       "Path to write adaptive load session output textproto "
       "(nighthawk::adaptive_load::AdaptiveLoadSessionOutput).",
-      true, "", "string", cmd);
+      /*required=*/true, /*default_value=*/"", "string", cmd);
 
   Nighthawk::Utility::parseCommand(cmd, argc, argv);
 
   nighthawk_service_address_ = nighthawk_service_address.getValue();
+  use_tls_ = use_tls.getValue();
   spec_filename_ = spec_filename.getValue();
   output_filename_ = output_filename.getValue();
 }
 
 uint32_t AdaptiveLoadClientMain::run() {
+  ENVOY_LOG(info, "Attempting adaptive load session: {}", DescribeInputs());
   std::string spec_textproto;
   try {
     spec_textproto = filesystem_.fileReadToEnd(spec_filename_);
@@ -100,13 +103,15 @@ uint32_t AdaptiveLoadClientMain::run() {
   }
 
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
+
   if (!Envoy::Protobuf::TextFormat::ParseFromString(spec_textproto, &spec)) {
     throw Nighthawk::NighthawkException("Unable to parse file \"" + spec_filename_ +
                                         "\" as a text protobuf (type " + spec.GetTypeName() + ")");
   }
 
-  std::shared_ptr<::grpc_impl::Channel> channel =
-      ::grpc::CreateChannel(nighthawk_service_address_, ::grpc::InsecureChannelCredentials());
+  std::shared_ptr<::grpc_impl::Channel> channel = grpc::CreateChannel(
+      nighthawk_service_address_, use_tls_ ? grpc::SslCredentials(grpc::SslCredentialsOptions())
+                                           : grpc::InsecureChannelCredentials());
 
   std::unique_ptr<nighthawk::client::NighthawkService::StubInterface> stub(
       nighthawk::client::NighthawkService::NewStub(channel));
@@ -119,9 +124,15 @@ uint32_t AdaptiveLoadClientMain::run() {
   WriteFileOrThrow(filesystem_, output_filename_, output_textproto);
 
   if (output.session_status().code() != 0) {
-    std::cerr << output.session_status().message() << "\n";
+    ENVOY_LOG(error, "Error in adaptive load session: {}", output.session_status().message());
   }
   return 0;
+}
+
+std::string AdaptiveLoadClientMain::DescribeInputs() {
+  return "Nighthawk Service " + nighthawk_service_address_ + " using " +
+         (use_tls_ ? "TLS" : "insecure") + " connection, input file: " + spec_filename_ +
+         ", output file: " + output_filename_;
 }
 
 } // namespace Nighthawk

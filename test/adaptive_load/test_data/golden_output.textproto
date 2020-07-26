@@ -1,6 +1,19 @@
+session_status {
+  code: 10
+  message: "Step controller determined that it can never converge: Outside threshold on initial input"
+}
+adjusting_stage_results {
+  nighthawk_service_output {
+  }
+  status {
+    code: 14
+    message: "failed to connect to all addresses"
+  }
+}
 metric_thresholds {
   metric_spec {
     metric_name: "success-rate"
+    metrics_plugin_name: "nighthawk.builtin"
   }
   threshold_spec {
     scoring_function {
@@ -13,20 +26,8 @@ metric_thresholds {
         }
       }
     }
-  }
-}
-
-nighthawk_traffic_template {
-  uri {
-    value: "/"
-  }
-}
-
-step_controller_config {
-  name: "nighthawk.exponential-search"
-  typed_config {
-    [type.googleapis.com/nighthawk.adaptive_load.ExponentialSearchStepControllerConfig] {
-      initial_value: 10.0
+    weight {
+      value: 1
     }
   }
 }
