@@ -1,6 +1,6 @@
 session_status {
   code: 10
-  message: "Step controller determined that it can never converge: Outside threshold on initial input"
+  message: "Step controller determined that it can never converge: Nighthawk Service returned an error."
 }
 adjusting_stage_results {
   nighthawk_service_output {

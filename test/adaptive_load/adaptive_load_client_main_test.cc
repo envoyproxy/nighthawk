@@ -153,8 +153,8 @@ TEST(AdaptiveLoadClientMainTest, WritesOutputProtoToFile) {
   EXPECT_CALL(*file, open_(_))
       .WillOnce(Return(ByMove(Envoy::Filesystem::resultSuccess<bool>(true))));
   EXPECT_CALL(*file, write_(_))
-      .WillRepeatedly(
-          Invoke([&actual_outfile_contents](absl::string_view data) -> Envoy::Api::IoCallSizeResult {
+      .WillRepeatedly(Invoke(
+          [&actual_outfile_contents](absl::string_view data) -> Envoy::Api::IoCallSizeResult {
             actual_outfile_contents += data;
             return Envoy::Filesystem::resultSuccess<ssize_t>(static_cast<ssize_t>(data.length()));
           }));

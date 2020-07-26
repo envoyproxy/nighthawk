@@ -11,6 +11,7 @@
 
 #include "adaptive_load/plugin_util.h"
 #include "adaptive_load/step_controller_impl.h"
+#include "google/rpc/code.pb.h"
 #include "gtest/gtest.h"
 
 namespace Nighthawk {
@@ -30,6 +31,12 @@ nighthawk::adaptive_load::BenchmarkResult MakeBenchmarkResultWithinThreshold() {
   nighthawk::adaptive_load::MetricEvaluation* evaluation = result.add_metric_evaluations();
   evaluation->set_threshold_score(1.0);
   evaluation->set_weight(10.0);
+  return result;
+}
+
+nighthawk::adaptive_load::BenchmarkResult MakeBenchmarkResultWithNighthawkError() {
+  nighthawk::adaptive_load::BenchmarkResult result;
+  result.mutable_status()->set_code(google::rpc::Code::UNKNOWN);
   return result;
 }
 
@@ -143,7 +150,20 @@ TEST(ExponentialSearchStepControllerTest, ReportsDoomIfOutsideThresholdsOnInitia
 
   std::string doom_reason;
   EXPECT_TRUE(step_controller.IsDoomed(&doom_reason));
-  EXPECT_EQ(doom_reason, "Outside threshold on initial input");
+  EXPECT_EQ(doom_reason, "Outside threshold on initial input.");
+}
+
+TEST(ExponentialSearchStepControllerTest, ReportsDoomAfterNighthawkServiceError) {
+  nighthawk::adaptive_load::ExponentialSearchStepControllerConfig config;
+  config.set_initial_value(100.0);
+  nighthawk::client::CommandLineOptions options_template;
+  ExponentialSearchStepController step_controller(config, options_template);
+
+  step_controller.UpdateAndRecompute(MakeBenchmarkResultWithNighthawkError());
+
+  std::string doom_reason;
+  EXPECT_TRUE(step_controller.IsDoomed(&doom_reason));
+  EXPECT_EQ(doom_reason, "Nighthawk Service returned an error.");
 }
 
 TEST(ExponentialSearchStepControllerTest,

@@ -34,7 +34,8 @@ public:
    * @return bool Whether the load has converged.
    */
   virtual bool IsConverged() const PURE;
-  /** Reports if the algorithm has determined it can never succeed as configured, e.g. because
+  /**
+   * Reports if the algorithm has determined it can never succeed as configured, e.g. because
    * metrics were outside thresholds at input values throughout the configured search range.
    *
    * @param doom_reason Pointer to a string to write the reason for being doomed. If returning true,

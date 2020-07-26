@@ -50,7 +50,7 @@ envoy_cc_test(
     srcs = ["adaptive_load_controller_test.cc"],
     repository = "@envoy",
     deps = [
-        "//include/nighthawk/adaptive_load:step_controller_include",
+        "//include/nighthawk/adaptive_load:step_controller",
         "//source/adaptive_load:adaptive_load_controller_impl_lib",
         "//source/adaptive_load:scoring_function_impl_lib",
         "//test/adaptive_load:utility_lib",

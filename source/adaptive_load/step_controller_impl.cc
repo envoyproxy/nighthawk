@@ -102,6 +102,10 @@ bool ExponentialSearchStepController::IsDoomed(std::string* doom_reason) const {
 }
 
 void ExponentialSearchStepController::UpdateAndRecompute(const BenchmarkResult& benchmark_result) {
+  if (benchmark_result.status().code()) {
+    doom_reason_ = "Nighthawk Service returned an error.";
+    return;
+  }
   double score = TotalWeightedScore(benchmark_result);
 
   if (is_exponential_phase_) {
@@ -114,7 +118,7 @@ void ExponentialSearchStepController::UpdateAndRecompute(const BenchmarkResult& 
       // Prepare for the binary search phase.
       if (std::isnan(previous_load_value_)) {
         // Cannot continue if the initial value already exceeds metric thresholds.
-        doom_reason_ = "Outside threshold on initial input";
+        doom_reason_ = "Outside threshold on initial input.";
         return;
       }
       is_exponential_phase_ = false;
