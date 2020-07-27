@@ -103,21 +103,21 @@ OutputFormatterPtr OutputFormatterFactoryImpl::create(
     NOT_REACHED_GCOVR_EXCL_LINE;
   }
 }
-RequestSourceConstructorImpl::RequestSourceConstructorImpl(const Envoy::Upstream::ClusterManagerPtr& cluster_manager,
-                          Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
-                          absl::string_view service_cluster_name) : cluster_manager_(cluster_manager), dispatcher_(dispatcher), scope_(scope), service_cluster_name_(service_cluster_name)
-                          {
-                          }
-RequestSourcePtr RequestSourceConstructorImpl::createStaticRequestSource(Envoy::Http::RequestHeaderMapPtr&& base_header,
-                          const uint64_t max_yields) const 
-                          {
-                               return std::make_unique<StaticRequestSourceImpl>(std::move(base_header), max_yields); 
-                          }
-RequestSourcePtr RequestSourceConstructorImpl::createRemoteRequestSource(Envoy::Http::RequestHeaderMapPtr&& base_header,
-                          uint32_t header_buffer_length) const
-                          {
-                            return std::make_unique<RemoteRequestSourceImpl>(cluster_manager_, dispatcher_, scope_, service_cluster_name_, std::move(base_header), header_buffer_length); 
-                          }
+RequestSourceConstructorImpl::RequestSourceConstructorImpl(
+    const Envoy::Upstream::ClusterManagerPtr& cluster_manager, Envoy::Event::Dispatcher& dispatcher,
+    Envoy::Stats::Scope& scope, absl::string_view service_cluster_name)
+    : cluster_manager_(cluster_manager), dispatcher_(dispatcher), scope_(scope),
+      service_cluster_name_(service_cluster_name) {}
+RequestSourcePtr RequestSourceConstructorImpl::createStaticRequestSource(
+    Envoy::Http::RequestHeaderMapPtr&& base_header, const uint64_t max_yields) const {
+  return std::make_unique<StaticRequestSourceImpl>(std::move(base_header), max_yields);
+}
+RequestSourcePtr RequestSourceConstructorImpl::createRemoteRequestSource(
+    Envoy::Http::RequestHeaderMapPtr&& base_header, uint32_t header_buffer_length) const {
+  return std::make_unique<RemoteRequestSourceImpl>(cluster_manager_, dispatcher_, scope_,
+                                                   service_cluster_name_, std::move(base_header),
+                                                   header_buffer_length);
+}
 
 RequestSourceFactoryImpl::RequestSourceFactoryImpl(const Options& options)
     : OptionBasedFactoryImpl(options) {}
@@ -135,7 +135,8 @@ RequestSourcePtr
 RequestSourceFactoryImpl::create(const Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                                  Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
                                  absl::string_view service_cluster_name) const {
-  RequestSourceConstructorImpl request_source_constructor(cluster_manager, dispatcher, scope, service_cluster_name);                                 
+  RequestSourceConstructorImpl request_source_constructor(cluster_manager, dispatcher, scope,
+                                                          service_cluster_name);
   Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
   if (options_.uri().has_value()) {
     // We set headers based on the URI, but we don't have all the prerequisites to call the
@@ -173,13 +174,14 @@ RequestSourceFactoryImpl::create(const Envoy::Upstream::ClusterManagerPtr& clust
   }
 
   if (options_.requestSource() == "") {
-      return request_source_constructor.createStaticRequestSource(std::move(header));
-//    return std::make_unique<StaticRequestSourceImpl>(std::move(header));
+    return request_source_constructor.createStaticRequestSource(std::move(header));
+    //    return std::make_unique<StaticRequestSourceImpl>(std::move(header));
   } else {
     RELEASE_ASSERT(!service_cluster_name.empty(), "expected cluster name to be set");
     // We pass in options_.requestsPerSecond() as the header buffer length so the grpc client
     // will shoot for maintaining an amount of headers of at least one second.
-    return request_source_constructor.createRemoteRequestSource(std::move(header), options_.requestsPerSecond());
+    return request_source_constructor.createRemoteRequestSource(std::move(header),
+                                                                options_.requestsPerSecond());
     // return std::make_unique<RemoteRequestSourceImpl>(cluster_manager, dispatcher, scope,
     //                                                  service_cluster_name, std::move(header),
     //                                                  options_.requestsPerSecond());

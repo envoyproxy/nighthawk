@@ -56,20 +56,21 @@ public:
   create(const nighthawk::client::OutputFormat_OutputFormatOptions output_format) const override;
 };
 class RequestSourceConstructorImpl : public RequestSourceConstructorInterface {
-public: 
-    virtual ~RequestSourceConstructorImpl() = default;
-    RequestSourceConstructorImpl(const Envoy::Upstream::ClusterManagerPtr& cluster_manager,
-                          Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
-                          absl::string_view service_cluster_name);
-    RequestSourcePtr createStaticRequestSource(Envoy::Http::RequestHeaderMapPtr&& base_header,
-                          const uint64_t max_yields = UINT64_MAX) const override;
-    RequestSourcePtr createRemoteRequestSource(Envoy::Http::RequestHeaderMapPtr&& base_header,
-                          uint32_t header_buffer_length) const override;
+public:
+  virtual ~RequestSourceConstructorImpl() = default;
+  RequestSourceConstructorImpl(const Envoy::Upstream::ClusterManagerPtr& cluster_manager,
+                               Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
+                               absl::string_view service_cluster_name);
+  RequestSourcePtr createStaticRequestSource(Envoy::Http::RequestHeaderMapPtr&& base_header,
+                                             const uint64_t max_yields = UINT64_MAX) const override;
+  RequestSourcePtr createRemoteRequestSource(Envoy::Http::RequestHeaderMapPtr&& base_header,
+                                             uint32_t header_buffer_length) const override;
+
 protected:
-    const Envoy::Upstream::ClusterManagerPtr& cluster_manager_;
-    Envoy::Event::Dispatcher& dispatcher_;
-    Envoy::Stats::Scope& scope_;
-    absl::string_view service_cluster_name_;
+  const Envoy::Upstream::ClusterManagerPtr& cluster_manager_;
+  Envoy::Event::Dispatcher& dispatcher_;
+  Envoy::Stats::Scope& scope_;
+  absl::string_view service_cluster_name_;
 };
 class RequestSourceFactoryImpl : public OptionBasedFactoryImpl, public RequestSourceFactory {
 public:
