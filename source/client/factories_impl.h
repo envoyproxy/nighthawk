@@ -75,7 +75,8 @@ protected:
 class RequestSourceFactoryImpl : public OptionBasedFactoryImpl, public RequestSourceFactory {
 public:
   RequestSourceFactoryImpl(const Options& options);
-  RequestSourcePtr create(const RequestSourceConstructorInterface& request_source_constructor) const override;
+  RequestSourcePtr
+  create(const RequestSourceConstructorInterface& request_source_constructor) const override;
 
 private:
   void setRequestHeader(Envoy::Http::RequestHeaderMap& header, absl::string_view key,

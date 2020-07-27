@@ -132,8 +132,8 @@ void RequestSourceFactoryImpl::setRequestHeader(Envoy::Http::RequestHeaderMap& h
   header.addCopy(lower_case_key, std::string(value));
 }
 
-RequestSourcePtr
-RequestSourceFactoryImpl::create(const RequestSourceConstructorInterface& request_source_constructor) const {
+RequestSourcePtr RequestSourceFactoryImpl::create(
+    const RequestSourceConstructorInterface& request_source_constructor) const {
   Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
   if (options_.uri().has_value()) {
     // We set headers based on the URI, but we don't have all the prerequisites to call the

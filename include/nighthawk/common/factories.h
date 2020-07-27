@@ -45,7 +45,8 @@ public:
 class RequestSourceFactory {
 public:
   virtual ~RequestSourceFactory() = default;
-  virtual RequestSourcePtr create(const RequestSourceConstructorInterface& request_source_constructor) const PURE;
+  virtual RequestSourcePtr
+  create(const RequestSourceConstructorInterface& request_source_constructor) const PURE;
 };
 
 class TerminationPredicateFactory {

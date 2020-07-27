@@ -1,11 +1,13 @@
 #include "client/client_worker_impl.h"
-#include "client/factories_impl.h"
 
 #include "external/envoy/source/common/stats/symbol_table_impl.h"
+
 #include "common/cached_time_source_impl.h"
 #include "common/phase_impl.h"
 #include "common/termination_predicate_impl.h"
 #include "common/utility.h"
+
+#include "client/factories_impl.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -28,9 +30,9 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
       sequencer_factory_(sequencer_factory), worker_scope_(store_.createScope("cluster.")),
       worker_number_scope_(worker_scope_->createScope(fmt::format("{}.", worker_number))),
       worker_number_(worker_number), http_tracer_(http_tracer),
-      request_generator_(
-          request_generator_factory.create(RequestSourceConstructorImpl(cluster_manager, *dispatcher_, *worker_number_scope_,
-                                           fmt::format("{}.requestsource", worker_number)))),
+      request_generator_(request_generator_factory.create(
+          RequestSourceConstructorImpl(cluster_manager, *dispatcher_, *worker_number_scope_,
+                                       fmt::format("{}.requestsource", worker_number)))),
       benchmark_client_(benchmark_client_factory.create(
           api, *dispatcher_, *worker_number_scope_, cluster_manager, http_tracer_,
           fmt::format("{}", worker_number), *request_generator_)),
