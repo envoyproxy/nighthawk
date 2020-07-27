@@ -16,6 +16,6 @@ api_cc_py_proto_library(
     visibility = ["//visibility:public"],
     deps = [
         "@envoy_api//envoy/config/core/v3:pkg",
-        "@nighthawk//api/client:base",
+        "//api/client:base",
     ],
 )
