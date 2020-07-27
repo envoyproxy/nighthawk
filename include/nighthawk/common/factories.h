@@ -45,9 +45,7 @@ public:
 class RequestSourceFactory {
 public:
   virtual ~RequestSourceFactory() = default;
-  virtual RequestSourcePtr create(const Envoy::Upstream::ClusterManagerPtr& cluster_manager,
-                                  Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
-                                  absl::string_view service_cluster_name) const PURE;
+  virtual RequestSourcePtr create(const RequestSourceConstructorInterface& request_source_constructor) const PURE;
 };
 
 class TerminationPredicateFactory {

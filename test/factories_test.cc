@@ -62,8 +62,9 @@ TEST_F(FactoriesTest, CreateRequestSource) {
   EXPECT_CALL(options_, toCommandLineOptions()).Times(1).WillOnce(Return(ByMove(std::move(cmd))));
   RequestSourceFactoryImpl factory(options_);
   Envoy::Upstream::ClusterManagerPtr cluster_manager;
-  auto request_generator = factory.create(cluster_manager, dispatcher_,
+  RequestSourceConstructorImpl constructor(cluster_manager, dispatcher_,
                                           *stats_store_.createScope("foo."), "requestsource");
+  auto request_generator = factory.create(constructor);
   EXPECT_NE(nullptr, request_generator.get());
 }
 

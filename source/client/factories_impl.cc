@@ -114,6 +114,7 @@ RequestSourcePtr RequestSourceConstructorImpl::createStaticRequestSource(
 }
 RequestSourcePtr RequestSourceConstructorImpl::createRemoteRequestSource(
     Envoy::Http::RequestHeaderMapPtr&& base_header, uint32_t header_buffer_length) const {
+  RELEASE_ASSERT(!service_cluster_name_.empty(), "expected cluster name to be set");
   return std::make_unique<RemoteRequestSourceImpl>(cluster_manager_, dispatcher_, scope_,
                                                    service_cluster_name_, std::move(base_header),
                                                    header_buffer_length);
@@ -132,11 +133,7 @@ void RequestSourceFactoryImpl::setRequestHeader(Envoy::Http::RequestHeaderMap& h
 }
 
 RequestSourcePtr
-RequestSourceFactoryImpl::create(const Envoy::Upstream::ClusterManagerPtr& cluster_manager,
-                                 Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
-                                 absl::string_view service_cluster_name) const {
-  RequestSourceConstructorImpl request_source_constructor(cluster_manager, dispatcher, scope,
-                                                          service_cluster_name);
+RequestSourceFactoryImpl::create(const RequestSourceConstructorInterface& request_source_constructor) const {
   Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
   if (options_.uri().has_value()) {
     // We set headers based on the URI, but we don't have all the prerequisites to call the
@@ -177,7 +174,6 @@ RequestSourceFactoryImpl::create(const Envoy::Upstream::ClusterManagerPtr& clust
     return request_source_constructor.createStaticRequestSource(std::move(header));
     //    return std::make_unique<StaticRequestSourceImpl>(std::move(header));
   } else {
-    RELEASE_ASSERT(!service_cluster_name.empty(), "expected cluster name to be set");
     // We pass in options_.requestsPerSecond() as the header buffer length so the grpc client
     // will shoot for maintaining an amount of headers of at least one second.
     return request_source_constructor.createRemoteRequestSource(std::move(header),
