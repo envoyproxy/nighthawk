@@ -39,6 +39,7 @@ envoy_cc_test(
         "//test/test_common:environment_lib",
         "@com_github_grpc_grpc//:grpc++_test",
         "@envoy//source/common/filesystem:filesystem_lib",
+        # "@envoy//source/common/filesystem:filesystem_lib_with_external_headers",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
         "@envoy//test/mocks/filesystem:filesystem_mocks",
         "@envoy//test/test_common:utility_lib",

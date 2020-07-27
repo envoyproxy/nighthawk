@@ -37,7 +37,8 @@ void WriteFileOrThrow(Envoy::Filesystem::Instance& filesystem, std::string& path
                       std::string& contents) {
   Envoy::Filesystem::FilePtr file = filesystem.createFile(path);
   const Envoy::Api::IoCallBoolResult open_result =
-      file->open(1 << Envoy::Filesystem::File::Operation::Write);
+      file->open((1 << Envoy::Filesystem::File::Operation::Write) |
+                 1 << (Envoy::Filesystem::File::Operation::Create));
   if (!open_result.ok()) {
     throw Nighthawk::NighthawkException("Unable to open output file \"" + path +
                                         "\": " + open_result.err_->getErrorDetails());

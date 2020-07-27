@@ -2,7 +2,9 @@
 
 #include "nighthawk/common/exception.h"
 
-#include "external/envoy/source/common/filesystem/file_shared_impl.h"
+#include "common/filesystem/file_shared_impl.h"  // fails check_format
+// #include "external/envoy/source/common/filesystem/file_shared_impl.h" // check_format possible fix
+
 #include "external/envoy/test/mocks/filesystem/mocks.h"
 #include "external/envoy/test/test_common/file_system_for_test.h"
 #include "external/envoy/test/test_common/utility.h"
