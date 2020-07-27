@@ -32,6 +32,15 @@ public:
   virtual StatisticPtr create() const PURE;
 };
 
+class RequestSourceConstructorInterface {
+  public:
+    virtual ~RequestSourceConstructorInterface() = default;
+    virtual RequestSourcePtr createStaticRequestSource(Envoy::Http::RequestHeaderMapPtr&&,
+                          const uint64_t max_yields = UINT64_MAX) const PURE;
+    virtual RequestSourcePtr createRemoteRequestSource(Envoy::Http::RequestHeaderMapPtr&& base_header,
+                          uint32_t header_buffer_length) const PURE;
+};
+
 class RequestSourceFactory {
 public:
   virtual ~RequestSourceFactory() = default;
