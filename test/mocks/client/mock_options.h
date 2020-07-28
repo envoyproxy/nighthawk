@@ -52,6 +52,8 @@ public:
   MOCK_CONST_METHOD0(labels, std::vector<std::string>());
   MOCK_CONST_METHOD0(simpleWarmup, bool());
   MOCK_CONST_METHOD0(noDuration, bool());
+  MOCK_CONST_METHOD0(statsSinks, std::vector<envoy::config::metrics::v3::StatsSink>());
+  MOCK_CONST_METHOD0(statsFlushInterval, uint32_t());
 };
 
 } // namespace Client

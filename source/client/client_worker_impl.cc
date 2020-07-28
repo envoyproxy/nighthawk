@@ -33,7 +33,7 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
                                            fmt::format("{}.requestsource", worker_number))),
       benchmark_client_(benchmark_client_factory.create(
           api, *dispatcher_, *worker_number_scope_, cluster_manager, http_tracer_,
-          fmt::format("{}", worker_number), *request_generator_)),
+          fmt::format("{}", worker_number), worker_number, *request_generator_)),
       phase_(
           std::make_unique<PhaseImpl>("main",
                                       sequencer_factory_.create(
