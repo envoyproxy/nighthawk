@@ -26,6 +26,7 @@ using namespace testing;
 namespace Nighthawk {
 
 namespace {
+
 // Default function for request generator when the content doesn't matter.
 RequestGenerator getDefaultRequestGenerator() {
   RequestGenerator request_generator = []() {
@@ -222,11 +223,13 @@ TEST_F(BenchmarkClientHttpTest, WeirdStatus) {
 TEST_F(BenchmarkClientHttpTest, EnableLatencyMeasurement) {
   setupBenchmarkClient(getDefaultRequestGenerator());
   EXPECT_EQ(false, client_->shouldMeasureLatencies());
+
   TestBenchmarkClientProcessesExpectedInflightRequests(
       10, 1, 10, getDefaultRequestGenerator());
   EXPECT_EQ(0, client_->statistics()["benchmark_http_client.queue_to_connect"]->count());
   EXPECT_EQ(0, client_->statistics()["benchmark_http_client.request_to_response"]->count());
   client_->setShouldMeasureLatencies(true);
+
   TestBenchmarkClientProcessesExpectedInflightRequests(
       10, 1, 10, getDefaultRequestGenerator());
   EXPECT_EQ(10, client_->statistics()["benchmark_http_client.queue_to_connect"]->count());
@@ -294,6 +297,7 @@ TEST_F(BenchmarkClientHttpTest, RequestMethodPost) {
   };
 
   EXPECT_CALL(stream_encoder_, encodeData(_, _)).Times(1);
+
   TestBenchmarkClientProcessesExpectedInflightRequests(1, 1, 1, request_generator);
   EXPECT_EQ(1, getCounter("http_2xx"));
 }
@@ -310,27 +314,29 @@ TEST_F(BenchmarkClientHttpTest, BadContentLength) {
   };
 
   EXPECT_CALL(stream_encoder_, encodeData(_, _)).Times(0);
+
   TestBenchmarkClientProcessesExpectedInflightRequests(1, 1, 1, request_generator);
   EXPECT_EQ(1, getCounter("http_2xx"));
 }
+
 TEST_F(BenchmarkClientHttpTest, RequestGeneratorProvidingDifferentPathsSendsRequestsOnThosePaths) {
   std::vector<HeaderMapPtr> requests_for_generator_to_send;
-  const std::initializer_list<std::pair<std::string, std::string>> first_header_map_to_send{
+  const std::initializer_list<std::pair<std::string, std::string>> header_map_for_first_request{
       {":scheme", "http"},
       {":method", "GET"},
       {":path", "/a"},
       {":host", "localhost"},
       {"Content-Length", "1313"}};
-  const std::initializer_list<std::pair<std::string, std::string>> second_header_map_to_send{
+  const std::initializer_list<std::pair<std::string, std::string>> header_map_for_second_request{
       {":scheme", "http"},
       {":method", "GET"},
       {":path", "/b"},
       {":host", "localhost"},
       {"Content-Length", "1313"}};
   requests_for_generator_to_send.push_back(
-      std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(first_header_map_to_send));
+      std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(header_map_for_first_request));
   requests_for_generator_to_send.push_back(
-      std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(second_header_map_to_send));
+      std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(header_map_for_second_request));
   std::vector<HeaderMapPtr>::iterator request_iterator;
   request_iterator = requests_for_generator_to_send.begin();
   RequestGenerator request_generator = [&]() {
@@ -340,11 +346,12 @@ TEST_F(BenchmarkClientHttpTest, RequestGeneratorProvidingDifferentPathsSendsRequ
   };
   std::vector<absl::flat_hash_set<std::string>> expected_requests_vector;
   expected_requests_vector.push_back(getTestRecordedProperties(
-      Envoy::Http::TestRequestHeaderMapImpl(first_header_map_to_send)));
+      Envoy::Http::TestRequestHeaderMapImpl(header_map_for_first_request)));
   expected_requests_vector.push_back(getTestRecordedProperties(
-      Envoy::Http::TestRequestHeaderMapImpl(second_header_map_to_send)));
+      Envoy::Http::TestRequestHeaderMapImpl(header_map_for_second_request)));
 
   EXPECT_CALL(stream_encoder_, encodeData(_, _)).Times(2);
+
   // Most of the testing happens inside of this call. Will confirm that the requests received match
   // the expected requests vector.
   TestBenchmarkClientProcessesExpectedInflightRequests(1, 1, 2, request_generator,
