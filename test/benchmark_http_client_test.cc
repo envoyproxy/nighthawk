@@ -19,6 +19,7 @@
 #include "common/utility.h"
 
 #include "client/benchmark_client_impl.h"
+
 #include "gtest/gtest.h"
 
 using namespace testing;
@@ -44,7 +45,7 @@ getTestRecordedProperties(const Envoy::Http::RequestHeaderMap& header) {
   header_set.insert(std::string(header.getPathValue()));
   return header_set;
 }
-} //Helper function namespace
+} // namespace
 
 class BenchmarkClientHttpTest : public Test {
 public:
@@ -83,8 +84,7 @@ public:
   void TestBenchmarkClientProcessesExpectedInflightRequests(
       const uint64_t max_pending, const uint64_t connection_limit, const uint64_t amount_of_request,
       const RequestGenerator& request_generator,
-      const std::vector<absl::flat_hash_set<std::string>>* header_expectations =
-          nullptr) {
+      const std::vector<absl::flat_hash_set<std::string>>* header_expectations = nullptr) {
     if (client_ == nullptr) {
       setupBenchmarkClient(request_generator);
       cluster_info().resetResourceManager(connection_limit, max_pending, 1024, 0, 1024);
@@ -96,8 +96,7 @@ public:
     ON_CALL(stream_encoder_, encodeHeaders(_, _))
         .WillByDefault(
             WithArgs<0>(([&called_headers](const Envoy::Http::RequestHeaderMap& specific_request) {
-              called_headers.push_back(
-                  getTestRecordedProperties(specific_request));
+              called_headers.push_back(getTestRecordedProperties(specific_request));
             })));
 
     EXPECT_CALL(pool_, newStream(_, _))
@@ -194,29 +193,25 @@ public:
 
 TEST_F(BenchmarkClientHttpTest, BasicTestH1200) {
   response_code_ = "200";
-  TestBenchmarkClientProcessesExpectedInflightRequests(
-      2, 3, 10, getDefaultRequestGenerator());
+  TestBenchmarkClientProcessesExpectedInflightRequests(2, 3, 10, getDefaultRequestGenerator());
   EXPECT_EQ(5, getCounter("http_2xx"));
 }
 
 TEST_F(BenchmarkClientHttpTest, BasicTestH1300) {
   response_code_ = "300";
-  TestBenchmarkClientProcessesExpectedInflightRequests(
-      0, 11, 10, getDefaultRequestGenerator());
+  TestBenchmarkClientProcessesExpectedInflightRequests(0, 11, 10, getDefaultRequestGenerator());
   EXPECT_EQ(10, getCounter("http_3xx"));
 }
 
 TEST_F(BenchmarkClientHttpTest, BasicTestH1404) {
   response_code_ = "404";
-  TestBenchmarkClientProcessesExpectedInflightRequests(
-      0, 1, 10, getDefaultRequestGenerator());
+  TestBenchmarkClientProcessesExpectedInflightRequests(0, 1, 10, getDefaultRequestGenerator());
   EXPECT_EQ(1, getCounter("http_4xx"));
 }
 
 TEST_F(BenchmarkClientHttpTest, WeirdStatus) {
   response_code_ = "601";
-  TestBenchmarkClientProcessesExpectedInflightRequests(
-      0, 1, 10, getDefaultRequestGenerator());
+  TestBenchmarkClientProcessesExpectedInflightRequests(0, 1, 10, getDefaultRequestGenerator());
   EXPECT_EQ(1, getCounter("http_xxx"));
 }
 
@@ -224,14 +219,12 @@ TEST_F(BenchmarkClientHttpTest, EnableLatencyMeasurement) {
   setupBenchmarkClient(getDefaultRequestGenerator());
   EXPECT_EQ(false, client_->shouldMeasureLatencies());
 
-  TestBenchmarkClientProcessesExpectedInflightRequests(
-      10, 1, 10, getDefaultRequestGenerator());
+  TestBenchmarkClientProcessesExpectedInflightRequests(10, 1, 10, getDefaultRequestGenerator());
   EXPECT_EQ(0, client_->statistics()["benchmark_http_client.queue_to_connect"]->count());
   EXPECT_EQ(0, client_->statistics()["benchmark_http_client.request_to_response"]->count());
   client_->setShouldMeasureLatencies(true);
 
-  TestBenchmarkClientProcessesExpectedInflightRequests(
-      10, 1, 10, getDefaultRequestGenerator());
+  TestBenchmarkClientProcessesExpectedInflightRequests(10, 1, 10, getDefaultRequestGenerator());
   EXPECT_EQ(10, client_->statistics()["benchmark_http_client.queue_to_connect"]->count());
   EXPECT_EQ(10, client_->statistics()["benchmark_http_client.request_to_response"]->count());
 }
