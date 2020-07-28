@@ -87,6 +87,7 @@ envoy_cc_mock(
         "//include/nighthawk/common:base_includes",
     ],
 )
+
 envoy_cc_mock(
     name = "mock_request_source_constructor",
     srcs = ["mock_request_source_constructor.cc"],

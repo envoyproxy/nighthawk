@@ -10,9 +10,9 @@
 
 #include "test/mocks/client/mock_benchmark_client.h"
 #include "test/mocks/client/mock_options.h"
-#include "test/mocks/common/mock_termination_predicate.h"
-#include "test/mocks/common/mock_request_source_constructor.h"
 #include "test/mocks/common/mock_request_source.h"
+#include "test/mocks/common/mock_request_source_constructor.h"
+#include "test/mocks/common/mock_termination_predicate.h"
 
 #include "gtest/gtest.h"
 
@@ -25,8 +25,7 @@ class FactoriesTest : public Test {
 public:
   FactoriesTest()
       : api_(Envoy::Api::createApiForTest(stats_store_)),
-        http_tracer_(std::make_unique<Envoy::Tracing::MockHttpTracer>()) {
-        }
+        http_tracer_(std::make_unique<Envoy::Tracing::MockHttpTracer>()) {}
 
   Envoy::Api::ApiPtr api_;
   Envoy::Stats::MockIsolatedStatsStore stats_store_;
