@@ -19,7 +19,6 @@
 #include "common/utility.h"
 
 #include "client/benchmark_client_impl.h"
-
 #include "gtest/gtest.h"
 
 using namespace testing;
@@ -83,8 +82,8 @@ public:
   void TestBenchmarkClientProcessesExpectedInflightRequests(
       const uint64_t max_pending, const uint64_t connection_limit, const uint64_t amount_of_request,
       const RequestGenerator& request_generator,
-      const std::vector<absl::flat_hash_set<std::string>>& header_expectations =
-          std::vector<absl::flat_hash_set<std::string>>()) {
+      const std::vector<absl::flat_hash_set<std::string>>* header_expectations =
+          nullptr) {
     if (client_ == nullptr) {
       setupBenchmarkClient(request_generator);
       cluster_info().resetResourceManager(connection_limit, max_pending, 1024, 0, 1024);
@@ -156,8 +155,8 @@ public:
     dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
     EXPECT_EQ(0, inflight_response_count);
     // If we have no expectations, then we don't test.
-    if (header_expectations.size() != 0) {
-      EXPECT_THAT(header_expectations, UnorderedElementsAreArray(called_headers));
+    if (header_expectations != nullptr) {
+      EXPECT_THAT((*header_expectations), UnorderedElementsAreArray(called_headers));
     }
   }
 
@@ -349,7 +348,7 @@ TEST_F(BenchmarkClientHttpTest, RequestGeneratorProvidingDifferentPathsSendsRequ
   // Most of the testing happens inside of this call. Will confirm that the requests received match
   // the expected requests vector.
   TestBenchmarkClientProcessesExpectedInflightRequests(1, 1, 2, request_generator,
-                                                       expected_requests_vector);
+                                                       &expected_requests_vector);
   EXPECT_EQ(2, getCounter("http_2xx"));
 }
 } // namespace Nighthawk
