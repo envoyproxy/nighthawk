@@ -64,8 +64,8 @@ py_library(
         requirement("pytest-xdist"),
         requirement("execnet"),
         requirement("apipkg"),
-        requirement("wcwidth"),
         requirement("pyyaml"),
+        requirement("iniconfig"),
     ],
 )
 
