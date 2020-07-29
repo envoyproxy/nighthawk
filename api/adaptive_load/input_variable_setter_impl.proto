@@ -1,0 +1,12 @@
+// Plugin-specific config protos for InputVariableSetter plugins.
+
+syntax = "proto3";
+
+package nighthawk.adaptive_load;
+
+// Configuration for RequestsPerSecondInputVariableSetter (plugin name: "nighthawk.rps")
+// that sets |requests_per_second| within CommandLineOptions to a numeric value
+// being varied by a StepController.
+message RequestsPerSecondInputVariableSetterConfig {
+  // This plugin does not need any configuration.
+}

@@ -1,0 +1,7 @@
+// Plugin-specific config protos for MetricsPlugin plugins.
+
+syntax = "proto3";
+
+package nighthawk.adaptive_load;
+
+// Plugin-specific config protos for MetricsPlugins that ship with Nighthawk should go here.
