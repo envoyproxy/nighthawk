@@ -59,7 +59,8 @@ public:
                    std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
                    std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
                    std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
-                   std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>()) {
+                   std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>()) 
+    {
     EXPECT_CALL(cluster_manager(), httpConnPoolForCluster(_, _, _, _))
         .WillRepeatedly(Return(&pool_));
     EXPECT_CALL(cluster_manager(), get(_)).WillRepeatedly(Return(&thread_local_cluster_));
