@@ -55,9 +55,8 @@ message AdaptiveLoadSessionSpec {
   google.protobuf.Duration convergence_deadline = 6 [(validate.rules).duration.gt.seconds = 0];
   // The duration of the single benchmark session of the testing stage to
   // confirm the performance at the level of load found in the adjusting stage.
-  // Required.
-  google.protobuf.Duration testing_stage_duration = 7
-      [(validate.rules).duration.gt.seconds = 0, (validate.rules).duration.required = true];
+  // Optional, default 30 seconds.
+  google.protobuf.Duration testing_stage_duration = 7;
   // Selects and configures a StepController plugin. Required.
   envoy.config.core.v3.TypedExtensionConfig step_controller_config = 8
       [(validate.rules).message.required = true];
@@ -66,7 +65,9 @@ message AdaptiveLoadSessionSpec {
 // Complete description of an adaptive load session, including metric scores
 // for every degree of load attempted during the adjusting stage.
 message AdaptiveLoadSessionOutput {
-  // Overall status of the session with error detail.
+  // Overall status of the session with error detail. INVALID_ARGUMENT if the input spec contained
+  // errors, DEADLINE_EXCEEDED if convergence did not occur before the deadline, ABORTED if the step
+  // controller determined it can never converge.
   google.rpc.Status session_status = 1;
   // Results of each short benchmark performed during the adjusting stage.
   repeated BenchmarkResult adjusting_stage_results = 2;

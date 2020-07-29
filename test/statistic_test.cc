@@ -414,11 +414,12 @@ TYPED_TEST(SinkableStatisticTest, SimpleSinkableStatistic) {
   const uint64_t sample_value = 123;
   const std::string stat_name = "stat_name";
 
-  EXPECT_CALL(mock_store, deliverHistogramToSinks(_, sample_value)).Times(1);
+  EXPECT_CALL(mock_store, deliverHistogramToSinks(_, sample_value)).Times(2);
   stat.recordValue(sample_value);
+  stat.addValue(sample_value);
   stat.setId(stat_name);
 
-  EXPECT_EQ(1, stat.count());
+  EXPECT_EQ(2, stat.count());
   Helper::expectNear(123.0, stat.mean(), stat.significantDigits());
   EXPECT_DOUBLE_EQ(0, stat.pvariance());
   EXPECT_DOUBLE_EQ(0, stat.pstdev());

@@ -5,6 +5,8 @@ options:
     {}
   labels:
     []
+  stats_sinks:
+    []
   connections: 0
   duration: 1s
 results:

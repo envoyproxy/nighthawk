@@ -43,7 +43,9 @@ bazel build -c opt //:nighthawk
 ```
 USAGE:
 
-bazel-bin/nighthawk_client  [--no-duration] [--simple-warmup]
+bazel-bin/nighthawk_client  [--stats-flush-interval <uint32_t>]
+[--stats-sinks <string>] ...
+[--no-duration] [--simple-warmup]
 [--request-source <uri format>] [--label
 <string>] ... [--multi-target-use-https]
 [--multi-target-path <string>]
@@ -77,6 +79,17 @@ format>
 
 
 Where:
+
+--stats-flush-interval <uint32_t>
+Time interval (in seconds) between flushes to configured stats sinks.
+Default: 5.
+
+--stats-sinks <string>  (accepted multiple times)
+Stats sinks (in json or compact yaml) where Nighthawk metrics will be
+flushed. This argument is intended to be specified multiple times.
+Example (json): {name:"envoy.stat_sinks.statsd"
+,typed_config:{"@type":"type.googleapis.com/envoy.config.metrics.v3.St
+atsdSink",tcp_cluster_name:"statsd"}}
 
 --no-duration
 Request infinite execution. Note that the default failure predicates
