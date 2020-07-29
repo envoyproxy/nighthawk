@@ -62,6 +62,15 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
+    name = "version_linkstamp",
+    srcs = ["version_linkstamp.cc"],
+    repository = "@envoy",
+    deps = [
+        "@envoy//source/common/version:version_includes",
+    ],
+)
+
+envoy_cc_library(
     name = "nighthawk_common_lib",
     srcs = [
         "phase_impl.cc",

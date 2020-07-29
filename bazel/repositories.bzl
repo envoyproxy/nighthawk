@@ -12,7 +12,6 @@ def nighthawk_dependencies():
         sha256 = ENVOY_SHA,
         strip_prefix = "envoy-%s" % ENVOY_COMMIT,
         url = "https://github.com/envoyproxy/envoy/archive/%s.tar.gz" % ENVOY_COMMIT,
-        patches = ["envoy.patch"],
     )
     http_archive(
         name = "dep_hdrhistogram_c",
