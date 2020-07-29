@@ -49,6 +49,14 @@ void StreamDecoder::onComplete(bool success) {
   ASSERT(!success || complete_);
   if (success && measure_latencies_) {
     latency_statistic_.addValue((time_source_.monotonicTime() - request_start_).count());
+    // At this point StreamDecoder::decodeHeaders() should have been called.
+    if (stream_info_.response_code_.has_value()) {
+      decoder_completion_callback_.exportLatency(
+          stream_info_.response_code_.value(),
+          (time_source_.monotonicTime() - request_start_).count());
+    } else {
+      ENVOY_LOG(warn, "response_code is not available in onComplete");
+    }
   }
   upstream_timing_.onLastUpstreamRxByteReceived(time_source_);
   response_body_sizes_statistic_.addValue(stream_info_.bytesSent());

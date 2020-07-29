@@ -33,7 +33,12 @@ public:
         dispatcher_(api_->allocateDispatcher("test_thread")),
         cluster_manager_(std::make_unique<Envoy::Upstream::MockClusterManager>()),
         cluster_info_(std::make_unique<Envoy::Upstream::MockClusterInfo>()),
-        http_tracer_(std::make_unique<Envoy::Tracing::MockHttpTracer>()), response_code_("200") {
+        http_tracer_(std::make_unique<Envoy::Tracing::MockHttpTracer>()), response_code_("200"),
+        statistic_(std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
+                   std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
+                   std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
+                   std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
+                   std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>()) {
     EXPECT_CALL(cluster_manager(), httpConnPoolForCluster(_, _, _, _))
         .WillRepeatedly(Return(&pool_));
     EXPECT_CALL(cluster_manager(), get(_)).WillRepeatedly(Return(&thread_local_cluster_));
@@ -125,9 +130,7 @@ public:
 
   void setupBenchmarkClient() {
     client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
-        *api_, *dispatcher_, store_, std::make_unique<StreamingStatistic>(),
-        std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
-        std::make_unique<StreamingStatistic>(), false, cluster_manager_, http_tracer_, "benchmark",
+        *api_, *dispatcher_, store_, statistic_, false, cluster_manager_, http_tracer_, "benchmark",
         request_generator_, true);
   }
 
@@ -161,6 +164,8 @@ public:
   Envoy::Tracing::HttpTracerSharedPtr http_tracer_;
   std::string response_code_;
   RequestGenerator request_generator_;
+  int worker_number_{0};
+  Client::BenchmarkClientStatistic statistic_;
 };
 
 TEST_F(BenchmarkClientHttpTest, BasicTestH1200) {
@@ -193,19 +198,48 @@ TEST_F(BenchmarkClientHttpTest, EnableLatencyMeasurement) {
   testBasicFunctionality(10, 1, 10);
   EXPECT_EQ(0, client_->statistics()["benchmark_http_client.queue_to_connect"]->count());
   EXPECT_EQ(0, client_->statistics()["benchmark_http_client.request_to_response"]->count());
+  EXPECT_EQ(10, client_->statistics()["benchmark_http_client.response_header_size"]->count());
+  EXPECT_EQ(10, client_->statistics()["benchmark_http_client.response_body_size"]->count());
+  EXPECT_EQ(0, client_->statistics()["benchmark_http_client.latency_2xx"]->count());
   client_->setShouldMeasureLatencies(true);
   testBasicFunctionality(10, 1, 10);
   EXPECT_EQ(10, client_->statistics()["benchmark_http_client.queue_to_connect"]->count());
   EXPECT_EQ(10, client_->statistics()["benchmark_http_client.request_to_response"]->count());
+  EXPECT_EQ(20, client_->statistics()["benchmark_http_client.response_header_size"]->count());
+  EXPECT_EQ(20, client_->statistics()["benchmark_http_client.response_body_size"]->count());
+  EXPECT_EQ(10, client_->statistics()["benchmark_http_client.latency_2xx"]->count());
+}
+
+TEST_F(BenchmarkClientHttpTest, ExportSuccessLatency) {
+  setupBenchmarkClient();
+  uint64_t latency_ns = 10;
+  client_->exportLatency(/*response_code=*/200, latency_ns);
+  client_->exportLatency(/*response_code=*/200, latency_ns);
+  EXPECT_EQ(2, client_->statistics()["benchmark_http_client.latency_2xx"]->count());
+  EXPECT_DOUBLE_EQ(latency_ns, client_->statistics()["benchmark_http_client.latency_2xx"]->mean());
+}
+
+TEST_F(BenchmarkClientHttpTest, ExportErrorLatency) {
+  setupBenchmarkClient();
+  client_->exportLatency(/*response_code=*/100, /*latency_ns=*/1);
+  client_->exportLatency(/*response_code=*/300, /*latency_ns=*/3);
+  client_->exportLatency(/*response_code=*/400, /*latency_ns=*/4);
+  client_->exportLatency(/*response_code=*/500, /*latency_ns=*/5);
+  client_->exportLatency(/*response_code=*/600, /*latency_ns=*/6);
+  EXPECT_EQ(1, client_->statistics()["benchmark_http_client.latency_1xx"]->count());
+  EXPECT_DOUBLE_EQ(1, client_->statistics()["benchmark_http_client.latency_1xx"]->mean());
+  EXPECT_EQ(1, client_->statistics()["benchmark_http_client.latency_xxx"]->count());
+  EXPECT_DOUBLE_EQ(3, client_->statistics()["benchmark_http_client.latency_3xx"]->mean());
+  EXPECT_EQ(1, client_->statistics()["benchmark_http_client.latency_xxx"]->count());
+  EXPECT_DOUBLE_EQ(4, client_->statistics()["benchmark_http_client.latency_4xx"]->mean());
+  EXPECT_EQ(1, client_->statistics()["benchmark_http_client.latency_xxx"]->count());
+  EXPECT_DOUBLE_EQ(5, client_->statistics()["benchmark_http_client.latency_5xx"]->mean());
+  EXPECT_EQ(1, client_->statistics()["benchmark_http_client.latency_xxx"]->count());
+  EXPECT_DOUBLE_EQ(6, client_->statistics()["benchmark_http_client.latency_xxx"]->mean());
 }
 
 TEST_F(BenchmarkClientHttpTest, StatusTrackingInOnComplete) {
-  auto store = std::make_unique<Envoy::Stats::IsolatedStoreImpl>();
-  client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
-      *api_, *dispatcher_, *store, std::make_unique<StreamingStatistic>(),
-      std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
-      std::make_unique<StreamingStatistic>(), false, cluster_manager_, http_tracer_, "foo",
-      request_generator_, true);
+  setupBenchmarkClient();
   Envoy::Http::ResponseHeaderMapPtr header = Envoy::Http::ResponseHeaderMapImpl::create();
 
   header->setStatus(1);

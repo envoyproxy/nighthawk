@@ -13,6 +13,7 @@ api_cc_py_proto_library(
     visibility = ["//visibility:public"],
     deps = [
         "@envoy_api//envoy/config/core/v3:pkg",
+        "@envoy_api//envoy/config/metrics/v3:pkg",
         "@envoy_api//envoy/extensions/transport_sockets/tls/v3:pkg",
     ],
 )
