@@ -8,6 +8,7 @@
 #include "envoy/common/pure.h"
 #include "envoy/config/cluster/v3/cluster.pb.h"
 #include "envoy/config/core/v3/base.pb.h"
+#include "envoy/config/metrics/v3/stats.pb.h"
 
 #include "nighthawk/common/termination_predicate.h"
 
@@ -68,6 +69,8 @@ public:
   virtual std::vector<std::string> labels() const PURE;
   virtual bool simpleWarmup() const PURE;
   virtual bool noDuration() const PURE;
+  virtual std::vector<envoy::config::metrics::v3::StatsSink> statsSinks() const PURE;
+  virtual uint32_t statsFlushInterval() const PURE;
 
   /**
    * Converts an Options instance to an equivalent CommandLineOptions instance in terms of option
