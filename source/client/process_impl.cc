@@ -24,7 +24,6 @@
 #include "external/envoy/source/common/runtime/runtime_impl.h"
 #include "external/envoy/source/common/singleton/manager_impl.h"
 #include "external/envoy/source/common/thread_local/thread_local_impl.h"
-#include "external/envoy/source/extensions/tracers/well_known_names.h"
 
 #include "absl/strings/str_replace.h"
 
