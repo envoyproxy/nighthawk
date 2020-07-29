@@ -80,8 +80,8 @@ public:
   //   client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
   //       *api_, *dispatcher_, store_, std::make_unique<StreamingStatistic>(),
   //       std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
-  //       std::make_unique<StreamingStatistic>(), false, cluster_manager_, http_tracer_, "benchmark",
-  //       request_generator, true);
+  //       std::make_unique<StreamingStatistic>(), false, cluster_manager_, http_tracer_,
+  //       "benchmark", request_generator, true);
   // }
   // Primary testing method. Confirms that connection limits are met and number of requests are
   // correct. If not empty, also checks the header expectations, if empty, it is ignored.
