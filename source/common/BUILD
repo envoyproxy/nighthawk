@@ -62,6 +62,15 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
+    name = "version_linkstamp",
+    srcs = ["version_linkstamp.cc"],
+    repository = "@envoy",
+    deps = [
+        "@envoy//source/common/version:version_includes",
+    ],
+)
+
+envoy_cc_library(
     name = "nighthawk_common_lib",
     srcs = [
         "phase_impl.cc",
@@ -105,11 +114,11 @@ envoy_cc_library(
         "@envoy//source/common/common:macros_with_external_headers",
         "@envoy//source/common/common:minimal_logger_lib_with_external_headers",
         "@envoy//source/common/common:thread_lib_with_external_headers",
-        "@envoy//source/common/common:version_includes_with_external_headers",
         "@envoy//source/common/http:utility_lib_with_external_headers",
         "@envoy//source/common/network:utility_lib_with_external_headers",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
         "@envoy//source/common/stats:histogram_lib_with_external_headers",
+        "@envoy//source/common/version:version_includes_with_external_headers",
         "@envoy//source/exe:envoy_common_lib_with_external_headers",
         "@envoy//source/server/config_validation:server_lib_with_external_headers",
     ],
