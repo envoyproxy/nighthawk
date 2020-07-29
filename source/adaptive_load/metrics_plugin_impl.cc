@@ -3,6 +3,7 @@
 #include "envoy/registry/registry.h"
 
 #include "external/envoy/source/common/protobuf/protobuf.h"
+#include "absl/strings/numbers.h"
 
 namespace Nighthawk {
 
@@ -12,8 +13,12 @@ NighthawkStatsEmulatedMetricsPlugin::NighthawkStatsEmulatedMetricsPlugin(
     if (result.name() != "global") {
       continue;
     }
+    int concurrency;
+    if (!absl::SimpleAtoi(nighthawk_output.options().concurrency().value(), &concurrency)) {
+      concurrency = 1;
+    }
     const long total_specified = nighthawk_output.options().requests_per_second().value() *
-                                 nighthawk_output.options().duration().seconds();
+                                 nighthawk_output.options().duration().seconds() * concurrency;
     int total_sent = 0;
     int total_2xx = 0;
     for (const nighthawk::client::Counter& counter : result.counters()) {
