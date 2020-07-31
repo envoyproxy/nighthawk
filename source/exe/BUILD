@@ -33,6 +33,7 @@ envoy_cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//source/client:nighthawk_client_lib",
+        "//source/common:version_linkstamp",
     ],
 )
 
@@ -46,6 +47,7 @@ envoy_cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//source/client:nighthawk_service_lib",
+        "//source/common:version_linkstamp",
     ],
 )
 
@@ -56,5 +58,6 @@ envoy_cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//source/client:output_transform_main_lib",
+        "//source/common:version_linkstamp",
     ],
 )
