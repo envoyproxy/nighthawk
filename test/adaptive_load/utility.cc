@@ -31,6 +31,7 @@ void SetStatisticValues(nighthawk::client::Statistic* statistic, const std::stri
 
 nighthawk::client::Output MakeStandardNighthawkOutput() {
   nighthawk::client::Output output;
+  output.mutable_options()->mutable_concurrency()->set_value("1");
   output.mutable_options()->mutable_requests_per_second()->set_value(1024);
   output.mutable_options()->mutable_duration()->set_seconds(10);
   nighthawk::client::Result* result = output.mutable_results()->Add();

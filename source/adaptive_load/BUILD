@@ -87,6 +87,7 @@ envoy_cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//include/nighthawk/adaptive_load:metrics_plugin",
+        "@envoy//source/common/common:assert_lib_with_external_headers",
         "@envoy//source/common/config:utility_lib_with_external_headers",
         "@envoy//source/common/protobuf:protobuf_with_external_headers",
     ],
@@ -144,6 +145,7 @@ envoy_cc_library(
         ":plugin_util",
         "//include/nighthawk/adaptive_load:input_variable_setter",
         "//include/nighthawk/adaptive_load:step_controller",
+        "@envoy//source/common/common:assert_lib_with_external_headers",
         "@envoy//source/common/config:utility_lib_with_external_headers",
         "@envoy//source/common/protobuf:protobuf_with_external_headers",
     ],

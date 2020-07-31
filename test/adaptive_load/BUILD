@@ -51,9 +51,9 @@ envoy_cc_test(
     srcs = ["adaptive_load_controller_test.cc"],
     repository = "@envoy",
     deps = [
+        ":utility",
         "//source/adaptive_load:adaptive_load_controller_impl",
         "//source/adaptive_load:scoring_function_impl",
-        ":utility",
         "@com_github_grpc_grpc//:grpc++_test",
     ],
 )
@@ -72,8 +72,8 @@ envoy_cc_test(
     srcs = ["metrics_plugin_test.cc"],
     repository = "@envoy",
     deps = [
-        "//source/adaptive_load:metrics_plugin_impl",
         ":utility",
+        "//source/adaptive_load:metrics_plugin_impl",
     ],
 )
 

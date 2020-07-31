@@ -2,6 +2,7 @@
 
 #include "envoy/registry/registry.h"
 
+#include "external/envoy/source/common/common/assert.h"
 #include "external/envoy/source/common/protobuf/protobuf.h"
 
 #include "absl/strings/numbers.h"
@@ -15,9 +16,10 @@ NighthawkStatsEmulatedMetricsPlugin::NighthawkStatsEmulatedMetricsPlugin(
       continue;
     }
     int concurrency;
-    if (!absl::SimpleAtoi(nighthawk_output.options().concurrency().value(), &concurrency)) {
-      concurrency = 1;
-    }
+    // "auto" is not supported since we have no way to detect the number of cores Nighthawk Service
+    // used; "auto" should have been caught during input validation.
+    RELEASE_ASSERT(absl::SimpleAtoi(nighthawk_output.options().concurrency().value(), &concurrency),
+                   "Concurrency 'auto' not supported in Adaptive Load Controller.");
     const long total_specified = nighthawk_output.options().requests_per_second().value() *
                                  nighthawk_output.options().duration().seconds() * concurrency;
     int total_sent = 0;
