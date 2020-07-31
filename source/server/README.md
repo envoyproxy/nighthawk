@@ -8,6 +8,11 @@ A test-server filter which is capable of generating test responses.
 bazel test -c dbg //test/server:http_test_server_filter_integration_test
 ```
 
+It is possible to enable
+[envoy extensions](https://github.com/envoyproxy/envoy/blob/master/source/extensions/extensions_build_config.bzl) by adding them [here](../../extensions_build_config.bzl) before the build.
+By default, Nighthawk's test server is set up with the minimum extension set needed
+for it to operate as documented.
+
 ## Building
 
 ```bash
