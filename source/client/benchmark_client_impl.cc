@@ -58,7 +58,7 @@ Http1PoolImpl::newStream(Envoy::Http::ResponseDecoder& response_decoder,
       // updating connections().canCreate() above. We would risk an infinite loop.
       Envoy::ConnectionPool::ActiveClientPtr client = instantiateActiveClient();
       connecting_stream_capacity_ += client->effectiveConcurrentRequestLimit();
-      client->moveIntoList(std::move(client), owningList(client->state_));
+      LinkedList::moveIntoList(std::move(client), owningList(client->state_));
     }
   }
 
