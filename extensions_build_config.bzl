@@ -11,4 +11,5 @@ EXTENSIONS = {
     "envoy.transport_sockets.raw_buffer": "//source/extensions/transport_sockets/raw_buffer:config",
     "envoy.upstreams.http.http": "//source/extensions/upstreams/http/http:config",
     "envoy.upstreams.http.tcp": "//source/extensions/upstreams/http/tcp:config",
+    "envoy.filters.listener.tls_inspector": "//source/extensions/filters/listener/tls_inspector:config",
 }
