@@ -1,7 +1,6 @@
 #include "external/envoy/source/common/config/utility.h"
 
 #include "adaptive_load/input_variable_setter_impl.h"
-#include "adaptive_load/plugin_util.h"
 #include "gtest/gtest.h"
 
 namespace Nighthawk {

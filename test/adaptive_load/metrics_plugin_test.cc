@@ -3,7 +3,8 @@
 #include "test/adaptive_load/utility.h"
 
 #include "adaptive_load/metrics_plugin_impl.h"
-#include "adaptive_load/plugin_util.h"
+
+// #include "adaptive_load/plugin_util.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
