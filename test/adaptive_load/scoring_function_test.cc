@@ -211,7 +211,9 @@ TEST(SigmoidScoringFunctionTest, ReturnsValueCloseToOneForValueFarBelowThreshold
   config.set_threshold(1000.0);
   config.set_k(0.001);
   SigmoidScoringFunction scoring_function(config);
-  EXPECT_LT(1.0 - scoring_function.EvaluateMetric(-1000000.0), 0.01);
+  const double score = scoring_function.EvaluateMetric(-10000.0);
+  EXPECT_GT(score, 0.99);
+  EXPECT_LT(score, 1.0);
 }
 
 TEST(SigmoidScoringFunctionTest, ReturnsValueCloseToNegativeOneForValueFarAboveThreshold) {
@@ -219,7 +221,9 @@ TEST(SigmoidScoringFunctionTest, ReturnsValueCloseToNegativeOneForValueFarAboveT
   config.set_threshold(1000.0);
   config.set_k(0.001);
   SigmoidScoringFunction scoring_function(config);
-  EXPECT_LT(1.0 + scoring_function.EvaluateMetric(1000000.0), 0.01);
+  const double score = scoring_function.EvaluateMetric(10000.0);
+  EXPECT_GT(score, -1.0);
+  EXPECT_LT(score, -0.99);
 }
 
 } // namespace
