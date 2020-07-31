@@ -1,0 +1,39 @@
+// Protos describing the results of running a single Nighthawk benchmark and
+// scoring the resulting metrics against thresholds.
+
+syntax = "proto3";
+
+package nighthawk.adaptive_load;
+
+import "api/client/output.proto";
+import "google/rpc/status.proto";
+
+// Records the status of a single metric during a benchmark session.
+message MetricEvaluation {
+  // Identifier for the metric that was evaluated (<plugin name>/<metric name>).
+  string metric_id = 1;
+  // Numerical value of the metric measured during this benchmark session.
+  double metric_value = 2;
+  // Score returned by a ScoringFunction plugin. This expresses how close the
+  // metric was to the threshold by an arbitrary formula selected and
+  // configured in the ThresholdSpec, such as a sigmoid curve. The controller
+  // can choose to make larger input adjustments when the score is larger, in
+  // order to converge faster. Not set if the metric was only informational.
+  double threshold_score = 3;
+  // Configured weight of the metric. 0.0 if the metric was only informational.
+  double weight = 4;
+}
+
+// Summary of a single Nighthawk Service benchmark session with evaluation
+// results.
+message BenchmarkResult {
+  // Raw Nighthawk Service output. Includes start/end times and full Nighthawk
+  // Service input spec.
+  nighthawk.client.Output nighthawk_service_output = 1;
+  // Execution status of this call to the Nighthawk Service. This will record errors connecting to
+  // the Nighthawk Service and internal errors returned from the Nighthawk Service.
+  google.rpc.Status status = 2;
+  // Status of all declared metrics during this benchmark session. Not present
+  // in the event of Nighthawk Service errors.
+  repeated MetricEvaluation metric_evaluations = 3;
+}

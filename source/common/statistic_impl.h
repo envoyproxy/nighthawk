@@ -223,6 +223,9 @@ public:
   // Overriding name() to return Nighthawk::Statistic::id().
   std::string name() const override { return id(); }
   std::string tagExtractedName() const override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; }
+
+  // Nighthawk::Statistic
+  void addValue(uint64_t value) override { recordValue(value); }
 };
 
 // Implementation of sinkable Nighthawk Statistic with Circllhist Histogram.
@@ -239,6 +242,9 @@ public:
   // Overriding name() to return Nighthawk::Statistic::id().
   std::string name() const override { return id(); }
   std::string tagExtractedName() const override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; }
+
+  // Nighthawk::Statistic
+  void addValue(uint64_t value) override { recordValue(value); }
 };
 
 } // namespace Nighthawk

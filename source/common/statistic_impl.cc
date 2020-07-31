@@ -317,7 +317,7 @@ SinkableHdrStatistic::SinkableHdrStatistic(Envoy::Stats::Scope& scope,
     : SinkableStatistic(scope, worker_id) {}
 
 void SinkableHdrStatistic::recordValue(uint64_t value) {
-  addValue(value);
+  HdrStatistic::addValue(value);
   // Currently in Envoy Scope implementation, deliverHistogramToSinks() will flush the histogram
   // value directly to stats Sinks.
   scope_.deliverHistogramToSinks(*this, value);
@@ -328,7 +328,7 @@ SinkableCircllhistStatistic::SinkableCircllhistStatistic(Envoy::Stats::Scope& sc
     : SinkableStatistic(scope, worker_id) {}
 
 void SinkableCircllhistStatistic::recordValue(uint64_t value) {
-  addValue(value);
+  CircllhistStatistic::addValue(value);
   // Currently in Envoy Scope implementation, deliverHistogramToSinks() will flush the histogram
   // value directly to stats Sinks.
   scope_.deliverHistogramToSinks(*this, value);

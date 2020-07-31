@@ -29,6 +29,7 @@ py_library(
 py_library(
     name = "integration_test_base_lean",
     srcs = [
+        "asserts.py",
         "common.py",
         "integration_test_fixtures.py",
         "nighthawk_grpc_service.py",
@@ -63,8 +64,8 @@ py_library(
         requirement("pytest-xdist"),
         requirement("execnet"),
         requirement("apipkg"),
-        requirement("wcwidth"),
         requirement("pyyaml"),
+        requirement("iniconfig"),
     ],
 )
 
