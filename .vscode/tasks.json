@@ -24,9 +24,9 @@
       }
     },
     {
-      "label": "Build Nighthawk-dev dockage image and push it",
+      "label": "Build Nighthawk-dev dockage",
       "type": "shell",
-      "command": "ci/do_ci.sh docker && ../tools/push_nighthawk_docker.sh",
+      "command": "ci/do_ci.sh docker",
       "problemMatcher": ["$gcc"],
       "group": {
         "kind": "build",
@@ -36,7 +36,7 @@
     {
       "label": "Docker Fix Format",
       "type": "shell",
-      "command": "../tools/run_docker.sh 'ci/do_ci.sh check_format'",
+      "command": "ci/run_envoy_docker.sh 'ci/do_ci.sh check_format'",
       "problemMatcher": ["$gcc"],
       "group": {
         "kind": "build",
@@ -116,7 +116,7 @@
     {
       "label": "Docker/clang-tidy",
       "type": "shell",
-      "command": "../tools/run_docker.sh 'ci/do_ci.sh clang_tidy'",
+      "command": "ci/run_envoy_docker.sh 'ci/do_ci.sh clang_tidy'",
       "problemMatcher": ["$gcc"],
       "group": {
         "kind": "test",
