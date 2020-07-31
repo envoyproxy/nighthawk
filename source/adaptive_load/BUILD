@@ -20,6 +20,7 @@ envoy_cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//include/nighthawk/adaptive_load:metrics_plugin",
+        "@envoy//source/common/common:assert_lib_with_external_headers",
         "@envoy//source/common/config:utility_lib_with_external_headers",
         "@envoy//source/common/protobuf:protobuf_with_external_headers",
     ],
