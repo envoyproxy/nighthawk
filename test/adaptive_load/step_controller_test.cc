@@ -13,6 +13,7 @@
 #include "adaptive_load/step_controller_impl.h"
 #include "google/rpc/code.pb.h"
 #include "gtest/gtest.h"
+#include "gmock/gmock.h"
 
 namespace Nighthawk {
 
@@ -106,11 +107,8 @@ TEST(ExponentialSearchStepControllerTest, ActivatesCustomInputValueSetter) {
   step_controller_config.mutable_input_variable_setter()->set_name("nighthawk.testing-connections");
   // typed_config can be set to any valid Any proto, as the test-only
   // ConnectionsInputVariableSetterConfigFactory defined above ignores the config proto.
-  nighthawk::adaptive_load::RequestsPerSecondInputVariableSetterConfig input_value_setter_config;
-  Envoy::ProtobufWkt::Any input_value_setter_config_any;
-  input_value_setter_config_any.PackFrom(input_value_setter_config);
   *step_controller_config.mutable_input_variable_setter()->mutable_typed_config() =
-      input_value_setter_config_any;
+      Envoy::ProtobufWkt::Any();
 
   step_controller_config.set_initial_value(100.0);
   nighthawk::client::CommandLineOptions options_template;
@@ -227,6 +225,132 @@ TEST(ExponentialSearchStepControllerTest, BinarySearchFindsBottomOfRange) {
     step_controller.UpdateAndRecompute(MakeBenchmarkResultOutsideThreshold());
   }
   EXPECT_EQ(step_controller.GetCurrentCommandLineOptions().requests_per_second().value(), 100);
+}
+
+TEST(FixedSequenceStepControllerConfigFactoryTest, GeneratesEmptyConfigProto) {
+  StepControllerConfigFactory& config_factory =
+      Envoy::Config::Utility::getAndCheckFactoryByName<StepControllerConfigFactory>(
+          "nighthawk.fixed-sequence");
+
+  Envoy::ProtobufTypes::MessagePtr message = config_factory.createEmptyConfigProto();
+
+  nighthawk::adaptive_load::FixedSequenceStepControllerConfig expected_config;
+
+  EXPECT_EQ(message->DebugString(), expected_config.DebugString());
+}
+
+TEST(FixedSequenceStepControllerConfigFactoryTest, CreatesPlugin) {
+  nighthawk::adaptive_load::FixedSequenceStepControllerConfig config;
+  Envoy::ProtobufWkt::Any config_any;
+  config_any.PackFrom(config);
+
+  nighthawk::client::CommandLineOptions options;
+
+  StepControllerConfigFactory& config_factory =
+      Envoy::Config::Utility::getAndCheckFactoryByName<StepControllerConfigFactory>(
+          "nighthawk.fixed-sequence");
+  StepControllerPtr plugin = config_factory.createStepController(config_any, options);
+
+  EXPECT_NE(dynamic_cast<FixedSequenceStepController*>(plugin.get()), nullptr);
+}
+
+TEST(FixedSequenceStepControllerTest, ActivatesCustomInputValueSetter) {
+  nighthawk::adaptive_load::FixedSequenceStepControllerConfig config;
+  config.mutable_input_variable_setter()->set_name("nighthawk.testing-connections");
+  // typed_config can be set to any valid Any proto, as the test-only
+  // ConnectionsInputVariableSetterConfigFactory defined above ignores the config proto.
+  *config.mutable_input_variable_setter()->mutable_typed_config() =
+      Envoy::ProtobufWkt::Any();
+
+  config.add_input_values(100.0);
+  config.add_input_values(200.0);
+  config.add_input_values(300.0);
+  nighthawk::client::CommandLineOptions options_template;
+  FixedSequenceStepController step_controller(config, options_template);
+
+  EXPECT_EQ(step_controller.GetCurrentCommandLineOptions().connections().value(), 100);
+}
+
+TEST(FixedSequenceStepControllerTest, InitiallyReportsNotConverged) {
+  nighthawk::adaptive_load::FixedSequenceStepControllerConfig config;
+  config.add_input_values(100.0);
+  config.add_input_values(200.0);
+  config.add_input_values(300.0);
+  nighthawk::client::CommandLineOptions options_template;
+  FixedSequenceStepController step_controller(config, options_template);
+
+  EXPECT_FALSE(step_controller.IsConverged());
+}
+
+TEST(FixedSequenceStepControllerTest, InitiallyReportsNotDoomed) {
+  nighthawk::adaptive_load::FixedSequenceStepControllerConfig config;
+  config.add_input_values(100.0);
+  config.add_input_values(200.0);
+  config.add_input_values(300.0);
+  nighthawk::client::CommandLineOptions options_template;
+  FixedSequenceStepController step_controller(config, options_template);
+
+  std::string doom_reason = "untouched";
+  EXPECT_FALSE(step_controller.IsDoomed(&doom_reason));
+  EXPECT_EQ(doom_reason, "untouched");
+}
+
+TEST(FixedSequenceStepControllerTest, ReportsDoomIfNoInputValuesProvided) {
+  nighthawk::adaptive_load::FixedSequenceStepControllerConfig config;
+  // No input values added.
+  nighthawk::client::CommandLineOptions options_template;
+  FixedSequenceStepController step_controller(config, options_template);
+
+  std::string doom_reason;
+  EXPECT_TRUE(step_controller.IsDoomed(&doom_reason));
+  EXPECT_EQ(doom_reason, "FixedSequenceStepController requires at least one value in input_values.");
+}
+
+TEST(FixedSequenceStepControllerTest, ReportsDoomAfterNighthawkServiceError) {
+  nighthawk::adaptive_load::FixedSequenceStepControllerConfig config;
+  config.add_input_values(100.0);
+  config.add_input_values(200.0);
+  config.add_input_values(300.0);
+  nighthawk::client::CommandLineOptions options_template;
+  FixedSequenceStepController step_controller(config, options_template);
+
+  step_controller.UpdateAndRecompute(MakeBenchmarkResultWithNighthawkError());
+
+  std::string doom_reason;
+  EXPECT_TRUE(step_controller.IsDoomed(&doom_reason));
+  EXPECT_EQ(doom_reason, "Nighthawk Service returned an error.");
+}
+
+TEST(FixedSequenceStepControllerTest, PerformsCorrectSequence) {
+  nighthawk::adaptive_load::FixedSequenceStepControllerConfig config;
+  config.add_input_values(100.0);
+  config.add_input_values(200.0);
+  config.add_input_values(300.0);
+  nighthawk::client::CommandLineOptions options_template;
+  FixedSequenceStepController step_controller(config, options_template);
+
+  std::vector<double> results;
+  for (int i = 0; i < 5; ++i) {
+    results.push_back(step_controller.GetCurrentCommandLineOptions().requests_per_second().value());
+    step_controller.UpdateAndRecompute(MakeBenchmarkResultWithinThreshold());
+  }
+  EXPECT_THAT(results, ::testing::ElementsAre(100.0, 200.0, 300.0, 300.0, 300.0));
+}
+
+TEST(FixedSequenceStepControllerTest, ReportsConvergenceAtEndOfSequence) {
+  nighthawk::adaptive_load::FixedSequenceStepControllerConfig config;
+  config.add_input_values(100.0);
+  config.add_input_values(200.0);
+  config.add_input_values(300.0);
+  nighthawk::client::CommandLineOptions options_template;
+  FixedSequenceStepController step_controller(config, options_template);
+
+  std::vector<bool> results;
+  for (int i = 0; i < 5; ++i) {
+    results.push_back(step_controller.IsConverged());
+    step_controller.UpdateAndRecompute(MakeBenchmarkResultWithinThreshold());
+  }
+  EXPECT_THAT(results, ::testing::ElementsAre(false, false, false, true, true));
 }
 
 } // namespace

@@ -35,5 +35,5 @@ message FixedSequenceStepControllerConfig {
   // plugin, which sets |requests_per_second| in CommandLineOptions.
   envoy.config.core.v3.TypedExtensionConfig input_variable_setter = 1;
   // Values of the input variable that should be attempted in sequence. Required.
-  repeated double values = 2;
+  repeated double input_values = 2;
 }

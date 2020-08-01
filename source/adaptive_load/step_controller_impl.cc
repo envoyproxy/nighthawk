@@ -20,6 +20,7 @@ namespace {
 
 using nighthawk::adaptive_load::BenchmarkResult;
 using nighthawk::adaptive_load::ExponentialSearchStepControllerConfig;
+using nighthawk::adaptive_load::FixedSequenceStepControllerConfig;
 using nighthawk::adaptive_load::MetricEvaluation;
 
 // Check if any non-informational metrics (weight > 0) were outside thresholds (score < 0). Return
@@ -139,6 +140,85 @@ void ExponentialSearchStepController::UpdateAndRecompute(const BenchmarkResult& 
     }
     previous_load_value_ = current_load_value_;
     current_load_value_ = (bottom_load_value_ + top_load_value_) / 2;
+  }
+}
+
+Envoy::ProtobufTypes::MessagePtr
+FixedSequenceStepControllerConfigFactory::createEmptyConfigProto() {
+  return std::make_unique<FixedSequenceStepControllerConfig>();
+}
+
+std::string FixedSequenceStepControllerConfigFactory::name() const {
+  return "nighthawk.fixed-sequence";
+}
+
+StepControllerPtr FixedSequenceStepControllerConfigFactory::createStepController(
+    const Envoy::Protobuf::Message& message,
+    const nighthawk::client::CommandLineOptions& command_line_options_template) {
+  const Envoy::ProtobufWkt::Any& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
+  FixedSequenceStepControllerConfig config;
+  Envoy::MessageUtil::unpackTo(any, config);
+  return std::make_unique<FixedSequenceStepController>(config, command_line_options_template);
+}
+
+REGISTER_FACTORY(FixedSequenceStepControllerConfigFactory, StepControllerConfigFactory);
+
+FixedSequenceStepController::FixedSequenceStepController(
+    const FixedSequenceStepControllerConfig& config,
+    const nighthawk::client::CommandLineOptions& command_line_options_template)
+    : command_line_options_template_{command_line_options_template}, current_index_{0} {
+  doom_reason_ = "";
+  if (config.has_input_variable_setter()) {
+    try {
+      input_variable_setter_ = LoadInputVariableSetterPlugin(config.input_variable_setter());
+    } catch (const Envoy::EnvoyException& e) {
+      doom_reason_ = absl::StrCat("Error loading plugin ",
+                                  config.input_variable_setter().DebugString(), ": ", e.what());
+    }
+  } else {
+    input_variable_setter_ = std::make_unique<RequestsPerSecondInputVariableSetter>(
+        nighthawk::adaptive_load::RequestsPerSecondInputVariableSetterConfig());
+  }
+  if (config.input_values_size() == 0) {
+    doom_reason_ = "FixedSequenceStepController requires at least one value in input_values.";
+    return;
+  }
+
+  for (const double input_value : config.input_values()) {
+    input_values_.push_back(input_value);
+  }
+  // Repeat the final value in the sequence for the testing stage.
+  input_values_.push_back(config.input_values(config.input_values_size() - 1));
+}
+
+nighthawk::client::CommandLineOptions
+FixedSequenceStepController::GetCurrentCommandLineOptions() const {
+  nighthawk::client::CommandLineOptions options = command_line_options_template_;
+  input_variable_setter_->SetInputVariable(options, input_values_[current_index_]);
+  return options;
+}
+
+bool FixedSequenceStepController::IsConverged() const {
+  return doom_reason_ == "" && current_index_ == input_values_.size() - 1;
+}
+
+bool FixedSequenceStepController::IsDoomed(std::string* doom_reason) const {
+  if (doom_reason_ == "") {
+    return false;
+  } else {
+    *doom_reason = doom_reason_;
+    return true;
+  }
+}
+
+void FixedSequenceStepController::UpdateAndRecompute(const BenchmarkResult& benchmark_result) {
+  if (benchmark_result.status().code()) {
+    doom_reason_ = "Nighthawk Service returned an error.";
+    return;
+  }
+  ++current_index_;
+  if (current_index_ >= input_values_.size()) {
+    current_index_ = input_values_.size() - 1;
   }
 }
 
