@@ -18,7 +18,7 @@ Envoy::ProtobufTypes::MessagePtr BinaryScoringFunctionConfigFactory::createEmpty
 
 ScoringFunctionPtr
 BinaryScoringFunctionConfigFactory::createScoringFunction(const Envoy::Protobuf::Message& message) {
-  const Envoy::ProtobufWkt::Any& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
+  const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
   nighthawk::adaptive_load::BinaryScoringFunctionConfig config;
   Envoy::MessageUtil::unpackTo(any, config);
   return std::make_unique<BinaryScoringFunction>(config);
@@ -45,7 +45,7 @@ Envoy::ProtobufTypes::MessagePtr LinearScoringFunctionConfigFactory::createEmpty
 
 ScoringFunctionPtr
 LinearScoringFunctionConfigFactory::createScoringFunction(const Envoy::Protobuf::Message& message) {
-  const Envoy::ProtobufWkt::Any& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
+  const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
   nighthawk::adaptive_load::LinearScoringFunctionConfig config;
   Envoy::MessageUtil::unpackTo(any, config);
   return std::make_unique<LinearScoringFunction>(config);
@@ -69,7 +69,7 @@ Envoy::ProtobufTypes::MessagePtr SigmoidScoringFunctionConfigFactory::createEmpt
 
 ScoringFunctionPtr SigmoidScoringFunctionConfigFactory::createScoringFunction(
     const Envoy::Protobuf::Message& message) {
-  const Envoy::ProtobufWkt::Any& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
+  const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
   nighthawk::adaptive_load::SigmoidScoringFunctionConfig config;
   Envoy::MessageUtil::unpackTo(any, config);
   return std::make_unique<SigmoidScoringFunction>(config);
