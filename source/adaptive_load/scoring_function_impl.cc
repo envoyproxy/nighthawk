@@ -1,6 +1,6 @@
 #include "adaptive_load/scoring_function_impl.h"
 
-#include <math.h>
+#include <cmath>
 
 #include "envoy/registry/registry.h"
 
