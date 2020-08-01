@@ -45,7 +45,6 @@ public:
       const nighthawk::client::CommandLineOptions& command_line_options_template) override;
 };
 
-
 // A StepController that applies a fixed series of load values.
 class FixedSequenceStepController : public StepController {
 public:
