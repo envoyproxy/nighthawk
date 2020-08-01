@@ -32,11 +32,15 @@ NighthawkStatsEmulatedMetricsPlugin::NighthawkStatsEmulatedMetricsPlugin(
       }
     }
     metric_from_name_["attempted-rps"] =
-        total_specified / nighthawk_output.options().duration().seconds();
+        static_cast<double>(total_specified) /
+        static_cast<double>(nighthawk_output.options().duration().seconds());
     metric_from_name_["achieved-rps"] =
-        static_cast<double>(total_sent) / nighthawk_output.options().duration().seconds();
-    metric_from_name_["send-rate"] = static_cast<double>(total_sent) / total_specified;
-    metric_from_name_["success-rate"] = static_cast<double>(total_2xx) / total_sent;
+        static_cast<double>(total_sent) /
+        static_cast<double>(nighthawk_output.options().duration().seconds());
+    metric_from_name_["send-rate"] =
+        static_cast<double>(total_sent) / static_cast<double>(total_specified);
+    metric_from_name_["success-rate"] =
+        static_cast<double>(total_2xx) / static_cast<double>(total_sent);
 
     for (const nighthawk::client::Statistic& statistic : result.statistics()) {
       if (statistic.id() == "benchmark_http_client.request_to_response") {
