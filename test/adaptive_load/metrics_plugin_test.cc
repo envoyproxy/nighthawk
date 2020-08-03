@@ -1,3 +1,5 @@
+#include <tuple>
+
 #include "external/envoy/source/common/config/utility.h"
 
 #include "test/adaptive_load/utility.h"
@@ -10,82 +12,31 @@ namespace Nighthawk {
 
 namespace {
 
-TEST(NighthawkStatsEmulatedMetricsPluginTest, ComputesCorrectAttemptedRps) {
+class NighthawkStatsEmulatedMetricsPluginTestFixture
+    : public ::testing::TestWithParam<std::tuple<std::string, double>> {};
+
+TEST_P(NighthawkStatsEmulatedMetricsPluginTestFixture, ComputesCorrectMetric) {
   NighthawkStatsEmulatedMetricsPlugin plugin =
       NighthawkStatsEmulatedMetricsPlugin(MakeStandardNighthawkOutput());
-  double value = plugin.GetMetricByName("attempted-rps");
-  EXPECT_EQ(value, 1024);
+  const std::string metric_name = std::get<0>(GetParam());
+  const double value = std::get<1>(GetParam());
+  EXPECT_EQ(plugin.GetMetricByName(metric_name), value);
 }
 
-TEST(NighthawkStatsEmulatedMetricsPluginTest, ComputesCorrectAchievedRps) {
-  NighthawkStatsEmulatedMetricsPlugin plugin =
-      NighthawkStatsEmulatedMetricsPlugin(MakeStandardNighthawkOutput());
-  double value = plugin.GetMetricByName("achieved-rps");
-  EXPECT_EQ(value, 256);
-}
-
-TEST(NighthawkStatsEmulatedMetricsPluginTest, ComputesCorrectSendRate) {
-  NighthawkStatsEmulatedMetricsPlugin plugin =
-      NighthawkStatsEmulatedMetricsPlugin(MakeStandardNighthawkOutput());
-  double value = plugin.GetMetricByName("send-rate");
-  EXPECT_EQ(value, 0.25);
-}
-
-TEST(NighthawkStatsEmulatedMetricsPluginTest, ComputesCorrectSuccessRate) {
-  NighthawkStatsEmulatedMetricsPlugin plugin =
-      NighthawkStatsEmulatedMetricsPlugin(MakeStandardNighthawkOutput());
-  double value = plugin.GetMetricByName("success-rate");
-  EXPECT_EQ(value, 0.125);
-}
-
-TEST(NighthawkStatsEmulatedMetricsPluginTest, ComputesCorrectMinimumLatency) {
-  NighthawkStatsEmulatedMetricsPlugin plugin =
-      NighthawkStatsEmulatedMetricsPlugin(MakeStandardNighthawkOutput());
-  double value = plugin.GetMetricByName("latency-ns-min");
-  EXPECT_EQ(value, 400.0);
-}
-
-TEST(NighthawkStatsEmulatedMetricsPluginTest, ComputesCorrectMeanLatency) {
-  NighthawkStatsEmulatedMetricsPlugin plugin =
-      NighthawkStatsEmulatedMetricsPlugin(MakeStandardNighthawkOutput());
-  double value = plugin.GetMetricByName("latency-ns-mean");
-  EXPECT_EQ(value, 500.0);
-}
-
-TEST(NighthawkStatsEmulatedMetricsPluginTest, ComputesCorrectMaxLatency) {
-  NighthawkStatsEmulatedMetricsPlugin plugin =
-      NighthawkStatsEmulatedMetricsPlugin(MakeStandardNighthawkOutput());
-  double value = plugin.GetMetricByName("latency-ns-max");
-  EXPECT_EQ(value, 600.0);
-}
-
-TEST(NighthawkStatsEmulatedMetricsPluginTest, ComputesCorrectMeanLatencyPlus1Stdev) {
-  NighthawkStatsEmulatedMetricsPlugin plugin =
-      NighthawkStatsEmulatedMetricsPlugin(MakeStandardNighthawkOutput());
-  double value = plugin.GetMetricByName("latency-ns-mean-plus-1stdev");
-  EXPECT_EQ(value, 511.0);
-}
-
-TEST(NighthawkStatsEmulatedMetricsPluginTest, ComputesCorrectMeanLatencyPlus2Stdev) {
-  NighthawkStatsEmulatedMetricsPlugin plugin =
-      NighthawkStatsEmulatedMetricsPlugin(MakeStandardNighthawkOutput());
-  double value = plugin.GetMetricByName("latency-ns-mean-plus-2stdev");
-  EXPECT_EQ(value, 522.0);
-}
-
-TEST(NighthawkStatsEmulatedMetricsPluginTest, ComputesCorrectMeanLatencyPlus3Stdev) {
-  NighthawkStatsEmulatedMetricsPlugin plugin =
-      NighthawkStatsEmulatedMetricsPlugin(MakeStandardNighthawkOutput());
-  double value = plugin.GetMetricByName("latency-ns-mean-plus-3stdev");
-  EXPECT_EQ(value, 533.0);
-}
-
-TEST(NighthawkStatsEmulatedMetricsPluginTest, ReturnsZeroForNonexistentMetric) {
-  NighthawkStatsEmulatedMetricsPlugin plugin =
-      NighthawkStatsEmulatedMetricsPlugin(MakeStandardNighthawkOutput());
-  double value = plugin.GetMetricByName("nonexistent-metric-name");
-  EXPECT_EQ(value, 0.0);
-}
+INSTANTIATE_TEST_SUITE_P(
+    NighthawkStatsEmulatedMetricsPluginValuesTests, NighthawkStatsEmulatedMetricsPluginTestFixture,
+    ::testing::Values(std::make_tuple<std::string, double>("attempted-rps", 1024),
+                      std::make_tuple<std::string, double>("achieved-rps", 256),
+                      std::make_tuple<std::string, double>("send-rate", 0.25),
+                      std::make_tuple<std::string, double>("success-rate", 0.125),
+                      std::make_tuple<std::string, double>("latency-ns-min", 400.0),
+                      std::make_tuple<std::string, double>("latency-ns-mean", 500.0),
+                      std::make_tuple<std::string, double>("latency-ns-max", 600.0),
+                      std::make_tuple<std::string, double>("latency-ns-mean-plus-1stdev", 511.0),
+                      std::make_tuple<std::string, double>("latency-ns-mean-plus-2stdev", 522.0),
+                      std::make_tuple<std::string, double>("latency-ns-mean-plus-3stdev", 533.0),
+                      std::make_tuple<std::string, double>("latency-ns-pstdev", 11.0),
+                      std::make_tuple<std::string, double>("nonexistent-metric-name", 0.0)));
 
 TEST(NighthawkStatsEmulatedMetricsPluginTest, ReturnsCorrectSupportedMetricNames) {
   NighthawkStatsEmulatedMetricsPlugin plugin =
@@ -95,7 +46,7 @@ TEST(NighthawkStatsEmulatedMetricsPluginTest, ReturnsCorrectSupportedMetricNames
               ::testing::ElementsAre("attempted-rps", "achieved-rps", "send-rate", "success-rate",
                                      "latency-ns-min", "latency-ns-mean", "latency-ns-max",
                                      "latency-ns-mean-plus-1stdev", "latency-ns-mean-plus-2stdev",
-                                     "latency-ns-mean-plus-3stdev"));
+                                     "latency-ns-mean-plus-3stdev", "latency-ns-pstdev"));
 }
 
 } // namespace
