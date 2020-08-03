@@ -1,26 +1,29 @@
 #include "test/adaptive_load/utility.h"
 
+#include <google/protobuf/util/time_util.h>
+
+#include "external/envoy/source/common/protobuf/protobuf.h"
+
+#include "absl/strings/string_view.h"
+
 namespace Nighthawk {
 
 namespace {
 
-void SetCounterValue(nighthawk::client::Counter* counter, const std::string& name, int value) {
-  counter->set_name(name);
+using ::Envoy::Protobuf::util::TimeUtil;
+
+void SetCounterValue(nighthawk::client::Counter* counter, absl::string_view name, int value) {
+  counter->set_name(std::string(name));
   counter->set_value(value);
 }
 
-void SetStatisticValues(nighthawk::client::Statistic* statistic, const std::string& id, long min_ns,
+void SetStatisticValues(nighthawk::client::Statistic* statistic, absl::string_view id, long min_ns,
                         long mean_ns, long max_ns, long pstdev_ns) {
-  const long kOneBillion = 1000 * 1000 * 1000;
-  statistic->set_id(id);
-  statistic->mutable_min()->set_seconds(min_ns / kOneBillion);
-  statistic->mutable_min()->set_nanos(min_ns % kOneBillion);
-  statistic->mutable_mean()->set_seconds(mean_ns / kOneBillion);
-  statistic->mutable_mean()->set_nanos(mean_ns % kOneBillion);
-  statistic->mutable_max()->set_seconds(max_ns / kOneBillion);
-  statistic->mutable_max()->set_nanos(max_ns % kOneBillion);
-  statistic->mutable_pstdev()->set_seconds(pstdev_ns / kOneBillion);
-  statistic->mutable_pstdev()->set_nanos(pstdev_ns % kOneBillion);
+  statistic->set_id(std::string(id));
+  *statistic->mutable_min() = TimeUtil::NanosecondsToDuration(min_ns);
+  *statistic->mutable_mean() = TimeUtil::NanosecondsToDuration(mean_ns);
+  *statistic->mutable_max() = TimeUtil::NanosecondsToDuration(max_ns);
+  *statistic->mutable_pstdev() = TimeUtil::NanosecondsToDuration(pstdev_ns);
 }
 
 } // namespace
@@ -29,8 +32,8 @@ nighthawk::client::Output MakeStandardNighthawkOutput() {
   nighthawk::client::Output output;
   output.mutable_options()->mutable_concurrency()->set_value("1");
   output.mutable_options()->mutable_requests_per_second()->set_value(1024);
-  output.mutable_options()->mutable_duration()->set_seconds(10);
   nighthawk::client::Result* result = output.mutable_results()->Add();
+  result->mutable_execution_duration()->set_seconds(10);
   result->set_name("global");
   // 1/4 of requests were successfully sent.
   SetCounterValue(result->mutable_counters()->Add(), "upstream_rq_total", 2560);

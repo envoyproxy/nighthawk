@@ -9,19 +9,21 @@
 
 namespace Nighthawk {
 
+using ::Envoy::Protobuf::util::TimeUtil;
+
 NighthawkStatsEmulatedMetricsPlugin::NighthawkStatsEmulatedMetricsPlugin(
     const nighthawk::client::Output& nighthawk_output) {
   for (const nighthawk::client::Result& result : nighthawk_output.results()) {
     if (result.name() != "global") {
       continue;
     }
-    int concurrency;
-    // "auto" is not supported since we have no way to detect the number of cores Nighthawk Service
-    // used; "auto" should have been caught during input validation.
-    RELEASE_ASSERT(absl::SimpleAtoi(nighthawk_output.options().concurrency().value(), &concurrency),
-                   "Concurrency 'auto' not supported in Adaptive Load Controller.");
+
+    const int64_t actual_duration_seconds =
+        TimeUtil::DurationToSeconds(result.execution_duration());
+    const uint32_t number_of_workers =
+        nighthawk_output.results().size() == 1 ? 1 : nighthawk_output.results().size() - 1;
     const long total_specified = nighthawk_output.options().requests_per_second().value() *
-                                 nighthawk_output.options().duration().seconds() * concurrency;
+                                 actual_duration_seconds * number_of_workers;
     int total_sent = 0;
     int total_2xx = 0;
     for (const nighthawk::client::Counter& counter : result.counters()) {
@@ -31,29 +33,37 @@ NighthawkStatsEmulatedMetricsPlugin::NighthawkStatsEmulatedMetricsPlugin(
         total_sent = counter.value();
       }
     }
-    metric_from_name_["attempted-rps"] =
-        static_cast<double>(total_specified) /
-        static_cast<double>(nighthawk_output.options().duration().seconds());
-    metric_from_name_["achieved-rps"] =
-        static_cast<double>(total_sent) /
-        static_cast<double>(nighthawk_output.options().duration().seconds());
-    metric_from_name_["send-rate"] =
-        static_cast<double>(total_sent) / static_cast<double>(total_specified);
-    metric_from_name_["success-rate"] =
-        static_cast<double>(total_2xx) / static_cast<double>(total_sent);
+    // Values that are missing for any reason are omitted from the map.
+    metric_from_name_.clear();
+    if (actual_duration_seconds > 0.0) {
+      metric_from_name_["attempted-rps"] =
+          static_cast<double>(total_specified) / actual_duration_seconds;
+      metric_from_name_["achieved-rps"] = static_cast<double>(total_sent) / actual_duration_seconds;
+    } else {
+      ENVOY_LOG(warn, "Nighthawk returned a benchmark result with zero actual duration.");
+    }
+    if (total_specified > 0) {
+      metric_from_name_["send-rate"] =
+          static_cast<double>(total_sent) / static_cast<double>(total_specified);
+    }
+    if (total_sent > 0) {
+      metric_from_name_["success-rate"] =
+          static_cast<double>(total_2xx) / static_cast<double>(total_sent);
+    }
 
     for (const nighthawk::client::Statistic& statistic : result.statistics()) {
       if (statistic.id() == "benchmark_http_client.request_to_response") {
-        double min = statistic.min().seconds() * 1.0e9 + statistic.min().nanos();
-        double mean = statistic.mean().seconds() * 1.0e9 + statistic.mean().nanos();
-        double max = statistic.max().seconds() * 1.0e9 + statistic.max().nanos();
-        double stdev = statistic.pstdev().seconds() * 1.0e9 + statistic.pstdev().nanos();
+        const double min = TimeUtil::DurationToNanoseconds(statistic.min());
+        const double mean = TimeUtil::DurationToNanoseconds(statistic.mean());
+        const double max = TimeUtil::DurationToNanoseconds(statistic.max());
+        const double pstdev = TimeUtil::DurationToNanoseconds(statistic.pstdev());
         metric_from_name_["latency-ns-min"] = min;
         metric_from_name_["latency-ns-mean"] = mean;
         metric_from_name_["latency-ns-max"] = max;
-        metric_from_name_["latency-ns-mean-plus-1stdev"] = mean + stdev;
-        metric_from_name_["latency-ns-mean-plus-2stdev"] = mean + 2 * stdev;
-        metric_from_name_["latency-ns-mean-plus-3stdev"] = mean + 3 * stdev;
+        metric_from_name_["latency-ns-mean-plus-1stdev"] = mean + pstdev;
+        metric_from_name_["latency-ns-mean-plus-2stdev"] = mean + 2 * pstdev;
+        metric_from_name_["latency-ns-mean-plus-3stdev"] = mean + 3 * pstdev;
+        metric_from_name_["latency-ns-pstdev"] = pstdev;
         break;
       }
     }
@@ -61,6 +71,7 @@ NighthawkStatsEmulatedMetricsPlugin::NighthawkStatsEmulatedMetricsPlugin(
 }
 
 double NighthawkStatsEmulatedMetricsPlugin::GetMetricByName(const std::string& metric_name) {
+  // Values that could not be obtained will be missing from the map and will produce 0.0.
   return metric_from_name_[metric_name];
 }
 
@@ -77,6 +88,7 @@ NighthawkStatsEmulatedMetricsPlugin::GetAllSupportedMetricNames() const {
       "latency-ns-mean-plus-1stdev",
       "latency-ns-mean-plus-2stdev",
       "latency-ns-mean-plus-3stdev",
+      "latency-ns-pstdev",
   };
 }
 
