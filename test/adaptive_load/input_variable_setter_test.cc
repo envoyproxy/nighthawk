@@ -11,12 +11,10 @@ TEST(RequestsPerSecondInputVariableSetterConfigFactoryTest, GeneratesEmptyConfig
   InputVariableSetterConfigFactory& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<InputVariableSetterConfigFactory>(
           "nighthawk.rps");
-
   Envoy::ProtobufTypes::MessagePtr message = config_factory.createEmptyConfigProto();
-
   const nighthawk::adaptive_load::RequestsPerSecondInputVariableSetterConfig expected_config;
-
   EXPECT_EQ(message->DebugString(), expected_config.DebugString());
+  EXPECT_TRUE(Envoy::MessageUtil()(*message, expected_config));
 }
 
 TEST(RequestsPerSecondInputVariableSetterConfigFactoryTest, CreatesCorrectFactory) {
@@ -40,7 +38,6 @@ TEST(RequestsPerSecondInputVariableSetterConfigFactoryTest, CreatesPlugin) {
       Envoy::Config::Utility::getAndCheckFactoryByName<InputVariableSetterConfigFactory>(
           "nighthawk.rps");
   InputVariableSetterPtr plugin = config_factory.createInputVariableSetter(config_any);
-
   EXPECT_NE(dynamic_cast<RequestsPerSecondInputVariableSetter*>(plugin.get()), nullptr);
 }
 
