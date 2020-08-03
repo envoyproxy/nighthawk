@@ -61,28 +61,4 @@ double LinearScoringFunction::EvaluateMetric(double value) const {
   return k_ * (threshold_ - value);
 }
 
-std::string SigmoidScoringFunctionConfigFactory::name() const { return "nighthawk.sigmoid"; }
-
-Envoy::ProtobufTypes::MessagePtr SigmoidScoringFunctionConfigFactory::createEmptyConfigProto() {
-  return std::make_unique<nighthawk::adaptive_load::SigmoidScoringFunctionConfig>();
-}
-
-ScoringFunctionPtr SigmoidScoringFunctionConfigFactory::createScoringFunction(
-    const Envoy::Protobuf::Message& message) {
-  const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
-  nighthawk::adaptive_load::SigmoidScoringFunctionConfig config;
-  Envoy::MessageUtil::unpackTo(any, config);
-  return std::make_unique<SigmoidScoringFunction>(config);
-}
-
-REGISTER_FACTORY(SigmoidScoringFunctionConfigFactory, ScoringFunctionConfigFactory);
-
-SigmoidScoringFunction::SigmoidScoringFunction(
-    const nighthawk::adaptive_load::SigmoidScoringFunctionConfig& config)
-    : threshold_{config.threshold()}, k_{config.k()} {}
-
-double SigmoidScoringFunction::EvaluateMetric(double value) const {
-  return 1.0 - 2.0 / (1.0 + exp(-k_ * (value - threshold_)));
-}
-
 } // namespace Nighthawk
