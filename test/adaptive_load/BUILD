@@ -14,6 +14,5 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         "//source/adaptive_load:scoring_function_impl",
-        "@envoy//source/common/protobuf:utility_lib_with_external_headers",
     ],
 )

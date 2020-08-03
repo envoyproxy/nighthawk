@@ -1,5 +1,4 @@
 #include "external/envoy/source/common/config/utility.h"
-#include "external/envoy/source/common/protobuf/utility.h"
 
 #include "adaptive_load/scoring_function_impl.h"
 #include "gtest/gtest.h"
