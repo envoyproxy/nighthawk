@@ -21,11 +21,9 @@ TEST(RequestsPerSecondInputVariableSetterConfigFactoryTest, CreatesCorrectFactor
   const nighthawk::adaptive_load::RequestsPerSecondInputVariableSetterConfig config;
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
-
   InputVariableSetterConfigFactory& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<InputVariableSetterConfigFactory>(
           "nighthawk.rps");
-
   EXPECT_EQ(config_factory.name(), "nighthawk.rps");
 }
 
@@ -33,7 +31,6 @@ TEST(RequestsPerSecondInputVariableSetterConfigFactoryTest, CreatesPlugin) {
   const nighthawk::adaptive_load::RequestsPerSecondInputVariableSetterConfig config;
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
-
   InputVariableSetterConfigFactory& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<InputVariableSetterConfigFactory>(
           "nighthawk.rps");
