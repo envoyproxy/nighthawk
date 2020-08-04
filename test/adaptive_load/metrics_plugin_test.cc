@@ -28,7 +28,7 @@ TEST_P(NighthawkStatsEmulatedMetricsPluginTestFixture, ComputesCorrectMetric) {
           /*max_ns=*/600,
           /*pstdev_ns=*/11,
       }));
-  const std::string metric_name = std::get<0>(GetParam());
+  const std::string& metric_name = std::get<0>(GetParam());
   const double value = std::get<1>(GetParam());
   EXPECT_EQ(plugin.GetMetricByName(metric_name).value(), value);
 }
