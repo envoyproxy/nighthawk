@@ -30,7 +30,7 @@ TEST_P(NighthawkStatsEmulatedMetricsPluginTestFixture, ComputesCorrectMetric) {
       }));
   const std::string metric_name = std::get<0>(GetParam());
   const double value = std::get<1>(GetParam());
-  EXPECT_EQ(plugin.GetMetricByName(metric_name), value);
+  EXPECT_EQ(plugin.GetMetricByName(metric_name).value(), value);
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -45,26 +45,52 @@ INSTANTIATE_TEST_SUITE_P(
                       std::make_tuple<std::string, double>("latency-ns-mean-plus-1stdev", 511.0),
                       std::make_tuple<std::string, double>("latency-ns-mean-plus-2stdev", 522.0),
                       std::make_tuple<std::string, double>("latency-ns-mean-plus-3stdev", 533.0),
-                      std::make_tuple<std::string, double>("latency-ns-pstdev", 11.0),
-                      std::make_tuple<std::string, double>("nonexistent-metric-name", 0.0)));
+                      std::make_tuple<std::string, double>("latency-ns-pstdev", 11.0)));
 
-TEST(NighthawkStatsEmulatedMetricsPluginTest, ReturnsZeroAttemptedRpsForZeroActualDuration) {
-  NighthawkStatsEmulatedMetricsPlugin plugin =
-      NighthawkStatsEmulatedMetricsPlugin(MakeSimpleNighthawkOutput({
-          /*concurrency=*/"auto",
-          /*requests_per_second=*/1024,
-          /*actual_duration_seconds=*/0,
-          /*upstream_rq_total=*/2560,
-          /*response_count_2xx=*/320,
-          /*min_ns=*/400,
-          /*mean_ns=*/500,
-          /*max_ns=*/600,
-          /*pstdev_ns=*/11,
-      }));
-  EXPECT_EQ(plugin.GetMetricByName("attempted-rps"), 0.0);
+TEST(NighthawkStatsEmulatedMetricsPluginTest, ReturnsErrorIfGlobalResultMissing) {
+  nighthawk::client::Output empty_output;
+  NighthawkStatsEmulatedMetricsPlugin plugin = NighthawkStatsEmulatedMetricsPlugin(empty_output);
+  EXPECT_THAT(plugin.GetMetricByName("x").status().message(),
+              testing::HasSubstr("'global' result not found"));
 }
 
-TEST(NighthawkStatsEmulatedMetricsPluginTest, ReturnsZeroAchievedRpsForZeroActualDuration) {
+TEST(NighthawkStatsEmulatedMetricsPluginTest, ReturnsErrorIf2xxMissing) {
+  nighthawk::client::Output output = MakeSimpleNighthawkOutput({
+      /*concurrency=*/"auto",
+      /*requests_per_second=*/1024,
+      /*actual_duration_seconds=*/10,
+      /*upstream_rq_total=*/2560,
+      /*response_count_2xx=*/320,
+      /*min_ns=*/400,
+      /*mean_ns=*/500,
+      /*max_ns=*/600,
+      /*pstdev_ns=*/11,
+  });
+  output.mutable_results(0)->clear_counters();
+  NighthawkStatsEmulatedMetricsPlugin plugin = NighthawkStatsEmulatedMetricsPlugin(output);
+  EXPECT_THAT(plugin.GetMetricByName("x").status().message(),
+              testing::HasSubstr("'benchmark.total_2xx' not found"));
+}
+
+TEST(NighthawkStatsEmulatedMetricsPluginTest, ReturnsErrorIfUpstreamRqTotalMissing) {
+  nighthawk::client::Output output = MakeSimpleNighthawkOutput({
+      /*concurrency=*/"auto",
+      /*requests_per_second=*/1024,
+      /*actual_duration_seconds=*/10,
+      /*upstream_rq_total=*/2560,
+      /*response_count_2xx=*/320,
+      /*min_ns=*/400,
+      /*mean_ns=*/500,
+      /*max_ns=*/600,
+      /*pstdev_ns=*/11,
+  });
+  output.mutable_results(0)->clear_counters();
+  NighthawkStatsEmulatedMetricsPlugin plugin = NighthawkStatsEmulatedMetricsPlugin(output);
+  EXPECT_THAT(plugin.GetMetricByName("x").status().message(),
+              testing::HasSubstr("'upstream_rq_total' not found"));
+}
+
+TEST(NighthawkStatsEmulatedMetricsPluginTest, ReturnsErrorForZeroActualDuration) {
   NighthawkStatsEmulatedMetricsPlugin plugin =
       NighthawkStatsEmulatedMetricsPlugin(MakeSimpleNighthawkOutput({
           /*concurrency=*/"auto",
@@ -77,7 +103,43 @@ TEST(NighthawkStatsEmulatedMetricsPluginTest, ReturnsZeroAchievedRpsForZeroActua
           /*max_ns=*/600,
           /*pstdev_ns=*/11,
       }));
-  EXPECT_EQ(plugin.GetMetricByName("achieved-rps"), 0.0);
+  EXPECT_THAT(plugin.GetMetricByName("x").status().message(),
+              testing::HasSubstr("zero actual duration"));
+}
+
+TEST(NighthawkStatsEmulatedMetricsPluginTest, ReturnsErrorIfStatisticMissing) {
+  nighthawk::client::Output output = MakeSimpleNighthawkOutput({
+      /*concurrency=*/"auto",
+      /*requests_per_second=*/1024,
+      /*actual_duration_seconds=*/10,
+      /*upstream_rq_total=*/2560,
+      /*response_count_2xx=*/320,
+      /*min_ns=*/400,
+      /*mean_ns=*/500,
+      /*max_ns=*/600,
+      /*pstdev_ns=*/11,
+  });
+  output.mutable_results(0)->clear_statistics();
+  NighthawkStatsEmulatedMetricsPlugin plugin = NighthawkStatsEmulatedMetricsPlugin(output);
+  EXPECT_THAT(
+      plugin.GetMetricByName("x").status().message(),
+      testing::HasSubstr("'benchmark_http_client.request_to_response' statistic not found"));
+}
+
+TEST(NighthawkStatsEmulatedMetricsPluginTest, ReturnsZeroSuccessRateForZeroRequestsSent) {
+  NighthawkStatsEmulatedMetricsPlugin plugin =
+      NighthawkStatsEmulatedMetricsPlugin(MakeSimpleNighthawkOutput({
+          /*concurrency=*/"auto",
+          /*requests_per_second=*/1024,
+          /*actual_duration_seconds=*/10,
+          /*upstream_rq_total=*/0,
+          /*response_count_2xx=*/320,
+          /*min_ns=*/400,
+          /*mean_ns=*/500,
+          /*max_ns=*/600,
+          /*pstdev_ns=*/11,
+      }));
+  EXPECT_EQ(plugin.GetMetricByName("success-rate").value(), 0.0);
 }
 
 TEST(NighthawkStatsEmulatedMetricsPluginTest, ReturnsZeroSendRateForZeroTotalSpecified) {
@@ -93,23 +155,24 @@ TEST(NighthawkStatsEmulatedMetricsPluginTest, ReturnsZeroSendRateForZeroTotalSpe
           /*max_ns=*/600,
           /*pstdev_ns=*/11,
       }));
-  EXPECT_EQ(plugin.GetMetricByName("send-rate"), 0.0);
+  EXPECT_EQ(plugin.GetMetricByName("send-rate").value(), 0.0);
 }
 
-TEST(NighthawkStatsEmulatedMetricsPluginTest, ReturnsZeroSuccessRateForZeroRequestsSent) {
+TEST(NighthawkStatsEmulatedMetricsPluginTest, ReturnsErrorForNonexistentMetricName) {
   NighthawkStatsEmulatedMetricsPlugin plugin =
       NighthawkStatsEmulatedMetricsPlugin(MakeSimpleNighthawkOutput({
           /*concurrency=*/"auto",
-          /*requests_per_second=*/0,
+          /*requests_per_second=*/123,
           /*actual_duration_seconds=*/10,
-          /*upstream_rq_total=*/0,
+          /*upstream_rq_total=*/2560,
           /*response_count_2xx=*/320,
           /*min_ns=*/400,
           /*mean_ns=*/500,
           /*max_ns=*/600,
           /*pstdev_ns=*/11,
       }));
-  EXPECT_EQ(plugin.GetMetricByName("success-rate"), 0.0);
+  EXPECT_THAT(plugin.GetMetricByName("nonexistent-metric-name").status().message(),
+              testing::HasSubstr("was not computed by the 'builtin' plugin"));
 }
 
 TEST(NighthawkStatsEmulatedMetricsPluginTest, DeterminesConcurrencyWithSingleWorker) {
@@ -126,7 +189,7 @@ TEST(NighthawkStatsEmulatedMetricsPluginTest, DeterminesConcurrencyWithSingleWor
           /*pstdev_ns=*/11,
       }));
   // |results| in output contains only "global" when there was 1 worker.
-  EXPECT_EQ(plugin.GetMetricByName("attempted-rps"), 123.0);
+  EXPECT_EQ(plugin.GetMetricByName("attempted-rps").value(), 123.0);
 }
 
 TEST(NighthawkStatsEmulatedMetricsPluginTest, DeterminesConcurrencyWithMultipleWorkers) {
@@ -152,7 +215,7 @@ TEST(NighthawkStatsEmulatedMetricsPluginTest, DeterminesConcurrencyWithMultipleW
 
   NighthawkStatsEmulatedMetricsPlugin plugin =
       NighthawkStatsEmulatedMetricsPlugin(nighthawk_output);
-  EXPECT_EQ(plugin.GetMetricByName("attempted-rps"), 246.0);
+  EXPECT_EQ(plugin.GetMetricByName("attempted-rps").value(), 246.0);
 }
 
 TEST(NighthawkStatsEmulatedMetricsPluginTest, ReturnsCorrectSupportedMetricNames) {

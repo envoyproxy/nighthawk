@@ -1,7 +1,5 @@
 #include "test/adaptive_load/utility.h"
 
-#include <google/protobuf/util/time_util.h>
-
 #include "external/envoy/source/common/protobuf/protobuf.h"
 
 #include "absl/strings/string_view.h"
@@ -9,8 +7,6 @@
 namespace Nighthawk {
 
 namespace {
-
-using ::Envoy::Protobuf::util::TimeUtil;
 
 void SetCounterValue(nighthawk::client::Counter* counter, absl::string_view name, int value) {
   counter->set_name(std::string(name));
@@ -20,10 +16,10 @@ void SetCounterValue(nighthawk::client::Counter* counter, absl::string_view name
 void SetStatisticValues(nighthawk::client::Statistic* statistic, absl::string_view id, long min_ns,
                         long mean_ns, long max_ns, long pstdev_ns) {
   statistic->set_id(std::string(id));
-  *statistic->mutable_min() = TimeUtil::NanosecondsToDuration(min_ns);
-  *statistic->mutable_mean() = TimeUtil::NanosecondsToDuration(mean_ns);
-  *statistic->mutable_max() = TimeUtil::NanosecondsToDuration(max_ns);
-  *statistic->mutable_pstdev() = TimeUtil::NanosecondsToDuration(pstdev_ns);
+  *statistic->mutable_min() = Envoy::Protobuf::util::TimeUtil::NanosecondsToDuration(min_ns);
+  *statistic->mutable_mean() = Envoy::Protobuf::util::TimeUtil::NanosecondsToDuration(mean_ns);
+  *statistic->mutable_max() = Envoy::Protobuf::util::TimeUtil::NanosecondsToDuration(max_ns);
+  *statistic->mutable_pstdev() = Envoy::Protobuf::util::TimeUtil::NanosecondsToDuration(pstdev_ns);
 }
 
 } // namespace

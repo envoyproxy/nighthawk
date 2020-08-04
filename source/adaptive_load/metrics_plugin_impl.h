@@ -9,6 +9,7 @@
 #include "api/client/output.pb.h"
 
 #include "absl/container/flat_hash_map.h"
+#include "absl/strings/string_view.h"
 
 namespace Nighthawk {
 
@@ -20,11 +21,12 @@ class NighthawkStatsEmulatedMetricsPlugin
       public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
   explicit NighthawkStatsEmulatedMetricsPlugin(const nighthawk::client::Output& nighthawk_output);
-  double GetMetricByName(const std::string& metric_name) override;
+  Envoy::StatusOr<double> GetMetricByName(absl::string_view metric_name) override;
   const std::vector<std::string> GetAllSupportedMetricNames() const override;
 
 private:
   absl::flat_hash_map<std::string, double> metric_from_name_;
+  std::string errors_;
 };
 
 } // namespace Nighthawk
