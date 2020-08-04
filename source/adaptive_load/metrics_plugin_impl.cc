@@ -13,6 +13,8 @@ using ::Envoy::Protobuf::util::TimeUtil;
 
 NighthawkStatsEmulatedMetricsPlugin::NighthawkStatsEmulatedMetricsPlugin(
     const nighthawk::client::Output& nighthawk_output) {
+  // Values that could not be determined for any reason are omitted from the map.
+  metric_from_name_.clear();
   for (const nighthawk::client::Result& result : nighthawk_output.results()) {
     if (result.name() != "global") {
       continue;
@@ -21,7 +23,7 @@ NighthawkStatsEmulatedMetricsPlugin::NighthawkStatsEmulatedMetricsPlugin(
     const int64_t actual_duration_seconds =
         TimeUtil::DurationToSeconds(result.execution_duration());
     const uint32_t number_of_workers =
-        nighthawk_output.results().size() == 1 ? 1 : nighthawk_output.results().size() - 1;
+        nighthawk_output.results_size() == 1 ? 1 : nighthawk_output.results_size() - 1;
     const long total_specified = nighthawk_output.options().requests_per_second().value() *
                                  actual_duration_seconds * number_of_workers;
     int total_sent = 0;
@@ -33,8 +35,6 @@ NighthawkStatsEmulatedMetricsPlugin::NighthawkStatsEmulatedMetricsPlugin(
         total_sent = counter.value();
       }
     }
-    // Values that are missing for any reason are omitted from the map.
-    metric_from_name_.clear();
     if (actual_duration_seconds > 0.0) {
       metric_from_name_["attempted-rps"] =
           static_cast<double>(total_specified) / actual_duration_seconds;

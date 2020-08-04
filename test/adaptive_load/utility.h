@@ -7,21 +7,36 @@
 namespace Nighthawk {
 
 /**
- * Creates a Nighthawk output proto containing minimal counters and statistics for analysis by the
- * nighthawk.builtin MetricsPlugin:
- *  - 1024 RPS attempted
- *  - 10 second duration attempted
- *  - 10240 requests attempted
- *  - 2560 requests performed (counter upstream_rq_total) (0.25 send-rate)
- *  - 320 requests returned 2xx (counter benchmark.http_2xx) (0.125 success-rate)
- *  - Latency stats (benchmark_http_client.request_to_response):
- *    - 400ns min
- *    - 500ns mean
- *    - 600ns max
- *    - 11ns pstdev
- *
- * @return Nighthawk benchmark output proto.
+ * Minimal description for unit tests to construct a fake nighthawk::client::Output proto using
+ * MakeSimpleNighthawkOutput().
  */
-nighthawk::client::Output MakeStandardNighthawkOutput();
+struct SimpleNighthawkOutputSpec {
+  // String that is either "auto" or a decimal worker count.
+  std::string concurrency;
+  // requests_per_second passed in by the caller of the Nighthawk Service.
+  int requests_per_second;
+  // Actual duration, to be stored in the Result in the output.
+  int actual_duration_seconds;
+  // Counter that records all requests Nighthawk attempted to send.
+  int upstream_rq_total;
+  // Counter that records Nighthawk sending a request and receiving a 2xx response.
+  int response_count_2xx;
+  // Minimum latency statistic.
+  long min_ns;
+  // Mean latency statistic.
+  long mean_ns;
+  // Max latency statistic.
+  long max_ns;
+  // pstdev latency statistic.
+  long pstdev_ns;
+};
+
+/**
+ * Creates a Nighthawk output proto containing minimal counters and statistics for analysis by the
+ * nighthawk.builtin MetricsPlugin.
+ *
+ * @return nighthawk::client::Output Nighthawk benchmark output proto.
+ */
+nighthawk::client::Output MakeSimpleNighthawkOutput(const SimpleNighthawkOutputSpec& spec);
 
 } // namespace Nighthawk
