@@ -22,6 +22,7 @@
 #include "absl/strings/str_join.h"
 #include "adaptive_load/metrics_plugin_impl.h"
 #include "adaptive_load/plugin_util.h"
+#include "external/envoy/source/common/common/statusor.h"
 
 namespace Nighthawk {
 
@@ -113,9 +114,17 @@ BenchmarkResult AnalyzeNighthawkBenchmark(
     evaluation.set_metric_id(absl::StrCat(metric_threshold.metric_spec().metrics_plugin_name(), "/",
                                           metric_threshold.metric_spec().metric_name()));
 
-    double metric_value =
+    const Envoy::StatusOr<double> metric_value_or =
         name_to_plugin_map[metric_threshold.metric_spec().metrics_plugin_name()]->GetMetricByName(
             metric_threshold.metric_spec().metric_name());
+    if (!metric_value_or.ok()) {
+      benchmark_result.mutable_status()->set_code(::grpc::INTERNAL);
+      benchmark_result.mutable_status()->set_message(
+          absl::StrCat("Error calling MetricsPlugin: ", metric_value_or.status().message()));
+      return benchmark_result;
+    }
+    const double metric_value = metric_value_or.value();
+
     evaluation.set_metric_value(metric_value);
     ScoringFunctionPtr scoring_function =
         LoadScoringFunctionPlugin(metric_threshold.threshold_spec().scoring_function());
@@ -132,8 +141,15 @@ BenchmarkResult AnalyzeNighthawkBenchmark(
     evaluation.set_metric_id(
         absl::StrCat(metric_spec.metrics_plugin_name(), "/", metric_spec.metric_name()));
 
-    double metric_value = name_to_plugin_map[metric_spec.metrics_plugin_name()]->GetMetricByName(
+    const Envoy::StatusOr<double> metric_value_or = name_to_plugin_map[metric_spec.metrics_plugin_name()]->GetMetricByName(
         metric_spec.metric_name());
+    if (!metric_value_or.ok()) {
+      benchmark_result.mutable_status()->set_code(::grpc::INTERNAL);
+      benchmark_result.mutable_status()->set_message(
+          absl::StrCat("Error calling MetricsPlugin: ", metric_value_or.status().message()));
+      return benchmark_result;
+    }
+    const double metric_value = metric_value_or.value();
     evaluation.set_metric_value(metric_value);
     evaluation.set_weight(0.0);
     *benchmark_result.mutable_metric_evaluations()->Add() = evaluation;

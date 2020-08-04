@@ -24,6 +24,7 @@
 #include "api/client/service.grpc.pb.h"
 #include "api/client/service.pb.h"
 #include "api/client/service_mock.grpc.pb.h"
+#include "external/envoy/source/common/common/statusor.h"
 
 #include "test/adaptive_load/utility.h"
 
@@ -47,6 +48,28 @@ using ::testing::Eq;
 using ::testing::HasSubstr;
 using ::testing::Return;
 using ::testing::SetArgPointee;
+
+/**
+ * Creates a minimal Nighthawk output proto for testing:
+ * - 1024 RPS attempted
+ * - 10 seconds actual execution time
+ * - Nighthawk was able to send 25% of requests (send-rate)
+ * - 12.5% of requests sent received 2xx response (success-rate)
+ * - 400/500/600/11 min/mean/max/pstdev latency ns
+ */
+nighthawk::client::Output MakeStandardNighthawkOutput() {
+  return MakeSimpleNighthawkOutput({
+      /*concurrency=*/"auto",
+      /*requests_per_second=*/1024,
+      /*actual_duration_seconds=*/10,
+      /*upstream_rq_total=*/2560,
+      /*response_count_2xx=*/320,
+      /*min_ns=*/400,
+      /*mean_ns=*/500,
+      /*max_ns=*/600,
+      /*pstdev_ns=*/11,
+  });
+}
 
 /**
  * Sets up a minimal working mock to be returned from the mock Nighthawk Service stub. To customize
@@ -75,7 +98,7 @@ MakeSimpleMockClientReaderWriter() {
 class FakeMetricsPlugin : public MetricsPlugin {
 public:
   FakeMetricsPlugin() {}
-  double GetMetricByName(const std::string&) override { return 5.0; }
+  Envoy::StatusOr<double> GetMetricByName(absl::string_view) override { return 5.0; }
   const std::vector<std::string> GetAllSupportedMetricNames() const override { return {"metric1"}; }
 };
 
