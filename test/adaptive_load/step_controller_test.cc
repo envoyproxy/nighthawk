@@ -12,8 +12,8 @@
 #include "adaptive_load/plugin_util.h"
 #include "adaptive_load/step_controller_impl.h"
 #include "google/rpc/code.pb.h"
-#include "gtest/gtest.h"
 #include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 namespace Nighthawk {
 
@@ -259,8 +259,7 @@ TEST(FixedSequenceStepControllerTest, ActivatesCustomInputValueSetter) {
   config.mutable_input_variable_setter()->set_name("nighthawk.testing-connections");
   // typed_config can be set to any valid Any proto, as the test-only
   // ConnectionsInputVariableSetterConfigFactory defined above ignores the config proto.
-  *config.mutable_input_variable_setter()->mutable_typed_config() =
-      Envoy::ProtobufWkt::Any();
+  *config.mutable_input_variable_setter()->mutable_typed_config() = Envoy::ProtobufWkt::Any();
 
   config.add_input_values(100.0);
   config.add_input_values(200.0);
@@ -303,7 +302,8 @@ TEST(FixedSequenceStepControllerTest, ReportsDoomIfNoInputValuesProvided) {
 
   std::string doom_reason;
   EXPECT_TRUE(step_controller.IsDoomed(&doom_reason));
-  EXPECT_EQ(doom_reason, "FixedSequenceStepController requires at least one value in input_values.");
+  EXPECT_EQ(doom_reason,
+            "FixedSequenceStepController requires at least one value in input_values.");
 }
 
 TEST(FixedSequenceStepControllerTest, ReportsDoomAfterNighthawkServiceError) {
