@@ -124,7 +124,7 @@ TEST(NighthawkStatsEmulatedMetricsPluginTest, DeterminesConcurrencyWithSingleWor
           /*mean_ns=*/500,
           /*max_ns=*/600,
           /*pstdev_ns=*/11,
-                }));
+      }));
   // |results| contains only "global" when there was 1 worker.
   EXPECT_EQ(plugin.GetMetricByName("attempted-rps"), 123.0);
 }
@@ -134,13 +134,13 @@ TEST(NighthawkStatsEmulatedMetricsPluginTest, DeterminesConcurrencyWithMultipleW
       /*concurrency=*/"auto",
       /*requests_per_second=*/123,
       /*actual_duration_seconds=*/10,
-            /*upstream_rq_total=*/60,
-          /*response_count_2xx=*/50,
-          /*.min_ns=*/400,
-          /*mean_ns=*/500,
-          /*max_ns=*/600,
-          /*pstdev_ns=*/11,
-          });
+      /*upstream_rq_total=*/60,
+      /*response_count_2xx=*/50,
+      /*.min_ns=*/400,
+      /*mean_ns=*/500,
+      /*max_ns=*/600,
+      /*pstdev_ns=*/11,
+  });
 
   // |results| when there are 2 workers contains 3 entries not necessarily in this order: "global"
   // merged results, worker 1 individual results, worker 2 individual results.
