@@ -11,30 +11,34 @@ TEST(BinaryScoringFunctionConfigFactoryTest, GeneratesEmptyConfigProto) {
   ScoringFunctionConfigFactory& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<ScoringFunctionConfigFactory>(
           "nighthawk.binary");
-  Envoy::ProtobufTypes::MessagePtr message = config_factory.createEmptyConfigProto();
+  const Envoy::ProtobufTypes::MessagePtr message = config_factory.createEmptyConfigProto();
 
-  nighthawk::adaptive_load::BinaryScoringFunctionConfig expected_config;
+  const nighthawk::adaptive_load::BinaryScoringFunctionConfig expected_config;
   EXPECT_EQ(message->DebugString(), expected_config.DebugString());
+  EXPECT_TRUE(Envoy::MessageUtil()(*message, expected_config));
 }
 
 TEST(LinearScoringFunctionConfigFactoryTest, GeneratesEmptyConfigProto) {
   ScoringFunctionConfigFactory& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<ScoringFunctionConfigFactory>(
           "nighthawk.linear");
-  Envoy::ProtobufTypes::MessagePtr message = config_factory.createEmptyConfigProto();
+  const Envoy::ProtobufTypes::MessagePtr message = config_factory.createEmptyConfigProto();
 
-  nighthawk::adaptive_load::LinearScoringFunctionConfig expected_config;
+  const nighthawk::adaptive_load::LinearScoringFunctionConfig expected_config;
   EXPECT_EQ(message->DebugString(), expected_config.DebugString());
+  EXPECT_TRUE(Envoy::MessageUtil()(*message, expected_config));
 }
 
-TEST(SigmoidScoringFunctionConfigFactoryTest, GeneratesEmptyConfigProto) {
+TEST(BinaryScoringFunctionConfigFactoryTest, CreatesBinaryScoringFunctionFactory) {
+  nighthawk::adaptive_load::BinaryScoringFunctionConfig config;
+  Envoy::ProtobufWkt::Any config_any;
+  config_any.PackFrom(config);
+
   ScoringFunctionConfigFactory& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<ScoringFunctionConfigFactory>(
-          "nighthawk.sigmoid");
-  Envoy::ProtobufTypes::MessagePtr message = config_factory.createEmptyConfigProto();
+          "nighthawk.binary");
 
-  nighthawk::adaptive_load::SigmoidScoringFunctionConfig expected_config;
-  EXPECT_EQ(message->DebugString(), expected_config.DebugString());
+  EXPECT_EQ(config_factory.name(), "nighthawk.binary");
 }
 
 TEST(BinaryScoringFunctionConfigFactoryTest, CreatesBinaryScoringFunctionPlugin) {
@@ -50,6 +54,18 @@ TEST(BinaryScoringFunctionConfigFactoryTest, CreatesBinaryScoringFunctionPlugin)
   EXPECT_NE(dynamic_cast<BinaryScoringFunction*>(plugin.get()), nullptr);
 }
 
+TEST(LinearScoringFunctionConfigFactoryTest, CreatesLinearScoringFunctionFactory) {
+  nighthawk::adaptive_load::LinearScoringFunctionConfig config;
+  Envoy::ProtobufWkt::Any config_any;
+  config_any.PackFrom(config);
+
+  ScoringFunctionConfigFactory& config_factory =
+      Envoy::Config::Utility::getAndCheckFactoryByName<ScoringFunctionConfigFactory>(
+          "nighthawk.linear");
+
+  EXPECT_EQ(config_factory.name(), "nighthawk.linear");
+}
+
 TEST(LinearScoringFunctionConfigFactoryTest, CreatesLinearScoringFunctionPlugin) {
   nighthawk::adaptive_load::LinearScoringFunctionConfig config;
   Envoy::ProtobufWkt::Any config_any;
@@ -61,19 +77,6 @@ TEST(LinearScoringFunctionConfigFactoryTest, CreatesLinearScoringFunctionPlugin)
   ScoringFunctionPtr plugin = config_factory.createScoringFunction(config_any);
 
   EXPECT_NE(dynamic_cast<LinearScoringFunction*>(plugin.get()), nullptr);
-}
-
-TEST(SigmoidScoringFunctionConfigFactoryTest, CreatesSigmoidScoringFunctionPlugin) {
-  nighthawk::adaptive_load::SigmoidScoringFunctionConfig config;
-  Envoy::ProtobufWkt::Any config_any;
-  config_any.PackFrom(config);
-
-  ScoringFunctionConfigFactory& config_factory =
-      Envoy::Config::Utility::getAndCheckFactoryByName<ScoringFunctionConfigFactory>(
-          "nighthawk.sigmoid");
-  ScoringFunctionPtr plugin = config_factory.createScoringFunction(config_any);
-
-  EXPECT_NE(dynamic_cast<SigmoidScoringFunction*>(plugin.get()), nullptr);
 }
 
 TEST(BinaryScoringFunctionTest, ReturnsOneForValueWithinUpperThreshold) {
@@ -180,50 +183,6 @@ TEST(LinearScoringFunctionTest, ReturnsNegativeValueForValueAboveThreshold) {
   config.set_k(1.0);
   LinearScoringFunction scoring_function(config);
   EXPECT_EQ(scoring_function.EvaluateMetric(12.0), -2.0);
-}
-
-TEST(SigmoidScoringFunctionTest, ReturnsZeroForValueEqualToThreshold) {
-  nighthawk::adaptive_load::SigmoidScoringFunctionConfig config;
-  config.set_threshold(10.0);
-  config.set_k(1.0);
-  SigmoidScoringFunction scoring_function(config);
-  EXPECT_EQ(scoring_function.EvaluateMetric(10.0), 0.0);
-}
-
-TEST(SigmoidScoringFunctionTest, ReturnsPositiveValueForValueBelowThreshold) {
-  nighthawk::adaptive_load::SigmoidScoringFunctionConfig config;
-  config.set_threshold(1000.0);
-  config.set_k(0.001);
-  SigmoidScoringFunction scoring_function(config);
-  EXPECT_GT(scoring_function.EvaluateMetric(999.0), 0.0);
-}
-
-TEST(SigmoidScoringFunctionTest, ReturnsNegativeValueForValueAboveThreshold) {
-  nighthawk::adaptive_load::SigmoidScoringFunctionConfig config;
-  config.set_threshold(1000.0);
-  config.set_k(0.001);
-  SigmoidScoringFunction scoring_function(config);
-  EXPECT_LT(scoring_function.EvaluateMetric(1001.0), 0.0);
-}
-
-TEST(SigmoidScoringFunctionTest, ReturnsValueCloseToOneForValueFarBelowThreshold) {
-  nighthawk::adaptive_load::SigmoidScoringFunctionConfig config;
-  config.set_threshold(1000.0);
-  config.set_k(0.001);
-  SigmoidScoringFunction scoring_function(config);
-  const double score = scoring_function.EvaluateMetric(-10000.0);
-  EXPECT_GT(score, 0.99);
-  EXPECT_LT(score, 1.0);
-}
-
-TEST(SigmoidScoringFunctionTest, ReturnsValueCloseToNegativeOneForValueFarAboveThreshold) {
-  nighthawk::adaptive_load::SigmoidScoringFunctionConfig config;
-  config.set_threshold(1000.0);
-  config.set_k(0.001);
-  SigmoidScoringFunction scoring_function(config);
-  const double score = scoring_function.EvaluateMetric(10000.0);
-  EXPECT_GT(score, -1.0);
-  EXPECT_LT(score, -0.99);
 }
 
 } // namespace
