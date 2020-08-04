@@ -18,7 +18,7 @@ class NighthawkStatsEmulatedMetricsPluginTestFixture
 TEST_P(NighthawkStatsEmulatedMetricsPluginTestFixture, ComputesCorrectMetric) {
   NighthawkStatsEmulatedMetricsPlugin plugin =
       NighthawkStatsEmulatedMetricsPlugin(MakeSimpleNighthawkOutput({
-          /*concurrency=*/"1",
+          /*concurrency=*/"auto",
           /*requests_per_second=*/1024,
           /*actual_duration_seconds=*/10,
           /*upstream_rq_total=*/2560,
@@ -51,7 +51,7 @@ INSTANTIATE_TEST_SUITE_P(
 TEST(NighthawkStatsEmulatedMetricsPluginTest, ReturnsZeroAttemptedRpsForZeroActualDuration) {
   NighthawkStatsEmulatedMetricsPlugin plugin =
       NighthawkStatsEmulatedMetricsPlugin(MakeSimpleNighthawkOutput({
-          /*concurrency=*/"1",
+          /*concurrency=*/"auto",
           /*requests_per_second=*/1024,
           /*actual_duration_seconds=*/0,
           /*upstream_rq_total=*/2560,
@@ -67,11 +67,11 @@ TEST(NighthawkStatsEmulatedMetricsPluginTest, ReturnsZeroAttemptedRpsForZeroActu
 TEST(NighthawkStatsEmulatedMetricsPluginTest, ReturnsZeroAchievedRpsForZeroActualDuration) {
   NighthawkStatsEmulatedMetricsPlugin plugin =
       NighthawkStatsEmulatedMetricsPlugin(MakeSimpleNighthawkOutput({
-          /*concurrency=*/"1",
+          /*concurrency=*/"auto",
           /*requests_per_second=*/1024,
           /*actual_duration_seconds=*/0,
-          /*upstream_rq_total=*/256,
-          /*response_count_2xx=*/32,
+          /*upstream_rq_total=*/2560,
+          /*response_count_2xx=*/320,
           /*min_ns=*/400,
           /*mean_ns=*/500,
           /*max_ns=*/600,
@@ -83,11 +83,11 @@ TEST(NighthawkStatsEmulatedMetricsPluginTest, ReturnsZeroAchievedRpsForZeroActua
 TEST(NighthawkStatsEmulatedMetricsPluginTest, ReturnsZeroSendRateForZeroTotalSpecified) {
   NighthawkStatsEmulatedMetricsPlugin plugin =
       NighthawkStatsEmulatedMetricsPlugin(MakeSimpleNighthawkOutput({
-          /*concurrency=*/"1",
+          /*concurrency=*/"auto",
           /*requests_per_second=*/0,
           /*actual_duration_seconds=*/10,
-          /*upstream_rq_total=*/256,
-          /*response_count_2xx=*/32,
+          /*upstream_rq_total=*/2560,
+          /*response_count_2xx=*/320,
           /*min_ns=*/400,
           /*mean_ns=*/500,
           /*max_ns=*/600,
@@ -99,11 +99,11 @@ TEST(NighthawkStatsEmulatedMetricsPluginTest, ReturnsZeroSendRateForZeroTotalSpe
 TEST(NighthawkStatsEmulatedMetricsPluginTest, ReturnsZeroSuccessRateForZeroRequestsSent) {
   NighthawkStatsEmulatedMetricsPlugin plugin =
       NighthawkStatsEmulatedMetricsPlugin(MakeSimpleNighthawkOutput({
-          /*concurrency=*/"1",
+          /*concurrency=*/"auto",
           /*requests_per_second=*/0,
           /*actual_duration_seconds=*/10,
           /*upstream_rq_total=*/0,
-          /*response_count_2xx=*/50,
+          /*response_count_2xx=*/320,
           /*min_ns=*/400,
           /*mean_ns=*/500,
           /*max_ns=*/600,
@@ -118,14 +118,14 @@ TEST(NighthawkStatsEmulatedMetricsPluginTest, DeterminesConcurrencyWithSingleWor
           /*concurrency=*/"auto",
           /*requests_per_second=*/123,
           /*actual_duration_seconds=*/10,
-          /*upstream_rq_total=*/60,
-          /*response_count_2xx=*/50,
-          /*.min_ns=*/400,
+          /*upstream_rq_total=*/2560,
+          /*response_count_2xx=*/320,
+          /*min_ns=*/400,
           /*mean_ns=*/500,
           /*max_ns=*/600,
           /*pstdev_ns=*/11,
       }));
-  // |results| contains only "global" when there was 1 worker.
+  // |results| in output contains only "global" when there was 1 worker.
   EXPECT_EQ(plugin.GetMetricByName("attempted-rps"), 123.0);
 }
 
@@ -134,9 +134,9 @@ TEST(NighthawkStatsEmulatedMetricsPluginTest, DeterminesConcurrencyWithMultipleW
       /*concurrency=*/"auto",
       /*requests_per_second=*/123,
       /*actual_duration_seconds=*/10,
-      /*upstream_rq_total=*/60,
-      /*response_count_2xx=*/50,
-      /*.min_ns=*/400,
+      /*upstream_rq_total=*/2560,
+      /*response_count_2xx=*/320,
+      /*min_ns=*/400,
       /*mean_ns=*/500,
       /*max_ns=*/600,
       /*pstdev_ns=*/11,

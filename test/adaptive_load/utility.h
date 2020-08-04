@@ -33,7 +33,7 @@ struct SimpleNighthawkOutputSpec {
 
 /**
  * Creates a Nighthawk output proto containing minimal counters and statistics for analysis by the
- * nighthawk.builtin MetricsPlugin.
+ * nighthawk.builtin MetricsPlugin. The output corresponds to Nighthawk output for a single worker.
  *
  * @return nighthawk::client::Output Nighthawk benchmark output proto.
  */
