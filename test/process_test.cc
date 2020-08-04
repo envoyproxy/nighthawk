@@ -5,6 +5,7 @@
 
 #include "external/envoy/test/test_common/environment.h"
 #include "external/envoy/test/test_common/network_utility.h"
+#include "external/envoy/test/test_common/registry.h"
 #include "external/envoy/test/test_common/utility.h"
 
 #include "common/uri_impl.h"
@@ -22,6 +23,37 @@ using namespace testing;
 namespace Nighthawk {
 namespace Client {
 
+constexpr absl::string_view kSinkName = "{name:\"nighthawk.dummy_stats_sink\"}";
+int kNumFlushes = 0;
+
+class DummyStatsSink : public Envoy::Stats::Sink {
+public:
+  DummyStatsSink() : dummy_(1) { kNumFlushes = 0; }
+
+  // Envoy::Stats::Sink
+  void flush(Envoy::Stats::MetricSnapshot&) override { kNumFlushes++; }
+
+  void onHistogramComplete(const Envoy::Stats::Histogram&, uint64_t) override {}
+
+  int dummy_ = 0;
+};
+
+// DummyStatsSinkFactory creates DummyStatsSink.
+class DummyStatsSinkFactory : public NighthawkStatsSinkFactory {
+public:
+  std::unique_ptr<Envoy::Stats::Sink> createStatsSink(Envoy::Stats::SymbolTable&) override {
+    return std::make_unique<DummyStatsSink>();
+  }
+
+  Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override {
+    // Using Struct instead of a custom per-filter empty config proto
+    // This is only allowed in tests.
+    return Envoy::ProtobufTypes::MessagePtr{new Envoy::ProtobufWkt::Struct()};
+  }
+
+  std::string name() const override { return "nighthawk.dummy_stats_sink"; }
+};
+
 // TODO(https://github.com/envoyproxy/nighthawk/issues/179): Mock Process in client_test, and move
 // it's tests in here. Note: these tests do not have a backend set up to talk to. That's why we
 // expect failure.
@@ -32,7 +64,9 @@ public:
   ProcessTest()
       : loopback_address_(Envoy::Network::Test::getLoopbackAddressUrlString(GetParam())),
         options_(TestUtility::createOptionsImpl(
-            fmt::format("foo --duration 1 -v error --rps 10 https://{}/", loopback_address_))){};
+            fmt::format("foo --duration 1 -v error --rps 10 --stats-flush-interval 1 --stats-sinks "
+                        "{} https://{}/",
+                        kSinkName, loopback_address_))){};
 
   void runProcess(RunExpectation expectation, bool do_cancel = false,
                   bool terminate_right_away = false) {
@@ -88,10 +122,15 @@ INSTANTIATE_TEST_SUITE_P(IpVersions, ProcessTest,
                          Envoy::TestUtility::ipTestParamsToString);
 
 TEST_P(ProcessTest, TwoProcessInSequence) {
+  DummyStatsSinkFactory factory;
+  Envoy::Registry::InjectFactory<NighthawkStatsSinkFactory> registered(factory);
   runProcess(RunExpectation::EXPECT_FAILURE);
-  options_ = TestUtility::createOptionsImpl(
-      fmt::format("foo --h2 --duration 1 --rps 10 https://{}/", loopback_address_));
+  EXPECT_GT(kNumFlushes, 0);
+  options_ = TestUtility::createOptionsImpl(fmt::format(
+      "foo --h2 --duration 1 --rps 10 --stats-flush-interval 1 --stats-sinks {} https://{}/",
+      kSinkName, loopback_address_));
   runProcess(RunExpectation::EXPECT_FAILURE);
+  EXPECT_GT(kNumFlushes, 0);
 }
 
 // TODO(oschaaf): move to python int. tests once it adds to coverage.
@@ -102,13 +141,17 @@ TEST_P(ProcessTest, BadTracerSpec) {
 }
 
 TEST_P(ProcessTest, CancelDuringLoadTest) {
+  DummyStatsSinkFactory factory;
+  Envoy::Registry::InjectFactory<NighthawkStatsSinkFactory> registered(factory);
   // The failure predicate below is there to wipe out any stock ones. We want this to run for a long
   // time, even if the upstream fails (there is no live upstream in this test, we send traffic into
   // the void), so we can check cancellation works.
   options_ = TestUtility::createOptionsImpl(
-      fmt::format("foo --duration 300 --failure-predicate foo:0 --concurrency 2 https://{}/",
-                  loopback_address_));
+      fmt::format("foo --duration 300 --failure-predicate foo:0 --concurrency 2 "
+                  "--stats-flush-interval 1 --stats-sinks {} https://{}/",
+                  kSinkName, loopback_address_));
   runProcess(RunExpectation::EXPECT_SUCCESS, true);
+  EXPECT_GT(kNumFlushes, 0);
 }
 
 TEST_P(ProcessTest, CancelExecutionBeforeBeginLoadTest) {

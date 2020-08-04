@@ -6,6 +6,7 @@
 #include "envoy/common/pure.h"
 #include "envoy/common/time.h"
 #include "envoy/event/dispatcher.h"
+#include "envoy/stats/symbol_table.h"
 #include "envoy/upstream/cluster_manager.h"
 
 #include "nighthawk/common/platform_util.h"
@@ -46,6 +47,28 @@ public:
   virtual TerminationPredicatePtr
   create(Envoy::TimeSource& time_source, Envoy::Stats::Scope& scope,
          const Envoy::MonotonicTime scheduled_starting_time) const PURE;
+};
+
+/**
+ * Factory Interface to create Envoy::Stats::Sink in Nighthawk.
+ * Implemented for each Envoy::Stats::Sink and registered via
+ * Registry::registerFactory() or the convenience class RegisterFactory.
+ */
+class NighthawkStatsSinkFactory : public Envoy::Config::TypedFactory {
+public:
+  ~NighthawkStatsSinkFactory() override = default;
+
+  /**
+   * Create a particular Envoy::Stats::Sink implementation. If the
+   * implementation is unable to produce a Sink with the provided parameters, it
+   * should throw an EnvoyException. The returned pointer should always be
+   * valid.
+   * @param symbol_table supplies the symbol_table instance
+   */
+  virtual std::unique_ptr<Envoy::Stats::Sink>
+  createStatsSink(Envoy::Stats::SymbolTable& symbol_table) PURE;
+
+  std::string category() const override { return "nighthawk.stats_sinks"; }
 };
 
 } // namespace Nighthawk

@@ -323,6 +323,14 @@ void SinkableHdrStatistic::recordValue(uint64_t value) {
   scope_.deliverHistogramToSinks(*this, value);
 }
 
+std::string SinkableHdrStatistic::tagExtractedName() const {
+  if (worker_id().has_value()) {
+    return fmt::format("{}.", worker_id().value()) + id();
+  } else {
+    return id();
+  }
+}
+
 SinkableCircllhistStatistic::SinkableCircllhistStatistic(Envoy::Stats::Scope& scope,
                                                          absl::optional<int> worker_id)
     : SinkableStatistic(scope, worker_id) {}
@@ -332,6 +340,14 @@ void SinkableCircllhistStatistic::recordValue(uint64_t value) {
   // Currently in Envoy Scope implementation, deliverHistogramToSinks() will flush the histogram
   // value directly to stats Sinks.
   scope_.deliverHistogramToSinks(*this, value);
+}
+
+std::string SinkableCircllhistStatistic::tagExtractedName() const {
+  if (worker_id().has_value()) {
+    return fmt::format("{}.", worker_id().value()) + id();
+  } else {
+    return id();
+  }
 }
 
 } // namespace Nighthawk

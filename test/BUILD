@@ -63,6 +63,23 @@ envoy_cc_test(
 )
 
 envoy_cc_test(
+    name = "flush_worker_test",
+    srcs = ["flush_worker_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/client:nighthawk_client_lib",
+        "@envoy//source/common/api:api_lib",
+        "@envoy//source/common/event:dispatcher_includes_with_external_headers",
+        "@envoy//source/common/stats:isolated_store_lib_with_external_headers",
+        "@envoy//test/mocks/api:api_mocks",
+        "@envoy//test/mocks/local_info:local_info_mocks",
+        "@envoy//test/mocks/protobuf:protobuf_mocks",
+        "@envoy//test/mocks/thread_local:thread_local_mocks",
+        "@envoy//test/test_common:simulated_time_system_lib",
+    ],
+)
+
+envoy_cc_test(
     name = "factories_test",
     srcs = ["factories_test.cc"],
     repository = "@envoy",
@@ -135,6 +152,7 @@ envoy_cc_test(
         "//test/client:utility_lib",
         "//test/test_common:environment_lib",
         "@envoy//test/test_common:network_utility_lib",
+        "@envoy//test/test_common:registry_lib",
     ],
 )
 

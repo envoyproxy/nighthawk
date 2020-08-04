@@ -33,6 +33,7 @@
 
 #include "client/benchmark_client_impl.h"
 #include "client/factories_impl.h"
+#include "client/flush_worker_impl.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -156,6 +157,7 @@ private:
   bool shutdown_{true};
   Envoy::Thread::MutexBasicLockable workers_lock_;
   bool cancelled_{false};
+  std::unique_ptr<FlushWorkerImpl> flush_worker_;
 };
 
 } // namespace Client
