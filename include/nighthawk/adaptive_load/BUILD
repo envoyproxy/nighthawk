@@ -16,6 +16,8 @@ envoy_basic_cc_library(
     include_prefix = "nighthawk/adaptive_load",
     deps = [
         "//api/adaptive_load:adaptive_load_proto_cc_proto",
+        "//api/client:grpc_service_lib",
+        "@envoy//include/envoy/common:time_interface",
     ],
 )
 
@@ -27,6 +29,8 @@ envoy_basic_cc_library(
     include_prefix = "nighthawk/adaptive_load",
     deps = [
         "//api/adaptive_load:adaptive_load_proto_cc_proto",
+        "@envoy//include/envoy/common:base_includes",
+        "@envoy//include/envoy/config:typed_config_interface",
     ],
 )
 
@@ -38,6 +42,8 @@ envoy_basic_cc_library(
     include_prefix = "nighthawk/adaptive_load",
     deps = [
         "//api/adaptive_load:adaptive_load_proto_cc_proto",
+        "@envoy//include/envoy/common:base_includes",
+        "@envoy//include/envoy/config:typed_config_interface",
     ],
 )
 
@@ -49,6 +55,8 @@ envoy_basic_cc_library(
     include_prefix = "nighthawk/adaptive_load",
     deps = [
         "//api/adaptive_load:adaptive_load_proto_cc_proto",
+        "@envoy//include/envoy/common:base_includes",
+        "@envoy//include/envoy/config:typed_config_interface",
     ],
 )
 
@@ -60,5 +68,7 @@ envoy_basic_cc_library(
     include_prefix = "nighthawk/adaptive_load",
     deps = [
         "//api/adaptive_load:adaptive_load_proto_cc_proto",
+        "@envoy//include/envoy/common:base_includes",
+        "@envoy//include/envoy/config:typed_config_interface",
     ],
 )
