@@ -438,7 +438,9 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
     createBootstrapConfiguration(bootstrap, uris, request_source_uri, number_of_workers);
     // Needs to happen as early as possible (before createWorkers()) in the instantiation to preempt
     // the objects that require stats.
-    store_root_.setTagProducer(Envoy::Config::Utility::createTagProducer(bootstrap));
+    if (!options_.statsSinks().empty()) {
+      store_root_.setTagProducer(Envoy::Config::Utility::createTagProducer(bootstrap));
+    }
 
     createWorkers(number_of_workers);
     tls_.registerThread(*dispatcher_, true);
@@ -486,10 +488,11 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
     std::chrono::milliseconds stats_flush_interval = std::chrono::milliseconds(
         Envoy::DurationUtil::durationToMilliseconds(bootstrap.stats_flush_interval()));
 
-    flush_worker_ = std::make_unique<FlushWorkerImpl>(*api_, tls_, store_root_, stats_sinks,
-                                                      stats_flush_interval);
-
-    flush_worker_->start();
+    if (!options_.statsSinks().empty()) {
+      flush_worker_ = std::make_unique<FlushWorkerImpl>(*api_, tls_, store_root_, stats_sinks,
+                                                        stats_flush_interval);
+      flush_worker_->start();
+    }
 
     for (auto& w : workers_) {
       w->start();
@@ -499,10 +502,12 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
     w->waitForCompletion();
   }
 
-  // Stop the running dispatcher in flush_worker_. Need to be called after all
-  // client workers are complete so that all the metrics can be flushed.
-  flush_worker_->exitDispatcher();
-  flush_worker_->waitForCompletion();
+  if (!options_.statsSinks().empty() && flush_worker_ != nullptr) {
+    // Stop the running dispatcher in flush_worker_. Need to be called after all
+    // client workers are complete so that all the metrics can be flushed.
+    flush_worker_->exitDispatcher();
+    flush_worker_->waitForCompletion();
+  }
 
   int i = 0;
   std::chrono::nanoseconds total_execution_duration = 0ns;

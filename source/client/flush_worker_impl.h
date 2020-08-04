@@ -29,8 +29,9 @@ public:
 
   void shutdownThread() override;
 
-  // Must be called in after all client workers are completed in
-  // process_impl.cc.
+  // exitDispatcher() stops the dispatcher and the flush timer running in flush worker. It must be
+  // called after all client workers are completed in process_impl.cc to make sure all metrics will
+  // be flushed.
   void exitDispatcher() { dispatcher_->exit(); }
 
 protected:
@@ -42,7 +43,7 @@ private:
   void flushStats();
 
   std::list<std::unique_ptr<Envoy::Stats::Sink>> stats_sinks_;
-  std::chrono::milliseconds stats_flush_interval_;
+  const std::chrono::milliseconds stats_flush_interval_;
   Envoy::Event::TimerPtr stat_flush_timer_;
 };
 

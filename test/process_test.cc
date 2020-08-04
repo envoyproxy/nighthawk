@@ -23,19 +23,19 @@ using namespace testing;
 namespace Nighthawk {
 namespace Client {
 
-constexpr absl::string_view kSinkName = "{name:\"nighthawk.dummy_stats_sink\"}";
+constexpr const char kSinkName[] = "{name:\"nighthawk.dummy_stats_sink\"}";
 int kNumFlushes = 0;
 
+// DummyStatsSink is a simple Envoy::Stats::Sink implementation used to prove
+// the logic to configure Sink in Nighthawk works as expected.
 class DummyStatsSink : public Envoy::Stats::Sink {
 public:
-  DummyStatsSink() : dummy_(1) { kNumFlushes = 0; }
+  DummyStatsSink() : Envoy::Stats::Sink() { kNumFlushes = 0; }
 
   // Envoy::Stats::Sink
   void flush(Envoy::Stats::MetricSnapshot&) override { kNumFlushes++; }
 
   void onHistogramComplete(const Envoy::Stats::Histogram&, uint64_t) override {}
-
-  int dummy_ = 0;
 };
 
 // DummyStatsSinkFactory creates DummyStatsSink.

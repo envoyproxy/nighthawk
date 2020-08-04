@@ -32,6 +32,7 @@ public:
     stats_sinks_.emplace_back(sink_);
 
     EXPECT_CALL(mock_api_, threadFactory()).WillRepeatedly(ReturnRef(thread_factory_));
+    // mock_api_ takes the ownership of dispatcher_.
     EXPECT_CALL(mock_api_, allocateDispatcher_(_, _)).WillOnce(Return(dispatcher_));
   }
 
@@ -47,7 +48,10 @@ public:
         .WillRepeatedly(Invoke([&](const std::chrono::microseconds,
                                    const Envoy::ScopeTrackedObject*) { timer_set_ = true; }));
     EXPECT_CALL(*timer_, disableTimer()).WillOnce(Invoke([&]() { timer_set_ = false; }));
-    EXPECT_CALL(*dispatcher_, exit()).WillOnce(Invoke([&]() { stopped_ = true; }));
+    EXPECT_CALL(*dispatcher_, exit()).WillOnce(Invoke([&]() {
+      absl::MutexLock l(&lock_);
+      stopped_ = true;
+    }));
   }
 
   void expectDispatcherRun() {
@@ -64,8 +68,11 @@ public:
   }
 
   void simulateTimerLoop() {
-    while (!stopped_) {
-      if (timer_set_) {
+    while (true) {
+      absl::MutexLock l(&lock_);
+      if (stopped_) {
+        break;
+      } else if (timer_set_) {
         timer_set_ = false;
         timer_cb_();
       }
@@ -77,7 +84,7 @@ public:
   Envoy::Stats::IsolatedStoreImpl store_;
   NiceMock<Envoy::ThreadLocal::MockInstance> tls_;
   Envoy::Random::RandomGeneratorImpl rand_;
-  NiceMock<Envoy::Event::MockDispatcher>* dispatcher_ = nullptr;
+  NiceMock<Envoy::Event::MockDispatcher>* dispatcher_ = nullptr; // not owned
   std::unique_ptr<Envoy::Runtime::ScopedLoaderSingleton> loader_;
   NiceMock<Envoy::LocalInfo::MockLocalInfo> local_info_;
   NiceMock<Envoy::ProtobufMessage::MockValidationVisitor> validation_visitor_;
@@ -85,9 +92,10 @@ public:
   NiceMock<Envoy::Event::MockTimer>* timer_; // not owned
   Envoy::Event::TimerCb timer_cb_;
   bool timer_set_{};
-  bool stopped_{};
+  bool stopped_ ABSL_GUARDED_BY(lock_) = false;
+  absl::Mutex lock_;
 
-  Envoy::Stats::MockSink* sink_ = nullptr;
+  Envoy::Stats::MockSink* sink_ = nullptr; // owned by stats_sinks_
   std::list<std::unique_ptr<Envoy::Stats::Sink>> stats_sinks_;
   std::chrono::milliseconds stats_flush_interval_{10};
 };
@@ -114,11 +122,14 @@ TEST_F(FlushWorkerTest, WorkerFlushStatsPeriodically) {
   worker->shutdown();
 }
 
+// Verify the final flush is always done in FlushWorkerImpl::shutdownThread()
+// even when the dispatcher and timer is not set up (expectDispatcherRun() is not called).
 TEST_F(FlushWorkerTest, FinalFlush) {
   auto worker = std::make_unique<FlushWorkerImpl>(mock_api_, tls_, store_, stats_sinks_,
                                                   stats_flush_interval_);
 
-  // Final flush should be done in FlushWorkerImpl::shutdownThread().
+  // Stats flush should happen exactly once as the final flush is done in
+  // FlushWorkerImpl::shutdownThread().
   EXPECT_CALL(*sink_, flush(_)).Times(1);
 
   worker->start();
