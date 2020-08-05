@@ -78,13 +78,22 @@ TEST(ExponentialSearchStepControllerConfigFactoryTest, GeneratesEmptyConfigProto
   EXPECT_EQ(message->DebugString(), expected_config.DebugString());
 }
 
-TEST(ExponentialSearchStepControllerConfigFactoryTest, CreatesPlugin) {
+TEST(ExponentialSearchStepControllerConfigFactoryTest, CreatesCorrectFactoryName) {
   nighthawk::adaptive_load::ExponentialSearchStepControllerConfig config;
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
-
   nighthawk::client::CommandLineOptions options;
+  StepControllerConfigFactory& config_factory =
+      Envoy::Config::Utility::getAndCheckFactoryByName<StepControllerConfigFactory>(
+          "nighthawk.exponential-search");
+  EXPECT_EQ(config_factory.name(), "nighthawk.exponential-search");
+}
 
+TEST(ExponentialSearchStepControllerConfigFactoryTest, CreatesCorrectPluginType) {
+  nighthawk::adaptive_load::ExponentialSearchStepControllerConfig config;
+  Envoy::ProtobufWkt::Any config_any;
+  config_any.PackFrom(config);
+  nighthawk::client::CommandLineOptions options;
   StepControllerConfigFactory& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<StepControllerConfigFactory>(
           "nighthawk.exponential-search");
@@ -126,7 +135,6 @@ TEST(ExponentialSearchStepControllerTest, InitiallyReportsNotDoomed) {
   config.set_initial_value(100.0);
   nighthawk::client::CommandLineOptions options_template;
   ExponentialSearchStepController step_controller(config, options_template);
-
   std::string doom_reason = "untouched";
   EXPECT_FALSE(step_controller.IsDoomed(doom_reason));
   EXPECT_EQ(doom_reason, "untouched");
@@ -137,10 +145,8 @@ TEST(ExponentialSearchStepControllerTest, ReportsDoomIfOutsideThresholdsOnInitia
   config.set_initial_value(100.0);
   nighthawk::client::CommandLineOptions options_template;
   ExponentialSearchStepController step_controller(config, options_template);
-
   // Initial RPS already put us outside metric thresholds.
   step_controller.UpdateAndRecompute(MakeBenchmarkResultOutsideThreshold());
-
   std::string doom_reason;
   EXPECT_TRUE(step_controller.IsDoomed(doom_reason));
   EXPECT_EQ(doom_reason, "Outside threshold on initial input.");
