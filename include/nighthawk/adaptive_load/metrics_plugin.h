@@ -5,11 +5,8 @@
 #include "envoy/common/pure.h"
 #include "envoy/config/typed_config.h"
 
-<<<<<<< HEAD
-=======
 #include "nighthawk/adaptive_load/config_validator.h"
 
->>>>>>> adaptive-rps-main-loop
 #include "external/envoy/source/common/common/statusor.h"
 
 namespace Nighthawk {
