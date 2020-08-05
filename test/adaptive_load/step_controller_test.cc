@@ -40,7 +40,9 @@ nighthawk::adaptive_load::BenchmarkResult MakeBenchmarkResultWithNighthawkError(
   return result;
 }
 
-// Non-default InputVariableSetter for testing.
+/**
+ * Non-default InputVariableSetter for testing.
+ */
 class ConnectionsInputVariableSetter : public InputVariableSetter {
 public:
   ConnectionsInputVariableSetter() {}
@@ -50,8 +52,10 @@ public:
   }
 };
 
-// A factory that creates a ConnectionsInputVariableSetter from a
-// ConnectionsInputVariableSetterConfig proto.
+/**
+ * A factory that creates a ConnectionsInputVariableSetter from a
+ * ConnectionsInputVariableSetterConfig proto.
+ */
 class ConnectionsInputVariableSetterConfigFactory : public InputVariableSetterConfigFactory {
 public:
   std::string name() const override { return "nighthawk.testing-connections"; }
