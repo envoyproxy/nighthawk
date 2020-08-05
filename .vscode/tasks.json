@@ -1,0 +1,253 @@
+{
+  // See https://go.microsoft.com/fwlink/?LinkId=733558
+  // for the documentation about the tasks.json format
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Refresh compilation database.",
+      "type": "shell",
+      "command": "tools/gen_compilation_database.py --vscode --include_external --include_genfiles --include_headers",
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Direct Update CLI README.md docs",
+      "type": "shell",
+      "command": "BAZEL_BUILD_OPTIONS=\"-c fastbuild\" tools/update_cli_readme_documentation.sh --mode fix",
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Build Nighthawk-dev dockage",
+      "type": "shell",
+      "command": "ci/do_ci.sh docker",
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Docker Fix Format",
+      "type": "shell",
+      "command": "ci/run_envoy_docker.sh 'ci/do_ci.sh check_format'",
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Direct Fix Format",
+      "type": "shell",
+      "command": "ci/do_ci.sh fix_format",
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Direct/Dbg: binaries",
+      "type": "shell",
+      "command": "bazel build  -c dbg //:nighthawk",
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Direct/Dbg: build tests",
+      "type": "shell",
+      "command": "bazel build  -c dbg //test/...",
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Direct/Opt: binaries",
+      "type": "shell",
+      "command": "bazel build  -c opt //:nighthawk",
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Docker/Coverage tests",
+      "type": "shell",
+      "command": "ci/run_envoy_docker.sh 'ci/do_ci.sh coverage'",
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Docker/TSAN tests",
+      "type": "shell",
+      "command": "ci/run_envoy_docker.sh 'ci/do_ci.sh tsan'",
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Docker/ASAN tests",
+      "type": "shell",
+      "command": "ci/run_envoy_docker.sh 'ci/do_ci.sh asan'",
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Docker/clang-tidy",
+      "type": "shell",
+      "command": "ci/run_envoy_docker.sh 'ci/do_ci.sh clang_tidy'",
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Direct/ASAN tests",
+      "type": "shell",
+      "command": "ci/do_ci.sh asan",
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Direct/TSAN tests",
+      "type": "shell",
+      "command": "ci/do_ci.sh tsan",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Direct/Opt tests",
+      "type": "shell",
+      "command": "bazel test  -c opt //test:nighthawk_test",
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Build benchmarks",
+      "type": "shell",
+      "command": "bazel build -c fastbuild \"//benchmarks:*\"",
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Benchmark execution with binaries from this repo",
+      "type": "shell",
+      "command": "bazel test --test_summary=detailed --test_output=all --test_arg=--log-cli-level=info --test_env=ENVOY_IP_TEST_VERSIONS=v4only --test_env=HEAPPROFILE= --test_env=HEAPCHECK= --cache_test_results=no --compilation_mode=opt --cxxopt=-g --cxxopt=-ggdb3 //benchmarks:*",
+      "options": {
+        "cwd": "${workspaceRoot}/nighthawk",
+        "env": {
+          "TMPDIR": "${workspaceRoot}/nighthawk/benchmarks/tmp",
+          "ENVOY_IP_TEST_VERSIONS": "v4only"
+        }
+      },
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Benchmark execution with NH & Envoy docker images",
+      "type": "shell",
+      "command": "benchmarks/run_benchmark.sh",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Direct repeat tests 1000x",
+      "type": "shell",
+      "command": "bazel test --cache_test_results=no --test_env=ENVOY_IP_TEST_VERSIONS=all --runs_per_test=1000 --jobs 50 -c dbg --local_resources 20000,20,0.25 //test:*",
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Direct/Fastbuild: run test(s)",
+      "type": "shell",
+      "command": "bazel",
+      "args": [
+        "test",
+        "-c",
+        "fastbuild",
+        "--test_env=ENVOY_IP_TEST_VERSIONS=v4only",
+        "--cache_test_results=no",
+        "${input:testTarget}"
+      ],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    }
+  ],
+  "inputs": [
+    {
+      "type": "pickString",
+      "id": "testTarget",
+      "description": "type",
+      "options": [
+        "//test:benchmark_http_client_test",
+        "//test:client_test",
+        "//test:client_worker_test",
+        "//test:factories_test",
+        "//test:frequency_test",
+        "//test:options_test",
+        "//test:output_formatter_test",
+        "//test:output_transform_main_test",
+        "//test:platform_util_test",
+        "//test:process_test",
+        "//test:python_test",
+        "//test:rate_limiter_test",
+        "//test:request_generator_test",
+        "//test:sequencer_test",
+        "//test:service_main_test",
+        "//test:service_test",
+        "//test:statistic_test",
+        "//test:stream_decoder_test",
+        "//test:termination_predicate_test",
+        "//test:utility_test",
+        "//test:worker_test",
+        "//test:sni_utility_test",
+        "//test/server:http_test_server_filter_integration_test",
+        "//test/server:http_dynamic_delay_filter_integration_test",
+        "//test/..."
+      ],
+      "default": "//test/..."
+    }
+  ]
+}
