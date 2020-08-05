@@ -23,8 +23,12 @@ using nighthawk::adaptive_load::ExponentialSearchStepControllerConfig;
 using nighthawk::adaptive_load::MetricEvaluation;
 
 /**
- * Check if any non-informational metrics (weight > 0) were outside thresholds (score < 0). Return
- * -1.0 if any metric was outside its threshold or 1.0 if all metrics were within thresholds.
+ * Checks if any non-informational metrics (weight > 0) were outside thresholds (score < 0).
+ *
+ * @param benchmark_result Metrics from the latest Nighthawk benchmark session.
+ *
+ * @return double -1.0 if any metric was outside its threshold or 1.0 if all metrics were within
+ * thresholds.
  */
 double TotalScore(const BenchmarkResult& benchmark_result) {
   for (const MetricEvaluation& evaluation : benchmark_result.metric_evaluations()) {
@@ -106,7 +110,7 @@ void ExponentialSearchStepController::UpdateAndRecompute(const BenchmarkResult& 
     doom_reason_ = "Nighthawk Service returned an error.";
     return;
   }
-  double score = TotalScore(benchmark_result);
+  const double score = TotalScore(benchmark_result);
 
   if (is_exponential_phase_) {
     if (score > 0.0) {
