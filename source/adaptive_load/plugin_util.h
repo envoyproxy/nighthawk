@@ -11,51 +11,52 @@ namespace Nighthawk {
 
 /**
  * Instantiates an InputVariableSetter plugin based on the plugin name in |config|, unpacking the
- * plugin-specific config proto within |config|. Throws Envoy::EnvoyException if the plugin is not
- * found.
+ * plugin-specific config proto within |config|.
  *
  * @param config Proto containing plugin name and plugin-specific config proto.
  *
- * @return InputVariableSetterPtr Initialized plugin.
+ * @return Envoy::StatusOr<InputVariableSetterPtr> Initialized plugin or error status due to missing
+ * plugin or validation error.
  */
-InputVariableSetterPtr
+Envoy::StatusOr<InputVariableSetterPtr>
 LoadInputVariableSetterPlugin(const envoy::config::core::v3::TypedExtensionConfig& config);
 
 /**
  * Instantiates a ScoringFunction plugin based on the plugin name in |config|, unpacking the
- * plugin-specific config proto within |config|. Throws Envoy::EnvoyException if the plugin is not
- * found.
+ * plugin-specific config proto within |config|.
  *
  * @param config Proto containing plugin name and plugin-specific config proto.
  *
- * @return ScoringFunctionPtr Initialized plugin.
+ * @return Envoy::StatusOr<ScoringFunctionPtr> Initialized plugin or error status due to missing
+ * plugin or validation error.
  */
-ScoringFunctionPtr
+Envoy::StatusOr<ScoringFunctionPtr>
 LoadScoringFunctionPlugin(const envoy::config::core::v3::TypedExtensionConfig& config);
 
 /**
  * Instantiates a MetricsPlugin based on the plugin name in |config|, unpacking the
- * plugin-specific config proto within |config|. Throws Envoy::EnvoyException if the plugin is not
- * found.
+ * plugin-specific config proto within |config|.
  *
  * @param config Proto containing plugin name and plugin-specific config proto.
  *
- * @return MetricsPluginPtr Initialized plugin.
+ * @return Envoy::StatusOr<MetricsPluginPtr> Initialized plugin or error status due to missing
+ * plugin or validation error.
  */
-MetricsPluginPtr LoadMetricsPlugin(const envoy::config::core::v3::TypedExtensionConfig& config);
+Envoy::StatusOr<MetricsPluginPtr>
+LoadMetricsPlugin(const envoy::config::core::v3::TypedExtensionConfig& config);
 
 /**
  * Instantiates a StepController plugin based on the plugin name in |config|, unpacking the
- * plugin-specific config proto within |config|. Throws Envoy::EnvoyException if the plugin is not
- * found.
+ * plugin-specific config proto within |config|.
  *
  * @param config Proto containing plugin name and plugin-specific config proto.
  * @param command_line_options_template CommandLineOptions traffic template from the
  * AdaptiveLoadSessionSpec.
  *
- * @return StepControllerPtr Initialized plugin.
+ * @return Envoy::StatusOr<StepControllerPtr> Initialized plugin or error status due to missing
+ * plugin or validation error.
  */
-StepControllerPtr LoadStepControllerPlugin(
+Envoy::StatusOr<StepControllerPtr> LoadStepControllerPlugin(
     const envoy::config::core::v3::TypedExtensionConfig& config,
     const nighthawk::client::CommandLineOptions& command_line_options_template);
 

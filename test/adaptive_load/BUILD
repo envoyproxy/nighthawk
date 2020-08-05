@@ -54,6 +54,7 @@ envoy_cc_test(
         ":utility",
         "//source/adaptive_load:adaptive_load_controller_impl",
         "//source/adaptive_load:scoring_function_impl",
+        "//source/client:nighthawk_client_lib",
         "@com_github_grpc_grpc//:grpc++_test",
     ],
 )

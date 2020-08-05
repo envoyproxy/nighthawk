@@ -9,6 +9,7 @@
 #include "nighthawk/adaptive_load/step_controller.h"
 
 #include "external/envoy/source/common/common/logger.h"
+#include "external/envoy/source/common/common/statusor.h"
 #include "external/envoy/source/common/protobuf/protobuf.h"
 
 #include "api/adaptive_load/adaptive_load.pb.h"
@@ -22,7 +23,6 @@
 #include "absl/strings/str_join.h"
 #include "adaptive_load/metrics_plugin_impl.h"
 #include "adaptive_load/plugin_util.h"
-#include "external/envoy/source/common/common/statusor.h"
 
 namespace Nighthawk {
 
@@ -38,10 +38,19 @@ using nighthawk::adaptive_load::MetricSpec;
 using nighthawk::adaptive_load::MetricSpecWithThreshold;
 using nighthawk::adaptive_load::ThresholdSpec;
 
-// Runs a single benchmark using a Nighthawk Service. Unconditionally returns a
-// nighthawk::client::ExecutionResponse. The ExecutionResponse may contain an error reported by the
-// Nighthawk Service. If we encounter a gRPC error communicating with the Nighthawk Service, we
-// insert the error code and message into the ExecutionResponse.
+/**
+ * Runs a single benchmark using a Nighthawk Service. Unconditionally returns a
+ * nighthawk::client::ExecutionResponse. The ExecutionResponse may contain an error reported by the
+ * Nighthawk Service.
+ *
+ * @param nighthawk_service_stub Nighthawk Service gRPC stub.
+ * @param command_line_options Full input for the Nighthawk Service, except for the duration.
+ * @param duration Duration to insert into the benchmark request.
+ *
+ * @return ExecutionResponse The raw ExecutionResponse proto from Nighthawk Service if we reached
+ * it, possibly with an error message from Nighthawk Service; if we could not reach it, a synthetic
+ * ExecutionResponse proto with |status| representing the communication failure.
+ */
 nighthawk::client::ExecutionResponse PerformNighthawkBenchmark(
     nighthawk::client::NighthawkService::StubInterface* nighthawk_service_stub,
     const nighthawk::client::CommandLineOptions& command_line_options,
@@ -82,11 +91,11 @@ nighthawk::client::ExecutionResponse PerformNighthawkBenchmark(
  * @param nighthawk_response Proto returned from Nighthawk Service describing a single benchmark
  * session.
  * @param spec Top-level proto defining the entire adaptive load session.
- * @param name_to_custom_metrics_plugin_map Map from plugin names to MetricsPlugins that were loaded
- * and initialized at startup.
+ * @param name_to_custom_metrics_plugin_map Common map from plugin names to MetricsPlugins loaded
+ * and initialized once at the beginning of the session and passed to all calls of this function.
  *
  * @return BenchmarkResult Proto containing metric scores for this Nighthawk Service benchmark
- * session.
+ * session, or an error from calling Nighthawk Service or a MetricsPlugin.
  */
 BenchmarkResult AnalyzeNighthawkBenchmark(
     const nighthawk::client::ExecutionResponse& nighthawk_response,
@@ -108,56 +117,71 @@ BenchmarkResult AnalyzeNighthawkBenchmark(
   if (nighthawk_response.error_detail().code() != ::grpc::OK) {
     return benchmark_result;
   }
-
+  // Process MetricSpecs in original order of definition.
+  std::vector<const nighthawk::adaptive_load::MetricSpec*> metric_specs;
+  // Pointer to the corresponding ThresholdSpec, or nullptr for informational metrics.
+  absl::flat_hash_map<const nighthawk::adaptive_load::MetricSpec*,
+                      const nighthawk::adaptive_load::ThresholdSpec*>
+      threshold_spec_from_metric_spec;
   for (const MetricSpecWithThreshold& metric_threshold : spec.metric_thresholds()) {
+    metric_specs.push_back(&metric_threshold.metric_spec());
+    threshold_spec_from_metric_spec[&metric_threshold.metric_spec()] =
+        &metric_threshold.threshold_spec();
+  }
+  for (const MetricSpec& metric_spec : spec.informational_metric_specs()) {
+    metric_specs.push_back(&metric_spec);
+    threshold_spec_from_metric_spec[&metric_spec] = nullptr;
+  }
+  std::string errors;
+  for (const nighthawk::adaptive_load::MetricSpec* metric_spec : metric_specs) {
     MetricEvaluation evaluation;
-    evaluation.set_metric_id(absl::StrCat(metric_threshold.metric_spec().metrics_plugin_name(), "/",
-                                          metric_threshold.metric_spec().metric_name()));
-
+    evaluation.set_metric_id(
+        absl::StrCat(metric_spec->metrics_plugin_name(), "/", metric_spec->metric_name()));
     const Envoy::StatusOr<double> metric_value_or =
-        name_to_plugin_map[metric_threshold.metric_spec().metrics_plugin_name()]->GetMetricByName(
-            metric_threshold.metric_spec().metric_name());
-    if (!metric_value_or.ok()) {
-      benchmark_result.mutable_status()->set_code(::grpc::INTERNAL);
-      benchmark_result.mutable_status()->set_message(
-          absl::StrCat("Error calling MetricsPlugin: ", metric_value_or.status().message()));
-      return benchmark_result;
-    }
-    const double metric_value = metric_value_or.value();
-
-    evaluation.set_metric_value(metric_value);
-    ScoringFunctionPtr scoring_function =
-        LoadScoringFunctionPlugin(metric_threshold.threshold_spec().scoring_function());
-    evaluation.set_threshold_score(scoring_function->EvaluateMetric(metric_value));
-    if (metric_threshold.threshold_spec().has_weight()) {
-      evaluation.set_weight(metric_threshold.threshold_spec().weight().value());
+        name_to_plugin_map[metric_spec->metrics_plugin_name()]->GetMetricByName(
+            metric_spec->metric_name());
+    if (metric_value_or.ok()) {
+      const double metric_value = metric_value_or.value();
+      evaluation.set_metric_value(metric_value);
+      const nighthawk::adaptive_load::ThresholdSpec* threshold_spec =
+          threshold_spec_from_metric_spec[metric_spec];
+      if (threshold_spec == nullptr) {
+        evaluation.set_weight(0.0);
+      } else {
+        evaluation.set_weight(threshold_spec->weight().value());
+        // Nonexistent ScoringFunction should have been caught during input validation.
+        ScoringFunctionPtr scoring_function =
+            LoadScoringFunctionPlugin(threshold_spec->scoring_function()).value();
+        evaluation.set_threshold_score(scoring_function->EvaluateMetric(metric_value));
+      }
     } else {
-      evaluation.set_weight(1.0);
+      errors += absl::StrCat("Error calling MetricsPlugin '", metric_spec->metrics_plugin_name(),
+                             ": ", metric_value_or.status().message(), "\n");
     }
     *benchmark_result.mutable_metric_evaluations()->Add() = evaluation;
   }
-  for (const MetricSpec& metric_spec : spec.informational_metric_specs()) {
-    MetricEvaluation evaluation;
-    evaluation.set_metric_id(
-        absl::StrCat(metric_spec.metrics_plugin_name(), "/", metric_spec.metric_name()));
-
-    const Envoy::StatusOr<double> metric_value_or = name_to_plugin_map[metric_spec.metrics_plugin_name()]->GetMetricByName(
-        metric_spec.metric_name());
-    if (!metric_value_or.ok()) {
-      benchmark_result.mutable_status()->set_code(::grpc::INTERNAL);
-      benchmark_result.mutable_status()->set_message(
-          absl::StrCat("Error calling MetricsPlugin: ", metric_value_or.status().message()));
-      return benchmark_result;
-    }
-    const double metric_value = metric_value_or.value();
-    evaluation.set_metric_value(metric_value);
-    evaluation.set_weight(0.0);
-    *benchmark_result.mutable_metric_evaluations()->Add() = evaluation;
+  if (errors.empty()) {
+    benchmark_result.mutable_status()->set_code(::grpc::OK);
+  } else {
+    benchmark_result.mutable_status()->set_code(::grpc::INTERNAL);
+    benchmark_result.mutable_status()->set_message(errors);
   }
   return benchmark_result;
 }
 
-// Performs a benchmark via a Nighthawk Service, then hands the result off for analysis.
+/**
+ * Performs a benchmark via a Nighthawk Service, then hands the result off for analysis.
+ *
+ * @param nighthawk_service_stub Nighthawk Service gRPC stub.
+ * @param spec Proto describing the overall adaptive load session.
+ * @param name_to_custom_plugin_map Common map from plugin names to MetricsPlugins loaded and
+ * initialized once at the beginning of the session and passed to all calls of this function.
+ * @param command_line_options Full input for the Nighthawk Service, except for the duration.
+ * @param duration Duration to insert into the benchmark request.
+ *
+ * @return BenchmarkResult Proto containing raw Nighthawk Service results, metric values, and metric
+ * scores.
+ */
 BenchmarkResult PerformAndAnalyzeNighthawkBenchmark(
     nighthawk::client::NighthawkService::StubInterface* nighthawk_service_stub,
     const AdaptiveLoadSessionSpec& spec,
@@ -169,7 +193,13 @@ BenchmarkResult PerformAndAnalyzeNighthawkBenchmark(
   return AnalyzeNighthawkBenchmark(response, spec, name_to_custom_plugin_map);
 }
 
-// Returns a copy of the input spec with default values inserted.
+/**
+ * Returns a copy of the input spec with default values inserted.
+ *
+ * @param original_spec Valid adaptive load session spec.
+ *
+ * @return Adaptive load session spec with default values inserted.
+ */
 AdaptiveLoadSessionSpec SetDefaults(const AdaptiveLoadSessionSpec& original_spec) {
   AdaptiveLoadSessionSpec spec = original_spec;
   if (!spec.has_measuring_period()) {
@@ -199,12 +229,17 @@ AdaptiveLoadSessionSpec SetDefaults(const AdaptiveLoadSessionSpec& original_spec
   return spec;
 }
 
-// Checks whether a session spec is valid: No forbidden fields in Nighthawk traffic spec; no
-// references to missing plugins (step controller, metric, scoring function); no nonexistent metric
-// names.
+/**
+ * Checks whether a session spec is valid: No forbidden fields in Nighthawk traffic spec; no bad
+ * plugin references or bad plugin configurations (step controller, metric, scoring function); no
+ * nonexistent metric names. Reports all errors in one pass.
+ *
+ * @param spec A potentially invalid adaptive load session spec.
+ *
+ * @return Status OK if no problems were found, or InvalidArgument with all errors.
+ */
 absl::Status CheckSessionSpec(const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec) {
   std::string errors;
-
   if (spec.nighthawk_traffic_template().has_duration()) {
     errors += "nighthawk_traffic_template should not have |duration| set. Set |measuring_period| "
               "and |testing_stage_duration| in the AdaptiveLoadSessionSpec proto instead.\n";
@@ -213,43 +248,40 @@ absl::Status CheckSessionSpec(const nighthawk::adaptive_load::AdaptiveLoadSessio
     errors += "nighthawk_traffic_template should not have |open_loop| set. Adaptive Load always "
               "operates in open loop mode.\n";
   }
-
   absl::flat_hash_map<std::string, MetricsPluginPtr> plugin_from_name;
   std::vector<std::string> plugin_names = {"nighthawk.builtin"};
   plugin_from_name["nighthawk.builtin"] =
       std::make_unique<NighthawkStatsEmulatedMetricsPlugin>(nighthawk::client::Output());
   for (const envoy::config::core::v3::TypedExtensionConfig& config :
        spec.metrics_plugin_configs()) {
-    try {
-      plugin_from_name[config.name()] = LoadMetricsPlugin(config);
-    } catch (const Envoy::EnvoyException& exception) {
-      errors += absl::StrCat("MetricsPlugin not found: ", exception.what(), "\n");
-    }
     plugin_names.push_back(config.name());
+    Envoy::StatusOr<MetricsPluginPtr> metrics_plugin_or = LoadMetricsPlugin(config);
+    if (!metrics_plugin_or.ok()) {
+      errors += absl::StrCat("Failed to load MetricsPlugin: ", metrics_plugin_or.status().message(),
+                             "\n");
+      continue;
+    }
+    plugin_from_name[config.name()] = std::move(metrics_plugin_or.value());
   }
-
-  try {
-    LoadStepControllerPlugin(spec.step_controller_config(), spec.nighthawk_traffic_template());
-  } catch (const Envoy::EnvoyException& exception) {
-    errors += absl::StrCat("StepController plugin not found: ", exception.what(), "\n");
+  Envoy::StatusOr<StepControllerPtr> step_controller_or =
+      LoadStepControllerPlugin(spec.step_controller_config(), spec.nighthawk_traffic_template());
+  if (!step_controller_or.ok()) {
+    errors += absl::StrCat(
+        "Failed to load StepController plugin: ", step_controller_or.status().message(), "\n");
   }
-
   std::vector<MetricSpec> all_metric_specs;
-
   for (const MetricSpecWithThreshold& metric_threshold : spec.metric_thresholds()) {
     all_metric_specs.push_back(metric_threshold.metric_spec());
-
-    try {
-      LoadScoringFunctionPlugin(metric_threshold.threshold_spec().scoring_function());
-    } catch (const Envoy::EnvoyException& exception) {
-      errors += absl::StrCat("ScoringFunction plugin not found: ", exception.what(), "\n");
+    Envoy::StatusOr<ScoringFunctionPtr> scoring_function_or =
+        LoadScoringFunctionPlugin(metric_threshold.threshold_spec().scoring_function());
+    if (!scoring_function_or.ok()) {
+      errors += absl::StrCat(
+          "Failed to load ScoringFunction plugin: ", scoring_function_or.status().message(), "\n");
     }
   }
-
   for (const MetricSpec& metric_spec : spec.informational_metric_specs()) {
     all_metric_specs.push_back(metric_spec);
   }
-
   for (const MetricSpec& metric_spec : all_metric_specs) {
     if (plugin_from_name.contains(metric_spec.metrics_plugin_name())) {
       std::vector<std::string> supported_metrics =
@@ -269,7 +301,6 @@ absl::Status CheckSessionSpec(const nighthawk::adaptive_load::AdaptiveLoadSessio
           "'nighthawk.builtin'. Available plugins: ", absl::StrJoin(plugin_names, ", "), ".\n");
     }
   }
-
   if (errors.length() > 0) {
     return absl::InvalidArgumentError(errors);
   }
@@ -282,7 +313,6 @@ AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
     nighthawk::client::NighthawkService::StubInterface* nighthawk_service_stub,
     const AdaptiveLoadSessionSpec& input_spec, Envoy::TimeSource& time_source) {
   AdaptiveLoadSessionOutput output;
-
   AdaptiveLoadSessionSpec spec = SetDefaults(input_spec);
   absl::Status validation_status = CheckSessionSpec(spec);
   if (!validation_status.ok()) {
@@ -290,25 +320,24 @@ AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
     output.mutable_session_status()->set_message(std::string(validation_status.message()));
     return output;
   }
-
   absl::flat_hash_map<std::string, MetricsPluginPtr> name_to_custom_metrics_plugin_map;
   for (const envoy::config::core::v3::TypedExtensionConfig& config :
        spec.metrics_plugin_configs()) {
-    name_to_custom_metrics_plugin_map[config.name()] = LoadMetricsPlugin(config);
+    // Load error should have been caught during input validation.
+    name_to_custom_metrics_plugin_map[config.name()] = std::move(LoadMetricsPlugin(config).value());
   }
-
+  // Load error should should have been caught during input validation.
   StepControllerPtr step_controller =
-      LoadStepControllerPlugin(spec.step_controller_config(), spec.nighthawk_traffic_template());
-
+      LoadStepControllerPlugin(spec.step_controller_config(), spec.nighthawk_traffic_template())
+          .value();
   for (const nighthawk::adaptive_load::MetricSpecWithThreshold& threshold :
        spec.metric_thresholds()) {
     *output.mutable_metric_thresholds()->Add() = threshold;
   }
-
   Envoy::MonotonicTime start_time = time_source.monotonicTime();
   while (!step_controller->IsConverged()) {
     std::string doom_reason;
-    if (step_controller->IsDoomed(&doom_reason)) {
+    if (step_controller->IsDoomed(doom_reason)) {
       output.mutable_session_status()->set_code(grpc::ABORTED);
       std::string message = "Step controller determined that it can never converge: " + doom_reason;
       output.mutable_session_status()->set_message(message);
@@ -324,29 +353,22 @@ AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
       ENVOY_LOG_MISC(info, message);
       return output;
     }
-
     ENVOY_LOG_MISC(info, "Adjusting Stage: Trying load: {}",
                    step_controller->GetCurrentCommandLineOptions().DebugString());
-
     BenchmarkResult result = PerformAndAnalyzeNighthawkBenchmark(
         nighthawk_service_stub, spec, name_to_custom_metrics_plugin_map,
         step_controller->GetCurrentCommandLineOptions(), spec.measuring_period());
-
     for (const MetricEvaluation& evaluation : result.metric_evaluations()) {
       ENVOY_LOG_MISC(info, "Evaluation: {}", evaluation.DebugString());
     }
-
     *output.mutable_adjusting_stage_results()->Add() = result;
     step_controller->UpdateAndRecompute(result);
   }
-
   ENVOY_LOG_MISC(info, "Testing Stage with load: {}",
                  step_controller->GetCurrentCommandLineOptions().DebugString());
-
   *output.mutable_testing_stage_result() = PerformAndAnalyzeNighthawkBenchmark(
       nighthawk_service_stub, spec, name_to_custom_metrics_plugin_map,
       step_controller->GetCurrentCommandLineOptions(), spec.testing_stage_duration());
-
   for (const MetricEvaluation& evaluation : output.testing_stage_result().metric_evaluations()) {
     ENVOY_LOG_MISC(info, "Evaluation: {}", evaluation.DebugString());
   }

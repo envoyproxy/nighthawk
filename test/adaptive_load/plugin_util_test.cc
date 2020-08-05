@@ -13,11 +13,30 @@
 #include "api/client/options.pb.h"
 
 #include "adaptive_load/plugin_util.h"
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 namespace Nighthawk {
 
 namespace {
+
+const double kBadConfigThreshold = 98765.0;
+
+/**
+ * Returns a validation error if the config proto contains kBadConfigThreshold.
+ *
+ * @param message An Any proto that must wrap a LinearScoringFunctionConfig.
+ *
+ * @return Status InvalidArgument if threshold is kBadConfigThreshold, OK otherwise.
+ */
+absl::Status DoValidateConfig(const Envoy::Protobuf::Message& message) {
+  const Envoy::ProtobufWkt::Any& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
+  nighthawk::adaptive_load::LinearScoringFunctionConfig config;
+  Envoy::MessageUtil::unpackTo(any, config);
+  return config.threshold() == kBadConfigThreshold
+             ? absl::InvalidArgumentError(absl::StrCat("input validation failed"))
+             : absl::OkStatus();
+}
 
 /**
  * InputVariableSetter for testing.
@@ -42,8 +61,12 @@ public:
 class TestInputVariableSetterConfigFactory : public InputVariableSetterConfigFactory {
 public:
   std::string name() const override { return "nighthawk.test-input-variable-setter"; }
+  absl::Status ValidateConfig(const Envoy::Protobuf::Message& message) override {
+    return DoValidateConfig(message);
+  }
+
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override {
-    return std::make_unique<Envoy::ProtobufWkt::Any>();
+    return std::make_unique<nighthawk::adaptive_load::LinearScoringFunctionConfig>();
   }
   InputVariableSetterPtr
   createInputVariableSetter(const Envoy::Protobuf::Message& message) override {
@@ -77,7 +100,10 @@ class TestScoringFunctionConfigFactory : public ScoringFunctionConfigFactory {
 public:
   std::string name() const override { return "nighthawk.test-scoring-function"; }
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override {
-    return std::make_unique<Envoy::ProtobufWkt::Any>();
+    return std::make_unique<nighthawk::adaptive_load::LinearScoringFunctionConfig>();
+  }
+  absl::Status ValidateConfig(const Envoy::Protobuf::Message& message) override {
+    return DoValidateConfig(message);
   }
   ScoringFunctionPtr createScoringFunction(const Envoy::Protobuf::Message& message) override {
     const Envoy::ProtobufWkt::Any& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
@@ -111,7 +137,10 @@ class TestMetricsPluginConfigFactory : public MetricsPluginConfigFactory {
 public:
   std::string name() const override { return "nighthawk.test-metrics-plugin"; }
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override {
-    return std::make_unique<Envoy::ProtobufWkt::Any>();
+    return std::make_unique<nighthawk::adaptive_load::LinearScoringFunctionConfig>();
+  }
+  absl::Status ValidateConfig(const Envoy::Protobuf::Message& message) override {
+    return DoValidateConfig(message);
   }
   MetricsPluginPtr createMetricsPlugin(const Envoy::Protobuf::Message& message) override {
     const Envoy::ProtobufWkt::Any& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
@@ -151,7 +180,10 @@ class TestStepControllerConfigFactory : public StepControllerConfigFactory {
 public:
   std::string name() const override { return "nighthawk.test-step-controller"; }
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override {
-    return std::make_unique<Envoy::ProtobufWkt::Any>();
+    return std::make_unique<nighthawk::adaptive_load::LinearScoringFunctionConfig>();
+  }
+  absl::Status ValidateConfig(const Envoy::Protobuf::Message& message) override {
+    return DoValidateConfig(message);
   }
   StepControllerPtr createStepController(
       const Envoy::Protobuf::Message& message,
@@ -183,78 +215,105 @@ TEST(PluginUtilTest, CreatesCorrectInputVariableSetterType) {
   envoy::config::core::v3::TypedExtensionConfig config;
   config.set_name("nighthawk.test-input-variable-setter");
   *config.mutable_typed_config() = CreateTypedConfigAny(0.0);
-  InputVariableSetterPtr plugin = LoadInputVariableSetterPlugin(config);
+  InputVariableSetterPtr plugin = LoadInputVariableSetterPlugin(config).value();
   TestInputVariableSetter* typed_plugin = dynamic_cast<TestInputVariableSetter*>(plugin.get());
   EXPECT_NE(typed_plugin, nullptr);
+}
+
+TEST(PluginUtilTest, ReturnsErrorFromInputVariableSetterConfigValidator) {
+  envoy::config::core::v3::TypedExtensionConfig config;
+  config.set_name("nighthawk.test-input-variable-setter");
+  *config.mutable_typed_config() = CreateTypedConfigAny(kBadConfigThreshold);
+  EXPECT_THAT(LoadInputVariableSetterPlugin(config).status().message(),
+              ::testing::HasSubstr("input validation failed"));
 }
 
 TEST(PluginUtilTest, PropagatesConfigProtoToInputVariableSetter) {
   envoy::config::core::v3::TypedExtensionConfig config;
   config.set_name("nighthawk.test-input-variable-setter");
   *config.mutable_typed_config() = CreateTypedConfigAny(12.0);
-  InputVariableSetterPtr plugin = LoadInputVariableSetterPlugin(config);
+  InputVariableSetterPtr plugin = LoadInputVariableSetterPlugin(config).value();
   TestInputVariableSetter* typed_plugin = dynamic_cast<TestInputVariableSetter*>(plugin.get());
   ASSERT_NE(typed_plugin, nullptr);
   EXPECT_EQ(typed_plugin->config_.threshold(), 12.0);
 }
 
-TEST(PluginUtilTest, ThrowsExceptionWhenInputVariableSetterPluginNotFound) {
+TEST(PluginUtilTest, ReturnsErrorWhenInputVariableSetterPluginNotFound) {
   envoy::config::core::v3::TypedExtensionConfig config;
   config.set_name("nonexistent-input-variable-setter");
   *config.mutable_typed_config() = CreateTypedConfigAny(0.0);
-  EXPECT_THROW(LoadInputVariableSetterPlugin(config), Envoy::EnvoyException);
+  EXPECT_THAT(LoadInputVariableSetterPlugin(config).status().message(),
+              ::testing::HasSubstr("Didn't find a registered implementation"));
 }
 
 TEST(PluginUtilTest, CreatesCorrectScoringFunctionType) {
   envoy::config::core::v3::TypedExtensionConfig config;
   config.set_name("nighthawk.test-scoring-function");
   *config.mutable_typed_config() = CreateTypedConfigAny(0.0);
-  ScoringFunctionPtr plugin = LoadScoringFunctionPlugin(config);
+  ScoringFunctionPtr plugin = LoadScoringFunctionPlugin(config).value();
   TestScoringFunction* typed_plugin = dynamic_cast<TestScoringFunction*>(plugin.get());
   EXPECT_NE(typed_plugin, nullptr);
+}
+
+TEST(PluginUtilTest, ReturnsErrorFromScoringFunctionConfigValidator) {
+  envoy::config::core::v3::TypedExtensionConfig config;
+  config.set_name("nighthawk.test-scoring-function");
+  *config.mutable_typed_config() = CreateTypedConfigAny(kBadConfigThreshold);
+  EXPECT_THAT(LoadScoringFunctionPlugin(config).status().message(),
+              ::testing::HasSubstr("input validation failed"));
 }
 
 TEST(PluginUtilTest, PropagatesConfigProtoToScoringFunction) {
   envoy::config::core::v3::TypedExtensionConfig config;
   config.set_name("nighthawk.test-scoring-function");
   *config.mutable_typed_config() = CreateTypedConfigAny(34.0);
-  ScoringFunctionPtr plugin = LoadScoringFunctionPlugin(config);
+  ScoringFunctionPtr plugin = LoadScoringFunctionPlugin(config).value();
   TestScoringFunction* typed_plugin = dynamic_cast<TestScoringFunction*>(plugin.get());
   ASSERT_NE(typed_plugin, nullptr);
   EXPECT_EQ(typed_plugin->config_.threshold(), 34.0);
 }
 
-TEST(PluginUtilTest, ThrowsExceptionWhenScoringFunctionPluginNotFound) {
+TEST(PluginUtilTest, ReturnsErrorWhenScoringFunctionPluginNotFound) {
   envoy::config::core::v3::TypedExtensionConfig config;
   config.set_name("nonexistent-scoring-function");
   *config.mutable_typed_config() = CreateTypedConfigAny(0.0);
-  EXPECT_THROW(LoadScoringFunctionPlugin(config), Envoy::EnvoyException);
+  EXPECT_THAT(LoadScoringFunctionPlugin(config).status().message(),
+              ::testing::HasSubstr("Didn't find a registered implementation"));
 }
 
 TEST(PluginUtilTest, CreatesCorrectMetricsPluginType) {
   envoy::config::core::v3::TypedExtensionConfig config;
   config.set_name("nighthawk.test-metrics-plugin");
   *config.mutable_typed_config() = CreateTypedConfigAny(0.0);
-  MetricsPluginPtr plugin = LoadMetricsPlugin(config);
+  MetricsPluginPtr plugin = LoadMetricsPlugin(config).value();
   TestMetricsPlugin* typed_plugin = dynamic_cast<TestMetricsPlugin*>(plugin.get());
   EXPECT_NE(typed_plugin, nullptr);
+}
+
+TEST(PluginUtilTest, ReturnsErrorFromMetricsPluginConfigValidator) {
+  envoy::config::core::v3::TypedExtensionConfig config;
+  config.set_name("nighthawk.test-metrics-plugin");
+  *config.mutable_typed_config() = CreateTypedConfigAny(kBadConfigThreshold);
+  EXPECT_THAT(LoadMetricsPlugin(config).status().message(),
+              ::testing::HasSubstr("input validation failed"));
 }
 
 TEST(PluginUtilTest, PropagatesConfigProtoToMetricsPlugin) {
   envoy::config::core::v3::TypedExtensionConfig config;
   config.set_name("nighthawk.test-metrics-plugin");
   *config.mutable_typed_config() = CreateTypedConfigAny(56.0);
-  MetricsPluginPtr plugin = LoadMetricsPlugin(config);
+  MetricsPluginPtr plugin = LoadMetricsPlugin(config).value();
   TestMetricsPlugin* typed_plugin = dynamic_cast<TestMetricsPlugin*>(plugin.get());
   ASSERT_NE(typed_plugin, nullptr);
   EXPECT_EQ(typed_plugin->config_.threshold(), 56.0);
 }
 
-TEST(PluginUtilTest, ThrowsExceptionWhenMetricsPluginNotFound) {
+TEST(PluginUtilTest, ReturnsErrorWhenMetricsPluginNotFound) {
   envoy::config::core::v3::TypedExtensionConfig config;
   config.set_name("nonexistent-metrics-plugin");
   *config.mutable_typed_config() = CreateTypedConfigAny(0.0);
-  EXPECT_THROW(LoadMetricsPlugin(config), Envoy::EnvoyException);
+  EXPECT_THAT(LoadMetricsPlugin(config).status().message(),
+              ::testing::HasSubstr("Didn't find a registered implementation"));
 }
 
 TEST(PluginUtilTest, CreatesCorrectStepControllerType) {
@@ -262,9 +321,18 @@ TEST(PluginUtilTest, CreatesCorrectStepControllerType) {
   config.set_name("nighthawk.test-step-controller");
   *config.mutable_typed_config() = CreateTypedConfigAny(0.0);
   nighthawk::client::CommandLineOptions options_template;
-  StepControllerPtr plugin = LoadStepControllerPlugin(config, options_template);
+  StepControllerPtr plugin = LoadStepControllerPlugin(config, options_template).value();
   TestStepController* typed_plugin = dynamic_cast<TestStepController*>(plugin.get());
   EXPECT_NE(typed_plugin, nullptr);
+}
+
+TEST(PluginUtilTest, ReturnsErrorFromStepControllerConfigValidator) {
+  envoy::config::core::v3::TypedExtensionConfig config;
+  config.set_name("nighthawk.test-step-controller");
+  *config.mutable_typed_config() = CreateTypedConfigAny(kBadConfigThreshold);
+  nighthawk::client::CommandLineOptions options_template;
+  EXPECT_THAT(LoadStepControllerPlugin(config, options_template).status().message(),
+              ::testing::HasSubstr("input validation failed"));
 }
 
 TEST(PluginUtilTest, PropagatesConfigProtoToStepController) {
@@ -272,7 +340,7 @@ TEST(PluginUtilTest, PropagatesConfigProtoToStepController) {
   config.set_name("nighthawk.test-step-controller");
   *config.mutable_typed_config() = CreateTypedConfigAny(78.0);
   nighthawk::client::CommandLineOptions options_template;
-  StepControllerPtr plugin = LoadStepControllerPlugin(config, options_template);
+  StepControllerPtr plugin = LoadStepControllerPlugin(config, options_template).value();
   TestStepController* typed_plugin = dynamic_cast<TestStepController*>(plugin.get());
   ASSERT_NE(typed_plugin, nullptr);
   EXPECT_EQ(typed_plugin->config_.threshold(), 78.0);
@@ -284,18 +352,19 @@ TEST(PluginUtilTest, PropagatesCommandLineOptionsTemplateToStepController) {
   *config.mutable_typed_config() = CreateTypedConfigAny(0.0);
   nighthawk::client::CommandLineOptions options_template;
   options_template.mutable_requests_per_second()->set_value(9);
-  StepControllerPtr plugin = LoadStepControllerPlugin(config, options_template);
+  StepControllerPtr plugin = LoadStepControllerPlugin(config, options_template).value();
   TestStepController* typed_plugin = dynamic_cast<TestStepController*>(plugin.get());
   ASSERT_NE(typed_plugin, nullptr);
   EXPECT_EQ(typed_plugin->command_line_options_template_.requests_per_second().value(), 9);
 }
 
-TEST(PluginUtilTest, ThrowsExceptionWhenStepControllerPluginNotFound) {
+TEST(PluginUtilTest, ReturnsErrorWhenStepControllerPluginNotFound) {
   envoy::config::core::v3::TypedExtensionConfig config;
   config.set_name("nonexistent-step-controller");
   *config.mutable_typed_config() = CreateTypedConfigAny(0.0);
   nighthawk::client::CommandLineOptions options_template;
-  EXPECT_THROW(LoadStepControllerPlugin(config, options_template), Envoy::EnvoyException);
+  EXPECT_THAT(LoadStepControllerPlugin(config, options_template).status().message(),
+              ::testing::HasSubstr("Didn't find a registered implementation"));
 }
 
 } // namespace
