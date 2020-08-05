@@ -104,7 +104,8 @@ public:
 };
 
 /**
- * A factory that creates a TestMetricsPlugin from a LinearScoringFunctionConfig (sic).
+ * A factory that creates a TestMetricsPlugin from a LinearScoringFunctionConfig (see
+ * TestInputVariableSetter constructor).
  */
 class TestMetricsPluginConfigFactory : public MetricsPluginConfigFactory {
 public:
@@ -143,7 +144,8 @@ public:
 };
 
 /**
- * A factory that creates a TestStepController from a LinearScoringFunctionConfig (sic).
+ * A factory that creates a TestStepController from a LinearScoringFunctionConfig (see
+ * TestInputVariableSetter constructor).
  */
 class TestStepControllerConfigFactory : public StepControllerConfigFactory {
 public:
