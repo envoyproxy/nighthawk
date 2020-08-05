@@ -1,5 +1,6 @@
 #pragma once
 
+#include "nighthawk/adaptive_load/config_validator.h"
 #include "nighthawk/adaptive_load/metrics_plugin.h"
 
 #include "external/envoy/source/common/common/logger.h"
@@ -10,7 +11,7 @@
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/string_view.h"
-#include "nighthawk/adaptive_load/config_validator.h"
+
 namespace Nighthawk {
 
 // Emulated MetricPlugin that wraps already collected Nighthawk Service counters and stats in a

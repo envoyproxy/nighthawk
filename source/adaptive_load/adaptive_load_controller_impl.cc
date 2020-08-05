@@ -257,7 +257,8 @@ absl::Status CheckSessionSpec(const nighthawk::adaptive_load::AdaptiveLoadSessio
     plugin_names.push_back(config.name());
     Envoy::StatusOr<MetricsPluginPtr> metrics_plugin_or = LoadMetricsPlugin(config);
     if (!metrics_plugin_or.ok()) {
-      errors += absl::StrCat("Failed to load MetricsPlugin: ", metrics_plugin_or.status().message(), "\n");
+      errors += absl::StrCat("Failed to load MetricsPlugin: ", metrics_plugin_or.status().message(),
+                             "\n");
       continue;
     }
     plugin_from_name[config.name()] = std::move(metrics_plugin_or.value());
@@ -265,8 +266,8 @@ absl::Status CheckSessionSpec(const nighthawk::adaptive_load::AdaptiveLoadSessio
   Envoy::StatusOr<StepControllerPtr> step_controller_or =
       LoadStepControllerPlugin(spec.step_controller_config(), spec.nighthawk_traffic_template());
   if (!step_controller_or.ok()) {
-    errors +=
-        absl::StrCat("Failed to load StepController plugin: ", step_controller_or.status().message(), "\n");
+    errors += absl::StrCat(
+        "Failed to load StepController plugin: ", step_controller_or.status().message(), "\n");
   }
   std::vector<MetricSpec> all_metric_specs;
   for (const MetricSpecWithThreshold& metric_threshold : spec.metric_thresholds()) {

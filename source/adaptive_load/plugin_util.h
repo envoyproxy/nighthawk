@@ -15,7 +15,8 @@ namespace Nighthawk {
  *
  * @param config Proto containing plugin name and plugin-specific config proto.
  *
- * @return Envoy::StatusOr<InputVariableSetterPtr> Initialized plugin or error status due to missing plugin or validation error.
+ * @return Envoy::StatusOr<InputVariableSetterPtr> Initialized plugin or error status due to missing
+ * plugin or validation error.
  */
 Envoy::StatusOr<InputVariableSetterPtr>
 LoadInputVariableSetterPlugin(const envoy::config::core::v3::TypedExtensionConfig& config);
@@ -26,7 +27,8 @@ LoadInputVariableSetterPlugin(const envoy::config::core::v3::TypedExtensionConfi
  *
  * @param config Proto containing plugin name and plugin-specific config proto.
  *
- * @return Envoy::StatusOr<ScoringFunctionPtr> Initialized plugin or error status due to missing plugin or validation error.
+ * @return Envoy::StatusOr<ScoringFunctionPtr> Initialized plugin or error status due to missing
+ * plugin or validation error.
  */
 Envoy::StatusOr<ScoringFunctionPtr>
 LoadScoringFunctionPlugin(const envoy::config::core::v3::TypedExtensionConfig& config);
@@ -37,9 +39,11 @@ LoadScoringFunctionPlugin(const envoy::config::core::v3::TypedExtensionConfig& c
  *
  * @param config Proto containing plugin name and plugin-specific config proto.
  *
- * @return Envoy::StatusOr<MetricsPluginPtr> Initialized plugin or error status due to missing plugin or validation error.
+ * @return Envoy::StatusOr<MetricsPluginPtr> Initialized plugin or error status due to missing
+ * plugin or validation error.
  */
-Envoy::StatusOr<MetricsPluginPtr> LoadMetricsPlugin(const envoy::config::core::v3::TypedExtensionConfig& config);
+Envoy::StatusOr<MetricsPluginPtr>
+LoadMetricsPlugin(const envoy::config::core::v3::TypedExtensionConfig& config);
 
 /**
  * Instantiates a StepController plugin based on the plugin name in |config|, unpacking the
@@ -49,7 +53,8 @@ Envoy::StatusOr<MetricsPluginPtr> LoadMetricsPlugin(const envoy::config::core::v
  * @param command_line_options_template CommandLineOptions traffic template from the
  * AdaptiveLoadSessionSpec.
  *
- * @return Envoy::StatusOr<StepControllerPtr> Initialized plugin or error status due to missing plugin or validation error.
+ * @return Envoy::StatusOr<StepControllerPtr> Initialized plugin or error status due to missing
+ * plugin or validation error.
  */
 Envoy::StatusOr<StepControllerPtr> LoadStepControllerPlugin(
     const envoy::config::core::v3::TypedExtensionConfig& config,

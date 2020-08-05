@@ -4,6 +4,7 @@
 
 #include "envoy/common/pure.h"
 #include "envoy/config/typed_config.h"
+
 #include "nighthawk/adaptive_load/config_validator.h"
 
 namespace Nighthawk {
