@@ -6,6 +6,8 @@
 #include "envoy/config/core/v3/base.pb.h"
 #include "envoy/config/typed_config.h"
 
+#include "nighthawk/adaptive_load/config_validator.h"
+
 namespace Nighthawk {
 
 /**
@@ -38,7 +40,7 @@ using MetricsPluginPtr = std::unique_ptr<MetricsPlugin>;
  * A factory that must be implemented for each MetricsPlugin. It instantiates the specific
  * MetricsPlugin class after unpacking the plugin-specific config proto.
  */
-class MetricsPluginConfigFactory : public Envoy::Config::TypedFactory {
+class MetricsPluginConfigFactory : public Envoy::Config::TypedFactory, public ConfigValidator {
 public:
   ~MetricsPluginConfigFactory() override = default;
   std::string category() const override { return "nighthawk.metrics_plugin"; }
