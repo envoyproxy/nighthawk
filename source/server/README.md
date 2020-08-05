@@ -256,7 +256,7 @@ Escape c-style escape sequences in the application logs
 Log message format in spdlog syntax (see
 https://github.com/gabime/spdlog/wiki/3.-Custom-formatting)
 
-Default is "[%Y-%m-%d %T.%e][%t][%l][%n] %v"
+Default is "[%Y-%m-%d %T.%e][%t][%l][%n] [%g:%#] %v"
 
 --component-log-level <string>
 Comma separated list of component log levels. For example
