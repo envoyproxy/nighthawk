@@ -53,7 +53,7 @@ EXTENSIONS = {
     #"envoy.filters.http.dynamic_forward_proxy":         "//source/extensions/filters/http/dynamic_forward_proxy:config",
     #"envoy.filters.http.dynamo":                        "//source/extensions/filters/http/dynamo:config",
     #"envoy.filters.http.ext_authz":                     "//source/extensions/filters/http/ext_authz:config",
-    "envoy.filters.http.fault":                         "//source/extensions/filters/http/fault:config",
+    "envoy.filters.http.fault": "//source/extensions/filters/http/fault:config",
     #"envoy.filters.http.grpc_http1_bridge":             "//source/extensions/filters/http/grpc_http1_bridge:config",
     #"envoy.filters.http.grpc_http1_reverse_bridge":     "//source/extensions/filters/http/grpc_http1_reverse_bridge:config",
     #"envoy.filters.http.grpc_json_transcoder":          "//source/extensions/filters/http/grpc_json_transcoder:config",
@@ -69,7 +69,7 @@ EXTENSIONS = {
     #"envoy.filters.http.original_src":                  "//source/extensions/filters/http/original_src:config",
     #"envoy.filters.http.ratelimit":                     "//source/extensions/filters/http/ratelimit:config",
     #"envoy.filters.http.rbac":                          "//source/extensions/filters/http/rbac:config",
-    "envoy.filters.http.router":                        "//source/extensions/filters/http/router:config",
+    "envoy.filters.http.router": "//source/extensions/filters/http/router:config",
     #"envoy.filters.http.squash":                        "//source/extensions/filters/http/squash:config",
     #"envoy.filters.http.tap":                           "//source/extensions/filters/http/tap:config",
 
@@ -85,7 +85,7 @@ EXTENSIONS = {
     # NOTE: The proxy_protocol filter is implicitly loaded if proxy_protocol functionality is
     #       configured on the listener. Do not remove it in that case or configs will fail to load.
     #"envoy.filters.listener.proxy_protocol":            "//source/extensions/filters/listener/proxy_protocol:config",
-    "envoy.filters.listener.tls_inspector":             "//source/extensions/filters/listener/tls_inspector:config",
+    "envoy.filters.listener.tls_inspector": "//source/extensions/filters/listener/tls_inspector:config",
 
     #
     # Network filters
@@ -96,7 +96,7 @@ EXTENSIONS = {
     #"envoy.filters.network.dubbo_proxy":                "//source/extensions/filters/network/dubbo_proxy:config",
     #"envoy.filters.network.echo":                       "//source/extensions/filters/network/echo:config",
     #"envoy.filters.network.ext_authz":                  "//source/extensions/filters/network/ext_authz:config",
-    "envoy.filters.network.http_connection_manager":    "//source/extensions/filters/network/http_connection_manager:config",
+    "envoy.filters.network.http_connection_manager": "//source/extensions/filters/network/http_connection_manager:config",
     # WiP
     #"envoy.filters.network.kafka_broker":               "//source/extensions/filters/network/kafka:kafka_broker_config_lib",
     #"envoy.filters.network.local_ratelimit":            "//source/extensions/filters/network/local_ratelimit:config",
@@ -150,7 +150,7 @@ EXTENSIONS = {
     #"envoy.tracers.dynamic_ot":                         "//source/extensions/tracers/dynamic_ot:config",
     #"envoy.tracers.lightstep":                          "//source/extensions/tracers/lightstep:config",
     #"envoy.tracers.datadog":                            "//source/extensions/tracers/datadog:config",
-    "envoy.tracers.zipkin":                             "//source/extensions/tracers/zipkin:config",
+    "envoy.tracers.zipkin": "//source/extensions/tracers/zipkin:config",
     #"envoy.tracers.opencensus":                         "//source/extensions/tracers/opencensus:config",
     # WiP
     #"envoy.tracers.xray":                               "//source/extensions/tracers/xray:config",
@@ -161,7 +161,7 @@ EXTENSIONS = {
 
     #"envoy.transport_sockets.alts":                     "//source/extensions/transport_sockets/alts:config",
     #"envoy.transport_sockets.upstream_proxy_protocol":  "//source/extensions/transport_sockets/proxy_protocol:upstream_proxy_protocol",
-    "envoy.transport_sockets.raw_buffer":               "//source/extensions/transport_sockets/raw_buffer:config",
+    "envoy.transport_sockets.raw_buffer": "//source/extensions/transport_sockets/raw_buffer:config",
     #"envoy.transport_sockets.tap":                      "//source/extensions/transport_sockets/tap:config",
     #"envoy.transport_sockets.quic":                     "//source/extensions/quic_listeners/quiche:quic_transport_socket_factory_lib",
 
@@ -195,8 +195,6 @@ EXTENSIONS = {
     # Http Upstreams (excepting envoy.upstreams.http.generic which is hard-coded into the build so not registered here)
     #"envoy.upstreams.http.http":                     "//source/extensions/upstreams/http/http:config",
     #"envoy.upstreams.http.tcp":                     "//source/extensions/upstreams/http/tcp:config",
-
-
 }
 
 # This can be used to extend the visibility rules for Envoy extensions
