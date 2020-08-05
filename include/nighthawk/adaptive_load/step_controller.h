@@ -8,6 +8,7 @@
 #include "external/envoy/source/common/protobuf/protobuf.h"
 
 #include "api/adaptive_load/benchmark_result.pb.h"
+#include "nighthawk/adaptive_load/config_validator.h"
 
 namespace Nighthawk {
 
@@ -61,7 +62,7 @@ using StepControllerPtr = std::unique_ptr<StepController>;
  * A factory that must be implemented for each StepController plugin. It instantiates the
  * specific StepController class after unpacking the plugin-specific config proto.
  */
-class StepControllerConfigFactory : public Envoy::Config::TypedFactory {
+class StepControllerConfigFactory : public Envoy::Config::TypedFactory, public ConfigValidator {
 public:
   ~StepControllerConfigFactory() override = default;
   std::string category() const override { return "nighthawk.step_controller"; }

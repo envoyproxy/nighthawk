@@ -10,7 +10,7 @@
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/strings/string_view.h"
-
+#include "nighthawk/adaptive_load/config_validator.h"
 namespace Nighthawk {
 
 // Emulated MetricPlugin that wraps already collected Nighthawk Service counters and stats in a

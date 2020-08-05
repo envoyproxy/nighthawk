@@ -264,7 +264,7 @@ TEST(AdaptiveLoadControllerTest, FailsWithNonexistentMetricsPluginName) {
   FakeIncrementingMonotonicTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
       /*nighthawk_service_stub=*/nullptr, spec, time_source);
-  EXPECT_THAT(output.session_status().message(), HasSubstr("MetricsPlugin not found"));
+  EXPECT_THAT(output.session_status().message(), HasSubstr("Failed to load MetricsPlugin"));
 }
 
 TEST(AdaptiveLoadControllerTest, FailsWithNonexistentStepControllerPluginName) {
@@ -276,7 +276,7 @@ TEST(AdaptiveLoadControllerTest, FailsWithNonexistentStepControllerPluginName) {
   FakeIncrementingMonotonicTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
       /*nighthawk_service_stub=*/nullptr, spec, time_source);
-  EXPECT_THAT(output.session_status().message(), HasSubstr("StepController plugin not found"));
+  EXPECT_THAT(output.session_status().message(), HasSubstr("Failed to load StepController"));
 }
 
 TEST(AdaptiveLoadControllerTest, FailsWithNonexistentScoringFunctionPluginName) {
@@ -290,7 +290,7 @@ TEST(AdaptiveLoadControllerTest, FailsWithNonexistentScoringFunctionPluginName) 
   FakeIncrementingMonotonicTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
       /*nighthawk_service_stub=*/nullptr, spec, time_source);
-  EXPECT_THAT(output.session_status().message(), HasSubstr("ScoringFunction plugin not found"));
+  EXPECT_THAT(output.session_status().message(), HasSubstr("Failed to load ScoringFunction"));
 }
 
 TEST(AdaptiveLoadControllerTest, FailsWithNonexistentMetricsPluginNameInMetricThresholdSpec) {

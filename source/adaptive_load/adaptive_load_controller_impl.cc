@@ -149,11 +149,9 @@ BenchmarkResult AnalyzeNighthawkBenchmark(
         evaluation.set_weight(0.0);
       } else {
         evaluation.set_weight(threshold_spec->weight().value());
+        // Nonexistent ScoringFunction should have been caught during input validation.
         ScoringFunctionPtr scoring_function =
-            LoadScoringFunctionPlugin(threshold_spec->scoring_function());
-        RELEASE_ASSERT(
-            scoring_function != nullptr,
-            "Nonexistent ScoringFunction should have been caught during input validation.");
+            LoadScoringFunctionPlugin(threshold_spec->scoring_function()).value();
         evaluation.set_threshold_score(scoring_function->EvaluateMetric(metric_value));
       }
     } else {
@@ -232,13 +230,13 @@ AdaptiveLoadSessionSpec SetDefaults(const AdaptiveLoadSessionSpec& original_spec
 }
 
 /**
- * Checks whether a session spec is valid: No forbidden fields in Nighthawk traffic spec; no
- * references to missing plugins (step controller, metric, scoring function); no nonexistent metric
- * names. Reports all errors in one pass.
+ * Checks whether a session spec is valid: No forbidden fields in Nighthawk traffic spec; no bad
+ * plugin references or bad plugin configurations (step controller, metric, scoring function); no
+ * nonexistent metric names. Reports all errors in one pass.
  *
- * @param spec Possibly invalid adaptive load session spec.
+ * @param spec A potentially invalid adaptive load session spec.
  *
- * @return Status Summary of all errors.
+ * @return Status OK if no problems were found, or InvalidArgument with all errors.
  */
 absl::Status CheckSessionSpec(const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec) {
   std::string errors;
@@ -256,26 +254,28 @@ absl::Status CheckSessionSpec(const nighthawk::adaptive_load::AdaptiveLoadSessio
       std::make_unique<NighthawkStatsEmulatedMetricsPlugin>(nighthawk::client::Output());
   for (const envoy::config::core::v3::TypedExtensionConfig& config :
        spec.metrics_plugin_configs()) {
-    try {
-      plugin_from_name[config.name()] = LoadMetricsPlugin(config);
-    } catch (const Envoy::EnvoyException& exception) {
-      errors += absl::StrCat("MetricsPlugin not found: ", exception.what(), "\n");
-    }
     plugin_names.push_back(config.name());
+    Envoy::StatusOr<MetricsPluginPtr> metrics_plugin_or = LoadMetricsPlugin(config);
+    if (!metrics_plugin_or.ok()) {
+      errors += absl::StrCat("Failed to load MetricsPlugin: ", metrics_plugin_or.status().message(), "\n");
+      continue;
+    }
+    plugin_from_name[config.name()] = std::move(metrics_plugin_or.value());
   }
-  try {
-    LoadStepControllerPlugin(spec.step_controller_config(), spec.nighthawk_traffic_template());
-  } catch (const Envoy::EnvoyException& exception) {
-    errors += absl::StrCat("StepController plugin not found: ", exception.what(), "\n");
+  Envoy::StatusOr<StepControllerPtr> step_controller_or =
+      LoadStepControllerPlugin(spec.step_controller_config(), spec.nighthawk_traffic_template());
+  if (!step_controller_or.ok()) {
+    errors +=
+        absl::StrCat("Failed to load StepController plugin: ", step_controller_or.status().message(), "\n");
   }
   std::vector<MetricSpec> all_metric_specs;
   for (const MetricSpecWithThreshold& metric_threshold : spec.metric_thresholds()) {
     all_metric_specs.push_back(metric_threshold.metric_spec());
-
-    try {
-      LoadScoringFunctionPlugin(metric_threshold.threshold_spec().scoring_function());
-    } catch (const Envoy::EnvoyException& exception) {
-      errors += absl::StrCat("ScoringFunction plugin not found: ", exception.what(), "\n");
+    Envoy::StatusOr<ScoringFunctionPtr> scoring_function_or =
+        LoadScoringFunctionPlugin(metric_threshold.threshold_spec().scoring_function());
+    if (!scoring_function_or.ok()) {
+      errors += absl::StrCat(
+          "Failed to load ScoringFunction plugin: ", scoring_function_or.status().message(), "\n");
     }
   }
   for (const MetricSpec& metric_spec : spec.informational_metric_specs()) {
@@ -322,10 +322,13 @@ AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
   absl::flat_hash_map<std::string, MetricsPluginPtr> name_to_custom_metrics_plugin_map;
   for (const envoy::config::core::v3::TypedExtensionConfig& config :
        spec.metrics_plugin_configs()) {
-    name_to_custom_metrics_plugin_map[config.name()] = LoadMetricsPlugin(config);
+    // Load error should have been caught during input validation.
+    name_to_custom_metrics_plugin_map[config.name()] = std::move(LoadMetricsPlugin(config).value());
   }
+  // Load error should should have been caught during input validation.
   StepControllerPtr step_controller =
-      LoadStepControllerPlugin(spec.step_controller_config(), spec.nighthawk_traffic_template());
+      LoadStepControllerPlugin(spec.step_controller_config(), spec.nighthawk_traffic_template())
+          .value();
   for (const nighthawk::adaptive_load::MetricSpecWithThreshold& threshold :
        spec.metric_thresholds()) {
     *output.mutable_metric_thresholds()->Add() = threshold;

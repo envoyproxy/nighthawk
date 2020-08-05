@@ -4,6 +4,7 @@
 
 #include "envoy/common/pure.h"
 #include "envoy/config/typed_config.h"
+#include "nighthawk/adaptive_load/config_validator.h"
 
 namespace Nighthawk {
 
@@ -34,7 +35,7 @@ using ScoringFunctionPtr = std::unique_ptr<ScoringFunction>;
  * A factory that must be implemented for each ScoringFunction plugin. It instantiates the
  * specific ScoringFunction class after unpacking the plugin-specific config proto.
  */
-class ScoringFunctionConfigFactory : public Envoy::Config::TypedFactory {
+class ScoringFunctionConfigFactory : public Envoy::Config::TypedFactory, public ConfigValidator {
 public:
   ~ScoringFunctionConfigFactory() override = default;
   std::string category() const override { return "nighthawk.scoring_function"; }
