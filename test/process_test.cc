@@ -23,26 +23,26 @@ using namespace testing;
 namespace Nighthawk {
 namespace Client {
 
-constexpr const char kSinkName[] = "{name:\"nighthawk.dummy_stats_sink\"}";
-int kNumFlushes = 0;
+constexpr absl::string_view kSinkName = "{name:\"nighthawk.fake_stats_sink\"}";
+int numFlushes = 0;
 
-// DummyStatsSink is a simple Envoy::Stats::Sink implementation used to prove
+// FakeStatsSink is a simple Envoy::Stats::Sink implementation used to prove
 // the logic to configure Sink in Nighthawk works as expected.
-class DummyStatsSink : public Envoy::Stats::Sink {
+class FakeStatsSink : public Envoy::Stats::Sink {
 public:
-  DummyStatsSink() : Envoy::Stats::Sink() { kNumFlushes = 0; }
+  FakeStatsSink() { numFlushes = 0; }
 
   // Envoy::Stats::Sink
-  void flush(Envoy::Stats::MetricSnapshot&) override { kNumFlushes++; }
+  void flush(Envoy::Stats::MetricSnapshot&) override { numFlushes++; }
 
   void onHistogramComplete(const Envoy::Stats::Histogram&, uint64_t) override {}
 };
 
-// DummyStatsSinkFactory creates DummyStatsSink.
-class DummyStatsSinkFactory : public NighthawkStatsSinkFactory {
+// FakeStatsSinkFactory creates FakeStatsSink.
+class FakeStatsSinkFactory : public NighthawkStatsSinkFactory {
 public:
   std::unique_ptr<Envoy::Stats::Sink> createStatsSink(Envoy::Stats::SymbolTable&) override {
-    return std::make_unique<DummyStatsSink>();
+    return std::make_unique<FakeStatsSink>();
   }
 
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override {
@@ -51,7 +51,7 @@ public:
     return Envoy::ProtobufTypes::MessagePtr{new Envoy::ProtobufWkt::Struct()};
   }
 
-  std::string name() const override { return "nighthawk.dummy_stats_sink"; }
+  std::string name() const override { return "nighthawk.fake_stats_sink"; }
 };
 
 // TODO(https://github.com/envoyproxy/nighthawk/issues/179): Mock Process in client_test, and move
@@ -122,15 +122,15 @@ INSTANTIATE_TEST_SUITE_P(IpVersions, ProcessTest,
                          Envoy::TestUtility::ipTestParamsToString);
 
 TEST_P(ProcessTest, TwoProcessInSequence) {
-  DummyStatsSinkFactory factory;
+  FakeStatsSinkFactory factory;
   Envoy::Registry::InjectFactory<NighthawkStatsSinkFactory> registered(factory);
   runProcess(RunExpectation::EXPECT_FAILURE);
-  EXPECT_GT(kNumFlushes, 0);
+  EXPECT_GT(numFlushes, 0);
   options_ = TestUtility::createOptionsImpl(fmt::format(
       "foo --h2 --duration 1 --rps 10 --stats-flush-interval 1 --stats-sinks {} https://{}/",
       kSinkName, loopback_address_));
   runProcess(RunExpectation::EXPECT_FAILURE);
-  EXPECT_GT(kNumFlushes, 0);
+  EXPECT_GT(numFlushes, 0);
 }
 
 // TODO(oschaaf): move to python int. tests once it adds to coverage.
@@ -141,7 +141,7 @@ TEST_P(ProcessTest, BadTracerSpec) {
 }
 
 TEST_P(ProcessTest, CancelDuringLoadTest) {
-  DummyStatsSinkFactory factory;
+  FakeStatsSinkFactory factory;
   Envoy::Registry::InjectFactory<NighthawkStatsSinkFactory> registered(factory);
   // The failure predicate below is there to wipe out any stock ones. We want this to run for a long
   // time, even if the upstream fails (there is no live upstream in this test, we send traffic into
@@ -151,7 +151,7 @@ TEST_P(ProcessTest, CancelDuringLoadTest) {
                   "--stats-flush-interval 1 --stats-sinks {} https://{}/",
                   kSinkName, loopback_address_));
   runProcess(RunExpectation::EXPECT_SUCCESS, true);
-  EXPECT_GT(kNumFlushes, 0);
+  EXPECT_GT(numFlushes, 0);
 }
 
 TEST_P(ProcessTest, CancelExecutionBeforeBeginLoadTest) {

@@ -131,14 +131,19 @@ void ProcessImpl::shutdown() {
 
   {
     auto guard = std::make_unique<Envoy::Thread::LockGuard>(workers_lock_);
+    // flush_worker_->shutdown() needs to happen before workers_.clear() so that
+    // metrics defined in workers scope will be included in the final stats
+    // flush which happens in FlushWorkerImpl::shutdownThread() after
+    // flush_worker_->shutdown(). For the order between worker shutdown() and
+    // shutdownThread(), see worker_impl.cc.
+    if (flush_worker_) {
+      flush_worker_->shutdown();
+    }
     // Before shutting down the cluster manager, stop the workers.
     for (auto& worker : workers_) {
       worker->shutdown();
     }
     workers_.clear();
-    if (flush_worker_) {
-      flush_worker_->shutdown();
-    }
   }
   if (cluster_manager_ != nullptr) {
     cluster_manager_->shutdown();

@@ -23,8 +23,8 @@ using namespace testing;
 
 class FlushWorkerTest : public Test {
 public:
-  FlushWorkerTest() : thread_factory_(Envoy::Thread::threadFactoryForTest()) {
-    dispatcher_ = new NiceMock<Envoy::Event::MockDispatcher>();
+  FlushWorkerTest() : thread_factory_(Envoy::Thread::threadFactoryForTest()),
+  dispatcher_(new NiceMock<Envoy::Event::MockDispatcher>()) {
     loader_ = std::make_unique<Envoy::Runtime::ScopedLoaderSingleton>(
         Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl(
             *dispatcher_, tls_, {}, local_info_, store_, rand_, validation_visitor_, mock_api_)});
@@ -49,7 +49,7 @@ public:
                                    const Envoy::ScopeTrackedObject*) { timer_set_ = true; }));
     EXPECT_CALL(*timer_, disableTimer()).WillOnce(Invoke([&]() { timer_set_ = false; }));
     EXPECT_CALL(*dispatcher_, exit()).WillOnce(Invoke([&]() {
-      absl::MutexLock l(&lock_);
+      auto guard = std::make_unique<Envoy::Thread::LockGuard>(lock_);
       stopped_ = true;
     }));
   }
@@ -68,8 +68,14 @@ public:
   }
 
   void simulateTimerLoop() {
+    int i = 0;
     while (true) {
-      absl::MutexLock l(&lock_);
+      i++;
+      // At least run the while loop for 100 times.
+      if (i == 100) {
+        promise_.set_value();
+      }
+      auto guard = std::make_unique<Envoy::Thread::LockGuard>(lock_);
       if (stopped_) {
         break;
       } else if (timer_set_) {
@@ -92,8 +98,10 @@ public:
   NiceMock<Envoy::Event::MockTimer>* timer_; // not owned
   Envoy::Event::TimerCb timer_cb_;
   bool timer_set_{};
-  bool stopped_ ABSL_GUARDED_BY(lock_) = false;
-  absl::Mutex lock_;
+  bool stopped_{false};
+  // Protect stopped_.
+  Envoy::Thread::MutexBasicLockable lock_;
+  std::promise<void> promise_;
 
   Envoy::Stats::MockSink* sink_ = nullptr; // owned by stats_sinks_
   std::list<std::unique_ptr<Envoy::Stats::Sink>> stats_sinks_;
@@ -106,14 +114,14 @@ TEST_F(FlushWorkerTest, WorkerFlushStatsPeriodically) {
   auto worker = std::make_unique<FlushWorkerImpl>(mock_api_, tls_, store_, stats_sinks_,
                                                   stats_flush_interval_);
 
-  std::thread thread = std::thread([&worker] {
-    sleep(1);
+  std::thread thread = std::thread([&worker, this] {
+    // Wait for the while loop run at least 100 times in simulateTimerLoop().
+    promise_.get_future().wait();
     worker->exitDispatcher();
   });
 
   expectDispatcherRun();
-  // During the 1s sleep, timer_cb_ in simulateTimerLoop() should be called at
-  // least 100 times.
+  // flush() is called at least 100 times in simulateTimerLoop().
   EXPECT_CALL(*sink_, flush(_)).Times(testing::AtLeast(100));
 
   worker->start();
