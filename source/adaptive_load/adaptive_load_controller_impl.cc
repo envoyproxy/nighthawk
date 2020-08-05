@@ -9,6 +9,7 @@
 #include "nighthawk/adaptive_load/step_controller.h"
 
 #include "external/envoy/source/common/common/logger.h"
+#include "external/envoy/source/common/common/statusor.h"
 #include "external/envoy/source/common/protobuf/protobuf.h"
 
 #include "api/adaptive_load/adaptive_load.pb.h"
@@ -22,7 +23,6 @@
 #include "absl/strings/str_join.h"
 #include "adaptive_load/metrics_plugin_impl.h"
 #include "adaptive_load/plugin_util.h"
-#include "external/envoy/source/common/common/statusor.h"
 
 namespace Nighthawk {
 
@@ -117,50 +117,56 @@ BenchmarkResult AnalyzeNighthawkBenchmark(
   if (nighthawk_response.error_detail().code() != ::grpc::OK) {
     return benchmark_result;
   }
+  // Process MetricSpecs in original order of definition.
+  std::vector<const nighthawk::adaptive_load::MetricSpec*> metric_specs;
+  // Pointer to the corresponding ThresholdSpec, or nullptr for informational metrics.
+  absl::flat_hash_map<const nighthawk::adaptive_load::MetricSpec*,
+                      const nighthawk::adaptive_load::ThresholdSpec*>
+      threshold_spec_from_metric_spec;
   for (const MetricSpecWithThreshold& metric_threshold : spec.metric_thresholds()) {
+    metric_specs.push_back(&metric_threshold.metric_spec());
+    threshold_spec_from_metric_spec[&metric_threshold.metric_spec()] =
+        &metric_threshold.threshold_spec();
+  }
+  for (const MetricSpec& metric_spec : spec.informational_metric_specs()) {
+    metric_specs.push_back(&metric_spec);
+    threshold_spec_from_metric_spec[&metric_spec] = nullptr;
+  }
+  std::string errors;
+  for (const nighthawk::adaptive_load::MetricSpec* metric_spec : metric_specs) {
     MetricEvaluation evaluation;
-    evaluation.set_metric_id(absl::StrCat(metric_threshold.metric_spec().metrics_plugin_name(), "/",
-                                          metric_threshold.metric_spec().metric_name()));
+    evaluation.set_metric_id(
+        absl::StrCat(metric_spec->metrics_plugin_name(), "/", metric_spec->metric_name()));
     const Envoy::StatusOr<double> metric_value_or =
-        name_to_plugin_map[metric_threshold.metric_spec().metrics_plugin_name()]->GetMetricByName(
-            metric_threshold.metric_spec().metric_name());
-    if (!metric_value_or.ok()) {
-      benchmark_result.mutable_status()->set_code(::grpc::INTERNAL);
-      benchmark_result.mutable_status()->set_message(
-          absl::StrCat("Error calling MetricsPlugin: ", metric_value_or.status().message()));
-      return benchmark_result;
-    }
-    const double metric_value = metric_value_or.value();
-    evaluation.set_metric_value(metric_value);
-
-    ScoringFunctionPtr scoring_function =
-        LoadScoringFunctionPlugin(metric_threshold.threshold_spec().scoring_function());
-    evaluation.set_threshold_score(scoring_function->EvaluateMetric(metric_value));
-    if (metric_threshold.threshold_spec().has_weight()) {
-      evaluation.set_weight(metric_threshold.threshold_spec().weight().value());
+        name_to_plugin_map[metric_spec->metrics_plugin_name()]->GetMetricByName(
+            metric_spec->metric_name());
+    if (metric_value_or.ok()) {
+      const double metric_value = metric_value_or.value();
+      evaluation.set_metric_value(metric_value);
+      const nighthawk::adaptive_load::ThresholdSpec* threshold_spec =
+          threshold_spec_from_metric_spec[metric_spec];
+      if (threshold_spec == nullptr) {
+        evaluation.set_weight(0.0);
+      } else {
+        evaluation.set_weight(threshold_spec->weight().value());
+        ScoringFunctionPtr scoring_function =
+            LoadScoringFunctionPlugin(threshold_spec->scoring_function());
+        RELEASE_ASSERT(
+            scoring_function != nullptr,
+            "Nonexistent ScoringFunction should have been caught during input validation.");
+        evaluation.set_threshold_score(scoring_function->EvaluateMetric(metric_value));
+      }
     } else {
-      evaluation.set_weight(1.0);
+      errors += absl::StrCat("Error calling MetricsPlugin '", metric_spec->metrics_plugin_name(),
+                             ": ", metric_value_or.status().message(), "\n");
     }
     *benchmark_result.mutable_metric_evaluations()->Add() = evaluation;
   }
-  for (const MetricSpec& metric_spec : spec.informational_metric_specs()) {
-    MetricEvaluation evaluation;
-    evaluation.set_metric_id(
-        absl::StrCat(metric_spec.metrics_plugin_name(), "/", metric_spec.metric_name()));
-
-    const Envoy::StatusOr<double> metric_value_or =
-        name_to_plugin_map[metric_spec.metrics_plugin_name()]->GetMetricByName(
-            metric_spec.metric_name());
-    if (!metric_value_or.ok()) {
-      benchmark_result.mutable_status()->set_code(::grpc::INTERNAL);
-      benchmark_result.mutable_status()->set_message(
-          absl::StrCat("Error calling MetricsPlugin: ", metric_value_or.status().message()));
-      return benchmark_result;
-    }
-    const double metric_value = metric_value_or.value();
-    evaluation.set_metric_value(metric_value);
-    evaluation.set_weight(0.0);
-    *benchmark_result.mutable_metric_evaluations()->Add() = evaluation;
+  if (errors.empty()) {
+    benchmark_result.mutable_status()->set_code(::grpc::OK);
+  } else {
+    benchmark_result.mutable_status()->set_code(::grpc::INTERNAL);
+    benchmark_result.mutable_status()->set_message(errors);
   }
   return benchmark_result;
 }

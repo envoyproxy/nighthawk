@@ -29,8 +29,8 @@ envoy_cc_test(
     deps = [
         ":utility",
         "//source/adaptive_load:adaptive_load_controller_impl",
+        "//source/adaptive_load:scoring_function_impl",
         "//source/client:nighthawk_client_lib",
-       "//source/adaptive_load:scoring_function_impl",
         "@com_github_grpc_grpc//:grpc++_test",
     ],
 )
