@@ -43,6 +43,7 @@ class ExponentialSearchStepControllerConfigFactory : public StepControllerConfig
 public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
+  absl::Status ValidateConfig(const Envoy::Protobuf::Message& config) override;
   StepControllerPtr createStepController(
       const Envoy::Protobuf::Message& config,
       const nighthawk::client::CommandLineOptions& command_line_options_template) override;

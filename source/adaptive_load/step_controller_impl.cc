@@ -50,6 +50,20 @@ std::string ExponentialSearchStepControllerConfigFactory::name() const {
   return "nighthawk.exponential-search";
 }
 
+absl::Status ExponentialSearchStepControllerConfigFactory::ValidateConfig(
+    const Envoy::Protobuf::Message& message) {
+  const Envoy::ProtobufWkt::Any& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
+  ExponentialSearchStepControllerConfig config;
+  Envoy::MessageUtil::unpackTo(any, config);
+  if (config.has_input_variable_setter()) {
+    Envoy::StatusOr<InputVariableSetterPtr> input_variable_setter_or = LoadInputVariableSetterPlugin(config.input_variable_setter());
+    if (!input_variable_setter_or.ok()) {
+      return input_variable_setter_or.status();
+    }
+  }
+  return absl::OkStatus();
+}
+
 StepControllerPtr ExponentialSearchStepControllerConfigFactory::createStepController(
     const Envoy::Protobuf::Message& message,
     const nighthawk::client::CommandLineOptions& command_line_options_template) {
@@ -72,12 +86,8 @@ ExponentialSearchStepController::ExponentialSearchStepController(
       top_load_value_{std::numeric_limits<double>::signaling_NaN()} {
   doom_reason_ = "";
   if (config.has_input_variable_setter()) {
-    try {
-      input_variable_setter_ = LoadInputVariableSetterPlugin(config.input_variable_setter());
-    } catch (const Envoy::EnvoyException& e) {
-      doom_reason_ = absl::StrCat(
-          "Error loading plugin: ", config.input_variable_setter().DebugString(), ": ", e.what());
-    }
+    // Load failures should have been caught during input validation.
+    input_variable_setter_ = LoadInputVariableSetterPlugin(config.input_variable_setter()).value();
   } else {
     input_variable_setter_ = std::make_unique<RequestsPerSecondInputVariableSetter>(
         nighthawk::adaptive_load::RequestsPerSecondInputVariableSetterConfig());

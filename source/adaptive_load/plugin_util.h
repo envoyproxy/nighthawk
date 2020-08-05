@@ -11,50 +11,50 @@ namespace Nighthawk {
 
 /**
  * Instantiates an InputVariableSetter plugin based on the plugin name in |config|, unpacking the
- * plugin-specific config proto within |config|.
+ * plugin-specific config proto within |config|. Validates the config proto.
  *
  * @param config Proto containing plugin name and plugin-specific config proto.
  *
  * @return Envoy::StatusOr<InputVariableSetterPtr> Initialized plugin or error status due to missing
- * plugin or validation error.
+ * plugin or config proto validation error.
  */
 Envoy::StatusOr<InputVariableSetterPtr>
 LoadInputVariableSetterPlugin(const envoy::config::core::v3::TypedExtensionConfig& config);
 
 /**
  * Instantiates a ScoringFunction plugin based on the plugin name in |config|, unpacking the
- * plugin-specific config proto within |config|.
+ * plugin-specific config proto within |config|. Validates the config proto.
  *
  * @param config Proto containing plugin name and plugin-specific config proto.
  *
  * @return Envoy::StatusOr<ScoringFunctionPtr> Initialized plugin or error status due to missing
- * plugin or validation error.
+ * plugin or config proto validation error.
  */
 Envoy::StatusOr<ScoringFunctionPtr>
 LoadScoringFunctionPlugin(const envoy::config::core::v3::TypedExtensionConfig& config);
 
 /**
  * Instantiates a MetricsPlugin based on the plugin name in |config|, unpacking the
- * plugin-specific config proto within |config|.
+ * plugin-specific config proto within |config|. Validates the config proto.
  *
  * @param config Proto containing plugin name and plugin-specific config proto.
  *
  * @return Envoy::StatusOr<MetricsPluginPtr> Initialized plugin or error status due to missing
- * plugin or validation error.
+ * plugin or config proto validation error.
  */
 Envoy::StatusOr<MetricsPluginPtr>
 LoadMetricsPlugin(const envoy::config::core::v3::TypedExtensionConfig& config);
 
 /**
  * Instantiates a StepController plugin based on the plugin name in |config|, unpacking the
- * plugin-specific config proto within |config|.
+ * plugin-specific config proto within |config|. Validates the config proto.
  *
  * @param config Proto containing plugin name and plugin-specific config proto.
  * @param command_line_options_template CommandLineOptions traffic template from the
  * AdaptiveLoadSessionSpec.
  *
  * @return Envoy::StatusOr<StepControllerPtr> Initialized plugin or error status due to missing
- * plugin or validation error.
+ * plugin or config proto validation error.
  */
 Envoy::StatusOr<StepControllerPtr> LoadStepControllerPlugin(
     const envoy::config::core::v3::TypedExtensionConfig& config,
