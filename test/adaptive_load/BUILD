@@ -91,7 +91,6 @@ envoy_cc_test(
     srcs = ["step_controller_test.cc"],
     repository = "@envoy",
     deps = [
-        "//source/adaptive_load:plugin_util",
         "//source/adaptive_load:step_controller_impl",
     ],
 )

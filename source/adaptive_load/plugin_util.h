@@ -9,27 +9,52 @@
 
 namespace Nighthawk {
 
-// Instantiates an InputVariableSetter plugin based on the plugin name in |config|, unpacking the
-// plugin-specific config proto within |config|. Throws Envoy::EnvoyException if the plugin is not
-// found.
+/**
+ * Instantiates an InputVariableSetter plugin based on the plugin name in |config|, unpacking the
+ * plugin-specific config proto within |config|. Throws Envoy::EnvoyException if the plugin is not
+ * found.
+ *
+ * @param config Proto containing plugin name and plugin-specific config proto.
+ *
+ * @return InputVariableSetterPtr Initialized plugin.
+ */
 InputVariableSetterPtr
 LoadInputVariableSetterPlugin(const envoy::config::core::v3::TypedExtensionConfig& config);
 
-// Instantiates a ScoringFunction plugin based on the plugin name in |config|, unpacking the
-// plugin-specific config proto within |config|. Throws Envoy::EnvoyException if the plugin is not
-// found.
+/**
+ * Instantiates a ScoringFunction plugin based on the plugin name in |config|, unpacking the
+ * plugin-specific config proto within |config|. Throws Envoy::EnvoyException if the plugin is not
+ * found.
+ *
+ * @param config Proto containing plugin name and plugin-specific config proto.
+ *
+ * @return ScoringFunctionPtr Initialized plugin.
+ */
 ScoringFunctionPtr
 LoadScoringFunctionPlugin(const envoy::config::core::v3::TypedExtensionConfig& config);
 
-// Instantiates a MetricsPlugin based on the plugin name in |config|, unpacking the
-// plugin-specific config proto within |config|. Throws Envoy::EnvoyException if the plugin is not
-// found.
+/**
+ * Instantiates a MetricsPlugin based on the plugin name in |config|, unpacking the
+ * plugin-specific config proto within |config|. Throws Envoy::EnvoyException if the plugin is not
+ * found.
+ *
+ * @param config Proto containing plugin name and plugin-specific config proto.
+ *
+ * @return MetricsPluginPtr Initialized plugin.
+ */
 MetricsPluginPtr LoadMetricsPlugin(const envoy::config::core::v3::TypedExtensionConfig& config);
 
-// Instantiates a StepController plugin based on the plugin name in |config|, unpacking the
-// plugin-specific config proto within |config|. Also requires the CommandLineOptions traffic
-// template from the AdaptiveLoadSessionSpec. Throws Envoy::EnvoyException if the plugin is not
-// found.
+/**
+ * Instantiates a StepController plugin based on the plugin name in |config|, unpacking the
+ * plugin-specific config proto within |config|. Throws Envoy::EnvoyException if the plugin is not
+ * found.
+ *
+ * @param config Proto containing plugin name and plugin-specific config proto.
+ * @param command_line_options_template CommandLineOptions traffic template from the
+ * AdaptiveLoadSessionSpec.
+ *
+ * @return StepControllerPtr Initialized plugin.
+ */
 StepControllerPtr LoadStepControllerPlugin(
     const envoy::config::core::v3::TypedExtensionConfig& config,
     const nighthawk::client::CommandLineOptions& command_line_options_template);

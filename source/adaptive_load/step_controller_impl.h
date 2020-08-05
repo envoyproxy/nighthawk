@@ -9,17 +9,18 @@
 
 namespace Nighthawk {
 
-// A StepController that performs an exponential search for the highest load that keeps metrics
-// within thresholds.
+/**
+ * A StepController that performs an exponential search for the highest load that keeps metrics
+ * within thresholds.
+ */
 class ExponentialSearchStepController : public StepController {
 public:
   explicit ExponentialSearchStepController(
       const nighthawk::adaptive_load::ExponentialSearchStepControllerConfig& config,
       const nighthawk::client::CommandLineOptions& command_line_options_template);
-
   nighthawk::client::CommandLineOptions GetCurrentCommandLineOptions() const override;
   bool IsConverged() const override;
-  bool IsDoomed(std::string* doom_reason) const override;
+  bool IsDoomed(std::string& doom_reason) const override;
   void UpdateAndRecompute(const nighthawk::adaptive_load::BenchmarkResult& result) override;
 
 private:
@@ -34,40 +35,11 @@ private:
   std::string doom_reason_;
 };
 
-// Factory that creates an ExponentialSearchStepController from an
-// ExponentialSearchStepControllerConfig proto. Registered as an Envoy plugin.
+/**
+ * Factory that creates an ExponentialSearchStepController from an
+ * ExponentialSearchStepControllerConfig proto. Registered as an Envoy plugin.
+ */
 class ExponentialSearchStepControllerConfigFactory : public StepControllerConfigFactory {
-public:
-  std::string name() const override;
-  Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
-  StepControllerPtr createStepController(
-      const Envoy::Protobuf::Message& config,
-      const nighthawk::client::CommandLineOptions& command_line_options_template) override;
-};
-
-// A StepController that applies a fixed series of load values.
-class FixedSequenceStepController : public StepController {
-public:
-  explicit FixedSequenceStepController(
-      const nighthawk::adaptive_load::FixedSequenceStepControllerConfig& config,
-      const nighthawk::client::CommandLineOptions& command_line_options_template);
-
-  nighthawk::client::CommandLineOptions GetCurrentCommandLineOptions() const override;
-  bool IsConverged() const override;
-  bool IsDoomed(std::string* doom_reason) const override;
-  void UpdateAndRecompute(const nighthawk::adaptive_load::BenchmarkResult& result) override;
-
-private:
-  const nighthawk::client::CommandLineOptions command_line_options_template_;
-  InputVariableSetterPtr input_variable_setter_;
-  std::vector<double> input_values_;
-  unsigned int current_index_;
-  std::string doom_reason_;
-};
-
-// Factory that creates a FixedSequenceStepController from an
-// FixedSequneceStepControllerConfig proto. Registered as an Envoy plugin.
-class FixedSequenceStepControllerConfigFactory : public StepControllerConfigFactory {
 public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;

@@ -36,13 +36,13 @@ public:
   /** Reports if the algorithm has determined it can never succeed as configured, e.g. because
    * metrics were outside thresholds at input values throughout the configured search range.
    *
-   * @param doom_reason Pointer to a string to write the reason for being doomed. If returning true,
-   * an explanation of why success is impossible is written here; otherwise this string is not
+   * @param doom_reason A string to store the reason for being doomed. If returning true, an
+   * explanation of why success is impossible is written here; otherwise this string is not
    * touched.
    *
    * @return bool true if the controller has determined convergence is impossible.
    */
-  virtual bool IsDoomed(std::string* doom_reason) const PURE;
+  virtual bool IsDoomed(std::string& doom_reason) const PURE;
   /**
    * Reports the result of the latest Nighthawk benchmark to the StepController so that the
    * StepController can add data to its history (if any), recompute any internal state, and
