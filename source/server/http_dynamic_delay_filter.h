@@ -7,7 +7,7 @@
 
 #include "api/server/response_options.pb.h"
 
-#include "extensions/filters/http/fault/fault_filter.h"
+#include "external/envoy/source/extensions/filters/http/fault/fault_filter.h"
 
 namespace Nighthawk {
 namespace Server {

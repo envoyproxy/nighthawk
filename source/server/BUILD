@@ -54,7 +54,7 @@ envoy_cc_library(
         ":well_known_headers_lib",
         "//api/server:response_options_proto_cc_proto",
         "@envoy//source/exe:envoy_common_lib_with_external_headers",
-        "@envoy//source/extensions/filters/http/fault:fault_filter_lib",
+        "@envoy//source/extensions/filters/http/fault:fault_filter_lib_with_external_headers",
     ],
 )
 
