@@ -1,5 +1,7 @@
 #include "adaptive_load/metrics_plugin_impl.h"
 
+#include <cmath>
+
 #include "envoy/registry/registry.h"
 
 #include "external/envoy/source/common/common/assert.h"
@@ -22,39 +24,37 @@ NighthawkStatsEmulatedMetricsPlugin::NighthawkStatsEmulatedMetricsPlugin(
         Envoy::Protobuf::util::TimeUtil::DurationToSeconds(result.execution_duration());
     const uint32_t number_of_workers =
         nighthawk_output.results_size() == 1 ? 1 : nighthawk_output.results_size() - 1;
-    const long total_specified = nighthawk_output.options().requests_per_second().value() *
-                                 actual_duration_seconds * number_of_workers;
-    int total_sent = -1;
-    int total_2xx = -1;
+    const double total_specified =
+        static_cast<double>(nighthawk_output.options().requests_per_second().value() *
+                            actual_duration_seconds * number_of_workers);
+    double total_sent = std::numeric_limits<double>::signaling_NaN();
+    double total_2xx = std::numeric_limits<double>::signaling_NaN();
     for (const nighthawk::client::Counter& counter : result.counters()) {
       if (counter.name() == "benchmark.http_2xx") {
-        total_2xx = counter.value();
+        total_2xx = static_cast<double>(counter.value());
       } else if (counter.name() == "upstream_rq_total") {
-        total_sent = counter.value();
+        total_sent = static_cast<double>(counter.value());
       }
     }
-    if (total_2xx < 0) {
+    if (std::isnan(total_2xx)) {
       errors_.push_back("Counter 'benchmark.total_2xx' not found.");
     }
-    if (total_sent < 0) {
+    if (std::isnan(total_sent)) {
       errors_.push_back("Counter 'upstream_rq_total' not found.");
     }
     if (actual_duration_seconds > 0.0) {
-      metric_from_name_["attempted-rps"] =
-          static_cast<double>(total_specified) / actual_duration_seconds;
-      metric_from_name_["achieved-rps"] = static_cast<double>(total_sent) / actual_duration_seconds;
+      metric_from_name_["attempted-rps"] = total_specified / actual_duration_seconds;
+      metric_from_name_["achieved-rps"] = total_sent / actual_duration_seconds;
     } else {
       errors_.push_back("Nighthawk returned a benchmark result with zero actual duration.");
     }
     if (total_specified > 0) {
-      metric_from_name_["send-rate"] =
-          static_cast<double>(total_sent) / static_cast<double>(total_specified);
+      metric_from_name_["send-rate"] = total_sent / total_specified;
     } else {
       metric_from_name_["send-rate"] = 0.0;
     }
     if (total_sent > 0) {
-      metric_from_name_["success-rate"] =
-          static_cast<double>(total_2xx) / static_cast<double>(total_sent);
+      metric_from_name_["success-rate"] = total_2xx / total_sent;
     } else {
       metric_from_name_["success-rate"] = 0.0;
     }
