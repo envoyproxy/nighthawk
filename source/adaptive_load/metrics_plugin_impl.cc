@@ -37,16 +37,16 @@ NighthawkStatsEmulatedMetricsPlugin::NighthawkStatsEmulatedMetricsPlugin(
       }
     }
     if (std::isnan(total_2xx)) {
-      errors_.push_back("Counter 'benchmark.total_2xx' not found.");
+      errors_.emplace_back("Counter 'benchmark.total_2xx' not found.");
     }
     if (std::isnan(total_sent)) {
-      errors_.push_back("Counter 'upstream_rq_total' not found.");
+      errors_.emplace_back("Counter 'upstream_rq_total' not found.");
     }
     if (actual_duration_seconds > 0.0) {
       metric_from_name_["attempted-rps"] = total_specified / actual_duration_seconds;
       metric_from_name_["achieved-rps"] = total_sent / actual_duration_seconds;
     } else {
-      errors_.push_back("Nighthawk returned a benchmark result with zero actual duration.");
+      errors_.emplace_back("Nighthawk returned a benchmark result with zero actual duration.");
     }
     if (total_specified > 0) {
       metric_from_name_["send-rate"] = total_sent / total_specified;
@@ -79,11 +79,11 @@ NighthawkStatsEmulatedMetricsPlugin::NighthawkStatsEmulatedMetricsPlugin(
       }
     }
     if (!found_latency_stats) {
-      errors_.push_back("'benchmark_http_client.request_to_response' statistic not found.");
+      errors_.emplace_back("'benchmark_http_client.request_to_response' statistic not found.");
     }
   }
   if (!found_global_result) {
-    errors_.push_back("'global' result not found in Nighthawk output.");
+    errors_.emplace_back("'global' result not found in Nighthawk output.");
   }
 }
 
