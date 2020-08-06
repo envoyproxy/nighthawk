@@ -3,10 +3,11 @@
 #pragma once
 
 #include "envoy/common/pure.h"
-#include "envoy/config/core/v3/base.pb.h"
 #include "envoy/config/typed_config.h"
 
 #include "nighthawk/adaptive_load/config_validator.h"
+
+#include "external/envoy/source/common/common/statusor.h"
 
 namespace Nighthawk {
 
@@ -22,9 +23,10 @@ public:
    *
    * @param metric_name The name of the metric to retrieve. Must be supported by the plugin.
    *
-   * @return double The metric value, or 0.0 if the metric was unsupported or unavailable.
+   * @return StatusOr<double> The metric value, or an error status if the metric was unsupported or
+   * unavailable.
    */
-  virtual double GetMetricByName(const std::string& metric_name) PURE;
+  virtual Envoy::StatusOr<double> GetMetricByName(absl::string_view metric_name) PURE;
   /**
    * All metric names implemented by this plugin, for use in input validation.
    *
@@ -51,6 +53,9 @@ public:
    * @param message Any typed_config proto taken from the TypedExtensionConfig.
    *
    * @return MetricsPluginPtr Pointer to the new plugin instance.
+   *
+   * @throw Envoy::EnvoyException If the Any proto cannot be unpacked as the type expected by the
+   * plugin.
    */
   virtual MetricsPluginPtr createMetricsPlugin(const Envoy::Protobuf::Message& message) PURE;
 };

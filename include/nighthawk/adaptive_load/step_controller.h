@@ -10,6 +10,7 @@
 #include "external/envoy/source/common/protobuf/protobuf.h"
 
 #include "api/adaptive_load/benchmark_result.pb.h"
+#include "external/envoy/source/common/common/statusor.h"
 
 namespace Nighthawk {
 
@@ -24,10 +25,12 @@ public:
   /**
    * Returns the current CommandLineOptions load specification that the StepController recommends.
    *
-   * @return CommandLineOptions The final product after applying all computed load variables via
-   * InputVariableSetter plugins to the stored CommandLineOptions template.
+   * @return StatusOr<CommandLineOptions> The final product after applying all computed load
+   * variables via InputVariableSetter plugins to the stored CommandLineOptions template, or an
+   * error if the variables could not be applied (e.g. out of range).
    */
-  virtual nighthawk::client::CommandLineOptions GetCurrentCommandLineOptions() const PURE;
+  virtual Envoy::StatusOr<nighthawk::client::CommandLineOptions>
+  GetCurrentCommandLineOptions() const PURE;
   /**
    * Reports if the search for the optimal load has converged, based on the StepController's
    * internal state variables.
@@ -38,13 +41,13 @@ public:
   /** Reports if the algorithm has determined it can never succeed as configured, e.g. because
    * metrics were outside thresholds at input values throughout the configured search range.
    *
-   * @param doom_reason Pointer to a string to write the reason for being doomed. If returning true,
-   * an explanation of why success is impossible is written here; otherwise this string is not
+   * @param doom_reason A string to store the reason for being doomed. If returning true, an
+   * explanation of why success is impossible is written here; otherwise this string is not
    * touched.
    *
    * @return bool true if the controller has determined convergence is impossible.
    */
-  virtual bool IsDoomed(std::string* doom_reason) const PURE;
+  virtual bool IsDoomed(std::string& doom_reason) const PURE;
   /**
    * Reports the result of the latest Nighthawk benchmark to the StepController so that the
    * StepController can add data to its history (if any), recompute any internal state, and
@@ -78,6 +81,9 @@ public:
    * dynamically, and this proto template is the basis for all such protos.
    *
    * @return StepControllerPtr Pointer to the new plugin instance.
+   *
+   * @throw Envoy::EnvoyException If the Any proto cannot be unpacked as the type expected by the
+   * plugin.
    */
   virtual StepControllerPtr createStepController(
       const Envoy::Protobuf::Message& message,
