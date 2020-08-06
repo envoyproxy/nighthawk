@@ -36,6 +36,7 @@ public:
   ScoringFunctionPtr createScoringFunction(const Envoy::Protobuf::Message& message) override;
 };
 
+// This factory is activated through LoadScoringFunctionPlugin in plugin_util.h.
 DECLARE_FACTORY(BinaryScoringFunctionConfigFactory);
 
 /**
@@ -59,8 +60,10 @@ private:
   const double scaling_constant_;
 };
 
-// Factory that creates a LinearScoringFunction from a LinearScoringFunctionConfig proto.
-// Registered as an Envoy plugin.
+/**
+ * Factory that creates a LinearScoringFunction from a LinearScoringFunctionConfig proto.
+ * Registered as an Envoy plugin.
+ */
 class LinearScoringFunctionConfigFactory : public ScoringFunctionConfigFactory {
 public:
   std::string name() const override;
@@ -68,6 +71,7 @@ public:
   ScoringFunctionPtr createScoringFunction(const Envoy::Protobuf::Message& message) override;
 };
 
+// This factory is activated through LoadScoringFunctionPlugin in plugin_util.h.
 DECLARE_FACTORY(LinearScoringFunctionConfigFactory);
 
 } // namespace Nighthawk
