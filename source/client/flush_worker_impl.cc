@@ -21,7 +21,6 @@ FlushWorkerImpl::FlushWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Insta
 void FlushWorkerImpl::work() {
   stat_flush_timer_ = dispatcher_->createTimer([this]() -> void { flushStats(); });
   stat_flush_timer_->enableTimer(stats_flush_interval_);
-
   dispatcher_->run(Envoy::Event::Dispatcher::RunType::RunUntilExit);
 }
 

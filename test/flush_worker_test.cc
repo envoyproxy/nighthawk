@@ -136,12 +136,11 @@ TEST_F(FlushWorkerTest, FinalFlush) {
   auto worker = std::make_unique<FlushWorkerImpl>(mock_api_, tls_, store_, stats_sinks_,
                                                   stats_flush_interval_);
 
+  worker->start();
+  worker->waitForCompletion();
   // Stats flush should happen exactly once as the final flush is done in
   // FlushWorkerImpl::shutdownThread().
   EXPECT_CALL(*sink_, flush(_)).Times(1);
-
-  worker->start();
-  worker->waitForCompletion();
   worker->shutdown();
 }
 
