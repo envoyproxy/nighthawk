@@ -94,10 +94,13 @@ ExponentialSearchStepController::ExponentialSearchStepController(
   }
 }
 
-nighthawk::client::CommandLineOptions
+Envoy::StatusOr<nighthawk::client::CommandLineOptions>
 ExponentialSearchStepController::GetCurrentCommandLineOptions() const {
   nighthawk::client::CommandLineOptions options = command_line_options_template_;
-  input_variable_setter_->SetInputVariable(options, current_load_value_);
+  absl::Status status = input_variable_setter_->SetInputVariable(options, current_load_value_);
+  if (!status.ok()) {
+    return status;
+  }
   return options;
 }
 

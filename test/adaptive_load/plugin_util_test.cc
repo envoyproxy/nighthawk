@@ -47,9 +47,10 @@ public:
   // config type. We use LinearScoringFunctionConfig for all plugins in this test.
   TestInputVariableSetter(const nighthawk::adaptive_load::LinearScoringFunctionConfig& config)
       : config_{config} {}
-  void SetInputVariable(nighthawk::client::CommandLineOptions& command_line_options,
-                        double input_value) override {
+  absl::Status SetInputVariable(nighthawk::client::CommandLineOptions& command_line_options,
+                                double input_value) override {
     command_line_options.mutable_connections()->set_value(static_cast<unsigned int>(input_value));
+    return absl::OkStatus();
   }
   const nighthawk::adaptive_load::LinearScoringFunctionConfig config_;
 };
@@ -164,7 +165,8 @@ public:
       : config_{config}, command_line_options_template_{command_line_options_template} {}
   bool IsConverged() const override { return false; }
   bool IsDoomed(std::string&) const override { return false; }
-  nighthawk::client::CommandLineOptions GetCurrentCommandLineOptions() const override {
+  Envoy::StatusOr<nighthawk::client::CommandLineOptions>
+  GetCurrentCommandLineOptions() const override {
     return nighthawk::client::CommandLineOptions();
   }
   void UpdateAndRecompute(const nighthawk::adaptive_load::BenchmarkResult&) override {}

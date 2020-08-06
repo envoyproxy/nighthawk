@@ -46,9 +46,10 @@ nighthawk::adaptive_load::BenchmarkResult MakeBenchmarkResultWithNighthawkError(
 class ConnectionsInputVariableSetter : public InputVariableSetter {
 public:
   ConnectionsInputVariableSetter() {}
-  void SetInputVariable(nighthawk::client::CommandLineOptions& command_line_options,
-                        double input_value) override {
+  absl::Status SetInputVariable(nighthawk::client::CommandLineOptions& command_line_options,
+                                double input_value) override {
     command_line_options.mutable_connections()->set_value(static_cast<unsigned int>(input_value));
+    return absl::OkStatus();
   }
 };
 
@@ -106,7 +107,7 @@ TEST(ExponentialSearchStepControllerTest, UsesInitialRps) {
   config.set_initial_value(100.0);
   nighthawk::client::CommandLineOptions options_template;
   ExponentialSearchStepController step_controller(config, options_template);
-  EXPECT_EQ(step_controller.GetCurrentCommandLineOptions().requests_per_second().value(), 100);
+  EXPECT_EQ(step_controller.GetCurrentCommandLineOptions().value().requests_per_second().value(), 100);
 }
 
 TEST(ExponentialSearchStepControllerTest, ActivatesCustomInputValueSetter) {
@@ -119,7 +120,7 @@ TEST(ExponentialSearchStepControllerTest, ActivatesCustomInputValueSetter) {
   step_controller_config.set_initial_value(100.0);
   nighthawk::client::CommandLineOptions options_template;
   ExponentialSearchStepController step_controller(step_controller_config, options_template);
-  EXPECT_EQ(step_controller.GetCurrentCommandLineOptions().connections().value(), 100);
+  EXPECT_EQ(step_controller.GetCurrentCommandLineOptions().value().connections().value(), 100);
 }
 
 TEST(ExponentialSearchStepControllerTest, InitiallyReportsNotConverged) {
@@ -171,7 +172,7 @@ TEST(ExponentialSearchStepControllerTest,
   ExponentialSearchStepController step_controller(config, options_template);
   step_controller.UpdateAndRecompute(MakeBenchmarkResultWithinThreshold());
   // Default exponent is 2.0.
-  EXPECT_EQ(step_controller.GetCurrentCommandLineOptions().requests_per_second().value(), 200);
+  EXPECT_EQ(step_controller.GetCurrentCommandLineOptions().value().requests_per_second().value(), 200);
 }
 
 TEST(ExponentialSearchStepControllerTest,
@@ -182,7 +183,7 @@ TEST(ExponentialSearchStepControllerTest,
   nighthawk::client::CommandLineOptions options_template;
   ExponentialSearchStepController step_controller(config, options_template);
   step_controller.UpdateAndRecompute(MakeBenchmarkResultWithinThreshold());
-  EXPECT_EQ(step_controller.GetCurrentCommandLineOptions().requests_per_second().value(), 150);
+  EXPECT_EQ(step_controller.GetCurrentCommandLineOptions().value().requests_per_second().value(), 150);
 }
 
 TEST(ExponentialSearchStepControllerTest, PerformsBinarySearchAfterExceedingThreshold) {
@@ -192,7 +193,7 @@ TEST(ExponentialSearchStepControllerTest, PerformsBinarySearchAfterExceedingThre
   ExponentialSearchStepController step_controller(config, options_template);
   step_controller.UpdateAndRecompute(MakeBenchmarkResultWithinThreshold());
   step_controller.UpdateAndRecompute(MakeBenchmarkResultOutsideThreshold());
-  EXPECT_EQ(step_controller.GetCurrentCommandLineOptions().requests_per_second().value(), 150);
+  EXPECT_EQ(step_controller.GetCurrentCommandLineOptions().value().requests_per_second().value(), 150);
 }
 
 TEST(ExponentialSearchStepControllerTest, BinarySearchConvergesAfterManySteps) {
@@ -218,7 +219,7 @@ TEST(ExponentialSearchStepControllerTest, BinarySearchFindsBottomOfRange) {
   for (int i = 0; i < 100; ++i) {
     step_controller.UpdateAndRecompute(MakeBenchmarkResultOutsideThreshold());
   }
-  EXPECT_EQ(step_controller.GetCurrentCommandLineOptions().requests_per_second().value(), 100);
+  EXPECT_EQ(step_controller.GetCurrentCommandLineOptions().value().requests_per_second().value(), 100);
 }
 
 } // namespace

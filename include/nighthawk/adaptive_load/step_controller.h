@@ -10,6 +10,7 @@
 #include "external/envoy/source/common/protobuf/protobuf.h"
 
 #include "api/adaptive_load/benchmark_result.pb.h"
+#include "external/envoy/source/common/common/statusor.h"
 
 namespace Nighthawk {
 
@@ -24,10 +25,12 @@ public:
   /**
    * Returns the current CommandLineOptions load specification that the StepController recommends.
    *
-   * @return CommandLineOptions The final product after applying all computed load variables via
-   * InputVariableSetter plugins to the stored CommandLineOptions template.
+   * @return StatusOr<CommandLineOptions> The final product after applying all computed load
+   * variables via InputVariableSetter plugins to the stored CommandLineOptions template, or an
+   * error if the variables could not be applied (e.g. out of range).
    */
-  virtual nighthawk::client::CommandLineOptions GetCurrentCommandLineOptions() const PURE;
+  virtual Envoy::StatusOr<nighthawk::client::CommandLineOptions>
+  GetCurrentCommandLineOptions() const PURE;
   /**
    * Reports if the search for the optimal load has converged, based on the StepController's
    * internal state variables.

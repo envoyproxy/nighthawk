@@ -167,7 +167,8 @@ public:
   /**
    * Recommends a fixed load of 678 RPS every time.
    */
-  nighthawk::client::CommandLineOptions GetCurrentCommandLineOptions() const override {
+  Envoy::StatusOr<nighthawk::client::CommandLineOptions>
+  GetCurrentCommandLineOptions() const override {
     nighthawk::client::CommandLineOptions options;
     options.mutable_requests_per_second()->set_value(678);
     return options;

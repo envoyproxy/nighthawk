@@ -353,22 +353,42 @@ AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
       ENVOY_LOG_MISC(info, message);
       return output;
     }
-    ENVOY_LOG_MISC(info, "Adjusting Stage: Trying load: {}",
-                   step_controller->GetCurrentCommandLineOptions().DebugString());
+    Envoy::StatusOr<nighthawk::client::CommandLineOptions> command_line_options_or =
+        step_controller->GetCurrentCommandLineOptions();
+    if (!command_line_options_or.ok()) {
+      std::string message =
+          absl::StrCat("Error applying input value: ", command_line_options_or.status().message());
+      output.mutable_session_status()->set_code(grpc::ABORTED);
+      output.mutable_session_status()->set_message(message);
+      ENVOY_LOG_MISC(info, message);
+      return output;
+    }
+    nighthawk::client::CommandLineOptions command_line_options = command_line_options_or.value();
+    ENVOY_LOG_MISC(info, "Adjusting Stage: Trying load: {}", command_line_options.DebugString());
     BenchmarkResult result = PerformAndAnalyzeNighthawkBenchmark(
-        nighthawk_service_stub, spec, name_to_custom_metrics_plugin_map,
-        step_controller->GetCurrentCommandLineOptions(), spec.measuring_period());
+        nighthawk_service_stub, spec, name_to_custom_metrics_plugin_map, command_line_options,
+        spec.measuring_period());
     for (const MetricEvaluation& evaluation : result.metric_evaluations()) {
       ENVOY_LOG_MISC(info, "Evaluation: {}", evaluation.DebugString());
     }
     *output.mutable_adjusting_stage_results()->Add() = result;
     step_controller->UpdateAndRecompute(result);
   }
-  ENVOY_LOG_MISC(info, "Testing Stage with load: {}",
-                 step_controller->GetCurrentCommandLineOptions().DebugString());
+  Envoy::StatusOr<nighthawk::client::CommandLineOptions> command_line_options_or =
+      step_controller->GetCurrentCommandLineOptions();
+  if (!command_line_options_or.ok()) {
+    std::string message =
+        absl::StrCat("Error applying input value: ", command_line_options_or.status().message());
+    output.mutable_session_status()->set_code(grpc::ABORTED);
+    output.mutable_session_status()->set_message(message);
+    ENVOY_LOG_MISC(info, message);
+    return output;
+  }
+  nighthawk::client::CommandLineOptions command_line_options = command_line_options_or.value();
+  ENVOY_LOG_MISC(info, "Testing Stage with load: {}", command_line_options.DebugString());
   *output.mutable_testing_stage_result() = PerformAndAnalyzeNighthawkBenchmark(
-      nighthawk_service_stub, spec, name_to_custom_metrics_plugin_map,
-      step_controller->GetCurrentCommandLineOptions(), spec.testing_stage_duration());
+      nighthawk_service_stub, spec, name_to_custom_metrics_plugin_map, command_line_options,
+      spec.testing_stage_duration());
   for (const MetricEvaluation& evaluation : output.testing_stage_result().metric_evaluations()) {
     ENVOY_LOG_MISC(info, "Evaluation: {}", evaluation.DebugString());
   }
