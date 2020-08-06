@@ -81,6 +81,9 @@ public:
    * dynamically, and this proto template is the basis for all such protos.
    *
    * @return StepControllerPtr Pointer to the new plugin instance.
+   *
+   * @throw Envoy::EnvoyException If the Any proto cannot be unpacked as the type expected by the
+   * plugin.
    */
   virtual StepControllerPtr createStepController(
       const Envoy::Protobuf::Message& message,

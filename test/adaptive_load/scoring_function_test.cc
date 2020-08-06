@@ -1,3 +1,5 @@
+#include "envoy/common/exception.h"
+
 #include "external/envoy/source/common/config/utility.h"
 
 #include "adaptive_load/scoring_function_impl.h"
@@ -7,121 +9,133 @@ namespace Nighthawk {
 
 namespace {
 
-TEST(BinaryScoringFunctionConfigFactoryTest, GeneratesEmptyConfigProto) {
-  ScoringFunctionConfigFactory& config_factory =
+TEST(BinaryScoringFunctionConfigFactory, CreateEmptyConfigProtoCreatesCorrectType) {
+  auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<ScoringFunctionConfigFactory>(
-          "nighthawk.binary");
-  const Envoy::ProtobufTypes::MessagePtr message = config_factory.createEmptyConfigProto();
-
+          "nighthawk.binary_scoring");
+  const Envoy::ProtobufTypes::MessagePtr empty_config = config_factory.createEmptyConfigProto();
   const nighthawk::adaptive_load::BinaryScoringFunctionConfig expected_config;
-  EXPECT_EQ(message->DebugString(), expected_config.DebugString());
-  EXPECT_TRUE(Envoy::MessageUtil()(*message, expected_config));
+  EXPECT_EQ(empty_config->DebugString(), expected_config.DebugString());
+  EXPECT_TRUE(Envoy::MessageUtil()(*empty_config, expected_config));
 }
 
-TEST(LinearScoringFunctionConfigFactoryTest, GeneratesEmptyConfigProto) {
-  ScoringFunctionConfigFactory& config_factory =
+TEST(LinearScoringFunctionConfigFactory, CreateEmptyConfigProtoCreatesCorrectType) {
+  auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<ScoringFunctionConfigFactory>(
-          "nighthawk.linear");
-  const Envoy::ProtobufTypes::MessagePtr message = config_factory.createEmptyConfigProto();
-
+          "nighthawk.linear_scoring");
+  const Envoy::ProtobufTypes::MessagePtr empty_config = config_factory.createEmptyConfigProto();
   const nighthawk::adaptive_load::LinearScoringFunctionConfig expected_config;
-  EXPECT_EQ(message->DebugString(), expected_config.DebugString());
-  EXPECT_TRUE(Envoy::MessageUtil()(*message, expected_config));
+  EXPECT_EQ(empty_config->DebugString(), expected_config.DebugString());
+  EXPECT_TRUE(Envoy::MessageUtil()(*empty_config, expected_config));
 }
 
-TEST(BinaryScoringFunctionConfigFactoryTest, CreatesBinaryScoringFunctionFactory) {
+TEST(BinaryScoringFunctionConfigFactory, FactoryRegistrationUsesCorrectPluginName) {
   nighthawk::adaptive_load::BinaryScoringFunctionConfig config;
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
-
-  ScoringFunctionConfigFactory& config_factory =
+  auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<ScoringFunctionConfigFactory>(
-          "nighthawk.binary");
-
-  EXPECT_EQ(config_factory.name(), "nighthawk.binary");
+          "nighthawk.binary_scoring");
+  EXPECT_EQ(config_factory.name(), "nighthawk.binary_scoring");
 }
 
-TEST(BinaryScoringFunctionConfigFactoryTest, CreatesBinaryScoringFunctionPlugin) {
+TEST(BinaryScoringFunctionConfigFactory, CreateScoringFunctionCreatesCorrectPluginType) {
   nighthawk::adaptive_load::BinaryScoringFunctionConfig config;
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
-
-  ScoringFunctionConfigFactory& config_factory =
+  auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<ScoringFunctionConfigFactory>(
-          "nighthawk.binary");
+          "nighthawk.binary_scoring");
   ScoringFunctionPtr plugin = config_factory.createScoringFunction(config_any);
-
   EXPECT_NE(dynamic_cast<BinaryScoringFunction*>(plugin.get()), nullptr);
 }
 
-TEST(LinearScoringFunctionConfigFactoryTest, CreatesLinearScoringFunctionFactory) {
+TEST(BinaryScoringFunctionConfigFactory, CreateScoringFunctionThrowsExceptionWithWrongConfigProto) {
+  // LinearScoringFunctionConfig is the wrong type for BinaryScoringFunction, so it will not unpack.
   nighthawk::adaptive_load::LinearScoringFunctionConfig config;
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
-
-  ScoringFunctionConfigFactory& config_factory =
+  auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<ScoringFunctionConfigFactory>(
-          "nighthawk.linear");
-
-  EXPECT_EQ(config_factory.name(), "nighthawk.linear");
+          "nighthawk.binary_scoring");
+  EXPECT_THROW(config_factory.createScoringFunction(config_any), Envoy::EnvoyException);
 }
 
-TEST(LinearScoringFunctionConfigFactoryTest, CreatesLinearScoringFunctionPlugin) {
+TEST(LinearScoringFunctionConfigFactory, FactoryRegistrationUsesCorrectPluginName) {
   nighthawk::adaptive_load::LinearScoringFunctionConfig config;
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
-
-  ScoringFunctionConfigFactory& config_factory =
+  auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<ScoringFunctionConfigFactory>(
-          "nighthawk.linear");
-  ScoringFunctionPtr plugin = config_factory.createScoringFunction(config_any);
+          "nighthawk.linear_scoring");
+  EXPECT_EQ(config_factory.name(), "nighthawk.linear_scoring");
+}
 
+TEST(LinearScoringFunctionConfigFactory, CreateScoringFunctionCreatesCorrectPluginType) {
+  nighthawk::adaptive_load::LinearScoringFunctionConfig config;
+  Envoy::ProtobufWkt::Any config_any;
+  config_any.PackFrom(config);
+  auto& config_factory =
+      Envoy::Config::Utility::getAndCheckFactoryByName<ScoringFunctionConfigFactory>(
+          "nighthawk.linear_scoring");
+  ScoringFunctionPtr plugin = config_factory.createScoringFunction(config_any);
   EXPECT_NE(dynamic_cast<LinearScoringFunction*>(plugin.get()), nullptr);
 }
 
-TEST(BinaryScoringFunctionTest, ReturnsOneForValueWithinUpperThreshold) {
+TEST(LinearScoringFunctionConfigFactory, CreateScoringFunctionThrowsExceptionWithWrongConfigProto) {
+  // BinaryScoringFunctionConfig is the wrong type for LinearScoringFunction, so it will not unpack.
+  nighthawk::adaptive_load::BinaryScoringFunctionConfig config;
+  Envoy::ProtobufWkt::Any config_any;
+  config_any.PackFrom(config);
+  auto& config_factory =
+      Envoy::Config::Utility::getAndCheckFactoryByName<ScoringFunctionConfigFactory>(
+          "nighthawk.linear_scoring");
+  EXPECT_THROW(config_factory.createScoringFunction(config_any), Envoy::EnvoyException);
+}
+
+TEST(BinaryScoringFunction, EvaluateMetricReturnsOneForValueWithinUpperThreshold) {
   nighthawk::adaptive_load::BinaryScoringFunctionConfig config;
   config.mutable_upper_threshold()->set_value(5.0);
   BinaryScoringFunction scoring_function(config);
   EXPECT_EQ(scoring_function.EvaluateMetric(4.0), 1.0);
 }
 
-TEST(BinaryScoringFunctionTest, ReturnsOneForValueEqualToUpperThreshold) {
+TEST(BinaryScoringFunction, EvaluateMetriceturnsOneForValueEqualToUpperThreshold) {
   nighthawk::adaptive_load::BinaryScoringFunctionConfig config;
   config.mutable_upper_threshold()->set_value(5.0);
   BinaryScoringFunction scoring_function(config);
   EXPECT_EQ(scoring_function.EvaluateMetric(5.0), 1.0);
 }
 
-TEST(BinaryScoringFunctionTest, ReturnsNegativeOneForValueOutsideUpperThreshold) {
+TEST(BinaryScoringFunction, EvaluateMetricReturnsNegativeOneForValueOutsideUpperThreshold) {
   nighthawk::adaptive_load::BinaryScoringFunctionConfig config;
   config.mutable_upper_threshold()->set_value(5.0);
   BinaryScoringFunction scoring_function(config);
   EXPECT_EQ(scoring_function.EvaluateMetric(6.0), -1.0);
 }
 
-TEST(BinaryScoringFunctionTest, ReturnsOneForValueWithinLowerThreshold) {
+TEST(BinaryScoringFunction, EvaluateMetricReturnsOneForValueWithinLowerThreshold) {
   nighthawk::adaptive_load::BinaryScoringFunctionConfig config;
   config.mutable_lower_threshold()->set_value(5.0);
   BinaryScoringFunction scoring_function(config);
   EXPECT_EQ(scoring_function.EvaluateMetric(6.0), 1.0);
 }
 
-TEST(BinaryScoringFunctionTest, ReturnsOneForValueEqualToLowerThreshold) {
+TEST(BinaryScoringFunction, EvaluateMetricReturnsOneForValueEqualToLowerThreshold) {
   nighthawk::adaptive_load::BinaryScoringFunctionConfig config;
   config.mutable_lower_threshold()->set_value(5.0);
   BinaryScoringFunction scoring_function(config);
   EXPECT_EQ(scoring_function.EvaluateMetric(5.0), 1.0);
 }
 
-TEST(BinaryScoringFunctionTest, ReturnsNegativeOneForValueOutsideLowerThreshold) {
+TEST(BinaryScoringFunction, EvaluateMetricReturnsNegativeOneForValueOutsideLowerThreshold) {
   nighthawk::adaptive_load::BinaryScoringFunctionConfig config;
   config.mutable_lower_threshold()->set_value(5.0);
   BinaryScoringFunction scoring_function(config);
   EXPECT_EQ(scoring_function.EvaluateMetric(4.0), -1.0);
 }
 
-TEST(BinaryScoringFunctionTest, ReturnsOneForValueWithinThresholdRange) {
+TEST(BinaryScoringFunction, EvaluateMetricReturnsOneForValueWithinThresholdRange) {
   nighthawk::adaptive_load::BinaryScoringFunctionConfig config;
   config.mutable_lower_threshold()->set_value(5.0);
   config.mutable_upper_threshold()->set_value(7.0);
@@ -129,7 +143,7 @@ TEST(BinaryScoringFunctionTest, ReturnsOneForValueWithinThresholdRange) {
   EXPECT_EQ(scoring_function.EvaluateMetric(6.0), 1.0);
 }
 
-TEST(BinaryScoringFunctionTest, ReturnsOneForValueEqualToLowerThresholdOfRange) {
+TEST(BinaryScoringFunction, EvaluateMetricReturnsOneForValueEqualToLowerThresholdOfRange) {
   nighthawk::adaptive_load::BinaryScoringFunctionConfig config;
   config.mutable_lower_threshold()->set_value(5.0);
   config.mutable_upper_threshold()->set_value(7.0);
@@ -137,7 +151,7 @@ TEST(BinaryScoringFunctionTest, ReturnsOneForValueEqualToLowerThresholdOfRange) 
   EXPECT_EQ(scoring_function.EvaluateMetric(5.0), 1.0);
 }
 
-TEST(BinaryScoringFunctionTest, ReturnsOneForValueEqualToUpperThresholdOfRange) {
+TEST(BinaryScoringFunction, EvaluateMetricReturnsOneForValueEqualToUpperThresholdOfRange) {
   nighthawk::adaptive_load::BinaryScoringFunctionConfig config;
   config.mutable_lower_threshold()->set_value(5.0);
   config.mutable_upper_threshold()->set_value(7.0);
@@ -145,7 +159,7 @@ TEST(BinaryScoringFunctionTest, ReturnsOneForValueEqualToUpperThresholdOfRange) 
   EXPECT_EQ(scoring_function.EvaluateMetric(7.0), 1.0);
 }
 
-TEST(BinaryScoringFunctionTest, ReturnsNegativeOneForValueBelowThresholdRange) {
+TEST(BinaryScoringFunction, EvaluateMetricReturnsNegativeOneForValueBelowThresholdRange) {
   nighthawk::adaptive_load::BinaryScoringFunctionConfig config;
   config.mutable_lower_threshold()->set_value(5.0);
   config.mutable_upper_threshold()->set_value(7.0);
@@ -153,7 +167,7 @@ TEST(BinaryScoringFunctionTest, ReturnsNegativeOneForValueBelowThresholdRange) {
   EXPECT_EQ(scoring_function.EvaluateMetric(4.0), -1.0);
 }
 
-TEST(BinaryScoringFunctionTest, ReturnsNegativeOneForValueAboveThresholdRange) {
+TEST(BinaryScoringFunction, EvaluateMetricReturnsNegativeOneForValueAboveThresholdRange) {
   nighthawk::adaptive_load::BinaryScoringFunctionConfig config;
   config.mutable_lower_threshold()->set_value(5.0);
   config.mutable_upper_threshold()->set_value(7.0);
@@ -161,26 +175,26 @@ TEST(BinaryScoringFunctionTest, ReturnsNegativeOneForValueAboveThresholdRange) {
   EXPECT_EQ(scoring_function.EvaluateMetric(8.0), -1.0);
 }
 
-TEST(LinearScoringFunctionTest, ReturnsZeroForValueEqualToThreshold) {
+TEST(LinearScoringFunction, EvaluateMetricReturnsZeroForValueEqualToThreshold) {
   nighthawk::adaptive_load::LinearScoringFunctionConfig config;
   config.set_threshold(10.0);
-  config.set_k(1.0);
+  config.set_scaling_constant(1.0);
   LinearScoringFunction scoring_function(config);
   EXPECT_EQ(scoring_function.EvaluateMetric(10.0), 0.0);
 }
 
-TEST(LinearScoringFunctionTest, ReturnsPositiveValueForValueBelowThreshold) {
+TEST(LinearScoringFunction, EvaluateMetricReturnsPositiveValueForValueBelowThreshold) {
   nighthawk::adaptive_load::LinearScoringFunctionConfig config;
   config.set_threshold(10.0);
-  config.set_k(1.0);
+  config.set_scaling_constant(1.0);
   LinearScoringFunction scoring_function(config);
   EXPECT_EQ(scoring_function.EvaluateMetric(8.0), 2.0);
 }
 
-TEST(LinearScoringFunctionTest, ReturnsNegativeValueForValueAboveThreshold) {
+TEST(LinearScoringFunction, EvaluateMetricReturnsNegativeValueForValueAboveThreshold) {
   nighthawk::adaptive_load::LinearScoringFunctionConfig config;
   config.set_threshold(10.0);
-  config.set_k(1.0);
+  config.set_scaling_constant(1.0);
   LinearScoringFunction scoring_function(config);
   EXPECT_EQ(scoring_function.EvaluateMetric(12.0), -2.0);
 }

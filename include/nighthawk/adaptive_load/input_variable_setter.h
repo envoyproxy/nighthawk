@@ -57,6 +57,9 @@ public:
    * @param message Any typed_config proto taken from the TypedExtensionConfig.
    *
    * @return InputVariableSetterPtr Pointer to the new plugin instance.
+   *
+   * @throw Envoy::EnvoyException If the Any proto cannot be unpacked as the type expected by the
+   * plugin.
    */
   virtual InputVariableSetterPtr
   createInputVariableSetter(const Envoy::Protobuf::Message& message) PURE;
