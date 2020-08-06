@@ -2,8 +2,6 @@
 
 #include <limits>
 
-#include "envoy/registry/registry.h"
-
 #include "external/envoy/source/common/protobuf/protobuf.h"
 
 namespace Nighthawk {
