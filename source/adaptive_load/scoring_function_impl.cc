@@ -10,7 +10,7 @@
 
 namespace Nighthawk {
 
-std::string BinaryScoringFunctionConfigFactory::name() const { return "nighthawk.binary"; }
+std::string BinaryScoringFunctionConfigFactory::name() const { return "nighthawk.binary_scoring"; }
 
 Envoy::ProtobufTypes::MessagePtr BinaryScoringFunctionConfigFactory::createEmptyConfigProto() {
   return std::make_unique<nighthawk::adaptive_load::BinaryScoringFunctionConfig>();
@@ -37,7 +37,7 @@ double BinaryScoringFunction::EvaluateMetric(double value) const {
   return value <= upper_threshold_ && value >= lower_threshold_ ? 1.0 : -1.0;
 }
 
-std::string LinearScoringFunctionConfigFactory::name() const { return "nighthawk.linear"; }
+std::string LinearScoringFunctionConfigFactory::name() const { return "nighthawk.linear_scoring"; }
 
 Envoy::ProtobufTypes::MessagePtr LinearScoringFunctionConfigFactory::createEmptyConfigProto() {
   return std::make_unique<nighthawk::adaptive_load::LinearScoringFunctionConfig>();
@@ -55,10 +55,10 @@ REGISTER_FACTORY(LinearScoringFunctionConfigFactory, ScoringFunctionConfigFactor
 
 LinearScoringFunction::LinearScoringFunction(
     const nighthawk::adaptive_load::LinearScoringFunctionConfig& config)
-    : threshold_{config.threshold()}, k_{config.k()} {}
+    : threshold_{config.threshold()}, scaling_constant_{config.scaling_constant()} {}
 
 double LinearScoringFunction::EvaluateMetric(double value) const {
-  return k_ * (threshold_ - value);
+  return scaling_constant_ * (threshold_ - value);
 }
 
 } // namespace Nighthawk

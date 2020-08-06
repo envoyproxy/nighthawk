@@ -46,6 +46,9 @@ public:
    * @param message Any typed_config proto taken from the TypedExtensionConfig.
    *
    * @return ScoringFunctionPtr Pointer to the new plugin instance.
+   *
+   * @throw Envoy::EnvoyException If the Any proto cannot be unpacked as the type expected by the
+   * plugin.
    */
   virtual ScoringFunctionPtr createScoringFunction(const Envoy::Protobuf::Message& message) PURE;
 };
