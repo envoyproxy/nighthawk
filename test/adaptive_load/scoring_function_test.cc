@@ -13,20 +13,20 @@ TEST(BinaryScoringFunctionConfigFactory, CreateEmptyConfigProtoCreatesCorrectTyp
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<ScoringFunctionConfigFactory>(
           "nighthawk.binary_scoring");
-  const Envoy::ProtobufTypes::MessagePtr message = config_factory.createEmptyConfigProto();
+  const Envoy::ProtobufTypes::MessagePtr empty_config = config_factory.createEmptyConfigProto();
   const nighthawk::adaptive_load::BinaryScoringFunctionConfig expected_config;
-  EXPECT_EQ(message->DebugString(), expected_config.DebugString());
-  EXPECT_TRUE(Envoy::MessageUtil()(*message, expected_config));
+  EXPECT_EQ(empty_config->DebugString(), expected_config.DebugString());
+  EXPECT_TRUE(Envoy::MessageUtil()(*empty_config, expected_config));
 }
 
 TEST(LinearScoringFunctionConfigFactory, CreateEmptyConfigProtoCreatesCorrectType) {
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<ScoringFunctionConfigFactory>(
           "nighthawk.linear_scoring");
-  const Envoy::ProtobufTypes::MessagePtr message = config_factory.createEmptyConfigProto();
+  const Envoy::ProtobufTypes::MessagePtr empty_config = config_factory.createEmptyConfigProto();
   const nighthawk::adaptive_load::LinearScoringFunctionConfig expected_config;
-  EXPECT_EQ(message->DebugString(), expected_config.DebugString());
-  EXPECT_TRUE(Envoy::MessageUtil()(*message, expected_config));
+  EXPECT_EQ(empty_config->DebugString(), expected_config.DebugString());
+  EXPECT_TRUE(Envoy::MessageUtil()(*empty_config, expected_config));
 }
 
 TEST(BinaryScoringFunctionConfigFactory, FactoryRegistrationUsesCorrectPluginName) {
