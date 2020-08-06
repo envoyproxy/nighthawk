@@ -45,6 +45,8 @@ envoy_basic_cc_library(
     include_prefix = "nighthawk/adaptive_load",
     deps = [
         "@envoy//include/envoy/common:base_includes",
+        "@envoy//include/envoy/common:time_interface",
+        "@envoy//include/envoy/config:typed_config_interface",
     ],
 )
 

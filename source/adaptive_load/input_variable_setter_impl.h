@@ -6,17 +6,26 @@
 
 namespace Nighthawk {
 
-// An InputVariableSetter that sets the |requests_per_second| field in the CommandLineOptions proto.
+/**
+ * An InputVariableSetter that sets the |requests_per_second| field in the CommandLineOptions proto.
+ */
 class RequestsPerSecondInputVariableSetter : public InputVariableSetter {
 public:
+  /**
+   * Constructs the class from an already valid config proto.
+   *
+   * @param config Valid plugin-specific config proto.
+   */
   RequestsPerSecondInputVariableSetter(
       const nighthawk::adaptive_load::RequestsPerSecondInputVariableSetterConfig& config);
-  void SetInputVariable(nighthawk::client::CommandLineOptions& command_line_options,
-                        double input_value) override;
+  absl::Status SetInputVariable(nighthawk::client::CommandLineOptions& command_line_options,
+                                double input_value) override;
 };
 
-// A factory that creates an RequestsPerSecondInputVariableSetter from an
-// RequestsPerSecondInputVariableSetterConfig proto.
+/**
+ * A factory that creates an RequestsPerSecondInputVariableSetter from a
+ * RequestsPerSecondInputVariableSetterConfig proto.
+ */
 class RequestsPerSecondInputVariableSetterConfigFactory : public InputVariableSetterConfigFactory {
 public:
   std::string name() const override;
