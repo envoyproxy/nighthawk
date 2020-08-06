@@ -24,6 +24,8 @@ namespace Nighthawk {
 namespace Client {
 
 constexpr absl::string_view kSinkName = "{name:\"nighthawk.fake_stats_sink\"}";
+// Global variable keeps count of number of flushes in FakeStatsSink. It is reset
+// to 0 when a new FakeStatsSink is created.
 int numFlushes = 0;
 
 // FakeStatsSink is a simple Envoy::Stats::Sink implementation used to prove
@@ -124,11 +126,13 @@ INSTANTIATE_TEST_SUITE_P(IpVersions, ProcessTest,
 TEST_P(ProcessTest, TwoProcessInSequence) {
   FakeStatsSinkFactory factory;
   Envoy::Registry::InjectFactory<NighthawkStatsSinkFactory> registered(factory);
+  numFlushes = 0;
   runProcess(RunExpectation::EXPECT_FAILURE);
   EXPECT_GT(numFlushes, 0);
   options_ = TestUtility::createOptionsImpl(fmt::format(
       "foo --h2 --duration 1 --rps 10 --stats-flush-interval 1 --stats-sinks {} https://{}/",
       kSinkName, loopback_address_));
+  numFlushes = 0;
   runProcess(RunExpectation::EXPECT_FAILURE);
   EXPECT_GT(numFlushes, 0);
 }
@@ -150,6 +154,7 @@ TEST_P(ProcessTest, CancelDuringLoadTest) {
       fmt::format("foo --duration 300 --failure-predicate foo:0 --concurrency 2 "
                   "--stats-flush-interval 1 --stats-sinks {} https://{}/",
                   kSinkName, loopback_address_));
+  numFlushes = 0;
   runProcess(RunExpectation::EXPECT_SUCCESS, true);
   EXPECT_GT(numFlushes, 0);
 }
@@ -158,7 +163,9 @@ TEST_P(ProcessTest, CancelExecutionBeforeBeginLoadTest) {
   options_ = TestUtility::createOptionsImpl(
       fmt::format("foo --duration 300 --failure-predicate foo:0 --concurrency 2 https://{}/",
                   loopback_address_));
+  numFlushes = 0;
   runProcess(RunExpectation::EXPECT_SUCCESS, true, true);
+  EXPECT_EQ(numFlushes, 0);
 }
 
 } // namespace Client

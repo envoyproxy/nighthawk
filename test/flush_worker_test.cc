@@ -23,8 +23,9 @@ using namespace testing;
 
 class FlushWorkerTest : public Test {
 public:
-  FlushWorkerTest() : thread_factory_(Envoy::Thread::threadFactoryForTest()),
-  dispatcher_(new NiceMock<Envoy::Event::MockDispatcher>()) {
+  FlushWorkerTest()
+      : thread_factory_(Envoy::Thread::threadFactoryForTest()),
+        dispatcher_(new NiceMock<Envoy::Event::MockDispatcher>()) {
     loader_ = std::make_unique<Envoy::Runtime::ScopedLoaderSingleton>(
         Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl(
             *dispatcher_, tls_, {}, local_info_, store_, rand_, validation_visitor_, mock_api_)});

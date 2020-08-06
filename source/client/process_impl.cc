@@ -134,7 +134,7 @@ void ProcessImpl::shutdown() {
     // flush_worker_->shutdown() needs to happen before workers_.clear() so that
     // metrics defined in workers scope will be included in the final stats
     // flush which happens in FlushWorkerImpl::shutdownThread() after
-    // flush_worker_->shutdown(). For the order between worker shutdown() and
+    // flush_worker_->shutdown() is called. For the order between worker shutdown() and
     // shutdownThread(), see worker_impl.cc.
     if (flush_worker_) {
       flush_worker_->shutdown();
@@ -494,6 +494,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
         Envoy::DurationUtil::durationToMilliseconds(bootstrap.stats_flush_interval()));
 
     if (!options_.statsSinks().empty()) {
+      // There should be only a single live flush worker instance at any time.
       flush_worker_ = std::make_unique<FlushWorkerImpl>(*api_, tls_, store_root_, stats_sinks,
                                                         stats_flush_interval);
       flush_worker_->start();

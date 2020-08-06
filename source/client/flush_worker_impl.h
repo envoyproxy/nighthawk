@@ -15,11 +15,11 @@
 namespace Nighthawk {
 namespace Client {
 
-// Flush worker periodically flushes metrics snapshot to all configured stats
-// sinks in Nighthawk. A single flush worker is created in Nighthawk
-// process_impl.cc. It will keep running until exitDispatcher() gets called
-// after all client workers are completed in process_impl.cc. It will make the
-// last flush before shutdown in shutdownThread().
+// Only a single live flush worker instance can be created in Nighthawk at any
+// time.
+// Flush worker periodically flushes metrics snapshot to all configured stats sinks in Nighthawk. It
+// will keep running until exitDispatcher() gets called after all client workers are completed in
+// process_impl.cc. It will make the last flush before shutdown in shutdownThread().
 class FlushWorkerImpl : public WorkerImpl {
 public:
   FlushWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Instance& tls,
