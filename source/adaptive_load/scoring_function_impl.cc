@@ -2,8 +2,6 @@
 
 #include <cmath>
 
-#include "envoy/registry/registry.h"
-
 #include "external/envoy/source/common/protobuf/protobuf.h"
 
 #include "api/adaptive_load/scoring_function_impl.pb.h"

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "envoy/registry/registry.h"
+
 #include "nighthawk/adaptive_load/scoring_function.h"
 
 #include "api/adaptive_load/scoring_function_impl.pb.h"
@@ -34,6 +36,8 @@ public:
   ScoringFunctionPtr createScoringFunction(const Envoy::Protobuf::Message& message) override;
 };
 
+DECLARE_FACTORY(BinaryScoringFunctionConfigFactory);
+
 /**
  * ScoringFunction that calculates a metric score as k * (threshold - value), where k is a scaling
  * constant. The score is 0.0 when the value exactly equals the threshold, positive below the
@@ -63,5 +67,7 @@ public:
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
   ScoringFunctionPtr createScoringFunction(const Envoy::Protobuf::Message& message) override;
 };
+
+DECLARE_FACTORY(LinearScoringFunctionConfigFactory);
 
 } // namespace Nighthawk
