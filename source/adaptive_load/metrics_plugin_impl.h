@@ -27,7 +27,7 @@ public:
 
 private:
   absl::flat_hash_map<std::string, double> metric_from_name_;
-  std::string errors_;
+  std::vector<std::string> errors_;
 };
 
 } // namespace Nighthawk

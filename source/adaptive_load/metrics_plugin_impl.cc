@@ -12,13 +12,12 @@ namespace Nighthawk {
 
 NighthawkStatsEmulatedMetricsPlugin::NighthawkStatsEmulatedMetricsPlugin(
     const nighthawk::client::Output& nighthawk_output) {
-  errors_ = "'global' result not found in Nighthawk output.\n";
-
+  bool found_global_result = false;
   for (const nighthawk::client::Result& result : nighthawk_output.results()) {
     if (result.name() != "global") {
       continue;
     }
-    errors_ = "";
+    found_global_result = true;
     const int64_t actual_duration_seconds =
         Envoy::Protobuf::util::TimeUtil::DurationToSeconds(result.execution_duration());
     const uint32_t number_of_workers =
@@ -35,17 +34,17 @@ NighthawkStatsEmulatedMetricsPlugin::NighthawkStatsEmulatedMetricsPlugin(
       }
     }
     if (total_2xx < 0) {
-      errors_ += "Counter 'benchmark.total_2xx' not found.\n";
+      errors_.push_back("Counter 'benchmark.total_2xx' not found.");
     }
     if (total_sent < 0) {
-      errors_ += "Counter 'upstream_rq_total' not found.\n";
+      errors_.push_back("Counter 'upstream_rq_total' not found.");
     }
     if (actual_duration_seconds > 0.0) {
       metric_from_name_["attempted-rps"] =
           static_cast<double>(total_specified) / actual_duration_seconds;
       metric_from_name_["achieved-rps"] = static_cast<double>(total_sent) / actual_duration_seconds;
     } else {
-      errors_ += "Nighthawk returned a benchmark result with zero actual duration.\n";
+      errors_.push_back("Nighthawk returned a benchmark result with zero actual duration.");
     }
     if (total_specified > 0) {
       metric_from_name_["send-rate"] =
@@ -80,15 +79,19 @@ NighthawkStatsEmulatedMetricsPlugin::NighthawkStatsEmulatedMetricsPlugin(
       }
     }
     if (!found_latency_stats) {
-      errors_ += "'benchmark_http_client.request_to_response' statistic not found.\n";
+      errors_.push_back("'benchmark_http_client.request_to_response' statistic not found.");
     }
+  }
+  if (!found_global_result) {
+    errors_.push_back("'global' result not found in Nighthawk output.");
   }
 }
 
 Envoy::StatusOr<double>
 NighthawkStatsEmulatedMetricsPlugin::GetMetricByName(absl::string_view metric_name) {
   if (!errors_.empty()) {
-    return Envoy::StatusOr<double>(absl::Status(absl::StatusCode::kInternal, errors_));
+    return Envoy::StatusOr<double>(
+        absl::Status(absl::StatusCode::kInternal, absl::StrJoin(errors_, "\n")));
   }
   if (metric_from_name_.find(metric_name) == metric_from_name_.end()) {
     return Envoy::StatusOr<double>(absl::Status(
