@@ -31,7 +31,7 @@ const double kBadConfigThreshold = 98765.0;
  * @return Status InvalidArgument if threshold is kBadConfigThreshold, OK otherwise.
  */
 absl::Status DoValidateConfig(const Envoy::Protobuf::Message& message) {
-  const Envoy::ProtobufWkt::Any& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
+  const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
   nighthawk::adaptive_load::LinearScoringFunctionConfig config;
   Envoy::MessageUtil::unpackTo(any, config);
   return config.threshold() == kBadConfigThreshold
@@ -47,13 +47,13 @@ public:
   // Any plugin in the adaptive load system can freely choose an arbitrary single proto as its
   // config type. We use LinearScoringFunctionConfig for all plugins in this test.
   TestInputVariableSetter(const nighthawk::adaptive_load::LinearScoringFunctionConfig& config)
-      : config_{config} {}
+      : value_from_config_proto_{config.threshold()} {}
   absl::Status SetInputVariable(nighthawk::client::CommandLineOptions& command_line_options,
                                 double input_value) override {
     command_line_options.mutable_connections()->set_value(static_cast<unsigned int>(input_value));
     return absl::OkStatus();
   }
-  const nighthawk::adaptive_load::LinearScoringFunctionConfig config_;
+  const double value_from_config_proto_;
 };
 
 /**
@@ -72,7 +72,7 @@ public:
   }
   InputVariableSetterPtr
   createInputVariableSetter(const Envoy::Protobuf::Message& message) override {
-    const Envoy::ProtobufWkt::Any& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
+    const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
     nighthawk::adaptive_load::LinearScoringFunctionConfig config;
     Envoy::MessageUtil::unpackTo(any, config);
     return std::make_unique<TestInputVariableSetter>(config);
@@ -89,9 +89,9 @@ public:
   // Any plugin in the adaptive load system can freely choose an arbitrary single proto as its
   // config type. We use LinearScoringFunctionConfig for all plugins in this test.
   TestScoringFunction(const nighthawk::adaptive_load::LinearScoringFunctionConfig& config)
-      : config_{config} {}
+      : value_from_config_proto_{config.threshold()} {}
   double EvaluateMetric(double) const override { return 1.0; }
-  const nighthawk::adaptive_load::LinearScoringFunctionConfig config_;
+  const double value_from_config_proto_;
 };
 
 /**
@@ -108,7 +108,7 @@ public:
     return DoValidateConfig(message);
   }
   ScoringFunctionPtr createScoringFunction(const Envoy::Protobuf::Message& message) override {
-    const Envoy::ProtobufWkt::Any& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
+    const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
     nighthawk::adaptive_load::LinearScoringFunctionConfig config;
     Envoy::MessageUtil::unpackTo(any, config);
     return std::make_unique<TestScoringFunction>(config);
@@ -125,10 +125,10 @@ public:
   // Any plugin in the adaptive load system can freely choose an arbitrary single proto as its
   // config type. We use LinearScoringFunctionConfig for all plugins in this test.
   TestMetricsPlugin(const nighthawk::adaptive_load::LinearScoringFunctionConfig& config)
-      : config_{config} {}
+      : value_from_config_proto_{config.threshold()} {}
   Envoy::StatusOr<double> GetMetricByName(absl::string_view) override { return 5.0; }
   const std::vector<std::string> GetAllSupportedMetricNames() const override { return {}; }
-  const nighthawk::adaptive_load::LinearScoringFunctionConfig config_;
+  const double value_from_config_proto_;
 };
 
 /**
@@ -145,7 +145,7 @@ public:
     return DoValidateConfig(message);
   }
   MetricsPluginPtr createMetricsPlugin(const Envoy::Protobuf::Message& message) override {
-    const Envoy::ProtobufWkt::Any& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
+    const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
     nighthawk::adaptive_load::LinearScoringFunctionConfig config;
     Envoy::MessageUtil::unpackTo(any, config);
     return std::make_unique<TestMetricsPlugin>(config);
@@ -163,15 +163,18 @@ public:
   // config type. We use LinearScoringFunctionConfig for all plugins in this test.
   TestStepController(const nighthawk::adaptive_load::LinearScoringFunctionConfig& config,
                      const nighthawk::client::CommandLineOptions& command_line_options_template)
-      : config_{config}, command_line_options_template_{command_line_options_template} {}
+      : value_from_config_proto_{config.threshold()},
+        value_from_command_line_options_template_{
+            command_line_options_template.requests_per_second().value()} {}
   bool IsConverged() const override { return false; }
   bool IsDoomed(std::string&) const override { return false; }
-  Envoy::StatusOr<nighthawk::client::CommandLineOptions> GetCurrentCommandLineOptions() const override {
+  Envoy::StatusOr<nighthawk::client::CommandLineOptions>
+  GetCurrentCommandLineOptions() const override {
     return nighthawk::client::CommandLineOptions();
   }
   void UpdateAndRecompute(const nighthawk::adaptive_load::BenchmarkResult&) override {}
-  const nighthawk::adaptive_load::LinearScoringFunctionConfig config_;
-  const nighthawk::client::CommandLineOptions command_line_options_template_;
+  const double value_from_config_proto_;
+  const unsigned int value_from_command_line_options_template_;
 };
 
 /**
@@ -190,7 +193,7 @@ public:
   StepControllerPtr createStepController(
       const Envoy::Protobuf::Message& message,
       const nighthawk::client::CommandLineOptions& command_line_options_template) override {
-    const Envoy::ProtobufWkt::Any& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
+    const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
     nighthawk::adaptive_load::LinearScoringFunctionConfig config;
     Envoy::MessageUtil::unpackTo(any, config);
     return std::make_unique<TestStepController>(config, command_line_options_template);
@@ -218,7 +221,7 @@ TEST(PluginUtilTest, CreatesCorrectInputVariableSetterType) {
   config.set_name("nighthawk.test-input-variable-setter");
   *config.mutable_typed_config() = CreateTypedConfigAny(0.0);
   InputVariableSetterPtr plugin = LoadInputVariableSetterPlugin(config).value();
-  TestInputVariableSetter* typed_plugin = dynamic_cast<TestInputVariableSetter*>(plugin.get());
+  auto* typed_plugin = dynamic_cast<TestInputVariableSetter*>(plugin.get());
   EXPECT_NE(typed_plugin, nullptr);
 }
 
@@ -235,9 +238,9 @@ TEST(PluginUtilTest, PropagatesConfigProtoToInputVariableSetter) {
   config.set_name("nighthawk.test-input-variable-setter");
   *config.mutable_typed_config() = CreateTypedConfigAny(12.0);
   InputVariableSetterPtr plugin = LoadInputVariableSetterPlugin(config).value();
-  TestInputVariableSetter* typed_plugin = dynamic_cast<TestInputVariableSetter*>(plugin.get());
+  auto* typed_plugin = dynamic_cast<TestInputVariableSetter*>(plugin.get());
   ASSERT_NE(typed_plugin, nullptr);
-  EXPECT_EQ(typed_plugin->config_.threshold(), 12.0);
+  EXPECT_EQ(typed_plugin->value_from_config_proto_, 12.0);
 }
 
 TEST(PluginUtilTest, ReturnsErrorWhenInputVariableSetterPluginNotFound) {
@@ -253,7 +256,7 @@ TEST(PluginUtilTest, CreatesCorrectScoringFunctionType) {
   config.set_name("nighthawk.test-scoring-function");
   *config.mutable_typed_config() = CreateTypedConfigAny(0.0);
   ScoringFunctionPtr plugin = LoadScoringFunctionPlugin(config).value();
-  TestScoringFunction* typed_plugin = dynamic_cast<TestScoringFunction*>(plugin.get());
+  auto* typed_plugin = dynamic_cast<TestScoringFunction*>(plugin.get());
   EXPECT_NE(typed_plugin, nullptr);
 }
 
@@ -270,9 +273,9 @@ TEST(PluginUtilTest, PropagatesConfigProtoToScoringFunction) {
   config.set_name("nighthawk.test-scoring-function");
   *config.mutable_typed_config() = CreateTypedConfigAny(34.0);
   ScoringFunctionPtr plugin = LoadScoringFunctionPlugin(config).value();
-  TestScoringFunction* typed_plugin = dynamic_cast<TestScoringFunction*>(plugin.get());
+  auto* typed_plugin = dynamic_cast<TestScoringFunction*>(plugin.get());
   ASSERT_NE(typed_plugin, nullptr);
-  EXPECT_EQ(typed_plugin->config_.threshold(), 34.0);
+  EXPECT_EQ(typed_plugin->value_from_config_proto_, 34.0);
 }
 
 TEST(PluginUtilTest, ReturnsErrorWhenScoringFunctionPluginNotFound) {
@@ -288,7 +291,7 @@ TEST(PluginUtilTest, CreatesCorrectMetricsPluginType) {
   config.set_name("nighthawk.test-metrics-plugin");
   *config.mutable_typed_config() = CreateTypedConfigAny(0.0);
   MetricsPluginPtr plugin = LoadMetricsPlugin(config).value();
-  TestMetricsPlugin* typed_plugin = dynamic_cast<TestMetricsPlugin*>(plugin.get());
+  auto* typed_plugin = dynamic_cast<TestMetricsPlugin*>(plugin.get());
   EXPECT_NE(typed_plugin, nullptr);
 }
 
@@ -305,9 +308,9 @@ TEST(PluginUtilTest, PropagatesConfigProtoToMetricsPlugin) {
   config.set_name("nighthawk.test-metrics-plugin");
   *config.mutable_typed_config() = CreateTypedConfigAny(56.0);
   MetricsPluginPtr plugin = LoadMetricsPlugin(config).value();
-  TestMetricsPlugin* typed_plugin = dynamic_cast<TestMetricsPlugin*>(plugin.get());
+  auto* typed_plugin = dynamic_cast<TestMetricsPlugin*>(plugin.get());
   ASSERT_NE(typed_plugin, nullptr);
-  EXPECT_EQ(typed_plugin->config_.threshold(), 56.0);
+  EXPECT_EQ(typed_plugin->value_from_config_proto_, 56.0);
 }
 
 TEST(PluginUtilTest, ReturnsErrorWhenMetricsPluginNotFound) {
@@ -324,7 +327,7 @@ TEST(PluginUtilTest, CreatesCorrectStepControllerType) {
   *config.mutable_typed_config() = CreateTypedConfigAny(0.0);
   nighthawk::client::CommandLineOptions options_template;
   StepControllerPtr plugin = LoadStepControllerPlugin(config, options_template).value();
-  TestStepController* typed_plugin = dynamic_cast<TestStepController*>(plugin.get());
+  auto* typed_plugin = dynamic_cast<TestStepController*>(plugin.get());
   EXPECT_NE(typed_plugin, nullptr);
 }
 
@@ -343,9 +346,9 @@ TEST(PluginUtilTest, PropagatesConfigProtoToStepController) {
   *config.mutable_typed_config() = CreateTypedConfigAny(78.0);
   nighthawk::client::CommandLineOptions options_template;
   StepControllerPtr plugin = LoadStepControllerPlugin(config, options_template).value();
-  TestStepController* typed_plugin = dynamic_cast<TestStepController*>(plugin.get());
+  auto* typed_plugin = dynamic_cast<TestStepController*>(plugin.get());
   ASSERT_NE(typed_plugin, nullptr);
-  EXPECT_EQ(typed_plugin->config_.threshold(), 78.0);
+  EXPECT_EQ(typed_plugin->value_from_config_proto_, 78.0);
 }
 
 TEST(PluginUtilTest, PropagatesCommandLineOptionsTemplateToStepController) {
@@ -355,9 +358,9 @@ TEST(PluginUtilTest, PropagatesCommandLineOptionsTemplateToStepController) {
   nighthawk::client::CommandLineOptions options_template;
   options_template.mutable_requests_per_second()->set_value(9);
   StepControllerPtr plugin = LoadStepControllerPlugin(config, options_template).value();
-  TestStepController* typed_plugin = dynamic_cast<TestStepController*>(plugin.get());
+  auto* typed_plugin = dynamic_cast<TestStepController*>(plugin.get());
   ASSERT_NE(typed_plugin, nullptr);
-  EXPECT_EQ(typed_plugin->command_line_options_template_.requests_per_second().value(), 9);
+  EXPECT_EQ(typed_plugin->value_from_command_line_options_template_, 9);
 }
 
 TEST(PluginUtilTest, ReturnsErrorWhenStepControllerPluginNotFound) {
