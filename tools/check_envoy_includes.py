@@ -33,9 +33,6 @@ def _inspect_line(bazel_output_base, file_path, line):
         alternative_found = os.path.isfile(potential_envoy_path)
 
       if alternative_found:
-        # TODO(#399): remove after extension includes are available at the proper location.
-        if "extensions/filters/http/fault/fault_filter.h" == path:
-          return True
         sys.stderr.writelines("Bad include in file " + str(file_path) + ": " + path)
         sys.stderr.writelines(" (Possible fixed path: %s" %
                               potential_envoy_path[len(bazel_output_base) + 1:] + ")\n")
