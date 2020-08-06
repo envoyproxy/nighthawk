@@ -5,9 +5,9 @@
 
 #include "envoy/server/filter_config.h"
 
-#include "api/server/response_options.pb.h"
+#include "external/envoy/source/extensions/filters/http/fault/fault_filter.h"
 
-#include "extensions/filters/http/fault/fault_filter.h"
+#include "api/server/response_options.pb.h"
 
 namespace Nighthawk {
 namespace Server {
