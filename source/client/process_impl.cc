@@ -203,7 +203,6 @@ void ProcessImpl::configureComponentLogLevels(spdlog::level::level_enum level) {
 }
 
 uint32_t ProcessImpl::determineConcurrency() const {
-  // Spare 1 cpu for flush worker.
   uint32_t cpu_cores_with_affinity = Envoy::OptionsImplPlatform::getCpuCount();
   bool autoscale = options_.concurrency() == "auto";
   // TODO(oschaaf): Maybe, in the case where the concurrency flag is left out, but
