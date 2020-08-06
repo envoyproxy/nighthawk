@@ -8,17 +8,17 @@ namespace Nighthawk {
 
 namespace {
 
-TEST(RequestsPerSecondInputVariableSetterConfigFactoryTest, GeneratesEmptyConfigProto) {
+TEST(RequestsPerSecondInputVariableSetterConfigFactory, CreateEmptyConfigProtoCreatesCorrectType) {
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<InputVariableSetterConfigFactory>(
           "nighthawk.rps");
-  const Envoy::ProtobufTypes::MessagePtr message = config_factory.createEmptyConfigProto();
+  const Envoy::ProtobufTypes::MessagePtr empty_config = config_factory.createEmptyConfigProto();
   const nighthawk::adaptive_load::RequestsPerSecondInputVariableSetterConfig expected_config;
-  EXPECT_EQ(message->DebugString(), expected_config.DebugString());
-  EXPECT_TRUE(Envoy::MessageUtil()(*message, expected_config));
+  EXPECT_EQ(empty_config->DebugString(), expected_config.DebugString());
+  EXPECT_TRUE(Envoy::MessageUtil()(*empty_config, expected_config));
 }
 
-TEST(RequestsPerSecondInputVariableSetterConfigFactoryTest, CreatesCorrectFactory) {
+TEST(RequestsPerSecondInputVariableSetterConfigFactory, FactoryRegistrationUsesCorrectPluginName) {
   const nighthawk::adaptive_load::RequestsPerSecondInputVariableSetterConfig config;
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
@@ -28,7 +28,8 @@ TEST(RequestsPerSecondInputVariableSetterConfigFactoryTest, CreatesCorrectFactor
   EXPECT_EQ(config_factory.name(), "nighthawk.rps");
 }
 
-TEST(RequestsPerSecondInputVariableSetterConfigFactoryTest, CreatesPlugin) {
+TEST(RequestsPerSecondInputVariableSetterConfigFactory,
+     CreateInputVariableSetterCreatesCorrectPluginType) {
   const nighthawk::adaptive_load::RequestsPerSecondInputVariableSetterConfig config;
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
@@ -39,7 +40,7 @@ TEST(RequestsPerSecondInputVariableSetterConfigFactoryTest, CreatesPlugin) {
   EXPECT_NE(dynamic_cast<RequestsPerSecondInputVariableSetter*>(plugin.get()), nullptr);
 }
 
-TEST(RequestsPerSecondInputVariableSetterTest, SetsCommandLineOptionsRpsValue) {
+TEST(RequestsPerSecondInputVariableSetter, SetInputVariableSetsCommandLineOptionsRpsValue) {
   const nighthawk::adaptive_load::RequestsPerSecondInputVariableSetterConfig config;
   RequestsPerSecondInputVariableSetter setter(config);
   nighthawk::client::CommandLineOptions options;
@@ -47,7 +48,7 @@ TEST(RequestsPerSecondInputVariableSetterTest, SetsCommandLineOptionsRpsValue) {
   EXPECT_EQ(options.requests_per_second().value(), 5);
 }
 
-TEST(RequestsPerSecondInputVariableSetterTest, TruncatesNonIntegerRpsValue) {
+TEST(RequestsPerSecondInputVariableSetter, SetInputVariableTruncatesNonIntegerRpsValue) {
   const nighthawk::adaptive_load::RequestsPerSecondInputVariableSetterConfig config;
   RequestsPerSecondInputVariableSetter setter(config);
   nighthawk::client::CommandLineOptions options;
@@ -55,7 +56,7 @@ TEST(RequestsPerSecondInputVariableSetterTest, TruncatesNonIntegerRpsValue) {
   EXPECT_EQ(options.requests_per_second().value(), 5);
 }
 
-TEST(RequestsPerSecondInputVariableSetterTest, ReturnsErrorWithNegativeRpsValue) {
+TEST(RequestsPerSecondInputVariableSetter, SetInputVariableReturnsErrorWithNegativeRpsValue) {
   const nighthawk::adaptive_load::RequestsPerSecondInputVariableSetterConfig config;
   RequestsPerSecondInputVariableSetter setter(config);
   nighthawk::client::CommandLineOptions options;
@@ -63,7 +64,7 @@ TEST(RequestsPerSecondInputVariableSetterTest, ReturnsErrorWithNegativeRpsValue)
               testing::HasSubstr("out of range"));
 }
 
-TEST(RequestsPerSecondInputVariableSetterTest, ReturnsErrorWithOversizedRpsValue) {
+TEST(RequestsPerSecondInputVariableSetter, SetInputVariableReturnsErrorWithOversizedRpsValue) {
   const nighthawk::adaptive_load::RequestsPerSecondInputVariableSetterConfig config;
   RequestsPerSecondInputVariableSetter setter(config);
   nighthawk::client::CommandLineOptions options;

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "envoy/registry/registry.h"
+
 #include "nighthawk/adaptive_load/input_variable_setter.h"
 
 #include "api/adaptive_load/input_variable_setter_impl.pb.h"
@@ -33,5 +35,8 @@ public:
   InputVariableSetterPtr
   createInputVariableSetter(const Envoy::Protobuf::Message& message) override;
 };
+
+// This factory is activated through LoadInputVariableSetterPlugin in plugin_util.h.
+DECLARE_FACTORY(RequestsPerSecondInputVariableSetterConfigFactory);
 
 } // namespace Nighthawk
