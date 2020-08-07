@@ -201,17 +201,17 @@ NighthawkStatsEmulatedMetricsPlugin::GetMetricByName(absl::string_view metric_na
 const std::vector<std::string>
 NighthawkStatsEmulatedMetricsPlugin::GetAllSupportedMetricNames() const {
   return {
-      "attempted-rps",
       "achieved-rps",
-      "send-rate",
-      "success-rate",
-      "latency-ns-min",
-      "latency-ns-mean",
+      "attempted-rps",
       "latency-ns-max",
+      "latency-ns-mean",
       "latency-ns-mean-plus-1stdev",
       "latency-ns-mean-plus-2stdev",
       "latency-ns-mean-plus-3stdev",
+      "latency-ns-min",
       "latency-ns-pstdev",
+      "send-rate",
+      "success-rate",
   };
 }
 

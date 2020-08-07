@@ -10,9 +10,9 @@ licenses(["notice"])  # Apache 2
 envoy_package()
 
 envoy_cc_test_library(
-    name = "utility",
-    srcs = ["utility.cc"],
-    hdrs = ["utility.h"],
+    name = "minimal_output",
+    srcs = ["minimal_output.cc"],
+    hdrs = ["minimal_output.h"],
     repository = "@envoy",
     deps = [
         "//source/client:nighthawk_client_lib",
@@ -33,7 +33,7 @@ envoy_cc_test(
     srcs = ["metrics_plugin_test.cc"],
     repository = "@envoy",
     deps = [
-        ":utility",
+        ":minimal_output",
         "//source/adaptive_load:metrics_plugin_impl",
     ],
 )

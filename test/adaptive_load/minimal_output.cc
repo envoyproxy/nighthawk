@@ -1,4 +1,4 @@
-#include "test/adaptive_load/utility.h"
+#include "test/adaptive_load/minimal_output.h"
 
 #include "external/envoy/source/common/protobuf/protobuf.h"
 

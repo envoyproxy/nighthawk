@@ -2,7 +2,7 @@
 
 #include "external/envoy/source/common/config/utility.h"
 
-#include "test/adaptive_load/utility.h"
+#include "test/adaptive_load/minimal_output.h"
 
 #include "adaptive_load/metrics_plugin_impl.h"
 #include "gmock/gmock.h"
@@ -35,17 +35,17 @@ TEST_P(NighthawkStatsEmulatedMetricsPluginFixture, ComputesCorrectMetric) {
 
 INSTANTIATE_TEST_SUITE_P(
     NighthawkStatsEmulatedMetricsPluginValuesTests, NighthawkStatsEmulatedMetricsPluginFixture,
-    ::testing::Values(std::make_tuple<std::string, double>("attempted-rps", 1024),
-                      std::make_tuple<std::string, double>("achieved-rps", 256),
-                      std::make_tuple<std::string, double>("send-rate", 0.25),
-                      std::make_tuple<std::string, double>("success-rate", 0.125),
-                      std::make_tuple<std::string, double>("latency-ns-min", 400.0),
-                      std::make_tuple<std::string, double>("latency-ns-mean", 500.0),
+    ::testing::Values(std::make_tuple<std::string, double>("achieved-rps", 256),
+                      std::make_tuple<std::string, double>("attempted-rps", 1024),
                       std::make_tuple<std::string, double>("latency-ns-max", 600.0),
+                      std::make_tuple<std::string, double>("latency-ns-mean", 500.0),
                       std::make_tuple<std::string, double>("latency-ns-mean-plus-1stdev", 511.0),
                       std::make_tuple<std::string, double>("latency-ns-mean-plus-2stdev", 522.0),
                       std::make_tuple<std::string, double>("latency-ns-mean-plus-3stdev", 533.0),
-                      std::make_tuple<std::string, double>("latency-ns-pstdev", 11.0)));
+                      std::make_tuple<std::string, double>("latency-ns-min", 400.0),
+                      std::make_tuple<std::string, double>("latency-ns-pstdev", 11.0),
+                      std::make_tuple<std::string, double>("send-rate", 0.25),
+                      std::make_tuple<std::string, double>("success-rate", 0.125)));
 
 TEST(NighthawkStatsEmulatedMetricsPlugin, ReturnsErrorIfGlobalResultMissing) {
   nighthawk::client::Output empty_output;
@@ -121,9 +121,8 @@ TEST(NighthawkStatsEmulatedMetricsPlugin, ReturnsErrorIfStatisticMissing) {
   });
   output.mutable_results(0)->clear_statistics();
   NighthawkStatsEmulatedMetricsPlugin plugin = NighthawkStatsEmulatedMetricsPlugin(output);
-  EXPECT_THAT(
-      plugin.GetMetricByName("x").status().message(),
-      testing::HasSubstr("'benchmark_http_client.request_to_response' not found"));
+  EXPECT_THAT(plugin.GetMetricByName("x").status().message(),
+              testing::HasSubstr("'benchmark_http_client.request_to_response' not found"));
 }
 
 TEST(NighthawkStatsEmulatedMetricsPlugin, ReturnsZeroSuccessRateForZeroRequestsSent) {
@@ -222,10 +221,11 @@ TEST(NighthawkStatsEmulatedMetricsPlugin, ReturnsCorrectSupportedMetricNames) {
   NighthawkStatsEmulatedMetricsPlugin plugin = NighthawkStatsEmulatedMetricsPlugin({});
   std::vector<std::string> supported_metrics = plugin.GetAllSupportedMetricNames();
   EXPECT_THAT(supported_metrics,
-              ::testing::ElementsAre("attempted-rps", "achieved-rps", "send-rate", "success-rate",
-                                     "latency-ns-min", "latency-ns-mean", "latency-ns-max",
-                                     "latency-ns-mean-plus-1stdev", "latency-ns-mean-plus-2stdev",
-                                     "latency-ns-mean-plus-3stdev", "latency-ns-pstdev"));
+              ::testing::ElementsAre("achieved-rps", "attempted-rps", "latency-ns-max",
+                                     "latency-ns-mean", "latency-ns-mean-plus-1stdev",
+                                     "latency-ns-mean-plus-2stdev", "latency-ns-mean-plus-3stdev",
+                                     "latency-ns-min", "latency-ns-pstdev", "send-rate",
+                                     "success-rate"));
 }
 
 } // namespace
