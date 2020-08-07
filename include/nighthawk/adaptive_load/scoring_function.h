@@ -38,7 +38,6 @@ using ScoringFunctionPtr = std::unique_ptr<ScoringFunction>;
  */
 class ScoringFunctionConfigFactory : public Envoy::Config::TypedFactory, public ConfigValidator {
 public:
-  ~ScoringFunctionConfigFactory() override = default;
   std::string category() const override { return "nighthawk.scoring_function"; }
   /**
    * Instantiates the specific ScoringFunction class. Casts |message| to Any, unpacks it to the
