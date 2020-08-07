@@ -1,4 +1,4 @@
-Checks:          'clang-diagnostic-*,clang-analyzer-*,abseil-*,bugprone-*,modernize-*,performance-*,readability-redundant-*,readability-braces-around-statements,-abseil-no-internal-dependencies,-modernize-use-trailing-return-type,-modernize-avoid-bind,-modernize-use-nodiscard,-modernize-concat-nested-namespaces'
+Checks:          'clang-diagnostic-*,clang-analyzer-*,abseil-*,bugprone-*,modernize-*,performance-*,readability-redundant-*,readability-braces-around-statements,-abseil-no-internal-dependencies,-modernize-use-trailing-return-type,-modernize-use-nodiscard,-modernize-concat-nested-namespaces'
 
 WarningsAsErrors:  '*'
 
