@@ -51,7 +51,7 @@ TEST(NighthawkStatsEmulatedMetricsPlugin, ReturnsErrorIfGlobalResultMissing) {
   nighthawk::client::Output empty_output;
   NighthawkStatsEmulatedMetricsPlugin plugin = NighthawkStatsEmulatedMetricsPlugin(empty_output);
   EXPECT_THAT(plugin.GetMetricByName("x").status().message(),
-              testing::HasSubstr("'global' result not found"));
+              testing::HasSubstr("'global' not found"));
 }
 
 TEST(NighthawkStatsEmulatedMetricsPlugin, ReturnsErrorIf2xxMissing) {
@@ -69,7 +69,7 @@ TEST(NighthawkStatsEmulatedMetricsPlugin, ReturnsErrorIf2xxMissing) {
   output.mutable_results(0)->clear_counters();
   NighthawkStatsEmulatedMetricsPlugin plugin = NighthawkStatsEmulatedMetricsPlugin(output);
   EXPECT_THAT(plugin.GetMetricByName("x").status().message(),
-              testing::HasSubstr("'benchmark.total_2xx' not found"));
+              testing::HasSubstr("'benchmark.http_2xx' not found"));
 }
 
 TEST(NighthawkStatsEmulatedMetricsPlugin, ReturnsErrorIfUpstreamRqTotalMissing) {
@@ -123,7 +123,7 @@ TEST(NighthawkStatsEmulatedMetricsPlugin, ReturnsErrorIfStatisticMissing) {
   NighthawkStatsEmulatedMetricsPlugin plugin = NighthawkStatsEmulatedMetricsPlugin(output);
   EXPECT_THAT(
       plugin.GetMetricByName("x").status().message(),
-      testing::HasSubstr("'benchmark_http_client.request_to_response' statistic not found"));
+      testing::HasSubstr("'benchmark_http_client.request_to_response' not found"));
 }
 
 TEST(NighthawkStatsEmulatedMetricsPlugin, ReturnsZeroSuccessRateForZeroRequestsSent) {

@@ -14,6 +14,12 @@ bazel test -c dbg //test/server:http_test_server_filter_integration_test
 bazel build -c opt :nighthawk_test_server
 ```
 
+It is possible to
+[enable additional envoy extension](https://github.com/envoyproxy/envoy/blob/master/source/extensions/extensions_build_config.bzl) by adding them [here](../../extensions_build_config.bzl) before the build.
+By default, Nighthawk's test server is set up with the minimum extension set needed
+for it to operate as documented.
+
+
 ## Configuring the test server
 
 `test-server.yaml` sample content
@@ -250,7 +256,7 @@ Escape c-style escape sequences in the application logs
 Log message format in spdlog syntax (see
 https://github.com/gabime/spdlog/wiki/3.-Custom-formatting)
 
-Default is "[%Y-%m-%d %T.%e][%t][%l][%n] %v"
+Default is "[%Y-%m-%d %T.%e][%t][%l][%n] [%g:%#] %v"
 
 --component-log-level <string>
 Comma separated list of component log levels. For example
