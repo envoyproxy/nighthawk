@@ -10,7 +10,6 @@
 #include "api/server/response_options.pb.h"
 
 namespace Nighthawk {
-namespace Server {
 
 /**
  * Filter configuration container class for the dynamic delay extension.
@@ -183,5 +182,4 @@ private:
   bool destroyed_{false};
 };
 
-} // namespace Server
 } // namespace Nighthawk

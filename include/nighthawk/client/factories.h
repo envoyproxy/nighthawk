@@ -19,7 +19,6 @@
 #include "nighthawk/common/uri.h"
 
 namespace Nighthawk {
-namespace Client {
 
 class BenchmarkClientFactory {
 public:
@@ -65,5 +64,4 @@ public:
   create(const nighthawk::client::OutputFormat_OutputFormatOptions options) const PURE;
 };
 
-} // namespace Client
-} // namespace Nighthawk
+ } // namespace Nighthawk

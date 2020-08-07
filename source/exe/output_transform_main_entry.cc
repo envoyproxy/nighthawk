@@ -16,11 +16,11 @@ int main(int argc, char** argv) {
   absl::InitializeSymbolizer(argv[0]);
 #endif
   try {
-    Nighthawk::Client::OutputTransformMain program(argc, argv, std::cin); // NOLINT
+    Nighthawk::OutputTransformMain program(argc, argv, std::cin); // NOLINT
     return program.run();
-  } catch (const Nighthawk::Client::NoServingException& e) {
+  } catch (const Nighthawk::NoServingException& e) {
     return EXIT_SUCCESS;
-  } catch (const Nighthawk::Client::MalformedArgvException& e) {
+  } catch (const Nighthawk::MalformedArgvException& e) {
     std::cerr << "Invalid args: " << e.what() << std::endl;
     return EXIT_FAILURE;
   } catch (const Nighthawk::NighthawkException& e) {

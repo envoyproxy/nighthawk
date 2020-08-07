@@ -8,7 +8,6 @@
 #include "absl/strings/string_view.h"
 
 namespace Nighthawk {
-namespace Client {
 
 class TestUtility {
 public:
@@ -23,5 +22,4 @@ private:
   TestUtility() = default;
 };
 
-} // namespace Client
-} // namespace Nighthawk
+ } // namespace Nighthawk

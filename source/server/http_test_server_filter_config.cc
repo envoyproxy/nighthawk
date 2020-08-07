@@ -10,10 +10,8 @@
 #include "server/http_test_server_filter.h"
 
 namespace Nighthawk {
-namespace Server {
-namespace Configuration {
 
-class HttpTestServerDecoderFilterConfig
+class HttpTestServerDecoderFilterConfigFactory
     : public Envoy::Server::Configuration::NamedHttpFilterConfigFactory {
 public:
   Envoy::Http::FilterFactoryCb
@@ -36,20 +34,19 @@ public:
 private:
   Envoy::Http::FilterFactoryCb createFilter(const nighthawk::server::ResponseOptions& proto_config,
                                             Envoy::Server::Configuration::FactoryContext&) {
-    Nighthawk::Server::HttpTestServerDecoderFilterConfigSharedPtr config =
-        std::make_shared<Nighthawk::Server::HttpTestServerDecoderFilterConfig>(
-            Nighthawk::Server::HttpTestServerDecoderFilterConfig(proto_config));
+    HttpTestServerDecoderFilterConfigSharedPtr config =
+        std::make_shared<HttpTestServerDecoderFilterConfig>(
+            HttpTestServerDecoderFilterConfig(proto_config));
 
     return [config](Envoy::Http::FilterChainFactoryCallbacks& callbacks) -> void {
-      auto* filter = new Nighthawk::Server::HttpTestServerDecoderFilter(config);
+      auto* filter = new HttpTestServerDecoderFilter(config);
       callbacks.addStreamDecoderFilter(Envoy::Http::StreamDecoderFilterSharedPtr{filter});
     };
   }
 };
 
-static Envoy::Registry::RegisterFactory<HttpTestServerDecoderFilterConfig,
+static Envoy::Registry::RegisterFactory<HttpTestServerDecoderFilterConfigFactory,
                                         Envoy::Server::Configuration::NamedHttpFilterConfigFactory>
     register_;
-} // namespace Configuration
-} // namespace Server
+
 } // namespace Nighthawk

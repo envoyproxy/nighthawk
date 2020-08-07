@@ -13,7 +13,6 @@
 using namespace testing;
 
 namespace Nighthawk {
-namespace Client {
 
 class OutputTransformMainTest : public Test {
 public:
@@ -63,5 +62,4 @@ TEST_F(OutputTransformMainTest, HappyFlow) {
   EXPECT_EQ(main.run(), 0);
 }
 
-} // namespace Client
-} // namespace Nighthawk
+ } // namespace Nighthawk

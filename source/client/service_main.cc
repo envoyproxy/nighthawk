@@ -14,7 +14,6 @@
 #include "tclap/CmdLine.h"
 
 namespace Nighthawk {
-namespace Client {
 
 ServiceMain::ServiceMain(int argc, const char** argv) {
   const char* descr = "L7 (HTTP/HTTPS/HTTP2) performance characterization tool.";
@@ -92,5 +91,4 @@ void ServiceMain::wait() {
 
 void ServiceMain::shutdown() { ENVOY_LOG(info, "Nighthawk grpc service exits"); }
 
-} // namespace Client
-} // namespace Nighthawk
+ } // namespace Nighthawk

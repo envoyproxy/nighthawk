@@ -8,7 +8,6 @@
 #include "common/utility.h"
 
 namespace Nighthawk {
-namespace Client {
 
 using namespace std::chrono_literals;
 
@@ -105,5 +104,4 @@ StatisticPtrMap ClientWorkerImpl::statistics() const {
   return statistics;
 }
 
-} // namespace Client
-} // namespace Nighthawk
+ } // namespace Nighthawk

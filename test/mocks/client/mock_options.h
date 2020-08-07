@@ -6,7 +6,6 @@
 #include "gmock/gmock.h"
 
 namespace Nighthawk {
-namespace Client {
 
 class MockOptions : public Options {
 public:
@@ -56,5 +55,4 @@ public:
   MOCK_CONST_METHOD0(statsFlushInterval, uint32_t());
 };
 
-} // namespace Client
-} // namespace Nighthawk
+ } // namespace Nighthawk

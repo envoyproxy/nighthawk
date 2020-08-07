@@ -14,7 +14,6 @@
 #include "tclap/CmdLine.h"
 
 namespace Nighthawk {
-namespace Client {
 
 class OptionsImpl : public Options, public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
@@ -24,7 +23,7 @@ public:
 
   OptionsImpl(int argc, const char* const* argv);
   OptionsImpl(const nighthawk::client::CommandLineOptions& options);
-  Client::CommandLineOptionsPtr toCommandLineOptions() const override;
+  CommandLineOptionsPtr toCommandLineOptions() const override;
 
   uint32_t requestsPerSecond() const override { return requests_per_second_; }
   uint32_t connections() const override { return connections_; }
@@ -91,7 +90,7 @@ private:
                        TerminationPredicateMap& predicates);
   void setNonTrivialDefaults();
   void validate() const;
-  Client::CommandLineOptionsPtr toCommandLineOptionsInternal() const;
+  CommandLineOptionsPtr toCommandLineOptionsInternal() const;
 
   uint32_t requests_per_second_{5};
   uint32_t connections_{100};
@@ -140,5 +139,4 @@ private:
   uint32_t stats_flush_interval_{5};
 };
 
-} // namespace Client
-} // namespace Nighthawk
+ } // namespace Nighthawk

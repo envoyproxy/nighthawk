@@ -7,7 +7,6 @@
 #include "nighthawk/common/statistic.h"
 
 namespace Nighthawk {
-namespace Client {
 
 /**
  * Facilitates building up an output proto from Nighthawk's native data structures.
@@ -42,5 +41,4 @@ public:
 
 using OutputCollectorPtr = std::unique_ptr<OutputCollector>;
 
-} // namespace Client
-} // namespace Nighthawk
+ } // namespace Nighthawk

@@ -17,7 +17,6 @@
 #include "absl/types/optional.h"
 
 namespace Nighthawk {
-namespace Client {
 
 using CommandLineOptionsPtr = std::unique_ptr<nighthawk::client::CommandLineOptions>;
 using TerminationPredicateMap = std::map<std::string, uint64_t>;
@@ -82,5 +81,4 @@ public:
 
 using OptionsPtr = std::unique_ptr<Options>;
 
-} // namespace Client
-} // namespace Nighthawk
+ } // namespace Nighthawk

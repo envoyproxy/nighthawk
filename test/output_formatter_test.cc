@@ -27,7 +27,6 @@ using namespace std::chrono_literals;
 using namespace testing;
 
 namespace Nighthawk {
-namespace Client {
 
 class OutputCollectorTest : public Test {
 public:
@@ -215,5 +214,4 @@ TEST_F(StatidToNameTest, TestTranslations) {
   }
 }
 
-} // namespace Client
-} // namespace Nighthawk
+ } // namespace Nighthawk

@@ -13,7 +13,6 @@ public:
 };
 
 // TODO(oschaaf): restructure.
-namespace Client {
 
 /**
  * We translate certain exceptions thrown by TCLAP to NoServingException, for example when
@@ -32,6 +31,5 @@ public:
   MalformedArgvException(const std::string& what) : NighthawkException(what) {}
 };
 
-} // namespace Client
 
-} // namespace Nighthawk
+ } // namespace Nighthawk

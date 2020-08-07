@@ -37,12 +37,11 @@
 using namespace std::chrono_literals;
 
 namespace Nighthawk {
-namespace Client {
 
 Main::Main(int argc, const char* const* argv)
-    : Main(std::make_unique<Client::OptionsImpl>(argc, argv)) {}
+    : Main(std::make_unique<OptionsImpl>(argc, argv)) {}
 
-Main::Main(Client::OptionsPtr&& options) : options_(std::move(options)) {}
+Main::Main(OptionsPtr&& options) : options_(std::move(options)) {}
 
 bool Main::run() {
   Envoy::Thread::MutexBasicLockable log_lock;
@@ -91,5 +90,4 @@ bool Main::run() {
   return result;
 }
 
-} // namespace Client
-} // namespace Nighthawk
+ } // namespace Nighthawk

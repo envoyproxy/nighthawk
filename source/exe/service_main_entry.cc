@@ -6,8 +6,6 @@
 
 // NOLINT(namespace-nighthawk)
 
-using namespace Nighthawk::Client;
-
 int main(int argc, const char** argv) {
 #ifndef __APPLE__
   // absl::Symbolize mostly works without this, but this improves corner case
@@ -15,12 +13,12 @@ int main(int argc, const char** argv) {
   absl::InitializeSymbolizer(argv[0]);
 #endif
   try {
-    ServiceMain service(argc, argv); // NOLINT
+    Nighthawk::ServiceMain service(argc, argv); // NOLINT
     service.start();
     service.wait();
-  } catch (const Nighthawk::Client::NoServingException& e) {
+  } catch (const Nighthawk::NoServingException& e) {
     return EXIT_SUCCESS;
-  } catch (const Nighthawk::Client::MalformedArgvException& e) {
+  } catch (const Nighthawk::MalformedArgvException& e) {
     return EXIT_FAILURE;
   } catch (const Nighthawk::NighthawkException& e) {
     std::cerr << "Failure: " << e.what() << std::endl;

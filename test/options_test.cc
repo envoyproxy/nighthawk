@@ -10,7 +10,6 @@ using namespace std::chrono_literals;
 using namespace testing;
 
 namespace Nighthawk {
-namespace Client {
 
 class OptionsImplTest : public Test {
 public:
@@ -805,5 +804,4 @@ TEST_F(OptionsImplTest, H1ConnectionReuseStrategyValuesAreConstrained) {
       MalformedArgvException, "experimental-h1-connection-reuse-strategy");
 }
 
-} // namespace Client
-} // namespace Nighthawk
+ } // namespace Nighthawk

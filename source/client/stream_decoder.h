@@ -18,7 +18,6 @@
 #include "external/envoy/source/common/tracing/http_tracer_impl.h"
 
 namespace Nighthawk {
-namespace Client {
 
 class StreamDecoderCompletionCallback {
 public:
@@ -119,5 +118,4 @@ private:
   Envoy::StreamInfo::UpstreamTiming upstream_timing_;
 };
 
-} // namespace Client
-} // namespace Nighthawk
+ } // namespace Nighthawk

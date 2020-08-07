@@ -9,7 +9,6 @@
 using namespace testing;
 
 namespace Nighthawk {
-namespace Client {
 
 class SniUtilityTest : public Test {
 public:
@@ -43,5 +42,4 @@ TEST_F(SniUtilityTest, SniHostComputation) {
   }
 }
 
-} // namespace Client
-} // namespace Nighthawk
+ } // namespace Nighthawk

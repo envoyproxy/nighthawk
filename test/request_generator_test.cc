@@ -7,7 +7,6 @@
 #include "gtest/gtest.h"
 
 namespace Nighthawk {
-namespace Client {
 
 class RequestSourceTest : public testing::Test {};
 
@@ -23,5 +22,4 @@ TEST_F(RequestSourceTest, StaticRequestSourceImpl) {
   ASSERT_EQ(generator(), nullptr);
 }
 
-} // namespace Client
-} // namespace Nighthawk
+ } // namespace Nighthawk

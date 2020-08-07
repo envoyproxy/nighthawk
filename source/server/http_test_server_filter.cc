@@ -10,7 +10,6 @@
 #include "absl/strings/numbers.h"
 
 namespace Nighthawk {
-namespace Server {
 
 HttpTestServerDecoderFilterConfig::HttpTestServerDecoderFilterConfig(
     nighthawk::server::ResponseOptions proto_config)
@@ -31,7 +30,7 @@ void HttpTestServerDecoderFilter::sendReply() {
     decoder_callbacks_->sendLocalReply(
         static_cast<Envoy::Http::Code>(200), response_body,
         [this](Envoy::Http::ResponseHeaderMap& direct_response_headers) {
-          Configuration::applyConfigToResponseHeaders(direct_response_headers, base_config_);
+          applyConfigToResponseHeaders(direct_response_headers, base_config_);
         },
         absl::nullopt, "");
   } else {
@@ -47,9 +46,9 @@ HttpTestServerDecoderFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& header
                                            bool end_stream) {
   // TODO(oschaaf): Add functionality to clear fields
   base_config_ = config_->server_config();
-  const auto* request_config_header = headers.get(TestServer::HeaderNames::get().TestServerConfig);
+  const auto* request_config_header = headers.get(HeaderNames::get().TestServerConfig);
   if (request_config_header) {
-    json_merge_error_ = !Configuration::mergeJsonConfig(
+    json_merge_error_ = !mergeJsonConfig(
         request_config_header->value().getStringView(), base_config_, error_message_);
   }
   if (base_config_.echo_request_headers()) {
@@ -81,5 +80,4 @@ void HttpTestServerDecoderFilter::setDecoderFilterCallbacks(
   decoder_callbacks_ = &callbacks;
 }
 
-} // namespace Server
 } // namespace Nighthawk

@@ -14,7 +14,6 @@
 #include "client/options_impl.h"
 
 namespace Nighthawk {
-namespace Client {
 
 RemoteProcessImpl::RemoteProcessImpl(const Options& options,
                                      nighthawk::client::NighthawkService::Stub& stub)
@@ -60,5 +59,4 @@ bool RemoteProcessImpl::requestExecutionCancellation() {
   return false;
 }
 
-} // namespace Client
-} // namespace Nighthawk
+ } // namespace Nighthawk

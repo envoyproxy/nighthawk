@@ -17,7 +17,6 @@
 using namespace testing;
 
 namespace Nighthawk {
-namespace Client {
 
 class FactoriesTest : public Test {
 public:
@@ -128,5 +127,4 @@ INSTANTIATE_TEST_SUITE_P(
               nighthawk::client::OutputFormat::YAML, nighthawk::client::OutputFormat::DOTTED,
               nighthawk::client::OutputFormat::FORTIO}));
 
-} // namespace Client
-} // namespace Nighthawk
+ } // namespace Nighthawk

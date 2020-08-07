@@ -10,7 +10,6 @@
 #include "absl/strings/str_cat.h"
 
 namespace Nighthawk {
-namespace Server {
 
 HttpDynamicDelayDecoderFilterConfig::HttpDynamicDelayDecoderFilterConfig(
     nighthawk::server::ResponseOptions proto_config, Envoy::Runtime::Loader& runtime,
@@ -58,9 +57,9 @@ HttpDynamicDelayDecoderFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& head
 bool HttpDynamicDelayDecoderFilter::computeResponseOptions(
     const Envoy::Http::RequestHeaderMap& headers, std::string& error_message) {
   response_options_ = config_->server_config();
-  const auto* request_config_header = headers.get(TestServer::HeaderNames::get().TestServerConfig);
+  const auto* request_config_header = headers.get(HeaderNames::get().TestServerConfig);
   if (request_config_header) {
-    if (!Configuration::mergeJsonConfig(request_config_header->value().getStringView(),
+    if (!mergeJsonConfig(request_config_header->value().getStringView(),
                                         response_options_, error_message)) {
       return false;
     }
@@ -109,5 +108,4 @@ void HttpDynamicDelayDecoderFilter::setDecoderFilterCallbacks(
   Envoy::Extensions::HttpFilters::Fault::FaultFilter::setDecoderFilterCallbacks(callbacks);
 }
 
-} // namespace Server
 } // namespace Nighthawk

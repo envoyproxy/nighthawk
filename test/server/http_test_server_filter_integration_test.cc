@@ -87,7 +87,7 @@ public:
           const std::string header_config =
               fmt::format("{{response_body_size:{}}}", response_body_size);
           request_headers.addCopy(
-              Nighthawk::Server::TestServer::HeaderNames::get().TestServerConfig, header_config);
+              Nighthawk::HeaderNames::get().TestServerConfig, header_config);
         });
     ASSERT_TRUE(response->complete());
     EXPECT_EQ("200", response->headers().Status()->value().getStringView());
@@ -111,7 +111,7 @@ public:
           const std::string header_config =
               fmt::format("{{response_body_size:{}}}", response_body_size);
           request_headers.addCopy(
-              Nighthawk::Server::TestServer::HeaderNames::get().TestServerConfig, header_config);
+              Nighthawk::HeaderNames::get().TestServerConfig, header_config);
         });
     ASSERT_TRUE(response->complete());
     EXPECT_EQ("500", response->headers().Status()->value().getStringView());
@@ -182,7 +182,7 @@ TEST_P(HttpTestServerIntegrationTest, TestHeaderConfig) {
       [](Envoy::Http::RequestHeaderMapImpl& request_headers) {
         const std::string header_config =
             R"({response_headers: [ { header: { key: "foo", value: "bar2"}, append: true } ]})";
-        request_headers.addCopy(Nighthawk::Server::TestServer::HeaderNames::get().TestServerConfig,
+        request_headers.addCopy(HeaderNames::get().TestServerConfig,
                                 header_config);
       });
   ASSERT_TRUE(response->complete());
@@ -201,7 +201,7 @@ TEST_P(HttpTestServerIntegrationTest, TestEchoHeaders) {
           request_headers.addCopy(Envoy::Http::LowerCaseString("red"), "fox");
           request_headers.addCopy(Envoy::Http::LowerCaseString("unique_header"), unique_header);
           request_headers.addCopy(
-              Nighthawk::Server::TestServer::HeaderNames::get().TestServerConfig,
+              HeaderNames::get().TestServerConfig,
               "{echo_request_headers: true}");
         });
     ASSERT_TRUE(response->complete());
@@ -275,7 +275,7 @@ TEST_P(HttpTestServerIntegrationNoConfigTest, TestHeaderConfig) {
       [](Envoy::Http::RequestHeaderMapImpl& request_headers) {
         const std::string header_config =
             R"({response_headers: [ { header: { key: "foo", value: "bar2"}, append: true } ]})";
-        request_headers.addCopy(Nighthawk::Server::TestServer::HeaderNames::get().TestServerConfig,
+        request_headers.addCopy(HeaderNames::get().TestServerConfig,
                                 header_config);
       });
   ASSERT_TRUE(response->complete());
@@ -289,7 +289,7 @@ TEST_P(HttpTestServerIntegrationNoConfigTest, BadTestHeaderConfig) {
   Envoy::BufferingStreamDecoderPtr response = makeSingleRequest(
       lookupPort("http"), "GET", "/", "", downstream_protocol_, version_, "foo.com", "",
       [](Envoy::Http::RequestHeaderMapImpl& request_headers) {
-        request_headers.addCopy(Nighthawk::Server::TestServer::HeaderNames::get().TestServerConfig,
+        request_headers.addCopy(HeaderNames::get().TestServerConfig,
                                 kBadJson);
       });
   ASSERT_TRUE(response->complete());
@@ -309,9 +309,9 @@ TEST_F(HttpTestServerDecoderFilterTest, HeaderMerge) {
   response_header->mutable_header()->set_value("bar1");
   response_header->mutable_append();
 
-  Server::HttpTestServerDecoderFilterConfigSharedPtr config =
-      std::make_shared<Server::HttpTestServerDecoderFilterConfig>(initial_options);
-  Server::HttpTestServerDecoderFilter f(config);
+  HttpTestServerDecoderFilterConfigSharedPtr config =
+      std::make_shared<HttpTestServerDecoderFilterConfig>(initial_options);
+  HttpTestServerDecoderFilter f(config);
   std::string error_message;
   nighthawk::server::ResponseOptions options = config->server_config();
 
@@ -322,11 +322,11 @@ TEST_F(HttpTestServerDecoderFilterTest, HeaderMerge) {
   EXPECT_EQ(false, options.response_headers(0).append().value());
 
   Envoy::Http::TestResponseHeaderMapImpl header_map{{":status", "200"}, {"foo", "bar"}};
-  Server::Configuration::applyConfigToResponseHeaders(header_map, options);
+  applyConfigToResponseHeaders(header_map, options);
   EXPECT_TRUE(Envoy::TestUtility::headerMapEqualIgnoreOrder(
       header_map, Envoy::Http::TestResponseHeaderMapImpl{{":status", "200"}, {"foo", "bar1"}}));
 
-  EXPECT_TRUE(Server::Configuration::mergeJsonConfig(
+  EXPECT_TRUE(mergeJsonConfig(
       R"({response_headers: [ { header: { key: "foo", value: "bar2"}, append: false } ]})", options,
       error_message));
   EXPECT_EQ("", error_message);
@@ -336,11 +336,11 @@ TEST_F(HttpTestServerDecoderFilterTest, HeaderMerge) {
   EXPECT_EQ("bar2", options.response_headers(1).header().value());
   EXPECT_EQ(false, options.response_headers(1).append().value());
 
-  Server::Configuration::applyConfigToResponseHeaders(header_map, options);
+  applyConfigToResponseHeaders(header_map, options);
   EXPECT_TRUE(Envoy::TestUtility::headerMapEqualIgnoreOrder(
       header_map, Envoy::Http::TestRequestHeaderMapImpl{{":status", "200"}, {"foo", "bar2"}}));
 
-  EXPECT_TRUE(Server::Configuration::mergeJsonConfig(
+  EXPECT_TRUE(mergeJsonConfig(
       R"({response_headers: [ { header: { key: "foo2", value: "bar3"}, append: true } ]})", options,
       error_message));
   EXPECT_EQ("", error_message);
@@ -350,12 +350,12 @@ TEST_F(HttpTestServerDecoderFilterTest, HeaderMerge) {
   EXPECT_EQ("bar3", options.response_headers(2).header().value());
   EXPECT_EQ(true, options.response_headers(2).append().value());
 
-  Server::Configuration::applyConfigToResponseHeaders(header_map, options);
+  applyConfigToResponseHeaders(header_map, options);
   EXPECT_TRUE(Envoy::TestUtility::headerMapEqualIgnoreOrder(
       header_map, Envoy::Http::TestResponseHeaderMapImpl{
                       {":status", "200"}, {"foo", "bar2"}, {"foo2", "bar3"}}));
 
-  EXPECT_FALSE(Server::Configuration::mergeJsonConfig(kBadJson, options, error_message));
+  EXPECT_FALSE(mergeJsonConfig(kBadJson, options, error_message));
   EXPECT_EQ("Error merging json config: Unable to parse JSON as proto (INVALID_ARGUMENT:Unexpected "
             "token.\nbad_json\n^): bad_json",
             error_message);

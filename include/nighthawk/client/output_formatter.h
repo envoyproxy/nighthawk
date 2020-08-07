@@ -9,7 +9,6 @@
 #include "api/client/output.pb.validate.h"
 
 namespace Nighthawk {
-namespace Client {
 
 /**
  * Transforms from nighthawk::client::Output to an output format.
@@ -27,5 +26,4 @@ public:
 
 using OutputFormatterPtr = std::unique_ptr<OutputFormatter>;
 
-} // namespace Client
-} // namespace Nighthawk
+ } // namespace Nighthawk

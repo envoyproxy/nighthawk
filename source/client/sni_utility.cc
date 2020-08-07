@@ -3,7 +3,6 @@
 #include "absl/strings/strip.h"
 
 namespace Nighthawk {
-namespace Client {
 
 std::string SniUtility::computeSniHost(const std::vector<UriPtr>& uris,
                                        const std::vector<std::string>& request_headers,
@@ -42,5 +41,4 @@ std::string SniUtility::computeSniHost(const std::vector<UriPtr>& uris,
   return sni_host;
 }
 
-} // namespace Client
-} // namespace Nighthawk
+ } // namespace Nighthawk

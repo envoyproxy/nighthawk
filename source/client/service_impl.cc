@@ -9,7 +9,6 @@
 #include "client/output_collector_impl.h"
 
 namespace Nighthawk {
-namespace Client {
 
 void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionRequest& request) {
   std::unique_ptr<Envoy::Thread::LockGuard> busy_lock;
@@ -162,5 +161,4 @@ RequestSourcePtr RequestSourceServiceImpl::createStaticEmptyRequestSource(const 
   return ok ? grpc::Status::OK : grpc::Status(grpc::StatusCode::INTERNAL, std::string("error"));
 }
 
-} // namespace Client
-} // namespace Nighthawk
+ } // namespace Nighthawk

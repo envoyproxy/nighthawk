@@ -30,7 +30,6 @@ using namespace testing;
 using namespace std::chrono_literals;
 
 namespace Nighthawk {
-namespace Client {
 
 class ClientWorkerTest : public Test {
 public:
@@ -131,5 +130,4 @@ TEST_F(ClientWorkerTest, BasicTest) {
   worker->shutdown();
 }
 
-} // namespace Client
-} // namespace Nighthawk
+ } // namespace Nighthawk

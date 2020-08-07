@@ -10,8 +10,6 @@
 #include "server/http_dynamic_delay_filter.h"
 
 namespace Nighthawk {
-namespace Server {
-namespace Configuration {
 namespace {
 
 class HttpDynamicDelayDecoderFilterConfigFactory
@@ -37,14 +35,14 @@ public:
 private:
   Envoy::Http::FilterFactoryCb createFilter(const nighthawk::server::ResponseOptions& proto_config,
                                             Envoy::Server::Configuration::FactoryContext& context) {
-    Nighthawk::Server::HttpDynamicDelayDecoderFilterConfigSharedPtr config =
-        std::make_shared<Nighthawk::Server::HttpDynamicDelayDecoderFilterConfig>(
-            Nighthawk::Server::HttpDynamicDelayDecoderFilterConfig(
+    HttpDynamicDelayDecoderFilterConfigSharedPtr config =
+        std::make_shared<HttpDynamicDelayDecoderFilterConfig>(
+            HttpDynamicDelayDecoderFilterConfig(
                 proto_config, context.runtime(), "" /*stats_prefix*/, context.scope(),
                 context.timeSource()));
 
     return [config](Envoy::Http::FilterChainFactoryCallbacks& callbacks) -> void {
-      auto* filter = new Nighthawk::Server::HttpDynamicDelayDecoderFilter(config);
+      auto* filter = new HttpDynamicDelayDecoderFilter(config);
       callbacks.addStreamDecoderFilter(Envoy::Http::StreamDecoderFilterSharedPtr{filter});
     };
   }
@@ -55,6 +53,4 @@ private:
 static Envoy::Registry::RegisterFactory<HttpDynamicDelayDecoderFilterConfigFactory,
                                         Envoy::Server::Configuration::NamedHttpFilterConfigFactory>
     register_;
-} // namespace Configuration
-} // namespace Server
 } // namespace Nighthawk

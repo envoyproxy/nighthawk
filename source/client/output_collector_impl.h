@@ -8,7 +8,6 @@
 #include "nighthawk/client/output_collector.h"
 
 namespace Nighthawk {
-namespace Client {
 
 class OutputCollectorImpl : public OutputCollector {
 public:
@@ -29,5 +28,4 @@ private:
   nighthawk::client::Output output_;
 };
 
-} // namespace Client
-} // namespace Nighthawk
+ } // namespace Nighthawk

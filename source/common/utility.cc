@@ -67,12 +67,12 @@ void Utility::parseCommand(TCLAP::CmdLine& cmd, const int argc, const char* cons
     } catch (const TCLAP::ExitException&) {
       // failure() has already written an informative message to stderr, so all that's left to do
       // is throw our own exception with the original message.
-      throw Client::MalformedArgvException(e.what());
+      throw MalformedArgvException(e.what());
     }
   } catch (const TCLAP::ExitException& e) {
     // parse() throws an ExitException with status 0 after printing the output for --help and
     // --version.
-    throw Client::NoServingException();
+    throw NoServingException();
   }
 }
 

@@ -163,7 +163,7 @@ public:
     minimal_delay.set_nanos(minimal_delay_nanos);
     delay_factor.set_seconds(delay_factor_seconds);
     delay_factor.set_nanos(delay_factor_nanos);
-    return Server::HttpDynamicDelayDecoderFilter::computeConcurrencyBasedLinearDelayMs(
+    return HttpDynamicDelayDecoderFilter::computeConcurrencyBasedLinearDelayMs(
         concurrency, minimal_delay, delay_factor);
   }
 };

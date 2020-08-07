@@ -4,7 +4,6 @@
 #include "external/envoy/source/common/event/real_time_system.h"
 
 namespace Nighthawk {
-namespace Client {
 
 class OutputTransformMain : public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
@@ -18,5 +17,4 @@ private:
   std::istream& input_;
 };
 
-} // namespace Client
-} // namespace Nighthawk
+ } // namespace Nighthawk

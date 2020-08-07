@@ -9,7 +9,6 @@
 #include "api/client/service.grpc.pb.h"
 
 namespace Nighthawk {
-namespace Client {
 
 /**
  * Will delegate execution to a remote nighthawk_service using gRPC.
@@ -41,5 +40,4 @@ private:
   nighthawk::client::NighthawkService::Stub& stub_;
 };
 
-} // namespace Client
-} // namespace Nighthawk
+ } // namespace Nighthawk

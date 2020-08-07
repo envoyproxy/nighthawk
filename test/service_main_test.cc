@@ -16,7 +16,6 @@ using namespace testing;
 // See if we can add some python integration tests.
 
 namespace Nighthawk {
-namespace Client {
 
 class ServiceMainTest : public Test {};
 
@@ -80,5 +79,4 @@ TEST_P(ServiceMainTestP, PortZero) {
   service_main.shutdown();
 }
 
-} // namespace Client
-} // namespace Nighthawk
+ } // namespace Nighthawk

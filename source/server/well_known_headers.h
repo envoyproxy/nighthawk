@@ -7,8 +7,6 @@
 #include "external/envoy/source/common/singleton/const_singleton.h"
 
 namespace Nighthawk {
-namespace Server {
-namespace TestServer {
 
 class HeaderNameValues {
 public:
@@ -17,6 +15,4 @@ public:
 
 using HeaderNames = Envoy::ConstSingleton<HeaderNameValues>;
 
-} // namespace TestServer
-} // namespace Server
 } // namespace Nighthawk

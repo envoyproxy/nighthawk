@@ -9,7 +9,6 @@
 #include "gmock/gmock.h"
 
 namespace Nighthawk {
-namespace Client {
 
 class MockBenchmarkClientFactory : public BenchmarkClientFactory {
 public:
@@ -21,5 +20,4 @@ public:
                                         int, RequestSource& request_generator));
 };
 
-} // namespace Client
-} // namespace Nighthawk
+ } // namespace Nighthawk

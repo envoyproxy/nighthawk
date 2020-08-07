@@ -17,7 +17,6 @@
 #include "fmt/ranges.h"
 
 namespace Nighthawk {
-namespace Client {
 
 #define TCLAP_SET_IF_SPECIFIED(command, value_member)                                              \
   ((value_member) = (((command).isSet()) ? ((command).getValue()) : (value_member)))
@@ -784,5 +783,4 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
   return command_line_options;
 }
 
-} // namespace Client
-} // namespace Nighthawk
+ } // namespace Nighthawk

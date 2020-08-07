@@ -27,7 +27,6 @@
 #include "client/stream_decoder.h"
 
 namespace Nighthawk {
-namespace Client {
 
 using namespace std::chrono_literals;
 
@@ -164,5 +163,4 @@ private:
   const bool provide_resource_backpressure_;
 };
 
-} // namespace Client
-} // namespace Nighthawk
+ } // namespace Nighthawk

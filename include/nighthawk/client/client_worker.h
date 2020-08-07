@@ -11,7 +11,6 @@
 #include "nighthawk/common/worker.h"
 
 namespace Nighthawk {
-namespace Client {
 
 /**
  * Interface for a threaded benchmark client worker.
@@ -43,5 +42,4 @@ public:
 
 using ClientWorkerPtr = std::unique_ptr<ClientWorker>;
 
-} // namespace Client
-} // namespace Nighthawk
+ } // namespace Nighthawk

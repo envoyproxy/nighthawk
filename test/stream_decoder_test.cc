@@ -18,7 +18,6 @@ using namespace std::chrono_literals;
 using namespace testing;
 
 namespace Nighthawk {
-namespace Client {
 
 class StreamDecoderTest : public Test, public StreamDecoderCompletionCallback {
 public:
@@ -208,5 +207,4 @@ TEST_F(StreamDecoderTest, StreamResetReasonToResponseFlag) {
             Envoy::StreamInfo::ResponseFlag::UpstreamRemoteReset);
 }
 
-} // namespace Client
-} // namespace Nighthawk
+ } // namespace Nighthawk

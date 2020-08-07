@@ -14,7 +14,6 @@
 #include "absl/strings/string_view.h"
 
 namespace Nighthawk {
-namespace Client {
 
 class OutputFormatterImpl : public OutputFormatter {
 public:
@@ -108,5 +107,4 @@ protected:
   double durationToSeconds(const Envoy::ProtobufWkt::Duration& duration) const;
 };
 
-} // namespace Client
-} // namespace Nighthawk
+ } // namespace Nighthawk

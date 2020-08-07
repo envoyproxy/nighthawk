@@ -20,7 +20,6 @@
 using namespace std::chrono_literals;
 
 namespace Nighthawk {
-namespace Client {
 
 OptionBasedFactoryImpl::OptionBasedFactoryImpl(const Options& options) : options_(options) {}
 
@@ -98,15 +97,15 @@ OutputFormatterPtr OutputFormatterFactoryImpl::create(
     const nighthawk::client::OutputFormat_OutputFormatOptions output_format) const {
   switch (output_format) {
   case nighthawk::client::OutputFormat::HUMAN:
-    return std::make_unique<Client::ConsoleOutputFormatterImpl>();
+    return std::make_unique<ConsoleOutputFormatterImpl>();
   case nighthawk::client::OutputFormat::JSON:
-    return std::make_unique<Client::JsonOutputFormatterImpl>();
+    return std::make_unique<JsonOutputFormatterImpl>();
   case nighthawk::client::OutputFormat::YAML:
-    return std::make_unique<Client::YamlOutputFormatterImpl>();
+    return std::make_unique<YamlOutputFormatterImpl>();
   case nighthawk::client::OutputFormat::DOTTED:
-    return std::make_unique<Client::DottedStringOutputFormatterImpl>();
+    return std::make_unique<DottedStringOutputFormatterImpl>();
   case nighthawk::client::OutputFormat::FORTIO:
-    return std::make_unique<Client::FortioOutputFormatterImpl>();
+    return std::make_unique<FortioOutputFormatterImpl>();
   default:
     NOT_REACHED_GCOVR_EXCL_LINE;
   }
@@ -220,5 +219,4 @@ TerminationPredicate* TerminationPredicateFactoryImpl::linkConfiguredPredicates(
   return current_predicate;
 }
 
-} // namespace Client
-} // namespace Nighthawk
+ } // namespace Nighthawk

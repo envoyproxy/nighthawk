@@ -19,7 +19,6 @@
 #include "tclap/CmdLine.h"
 
 namespace Nighthawk {
-namespace Client {
 
 class ServiceMain : public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
@@ -50,5 +49,4 @@ private:
   SignalHandlerPtr signal_handler_;
 };
 
-} // namespace Client
-} // namespace Nighthawk
+ } // namespace Nighthawk

@@ -12,7 +12,6 @@
 #include "nighthawk/common/uri.h"
 
 namespace Nighthawk {
-namespace Client {
 
 using CompletionCallback = OperationCallback;
 
@@ -64,5 +63,4 @@ public:
 
 using BenchmarkClientPtr = std::unique_ptr<BenchmarkClient>;
 
-} // namespace Client
 } // namespace Nighthawk

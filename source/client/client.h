@@ -14,12 +14,11 @@
 #include "process_impl.h"
 
 namespace Nighthawk {
-namespace Client {
 
 class Main : public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
   Main(int argc, const char* const* argv);
-  Main(Client::OptionsPtr&& options);
+  Main(OptionsPtr&& options);
   bool run();
 
 private:
@@ -27,5 +26,4 @@ private:
   std::unique_ptr<Envoy::Logger::Context> logging_context_;
 };
 
-} // namespace Client
-} // namespace Nighthawk
+ } // namespace Nighthawk

@@ -26,7 +26,7 @@ using namespace testing;
 
 namespace Nighthawk {
 
-class BenchmarkClientHttpTest : public Test {
+class BenchmarkClientHttpTest : public testing::Test {
 public:
   BenchmarkClientHttpTest()
       : api_(Envoy::Api::createApiForTest(time_system_)),
@@ -92,7 +92,7 @@ public:
     const uint64_t amount = amount_of_request;
     uint64_t inflight_response_count = 0;
 
-    Client::CompletionCallback f = [this, &inflight_response_count](bool, bool) {
+    CompletionCallback f = [this, &inflight_response_count](bool, bool) {
       --inflight_response_count;
       if (inflight_response_count == 0) {
         dispatcher_->exit();
@@ -129,7 +129,7 @@ public:
   }
 
   void setupBenchmarkClient() {
-    client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
+    client_ = std::make_unique<BenchmarkClientHttpImpl>(
         *api_, *dispatcher_, store_, statistic_, false, cluster_manager_, http_tracer_, "benchmark",
         request_generator_, true);
   }
@@ -153,7 +153,7 @@ public:
   Envoy::Random::RandomGeneratorImpl generator_;
   NiceMock<Envoy::ThreadLocal::MockInstance> tls_;
   NiceMock<Envoy::Runtime::MockLoader> runtime_;
-  std::unique_ptr<Client::BenchmarkClientHttpImpl> client_;
+  std::unique_ptr<BenchmarkClientHttpImpl> client_;
   Envoy::Upstream::ClusterManagerPtr cluster_manager_;
   Envoy::Http::ConnectionPool::MockInstance pool_;
   Envoy::ProcessWide process_wide;
@@ -165,7 +165,7 @@ public:
   std::string response_code_;
   RequestGenerator request_generator_;
   int worker_number_{0};
-  Client::BenchmarkClientStatistic statistic_;
+  BenchmarkClientStatistic statistic_;
 };
 
 TEST_F(BenchmarkClientHttpTest, BasicTestH1200) {
