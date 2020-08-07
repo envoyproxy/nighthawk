@@ -107,4 +107,4 @@ protected:
   double durationToSeconds(const Envoy::ProtobufWkt::Duration& duration) const;
 };
 
- } // namespace Nighthawk
+} // namespace Nighthawk

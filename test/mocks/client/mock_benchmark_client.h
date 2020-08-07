@@ -19,4 +19,4 @@ public:
   MOCK_CONST_METHOD0(requestHeaders, const Envoy::Http::RequestHeaderMap&());
 };
 
- } // namespace Nighthawk
+} // namespace Nighthawk

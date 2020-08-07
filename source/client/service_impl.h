@@ -84,4 +84,4 @@ private:
   RequestSourcePtr createStaticEmptyRequestSource(const uint32_t amount);
 };
 
- } // namespace Nighthawk
+} // namespace Nighthawk

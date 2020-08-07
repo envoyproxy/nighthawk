@@ -22,4 +22,4 @@ TEST_F(RequestSourceTest, StaticRequestSourceImpl) {
   ASSERT_EQ(generator(), nullptr);
 }
 
- } // namespace Nighthawk
+} // namespace Nighthawk

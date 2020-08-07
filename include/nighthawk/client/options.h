@@ -81,4 +81,4 @@ public:
 
 using OptionsPtr = std::unique_ptr<Options>;
 
- } // namespace Nighthawk
+} // namespace Nighthawk

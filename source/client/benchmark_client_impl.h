@@ -163,4 +163,4 @@ private:
   const bool provide_resource_backpressure_;
 };
 
- } // namespace Nighthawk
+} // namespace Nighthawk

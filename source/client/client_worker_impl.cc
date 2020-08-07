@@ -104,4 +104,4 @@ StatisticPtrMap ClientWorkerImpl::statistics() const {
   return statistics;
 }
 
- } // namespace Nighthawk
+} // namespace Nighthawk

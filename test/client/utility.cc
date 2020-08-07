@@ -24,4 +24,4 @@ std::unique_ptr<OptionsImpl> TestUtility::createOptionsImpl(const std::vector<co
   return std::make_unique<OptionsImpl>(argv.size(), argv.data());
 }
 
- } // namespace Nighthawk
+} // namespace Nighthawk

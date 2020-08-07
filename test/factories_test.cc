@@ -127,4 +127,4 @@ INSTANTIATE_TEST_SUITE_P(
               nighthawk::client::OutputFormat::YAML, nighthawk::client::OutputFormat::DOTTED,
               nighthawk::client::OutputFormat::FORTIO}));
 
- } // namespace Nighthawk
+} // namespace Nighthawk

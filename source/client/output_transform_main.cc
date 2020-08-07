@@ -61,4 +61,4 @@ uint32_t OutputTransformMain::run() {
   return 0;
 }
 
- } // namespace Nighthawk
+} // namespace Nighthawk

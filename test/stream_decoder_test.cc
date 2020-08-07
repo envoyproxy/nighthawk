@@ -207,4 +207,4 @@ TEST_F(StreamDecoderTest, StreamResetReasonToResponseFlag) {
             Envoy::StreamInfo::ResponseFlag::UpstreamRemoteReset);
 }
 
- } // namespace Nighthawk
+} // namespace Nighthawk

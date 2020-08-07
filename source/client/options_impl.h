@@ -139,4 +139,4 @@ private:
   uint32_t stats_flush_interval_{5};
 };
 
- } // namespace Nighthawk
+} // namespace Nighthawk

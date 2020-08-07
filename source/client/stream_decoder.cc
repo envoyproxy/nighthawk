@@ -163,4 +163,4 @@ void StreamDecoder::setupForTracing() {
   stream_info_.setDownstreamRemoteAddress(remote_address);
 }
 
- } // namespace Nighthawk
+} // namespace Nighthawk

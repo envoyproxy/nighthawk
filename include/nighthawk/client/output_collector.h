@@ -41,4 +41,4 @@ public:
 
 using OutputCollectorPtr = std::unique_ptr<OutputCollector>;
 
- } // namespace Nighthawk
+} // namespace Nighthawk

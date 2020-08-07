@@ -118,4 +118,4 @@ private:
   Envoy::StreamInfo::UpstreamTiming upstream_timing_;
 };
 
- } // namespace Nighthawk
+} // namespace Nighthawk

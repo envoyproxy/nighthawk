@@ -20,4 +20,4 @@ public:
                                         int, RequestSource& request_generator));
 };
 
- } // namespace Nighthawk
+} // namespace Nighthawk

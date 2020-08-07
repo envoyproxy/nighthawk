@@ -390,4 +390,4 @@ const nighthawk::client::DurationHistogram FortioOutputFormatterImpl::renderFort
   return fortio_histogram;
 }
 
- } // namespace Nighthawk
+} // namespace Nighthawk

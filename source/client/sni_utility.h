@@ -29,4 +29,4 @@ public:
                                     const Envoy::Http::Protocol protocol);
 };
 
- } // namespace Nighthawk
+} // namespace Nighthawk

@@ -59,4 +59,4 @@ bool RemoteProcessImpl::requestExecutionCancellation() {
   return false;
 }
 
- } // namespace Nighthawk
+} // namespace Nighthawk

@@ -22,4 +22,4 @@ private:
   TestUtility() = default;
 };
 
- } // namespace Nighthawk
+} // namespace Nighthawk

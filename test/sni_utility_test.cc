@@ -42,4 +42,4 @@ TEST_F(SniUtilityTest, SniHostComputation) {
   }
 }
 
- } // namespace Nighthawk
+} // namespace Nighthawk

@@ -197,4 +197,4 @@ TEST_P(ServiceTest, Unresolvable) {
   runWithFailingValidationExpectations(true, "Unknown failure");
 }
 
- } // namespace Nighthawk
+} // namespace Nighthawk

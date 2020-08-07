@@ -55,4 +55,4 @@ public:
   MOCK_CONST_METHOD0(statsFlushInterval, uint32_t());
 };
 
- } // namespace Nighthawk
+} // namespace Nighthawk

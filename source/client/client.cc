@@ -90,4 +90,4 @@ bool Main::run() {
   return result;
 }
 
- } // namespace Nighthawk
+} // namespace Nighthawk

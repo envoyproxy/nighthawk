@@ -214,4 +214,4 @@ TEST_F(StatidToNameTest, TestTranslations) {
   }
 }
 
- } // namespace Nighthawk
+} // namespace Nighthawk

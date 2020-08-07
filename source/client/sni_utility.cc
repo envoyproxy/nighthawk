@@ -41,4 +41,4 @@ std::string SniUtility::computeSniHost(const std::vector<UriPtr>& uris,
   return sni_host;
 }
 
- } // namespace Nighthawk
+} // namespace Nighthawk

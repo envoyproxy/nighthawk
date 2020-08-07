@@ -64,4 +64,4 @@ public:
   create(const nighthawk::client::OutputFormat_OutputFormatOptions options) const PURE;
 };
 
- } // namespace Nighthawk
+} // namespace Nighthawk

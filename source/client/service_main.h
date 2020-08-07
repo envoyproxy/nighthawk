@@ -49,4 +49,4 @@ private:
   SignalHandlerPtr signal_handler_;
 };
 
- } // namespace Nighthawk
+} // namespace Nighthawk

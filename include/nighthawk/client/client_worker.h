@@ -42,4 +42,4 @@ public:
 
 using ClientWorkerPtr = std::unique_ptr<ClientWorker>;
 
- } // namespace Nighthawk
+} // namespace Nighthawk

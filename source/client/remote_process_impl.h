@@ -40,4 +40,4 @@ private:
   nighthawk::client::NighthawkService::Stub& stub_;
 };
 
- } // namespace Nighthawk
+} // namespace Nighthawk

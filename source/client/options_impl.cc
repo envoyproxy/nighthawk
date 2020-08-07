@@ -783,4 +783,4 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
   return command_line_options;
 }
 
- } // namespace Nighthawk
+} // namespace Nighthawk

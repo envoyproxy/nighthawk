@@ -31,4 +31,4 @@ public:
 
 using ProcessPtr = std::unique_ptr<Process>;
 
- } // namespace Nighthawk
+} // namespace Nighthawk

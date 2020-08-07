@@ -79,4 +79,4 @@ TEST_F(ClientTest, BadRun) {
   EXPECT_FALSE(program.run());
 }
 
- } // namespace Nighthawk
+} // namespace Nighthawk

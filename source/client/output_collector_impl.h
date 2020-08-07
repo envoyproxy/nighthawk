@@ -28,4 +28,4 @@ private:
   nighthawk::client::Output output_;
 };
 
- } // namespace Nighthawk
+} // namespace Nighthawk

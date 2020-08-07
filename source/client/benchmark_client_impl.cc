@@ -223,4 +223,4 @@ void BenchmarkClientHttpImpl::exportLatency(const uint32_t response_code,
   }
 }
 
- } // namespace Nighthawk
+} // namespace Nighthawk

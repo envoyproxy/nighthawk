@@ -543,4 +543,4 @@ void ProcessImpl::setupForHRTimers() {
   putenv(const_cast<char*>("EVENT_PRECISE_TIMER=1"));
 }
 
- } // namespace Nighthawk
+} // namespace Nighthawk

@@ -130,4 +130,4 @@ TEST_F(ClientWorkerTest, BasicTest) {
   worker->shutdown();
 }
 
- } // namespace Nighthawk
+} // namespace Nighthawk

@@ -78,4 +78,4 @@ public:
       const TerminationPredicate::Status termination_status, Envoy::Stats::Scope& scope) const;
 };
 
- } // namespace Nighthawk
+} // namespace Nighthawk

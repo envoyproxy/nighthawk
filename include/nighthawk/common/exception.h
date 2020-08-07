@@ -32,4 +32,4 @@ public:
 };
 
 
- } // namespace Nighthawk
+} // namespace Nighthawk

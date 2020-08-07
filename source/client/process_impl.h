@@ -157,4 +157,4 @@ private:
   bool cancelled_{false};
 };
 
- } // namespace Nighthawk
+} // namespace Nighthawk

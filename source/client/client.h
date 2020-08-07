@@ -26,4 +26,4 @@ private:
   std::unique_ptr<Envoy::Logger::Context> logging_context_;
 };
 
- } // namespace Nighthawk
+} // namespace Nighthawk

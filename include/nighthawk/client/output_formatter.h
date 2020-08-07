@@ -26,4 +26,4 @@ public:
 
 using OutputFormatterPtr = std::unique_ptr<OutputFormatter>;
 
- } // namespace Nighthawk
+} // namespace Nighthawk

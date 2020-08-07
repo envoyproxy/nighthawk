@@ -70,4 +70,4 @@ private:
 
 using ClientWorkerImplPtr = std::unique_ptr<ClientWorkerImpl>;
 
- } // namespace Nighthawk
+} // namespace Nighthawk

@@ -117,4 +117,4 @@ TEST_P(ProcessTest, CancelExecutionBeforeBeginLoadTest) {
   runProcess(RunExpectation::EXPECT_SUCCESS, true, true);
 }
 
- } // namespace Nighthawk
+} // namespace Nighthawk

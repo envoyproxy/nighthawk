@@ -17,4 +17,4 @@ private:
   std::istream& input_;
 };
 
- } // namespace Nighthawk
+} // namespace Nighthawk

@@ -91,4 +91,4 @@ void ServiceMain::wait() {
 
 void ServiceMain::shutdown() { ENVOY_LOG(info, "Nighthawk grpc service exits"); }
 
- } // namespace Nighthawk
+} // namespace Nighthawk

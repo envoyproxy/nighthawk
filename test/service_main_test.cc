@@ -79,4 +79,4 @@ TEST_P(ServiceMainTestP, PortZero) {
   service_main.shutdown();
 }
 
- } // namespace Nighthawk
+} // namespace Nighthawk

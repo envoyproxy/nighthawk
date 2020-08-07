@@ -47,4 +47,4 @@ void OutputCollectorImpl::addResult(absl::string_view name,
       Envoy::Protobuf::util::TimeUtil::NanosecondsToDuration(execution_duration.count());
 }
 
- } // namespace Nighthawk
+} // namespace Nighthawk

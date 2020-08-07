@@ -161,4 +161,4 @@ RequestSourcePtr RequestSourceServiceImpl::createStaticEmptyRequestSource(const 
   return ok ? grpc::Status::OK : grpc::Status(grpc::StatusCode::INTERNAL, std::string("error"));
 }
 
- } // namespace Nighthawk
+} // namespace Nighthawk

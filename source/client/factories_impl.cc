@@ -219,4 +219,4 @@ TerminationPredicate* TerminationPredicateFactoryImpl::linkConfiguredPredicates(
   return current_predicate;
 }
 
- } // namespace Nighthawk
+} // namespace Nighthawk

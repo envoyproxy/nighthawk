@@ -804,4 +804,4 @@ TEST_F(OptionsImplTest, H1ConnectionReuseStrategyValuesAreConstrained) {
       MalformedArgvException, "experimental-h1-connection-reuse-strategy");
 }
 
- } // namespace Nighthawk
+} // namespace Nighthawk

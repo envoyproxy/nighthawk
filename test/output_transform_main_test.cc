@@ -62,4 +62,4 @@ TEST_F(OutputTransformMainTest, HappyFlow) {
   EXPECT_EQ(main.run(), 0);
 }
 
- } // namespace Nighthawk
+} // namespace Nighthawk
