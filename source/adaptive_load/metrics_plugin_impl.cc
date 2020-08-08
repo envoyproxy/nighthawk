@@ -101,9 +101,9 @@ bool ExtractValueOrRecordError(absl::StatusOr<T> status_or, U& value,
 
 /**
  * Extracts counters from a Nighthawk Service Output proto and computes metrics from them, storing
- * them in a map.
+ * the metrics in a map.
  *
- * @param nighthawk_output An Output proto returned by the Nighthawk Service.
+ * @param nighthawk_output An Output proto returned from Nighthawk Service.
  * @param metric_from_name A map to write computed metrics under various names.
  * @param errors A place to accumulate error messages.
  */
@@ -116,14 +116,15 @@ void ExtractCounters(const nighthawk::client::Output& nighthawk_output,
   }
   const int64_t actual_duration_seconds =
       Envoy::Protobuf::util::TimeUtil::DurationToSeconds(global_result.execution_duration());
+  // 1 worker: 'global' Result only. >1 workers: Result for each worker plus a 'global' Result.
   const uint32_t number_of_workers =
       nighthawk_output.results_size() == 1 ? 1 : nighthawk_output.results_size() - 1;
   const double total_specified =
       static_cast<double>(nighthawk_output.options().requests_per_second().value() *
                           actual_duration_seconds * number_of_workers);
+  // Proceed through all calculations without crashing in order to capture all errors.
   double total_sent = std::numeric_limits<double>::quiet_NaN();
   double total_2xx = std::numeric_limits<double>::quiet_NaN();
-  // Proceed through all calculations without crashing in order to capture all errors.
   ExtractValueOrRecordError(GetCounter(global_result, "upstream_rq_total"), total_sent, errors);
   ExtractValueOrRecordError(GetCounter(global_result, "benchmark.http_2xx"), total_2xx, errors);
   if (actual_duration_seconds > 0.0) {
@@ -145,10 +146,10 @@ void ExtractCounters(const nighthawk::client::Output& nighthawk_output,
 }
 
 /**
- * Extracts a Statistic for latency from a Result proto and computes metrics from Statistic values,
- * storing the metrics in a map.
+ * Extracts a Statistic for latency from a Nighthawk Service Output proto and computes metrics from
+ * Statistic values, storing the metrics in a map.
  *
- * @param nighthawk_output An Output proto returned by the Nighthawk Service.
+ * @param nighthawk_output An Output proto returned from Nighthawk Service.
  * @param metric_from_name A map to write computed metrics under various names.
  * @param errors A place to accumulate error messages.
  */
