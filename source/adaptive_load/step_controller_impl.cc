@@ -56,7 +56,7 @@ absl::Status ExponentialSearchStepControllerConfigFactory::ValidateConfig(
   ExponentialSearchStepControllerConfig config;
   Envoy::MessageUtil::unpackTo(any, config);
   if (config.has_input_variable_setter()) {
-    Envoy::StatusOr<InputVariableSetterPtr> input_variable_setter_or = LoadInputVariableSetterPlugin(config.input_variable_setter());
+    absl::StatusOr<InputVariableSetterPtr> input_variable_setter_or = LoadInputVariableSetterPlugin(config.input_variable_setter());
     if (!input_variable_setter_or.ok()) {
       return input_variable_setter_or.status();
     }
@@ -94,7 +94,7 @@ ExponentialSearchStepController::ExponentialSearchStepController(
   }
 }
 
-Envoy::StatusOr<nighthawk::client::CommandLineOptions>
+absl::StatusOr<nighthawk::client::CommandLineOptions>
 ExponentialSearchStepController::GetCurrentCommandLineOptions() const {
   nighthawk::client::CommandLineOptions options = command_line_options_template_;
   absl::Status status = input_variable_setter_->SetInputVariable(options, current_load_value_);

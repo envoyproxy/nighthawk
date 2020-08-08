@@ -10,13 +10,23 @@ licenses(["notice"])  # Apache 2
 envoy_package()
 
 envoy_cc_test_library(
-    name = "utility",
-    srcs = ["utility.cc"],
-    hdrs = ["utility.h"],
+    name = "fake_time_source",
+    srcs = ["fake_time_source.cc"],
+    hdrs = ["fake_time_source.h"],
     repository = "@envoy",
     deps = [
         "//source/client:nighthawk_client_lib",
         "@com_google_absl//absl/time",
+    ],
+)
+
+envoy_cc_test_library(
+    name = "minimal_output",
+    srcs = ["minimal_output.cc"],
+    hdrs = ["minimal_output.h"],
+    repository = "@envoy",
+    deps = [
+        "//source/client:nighthawk_client_lib",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
         "@envoy//test/test_common:utility_lib",
     ],
@@ -35,7 +45,7 @@ envoy_cc_test(
         "//source/adaptive_load:adaptive_load_client_main",
         "//source/adaptive_load:scoring_function_impl",
         "//source/adaptive_load:step_controller_impl",
-        ":utility",
+        ":minimal_output",
         "//test/test_common:environment_lib",
         "@com_github_grpc_grpc//:grpc++_test",
         "@envoy//source/common/filesystem:filesystem_lib",
@@ -51,7 +61,7 @@ envoy_cc_test(
     srcs = ["adaptive_load_controller_test.cc"],
     repository = "@envoy",
     deps = [
-        ":utility",
+        ":minimal_output",
         "//source/adaptive_load:adaptive_load_controller_impl",
         "//source/adaptive_load:scoring_function_impl",
         "//source/client:nighthawk_client_lib",
@@ -73,7 +83,7 @@ envoy_cc_test(
     srcs = ["metrics_plugin_test.cc"],
     repository = "@envoy",
     deps = [
-        ":utility",
+        ":minimal_output",
         "//source/adaptive_load:metrics_plugin_impl",
     ],
 )

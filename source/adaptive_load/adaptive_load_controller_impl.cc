@@ -9,7 +9,7 @@
 #include "nighthawk/adaptive_load/step_controller.h"
 
 #include "external/envoy/source/common/common/logger.h"
-#include "external/envoy/source/common/common/statusor.h"
+#include "external/envoy/third_party/statusor/statusor.h"
 #include "external/envoy/source/common/protobuf/protobuf.h"
 
 #include "api/adaptive_load/adaptive_load.pb.h"
@@ -137,7 +137,7 @@ BenchmarkResult AnalyzeNighthawkBenchmark(
     MetricEvaluation evaluation;
     evaluation.set_metric_id(
         absl::StrCat(metric_spec->metrics_plugin_name(), "/", metric_spec->metric_name()));
-    const Envoy::StatusOr<double> metric_value_or =
+    const absl::StatusOr<double> metric_value_or =
         name_to_plugin_map[metric_spec->metrics_plugin_name()]->GetMetricByName(
             metric_spec->metric_name());
     if (metric_value_or.ok()) {
@@ -255,7 +255,7 @@ absl::Status CheckSessionSpec(const nighthawk::adaptive_load::AdaptiveLoadSessio
   for (const envoy::config::core::v3::TypedExtensionConfig& config :
        spec.metrics_plugin_configs()) {
     plugin_names.push_back(config.name());
-    Envoy::StatusOr<MetricsPluginPtr> metrics_plugin_or = LoadMetricsPlugin(config);
+    absl::StatusOr<MetricsPluginPtr> metrics_plugin_or = LoadMetricsPlugin(config);
     if (!metrics_plugin_or.ok()) {
       errors += absl::StrCat("Failed to load MetricsPlugin: ", metrics_plugin_or.status().message(),
                              "\n");
@@ -263,7 +263,7 @@ absl::Status CheckSessionSpec(const nighthawk::adaptive_load::AdaptiveLoadSessio
     }
     plugin_from_name[config.name()] = std::move(metrics_plugin_or.value());
   }
-  Envoy::StatusOr<StepControllerPtr> step_controller_or =
+  absl::StatusOr<StepControllerPtr> step_controller_or =
       LoadStepControllerPlugin(spec.step_controller_config(), spec.nighthawk_traffic_template());
   if (!step_controller_or.ok()) {
     errors += absl::StrCat(
@@ -272,7 +272,7 @@ absl::Status CheckSessionSpec(const nighthawk::adaptive_load::AdaptiveLoadSessio
   std::vector<MetricSpec> all_metric_specs;
   for (const MetricSpecWithThreshold& metric_threshold : spec.metric_thresholds()) {
     all_metric_specs.push_back(metric_threshold.metric_spec());
-    Envoy::StatusOr<ScoringFunctionPtr> scoring_function_or =
+    absl::StatusOr<ScoringFunctionPtr> scoring_function_or =
         LoadScoringFunctionPlugin(metric_threshold.threshold_spec().scoring_function());
     if (!scoring_function_or.ok()) {
       errors += absl::StrCat(
@@ -353,7 +353,7 @@ AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
       ENVOY_LOG_MISC(info, message);
       return output;
     }
-    Envoy::StatusOr<nighthawk::client::CommandLineOptions> command_line_options_or =
+    absl::StatusOr<nighthawk::client::CommandLineOptions> command_line_options_or =
         step_controller->GetCurrentCommandLineOptions();
     if (!command_line_options_or.ok()) {
       std::string message =
@@ -374,7 +374,7 @@ AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
     *output.mutable_adjusting_stage_results()->Add() = result;
     step_controller->UpdateAndRecompute(result);
   }
-  Envoy::StatusOr<nighthawk::client::CommandLineOptions> command_line_options_or =
+  absl::StatusOr<nighthawk::client::CommandLineOptions> command_line_options_or =
       step_controller->GetCurrentCommandLineOptions();
   if (!command_line_options_or.ok()) {
     std::string message =

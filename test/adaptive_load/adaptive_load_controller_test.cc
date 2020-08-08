@@ -9,7 +9,7 @@
 #include "nighthawk/adaptive_load/scoring_function.h"
 #include "nighthawk/adaptive_load/step_controller.h"
 
-#include "external/envoy/source/common/common/statusor.h"
+#include "external/envoy/third_party/statusor/statusor.h"
 #include "external/envoy/source/common/config/utility.h"
 #include "external/envoy/source/common/protobuf/protobuf.h"
 
@@ -98,7 +98,7 @@ MakeSimpleMockClientReaderWriter() {
 class FakeMetricsPlugin : public MetricsPlugin {
 public:
   FakeMetricsPlugin() {}
-  Envoy::StatusOr<double> GetMetricByName(absl::string_view) override { return 5.0; }
+  absl::StatusOr<double> GetMetricByName(absl::string_view) override { return 5.0; }
   const std::vector<std::string> GetAllSupportedMetricNames() const override { return {"metric1"}; }
 };
 
@@ -167,7 +167,7 @@ public:
   /**
    * Recommends a fixed load of 678 RPS every time.
    */
-  Envoy::StatusOr<nighthawk::client::CommandLineOptions>
+  absl::StatusOr<nighthawk::client::CommandLineOptions>
   GetCurrentCommandLineOptions() const override {
     nighthawk::client::CommandLineOptions options;
     options.mutable_requests_per_second()->set_value(678);

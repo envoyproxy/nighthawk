@@ -126,7 +126,7 @@ public:
   // config type. We use LinearScoringFunctionConfig for all plugins in this test.
   TestMetricsPlugin(const nighthawk::adaptive_load::LinearScoringFunctionConfig& config)
       : value_from_config_proto_{config.threshold()} {}
-  Envoy::StatusOr<double> GetMetricByName(absl::string_view) override { return 5.0; }
+  absl::StatusOr<double> GetMetricByName(absl::string_view) override { return 5.0; }
   const std::vector<std::string> GetAllSupportedMetricNames() const override { return {}; }
   const double value_from_config_proto_;
 };
@@ -168,7 +168,7 @@ public:
             command_line_options_template.requests_per_second().value()} {}
   bool IsConverged() const override { return false; }
   bool IsDoomed(std::string&) const override { return false; }
-  Envoy::StatusOr<nighthawk::client::CommandLineOptions>
+  absl::StatusOr<nighthawk::client::CommandLineOptions>
   GetCurrentCommandLineOptions() const override {
     return nighthawk::client::CommandLineOptions();
   }

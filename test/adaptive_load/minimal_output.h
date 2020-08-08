@@ -1,7 +1,5 @@
 #pragma once
 
-#include "envoy/common/time.h"
-
 #include "api/client/output.pb.h"
 
 namespace Nighthawk {
@@ -38,28 +36,5 @@ struct SimpleNighthawkOutputSpec {
  * @return nighthawk::client::Output Nighthawk benchmark output proto.
  */
 nighthawk::client::Output MakeSimpleNighthawkOutput(const SimpleNighthawkOutputSpec& spec);
-
-/**
- * Fake time source that ticks 1 second on every query, starting from the Unix epoch. Supports only
- * monotonicTime().
- */
-class FakeIncrementingMonotonicTimeSource : public Envoy::TimeSource {
-public:
-  /**
-   * Not supported.
-   *
-   * @return Envoy::SystemTime Fixed value of the Unix epoch.
-   */
-  Envoy::SystemTime systemTime() override;
-  /**
-   * Ticks forward 1 second on each call.
-   *
-   * @return Envoy::MonotonicTime Fake time vaule.
-   */
-  Envoy::MonotonicTime monotonicTime() override;
-
-private:
-  int unix_time_{0};
-};
 
 } // namespace Nighthawk

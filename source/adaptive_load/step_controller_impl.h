@@ -18,7 +18,7 @@ public:
   explicit ExponentialSearchStepController(
       const nighthawk::adaptive_load::ExponentialSearchStepControllerConfig& config,
       const nighthawk::client::CommandLineOptions& command_line_options_template);
-  Envoy::StatusOr<nighthawk::client::CommandLineOptions>
+  absl::StatusOr<nighthawk::client::CommandLineOptions>
   GetCurrentCommandLineOptions() const override;
   bool IsConverged() const override;
   bool IsDoomed(std::string& doom_reason) const override;

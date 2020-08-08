@@ -14,15 +14,22 @@
 
 namespace Nighthawk {
 
-// Emulated MetricPlugin that wraps already collected Nighthawk Service counters and stats in a
-// MetricPlugin interface. This class is not registered with the Envoy registry mechanism. It will
-// be constructed on the fly from each Nighthawk Service result.
+/**
+ * Emulated MetricPlugin that wraps already collected Nighthawk Service counters and stats in a
+ * MetricPlugin interface. This class is not registered with the Envoy registry mechanism. It will
+ * be constructed on the fly from each Nighthawk Service result.
+ */
 class NighthawkStatsEmulatedMetricsPlugin
     : public MetricsPlugin,
       public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
+  /**
+   * Constructs the MetricsPlugin from the given Nighthawk Service output.
+   *
+   * @param nighthawk_output Proto describing benchmark results from Nighthawk Service.
+   */
   explicit NighthawkStatsEmulatedMetricsPlugin(const nighthawk::client::Output& nighthawk_output);
-  Envoy::StatusOr<double> GetMetricByName(absl::string_view metric_name) override;
+  absl::StatusOr<double> GetMetricByName(absl::string_view metric_name) override;
   const std::vector<std::string> GetAllSupportedMetricNames() const override;
 
 private:

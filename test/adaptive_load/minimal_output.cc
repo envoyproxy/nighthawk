@@ -1,11 +1,8 @@
-#include "test/adaptive_load/utility.h"
-
-#include "envoy/filesystem/filesystem.h"
+#include "test/adaptive_load/minimal_output.h"
 
 #include "external/envoy/source/common/protobuf/protobuf.h"
 
 #include "absl/strings/string_view.h"
-#include "absl/time/time.h"
 
 namespace Nighthawk {
 
@@ -40,17 +37,6 @@ nighthawk::client::Output MakeSimpleNighthawkOutput(const SimpleNighthawkOutputS
                      "benchmark_http_client.request_to_response", spec.min_ns, spec.mean_ns,
                      spec.max_ns, spec.pstdev_ns);
   return output;
-}
-
-Envoy::SystemTime FakeIncrementingMonotonicTimeSource::systemTime() {
-  Envoy::SystemTime epoch;
-  return epoch;
-}
-
-Envoy::MonotonicTime FakeIncrementingMonotonicTimeSource::monotonicTime() {
-  ++unix_time_;
-  Envoy::MonotonicTime epoch;
-  return epoch + std::chrono::seconds(unix_time_);
 }
 
 } // namespace Nighthawk
