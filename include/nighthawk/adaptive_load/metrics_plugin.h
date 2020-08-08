@@ -6,7 +6,7 @@
 #include "envoy/config/core/v3/base.pb.h"
 #include "envoy/config/typed_config.h"
 
-#include "external/envoy/third_party/statusor/statusor.h"
+#include "external/envoy/source/common/common/statusor.h"
 
 namespace Nighthawk {
 
