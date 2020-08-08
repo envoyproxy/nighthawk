@@ -356,8 +356,8 @@ AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
     absl::StatusOr<nighthawk::client::CommandLineOptions> command_line_options_or =
         step_controller->GetCurrentCommandLineOptions();
     if (!command_line_options_or.ok()) {
-      std::string message =
-          absl::StrCat("Error applying input value: ", command_line_options_or.status().message());
+      std::string message = absl::StrCat("Error setting Nighthawk input: ",
+                                         command_line_options_or.status().message());
       output.mutable_session_status()->set_code(grpc::ABORTED);
       output.mutable_session_status()->set_message(message);
       ENVOY_LOG_MISC(info, message);
@@ -378,7 +378,7 @@ AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
       step_controller->GetCurrentCommandLineOptions();
   if (!command_line_options_or.ok()) {
     std::string message =
-        absl::StrCat("Error applying input value: ", command_line_options_or.status().message());
+        absl::StrCat("Error setting Nighthawk input: ", command_line_options_or.status().message());
     output.mutable_session_status()->set_code(grpc::ABORTED);
     output.mutable_session_status()->set_message(message);
     ENVOY_LOG_MISC(info, message);

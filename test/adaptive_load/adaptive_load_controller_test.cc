@@ -26,6 +26,7 @@
 #include "api/client/service.pb.h"
 #include "api/client/service_mock.grpc.pb.h"
 
+#include "test/adaptive_load/fake_time_source.h"
 #include "test/adaptive_load/minimal_output.h"
 
 #include "grpcpp/test/mock_stream.h"
@@ -229,7 +230,7 @@ envoy::config::core::v3::TypedExtensionConfig MakeFakeStepControllerConfig() {
 envoy::config::core::v3::TypedExtensionConfig
 MakeLowerThresholdBinaryScoringFunctionConfig(double upper_threshold) {
   envoy::config::core::v3::TypedExtensionConfig config;
-  config.set_name("nighthawk.binary");
+  config.set_name("nighthawk.binary_scoring");
   nighthawk::adaptive_load::BinaryScoringFunctionConfig inner_config;
   inner_config.mutable_lower_threshold()->set_value(upper_threshold);
   Envoy::ProtobufWkt::Any inner_config_any;
@@ -238,7 +239,7 @@ MakeLowerThresholdBinaryScoringFunctionConfig(double upper_threshold) {
   return config;
 }
 
-TEST(AdaptiveLoadControllerTest, FailsWithTrafficTemplateDurationSet) {
+TEST(AdaptiveLoadController, FailsWithTrafficTemplateDurationSet) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
   spec.mutable_nighthawk_traffic_template()->mutable_duration()->set_seconds(1);
   FakeIncrementingMonotonicTimeSource time_source;
@@ -247,7 +248,7 @@ TEST(AdaptiveLoadControllerTest, FailsWithTrafficTemplateDurationSet) {
   EXPECT_THAT(output.session_status().message(), HasSubstr("should not have |duration| set"));
 }
 
-TEST(AdaptiveLoadControllerTest, FailsWithOpenLoopSet) {
+TEST(AdaptiveLoadController, FailsWithOpenLoopSet) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
   spec.mutable_nighthawk_traffic_template()->mutable_open_loop()->set_value(false);
   FakeIncrementingMonotonicTimeSource time_source;
@@ -256,7 +257,7 @@ TEST(AdaptiveLoadControllerTest, FailsWithOpenLoopSet) {
   EXPECT_THAT(output.session_status().message(), HasSubstr("should not have |open_loop| set"));
 }
 
-TEST(AdaptiveLoadControllerTest, FailsWithNonexistentMetricsPluginName) {
+TEST(AdaptiveLoadController, FailsWithNonexistentMetricsPluginName) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
   envoy::config::core::v3::TypedExtensionConfig* metrics_plugin_config =
       spec.mutable_metrics_plugin_configs()->Add();
@@ -268,7 +269,7 @@ TEST(AdaptiveLoadControllerTest, FailsWithNonexistentMetricsPluginName) {
   EXPECT_THAT(output.session_status().message(), HasSubstr("Failed to load MetricsPlugin"));
 }
 
-TEST(AdaptiveLoadControllerTest, FailsWithNonexistentStepControllerPluginName) {
+TEST(AdaptiveLoadController, FailsWithNonexistentStepControllerPluginName) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
   envoy::config::core::v3::TypedExtensionConfig config;
   config.set_name("nonexistent-plugin");
@@ -280,7 +281,7 @@ TEST(AdaptiveLoadControllerTest, FailsWithNonexistentStepControllerPluginName) {
   EXPECT_THAT(output.session_status().message(), HasSubstr("Failed to load StepController"));
 }
 
-TEST(AdaptiveLoadControllerTest, FailsWithNonexistentScoringFunctionPluginName) {
+TEST(AdaptiveLoadController, FailsWithNonexistentScoringFunctionPluginName) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
   nighthawk::adaptive_load::MetricSpecWithThreshold* threshold =
       spec.mutable_metric_thresholds()->Add();
@@ -294,7 +295,7 @@ TEST(AdaptiveLoadControllerTest, FailsWithNonexistentScoringFunctionPluginName) 
   EXPECT_THAT(output.session_status().message(), HasSubstr("Failed to load ScoringFunction"));
 }
 
-TEST(AdaptiveLoadControllerTest, FailsWithNonexistentMetricsPluginNameInMetricThresholdSpec) {
+TEST(AdaptiveLoadController, FailsWithNonexistentMetricsPluginNameInMetricThresholdSpec) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
   nighthawk::adaptive_load::MetricSpecWithThreshold* threshold =
       spec.mutable_metric_thresholds()->Add();
@@ -308,7 +309,7 @@ TEST(AdaptiveLoadControllerTest, FailsWithNonexistentMetricsPluginNameInMetricTh
   EXPECT_THAT(output.session_status().message(), HasSubstr("nonexistent metrics_plugin_name"));
 }
 
-TEST(AdaptiveLoadControllerTest, FailsWithUndeclaredMetricsPluginNameInMetricThresholdSpec) {
+TEST(AdaptiveLoadController, FailsWithUndeclaredMetricsPluginNameInMetricThresholdSpec) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
   nighthawk::adaptive_load::MetricSpecWithThreshold* threshold =
       spec.mutable_metric_thresholds()->Add();
@@ -323,7 +324,7 @@ TEST(AdaptiveLoadControllerTest, FailsWithUndeclaredMetricsPluginNameInMetricThr
   EXPECT_THAT(output.session_status().message(), HasSubstr("nonexistent metrics_plugin_name"));
 }
 
-TEST(AdaptiveLoadControllerTest, FailsWithNonexistentMetricsPluginNameInInformationalMetricSpec) {
+TEST(AdaptiveLoadController, FailsWithNonexistentMetricsPluginNameInInformationalMetricSpec) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
   nighthawk::adaptive_load::MetricSpec* metric_spec =
       spec.mutable_informational_metric_specs()->Add();
@@ -335,7 +336,7 @@ TEST(AdaptiveLoadControllerTest, FailsWithNonexistentMetricsPluginNameInInformat
   EXPECT_THAT(output.session_status().message(), HasSubstr("nonexistent metrics_plugin_name"));
 }
 
-TEST(AdaptiveLoadControllerTest, FailsWithUndeclaredMetricsPluginNameInInformationalMetricSpec) {
+TEST(AdaptiveLoadController, FailsWithUndeclaredMetricsPluginNameInInformationalMetricSpec) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
   nighthawk::adaptive_load::MetricSpec* metric_spec =
       spec.mutable_informational_metric_specs()->Add();
@@ -348,7 +349,7 @@ TEST(AdaptiveLoadControllerTest, FailsWithUndeclaredMetricsPluginNameInInformati
   EXPECT_THAT(output.session_status().message(), HasSubstr("nonexistent metrics_plugin_name"));
 }
 
-TEST(AdaptiveLoadControllerTest, FailsWithNonexistentBuiltinMetricNameInMetricThresholdSpec) {
+TEST(AdaptiveLoadController, FailsWithNonexistentBuiltinMetricNameInMetricThresholdSpec) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
   nighthawk::adaptive_load::MetricSpecWithThreshold* threshold =
       spec.mutable_metric_thresholds()->Add();
@@ -362,7 +363,7 @@ TEST(AdaptiveLoadControllerTest, FailsWithNonexistentBuiltinMetricNameInMetricTh
   EXPECT_THAT(output.session_status().message(), HasSubstr("not implemented by plugin"));
 }
 
-TEST(AdaptiveLoadControllerTest, FailsWithNonexistentCustomMetricNameInMetricThresholdSpec) {
+TEST(AdaptiveLoadController, FailsWithNonexistentCustomMetricNameInMetricThresholdSpec) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
   *spec.mutable_metrics_plugin_configs()->Add() = MakeFakeMetricsPluginConfig();
   nighthawk::adaptive_load::MetricSpecWithThreshold* threshold =
@@ -377,7 +378,7 @@ TEST(AdaptiveLoadControllerTest, FailsWithNonexistentCustomMetricNameInMetricThr
   EXPECT_THAT(output.session_status().message(), HasSubstr("not implemented by plugin"));
 }
 
-TEST(AdaptiveLoadControllerTest, FailsWithNonexistentBuiltinMetricNameInInformationalMetricSpec) {
+TEST(AdaptiveLoadController, FailsWithNonexistentBuiltinMetricNameInInformationalMetricSpec) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
   nighthawk::adaptive_load::MetricSpec* metric_spec =
       spec.mutable_informational_metric_specs()->Add();
@@ -389,7 +390,7 @@ TEST(AdaptiveLoadControllerTest, FailsWithNonexistentBuiltinMetricNameInInformat
   EXPECT_THAT(output.session_status().message(), HasSubstr("not implemented by plugin"));
 }
 
-TEST(AdaptiveLoadControllerTest, FailsWithNonexistentCustomMetricNameInInformationalMetricSpec) {
+TEST(AdaptiveLoadController, FailsWithNonexistentCustomMetricNameInInformationalMetricSpec) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
   *spec.mutable_metrics_plugin_configs()->Add() = MakeFakeMetricsPluginConfig();
   nighthawk::adaptive_load::MetricSpec* metric_spec =
@@ -402,7 +403,7 @@ TEST(AdaptiveLoadControllerTest, FailsWithNonexistentCustomMetricNameInInformati
   EXPECT_THAT(output.session_status().message(), HasSubstr("not implemented by plugin"));
 }
 
-TEST(AdaptiveLoadControllerTest, TimesOutIfNeverConverged) {
+TEST(AdaptiveLoadController, TimesOutIfNeverConverged) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
   spec.mutable_nighthawk_traffic_template();
   *spec.mutable_step_controller_config() = MakeFakeStepControllerConfig();
@@ -417,7 +418,7 @@ TEST(AdaptiveLoadControllerTest, TimesOutIfNeverConverged) {
   EXPECT_THAT(output.session_status().message(), HasSubstr("Failed to converge before deadline"));
 }
 
-TEST(AdaptiveLoadControllerTest, UsesDefaultConvergenceDeadline) {
+TEST(AdaptiveLoadController, UsesDefaultConvergenceDeadline) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
   spec.mutable_nighthawk_traffic_template();
   *spec.mutable_step_controller_config() = MakeFakeStepControllerConfig();
@@ -442,7 +443,7 @@ TEST(AdaptiveLoadControllerTest, UsesDefaultConvergenceDeadline) {
             // recorded the start time.
 }
 
-TEST(AdaptiveLoadControllerTest, UsesDefaultTestingStageDuration) {
+TEST(AdaptiveLoadController, UsesDefaultTestingStageDuration) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
   spec.mutable_nighthawk_traffic_template();
   *spec.mutable_step_controller_config() = MakeFakeStepControllerConfig();
@@ -464,7 +465,7 @@ TEST(AdaptiveLoadControllerTest, UsesDefaultTestingStageDuration) {
   EXPECT_EQ(request.start_request().options().duration().seconds(), 30);
 }
 
-TEST(AdaptiveLoadControllerTest, UsesDefaultMeasuringPeriod) {
+TEST(AdaptiveLoadController, UsesDefaultMeasuringPeriod) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
   spec.mutable_nighthawk_traffic_template();
   *spec.mutable_step_controller_config() = MakeFakeStepControllerConfig();
@@ -484,7 +485,7 @@ TEST(AdaptiveLoadControllerTest, UsesDefaultMeasuringPeriod) {
   EXPECT_EQ(request.start_request().options().duration().seconds(), 10);
 }
 
-TEST(AdaptiveLoadControllerTest, UsesConfiguredMeasuringPeriod) {
+TEST(AdaptiveLoadController, UsesConfiguredMeasuringPeriod) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
   spec.mutable_measuring_period()->set_seconds(17);
   spec.mutable_nighthawk_traffic_template();
@@ -505,7 +506,7 @@ TEST(AdaptiveLoadControllerTest, UsesConfiguredMeasuringPeriod) {
   EXPECT_EQ(request.start_request().options().duration().seconds(), 17);
 }
 
-TEST(AdaptiveLoadControllerTest, UsesCommandLineOptionsFromController) {
+TEST(AdaptiveLoadController, UsesCommandLineOptionsFromController) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
   spec.mutable_nighthawk_traffic_template();
   // Always sends 678 RPS:
@@ -526,7 +527,7 @@ TEST(AdaptiveLoadControllerTest, UsesCommandLineOptionsFromController) {
   EXPECT_EQ(request.start_request().options().requests_per_second().value(), 678);
 }
 
-TEST(AdaptiveLoadControllerTest, UsesDefaultMetricWeight) {
+TEST(AdaptiveLoadController, UsesDefaultMetricWeight) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
   spec.mutable_nighthawk_traffic_template();
   *spec.mutable_step_controller_config() = MakeFakeStepControllerConfig();
@@ -549,7 +550,7 @@ TEST(AdaptiveLoadControllerTest, UsesDefaultMetricWeight) {
   EXPECT_EQ(output.adjusting_stage_results()[0].metric_evaluations()[0].weight(), 1.0);
 }
 
-TEST(AdaptiveLoadControllerTest, UsesCustomMetricWeight) {
+TEST(AdaptiveLoadController, UsesCustomMetricWeight) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
   spec.mutable_nighthawk_traffic_template();
   *spec.mutable_step_controller_config() = MakeFakeStepControllerConfig();
@@ -573,7 +574,7 @@ TEST(AdaptiveLoadControllerTest, UsesCustomMetricWeight) {
   EXPECT_EQ(output.adjusting_stage_results()[0].metric_evaluations()[0].weight(), 45.0);
 }
 
-TEST(AdaptiveLoadControllerTest, ExitsWhenDoomed) {
+TEST(AdaptiveLoadController, ExitsWhenDoomed) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
   spec.mutable_nighthawk_traffic_template();
   *spec.mutable_step_controller_config() = MakeFakeStepControllerConfig();
@@ -590,7 +591,7 @@ TEST(AdaptiveLoadControllerTest, ExitsWhenDoomed) {
   EXPECT_THAT(output.session_status().message(), HasSubstr("fake doom reason"));
 }
 
-TEST(AdaptiveLoadControllerTest, PerformsTestingStageAfterConvergence) {
+TEST(AdaptiveLoadController, PerformsTestingStageAfterConvergence) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
   spec.mutable_nighthawk_traffic_template();
   *spec.mutable_step_controller_config() = MakeFakeStepControllerConfig();
@@ -605,7 +606,7 @@ TEST(AdaptiveLoadControllerTest, PerformsTestingStageAfterConvergence) {
   EXPECT_TRUE(output.has_testing_stage_result());
 }
 
-TEST(AdaptiveLoadControllerTest, SetsBenchmarkErrorStatusIfNighthawkServiceDoesNotSendResponse) {
+TEST(AdaptiveLoadController, SetsBenchmarkErrorStatusIfNighthawkServiceDoesNotSendResponse) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
   spec.mutable_nighthawk_traffic_template();
   *spec.mutable_step_controller_config() = MakeFakeStepControllerConfig();
@@ -628,7 +629,7 @@ TEST(AdaptiveLoadControllerTest, SetsBenchmarkErrorStatusIfNighthawkServiceDoesN
             "Nighthawk Service did not send a response.");
 }
 
-TEST(AdaptiveLoadControllerTest,
+TEST(AdaptiveLoadController,
      SetsBenchmarkErrorStatusIfNighthawkServiceGrpcStreamClosesAbnormally) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
 
@@ -653,7 +654,7 @@ TEST(AdaptiveLoadControllerTest,
   EXPECT_EQ(output.adjusting_stage_results()[0].status().message(), "status message");
 }
 
-TEST(AdaptiveLoadControllerTest, UsesBuiltinMetricsPluginForThresholdByDefault) {
+TEST(AdaptiveLoadController, UsesBuiltinMetricsPluginForThresholdByDefault) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
   spec.mutable_nighthawk_traffic_template();
   *spec.mutable_step_controller_config() = MakeFakeStepControllerConfig();
@@ -685,7 +686,7 @@ TEST(AdaptiveLoadControllerTest, UsesBuiltinMetricsPluginForThresholdByDefault) 
   EXPECT_EQ(output.adjusting_stage_results()[0].metric_evaluations()[0].metric_value(), 0.125);
 }
 
-TEST(AdaptiveLoadControllerTest, EvaluatesBuiltinMetric) {
+TEST(AdaptiveLoadController, EvaluatesBuiltinMetric) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
   spec.mutable_nighthawk_traffic_template();
   *spec.mutable_step_controller_config() = MakeFakeStepControllerConfig();
@@ -719,7 +720,7 @@ TEST(AdaptiveLoadControllerTest, EvaluatesBuiltinMetric) {
   EXPECT_EQ(output.adjusting_stage_results()[0].metric_evaluations()[0].threshold_score(), -1.0);
 }
 
-TEST(AdaptiveLoadControllerTest, UsesBuiltinMetricsPluginForInformationalMetricSpecByDefault) {
+TEST(AdaptiveLoadController, UsesBuiltinMetricsPluginForInformationalMetricSpecByDefault) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
 
   spec.mutable_nighthawk_traffic_template();
@@ -750,7 +751,7 @@ TEST(AdaptiveLoadControllerTest, UsesBuiltinMetricsPluginForInformationalMetricS
   EXPECT_EQ(output.adjusting_stage_results()[0].metric_evaluations()[0].metric_value(), 0.125);
 }
 
-TEST(AdaptiveLoadControllerTest, StoresInformationalBuiltinMetric) {
+TEST(AdaptiveLoadController, StoresInformationalBuiltinMetric) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
   spec.mutable_nighthawk_traffic_template();
   *spec.mutable_step_controller_config() = MakeFakeStepControllerConfig();
@@ -780,7 +781,7 @@ TEST(AdaptiveLoadControllerTest, StoresInformationalBuiltinMetric) {
   EXPECT_EQ(output.adjusting_stage_results()[0].metric_evaluations()[0].metric_value(), 0.125);
 }
 
-TEST(AdaptiveLoadControllerTest, EvaluatesCustomMetric) {
+TEST(AdaptiveLoadController, EvaluatesCustomMetric) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
   spec.mutable_nighthawk_traffic_template();
   *spec.mutable_step_controller_config() = MakeFakeStepControllerConfig();
@@ -805,7 +806,7 @@ TEST(AdaptiveLoadControllerTest, EvaluatesCustomMetric) {
   EXPECT_EQ(output.adjusting_stage_results()[0].metric_evaluations()[0].threshold_score(), -1.0);
 }
 
-TEST(AdaptiveLoadControllerTest, StoresInformationalCustomMetric) {
+TEST(AdaptiveLoadController, StoresInformationalCustomMetric) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
   spec.mutable_nighthawk_traffic_template();
   *spec.mutable_step_controller_config() = MakeFakeStepControllerConfig();
@@ -827,7 +828,7 @@ TEST(AdaptiveLoadControllerTest, StoresInformationalCustomMetric) {
   EXPECT_EQ(output.adjusting_stage_results()[0].metric_evaluations()[0].metric_value(), 5.0);
 }
 
-TEST(AdaptiveLoadControllerTest, CopiesThresholdSpecToOutput) {
+TEST(AdaptiveLoadController, CopiesThresholdSpecToOutput) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
   spec.mutable_nighthawk_traffic_template();
   *spec.mutable_step_controller_config() = MakeFakeStepControllerConfig();
@@ -853,6 +854,7 @@ TEST(AdaptiveLoadControllerTest, CopiesThresholdSpecToOutput) {
   FakeIncrementingMonotonicTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output =
       PerformAdaptiveLoadSession(&mock_nighthawk_service_stub, spec, time_source);
+  std::cerr << output.DebugString() << "\n";
   ASSERT_GT(output.metric_thresholds_size(), 0);
   EXPECT_EQ(output.metric_thresholds()[0].metric_spec().metric_name(), "success-rate");
 }

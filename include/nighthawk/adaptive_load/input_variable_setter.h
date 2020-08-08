@@ -48,7 +48,6 @@ using InputVariableSetterPtr = std::unique_ptr<InputVariableSetter>;
 class InputVariableSetterConfigFactory : public Envoy::Config::TypedFactory,
                                          public ConfigValidator {
 public:
-  ~InputVariableSetterConfigFactory() override = default;
   std::string category() const override { return "nighthawk.input_variable_setter"; }
   /**
    * Instantiates the specific InputVariableSetter class. Casts |message| to Any, unpacks it to the
