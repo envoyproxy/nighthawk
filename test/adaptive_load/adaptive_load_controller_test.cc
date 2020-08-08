@@ -9,7 +9,7 @@
 #include "nighthawk/adaptive_load/scoring_function.h"
 #include "nighthawk/adaptive_load/step_controller.h"
 
-#include "external/envoy/third_party/statusor/statusor.h"
+#include "external/envoy/source/common/common/statusor.h"
 #include "external/envoy/source/common/config/utility.h"
 #include "external/envoy/source/common/protobuf/protobuf.h"
 
@@ -26,7 +26,7 @@
 #include "api/client/service.pb.h"
 #include "api/client/service_mock.grpc.pb.h"
 
-#include "test/adaptive_load/utility.h"
+#include "test/adaptive_load/minimal_output.h"
 
 #include "grpcpp/test/mock_stream.h"
 

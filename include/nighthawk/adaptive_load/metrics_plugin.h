@@ -7,7 +7,7 @@
 
 #include "nighthawk/adaptive_load/config_validator.h"
 
-#include "external/envoy/third_party/statusor/statusor.h"
+#include "external/envoy/source/common/common/statusor.h"
 
 namespace Nighthawk {
 

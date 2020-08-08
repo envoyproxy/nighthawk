@@ -4,7 +4,7 @@ metric_thresholds {
   }
   threshold_spec {
     scoring_function {
-      name: "nighthawk.binary"
+      name: "nighthawk.binary_scoring"
       typed_config {
         [type.googleapis.com/nighthawk.adaptive_load.BinaryScoringFunctionConfig] {
           lower_threshold {

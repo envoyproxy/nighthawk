@@ -9,7 +9,7 @@
 #include "nighthawk/adaptive_load/step_controller.h"
 
 #include "external/envoy/source/common/common/logger.h"
-#include "external/envoy/third_party/statusor/statusor.h"
+#include "external/envoy/source/common/common/statusor.h"
 #include "external/envoy/source/common/protobuf/protobuf.h"
 
 #include "api/adaptive_load/adaptive_load.pb.h"

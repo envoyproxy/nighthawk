@@ -45,6 +45,7 @@ envoy_cc_test(
         "//source/adaptive_load:adaptive_load_client_main",
         "//source/adaptive_load:scoring_function_impl",
         "//source/adaptive_load:step_controller_impl",
+        ":fake_time_source",
         ":minimal_output",
         "//test/test_common:environment_lib",
         "@com_github_grpc_grpc//:grpc++_test",
