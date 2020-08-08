@@ -6,6 +6,7 @@
 #include "api/adaptive_load/adaptive_load.pb.h"
 #include "api/adaptive_load/benchmark_result.pb.h"
 #include "api/adaptive_load/step_controller_impl.pb.h"
+#include "envoy/registry/registry.h"
 
 namespace Nighthawk {
 
@@ -49,5 +50,8 @@ public:
       const Envoy::Protobuf::Message& config,
       const nighthawk::client::CommandLineOptions& command_line_options_template) override;
 };
+
+// This factory is activated through LoadStepControllerPlugin in plugin_util.h.
+DECLARE_FACTORY(ExponentialSearchStepControllerConfigFactory);
 
 } // namespace Nighthawk
