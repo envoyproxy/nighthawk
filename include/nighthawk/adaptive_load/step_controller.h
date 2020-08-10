@@ -68,7 +68,6 @@ using StepControllerPtr = std::unique_ptr<StepController>;
  */
 class StepControllerConfigFactory : public Envoy::Config::TypedFactory, public ConfigValidator {
 public:
-  ~StepControllerConfigFactory() override = default;
   std::string category() const override { return "nighthawk.step_controller"; }
   /**
    * Instantiates the specific StepController class. Casts |message| to Any, unpacks it to the

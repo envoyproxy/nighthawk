@@ -15,10 +15,10 @@ namespace Nighthawk {
  *
  * @param config Proto containing plugin name and plugin-specific config proto.
  *
- * @return Envoy::StatusOr<InputVariableSetterPtr> Initialized plugin or error status due to missing
+ * @return absl::StatusOr<InputVariableSetterPtr> Initialized plugin or error status due to missing
  * plugin or config proto validation error.
  */
-Envoy::StatusOr<InputVariableSetterPtr>
+absl::StatusOr<InputVariableSetterPtr>
 LoadInputVariableSetterPlugin(const envoy::config::core::v3::TypedExtensionConfig& config);
 
 /**
@@ -27,10 +27,10 @@ LoadInputVariableSetterPlugin(const envoy::config::core::v3::TypedExtensionConfi
  *
  * @param config Proto containing plugin name and plugin-specific config proto.
  *
- * @return Envoy::StatusOr<ScoringFunctionPtr> Initialized plugin or error status due to missing
+ * @return absl::StatusOr<ScoringFunctionPtr> Initialized plugin or error status due to missing
  * plugin or config proto validation error.
  */
-Envoy::StatusOr<ScoringFunctionPtr>
+absl::StatusOr<ScoringFunctionPtr>
 LoadScoringFunctionPlugin(const envoy::config::core::v3::TypedExtensionConfig& config);
 
 /**
@@ -39,10 +39,10 @@ LoadScoringFunctionPlugin(const envoy::config::core::v3::TypedExtensionConfig& c
  *
  * @param config Proto containing plugin name and plugin-specific config proto.
  *
- * @return Envoy::StatusOr<MetricsPluginPtr> Initialized plugin or error status due to missing
+ * @return absl::StatusOr<MetricsPluginPtr> Initialized plugin or error status due to missing
  * plugin or config proto validation error.
  */
-Envoy::StatusOr<MetricsPluginPtr>
+absl::StatusOr<MetricsPluginPtr>
 LoadMetricsPlugin(const envoy::config::core::v3::TypedExtensionConfig& config);
 
 /**
@@ -53,10 +53,10 @@ LoadMetricsPlugin(const envoy::config::core::v3::TypedExtensionConfig& config);
  * @param command_line_options_template CommandLineOptions traffic template from the
  * AdaptiveLoadSessionSpec.
  *
- * @return Envoy::StatusOr<StepControllerPtr> Initialized plugin or error status due to missing
+ * @return absl::StatusOr<StepControllerPtr> Initialized plugin or error status due to missing
  * plugin or config proto validation error.
  */
-Envoy::StatusOr<StepControllerPtr> LoadStepControllerPlugin(
+absl::StatusOr<StepControllerPtr> LoadStepControllerPlugin(
     const envoy::config::core::v3::TypedExtensionConfig& config,
     const nighthawk::client::CommandLineOptions& command_line_options_template);
 

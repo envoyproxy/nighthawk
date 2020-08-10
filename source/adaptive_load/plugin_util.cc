@@ -10,7 +10,7 @@
 
 namespace Nighthawk {
 
-Envoy::StatusOr<InputVariableSetterPtr>
+absl::StatusOr<InputVariableSetterPtr>
 LoadInputVariableSetterPlugin(const envoy::config::core::v3::TypedExtensionConfig& config) {
   try {
     auto& config_factory = Envoy::Config::Utility::getAndCheckFactoryByName<InputVariableSetterConfigFactory>(config.name());
@@ -25,7 +25,7 @@ LoadInputVariableSetterPlugin(const envoy::config::core::v3::TypedExtensionConfi
   }
 }
 
-Envoy::StatusOr<ScoringFunctionPtr>
+absl::StatusOr<ScoringFunctionPtr>
 LoadScoringFunctionPlugin(const envoy::config::core::v3::TypedExtensionConfig& config) {
   try {
     auto& config_factory = Envoy::Config::Utility::getAndCheckFactoryByName<ScoringFunctionConfigFactory>(config.name());
@@ -40,7 +40,7 @@ LoadScoringFunctionPlugin(const envoy::config::core::v3::TypedExtensionConfig& c
   }
 }
 
-Envoy::StatusOr<MetricsPluginPtr>
+absl::StatusOr<MetricsPluginPtr>
 LoadMetricsPlugin(const envoy::config::core::v3::TypedExtensionConfig& config) {
   try {
     auto& config_factory = Envoy::Config::Utility::getAndCheckFactoryByName<MetricsPluginConfigFactory>(config.name());
@@ -55,7 +55,7 @@ LoadMetricsPlugin(const envoy::config::core::v3::TypedExtensionConfig& config) {
   }
 }
 
-Envoy::StatusOr<StepControllerPtr> LoadStepControllerPlugin(
+absl::StatusOr<StepControllerPtr> LoadStepControllerPlugin(
     const envoy::config::core::v3::TypedExtensionConfig& config,
     const nighthawk::client::CommandLineOptions& command_line_options_template) {
   try {

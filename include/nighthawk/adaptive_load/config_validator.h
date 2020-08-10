@@ -8,6 +8,13 @@ namespace Nighthawk {
 
 /**
  * Interface implemented by plugin config factories to perform proto-specific validations.
+ *
+ * If a plugin's config proto contains any TypedExtensionConfig fields, the plugin's
+ * ValidateConfig() method should attempt to call Load...Plugin() on each TypedExtensionConfig
+ * provided. See plugin_util.h. If all plugin config factories follow this convention, the entire
+ * adaptive load session spec will be recursively validated at load time.
+ *
+ * The default ConfigValidator implementation performs no checks and returns OK.
  */
 class ConfigValidator {
 public:

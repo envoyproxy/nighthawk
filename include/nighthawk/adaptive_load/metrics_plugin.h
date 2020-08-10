@@ -44,7 +44,6 @@ using MetricsPluginPtr = std::unique_ptr<MetricsPlugin>;
  */
 class MetricsPluginConfigFactory : public Envoy::Config::TypedFactory, public ConfigValidator {
 public:
-  ~MetricsPluginConfigFactory() override = default;
   std::string category() const override { return "nighthawk.metrics_plugin"; }
   /**
    * Instantiates the specific MetricsPlugin class. Casts |message| to Any, unpacks it to the
