@@ -27,23 +27,23 @@ using namespace testing;
 namespace Nighthawk {
 
 namespace {
+const std::shared_ptr<Envoy::Http::RequestHeaderMap>& getDefaultHeaderMap() {
+  static auto* header =
+      new std::shared_ptr<Envoy::Http::RequestHeaderMap>{new Envoy::Http::TestRequestHeaderMapImpl{
+          {":scheme", "http"}, {":method", "GET"}, {":path", "/"}, {":host", "localhost"}}};
+  return *header;
+}
 
 // Default function for request generator when the content doesn't matter.
 RequestGenerator getDefaultRequestGenerator() {
   RequestGenerator request_generator = []() {
-    auto header = std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(
-        std::initializer_list<std::pair<std::string, std::string>>(
-            {{":scheme", "http"}, {":method", "GET"}, {":path", "/"}, {":host", "localhost"}}));
-    return std::make_unique<RequestImpl>(header);
+    return std::make_unique<RequestImpl>(getDefaultHeaderMap());
   };
   return request_generator;
 }
 // Helper function to get headers in a set that should be verified during the test.
-absl::flat_hash_set<std::string>
-getTestRecordedProperties(const Envoy::Http::RequestHeaderMap& header) {
-  absl::flat_hash_set<std::string> header_set;
-  header_set.insert(std::string(header.getPathValue()));
-  return header_set;
+std::string getTestRecordedProperty(const Envoy::Http::RequestHeaderMap& header) {
+  return std::string(header.getPathValue());
 }
 } // namespace
 
@@ -67,45 +67,39 @@ public:
 
     auto& tracer = static_cast<Envoy::Tracing::MockHttpTracer&>(*http_tracer_);
     EXPECT_CALL(tracer, startSpan_(_, _, _, _))
-        .WillRepeatedly([&](const Envoy::Tracing::Config& config, const Envoy::Http::HeaderMap&,
-                            const Envoy::StreamInfo::StreamInfo&,
-                            const Envoy::Tracing::Decision) -> Envoy::Tracing::Span* {
+        .WillRepeatedly([](const Envoy::Tracing::Config& config, const Envoy::Http::HeaderMap&,
+                           const Envoy::StreamInfo::StreamInfo&,
+                           const Envoy::Tracing::Decision) -> Envoy::Tracing::Span* {
           EXPECT_EQ(Envoy::Tracing::OperationName::Egress, config.operationName());
           auto* span = new NiceMock<Envoy::Tracing::MockSpan>();
           return span;
         });
   }
 
-  // void setupBenchmarkClient(const RequestGenerator& request_generator) {
-  //   client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
-  //       *api_, *dispatcher_, store_, std::make_unique<StreamingStatistic>(),
-  //       std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
-  //       std::make_unique<StreamingStatistic>(), false, cluster_manager_, http_tracer_,
-  //       "benchmark", request_generator, true);
-  // }
   // Primary testing method. Confirms that connection limits are met and number of requests are
-  // correct. If not empty, also checks the header expectations, if empty, it is ignored.
+  // correct. If header expectations is not null, also checks the header expectations, if null, it
+  // is ignored.
   void TestBenchmarkClientProcessesExpectedInflightRequests(
       const uint64_t max_pending, const uint64_t connection_limit, const uint64_t amount_of_request,
       const RequestGenerator& request_generator,
-      const std::vector<absl::flat_hash_set<std::string>>* header_expectations = nullptr) {
+      const absl::flat_hash_set<std::string>* header_expectations = nullptr) {
     if (client_ == nullptr) {
       setupBenchmarkClient(request_generator);
       cluster_info().resetResourceManager(connection_limit, max_pending, 1024, 0, 1024);
     }
     // This is where we store the properties of headers that are passed to the stream encoder. We
     // verify later that these match expected headers.
-    std::vector<absl::flat_hash_set<std::string>> called_headers;
+    absl::flat_hash_set<std::string> called_headers;
     EXPECT_CALL(stream_encoder_, encodeHeaders(_, _)).Times(AtLeast(1));
     ON_CALL(stream_encoder_, encodeHeaders(_, _))
         .WillByDefault(
             WithArgs<0>(([&called_headers](const Envoy::Http::RequestHeaderMap& specific_request) {
-              called_headers.push_back(getTestRecordedProperties(specific_request));
+              called_headers.insert(getTestRecordedProperty(specific_request));
             })));
 
     EXPECT_CALL(pool_, newStream(_, _))
-        .WillRepeatedly([&](Envoy::Http::ResponseDecoder& decoder,
-                            Envoy::Http::ConnectionPool::Callbacks& callbacks)
+        .WillRepeatedly([this](Envoy::Http::ResponseDecoder& decoder,
+                               Envoy::Http::ConnectionPool::Callbacks& callbacks)
                             -> Envoy::Http::ConnectionPool::Cancellable* {
           decoders_.push_back(&decoder);
           NiceMock<Envoy::StreamInfo::MockStreamInfo> stream_info;
@@ -374,15 +368,13 @@ TEST_F(BenchmarkClientHttpTest, RequestGeneratorProvidingDifferentPathsSendsRequ
       std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(header_map_for_second_request));
   std::vector<HeaderMapPtr>::iterator request_iterator;
   request_iterator = requests_for_generator_to_send.begin();
-  RequestGenerator request_generator = [&]() {
-    auto item = *request_iterator;
-    request_iterator++;
-    return std::make_unique<RequestImpl>(item);
+  RequestGenerator request_generator = [&request_iterator]() {
+    return std::make_unique<RequestImpl>(*request_iterator++);
   };
-  std::vector<absl::flat_hash_set<std::string>> expected_requests_vector;
-  expected_requests_vector.push_back(getTestRecordedProperties(
-      Envoy::Http::TestRequestHeaderMapImpl(header_map_for_first_request)));
-  expected_requests_vector.push_back(getTestRecordedProperties(
+  absl::flat_hash_set<std::string> expected_requests;
+  expected_requests.insert(
+      getTestRecordedProperty(Envoy::Http::TestRequestHeaderMapImpl(header_map_for_first_request)));
+  expected_requests.insert(getTestRecordedProperty(
       Envoy::Http::TestRequestHeaderMapImpl(header_map_for_second_request)));
 
   EXPECT_CALL(stream_encoder_, encodeData(_, _)).Times(2);
@@ -390,7 +382,7 @@ TEST_F(BenchmarkClientHttpTest, RequestGeneratorProvidingDifferentPathsSendsRequ
   // Most of the testing happens inside of this call. Will confirm that the requests received match
   // the expected requests vector.
   TestBenchmarkClientProcessesExpectedInflightRequests(1, 1, 2, request_generator,
-                                                       &expected_requests_vector);
+                                                       &expected_requests);
   EXPECT_EQ(2, getCounter("http_2xx"));
 }
 } // namespace Nighthawk
