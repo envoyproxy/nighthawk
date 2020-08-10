@@ -9,7 +9,7 @@
 
 #include "absl/strings/str_cat.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 HttpDynamicDelayDecoderFilterConfig::HttpDynamicDelayDecoderFilterConfig(
     nighthawk::server::ResponseOptions proto_config, Envoy::Runtime::Loader& runtime,
@@ -108,4 +108,4 @@ void HttpDynamicDelayDecoderFilter::setDecoderFilterCallbacks(
   Envoy::Extensions::HttpFilters::Fault::FaultFilter::setDecoderFilterCallbacks(callbacks);
 }
 
-} // namespace Nighthawk
+} // namespace nighthawk

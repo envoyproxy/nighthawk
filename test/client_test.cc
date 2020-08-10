@@ -12,7 +12,7 @@
 using namespace std::chrono_literals;
 using namespace testing;
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class ClientTest : public testing::Test {};
 
@@ -23,7 +23,7 @@ class ClientTest : public testing::Test {};
 // Note: these tests do not have a backend set up to talk to.
 // That's why we expect exit codes indicating failure.
 TEST_F(ClientTest, NormalRun) {
-  Main program(Nighthawk::TestUtility::createOptionsImpl(
+  Main program(nighthawk::TestUtility::createOptionsImpl(
       "foo --duration 1 --rps 10 http://localhost:63657/"));
 
   EXPECT_FALSE(program.run());
@@ -74,9 +74,9 @@ TEST_F(ClientTest, TracingRun) {
 }
 
 TEST_F(ClientTest, BadRun) {
-  Main program(Nighthawk::TestUtility::createOptionsImpl(
+  Main program(nighthawk::TestUtility::createOptionsImpl(
       "foo --duration 1 --rps 1 https://unresolveable.host/"));
   EXPECT_FALSE(program.run());
 }
 
-} // namespace Nighthawk
+} // namespace nighthawk

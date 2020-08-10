@@ -10,7 +10,7 @@
 #include "absl/strings/str_replace.h"
 #include "absl/strings/str_split.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 std::map<std::string, uint64_t>
 Utility::mapCountersFromStore(const Envoy::Stats::Store& store,
@@ -82,4 +82,4 @@ bool Utility::parseHostPort(const std::string& host_port, std::string* address, 
          RE2::FullMatch(host_port, R"(([-.0-9a-zA-Z]+):(\d+))", address, port);
 }
 
-} // namespace Nighthawk
+} // namespace nighthawk

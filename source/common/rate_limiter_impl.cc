@@ -4,7 +4,7 @@
 
 #include "external/envoy/source/common/common/assert.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 using namespace std::chrono_literals;
 
@@ -241,4 +241,4 @@ ZipfRateLimiterImpl::ZipfRateLimiterImpl(RateLimiterPtr&& rate_limiter, double q
   dist_ = absl::zipf_distribution<uint64_t>(1, q, v);
 }
 
-} // namespace Nighthawk
+} // namespace nighthawk

@@ -6,7 +6,7 @@
 
 #include "nighthawk/common/request.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 using RequestGenerator = std::function<RequestPtr()>;
 
@@ -27,4 +27,4 @@ public:
 
 using RequestSourcePtr = std::unique_ptr<RequestSource>;
 
-} // namespace Nighthawk
+} // namespace nighthawk

@@ -4,7 +4,7 @@
 
 #include "gmock/gmock.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class MockSequencer : public Sequencer {
 public:
@@ -18,4 +18,4 @@ public:
   MOCK_METHOD0(cancel, void());
 };
 
-} // namespace Nighthawk
+} // namespace nighthawk

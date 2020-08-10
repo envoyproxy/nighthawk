@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include <string>
 
-namespace Nighthawk {
+namespace nighthawk {
 /**
  * Base class for all Nighthawk exceptions.
  */
@@ -32,4 +32,4 @@ public:
 };
 
 
-} // namespace Nighthawk
+} // namespace nighthawk

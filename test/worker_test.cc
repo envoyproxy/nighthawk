@@ -13,7 +13,7 @@
 
 using namespace testing;
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class TestWorker : public WorkerImpl {
 public:
@@ -62,4 +62,4 @@ TEST_F(WorkerTest, WorkerExecutesOnThread) {
   worker.shutdown();
 }
 
-} // namespace Nighthawk
+} // namespace nighthawk

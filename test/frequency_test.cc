@@ -4,7 +4,7 @@
 
 using namespace testing;
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class FrequencyTest : public Test {};
 
@@ -18,4 +18,4 @@ TEST_F(FrequencyTest, BasicTest) {
   EXPECT_EQ(std::chrono::duration<double>(1.0 / (1000 * 1000)), f2.interval());
 }
 
-} // namespace Nighthawk
+} // namespace nighthawk

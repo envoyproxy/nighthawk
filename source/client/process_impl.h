@@ -34,7 +34,7 @@
 #include "client/benchmark_client_impl.h"
 #include "client/factories_impl.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class ClusterManagerFactory;
 /**
@@ -157,4 +157,4 @@ private:
   bool cancelled_{false};
 };
 
-} // namespace Nighthawk
+} // namespace nighthawk

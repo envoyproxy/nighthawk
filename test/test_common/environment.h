@@ -4,7 +4,7 @@
 
 #include "external/envoy/test/test_common/environment.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 // For now we delegate most things 1:1 to Envoy::TestEnvironment.
 // We hide the original versions of runfilesDirectory() & runfilesPath(),
@@ -20,4 +20,4 @@ public:
   }
 };
 
-} // namespace Nighthawk
+} // namespace nighthawk

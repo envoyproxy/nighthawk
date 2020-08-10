@@ -4,7 +4,7 @@
 
 #include "nighthawk/common/request.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class RequestImpl : public Request {
 public:
@@ -15,4 +15,4 @@ private:
   HeaderMapPtr header_;
 };
 
-} // namespace Nighthawk
+} // namespace nighthawk

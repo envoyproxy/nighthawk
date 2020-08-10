@@ -8,7 +8,7 @@
 
 #include "absl/types/optional.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 /**
  * Abstract rate limiter interface.
@@ -64,4 +64,4 @@ public:
 
 using DiscreteNumericDistributionSamplerPtr = std::unique_ptr<DiscreteNumericDistributionSampler>;
 
-} // namespace Nighthawk
+} // namespace nighthawk

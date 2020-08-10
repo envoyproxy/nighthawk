@@ -4,7 +4,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 namespace {
 
@@ -74,4 +74,4 @@ TEST(RequestsPerSecondInputVariableSetter, SetInputVariableReturnsErrorWithOvers
 
 } // namespace
 
-} // namespace Nighthawk
+} // namespace nighthawk

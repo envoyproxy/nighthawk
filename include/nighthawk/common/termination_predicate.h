@@ -4,7 +4,7 @@
 
 #include "envoy/common/pure.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class TerminationPredicate;
 
@@ -55,4 +55,4 @@ public:
   virtual Status evaluate() PURE;
 };
 
-} // namespace Nighthawk
+} // namespace nighthawk

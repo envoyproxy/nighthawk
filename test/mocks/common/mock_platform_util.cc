@@ -1,6 +1,6 @@
 #include "test/mocks/common/mock_platform_util.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 MockPlatformUtil::MockPlatformUtil() = default;
 

@@ -7,7 +7,7 @@
 
 using namespace std::chrono_literals;
 
-namespace Nighthawk {
+namespace nighthawk {
 
 SequencerImpl::SequencerImpl(
     const PlatformUtil& platform_util, Envoy::Event::Dispatcher& dispatcher,
@@ -175,4 +175,4 @@ StatisticPtrMap SequencerImpl::statistics() const {
   return statistics;
 };
 
-} // namespace Nighthawk
+} // namespace nighthawk

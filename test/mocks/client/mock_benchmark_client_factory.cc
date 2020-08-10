@@ -1,7 +1,7 @@
 #include "test/mocks/client/mock_benchmark_client_factory.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 MockBenchmarkClientFactory::MockBenchmarkClientFactory() = default;
 
-} // namespace Nighthawk
+} // namespace nighthawk

@@ -9,7 +9,7 @@
 #include "nighthawk/common/operation_callback.h"
 #include "nighthawk/common/statistic.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 using SequencerTarget = std::function<bool(OperationCallback)>;
 
@@ -53,4 +53,4 @@ public:
 
 using SequencerPtr = std::unique_ptr<Sequencer>;
 
-} // namespace Nighthawk
+} // namespace nighthawk

@@ -13,7 +13,7 @@
 
 #include "absl/strings/string_view.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class UriImpl : public Uri, public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
@@ -48,4 +48,4 @@ private:
   bool resolve_attempted_{};
 };
 
-} // namespace Nighthawk
+} // namespace nighthawk

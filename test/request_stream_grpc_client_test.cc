@@ -7,7 +7,7 @@
 
 using namespace testing;
 
-namespace Nighthawk {
+namespace nighthawk {
 
 // The grpc client itself is tested via the python based integration tests.
 // It is convenient to test message translation here.
@@ -74,4 +74,4 @@ TEST_F(ProtoRequestHelperTest, AmbiguousHost) {
   translateExpectingEqual();
 }
 
-} // namespace Nighthawk
+} // namespace nighthawk

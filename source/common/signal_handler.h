@@ -7,7 +7,7 @@
 
 #include "external/envoy/source/common/common/logger.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 /**
  * Callback definition for providing a delegate that should be executed after a signal
@@ -73,4 +73,4 @@ private:
 
 using SignalHandlerPtr = std::unique_ptr<SignalHandler>;
 
-} // namespace Nighthawk
+} // namespace nighthawk

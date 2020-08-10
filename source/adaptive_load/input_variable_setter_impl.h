@@ -6,7 +6,7 @@
 
 #include "api/adaptive_load/input_variable_setter_impl.pb.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 /**
  * An InputVariableSetter that sets the |requests_per_second| field in the CommandLineOptions proto.
@@ -39,4 +39,4 @@ public:
 // This factory is activated through LoadInputVariableSetterPlugin in plugin_util.h.
 DECLARE_FACTORY(RequestsPerSecondInputVariableSetterConfigFactory);
 
-} // namespace Nighthawk
+} // namespace nighthawk

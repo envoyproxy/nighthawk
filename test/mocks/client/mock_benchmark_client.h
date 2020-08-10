@@ -4,7 +4,7 @@
 
 #include "gmock/gmock.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class MockBenchmarkClient : public BenchmarkClient {
 public:
@@ -19,4 +19,4 @@ public:
   MOCK_CONST_METHOD0(requestHeaders, const Envoy::Http::RequestHeaderMap&());
 };
 
-} // namespace Nighthawk
+} // namespace nighthawk

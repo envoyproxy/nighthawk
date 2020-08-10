@@ -1,6 +1,6 @@
 #include "test/mocks/common/mock_termination_predicate.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 MockTerminationPredicate::MockTerminationPredicate() = default;
 

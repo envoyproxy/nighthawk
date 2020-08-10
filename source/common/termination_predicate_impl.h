@@ -5,7 +5,7 @@
 
 #include "nighthawk/common/termination_predicate.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class TerminationPredicateBaseImpl : public TerminationPredicate {
 public:
@@ -59,4 +59,4 @@ private:
   const TerminationPredicate::Status termination_status_;
 };
 
-} // namespace Nighthawk
+} // namespace nighthawk

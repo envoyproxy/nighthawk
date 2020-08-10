@@ -6,7 +6,7 @@
 
 #include "external/envoy/source/common/singleton/const_singleton.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class HeaderNameValues {
 public:
@@ -15,4 +15,4 @@ public:
 
 using HeaderNames = Envoy::ConstSingleton<HeaderNameValues>;
 
-} // namespace Nighthawk
+} // namespace nighthawk

@@ -15,7 +15,7 @@ using namespace testing;
 // TODO(oschaaf): this gets us some coverage, but we need more functional testing.
 // See if we can add some python integration tests.
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class ServiceMainTest : public Test {};
 
@@ -79,4 +79,4 @@ TEST_P(ServiceMainTestP, PortZero) {
   service_main.shutdown();
 }
 
-} // namespace Nighthawk
+} // namespace nighthawk

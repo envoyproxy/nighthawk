@@ -4,7 +4,7 @@
 
 #include "gmock/gmock.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class MockPlatformUtil : public PlatformUtil {
 public:
@@ -14,4 +14,4 @@ public:
   MOCK_CONST_METHOD1(sleep, void(std::chrono::microseconds));
 };
 
-} // namespace Nighthawk
+} // namespace nighthawk

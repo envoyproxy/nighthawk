@@ -3,7 +3,7 @@
 #include "envoy/runtime/runtime.h"
 #include "envoy/thread_local/thread_local.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 WorkerImpl::WorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Instance& tls,
                        Envoy::Stats::Store& store)
@@ -38,4 +38,4 @@ void WorkerImpl::start() {
 
 void WorkerImpl::waitForCompletion() { complete_.get_future().wait(); }
 
-} // namespace Nighthawk
+} // namespace nighthawk

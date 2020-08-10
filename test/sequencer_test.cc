@@ -23,7 +23,7 @@ using namespace std::chrono_literals;
 using namespace nighthawk::client;
 using namespace testing;
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class FakeSequencerTarget {
 public:
@@ -301,4 +301,4 @@ TEST_F(SequencerIntegrationTest, CallbacksDoNotInfluenceTestDuration) {
   EXPECT_EQ(0, sequencer.blockedStatistic().count());
 }
 
-} // namespace Nighthawk
+} // namespace nighthawk

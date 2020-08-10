@@ -4,7 +4,7 @@
 
 #include "gmock/gmock.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class MockRequestSource : public RequestSource {
 public:
@@ -13,4 +13,4 @@ public:
   MOCK_METHOD0(initOnThread, void());
 };
 
-} // namespace Nighthawk
+} // namespace nighthawk

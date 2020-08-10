@@ -5,7 +5,7 @@
 using namespace std::chrono_literals;
 using namespace testing;
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class PythonTest : public Test {};
 
@@ -20,4 +20,4 @@ TEST_F(PythonTest, IntegrationTests) {
   ASSERT_EQ(0, system(path.c_str()));
 }
 
-} // namespace Nighthawk
+} // namespace nighthawk

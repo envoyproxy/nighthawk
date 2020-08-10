@@ -5,7 +5,7 @@
 #include "external/envoy/source/common/common/assert.h"
 #include "external/envoy/source/common/common/macros.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 namespace {
 std::function<void(int)> signal_handler_delegate;
@@ -47,4 +47,4 @@ void SignalHandler::initiateShutdown() {
 
 void SignalHandler::onSignal() { initiateShutdown(); }
 
-} // namespace Nighthawk
+} // namespace nighthawk

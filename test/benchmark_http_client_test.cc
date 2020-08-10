@@ -24,7 +24,7 @@
 
 using namespace testing;
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class BenchmarkClientHttpTest : public testing::Test {
 public:
@@ -314,4 +314,4 @@ TEST_F(BenchmarkClientHttpTest, BadContentLength) {
   EXPECT_EQ(1, getCounter("http_2xx"));
 }
 
-} // namespace Nighthawk
+} // namespace nighthawk

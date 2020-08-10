@@ -9,7 +9,7 @@
 
 #include "common/version_info.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 OutputCollectorImpl::OutputCollectorImpl(Envoy::TimeSource& time_source, const Options& options) {
   *(output_.mutable_timestamp()) = Envoy::Protobuf::util::TimeUtil::NanosecondsToTimestamp(
@@ -47,4 +47,4 @@ void OutputCollectorImpl::addResult(absl::string_view name,
       Envoy::Protobuf::util::TimeUtil::NanosecondsToDuration(execution_duration.count());
 }
 
-} // namespace Nighthawk
+} // namespace nighthawk

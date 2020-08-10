@@ -11,7 +11,7 @@
 
 #include "common/platform_util_impl.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class OptionBasedFactoryImpl : public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
@@ -78,4 +78,4 @@ public:
       const TerminationPredicate::Status termination_status, Envoy::Stats::Scope& scope) const;
 };
 
-} // namespace Nighthawk
+} // namespace nighthawk

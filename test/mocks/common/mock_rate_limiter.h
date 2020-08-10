@@ -4,7 +4,7 @@
 
 #include "gmock/gmock.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class MockRateLimiter : public RateLimiter {
 public:
@@ -24,4 +24,4 @@ public:
   MOCK_CONST_METHOD0(max, uint64_t());
 };
 
-} // namespace Nighthawk
+} // namespace nighthawk

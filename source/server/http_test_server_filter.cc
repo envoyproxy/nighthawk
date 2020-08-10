@@ -9,7 +9,7 @@
 
 #include "absl/strings/numbers.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 HttpTestServerDecoderFilterConfig::HttpTestServerDecoderFilterConfig(
     nighthawk::server::ResponseOptions proto_config)
@@ -80,4 +80,4 @@ void HttpTestServerDecoderFilter::setDecoderFilterCallbacks(
   decoder_callbacks_ = &callbacks;
 }
 
-} // namespace Nighthawk
+} // namespace nighthawk

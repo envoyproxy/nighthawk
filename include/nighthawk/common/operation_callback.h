@@ -1,6 +1,6 @@
 #include <functional>
 
-namespace Nighthawk {
+namespace nighthawk {
 
 /**
  * Callback specification. Done will be true if the flow was fully executed,
@@ -9,4 +9,4 @@ namespace Nighthawk {
  * a success, and is meaningful only when done equals true.
  */
 using OperationCallback = std::function<void(bool done, bool success)>;
-} // namespace Nighthawk
+} // namespace nighthawk

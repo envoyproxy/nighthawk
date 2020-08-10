@@ -5,7 +5,7 @@
 #include "envoy/common/time.h"
 #include "envoy/event/dispatcher.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 /**
  * Time source which caches monotonic time. Intended for usage accross components to get a
@@ -34,4 +34,4 @@ private:
   Envoy::Event::Dispatcher& dispatcher_;
 };
 
-} // namespace Nighthawk
+} // namespace nighthawk

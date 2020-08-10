@@ -1,6 +1,6 @@
 #include "common/phase_impl.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 absl::string_view PhaseImpl::id() const { return id_; }
 
@@ -15,4 +15,4 @@ void PhaseImpl::run() const {
   ENVOY_LOG(trace, "finished '{}' phase", id());
 }
 
-} // namespace Nighthawk
+} // namespace nighthawk

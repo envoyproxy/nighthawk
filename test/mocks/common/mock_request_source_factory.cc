@@ -1,7 +1,7 @@
 #include "test/mocks/common/mock_request_source_factory.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 MockRequestSourceFactory::MockRequestSourceFactory() = default;
 
-} // namespace Nighthawk
+} // namespace nighthawk

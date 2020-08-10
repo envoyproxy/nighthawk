@@ -5,7 +5,7 @@
 #include "api/adaptive_load/adaptive_load.pb.h"
 #include "api/client/service.grpc.pb.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 /**
  * Performs an adaptive load session consisting of the Adjusting Stage and the
@@ -31,4 +31,4 @@ nighthawk::adaptive_load::AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
     nighthawk::client::NighthawkService::StubInterface* nighthawk_service_stub,
     const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec, Envoy::TimeSource& time_source);
 
-} // namespace Nighthawk
+} // namespace nighthawk

@@ -14,7 +14,7 @@
 #include "nighthawk/common/statistic.h"
 #include "nighthawk/common/termination_predicate.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class SequencerFactory {
 public:
@@ -48,4 +48,4 @@ public:
          const Envoy::MonotonicTime scheduled_starting_time) const PURE;
 };
 
-} // namespace Nighthawk
+} // namespace nighthawk

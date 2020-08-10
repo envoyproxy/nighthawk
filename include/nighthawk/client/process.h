@@ -2,7 +2,7 @@
 
 #include "nighthawk/client/output_collector.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 /**
  * Process context is shared between the CLI and grpc service. It is capable of executing
@@ -31,4 +31,4 @@ public:
 
 using ProcessPtr = std::unique_ptr<Process>;
 
-} // namespace Nighthawk
+} // namespace nighthawk

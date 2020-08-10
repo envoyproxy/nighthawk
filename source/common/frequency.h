@@ -3,7 +3,7 @@
 #include <chrono>
 #include <cmath>
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class Frequency {
 public:
@@ -20,4 +20,4 @@ private:
 constexpr Frequency operator"" _Hz(unsigned long long hz) { return Frequency{hz}; }
 constexpr Frequency operator"" _kHz(unsigned long long khz) { return Frequency{khz * 1000}; }
 
-} // namespace Nighthawk
+} // namespace nighthawk

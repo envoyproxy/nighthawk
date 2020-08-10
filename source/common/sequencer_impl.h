@@ -12,7 +12,7 @@
 
 #include "external/envoy/source/common/common/logger.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 namespace {
 
@@ -136,4 +136,4 @@ private:
   SequencerStats sequencer_stats_;
 };
 
-} // namespace Nighthawk
+} // namespace nighthawk

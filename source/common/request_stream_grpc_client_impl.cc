@@ -10,7 +10,7 @@
 
 #include "common/request_impl.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 const std::string RequestStreamGrpcClientImpl::METHOD_NAME =
     "nighthawk.request_source.NighthawkRequestSourceService.RequestStream";
@@ -128,4 +128,4 @@ void RequestStreamGrpcClientImpl::emplaceMessage(
   messages_.emplace(std::move(message));
 }
 
-} // namespace Nighthawk
+} // namespace nighthawk

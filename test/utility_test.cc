@@ -13,7 +13,7 @@
 
 using namespace testing;
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class UtilityTest : public Test {
 public:
@@ -177,4 +177,4 @@ TEST_F(UtilityTest, MapCountersFromStore) {
   EXPECT_EQ(counters.begin()->second, 2);
 }
 
-} // namespace Nighthawk
+} // namespace nighthawk

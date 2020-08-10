@@ -4,7 +4,7 @@
 
 #include "gmock/gmock.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class MockTerminationPredicate : public TerminationPredicate {
 public:
@@ -15,4 +15,4 @@ public:
   MOCK_METHOD0(evaluate, TerminationPredicate::Status());
 };
 
-} // namespace Nighthawk
+} // namespace nighthawk

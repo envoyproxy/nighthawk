@@ -9,7 +9,7 @@
 
 #include "absl/types/optional.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class PhaseImpl : public Phase, public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
@@ -35,4 +35,4 @@ private:
   const bool should_measure_latencies_;
 };
 
-} // namespace Nighthawk
+} // namespace nighthawk

@@ -4,7 +4,7 @@
 
 #include "gmock/gmock.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class MockSequencerFactory : public SequencerFactory {
 public:
@@ -17,4 +17,4 @@ public:
                                           const Envoy::MonotonicTime scheduled_starting_time));
 };
 
-} // namespace Nighthawk
+} // namespace nighthawk

@@ -13,7 +13,7 @@
 #include "absl/types/optional.h"
 #include "tclap/CmdLine.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class OptionsImpl : public Options, public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
@@ -139,4 +139,4 @@ private:
   uint32_t stats_flush_interval_{5};
 };
 
-} // namespace Nighthawk
+} // namespace nighthawk

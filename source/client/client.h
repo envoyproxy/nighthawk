@@ -13,7 +13,7 @@
 
 #include "process_impl.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class Main : public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
@@ -26,4 +26,4 @@ private:
   std::unique_ptr<Envoy::Logger::Context> logging_context_;
 };
 
-} // namespace Nighthawk
+} // namespace nighthawk

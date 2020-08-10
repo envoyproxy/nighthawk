@@ -9,7 +9,7 @@
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 const std::string& VersionInfo::version() {
   CONSTRUCT_ON_FIRST_USE(std::string, NIGHTHAWK_BUILD_VERSION_NUMBER);
@@ -42,4 +42,4 @@ VersionInfo::toVersionString(const envoy::config::core::v3::BuildVersion& build_
   return absl::StrCat(version.major_number(), ".", version.minor_number(), ".", version.patch());
 }
 
-} // namespace Nighthawk
+} // namespace nighthawk

@@ -4,7 +4,7 @@
 
 #include "gmock/gmock.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class MockRequestSourceFactory : public RequestSourceFactory {
 public:
@@ -16,4 +16,4 @@ public:
                                       absl::string_view service_cluster_name));
 };
 
-} // namespace Nighthawk
+} // namespace nighthawk

@@ -18,7 +18,7 @@
 #include "nighthawk/common/termination_predicate.h"
 #include "nighthawk/common/uri.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class BenchmarkClientFactory {
 public:
@@ -64,4 +64,4 @@ public:
   create(const nighthawk::client::OutputFormat_OutputFormatOptions options) const PURE;
 };
 
-} // namespace Nighthawk
+} // namespace nighthawk

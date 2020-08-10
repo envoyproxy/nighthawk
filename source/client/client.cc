@@ -36,7 +36,7 @@
 
 using namespace std::chrono_literals;
 
-namespace Nighthawk {
+namespace nighthawk {
 
 Main::Main(int argc, const char* const* argv)
     : Main(std::make_unique<OptionsImpl>(argc, argv)) {}
@@ -90,4 +90,4 @@ bool Main::run() {
   return result;
 }
 
-} // namespace Nighthawk
+} // namespace nighthawk

@@ -5,7 +5,7 @@
 
 #include "envoy/common/pure.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 /**
  * A place to store platform specific utilities.
@@ -26,4 +26,4 @@ public:
 
 using PlatformUtilPtr = std::unique_ptr<PlatformUtil>;
 
-} // namespace Nighthawk
+} // namespace nighthawk

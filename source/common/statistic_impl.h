@@ -11,7 +11,7 @@
 
 #include "common/frequency.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 /**
  * Base class for all statistics implementations.
@@ -192,7 +192,7 @@ public:
   ~SinkableStatistic() override;
 
   // Currently Envoy Histogram Unit supports {Unspecified, Bytes, Microseconds, Milliseconds}. By
-  // default, Nighthawk::Statistic uses nanosecond as the unit of latency histograms, so Unspecified
+  // default, nighthawk::Statistic uses nanosecond as the unit of latency histograms, so Unspecified
   // is returned here to isolate Nighthawk Statistic from Envoy Histogram Unit.
   Envoy::Stats::Histogram::Unit unit() const override;
   Envoy::Stats::SymbolTable& symbolTable() override;
@@ -220,11 +220,11 @@ public:
   // Envoy::Stats::Histogram
   void recordValue(uint64_t value) override;
   bool used() const override { return count() > 0; }
-  // Overriding name() to return Nighthawk::Statistic::id().
+  // Overriding name() to return nighthawk::Statistic::id().
   std::string name() const override { return id(); }
   std::string tagExtractedName() const override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; }
 
-  // Nighthawk::Statistic
+  // nighthawk::Statistic
   void addValue(uint64_t value) override { recordValue(value); }
 };
 
@@ -239,12 +239,12 @@ public:
   // Envoy::Stats::Histogram
   void recordValue(uint64_t value) override;
   bool used() const override { return count() > 0; }
-  // Overriding name() to return Nighthawk::Statistic::id().
+  // Overriding name() to return nighthawk::Statistic::id().
   std::string name() const override { return id(); }
   std::string tagExtractedName() const override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; }
 
-  // Nighthawk::Statistic
+  // nighthawk::Statistic
   void addValue(uint64_t value) override { recordValue(value); }
 };
 
-} // namespace Nighthawk
+} // namespace nighthawk

@@ -4,7 +4,7 @@
 
 #include "envoy/http/header_map.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 using HeaderMapPtr = std::shared_ptr<const Envoy::Http::RequestHeaderMap>;
 
@@ -25,4 +25,4 @@ public:
 
 using RequestPtr = std::unique_ptr<Request>;
 
-} // namespace Nighthawk
+} // namespace nighthawk

@@ -19,7 +19,7 @@
 
 using namespace std::chrono_literals;
 
-namespace Nighthawk {
+namespace nighthawk {
 
 OptionBasedFactoryImpl::OptionBasedFactoryImpl(const Options& options) : options_(options) {}
 
@@ -219,4 +219,4 @@ TerminationPredicate* TerminationPredicateFactoryImpl::linkConfiguredPredicates(
   return current_predicate;
 }
 
-} // namespace Nighthawk
+} // namespace nighthawk

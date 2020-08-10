@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-namespace Nighthawk {
+namespace nighthawk {
 
 TerminationPredicate::Status TerminationPredicateBaseImpl::evaluateChain() {
   auto status = TerminationPredicate::Status::PROCEED;
@@ -25,4 +25,4 @@ TerminationPredicate::Status StatsCounterAbsoluteThresholdTerminationPredicateIm
                                            : TerminationPredicate::Status::PROCEED;
 }
 
-} // namespace Nighthawk
+} // namespace nighthawk

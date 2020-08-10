@@ -14,7 +14,7 @@
 using namespace std::chrono_literals;
 using namespace testing;
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class RateLimiterTest : public Test {};
 
@@ -445,4 +445,4 @@ TEST_F(ZipfRateLimiterImplTest, BadArgumentsTest) {
   }
 }
 
-} // namespace Nighthawk
+} // namespace nighthawk

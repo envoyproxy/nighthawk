@@ -17,7 +17,7 @@
 
 using namespace std::chrono_literals;
 
-namespace Nighthawk {
+namespace nighthawk {
 
 BenchmarkClientStatistic::BenchmarkClientStatistic(BenchmarkClientStatistic&& statistic) noexcept
     : connect_statistic(std::move(statistic.connect_statistic)),
@@ -223,4 +223,4 @@ void BenchmarkClientHttpImpl::exportLatency(const uint32_t response_code,
   }
 }
 
-} // namespace Nighthawk
+} // namespace nighthawk

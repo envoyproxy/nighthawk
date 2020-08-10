@@ -1,7 +1,7 @@
 #include "test/mocks/client/mock_options.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 MockOptions::MockOptions() = default;
 
-} // namespace Nighthawk
+} // namespace nighthawk

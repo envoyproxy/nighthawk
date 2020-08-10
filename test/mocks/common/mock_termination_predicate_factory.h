@@ -4,7 +4,7 @@
 
 #include "gmock/gmock.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class MockTerminationPredicateFactory : public TerminationPredicateFactory {
 public:
@@ -15,4 +15,4 @@ public:
                                              const Envoy::MonotonicTime scheduled_starting_time));
 };
 
-} // namespace Nighthawk
+} // namespace nighthawk

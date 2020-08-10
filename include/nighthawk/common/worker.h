@@ -6,7 +6,7 @@
 
 #include "nighthawk/common/statistic.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 /**
  * Interface for a threaded worker.
@@ -40,4 +40,4 @@ public:
 
 using WorkerPtr = std::unique_ptr<Worker>;
 
-} // namespace Nighthawk
+} // namespace nighthawk

@@ -18,7 +18,7 @@
 #include "fmt/ranges.h"
 #include "tclap/CmdLine.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 OutputTransformMain::OutputTransformMain(int argc, const char* const* argv, std::istream& input)
     : input_(input) {
@@ -61,4 +61,4 @@ uint32_t OutputTransformMain::run() {
   return 0;
 }
 
-} // namespace Nighthawk
+} // namespace nighthawk

@@ -7,7 +7,7 @@
 
 #include "nighthawk/common/sequencer.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 /**
  * Phase represents a distinct phase of a benchmmark execution, like warmup and cooldown.
@@ -48,4 +48,4 @@ public:
 
 using PhasePtr = std::unique_ptr<Phase>;
 
-} // namespace Nighthawk
+} // namespace nighthawk

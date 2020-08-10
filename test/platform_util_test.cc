@@ -7,7 +7,7 @@
 using namespace testing;
 using namespace std::chrono_literals;
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class PlatformUtilTest : public Test {
 public:
@@ -22,4 +22,4 @@ TEST_F(PlatformUtilTest, NoFatalFailureForSleep) {
   EXPECT_NO_FATAL_FAILURE(platform_util_.sleep(1us));
 }
 
-} // namespace Nighthawk
+} // namespace nighthawk

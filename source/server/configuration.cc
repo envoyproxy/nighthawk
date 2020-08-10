@@ -9,7 +9,7 @@
 
 #include "absl/strings/numbers.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 bool mergeJsonConfig(absl::string_view json, nighthawk::server::ResponseOptions& config,
                      std::string& error_message) {
@@ -38,4 +38,4 @@ void applyConfigToResponseHeaders(Envoy::Http::ResponseHeaderMap& response_heade
   }
 }
 
-} // namespace Nighthawk
+} // namespace nighthawk

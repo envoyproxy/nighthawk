@@ -19,7 +19,7 @@
 
 #include "common/worker_impl.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class ClientWorkerImpl : public WorkerImpl, virtual public ClientWorker {
 public:
@@ -70,4 +70,4 @@ private:
 
 using ClientWorkerImplPtr = std::unique_ptr<ClientWorkerImpl>;
 
-} // namespace Nighthawk
+} // namespace nighthawk

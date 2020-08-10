@@ -1,6 +1,6 @@
 #include "test/mocks/common/mock_sequencer.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 MockSequencer::MockSequencer() = default;
 

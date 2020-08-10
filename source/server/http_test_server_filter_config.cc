@@ -9,7 +9,7 @@
 
 #include "server/http_test_server_filter.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class HttpTestServerDecoderFilterConfigFactory
     : public Envoy::Server::Configuration::NamedHttpFilterConfigFactory {
@@ -49,4 +49,4 @@ static Envoy::Registry::RegisterFactory<HttpTestServerDecoderFilterConfigFactory
                                         Envoy::Server::Configuration::NamedHttpFilterConfigFactory>
     register_;
 
-} // namespace Nighthawk
+} // namespace nighthawk

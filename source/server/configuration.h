@@ -6,7 +6,7 @@
 
 #include "api/server/response_options.pb.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 /**
  * Merges a json string containing configuration into a ResponseOptions instance.
@@ -29,4 +29,4 @@ bool mergeJsonConfig(absl::string_view json, nighthawk::server::ResponseOptions&
 void applyConfigToResponseHeaders(Envoy::Http::ResponseHeaderMap& response_headers,
                                   nighthawk::server::ResponseOptions& response_options);
 
-} // namespace Nighthawk
+} // namespace nighthawk

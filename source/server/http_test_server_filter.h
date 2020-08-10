@@ -6,7 +6,7 @@
 
 #include "api/server/response_options.pb.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 // Basically this is left in as a placeholder for further configuration.
 class HttpTestServerDecoderFilterConfig {
@@ -44,4 +44,4 @@ private:
   absl::optional<std::string> request_headers_dump_;
 };
 
-} // namespace Nighthawk
+} // namespace nighthawk

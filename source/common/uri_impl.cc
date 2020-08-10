@@ -9,7 +9,7 @@
 #include "absl/strings/str_replace.h"
 #include "absl/strings/str_split.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 bool UriImpl::isValid() const {
   return (scheme_ == "http" || scheme_ == "https" || scheme_ == "zipkin" || scheme_ == "grpc") &&
@@ -109,4 +109,4 @@ UriImpl::resolve(Envoy::Event::Dispatcher& dispatcher,
   return address_;
 }
 
-} // namespace Nighthawk
+} // namespace nighthawk

@@ -19,7 +19,7 @@
 
 using namespace testing;
 
-namespace Nighthawk {
+namespace nighthawk {
 
 // TODO(https://github.com/envoyproxy/nighthawk/issues/179): Mock Process in client_test, and move
 // it's tests in here. Note: these tests do not have a backend set up to talk to. That's why we
@@ -117,4 +117,4 @@ TEST_P(ProcessTest, CancelExecutionBeforeBeginLoadTest) {
   runProcess(RunExpectation::EXPECT_SUCCESS, true, true);
 }
 
-} // namespace Nighthawk
+} // namespace nighthawk

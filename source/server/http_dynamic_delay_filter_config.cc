@@ -9,7 +9,7 @@
 
 #include "server/http_dynamic_delay_filter.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 namespace {
 
 class HttpDynamicDelayDecoderFilterConfigFactory
@@ -53,4 +53,4 @@ private:
 static Envoy::Registry::RegisterFactory<HttpDynamicDelayDecoderFilterConfigFactory,
                                         Envoy::Server::Configuration::NamedHttpFilterConfigFactory>
     register_;
-} // namespace Nighthawk
+} // namespace nighthawk

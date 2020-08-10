@@ -9,7 +9,7 @@
 
 #include "gtest/gtest.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 /**
  * Support class for testing the dynamic delay filter. We rely on the fault filter for
@@ -181,4 +181,4 @@ TEST_F(ComputeTest, ComputeConcurrencyBasedLinearDelayMs) {
   EXPECT_EQ(compute(4, 1, 500000, 1, 500000), 5003);
 }
 
-} // namespace Nighthawk
+} // namespace nighthawk

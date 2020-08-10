@@ -21,7 +21,7 @@
 #include "nighthawk/client/process.h"
 #include "nighthawk/common/request_source.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 /**
  * Implements Nighthawk's gRPC service. This service allows load generation to be
@@ -84,4 +84,4 @@ private:
   RequestSourcePtr createStaticEmptyRequestSource(const uint32_t amount);
 };
 
-} // namespace Nighthawk
+} // namespace nighthawk

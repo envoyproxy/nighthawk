@@ -5,7 +5,7 @@
 #include "absl/types/optional.h"
 #include "gmock/gmock.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class MockOptions : public Options {
 public:
@@ -55,4 +55,4 @@ public:
   MOCK_CONST_METHOD0(statsFlushInterval, uint32_t());
 };
 
-} // namespace Nighthawk
+} // namespace nighthawk

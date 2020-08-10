@@ -4,7 +4,7 @@
 
 #include "nighthawk/common/request.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 /**
  * Interface for a gRPC client used to pull request data from a gRPC service.
@@ -29,4 +29,4 @@ public:
 
 using RequestStreamGrpcClientPtr = std::unique_ptr<RequestStreamGrpcClient>;
 
-} // namespace Nighthawk
+} // namespace nighthawk

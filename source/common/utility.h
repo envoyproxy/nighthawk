@@ -14,7 +14,7 @@
 #include "re2/re2.h"
 #include "tclap/CmdLine.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 using StoreCounterFilter = std::function<bool(absl::string_view, const uint64_t)>;
 
@@ -66,4 +66,4 @@ public:
   static bool parseHostPort(const std::string& host_port, std::string* host, int* port);
 };
 
-} // namespace Nighthawk
+} // namespace nighthawk

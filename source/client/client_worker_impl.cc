@@ -7,7 +7,7 @@
 #include "common/termination_predicate_impl.h"
 #include "common/utility.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 using namespace std::chrono_literals;
 
@@ -104,4 +104,4 @@ StatisticPtrMap ClientWorkerImpl::statistics() const {
   return statistics;
 }
 
-} // namespace Nighthawk
+} // namespace nighthawk

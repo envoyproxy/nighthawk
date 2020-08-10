@@ -13,7 +13,7 @@
 
 #include "gtest/gtest.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 using namespace testing;
 constexpr absl::string_view kBadJson = "bad_json";
@@ -87,7 +87,7 @@ public:
           const std::string header_config =
               fmt::format("{{response_body_size:{}}}", response_body_size);
           request_headers.addCopy(
-              Nighthawk::HeaderNames::get().TestServerConfig, header_config);
+              nighthawk::HeaderNames::get().TestServerConfig, header_config);
         });
     ASSERT_TRUE(response->complete());
     EXPECT_EQ("200", response->headers().Status()->value().getStringView());
@@ -111,7 +111,7 @@ public:
           const std::string header_config =
               fmt::format("{{response_body_size:{}}}", response_body_size);
           request_headers.addCopy(
-              Nighthawk::HeaderNames::get().TestServerConfig, header_config);
+              nighthawk::HeaderNames::get().TestServerConfig, header_config);
         });
     ASSERT_TRUE(response->complete());
     EXPECT_EQ("500", response->headers().Status()->value().getStringView());
@@ -362,4 +362,4 @@ TEST_F(HttpTestServerDecoderFilterTest, HeaderMerge) {
   EXPECT_EQ(3, options.response_headers_size());
 }
 
-} // namespace Nighthawk
+} // namespace nighthawk

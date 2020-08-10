@@ -11,7 +11,7 @@
 #include "nighthawk/common/statistic.h"
 #include "nighthawk/common/uri.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 using CompletionCallback = OperationCallback;
 
@@ -63,4 +63,4 @@ public:
 
 using BenchmarkClientPtr = std::unique_ptr<BenchmarkClient>;
 
-} // namespace Nighthawk
+} // namespace nighthawk

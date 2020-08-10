@@ -8,7 +8,7 @@
 #include "external/envoy/source/common/network/address_impl.h"
 #include "external/envoy/source/common/stream_info/stream_info_impl.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 void StreamDecoder::decodeHeaders(Envoy::Http::ResponseHeaderMapPtr&& headers, bool end_stream) {
   ASSERT(!complete_);
@@ -163,4 +163,4 @@ void StreamDecoder::setupForTracing() {
   stream_info_.setDownstreamRemoteAddress(remote_address);
 }
 
-} // namespace Nighthawk
+} // namespace nighthawk

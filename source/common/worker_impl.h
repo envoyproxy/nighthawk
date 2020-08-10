@@ -13,7 +13,7 @@
 #include "external/envoy/source/common/common/logger.h"
 #include "external/envoy/source/common/common/thread.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class WorkerImpl : virtual public Worker, public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
@@ -44,4 +44,4 @@ private:
   bool shutdown_{true};
 };
 
-} // namespace Nighthawk
+} // namespace nighthawk

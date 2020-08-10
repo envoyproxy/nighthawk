@@ -7,7 +7,7 @@
 #include "external/envoy/source/common/common/assert.h"
 #include "external/envoy/source/common/protobuf/utility.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 namespace {
 
@@ -334,4 +334,4 @@ void SinkableCircllhistStatistic::recordValue(uint64_t value) {
   scope_.deliverHistogramToSinks(*this, value);
 }
 
-} // namespace Nighthawk
+} // namespace nighthawk

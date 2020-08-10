@@ -14,7 +14,7 @@
 #include "absl/random/zipf_distribution.h"
 #include "absl/types/optional.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 /**
  * Rate limiter base class, which implements some shared functionality for derivations that
@@ -251,4 +251,4 @@ private:
   ZipfBehavior behavior_;
 };
 
-} // namespace Nighthawk
+} // namespace nighthawk

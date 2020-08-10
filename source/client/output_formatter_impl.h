@@ -13,7 +13,7 @@
 
 #include "absl/strings/string_view.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class OutputFormatterImpl : public OutputFormatter {
 public:
@@ -107,4 +107,4 @@ protected:
   double durationToSeconds(const Envoy::ProtobufWkt::Duration& duration) const;
 };
 
-} // namespace Nighthawk
+} // namespace nighthawk

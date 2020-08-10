@@ -10,7 +10,7 @@
 #include "nighthawk/common/statistic.h"
 #include "nighthawk/common/worker.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 /**
  * Interface for a threaded benchmark client worker.
@@ -42,4 +42,4 @@ public:
 
 using ClientWorkerPtr = std::unique_ptr<ClientWorker>;
 
-} // namespace Nighthawk
+} // namespace nighthawk

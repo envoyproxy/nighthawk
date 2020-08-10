@@ -16,7 +16,7 @@
 #include "absl/types/optional.h"
 #include "fmt/ranges.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 #define TCLAP_SET_IF_SPECIFIED(command, value_member)                                              \
   ((value_member) = (((command).isSet()) ? ((command).getValue()) : (value_member)))
@@ -783,4 +783,4 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
   return command_line_options;
 }
 
-} // namespace Nighthawk
+} // namespace nighthawk

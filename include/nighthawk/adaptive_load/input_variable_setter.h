@@ -12,7 +12,7 @@
 
 #include "absl/status/status.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 /**
  * An interface for plugins that apply a StepController-computed input value to a CommandLineOptions
@@ -60,4 +60,4 @@ public:
   createInputVariableSetter(const Envoy::Protobuf::Message& message) PURE;
 };
 
-} // namespace Nighthawk
+} // namespace nighthawk

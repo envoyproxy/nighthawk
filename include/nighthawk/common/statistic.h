@@ -13,7 +13,7 @@
 
 #include "absl/strings/string_view.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class Statistic;
 
@@ -117,4 +117,4 @@ public:
   virtual void setId(absl::string_view id) PURE;
 };
 
-} // namespace Nighthawk
+} // namespace nighthawk

@@ -10,7 +10,7 @@
 
 #include "api/adaptive_load/benchmark_result.pb.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 /**
  * An interface for StepControllers that compute load adjustments and check for convergence.
@@ -83,4 +83,4 @@ public:
       const nighthawk::client::CommandLineOptions& command_line_options_template) PURE;
 };
 
-} // namespace Nighthawk
+} // namespace nighthawk

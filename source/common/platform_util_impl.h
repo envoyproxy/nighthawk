@@ -6,7 +6,7 @@
 
 #include "nighthawk/common/platform_util.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 using namespace std::chrono_literals;
 
@@ -24,4 +24,4 @@ public:
   };
 };
 
-} // namespace Nighthawk
+} // namespace nighthawk

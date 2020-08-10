@@ -1,9 +1,9 @@
 #include "test/mocks/common/mock_rate_limiter.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 MockRateLimiter::MockRateLimiter() = default;
 
 MockDiscreteNumericDistributionSampler::MockDiscreteNumericDistributionSampler() = default;
 
-} // namespace Nighthawk
+} // namespace nighthawk

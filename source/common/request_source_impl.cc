@@ -6,7 +6,7 @@
 
 #include "common/request_impl.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 using namespace std::chrono_literals;
 
@@ -62,4 +62,4 @@ RequestGenerator RemoteRequestSourceImpl::get() {
   return [this]() -> RequestPtr { return grpc_client_->maybeDequeue(); };
 }
 
-} // namespace Nighthawk
+} // namespace nighthawk

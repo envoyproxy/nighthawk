@@ -1,7 +1,7 @@
 #include "test/mocks/common/mock_request_source.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 MockRequestSource::MockRequestSource() = default;
 
-} // namespace Nighthawk
+} // namespace nighthawk

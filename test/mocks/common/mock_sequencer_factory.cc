@@ -1,7 +1,7 @@
 #include "test/mocks/common/mock_sequencer_factory.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 MockSequencerFactory::MockSequencerFactory() = default;
 
-} // namespace Nighthawk
+} // namespace nighthawk

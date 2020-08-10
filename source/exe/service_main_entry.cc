@@ -13,14 +13,14 @@ int main(int argc, const char** argv) {
   absl::InitializeSymbolizer(argv[0]);
 #endif
   try {
-    Nighthawk::ServiceMain service(argc, argv); // NOLINT
+    nighthawk::ServiceMain service(argc, argv); // NOLINT
     service.start();
     service.wait();
-  } catch (const Nighthawk::NoServingException& e) {
+  } catch (const nighthawk::NoServingException& e) {
     return EXIT_SUCCESS;
-  } catch (const Nighthawk::MalformedArgvException& e) {
+  } catch (const nighthawk::MalformedArgvException& e) {
     return EXIT_FAILURE;
-  } catch (const Nighthawk::NighthawkException& e) {
+  } catch (const nighthawk::NighthawkException& e) {
     std::cerr << "Failure: " << e.what() << std::endl;
     return EXIT_FAILURE;
   }

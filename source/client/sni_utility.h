@@ -7,7 +7,7 @@
 
 #include "external/envoy/include/envoy/http/protocol.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class SniUtility : public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
@@ -29,4 +29,4 @@ public:
                                     const Envoy::Http::Protocol protocol);
 };
 
-} // namespace Nighthawk
+} // namespace nighthawk

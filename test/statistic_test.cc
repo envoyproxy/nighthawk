@@ -20,7 +20,7 @@
 using namespace std::chrono_literals;
 using namespace testing;
 
-namespace Nighthawk {
+namespace nighthawk {
 
 using MyTypes = Types<SimpleStatistic, InMemoryStatistic, HdrStatistic, StreamingStatistic,
                       CircllhistStatistic>;
@@ -433,4 +433,4 @@ TYPED_TEST(SinkableStatisticTest, SimpleSinkableStatistic) {
   EXPECT_EQ(worker_id, stat.worker_id().value());
 }
 
-} // namespace Nighthawk
+} // namespace nighthawk

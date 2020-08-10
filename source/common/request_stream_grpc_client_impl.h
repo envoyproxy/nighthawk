@@ -25,7 +25,7 @@
 #pragma clang diagnostic pop
 #endif
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class ProtoRequestHelper {
 public:
@@ -85,4 +85,4 @@ private:
   const uint32_t header_buffer_length_;
 };
 
-} // namespace Nighthawk
+} // namespace nighthawk

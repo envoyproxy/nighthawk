@@ -9,7 +9,7 @@
 
 #include "common/request_stream_grpc_client_impl.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class BaseRequestSourceImpl : public RequestSource,
                               public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {};
@@ -67,4 +67,4 @@ private:
   const uint32_t header_buffer_length_;
 };
 
-} // namespace Nighthawk
+} // namespace nighthawk

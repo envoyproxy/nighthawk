@@ -17,7 +17,7 @@
 using namespace std::chrono_literals;
 using namespace testing;
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class ServiceTest : public TestWithParam<Envoy::Network::Address::IpVersion> {
 public:
@@ -197,4 +197,4 @@ TEST_P(ServiceTest, Unresolvable) {
   runWithFailingValidationExpectations(true, "Unknown failure");
 }
 
-} // namespace Nighthawk
+} // namespace nighthawk

@@ -53,7 +53,7 @@
 
 using namespace std::chrono_literals;
 
-namespace Nighthawk {
+namespace nighthawk {
 
 // We customize ProdClusterManagerFactory for the sole purpose of returning our specialized
 // http1 pool to the benchmark client, which allows us to offer connection prefetching.
@@ -543,4 +543,4 @@ void ProcessImpl::setupForHRTimers() {
   putenv(const_cast<char*>("EVENT_PRECISE_TIMER=1"));
 }
 
-} // namespace Nighthawk
+} // namespace nighthawk

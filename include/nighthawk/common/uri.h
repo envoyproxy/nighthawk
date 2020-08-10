@@ -9,7 +9,7 @@
 
 #include "absl/strings/string_view.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 /**
  * Any exception thrown by Uri shall inherit from UriException.
@@ -75,4 +75,4 @@ public:
 
 using UriPtr = std::unique_ptr<Uri>;
 
-} // namespace Nighthawk
+} // namespace nighthawk

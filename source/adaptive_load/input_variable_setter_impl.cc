@@ -4,7 +4,7 @@
 
 #include "external/envoy/source/common/protobuf/protobuf.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 RequestsPerSecondInputVariableSetter::RequestsPerSecondInputVariableSetter(
     const nighthawk::adaptive_load::RequestsPerSecondInputVariableSetterConfig&) {}
@@ -40,4 +40,4 @@ InputVariableSetterPtr RequestsPerSecondInputVariableSetterConfigFactory::create
 REGISTER_FACTORY(RequestsPerSecondInputVariableSetterConfigFactory,
                  InputVariableSetterConfigFactory);
 
-} // namespace Nighthawk
+} // namespace nighthawk

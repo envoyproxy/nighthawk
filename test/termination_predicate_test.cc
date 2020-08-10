@@ -12,7 +12,7 @@
 using namespace std::chrono_literals;
 using namespace testing;
 
-namespace Nighthawk {
+namespace nighthawk {
 
 class TerminationPredicateTest : public Test {
 public:
@@ -79,4 +79,4 @@ TEST_F(TerminationPredicateTest, AppendToChain) {
   EXPECT_EQ(predicate.evaluateChain(), TerminationPredicate::Status::FAIL);
 }
 
-} // namespace Nighthawk
+} // namespace nighthawk

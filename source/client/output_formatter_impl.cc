@@ -16,7 +16,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/strip.h"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 std::vector<std::string> OutputFormatterImpl::getLowerCaseOutputFormats() {
   const Envoy::Protobuf::EnumDescriptor* enum_descriptor =
@@ -390,4 +390,4 @@ const nighthawk::client::DurationHistogram FortioOutputFormatterImpl::renderFort
   return fortio_histogram;
 }
 
-} // namespace Nighthawk
+} // namespace nighthawk

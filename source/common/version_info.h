@@ -4,7 +4,7 @@
 
 #define NIGHTHAWK_BUILD_VERSION_NUMBER "0.3.0"
 
-namespace Nighthawk {
+namespace nighthawk {
 
 /*
  * TODO(#267): This class is heavily based on Envoy's source/common/common/version.h
@@ -35,4 +35,4 @@ private:
   static envoy::config::core::v3::BuildVersion makeBuildVersion(const char* version);
 };
 
-} // namespace Nighthawk
+} // namespace nighthawk
