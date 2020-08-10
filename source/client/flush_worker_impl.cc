@@ -38,7 +38,7 @@ void FlushWorkerImpl::flushStats() {
   // creating the snapshot has the important property that it latches all counters on a periodic
   // basis.
   Envoy::Server::MetricSnapshotImpl snapshot(store_);
-  for (auto& sink : stats_sinks_) {
+  for (std::unique_ptr<Envoy::Stats::Sink>& sink : stats_sinks_) {
     sink->flush(snapshot);
   }
   if (stat_flush_timer_ != nullptr) {

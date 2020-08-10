@@ -484,7 +484,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
           Envoy::Config::Utility::getAndCheckFactory<NighthawkStatsSinkFactory>(stats_sink);
       stats_sinks.emplace_back(factory.createStatsSink(store_root_.symbolTable()));
     }
-    for (auto& sink : stats_sinks) {
+    for (std::unique_ptr<Envoy::Stats::Sink>& sink : stats_sinks) {
       store_root_.addSink(*sink);
     }
 
@@ -508,7 +508,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
   }
 
   if (!options_.statsSinks().empty() && flush_worker_ != nullptr) {
-    // Stop the running dispatcher in flush_worker_. Need to be called after all
+    // Stop the running dispatcher in flush_worker_. Needs to be called after all
     // client workers are complete so that all the metrics can be flushed.
     flush_worker_->exitDispatcher();
     flush_worker_->waitForCompletion();

@@ -18,17 +18,25 @@
 
 namespace Nighthawk {
 namespace Client {
+namespace {
 
-using namespace testing;
+using ::testing::AtLeast;
+using ::testing::NiceMock;
+using ::testing::ReturnRef;
+using ::testing::StrictMock;
+using ::testing::Test;
 
 class FlushWorkerTest : public Test {
 public:
   FlushWorkerTest()
       : thread_factory_(Envoy::Thread::threadFactoryForTest()),
         dispatcher_(new NiceMock<Envoy::Event::MockDispatcher>()) {
+    Envoy::Random::RandomGeneratorImpl rand;
+    NiceMock<Envoy::LocalInfo::MockLocalInfo> local_info;
+    NiceMock<Envoy::ProtobufMessage::MockValidationVisitor> validation_visitor;
     loader_ = std::make_unique<Envoy::Runtime::ScopedLoaderSingleton>(
         Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl(
-            *dispatcher_, tls_, {}, local_info_, store_, rand_, validation_visitor_, mock_api_)});
+            *dispatcher_, tls_, {}, local_info, store_, rand, validation_visitor, mock_api_)});
     sink_ = new StrictMock<Envoy::Stats::MockSink>();
     stats_sinks_.emplace_back(sink_);
 
@@ -37,8 +45,7 @@ public:
     EXPECT_CALL(mock_api_, allocateDispatcher_(_, _)).WillOnce(Return(dispatcher_));
   }
 
-  // We set up emulating timer firing and moving simulated time forward in
-  // simulateTimerloop() below.
+  // Set up emulating timer firing and corresponding expectations and behaviors.
   void setupDispatcherTimerEmulation() {
     timer_ = new NiceMock<Envoy::Event::MockTimer>();
     EXPECT_CALL(*dispatcher_, createTimer_(_)).WillOnce(Invoke([&](Envoy::Event::TimerCb cb) {
@@ -55,6 +62,7 @@ public:
     }));
   }
 
+  // Set up expected behaviors when run() is called on dispatcher_.
   void expectDispatcherRun() {
     EXPECT_CALL(*dispatcher_, run(_))
         .WillOnce(Invoke([&](Envoy::Event::DispatcherImpl::RunType type) {
@@ -68,13 +76,17 @@ public:
         }));
   }
 
+  // Simulate the periodical timer which keeps running until dispatcher->exit()
+  // is called from another thread. The std::promise signal_dispatcher_to_exit_
+  // is used here to guarantee the while loop runs for at least 100 times before dispatcher->exit()
+  // is called.
   void simulateTimerLoop() {
     int i = 0;
     while (true) {
       i++;
       // At least run the while loop for 100 times.
       if (i == 100) {
-        promise_.set_value();
+        signal_dispatcher_to_exit_.set_value();
       }
       auto guard = std::make_unique<Envoy::Thread::LockGuard>(lock_);
       if (stopped_) {
@@ -90,11 +102,8 @@ public:
   Envoy::Thread::ThreadFactory& thread_factory_;
   Envoy::Stats::IsolatedStoreImpl store_;
   NiceMock<Envoy::ThreadLocal::MockInstance> tls_;
-  Envoy::Random::RandomGeneratorImpl rand_;
   NiceMock<Envoy::Event::MockDispatcher>* dispatcher_ = nullptr; // not owned
   std::unique_ptr<Envoy::Runtime::ScopedLoaderSingleton> loader_;
-  NiceMock<Envoy::LocalInfo::MockLocalInfo> local_info_;
-  NiceMock<Envoy::ProtobufMessage::MockValidationVisitor> validation_visitor_;
 
   NiceMock<Envoy::Event::MockTimer>* timer_; // not owned
   Envoy::Event::TimerCb timer_cb_;
@@ -102,48 +111,51 @@ public:
   bool stopped_{false};
   // Protect stopped_.
   Envoy::Thread::MutexBasicLockable lock_;
-  std::promise<void> promise_;
+  std::promise<void> signal_dispatcher_to_exit_;
 
   Envoy::Stats::MockSink* sink_ = nullptr; // owned by stats_sinks_
   std::list<std::unique_ptr<Envoy::Stats::Sink>> stats_sinks_;
-  std::chrono::milliseconds stats_flush_interval_{10};
 };
 
+// Verify stats are flushed periodically until dispatcher->exit() is called from
+// another thread.
 TEST_F(FlushWorkerTest, WorkerFlushStatsPeriodically) {
+  std::chrono::milliseconds stats_flush_interval{10};
   setupDispatcherTimerEmulation();
 
-  auto worker = std::make_unique<FlushWorkerImpl>(mock_api_, tls_, store_, stats_sinks_,
-                                                  stats_flush_interval_);
+  FlushWorkerImpl worker(mock_api_, tls_, store_, stats_sinks_, stats_flush_interval);
 
   std::thread thread = std::thread([&worker, this] {
     // Wait for the while loop run at least 100 times in simulateTimerLoop().
-    promise_.get_future().wait();
-    worker->exitDispatcher();
+    signal_dispatcher_to_exit_.get_future().wait();
+    worker.exitDispatcher();
   });
 
   expectDispatcherRun();
-  // flush() is called at least 100 times in simulateTimerLoop().
+  // Check flush() is called at least 100 times in simulateTimerLoop().
   EXPECT_CALL(*sink_, flush(_)).Times(testing::AtLeast(100));
 
-  worker->start();
-  worker->waitForCompletion();
+  worker.start();
+  worker.waitForCompletion();
   thread.join();
-  worker->shutdown();
+  worker.shutdown();
 }
 
 // Verify the final flush is always done in FlushWorkerImpl::shutdownThread()
 // even when the dispatcher and timer is not set up (expectDispatcherRun() is not called).
 TEST_F(FlushWorkerTest, FinalFlush) {
-  auto worker = std::make_unique<FlushWorkerImpl>(mock_api_, tls_, store_, stats_sinks_,
-                                                  stats_flush_interval_);
+  std::chrono::milliseconds stats_flush_interval{10};
 
-  worker->start();
-  worker->waitForCompletion();
+  FlushWorkerImpl worker(mock_api_, tls_, store_, stats_sinks_, stats_flush_interval);
+
+  worker.start();
+  worker.waitForCompletion();
   // Stats flush should happen exactly once as the final flush is done in
   // FlushWorkerImpl::shutdownThread().
   EXPECT_CALL(*sink_, flush(_)).Times(1);
-  worker->shutdown();
+  worker.shutdown();
 }
 
+} // namespace
 } // namespace Client
 } // namespace Nighthawk

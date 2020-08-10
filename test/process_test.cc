@@ -18,10 +18,12 @@
 
 #include "gtest/gtest.h"
 
-using namespace testing;
-
 namespace Nighthawk {
 namespace Client {
+namespace {
+
+using ::testing::TestWithParam;
+using ::testing::ValuesIn;
 
 constexpr absl::string_view kSinkName = "{name:\"nighthawk.fake_stats_sink\"}";
 // Global variable keeps count of number of flushes in FakeStatsSink. It is reset
@@ -168,5 +170,6 @@ TEST_P(ProcessTest, CancelExecutionBeforeBeginLoadTest) {
   EXPECT_EQ(numFlushes, 0);
 }
 
+} // namespace
 } // namespace Client
 } // namespace Nighthawk

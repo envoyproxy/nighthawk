@@ -325,7 +325,7 @@ void SinkableHdrStatistic::recordValue(uint64_t value) {
 
 std::string SinkableHdrStatistic::tagExtractedName() const {
   if (worker_id().has_value()) {
-    return fmt::format("{}.", worker_id().value()) + id();
+    return fmt::format("{}.{}", worker_id().value(), id());
   } else {
     return id();
   }
@@ -344,7 +344,7 @@ void SinkableCircllhistStatistic::recordValue(uint64_t value) {
 
 std::string SinkableCircllhistStatistic::tagExtractedName() const {
   if (worker_id().has_value()) {
-    return fmt::format("{}.", worker_id().value()) + id();
+    return fmt::format("{}.{}", worker_id().value(), id());
   } else {
     return id();
   }

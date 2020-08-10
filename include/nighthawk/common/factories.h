@@ -63,7 +63,8 @@ public:
    * implementation is unable to produce a Sink with the provided parameters, it
    * should throw an EnvoyException. The returned pointer should always be
    * valid.
-   * @param symbol_table supplies the symbol_table instance
+   * @param symbol_table supplies the symbol_table instance. For the definition
+   * of SymbolTable, see envoy/include/envoy/stats/symbol_table.h.
    */
   virtual std::unique_ptr<Envoy::Stats::Sink>
   createStatsSink(Envoy::Stats::SymbolTable& symbol_table) PURE;

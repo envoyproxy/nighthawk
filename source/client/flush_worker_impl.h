@@ -38,8 +38,8 @@ protected:
   void work() override;
 
 private:
-  // Flush the stats sinks. Note: stats flushing may not be synchronous.
-  // Therefore, this function may return prior to flushing taking place.
+  // Flush the stats sinks. Note: stats flushing may not be synchronous, depending on each stat
+  // sink's implementation. Therefore, this function may return prior to flushing taking place.
   void flushStats();
 
   std::list<std::unique_ptr<Envoy::Stats::Sink>> stats_sinks_;
