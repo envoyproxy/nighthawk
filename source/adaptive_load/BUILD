@@ -26,38 +26,40 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
-<<<<<<< HEAD
-    name = "plugin_util",
-    srcs = [
-        "plugin_util.cc",
-    ],
-    hdrs = [
-        "plugin_util.h",
-=======
     name = "metrics_plugin_impl",
     srcs = [
         "metrics_plugin_impl.cc",
     ],
     hdrs = [
         "metrics_plugin_impl.h",
->>>>>>> upstream/master
     ],
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
-<<<<<<< HEAD
+        "//include/nighthawk/adaptive_load:metrics_plugin",
+        "@envoy//source/common/common:assert_lib_with_external_headers",
+        "@envoy//source/common/common:minimal_logger_lib_with_external_headers",
+        "@envoy//source/common/config:utility_lib_with_external_headers",
+        "@envoy//source/common/protobuf:protobuf_with_external_headers",
+    ],
+)
+
+envoy_cc_library(
+    name = "plugin_util",
+    srcs = [
+        "plugin_util.cc",
+    ],
+    hdrs = [
+        "plugin_util.h",
+    ],
+    repository = "@envoy",
+    visibility = ["//visibility:public"],
+    deps = [
         "//include/nighthawk/adaptive_load:input_variable_setter",
         "//include/nighthawk/adaptive_load:metrics_plugin",
         "//include/nighthawk/adaptive_load:scoring_function",
         "//include/nighthawk/adaptive_load:step_controller",
         "//source/common:nighthawk_common_lib",
         "@envoy//source/common/config:utility_lib_with_external_headers",
-=======
-        "//include/nighthawk/adaptive_load:metrics_plugin",
-        "@envoy//source/common/common:assert_lib_with_external_headers",
-        "@envoy//source/common/common:minimal_logger_lib_with_external_headers",
-        "@envoy//source/common/config:utility_lib_with_external_headers",
-        "@envoy//source/common/protobuf:protobuf_with_external_headers",
->>>>>>> upstream/master
     ],
 )
