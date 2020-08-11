@@ -8,7 +8,7 @@
 
 namespace Nighthawk {
 
-std::string BinaryScoringFunctionConfigFactory::name() const { return "nighthawk.binary_scoring"; }
+std::string BinaryScoringFunctionConfigFactory::name() const { return "nighthawk.binary-scoring"; }
 
 Envoy::ProtobufTypes::MessagePtr BinaryScoringFunctionConfigFactory::createEmptyConfigProto() {
   return std::make_unique<nighthawk::adaptive_load::BinaryScoringFunctionConfig>();
@@ -35,7 +35,7 @@ double BinaryScoringFunction::EvaluateMetric(double value) const {
   return value <= upper_threshold_ && value >= lower_threshold_ ? 1.0 : -1.0;
 }
 
-std::string LinearScoringFunctionConfigFactory::name() const { return "nighthawk.linear_scoring"; }
+std::string LinearScoringFunctionConfigFactory::name() const { return "nighthawk.linear-scoring"; }
 
 Envoy::ProtobufTypes::MessagePtr LinearScoringFunctionConfigFactory::createEmptyConfigProto() {
   return std::make_unique<nighthawk::adaptive_load::LinearScoringFunctionConfig>();
