@@ -15,6 +15,8 @@ namespace Nighthawk {
 
 namespace {
 
+using Envoy::Protobuf::util::TimeUtil;
+
 /**
  * Finds a Result proto with the given name within a Nighthawk Output proto.
  *
@@ -110,12 +112,15 @@ bool ExtractValueOrRecordError(absl::StatusOr<T> status_or, U& value,
 void ExtractCounters(const nighthawk::client::Output& nighthawk_output,
                      absl::flat_hash_map<std::string, double>& metric_from_name,
                      std::vector<std::string>& errors) {
-  nighthawk::client::Result global_result;
-  if (!ExtractValueOrRecordError(GetResult(nighthawk_output, "global"), global_result, errors)) {
+  absl::StatusOr<nighthawk::client::Result> global_result_or =
+      GetResult(nighthawk_output, "global");
+  if (!global_result_or.ok()) {
+    errors.emplace_back(global_result_or.status().message());
     return;
   }
+  nighthawk::client::Result global_result = global_result_or.value();
   const int64_t actual_duration_seconds =
-      Envoy::Protobuf::util::TimeUtil::DurationToSeconds(global_result.execution_duration());
+      TimeUtil::DurationToSeconds(global_result.execution_duration());
   // 1 worker: 'global' Result only. >1 workers: Result for each worker plus a 'global' Result.
   const uint32_t number_of_workers =
       nighthawk_output.results_size() == 1 ? 1 : nighthawk_output.results_size() - 1;
@@ -123,10 +128,22 @@ void ExtractCounters(const nighthawk::client::Output& nighthawk_output,
       static_cast<double>(nighthawk_output.options().requests_per_second().value() *
                           actual_duration_seconds * number_of_workers);
   // Proceed through all calculations without crashing in order to capture all errors.
-  double total_sent = std::numeric_limits<double>::quiet_NaN();
-  double total_2xx = std::numeric_limits<double>::quiet_NaN();
-  ExtractValueOrRecordError(GetCounter(global_result, "upstream_rq_total"), total_sent, errors);
-  ExtractValueOrRecordError(GetCounter(global_result, "benchmark.http_2xx"), total_2xx, errors);
+  double total_sent;
+  absl::StatusOr<double> total_sent_or = GetCounter(global_result, "upstream_rq_total");
+  if (total_sent_or.ok()) {
+    total_sent = total_sent_or.value();
+  } else {
+    total_sent = std::numeric_limits<double>::quiet_NaN();
+    errors.emplace_back(total_sent_or.status().message());
+  }
+  double total_2xx;
+  absl::StatusOr<double> total_2xx_or = GetCounter(global_result, "benchmark.http_2xx");
+  if (total_2xx_or.ok()) {
+    total_2xx = total_2xx_or.value();
+  } else {
+    total_2xx = std::numeric_limits<double>::quiet_NaN();
+    errors.emplace_back(total_2xx_or.status().message());
+  }
   if (actual_duration_seconds > 0.0) {
     metric_from_name["attempted-rps"] = total_specified / actual_duration_seconds;
     metric_from_name["achieved-rps"] = total_sent / actual_duration_seconds;
@@ -156,20 +173,24 @@ void ExtractCounters(const nighthawk::client::Output& nighthawk_output,
 void ExtractStatistics(const nighthawk::client::Output& nighthawk_output,
                        absl::flat_hash_map<std::string, double>& metric_from_name,
                        std::vector<std::string>& errors) {
-  nighthawk::client::Result global_result;
-  if (!ExtractValueOrRecordError(GetResult(nighthawk_output, "global"), global_result, errors)) {
+  absl::StatusOr<nighthawk::client::Result> global_result_or =
+      GetResult(nighthawk_output, "global");
+  if (!global_result_or.ok()) {
+    errors.emplace_back(global_result_or.status().message());
     return;
   }
-  nighthawk::client::Statistic statistic;
-  if (!ExtractValueOrRecordError(
-          GetStatistic(global_result, "benchmark_http_client.request_to_response"), statistic,
-          errors)) {
+  nighthawk::client::Result global_result = global_result_or.value();
+  absl::StatusOr<nighthawk::client::Statistic> statistic_or =
+      GetStatistic(global_result, "benchmark_http_client.request_to_response");
+  if (!statistic_or.ok()) {
+    errors.emplace_back(statistic_or.status().message());
     return;
   }
-  const double min = Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(statistic.min());
-  const double mean = Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(statistic.mean());
-  const double max = Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(statistic.max());
-  const double pstdev = Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(statistic.pstdev());
+  nighthawk::client::Statistic statistic = statistic_or.value();
+  const double min = TimeUtil::DurationToNanoseconds(statistic.min());
+  const double mean = TimeUtil::DurationToNanoseconds(statistic.mean());
+  const double max = TimeUtil::DurationToNanoseconds(statistic.max());
+  const double pstdev = TimeUtil::DurationToNanoseconds(statistic.pstdev());
   metric_from_name["latency-ns-min"] = min;
   metric_from_name["latency-ns-mean"] = mean;
   metric_from_name["latency-ns-max"] = max;

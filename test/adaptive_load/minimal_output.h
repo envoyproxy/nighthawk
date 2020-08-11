@@ -1,5 +1,7 @@
 #pragma once
 
+#include "envoy/common/time.h"
+
 #include "api/client/output.pb.h"
 
 namespace Nighthawk {
