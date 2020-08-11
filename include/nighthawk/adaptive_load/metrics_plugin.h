@@ -5,8 +5,11 @@
 #include "envoy/common/pure.h"
 #include "envoy/config/typed_config.h"
 
+<<<<<<< HEAD
 #include "nighthawk/adaptive_load/config_validator.h"
 
+=======
+>>>>>>> upstream/master
 #include "external/envoy/source/common/common/statusor.h"
 
 namespace Nighthawk {
@@ -26,7 +29,11 @@ public:
    * @return StatusOr<double> The metric value, or an error status if the metric was unsupported or
    * unavailable.
    */
+<<<<<<< HEAD
   virtual Envoy::StatusOr<double> GetMetricByName(absl::string_view metric_name) PURE;
+=======
+  virtual absl::StatusOr<double> GetMetricByName(absl::string_view metric_name) PURE;
+>>>>>>> upstream/master
   /**
    * All metric names implemented by this plugin, for use in input validation.
    *
