@@ -8,10 +8,9 @@
 namespace Nighthawk {
 namespace Client {
 
-FlushWorkerImpl::FlushWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Instance& tls,
+FlushWorkerImpl::FlushWorkerImpl(const std::chrono::milliseconds& stats_flush_interval, Envoy::Api::Api& api, Envoy::ThreadLocal::Instance& tls,
                                  Envoy::Stats::Store& store,
-                                 std::list<std::unique_ptr<Envoy::Stats::Sink>>& stats_sinks,
-                                 const std::chrono::milliseconds& stats_flush_interval)
+                                 std::list<std::unique_ptr<Envoy::Stats::Sink>>& stats_sinks)
     : WorkerImpl(api, tls, store), stats_flush_interval_(stats_flush_interval) {
   for (auto& sink : stats_sinks) {
     stats_sinks_.emplace_back(std::move(sink));

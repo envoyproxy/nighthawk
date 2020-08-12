@@ -114,6 +114,16 @@ private:
   std::vector<StatisticPtr>
   mergeWorkerStatistics(const std::vector<ClientWorkerPtr>& workers) const;
   void setupForHRTimers();
+  /**
+   * If there are sinks configured in bootstrap, populate stats_sinks with sinks
+   * created through NighthawkStatsSinkFactory and add them to store_root_.
+   *
+   * @param bootstrap the bootstrap configuration which include the stats sink configuration.
+   * @param stats_sinks a Sink list to be populated.
+   */
+  void setupStatsSinks(
+      envoy::config::bootstrap::v3::Bootstrap& bootstrap,
+      std::list<std::unique_ptr<Envoy::Stats::Sink>>& stats_sinks);
   bool runInternal(OutputCollector& collector, const std::vector<UriPtr>& uris,
                    const UriPtr& request_source_uri, const UriPtr& tracing_uri);
 

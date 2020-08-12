@@ -10,7 +10,6 @@
 #include "external/envoy/test/mocks/protobuf/mocks.h"
 #include "external/envoy/test/mocks/stats/mocks.h"
 #include "external/envoy/test/mocks/thread_local/mocks.h"
-#include "external/envoy/test/test_common/simulated_time_system.h"
 
 #include "client/flush_worker_impl.h"
 
@@ -26,6 +25,8 @@ using ::testing::ReturnRef;
 using ::testing::StrictMock;
 using ::testing::Test;
 
+const int kNumTimerLoops = 100;
+
 class FlushWorkerTest : public Test {
 public:
   FlushWorkerTest()
@@ -36,13 +37,13 @@ public:
     NiceMock<Envoy::ProtobufMessage::MockValidationVisitor> validation_visitor;
     loader_ = std::make_unique<Envoy::Runtime::ScopedLoaderSingleton>(
         Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl(
-            *dispatcher_, tls_, {}, local_info, store_, rand, validation_visitor, mock_api_)});
+            *dispatcher_, tls_, {}, local_info, store_, rand, validation_visitor, api_)});
     sink_ = new StrictMock<Envoy::Stats::MockSink>();
     stats_sinks_.emplace_back(sink_);
 
-    EXPECT_CALL(mock_api_, threadFactory()).WillRepeatedly(ReturnRef(thread_factory_));
-    // mock_api_ takes the ownership of dispatcher_.
-    EXPECT_CALL(mock_api_, allocateDispatcher_(_, _)).WillOnce(Return(dispatcher_));
+    EXPECT_CALL(api_, threadFactory()).WillRepeatedly(ReturnRef(thread_factory_));
+    // api_ takes the ownership of dispatcher_.
+    EXPECT_CALL(api_, allocateDispatcher_(_, _)).WillOnce(Return(dispatcher_));
   }
 
   // Set up emulating timer firing and corresponding expectations and behaviors.
@@ -57,8 +58,6 @@ public:
                                    const Envoy::ScopeTrackedObject*) { timer_set_ = true; }));
     EXPECT_CALL(*timer_, disableTimer()).WillOnce(Invoke([&]() { timer_set_ = false; }));
     EXPECT_CALL(*dispatcher_, exit()).WillOnce(Invoke([&]() {
-      auto guard = std::make_unique<Envoy::Thread::LockGuard>(lock_);
-      stopped_ = true;
     }));
   }
 
@@ -76,41 +75,33 @@ public:
         }));
   }
 
-  // Simulate the periodical timer which keeps running until dispatcher->exit()
-  // is called from another thread. The std::promise signal_dispatcher_to_exit_
-  // is used here to guarantee the while loop runs for at least 100 times before dispatcher->exit()
-  // is called.
+  // Simulate the periodical timer which runs kNumTimerLoops iterations before signaling another thread to call dispatcher->exit().
   void simulateTimerLoop() {
-    int i = 0;
-    while (true) {
-      i++;
-      // At least run the while loop for 100 times.
-      if (i == 100) {
-        signal_dispatcher_to_exit_.set_value();
-      }
-      auto guard = std::make_unique<Envoy::Thread::LockGuard>(lock_);
-      if (stopped_) {
-        break;
-      } else if (timer_set_) {
+    int loop_iterations = 0;
+    do {
+      if (timer_set_) {
         timer_set_ = false;
         timer_cb_();
       }
-    }
+      if (++loop_iterations == kNumTimerLoops) {
+        signal_dispatcher_to_exit_.set_value();
+        return;
+      }
+    } while (true);
   }
 
-  NiceMock<Envoy::Api::MockApi> mock_api_;
+  NiceMock<Envoy::Api::MockApi> api_;
   Envoy::Thread::ThreadFactory& thread_factory_;
   Envoy::Stats::IsolatedStoreImpl store_;
   NiceMock<Envoy::ThreadLocal::MockInstance> tls_;
-  NiceMock<Envoy::Event::MockDispatcher>* dispatcher_ = nullptr; // not owned
+  // owned by FlushWorkerImpl's dispatcher member variable.
+  NiceMock<Envoy::Event::MockDispatcher>* dispatcher_ = nullptr;
   std::unique_ptr<Envoy::Runtime::ScopedLoaderSingleton> loader_;
 
-  NiceMock<Envoy::Event::MockTimer>* timer_; // not owned
+  // owned by FlushWorkerImpl's stat_flush_timer_ member variable.
+  NiceMock<Envoy::Event::MockTimer>* timer_;
   Envoy::Event::TimerCb timer_cb_;
-  bool timer_set_{};
-  bool stopped_{false};
-  // Protect stopped_.
-  Envoy::Thread::MutexBasicLockable lock_;
+  bool timer_set_{};  // used to simulate whether the timer is enabled.
   std::promise<void> signal_dispatcher_to_exit_;
 
   Envoy::Stats::MockSink* sink_ = nullptr; // owned by stats_sinks_
@@ -123,21 +114,24 @@ TEST_F(FlushWorkerTest, WorkerFlushStatsPeriodically) {
   std::chrono::milliseconds stats_flush_interval{10};
   setupDispatcherTimerEmulation();
 
-  FlushWorkerImpl worker(mock_api_, tls_, store_, stats_sinks_, stats_flush_interval);
+  FlushWorkerImpl worker(stats_flush_interval, api_, tls_, store_, stats_sinks_);
 
   std::thread thread = std::thread([&worker, this] {
-    // Wait for the while loop run at least 100 times in simulateTimerLoop().
+    // Wait for the while loop to run kNumTimerLoops times in simulateTimerLoop().
     signal_dispatcher_to_exit_.get_future().wait();
     worker.exitDispatcher();
   });
 
   expectDispatcherRun();
-  // Check flush() is called at least 100 times in simulateTimerLoop().
-  EXPECT_CALL(*sink_, flush(_)).Times(testing::AtLeast(100));
+  // Check flush() is called at least kNumTimerLoops times in simulateTimerLoop().
+  EXPECT_CALL(*sink_, flush(_)).Times(kNumTimerLoops);
 
   worker.start();
   worker.waitForCompletion();
   thread.join();
+  // Stats flush should happen exactly once as the final flush is done in
+  // FlushWorkerImpl::shutdownThread().
+  EXPECT_CALL(*sink_, flush(_)).Times(1);
   worker.shutdown();
 }
 
@@ -146,7 +140,7 @@ TEST_F(FlushWorkerTest, WorkerFlushStatsPeriodically) {
 TEST_F(FlushWorkerTest, FinalFlush) {
   std::chrono::milliseconds stats_flush_interval{10};
 
-  FlushWorkerImpl worker(mock_api_, tls_, store_, stats_sinks_, stats_flush_interval);
+  FlushWorkerImpl worker(stats_flush_interval, api_, tls_, store_, stats_sinks_);
 
   worker.start();
   worker.waitForCompletion();

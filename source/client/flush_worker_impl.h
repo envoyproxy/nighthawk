@@ -22,10 +22,19 @@ namespace Client {
 // process_impl.cc. It will make the last flush before shutdown in shutdownThread().
 class FlushWorkerImpl : public WorkerImpl {
 public:
-  FlushWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Instance& tls,
+  // Constructor to call parent class's constructor and initialize member
+  // variables stats_sinks_ and stats_flush_interval_.
+  // @param stats_flush_interval time interval between each flush.
+  // @param api supplies the Api instance for WorkerImpl's constructor. See
+  // envoy/include/envoy/api/api.h for its definition.
+  // @param tls supplies the ThreadLocal::Instance for WorkerImpl's constructor.
+  // See envoy/include/envoy/thread_local/thread_local.h for its definition.
+  // @param store supplies the stats store instance for WorkerImpl's constructor.
+  // @param stats_sinks list of configured stats sinks where the stats will be
+  // flushed to.
+  FlushWorkerImpl(const std::chrono::milliseconds& stats_flush_interval, Envoy::Api::Api& api, Envoy::ThreadLocal::Instance& tls,
                   Envoy::Stats::Store& store,
-                  std::list<std::unique_ptr<Envoy::Stats::Sink>>& stats_sinks,
-                  const std::chrono::milliseconds& stats_flush_interval);
+                  std::list<std::unique_ptr<Envoy::Stats::Sink>>& stats_sinks);
 
   void shutdownThread() override;
 

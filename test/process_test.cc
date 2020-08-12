@@ -68,9 +68,7 @@ public:
   ProcessTest()
       : loopback_address_(Envoy::Network::Test::getLoopbackAddressUrlString(GetParam())),
         options_(TestUtility::createOptionsImpl(
-            fmt::format("foo --duration 1 -v error --rps 10 --stats-flush-interval 1 --stats-sinks "
-                        "{} https://{}/",
-                        kSinkName, loopback_address_))){};
+            fmt::format("foo --duration 1 -v error --rps 10 https://{}/", loopback_address_))){};
 
   void runProcess(RunExpectation expectation, bool do_cancel = false,
                   bool terminate_right_away = false) {
@@ -126,17 +124,10 @@ INSTANTIATE_TEST_SUITE_P(IpVersions, ProcessTest,
                          Envoy::TestUtility::ipTestParamsToString);
 
 TEST_P(ProcessTest, TwoProcessInSequence) {
-  FakeStatsSinkFactory factory;
-  Envoy::Registry::InjectFactory<NighthawkStatsSinkFactory> registered(factory);
-  numFlushes = 0;
   runProcess(RunExpectation::EXPECT_FAILURE);
-  EXPECT_GT(numFlushes, 0);
   options_ = TestUtility::createOptionsImpl(fmt::format(
-      "foo --h2 --duration 1 --rps 10 --stats-flush-interval 1 --stats-sinks {} https://{}/",
-      kSinkName, loopback_address_));
-  numFlushes = 0;
+      "foo --h2 --duration 1 --rps 10 https://{}/", loopback_address_));
   runProcess(RunExpectation::EXPECT_FAILURE);
-  EXPECT_GT(numFlushes, 0);
 }
 
 // TODO(oschaaf): move to python int. tests once it adds to coverage.
@@ -147,24 +138,41 @@ TEST_P(ProcessTest, BadTracerSpec) {
 }
 
 TEST_P(ProcessTest, CancelDuringLoadTest) {
-  FakeStatsSinkFactory factory;
-  Envoy::Registry::InjectFactory<NighthawkStatsSinkFactory> registered(factory);
   // The failure predicate below is there to wipe out any stock ones. We want this to run for a long
   // time, even if the upstream fails (there is no live upstream in this test, we send traffic into
   // the void), so we can check cancellation works.
   options_ = TestUtility::createOptionsImpl(
-      fmt::format("foo --duration 300 --failure-predicate foo:0 --concurrency 2 "
-                  "--stats-flush-interval 1 --stats-sinks {} https://{}/",
-                  kSinkName, loopback_address_));
-  numFlushes = 0;
+      fmt::format("foo --duration 300 --failure-predicate foo:0 --concurrency 2 https://{}/",
+                  loopback_address_));
   runProcess(RunExpectation::EXPECT_SUCCESS, true);
-  EXPECT_GT(numFlushes, 0);
 }
 
 TEST_P(ProcessTest, CancelExecutionBeforeBeginLoadTest) {
   options_ = TestUtility::createOptionsImpl(
       fmt::format("foo --duration 300 --failure-predicate foo:0 --concurrency 2 https://{}/",
                   loopback_address_));
+  runProcess(RunExpectation::EXPECT_SUCCESS, true, true);
+}
+
+TEST_P(ProcessTest, RunProcessWithStatsSinkConfigured) {
+  FakeStatsSinkFactory factory;
+  Envoy::Registry::InjectFactory<NighthawkStatsSinkFactory> registered(factory);
+  options_ = TestUtility::createOptionsImpl(
+      fmt::format("foo --h2 --duration 1 --rps 10 --stats-flush-interval 1 "
+                  "--stats-sinks {} https://{}/",
+                  kSinkName, loopback_address_));
+  numFlushes = 0;
+  runProcess(RunExpectation::EXPECT_FAILURE);
+  EXPECT_GT(numFlushes, 0);
+}
+
+TEST_P(ProcessTest, NoFlushWhenCancelExecutionBeforeLoadTestBegin) {
+  FakeStatsSinkFactory factory;
+  Envoy::Registry::InjectFactory<NighthawkStatsSinkFactory> registered(factory);
+  options_ = TestUtility::createOptionsImpl(
+      fmt::format("foo --duration 300 --failure-predicate foo:0 --concurrency "
+                  "2 --stats-flush-interval 1 --stats-sinks {} https://{}/",
+                  kSinkName, loopback_address_));
   numFlushes = 0;
   runProcess(RunExpectation::EXPECT_SUCCESS, true, true);
   EXPECT_EQ(numFlushes, 0);

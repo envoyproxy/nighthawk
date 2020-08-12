@@ -429,6 +429,23 @@ void ProcessImpl::addRequestSourceCluster(
   socket->set_port_value(uri.port());
 }
 
+void ProcessImpl::setupStatsSinks(
+    envoy::config::bootstrap::v3::Bootstrap& bootstrap,
+    std::list<std::unique_ptr<Envoy::Stats::Sink>>& stats_sinks) {
+  for (const envoy::config::metrics::v3::StatsSink& stats_sink :
+         bootstrap.stats_sinks()) {
+      ENVOY_LOG(info, "loading stats sink configuration in Nighthawk");
+      auto& factory =
+          Envoy::Config::Utility::getAndCheckFactory<NighthawkStatsSinkFactory>(
+              stats_sink);
+      stats_sinks.emplace_back(
+          factory.createStatsSink(store_root_.symbolTable()));
+    }
+    for (std::unique_ptr<Envoy::Stats::Sink>& sink : stats_sinks) {
+      store_root_.addSink(*sink);
+    }
+}
+
 bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriPtr>& uris,
                               const UriPtr& request_source_uri, const UriPtr& tracing_uri) {
   {
@@ -478,24 +495,13 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
     Runtime::LoaderSingleton::get().initialize(*cluster_manager_);
 
     std::list<std::unique_ptr<Envoy::Stats::Sink>> stats_sinks;
-    for (const envoy::config::metrics::v3::StatsSink& stats_sink : bootstrap.stats_sinks()) {
-      ENVOY_LOG(info, "loading stats sink configuration in Nighthawk");
-      auto& factory =
-          Envoy::Config::Utility::getAndCheckFactory<NighthawkStatsSinkFactory>(stats_sink);
-      stats_sinks.emplace_back(factory.createStatsSink(store_root_.symbolTable()));
-    }
-    for (std::unique_ptr<Envoy::Stats::Sink>& sink : stats_sinks) {
-      store_root_.addSink(*sink);
-    }
-
-    // Default flush interval is 5s.
+    setupStatsSinks(bootstrap, stats_sinks);
     std::chrono::milliseconds stats_flush_interval = std::chrono::milliseconds(
         Envoy::DurationUtil::durationToMilliseconds(bootstrap.stats_flush_interval()));
 
     if (!options_.statsSinks().empty()) {
       // There should be only a single live flush worker instance at any time.
-      flush_worker_ = std::make_unique<FlushWorkerImpl>(*api_, tls_, store_root_, stats_sinks,
-                                                        stats_flush_interval);
+      flush_worker_ = std::make_unique<FlushWorkerImpl>(stats_flush_interval, *api_, tls_, store_root_, stats_sinks);
       flush_worker_->start();
     }
 
