@@ -49,7 +49,7 @@ struct ClientSetupParameters {
   ClientSetupParameters(const uint64_t max_pending, const uint64_t connection_limit,
                         const uint64_t amount, const RequestGenerator& generator)
       : max_pending_requests(max_pending), max_connection_limit(connection_limit),
-        amount_of_requests(amount), request_generator(std::move(generator)) {}
+        amount_of_requests(amount), request_generator(generator) {}
   const uint64_t max_pending_requests;
   const uint64_t max_connection_limit;
   const uint64_t amount_of_requests;
