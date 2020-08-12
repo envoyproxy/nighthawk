@@ -57,8 +57,7 @@ public:
         .WillRepeatedly(Invoke([&](const std::chrono::microseconds,
                                    const Envoy::ScopeTrackedObject*) { timer_set_ = true; }));
     EXPECT_CALL(*timer_, disableTimer()).WillOnce(Invoke([&]() { timer_set_ = false; }));
-    EXPECT_CALL(*dispatcher_, exit()).WillOnce(Invoke([&]() {
-    }));
+    EXPECT_CALL(*dispatcher_, exit()).WillOnce(Invoke([&]() {}));
   }
 
   // Set up expected behaviors when run() is called on dispatcher_.
@@ -75,7 +74,8 @@ public:
         }));
   }
 
-  // Simulate the periodical timer which runs kNumTimerLoops iterations before signaling another thread to call dispatcher->exit().
+  // Simulate the periodical timer which runs kNumTimerLoops iterations before signaling another
+  // thread to call dispatcher->exit().
   void simulateTimerLoop() {
     int loop_iterations = 0;
     do {
@@ -101,7 +101,7 @@ public:
   // owned by FlushWorkerImpl's stat_flush_timer_ member variable.
   NiceMock<Envoy::Event::MockTimer>* timer_;
   Envoy::Event::TimerCb timer_cb_;
-  bool timer_set_{};  // used to simulate whether the timer is enabled.
+  bool timer_set_{}; // used to simulate whether the timer is enabled.
   std::promise<void> signal_dispatcher_to_exit_;
 
   Envoy::Stats::MockSink* sink_ = nullptr; // owned by stats_sinks_
@@ -123,7 +123,7 @@ TEST_F(FlushWorkerTest, WorkerFlushStatsPeriodically) {
   });
 
   expectDispatcherRun();
-  // Check flush() is called at least kNumTimerLoops times in simulateTimerLoop().
+  // Check flush() is called kNumTimerLoops times in simulateTimerLoop().
   EXPECT_CALL(*sink_, flush(_)).Times(kNumTimerLoops);
 
   worker.start();

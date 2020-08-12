@@ -121,9 +121,8 @@ private:
    * @param bootstrap the bootstrap configuration which include the stats sink configuration.
    * @param stats_sinks a Sink list to be populated.
    */
-  void setupStatsSinks(
-      envoy::config::bootstrap::v3::Bootstrap& bootstrap,
-      std::list<std::unique_ptr<Envoy::Stats::Sink>>& stats_sinks);
+  void setupStatsSinks(envoy::config::bootstrap::v3::Bootstrap& bootstrap,
+                       std::list<std::unique_ptr<Envoy::Stats::Sink>>& stats_sinks);
   bool runInternal(OutputCollector& collector, const std::vector<UriPtr>& uris,
                    const UriPtr& request_source_uri, const UriPtr& tracing_uri);
 

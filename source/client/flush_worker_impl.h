@@ -32,8 +32,8 @@ public:
   // @param store supplies the stats store instance for WorkerImpl's constructor.
   // @param stats_sinks list of configured stats sinks where the stats will be
   // flushed to.
-  FlushWorkerImpl(const std::chrono::milliseconds& stats_flush_interval, Envoy::Api::Api& api, Envoy::ThreadLocal::Instance& tls,
-                  Envoy::Stats::Store& store,
+  FlushWorkerImpl(const std::chrono::milliseconds& stats_flush_interval, Envoy::Api::Api& api,
+                  Envoy::ThreadLocal::Instance& tls, Envoy::Stats::Store& store,
                   std::list<std::unique_ptr<Envoy::Stats::Sink>>& stats_sinks);
 
   void shutdownThread() override;
