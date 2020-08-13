@@ -49,7 +49,7 @@ std::string ExponentialSearchStepControllerConfigFactory::name() const {
 }
 
 absl::Status ExponentialSearchStepControllerConfigFactory::ValidateConfig(
-    const Envoy::Protobuf::Message& message) {
+    const Envoy::Protobuf::Message& message) const {
   const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
   ExponentialSearchStepControllerConfig config;
   Envoy::MessageUtil::unpackTo(any, config);

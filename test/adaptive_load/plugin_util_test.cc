@@ -35,7 +35,7 @@ absl::Status DoValidateConfig(const Envoy::Protobuf::Message& message) {
   nighthawk::adaptive_load::LinearScoringFunctionConfig config;
   Envoy::MessageUtil::unpackTo(any, config);
   return config.threshold() == kBadConfigThreshold
-             ? absl::InvalidArgumentError(absl::StrCat("input validation failed"))
+             ? absl::InvalidArgumentError("input validation failed")
              : absl::OkStatus();
 }
 
@@ -63,13 +63,14 @@ public:
 class TestInputVariableSetterConfigFactory : public InputVariableSetterConfigFactory {
 public:
   std::string name() const override { return "nighthawk.test-input-variable-setter"; }
-  absl::Status ValidateConfig(const Envoy::Protobuf::Message& message) override {
+  absl::Status ValidateConfig(const Envoy::Protobuf::Message& message) const override {
     return DoValidateConfig(message);
   }
 
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override {
     return std::make_unique<nighthawk::adaptive_load::LinearScoringFunctionConfig>();
   }
+
   InputVariableSetterPtr
   createInputVariableSetter(const Envoy::Protobuf::Message& message) override {
     const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
@@ -104,7 +105,7 @@ public:
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override {
     return std::make_unique<nighthawk::adaptive_load::LinearScoringFunctionConfig>();
   }
-  absl::Status ValidateConfig(const Envoy::Protobuf::Message& message) override {
+  absl::Status ValidateConfig(const Envoy::Protobuf::Message& message) const override {
     return DoValidateConfig(message);
   }
   ScoringFunctionPtr createScoringFunction(const Envoy::Protobuf::Message& message) override {
@@ -141,7 +142,7 @@ public:
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override {
     return std::make_unique<nighthawk::adaptive_load::LinearScoringFunctionConfig>();
   }
-  absl::Status ValidateConfig(const Envoy::Protobuf::Message& message) override {
+  absl::Status ValidateConfig(const Envoy::Protobuf::Message& message) const override {
     return DoValidateConfig(message);
   }
   MetricsPluginPtr createMetricsPlugin(const Envoy::Protobuf::Message& message) override {
@@ -187,7 +188,7 @@ public:
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override {
     return std::make_unique<nighthawk::adaptive_load::LinearScoringFunctionConfig>();
   }
-  absl::Status ValidateConfig(const Envoy::Protobuf::Message& message) override {
+  absl::Status ValidateConfig(const Envoy::Protobuf::Message& message) const override {
     return DoValidateConfig(message);
   }
   StepControllerPtr createStepController(
@@ -208,7 +209,7 @@ REGISTER_FACTORY(TestStepControllerConfigFactory, StepControllerConfigFactory);
  * arbitrary. We don't leave the Any empty because we need to check that the plugin utils can
  * correctly pass the proto through to the plugin.
  */
-Envoy::ProtobufWkt::Any CreateTypedConfigAny(double threshold) {
+Envoy::ProtobufWkt::Any CreateTypedConfigAny(const double threshold) {
   nighthawk::adaptive_load::LinearScoringFunctionConfig config;
   config.set_threshold(threshold);
   Envoy::ProtobufWkt::Any config_any;

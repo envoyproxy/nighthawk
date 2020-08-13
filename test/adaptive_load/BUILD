@@ -104,6 +104,7 @@ envoy_cc_test(
     srcs = ["step_controller_test.cc"],
     repository = "@envoy",
     deps = [
+        "//source/adaptive_load:config_validator_impl",
         "//source/adaptive_load:step_controller_impl",
     ],
 )

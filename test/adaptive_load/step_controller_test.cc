@@ -10,6 +10,7 @@
 #include "api/client/options.pb.h"
 
 #include "adaptive_load/plugin_util.h"
+#include "adaptive_load/config_validator_impl.h"
 #include "adaptive_load/step_controller_impl.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -57,7 +58,7 @@ public:
  * A factory that creates a ConnectionsInputVariableSetter from a
  * ConnectionsInputVariableSetterConfig proto.
  */
-class ConnectionsInputVariableSetterConfigFactory : public InputVariableSetterConfigFactory {
+class ConnectionsInputVariableSetterConfigFactory : public InputVariableSetterConfigFactory, public virtual NullConfigValidator {
 public:
   std::string name() const override { return "nighthawk.testing-connections"; }
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override {

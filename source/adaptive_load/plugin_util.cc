@@ -20,7 +20,7 @@ LoadInputVariableSetterPlugin(const envoy::config::core::v3::TypedExtensionConfi
     return config_factory.createInputVariableSetter(config.typed_config());
   } catch (const Envoy::EnvoyException& e) {
     return absl::InvalidArgumentError(
-        absl::StrCat("Could not load plugin: ", config.DebugString(), ": ", e.what()));
+        absl::StrCat("Could not load plugin: ", config.name(), ": ", e.what()));
   }
 }
 
@@ -35,7 +35,7 @@ LoadScoringFunctionPlugin(const envoy::config::core::v3::TypedExtensionConfig& c
     return config_factory.createScoringFunction(config.typed_config());
   } catch (const Envoy::EnvoyException& e) {
     return absl::InvalidArgumentError(
-        absl::StrCat("Could not load plugin: ", config.DebugString(), ": ", e.what()));
+        absl::StrCat("Could not load plugin: ", config.name(), ": ", e.what()));
   }
 }
 
@@ -50,7 +50,7 @@ LoadMetricsPlugin(const envoy::config::core::v3::TypedExtensionConfig& config) {
     return config_factory.createMetricsPlugin(config.typed_config());
   } catch (const Envoy::EnvoyException& e) {
     return absl::InvalidArgumentError(
-        absl::StrCat("Could not load plugin: ", config.DebugString(), ": ", e.what()));
+        absl::StrCat("Could not load plugin: ", config.name(), ": ", e.what()));
   }
 }
 
@@ -67,7 +67,7 @@ absl::StatusOr<StepControllerPtr> LoadStepControllerPlugin(
                                                command_line_options_template);
   } catch (const Envoy::EnvoyException& e) {
     return absl::InvalidArgumentError(
-        absl::StrCat("Could not load plugin: ", config.DebugString(), ": ", e.what()));
+        absl::StrCat("Could not load plugin: ", config.name(), ": ", e.what()));
   }
 }
 

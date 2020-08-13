@@ -7,6 +7,7 @@
 #include "api/adaptive_load/benchmark_result.pb.h"
 #include "api/adaptive_load/step_controller_impl.pb.h"
 #include "envoy/registry/registry.h"
+#include "adaptive_load/config_validator_impl.h"
 
 namespace Nighthawk {
 
@@ -45,7 +46,7 @@ class ExponentialSearchStepControllerConfigFactory : public StepControllerConfig
 public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
-  absl::Status ValidateConfig(const Envoy::Protobuf::Message& config) override;
+  absl::Status ValidateConfig(const Envoy::Protobuf::Message& config) const override;
   StepControllerPtr createStepController(
       const Envoy::Protobuf::Message& config,
       const nighthawk::client::CommandLineOptions& command_line_options_template) override;
