@@ -187,9 +187,9 @@ if [ -n "$CIRCLECI" ]; then
     # As of the new coverage methodology introduced in Envoy, that has grown memory requirements too.
     # Hence we heavily reduce parallellism, to avoid being OOM killed.
     if [[ "$1" == "coverage" ]]; then
-        NUM_CPUS=4
+        NUM_CPUS=6
     elif [[ "$1" == "asan" ]]; then
-        NUM_CPUS=3
+        NUM_CPUS=6
     elif [[ "$1" == "test_gcc" ]]; then
         NUM_CPUS=6
     else
@@ -221,7 +221,7 @@ case "$1" in
     ;;
     clang_tidy)
         setup_clang_toolchain
-        do_clang_tidy
+        RUN_FULL_CLANG_TIDY=1 do_clang_tidy
         exit 0
     ;;
     coverage)
