@@ -9,9 +9,11 @@
 #include <random>
 
 #include "envoy/server/filter_config.h"
+#include "envoy/stats/sink.h"
 #include "envoy/stats/store.h"
 
 #include "nighthawk/client/output_collector.h"
+#include "nighthawk/common/factories.h"
 
 #include "external/envoy/source/common/api/api_impl.h"
 #include "external/envoy/source/common/common/cleanup.h"
@@ -24,6 +26,7 @@
 #include "external/envoy/source/common/runtime/runtime_impl.h"
 #include "external/envoy/source/common/singleton/manager_impl.h"
 #include "external/envoy/source/common/thread_local/thread_local_impl.h"
+#include "external/envoy/source/server/server.h"
 
 #include "absl/strings/str_replace.h"
 
@@ -128,6 +131,14 @@ void ProcessImpl::shutdown() {
 
   {
     auto guard = std::make_unique<Envoy::Thread::LockGuard>(workers_lock_);
+    // flush_worker_->shutdown() needs to happen before workers_.clear() so that
+    // metrics defined in workers scope will be included in the final stats
+    // flush which happens in FlushWorkerImpl::shutdownThread() after
+    // flush_worker_->shutdown() is called. For the order between worker shutdown() and
+    // shutdownThread(), see worker_impl.cc.
+    if (flush_worker_) {
+      flush_worker_->shutdown();
+    }
     // Before shutting down the cluster manager, stop the workers.
     for (auto& worker : workers_) {
       worker->shutdown();
@@ -324,6 +335,11 @@ void ProcessImpl::createBootstrapConfiguration(envoy::config::bootstrap::v3::Boo
       addRequestSourceCluster(*request_source_uri, i, bootstrap);
     }
   }
+
+  for (const envoy::config::metrics::v3::StatsSink& stats_sink : options_.statsSinks()) {
+    *bootstrap.add_stats_sinks() = stats_sink;
+  }
+  bootstrap.mutable_stats_flush_interval()->set_seconds(options_.statsFlushInterval());
 }
 
 void ProcessImpl::addTracingCluster(envoy::config::bootstrap::v3::Bootstrap& bootstrap,
@@ -413,6 +429,19 @@ void ProcessImpl::addRequestSourceCluster(
   socket->set_port_value(uri.port());
 }
 
+void ProcessImpl::setupStatsSinks(const envoy::config::bootstrap::v3::Bootstrap& bootstrap,
+                                  std::list<std::unique_ptr<Envoy::Stats::Sink>>& stats_sinks) {
+  for (const envoy::config::metrics::v3::StatsSink& stats_sink : bootstrap.stats_sinks()) {
+    ENVOY_LOG(info, "loading stats sink configuration in Nighthawk");
+    auto& factory =
+        Envoy::Config::Utility::getAndCheckFactory<NighthawkStatsSinkFactory>(stats_sink);
+    stats_sinks.emplace_back(factory.createStatsSink(store_root_.symbolTable()));
+  }
+  for (std::unique_ptr<Envoy::Stats::Sink>& sink : stats_sinks) {
+    store_root_.addSink(*sink);
+  }
+}
+
 bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriPtr>& uris,
                               const UriPtr& request_source_uri, const UriPtr& tracing_uri) {
   {
@@ -422,6 +451,14 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
     }
     int number_of_workers = determineConcurrency();
     shutdown_ = false;
+    envoy::config::bootstrap::v3::Bootstrap bootstrap;
+    createBootstrapConfiguration(bootstrap, uris, request_source_uri, number_of_workers);
+    // Needs to happen as early as possible (before createWorkers()) in the instantiation to preempt
+    // the objects that require stats.
+    if (!options_.statsSinks().empty()) {
+      store_root_.setTagProducer(Envoy::Config::Utility::createTagProducer(bootstrap));
+    }
+
     createWorkers(number_of_workers);
     tls_.registerThread(*dispatcher_, true);
     store_root_.initializeThreading(*dispatcher_, tls_);
@@ -441,8 +478,6 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
             ? Http1PoolImpl::ConnectionReuseStrategy::LRU
             : Http1PoolImpl::ConnectionReuseStrategy::MRU);
     cluster_manager_factory_->setPrefetchConnections(options_.prefetchConnections());
-    envoy::config::bootstrap::v3::Bootstrap bootstrap;
-    createBootstrapConfiguration(bootstrap, uris, request_source_uri, number_of_workers);
     if (tracing_uri != nullptr) {
       setupTracingImplementation(bootstrap, *tracing_uri);
       addTracingCluster(bootstrap, *tracing_uri);
@@ -455,12 +490,31 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
 
     Runtime::LoaderSingleton::get().initialize(*cluster_manager_);
 
+    std::list<std::unique_ptr<Envoy::Stats::Sink>> stats_sinks;
+    setupStatsSinks(bootstrap, stats_sinks);
+    std::chrono::milliseconds stats_flush_interval = std::chrono::milliseconds(
+        Envoy::DurationUtil::durationToMilliseconds(bootstrap.stats_flush_interval()));
+
+    if (!options_.statsSinks().empty()) {
+      // There should be only a single live flush worker instance at any time.
+      flush_worker_ = std::make_unique<FlushWorkerImpl>(stats_flush_interval, *api_, tls_,
+                                                        store_root_, stats_sinks);
+      flush_worker_->start();
+    }
+
     for (auto& w : workers_) {
       w->start();
     }
   }
   for (auto& w : workers_) {
     w->waitForCompletion();
+  }
+
+  if (!options_.statsSinks().empty() && flush_worker_ != nullptr) {
+    // Stop the running dispatcher in flush_worker_. Needs to be called after all
+    // client workers are complete so that all the metrics can be flushed.
+    flush_worker_->exitDispatcher();
+    flush_worker_->waitForCompletion();
   }
 
   int i = 0;

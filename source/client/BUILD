@@ -15,6 +15,7 @@ envoy_cc_library(
         "client.cc",
         "client_worker_impl.cc",
         "factories_impl.cc",
+        "flush_worker_impl.cc",
         "options_impl.cc",
         "process_impl.cc",
         "remote_process_impl.cc",
@@ -26,6 +27,7 @@ envoy_cc_library(
         "client.h",
         "client_worker_impl.h",
         "factories_impl.h",
+        "flush_worker_impl.h",
         "options_impl.h",
         "process_impl.h",
         "remote_process_impl.h",
@@ -84,6 +86,7 @@ envoy_cc_library(
         "@envoy//source/extensions/transport_sockets:well_known_names_with_external_headers",
         "@envoy//source/extensions/transport_sockets/tls:context_lib_with_external_headers",
         "@envoy//source/server:options_lib_with_external_headers",
+        "@envoy//source/server:server_lib_with_external_headers",
         "@envoy//source/server/config_validation:admin_lib_with_external_headers",
         "@envoy//include/envoy/http:protocol_interface_with_external_headers",
     ] + select({
