@@ -71,7 +71,7 @@ public:
 
 REGISTER_FACTORY(ConnectionsInputVariableSetterConfigFactory, InputVariableSetterConfigFactory);
 
-TEST(ExponentialSearchStepControllerConfigFactoryTest, GeneratesEmptyConfigProto) {
+TEST(ExponentialSearchStepControllerConfigFactory, GeneratesEmptyConfigProto) {
   StepControllerConfigFactory& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<StepControllerConfigFactory>(
           "nighthawk.exponential-search");
@@ -80,7 +80,7 @@ TEST(ExponentialSearchStepControllerConfigFactoryTest, GeneratesEmptyConfigProto
   EXPECT_EQ(message->DebugString(), expected_config.DebugString());
 }
 
-TEST(ExponentialSearchStepControllerConfigFactoryTest, CreatesCorrectFactoryName) {
+TEST(ExponentialSearchStepControllerConfigFactory, CreatesCorrectFactoryName) {
   nighthawk::adaptive_load::ExponentialSearchStepControllerConfig config;
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
@@ -91,7 +91,7 @@ TEST(ExponentialSearchStepControllerConfigFactoryTest, CreatesCorrectFactoryName
   EXPECT_EQ(config_factory.name(), "nighthawk.exponential-search");
 }
 
-TEST(ExponentialSearchStepControllerConfigFactoryTest, CreatesCorrectPluginType) {
+TEST(ExponentialSearchStepControllerConfigFactory, CreatesCorrectPluginType) {
   nighthawk::adaptive_load::ExponentialSearchStepControllerConfig config;
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
@@ -103,7 +103,7 @@ TEST(ExponentialSearchStepControllerConfigFactoryTest, CreatesCorrectPluginType)
   EXPECT_NE(dynamic_cast<ExponentialSearchStepController*>(plugin.get()), nullptr);
 }
 
-TEST(ExponentialSearchStepControllerTest, UsesInitialRps) {
+TEST(ExponentialSearchStepController, UsesInitialRps) {
   nighthawk::adaptive_load::ExponentialSearchStepControllerConfig config;
   config.set_initial_value(100.0);
   nighthawk::client::CommandLineOptions options_template;
@@ -111,7 +111,7 @@ TEST(ExponentialSearchStepControllerTest, UsesInitialRps) {
   EXPECT_EQ(step_controller.GetCurrentCommandLineOptions().value().requests_per_second().value(), 100);
 }
 
-TEST(ExponentialSearchStepControllerTest, ActivatesCustomInputValueSetter) {
+TEST(ExponentialSearchStepController, ActivatesCustomInputValueSetter) {
   nighthawk::adaptive_load::ExponentialSearchStepControllerConfig step_controller_config;
   step_controller_config.mutable_input_variable_setter()->set_name("nighthawk.testing-connections");
   // typed_config can be set to any valid Any proto, as the test-only
@@ -124,7 +124,7 @@ TEST(ExponentialSearchStepControllerTest, ActivatesCustomInputValueSetter) {
   EXPECT_EQ(step_controller.GetCurrentCommandLineOptions().value().connections().value(), 100);
 }
 
-TEST(ExponentialSearchStepControllerTest, InitiallyReportsNotConverged) {
+TEST(ExponentialSearchStepController, InitiallyReportsNotConverged) {
   nighthawk::adaptive_load::ExponentialSearchStepControllerConfig config;
   config.set_initial_value(100.0);
   nighthawk::client::CommandLineOptions options_template;
@@ -132,7 +132,7 @@ TEST(ExponentialSearchStepControllerTest, InitiallyReportsNotConverged) {
   EXPECT_FALSE(step_controller.IsConverged());
 }
 
-TEST(ExponentialSearchStepControllerTest, InitiallyReportsNotDoomed) {
+TEST(ExponentialSearchStepController, InitiallyReportsNotDoomed) {
   nighthawk::adaptive_load::ExponentialSearchStepControllerConfig config;
   config.set_initial_value(100.0);
   nighthawk::client::CommandLineOptions options_template;
@@ -142,7 +142,7 @@ TEST(ExponentialSearchStepControllerTest, InitiallyReportsNotDoomed) {
   EXPECT_EQ(doom_reason, "untouched");
 }
 
-TEST(ExponentialSearchStepControllerTest, ReportsDoomIfOutsideThresholdsOnInitialValue) {
+TEST(ExponentialSearchStepController, ReportsDoomIfOutsideThresholdsOnInitialValue) {
   nighthawk::adaptive_load::ExponentialSearchStepControllerConfig config;
   config.set_initial_value(100.0);
   nighthawk::client::CommandLineOptions options_template;
@@ -154,7 +154,7 @@ TEST(ExponentialSearchStepControllerTest, ReportsDoomIfOutsideThresholdsOnInitia
   EXPECT_EQ(doom_reason, "Outside threshold on initial input.");
 }
 
-TEST(ExponentialSearchStepControllerTest, ReportsDoomAfterNighthawkServiceError) {
+TEST(ExponentialSearchStepController, ReportsDoomAfterNighthawkServiceError) {
   nighthawk::adaptive_load::ExponentialSearchStepControllerConfig config;
   config.set_initial_value(100.0);
   nighthawk::client::CommandLineOptions options_template;
@@ -165,7 +165,7 @@ TEST(ExponentialSearchStepControllerTest, ReportsDoomAfterNighthawkServiceError)
   EXPECT_EQ(doom_reason, "Nighthawk Service returned an error.");
 }
 
-TEST(ExponentialSearchStepControllerTest,
+TEST(ExponentialSearchStepController,
      IncreasesRpsExponentiallyIfWithinThresholdUsingDefaultExponent) {
   nighthawk::adaptive_load::ExponentialSearchStepControllerConfig config;
   config.set_initial_value(100.0);
@@ -176,7 +176,7 @@ TEST(ExponentialSearchStepControllerTest,
   EXPECT_EQ(step_controller.GetCurrentCommandLineOptions().value().requests_per_second().value(), 200);
 }
 
-TEST(ExponentialSearchStepControllerTest,
+TEST(ExponentialSearchStepController,
      IncreasesRpsExponentiallyIfWithinThresholdUsingCustomExponent) {
   nighthawk::adaptive_load::ExponentialSearchStepControllerConfig config;
   config.set_initial_value(100.0);
@@ -187,7 +187,7 @@ TEST(ExponentialSearchStepControllerTest,
   EXPECT_EQ(step_controller.GetCurrentCommandLineOptions().value().requests_per_second().value(), 150);
 }
 
-TEST(ExponentialSearchStepControllerTest, PerformsBinarySearchAfterExceedingThreshold) {
+TEST(ExponentialSearchStepController, PerformsBinarySearchAfterExceedingThreshold) {
   nighthawk::adaptive_load::ExponentialSearchStepControllerConfig config;
   config.set_initial_value(100.0);
   nighthawk::client::CommandLineOptions options_template;
@@ -197,7 +197,7 @@ TEST(ExponentialSearchStepControllerTest, PerformsBinarySearchAfterExceedingThre
   EXPECT_EQ(step_controller.GetCurrentCommandLineOptions().value().requests_per_second().value(), 150);
 }
 
-TEST(ExponentialSearchStepControllerTest, BinarySearchConvergesAfterManySteps) {
+TEST(ExponentialSearchStepController, BinarySearchConvergesAfterManySteps) {
   nighthawk::adaptive_load::ExponentialSearchStepControllerConfig config;
   config.set_initial_value(100.0);
   nighthawk::client::CommandLineOptions options_template;
@@ -210,7 +210,7 @@ TEST(ExponentialSearchStepControllerTest, BinarySearchConvergesAfterManySteps) {
   EXPECT_TRUE(step_controller.IsConverged());
 }
 
-TEST(ExponentialSearchStepControllerTest, BinarySearchFindsBottomOfRange) {
+TEST(ExponentialSearchStepController, BinarySearchFindsBottomOfRange) {
   nighthawk::adaptive_load::ExponentialSearchStepControllerConfig config;
   config.set_initial_value(100.0);
   nighthawk::client::CommandLineOptions options_template;
