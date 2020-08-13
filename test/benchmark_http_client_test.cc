@@ -27,25 +27,17 @@ using namespace testing;
 namespace Nighthawk {
 
 namespace {
-const std::shared_ptr<Envoy::Http::RequestHeaderMap>& getDefaultHeaderMap() {
-  static auto* header =
-      new std::shared_ptr<Envoy::Http::RequestHeaderMap>{new Envoy::Http::TestRequestHeaderMapImpl{
-          {":scheme", "http"}, {":method", "GET"}, {":path", "/"}, {":host", "localhost"}}};
-  return *header;
-}
-
-// Default function for request generator when the content doesn't matter.
-RequestGenerator getDefaultRequestGenerator() {
-  RequestGenerator request_generator = []() {
-    return std::make_unique<RequestImpl>(getDefaultHeaderMap());
-  };
-  return request_generator;
-}
 // Helper function to get headers in a set that should be verified during the test.
 std::string getPathFromRequest(const Envoy::Http::RequestHeaderMap& header) {
   return std::string(header.getPathValue());
 }
+
+// This struct contains necessary information for setting up benchmark client to get requests in
+// verifyBenchmarkClientProcessesExpectedInflightRequests.
 struct ClientSetupParameters {
+  // max_pending corresponds to the number of max_pending requests. connection limit corresponds to
+  // the number of maximum connections allowed. amount refers to the number of requests expected.
+  // The generator is a function that returns requests.
   ClientSetupParameters(const uint64_t max_pending, const uint64_t connection_limit,
                         const uint64_t amount, const RequestGenerator& generator)
       : max_pending_requests(max_pending), max_connection_limit(connection_limit),
@@ -69,7 +61,11 @@ public:
                    std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
                    std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
                    std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
-                   std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>()) {
+                   std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>()),
+        default_header_map_(std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(
+            std::initializer_list<std::pair<std::string, std::string>>{
+                {":scheme", "http"}, {":method", "GET"}, {":path", "/"}, {":host", "localhost"}})) {
+
     EXPECT_CALL(cluster_manager(), httpConnPoolForCluster(_, _, _, _))
         .WillRepeatedly(Return(&pool_));
     EXPECT_CALL(cluster_manager(), get(_)).WillRepeatedly(Return(&thread_local_cluster_));
@@ -85,11 +81,17 @@ public:
           return span;
         });
   }
-
+  // Default function for request generator when the content doesn't matter.
+  RequestGenerator getDefaultRequestGenerator() {
+    RequestGenerator request_generator = [this]() {
+      return std::make_unique<RequestImpl>(default_header_map_);
+    };
+    return request_generator;
+  }
   // Primary testing method. Confirms that connection limits are met and number of requests are
   // correct. If header expectations is not null, also checks the header expectations, if null, it
   // is ignored.
-  void TestBenchmarkClientProcessesExpectedInflightRequests(
+  void verifyBenchmarkClientProcessesExpectedInflightRequests(
       ClientSetupParameters& client_setup_parameters,
       const absl::flat_hash_set<std::string>* header_expectations = nullptr) {
     if (client_ == nullptr) {
@@ -170,7 +172,8 @@ public:
     }
   }
 
-  // Used to set up benchmarkclient. Especially from within the testBenchmarkClientFunctionality.
+  // Used to set up benchmarkclient. Especially from within
+  // verifyBenchmarkClientProcessesExpectedInflightRequests.
   void setupBenchmarkClient(const RequestGenerator& request_generator) {
     client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
         *api_, *dispatcher_, store_, statistic_, false, cluster_manager_, http_tracer_, "benchmark",
@@ -208,33 +211,34 @@ public:
   std::string response_code_;
   int worker_number_{0};
   Client::BenchmarkClientStatistic statistic_;
-};
+  std::shared_ptr<Envoy::Http::RequestHeaderMap> default_header_map_;
+}; // namespace Nighthawk
 
 TEST_F(BenchmarkClientHttpTest, BasicTestH1200) {
   response_code_ = "200";
   auto client_setup_param = ClientSetupParameters(2, 3, 10, getDefaultRequestGenerator());
-  TestBenchmarkClientProcessesExpectedInflightRequests(client_setup_param);
+  verifyBenchmarkClientProcessesExpectedInflightRequests(client_setup_param);
   EXPECT_EQ(5, getCounter("http_2xx"));
 }
 
 TEST_F(BenchmarkClientHttpTest, BasicTestH1300) {
   response_code_ = "300";
   auto client_setup_param = ClientSetupParameters(0, 11, 10, getDefaultRequestGenerator());
-  TestBenchmarkClientProcessesExpectedInflightRequests(client_setup_param);
+  verifyBenchmarkClientProcessesExpectedInflightRequests(client_setup_param);
   EXPECT_EQ(10, getCounter("http_3xx"));
 }
 
 TEST_F(BenchmarkClientHttpTest, BasicTestH1404) {
   response_code_ = "404";
   auto client_setup_param = ClientSetupParameters(0, 1, 10, getDefaultRequestGenerator());
-  TestBenchmarkClientProcessesExpectedInflightRequests(client_setup_param);
+  verifyBenchmarkClientProcessesExpectedInflightRequests(client_setup_param);
   EXPECT_EQ(1, getCounter("http_4xx"));
 }
 
 TEST_F(BenchmarkClientHttpTest, WeirdStatus) {
   response_code_ = "601";
   auto client_setup_param = ClientSetupParameters(0, 1, 10, getDefaultRequestGenerator());
-  TestBenchmarkClientProcessesExpectedInflightRequests(client_setup_param);
+  verifyBenchmarkClientProcessesExpectedInflightRequests(client_setup_param);
   EXPECT_EQ(1, getCounter("http_xxx"));
 }
 
@@ -242,7 +246,7 @@ TEST_F(BenchmarkClientHttpTest, EnableLatencyMeasurement) {
   setupBenchmarkClient(getDefaultRequestGenerator());
   EXPECT_EQ(false, client_->shouldMeasureLatencies());
   auto client_setup_param = ClientSetupParameters(10, 1, 10, getDefaultRequestGenerator());
-  TestBenchmarkClientProcessesExpectedInflightRequests(client_setup_param);
+  verifyBenchmarkClientProcessesExpectedInflightRequests(client_setup_param);
   EXPECT_EQ(0, client_->statistics()["benchmark_http_client.queue_to_connect"]->count());
   EXPECT_EQ(0, client_->statistics()["benchmark_http_client.request_to_response"]->count());
   EXPECT_EQ(10, client_->statistics()["benchmark_http_client.response_header_size"]->count());
@@ -250,7 +254,7 @@ TEST_F(BenchmarkClientHttpTest, EnableLatencyMeasurement) {
   EXPECT_EQ(0, client_->statistics()["benchmark_http_client.latency_2xx"]->count());
   client_->setShouldMeasureLatencies(true);
 
-  TestBenchmarkClientProcessesExpectedInflightRequests(client_setup_param);
+  verifyBenchmarkClientProcessesExpectedInflightRequests(client_setup_param);
   EXPECT_EQ(10, client_->statistics()["benchmark_http_client.queue_to_connect"]->count());
   EXPECT_EQ(10, client_->statistics()["benchmark_http_client.request_to_response"]->count());
   EXPECT_EQ(20, client_->statistics()["benchmark_http_client.response_header_size"]->count());
@@ -343,7 +347,7 @@ TEST_F(BenchmarkClientHttpTest, RequestMethodPost) {
 
   EXPECT_CALL(stream_encoder_, encodeData(_, _)).Times(1);
   auto client_setup_parameters = ClientSetupParameters(1, 1, 1, request_generator);
-  TestBenchmarkClientProcessesExpectedInflightRequests(client_setup_parameters);
+  verifyBenchmarkClientProcessesExpectedInflightRequests(client_setup_parameters);
   EXPECT_EQ(1, getCounter("http_2xx"));
 }
 
@@ -360,7 +364,7 @@ TEST_F(BenchmarkClientHttpTest, BadContentLength) {
 
   EXPECT_CALL(stream_encoder_, encodeData(_, _)).Times(0);
   auto client_setup_parameters = ClientSetupParameters(1, 1, 1, request_generator);
-  TestBenchmarkClientProcessesExpectedInflightRequests(client_setup_parameters);
+  verifyBenchmarkClientProcessesExpectedInflightRequests(client_setup_parameters);
   EXPECT_EQ(1, getCounter("http_2xx"));
 }
 
@@ -398,7 +402,8 @@ TEST_F(BenchmarkClientHttpTest, RequestGeneratorProvidingDifferentPathsSendsRequ
   // Most of the testing happens inside of this call. Will confirm that the requests received match
   // the expected requests vector.
   auto client_setup_parameters = ClientSetupParameters(1, 1, 2, request_generator);
-  TestBenchmarkClientProcessesExpectedInflightRequests(client_setup_parameters, &expected_requests);
+  verifyBenchmarkClientProcessesExpectedInflightRequests(client_setup_parameters,
+                                                         &expected_requests);
   EXPECT_EQ(2, getCounter("http_2xx"));
 }
 } // namespace Nighthawk
