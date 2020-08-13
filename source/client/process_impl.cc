@@ -429,7 +429,7 @@ void ProcessImpl::addRequestSourceCluster(
   socket->set_port_value(uri.port());
 }
 
-void ProcessImpl::setupStatsSinks(envoy::config::bootstrap::v3::Bootstrap& bootstrap,
+void ProcessImpl::setupStatsSinks(const envoy::config::bootstrap::v3::Bootstrap& bootstrap,
                                   std::list<std::unique_ptr<Envoy::Stats::Sink>>& stats_sinks) {
   for (const envoy::config::metrics::v3::StatsSink& stats_sink : bootstrap.stats_sinks()) {
     ENVOY_LOG(info, "loading stats sink configuration in Nighthawk");

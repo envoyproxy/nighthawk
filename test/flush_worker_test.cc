@@ -25,6 +25,7 @@ using ::testing::ReturnRef;
 using ::testing::StrictMock;
 using ::testing::Test;
 
+// Number of times the simulated timer loops run in simulateTimerLoop().
 const int kNumTimerLoops = 100;
 
 class FlushWorkerTest : public Test {
