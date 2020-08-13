@@ -29,7 +29,7 @@ public:
    * variables via InputVariableSetter plugins to the stored CommandLineOptions template, or an
    * error if the variables could not be applied (e.g. out of range).
    */
-  virtual Envoy::StatusOr<nighthawk::client::CommandLineOptions>
+  virtual absl::StatusOr<nighthawk::client::CommandLineOptions>
   GetCurrentCommandLineOptions() const PURE;
   /**
    * Reports if the search for the optimal load has converged, based on the StepController's
