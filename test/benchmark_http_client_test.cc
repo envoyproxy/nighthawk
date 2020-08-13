@@ -61,11 +61,11 @@ public:
                    std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
                    std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
                    std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
-                   std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>()),
-        default_header_map_(std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(
-            std::initializer_list<std::pair<std::string, std::string>>{
-                {":scheme", "http"}, {":method", "GET"}, {":path", "/"}, {":host", "localhost"}})) {
-
+                   std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>()) {
+    auto header_map_param = std::initializer_list<std::pair<std::string, std::string>>{
+        {":scheme", "http"}, {":method", "GET"}, {":path", "/"}, {":host", "localhost"}};
+    default_header_map_ =
+        (std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(header_map_param));
     EXPECT_CALL(cluster_manager(), httpConnPoolForCluster(_, _, _, _))
         .WillRepeatedly(Return(&pool_));
     EXPECT_CALL(cluster_manager(), get(_)).WillRepeatedly(Return(&thread_local_cluster_));
@@ -84,7 +84,8 @@ public:
   // Default function for request generator when the content doesn't matter.
   RequestGenerator getDefaultRequestGenerator() {
     RequestGenerator request_generator = [this]() {
-      return std::make_unique<RequestImpl>(default_header_map_);
+      auto returned_request_impl=std::make_unique<RequestImpl>(default_header_map_);
+      return returned_request_impl;
     };
     return request_generator;
   }
@@ -216,28 +217,32 @@ public:
 
 TEST_F(BenchmarkClientHttpTest, BasicTestH1200) {
   response_code_ = "200";
-  auto client_setup_param = ClientSetupParameters(2, 3, 10, getDefaultRequestGenerator());
+  RequestGenerator default_request_generator = getDefaultRequestGenerator();
+  auto client_setup_param = ClientSetupParameters(2, 3, 10, default_request_generator);
   verifyBenchmarkClientProcessesExpectedInflightRequests(client_setup_param);
   EXPECT_EQ(5, getCounter("http_2xx"));
 }
 
 TEST_F(BenchmarkClientHttpTest, BasicTestH1300) {
   response_code_ = "300";
-  auto client_setup_param = ClientSetupParameters(0, 11, 10, getDefaultRequestGenerator());
+  RequestGenerator default_request_generator = getDefaultRequestGenerator();
+  auto client_setup_param = ClientSetupParameters(0, 11, 10, default_request_generator);
   verifyBenchmarkClientProcessesExpectedInflightRequests(client_setup_param);
   EXPECT_EQ(10, getCounter("http_3xx"));
 }
 
 TEST_F(BenchmarkClientHttpTest, BasicTestH1404) {
   response_code_ = "404";
-  auto client_setup_param = ClientSetupParameters(0, 1, 10, getDefaultRequestGenerator());
+  RequestGenerator default_request_generator = getDefaultRequestGenerator();
+  auto client_setup_param = ClientSetupParameters(0, 1, 10, default_request_generator);
   verifyBenchmarkClientProcessesExpectedInflightRequests(client_setup_param);
   EXPECT_EQ(1, getCounter("http_4xx"));
 }
 
 TEST_F(BenchmarkClientHttpTest, WeirdStatus) {
   response_code_ = "601";
-  auto client_setup_param = ClientSetupParameters(0, 1, 10, getDefaultRequestGenerator());
+  RequestGenerator default_request_generator = getDefaultRequestGenerator();
+  auto client_setup_param = ClientSetupParameters(0, 1, 10, default_request_generator);
   verifyBenchmarkClientProcessesExpectedInflightRequests(client_setup_param);
   EXPECT_EQ(1, getCounter("http_xxx"));
 }
@@ -245,7 +250,8 @@ TEST_F(BenchmarkClientHttpTest, WeirdStatus) {
 TEST_F(BenchmarkClientHttpTest, EnableLatencyMeasurement) {
   setupBenchmarkClient(getDefaultRequestGenerator());
   EXPECT_EQ(false, client_->shouldMeasureLatencies());
-  auto client_setup_param = ClientSetupParameters(10, 1, 10, getDefaultRequestGenerator());
+  RequestGenerator default_request_generator = getDefaultRequestGenerator();
+  auto client_setup_param = ClientSetupParameters(10, 1, 10, default_request_generator);
   verifyBenchmarkClientProcessesExpectedInflightRequests(client_setup_param);
   EXPECT_EQ(0, client_->statistics()["benchmark_http_client.queue_to_connect"]->count());
   EXPECT_EQ(0, client_->statistics()["benchmark_http_client.request_to_response"]->count());
@@ -263,7 +269,8 @@ TEST_F(BenchmarkClientHttpTest, EnableLatencyMeasurement) {
 }
 
 TEST_F(BenchmarkClientHttpTest, ExportSuccessLatency) {
-  setupBenchmarkClient(getDefaultRequestGenerator());
+  RequestGenerator default_request_generator = getDefaultRequestGenerator();
+  setupBenchmarkClient(default_request_generator);
   uint64_t latency_ns = 10;
   client_->exportLatency(/*response_code=*/200, latency_ns);
   client_->exportLatency(/*response_code=*/200, latency_ns);
@@ -272,7 +279,8 @@ TEST_F(BenchmarkClientHttpTest, ExportSuccessLatency) {
 }
 
 TEST_F(BenchmarkClientHttpTest, ExportErrorLatency) {
-  setupBenchmarkClient(getDefaultRequestGenerator());
+  RequestGenerator default_request_generator = getDefaultRequestGenerator();
+  setupBenchmarkClient(default_request_generator);
   client_->exportLatency(/*response_code=*/100, /*latency_ns=*/1);
   client_->exportLatency(/*response_code=*/300, /*latency_ns=*/3);
   client_->exportLatency(/*response_code=*/400, /*latency_ns=*/4);
@@ -291,7 +299,8 @@ TEST_F(BenchmarkClientHttpTest, ExportErrorLatency) {
 }
 
 TEST_F(BenchmarkClientHttpTest, StatusTrackingInOnComplete) {
-  setupBenchmarkClient(getDefaultRequestGenerator());
+  RequestGenerator default_request_generator = getDefaultRequestGenerator();
+  setupBenchmarkClient(default_request_generator);
   Envoy::Http::ResponseHeaderMapPtr header = Envoy::Http::ResponseHeaderMapImpl::create();
 
   header->setStatus(1);
@@ -323,7 +332,8 @@ TEST_F(BenchmarkClientHttpTest, StatusTrackingInOnComplete) {
 }
 
 TEST_F(BenchmarkClientHttpTest, PoolFailures) {
-  setupBenchmarkClient(getDefaultRequestGenerator());
+  RequestGenerator default_request_generator = getDefaultRequestGenerator();
+  setupBenchmarkClient(default_request_generator);
   client_->onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason::LocalConnectionFailure);
   client_->onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason::RemoteConnectionFailure);
   client_->onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason::Overflow);
