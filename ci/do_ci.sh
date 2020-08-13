@@ -221,7 +221,7 @@ case "$1" in
     ;;
     clang_tidy)
         setup_clang_toolchain
-        do_clang_tidy
+        RUN_FULL_CLANG_TIDY=1 do_clang_tidy
         exit 0
     ;;
     coverage)
