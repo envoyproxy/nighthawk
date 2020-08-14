@@ -9,6 +9,23 @@ licenses(["notice"])  # Apache 2
 envoy_package()
 
 envoy_cc_library(
+    name = "config_validator_impl",
+    srcs = [
+        "config_validator_impl.cc",
+    ],
+    hdrs = [
+        "config_validator_impl.h",
+    ],
+    repository = "@envoy",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//include/nighthawk/adaptive_load:config_validator",
+        "@envoy//source/common/config:utility_lib_with_external_headers",
+        "@envoy//source/common/protobuf:protobuf_with_external_headers",
+    ],
+)
+
+envoy_cc_library( 
     name = "input_variable_setter_impl",
     srcs = [
         "input_variable_setter_impl.cc",
@@ -19,6 +36,7 @@ envoy_cc_library(
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
+        ":config_validator_impl",
         "//include/nighthawk/adaptive_load:input_variable_setter",
         "@envoy//source/common/config:utility_lib_with_external_headers",
         "@envoy//source/common/protobuf:protobuf_with_external_headers",
@@ -41,5 +59,25 @@ envoy_cc_library(
         "@envoy//source/common/common:minimal_logger_lib_with_external_headers",
         "@envoy//source/common/config:utility_lib_with_external_headers",
         "@envoy//source/common/protobuf:protobuf_with_external_headers",
+    ],
+)
+
+envoy_cc_library(
+    name = "plugin_loader",
+    srcs = [
+        "plugin_loader.cc",
+    ],
+    hdrs = [
+        "plugin_loader.h",
+    ],
+    repository = "@envoy",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//include/nighthawk/adaptive_load:input_variable_setter",
+        "//include/nighthawk/adaptive_load:metrics_plugin",
+        "//include/nighthawk/adaptive_load:scoring_function",
+        "//include/nighthawk/adaptive_load:step_controller",
+        "//source/common:nighthawk_common_lib",
+        "@envoy//source/common/config:utility_lib_with_external_headers",
     ],
 )
