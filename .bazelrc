@@ -318,3 +318,6 @@ build:windows --dynamic_mode=off
 
 try-import %workspace%/clang.bazelrc
 try-import %workspace%/user.bazelrc
+
+# TODO(#452): get rid of the warning suppression here.
+build --copt -Wno-error=unused-variable

@@ -55,6 +55,7 @@ py_library(
         # The following are implied by pytest & co.
         requirement("attrs"),
         requirement("pluggy"),
+        requirement("psutil"),
         requirement("zipp"),
         requirement("six"),
         requirement("py"),
