@@ -13,7 +13,7 @@
 #include "api/adaptive_load/scoring_function_impl.pb.h"
 #include "api/client/options.pb.h"
 
-#include "adaptive_load/plugin_util.h"
+#include "adaptive_load/plugin_loader.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -21,6 +21,8 @@ namespace Nighthawk {
 
 namespace {
 
+// A special value that causes ValidateConfig to return an error when included in the config
+// protos of the fake plugins in this file.
 const double kBadConfigThreshold = 98765.0;
 
 /**
@@ -48,11 +50,13 @@ public:
   // config type. We use LinearScoringFunctionConfig for all plugins in this test.
   TestInputVariableSetter(const nighthawk::adaptive_load::LinearScoringFunctionConfig& config)
       : value_from_config_proto_{config.threshold()} {}
+      
   absl::Status SetInputVariable(nighthawk::client::CommandLineOptions& command_line_options,
                                 double input_value) override {
     command_line_options.mutable_connections()->set_value(static_cast<unsigned int>(input_value));
     return absl::OkStatus();
   }
+
   const double value_from_config_proto_;
 };
 
@@ -91,7 +95,9 @@ public:
   // config type. We use LinearScoringFunctionConfig for all plugins in this test.
   TestScoringFunction(const nighthawk::adaptive_load::LinearScoringFunctionConfig& config)
       : value_from_config_proto_{config.threshold()} {}
+
   double EvaluateMetric(double) const override { return 1.0; }
+
   const double value_from_config_proto_;
 };
 
@@ -127,8 +133,10 @@ public:
   // config type. We use LinearScoringFunctionConfig for all plugins in this test.
   TestMetricsPlugin(const nighthawk::adaptive_load::LinearScoringFunctionConfig& config)
       : value_from_config_proto_{config.threshold()} {}
+
   absl::StatusOr<double> GetMetricByName(absl::string_view) override { return 5.0; }
   const std::vector<std::string> GetAllSupportedMetricNames() const override { return {}; }
+
   const double value_from_config_proto_;
 };
 
@@ -167,6 +175,7 @@ public:
       : value_from_config_proto_{config.threshold()},
         value_from_command_line_options_template_{
             command_line_options_template.requests_per_second().value()} {}
+
   bool IsConverged() const override { return false; }
   bool IsDoomed(std::string&) const override { return false; }
   absl::StatusOr<nighthawk::client::CommandLineOptions>
@@ -174,6 +183,7 @@ public:
     return nighthawk::client::CommandLineOptions();
   }
   void UpdateAndRecompute(const nighthawk::adaptive_load::BenchmarkResult&) override {}
+
   const double value_from_config_proto_;
   const unsigned int value_from_command_line_options_template_;
 };
