@@ -80,8 +80,6 @@ void ServiceMain::start() {
       myfile << listener_bound_address_;
     }
   }
-  channel_ = grpc::CreateChannel(listener_bound_address_, grpc::InsecureChannelCredentials());
-  stub_ = std::make_unique<nighthawk::client::NighthawkService::Stub>(channel_);
   signal_handler_ = std::make_unique<SignalHandler>([this]() { server_->Shutdown(); });
 }
 
