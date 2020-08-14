@@ -3,8 +3,9 @@
 #pragma once
 
 #include "envoy/common/pure.h"
-#include "envoy/config/core/v3/base.pb.h"
 #include "envoy/config/typed_config.h"
+
+#include "nighthawk/adaptive_load/config_validator.h"
 
 namespace Nighthawk {
 
@@ -35,9 +36,8 @@ using ScoringFunctionPtr = std::unique_ptr<ScoringFunction>;
  * A factory that must be implemented for each ScoringFunction plugin. It instantiates the
  * specific ScoringFunction class after unpacking the plugin-specific config proto.
  */
-class ScoringFunctionConfigFactory : public Envoy::Config::TypedFactory {
+class ScoringFunctionConfigFactory : public Envoy::Config::TypedFactory, public ConfigValidator {
 public:
-  ~ScoringFunctionConfigFactory() override = default;
   std::string category() const override { return "nighthawk.scoring_function"; }
   /**
    * Instantiates the specific ScoringFunction class. Casts |message| to Any, unpacks it to the
@@ -46,6 +46,9 @@ public:
    * @param message Any typed_config proto taken from the TypedExtensionConfig.
    *
    * @return ScoringFunctionPtr Pointer to the new plugin instance.
+   *
+   * @throw Envoy::EnvoyException If the Any proto cannot be unpacked as the type expected by the
+   * plugin.
    */
   virtual ScoringFunctionPtr createScoringFunction(const Envoy::Protobuf::Message& message) PURE;
 };
