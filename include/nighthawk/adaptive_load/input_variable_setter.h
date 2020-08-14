@@ -3,8 +3,9 @@
 #pragma once
 
 #include "envoy/common/pure.h"
-#include "envoy/config/core/v3/base.pb.h"
 #include "envoy/config/typed_config.h"
+
+#include "nighthawk/adaptive_load/config_validator.h"
 
 #include "external/envoy/source/common/protobuf/protobuf.h"
 
@@ -44,9 +45,9 @@ using InputVariableSetterPtr = std::unique_ptr<InputVariableSetter>;
  * A factory that must be implemented for each InputVariableSetter plugin. It instantiates the
  * specific InputVariableSetter class after unpacking the plugin-specific config proto.
  */
-class InputVariableSetterConfigFactory : public Envoy::Config::TypedFactory {
+class InputVariableSetterConfigFactory : public virtual Envoy::Config::TypedFactory,
+                                         public virtual ConfigValidator {
 public:
-  ~InputVariableSetterConfigFactory() override = default;
   std::string category() const override { return "nighthawk.input_variable_setter"; }
   /**
    * Instantiates the specific InputVariableSetter class. Casts |message| to Any, unpacks it to the

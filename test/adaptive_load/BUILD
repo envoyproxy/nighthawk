@@ -39,6 +39,17 @@ envoy_cc_test(
 )
 
 envoy_cc_test(
+    name = "plugin_loader_test",
+    srcs = ["plugin_loader_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/adaptive_load:plugin_loader",
+        "@envoy//source/common/protobuf:utility_lib_with_external_headers",
+        "@envoy//test/test_common:utility_lib",
+    ],
+)
+
+envoy_cc_test(
     name = "scoring_function_test",
     srcs = ["scoring_function_test.cc"],
     repository = "@envoy",
