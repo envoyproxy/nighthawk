@@ -1,4 +1,4 @@
-#include "test/adaptive_load/fake_plugins/fake_step_controller/fake_step_controller_impl.h"
+#include "test/adaptive_load/fake_plugins/fake_step_controller/fake_step_controller.h"
 #include "api/adaptive_load/benchmark_result.pb.h"
 
 namespace Nighthawk {
@@ -65,5 +65,17 @@ StepControllerPtr FakeStepControllerConfigFactory::createStepController(
 }
 
 REGISTER_FACTORY(FakeStepControllerConfigFactory, StepControllerConfigFactory);
+
+envoy::config::core::v3::TypedExtensionConfig
+MakeFakeStepControllerPluginConfig(int fixed_rps_value) {
+  envoy::config::core::v3::TypedExtensionConfig outer_config;
+  outer_config.set_name("nighthawk.fake-step-controller");
+  nighthawk::adaptive_load::FakeStepControllerConfig config;
+  config.set_fixed_rps_value(fixed_rps_value);
+  Envoy::ProtobufWkt::Any config_any;
+  config_any.PackFrom(config);
+  *outer_config.mutable_typed_config() = config_any;
+  return outer_config;
+}
 
 } // namespace Nighthawk

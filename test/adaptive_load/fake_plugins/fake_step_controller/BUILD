@@ -23,12 +23,12 @@ api_cc_py_proto_library(
 )
 
 envoy_cc_library(
-    name = "fake_step_controller_impl",
+    name = "fake_step_controller",
     srcs = [
-        "fake_step_controller_impl.cc",
+        "fake_step_controller.cc",
     ],
     hdrs = [
-        "fake_step_controller_impl.h",
+        "fake_step_controller.h",
     ],
     repository = "@envoy",
     visibility = ["//visibility:public"],
@@ -50,7 +50,8 @@ envoy_cc_test(
     srcs = ["fake_step_controller_test.cc"],
     repository = "@envoy",
     deps = [
-        ":fake_step_controller_impl",
+        ":fake_step_controller",
+        "//source/adaptive_load:plugin_util",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
         "@envoy//test/test_common:utility_lib",
     ],

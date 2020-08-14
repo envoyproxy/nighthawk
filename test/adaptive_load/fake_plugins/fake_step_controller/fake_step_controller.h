@@ -74,4 +74,14 @@ public:
 // This factory is activated through LoadStepControllerPlugin in plugin_util.h.
 DECLARE_FACTORY(FakeStepControllerConfigFactory);
 
+/**
+ * Creates a valid TypedExtensionConfig proto that activates a FakeStepController.
+ *
+ * @param fixed_rps_value Value for RPS to set in the FakeStepControllerConfig proto.
+ *
+ * @return TypedExtensionConfig A proto that activates FakeStepController by name and provides a
+ * FakeStepControllerConfig proto wrapped in an Any.
+ */
+envoy::config::core::v3::TypedExtensionConfig MakeFakeStepControllerPluginConfig(int fixed_rps_value);
+
 } // namespace Nighthawk

@@ -93,57 +93,6 @@ MakeSimpleMockClientReaderWriter() {
 }
 
 /**
- * MetricsPlugin for testing, supporting a single metric named 'metric1' with the constant
- * value 5.0.
- */
-class FakeMetricsPlugin : public MetricsPlugin {
-public:
-  FakeMetricsPlugin() {}
-  absl::StatusOr<double> GetMetricByName(absl::string_view) override { return 5.0; }
-  const std::vector<std::string> GetAllSupportedMetricNames() const override { return {"metric1"}; }
-};
-
-/**
- * Factory that creates a FakeMetricsPlugin with no config proto, registered under the name
- * 'nighthawk.fake-metrics-plugin'.
- */
-class FakeMetricsPluginConfigFactory : public MetricsPluginConfigFactory {
-public:
-  std::string name() const override { return "nighthawk.fake-metrics-plugin"; }
-  Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override {
-    return std::make_unique<Envoy::ProtobufWkt::Any>();
-  }
-  MetricsPluginPtr createMetricsPlugin(const Envoy::Protobuf::Message&) override {
-    return std::make_unique<FakeMetricsPlugin>();
-  }
-};
-
-REGISTER_FACTORY(FakeMetricsPluginConfigFactory, MetricsPluginConfigFactory);
-
-
-/**
- * Creates a valid TypedExtensionConfig proto that activates the fake MetricsPlugin defined in this
- * file.
- */
-envoy::config::core::v3::TypedExtensionConfig MakeFakeMetricsPluginConfig() {
-  envoy::config::core::v3::TypedExtensionConfig config;
-  config.set_name("nighthawk.fake-metrics-plugin");
-  *config.mutable_typed_config() = Envoy::ProtobufWkt::Any();
-  return config;
-}
-
-/**
- * Creates a valid TypedExtensionConfig proto that activates the fake StepController defined in this
- * file.
- */
-envoy::config::core::v3::TypedExtensionConfig MakeFakeStepControllerConfig() {
-  envoy::config::core::v3::TypedExtensionConfig config;
-  config.set_name("fake-step-controller");
-  *config.mutable_typed_config() = Envoy::ProtobufWkt::Any();
-  return config;
-}
-
-/**
  * Creates a valid ScoringFunctionConfig proto selecting the real BinaryScoringFunction plugin
  * and configuring it with a threshold.
  */

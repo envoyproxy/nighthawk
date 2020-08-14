@@ -1,7 +1,8 @@
 #include "api/adaptive_load/benchmark_result.pb.h"
 #include "api/client/options.pb.h"
 #include "envoy/registry/registry.h"
-#include "test/adaptive_load/fake_plugins/fake_metrics_plugin/fake_metrics_plugin_impl.h"
+#include "source/adaptive_load/_virtual_includes/plugin_util/adaptive_load/plugin_util.h"
+#include "test/adaptive_load/fake_plugins/fake_metrics_plugin/fake_metrics_plugin.h"
 
 #include "external/envoy/source/common/config/utility.h"
 
@@ -75,7 +76,24 @@ TEST(FakeMetricsPlugin, GetMetricByNameReturnsErrorStatusForBadName) {
 
 TEST(FakeMetricsPlugin, GetAllSupportedMetricNamesReturnsCorrectValues) {
   FakeMetricsPlugin metrics_plugin(FakeMetricsPluginConfig{});
-  EXPECT_THAT(metrics_plugin.GetAllSupportedMetricNames(), ::testing::ElementsAre("good-metric", "bad-metric"));
+  EXPECT_THAT(metrics_plugin.GetAllSupportedMetricNames(),
+              ::testing::ElementsAre("good-metric", "bad-metric"));
+}
+
+TEST(MakeFakeMetricsPluginConfig, ActivatesFakeMetricsPlugin) {
+  absl::StatusOr<MetricsPluginPtr> plugin_or = LoadMetricsPlugin(MakeFakeMetricsPluginConfig(5.0));
+  ASSERT_TRUE(plugin_or.ok());
+  EXPECT_NE(dynamic_cast<FakeMetricsPlugin*>(plugin_or.value().get()), nullptr);
+}
+
+TEST(MakeFakeMetricsPluginConfig, ProducesFakeMetricsPluginWithConfiguredValue) {
+  absl::StatusOr<MetricsPluginPtr> plugin_or = LoadMetricsPlugin(MakeFakeMetricsPluginConfig(5.0));
+  ASSERT_TRUE(plugin_or.ok());
+  FakeMetricsPlugin* plugin = dynamic_cast<FakeMetricsPlugin*>(plugin_or.value().get());
+  ASSERT_NE(plugin, nullptr);
+  absl::StatusOr<double> value_or = plugin->GetMetricByName("good-metric");
+  ASSERT_TRUE(value_or.ok());
+  EXPECT_EQ(value_or.value(), 5.0);
 }
 
 } // namespace

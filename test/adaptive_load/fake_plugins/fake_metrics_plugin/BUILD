@@ -23,12 +23,12 @@ api_cc_py_proto_library(
 )
 
 envoy_cc_library(
-    name = "fake_metrics_plugin_impl",
+    name = "fake_metrics_plugin",
     srcs = [
-        "fake_metrics_plugin_impl.cc",
+        "fake_metrics_plugin.cc",
     ],
     hdrs = [
-        "fake_metrics_plugin_impl.h",
+        "fake_metrics_plugin.h",
     ],
     repository = "@envoy",
     visibility = ["//visibility:public"],
@@ -48,7 +48,8 @@ envoy_cc_test(
     srcs = ["fake_metrics_plugin_test.cc"],
     repository = "@envoy",
     deps = [
-        ":fake_metrics_plugin_impl",
+        ":fake_metrics_plugin",
+        "//source/adaptive_load:plugin_util",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
         "@envoy//test/test_common:utility_lib",
     ],

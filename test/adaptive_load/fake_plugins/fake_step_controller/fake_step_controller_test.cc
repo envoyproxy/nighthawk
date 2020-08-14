@@ -1,7 +1,8 @@
 #include "api/adaptive_load/benchmark_result.pb.h"
 #include "api/client/options.pb.h"
 #include "envoy/registry/registry.h"
-#include "test/adaptive_load/fake_plugins/fake_step_controller/fake_step_controller_impl.h"
+#include "adaptive_load/plugin_util.h"
+#include "test/adaptive_load/fake_plugins/fake_step_controller/fake_step_controller.h"
 
 #include "external/envoy/source/common/config/utility.h"
 
@@ -115,6 +116,25 @@ TEST(FakeStepController, IsDoomedSetsDoomedReasonToStatusMessageAfterFailedBench
   std::string doomed_reason;
   ASSERT_TRUE(step_controller.IsDoomed(doomed_reason));
   EXPECT_EQ(doomed_reason, "error from nighthawk");
+}
+
+TEST(MakeFakeStepControllerPluginConfig, ActivatesFakeStepControllerPlugin) {
+  absl::StatusOr<StepControllerPtr> plugin_or =
+      LoadStepControllerPlugin(MakeFakeStepControllerPluginConfig(5), nighthawk::client::CommandLineOptions{});
+  ASSERT_TRUE(plugin_or.ok());
+  EXPECT_NE(dynamic_cast<FakeStepController*>(plugin_or.value().get()), nullptr);
+}
+
+TEST(MakeFakeStepControllerPluginConfig, ProducesFakeStepControllerPluginWithConfiguredValue) {
+  absl::StatusOr<StepControllerPtr> plugin_or =
+      LoadStepControllerPlugin(MakeFakeStepControllerPluginConfig(5), nighthawk::client::CommandLineOptions{});
+  ASSERT_TRUE(plugin_or.ok());
+  FakeStepController* plugin = dynamic_cast<FakeStepController*>(plugin_or.value().get());
+  ASSERT_NE(plugin, nullptr);
+  absl::StatusOr<nighthawk::client::CommandLineOptions> options_or =
+      plugin->GetCurrentCommandLineOptions();
+  ASSERT_TRUE(options_or.ok());
+  EXPECT_EQ(options_or.value().requests_per_second().value(), 5);
 }
 
 } // namespace

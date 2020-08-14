@@ -38,7 +38,7 @@ private:
  * Registered as an Envoy plugin.
  */
 class FakeMetricsPluginConfigFactory : public virtual MetricsPluginConfigFactory,
-                                   public virtual NullConfigValidator {
+                                       public virtual NullConfigValidator {
 public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
@@ -47,5 +47,17 @@ public:
 
 // This factory is activated through LoadMetricsPlugin in plugin_util.h.
 DECLARE_FACTORY(FakeMetricsPluginConfigFactory);
+
+/**
+ * Creates a valid TypedExtensionConfig proto that activates a FakeMetricsPlugin with a
+ * FakeMetricsPluginConfig.
+ *
+ * @param fixed_metric_value A value that the plugin should always return when "good-metric" is
+ * requested.
+ *
+ * @return TypedExtensionConfig A proto that activates FakeMetricsPlugin by name and includes a
+ * FakeMetricsPluginConfig proto wrapped in an Any.
+ */
+envoy::config::core::v3::TypedExtensionConfig MakeFakeMetricsPluginConfig(double fixed_metric_value);
 
 } // namespace Nighthawk

@@ -64,6 +64,7 @@ envoy_cc_test(
     deps = [
         ":fake_time_source",
         ":minimal_output",
+        "//test/adaptive_load/fake_plugins/fake_step_controller",
         "//source/adaptive_load:adaptive_load_controller_impl",
         "//source/adaptive_load:scoring_function_impl",
         "//source/client:nighthawk_client_lib",
