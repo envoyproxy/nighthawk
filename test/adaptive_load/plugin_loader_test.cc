@@ -13,7 +13,7 @@
 #include "api/adaptive_load/scoring_function_impl.pb.h"
 #include "api/client/options.pb.h"
 
-#include "adaptive_load/plugin_util.h"
+#include "adaptive_load/plugin_loader.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -21,6 +21,10 @@ namespace Nighthawk {
 
 namespace {
 
+using ::envoy::config::core::v3::TypedExtensionConfig;
+
+// A special value that causes ValidateConfig to return an error when included in the config
+// protos of the fake plugins in this file.
 const double kBadConfigThreshold = 98765.0;
 
 /**
@@ -48,11 +52,13 @@ public:
   // config type. We use LinearScoringFunctionConfig for all plugins in this test.
   TestInputVariableSetter(const nighthawk::adaptive_load::LinearScoringFunctionConfig& config)
       : value_from_config_proto_{config.threshold()} {}
+
   absl::Status SetInputVariable(nighthawk::client::CommandLineOptions& command_line_options,
                                 double input_value) override {
     command_line_options.mutable_connections()->set_value(static_cast<unsigned int>(input_value));
     return absl::OkStatus();
   }
+
   const double value_from_config_proto_;
 };
 
@@ -91,7 +97,9 @@ public:
   // config type. We use LinearScoringFunctionConfig for all plugins in this test.
   TestScoringFunction(const nighthawk::adaptive_load::LinearScoringFunctionConfig& config)
       : value_from_config_proto_{config.threshold()} {}
+
   double EvaluateMetric(double) const override { return 1.0; }
+
   const double value_from_config_proto_;
 };
 
@@ -127,8 +135,10 @@ public:
   // config type. We use LinearScoringFunctionConfig for all plugins in this test.
   TestMetricsPlugin(const nighthawk::adaptive_load::LinearScoringFunctionConfig& config)
       : value_from_config_proto_{config.threshold()} {}
+
   absl::StatusOr<double> GetMetricByName(absl::string_view) override { return 5.0; }
   const std::vector<std::string> GetAllSupportedMetricNames() const override { return {}; }
+
   const double value_from_config_proto_;
 };
 
@@ -167,6 +177,7 @@ public:
       : value_from_config_proto_{config.threshold()},
         value_from_command_line_options_template_{
             command_line_options_template.requests_per_second().value()} {}
+
   bool IsConverged() const override { return false; }
   bool IsDoomed(std::string&) const override { return false; }
   absl::StatusOr<nighthawk::client::CommandLineOptions>
@@ -174,6 +185,7 @@ public:
     return nighthawk::client::CommandLineOptions();
   }
   void UpdateAndRecompute(const nighthawk::adaptive_load::BenchmarkResult&) override {}
+
   const double value_from_config_proto_;
   const unsigned int value_from_command_line_options_template_;
 };
@@ -218,7 +230,7 @@ Envoy::ProtobufWkt::Any CreateTypedConfigAny(const double threshold) {
 }
 
 TEST(PluginUtilTest, CreatesCorrectInputVariableSetterType) {
-  envoy::config::core::v3::TypedExtensionConfig config;
+  TypedExtensionConfig config;
   config.set_name("nighthawk.test-input-variable-setter");
   *config.mutable_typed_config() = CreateTypedConfigAny(0.0);
   InputVariableSetterPtr plugin = LoadInputVariableSetterPlugin(config).value();
@@ -227,7 +239,7 @@ TEST(PluginUtilTest, CreatesCorrectInputVariableSetterType) {
 }
 
 TEST(PluginUtilTest, ReturnsErrorFromInputVariableSetterConfigValidator) {
-  envoy::config::core::v3::TypedExtensionConfig config;
+  TypedExtensionConfig config;
   config.set_name("nighthawk.test-input-variable-setter");
   *config.mutable_typed_config() = CreateTypedConfigAny(kBadConfigThreshold);
   EXPECT_THAT(LoadInputVariableSetterPlugin(config).status().message(),
@@ -235,7 +247,7 @@ TEST(PluginUtilTest, ReturnsErrorFromInputVariableSetterConfigValidator) {
 }
 
 TEST(PluginUtilTest, PropagatesConfigProtoToInputVariableSetter) {
-  envoy::config::core::v3::TypedExtensionConfig config;
+  TypedExtensionConfig config;
   config.set_name("nighthawk.test-input-variable-setter");
   *config.mutable_typed_config() = CreateTypedConfigAny(12.0);
   InputVariableSetterPtr plugin = LoadInputVariableSetterPlugin(config).value();
@@ -245,7 +257,7 @@ TEST(PluginUtilTest, PropagatesConfigProtoToInputVariableSetter) {
 }
 
 TEST(PluginUtilTest, ReturnsErrorWhenInputVariableSetterPluginNotFound) {
-  envoy::config::core::v3::TypedExtensionConfig config;
+  TypedExtensionConfig config;
   config.set_name("nonexistent-input-variable-setter");
   *config.mutable_typed_config() = CreateTypedConfigAny(0.0);
   EXPECT_THAT(LoadInputVariableSetterPlugin(config).status().message(),
@@ -253,7 +265,7 @@ TEST(PluginUtilTest, ReturnsErrorWhenInputVariableSetterPluginNotFound) {
 }
 
 TEST(PluginUtilTest, CreatesCorrectScoringFunctionType) {
-  envoy::config::core::v3::TypedExtensionConfig config;
+  TypedExtensionConfig config;
   config.set_name("nighthawk.test-scoring-function");
   *config.mutable_typed_config() = CreateTypedConfigAny(0.0);
   ScoringFunctionPtr plugin = LoadScoringFunctionPlugin(config).value();
@@ -262,7 +274,7 @@ TEST(PluginUtilTest, CreatesCorrectScoringFunctionType) {
 }
 
 TEST(PluginUtilTest, ReturnsErrorFromScoringFunctionConfigValidator) {
-  envoy::config::core::v3::TypedExtensionConfig config;
+  TypedExtensionConfig config;
   config.set_name("nighthawk.test-scoring-function");
   *config.mutable_typed_config() = CreateTypedConfigAny(kBadConfigThreshold);
   EXPECT_THAT(LoadScoringFunctionPlugin(config).status().message(),
@@ -270,7 +282,7 @@ TEST(PluginUtilTest, ReturnsErrorFromScoringFunctionConfigValidator) {
 }
 
 TEST(PluginUtilTest, PropagatesConfigProtoToScoringFunction) {
-  envoy::config::core::v3::TypedExtensionConfig config;
+  TypedExtensionConfig config;
   config.set_name("nighthawk.test-scoring-function");
   *config.mutable_typed_config() = CreateTypedConfigAny(34.0);
   ScoringFunctionPtr plugin = LoadScoringFunctionPlugin(config).value();
@@ -280,7 +292,7 @@ TEST(PluginUtilTest, PropagatesConfigProtoToScoringFunction) {
 }
 
 TEST(PluginUtilTest, ReturnsErrorWhenScoringFunctionPluginNotFound) {
-  envoy::config::core::v3::TypedExtensionConfig config;
+  TypedExtensionConfig config;
   config.set_name("nonexistent-scoring-function");
   *config.mutable_typed_config() = CreateTypedConfigAny(0.0);
   EXPECT_THAT(LoadScoringFunctionPlugin(config).status().message(),
@@ -288,7 +300,7 @@ TEST(PluginUtilTest, ReturnsErrorWhenScoringFunctionPluginNotFound) {
 }
 
 TEST(PluginUtilTest, CreatesCorrectMetricsPluginType) {
-  envoy::config::core::v3::TypedExtensionConfig config;
+  TypedExtensionConfig config;
   config.set_name("nighthawk.test-metrics-plugin");
   *config.mutable_typed_config() = CreateTypedConfigAny(0.0);
   MetricsPluginPtr plugin = LoadMetricsPlugin(config).value();
@@ -297,7 +309,7 @@ TEST(PluginUtilTest, CreatesCorrectMetricsPluginType) {
 }
 
 TEST(PluginUtilTest, ReturnsErrorFromMetricsPluginConfigValidator) {
-  envoy::config::core::v3::TypedExtensionConfig config;
+  TypedExtensionConfig config;
   config.set_name("nighthawk.test-metrics-plugin");
   *config.mutable_typed_config() = CreateTypedConfigAny(kBadConfigThreshold);
   EXPECT_THAT(LoadMetricsPlugin(config).status().message(),
@@ -305,7 +317,7 @@ TEST(PluginUtilTest, ReturnsErrorFromMetricsPluginConfigValidator) {
 }
 
 TEST(PluginUtilTest, PropagatesConfigProtoToMetricsPlugin) {
-  envoy::config::core::v3::TypedExtensionConfig config;
+  TypedExtensionConfig config;
   config.set_name("nighthawk.test-metrics-plugin");
   *config.mutable_typed_config() = CreateTypedConfigAny(56.0);
   MetricsPluginPtr plugin = LoadMetricsPlugin(config).value();
@@ -315,7 +327,7 @@ TEST(PluginUtilTest, PropagatesConfigProtoToMetricsPlugin) {
 }
 
 TEST(PluginUtilTest, ReturnsErrorWhenMetricsPluginNotFound) {
-  envoy::config::core::v3::TypedExtensionConfig config;
+  TypedExtensionConfig config;
   config.set_name("nonexistent-metrics-plugin");
   *config.mutable_typed_config() = CreateTypedConfigAny(0.0);
   EXPECT_THAT(LoadMetricsPlugin(config).status().message(),
@@ -323,7 +335,7 @@ TEST(PluginUtilTest, ReturnsErrorWhenMetricsPluginNotFound) {
 }
 
 TEST(PluginUtilTest, CreatesCorrectStepControllerType) {
-  envoy::config::core::v3::TypedExtensionConfig config;
+  TypedExtensionConfig config;
   config.set_name("nighthawk.test-step-controller");
   *config.mutable_typed_config() = CreateTypedConfigAny(0.0);
   nighthawk::client::CommandLineOptions options_template;
@@ -333,7 +345,7 @@ TEST(PluginUtilTest, CreatesCorrectStepControllerType) {
 }
 
 TEST(PluginUtilTest, ReturnsErrorFromStepControllerConfigValidator) {
-  envoy::config::core::v3::TypedExtensionConfig config;
+  TypedExtensionConfig config;
   config.set_name("nighthawk.test-step-controller");
   *config.mutable_typed_config() = CreateTypedConfigAny(kBadConfigThreshold);
   nighthawk::client::CommandLineOptions options_template;
@@ -342,7 +354,7 @@ TEST(PluginUtilTest, ReturnsErrorFromStepControllerConfigValidator) {
 }
 
 TEST(PluginUtilTest, PropagatesConfigProtoToStepController) {
-  envoy::config::core::v3::TypedExtensionConfig config;
+  TypedExtensionConfig config;
   config.set_name("nighthawk.test-step-controller");
   *config.mutable_typed_config() = CreateTypedConfigAny(78.0);
   nighthawk::client::CommandLineOptions options_template;
@@ -353,7 +365,7 @@ TEST(PluginUtilTest, PropagatesConfigProtoToStepController) {
 }
 
 TEST(PluginUtilTest, PropagatesCommandLineOptionsTemplateToStepController) {
-  envoy::config::core::v3::TypedExtensionConfig config;
+  TypedExtensionConfig config;
   config.set_name("nighthawk.test-step-controller");
   *config.mutable_typed_config() = CreateTypedConfigAny(0.0);
   nighthawk::client::CommandLineOptions options_template;
@@ -365,7 +377,7 @@ TEST(PluginUtilTest, PropagatesCommandLineOptionsTemplateToStepController) {
 }
 
 TEST(PluginUtilTest, ReturnsErrorWhenStepControllerPluginNotFound) {
-  envoy::config::core::v3::TypedExtensionConfig config;
+  TypedExtensionConfig config;
   config.set_name("nonexistent-step-controller");
   *config.mutable_typed_config() = CreateTypedConfigAny(0.0);
   nighthawk::client::CommandLineOptions options_template;

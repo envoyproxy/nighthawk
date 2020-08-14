@@ -113,12 +113,12 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
-    name = "plugin_util",
+    name = "plugin_loader",
     srcs = [
-        "plugin_util.cc",
+        "plugin_loader.cc",
     ],
     hdrs = [
-        "plugin_util.h",
+        "plugin_loader.h",
     ],
     repository = "@envoy",
     visibility = ["//visibility:public"],
