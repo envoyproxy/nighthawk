@@ -2,6 +2,7 @@
 
 #include "envoy/registry/registry.h"
 
+#include "adaptive_load/config_validator_impl.h"
 #include "nighthawk/adaptive_load/scoring_function.h"
 
 #include "api/adaptive_load/scoring_function_impl.pb.h"
@@ -29,7 +30,8 @@ private:
  * Factory that creates a BinaryScoringFunction from a BinaryScoringFunctionConfig proto.
  * Registered as an Envoy plugin.
  */
-class BinaryScoringFunctionConfigFactory : public ScoringFunctionConfigFactory {
+class BinaryScoringFunctionConfigFactory : public virtual ScoringFunctionConfigFactory,
+                                           public virtual NullConfigValidator {
 public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
@@ -64,7 +66,8 @@ private:
  * Factory that creates a LinearScoringFunction from a LinearScoringFunctionConfig proto.
  * Registered as an Envoy plugin.
  */
-class LinearScoringFunctionConfigFactory : public ScoringFunctionConfigFactory {
+class LinearScoringFunctionConfigFactory : public virtual ScoringFunctionConfigFactory,
+                                           public virtual NullConfigValidator {
 public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
