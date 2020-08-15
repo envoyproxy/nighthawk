@@ -36,7 +36,8 @@ using ScoringFunctionPtr = std::unique_ptr<ScoringFunction>;
  * A factory that must be implemented for each ScoringFunction plugin. It instantiates the
  * specific ScoringFunction class after unpacking the plugin-specific config proto.
  */
-class ScoringFunctionConfigFactory : public virtual Envoy::Config::TypedFactory, public virtual ConfigValidator {
+class ScoringFunctionConfigFactory : public virtual Envoy::Config::TypedFactory,
+                                     public virtual ConfigValidator {
 public:
   std::string category() const override { return "nighthawk.scoring_function"; }
   /**
