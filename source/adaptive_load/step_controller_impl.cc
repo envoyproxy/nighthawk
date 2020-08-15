@@ -10,7 +10,7 @@
 #include "api/adaptive_load/step_controller_impl.pb.h"
 
 #include "adaptive_load/input_variable_setter_impl.h"
-#include "adaptive_load/plugin_util.h"
+#include "adaptive_load/plugin_loader.h"
 
 namespace Nighthawk {
 

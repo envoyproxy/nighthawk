@@ -9,7 +9,7 @@
 #include "api/adaptive_load/step_controller_impl.pb.h"
 #include "api/client/options.pb.h"
 
-#include "adaptive_load/plugin_util.h"
+#include "adaptive_load/plugin_loader.h"
 #include "adaptive_load/config_validator_impl.h"
 #include "adaptive_load/step_controller_impl.h"
 #include "gmock/gmock.h"

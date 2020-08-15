@@ -51,7 +51,7 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         ":fake_step_controller",
-        "//source/adaptive_load:plugin_util",
+        "//source/adaptive_load:plugin_loader",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
         "@envoy//test/test_common:utility_lib",
     ],

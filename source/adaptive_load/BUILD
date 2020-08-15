@@ -45,7 +45,7 @@ envoy_cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":metrics_plugin_impl",
-        ":plugin_util",
+        ":plugin_loader",
         "//api/adaptive_load:adaptive_load_proto_cc_proto",
         "//api/client:base_cc_proto",
         "//api/client:grpc_service_lib",
@@ -163,7 +163,7 @@ envoy_cc_library(
     deps = [
         ":config_validator_impl",
         ":input_variable_setter_impl",
-        ":plugin_util",
+        ":plugin_loader",
         "//include/nighthawk/adaptive_load:input_variable_setter",
         "//include/nighthawk/adaptive_load:step_controller",
         "@envoy//source/common/common:assert_lib_with_external_headers",

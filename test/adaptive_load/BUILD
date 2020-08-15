@@ -64,6 +64,7 @@ envoy_cc_test(
     deps = [
         ":fake_time_source",
         ":minimal_output",
+        "//test/adaptive_load/fake_plugins/fake_metrics_plugin",
         "//test/adaptive_load/fake_plugins/fake_step_controller",
         "//source/adaptive_load:adaptive_load_controller_impl",
         "//source/adaptive_load:scoring_function_impl",
@@ -92,6 +93,17 @@ envoy_cc_test(
 )
 
 envoy_cc_test(
+    name = "plugin_loader_test",
+    srcs = ["plugin_loader_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/adaptive_load:plugin_loader",
+        "@envoy//source/common/protobuf:utility_lib_with_external_headers",
+        "@envoy//test/test_common:utility_lib",
+    ],
+)
+
+envoy_cc_test(
     name = "scoring_function_test",
     srcs = ["scoring_function_test.cc"],
     repository = "@envoy",
@@ -107,16 +119,5 @@ envoy_cc_test(
     deps = [
         "//source/adaptive_load:config_validator_impl",
         "//source/adaptive_load:step_controller_impl",
-    ],
-)
-
-envoy_cc_test(
-    name = "plugin_loader_test",
-    srcs = ["plugin_loader_test.cc"],
-    repository = "@envoy",
-    deps = [
-        "//source/adaptive_load:plugin_loader",
-        "@envoy//source/common/protobuf:utility_lib_with_external_headers",
-        "@envoy//test/test_common:utility_lib",
     ],
 )
