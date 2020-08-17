@@ -199,7 +199,7 @@ public:
   // Return the id of the worker where this statistic is defined. Per worker
   // statistic should always set worker_id. Return absl::nullopt when the
   // statistic is not defined per worker.
-  const absl::optional<int> worker_id() { return worker_id_; }
+  const absl::optional<int> worker_id() const { return worker_id_; }
 
 protected:
   // This is used in child class for delivering the histogram data to sinks.
@@ -222,7 +222,9 @@ public:
   bool used() const override { return count() > 0; }
   // Overriding name() to return Nighthawk::Statistic::id().
   std::string name() const override { return id(); }
-  std::string tagExtractedName() const override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; }
+  // Overriding tagExtractedName() to return string(worker_id) + "." + Nighthawk::Statistic::id()
+  // when worker_id is set. The worker_id prefix can be used in customized stats sinks.
+  std::string tagExtractedName() const override;
 
   // Nighthawk::Statistic
   void addValue(uint64_t value) override { recordValue(value); }
@@ -241,7 +243,9 @@ public:
   bool used() const override { return count() > 0; }
   // Overriding name() to return Nighthawk::Statistic::id().
   std::string name() const override { return id(); }
-  std::string tagExtractedName() const override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; }
+  // Overriding tagExtractedName() to return string(worker_id) + "." + Nighthawk::Statistic::id()
+  // when worker_id is set. The worker_id prefix can be used in customized stats sinks.
+  std::string tagExtractedName() const override;
 
   // Nighthawk::Statistic
   void addValue(uint64_t value) override { recordValue(value); }

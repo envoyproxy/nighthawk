@@ -72,28 +72,18 @@ function run_bazel() {
     fi
 }
 
-function do_asan() {
-    echo "bazel ASAN/UBSAN debug build with tests"
-    echo "Building and testing envoy tests..."
+function do_sanitizer() {
+    CONFIG="$1"
+    echo "bazel $CONFIG debug build with tests"
+    echo "Building and testing Nighthawk tests..."
     cd "${SRCDIR}"
 
     # We build this in steps to avoid running out of memory in CI
-    run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-asan -- //source/exe/... && \
-    run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-asan -- //source/server/... && \
-    run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-asan -- //test/mocks/... && \
-    run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-asan -- //test/... && \
-    run_bazel test ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-asan -- //test/...
-}
-
-function do_tsan() {
-    echo "bazel TSAN debug build with tests"
-    echo "Building and testing envoy tests..."
-    cd "${SRCDIR}"
-    run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-tsan -- //source/exe/... && \
-    run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-tsan -- //source/server/... && \
-    run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-tsan -- //test/mocks/... && \
-    run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-tsan -- //test/... && \
-    run_bazel test ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-tsan //test/...
+    run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config="$CONFIG" -- //source/exe/... && \
+    run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config="$CONFIG" -- //source/server/... && \
+    run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config="$CONFIG" -- //test/mocks/... && \
+    run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config="$CONFIG" -- //test/... && \
+    run_bazel test ${BAZEL_TEST_OPTIONS} -c dbg --config="$CONFIG" -- //test/...
 }
 
 function cleanup_benchmark_artifacts {
@@ -182,20 +172,9 @@ if [ -n "$CIRCLECI" ]; then
         mv "${HOME:-/root}/.gitconfig" "${HOME:-/root}/.gitconfig_save"
         echo 1
     fi
-    
-    # Asan has huge memory requirements in its link steps.
-    # As of the new coverage methodology introduced in Envoy, that has grown memory requirements too.
-    # Hence we heavily reduce parallellism, to avoid being OOM killed.
-    if [[ "$1" == "coverage" ]]; then
-        NUM_CPUS=4
-    elif [[ "$1" == "asan" ]]; then
-        NUM_CPUS=3
-    elif [[ "$1" == "test_gcc" ]]; then
-        NUM_CPUS=6
-    else
-        NUM_CPUS=8
-    fi
+    NUM_CPUS=8
 fi
+
 echo "Running with ${NUM_CPUS} cpus"
 BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} --jobs=${NUM_CPUS}"
 
@@ -221,7 +200,7 @@ case "$1" in
     ;;
     clang_tidy)
         setup_clang_toolchain
-        do_clang_tidy
+        RUN_FULL_CLANG_TIDY=1 do_clang_tidy
         exit 0
     ;;
     coverage)
@@ -231,12 +210,12 @@ case "$1" in
     ;;
     asan)
         setup_clang_toolchain
-        do_asan
+        do_sanitizer "clang-asan"
         exit 0
     ;;
     tsan)
         setup_clang_toolchain
-        do_tsan
+        do_sanitizer "clang-tsan"
         exit 0
     ;;
     docker)
