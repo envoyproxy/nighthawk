@@ -1,7 +1,8 @@
 requests
-pytest
+pytest==5.4.2
 pytest-dependency
 pytest-xdist
 pyyaml
 zipp
 importlib_metadata
+psutil
