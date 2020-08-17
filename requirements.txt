@@ -1,5 +1,4 @@
 requests
-psutil
 pytest
 pytest-dependency
 pytest-xdist

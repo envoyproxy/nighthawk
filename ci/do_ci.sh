@@ -24,8 +24,8 @@ function do_opt_build () {
 }
 
 function do_test() {
-    bazel build -c dbg $BAZEL_BUILD_OPTIONS //test/...
-    bazel test -c dbg $BAZEL_TEST_OPTIONS --test_output=all //test/...
+    bazel build $BAZEL_BUILD_OPTIONS //test/...
+    bazel test $BAZEL_TEST_OPTIONS --test_output=all //test/...
 }
 
 function do_clang_tidy() {
@@ -173,9 +173,6 @@ if [ -n "$CIRCLECI" ]; then
         echo 1
     fi
     NUM_CPUS=8
-    if [[ "$1" == "test_gcc" ]]; then
-        NUM_CPUS=6
-    fi
 fi
 
 echo "Running with ${NUM_CPUS} cpus"
@@ -184,9 +181,6 @@ BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} --jobs=${NUM_CPUS}"
 export BAZEL_TEST_OPTIONS="${BAZEL_BUILD_OPTIONS} --test_env=HOME --test_env=PYTHONUSERBASE \
 --test_env=UBSAN_OPTIONS=print_stacktrace=1 \
 --cache_test_results=no --test_output=all ${BAZEL_EXTRA_TEST_OPTIONS}"
-
-## TODO(#452): Get rid of the apt update / install below.
-sudo apt update && sudo apt install -y gcc g++ python3.6-dev
 
 case "$1" in
     build)
