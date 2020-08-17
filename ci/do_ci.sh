@@ -159,6 +159,13 @@ if grep 'docker\|lxc' /proc/1/cgroup; then
     export USER=bazel
     export TEST_TMPDIR=/build/tmp
     export BAZEL="bazel"
+
+    ## TODO(#452): Get rid of the package install and symlinking below.   
+    export DEBIAN_FRONTEND=noninteractive
+    sudo apt -yq update
+    sudo apt install -yq python3.6-dev
+    # We do this, because python's psutil install looks for x86_64-linux-gnu-gcc
+    ln -s /usr/bin/x86_64-linux-gnu-gcc-9 /usr/bin/x86_64-linux-gnu-gcc
 fi
 
 export BAZEL_EXTRA_TEST_OPTIONS="--test_env=ENVOY_IP_TEST_VERSIONS=v4only ${BAZEL_EXTRA_TEST_OPTIONS}"
