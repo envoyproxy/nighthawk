@@ -148,6 +148,11 @@ if grep 'docker\|lxc' /proc/1/cgroup; then
     export HOME="${FAKE_HOME}"
     export PYTHONUSERBASE="${FAKE_HOME}"
 
+    ## TODO(#452): Get rid of the apt update / install below.
+    export DEBIAN_FRONTEND=noninteractive
+    sudo apt -yq update
+    sudo apt install -yq python3.6-dev
+    ln -s /usr/bin/x86_64-linux-gnu-gcc-9 /usr/bin/x86_64-linux-gnu-gcc
     export BUILD_DIR=/build
     if [[ ! -d "${BUILD_DIR}" ]]
     then
