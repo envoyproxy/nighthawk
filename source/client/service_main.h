@@ -42,8 +42,6 @@ private:
   grpc::ServerBuilder builder_;
   std::unique_ptr<grpc::Service> service_;
   std::unique_ptr<grpc::Server> server_;
-  std::shared_ptr<grpc::Channel> channel_;
-  std::unique_ptr<nighthawk::client::NighthawkService::Stub> stub_;
   int listener_port_{-1};
   std::string listener_bound_address_;
   std::string listener_output_path_;

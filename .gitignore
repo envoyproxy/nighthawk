@@ -19,3 +19,4 @@ test/coverage/BUILD
 default.profraw
 tmp-*
 clang-tidy-fixes.yaml
+*.out

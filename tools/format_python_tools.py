@@ -5,7 +5,7 @@ import sys
 
 from yapf.yapflib.yapf_api import FormatFile
 
-EXCLUDE_LIST = ['generated', 'venv']
+EXCLUDE_LIST = ['generated', 'venv', ".cache"]
 
 
 def collectFiles():
