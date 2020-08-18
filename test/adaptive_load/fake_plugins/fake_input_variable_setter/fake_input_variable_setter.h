@@ -39,6 +39,7 @@ public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
   InputVariableSetterPtr createInputVariableSetter(const Envoy::Protobuf::Message&) override;
+  absl::Status ValidateConfig(const Envoy::Protobuf::Message& message) const override;
 };
 
 // This factory is activated through LoadInputVariableSetter in plugin_util.h.

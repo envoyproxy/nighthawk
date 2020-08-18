@@ -6,6 +6,7 @@ package nighthawk.adaptive_load;
 // that sets the |connections| field in CommandLineOptions.
 message FakeInputVariableSetterConfig {
   // A factor that multiplies the input value before applying it, in order to test the propagation
-  // of both the input and the config. Optional, default 1.
+  // of both the input and the config. Set a negative value to trigger a validation failure from the
+  // plugin-specific config validator. Optional, default 1.
   int32 adjustment_factor = 1;
 }

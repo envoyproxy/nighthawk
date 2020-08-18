@@ -29,6 +29,23 @@ InputVariableSetterPtr FakeInputVariableSetterConfigFactory::createInputVariable
   return std::make_unique<FakeInputVariableSetter>(config);
 }
 
+absl::Status
+FakeInputVariableSetterConfigFactory::ValidateConfig(const Envoy::Protobuf::Message& message) const {
+  try {
+    const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
+    nighthawk::adaptive_load::FakeInputVariableSetterConfig config;
+    Envoy::MessageUtil::unpackTo(any, config);
+    if (config.adjustment_factor() < 0) {
+      return absl::InvalidArgumentError(
+          "Negative adjustment_factor triggered validation failure.");
+    }
+    return absl::OkStatus();
+  } catch (const Envoy::EnvoyException& e) {
+    return absl::InvalidArgumentError(
+        absl::StrCat("Failed to parse FakeInputVariableSetterConfig proto: ", e.what()));
+  }
+}
+
 REGISTER_FACTORY(FakeInputVariableSetterConfigFactory, InputVariableSetterConfigFactory);
 
 envoy::config::core::v3::TypedExtensionConfig
