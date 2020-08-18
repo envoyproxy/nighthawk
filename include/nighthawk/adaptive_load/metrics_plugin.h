@@ -42,7 +42,7 @@ using MetricsPluginPtr = std::unique_ptr<MetricsPlugin>;
  * A factory that must be implemented for each MetricsPlugin. It instantiates the specific
  * MetricsPlugin class after unpacking the plugin-specific config proto.
  */
-class MetricsPluginConfigFactory : public Envoy::Config::TypedFactory, public ConfigValidator {
+class MetricsPluginConfigFactory : public virtual Envoy::Config::TypedFactory, public virtual ConfigValidator {
 public:
   std::string category() const override { return "nighthawk.metrics_plugin"; }
   /**
