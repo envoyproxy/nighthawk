@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package nighthawk.adaptive_load;
+
+import "envoy/config/core/v3/extension.proto";
+
+// Configuration for FakeMetricsPlugin (plugin name: "nighthawk.fake-metrics-plugin") that always
+// returns a fixed value.
+message FakeMetricsPluginConfig {
+  // Value that should always be returned. Optional, default 0.
+  double fixed_metric_value = 1;
+}
