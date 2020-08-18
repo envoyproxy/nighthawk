@@ -16,7 +16,7 @@ python format_python_tools.py $1
 
 echo "Running Python3 flake8 check..."
 cd ..
-EXCLUDE="--exclude=benchmarks/tmp/*,*/venv/*,tools/format_python_tools.py,tools/gen_compilation_database.py,bazel-*"
+EXCLUDE="--exclude=benchmarks/tmp/*,.cache/*,*/venv/*,tools/format_python_tools.py,tools/gen_compilation_database.py,bazel-*"
 
 
 # Because of conflict with the automatic fix format script, we ignore: 
