@@ -75,8 +75,8 @@ REGISTER_FACTORY(ExponentialSearchStepControllerConfigFactory, StepControllerCon
 
 ExponentialSearchStepController::ExponentialSearchStepController(
     const ExponentialSearchStepControllerConfig& config,
-    const nighthawk::client::CommandLineOptions& command_line_options_template)
-    : command_line_options_template_{command_line_options_template}, is_exponential_phase_{true},
+    nighthawk::client::CommandLineOptions command_line_options_template)
+    : command_line_options_template_{std::move(command_line_options_template)}, is_exponential_phase_{true},
       exponential_factor_{config.exponential_factor() > 0.0 ? config.exponential_factor() : 2.0},
       previous_load_value_{std::numeric_limits<double>::signaling_NaN()},
       current_load_value_{config.initial_value()},
