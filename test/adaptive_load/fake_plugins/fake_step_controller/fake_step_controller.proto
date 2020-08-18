@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package nighthawk.adaptive_load;
+
+import "envoy/config/core/v3/extension.proto";
+
+// Configuration for FakeStepController (plugin name: "nighthawk.fake-step-controller") that always
+// returns a fixed RPS value and changes converged and doomed states based on the latest reported
+// BenchmarkResult.
+message FakeStepControllerConfig {
+  // RPS that should always be returned. Set a negative value to trigger a validation failure from
+  // the plugin-specific config validator. Optional, default 0.
+  int32 fixed_rps_value = 1;
+}
