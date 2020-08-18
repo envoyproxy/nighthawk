@@ -1,5 +1,6 @@
 #include "envoy/registry/registry.h"
 
+#include "fake_plugins/fake_input_variable_setter/fake_input_variable_setter.h"
 #include "nighthawk/adaptive_load/input_variable_setter.h"
 
 #include "external/envoy/source/common/config/utility.h"
@@ -41,38 +42,8 @@ nighthawk::adaptive_load::BenchmarkResult MakeBenchmarkResultWithNighthawkError(
   return result;
 }
 
-/**
- * Non-default InputVariableSetter for testing.
- */
-class ConnectionsInputVariableSetter : public InputVariableSetter {
-public:
-  ConnectionsInputVariableSetter() {}
-  absl::Status SetInputVariable(nighthawk::client::CommandLineOptions& command_line_options,
-                                double input_value) override {
-    command_line_options.mutable_connections()->set_value(static_cast<unsigned int>(input_value));
-    return absl::OkStatus();
-  }
-};
-
-/**
- * A factory that creates a ConnectionsInputVariableSetter from a
- * ConnectionsInputVariableSetterConfig proto.
- */
-class ConnectionsInputVariableSetterConfigFactory : public InputVariableSetterConfigFactory, public virtual NullConfigValidator {
-public:
-  std::string name() const override { return "nighthawk.testing-connections"; }
-  Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override {
-    return std::make_unique<Envoy::ProtobufWkt::Any>();
-  }
-  InputVariableSetterPtr createInputVariableSetter(const Envoy::Protobuf::Message&) override {
-    return std::make_unique<ConnectionsInputVariableSetter>();
-  }
-};
-
-REGISTER_FACTORY(ConnectionsInputVariableSetterConfigFactory, InputVariableSetterConfigFactory);
-
 TEST(ExponentialSearchStepControllerConfigFactory, GeneratesEmptyConfigProto) {
-  StepControllerConfigFactory& config_factory =
+  auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<StepControllerConfigFactory>(
           "nighthawk.exponential-search");
   Envoy::ProtobufTypes::MessagePtr message = config_factory.createEmptyConfigProto();
@@ -85,7 +56,7 @@ TEST(ExponentialSearchStepControllerConfigFactory, CreatesCorrectFactoryName) {
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
   nighthawk::client::CommandLineOptions options;
-  StepControllerConfigFactory& config_factory =
+  auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<StepControllerConfigFactory>(
           "nighthawk.exponential-search");
   EXPECT_EQ(config_factory.name(), "nighthawk.exponential-search");
@@ -96,7 +67,7 @@ TEST(ExponentialSearchStepControllerConfigFactory, CreatesCorrectPluginType) {
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
   nighthawk::client::CommandLineOptions options;
-  StepControllerConfigFactory& config_factory =
+  auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<StepControllerConfigFactory>(
           "nighthawk.exponential-search");
   StepControllerPtr plugin = config_factory.createStepController(config_any, options);
@@ -111,17 +82,14 @@ TEST(ExponentialSearchStepController, UsesInitialRps) {
   EXPECT_EQ(step_controller.GetCurrentCommandLineOptions().value().requests_per_second().value(), 100);
 }
 
-TEST(ExponentialSearchStepController, ActivatesCustomInputValueSetter) {
+TEST(ExponentialSearchStepController, ActivatesCustomInputVariableSetter) {
   nighthawk::adaptive_load::ExponentialSearchStepControllerConfig step_controller_config;
-  step_controller_config.mutable_input_variable_setter()->set_name("nighthawk.testing-connections");
-  // typed_config can be set to any valid Any proto, as the test-only
-  // ConnectionsInputVariableSetterConfigFactory defined above ignores the config proto.
-  *step_controller_config.mutable_input_variable_setter()->mutable_typed_config() =
-      Envoy::ProtobufWkt::Any();
+  // Sets the |connections| field in the Nighthawk input:
+  *step_controller_config.mutable_input_variable_setter() = MakeFakeInputVariableSetterConfig(123);
   step_controller_config.set_initial_value(100.0);
   nighthawk::client::CommandLineOptions options_template;
   ExponentialSearchStepController step_controller(step_controller_config, options_template);
-  EXPECT_EQ(step_controller.GetCurrentCommandLineOptions().value().connections().value(), 100);
+  EXPECT_EQ(step_controller.GetCurrentCommandLineOptions().value().connections().value(), 12300);
 }
 
 TEST(ExponentialSearchStepController, InitiallyReportsNotConverged) {

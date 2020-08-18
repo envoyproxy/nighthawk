@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package nighthawk.adaptive_load;
+
+// Configuration for FakeInputVariableSetter (plugin name: "nighthawk.fake-input-variable-setter")
+// that sets the |connections| field in CommandLineOptions.
+message FakeInputVariableSetterConfig {
+  // A factor that multiplies the input value before applying it, in order to test the propagation
+  // of both the input and the config. Optional, default 1.
+  int32 adjustment_factor = 1;
+}

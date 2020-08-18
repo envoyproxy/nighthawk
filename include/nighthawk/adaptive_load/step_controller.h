@@ -66,7 +66,7 @@ using StepControllerPtr = std::unique_ptr<StepController>;
  * A factory that must be implemented for each StepController plugin. It instantiates the
  * specific StepController class after unpacking the plugin-specific config proto.
  */
-class StepControllerConfigFactory : public Envoy::Config::TypedFactory, public ConfigValidator {
+class StepControllerConfigFactory : public virtual Envoy::Config::TypedFactory, public virtual ConfigValidator {
 public:
   std::string category() const override { return "nighthawk.step_controller"; }
   /**
