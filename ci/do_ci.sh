@@ -173,6 +173,9 @@ if [ -n "$CIRCLECI" ]; then
         echo 1
     fi
     NUM_CPUS=8
+    if [[ "$1" == "test_gcc" ]]; then
+        NUM_CPUS=6
+    fi
 fi
 
 echo "Running with ${NUM_CPUS} cpus"
