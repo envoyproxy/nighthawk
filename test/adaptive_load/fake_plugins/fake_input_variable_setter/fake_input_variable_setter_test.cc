@@ -17,7 +17,7 @@ using ::nighthawk::adaptive_load::FakeInputVariableSetterConfig;
 using ::nighthawk::client::CommandLineOptions;
 
 TEST(FakeInputVariableSetterConfigFactory, CreateEmptyConfigProtoCreatesCorrectType) {
-  InputVariableSetterConfigFactory& config_factory =
+  auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<InputVariableSetterConfigFactory>(
           "nighthawk.fake-input-variable-setter");
   Envoy::ProtobufTypes::MessagePtr message = config_factory.createEmptyConfigProto();
@@ -30,7 +30,7 @@ TEST(FakeInputVariableSetterConfigFactory, FactoryRegistersUnderCorrectName) {
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
   CommandLineOptions options;
-  InputVariableSetterConfigFactory& config_factory =
+  auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<InputVariableSetterConfigFactory>(
           "nighthawk.fake-input-variable-setter");
   EXPECT_EQ(config_factory.name(), "nighthawk.fake-input-variable-setter");
@@ -41,7 +41,7 @@ TEST(FakeInputVariableSetterConfigFactory, FactoryCreatesCorrectPluginType) {
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
   CommandLineOptions options;
-  InputVariableSetterConfigFactory& config_factory =
+  auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<InputVariableSetterConfigFactory>(
           "nighthawk.fake-input-variable-setter");
   InputVariableSetterPtr plugin = config_factory.createInputVariableSetter(config_any);
@@ -57,7 +57,7 @@ TEST(MakeFakeInputVariableSetterConfig, ActivatesFakeInputVariableSetter) {
 TEST(MakeFakeInputVariableSetterConfig, SetsInputWithDefaultConfigProtoValue) {
   absl::StatusOr<InputVariableSetterPtr> plugin_or = LoadInputVariableSetterPlugin(MakeFakeInputVariableSetterConfig(0));
   ASSERT_TRUE(plugin_or.ok());
-  FakeInputVariableSetter* plugin = dynamic_cast<FakeInputVariableSetter*>(plugin_or.value().get());
+  auto* plugin = dynamic_cast<FakeInputVariableSetter*>(plugin_or.value().get());
   ASSERT_NE(plugin, nullptr);
   CommandLineOptions options;
   absl::Status status = plugin->SetInputVariable(options, 123);
@@ -68,7 +68,7 @@ TEST(MakeFakeInputVariableSetterConfig, SetsInputWithDefaultConfigProtoValue) {
 TEST(MakeFakeInputVariableSetterConfig, SetsInputWithSpecifiedConfigProtoValue) {
   absl::StatusOr<InputVariableSetterPtr> plugin_or = LoadInputVariableSetterPlugin(MakeFakeInputVariableSetterConfig(100));
   ASSERT_TRUE(plugin_or.ok());
-  FakeInputVariableSetter* plugin = dynamic_cast<FakeInputVariableSetter*>(plugin_or.value().get());
+  auto* plugin = dynamic_cast<FakeInputVariableSetter*>(plugin_or.value().get());
   ASSERT_NE(plugin, nullptr);
   CommandLineOptions options;
   absl::Status status = plugin->SetInputVariable(options, 123);
