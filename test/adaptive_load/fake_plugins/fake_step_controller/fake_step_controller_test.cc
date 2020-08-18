@@ -18,7 +18,7 @@ using ::nighthawk::adaptive_load::MetricEvaluation;
 using ::nighthawk::client::CommandLineOptions;
 
 TEST(FakeStepControllerConfigFactory, CreateEmptyConfigProtoCreatesCorrectType) {
-  StepControllerConfigFactory& config_factory =
+  auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<StepControllerConfigFactory>(
           "nighthawk.fake-step-controller");
   Envoy::ProtobufTypes::MessagePtr message = config_factory.createEmptyConfigProto();
@@ -31,7 +31,7 @@ TEST(FakeStepControllerConfigFactory, FactoryRegistersUnderCorrectName) {
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
   CommandLineOptions options;
-  StepControllerConfigFactory& config_factory =
+  auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<StepControllerConfigFactory>(
           "nighthawk.fake-step-controller");
   EXPECT_EQ(config_factory.name(), "nighthawk.fake-step-controller");
@@ -42,7 +42,7 @@ TEST(FakeStepControllerConfigFactory, FactoryCreatesCorrectPluginType) {
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
   CommandLineOptions options;
-  StepControllerConfigFactory& config_factory =
+  auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<StepControllerConfigFactory>(
           "nighthawk.fake-step-controller");
   StepControllerPtr plugin = config_factory.createStepController(config_any, options);
@@ -129,7 +129,7 @@ TEST(MakeFakeStepControllerPluginConfig, ProducesFakeStepControllerPluginWithCon
   absl::StatusOr<StepControllerPtr> plugin_or =
       LoadStepControllerPlugin(MakeFakeStepControllerPluginConfig(5), nighthawk::client::CommandLineOptions{});
   ASSERT_TRUE(plugin_or.ok());
-  FakeStepController* plugin = dynamic_cast<FakeStepController*>(plugin_or.value().get());
+  auto* plugin = dynamic_cast<FakeStepController*>(plugin_or.value().get());
   ASSERT_NE(plugin, nullptr);
   absl::StatusOr<nighthawk::client::CommandLineOptions> options_or =
       plugin->GetCurrentCommandLineOptions();

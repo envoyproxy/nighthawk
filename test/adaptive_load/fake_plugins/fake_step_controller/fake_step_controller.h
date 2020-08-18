@@ -21,7 +21,7 @@ public:
    * @param command_line_options_template A template for producing Nighthawk input.
    */
   FakeStepController(const nighthawk::adaptive_load::FakeStepControllerConfig& config,
-                     const nighthawk::client::CommandLineOptions& command_line_options_template);
+                     nighthawk::client::CommandLineOptions command_line_options_template);
   /**
    * @return bool The current value of |is_converged_|.
    */

@@ -5,10 +5,9 @@ namespace Nighthawk {
 
 FakeStepController::FakeStepController(
     const nighthawk::adaptive_load::FakeStepControllerConfig& config,
-    const nighthawk::client::CommandLineOptions& command_line_options_template)
-    : is_converged_{false}, is_doomed_{false}, doomed_reason_{},
-      fixed_rps_value_{config.fixed_rps_value()}, command_line_options_template_{
-                                                      command_line_options_template} {}
+    nighthawk::client::CommandLineOptions command_line_options_template)
+    : is_converged_{false}, is_doomed_{false},
+      fixed_rps_value_{config.fixed_rps_value()}, command_line_options_template_{std::move(command_line_options_template)} {}
 
 bool FakeStepController::IsConverged() const { return is_converged_; }
 
