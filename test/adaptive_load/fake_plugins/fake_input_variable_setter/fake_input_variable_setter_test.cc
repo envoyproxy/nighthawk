@@ -15,6 +15,7 @@ namespace {
 using ::nighthawk::adaptive_load::BenchmarkResult;
 using ::nighthawk::adaptive_load::FakeInputVariableSetterConfig;
 using ::nighthawk::client::CommandLineOptions;
+using ::testing::HasSubstr;
 
 TEST(FakeInputVariableSetterConfigFactory, CreateEmptyConfigProtoCreatesCorrectType) {
   auto& config_factory =
@@ -36,7 +37,7 @@ TEST(FakeInputVariableSetterConfigFactory, FactoryRegistersUnderCorrectName) {
   EXPECT_EQ(config_factory.name(), "nighthawk.fake-input-variable-setter");
 }
 
-TEST(FakeInputVariableSetterConfigFactory, FactoryCreatesCorrectPluginType) {
+TEST(FakeInputVariableSetterConfigFactory, CreateInputVariableSetterCreatesCorrectPluginType) {
   FakeInputVariableSetterConfig config;
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
@@ -46,6 +47,51 @@ TEST(FakeInputVariableSetterConfigFactory, FactoryCreatesCorrectPluginType) {
           "nighthawk.fake-input-variable-setter");
   InputVariableSetterPtr plugin = config_factory.createInputVariableSetter(config_any);
   EXPECT_NE(dynamic_cast<FakeInputVariableSetter*>(plugin.get()), nullptr);
+}
+
+TEST(FakeInputVariableSetterConfigFactory, ValidateConfigWithBadConfigProtoReturnsError) {
+  Envoy::ProtobufWkt::Any empty_any;
+  auto& config_factory =
+      Envoy::Config::Utility::getAndCheckFactoryByName<InputVariableSetterConfigFactory>(
+          "nighthawk.fake-input-variable-setter");
+  absl::Status status = config_factory.ValidateConfig(empty_any);
+  EXPECT_THAT(status.message(), HasSubstr("Failed to parse"));
+}
+
+TEST(FakeInputVariableSetterConfigFactory, ValidateConfigWithWellFormedIllegalConfigReturnsError) {
+  FakeInputVariableSetterConfig config;
+  // Negative value fails config validation:
+  config.set_adjustment_factor(-1.0);
+  Envoy::ProtobufWkt::Any config_any;
+  config_any.PackFrom(config);
+  auto& config_factory =
+      Envoy::Config::Utility::getAndCheckFactoryByName<InputVariableSetterConfigFactory>(
+          "nighthawk.fake-input-variable-setter");
+  absl::Status status = config_factory.ValidateConfig(config_any);
+  EXPECT_THAT(status.message(), HasSubstr("Negative adjustment_factor"));
+}
+
+TEST(FakeInputVariableSetterConfigFactory, ValidateConfigWithDefaultConfigReturnsOk) {
+  FakeInputVariableSetterConfig config;
+  Envoy::ProtobufWkt::Any config_any;
+  config_any.PackFrom(config);
+  auto& config_factory =
+      Envoy::Config::Utility::getAndCheckFactoryByName<InputVariableSetterConfigFactory>(
+          "nighthawk.fake-input-variable-setter");
+  absl::Status status = config_factory.ValidateConfig(config_any);
+  EXPECT_TRUE(status.ok());
+}
+
+TEST(FakeInputVariableSetterConfigFactory, ValidateConfigWithValidConfigReturnsOk) {
+  FakeInputVariableSetterConfig config;
+  config.set_adjustment_factor(1.0);
+  Envoy::ProtobufWkt::Any config_any;
+  config_any.PackFrom(config);
+  auto& config_factory =
+      Envoy::Config::Utility::getAndCheckFactoryByName<InputVariableSetterConfigFactory>(
+          "nighthawk.fake-input-variable-setter");
+  absl::Status status = config_factory.ValidateConfig(config_any);
+  EXPECT_TRUE(status.ok());
 }
 
 TEST(MakeFakeInputVariableSetterConfig, ActivatesFakeInputVariableSetter) {

@@ -192,5 +192,4 @@ TEST(ExponentialSearchStepController, BinarySearchFindsBottomOfRange) {
 }
 
 } // namespace
-
 } // namespace Nighthawk
