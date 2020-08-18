@@ -16,6 +16,8 @@ envoy_cc_test_library(
     repository = "@envoy",
     deps = [
         "//source/client:nighthawk_client_lib",
+        "@envoy//source/common/protobuf:utility_lib_with_external_headers",
+        "@envoy//test/test_common:utility_lib",
     ],
 )
 
@@ -46,5 +48,15 @@ envoy_cc_test(
         "//source/adaptive_load:plugin_loader",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
         "@envoy//test/test_common:utility_lib",
+    ],
+)
+
+envoy_cc_test(
+    name = "step_controller_test",
+    srcs = ["step_controller_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/adaptive_load:config_validator_impl",
+        "//source/adaptive_load:step_controller_impl",
     ],
 )
