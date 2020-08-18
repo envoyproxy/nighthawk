@@ -37,12 +37,12 @@ private:
  * Factory that creates a FakeMetricsPlugin plugin from a FakeMetricsPluginConfig proto.
  * Registered as an Envoy plugin.
  */
-class FakeMetricsPluginConfigFactory : public virtual MetricsPluginConfigFactory,
-                                       public virtual NullConfigValidator {
+class FakeMetricsPluginConfigFactory : public virtual MetricsPluginConfigFactory {
 public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
   MetricsPluginPtr createMetricsPlugin(const Envoy::Protobuf::Message& config_any) override;
+  absl::Status ValidateConfig(const Envoy::Protobuf::Message& message) const override;
 };
 
 // This factory is activated through LoadMetricsPlugin in plugin_util.h.
