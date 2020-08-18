@@ -1,5 +1,6 @@
 #include "test/adaptive_load/fake_plugins/fake_metrics_plugin/fake_metrics_plugin.h"
 #include "api/adaptive_load/benchmark_result.pb.h"
+#include "envoy/common/exception.h"
 
 namespace Nighthawk {
 
@@ -32,6 +33,23 @@ FakeMetricsPluginConfigFactory::createMetricsPlugin(const Envoy::Protobuf::Messa
   return std::make_unique<FakeMetricsPlugin>(config);
 }
 
+absl::Status
+FakeMetricsPluginConfigFactory::ValidateConfig(const Envoy::Protobuf::Message& message) const {
+  try {
+    const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
+    nighthawk::adaptive_load::FakeMetricsPluginConfig config;
+    Envoy::MessageUtil::unpackTo(any, config);
+    if (config.fixed_metric_value() < 0) {
+      return absl::InvalidArgumentError(
+          "Negative fixed_metric_value triggered validation failure.");
+    }
+    return absl::OkStatus();
+  } catch (const Envoy::EnvoyException& e) {
+    return absl::InvalidArgumentError(
+        absl::StrCat("Failed to parse FakeMetricsPluginConfig proto: ", e.what()));
+  }
+}
+  
 REGISTER_FACTORY(FakeMetricsPluginConfigFactory, MetricsPluginConfigFactory);
 
 envoy::config::core::v3::TypedExtensionConfig

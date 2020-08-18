@@ -7,6 +7,7 @@ import "envoy/config/core/v3/extension.proto";
 // Configuration for FakeMetricsPlugin (plugin name: "nighthawk.fake-metrics-plugin") that always
 // returns a fixed value.
 message FakeMetricsPluginConfig {
-  // Value that should always be returned. Optional, default 0.
+  // Metric value that should always be returned for metric name "good-metric". Set a negative value
+  // to trigger a validation failure from the plugin-specific config validator. Optional, default 0.
   double fixed_metric_value = 1;
 }
