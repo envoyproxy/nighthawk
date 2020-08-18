@@ -70,7 +70,6 @@ nighthawk::client::ExecutionResponse PerformNighthawkBenchmark(
 
   stream->Write(request);
   stream->WritesDone();
-
   if (!stream->Read(&response)) {
     response.mutable_error_detail()->set_code(::grpc::UNKNOWN);
     response.mutable_error_detail()->set_message("Nighthawk Service did not send a response.");

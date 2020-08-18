@@ -53,26 +53,48 @@ using ::testing::Return;
 using ::testing::SetArgPointee;
 
 /**
- * Creates a minimal Nighthawk output proto for testing:
- * - 1024 RPS attempted
- * - 10 seconds actual execution time
- * - Nighthawk was able to send 25% of requests (send-rate)
- * - 12.5% of requests sent received 2xx response (success-rate)
- * - 400/500/600/11 min/mean/max/pstdev latency ns
+ * Creates a valid TypedExtensionConfig proto selecting the real BinaryScoringFunction plugin
+ * and configuring it with a threshold.
+ *
+ * @param lower_threshold Threshold value to set within the config proto.
+ *
+ * @return TypedExtensionConfig Full scoring function plugin spec that selects
+ * nighthawk.binary-scoring and provides a config.
  */
-// nighthawk::client::Output MakeStandardNighthawkOutput() {
-//   return MakeSimpleNighthawkOutput({
-//       /*concurrency=*/"auto",
-//       /*requests_per_second=*/1024,
-//       /*actual_duration_seconds=*/10,
-//       /*upstream_rq_total=*/2560,
-//       /*response_count_2xx=*/320,
-//       /*min_ns=*/400,
-//       /*mean_ns=*/500,
-//       /*max_ns=*/600,
-//       /*pstdev_ns=*/11,
-//   });
-// }
+envoy::config::core::v3::TypedExtensionConfig
+MakeLowerThresholdBinaryScoringFunctionConfig(double lower_threshold) {
+  envoy::config::core::v3::TypedExtensionConfig config;
+  config.set_name("nighthawk.binary-scoring");
+  nighthawk::adaptive_load::BinaryScoringFunctionConfig inner_config;
+  inner_config.mutable_lower_threshold()->set_value(lower_threshold);
+  Envoy::ProtobufWkt::Any inner_config_any;
+  inner_config_any.PackFrom(inner_config);
+  *config.mutable_typed_config() = inner_config_any;
+  return config;
+}
+
+/**
+ * Creates a session spec with BuiltinMetricsPlugin configured to collect send-rate, a
+ * BinaryScoringFunction with a lower threshold of 0.9, and a FakeStepController, which
+ * will report convergence whenever the metric score of a mock Nighthawk Service response evaluates
+ * to a positive value, or doom whenever the mock Nighthawk Service returns an error code. This
+ * session spec may be amended or overwritten.
+ *
+ * @return AdaptiveLoadSessionSpec Adaptive load session spec proto.
+ */
+nighthawk::adaptive_load::AdaptiveLoadSessionSpec MakeConvergeableDoomableSessionSpec() {
+  nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
+  spec.mutable_nighthawk_traffic_template();
+  *spec.mutable_step_controller_config() =
+      MakeFakeStepControllerPluginConfig(/*fixed_rps_value=*/1024);
+  nighthawk::adaptive_load::MetricSpecWithThreshold* threshold =
+      spec.mutable_metric_thresholds()->Add();
+  threshold->mutable_metric_spec()->set_metric_name("send-rate");
+  threshold->mutable_metric_spec()->set_metrics_plugin_name("nighthawk.builtin");
+  *threshold->mutable_threshold_spec()->mutable_scoring_function() =
+      MakeLowerThresholdBinaryScoringFunctionConfig(0.9);
+  return spec;
+}
 
 /**
  * Sets up a minimal working mock to be returned from the mock Nighthawk Service stub. To customize
@@ -92,52 +114,6 @@ MakeSimpleMockClientReaderWriter() {
   EXPECT_CALL(*mock_reader_writer, Read(_)).WillRepeatedly(Return(true));
   EXPECT_CALL(*mock_reader_writer, Finish()).WillRepeatedly(Return(::grpc::Status::OK));
   return mock_reader_writer;
-}
-
-/**
- * Sets up a minimal working mock to be returned from the mock Nighthawk Service stub. It generates
- * fake Nighthawk responses intended for FakeStepController. It will return
- * |pre_transition_response| the first |responses_before_transition| times, then
- * |post_transition_response| after that.
- *
- * To customize a mock method, start with the result of this function and then do another
- * EXPECT_CALL on that method which will overwrite the behavior configured here.
- *
- * @param responses_before_transition Number of times |pre_transition_response| should be returned
- * from the mock Nighthawk Service.
- * @param pre_transition_response Response to return from the mock Nighthawk Service before the
- * transition (e.g. a response causing FakeStepController to decide it is not converged).
- * @param post_transition_response Response to return from the mock Nighthawk Service on all calls
- * after the transition (e.g. responses causing FakeStepController to decide it is converged).
- *
- * @return Bare pointer that will be automatically wrapped in a unique_ptr by the caller.
- */
-grpc::testing::MockClientReaderWriter<nighthawk::client::ExecutionRequest,
-                                      nighthawk::client::ExecutionResponse>*
-MakeSimpleMockClientReaderWriterWithScheduledTransition(
-    int responses_before_transition,
-    const nighthawk::client::ExecutionResponse& pre_transition_response,
-    const nighthawk::client::ExecutionResponse& post_transition_response) {
-  auto* mock_reader_writer = MakeSimpleMockClientReaderWriter();
-  // Inject simulated Nighthawk Service output:
-  EXPECT_CALL(*mock_reader_writer, Read(_))
-      .Times(responses_before_transition)
-      .WillRepeatedly(DoAll(SetArgPointee<0>(pre_transition_response), Return(true)))
-      .WillRepeatedly(DoAll(SetArgPointee<0>(post_transition_response), Return(true)));
-  return mock_reader_writer;
-}
-
-/**
- * Creates a simulated Nighthawk Service response with an error code. FakeStepController becomes
- * doomed when it receives this response.
- *
- * @return ExecutionResponse A Nighthawk Service response containing an error code.
- */
-nighthawk::client::ExecutionResponse MakeFailedNighthawkResponse() {
-  nighthawk::client::ExecutionResponse response;
-  response.mutable_error_detail()->set_code(::grpc::INTERNAL);
-  response.mutable_error_detail()->set_message("simulated Nighthawk Service error response");
-  return response;
 }
 
 /**
@@ -167,91 +143,64 @@ nighthawk::client::ExecutionResponse MakeNighthawkResponseWithSendRate(double se
 }
 
 /**
- * Sets up a minimal working mock to be returned from the mock Nighthawk Service stub. It generates
- * fake Nighthawk responses intended for FakeStepController. It will return a response that will
- * evaluate to send-rate of 0.5 the first |calls| times, then a send-rate of 0.95 that causes
- * FakeStepController to report convergence.
+ * Creates a simulated Nighthawk Service response with an error code. FakeStepController becomes
+ * doomed when it receives this response.
  *
- * To customize a mock method, start with the result of this function and then do another
- * EXPECT_CALL on that method which will overwrite the behavior configured here.
- *
- * @param calls Number of times to return the non-converging response from the mock Nighthawk
- * Service.
+ * @return ExecutionResponse A Nighthawk Service response containing an error code.
+ */
+nighthawk::client::ExecutionResponse MakeFailedNighthawkResponse() {
+  nighthawk::client::ExecutionResponse response;
+  response.mutable_error_detail()->set_code(::grpc::INTERNAL);
+  response.mutable_error_detail()->set_message("simulated Nighthawk Service error response");
+  return response;
+}
+
+/**
+ * Sets up a working mock to be returned from the mock Nighthawk Service stub. To customize
+ * a method, start with the result of this function and then do another EXPECT_CALL on that method
+ * which will overwrite the behavior configured here.
  *
  * @return Bare pointer that will be automatically wrapped in a unique_ptr by the caller.
  */
 grpc::testing::MockClientReaderWriter<nighthawk::client::ExecutionRequest,
                                       nighthawk::client::ExecutionResponse>*
-MakeSimpleMockClientReaderWriterConvergingAfter(int calls) {
-  nighthawk::client::ExecutionResponse pre_convergence_response =
-      MakeNighthawkResponseWithSendRate(0.5);
-  nighthawk::client::ExecutionResponse post_convergence_response =
-      MakeNighthawkResponseWithSendRate(0.95);
-  return MakeSimpleMockClientReaderWriterWithScheduledTransition(calls, pre_convergence_response,
-                                                                 post_convergence_response);
+MakeNonConvergingMockClientReaderWriter() {
+  auto* mock_reader_writer = MakeSimpleMockClientReaderWriter();
+  EXPECT_CALL(*mock_reader_writer, Read(_))
+      .WillOnce(DoAll(SetArgPointee<0>(MakeNighthawkResponseWithSendRate(0.5)), Return(true)));
+  return mock_reader_writer;
 }
 
 /**
- * Sets up a minimal working mock to be returned from the mock Nighthawk Service stub. It generates
- * fake Nighthawk responses intended for FakeStepController. It will return a response that will
- * evaluate to send-rate of 0.5 the first |calls| times, then a response with an error code that
- * will cause FakeStepController to report doom.
- *
- * To customize a mock method, start with the result of this function and then do another
- * EXPECT_CALL on that method which will overwrite the behavior configured here.
- *
- * @param calls Number of times to return the non-converging response from the mock Nighthawk
- * Service.
+ * Sets up a working mock to be returned from the mock Nighthawk Service stub. To customize
+ * a method, start with the result of this function and then do another EXPECT_CALL on that method
+ * which will overwrite the behavior configured here.
  *
  * @return Bare pointer that will be automatically wrapped in a unique_ptr by the caller.
  */
 grpc::testing::MockClientReaderWriter<nighthawk::client::ExecutionRequest,
                                       nighthawk::client::ExecutionResponse>*
-MakeSimpleMockClientReaderWriterDoomedAfter(int calls) {
-  nighthawk::client::ExecutionResponse non_converged_non_error_response =
-      MakeNighthawkResponseWithSendRate(0.5);
-  nighthawk::client::ExecutionResponse error_response = MakeFailedNighthawkResponse();
-
-  return MakeSimpleMockClientReaderWriterWithScheduledTransition(
-      calls, non_converged_non_error_response, error_response);
+MakeConvergingMockClientReaderWriter() {
+  auto* mock_reader_writer = MakeSimpleMockClientReaderWriter();
+  EXPECT_CALL(*mock_reader_writer, Read(_))
+      .WillOnce(DoAll(SetArgPointee<0>(MakeNighthawkResponseWithSendRate(1.0)), Return(true)));
+  return mock_reader_writer;
 }
 
 /**
- * Creates a valid ScoringFunctionConfig proto selecting the real BinaryScoringFunction plugin
- * and configuring it with a threshold.
- */
-envoy::config::core::v3::TypedExtensionConfig
-MakeLowerThresholdBinaryScoringFunctionConfig(double lower_threshold) {
-  envoy::config::core::v3::TypedExtensionConfig config;
-  config.set_name("nighthawk.binary-scoring");
-  nighthawk::adaptive_load::BinaryScoringFunctionConfig inner_config;
-  inner_config.mutable_lower_threshold()->set_value(lower_threshold);
-  Envoy::ProtobufWkt::Any inner_config_any;
-  inner_config_any.PackFrom(inner_config);
-  *config.mutable_typed_config() = inner_config_any;
-  return config;
-}
-
-/**
- * Creates a session spec with BuiltinMetricsPlugin configured to collect send-rate, a
- * BinaryScoringFunction with a lower threshold of 0.9, and a FakeStepController, which
- * will report convergence whenever the metric score of a mock Nighthawk Service response evaluates
- * to a positive value, or doom whenever the mock Nighthawk Service returns an error code. This
- * session spec may be amended or overwritten.
+ * Sets up a working mock to be returned from the mock Nighthawk Service stub. To customize
+ * a method, start with the result of this function and then do another EXPECT_CALL on that method
+ * which will overwrite the behavior configured here.
  *
- *
+ * @return Bare pointer that will be automatically wrapped in a unique_ptr by the caller.
  */
-nighthawk::adaptive_load::AdaptiveLoadSessionSpec MakeConvergeableDoomableSessionSpec() {
-  nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
-  spec.mutable_nighthawk_traffic_template();
-  *spec.mutable_step_controller_config() = MakeFakeStepControllerPluginConfig(/*fixed_rps_value=*/5);
-  nighthawk::adaptive_load::MetricSpecWithThreshold* threshold =
-      spec.mutable_metric_thresholds()->Add();
-  threshold->mutable_metric_spec()->set_metric_name("send-rate");
-  threshold->mutable_metric_spec()->set_metrics_plugin_name("nighthawk.builtin");
-  *threshold->mutable_threshold_spec()->mutable_scoring_function() =
-      MakeLowerThresholdBinaryScoringFunctionConfig(0.9);
-  return spec;
+grpc::testing::MockClientReaderWriter<nighthawk::client::ExecutionRequest,
+                                      nighthawk::client::ExecutionResponse>*
+MakeDoomedMockClientReaderWriter() {
+  auto* mock_reader_writer = MakeSimpleMockClientReaderWriter();
+  EXPECT_CALL(*mock_reader_writer, Read(_))
+      .WillOnce(DoAll(SetArgPointee<0>(MakeFailedNighthawkResponse()), Return(true)));
+  return mock_reader_writer;
 }
 
 TEST(AdaptiveLoadController, FailsWithTrafficTemplateDurationSet) {
@@ -421,10 +370,11 @@ TEST(AdaptiveLoadController, FailsWithNonexistentCustomMetricNameInInformational
 TEST(AdaptiveLoadController, TimesOutIfNeverConverged) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec = MakeConvergeableDoomableSessionSpec();
 
-  // Values to trigger convergence are not set up in the mock Nighthawk Service.
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
-      .WillRepeatedly([](grpc_impl::ClientContext*) { return MakeSimpleMockClientReaderWriter(); });
+      .WillRepeatedly([](grpc_impl::ClientContext*) {
+        return MakeNonConvergingMockClientReaderWriter();
+            });
   FakeIncrementingMonotonicTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output =
       PerformAdaptiveLoadSession(&mock_nighthawk_service_stub, spec, time_source);
@@ -435,17 +385,14 @@ TEST(AdaptiveLoadController, UsesDefaultConvergenceDeadline) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec = MakeConvergeableDoomableSessionSpec();
 
   // Not setting convergence deadline, should default to 300 seconds.
-  // Values to trigger convergence are not set up in the mock Nighthawk Service.
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
-      .WillRepeatedly([](grpc_impl::ClientContext*) { return MakeSimpleMockClientReaderWriter(); });
+      .WillRepeatedly(
+          [](grpc_impl::ClientContext*) { return MakeNonConvergingMockClientReaderWriter(); });
   FakeIncrementingMonotonicTimeSource time_source;
   Envoy::MonotonicTime start_time = time_source.monotonicTime();
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output =
       PerformAdaptiveLoadSession(&mock_nighthawk_service_stub, spec, time_source);
-  // The test assumes that the session times out without convergence and therefore skips the testing
-  // stage.
-  ASSERT_FALSE(output.has_testing_stage_result());
   EXPECT_THAT(
       std::chrono::duration_cast<std::chrono::seconds>(time_source.monotonicTime() - start_time)
           .count(),
@@ -453,17 +400,38 @@ TEST(AdaptiveLoadController, UsesDefaultConvergenceDeadline) {
             // recorded the start time.
 }
 
+TEST(AdaptiveLoadController, UsesConfiguredConvergenceDeadline) {
+  nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec = MakeConvergeableDoomableSessionSpec();
+  spec.mutable_convergence_deadline()->set_seconds(123);
+
+  nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
+  EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
+      .WillRepeatedly(
+          [](grpc_impl::ClientContext*) { return MakeNonConvergingMockClientReaderWriter(); });
+  FakeIncrementingMonotonicTimeSource time_source;
+  Envoy::MonotonicTime start_time = time_source.monotonicTime();
+  nighthawk::adaptive_load::AdaptiveLoadSessionOutput output =
+      PerformAdaptiveLoadSession(&mock_nighthawk_service_stub, spec, time_source);
+  EXPECT_THAT(
+      std::chrono::duration_cast<std::chrono::seconds>(time_source.monotonicTime() - start_time)
+          .count(),
+      126); // 123 ticks plus 2 monotonicTime() calls here plus 1 within the controller when it
+            // recorded the start time.
+}
+
 TEST(AdaptiveLoadController, UsesDefaultTestingStageDuration) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec = MakeConvergeableDoomableSessionSpec();
-
-  // Values to trigger convergence are not set up in the mock Nighthawk Service.
 
   // Successively overwritten by each adjusting stage request and finally the testing stage request.
   nighthawk::client::ExecutionRequest request;
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
+  int convergence_countdown = 5;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
-      .WillRepeatedly([&request](grpc_impl::ClientContext*) {
-        auto* mock_reader_writer = MakeSimpleMockClientReaderWriter();
+      .WillRepeatedly([&request, &convergence_countdown](grpc_impl::ClientContext*) {
+        auto* mock_reader_writer = convergence_countdown > 0
+                                       ? MakeNonConvergingMockClientReaderWriter()
+                                       : MakeConvergingMockClientReaderWriter();
+        --convergence_countdown;
         EXPECT_CALL(*mock_reader_writer, Write(_, _))
             .WillRepeatedly(::testing::DoAll(::testing::SaveArg<0>(&request), Return(true)));
         return mock_reader_writer;
@@ -482,7 +450,7 @@ TEST(AdaptiveLoadController, UsesDefaultMeasuringPeriod) {
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
       .WillRepeatedly([&request](grpc_impl::ClientContext*) {
-        auto* mock_reader_writer = MakeSimpleMockClientReaderWriter();
+        auto* mock_reader_writer = MakeNonConvergingMockClientReaderWriter();
         EXPECT_CALL(*mock_reader_writer, Write(_, _))
             .WillRepeatedly(::testing::DoAll(::testing::SaveArg<0>(&request), Return(true)));
         return mock_reader_writer;
@@ -503,7 +471,7 @@ TEST(AdaptiveLoadController, UsesConfiguredMeasuringPeriod) {
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
       .WillRepeatedly([&request](grpc_impl::ClientContext*) {
-        auto* mock_reader_writer = MakeSimpleMockClientReaderWriter();
+        auto* mock_reader_writer = MakeNonConvergingMockClientReaderWriter();
         EXPECT_CALL(*mock_reader_writer, Write(_, _))
             .WillRepeatedly(::testing::DoAll(::testing::SaveArg<0>(&request), Return(true)));
         return mock_reader_writer;
@@ -522,7 +490,7 @@ TEST(AdaptiveLoadController, UsesCommandLineOptionsFromController) {
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
       .WillRepeatedly([&request](grpc_impl::ClientContext*) {
-        auto* mock_reader_writer = MakeSimpleMockClientReaderWriterConvergingAfter(10);
+        auto* mock_reader_writer = MakeNonConvergingMockClientReaderWriter();
         EXPECT_CALL(*mock_reader_writer, Write(_, _))
             .WillRepeatedly(::testing::DoAll(::testing::SaveArg<0>(&request), Return(true)));
         return mock_reader_writer;
@@ -536,19 +504,19 @@ TEST(AdaptiveLoadController, UsesCommandLineOptionsFromController) {
 
 TEST(AdaptiveLoadController, UsesDefaultMetricWeight) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec = MakeConvergeableDoomableSessionSpec();
+  *spec.mutable_metrics_plugin_configs()->Add() = MakeFakeMetricsPluginConfig(0.0);
 
   nighthawk::adaptive_load::MetricSpecWithThreshold* threshold =
       spec.mutable_metric_thresholds()->Add();
-  threshold->mutable_metric_spec()->set_metric_name("metric1");
+  threshold->mutable_metric_spec()->set_metric_name("good-metric");
   threshold->mutable_metric_spec()->set_metrics_plugin_name("nighthawk.fake-metrics-plugin");
   *threshold->mutable_threshold_spec()->mutable_scoring_function() =
       MakeLowerThresholdBinaryScoringFunctionConfig(0.0);
 
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
-      .WillRepeatedly([](grpc_impl::ClientContext*) {
-        return MakeSimpleMockClientReaderWriterConvergingAfter(3);
-      });
+      .WillRepeatedly(
+          [](grpc_impl::ClientContext*) { return MakeConvergingMockClientReaderWriter(); });
 
   FakeIncrementingMonotonicTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output =
@@ -560,10 +528,11 @@ TEST(AdaptiveLoadController, UsesDefaultMetricWeight) {
 
 TEST(AdaptiveLoadController, UsesCustomMetricWeight) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec = MakeConvergeableDoomableSessionSpec();
+  *spec.mutable_metrics_plugin_configs()->Add() = MakeFakeMetricsPluginConfig(0.0);
 
   nighthawk::adaptive_load::MetricSpecWithThreshold* threshold =
       spec.mutable_metric_thresholds()->Add();
-  threshold->mutable_metric_spec()->set_metric_name("metric1");
+  threshold->mutable_metric_spec()->set_metric_name("good-metric");
   threshold->mutable_metric_spec()->set_metrics_plugin_name("nighthawk.fake-metrics-plugin");
   *threshold->mutable_threshold_spec()->mutable_scoring_function() =
       MakeLowerThresholdBinaryScoringFunctionConfig(0.0);
@@ -571,44 +540,48 @@ TEST(AdaptiveLoadController, UsesCustomMetricWeight) {
 
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
-      .WillRepeatedly([](grpc_impl::ClientContext*) {
-        return MakeSimpleMockClientReaderWriterConvergingAfter(3);
-      });
+      .WillRepeatedly(
+          [](grpc_impl::ClientContext*) { return MakeConvergingMockClientReaderWriter(); });
 
   FakeIncrementingMonotonicTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output =
       PerformAdaptiveLoadSession(&mock_nighthawk_service_stub, spec, time_source);
   ASSERT_GT(output.adjusting_stage_results_size(), 0);
-  ASSERT_GT(output.adjusting_stage_results()[0].metric_evaluations_size(), 0);
-  EXPECT_EQ(output.adjusting_stage_results()[0].metric_evaluations()[0].weight(), 45.0);
+  ASSERT_GT(output.adjusting_stage_results()[0].metric_evaluations_size(), 1);
+  EXPECT_EQ(output.adjusting_stage_results()[0].metric_evaluations()[1].weight(), 45.0);
 }
 
 TEST(AdaptiveLoadController, ExitsWhenDoomed) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec = MakeConvergeableDoomableSessionSpec();
-  spec.mutable_convergence_deadline()->set_seconds(5);
 
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
+  int doom_countdown = 3;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
-      .WillRepeatedly(
-          [](grpc_impl::ClientContext*) { return MakeSimpleMockClientReaderWriterDoomedAfter(3); });
+      .WillRepeatedly([&doom_countdown](grpc_impl::ClientContext*) {
+        if (doom_countdown > 0) {
+          --doom_countdown;
+          return MakeNonConvergingMockClientReaderWriter();
+        } else {
+          return MakeDoomedMockClientReaderWriter();
+        }
+      });
 
   FakeIncrementingMonotonicTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output =
       PerformAdaptiveLoadSession(&mock_nighthawk_service_stub, spec, time_source);
   EXPECT_THAT(output.session_status().message(),
               HasSubstr("Step controller determined that it can never converge"));
-  EXPECT_THAT(output.session_status().message(), HasSubstr("fake doom reason"));
+  EXPECT_THAT(output.session_status().message(),
+              HasSubstr("simulated Nighthawk Service error response"));
 }
 
 TEST(AdaptiveLoadController, PerformsTestingStageAfterConvergence) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec = MakeConvergeableDoomableSessionSpec();
-  spec.mutable_convergence_deadline()->set_seconds(5);
 
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
-      .WillRepeatedly([](grpc_impl::ClientContext*) {
-        return MakeSimpleMockClientReaderWriterConvergingAfter(3);
-      });
+      .WillRepeatedly(
+          [](grpc_impl::ClientContext*) { return MakeConvergingMockClientReaderWriter(); });
   FakeIncrementingMonotonicTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output =
       PerformAdaptiveLoadSession(&mock_nighthawk_service_stub, spec, time_source);
@@ -617,7 +590,6 @@ TEST(AdaptiveLoadController, PerformsTestingStageAfterConvergence) {
 
 TEST(AdaptiveLoadController, SetsBenchmarkErrorStatusIfNighthawkServiceDoesNotSendResponse) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec = MakeConvergeableDoomableSessionSpec();
-  spec.mutable_convergence_deadline()->set_seconds(5);
 
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
@@ -639,7 +611,6 @@ TEST(AdaptiveLoadController, SetsBenchmarkErrorStatusIfNighthawkServiceDoesNotSe
 
 TEST(AdaptiveLoadController, SetsBenchmarkErrorStatusIfNighthawkServiceGrpcStreamClosesAbnormally) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec = MakeConvergeableDoomableSessionSpec();
-  spec.mutable_convergence_deadline()->set_seconds(5);
 
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
@@ -667,20 +638,18 @@ TEST(AdaptiveLoadController, UsesBuiltinMetricsPluginForThresholdByDefault) {
   // metrics_plugin_name not set, defaults to nighthawk.builtin
   *threshold->mutable_threshold_spec()->mutable_scoring_function() =
       MakeLowerThresholdBinaryScoringFunctionConfig(0.9);
-  spec.mutable_convergence_deadline()->set_seconds(5);
 
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
-      .WillRepeatedly([](grpc_impl::ClientContext*) {
-        return MakeSimpleMockClientReaderWriterConvergingAfter(2);
-      });
+      .WillRepeatedly(
+          [](grpc_impl::ClientContext*) { return MakeConvergingMockClientReaderWriter(); });
 
   FakeIncrementingMonotonicTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output =
       PerformAdaptiveLoadSession(&mock_nighthawk_service_stub, spec, time_source);
   ASSERT_GT(output.adjusting_stage_results_size(), 0);
   ASSERT_GT(output.adjusting_stage_results()[0].metric_evaluations_size(), 1);
-  EXPECT_EQ(output.adjusting_stage_results()[0].metric_evaluations()[1].metric_value(), 0.125);
+  EXPECT_EQ(output.adjusting_stage_results()[0].metric_evaluations()[1].metric_value(), 0.03125);
 }
 
 TEST(AdaptiveLoadController, EvaluatesBuiltinMetric) {
@@ -692,21 +661,19 @@ TEST(AdaptiveLoadController, EvaluatesBuiltinMetric) {
   threshold->mutable_metric_spec()->set_metrics_plugin_name("nighthawk.builtin");
   *threshold->mutable_threshold_spec()->mutable_scoring_function() =
       MakeLowerThresholdBinaryScoringFunctionConfig(0.9);
-  spec.mutable_convergence_deadline()->set_seconds(5);
 
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
-      .WillRepeatedly([](grpc_impl::ClientContext*) {
-        return MakeSimpleMockClientReaderWriterConvergingAfter(2);
-      });
+      .WillRepeatedly(
+          [](grpc_impl::ClientContext*) { return MakeConvergingMockClientReaderWriter(); });
 
   FakeIncrementingMonotonicTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output =
       PerformAdaptiveLoadSession(&mock_nighthawk_service_stub, spec, time_source);
   ASSERT_GT(output.adjusting_stage_results_size(), 0);
   ASSERT_GT(output.adjusting_stage_results()[0].metric_evaluations_size(), 1);
-  EXPECT_EQ(output.adjusting_stage_results()[0].metric_evaluations()[1].metric_value(), 0.125);
-  // Requested a lower threshold of 0.9 but only achieved 0.125.
+  EXPECT_EQ(output.adjusting_stage_results()[0].metric_evaluations()[1].metric_value(), 0.03125);
+  // Requested a lower threshold of 0.9 but only achieved 0.03125.
   EXPECT_EQ(output.adjusting_stage_results()[0].metric_evaluations()[1].threshold_score(), -1.0);
 }
 
@@ -717,20 +684,18 @@ TEST(AdaptiveLoadController, UsesBuiltinMetricsPluginForInformationalMetricSpecB
       spec.mutable_informational_metric_specs()->Add();
   metric_spec->set_metric_name("success-rate");
   // metrics_plugin_name not set, defaults to nighthawk.builtin
-  spec.mutable_convergence_deadline()->set_seconds(5);
 
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
-      .WillRepeatedly([](grpc_impl::ClientContext*) {
-        return MakeSimpleMockClientReaderWriterConvergingAfter(2);
-      });
+      .WillRepeatedly(
+          [](grpc_impl::ClientContext*) { return MakeConvergingMockClientReaderWriter(); });
 
   FakeIncrementingMonotonicTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output =
       PerformAdaptiveLoadSession(&mock_nighthawk_service_stub, spec, time_source);
   ASSERT_GT(output.adjusting_stage_results_size(), 0);
   ASSERT_GT(output.adjusting_stage_results()[0].metric_evaluations_size(), 1);
-  EXPECT_EQ(output.adjusting_stage_results()[0].metric_evaluations()[1].metric_value(), 0.125);
+  EXPECT_EQ(output.adjusting_stage_results()[0].metric_evaluations()[1].metric_value(), 0.03125);
 }
 
 TEST(AdaptiveLoadController, StoresInformationalBuiltinMetric) {
@@ -740,39 +705,35 @@ TEST(AdaptiveLoadController, StoresInformationalBuiltinMetric) {
       spec.mutable_informational_metric_specs()->Add();
   metric_spec->set_metric_name("success-rate");
   metric_spec->set_metrics_plugin_name("nighthawk.builtin");
-  spec.mutable_convergence_deadline()->set_seconds(5);
 
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
-      .WillRepeatedly([](grpc_impl::ClientContext*) {
-        return MakeSimpleMockClientReaderWriterConvergingAfter(2);
-      });
+      .WillRepeatedly(
+          [](grpc_impl::ClientContext*) { return MakeConvergingMockClientReaderWriter(); });
 
   FakeIncrementingMonotonicTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output =
       PerformAdaptiveLoadSession(&mock_nighthawk_service_stub, spec, time_source);
   ASSERT_GT(output.adjusting_stage_results_size(), 0);
   ASSERT_GT(output.adjusting_stage_results()[0].metric_evaluations_size(), 1);
-  EXPECT_EQ(output.adjusting_stage_results()[0].metric_evaluations()[1].metric_value(), 0.125);
+  EXPECT_EQ(output.adjusting_stage_results()[0].metric_evaluations()[1].metric_value(), 0.03125);
 }
 
 TEST(AdaptiveLoadController, EvaluatesCustomMetric) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec = MakeConvergeableDoomableSessionSpec();
 
-  *spec.mutable_metrics_plugin_configs()->Add() = MakeFakeMetricsPluginConfig(0.0);
+  *spec.mutable_metrics_plugin_configs()->Add() = MakeFakeMetricsPluginConfig(5.0);
   nighthawk::adaptive_load::MetricSpecWithThreshold* threshold =
       spec.mutable_metric_thresholds()->Add();
-  threshold->mutable_metric_spec()->set_metric_name("metric1");
+  threshold->mutable_metric_spec()->set_metric_name("good-metric");
   threshold->mutable_metric_spec()->set_metrics_plugin_name("nighthawk.fake-metrics-plugin");
   *threshold->mutable_threshold_spec()->mutable_scoring_function() =
       MakeLowerThresholdBinaryScoringFunctionConfig(6.0);
-  spec.mutable_convergence_deadline()->set_seconds(5);
 
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
-      .WillRepeatedly([](grpc_impl::ClientContext*) {
-        return MakeSimpleMockClientReaderWriterConvergingAfter(2);
-      });
+      .WillRepeatedly(
+          [](grpc_impl::ClientContext*) { return MakeConvergingMockClientReaderWriter(); });
 
   FakeIncrementingMonotonicTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output =
@@ -785,20 +746,16 @@ TEST(AdaptiveLoadController, EvaluatesCustomMetric) {
 
 TEST(AdaptiveLoadController, StoresInformationalCustomMetric) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec = MakeConvergeableDoomableSessionSpec();
-  spec.mutable_nighthawk_traffic_template();
-  *spec.mutable_step_controller_config() = MakeFakeMetricsPluginConfig(/*fixed_rps_value=*/5);
-  *spec.mutable_metrics_plugin_configs()->Add() = MakeFakeMetricsPluginConfig(0.0);
+  *spec.mutable_metrics_plugin_configs()->Add() = MakeFakeMetricsPluginConfig(/*fixed_metric_value=*/5);
   nighthawk::adaptive_load::MetricSpec* metric_spec =
       spec.mutable_informational_metric_specs()->Add();
-  metric_spec->set_metric_name("metric1");
+  metric_spec->set_metric_name("good-metric");
   metric_spec->set_metrics_plugin_name("nighthawk.fake-metrics-plugin");
-  spec.mutable_convergence_deadline()->set_seconds(5);
 
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
-      .WillRepeatedly([](grpc_impl::ClientContext*) {
-        return MakeSimpleMockClientReaderWriterConvergingAfter(2);
-      });
+      .WillRepeatedly(
+          [](grpc_impl::ClientContext*) { return MakeConvergingMockClientReaderWriter(); });
 
   FakeIncrementingMonotonicTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output =
@@ -809,27 +766,18 @@ TEST(AdaptiveLoadController, StoresInformationalCustomMetric) {
 }
 
 TEST(AdaptiveLoadController, CopiesThresholdSpecToOutput) {
+  // Spec contains a threshold for send-rate:
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec = MakeConvergeableDoomableSessionSpec();
-
-  nighthawk::adaptive_load::MetricSpecWithThreshold* threshold =
-      spec.mutable_metric_thresholds()->Add();
-  threshold->mutable_metric_spec()->set_metric_name("success-rate");
-  threshold->mutable_metric_spec()->set_metrics_plugin_name("nighthawk.builtin");
-  *threshold->mutable_threshold_spec()->mutable_scoring_function() =
-      MakeLowerThresholdBinaryScoringFunctionConfig(0.9);
-  spec.mutable_convergence_deadline()->set_seconds(5);
-
+  
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
-      .WillRepeatedly([](grpc_impl::ClientContext*) {
-        return MakeSimpleMockClientReaderWriterConvergingAfter(2);
-      });
+      .WillRepeatedly(
+          [](grpc_impl::ClientContext*) { return MakeConvergingMockClientReaderWriter(); });
   FakeIncrementingMonotonicTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output =
       PerformAdaptiveLoadSession(&mock_nighthawk_service_stub, spec, time_source);
-  std::cerr << output.DebugString() << "\n";
-  ASSERT_GT(output.metric_thresholds_size(), 1);
-  EXPECT_EQ(output.metric_thresholds()[1].metric_spec().metric_name(), "success-rate");
+  ASSERT_GT(output.metric_thresholds_size(), 0);
+  EXPECT_EQ(output.metric_thresholds()[0].metric_spec().metric_name(), "send-rate");
 }
 
 } // namespace
