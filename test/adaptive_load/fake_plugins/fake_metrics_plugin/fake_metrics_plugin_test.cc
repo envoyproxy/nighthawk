@@ -18,7 +18,7 @@ using ::nighthawk::adaptive_load::MetricEvaluation;
 using ::nighthawk::client::CommandLineOptions;
 
 TEST(FakeMetricsPluginConfigFactory, CreateEmptyConfigProtoCreatesCorrectType) {
-  MetricsPluginConfigFactory& config_factory =
+  auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<MetricsPluginConfigFactory>(
           "nighthawk.fake-metrics-plugin");
   Envoy::ProtobufTypes::MessagePtr message = config_factory.createEmptyConfigProto();
@@ -31,7 +31,7 @@ TEST(FakeMetricsPluginConfigFactory, FactoryRegistersUnderCorrectName) {
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
   CommandLineOptions options;
-  MetricsPluginConfigFactory& config_factory =
+  auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<MetricsPluginConfigFactory>(
           "nighthawk.fake-metrics-plugin");
   EXPECT_EQ(config_factory.name(), "nighthawk.fake-metrics-plugin");
@@ -42,7 +42,7 @@ TEST(FakeMetricsPluginConfigFactory, FactoryCreatesCorrectPluginType) {
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
   CommandLineOptions options;
-  MetricsPluginConfigFactory& config_factory =
+  auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<MetricsPluginConfigFactory>(
           "nighthawk.fake-metrics-plugin");
   MetricsPluginPtr plugin = config_factory.createMetricsPlugin(config_any);
@@ -89,7 +89,7 @@ TEST(MakeFakeMetricsPluginConfig, ActivatesFakeMetricsPlugin) {
 TEST(MakeFakeMetricsPluginConfig, ProducesFakeMetricsPluginWithConfiguredValue) {
   absl::StatusOr<MetricsPluginPtr> plugin_or = LoadMetricsPlugin(MakeFakeMetricsPluginConfig(5.0));
   ASSERT_TRUE(plugin_or.ok());
-  FakeMetricsPlugin* plugin = dynamic_cast<FakeMetricsPlugin*>(plugin_or.value().get());
+  auto* plugin = dynamic_cast<FakeMetricsPlugin*>(plugin_or.value().get());
   ASSERT_NE(plugin, nullptr);
   absl::StatusOr<double> value_or = plugin->GetMetricByName("good-metric");
   ASSERT_TRUE(value_or.ok());
