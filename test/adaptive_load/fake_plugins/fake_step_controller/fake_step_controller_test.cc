@@ -38,7 +38,7 @@ TEST(FakeStepControllerConfigFactory, FactoryRegistersUnderCorrectName) {
   EXPECT_EQ(config_factory.name(), "nighthawk.fake-step-controller");
 }
 
-TEST(FakeStepControllerConfigFactory, CreateMetricsPluginCreatesCorrectPluginType) {
+TEST(FakeStepControllerConfigFactory, CreateStepControllerCreatesCorrectPluginType) {
   FakeStepControllerConfig config;
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
