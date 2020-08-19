@@ -1,6 +1,5 @@
 #pragma once
 
-#include "adaptive_load/config_validator_impl.h"
 #include "api/client/options.pb.h"
 #include "api/client/service.grpc.pb.h"
 #include "envoy/registry/registry.h"
@@ -61,7 +60,7 @@ private:
  * Factory that creates a FakeStepController plugin from a FakeStepControllerConfig proto.
  * Registered as an Envoy plugin.
  */
-class FakeStepControllerConfigFactory : public virtual StepControllerConfigFactory {
+class FakeStepControllerConfigFactory : public StepControllerConfigFactory {
 public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
