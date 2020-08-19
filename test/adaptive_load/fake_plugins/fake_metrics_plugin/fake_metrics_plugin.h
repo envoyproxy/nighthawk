@@ -1,6 +1,5 @@
 #pragma once
 
-#include "adaptive_load/config_validator_impl.h"
 #include "api/client/options.pb.h"
 #include "envoy/registry/registry.h"
 #include "nighthawk/adaptive_load/metrics_plugin.h"
