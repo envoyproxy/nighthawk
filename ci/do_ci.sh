@@ -24,8 +24,8 @@ function do_opt_build () {
 }
 
 function do_test() {
-    bazel build $BAZEL_BUILD_OPTIONS //test/...
-    bazel test $BAZEL_TEST_OPTIONS --test_output=all //test/...
+    bazel build -c dbg $BAZEL_BUILD_OPTIONS //test/...
+    bazel test -c dbg $BAZEL_TEST_OPTIONS --test_output=all //test/...
 }
 
 function do_clang_tidy() {
@@ -173,6 +173,9 @@ if [ -n "$CIRCLECI" ]; then
         echo 1
     fi
     NUM_CPUS=8
+    if [[ "$1" == "test_gcc" ]]; then
+        NUM_CPUS=6
+    fi
 fi
 
 echo "Running with ${NUM_CPUS} cpus"
