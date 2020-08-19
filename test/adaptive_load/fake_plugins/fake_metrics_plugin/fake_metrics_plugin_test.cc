@@ -1,7 +1,7 @@
+#include "adaptive_load/plugin_loader.h"
 #include "api/adaptive_load/benchmark_result.pb.h"
 #include "api/client/options.pb.h"
 #include "envoy/registry/registry.h"
-#include "adaptive_load/plugin_loader.h"
 #include "test/adaptive_load/fake_plugins/fake_metrics_plugin/fake_metrics_plugin.h"
 
 #include "external/envoy/source/common/config/utility.h"
@@ -22,9 +22,10 @@ TEST(FakeMetricsPluginConfigFactory, CreateEmptyConfigProtoCreatesCorrectType) {
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<MetricsPluginConfigFactory>(
           "nighthawk.fake-metrics-plugin");
-  Envoy::ProtobufTypes::MessagePtr message = config_factory.createEmptyConfigProto();
+  Envoy::ProtobufTypes::MessagePtr empty_config = config_factory.createEmptyConfigProto();
   FakeMetricsPluginConfig expected_config;
-  EXPECT_EQ(message->DebugString(), expected_config.DebugString());
+  EXPECT_EQ(empty_config->DebugString(), expected_config.DebugString());
+  EXPECT_TRUE(Envoy::MessageUtil()(*empty_config, expected_config));
 }
 
 TEST(FakeMetricsPluginConfigFactory, FactoryRegistersUnderCorrectName) {
@@ -104,16 +105,17 @@ TEST(FakeMetricsPlugin, GetMetricByNameReturnsDefaultValueForGoodMetricName) {
 
 TEST(FakeMetricsPlugin, GetMetricByNameReturnsValueFromConfigForGoodMetricName) {
   FakeMetricsPluginConfig config;
-  config.set_fixed_metric_value(5678.0);
+  const double kExpectedValue = 5678.0;
+  config.set_fixed_metric_value(kExpectedValue);
   FakeMetricsPlugin metrics_plugin(config);
   absl::StatusOr<double> metric_value_or = metrics_plugin.GetMetricByName("good-metric");
   ASSERT_TRUE(metric_value_or.ok());
-  EXPECT_EQ(metric_value_or.value(), 5678.0);
+  EXPECT_EQ(metric_value_or.value(), kExpectedValue);
 }
 
 TEST(FakeMetricsPlugin, GetMetricByNameReturnsErrorStatusForBadName) {
   FakeMetricsPluginConfig config;
-  config.set_fixed_metric_value(5678.0);
+  config.set_fixed_metric_value(0.0);
   FakeMetricsPlugin metrics_plugin(config);
   absl::StatusOr<double> metric_value_or = metrics_plugin.GetMetricByName("bad-metric");
   EXPECT_FALSE(metric_value_or.ok());
@@ -127,7 +129,7 @@ TEST(FakeMetricsPlugin, GetAllSupportedMetricNamesReturnsCorrectValues) {
 }
 
 TEST(MakeFakeMetricsPluginConfig, ActivatesFakeMetricsPlugin) {
-  absl::StatusOr<MetricsPluginPtr> plugin_or = LoadMetricsPlugin(MakeFakeMetricsPluginConfig(5.0));
+  absl::StatusOr<MetricsPluginPtr> plugin_or = LoadMetricsPlugin(MakeFakeMetricsPluginConfig(0.0));
   ASSERT_TRUE(plugin_or.ok());
   EXPECT_NE(dynamic_cast<FakeMetricsPlugin*>(plugin_or.value().get()), nullptr);
 }
