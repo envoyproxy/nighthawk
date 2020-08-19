@@ -1,7 +1,6 @@
 
 #pragma once
 
-#include "adaptive_load/config_validator_impl.h"
 #include "api/client/options.pb.h"
 #include "envoy/registry/registry.h"
 #include "nighthawk/adaptive_load/input_variable_setter.h"
@@ -33,8 +32,7 @@ private:
  * A factory that creates a FakeInputVariableSetter from a
  * FakeInputVariableSetterConfig proto.
  */
-class FakeInputVariableSetterConfigFactory : public virtual InputVariableSetterConfigFactory,
-                                             public virtual NullConfigValidator {
+class FakeInputVariableSetterConfigFactory : public InputVariableSetterConfigFactory {
 public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;

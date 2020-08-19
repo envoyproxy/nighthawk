@@ -36,7 +36,6 @@ envoy_cc_library(
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
-        ":config_validator_impl",
         "//include/nighthawk/adaptive_load:input_variable_setter",
         "@envoy//source/common/config:utility_lib_with_external_headers",
         "@envoy//source/common/protobuf:protobuf_with_external_headers",

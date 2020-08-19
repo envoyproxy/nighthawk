@@ -45,8 +45,7 @@ using InputVariableSetterPtr = std::unique_ptr<InputVariableSetter>;
  * A factory that must be implemented for each InputVariableSetter plugin. It instantiates the
  * specific InputVariableSetter class after unpacking the plugin-specific config proto.
  */
-class InputVariableSetterConfigFactory : public virtual Envoy::Config::TypedFactory,
-                                         public virtual ConfigValidator {
+class InputVariableSetterConfigFactory : public Envoy::Config::TypedFactory, public ConfigValidator {
 public:
   std::string category() const override { return "nighthawk.input_variable_setter"; }
   /**
