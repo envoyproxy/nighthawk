@@ -4,9 +4,16 @@ package nighthawk.request_source;
 
 import "google/protobuf/wrappers.proto";
 
-// Configuration for DummyPluginRequestSource (plugin name: "nighthawk.dummy") that does nothing
+// Configuration for DummyPluginRequestSource (plugin name: "nighthawk.dummy-request-source-plugin") that does nothing
 message DummyPluginRequestSourceConfig {
     // Dummy input value.
     google.protobuf.DoubleValue dummy_value = 1;
   }
-  
+// Configuration for RPCPluginRequestSource (plugin name: "nighthawk.rpc-request-source-plugin") that uses rpc
+message RPCPluginRequestSourceConfig {  
+  string uri = 1;
+}  
+// Configuration for FileBasedPluginRequestSource (plugin name: "nighthawk.file-based-request-source-plugin") that uses rpc
+message FileBasedPluginRequestSourceConfig {  
+  string uri = 1;
+}  
