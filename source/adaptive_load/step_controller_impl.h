@@ -42,7 +42,7 @@ private:
  * Factory that creates an ExponentialSearchStepController from an
  * ExponentialSearchStepControllerConfig proto. Registered as an Envoy plugin.
  */
-class ExponentialSearchStepControllerConfigFactory : public virtual StepControllerConfigFactory {
+class ExponentialSearchStepControllerConfigFactory : public StepControllerConfigFactory {
 public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
