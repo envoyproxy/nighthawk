@@ -37,7 +37,7 @@ private:
  * Factory that creates a FakeMetricsPlugin plugin from a FakeMetricsPluginConfig proto.
  * Registered as an Envoy plugin.
  */
-class FakeMetricsPluginConfigFactory : public virtual MetricsPluginConfigFactory {
+class FakeMetricsPluginConfigFactory : public MetricsPluginConfigFactory {
 public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;

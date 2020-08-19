@@ -35,7 +35,6 @@ envoy_cc_library(
     deps = [
         ":fake_metrics_plugin_proto_cc_proto",
         "//include/nighthawk/adaptive_load:metrics_plugin",
-        "//source/adaptive_load:config_validator_impl",
         "@envoy//source/common/common:assert_lib_with_external_headers",
         "@envoy//source/common/common:statusor_lib_with_external_headers",
         "@envoy//source/common/config:utility_lib_with_external_headers",
