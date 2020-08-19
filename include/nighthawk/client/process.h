@@ -23,6 +23,11 @@ public:
    * Shuts down the worker. Mandatory call before destructing.
    */
   virtual void shutdown() PURE;
+
+  /**
+   * Will request all workers to cancel execution asap.
+   */
+  virtual bool requestExecutionCancellation() PURE;
 };
 
 using ProcessPtr = std::unique_ptr<Process>;

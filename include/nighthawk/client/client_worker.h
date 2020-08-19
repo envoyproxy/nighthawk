@@ -34,6 +34,11 @@ public:
    * @return const Phase& associated to this worker.
    */
   virtual const Phase& phase() const PURE;
+
+  /**
+   * Requests execution cancellation.
+   */
+  virtual void requestExecutionCancellation() PURE;
 };
 
 using ClientWorkerPtr = std::unique_ptr<ClientWorker>;

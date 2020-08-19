@@ -2,10 +2,12 @@
 
 #include <chrono>
 #include <random>
+#include <string>
 #include <typeinfo> // std::bad_cast
 
 #include "external/envoy/source/common/protobuf/utility.h"
 #include "external/envoy/source/common/stats/isolated_store_impl.h"
+#include "external/envoy/test/mocks/stats/mocks.h"
 #include "external/envoy/test/test_common/file_system_for_test.h"
 #include "external/envoy/test/test_common/utility.h"
 
@@ -20,7 +22,8 @@ using namespace testing;
 
 namespace Nighthawk {
 
-using MyTypes = Types<SimpleStatistic, InMemoryStatistic, HdrStatistic, StreamingStatistic>;
+using MyTypes = Types<SimpleStatistic, InMemoryStatistic, HdrStatistic, StreamingStatistic,
+                      CircllhistStatistic>;
 
 template <typename T> class TypedStatisticTest : public Test {};
 
@@ -116,15 +119,15 @@ TYPED_TEST(TypedStatisticTest, SingleAndDoubleValue) {
 
   a.addValue(1);
   EXPECT_EQ(1, a.count());
-  EXPECT_DOUBLE_EQ(1, a.mean());
+  Helper::expectNear(1.0, a.mean(), a.significantDigits());
   EXPECT_DOUBLE_EQ(0, a.pvariance());
   EXPECT_DOUBLE_EQ(0, a.pstdev());
 
   a.addValue(2);
   EXPECT_EQ(2, a.count());
-  EXPECT_DOUBLE_EQ(1.5, a.mean());
-  EXPECT_DOUBLE_EQ(0.25, a.pvariance());
-  EXPECT_DOUBLE_EQ(0.5, a.pstdev());
+  Helper::expectNear(1.5, a.mean(), a.significantDigits());
+  Helper::expectNear(0.25, a.pvariance(), a.significantDigits());
+  Helper::expectNear(0.5, a.pstdev(), a.significantDigits());
 }
 
 TYPED_TEST(TypedStatisticTest, CatastrophicalCancellation) {
@@ -220,6 +223,15 @@ TYPED_TEST(TypedStatisticTest, StringOutput) {
   }
 }
 
+TYPED_TEST(TypedStatisticTest, IdFieldWorks) {
+  TypeParam statistic;
+  std::string id = "fooid";
+
+  EXPECT_EQ("", statistic.id());
+  statistic.setId(id);
+  EXPECT_EQ(id, statistic.id());
+}
+
 class StatisticTest : public Test {};
 
 // Note that we explicitly subject SimpleStatistic to the large
@@ -269,6 +281,20 @@ TEST(StatisticTest, StreamingStatProtoOutputLargeValues) {
   EXPECT_EQ(proto.pstdev().nanos(), 0);
 }
 
+TEST(StatisticTest, CircllhistStatisticProtoOutputLargeValues) {
+  CircllhistStatistic statistic;
+  uint64_t value = 100ul + 0xFFFFFFFF;
+  statistic.addValue(value);
+  statistic.addValue(value);
+  const nighthawk::client::Statistic proto =
+      statistic.toProto(Statistic::SerializationDomain::DURATION);
+
+  EXPECT_EQ(proto.count(), 2);
+  Helper::expectNear(Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(proto.mean()), value,
+                     statistic.significantDigits());
+  EXPECT_EQ(Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(proto.pstdev()), 0);
+}
+
 TEST(StatisticTest, HdrStatisticPercentilesProto) {
   nighthawk::client::Statistic parsed_json_proto;
   HdrStatistic statistic;
@@ -281,33 +307,51 @@ TEST(StatisticTest, HdrStatisticPercentilesProto) {
   util.loadFromJson(Envoy::Filesystem::fileSystemForTest().fileReadToEnd(
                         TestEnvironment::runfilesPath("test/test_data/hdr_proto_json.gold")),
                     parsed_json_proto, Envoy::ProtobufMessage::getStrictValidationVisitor());
-  // Instead of comparing proto's, we perform a string-based comparison, because that emits a
-  // helpful diff when this fails.
   const std::string json = util.getJsonStringFromMessage(
       statistic.toProto(Statistic::SerializationDomain::DURATION), true, true);
   const std::string golden_json = util.getJsonStringFromMessage(parsed_json_proto, true, true);
-  EXPECT_EQ(json, golden_json);
+  EXPECT_THAT(statistic.toProto(Statistic::SerializationDomain::DURATION),
+              Envoy::ProtoEq(parsed_json_proto))
+      << json << "\n"
+      << "is not equal to golden file:\n"
+      << golden_json;
+}
+
+TEST(StatisticTest, CircllhistStatisticPercentilesProto) {
+  nighthawk::client::Statistic parsed_json_proto;
+  CircllhistStatistic statistic;
+
+  for (int i = 1; i <= 10; i++) {
+    statistic.addValue(i);
+  }
+
+  Envoy::MessageUtil util;
+  util.loadFromJson(Envoy::Filesystem::fileSystemForTest().fileReadToEnd(
+                        TestEnvironment::runfilesPath("test/test_data/circllhist_proto_json.gold")),
+                    parsed_json_proto, Envoy::ProtobufMessage::getStrictValidationVisitor());
+  const std::string json = util.getJsonStringFromMessage(
+      statistic.toProto(Statistic::SerializationDomain::DURATION), true, true);
+  const std::string golden_json = util.getJsonStringFromMessage(parsed_json_proto, true, true);
+  EXPECT_THAT(statistic.toProto(Statistic::SerializationDomain::DURATION),
+              Envoy::ProtoEq(parsed_json_proto))
+      << json << "\n"
+      << "is not equal to golden file:\n"
+      << golden_json;
 }
 
 TEST(StatisticTest, CombineAcrossTypesFails) {
   HdrStatistic a;
   InMemoryStatistic b;
   StreamingStatistic c;
+  CircllhistStatistic d;
   EXPECT_THROW(a.combine(b), std::bad_cast);
   EXPECT_THROW(a.combine(c), std::bad_cast);
   EXPECT_THROW(b.combine(a), std::bad_cast);
   EXPECT_THROW(b.combine(c), std::bad_cast);
   EXPECT_THROW(c.combine(a), std::bad_cast);
   EXPECT_THROW(c.combine(b), std::bad_cast);
-}
-
-TEST(StatisticTest, IdFieldWorks) {
-  StreamingStatistic c;
-  std::string id = "fooid";
-
-  EXPECT_EQ("", c.id());
-  c.setId(id);
-  EXPECT_EQ(id, c.id());
+  EXPECT_THROW(c.combine(d), std::bad_cast);
+  EXPECT_THROW(d.combine(a), std::bad_cast);
 }
 
 TEST(StatisticTest, HdrStatisticOutOfRange) {
@@ -319,8 +363,74 @@ TEST(StatisticTest, HdrStatisticOutOfRange) {
 TEST(StatisticTest, NullStatistic) {
   NullStatistic stat;
   EXPECT_EQ(0, stat.count());
+  std::string id = "fooid";
+  stat.setId(id);
+  EXPECT_EQ(id, stat.id());
   stat.addValue(1);
   EXPECT_EQ(0, stat.count());
+  EXPECT_EQ(0, stat.max());
+  EXPECT_EQ(UINT64_MAX, stat.min());
+  EXPECT_EQ(0, stat.mean());
+  EXPECT_EQ(0, stat.pvariance());
+  EXPECT_EQ(0, stat.pstdev());
+  EXPECT_NE(nullptr, stat.combine(stat));
+  EXPECT_EQ(0, stat.significantDigits());
+  EXPECT_NE(nullptr, stat.createNewInstanceOfSameType());
+  const nighthawk::client::Statistic proto = stat.toProto(Statistic::SerializationDomain::RAW);
+  EXPECT_EQ(id, proto.id());
+  EXPECT_EQ(0, proto.count());
+  EXPECT_EQ(0, proto.raw_mean());
+  EXPECT_EQ(0, proto.raw_pstdev());
+  EXPECT_EQ(0, proto.raw_max());
+  EXPECT_EQ(UINT64_MAX, proto.raw_min());
+}
+
+using SinkableTypes = Types<SinkableHdrStatistic, SinkableCircllhistStatistic>;
+
+template <typename T> class SinkableStatisticTest : public Test {};
+
+TYPED_TEST_SUITE(SinkableStatisticTest, SinkableTypes);
+
+TYPED_TEST(SinkableStatisticTest, EmptySinkableStatistic) {
+  Envoy::Stats::MockIsolatedStatsStore mock_store;
+  TypeParam stat(mock_store);
+  EXPECT_EQ(0, stat.count());
+  EXPECT_TRUE(std::isnan(stat.mean()));
+  EXPECT_TRUE(std::isnan(stat.pvariance()));
+  EXPECT_TRUE(std::isnan(stat.pstdev()));
+  EXPECT_EQ(stat.min(), UINT64_MAX);
+  EXPECT_EQ(stat.max(), 0);
+  EXPECT_EQ(Envoy::Stats::Histogram::Unit::Unspecified, stat.unit());
+  EXPECT_FALSE(stat.used());
+  EXPECT_EQ("", stat.name());
+  EXPECT_EQ("", stat.tagExtractedName());
+  EXPECT_EQ(absl::nullopt, stat.worker_id());
+}
+
+TYPED_TEST(SinkableStatisticTest, SimpleSinkableStatistic) {
+  Envoy::Stats::MockIsolatedStatsStore mock_store;
+  const int worker_id = 0;
+  TypeParam stat(mock_store, worker_id);
+  const uint64_t sample_value = 123;
+  const std::string stat_name = "stat_name";
+
+  EXPECT_CALL(mock_store, deliverHistogramToSinks(_, sample_value)).Times(2);
+  stat.recordValue(sample_value);
+  stat.addValue(sample_value);
+  stat.setId(stat_name);
+
+  EXPECT_EQ(2, stat.count());
+  Helper::expectNear(123.0, stat.mean(), stat.significantDigits());
+  EXPECT_DOUBLE_EQ(0, stat.pvariance());
+  EXPECT_DOUBLE_EQ(0, stat.pstdev());
+  EXPECT_EQ(123, stat.min());
+  EXPECT_EQ(123, stat.max());
+  EXPECT_EQ(Envoy::Stats::Histogram::Unit::Unspecified, stat.unit());
+  EXPECT_TRUE(stat.used());
+  EXPECT_EQ(stat_name, stat.name());
+  EXPECT_EQ("0.stat_name", stat.tagExtractedName());
+  EXPECT_TRUE(stat.worker_id().has_value());
+  EXPECT_EQ(worker_id, stat.worker_id().value());
 }
 
 } // namespace Nighthawk

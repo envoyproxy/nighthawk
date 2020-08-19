@@ -1,3 +1,4 @@
+"""Contains the NighthawkGrpcService class."""
 import logging
 import socket
 import subprocess
@@ -5,21 +6,22 @@ import tempfile
 import threading
 import time
 
-from common import IpVersion
+from test.integration.common import IpVersion
 
 
 # TODO(oschaaf): unify some of this code with the test server wrapper.
 class NighthawkGrpcService(object):
-  """
-  Class for running the Nighthawk gRPC service in a separate process.
+  """Class for running the Nighthawk gRPC service in a separate process.
+
   Usage:
     grpc_service = NighthawkGrpcService("/path/to/nighthawk_service"), "127.0.0.1", IpVersion.IPV4)
     if grpc_service.start():
       .... You can talk to the Nighthawk gRPC service at the 127.0.0.1:grpc_service.server_port ...
 
   Attributes:
-  server_ip: IP address used by the gRPC service to listen. 
+  server_ip: IP address used by the gRPC service to listen.
   server_port: An integer, indicates the port used by the gRPC service to listen. 0 means that the server is not listening.
+  log_lines: An array of log lines emitted by the service. Available after stop() is called, reset to None on start().
   """
 
   def __init__(self,
@@ -27,7 +29,7 @@ class NighthawkGrpcService(object):
                server_ip,
                ip_version,
                service_name="traffic-generator-service"):
-    """Initializes Nighthawk gRPC service.
+    """Initialize the Nighthawk gRPC service.
 
     Args:
     server_binary_path: A string, indicates where the nighthawk gRPC service binary resides
@@ -39,6 +41,7 @@ class NighthawkGrpcService(object):
     assert ip_version != IpVersion.UNKNOWN
     self.server_port = 0
     self.server_ip = server_ip
+    self.log_lines = None
     self._server_process = None
     self._ip_version = ip_version
     self._server_binary_path = server_binary_path
@@ -55,15 +58,16 @@ class NighthawkGrpcService(object):
           "%s:0" % str(self.server_ip), "--service", self._service_name
       ]
       logging.info("Nighthawk grpc service popen() args: [%s]" % args)
-      self._server_process = subprocess.Popen(args)
-      self._server_process.communicate()
+      self._server_process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+      _, stderr = self._server_process.communicate()
+      self.log_lines = stderr.decode("utf-8").splitlines()
       self._address_file = None
 
   def _waitUntilServerListening(self):
     tries = 90
     while tries > 0:
       contents = ""
-      if not self._address_file is None:
+      if self._address_file is not None:
         try:
           with open(self._address_file) as f:
             contents = f.read().strip()
@@ -82,20 +86,21 @@ class NighthawkGrpcService(object):
     return False
 
   def start(self):
-    """
-    Starts the Nighthawk gRPC service. Returns True upon success, after which the server_port attribute
+    """Start the Nighthawk gRPC service.
+
+    Returns True upon success, after which the server_port attribute
     can be queried to get the listening port.
     """
-
+    self.log_lines = None
     self._server_thread.daemon = True
     self._server_thread.start()
     return self._waitUntilServerListening()
 
   def stop(self):
-    """
-    Signals the Nighthawk gRPC service to stop, waits for its termination, and returns the exit code of the associated process.
-    """
+    """Signals the Nighthawk gRPC service to stop.
 
+    Waits for its termination, and returns the exit code of the associated process.
+    """
     self._server_process.terminate()
     self._server_thread.join()
     self.server_port = 0

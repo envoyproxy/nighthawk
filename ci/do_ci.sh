@@ -1,29 +1,31 @@
 #!/bin/bash
 
-set -e
+set -eo pipefail
+set +x
+set -u
 
 export BUILDIFIER_BIN="${BUILDIFIER_BIN:=/usr/local/bin/buildifier}"
 export BUILDOZER_BIN="${BUILDOZER_BIN:=/usr/local/bin/buildozer}"
+export NUM_CPUS=${NUM_CPUS:=$(grep -c ^processor /proc/cpuinfo)}
+export CIRCLECI=${CIRCLECI:=""}
+export BAZEL_EXTRA_TEST_OPTIONS=${BAZEL_EXTRA_TEST_OPTIONS:=""}
+export BAZEL_OPTIONS=${BAZEL_OPTIONS:=""}
+export BAZEL_BUILD_EXTRA_OPTIONS=${BAZEL_BUILD_EXTRA_OPTIONS:=""}
+export SRCDIR=${SRCDIR:="${PWD}"}
+export CLANG_FORMAT=clang-format
 
 function do_build () {
-    bazel build $BAZEL_BUILD_OPTIONS --verbose_failures=true //:nighthawk
+    bazel build $BAZEL_BUILD_OPTIONS //:nighthawk
     tools/update_cli_readme_documentation.sh --mode check
 }
 
 function do_opt_build () {
-    bazel build $BAZEL_BUILD_OPTIONS -c opt --verbose_failures=true //:nighthawk
+    bazel build $BAZEL_BUILD_OPTIONS -c opt //:nighthawk
 }
 
 function do_test() {
-    bazel test $BAZEL_BUILD_OPTIONS $BAZEL_TEST_OPTIONS \
-    --test_output=all \
-    //test/...
-}
-
-function do_test_with_valgrind() {
-    apt-get update && apt-get install valgrind && \
-    bazel build $BAZEL_BUILD_OPTIONS -c dbg //test/... && \
-    nighthawk/tools/valgrind-tests.sh
+    bazel build -c dbg $BAZEL_BUILD_OPTIONS //test/...
+    bazel test -c dbg $BAZEL_TEST_OPTIONS --test_output=all //test/...
 }
 
 function do_clang_tidy() {
@@ -31,16 +33,17 @@ function do_clang_tidy() {
 }
 
 function do_coverage() {
-    echo "bazel coverage build with tests ${TEST_TARGETS}"
-
-    # Reduce the amount of memory Bazel tries to use to prevent it from launching too many subprocesses.
-    # This should prevent the system from running out of memory and killing tasks. See discussion on
-    # https://github.com/envoyproxy/envoy/pull/5611.
-    [ -z "$CIRCLECI" ] || export BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} --local_ram_resources=12288"
-
     export TEST_TARGETS="//test/..."
+    echo "bazel coverage build with tests ${TEST_TARGETS}"
     test/run_nighthawk_bazel_coverage.sh ${TEST_TARGETS}
     exit 0
+}
+
+function setup_gcc_toolchain() {
+    export CC=gcc
+    export CXX=g++
+    export BAZEL_COMPILER=gcc
+    echo "$CC/$CXX toolchain configured"
 }
 
 function setup_clang_toolchain() {
@@ -69,25 +72,48 @@ function run_bazel() {
     fi
 }
 
-function do_asan() {
-    echo "bazel ASAN/UBSAN debug build with tests"
-    echo "Building and testing envoy tests..."
+function do_sanitizer() {
+    CONFIG="$1"
+    echo "bazel $CONFIG debug build with tests"
+    echo "Building and testing Nighthawk tests..."
     cd "${SRCDIR}"
 
     # We build this in steps to avoid running out of memory in CI
-    run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-asan -- //source/exe/... && \
-    run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-asan -- //source/server/... && \
-    run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-asan -- //test/mocks/... && \
-    run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-asan -- //test/... && \
-    run_bazel test ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-asan -- //test/...
+    run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config="$CONFIG" -- //source/exe/... && \
+    run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config="$CONFIG" -- //source/server/... && \
+    run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config="$CONFIG" -- //test/mocks/... && \
+    run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config="$CONFIG" -- //test/... && \
+    run_bazel test ${BAZEL_TEST_OPTIONS} -c dbg --config="$CONFIG" -- //test/...
 }
 
-function do_tsan() {
-    echo "bazel TSAN debug build with tests"
-    echo "Building and testing envoy tests..."
+function cleanup_benchmark_artifacts {
+    # TODO(oschaaf): we clean the tmp dir above from uninteresting stuff
+    # that crept into the tmp/output directory. The cruft gets in there because
+    # other tooling also responds to the TMPDIR environment variable, which in retrospect
+    # was a bad choice.
+    # Consider using a different environment variable for the benchmark tooling
+    # to use for this.
+    size=${#TMPDIR}
+    if [ $size -gt 4 ] && [ -d "${TMPDIR}" ]; then
+        rm -rf ${TMPDIR}/tmp.*
+    fi
+}
+
+function do_benchmark_with_own_binaries() {
+    echo "Running benchmark framework with own binaries"
     cd "${SRCDIR}"
-    [ -z "$CIRCLECI" ] || export BAZEL_BUILD_OPTIONS="${BAZEL_TEST_OPTIONS} --local_ram_resources=12288"
-    run_bazel test ${BAZEL_TEST_OPTIONS} -c dbg --config=clang-tsan //test/...
+    # Benchmark artifacts will be dropped into this directory:
+    export TMPDIR="${SRCDIR}/generated"
+    mkdir -p "${TMPDIR}"
+    trap cleanup_benchmark_artifacts EXIT
+    run_bazel test ${BAZEL_TEST_OPTIONS} --test_summary=detailed \
+        --test_arg=--log-cli-level=info \
+        --test_env=HEAPPROFILE= \
+        --test_env=HEAPCHECK= \
+        --compilation_mode=opt \
+        --cxxopt=-g \
+        --cxxopt=-ggdb3 \
+        //benchmarks:*
 }
 
 function do_check_format() {
@@ -112,23 +138,6 @@ function do_fix_format() {
     ./tools/check_format.sh fix
     ./tools/format_python_tools.sh fix
 }
-
-[ -z "${NUM_CPUS}" ] && export NUM_CPUS=`grep -c ^processor /proc/cpuinfo`
-
-if [ -n "$CIRCLECI" ]; then
-    if [[ -f "${HOME:-/root}/.gitconfig" ]]; then
-        mv "${HOME:-/root}/.gitconfig" "${HOME:-/root}/.gitconfig_save"
-        echo 1
-    fi
-    # We constrain parallelism in CI to avoid running out of memory.	
-    NUM_CPUS=8
-    if [[ "$1" == "asan" ]]; then
-        NUM_CPUS=5
-    fi
-    if [[ "$1" == "coverage" ]]; then
-        NUM_CPUS=3
-    fi
-fi
 
 if grep 'docker\|lxc' /proc/1/cgroup; then
     # Create a fake home. Python site libs tries to do getpwuid(3) if we don't and the CI
@@ -155,62 +164,85 @@ fi
 export BAZEL_EXTRA_TEST_OPTIONS="--test_env=ENVOY_IP_TEST_VERSIONS=v4only ${BAZEL_EXTRA_TEST_OPTIONS}"
 export BAZEL_BUILD_OPTIONS=" \
 --verbose_failures ${BAZEL_OPTIONS} --action_env=HOME --action_env=PYTHONUSERBASE \
---jobs=${NUM_CPUS} --show_task_finish --experimental_generate_json_trace_profile ${BAZEL_BUILD_EXTRA_OPTIONS}"
+--experimental_local_memory_estimate \
+--show_task_finish --experimental_generate_json_trace_profile ${BAZEL_BUILD_EXTRA_OPTIONS}"
+
+if [ -n "$CIRCLECI" ]; then
+    if [[ -f "${HOME:-/root}/.gitconfig" ]]; then
+        mv "${HOME:-/root}/.gitconfig" "${HOME:-/root}/.gitconfig_save"
+        echo 1
+    fi
+    NUM_CPUS=8
+    if [[ "$1" == "test_gcc" ]]; then
+        NUM_CPUS=6
+    fi
+fi
+
+echo "Running with ${NUM_CPUS} cpus"
+BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} --jobs=${NUM_CPUS}"
+
 export BAZEL_TEST_OPTIONS="${BAZEL_BUILD_OPTIONS} --test_env=HOME --test_env=PYTHONUSERBASE \
 --test_env=UBSAN_OPTIONS=print_stacktrace=1 \
 --cache_test_results=no --test_output=all ${BAZEL_EXTRA_TEST_OPTIONS}"
-[[ -z "${SRCDIR}" ]] && SRCDIR="${PWD}"
-
-setup_clang_toolchain
-export CLANG_FORMAT=clang-format
 
 case "$1" in
     build)
+        setup_clang_toolchain
         do_build
         exit 0
     ;;
     test)
+        setup_clang_toolchain
         do_test
         exit 0
     ;;
-    test_with_valgrind)
-        do_test_with_valgrind
+    test_gcc)
+        setup_gcc_toolchain
+        do_test
         exit 0
     ;;
     clang_tidy)
-        if [ -n "$CIRCLECI" ]; then
-            # Decrease parallelism to avoid running out of memory
-            NUM_CPUS=7
-        fi
-        do_clang_tidy
+        setup_clang_toolchain
+        RUN_FULL_CLANG_TIDY=1 do_clang_tidy
         exit 0
     ;;
     coverage)
+        setup_clang_toolchain
         do_coverage
         exit 0
     ;;
     asan)
-        do_asan
+        setup_clang_toolchain
+        do_sanitizer "clang-asan"
         exit 0
     ;;
     tsan)
-        do_tsan
+        setup_clang_toolchain
+        do_sanitizer "clang-tsan"
         exit 0
     ;;
     docker)
+        setup_clang_toolchain
         do_docker
         exit 0
     ;;
     check_format)
+        setup_clang_toolchain
         do_check_format
         exit 0
     ;;
     fix_format)
+        setup_clang_toolchain
         do_fix_format
         exit 0
     ;;
+    benchmark_with_own_binaries)
+        setup_clang_toolchain
+        do_benchmark_with_own_binaries
+        exit 0
+    ;;
     *)
-        echo "must be one of [build,test,clang_tidy,test_with_valgrind,coverage,asan,tsan,docker,check_format,fix_format]"
+        echo "must be one of [build,test,clang_tidy,coverage,asan,tsan,benchmark_with_own_binaries,docker,check_format,fix_format,test_gcc]"
         exit 1
     ;;
 esac

@@ -20,6 +20,39 @@ using namespace std::chrono_literals;
 namespace Nighthawk {
 namespace Client {
 
+BenchmarkClientStatistic::BenchmarkClientStatistic(BenchmarkClientStatistic&& statistic) noexcept
+    : connect_statistic(std::move(statistic.connect_statistic)),
+      response_statistic(std::move(statistic.response_statistic)),
+      response_header_size_statistic(std::move(statistic.response_header_size_statistic)),
+      response_body_size_statistic(std::move(statistic.response_body_size_statistic)),
+      latency_1xx_statistic(std::move(statistic.latency_1xx_statistic)),
+      latency_2xx_statistic(std::move(statistic.latency_2xx_statistic)),
+      latency_3xx_statistic(std::move(statistic.latency_3xx_statistic)),
+      latency_4xx_statistic(std::move(statistic.latency_4xx_statistic)),
+      latency_5xx_statistic(std::move(statistic.latency_5xx_statistic)),
+      latency_xxx_statistic(std::move(statistic.latency_xxx_statistic)),
+      origin_latency_statistic(std::move(statistic.origin_latency_statistic)),
+      origin_receipt_statistic(std::move(statistic.origin_receipt_statistic)) {}
+
+BenchmarkClientStatistic::BenchmarkClientStatistic(
+    StatisticPtr&& connect_stat, StatisticPtr&& response_stat,
+    StatisticPtr&& response_header_size_stat, StatisticPtr&& response_body_size_stat,
+    StatisticPtr&& latency_1xx_stat, StatisticPtr&& latency_2xx_stat,
+    StatisticPtr&& latency_3xx_stat, StatisticPtr&& latency_4xx_stat,
+    StatisticPtr&& latency_5xx_stat, StatisticPtr&& latency_xxx_stat,
+    StatisticPtr&& origin_latency_stat, StatisticPtr&& origin_receipt_stat)
+    : connect_statistic(std::move(connect_stat)), response_statistic(std::move(response_stat)),
+      response_header_size_statistic(std::move(response_header_size_stat)),
+      response_body_size_statistic(std::move(response_body_size_stat)),
+      latency_1xx_statistic(std::move(latency_1xx_stat)),
+      latency_2xx_statistic(std::move(latency_2xx_stat)),
+      latency_3xx_statistic(std::move(latency_3xx_stat)),
+      latency_4xx_statistic(std::move(latency_4xx_stat)),
+      latency_5xx_statistic(std::move(latency_5xx_stat)),
+      latency_xxx_statistic(std::move(latency_xxx_stat)),
+      origin_latency_statistic(std::move(origin_latency_stat)),
+      origin_receipt_statistic(std::move(origin_receipt_stat)) {}
+
 Envoy::Http::ConnectionPool::Cancellable*
 Http1PoolImpl::newStream(Envoy::Http::ResponseDecoder& response_decoder,
                          Envoy::Http::ConnectionPool::Callbacks& callbacks) {
@@ -28,9 +61,9 @@ Http1PoolImpl::newStream(Envoy::Http::ResponseDecoder& response_decoder,
     while (host_->cluster().resourceManager(priority_).connections().canCreate()) {
       // We cannot rely on ::tryCreateConnection here, because that might decline without
       // updating connections().canCreate() above. We would risk an infinite loop.
-      ActiveClientPtr client = instantiateActiveClient();
-      connecting_request_capacity_ += client->effectiveConcurrentRequestLimit();
-      client->moveIntoList(std::move(client), owningList(client->state_));
+      Envoy::ConnectionPool::ActiveClientPtr client = instantiateActiveClient();
+      connecting_stream_capacity_ += client->effectiveConcurrentRequestLimit();
+      LinkedList::moveIntoList(std::move(client), owningList(client->state_));
     }
   }
 
@@ -38,7 +71,8 @@ Http1PoolImpl::newStream(Envoy::Http::ResponseDecoder& response_decoder,
   // of ready_clients_, which will pick the oldest one instead. This makes us cycle through
   // all the available connections.
   if (!ready_clients_.empty() && connection_reuse_strategy_ == ConnectionReuseStrategy::LRU) {
-    attachRequestToClient(*ready_clients_.back(), response_decoder, callbacks);
+    Envoy::Http::HttpAttachContext context({&response_decoder, &callbacks});
+    attachRequestToClient(*ready_clients_.back(), context);
     return nullptr;
   }
 
@@ -48,29 +82,28 @@ Http1PoolImpl::newStream(Envoy::Http::ResponseDecoder& response_decoder,
 
 BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
     Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
-    StatisticPtr&& connect_statistic, StatisticPtr&& response_statistic,
-    StatisticPtr&& response_header_size_statistic, StatisticPtr&& response_body_size_statistic,
-    StatisticPtr&& origin_latency_statistic, StatisticPtr&& origin_receipt_statistic, bool use_h2,
+    BenchmarkClientStatistic& statistic, bool use_h2,
     Envoy::Upstream::ClusterManagerPtr& cluster_manager,
     Envoy::Tracing::HttpTracerSharedPtr& http_tracer, absl::string_view cluster_name,
     RequestGenerator request_generator, const bool provide_resource_backpressure)
     : api_(api), dispatcher_(dispatcher), scope_(scope.createScope("benchmark.")),
-      connect_statistic_(std::move(connect_statistic)),
-      response_statistic_(std::move(response_statistic)),
-      response_header_size_statistic_(std::move(response_header_size_statistic)),
-      response_body_size_statistic_(std::move(response_body_size_statistic)),
-      origin_latency_statistic_(std::move(origin_latency_statistic)),
-      origin_receipt_statistic_(std::move(origin_receipt_statistic)), use_h2_(use_h2),
-      benchmark_client_stats_({ALL_BENCHMARK_CLIENT_STATS(POOL_COUNTER(*scope_))}),
+      statistic_(std::move(statistic)), use_h2_(use_h2),
+      benchmark_client_counters_({ALL_BENCHMARK_CLIENT_COUNTERS(POOL_COUNTER(*scope_))}),
       cluster_manager_(cluster_manager), http_tracer_(http_tracer),
       cluster_name_(std::string(cluster_name)), request_generator_(std::move(request_generator)),
       provide_resource_backpressure_(provide_resource_backpressure) {
-  connect_statistic_->setId("benchmark_http_client.queue_to_connect");
-  response_statistic_->setId("benchmark_http_client.request_to_response");
-  response_header_size_statistic_->setId("benchmark_http_client.response_header_size");
-  response_body_size_statistic_->setId("benchmark_http_client.response_body_size");
-  origin_latency_statistic_->setId("benchmark_http_client.origin_latency");
-  origin_receipt_statistic_->setId("benchmark_http_client.origin_delta");
+  statistic_.connect_statistic->setId("benchmark_http_client.queue_to_connect");
+  statistic_.response_statistic->setId("benchmark_http_client.request_to_response");
+  statistic_.response_header_size_statistic->setId("benchmark_http_client.response_header_size");
+  statistic_.response_body_size_statistic->setId("benchmark_http_client.response_body_size");
+  statistic_.latency_1xx_statistic->setId("benchmark_http_client.latency_1xx");
+  statistic_.latency_2xx_statistic->setId("benchmark_http_client.latency_2xx");
+  statistic_.latency_3xx_statistic->setId("benchmark_http_client.latency_3xx");
+  statistic_.latency_4xx_statistic->setId("benchmark_http_client.latency_4xx");
+  statistic_.latency_5xx_statistic->setId("benchmark_http_client.latency_5xx");
+  statistic_.latency_xxx_statistic->setId("benchmark_http_client.latency_xxx");
+  statistic_.origin_latency_statistic->setId("benchmark_http_client.origin_latency");
+  statistic_.origin_receipt_statistic->setId("benchmark_http_client.origin_delta");
 }
 
 void BenchmarkClientHttpImpl::terminate() {
@@ -83,12 +116,20 @@ void BenchmarkClientHttpImpl::terminate() {
 
 StatisticPtrMap BenchmarkClientHttpImpl::statistics() const {
   StatisticPtrMap statistics;
-  statistics[connect_statistic_->id()] = connect_statistic_.get();
-  statistics[response_statistic_->id()] = response_statistic_.get();
-  statistics[response_header_size_statistic_->id()] = response_header_size_statistic_.get();
-  statistics[response_body_size_statistic_->id()] = response_body_size_statistic_.get();
-  statistics[origin_latency_statistic_->id()] = origin_latency_statistic_.get();
-  statistics[origin_receipt_statistic_->id()] = origin_receipt_statistic_.get();
+  statistics[statistic_.connect_statistic->id()] = statistic_.connect_statistic.get();
+  statistics[statistic_.response_statistic->id()] = statistic_.response_statistic.get();
+  statistics[statistic_.response_header_size_statistic->id()] =
+      statistic_.response_header_size_statistic.get();
+  statistics[statistic_.response_body_size_statistic->id()] =
+      statistic_.response_body_size_statistic.get();
+  statistics[statistic_.latency_1xx_statistic->id()] = statistic_.latency_1xx_statistic.get();
+  statistics[statistic_.latency_2xx_statistic->id()] = statistic_.latency_2xx_statistic.get();
+  statistics[statistic_.latency_3xx_statistic->id()] = statistic_.latency_3xx_statistic.get();
+  statistics[statistic_.latency_4xx_statistic->id()] = statistic_.latency_4xx_statistic.get();
+  statistics[statistic_.latency_5xx_statistic->id()] = statistic_.latency_5xx_statistic.get();
+  statistics[statistic_.latency_xxx_statistic->id()] = statistic_.latency_xxx_statistic.get();
+  statistics[statistic_.origin_latency_statistic->id()] = statistic_.origin_latency_statistic.get();
+  statistics[statistic_.origin_receipt_statistic->id()] = statistic_.origin_receipt_statistic.get();
   return statistics;
 };
 
@@ -126,9 +167,10 @@ bool BenchmarkClientHttpImpl::tryStartRequest(CompletionCallback caller_completi
 
   auto stream_decoder = new StreamDecoder(
       dispatcher_, api_.timeSource(), *this, std::move(caller_completion_callback),
-      *connect_statistic_, *response_statistic_, *response_header_size_statistic_,
-      *response_body_size_statistic_, *origin_latency_statistic_, *origin_receipt_statistic_,
-      request->header(), shouldMeasureLatencies(), content_length, generator_, http_tracer_);
+      *statistic_.connect_statistic, *statistic_.response_statistic,
+      *statistic_.response_header_size_statistic, *statistic_.response_body_size_statistic,
+      *statistic_.origin_latency_statistic, *statistic_.origin_receipt_statistic, request->header(),
+      shouldMeasureLatencies(), content_length, generator_, http_tracer_);
   requests_initiated_++;
   pool_ptr->newStream(*stream_decoder, *stream_decoder);
   return true;
@@ -138,23 +180,23 @@ void BenchmarkClientHttpImpl::onComplete(bool success,
                                          const Envoy::Http::ResponseHeaderMap& headers) {
   requests_completed_++;
   if (!success) {
-    benchmark_client_stats_.stream_resets_.inc();
+    benchmark_client_counters_.stream_resets_.inc();
   } else {
     ASSERT(headers.Status());
     const int64_t status = Envoy::Http::Utility::getResponseStatus(headers);
 
     if (status > 99 && status <= 199) {
-      benchmark_client_stats_.http_1xx_.inc();
+      benchmark_client_counters_.http_1xx_.inc();
     } else if (status > 199 && status <= 299) {
-      benchmark_client_stats_.http_2xx_.inc();
+      benchmark_client_counters_.http_2xx_.inc();
     } else if (status > 299 && status <= 399) {
-      benchmark_client_stats_.http_3xx_.inc();
+      benchmark_client_counters_.http_3xx_.inc();
     } else if (status > 399 && status <= 499) {
-      benchmark_client_stats_.http_4xx_.inc();
+      benchmark_client_counters_.http_4xx_.inc();
     } else if (status > 499 && status <= 599) {
-      benchmark_client_stats_.http_5xx_.inc();
+      benchmark_client_counters_.http_5xx_.inc();
     } else {
-      benchmark_client_stats_.http_xxx_.inc();
+      benchmark_client_counters_.http_xxx_.inc();
     }
   }
 }
@@ -162,16 +204,33 @@ void BenchmarkClientHttpImpl::onComplete(bool success,
 void BenchmarkClientHttpImpl::onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason reason) {
   switch (reason) {
   case Envoy::Http::ConnectionPool::PoolFailureReason::Overflow:
-    benchmark_client_stats_.pool_overflow_.inc();
+    benchmark_client_counters_.pool_overflow_.inc();
     break;
   case Envoy::Http::ConnectionPool::PoolFailureReason::LocalConnectionFailure:
   case Envoy::Http::ConnectionPool::PoolFailureReason::RemoteConnectionFailure:
-    benchmark_client_stats_.pool_connection_failure_.inc();
+    benchmark_client_counters_.pool_connection_failure_.inc();
     break;
   case Envoy::Http::ConnectionPool::PoolFailureReason::Timeout:
     break;
   default:
     NOT_REACHED_GCOVR_EXCL_LINE;
+  }
+}
+
+void BenchmarkClientHttpImpl::exportLatency(const uint32_t response_code,
+                                            const uint64_t latency_ns) {
+  if (response_code > 99 && response_code <= 199) {
+    statistic_.latency_1xx_statistic->addValue(latency_ns);
+  } else if (response_code > 199 && response_code <= 299) {
+    statistic_.latency_2xx_statistic->addValue(latency_ns);
+  } else if (response_code > 299 && response_code <= 399) {
+    statistic_.latency_3xx_statistic->addValue(latency_ns);
+  } else if (response_code > 399 && response_code <= 499) {
+    statistic_.latency_4xx_statistic->addValue(latency_ns);
+  } else if (response_code > 499 && response_code <= 599) {
+    statistic_.latency_5xx_statistic->addValue(latency_ns);
+  } else {
+    statistic_.latency_xxx_statistic->addValue(latency_ns);
   }
 }
 

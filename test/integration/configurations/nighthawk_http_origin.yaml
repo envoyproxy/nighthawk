@@ -1,6 +1,6 @@
 admin:
-  access_log_path: /tmp/admin_access-$test_id.log
-  profile_path: /tmp/envoy-$test_id.prof
+  access_log_path: $tmpdir/nighthawk-test-server-admin-access.log
+  profile_path: $tmpdir/nighthawk-test-server.prof
   address:
     socket_address: { address: $server_ip, port_value: 0 }
 static_resources:
@@ -23,6 +23,7 @@ static_resources:
               domains:
               - "*"
           http_filters:
+          - name: dynamic-delay
           - name: envoy.fault
             config:
               max_active_faults: 100

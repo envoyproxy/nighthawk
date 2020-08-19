@@ -23,6 +23,7 @@
 #include "api/client/service.grpc.pb.h"
 
 #include "common/frequency.h"
+#include "common/signal_handler.h"
 #include "common/uri_impl.h"
 #include "common/utility.h"
 
@@ -73,16 +74,21 @@ bool Main::run() {
   }
   OutputFormatterFactoryImpl output_formatter_factory;
   OutputCollectorImpl output_collector(time_system, *options_);
-  const bool res = process->run(output_collector);
+  bool result;
+  {
+    auto signal_handler =
+        std::make_unique<SignalHandler>([&process]() { process->requestExecutionCancellation(); });
+    result = process->run(output_collector);
+  }
   auto formatter = output_formatter_factory.create(options_->outputFormat());
   std::cout << formatter->formatProto(output_collector.toProto());
   process->shutdown();
-  if (!res) {
+  if (!result) {
     ENVOY_LOG(error, "An error ocurred.");
   } else {
     ENVOY_LOG(info, "Done.");
   }
-  return res;
+  return result;
 }
 
 } // namespace Client

@@ -1,9 +1,9 @@
 #include <chrono>
 
+#include "external/envoy/source/common/common/random_generator.h"
 #include "external/envoy/source/common/event/dispatcher_impl.h"
 #include "external/envoy/source/common/http/header_map_impl.h"
 #include "external/envoy/source/common/network/utility.h"
-#include "external/envoy/source/common/runtime/runtime_impl.h"
 #include "external/envoy/source/common/stats/isolated_store_impl.h"
 #include "external/envoy/test/mocks/http/mocks.h"
 #include "external/envoy/test/mocks/stream_info/mocks.h"
@@ -37,6 +37,9 @@ public:
     stream_decoder_completion_callbacks_++;
   }
   void onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason) override { pool_failures_++; }
+  void exportLatency(const uint32_t, const uint64_t) override {
+    stream_decoder_export_latency_callbacks_++;
+  }
 
   Envoy::Event::TestRealTimeSystem time_system_;
   Envoy::Stats::IsolatedStoreImpl store_;
@@ -51,7 +54,8 @@ public:
   HeaderMapPtr request_headers_;
   uint64_t stream_decoder_completion_callbacks_{0};
   uint64_t pool_failures_{0};
-  Envoy::Runtime::RandomGeneratorImpl random_generator_;
+  uint64_t stream_decoder_export_latency_callbacks_{0};
+  Envoy::Random::RandomGeneratorImpl random_generator_;
   Envoy::Tracing::HttpTracerSharedPtr http_tracer_;
   Envoy::Http::ResponseHeaderMapPtr test_header_;
   Envoy::Http::ResponseTrailerMapPtr test_trailer_;
@@ -67,6 +71,7 @@ TEST_F(StreamDecoderTest, HeaderOnlyTest) {
   decoder->decodeHeaders(std::move(test_header_), true);
   EXPECT_TRUE(is_complete);
   EXPECT_EQ(1, stream_decoder_completion_callbacks_);
+  EXPECT_EQ(0, stream_decoder_export_latency_callbacks_);
 }
 
 TEST_F(StreamDecoderTest, HeaderWithBodyTest) {
@@ -96,7 +101,7 @@ TEST_F(StreamDecoderTest, TrailerTest) {
   Envoy::Http::ResponseHeaderMapPtr headers{
       new Envoy::Http::TestResponseHeaderMapImpl{{":status", "200"}}};
   decoder->decodeHeaders(std::move(headers), false);
-  auto trailers = std::make_unique<Envoy::Http::ResponseTrailerMapImpl>();
+  Envoy::Http::ResponseTrailerMapPtr trailers = Envoy::Http::ResponseTrailerMapImpl::create();
   decoder->decodeTrailers(std::move(trailers));
   EXPECT_TRUE(is_complete);
   EXPECT_EQ(1, stream_decoder_completion_callbacks_);
@@ -117,6 +122,7 @@ TEST_F(StreamDecoderTest, LatencyIsNotMeasured) {
   decoder->decodeHeaders(std::move(test_header_), true);
   EXPECT_EQ(0, connect_statistic_.count());
   EXPECT_EQ(0, latency_statistic_.count());
+  EXPECT_EQ(0, stream_decoder_export_latency_callbacks_);
 }
 
 TEST_F(StreamDecoderTest, LatencyIsMeasured) {
@@ -151,9 +157,11 @@ TEST_F(StreamDecoderTest, LatencyIsMeasured) {
   decoder->onPoolReady(stream_encoder, ptr, stream_info);
   EXPECT_EQ(1, connect_statistic_.count());
   decoder->decodeHeaders(std::move(test_header_), false);
+  EXPECT_EQ(0, stream_decoder_export_latency_callbacks_);
   decoder->decodeTrailers(std::move(test_trailer_));
   EXPECT_EQ(1, connect_statistic_.count());
   EXPECT_EQ(1, latency_statistic_.count());
+  EXPECT_EQ(1, stream_decoder_export_latency_callbacks_);
 }
 
 TEST_F(StreamDecoderTest, StreamResetTest) {
@@ -167,6 +175,7 @@ TEST_F(StreamDecoderTest, StreamResetTest) {
   decoder->onResetStream(Envoy::Http::StreamResetReason::LocalReset, "fooreason");
   EXPECT_TRUE(is_complete); // these do get reported.
   EXPECT_EQ(1, stream_decoder_completion_callbacks_);
+  EXPECT_EQ(0, stream_decoder_export_latency_callbacks_);
 }
 
 TEST_F(StreamDecoderTest, PoolFailureTest) {

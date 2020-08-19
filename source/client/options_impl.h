@@ -80,6 +80,11 @@ public:
   std::string multiTargetPath() const override { return multi_target_path_; }
   bool multiTargetUseHttps() const override { return multi_target_use_https_; }
   bool simpleWarmup() const override { return simple_warmup_; }
+  bool noDuration() const override { return no_duration_; }
+  std::vector<envoy::config::metrics::v3::StatsSink> statsSinks() const override {
+    return stats_sinks_;
+  }
+  uint32_t statsFlushInterval() const override { return stats_flush_interval_; }
 
 private:
   void parsePredicates(const TCLAP::MultiArg<std::string>& arg,
@@ -130,6 +135,9 @@ private:
   bool multi_target_use_https_{false};
   std::vector<std::string> labels_;
   bool simple_warmup_{false};
+  bool no_duration_{false};
+  std::vector<envoy::config::metrics::v3::StatsSink> stats_sinks_;
+  uint32_t stats_flush_interval_{5};
 };
 
 } // namespace Client

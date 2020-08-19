@@ -10,17 +10,6 @@
 namespace Nighthawk {
 namespace Server {
 
-namespace TestServer {
-
-class HeaderNameValues {
-public:
-  const Envoy::Http::LowerCaseString TestServerConfig{"x-nighthawk-test-server-config"};
-};
-
-using HeaderNames = Envoy::ConstSingleton<HeaderNameValues>;
-
-} // namespace TestServer
-
 // Basically this is left in as a placeholder for further configuration.
 class HttpTestServerDecoderFilterConfig {
 public:
@@ -47,33 +36,13 @@ public:
   Envoy::Http::FilterTrailersStatus decodeTrailers(Envoy::Http::RequestTrailerMap&) override;
   void setDecoderFilterCallbacks(Envoy::Http::StreamDecoderFilterCallbacks&) override;
 
-  /**
-   * Merges a json string containing configuration into a ResponseOptions instance.
-   *
-   * @param json Json-formatted seralization of ResponseOptions to merge into the configuration.
-   * @param config The target that the json string should be merged into.
-   * @param error_message Will contain an error message iff an error occurred.
-   * @return bool false iff an error occurred.
-   */
-  bool mergeJsonConfig(absl::string_view json, nighthawk::server::ResponseOptions& config,
-                       absl::optional<std::string>& error_message);
-
-  /**
-   * Applies ResponseOptions onto a HeaderMap containing response headers.
-   *
-   * @param response_headers Response headers to transform to reflect the passed in response
-   * options.
-   * @param response_options Configuration specifying how to transform the header map.
-   */
-  void applyConfigToResponseHeaders(Envoy::Http::ResponseHeaderMap& response_headers,
-                                    nighthawk::server::ResponseOptions& response_options);
-
 private:
   void sendReply();
   const HttpTestServerDecoderFilterConfigSharedPtr config_;
   Envoy::Http::StreamDecoderFilterCallbacks* decoder_callbacks_;
   nighthawk::server::ResponseOptions base_config_;
-  absl::optional<std::string> error_message_;
+  bool json_merge_error_{false};
+  std::string error_message_;
   absl::optional<std::string> request_headers_dump_;
   Envoy::TimeSource* time_source_{nullptr};
   Envoy::MonotonicTime request_time_;

@@ -33,11 +33,7 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
     return;
   }
 
-  ProcessImpl process(*options, time_system_);
-  auto logging_context = std::make_unique<Envoy::Logger::Context>(
-      spdlog::level::from_str(
-          nighthawk::client::Verbosity::VerbosityOptions_Name(options->verbosity())),
-      "[%T.%f][%t][%L] %v", log_lock_, false);
+  ProcessImpl process(*options, time_system_, process_wide_);
   OutputCollectorImpl output_collector(time_system_, *options);
   const bool ok = process.run(output_collector);
   if (!ok) {
@@ -119,7 +115,7 @@ void addHeader(envoy::api::v2::core::HeaderMap* map, absl::string_view key,
 } // namespace
 
 RequestSourcePtr RequestSourceServiceImpl::createStaticEmptyRequestSource(const uint32_t amount) {
-  Envoy::Http::RequestHeaderMapPtr header = std::make_unique<Envoy::Http::RequestHeaderMapImpl>();
+  Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
   header->addCopy(Envoy::Http::LowerCaseString("x-from-remote-request-source"), "1");
   return std::make_unique<StaticRequestSourceImpl>(std::move(header), amount);
 }
@@ -149,14 +145,11 @@ RequestSourcePtr RequestSourceServiceImpl::createStaticEmptyRequestSource(const 
       nighthawk::request_source::RequestStreamResponse response;
       auto* request_specifier = response.mutable_request_specifier();
       auto* request_headers = request_specifier->mutable_headers();
-      headers->iterate(
-          [](const Envoy::Http::HeaderEntry& header,
-             void* context) -> Envoy::Http::RequestHeaderMap::Iterate {
-            addHeader(static_cast<envoy::api::v2::core::HeaderMap*>(context),
-                      header.key().getStringView(), header.value().getStringView());
-            return Envoy::Http::RequestHeaderMap::Iterate::Continue;
-          },
-          request_headers);
+      headers->iterate([&request_headers](const Envoy::Http::HeaderEntry& header)
+                           -> Envoy::Http::HeaderMap::Iterate {
+        addHeader(request_headers, header.key().getStringView(), header.value().getStringView());
+        return Envoy::Http::RequestHeaderMap::Iterate::Continue;
+      });
       // TODO(oschaaf): add static configuration for other fields plus expectations
       ok = ok && stream->Write(response);
     }

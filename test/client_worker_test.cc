@@ -3,6 +3,7 @@
 
 #include "envoy/upstream/cluster_manager.h"
 
+#include "external/envoy/source/common/common/random_generator.h"
 #include "external/envoy/source/common/runtime/runtime_impl.h"
 #include "external/envoy/source/common/stats/isolated_store_impl.h"
 #include "external/envoy/test/mocks/local_info/mocks.h"
@@ -42,7 +43,7 @@ public:
     sequencer_ = new MockSequencer();
     request_generator_ = new MockRequestSource();
 
-    EXPECT_CALL(benchmark_client_factory_, create(_, _, _, _, _, _, _))
+    EXPECT_CALL(benchmark_client_factory_, create(_, _, _, _, _, _, _, _))
         .Times(1)
         .WillOnce(Return(ByMove(std::unique_ptr<BenchmarkClient>(benchmark_client_))));
 
@@ -90,7 +91,7 @@ public:
   MockBenchmarkClient* benchmark_client_;
   MockSequencer* sequencer_;
   MockRequestSource* request_generator_;
-  Envoy::Runtime::RandomGeneratorImpl rand_;
+  Envoy::Random::RandomGeneratorImpl rand_;
   NiceMock<Envoy::Event::MockDispatcher> dispatcher_;
   std::unique_ptr<Envoy::Runtime::ScopedLoaderSingleton> loader_;
   NiceMock<Envoy::LocalInfo::MockLocalInfo> local_info_;

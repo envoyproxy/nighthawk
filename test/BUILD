@@ -63,6 +63,22 @@ envoy_cc_test(
 )
 
 envoy_cc_test(
+    name = "flush_worker_test",
+    srcs = ["flush_worker_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/client:nighthawk_client_lib",
+        "@envoy//source/common/api:api_lib",
+        "@envoy//source/common/event:dispatcher_includes_with_external_headers",
+        "@envoy//source/common/stats:isolated_store_lib_with_external_headers",
+        "@envoy//test/mocks/api:api_mocks",
+        "@envoy//test/mocks/local_info:local_info_mocks",
+        "@envoy//test/mocks/protobuf:protobuf_mocks",
+        "@envoy//test/mocks/thread_local:thread_local_mocks",
+    ],
+)
+
+envoy_cc_test(
     name = "factories_test",
     srcs = ["factories_test.cc"],
     repository = "@envoy",
@@ -135,6 +151,7 @@ envoy_cc_test(
         "//test/client:utility_lib",
         "//test/test_common:environment_lib",
         "@envoy//test/test_common:network_utility_lib",
+        "@envoy//test/test_common:registry_lib",
     ],
 )
 
@@ -195,13 +212,17 @@ envoy_cc_test(
 envoy_cc_test(
     name = "statistic_test",
     srcs = ["statistic_test.cc"],
-    data = ["test_data/hdr_proto_json.gold"],
+    data = [
+        "test_data/circllhist_proto_json.gold",
+        "test_data/hdr_proto_json.gold",
+    ],
     repository = "@envoy",
     deps = [
         "//source/common:nighthawk_common_lib",
         "//test/test_common:environment_lib",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
         "@envoy//source/common/stats:isolated_store_lib_with_external_headers",
+        "@envoy//test/mocks/stats:stats_mocks",
     ],
 )
 
@@ -238,6 +259,7 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         "//source/common:nighthawk_common_lib",
+        "@envoy//source/common/common:random_generator_lib_with_external_headers",
         "@envoy//source/common/stats:isolated_store_lib_with_external_headers",
         "@envoy//test/mocks/local_info:local_info_mocks",
         "@envoy//test/mocks/protobuf:protobuf_mocks",
@@ -266,6 +288,7 @@ envoy_cc_test(
     deps = [
         "//source/client:nighthawk_client_lib",
         "//source/client:nighthawk_service_lib",
+        "//source/client:output_transform_main_lib",
         "//source/common:nighthawk_common_lib",
         "//source/server:http_test_server_filter_lib",
         "//test/test_common:environment_lib",

@@ -236,4 +236,118 @@ nighthawk::client::Statistic HdrStatistic::toProto(SerializationDomain domain) c
   return proto;
 }
 
+CircllhistStatistic::CircllhistStatistic() {
+  histogram_ = hist_alloc();
+  ASSERT(histogram_ != nullptr);
+}
+
+CircllhistStatistic::~CircllhistStatistic() { hist_free(histogram_); }
+
+void CircllhistStatistic::addValue(uint64_t value) {
+  hist_insert_intscale(histogram_, value, 0, 1);
+  StatisticImpl::addValue(value);
+}
+double CircllhistStatistic::mean() const { return hist_approx_mean(histogram_); }
+double CircllhistStatistic::pvariance() const { return pstdev() * pstdev(); }
+double CircllhistStatistic::pstdev() const {
+  return count() == 0 ? std::nan("") : hist_approx_stddev(histogram_);
+}
+
+StatisticPtr CircllhistStatistic::combine(const Statistic& statistic) const {
+  auto combined = std::make_unique<CircllhistStatistic>();
+  const auto& stat = dynamic_cast<const CircllhistStatistic&>(statistic);
+  hist_accumulate(combined->histogram_, &this->histogram_, /*cnt=*/1);
+  hist_accumulate(combined->histogram_, &stat.histogram_, /*cnt=*/1);
+
+  combined->min_ = std::min(this->min(), stat.min());
+  combined->max_ = std::max(this->max(), stat.max());
+  combined->count_ = this->count() + stat.count();
+  return combined;
+}
+
+StatisticPtr CircllhistStatistic::createNewInstanceOfSameType() const {
+  return std::make_unique<CircllhistStatistic>();
+}
+
+nighthawk::client::Statistic CircllhistStatistic::toProto(SerializationDomain domain) const {
+  nighthawk::client::Statistic proto = StatisticImpl::toProto(domain);
+  if (count() == 0) {
+    return proto;
+  }
+
+  // List of quantiles is based on hdr_proto_json.gold.
+  const std::vector<double> quantiles{0,    0.1,   0.2,  0.3,   0.4,  0.5,   0.55,  0.6,
+                                      0.65, 0.7,   0.75, 0.775, 0.8,  0.825, 0.85,  0.875,
+                                      0.90, 0.925, 0.95, 0.975, 0.99, 0.995, 0.999, 1};
+  std::vector<double> computed_quantiles(quantiles.size(), 0.0);
+  hist_approx_quantile(histogram_, quantiles.data(), quantiles.size(), computed_quantiles.data());
+  for (size_t i = 0; i < quantiles.size(); i++) {
+    nighthawk::client::Percentile* percentile = proto.add_percentiles();
+    if (domain == Statistic::SerializationDomain::DURATION) {
+      setDurationFromNanos(*percentile->mutable_duration(),
+                           static_cast<int64_t>(computed_quantiles[i]));
+    } else {
+      percentile->set_raw_value(computed_quantiles[i]);
+    }
+    percentile->set_percentile(quantiles[i]);
+    percentile->set_count(hist_approx_count_below(histogram_, computed_quantiles[i]));
+  }
+
+  return proto;
+}
+
+SinkableStatistic::SinkableStatistic(Envoy::Stats::Scope& scope, absl::optional<int> worker_id)
+    : Envoy::Stats::HistogramImplHelper(scope.symbolTable()), scope_(scope), worker_id_(worker_id) {
+}
+
+SinkableStatistic::~SinkableStatistic() {
+  // We must explicitly free the StatName here in order to supply the
+  // SymbolTable reference.
+  MetricImpl::clear(scope_.symbolTable());
+}
+
+Envoy::Stats::Histogram::Unit SinkableStatistic::unit() const {
+  return Envoy::Stats::Histogram::Unit::Unspecified;
+}
+
+Envoy::Stats::SymbolTable& SinkableStatistic::symbolTable() { return scope_.symbolTable(); }
+
+SinkableHdrStatistic::SinkableHdrStatistic(Envoy::Stats::Scope& scope,
+                                           absl::optional<int> worker_id)
+    : SinkableStatistic(scope, worker_id) {}
+
+void SinkableHdrStatistic::recordValue(uint64_t value) {
+  HdrStatistic::addValue(value);
+  // Currently in Envoy Scope implementation, deliverHistogramToSinks() will flush the histogram
+  // value directly to stats Sinks.
+  scope_.deliverHistogramToSinks(*this, value);
+}
+
+std::string SinkableHdrStatistic::tagExtractedName() const {
+  if (worker_id().has_value()) {
+    return fmt::format("{}.{}", worker_id().value(), id());
+  } else {
+    return id();
+  }
+}
+
+SinkableCircllhistStatistic::SinkableCircllhistStatistic(Envoy::Stats::Scope& scope,
+                                                         absl::optional<int> worker_id)
+    : SinkableStatistic(scope, worker_id) {}
+
+void SinkableCircllhistStatistic::recordValue(uint64_t value) {
+  CircllhistStatistic::addValue(value);
+  // Currently in Envoy Scope implementation, deliverHistogramToSinks() will flush the histogram
+  // value directly to stats Sinks.
+  scope_.deliverHistogramToSinks(*this, value);
+}
+
+std::string SinkableCircllhistStatistic::tagExtractedName() const {
+  if (worker_id().has_value()) {
+    return fmt::format("{}.{}", worker_id().value(), id());
+  } else {
+    return id();
+  }
+}
+
 } // namespace Nighthawk

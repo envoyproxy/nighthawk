@@ -59,10 +59,52 @@ TEST_F(OptionsImplTest, BogusRequestSource) {
                           MalformedArgvException, "Invalid replay source URI");
 }
 
+TEST_F(OptionsImplTest, NoDurationAndDurationAreMutuallyExclusive) {
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                              "{} --duration 5 --no-duration http://foo", client_name_)),
+                          MalformedArgvException, "mutually exclusive");
+}
+
+TEST_F(OptionsImplTest, DurationAndNoDurationSanity) {
+  std::unique_ptr<OptionsImpl> options =
+      TestUtility::createOptionsImpl(fmt::format("{} http://foo", client_name_));
+  EXPECT_FALSE(options->noDuration());
+  EXPECT_EQ(5s, options->duration());
+
+  CommandLineOptionsPtr cmd = options->toCommandLineOptions();
+  EXPECT_FALSE(cmd->has_no_duration());
+  ASSERT_TRUE(cmd->has_duration());
+  EXPECT_EQ(5, cmd->duration().seconds());
+
+  options =
+      TestUtility::createOptionsImpl(fmt::format("{} --no-duration http://foo", client_name_));
+  EXPECT_TRUE(options->noDuration());
+  cmd = options->toCommandLineOptions();
+  ASSERT_TRUE(cmd->has_no_duration());
+  EXPECT_TRUE(cmd->no_duration().value());
+}
+
+TEST_F(OptionsImplTest, StatsSinksMustBeSetWhenStatsFlushIntervalSet) {
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(fmt::format("{} --stats-flush-interval 10", client_name_)),
+      MalformedArgvException,
+      "if --stats-flush-interval is set, then --stats-sinks must also be set");
+}
+
 // This test should cover every option we offer, except some mutually exclusive ones that
 // have separate tests.
 TEST_F(OptionsImplTest, AlmostAll) {
   Envoy::MessageUtil util;
+  const std::string sink_json_1 =
+      "{name:\"envoy.stat_sinks.statsd\",typed_config:{\"@type\":\"type."
+      "googleapis.com/"
+      "envoy.config.metrics.v3.StatsdSink\",tcp_cluster_name:\"statsd\"}}";
+  const std::string sink_json_2 =
+      "{name:\"envoy.stat_sinks.statsd\",typed_config:{\"@type\":\"type."
+      "googleapis.com/"
+      "envoy.config.metrics.v3.StatsdSink\",tcp_cluster_name:\"statsd\",prefix:"
+      "\"nighthawk\"}}";
+
   std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(fmt::format(
       "{} --rps 4 --connections 5 --duration 6 --timeout 7 --h2 "
       "--concurrency 8 --verbosity error --output-format yaml --prefetch-connections "
@@ -75,13 +117,13 @@ TEST_F(OptionsImplTest, AlmostAll) {
       "--failure-predicate f2:2 --jitter-uniform .00001s "
       "--experimental-h2-use-multiple-connections "
       "--experimental-h1-connection-reuse-strategy lru --label label1 --label label2 {} "
-      "--simple-warmup",
+      "--simple-warmup --stats-sinks {} --stats-sinks {} --stats-flush-interval 10",
       client_name_,
       "{name:\"envoy.transport_sockets.tls\","
       "typed_config:{\"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\","
       "common_tls_context:{tls_params:{"
       "cipher_suites:[\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"]}}}}",
-      good_test_uri_));
+      good_test_uri_, sink_json_1, sink_json_2));
 
   EXPECT_EQ(4, options->requestsPerSecond());
   EXPECT_EQ(5, options->connections());
@@ -128,6 +170,26 @@ TEST_F(OptionsImplTest, AlmostAll) {
   const std::vector<std::string> expected_labels{"label1", "label2"};
   EXPECT_EQ(expected_labels, options->labels());
   EXPECT_TRUE(options->simpleWarmup());
+  EXPECT_EQ(10, options->statsFlushInterval());
+  ASSERT_EQ(2, options->statsSinks().size());
+  EXPECT_EQ("name: \"envoy.stat_sinks.statsd\"\n"
+            "typed_config {\n"
+            "  [type.googleapis.com/envoy.config.metrics.v3.StatsdSink] {\n"
+            "    tcp_cluster_name: \"statsd\"\n"
+            "  }\n"
+            "}\n"
+            "183412668: \"envoy.config.metrics.v2.StatsSink\"\n",
+            options->statsSinks()[0].DebugString());
+  EXPECT_EQ("name: \"envoy.stat_sinks.statsd\"\n"
+            "typed_config {\n"
+            "  [type.googleapis.com/envoy.config.metrics.v3.StatsdSink] {\n"
+            "    tcp_cluster_name: \"statsd\"\n"
+            "    prefix: \"nighthawk\"\n"
+            "  }\n"
+            "}\n"
+            "183412668: \"envoy.config.metrics.v2.StatsSink\"\n",
+            options->statsSinks()[1].DebugString());
+
   // Check that our conversion to CommandLineOptionsPtr makes sense.
   CommandLineOptionsPtr cmd = options->toCommandLineOptions();
   EXPECT_EQ(cmd->requests_per_second().value(), options->requestsPerSecond());
@@ -180,6 +242,10 @@ TEST_F(OptionsImplTest, AlmostAll) {
             options->h1ConnectionReuseStrategy());
   EXPECT_THAT(cmd->labels(), ElementsAreArray(expected_labels));
   EXPECT_EQ(cmd->simple_warmup().value(), options->simpleWarmup());
+  EXPECT_EQ(10, cmd->stats_flush_interval().value());
+  ASSERT_EQ(cmd->stats_sinks_size(), options->statsSinks().size());
+  EXPECT_TRUE(util(cmd->stats_sinks(0), options->statsSinks()[0]));
+  EXPECT_TRUE(util(cmd->stats_sinks(1), options->statsSinks()[1]));
 
   OptionsImpl options_from_proto(*cmd);
   std::string s1 = Envoy::MessageUtil::getYamlStringFromMessage(
@@ -203,6 +269,18 @@ TEST_F(OptionsImplTest, RequestSource) {
   // Check that our conversion to CommandLineOptionsPtr makes sense.
   CommandLineOptionsPtr cmd = options->toCommandLineOptions();
   EXPECT_EQ(cmd->request_source().uri(), request_source);
+  OptionsImpl options_from_proto(*cmd);
+  EXPECT_TRUE(util(*(options_from_proto.toCommandLineOptions()), *cmd));
+}
+
+// We test --no-duration here and not in All above because it is exclusive to --duration.
+TEST_F(OptionsImplTest, NoDuration) {
+  Envoy::MessageUtil util;
+  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(
+      fmt::format("{} --no-duration {}", client_name_, good_test_uri_));
+  EXPECT_TRUE(options->noDuration());
+  // Check that our conversion to CommandLineOptionsPtr makes sense.
+  CommandLineOptionsPtr cmd = options->toCommandLineOptions();
   OptionsImpl options_from_proto(*cmd);
   EXPECT_TRUE(util(*(options_from_proto.toCommandLineOptions()), *cmd));
 }
@@ -339,14 +417,15 @@ TEST_F(OptionsImplTest, NoArguments) {
 
 TEST_P(OptionsImplIntTestNonZeroable, NonZeroableOptions) {
   const char* option_name = GetParam();
-  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{} --{} 0 {}", client_name_,
-                                                                     option_name, good_test_uri_)),
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                              "{} --{} 0 --stats-sinks {} {}", client_name_, option_name,
+                              "{name:\"envoy.stat_sinks.statsd\"}", good_test_uri_)),
                           std::exception, "Proto constraint validation failed");
 }
 
 INSTANTIATE_TEST_SUITE_P(NonZeroableIntOptionTests, OptionsImplIntTestNonZeroable,
-                         Values("rps", "connections", "duration", "max-active-requests",
-                                "max-requests-per-connection"));
+                         Values("rps", "connections", "max-active-requests",
+                                "max-requests-per-connection", "stats-flush-interval"));
 
 // Check standard expectations for any integer values options we offer.
 TEST_P(OptionsImplIntTest, IntOptionsBadValuesTest) {
@@ -558,6 +637,18 @@ TEST_F(OptionsImplTest, BadTransportSocketSpecification) {
       MalformedArgvException,
       "Protobuf message \\(type envoy.config.core.v3.TransportSocket reason "
       "INVALID_ARGUMENT:misspelled_transport_socket: Cannot find field.\\) has unknown fields");
+}
+
+TEST_F(OptionsImplTest, BadStatsSinksSpecification) {
+  // Bad JSON
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                              "{} --stats-sinks {} http://foo/", client_name_, "{broken_json:")),
+                          MalformedArgvException, "Unable to parse JSON as proto");
+  // Correct JSON, but contents not according to spec.
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(fmt::format("{} --stats-sinks {} http://foo/", client_name_,
+                                                 "{misspelled_stats_sink:{}}")),
+      MalformedArgvException, "misspelled_stats_sink: Cannot find field");
 }
 
 class OptionsImplPredicateBasedOptionsTest : public OptionsImplTest,

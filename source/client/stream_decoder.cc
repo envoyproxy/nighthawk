@@ -68,6 +68,14 @@ void StreamDecoder::onComplete(bool success) {
   ASSERT(!success || complete_);
   if (success && measure_latencies_) {
     latency_statistic_.addValue((time_source_.monotonicTime() - request_start_).count());
+    // At this point StreamDecoder::decodeHeaders() should have been called.
+    if (stream_info_.response_code_.has_value()) {
+      decoder_completion_callback_.exportLatency(
+          stream_info_.response_code_.value(),
+          (time_source_.monotonicTime() - request_start_).count());
+    } else {
+      ENVOY_LOG(warn, "response_code is not available in onComplete");
+    }
   }
   upstream_timing_.onLastUpstreamRxByteReceived(time_source_);
   response_body_sizes_statistic_.addValue(stream_info_.bytesSent());
@@ -155,7 +163,7 @@ void StreamDecoder::finalizeActiveSpan() {
 }
 
 void StreamDecoder::setupForTracing() {
-  auto headers_copy = std::make_unique<Envoy::Http::RequestHeaderMapImpl>();
+  Envoy::Http::RequestHeaderMapPtr headers_copy = Envoy::Http::RequestHeaderMapImpl::create();
   Envoy::Http::HeaderMapImpl::copyFrom(*headers_copy, *request_headers_);
   Envoy::Tracing::Decision tracing_decision = {Envoy::Tracing::Reason::ClientForced, true};
   Envoy::Http::UUIDRequestIDExtension uuid_generator(random_generator_);
@@ -167,7 +175,7 @@ void StreamDecoder::setupForTracing() {
   // We pass in a fake remote address; recently trace finalization mandates setting this, and will
   // segfault without it.
   const auto remote_address = Envoy::Network::Address::InstanceConstSharedPtr{
-      new Envoy::Network::Address::Ipv4Instance("127.0.0.1", 0)};
+      new Envoy::Network::Address::Ipv4Instance("127.0.0.1")};
   stream_info_.setDownstreamDirectRemoteAddress(remote_address);
   // For good measure, we also set DownstreamRemoteAddress, as the associated getter will crash
   // if we don't. So this is just in case anyone calls that (or Envoy starts doing so in the

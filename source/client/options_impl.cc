@@ -48,8 +48,10 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       false, 0, "uint32_t", cmd);
   TCLAP::ValueArg<uint32_t> duration(
       "", "duration",
-      fmt::format("The number of seconds that the test should run. Default: {}.", duration_), false,
-      0, "uint32_t", cmd);
+      fmt::format("The number of seconds that the test should run. "
+                  "Default: {}. Mutually exclusive with --no-duration.",
+                  duration_),
+      false, 0, "uint32_t", cmd);
   TCLAP::ValueArg<uint32_t> timeout(
       "", "timeout",
       fmt::format("Connection connect timeout period in seconds. Default: {}.", timeout_), false, 0,
@@ -270,8 +272,44 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "this will be reflected in the counters that Nighthawk writes to the output. Default is "
       "false.",
       cmd);
+  TCLAP::SwitchArg no_duration(
+      "", "no-duration",
+      "Request infinite execution. Note that the default failure "
+      "predicates will still be added. Mutually exclusive with --duration.",
+      cmd);
+  TCLAP::MultiArg<std::string> stats_sinks(
+      "", "stats-sinks",
+      "Stats sinks (in json or compact yaml) where Nighthawk "
+      "metrics will be flushed. This argument is intended to "
+      "be specified multiple times. Example (json): "
+      "{name:\"envoy.stat_sinks.statsd\",typed_config:{\"@type\":\"type."
+      "googleapis.com/"
+      "envoy.config.metrics.v3.StatsdSink\",tcp_cluster_name:\"statsd\"}}",
+      false, "string", cmd);
+
+  TCLAP::ValueArg<uint32_t> stats_flush_interval(
+      "", "stats-flush-interval",
+      fmt::format("Time interval (in seconds) between flushes to configured "
+                  "stats sinks. Default: {}.",
+                  stats_flush_interval_),
+      false, 5, "uint32_t", cmd);
 
   Utility::parseCommand(cmd, argc, argv);
+
+  // --duration and --no-duration are mutually exclusive
+  // Would love to have used cmd.xorAdd here, but that prevents
+  // us from having a default duration when neither arg is specified,
+  // as specifying one of those became mandatory.
+  // That's why we manually validate this.
+  if (duration.isSet() && (no_duration.isSet() && no_duration.getValue() == true)) {
+    throw MalformedArgvException("--duration and --no-duration are mutually exclusive");
+  }
+
+  // Verify that if --stats-flush-interval is set, then --stats-sinks must also be set.
+  if (stats_flush_interval.isSet() && !stats_sinks.isSet()) {
+    throw MalformedArgvException(
+        "if --stats-flush-interval is set, then --stats-sinks must also be set");
+  }
 
   TCLAP_SET_IF_SPECIFIED(requests_per_second, requests_per_second_);
   TCLAP_SET_IF_SPECIFIED(connections, connections_);
@@ -373,6 +411,20 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   }
   TCLAP_SET_IF_SPECIFIED(labels, labels_);
   TCLAP_SET_IF_SPECIFIED(simple_warmup, simple_warmup_);
+  TCLAP_SET_IF_SPECIFIED(no_duration, no_duration_);
+  if (stats_sinks.isSet()) {
+    for (const std::string& stats_sink : stats_sinks.getValue()) {
+      envoy::config::metrics::v3::StatsSink sink;
+      try {
+        Envoy::MessageUtil::loadFromJson(stats_sink, sink,
+                                         Envoy::ProtobufMessage::getStrictValidationVisitor());
+      } catch (const Envoy::EnvoyException& e) {
+        throw MalformedArgvException(e.what());
+      }
+      stats_sinks_.push_back(sink);
+    }
+  }
+  TCLAP_SET_IF_SPECIFIED(stats_flush_interval, stats_flush_interval_);
 
   // CLI-specific tests.
   // TODO(oschaaf): as per mergconflicts's remark, it would be nice to aggregate
@@ -403,6 +455,9 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   }
   if (max_requests_per_connection_ > largest_acceptable_uint32_option_value) {
     throw MalformedArgvException("Invalid value for --max-requests-per-connection");
+  }
+  if (stats_flush_interval_ > largest_acceptable_uint32_option_value) {
+    throw MalformedArgvException("Invalid value for --stats-flush-interval");
   }
 
   if (!tls_context.getValue().empty()) {
@@ -541,11 +596,19 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
     jitter_uniform_ = std::chrono::nanoseconds(
         Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(options.jitter_uniform()));
   }
+  for (const envoy::config::metrics::v3::StatsSink& stats_sink : options.stats_sinks()) {
+    stats_sinks_.push_back(stats_sink);
+  }
+  stats_flush_interval_ =
+      PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, stats_flush_interval, stats_flush_interval_);
   nighthawk_service_ =
       PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, nighthawk_service, nighthawk_service_);
   h2_use_multiple_connections_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(
       options, experimental_h2_use_multiple_connections, h2_use_multiple_connections_);
   simple_warmup_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, simple_warmup, simple_warmup_);
+  if (options.has_no_duration()) {
+    no_duration_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, no_duration, no_duration_);
+  }
   std::copy(options.labels().begin(), options.labels().end(), std::back_inserter(labels_));
   validate();
 }
@@ -624,7 +687,9 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
       std::make_unique<nighthawk::client::CommandLineOptions>();
 
   command_line_options->mutable_connections()->set_value(connections_);
-  command_line_options->mutable_duration()->set_seconds(duration_);
+  if (!no_duration_) {
+    command_line_options->mutable_duration()->set_seconds(duration_);
+  }
   command_line_options->mutable_requests_per_second()->set_value(requests_per_second_);
   command_line_options->mutable_timeout()->set_seconds(timeout_);
   command_line_options->mutable_h2()->set_value(h2_);
@@ -671,7 +736,13 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
       request_options->mutable_request_body_size()->set_value(requestBodySize());
     }
   }
-  *(command_line_options->mutable_tls_context()) = tls_context_;
+
+  // Only set the tls context if needed, to avoid a warning being logged about field deprecation.
+  // Ideally this would follow the way transport_socket uses absl::optional below.
+  // But as this field is about to get eliminated this minimal effort shortcut may be more suitable.
+  if (tls_context_.ByteSizeLong() > 0) {
+    *(command_line_options->mutable_tls_context()) = tls_context_;
+  }
   if (transport_socket_.has_value()) {
     *(command_line_options->mutable_transport_socket()) = transport_socket_.value();
   }
@@ -703,6 +774,13 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
     *command_line_options->add_labels() = label;
   }
   command_line_options->mutable_simple_warmup()->set_value(simple_warmup_);
+  if (no_duration_) {
+    command_line_options->mutable_no_duration()->set_value(no_duration_);
+  }
+  for (const envoy::config::metrics::v3::StatsSink& stats_sink : stats_sinks_) {
+    *command_line_options->add_stats_sinks() = stats_sink;
+  }
+  command_line_options->mutable_stats_flush_interval()->set_value(stats_flush_interval_);
   return command_line_options;
 }
 
