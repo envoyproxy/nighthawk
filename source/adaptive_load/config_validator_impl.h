@@ -1,5 +1,3 @@
-#pragma once
-
 #include "nighthawk/adaptive_load/config_validator.h"
 
 namespace Nighthawk {
