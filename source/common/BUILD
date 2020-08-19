@@ -60,6 +60,24 @@ envoy_cc_library(
         "//include/nighthawk/common:request_source_lib",
     ],
 )
+envoy_cc_library(
+    name = "request_source_plugin_impl",
+    srcs = [
+        "request_source_plugin_impl.cc",
+    ],
+    hdrs = [
+        "request_source_plugin_impl.h",
+    ],
+    repository = "@envoy",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//include/nighthawk/common:request_source_plugin_lib",
+        ":request_impl_lib",
+        ":request_source_impl_lib",
+        "@envoy//source/common/config:utility_lib_with_external_headers",
+        "@envoy//source/common/protobuf:protobuf_with_external_headers",
+    ],
+)
 
 envoy_cc_library(
     name = "version_linkstamp",

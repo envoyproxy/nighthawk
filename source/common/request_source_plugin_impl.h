@@ -13,7 +13,14 @@ namespace Nighthawk {
 class DummyRequestSourcePlugin : public RequestSourcePlugin {
 public:
   explicit DummyRequestSourcePlugin(
-      const nighthawk::request_source_plugin::DummyPluginRequestSourceConfig& config);
+      const nighthawk::request_source::DummyPluginRequestSourceConfig& config);
+  RequestGenerator get() override;
+  /**
+   * Will be called on an intialized and running worker thread, before commencing actual work.
+   * Can be used to prepare the request source implementation (opening any connection or files
+   * needed, for example).
+   */
+  void initOnThread() override;
 
 private:
   const double dummy_value_;
@@ -28,7 +35,7 @@ class DummyRequestSourceConfigFactory : public virtual RequestSourcePluginConfig
 public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
-  RequestSourcePtr createRequestSourcePlugin(const Envoy::Protobuf::Message& message) override;
+  RequestSourcePluginPtr createRequestSourcePlugin(const Envoy::Protobuf::Message& message) override;
 };
 
 // This factory is activated through ???.
