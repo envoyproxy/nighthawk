@@ -47,6 +47,19 @@ envoy_basic_cc_library(
         "@envoy//source/common/http:headers_lib",
     ],
 )
+envoy_basic_cc_library(
+    name = "request_source_plugin_lib",
+    hdrs = [
+        "request_source_plugin.h",
+    ],
+    include_prefix = "nighthawk/common",
+    deps = [
+        ":request_source_lib",
+        "//api/request_source:request_source_plugin_cc_proto",
+        "@envoy//include/envoy/common:base_includes",
+        "@envoy//include/envoy/config:typed_config_interface",
+    ],
+)
 
 envoy_basic_cc_library(
     name = "request_source_lib",

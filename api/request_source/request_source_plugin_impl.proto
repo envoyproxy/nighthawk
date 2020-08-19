@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package nighthawk.request_source;
+
+import "google/protobuf/wrappers.proto";
+
+// Configuration for DummyPluginRequestSource (plugin name: "nighthawk.dummy") that does nothing
+message DummyPluginRequestSourceConfig {
+    // Dummy input value.
+    google.protobuf.DoubleValue dummy_value = 1;
+  }
+  
