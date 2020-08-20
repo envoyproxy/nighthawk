@@ -60,15 +60,18 @@ TEST(FakeInputVariableSetterConfigFactory, ValidateConfigWithBadConfigProtoRetur
 
 TEST(FakeInputVariableSetterConfigFactory, ValidateConfigWithWellFormedIllegalConfigReturnsError) {
   FakeInputVariableSetterConfig config;
-  // Negative value fails config validation:
-  config.set_adjustment_factor(-1.0);
+  const int kExpectedStatusCode = static_cast<int>(absl::StatusCode::kDataLoss);
+  const std::string kExpectedStatusMessage = "artificial validation failure";
+  config.mutable_artificial_validation_failure()->set_code(kExpectedStatusCode);
+  config.mutable_artificial_validation_failure()->set_message(kExpectedStatusMessage);
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<InputVariableSetterConfigFactory>(
           "nighthawk.fake-input-variable-setter");
   absl::Status status = config_factory.ValidateConfig(config_any);
-  EXPECT_THAT(status.message(), HasSubstr("Negative adjustment_factor"));
+	EXPECT_EQ(static_cast<int>(status.code()), kExpectedStatusCode);
+  EXPECT_EQ(status.message(), kExpectedStatusMessage);
 }
 
 TEST(FakeInputVariableSetterConfigFactory, ValidateConfigWithDefaultConfigReturnsOk) {
