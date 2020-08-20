@@ -67,7 +67,7 @@ MakeLowerThresholdBinaryScoringFunctionConfig(double lower_threshold) {
   config.set_name("nighthawk.binary-scoring");
   nighthawk::adaptive_load::BinaryScoringFunctionConfig inner_config;
   inner_config.mutable_lower_threshold()->set_value(lower_threshold);
-  *config.mutable_typed_config()->PackFrom(inner_config);
+  config.mutable_typed_config()->PackFrom(inner_config);
   return config;
 }
 
@@ -92,6 +92,17 @@ nighthawk::adaptive_load::AdaptiveLoadSessionSpec MakeConvergeableDoomableSessio
   *threshold->mutable_threshold_spec()->mutable_scoring_function() =
       MakeLowerThresholdBinaryScoringFunctionConfig(0.9);
   return spec;
+}
+
+envoy::config::core::v3::TypedExtensionConfig MakeFakeMetricsPluginConfig() {
+  envoy::config::core::v3::TypedExtensionConfig config;
+  config.set_name("nighthawk.fake-metrics-plugin");
+  nighthawk::adaptive_load::FakeMetricsPluginConfig inner_config;
+  nighthawk::adaptive_load::FakeMetricsPluginConfig::FakeMetric* fake_metric = inner_config.mutable_fake_metrics()->Add();
+  fake_metric->set_name("metric1");
+  fake_metric->set_value(5.0);
+  config.mutable_typed_config()->PackFrom(inner_config);
+  return config;
 }
 
 /**
@@ -327,7 +338,7 @@ TEST(AdaptiveLoadController, FailsWithNonexistentBuiltinMetricNameInMetricThresh
 
 TEST(AdaptiveLoadController, FailsWithNonexistentCustomMetricNameInMetricThresholdSpec) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
-  *spec.mutable_metrics_plugin_configs()->Add() = MakeFakeMetricsPluginConfig(0.0);
+  *spec.mutable_metrics_plugin_configs()->Add() = MakeFakeMetricsPluginConfig();
   nighthawk::adaptive_load::MetricSpecWithThreshold* threshold =
       spec.mutable_metric_thresholds()->Add();
   *threshold->mutable_threshold_spec()->mutable_scoring_function() =
@@ -354,7 +365,7 @@ TEST(AdaptiveLoadController, FailsWithNonexistentBuiltinMetricNameInInformationa
 
 TEST(AdaptiveLoadController, FailsWithNonexistentCustomMetricNameInInformationalMetricSpec) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
-  *spec.mutable_metrics_plugin_configs()->Add() = MakeFakeMetricsPluginConfig(0.0);
+  *spec.mutable_metrics_plugin_configs()->Add() = MakeFakeMetricsPluginConfig();
   nighthawk::adaptive_load::MetricSpec* metric_spec =
       spec.mutable_informational_metric_specs()->Add();
   metric_spec->set_metric_name("nonexistent-metric-name");
@@ -502,11 +513,11 @@ TEST(AdaptiveLoadController, UsesCommandLineOptionsFromController) {
 
 TEST(AdaptiveLoadController, UsesDefaultMetricWeight) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec = MakeConvergeableDoomableSessionSpec();
-  *spec.mutable_metrics_plugin_configs()->Add() = MakeFakeMetricsPluginConfig(0.0);
+  *spec.mutable_metrics_plugin_configs()->Add() = MakeFakeMetricsPluginConfig();
 
   nighthawk::adaptive_load::MetricSpecWithThreshold* threshold =
       spec.mutable_metric_thresholds()->Add();
-  threshold->mutable_metric_spec()->set_metric_name("good-metric");
+  threshold->mutable_metric_spec()->set_metric_name("metric1");
   threshold->mutable_metric_spec()->set_metrics_plugin_name("nighthawk.fake-metrics-plugin");
   *threshold->mutable_threshold_spec()->mutable_scoring_function() =
       MakeLowerThresholdBinaryScoringFunctionConfig(0.0);
@@ -526,11 +537,11 @@ TEST(AdaptiveLoadController, UsesDefaultMetricWeight) {
 
 TEST(AdaptiveLoadController, UsesCustomMetricWeight) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec = MakeConvergeableDoomableSessionSpec();
-  *spec.mutable_metrics_plugin_configs()->Add() = MakeFakeMetricsPluginConfig(0.0);
+  *spec.mutable_metrics_plugin_configs()->Add() = MakeFakeMetricsPluginConfig();
 
   nighthawk::adaptive_load::MetricSpecWithThreshold* threshold =
       spec.mutable_metric_thresholds()->Add();
-  threshold->mutable_metric_spec()->set_metric_name("good-metric");
+  threshold->mutable_metric_spec()->set_metric_name("metric1");
   threshold->mutable_metric_spec()->set_metrics_plugin_name("nighthawk.fake-metrics-plugin");
   *threshold->mutable_threshold_spec()->mutable_scoring_function() =
       MakeLowerThresholdBinaryScoringFunctionConfig(0.0);
@@ -719,11 +730,11 @@ TEST(AdaptiveLoadController, StoresInformationalBuiltinMetric) {
 
 TEST(AdaptiveLoadController, EvaluatesCustomMetric) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec = MakeConvergeableDoomableSessionSpec();
-
-  *spec.mutable_metrics_plugin_configs()->Add() = MakeFakeMetricsPluginConfig(5.0);
+  // Configures a metric with value 5.0:
+  *spec.mutable_metrics_plugin_configs()->Add() = MakeFakeMetricsPluginConfig();
   nighthawk::adaptive_load::MetricSpecWithThreshold* threshold =
       spec.mutable_metric_thresholds()->Add();
-  threshold->mutable_metric_spec()->set_metric_name("good-metric");
+  threshold->mutable_metric_spec()->set_metric_name("metric1");
   threshold->mutable_metric_spec()->set_metrics_plugin_name("nighthawk.fake-metrics-plugin");
   *threshold->mutable_threshold_spec()->mutable_scoring_function() =
       MakeLowerThresholdBinaryScoringFunctionConfig(6.0);
@@ -744,10 +755,10 @@ TEST(AdaptiveLoadController, EvaluatesCustomMetric) {
 
 TEST(AdaptiveLoadController, StoresInformationalCustomMetric) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec = MakeConvergeableDoomableSessionSpec();
-  *spec.mutable_metrics_plugin_configs()->Add() = MakeFakeMetricsPluginConfig(/*fixed_metric_value=*/5);
+  *spec.mutable_metrics_plugin_configs()->Add() = MakeFakeMetricsPluginConfig();
   nighthawk::adaptive_load::MetricSpec* metric_spec =
       spec.mutable_informational_metric_specs()->Add();
-  metric_spec->set_metric_name("good-metric");
+  metric_spec->set_metric_name("metric1");
   metric_spec->set_metrics_plugin_name("nighthawk.fake-metrics-plugin");
 
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
