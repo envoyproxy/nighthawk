@@ -51,7 +51,7 @@ public:
         .Times(1)
         .WillOnce(Return(ByMove(std::unique_ptr<Sequencer>(sequencer_))));
 
-    EXPECT_CALL(request_generator_factory_, create(_, _, _, _))
+    EXPECT_CALL(request_generator_factory_, create(_))
         .Times(1)
         .WillOnce(Return(ByMove(std::unique_ptr<RequestSource>(request_generator_))));
     EXPECT_CALL(*request_generator_, initOnThread()).Times(1);
