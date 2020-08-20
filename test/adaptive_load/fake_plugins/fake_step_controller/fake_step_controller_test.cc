@@ -1,14 +1,7 @@
-<<<<<<< HEAD
-#include "api/adaptive_load/benchmark_result.pb.h"
-#include "api/client/options.pb.h"
-#include "envoy/registry/registry.h"
-#include "adaptive_load/plugin_loader.h"
-=======
 #include "adaptive_load/plugin_loader.h"
 #include "api/adaptive_load/benchmark_result.pb.h"
 #include "api/client/options.pb.h"
 #include "envoy/registry/registry.h"
->>>>>>> adaptive-rps-fake-step-controller
 #include "test/adaptive_load/fake_plugins/fake_step_controller/fake_step_controller.h"
 
 #include "external/envoy/source/common/config/utility.h"
@@ -19,33 +12,21 @@
 namespace Nighthawk {
 namespace {
 
-<<<<<<< HEAD
-=======
 using ::Envoy::Protobuf::util::MessageDifferencer;
->>>>>>> adaptive-rps-fake-step-controller
 using ::nighthawk::adaptive_load::BenchmarkResult;
 using ::nighthawk::adaptive_load::FakeStepControllerConfig;
 using ::nighthawk::adaptive_load::MetricEvaluation;
 using ::nighthawk::client::CommandLineOptions;
-<<<<<<< HEAD
-=======
 using ::testing::HasSubstr;
->>>>>>> adaptive-rps-fake-step-controller
 
 TEST(FakeStepControllerConfigFactory, CreateEmptyConfigProtoCreatesCorrectType) {
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<StepControllerConfigFactory>(
           "nighthawk.fake-step-controller");
-<<<<<<< HEAD
-  Envoy::ProtobufTypes::MessagePtr message = config_factory.createEmptyConfigProto();
-  FakeStepControllerConfig expected_config;
-  EXPECT_EQ(message->DebugString(), expected_config.DebugString());
-=======
   Envoy::ProtobufTypes::MessagePtr empty_config = config_factory.createEmptyConfigProto();
   FakeStepControllerConfig expected_config;
   EXPECT_EQ(empty_config->DebugString(), expected_config.DebugString());
   EXPECT_TRUE(MessageDifferencer::Equivalent(*empty_config, expected_config));
->>>>>>> adaptive-rps-fake-step-controller
 }
 
 TEST(FakeStepControllerConfigFactory, FactoryRegistersUnderCorrectName) {

@@ -60,22 +60,14 @@ private:
  * Factory that creates a FakeStepController plugin from a FakeStepControllerConfig proto.
  * Registered as an Envoy plugin.
  */
-<<<<<<< HEAD
-class FakeStepControllerConfigFactory : public virtual StepControllerConfigFactory,
-                                        public virtual NullConfigValidator {
-=======
 class FakeStepControllerConfigFactory : public StepControllerConfigFactory {
->>>>>>> adaptive-rps-fake-step-controller
 public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
   StepControllerPtr createStepController(
       const Envoy::Protobuf::Message& config_any,
       const nighthawk::client::CommandLineOptions& command_line_options_template) override;
-<<<<<<< HEAD
-=======
   absl::Status ValidateConfig(const Envoy::Protobuf::Message& message) const override;
->>>>>>> adaptive-rps-fake-step-controller
 };
 
 // This factory is activated through LoadStepControllerPlugin in plugin_util.h.

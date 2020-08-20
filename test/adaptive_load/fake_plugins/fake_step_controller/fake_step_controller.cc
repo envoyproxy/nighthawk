@@ -1,10 +1,5 @@
 #include "test/adaptive_load/fake_plugins/fake_step_controller/fake_step_controller.h"
 #include "api/adaptive_load/benchmark_result.pb.h"
-<<<<<<< HEAD
-
-namespace Nighthawk {
-
-=======
 #include "test/adaptive_load/fake_plugins/fake_step_controller/fake_step_controller.pb.h"
 
 namespace Nighthawk {
@@ -17,7 +12,6 @@ absl::Status StatusFromProtoRpcStatus(const google::rpc::Status& status_proto) {
 
 } // namespace
 
->>>>>>> adaptive-rps-fake-step-controller
 FakeStepController::FakeStepController(
     const nighthawk::adaptive_load::FakeStepControllerConfig& config,
     nighthawk::client::CommandLineOptions command_line_options_template)
