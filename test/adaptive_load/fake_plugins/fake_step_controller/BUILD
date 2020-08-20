@@ -31,7 +31,6 @@ envoy_cc_test_library(
         "fake_step_controller.h",
     ],
     repository = "@envoy",
-    visibility = ["//visibility:public"],
     deps = [
         ":fake_step_controller_proto_cc_proto",
         "//api/client:grpc_service_lib",
