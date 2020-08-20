@@ -46,7 +46,7 @@ const std::vector<std::string> FakeMetricsPlugin::GetAllSupportedMetricNames() c
   return metric_names;
 }
 
-std::string FakeMetricsPluginConfigFactory::name() const { return "nighthawk.fake-metrics-plugin"; }
+std::string FakeMetricsPluginConfigFactory::name() const { return "nighthawk.fake_metrics_plugin"; }
 
 Envoy::ProtobufTypes::MessagePtr FakeMetricsPluginConfigFactory::createEmptyConfigProto() {
   return std::make_unique<nighthawk::adaptive_load::FakeMetricsPluginConfig>();
