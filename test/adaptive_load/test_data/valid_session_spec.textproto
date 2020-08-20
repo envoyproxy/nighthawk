@@ -23,7 +23,7 @@ nighthawk_traffic_template {
 }
 
 step_controller_config {
-  name: "nighthawk.exponential-search"
+  name: "nighthawk.exponential_search"
   typed_config {
     [type.googleapis.com/nighthawk.adaptive_load.ExponentialSearchStepControllerConfig] {
       initial_value: 10.0

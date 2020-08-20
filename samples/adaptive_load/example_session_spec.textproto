@@ -100,7 +100,7 @@ testing_stage_duration {
 }
 
 step_controller_config {
-  name: "nighthawk.exponential-search"
+  name: "nighthawk.exponential_search"
   typed_config {
     [type.googleapis.com/nighthawk.adaptive_load.ExponentialSearchStepControllerConfig] {
       input_variable_setter {
