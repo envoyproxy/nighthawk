@@ -2,7 +2,6 @@
 
 #include "envoy/registry/registry.h"
 
-#include "adaptive_load/config_validator_impl.h"
 #include "nighthawk/adaptive_load/scoring_function.h"
 
 #include "api/adaptive_load/scoring_function_impl.pb.h"
