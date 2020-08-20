@@ -58,7 +58,7 @@ TEST(FakeInputVariableSetterConfigFactory, ValidateConfigWithBadConfigProtoRetur
   EXPECT_THAT(status.message(), HasSubstr("Failed to parse"));
 }
 
-TEST(FakeInputVariableSetterConfigFactory, ValidateConfigWithWellFormedIllegalConfigReturnsError) {
+TEST(FakeInputVariableSetterConfigFactory, ValidateConfigWithArtificialValidationErrorReturnsError) {
   FakeInputVariableSetterConfig config;
   const int kExpectedStatusCode = static_cast<int>(absl::StatusCode::kDataLoss);
   const std::string kExpectedStatusMessage = "artificial validation failure";
