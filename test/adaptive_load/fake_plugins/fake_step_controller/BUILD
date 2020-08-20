@@ -37,7 +37,6 @@ envoy_cc_library(
         "//api/client:grpc_service_lib",
         "//include/nighthawk/adaptive_load:input_variable_setter",
         "//include/nighthawk/adaptive_load:step_controller",
-        "//source/adaptive_load:config_validator_impl",
         "@envoy//source/common/common:assert_lib_with_external_headers",
         "@envoy//source/common/common:statusor_lib_with_external_headers",
         "@envoy//source/common/config:utility_lib_with_external_headers",

@@ -3,6 +3,7 @@ syntax = "proto3";
 package nighthawk.adaptive_load;
 
 import "envoy/config/core/v3/extension.proto";
+import "google/rpc/status.proto";
 
 // Configuration for FakeStepController (plugin name: "nighthawk.fake-step-controller") that always
 // returns a fixed RPS value and changes converged and doomed states based on the latest reported
@@ -10,4 +11,6 @@ import "envoy/config/core/v3/extension.proto";
 message FakeStepControllerConfig {
   // RPS that should always be returned. Optional, default 0.
   int32 fixed_rps_value = 1;
+  // Artificial error that the plugin factory should return during validation. Optional.
+  google.rpc.Status artificial_validation_failure = 2;
 }

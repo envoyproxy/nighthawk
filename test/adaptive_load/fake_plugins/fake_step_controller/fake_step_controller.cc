@@ -1,8 +1,23 @@
 #include "test/adaptive_load/fake_plugins/fake_step_controller/fake_step_controller.h"
 #include "api/adaptive_load/benchmark_result.pb.h"
+<<<<<<< HEAD
 
 namespace Nighthawk {
 
+=======
+#include "test/adaptive_load/fake_plugins/fake_step_controller/fake_step_controller.pb.h"
+
+namespace Nighthawk {
+
+namespace {
+
+absl::Status StatusFromProtoRpcStatus(const google::rpc::Status& status_proto) {
+  return absl::Status(static_cast<absl::StatusCode>(status_proto.code()), status_proto.message());
+}
+
+} // namespace
+
+>>>>>>> adaptive-rps-fake-step-controller
 FakeStepController::FakeStepController(
     const nighthawk::adaptive_load::FakeStepControllerConfig& config,
     nighthawk::client::CommandLineOptions command_line_options_template)
@@ -61,6 +76,22 @@ StepControllerPtr FakeStepControllerConfigFactory::createStepController(
   nighthawk::adaptive_load::FakeStepControllerConfig config;
   Envoy::MessageUtil::unpackTo(any, config);
   return std::make_unique<FakeStepController>(config, command_line_options_template);
+}
+
+absl::Status
+FakeStepControllerConfigFactory::ValidateConfig(const Envoy::Protobuf::Message& message) const {
+  try {
+    const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
+    nighthawk::adaptive_load::FakeStepControllerConfig config;
+    Envoy::MessageUtil::unpackTo(any, config);
+    if (config.has_artificial_validation_failure()) {
+      return StatusFromProtoRpcStatus(config.artificial_validation_failure());
+    }
+    return absl::OkStatus();
+  } catch (const Envoy::EnvoyException& e) {
+    return absl::InvalidArgumentError(
+        absl::StrCat("Failed to parse FakeStepControllerConfig proto: ", e.what()));
+  }
 }
 
 REGISTER_FACTORY(FakeStepControllerConfigFactory, StepControllerConfigFactory);
