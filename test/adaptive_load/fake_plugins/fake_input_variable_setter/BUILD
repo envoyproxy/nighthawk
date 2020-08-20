@@ -1,8 +1,8 @@
 load("@envoy_api//bazel:api_build_system.bzl", "api_cc_py_proto_library")
 load(
     "@envoy//bazel:envoy_build_system.bzl",
-    "envoy_cc_library",
     "envoy_cc_test",
+    "envoy_cc_test_library",
     "envoy_package",
 )
 
@@ -22,7 +22,7 @@ api_cc_py_proto_library(
     ],
 )
 
-envoy_cc_library(
+envoy_cc_test_library(
     name = "fake_input_variable_setter",
     srcs = [
         "fake_input_variable_setter.cc",
@@ -31,12 +31,10 @@ envoy_cc_library(
         "fake_input_variable_setter.h",
     ],
     repository = "@envoy",
-    visibility = ["//visibility:public"],
     deps = [
         ":fake_input_variable_setter_proto_cc_proto",
         "//api/client:grpc_service_lib",
         "//include/nighthawk/adaptive_load:input_variable_setter",
-        "//source/adaptive_load:config_validator_impl",
         "@envoy//source/common/common:assert_lib_with_external_headers",
         "@envoy//source/common/common:statusor_lib_with_external_headers",
         "@envoy//source/common/config:utility_lib_with_external_headers",

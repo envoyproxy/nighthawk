@@ -2,6 +2,14 @@
 
 namespace Nighthawk {
 
+namespace {
+
+absl::Status StatusFromProtoRpcStatus(const google::rpc::Status& status_proto) {
+  return absl::Status(static_cast<absl::StatusCode>(status_proto.code()), status_proto.message());
+}
+
+} // namespace
+
 FakeInputVariableSetter::FakeInputVariableSetter(
     const nighthawk::adaptive_load::FakeInputVariableSetterConfig& config)
     : adjustment_factor_{config.adjustment_factor() > 0 ? config.adjustment_factor() : 1} {}
@@ -35,9 +43,8 @@ FakeInputVariableSetterConfigFactory::ValidateConfig(const Envoy::Protobuf::Mess
     const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
     nighthawk::adaptive_load::FakeInputVariableSetterConfig config;
     Envoy::MessageUtil::unpackTo(any, config);
-    if (config.adjustment_factor() < 0) {
-      return absl::InvalidArgumentError(
-          "Negative adjustment_factor triggered validation failure.");
+    if (config.has_artificial_validation_failure()) {
+      return StatusFromProtoRpcStatus(config.artificial_validation_failure());
     }
     return absl::OkStatus();
   } catch (const Envoy::EnvoyException& e) {

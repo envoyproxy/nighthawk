@@ -3,7 +3,6 @@
 #include "nighthawk/adaptive_load/input_variable_setter.h"
 #include "nighthawk/adaptive_load/step_controller.h"
 
-#include "adaptive_load/config_validator_impl.h"
 #include "api/adaptive_load/adaptive_load.pb.h"
 #include "api/adaptive_load/benchmark_result.pb.h"
 #include "api/adaptive_load/step_controller_impl.pb.h"
@@ -42,7 +41,7 @@ private:
  * Factory that creates an ExponentialSearchStepController from an
  * ExponentialSearchStepControllerConfig proto. Registered as an Envoy plugin.
  */
-class ExponentialSearchStepControllerConfigFactory : public virtual StepControllerConfigFactory {
+class ExponentialSearchStepControllerConfigFactory : public StepControllerConfigFactory {
 public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;

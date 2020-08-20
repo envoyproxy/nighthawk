@@ -2,7 +2,6 @@
 
 #include "envoy/registry/registry.h"
 
-#include "adaptive_load/config_validator_impl.h"
 #include "nighthawk/adaptive_load/input_variable_setter.h"
 
 #include "api/adaptive_load/input_variable_setter_impl.pb.h"
@@ -29,13 +28,13 @@ public:
  * A factory that creates an RequestsPerSecondInputVariableSetter from a
  * RequestsPerSecondInputVariableSetterConfig proto.
  */
-class RequestsPerSecondInputVariableSetterConfigFactory : public virtual InputVariableSetterConfigFactory,
-                                                          public virtual NullConfigValidator {
+class RequestsPerSecondInputVariableSetterConfigFactory : public InputVariableSetterConfigFactory {
 public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
   InputVariableSetterPtr
   createInputVariableSetter(const Envoy::Protobuf::Message& message) override;
+  absl::Status ValidateConfig(const Envoy::Protobuf::Message& message) const override;
 };
 
 // This factory is activated through LoadInputVariableSetterPlugin in plugin_util.h.

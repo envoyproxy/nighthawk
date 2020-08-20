@@ -11,7 +11,6 @@
 #include "api/client/options.pb.h"
 
 #include "adaptive_load/plugin_loader.h"
-#include "adaptive_load/config_validator_impl.h"
 #include "adaptive_load/step_controller_impl.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
