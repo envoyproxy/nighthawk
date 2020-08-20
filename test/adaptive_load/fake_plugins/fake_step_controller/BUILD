@@ -1,8 +1,8 @@
 load("@envoy_api//bazel:api_build_system.bzl", "api_cc_py_proto_library")
 load(
     "@envoy//bazel:envoy_build_system.bzl",
-    "envoy_cc_library",
     "envoy_cc_test",
+    "envoy_cc_test_library",
     "envoy_package",
 )
 
@@ -22,7 +22,7 @@ api_cc_py_proto_library(
     ],
 )
 
-envoy_cc_library(
+envoy_cc_test_library(
     name = "fake_step_controller",
     srcs = [
         "fake_step_controller.cc",
