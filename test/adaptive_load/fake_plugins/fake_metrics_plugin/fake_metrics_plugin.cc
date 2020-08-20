@@ -1,22 +1,49 @@
 #include "test/adaptive_load/fake_plugins/fake_metrics_plugin/fake_metrics_plugin.h"
 #include "api/adaptive_load/benchmark_result.pb.h"
 #include "envoy/common/exception.h"
+#include "test/adaptive_load/fake_plugins/fake_metrics_plugin/fake_metrics_plugin.pb.h"
 
 namespace Nighthawk {
 
+namespace {
+
+absl::Status StatusFromProtoRpcStatus(const google::rpc::Status& status_proto) {
+  return absl::Status(static_cast<absl::StatusCode>(status_proto.code()), status_proto.message());
+}
+
+absl::StatusOr<double> StatusOrFromFakeMetricProto(
+    const nighthawk::adaptive_load::FakeMetricsPluginConfig::FakeMetric& fake_metric) {
+  if (fake_metric.has_error_status()) {
+    return StatusFromProtoRpcStatus(fake_metric.error_status());
+  } else {
+    return fake_metric.value();
+  }
+}
+
+} // namespace
+
 FakeMetricsPlugin::FakeMetricsPlugin(
-    const nighthawk::adaptive_load::FakeMetricsPluginConfig& config)
-    : fixed_metric_value_{config.fixed_metric_value()} {}
+    const nighthawk::adaptive_load::FakeMetricsPluginConfig& config) {
+  for (const nighthawk::adaptive_load::FakeMetricsPluginConfig::FakeMetric& fake_metric :
+       config.fake_metrics()) {
+    value_or_error_from_name_[fake_metric.name()] = StatusOrFromFakeMetricProto(fake_metric);
+  }
+}
 
 absl::StatusOr<double> FakeMetricsPlugin::GetMetricByName(absl::string_view metric_name) {
-  if (metric_name == "bad-metric") {
-    return absl::InternalError("bad-metric requested");
+  if (value_or_error_from_name_.find(metric_name) == value_or_error_from_name_.end()) {
+    return absl::InternalError(absl::StrCat("GetMetricByName called on metric name '", metric_name,
+                                            "' not defined in FakeMetricsPluginConfig proto."));
   }
-  return fixed_metric_value_;
+  return value_or_error_from_name_[metric_name];
 }
 
 const std::vector<std::string> FakeMetricsPlugin::GetAllSupportedMetricNames() const {
-  return {"good-metric", "bad-metric"};
+  std::vector<std::string> metric_names;
+  for (const auto& key_value : value_or_error_from_name_) {
+    metric_names.push_back(key_value.first);
+  }
+  return metric_names;
 }
 
 std::string FakeMetricsPluginConfigFactory::name() const { return "nighthawk.fake-metrics-plugin"; }
@@ -39,9 +66,8 @@ FakeMetricsPluginConfigFactory::ValidateConfig(const Envoy::Protobuf::Message& m
     const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
     nighthawk::adaptive_load::FakeMetricsPluginConfig config;
     Envoy::MessageUtil::unpackTo(any, config);
-    if (config.fixed_metric_value() < 0) {
-      return absl::InvalidArgumentError(
-          "Negative fixed_metric_value triggered validation failure.");
+    if (config.has_artificial_validation_failure()) {
+      return StatusFromProtoRpcStatus(config.artificial_validation_failure());
     }
     return absl::OkStatus();
   } catch (const Envoy::EnvoyException& e) {
@@ -49,19 +75,7 @@ FakeMetricsPluginConfigFactory::ValidateConfig(const Envoy::Protobuf::Message& m
         absl::StrCat("Failed to parse FakeMetricsPluginConfig proto: ", e.what()));
   }
 }
-  
-REGISTER_FACTORY(FakeMetricsPluginConfigFactory, MetricsPluginConfigFactory);
 
-envoy::config::core::v3::TypedExtensionConfig
-MakeFakeMetricsPluginConfig(double fixed_metric_value) {
-  envoy::config::core::v3::TypedExtensionConfig outer_config;
-  outer_config.set_name("nighthawk.fake-metrics-plugin");
-  nighthawk::adaptive_load::FakeMetricsPluginConfig config;
-  config.set_fixed_metric_value(fixed_metric_value);
-  Envoy::ProtobufWkt::Any config_any;
-  config_any.PackFrom(config);
-  *outer_config.mutable_typed_config() = config_any;
-  return outer_config;
-}
+REGISTER_FACTORY(FakeMetricsPluginConfigFactory, MetricsPluginConfigFactory);
 
 } // namespace Nighthawk

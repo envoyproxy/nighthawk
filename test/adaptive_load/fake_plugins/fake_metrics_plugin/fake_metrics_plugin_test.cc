@@ -17,6 +17,33 @@ using ::nighthawk::adaptive_load::FakeMetricsPluginConfig;
 using ::nighthawk::adaptive_load::MetricEvaluation;
 using ::nighthawk::client::CommandLineOptions;
 using ::testing::HasSubstr;
+using ::Envoy::Protobuf::util::MessageDifferencer;
+
+FakeMetricsPluginConfig
+MakeFakeMetricsPluginConfigWithValidationFailureValue(absl::Status validation_error) {
+  FakeMetricsPluginConfig config;
+  config.mutable_artificial_validation_failure()->set_code(static_cast<int>(validation_error.code()));
+  config.mutable_artificial_validation_failure()->set_message(std::string(validation_error.message()));
+  return config;
+}
+
+FakeMetricsPluginConfig MakeFakeMetricsPluginConfigWithValue(absl::string_view name, double value) {
+  FakeMetricsPluginConfig config;
+  FakeMetricsPluginConfig::FakeMetric* fake_metric = config.mutable_fake_metrics()->Add();
+  fake_metric->set_name(std::string(name));
+  fake_metric->set_value(value);
+  return config;
+}
+
+FakeMetricsPluginConfig MakeFakeMetricsPluginConfigWithError(absl::string_view name,
+                                                             absl::Status error) {
+  FakeMetricsPluginConfig config;
+  FakeMetricsPluginConfig::FakeMetric* fake_metric = config.mutable_fake_metrics()->Add();
+  fake_metric->set_name(std::string(name));
+  fake_metric->mutable_error_status()->set_code(static_cast<int>(error.code()));
+  fake_metric->mutable_error_status()->set_message(std::string(error.message()));
+  return config;
+}
 
 TEST(FakeMetricsPluginConfigFactory, CreateEmptyConfigProtoCreatesCorrectType) {
   auto& config_factory =
@@ -25,14 +52,13 @@ TEST(FakeMetricsPluginConfigFactory, CreateEmptyConfigProtoCreatesCorrectType) {
   Envoy::ProtobufTypes::MessagePtr empty_config = config_factory.createEmptyConfigProto();
   FakeMetricsPluginConfig expected_config;
   EXPECT_EQ(empty_config->DebugString(), expected_config.DebugString());
-  EXPECT_TRUE(Envoy::MessageUtil()(*empty_config, expected_config));
+  EXPECT_TRUE(MessageDifferencer::Equivalent(*empty_config, expected_config));
 }
 
 TEST(FakeMetricsPluginConfigFactory, FactoryRegistersUnderCorrectName) {
   FakeMetricsPluginConfig config;
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
-  CommandLineOptions options;
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<MetricsPluginConfigFactory>(
           "nighthawk.fake-metrics-plugin");
@@ -43,7 +69,6 @@ TEST(FakeMetricsPluginConfigFactory, CreateMetricsPluginCreatesCorrectPluginType
   FakeMetricsPluginConfig config;
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
-  CommandLineOptions options;
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<MetricsPluginConfigFactory>(
           "nighthawk.fake-metrics-plugin");
@@ -61,87 +86,40 @@ TEST(FakeMetricsPluginConfigFactory, ValidateConfigWithBadConfigProtoReturnsErro
 }
 
 TEST(FakeMetricsPluginConfigFactory, ValidateConfigWithWellFormedIllegalConfigReturnsError) {
-  FakeMetricsPluginConfig config;
-  // Negative value fails config validation:
-  config.set_fixed_metric_value(-1.0);
-  Envoy::ProtobufWkt::Any config_any;
-  config_any.PackFrom(config);
+  Envoy::ProtobufWkt::Any any;
+  any.PackFrom(MakeFakeMetricsPluginConfigWithValidationFailureValue(
+      absl::DeadlineExceededError("artificial validation failure")));
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<MetricsPluginConfigFactory>(
           "nighthawk.fake-metrics-plugin");
-  absl::Status status = config_factory.ValidateConfig(config_any);
-  EXPECT_THAT(status.message(), HasSubstr("Negative fixed_metric_value"));
+  absl::Status status = config_factory.ValidateConfig(any);
+  EXPECT_EQ(status.code(), absl::StatusCode::kDeadlineExceeded);
+  EXPECT_THAT(status.message(), "artificial validation failure");
 }
 
-TEST(FakeMetricsPluginConfigFactory, ValidateConfigWithDefaultConfigReturnsOk) {
-  FakeMetricsPluginConfig config;
-  Envoy::ProtobufWkt::Any config_any;
-  config_any.PackFrom(config);
-  auto& config_factory =
-      Envoy::Config::Utility::getAndCheckFactoryByName<MetricsPluginConfigFactory>(
-          "nighthawk.fake-metrics-plugin");
-  absl::Status status = config_factory.ValidateConfig(config_any);
-  EXPECT_TRUE(status.ok());
-}
-
-TEST(FakeMetricsPluginConfigFactory, ValidateConfigWithValidConfigReturnsOk) {
-  FakeMetricsPluginConfig config;
-  config.set_fixed_metric_value(1.0);
-  Envoy::ProtobufWkt::Any config_any;
-  config_any.PackFrom(config);
-  auto& config_factory =
-      Envoy::Config::Utility::getAndCheckFactoryByName<MetricsPluginConfigFactory>(
-          "nighthawk.fake-metrics-plugin");
-  absl::Status status = config_factory.ValidateConfig(config_any);
-  EXPECT_TRUE(status.ok());
-}
-
-TEST(FakeMetricsPlugin, GetMetricByNameReturnsDefaultValueForGoodMetricName) {
-  FakeMetricsPlugin metrics_plugin(FakeMetricsPluginConfig{});
-  absl::StatusOr<double> metric_value_or = metrics_plugin.GetMetricByName("good-metric");
-  ASSERT_TRUE(metric_value_or.ok());
-  EXPECT_EQ(metric_value_or.value(), 0.0);
-}
-
-TEST(FakeMetricsPlugin, GetMetricByNameReturnsValueFromConfigForGoodMetricName) {
-  FakeMetricsPluginConfig config;
+TEST(FakeMetricsPlugin, GetMetricByNameReturnsValueFromConfig) {
   const double kExpectedValue = 5678.0;
-  config.set_fixed_metric_value(kExpectedValue);
-  FakeMetricsPlugin metrics_plugin(config);
+  FakeMetricsPlugin metrics_plugin(
+      MakeFakeMetricsPluginConfigWithValue("good-metric", kExpectedValue));
   absl::StatusOr<double> metric_value_or = metrics_plugin.GetMetricByName("good-metric");
+  // ASSERT_OK(metric_value_or.status());
   ASSERT_TRUE(metric_value_or.ok());
   EXPECT_EQ(metric_value_or.value(), kExpectedValue);
 }
 
-TEST(FakeMetricsPlugin, GetMetricByNameReturnsErrorStatusForBadName) {
-  FakeMetricsPluginConfig config;
-  config.set_fixed_metric_value(0.0);
-  FakeMetricsPlugin metrics_plugin(config);
+TEST(FakeMetricsPlugin, GetMetricByNameReturnsErrorStatusFromConfig) {
+  FakeMetricsPlugin metrics_plugin(
+      MakeFakeMetricsPluginConfigWithError("bad-metric", absl::DataLossError("metric error")));
   absl::StatusOr<double> metric_value_or = metrics_plugin.GetMetricByName("bad-metric");
-  EXPECT_FALSE(metric_value_or.ok());
-  EXPECT_EQ(metric_value_or.status().message(), "bad-metric requested");
+  // EXPECT_FALSE(metric_value_or.ok());
+  // ASSERT_NOT_OK(metric_value_or.status());
+  EXPECT_EQ(metric_value_or.status().code(), absl::StatusCode::kDataLoss);
+  EXPECT_EQ(metric_value_or.status().message(), "metric error");
 }
 
 TEST(FakeMetricsPlugin, GetAllSupportedMetricNamesReturnsCorrectValues) {
-  FakeMetricsPlugin metrics_plugin(FakeMetricsPluginConfig{});
-  EXPECT_THAT(metrics_plugin.GetAllSupportedMetricNames(),
-              ::testing::ElementsAre("good-metric", "bad-metric"));
-}
-
-TEST(MakeFakeMetricsPluginConfig, ActivatesFakeMetricsPlugin) {
-  absl::StatusOr<MetricsPluginPtr> plugin_or = LoadMetricsPlugin(MakeFakeMetricsPluginConfig(0.0));
-  ASSERT_TRUE(plugin_or.ok());
-  EXPECT_NE(dynamic_cast<FakeMetricsPlugin*>(plugin_or.value().get()), nullptr);
-}
-
-TEST(MakeFakeMetricsPluginConfig, ProducesFakeMetricsPluginWithConfiguredValue) {
-  absl::StatusOr<MetricsPluginPtr> plugin_or = LoadMetricsPlugin(MakeFakeMetricsPluginConfig(5.0));
-  ASSERT_TRUE(plugin_or.ok());
-  auto* plugin = dynamic_cast<FakeMetricsPlugin*>(plugin_or.value().get());
-  ASSERT_NE(plugin, nullptr);
-  absl::StatusOr<double> value_or = plugin->GetMetricByName("good-metric");
-  ASSERT_TRUE(value_or.ok());
-  EXPECT_EQ(value_or.value(), 5.0);
+  FakeMetricsPlugin metrics_plugin(MakeFakeMetricsPluginConfigWithValue("metric1", 0.0));
+  EXPECT_THAT(metrics_plugin.GetAllSupportedMetricNames(), ::testing::ElementsAre("metric1"));
 }
 
 } // namespace

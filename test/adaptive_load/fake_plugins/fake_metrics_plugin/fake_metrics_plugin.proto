@@ -3,11 +3,23 @@ syntax = "proto3";
 package nighthawk.adaptive_load;
 
 import "envoy/config/core/v3/extension.proto";
+import "google/rpc/status.proto";
 
-// Configuration for FakeMetricsPlugin (plugin name: "nighthawk.fake-metrics-plugin") that always
-// returns a fixed value.
+// Configuration for FakeMetricsPlugin (plugin name: "nighthawk.fake-metrics-plugin") that returns
+// fixed values or errors.
 message FakeMetricsPluginConfig {
-  // Metric value that should always be returned for metric name "good-metric". Set a negative value
-  // to trigger a validation failure from the plugin-specific config validator. Optional, default 0.
-  double fixed_metric_value = 1;
+  message FakeMetric {
+    // The metric name passed in when querying the plugin.
+    string name = 1;
+    oneof value_or_error {
+      // A fixed value the plugin returns for this metric name.
+      double value = 2;
+      // An error status the plugin returns for this metric name.
+      google.rpc.Status error_status = 3;
+    }
+  }
+  // Fake values or errors to be returned when querying FakeMetricsPlugin.
+  repeated FakeMetric fake_metrics = 1;
+  // Artificial error that the plugin factory should return during validation. Optional.
+  google.rpc.Status artificial_validation_failure = 2;
 }
