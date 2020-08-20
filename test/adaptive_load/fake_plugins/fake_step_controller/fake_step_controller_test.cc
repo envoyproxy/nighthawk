@@ -62,7 +62,7 @@ TEST(FakeStepControllerConfigFactory, ValidateConfigWithBadConfigProtoReturnsErr
 }
 
 TEST(FakeStepControllerConfigFactory, ValidateConfigWithWellFormedIllegalConfigReturnsError) {
-  const int kExpectedStatusCode = static_cast<int>(absl::StatusCode::kDataLoss);
+  const int kExpectedStatusCode = ::grpc::DATA_LOSS;
   const std::string kExpectedStatusMessage = "artificial validation error";
   FakeStepControllerConfig config;
   config.mutable_artificial_validation_failure()->set_code(kExpectedStatusCode);
