@@ -11,9 +11,6 @@ namespace Nighthawk {
 
 namespace {
 
-using nighthawk::adaptive_load::BinaryScoringFunctionConfig;
-using nighthawk::adaptive_load::LinearScoringFunctionConfig;
-
 TEST(BinaryScoringFunctionConfigFactory, CreateEmptyConfigProtoCreatesCorrectType) {
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<ScoringFunctionConfigFactory>(
@@ -98,32 +95,35 @@ TEST(LinearScoringFunctionConfigFactory, CreateScoringFunctionThrowsExceptionWit
   EXPECT_THROW(config_factory.createScoringFunction(config_any), Envoy::EnvoyException);
 }
 
-BinaryScoringFunctionConfig MakeBinaryConfigWithUpperThreshold(double upper_threshold) {
-  BinaryScoringFunctionConfig config;
+nighthawk::adaptive_load::BinaryScoringFunctionConfig
+MakeBinaryConfigWithUpperThreshold(double upper_threshold) {
+  nighthawk::adaptive_load::BinaryScoringFunctionConfig config;
   config.mutable_upper_threshold()->set_value(upper_threshold);
   return config;
 }
 
-BinaryScoringFunctionConfig MakeBinaryConfigWithLowerThreshold(double lower_threshold) {
-  BinaryScoringFunctionConfig config;
+nighthawk::adaptive_load::BinaryScoringFunctionConfig
+MakeBinaryConfigWithLowerThreshold(double lower_threshold) {
+  nighthawk::adaptive_load::BinaryScoringFunctionConfig config;
   config.mutable_lower_threshold()->set_value(lower_threshold);
   return config;
 }
 
-BinaryScoringFunctionConfig MakeBinaryConfigWithBothThresholds(double lower_threshold,
-                                                               double upper_threshold) {
-  BinaryScoringFunctionConfig config;
+nighthawk::adaptive_load::BinaryScoringFunctionConfig
+MakeBinaryConfigWithBothThresholds(double lower_threshold, double upper_threshold) {
+  nighthawk::adaptive_load::BinaryScoringFunctionConfig config;
   config.mutable_lower_threshold()->set_value(lower_threshold);
   config.mutable_upper_threshold()->set_value(upper_threshold);
   return config;
 }
 
 class BinaryScoringFunctionFixture
-    : public ::testing::TestWithParam<std::tuple<
-          BinaryScoringFunctionConfig, /*metric value*/ double, /*expected score*/ double>> {};
+    : public ::testing::TestWithParam<
+          std::tuple<nighthawk::adaptive_load::BinaryScoringFunctionConfig, /*metric value*/ double,
+                     /*expected score*/ double>> {};
 
 TEST_P(BinaryScoringFunctionFixture, ComputesCorrectScore) {
-  const BinaryScoringFunctionConfig& config = std::get<0>(GetParam());
+  const nighthawk::adaptive_load::BinaryScoringFunctionConfig& config = std::get<0>(GetParam());
   const double metric_value = std::get<1>(GetParam());
   const double expected_score = std::get<2>(GetParam());
   BinaryScoringFunction scoring_function(config);
@@ -132,21 +132,23 @@ TEST_P(BinaryScoringFunctionFixture, ComputesCorrectScore) {
 
 INSTANTIATE_TEST_SUITE_P(
     BinaryScoringFunctionTest, BinaryScoringFunctionFixture,
-    ::testing::ValuesIn(std::vector<std::tuple<BinaryScoringFunctionConfig, /*metric value*/ double,
-                                               /*expected score*/ double>>{
-        {MakeBinaryConfigWithUpperThreshold(5.0), 4.0, 1.0},
-        {MakeBinaryConfigWithUpperThreshold(5.0), 5.0, 1.0},
-        {MakeBinaryConfigWithUpperThreshold(5.0), 6.0, -1.0},
+    ::testing::ValuesIn(
+        std::vector<std::tuple<nighthawk::adaptive_load::BinaryScoringFunctionConfig,
+                               /*metric value*/ double,
+                               /*expected score*/ double>>{
+            {MakeBinaryConfigWithUpperThreshold(5.0), 4.0, 1.0},
+            {MakeBinaryConfigWithUpperThreshold(5.0), 5.0, 1.0},
+            {MakeBinaryConfigWithUpperThreshold(5.0), 6.0, -1.0},
 
-        {MakeBinaryConfigWithLowerThreshold(5.0), 4.0, -1.0},
-        {MakeBinaryConfigWithLowerThreshold(5.0), 5.0, 1.0},
-        {MakeBinaryConfigWithLowerThreshold(5.0), 6.0, 1.0},
+            {MakeBinaryConfigWithLowerThreshold(5.0), 4.0, -1.0},
+            {MakeBinaryConfigWithLowerThreshold(5.0), 5.0, 1.0},
+            {MakeBinaryConfigWithLowerThreshold(5.0), 6.0, 1.0},
 
-        {MakeBinaryConfigWithBothThresholds(5.0, 7.0), 6.0, 1.0},
-        {MakeBinaryConfigWithBothThresholds(5.0, 7.0), 5.0, 1.0},
-        {MakeBinaryConfigWithBothThresholds(5.0, 7.0), 7.0, 1.0},
-        {MakeBinaryConfigWithBothThresholds(5.0, 7.0), 4.0, -1.0},
-        {MakeBinaryConfigWithBothThresholds(5.0, 7.0), 8.0, -1.0}}));
+            {MakeBinaryConfigWithBothThresholds(5.0, 7.0), 6.0, 1.0},
+            {MakeBinaryConfigWithBothThresholds(5.0, 7.0), 5.0, 1.0},
+            {MakeBinaryConfigWithBothThresholds(5.0, 7.0), 7.0, 1.0},
+            {MakeBinaryConfigWithBothThresholds(5.0, 7.0), 4.0, -1.0},
+            {MakeBinaryConfigWithBothThresholds(5.0, 7.0), 8.0, -1.0}}));
 
 TEST(LinearScoringFunction, EvaluateMetricReturnsZeroForValueEqualToThreshold) {
   nighthawk::adaptive_load::LinearScoringFunctionConfig config;
