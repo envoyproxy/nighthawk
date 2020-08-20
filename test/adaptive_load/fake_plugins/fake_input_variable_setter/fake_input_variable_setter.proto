@@ -4,7 +4,7 @@ package nighthawk.adaptive_load;
 
 import "google/rpc/status.proto";
 
-// Configuration for FakeInputVariableSetter (plugin name: "nighthawk.fake-input-variable-setter")
+// Configuration for FakeInputVariableSetter (plugin name: "nighthawk.fake_input_variable_setter")
 // that sets the |connections| field in CommandLineOptions.
 message FakeInputVariableSetterConfig {
   // A factor that multiplies the input value before applying it, in order to test the propagation

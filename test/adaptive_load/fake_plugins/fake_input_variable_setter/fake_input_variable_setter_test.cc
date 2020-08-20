@@ -20,7 +20,7 @@ using ::testing::HasSubstr;
 TEST(FakeInputVariableSetterConfigFactory, CreateEmptyConfigProtoCreatesCorrectType) {
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<InputVariableSetterConfigFactory>(
-          "nighthawk.fake-input-variable-setter");
+          "nighthawk.fake_input_variable_setter");
   Envoy::ProtobufTypes::MessagePtr message = config_factory.createEmptyConfigProto();
   FakeInputVariableSetterConfig expected_config;
   EXPECT_EQ(message->DebugString(), expected_config.DebugString());
@@ -33,8 +33,8 @@ TEST(FakeInputVariableSetterConfigFactory, FactoryRegistersUnderCorrectName) {
   CommandLineOptions options;
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<InputVariableSetterConfigFactory>(
-          "nighthawk.fake-input-variable-setter");
-  EXPECT_EQ(config_factory.name(), "nighthawk.fake-input-variable-setter");
+          "nighthawk.fake_input_variable_setter");
+  EXPECT_EQ(config_factory.name(), "nighthawk.fake_input_variable_setter");
 }
 
 TEST(FakeInputVariableSetterConfigFactory, CreateInputVariableSetterCreatesCorrectPluginType) {
@@ -44,7 +44,7 @@ TEST(FakeInputVariableSetterConfigFactory, CreateInputVariableSetterCreatesCorre
   CommandLineOptions options;
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<InputVariableSetterConfigFactory>(
-          "nighthawk.fake-input-variable-setter");
+          "nighthawk.fake_input_variable_setter");
   InputVariableSetterPtr plugin = config_factory.createInputVariableSetter(config_any);
   EXPECT_NE(dynamic_cast<FakeInputVariableSetter*>(plugin.get()), nullptr);
 }
@@ -53,7 +53,7 @@ TEST(FakeInputVariableSetterConfigFactory, ValidateConfigWithBadConfigProtoRetur
   Envoy::ProtobufWkt::Any empty_any;
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<InputVariableSetterConfigFactory>(
-          "nighthawk.fake-input-variable-setter");
+          "nighthawk.fake_input_variable_setter");
   absl::Status status = config_factory.ValidateConfig(empty_any);
   EXPECT_THAT(status.message(), HasSubstr("Failed to parse"));
 }
@@ -68,7 +68,7 @@ TEST(FakeInputVariableSetterConfigFactory, ValidateConfigWithArtificialValidatio
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<InputVariableSetterConfigFactory>(
-          "nighthawk.fake-input-variable-setter");
+          "nighthawk.fake_input_variable_setter");
   absl::Status status = config_factory.ValidateConfig(config_any);
 	EXPECT_EQ(static_cast<int>(status.code()), kExpectedStatusCode);
   EXPECT_EQ(status.message(), kExpectedStatusMessage);
@@ -80,7 +80,7 @@ TEST(FakeInputVariableSetterConfigFactory, ValidateConfigWithDefaultConfigReturn
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<InputVariableSetterConfigFactory>(
-          "nighthawk.fake-input-variable-setter");
+          "nighthawk.fake_input_variable_setter");
   absl::Status status = config_factory.ValidateConfig(config_any);
   EXPECT_TRUE(status.ok());
 }
@@ -92,7 +92,7 @@ TEST(FakeInputVariableSetterConfigFactory, ValidateConfigWithValidConfigReturnsO
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<InputVariableSetterConfigFactory>(
-          "nighthawk.fake-input-variable-setter");
+          "nighthawk.fake_input_variable_setter");
   absl::Status status = config_factory.ValidateConfig(config_any);
   EXPECT_TRUE(status.ok());
 }
