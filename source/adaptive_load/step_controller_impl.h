@@ -35,7 +35,7 @@ private:
   // Whether the algorithm is in the exponential stage, as opposed to the subsequent binary search
   // stage.
   bool is_exponential_phase_;
-  // The factor for increasing the load value during the exponential stage.
+  // The factor for increasing the load value in each recalculation during the exponential stage.
   double exponential_factor_;
   // The previous load the controller recommended before the most recent recalculation. NaN
   // initially.
