@@ -56,9 +56,6 @@ TEST(FakeMetricsPluginConfigFactory, CreateEmptyConfigProtoCreatesCorrectType) {
 }
 
 TEST(FakeMetricsPluginConfigFactory, FactoryRegistersUnderCorrectName) {
-  FakeMetricsPluginConfig config;
-  Envoy::ProtobufWkt::Any config_any;
-  config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<MetricsPluginConfigFactory>(
           "nighthawk.fake-metrics-plugin");
