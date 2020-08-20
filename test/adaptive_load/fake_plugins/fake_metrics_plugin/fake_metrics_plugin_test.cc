@@ -12,38 +12,12 @@
 namespace Nighthawk {
 namespace {
 
+using ::Envoy::Protobuf::util::MessageDifferencer;
 using ::nighthawk::adaptive_load::BenchmarkResult;
 using ::nighthawk::adaptive_load::FakeMetricsPluginConfig;
 using ::nighthawk::adaptive_load::MetricEvaluation;
 using ::nighthawk::client::CommandLineOptions;
 using ::testing::HasSubstr;
-using ::Envoy::Protobuf::util::MessageDifferencer;
-
-FakeMetricsPluginConfig
-MakeFakeMetricsPluginConfigWithValidationFailureValue(absl::Status validation_error) {
-  FakeMetricsPluginConfig config;
-  config.mutable_artificial_validation_failure()->set_code(static_cast<int>(validation_error.code()));
-  config.mutable_artificial_validation_failure()->set_message(std::string(validation_error.message()));
-  return config;
-}
-
-FakeMetricsPluginConfig MakeFakeMetricsPluginConfigWithValue(absl::string_view name, double value) {
-  FakeMetricsPluginConfig config;
-  FakeMetricsPluginConfig::FakeMetric* fake_metric = config.mutable_fake_metrics()->Add();
-  fake_metric->set_name(std::string(name));
-  fake_metric->set_value(value);
-  return config;
-}
-
-FakeMetricsPluginConfig MakeFakeMetricsPluginConfigWithError(absl::string_view name,
-                                                             absl::Status error) {
-  FakeMetricsPluginConfig config;
-  FakeMetricsPluginConfig::FakeMetric* fake_metric = config.mutable_fake_metrics()->Add();
-  fake_metric->set_name(std::string(name));
-  fake_metric->mutable_error_status()->set_code(static_cast<int>(error.code()));
-  fake_metric->mutable_error_status()->set_message(std::string(error.message()));
-  return config;
-}
 
 TEST(FakeMetricsPluginConfigFactory, CreateEmptyConfigProtoCreatesCorrectType) {
   auto& config_factory =
@@ -83,40 +57,59 @@ TEST(FakeMetricsPluginConfigFactory, ValidateConfigWithBadConfigProtoReturnsErro
 }
 
 TEST(FakeMetricsPluginConfigFactory, ValidateConfigWithWellFormedIllegalConfigReturnsError) {
+  const int kExpectedStatusCode = static_cast<int>(absl::StatusCode::kDataLoss);
+  const std::string kExpectedStatusMessage = "artificial validation failure";
+  FakeMetricsPluginConfig config;
+  config.mutable_artificial_validation_failure()->set_code(kExpectedStatusCode);
+  config.mutable_artificial_validation_failure()->set_message(kExpectedStatusMessage);
   Envoy::ProtobufWkt::Any any;
-  any.PackFrom(MakeFakeMetricsPluginConfigWithValidationFailureValue(
-      absl::DeadlineExceededError("artificial validation failure")));
+  any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<MetricsPluginConfigFactory>(
           "nighthawk.fake-metrics-plugin");
   absl::Status status = config_factory.ValidateConfig(any);
-  EXPECT_EQ(status.code(), absl::StatusCode::kDeadlineExceeded);
-  EXPECT_THAT(status.message(), "artificial validation failure");
+  EXPECT_EQ(static_cast<int>(status.code()), kExpectedStatusCode);
+  EXPECT_THAT(status.message(), kExpectedStatusMessage);
 }
 
 TEST(FakeMetricsPlugin, GetMetricByNameReturnsValueFromConfig) {
   const double kExpectedValue = 5678.0;
-  FakeMetricsPlugin metrics_plugin(
-      MakeFakeMetricsPluginConfigWithValue("good-metric", kExpectedValue));
-  absl::StatusOr<double> metric_value_or = metrics_plugin.GetMetricByName("good-metric");
-  // ASSERT_OK(metric_value_or.status());
+  const std::string kMetricName = "good-metric";
+  FakeMetricsPluginConfig config;
+  FakeMetricsPluginConfig::FakeMetric* fake_metric = config.mutable_fake_metrics()->Add();
+  fake_metric->set_name(kMetricName);
+  fake_metric->set_value(kExpectedValue);
+  FakeMetricsPlugin metrics_plugin(config);
+  absl::StatusOr<double> metric_value_or = metrics_plugin.GetMetricByName(kMetricName);
   ASSERT_TRUE(metric_value_or.ok());
   EXPECT_EQ(metric_value_or.value(), kExpectedValue);
 }
 
 TEST(FakeMetricsPlugin, GetMetricByNameReturnsErrorStatusFromConfig) {
-  FakeMetricsPlugin metrics_plugin(
-      MakeFakeMetricsPluginConfigWithError("bad-metric", absl::DataLossError("metric error")));
-  absl::StatusOr<double> metric_value_or = metrics_plugin.GetMetricByName("bad-metric");
-  // EXPECT_FALSE(metric_value_or.ok());
-  // ASSERT_NOT_OK(metric_value_or.status());
-  EXPECT_EQ(metric_value_or.status().code(), absl::StatusCode::kDataLoss);
-  EXPECT_EQ(metric_value_or.status().message(), "metric error");
+  const int kExpectedStatusCode = static_cast<int>(absl::StatusCode::kFailedPrecondition);
+  const std::string kMetricName = "bad-metric";
+  const std::string kExpectedStatusMessage = "artificial metric error";
+  FakeMetricsPluginConfig config;
+  FakeMetricsPluginConfig::FakeMetric* fake_metric = config.mutable_fake_metrics()->Add();
+  fake_metric->set_name(kMetricName);
+  fake_metric->mutable_error_status()->set_code(kExpectedStatusCode);
+  fake_metric->mutable_error_status()->set_message(kExpectedStatusMessage);
+  FakeMetricsPlugin metrics_plugin(config);
+  absl::StatusOr<double> metric_value_or = metrics_plugin.GetMetricByName(kMetricName);
+  EXPECT_EQ(static_cast<int>(metric_value_or.status().code()), kExpectedStatusCode);
+  EXPECT_EQ(metric_value_or.status().message(), kExpectedStatusMessage);
 }
 
 TEST(FakeMetricsPlugin, GetAllSupportedMetricNamesReturnsCorrectValues) {
-  FakeMetricsPlugin metrics_plugin(MakeFakeMetricsPluginConfigWithValue("metric1", 0.0));
-  EXPECT_THAT(metrics_plugin.GetAllSupportedMetricNames(), ::testing::ElementsAre("metric1"));
+  FakeMetricsPluginConfig config;
+  FakeMetricsPluginConfig::FakeMetric* fake_metric1 = config.mutable_fake_metrics()->Add();
+  fake_metric1->set_name("metric1");
+  FakeMetricsPluginConfig::FakeMetric* fake_metric2 = config.mutable_fake_metrics()->Add();
+  fake_metric2->set_name("metric2");
+
+  FakeMetricsPlugin metrics_plugin(config);
+  EXPECT_THAT(metrics_plugin.GetAllSupportedMetricNames(),
+              ::testing::UnorderedElementsAre("metric1", "metric2"));
 }
 
 } // namespace
