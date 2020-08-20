@@ -61,14 +61,12 @@ TEST(FakeStepControllerConfigFactory, ValidateConfigWithBadConfigProtoReturnsErr
   EXPECT_THAT(status.message(), HasSubstr("Failed to parse"));
 }
 
-TEST(FakeStepControllerConfigFactory, ValidateConfigWithWellFormedIllegalConfigReturnsError) {
+TEST(FakeStepControllerConfigFactory, ValidateConfigWithAritificialValidationErrorReturnsError) {
   const int kExpectedStatusCode = ::grpc::DATA_LOSS;
   const std::string kExpectedStatusMessage = "artificial validation error";
   FakeStepControllerConfig config;
   config.mutable_artificial_validation_failure()->set_code(kExpectedStatusCode);
   config.mutable_artificial_validation_failure()->set_message(kExpectedStatusMessage);
-
-  config.set_fixed_rps_value(-1);
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
