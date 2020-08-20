@@ -1,7 +1,7 @@
+#include "adaptive_load/plugin_loader.h"
 #include "api/adaptive_load/benchmark_result.pb.h"
 #include "api/client/options.pb.h"
 #include "envoy/registry/registry.h"
-#include "adaptive_load/plugin_loader.h"
 #include "test/adaptive_load/fake_plugins/fake_step_controller/fake_step_controller.h"
 
 #include "external/envoy/source/common/config/utility.h"
@@ -12,12 +12,12 @@
 namespace Nighthawk {
 namespace {
 
+using ::Envoy::Protobuf::util::MessageDifferencer;
 using ::nighthawk::adaptive_load::BenchmarkResult;
 using ::nighthawk::adaptive_load::FakeStepControllerConfig;
 using ::nighthawk::adaptive_load::MetricEvaluation;
 using ::nighthawk::client::CommandLineOptions;
 using ::testing::HasSubstr;
-using ::Envoy::Protobuf::util::MessageDifferencer;
 
 TEST(FakeStepControllerConfigFactory, CreateEmptyConfigProtoCreatesCorrectType) {
   auto& config_factory =
@@ -62,8 +62,12 @@ TEST(FakeStepControllerConfigFactory, ValidateConfigWithBadConfigProtoReturnsErr
 }
 
 TEST(FakeStepControllerConfigFactory, ValidateConfigWithWellFormedIllegalConfigReturnsError) {
+  const int kExpectedStatusCode = static_cast<int>(absl::StatusCode::kDataLoss);
+  const std::string kExpectedStatusMessage = "artificial validation error";
   FakeStepControllerConfig config;
-  // Negative value fails config validation:
+  config.mutable_artificial_validation_failure()->set_code(kExpectedStatusCode);
+  config.mutable_artificial_validation_failure()->set_message(kExpectedStatusMessage);
+
   config.set_fixed_rps_value(-1);
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
@@ -71,7 +75,8 @@ TEST(FakeStepControllerConfigFactory, ValidateConfigWithWellFormedIllegalConfigR
       Envoy::Config::Utility::getAndCheckFactoryByName<StepControllerConfigFactory>(
           "nighthawk.fake-step-controller");
   absl::Status status = config_factory.ValidateConfig(config_any);
-  EXPECT_THAT(status.message(), HasSubstr("Negative fixed_rps_value"));
+  EXPECT_EQ(static_cast<int>(status.code()), kExpectedStatusCode);
+  EXPECT_EQ(status.message(), kExpectedStatusMessage);
 }
 
 TEST(FakeStepControllerConfigFactory, ValidateConfigWithDefaultConfigReturnsOk) {
@@ -169,16 +174,16 @@ TEST(FakeStepController, IsDoomedSetsDoomedReasonToStatusMessageAfterFailedBench
 }
 
 TEST(MakeFakeStepControllerPluginConfig, ActivatesFakeStepControllerPlugin) {
-  absl::StatusOr<StepControllerPtr> plugin_or =
-      LoadStepControllerPlugin(MakeFakeStepControllerPluginConfig(0), nighthawk::client::CommandLineOptions{});
+  absl::StatusOr<StepControllerPtr> plugin_or = LoadStepControllerPlugin(
+      MakeFakeStepControllerPluginConfig(0), nighthawk::client::CommandLineOptions{});
   ASSERT_TRUE(plugin_or.ok());
   EXPECT_NE(dynamic_cast<FakeStepController*>(plugin_or.value().get()), nullptr);
 }
 
 TEST(MakeFakeStepControllerPluginConfig, ProducesFakeStepControllerPluginWithConfiguredValue) {
   const int kExpectedRps = 5;
-  absl::StatusOr<StepControllerPtr> plugin_or =
-      LoadStepControllerPlugin(MakeFakeStepControllerPluginConfig(kExpectedRps), nighthawk::client::CommandLineOptions{});
+  absl::StatusOr<StepControllerPtr> plugin_or = LoadStepControllerPlugin(
+      MakeFakeStepControllerPluginConfig(kExpectedRps), nighthawk::client::CommandLineOptions{});
   ASSERT_TRUE(plugin_or.ok());
   auto* plugin = dynamic_cast<FakeStepController*>(plugin_or.value().get());
   ASSERT_NE(plugin, nullptr);

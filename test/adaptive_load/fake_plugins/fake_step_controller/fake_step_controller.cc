@@ -4,6 +4,14 @@
 
 namespace Nighthawk {
 
+namespace {
+
+absl::Status StatusFromProtoRpcStatus(const google::rpc::Status& status_proto) {
+  return absl::Status(static_cast<absl::StatusCode>(status_proto.code()), status_proto.message());
+}
+
+} // namespace
+
 FakeStepController::FakeStepController(
     const nighthawk::adaptive_load::FakeStepControllerConfig& config,
     nighthawk::client::CommandLineOptions command_line_options_template)
@@ -70,9 +78,8 @@ FakeStepControllerConfigFactory::ValidateConfig(const Envoy::Protobuf::Message& 
     const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
     nighthawk::adaptive_load::FakeStepControllerConfig config;
     Envoy::MessageUtil::unpackTo(any, config);
-    if (config.fixed_rps_value() < 0) {
-      return absl::InvalidArgumentError(
-          "Negative fixed_rps_value triggered validation failure.");
+    if (config.has_artificial_validation_failure()) {
+      return StatusFromProtoRpcStatus(config.artificial_validation_failure());
     }
     return absl::OkStatus();
   } catch (const Envoy::EnvoyException& e) {
