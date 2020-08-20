@@ -5,7 +5,7 @@ package nighthawk.adaptive_load;
 import "envoy/config/core/v3/extension.proto";
 import "google/rpc/status.proto";
 
-// Configuration for FakeStepController (plugin name: "nighthawk.fake-step-controller") that always
+// Configuration for FakeStepController (plugin name: "nighthawk.fake_step_controller") that always
 // returns a fixed RPS value and changes converged and doomed states based on the latest reported
 // BenchmarkResult.
 message FakeStepControllerConfig {
