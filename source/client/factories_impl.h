@@ -57,7 +57,6 @@ public:
 };
 class RequestSourceConstructorImpl : public RequestSourceConstructorInterface {
 public:
-  virtual ~RequestSourceConstructorImpl() = default;
   RequestSourceConstructorImpl(const Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                                Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
                                absl::string_view service_cluster_name);
