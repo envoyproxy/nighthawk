@@ -1,3 +1,4 @@
+// Implementations of ScoringFunction plugins and corresponding factories.
 #pragma once
 
 #include "envoy/registry/registry.h"
@@ -14,6 +15,9 @@ namespace Nighthawk {
  */
 class BinaryScoringFunction : public ScoringFunction {
 public:
+  /**
+   * Constructs a BinaryScoringFunction, taking thresholds from the config proto.
+   */
   explicit BinaryScoringFunction(
       const nighthawk::adaptive_load::BinaryScoringFunctionConfig& config);
   double EvaluateMetric(double value) const override;
@@ -48,6 +52,10 @@ DECLARE_FACTORY(BinaryScoringFunctionConfigFactory);
  */
 class LinearScoringFunction : public ScoringFunction {
 public:
+  /**
+   * Constructs a LinearScoringFunction, taking threshold and scaling parameter from the config
+   * proto.
+   */
   explicit LinearScoringFunction(
       const nighthawk::adaptive_load::LinearScoringFunctionConfig& config);
   double EvaluateMetric(double value) const override;
