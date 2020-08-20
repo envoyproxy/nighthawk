@@ -57,23 +57,6 @@ envoy_cc_library(
     ],
 )
 
-envoy_cc_library(
-    name = "config_validator_impl",
-    srcs = [
-        "config_validator_impl.cc",
-    ],
-    hdrs = [
-        "config_validator_impl.h",
-    ],
-    repository = "@envoy",
-    visibility = ["//visibility:public"],
-    deps = [
-        "//include/nighthawk/adaptive_load:config_validator",
-        "@envoy//source/common/config:utility_lib_with_external_headers",
-        "@envoy//source/common/protobuf:protobuf_with_external_headers",
-    ],
-)
-
 envoy_cc_library( 
     name = "input_variable_setter_impl",
     srcs = [
@@ -141,7 +124,6 @@ envoy_cc_library(
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
-        ":config_validator_impl",
         "//include/nighthawk/adaptive_load:scoring_function",
         "@envoy//source/common/config:utility_lib_with_external_headers",
         "@envoy//source/common/protobuf:protobuf_with_external_headers",
