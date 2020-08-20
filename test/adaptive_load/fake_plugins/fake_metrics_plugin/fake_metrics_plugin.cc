@@ -7,14 +7,14 @@ namespace Nighthawk {
 
 namespace {
 
-absl::Status StatusFromProtoRpcStatus(const google::rpc::Status& status_proto) {
+absl::Status GetStatusFromProtoRpcStatus(const google::rpc::Status& status_proto) {
   return absl::Status(static_cast<absl::StatusCode>(status_proto.code()), status_proto.message());
 }
 
 absl::StatusOr<double> StatusOrFromFakeMetricProto(
     const nighthawk::adaptive_load::FakeMetricsPluginConfig::FakeMetric& fake_metric) {
   if (fake_metric.has_error_status()) {
-    return StatusFromProtoRpcStatus(fake_metric.error_status());
+    return GetStatusFromProtoRpcStatus(fake_metric.error_status());
   } else {
     return fake_metric.value();
   }
@@ -67,7 +67,7 @@ FakeMetricsPluginConfigFactory::ValidateConfig(const Envoy::Protobuf::Message& m
     nighthawk::adaptive_load::FakeMetricsPluginConfig config;
     Envoy::MessageUtil::unpackTo(any, config);
     if (config.has_artificial_validation_failure()) {
-      return StatusFromProtoRpcStatus(config.artificial_validation_failure());
+      return GetStatusFromProtoRpcStatus(config.artificial_validation_failure());
     }
     return absl::OkStatus();
   } catch (const Envoy::EnvoyException& e) {
