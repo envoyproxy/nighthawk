@@ -2,7 +2,6 @@
 
 #include "envoy/registry/registry.h"
 
-#include "adaptive_load/config_validator_impl.h"
 #include "nighthawk/adaptive_load/scoring_function.h"
 
 #include "api/adaptive_load/scoring_function_impl.pb.h"
@@ -31,12 +30,12 @@ private:
  * Factory that creates a BinaryScoringFunction from a BinaryScoringFunctionConfig proto.
  * Registered as an Envoy plugin.
  */
-class BinaryScoringFunctionConfigFactory : public virtual ScoringFunctionConfigFactory,
-                                           public virtual NullConfigValidator {
+class BinaryScoringFunctionConfigFactory : public ScoringFunctionConfigFactory {
 public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
   ScoringFunctionPtr createScoringFunction(const Envoy::Protobuf::Message& message) override;
+  absl::Status ValidateConfig(const Envoy::Protobuf::Message& message) const override;
 };
 
 // This factory is activated through LoadScoringFunctionPlugin in plugin_util.h.
@@ -67,12 +66,12 @@ private:
  * Factory that creates a LinearScoringFunction from a LinearScoringFunctionConfig proto.
  * Registered as an Envoy plugin.
  */
-class LinearScoringFunctionConfigFactory : public virtual ScoringFunctionConfigFactory,
-                                           public virtual NullConfigValidator {
+class LinearScoringFunctionConfigFactory : public ScoringFunctionConfigFactory {
 public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
   ScoringFunctionPtr createScoringFunction(const Envoy::Protobuf::Message& message) override;
+  absl::Status ValidateConfig(const Envoy::Protobuf::Message& message) const override;
 };
 
 // This factory is activated through LoadScoringFunctionPlugin in plugin_util.h.

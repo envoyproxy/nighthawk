@@ -22,6 +22,10 @@ BinaryScoringFunctionConfigFactory::createScoringFunction(const Envoy::Protobuf:
   return std::make_unique<BinaryScoringFunction>(config);
 }
 
+absl::Status BinaryScoringFunctionConfigFactory::ValidateConfig(const Envoy::Protobuf::Message&) const {
+  return absl::OkStatus();
+}
+
 REGISTER_FACTORY(BinaryScoringFunctionConfigFactory, ScoringFunctionConfigFactory);
 
 BinaryScoringFunction::BinaryScoringFunction(
@@ -47,6 +51,10 @@ LinearScoringFunctionConfigFactory::createScoringFunction(const Envoy::Protobuf:
   nighthawk::adaptive_load::LinearScoringFunctionConfig config;
   Envoy::MessageUtil::unpackTo(any, config);
   return std::make_unique<LinearScoringFunction>(config);
+}
+
+absl::Status LinearScoringFunctionConfigFactory::ValidateConfig(const Envoy::Protobuf::Message&) const {
+  return absl::OkStatus();
 }
 
 REGISTER_FACTORY(LinearScoringFunctionConfigFactory, ScoringFunctionConfigFactory);
