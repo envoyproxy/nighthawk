@@ -56,7 +56,7 @@ FakeInputVariableSetterConfigFactory::ValidateConfig(const Envoy::Protobuf::Mess
 REGISTER_FACTORY(FakeInputVariableSetterConfigFactory, InputVariableSetterConfigFactory);
 
 envoy::config::core::v3::TypedExtensionConfig
-MakeFakeInputVariableSetterConfig(int adjustment_factor) {
+MakeFakeInputVariableSetterConfig(unsigned int adjustment_factor) {
   envoy::config::core::v3::TypedExtensionConfig outer_config;
   outer_config.set_name("nighthawk.fake_input_variable_setter");
   nighthawk::adaptive_load::FakeInputVariableSetterConfig config;
