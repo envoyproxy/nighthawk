@@ -67,9 +67,7 @@ MakeLowerThresholdBinaryScoringFunctionConfig(double lower_threshold) {
   config.set_name("nighthawk.binary-scoring");
   nighthawk::adaptive_load::BinaryScoringFunctionConfig inner_config;
   inner_config.mutable_lower_threshold()->set_value(lower_threshold);
-  Envoy::ProtobufWkt::Any inner_config_any;
-  inner_config_any.PackFrom(inner_config);
-  *config.mutable_typed_config() = inner_config_any;
+  *config.mutable_typed_config()->PackFrom(inner_config);
   return config;
 }
 
