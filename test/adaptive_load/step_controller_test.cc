@@ -19,6 +19,8 @@ namespace Nighthawk {
 
 namespace {
 
+using ::testing::HasSubstr;
+
 nighthawk::adaptive_load::BenchmarkResult MakeBenchmarkResultOutsideThreshold() {
   nighthawk::adaptive_load::BenchmarkResult result;
   nighthawk::adaptive_load::MetricEvaluation* evaluation = result.add_metric_evaluations();
@@ -118,7 +120,7 @@ TEST(ExponentialSearchStepController, ReportsDoomIfOutsideThresholdsOnInitialVal
   step_controller.UpdateAndRecompute(MakeBenchmarkResultOutsideThreshold());
   std::string doom_reason;
   EXPECT_TRUE(step_controller.IsDoomed(doom_reason));
-  EXPECT_EQ(doom_reason, "Outside threshold on initial input.");
+  EXPECT_THAT(doom_reason, HasSubstr("already exceed metric thresholds with the initial load"));
 }
 
 TEST(ExponentialSearchStepController, ReportsDoomAfterNighthawkServiceError) {
