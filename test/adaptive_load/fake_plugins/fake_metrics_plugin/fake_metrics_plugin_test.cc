@@ -69,7 +69,7 @@ TEST(FakeMetricsPluginConfigFactory, ValidateConfigWithWellFormedIllegalConfigRe
           "nighthawk.fake-metrics-plugin");
   absl::Status status = config_factory.ValidateConfig(any);
   EXPECT_EQ(static_cast<int>(status.code()), kExpectedStatusCode);
-  EXPECT_THAT(status.message(), kExpectedStatusMessage);
+  EXPECT_EQ(status.message(), kExpectedStatusMessage);
 }
 
 TEST(FakeMetricsPlugin, GetMetricByNameReturnsValueFromConfig) {
