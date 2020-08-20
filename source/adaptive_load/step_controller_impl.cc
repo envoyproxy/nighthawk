@@ -54,7 +54,8 @@ absl::Status ExponentialSearchStepControllerConfigFactory::ValidateConfig(
   ExponentialSearchStepControllerConfig config;
   Envoy::MessageUtil::unpackTo(any, config);
   if (config.has_input_variable_setter()) {
-    absl::StatusOr<InputVariableSetterPtr> input_variable_setter_or = LoadInputVariableSetterPlugin(config.input_variable_setter());
+    absl::StatusOr<InputVariableSetterPtr> input_variable_setter_or =
+        LoadInputVariableSetterPlugin(config.input_variable_setter());
     if (!input_variable_setter_or.ok()) {
       return input_variable_setter_or.status();
     }
@@ -76,16 +77,21 @@ REGISTER_FACTORY(ExponentialSearchStepControllerConfigFactory, StepControllerCon
 ExponentialSearchStepController::ExponentialSearchStepController(
     const ExponentialSearchStepControllerConfig& config,
     nighthawk::client::CommandLineOptions command_line_options_template)
-    : command_line_options_template_{std::move(command_line_options_template)}, is_exponential_phase_{true},
-      exponential_factor_{config.exponential_factor() > 0.0 ? config.exponential_factor() : 2.0},
+    : command_line_options_template_{std::move(command_line_options_template)},
+      is_exponential_phase_{true}, exponential_factor_{config.exponential_factor() > 0.0
+                                                           ? config.exponential_factor()
+                                                           : 2.0},
       previous_load_value_{std::numeric_limits<double>::signaling_NaN()},
       current_load_value_{config.initial_value()},
       bottom_load_value_{std::numeric_limits<double>::signaling_NaN()},
       top_load_value_{std::numeric_limits<double>::signaling_NaN()} {
   doom_reason_ = "";
   if (config.has_input_variable_setter()) {
+    absl::StatusOr<InputVariableSetterPluginPtr> input_variable_setter_or =
+        LoadInputVariableSetterPlugin(config.input_variable_setter());
     // Load failures should have been caught during input validation.
-    input_variable_setter_ = LoadInputVariableSetterPlugin(config.input_variable_setter()).value();
+    RELEASE_ASSERT(input_variable_setter_or.ok());
+    input_variable_setter_ = input_variable_setter_or.value();
   } else {
     input_variable_setter_ = std::make_unique<RequestsPerSecondInputVariableSetter>(
         nighthawk::adaptive_load::RequestsPerSecondInputVariableSetterConfig());
@@ -132,8 +138,10 @@ void ExponentialSearchStepController::UpdateAndRecompute(const BenchmarkResult& 
       // We have found a value that exceeded the threshold.
       // Prepare for the binary search phase.
       if (std::isnan(previous_load_value_)) {
-        // Cannot continue if the initial value already exceeds metric thresholds.
-        doom_reason_ = "Outside threshold on initial input.";
+        doom_reason_ =
+            "ExponentialSearchStepController cannot continue if the metrics values already exceed "
+            "metric thresholds with the initial load. Check the initial load value in the "
+            "ExponentialSearchStepControllerConfig, requested metrics, and thresholds.";
         return;
       }
       is_exponential_phase_ = false;
