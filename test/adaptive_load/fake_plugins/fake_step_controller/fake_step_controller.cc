@@ -57,7 +57,7 @@ void FakeStepController::UpdateAndRecompute(
 }
 
 std::string FakeStepControllerConfigFactory::name() const {
-  return "nighthawk.fake-step-controller";
+  return "nighthawk.fake_step_controller";
 }
 Envoy::ProtobufTypes::MessagePtr FakeStepControllerConfigFactory::createEmptyConfigProto() {
   return std::make_unique<nighthawk::adaptive_load::FakeStepControllerConfig>();
@@ -93,7 +93,7 @@ REGISTER_FACTORY(FakeStepControllerConfigFactory, StepControllerConfigFactory);
 envoy::config::core::v3::TypedExtensionConfig
 MakeFakeStepControllerPluginConfig(int fixed_rps_value) {
   envoy::config::core::v3::TypedExtensionConfig outer_config;
-  outer_config.set_name("nighthawk.fake-step-controller");
+  outer_config.set_name("nighthawk.fake_step_controller");
   nighthawk::adaptive_load::FakeStepControllerConfig config;
   config.set_fixed_rps_value(fixed_rps_value);
   Envoy::ProtobufWkt::Any config_any;
