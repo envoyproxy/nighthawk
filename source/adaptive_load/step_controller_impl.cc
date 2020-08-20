@@ -45,7 +45,7 @@ ExponentialSearchStepControllerConfigFactory::createEmptyConfigProto() {
 }
 
 std::string ExponentialSearchStepControllerConfigFactory::name() const {
-  return "nighthawk.exponential-search";
+  return "nighthawk.exponential_search";
 }
 
 absl::Status ExponentialSearchStepControllerConfigFactory::ValidateConfig(
@@ -87,11 +87,13 @@ ExponentialSearchStepController::ExponentialSearchStepController(
       top_load_value_{std::numeric_limits<double>::signaling_NaN()} {
   doom_reason_ = "";
   if (config.has_input_variable_setter()) {
-    absl::StatusOr<InputVariableSetterPluginPtr> input_variable_setter_or =
+    absl::StatusOr<InputVariableSetterPtr> input_variable_setter_or =
         LoadInputVariableSetterPlugin(config.input_variable_setter());
-    // Load failures should have been caught during input validation.
-    RELEASE_ASSERT(input_variable_setter_or.ok());
-    input_variable_setter_ = input_variable_setter_or.value();
+    RELEASE_ASSERT(input_variable_setter_or.ok(),
+                   absl::StrCat("InputVariableSetter plugin loading error should have been caught "
+                                "during input validation: ",
+                                input_variable_setter_or.status().message()));
+    input_variable_setter_ = std::move(input_variable_setter_or.value());
   } else {
     input_variable_setter_ = std::make_unique<RequestsPerSecondInputVariableSetter>(
         nighthawk::adaptive_load::RequestsPerSecondInputVariableSetterConfig());

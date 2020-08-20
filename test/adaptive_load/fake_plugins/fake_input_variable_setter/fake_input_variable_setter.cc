@@ -21,7 +21,7 @@ absl::Status FakeInputVariableSetter::SetInputVariable(
 }
 
 std::string FakeInputVariableSetterConfigFactory::name() const {
-  return "nighthawk.fake-input-variable-setter";
+  return "nighthawk.fake_input_variable_setter";
 }
 
 Envoy::ProtobufTypes::MessagePtr
@@ -58,7 +58,7 @@ REGISTER_FACTORY(FakeInputVariableSetterConfigFactory, InputVariableSetterConfig
 envoy::config::core::v3::TypedExtensionConfig
 MakeFakeInputVariableSetterConfig(int adjustment_factor) {
   envoy::config::core::v3::TypedExtensionConfig outer_config;
-  outer_config.set_name("nighthawk.fake-input-variable-setter");
+  outer_config.set_name("nighthawk.fake_input_variable_setter");
   nighthawk::adaptive_load::FakeInputVariableSetterConfig config;
   config.set_adjustment_factor(adjustment_factor);
   Envoy::ProtobufWkt::Any config_any;
