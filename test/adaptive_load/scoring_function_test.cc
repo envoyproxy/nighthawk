@@ -14,7 +14,7 @@ namespace {
 TEST(BinaryScoringFunctionConfigFactory, CreateEmptyConfigProtoCreatesCorrectType) {
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<ScoringFunctionConfigFactory>(
-          "nighthawk.binary-scoring");
+          "nighthawk.binary_scoring");
   const Envoy::ProtobufTypes::MessagePtr empty_config = config_factory.createEmptyConfigProto();
   const nighthawk::adaptive_load::BinaryScoringFunctionConfig expected_config;
   EXPECT_EQ(empty_config->DebugString(), expected_config.DebugString());
@@ -24,7 +24,7 @@ TEST(BinaryScoringFunctionConfigFactory, CreateEmptyConfigProtoCreatesCorrectTyp
 TEST(LinearScoringFunctionConfigFactory, CreateEmptyConfigProtoCreatesCorrectType) {
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<ScoringFunctionConfigFactory>(
-          "nighthawk.linear-scoring");
+          "nighthawk.linear_scoring");
   const Envoy::ProtobufTypes::MessagePtr empty_config = config_factory.createEmptyConfigProto();
   const nighthawk::adaptive_load::LinearScoringFunctionConfig expected_config;
   EXPECT_EQ(empty_config->DebugString(), expected_config.DebugString());
@@ -37,8 +37,8 @@ TEST(BinaryScoringFunctionConfigFactory, FactoryRegistrationUsesCorrectPluginNam
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<ScoringFunctionConfigFactory>(
-          "nighthawk.binary-scoring");
-  EXPECT_EQ(config_factory.name(), "nighthawk.binary-scoring");
+          "nighthawk.binary_scoring");
+  EXPECT_EQ(config_factory.name(), "nighthawk.binary_scoring");
 }
 
 TEST(BinaryScoringFunctionConfigFactory, CreateScoringFunctionCreatesCorrectPluginType) {
@@ -47,7 +47,7 @@ TEST(BinaryScoringFunctionConfigFactory, CreateScoringFunctionCreatesCorrectPlug
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<ScoringFunctionConfigFactory>(
-          "nighthawk.binary-scoring");
+          "nighthawk.binary_scoring");
   ScoringFunctionPtr plugin = config_factory.createScoringFunction(config_any);
   EXPECT_NE(dynamic_cast<BinaryScoringFunction*>(plugin.get()), nullptr);
 }
@@ -59,7 +59,7 @@ TEST(BinaryScoringFunctionConfigFactory, CreateScoringFunctionThrowsExceptionWit
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<ScoringFunctionConfigFactory>(
-          "nighthawk.binary-scoring");
+          "nighthawk.binary_scoring");
   EXPECT_THROW(config_factory.createScoringFunction(config_any), Envoy::EnvoyException);
 }
 
@@ -69,8 +69,8 @@ TEST(LinearScoringFunctionConfigFactory, FactoryRegistrationUsesCorrectPluginNam
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<ScoringFunctionConfigFactory>(
-          "nighthawk.linear-scoring");
-  EXPECT_EQ(config_factory.name(), "nighthawk.linear-scoring");
+          "nighthawk.linear_scoring");
+  EXPECT_EQ(config_factory.name(), "nighthawk.linear_scoring");
 }
 
 TEST(LinearScoringFunctionConfigFactory, CreateScoringFunctionCreatesCorrectPluginType) {
@@ -79,7 +79,7 @@ TEST(LinearScoringFunctionConfigFactory, CreateScoringFunctionCreatesCorrectPlug
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<ScoringFunctionConfigFactory>(
-          "nighthawk.linear-scoring");
+          "nighthawk.linear_scoring");
   ScoringFunctionPtr plugin = config_factory.createScoringFunction(config_any);
   EXPECT_NE(dynamic_cast<LinearScoringFunction*>(plugin.get()), nullptr);
 }
@@ -91,7 +91,7 @@ TEST(LinearScoringFunctionConfigFactory, CreateScoringFunctionThrowsExceptionWit
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<ScoringFunctionConfigFactory>(
-          "nighthawk.linear-scoring");
+          "nighthawk.linear_scoring");
   EXPECT_THROW(config_factory.createScoringFunction(config_any), Envoy::EnvoyException);
 }
 
