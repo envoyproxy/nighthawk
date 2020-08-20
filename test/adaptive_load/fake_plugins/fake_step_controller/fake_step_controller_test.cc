@@ -17,14 +17,16 @@ using ::nighthawk::adaptive_load::FakeStepControllerConfig;
 using ::nighthawk::adaptive_load::MetricEvaluation;
 using ::nighthawk::client::CommandLineOptions;
 using ::testing::HasSubstr;
+using ::Envoy::Protobuf::util::MessageDifferencer;
 
 TEST(FakeStepControllerConfigFactory, CreateEmptyConfigProtoCreatesCorrectType) {
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<StepControllerConfigFactory>(
           "nighthawk.fake-step-controller");
-  Envoy::ProtobufTypes::MessagePtr message = config_factory.createEmptyConfigProto();
+  Envoy::ProtobufTypes::MessagePtr empty_config = config_factory.createEmptyConfigProto();
   FakeStepControllerConfig expected_config;
-  EXPECT_EQ(message->DebugString(), expected_config.DebugString());
+  EXPECT_EQ(empty_config->DebugString(), expected_config.DebugString());
+  EXPECT_TRUE(MessageDifferencer::Equivalent(*empty_config, expected_config));
 }
 
 TEST(FakeStepControllerConfigFactory, FactoryRegistersUnderCorrectName) {
@@ -97,10 +99,11 @@ TEST(FakeStepControllerConfigFactory, ValidateConfigWithValidConfigReturnsOk) {
 
 TEST(FakeStepController, GetCurrentCommandLineOptionsReturnsRpsFromConfig) {
   FakeStepControllerConfig config;
-  config.set_fixed_rps_value(5678);
+  const int kExpectedValue = 5678;
+  config.set_fixed_rps_value(kExpectedValue);
   FakeStepController step_controller(config, CommandLineOptions());
   EXPECT_EQ(step_controller.GetCurrentCommandLineOptions().value().requests_per_second().value(),
-            5678);
+            kExpectedValue);
 }
 
 TEST(FakeStepController, IsConvergedInitiallyReturnsFalse) {
@@ -154,33 +157,35 @@ TEST(FakeStepController, IsDoomedReturnsTrueAfterFailedBenchmarkResult) {
 }
 
 TEST(FakeStepController, IsDoomedSetsDoomedReasonToStatusMessageAfterFailedBenchmarkResult) {
+  const std::string kErrorMessage = "error from nighthawk";
   FakeStepController step_controller(FakeStepControllerConfig{}, CommandLineOptions{});
   BenchmarkResult benchmark_result;
   benchmark_result.mutable_status()->set_code(::grpc::INTERNAL);
-  benchmark_result.mutable_status()->set_message("error from nighthawk");
+  benchmark_result.mutable_status()->set_message(kErrorMessage);
   step_controller.UpdateAndRecompute(benchmark_result);
   std::string doomed_reason;
   ASSERT_TRUE(step_controller.IsDoomed(doomed_reason));
-  EXPECT_EQ(doomed_reason, "error from nighthawk");
+  EXPECT_EQ(doomed_reason, kErrorMessage);
 }
 
 TEST(MakeFakeStepControllerPluginConfig, ActivatesFakeStepControllerPlugin) {
   absl::StatusOr<StepControllerPtr> plugin_or =
-      LoadStepControllerPlugin(MakeFakeStepControllerPluginConfig(5), nighthawk::client::CommandLineOptions{});
+      LoadStepControllerPlugin(MakeFakeStepControllerPluginConfig(0), nighthawk::client::CommandLineOptions{});
   ASSERT_TRUE(plugin_or.ok());
   EXPECT_NE(dynamic_cast<FakeStepController*>(plugin_or.value().get()), nullptr);
 }
 
 TEST(MakeFakeStepControllerPluginConfig, ProducesFakeStepControllerPluginWithConfiguredValue) {
+  const int kExpectedRps = 5;
   absl::StatusOr<StepControllerPtr> plugin_or =
-      LoadStepControllerPlugin(MakeFakeStepControllerPluginConfig(5), nighthawk::client::CommandLineOptions{});
+      LoadStepControllerPlugin(MakeFakeStepControllerPluginConfig(kExpectedRps), nighthawk::client::CommandLineOptions{});
   ASSERT_TRUE(plugin_or.ok());
   auto* plugin = dynamic_cast<FakeStepController*>(plugin_or.value().get());
   ASSERT_NE(plugin, nullptr);
   absl::StatusOr<nighthawk::client::CommandLineOptions> options_or =
       plugin->GetCurrentCommandLineOptions();
   ASSERT_TRUE(options_or.ok());
-  EXPECT_EQ(options_or.value().requests_per_second().value(), 5);
+  EXPECT_EQ(options_or.value().requests_per_second().value(), kExpectedRps);
 }
 
 } // namespace
