@@ -52,6 +52,15 @@ envoy_cc_test(
 )
 
 envoy_cc_test(
+    name = "scoring_function_test",
+    srcs = ["scoring_function_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/adaptive_load:scoring_function_impl",
+    ],
+)
+
+envoy_cc_test(
     name = "step_controller_test",
     srcs = ["step_controller_test.cc"],
     repository = "@envoy",
