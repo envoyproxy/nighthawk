@@ -98,7 +98,8 @@ envoy::config::core::v3::TypedExtensionConfig MakeFakeMetricsPluginConfig() {
   envoy::config::core::v3::TypedExtensionConfig config;
   config.set_name("nighthawk.fake-metrics-plugin");
   nighthawk::adaptive_load::FakeMetricsPluginConfig inner_config;
-  nighthawk::adaptive_load::FakeMetricsPluginConfig::FakeMetric* fake_metric = inner_config.mutable_fake_metrics()->Add();
+  nighthawk::adaptive_load::FakeMetricsPluginConfig::FakeMetric* fake_metric =
+      inner_config.mutable_fake_metrics()->Add();
   fake_metric->set_name("metric1");
   fake_metric->set_value(5.0);
   config.mutable_typed_config()->PackFrom(inner_config);
@@ -381,9 +382,8 @@ TEST(AdaptiveLoadController, TimesOutIfNeverConverged) {
 
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
-      .WillRepeatedly([](grpc_impl::ClientContext*) {
-        return MakeNonConvergingMockClientReaderWriter();
-            });
+      .WillRepeatedly(
+          [](grpc_impl::ClientContext*) { return MakeNonConvergingMockClientReaderWriter(); });
   FakeIncrementingMonotonicTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output =
       PerformAdaptiveLoadSession(&mock_nighthawk_service_stub, spec, time_source);
@@ -777,7 +777,7 @@ TEST(AdaptiveLoadController, StoresInformationalCustomMetric) {
 TEST(AdaptiveLoadController, CopiesThresholdSpecToOutput) {
   // Spec contains a threshold for send-rate:
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec = MakeConvergeableDoomableSessionSpec();
-  
+
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
       .WillRepeatedly(

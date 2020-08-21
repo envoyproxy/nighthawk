@@ -2,7 +2,7 @@
 
 set -e
 
-TO_CHECK="${1:-$PWD}"    
+TO_CHECK="${2:-$PWD}"    
 # TODO(https://github.com/envoyproxy/nighthawk/issues/165): fully excluding everything
 # from the build fixer isn't ideal.
 bazel run @envoy//tools:code_format/check_format.py -- \

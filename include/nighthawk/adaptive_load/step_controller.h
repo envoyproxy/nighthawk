@@ -7,10 +7,10 @@
 
 #include "nighthawk/adaptive_load/config_validator.h"
 
+#include "external/envoy/source/common/common/statusor.h"
 #include "external/envoy/source/common/protobuf/protobuf.h"
 
 #include "api/adaptive_load/benchmark_result.pb.h"
-#include "external/envoy/source/common/common/statusor.h"
 
 namespace Nighthawk {
 

@@ -1,6 +1,5 @@
 #include "envoy/registry/registry.h"
 
-#include "fake_plugins/fake_input_variable_setter/fake_input_variable_setter.h"
 #include "nighthawk/adaptive_load/input_variable_setter.h"
 
 #include "external/envoy/source/common/config/utility.h"
@@ -12,6 +11,7 @@
 
 #include "adaptive_load/plugin_loader.h"
 #include "adaptive_load/step_controller_impl.h"
+#include "fake_plugins/fake_input_variable_setter/fake_input_variable_setter.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 

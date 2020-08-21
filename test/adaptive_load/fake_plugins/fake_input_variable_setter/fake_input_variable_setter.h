@@ -1,9 +1,12 @@
 
 #pragma once
 
-#include "api/client/options.pb.h"
 #include "envoy/registry/registry.h"
+
 #include "nighthawk/adaptive_load/input_variable_setter.h"
+
+#include "api/client/options.pb.h"
+
 #include "test/adaptive_load/fake_plugins/fake_input_variable_setter/fake_input_variable_setter.pb.h"
 
 namespace Nighthawk {

@@ -7,6 +7,7 @@ load(
 licenses(["notice"])  # Apache 2
 
 envoy_package()
+
 envoy_cc_library(
     name = "adaptive_load_client_main",
     srcs = [
@@ -57,7 +58,7 @@ envoy_cc_library(
     ],
 )
 
-envoy_cc_library( 
+envoy_cc_library(
     name = "input_variable_setter_impl",
     srcs = [
         "input_variable_setter_impl.cc",

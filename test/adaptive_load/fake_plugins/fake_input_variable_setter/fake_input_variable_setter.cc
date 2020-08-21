@@ -16,7 +16,8 @@ FakeInputVariableSetter::FakeInputVariableSetter(
 
 absl::Status FakeInputVariableSetter::SetInputVariable(
     nighthawk::client::CommandLineOptions& command_line_options, double input_value) {
-  command_line_options.mutable_connections()->set_value(static_cast<unsigned int>(input_value * adjustment_factor_));
+  command_line_options.mutable_connections()->set_value(
+      static_cast<unsigned int>(input_value * adjustment_factor_));
   return absl::OkStatus();
 }
 
@@ -24,8 +25,7 @@ std::string FakeInputVariableSetterConfigFactory::name() const {
   return "nighthawk.fake_input_variable_setter";
 }
 
-Envoy::ProtobufTypes::MessagePtr
-FakeInputVariableSetterConfigFactory::createEmptyConfigProto() {
+Envoy::ProtobufTypes::MessagePtr FakeInputVariableSetterConfigFactory::createEmptyConfigProto() {
   return std::make_unique<nighthawk::adaptive_load::FakeInputVariableSetterConfig>();
 }
 
@@ -37,8 +37,8 @@ InputVariableSetterPtr FakeInputVariableSetterConfigFactory::createInputVariable
   return std::make_unique<FakeInputVariableSetter>(config);
 }
 
-absl::Status
-FakeInputVariableSetterConfigFactory::ValidateConfig(const Envoy::Protobuf::Message& message) const {
+absl::Status FakeInputVariableSetterConfigFactory::ValidateConfig(
+    const Envoy::Protobuf::Message& message) const {
   try {
     const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
     nighthawk::adaptive_load::FakeInputVariableSetterConfig config;

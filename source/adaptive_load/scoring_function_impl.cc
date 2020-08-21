@@ -22,7 +22,8 @@ BinaryScoringFunctionConfigFactory::createScoringFunction(const Envoy::Protobuf:
   return std::make_unique<BinaryScoringFunction>(config);
 }
 
-absl::Status BinaryScoringFunctionConfigFactory::ValidateConfig(const Envoy::Protobuf::Message&) const {
+absl::Status
+BinaryScoringFunctionConfigFactory::ValidateConfig(const Envoy::Protobuf::Message&) const {
   return absl::OkStatus();
 }
 
@@ -53,7 +54,8 @@ LinearScoringFunctionConfigFactory::createScoringFunction(const Envoy::Protobuf:
   return std::make_unique<LinearScoringFunction>(config);
 }
 
-absl::Status LinearScoringFunctionConfigFactory::ValidateConfig(const Envoy::Protobuf::Message&) const {
+absl::Status
+LinearScoringFunctionConfigFactory::ValidateConfig(const Envoy::Protobuf::Message&) const {
   return absl::OkStatus();
 }
 
