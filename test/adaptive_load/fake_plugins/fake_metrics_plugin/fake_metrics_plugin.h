@@ -1,8 +1,11 @@
 #pragma once
 
-#include "api/client/options.pb.h"
 #include "envoy/registry/registry.h"
+
 #include "nighthawk/adaptive_load/metrics_plugin.h"
+
+#include "api/client/options.pb.h"
+
 #include "test/adaptive_load/fake_plugins/fake_metrics_plugin/fake_metrics_plugin.pb.h"
 
 namespace Nighthawk {
