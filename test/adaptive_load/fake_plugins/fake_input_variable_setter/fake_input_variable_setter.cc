@@ -16,7 +16,12 @@ FakeInputVariableSetter::FakeInputVariableSetter(
 
 absl::Status FakeInputVariableSetter::SetInputVariable(
     nighthawk::client::CommandLineOptions& command_line_options, double input_value) {
-  command_line_options.mutable_connections()->set_value(static_cast<unsigned int>(input_value * adjustment_factor_));
+  if (input_value < 0) {
+    return absl::InvalidArgumentError(
+        "Artificial SetInputVariable failure triggered by negative value.");
+  }
+  command_line_options.mutable_connections()->set_value(
+      static_cast<uint32_t>(input_value * adjustment_factor_));
   return absl::OkStatus();
 }
 
@@ -24,8 +29,7 @@ std::string FakeInputVariableSetterConfigFactory::name() const {
   return "nighthawk.fake_input_variable_setter";
 }
 
-Envoy::ProtobufTypes::MessagePtr
-FakeInputVariableSetterConfigFactory::createEmptyConfigProto() {
+Envoy::ProtobufTypes::MessagePtr FakeInputVariableSetterConfigFactory::createEmptyConfigProto() {
   return std::make_unique<nighthawk::adaptive_load::FakeInputVariableSetterConfig>();
 }
 
@@ -37,8 +41,8 @@ InputVariableSetterPtr FakeInputVariableSetterConfigFactory::createInputVariable
   return std::make_unique<FakeInputVariableSetter>(config);
 }
 
-absl::Status
-FakeInputVariableSetterConfigFactory::ValidateConfig(const Envoy::Protobuf::Message& message) const {
+absl::Status FakeInputVariableSetterConfigFactory::ValidateConfig(
+    const Envoy::Protobuf::Message& message) const {
   try {
     const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
     nighthawk::adaptive_load::FakeInputVariableSetterConfig config;
@@ -56,14 +60,25 @@ FakeInputVariableSetterConfigFactory::ValidateConfig(const Envoy::Protobuf::Mess
 REGISTER_FACTORY(FakeInputVariableSetterConfigFactory, InputVariableSetterConfigFactory);
 
 envoy::config::core::v3::TypedExtensionConfig
-MakeFakeInputVariableSetterConfig(unsigned int adjustment_factor) {
+MakeFakeInputVariableSetterConfig(uint32_t adjustment_factor) {
   envoy::config::core::v3::TypedExtensionConfig outer_config;
   outer_config.set_name("nighthawk.fake_input_variable_setter");
   nighthawk::adaptive_load::FakeInputVariableSetterConfig config;
   config.set_adjustment_factor(adjustment_factor);
-  Envoy::ProtobufWkt::Any config_any;
-  config_any.PackFrom(config);
-  *outer_config.mutable_typed_config() = config_any;
+  outer_config.mutable_typed_config()->PackFrom(config);
+  return outer_config;
+}
+
+envoy::config::core::v3::TypedExtensionConfig
+MakeFakeInputVariableSetterConfigWithValidationError(absl::Status artificial_validation_error) {
+  envoy::config::core::v3::TypedExtensionConfig outer_config;
+  outer_config.set_name("nighthawk.fake_input_variable_setter");
+  nighthawk::adaptive_load::FakeInputVariableSetterConfig config;
+  config.mutable_artificial_validation_failure()->set_code(
+      static_cast<int>(artificial_validation_error.code()));
+  config.mutable_artificial_validation_failure()->set_message(
+      std::string(artificial_validation_error.message()));
+  outer_config.mutable_typed_config()->PackFrom(config);
   return outer_config;
 }
 

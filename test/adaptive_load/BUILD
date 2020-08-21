@@ -58,5 +58,6 @@ envoy_cc_test(
     deps = [
         "//source/adaptive_load:step_controller_impl",
         "//test/adaptive_load/fake_plugins/fake_input_variable_setter",
+        "//test/adaptive_load/fake_plugins/fake_metrics_plugin",
     ],
 )
