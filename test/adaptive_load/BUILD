@@ -48,3 +48,12 @@ envoy_cc_test(
         "@envoy//test/test_common:utility_lib",
     ],
 )
+
+envoy_cc_test(
+    name = "scoring_function_test",
+    srcs = ["scoring_function_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/adaptive_load:scoring_function_impl",
+    ],
+)

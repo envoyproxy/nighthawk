@@ -81,3 +81,20 @@ envoy_cc_library(
         "@envoy//source/common/config:utility_lib_with_external_headers",
     ],
 )
+
+envoy_cc_library(
+    name = "scoring_function_impl",
+    srcs = [
+        "scoring_function_impl.cc",
+    ],
+    hdrs = [
+        "scoring_function_impl.h",
+    ],
+    repository = "@envoy",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//include/nighthawk/adaptive_load:scoring_function",
+        "@envoy//source/common/config:utility_lib_with_external_headers",
+        "@envoy//source/common/protobuf:protobuf_with_external_headers",
+    ],
+)
