@@ -45,10 +45,6 @@ TEST(ExponentialSearchStepControllerConfigFactory, GeneratesEmptyConfigProto) {
 }
 
 TEST(ExponentialSearchStepControllerConfigFactory, CreatesCorrectFactoryName) {
-  nighthawk::adaptive_load::ExponentialSearchStepControllerConfig config;
-  Envoy::ProtobufWkt::Any config_any;
-  config_any.PackFrom(config);
-  nighthawk::client::CommandLineOptions options;
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<StepControllerConfigFactory>(
           "nighthawk.exponential_search");
