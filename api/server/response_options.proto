@@ -32,6 +32,6 @@ message ResponseOptions {
     // Concurrency based linear delay configuration.
     ConcurrencyBasedLinearDelay concurrency_based_linear_delay = 5;
   }
-  // If set, makes the extension echo timing data in the supplied response header name. 
-  string emit_previous_request_delta_in_response_header =  6;
+  // If set, makes the extension echo timing data in the supplied response header name.
+  string emit_previous_request_delta_in_response_header = 6;
 }

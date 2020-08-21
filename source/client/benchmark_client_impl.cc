@@ -100,7 +100,7 @@ BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
   statistic_.latency_4xx_statistic->setId("benchmark_http_client.latency_4xx");
   statistic_.latency_5xx_statistic->setId("benchmark_http_client.latency_5xx");
   statistic_.latency_xxx_statistic->setId("benchmark_http_client.latency_xxx");
-  statistic_.origin_latency_statistic->setId("benchmark_http_client.origin_processing_time");
+  statistic_.origin_latency_statistic->setId("benchmark_http_client.origin_latency_statistic");
 }
 
 void BenchmarkClientHttpImpl::terminate() {

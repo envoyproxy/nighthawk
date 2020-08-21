@@ -286,10 +286,12 @@ TEST_P(HttpTestServerIntegrationNoConfigTest, TestHeaderConfig) {
   EXPECT_EQ("bar2",
             response->headers().get(Envoy::Http::LowerCaseString("foo"))->value().getStringView());
   EXPECT_EQ("", response->body());
-  EXPECT_EQ("1", response->headers()
-                     .get(Envoy::Http::LowerCaseString(kPreviousRequestDeltaHeader))
-                     ->value()
-                     .getStringView());
+  uint64_t dummy;
+  ASSERT_TRUE(absl::SimpleAtoi(response->headers()
+                                   .get(Envoy::Http::LowerCaseString(kPreviousRequestDeltaHeader))
+                                   ->value()
+                                   .getStringView(),
+                               &dummy));
 }
 
 TEST_P(HttpTestServerIntegrationNoConfigTest, BadTestHeaderConfig) {

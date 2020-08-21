@@ -57,5 +57,5 @@ private:
   uint64_t last_request_delta_ns_;
 };
 
-}
+} // namespace Server
 } // namespace Nighthawk
