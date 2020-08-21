@@ -35,7 +35,7 @@ void HttpTestServerDecoderFilter::sendReply() {
           Configuration::applyConfigToResponseHeaders(direct_response_headers, base_config_);
           const std::string previous_request_delta_in_response_header =
               base_config_.emit_previous_request_delta_in_response_header();
-          if (!previous_request_delta_in_response_header.empty()) {
+          if (!previous_request_delta_in_response_header.empty() && last_request_delta_ns_ > 0) {
             direct_response_headers.appendCopy(
                 Envoy::Http::LowerCaseString(previous_request_delta_in_response_header),
                 absl::StrCat(last_request_delta_ns_));
@@ -90,7 +90,11 @@ void HttpTestServerDecoderFilter::setDecoderFilterCallbacks(
   time_source_ = &callbacks.dispatcher().timeSource();
   const Envoy::MonotonicTime current_time = time_source_->monotonicTime();
   const Envoy::MonotonicTime last_request_time = config_->swapLastRequestTime(current_time);
-  last_request_delta_ns_ = (current_time - last_request_time).count();
+  if (last_request_time == Envoy::MonotonicTime::min()) {
+    last_request_delta_ns_ = 0;
+  } else {
+    last_request_delta_ns_ = (current_time - last_request_time).count();
+  }
 }
 
 } // namespace Server
