@@ -13,7 +13,9 @@ namespace Nighthawk {
 absl::StatusOr<InputVariableSetterPtr>
 LoadInputVariableSetterPlugin(const envoy::config::core::v3::TypedExtensionConfig& config) {
   try {
-    auto& config_factory = Envoy::Config::Utility::getAndCheckFactoryByName<InputVariableSetterConfigFactory>(config.name());
+    auto& config_factory =
+        Envoy::Config::Utility::getAndCheckFactoryByName<InputVariableSetterConfigFactory>(
+            config.name());
     absl::Status validation_status = config_factory.ValidateConfig(config.typed_config());
     if (!validation_status.ok()) {
       return validation_status;
@@ -28,7 +30,9 @@ LoadInputVariableSetterPlugin(const envoy::config::core::v3::TypedExtensionConfi
 absl::StatusOr<ScoringFunctionPtr>
 LoadScoringFunctionPlugin(const envoy::config::core::v3::TypedExtensionConfig& config) {
   try {
-    auto& config_factory = Envoy::Config::Utility::getAndCheckFactoryByName<ScoringFunctionConfigFactory>(config.name());
+    auto& config_factory =
+        Envoy::Config::Utility::getAndCheckFactoryByName<ScoringFunctionConfigFactory>(
+            config.name());
     absl::Status validation_status = config_factory.ValidateConfig(config.typed_config());
     if (!validation_status.ok()) {
       return validation_status;
@@ -43,7 +47,8 @@ LoadScoringFunctionPlugin(const envoy::config::core::v3::TypedExtensionConfig& c
 absl::StatusOr<MetricsPluginPtr>
 LoadMetricsPlugin(const envoy::config::core::v3::TypedExtensionConfig& config) {
   try {
-    auto& config_factory = Envoy::Config::Utility::getAndCheckFactoryByName<MetricsPluginConfigFactory>(config.name());
+    auto& config_factory =
+        Envoy::Config::Utility::getAndCheckFactoryByName<MetricsPluginConfigFactory>(config.name());
     absl::Status validation_status = config_factory.ValidateConfig(config.typed_config());
     if (!validation_status.ok()) {
       return validation_status;
@@ -59,7 +64,9 @@ absl::StatusOr<StepControllerPtr> LoadStepControllerPlugin(
     const envoy::config::core::v3::TypedExtensionConfig& config,
     const nighthawk::client::CommandLineOptions& command_line_options_template) {
   try {
-    auto& config_factory = Envoy::Config::Utility::getAndCheckFactoryByName<StepControllerConfigFactory>(config.name());
+    auto& config_factory =
+        Envoy::Config::Utility::getAndCheckFactoryByName<StepControllerConfigFactory>(
+            config.name());
     absl::Status validation_status = config_factory.ValidateConfig(config.typed_config());
     if (!validation_status.ok()) {
       return validation_status;
