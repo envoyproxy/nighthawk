@@ -1,11 +1,13 @@
-#include "adaptive_load/plugin_loader.h"
-#include "api/adaptive_load/benchmark_result.pb.h"
-#include "api/client/options.pb.h"
 #include "envoy/registry/registry.h"
-#include "test/adaptive_load/fake_plugins/fake_step_controller/fake_step_controller.h"
 
 #include "external/envoy/source/common/config/utility.h"
 
+#include "api/adaptive_load/benchmark_result.pb.h"
+#include "api/client/options.pb.h"
+
+#include "test/adaptive_load/fake_plugins/fake_step_controller/fake_step_controller.h"
+
+#include "adaptive_load/plugin_loader.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 

@@ -84,7 +84,7 @@ public:
   // Default function for request generator when the content doesn't matter.
   RequestGenerator getDefaultRequestGenerator() {
     RequestGenerator request_generator = [this]() {
-      auto returned_request_impl=std::make_unique<RequestImpl>(default_header_map_);
+      auto returned_request_impl = std::make_unique<RequestImpl>(default_header_map_);
       return returned_request_impl;
     };
     return request_generator;

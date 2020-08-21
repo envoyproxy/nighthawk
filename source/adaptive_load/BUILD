@@ -25,7 +25,7 @@ envoy_cc_library(
     ],
 )
 
-envoy_cc_library( 
+envoy_cc_library(
     name = "input_variable_setter_impl",
     srcs = [
         "input_variable_setter_impl.cc",

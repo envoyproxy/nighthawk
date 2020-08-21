@@ -1,9 +1,12 @@
 #pragma once
 
+#include "envoy/registry/registry.h"
+
+#include "nighthawk/adaptive_load/step_controller.h"
+
 #include "api/client/options.pb.h"
 #include "api/client/service.grpc.pb.h"
-#include "envoy/registry/registry.h"
-#include "nighthawk/adaptive_load/step_controller.h"
+
 #include "test/adaptive_load/fake_plugins/fake_step_controller/fake_step_controller.pb.h"
 
 namespace Nighthawk {
@@ -81,6 +84,7 @@ DECLARE_FACTORY(FakeStepControllerConfigFactory);
  * @return TypedExtensionConfig A proto that activates FakeStepController by name and provides a
  * FakeStepControllerConfig proto wrapped in an Any.
  */
-envoy::config::core::v3::TypedExtensionConfig MakeFakeStepControllerPluginConfig(int fixed_rps_value);
+envoy::config::core::v3::TypedExtensionConfig
+MakeFakeStepControllerPluginConfig(int fixed_rps_value);
 
 } // namespace Nighthawk
