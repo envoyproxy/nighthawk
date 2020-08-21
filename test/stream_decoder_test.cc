@@ -50,7 +50,6 @@ public:
   StreamingStatistic response_header_size_statistic_;
   StreamingStatistic response_body_size_statistic_;
   StreamingStatistic origin_latency_statistic_;
-  StreamingStatistic origin_receipt_statistic_;
   HeaderMapPtr request_headers_;
   uint64_t stream_decoder_completion_callbacks_{0};
   uint64_t pool_failures_{0};
@@ -66,7 +65,7 @@ TEST_F(StreamDecoderTest, HeaderOnlyTest) {
   auto decoder = new StreamDecoder(
       *dispatcher_, time_system_, *this, [&is_complete](bool, bool) { is_complete = true; },
       connect_statistic_, latency_statistic_, response_header_size_statistic_,
-      response_body_size_statistic_, origin_latency_statistic_, origin_receipt_statistic_,
+      response_body_size_statistic_, origin_latency_statistic_, 
       request_headers_, false, 0, random_generator_, http_tracer_);
   decoder->decodeHeaders(std::move(test_header_), true);
   EXPECT_TRUE(is_complete);
@@ -79,7 +78,7 @@ TEST_F(StreamDecoderTest, HeaderWithBodyTest) {
   auto decoder = new StreamDecoder(
       *dispatcher_, time_system_, *this, [&is_complete](bool, bool) { is_complete = true; },
       connect_statistic_, latency_statistic_, response_header_size_statistic_,
-      response_body_size_statistic_, origin_latency_statistic_, origin_receipt_statistic_,
+      response_body_size_statistic_, origin_latency_statistic_, 
       request_headers_, false, 0, random_generator_, http_tracer_);
   decoder->decodeHeaders(std::move(test_header_), false);
   EXPECT_FALSE(is_complete);
@@ -96,7 +95,7 @@ TEST_F(StreamDecoderTest, TrailerTest) {
   auto decoder = new StreamDecoder(
       *dispatcher_, time_system_, *this, [&is_complete](bool, bool) { is_complete = true; },
       connect_statistic_, latency_statistic_, response_header_size_statistic_,
-      response_body_size_statistic_, origin_latency_statistic_, origin_receipt_statistic_,
+      response_body_size_statistic_, origin_latency_statistic_, 
       request_headers_, false, 0, random_generator_, http_tracer_);
   Envoy::Http::ResponseHeaderMapPtr headers{
       new Envoy::Http::TestResponseHeaderMapImpl{{":status", "200"}}};
@@ -111,7 +110,7 @@ TEST_F(StreamDecoderTest, LatencyIsNotMeasured) {
   auto decoder = new StreamDecoder(
       *dispatcher_, time_system_, *this, [](bool, bool) {}, connect_statistic_, latency_statistic_,
       response_header_size_statistic_, response_body_size_statistic_, origin_latency_statistic_,
-      origin_receipt_statistic_, request_headers_, false, 0, random_generator_, http_tracer_);
+       request_headers_, false, 0, random_generator_, http_tracer_);
   Envoy::Http::MockRequestEncoder stream_encoder;
   EXPECT_CALL(stream_encoder, getStream());
   Envoy::Upstream::HostDescriptionConstSharedPtr ptr;
@@ -147,7 +146,7 @@ TEST_F(StreamDecoderTest, LatencyIsMeasured) {
   auto decoder = new StreamDecoder(
       *dispatcher_, time_system_, *this, [](bool, bool) {}, connect_statistic_, latency_statistic_,
       response_header_size_statistic_, response_body_size_statistic_, origin_latency_statistic_,
-      origin_receipt_statistic_, request_header, true, 0, random_generator_, http_tracer_);
+       request_header, true, 0, random_generator_, http_tracer_);
 
   Envoy::Http::MockRequestEncoder stream_encoder;
   EXPECT_CALL(stream_encoder, getStream());
@@ -169,7 +168,7 @@ TEST_F(StreamDecoderTest, StreamResetTest) {
   auto decoder = new StreamDecoder(
       *dispatcher_, time_system_, *this, [&is_complete](bool, bool) { is_complete = true; },
       connect_statistic_, latency_statistic_, response_header_size_statistic_,
-      response_body_size_statistic_, origin_latency_statistic_, origin_receipt_statistic_,
+      response_body_size_statistic_, origin_latency_statistic_, 
       request_headers_, false, 0, random_generator_, http_tracer_);
   decoder->decodeHeaders(std::move(test_header_), false);
   decoder->onResetStream(Envoy::Http::StreamResetReason::LocalReset, "fooreason");
@@ -183,7 +182,7 @@ TEST_F(StreamDecoderTest, PoolFailureTest) {
   auto decoder = new StreamDecoder(
       *dispatcher_, time_system_, *this, [&is_complete](bool, bool) { is_complete = true; },
       connect_statistic_, latency_statistic_, response_header_size_statistic_,
-      response_body_size_statistic_, origin_latency_statistic_, origin_receipt_statistic_,
+      response_body_size_statistic_, origin_latency_statistic_, 
       request_headers_, false, 0, random_generator_, http_tracer_);
   Envoy::Upstream::HostDescriptionConstSharedPtr ptr;
   decoder->onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason::Overflow, "fooreason",

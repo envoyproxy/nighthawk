@@ -15,8 +15,17 @@ class HttpTestServerDecoderFilterConfig {
 public:
   HttpTestServerDecoderFilterConfig(nighthawk::server::ResponseOptions proto_config);
   const nighthawk::server::ResponseOptions& server_config() { return server_config_; }
+  static Envoy::MonotonicTime swapLastRequestTime(const Envoy::MonotonicTime new_time) {
+    std::atomic<Envoy::MonotonicTime>& mutable_last_request_time = mutableLastRequestTime();
+    return mutable_last_request_time.exchange(new_time);
+  }
 
 private:
+  static std::atomic<Envoy::MonotonicTime>& mutableLastRequestTime() {
+    // We lazy-init the atomic to avoid static initialization / a fiasco.
+    MUTABLE_CONSTRUCT_ON_FIRST_USE(std::atomic<Envoy::MonotonicTime>,
+                                   Envoy::MonotonicTime::min()); // NOLINT
+  }
   const nighthawk::server::ResponseOptions server_config_;
 };
 
@@ -45,8 +54,8 @@ private:
   std::string error_message_;
   absl::optional<std::string> request_headers_dump_;
   Envoy::TimeSource* time_source_{nullptr};
-  Envoy::MonotonicTime request_time_;
+  uint64_t last_request_delta_ns_;
 };
 
-} // namespace Server
+}
 } // namespace Nighthawk

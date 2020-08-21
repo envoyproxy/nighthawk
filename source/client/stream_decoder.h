@@ -44,7 +44,7 @@ public:
                 OperationCallback caller_completion_callback, Statistic& connect_statistic,
                 Statistic& latency_statistic, Statistic& response_header_sizes_statistic,
                 Statistic& response_body_sizes_statistic, Statistic& origin_latency_statistic,
-                Statistic& origin_receipt_statistic, HeaderMapPtr request_headers,
+                HeaderMapPtr request_headers,
                 bool measure_latencies, uint32_t request_body_size,
                 Envoy::Random::RandomGenerator& random_generator,
                 Envoy::Tracing::HttpTracerSharedPtr& http_tracer)
@@ -55,7 +55,6 @@ public:
         response_header_sizes_statistic_(response_header_sizes_statistic),
         response_body_sizes_statistic_(response_body_sizes_statistic),
         origin_latency_statistic_(origin_latency_statistic),
-        origin_receipt_statistic_(origin_receipt_statistic),
         request_headers_(std::move(request_headers)), connect_start_(time_source_.monotonicTime()),
         complete_(false), measure_latencies_(measure_latencies),
         request_body_size_(request_body_size), stream_info_(time_source_),
@@ -107,7 +106,6 @@ private:
   Statistic& response_header_sizes_statistic_;
   Statistic& response_body_sizes_statistic_;
   Statistic& origin_latency_statistic_;
-  Statistic& origin_receipt_statistic_;
   HeaderMapPtr request_headers_;
   Envoy::Http::ResponseHeaderMapPtr response_headers_;
   Envoy::Http::ResponseTrailerMapPtr trailer_headers_;

@@ -270,11 +270,14 @@ TEST_P(HttpTestServerIntegrationNoConfigTest, TestTooLarge) {
 }
 
 TEST_P(HttpTestServerIntegrationNoConfigTest, TestHeaderConfig) {
+  const std::string kPreviousRequestDeltaHeader = "x-prd";
   Envoy::BufferingStreamDecoderPtr response = makeSingleRequest(
       lookupPort("http"), "GET", "/", "", downstream_protocol_, version_, "foo.com", "",
-      [](Envoy::Http::RequestHeaderMapImpl& request_headers) {
-        const std::string header_config =
-            R"({response_headers: [ { header: { key: "foo", value: "bar2"}, append: true } ]})";
+      [kPreviousRequestDeltaHeader](Envoy::Http::RequestHeaderMapImpl& request_headers) {
+        const std::string header_config = fmt::format(
+            R"({{response_headers: [ {{ header: {{ key: "foo", value: "bar2"}}, append: true }} ], emit_previous_request_delta_in_response_header: "{}"}})",
+            kPreviousRequestDeltaHeader);
+        std::cerr << header_config << std::endl;
         request_headers.addCopy(Nighthawk::Server::TestServer::HeaderNames::get().TestServerConfig,
                                 header_config);
       });
@@ -283,6 +286,10 @@ TEST_P(HttpTestServerIntegrationNoConfigTest, TestHeaderConfig) {
   EXPECT_EQ("bar2",
             response->headers().get(Envoy::Http::LowerCaseString("foo"))->value().getStringView());
   EXPECT_EQ("", response->body());
+  EXPECT_EQ("1", response->headers()
+                     .get(Envoy::Http::LowerCaseString(kPreviousRequestDeltaHeader))
+                     ->value()
+                     .getStringView());
 }
 
 TEST_P(HttpTestServerIntegrationNoConfigTest, BadTestHeaderConfig) {

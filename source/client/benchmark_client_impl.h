@@ -59,8 +59,7 @@ struct BenchmarkClientStatistic {
                            StatisticPtr&& response_body_size_stat, StatisticPtr&& latency_1xx_stat,
                            StatisticPtr&& latency_2xx_stat, StatisticPtr&& latency_3xx_stat,
                            StatisticPtr&& latency_4xx_stat, StatisticPtr&& latency_5xx_stat,
-                           StatisticPtr&& latency_xxx_stat, StatisticPtr&& origin_latency_statistic,
-                           StatisticPtr&& origin_receipt_statistic);
+                           StatisticPtr&& latency_xxx_stat, StatisticPtr&& origin_latency_statistic);
 
   // These are declared order dependent. Changing ordering may trigger on assert upon
   // destruction when tls has been involved during usage.
@@ -75,7 +74,6 @@ struct BenchmarkClientStatistic {
   StatisticPtr latency_5xx_statistic;
   StatisticPtr latency_xxx_statistic;
   StatisticPtr origin_latency_statistic;
-  StatisticPtr origin_receipt_statistic;
 };
 
 class Http1PoolImpl : public Envoy::Http::Http1::ProdConnPoolImpl {

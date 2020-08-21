@@ -33,11 +33,13 @@ void HttpTestServerDecoderFilter::sendReply() {
         static_cast<Envoy::Http::Code>(200), response_body,
         [this](Envoy::Http::ResponseHeaderMap& direct_response_headers) {
           Configuration::applyConfigToResponseHeaders(direct_response_headers, base_config_);
-          const auto timing_header = Envoy::Http::LowerCaseString("x-nh-origin-timings");
-          auto delta = time_source_->monotonicTime() - request_time_;
-          std::string timing_value =
-              absl::StrCat(request_time_.time_since_epoch().count(), ",", delta.count());
-          direct_response_headers.appendCopy(timing_header, timing_value);
+          const std::string previous_request_delta_in_response_header =
+              base_config_.emit_previous_request_delta_in_response_header();
+          if (!previous_request_delta_in_response_header.empty()) {
+            direct_response_headers.appendCopy(
+                Envoy::Http::LowerCaseString(previous_request_delta_in_response_header),
+                absl::StrCat(last_request_delta_ns_));
+          }
         },
         absl::nullopt, "");
   } else {
@@ -53,7 +55,6 @@ HttpTestServerDecoderFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& header
                                            bool end_stream) {
   // TODO(oschaaf): Add functionality to clear fields
   base_config_ = config_->server_config();
-  request_time_ = time_source_->monotonicTime();
   const auto* request_config_header = headers.get(TestServer::HeaderNames::get().TestServerConfig);
   if (request_config_header) {
     json_merge_error_ = !Configuration::mergeJsonConfig(
@@ -87,6 +88,9 @@ void HttpTestServerDecoderFilter::setDecoderFilterCallbacks(
     Envoy::Http::StreamDecoderFilterCallbacks& callbacks) {
   decoder_callbacks_ = &callbacks;
   time_source_ = &callbacks.dispatcher().timeSource();
+  const Envoy::MonotonicTime current_time = time_source_->monotonicTime();
+  const Envoy::MonotonicTime last_request_time = config_->swapLastRequestTime(current_time);
+  last_request_delta_ns_ = (current_time - last_request_time).count();
 }
 
 } // namespace Server
