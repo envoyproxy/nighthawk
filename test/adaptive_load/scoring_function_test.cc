@@ -1,3 +1,5 @@
+#include <cmath>
+
 #include "envoy/common/exception.h"
 
 #include "external/envoy/source/common/config/utility.h"
@@ -5,7 +7,6 @@
 #include "adaptive_load/scoring_function_impl.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include <cmath>
 
 namespace Nighthawk {
 
