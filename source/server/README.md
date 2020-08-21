@@ -175,12 +175,12 @@ bazel-bin/nighthawk_test_server  [--disable-extensions <string>]
 [--restart-epoch <uint32_t>]
 [--log-path <string>]
 [--log-format-prefix-with-location
-<bool>] [--log-format-escaped]
-[--log-format <string>]
-[--component-log-level <string>] [-l
-<string>] [--local-address-ip-version
-<string>] [--admin-address-path
-<string>]
+<bool>] [--enable-fine-grain-logging]
+[--log-format-escaped] [--log-format
+<string>] [--component-log-level
+<string>] [-l <string>]
+[--local-address-ip-version <string>]
+[--admin-address-path <string>]
 [--ignore-unknown-dynamic-fields]
 [--reject-unknown-dynamic-fields]
 [--allow-unknown-static-fields]
@@ -248,6 +248,9 @@ Path to logfile
 --log-format-prefix-with-location <bool>
 Prefix all occurrences of '%v' in log format with with '[%g:%#] '
 ('[path/to/file.cc:99] ').
+
+--enable-fine-grain-logging
+Logger mode: enable file level log control(Fancy Logger)or not
 
 --log-format-escaped
 Escape c-style escape sequences in the application logs
