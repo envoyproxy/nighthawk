@@ -45,10 +45,6 @@ TEST(ExponentialSearchStepControllerConfigFactory, GeneratesEmptyConfigProto) {
 }
 
 TEST(ExponentialSearchStepControllerConfigFactory, CreatesCorrectFactoryName) {
-  nighthawk::adaptive_load::ExponentialSearchStepControllerConfig config;
-  Envoy::ProtobufWkt::Any config_any;
-  config_any.PackFrom(config);
-  nighthawk::client::CommandLineOptions options;
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<StepControllerConfigFactory>(
           "nighthawk.exponential_search");
@@ -68,26 +64,31 @@ TEST(ExponentialSearchStepControllerConfigFactory, CreatesCorrectPluginType) {
 }
 
 TEST(ExponentialSearchStepController, UsesInitialRps) {
+  const double kInitialInput = 100.0;
   nighthawk::adaptive_load::ExponentialSearchStepControllerConfig config;
-  config.set_initial_value(100.0);
+  config.set_initial_value(kInitialInput);
   nighthawk::client::CommandLineOptions options_template;
   ExponentialSearchStepController step_controller(config, options_template);
-  EXPECT_EQ(step_controller.GetCurrentCommandLineOptions().value().requests_per_second().value(), 100);
+  EXPECT_EQ(step_controller.GetCurrentCommandLineOptions().value().requests_per_second().value(),
+            kInitialInput);
 }
 
 TEST(ExponentialSearchStepController, ActivatesCustomInputVariableSetter) {
+  const double kInitialInput = 100.0;
+  const int kAdjustmentFactor = 123;
   nighthawk::adaptive_load::ExponentialSearchStepControllerConfig step_controller_config;
   // Sets the |connections| field in the Nighthawk input:
-  *step_controller_config.mutable_input_variable_setter() = MakeFakeInputVariableSetterConfig(123);
-  step_controller_config.set_initial_value(100.0);
+  *step_controller_config.mutable_input_variable_setter() =
+      MakeFakeInputVariableSetterConfig(kAdjustmentFactor);
+  step_controller_config.set_initial_value(kInitialInput);
   nighthawk::client::CommandLineOptions options_template;
   ExponentialSearchStepController step_controller(step_controller_config, options_template);
-  EXPECT_EQ(step_controller.GetCurrentCommandLineOptions().value().connections().value(), 12300);
+  EXPECT_EQ(step_controller.GetCurrentCommandLineOptions().value().connections().value(),
+            kInitialInput * kAdjustmentFactor);
 }
 
 TEST(ExponentialSearchStepController, InitiallyReportsNotConverged) {
   nighthawk::adaptive_load::ExponentialSearchStepControllerConfig config;
-  config.set_initial_value(100.0);
   nighthawk::client::CommandLineOptions options_template;
   ExponentialSearchStepController step_controller(config, options_template);
   EXPECT_FALSE(step_controller.IsConverged());
@@ -95,7 +96,6 @@ TEST(ExponentialSearchStepController, InitiallyReportsNotConverged) {
 
 TEST(ExponentialSearchStepController, InitiallyReportsNotDoomed) {
   nighthawk::adaptive_load::ExponentialSearchStepControllerConfig config;
-  config.set_initial_value(100.0);
   nighthawk::client::CommandLineOptions options_template;
   ExponentialSearchStepController step_controller(config, options_template);
   std::string doom_reason = "untouched";
@@ -105,10 +105,9 @@ TEST(ExponentialSearchStepController, InitiallyReportsNotDoomed) {
 
 TEST(ExponentialSearchStepController, ReportsDoomIfOutsideThresholdsOnInitialValue) {
   nighthawk::adaptive_load::ExponentialSearchStepControllerConfig config;
-  config.set_initial_value(100.0);
   nighthawk::client::CommandLineOptions options_template;
   ExponentialSearchStepController step_controller(config, options_template);
-  // Initial RPS already put us outside metric thresholds.
+  // Initial RPS already puts us outside metric thresholds:
   step_controller.UpdateAndRecompute(MakeBenchmarkResultWithScore(-1.0));
   std::string doom_reason;
   EXPECT_TRUE(step_controller.IsDoomed(doom_reason));
@@ -117,7 +116,6 @@ TEST(ExponentialSearchStepController, ReportsDoomIfOutsideThresholdsOnInitialVal
 
 TEST(ExponentialSearchStepController, ReportsDoomAfterNighthawkServiceError) {
   nighthawk::adaptive_load::ExponentialSearchStepControllerConfig config;
-  config.set_initial_value(100.0);
   nighthawk::client::CommandLineOptions options_template;
   ExponentialSearchStepController step_controller(config, options_template);
   step_controller.UpdateAndRecompute(MakeBenchmarkResultWithNighthawkError());
@@ -128,34 +126,43 @@ TEST(ExponentialSearchStepController, ReportsDoomAfterNighthawkServiceError) {
 
 TEST(ExponentialSearchStepController,
      IncreasesRpsExponentiallyIfWithinThresholdUsingDefaultExponent) {
+  const double kInitialInput = 100.0;
+  const double kDefaultExponentialFactor = 2.0;
   nighthawk::adaptive_load::ExponentialSearchStepControllerConfig config;
-  config.set_initial_value(100.0);
+  config.set_initial_value(kInitialInput);
   nighthawk::client::CommandLineOptions options_template;
   ExponentialSearchStepController step_controller(config, options_template);
   step_controller.UpdateAndRecompute(MakeBenchmarkResultWithScore(1.0));
-  // Default exponent is 2.0.
-  EXPECT_EQ(step_controller.GetCurrentCommandLineOptions().value().requests_per_second().value(), 200);
+  EXPECT_EQ(step_controller.GetCurrentCommandLineOptions().value().requests_per_second().value(),
+            kInitialInput * kDefaultExponentialFactor);
 }
 
 TEST(ExponentialSearchStepController,
      IncreasesRpsExponentiallyIfWithinThresholdUsingCustomExponent) {
+  const double kInitialInput = 100.0;
+  const double kExponentialFactor = 1.5;
   nighthawk::adaptive_load::ExponentialSearchStepControllerConfig config;
-  config.set_initial_value(100.0);
-  config.set_exponential_factor(1.5);
+  config.set_initial_value(kInitialInput);
+  config.set_exponential_factor(kExponentialFactor);
   nighthawk::client::CommandLineOptions options_template;
   ExponentialSearchStepController step_controller(config, options_template);
   step_controller.UpdateAndRecompute(MakeBenchmarkResultWithScore(1.0));
-  EXPECT_EQ(step_controller.GetCurrentCommandLineOptions().value().requests_per_second().value(), 150);
+  EXPECT_EQ(step_controller.GetCurrentCommandLineOptions().value().requests_per_second().value(),
+            kInitialInput * kExponentialFactor);
 }
 
 TEST(ExponentialSearchStepController, PerformsBinarySearchAfterExceedingThreshold) {
   nighthawk::adaptive_load::ExponentialSearchStepControllerConfig config;
-  config.set_initial_value(100.0);
+  const double kInitialInput = 100.0;
+  const double kDefaultExponentialFactor = 2.0;
+  const double kOvershootInput = kInitialInput * kDefaultExponentialFactor;
+  config.set_initial_value(kInitialInput);
   nighthawk::client::CommandLineOptions options_template;
   ExponentialSearchStepController step_controller(config, options_template);
   step_controller.UpdateAndRecompute(MakeBenchmarkResultWithScore(1.0));
   step_controller.UpdateAndRecompute(MakeBenchmarkResultWithScore(-1.0));
-  EXPECT_EQ(step_controller.GetCurrentCommandLineOptions().value().requests_per_second().value(), 150);
+  EXPECT_EQ(step_controller.GetCurrentCommandLineOptions().value().requests_per_second().value(),
+            (kInitialInput + kOvershootInput) / 2);
 }
 
 TEST(ExponentialSearchStepController, BinarySearchConvergesAfterManySteps) {
@@ -172,8 +179,9 @@ TEST(ExponentialSearchStepController, BinarySearchConvergesAfterManySteps) {
 }
 
 TEST(ExponentialSearchStepController, BinarySearchFindsBottomOfRange) {
+  const double kInitialInput = 100.0;
   nighthawk::adaptive_load::ExponentialSearchStepControllerConfig config;
-  config.set_initial_value(100.0);
+  config.set_initial_value(kInitialInput);
   nighthawk::client::CommandLineOptions options_template;
   ExponentialSearchStepController step_controller(config, options_template);
   step_controller.UpdateAndRecompute(MakeBenchmarkResultWithScore(1.0));
@@ -181,7 +189,8 @@ TEST(ExponentialSearchStepController, BinarySearchFindsBottomOfRange) {
   for (int i = 0; i < 100; ++i) {
     step_controller.UpdateAndRecompute(MakeBenchmarkResultWithScore(-1.0));
   }
-  EXPECT_EQ(step_controller.GetCurrentCommandLineOptions().value().requests_per_second().value(), 100);
+  EXPECT_EQ(step_controller.GetCurrentCommandLineOptions().value().requests_per_second().value(),
+            kInitialInput);
 }
 
 } // namespace

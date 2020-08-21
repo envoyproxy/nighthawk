@@ -16,9 +16,9 @@ namespace Nighthawk {
 
 namespace {
 
-using nighthawk::adaptive_load::BenchmarkResult;
-using nighthawk::adaptive_load::ExponentialSearchStepControllerConfig;
-using nighthawk::adaptive_load::MetricEvaluation;
+using ::nighthawk::adaptive_load::BenchmarkResult;
+using ::nighthawk::adaptive_load::ExponentialSearchStepControllerConfig;
+using ::nighthawk::adaptive_load::MetricEvaluation;
 
 /**
  * Checks if any non-informational metrics (weight > 0) were outside thresholds (score < 0).
@@ -54,11 +54,7 @@ absl::Status ExponentialSearchStepControllerConfigFactory::ValidateConfig(
   ExponentialSearchStepControllerConfig config;
   Envoy::MessageUtil::unpackTo(any, config);
   if (config.has_input_variable_setter()) {
-    absl::StatusOr<InputVariableSetterPtr> input_variable_setter_or =
-        LoadInputVariableSetterPlugin(config.input_variable_setter());
-    if (!input_variable_setter_or.ok()) {
-      return input_variable_setter_or.status();
-    }
+    return LoadInputVariableSetterPlugin(config.input_variable_setter()).status();
   }
   return absl::OkStatus();
 }

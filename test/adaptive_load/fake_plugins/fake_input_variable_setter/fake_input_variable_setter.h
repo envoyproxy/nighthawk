@@ -25,7 +25,7 @@ public:
 private:
   // A multiplier defined in the config proto that adjusts the input value before applying it, in
   // order to test the propagation of both input and config.
-  int adjustment_factor_;
+  unsigned int adjustment_factor_;
 };
 
 /**
@@ -54,6 +54,6 @@ DECLARE_FACTORY(FakeInputVariableSetterConfigFactory);
  * a FakeInputVariableSetterConfig proto wrapped in an Any.
  */
 envoy::config::core::v3::TypedExtensionConfig
-MakeFakeInputVariableSetterConfig(int adjustment_factor);
+MakeFakeInputVariableSetterConfig(unsigned int adjustment_factor);
 
 } // namespace Nighthawk

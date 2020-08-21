@@ -27,10 +27,6 @@ TEST(FakeInputVariableSetterConfigFactory, CreateEmptyConfigProtoCreatesCorrectT
 }
 
 TEST(FakeInputVariableSetterConfigFactory, FactoryRegistersUnderCorrectName) {
-  FakeInputVariableSetterConfig config;
-  Envoy::ProtobufWkt::Any config_any;
-  config_any.PackFrom(config);
-  CommandLineOptions options;
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<InputVariableSetterConfigFactory>(
           "nighthawk.fake_input_variable_setter");
