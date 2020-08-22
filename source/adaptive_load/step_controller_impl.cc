@@ -129,7 +129,8 @@ void ExponentialSearchStepController::UpdateAndRecompute(const BenchmarkResult& 
 }
 
 /**
- * Updates state variables based on the latest score. Transitions to the binary search phase when
+ * Updates state variables based on the latest score. Exponentially increases the load in each step.
+ * Transitions to the binary search phase when the load has caused metrics to go outside thresholds.
  */
 void ExponentialSearchStepController::IterateRangeFindingPhase(double score) {
   if (score > 0.0) {
@@ -157,7 +158,7 @@ void ExponentialSearchStepController::IterateRangeFindingPhase(double score) {
 }
 
 /**
- * Updates state variables based on the latest score
+ * Updates state variables based on the latest score. Performs one step of a binary search.
  */
 void ExponentialSearchStepController::IterateBinarySearchPhase(double score) {
   if (score > 0.0) {
