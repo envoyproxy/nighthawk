@@ -34,7 +34,7 @@ class ExponentialSearchStepController : public StepController {
 public:
   explicit ExponentialSearchStepController(
       const nighthawk::adaptive_load::ExponentialSearchStepControllerConfig& config,
-      const nighthawk::client::CommandLineOptions& command_line_options_template);
+      nighthawk::client::CommandLineOptions command_line_options_template);
   absl::StatusOr<nighthawk::client::CommandLineOptions>
   GetCurrentCommandLineOptions() const override;
   bool IsConverged() const override;
