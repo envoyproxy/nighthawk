@@ -104,4 +104,17 @@ MakeFakeStepControllerPluginConfig(int fixed_rps_value) {
   return outer_config;
 }
 
+envoy::config::core::v3::TypedExtensionConfig MakeFakeStepControllerPluginConfigWithValidationError(
+    const absl::Status& artificial_validation_error) {
+  envoy::config::core::v3::TypedExtensionConfig outer_config;
+  outer_config.set_name("nighthawk.fake_step_controller");
+  nighthawk::adaptive_load::FakeStepControllerConfig config;
+  config.mutable_artificial_validation_failure()->set_code(
+      static_cast<int>(artificial_validation_error.code()));
+  config.mutable_artificial_validation_failure()->set_message(
+      std::string(artificial_validation_error.message()));
+  outer_config.mutable_typed_config()->PackFrom(config);
+  return outer_config;
+}
+
 } // namespace Nighthawk

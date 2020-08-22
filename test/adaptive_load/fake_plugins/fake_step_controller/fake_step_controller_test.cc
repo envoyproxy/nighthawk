@@ -193,5 +193,16 @@ TEST(MakeFakeStepControllerPluginConfig, ProducesFakeStepControllerPluginWithCon
   EXPECT_EQ(options_or.value().requests_per_second().value(), kExpectedRps);
 }
 
+TEST(MakeFakeStepControllerPluginConfigWithValidationError,
+     ProducesFakeStepControllerPluginWithConfiguredValue) {
+  std::string kValidationErrorMessage = "artificial validation error";
+  absl::StatusOr<StepControllerPtr> plugin_or =
+      LoadStepControllerPlugin(MakeFakeStepControllerPluginConfigWithValidationError(
+                                   absl::DeadlineExceededError(kValidationErrorMessage)),
+                               nighthawk::client::CommandLineOptions{});
+  EXPECT_EQ(plugin_or.status().code(), absl::StatusCode::kDeadlineExceeded);
+  EXPECT_EQ(plugin_or.status().message(), kValidationErrorMessage);
+}
+
 } // namespace
 } // namespace Nighthawk

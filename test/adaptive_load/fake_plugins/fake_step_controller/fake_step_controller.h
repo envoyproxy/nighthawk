@@ -86,5 +86,21 @@ DECLARE_FACTORY(FakeStepControllerConfigFactory);
  */
 envoy::config::core::v3::TypedExtensionConfig
 MakeFakeStepControllerPluginConfig(int fixed_rps_value);
+<<<<<<< HEAD
+=======
+
+/**
+ * Creates a valid TypedExtensionConfig proto that activates a FakeStepController with a
+ * FakeInputVariableSetterConfig that fails validation.
+ *
+ * @param artificial_validation_error An error status.
+ *
+ * @return TypedExtensionConfig A proto that activates FakeStepController by name and includes
+ * a FakeStepControllerConfig proto wrapped in an Any. This proto will fail validation when
+ * attempting to load the plugin.
+ */
+envoy::config::core::v3::TypedExtensionConfig MakeFakeStepControllerPluginConfigWithValidationError(
+    const absl::Status& artificial_validation_error);
+>>>>>>> adaptive-rps-fake-step-controller
 
 } // namespace Nighthawk
