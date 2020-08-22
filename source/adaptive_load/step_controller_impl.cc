@@ -75,10 +75,7 @@ ExponentialSearchStepController::ExponentialSearchStepController(
     const nighthawk::client::CommandLineOptions& command_line_options_template)
     : command_line_options_template_{command_line_options_template},
       exponential_factor_{config.exponential_factor() > 0.0 ? config.exponential_factor() : 2.0},
-      previous_load_value_{std::numeric_limits<double>::signaling_NaN()},
-      current_load_value_{config.initial_value()},
-      bottom_load_value_{std::numeric_limits<double>::signaling_NaN()},
-      top_load_value_{std::numeric_limits<double>::signaling_NaN()} {
+      current_load_value_{config.initial_value()} {
   doom_reason_ = "";
   if (config.has_input_variable_setter()) {
     absl::StatusOr<InputVariableSetterPtr> input_variable_setter_or =

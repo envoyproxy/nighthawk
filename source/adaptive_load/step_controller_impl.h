@@ -51,21 +51,21 @@ private:
   // A plugin that applies a numerical load value to the traffic definition, e.g by setting
   // requests_per_second.
   InputVariableSetterPtr input_variable_setter_;
-  // Whether the algorithm is in the initial range finding stage, as opposed to the subsequent
-  // binary search stage.
+  // Whether the algorithm is in the initial range finding phase, as opposed to the subsequent
+  // binary search phase.
   bool is_range_finding_phase_{true};
-  // The factor for increasing the load value in each recalculation during the range finding stage.
+  // The factor for increasing the load value in each recalculation during the range finding phase.
   double exponential_factor_;
   // The previous load the controller recommended before the most recent recalculation, in both
-  // range finding and binary search stages. NaN initially.
-  double previous_load_value_;
+  // range finding and binary search phases.
+  double previous_load_value_{std::numeric_limits<double>::signaling_NaN()};
   // The load the controller will currently recommend, until the next recalculation, in both range
-  // finding and binary search stages.
+  // finding and binary search phases.
   double current_load_value_;
-  // The current bottom of the search range during the binary search stage.
-  double bottom_load_value_;
-  // The current top of the search range during the binary search stage.
-  double top_load_value_;
+  // The current bottom of the search range during the binary search phase.
+  double bottom_load_value_{std::numeric_limits<double>::signaling_NaN()};
+  // The current top of the search range during the binary search phase.
+  double top_load_value_{std::numeric_limits<double>::signaling_NaN()};
   // Set when an error has been detected; exposed via IsDoomed().
   std::string doom_reason_;
 };
