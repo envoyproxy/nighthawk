@@ -6,8 +6,6 @@
 
 #include "api/adaptive_load/input_variable_setter_impl.pb.h"
 
-#include "adaptive_load/config_validator_impl.h"
-
 namespace Nighthawk {
 
 /**

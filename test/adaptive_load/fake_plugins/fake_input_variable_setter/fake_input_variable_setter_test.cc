@@ -96,6 +96,39 @@ TEST(FakeInputVariableSetterConfigFactory, ValidateConfigWithValidConfigReturnsO
   EXPECT_TRUE(status.ok());
 }
 
+TEST(FakeInputVariableSetter, AppliesInputVariableWithNonnegativeInputValue) {
+  const int kExpectedConnectionsValue = 123;
+  FakeInputVariableSetterConfig config;
+  FakeInputVariableSetter plugin(config);
+  CommandLineOptions options;
+  absl::Status status =
+      plugin.SetInputVariable(options, static_cast<double>(kExpectedConnectionsValue));
+  EXPECT_TRUE(status.ok());
+  EXPECT_EQ(options.connections().value(), kExpectedConnectionsValue);
+}
+
+TEST(FakeInputVariableSetter, AppliesInputVariableWithAdjustmentFactor) {
+  const int kExpectedConnectionsValue = 123;
+  const int kAdjustmentFactor = 100;
+  FakeInputVariableSetterConfig config;
+  config.set_adjustment_factor(kAdjustmentFactor);
+  FakeInputVariableSetter plugin(config);
+  CommandLineOptions options;
+  absl::Status status =
+      plugin.SetInputVariable(options, static_cast<double>(kExpectedConnectionsValue));
+  EXPECT_TRUE(status.ok());
+  EXPECT_EQ(options.connections().value(), kExpectedConnectionsValue * kAdjustmentFactor);
+}
+
+TEST(FakeInputVariableSetter, ReturnsErrorWithNegativeInputValue) {
+  FakeInputVariableSetterConfig config;
+  FakeInputVariableSetter plugin(config);
+  CommandLineOptions options;
+  absl::Status status = plugin.SetInputVariable(options, -1.0);
+  EXPECT_FALSE(status.ok());
+  EXPECT_EQ(status.message(), "Artificial SetInputVariable failure triggered by negative value.");
+}
+
 TEST(MakeFakeInputVariableSetterConfig, ActivatesFakeInputVariableSetter) {
   absl::StatusOr<InputVariableSetterPtr> plugin_or =
       LoadInputVariableSetterPlugin(MakeFakeInputVariableSetterConfig(0));
@@ -103,28 +136,27 @@ TEST(MakeFakeInputVariableSetterConfig, ActivatesFakeInputVariableSetter) {
   EXPECT_NE(dynamic_cast<FakeInputVariableSetter*>(plugin_or.value().get()), nullptr);
 }
 
-TEST(MakeFakeInputVariableSetterConfig, SetsInputWithDefaultConfigProtoValue) {
+TEST(MakeFakeInputVariableSetterConfig, SetsInputWithSpecifiedConfigProtoValue) {
+  const int kExpectedConnectionsValue = 123;
+  const int kAdjustmentFactor = 100;
   absl::StatusOr<InputVariableSetterPtr> plugin_or =
-      LoadInputVariableSetterPlugin(MakeFakeInputVariableSetterConfig(0));
+      LoadInputVariableSetterPlugin(MakeFakeInputVariableSetterConfig(kAdjustmentFactor));
   ASSERT_TRUE(plugin_or.ok());
   auto* plugin = dynamic_cast<FakeInputVariableSetter*>(plugin_or.value().get());
   ASSERT_NE(plugin, nullptr);
   CommandLineOptions options;
-  absl::Status status = plugin->SetInputVariable(options, 123);
+  absl::Status status = plugin->SetInputVariable(options, kExpectedConnectionsValue);
   ASSERT_TRUE(status.ok());
-  EXPECT_EQ(options.connections().value(), 123);
+  EXPECT_EQ(options.connections().value(), kExpectedConnectionsValue * kAdjustmentFactor);
 }
 
-TEST(MakeFakeInputVariableSetterConfig, SetsInputWithSpecifiedConfigProtoValue) {
+TEST(MakeFakeInputVariableSetterConfigWithError, CreatesConfigProtoWithCorrectArtificalError) {
+  std::string kValidationErrorMessage = "artificial validation error";
   absl::StatusOr<InputVariableSetterPtr> plugin_or =
-      LoadInputVariableSetterPlugin(MakeFakeInputVariableSetterConfig(100));
-  ASSERT_TRUE(plugin_or.ok());
-  auto* plugin = dynamic_cast<FakeInputVariableSetter*>(plugin_or.value().get());
-  ASSERT_NE(plugin, nullptr);
-  CommandLineOptions options;
-  absl::Status status = plugin->SetInputVariable(options, 123);
-  ASSERT_TRUE(status.ok());
-  EXPECT_EQ(options.connections().value(), 12300);
+      LoadInputVariableSetterPlugin(MakeFakeInputVariableSetterConfigWithValidationError(
+          absl::DeadlineExceededError(kValidationErrorMessage)));
+  EXPECT_EQ(plugin_or.status().code(), absl::StatusCode::kDeadlineExceeded);
+  EXPECT_EQ(plugin_or.status().message(), kValidationErrorMessage);
 }
 
 } // namespace

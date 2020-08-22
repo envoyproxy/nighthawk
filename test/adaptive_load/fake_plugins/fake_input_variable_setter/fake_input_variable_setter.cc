@@ -16,8 +16,12 @@ FakeInputVariableSetter::FakeInputVariableSetter(
 
 absl::Status FakeInputVariableSetter::SetInputVariable(
     nighthawk::client::CommandLineOptions& command_line_options, double input_value) {
+  if (input_value < 0) {
+    return absl::InvalidArgumentError(
+        "Artificial SetInputVariable failure triggered by negative value.");
+  }
   command_line_options.mutable_connections()->set_value(
-      static_cast<unsigned int>(input_value * adjustment_factor_));
+      static_cast<uint32_t>(input_value * adjustment_factor_));
   return absl::OkStatus();
 }
 
@@ -56,14 +60,25 @@ absl::Status FakeInputVariableSetterConfigFactory::ValidateConfig(
 REGISTER_FACTORY(FakeInputVariableSetterConfigFactory, InputVariableSetterConfigFactory);
 
 envoy::config::core::v3::TypedExtensionConfig
-MakeFakeInputVariableSetterConfig(unsigned int adjustment_factor) {
+MakeFakeInputVariableSetterConfig(uint32_t adjustment_factor) {
   envoy::config::core::v3::TypedExtensionConfig outer_config;
   outer_config.set_name("nighthawk.fake_input_variable_setter");
   nighthawk::adaptive_load::FakeInputVariableSetterConfig config;
   config.set_adjustment_factor(adjustment_factor);
-  Envoy::ProtobufWkt::Any config_any;
-  config_any.PackFrom(config);
-  *outer_config.mutable_typed_config() = config_any;
+  outer_config.mutable_typed_config()->PackFrom(config);
+  return outer_config;
+}
+
+envoy::config::core::v3::TypedExtensionConfig MakeFakeInputVariableSetterConfigWithValidationError(
+    const absl::Status& artificial_validation_error) {
+  envoy::config::core::v3::TypedExtensionConfig outer_config;
+  outer_config.set_name("nighthawk.fake_input_variable_setter");
+  nighthawk::adaptive_load::FakeInputVariableSetterConfig config;
+  config.mutable_artificial_validation_failure()->set_code(
+      static_cast<int>(artificial_validation_error.code()));
+  config.mutable_artificial_validation_failure()->set_message(
+      std::string(artificial_validation_error.message()));
+  outer_config.mutable_typed_config()->PackFrom(config);
   return outer_config;
 }
 

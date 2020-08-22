@@ -72,15 +72,10 @@ REGISTER_FACTORY(ExponentialSearchStepControllerConfigFactory, StepControllerCon
 
 ExponentialSearchStepController::ExponentialSearchStepController(
     const ExponentialSearchStepControllerConfig& config,
-    nighthawk::client::CommandLineOptions command_line_options_template)
-    : command_line_options_template_{std::move(command_line_options_template)},
-      is_exponential_phase_{true}, exponential_factor_{config.exponential_factor() > 0.0
-                                                           ? config.exponential_factor()
-                                                           : 2.0},
-      previous_load_value_{std::numeric_limits<double>::signaling_NaN()},
-      current_load_value_{config.initial_value()},
-      bottom_load_value_{std::numeric_limits<double>::signaling_NaN()},
-      top_load_value_{std::numeric_limits<double>::signaling_NaN()} {
+    const nighthawk::client::CommandLineOptions& command_line_options_template)
+    : command_line_options_template_{command_line_options_template},
+      exponential_factor_{config.exponential_factor() > 0.0 ? config.exponential_factor() : 2.0},
+      current_load_value_{config.initial_value()} {
   doom_reason_ = "";
   if (config.has_input_variable_setter()) {
     absl::StatusOr<InputVariableSetterPtr> input_variable_setter_or =
@@ -108,7 +103,7 @@ ExponentialSearchStepController::GetCurrentCommandLineOptions() const {
 
 bool ExponentialSearchStepController::IsConverged() const {
   // Binary search has brought successive input values within 1% of each other.
-  return doom_reason_.empty() && !is_exponential_phase_ &&
+  return doom_reason_.empty() && !is_range_finding_phase_ &&
          abs(current_load_value_ / previous_load_value_ - 1.0) < 0.01;
 }
 
@@ -126,42 +121,55 @@ void ExponentialSearchStepController::UpdateAndRecompute(const BenchmarkResult& 
     return;
   }
   const double score = TotalScore(benchmark_result);
-
-  if (is_exponential_phase_) {
-    if (score > 0.0) {
-      // Have not reached the threshold yet; continue increasing the load exponentially.
-      previous_load_value_ = current_load_value_;
-      current_load_value_ *= exponential_factor_;
-    } else {
-      // We have found a value that exceeded the threshold.
-      // Prepare for the binary search phase.
-      if (std::isnan(previous_load_value_)) {
-        doom_reason_ =
-            "ExponentialSearchStepController cannot continue if the metrics values already exceed "
-            "metric thresholds with the initial load. Check the initial load value in the "
-            "ExponentialSearchStepControllerConfig, requested metrics, and thresholds.";
-        return;
-      }
-      is_exponential_phase_ = false;
-      // Binary search between previous load (ok) and current load (too high).
-      bottom_load_value_ = previous_load_value_;
-      top_load_value_ = current_load_value_;
-
-      previous_load_value_ = current_load_value_;
-      current_load_value_ = (bottom_load_value_ + top_load_value_) / 2;
-    }
+  if (is_range_finding_phase_) {
+    IterateRangeFindingPhase(score);
   } else {
-    // Binary search phase.
-    if (score > 0.0) {
-      // Within threshold, go higher.
-      bottom_load_value_ = current_load_value_;
-    } else {
-      // Outside threshold, go lower.
-      top_load_value_ = current_load_value_;
+    IterateBinarySearchPhase(score);
+  }
+}
+
+/**
+ * Updates state variables based on the latest score. Exponentially increases the load in each step.
+ * Transitions to the binary search phase when the load has caused metrics to go outside thresholds.
+ */
+void ExponentialSearchStepController::IterateRangeFindingPhase(double score) {
+  if (score > 0.0) {
+    // Have not reached the threshold yet; continue increasing the load exponentially.
+    previous_load_value_ = current_load_value_;
+    current_load_value_ *= exponential_factor_;
+  } else {
+    // We have found a value that exceeded the threshold.
+    // Prepare for the binary search phase.
+    if (std::isnan(previous_load_value_)) {
+      doom_reason_ =
+          "ExponentialSearchStepController cannot continue if the metrics values already exceed "
+          "metric thresholds with the initial load. Check the initial load value in the "
+          "ExponentialSearchStepControllerConfig, requested metrics, and thresholds.";
+      return;
     }
+    is_range_finding_phase_ = false;
+    // Binary search is between previous load (ok) and current load (too high).
+    bottom_load_value_ = previous_load_value_;
+    top_load_value_ = current_load_value_;
+
     previous_load_value_ = current_load_value_;
     current_load_value_ = (bottom_load_value_ + top_load_value_) / 2;
   }
+}
+
+/**
+ * Updates state variables based on the latest score. Performs one step of a binary search.
+ */
+void ExponentialSearchStepController::IterateBinarySearchPhase(double score) {
+  if (score > 0.0) {
+    // Within threshold, go higher.
+    bottom_load_value_ = current_load_value_;
+  } else {
+    // Outside threshold, go lower.
+    top_load_value_ = current_load_value_;
+  }
+  previous_load_value_ = current_load_value_;
+  current_load_value_ = (bottom_load_value_ + top_load_value_) / 2;
 }
 
 } // namespace Nighthawk
