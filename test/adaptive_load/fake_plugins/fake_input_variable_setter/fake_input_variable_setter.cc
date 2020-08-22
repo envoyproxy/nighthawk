@@ -69,8 +69,8 @@ MakeFakeInputVariableSetterConfig(uint32_t adjustment_factor) {
   return outer_config;
 }
 
-envoy::config::core::v3::TypedExtensionConfig
-MakeFakeInputVariableSetterConfigWithValidationError(absl::Status artificial_validation_error) {
+envoy::config::core::v3::TypedExtensionConfig MakeFakeInputVariableSetterConfigWithValidationError(
+    const absl::Status& artificial_validation_error) {
   envoy::config::core::v3::TypedExtensionConfig outer_config;
   outer_config.set_name("nighthawk.fake_input_variable_setter");
   nighthawk::adaptive_load::FakeInputVariableSetterConfig config;

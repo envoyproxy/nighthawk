@@ -17,12 +17,24 @@ namespace Nighthawk {
  *
  * Converges when the binary search values are within 1%. Report doom if the initial load already
  * caused metrics to exceed thresholds, or if any Nighthawk result has an error status.
+ *
+ * Example usage in adaptive load session spec:
+ *   // ...
+ *   step_controller_config {
+ *    name: "nighthawk.exponential_search"
+ *    typed_config {
+ *      [type.googleapis.com/nighthawk.adaptive_load.ExponentialSearchStepControllerConfig] {
+ *        initial_value: 10.0
+ *      }
+ *    }
+ *   }
+ *   // ...
  */
 class ExponentialSearchStepController : public StepController {
 public:
   explicit ExponentialSearchStepController(
       const nighthawk::adaptive_load::ExponentialSearchStepControllerConfig& config,
-      nighthawk::client::CommandLineOptions command_line_options_template);
+      const nighthawk::client::CommandLineOptions& command_line_options_template);
   absl::StatusOr<nighthawk::client::CommandLineOptions>
   GetCurrentCommandLineOptions() const override;
   bool IsConverged() const override;

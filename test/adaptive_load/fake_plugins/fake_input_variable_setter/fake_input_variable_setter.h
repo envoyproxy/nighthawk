@@ -77,7 +77,7 @@ MakeFakeInputVariableSetterConfig(uint32_t adjustment_factor);
  * a FakeInputVariableSetterConfig proto wrapped in an Any. This proto will fail validation when
  * attempting to load the plugin.
  */
-envoy::config::core::v3::TypedExtensionConfig
-MakeFakeInputVariableSetterConfigWithValidationError(absl::Status artificial_validation_error);
+envoy::config::core::v3::TypedExtensionConfig MakeFakeInputVariableSetterConfigWithValidationError(
+    const absl::Status& artificial_validation_error);
 
 } // namespace Nighthawk
