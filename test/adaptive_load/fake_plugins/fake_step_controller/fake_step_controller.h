@@ -97,7 +97,7 @@ MakeFakeStepControllerPluginConfig(int fixed_rps_value);
  * a FakeStepControllerConfig proto wrapped in an Any. This proto will fail validation when
  * attempting to load the plugin.
  */
-envoy::config::core::v3::TypedExtensionConfig
-MakeFakeStepControllerPluginConfigWithError(const absl::Status& artificial_validation_error);
+envoy::config::core::v3::TypedExtensionConfig MakeFakeStepControllerPluginConfigWithValidationError(
+    const absl::Status& artificial_validation_error);
 
 } // namespace Nighthawk
