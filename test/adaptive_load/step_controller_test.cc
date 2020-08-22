@@ -63,7 +63,20 @@ TEST(ExponentialSearchStepControllerConfigFactory, CreatesCorrectPluginType) {
   EXPECT_NE(dynamic_cast<ExponentialSearchStepController*>(plugin.get()), nullptr);
 }
 
-TEST(ExponentialSearchStepControllerConfigFactory, ValidateConfigWithValidConfigReturnsOk) {
+TEST(ExponentialSearchStepControllerConfigFactory,
+     ValidateConfigWithoutInputVariableSetterReturnsOk) {
+  nighthawk::adaptive_load::ExponentialSearchStepControllerConfig config;
+  auto& config_factory =
+      Envoy::Config::Utility::getAndCheckFactoryByName<StepControllerConfigFactory>(
+          "nighthawk.exponential_search");
+  Envoy::ProtobufWkt::Any config_any;
+  config_any.PackFrom(config);
+  absl::Status status = config_factory.ValidateConfig(config_any);
+  EXPECT_TRUE(status.ok());
+}
+
+TEST(ExponentialSearchStepControllerConfigFactory,
+     ValidateConfigWithValidInputVariableSetterReturnsOk) {
   nighthawk::adaptive_load::ExponentialSearchStepControllerConfig config;
   *config.mutable_input_variable_setter() =
       MakeFakeInputVariableSetterConfig(/*adjustment_factor=*/0);
@@ -76,7 +89,8 @@ TEST(ExponentialSearchStepControllerConfigFactory, ValidateConfigWithValidConfig
   EXPECT_TRUE(status.ok());
 }
 
-TEST(ExponentialSearchStepControllerConfigFactory, ValidateConfigWithInvalidConfigReturnsError) {
+TEST(ExponentialSearchStepControllerConfigFactory,
+     ValidateConfigWithInvalidInputVariableSetterReturnsError) {
   const std::string kExpectedStatusMessage = "artificial validation failure";
   nighthawk::adaptive_load::ExponentialSearchStepControllerConfig config;
   *config.mutable_input_variable_setter() = MakeFakeInputVariableSetterConfigWithValidationError(
@@ -117,6 +131,21 @@ TEST(ExponentialSearchStepController, ActivatesCustomInputVariableSetter) {
       step_controller.GetCurrentCommandLineOptions();
   ASSERT_TRUE(returned_options_or.ok());
   EXPECT_EQ(returned_options_or.value().connections().value(), kInitialInput * kAdjustmentFactor);
+}
+
+TEST(ExponentialSearchStepController, PropagatesInputVariableSetterError) {
+  nighthawk::adaptive_load::ExponentialSearchStepControllerConfig step_controller_config;
+  *step_controller_config.mutable_input_variable_setter() = MakeFakeInputVariableSetterConfig(0);
+  // Attempting to apply a negative value triggers an error from FakeInputVariableSetter.
+  step_controller_config.set_initial_value(-1.0);
+  nighthawk::client::CommandLineOptions options_template;
+  ExponentialSearchStepController step_controller(step_controller_config, options_template);
+  absl::StatusOr<nighthawk::client::CommandLineOptions> returned_options_or =
+      step_controller.GetCurrentCommandLineOptions();
+  ASSERT_FALSE(returned_options_or.ok());
+  EXPECT_EQ(returned_options_or.status().code(), absl::StatusCode::kInvalidArgument);
+  EXPECT_EQ(returned_options_or.status().message(),
+            "Artificial SetInputVariable failure triggered by negative value.");
 }
 
 TEST(ExponentialSearchStepController, InitiallyReportsNotConverged) {
@@ -234,6 +263,26 @@ TEST(ExponentialSearchStepController, BinarySearchFindsBottomOfRange) {
       step_controller.GetCurrentCommandLineOptions();
   ASSERT_TRUE(returned_options_or.ok());
   EXPECT_EQ(returned_options_or.value().requests_per_second().value(), kInitialInput);
+}
+
+TEST(ExponentialSearchStepController, BinarySearchFindsMidpointOfRange) {
+  const double kInitialInput = 100.0;
+  nighthawk::adaptive_load::ExponentialSearchStepControllerConfig config;
+  config.set_initial_value(kInitialInput);
+  nighthawk::client::CommandLineOptions options_template;
+  ExponentialSearchStepController step_controller(config, options_template);
+  step_controller.UpdateAndRecompute(MakeBenchmarkResultWithScore(1.0));
+  step_controller.UpdateAndRecompute(MakeBenchmarkResultWithScore(-1.0));
+  // During binary search, succeed once to send it up to the midpoint:
+  step_controller.UpdateAndRecompute(MakeBenchmarkResultWithScore(1.0));
+  // Fail every subsequent test, so it converges back down to the midpoint:
+  for (int i = 0; i < 100; ++i) {
+    step_controller.UpdateAndRecompute(MakeBenchmarkResultWithScore(-1.0));
+  }
+  absl::StatusOr<nighthawk::client::CommandLineOptions> returned_options_or =
+      step_controller.GetCurrentCommandLineOptions();
+  ASSERT_TRUE(returned_options_or.ok());
+  EXPECT_EQ(returned_options_or.value().requests_per_second().value(), kInitialInput * 1.5);
 }
 
 } // namespace
