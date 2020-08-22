@@ -54,12 +54,13 @@ private:
   // Whether the algorithm is in the initial range finding stage, as opposed to the subsequent
   // binary search stage.
   bool is_range_finding_phase_{true};
-  // The factor for increasing the load value in each recalculation during the exponential stage.
+  // The factor for increasing the load value in each recalculation during the range finding stage.
   double exponential_factor_;
-  // The previous load the controller recommended before the most recent recalculation. NaN
-  // initially.
+  // The previous load the controller recommended before the most recent recalculation, in both
+  // range finding and binary search stages. NaN initially.
   double previous_load_value_;
-  // The load the controller will currently recommend, until the next recalculation.
+  // The load the controller will currently recommend, until the next recalculation, in both range
+  // finding and binary search stages.
   double current_load_value_;
   // The current bottom of the search range during the binary search stage.
   double bottom_load_value_;
