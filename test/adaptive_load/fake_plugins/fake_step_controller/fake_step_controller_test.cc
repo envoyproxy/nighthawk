@@ -141,7 +141,8 @@ TEST(FakeStepController, IsDoomedReturnsFalseAfterSuccessfulBenchmarkResult) {
   EXPECT_FALSE(step_controller.IsDoomed(doomed_reason));
 }
 
-TEST(FakeStepController, IsDoomedDoesNotWriteDoomedReasonAfterSuccessfulBenchmarkResult) {
+TEST(FakeStepController,
+     IsDoomedReturnsFalseAndLeavesDoomedReasonUntouchedAfterSuccessfulBenchmarkResult) {
   FakeStepController step_controller(FakeStepControllerConfig{}, CommandLineOptions{});
   BenchmarkResult benchmark_result;
   benchmark_result.mutable_status()->set_code(::grpc::OK);
