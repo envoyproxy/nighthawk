@@ -33,7 +33,7 @@ function do_clang_tidy() {
 }
 
 function do_coverage() {
-    export TEST_TARGETS="//test/..."
+    export TEST_TARGETS="//test/... -//test:python_test"
     echo "bazel coverage build with tests ${TEST_TARGETS}"
     test/run_nighthawk_bazel_coverage.sh ${TEST_TARGETS}
     exit 0

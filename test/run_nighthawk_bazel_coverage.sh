@@ -31,7 +31,7 @@ else
 fi
 
 BAZEL_BUILD_OPTIONS+=" --config=test-coverage --test_tag_filters=-nocoverage --test_env=ENVOY_IP_TEST_VERSIONS=v4only"
-bazel coverage ${BAZEL_BUILD_OPTIONS} --cache_test_results=no --test_output=all ${COVERAGE_TARGETS}
+bazel coverage ${BAZEL_BUILD_OPTIONS} --cache_test_results=no --test_output=all -- ${COVERAGE_TARGETS}
 COVERAGE_DATA="${COVERAGE_DIR}/coverage.dat"
 
 cp bazel-out/_coverage/_coverage_report.dat "${COVERAGE_DATA}"
@@ -43,7 +43,7 @@ COVERAGE_VALUE=${COVERAGE_VALUE%?}
 
 if [ "$VALIDATE_COVERAGE" == "true" ]
 then
-  COVERAGE_THRESHOLD=98.4
+  COVERAGE_THRESHOLD=92.1
   COVERAGE_FAILED=$(echo "${COVERAGE_VALUE}<${COVERAGE_THRESHOLD}" | bc)
   if test ${COVERAGE_FAILED} -eq 1; then
       echo Code coverage ${COVERAGE_VALUE} is lower than limit of ${COVERAGE_THRESHOLD}
