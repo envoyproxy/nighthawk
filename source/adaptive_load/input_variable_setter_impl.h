@@ -2,10 +2,11 @@
 
 #include "envoy/registry/registry.h"
 
-#include "adaptive_load/config_validator_impl.h"
 #include "nighthawk/adaptive_load/input_variable_setter.h"
 
 #include "api/adaptive_load/input_variable_setter_impl.pb.h"
+
+#include "adaptive_load/config_validator_impl.h"
 
 namespace Nighthawk {
 
@@ -29,8 +30,9 @@ public:
  * A factory that creates an RequestsPerSecondInputVariableSetter from a
  * RequestsPerSecondInputVariableSetterConfig proto.
  */
-class RequestsPerSecondInputVariableSetterConfigFactory : public virtual InputVariableSetterConfigFactory,
-                                                          public virtual NullConfigValidator {
+class RequestsPerSecondInputVariableSetterConfigFactory
+    : public virtual InputVariableSetterConfigFactory,
+      public virtual NullConfigValidator {
 public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
