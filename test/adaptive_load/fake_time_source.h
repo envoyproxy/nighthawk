@@ -18,7 +18,7 @@ public:
   /**
    * Ticks forward 1 second on each call.
    *
-   * @return Envoy::MonotonicTime Fake time vaule.
+   * @return Envoy::MonotonicTime Fake time value.
    */
   Envoy::MonotonicTime monotonicTime() override;
 

@@ -9,22 +9,20 @@ licenses(["notice"])  # Apache 2
 envoy_package()
 
 envoy_cc_library(
-    name = "adaptive_load_client_main",
-    srcs = [
-        "adaptive_load_client_main.cc",
-    ],
-    hdrs = [
-        "adaptive_load_client_main.h",
-    ],
+    name = "adaptive_load",
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
-        ":adaptive_load",
-        "@envoy//source/common/grpc:google_grpc_utils_lib_with_external_headers",
+        ":adaptive_load_controller_impl",
+        ":input_variable_setter_impl",
+        ":metrics_plugin_impl",
+        ":scoring_function_impl",
+        ":step_controller_impl",
     ],
 )
 
 envoy_cc_library(
+    name = "adaptive_load_client_main",
     name = "adaptive_load",
     repository = "@envoy",
     visibility = ["//visibility:public"],

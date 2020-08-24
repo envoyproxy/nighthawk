@@ -26,12 +26,12 @@
 #include "api/client/service.pb.h"
 #include "api/client/service_mock.grpc.pb.h"
 
+#include "grpcpp/test/mock_stream.h"
+
 #include "test/adaptive_load/fake_plugins/fake_metrics_plugin/fake_metrics_plugin.h"
 #include "test/adaptive_load/fake_plugins/fake_step_controller/fake_step_controller.h"
 #include "test/adaptive_load/fake_time_source.h"
 #include "test/adaptive_load/minimal_output.h"
-
-#include "grpcpp/test/mock_stream.h"
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
@@ -130,7 +130,11 @@ MakeSimpleMockClientReaderWriter() {
  * Creates a simulated Nighthawk Service response that reflects the specified send rate. Combined
  * with BuiltinMetricsPlugin and BinaryScoringFunction with a lower threshold, this can be used to
  * produce a 'send-rate' metric score of 1.0 or -1.0 on demand. This in turn can be used to make
- * FakeStepController report convergence if the score is 1.0 for testing purposes.
+ * FakeStepController report convergence for testing purposes, by arrranging a metric score of 1.0.
+ *
+ * For example, use the response MakeNighthawkResponseWithSendRate(1.0) and a lower threshold of
+ * 0.9 to produce the score 1.0, or the response MakeNighthawkResponseWithSendRate(0.5) with the
+ * same threshold to produce the score -1.0.
  *
  * @return ExecutionResponse A simulated Nighthawk Service response with counters representing the
  * specified send rate, along with other dummy counters and stats.
