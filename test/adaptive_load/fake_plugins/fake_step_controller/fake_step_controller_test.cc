@@ -146,22 +146,12 @@ TEST(FakeStepController, IsDoomedDoesNotWriteDoomedReasonAfterSuccessfulBenchmar
   BenchmarkResult benchmark_result;
   benchmark_result.mutable_status()->set_code(::grpc::OK);
   step_controller.UpdateAndRecompute(benchmark_result);
-  std::string doomed_reason = "untouched";
-  ASSERT_FALSE(step_controller.IsDoomed(doomed_reason));
-  EXPECT_EQ(doomed_reason, "untouched");
+  std::string variable_that_should_not_be_written = "original value";
+  EXPECT_FALSE(step_controller.IsDoomed(variable_that_should_not_be_written));
+  EXPECT_EQ(variable_that_should_not_be_written, "original value");
 }
 
-TEST(FakeStepController, IsDoomedReturnsTrueAfterFailedBenchmarkResult) {
-  FakeStepController step_controller(FakeStepControllerConfig{}, CommandLineOptions{});
-  BenchmarkResult benchmark_result;
-  benchmark_result.mutable_status()->set_code(::grpc::INTERNAL);
-  benchmark_result.mutable_status()->set_message("error from nighthawk");
-  step_controller.UpdateAndRecompute(benchmark_result);
-  std::string doomed_reason;
-  EXPECT_TRUE(step_controller.IsDoomed(doomed_reason));
-}
-
-TEST(FakeStepController, IsDoomedSetsDoomedReasonToStatusMessageAfterFailedBenchmarkResult) {
+TEST(FakeStepController, IsDoomedReturnsTrueAndSetsDoomedReasonAfterFailedBenchmarkResult) {
   const std::string kErrorMessage = "error from nighthawk";
   FakeStepController step_controller(FakeStepControllerConfig{}, CommandLineOptions{});
   BenchmarkResult benchmark_result;
@@ -169,7 +159,7 @@ TEST(FakeStepController, IsDoomedSetsDoomedReasonToStatusMessageAfterFailedBench
   benchmark_result.mutable_status()->set_message(kErrorMessage);
   step_controller.UpdateAndRecompute(benchmark_result);
   std::string doomed_reason;
-  ASSERT_TRUE(step_controller.IsDoomed(doomed_reason));
+  EXPECT_TRUE(step_controller.IsDoomed(doomed_reason));
   EXPECT_EQ(doomed_reason, kErrorMessage);
 }
 
