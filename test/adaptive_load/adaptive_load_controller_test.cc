@@ -130,7 +130,11 @@ MakeSimpleMockClientReaderWriter() {
  * Creates a simulated Nighthawk Service response that reflects the specified send rate. Combined
  * with BuiltinMetricsPlugin and BinaryScoringFunction with a lower threshold, this can be used to
  * produce a 'send-rate' metric score of 1.0 or -1.0 on demand. This in turn can be used to make
- * FakeStepController report convergence if the score is 1.0 for testing purposes.
+ * FakeStepController report convergence for testing purposes, by arrranging a metric score of 1.0.
+ *
+ * For example, use the response MakeNighthawkResponseWithSendRate(1.0) and a lower threshold of
+ * 0.9 to produce the score 1.0, or the response MakeNighthawkResponseWithSendRate(0.5) with the
+ * same threshold to produce the score -1.0.
  *
  * @return ExecutionResponse A simulated Nighthawk Service response with counters representing the
  * specified send rate, along with other dummy counters and stats.
