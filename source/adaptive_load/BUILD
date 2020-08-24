@@ -9,6 +9,40 @@ licenses(["notice"])  # Apache 2
 envoy_package()
 
 envoy_cc_library(
+    name = "adaptive_load",
+    repository = "@envoy",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":adaptive_load_controller_impl",
+        ":input_variable_setter_impl",
+        ":metrics_plugin_impl",
+        ":scoring_function_impl",
+        ":step_controller_impl",
+    ],
+)
+
+envoy_cc_library(
+    name = "adaptive_load_controller_impl",
+    srcs = [
+        "adaptive_load_controller_impl.cc",
+    ],
+    repository = "@envoy",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":metrics_plugin_impl",
+        ":plugin_loader",
+        "//api/adaptive_load:adaptive_load_proto_cc_proto",
+        "//api/client:base_cc_proto",
+        "//api/client:grpc_service_lib",
+        "//include/nighthawk/adaptive_load:adaptive_load_controller",
+        "//include/nighthawk/adaptive_load:scoring_function",
+        "//include/nighthawk/adaptive_load:step_controller",
+        "@envoy//source/common/common:minimal_logger_lib_with_external_headers",
+        "@envoy//source/common/event:real_time_system_lib_with_external_headers",
+    ],
+)
+
+envoy_cc_library(
     name = "config_validator_impl",
     srcs = [
         "config_validator_impl.cc",

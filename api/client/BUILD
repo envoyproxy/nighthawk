@@ -23,6 +23,7 @@ cc_grpc_library(
     srcs = [
         ":base",
     ],
+    generate_mocks = True,
     grpc_only = True,
     proto_only = False,
     use_external = False,
