@@ -40,6 +40,8 @@ envoy_cc_library(
         ":configuration_lib",
         ":well_known_headers_lib",
         "//api/server:response_options_proto_cc_proto",
+        "@envoy//source/common/common:lock_guard_lib_with_external_headers",
+        "@envoy//source/common/common:thread_lib_with_external_headers",
         "@envoy//source/exe:envoy_common_lib_with_external_headers",
     ],
 )

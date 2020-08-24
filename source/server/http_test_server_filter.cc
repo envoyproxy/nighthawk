@@ -17,6 +17,22 @@ HttpTestServerDecoderFilterConfig::HttpTestServerDecoderFilterConfig(
     nighthawk::server::ResponseOptions proto_config)
     : server_config_(std::move(proto_config)) {}
 
+uint64_t HttpTestServerDecoderFilterConfig::ThreadSafeMontonicTimeStopwatch::getElapsedNsAndReset(
+    Envoy::TimeSource& time_source) {
+  Envoy::Thread::LockGuard guard(lock_);
+  // Note that we obtain monotonic time under lock, to ensure that start_ will be updated
+  // monotonically.
+  const Envoy::MonotonicTime new_time = time_source.monotonicTime();
+  const uint64_t elapsed = start_ == Envoy::MonotonicTime::min() ? 0 : (new_time - start_).count();
+  start_ = new_time;
+  return elapsed;
+}
+
+uint64_t
+HttpTestServerDecoderFilterConfig::getElapsedNanosSinceLastRequest(Envoy::TimeSource& time_source) {
+  return lastRequestStopwatch().getElapsedNsAndReset(time_source);
+}
+
 HttpTestServerDecoderFilter::HttpTestServerDecoderFilter(
     HttpTestServerDecoderFilterConfigSharedPtr config)
     : config_(std::move(config)) {}
@@ -87,14 +103,10 @@ HttpTestServerDecoderFilter::decodeTrailers(Envoy::Http::RequestTrailerMap&) {
 void HttpTestServerDecoderFilter::setDecoderFilterCallbacks(
     Envoy::Http::StreamDecoderFilterCallbacks& callbacks) {
   decoder_callbacks_ = &callbacks;
-  time_source_ = &callbacks.dispatcher().timeSource();
-  const Envoy::MonotonicTime current_time = time_source_->monotonicTime();
-  const Envoy::MonotonicTime last_request_time = config_->swapLastRequestTime(current_time);
-  if (last_request_time == Envoy::MonotonicTime::min()) {
-    last_request_delta_ns_ = 0;
-  } else {
-    last_request_delta_ns_ = (current_time - last_request_time).count();
-  }
+  // TODO(oschaaf): this adds locking in the hot path. Consider moving this into a separate
+  // extension, which will also allow tracking multiple points via configuration.
+  last_request_delta_ns_ =
+      config_->getElapsedNanosSinceLastRequest(callbacks.dispatcher().timeSource());
 }
 
 } // namespace Server
