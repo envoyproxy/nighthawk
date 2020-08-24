@@ -174,7 +174,7 @@ if [ -n "$CIRCLECI" ]; then
     fi
     NUM_CPUS=8
     if [[ "$1" == "test_gcc" ]]; then
-        NUM_CPUS=6
+        NUM_CPUS=4
     fi
 fi
 
