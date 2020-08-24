@@ -148,9 +148,13 @@ BenchmarkResult AnalyzeNighthawkBenchmark(
         evaluation.set_weight(0.0);
       } else {
         evaluation.set_weight(threshold_spec->weight().value());
-        // Nonexistent ScoringFunction should have been caught during input validation.
-        ScoringFunctionPtr scoring_function =
-            LoadScoringFunctionPlugin(threshold_spec->scoring_function()).value();
+        absl::StatusOr<ScoringFunctionPtr> scoring_function_or =
+            LoadScoringFunctionPlugin(threshold_spec->scoring_function());
+        RELEASE_ASSERT(scoring_function_or.ok(),
+                       absl::StrCat("ScoringFunction plugin loading error should have been caught "
+                                    "during input validation: ",
+                                    scoring_function_or.status().message()));
+        ScoringFunctionPtr scoring_function = std::move(scoring_function_or.value());
         evaluation.set_threshold_score(scoring_function->EvaluateMetric(metric_value));
       }
     } else {
@@ -315,6 +319,7 @@ AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
     nighthawk::client::NighthawkService::StubInterface* nighthawk_service_stub,
     const AdaptiveLoadSessionSpec& input_spec, Envoy::TimeSource& time_source) {
   AdaptiveLoadSessionOutput output;
+
   AdaptiveLoadSessionSpec spec = SetDefaults(input_spec);
   absl::Status validation_status = CheckSessionSpec(spec);
   if (!validation_status.ok()) {
@@ -322,20 +327,33 @@ AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
     output.mutable_session_status()->set_message(std::string(validation_status.message()));
     return output;
   }
+
   absl::flat_hash_map<std::string, MetricsPluginPtr> name_to_custom_metrics_plugin_map;
   for (const envoy::config::core::v3::TypedExtensionConfig& config :
        spec.metrics_plugin_configs()) {
-    // Load error should have been caught during input validation.
-    name_to_custom_metrics_plugin_map[config.name()] = std::move(LoadMetricsPlugin(config).value());
+    absl::StatusOr<MetricsPluginPtr> metrics_plugin_or = LoadMetricsPlugin(config);
+    RELEASE_ASSERT(
+        metrics_plugin_or.ok(),
+        absl::StrCat(
+            "MetricsPlugin loading error should have been caught during input validation: ",
+            metrics_plugin_or.status().message()));
+    name_to_custom_metrics_plugin_map[config.name()] = std::move(metrics_plugin_or.value());
   }
-  // Load error should should have been caught during input validation.
-  StepControllerPtr step_controller =
-      LoadStepControllerPlugin(spec.step_controller_config(), spec.nighthawk_traffic_template())
-          .value();
+
+  absl::StatusOr<StepControllerPtr> step_controller_or =
+      LoadStepControllerPlugin(spec.step_controller_config(), spec.nighthawk_traffic_template());
+  RELEASE_ASSERT(
+      step_controller_or.ok(),
+      absl::StrCat(
+          "StepController plugin loading error should have been caught during input validation: ",
+          step_controller_or.status().message()));
+  StepControllerPtr step_controller = std::move(step_controller_or.value());
+
   for (const nighthawk::adaptive_load::MetricSpecWithThreshold& threshold :
        spec.metric_thresholds()) {
     *output.mutable_metric_thresholds()->Add() = threshold;
   }
+
   Envoy::MonotonicTime start_time = time_source.monotonicTime();
   while (!step_controller->IsConverged()) {
     std::string doom_reason;
@@ -355,6 +373,7 @@ AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
       ENVOY_LOG_MISC(info, message);
       return output;
     }
+    
     absl::StatusOr<nighthawk::client::CommandLineOptions> command_line_options_or =
         step_controller->GetCurrentCommandLineOptions();
     if (!command_line_options_or.ok()) {
@@ -376,6 +395,7 @@ AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
     *output.mutable_adjusting_stage_results()->Add() = result;
     step_controller->UpdateAndRecompute(result);
   }
+
   absl::StatusOr<nighthawk::client::CommandLineOptions> command_line_options_or =
       step_controller->GetCurrentCommandLineOptions();
   if (!command_line_options_or.ok()) {
