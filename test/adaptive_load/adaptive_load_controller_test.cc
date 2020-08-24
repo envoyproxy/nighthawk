@@ -64,7 +64,7 @@ using ::testing::SetArgPointee;
 envoy::config::core::v3::TypedExtensionConfig
 MakeLowerThresholdBinaryScoringFunctionConfig(double lower_threshold) {
   envoy::config::core::v3::TypedExtensionConfig config;
-  config.set_name("nighthawk.binary-scoring");
+  config.set_name("nighthawk.binary_scoring");
   nighthawk::adaptive_load::BinaryScoringFunctionConfig inner_config;
   inner_config.mutable_lower_threshold()->set_value(lower_threshold);
   config.mutable_typed_config()->PackFrom(inner_config);
@@ -96,7 +96,7 @@ nighthawk::adaptive_load::AdaptiveLoadSessionSpec MakeConvergeableDoomableSessio
 
 envoy::config::core::v3::TypedExtensionConfig MakeFakeMetricsPluginConfig() {
   envoy::config::core::v3::TypedExtensionConfig config;
-  config.set_name("nighthawk.fake-metrics-plugin");
+  config.set_name("nighthawk.fake_metrics_plugin");
   nighthawk::adaptive_load::FakeMetricsPluginConfig inner_config;
   nighthawk::adaptive_load::FakeMetricsPluginConfig::FakeMetric* fake_metric =
       inner_config.mutable_fake_metrics()->Add();
@@ -291,7 +291,7 @@ TEST(AdaptiveLoadController, FailsWithUndeclaredMetricsPluginNameInMetricThresho
       MakeLowerThresholdBinaryScoringFunctionConfig(0.0);
   threshold->mutable_metric_spec()->set_metric_name("x");
   // Valid plugin name, but plugin not declared in the spec.
-  threshold->mutable_metric_spec()->set_metrics_plugin_name("nighthawk.fake-metrics-plugin");
+  threshold->mutable_metric_spec()->set_metrics_plugin_name("nighthawk.fake_metrics_plugin");
   FakeIncrementingMonotonicTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
       /*nighthawk_service_stub=*/nullptr, spec, time_source);
@@ -316,7 +316,7 @@ TEST(AdaptiveLoadController, FailsWithUndeclaredMetricsPluginNameInInformational
       spec.mutable_informational_metric_specs()->Add();
   metric_spec->set_metric_name("x");
   // Valid plugin name, but plugin not declared in the spec.
-  metric_spec->set_metrics_plugin_name("nighthawk.fake-metrics-plugin");
+  metric_spec->set_metrics_plugin_name("nighthawk.fake_metrics_plugin");
   FakeIncrementingMonotonicTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
       /*nighthawk_service_stub=*/nullptr, spec, time_source);
@@ -345,7 +345,7 @@ TEST(AdaptiveLoadController, FailsWithNonexistentCustomMetricNameInMetricThresho
   *threshold->mutable_threshold_spec()->mutable_scoring_function() =
       MakeLowerThresholdBinaryScoringFunctionConfig(0.0);
   threshold->mutable_metric_spec()->set_metric_name("nonexistent-metric-name");
-  threshold->mutable_metric_spec()->set_metrics_plugin_name("nighthawk.fake-metrics-plugin");
+  threshold->mutable_metric_spec()->set_metrics_plugin_name("nighthawk.fake_metrics_plugin");
   FakeIncrementingMonotonicTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
       /*nighthawk_service_stub=*/nullptr, spec, time_source);
@@ -370,7 +370,7 @@ TEST(AdaptiveLoadController, FailsWithNonexistentCustomMetricNameInInformational
   nighthawk::adaptive_load::MetricSpec* metric_spec =
       spec.mutable_informational_metric_specs()->Add();
   metric_spec->set_metric_name("nonexistent-metric-name");
-  metric_spec->set_metrics_plugin_name("nighthawk.fake-metrics-plugin");
+  metric_spec->set_metrics_plugin_name("nighthawk.fake_metrics_plugin");
   FakeIncrementingMonotonicTimeSource time_source;
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = PerformAdaptiveLoadSession(
       /*nighthawk_service_stub=*/nullptr, spec, time_source);
@@ -518,7 +518,7 @@ TEST(AdaptiveLoadController, UsesDefaultMetricWeight) {
   nighthawk::adaptive_load::MetricSpecWithThreshold* threshold =
       spec.mutable_metric_thresholds()->Add();
   threshold->mutable_metric_spec()->set_metric_name("metric1");
-  threshold->mutable_metric_spec()->set_metrics_plugin_name("nighthawk.fake-metrics-plugin");
+  threshold->mutable_metric_spec()->set_metrics_plugin_name("nighthawk.fake_metrics_plugin");
   *threshold->mutable_threshold_spec()->mutable_scoring_function() =
       MakeLowerThresholdBinaryScoringFunctionConfig(0.0);
 
@@ -542,7 +542,7 @@ TEST(AdaptiveLoadController, UsesCustomMetricWeight) {
   nighthawk::adaptive_load::MetricSpecWithThreshold* threshold =
       spec.mutable_metric_thresholds()->Add();
   threshold->mutable_metric_spec()->set_metric_name("metric1");
-  threshold->mutable_metric_spec()->set_metrics_plugin_name("nighthawk.fake-metrics-plugin");
+  threshold->mutable_metric_spec()->set_metrics_plugin_name("nighthawk.fake_metrics_plugin");
   *threshold->mutable_threshold_spec()->mutable_scoring_function() =
       MakeLowerThresholdBinaryScoringFunctionConfig(0.0);
   threshold->mutable_threshold_spec()->mutable_weight()->set_value(45.0);
@@ -735,7 +735,7 @@ TEST(AdaptiveLoadController, EvaluatesCustomMetric) {
   nighthawk::adaptive_load::MetricSpecWithThreshold* threshold =
       spec.mutable_metric_thresholds()->Add();
   threshold->mutable_metric_spec()->set_metric_name("metric1");
-  threshold->mutable_metric_spec()->set_metrics_plugin_name("nighthawk.fake-metrics-plugin");
+  threshold->mutable_metric_spec()->set_metrics_plugin_name("nighthawk.fake_metrics_plugin");
   *threshold->mutable_threshold_spec()->mutable_scoring_function() =
       MakeLowerThresholdBinaryScoringFunctionConfig(6.0);
 
@@ -759,7 +759,7 @@ TEST(AdaptiveLoadController, StoresInformationalCustomMetric) {
   nighthawk::adaptive_load::MetricSpec* metric_spec =
       spec.mutable_informational_metric_specs()->Add();
   metric_spec->set_metric_name("metric1");
-  metric_spec->set_metrics_plugin_name("nighthawk.fake-metrics-plugin");
+  metric_spec->set_metrics_plugin_name("nighthawk.fake_metrics_plugin");
 
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)

@@ -86,8 +86,6 @@ DECLARE_FACTORY(FakeStepControllerConfigFactory);
  */
 envoy::config::core::v3::TypedExtensionConfig
 MakeFakeStepControllerPluginConfig(int fixed_rps_value);
-<<<<<<< HEAD
-=======
 
 /**
  * Creates a valid TypedExtensionConfig proto that activates a FakeStepController with a
@@ -101,6 +99,5 @@ MakeFakeStepControllerPluginConfig(int fixed_rps_value);
  */
 envoy::config::core::v3::TypedExtensionConfig MakeFakeStepControllerPluginConfigWithValidationError(
     const absl::Status& artificial_validation_error);
->>>>>>> adaptive-rps-fake-step-controller
 
 } // namespace Nighthawk
