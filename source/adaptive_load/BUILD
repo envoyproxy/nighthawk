@@ -23,15 +23,17 @@ envoy_cc_library(
 
 envoy_cc_library(
     name = "adaptive_load_client_main",
-    name = "adaptive_load",
+    srcs = [
+        "adaptive_load_client_main.cc",
+    ],
+    hdrs = [
+        "adaptive_load_client_main.h",
+    ],
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
-        ":adaptive_load_controller_impl",
-        ":input_variable_setter_impl",
-        ":metrics_plugin_impl",
-        ":scoring_function_impl",
-        ":step_controller_impl",
+        ":adaptive_load",
+        "@envoy//source/common/grpc:google_grpc_utils_lib_with_external_headers",
     ],
 )
 

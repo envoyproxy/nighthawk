@@ -54,7 +54,7 @@ using nighthawk::adaptive_load::ThresholdSpec;
 nighthawk::client::ExecutionResponse PerformNighthawkBenchmark(
     nighthawk::client::NighthawkService::StubInterface* nighthawk_service_stub,
     const nighthawk::client::CommandLineOptions& command_line_options,
-    Envoy::Protobuf::Duration duration) {
+    const Envoy::Protobuf::Duration& duration) {
   nighthawk::client::CommandLineOptions options = command_line_options;
   *options.mutable_duration() = duration;
   options.mutable_open_loop()->set_value(false);
@@ -192,7 +192,7 @@ BenchmarkResult PerformAndAnalyzeNighthawkBenchmark(
     const AdaptiveLoadSessionSpec& spec,
     const absl::flat_hash_map<std::string, MetricsPluginPtr>& name_to_custom_plugin_map,
     const nighthawk::client::CommandLineOptions& command_line_options,
-    Envoy::Protobuf::Duration duration) {
+    const Envoy::Protobuf::Duration& duration) {
   nighthawk::client::ExecutionResponse response =
       PerformNighthawkBenchmark(nighthawk_service_stub, command_line_options, duration);
   return AnalyzeNighthawkBenchmark(response, spec, name_to_custom_plugin_map);
