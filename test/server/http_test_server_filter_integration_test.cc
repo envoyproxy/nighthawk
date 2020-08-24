@@ -286,7 +286,7 @@ TEST_P(HttpTestServerIntegrationNoConfigTest, TestHeaderConfig) {
             response->headers().get(Envoy::Http::LowerCaseString("foo"))->value().getStringView());
   EXPECT_EQ("", response->body());
   uint64_t dummy;
-  ASSERT_TRUE(absl::SimpleAtoi(response->headers()
+  EXPECT_TRUE(absl::SimpleAtoi(response->headers()
                                    .get(Envoy::Http::LowerCaseString(kPreviousRequestDeltaHeader))
                                    ->value()
                                    .getStringView(),
