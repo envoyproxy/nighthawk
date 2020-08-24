@@ -23,8 +23,8 @@ public:
 private:
   static std::atomic<Envoy::MonotonicTime>& mutableLastRequestTime() {
     // We lazy-init the atomic to avoid static initialization / a fiasco.
-    MUTABLE_CONSTRUCT_ON_FIRST_USE(std::atomic<Envoy::MonotonicTime>,
-                                   Envoy::MonotonicTime::min()); // NOLINT
+    MUTABLE_CONSTRUCT_ON_FIRST_USE(std::atomic<Envoy::MonotonicTime>, // NOLINT
+                                   Envoy::MonotonicTime::min());
   }
   const nighthawk::server::ResponseOptions server_config_;
 };

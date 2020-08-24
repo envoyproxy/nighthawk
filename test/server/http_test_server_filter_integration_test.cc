@@ -277,7 +277,6 @@ TEST_P(HttpTestServerIntegrationNoConfigTest, TestHeaderConfig) {
         const std::string header_config = fmt::format(
             R"({{response_headers: [ {{ header: {{ key: "foo", value: "bar2"}}, append: true }} ], emit_previous_request_delta_in_response_header: "{}"}})",
             kPreviousRequestDeltaHeader);
-        std::cerr << header_config << std::endl;
         request_headers.addCopy(Nighthawk::Server::TestServer::HeaderNames::get().TestServerConfig,
                                 header_config);
       });
