@@ -24,11 +24,11 @@ void StreamDecoder::decodeHeaders(Envoy::Http::ResponseHeaderMapPtr&& headers, b
   if (timing_header != nullptr) {
     auto timing_value = timing_header->value().getStringView();
     int64_t origin_delta;
-    if (absl::SimpleAtoi(timing_value, &origin_delta)) {
+    if (absl::SimpleAtoi(timing_value, &origin_delta) && origin_delta >= 0) {
       origin_latency_statistic_.addValue(origin_delta);
     } else {
       // TODO(XXX): Can we make sure we avoid high frequency logging for this somehow?
-      ENVOY_LOG(warn, "Origin delta {} could not be interpreted as an integer.", timing_value);
+      ENVOY_LOG(warn, "Bad origin delta: '{}'.", timing_value);
     }
   }
 

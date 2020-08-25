@@ -214,5 +214,36 @@ TEST_F(StreamDecoderTest, StreamResetReasonToResponseFlag) {
             Envoy::StreamInfo::ResponseFlag::UpstreamRemoteReset);
 }
 
+// This test parameterization structure carries the response header name that ought to be treated
+// as a latency input that should be tracked, as well as a boolean indicating if we ought to expect
+// the latency delivered via that header to be added to the histogram.
+using LatencyTrackingViaResponseHeaderTestParam = std::tuple<const char*, bool>;
+
+class LatencyTrackingViaResponseHeaderTest
+    : public StreamDecoderTest,
+      public WithParamInterface<LatencyTrackingViaResponseHeaderTestParam> {};
+
+INSTANTIATE_TEST_SUITE_P(ResponseHeaderLatencies, LatencyTrackingViaResponseHeaderTest,
+                         ValuesIn({LatencyTrackingViaResponseHeaderTestParam{"0", true},
+                                   LatencyTrackingViaResponseHeaderTestParam{"1", true},
+                                   LatencyTrackingViaResponseHeaderTestParam{"-1", false},
+                                   LatencyTrackingViaResponseHeaderTestParam{"1000", true},
+                                   LatencyTrackingViaResponseHeaderTestParam{"invalid", false},
+                                   LatencyTrackingViaResponseHeaderTestParam{"", false}}));
+
+// Tests that the StreamDecoder handles delivery of latencies by response header.
+TEST_P(LatencyTrackingViaResponseHeaderTest, LatencyTrackingViaResponseHeader) {
+  auto decoder = new StreamDecoder(
+      *dispatcher_, time_system_, *this, [](bool, bool) {}, connect_statistic_, latency_statistic_,
+      response_header_size_statistic_, response_body_size_statistic_, origin_latency_statistic_,
+      request_headers_, false, 0, random_generator_, http_tracer_);
+  const LatencyTrackingViaResponseHeaderTestParam param = GetParam();
+  Envoy::Http::ResponseHeaderMapPtr headers{new Envoy::Http::TestResponseHeaderMapImpl{
+      {":status", "200"}, {"x-nh-do-not-use-origin-timings", std::get<0>(param)}}};
+  decoder->decodeHeaders(std::move(headers), true);
+  const uint64_t expected_count = std::get<1>(param) ? 1 : 0;
+  EXPECT_EQ(origin_latency_statistic_.count(), expected_count);
+}
+
 } // namespace Client
 } // namespace Nighthawk
