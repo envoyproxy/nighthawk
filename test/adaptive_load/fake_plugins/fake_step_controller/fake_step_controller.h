@@ -104,11 +104,10 @@ envoy::config::core::v3::TypedExtensionConfig MakeFakeStepControllerPluginConfig
  * Creates a valid TypedExtensionConfig proto that activates a FakeStepController with a
  * FakeInputVariableSetterConfig that returns an error from GetCurrentCommandLineOptions().
  *
- * @param artificial_input_setting_failure An error status..
+ * @param artificial_input_setting_failure An error status.
  *
  * @return TypedExtensionConfig A proto that activates FakeStepController by name and includes
- * a FakeStepControllerConfig proto wrapped in an Any. This proto will fail validation when
- * attempting to load the plugin.
+ * a FakeStepControllerConfig proto wrapped in an Any.
  */
 envoy::config::core::v3::TypedExtensionConfig
 MakeFakeStepControllerPluginConfigWithInputSettingError(
