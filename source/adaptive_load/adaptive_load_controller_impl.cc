@@ -54,7 +54,7 @@ using nighthawk::adaptive_load::ThresholdSpec;
 nighthawk::client::ExecutionResponse PerformNighthawkBenchmark(
     nighthawk::client::NighthawkService::StubInterface* nighthawk_service_stub,
     const nighthawk::client::CommandLineOptions& command_line_options,
-    Envoy::Protobuf::Duration duration) {
+    const Envoy::Protobuf::Duration& duration) {
   nighthawk::client::CommandLineOptions options = command_line_options;
   *options.mutable_duration() = duration;
   options.mutable_open_loop()->set_value(false);
@@ -192,10 +192,27 @@ BenchmarkResult PerformAndAnalyzeNighthawkBenchmark(
     const AdaptiveLoadSessionSpec& spec,
     const absl::flat_hash_map<std::string, MetricsPluginPtr>& name_to_custom_plugin_map,
     const nighthawk::client::CommandLineOptions& command_line_options,
-    Envoy::Protobuf::Duration duration) {
+    const Envoy::Protobuf::Duration& duration) {
   nighthawk::client::ExecutionResponse response =
       PerformNighthawkBenchmark(nighthawk_service_stub, command_line_options, duration);
-  return AnalyzeNighthawkBenchmark(response, spec, name_to_custom_plugin_map);
+  BenchmarkResult result = AnalyzeNighthawkBenchmark(response, spec, name_to_custom_plugin_map);
+  for (const MetricEvaluation& evaluation : result.metric_evaluations()) {
+    ENVOY_LOG_MISC(info, "Evaluation: {}", evaluation.DebugString());
+  }
+  return result;
+}
+
+/**
+ * Sets the output code and message in the adaptive load session output.
+ *
+ * @param code A Google status code, such as ::grpc::DEADLINE_EXCEEDED.
+ * @param message Status message text
+ * @param output Adaptive load output proto
+ */
+void SetOutputError(int code, absl::string_view message, AdaptiveLoadSessionOutput& output) {
+  output.mutable_session_status()->set_code(code);
+  output.mutable_session_status()->set_message(std::string(message));
+  ENVOY_LOG_MISC(info, message);
 }
 
 /**
@@ -314,6 +331,34 @@ absl::Status CheckSessionSpec(const nighthawk::adaptive_load::AdaptiveLoadSessio
   return absl::OkStatus();
 }
 
+/**
+ * Queries the StepController for the current load specification.
+ *
+ * @param step_controller The step controller to be queried for the load.
+ * @param command_line_options The Nighthawk Service load proto, written if the step controller
+ * returned a value.
+ * @param output The adaptive load session output proto where any error code is stored.
+ *
+ * @return bool True if the step controller provided a value, false if an error occurred.
+ */
+bool GetCommandLineOptionsOrSetOutputError(
+    const StepController& step_controller,
+    nighthawk::client::CommandLineOptions& command_line_options,
+    AdaptiveLoadSessionOutput& output) {
+  absl::StatusOr<nighthawk::client::CommandLineOptions> command_line_options_or =
+      step_controller.GetCurrentCommandLineOptions();
+  if (!command_line_options_or.ok()) {
+    std::string message =
+        absl::StrCat("Error setting Nighthawk input: ", command_line_options_or.status().message());
+    output.mutable_session_status()->set_code(grpc::ABORTED);
+    output.mutable_session_status()->set_message(message);
+    ENVOY_LOG_MISC(info, message);
+    return false;
+  }
+  command_line_options = command_line_options_or.value();
+  return true;
+}
+
 } // namespace
 
 AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
@@ -324,8 +369,7 @@ AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
   AdaptiveLoadSessionSpec spec = SetDefaults(input_spec);
   absl::Status validation_status = CheckSessionSpec(spec);
   if (!validation_status.ok()) {
-    output.mutable_session_status()->set_code(static_cast<int>(validation_status.code()));
-    output.mutable_session_status()->set_message(std::string(validation_status.message()));
+    SetOutputError(static_cast<int>(validation_status.code()), validation_status.message(), output);
     return output;
   }
 
@@ -359,62 +403,41 @@ AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
   while (!step_controller->IsConverged()) {
     std::string doom_reason;
     if (step_controller->IsDoomed(doom_reason)) {
-      output.mutable_session_status()->set_code(grpc::ABORTED);
-      std::string message = "Step controller determined that it can never converge: " + doom_reason;
-      output.mutable_session_status()->set_message(message);
-      ENVOY_LOG_MISC(info, message);
+      SetOutputError(
+          grpc::ABORTED,
+          absl::StrCat("Step controller determined that it can never converge: ", doom_reason),
+          output);
       return output;
     }
     if (std::chrono::duration_cast<std::chrono::seconds>(time_source.monotonicTime() - start_time)
             .count() > spec.convergence_deadline().seconds()) {
-      output.mutable_session_status()->set_code(grpc::DEADLINE_EXCEEDED);
-      std::string message = absl::StrCat("Failed to converge before deadline of ",
-                                         spec.convergence_deadline().seconds(), " seconds.");
-      output.mutable_session_status()->set_message(message);
-      ENVOY_LOG_MISC(info, message);
+      SetOutputError(grpc::DEADLINE_EXCEEDED,
+                     absl::StrCat("Failed to converge before deadline of ",
+                                  spec.convergence_deadline().seconds(), " seconds."),
+                     output);
       return output;
     }
 
-    absl::StatusOr<nighthawk::client::CommandLineOptions> command_line_options_or =
-        step_controller->GetCurrentCommandLineOptions();
-    if (!command_line_options_or.ok()) {
-      std::string message = absl::StrCat("Error setting Nighthawk input: ",
-                                         command_line_options_or.status().message());
-      output.mutable_session_status()->set_code(grpc::ABORTED);
-      output.mutable_session_status()->set_message(message);
-      ENVOY_LOG_MISC(info, message);
+    nighthawk::client::CommandLineOptions command_line_options;
+    if (!GetCommandLineOptionsOrSetOutputError(*step_controller, command_line_options, output)) {
       return output;
     }
-    nighthawk::client::CommandLineOptions command_line_options = command_line_options_or.value();
     ENVOY_LOG_MISC(info, "Adjusting Stage: Trying load: {}", command_line_options.DebugString());
     BenchmarkResult result = PerformAndAnalyzeNighthawkBenchmark(
         nighthawk_service_stub, spec, name_to_custom_metrics_plugin_map, command_line_options,
         spec.measuring_period());
-    for (const MetricEvaluation& evaluation : result.metric_evaluations()) {
-      ENVOY_LOG_MISC(info, "Evaluation: {}", evaluation.DebugString());
-    }
     *output.mutable_adjusting_stage_results()->Add() = result;
     step_controller->UpdateAndRecompute(result);
   }
 
-  absl::StatusOr<nighthawk::client::CommandLineOptions> command_line_options_or =
-      step_controller->GetCurrentCommandLineOptions();
-  if (!command_line_options_or.ok()) {
-    std::string message =
-        absl::StrCat("Error setting Nighthawk input: ", command_line_options_or.status().message());
-    output.mutable_session_status()->set_code(grpc::ABORTED);
-    output.mutable_session_status()->set_message(message);
-    ENVOY_LOG_MISC(info, message);
+  nighthawk::client::CommandLineOptions command_line_options;
+  if (!GetCommandLineOptionsOrSetOutputError(*step_controller, command_line_options, output)) {
     return output;
   }
-  nighthawk::client::CommandLineOptions command_line_options = command_line_options_or.value();
   ENVOY_LOG_MISC(info, "Testing Stage with load: {}", command_line_options.DebugString());
   *output.mutable_testing_stage_result() = PerformAndAnalyzeNighthawkBenchmark(
       nighthawk_service_stub, spec, name_to_custom_metrics_plugin_map, command_line_options,
       spec.testing_stage_duration());
-  for (const MetricEvaluation& evaluation : output.testing_stage_result().metric_evaluations()) {
-    ENVOY_LOG_MISC(info, "Evaluation: {}", evaluation.DebugString());
-  }
   return output;
 }
 

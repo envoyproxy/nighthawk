@@ -15,9 +15,9 @@ absl::Status StatusFromProtoRpcStatus(const google::rpc::Status& status_proto) {
 } // namespace
 
 FakeStepController::FakeStepController(
-    const nighthawk::adaptive_load::FakeStepControllerConfig& config,
+    nighthawk::adaptive_load::FakeStepControllerConfig config,
     nighthawk::client::CommandLineOptions command_line_options_template)
-    : is_converged_{false}, is_doomed_{false}, fixed_rps_value_{config.fixed_rps_value()},
+    : config_{std::move(config)}, is_converged_{false}, is_doomed_{false},
       command_line_options_template_{std::move(command_line_options_template)} {}
 
 bool FakeStepController::IsConverged() const { return is_converged_; }
@@ -33,8 +33,11 @@ bool FakeStepController::IsDoomed(std::string& doomed_reason) const {
 
 absl::StatusOr<nighthawk::client::CommandLineOptions>
 FakeStepController::GetCurrentCommandLineOptions() const {
+  if (config_.has_artificial_input_setting_failure()) {
+    return StatusFromProtoRpcStatus(config_.artificial_input_setting_failure());
+  }
   nighthawk::client::CommandLineOptions options = command_line_options_template_;
-  options.mutable_requests_per_second()->set_value(fixed_rps_value_);
+  options.mutable_requests_per_second()->set_value(config_.fixed_rps_value());
   return options;
 }
 
@@ -113,6 +116,20 @@ envoy::config::core::v3::TypedExtensionConfig MakeFakeStepControllerPluginConfig
       static_cast<int>(artificial_validation_error.code()));
   config.mutable_artificial_validation_failure()->set_message(
       std::string(artificial_validation_error.message()));
+  outer_config.mutable_typed_config()->PackFrom(config);
+  return outer_config;
+}
+
+envoy::config::core::v3::TypedExtensionConfig
+MakeFakeStepControllerPluginConfigWithInputSettingError(
+    const absl::Status& artificial_input_setting_failure) {
+  envoy::config::core::v3::TypedExtensionConfig outer_config;
+  outer_config.set_name("nighthawk.fake_step_controller");
+  nighthawk::adaptive_load::FakeStepControllerConfig config;
+  config.mutable_artificial_input_setting_failure()->set_code(
+      static_cast<int>(artificial_input_setting_failure.code()));
+  config.mutable_artificial_input_setting_failure()->set_message(
+      std::string(artificial_input_setting_failure.message()));
   outer_config.mutable_typed_config()->PackFrom(config);
   return outer_config;
 }

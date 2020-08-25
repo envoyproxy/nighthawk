@@ -111,6 +111,20 @@ TEST(FakeStepController, GetCurrentCommandLineOptionsReturnsRpsFromConfig) {
             kExpectedValue);
 }
 
+TEST(FakeStepController, GetCurrentCommandLineOptionsReturnsArtificialError) {
+  FakeStepControllerConfig config;
+  const int kExpectedCode = ::grpc::DEADLINE_EXCEEDED;
+  const std::string kExpectedMessage = "artificial input setting error";
+  config.mutable_artificial_input_setting_failure()->set_code(kExpectedCode);
+  config.mutable_artificial_input_setting_failure()->set_message(kExpectedMessage);
+  FakeStepController step_controller(config, CommandLineOptions());
+  absl::StatusOr<nighthawk::client::CommandLineOptions> command_line_options_or =
+      step_controller.GetCurrentCommandLineOptions();
+  ASSERT_FALSE(command_line_options_or.ok());
+  EXPECT_EQ(static_cast<int>(command_line_options_or.status().code()), kExpectedCode);
+  EXPECT_EQ(command_line_options_or.status().message(), kExpectedMessage);
+}
+
 TEST(FakeStepController, IsConvergedInitiallyReturnsFalse) {
   FakeStepController step_controller(FakeStepControllerConfig{}, CommandLineOptions{});
   EXPECT_FALSE(step_controller.IsConverged());
@@ -185,7 +199,7 @@ TEST(MakeFakeStepControllerPluginConfig, ProducesFakeStepControllerPluginWithCon
 }
 
 TEST(MakeFakeStepControllerPluginConfigWithValidationError,
-     ProducesFakeStepControllerPluginWithConfiguredValue) {
+     ProducesFakeStepControllerPluginWithConfiguredError) {
   std::string kValidationErrorMessage = "artificial validation error";
   absl::StatusOr<StepControllerPtr> plugin_or =
       LoadStepControllerPlugin(MakeFakeStepControllerPluginConfigWithValidationError(
@@ -193,6 +207,23 @@ TEST(MakeFakeStepControllerPluginConfigWithValidationError,
                                nighthawk::client::CommandLineOptions{});
   EXPECT_EQ(plugin_or.status().code(), absl::StatusCode::kDeadlineExceeded);
   EXPECT_EQ(plugin_or.status().message(), kValidationErrorMessage);
+}
+
+TEST(MakeFakeStepControllerPluginConfigWithInputSettingError,
+     ProducesFakeStepControllerPluginWithConfiguredError) {
+  std::string kInputSettingErrorMessage = "artificial input setting error";
+  absl::StatusOr<StepControllerPtr> plugin_or =
+      LoadStepControllerPlugin(MakeFakeStepControllerPluginConfigWithInputSettingError(
+                                   absl::DeadlineExceededError(kInputSettingErrorMessage)),
+                               nighthawk::client::CommandLineOptions{});
+  ASSERT_TRUE(plugin_or.ok());
+  auto* plugin = dynamic_cast<FakeStepController*>(plugin_or.value().get());
+  ASSERT_NE(plugin, nullptr);
+  absl::StatusOr<nighthawk::client::CommandLineOptions> command_line_options_or =
+      plugin->GetCurrentCommandLineOptions();
+  ASSERT_FALSE(command_line_options_or.ok());
+  EXPECT_EQ(command_line_options_or.status().code(), absl::StatusCode::kDeadlineExceeded);
+  EXPECT_EQ(command_line_options_or.status().message(), kInputSettingErrorMessage);
 }
 
 } // namespace

@@ -98,10 +98,15 @@ envoy::config::core::v3::TypedExtensionConfig MakeFakeMetricsPluginConfig() {
   envoy::config::core::v3::TypedExtensionConfig config;
   config.set_name("nighthawk.fake_metrics_plugin");
   nighthawk::adaptive_load::FakeMetricsPluginConfig inner_config;
-  nighthawk::adaptive_load::FakeMetricsPluginConfig::FakeMetric* fake_metric =
+  nighthawk::adaptive_load::FakeMetricsPluginConfig::FakeMetric* fake_metric_good =
       inner_config.mutable_fake_metrics()->Add();
-  fake_metric->set_name("metric1");
-  fake_metric->set_value(5.0);
+  fake_metric_good->set_name("good_metric");
+  fake_metric_good->set_value(5.0);
+  nighthawk::adaptive_load::FakeMetricsPluginConfig::FakeMetric* fake_metric_bad =
+      inner_config.mutable_fake_metrics()->Add();
+  fake_metric_bad->set_name("bad_metric");
+  fake_metric_bad->mutable_error_status()->set_code(::grpc::INTERNAL);
+  fake_metric_bad->mutable_error_status()->set_message("bad_metric simulated error");
   config.mutable_typed_config()->PackFrom(inner_config);
   return config;
 }
@@ -521,7 +526,7 @@ TEST(AdaptiveLoadController, UsesDefaultMetricWeight) {
 
   nighthawk::adaptive_load::MetricSpecWithThreshold* threshold =
       spec.mutable_metric_thresholds()->Add();
-  threshold->mutable_metric_spec()->set_metric_name("metric1");
+  threshold->mutable_metric_spec()->set_metric_name("good_metric");
   threshold->mutable_metric_spec()->set_metrics_plugin_name("nighthawk.fake_metrics_plugin");
   *threshold->mutable_threshold_spec()->mutable_scoring_function() =
       MakeLowerThresholdBinaryScoringFunctionConfig(0.0);
@@ -545,7 +550,7 @@ TEST(AdaptiveLoadController, UsesCustomMetricWeight) {
 
   nighthawk::adaptive_load::MetricSpecWithThreshold* threshold =
       spec.mutable_metric_thresholds()->Add();
-  threshold->mutable_metric_spec()->set_metric_name("metric1");
+  threshold->mutable_metric_spec()->set_metric_name("good_metric");
   threshold->mutable_metric_spec()->set_metrics_plugin_name("nighthawk.fake_metrics_plugin");
   *threshold->mutable_threshold_spec()->mutable_scoring_function() =
       MakeLowerThresholdBinaryScoringFunctionConfig(0.0);
@@ -738,7 +743,7 @@ TEST(AdaptiveLoadController, EvaluatesCustomMetric) {
   *spec.mutable_metrics_plugin_configs()->Add() = MakeFakeMetricsPluginConfig();
   nighthawk::adaptive_load::MetricSpecWithThreshold* threshold =
       spec.mutable_metric_thresholds()->Add();
-  threshold->mutable_metric_spec()->set_metric_name("metric1");
+  threshold->mutable_metric_spec()->set_metric_name("good_metric");
   threshold->mutable_metric_spec()->set_metrics_plugin_name("nighthawk.fake_metrics_plugin");
   *threshold->mutable_threshold_spec()->mutable_scoring_function() =
       MakeLowerThresholdBinaryScoringFunctionConfig(6.0);
@@ -762,7 +767,7 @@ TEST(AdaptiveLoadController, StoresInformationalCustomMetric) {
   *spec.mutable_metrics_plugin_configs()->Add() = MakeFakeMetricsPluginConfig();
   nighthawk::adaptive_load::MetricSpec* metric_spec =
       spec.mutable_informational_metric_specs()->Add();
-  metric_spec->set_metric_name("metric1");
+  metric_spec->set_metric_name("good_metric");
   metric_spec->set_metrics_plugin_name("nighthawk.fake_metrics_plugin");
 
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
@@ -778,6 +783,27 @@ TEST(AdaptiveLoadController, StoresInformationalCustomMetric) {
   EXPECT_EQ(output.adjusting_stage_results()[0].metric_evaluations()[1].metric_value(), 5.0);
 }
 
+TEST(AdaptiveLoadController, PropagatesErrorFromMetricsPlugin) {
+  nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec = MakeConvergeableDoomableSessionSpec();
+  *spec.mutable_metrics_plugin_configs()->Add() = MakeFakeMetricsPluginConfig();
+  nighthawk::adaptive_load::MetricSpec* metric_spec =
+      spec.mutable_informational_metric_specs()->Add();
+  metric_spec->set_metric_name("bad_metric");
+  metric_spec->set_metrics_plugin_name("nighthawk.fake_metrics_plugin");
+
+  nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
+  EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
+      .WillRepeatedly(
+          [](grpc_impl::ClientContext*) { return MakeConvergingMockClientReaderWriter(); });
+
+  FakeIncrementingMonotonicTimeSource time_source;
+  nighthawk::adaptive_load::AdaptiveLoadSessionOutput output =
+      PerformAdaptiveLoadSession(&mock_nighthawk_service_stub, spec, time_source);
+  ASSERT_GT(output.adjusting_stage_results_size(), 0);
+  EXPECT_THAT(output.adjusting_stage_results()[0].status().message(),
+              HasSubstr("Error calling MetricsPlugin"));
+}
+
 TEST(AdaptiveLoadController, CopiesThresholdSpecToOutput) {
   // Spec contains a threshold for send-rate:
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec = MakeConvergeableDoomableSessionSpec();
@@ -791,6 +817,29 @@ TEST(AdaptiveLoadController, CopiesThresholdSpecToOutput) {
       PerformAdaptiveLoadSession(&mock_nighthawk_service_stub, spec, time_source);
   ASSERT_GT(output.metric_thresholds_size(), 0);
   EXPECT_EQ(output.metric_thresholds()[0].metric_spec().metric_name(), "send-rate");
+}
+
+TEST(AdaptiveLoadController, PropagatesInputVariableSettingError) {
+  const std::string kExpectedErrorMessage = "artificial input value setting error";
+  nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec = MakeConvergeableDoomableSessionSpec();
+  *spec.mutable_step_controller_config() = MakeFakeStepControllerPluginConfigWithInputSettingError(
+      absl::PermissionDeniedError(kExpectedErrorMessage));
+
+  *spec.mutable_metrics_plugin_configs()->Add() = MakeFakeMetricsPluginConfig();
+  nighthawk::adaptive_load::MetricSpec* metric_spec =
+      spec.mutable_informational_metric_specs()->Add();
+  metric_spec->set_metric_name("good_metric");
+  metric_spec->set_metrics_plugin_name("nighthawk.fake_metrics_plugin");
+
+  nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
+  EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
+      .WillRepeatedly(
+          [](grpc_impl::ClientContext*) { return MakeConvergingMockClientReaderWriter(); });
+
+  FakeIncrementingMonotonicTimeSource time_source;
+  nighthawk::adaptive_load::AdaptiveLoadSessionOutput output =
+      PerformAdaptiveLoadSession(&mock_nighthawk_service_stub, spec, time_source);
+  EXPECT_THAT(output.session_status().message(), HasSubstr(kExpectedErrorMessage));
 }
 
 } // namespace
