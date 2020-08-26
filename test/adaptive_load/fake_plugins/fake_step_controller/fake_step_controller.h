@@ -52,6 +52,9 @@ public:
   UpdateAndRecompute(const nighthawk::adaptive_load::BenchmarkResult& benchmark_result) override;
 
 private:
+  // Counts down UpdateAndRecompute() calls. When this reaches zero, GetCurrentCommandLineOptions()
+  // starts to return an artificial input value setting failure if one is specified in the config.
+  int input_setting_failure_countdown_;
   const nighthawk::adaptive_load::FakeStepControllerConfig config_;
   bool is_converged_;
   bool is_doomed_;
@@ -105,12 +108,14 @@ envoy::config::core::v3::TypedExtensionConfig MakeFakeStepControllerPluginConfig
  * FakeInputVariableSetterConfig that returns an error from GetCurrentCommandLineOptions().
  *
  * @param artificial_input_setting_failure An error status.
+ * @param countdown Number of times UpdateAndRecompute() must be called before
+ * GetCurrentCommandLineOptions() starts to return the input error status.
  *
  * @return TypedExtensionConfig A proto that activates FakeStepController by name and includes
  * a FakeStepControllerConfig proto wrapped in an Any.
  */
 envoy::config::core::v3::TypedExtensionConfig
 MakeFakeStepControllerPluginConfigWithInputSettingError(
-    const absl::Status& artificial_input_setting_failure);
+    const absl::Status& artificial_input_setting_failure, int countdown);
 
 } // namespace Nighthawk

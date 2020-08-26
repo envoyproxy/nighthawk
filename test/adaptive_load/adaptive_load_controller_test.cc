@@ -983,11 +983,38 @@ TEST(AdaptiveLoadController, CopiesThresholdSpecToOutput) {
   EXPECT_EQ(output.metric_thresholds()[0].metric_spec().metric_name(), "send-rate");
 }
 
-TEST(AdaptiveLoadController, PropagatesInputVariableSettingError) {
+TEST(AdaptiveLoadController, PropagatesInputVariableSettingErrorInAdjustingStage) {
   const std::string kExpectedErrorMessage = "artificial input value setting error";
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec = MakeConvergeableDoomableSessionSpec();
   *spec.mutable_step_controller_config() = MakeFakeStepControllerPluginConfigWithInputSettingError(
-      absl::PermissionDeniedError(kExpectedErrorMessage));
+      absl::PermissionDeniedError(kExpectedErrorMessage), /*countdown=*/0);
+
+  *spec.mutable_metrics_plugin_configs()->Add() = MakeFakeMetricsPluginConfig();
+  nighthawk::adaptive_load::MetricSpec* metric_spec =
+      spec.mutable_informational_metric_specs()->Add();
+  metric_spec->set_metric_name("good_metric");
+  metric_spec->set_metrics_plugin_name("nighthawk.fake_metrics_plugin");
+
+  nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
+  EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
+      .WillRepeatedly(
+          [](grpc_impl::ClientContext*) { return MakeConvergingMockClientReaderWriter(); });
+
+  FakeIncrementingMonotonicTimeSource time_source;
+  absl::StatusOr<AdaptiveLoadSessionOutput> output_or =
+      PerformAdaptiveLoadSession(&mock_nighthawk_service_stub, spec, time_source);
+  ASSERT_FALSE(output_or.ok());
+  EXPECT_THAT(output_or.status().message(), HasSubstr(kExpectedErrorMessage));
+}
+
+TEST(AdaptiveLoadController, PropagatesInputVariableSettingErrorInTestingStage) {
+  const std::string kExpectedErrorMessage = "artificial input value setting error";
+  nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec = MakeConvergeableDoomableSessionSpec();
+
+  // Adjusting stage will converge after 1 iteration, then testing stage will get the input setting
+  // error.
+  *spec.mutable_step_controller_config() = MakeFakeStepControllerPluginConfigWithInputSettingError(
+      absl::PermissionDeniedError(kExpectedErrorMessage), /*countdown=*/1);
 
   *spec.mutable_metrics_plugin_configs()->Add() = MakeFakeMetricsPluginConfig();
   nighthawk::adaptive_load::MetricSpec* metric_spec =

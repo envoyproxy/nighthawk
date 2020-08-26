@@ -17,7 +17,8 @@ absl::Status StatusFromProtoRpcStatus(const google::rpc::Status& status_proto) {
 FakeStepController::FakeStepController(
     nighthawk::adaptive_load::FakeStepControllerConfig config,
     nighthawk::client::CommandLineOptions command_line_options_template)
-    : config_{std::move(config)}, is_converged_{false}, is_doomed_{false},
+    : input_setting_failure_countdown_{config.artificial_input_setting_failure_countdown()},
+      config_{std::move(config)}, is_converged_{false}, is_doomed_{false},
       command_line_options_template_{std::move(command_line_options_template)} {}
 
 bool FakeStepController::IsConverged() const { return is_converged_; }
@@ -33,7 +34,7 @@ bool FakeStepController::IsDoomed(std::string& doomed_reason) const {
 
 absl::StatusOr<nighthawk::client::CommandLineOptions>
 FakeStepController::GetCurrentCommandLineOptions() const {
-  if (config_.has_artificial_input_setting_failure()) {
+  if (config_.has_artificial_input_setting_failure() && input_setting_failure_countdown_ <= 0) {
     return StatusFromProtoRpcStatus(config_.artificial_input_setting_failure());
   }
   nighthawk::client::CommandLineOptions options = command_line_options_template_;
@@ -43,6 +44,9 @@ FakeStepController::GetCurrentCommandLineOptions() const {
 
 void FakeStepController::UpdateAndRecompute(
     const nighthawk::adaptive_load::BenchmarkResult& benchmark_result) {
+  if (input_setting_failure_countdown_ > 0) {
+    --input_setting_failure_countdown_;
+  }
   // "Convergence" is defined as the latest benchmark reporting any score > 0.0.
   // "Doom" is defined as any score < 0.0. Neutral is all scores equal to 0.0.
   is_converged_ = false;
@@ -120,7 +124,7 @@ envoy::config::core::v3::TypedExtensionConfig MakeFakeStepControllerPluginConfig
 
 envoy::config::core::v3::TypedExtensionConfig
 MakeFakeStepControllerPluginConfigWithInputSettingError(
-    const absl::Status& artificial_input_setting_failure) {
+    const absl::Status& artificial_input_setting_failure, int countdown) {
   envoy::config::core::v3::TypedExtensionConfig outer_config;
   outer_config.set_name("nighthawk.fake_step_controller");
   nighthawk::adaptive_load::FakeStepControllerConfig config;
@@ -128,6 +132,7 @@ MakeFakeStepControllerPluginConfigWithInputSettingError(
       static_cast<int>(artificial_input_setting_failure.code()));
   config.mutable_artificial_input_setting_failure()->set_message(
       std::string(artificial_input_setting_failure.message()));
+  config.set_artificial_input_setting_failure_countdown(countdown);
   outer_config.mutable_typed_config()->PackFrom(config);
   return outer_config;
 }
