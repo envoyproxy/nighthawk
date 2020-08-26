@@ -107,6 +107,8 @@ envoy::config::core::v3::TypedExtensionConfig MakeFakeStepControllerPluginConfig
  * Creates a valid TypedExtensionConfig proto that activates a FakeStepController with a
  * FakeInputVariableSetterConfig that returns an error from GetCurrentCommandLineOptions().
  *
+ * @param fixed_rps_value Value for RPS to set in the FakeStepControllerConfig proto until the
+ * countdown reaches zero.
  * @param artificial_input_setting_failure An error status.
  * @param countdown Number of times UpdateAndRecompute() must be called before
  * GetCurrentCommandLineOptions() starts to return the input error status.
@@ -116,6 +118,6 @@ envoy::config::core::v3::TypedExtensionConfig MakeFakeStepControllerPluginConfig
  */
 envoy::config::core::v3::TypedExtensionConfig
 MakeFakeStepControllerPluginConfigWithInputSettingError(
-    const absl::Status& artificial_input_setting_failure, int countdown);
+    int fixed_rps_value, const absl::Status& artificial_input_setting_failure, int countdown);
 
 } // namespace Nighthawk

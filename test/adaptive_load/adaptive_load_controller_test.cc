@@ -987,7 +987,7 @@ TEST(AdaptiveLoadController, PropagatesInputVariableSettingErrorInAdjustingStage
   const std::string kExpectedErrorMessage = "artificial input value setting error";
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec = MakeConvergeableDoomableSessionSpec();
   *spec.mutable_step_controller_config() = MakeFakeStepControllerPluginConfigWithInputSettingError(
-      absl::PermissionDeniedError(kExpectedErrorMessage), /*countdown=*/0);
+      /*fixed_rps_value=*/5, absl::PermissionDeniedError(kExpectedErrorMessage), /*countdown=*/0);
 
   *spec.mutable_metrics_plugin_configs()->Add() = MakeFakeMetricsPluginConfig();
   nighthawk::adaptive_load::MetricSpec* metric_spec =
@@ -1014,7 +1014,7 @@ TEST(AdaptiveLoadController, PropagatesInputVariableSettingErrorInTestingStage) 
   // Adjusting stage will converge after 1 iteration, then testing stage will get the input setting
   // error.
   *spec.mutable_step_controller_config() = MakeFakeStepControllerPluginConfigWithInputSettingError(
-      absl::PermissionDeniedError(kExpectedErrorMessage), /*countdown=*/1);
+      /*fixed_rps_value=*/5, absl::PermissionDeniedError(kExpectedErrorMessage), /*countdown=*/1);
 
   *spec.mutable_metrics_plugin_configs()->Add() = MakeFakeMetricsPluginConfig();
   nighthawk::adaptive_load::MetricSpec* metric_spec =

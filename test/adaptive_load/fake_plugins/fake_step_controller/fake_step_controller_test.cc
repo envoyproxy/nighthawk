@@ -241,17 +241,20 @@ TEST(MakeFakeStepControllerPluginConfigWithValidationError,
 
 TEST(MakeFakeStepControllerPluginConfigWithInputSettingError,
      ProducesFakeStepControllerPluginWithConfiguredErrorAndCountdown) {
+  const int kExpectedRpsValue = 123;
   std::string kInputSettingErrorMessage = "artificial input setting error";
   absl::StatusOr<StepControllerPtr> plugin_or = LoadStepControllerPlugin(
       MakeFakeStepControllerPluginConfigWithInputSettingError(
-          absl::DeadlineExceededError(kInputSettingErrorMessage), /*countdown=*/1),
+          kExpectedRpsValue, absl::DeadlineExceededError(kInputSettingErrorMessage),
+          /*countdown=*/1),
       nighthawk::client::CommandLineOptions{});
   ASSERT_TRUE(plugin_or.ok());
   auto* plugin = dynamic_cast<FakeStepController*>(plugin_or.value().get());
   ASSERT_NE(plugin, nullptr);
   absl::StatusOr<nighthawk::client::CommandLineOptions> command_line_options_or1 =
       plugin->GetCurrentCommandLineOptions();
-  EXPECT_TRUE(command_line_options_or1.ok());
+  ASSERT_TRUE(command_line_options_or1.ok());
+  EXPECT_EQ(command_line_options_or1.value().requests_per_second().value(), kExpectedRpsValue);
   plugin->UpdateAndRecompute(BenchmarkResult());
   absl::StatusOr<nighthawk::client::CommandLineOptions> command_line_options_or2 =
       plugin->GetCurrentCommandLineOptions();

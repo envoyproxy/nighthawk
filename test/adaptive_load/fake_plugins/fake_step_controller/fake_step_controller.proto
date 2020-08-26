@@ -8,8 +8,8 @@ import "google/rpc/status.proto";
 // Configuration for FakeStepController (plugin name: "nighthawk.fake_step_controller") that returns
 // a fixed RPS value and changes converged and doomed states based on the latest reported
 // BenchmarkResult. Can also be programmed to return a proto validation failure, return an error
-// from input value setting every time, or return an error after successfully setting the input
-// value some number of times.
+// from input value setting every time, or return an error after some number of UpdateAndRecompute()
+// iterations.
 message FakeStepControllerConfig {
   // RPS that should always be returned, except when artificial errors are configured. Optional,
   // default 0.

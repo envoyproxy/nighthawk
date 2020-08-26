@@ -124,10 +124,11 @@ envoy::config::core::v3::TypedExtensionConfig MakeFakeStepControllerPluginConfig
 
 envoy::config::core::v3::TypedExtensionConfig
 MakeFakeStepControllerPluginConfigWithInputSettingError(
-    const absl::Status& artificial_input_setting_failure, int countdown) {
+    int fixed_rps_value, const absl::Status& artificial_input_setting_failure, int countdown) {
   envoy::config::core::v3::TypedExtensionConfig outer_config;
   outer_config.set_name("nighthawk.fake_step_controller");
   nighthawk::adaptive_load::FakeStepControllerConfig config;
+  config.set_fixed_rps_value(fixed_rps_value);
   config.mutable_artificial_input_setting_failure()->set_code(
       static_cast<int>(artificial_input_setting_failure.code()));
   config.mutable_artificial_input_setting_failure()->set_message(
