@@ -22,7 +22,7 @@ public:
    * @param config FakeStepControllerConfig proto for setting the fixed RPS value.
    * @param command_line_options_template A template for producing Nighthawk input.
    */
-  FakeStepController(const nighthawk::adaptive_load::FakeStepControllerConfig& config,
+  FakeStepController(nighthawk::adaptive_load::FakeStepControllerConfig config,
                      nighthawk::client::CommandLineOptions command_line_options_template);
   /**
    * @return bool The current value of |is_converged_|.
@@ -52,10 +52,10 @@ public:
   UpdateAndRecompute(const nighthawk::adaptive_load::BenchmarkResult& benchmark_result) override;
 
 private:
+  const nighthawk::adaptive_load::FakeStepControllerConfig config_;
   bool is_converged_;
   bool is_doomed_;
   std::string doomed_reason_;
-  const int fixed_rps_value_;
   const nighthawk::client::CommandLineOptions command_line_options_template_;
 };
 
@@ -99,5 +99,18 @@ MakeFakeStepControllerPluginConfig(int fixed_rps_value);
  */
 envoy::config::core::v3::TypedExtensionConfig MakeFakeStepControllerPluginConfigWithValidationError(
     const absl::Status& artificial_validation_error);
+
+/**
+ * Creates a valid TypedExtensionConfig proto that activates a FakeStepController with a
+ * FakeInputVariableSetterConfig that returns an error from GetCurrentCommandLineOptions().
+ *
+ * @param artificial_input_setting_failure An error status.
+ *
+ * @return TypedExtensionConfig A proto that activates FakeStepController by name and includes
+ * a FakeStepControllerConfig proto wrapped in an Any.
+ */
+envoy::config::core::v3::TypedExtensionConfig
+MakeFakeStepControllerPluginConfigWithInputSettingError(
+    const absl::Status& artificial_input_setting_failure);
 
 } // namespace Nighthawk

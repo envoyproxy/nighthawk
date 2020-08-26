@@ -8,9 +8,9 @@ Envoy::SystemTime FakeIncrementingMonotonicTimeSource::systemTime() {
 }
 
 Envoy::MonotonicTime FakeIncrementingMonotonicTimeSource::monotonicTime() {
-  ++unix_time_;
+  ++seconds_since_epoch_;
   Envoy::MonotonicTime epoch;
-  return epoch + std::chrono::seconds(unix_time_);
+  return epoch + std::chrono::seconds(seconds_since_epoch_);
 }
 
 } // namespace Nighthawk

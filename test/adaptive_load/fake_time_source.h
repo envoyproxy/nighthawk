@@ -23,7 +23,7 @@ public:
   Envoy::MonotonicTime monotonicTime() override;
 
 private:
-  int unix_time_{0};
+  int seconds_since_epoch_{0};
 };
 
 } // namespace Nighthawk

@@ -9,8 +9,11 @@ import "google/rpc/status.proto";
 // returns a fixed RPS value and changes converged and doomed states based on the latest reported
 // BenchmarkResult.
 message FakeStepControllerConfig {
-  // RPS that should always be returned. Optional, default 0.
+  // RPS that should always be returned, except when artificial errors are configured. Optional,
+  // default 0.
   int32 fixed_rps_value = 1;
   // Artificial error that the plugin factory should return during validation. Optional.
   google.rpc.Status artificial_validation_failure = 2;
+  // Artificial error that should be returned from GetCurrentCommandLineOptions(). Optional.
+  google.rpc.Status artificial_input_setting_failure = 3;
 }
