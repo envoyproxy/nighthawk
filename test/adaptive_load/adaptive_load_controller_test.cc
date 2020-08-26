@@ -229,17 +229,6 @@ TEST(AdaptiveLoadController, FailsWithTrafficTemplateDurationSet) {
   EXPECT_THAT(output_or.status().message(), HasSubstr("should not have |duration| set"));
 }
 
-TEST(AdaptiveLoadController, FailsWithOpenLoopSet) {
-  nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
-  spec.mutable_nighthawk_traffic_template()->mutable_open_loop()->set_value(false);
-  FakeIncrementingMonotonicTimeSource time_source;
-  absl::StatusOr<AdaptiveLoadSessionOutput> output_or = PerformAdaptiveLoadSession(
-      /*nighthawk_service_stub=*/nullptr, spec, time_source);
-  ASSERT_FALSE(output_or.ok());
-  EXPECT_EQ(output_or.status().code(), absl::StatusCode::kInvalidArgument);
-  EXPECT_THAT(output_or.status().message(), HasSubstr("should not have |open_loop| set"));
-}
-
 TEST(AdaptiveLoadController, FailsWithNonexistentMetricsPluginName) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
   envoy::config::core::v3::TypedExtensionConfig* metrics_plugin_config =
@@ -442,7 +431,7 @@ TEST(AdaptiveLoadController, UsesDefaultConvergenceDeadline) {
             // recorded the start time.
 }
 
-TEST(AdaptiveLoadController, SetsOpenLoopMode) {
+TEST(AdaptiveLoadController, UsesOpenLoopModeByDefault) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec = MakeConvergeableDoomableSessionSpec();
 
   // Successively overwritten by each adjusting stage request and finally the testing stage request.
@@ -459,6 +448,26 @@ TEST(AdaptiveLoadController, SetsOpenLoopMode) {
   absl::StatusOr<AdaptiveLoadSessionOutput> output_or =
       PerformAdaptiveLoadSession(&mock_nighthawk_service_stub, spec, time_source);
   EXPECT_TRUE(request.start_request().options().open_loop().value());
+}
+
+TEST(AdaptiveLoadController, UsesExplicitOpenLoopValue) {
+  nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec = MakeConvergeableDoomableSessionSpec();
+  spec.mutable_nighthawk_traffic_template()->mutable_open_loop()->set_value(false);
+
+  // Successively overwritten by each adjusting stage request and finally the testing stage request.
+  nighthawk::client::ExecutionRequest request;
+  nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
+  EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
+      .WillRepeatedly([&request](grpc_impl::ClientContext*) {
+        auto* mock_reader_writer = MakeConvergingMockClientReaderWriter();
+        EXPECT_CALL(*mock_reader_writer, Write(_, _))
+            .WillRepeatedly(::testing::DoAll(::testing::SaveArg<0>(&request), Return(true)));
+        return mock_reader_writer;
+      });
+  FakeIncrementingMonotonicTimeSource time_source;
+  absl::StatusOr<AdaptiveLoadSessionOutput> output_or =
+      PerformAdaptiveLoadSession(&mock_nighthawk_service_stub, spec, time_source);
+  EXPECT_FALSE(request.start_request().options().open_loop().value());
 }
 
 TEST(AdaptiveLoadController, UsesConfiguredConvergenceDeadline) {

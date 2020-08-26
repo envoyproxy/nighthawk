@@ -58,7 +58,6 @@ absl::StatusOr<nighthawk::client::ExecutionResponse> PerformNighthawkBenchmark(
     const Envoy::Protobuf::Duration& duration) {
   nighthawk::client::CommandLineOptions options = command_line_options;
   *options.mutable_duration() = duration;
-  options.mutable_open_loop()->set_value(true);
 
   nighthawk::client::ExecutionRequest request;
   nighthawk::client::ExecutionResponse response;
@@ -276,6 +275,9 @@ absl::StatusOr<BenchmarkResult> PerformAndAnalyzeNighthawkBenchmark(
  */
 AdaptiveLoadSessionSpec SetDefaults(const AdaptiveLoadSessionSpec& original_spec) {
   AdaptiveLoadSessionSpec spec = original_spec;
+  if (!spec.nighthawk_traffic_template().has_open_loop()) {
+    spec.mutable_nighthawk_traffic_template()->mutable_open_loop()->set_value(true);
+  }
   if (!spec.has_measuring_period()) {
     spec.mutable_measuring_period()->set_seconds(10);
   }
@@ -318,11 +320,6 @@ absl::Status CheckSessionSpec(const nighthawk::adaptive_load::AdaptiveLoadSessio
     errors.emplace_back(
         "nighthawk_traffic_template should not have |duration| set. Set |measuring_period| "
         "and |testing_stage_duration| in the AdaptiveLoadSessionSpec proto instead.");
-  }
-  if (spec.nighthawk_traffic_template().has_open_loop()) {
-    errors.emplace_back(
-        "nighthawk_traffic_template should not have |open_loop| set. Adaptive Load always "
-        "operates in open loop mode.");
   }
   absl::flat_hash_map<std::string, MetricsPluginPtr> plugin_from_name;
   std::vector<std::string> plugin_names = {"nighthawk.builtin"};
