@@ -1,7 +1,9 @@
 #include "envoy/filesystem/filesystem.h"
 
-#include "nighthawk/common/exception.h"
 #include "nighthawk/adaptive_load/adaptive_load_controller.h"
+#include "nighthawk/common/exception.h"
+
+#include "api/adaptive_load/benchmark_result.pb.h"
 
 #include "common/filesystem/file_shared_impl.h" // fails check_format
 
@@ -25,14 +27,17 @@
 
 namespace Nighthawk {
 
-
-absl::StatusOr<nighthawk::adaptive_load::AdaptiveLoadSessionOutput> PerformAdaptiveLoadSession(
-    nighthawk::client::NighthawkService::StubInterface*,
-    const nighthawk::adaptive_load::AdaptiveLoadSessionSpec&, Envoy::TimeSource&) {
-      nighthawk::adaptive_load::AdaptiveLoadSessionOutput output;
-      output.mutable_testing_stage_result()->mutable_status()->set_code(0);
-      return output;
-    }
+absl::StatusOr<nighthawk::adaptive_load::AdaptiveLoadSessionOutput>
+PerformAdaptiveLoadSession(nighthawk::client::NighthawkService::StubInterface*,
+                           const nighthawk::adaptive_load::AdaptiveLoadSessionSpec&,
+                           Envoy::TimeSource&) {
+  nighthawk::adaptive_load::AdaptiveLoadSessionOutput output;
+  nighthawk::adaptive_load::MetricEvaluation* evaluation =
+      output.mutable_adjusting_stage_results()->Add()->add_metric_evaluations();
+  evaluation->set_metric_id("com.a/b");
+  evaluation->set_metric_value(123);
+  return output;
+}
 
 namespace {
 

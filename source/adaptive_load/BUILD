@@ -32,14 +32,14 @@ envoy_cc_library(
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
-        "//include/nighthawk/adaptive_load:adaptive_load_controller",
-        "@envoy//source/common/common:assert_lib_with_external_headers",
-        "@envoy//source/common/common:minimal_logger_lib_with_external_headers",
-        "@envoy//source/common/grpc:google_grpc_utils_lib_with_external_headers",
-        "@envoy//source/common/event:real_time_system_lib_with_external_headers",
         "//api/client:base_cc_proto",
         "//api/client:grpc_service_lib",
+        "//include/nighthawk/adaptive_load:adaptive_load_controller",
         "//source/common:nighthawk_common_lib",
+        "@envoy//source/common/common:assert_lib_with_external_headers",
+        "@envoy//source/common/common:minimal_logger_lib_with_external_headers",
+        "@envoy//source/common/event:real_time_system_lib_with_external_headers",
+        "@envoy//source/common/grpc:google_grpc_utils_lib_with_external_headers",
     ],
 )
 
