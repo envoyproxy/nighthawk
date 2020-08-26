@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
   try {
     Nighthawk::AdaptiveLoadClientMain program(argc, argv, platform_impl.fileSystem(),
                                               time_system); // NOLINT
-    return program.run();
+    return program.Run();
   } catch (const Nighthawk::Client::NoServingException& e) {
     return EXIT_SUCCESS;
   } catch (const Nighthawk::Client::MalformedArgvException& e) {

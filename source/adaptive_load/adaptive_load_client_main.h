@@ -34,7 +34,7 @@ public:
    * @return Exit code for this process.
    * @throw Nighthawk::NighthawkException If a file read or write error occurs.
    */
-  uint32_t run();
+  uint32_t Run();
   /**
    * Describes the program inputs as parsed from the command line.
    */

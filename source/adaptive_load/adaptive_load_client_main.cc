@@ -33,25 +33,25 @@ namespace {
  *
  * @throw Nighthawk::NighthawkException For any filesystem error.
  */
-void WriteFileOrThrow(Envoy::Filesystem::Instance& filesystem, std::string& path,
-                      std::string& contents) {
-  Envoy::Filesystem::FilePtr file = filesystem.createFile(path);
+void WriteFileOrThrow(Envoy::Filesystem::Instance& filesystem, absl::string_view path,
+                      absl::string_view contents) {
+  Envoy::Filesystem::FilePtr file = filesystem.createFile(std::string(path));
   const Envoy::Api::IoCallBoolResult open_result =
-      file->open((1 << Envoy::Filesystem::File::Operation::Write) |
-                 1 << (Envoy::Filesystem::File::Operation::Create));
+      file->open(((1 << Envoy::Filesystem::File::Operation::Write)) |
+                 (1 << (Envoy::Filesystem::File::Operation::Create)));
   if (!open_result.ok()) {
-    throw Nighthawk::NighthawkException("Unable to open output file \"" + path +
-                                        "\": " + open_result.err_->getErrorDetails());
+    throw Nighthawk::NighthawkException(absl::StrCat("Unable to open output file \"", path,
+                                                     "\": ", open_result.err_->getErrorDetails()));
   }
   const Envoy::Api::IoCallSizeResult write_result = file->write(contents);
   if (!write_result.ok()) {
-    throw Nighthawk::NighthawkException("Unable to write output file \"" + path +
-                                        "\": " + write_result.err_->getErrorDetails());
+    throw Nighthawk::NighthawkException(absl::StrCat("Unable to write output file \"", path,
+                                                     "\": ", write_result.err_->getErrorDetails()));
   }
   const Envoy::Api::IoCallBoolResult close_result = file->close();
   if (!close_result.ok()) {
-    throw Nighthawk::NighthawkException("Unable to close output file \"" + path +
-                                        "\": " + close_result.err_->getErrorDetails());
+    throw Nighthawk::NighthawkException(absl::StrCat("Unable to close output file \"", path,
+                                                     "\": ", close_result.err_->getErrorDetails()));
   }
 }
 
@@ -61,10 +61,9 @@ AdaptiveLoadClientMain::AdaptiveLoadClientMain(int argc, const char* const* argv
                                                Envoy::Filesystem::Instance& filesystem,
                                                Envoy::TimeSource& time_source)
     : filesystem_{filesystem}, time_source_{time_source} {
-  TCLAP::CmdLine cmd(
-      "Adaptive Load Controller tool that finds optimal load by sending a series of requests via "
-      "a Nighthawk Service.",
-      /*delimiter=*/' ', VersionInfo::version());
+  TCLAP::CmdLine cmd("Adaptive Load tool that finds the optimal load on the target "
+                     "through a series of Nighthawk Service benchmarks.",
+                     /*delimiter=*/' ', VersionInfo::version());
 
   TCLAP::ValueArg<std::string> nighthawk_service_address(
       /*flag_name=*/"", "nighthawk-service-address",
@@ -94,7 +93,7 @@ AdaptiveLoadClientMain::AdaptiveLoadClientMain(int argc, const char* const* argv
   output_filename_ = output_filename.getValue();
 }
 
-uint32_t AdaptiveLoadClientMain::run() {
+uint32_t AdaptiveLoadClientMain::Run() {
   ENVOY_LOG(info, "Attempting adaptive load session: {}", DescribeInputs());
   std::string spec_textproto;
   try {
@@ -103,31 +102,25 @@ uint32_t AdaptiveLoadClientMain::run() {
     throw Nighthawk::NighthawkException("Failed to read spec textproto file \"" + spec_filename_ +
                                         "\": " + e.what());
   }
-
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
-
   if (!Envoy::Protobuf::TextFormat::ParseFromString(spec_textproto, &spec)) {
     throw Nighthawk::NighthawkException("Unable to parse file \"" + spec_filename_ +
                                         "\" as a text protobuf (type " + spec.GetTypeName() + ")");
   }
-
   std::shared_ptr<::grpc_impl::Channel> channel = grpc::CreateChannel(
       nighthawk_service_address_, use_tls_ ? grpc::SslCredentials(grpc::SslCredentialsOptions())
                                            : grpc::InsecureChannelCredentials());
-
   std::unique_ptr<nighthawk::client::NighthawkService::StubInterface> stub(
       nighthawk::client::NighthawkService::NewStub(channel));
 
-  nighthawk::adaptive_load::AdaptiveLoadSessionOutput output =
+  absl::StatusOr<nighthawk::adaptive_load::AdaptiveLoadSessionOutput> output_or =
       PerformAdaptiveLoadSession(stub.get(), spec, time_source_);
-
-  std::string output_textproto = output.DebugString();
-
-  WriteFileOrThrow(filesystem_, output_filename_, output_textproto);
-
-  if (output.session_status().code() != 0) {
-    ENVOY_LOG(error, "Error in adaptive load session: {}", output.session_status().message());
+  if (!output_or.ok()) {
+    ENVOY_LOG(error, "Error in adaptive load session: {}", output_or.status().message());
+    return 1;
   }
+  nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = output_or.value();
+  WriteFileOrThrow(filesystem_, output_filename_, output.DebugString());
   return 0;
 }
 

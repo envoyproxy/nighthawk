@@ -43,8 +43,9 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         "//source/adaptive_load:adaptive_load_client_main",
-        "//source/adaptive_load:scoring_function_impl",
-        "//source/adaptive_load:step_controller_impl",
+        # "//source/adaptive_load:scoring_function_impl",
+        # "//source/adaptive_load:step_controller_impl",
+        "//include/nighthawk/adaptive_load:adaptive_load_controller",
         ":fake_time_source",
         ":minimal_output",
         "//test/test_common:environment_lib",

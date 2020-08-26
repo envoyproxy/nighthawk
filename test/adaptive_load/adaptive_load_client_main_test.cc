@@ -1,6 +1,7 @@
 #include "envoy/filesystem/filesystem.h"
 
 #include "nighthawk/common/exception.h"
+#include "nighthawk/adaptive_load/adaptive_load_controller.h"
 
 #include "common/filesystem/file_shared_impl.h" // fails check_format
 
@@ -23,6 +24,15 @@
 #include "gtest/gtest.h"
 
 namespace Nighthawk {
+
+
+absl::StatusOr<nighthawk::adaptive_load::AdaptiveLoadSessionOutput> PerformAdaptiveLoadSession(
+    nighthawk::client::NighthawkService::StubInterface*,
+    const nighthawk::adaptive_load::AdaptiveLoadSessionSpec&, Envoy::TimeSource&) {
+      nighthawk::adaptive_load::AdaptiveLoadSessionOutput output;
+      output.mutable_testing_stage_result()->mutable_status()->set_code(0);
+      return output;
+    }
 
 namespace {
 
@@ -90,7 +100,7 @@ TEST(AdaptiveLoadClientMainTest, FailsWithNonexistentInputFile) {
   FakeIncrementingMonotonicTimeSource time_source;
 
   AdaptiveLoadClientMain main(5, argv, filesystem, time_source);
-  EXPECT_THROW_WITH_REGEX(main.run(), Nighthawk::NighthawkException,
+  EXPECT_THROW_WITH_REGEX(main.Run(), Nighthawk::NighthawkException,
                           "Failed to read spec textproto file");
 }
 
@@ -106,7 +116,7 @@ TEST(AdaptiveLoadClientMainTest, FailsWithUnparseableInputFile) {
   FakeIncrementingMonotonicTimeSource time_source;
 
   AdaptiveLoadClientMain main(5, argv, filesystem, time_source);
-  EXPECT_THROW_WITH_REGEX(main.run(), Nighthawk::NighthawkException, "Unable to parse file");
+  EXPECT_THROW_WITH_REGEX(main.Run(), Nighthawk::NighthawkException, "Unable to parse file");
 }
 
 TEST(AdaptiveLoadClientMainTest, FailsWithUnwritableOutputFile) {
@@ -122,7 +132,7 @@ TEST(AdaptiveLoadClientMainTest, FailsWithUnwritableOutputFile) {
   FakeIncrementingMonotonicTimeSource time_source;
 
   AdaptiveLoadClientMain main(5, argv, filesystem, time_source);
-  EXPECT_THROW_WITH_REGEX(main.run(), Nighthawk::NighthawkException, "Unable to open output file");
+  EXPECT_THROW_WITH_REGEX(main.Run(), Nighthawk::NighthawkException, "Unable to open output file");
 }
 
 TEST(AdaptiveLoadClientMainTest, WritesOutputProtoToFile) {
@@ -158,7 +168,7 @@ TEST(AdaptiveLoadClientMainTest, WritesOutputProtoToFile) {
       .WillOnce(Return(ByMove(Envoy::Filesystem::resultSuccess<bool>(true))));
 
   AdaptiveLoadClientMain main(5, argv, filesystem, time_source);
-  main.run();
+  main.Run();
 
   std::string golden_output =
       Envoy::Filesystem::fileSystemForTest().fileReadToEnd(Nighthawk::TestEnvironment::runfilesPath(

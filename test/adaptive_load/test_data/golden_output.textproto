@@ -1,33 +1,5 @@
-session_status {
-  code: 10
-  message: "Step controller determined that it can never converge: Nighthawk Service returned an error."
-}
-adjusting_stage_results {
-  nighthawk_service_output {
-  }
+testing_stage_result {
   status {
-    code: 14
-    message: "failed to connect to all addresses"
-  }
-}
-metric_thresholds {
-  metric_spec {
-    metric_name: "success-rate"
-    metrics_plugin_name: "nighthawk.builtin"
-  }
-  threshold_spec {
-    scoring_function {
-      name: "nighthawk.binary_scoring"
-      typed_config {
-        [type.googleapis.com/nighthawk.adaptive_load.BinaryScoringFunctionConfig] {
-          lower_threshold {
-            value: 0.95
-          }
-        }
-      }
-    }
-    weight {
-      value: 1
-    }
+    
   }
 }
