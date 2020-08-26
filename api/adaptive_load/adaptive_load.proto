@@ -71,10 +71,6 @@ message AdaptiveLoadSessionSpec {
 // Complete description of an adaptive load session, including metric scores
 // for every degree of load attempted during the adjusting stage.
 message AdaptiveLoadSessionOutput {
-  // Overall status of the session with error detail. INVALID_ARGUMENT if the input spec contained
-  // errors, DEADLINE_EXCEEDED if convergence did not occur before the deadline, ABORTED if the step
-  // controller determined it can never converge.
-  google.rpc.Status session_status = 1;
   // Results of each short benchmark performed during the adjusting stage.
   repeated BenchmarkResult adjusting_stage_results = 2;
   // Result of the single benchmark of the testing stage.

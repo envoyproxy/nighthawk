@@ -42,9 +42,9 @@ public:
   absl::StatusOr<nighthawk::client::CommandLineOptions>
   GetCurrentCommandLineOptions() const override;
   /**
-   * Updates |is_converged_| to reflect whether |benchmark_result| contains any score >0. Sets
-   * |is_doomed_| based whether the status in |benchmark_result| is OK; copies the status message
-   * into |doomed_reason_| only when the status is not OK.
+   * Updates |is_converged_| to reflect whether |benchmark_result| contains any score >0. Updates
+   * |is_doomed_| to reflect whether |benchmark_result| contains any score <0. A non-converged,
+   * non-doomed input has scores all equal to 0.
    *
    * @param benchmark_result A Nighthawk benchmark result proto.
    */

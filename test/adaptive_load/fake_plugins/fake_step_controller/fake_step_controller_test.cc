@@ -130,14 +130,14 @@ TEST(FakeStepController, IsConvergedInitiallyReturnsFalse) {
   EXPECT_FALSE(step_controller.IsConverged());
 }
 
-TEST(FakeStepController, IsConvergedReturnsFalseAfterBenchmarkResultWithoutPositiveScore) {
+TEST(FakeStepController, IsConvergedReturnsFalseAfterNeutralBenchmarkResult) {
   FakeStepController step_controller(FakeStepControllerConfig{}, CommandLineOptions{});
   BenchmarkResult benchmark_result;
   step_controller.UpdateAndRecompute(benchmark_result);
   EXPECT_FALSE(step_controller.IsConverged());
 }
 
-TEST(FakeStepController, IsConvergedReturnsTrueAfterBenchmarkResultWithPositiveScore) {
+TEST(FakeStepController, IsConvergedReturnsTrueAfterPositiveBenchmarkResultScore) {
   FakeStepController step_controller(FakeStepControllerConfig{}, CommandLineOptions{});
   BenchmarkResult benchmark_result;
   MetricEvaluation* evaluation = benchmark_result.mutable_metric_evaluations()->Add();
@@ -146,36 +146,33 @@ TEST(FakeStepController, IsConvergedReturnsTrueAfterBenchmarkResultWithPositiveS
   EXPECT_TRUE(step_controller.IsConverged());
 }
 
-TEST(FakeStepController, IsDoomedReturnsFalseAfterSuccessfulBenchmarkResult) {
+TEST(FakeStepController, IsDoomedReturnsFalseAfterNeutralBenchmarkResult) {
   FakeStepController step_controller(FakeStepControllerConfig{}, CommandLineOptions{});
   BenchmarkResult benchmark_result;
-  benchmark_result.mutable_status()->set_code(::grpc::OK);
   step_controller.UpdateAndRecompute(benchmark_result);
   std::string doomed_reason;
   EXPECT_FALSE(step_controller.IsDoomed(doomed_reason));
 }
 
 TEST(FakeStepController,
-     IsDoomedReturnsFalseAndLeavesDoomedReasonUntouchedAfterSuccessfulBenchmarkResult) {
+     IsDoomedReturnsFalseAndLeavesDoomedReasonUntouchedAfterNeutralBenchmarkResult) {
   FakeStepController step_controller(FakeStepControllerConfig{}, CommandLineOptions{});
   BenchmarkResult benchmark_result;
-  benchmark_result.mutable_status()->set_code(::grpc::OK);
   step_controller.UpdateAndRecompute(benchmark_result);
   std::string variable_that_should_not_be_written = "original value";
   EXPECT_FALSE(step_controller.IsDoomed(variable_that_should_not_be_written));
   EXPECT_EQ(variable_that_should_not_be_written, "original value");
 }
 
-TEST(FakeStepController, IsDoomedReturnsTrueAndSetsDoomedReasonAfterFailedBenchmarkResult) {
-  const std::string kErrorMessage = "error from nighthawk";
+TEST(FakeStepController, IsDoomedReturnsTrueAndSetsDoomedReasonAfterNegativeBenchmarkResultScore) {
   FakeStepController step_controller(FakeStepControllerConfig{}, CommandLineOptions{});
   BenchmarkResult benchmark_result;
-  benchmark_result.mutable_status()->set_code(::grpc::INTERNAL);
-  benchmark_result.mutable_status()->set_message(kErrorMessage);
+  MetricEvaluation* evaluation = benchmark_result.mutable_metric_evaluations()->Add();
+  evaluation->set_threshold_score(-1.0);
   step_controller.UpdateAndRecompute(benchmark_result);
   std::string doomed_reason;
   EXPECT_TRUE(step_controller.IsDoomed(doomed_reason));
-  EXPECT_EQ(doomed_reason, kErrorMessage);
+  EXPECT_EQ(doomed_reason, "artificial doom triggered by negative score");
 }
 
 TEST(MakeFakeStepControllerPluginConfig, ActivatesFakeStepControllerPlugin) {

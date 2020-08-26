@@ -179,8 +179,12 @@ absl::StatusOr<BenchmarkResult> AnalyzeNighthawkBenchmark(
     const nighthawk::client::ExecutionResponse& nighthawk_response,
     const AdaptiveLoadSessionSpec& spec,
     const absl::flat_hash_map<std::string, MetricsPluginPtr>& name_to_custom_metrics_plugin_map) {
-  BenchmarkResult benchmark_result;
+  if (nighthawk_response.error_detail().code() != ::grpc::OK) {
+    return absl::Status(static_cast<absl::StatusCode>(nighthawk_response.error_detail().code()),
+                        nighthawk_response.error_detail().message());
+  }
 
+  BenchmarkResult benchmark_result;
   *benchmark_result.mutable_nighthawk_service_output() = nighthawk_response.output();
 
   // A map containing all available MetricsPlugins: preloaded custom plugins shared across all
@@ -192,11 +196,6 @@ absl::StatusOr<BenchmarkResult> AnalyzeNighthawkBenchmark(
   auto builtin_plugin =
       std::make_unique<NighthawkStatsEmulatedMetricsPlugin>(nighthawk_response.output());
   name_to_plugin_map["nighthawk.builtin"] = builtin_plugin.get();
-
-  *benchmark_result.mutable_status() = nighthawk_response.error_detail();
-  if (nighthawk_response.error_detail().code() != ::grpc::OK) {
-    return benchmark_result;
-  }
 
   // MetricSpecs in original order of definition.
   std::vector<const nighthawk::adaptive_load::MetricSpec*> metric_specs;
