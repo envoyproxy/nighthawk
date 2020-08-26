@@ -13,6 +13,7 @@
 #include "external/envoy/source/common/protobuf/protobuf.h"
 
 #include "api/adaptive_load/adaptive_load.pb.h"
+#include "api/adaptive_load/benchmark_result.pb.h"
 #include "api/adaptive_load/metric_spec.pb.h"
 #include "api/client/options.pb.h"
 #include "api/client/output.pb.h"
@@ -51,13 +52,13 @@ using nighthawk::adaptive_load::ThresholdSpec;
  * had trouble communicating with the Nighthawk Service, we insert the details into the
  * |error_detail| of this proto.
  */
-nighthawk::client::ExecutionResponse PerformNighthawkBenchmark(
+absl::StatusOr<nighthawk::client::ExecutionResponse> PerformNighthawkBenchmark(
     nighthawk::client::NighthawkService::StubInterface* nighthawk_service_stub,
     const nighthawk::client::CommandLineOptions& command_line_options,
     const Envoy::Protobuf::Duration& duration) {
   nighthawk::client::CommandLineOptions options = command_line_options;
   *options.mutable_duration() = duration;
-  options.mutable_open_loop()->set_value(false);
+  options.mutable_open_loop()->set_value(true);
 
   nighthawk::client::ExecutionRequest request;
   nighthawk::client::ExecutionResponse response;
@@ -68,24 +69,78 @@ nighthawk::client::ExecutionResponse PerformNighthawkBenchmark(
                                                       nighthawk::client::ExecutionResponse>>
       stream(nighthawk_service_stub->ExecutionStream(&context));
 
-  stream->Write(request);
-  stream->WritesDone();
-  if (!stream->Read(&response)) {
-    response.mutable_error_detail()->set_code(::grpc::UNKNOWN);
-    response.mutable_error_detail()->set_message("Nighthawk Service did not send a response.");
+  if (!stream->Write(request)) {
+    return absl::UnknownError("Failed to write request to the Nighthawk Service gRPC channel.");
+  }
+  if (!stream->WritesDone()) {
+    return absl::UnknownError("WritesDone() failed on the Nighthawk Service gRPC channel.");
+  }
+
+  bool got_response = false;
+  // Discard all responses in the channel before the last one.
+  while (stream->Read(&response)) {
+    got_response = true;
+  }
+  if (!got_response) {
+    return absl::UnknownError("Nighthawk Service did not send a gRPC response.");
   }
   ::grpc::Status status = stream->Finish();
   if (!status.ok()) {
-    response.mutable_error_detail()->set_code(status.error_code());
-    response.mutable_error_detail()->set_message(status.error_message());
+    return absl::Status(static_cast<absl::StatusCode>(status.error_code()), status.error_message());
   }
   return response;
 }
 
 /**
- * Analyzes a single Nighthawk Service benchmark result against configured MetricThresholds.
- * Queries outside MetricsPlugins if configured and/or uses "nighthawk.builtin" plugin to check
- * Nighthawk Service stats and counters.
+ * Given a MetricSpec, obtains a single metric value from the MetricPlugin and optionally scores it
+ * according to a threshold and scoring function.
+ *
+ * @param metric_spec The metric spec identifying the metric by name and plugin name.
+ * @param metrics_plugin An already activated MetricsPlugin used by the metric_spec.
+ * @param threshold_spec Proto describing the threshold and scoring function. Nullptr if the metric
+ * is informational only.
+ * @param errors A vector to append error messages to.
+ *
+ * @return MetricEvaluation A proto containing the metric value and its score if a threshold was
+ * specified, or an error mesasge if the metric could not be obtained from the MetricsPlugin.
+ */
+absl::StatusOr<MetricEvaluation>
+EvaluateMetric(const MetricSpec& metric_spec, MetricsPlugin& metrics_plugin,
+               const nighthawk::adaptive_load::ThresholdSpec* threshold_spec) {
+  MetricEvaluation evaluation;
+  evaluation.set_metric_id(
+      absl::StrCat(metric_spec.metrics_plugin_name(), "/", metric_spec.metric_name()));
+  const absl::StatusOr<double> metric_value_or =
+      metrics_plugin.GetMetricByName(metric_spec.metric_name());
+  if (!metric_value_or.ok()) {
+    return absl::Status(static_cast<absl::StatusCode>(metric_value_or.status().code()),
+                        absl::StrCat("Error calling MetricsPlugin '",
+                                     metric_spec.metrics_plugin_name(), ": ",
+                                     metric_value_or.status().message()));
+  }
+  const double metric_value = metric_value_or.value();
+  evaluation.set_metric_value(metric_value);
+  if (threshold_spec == nullptr) {
+    // Informational metric.
+    evaluation.set_weight(0.0);
+  } else {
+    evaluation.set_weight(threshold_spec->weight().value());
+    absl::StatusOr<ScoringFunctionPtr> scoring_function_or =
+        LoadScoringFunctionPlugin(threshold_spec->scoring_function());
+    RELEASE_ASSERT(scoring_function_or.ok(),
+                   absl::StrCat("ScoringFunction plugin loading error should have been caught "
+                                "during input validation: ",
+                                scoring_function_or.status().message()));
+    ScoringFunctionPtr scoring_function = std::move(scoring_function_or.value());
+    evaluation.set_threshold_score(scoring_function->EvaluateMetric(metric_value));
+  }
+  return evaluation;
+}
+
+/**
+ * Analyzes a recently completed Nighthawk Service benchmark against configured MetricThresholds.
+ * Queries outside MetricsPlugins if configured and/or uses "nighthawk.builtin" plugin to exrtact
+ * stats and counters from the Nighthawk Service output.
  *
  * @param nighthawk_response Proto returned from Nighthawk Service describing a single benchmark
  * session.
@@ -96,7 +151,7 @@ nighthawk::client::ExecutionResponse PerformNighthawkBenchmark(
  * @return BenchmarkResult Proto containing metric scores for this Nighthawk Service benchmark
  * session, or an error propagated from the Nighthawk Service or MetricsPlugins.
  */
-BenchmarkResult AnalyzeNighthawkBenchmark(
+absl::StatusOr<BenchmarkResult> AnalyzeNighthawkBenchmark(
     const nighthawk::client::ExecutionResponse& nighthawk_response,
     const AdaptiveLoadSessionSpec& spec,
     const absl::flat_hash_map<std::string, MetricsPluginPtr>& name_to_custom_metrics_plugin_map) {
@@ -104,6 +159,8 @@ BenchmarkResult AnalyzeNighthawkBenchmark(
 
   *benchmark_result.mutable_nighthawk_service_output() = nighthawk_response.output();
 
+  // A map containing all available MetricsPlugins: preloaded custom plugins shared across all
+  // benchmarks and a freshly instantiated builtin plugin for this benchmark only.
   absl::flat_hash_map<std::string, MetricsPlugin*> name_to_plugin_map;
   for (const auto& pair : name_to_custom_metrics_plugin_map) {
     name_to_plugin_map[pair.first] = pair.second.get();
@@ -133,43 +190,18 @@ BenchmarkResult AnalyzeNighthawkBenchmark(
   }
   std::vector<std::string> errors;
   for (const nighthawk::adaptive_load::MetricSpec* metric_spec : metric_specs) {
-    MetricEvaluation evaluation;
-    evaluation.set_metric_id(
-        absl::StrCat(metric_spec->metrics_plugin_name(), "/", metric_spec->metric_name()));
-    const absl::StatusOr<double> metric_value_or =
-        name_to_plugin_map[metric_spec->metrics_plugin_name()]->GetMetricByName(
-            metric_spec->metric_name());
-    if (metric_value_or.ok()) {
-      const double metric_value = metric_value_or.value();
-      evaluation.set_metric_value(metric_value);
-      const nighthawk::adaptive_load::ThresholdSpec* threshold_spec =
-          threshold_spec_from_metric_spec[metric_spec];
-      if (threshold_spec == nullptr) {
-        // Informational metric.
-        evaluation.set_weight(0.0);
-      } else {
-        evaluation.set_weight(threshold_spec->weight().value());
-        absl::StatusOr<ScoringFunctionPtr> scoring_function_or =
-            LoadScoringFunctionPlugin(threshold_spec->scoring_function());
-        RELEASE_ASSERT(scoring_function_or.ok(),
-                       absl::StrCat("ScoringFunction plugin loading error should have been caught "
-                                    "during input validation: ",
-                                    scoring_function_or.status().message()));
-        ScoringFunctionPtr scoring_function = std::move(scoring_function_or.value());
-        evaluation.set_threshold_score(scoring_function->EvaluateMetric(metric_value));
-      }
-    } else {
-      errors.emplace_back(absl::StrCat("Error calling MetricsPlugin '",
-                                       metric_spec->metrics_plugin_name(), ": ",
-                                       metric_value_or.status().message()));
+    absl::StatusOr<MetricEvaluation> evaluation_or =
+        EvaluateMetric(*metric_spec, *name_to_plugin_map[metric_spec->metrics_plugin_name()],
+                       threshold_spec_from_metric_spec[metric_spec]);
+    if (!evaluation_or.ok()) {
+      errors.emplace_back(absl::StrCat("Error evaluating metric: ", evaluation_or.status().code(),
+                                       ": ", evaluation_or.status().message()));
+      continue;
     }
-    *benchmark_result.mutable_metric_evaluations()->Add() = evaluation;
+    *benchmark_result.mutable_metric_evaluations()->Add() = evaluation_or.value();
   }
-  if (errors.empty()) {
-    benchmark_result.mutable_status()->set_code(::grpc::OK);
-  } else {
-    benchmark_result.mutable_status()->set_code(::grpc::INTERNAL);
-    benchmark_result.mutable_status()->set_message(absl::StrJoin(errors, "\n"));
+  if (!errors.empty()) {
+    return absl::InternalError(absl::StrJoin(errors, "\n"));
   }
   return benchmark_result;
 }
@@ -184,39 +216,39 @@ BenchmarkResult AnalyzeNighthawkBenchmark(
  * @param command_line_options Full input for the Nighthawk Service, except for the duration.
  * @param duration Duration to insert into the benchmark request.
  *
- * @return BenchmarkResult Proto containing raw Nighthawk Service results, metric values, and metric
- * scores.
+ * @return BenchmarkResult Proto containing either an error status or raw Nighthawk Service results,
+ * metric values, and metric scores.
  */
-BenchmarkResult PerformAndAnalyzeNighthawkBenchmark(
+absl::StatusOr<BenchmarkResult> PerformAndAnalyzeNighthawkBenchmark(
     nighthawk::client::NighthawkService::StubInterface* nighthawk_service_stub,
     const AdaptiveLoadSessionSpec& spec,
     const absl::flat_hash_map<std::string, MetricsPluginPtr>& name_to_custom_plugin_map,
     const nighthawk::client::CommandLineOptions& command_line_options,
     const Envoy::Protobuf::Duration& duration) {
-  nighthawk::client::ExecutionResponse response =
+  absl::StatusOr<nighthawk::client::ExecutionResponse> nighthawk_response_or =
       PerformNighthawkBenchmark(nighthawk_service_stub, command_line_options, duration);
-  BenchmarkResult result = AnalyzeNighthawkBenchmark(response, spec, name_to_custom_plugin_map);
-  for (const MetricEvaluation& evaluation : result.metric_evaluations()) {
+  if (!nighthawk_response_or.ok()) {
+    ENVOY_LOG_MISC(error, "Nighthawk Service error: {}", nighthawk_response_or.status().message());
+    return nighthawk_response_or.status();
+  }
+  nighthawk::client::ExecutionResponse nighthawk_response = nighthawk_response_or.value();
+
+  absl::StatusOr<BenchmarkResult> benchmark_result_or =
+      AnalyzeNighthawkBenchmark(nighthawk_response, spec, name_to_custom_plugin_map);
+  if (!benchmark_result_or.ok()) {
+    ENVOY_LOG_MISC(error, "Benchmark scoring error: {}", benchmark_result_or.status().message());
+    return benchmark_result_or.status();
+  }
+  BenchmarkResult benchmark_result = benchmark_result_or.value();
+  for (const MetricEvaluation& evaluation : benchmark_result.metric_evaluations()) {
     ENVOY_LOG_MISC(info, "Evaluation: {}", evaluation.DebugString());
   }
-  return result;
+  return benchmark_result;
 }
 
 /**
- * Sets the output code and message in the adaptive load session output.
- *
- * @param code A Google status code, such as ::grpc::DEADLINE_EXCEEDED.
- * @param message Status message text
- * @param output Adaptive load output proto
- */
-void SetOutputError(int code, absl::string_view message, AdaptiveLoadSessionOutput& output) {
-  output.mutable_session_status()->set_code(code);
-  output.mutable_session_status()->set_message(std::string(message));
-  ENVOY_LOG_MISC(info, message);
-}
-
-/**
- * Returns a copy of the input spec with default values inserted.
+ * Returns a copy of the input spec with default values inserted. Avoids overriding pre-set values
+ * in the original spec.
  *
  * @param original_spec Valid adaptive load session spec.
  *
@@ -331,37 +363,9 @@ absl::Status CheckSessionSpec(const nighthawk::adaptive_load::AdaptiveLoadSessio
   return absl::OkStatus();
 }
 
-/**
- * Queries the StepController for the current load specification.
- *
- * @param step_controller The step controller to be queried for the load.
- * @param command_line_options The Nighthawk Service load proto, written if the step controller
- * returned a value.
- * @param output The adaptive load session output proto where any error code is stored.
- *
- * @return bool True if the step controller provided a value, false if an error occurred.
- */
-bool GetCommandLineOptionsOrSetOutputError(
-    const StepController& step_controller,
-    nighthawk::client::CommandLineOptions& command_line_options,
-    AdaptiveLoadSessionOutput& output) {
-  absl::StatusOr<nighthawk::client::CommandLineOptions> command_line_options_or =
-      step_controller.GetCurrentCommandLineOptions();
-  if (!command_line_options_or.ok()) {
-    std::string message =
-        absl::StrCat("Error setting Nighthawk input: ", command_line_options_or.status().message());
-    output.mutable_session_status()->set_code(grpc::ABORTED);
-    output.mutable_session_status()->set_message(message);
-    ENVOY_LOG_MISC(info, message);
-    return false;
-  }
-  command_line_options = command_line_options_or.value();
-  return true;
-}
-
 } // namespace
 
-AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
+absl::StatusOr<AdaptiveLoadSessionOutput> PerformAdaptiveLoadSession(
     nighthawk::client::NighthawkService::StubInterface* nighthawk_service_stub,
     const AdaptiveLoadSessionSpec& input_spec, Envoy::TimeSource& time_source) {
   AdaptiveLoadSessionOutput output;
@@ -369,8 +373,7 @@ AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
   AdaptiveLoadSessionSpec spec = SetDefaults(input_spec);
   absl::Status validation_status = CheckSessionSpec(spec);
   if (!validation_status.ok()) {
-    SetOutputError(static_cast<int>(validation_status.code()), validation_status.message(), output);
-    return output;
+    return validation_status;
   }
 
   absl::flat_hash_map<std::string, MetricsPluginPtr> name_to_custom_metrics_plugin_map;
@@ -400,44 +403,58 @@ AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
   }
 
   Envoy::MonotonicTime start_time = time_source.monotonicTime();
-  while (!step_controller->IsConverged()) {
-    std::string doom_reason;
-    if (step_controller->IsDoomed(doom_reason)) {
-      SetOutputError(
-          grpc::ABORTED,
-          absl::StrCat("Step controller determined that it can never converge: ", doom_reason),
-          output);
-      return output;
-    }
+  std::string doom_reason;
+  do {
     if (std::chrono::duration_cast<std::chrono::seconds>(time_source.monotonicTime() - start_time)
             .count() > spec.convergence_deadline().seconds()) {
-      SetOutputError(grpc::DEADLINE_EXCEEDED,
-                     absl::StrCat("Failed to converge before deadline of ",
-                                  spec.convergence_deadline().seconds(), " seconds."),
-                     output);
-      return output;
+      return absl::DeadlineExceededError(absl::StrCat("Failed to converge before deadline of ",
+                                                      spec.convergence_deadline().seconds(),
+                                                      " seconds."));
     }
 
-    nighthawk::client::CommandLineOptions command_line_options;
-    if (!GetCommandLineOptionsOrSetOutputError(*step_controller, command_line_options, output)) {
-      return output;
+    absl::StatusOr<nighthawk::client::CommandLineOptions> command_line_options_or =
+        step_controller->GetCurrentCommandLineOptions();
+    if (!command_line_options_or.ok()) {
+      ENVOY_LOG_MISC(error, command_line_options_or.status().message());
+      return absl::AbortedError(absl::StrCat("Error constructing Nighthawk input: ",
+                                             command_line_options_or.status().message()));
     }
+    nighthawk::client::CommandLineOptions command_line_options = command_line_options_or.value();
+
     ENVOY_LOG_MISC(info, "Adjusting Stage: Trying load: {}", command_line_options.DebugString());
-    BenchmarkResult result = PerformAndAnalyzeNighthawkBenchmark(
+    absl::StatusOr<BenchmarkResult> result_or = PerformAndAnalyzeNighthawkBenchmark(
         nighthawk_service_stub, spec, name_to_custom_metrics_plugin_map, command_line_options,
         spec.measuring_period());
+    if (!result_or.ok()) {
+      return result_or.status();
+    }
+    BenchmarkResult result = result_or.value();
     *output.mutable_adjusting_stage_results()->Add() = result;
     step_controller->UpdateAndRecompute(result);
+  } while (!step_controller->IsConverged() && !step_controller->IsDoomed(doom_reason));
+
+  if (step_controller->IsDoomed(doom_reason)) {
+    return absl::AbortedError(
+        absl::StrCat("Step controller determined that it can never converge: ", doom_reason));
   }
 
-  nighthawk::client::CommandLineOptions command_line_options;
-  if (!GetCommandLineOptionsOrSetOutputError(*step_controller, command_line_options, output)) {
-    return output;
+  absl::StatusOr<nighthawk::client::CommandLineOptions> command_line_options_or =
+      step_controller->GetCurrentCommandLineOptions();
+  if (!command_line_options_or.ok()) {
+    ENVOY_LOG_MISC(error, command_line_options_or.status().message());
+    return absl::AbortedError(absl::StrCat("Error constructing Nighthawk input: ",
+                                           command_line_options_or.status().message()));
   }
+  nighthawk::client::CommandLineOptions command_line_options = command_line_options_or.value();
+
   ENVOY_LOG_MISC(info, "Testing Stage with load: {}", command_line_options.DebugString());
-  *output.mutable_testing_stage_result() = PerformAndAnalyzeNighthawkBenchmark(
+  absl::StatusOr<BenchmarkResult> result_or = PerformAndAnalyzeNighthawkBenchmark(
       nighthawk_service_stub, spec, name_to_custom_metrics_plugin_map, command_line_options,
       spec.testing_stage_duration());
+  if (!result_or.ok()) {
+    return result_or.status();
+  }
+  *output.mutable_testing_stage_result() = result_or.value();
   return output;
 }
 
