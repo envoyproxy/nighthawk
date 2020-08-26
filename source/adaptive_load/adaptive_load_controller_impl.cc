@@ -70,8 +70,7 @@ absl::StatusOr<nighthawk::client::ExecutionResponse> PerformNighthawkBenchmark(
 
   if (!stream->Write(request)) {
     return absl::UnknownError("Failed to write request to the Nighthawk Service gRPC channel.");
-  }
-  if (!stream->WritesDone()) {
+  } else if (!stream->WritesDone()) {
     return absl::UnknownError("WritesDone() failed on the Nighthawk Service gRPC channel.");
   }
 
