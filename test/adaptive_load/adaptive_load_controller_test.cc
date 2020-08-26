@@ -73,11 +73,31 @@ MakeLowerThresholdBinaryScoringFunctionConfig(double lower_threshold) {
 }
 
 /**
+ * Creates a valid TypedExtensionConfig proto selecting the real LinearScoringFunction plugin
+ * and configuring it with a threshold. The scaling constant is set so that metric values below the
+ * threshold produce negative values and values above the threshold produce positive values.
+ *
+ * @param threshold Threshold value to set within the config proto.
+ *
+ * @return TypedExtensionConfig Full scoring function plugin spec that selects
+ * nighthawk.linear-scoring and provides a config.
+ */
+envoy::config::core::v3::TypedExtensionConfig MakeLinearScoringFunctionConfig(double threshold) {
+  envoy::config::core::v3::TypedExtensionConfig config;
+  config.set_name("nighthawk.linear_scoring");
+  nighthawk::adaptive_load::LinearScoringFunctionConfig inner_config;
+  inner_config.set_threshold(threshold);
+  inner_config.set_scaling_constant(-1.0);
+  config.mutable_typed_config()->PackFrom(inner_config);
+  return config;
+}
+
+/**
  * Creates a session spec with BuiltinMetricsPlugin configured to collect send-rate, a
- * BinaryScoringFunction with a lower threshold of 0.9, and a FakeStepController, which
- * will report convergence whenever the metric score of a mock Nighthawk Service response evaluates
- * to a positive value, or doom whenever the mock Nighthawk Service returns an error code. This
- * session spec may be amended or overwritten.
+ * LinearScoringFunction with a threshold of 0.5, and a FakeStepController, which
+ * will report convergence whenever the metric score of a mock Nighthawk Service response receives
+ * a positive score, doom whenever it receives a negative score. This session spec may be amended or
+ * overwritten.
  *
  * @return AdaptiveLoadSessionSpec Adaptive load session spec proto.
  */
@@ -91,7 +111,7 @@ nighthawk::adaptive_load::AdaptiveLoadSessionSpec MakeConvergeableDoomableSessio
   threshold->mutable_metric_spec()->set_metric_name("send-rate");
   threshold->mutable_metric_spec()->set_metrics_plugin_name("nighthawk.builtin");
   *threshold->mutable_threshold_spec()->mutable_scoring_function() =
-      MakeLowerThresholdBinaryScoringFunctionConfig(0.9);
+      MakeLinearScoringFunctionConfig(0.5);
   return spec;
 }
 
@@ -114,13 +134,15 @@ envoy::config::core::v3::TypedExtensionConfig MakeFakeMetricsPluginConfig() {
 
 /**
  * Creates a simulated Nighthawk Service response that reflects the specified send rate. Combined
- * with BuiltinMetricsPlugin and BinaryScoringFunction with a lower threshold, this can be used to
- * produce a 'send-rate' metric score of 1.0 or -1.0 on demand. This in turn can be used to make
- * FakeStepController report convergence for testing purposes, by arrranging a metric score of 1.0.
+ * with BuiltinMetricsPlugin and LinearScoringFunction with a lower threshold, this can be used to
+ * produce a 'send-rate' metric score that is positive, zero, or negative on demand. This in turn
+ * can be used to make FakeStepController report convergence or doom for testing purposes, by
+ * arrranging a positive or negative metric score.
  *
- * For example, use the response MakeNighthawkResponseWithSendRate(1.0) and a lower threshold of
- * 0.9 to produce the score 1.0, or the response MakeNighthawkResponseWithSendRate(0.5) with the
- * same threshold to produce the score -1.0.
+ * For example, use a LinearScoringFunction threshold of 0.5 and the response
+ * MakeNighthawkResponseWithSendRate(1.0) to produce a positive score (converging),
+ * MakeNighthawkResponseWithSendRate(0.25) to produce a negative score (doomed), and
+ * MakeNighthawkResponseWithSendRate(0.5) to produce a zero score (non-converging, non-doomed).
  *
  * @return ExecutionResponse A simulated Nighthawk Service response with counters representing the
  * specified send rate, along with other dummy counters and stats.
@@ -143,21 +165,8 @@ nighthawk::client::ExecutionResponse MakeNighthawkResponseWithSendRate(double se
 }
 
 /**
- * Creates a simulated Nighthawk Service response with an error code. FakeStepController becomes
- * doomed when it receives this response.
- *
- * @return ExecutionResponse A Nighthawk Service response containing an error code.
- */
-nighthawk::client::ExecutionResponse MakeFailedNighthawkResponse() {
-  nighthawk::client::ExecutionResponse response;
-  response.mutable_error_detail()->set_code(::grpc::INTERNAL);
-  response.mutable_error_detail()->set_message("simulated Nighthawk Service error response");
-  return response;
-}
-
-/**
  * Sets up a mock gRPC reader-writer to be returned from the mock Nighthawk Service stub. The mock
- * Read() return a non-converging Nighthawk response.
+ * Read() returns a non-converging, non-doomed Nighthawk response.
  *
  * @return Bare pointer that will be automatically wrapped in a unique_ptr by the caller.
  */
@@ -178,7 +187,7 @@ MakeNonConvergingMockClientReaderWriter() {
 
 /**
  * Sets up a mock gRPC reader-writer to be returned from the mock Nighthawk Service stub. The mock
- * Read() return a converging Nighthawk response.
+ * Read() returns a converging Nighthawk response.
  *
  * @return Bare pointer that will be automatically wrapped in a unique_ptr by the caller.
  */
@@ -199,7 +208,7 @@ MakeConvergingMockClientReaderWriter() {
 
 /**
  * Sets up a mock gRPC reader-writer to be returned from the mock Nighthawk Service stub. The mock
- * Read() return a failed Nighthawk response.
+ * Read() returns a doomed Nighthawk response.
  *
  * @return Bare pointer that will be automatically wrapped in a unique_ptr by the caller.
  */
@@ -210,7 +219,7 @@ MakeDoomedMockClientReaderWriter() {
       new grpc::testing::MockClientReaderWriter<nighthawk::client::ExecutionRequest,
                                                 nighthawk::client::ExecutionResponse>();
   EXPECT_CALL(*mock_reader_writer, Read(_))
-      .WillOnce(DoAll(SetArgPointee<0>(MakeFailedNighthawkResponse()), Return(true)))
+      .WillOnce(DoAll(SetArgPointee<0>(MakeNighthawkResponseWithSendRate(0.25)), Return(true)))
       .WillRepeatedly(Return(false));
   EXPECT_CALL(*mock_reader_writer, Write(_, _)).WillRepeatedly(Return(true));
   EXPECT_CALL(*mock_reader_writer, WritesDone()).WillRepeatedly(Return(true));
@@ -669,8 +678,7 @@ TEST(AdaptiveLoadController, ExitsWhenDoomed) {
 
   EXPECT_THAT(output_or.status().message(),
               HasSubstr("Step controller determined that it can never converge"));
-  EXPECT_THAT(output_or.status().message(),
-              HasSubstr("simulated Nighthawk Service error response"));
+  EXPECT_THAT(output_or.status().message(), HasSubstr("artificial doom"));
 }
 
 TEST(AdaptiveLoadController, PerformsTestingStageAfterConvergence) {
@@ -798,7 +806,7 @@ TEST(AdaptiveLoadController, UsesBuiltinMetricsPluginForThresholdByDefault) {
   threshold->mutable_metric_spec()->set_metric_name("success-rate");
   // metrics_plugin_name not set, defaults to nighthawk.builtin
   *threshold->mutable_threshold_spec()->mutable_scoring_function() =
-      MakeLowerThresholdBinaryScoringFunctionConfig(0.9);
+      MakeLowerThresholdBinaryScoringFunctionConfig(0.0);
 
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
@@ -823,7 +831,7 @@ TEST(AdaptiveLoadController, EvaluatesBuiltinMetric) {
   threshold->mutable_metric_spec()->set_metric_name("success-rate");
   threshold->mutable_metric_spec()->set_metrics_plugin_name("nighthawk.builtin");
   *threshold->mutable_threshold_spec()->mutable_scoring_function() =
-      MakeLowerThresholdBinaryScoringFunctionConfig(0.9);
+      MakeLowerThresholdBinaryScoringFunctionConfig(0.0);
 
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
@@ -838,8 +846,8 @@ TEST(AdaptiveLoadController, EvaluatesBuiltinMetric) {
   ASSERT_GT(output.adjusting_stage_results_size(), 0);
   ASSERT_GT(output.adjusting_stage_results()[0].metric_evaluations_size(), 1);
   EXPECT_EQ(output.adjusting_stage_results()[0].metric_evaluations()[1].metric_value(), 0.03125);
-  // Requested a lower threshold of 0.9 but only achieved 0.03125.
-  EXPECT_EQ(output.adjusting_stage_results()[0].metric_evaluations()[1].threshold_score(), -1.0);
+  // Requested a lower threshold of 0.0 and achieved 0.03125.
+  EXPECT_EQ(output.adjusting_stage_results()[0].metric_evaluations()[1].threshold_score(), 1.0);
 }
 
 TEST(AdaptiveLoadController, UsesBuiltinMetricsPluginForInformationalMetricSpecByDefault) {
@@ -897,7 +905,7 @@ TEST(AdaptiveLoadController, EvaluatesCustomMetric) {
   threshold->mutable_metric_spec()->set_metric_name("good_metric");
   threshold->mutable_metric_spec()->set_metrics_plugin_name("nighthawk.fake_metrics_plugin");
   *threshold->mutable_threshold_spec()->mutable_scoring_function() =
-      MakeLowerThresholdBinaryScoringFunctionConfig(6.0);
+      MakeLowerThresholdBinaryScoringFunctionConfig(4.0);
 
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
@@ -911,8 +919,8 @@ TEST(AdaptiveLoadController, EvaluatesCustomMetric) {
   AdaptiveLoadSessionOutput output = output_or.value();
   ASSERT_GT(output.adjusting_stage_results_size(), 0);
   ASSERT_GT(output.adjusting_stage_results()[0].metric_evaluations_size(), 1);
-  // Requested a lower threshold of 6.0 but only achieved 5.0.
-  EXPECT_EQ(output.adjusting_stage_results()[0].metric_evaluations()[1].threshold_score(), -1.0);
+  // Requested a lower threshold of 4.0 and achieved 5.0.
+  EXPECT_EQ(output.adjusting_stage_results()[0].metric_evaluations()[1].threshold_score(), 1.0);
 }
 
 TEST(AdaptiveLoadController, StoresInformationalCustomMetric) {
@@ -975,11 +983,38 @@ TEST(AdaptiveLoadController, CopiesThresholdSpecToOutput) {
   EXPECT_EQ(output.metric_thresholds()[0].metric_spec().metric_name(), "send-rate");
 }
 
-TEST(AdaptiveLoadController, PropagatesInputVariableSettingError) {
+TEST(AdaptiveLoadController, PropagatesInputVariableSettingErrorInAdjustingStage) {
   const std::string kExpectedErrorMessage = "artificial input value setting error";
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec = MakeConvergeableDoomableSessionSpec();
   *spec.mutable_step_controller_config() = MakeFakeStepControllerPluginConfigWithInputSettingError(
-      absl::PermissionDeniedError(kExpectedErrorMessage));
+      /*fixed_rps_value=*/5, absl::PermissionDeniedError(kExpectedErrorMessage), /*countdown=*/0);
+
+  *spec.mutable_metrics_plugin_configs()->Add() = MakeFakeMetricsPluginConfig();
+  nighthawk::adaptive_load::MetricSpec* metric_spec =
+      spec.mutable_informational_metric_specs()->Add();
+  metric_spec->set_metric_name("good_metric");
+  metric_spec->set_metrics_plugin_name("nighthawk.fake_metrics_plugin");
+
+  nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
+  EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
+      .WillRepeatedly(
+          [](grpc_impl::ClientContext*) { return MakeConvergingMockClientReaderWriter(); });
+
+  FakeIncrementingMonotonicTimeSource time_source;
+  absl::StatusOr<AdaptiveLoadSessionOutput> output_or =
+      PerformAdaptiveLoadSession(&mock_nighthawk_service_stub, spec, time_source);
+  ASSERT_FALSE(output_or.ok());
+  EXPECT_THAT(output_or.status().message(), HasSubstr(kExpectedErrorMessage));
+}
+
+TEST(AdaptiveLoadController, PropagatesInputVariableSettingErrorInTestingStage) {
+  const std::string kExpectedErrorMessage = "artificial input value setting error";
+  nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec = MakeConvergeableDoomableSessionSpec();
+
+  // Adjusting stage will converge after 1 iteration, then testing stage will get the input setting
+  // error.
+  *spec.mutable_step_controller_config() = MakeFakeStepControllerPluginConfigWithInputSettingError(
+      /*fixed_rps_value=*/5, absl::PermissionDeniedError(kExpectedErrorMessage), /*countdown=*/1);
 
   *spec.mutable_metrics_plugin_configs()->Add() = MakeFakeMetricsPluginConfig();
   nighthawk::adaptive_load::MetricSpec* metric_spec =
