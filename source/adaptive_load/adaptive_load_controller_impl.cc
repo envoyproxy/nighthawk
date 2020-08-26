@@ -77,8 +77,8 @@ absl::StatusOr<nighthawk::client::ExecutionResponse> PerformNighthawkBenchmark(
   }
 
   bool got_response = false;
-  // Discard all responses in the channel before the last one.
   while (stream->Read(&response)) {
+    RELEASE_ASSERT(!got_response, "gRPC server has started sending more than one message.");
     got_response = true;
   }
   if (!got_response) {
