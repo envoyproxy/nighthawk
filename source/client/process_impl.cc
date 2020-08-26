@@ -391,9 +391,9 @@ void ProcessImpl::maybeCreateTracingDriver(const envoy::config::trace::v3::Traci
     // in which we do not have, and creating a fake for that means we risk code-churn because of
     // upstream code changes.
     auto& factory =
-        Config::Utility::getAndCheckFactory<Envoy::Server::Configuration::TracerFactory>(
+        Envoy::Config::Utility::getAndCheckFactory<Envoy::Server::Configuration::TracerFactory>(
             configuration.http());
-    ProtobufTypes::MessagePtr message = Envoy::Config::Utility::translateToFactoryConfig(
+    Envoy::ProtobufTypes::MessagePtr message = Envoy::Config::Utility::translateToFactoryConfig(
         configuration.http(), Envoy::ProtobufMessage::getStrictValidationVisitor(), factory);
     auto zipkin_config = dynamic_cast<const envoy::config::trace::v3::ZipkinConfig&>(*message);
     Envoy::Tracing::DriverPtr zipkin_driver =
@@ -467,7 +467,8 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
             *dispatcher_, tls_, {}, *local_info_, store_root_, generator_,
             Envoy::ProtobufMessage::getStrictValidationVisitor(), *api_)});
     ssl_context_manager_ =
-        std::make_unique<Extensions::TransportSockets::Tls::ContextManagerImpl>(time_system_);
+        std::make_unique<Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl>(
+            time_system_);
     cluster_manager_factory_ = std::make_unique<ClusterManagerFactory>(
         admin_, Envoy::Runtime::LoaderSingleton::get(), store_root_, tls_, generator_,
         dispatcher_->createDnsResolver({}, false), *ssl_context_manager_, *dispatcher_,
@@ -488,7 +489,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
     cluster_manager_->setInitializedCb(
         [this]() -> void { init_manager_.initialize(init_watcher_); });
 
-    Runtime::LoaderSingleton::get().initialize(*cluster_manager_);
+    Envoy::Runtime::LoaderSingleton::get().initialize(*cluster_manager_);
 
     std::list<std::unique_ptr<Envoy::Stats::Sink>> stats_sinks;
     setupStatsSinks(bootstrap, stats_sinks);
