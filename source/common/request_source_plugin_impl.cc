@@ -3,8 +3,11 @@
 #include "common/request_source_impl.h"
 #include "external/envoy/source/common/protobuf/protobuf.h"
 
+#include "api/client/options.pb.h"
 #include "api/request_source/request_source_plugin_impl.pb.h"
-
+#include <fstream>
+#include <iostream>
+#include <sstream>
 namespace Nighthawk {
 
 std::string DummyRequestSourceConfigFactory::name() const {
@@ -39,7 +42,6 @@ RequestGenerator DummyRequestSourcePlugin::get() {
 }
 void DummyRequestSourcePlugin::initOnThread() {}
 
-
 std::string RPCRequestSourceConfigFactory::name() const {
   return "nighthawk.rpc-request-source-plugin";
 }
@@ -48,8 +50,8 @@ Envoy::ProtobufTypes::MessagePtr RPCRequestSourceConfigFactory::createEmptyConfi
   return std::make_unique<nighthawk::request_source::RPCPluginRequestSourceConfig>();
 }
 
-RequestSourcePluginPtr RPCRequestSourceConfigFactory::createRequestSourcePlugin(
-    const Envoy::Protobuf::Message& message) {
+RequestSourcePluginPtr
+RPCRequestSourceConfigFactory::createRequestSourcePlugin(const Envoy::Protobuf::Message& message) {
   const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
   nighthawk::request_source::RPCPluginRequestSourceConfig config;
   Envoy::MessageUtil::unpackTo(any, config);
@@ -71,7 +73,6 @@ RequestGenerator RPCRequestSourcePlugin::get() {
 }
 void RPCRequestSourcePlugin::initOnThread() {}
 
-
 std::string FileBasedRequestSourceConfigFactory::name() const {
   return "nighthawk.file-based-request-source-plugin";
 }
@@ -92,15 +93,27 @@ REGISTER_FACTORY(FileBasedRequestSourceConfigFactory, RequestSourcePluginConfigF
 
 FileBasedRequestSourcePlugin::FileBasedRequestSourcePlugin(
     const nighthawk::request_source::FileBasedPluginRequestSourceConfig& config)
-    : uri_(config.uri()) {}
+    : uri_(config.uri()) {
+  //      Envoy::MessageUtil::loadFromJson()
+  std::ifstream options_file(uri_, std::ifstream::binary);
+  options_.ParseFromIstream(&options_file);
+  options_file.close();
+}
 RequestGenerator FileBasedRequestSourcePlugin::get() {
   RequestGenerator request_generator = []() {
-    Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
+    // auto returned_request_impl = std::make_unique<RequestImpl>(std::move(options_.request_headers()));
+  Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
     auto returned_request_impl = std::make_unique<RequestImpl>(std::move(header));
     return returned_request_impl;
   };
   return request_generator;
 }
-void FileBasedRequestSourcePlugin::initOnThread() {}
+void FileBasedRequestSourcePlugin::initOnThread() {
+  // options_.set_request_method(::envoy::config::core::v3::RequestMethod::GET);
+  // auto request_headers = options_.add_request_headers();
+  // request_headers->mutable_header()->set_key("foo");
+  // request_headers->mutable_header()->set_value("bar");
+  // options_.set_allocated_request_body_size(0);
+}
 
 } // namespace Nighthawk

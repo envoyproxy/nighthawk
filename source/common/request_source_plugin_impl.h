@@ -5,6 +5,8 @@
 #include "nighthawk/common/request_source_plugin.h"
 
 #include "api/request_source/request_source_plugin_impl.pb.h"
+#include "api/client/options.pb.h"
+#include <fstream>
 
 namespace Nighthawk {
 
@@ -89,6 +91,7 @@ public:
 
 private:
   const std::string uri_;
+  nighthawk::client::RequestOptions options_;
 };
 
 /**
