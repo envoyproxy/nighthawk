@@ -138,6 +138,32 @@ EvaluateMetric(const MetricSpec& metric_spec, MetricsPlugin& metrics_plugin,
 }
 
 /**
+ * Extracts metric descriptors and corresponding thresholds to an ordered list and a map. Allows for
+ * uniform treatment of scored and informational metrics.
+ *
+ * @param spec The adaptive load session spec.
+ * @param metric_specs A list of MetricSpecs in order of definition.
+ * @param threshold_spec_from_metric_spec A map from each MetricSpec to its threshold if it had one,
+ * or nullptr if it was an informational metric.
+ *
+ */
+void ExtractMetricSpecs(const AdaptiveLoadSessionSpec& spec,
+                        std::vector<const nighthawk::adaptive_load::MetricSpec*>& metric_specs,
+                        absl::flat_hash_map<const nighthawk::adaptive_load::MetricSpec*,
+                                            const nighthawk::adaptive_load::ThresholdSpec*>&
+                            threshold_spec_from_metric_spec) {
+  for (const MetricSpecWithThreshold& metric_threshold : spec.metric_thresholds()) {
+    metric_specs.push_back(&metric_threshold.metric_spec());
+    threshold_spec_from_metric_spec[&metric_threshold.metric_spec()] =
+        &metric_threshold.threshold_spec();
+  }
+  for (const MetricSpec& metric_spec : spec.informational_metric_specs()) {
+    metric_specs.push_back(&metric_spec);
+    threshold_spec_from_metric_spec[&metric_spec] = nullptr;
+  }
+}
+
+/**
  * Analyzes a recently completed Nighthawk Service benchmark against configured MetricThresholds.
  * Queries outside MetricsPlugins if configured and/or uses "nighthawk.builtin" plugin to exrtact
  * stats and counters from the Nighthawk Service output.
@@ -160,10 +186,10 @@ absl::StatusOr<BenchmarkResult> AnalyzeNighthawkBenchmark(
   *benchmark_result.mutable_nighthawk_service_output() = nighthawk_response.output();
 
   // A map containing all available MetricsPlugins: preloaded custom plugins shared across all
-  // benchmarks and a freshly instantiated builtin plugin for this benchmark only.
+  // benchmarks, and a freshly instantiated builtin plugin for this benchmark only.
   absl::flat_hash_map<std::string, MetricsPlugin*> name_to_plugin_map;
-  for (const auto& pair : name_to_custom_metrics_plugin_map) {
-    name_to_plugin_map[pair.first] = pair.second.get();
+  for (const auto& name_plugin_pair : name_to_custom_metrics_plugin_map) {
+    name_to_plugin_map[name_plugin_pair.first] = name_plugin_pair.second.get();
   }
   auto builtin_plugin =
       std::make_unique<NighthawkStatsEmulatedMetricsPlugin>(nighthawk_response.output());
@@ -173,21 +199,15 @@ absl::StatusOr<BenchmarkResult> AnalyzeNighthawkBenchmark(
   if (nighthawk_response.error_detail().code() != ::grpc::OK) {
     return benchmark_result;
   }
+
   // MetricSpecs in original order of definition.
   std::vector<const nighthawk::adaptive_load::MetricSpec*> metric_specs;
   // Pointer to the corresponding ThresholdSpec, or nullptr for informational metrics.
   absl::flat_hash_map<const nighthawk::adaptive_load::MetricSpec*,
                       const nighthawk::adaptive_load::ThresholdSpec*>
       threshold_spec_from_metric_spec;
-  for (const MetricSpecWithThreshold& metric_threshold : spec.metric_thresholds()) {
-    metric_specs.push_back(&metric_threshold.metric_spec());
-    threshold_spec_from_metric_spec[&metric_threshold.metric_spec()] =
-        &metric_threshold.threshold_spec();
-  }
-  for (const MetricSpec& metric_spec : spec.informational_metric_specs()) {
-    metric_specs.push_back(&metric_spec);
-    threshold_spec_from_metric_spec[&metric_spec] = nullptr;
-  }
+  ExtractMetricSpecs(spec, metric_specs, threshold_spec_from_metric_spec);
+
   std::vector<std::string> errors;
   for (const nighthawk::adaptive_load::MetricSpec* metric_spec : metric_specs) {
     absl::StatusOr<MetricEvaluation> evaluation_or =
