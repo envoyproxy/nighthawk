@@ -285,12 +285,11 @@ TEST_P(HttpTestServerIntegrationNoConfigTest, TestHeaderConfig) {
   EXPECT_EQ("bar2",
             response->headers().get(Envoy::Http::LowerCaseString("foo"))->value().getStringView());
   EXPECT_EQ("", response->body());
+  const auto delta_header =
+      response->headers().get(Envoy::Http::LowerCaseString(kPreviousRequestDeltaHeader));
+  ASSERT_FALSE(delta_header == nullptr);
   uint64_t dummy;
-  EXPECT_TRUE(absl::SimpleAtoi(response->headers()
-                                   .get(Envoy::Http::LowerCaseString(kPreviousRequestDeltaHeader))
-                                   ->value()
-                                   .getStringView(),
-                               &dummy));
+  EXPECT_TRUE(absl::SimpleAtoi(delta_header->value().getStringView(), &dummy));
 }
 
 TEST_P(HttpTestServerIntegrationNoConfigTest, BadTestHeaderConfig) {

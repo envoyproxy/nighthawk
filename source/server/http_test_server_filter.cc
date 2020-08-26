@@ -23,9 +23,10 @@ uint64_t HttpTestServerDecoderFilterConfig::ThreadSafeMontonicTimeStopwatch::get
   // Note that we obtain monotonic time under lock, to ensure that start_ will be updated
   // monotonically.
   const Envoy::MonotonicTime new_time = time_source.monotonicTime();
-  const uint64_t elapsed = start_ == Envoy::MonotonicTime::min() ? 0 : (new_time - start_).count();
+  const uint64_t elapsed_ns =
+      start_ == Envoy::MonotonicTime::min() ? 0 : (new_time - start_).count();
   start_ = new_time;
-  return elapsed;
+  return elapsed_ns;
 }
 
 uint64_t
@@ -103,7 +104,7 @@ HttpTestServerDecoderFilter::decodeTrailers(Envoy::Http::RequestTrailerMap&) {
 void HttpTestServerDecoderFilter::setDecoderFilterCallbacks(
     Envoy::Http::StreamDecoderFilterCallbacks& callbacks) {
   decoder_callbacks_ = &callbacks;
-  // TODO(oschaaf): this adds locking in the hot path. Consider moving this into a separate
+  // TODO(#486): this adds locking in the hot path. Consider moving this into a separate
   // extension, which will also allow tracking multiple points via configuration.
   last_request_delta_ns_ =
       config_->getElapsedNanosSinceLastRequest(callbacks.dispatcher().timeSource());

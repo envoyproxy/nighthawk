@@ -27,7 +27,7 @@ void StreamDecoder::decodeHeaders(Envoy::Http::ResponseHeaderMapPtr&& headers, b
     if (absl::SimpleAtoi(timing_value, &origin_delta) && origin_delta >= 0) {
       origin_latency_statistic_.addValue(origin_delta);
     } else {
-      // TODO(XXX): Can we make sure we avoid high frequency logging for this somehow?
+      // TODO(#484): avoid high frequency logging.
       ENVOY_LOG(warn, "Bad origin delta: '{}'.", timing_value);
     }
   }
