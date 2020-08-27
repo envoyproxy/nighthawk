@@ -18,3 +18,5 @@ test/coverage/BUILD
 *.bak
 default.profraw
 tmp-*
+clang-tidy-fixes.yaml
+*.out

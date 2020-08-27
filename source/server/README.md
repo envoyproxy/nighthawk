@@ -14,6 +14,12 @@ bazel test -c dbg //test/server:http_test_server_filter_integration_test
 bazel build -c opt :nighthawk_test_server
 ```
 
+It is possible to
+[enable additional envoy extension](https://github.com/envoyproxy/envoy/blob/master/source/extensions/extensions_build_config.bzl) by adding them [here](../../extensions_build_config.bzl) before the build.
+By default, Nighthawk's test server is set up with the minimum extension set needed
+for it to operate as documented.
+
+
 ## Configuring the test server
 
 `test-server.yaml` sample content
@@ -169,12 +175,12 @@ bazel-bin/nighthawk_test_server  [--disable-extensions <string>]
 [--restart-epoch <uint32_t>]
 [--log-path <string>]
 [--log-format-prefix-with-location
-<bool>] [--log-format-escaped]
-[--log-format <string>]
-[--component-log-level <string>] [-l
-<string>] [--local-address-ip-version
-<string>] [--admin-address-path
-<string>]
+<bool>] [--enable-fine-grain-logging]
+[--log-format-escaped] [--log-format
+<string>] [--component-log-level
+<string>] [-l <string>]
+[--local-address-ip-version <string>]
+[--admin-address-path <string>]
 [--ignore-unknown-dynamic-fields]
 [--reject-unknown-dynamic-fields]
 [--allow-unknown-static-fields]
@@ -243,6 +249,9 @@ Path to logfile
 Prefix all occurrences of '%v' in log format with with '[%g:%#] '
 ('[path/to/file.cc:99] ').
 
+--enable-fine-grain-logging
+Logger mode: enable file level log control(Fancy Logger)or not
+
 --log-format-escaped
 Escape c-style escape sequences in the application logs
 
@@ -250,7 +259,7 @@ Escape c-style escape sequences in the application logs
 Log message format in spdlog syntax (see
 https://github.com/gabime/spdlog/wiki/3.-Custom-formatting)
 
-Default is "[%Y-%m-%d %T.%e][%t][%l][%n] %v"
+Default is "[%Y-%m-%d %T.%e][%t][%l][%n] [%g:%#] %v"
 
 --component-log-level <string>
 Comma separated list of component log levels. For example

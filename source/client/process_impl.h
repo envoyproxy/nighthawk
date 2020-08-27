@@ -33,6 +33,7 @@
 
 #include "client/benchmark_client_impl.h"
 #include "client/factories_impl.h"
+#include "client/flush_worker_impl.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -113,6 +114,15 @@ private:
   std::vector<StatisticPtr>
   mergeWorkerStatistics(const std::vector<ClientWorkerPtr>& workers) const;
   void setupForHRTimers();
+  /**
+   * If there are sinks configured in bootstrap, populate stats_sinks with sinks
+   * created through NighthawkStatsSinkFactory and add them to store_root_.
+   *
+   * @param bootstrap the bootstrap configuration which include the stats sink configuration.
+   * @param stats_sinks a Sink list to be populated.
+   */
+  void setupStatsSinks(const envoy::config::bootstrap::v3::Bootstrap& bootstrap,
+                       std::list<std::unique_ptr<Envoy::Stats::Sink>>& stats_sinks);
   bool runInternal(OutputCollector& collector, const std::vector<UriPtr>& uris,
                    const UriPtr& request_source_uri, const UriPtr& tracing_uri);
 
@@ -148,14 +158,15 @@ private:
 
   std::unique_ptr<ClusterManagerFactory> cluster_manager_factory_;
   Envoy::Upstream::ClusterManagerPtr cluster_manager_{};
-  std::unique_ptr<Runtime::ScopedLoaderSingleton> runtime_singleton_;
+  std::unique_ptr<Envoy::Runtime::ScopedLoaderSingleton> runtime_singleton_;
   Envoy::Init::WatcherImpl init_watcher_;
-  Tracing::HttpTracerSharedPtr http_tracer_;
+  Envoy::Tracing::HttpTracerSharedPtr http_tracer_;
   Envoy::Server::ValidationAdmin admin_;
   Envoy::ProtobufMessage::ProdValidationContextImpl validation_context_;
   bool shutdown_{true};
   Envoy::Thread::MutexBasicLockable workers_lock_;
   bool cancelled_{false};
+  std::unique_ptr<FlushWorkerImpl> flush_worker_;
 };
 
 } // namespace Client

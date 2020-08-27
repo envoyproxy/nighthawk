@@ -5,6 +5,7 @@
 
 #include "external/envoy/test/test_common/environment.h"
 #include "external/envoy/test/test_common/network_utility.h"
+#include "external/envoy/test/test_common/registry.h"
 #include "external/envoy/test/test_common/utility.h"
 
 #include "common/uri_impl.h"
@@ -17,10 +18,45 @@
 
 #include "gtest/gtest.h"
 
-using namespace testing;
-
 namespace Nighthawk {
 namespace Client {
+namespace {
+
+using ::testing::TestWithParam;
+using ::testing::ValuesIn;
+
+constexpr absl::string_view kSinkName = "{name:\"nighthawk.fake_stats_sink\"}";
+// Global variable keeps count of number of flushes in FakeStatsSink. It is reset
+// to 0 when a new FakeStatsSink is created.
+int numFlushes = 0;
+
+// FakeStatsSink is a simple Envoy::Stats::Sink implementation used to prove
+// the logic to configure Sink in Nighthawk works as expected.
+class FakeStatsSink : public Envoy::Stats::Sink {
+public:
+  FakeStatsSink() { numFlushes = 0; }
+
+  // Envoy::Stats::Sink
+  void flush(Envoy::Stats::MetricSnapshot&) override { numFlushes++; }
+
+  void onHistogramComplete(const Envoy::Stats::Histogram&, uint64_t) override {}
+};
+
+// FakeStatsSinkFactory creates FakeStatsSink.
+class FakeStatsSinkFactory : public NighthawkStatsSinkFactory {
+public:
+  std::unique_ptr<Envoy::Stats::Sink> createStatsSink(Envoy::Stats::SymbolTable&) override {
+    return std::make_unique<FakeStatsSink>();
+  }
+
+  Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override {
+    // Using Struct instead of a custom per-filter empty config proto
+    // This is only allowed in tests.
+    return Envoy::ProtobufTypes::MessagePtr{new Envoy::ProtobufWkt::Struct()};
+  }
+
+  std::string name() const override { return "nighthawk.fake_stats_sink"; }
+};
 
 // TODO(https://github.com/envoyproxy/nighthawk/issues/179): Mock Process in client_test, and move
 // it's tests in here. Note: these tests do not have a backend set up to talk to. That's why we
@@ -118,5 +154,30 @@ TEST_P(ProcessTest, CancelExecutionBeforeBeginLoadTest) {
   runProcess(RunExpectation::EXPECT_SUCCESS, true, true);
 }
 
+TEST_P(ProcessTest, RunProcessWithStatsSinkConfigured) {
+  FakeStatsSinkFactory factory;
+  Envoy::Registry::InjectFactory<NighthawkStatsSinkFactory> registered(factory);
+  options_ = TestUtility::createOptionsImpl(
+      fmt::format("foo --h2 --duration 1 --rps 10 --stats-flush-interval 1 "
+                  "--stats-sinks {} https://{}/",
+                  kSinkName, loopback_address_));
+  numFlushes = 0;
+  runProcess(RunExpectation::EXPECT_FAILURE);
+  EXPECT_GT(numFlushes, 0);
+}
+
+TEST_P(ProcessTest, NoFlushWhenCancelExecutionBeforeLoadTestBegin) {
+  FakeStatsSinkFactory factory;
+  Envoy::Registry::InjectFactory<NighthawkStatsSinkFactory> registered(factory);
+  options_ = TestUtility::createOptionsImpl(
+      fmt::format("foo --duration 300 --failure-predicate foo:0 --concurrency "
+                  "2 --stats-flush-interval 1 --stats-sinks {} https://{}/",
+                  kSinkName, loopback_address_));
+  numFlushes = 0;
+  runProcess(RunExpectation::EXPECT_SUCCESS, true, true);
+  EXPECT_EQ(numFlushes, 0);
+}
+
+} // namespace
 } // namespace Client
 } // namespace Nighthawk
