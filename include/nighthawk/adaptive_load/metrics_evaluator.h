@@ -1,9 +1,6 @@
 #include "envoy/config/core/v3/base.pb.h"
 
-#include "nighthawk/adaptive_load/adaptive_load_controller.h"
 #include "nighthawk/adaptive_load/metrics_plugin.h"
-#include "nighthawk/adaptive_load/scoring_function.h"
-#include "nighthawk/adaptive_load/step_controller.h"
 
 #include "external/envoy/source/common/common/logger.h"
 #include "external/envoy/source/common/common/statusor.h"
