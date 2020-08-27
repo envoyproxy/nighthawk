@@ -30,16 +30,14 @@ TEST(PerformNighthawkBenchmark, UsesSpecifiedDuration) {
   ExecutionRequest request;
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
-      .WillRepeatedly([&request](grpc_impl::ClientContext*) {
+      .WillOnce([&request](grpc_impl::ClientContext*) {
         auto* mock_reader_writer =
             new grpc::testing::MockClientReaderWriter<ExecutionRequest, ExecutionResponse>();
-        EXPECT_CALL(*mock_reader_writer, Read(_))
-            .WillOnce(Return(true))
-            .WillRepeatedly(Return(false));
+        EXPECT_CALL(*mock_reader_writer, Read(_)).WillOnce(Return(true)).WillOnce(Return(false));
         EXPECT_CALL(*mock_reader_writer, Write(_, _))
-            .WillRepeatedly(::testing::DoAll(::testing::SaveArg<0>(&request), Return(true)));
-        EXPECT_CALL(*mock_reader_writer, WritesDone()).WillRepeatedly(Return(true));
-        EXPECT_CALL(*mock_reader_writer, Finish()).WillRepeatedly(Return(::grpc::Status::OK));
+            .WillOnce(::testing::DoAll(::testing::SaveArg<0>(&request), Return(true)));
+        EXPECT_CALL(*mock_reader_writer, WritesDone()).WillOnce(Return(true));
+        EXPECT_CALL(*mock_reader_writer, Finish()).WillOnce(Return(::grpc::Status::OK));
         return mock_reader_writer;
       });
   Envoy::Protobuf::Duration duration;
@@ -55,16 +53,14 @@ TEST(PerformNighthawkBenchmark, UsesSpecifiedCommandLineOptions) {
   ExecutionRequest request;
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
-      .WillRepeatedly([&request](grpc_impl::ClientContext*) {
+      .WillOnce([&request](grpc_impl::ClientContext*) {
         auto* mock_reader_writer =
             new grpc::testing::MockClientReaderWriter<ExecutionRequest, ExecutionResponse>();
-        EXPECT_CALL(*mock_reader_writer, Read(_))
-            .WillOnce(Return(true))
-            .WillRepeatedly(Return(false));
+        EXPECT_CALL(*mock_reader_writer, Read(_)).WillOnce(Return(true)).WillOnce(Return(false));
         EXPECT_CALL(*mock_reader_writer, Write(_, _))
-            .WillRepeatedly(::testing::DoAll(::testing::SaveArg<0>(&request), Return(true)));
-        EXPECT_CALL(*mock_reader_writer, WritesDone()).WillRepeatedly(Return(true));
-        EXPECT_CALL(*mock_reader_writer, Finish()).WillRepeatedly(Return(::grpc::Status::OK));
+            .WillOnce(::testing::DoAll(::testing::SaveArg<0>(&request), Return(true)));
+        EXPECT_CALL(*mock_reader_writer, WritesDone()).WillOnce(Return(true));
+        EXPECT_CALL(*mock_reader_writer, Finish()).WillOnce(Return(::grpc::Status::OK));
         return mock_reader_writer;
       });
   CommandLineOptions command_line_options;
@@ -79,15 +75,15 @@ TEST(PerformNighthawkBenchmark, ReturnsNighthawkResponseSuccessfully) {
   ExecutionResponse expected_response;
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
-      .WillRepeatedly([&expected_response](grpc_impl::ClientContext*) {
+      .WillOnce([&expected_response](grpc_impl::ClientContext*) {
         auto* mock_reader_writer =
             new grpc::testing::MockClientReaderWriter<ExecutionRequest, ExecutionResponse>();
         EXPECT_CALL(*mock_reader_writer, Read(_))
             .WillOnce(DoAll(SetArgPointee<0>(expected_response), Return(true)))
-            .WillRepeatedly(Return(false));
-        EXPECT_CALL(*mock_reader_writer, Write(_, _)).WillRepeatedly(Return(true));
-        EXPECT_CALL(*mock_reader_writer, WritesDone()).WillRepeatedly(Return(true));
-        EXPECT_CALL(*mock_reader_writer, Finish()).WillRepeatedly(Return(::grpc::Status::OK));
+            .WillOnce(Return(false));
+        EXPECT_CALL(*mock_reader_writer, Write(_, _)).WillOnce(Return(true));
+        EXPECT_CALL(*mock_reader_writer, WritesDone()).WillOnce(Return(true));
+        EXPECT_CALL(*mock_reader_writer, Finish()).WillOnce(Return(::grpc::Status::OK));
         return mock_reader_writer;
       });
   absl::StatusOr<ExecutionResponse> response_or = PerformNighthawkBenchmark(
@@ -101,12 +97,12 @@ TEST(PerformNighthawkBenchmark, ReturnsNighthawkResponseSuccessfully) {
 TEST(PerformNighthawkBenchmark, ReturnsErrorIfNighthawkServiceDoesNotSendResponse) {
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
-      .WillRepeatedly([](grpc_impl::ClientContext*) {
+      .WillOnce([](grpc_impl::ClientContext*) {
         auto* mock_reader_writer =
             new grpc::testing::MockClientReaderWriter<ExecutionRequest, ExecutionResponse>();
-        EXPECT_CALL(*mock_reader_writer, Read(_)).WillRepeatedly(Return(false));
-        EXPECT_CALL(*mock_reader_writer, Write(_, _)).WillRepeatedly(Return(true));
-        EXPECT_CALL(*mock_reader_writer, WritesDone()).WillRepeatedly(Return(true));
+        EXPECT_CALL(*mock_reader_writer, Read(_)).WillOnce(Return(false));
+        EXPECT_CALL(*mock_reader_writer, Write(_, _)).WillOnce(Return(true));
+        EXPECT_CALL(*mock_reader_writer, WritesDone()).WillOnce(Return(true));
         return mock_reader_writer;
       });
   absl::StatusOr<ExecutionResponse> response_or = PerformNighthawkBenchmark(
@@ -120,10 +116,10 @@ TEST(PerformNighthawkBenchmark, ReturnsErrorIfNighthawkServiceDoesNotSendRespons
 TEST(PerformNighthawkBenchmark, ReturnsErrorIfNighthawkServiceWriteFails) {
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
-      .WillRepeatedly([](grpc_impl::ClientContext*) {
+      .WillOnce([](grpc_impl::ClientContext*) {
         auto* mock_reader_writer =
             new grpc::testing::MockClientReaderWriter<ExecutionRequest, ExecutionResponse>();
-        EXPECT_CALL(*mock_reader_writer, Write(_, _)).WillRepeatedly(Return(false));
+        EXPECT_CALL(*mock_reader_writer, Write(_, _)).WillOnce(Return(false));
         return mock_reader_writer;
       });
   absl::StatusOr<ExecutionResponse> response_or = PerformNighthawkBenchmark(
@@ -136,11 +132,11 @@ TEST(PerformNighthawkBenchmark, ReturnsErrorIfNighthawkServiceWriteFails) {
 TEST(PerformNighthawkBenchmark, ReturnsErrorIfNighthawkServiceWritesDoneFails) {
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
-      .WillRepeatedly([](grpc_impl::ClientContext*) {
+      .WillOnce([](grpc_impl::ClientContext*) {
         auto* mock_reader_writer =
             new grpc::testing::MockClientReaderWriter<ExecutionRequest, ExecutionResponse>();
-        EXPECT_CALL(*mock_reader_writer, Write(_, _)).WillRepeatedly(Return(true));
-        EXPECT_CALL(*mock_reader_writer, WritesDone()).WillRepeatedly(Return(false));
+        EXPECT_CALL(*mock_reader_writer, Write(_, _)).WillOnce(Return(true));
+        EXPECT_CALL(*mock_reader_writer, WritesDone()).WillOnce(Return(false));
         return mock_reader_writer;
       });
   absl::StatusOr<ExecutionResponse> response_or = PerformNighthawkBenchmark(
@@ -153,17 +149,14 @@ TEST(PerformNighthawkBenchmark, ReturnsErrorIfNighthawkServiceWritesDoneFails) {
 TEST(PerformNighthawkBenchmark, ReturnsErrorIfNighthawkServiceGrpcStreamClosesAbnormally) {
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
-      .WillRepeatedly([](grpc_impl::ClientContext*) {
+      .WillOnce([](grpc_impl::ClientContext*) {
         auto* mock_reader_writer =
             new grpc::testing::MockClientReaderWriter<ExecutionRequest, ExecutionResponse>();
-        EXPECT_CALL(*mock_reader_writer, Read(_))
-            .WillOnce(Return(true))
-            .WillRepeatedly(Return(false));
-        EXPECT_CALL(*mock_reader_writer, Write(_, _)).WillRepeatedly(Return(true));
-        EXPECT_CALL(*mock_reader_writer, WritesDone()).WillRepeatedly(Return(true));
+        EXPECT_CALL(*mock_reader_writer, Read(_)).WillOnce(Return(true)).WillOnce(Return(false));
+        EXPECT_CALL(*mock_reader_writer, Write(_, _)).WillOnce(Return(true));
+        EXPECT_CALL(*mock_reader_writer, WritesDone()).WillOnce(Return(true));
         EXPECT_CALL(*mock_reader_writer, Finish())
-            .WillRepeatedly(
-                Return(::grpc::Status(::grpc::UNKNOWN, "Finish failure status message")));
+            .WillOnce(Return(::grpc::Status(::grpc::UNKNOWN, "Finish failure status message")));
         return mock_reader_writer;
       });
   absl::StatusOr<ExecutionResponse> response_or = PerformNighthawkBenchmark(
