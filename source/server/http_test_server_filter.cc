@@ -8,7 +8,6 @@
 #include "server/well_known_headers.h"
 
 #include "absl/strings/numbers.h"
-#include "absl/strings/str_cat.h"
 
 namespace Nighthawk {
 namespace Server {
@@ -16,23 +15,6 @@ namespace Server {
 HttpTestServerDecoderFilterConfig::HttpTestServerDecoderFilterConfig(
     nighthawk::server::ResponseOptions proto_config)
     : server_config_(std::move(proto_config)) {}
-
-uint64_t HttpTestServerDecoderFilterConfig::ThreadSafeMontonicTimeStopwatch::getElapsedNsAndReset(
-    Envoy::TimeSource& time_source) {
-  Envoy::Thread::LockGuard guard(lock_);
-  // Note that we obtain monotonic time under lock, to ensure that start_ will be updated
-  // monotonically.
-  const Envoy::MonotonicTime new_time = time_source.monotonicTime();
-  const uint64_t elapsed_ns =
-      start_ == Envoy::MonotonicTime::min() ? 0 : (new_time - start_).count();
-  start_ = new_time;
-  return elapsed_ns;
-}
-
-uint64_t
-HttpTestServerDecoderFilterConfig::getElapsedNanosSinceLastRequest(Envoy::TimeSource& time_source) {
-  return getRequestStopwatch().getElapsedNsAndReset(time_source);
-}
 
 HttpTestServerDecoderFilter::HttpTestServerDecoderFilter(
     HttpTestServerDecoderFilterConfigSharedPtr config)
@@ -50,13 +32,6 @@ void HttpTestServerDecoderFilter::sendReply() {
         static_cast<Envoy::Http::Code>(200), response_body,
         [this](Envoy::Http::ResponseHeaderMap& direct_response_headers) {
           Configuration::applyConfigToResponseHeaders(direct_response_headers, base_config_);
-          const std::string previous_request_delta_in_response_header =
-              base_config_.emit_previous_request_delta_in_response_header();
-          if (!previous_request_delta_in_response_header.empty() && last_request_delta_ns_ > 0) {
-            direct_response_headers.appendCopy(
-                Envoy::Http::LowerCaseString(previous_request_delta_in_response_header),
-                absl::StrCat(last_request_delta_ns_));
-          }
         },
         absl::nullopt, "");
   } else {
@@ -104,10 +79,6 @@ HttpTestServerDecoderFilter::decodeTrailers(Envoy::Http::RequestTrailerMap&) {
 void HttpTestServerDecoderFilter::setDecoderFilterCallbacks(
     Envoy::Http::StreamDecoderFilterCallbacks& callbacks) {
   decoder_callbacks_ = &callbacks;
-  // TODO(#486): this adds locking in the hot path. Consider moving this into a separate
-  // extension, which will also allow tracking multiple points via configuration.
-  last_request_delta_ns_ =
-      config_->getElapsedNanosSinceLastRequest(callbacks.dispatcher().timeSource());
 }
 
 } // namespace Server

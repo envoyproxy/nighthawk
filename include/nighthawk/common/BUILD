@@ -59,3 +59,14 @@ envoy_basic_cc_library(
         "@envoy//source/common/http:headers_lib",
     ],
 )
+
+envoy_basic_cc_library(
+    name = "stopwatch_lib",
+    hdrs = [
+        "stopwatch.h",
+    ],
+    include_prefix = "nighthawk/common",
+    deps = [
+        "@envoy//include/envoy/common:time_interface",
+    ],
+)

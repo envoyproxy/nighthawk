@@ -71,6 +71,24 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
+    name = "thread_safe_monotonic_time_stopwatch_lib",
+    srcs = [
+        "thread_safe_monotonic_time_stopwatch.cc",
+    ],
+    hdrs = [
+        "thread_safe_monotonic_time_stopwatch.h",
+    ],
+    repository = "@envoy",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//include/nighthawk/common:stopwatch_lib",
+        "@envoy//include/envoy/common:time_interface",
+        "@envoy//source/common/common:lock_guard_lib_with_external_headers",
+        "@envoy//source/common/common:thread_lib_with_external_headers",
+    ],
+)
+
+envoy_cc_library(
     name = "nighthawk_common_lib",
     srcs = [
         "phase_impl.cc",
@@ -79,6 +97,7 @@ envoy_cc_library(
         "signal_handler.cc",
         "statistic_impl.cc",
         "termination_predicate_impl.cc",
+        "thread_safe_monotonic_time_stopwatch.cc",
         "uri_impl.cc",
         "utility.cc",
         "version_info.cc",
@@ -94,6 +113,7 @@ envoy_cc_library(
         "signal_handler.h",
         "statistic_impl.h",
         "termination_predicate_impl.h",
+        "thread_safe_monotonic_time_stopwatch.h",
         "uri_impl.h",
         "utility.h",
         "version_info.h",
