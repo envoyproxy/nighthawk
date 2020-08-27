@@ -23,8 +23,6 @@ constexpr std::chrono::microseconds NighthawkTimerResolution = 25us;
 
 } // namespace
 
-using namespace Envoy; // We need this because of macro expectations.
-
 #define ALL_SEQUENCER_STATS(COUNTER) COUNTER(failed_terminations)
 
 struct SequencerStats {

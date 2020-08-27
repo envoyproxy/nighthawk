@@ -37,6 +37,11 @@ InputVariableSetterPtr RequestsPerSecondInputVariableSetterConfigFactory::create
   return std::make_unique<RequestsPerSecondInputVariableSetter>(config);
 }
 
+absl::Status RequestsPerSecondInputVariableSetterConfigFactory::ValidateConfig(
+    const Envoy::Protobuf::Message&) const {
+  return absl::OkStatus();
+}
+
 REGISTER_FACTORY(RequestsPerSecondInputVariableSetterConfigFactory,
                  InputVariableSetterConfigFactory);
 

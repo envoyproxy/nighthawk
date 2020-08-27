@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package nighthawk.adaptive_load;
+
+import "google/rpc/status.proto";
+
+// Configuration for FakeInputVariableSetter (plugin name: "nighthawk.fake_input_variable_setter")
+// that sets the |connections| field in CommandLineOptions.
+message FakeInputVariableSetterConfig {
+  // A factor that multiplies the input value before applying it, in order to test the propagation
+  // of both the input and the config. Optional, default 1.
+  uint32 adjustment_factor = 1;
+  // Artificial error that the plugin factory should return during validation. Optional.
+  // Note that the |code| field will be static_casted to an absl::StatusCode. Setting |code| to a
+  // value outside the range of the enum absl::StatusCode will produce undefined behavior.
+  google.rpc.Status artificial_validation_failure = 2;
+}
