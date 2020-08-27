@@ -24,6 +24,10 @@
 
 namespace Nighthawk {
 
+/**
+ * An interface with utilities for translating between metrics definitions, thresholds, scores,
+ * MetricsPlugins, and Nighthawk Service results.
+ */
 class MetricsEvaluator {
 public:
   virtual ~MetricsEvaluator() = default;
