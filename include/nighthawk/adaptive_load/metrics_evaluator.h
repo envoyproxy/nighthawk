@@ -38,12 +38,12 @@ public:
    *
    * @param metric_spec The metric spec identifying the metric by name and plugin name.
    * @param metrics_plugin An already activated MetricsPlugin used by the metric_spec.
-   * @param threshold_spec Proto describing the threshold and scoring function. Nullptr if the
+   * @param threshold_spec A proto describing the threshold and scoring function. Nullptr if the
    * metric is informational only.
-   * @param errors A vector to append error messages to.
    *
-   * @return MetricEvaluation A proto containing the metric value and its score if a threshold was
-   * specified, or an error mesasge if the metric could not be obtained from the MetricsPlugin.
+   * @return StatusOr<MetricEvaluation> A proto containing the metric value (and its score if a
+   * threshold was specified), or an error status if the metric could not be obtained from the
+   * MetricsPlugin.
    */
   virtual absl::StatusOr<nighthawk::adaptive_load::MetricEvaluation>
   EvaluateMetric(const nighthawk::adaptive_load::MetricSpec& metric_spec,
@@ -59,7 +59,6 @@ public:
    * @param metric_specs A list to store extracted MetricSpecs in order of definition.
    * @param threshold_spec_from_metric_spec A map to store each MetricSpec and its threshold if it
    * had one, or nullptr if it was an informational metric.
-   *
    */
   virtual void
   ExtractMetricSpecs(const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec,
@@ -70,18 +69,18 @@ public:
 
   /**
    * Analyzes a Nighthawk Service benchmark against configured MetricThresholds. Queries
-   * outside MetricsPlugins if configured and/or uses "nighthawk.builtin" plugin to extract stats
-   * and counters from the Nighthawk Service output. The benchmark is assumed to have finished
-   * recently so values from MetricsPlugins are relevant.
+   * outside MetricsPlugins for current metric values, and/or uses "nighthawk.builtin" plugin to
+   * extract stats and counters from the latest Nighthawk Service output. The Nighthawk benchmark is
+   * assumed to have finished recently so values from MetricsPlugins will be relevant.
    *
-   * @param nighthawk_response Proto returned from Nighthawk Service describing a single benchmark
-   * session.
+   * @param nighthawk_response Proto returned from Nighthawk Service describing the latest single
+   * benchmark session.
    * @param spec Top-level proto defining the adaptive load session.
    * @param name_to_custom_metrics_plugin_map Common map from plugin names to MetricsPlugins, loaded
-   * and initialized once at the beginning of the session and passed to all calls of this function.
+   * and initialized once at the beginning of the session and passed to all calls of this method.
    *
-   * @return BenchmarkResult Proto containing metric scores for this Nighthawk Service benchmark
-   * session, or an error propagated from the Nighthawk Service or MetricsPlugins.
+   * @return StatusOr<BenchmarkResult> A proto containing all metric scores for this Nighthawk
+   * Service benchmark session, or an error propagated from MetricsPlugins.
    */
   virtual absl::StatusOr<nighthawk::adaptive_load::BenchmarkResult>
   AnalyzeNighthawkBenchmark(const nighthawk::client::ExecutionResponse& nighthawk_response,
