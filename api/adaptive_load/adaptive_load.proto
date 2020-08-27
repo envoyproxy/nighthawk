@@ -33,11 +33,17 @@ message AdaptiveLoadSessionSpec {
   // A proto describing Nighthawk Service traffic. See
   // https://github.com/envoyproxy/nighthawk/blob/master/api/client/options.proto
   //
-  // The adaptive load controller will return an error if the |duration| or
-  // |open_loop| fields are set within |nighthawk_traffic_options|. The
-  // controller will also be configured to overwrite at least one of the
-  // numerical fields during the search, such as requests_per_second, so any
-  // value of those fields specified here will be ignored.
+  // The adaptive load controller will return an error if the |duration| field is set within
+  // |nighthawk_traffic_options|.
+  //
+  // If |open_loop| is unset, it will be overridden to true by the adaptive load controller. This is
+  // to support the typical case where the controller needs full control over attempted requests per
+  // second, which could conflict with the backpressure mechanism of closed-loop mode. Note that in
+  // standalone Nighthawk clients, closed-loop mode is the default so |open_loop| defaults to false.
+  //
+  // The controller will override at least one field in this proto to vary the load, such as the
+  // requests_per_second field or headers. Any existing value for such a field in the template will
+  // be ignored.
   //
   // All other fields in |nighthawk_traffic_options| are passed through to the
   // Nighthawk Service.
@@ -65,10 +71,6 @@ message AdaptiveLoadSessionSpec {
 // Complete description of an adaptive load session, including metric scores
 // for every degree of load attempted during the adjusting stage.
 message AdaptiveLoadSessionOutput {
-  // Overall status of the session with error detail. INVALID_ARGUMENT if the input spec contained
-  // errors, DEADLINE_EXCEEDED if convergence did not occur before the deadline, ABORTED if the step
-  // controller determined it can never converge.
-  google.rpc.Status session_status = 1;
   // Results of each short benchmark performed during the adjusting stage.
   repeated BenchmarkResult adjusting_stage_results = 2;
   // Result of the single benchmark of the testing stage.

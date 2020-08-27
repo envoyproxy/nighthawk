@@ -2,6 +2,8 @@
 
 #include "envoy/common/time.h"
 
+#include "external/envoy/source/common/common/statusor.h"
+
 #include "api/adaptive_load/adaptive_load.pb.h"
 #include "api/client/service.grpc.pb.h"
 
@@ -23,11 +25,10 @@ namespace Nighthawk {
  * Envoy-based process, there may be an existing TimeSource or TimeSystem to use. If calling
  * from a test, pass a fake TimeSource.
  *
- * @return AdaptiveLoadSessionOutput a proto logging the result of all traffic attempted and all
- * corresponding metric values and scores. Any errors that occur will be recorded in the
- * |session_status| field.
+ * @return StatusOr<AdaptiveLoadSessionOutput> A proto logging the result of all traffic attempted
+ * and all corresponding metric values and scores, or an overall error status if the session failed.
  */
-nighthawk::adaptive_load::AdaptiveLoadSessionOutput PerformAdaptiveLoadSession(
+absl::StatusOr<nighthawk::adaptive_load::AdaptiveLoadSessionOutput> PerformAdaptiveLoadSession(
     nighthawk::client::NighthawkService::StubInterface* nighthawk_service_stub,
     const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec, Envoy::TimeSource& time_source);
 
