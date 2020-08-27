@@ -116,10 +116,6 @@ bool ExponentialSearchStepController::IsDoomed(std::string& doom_reason) const {
 }
 
 void ExponentialSearchStepController::UpdateAndRecompute(const BenchmarkResult& benchmark_result) {
-  if (benchmark_result.status().code()) {
-    doom_reason_ = "Nighthawk Service returned an error.";
-    return;
-  }
   const double score = TotalScore(benchmark_result);
   if (is_range_finding_phase_) {
     IterateRangeFindingPhase(score);
