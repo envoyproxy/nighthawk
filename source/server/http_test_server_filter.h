@@ -48,6 +48,9 @@ private:
    */
   class ThreadSafeMontonicTimeStopwatch {
   public:
+    /**
+     * Construct a new ThreadSafe & MontonicTime-based Stopwatch object.
+     */
     ThreadSafeMontonicTimeStopwatch() : start_(Envoy::MonotonicTime::min()) {}
     /**
      * @param time_source used to obtain a sample of the current monotonic time.
@@ -61,7 +64,11 @@ private:
     Envoy::MonotonicTime start_ GUARDED_BY(lock_);
   };
 
-  static ThreadSafeMontonicTimeStopwatch& lastRequestStopwatch() {
+  /**
+   * @return ThreadSafeMontonicTimeStopwatch& Get the Stopwatch singleton instance used to track
+   * the deltas between inbound requests.
+   */
+  static ThreadSafeMontonicTimeStopwatch& getRequestStopwatch() {
     MUTABLE_CONSTRUCT_ON_FIRST_USE(ThreadSafeMontonicTimeStopwatch); // NOLINT
   }
   const nighthawk::server::ResponseOptions server_config_;

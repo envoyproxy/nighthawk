@@ -31,7 +31,7 @@ uint64_t HttpTestServerDecoderFilterConfig::ThreadSafeMontonicTimeStopwatch::get
 
 uint64_t
 HttpTestServerDecoderFilterConfig::getElapsedNanosSinceLastRequest(Envoy::TimeSource& time_source) {
-  return lastRequestStopwatch().getElapsedNsAndReset(time_source);
+  return getRequestStopwatch().getElapsedNsAndReset(time_source);
 }
 
 HttpTestServerDecoderFilter::HttpTestServerDecoderFilter(

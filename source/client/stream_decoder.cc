@@ -20,9 +20,9 @@ void StreamDecoder::decodeHeaders(Envoy::Http::ResponseHeaderMapPtr&& headers, b
   const uint64_t response_code = Envoy::Http::Utility::getResponseStatus(*response_headers_);
   stream_info_.response_code_ = static_cast<uint32_t>(response_code);
   const auto timing_header_name = Envoy::Http::LowerCaseString("x-nh-do-not-use-origin-timings");
-  const auto* timing_header = response_headers_->get(timing_header_name);
+  const Envoy::Http::HeaderEntry* timing_header = response_headers_->get(timing_header_name);
   if (timing_header != nullptr) {
-    auto timing_value = timing_header->value().getStringView();
+    absl::string_view timing_value = timing_header->value().getStringView();
     int64_t origin_delta;
     if (absl::SimpleAtoi(timing_value, &origin_delta) && origin_delta >= 0) {
       origin_latency_statistic_.addValue(origin_delta);
