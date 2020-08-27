@@ -62,6 +62,29 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
+    name = "nighthawk_service_client",
+    srcs = [
+        "nighthawk_service_client.cc",
+    ],
+    hdrs = [
+        "nighthawk_service_client.h",
+    ],
+    repository = "@envoy",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//api/adaptive_load:adaptive_load_proto_cc_proto",
+        "//api/client:base_cc_proto",
+        "//api/client:grpc_service_lib",
+        "@envoy//source/common/common:assert_lib_with_external_headers",
+        "@envoy//source/common/common:minimal_logger_lib_with_external_headers",
+        "@envoy//source/common/common:statusor_lib_with_external_headers",
+        "@envoy//source/common/config:utility_lib_with_external_headers",
+        "@envoy//source/common/event:real_time_system_lib_with_external_headers",
+        "@envoy//source/common/protobuf:protobuf_with_external_headers",
+    ],
+)
+
+envoy_cc_library(
     name = "plugin_loader",
     srcs = [
         "plugin_loader.cc",

@@ -41,6 +41,17 @@ envoy_cc_test(
 )
 
 envoy_cc_test(
+    name = "nighthawk_service_client_test",
+    srcs = ["nighthawk_service_client_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/adaptive_load:nighthawk_service_client",
+        "//source/client:nighthawk_client_lib",
+        "@com_github_grpc_grpc//:grpc++_test",
+    ],
+)
+
+envoy_cc_test(
     name = "plugin_loader_test",
     srcs = ["plugin_loader_test.cc"],
     repository = "@envoy",
