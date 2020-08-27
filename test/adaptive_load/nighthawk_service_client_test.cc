@@ -6,7 +6,7 @@
 
 #include "grpcpp/test/mock_stream.h"
 
-#include "adaptive_load/nighthawk_service_client.h"
+#include "adaptive_load/nighthawk_service_client_impl.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -42,8 +42,9 @@ TEST(PerformNighthawkBenchmark, UsesSpecifiedDuration) {
       });
   Envoy::Protobuf::Duration duration;
   duration.set_seconds(kExpectedSeconds);
-  absl::StatusOr<ExecutionResponse> response_or =
-      PerformNighthawkBenchmark(&mock_nighthawk_service_stub, CommandLineOptions(), duration);
+  NighthawkServiceClientImpl client;
+  absl::StatusOr<ExecutionResponse> response_or = client.PerformNighthawkBenchmark(
+      &mock_nighthawk_service_stub, CommandLineOptions(), duration);
   EXPECT_TRUE(response_or.ok());
   EXPECT_EQ(request.start_request().options().duration().seconds(), kExpectedSeconds);
 }
@@ -65,7 +66,8 @@ TEST(PerformNighthawkBenchmark, UsesSpecifiedCommandLineOptions) {
       });
   CommandLineOptions command_line_options;
   command_line_options.mutable_requests_per_second()->set_value(kExpectedRps);
-  absl::StatusOr<ExecutionResponse> response_or = PerformNighthawkBenchmark(
+  NighthawkServiceClientImpl client;
+  absl::StatusOr<ExecutionResponse> response_or = client.PerformNighthawkBenchmark(
       &mock_nighthawk_service_stub, command_line_options, Envoy::Protobuf::Duration());
   EXPECT_TRUE(response_or.ok());
   EXPECT_EQ(request.start_request().options().requests_per_second().value(), kExpectedRps);
@@ -86,7 +88,8 @@ TEST(PerformNighthawkBenchmark, ReturnsNighthawkResponseSuccessfully) {
         EXPECT_CALL(*mock_reader_writer, Finish()).WillOnce(Return(::grpc::Status::OK));
         return mock_reader_writer;
       });
-  absl::StatusOr<ExecutionResponse> response_or = PerformNighthawkBenchmark(
+  NighthawkServiceClientImpl client;
+  absl::StatusOr<ExecutionResponse> response_or = client.PerformNighthawkBenchmark(
       &mock_nighthawk_service_stub, CommandLineOptions(), Envoy::Protobuf::Duration());
   EXPECT_TRUE(response_or.ok());
   ExecutionResponse actual_response = response_or.value();
@@ -105,7 +108,8 @@ TEST(PerformNighthawkBenchmark, ReturnsErrorIfNighthawkServiceDoesNotSendRespons
         EXPECT_CALL(*mock_reader_writer, WritesDone()).WillOnce(Return(true));
         return mock_reader_writer;
       });
-  absl::StatusOr<ExecutionResponse> response_or = PerformNighthawkBenchmark(
+  NighthawkServiceClientImpl client;
+  absl::StatusOr<ExecutionResponse> response_or = client.PerformNighthawkBenchmark(
       &mock_nighthawk_service_stub, CommandLineOptions(), Envoy::Protobuf::Duration());
   ASSERT_FALSE(response_or.ok());
   EXPECT_EQ(response_or.status().code(), absl::StatusCode::kUnknown);
@@ -122,7 +126,8 @@ TEST(PerformNighthawkBenchmark, ReturnsErrorIfNighthawkServiceWriteFails) {
         EXPECT_CALL(*mock_reader_writer, Write(_, _)).WillOnce(Return(false));
         return mock_reader_writer;
       });
-  absl::StatusOr<ExecutionResponse> response_or = PerformNighthawkBenchmark(
+  NighthawkServiceClientImpl client;
+  absl::StatusOr<ExecutionResponse> response_or = client.PerformNighthawkBenchmark(
       &mock_nighthawk_service_stub, CommandLineOptions(), Envoy::Protobuf::Duration());
   ASSERT_FALSE(response_or.ok());
   EXPECT_EQ(response_or.status().code(), absl::StatusCode::kUnknown);
@@ -139,7 +144,8 @@ TEST(PerformNighthawkBenchmark, ReturnsErrorIfNighthawkServiceWritesDoneFails) {
         EXPECT_CALL(*mock_reader_writer, WritesDone()).WillOnce(Return(false));
         return mock_reader_writer;
       });
-  absl::StatusOr<ExecutionResponse> response_or = PerformNighthawkBenchmark(
+  NighthawkServiceClientImpl client;
+  absl::StatusOr<ExecutionResponse> response_or = client.PerformNighthawkBenchmark(
       &mock_nighthawk_service_stub, CommandLineOptions(), Envoy::Protobuf::Duration());
   ASSERT_FALSE(response_or.ok());
   EXPECT_EQ(response_or.status().code(), absl::StatusCode::kUnknown);
@@ -159,7 +165,8 @@ TEST(PerformNighthawkBenchmark, ReturnsErrorIfNighthawkServiceGrpcStreamClosesAb
             .WillOnce(Return(::grpc::Status(::grpc::UNKNOWN, "Finish failure status message")));
         return mock_reader_writer;
       });
-  absl::StatusOr<ExecutionResponse> response_or = PerformNighthawkBenchmark(
+  NighthawkServiceClientImpl client;
+  absl::StatusOr<ExecutionResponse> response_or = client.PerformNighthawkBenchmark(
       &mock_nighthawk_service_stub, CommandLineOptions(), Envoy::Protobuf::Duration());
   ASSERT_FALSE(response_or.ok());
   EXPECT_EQ(response_or.status().code(), absl::StatusCode::kUnknown);

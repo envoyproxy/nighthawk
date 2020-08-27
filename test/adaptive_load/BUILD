@@ -45,7 +45,7 @@ envoy_cc_test(
     srcs = ["nighthawk_service_client_test.cc"],
     repository = "@envoy",
     deps = [
-        "//source/adaptive_load:nighthawk_service_client",
+        "//source/adaptive_load:nighthawk_service_client_impl",
         "@com_github_grpc_grpc//:grpc++_test",
     ],
 )

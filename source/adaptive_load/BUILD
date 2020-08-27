@@ -62,18 +62,19 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
-    name = "nighthawk_service_client",
+    name = "nighthawk_service_client_impl",
     srcs = [
-        "nighthawk_service_client.cc",
+        "nighthawk_service_client_impl.cc",
     ],
     hdrs = [
-        "nighthawk_service_client.h",
+        "nighthawk_service_client_impl.h",
     ],
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
         "//api/client:base_cc_proto",
         "//api/client:grpc_service_lib",
+        "//include/nighthawk/adaptive_load:nighthawk_service_client",
         "@envoy//source/common/common:assert_lib_with_external_headers",
         "@envoy//source/common/common:statusor_lib_with_external_headers",
         "@envoy//source/common/protobuf:protobuf_with_external_headers",

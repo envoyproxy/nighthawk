@@ -1,10 +1,11 @@
-#include "adaptive_load/nighthawk_service_client.h"
+#include "adaptive_load/nighthawk_service_client_impl.h"
 
 #include "external/envoy/source/common/common/assert.h"
 
 namespace Nighthawk {
 
-absl::StatusOr<nighthawk::client::ExecutionResponse> PerformNighthawkBenchmark(
+absl::StatusOr<nighthawk::client::ExecutionResponse>
+NighthawkServiceClientImpl::PerformNighthawkBenchmark(
     nighthawk::client::NighthawkService::StubInterface* nighthawk_service_stub,
     const nighthawk::client::CommandLineOptions& command_line_options,
     const Envoy::Protobuf::Duration& duration) {

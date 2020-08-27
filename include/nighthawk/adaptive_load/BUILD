@@ -67,6 +67,22 @@ envoy_basic_cc_library(
 )
 
 envoy_basic_cc_library(
+    name = "nighthawk_service_client",
+    hdrs = [
+        "nighthawk_service_client.h",
+    ],
+    include_prefix = "nighthawk/adaptive_load",
+    deps = [
+        # "@envoy//include/envoy/common:base_includes",
+        # "//api/client:base_cc_proto",
+        # "//api/client:grpc_service_lib",
+        # "@envoy//source/common/common:assert_lib_with_external_headers",
+        # "@envoy//source/common/common:statusor_lib_with_external_headers",
+        # "@envoy//source/common/protobuf:protobuf_with_external_headers",
+    ],
+)
+
+envoy_basic_cc_library(
     name = "scoring_function",
     hdrs = [
         "scoring_function.h",
