@@ -31,8 +31,6 @@ namespace Client {
 
 using namespace std::chrono_literals;
 
-using namespace Envoy; // We need this because of macro expectations.
-
 #define ALL_BENCHMARK_CLIENT_COUNTERS(COUNTER)                                                     \
   COUNTER(stream_resets)                                                                           \
   COUNTER(http_1xx)                                                                                \
