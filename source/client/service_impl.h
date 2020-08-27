@@ -17,7 +17,7 @@
 #include "external/envoy/source/common/common/thread.h"
 #include "external/envoy/source/common/event/real_time_system.h"
 #include "external/envoy/source/exe/process_wide.h"
-
+#include "external/envoy/source/server/options_impl.h"
 #include "nighthawk/client/process.h"
 #include "nighthawk/common/request_source.h"
 
