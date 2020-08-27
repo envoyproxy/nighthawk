@@ -9,6 +9,9 @@
 
 namespace Nighthawk {
 
+/**
+ * An interface for interacting with a Nighthawk Service gRPC stub.
+ */
 class NighthawkServiceClient {
 public:
   virtual ~NighthawkServiceClient() = default;
