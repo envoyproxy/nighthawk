@@ -32,8 +32,17 @@ function do_clang_tidy() {
     ci/run_clang_tidy.sh
 }
 
-function do_coverage() {
+function do_unit_test_coverage() {
     export TEST_TARGETS="//test/... -//test:python_test"
+    export COVERAGE_THRESHOLD=92.3
+    echo "bazel coverage build with tests ${TEST_TARGETS}"
+    test/run_nighthawk_bazel_coverage.sh ${TEST_TARGETS}
+    exit 0
+}
+
+function do_integration_test_coverage() {
+    export TEST_TARGETS="//test:python_test"
+    export COVERAGE_THRESHOLD=78.2
     echo "bazel coverage build with tests ${TEST_TARGETS}"
     test/run_nighthawk_bazel_coverage.sh ${TEST_TARGETS}
     exit 0
@@ -208,7 +217,12 @@ case "$1" in
     ;;
     coverage)
         setup_clang_toolchain
-        do_coverage
+        do_unit_test_coverage
+        exit 0
+    ;;
+    coverage_integration)
+        setup_clang_toolchain
+        do_integration_test_coverage
         exit 0
     ;;
     asan)
@@ -242,7 +256,7 @@ case "$1" in
         exit 0
     ;;
     *)
-        echo "must be one of [build,test,clang_tidy,coverage,asan,tsan,benchmark_with_own_binaries,docker,check_format,fix_format,test_gcc]"
+        echo "must be one of [build,test,clang_tidy,coverage,coverage_integration,asan,tsan,benchmark_with_own_binaries,docker,check_format,fix_format,test_gcc]"
         exit 1
     ;;
 esac
