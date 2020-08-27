@@ -1,11 +1,7 @@
-#include "external/envoy/source/common/common/statusor.h"
-#include "external/envoy/source/common/config/utility.h"
 #include "external/envoy/source/common/protobuf/protobuf.h"
 
 #include "api/client/options.pb.h"
-#include "api/client/output.pb.h"
 #include "api/client/service.grpc.pb.h"
-#include "api/client/service.pb.h"
 #include "api/client/service_mock.grpc.pb.h"
 
 #include "grpcpp/test/mock_stream.h"
@@ -45,8 +41,6 @@ TEST(PerformNighthawkBenchmark, UsesSpecifiedDuration) {
         EXPECT_CALL(*mock_reader_writer, WritesDone()).WillRepeatedly(Return(true));
         EXPECT_CALL(*mock_reader_writer, Finish()).WillRepeatedly(Return(::grpc::Status::OK));
         return mock_reader_writer;
-
-        return mock_reader_writer;
       });
   Envoy::Protobuf::Duration duration;
   duration.set_seconds(kExpectedSeconds);
@@ -75,16 +69,14 @@ TEST(PerformNighthawkBenchmark, UsesSpecifiedCommandLineOptions) {
       });
   CommandLineOptions command_line_options;
   command_line_options.mutable_requests_per_second()->set_value(kExpectedRps);
-  Envoy::Protobuf::Duration duration;
-  absl::StatusOr<ExecutionResponse> response_or =
-      PerformNighthawkBenchmark(&mock_nighthawk_service_stub, command_line_options, duration);
+  absl::StatusOr<ExecutionResponse> response_or = PerformNighthawkBenchmark(
+      &mock_nighthawk_service_stub, command_line_options, Envoy::Protobuf::Duration());
   EXPECT_TRUE(response_or.ok());
   EXPECT_EQ(request.start_request().options().requests_per_second().value(), kExpectedRps);
 }
 
 TEST(PerformNighthawkBenchmark, ReturnsNighthawkResponseSuccessfully) {
   ExecutionResponse expected_response;
-
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
       .WillRepeatedly([&expected_response](grpc_impl::ClientContext*) {

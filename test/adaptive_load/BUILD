@@ -47,7 +47,6 @@ envoy_cc_test(
     deps = [
         "//source/adaptive_load:nighthawk_service_client",
         "@com_github_grpc_grpc//:grpc++_test",
-        "@envoy//source/common/config:utility_lib_with_external_headers",
     ],
 )
 
