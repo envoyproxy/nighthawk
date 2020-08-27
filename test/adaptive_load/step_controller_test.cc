@@ -29,12 +29,6 @@ nighthawk::adaptive_load::BenchmarkResult MakeBenchmarkResultWithScore(double sc
   return result;
 }
 
-nighthawk::adaptive_load::BenchmarkResult MakeBenchmarkResultWithNighthawkError() {
-  nighthawk::adaptive_load::BenchmarkResult result;
-  result.mutable_status()->set_code(1);
-  return result;
-}
-
 TEST(ExponentialSearchStepControllerConfigFactory, GeneratesEmptyConfigProto) {
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<StepControllerConfigFactory>(
@@ -173,16 +167,6 @@ TEST(ExponentialSearchStepController, ReportsDoomIfOutsideThresholdsOnInitialVal
   std::string doom_reason;
   EXPECT_TRUE(step_controller.IsDoomed(doom_reason));
   EXPECT_THAT(doom_reason, HasSubstr("already exceed metric thresholds with the initial load"));
-}
-
-TEST(ExponentialSearchStepController, ReportsDoomAfterNighthawkServiceError) {
-  nighthawk::adaptive_load::ExponentialSearchStepControllerConfig config;
-  nighthawk::client::CommandLineOptions options_template;
-  ExponentialSearchStepController step_controller(config, options_template);
-  step_controller.UpdateAndRecompute(MakeBenchmarkResultWithNighthawkError());
-  std::string doom_reason;
-  EXPECT_TRUE(step_controller.IsDoomed(doom_reason));
-  EXPECT_EQ(doom_reason, "Nighthawk Service returned an error.");
 }
 
 TEST(ExponentialSearchStepController,

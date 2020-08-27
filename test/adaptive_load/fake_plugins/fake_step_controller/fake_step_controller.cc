@@ -44,9 +44,12 @@ FakeStepController::GetCurrentCommandLineOptions() const {
 
 void FakeStepController::UpdateAndRecompute(
     const nighthawk::adaptive_load::BenchmarkResult& benchmark_result) {
+<<<<<<< HEAD
   if (input_setting_failure_countdown_ > 0) {
     --input_setting_failure_countdown_;
   }
+=======
+>>>>>>> master2
   // "Convergence" is defined as the latest benchmark reporting any score > 0.0.
   // "Doom" is defined as any score < 0.0. Neutral is all scores equal to 0.0.
   is_converged_ = false;
