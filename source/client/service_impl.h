@@ -42,8 +42,7 @@ public:
           options->logLevel(), options->logFormat(), log_lock_, false);
     } else {
       logging_context_ = std::make_unique<Envoy::Logger::Context>(
-          spdlog::level::from_str("info"), "[%T.%f][%t][%L] %v", log_lock_,
-          false);
+          spdlog::level::from_str("info"), "[%T.%f][%t][%L] %v", log_lock_, false);
     }
   }
   ::grpc::Status ExecutionStream(
