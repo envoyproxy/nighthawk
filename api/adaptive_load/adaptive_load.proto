@@ -39,7 +39,7 @@ message AdaptiveLoadSessionSpec {
   // If |open_loop| is unset, it will be overridden to true by the adaptive load controller. This is
   // to support the typical case where the controller needs full control over attempted requests per
   // second, which could conflict with the backpressure mechanism of closed-loop mode. Note that in
-  // standalone Nighthawk clients, closed-loop mode is the default so |open_loop| defaults to false.
+  // standalone Nighthawk clients, closed-loop mode is the default.
   //
   // The controller will override at least one field in this proto to vary the load, such as the
   // requests_per_second field or headers. Any existing value for such a field in the template will
