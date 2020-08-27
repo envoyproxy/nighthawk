@@ -28,7 +28,8 @@ absl::StatusOr<nighthawk::client::ExecutionResponse> PerformNighthawkBenchmark(
 
   bool got_response = false;
   while (stream->Read(&response)) {
-    RELEASE_ASSERT(!got_response, "gRPC server has started sending more than one message.");
+    RELEASE_ASSERT(!got_response,
+                   "Nighthawk Service has started responding with more than one message.");
     got_response = true;
   }
   if (!got_response) {

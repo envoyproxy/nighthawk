@@ -125,7 +125,7 @@ TEST(PerformNighthawkBenchmark, ReturnsErrorIfNighthawkServiceDoesNotSendRespons
               HasSubstr("Nighthawk Service did not send a gRPC response."));
 }
 
-TEST(NighthawkServiceClient, ReturnsErrorIfNighthawkServiceWriteFails) {
+TEST(PerformNighthawkBenchmark, ReturnsErrorIfNighthawkServiceWriteFails) {
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
       .WillRepeatedly([](grpc_impl::ClientContext*) {
@@ -141,7 +141,7 @@ TEST(NighthawkServiceClient, ReturnsErrorIfNighthawkServiceWriteFails) {
   EXPECT_THAT(response_or.status().message(), HasSubstr("Failed to write"));
 }
 
-TEST(NighthawkServiceClient, ReturnsErrorIfNighthawkServiceWritesDoneFails) {
+TEST(PerformNighthawkBenchmark, ReturnsErrorIfNighthawkServiceWritesDoneFails) {
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
       .WillRepeatedly([](grpc_impl::ClientContext*) {
@@ -158,7 +158,7 @@ TEST(NighthawkServiceClient, ReturnsErrorIfNighthawkServiceWritesDoneFails) {
   EXPECT_THAT(response_or.status().message(), HasSubstr("WritesDone() failed"));
 }
 
-TEST(NighthawkServiceClient, ReturnsErrorIfNighthawkServiceGrpcStreamClosesAbnormally) {
+TEST(PerformNighthawkBenchmark, ReturnsErrorIfNighthawkServiceGrpcStreamClosesAbnormally) {
   nighthawk::client::MockNighthawkServiceStub mock_nighthawk_service_stub;
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
       .WillRepeatedly([](grpc_impl::ClientContext*) {
