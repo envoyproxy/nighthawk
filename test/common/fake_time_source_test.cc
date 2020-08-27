@@ -1,4 +1,4 @@
-#include "test/adaptive_load/fake_time_source.h"
+#include "test/common/fake_time_source.h"
 
 #include "gtest/gtest.h"
 

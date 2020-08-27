@@ -1,0 +1,30 @@
+load(
+    "@envoy//bazel:envoy_build_system.bzl",
+    "envoy_cc_test",
+    "envoy_cc_test_library",
+    "envoy_package",
+)
+
+licenses(["notice"])  # Apache 2
+
+envoy_package()
+
+envoy_cc_test_library(
+    name = "fake_time_source",
+    srcs = ["fake_time_source.cc"],
+    hdrs = ["fake_time_source.h"],
+    repository = "@envoy",
+    deps = [
+        "//source/client:nighthawk_client_lib",
+        "@com_google_absl//absl/time",
+    ],
+)
+
+envoy_cc_test(
+    name = "fake_time_source_test",
+    srcs = ["fake_time_source_test.cc"],
+    repository = "@envoy",
+    deps = [
+        ":fake_time_source",
+    ],
+)
