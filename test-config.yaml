@@ -1,6 +1,0 @@
-config:
-response_body_size: 10
-response_headers:
-  - { header: { key: "foo", value: "bar" } }
-  - { header: { key: "foo", value: "bar2" }, append: true, }
-  - { header: { key: "x-nh", value: "1" } }

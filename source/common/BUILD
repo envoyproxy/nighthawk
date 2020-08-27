@@ -71,10 +71,12 @@ envoy_cc_library(
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
+        "//source/common:nighthawk_common_lib",
         "//include/nighthawk/common:request_source_plugin_lib",
+        "@envoy//source/common/protobuf:message_validator_lib",
         ":request_impl_lib",
         ":request_source_impl_lib",
-        "@envoy//source/common/config:utility_lib_with_external_headers",
+        "@envoy//source/common/protobuf:utility_lib_with_external_headers",
         "@envoy//source/common/protobuf:protobuf_with_external_headers",
     ],
 )

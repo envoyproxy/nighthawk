@@ -4,6 +4,7 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "test/test_common/environment.h"
 
 namespace Nighthawk {
 
@@ -73,7 +74,7 @@ TEST(FileBasedPluginRequestSourceConfigFactory, CreateRequestSourcePluginCreates
   EXPECT_NE(dynamic_cast<FileBasedRequestSourcePlugin*>(plugin.get()), nullptr);
 }
 TEST(FileBasedPluginRequestSourceConfigFactory, CreateRequestSourcePluginGetsWorkingRequestGenerator) {
-  nighthawk::request_source::FileBasedPluginRequestSourceConfig config = MakeFileBasedPluginConfigWithTestYaml("test-config.yaml");
+  nighthawk::request_source::FileBasedPluginRequestSourceConfig config = MakeFileBasedPluginConfigWithTestYaml(TestEnvironment::runfilesPath("test/request_source/test_data/test-config.yaml"));
   FileBasedRequestSourcePlugin file_based_request_source(config);
   // auto generator = file_based_request_source.get();
   // auto request = generator();
