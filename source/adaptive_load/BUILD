@@ -72,14 +72,10 @@ envoy_cc_library(
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
-        "//api/adaptive_load:adaptive_load_proto_cc_proto",
         "//api/client:base_cc_proto",
         "//api/client:grpc_service_lib",
         "@envoy//source/common/common:assert_lib_with_external_headers",
-        "@envoy//source/common/common:minimal_logger_lib_with_external_headers",
         "@envoy//source/common/common:statusor_lib_with_external_headers",
-        "@envoy//source/common/config:utility_lib_with_external_headers",
-        "@envoy//source/common/event:real_time_system_lib_with_external_headers",
         "@envoy//source/common/protobuf:protobuf_with_external_headers",
     ],
 )
