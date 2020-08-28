@@ -40,13 +40,6 @@ FakeStepController::GetCurrentCommandLineOptions() const {
 
 void FakeStepController::UpdateAndRecompute(
     const nighthawk::adaptive_load::BenchmarkResult& benchmark_result) {
-  if (benchmark_result.status().code() == ::grpc::OK) {
-    is_doomed_ = false;
-    doomed_reason_ = "";
-  } else {
-    is_doomed_ = true;
-    doomed_reason_ = benchmark_result.status().message();
-  }
   // "Convergence" is defined as the latest benchmark reporting any score > 0.0.
   is_converged_ = false;
   for (const nighthawk::adaptive_load::MetricEvaluation& metric_evaluation :
