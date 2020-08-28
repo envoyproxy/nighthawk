@@ -46,8 +46,8 @@ TEST_F(FakeTimeStopwatchTest, ThreadedStopwatchSpamming) {
 
   // The first call should always return 0.
   EXPECT_EQ(stopwatch.getElapsedNsAndReset(time_system), 0);
-  for (uint32_t i = 0; i < threads.size(); i++) {
-    threads[i] = std::thread([&stopwatch, &time_system, kFakeTimeSourceDefaultTick, future] {
+  for (auto& thread : threads) {
+    thread = std::thread([&stopwatch, &time_system, kFakeTimeSourceDefaultTick, future] {
       // We wait for all threads to be up and running here to maximize concurrency
       // of the call below.
       future.wait();
