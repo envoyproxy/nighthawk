@@ -242,7 +242,7 @@ TEST(MakeFakeStepControllerPluginConfigWithValidationError,
 TEST(MakeFakeStepControllerPluginConfigWithInputSettingError,
      ProducesFakeStepControllerPluginWithConfiguredErrorAndCountdown) {
   const int kExpectedRpsValue = 123;
-  std::string kInputSettingErrorMessage = "artificial input setting error";
+  const std::string kInputSettingErrorMessage = "artificial input setting error";
   absl::StatusOr<StepControllerPtr> plugin_or = LoadStepControllerPlugin(
       MakeFakeStepControllerPluginConfigWithInputSettingError(
           kExpectedRpsValue, absl::DeadlineExceededError(kInputSettingErrorMessage),
