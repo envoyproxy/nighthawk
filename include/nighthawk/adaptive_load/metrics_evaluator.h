@@ -11,7 +11,7 @@
 #include "api/adaptive_load/metric_spec.pb.h"
 #include "api/client/options.pb.h"
 #include "api/client/output.pb.h"
-#include "api/client/service.grpc.pb.h"
+#include "api/client/service.pb.h"
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"

@@ -60,7 +60,7 @@ MetricsEvaluatorImpl::AnalyzeNighthawkBenchmark(
     const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec,
     const absl::flat_hash_map<std::string, MetricsPluginPtr>& name_to_custom_metrics_plugin_map)
     const {
-  if (nighthawk_response.error_detail().code() != ::grpc::OK) {
+  if (nighthawk_response.error_detail().code() != static_cast<int>(absl::StatusCode::kOk)) {
     return absl::Status(static_cast<absl::StatusCode>(nighthawk_response.error_detail().code()),
                         nighthawk_response.error_detail().message());
   }
