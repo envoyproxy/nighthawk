@@ -1,5 +1,8 @@
 #include "adaptive_load/metrics_evaluator_impl.h"
 
+#include "adaptive_load/metrics_plugin_impl.h"
+#include "adaptive_load/plugin_loader.h"
+
 namespace Nighthawk {
 
 absl::StatusOr<nighthawk::adaptive_load::MetricEvaluation> MetricsEvaluatorImpl::EvaluateMetric(
