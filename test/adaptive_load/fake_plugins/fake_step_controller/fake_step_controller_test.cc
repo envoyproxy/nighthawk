@@ -179,7 +179,6 @@ TEST(FakeStepController, IsConvergedReturnsTrueAfterPositiveBenchmarkResultScore
   EXPECT_TRUE(step_controller.IsConverged());
 }
 
-<<<<<<< HEAD
 TEST(FakeStepController, IsDoomedReturnsFalseAfterNeutralBenchmarkResult) {
   FakeStepController step_controller(FakeStepControllerConfig{}, CommandLineOptions{});
   BenchmarkResult benchmark_result;
@@ -209,8 +208,6 @@ TEST(FakeStepController, IsDoomedReturnsTrueAndSetsDoomedReasonAfterNegativeBenc
   EXPECT_EQ(doomed_reason, "artificial doom triggered by negative score");
 }
 
-=======
->>>>>>> master2
 TEST(MakeFakeStepControllerPluginConfig, ActivatesFakeStepControllerPlugin) {
   absl::StatusOr<StepControllerPtr> plugin_or = LoadStepControllerPlugin(
       MakeFakeStepControllerPluginConfig(0), nighthawk::client::CommandLineOptions{});
