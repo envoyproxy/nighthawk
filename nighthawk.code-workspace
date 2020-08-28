@@ -5,13 +5,6 @@
 		}
 	],
 	"settings": {
-		"files.associations": {
-			"array": "cpp",
-			"*.tcc": "cpp",
-			"istream": "cpp",
-			"tuple": "cpp",
-			"utility": "cpp",
-			"variant": "cpp"
-		}
+		"settings": {}
 	}
 }
