@@ -132,38 +132,6 @@ TEST(FakeStepController, IsConvergedReturnsTrueAfterBenchmarkResultWithPositiveS
   EXPECT_TRUE(step_controller.IsConverged());
 }
 
-TEST(FakeStepController, IsDoomedReturnsFalseAfterSuccessfulBenchmarkResult) {
-  FakeStepController step_controller(FakeStepControllerConfig{}, CommandLineOptions{});
-  BenchmarkResult benchmark_result;
-  benchmark_result.mutable_status()->set_code(::grpc::OK);
-  step_controller.UpdateAndRecompute(benchmark_result);
-  std::string doomed_reason;
-  EXPECT_FALSE(step_controller.IsDoomed(doomed_reason));
-}
-
-TEST(FakeStepController,
-     IsDoomedReturnsFalseAndLeavesDoomedReasonUntouchedAfterSuccessfulBenchmarkResult) {
-  FakeStepController step_controller(FakeStepControllerConfig{}, CommandLineOptions{});
-  BenchmarkResult benchmark_result;
-  benchmark_result.mutable_status()->set_code(::grpc::OK);
-  step_controller.UpdateAndRecompute(benchmark_result);
-  std::string variable_that_should_not_be_written = "original value";
-  EXPECT_FALSE(step_controller.IsDoomed(variable_that_should_not_be_written));
-  EXPECT_EQ(variable_that_should_not_be_written, "original value");
-}
-
-TEST(FakeStepController, IsDoomedReturnsTrueAndSetsDoomedReasonAfterFailedBenchmarkResult) {
-  const std::string kErrorMessage = "error from nighthawk";
-  FakeStepController step_controller(FakeStepControllerConfig{}, CommandLineOptions{});
-  BenchmarkResult benchmark_result;
-  benchmark_result.mutable_status()->set_code(::grpc::INTERNAL);
-  benchmark_result.mutable_status()->set_message(kErrorMessage);
-  step_controller.UpdateAndRecompute(benchmark_result);
-  std::string doomed_reason;
-  EXPECT_TRUE(step_controller.IsDoomed(doomed_reason));
-  EXPECT_EQ(doomed_reason, kErrorMessage);
-}
-
 TEST(MakeFakeStepControllerPluginConfig, ActivatesFakeStepControllerPlugin) {
   absl::StatusOr<StepControllerPtr> plugin_or = LoadStepControllerPlugin(
       MakeFakeStepControllerPluginConfig(0), nighthawk::client::CommandLineOptions{});

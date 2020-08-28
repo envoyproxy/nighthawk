@@ -30,9 +30,6 @@ message BenchmarkResult {
   // Raw Nighthawk Service output. Includes start/end times and full Nighthawk
   // Service input spec.
   nighthawk.client.Output nighthawk_service_output = 1;
-  // Execution status of this call to the Nighthawk Service. This will record errors connecting to
-  // the Nighthawk Service and internal errors returned from the Nighthawk Service.
-  google.rpc.Status status = 2;
   // Status of all declared metrics during this benchmark session. Not present
   // in the event of Nighthawk Service errors.
   repeated MetricEvaluation metric_evaluations = 3;
