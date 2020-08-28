@@ -5,6 +5,9 @@
 
 namespace Nighthawk {
 
+/**
+ * Interface for measuring elapsed time between events.
+ */
 class Stopwatch {
 public:
   virtual ~Stopwatch() = default;
