@@ -5,12 +5,25 @@ package nighthawk.adaptive_load;
 import "envoy/config/core/v3/extension.proto";
 import "google/rpc/status.proto";
 
-// Configuration for FakeStepController (plugin name: "nighthawk.fake_step_controller") that always
-// returns a fixed RPS value and changes converged and doomed states based on the latest reported
-// BenchmarkResult.
+// Configuration for FakeStepController (plugin name: "nighthawk.fake_step_controller") that returns
+// a fixed RPS value and changes converged and doomed states based on the latest reported
+// BenchmarkResult. Can also be programmed to return a proto validation failure, return an error
+// from input value setting every time, or return an error after some number of UpdateAndRecompute()
+// iterations.
 message FakeStepControllerConfig {
-  // RPS that should always be returned. Optional, default 0.
+  // RPS that should always be returned, except when artificial errors are configured. Optional,
+  // default 0.
   int32 fixed_rps_value = 1;
   // Artificial error that the plugin factory should return during validation. Optional.
   google.rpc.Status artificial_validation_failure = 2;
+  // Artificial error that should be returned from GetCurrentCommandLineOptions(). Optional. May be
+  // used in conjunction with |artificial_input_setting_failure_countdown| to activate error
+  // behavior after a delay.
+  google.rpc.Status artificial_input_setting_failure = 3;
+  // Relevant only when |artificial_input_setting_failure| is set. Number of calls to
+  // UpdateAndRecompute() the controller must receive before it starts to return
+  // |artificial_input_setting_failure|. Before this total is reached, |fixed_rps_value| is
+  // returned. Optional, default 0, meaning the failure is returned regardless of calls to
+  // UpdateAndRecompute().
+  int32 artificial_input_setting_failure_countdown = 4;
 }
