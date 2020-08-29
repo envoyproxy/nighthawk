@@ -8,7 +8,15 @@
 namespace Nighthawk {
 
 /**
- *  Utility class for thread safe tracking of elapsed monotonic time.
+ * Utility class for thread safe tracking of elapsed monotonic time.
+ * Example usage:
+ *
+ * ThreadSafeMontonicTimeStopwatch stopwatch;
+ * int i = 0;
+ * do {
+ *   std::cerr << stopwatch.getElapsedNsAndReset() <<
+ *    "ns elapsed since last iteration." << std::endl;
+ * } while (++i < 100);
  */
 class ThreadSafeMontonicTimeStopwatch : public Stopwatch {
 public:

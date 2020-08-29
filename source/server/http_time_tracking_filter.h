@@ -15,7 +15,7 @@ namespace Nighthawk {
 namespace Server {
 
 /**
- * Filter configuration container class for the test server extension.
+ * Filter configuration container class for the time tracking extension.
  * Instances of this class will be shared accross instances of HttpTimeTrackingFilter.
  */
 class HttpTimeTrackingFilterConfig {
@@ -56,9 +56,17 @@ private:
 
 using HttpTimeTrackingFilterConfigSharedPtr = std::shared_ptr<HttpTimeTrackingFilterConfig>;
 
+/**
+ * Extension that tracks elapsed time between inbound requests.
+ */
 class HttpTimeTrackingFilter : public Envoy::Http::PassThroughFilter {
 public:
-  HttpTimeTrackingFilter(HttpTimeTrackingFilterConfigSharedPtr);
+  /**
+   * Construct a new Http Time Tracking Filter object.
+   *
+   * @param config Configuration of the extension.
+   */
+  HttpTimeTrackingFilter(HttpTimeTrackingFilterConfigSharedPtr config);
 
   // Http::StreamDecoderFilter
   Envoy::Http::FilterHeadersStatus decodeHeaders(Envoy::Http::RequestHeaderMap& headers,
