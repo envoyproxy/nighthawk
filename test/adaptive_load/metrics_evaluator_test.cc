@@ -1,38 +1,14 @@
-#include "envoy/config/core/v3/base.pb.h"
-#include "envoy/registry/registry.h"
-
-#include "adaptive_load/metrics_evaluator_impl.h"
-
-// #include "nighthawk/adaptive_load/adaptive_load_controller.h"
-// #include "nighthawk/adaptive_load/input_variable_setter.h"
-#include "nighthawk/adaptive_load/metrics_plugin.h"
-#include "nighthawk/adaptive_load/scoring_function.h"
-// #include "nighthawk/adaptive_load/step_controller.h"
-
-#include "external/envoy/source/common/common/statusor.h"
-#include "external/envoy/source/common/config/utility.h"
 #include "external/envoy/source/common/protobuf/protobuf.h"
 
-#include "api/adaptive_load/adaptive_load.pb.h"
 #include "api/adaptive_load/benchmark_result.pb.h"
-// #include "api/adaptive_load/input_variable_setter_impl.pb.h"
 #include "api/adaptive_load/metric_spec.pb.h"
-#include "api/adaptive_load/metrics_plugin_impl.pb.h"
 #include "api/adaptive_load/scoring_function_impl.pb.h"
-// #include "api/adaptive_load/step_controller_impl.pb.h"
-#include "api/client/options.pb.h"
-#include "api/client/output.pb.h"
-#include "api/client/service.grpc.pb.h"
 #include "api/client/service.pb.h"
 
 #include "test/adaptive_load/fake_plugins/fake_metrics_plugin/fake_metrics_plugin.h"
 #include "test/adaptive_load/minimal_output.h"
 
-#include "absl/container/flat_hash_map.h"
-#include "absl/status/status.h"
-#include "absl/strings/str_join.h"
-#include "adaptive_load/metrics_plugin_impl.h"
-#include "adaptive_load/plugin_loader.h"
+#include "adaptive_load/metrics_evaluator_impl.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -204,7 +180,7 @@ TEST(EvaluateMetric, SetsWeightForScoredMetric) {
   EXPECT_EQ(evaluation_or.value().weight(), kExpectedWeight);
 }
 
-TEST(EvaluateMetric, SetScoreForMetric) {
+TEST(EvaluateMetric, SetsScoreForMetric) {
   const std::string kMetricName = "good-metric";
   const double kExpectedValue = 123.0;
   const double kLowerThreshold = 200.0;
@@ -240,13 +216,14 @@ TEST(ExtractMetricSpecs, ExtractsScoredMetricAndThreshold) {
   threshold_spec.mutable_weight()->set_value(123.0);
   *metric_threshold->mutable_threshold_spec() = threshold_spec;
 
-  std::vector<const nighthawk::adaptive_load::MetricSpec*> metric_specs;
+  MetricsEvaluatorImpl evaluator;
+  auto spec_list_map = evaluator.ExtractMetricSpecs(spec);
+
+  std::vector<const nighthawk::adaptive_load::MetricSpec*> metric_specs = spec_list_map.first;
   absl::flat_hash_map<const nighthawk::adaptive_load::MetricSpec*,
                       const nighthawk::adaptive_load::ThresholdSpec*>
-      threshold_spec_from_metric_spec;
+      threshold_spec_from_metric_spec = spec_list_map.second;
 
-  MetricsEvaluatorImpl evaluator;
-  evaluator.ExtractMetricSpecs(spec, metric_specs, threshold_spec_from_metric_spec);
   ASSERT_GT(metric_specs.size(), 0);
   EXPECT_EQ(metric_specs[0]->metric_name(), kExpectedMetricName);
   ASSERT_NE(threshold_spec_from_metric_spec[metric_specs[0]], nullptr);
@@ -263,13 +240,14 @@ TEST(ExtractMetricSpecs, ExtractsInformationalMetric) {
       spec.mutable_informational_metric_specs()->Add();
   metric_spec->set_metric_name(kExpectedMetricName);
 
-  std::vector<const nighthawk::adaptive_load::MetricSpec*> metric_specs;
+  MetricsEvaluatorImpl evaluator;
+  auto spec_list_map = evaluator.ExtractMetricSpecs(spec);
+
+  std::vector<const nighthawk::adaptive_load::MetricSpec*> metric_specs = spec_list_map.first;
   absl::flat_hash_map<const nighthawk::adaptive_load::MetricSpec*,
                       const nighthawk::adaptive_load::ThresholdSpec*>
-      threshold_spec_from_metric_spec;
+      threshold_spec_from_metric_spec = spec_list_map.second;
 
-  MetricsEvaluatorImpl evaluator;
-  evaluator.ExtractMetricSpecs(spec, metric_specs, threshold_spec_from_metric_spec);
   ASSERT_GT(metric_specs.size(), 0);
   EXPECT_EQ(metric_specs[0]->metric_name(), kExpectedMetricName);
   EXPECT_EQ(threshold_spec_from_metric_spec[metric_specs[0]], nullptr);
@@ -279,7 +257,8 @@ TEST(AnalyzeNighthawkBenchmark, PropagatesNighthawkServiceError) {
   const std::string kExpectedErrorMessage = "artificial nighthawk service error";
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
   nighthawk::client::ExecutionResponse bad_nighthawk_response;
-  bad_nighthawk_response.mutable_error_detail()->set_code(::grpc::UNAVAILABLE);
+  bad_nighthawk_response.mutable_error_detail()->set_code(
+      static_cast<int>(absl::StatusCode::kUnavailable));
   bad_nighthawk_response.mutable_error_detail()->set_message(kExpectedErrorMessage);
   absl::flat_hash_map<std::string, MetricsPluginPtr> name_to_custom_metrics_plugin_map;
 

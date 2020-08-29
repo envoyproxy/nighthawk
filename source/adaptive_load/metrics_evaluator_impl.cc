@@ -1,13 +1,22 @@
 #include "adaptive_load/metrics_evaluator_impl.h"
 
+#include <utility>
+
 #include "adaptive_load/metrics_plugin_impl.h"
 #include "adaptive_load/plugin_loader.h"
 
 namespace Nighthawk {
 
-absl::StatusOr<nighthawk::adaptive_load::MetricEvaluation> MetricsEvaluatorImpl::EvaluateMetric(
-    const nighthawk::adaptive_load::MetricSpec& metric_spec, MetricsPlugin& metrics_plugin,
-    const nighthawk::adaptive_load::ThresholdSpec* threshold_spec) const {
+namespace {
+
+using ::nighthawk::adaptive_load::MetricSpec;
+using ::nighthawk::adaptive_load::ThresholdSpec;
+
+} // namespace
+
+absl::StatusOr<nighthawk::adaptive_load::MetricEvaluation>
+MetricsEvaluatorImpl::EvaluateMetric(const MetricSpec& metric_spec, MetricsPlugin& metrics_plugin,
+                                     const ThresholdSpec* threshold_spec) const {
   nighthawk::adaptive_load::MetricEvaluation evaluation;
   evaluation.set_metric_id(
       absl::StrCat(metric_spec.metrics_plugin_name(), "/", metric_spec.metric_name()));
@@ -38,23 +47,22 @@ absl::StatusOr<nighthawk::adaptive_load::MetricEvaluation> MetricsEvaluatorImpl:
   return evaluation;
 }
 
-void MetricsEvaluatorImpl::ExtractMetricSpecs(
-    const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec,
-    std::vector<const nighthawk::adaptive_load::MetricSpec*>& metric_specs,
-    absl::flat_hash_map<const nighthawk::adaptive_load::MetricSpec*,
-                        const nighthawk::adaptive_load::ThresholdSpec*>&
-        threshold_spec_from_metric_spec) const {
-  for (const nighthawk::adaptive_load::MetricSpecWithThreshold& metric_threshold :
-       spec.metric_thresholds()) {
+std::pair<std::vector<const MetricSpec*>,
+          absl::flat_hash_map<const MetricSpec*, const ThresholdSpec*>>
+MetricsEvaluatorImpl::ExtractMetricSpecs(
+    const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec) const {
+  std::vector<const MetricSpec*> metric_specs;
+  absl::flat_hash_map<const MetricSpec*, const ThresholdSpec*> threshold_spec_from_metric_spec;
+  for (const MetricSpecWithThreshold& metric_threshold : spec.metric_thresholds()) {
     metric_specs.push_back(&metric_threshold.metric_spec());
     threshold_spec_from_metric_spec[&metric_threshold.metric_spec()] =
         &metric_threshold.threshold_spec();
   }
-  for (const nighthawk::adaptive_load::MetricSpec& metric_spec :
-       spec.informational_metric_specs()) {
+  for (const MetricSpec& metric_spec : spec.informational_metric_specs()) {
     metric_specs.push_back(&metric_spec);
     threshold_spec_from_metric_spec[&metric_spec] = nullptr;
   }
+  return {metric_specs, threshold_spec_from_metric_spec};
 }
 
 absl::StatusOr<nighthawk::adaptive_load::BenchmarkResult>
@@ -81,16 +89,17 @@ MetricsEvaluatorImpl::AnalyzeNighthawkBenchmark(
       std::make_unique<NighthawkStatsEmulatedMetricsPlugin>(nighthawk_response.output());
   name_to_plugin_map["nighthawk.builtin"] = builtin_plugin.get();
 
+  std::pair<std::vector<const MetricSpec*>,
+            absl::flat_hash_map<const MetricSpec*, const ThresholdSpec*>>
+      metric_spec_list_map = ExtractMetricSpecs(spec);
   // MetricSpecs in original order of definition.
-  std::vector<const nighthawk::adaptive_load::MetricSpec*> metric_specs;
+  std::vector<const MetricSpec*> metric_specs = metric_spec_list_map.first;
   // Pointer to the corresponding ThresholdSpec, or nullptr for informational metrics.
-  absl::flat_hash_map<const nighthawk::adaptive_load::MetricSpec*,
-                      const nighthawk::adaptive_load::ThresholdSpec*>
-      threshold_spec_from_metric_spec;
-  ExtractMetricSpecs(spec, metric_specs, threshold_spec_from_metric_spec);
+  absl::flat_hash_map<const MetricSpec*, const ThresholdSpec*> threshold_spec_from_metric_spec =
+      metric_spec_list_map.second;
 
   std::vector<std::string> errors;
-  for (const nighthawk::adaptive_load::MetricSpec* metric_spec : metric_specs) {
+  for (const MetricSpec* metric_spec : metric_specs) {
     absl::StatusOr<nighthawk::adaptive_load::MetricEvaluation> evaluation_or =
         EvaluateMetric(*metric_spec, *name_to_plugin_map[metric_spec->metrics_plugin_name()],
                        threshold_spec_from_metric_spec[metric_spec]);

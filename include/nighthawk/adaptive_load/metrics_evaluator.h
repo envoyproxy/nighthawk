@@ -51,16 +51,14 @@ public:
    * metrics.
    *
    * @param spec The adaptive load session spec.
-   * @param metric_specs A list to store extracted MetricSpecs in order of definition.
-   * @param threshold_spec_from_metric_spec A map to store each MetricSpec and its threshold if it
-   * had one, or nullptr if it was an informational metric.
+   * @return std::pair: First: List of extracted MetricSpecs in order of definition. Second: Map:
+   * Key: A MetricSpec from the list; Value: Corresponding threshold for a scored metric, nullptr
+   * for an informational metric.
    */
-  virtual void
-  ExtractMetricSpecs(const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec,
-                     std::vector<const nighthawk::adaptive_load::MetricSpec*>& metric_specs,
-                     absl::flat_hash_map<const nighthawk::adaptive_load::MetricSpec*,
-                                         const nighthawk::adaptive_load::ThresholdSpec*>&
-                         threshold_spec_from_metric_spec) const PURE;
+  virtual std::pair<std::vector<const nighthawk::adaptive_load::MetricSpec*>,
+                    absl::flat_hash_map<const nighthawk::adaptive_load::MetricSpec*,
+                                        const nighthawk::adaptive_load::ThresholdSpec*>>
+  ExtractMetricSpecs(const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec) const PURE;
 
   /**
    * Analyzes a Nighthawk Service benchmark against configured MetricThresholds. Queries
