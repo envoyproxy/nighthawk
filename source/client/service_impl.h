@@ -17,7 +17,6 @@
 #include "external/envoy/source/common/common/thread.h"
 #include "external/envoy/source/common/event/real_time_system.h"
 #include "external/envoy/source/exe/process_wide.h"
-#include "external/envoy/source/server/options_impl.h"
 #include "nighthawk/client/process.h"
 #include "nighthawk/common/request_source.h"
 
@@ -35,11 +34,10 @@ public:
   /**
    * Constructs a new ServiceImpl instance
    */
-  ServiceImpl(std::unique_ptr<Envoy::OptionsImpl> options = nullptr)
+  ServiceImpl(std::unique_ptr<Envoy::Logger::Context> logging_context = nullptr)
       : process_wide_(std::make_shared<Envoy::ProcessWide>()) {
-    if (options != nullptr) {
-      logging_context_ = std::make_unique<Envoy::Logger::Context>(
-          options->logLevel(), options->logFormat(), log_lock_, false);
+    if (logging_context != nullptr) {
+      logging_context_ = std::move(logging_context);
     } else {
       logging_context_ = std::make_unique<Envoy::Logger::Context>(
           spdlog::level::from_str("info"), "[%T.%f][%t][%L] %v", log_lock_, false);
