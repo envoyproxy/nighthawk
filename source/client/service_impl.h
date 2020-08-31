@@ -34,15 +34,16 @@ public:
   /**
    * Constructs a new ServiceImpl instance
    */
-  ServiceImpl(std::unique_ptr<Envoy::Logger::Context> logging_context = nullptr)
-      : process_wide_(std::make_shared<Envoy::ProcessWide>()) {
-    if (logging_context != nullptr) {
-      logging_context_ = std::move(logging_context);
-    } else {
-      logging_context_ = std::make_unique<Envoy::Logger::Context>(
-          spdlog::level::from_str("info"), "[%T.%f][%t][%L] %v", log_lock_, false);
-    }
+  ServiceImpl() : process_wide_(std::make_shared<Envoy::ProcessWide>()) {
+    logging_context_ = std::make_unique<Envoy::Logger::Context>(
+        spdlog::level::from_str("info"), "[%T.%f][%t][%L] %v", log_lock_, false);
   }
+
+  ServiceImpl(std::unique_ptr<Envoy::Logger::Context> logging_context)
+      : process_wide_(std::make_shared<Envoy::ProcessWide>()) {
+    logging_context_ = std::move(logging_context);
+  }
+
   ::grpc::Status ExecutionStream(
       ::grpc::ServerContext* context,
       ::grpc::ServerReaderWriter<::nighthawk::client::ExecutionResponse,
