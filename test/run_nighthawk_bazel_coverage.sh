@@ -7,13 +7,13 @@ set +x
 set -u
 
 SRCDIR="${SRCDIR:=${PWD}}"
-VALIDATE_COVERAGE="${VALIDATE_COVERAGE:=true}"
 ENVOY_COVERAGE_DIR="${ENVOY_COVERAGE_DIR:=}"
+COVERAGE_THRESHOLD=${COVERAGE_THRESHOLD:=0}
 
 echo "Starting run_nighthawk_bazel_coverage.sh..."
 echo "    PWD=$(pwd)"
 echo "    SRCDIR=${SRCDIR}"
-echo "    VALIDATE_COVERAGE=${VALIDATE_COVERAGE}"
+echo "    COVERAGE_THRESHOLD=${COVERAGE_THRESHOLD}"
 
 COVERAGE_DIR="${SRCDIR}"/generated/coverage
 rm -rf "${COVERAGE_DIR}"
@@ -31,7 +31,7 @@ else
 fi
 
 BAZEL_BUILD_OPTIONS+=" --config=test-coverage --test_tag_filters=-nocoverage --test_env=ENVOY_IP_TEST_VERSIONS=v4only"
-bazel coverage ${BAZEL_BUILD_OPTIONS} --cache_test_results=no --test_output=all ${COVERAGE_TARGETS}
+bazel coverage ${BAZEL_BUILD_OPTIONS} --cache_test_results=no --test_output=all -- ${COVERAGE_TARGETS}
 COVERAGE_DATA="${COVERAGE_DIR}/coverage.dat"
 
 cp bazel-out/_coverage/_coverage_report.dat "${COVERAGE_DATA}"
@@ -41,9 +41,8 @@ COVERAGE_VALUE=${COVERAGE_VALUE%?}
 
 [[ -z "${ENVOY_COVERAGE_DIR}" ]] || rsync -av "${COVERAGE_DIR}"/ "${ENVOY_COVERAGE_DIR}"
 
-if [ "$VALIDATE_COVERAGE" == "true" ]
+if [ "$COVERAGE_THRESHOLD" != "0" ]
 then
-  COVERAGE_THRESHOLD=98.4
   COVERAGE_FAILED=$(echo "${COVERAGE_VALUE}<${COVERAGE_THRESHOLD}" | bc)
   if test ${COVERAGE_FAILED} -eq 1; then
       echo Code coverage ${COVERAGE_VALUE} is lower than limit of ${COVERAGE_THRESHOLD}
