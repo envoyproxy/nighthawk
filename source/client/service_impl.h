@@ -17,6 +17,7 @@
 #include "external/envoy/source/common/common/thread.h"
 #include "external/envoy/source/common/event/real_time_system.h"
 #include "external/envoy/source/exe/process_wide.h"
+
 #include "nighthawk/client/process.h"
 #include "nighthawk/common/request_source.h"
 
@@ -39,7 +40,7 @@ public:
         spdlog::level::from_str("info"), "[%T.%f][%t][%L] %v", log_lock_, false);
   }
 
-  ServiceImpl(std::unique_ptr<Envoy::Logger::Context> logging_context)
+  ServiceImpl(std::unique_ptr<Envoy::Logger::Context>&& logging_context)
       : process_wide_(std::make_shared<Envoy::ProcessWide>()) {
     logging_context_ = std::move(logging_context);
   }
