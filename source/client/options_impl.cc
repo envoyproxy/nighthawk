@@ -296,8 +296,10 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
 
   TCLAP::ValueArg<std::string> response_header_with_latency_input(
       "", "response-header-with-latency-input",
-      "Response header whose values should be tracked in a latency histogram. The response header "
-      "value is assumed to be in nanoseconds. Default: \"\"",
+      "Set an optional response header name, whose values will be tracked in a latency histogram "
+      "if  set. Can be used in tandem with the test server's "
+      "\"emit_previous_request_delta_in_response_header\" option to get a sense of elapsed time "
+      "between request arrivals. Default: \"\"",
       false, "", "string", cmd);
 
   Utility::parseCommand(cmd, argc, argv);
