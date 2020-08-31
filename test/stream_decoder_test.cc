@@ -66,7 +66,7 @@ TEST_F(StreamDecoderTest, HeaderOnlyTest) {
       *dispatcher_, time_system_, *this, [&is_complete](bool, bool) { is_complete = true; },
       connect_statistic_, latency_statistic_, response_header_size_statistic_,
       response_body_size_statistic_, origin_latency_statistic_, request_headers_, false, 0,
-      random_generator_, http_tracer_);
+      random_generator_, http_tracer_, "");
   decoder->decodeHeaders(std::move(test_header_), true);
   EXPECT_TRUE(is_complete);
   EXPECT_EQ(1, stream_decoder_completion_callbacks_);
@@ -79,7 +79,7 @@ TEST_F(StreamDecoderTest, HeaderWithBodyTest) {
       *dispatcher_, time_system_, *this, [&is_complete](bool, bool) { is_complete = true; },
       connect_statistic_, latency_statistic_, response_header_size_statistic_,
       response_body_size_statistic_, origin_latency_statistic_, request_headers_, false, 0,
-      random_generator_, http_tracer_);
+      random_generator_, http_tracer_, "");
   decoder->decodeHeaders(std::move(test_header_), false);
   EXPECT_FALSE(is_complete);
   Envoy::Buffer::OwnedImpl buf(std::string(1, 'a'));
@@ -96,7 +96,7 @@ TEST_F(StreamDecoderTest, TrailerTest) {
       *dispatcher_, time_system_, *this, [&is_complete](bool, bool) { is_complete = true; },
       connect_statistic_, latency_statistic_, response_header_size_statistic_,
       response_body_size_statistic_, origin_latency_statistic_, request_headers_, false, 0,
-      random_generator_, http_tracer_);
+      random_generator_, http_tracer_, "");
   Envoy::Http::ResponseHeaderMapPtr headers{
       new Envoy::Http::TestResponseHeaderMapImpl{{":status", "200"}}};
   decoder->decodeHeaders(std::move(headers), false);
@@ -110,7 +110,7 @@ TEST_F(StreamDecoderTest, LatencyIsNotMeasured) {
   auto decoder = new StreamDecoder(
       *dispatcher_, time_system_, *this, [](bool, bool) {}, connect_statistic_, latency_statistic_,
       response_header_size_statistic_, response_body_size_statistic_, origin_latency_statistic_,
-      request_headers_, false, 0, random_generator_, http_tracer_);
+      request_headers_, false, 0, random_generator_, http_tracer_, "");
   Envoy::Http::MockRequestEncoder stream_encoder;
   EXPECT_CALL(stream_encoder, getStream());
   Envoy::Upstream::HostDescriptionConstSharedPtr ptr;
@@ -146,7 +146,7 @@ TEST_F(StreamDecoderTest, LatencyIsMeasured) {
   auto decoder = new StreamDecoder(
       *dispatcher_, time_system_, *this, [](bool, bool) {}, connect_statistic_, latency_statistic_,
       response_header_size_statistic_, response_body_size_statistic_, origin_latency_statistic_,
-      request_header, true, 0, random_generator_, http_tracer_);
+      request_header, true, 0, random_generator_, http_tracer_, "");
 
   Envoy::Http::MockRequestEncoder stream_encoder;
   EXPECT_CALL(stream_encoder, getStream());
@@ -169,7 +169,7 @@ TEST_F(StreamDecoderTest, StreamResetTest) {
       *dispatcher_, time_system_, *this, [&is_complete](bool, bool) { is_complete = true; },
       connect_statistic_, latency_statistic_, response_header_size_statistic_,
       response_body_size_statistic_, origin_latency_statistic_, request_headers_, false, 0,
-      random_generator_, http_tracer_);
+      random_generator_, http_tracer_, "");
   decoder->decodeHeaders(std::move(test_header_), false);
   decoder->onResetStream(Envoy::Http::StreamResetReason::LocalReset, "fooreason");
   EXPECT_TRUE(is_complete); // these do get reported.
@@ -183,7 +183,7 @@ TEST_F(StreamDecoderTest, PoolFailureTest) {
       *dispatcher_, time_system_, *this, [&is_complete](bool, bool) { is_complete = true; },
       connect_statistic_, latency_statistic_, response_header_size_statistic_,
       response_body_size_statistic_, origin_latency_statistic_, request_headers_, false, 0,
-      random_generator_, http_tracer_);
+      random_generator_, http_tracer_, "");
   Envoy::Upstream::HostDescriptionConstSharedPtr ptr;
   decoder->onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason::Overflow, "fooreason",
                          ptr);
@@ -233,13 +233,14 @@ INSTANTIATE_TEST_SUITE_P(ResponseHeaderLatencies, LatencyTrackingViaResponseHead
 
 // Tests that the StreamDecoder handles delivery of latencies by response header.
 TEST_P(LatencyTrackingViaResponseHeaderTest, LatencyTrackingViaResponseHeader) {
+  const std::string kLatencyTrackingResponseHeader = "latency-in-response-header";
   auto decoder = new StreamDecoder(
       *dispatcher_, time_system_, *this, [](bool, bool) {}, connect_statistic_, latency_statistic_,
       response_header_size_statistic_, response_body_size_statistic_, origin_latency_statistic_,
-      request_headers_, false, 0, random_generator_, http_tracer_);
+      request_headers_, false, 0, random_generator_, http_tracer_, kLatencyTrackingResponseHeader);
   const LatencyTrackingViaResponseHeaderTestParam param = GetParam();
   Envoy::Http::ResponseHeaderMapPtr headers{new Envoy::Http::TestResponseHeaderMapImpl{
-      {":status", "200"}, {"x-nh-do-not-use-origin-timings", std::get<0>(param)}}};
+      {":status", "200"}, {kLatencyTrackingResponseHeader, std::get<0>(param)}}};
   decoder->decodeHeaders(std::move(headers), true);
   const uint64_t expected_count = std::get<1>(param) ? 1 : 0;
   EXPECT_EQ(origin_latency_statistic_.count(), expected_count);

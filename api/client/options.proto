@@ -202,4 +202,9 @@ message CommandLineOptions {
   // specified the default is 5 seconds. Time interval must be at least 1s and at most 300s.
   google.protobuf.UInt32Value stats_flush_interval = 35
       [(validate.rules).uint32 = {gte: 1, lte: 300}];
+  // Set an optional response header name, whose values will be tracked in a latency histogram if
+  // set. Can be used in tandem with the test server's
+  // "emit_previous_request_delta_in_response_header" option to get a sense of elapsed time between
+  // request arrivals.
+  google.protobuf.StringValue response_header_with_latency_input = 36;
 }

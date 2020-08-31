@@ -85,6 +85,9 @@ public:
     return stats_sinks_;
   }
   uint32_t statsFlushInterval() const override { return stats_flush_interval_; }
+  std::string responseHeaderWithLatencyInput() const override {
+    return response_header_with_latency_input_;
+  };
 
 private:
   void parsePredicates(const TCLAP::MultiArg<std::string>& arg,
@@ -138,6 +141,7 @@ private:
   bool no_duration_{false};
   std::vector<envoy::config::metrics::v3::StatsSink> stats_sinks_;
   uint32_t stats_flush_interval_{5};
+  std::string response_header_with_latency_input_;
 };
 
 } // namespace Client
