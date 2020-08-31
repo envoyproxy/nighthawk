@@ -13,6 +13,8 @@ namespace Nighthawk {
 
 /**
  * StepController for testing: Configurable convergence and doom countdowns, fixed RPS value.
+ *
+ * This class is not thread-safe.
  */
 class FakeStepController : public StepController {
 public:
@@ -22,7 +24,7 @@ public:
    * @param config FakeStepControllerConfig proto for setting the fixed RPS value.
    * @param command_line_options_template A template for producing Nighthawk input.
    */
-  FakeStepController(const nighthawk::adaptive_load::FakeStepControllerConfig& config,
+  FakeStepController(nighthawk::adaptive_load::FakeStepControllerConfig config,
                      nighthawk::client::CommandLineOptions command_line_options_template);
   /**
    * @return bool The current value of |is_converged_|.
@@ -42,9 +44,9 @@ public:
   absl::StatusOr<nighthawk::client::CommandLineOptions>
   GetCurrentCommandLineOptions() const override;
   /**
-   * Updates |is_converged_| to reflect whether |benchmark_result| contains any score >0. Sets
-   * |is_doomed_| based whether the status in |benchmark_result| is OK; copies the status message
-   * into |doomed_reason_| only when the status is not OK.
+   * Updates |is_converged_| to reflect whether |benchmark_result| contains any score >0. Updates
+   * |is_doomed_| to reflect whether |benchmark_result| contains any score <0. A non-converged,
+   * non-doomed input has scores all equal to 0.
    *
    * @param benchmark_result A Nighthawk benchmark result proto.
    */
@@ -52,10 +54,13 @@ public:
   UpdateAndRecompute(const nighthawk::adaptive_load::BenchmarkResult& benchmark_result) override;
 
 private:
+  // Counts down UpdateAndRecompute() calls. When this reaches zero, GetCurrentCommandLineOptions()
+  // starts to return an artificial input value setting failure if one is specified in the config.
+  int input_setting_failure_countdown_;
+  const nighthawk::adaptive_load::FakeStepControllerConfig config_;
   bool is_converged_;
   bool is_doomed_;
   std::string doomed_reason_;
-  const int fixed_rps_value_;
   const nighthawk::client::CommandLineOptions command_line_options_template_;
 };
 
@@ -91,7 +96,8 @@ MakeFakeStepControllerPluginConfig(int fixed_rps_value);
  * Creates a valid TypedExtensionConfig proto that activates a FakeStepController with a
  * FakeInputVariableSetterConfig that fails validation.
  *
- * @param artificial_validation_error An error status.
+ * @param artificial_validation_error An artificial error status to be returned by
+ * FakeStepControllerConfigFactory::ValidateConfig() when attempting LoadStepControllerPlugin().
  *
  * @return TypedExtensionConfig A proto that activates FakeStepController by name and includes
  * a FakeStepControllerConfig proto wrapped in an Any. This proto will fail validation when
@@ -99,5 +105,22 @@ MakeFakeStepControllerPluginConfig(int fixed_rps_value);
  */
 envoy::config::core::v3::TypedExtensionConfig MakeFakeStepControllerPluginConfigWithValidationError(
     const absl::Status& artificial_validation_error);
+
+/**
+ * Creates a valid TypedExtensionConfig proto that activates a FakeStepController with a
+ * FakeInputVariableSetterConfig that returns an error from GetCurrentCommandLineOptions().
+ *
+ * @param fixed_rps_value Value for RPS to set in the FakeStepControllerConfig proto until the
+ * countdown reaches zero.
+ * @param artificial_input_setting_failure An error status.
+ * @param countdown Number of times UpdateAndRecompute() must be called before
+ * GetCurrentCommandLineOptions() starts to return the input error status.
+ *
+ * @return TypedExtensionConfig A proto that activates FakeStepController by name and includes
+ * a FakeStepControllerConfig proto wrapped in an Any.
+ */
+envoy::config::core::v3::TypedExtensionConfig
+MakeFakeStepControllerPluginConfigWithInputSettingError(
+    int fixed_rps_value, const absl::Status& artificial_input_setting_failure, int countdown);
 
 } // namespace Nighthawk
