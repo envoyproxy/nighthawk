@@ -700,6 +700,24 @@ def test_cancellation_with_infinite_duration(http_test_server_fixture):
   asserts.assertCounterGreaterEqual(counters, "benchmark.http_2xx", 1)
 
 
+@pytest.mark.parametrize('server_config',
+                         ["nighthawk/test/integration/configurations/nighthawk_track_timings.yaml"])
+def test_http_h1_response_header_latency_tracking(http_test_server_fixture):
+  """Test emission and tracking of response header latencies.
+
+  Run the CLI configured to track latencies delivered by response header from the test-server
+  which is set up emit those. Ensure the expected histogram is observed.
+  """
+  parsed_json, _ = http_test_server_fixture.runNighthawkClient([
+      http_test_server_fixture.getTestServerRootUri(), "--connections", "1", "--rps", "100",
+      "--duration", "100", "--termination-predicate", "benchmark.http_2xx:99",
+      "--response-header-with-latency-input", "x-origin-request-receipt-delta"
+  ])
+  global_histograms = http_test_server_fixture.getNighthawkGlobalHistogramsbyIdFromJson(parsed_json)
+  asserts.assertEqual(
+      int(global_histograms["benchmark_http_client.origin_latency_statistic"]["count"]), 99)
+
+
 def _run_client_with_args(args):
   return utility.run_binary_with_args("nighthawk_client", args)
 

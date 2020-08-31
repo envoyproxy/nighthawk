@@ -59,7 +59,7 @@ public:
         complete_(false), measure_latencies_(measure_latencies),
         request_body_size_(request_body_size), stream_info_(time_source_),
         random_generator_(random_generator), http_tracer_(http_tracer),
-        response_header_with_latency_input_(response_header_with_latency_input) {
+        response_header_with_latency_input_(std::move(response_header_with_latency_input)) {
     if (measure_latencies_ && http_tracer_ != nullptr) {
       setupForTracing();
     }
