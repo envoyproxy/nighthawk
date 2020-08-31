@@ -43,8 +43,9 @@ bazel build -c opt //:nighthawk
 ```
 USAGE:
 
-bazel-bin/nighthawk_client  [--stats-flush-interval <uint32_t>]
-[--stats-sinks <string>] ...
+bazel-bin/nighthawk_client  [--response-header-with-latency-input
+<string>] [--stats-flush-interval
+<uint32_t>] [--stats-sinks <string>] ...
 [--no-duration] [--simple-warmup]
 [--request-source <uri format>] [--label
 <string>] ... [--multi-target-use-https]
@@ -79,6 +80,11 @@ format>
 
 
 Where:
+
+--response-header-with-latency-input <string>
+Response header whose values should be tracked in a latency histogram.
+The response header value is assumed to be in nanoseconds. Default:
+""
 
 --stats-flush-interval <uint32_t>
 Time interval (in seconds) between flushes to configured stats sinks.
