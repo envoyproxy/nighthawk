@@ -17,6 +17,7 @@
 #include "gtest/gtest.h"
 
 namespace Nighthawk {
+namespace {
 
 using namespace std::chrono_literals;
 
@@ -80,36 +81,27 @@ protected:
   const Envoy::Http::TestRequestHeaderMapImpl request_headers_;
 };
 
-class HttpTimeTrackingFilterConfigTest : public testing::Test,
-                                         public Envoy::Event::TestUsingSimulatedTime {};
-
-// WARNING: Don't move this test. Keep it on top.
-// The static stopwatch member of the extension config persists accross tests, and
-// we test the first call to that singleton instance here.
-TEST_F(HttpTimeTrackingFilterConfigTest, GetElapsedNanosSinceLastRequest) {
-  Envoy::Event::SimulatedTimeSystem& time_system = simTime();
-  EXPECT_EQ(Server::HttpTimeTrackingFilterConfig::getElapsedNanosSinceLastRequest(time_system), 0);
-  time_system.setMonotonicTime(1ns);
-  EXPECT_EQ(Server::HttpTimeTrackingFilterConfig::getElapsedNanosSinceLastRequest(time_system), 1);
-}
-
 INSTANTIATE_TEST_SUITE_P(IpVersions, HttpTimeTrackingIntegrationTest,
                          testing::ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()));
 
 // Verify expectations with static/file-based time-tracking configuration.
-TEST_P(HttpTimeTrackingIntegrationTest, StaticConfiguration) {
+TEST_P(HttpTimeTrackingIntegrationTest, ReturnsPositiveLatencyForStaticConfiguration) {
   setup(fmt::format(kProtoConfigTemplate, kDefaultProtoFragment));
   Envoy::IntegrationStreamDecoderPtr response = getResponse();
   int64_t latency;
-  const Envoy::Http::HeaderEntry* latency_header =
+  const Envoy::Http::HeaderEntry* latency_header_1 =
       response->headers().get(Envoy::Http::LowerCaseString(kLatencyResponseHeaderName));
-  ASSERT_NE(latency_header, nullptr);
-  EXPECT_TRUE(absl::SimpleAtoi(latency_header->value().getStringView(), &latency));
+  EXPECT_EQ(latency_header_1, nullptr);
+  response = getResponse();
+  const Envoy::Http::HeaderEntry* latency_header_2 =
+      response->headers().get(Envoy::Http::LowerCaseString(kLatencyResponseHeaderName));
+  ASSERT_NE(latency_header_2, nullptr);
+  EXPECT_TRUE(absl::SimpleAtoi(latency_header_2->value().getStringView(), &latency));
   EXPECT_GT(latency, 0);
 }
 
 // Verify expectations with an empty time-tracking configuration.
-TEST_P(HttpTimeTrackingIntegrationTest, NoStaticConfiguration) {
+TEST_P(HttpTimeTrackingIntegrationTest, ReturnsPositiveLatencyForPerRequestConfiguration) {
   setup(fmt::format(kProtoConfigTemplate, ""));
   // Don't send any config request header
   getResponse();
@@ -126,10 +118,13 @@ TEST_P(HttpTimeTrackingIntegrationTest, NoStaticConfiguration) {
   // TODO(oschaaf): figure out if we can use simtime here, and verify actual timing matches
   // what we'd expect using that.
   EXPECT_GT(latency, 0);
+}
 
+TEST_P(HttpTimeTrackingIntegrationTest, BehavesWellWithBadPerRequestConfiguration) {
+  setup(fmt::format(kProtoConfigTemplate, ""));
   // Send a malformed config request header. This ought to shortcut and directly reply,
   // hence we don't expect an upstream request.
-  response = getResponse("bad_json", false);
+  Envoy::IntegrationStreamDecoderPtr response = getResponse("bad_json", false);
   EXPECT_EQ(Envoy::Http::Utility::getResponseStatus(response->headers()), 500);
   EXPECT_EQ(
       response->body(),
@@ -144,4 +139,20 @@ TEST_P(HttpTimeTrackingIntegrationTest, NoStaticConfiguration) {
       "parse JSON as proto (INVALID_ARGUMENT:Unexpected end of string. Expected a value.\n\n^): ");
 }
 
+class HttpTimeTrackingFilterConfigTest : public testing::Test,
+                                         public Envoy::Event::TestUsingSimulatedTime {};
+
+TEST_F(HttpTimeTrackingFilterConfigTest, GetElapsedNanosSinceLastRequest) {
+  Envoy::Event::SimulatedTimeSystem& time_system = simTime();
+  Server::HttpTimeTrackingFilterConfig config({});
+  EXPECT_EQ(config.getElapsedNanosSinceLastRequest(time_system), 0);
+  time_system.setMonotonicTime(1ns);
+  EXPECT_EQ(config.getElapsedNanosSinceLastRequest(time_system), 1);
+  time_system.setMonotonicTime(1s + 1ns);
+  EXPECT_EQ(config.getElapsedNanosSinceLastRequest(time_system), 1e9);
+  time_system.setMonotonicTime(60s + 1s + 1ns);
+  EXPECT_EQ(config.getElapsedNanosSinceLastRequest(time_system), 60 * 1e9);
+}
+
+} // namespace
 } // namespace Nighthawk

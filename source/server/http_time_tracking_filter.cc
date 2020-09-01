@@ -4,6 +4,8 @@
 
 #include "envoy/server/filter_config.h"
 
+#include "common/thread_safe_monotonic_time_stopwatch.h"
+
 #include "server/configuration.h"
 #include "server/well_known_headers.h"
 
@@ -15,11 +17,12 @@ namespace Server {
 
 HttpTimeTrackingFilterConfig::HttpTimeTrackingFilterConfig(
     nighthawk::server::ResponseOptions proto_config)
-    : server_config_(std::move(proto_config)) {}
+    : server_config_(std::move(proto_config)),
+      stopwatch_(std::make_unique<ThreadSafeMontonicTimeStopwatch>()) {}
 
 uint64_t
 HttpTimeTrackingFilterConfig::getElapsedNanosSinceLastRequest(Envoy::TimeSource& time_source) {
-  return getRequestStopwatch().getElapsedNsAndReset(time_source);
+  return stopwatch_->getElapsedNsAndReset(time_source);
 }
 
 HttpTimeTrackingFilter::HttpTimeTrackingFilter(HttpTimeTrackingFilterConfigSharedPtr config)

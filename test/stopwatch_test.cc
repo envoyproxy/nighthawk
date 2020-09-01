@@ -13,6 +13,7 @@
 #include "gtest/gtest.h"
 
 namespace Nighthawk {
+namespace {
 
 using namespace std::chrono_literals;
 
@@ -33,9 +34,7 @@ TEST_F(SimTimeStopwatchTest, TestElapsedAndReset) {
   EXPECT_EQ(stopwatch.getElapsedNsAndReset(time_system), 2);
 }
 
-class FakeTimeStopwatchTest : public testing::Test {};
-
-TEST_F(FakeTimeStopwatchTest, ThreadedStopwatchSpamming) {
+TEST(ThreadSafeStopwatchTest, ThreadedStopwatchSpamming) {
   constexpr uint64_t kFakeTimeSourceDefaultTick = 1000000000;
   constexpr uint32_t kNumThreads = 100;
   ThreadSafeMontonicTimeStopwatch stopwatch;
@@ -46,7 +45,7 @@ TEST_F(FakeTimeStopwatchTest, ThreadedStopwatchSpamming) {
 
   // The first call should always return 0.
   EXPECT_EQ(stopwatch.getElapsedNsAndReset(time_system), 0);
-  for (auto& thread : threads) {
+  for (std::thread& thread : threads) {
     thread = std::thread([&stopwatch, &time_system, kFakeTimeSourceDefaultTick, future] {
       // We wait for all threads to be up and running here to maximize concurrency
       // of the call below.
@@ -65,4 +64,5 @@ TEST_F(FakeTimeStopwatchTest, ThreadedStopwatchSpamming) {
             (kNumThreads * kFakeTimeSourceDefaultTick) + kFakeTimeSourceDefaultTick);
 }
 
+} // namespace
 } // namespace Nighthawk
