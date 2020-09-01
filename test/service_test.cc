@@ -19,16 +19,18 @@ using namespace testing;
 
 namespace Nighthawk {
 namespace Client {
+namespace {
 
 class ServiceTest : public TestWithParam<Envoy::Network::Address::IpVersion> {
 public:
   void SetUp() override {
+    service_ = std::make_unique<ServiceImpl>();
     grpc::ServerBuilder builder;
     loopback_address_ = Envoy::Network::Test::getLoopbackAddressUrlString(GetParam());
 
     builder.AddListeningPort(fmt::format("{}:0", loopback_address_),
                              grpc::InsecureServerCredentials(), &grpc_server_port_);
-    builder.RegisterService(&service_);
+    builder.RegisterService(service_.get());
     server_ = builder.BuildAndStart();
     setupGrpcClient();
     setBasicRequestOptions();
@@ -100,7 +102,7 @@ public:
     EXPECT_TRUE(status.ok());
   }
 
-  ServiceImpl service_;
+  std::unique_ptr<ServiceImpl> service_;
   std::unique_ptr<grpc::Server> server_;
   std::shared_ptr<grpc::Channel> channel_;
   grpc::ClientContext context_;
@@ -110,6 +112,43 @@ public:
   std::string loopback_address_;
   int grpc_server_port_{0};
 };
+
+class ServiceTestWithParameterizedConstructor : public ServiceTest {
+public:
+  void SetUp() override {
+    Envoy::Thread::MutexBasicLockable log_lock_;
+    auto logging_context = std::make_unique<Envoy::Logger::Context>(
+        spdlog::level::info, "%L %n [%g:%#] %v", log_lock_, false);
+    service_ = std::make_unique<ServiceImpl>(std::move(logging_context));
+    grpc::ServerBuilder builder;
+    loopback_address_ = Envoy::Network::Test::getLoopbackAddressUrlString(GetParam());
+
+    builder.AddListeningPort(fmt::format("{}:0", loopback_address_),
+                             grpc::InsecureServerCredentials(), &grpc_server_port_);
+    builder.RegisterService(service_.get());
+    server_ = builder.BuildAndStart();
+    setupGrpcClient();
+    setBasicRequestOptions();
+  }
+};
+
+INSTANTIATE_TEST_SUITE_P(IpVersions, ServiceTestWithParameterizedConstructor,
+                         ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()),
+                         Envoy::TestUtility::ipTestParamsToString);
+
+// Test single NH run with parameterized constructor
+TEST_P(ServiceTestWithParameterizedConstructor, BasicWithUserSpecifiedLoggingContext) {
+  auto r = stub_->ExecutionStream(&context_);
+  r->Write(request_, {});
+  r->WritesDone();
+  EXPECT_TRUE(r->Read(&response_));
+  ASSERT_TRUE(response_.has_error_detail());
+  EXPECT_THAT(response_.error_detail().message(), HasSubstr(std::string("Unknown failure")));
+  EXPECT_TRUE(response_.has_output());
+  EXPECT_GE(response_.output().results(0).counters().size(), 8);
+  auto status = r->Finish();
+  EXPECT_TRUE(status.ok());
+}
 
 INSTANTIATE_TEST_SUITE_P(IpVersions, ServiceTest,
                          ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()),
@@ -198,5 +237,6 @@ TEST_P(ServiceTest, Unresolvable) {
   runWithFailingValidationExpectations(true, "Unknown failure");
 }
 
+} // namespace
 } // namespace Client
 } // namespace Nighthawk
