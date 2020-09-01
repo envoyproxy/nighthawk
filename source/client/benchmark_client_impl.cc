@@ -30,14 +30,16 @@ BenchmarkClientStatistic::BenchmarkClientStatistic(BenchmarkClientStatistic&& st
       latency_3xx_statistic(std::move(statistic.latency_3xx_statistic)),
       latency_4xx_statistic(std::move(statistic.latency_4xx_statistic)),
       latency_5xx_statistic(std::move(statistic.latency_5xx_statistic)),
-      latency_xxx_statistic(std::move(statistic.latency_xxx_statistic)) {}
+      latency_xxx_statistic(std::move(statistic.latency_xxx_statistic)),
+      origin_latency_statistic(std::move(statistic.origin_latency_statistic)) {}
 
 BenchmarkClientStatistic::BenchmarkClientStatistic(
     StatisticPtr&& connect_stat, StatisticPtr&& response_stat,
     StatisticPtr&& response_header_size_stat, StatisticPtr&& response_body_size_stat,
     StatisticPtr&& latency_1xx_stat, StatisticPtr&& latency_2xx_stat,
     StatisticPtr&& latency_3xx_stat, StatisticPtr&& latency_4xx_stat,
-    StatisticPtr&& latency_5xx_stat, StatisticPtr&& latency_xxx_stat)
+    StatisticPtr&& latency_5xx_stat, StatisticPtr&& latency_xxx_stat,
+    StatisticPtr&& origin_latency_stat)
     : connect_statistic(std::move(connect_stat)), response_statistic(std::move(response_stat)),
       response_header_size_statistic(std::move(response_header_size_stat)),
       response_body_size_statistic(std::move(response_body_size_stat)),
@@ -46,7 +48,8 @@ BenchmarkClientStatistic::BenchmarkClientStatistic(
       latency_3xx_statistic(std::move(latency_3xx_stat)),
       latency_4xx_statistic(std::move(latency_4xx_stat)),
       latency_5xx_statistic(std::move(latency_5xx_stat)),
-      latency_xxx_statistic(std::move(latency_xxx_stat)) {}
+      latency_xxx_statistic(std::move(latency_xxx_stat)),
+      origin_latency_statistic(std::move(origin_latency_stat)) {}
 
 Envoy::Http::ConnectionPool::Cancellable*
 Http1PoolImpl::newStream(Envoy::Http::ResponseDecoder& response_decoder,
@@ -97,6 +100,7 @@ BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
   statistic_.latency_4xx_statistic->setId("benchmark_http_client.latency_4xx");
   statistic_.latency_5xx_statistic->setId("benchmark_http_client.latency_5xx");
   statistic_.latency_xxx_statistic->setId("benchmark_http_client.latency_xxx");
+  statistic_.origin_latency_statistic->setId("benchmark_http_client.origin_latency_statistic");
 }
 
 void BenchmarkClientHttpImpl::terminate() {
@@ -121,6 +125,7 @@ StatisticPtrMap BenchmarkClientHttpImpl::statistics() const {
   statistics[statistic_.latency_4xx_statistic->id()] = statistic_.latency_4xx_statistic.get();
   statistics[statistic_.latency_5xx_statistic->id()] = statistic_.latency_5xx_statistic.get();
   statistics[statistic_.latency_xxx_statistic->id()] = statistic_.latency_xxx_statistic.get();
+  statistics[statistic_.origin_latency_statistic->id()] = statistic_.origin_latency_statistic.get();
   return statistics;
 };
 
@@ -160,7 +165,8 @@ bool BenchmarkClientHttpImpl::tryStartRequest(CompletionCallback caller_completi
       dispatcher_, api_.timeSource(), *this, std::move(caller_completion_callback),
       *statistic_.connect_statistic, *statistic_.response_statistic,
       *statistic_.response_header_size_statistic, *statistic_.response_body_size_statistic,
-      request->header(), shouldMeasureLatencies(), content_length, generator_, http_tracer_);
+      *statistic_.origin_latency_statistic, request->header(), shouldMeasureLatencies(),
+      content_length, generator_, http_tracer_);
   requests_initiated_++;
   pool_ptr->newStream(*stream_decoder, *stream_decoder);
   return true;
