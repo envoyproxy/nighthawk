@@ -91,7 +91,7 @@ BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
       cluster_manager_(cluster_manager), http_tracer_(http_tracer),
       cluster_name_(std::string(cluster_name)), request_generator_(std::move(request_generator)),
       provide_resource_backpressure_(provide_resource_backpressure),
-      response_header_with_latency_input_(std::move(response_header_with_latency_input)) {
+      response_header_with_latency_input_(response_header_with_latency_input) {
   statistic_.connect_statistic->setId("benchmark_http_client.queue_to_connect");
   statistic_.response_statistic->setId("benchmark_http_client.request_to_response");
   statistic_.response_header_size_statistic->setId("benchmark_http_client.response_header_size");
