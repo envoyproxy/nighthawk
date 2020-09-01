@@ -61,7 +61,8 @@ public:
                    std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
                    std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
                    std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
-                   std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>()) {
+                   std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
+                   std::make_unique<StreamingStatistic>()) {
     auto header_map_param = std::initializer_list<std::pair<std::string, std::string>>{
         {":scheme", "http"}, {":method", "GET"}, {":path", "/"}, {":host", "localhost"}};
     default_header_map_ =
