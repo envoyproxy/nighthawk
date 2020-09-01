@@ -6,7 +6,7 @@
 
 #include "api/request_source/request_source_plugin_impl.pb.h"
 #include "api/client/options.pb.h"
-#include <fstream>
+#include "common/uri_impl.h"
 
 namespace Nighthawk {
 
@@ -80,7 +80,7 @@ DECLARE_FACTORY(RPCRequestSourceConfigFactory);
 class FileBasedRequestSourcePlugin : public RequestSourcePlugin {
 public:
   explicit FileBasedRequestSourcePlugin(
-      const nighthawk::request_source::FileBasedPluginRequestSourceConfig& config);
+      const nighthawk::request_source::FileBasedPluginRequestSourceConfig& config,  Envoy::Filesystem::Instance& file_system);
   RequestGenerator get() override;
   /**
    * Will be called on an intialized and running worker thread, before commencing actual work.
@@ -90,8 +90,10 @@ public:
   void initOnThread() override;
 
 private:
-  const std::string uri_;
+  const Nighthawk::UriImpl uri_;
+  const std::string file_path_;
   nighthawk::client::RequestOptions options_;
+  nighthawk::client::RequestOptionses optionses_;
 };
 
 /**

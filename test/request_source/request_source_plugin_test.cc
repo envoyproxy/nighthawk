@@ -1,7 +1,7 @@
 #include "envoy/common/exception.h"
 #include "common/request_source_plugin_impl.h"
 #include "external/envoy/source/common/config/utility.h"
-
+#include "external/envoy/test/test_common/file_system_for_test.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "test/test_common/environment.h"
@@ -14,7 +14,8 @@ using nighthawk::request_source::FileBasedPluginRequestSourceConfig;
 
 nighthawk::request_source::FileBasedPluginRequestSourceConfig MakeFileBasedPluginConfigWithTestYaml(std::string request_file) {
   nighthawk::request_source::FileBasedPluginRequestSourceConfig config;
-  config.mutable_uri()->assign(request_file);
+  config.mutable_uri()->assign("http://foo/");
+  config.mutable_file_path()-> assign(request_file);
   return config;
 }
 TEST(DummyPluginRequestSourceConfigFactory, CreateEmptyConfigProtoCreatesCorrectType) {
@@ -75,7 +76,7 @@ TEST(FileBasedPluginRequestSourceConfigFactory, CreateRequestSourcePluginCreates
 }
 TEST(FileBasedPluginRequestSourceConfigFactory, CreateRequestSourcePluginGetsWorkingRequestGenerator) {
   nighthawk::request_source::FileBasedPluginRequestSourceConfig config = MakeFileBasedPluginConfigWithTestYaml(TestEnvironment::runfilesPath("test/request_source/test_data/test-config.yaml"));
-  FileBasedRequestSourcePlugin file_based_request_source(config);
+  FileBasedRequestSourcePlugin file_based_request_source(config, Envoy::Filesystem::fileSystemForTest());
   // auto generator = file_based_request_source.get();
   // auto request = generator();
 }

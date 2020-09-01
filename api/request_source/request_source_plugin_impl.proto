@@ -16,4 +16,5 @@ message RPCPluginRequestSourceConfig {
 // Configuration for FileBasedPluginRequestSource (plugin name: "nighthawk.file-based-request-source-plugin") that uses rpc
 message FileBasedPluginRequestSourceConfig {  
   string uri = 1;
+  string file_path = 2;
 }  

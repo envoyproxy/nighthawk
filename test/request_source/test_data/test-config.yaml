@@ -1,5 +1,11 @@
-request_body_size: 10
-request_headers:
-  - { header: { key: "foo", value: "bar" } }
-  - { header: { key: "foo", value: "bar2" }, append: true }
-  - { header: { key: "x-nh", value: "1" } }
+sub_options:
+  - request_body_size: 10
+    request_headers:
+      - { header: { key: "foo", value: "bar" } }
+      - { header: { key: "foo", value: "bar2" }, append: true }
+      - { header: { key: "x-nh", value: "1" } }
+  - request_body_size: 10
+    request_headers:
+      - { header: { key: "bar", value: "foo" } }
+      - { header: { key: "bar", value: "foo2" }, append: true }
+      - { header: { key: "x-nh", value: "2" } }  

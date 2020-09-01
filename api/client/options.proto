@@ -18,6 +18,10 @@ message RequestOptions {
   google.protobuf.UInt32Value request_body_size = 3 [(validate.rules).uint32 = {lte: 4194304}];
 }
 
+message RequestOptionses {
+  repeated RequestOptions sub_options = 1;
+}
+
 // Configures a remote gRPC source that will deliver to-be-replayed request data to Nighthawks
 // workers.
 message RequestSource {

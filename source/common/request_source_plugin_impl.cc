@@ -1,11 +1,14 @@
 #include "common/request_source_plugin_impl.h"
 #include "common/request_impl.h"
 #include "common/request_source_impl.h"
-// #include "external/envoy/source/common/protobuf/protobuf.h"
 #include "external/envoy/source/common/protobuf/utility.h"
 #include "common/protobuf/message_validator_impl.h"
 
+#include "external/envoy/source/exe/platform_impl.h"
+
+
 #include "api/client/options.pb.h"
+
 #include "api/request_source/request_source_plugin_impl.pb.h"
 #include <fstream>
 #include <iostream>
@@ -88,38 +91,53 @@ RequestSourcePluginPtr FileBasedRequestSourceConfigFactory::createRequestSourceP
   const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
   nighthawk::request_source::FileBasedPluginRequestSourceConfig config;
   Envoy::MessageUtil::unpackTo(any, config);
-  return std::make_unique<FileBasedRequestSourcePlugin>(config);
+  Envoy::PlatformImpl platform_impl_;
+  return std::make_unique<FileBasedRequestSourcePlugin>(config, platform_impl_.fileSystem());
 }
 
 REGISTER_FACTORY(FileBasedRequestSourceConfigFactory, RequestSourcePluginConfigFactory);
 
 FileBasedRequestSourcePlugin::FileBasedRequestSourcePlugin(
-    const nighthawk::request_source::FileBasedPluginRequestSourceConfig& config)
-    : uri_(config.uri()) {
+    const nighthawk::request_source::FileBasedPluginRequestSourceConfig& config, Envoy::Filesystem::Instance& file_system)
+    : uri_(config.uri()), file_path_(config.file_path()) {
   //      Envoy::MessageUtil::loadFromJson()
-  std::ifstream options_file(uri_);
-  if (options_file.is_open())
-  {
-    std::cerr << "Opened file: " + uri_;
-  }
-  // options_.ParseFromIstream(&options_file);
-  std::stringstream file_string_stream;
-  file_string_stream << options_file.rdbuf();
-  std::string test_string = file_string_stream.str();
+  // std::ifstream options_file(file_path_);
+  // if (options_file.is_open())
+  // {
+  //   std::cerr << "Opened file: " + file_path_;
+  // }
+  // // options_.ParseFromIstream(&options_file);
+  // std::stringstream file_string_stream;
+  // file_string_stream << options_file.rdbuf();
+  // std::string test_string = file_string_stream.str();
+  // Envoy::MessageUtil util;
+  // util.loadFromYaml(test_string, options_, Envoy::ProtobufMessage::getStrictValidationVisitor());
+  // for (const auto& option_header : options_.request_headers()) {
+  //   std::cerr << option_header.header().key() +":"+ option_header.header().value()+"\n";
+  // }
+  // options_file.close();
   Envoy::MessageUtil util;
-  util.loadFromYaml(test_string, options_, Envoy::ProtobufMessage::getStrictValidationVisitor());
-  for (const auto& option_header : options_.request_headers()) {
-    std::cerr << option_header.header().key() +":"+ option_header.header().value()+"\n";
-  }
-  options_file.close();
-  std::cerr << "\ntest_string" +test_string;
-  std::cerr << "\nI was here";
-  std::cerr << "header size:" + std::to_string(options_.request_headers_size());
+  std::string file_string = file_system.fileReadToEnd(file_path_);
+  util.loadFromYaml(file_string, optionses_, Envoy::ProtobufMessage::getStrictValidationVisitor());
+  std::cerr << "\n"+ file_string +"\n";
 }
+
 RequestGenerator FileBasedRequestSourcePlugin::get() {
-  RequestGenerator request_generator = []() {
+  auto iterator = optionses_.sub_options().begin();
+  RequestGenerator request_generator = [this, &iterator]() {
+    auto temp = *iterator++;
     // auto returned_request_impl = std::make_unique<RequestImpl>(std::move(options_.request_headers()));
-  Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
+    Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();    
+    header->setPath(uri_.path());
+    header->setHost(uri_.hostAndPort());
+    header->setScheme(uri_.scheme() == "https" ? Envoy::Http::Headers::get().SchemeValues.Https
+                                              : Envoy::Http::Headers::get().SchemeValues.Http);
+    header->setMethod(envoy::config::core::v3::RequestMethod_Name(temp.request_method()));
+    // const uint32_t content_length = temp.request_body_size();
+    // if (content_length > 0) {
+    //   header->setContentLength(content_length);
+    // }
+
     auto returned_request_impl = std::make_unique<RequestImpl>(std::move(header));
     return returned_request_impl;
   };
