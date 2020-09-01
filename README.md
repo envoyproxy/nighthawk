@@ -83,9 +83,9 @@ Where:
 
 --response-header-with-latency-input <string>
 Set an optional response header name, whose values will be tracked in
-a latency histogram if  set. Can be used in tandem with the test
-server's "emit_previous_request_delta_in_response_header" option to
-get a sense of elapsed time between request arrivals. Default: ""
+a latency histogram if set. Can be used in tandem with the test server
+"emit_previous_request_delta_in_response_header" option to get a sense
+of elapsed time between request arrivals. Default: ""
 
 --stats-flush-interval <uint32_t>
 Time interval (in seconds) between flushes to configured stats sinks.
