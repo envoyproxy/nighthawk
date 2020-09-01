@@ -147,7 +147,6 @@ TEST_F(StreamDecoderTest, LatencyIsMeasured) {
       *dispatcher_, time_system_, *this, [](bool, bool) {}, connect_statistic_, latency_statistic_,
       response_header_size_statistic_, response_body_size_statistic_, origin_latency_statistic_,
       request_header, true, 0, random_generator_, http_tracer_, "");
-
   Envoy::Http::MockRequestEncoder stream_encoder;
   EXPECT_CALL(stream_encoder, getStream());
   Envoy::Upstream::HostDescriptionConstSharedPtr ptr;

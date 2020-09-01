@@ -103,6 +103,7 @@ workflows:
       - test_gcc
       - clang_tidy
       - coverage
+      - integration_test_coverage
       - asan
       - tsan
       - benchmark
