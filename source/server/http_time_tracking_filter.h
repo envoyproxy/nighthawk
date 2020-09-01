@@ -5,11 +5,11 @@
 #include "envoy/common/time.h"
 #include "envoy/server/filter_config.h"
 
+#include "nighthawk/common/stopwatch.h"
+
 #include "external/envoy/source/extensions/filters/http/common/pass_through_filter.h"
 
 #include "api/server/response_options.pb.h"
-
-#include "common/thread_safe_monotonic_time_stopwatch.h"
 
 namespace Nighthawk {
 namespace Server {
@@ -41,17 +41,11 @@ public:
    * @return uint64_t 0 on the first call, else the number of elapsed nanoseconds since the last
    * call.
    */
-  static uint64_t getElapsedNanosSinceLastRequest(Envoy::TimeSource& time_source);
+  uint64_t getElapsedNanosSinceLastRequest(Envoy::TimeSource& time_source);
 
 private:
-  /**
-   * @return ThreadSafeMontonicTimeStopwatch& Get the Stopwatch singleton instance used to track
-   * the deltas between inbound requests.
-   */
-  static ThreadSafeMontonicTimeStopwatch& getRequestStopwatch() {
-    MUTABLE_CONSTRUCT_ON_FIRST_USE(ThreadSafeMontonicTimeStopwatch); // NOLINT
-  }
   const nighthawk::server::ResponseOptions server_config_;
+  std::shared_ptr<Stopwatch> stopwatch_;
 };
 
 using HttpTimeTrackingFilterConfigSharedPtr = std::shared_ptr<HttpTimeTrackingFilterConfig>;

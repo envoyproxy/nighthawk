@@ -239,7 +239,7 @@ TEST_P(LatencyTrackingViaResponseHeaderTest, LatencyTrackingViaResponseHeader) {
       request_headers_, false, 0, random_generator_, http_tracer_);
   const LatencyTrackingViaResponseHeaderTestParam param = GetParam();
   Envoy::Http::ResponseHeaderMapPtr headers{new Envoy::Http::TestResponseHeaderMapImpl{
-      {":status", "200"}, {"x-nh-do-not-use-origin-timings", std::get<0>(param)}}};
+      {":status", "200"}, {"x-nighthawk-do-not-use-origin-timings", std::get<0>(param)}}};
   decoder->decodeHeaders(std::move(headers), true);
   const uint64_t expected_count = std::get<1>(param) ? 1 : 0;
   EXPECT_EQ(origin_latency_statistic_.count(), expected_count);
