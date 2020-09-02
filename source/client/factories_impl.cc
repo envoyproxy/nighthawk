@@ -180,15 +180,11 @@ RequestSourcePtr RequestSourceFactoryImpl::create(
 
   if (options_.requestSource() == "") {
     return request_source_constructor.createStaticRequestSource(std::move(header));
-    //    return std::make_unique<StaticRequestSourceImpl>(std::move(header));
   } else {
     // We pass in options_.requestsPerSecond() as the header buffer length so the grpc client
     // will shoot for maintaining an amount of headers of at least one second.
     return request_source_constructor.createRemoteRequestSource(std::move(header),
                                                                 options_.requestsPerSecond());
-    // return std::make_unique<RemoteRequestSourceImpl>(cluster_manager, dispatcher, scope,
-    //                                                  service_cluster_name, std::move(header),
-    //                                                  options_.requestsPerSecond());
   }
 }
 
