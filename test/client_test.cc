@@ -80,5 +80,19 @@ TEST_F(ClientTest, BadRun) {
   EXPECT_FALSE(program.run());
 }
 
+TEST_F(ClientTest, BadRemoteRun) {
+  Main program(Nighthawk::Client::TestUtility::createOptionsImpl(
+      "foo --duration 1 --nighthawk-service grpc://unresolveable.host:8843 --rps 1 "
+      "http://localhost:63657/"));
+  EXPECT_FALSE(program.run());
+}
+
+TEST_F(ClientTest, RemoteRun) {
+  Main program(Nighthawk::Client::TestUtility::createOptionsImpl(
+      "foo --duration 1 --nighthawk-service grpc://localhost:8843 --rps 1 "
+      "http://localhost:63657/"));
+  EXPECT_FALSE(program.run());
+}
+
 } // namespace Client
 } // namespace Nighthawk
