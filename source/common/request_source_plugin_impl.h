@@ -4,8 +4,8 @@
 
 #include "nighthawk/common/request_source_plugin.h"
 
-#include "api/request_source/request_source_plugin_impl.pb.h"
 #include "api/client/options.pb.h"
+#include "api/request_source/request_source_plugin_impl.pb.h"
 #include "common/uri_impl.h"
 
 namespace Nighthawk {
@@ -15,7 +15,8 @@ namespace Nighthawk {
 class DummyRequestSourcePlugin : public RequestSourcePlugin {
 public:
   explicit DummyRequestSourcePlugin(
-      const nighthawk::request_source::DummyPluginRequestSourceConfig& config);
+      const nighthawk::request_source::DummyPluginRequestSourceConfig& config,
+      Envoy::Api::Api& api);
   RequestGenerator get() override;
   /**
    * Will be called on an intialized and running worker thread, before commencing actual work.
@@ -32,12 +33,12 @@ private:
  * Factory that creates a DummyRequestSourcePlugin from a DummyRequestSourcePluginConfig proto.
  * Registered as an Envoy plugin.
  */
-class DummyRequestSourceConfigFactory : public virtual RequestSourcePluginConfigFactory
-{
+class DummyRequestSourceConfigFactory : public virtual RequestSourcePluginConfigFactory {
 public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
-  RequestSourcePluginPtr createRequestSourcePlugin(const Envoy::Protobuf::Message& message) override;
+  RequestSourcePluginPtr createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
+                                                   Envoy::Api::Api& api) override;
 };
 
 // This factory is activated through ???.
@@ -48,7 +49,7 @@ DECLARE_FACTORY(DummyRequestSourceConfigFactory);
 class RPCRequestSourcePlugin : public RequestSourcePlugin {
 public:
   explicit RPCRequestSourcePlugin(
-      const nighthawk::request_source::RPCPluginRequestSourceConfig& config);
+      const nighthawk::request_source::RPCPluginRequestSourceConfig& config, Envoy::Api::Api& api);
   RequestGenerator get() override;
   /**
    * Will be called on an intialized and running worker thread, before commencing actual work.
@@ -64,12 +65,12 @@ private:
 /**
  * Registered as an Envoy plugin.
  */
-class RPCRequestSourceConfigFactory : public virtual RequestSourcePluginConfigFactory
-{
+class RPCRequestSourceConfigFactory : public virtual RequestSourcePluginConfigFactory {
 public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
-  RequestSourcePluginPtr createRequestSourcePlugin(const Envoy::Protobuf::Message& message) override;
+  RequestSourcePluginPtr createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
+                                                   Envoy::Api::Api& api) override;
 };
 
 // This factory is activated through ???.
@@ -80,7 +81,8 @@ DECLARE_FACTORY(RPCRequestSourceConfigFactory);
 class FileBasedRequestSourcePlugin : public RequestSourcePlugin {
 public:
   explicit FileBasedRequestSourcePlugin(
-      const nighthawk::request_source::FileBasedPluginRequestSourceConfig& config,  Envoy::Filesystem::Instance& file_system);
+      const nighthawk::request_source::FileBasedPluginRequestSourceConfig& config,
+      Envoy::Api::Api& api);
   RequestGenerator get() override;
   /**
    * Will be called on an intialized and running worker thread, before commencing actual work.
@@ -99,15 +101,15 @@ private:
 /**
  * Registered as an Envoy plugin.
  */
-class FileBasedRequestSourceConfigFactory : public virtual RequestSourcePluginConfigFactory
-{
+class FileBasedRequestSourceConfigFactory : public virtual RequestSourcePluginConfigFactory {
 public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
-  RequestSourcePluginPtr createRequestSourcePlugin(const Envoy::Protobuf::Message& message) override;
+  RequestSourcePluginPtr createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
+                                                   Envoy::Api::Api& api) override;
 };
 
 // This factory is activated through ???.
 DECLARE_FACTORY(FileBasedRequestSourceConfigFactory);
 
-}
+} // namespace Nighthawk

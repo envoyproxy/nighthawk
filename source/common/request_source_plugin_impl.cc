@@ -1,11 +1,10 @@
 #include "common/request_source_plugin_impl.h"
+#include "common/protobuf/message_validator_impl.h"
 #include "common/request_impl.h"
 #include "common/request_source_impl.h"
 #include "external/envoy/source/common/protobuf/utility.h"
-#include "common/protobuf/message_validator_impl.h"
 
 #include "external/envoy/source/exe/platform_impl.h"
-
 
 #include "api/client/options.pb.h"
 
@@ -23,20 +22,22 @@ Envoy::ProtobufTypes::MessagePtr DummyRequestSourceConfigFactory::createEmptyCon
   return std::make_unique<nighthawk::request_source::DummyPluginRequestSourceConfig>();
 }
 
-RequestSourcePluginPtr DummyRequestSourceConfigFactory::createRequestSourcePlugin(
-    const Envoy::Protobuf::Message& message) {
+RequestSourcePluginPtr
+DummyRequestSourceConfigFactory::createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
+                                                           Envoy::Api::Api& api) {
   const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
   nighthawk::request_source::DummyPluginRequestSourceConfig config;
   Envoy::MessageUtil::unpackTo(any, config);
-  return std::make_unique<DummyRequestSourcePlugin>(config);
+  return std::make_unique<DummyRequestSourcePlugin>(config, api);
 }
 
 REGISTER_FACTORY(DummyRequestSourceConfigFactory, RequestSourcePluginConfigFactory);
 
 DummyRequestSourcePlugin::DummyRequestSourcePlugin(
-    const nighthawk::request_source::DummyPluginRequestSourceConfig& config)
-    : dummy_value_{config.has_dummy_value() ? config.dummy_value().value()
-                                            : std::numeric_limits<double>::infinity()} {}
+    const nighthawk::request_source::DummyPluginRequestSourceConfig& config,
+    Envoy::Api::Api& api)
+    : RequestSourcePlugin{api}, dummy_value_{config.has_dummy_value() ? config.dummy_value().value()
+                                                       : std::numeric_limits<double>::infinity()} {}
 RequestGenerator DummyRequestSourcePlugin::get() {
   RequestGenerator request_generator = []() {
     Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
@@ -56,18 +57,20 @@ Envoy::ProtobufTypes::MessagePtr RPCRequestSourceConfigFactory::createEmptyConfi
 }
 
 RequestSourcePluginPtr
-RPCRequestSourceConfigFactory::createRequestSourcePlugin(const Envoy::Protobuf::Message& message) {
+RPCRequestSourceConfigFactory::createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
+                                                         Envoy::Api::Api& api) {
   const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
   nighthawk::request_source::RPCPluginRequestSourceConfig config;
   Envoy::MessageUtil::unpackTo(any, config);
-  return std::make_unique<RPCRequestSourcePlugin>(config);
+  return std::make_unique<RPCRequestSourcePlugin>(config, api);
 }
 
 REGISTER_FACTORY(RPCRequestSourceConfigFactory, RequestSourcePluginConfigFactory);
 
 RPCRequestSourcePlugin::RPCRequestSourcePlugin(
-    const nighthawk::request_source::RPCPluginRequestSourceConfig& config)
-    : uri_(config.uri()) {}
+    const nighthawk::request_source::RPCPluginRequestSourceConfig& config,
+    Envoy::Api::Api& api)
+    : RequestSourcePlugin{api}, uri_(config.uri()) {}
 RequestGenerator RPCRequestSourcePlugin::get() {
   RequestGenerator request_generator = []() {
     Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
@@ -87,19 +90,20 @@ Envoy::ProtobufTypes::MessagePtr FileBasedRequestSourceConfigFactory::createEmpt
 }
 
 RequestSourcePluginPtr FileBasedRequestSourceConfigFactory::createRequestSourcePlugin(
-    const Envoy::Protobuf::Message& message) {
+    const Envoy::Protobuf::Message& message, Envoy::Api::Api& api) {
   const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
   nighthawk::request_source::FileBasedPluginRequestSourceConfig config;
   Envoy::MessageUtil::unpackTo(any, config);
-  Envoy::PlatformImpl platform_impl_;
-  return std::make_unique<FileBasedRequestSourcePlugin>(config, platform_impl_.fileSystem());
+  // Envoy::PlatformImpl platform_impl_;
+  return std::make_unique<FileBasedRequestSourcePlugin>(config, api);
 }
 
 REGISTER_FACTORY(FileBasedRequestSourceConfigFactory, RequestSourcePluginConfigFactory);
 
 FileBasedRequestSourcePlugin::FileBasedRequestSourcePlugin(
-    const nighthawk::request_source::FileBasedPluginRequestSourceConfig& config, Envoy::Filesystem::Instance& file_system)
-    : uri_(config.uri()), file_path_(config.file_path()) {
+    const nighthawk::request_source::FileBasedPluginRequestSourceConfig& config,
+    Envoy::Api::Api& api)
+    : RequestSourcePlugin{api}, uri_(config.uri()), file_path_(config.file_path()) {
   //      Envoy::MessageUtil::loadFromJson()
   // std::ifstream options_file(file_path_);
   // if (options_file.is_open())
@@ -117,26 +121,27 @@ FileBasedRequestSourcePlugin::FileBasedRequestSourcePlugin(
   // }
   // options_file.close();
   Envoy::MessageUtil util;
-  std::string file_string = file_system.fileReadToEnd(file_path_);
+  std::string file_string = RequestSourcePlugin::api_.fileSystem().fileReadToEnd(file_path_);
   util.loadFromYaml(file_string, optionses_, Envoy::ProtobufMessage::getStrictValidationVisitor());
-  std::cerr << "\n"+ file_string +"\n";
+  std::cerr << "\n" + file_string + "\n";
 }
 
 RequestGenerator FileBasedRequestSourcePlugin::get() {
   auto iterator = optionses_.sub_options().begin();
   RequestGenerator request_generator = [this, &iterator]() {
     auto temp = *iterator++;
-    // auto returned_request_impl = std::make_unique<RequestImpl>(std::move(options_.request_headers()));
-    Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();    
+    // auto returned_request_impl =
+    // std::make_unique<RequestImpl>(std::move(options_.request_headers()));
+    Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
     header->setPath(uri_.path());
     header->setHost(uri_.hostAndPort());
     header->setScheme(uri_.scheme() == "https" ? Envoy::Http::Headers::get().SchemeValues.Https
-                                              : Envoy::Http::Headers::get().SchemeValues.Http);
+                                               : Envoy::Http::Headers::get().SchemeValues.Http);
     header->setMethod(envoy::config::core::v3::RequestMethod_Name(temp.request_method()));
-    // const uint32_t content_length = temp.request_body_size();
-    // if (content_length > 0) {
-    //   header->setContentLength(content_length);
-    // }
+    const uint32_t content_length = temp.request_body_size().value();
+    if (content_length > 0) {
+      header->setContentLength(content_length);
+    }
 
     auto returned_request_impl = std::make_unique<RequestImpl>(std::move(header));
     return returned_request_impl;
