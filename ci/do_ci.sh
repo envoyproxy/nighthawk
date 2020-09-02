@@ -34,7 +34,7 @@ function do_clang_tidy() {
 
 function do_unit_test_coverage() {
     export TEST_TARGETS="//test/... -//test:python_test"
-    export COVERAGE_THRESHOLD=93.3
+    export COVERAGE_THRESHOLD=93.2
     echo "bazel coverage build with tests ${TEST_TARGETS}"
     test/run_nighthawk_bazel_coverage.sh ${TEST_TARGETS}
     exit 0
@@ -42,7 +42,7 @@ function do_unit_test_coverage() {
 
 function do_integration_test_coverage() {
     export TEST_TARGETS="//test:python_test"
-    export COVERAGE_THRESHOLD=78.2
+    export COVERAGE_THRESHOLD=78.1
     echo "bazel coverage build with tests ${TEST_TARGETS}"
     test/run_nighthawk_bazel_coverage.sh ${TEST_TARGETS}
     exit 0
