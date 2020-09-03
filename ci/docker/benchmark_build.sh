@@ -9,7 +9,7 @@ set -e
 # publishing sensitive information into public CI logs if someone makes a change in a
 # consuming script that is off guard.
 
-DOCKER_NAME="benchmark"
+DOCKER_NAME="nighthawk-benchmark"
 DOCKER_IMAGE_PREFIX="envoyproxy/${DOCKER_NAME}"
 WORKSPACE="$(bazel info workspace)"
 BAZEL_BIN="$(bazel info -c opt bazel-bin)"
