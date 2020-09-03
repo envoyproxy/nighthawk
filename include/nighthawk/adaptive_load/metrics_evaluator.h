@@ -55,9 +55,9 @@ public:
    * Key: A MetricSpec from the list; Value: Corresponding threshold for a scored metric, nullptr
    * for an informational metric.
    */
-  virtual std::pair<std::vector<const nighthawk::adaptive_load::MetricSpec*>,
-                    absl::flat_hash_map<const nighthawk::adaptive_load::MetricSpec*,
-                                        const nighthawk::adaptive_load::ThresholdSpec*>>
+  virtual const std::pair<const std::vector<const nighthawk::adaptive_load::MetricSpec*>,
+                          const absl::flat_hash_map<const nighthawk::adaptive_load::MetricSpec*,
+                                                    const nighthawk::adaptive_load::ThresholdSpec*>>
   ExtractMetricSpecs(const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec) const PURE;
 
   /**

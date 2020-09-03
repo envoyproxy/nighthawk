@@ -9,9 +9,9 @@ public:
                  MetricsPlugin& metrics_plugin,
                  const nighthawk::adaptive_load::ThresholdSpec* threshold_spec) const override;
 
-  std::pair<std::vector<const nighthawk::adaptive_load::MetricSpec*>,
-            absl::flat_hash_map<const nighthawk::adaptive_load::MetricSpec*,
-                                const nighthawk::adaptive_load::ThresholdSpec*>>
+  const std::pair<const std::vector<const nighthawk::adaptive_load::MetricSpec*>,
+                  const absl::flat_hash_map<const nighthawk::adaptive_load::MetricSpec*,
+                                            const nighthawk::adaptive_load::ThresholdSpec*>>
   ExtractMetricSpecs(const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec) const override;
 
   absl::StatusOr<nighthawk::adaptive_load::BenchmarkResult>

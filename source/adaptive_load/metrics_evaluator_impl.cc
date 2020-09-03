@@ -50,8 +50,8 @@ MetricsEvaluatorImpl::EvaluateMetric(const MetricSpec& metric_spec, MetricsPlugi
   return evaluation;
 }
 
-std::pair<std::vector<const MetricSpec*>,
-          absl::flat_hash_map<const MetricSpec*, const ThresholdSpec*>>
+const std::pair<const std::vector<const MetricSpec*>,
+                const absl::flat_hash_map<const MetricSpec*, const ThresholdSpec*>>
 MetricsEvaluatorImpl::ExtractMetricSpecs(
     const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec) const {
   std::vector<const MetricSpec*> metric_specs;
