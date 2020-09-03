@@ -716,3 +716,11 @@ def test_client_bad_arg():
   (exit_code, output) = _run_client_with_args("127.0.0.1 --foo")
   asserts.assertEqual(exit_code, 1)
   asserts.assertIn("PARSE ERROR: Argument: --foo", output)
+
+
+def test_client_cli_bad_uri(http_test_server_fixture):
+  """Test that passing a bad URI to the client results in nice behavior."""
+  _, err = http_test_server_fixture.runNighthawkClient(["http://http://foo"],
+                                                       expect_failure=True,
+                                                       as_json=False)
+  assert "Invalid target URI" in err
