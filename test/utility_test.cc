@@ -177,4 +177,8 @@ TEST_F(UtilityTest, MapCountersFromStore) {
   EXPECT_EQ(counters.begin()->second, 2);
 }
 
+TEST_F(UtilityTest, MultipleSemicolons) {
+  EXPECT_THROW(UriImpl("HTTP://HTTP://a:111"), UriException);
+}
+
 } // namespace Nighthawk
