@@ -18,9 +18,9 @@ NighthawkServiceClientImpl::PerformNighthawkBenchmark(
       stream(nighthawk_service_stub->ExecutionStream(&context));
 
   if (!stream->Write(request)) {
-    return absl::UnknownError("Failed to write request to the Nighthawk Service gRPC channel.");
+    return absl::InternalError("Failed to write request to the Nighthawk Service gRPC channel.");
   } else if (!stream->WritesDone()) {
-    return absl::UnknownError("WritesDone() failed on the Nighthawk Service gRPC channel.");
+    return absl::InternalError("WritesDone() failed on the Nighthawk Service gRPC channel.");
   }
 
   bool got_response = false;
@@ -30,7 +30,7 @@ NighthawkServiceClientImpl::PerformNighthawkBenchmark(
     got_response = true;
   }
   if (!got_response) {
-    return absl::UnknownError("Nighthawk Service did not send a gRPC response.");
+    return absl::InternalError("Nighthawk Service did not send a gRPC response.");
   }
   ::grpc::Status status = stream->Finish();
   if (!status.ok()) {
