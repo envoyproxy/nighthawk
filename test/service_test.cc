@@ -24,7 +24,7 @@ namespace {
 class ServiceTest : public TestWithParam<Envoy::Network::Address::IpVersion> {
 public:
   void SetUp() override {
-    service_ = absl::make_unique<ServiceImpl>();
+    service_ = std::make_unique<ServiceImpl>();
     grpc::ServerBuilder builder;
     loopback_address_ = Envoy::Network::Test::getLoopbackAddressUrlString(GetParam());
 
@@ -118,7 +118,7 @@ public:
   void SetUp() override {
     auto logging_context = std::make_unique<Envoy::Logger::Context>(
         spdlog::level::info, "%L %n [%g:%#] %v", log_lock_, false);
-    service_ = absl::make_unique<ServiceImpl>(std::move(logging_context));
+    service_ = std::make_unique<ServiceImpl>(std::move(logging_context));
     grpc::ServerBuilder builder;
     loopback_address_ = Envoy::Network::Test::getLoopbackAddressUrlString(GetParam());
 
