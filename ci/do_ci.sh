@@ -10,7 +10,7 @@ fi
 
 export BUILDIFIER_BIN="${BUILDIFIER_BIN:=/usr/local/bin/buildifier}"
 export BUILDOZER_BIN="${BUILDOZER_BIN:=/usr/local/bin/buildozer}"
-export CIRCLECI_NUM_CPUS=${CIRCLECI_NUM_CPUS:=$(grep -c ^processor /proc/cpuinfo)}
+export NUM_CPUS=${NUM_CPUS:=$(grep -c ^processor /proc/cpuinfo)}
 export CIRCLECI=${CIRCLECI:=""}
 export BAZEL_EXTRA_TEST_OPTIONS=${BAZEL_EXTRA_TEST_OPTIONS:=""}
 export BAZEL_OPTIONS=${BAZEL_OPTIONS:=""}
@@ -185,12 +185,12 @@ if [ -n "$CIRCLECI" ]; then
         mv "${HOME:-/root}/.gitconfig" "${HOME:-/root}/.gitconfig_save"
         echo 1
     fi
-    CIRCLECI_NUM_CPUS=8
+    NUM_CPUS=8
     if [[ "$1" == "test_gcc" ]]; then
-        CIRCLECI_NUM_CPUS=4
+        NUM_CPUS=4
     fi
-    echo "Running with ${CIRCLECI_NUM_CPUS} cpus"
-    BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} --jobs=${CIRCLECI_NUM_CPUS}"
+    echo "Running with ${NUM_CPUS} cpus"
+    BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} --jobs=${NUM_CPUS}"
 fi
 
 export BAZEL_TEST_OPTIONS="${BAZEL_BUILD_OPTIONS} --test_env=HOME --test_env=PYTHONUSERBASE \
