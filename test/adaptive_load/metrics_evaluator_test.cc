@@ -67,13 +67,11 @@ nighthawk::client::ExecutionResponse MakeNighthawkResponseWithSendRate(double se
   return response;
 }
 
-TEST(EvaluateMetric, SetsMetricId) {
+TEST(EvaluateMetric, SetsMetricIdForValidMetric) {
   const std::string kMetricName = "good-metric";
-  const double kExpectedValue = 123.0;
   FakeMetricsPluginConfig config;
   FakeMetricsPluginConfig::FakeMetric* fake_metric = config.mutable_fake_metrics()->Add();
   fake_metric->set_name(kMetricName);
-  fake_metric->set_value(kExpectedValue);
   FakeMetricsPlugin fake_plugin(config);
 
   MetricSpec metric_spec;
@@ -111,7 +109,7 @@ TEST(EvaluateMetric, PropagatesMetricsPluginError) {
   EXPECT_THAT(evaluation_or.status().message(), HasSubstr(kExpectedStatusMessage));
 }
 
-TEST(EvaluateMetric, StoresMetricValue) {
+TEST(EvaluateMetric, StoresMetricValueForValidMetric) {
   const std::string kMetricName = "good-metric";
   const double kExpectedValue = 123.0;
   FakeMetricsPluginConfig config;
@@ -131,7 +129,7 @@ TEST(EvaluateMetric, StoresMetricValue) {
   EXPECT_EQ(evaluation_or.value().metric_value(), kExpectedValue);
 }
 
-TEST(EvaluateMetric, SetsWeightToZeroForInformationalMetric) {
+TEST(EvaluateMetric, SetsWeightToZeroForValidInformationalMetric) {
   const std::string kMetricName = "good-metric";
   const double kExpectedValue = 123.0;
 
@@ -152,7 +150,7 @@ TEST(EvaluateMetric, SetsWeightToZeroForInformationalMetric) {
   EXPECT_EQ(evaluation_or.value().weight(), 0.0);
 }
 
-TEST(EvaluateMetric, SetsWeightForScoredMetric) {
+TEST(EvaluateMetric, SetsWeightForValidScoredMetric) {
   const std::string kMetricName = "good-metric";
   const double kExpectedValue = 123.0;
   const double kExpectedWeight = 1.5;
@@ -180,7 +178,7 @@ TEST(EvaluateMetric, SetsWeightForScoredMetric) {
   EXPECT_EQ(evaluation_or.value().weight(), kExpectedWeight);
 }
 
-TEST(EvaluateMetric, SetsScoreForMetric) {
+TEST(EvaluateMetric, SetsScoreForValidMetric) {
   const std::string kMetricName = "good-metric";
   const double kExpectedValue = 123.0;
   const double kLowerThreshold = 200.0;
@@ -206,7 +204,7 @@ TEST(EvaluateMetric, SetsScoreForMetric) {
   EXPECT_EQ(evaluation_or.value().threshold_score(), -1.0);
 }
 
-TEST(ExtractMetricSpecs, ExtractsScoredMetricAndThreshold) {
+TEST(ExtractMetricSpecs, ExtractsScoredMetricAndThresholdForValidMetric) {
   const std::string kExpectedMetricName = "a";
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
   nighthawk::adaptive_load::MetricSpecWithThreshold* metric_threshold =
@@ -233,7 +231,7 @@ TEST(ExtractMetricSpecs, ExtractsScoredMetricAndThreshold) {
             threshold_spec.DebugString());
 }
 
-TEST(ExtractMetricSpecs, ExtractsInformationalMetric) {
+TEST(ExtractMetricSpecs, ExtractsValueForValidInformationalMetric) {
   const std::string kExpectedMetricName = "a";
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
   nighthawk::adaptive_load::MetricSpec* metric_spec =
@@ -270,7 +268,7 @@ TEST(AnalyzeNighthawkBenchmark, PropagatesNighthawkServiceError) {
   EXPECT_EQ(result_or.status().message(), kExpectedErrorMessage);
 }
 
-TEST(AnalyzeNighthawkBenchmark, StoresNighthawkResult) {
+TEST(AnalyzeNighthawkBenchmark, StoresNighthawkResultForSuccessfulMetricEvaluation) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
   nighthawk::client::ExecutionResponse nighthawk_response = MakeNighthawkResponseWithSendRate(1.0);
   absl::flat_hash_map<std::string, MetricsPluginPtr> name_to_custom_metrics_plugin_map;
@@ -286,7 +284,7 @@ TEST(AnalyzeNighthawkBenchmark, StoresNighthawkResult) {
             nighthawk_response.output().DebugString());
 }
 
-TEST(AnalyzeNighthawkBenchmark, StoresSuccessfulMetricEvaluation) {
+TEST(AnalyzeNighthawkBenchmark, StoresScoreForSuccessfulMetricEvaluation) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
 
   const std::string kMetricName = "good-metric";
@@ -317,7 +315,7 @@ TEST(AnalyzeNighthawkBenchmark, StoresSuccessfulMetricEvaluation) {
   EXPECT_EQ(result_or.value().metric_evaluations()[0].metric_value(), kExpectedValue);
 }
 
-TEST(AnalyzeNighthawkBenchmark, ReturnsErrorFromFailedMetricEvaluation) {
+TEST(AnalyzeNighthawkBenchmark, PropagatesErrorFromFailedMetricEvaluation) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
 
   const std::string kMetricName = "bad-metric";
@@ -350,7 +348,7 @@ TEST(AnalyzeNighthawkBenchmark, ReturnsErrorFromFailedMetricEvaluation) {
   EXPECT_THAT(result_or.status().message(), HasSubstr(kExpectedStatusMessage));
 }
 
-TEST(AnalyzeNighthawkBenchmark, EvaluatesBuiltinMetric) {
+TEST(AnalyzeNighthawkBenchmark, UsesBuiltinMetricsPluginForUnspecifiedPluginName) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
 
   const std::string kMetricName = "send-rate";

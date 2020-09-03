@@ -2,6 +2,8 @@
 
 #include <utility>
 
+#include "api/adaptive_load/metric_spec.pb.h"
+
 #include "adaptive_load/metrics_plugin_impl.h"
 #include "adaptive_load/plugin_loader.h"
 
@@ -10,6 +12,7 @@ namespace Nighthawk {
 namespace {
 
 using ::nighthawk::adaptive_load::MetricSpec;
+using ::nighthawk::adaptive_load::MetricSpecWithThreshold;
 using ::nighthawk::adaptive_load::ThresholdSpec;
 
 } // namespace
