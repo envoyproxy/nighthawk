@@ -4,6 +4,10 @@ set -eo pipefail
 set +x
 set -u
 
+if [ $# -eq 0 ]; then
+    set -- "help"
+fi
+
 export BUILDIFIER_BIN="${BUILDIFIER_BIN:=/usr/local/bin/buildifier}"
 export BUILDOZER_BIN="${BUILDOZER_BIN:=/usr/local/bin/buildozer}"
 export NUM_CPUS=${NUM_CPUS:=$(grep -c ^processor /proc/cpuinfo)}
@@ -185,10 +189,9 @@ if [ -n "$CIRCLECI" ]; then
     if [[ "$1" == "test_gcc" ]]; then
         NUM_CPUS=4
     fi
+    echo "Running with ${NUM_CPUS} cpus"
+    BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} --jobs=${NUM_CPUS}"
 fi
-
-echo "Running with ${NUM_CPUS} cpus"
-BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} --jobs=${NUM_CPUS}"
 
 export BAZEL_TEST_OPTIONS="${BAZEL_BUILD_OPTIONS} --test_env=HOME --test_env=PYTHONUSERBASE \
 --test_env=UBSAN_OPTIONS=print_stacktrace=1 \
