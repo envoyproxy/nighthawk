@@ -52,6 +52,17 @@ envoy_cc_test(
 )
 
 envoy_cc_test(
+    name = "session_spec_proto_helper_test",
+    srcs = ["session_spec_proto_helper_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/adaptive_load:session_spec_proto_helper_impl",
+        "//test/adaptive_load/fake_plugins/fake_metrics_plugin",
+        "//test/adaptive_load/fake_plugins/fake_step_controller",
+    ],
+)
+
+envoy_cc_test(
     name = "scoring_function_test",
     srcs = ["scoring_function_test.cc"],
     repository = "@envoy",
