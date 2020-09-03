@@ -4,20 +4,12 @@
 
 #include "api/adaptive_load/adaptive_load.pb.h"
 #include "api/adaptive_load/metric_spec.pb.h"
+#include "api/client/options.pb.h"
 
 #include "test/adaptive_load/fake_plugins/fake_metrics_plugin/fake_metrics_plugin.h"
 
-#include "adaptive_load/session_spec_proto_helper_impl.h"
-
-// #include "api/adaptive_load/input_variable_setter_impl.pb.h"
-// #include "api/adaptive_load/step_controller_impl.pb.h"
-#include "api/client/options.pb.h"
-#include "external/envoy/source/common/config/utility.h"
-
-// #include "adaptive_load/metrics_plugin_impl.h"
 #include "adaptive_load/plugin_loader.h"
-// #include "adaptive_load/step_controller_impl.h"
-// #include "fake_plugins/fake_input_variable_setter/fake_input_variable_setter.h"
+#include "adaptive_load/session_spec_proto_helper_impl.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -28,129 +20,129 @@ namespace {
 using ::nighthawk::adaptive_load::AdaptiveLoadSessionSpec;
 using ::testing::HasSubstr;
 
-TEST(SetDefaults, SetsDefaultValueIfOpenLoopUnset) {
+TEST(SetSessionSpecDefaults, SetsDefaultValueIfOpenLoopUnset) {
   AdaptiveLoadSessionSpec original_spec;
   AdaptiveLoadSessionSpecProtoHelperImpl helper;
-  AdaptiveLoadSessionSpec spec = helper.SetDefaults(original_spec);
+  AdaptiveLoadSessionSpec spec = helper.SetSessionSpecDefaults(original_spec);
   EXPECT_TRUE(spec.nighthawk_traffic_template().open_loop().value());
 }
 
-TEST(SetDefaults, PreservesExplicitOpenLoopSetting) {
+TEST(SetSessionSpecDefaults, PreservesExplicitOpenLoopSetting) {
   AdaptiveLoadSessionSpec original_spec;
   original_spec.mutable_nighthawk_traffic_template()->mutable_open_loop()->set_value(false);
   AdaptiveLoadSessionSpecProtoHelperImpl helper;
-  AdaptiveLoadSessionSpec spec = helper.SetDefaults(original_spec);
+  AdaptiveLoadSessionSpec spec = helper.SetSessionSpecDefaults(original_spec);
   EXPECT_FALSE(spec.nighthawk_traffic_template().open_loop().value());
 }
 
-TEST(SetDefaults, SetsDefaultMeasuringPeriodIfUnset) {
+TEST(SetSessionSpecDefaults, SetsDefaultMeasuringPeriodIfUnset) {
   AdaptiveLoadSessionSpec original_spec;
   AdaptiveLoadSessionSpecProtoHelperImpl helper;
-  AdaptiveLoadSessionSpec spec = helper.SetDefaults(original_spec);
+  AdaptiveLoadSessionSpec spec = helper.SetSessionSpecDefaults(original_spec);
   EXPECT_EQ(spec.measuring_period().seconds(), 10);
 }
 
-TEST(SetDefaults, PreservesExplicitMeasuringPeriod) {
+TEST(SetSessionSpecDefaults, PreservesExplicitMeasuringPeriod) {
   const int kExpectedMeasuringPeriodSeconds = 123;
   AdaptiveLoadSessionSpec original_spec;
   original_spec.mutable_measuring_period()->set_seconds(kExpectedMeasuringPeriodSeconds);
   AdaptiveLoadSessionSpecProtoHelperImpl helper;
-  AdaptiveLoadSessionSpec spec = helper.SetDefaults(original_spec);
+  AdaptiveLoadSessionSpec spec = helper.SetSessionSpecDefaults(original_spec);
   EXPECT_EQ(spec.measuring_period().seconds(), kExpectedMeasuringPeriodSeconds);
 }
 
-TEST(SetDefaults, SetsDefaultConvergenceDeadlineIfUnset) {
+TEST(SetSessionSpecDefaults, SetsDefaultConvergenceDeadlineIfUnset) {
   AdaptiveLoadSessionSpec original_spec;
   AdaptiveLoadSessionSpecProtoHelperImpl helper;
-  AdaptiveLoadSessionSpec spec = helper.SetDefaults(original_spec);
+  AdaptiveLoadSessionSpec spec = helper.SetSessionSpecDefaults(original_spec);
   EXPECT_EQ(spec.convergence_deadline().seconds(), 300);
 }
 
-TEST(SetDefaults, PreservesExplicitConvergenceDeadline) {
+TEST(SetSessionSpecDefaults, PreservesExplicitConvergenceDeadline) {
   const int kExpectedConvergenceDeadlineSeconds = 123;
   AdaptiveLoadSessionSpec original_spec;
   original_spec.mutable_convergence_deadline()->set_seconds(kExpectedConvergenceDeadlineSeconds);
   AdaptiveLoadSessionSpecProtoHelperImpl helper;
-  AdaptiveLoadSessionSpec spec = helper.SetDefaults(original_spec);
+  AdaptiveLoadSessionSpec spec = helper.SetSessionSpecDefaults(original_spec);
   EXPECT_EQ(spec.convergence_deadline().seconds(), kExpectedConvergenceDeadlineSeconds);
 }
 
-TEST(SetDefaults, SetsDefaultTestingStageDurationIfUnset) {
+TEST(SetSessionSpecDefaults, SetsDefaultTestingStageDurationIfUnset) {
   AdaptiveLoadSessionSpec original_spec;
   AdaptiveLoadSessionSpecProtoHelperImpl helper;
-  AdaptiveLoadSessionSpec spec = helper.SetDefaults(original_spec);
+  AdaptiveLoadSessionSpec spec = helper.SetSessionSpecDefaults(original_spec);
   EXPECT_EQ(spec.testing_stage_duration().seconds(), 30);
 }
 
-TEST(SetDefaults, PreservesExplicitTestingStageDuration) {
+TEST(SetSessionSpecDefaults, PreservesExplicitTestingStageDuration) {
   const int kExpectedTestingStageDurationSeconds = 123;
   AdaptiveLoadSessionSpec original_spec;
   original_spec.mutable_testing_stage_duration()->set_seconds(kExpectedTestingStageDurationSeconds);
   AdaptiveLoadSessionSpecProtoHelperImpl helper;
-  AdaptiveLoadSessionSpec spec = helper.SetDefaults(original_spec);
+  AdaptiveLoadSessionSpec spec = helper.SetSessionSpecDefaults(original_spec);
   EXPECT_EQ(spec.testing_stage_duration().seconds(), kExpectedTestingStageDurationSeconds);
 }
 
-TEST(SetDefaults, SetsDefaultScoredMetricPluginNameIfUnset) {
+TEST(SetSessionSpecDefaults, SetsDefaultScoredMetricPluginNameIfUnset) {
   AdaptiveLoadSessionSpec original_spec;
   (void)original_spec.mutable_metric_thresholds()->Add();
   AdaptiveLoadSessionSpecProtoHelperImpl helper;
-  AdaptiveLoadSessionSpec spec = helper.SetDefaults(original_spec);
+  AdaptiveLoadSessionSpec spec = helper.SetSessionSpecDefaults(original_spec);
   ASSERT_GT(spec.metric_thresholds_size(), 0);
   EXPECT_EQ(spec.metric_thresholds(0).metric_spec().metrics_plugin_name(), "nighthawk.builtin");
 }
 
-TEST(SetDefaults, PreservesExplicitScoredMetricPluginName) {
+TEST(SetSessionSpecDefaults, PreservesExplicitScoredMetricPluginName) {
   const std::string kExpectedMetricsPluginName = "a";
   AdaptiveLoadSessionSpec original_spec;
   nighthawk::adaptive_load::MetricSpecWithThreshold* spec_threshold =
       original_spec.mutable_metric_thresholds()->Add();
   spec_threshold->mutable_metric_spec()->set_metrics_plugin_name(kExpectedMetricsPluginName);
   AdaptiveLoadSessionSpecProtoHelperImpl helper;
-  AdaptiveLoadSessionSpec spec = helper.SetDefaults(original_spec);
+  AdaptiveLoadSessionSpec spec = helper.SetSessionSpecDefaults(original_spec);
   ASSERT_GT(spec.metric_thresholds_size(), 0);
   EXPECT_EQ(spec.metric_thresholds(0).metric_spec().metrics_plugin_name(),
             kExpectedMetricsPluginName);
 }
 
-TEST(SetDefaults, SetsDefaultScoredMetricWeightIfUnset) {
+TEST(SetSessionSpecDefaults, SetsDefaultScoredMetricWeightIfUnset) {
   AdaptiveLoadSessionSpec original_spec;
   (void)original_spec.mutable_metric_thresholds()->Add();
   AdaptiveLoadSessionSpecProtoHelperImpl helper;
-  AdaptiveLoadSessionSpec spec = helper.SetDefaults(original_spec);
+  AdaptiveLoadSessionSpec spec = helper.SetSessionSpecDefaults(original_spec);
   ASSERT_GT(spec.metric_thresholds_size(), 0);
   EXPECT_EQ(spec.metric_thresholds(0).threshold_spec().weight().value(), 1.0);
 }
 
-TEST(SetDefaults, PreservesExplicitScoredMetricWeight) {
+TEST(SetSessionSpecDefaults, PreservesExplicitScoredMetricWeight) {
   const double kExpectedWeight = 123.0;
   AdaptiveLoadSessionSpec original_spec;
   nighthawk::adaptive_load::MetricSpecWithThreshold* spec_threshold =
       original_spec.mutable_metric_thresholds()->Add();
   spec_threshold->mutable_threshold_spec()->mutable_weight()->set_value(kExpectedWeight);
   AdaptiveLoadSessionSpecProtoHelperImpl helper;
-  AdaptiveLoadSessionSpec spec = helper.SetDefaults(original_spec);
+  AdaptiveLoadSessionSpec spec = helper.SetSessionSpecDefaults(original_spec);
   ASSERT_GT(spec.metric_thresholds_size(), 0);
   EXPECT_EQ(spec.metric_thresholds(0).threshold_spec().weight().value(), kExpectedWeight);
 }
 
-TEST(SetDefaults, SetsDefaultInformationalMetricPluginNameIfUnset) {
+TEST(SetSessionSpecDefaults, SetsDefaultInformationalMetricPluginNameIfUnset) {
   AdaptiveLoadSessionSpec original_spec;
   (void)original_spec.mutable_informational_metric_specs()->Add();
   AdaptiveLoadSessionSpecProtoHelperImpl helper;
-  AdaptiveLoadSessionSpec spec = helper.SetDefaults(original_spec);
+  AdaptiveLoadSessionSpec spec = helper.SetSessionSpecDefaults(original_spec);
   ASSERT_GT(spec.informational_metric_specs_size(), 0);
   EXPECT_EQ(spec.informational_metric_specs(0).metrics_plugin_name(), "nighthawk.builtin");
 }
 
-TEST(SetDefaults, PreservesExplicitInformationalMetricPluginName) {
+TEST(SetSessionSpecDefaults, PreservesExplicitInformationalMetricPluginName) {
   const std::string kExpectedMetricsPluginName = "a";
   AdaptiveLoadSessionSpec original_spec;
   nighthawk::adaptive_load::MetricSpec* metric_spec =
       original_spec.mutable_informational_metric_specs()->Add();
   metric_spec->set_metrics_plugin_name(kExpectedMetricsPluginName);
   AdaptiveLoadSessionSpecProtoHelperImpl helper;
-  AdaptiveLoadSessionSpec spec = helper.SetDefaults(original_spec);
+  AdaptiveLoadSessionSpec spec = helper.SetSessionSpecDefaults(original_spec);
   ASSERT_GT(spec.informational_metric_specs_size(), 0);
   EXPECT_EQ(spec.informational_metric_specs(0).metrics_plugin_name(), kExpectedMetricsPluginName);
 }

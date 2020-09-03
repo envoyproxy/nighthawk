@@ -17,7 +17,7 @@
 namespace Nighthawk {
 
 nighthawk::adaptive_load::AdaptiveLoadSessionSpec
-AdaptiveLoadSessionSpecProtoHelperImpl::SetDefaults(
+AdaptiveLoadSessionSpecProtoHelperImpl::SetSessionSpecDefaults(
     nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec) {
   if (!spec.nighthawk_traffic_template().has_open_loop()) {
     spec.mutable_nighthawk_traffic_template()->mutable_open_loop()->set_value(true);

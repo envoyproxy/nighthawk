@@ -25,7 +25,7 @@ public:
    * @return Adaptive load session spec with default values inserted.
    */
   virtual nighthawk::adaptive_load::AdaptiveLoadSessionSpec
-  SetDefaults(nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec) PURE;
+  SetSessionSpecDefaults(nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec) PURE;
 
   /**
    * Checks whether a session spec is valid: No forbidden fields in Nighthawk traffic spec; no bad
