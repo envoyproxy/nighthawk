@@ -30,3 +30,16 @@ envoy_cc_test(
         "@envoy//test/integration:http_integration_lib",
     ],
 )
+
+envoy_cc_test(
+    name = "http_time_tracking_filter_integration_test",
+    srcs = ["http_time_tracking_filter_integration_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/server:http_time_tracking_filter_config",
+        "@envoy//include/envoy/upstream:cluster_manager_interface_with_external_headers",
+        "@envoy//source/common/api:api_lib_with_external_headers",
+        "@envoy//test/integration:http_integration_lib",
+        "@envoy//test/test_common:simulated_time_system_lib",
+    ],
+)

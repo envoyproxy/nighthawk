@@ -41,6 +41,16 @@ jobs:
       - store_artifacts:
           path: /root/project/generated
           destination: /
+  integration_test_coverage:
+    docker:
+      - image: *envoy-build-image
+    resource_class: xlarge
+    steps:
+      - checkout
+      - run: ci/do_ci.sh coverage_integration
+      - store_artifacts:
+          path: /root/project/generated
+          destination: /
   benchmark:
     docker:
       - image: *envoy-build-image
@@ -93,6 +103,7 @@ workflows:
       - test_gcc
       - clang_tidy
       - coverage
+      - integration_test_coverage
       - asan
       - tsan
       - benchmark

@@ -337,3 +337,15 @@ envoy_cc_test(
         "@envoy//test/test_common:utility_lib",
     ],
 )
+
+envoy_cc_test(
+    name = "stopwatch_test",
+    srcs = ["stopwatch_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/common:thread_safe_monotonic_time_stopwatch_lib",
+        "//test/common:fake_time_source",
+        "@envoy//test/test_common:simulated_time_system_lib",
+        "@envoy//test/test_common:utility_lib",
+    ],
+)

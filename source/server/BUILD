@@ -45,6 +45,21 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
+    name = "http_time_tracking_filter_lib",
+    srcs = ["http_time_tracking_filter.cc"],
+    hdrs = ["http_time_tracking_filter.h"],
+    repository = "@envoy",
+    deps = [
+        ":configuration_lib",
+        ":well_known_headers_lib",
+        "//api/server:response_options_proto_cc_proto",
+        "//source/common:thread_safe_monotonic_time_stopwatch_lib",
+        "@envoy//source/exe:envoy_common_lib_with_external_headers",
+        "@envoy//source/extensions/filters/http/common:pass_through_filter_lib_with_external_headers",
+    ],
+)
+
+envoy_cc_library(
     name = "http_dynamic_delay_filter_lib",
     srcs = ["http_dynamic_delay_filter.cc"],
     hdrs = ["http_dynamic_delay_filter.h"],
@@ -74,6 +89,16 @@ envoy_cc_library(
     repository = "@envoy",
     deps = [
         ":http_dynamic_delay_filter_lib",
+        "@envoy//include/envoy/server:filter_config_interface_with_external_headers",
+    ],
+)
+
+envoy_cc_library(
+    name = "http_time_tracking_filter_config",
+    srcs = ["http_time_tracking_filter_config.cc"],
+    repository = "@envoy",
+    deps = [
+        ":http_time_tracking_filter_lib",
         "@envoy//include/envoy/server:filter_config_interface_with_external_headers",
     ],
 )
