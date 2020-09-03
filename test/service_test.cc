@@ -116,7 +116,6 @@ public:
 class ServiceTestWithParameterizedConstructor : public ServiceTest {
 public:
   void SetUp() override {
-    Envoy::Thread::MutexBasicLockable log_lock_;
     auto logging_context = std::make_unique<Envoy::Logger::Context>(
         spdlog::level::info, "%L %n [%g:%#] %v", log_lock_, false);
     service_ = absl::make_unique<ServiceImpl>(std::move(logging_context));
@@ -130,6 +129,8 @@ public:
     setupGrpcClient();
     setBasicRequestOptions();
   }
+
+  Envoy::Thread::MutexBasicLockable log_lock_;
 };
 
 INSTANTIATE_TEST_SUITE_P(IpVersions, ServiceTestWithParameterizedConstructor,
