@@ -104,49 +104,29 @@ FileBasedRequestSourcePlugin::FileBasedRequestSourcePlugin(
     const nighthawk::request_source::FileBasedPluginRequestSourceConfig& config,
     Envoy::Api::Api& api)
     : RequestSourcePlugin{api}, uri_(config.uri()), file_path_(config.file_path()) {
-  //      Envoy::MessageUtil::loadFromJson()
-  // std::ifstream options_file(file_path_);
-  // if (options_file.is_open())
-  // {
-  //   std::cerr << "Opened file: " + file_path_;
-  // }
-  // // options_.ParseFromIstream(&options_file);
-  // std::stringstream file_string_stream;
-  // file_string_stream << options_file.rdbuf();
-  // std::string test_string = file_string_stream.str();
-  // Envoy::MessageUtil util;
-  // util.loadFromYaml(test_string, options_, Envoy::ProtobufMessage::getStrictValidationVisitor());
-  // for (const auto& option_header : options_.request_headers()) {
-  //   std::cerr << option_header.header().key() +":"+ option_header.header().value()+"\n";
-  // }
-  // options_file.close();
   Envoy::MessageUtil util;
-  std::string file_string = RequestSourcePlugin::api_.fileSystem().fileReadToEnd(file_path_);
-  util.loadFromYaml(file_string, optionses_, Envoy::ProtobufMessage::getStrictValidationVisitor());
+  // std::string file_string = RequestSourcePlugin::api_.fileSystem().fileReadToEnd(file_path_);
+  util.loadFromFile(file_path_, optionses_, Envoy::ProtobufMessage::getStrictValidationVisitor(), api_, true);
   iterator_ = optionses_.sub_options().begin();
-  std::cerr << "\n" + file_string + "\n";
+  // std::cerr << "\n" + file_string + "\n";
 }
 
 RequestGenerator FileBasedRequestSourcePlugin::get() {
-  // const google::protobuf::internal::RepeatedPtrIterator<const nighthawk::client::RequestOptions> option_iterator = optionses_.sub_options().begin();
   RequestGenerator request_generator = [this]() {
-    auto temp = *iterator_++;
-    // auto returned_request_impl =
-    // std::make_unique<RequestImpl>(std::move(options_.request_headers()));
+    nighthawk::client::RequestOptions request_option = *iterator_++;
     Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
     header->setPath(uri_.path());
     header->setHost(uri_.hostAndPort());
     header->setScheme(uri_.scheme() == "https" ? Envoy::Http::Headers::get().SchemeValues.Https
                                                : Envoy::Http::Headers::get().SchemeValues.Http);
-    header->setMethod(envoy::config::core::v3::RequestMethod_Name(temp.request_method()));
-    const uint32_t content_length = temp.request_body_size().value();
+    header->setMethod(envoy::config::core::v3::RequestMethod_Name(request_option.request_method()));
+    const uint32_t content_length = request_option.request_body_size().value();
     if (content_length > 0) {
       header->setContentLength(content_length);
     }
-    for (const auto& option_header : temp.request_headers()) {
+    for (const auto& option_header : request_option.request_headers()) {
         auto lower_case_key = Envoy::Http::LowerCaseString(std::string(option_header.header().key()));
         header->remove(lower_case_key);
-        // TODO(oschaaf): we've performed zero validation on the header key/value.
         header->addCopy(lower_case_key, std::string(option_header.header().value()));
     }
     auto returned_request_impl = std::make_unique<RequestImpl>(std::move(header));
@@ -156,11 +136,6 @@ RequestGenerator FileBasedRequestSourcePlugin::get() {
 }
 
 void FileBasedRequestSourcePlugin::initOnThread() {
-  // options_.set_request_method(::envoy::config::core::v3::RequestMethod::GET);
-  // auto request_headers = options_.add_request_headers();
-  // request_headers->mutable_header()->set_key("foo");
-  // request_headers->mutable_header()->set_value("bar");
-  // options_.set_allocated_request_body_size(0);
 }
 
 } // namespace Nighthawk
