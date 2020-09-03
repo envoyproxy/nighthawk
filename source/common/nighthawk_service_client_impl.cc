@@ -18,7 +18,7 @@ NighthawkServiceClientImpl::PerformNighthawkBenchmark(
       stream(nighthawk_service_stub->ExecutionStream(&context));
 
   if (!stream->Write(request)) {
-    return absl::InternalError("Failed to write request to the Nighthawk Service gRPC channel.");
+    return absl::UnavailableError("Failed to write request to the Nighthawk Service gRPC channel.");
   } else if (!stream->WritesDone()) {
     return absl::InternalError("WritesDone() failed on the Nighthawk Service gRPC channel.");
   }

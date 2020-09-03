@@ -123,7 +123,7 @@ TEST(PerformNighthawkBenchmark, ReturnsErrorIfNighthawkServiceWriteFails) {
   absl::StatusOr<ExecutionResponse> response_or =
       client.PerformNighthawkBenchmark(&mock_nighthawk_service_stub, CommandLineOptions());
   ASSERT_FALSE(response_or.ok());
-  EXPECT_EQ(response_or.status().code(), absl::StatusCode::kInternal);
+  EXPECT_EQ(response_or.status().code(), absl::StatusCode::kUnavailable);
   EXPECT_THAT(response_or.status().message(), HasSubstr("Failed to write"));
 }
 
