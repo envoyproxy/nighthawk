@@ -123,13 +123,14 @@ FileBasedRequestSourcePlugin::FileBasedRequestSourcePlugin(
   Envoy::MessageUtil util;
   std::string file_string = RequestSourcePlugin::api_.fileSystem().fileReadToEnd(file_path_);
   util.loadFromYaml(file_string, optionses_, Envoy::ProtobufMessage::getStrictValidationVisitor());
+  iterator_ = optionses_.sub_options().begin();
   std::cerr << "\n" + file_string + "\n";
 }
 
 RequestGenerator FileBasedRequestSourcePlugin::get() {
-  auto iterator = optionses_.sub_options().begin();
-  RequestGenerator request_generator = [this, &iterator]() {
-    auto temp = *iterator++;
+  // const google::protobuf::internal::RepeatedPtrIterator<const nighthawk::client::RequestOptions> option_iterator = optionses_.sub_options().begin();
+  RequestGenerator request_generator = [this]() {
+    auto temp = *iterator_++;
     // auto returned_request_impl =
     // std::make_unique<RequestImpl>(std::move(options_.request_headers()));
     Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
@@ -142,12 +143,18 @@ RequestGenerator FileBasedRequestSourcePlugin::get() {
     if (content_length > 0) {
       header->setContentLength(content_length);
     }
-
+    for (const auto& option_header : temp.request_headers()) {
+        auto lower_case_key = Envoy::Http::LowerCaseString(std::string(option_header.header().key()));
+        header->remove(lower_case_key);
+        // TODO(oschaaf): we've performed zero validation on the header key/value.
+        header->addCopy(lower_case_key, std::string(option_header.header().value()));
+    }
     auto returned_request_impl = std::make_unique<RequestImpl>(std::move(header));
     return returned_request_impl;
   };
   return request_generator;
 }
+
 void FileBasedRequestSourcePlugin::initOnThread() {
   // options_.set_request_method(::envoy::config::core::v3::RequestMethod::GET);
   // auto request_headers = options_.add_request_headers();

@@ -96,6 +96,7 @@ private:
   const std::string file_path_;
   nighthawk::client::RequestOptions options_;
   nighthawk::client::RequestOptionses optionses_;
+  google::protobuf::internal::RepeatedPtrIterator<const nighthawk::client::RequestOptions> iterator_;
 };
 
 /**

@@ -83,7 +83,7 @@ public:
   }
   TEST_F(FileBasedRequestSourcePluginTest,
        CreateRequestSourcePluginCreatesCorrectPluginType) {
-    nighthawk::request_source::FileBasedPluginRequestSourceConfig config;
+    nighthawk::request_source::FileBasedPluginRequestSourceConfig config = MakeFileBasedPluginConfigWithTestYaml(TestEnvironment::runfilesPath("test/request_source/test_data/test-config.yaml"));
     Envoy::ProtobufWkt::Any config_any;
     config_any.PackFrom(config);
     auto& config_factory =
@@ -99,8 +99,13 @@ public:
             TestEnvironment::runfilesPath("test/request_source/test_data/test-config.yaml"));
     FileBasedRequestSourcePlugin file_based_request_source(config,
                                                            *api_);
-    // auto generator = file_based_request_source.get();
-    // auto request = generator();
+    auto generator = file_based_request_source.get();
+    auto request = generator();
+    auto request2 = generator();
+    auto header = request -> header();
+    auto header2 = request2 -> header();
+    EXPECT_EQ ( header->getPathValue(), "/a");
+    EXPECT_EQ ( header2->getPathValue(), "/b"); 
   }
 } // namespace
 } // namespace Nighthawk
