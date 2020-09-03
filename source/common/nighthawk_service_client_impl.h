@@ -1,4 +1,4 @@
-#include "nighthawk/adaptive_load/nighthawk_service_client.h"
+#include "nighthawk/common/nighthawk_service_client.h"
 
 #include "external/envoy/source/common/common/statusor.h"
 #include "external/envoy/source/common/protobuf/protobuf.h"
@@ -12,8 +12,7 @@ class NighthawkServiceClientImpl : public NighthawkServiceClient {
 public:
   absl::StatusOr<nighthawk::client::ExecutionResponse> PerformNighthawkBenchmark(
       nighthawk::client::NighthawkService::StubInterface* nighthawk_service_stub,
-      const nighthawk::client::CommandLineOptions& command_line_options,
-      const Envoy::Protobuf::Duration& duration) override;
+      const nighthawk::client::CommandLineOptions& command_line_options) override;
 };
 
 } // namespace Nighthawk

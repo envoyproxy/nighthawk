@@ -1,4 +1,4 @@
-#include "adaptive_load/nighthawk_service_client_impl.h"
+#include "common/nighthawk_service_client_impl.h"
 
 #include "external/envoy/source/common/common/assert.h"
 
@@ -7,14 +7,10 @@ namespace Nighthawk {
 absl::StatusOr<nighthawk::client::ExecutionResponse>
 NighthawkServiceClientImpl::PerformNighthawkBenchmark(
     nighthawk::client::NighthawkService::StubInterface* nighthawk_service_stub,
-    const nighthawk::client::CommandLineOptions& command_line_options,
-    const Envoy::Protobuf::Duration& duration) {
-  nighthawk::client::CommandLineOptions options = command_line_options;
-  *options.mutable_duration() = duration;
-
+    const nighthawk::client::CommandLineOptions& command_line_options) {
   nighthawk::client::ExecutionRequest request;
   nighthawk::client::ExecutionResponse response;
-  *request.mutable_start_request()->mutable_options() = options;
+  *request.mutable_start_request()->mutable_options() = command_line_options;
 
   ::grpc::ClientContext context;
   std::shared_ptr<::grpc::ClientReaderWriterInterface<nighthawk::client::ExecutionRequest,

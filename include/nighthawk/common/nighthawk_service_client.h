@@ -31,8 +31,7 @@ public:
    */
   virtual absl::StatusOr<nighthawk::client::ExecutionResponse> PerformNighthawkBenchmark(
       nighthawk::client::NighthawkService::StubInterface* nighthawk_service_stub,
-      const nighthawk::client::CommandLineOptions& command_line_options,
-      const Envoy::Protobuf::Duration& duration) PURE;
+      const nighthawk::client::CommandLineOptions& command_line_options) PURE;
 };
 
 } // namespace Nighthawk
