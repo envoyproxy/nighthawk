@@ -156,7 +156,7 @@ bool BenchmarkClientHttpImpl::tryStartRequest(CompletionCallback caller_completi
   if (content_length_header != nullptr) {
     auto s_content_length = content_length_header->value().getStringView();
     if (!absl::SimpleAtoi(s_content_length, &content_length)) {
-      ENVOY_LOG(error, "Ignoring bad content length of {}", s_content_length);
+      ENVOY_LOG_EVERY_POW_2(error, "Ignoring bad content length of {}", s_content_length);
       content_length = 0;
     }
   }

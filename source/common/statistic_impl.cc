@@ -180,7 +180,7 @@ void HdrStatistic::addValue(uint64_t value) {
   // Failure to record a value can happen when it exceeds the configured minimum
   // or maximum value we passed when initializing histogram_.
   if (!hdr_record_value(histogram_, value)) {
-    ENVOY_LOG(warn, "Failed to record value into HdrHistogram.");
+    ENVOY_LOG_EVERY_POW_2(warn, "Failed to record value into HdrHistogram.");
   } else {
     StatisticImpl::addValue(value);
   }
