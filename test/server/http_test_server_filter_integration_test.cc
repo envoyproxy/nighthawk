@@ -312,9 +312,10 @@ TEST_F(HttpTestServerDecoderFilterTest, HeaderMerge) {
   Server::HttpTestServerDecoderFilterConfigSharedPtr config =
       std::make_shared<Server::HttpTestServerDecoderFilterConfig>(initial_options);
   Server::HttpTestServerDecoderFilter f(config);
-  std::string error_message;
-  nighthawk::server::ResponseOptions options = config->server_config();
 
+  Server::EffectiveFilterConfiguration options_or = config->getEffectiveConfiguration();
+  ASSERT_TRUE(options_or.ok());
+  nighthawk::server::ResponseOptions options = *options_or.value();
   EXPECT_EQ(1, options.response_headers_size());
 
   EXPECT_EQ("foo", options.response_headers(0).header().key());
@@ -326,6 +327,7 @@ TEST_F(HttpTestServerDecoderFilterTest, HeaderMerge) {
   EXPECT_TRUE(Envoy::TestUtility::headerMapEqualIgnoreOrder(
       header_map, Envoy::Http::TestResponseHeaderMapImpl{{":status", "200"}, {"foo", "bar1"}}));
 
+  std::string error_message;
   EXPECT_TRUE(Server::Configuration::mergeJsonConfig(
       R"({response_headers: [ { header: { key: "foo", value: "bar2"}, append: false } ]})", options,
       error_message));

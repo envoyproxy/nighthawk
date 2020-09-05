@@ -414,8 +414,11 @@ def test_cli_output_format(http_test_server_fixture):
   asserts.assertIn("Percentile", output)
 
 
-def test_request_body_gets_transmitted(http_test_server_fixture):
-  """Test request body transmission.
+@pytest.mark.parametrize(
+    'filter_configs',
+    ["{}", "{static_delay: \"0.01s\"}", "{emit_previous_request_delta_in_response_header: \"aa\"}"])
+def test_request_body_gets_transmitted(http_test_server_fixture, filter_configs):
+  """Test request body transmission with.
 
   Ensure that the number of bytes we request for the request body gets reflected in the upstream
   connection transmitted bytes counter for h1 and h2.
@@ -434,13 +437,17 @@ def test_request_body_gets_transmitted(http_test_server_fixture):
         expected_received_bytes)
 
   upload_bytes = 1024 * 1024 * 3
+  # TODO(XXX): The dynamic-delay extension hangs unless we lower the request entity body size.
+  if "static_delay" in filter_configs:
+    upload_bytes = int(upload_bytes / 3)
   requests = 10
   args = [
       http_test_server_fixture.getTestServerRootUri(), "--duration", "100", "--rps", "100",
       "--request-body-size",
       str(upload_bytes), "--termination-predicate",
       "benchmark.http_2xx:%s" % str(requests), "--connections", "1", "--request-method", "POST",
-      "--max-active-requests", "1"
+      "--max-active-requests", "1", "--request-header",
+      "x-nighthawk-test-server-config:%s" % filter_configs
   ]
   # Test we transmit the expected amount of bytes with H1
   parsed_json, _ = http_test_server_fixture.runNighthawkClient(args)

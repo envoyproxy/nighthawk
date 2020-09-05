@@ -9,6 +9,8 @@
 
 #include "api/server/response_options.pb.h"
 
+#include "server/http_filter_config_base.h"
+
 namespace Nighthawk {
 namespace Server {
 
@@ -17,7 +19,7 @@ namespace Server {
  * Instances of this class will be shared accross instances of HttpDynamicDelayDecoderFilter.
  * The methods for getting and manipulating (global) active filter instance counts are thread safe.
  */
-class HttpDynamicDelayDecoderFilterConfig {
+class HttpDynamicDelayDecoderFilterConfig : public FilterConfigurationBase {
 
 public:
   /**
@@ -35,13 +37,6 @@ public:
                                       Envoy::Runtime::Loader& runtime,
                                       const std::string& stats_prefix, Envoy::Stats::Scope& scope,
                                       Envoy::TimeSource& time_source);
-
-  /**
-   * @return const nighthawk::server::ResponseOptions& read-only reference to the proto config
-   * object.
-   */
-  const nighthawk::server::ResponseOptions& server_config() const { return server_config_; }
-
   /**
    * Increments the number of globally active filter instances.
    */
@@ -79,7 +74,6 @@ public:
   std::string stats_prefix() { return stats_prefix_; }
 
 private:
-  const nighthawk::server::ResponseOptions server_config_;
   static std::atomic<uint64_t>& instances() {
     // We lazy-init the atomic to avoid static initialization / a fiasco.
     MUTABLE_CONSTRUCT_ON_FIRST_USE(std::atomic<uint64_t>, 0); // NOLINT
@@ -112,20 +106,8 @@ public:
 
   // Http::StreamDecoderFilter
   Envoy::Http::FilterHeadersStatus decodeHeaders(Envoy::Http::RequestHeaderMap&, bool) override;
+  Envoy::Http::FilterDataStatus decodeData(Envoy::Buffer::Instance&, bool) override;
   void setDecoderFilterCallbacks(Envoy::Http::StreamDecoderFilterCallbacks&) override;
-
-  /**
-   * Compute the response options based on the static configuration and optional configuration
-   * provided via the request headers. After a successfull call the response_options_ field will
-   * have been modified to reflect request-level configuration.
-   *
-   * @param request_headers The request headers set to inspect for configuration.
-   * @param error_message Set to an error message if the request-level configuration couldn't be
-   * interpreted.
-   * @return true iff the configuration was successfully computed.
-   */
-  bool computeResponseOptions(const Envoy::Http::RequestHeaderMap& request_headers,
-                              std::string& error_message);
 
   /**
    * Compute the concurrency based linear delay in milliseconds.
@@ -179,7 +161,6 @@ public:
 private:
   const HttpDynamicDelayDecoderFilterConfigSharedPtr config_;
   Envoy::Http::StreamDecoderFilterCallbacks* decoder_callbacks_;
-  nighthawk::server::ResponseOptions response_options_;
   bool destroyed_{false};
 };
 
