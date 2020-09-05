@@ -4,6 +4,10 @@ set -eo pipefail
 set +x
 set -u
 
+if [ $# -eq 0 ]; then
+    set -- "help"
+fi
+
 export BUILDIFIER_BIN="${BUILDIFIER_BIN:=/usr/local/bin/buildifier}"
 export BUILDOZER_BIN="${BUILDOZER_BIN:=/usr/local/bin/buildozer}"
 export NUM_CPUS=${NUM_CPUS:=$(grep -c ^processor /proc/cpuinfo)}
@@ -34,7 +38,7 @@ function do_clang_tidy() {
 
 function do_unit_test_coverage() {
     export TEST_TARGETS="//test/... -//test:python_test"
-    export COVERAGE_THRESHOLD=92.3
+    export COVERAGE_THRESHOLD=93.2
     echo "bazel coverage build with tests ${TEST_TARGETS}"
     test/run_nighthawk_bazel_coverage.sh ${TEST_TARGETS}
     exit 0
@@ -42,7 +46,7 @@ function do_unit_test_coverage() {
 
 function do_integration_test_coverage() {
     export TEST_TARGETS="//test:python_test"
-    export COVERAGE_THRESHOLD=78.2
+    export COVERAGE_THRESHOLD=78.1
     echo "bazel coverage build with tests ${TEST_TARGETS}"
     test/run_nighthawk_bazel_coverage.sh ${TEST_TARGETS}
     exit 0
@@ -185,10 +189,9 @@ if [ -n "$CIRCLECI" ]; then
     if [[ "$1" == "test_gcc" ]]; then
         NUM_CPUS=4
     fi
+    echo "Running with ${NUM_CPUS} cpus"
+    BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} --jobs=${NUM_CPUS}"
 fi
-
-echo "Running with ${NUM_CPUS} cpus"
-BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} --jobs=${NUM_CPUS}"
 
 export BAZEL_TEST_OPTIONS="${BAZEL_BUILD_OPTIONS} --test_env=HOME --test_env=PYTHONUSERBASE \
 --test_env=UBSAN_OPTIONS=print_stacktrace=1 \
