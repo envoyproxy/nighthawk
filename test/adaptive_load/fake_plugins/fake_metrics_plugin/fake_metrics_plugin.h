@@ -50,4 +50,16 @@ public:
 // This factory is activated through LoadMetricsPlugin in plugin_util.h.
 DECLARE_FACTORY(FakeMetricsPluginConfigFactory);
 
+/**
+ * Creates a TypedExtensionConfig that activates a FakeMetricsPlugin by name with the given config
+ * proto.
+ *
+ * @param config The plugin-specific config proto to be packed into the typed_config Any.
+ *
+ * @return TypedExtensionConfig A proto that activates a FakeMetricsPlugin by name with a bundled
+ * config proto.
+ */
+envoy::config::core::v3::TypedExtensionConfig MakeFakeMetricsPluginTypedExtensionConfig(
+    const nighthawk::adaptive_load::FakeMetricsPluginConfig& config);
+
 } // namespace Nighthawk
