@@ -130,6 +130,7 @@ public:
     setBasicRequestOptions();
   }
 
+private:
   Envoy::Thread::MutexBasicLockable log_lock_;
 };
 
@@ -137,17 +138,19 @@ INSTANTIATE_TEST_SUITE_P(IpVersions, ServiceTestWithParameterizedConstructor,
                          ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()),
                          Envoy::TestUtility::ipTestParamsToString);
 
-// Test single NH run with parameterized constructor
-TEST_P(ServiceTestWithParameterizedConstructor, BasicWithUserSpecifiedLoggingContext) {
-  auto r = stub_->ExecutionStream(&context_);
-  r->Write(request_, {});
-  r->WritesDone();
-  EXPECT_TRUE(r->Read(&response_));
+TEST_P(ServiceTestWithParameterizedConstructor,
+       ConstructorWithLoggingContextParameterCanRespondToRequests) {
+  std::unique_ptr<::grpc::ClientReaderWriter<::nighthawk::client::ExecutionRequest,
+                                             ::nighthawk::client::ExecutionResponse>>
+      request = stub_->ExecutionStream(&context_);
+  request->Write(request_, {});
+  request->WritesDone();
+  EXPECT_TRUE(request->Read(&response_));
   ASSERT_TRUE(response_.has_error_detail());
   EXPECT_THAT(response_.error_detail().message(), HasSubstr(std::string("Unknown failure")));
   EXPECT_TRUE(response_.has_output());
   EXPECT_GE(response_.output().results(0).counters().size(), 8);
-  auto status = r->Finish();
+  ::grpc::Status status = request->Finish();
   EXPECT_TRUE(status.ok());
 }
 
