@@ -192,6 +192,15 @@ TEST_F(MediumOutputCollectorTest, FortioFormatter) {
                         "test/test_data/output_formatter.medium.fortio.gold");
 }
 
+TEST_F(MediumOutputCollectorTest, FortioFormatter0sJitterUniformGetsReflected) {
+  nighthawk::client::Output input_proto =
+      loadProtoFromFile("test/test_data/output_formatter.medium.proto.gold");
+  FortioOutputFormatterImpl formatter;
+  input_proto.mutable_options()->mutable_jitter_uniform()->set_nanos(0);
+  input_proto.mutable_options()->mutable_jitter_uniform()->set_seconds(0);
+  EXPECT_NE(formatter.formatProto(input_proto).find(" \"Jitter\": false,"), std::string::npos);
+}
+
 TEST_F(MediumOutputCollectorTest, ConsoleOutputFormatter) {
   const auto input_proto = loadProtoFromFile("test/test_data/percentile-column-overflow.json");
   ConsoleOutputFormatterImpl formatter;
