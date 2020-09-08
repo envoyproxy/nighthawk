@@ -46,18 +46,16 @@ public:
                  const nighthawk::adaptive_load::ThresholdSpec* threshold_spec) const PURE;
 
   /**
-   * Extracts metric descriptors and corresponding thresholds from a top-level adaptive load session
-   * spec to an ordered list and a map. Allows for uniform treatment of scored and informational
-   * metrics.
+   * Extracts pointers to metric descriptors and corresponding thresholds from a top-level adaptive
+   * load session spec to an ordered list and a map. Allows for uniform treatment of scored and
+   * informational metrics.
    *
    * @param spec The adaptive load session spec.
-   * @return std::pair: First: List of extracted MetricSpecs in order of definition. Second: Map:
-   * Key: A MetricSpec from the list; Value: Corresponding threshold for a scored metric, nullptr
-   * for an informational metric.
+   * @return Vector of pairs of pointers to MetricSpec and ThresholdSpec within |spec|. For
+   * informational metrics, the ThresholdSpec pointer is nullptr.
    */
-  virtual const std::pair<const std::vector<const nighthawk::adaptive_load::MetricSpec*>,
-                          const absl::flat_hash_map<const nighthawk::adaptive_load::MetricSpec*,
-                                                    const nighthawk::adaptive_load::ThresholdSpec*>>
+  virtual const std::vector<std::pair<const nighthawk::adaptive_load::MetricSpec*,
+                                      const nighthawk::adaptive_load::ThresholdSpec*>>
   ExtractMetricSpecs(const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec) const PURE;
 
   /**

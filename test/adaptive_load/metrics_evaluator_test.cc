@@ -215,20 +215,15 @@ TEST(ExtractMetricSpecs, ExtractsScoredMetricAndThresholdForValidMetric) {
   *metric_threshold->mutable_threshold_spec() = threshold_spec;
 
   MetricsEvaluatorImpl evaluator;
-  auto spec_list_map = evaluator.ExtractMetricSpecs(spec);
+  const std::vector<std::pair<const nighthawk::adaptive_load::MetricSpec*,
+                              const nighthawk::adaptive_load::ThresholdSpec*>>
+      spec_threshold_pairs = evaluator.ExtractMetricSpecs(spec);
 
-  std::vector<const nighthawk::adaptive_load::MetricSpec*> metric_specs = spec_list_map.first;
-  absl::flat_hash_map<const nighthawk::adaptive_load::MetricSpec*,
-                      const nighthawk::adaptive_load::ThresholdSpec*>
-      threshold_spec_from_metric_spec = spec_list_map.second;
-
-  ASSERT_GT(metric_specs.size(), 0);
-  EXPECT_EQ(metric_specs[0]->metric_name(), kExpectedMetricName);
-  ASSERT_NE(threshold_spec_from_metric_spec[metric_specs[0]], nullptr);
-  EXPECT_TRUE(MessageDifferencer::Equivalent(*threshold_spec_from_metric_spec[metric_specs[0]],
-                                             threshold_spec));
-  EXPECT_EQ(threshold_spec_from_metric_spec[metric_specs[0]]->DebugString(),
-            threshold_spec.DebugString());
+  ASSERT_GT(spec_threshold_pairs.size(), 0);
+  EXPECT_EQ(spec_threshold_pairs[0].first->metric_name(), kExpectedMetricName);
+  ASSERT_NE(spec_threshold_pairs[0].second, nullptr);
+  EXPECT_TRUE(MessageDifferencer::Equivalent(*spec_threshold_pairs[0].second, threshold_spec));
+  EXPECT_EQ(spec_threshold_pairs[0].second->DebugString(), threshold_spec.DebugString());
 }
 
 TEST(ExtractMetricSpecs, ExtractsValueForValidInformationalMetric) {
@@ -239,16 +234,13 @@ TEST(ExtractMetricSpecs, ExtractsValueForValidInformationalMetric) {
   metric_spec->set_metric_name(kExpectedMetricName);
 
   MetricsEvaluatorImpl evaluator;
-  auto spec_list_map = evaluator.ExtractMetricSpecs(spec);
+  const std::vector<std::pair<const nighthawk::adaptive_load::MetricSpec*,
+                              const nighthawk::adaptive_load::ThresholdSpec*>>
+      spec_threshold_pairs = evaluator.ExtractMetricSpecs(spec);
 
-  std::vector<const nighthawk::adaptive_load::MetricSpec*> metric_specs = spec_list_map.first;
-  absl::flat_hash_map<const nighthawk::adaptive_load::MetricSpec*,
-                      const nighthawk::adaptive_load::ThresholdSpec*>
-      threshold_spec_from_metric_spec = spec_list_map.second;
-
-  ASSERT_GT(metric_specs.size(), 0);
-  EXPECT_EQ(metric_specs[0]->metric_name(), kExpectedMetricName);
-  EXPECT_EQ(threshold_spec_from_metric_spec[metric_specs[0]], nullptr);
+  ASSERT_GT(spec_threshold_pairs.size(), 0);
+  EXPECT_EQ(spec_threshold_pairs[0].first->metric_name(), kExpectedMetricName);
+  EXPECT_EQ(spec_threshold_pairs[0].second, nullptr);
 }
 
 TEST(AnalyzeNighthawkBenchmark, PropagatesNighthawkServiceError) {

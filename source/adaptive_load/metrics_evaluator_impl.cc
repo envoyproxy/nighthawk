@@ -50,22 +50,18 @@ MetricsEvaluatorImpl::EvaluateMetric(const MetricSpec& metric_spec, MetricsPlugi
   return evaluation;
 }
 
-const std::pair<const std::vector<const MetricSpec*>,
-                const absl::flat_hash_map<const MetricSpec*, const ThresholdSpec*>>
+const std::vector<std::pair<const MetricSpec*, const ThresholdSpec*>>
 MetricsEvaluatorImpl::ExtractMetricSpecs(
     const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec) const {
-  std::vector<const MetricSpec*> metric_specs;
-  absl::flat_hash_map<const MetricSpec*, const ThresholdSpec*> threshold_spec_from_metric_spec;
+  std::vector<std::pair<const MetricSpec*, const ThresholdSpec*>> spec_threshold_pairs;
   for (const MetricSpecWithThreshold& metric_threshold : spec.metric_thresholds()) {
-    metric_specs.push_back(&metric_threshold.metric_spec());
-    threshold_spec_from_metric_spec[&metric_threshold.metric_spec()] =
-        &metric_threshold.threshold_spec();
+    spec_threshold_pairs.emplace_back(&metric_threshold.metric_spec(),
+                                      &metric_threshold.threshold_spec());
   }
   for (const MetricSpec& metric_spec : spec.informational_metric_specs()) {
-    metric_specs.push_back(&metric_spec);
-    threshold_spec_from_metric_spec[&metric_spec] = nullptr;
+    spec_threshold_pairs.emplace_back(&metric_spec, nullptr);
   }
-  return {metric_specs, threshold_spec_from_metric_spec};
+  return spec_threshold_pairs;
 }
 
 absl::StatusOr<nighthawk::adaptive_load::BenchmarkResult>
@@ -92,20 +88,16 @@ MetricsEvaluatorImpl::AnalyzeNighthawkBenchmark(
       std::make_unique<NighthawkStatsEmulatedMetricsPlugin>(nighthawk_response.output());
   name_to_plugin_map["nighthawk.builtin"] = builtin_plugin.get();
 
-  std::pair<std::vector<const MetricSpec*>,
-            absl::flat_hash_map<const MetricSpec*, const ThresholdSpec*>>
-      metric_spec_list_map = ExtractMetricSpecs(spec);
-  // MetricSpecs in original order of definition.
-  std::vector<const MetricSpec*> metric_specs = metric_spec_list_map.first;
-  // Pointer to the corresponding ThresholdSpec, or nullptr for informational metrics.
-  absl::flat_hash_map<const MetricSpec*, const ThresholdSpec*> threshold_spec_from_metric_spec =
-      metric_spec_list_map.second;
+  const std::vector<std::pair<const MetricSpec*, const ThresholdSpec*>> spec_threshold_pairs =
+      ExtractMetricSpecs(spec);
 
   std::vector<std::string> errors;
-  for (const MetricSpec* metric_spec : metric_specs) {
+  for (const std::pair<const MetricSpec*, const ThresholdSpec*>& spec_threshold_pair :
+       spec_threshold_pairs) {
     absl::StatusOr<nighthawk::adaptive_load::MetricEvaluation> evaluation_or =
-        EvaluateMetric(*metric_spec, *name_to_plugin_map[metric_spec->metrics_plugin_name()],
-                       threshold_spec_from_metric_spec[metric_spec]);
+        EvaluateMetric(*spec_threshold_pair.first,
+                       *name_to_plugin_map[spec_threshold_pair.first->metrics_plugin_name()],
+                       spec_threshold_pair.second);
     if (!evaluation_or.ok()) {
       errors.emplace_back(absl::StrCat("Error evaluating metric: ", evaluation_or.status().code(),
                                        ": ", evaluation_or.status().message()));
