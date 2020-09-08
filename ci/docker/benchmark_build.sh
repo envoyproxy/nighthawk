@@ -11,9 +11,11 @@ set -e
 
 DOCKER_NAME="nighthawk-benchmark"
 DOCKER_IMAGE_PREFIX="envoyproxy/${DOCKER_NAME}"
+DOCKER_IMAGE_TAG=${BENCHMARK_IMAGE_TAG:-latest}
+
 WORKSPACE="$(bazel info workspace)"
 BAZEL_BIN="$(bazel info -c opt bazel-bin)"
-TMP_DIR="${WORKSPACE}/tmp-docker-build-context"
+TMP_DIR="$(mktemp -d ${WORKSPACE}/tmp-docker-build-context-XXXXXXXX)"
 
 [ -d "${TMP_DIR}"  ] && rm -rf "${TMP_DIR}"
 
@@ -23,6 +25,6 @@ cp -rL "${BAZEL_BIN}/benchmarks" "${TMP_DIR}"
 
 cd "${TMP_DIR}"
 echo "running docker build ... "
-docker build -f "${TMP_DIR}/Dockerfile-${DOCKER_NAME}" -t "${DOCKER_IMAGE_PREFIX}-dev:latest" .
+docker build -f "${TMP_DIR}/Dockerfile-${DOCKER_NAME}" -t "${DOCKER_IMAGE_PREFIX}-dev:${DOCKER_IMAGE_TAG}" .
 rm -rf "${TMP_DIR}"
 echo "docker build finished"
