@@ -12,8 +12,6 @@
 #include "adaptive_load/metrics_plugin_impl.h"
 #include "adaptive_load/plugin_loader.h"
 
-// #include "api/adaptive_load/step_controller_impl.pb.h"
-
 namespace Nighthawk {
 
 nighthawk::adaptive_load::AdaptiveLoadSessionSpec
