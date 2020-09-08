@@ -28,8 +28,7 @@ void StreamDecoder::decodeHeaders(Envoy::Http::ResponseHeaderMapPtr&& headers, b
     if (absl::SimpleAtoi(timing_value, &origin_delta) && origin_delta >= 0) {
       origin_latency_statistic_.addValue(origin_delta);
     } else {
-      // TODO(#484): avoid high frequency logging.
-      ENVOY_LOG(warn, "Bad origin delta: '{}'.", timing_value);
+      ENVOY_LOG_EVERY_POW_2(warn, "Bad origin delta: '{}'.", timing_value);
     }
   }
 
@@ -69,7 +68,7 @@ void StreamDecoder::onComplete(bool success) {
           stream_info_.response_code_.value(),
           (time_source_.monotonicTime() - request_start_).count());
     } else {
-      ENVOY_LOG(warn, "response_code is not available in onComplete");
+      ENVOY_LOG_EVERY_POW_2(warn, "response_code is not available in onComplete");
     }
   }
   upstream_timing_.onLastUpstreamRxByteReceived(time_source_);
