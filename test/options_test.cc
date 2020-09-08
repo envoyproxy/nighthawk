@@ -509,11 +509,11 @@ TEST_F(OptionsImplTest, JitterValueRangeTest) {
   EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{} --jitter-uniform -1s {}",
                                                                      client_name_, good_test_uri_)),
                           MalformedArgvException, "--jitter-uniform is out of range");
-  // No 0 duration accepted
-  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{} --jitter-uniform 0s {}",
-                                                                     client_name_, good_test_uri_)),
-                          MalformedArgvException, "--jitter-uniform is out of range");
-  // No durations >= 1s are accepted
+  // Durations >= 0s are accepted
+  EXPECT_NO_THROW(TestUtility::createOptionsImpl(
+      fmt::format("{} --jitter-uniform 0s {}", client_name_, good_test_uri_)));
+  EXPECT_NO_THROW(TestUtility::createOptionsImpl(
+      fmt::format("{} --jitter-uniform 0.1s {}", client_name_, good_test_uri_)));
   EXPECT_NO_THROW(TestUtility::createOptionsImpl(
       fmt::format("{} --jitter-uniform 1s {}", client_name_, good_test_uri_)));
   EXPECT_NO_THROW(TestUtility::createOptionsImpl(
