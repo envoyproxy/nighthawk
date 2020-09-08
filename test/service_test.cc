@@ -21,6 +21,9 @@ namespace Nighthawk {
 namespace Client {
 namespace {
 
+using nighthawk::client::ExecutionRequest;
+using nighthawk::client::ExecutionResponse;
+
 class ServiceTest : public TestWithParam<Envoy::Network::Address::IpVersion> {
 public:
   void SetUp() override {
@@ -140,17 +143,16 @@ INSTANTIATE_TEST_SUITE_P(IpVersions, ServiceTestWithParameterizedConstructor,
 
 TEST_P(ServiceTestWithParameterizedConstructor,
        ConstructorWithLoggingContextParameterCanRespondToRequests) {
-  std::unique_ptr<::grpc::ClientReaderWriter<::nighthawk::client::ExecutionRequest,
-                                             ::nighthawk::client::ExecutionResponse>>
-      request = stub_->ExecutionStream(&context_);
-  request->Write(request_, {});
-  request->WritesDone();
-  EXPECT_TRUE(request->Read(&response_));
+  std::unique_ptr<::grpc::ClientReaderWriter<ExecutionRequest, ExecutionResponse>> stream =
+      stub_->ExecutionStream(&context_);
+  stream->Write(request_, {});
+  stream->WritesDone();
+  EXPECT_TRUE(stream->Read(&response_));
   ASSERT_TRUE(response_.has_error_detail());
   EXPECT_THAT(response_.error_detail().message(), HasSubstr(std::string("Unknown failure")));
   EXPECT_TRUE(response_.has_output());
   EXPECT_GE(response_.output().results(0).counters().size(), 8);
-  ::grpc::Status status = request->Finish();
+  ::grpc::Status status = stream->Finish();
   EXPECT_TRUE(status.ok());
 }
 
