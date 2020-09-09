@@ -19,8 +19,8 @@ void StreamDecoder::decodeHeaders(Envoy::Http::ResponseHeaderMapPtr&& headers, b
   response_header_sizes_statistic_.addValue(response_headers_->byteSize());
   const uint64_t response_code = Envoy::Http::Utility::getResponseStatus(*response_headers_);
   stream_info_.response_code_ = static_cast<uint32_t>(response_code);
-  if (!response_latency_header_name_.empty()) {
-    const auto timing_header_name = Envoy::Http::LowerCaseString(response_latency_header_name_);
+  if (!latency_response_header_name_.empty()) {
+    const auto timing_header_name = Envoy::Http::LowerCaseString(latency_response_header_name_);
     const Envoy::Http::HeaderEntry* timing_header = response_headers_->get(timing_header_name);
     if (timing_header != nullptr) {
       absl::string_view timing_value = timing_header->value().getStringView();

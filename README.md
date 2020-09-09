@@ -43,7 +43,7 @@ bazel build -c opt //:nighthawk
 ```
 USAGE:
 
-bazel-bin/nighthawk_client  [--response-latency-header-name <string>]
+bazel-bin/nighthawk_client  [--latency-response-header-name <string>]
 [--stats-flush-interval <uint32_t>]
 [--stats-sinks <string>] ...
 [--no-duration] [--simple-warmup]
@@ -81,7 +81,7 @@ format>
 
 Where:
 
---response-latency-header-name <string>
+--latency-response-header-name <string>
 Set an optional header name that will be returned in responses, whose
 values will be tracked in a latency histogram if set. Can be used in
 tandem with the test server's response option

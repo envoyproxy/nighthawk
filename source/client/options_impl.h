@@ -86,7 +86,7 @@ public:
   }
   uint32_t statsFlushInterval() const override { return stats_flush_interval_; }
   std::string responseHeaderWithLatencyInput() const override {
-    return response_latency_header_name_;
+    return latency_response_header_name_;
   };
 
 private:
@@ -141,7 +141,7 @@ private:
   bool no_duration_{false};
   std::vector<envoy::config::metrics::v3::StatsSink> stats_sinks_;
   uint32_t stats_flush_interval_{5};
-  std::string response_latency_header_name_;
+  std::string latency_response_header_name_;
 };
 
 } // namespace Client
