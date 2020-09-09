@@ -390,7 +390,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   if (jitter_uniform.isSet()) {
     Envoy::ProtobufWkt::Duration duration;
     if (Envoy::Protobuf::util::TimeUtil::FromString(jitter_uniform.getValue(), &duration)) {
-      if (duration.nanos() > 0 || duration.seconds() > 0) {
+      if (duration.nanos() >= 0 && duration.seconds() >= 0) {
         jitter_uniform_ = std::chrono::nanoseconds(
             Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(duration));
       } else {

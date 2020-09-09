@@ -180,7 +180,7 @@ message CommandLineOptions {
   google.protobuf.BoolValue open_loop = 21;
   // Add uniformly distributed absolute request-release timing jitter. For example, to add 10 us of
   // jitter, specify .00001s. Default is empty / no uniform jitter.
-  google.protobuf.Duration jitter_uniform = 25 [(validate.rules).duration.gte.nanos = 1];
+  google.protobuf.Duration jitter_uniform = 25 [(validate.rules).duration.gte.nanos = 0];
   // Nighthawk service uri for running CLI in remote host mode. Example: grpc://localhost:8843/.
   // Default is empty.
   // NOTE: not relevant to gRPC service
