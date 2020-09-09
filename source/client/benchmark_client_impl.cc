@@ -60,7 +60,7 @@ Http1PoolImpl::newStream(Envoy::Http::ResponseDecoder& response_decoder,
       // We cannot rely on ::tryCreateConnection here, because that might decline without
       // updating connections().canCreate() above. We would risk an infinite loop.
       Envoy::ConnectionPool::ActiveClientPtr client = instantiateActiveClient();
-      connecting_stream_capacity_ += client->effectiveConcurrentRequestLimit();
+      connecting_stream_capacity_ += client->effectiveConcurrentStreamLimit();
       Envoy::LinkedList::moveIntoList(std::move(client), owningList(client->state_));
     }
   }
@@ -70,7 +70,7 @@ Http1PoolImpl::newStream(Envoy::Http::ResponseDecoder& response_decoder,
   // all the available connections.
   if (!ready_clients_.empty() && connection_reuse_strategy_ == ConnectionReuseStrategy::LRU) {
     Envoy::Http::HttpAttachContext context({&response_decoder, &callbacks});
-    attachRequestToClient(*ready_clients_.back(), context);
+    attachStreamToClient(*ready_clients_.back(), context);
     return nullptr;
   }
 
