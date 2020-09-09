@@ -42,25 +42,25 @@ typed_config:
   "@type": type.googleapis.com/nighthawk.server.ResponseOptions
 )");
   // Don't send any config request header
-  getResponse();
+  getResponseFromUpstream();
   EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString), nullptr);
   // Send a config request header with an empty / default config. Should be a no-op.
-  getResponse("{}");
+  getResponseFromUpstream("{}");
   EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString), nullptr);
   // Send a config request header, this should become effective.
-  getResponse("{static_delay: \"1.6s\"}");
+  getResponseFromUpstream("{static_delay: \"1.6s\"}");
   EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString)->value().getStringView(), "1600");
 
   // Send a malformed config request header. This ought to shortcut and directly reply,
   // hence we don't expect an upstream request.
-  auto response = getResponse("bad_json", false);
+  auto response = getResponseFromExtension("bad_json");
   EXPECT_EQ(Envoy::Http::Utility::getResponseStatus(response->headers()), 500);
   EXPECT_EQ(
       response->body(),
       "dynamic-delay didn't understand the request: Error merging json config: Unable to parse "
       "JSON as proto (INVALID_ARGUMENT:Unexpected token.\nbad_json\n^): bad_json");
   // Send an empty config header, which ought to trigger failure mode as well.
-  response = getResponse("", false);
+  response = getResponseFromExtension("");
   EXPECT_EQ(Envoy::Http::Utility::getResponseStatus(response->headers()), 500);
   EXPECT_EQ(
       response->body(),
@@ -77,11 +77,11 @@ typed_config:
   "@type": type.googleapis.com/nighthawk.server.ResponseOptions
   static_delay: 0.1s
 )EOF");
-  Envoy::Http::TestRequestHeaderMapImpl request_headers = request_headers_;
-  request_headers.setMethod("POST");
+  Envoy::Http::TestRequestHeaderMapImpl request_headers(
+      {{":method", "POST"}, {":path", "/"}, {":authority", "host"}});
 
   // Post without any request-level configuration. Should succeed.
-  getResponse(request_headers, true);
+  getResponseFromUpstream(request_headers);
   EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString)->value().getStringView(), "100");
 
   // Post with bad request-level configuration. The extension should response directly with an
@@ -89,7 +89,7 @@ typed_config:
   const Envoy::Http::LowerCaseString key("x-nighthawk-test-server-config");
   request_headers.setCopy(key, "bad_json");
   fake_upstreams_[0]->set_allow_unexpected_disconnects(true);
-  auto response = getResponse(request_headers, false);
+  auto response = getResponseFromExtension(request_headers);
   EXPECT_EQ(Envoy::Http::Utility::getResponseStatus(response->headers()), 500);
   EXPECT_EQ(
       response->body(),
@@ -105,11 +105,11 @@ typed_config:
   "@type": type.googleapis.com/nighthawk.server.ResponseOptions
   static_delay: 1.33s
 )EOF");
-  getResponse();
+  getResponseFromUpstream();
   EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString)->value().getStringView(), "1330");
-  getResponse("{}");
+  getResponseFromUpstream("{}");
   EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString)->value().getStringView(), "1330");
-  getResponse("{static_delay: \"0.2s\"}");
+  getResponseFromUpstream("{static_delay: \"0.2s\"}");
   // TODO(#392): This fails, because the duration is a two-field message: it would make here to see
   // both the number of seconds and nanoseconds to be overridden.
   // However, the seconds part is set to '0', which equates to the default of the underlying int
@@ -117,7 +117,7 @@ typed_config:
   // Hence the following expectation will fail, as it yields 1200 instead of the expected 200.
   // EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString)->value().getStringView(),
   // "200");
-  getResponse("{static_delay: \"2.2s\"}");
+  getResponseFromUpstream("{static_delay: \"2.2s\"}");
   EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString)->value().getStringView(), "2200");
 }
 
@@ -131,7 +131,7 @@ typed_config:
     minimal_delay: 0.05s
     concurrency_delay_factor: 0.01s
 )EOF");
-  getResponse();
+  getResponseFromUpstream();
   EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString)->value().getStringView(), "60");
 }
 
