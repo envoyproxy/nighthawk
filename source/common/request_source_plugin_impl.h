@@ -77,7 +77,6 @@ public:
 DECLARE_FACTORY(RPCRequestSourceConfigFactory);
 
 using RequestOptionsIterator = google::protobuf::internal::RepeatedPtrIterator<const nighthawk::client::RequestOptions>;
-using RequestOptionsIteratorPtr = std::shared_ptr<RequestOptionsIterator>;  
 
 /**
  */
@@ -99,7 +98,6 @@ private:
   const std::string file_path_;
   nighthawk::client::RequestOptions options_;
   nighthawk::client::RequestOptionses optionses_;
-  // RequestOptionsIteratorPtr iterator_;
   std::vector<RequestOptionsIterator> request_iterators_;
 };
 /**

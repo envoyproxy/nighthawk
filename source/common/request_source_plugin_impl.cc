@@ -105,7 +105,6 @@ FileBasedRequestSourcePlugin::FileBasedRequestSourcePlugin(
     : RequestSourcePlugin{api}, uri_(config.uri()), file_path_(config.file_path()) {
   Envoy::MessageUtil util;
   util.loadFromFile(file_path_, optionses_, Envoy::ProtobufMessage::getStrictValidationVisitor(), api_, true);
-  // iterator_ = std::make_shared<RequestOptionsIterator>(optionses_.sub_options().begin());
 }
 
 RequestGenerator FileBasedRequestSourcePlugin::get() {
