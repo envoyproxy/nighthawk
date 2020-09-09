@@ -84,14 +84,14 @@ BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
     Envoy::Upstream::ClusterManagerPtr& cluster_manager,
     Envoy::Tracing::HttpTracerSharedPtr& http_tracer, absl::string_view cluster_name,
     RequestGenerator request_generator, const bool provide_resource_backpressure,
-    absl::string_view response_header_with_latency_input)
+    absl::string_view response_latency_header_name)
     : api_(api), dispatcher_(dispatcher), scope_(scope.createScope("benchmark.")),
       statistic_(std::move(statistic)), use_h2_(use_h2),
       benchmark_client_counters_({ALL_BENCHMARK_CLIENT_COUNTERS(POOL_COUNTER(*scope_))}),
       cluster_manager_(cluster_manager), http_tracer_(http_tracer),
       cluster_name_(std::string(cluster_name)), request_generator_(std::move(request_generator)),
       provide_resource_backpressure_(provide_resource_backpressure),
-      response_header_with_latency_input_(response_header_with_latency_input) {
+      response_latency_header_name_(response_latency_header_name) {
   statistic_.connect_statistic->setId("benchmark_http_client.queue_to_connect");
   statistic_.response_statistic->setId("benchmark_http_client.request_to_response");
   statistic_.response_header_size_statistic->setId("benchmark_http_client.response_header_size");
@@ -168,7 +168,7 @@ bool BenchmarkClientHttpImpl::tryStartRequest(CompletionCallback caller_completi
       *statistic_.connect_statistic, *statistic_.response_statistic,
       *statistic_.response_header_size_statistic, *statistic_.response_body_size_statistic,
       *statistic_.origin_latency_statistic, request->header(), shouldMeasureLatencies(),
-      content_length, generator_, http_tracer_, response_header_with_latency_input_);
+      content_length, generator_, http_tracer_, response_latency_header_name_);
   requests_initiated_++;
   pool_ptr->newStream(*stream_decoder, *stream_decoder);
   return true;

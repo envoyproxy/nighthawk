@@ -118,7 +118,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
       "--experimental-h2-use-multiple-connections "
       "--experimental-h1-connection-reuse-strategy lru --label label1 --label label2 {} "
       "--simple-warmup --stats-sinks {} --stats-sinks {} --stats-flush-interval 10 "
-      "--response-header-with-latency-input zz",
+      "--response-latency-header-name zz",
       client_name_,
       "{name:\"envoy.transport_sockets.tls\","
       "typed_config:{\"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\","
@@ -248,8 +248,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
   ASSERT_EQ(cmd->stats_sinks_size(), options->statsSinks().size());
   EXPECT_TRUE(util(cmd->stats_sinks(0), options->statsSinks()[0]));
   EXPECT_TRUE(util(cmd->stats_sinks(1), options->statsSinks()[1]));
-  EXPECT_EQ(cmd->response_header_with_latency_input().value(),
-            options->responseHeaderWithLatencyInput());
+  EXPECT_EQ(cmd->response_latency_header_name().value(), options->responseHeaderWithLatencyInput());
 
   OptionsImpl options_from_proto(*cmd);
   std::string s1 = Envoy::MessageUtil::getYamlStringFromMessage(
