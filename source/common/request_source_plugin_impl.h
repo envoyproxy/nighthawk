@@ -76,6 +76,9 @@ public:
 // This factory is activated through ???.
 DECLARE_FACTORY(RPCRequestSourceConfigFactory);
 
+using RequestOptionsIterator = google::protobuf::internal::RepeatedPtrIterator<const nighthawk::client::RequestOptions>;
+using RequestOptionsIteratorPtr = std::shared_ptr<RequestOptionsIterator>;  
+
 /**
  */
 class FileBasedRequestSourcePlugin : public RequestSourcePlugin {
@@ -96,9 +99,9 @@ private:
   const std::string file_path_;
   nighthawk::client::RequestOptions options_;
   nighthawk::client::RequestOptionses optionses_;
-  google::protobuf::internal::RepeatedPtrIterator<const nighthawk::client::RequestOptions> iterator_;
+  // RequestOptionsIteratorPtr iterator_;
+  std::vector<RequestOptionsIterator> request_iterators_;
 };
-
 /**
  * Registered as an Envoy plugin.
  */

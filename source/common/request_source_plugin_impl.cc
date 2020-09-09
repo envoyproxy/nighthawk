@@ -94,7 +94,6 @@ RequestSourcePluginPtr FileBasedRequestSourceConfigFactory::createRequestSourceP
   const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
   nighthawk::request_source::FileBasedPluginRequestSourceConfig config;
   Envoy::MessageUtil::unpackTo(any, config);
-  // Envoy::PlatformImpl platform_impl_;
   return std::make_unique<FileBasedRequestSourcePlugin>(config, api);
 }
 
@@ -105,15 +104,18 @@ FileBasedRequestSourcePlugin::FileBasedRequestSourcePlugin(
     Envoy::Api::Api& api)
     : RequestSourcePlugin{api}, uri_(config.uri()), file_path_(config.file_path()) {
   Envoy::MessageUtil util;
-  // std::string file_string = RequestSourcePlugin::api_.fileSystem().fileReadToEnd(file_path_);
   util.loadFromFile(file_path_, optionses_, Envoy::ProtobufMessage::getStrictValidationVisitor(), api_, true);
-  iterator_ = optionses_.sub_options().begin();
-  // std::cerr << "\n" + file_string + "\n";
+  // iterator_ = std::make_shared<RequestOptionsIterator>(optionses_.sub_options().begin());
 }
 
 RequestGenerator FileBasedRequestSourcePlugin::get() {
-  RequestGenerator request_generator = [this]() {
-    nighthawk::client::RequestOptions request_option = *iterator_++;
+  RequestOptionsIterator iterator = optionses_.sub_options().begin();
+  request_iterators_.push_back(iterator);
+  RequestOptionsIterator* temp = &request_iterators_.back();
+  RequestGenerator request_generator = [this, temp]() mutable {
+    auto tempValue = *temp;    
+    nighthawk::client::RequestOptions request_option = *tempValue;
+    *temp = std::next(*temp);
     Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
     header->setPath(uri_.path());
     header->setHost(uri_.hostAndPort());
