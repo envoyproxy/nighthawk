@@ -294,12 +294,14 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
                   stats_flush_interval_),
       false, 5, "uint32_t", cmd);
 
-  TCLAP::ValueArg<std::string> response_header_with_latency_input(
-      "", "response-header-with-latency-input",
-      "Set an optional response header name, whose values will be tracked in a latency histogram "
-      "if set. Can be used in tandem with the test server "
-      "\"emit_previous_request_delta_in_response_header\" option to get a sense of elapsed time "
-      "between request arrivals. Default: \"\"",
+  TCLAP::ValueArg<std::string> response_latency_header_name(
+      "", "response-latency-header-name",
+      "Set an optional header name that will be returned in responses, whose values will be "
+      "tracked in a latency histogram if set. "
+      "Can be used in tandem with the test server's response option "
+      "\"emit_previous_request_delta_in_response_header\" to record elapsed time between request "
+      "arrivals. "
+      "Default: \"\"",
       false, "", "string", cmd);
 
   Utility::parseCommand(cmd, argc, argv);
@@ -433,7 +435,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
     }
   }
   TCLAP_SET_IF_SPECIFIED(stats_flush_interval, stats_flush_interval_);
-  TCLAP_SET_IF_SPECIFIED(response_header_with_latency_input, response_header_with_latency_input_);
+  TCLAP_SET_IF_SPECIFIED(response_latency_header_name, response_latency_header_name_);
 
   // CLI-specific tests.
   // TODO(oschaaf): as per mergconflicts's remark, it would be nice to aggregate
@@ -619,8 +621,8 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
     no_duration_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, no_duration, no_duration_);
   }
   std::copy(options.labels().begin(), options.labels().end(), std::back_inserter(labels_));
-  response_header_with_latency_input_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(
-      options, response_header_with_latency_input, response_header_with_latency_input_);
+  response_latency_header_name_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(
+      options, response_latency_header_name, response_latency_header_name_);
 
   validate();
 }
@@ -793,8 +795,8 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
     *command_line_options->add_stats_sinks() = stats_sink;
   }
   command_line_options->mutable_stats_flush_interval()->set_value(stats_flush_interval_);
-  command_line_options->mutable_response_header_with_latency_input()->set_value(
-      response_header_with_latency_input_);
+  command_line_options->mutable_response_latency_header_name()->set_value(
+      response_latency_header_name_);
   return command_line_options;
 }
 

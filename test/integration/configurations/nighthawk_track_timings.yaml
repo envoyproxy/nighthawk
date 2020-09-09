@@ -1,3 +1,6 @@
+# Envoy configuration template for testing the time-tracking http filter extension.
+# Sets up the time-tracking extension plus the test-server extension for generating
+# responses.
 admin:
   access_log_path: $tmpdir/nighthawk-test-server-admin-access.log
   profile_path: $tmpdir/nighthawk-test-server.prof
@@ -23,6 +26,7 @@ static_resources:
               domains:
               - "*"
           http_filters:
+            # Here we set up the time-tracking extension to emit request-arrival delta timings in a response header.
           - name: time-tracking
             config:
               emit_previous_request_delta_in_response_header: x-origin-request-receipt-delta
