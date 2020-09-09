@@ -7,7 +7,7 @@ namespace Nighthawk {
 absl::StatusOr<nighthawk::client::ExecutionResponse>
 NighthawkServiceClientImpl::PerformNighthawkBenchmark(
     nighthawk::client::NighthawkService::StubInterface* nighthawk_service_stub,
-    const nighthawk::client::CommandLineOptions& command_line_options) {
+    const nighthawk::client::CommandLineOptions& command_line_options) const {
   nighthawk::client::ExecutionRequest request;
   nighthawk::client::ExecutionResponse response;
   *request.mutable_start_request()->mutable_options() = command_line_options;

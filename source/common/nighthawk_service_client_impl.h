@@ -19,7 +19,7 @@ class NighthawkServiceClientImpl : public NighthawkServiceClient {
 public:
   absl::StatusOr<nighthawk::client::ExecutionResponse> PerformNighthawkBenchmark(
       nighthawk::client::NighthawkService::StubInterface* nighthawk_service_stub,
-      const nighthawk::client::CommandLineOptions& command_line_options) override;
+      const nighthawk::client::CommandLineOptions& command_line_options) const override;
 };
 
 } // namespace Nighthawk

@@ -90,7 +90,7 @@ DECLARE_FACTORY(FakeStepControllerConfigFactory);
  * FakeStepControllerConfig proto wrapped in an Any.
  */
 envoy::config::core::v3::TypedExtensionConfig
-MakeFakeStepControllerPluginConfig(int fixed_rps_value);
+MakeFakeStepControllerPluginConfigWithRps(int fixed_rps_value);
 
 /**
  * Creates a valid TypedExtensionConfig proto that activates a FakeStepController with a

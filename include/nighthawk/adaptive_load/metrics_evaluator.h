@@ -1,8 +1,9 @@
+#pragma once
+
 #include "envoy/config/core/v3/base.pb.h"
 
 #include "nighthawk/adaptive_load/metrics_plugin.h"
 
-#include "external/envoy/source/common/common/logger.h"
 #include "external/envoy/source/common/common/statusor.h"
 #include "external/envoy/source/common/protobuf/protobuf.h"
 
