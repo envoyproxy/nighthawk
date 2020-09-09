@@ -47,7 +47,7 @@ public:
                 HeaderMapPtr request_headers, bool measure_latencies, uint32_t request_body_size,
                 Envoy::Random::RandomGenerator& random_generator,
                 Envoy::Tracing::HttpTracerSharedPtr& http_tracer,
-                absl::string_view response_latency_header_name)
+                absl::string_view latency_response_header_name)
       : dispatcher_(dispatcher), time_source_(time_source),
         decoder_completion_callback_(decoder_completion_callback),
         caller_completion_callback_(std::move(caller_completion_callback)),
@@ -59,7 +59,7 @@ public:
         complete_(false), measure_latencies_(measure_latencies),
         request_body_size_(request_body_size), stream_info_(time_source_),
         random_generator_(random_generator), http_tracer_(http_tracer),
-        response_latency_header_name_(response_latency_header_name) {
+        latency_response_header_name_(latency_response_header_name) {
     if (measure_latencies_ && http_tracer_ != nullptr) {
       setupForTracing();
     }
@@ -121,7 +121,7 @@ private:
   Envoy::Tracing::HttpTracerSharedPtr& http_tracer_;
   Envoy::Tracing::SpanPtr active_span_;
   Envoy::StreamInfo::UpstreamTiming upstream_timing_;
-  const std::string response_latency_header_name_;
+  const std::string latency_response_header_name_;
 };
 
 } // namespace Client

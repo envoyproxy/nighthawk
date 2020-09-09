@@ -713,7 +713,7 @@ def test_http_h1_response_header_latency_tracking(http_test_server_fixture, serv
   parsed_json, _ = http_test_server_fixture.runNighthawkClient([
       http_test_server_fixture.getTestServerRootUri(), "--connections", "1", "--rps", "100",
       "--duration", "100", "--termination-predicate", "benchmark.http_2xx:99",
-      "--response-latency-header-name", "x-origin-request-receipt-delta"
+      "--latency-response-header-name", "x-origin-request-receipt-delta"
   ])
   global_histograms = http_test_server_fixture.getNighthawkGlobalHistogramsbyIdFromJson(parsed_json)
   asserts.assertEqual(int(global_histograms["benchmark_http_client.latency_2xx"]["count"]), 100)

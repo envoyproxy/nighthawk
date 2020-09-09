@@ -107,7 +107,7 @@ public:
                           Envoy::Tracing::HttpTracerSharedPtr& http_tracer,
                           absl::string_view cluster_name, RequestGenerator request_generator,
                           const bool provide_resource_backpressure,
-                          absl::string_view response_latency_header_name);
+                          absl::string_view latency_response_header_name);
   void setConnectionLimit(uint32_t connection_limit) { connection_limit_ = connection_limit; }
   void setMaxPendingRequests(uint32_t max_pending_requests) {
     max_pending_requests_ = max_pending_requests;
@@ -163,7 +163,7 @@ private:
   std::string cluster_name_;
   const RequestGenerator request_generator_;
   const bool provide_resource_backpressure_;
-  const std::string response_latency_header_name_;
+  const std::string latency_response_header_name_;
 };
 
 } // namespace Client

@@ -206,5 +206,5 @@ message CommandLineOptions {
   // a latency histogram if set. Can be used in tandem with the test server's response option
   // "emit_previous_request_delta_in_response_header" to record elapsed time between request
   // arrivals.
-  google.protobuf.StringValue response_latency_header_name = 36;
+  google.protobuf.StringValue latency_response_header_name = 36;
 }
