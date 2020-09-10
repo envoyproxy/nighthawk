@@ -48,39 +48,6 @@ RequestGenerator DummyRequestSourcePlugin::get() {
 }
 void DummyRequestSourcePlugin::initOnThread() {}
 
-std::string RPCRequestSourceConfigFactory::name() const {
-  return "nighthawk.rpc-request-source-plugin";
-}
-
-Envoy::ProtobufTypes::MessagePtr RPCRequestSourceConfigFactory::createEmptyConfigProto() {
-  return std::make_unique<nighthawk::request_source::RPCPluginRequestSourceConfig>();
-}
-
-RequestSourcePluginPtr
-RPCRequestSourceConfigFactory::createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
-                                                         Envoy::Api::Api& api) {
-  const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
-  nighthawk::request_source::RPCPluginRequestSourceConfig config;
-  Envoy::MessageUtil::unpackTo(any, config);
-  return std::make_unique<RPCRequestSourcePlugin>(config, api);
-}
-
-REGISTER_FACTORY(RPCRequestSourceConfigFactory, RequestSourcePluginConfigFactory);
-
-RPCRequestSourcePlugin::RPCRequestSourcePlugin(
-    const nighthawk::request_source::RPCPluginRequestSourceConfig& config,
-    Envoy::Api::Api& api)
-    : RequestSourcePlugin{api}, uri_(config.uri()) {}
-RequestGenerator RPCRequestSourcePlugin::get() {
-  RequestGenerator request_generator = []() {
-    Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
-    auto returned_request_impl = std::make_unique<RequestImpl>(std::move(header));
-    return returned_request_impl;
-  };
-  return request_generator;
-}
-void RPCRequestSourcePlugin::initOnThread() {}
-
 std::string FileBasedRequestSourceConfigFactory::name() const {
   return "nighthawk.file-based-request-source-plugin";
 }
