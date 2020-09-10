@@ -3,8 +3,8 @@
 namespace Nighthawk {
 namespace Server {
 
-FilterConfigurationBase::FilterConfigurationBase(nighthawk::server::ResponseOptions proto_config,
-                                                 absl::string_view filter_name)
+FilterConfigurationBase::FilterConfigurationBase(
+    const nighthawk::server::ResponseOptions& proto_config, absl::string_view filter_name)
     : filter_name_(filter_name),
       server_config_(std::make_shared<nighthawk::server::ResponseOptions>(std::move(proto_config))),
       effective_config_(server_config_) {}

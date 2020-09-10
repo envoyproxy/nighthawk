@@ -16,13 +16,13 @@
 namespace Nighthawk {
 namespace Server {
 
+using EffectiveFilterConfigurationPtr = std::shared_ptr<const nighthawk::server::ResponseOptions>;
 /**
  * Shorthand and canonical representation of the effective filter configuration. Either a status
  * or a shared pointer to the effective configuration. We use a shared pointer to avoid copying
  * in the static configuration flow.
  */
-using EffectiveFilterConfiguration =
-    absl::StatusOr<std::shared_ptr<const nighthawk::server::ResponseOptions>>;
+using StatusOrEffectiveFilterConfigurationPtr = absl::StatusOr<EffectiveFilterConfigurationPtr>;
 
 /**
  * Provides functionality for parsing and merging request-header based configuration, as well as
@@ -37,7 +37,7 @@ public:
    * @param filter_name name of the extension that is consuming this. Used during error response
    * generation.
    */
-  FilterConfigurationBase(nighthawk::server::ResponseOptions static_proto_config,
+  FilterConfigurationBase(const nighthawk::server::ResponseOptions& proto_config,
                           absl::string_view filter_name);
 
   /**
@@ -61,9 +61,12 @@ public:
    * @brief Get the effective configuration. Depending on state ,this could be one of static
    * configuration, dynamic configuration, or an error status.
    *
-   * @return const EffectiveFilterConfiguration The effective configuration, or an error status.
+   * @return const StatusOrEffectiveFilterConfigurationPtr The effective configuration, or an error
+   * status.
    */
-  const EffectiveFilterConfiguration getEffectiveConfiguration() const { return effective_config_; }
+  const StatusOrEffectiveFilterConfigurationPtr getEffectiveConfiguration() const {
+    return effective_config_;
+  }
 
   /**
    * @return absl::string_view Name of the filter that constructed this instance.
@@ -73,7 +76,7 @@ public:
 private:
   const std::string filter_name_;
   const std::shared_ptr<nighthawk::server::ResponseOptions> server_config_;
-  EffectiveFilterConfiguration effective_config_;
+  StatusOrEffectiveFilterConfigurationPtr effective_config_;
 };
 
 } // namespace Server
