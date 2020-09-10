@@ -16,13 +16,11 @@
 namespace Nighthawk {
 namespace Server {
 
-using EffectiveFilterConfigurationPtr = std::shared_ptr<const nighthawk::server::ResponseOptions>;
 /**
- * Shorthand and canonical representation of the effective filter configuration. Either a status
- * or a shared pointer to the effective configuration. We use a shared pointer to avoid copying
- * in the static configuration flow.
+ * Canonical representation of the effective filter configuration.
+ * We use a shared pointer to avoid copying in the static configuration flow.
  */
-using StatusOrEffectiveFilterConfigurationPtr = absl::StatusOr<EffectiveFilterConfigurationPtr>;
+using EffectiveFilterConfigurationPtr = std::shared_ptr<const nighthawk::server::ResponseOptions>;
 
 /**
  * Provides functionality for parsing and merging request-header based configuration, as well as
@@ -61,10 +59,10 @@ public:
    * @brief Get the effective configuration. Depending on state ,this could be one of static
    * configuration, dynamic configuration, or an error status.
    *
-   * @return const StatusOrEffectiveFilterConfigurationPtr The effective configuration, or an error
-   * status.
+   * @return const absl::StatusOr<EffectiveFilterConfigurationPtr> The effective configuration, or
+   * an error status.
    */
-  const StatusOrEffectiveFilterConfigurationPtr getEffectiveConfiguration() const {
+  const absl::StatusOr<EffectiveFilterConfigurationPtr> getEffectiveConfiguration() const {
     return effective_config_;
   }
 
@@ -76,7 +74,7 @@ public:
 private:
   const std::string filter_name_;
   const std::shared_ptr<nighthawk::server::ResponseOptions> server_config_;
-  StatusOrEffectiveFilterConfigurationPtr effective_config_;
+  absl::StatusOr<EffectiveFilterConfigurationPtr> effective_config_;
 };
 
 } // namespace Server

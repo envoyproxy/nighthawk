@@ -40,7 +40,7 @@ private:
     Nighthawk::Server::HttpDynamicDelayDecoderFilterConfigSharedPtr config =
         std::make_shared<Nighthawk::Server::HttpDynamicDelayDecoderFilterConfig>(
             Nighthawk::Server::HttpDynamicDelayDecoderFilterConfig(
-                proto_config, context.runtime(), "" /*stats_prefix*/, context.scope(),
+                std::move(proto_config), context.runtime(), "" /*stats_prefix*/, context.scope(),
                 context.timeSource()));
 
     return [config](Envoy::Http::FilterChainFactoryCallbacks& callbacks) -> void {
