@@ -111,9 +111,8 @@ RequestGenerator FileBasedRequestSourcePlugin::get() {
   RequestOptionsIterator iterator = optionses_.sub_options().begin();
   request_iterators_.push_back(iterator);
   RequestOptionsIterator* temp = &request_iterators_.back();
-  RequestGenerator request_generator = [this, temp]() mutable {
-    auto tempValue = *temp;    
-    nighthawk::client::RequestOptions request_option = *tempValue;
+  RequestGenerator request_generator = [this, temp]() mutable {    
+    nighthawk::client::RequestOptions request_option = **temp;
     *temp = std::next(*temp);
     Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
     header->setPath(uri_.path());
