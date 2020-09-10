@@ -46,7 +46,7 @@ public:
 DECLARE_FACTORY(DummyRequestSourceConfigFactory);
 
 using RequestOptionsIterator =
-    google::protobuf::internal::RepeatedPtrIterator<const nighthawk::client::RequestOptions>;
+    Envoy::ProtobufWkt::internal::RepeatedPtrIterator<const nighthawk::client::RequestOptions>;
 
 /**
  */
