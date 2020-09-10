@@ -1,17 +1,15 @@
 #include "common/request_source_plugin_impl.h"
-#include "common/protobuf/message_validator_impl.h"
-#include "common/request_impl.h"
-#include "common/request_source_impl.h"
-#include "external/envoy/source/common/protobuf/utility.h"
 
+#include "external/envoy/source/common/protobuf/utility.h"
 #include "external/envoy/source/exe/platform_impl.h"
 
 #include "api/client/options.pb.h"
-
 #include "api/request_source/request_source_plugin_impl.pb.h"
-#include <fstream>
-#include <iostream>
-#include <sstream>
+
+#include "common/protobuf/message_validator_impl.h"
+#include "common/request_impl.h"
+#include "common/request_source_impl.h"
+
 namespace Nighthawk {
 
 std::string DummyRequestSourceConfigFactory::name() const {
@@ -34,10 +32,10 @@ DummyRequestSourceConfigFactory::createRequestSourcePlugin(const Envoy::Protobuf
 REGISTER_FACTORY(DummyRequestSourceConfigFactory, RequestSourcePluginConfigFactory);
 
 DummyRequestSourcePlugin::DummyRequestSourcePlugin(
-    const nighthawk::request_source::DummyPluginRequestSourceConfig& config,
-    Envoy::Api::Api& api)
-    : RequestSourcePlugin{api}, dummy_value_{config.has_dummy_value() ? config.dummy_value().value()
-                                                       : std::numeric_limits<double>::infinity()} {}
+    const nighthawk::request_source::DummyPluginRequestSourceConfig& config, Envoy::Api::Api& api)
+    : RequestSourcePlugin{api}, dummy_value_{config.has_dummy_value()
+                                                 ? config.dummy_value().value()
+                                                 : std::numeric_limits<double>::infinity()} {}
 RequestGenerator DummyRequestSourcePlugin::get() {
   RequestGenerator request_generator = []() {
     Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
@@ -71,14 +69,15 @@ FileBasedRequestSourcePlugin::FileBasedRequestSourcePlugin(
     Envoy::Api::Api& api)
     : RequestSourcePlugin{api}, uri_(config.uri()), file_path_(config.file_path()) {
   Envoy::MessageUtil util;
-  util.loadFromFile(file_path_, optionses_, Envoy::ProtobufMessage::getStrictValidationVisitor(), api_, true);
+  util.loadFromFile(file_path_, optionses_, Envoy::ProtobufMessage::getStrictValidationVisitor(),
+                    api_, true);
 }
 
 RequestGenerator FileBasedRequestSourcePlugin::get() {
   RequestOptionsIterator iterator = optionses_.sub_options().begin();
   request_iterators_.push_back(iterator);
   RequestOptionsIterator* temp = &request_iterators_.back();
-  RequestGenerator request_generator = [this, temp]() mutable {    
+  RequestGenerator request_generator = [this, temp]() mutable {
     nighthawk::client::RequestOptions request_option = **temp;
     *temp = std::next(*temp);
     Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
@@ -92,9 +91,9 @@ RequestGenerator FileBasedRequestSourcePlugin::get() {
       header->setContentLength(content_length);
     }
     for (const auto& option_header : request_option.request_headers()) {
-        auto lower_case_key = Envoy::Http::LowerCaseString(std::string(option_header.header().key()));
-        header->remove(lower_case_key);
-        header->addCopy(lower_case_key, std::string(option_header.header().value()));
+      auto lower_case_key = Envoy::Http::LowerCaseString(std::string(option_header.header().key()));
+      header->remove(lower_case_key);
+      header->addCopy(lower_case_key, std::string(option_header.header().value()));
     }
     auto returned_request_impl = std::make_unique<RequestImpl>(std::move(header));
     return returned_request_impl;
@@ -102,7 +101,6 @@ RequestGenerator FileBasedRequestSourcePlugin::get() {
   return request_generator;
 }
 
-void FileBasedRequestSourcePlugin::initOnThread() {
-}
+void FileBasedRequestSourcePlugin::initOnThread() {}
 
 } // namespace Nighthawk

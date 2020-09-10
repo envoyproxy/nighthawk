@@ -2,8 +2,8 @@
 
 #include "envoy/api/api.h"
 #include "envoy/common/pure.h"
-
 #include "envoy/config/typed_config.h"
+
 #include "nighthawk/common/request_source.h"
 
 namespace Nighthawk {
@@ -15,7 +15,7 @@ namespace Nighthawk {
 class RequestSourcePlugin : RequestSource {
 public:
   RequestSourcePlugin(Envoy::Api::Api& api) : api_(api) {}
-  virtual ~RequestSourcePlugin() = default;  
+  virtual ~RequestSourcePlugin() = default;
   // virtual RequestGenerator get() PURE;
   // virtual void initOnThread() PURE;
 protected:
@@ -43,7 +43,8 @@ public:
    * @throw Envoy::EnvoyException If the Any proto cannot be unpacked as the type expected by the
    * plugin.
    */
-  virtual RequestSourcePluginPtr createRequestSourcePlugin(const Envoy::Protobuf::Message& message, Envoy::Api::Api& api) PURE;
+  virtual RequestSourcePluginPtr createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
+                                                           Envoy::Api::Api& api) PURE;
 };
 
 } // namespace Nighthawk

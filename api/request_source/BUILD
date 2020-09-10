@@ -15,6 +15,7 @@ api_cc_py_proto_library(
         "@envoy_api//envoy/api/v2/core:pkg",
     ],
 )
+
 api_cc_py_proto_library(
     name = "request_source_plugin",
     srcs = [
@@ -26,6 +27,7 @@ api_cc_py_proto_library(
         "@nighthawk//api/client:base",
     ],
 )
+
 cc_grpc_library(
     name = "grpc_request_source_service_lib",
     srcs = [

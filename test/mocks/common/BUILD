@@ -87,4 +87,3 @@ envoy_cc_mock(
         "//include/nighthawk/common:base_includes",
     ],
 )
-

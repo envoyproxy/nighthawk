@@ -6,6 +6,7 @@
 
 #include "api/client/options.pb.h"
 #include "api/request_source/request_source_plugin_impl.pb.h"
+
 #include "common/uri_impl.h"
 
 namespace Nighthawk {
@@ -44,8 +45,8 @@ public:
 // This factory is activated through ???.
 DECLARE_FACTORY(DummyRequestSourceConfigFactory);
 
-
-using RequestOptionsIterator = google::protobuf::internal::RepeatedPtrIterator<const nighthawk::client::RequestOptions>;
+using RequestOptionsIterator =
+    google::protobuf::internal::RepeatedPtrIterator<const nighthawk::client::RequestOptions>;
 
 /**
  */
