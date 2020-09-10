@@ -19,6 +19,20 @@ void StreamDecoder::decodeHeaders(Envoy::Http::ResponseHeaderMapPtr&& headers, b
   response_header_sizes_statistic_.addValue(response_headers_->byteSize());
   const uint64_t response_code = Envoy::Http::Utility::getResponseStatus(*response_headers_);
   stream_info_.response_code_ = static_cast<uint32_t>(response_code);
+  if (!latency_response_header_name_.empty()) {
+    const auto timing_header_name = Envoy::Http::LowerCaseString(latency_response_header_name_);
+    const Envoy::Http::HeaderEntry* timing_header = response_headers_->get(timing_header_name);
+    if (timing_header != nullptr) {
+      absl::string_view timing_value = timing_header->value().getStringView();
+      int64_t origin_delta;
+      if (absl::SimpleAtoi(timing_value, &origin_delta) && origin_delta >= 0) {
+        origin_latency_statistic_.addValue(origin_delta);
+      } else {
+        ENVOY_LOG_EVERY_POW_2(warn, "Bad origin delta: '{}'.", timing_value);
+      }
+    }
+  }
+
   if (complete_) {
     onComplete(true);
   }
@@ -55,7 +69,7 @@ void StreamDecoder::onComplete(bool success) {
           stream_info_.response_code_.value(),
           (time_source_.monotonicTime() - request_start_).count());
     } else {
-      ENVOY_LOG(warn, "response_code is not available in onComplete");
+      ENVOY_LOG_EVERY_POW_2(warn, "response_code is not available in onComplete");
     }
   }
   upstream_timing_.onLastUpstreamRxByteReceived(time_source_);

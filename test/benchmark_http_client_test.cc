@@ -61,7 +61,8 @@ public:
                    std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
                    std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
                    std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
-                   std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>()) {
+                   std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
+                   std::make_unique<StreamingStatistic>()) {
     auto header_map_param = std::initializer_list<std::pair<std::string, std::string>>{
         {":scheme", "http"}, {":method", "GET"}, {":path", "/"}, {":host", "localhost"}};
     default_header_map_ =
@@ -84,7 +85,7 @@ public:
   // Default function for request generator when the content doesn't matter.
   RequestGenerator getDefaultRequestGenerator() {
     RequestGenerator request_generator = [this]() {
-      auto returned_request_impl=std::make_unique<RequestImpl>(default_header_map_);
+      auto returned_request_impl = std::make_unique<RequestImpl>(default_header_map_);
       return returned_request_impl;
     };
     return request_generator;
@@ -177,8 +178,9 @@ public:
   // verifyBenchmarkClientProcessesExpectedInflightRequests.
   void setupBenchmarkClient(const RequestGenerator& request_generator) {
     client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
-        *api_, *dispatcher_, store_, statistic_, false, cluster_manager_, http_tracer_, "benchmark",
-        request_generator, true);
+        *api_, *dispatcher_, store_, statistic_, /*use_h2*/ false, cluster_manager_, http_tracer_,
+        "benchmark", request_generator, /*provide_resource_backpressure*/ true,
+        /*response_header_with_latency_input=*/"");
   }
 
   uint64_t getCounter(absl::string_view name) {

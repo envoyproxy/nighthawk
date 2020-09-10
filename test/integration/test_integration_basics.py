@@ -700,6 +700,30 @@ def test_cancellation_with_infinite_duration(http_test_server_fixture):
   asserts.assertCounterGreaterEqual(counters, "benchmark.http_2xx", 1)
 
 
+@pytest.mark.parametrize('server_config', [
+    "nighthawk/test/integration/configurations/nighthawk_http_origin.yaml",
+    "nighthawk/test/integration/configurations/nighthawk_track_timings.yaml"
+])
+def test_http_h1_response_header_latency_tracking(http_test_server_fixture, server_config):
+  """Test emission and tracking of response header latencies.
+
+  Run the CLI configured to track latencies delivered by response header from the test-server.
+  Ensure that the origin_latency_statistic histogram receives the correct number of inputs.
+  """
+  parsed_json, _ = http_test_server_fixture.runNighthawkClient([
+      http_test_server_fixture.getTestServerRootUri(), "--connections", "1", "--rps", "100",
+      "--duration", "100", "--termination-predicate", "benchmark.http_2xx:99",
+      "--latency-response-header-name", "x-origin-request-receipt-delta"
+  ])
+  global_histograms = http_test_server_fixture.getNighthawkGlobalHistogramsbyIdFromJson(parsed_json)
+  asserts.assertEqual(int(global_histograms["benchmark_http_client.latency_2xx"]["count"]), 100)
+  # Verify behavior is correct both with and without the timing filter enabled.
+  expected_histogram_count = 99 if "nighthawk_track_timings.yaml" in server_config else 0
+  asserts.assertEqual(
+      int(global_histograms["benchmark_http_client.origin_latency_statistic"]["count"]),
+      expected_histogram_count)
+
+
 def _run_client_with_args(args):
   return utility.run_binary_with_args("nighthawk_client", args)
 
@@ -716,3 +740,11 @@ def test_client_bad_arg():
   (exit_code, output) = _run_client_with_args("127.0.0.1 --foo")
   asserts.assertEqual(exit_code, 1)
   asserts.assertIn("PARSE ERROR: Argument: --foo", output)
+
+
+def test_client_cli_bad_uri(http_test_server_fixture):
+  """Test that passing a bad URI to the client results in nice behavior."""
+  _, err = http_test_server_fixture.runNighthawkClient(["http://http://foo"],
+                                                       expect_failure=True,
+                                                       as_json=False)
+  assert "Invalid target URI" in err

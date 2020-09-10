@@ -31,8 +31,6 @@ namespace Client {
 
 using namespace std::chrono_literals;
 
-using namespace Envoy; // We need this because of macro expectations.
-
 #define ALL_BENCHMARK_CLIENT_COUNTERS(COUNTER)                                                     \
   COUNTER(stream_resets)                                                                           \
   COUNTER(http_1xx)                                                                                \
@@ -59,7 +57,8 @@ struct BenchmarkClientStatistic {
                            StatisticPtr&& response_body_size_stat, StatisticPtr&& latency_1xx_stat,
                            StatisticPtr&& latency_2xx_stat, StatisticPtr&& latency_3xx_stat,
                            StatisticPtr&& latency_4xx_stat, StatisticPtr&& latency_5xx_stat,
-                           StatisticPtr&& latency_xxx_stat);
+                           StatisticPtr&& latency_xxx_stat,
+                           StatisticPtr&& origin_latency_statistic);
 
   // These are declared order dependent. Changing ordering may trigger on assert upon
   // destruction when tls has been involved during usage.
@@ -73,6 +72,7 @@ struct BenchmarkClientStatistic {
   StatisticPtr latency_4xx_statistic;
   StatisticPtr latency_5xx_statistic;
   StatisticPtr latency_xxx_statistic;
+  StatisticPtr origin_latency_statistic;
 };
 
 class Http1PoolImpl : public Envoy::Http::Http1::ProdConnPoolImpl {
@@ -106,7 +106,8 @@ public:
                           bool use_h2, Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                           Envoy::Tracing::HttpTracerSharedPtr& http_tracer,
                           absl::string_view cluster_name, RequestGenerator request_generator,
-                          const bool provide_resource_backpressure);
+                          const bool provide_resource_backpressure,
+                          absl::string_view latency_response_header_name);
   void setConnectionLimit(uint32_t connection_limit) { connection_limit_ = connection_limit; }
   void setMaxPendingRequests(uint32_t max_pending_requests) {
     max_pending_requests_ = max_pending_requests;
@@ -162,6 +163,7 @@ private:
   std::string cluster_name_;
   const RequestGenerator request_generator_;
   const bool provide_resource_backpressure_;
+  const std::string latency_response_header_name_;
 };
 
 } // namespace Client

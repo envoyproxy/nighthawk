@@ -20,3 +20,6 @@ default.profraw
 tmp-*
 clang-tidy-fixes.yaml
 *.out
+user.bazelrc
+clang.bazelrc
+local_*.bazelrc
