@@ -18,7 +18,7 @@ Envoy internals.
 - New features should be added to the [version history](docs/root/version_history.md).
 - Breaking changes to the [protobuf APIs](api/) are not allowed.
 - When merging, clean up the commit message so we get a nice history. By default,
-  github will compile messages from all the commits that are squashed.
+  github will compile a message from all the commits that are squashed.
   The PR title and description should be a good starting point for the final commit message. 
   (If it is not, it may be worth asking the PR author to update the description).
 - Make sure that the DCO signoff is included in the final commit message.
