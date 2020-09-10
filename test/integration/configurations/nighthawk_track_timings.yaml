@@ -1,0 +1,38 @@
+# Envoy configuration template for testing the time-tracking http filter extension.
+# Sets up the time-tracking extension plus the test-server extension for generating
+# responses.
+admin:
+  access_log_path: $tmpdir/nighthawk-test-server-admin-access.log
+  profile_path: $tmpdir/nighthawk-test-server.prof
+  address:
+    socket_address: { address: $server_ip, port_value: 0 }
+static_resources:
+  listeners:
+  - address:
+      socket_address:
+        address: $server_ip
+        port_value: 0
+    filter_chains:
+    - filters:
+      - name: envoy.http_connection_manager
+        config:
+          generate_request_id: false
+          codec_type: auto
+          stat_prefix: ingress_http
+          route_config:
+            name: local_route
+            virtual_hosts:
+            - name: service
+              domains:
+              - "*"
+          http_filters:
+            # Here we set up the time-tracking extension to emit request-arrival delta timings in a response header.
+          - name: time-tracking
+            config:
+              emit_previous_request_delta_in_response_header: x-origin-request-receipt-delta
+          - name: test-server
+            config:
+              response_body_size: 10
+          - name: envoy.router
+            config:
+              dynamic_stats: false
