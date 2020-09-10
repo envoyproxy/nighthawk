@@ -117,7 +117,6 @@ TEST_P(HttpTimeTrackingIntegrationTest, BehaviorWithRequestBody) {
   // error.
   const Envoy::Http::LowerCaseString key("x-nighthawk-test-server-config");
   request_headers.setCopy(key, "bad_json");
-  fake_upstreams_[0]->set_allow_unexpected_disconnects(true);
   response = getResponseFromExtension(request_headers);
   EXPECT_EQ(Envoy::Http::Utility::getResponseStatus(response->headers()), 500);
   EXPECT_EQ(
