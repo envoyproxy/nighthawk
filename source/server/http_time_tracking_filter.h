@@ -45,7 +45,7 @@ public:
 
 private:
   const nighthawk::server::ResponseOptions server_config_;
-  std::shared_ptr<Stopwatch> stopwatch_;
+  std::unique_ptr<Stopwatch> stopwatch_;
 };
 
 using HttpTimeTrackingFilterConfigSharedPtr = std::shared_ptr<HttpTimeTrackingFilterConfig>;

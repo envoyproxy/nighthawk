@@ -43,6 +43,27 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
+    name = "metrics_evaluator_impl",
+    srcs = [
+        "metrics_evaluator_impl.cc",
+    ],
+    hdrs = [
+        "metrics_evaluator_impl.h",
+    ],
+    repository = "@envoy",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":metrics_plugin_impl",
+        ":plugin_loader",
+        "//api/adaptive_load:adaptive_load_proto_cc_proto",
+        "//api/client:base_cc_proto",
+        "//include/nighthawk/adaptive_load:adaptive_load_controller",
+        "//include/nighthawk/adaptive_load:metrics_evaluator",
+        "//include/nighthawk/adaptive_load:scoring_function",
+    ],
+)
+
+envoy_cc_library(
     name = "metrics_plugin_impl",
     srcs = [
         "metrics_plugin_impl.cc",

@@ -31,6 +31,18 @@ envoy_cc_test(
 )
 
 envoy_cc_test(
+    name = "metrics_evaluator_test",
+    srcs = ["metrics_evaluator_test.cc"],
+    repository = "@envoy",
+    deps = [
+        ":minimal_output",
+        "//source/adaptive_load:metrics_evaluator_impl",
+        "//source/adaptive_load:scoring_function_impl",
+        "//test/adaptive_load/fake_plugins/fake_metrics_plugin",
+    ],
+)
+
+envoy_cc_test(
     name = "metrics_plugin_test",
     srcs = ["metrics_plugin_test.cc"],
     repository = "@envoy",

@@ -60,7 +60,7 @@ Http1PoolImpl::newStream(Envoy::Http::ResponseDecoder& response_decoder,
       // We cannot rely on ::tryCreateConnection here, because that might decline without
       // updating connections().canCreate() above. We would risk an infinite loop.
       Envoy::ConnectionPool::ActiveClientPtr client = instantiateActiveClient();
-      connecting_stream_capacity_ += client->effectiveConcurrentRequestLimit();
+      connecting_stream_capacity_ += client->effectiveConcurrentStreamLimit();
       Envoy::LinkedList::moveIntoList(std::move(client), owningList(client->state_));
     }
   }
@@ -70,7 +70,7 @@ Http1PoolImpl::newStream(Envoy::Http::ResponseDecoder& response_decoder,
   // all the available connections.
   if (!ready_clients_.empty() && connection_reuse_strategy_ == ConnectionReuseStrategy::LRU) {
     Envoy::Http::HttpAttachContext context({&response_decoder, &callbacks});
-    attachRequestToClient(*ready_clients_.back(), context);
+    attachStreamToClient(*ready_clients_.back(), context);
     return nullptr;
   }
 
@@ -83,13 +83,15 @@ BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
     BenchmarkClientStatistic& statistic, bool use_h2,
     Envoy::Upstream::ClusterManagerPtr& cluster_manager,
     Envoy::Tracing::HttpTracerSharedPtr& http_tracer, absl::string_view cluster_name,
-    RequestGenerator request_generator, const bool provide_resource_backpressure)
+    RequestGenerator request_generator, const bool provide_resource_backpressure,
+    absl::string_view latency_response_header_name)
     : api_(api), dispatcher_(dispatcher), scope_(scope.createScope("benchmark.")),
       statistic_(std::move(statistic)), use_h2_(use_h2),
       benchmark_client_counters_({ALL_BENCHMARK_CLIENT_COUNTERS(POOL_COUNTER(*scope_))}),
       cluster_manager_(cluster_manager), http_tracer_(http_tracer),
       cluster_name_(std::string(cluster_name)), request_generator_(std::move(request_generator)),
-      provide_resource_backpressure_(provide_resource_backpressure) {
+      provide_resource_backpressure_(provide_resource_backpressure),
+      latency_response_header_name_(latency_response_header_name) {
   statistic_.connect_statistic->setId("benchmark_http_client.queue_to_connect");
   statistic_.response_statistic->setId("benchmark_http_client.request_to_response");
   statistic_.response_header_size_statistic->setId("benchmark_http_client.response_header_size");
@@ -156,7 +158,7 @@ bool BenchmarkClientHttpImpl::tryStartRequest(CompletionCallback caller_completi
   if (content_length_header != nullptr) {
     auto s_content_length = content_length_header->value().getStringView();
     if (!absl::SimpleAtoi(s_content_length, &content_length)) {
-      ENVOY_LOG(error, "Ignoring bad content length of {}", s_content_length);
+      ENVOY_LOG_EVERY_POW_2(error, "Ignoring bad content length of {}", s_content_length);
       content_length = 0;
     }
   }
@@ -166,7 +168,7 @@ bool BenchmarkClientHttpImpl::tryStartRequest(CompletionCallback caller_completi
       *statistic_.connect_statistic, *statistic_.response_statistic,
       *statistic_.response_header_size_statistic, *statistic_.response_body_size_statistic,
       *statistic_.origin_latency_statistic, request->header(), shouldMeasureLatencies(),
-      content_length, generator_, http_tracer_);
+      content_length, generator_, http_tracer_, latency_response_header_name_);
   requests_initiated_++;
   pool_ptr->newStream(*stream_decoder, *stream_decoder);
   return true;
