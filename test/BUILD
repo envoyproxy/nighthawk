@@ -86,8 +86,6 @@ envoy_cc_test(
         "//source/client:nighthawk_client_lib",
         "//test/mocks/client:mock_benchmark_client",
         "//test/mocks/client:mock_options",
-        "//test/mocks/common:mock_request_source",
-        "//test/mocks/common:mock_request_source_constructor",
         "//test/mocks/common:mock_termination_predicate",
         "@envoy//test/mocks/event:event_mocks",
         "@envoy//test/mocks/tracing:tracing_mocks",

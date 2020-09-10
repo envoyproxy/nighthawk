@@ -10,8 +10,6 @@
 
 #include "test/mocks/client/mock_benchmark_client.h"
 #include "test/mocks/client/mock_options.h"
-#include "test/mocks/common/mock_request_source.h"
-#include "test/mocks/common/mock_request_source_constructor.h"
 #include "test/mocks/common/mock_termination_predicate.h"
 
 #include "gtest/gtest.h"
@@ -32,8 +30,6 @@ public:
   Envoy::Event::MockDispatcher dispatcher_;
   MockOptions options_;
   Envoy::Tracing::HttpTracerSharedPtr http_tracer_;
-  MockRequestSourceConstructor mock_request_constructor_;
-  MockRequestSource mock_request_source_;
 };
 
 TEST_F(FactoriesTest, CreateBenchmarkClient) {
@@ -56,7 +52,7 @@ TEST_F(FactoriesTest, CreateBenchmarkClient) {
   EXPECT_NE(nullptr, benchmark_client.get());
 }
 
-TEST_F(FactoriesTest, CreateStaticRequestSource) {
+TEST_F(FactoriesTest, CreateRequestSource) {
   EXPECT_CALL(options_, requestMethod()).Times(1);
   EXPECT_CALL(options_, requestBodySize()).Times(1);
   EXPECT_CALL(options_, uri()).Times(2).WillRepeatedly(Return("http://foo/"));
@@ -68,27 +64,9 @@ TEST_F(FactoriesTest, CreateStaticRequestSource) {
   EXPECT_CALL(options_, toCommandLineOptions()).Times(1).WillOnce(Return(ByMove(std::move(cmd))));
   RequestSourceFactoryImpl factory(options_);
   Envoy::Upstream::ClusterManagerPtr cluster_manager;
-  RequestSourceConstructorImpl constructor(cluster_manager, dispatcher_,
-                                           *stats_store_.createScope("foo."), "requestsource");
-  auto request_generator = factory.create(constructor);
+  auto request_generator = factory.create(cluster_manager, dispatcher_,
+                                          *stats_store_.createScope("foo."), "requestsource");
   EXPECT_NE(nullptr, request_generator.get());
-}
-
-TEST_F(FactoriesTest, CreateRequestSourceWithRequestSourceUriOptionReturnsRemoteRequestSource) {
-  EXPECT_CALL(options_, requestMethod()).Times(1);
-  EXPECT_CALL(options_, requestBodySize()).Times(1);
-  EXPECT_CALL(options_, requestsPerSecond()).Times(1).WillRepeatedly(Return(1));
-  EXPECT_CALL(options_, uri()).Times(2).WillRepeatedly(Return("http://foo/"));
-  EXPECT_CALL(options_, requestSource()).Times(1).WillRepeatedly(Return("requestSourceUri"));
-  EXPECT_CALL(mock_request_constructor_, createRemoteRequestSource(_, _)).Times(1);
-  auto cmd = std::make_unique<nighthawk::client::CommandLineOptions>();
-  auto request_headers = cmd->mutable_request_options()->add_request_headers();
-  request_headers->mutable_header()->set_key("foo");
-  request_headers->mutable_header()->set_value("bar");
-  EXPECT_CALL(options_, toCommandLineOptions()).Times(1).WillOnce(Return(ByMove(std::move(cmd))));
-  RequestSourceFactoryImpl factory(options_);
-  Envoy::Upstream::ClusterManagerPtr cluster_manager;
-  factory.create(mock_request_constructor_);
 }
 
 TEST_F(FactoriesTest, CreateSequencer) {}
