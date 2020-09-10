@@ -273,7 +273,9 @@ std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Outp
   *fortio_output.mutable_requestedduration() = output.options().duration();
   auto actual_duration = getAverageExecutionDuration(output);
   fortio_output.set_actualduration(actual_duration.count());
-  fortio_output.set_jitter(output.options().has_jitter_uniform());
+  fortio_output.set_jitter(output.options().has_jitter_uniform() &&
+                           (output.options().jitter_uniform().nanos() > 0 ||
+                            output.options().jitter_uniform().seconds() > 0));
   fortio_output.set_runtype("HTTP");
 
   // The stock Envoy h2 pool doesn't offer support for multiple connections here. So we must ignore

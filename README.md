@@ -43,7 +43,8 @@ bazel build -c opt //:nighthawk
 ```
 USAGE:
 
-bazel-bin/nighthawk_client  [--stats-flush-interval <uint32_t>]
+bazel-bin/nighthawk_client  [--latency-response-header-name <string>]
+[--stats-flush-interval <uint32_t>]
 [--stats-sinks <string>] ...
 [--no-duration] [--simple-warmup]
 [--request-source <uri format>] [--label
@@ -79,6 +80,13 @@ format>
 
 
 Where:
+
+--latency-response-header-name <string>
+Set an optional header name that will be returned in responses, whose
+values will be tracked in a latency histogram if set. Can be used in
+tandem with the test server's response option
+"emit_previous_request_delta_in_response_header" to record elapsed
+time between request arrivals. Default: ""
 
 --stats-flush-interval <uint32_t>
 Time interval (in seconds) between flushes to configured stats sinks.
