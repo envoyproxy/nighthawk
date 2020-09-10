@@ -33,7 +33,7 @@ public:
    * @param scope Statistics scope to be used by the filter.
    * @param time_source Time source to be used by the filter.
    */
-  HttpDynamicDelayDecoderFilterConfig(nighthawk::server::ResponseOptions proto_config,
+  HttpDynamicDelayDecoderFilterConfig(const nighthawk::server::ResponseOptions& proto_config,
                                       Envoy::Runtime::Loader& runtime,
                                       const std::string& stats_prefix, Envoy::Stats::Scope& scope,
                                       Envoy::TimeSource& time_source);

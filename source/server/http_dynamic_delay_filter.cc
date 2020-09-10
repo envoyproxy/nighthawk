@@ -13,9 +13,9 @@ namespace Nighthawk {
 namespace Server {
 
 HttpDynamicDelayDecoderFilterConfig::HttpDynamicDelayDecoderFilterConfig(
-    nighthawk::server::ResponseOptions proto_config, Envoy::Runtime::Loader& runtime,
+    const nighthawk::server::ResponseOptions& proto_config, Envoy::Runtime::Loader& runtime,
     const std::string& stats_prefix, Envoy::Stats::Scope& scope, Envoy::TimeSource& time_source)
-    : FilterConfigurationBase(std::move(proto_config), "dynamic-delay"), runtime_(runtime),
+    : FilterConfigurationBase(proto_config, "dynamic-delay"), runtime_(runtime),
       stats_prefix_(absl::StrCat(stats_prefix, fmt::format("{}.", filter_name()))), scope_(scope),
       time_source_(time_source) {}
 

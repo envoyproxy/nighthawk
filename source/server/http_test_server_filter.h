@@ -14,7 +14,7 @@ namespace Server {
 // Basically this is left in as a placeholder for further configuration.
 class HttpTestServerDecoderFilterConfig : public FilterConfigurationBase {
 public:
-  HttpTestServerDecoderFilterConfig(nighthawk::server::ResponseOptions proto_config);
+  HttpTestServerDecoderFilterConfig(const nighthawk::server::ResponseOptions& proto_config);
 };
 
 using HttpTestServerDecoderFilterConfigSharedPtr =

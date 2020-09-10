@@ -13,8 +13,8 @@ namespace Nighthawk {
 namespace Server {
 
 HttpTestServerDecoderFilterConfig::HttpTestServerDecoderFilterConfig(
-    nighthawk::server::ResponseOptions proto_config)
-    : FilterConfigurationBase(std::move(proto_config), "test-server") {}
+    const nighthawk::server::ResponseOptions& proto_config)
+    : FilterConfigurationBase(proto_config, "test-server") {}
 
 HttpTestServerDecoderFilter::HttpTestServerDecoderFilter(
     HttpTestServerDecoderFilterConfigSharedPtr config)

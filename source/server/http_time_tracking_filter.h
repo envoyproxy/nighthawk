@@ -27,7 +27,7 @@ public:
    *
    * @param proto_config The proto configuration of the filter.
    */
-  HttpTimeTrackingFilterConfig(nighthawk::server::ResponseOptions proto_config);
+  HttpTimeTrackingFilterConfig(const nighthawk::server::ResponseOptions& proto_config);
 
   /**
    * Gets the number of elapsed nanoseconds since the last call (server wide).
