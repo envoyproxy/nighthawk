@@ -6,4 +6,4 @@ absl::Status NullConfigValidator::ValidateConfig(const Envoy::Protobuf::Message&
   return absl::OkStatus();
 }
 
-}  // namespace Nighthawk
+} // namespace Nighthawk

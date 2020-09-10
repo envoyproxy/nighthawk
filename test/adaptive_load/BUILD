@@ -16,6 +16,8 @@ envoy_cc_test_library(
     repository = "@envoy",
     deps = [
         "//source/client:nighthawk_client_lib",
+        "@envoy//source/common/protobuf:utility_lib_with_external_headers",
+        "@envoy//test/test_common:utility_lib",
     ],
 )
 
@@ -25,6 +27,18 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         "//source/adaptive_load:input_variable_setter_impl",
+    ],
+)
+
+envoy_cc_test(
+    name = "metrics_evaluator_test",
+    srcs = ["metrics_evaluator_test.cc"],
+    repository = "@envoy",
+    deps = [
+        ":minimal_output",
+        "//source/adaptive_load:metrics_evaluator_impl",
+        "//source/adaptive_load:scoring_function_impl",
+        "//test/adaptive_load/fake_plugins/fake_metrics_plugin",
     ],
 )
 
@@ -46,5 +60,25 @@ envoy_cc_test(
         "//source/adaptive_load:plugin_loader",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
         "@envoy//test/test_common:utility_lib",
+    ],
+)
+
+envoy_cc_test(
+    name = "scoring_function_test",
+    srcs = ["scoring_function_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/adaptive_load:scoring_function_impl",
+    ],
+)
+
+envoy_cc_test(
+    name = "step_controller_test",
+    srcs = ["step_controller_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/adaptive_load:step_controller_impl",
+        "//test/adaptive_load/fake_plugins/fake_input_variable_setter",
+        "//test/adaptive_load/fake_plugins/fake_metrics_plugin",
     ],
 )

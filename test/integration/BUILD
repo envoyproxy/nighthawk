@@ -14,6 +14,7 @@ py_library(
     data = [
         "configurations/nighthawk_http_origin.yaml",
         "configurations/nighthawk_https_origin.yaml",
+        "configurations/nighthawk_track_timings.yaml",
         "configurations/sni_origin.yaml",
         "//:nighthawk_client",
         "//:nighthawk_output_transform",

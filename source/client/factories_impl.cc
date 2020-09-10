@@ -47,10 +47,11 @@ BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
                                      std::make_unique<SinkableHdrStatistic>(scope, worker_id),
                                      std::make_unique<SinkableHdrStatistic>(scope, worker_id),
                                      std::make_unique<SinkableHdrStatistic>(scope, worker_id),
+                                     std::make_unique<SinkableHdrStatistic>(scope, worker_id),
                                      std::make_unique<SinkableHdrStatistic>(scope, worker_id));
   auto benchmark_client = std::make_unique<BenchmarkClientHttpImpl>(
       api, dispatcher, scope, statistic, options_.h2(), cluster_manager, http_tracer, cluster_name,
-      request_generator.get(), !options_.openLoop());
+      request_generator.get(), !options_.openLoop(), options_.responseHeaderWithLatencyInput());
   auto request_options = options_.toCommandLineOptions()->request_options();
   benchmark_client->setConnectionLimit(options_.connections());
   benchmark_client->setMaxPendingRequests(options_.maxPendingRequests());
@@ -180,15 +181,11 @@ RequestSourcePtr RequestSourceFactoryImpl::create(
 
   if (options_.requestSource() == "") {
     return request_source_constructor.createStaticRequestSource(std::move(header));
-    //    return std::make_unique<StaticRequestSourceImpl>(std::move(header));
   } else {
     // We pass in options_.requestsPerSecond() as the header buffer length so the grpc client
     // will shoot for maintaining an amount of headers of at least one second.
     return request_source_constructor.createRemoteRequestSource(std::move(header),
                                                                 options_.requestsPerSecond());
-    // return std::make_unique<RemoteRequestSourceImpl>(cluster_manager, dispatcher, scope,
-    //                                                  service_cluster_name, std::move(header),
-    //                                                  options_.requestsPerSecond());
   }
 }
 

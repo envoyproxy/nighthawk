@@ -49,8 +49,11 @@ UriImpl::UriImpl(absl::string_view uri, absl::string_view default_scheme)
     host_without_port_ = host_and_port_;
     host_and_port_ = fmt::format("{}:{}", host_and_port_, port_);
   } else {
-    port_ = std::stoi(host_and_port_.substr(colon_index + 1));
-    host_without_port_ = host_and_port_.substr(0, colon_index);
+    if (absl::SimpleAtoi(host_and_port_.substr(colon_index + 1), &port_)) {
+      host_without_port_ = host_and_port_.substr(0, colon_index);
+    } else {
+      throw UriException("Invalid URI, couldn't parse port");
+    }
   }
   if (!isValid()) {
     throw UriException("Invalid URI");
