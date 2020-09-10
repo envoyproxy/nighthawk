@@ -103,9 +103,10 @@ absl::StatusOr<BenchmarkResult> AdaptiveLoadControllerImpl::PerformAndAnalyzeNig
   absl::StatusOr<nighthawk::client::CommandLineOptions> command_line_options_or =
       step_controller.GetCurrentCommandLineOptions();
   if (!command_line_options_or.ok()) {
-    ENVOY_LOG_MISC(error, command_line_options_or.status().message());
-    return absl::AbortedError(absl::StrCat("Error constructing Nighthawk input: ",
-                                           command_line_options_or.status().message()));
+    ENVOY_LOG_MISC(error, "Error constructing Nighthawk input: {}: {}",
+                   command_line_options_or.status().code(),
+                   command_line_options_or.status().message());
+    return command_line_options_or.status();
   }
   nighthawk::client::CommandLineOptions command_line_options = command_line_options_or.value();
   *command_line_options.mutable_duration() = std::move(duration);
@@ -115,7 +116,8 @@ absl::StatusOr<BenchmarkResult> AdaptiveLoadControllerImpl::PerformAndAnalyzeNig
       nighthawk_service_client_.PerformNighthawkBenchmark(nighthawk_service_stub,
                                                           command_line_options);
   if (!nighthawk_response_or.ok()) {
-    ENVOY_LOG_MISC(error, "Nighthawk Service error: {}", nighthawk_response_or.status().message());
+    ENVOY_LOG_MISC(error, "Nighthawk Service error: {}: {}", nighthawk_response_or.status().code(),
+                   nighthawk_response_or.status().message());
     return nighthawk_response_or.status();
   }
   nighthawk::client::ExecutionResponse nighthawk_response = nighthawk_response_or.value();
@@ -124,7 +126,8 @@ absl::StatusOr<BenchmarkResult> AdaptiveLoadControllerImpl::PerformAndAnalyzeNig
       metrics_evaluator_.AnalyzeNighthawkBenchmark(nighthawk_response, spec,
                                                    name_to_custom_plugin_map);
   if (!benchmark_result_or.ok()) {
-    ENVOY_LOG_MISC(error, "Benchmark scoring error: {}", benchmark_result_or.status().message());
+    ENVOY_LOG_MISC(error, "Benchmark scoring error: {}: {}", benchmark_result_or.status().code(),
+                   benchmark_result_or.status().message());
     return benchmark_result_or.status();
   }
   BenchmarkResult benchmark_result = benchmark_result_or.value();
@@ -145,7 +148,6 @@ absl::StatusOr<AdaptiveLoadSessionOutput> AdaptiveLoadControllerImpl::PerformAda
   absl::flat_hash_map<std::string, MetricsPluginPtr> name_to_custom_metrics_plugin_map =
       LoadMetricsPlugins(spec);
   StepControllerPtr step_controller = LoadStepControllerPluginFromSpec(spec);
-
   AdaptiveLoadSessionOutput output;
 
   // Threshold specs are reproduced in the output proto for convenience.
@@ -157,12 +159,6 @@ absl::StatusOr<AdaptiveLoadSessionOutput> AdaptiveLoadControllerImpl::PerformAda
   Envoy::MonotonicTime start_time = time_source_.monotonicTime();
   std::string doom_reason;
   do {
-    if (std::chrono::duration_cast<std::chrono::seconds>(time_source_.monotonicTime() - start_time)
-            .count() > spec.convergence_deadline().seconds()) {
-      return absl::DeadlineExceededError(absl::StrCat("Failed to converge before deadline of ",
-                                                      spec.convergence_deadline().seconds(),
-                                                      " seconds."));
-    }
     absl::StatusOr<BenchmarkResult> result_or = PerformAndAnalyzeNighthawkBenchmark(
         nighthawk_service_stub, spec, name_to_custom_metrics_plugin_map, *step_controller,
         spec.measuring_period());
@@ -172,6 +168,13 @@ absl::StatusOr<AdaptiveLoadSessionOutput> AdaptiveLoadControllerImpl::PerformAda
     BenchmarkResult result = result_or.value();
     *output.mutable_adjusting_stage_results()->Add() = result;
     step_controller->UpdateAndRecompute(result);
+
+    if (std::chrono::duration_cast<std::chrono::seconds>(time_source_.monotonicTime() - start_time)
+            .count() > spec.convergence_deadline().seconds()) {
+      return absl::DeadlineExceededError(absl::StrCat("Failed to converge before deadline of ",
+                                                      spec.convergence_deadline().seconds(),
+                                                      " seconds."));
+    }
   } while (!step_controller->IsConverged() && !step_controller->IsDoomed(doom_reason));
 
   if (step_controller->IsDoomed(doom_reason)) {
