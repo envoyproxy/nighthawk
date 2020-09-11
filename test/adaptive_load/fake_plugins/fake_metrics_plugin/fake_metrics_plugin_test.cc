@@ -6,6 +6,7 @@
 #include "api/client/options.pb.h"
 
 #include "test/adaptive_load/fake_plugins/fake_metrics_plugin/fake_metrics_plugin.h"
+#include "test/adaptive_load/fake_plugins/fake_metrics_plugin/fake_metrics_plugin.pb.h"
 
 #include "adaptive_load/plugin_loader.h"
 #include "gmock/gmock.h"
@@ -112,6 +113,24 @@ TEST(FakeMetricsPlugin, GetAllSupportedMetricNamesReturnsCorrectValues) {
   FakeMetricsPlugin metrics_plugin(config);
   EXPECT_THAT(metrics_plugin.GetAllSupportedMetricNames(),
               ::testing::UnorderedElementsAre("metric1", "metric2"));
+}
+
+TEST(MakeFakeMetricsPluginTypedExtensionConfig, SetsCorrectPluginName) {
+  envoy::config::core::v3::TypedExtensionConfig activator =
+      MakeFakeMetricsPluginTypedExtensionConfig(
+          nighthawk::adaptive_load::FakeMetricsPluginConfig());
+  EXPECT_EQ(activator.name(), "nighthawk.fake_metrics_plugin");
+}
+
+TEST(MakeFakeMetricsPluginTypedExtensionConfig, PacksGivenConfigProto) {
+  nighthawk::adaptive_load::FakeMetricsPluginConfig expected_config;
+  expected_config.mutable_fake_metrics()->Add()->set_name("a");
+  envoy::config::core::v3::TypedExtensionConfig activator =
+      MakeFakeMetricsPluginTypedExtensionConfig(expected_config);
+  nighthawk::adaptive_load::FakeMetricsPluginConfig actual_config;
+  Envoy::MessageUtil::unpackTo(activator.typed_config(), actual_config);
+  EXPECT_EQ(expected_config.DebugString(), actual_config.DebugString());
+  EXPECT_TRUE(MessageDifferencer::Equivalent(expected_config, actual_config));
 }
 
 } // namespace

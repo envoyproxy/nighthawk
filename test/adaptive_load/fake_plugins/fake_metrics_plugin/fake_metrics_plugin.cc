@@ -81,4 +81,12 @@ FakeMetricsPluginConfigFactory::ValidateConfig(const Envoy::Protobuf::Message& m
 
 REGISTER_FACTORY(FakeMetricsPluginConfigFactory, MetricsPluginConfigFactory);
 
+envoy::config::core::v3::TypedExtensionConfig MakeFakeMetricsPluginTypedExtensionConfig(
+    const nighthawk::adaptive_load::FakeMetricsPluginConfig& config) {
+  envoy::config::core::v3::TypedExtensionConfig outer_config;
+  outer_config.set_name("nighthawk.fake_metrics_plugin");
+  outer_config.mutable_typed_config()->PackFrom(config);
+  return outer_config;
+}
+
 } // namespace Nighthawk
