@@ -13,3 +13,5 @@ routing PRs, questions, etc. to the right place.
   * Envoy internals and architecture.
 * Jakub Sobon ([mum4k](https://github.com/mum4k)) (mumak@google.com)
   * APIs, general functionality and miscellany.
+* Nathan Perry ([dubious90](https://github.com/dubious90)) (nbperry@google.com)
+  * APIs and general functionality.
