@@ -120,6 +120,28 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
+    name = "session_spec_proto_helper_impl",
+    srcs = [
+        "session_spec_proto_helper_impl.cc",
+    ],
+    hdrs = [
+        "session_spec_proto_helper_impl.h",
+    ],
+    repository = "@envoy",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":metrics_plugin_impl",
+        ":plugin_loader",
+        "//include/nighthawk/adaptive_load:metrics_plugin",
+        "//include/nighthawk/adaptive_load:scoring_function",
+        "//include/nighthawk/adaptive_load:session_spec_proto_helper",
+        "//include/nighthawk/adaptive_load:step_controller",
+        "@envoy//source/common/config:utility_lib_with_external_headers",
+        "@envoy//source/common/protobuf:protobuf_with_external_headers",
+    ],
+)
+
+envoy_cc_library(
     name = "step_controller_impl",
     srcs = [
         "step_controller_impl.cc",

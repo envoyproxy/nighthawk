@@ -97,6 +97,19 @@ envoy_basic_cc_library(
 )
 
 envoy_basic_cc_library(
+    name = "session_spec_proto_helper",
+    hdrs = [
+        "session_spec_proto_helper.h",
+    ],
+    include_prefix = "nighthawk/adaptive_load",
+    deps = [
+        "//api/adaptive_load:adaptive_load_proto_cc_proto",
+        "@com_google_absl//absl/status",
+        "@envoy//include/envoy/common:base_includes",
+    ],
+)
+
+envoy_basic_cc_library(
     name = "step_controller",
     hdrs = [
         "step_controller.h",
