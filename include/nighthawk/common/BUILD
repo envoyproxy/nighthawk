@@ -72,10 +72,10 @@ envoy_basic_cc_library(
     include_prefix = "nighthawk/common",
     deps = [
         ":request_source_lib",
-        "@envoy//source/common/api:api_lib_with_external_headers",
         "//api/request_source:request_source_plugin_cc_proto",
         "@envoy//include/envoy/common:base_includes",
         "@envoy//include/envoy/config:typed_config_interface",
+        "@envoy//source/common/api:api_lib_with_external_headers",
     ],
 )
 
