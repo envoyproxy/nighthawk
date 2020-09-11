@@ -107,14 +107,15 @@ protected:
   MockNighthawkServiceStub mock_nighthawk_service_stub_;
 };
 
-// TEST_F(AdaptiveLoadControllerImplFixture, SetsSpecDefaults) {
-//   NiceMock<MockAdaptiveLoadSessionSpecProtoHelper> mock_spec_proto_helper;
-//   EXPECT_CALL(mock_spec_proto_helper, SetSessionSpecDefaults(_)).Times(1);
-//   AdaptiveLoadControllerImpl controller(mock_nighthawk_service_client_, mock_metrics_evaluator_,
-//                                         mock_spec_proto_helper, fake_time_source_);
-//   (void)controller.PerformAdaptiveLoadSession(&mock_nighthawk_service_stub_,
-//   MakeValidAdaptiveLoadSessionSpec());
-// }
+TEST_F(AdaptiveLoadControllerImplFixture, SetsSpecDefaults) {
+  NiceMock<MockAdaptiveLoadSessionSpecProtoHelper> mock_spec_proto_helper;
+  AdaptiveLoadSessionSpec spec = MakeValidAdaptiveLoadSessionSpec();
+  EXPECT_CALL(mock_spec_proto_helper, SetSessionSpecDefaults(_)).WillOnce(Return(spec));
+
+  AdaptiveLoadControllerImpl controller(mock_nighthawk_service_client_, mock_metrics_evaluator_,
+                                        mock_spec_proto_helper, fake_time_source_);
+  (void)controller.PerformAdaptiveLoadSession(&mock_nighthawk_service_stub_, spec);
+}
 
 TEST_F(AdaptiveLoadControllerImplFixture, PropagatesSpecValidationError) {
   NiceMock<MockAdaptiveLoadSessionSpecProtoHelper> mock_spec_proto_helper;
