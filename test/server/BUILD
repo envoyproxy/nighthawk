@@ -15,6 +15,7 @@ envoy_cc_test_library(
     hdrs = ["http_filter_integration_test_base.h"],
     repository = "@envoy",
     deps = [
+        "//source/server:well_known_headers_lib",
         "@envoy//test/integration:http_integration_lib",
     ],
 )

@@ -1,5 +1,7 @@
 #include "test/server/http_filter_integration_test_base.h"
 
+#include "server/well_known_headers.h"
+
 #include "gtest/gtest.h"
 
 namespace Nighthawk {
@@ -14,55 +16,33 @@ void HttpFilterIntegrationTestBase::setup(const std::string& config) {
   HttpIntegrationTest::initialize();
 }
 
-Envoy::IntegrationStreamDecoderPtr HttpFilterIntegrationTestBase::getResponseFromUpstream() {
-  return getResponse(request_headers_, true);
+void HttpFilterIntegrationTestBase::updateRequestLevelConfiguration(
+    absl::string_view request_level_config) {
+  request_headers_.setCopy(Server::TestServer::HeaderNames::get().TestServerConfig,
+                           request_level_config);
+}
+
+void HttpFilterIntegrationTestBase::switchToPostWithEntityBody() {
+  request_headers_.setCopy(Envoy::Http::Headers::get().Method,
+                           Envoy::Http::Headers::get().MethodValues.Post);
 }
 
 Envoy::IntegrationStreamDecoderPtr
-HttpFilterIntegrationTestBase::getResponseFromUpstream(absl::string_view request_level_config) {
-  return getResponse(request_level_config, true);
-}
-
-Envoy::IntegrationStreamDecoderPtr
-HttpFilterIntegrationTestBase::getResponseFromExtension(absl::string_view request_level_config) {
-  return getResponse(request_level_config, false);
-}
-
-Envoy::IntegrationStreamDecoderPtr HttpFilterIntegrationTestBase::getResponseFromUpstream(
-    const Envoy::Http::TestRequestHeaderMapImpl& request_headers) {
-  return getResponse(request_headers, true);
-}
-
-Envoy::IntegrationStreamDecoderPtr HttpFilterIntegrationTestBase::getResponseFromExtension(
-    const Envoy::Http::TestRequestHeaderMapImpl& request_headers) {
-  return getResponse(request_headers, false);
-}
-
-Envoy::IntegrationStreamDecoderPtr
-HttpFilterIntegrationTestBase::getResponse(absl::string_view request_level_config,
-                                           bool setup_for_upstream_request) {
-  const Envoy::Http::LowerCaseString key("x-nighthawk-test-server-config");
-  Envoy::Http::TestRequestHeaderMapImpl request_headers = request_headers_;
-  request_headers.setCopy(key, request_level_config);
-  return getResponse(request_headers, setup_for_upstream_request);
-}
-
-Envoy::IntegrationStreamDecoderPtr HttpFilterIntegrationTestBase::getResponse(
-    const Envoy::Http::TestRequestHeaderMapImpl& request_headers, bool setup_for_upstream_request) {
+HttpFilterIntegrationTestBase::getResponse(ResponseOrigin expected_origin) {
   cleanupUpstreamAndDownstream();
   codec_client_ = makeHttpConnection(lookupPort("http"));
   Envoy::IntegrationStreamDecoderPtr response;
-  const bool is_post = request_headers.Method()->value().getStringView() ==
+  const bool is_post = request_headers_.Method()->value().getStringView() ==
                        Envoy::Http::Headers::get().MethodValues.Post;
   const uint64_t request_body_size = is_post ? 1024 : 0;
-  if (setup_for_upstream_request) {
-    response = sendRequestAndWaitForResponse(request_headers, request_body_size,
+  if (expected_origin == ResponseOrigin::UPSTREAM) {
+    response = sendRequestAndWaitForResponse(request_headers_, request_body_size,
                                              default_response_headers_, /*response_body_size*/ 0);
   } else {
     if (is_post) {
-      response = codec_client_->makeRequestWithBody(request_headers, request_body_size);
+      response = codec_client_->makeRequestWithBody(request_headers_, request_body_size);
     } else {
-      response = codec_client_->makeHeaderOnlyRequest(request_headers);
+      response = codec_client_->makeHeaderOnlyRequest(request_headers_);
     }
     response->waitForEndStream();
   }

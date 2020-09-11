@@ -1,5 +1,7 @@
 #include "server/http_filter_config_base.h"
 
+#include "server/well_known_headers.h"
+
 namespace Nighthawk {
 namespace Server {
 

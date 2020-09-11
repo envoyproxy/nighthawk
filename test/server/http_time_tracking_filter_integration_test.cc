@@ -11,7 +11,6 @@
 
 #include "server/configuration.h"
 #include "server/http_time_tracking_filter.h"
-#include "server/well_known_headers.h"
 
 #include "test/server/http_filter_integration_test_base.h"
 
@@ -45,12 +44,12 @@ INSTANTIATE_TEST_SUITE_P(IpVersions, HttpTimeTrackingIntegrationTest,
 // Verify expectations with static/file-based time-tracking configuration.
 TEST_P(HttpTimeTrackingIntegrationTest, ReturnsPositiveLatencyForStaticConfiguration) {
   setup(fmt::format(kProtoConfigTemplate, kDefaultProtoFragment));
-  Envoy::IntegrationStreamDecoderPtr response = getResponseFromUpstream();
+  Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::UPSTREAM);
   int64_t latency;
   const Envoy::Http::HeaderEntry* latency_header_1 =
       response->headers().get(Envoy::Http::LowerCaseString(kLatencyResponseHeaderName));
   EXPECT_EQ(latency_header_1, nullptr);
-  response = getResponseFromUpstream();
+  response = getResponse(ResponseOrigin::UPSTREAM);
   const Envoy::Http::HeaderEntry* latency_header_2 =
       response->headers().get(Envoy::Http::LowerCaseString(kLatencyResponseHeaderName));
   ASSERT_NE(latency_header_2, nullptr);
@@ -62,12 +61,13 @@ TEST_P(HttpTimeTrackingIntegrationTest, ReturnsPositiveLatencyForStaticConfigura
 TEST_P(HttpTimeTrackingIntegrationTest, ReturnsPositiveLatencyForPerRequestConfiguration) {
   setup(fmt::format(kProtoConfigTemplate, ""));
   // Don't send any config request header
-  getResponseFromUpstream();
+  getResponse(ResponseOrigin::UPSTREAM);
   // Send a config request header with an empty / default config. Should be a no-op.
-  getResponseFromUpstream("{}");
+  updateRequestLevelConfiguration("{}");
+  getResponse(ResponseOrigin::UPSTREAM);
   // Send a config request header, this should become effective.
-  Envoy::IntegrationStreamDecoderPtr response =
-      getResponseFromUpstream(fmt::format("{{{}}}", kDefaultProtoFragment));
+  updateRequestLevelConfiguration(fmt::format("{{{}}}", kDefaultProtoFragment));
+  Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::UPSTREAM);
   const Envoy::Http::HeaderEntry* latency_header =
       response->headers().get(Envoy::Http::LowerCaseString(kLatencyResponseHeaderName));
   ASSERT_NE(latency_header, nullptr);
@@ -82,14 +82,16 @@ TEST_P(HttpTimeTrackingIntegrationTest, BehavesWellWithBadPerRequestConfiguratio
   setup(fmt::format(kProtoConfigTemplate, ""));
   // Send a malformed config request header. This ought to shortcut and directly reply,
   // hence we don't expect an upstream request.
-  Envoy::IntegrationStreamDecoderPtr response = getResponseFromExtension("bad_json");
+  updateRequestLevelConfiguration("bad_json");
+  Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
   EXPECT_EQ(Envoy::Http::Utility::getResponseStatus(response->headers()), 500);
   EXPECT_EQ(
       response->body(),
       "time-tracking didn't understand the request: Error merging json config: Unable to parse "
       "JSON as proto (INVALID_ARGUMENT:Unexpected token.\nbad_json\n^): bad_json");
   // Send an empty config header, which ought to trigger failure mode as well.
-  response = getResponseFromExtension("");
+  updateRequestLevelConfiguration("");
+  response = getResponse(ResponseOrigin::EXTENSION);
   EXPECT_EQ(Envoy::Http::Utility::getResponseStatus(response->headers()), 500);
   EXPECT_EQ(
       response->body(),
@@ -101,23 +103,20 @@ TEST_P(HttpTimeTrackingIntegrationTest, BehavesWellWithBadPerRequestConfiguratio
 // This takes a slightly different code path, so it is important to test this explicitly.
 TEST_P(HttpTimeTrackingIntegrationTest, BehaviorWithRequestBody) {
   setup(fmt::format(kProtoConfigTemplate, ""));
-  Envoy::Http::TestRequestHeaderMapImpl request_headers(
-      {{":method", "POST"}, {":path", "/"}, {":authority", "host"}});
+  switchToPostWithEntityBody();
 
   // Post without any request-level configuration. Should succeed.
-  getResponseFromUpstream(request_headers);
-
-  Envoy::IntegrationStreamDecoderPtr response =
-      getResponseFromUpstream(fmt::format("{{{}}}", kDefaultProtoFragment));
+  getResponse(ResponseOrigin::UPSTREAM);
+  updateRequestLevelConfiguration(fmt::format("{{{}}}", kDefaultProtoFragment));
+  Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::UPSTREAM);
   const Envoy::Http::HeaderEntry* latency_header =
       response->headers().get(Envoy::Http::LowerCaseString(kLatencyResponseHeaderName));
   ASSERT_NE(latency_header, nullptr);
 
-  // Post with bad request-level configuration. The extension should response directly with an
+  // Post with bad request-level configuration. The extension should respond directly with an
   // error.
-  const Envoy::Http::LowerCaseString key("x-nighthawk-test-server-config");
-  request_headers.setCopy(key, "bad_json");
-  response = getResponseFromExtension(request_headers);
+  updateRequestLevelConfiguration("bad_json");
+  response = getResponse(ResponseOrigin::EXTENSION);
   EXPECT_EQ(Envoy::Http::Utility::getResponseStatus(response->headers()), 500);
   EXPECT_EQ(
       response->body(),
