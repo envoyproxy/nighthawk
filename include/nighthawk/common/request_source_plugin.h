@@ -15,9 +15,6 @@ namespace Nighthawk {
 class RequestSourcePlugin : RequestSource {
 public:
   RequestSourcePlugin(Envoy::Api::Api& api) : api_(api) {}
-  override ~RequestSourcePlugin() = default;
-  // virtual RequestGenerator get() PURE;
-  // virtual void initOnThread() PURE;
 protected:
   Envoy::Api::Api& api_;
 };
