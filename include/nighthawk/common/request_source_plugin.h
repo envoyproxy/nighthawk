@@ -15,6 +15,7 @@ namespace Nighthawk {
 class RequestSourcePlugin : RequestSource {
 public:
   RequestSourcePlugin(Envoy::Api::Api& api) : api_(api) {}
+
 protected:
   Envoy::Api::Api& api_;
 };
