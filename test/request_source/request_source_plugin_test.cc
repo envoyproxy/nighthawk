@@ -31,7 +31,7 @@ public:
   Envoy::Api::ApiPtr api_;
   Envoy::Stats::MockIsolatedStatsStore stats_store_;
   nighthawk::request_source::FileBasedPluginRequestSourceConfig
-  MakeFileBasedPluginConfigWithTestYaml(std::string request_file) {
+  MakeFileBasedPluginConfigWithTestYaml(const std::string& request_file) {
     nighthawk::request_source::FileBasedPluginRequestSourceConfig config;
     config.mutable_uri()->assign("http://foo/");
     config.mutable_file_path()->assign(request_file);
