@@ -24,6 +24,9 @@ public:
    *       MetricsEvaluatorImpl(),
    *       AdaptiveLoadSessionSpecProtoHelperImpl(),
    *       Envoy::Event::RealTimeSystem()); // NO_CHECK_FORMAT(real_time))
+   *   AdaptiveLoadSessionSpec spec; // ...
+   *   StatusOr<AdaptiveLoadSessionOutput> output =
+   *       controller.PerformAdaptiveLoadSession(nighthawk_service_stub, spec);
    *
    * @param nighthawk_service_client A helper that executes Nighthawk Service benchmarks given a
    * gRPC stub.

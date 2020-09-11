@@ -11,7 +11,7 @@ namespace Nighthawk {
 
 /**
  * Contains the main loop of the adaptive load controller. Consults a StepController for load
- * decisions, interacting with Nighthawk Service and MetricsPlugins. AdaptiveLoadSessionSpec proto
+ * decisions, interacts with Nighthawk Service and MetricsPlugins.
  */
 class AdaptiveLoadController {
 public:
