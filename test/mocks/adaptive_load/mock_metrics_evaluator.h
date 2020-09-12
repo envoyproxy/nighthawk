@@ -26,7 +26,7 @@ public:
       absl::StatusOr<nighthawk::adaptive_load::BenchmarkResult>(
           const nighthawk::client::ExecutionResponse& execution_response,
           const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec,
-          const absl::flat_hash_map<std::string, MetricsPluginPtr>& name_to_const_plugin_map));
+          const absl::flat_hash_map<std::string, MetricsPluginPtr>& name_to_custom_plugin_map));
 };
 
 } // namespace Nighthawk
