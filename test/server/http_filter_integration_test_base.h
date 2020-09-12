@@ -48,6 +48,14 @@ protected:
   void switchToPostWithEntityBody();
 
   /**
+   * Set a request header value. Overwrites any existing value.
+   *
+   * @param header_name Name of the request header to set.
+   * @param header_value Value to set for the request header.
+   */
+  void setRequestHeader(Envoy::Http::LowerCaseString header_name, absl::string_view header_value);
+
+  /**
    * Fetch a response. The request headers default to a minimal GET, but this may be changed
    * via other methods in this class.
    *

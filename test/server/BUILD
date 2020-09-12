@@ -25,10 +25,9 @@ envoy_cc_test(
     srcs = ["http_test_server_filter_integration_test.cc"],
     repository = "@envoy",
     deps = [
+        ":http_filter_integration_test_base_lib",
         "//source/server:http_test_server_filter_config",
-        "@envoy//include/envoy/upstream:cluster_manager_interface_with_external_headers",
         "@envoy//source/common/api:api_lib_with_external_headers",
-        "@envoy//test/integration:http_integration_lib",
     ],
 )
 

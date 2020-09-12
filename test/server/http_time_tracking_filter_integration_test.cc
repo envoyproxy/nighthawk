@@ -1,9 +1,5 @@
 #include <chrono>
 
-#include "envoy/upstream/cluster_manager.h"
-#include "envoy/upstream/upstream.h"
-
-#include "external/envoy/test/common/upstream/utility.h"
 #include "external/envoy/test/test_common/simulated_time_system.h"
 
 #include "api/server/response_options.pb.h"

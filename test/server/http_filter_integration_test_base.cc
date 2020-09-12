@@ -18,13 +18,17 @@ void HttpFilterIntegrationTestBase::setup(const std::string& config) {
 
 void HttpFilterIntegrationTestBase::updateRequestLevelConfiguration(
     absl::string_view request_level_config) {
-  request_headers_.setCopy(Server::TestServer::HeaderNames::get().TestServerConfig,
-                           request_level_config);
+  setRequestHeader(Server::TestServer::HeaderNames::get().TestServerConfig, request_level_config);
 }
 
 void HttpFilterIntegrationTestBase::switchToPostWithEntityBody() {
-  request_headers_.setCopy(Envoy::Http::Headers::get().Method,
-                           Envoy::Http::Headers::get().MethodValues.Post);
+  setRequestHeader(Envoy::Http::Headers::get().Method,
+                   Envoy::Http::Headers::get().MethodValues.Post);
+}
+
+void HttpFilterIntegrationTestBase::setRequestHeader(Envoy::Http::LowerCaseString header_name,
+                                                     absl::string_view header_value) {
+  request_headers_.setCopy(header_name, header_value);
 }
 
 Envoy::IntegrationStreamDecoderPtr
