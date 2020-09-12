@@ -12,8 +12,8 @@ namespace Nighthawk {
 
 using namespace testing;
 
-constexpr absl::string_view kBadJson = "bad_json";
-constexpr char kDefaultProto[] = R"EOF(
+const std::string kBadJson = "bad_json";
+const std::string kDefaultProto = R"EOF(
 name: test-server
 typed_config:
   "@type": type.googleapis.com/nighthawk.server.ResponseOptions
@@ -22,7 +22,7 @@ typed_config:
   - { header: { key: "x-supplied-by", value: "nighthawk-test-server"} }
 )EOF";
 
-constexpr char kNoConfigProto[] = R"EOF(
+const std::string kNoConfigProto = R"EOF(
 name: test-server
 )EOF";
 

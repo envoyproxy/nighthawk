@@ -49,7 +49,6 @@ envoy_cc_test(
     deps = [
         ":http_filter_integration_test_base_lib",
         "//source/server:http_time_tracking_filter_config",
-        "@envoy//include/envoy/upstream:cluster_manager_interface_with_external_headers",
         "@envoy//source/common/api:api_lib_with_external_headers",
         "@envoy//test/test_common:simulated_time_system_lib",
     ],

@@ -26,8 +26,8 @@ void HttpFilterIntegrationTestBase::switchToPostWithEntityBody() {
                    Envoy::Http::Headers::get().MethodValues.Post);
 }
 
-void HttpFilterIntegrationTestBase::setRequestHeader(Envoy::Http::LowerCaseString header_name,
-                                                     absl::string_view header_value) {
+void HttpFilterIntegrationTestBase::setRequestHeader(
+    const Envoy::Http::LowerCaseString& header_name, absl::string_view header_value) {
   request_headers_.setCopy(header_name, header_value);
 }
 

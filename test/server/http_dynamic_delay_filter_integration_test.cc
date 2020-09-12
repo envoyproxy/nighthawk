@@ -23,7 +23,6 @@ const Envoy::Http::LowerCaseString kDelayHeaderString("x-envoy-fault-delay-reque
  * - TODO(#393): An end to end test which proves that the interaction between this filter
  *   and the fault filter work as expected.
  */
-
 class HttpDynamicDelayIntegrationTest
     : public HttpFilterIntegrationTestBase,
       public testing::TestWithParam<Envoy::Network::Address::IpVersion> {
