@@ -39,6 +39,8 @@
 #include "adaptive_load/adaptive_load_controller_impl.h"
 #include "adaptive_load/metrics_plugin_impl.h"
 #include "adaptive_load/plugin_loader.h"
+#include "adaptive_load/scoring_function_impl.h"
+#include "adaptive_load/session_spec_proto_helper_impl.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -64,6 +66,16 @@ using ::testing::Return;
 using ::testing::SaveArg;
 using ::testing::SetArgPointee;
 
+/**
+ * Creates a valid BenchmarkResult proto with only the score set. Useful for controlling the
+ * FakeStepController, which returns convergence for score > 0 and doom for a score < 0.
+ *
+ * @param score Positive number for a converging BenchmarkResult, negative number for doomed, zero
+ * for neither.
+ *
+ * @return BenchmarkResult An incomplete BenchmarkResult useful only for determining
+ * FakeStepController convergence and doom.
+ */
 BenchmarkResult MakeBenchmarkResultWithScore(double score) {
   BenchmarkResult benchmark_result;
   MetricEvaluation* evaluation = benchmark_result.mutable_metric_evaluations()->Add();
@@ -71,26 +83,26 @@ BenchmarkResult MakeBenchmarkResultWithScore(double score) {
   return benchmark_result;
 }
 
+/**
+ * Creates a minimal AdaptiveLoadSessionSpec with a FakeStepController.
+ *
+ * @return AdaptiveLoadSessionSpec with a FakeStepController and enough fields set to pass
+ * validation.
+ */
 AdaptiveLoadSessionSpec MakeValidAdaptiveLoadSessionSpec() {
   AdaptiveLoadSessionSpec spec;
   spec.mutable_convergence_deadline()->set_seconds(100);
   *spec.mutable_step_controller_config() = MakeFakeStepControllerPluginConfigWithRps(10);
   MetricSpecWithThreshold* expected_spec_with_threshold = spec.mutable_metric_thresholds()->Add();
-  expected_spec_with_threshold->mutable_metric_spec()->set_metric_name("a");
+  expected_spec_with_threshold->mutable_metric_spec()->set_metric_name("success-rate");
+  expected_spec_with_threshold->mutable_threshold_spec()->mutable_scoring_function()->set_name(
+      "nighthawk.binary_scoring");
+  expected_spec_with_threshold->mutable_threshold_spec()
+      ->mutable_scoring_function()
+      ->mutable_typed_config()
+      ->PackFrom(nighthawk::adaptive_load::BinaryScoringFunctionConfig());
   return spec;
 }
-
-class NoopAdaptiveLoadSessionSpecProtoHelper : public AdaptiveLoadSessionSpecProtoHelper {
-public:
-  nighthawk::adaptive_load::AdaptiveLoadSessionSpec
-  SetSessionSpecDefaults(nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec) const override {
-    return spec;
-  }
-  absl::Status
-  CheckSessionSpec(const nighthawk::adaptive_load::AdaptiveLoadSessionSpec&) const override {
-    return absl::OkStatus();
-  }
-};
 
 class AdaptiveLoadControllerImplFixture : public testing::Test {
 public:
@@ -103,7 +115,6 @@ protected:
   NiceMock<MockNighthawkServiceClient> mock_nighthawk_service_client_;
   NiceMock<MockMetricsEvaluator> mock_metrics_evaluator_;
   FakeIncrementingMonotonicTimeSource fake_time_source_;
-  NoopAdaptiveLoadSessionSpecProtoHelper fake_spec_proto_helper_;
   MockNighthawkServiceStub mock_nighthawk_service_stub_;
 };
 
@@ -114,6 +125,7 @@ TEST_F(AdaptiveLoadControllerImplFixture, SetsSpecDefaults) {
 
   AdaptiveLoadControllerImpl controller(mock_nighthawk_service_client_, mock_metrics_evaluator_,
                                         mock_spec_proto_helper, fake_time_source_);
+
   (void)controller.PerformAdaptiveLoadSession(&mock_nighthawk_service_stub_, spec);
 }
 
@@ -136,10 +148,12 @@ TEST_F(AdaptiveLoadControllerImplFixture, CopiesThresholdSpecsIntoOutput) {
   EXPECT_CALL(mock_metrics_evaluator_, AnalyzeNighthawkBenchmark(_, _, _))
       .WillRepeatedly(Return(MakeBenchmarkResultWithScore(1.0)));
 
+  AdaptiveLoadSessionSpecProtoHelperImpl spec_helper;
   AdaptiveLoadControllerImpl controller(mock_nighthawk_service_client_, mock_metrics_evaluator_,
-                                        fake_spec_proto_helper_, fake_time_source_);
+                                        spec_helper, fake_time_source_);
 
-  AdaptiveLoadSessionSpec spec = MakeValidAdaptiveLoadSessionSpec();
+  AdaptiveLoadSessionSpec spec =
+      spec_helper.SetSessionSpecDefaults(MakeValidAdaptiveLoadSessionSpec());
   absl::StatusOr<AdaptiveLoadSessionOutput> output_or =
       controller.PerformAdaptiveLoadSession(&mock_nighthawk_service_stub_, spec);
   ASSERT_TRUE(output_or.ok());
@@ -155,7 +169,8 @@ TEST_F(AdaptiveLoadControllerImplFixture, TimesOutIfNeverConverged) {
       .WillRepeatedly(Return(MakeBenchmarkResultWithScore(0.0)));
 
   AdaptiveLoadControllerImpl controller(mock_nighthawk_service_client_, mock_metrics_evaluator_,
-                                        fake_spec_proto_helper_, fake_time_source_);
+                                        AdaptiveLoadSessionSpecProtoHelperImpl(),
+                                        fake_time_source_);
 
   AdaptiveLoadSessionSpec spec = MakeValidAdaptiveLoadSessionSpec();
   absl::StatusOr<AdaptiveLoadSessionOutput> output_or =
@@ -170,7 +185,8 @@ TEST_F(AdaptiveLoadControllerImplFixture, ReturnsErrorWhenDoomed) {
       .WillOnce(Return(MakeBenchmarkResultWithScore(-1.0)));
 
   AdaptiveLoadControllerImpl controller(mock_nighthawk_service_client_, mock_metrics_evaluator_,
-                                        fake_spec_proto_helper_, fake_time_source_);
+                                        AdaptiveLoadSessionSpecProtoHelperImpl(),
+                                        fake_time_source_);
 
   absl::StatusOr<AdaptiveLoadSessionOutput> output_or = controller.PerformAdaptiveLoadSession(
       &mock_nighthawk_service_stub_, MakeValidAdaptiveLoadSessionSpec());
@@ -186,7 +202,8 @@ TEST_F(AdaptiveLoadControllerImplFixture,
       .WillRepeatedly(Return(MakeBenchmarkResultWithScore(-1.0)));
 
   AdaptiveLoadControllerImpl controller(mock_nighthawk_service_client_, mock_metrics_evaluator_,
-                                        fake_spec_proto_helper_, fake_time_source_);
+                                        AdaptiveLoadSessionSpecProtoHelperImpl(),
+                                        fake_time_source_);
 
   AdaptiveLoadSessionSpec spec = MakeValidAdaptiveLoadSessionSpec();
   *spec.mutable_step_controller_config() = MakeFakeStepControllerPluginConfigWithInputSettingError(
@@ -204,7 +221,8 @@ TEST_F(AdaptiveLoadControllerImplFixture, PropagatesErrorWhenInputValueSettingFa
       .WillRepeatedly(Return(MakeBenchmarkResultWithScore(1.0)));
 
   AdaptiveLoadControllerImpl controller(mock_nighthawk_service_client_, mock_metrics_evaluator_,
-                                        fake_spec_proto_helper_, fake_time_source_);
+                                        AdaptiveLoadSessionSpecProtoHelperImpl(),
+                                        fake_time_source_);
 
   AdaptiveLoadSessionSpec spec = MakeValidAdaptiveLoadSessionSpec();
   *spec.mutable_step_controller_config() = MakeFakeStepControllerPluginConfigWithInputSettingError(
@@ -222,7 +240,8 @@ TEST_F(AdaptiveLoadControllerImplFixture, PropagatesErrorFromNighthawkService) {
       .WillOnce(Return(absl::DataLossError(kExpectedErrorMessage)));
 
   AdaptiveLoadControllerImpl controller(mock_nighthawk_service_client_, mock_metrics_evaluator_,
-                                        fake_spec_proto_helper_, fake_time_source_);
+                                        AdaptiveLoadSessionSpecProtoHelperImpl(),
+                                        fake_time_source_);
 
   absl::StatusOr<AdaptiveLoadSessionOutput> output_or = controller.PerformAdaptiveLoadSession(
       &mock_nighthawk_service_stub_, MakeValidAdaptiveLoadSessionSpec());
@@ -237,7 +256,8 @@ TEST_F(AdaptiveLoadControllerImplFixture, PropagatesErrorFromMetricsEvaluator) {
       .WillOnce(Return(absl::DataLossError(kExpectedErrorMessage)));
 
   AdaptiveLoadControllerImpl controller(mock_nighthawk_service_client_, mock_metrics_evaluator_,
-                                        fake_spec_proto_helper_, fake_time_source_);
+                                        AdaptiveLoadSessionSpecProtoHelperImpl(),
+                                        fake_time_source_);
 
   absl::StatusOr<AdaptiveLoadSessionOutput> output_or = controller.PerformAdaptiveLoadSession(
       &mock_nighthawk_service_stub_, MakeValidAdaptiveLoadSessionSpec());
@@ -252,7 +272,8 @@ TEST_F(AdaptiveLoadControllerImplFixture, StoresAdjustingStageResult) {
       .WillRepeatedly(Return(expected_benchmark_result));
 
   AdaptiveLoadControllerImpl controller(mock_nighthawk_service_client_, mock_metrics_evaluator_,
-                                        fake_spec_proto_helper_, fake_time_source_);
+                                        AdaptiveLoadSessionSpecProtoHelperImpl(),
+                                        fake_time_source_);
 
   AdaptiveLoadSessionSpec spec = MakeValidAdaptiveLoadSessionSpec();
   absl::StatusOr<AdaptiveLoadSessionOutput> output_or =
@@ -270,7 +291,8 @@ TEST_F(AdaptiveLoadControllerImplFixture, StoresTestingStageResult) {
       .WillRepeatedly(Return(expected_benchmark_result));
 
   AdaptiveLoadControllerImpl controller(mock_nighthawk_service_client_, mock_metrics_evaluator_,
-                                        fake_spec_proto_helper_, fake_time_source_);
+                                        AdaptiveLoadSessionSpecProtoHelperImpl(),
+                                        fake_time_source_);
 
   AdaptiveLoadSessionSpec spec = MakeValidAdaptiveLoadSessionSpec();
   absl::StatusOr<AdaptiveLoadSessionOutput> output_or =

@@ -31,6 +31,8 @@ envoy_cc_test(
         "//include/nighthawk/adaptive_load:input_variable_setter",
         "//include/nighthawk/adaptive_load:step_controller",
         "//source/adaptive_load:adaptive_load_controller_impl",
+        "//source/adaptive_load:scoring_function_impl",
+        "//source/adaptive_load:session_spec_proto_helper_impl",
         "//test/adaptive_load/fake_plugins/fake_step_controller",
         "//test/common:fake_time_source",
         "//test/mocks/adaptive_load:mock_metrics_evaluator",
