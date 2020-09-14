@@ -69,12 +69,12 @@ FileBasedRequestSourcePlugin::FileBasedRequestSourcePlugin(
     Envoy::Api::Api& api)
     : RequestSourcePlugin{api}, uri_(config.uri()), file_path_(config.file_path()) {
   Envoy::MessageUtil util;
-  util.loadFromFile(file_path_, optionses_, Envoy::ProtobufMessage::getStrictValidationVisitor(),
+  util.loadFromFile(file_path_, options_list_, Envoy::ProtobufMessage::getStrictValidationVisitor(),
                     api_, true);
 }
 
 RequestGenerator FileBasedRequestSourcePlugin::get() {
-  RequestOptionsIterator iterator = optionses_.sub_options().begin();
+  RequestOptionsIterator iterator = options_list_.options().begin();
   request_iterators_.push_back(iterator);
   RequestOptionsIterator* temp = &request_iterators_.back();
   RequestGenerator request_generator = [this, temp]() mutable {

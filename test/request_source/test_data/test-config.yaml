@@ -1,4 +1,4 @@
-sub_options:
+options:
   - request_body_size: 10
     request_headers:
       - { header: { key: ":path", value: "/a" } }

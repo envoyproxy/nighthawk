@@ -67,7 +67,7 @@ private:
   const Nighthawk::UriImpl uri_;
   const std::string file_path_;
   nighthawk::client::RequestOptions options_;
-  nighthawk::client::RequestOptionses optionses_;
+  nighthawk::client::RequestOptionsList options_list_;
   std::vector<RequestOptionsIterator> request_iterators_;
 };
 /**

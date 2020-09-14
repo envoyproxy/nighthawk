@@ -36,6 +36,8 @@ public:
    *
    * @param message Any typed_config proto taken from the TypedExtensionConfig.
    *
+   * @param api Api parameter that contains timesystem, filesystem, and threadfactory.
+   *
    * @return RequestSourcePluginPtr Pointer to the new plugin instance.
    *
    * @throw Envoy::EnvoyException If the Any proto cannot be unpacked as the type expected by the
