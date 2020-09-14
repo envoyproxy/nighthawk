@@ -108,5 +108,10 @@ protected:
   double durationToSeconds(const Envoy::ProtobufWkt::Duration& duration) const;
 };
 
+class FortioPedanticOutputFormatterImpl : public FortioOutputFormatterImpl {
+public:
+  std::string formatProto(const nighthawk::client::Output& output) const override;
+};
+
 } // namespace Client
 } // namespace Nighthawk

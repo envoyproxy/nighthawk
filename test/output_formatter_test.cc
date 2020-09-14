@@ -126,7 +126,8 @@ TEST_F(OutputCollectorTest, GetLowerCaseOutputFormats) {
   auto output_formats = OutputFormatterImpl::getLowerCaseOutputFormats();
   // When you're looking at this code you probably just added an output format.
   // This is to point out that you might want to update the list below and add a test above.
-  ASSERT_THAT(output_formats, ElementsAre("json", "human", "yaml", "dotted", "fortio"));
+  ASSERT_THAT(output_formats, ElementsAre("json", "human", "yaml", "dotted", "fortio",
+                                          "experimental_fortio_pedantic"));
 }
 
 class FortioOutputCollectorTest : public OutputCollectorTest {
@@ -222,6 +223,13 @@ TEST_F(StatidToNameTest, TestTranslations) {
   for (const std::string& id : ids) {
     EXPECT_NE(ConsoleOutputFormatterImpl::statIdtoFriendlyStatName(id), id);
   }
+}
+
+TEST_F(MediumOutputCollectorTest, FortioPedanticFormatter) {
+  const auto input_proto = loadProtoFromFile("test/test_data/output_formatter.medium.proto.gold");
+  FortioPedanticOutputFormatterImpl formatter;
+  expectEqualToGoldFile(formatter.formatProto(input_proto),
+                        "test/test_data/output_formatter.medium.fortio-noquirks.gold");
 }
 
 } // namespace Client
