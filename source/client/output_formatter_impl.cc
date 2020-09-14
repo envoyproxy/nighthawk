@@ -397,10 +397,9 @@ const nighthawk::client::DurationHistogram FortioOutputFormatterImpl::renderFort
 std::string
 FortioPedanticOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
   std::string res = FortioOutputFormatterImpl::formatProto(output);
+  // clang-format off
   // Fix two types of quirks. We disable linting because we use std::regex directly.
   // This should be OK as the regular expression we use can be trusted.
-
-  // clang-format off
   // 1. We misdefined RequestRPS as an int, whereas Fortio outputs that as a string.
   res = std::regex_replace(res, std::regex(R"EOF("RequestedQPS"\: ([0-9]*))EOF"),
                            "\"RequestedQPS\": \"$1\"");
