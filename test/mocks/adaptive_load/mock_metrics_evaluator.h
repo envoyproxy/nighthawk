@@ -6,8 +6,22 @@
 
 namespace Nighthawk {
 
+/**
+ * A mock MetricsEvaluator that returns empty values from all methods.
+ *
+ * Typical usage:
+ *
+ *   MockMetricsEvaluator mock_metrics_evaluator;
+ *   BenchmarkResult benchmark_result;
+ *   // (set benchmark_result fields here)
+ *   EXPECT_CALL(mock_metrics_evaluator, AnalyzeNighthawkBenchmark(_, _, _))
+ *       .WillRepeatedly(Return(benchmark_result));
+ */
 class MockMetricsEvaluator : public MetricsEvaluator {
 public:
+  /**
+   * Empty constructor.
+   */
   MockMetricsEvaluator();
 
   MOCK_CONST_METHOD3(EvaluateMetric,
