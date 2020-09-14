@@ -16,7 +16,7 @@ namespace Nighthawk {
 
 nighthawk::adaptive_load::AdaptiveLoadSessionSpec
 AdaptiveLoadSessionSpecProtoHelperImpl::SetSessionSpecDefaults(
-    nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec) {
+    nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec) const {
   if (!spec.nighthawk_traffic_template().has_open_loop()) {
     spec.mutable_nighthawk_traffic_template()->mutable_open_loop()->set_value(true);
   }
@@ -48,7 +48,7 @@ AdaptiveLoadSessionSpecProtoHelperImpl::SetSessionSpecDefaults(
 }
 
 absl::Status AdaptiveLoadSessionSpecProtoHelperImpl::CheckSessionSpec(
-    const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec) {
+    const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec) const {
   std::vector<std::string> errors;
   if (spec.nighthawk_traffic_template().has_duration()) {
     errors.emplace_back(
