@@ -69,7 +69,7 @@ TEST_P(HttpFilterBaseIntegrationTest, BasicExtensionFlows) {
   EXPECT_EQ("200", response->headers().Status()->value().getStringView());
   EXPECT_TRUE(response->body().empty());
 
-  const char kBadConfig[] =
+  const std::string kBadConfigErrorSentinel =
       "didn't understand the request: Error merging json config: Unable to parse "
       "JSON as proto (INVALID_ARGUMENT:Unexpected";
 
@@ -77,13 +77,13 @@ TEST_P(HttpFilterBaseIntegrationTest, BasicExtensionFlows) {
   updateRequestLevelConfiguration("bad_json");
   response = getResponse(ResponseOrigin::EXTENSION);
   EXPECT_EQ(Envoy::Http::Utility::getResponseStatus(response->headers()), 500);
-  EXPECT_THAT(response->body(), HasSubstr(kBadConfig));
+  EXPECT_THAT(response->body(), HasSubstr(kBadConfigErrorSentinel));
 
   // When sending empty request-level configuration, the extension ought to reply directly.
   updateRequestLevelConfiguration("");
   response = getResponse(ResponseOrigin::EXTENSION);
   EXPECT_EQ(Envoy::Http::Utility::getResponseStatus(response->headers()), 500);
-  EXPECT_THAT(response->body(), HasSubstr(kBadConfig));
+  EXPECT_THAT(response->body(), HasSubstr(kBadConfigErrorSentinel));
 }
 
 } // namespace Nighthawk
