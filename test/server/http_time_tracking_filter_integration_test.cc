@@ -39,7 +39,7 @@ INSTANTIATE_TEST_SUITE_P(IpVersions, HttpTimeTrackingIntegrationTest,
 
 // Verify expectations with static/file-based time-tracking configuration.
 TEST_P(HttpTimeTrackingIntegrationTest, ReturnsPositiveLatencyForStaticConfiguration) {
-  setup(fmt::format(kProtoConfigTemplate, kDefaultProtoFragment));
+  initializeConfig(fmt::format(kProtoConfigTemplate, kDefaultProtoFragment));
   Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::UPSTREAM);
   int64_t latency;
   const Envoy::Http::HeaderEntry* latency_header_1 =
@@ -55,7 +55,7 @@ TEST_P(HttpTimeTrackingIntegrationTest, ReturnsPositiveLatencyForStaticConfigura
 
 // Verify expectations with an empty time-tracking configuration.
 TEST_P(HttpTimeTrackingIntegrationTest, ReturnsPositiveLatencyForPerRequestConfiguration) {
-  setup(fmt::format(kProtoConfigTemplate, ""));
+  initializeConfig(fmt::format(kProtoConfigTemplate, ""));
   // Don't send any config request header
   getResponse(ResponseOrigin::UPSTREAM);
   // Send a config request header with an empty / default config. Should be a no-op.

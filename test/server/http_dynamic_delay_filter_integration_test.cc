@@ -35,7 +35,7 @@ INSTANTIATE_TEST_SUITE_P(IpVersions, HttpDynamicDelayIntegrationTest,
 
 // Verify expectations with an empty dynamic-delay configuration.
 TEST_P(HttpDynamicDelayIntegrationTest, NoStaticConfiguration) {
-  setup(R"(
+  initializeConfig(R"(
 name: dynamic-delay
 typed_config:
   "@type": type.googleapis.com/nighthawk.server.ResponseOptions
@@ -56,7 +56,7 @@ typed_config:
 
 // Verify expectations with static/file-based static_delay configuration.
 TEST_P(HttpDynamicDelayIntegrationTest, StaticConfigurationStaticDelay) {
-  setup(R"EOF(
+  initializeConfig(R"EOF(
 name: dynamic-delay
 typed_config:
   "@type": type.googleapis.com/nighthawk.server.ResponseOptions
@@ -83,7 +83,7 @@ typed_config:
 
 // Verify expectations with static/file-based concurrency_based_linear_delay configuration.
 TEST_P(HttpDynamicDelayIntegrationTest, StaticConfigurationConcurrentDelay) {
-  setup(R"EOF(
+  initializeConfig(R"EOF(
 name: dynamic-delay
 typed_config:
   "@type": type.googleapis.com/nighthawk.server.ResponseOptions

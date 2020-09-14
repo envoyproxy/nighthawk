@@ -60,7 +60,7 @@ INSTANTIATE_TEST_SUITE_P(IpVersions, HttpTestServerIntegrationTest,
                          ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()));
 
 TEST_P(HttpTestServerIntegrationTest, TestNoHeaderConfig) {
-  setup(kDefaultProto);
+  initializeConfig(kDefaultProto);
   Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
   ASSERT_TRUE(response->complete());
   EXPECT_EQ("200", response->headers().Status()->value().getStringView());
@@ -68,7 +68,7 @@ TEST_P(HttpTestServerIntegrationTest, TestNoHeaderConfig) {
 }
 
 TEST_P(HttpTestServerIntegrationTest, TestBasics) {
-  setup(kDefaultProto);
+  initializeConfig(kDefaultProto);
   testWithResponseSize(1);
   testWithResponseSize(10);
   testWithResponseSize(100);
@@ -77,30 +77,30 @@ TEST_P(HttpTestServerIntegrationTest, TestBasics) {
 }
 
 TEST_P(HttpTestServerIntegrationTest, TestNegative) {
-  setup(kDefaultProto);
+  initializeConfig(kDefaultProto);
   testBadResponseSize(-1);
 }
 
 // TODO(oschaaf): We can't currently override with a default value ('0') in this case.
 TEST_P(HttpTestServerIntegrationTest, DISABLED_TestZeroLengthRequest) {
-  setup(kDefaultProto);
+  initializeConfig(kDefaultProto);
   testWithResponseSize(0);
 }
 
 TEST_P(HttpTestServerIntegrationTest, TestMaxBoundaryLengthRequest) {
-  setup(kDefaultProto);
+  initializeConfig(kDefaultProto);
   const int max = 1024 * 1024 * 4;
   testWithResponseSize(max);
 }
 
 TEST_P(HttpTestServerIntegrationTest, TestTooLarge) {
-  setup(kDefaultProto);
+  initializeConfig(kDefaultProto);
   const int max = 1024 * 1024 * 4;
   testBadResponseSize(max + 1);
 }
 
 TEST_P(HttpTestServerIntegrationTest, TestHeaderConfig) {
-  setup(kDefaultProto);
+  initializeConfig(kDefaultProto);
   updateRequestLevelConfiguration(
       R"({response_headers: [ { header: { key: "foo", value: "bar2"}, append: true } ]})");
   Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
@@ -112,7 +112,7 @@ TEST_P(HttpTestServerIntegrationTest, TestHeaderConfig) {
 }
 
 TEST_P(HttpTestServerIntegrationTest, TestEchoHeaders) {
-  setup(kDefaultProto);
+  initializeConfig(kDefaultProto);
   updateRequestLevelConfiguration("{echo_request_headers: true}");
   setRequestHeader(Envoy::Http::LowerCaseString("gray"), "pidgeon");
   setRequestHeader(Envoy::Http::LowerCaseString("red"), "fox");
@@ -133,7 +133,7 @@ TEST_P(HttpTestServerIntegrationTest, TestEchoHeaders) {
 }
 
 TEST_P(HttpTestServerIntegrationTest, NoNoStaticConfigHeaderConfig) {
-  setup(kNoConfigProto);
+  initializeConfig(kNoConfigProto);
   Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
   ASSERT_TRUE(response->complete());
   EXPECT_EQ("200", response->headers().Status()->value().getStringView());
@@ -141,7 +141,7 @@ TEST_P(HttpTestServerIntegrationTest, NoNoStaticConfigHeaderConfig) {
 }
 
 TEST_P(HttpTestServerIntegrationTest, TestNoStaticConfigBasics) {
-  setup(kNoConfigProto);
+  initializeConfig(kNoConfigProto);
   testWithResponseSize(1, false);
   testWithResponseSize(10, false);
   testWithResponseSize(100, false);
@@ -150,29 +150,29 @@ TEST_P(HttpTestServerIntegrationTest, TestNoStaticConfigBasics) {
 }
 
 TEST_P(HttpTestServerIntegrationTest, TestNoStaticConfigNegative) {
-  setup(kNoConfigProto);
+  initializeConfig(kNoConfigProto);
   testBadResponseSize(-1);
 }
 
 TEST_P(HttpTestServerIntegrationTest, TestNoStaticConfigZeroLengthRequest) {
-  setup(kNoConfigProto);
+  initializeConfig(kNoConfigProto);
   testWithResponseSize(0, false);
 }
 
 TEST_P(HttpTestServerIntegrationTest, TestNoStaticConfigMaxBoundaryLengthRequest) {
-  setup(kNoConfigProto);
+  initializeConfig(kNoConfigProto);
   const int max = 1024 * 1024 * 4;
   testWithResponseSize(max, false);
 }
 
 TEST_P(HttpTestServerIntegrationTest, TestNoStaticConfigTooLarge) {
-  setup(kNoConfigProto);
+  initializeConfig(kNoConfigProto);
   const int max = 1024 * 1024 * 4;
   testBadResponseSize(max + 1);
 }
 
 TEST_P(HttpTestServerIntegrationTest, TestNoStaticConfigHeaderConfig) {
-  setup(kNoConfigProto);
+  initializeConfig(kNoConfigProto);
   updateRequestLevelConfiguration(
       R"({response_headers: [ { header: { key: "foo", value: "bar2"}, append: true } ]})");
   Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);

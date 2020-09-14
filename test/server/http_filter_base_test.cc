@@ -45,7 +45,7 @@ typed_config:
 // ensure that bad configuration handling is in-place.
 TEST_P(HttpFilterBaseIntegrationTest, BasicExtensionFlows) {
   absl::string_view config = std::get<1>(GetParam());
-  setup(std::string(config));
+  initializeConfig(std::string(config));
   bool is_post = std::get<2>(GetParam());
   if (is_post) {
     switchToPostWithEntityBody();
