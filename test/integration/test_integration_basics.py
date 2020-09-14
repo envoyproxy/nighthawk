@@ -418,7 +418,7 @@ def test_cli_output_format(http_test_server_fixture):
     'filter_configs',
     ["{}", "{static_delay: \"0.01s\"}", "{emit_previous_request_delta_in_response_header: \"aa\"}"])
 def test_request_body_gets_transmitted(http_test_server_fixture, filter_configs):
-  """Test request body transmission with.
+  """Test request body transmission handling code for our extensions.
 
   Ensure that the number of bytes we request for the request body gets reflected in the upstream
   connection transmitted bytes counter for h1 and h2.
@@ -436,10 +436,8 @@ def test_request_body_gets_transmitted(http_test_server_fixture, filter_configs)
                                       "http.ingress_http.downstream_cx_rx_bytes_total"),
         expected_received_bytes)
 
-  upload_bytes = 1024 * 1024 * 3
-  # TODO(XXX): The dynamic-delay extension hangs unless we lower the request entity body size.
-  if "static_delay" in filter_configs:
-    upload_bytes = int(upload_bytes / 3)
+  # TODO(#531): The dynamic-delay extension hangs unless we lower the request entity body size.
+  upload_bytes = 1024 * 1024 if "static_delay" in filter_configs else 1024 * 1024 * 3
   requests = 10
   args = [
       http_test_server_fixture.getTestServerRootUri(), "--duration", "100", "--rps", "100",
