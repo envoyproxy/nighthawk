@@ -29,7 +29,7 @@ bool mergeJsonConfig(absl::string_view json, nighthawk::server::ResponseOptions&
  * @param response_options Configuration specifying how to transform the header map.
  */
 void applyConfigToResponseHeaders(Envoy::Http::ResponseHeaderMap& response_headers,
-                                  nighthawk::server::ResponseOptions& response_options);
+                                  const nighthawk::server::ResponseOptions& response_options);
 
 } // namespace Configuration
 } // namespace Server
