@@ -74,52 +74,6 @@ TEST_P(HttpTimeTrackingIntegrationTest, ReturnsPositiveLatencyForPerRequestConfi
   EXPECT_GT(latency, 0);
 }
 
-TEST_P(HttpTimeTrackingIntegrationTest, BehavesWellWithBadPerRequestConfiguration) {
-  setup(fmt::format(kProtoConfigTemplate, ""));
-  // Send a malformed config request header. This ought to shortcut and directly reply,
-  // hence we don't expect an upstream request.
-  updateRequestLevelConfiguration("bad_json");
-  Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
-  EXPECT_EQ(Envoy::Http::Utility::getResponseStatus(response->headers()), 500);
-  EXPECT_EQ(
-      response->body(),
-      "time-tracking didn't understand the request: Error merging json config: Unable to parse "
-      "JSON as proto (INVALID_ARGUMENT:Unexpected token.\nbad_json\n^): bad_json");
-  // Send an empty config header, which ought to trigger failure mode as well.
-  updateRequestLevelConfiguration("");
-  response = getResponse(ResponseOrigin::EXTENSION);
-  EXPECT_EQ(Envoy::Http::Utility::getResponseStatus(response->headers()), 500);
-  EXPECT_EQ(
-      response->body(),
-      "time-tracking didn't understand the request: Error merging json config: Unable to "
-      "parse JSON as proto (INVALID_ARGUMENT:Unexpected end of string. Expected a value.\n\n^): ");
-}
-
-// Verify the filter is well-behaved when it comes to requests with an entity body.
-// This takes a slightly different code path, so it is important to test this explicitly.
-TEST_P(HttpTimeTrackingIntegrationTest, BehaviorWithRequestBody) {
-  setup(fmt::format(kProtoConfigTemplate, ""));
-  switchToPostWithEntityBody();
-
-  // Post without any request-level configuration. Should succeed.
-  getResponse(ResponseOrigin::UPSTREAM);
-  updateRequestLevelConfiguration(fmt::format("{{{}}}", kDefaultProtoFragment));
-  Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::UPSTREAM);
-  const Envoy::Http::HeaderEntry* latency_header =
-      response->headers().get(Envoy::Http::LowerCaseString(kLatencyResponseHeaderName));
-  ASSERT_NE(latency_header, nullptr);
-
-  // Post with bad request-level configuration. The extension should respond directly with an
-  // error.
-  updateRequestLevelConfiguration("bad_json");
-  response = getResponse(ResponseOrigin::EXTENSION);
-  EXPECT_EQ(Envoy::Http::Utility::getResponseStatus(response->headers()), 500);
-  EXPECT_EQ(
-      response->body(),
-      "time-tracking didn't understand the request: Error merging json config: Unable to parse "
-      "JSON as proto (INVALID_ARGUMENT:Unexpected token.\nbad_json\n^): bad_json");
-}
-
 class HttpTimeTrackingFilterConfigTest : public testing::Test,
                                          public Envoy::Event::TestUsingSimulatedTime {};
 

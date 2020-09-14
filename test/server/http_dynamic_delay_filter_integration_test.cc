@@ -52,49 +52,6 @@ typed_config:
   updateRequestLevelConfiguration("{static_delay: \"1.6s\"}");
   getResponse(ResponseOrigin::UPSTREAM);
   EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString)->value().getStringView(), "1600");
-
-  // Send a malformed config request header. This ought to shortcut and directly reply,
-  // hence we don't expect an upstream request.
-  updateRequestLevelConfiguration("bad_json");
-  auto response = getResponse(ResponseOrigin::EXTENSION);
-  EXPECT_EQ(Envoy::Http::Utility::getResponseStatus(response->headers()), 500);
-  EXPECT_EQ(
-      response->body(),
-      "dynamic-delay didn't understand the request: Error merging json config: Unable to parse "
-      "JSON as proto (INVALID_ARGUMENT:Unexpected token.\nbad_json\n^): bad_json");
-  // Send an empty config header, which ought to trigger failure mode as well.
-  updateRequestLevelConfiguration("");
-  response = getResponse(ResponseOrigin::EXTENSION);
-  EXPECT_EQ(Envoy::Http::Utility::getResponseStatus(response->headers()), 500);
-  EXPECT_EQ(
-      response->body(),
-      "dynamic-delay didn't understand the request: Error merging json config: Unable to "
-      "parse JSON as proto (INVALID_ARGUMENT:Unexpected end of string. Expected a value.\n\n^): ");
-}
-
-// Verify the filter is well-behaved when it comes to requests with an entity body.
-// This takes a slightly different code path, so it is important to test this explicitly.
-TEST_P(HttpDynamicDelayIntegrationTest, BehaviorWithRequestBody) {
-  setup(R"EOF(
-name: dynamic-delay
-typed_config:
-  "@type": type.googleapis.com/nighthawk.server.ResponseOptions
-  static_delay: 0.1s
-)EOF");
-  switchToPostWithEntityBody();
-  // Post without any request-level configuration. Should succeed.
-  getResponse(ResponseOrigin::UPSTREAM);
-  EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString)->value().getStringView(), "100");
-
-  // Post with bad request-level configuration. The extension should respond directly with an
-  // error.
-  updateRequestLevelConfiguration("bad_json");
-  auto response = getResponse(ResponseOrigin::EXTENSION);
-  EXPECT_EQ(Envoy::Http::Utility::getResponseStatus(response->headers()), 500);
-  EXPECT_EQ(
-      response->body(),
-      "dynamic-delay didn't understand the request: Error merging json config: Unable to parse "
-      "JSON as proto (INVALID_ARGUMENT:Unexpected token.\nbad_json\n^): bad_json");
 }
 
 // Verify expectations with static/file-based static_delay configuration.

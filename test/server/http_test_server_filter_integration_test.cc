@@ -12,7 +12,6 @@ namespace Nighthawk {
 
 using namespace testing;
 
-const std::string kBadJson = "bad_json";
 const std::string kDefaultProto = R"EOF(
 name: test-server
 typed_config:
@@ -185,37 +184,6 @@ TEST_P(HttpTestServerIntegrationTest, TestNoStaticConfigHeaderConfig) {
   EXPECT_EQ("", response->body());
 }
 
-TEST_P(HttpTestServerIntegrationTest, BadNoStaticConfigTestHeaderConfig) {
-  setup(kNoConfigProto);
-  updateRequestLevelConfiguration(kBadJson);
-  Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
-  ASSERT_TRUE(response->complete());
-  EXPECT_EQ("500", response->headers().Status()->value().getStringView());
-  EXPECT_EQ("test-server didn't understand the request: Error merging json config: Unable to parse "
-            "JSON as proto (INVALID_ARGUMENT:Unexpected token.\nbad_json\n^): bad_json",
-            response->body());
-}
-
-// Verify the filter is well-behaved when it comes to requests with an entity body.
-// This takes a slightly different code path, so it is important to test this explicitly.
-TEST_P(HttpTestServerIntegrationTest, BehaviorWithRequestBody) {
-  setup(kDefaultProto);
-  switchToPostWithEntityBody();
-  // Post without any request-level configuration. Should succeed.
-  Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
-  ASSERT_TRUE(response->complete());
-  EXPECT_EQ("200", response->headers().Status()->value().getStringView());
-  EXPECT_EQ(std::string(10, 'a'), response->body());
-  // Post with bad request-level configuration. The extension should respond directly with an
-  // error.
-  updateRequestLevelConfiguration("bad_json");
-  response = getResponse(ResponseOrigin::EXTENSION);
-  EXPECT_EQ(Envoy::Http::Utility::getResponseStatus(response->headers()), 500);
-  EXPECT_EQ(response->body(),
-            "test-server didn't understand the request: Error merging json config: Unable to parse "
-            "JSON as proto (INVALID_ARGUMENT:Unexpected token.\nbad_json\n^): bad_json");
-}
-
 // Here we test config-level merging as well as its application at the response-header level.
 TEST(HttpTestServerDecoderFilterTest, HeaderMerge) {
   nighthawk::server::ResponseOptions initial_options;
@@ -273,7 +241,7 @@ TEST(HttpTestServerDecoderFilterTest, HeaderMerge) {
       header_map, Envoy::Http::TestResponseHeaderMapImpl{
                       {":status", "200"}, {"foo", "bar2"}, {"foo2", "bar3"}}));
 
-  EXPECT_FALSE(Server::Configuration::mergeJsonConfig(kBadJson, options, error_message));
+  EXPECT_FALSE(Server::Configuration::mergeJsonConfig("bad_json", options, error_message));
   EXPECT_EQ("Error merging json config: Unable to parse JSON as proto (INVALID_ARGUMENT:Unexpected "
             "token.\nbad_json\n^): bad_json",
             error_message);
