@@ -29,7 +29,7 @@ bool mergeJsonConfig(absl::string_view json, nighthawk::server::ResponseOptions&
 }
 
 void applyConfigToResponseHeaders(Envoy::Http::ResponseHeaderMap& response_headers,
-                                  nighthawk::server::ResponseOptions& response_options) {
+                                  const nighthawk::server::ResponseOptions& response_options) {
   for (const auto& header_value_option : response_options.response_headers()) {
     const auto& header = header_value_option.header();
     auto lower_case_key = Envoy::Http::LowerCaseString(header.key());
