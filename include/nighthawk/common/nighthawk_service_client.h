@@ -10,7 +10,7 @@
 namespace Nighthawk {
 
 /**
- * An interface for interacting with a Nighthawk Service gRPC stub.
+ * An interface for a stateless helper that interacts with a Nighthawk Service gRPC stub.
  */
 class NighthawkServiceClient {
 public:
@@ -30,7 +30,7 @@ public:
    */
   virtual absl::StatusOr<nighthawk::client::ExecutionResponse> PerformNighthawkBenchmark(
       nighthawk::client::NighthawkService::StubInterface* nighthawk_service_stub,
-      const nighthawk::client::CommandLineOptions& command_line_options) PURE;
+      const nighthawk::client::CommandLineOptions& command_line_options) const PURE;
 };
 
 } // namespace Nighthawk

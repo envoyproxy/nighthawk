@@ -5,10 +5,10 @@ namespace Nighthawk {
 class AdaptiveLoadSessionSpecProtoHelperImpl : public AdaptiveLoadSessionSpecProtoHelper {
 public:
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec
-  SetSessionSpecDefaults(nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec) override;
+  SetSessionSpecDefaults(nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec) const override;
 
   absl::Status
-  CheckSessionSpec(const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec) override;
+  CheckSessionSpec(const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec) const override;
 };
 
 } // namespace Nighthawk
