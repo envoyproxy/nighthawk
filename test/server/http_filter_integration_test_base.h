@@ -29,7 +29,7 @@ protected:
    *
    * @param config configuration to pass to Envoy::HttpIntegrationTest::config_helper_.addFilter.
    */
-  void setup(const std::string& config);
+  void initializeConfig(absl::string_view config);
 
   /**
    * Make getResponse send request-level configuration. Test server extensions read that

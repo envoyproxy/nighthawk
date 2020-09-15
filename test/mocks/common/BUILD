@@ -9,6 +9,16 @@ licenses(["notice"])  # Apache 2
 envoy_package()
 
 envoy_cc_mock(
+    name = "mock_nighthawk_service_client",
+    srcs = ["mock_nighthawk_service_client.cc"],
+    hdrs = ["mock_nighthawk_service_client.h"],
+    repository = "@envoy",
+    deps = [
+        "//include/nighthawk/common:nighthawk_service_client",
+    ],
+)
+
+envoy_cc_mock(
     name = "mock_rate_limiter",
     srcs = ["mock_rate_limiter.cc"],
     hdrs = ["mock_rate_limiter.h"],

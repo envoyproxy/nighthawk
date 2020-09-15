@@ -11,8 +11,8 @@ HttpFilterIntegrationTestBase::HttpFilterIntegrationTestBase(
     : HttpIntegrationTest(Envoy::Http::CodecClient::Type::HTTP1, ip_version),
       request_headers_({{":method", "GET"}, {":path", "/"}, {":authority", "host"}}) {}
 
-void HttpFilterIntegrationTestBase::setup(const std::string& config) {
-  config_helper_.addFilter(config);
+void HttpFilterIntegrationTestBase::initializeConfig(absl::string_view config) {
+  config_helper_.addFilter(std::string(config));
   HttpIntegrationTest::initialize();
 }
 
@@ -38,7 +38,14 @@ HttpFilterIntegrationTestBase::getResponse(ResponseOrigin expected_origin) {
   Envoy::IntegrationStreamDecoderPtr response;
   const bool is_post = request_headers_.Method()->value().getStringView() ==
                        Envoy::Http::Headers::get().MethodValues.Post;
+  // Upon observing a POST request method, we inject a content body, as promised in the header file.
+  // This is useful, because emitting an entity body will hit distinct code in extensions. Hence we
+  // facilitate that.
   const uint64_t request_body_size = is_post ? 1024 : 0;
+  // An extension can either act as an origin and synthesize a reply, or delegate that
+  // responsibility to an upstream. This behavior may change from request to request. For example,
+  // an extension is designed to transform input from an upstream, may start acting as an origin on
+  // misconfiguration.
   if (expected_origin == ResponseOrigin::UPSTREAM) {
     response = sendRequestAndWaitForResponse(request_headers_, request_body_size,
                                              default_response_headers_, /*response_body_size*/ 0);
