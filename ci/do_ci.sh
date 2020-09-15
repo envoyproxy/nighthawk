@@ -258,8 +258,13 @@ case "$1" in
         do_benchmark_with_own_binaries
         exit 0
     ;;
+    opt_build)
+        setup_clang_toolchain
+        do_opt_build
+        exit 0
+    ;;
     *)
-        echo "must be one of [build,test,clang_tidy,coverage,coverage_integration,asan,tsan,benchmark_with_own_binaries,docker,check_format,fix_format,test_gcc]"
+        echo "must be one of [opt_build, build,test,clang_tidy,coverage,coverage_integration,asan,tsan,benchmark_with_own_binaries,docker,check_format,fix_format,test_gcc]"
         exit 1
     ;;
 esac
