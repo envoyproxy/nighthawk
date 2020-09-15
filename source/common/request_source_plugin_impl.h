@@ -5,7 +5,7 @@
 #include "nighthawk/common/request_source_plugin.h"
 
 #include "api/client/options.pb.h"
-#include "api/request_source/request_source_plugin_impl.pb.h"
+#include "api/request_source/request_source_plugin.pb.h"
 
 #include "common/uri_impl.h"
 

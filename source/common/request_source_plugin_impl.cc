@@ -5,7 +5,6 @@
 #include "external/envoy/source/exe/platform_impl.h"
 
 #include "api/client/options.pb.h"
-#include "api/request_source/request_source_plugin_impl.pb.h"
 
 #include "common/request_impl.h"
 #include "common/request_source_impl.h"

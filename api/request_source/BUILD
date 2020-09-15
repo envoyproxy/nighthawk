@@ -19,7 +19,7 @@ api_cc_py_proto_library(
 api_cc_py_proto_library(
     name = "request_source_plugin",
     srcs = [
-        "request_source_plugin_impl.proto",
+        "request_source_plugin.proto",
     ],
     visibility = ["//visibility:public"],
     deps = [
