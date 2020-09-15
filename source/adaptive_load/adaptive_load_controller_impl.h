@@ -59,7 +59,8 @@ private:
    * @param name_to_custom_plugin_map Common map from plugin names to MetricsPlugins loaded and
    * initialized once at the beginning of the session and passed to all calls of this function.
    * @param step_controller The active StepController specified in the session spec proto.
-   * @param duration The duration of the benchmark.
+   * @param duration The duration of the benchmark to insert into the traffic template, different
+   * between adjusting and testing stages.
    *
    * @return BenchmarkResult Proto containing either an error status or raw Nighthawk Service
    * results, metric values, and metric scores.

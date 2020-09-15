@@ -23,6 +23,7 @@
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
+#include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
 #include "adaptive_load/metrics_plugin_impl.h"
 #include "adaptive_load/plugin_loader.h"
@@ -30,8 +31,6 @@
 namespace Nighthawk {
 
 namespace {
-
-using namespace Envoy; // for Envoy::Logger
 
 using nighthawk::adaptive_load::AdaptiveLoadSessionOutput;
 using nighthawk::adaptive_load::AdaptiveLoadSessionSpec;
@@ -109,6 +108,8 @@ absl::StatusOr<BenchmarkResult> AdaptiveLoadControllerImpl::PerformAndAnalyzeNig
     return command_line_options_or.status();
   }
   nighthawk::client::CommandLineOptions command_line_options = command_line_options_or.value();
+  // Overwrite the duration in the traffic template with the specified duration of the adjusting
+  // or testing stage.
   *command_line_options.mutable_duration() = std::move(duration);
 
   ENVOY_LOG_MISC(info, "Sending load: {}", command_line_options.DebugString());
@@ -169,11 +170,13 @@ absl::StatusOr<AdaptiveLoadSessionOutput> AdaptiveLoadControllerImpl::PerformAda
     *output.mutable_adjusting_stage_results()->Add() = result;
     step_controller->UpdateAndRecompute(result);
 
-    if (std::chrono::duration_cast<std::chrono::seconds>(time_source_.monotonicTime() - start_time)
-            .count() > spec.convergence_deadline().seconds()) {
-      return absl::DeadlineExceededError(absl::StrCat("Failed to converge before deadline of ",
-                                                      spec.convergence_deadline().seconds(),
-                                                      " seconds."));
+    const std::chrono::nanoseconds time_limit_ns(
+        Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(spec.convergence_deadline()));
+    const auto elapsed_time_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+        time_source_.monotonicTime() - start_time);
+    if (elapsed_time_ns > time_limit_ns) {
+      return absl::DeadlineExceededError(absl::StrFormat(
+          "Failed to converge before deadline of %.2f seconds.", time_limit_ns.count() / 1e9));
     }
   } while (!step_controller->IsConverged() && !step_controller->IsDoomed(doom_reason));
 
