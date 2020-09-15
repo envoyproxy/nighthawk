@@ -25,6 +25,7 @@ function do_build () {
 
 function do_opt_build () {
     bazel build $BAZEL_BUILD_OPTIONS -c opt //:nighthawk
+    bazel build $BAZEL_BUILD_OPTIONS -c opt //benchmarks:benchmarks
 }
 
 function do_test() {
@@ -143,6 +144,7 @@ function do_docker() {
     do_opt_build
     ./ci/docker/docker_build.sh
     ./ci/docker/docker_push.sh
+    ./ci/docker/benchmark_build.sh
 }
 
 function do_fix_format() {
