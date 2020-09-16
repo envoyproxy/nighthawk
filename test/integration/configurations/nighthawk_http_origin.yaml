@@ -23,6 +23,7 @@ static_resources:
               domains:
               - "*"
           http_filters:
+          - name: time-tracking
           - name: dynamic-delay
           - name: test-server
             config:
