@@ -400,7 +400,7 @@ FortioPedanticOutputFormatterImpl::formatProto(const nighthawk::client::Output& 
   // clang-format off
   // Fix two types of quirks. We disable linting because we use std::regex directly.
   // This should be OK as the regular expression we use can be trusted.
-  // 1. We misdefined RequestRPS as an int, whereas Fortio outputs that as a string.
+  // 1. We misdefined RequestedRPS as an int, whereas Fortio outputs that as a string.
   res = std::regex_replace(res, std::regex(R"EOF("RequestedQPS"\: ([0-9]*))EOF"),
                            R"EOF("RequestedQPS": "$1")EOF");
   // 2. Our uint64's get serialized as json strings. Fortio outputs them as json integers.
