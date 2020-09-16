@@ -8,6 +8,9 @@
 #include "api/request_source/request_source_plugin.pb.h"
 
 #include "common/uri_impl.h"
+#include "external/envoy/source/common/common/thread.h"
+#include "external/envoy/source/common/common/lock_guard.h"
+#include "external/envoy/source/common/event/real_time_system.h"
 
 namespace Nighthawk {
 
@@ -54,7 +57,7 @@ class FileBasedRequestSourcePlugin : public RequestSourcePlugin {
 public:
   explicit FileBasedRequestSourcePlugin(
       const nighthawk::request_source::FileBasedPluginRequestSourceConfig& config,
-      Envoy::Api::Api& api);
+      Envoy::Api::Api& api, std::unique_ptr<nighthawk::client::RequestOptionsList> options_list);
   RequestGenerator get() override;
   /**
    * Will be called on an intialized and running worker thread, before commencing actual work.
@@ -66,8 +69,7 @@ public:
 private:
   const Nighthawk::UriImpl uri_;
   const std::string file_path_;
-  nighthawk::client::RequestOptions options_;
-  nighthawk::client::RequestOptionsList options_list_;
+  const std::unique_ptr<nighthawk::client::RequestOptionsList> options_list_;
   std::vector<RequestOptionsIterator> request_iterators_;
   std::vector<uint32_t> request_count_;
   const uint32_t request_max_;
@@ -82,7 +84,11 @@ public:
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
   RequestSourcePluginPtr createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
                                                    Envoy::Api::Api& api) override;
+private:
+  Envoy::Thread::MutexBasicLockable file_lock_;
+  nighthawk::client::RequestOptionsList options_list_ ABSL_GUARDED_BY(file_lock_);;                                                  
 };
+
 
 // This factory is activated through ???.
 DECLARE_FACTORY(FileBasedRequestSourceConfigFactory);

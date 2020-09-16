@@ -57,19 +57,28 @@ RequestSourcePluginPtr FileBasedRequestSourceConfigFactory::createRequestSourceP
     const Envoy::Protobuf::Message& message, Envoy::Api::Api& api) {
   const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
   nighthawk::request_source::FileBasedPluginRequestSourceConfig config;
-  Envoy::MessageUtil::unpackTo(any, config);
-  return std::make_unique<FileBasedRequestSourcePlugin>(config, api);
+  Envoy::MessageUtil util;
+  util.unpackTo(any, config);  
+  RELEASE_ASSERT(api.fileSystem().fileSize(config.file_path()) < config.max_file_size().value(), "file size must be less than max_file_size");
+  auto temp_list = std::make_unique<nighthawk::client::RequestOptionsList>();
+  {
+    Envoy::Thread::LockGuard lock_guard(file_lock_);  
+    if (options_list_.options_size() == 0)
+    {
+    util.loadFromFile(config.file_path(), options_list_, Envoy::ProtobufMessage::getStrictValidationVisitor(),
+                      api, true);
+    }
+    temp_list->CopyFrom(options_list_);
+  }
+  return std::make_unique<FileBasedRequestSourcePlugin>(config, api, std::move(temp_list));
 }
 
 REGISTER_FACTORY(FileBasedRequestSourceConfigFactory, RequestSourcePluginConfigFactory);
 
 FileBasedRequestSourcePlugin::FileBasedRequestSourcePlugin(
     const nighthawk::request_source::FileBasedPluginRequestSourceConfig& config,
-    Envoy::Api::Api& api)
-    : RequestSourcePlugin{api}, uri_(config.uri()), file_path_(config.file_path()), request_max_(config.num_requests().value()) {
-  Envoy::MessageUtil util;
-  util.loadFromFile(file_path_, options_list_, Envoy::ProtobufMessage::getStrictValidationVisitor(),
-                    api_, true);
+    Envoy::Api::Api& api, std::unique_ptr<nighthawk::client::RequestOptionsList> options_list)
+    : RequestSourcePlugin{api}, uri_(config.uri()), file_path_(config.file_path()), options_list_(std::move(options_list)), request_max_(config.num_requests().value()) {
 }
 
 RequestGenerator FileBasedRequestSourcePlugin::get() {
@@ -81,8 +90,8 @@ RequestGenerator FileBasedRequestSourcePlugin::get() {
     {
       return nullptr;
     }
-    auto index = *lambda_counter % options_list_.options_size();
-    nighthawk::client::RequestOptions request_option = options_list_.options().at(index);
+    auto index = *lambda_counter % options_list_->options_size();
+    nighthawk::client::RequestOptions request_option = options_list_->options().at(index);
     (*lambda_counter)++;
     Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
     header->setPath(uri_.path());

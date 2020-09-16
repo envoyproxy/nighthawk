@@ -35,6 +35,7 @@ public:
     nighthawk::request_source::FileBasedPluginRequestSourceConfig config;
     config.mutable_uri()->assign("http://foo/");
     config.mutable_file_path()->assign(request_file);
+    config.mutable_max_file_size()->set_value(4000);
     return config;
   }
 }; // RequestSourcePluginTest
