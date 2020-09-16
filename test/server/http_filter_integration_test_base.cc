@@ -11,12 +11,12 @@ HttpFilterIntegrationTestBase::HttpFilterIntegrationTestBase(
     : HttpIntegrationTest(Envoy::Http::CodecClient::Type::HTTP1, ip_version),
       request_headers_({{":method", "GET"}, {":path", "/"}, {":authority", "host"}}) {}
 
-void HttpFilterIntegrationTestBase::initializeConfig(absl::string_view config) {
+void HttpFilterIntegrationTestBase::initializeFilterConfiguration(absl::string_view config) {
   config_helper_.addFilter(std::string(config));
   HttpIntegrationTest::initialize();
 }
 
-void HttpFilterIntegrationTestBase::updateRequestLevelConfiguration(
+void HttpFilterIntegrationTestBase::setRequestLevelConfiguration(
     absl::string_view request_level_config) {
   setRequestHeader(Server::TestServer::HeaderNames::get().TestServerConfig, request_level_config);
 }

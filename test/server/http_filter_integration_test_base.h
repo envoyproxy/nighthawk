@@ -8,13 +8,23 @@ namespace Nighthawk {
 
 /**
  * Base class with shared functionality for testing Nighthawk test server http filter extensions.
+ * The class is stateful, and not safe to use from multiple threads.
  */
 class HttpFilterIntegrationTestBase : public Envoy::HttpIntegrationTest {
 protected:
   /**
-   * Indicate the expected response origin.
+   * Indicate the expected response origin. A test failure will occur upon mismatch.
    */
-  enum class ResponseOrigin { UPSTREAM, EXTENSION };
+  enum class ResponseOrigin {
+    /**
+     * The upstream will supply the response, and not the extension under test.
+     */
+    UPSTREAM,
+    /**
+     * The extension under test will suplly a response, and no upstream will be set up to do that.
+     */
+    EXTENSION
+  };
   /**
    * Construct a new HttpFilterIntegrationTestBase instance.
    *
@@ -24,12 +34,13 @@ protected:
   HttpFilterIntegrationTestBase(Envoy::Network::Address::IpVersion ip_version);
 
   /**
-   * We don't override SetUp(): tests using this fixture must call setup() instead.
-   * This is to avoid imposing the need to create a fixture per filter configuration.
+   * We don't override SetUp(): tests using this fixture must call initializeFilterConfiguration()
+   * instead. This is to avoid imposing the need to create a fixture per filter configuration.
    *
-   * @param config configuration to pass to Envoy::HttpIntegrationTest::config_helper_.addFilter.
+   * @param filter_configuration Pass configuration for the filter under test. Will be handed off to
+   * Envoy::HttpIntegrationTest::config_helper_.addFilter.
    */
-  void initializeConfig(absl::string_view config);
+  void initializeFilterConfiguration(absl::string_view filter_configuration);
 
   /**
    * Make getResponse send request-level configuration. Test server extensions read that
@@ -39,7 +50,7 @@ protected:
    * @param request_level_config Configuration to be delivered by request-header in future calls to
    * getResponse(). For example: "{response_body_size:1024}".
    */
-  void updateRequestLevelConfiguration(absl::string_view request_level_config);
+  void setRequestLevelConfiguration(absl::string_view request_level_config);
 
   /**
    * Switch getResponse() to use the POST request method with an entity body.
@@ -57,9 +68,8 @@ protected:
                         absl::string_view header_value);
 
   /**
-   * Fetch a response. The request headers default to a minimal GET, but this may be changed
-   * via other methods in this class.
-   *
+   * Fetch a response, according to the options specified by the class methods. By default,
+   * simulates a GET request with minimal headers.
    * @param expected_origin Indicate which component will be expected to reply: the extension or
    * a fake upstream. Will cause a test failure upon mismatch. Can be used to verify that an
    * extension short circuits and directly responds when expected.
