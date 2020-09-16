@@ -69,6 +69,9 @@ private:
   nighthawk::client::RequestOptions options_;
   nighthawk::client::RequestOptionsList options_list_;
   std::vector<RequestOptionsIterator> request_iterators_;
+  std::vector<uint32_t> request_count_;
+  const uint32_t request_max_;
+
 };
 /**
  * Registered as an Envoy plugin.

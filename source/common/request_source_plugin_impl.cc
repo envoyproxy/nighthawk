@@ -66,19 +66,30 @@ REGISTER_FACTORY(FileBasedRequestSourceConfigFactory, RequestSourcePluginConfigF
 FileBasedRequestSourcePlugin::FileBasedRequestSourcePlugin(
     const nighthawk::request_source::FileBasedPluginRequestSourceConfig& config,
     Envoy::Api::Api& api)
-    : RequestSourcePlugin{api}, uri_(config.uri()), file_path_(config.file_path()) {
+    : RequestSourcePlugin{api}, uri_(config.uri()), file_path_(config.file_path()), request_max_(config.num_requests().value()) {
   Envoy::MessageUtil util;
   util.loadFromFile(file_path_, options_list_, Envoy::ProtobufMessage::getStrictValidationVisitor(),
                     api_, true);
 }
 
 RequestGenerator FileBasedRequestSourcePlugin::get() {
-  RequestOptionsIterator iterator = options_list_.options().begin();
-  request_iterators_.push_back(iterator);
-  RequestOptionsIterator* temp = &request_iterators_.back();
-  RequestGenerator request_generator = [this, temp]() mutable {
-    nighthawk::client::RequestOptions request_option = **temp;
-    *temp = std::next(*temp);
+  // RequestOptionsIterator iterator = options_list_.options().begin();
+  // options_list_.options().at();
+  // request_iterators_.push_back(iterator);
+  // RequestOptionsIterator* temp = &request_iterators_.back();
+  uint32_t counter = 0;
+  request_count_.push_back(counter);
+  uint32_t* lambda_counter = &request_count_.back();
+  RequestGenerator request_generator = [this, lambda_counter]() mutable -> RequestPtr {
+    // nighthawk::client::RequestOptions request_option = **temp;
+    // *temp = std::next(*temp);
+    if (*lambda_counter > request_max_ && request_max_ != 0)
+    {
+      return nullptr;
+    }
+    auto index = *lambda_counter % options_list_.options_size();
+    nighthawk::client::RequestOptions request_option = options_list_.options().at(index);
+    (*lambda_counter)++;
     Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
     header->setPath(uri_.path());
     header->setHost(uri_.hostAndPort());
@@ -94,8 +105,7 @@ RequestGenerator FileBasedRequestSourcePlugin::get() {
       header->remove(lower_case_key);
       header->addCopy(lower_case_key, std::string(option_header.header().value()));
     }
-    auto returned_request_impl = std::make_unique<RequestImpl>(std::move(header));
-    return returned_request_impl;
+    return std::make_unique<RequestImpl>(std::move(header));
   };
   return request_generator;
 }
