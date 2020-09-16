@@ -8,7 +8,7 @@ namespace Nighthawk {
 
 /**
  * Base class with shared functionality for testing Nighthawk test server http filter extensions.
- * The class is stateful, and not safed to use from multiple threads.
+ * The class is stateful, and not safe to use from multiple threads.
  */
 class HttpFilterIntegrationTestBase : public Envoy::HttpIntegrationTest {
 protected:
