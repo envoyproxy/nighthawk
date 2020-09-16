@@ -102,8 +102,13 @@ TEST_F(FileBasedRequestSourcePluginTest, CreateRequestSourcePluginGetsWorkingReq
       MakeFileBasedPluginConfigWithTestYaml(
           TestEnvironment::runfilesPath("test/request_source/test_data/test-config.yaml"));
   config.mutable_num_requests()->set_value(2);
-  FileBasedRequestSourcePlugin file_based_request_source(config, *api_);
-  auto generator = file_based_request_source.get();
+  Envoy::ProtobufWkt::Any config_any;
+  config_any.PackFrom(config);
+  auto& config_factory =
+      Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
+          "nighthawk.file-based-request-source-plugin");
+  RequestSourcePluginPtr file_based_request_source = config_factory.createRequestSourcePlugin(config_any, *api_);
+  auto generator = file_based_request_source->get();
   auto request = generator();
   auto request2 = generator();
   auto request3 = generator();
@@ -119,8 +124,13 @@ TEST_F(FileBasedRequestSourcePluginTest, CreateRequestSourcePluginWithMoreNumReq
       MakeFileBasedPluginConfigWithTestYaml(
           TestEnvironment::runfilesPath("test/request_source/test_data/test-config.yaml"));
   config.mutable_num_requests()->set_value(4);
-  FileBasedRequestSourcePlugin file_based_request_source(config, *api_);
-  auto generator = file_based_request_source.get();
+  Envoy::ProtobufWkt::Any config_any;
+  config_any.PackFrom(config);
+  auto& config_factory =
+      Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
+          "nighthawk.file-based-request-source-plugin");
+  RequestSourcePluginPtr file_based_request_source = config_factory.createRequestSourcePlugin(config_any, *api_);
+  auto generator = file_based_request_source->get();
   auto request = generator();
   auto request2 = generator();
   auto request3 = generator();

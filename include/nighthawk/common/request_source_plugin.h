@@ -12,7 +12,7 @@ namespace Nighthawk {
  * An interface for different RequestSource plugins.
  * Uses a plugin-specific config proto.
  */
-class RequestSourcePlugin : RequestSource {
+class RequestSourcePlugin : public RequestSource {
 public:
   RequestSourcePlugin(Envoy::Api::Api& api) : api_(api) {}
 
