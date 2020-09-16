@@ -10,7 +10,6 @@
 #include "common/uri_impl.h"
 #include "external/envoy/source/common/common/thread.h"
 #include "external/envoy/source/common/common/lock_guard.h"
-#include "external/envoy/source/common/event/real_time_system.h"
 
 namespace Nighthawk {
 
