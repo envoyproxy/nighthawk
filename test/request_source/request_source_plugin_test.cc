@@ -106,10 +106,13 @@ TEST_F(FileBasedRequestSourcePluginTest, CreateRequestSourcePluginGetsWorkingReq
   auto generator = file_based_request_source.get();
   auto request = generator();
   auto request2 = generator();
+  auto request3 = generator();
   auto header = request->header();
   auto header2 = request2->header();
   EXPECT_EQ(header->getPathValue(), "/a");
   EXPECT_EQ(header2->getPathValue(), "/b");
+  EXPECT_EQ(request3, nullptr);
+
 }
 TEST_F(FileBasedRequestSourcePluginTest, CreateRequestSourcePluginWithMoreNumRequestsThanInFileGetsWorkingRequestGeneratorThatLoops) {
   nighthawk::request_source::FileBasedPluginRequestSourceConfig config =
@@ -123,11 +126,7 @@ TEST_F(FileBasedRequestSourcePluginTest, CreateRequestSourcePluginWithMoreNumReq
   auto request3 = generator();
   auto header = request->header();
   auto header2 = request2->header();
-  auto header3 = request3 -> header();
-  std::cerr << header ->getPathValue() +"\n";
-  std::cerr << header2 ->getPathValue() +"\n";
-  std::cerr << header3 ->getPathValue() +"\n";
- 
+  auto header3 = request3 -> header(); 
   EXPECT_EQ(header->getPathValue(), "/a");
   EXPECT_EQ(header2->getPathValue(), "/b");
   EXPECT_EQ(header3->getPathValue(), "/a");

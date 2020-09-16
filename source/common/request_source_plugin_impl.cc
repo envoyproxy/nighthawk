@@ -73,17 +73,11 @@ FileBasedRequestSourcePlugin::FileBasedRequestSourcePlugin(
 }
 
 RequestGenerator FileBasedRequestSourcePlugin::get() {
-  // RequestOptionsIterator iterator = options_list_.options().begin();
-  // options_list_.options().at();
-  // request_iterators_.push_back(iterator);
-  // RequestOptionsIterator* temp = &request_iterators_.back();
   uint32_t counter = 0;
   request_count_.push_back(counter);
   uint32_t* lambda_counter = &request_count_.back();
   RequestGenerator request_generator = [this, lambda_counter]() mutable -> RequestPtr {
-    // nighthawk::client::RequestOptions request_option = **temp;
-    // *temp = std::next(*temp);
-    if (*lambda_counter > request_max_ && request_max_ != 0)
+    if (*lambda_counter >= request_max_ && request_max_ != 0)
     {
       return nullptr;
     }
