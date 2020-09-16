@@ -108,7 +108,8 @@ TEST_F(FileBasedRequestSourcePluginTest, CreateRequestSourcePluginGetsWorkingReq
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
           "nighthawk.file-based-request-source-plugin");
-  RequestSourcePluginPtr file_based_request_source = config_factory.createRequestSourcePlugin(config_any, *api_);
+  RequestSourcePluginPtr file_based_request_source =
+      config_factory.createRequestSourcePlugin(config_any, *api_);
   auto generator = file_based_request_source->get();
   auto request = generator();
   auto request2 = generator();
@@ -118,9 +119,9 @@ TEST_F(FileBasedRequestSourcePluginTest, CreateRequestSourcePluginGetsWorkingReq
   EXPECT_EQ(header->getPathValue(), "/a");
   EXPECT_EQ(header2->getPathValue(), "/b");
   EXPECT_EQ(request3, nullptr);
-
 }
-TEST_F(FileBasedRequestSourcePluginTest, CreateRequestSourcePluginWithMoreNumRequestsThanInFileGetsWorkingRequestGeneratorThatLoops) {
+TEST_F(FileBasedRequestSourcePluginTest,
+       CreateRequestSourcePluginWithMoreNumRequestsThanInFileGetsWorkingRequestGeneratorThatLoops) {
   nighthawk::request_source::FileBasedPluginRequestSourceConfig config =
       MakeFileBasedPluginConfigWithTestYaml(
           TestEnvironment::runfilesPath("test/request_source/test_data/test-config.yaml"));
@@ -130,18 +131,18 @@ TEST_F(FileBasedRequestSourcePluginTest, CreateRequestSourcePluginWithMoreNumReq
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
           "nighthawk.file-based-request-source-plugin");
-  RequestSourcePluginPtr file_based_request_source = config_factory.createRequestSourcePlugin(config_any, *api_);
+  RequestSourcePluginPtr file_based_request_source =
+      config_factory.createRequestSourcePlugin(config_any, *api_);
   auto generator = file_based_request_source->get();
   auto request = generator();
   auto request2 = generator();
   auto request3 = generator();
   auto header = request->header();
   auto header2 = request2->header();
-  auto header3 = request3 -> header(); 
+  auto header3 = request3->header();
   EXPECT_EQ(header->getPathValue(), "/a");
   EXPECT_EQ(header2->getPathValue(), "/b");
   EXPECT_EQ(header3->getPathValue(), "/a");
-
 }
 } // namespace
 } // namespace Nighthawk

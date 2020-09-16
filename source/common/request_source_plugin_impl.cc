@@ -58,15 +58,15 @@ RequestSourcePluginPtr FileBasedRequestSourceConfigFactory::createRequestSourceP
   const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
   nighthawk::request_source::FileBasedPluginRequestSourceConfig config;
   Envoy::MessageUtil util;
-  util.unpackTo(any, config);  
-  RELEASE_ASSERT(api.fileSystem().fileSize(config.file_path()) < config.max_file_size().value(), "file size must be less than max_file_size");
+  util.unpackTo(any, config);
+  RELEASE_ASSERT(api.fileSystem().fileSize(config.file_path()) < config.max_file_size().value(),
+                 "file size must be less than max_file_size");
   auto temp_list = std::make_unique<nighthawk::client::RequestOptionsList>();
   {
-    Envoy::Thread::LockGuard lock_guard(file_lock_);  
-    if (options_list_.options_size() == 0)
-    {
-    util.loadFromFile(config.file_path(), options_list_, Envoy::ProtobufMessage::getStrictValidationVisitor(),
-                      api, true);
+    Envoy::Thread::LockGuard lock_guard(file_lock_);
+    if (options_list_.options_size() == 0) {
+      util.loadFromFile(config.file_path(), options_list_,
+                        Envoy::ProtobufMessage::getStrictValidationVisitor(), api, true);
     }
     temp_list->CopyFrom(options_list_);
   }
@@ -78,16 +78,15 @@ REGISTER_FACTORY(FileBasedRequestSourceConfigFactory, RequestSourcePluginConfigF
 FileBasedRequestSourcePlugin::FileBasedRequestSourcePlugin(
     const nighthawk::request_source::FileBasedPluginRequestSourceConfig& config,
     Envoy::Api::Api& api, std::unique_ptr<nighthawk::client::RequestOptionsList> options_list)
-    : RequestSourcePlugin{api}, uri_(config.uri()), file_path_(config.file_path()), options_list_(std::move(options_list)), request_max_(config.num_requests().value()) {
-}
+    : RequestSourcePlugin{api}, uri_(config.uri()), file_path_(config.file_path()),
+      options_list_(std::move(options_list)), request_max_(config.num_requests().value()) {}
 
 RequestGenerator FileBasedRequestSourcePlugin::get() {
   uint32_t counter = 0;
   request_count_.push_back(counter);
   uint32_t* lambda_counter = &request_count_.back();
   RequestGenerator request_generator = [this, lambda_counter]() mutable -> RequestPtr {
-    if (*lambda_counter >= request_max_ && request_max_ != 0)
-    {
+    if (*lambda_counter >= request_max_ && request_max_ != 0) {
       return nullptr;
     }
     auto index = *lambda_counter % options_list_->options_size();

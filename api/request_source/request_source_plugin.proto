@@ -5,7 +5,6 @@ package nighthawk.request_source;
 import "google/protobuf/wrappers.proto";
 import "validate/validate.proto";
 
-
 // Configuration for DummyPluginRequestSource (plugin name: "nighthawk.dummy-request-source-plugin")
 // that does nothing
 message DummyPluginRequestSourceConfig {
@@ -24,5 +23,4 @@ message FileBasedPluginRequestSourceConfig {
   string file_path = 2;
   google.protobuf.UInt32Value num_requests = 3 [(validate.rules).uint32 = {gte: 0, lte: 1000000}];
   google.protobuf.UInt32Value max_file_size = 4;
-
 }
