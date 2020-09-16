@@ -39,7 +39,7 @@ INSTANTIATE_TEST_SUITE_P(IpVersions, HttpTimeTrackingIntegrationTest,
 
 // Verify expectations with static/file-based time-tracking configuration.
 TEST_P(HttpTimeTrackingIntegrationTest, ReturnsPositiveLatencyForStaticConfiguration) {
-  initializeConfig(fmt::format(kProtoConfigTemplate, kDefaultProtoFragment));
+  initializeFilterConfiguration(fmt::format(kProtoConfigTemplate, kDefaultProtoFragment));
   Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::UPSTREAM);
   int64_t latency;
   const Envoy::Http::HeaderEntry* latency_header_1 =
@@ -55,14 +55,14 @@ TEST_P(HttpTimeTrackingIntegrationTest, ReturnsPositiveLatencyForStaticConfigura
 
 // Verify expectations with an empty time-tracking configuration.
 TEST_P(HttpTimeTrackingIntegrationTest, ReturnsPositiveLatencyForPerRequestConfiguration) {
-  initializeConfig(fmt::format(kProtoConfigTemplate, ""));
+  initializeFilterConfiguration(fmt::format(kProtoConfigTemplate, ""));
   // Don't send any config request header
   getResponse(ResponseOrigin::UPSTREAM);
   // Send a config request header with an empty / default config. Should be a no-op.
-  updateRequestLevelConfiguration("{}");
+  setRequestLevelConfiguration("{}");
   getResponse(ResponseOrigin::UPSTREAM);
   // Send a config request header, this should become effective.
-  updateRequestLevelConfiguration(fmt::format("{{{}}}", kDefaultProtoFragment));
+  setRequestLevelConfiguration(fmt::format("{{{}}}", kDefaultProtoFragment));
   Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::UPSTREAM);
   const Envoy::Http::HeaderEntry* latency_header =
       response->headers().get(Envoy::Http::LowerCaseString(kLatencyResponseHeaderName));

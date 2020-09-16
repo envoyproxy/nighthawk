@@ -31,7 +31,7 @@ public:
   HttpTestServerIntegrationTest() : HttpFilterIntegrationTestBase(GetParam()) {}
 
   void testWithResponseSize(int response_body_size, bool expect_header = true) {
-    updateRequestLevelConfiguration(fmt::format("{{response_body_size:{}}}", response_body_size));
+    setRequestLevelConfiguration(fmt::format("{{response_body_size:{}}}", response_body_size));
     Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
     ASSERT_TRUE(response->complete());
     EXPECT_EQ("200", response->headers().Status()->value().getStringView());
@@ -49,7 +49,7 @@ public:
   }
 
   void testBadResponseSize(int response_body_size) {
-    updateRequestLevelConfiguration(fmt::format("{{response_body_size:{}}}", response_body_size));
+    setRequestLevelConfiguration(fmt::format("{{response_body_size:{}}}", response_body_size));
     Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
     ASSERT_TRUE(response->complete());
     EXPECT_EQ("500", response->headers().Status()->value().getStringView());
@@ -60,7 +60,7 @@ INSTANTIATE_TEST_SUITE_P(IpVersions, HttpTestServerIntegrationTest,
                          ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()));
 
 TEST_P(HttpTestServerIntegrationTest, TestNoHeaderConfig) {
-  initializeConfig(kDefaultProto);
+  initializeFilterConfiguration(kDefaultProto);
   Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
   ASSERT_TRUE(response->complete());
   EXPECT_EQ("200", response->headers().Status()->value().getStringView());
@@ -68,7 +68,7 @@ TEST_P(HttpTestServerIntegrationTest, TestNoHeaderConfig) {
 }
 
 TEST_P(HttpTestServerIntegrationTest, TestBasics) {
-  initializeConfig(kDefaultProto);
+  initializeFilterConfiguration(kDefaultProto);
   testWithResponseSize(1);
   testWithResponseSize(10);
   testWithResponseSize(100);
@@ -77,31 +77,31 @@ TEST_P(HttpTestServerIntegrationTest, TestBasics) {
 }
 
 TEST_P(HttpTestServerIntegrationTest, TestNegative) {
-  initializeConfig(kDefaultProto);
+  initializeFilterConfiguration(kDefaultProto);
   testBadResponseSize(-1);
 }
 
 // TODO(oschaaf): We can't currently override with a default value ('0') in this case.
 TEST_P(HttpTestServerIntegrationTest, DISABLED_TestZeroLengthRequest) {
-  initializeConfig(kDefaultProto);
+  initializeFilterConfiguration(kDefaultProto);
   testWithResponseSize(0);
 }
 
 TEST_P(HttpTestServerIntegrationTest, TestMaxBoundaryLengthRequest) {
-  initializeConfig(kDefaultProto);
+  initializeFilterConfiguration(kDefaultProto);
   const int max = 1024 * 1024 * 4;
   testWithResponseSize(max);
 }
 
 TEST_P(HttpTestServerIntegrationTest, TestTooLarge) {
-  initializeConfig(kDefaultProto);
+  initializeFilterConfiguration(kDefaultProto);
   const int max = 1024 * 1024 * 4;
   testBadResponseSize(max + 1);
 }
 
 TEST_P(HttpTestServerIntegrationTest, TestHeaderConfig) {
-  initializeConfig(kDefaultProto);
-  updateRequestLevelConfiguration(
+  initializeFilterConfiguration(kDefaultProto);
+  setRequestLevelConfiguration(
       R"({response_headers: [ { header: { key: "foo", value: "bar2"}, append: true } ]})");
   Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
   ASSERT_TRUE(response->complete());
@@ -112,8 +112,8 @@ TEST_P(HttpTestServerIntegrationTest, TestHeaderConfig) {
 }
 
 TEST_P(HttpTestServerIntegrationTest, TestEchoHeaders) {
-  initializeConfig(kDefaultProto);
-  updateRequestLevelConfiguration("{echo_request_headers: true}");
+  initializeFilterConfiguration(kDefaultProto);
+  setRequestLevelConfiguration("{echo_request_headers: true}");
   setRequestHeader(Envoy::Http::LowerCaseString("gray"), "pidgeon");
   setRequestHeader(Envoy::Http::LowerCaseString("red"), "fox");
   setRequestHeader(Envoy::Http::LowerCaseString(":authority"), "foo.com");
@@ -133,7 +133,7 @@ TEST_P(HttpTestServerIntegrationTest, TestEchoHeaders) {
 }
 
 TEST_P(HttpTestServerIntegrationTest, NoNoStaticConfigHeaderConfig) {
-  initializeConfig(kNoConfigProto);
+  initializeFilterConfiguration(kNoConfigProto);
   Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
   ASSERT_TRUE(response->complete());
   EXPECT_EQ("200", response->headers().Status()->value().getStringView());
@@ -141,7 +141,7 @@ TEST_P(HttpTestServerIntegrationTest, NoNoStaticConfigHeaderConfig) {
 }
 
 TEST_P(HttpTestServerIntegrationTest, TestNoStaticConfigBasics) {
-  initializeConfig(kNoConfigProto);
+  initializeFilterConfiguration(kNoConfigProto);
   testWithResponseSize(1, false);
   testWithResponseSize(10, false);
   testWithResponseSize(100, false);
@@ -150,30 +150,30 @@ TEST_P(HttpTestServerIntegrationTest, TestNoStaticConfigBasics) {
 }
 
 TEST_P(HttpTestServerIntegrationTest, TestNoStaticConfigNegative) {
-  initializeConfig(kNoConfigProto);
+  initializeFilterConfiguration(kNoConfigProto);
   testBadResponseSize(-1);
 }
 
 TEST_P(HttpTestServerIntegrationTest, TestNoStaticConfigZeroLengthRequest) {
-  initializeConfig(kNoConfigProto);
+  initializeFilterConfiguration(kNoConfigProto);
   testWithResponseSize(0, false);
 }
 
 TEST_P(HttpTestServerIntegrationTest, TestNoStaticConfigMaxBoundaryLengthRequest) {
-  initializeConfig(kNoConfigProto);
+  initializeFilterConfiguration(kNoConfigProto);
   const int max = 1024 * 1024 * 4;
   testWithResponseSize(max, false);
 }
 
 TEST_P(HttpTestServerIntegrationTest, TestNoStaticConfigTooLarge) {
-  initializeConfig(kNoConfigProto);
+  initializeFilterConfiguration(kNoConfigProto);
   const int max = 1024 * 1024 * 4;
   testBadResponseSize(max + 1);
 }
 
 TEST_P(HttpTestServerIntegrationTest, TestNoStaticConfigHeaderConfig) {
-  initializeConfig(kNoConfigProto);
-  updateRequestLevelConfiguration(
+  initializeFilterConfiguration(kNoConfigProto);
+  setRequestLevelConfiguration(
       R"({response_headers: [ { header: { key: "foo", value: "bar2"}, append: true } ]})");
   Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
 

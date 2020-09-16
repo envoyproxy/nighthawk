@@ -35,7 +35,7 @@ INSTANTIATE_TEST_SUITE_P(IpVersions, HttpDynamicDelayIntegrationTest,
 
 // Verify expectations with an empty dynamic-delay configuration.
 TEST_P(HttpDynamicDelayIntegrationTest, NoStaticConfiguration) {
-  initializeConfig(R"(
+  initializeFilterConfiguration(R"(
 name: dynamic-delay
 typed_config:
   "@type": type.googleapis.com/nighthawk.server.ResponseOptions
@@ -45,18 +45,18 @@ typed_config:
   EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString), nullptr);
   // Send a config request header with an empty / default config. Should be a no-op.
 
-  updateRequestLevelConfiguration("{}");
+  setRequestLevelConfiguration("{}");
   getResponse(ResponseOrigin::UPSTREAM);
   EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString), nullptr);
   // Send a config request header, this should become effective.
-  updateRequestLevelConfiguration("{static_delay: \"1.6s\"}");
+  setRequestLevelConfiguration("{static_delay: \"1.6s\"}");
   getResponse(ResponseOrigin::UPSTREAM);
   EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString)->value().getStringView(), "1600");
 }
 
 // Verify expectations with static/file-based static_delay configuration.
 TEST_P(HttpDynamicDelayIntegrationTest, StaticConfigurationStaticDelay) {
-  initializeConfig(R"EOF(
+  initializeFilterConfiguration(R"EOF(
 name: dynamic-delay
 typed_config:
   "@type": type.googleapis.com/nighthawk.server.ResponseOptions
@@ -64,10 +64,10 @@ typed_config:
 )EOF");
   getResponse(ResponseOrigin::UPSTREAM);
   EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString)->value().getStringView(), "1330");
-  updateRequestLevelConfiguration("{}");
+  setRequestLevelConfiguration("{}");
   getResponse(ResponseOrigin::UPSTREAM);
   EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString)->value().getStringView(), "1330");
-  updateRequestLevelConfiguration("{static_delay: \"0.2s\"}");
+  setRequestLevelConfiguration("{static_delay: \"0.2s\"}");
   getResponse(ResponseOrigin::UPSTREAM);
   // TODO(#392): This fails, because the duration is a two-field message: it would make here to see
   // both the number of seconds and nanoseconds to be overridden.
@@ -76,14 +76,14 @@ typed_config:
   // Hence the following expectation will fail, as it yields 1200 instead of the expected 200.
   // EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString)->value().getStringView(),
   // "200");
-  updateRequestLevelConfiguration("{static_delay: \"2.2s\"}");
+  setRequestLevelConfiguration("{static_delay: \"2.2s\"}");
   getResponse(ResponseOrigin::UPSTREAM);
   EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString)->value().getStringView(), "2200");
 }
 
 // Verify expectations with static/file-based concurrency_based_linear_delay configuration.
 TEST_P(HttpDynamicDelayIntegrationTest, StaticConfigurationConcurrentDelay) {
-  initializeConfig(R"EOF(
+  initializeFilterConfiguration(R"EOF(
 name: dynamic-delay
 typed_config:
   "@type": type.googleapis.com/nighthawk.server.ResponseOptions

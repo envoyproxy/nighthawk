@@ -45,7 +45,7 @@ typed_config:
 // ensure that bad configuration handling is in-place.
 TEST_P(HttpFilterBaseIntegrationTest, BasicExtensionFlows) {
   absl::string_view config = std::get<1>(GetParam());
-  initializeConfig(std::string(config));
+  initializeFilterConfiguration(std::string(config));
   bool is_post = std::get<2>(GetParam());
   if (is_post) {
     switchToPostWithEntityBody();
@@ -63,7 +63,7 @@ TEST_P(HttpFilterBaseIntegrationTest, BasicExtensionFlows) {
   EXPECT_TRUE(response->body().empty());
 
   // Test with a valid but empty request-level configuration.
-  updateRequestLevelConfiguration("{}");
+  setRequestLevelConfiguration("{}");
   response = getResponse(happy_flow_response_origin);
   ASSERT_TRUE(response->complete());
   EXPECT_EQ("200", response->headers().Status()->value().getStringView());
@@ -74,13 +74,13 @@ TEST_P(HttpFilterBaseIntegrationTest, BasicExtensionFlows) {
       "JSON as proto (INVALID_ARGUMENT:Unexpected";
 
   // When sending bad request-level configuration, the extension ought to reply directly.
-  updateRequestLevelConfiguration("bad_json");
+  setRequestLevelConfiguration("bad_json");
   response = getResponse(ResponseOrigin::EXTENSION);
   EXPECT_EQ(Envoy::Http::Utility::getResponseStatus(response->headers()), 500);
   EXPECT_THAT(response->body(), HasSubstr(kBadConfigErrorSentinel));
 
   // When sending empty request-level configuration, the extension ought to reply directly.
-  updateRequestLevelConfiguration("");
+  setRequestLevelConfiguration("");
   response = getResponse(ResponseOrigin::EXTENSION);
   EXPECT_EQ(Envoy::Http::Utility::getResponseStatus(response->headers()), 500);
   EXPECT_THAT(response->body(), HasSubstr(kBadConfigErrorSentinel));
