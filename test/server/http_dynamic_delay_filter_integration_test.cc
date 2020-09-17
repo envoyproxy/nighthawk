@@ -22,6 +22,11 @@ const Envoy::Http::LowerCaseString kDelayHeaderString("x-envoy-fault-delay-reque
  * - Failure modes work.
  * - TODO(#393): An end to end test which proves that the interaction between this filter
  *   and the fault filter work as expected.
+ *
+ * The Dynamic Delay filter communicates with the fault filter by adding kDelayHeaderString
+ * to the request headers. We use that in tests below to verify expectations. The fault filter
+ * accepts input values via request headers specified in milliseconds, so our expectations are
+ * also using milliseconds.
  */
 class HttpDynamicDelayIntegrationTest
     : public HttpFilterIntegrationTestBase,
@@ -40,17 +45,21 @@ name: dynamic-delay
 typed_config:
   "@type": type.googleapis.com/nighthawk.server.ResponseOptions
 )");
-  // Don't send any config request header
+  // Don't send any config request header ...
   getResponse(ResponseOrigin::UPSTREAM);
+  // ... we shouldn't observe any delay being requested via the upstream request headers.
   EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString), nullptr);
-  // Send a config request header with an empty / default config. Should be a no-op.
 
+  // Send a config request header with an empty / default configuration ....
   setRequestLevelConfiguration("{}");
   getResponse(ResponseOrigin::UPSTREAM);
+  // ... we shouldn't observe any delay being requested via the upstream request headers.
   EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString), nullptr);
-  // Send a config request header, this should become effective.
+
+  // Send a config request header requesting a 1.6s delay...
   setRequestLevelConfiguration("{static_delay: \"1.6s\"}");
   getResponse(ResponseOrigin::UPSTREAM);
+  // ...we should observe a delay of 1.6s in the upstream request.
   EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString)->value().getStringView(), "1600");
 }
 
@@ -62,11 +71,20 @@ typed_config:
   "@type": type.googleapis.com/nighthawk.server.ResponseOptions
   static_delay: 1.33s
 )EOF");
+
+  // Without any request-level configuration, we expect the statically configured static delay to
+  // apply.
   getResponse(ResponseOrigin::UPSTREAM);
   EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString)->value().getStringView(), "1330");
+
+  // With an empty request-level configuration, we expect the statically configured static delay to
+  // apply.
   setRequestLevelConfiguration("{}");
   getResponse(ResponseOrigin::UPSTREAM);
   EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString)->value().getStringView(), "1330");
+
+  // Overriding the statically configured static delay via request-level configuration should be
+  // reflected in the output.
   setRequestLevelConfiguration("{static_delay: \"0.2s\"}");
   getResponse(ResponseOrigin::UPSTREAM);
   // TODO(#392): This fails, because the duration is a two-field message: it would make here to see
@@ -76,8 +94,12 @@ typed_config:
   // Hence the following expectation will fail, as it yields 1200 instead of the expected 200.
   // EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString)->value().getStringView(),
   // "200");
+
+  // Overriding the statically configured static delay via request-level configuration should be
+  // reflected in the output.
   setRequestLevelConfiguration("{static_delay: \"2.2s\"}");
   getResponse(ResponseOrigin::UPSTREAM);
+  // 2.2 seconds -> 2200 ms.
   EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString)->value().getStringView(), "2200");
 }
 
@@ -92,6 +114,8 @@ typed_config:
     concurrency_delay_factor: 0.01s
 )EOF");
   getResponse(ResponseOrigin::UPSTREAM);
+  // Based on the algorithm of concurrency_based_linear_delay, for the first request we expect to
+  // observe the configured minimal_delay + concurrency_delay_factor = 0.06s -> 60ms.
   EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString)->value().getStringView(), "60");
 }
 

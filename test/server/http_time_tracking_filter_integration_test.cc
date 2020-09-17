@@ -40,11 +40,15 @@ INSTANTIATE_TEST_SUITE_P(IpVersions, HttpTimeTrackingIntegrationTest,
 // Verify expectations with static/file-based time-tracking configuration.
 TEST_P(HttpTimeTrackingIntegrationTest, ReturnsPositiveLatencyForStaticConfiguration) {
   initializeFilterConfiguration(fmt::format(kProtoConfigTemplate, kDefaultProtoFragment));
+
+  // As the first request doesn't have a prior one, we should not observe a delta.
   Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::UPSTREAM);
   int64_t latency;
   const Envoy::Http::HeaderEntry* latency_header_1 =
       response->headers().get(Envoy::Http::LowerCaseString(kLatencyResponseHeaderName));
   EXPECT_EQ(latency_header_1, nullptr);
+
+  // On the second request we should observe a delta.
   response = getResponse(ResponseOrigin::UPSTREAM);
   const Envoy::Http::HeaderEntry* latency_header_2 =
       response->headers().get(Envoy::Http::LowerCaseString(kLatencyResponseHeaderName));
@@ -56,14 +60,16 @@ TEST_P(HttpTimeTrackingIntegrationTest, ReturnsPositiveLatencyForStaticConfigura
 // Verify expectations with an empty time-tracking configuration.
 TEST_P(HttpTimeTrackingIntegrationTest, ReturnsPositiveLatencyForPerRequestConfiguration) {
   initializeFilterConfiguration(fmt::format(kProtoConfigTemplate, ""));
-  // Don't send any config request header
-  getResponse(ResponseOrigin::UPSTREAM);
-  // Send a config request header with an empty / default config. Should be a no-op.
+  // As the first request doesn't have a prior one, we should not observe a delta.
   setRequestLevelConfiguration("{}");
-  getResponse(ResponseOrigin::UPSTREAM);
-  // Send a config request header, this should become effective.
-  setRequestLevelConfiguration(fmt::format("{{{}}}", kDefaultProtoFragment));
   Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::UPSTREAM);
+  EXPECT_EQ(response->headers().get(Envoy::Http::LowerCaseString(kLatencyResponseHeaderName)),
+            nullptr);
+
+  // With request level configuration indicating that the timing header should be emitted,
+  // we should be able to observe it.
+  setRequestLevelConfiguration(fmt::format("{{{}}}", kDefaultProtoFragment));
+  response = getResponse(ResponseOrigin::UPSTREAM);
   const Envoy::Http::HeaderEntry* latency_header =
       response->headers().get(Envoy::Http::LowerCaseString(kLatencyResponseHeaderName));
   ASSERT_NE(latency_header, nullptr);
