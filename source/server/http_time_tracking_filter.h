@@ -11,6 +11,8 @@
 
 #include "api/server/response_options.pb.h"
 
+#include "server/http_filter_config_base.h"
+
 namespace Nighthawk {
 namespace Server {
 
@@ -18,20 +20,14 @@ namespace Server {
  * Filter configuration container class for the time tracking extension.
  * Instances of this class will be shared accross instances of HttpTimeTrackingFilter.
  */
-class HttpTimeTrackingFilterConfig {
+class HttpTimeTrackingFilterConfig : public FilterConfigurationBase {
 public:
   /**
    * Constructs a new HttpTimeTrackingFilterConfig instance.
    *
    * @param proto_config The proto configuration of the filter.
    */
-  HttpTimeTrackingFilterConfig(nighthawk::server::ResponseOptions proto_config);
-
-  /**
-   * @return const nighthawk::server::ResponseOptions& read-only reference to the proto config
-   * object.
-   */
-  const nighthawk::server::ResponseOptions& server_config() { return server_config_; }
+  HttpTimeTrackingFilterConfig(const nighthawk::server::ResponseOptions& proto_config);
 
   /**
    * Gets the number of elapsed nanoseconds since the last call (server wide).
@@ -44,7 +40,6 @@ public:
   uint64_t getElapsedNanosSinceLastRequest(Envoy::TimeSource& time_source);
 
 private:
-  const nighthawk::server::ResponseOptions server_config_;
   std::unique_ptr<Stopwatch> stopwatch_;
 };
 
@@ -65,6 +60,7 @@ public:
   // Http::StreamDecoderFilter
   Envoy::Http::FilterHeadersStatus decodeHeaders(Envoy::Http::RequestHeaderMap& headers,
                                                  bool /*end_stream*/) override;
+  Envoy::Http::FilterDataStatus decodeData(Envoy::Buffer::Instance&, bool) override;
   void setDecoderFilterCallbacks(Envoy::Http::StreamDecoderFilterCallbacks&) override;
 
   // Http::StreamEncoderFilter
@@ -72,9 +68,6 @@ public:
 
 private:
   const HttpTimeTrackingFilterConfigSharedPtr config_;
-  nighthawk::server::ResponseOptions base_config_;
-  bool json_merge_error_{false};
-  std::string error_message_;
   uint64_t last_request_delta_ns_;
 };
 
