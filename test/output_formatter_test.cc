@@ -187,7 +187,8 @@ public:
 };
 
 TEST_F(MediumOutputCollectorTest, FortioFormatter) {
-  const auto input_proto = loadProtoFromFile("test/test_data/output_formatter.medium.proto.gold");
+  const nighthawk::client::Output input_proto =
+      loadProtoFromFile("test/test_data/output_formatter.medium.proto.gold");
   FortioOutputFormatterImpl formatter;
   expectEqualToGoldFile(formatter.formatProto(input_proto),
                         "test/test_data/output_formatter.medium.fortio.gold");
@@ -203,7 +204,8 @@ TEST_F(MediumOutputCollectorTest, FortioFormatter0sJitterUniformGetsReflected) {
 }
 
 TEST_F(MediumOutputCollectorTest, ConsoleOutputFormatter) {
-  const auto input_proto = loadProtoFromFile("test/test_data/percentile-column-overflow.json");
+  const nighthawk::client::Output input_proto =
+      loadProtoFromFile("test/test_data/percentile-column-overflow.json");
   ConsoleOutputFormatterImpl formatter;
   expectEqualToGoldFile(formatter.formatProto(input_proto),
                         "test/test_data/percentile-column-overflow.txt.gold");
@@ -226,7 +228,8 @@ TEST_F(StatidToNameTest, TestTranslations) {
 }
 
 TEST_F(MediumOutputCollectorTest, FortioPedanticFormatter) {
-  const auto input_proto = loadProtoFromFile("test/test_data/output_formatter.medium.proto.gold");
+  const nighthawk::client::Output input_proto =
+      loadProtoFromFile("test/test_data/output_formatter.medium.proto.gold");
   FortioPedanticOutputFormatterImpl formatter;
   expectEqualToGoldFile(formatter.formatProto(input_proto),
                         "test/test_data/output_formatter.medium.fortio-noquirks.gold");

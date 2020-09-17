@@ -404,9 +404,10 @@ FortioPedanticOutputFormatterImpl::formatProto(const nighthawk::client::Output& 
   res = std::regex_replace(res, std::regex(R"EOF("RequestedQPS"\: ([0-9]*))EOF"),
                            R"EOF("RequestedQPS": "$1")EOF");
   // 2. Our uint64's get serialized as json strings. Fortio outputs them as json integers.
-  // NOTE: [0-9][0-9][0-9] looks for string fields referring to http status codes, which get
-  // counted.
-  res = std::regex_replace(
+  // An example of a string that would match the regular expression below would be:
+  // "Count": "100", which then would be replaced to look like: "Count": 100.
+  // NOTE: [0-9][0-9][0-9] looks for string fields referring to http status codes, which get counted.
+ res = std::regex_replace(
       res, std::regex(R"EOF("([0-9][0-9][0-9]|Count|BytesSent|BytesReceived)"\: "([0-9]*)")EOF"),
       R"EOF("$1": $2)EOF");
   // clang-format on
