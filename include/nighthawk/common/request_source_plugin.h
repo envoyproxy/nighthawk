@@ -20,8 +20,6 @@ protected:
   Envoy::Api::Api& api_;
 };
 
-using RequestSourcePluginPtr = std::unique_ptr<RequestSourcePlugin>;
-
 /**
  * A factory that must be implemented for each RequestSourcePlugin. It instantiates the specific
  * RequestSourcePlugin class after unpacking the plugin-specific config proto.
@@ -38,12 +36,12 @@ public:
    *
    * @param api Api parameter that contains timesystem, filesystem, and threadfactory.
    *
-   * @return RequestSourcePluginPtr Pointer to the new plugin instance.
+   * @return RequestSourcePtr Pointer to the new plugin instance.
    *
    * @throw Envoy::EnvoyException If the Any proto cannot be unpacked as the type expected by the
    * plugin.
    */
-  virtual RequestSourcePluginPtr createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
+  virtual RequestSourcePtr createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
                                                            Envoy::Api::Api& api) PURE;
 };
 

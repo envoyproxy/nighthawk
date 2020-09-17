@@ -68,7 +68,7 @@ TEST_F(DummyRequestSourcePluginTest, CreateRequestSourcePluginCreatesCorrectPlug
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
           "nighthawk.dummy-request-source-plugin");
-  RequestSourcePluginPtr plugin = config_factory.createRequestSourcePlugin(config_any, *api_);
+  RequestSourcePtr plugin = config_factory.createRequestSourcePlugin(config_any, *api_);
   EXPECT_NE(dynamic_cast<DummyRequestSourcePlugin*>(plugin.get()), nullptr);
 }
 
@@ -101,7 +101,7 @@ TEST_F(FileBasedRequestSourcePluginTest, CreateRequestSourcePluginCreatesCorrect
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
           "nighthawk.file-based-request-source-plugin");
-  RequestSourcePluginPtr plugin = config_factory.createRequestSourcePlugin(config_any, *api_);
+  RequestSourcePtr plugin = config_factory.createRequestSourcePlugin(config_any, *api_);
   EXPECT_NE(dynamic_cast<FileBasedRequestSourcePlugin*>(plugin.get()), nullptr);
 }
 
@@ -115,7 +115,7 @@ TEST_F(FileBasedRequestSourcePluginTest, CreateRequestSourcePluginGetsWorkingReq
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
           "nighthawk.file-based-request-source-plugin");
-  RequestSourcePluginPtr file_based_request_source =
+  RequestSourcePtr file_based_request_source =
       config_factory.createRequestSourcePlugin(config_any, *api_);
   auto generator = file_based_request_source->get();
   auto request = generator();
@@ -139,7 +139,7 @@ TEST_F(FileBasedRequestSourcePluginTest,
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
           "nighthawk.file-based-request-source-plugin");
-  RequestSourcePluginPtr file_based_request_source =
+  RequestSourcePtr file_based_request_source =
       config_factory.createRequestSourcePlugin(config_any, *api_);
   auto generator = file_based_request_source->get();
   auto request = generator();

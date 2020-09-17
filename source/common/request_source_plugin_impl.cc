@@ -19,7 +19,7 @@ Envoy::ProtobufTypes::MessagePtr DummyRequestSourceConfigFactory::createEmptyCon
   return std::make_unique<nighthawk::request_source::DummyPluginRequestSourceConfig>();
 }
 
-RequestSourcePluginPtr
+RequestSourcePtr
 DummyRequestSourceConfigFactory::createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
                                                            Envoy::Api::Api& api) {
   const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
@@ -53,7 +53,7 @@ Envoy::ProtobufTypes::MessagePtr FileBasedRequestSourceConfigFactory::createEmpt
   return std::make_unique<nighthawk::request_source::FileBasedPluginRequestSourceConfig>();
 }
 
-RequestSourcePluginPtr FileBasedRequestSourceConfigFactory::createRequestSourcePlugin(
+RequestSourcePtr FileBasedRequestSourceConfigFactory::createRequestSourcePlugin(
     const Envoy::Protobuf::Message& message, Envoy::Api::Api& api) {
   const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
   nighthawk::request_source::FileBasedPluginRequestSourceConfig config;

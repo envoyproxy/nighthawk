@@ -15,6 +15,7 @@
 namespace Nighthawk {
 
 /**
+ * Sample Request Source implementation for comparison.
  */
 class DummyRequestSourcePlugin : public RequestSourcePlugin {
 public:
@@ -41,11 +42,11 @@ class DummyRequestSourceConfigFactory : public virtual RequestSourcePluginConfig
 public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
-  RequestSourcePluginPtr createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
+  RequestSourcePtr createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
                                                    Envoy::Api::Api& api) override;
 };
 
-// This factory is activated through ???.
+// This factory will be activated through RequestSourceFactory in factories.h
 DECLARE_FACTORY(DummyRequestSourceConfigFactory);
 
 using RequestOptionsIterator =
@@ -83,7 +84,7 @@ class FileBasedRequestSourceConfigFactory : public virtual RequestSourcePluginCo
 public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
-  RequestSourcePluginPtr createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
+  RequestSourcePtr createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
                                                    Envoy::Api::Api& api) override;
 
 private:
@@ -92,7 +93,7 @@ private:
   ;
 };
 
-// This factory is activated through ???.
+// This factory will be activated through RequestSourceFactory in factories.h
 DECLARE_FACTORY(FileBasedRequestSourceConfigFactory);
 
 } // namespace Nighthawk
