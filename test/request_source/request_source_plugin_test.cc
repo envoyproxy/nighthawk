@@ -105,7 +105,8 @@ TEST_F(FileBasedRequestSourcePluginTest, CreateRequestSourcePluginCreatesCorrect
   EXPECT_NE(dynamic_cast<FileBasedRequestSourcePlugin*>(plugin.get()), nullptr);
 }
 
-TEST_F(FileBasedRequestSourcePluginTest, CreateRequestSourcePluginGetsWorkingRequestGeneratorThatEndsAtNumRequest) {
+TEST_F(FileBasedRequestSourcePluginTest,
+       CreateRequestSourcePluginGetsWorkingRequestGeneratorThatEndsAtNumRequest) {
   nighthawk::request_source::FileBasedPluginRequestSourceConfig config =
       MakeFileBasedPluginConfigWithTestYaml(
           TestEnvironment::runfilesPath("test/request_source/test_data/test-config.yaml"));

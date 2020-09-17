@@ -11,7 +11,6 @@
 
 namespace Nighthawk {
 
-
 std::string DummyRequestSourceConfigFactory::name() const {
   return "nighthawk.dummy-request-source-plugin";
 }
@@ -33,9 +32,8 @@ REGISTER_FACTORY(DummyRequestSourceConfigFactory, RequestSourcePluginConfigFacto
 
 DummyRequestSourcePlugin::DummyRequestSourcePlugin(
     const nighthawk::request_source::DummyPluginRequestSourceConfig& config)
-    : dummy_value_{config.has_dummy_value()
-                                                 ? config.dummy_value().value()
-                                                 : std::numeric_limits<double>::infinity()} {}
+    : dummy_value_{config.has_dummy_value() ? config.dummy_value().value()
+                                            : std::numeric_limits<double>::infinity()} {}
 RequestGenerator DummyRequestSourcePlugin::get() {
   RequestGenerator request_generator = []() {
     Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
@@ -80,8 +78,8 @@ REGISTER_FACTORY(FileBasedRequestSourceConfigFactory, RequestSourcePluginConfigF
 FileBasedRequestSourcePlugin::FileBasedRequestSourcePlugin(
     const nighthawk::request_source::FileBasedPluginRequestSourceConfig& config,
     std::unique_ptr<nighthawk::client::RequestOptionsList> options_list)
-    : uri_(config.uri()), file_path_(config.file_path()),
-      options_list_(std::move(options_list)), request_max_(config.num_requests().value()) {}
+    : uri_(config.uri()), file_path_(config.file_path()), options_list_(std::move(options_list)),
+      request_max_(config.num_requests().value()) {}
 
 RequestGenerator FileBasedRequestSourcePlugin::get() {
   uint32_t counter = 0;

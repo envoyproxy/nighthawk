@@ -28,6 +28,7 @@ public:
    * needed, for example).
    */
   void initOnThread() override;
+
 private:
   const double dummy_value_;
 };
@@ -41,7 +42,7 @@ public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
   RequestSourcePtr createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
-                                                   Envoy::Api::Api& api) override;
+                                             Envoy::Api::Api& api) override;
 };
 
 // This factory will be activated through RequestSourceFactory in factories.h
@@ -51,13 +52,15 @@ using RequestOptionsIterator =
     Envoy::ProtobufWkt::internal::RepeatedPtrIterator<const nighthawk::client::RequestOptions>;
 
 /**
- * Sample Request Source for small files. Loads the file in and replays the request specifications from the file. Each worker will keep the file contents in memory.
- * It will provide num_requests number of requests, looping as required. 0 requests means infinite requests.
+ * Sample Request Source for small files. Loads the file in and replays the request specifications
+ * from the file. Each worker will keep the file contents in memory. It will provide num_requests
+ * number of requests, looping as required. 0 requests means infinite requests.
  */
 class FileBasedRequestSourcePlugin : public RequestSource {
 public:
   explicit FileBasedRequestSourcePlugin(
-      const nighthawk::request_source::FileBasedPluginRequestSourceConfig& config, std::unique_ptr<nighthawk::client::RequestOptionsList> options_list);
+      const nighthawk::request_source::FileBasedPluginRequestSourceConfig& config,
+      std::unique_ptr<nighthawk::client::RequestOptionsList> options_list);
   RequestGenerator get() override;
   /**
    * Will be called on an intialized and running worker thread, before commencing actual work.
@@ -65,6 +68,7 @@ public:
    * needed, for example).
    */
   void initOnThread() override;
+
 private:
   const Nighthawk::UriImpl uri_;
   const std::string file_path_;
@@ -81,7 +85,7 @@ public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
   RequestSourcePtr createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
-                                                   Envoy::Api::Api& api) override;
+                                             Envoy::Api::Api& api) override;
 
 private:
   Envoy::Thread::MutexBasicLockable file_lock_;

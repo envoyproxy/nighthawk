@@ -8,8 +8,6 @@
 
 namespace Nighthawk {
 
-
-
 /**
  * A factory that must be implemented for each RequestSourcePlugin. It instantiates the specific
  * RequestSourcePlugin class after unpacking the plugin-specific config proto.
@@ -32,7 +30,7 @@ public:
    * plugin.
    */
   virtual RequestSourcePtr createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
-                                                           Envoy::Api::Api& api) PURE;
+                                                     Envoy::Api::Api& api) PURE;
 };
 
 } // namespace Nighthawk
