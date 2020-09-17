@@ -11,6 +11,7 @@
 
 namespace Nighthawk {
 
+
 std::string DummyRequestSourceConfigFactory::name() const {
   return "nighthawk.dummy-request-source-plugin";
 }
@@ -21,18 +22,18 @@ Envoy::ProtobufTypes::MessagePtr DummyRequestSourceConfigFactory::createEmptyCon
 
 RequestSourcePtr
 DummyRequestSourceConfigFactory::createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
-                                                           Envoy::Api::Api& api) {
+                                                           Envoy::Api::Api&) {
   const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
   nighthawk::request_source::DummyPluginRequestSourceConfig config;
   Envoy::MessageUtil::unpackTo(any, config);
-  return std::make_unique<DummyRequestSourcePlugin>(config, api);
+  return std::make_unique<DummyRequestSourcePlugin>(config);
 }
 
 REGISTER_FACTORY(DummyRequestSourceConfigFactory, RequestSourcePluginConfigFactory);
 
 DummyRequestSourcePlugin::DummyRequestSourcePlugin(
-    const nighthawk::request_source::DummyPluginRequestSourceConfig& config, Envoy::Api::Api& api)
-    : RequestSourcePlugin{api}, dummy_value_{config.has_dummy_value()
+    const nighthawk::request_source::DummyPluginRequestSourceConfig& config)
+    : dummy_value_{config.has_dummy_value()
                                                  ? config.dummy_value().value()
                                                  : std::numeric_limits<double>::infinity()} {}
 RequestGenerator DummyRequestSourcePlugin::get() {
@@ -43,6 +44,7 @@ RequestGenerator DummyRequestSourcePlugin::get() {
   };
   return request_generator;
 }
+
 void DummyRequestSourcePlugin::initOnThread() {}
 
 std::string FileBasedRequestSourceConfigFactory::name() const {
@@ -70,15 +72,15 @@ RequestSourcePtr FileBasedRequestSourceConfigFactory::createRequestSourcePlugin(
     }
     temp_list->CopyFrom(options_list_);
   }
-  return std::make_unique<FileBasedRequestSourcePlugin>(config, api, std::move(temp_list));
+  return std::make_unique<FileBasedRequestSourcePlugin>(config, std::move(temp_list));
 }
 
 REGISTER_FACTORY(FileBasedRequestSourceConfigFactory, RequestSourcePluginConfigFactory);
 
 FileBasedRequestSourcePlugin::FileBasedRequestSourcePlugin(
     const nighthawk::request_source::FileBasedPluginRequestSourceConfig& config,
-    Envoy::Api::Api& api, std::unique_ptr<nighthawk::client::RequestOptionsList> options_list)
-    : RequestSourcePlugin{api}, uri_(config.uri()), file_path_(config.file_path()),
+    std::unique_ptr<nighthawk::client::RequestOptionsList> options_list)
+    : uri_(config.uri()), file_path_(config.file_path()),
       options_list_(std::move(options_list)), request_max_(config.num_requests().value()) {}
 
 RequestGenerator FileBasedRequestSourcePlugin::get() {

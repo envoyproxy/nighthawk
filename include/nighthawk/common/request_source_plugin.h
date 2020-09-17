@@ -8,17 +8,7 @@
 
 namespace Nighthawk {
 
-/**
- * An interface for different RequestSource plugins.
- * Uses a plugin-specific config proto.
- */
-class RequestSourcePlugin : public RequestSource {
-public:
-  RequestSourcePlugin(Envoy::Api::Api& api) : api_(api) {}
 
-protected:
-  Envoy::Api::Api& api_;
-};
 
 /**
  * A factory that must be implemented for each RequestSourcePlugin. It instantiates the specific

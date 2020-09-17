@@ -17,11 +17,10 @@ namespace Nighthawk {
 /**
  * Sample Request Source implementation for comparison.
  */
-class DummyRequestSourcePlugin : public RequestSourcePlugin {
+class DummyRequestSourcePlugin : public RequestSource {
 public:
   explicit DummyRequestSourcePlugin(
-      const nighthawk::request_source::DummyPluginRequestSourceConfig& config,
-      Envoy::Api::Api& api);
+      const nighthawk::request_source::DummyPluginRequestSourceConfig& config);
   RequestGenerator get() override;
   /**
    * Will be called on an intialized and running worker thread, before commencing actual work.
@@ -29,7 +28,6 @@ public:
    * needed, for example).
    */
   void initOnThread() override;
-
 private:
   const double dummy_value_;
 };
@@ -56,11 +54,10 @@ using RequestOptionsIterator =
  * Sample Request Source for small files. Loads the file in and replays the request specifications from the file. Each worker will keep the file contents in memory.
  * It will provide num_requests number of requests, looping as required. 0 requests means infinite requests.
  */
-class FileBasedRequestSourcePlugin : public RequestSourcePlugin {
+class FileBasedRequestSourcePlugin : public RequestSource {
 public:
   explicit FileBasedRequestSourcePlugin(
-      const nighthawk::request_source::FileBasedPluginRequestSourceConfig& config,
-      Envoy::Api::Api& api, std::unique_ptr<nighthawk::client::RequestOptionsList> options_list);
+      const nighthawk::request_source::FileBasedPluginRequestSourceConfig& config, std::unique_ptr<nighthawk::client::RequestOptionsList> options_list);
   RequestGenerator get() override;
   /**
    * Will be called on an intialized and running worker thread, before commencing actual work.
@@ -68,7 +65,6 @@ public:
    * needed, for example).
    */
   void initOnThread() override;
-
 private:
   const Nighthawk::UriImpl uri_;
   const std::string file_path_;
