@@ -11,11 +11,13 @@ message DummyPluginRequestSourceConfig {
   // Dummy input value.
   google.protobuf.DoubleValue dummy_value = 1;
 }
+
 // Configuration for RPCPluginRequestSource (plugin name: "nighthawk.rpc-request-source-plugin")
 // that uses rpc
 message RPCPluginRequestSourceConfig {
   string uri = 1;
 }
+
 // Configuration for FileBasedPluginRequestSource (plugin name:
 // "nighthawk.file-based-request-source-plugin") that uses rpc
 message FileBasedPluginRequestSourceConfig {

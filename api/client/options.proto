@@ -18,7 +18,9 @@ message RequestOptions {
   google.protobuf.UInt32Value request_body_size = 3 [(validate.rules).uint32 = {lte: 4194304}];
 }
 
+// Used for providing multiple request options, especially for RequestSourcePlugins.
 message RequestOptionsList {
+  // Each option is used for a separate request to be sent by the requestSource.
   repeated RequestOptions options = 1;
 }
 

@@ -104,8 +104,7 @@ RequestGenerator FileBasedRequestSourcePlugin::get() {
     }
     for (const auto& option_header : request_option.request_headers()) {
       auto lower_case_key = Envoy::Http::LowerCaseString(std::string(option_header.header().key()));
-      header->remove(lower_case_key);
-      header->addCopy(lower_case_key, std::string(option_header.header().value()));
+      header->setCopy(lower_case_key, std::string(option_header.header().value()));
     }
     return std::make_unique<RequestImpl>(std::move(header));
   };

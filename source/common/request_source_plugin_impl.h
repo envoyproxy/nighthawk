@@ -52,6 +52,8 @@ using RequestOptionsIterator =
     Envoy::ProtobufWkt::internal::RepeatedPtrIterator<const nighthawk::client::RequestOptions>;
 
 /**
+ * Sample Request Source for small files. Loads the file in and replays the request specifications from the file. Each worker will keep the file contents in memory.
+ * It will provide num_requests number of requests, looping as required. 0 requests means infinite requests.
  */
 class FileBasedRequestSourcePlugin : public RequestSourcePlugin {
 public:

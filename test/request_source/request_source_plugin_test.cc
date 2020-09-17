@@ -24,21 +24,22 @@ public:
   DummyRequestSourcePluginTest() : api_(Envoy::Api::createApiForTest(stats_store_)) {}
   Envoy::Api::ApiPtr api_;
   Envoy::Stats::MockIsolatedStatsStore stats_store_;
-}; // RequestSourcePluginTest
+};
+
 class FileBasedRequestSourcePluginTest : public Test {
 public:
   FileBasedRequestSourcePluginTest() : api_(Envoy::Api::createApiForTest(stats_store_)) {}
   Envoy::Api::ApiPtr api_;
   Envoy::Stats::MockIsolatedStatsStore stats_store_;
   nighthawk::request_source::FileBasedPluginRequestSourceConfig
-  MakeFileBasedPluginConfigWithTestYaml(const std::string& request_file) {
+  MakeFileBasedPluginConfigWithTestYaml(absl::string_view request_file) {
     nighthawk::request_source::FileBasedPluginRequestSourceConfig config;
     config.mutable_uri()->assign("http://foo/");
     config.mutable_file_path()->assign(request_file);
     config.mutable_max_file_size()->set_value(4000);
     return config;
   }
-}; // RequestSourcePluginTest
+};
 
 TEST_F(DummyRequestSourcePluginTest, CreateEmptyConfigProtoCreatesCorrectType) {
   auto& config_factory =
@@ -49,6 +50,7 @@ TEST_F(DummyRequestSourcePluginTest, CreateEmptyConfigProtoCreatesCorrectType) {
   EXPECT_EQ(empty_config->DebugString(), expected_config.DebugString());
   EXPECT_TRUE(Envoy::MessageUtil()(*empty_config, expected_config));
 }
+
 TEST_F(DummyRequestSourcePluginTest, FactoryRegistrationUsesCorrectPluginName) {
   nighthawk::request_source::DummyPluginRequestSourceConfig config;
   Envoy::ProtobufWkt::Any config_any;
@@ -58,6 +60,7 @@ TEST_F(DummyRequestSourcePluginTest, FactoryRegistrationUsesCorrectPluginName) {
           "nighthawk.dummy-request-source-plugin");
   EXPECT_EQ(config_factory.name(), "nighthawk.dummy-request-source-plugin");
 }
+
 TEST_F(DummyRequestSourcePluginTest, CreateRequestSourcePluginCreatesCorrectPluginType) {
   nighthawk::request_source::DummyPluginRequestSourceConfig config;
   Envoy::ProtobufWkt::Any config_any;
@@ -68,6 +71,7 @@ TEST_F(DummyRequestSourcePluginTest, CreateRequestSourcePluginCreatesCorrectPlug
   RequestSourcePluginPtr plugin = config_factory.createRequestSourcePlugin(config_any, *api_);
   EXPECT_NE(dynamic_cast<DummyRequestSourcePlugin*>(plugin.get()), nullptr);
 }
+
 TEST_F(FileBasedRequestSourcePluginTest, CreateEmptyConfigProtoCreatesCorrectType) {
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
@@ -77,6 +81,7 @@ TEST_F(FileBasedRequestSourcePluginTest, CreateEmptyConfigProtoCreatesCorrectTyp
   EXPECT_EQ(empty_config->DebugString(), expected_config.DebugString());
   EXPECT_TRUE(Envoy::MessageUtil()(*empty_config, expected_config));
 }
+
 TEST_F(FileBasedRequestSourcePluginTest, FactoryRegistrationUsesCorrectPluginName) {
   nighthawk::request_source::FileBasedPluginRequestSourceConfig config;
   Envoy::ProtobufWkt::Any config_any;
@@ -86,6 +91,7 @@ TEST_F(FileBasedRequestSourcePluginTest, FactoryRegistrationUsesCorrectPluginNam
           "nighthawk.file-based-request-source-plugin");
   EXPECT_EQ(config_factory.name(), "nighthawk.file-based-request-source-plugin");
 }
+
 TEST_F(FileBasedRequestSourcePluginTest, CreateRequestSourcePluginCreatesCorrectPluginType) {
   nighthawk::request_source::FileBasedPluginRequestSourceConfig config =
       MakeFileBasedPluginConfigWithTestYaml(
@@ -98,7 +104,8 @@ TEST_F(FileBasedRequestSourcePluginTest, CreateRequestSourcePluginCreatesCorrect
   RequestSourcePluginPtr plugin = config_factory.createRequestSourcePlugin(config_any, *api_);
   EXPECT_NE(dynamic_cast<FileBasedRequestSourcePlugin*>(plugin.get()), nullptr);
 }
-TEST_F(FileBasedRequestSourcePluginTest, CreateRequestSourcePluginGetsWorkingRequestGenerator) {
+
+TEST_F(FileBasedRequestSourcePluginTest, CreateRequestSourcePluginGetsWorkingRequestGeneratorThatEndsAtNumRequest) {
   nighthawk::request_source::FileBasedPluginRequestSourceConfig config =
       MakeFileBasedPluginConfigWithTestYaml(
           TestEnvironment::runfilesPath("test/request_source/test_data/test-config.yaml"));
@@ -120,6 +127,7 @@ TEST_F(FileBasedRequestSourcePluginTest, CreateRequestSourcePluginGetsWorkingReq
   EXPECT_EQ(header2->getPathValue(), "/b");
   EXPECT_EQ(request3, nullptr);
 }
+
 TEST_F(FileBasedRequestSourcePluginTest,
        CreateRequestSourcePluginWithMoreNumRequestsThanInFileGetsWorkingRequestGeneratorThatLoops) {
   nighthawk::request_source::FileBasedPluginRequestSourceConfig config =
