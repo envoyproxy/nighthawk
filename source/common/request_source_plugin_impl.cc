@@ -59,8 +59,10 @@ RequestSourcePtr FileBasedRequestSourceConfigFactory::createRequestSourcePlugin(
   nighthawk::request_source::FileBasedPluginRequestSourceConfig config;
   Envoy::MessageUtil util;
   util.unpackTo(any, config);
-  RELEASE_ASSERT(api.fileSystem().fileSize(config.file_path()) < config.max_file_size().value(),
-                 "file size must be less than max_file_size");
+  if(api.fileSystem().fileSize(config.file_path()) > config.max_file_size().value())
+  {
+    throw NighthawkException("file size must be less than max_file_size");
+  }
   auto temp_list = std::make_unique<nighthawk::client::RequestOptionsList>();
   {
     Envoy::Thread::LockGuard lock_guard(file_lock_);
