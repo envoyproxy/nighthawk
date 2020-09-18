@@ -65,9 +65,9 @@ envoy_basic_cc_library(
 )
 
 envoy_basic_cc_library(
-    name = "request_source_plugin_lib",
+    name = "request_source_plugin_config_factory_lib",
     hdrs = [
-        "request_source_plugin.h",
+        "request_source_plugin_config_factory.h",
     ],
     include_prefix = "nighthawk/common",
     deps = [

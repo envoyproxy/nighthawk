@@ -95,7 +95,7 @@ envoy_cc_library(
         ":nighthawk_common_lib",
         ":request_impl_lib",
         ":request_source_impl_lib",
-        "//include/nighthawk/common:request_source_plugin_lib",
+        "//include/nighthawk/common:request_source_plugin_config_factory_lib",
         "@envoy//source/common/common:thread_lib_with_external_headers",
         "@envoy//source/common/protobuf:message_validator_lib_with_external_headers",
         "@envoy//source/common/protobuf:protobuf_with_external_headers",
