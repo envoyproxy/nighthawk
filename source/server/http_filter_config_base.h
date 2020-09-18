@@ -9,7 +9,6 @@
 #include "api/server/response_options.pb.h"
 
 #include "server/configuration.h"
-#include "server/well_known_headers.h"
 
 #include "absl/status/status.h"
 
