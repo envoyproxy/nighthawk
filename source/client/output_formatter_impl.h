@@ -108,5 +108,26 @@ protected:
   double durationToSeconds(const Envoy::ProtobufWkt::Duration& duration) const;
 };
 
+/**
+ * Applies corrections to the output of the original FortioOutputFormatterImpl class,
+ * to make the output adhere better to Fortio's actual output.
+ * In particular, the proto json serializer outputs 64 bits integers as strings, whereas
+ * Fortio outputs them unquoted / as integers, trusting that consumers side can take that
+ * well. We also fix the RequestedQPS field which was defined as an integer, but gets
+ * represented as a string in Fortio's json output.
+ */
+class FortioPedanticOutputFormatterImpl : public FortioOutputFormatterImpl {
+public:
+  /**
+   * Format Nighthawk's native output proto to Fortio's output format.
+   * This relies on the base class to provide the initial render, and applies
+   * post processing to make corrections afterwards.
+   *
+   * @param output Nighthawk's native output proto that will be transformed.
+   * @return std::string Fortio formatted json string.
+   */
+  std::string formatProto(const nighthawk::client::Output& output) const override;
+};
+
 } // namespace Client
 } // namespace Nighthawk
