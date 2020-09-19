@@ -145,7 +145,7 @@ absl::StatusOr<AdaptiveLoadSessionOutput> AdaptiveLoadControllerImpl::PerformAda
   AdaptiveLoadSessionSpec spec = session_spec_proto_helper_.SetSessionSpecDefaults(input_spec);
   absl::Status validation_status = session_spec_proto_helper_.CheckSessionSpec(spec);
   if (!validation_status.ok()) {
-    ENVOY_LOG_MISC(info, "Validation failed: {}", validation_status.message());
+    ENVOY_LOG_MISC(error, "Validation failed: {}", validation_status.message());
     return validation_status;
   }
   absl::flat_hash_map<std::string, MetricsPluginPtr> name_to_custom_metrics_plugin_map =
@@ -177,14 +177,18 @@ absl::StatusOr<AdaptiveLoadSessionOutput> AdaptiveLoadControllerImpl::PerformAda
     const auto elapsed_time_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
         time_source_.monotonicTime() - start_time);
     if (elapsed_time_ns > time_limit_ns) {
-      return absl::DeadlineExceededError(absl::StrFormat(
-          "Failed to converge before deadline of %.2f seconds.", time_limit_ns.count() / 1e9));
+      std::string message = absl::StrFormat("Failed to converge before deadline of %.2f seconds.",
+                                            time_limit_ns.count() / 1e9);
+      ENVOY_LOG_MISC(error, message);
+      return absl::DeadlineExceededError(message);
     }
   } while (!step_controller->IsConverged() && !step_controller->IsDoomed(doom_reason));
 
   if (step_controller->IsDoomed(doom_reason)) {
-    return absl::AbortedError(
-        absl::StrCat("Step controller determined that it can never converge: ", doom_reason));
+    std::string message =
+        absl::StrCat("Step controller determined that it can never converge: ", doom_reason);
+    ENVOY_LOG_MISC(error, message);
+    return absl::AbortedError(message);
   }
 
   // Perform testing stage:
