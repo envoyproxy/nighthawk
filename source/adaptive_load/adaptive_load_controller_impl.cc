@@ -98,7 +98,7 @@ absl::StatusOr<BenchmarkResult> AdaptiveLoadControllerImpl::PerformAndAnalyzeNig
     nighthawk::client::NighthawkService::StubInterface* nighthawk_service_stub,
     const AdaptiveLoadSessionSpec& spec,
     const absl::flat_hash_map<std::string, MetricsPluginPtr>& name_to_custom_plugin_map,
-    const StepController& step_controller, Envoy::ProtobufWkt::Duration duration) {
+    StepController& step_controller, Envoy::ProtobufWkt::Duration duration) {
   absl::StatusOr<nighthawk::client::CommandLineOptions> command_line_options_or =
       step_controller.GetCurrentCommandLineOptions();
   if (!command_line_options_or.ok()) {
@@ -135,6 +135,7 @@ absl::StatusOr<BenchmarkResult> AdaptiveLoadControllerImpl::PerformAndAnalyzeNig
   for (const MetricEvaluation& evaluation : benchmark_result.metric_evaluations()) {
     ENVOY_LOG_MISC(info, "Evaluation: {}", evaluation.DebugString());
   }
+  step_controller.UpdateAndRecompute(benchmark_result);
   return benchmark_result;
 }
 
@@ -144,6 +145,7 @@ absl::StatusOr<AdaptiveLoadSessionOutput> AdaptiveLoadControllerImpl::PerformAda
   AdaptiveLoadSessionSpec spec = session_spec_proto_helper_.SetSessionSpecDefaults(input_spec);
   absl::Status validation_status = session_spec_proto_helper_.CheckSessionSpec(spec);
   if (!validation_status.ok()) {
+    ENVOY_LOG_MISC(info, "Validation failed: {}", validation_status.message());
     return validation_status;
   }
   absl::flat_hash_map<std::string, MetricsPluginPtr> name_to_custom_metrics_plugin_map =
@@ -157,6 +159,7 @@ absl::StatusOr<AdaptiveLoadSessionOutput> AdaptiveLoadControllerImpl::PerformAda
     *output.mutable_metric_thresholds()->Add() = threshold;
   }
 
+  // Perform adjusting stage:
   Envoy::MonotonicTime start_time = time_source_.monotonicTime();
   std::string doom_reason;
   do {
@@ -168,7 +171,6 @@ absl::StatusOr<AdaptiveLoadSessionOutput> AdaptiveLoadControllerImpl::PerformAda
     }
     BenchmarkResult result = result_or.value();
     *output.mutable_adjusting_stage_results()->Add() = result;
-    step_controller->UpdateAndRecompute(result);
 
     const std::chrono::nanoseconds time_limit_ns(
         Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(spec.convergence_deadline()));
@@ -185,6 +187,7 @@ absl::StatusOr<AdaptiveLoadSessionOutput> AdaptiveLoadControllerImpl::PerformAda
         absl::StrCat("Step controller determined that it can never converge: ", doom_reason));
   }
 
+  // Perform testing stage:
   absl::StatusOr<BenchmarkResult> result_or = PerformAndAnalyzeNighthawkBenchmark(
       nighthawk_service_stub, spec, name_to_custom_metrics_plugin_map, *step_controller,
       spec.testing_stage_duration());

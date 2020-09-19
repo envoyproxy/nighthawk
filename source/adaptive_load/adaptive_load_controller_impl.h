@@ -17,6 +17,9 @@ public:
    * determine the next load and detect convergence. All plugins are specified through the
    * AdaptiveLoadSessionSpec proto.
    *
+   * This class is thread-safe, but Nighthawk Service itself does not support multiple simultaneous
+   * benchmarks.
+   *
    * Usage:
    *
    *   AdaptiveLoadControllerImpl controller(
@@ -52,7 +55,7 @@ public:
 private:
   /**
    * Gets the current load from the StepController, performs a benchmark via a Nighthawk Service,
-   * and hands the result off for analysis.
+   * hands the result off for analysis, and reports the scores back to the StepController.
    *
    * @param nighthawk_service_stub Nighthawk Service gRPC stub.
    * @param spec Proto describing the overall adaptive load session.
@@ -69,7 +72,7 @@ private:
       nighthawk::client::NighthawkService::StubInterface* nighthawk_service_stub,
       const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec,
       const absl::flat_hash_map<std::string, MetricsPluginPtr>& name_to_custom_plugin_map,
-      const StepController& step_controller, Envoy::ProtobufWkt::Duration duration);
+      StepController& step_controller, Envoy::ProtobufWkt::Duration duration);
 
   const NighthawkServiceClient& nighthawk_service_client_;
   const MetricsEvaluator& metrics_evaluator_;
