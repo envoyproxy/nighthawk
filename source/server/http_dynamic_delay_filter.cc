@@ -13,10 +13,10 @@ namespace Nighthawk {
 namespace Server {
 
 HttpDynamicDelayDecoderFilterConfig::HttpDynamicDelayDecoderFilterConfig(
-    nighthawk::server::ResponseOptions proto_config, Envoy::Runtime::Loader& runtime,
+    const nighthawk::server::ResponseOptions& proto_config, Envoy::Runtime::Loader& runtime,
     const std::string& stats_prefix, Envoy::Stats::Scope& scope, Envoy::TimeSource& time_source)
-    : server_config_(std::move(proto_config)), runtime_(runtime),
-      stats_prefix_(absl::StrCat(stats_prefix, "dynamic-delay.")), scope_(scope),
+    : FilterConfigurationBase(proto_config, "dynamic-delay"), runtime_(runtime),
+      stats_prefix_(absl::StrCat(stats_prefix, fmt::format("{}.", filter_name()))), scope_(scope),
       time_source_(time_source) {}
 
 HttpDynamicDelayDecoderFilter::HttpDynamicDelayDecoderFilter(
@@ -40,32 +40,31 @@ void HttpDynamicDelayDecoderFilter::onDestroy() {
 Envoy::Http::FilterHeadersStatus
 HttpDynamicDelayDecoderFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& headers,
                                              bool end_stream) {
-  response_options_ = config_->server_config();
-  std::string error_message;
-  if (!computeResponseOptions(headers, error_message)) {
-    decoder_callbacks_->sendLocalReply(
-        static_cast<Envoy::Http::Code>(500),
-        fmt::format("dynamic-delay didn't understand the request: {}", error_message), nullptr,
-        absl::nullopt, "");
-    return Envoy::Http::FilterHeadersStatus::StopIteration;
+  config_->computeEffectiveConfiguration(headers);
+  if (config_->getEffectiveConfiguration().ok()) {
+    const absl::optional<int64_t> delay_ms = computeDelayMs(
+        *config_->getEffectiveConfiguration().value(), config_->approximateFilterInstances());
+    maybeRequestFaultFilterDelay(delay_ms, headers);
+  } else {
+    if (end_stream) {
+      config_->maybeSendErrorReply(*decoder_callbacks_);
+      return Envoy::Http::FilterHeadersStatus::StopIteration;
+    }
+    return Envoy::Http::FilterHeadersStatus::Continue;
   }
-  const absl::optional<int64_t> delay_ms =
-      computeDelayMs(response_options_, config_->approximateFilterInstances());
-  maybeRequestFaultFilterDelay(delay_ms, headers);
   return Envoy::Extensions::HttpFilters::Fault::FaultFilter::decodeHeaders(headers, end_stream);
 }
 
-bool HttpDynamicDelayDecoderFilter::computeResponseOptions(
-    const Envoy::Http::RequestHeaderMap& headers, std::string& error_message) {
-  response_options_ = config_->server_config();
-  const auto* request_config_header = headers.get(TestServer::HeaderNames::get().TestServerConfig);
-  if (request_config_header) {
-    if (!Configuration::mergeJsonConfig(request_config_header->value().getStringView(),
-                                        response_options_, error_message)) {
-      return false;
+Envoy::Http::FilterDataStatus
+HttpDynamicDelayDecoderFilter::decodeData(Envoy::Buffer::Instance& buffer, bool end_stream) {
+  if (!config_->getEffectiveConfiguration().ok()) {
+    if (end_stream) {
+      config_->maybeSendErrorReply(*decoder_callbacks_);
+      return Envoy::Http::FilterDataStatus::StopIterationNoBuffer;
     }
+    return Envoy::Http::FilterDataStatus::Continue;
   }
-  return true;
+  return Envoy::Extensions::HttpFilters::Fault::FaultFilter::decodeData(buffer, end_stream);
 }
 
 absl::optional<int64_t> HttpDynamicDelayDecoderFilter::computeDelayMs(
