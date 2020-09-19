@@ -1,12 +1,14 @@
 #include "server/http_filter_config_base.h"
 
+#include "server/well_known_headers.h"
+
 namespace Nighthawk {
 namespace Server {
 
 FilterConfigurationBase::FilterConfigurationBase(
     const nighthawk::server::ResponseOptions& proto_config, absl::string_view filter_name)
     : filter_name_(filter_name),
-      server_config_(std::make_shared<nighthawk::server::ResponseOptions>(std::move(proto_config))),
+      server_config_(std::make_shared<nighthawk::server::ResponseOptions>(proto_config)),
       effective_config_(server_config_) {}
 
 void FilterConfigurationBase::computeEffectiveConfiguration(

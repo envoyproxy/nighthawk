@@ -108,6 +108,8 @@ OutputFormatterPtr OutputFormatterFactoryImpl::create(
     return std::make_unique<Client::DottedStringOutputFormatterImpl>();
   case nighthawk::client::OutputFormat::FORTIO:
     return std::make_unique<Client::FortioOutputFormatterImpl>();
+  case nighthawk::client::OutputFormat::EXPERIMENTAL_FORTIO_PEDANTIC:
+    return std::make_unique<Client::FortioPedanticOutputFormatterImpl>();
   default:
     NOT_REACHED_GCOVR_EXCL_LINE;
   }
