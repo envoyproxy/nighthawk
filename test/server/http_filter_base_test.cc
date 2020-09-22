@@ -7,15 +7,38 @@
 #include "gtest/gtest.h"
 
 namespace Nighthawk {
+namespace {
 
-using namespace testing;
+using ::testing::HasSubstr;
+
+enum TestRequestMethod { GET, POST };
+
+const std::string kBadConfigErrorSentinel =
+    "didn't understand the request: Error merging json config: Unable to parse "
+    "JSON as proto (INVALID_ARGUMENT:Unexpected";
 
 class HttpFilterBaseIntegrationTest
     : public HttpFilterIntegrationTestBase,
       public testing::TestWithParam<
-          std::tuple<Envoy::Network::Address::IpVersion, absl::string_view, bool>> {
+          std::tuple<Envoy::Network::Address::IpVersion, absl::string_view, TestRequestMethod>> {
 public:
-  HttpFilterBaseIntegrationTest() : HttpFilterIntegrationTestBase(std::get<0>(GetParam())){};
+  HttpFilterBaseIntegrationTest()
+      : HttpFilterIntegrationTestBase(std::get<0>(GetParam())), config_(std::get<1>(GetParam())) {
+    initializeFilterConfiguration(config_);
+    if (std::get<2>(GetParam()) == TestRequestMethod::POST) {
+      switchToPostWithEntityBody();
+    }
+  };
+
+  ResponseOrigin getHappyFlowResponseOrigin() {
+    // Modulo the test-server, extensions are expected to need an upstream to synthesize a reply
+    // when the effective configuration is valid.
+    return config_.find_first_of("name: test-server") == 0 ? ResponseOrigin::EXTENSION
+                                                           : ResponseOrigin::UPSTREAM;
+  }
+
+protected:
+  const std::string config_;
 };
 
 INSTANTIATE_TEST_SUITE_P(
@@ -34,56 +57,38 @@ typed_config:
   static_delay: 0.1s
 )EOF"),
                                           absl::string_view("name: test-server")}),
-                       testing::ValuesIn({true, false})));
+                       testing::ValuesIn({TestRequestMethod::GET, TestRequestMethod::POST})));
 
-// Verify extensions are well-behaved when it comes to:
-// - GET requests.
-// - POST requests with an entity body (takes a slightly different code path).
-// - Valid but empty configuration.
-// - Bad request-level json configuration.
-// We will be low on functional expectations for the extensions, but this will catch hangs and
-// ensure that bad configuration handling is in-place.
-TEST_P(HttpFilterBaseIntegrationTest, BasicExtensionFlows) {
-  absl::string_view config = std::get<1>(GetParam());
-  initializeFilterConfiguration(std::string(config));
-  bool is_post = std::get<2>(GetParam());
-  if (is_post) {
-    switchToPostWithEntityBody();
-  }
-
-  // Modulo the test-server, extensions are expected to need an upstream to synthesize a reply
-  // when effective configuration is valid.
-  ResponseOrigin happy_flow_response_origin = config.find_first_of("name: test-server") == 0
-                                                  ? ResponseOrigin::EXTENSION
-                                                  : ResponseOrigin::UPSTREAM;
-  // Post without any request-level configuration. Should succeed.
-  Envoy::IntegrationStreamDecoderPtr response = getResponse(happy_flow_response_origin);
+TEST_P(HttpFilterBaseIntegrationTest, NoRequestLevelConfigurationShouldSucceed) {
+  Envoy::IntegrationStreamDecoderPtr response = getResponse(getHappyFlowResponseOrigin());
   ASSERT_TRUE(response->complete());
   EXPECT_EQ("200", response->headers().Status()->value().getStringView());
   EXPECT_TRUE(response->body().empty());
+}
 
-  // Test with a valid but empty request-level configuration.
+TEST_P(HttpFilterBaseIntegrationTest, EmptyJsonRequestLevelConfigurationShouldSucceed) {
   setRequestLevelConfiguration("{}");
-  response = getResponse(happy_flow_response_origin);
+  Envoy::IntegrationStreamDecoderPtr response = getResponse(getHappyFlowResponseOrigin());
   ASSERT_TRUE(response->complete());
   EXPECT_EQ("200", response->headers().Status()->value().getStringView());
   EXPECT_TRUE(response->body().empty());
+}
 
-  const std::string kBadConfigErrorSentinel =
-      "didn't understand the request: Error merging json config: Unable to parse "
-      "JSON as proto (INVALID_ARGUMENT:Unexpected";
-
+TEST_P(HttpFilterBaseIntegrationTest, BadJsonAsRequestLevelConfigurationShouldFail) {
   // When sending bad request-level configuration, the extension ought to reply directly.
   setRequestLevelConfiguration("bad_json");
-  response = getResponse(ResponseOrigin::EXTENSION);
-  EXPECT_EQ(Envoy::Http::Utility::getResponseStatus(response->headers()), 500);
-  EXPECT_THAT(response->body(), HasSubstr(kBadConfigErrorSentinel));
-
-  // When sending empty request-level configuration, the extension ought to reply directly.
-  setRequestLevelConfiguration("");
-  response = getResponse(ResponseOrigin::EXTENSION);
+  Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
   EXPECT_EQ(Envoy::Http::Utility::getResponseStatus(response->headers()), 500);
   EXPECT_THAT(response->body(), HasSubstr(kBadConfigErrorSentinel));
 }
 
+TEST_P(HttpFilterBaseIntegrationTest, EmptyRequestLevelConfigurationShouldFail) {
+  // When sending empty request-level configuration, the extension ought to reply directly.
+  setRequestLevelConfiguration("");
+  Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
+  EXPECT_EQ(Envoy::Http::Utility::getResponseStatus(response->headers()), 500);
+  EXPECT_THAT(response->body(), HasSubstr(kBadConfigErrorSentinel));
+}
+
+} // namespace
 } // namespace Nighthawk
