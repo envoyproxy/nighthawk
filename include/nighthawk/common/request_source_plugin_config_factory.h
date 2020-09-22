@@ -8,16 +8,6 @@
 
 namespace Nighthawk {
 
-struct RequestSourceContext {
-  RequestSourceContext(RequestSourceContext& context)
-      : api(std::move(context.api)), header(std::move(context.header)) {}
-  RequestSourceContext(Envoy::Api::ApiPtr api_input, Envoy::Http::RequestHeaderMapPtr header_input)
-      : api(std::move(api_input)), header(std::move(header_input)) {}
-  Envoy::Api::ApiPtr api;
-  Envoy::Http::RequestHeaderMapPtr header;
-};
-using RequestSourceContextPtr = std::unique_ptr<RequestSourceContext>;
-
 /**
  * A factory that must be implemented for each RequestSourcePlugin. It instantiates the specific
  * RequestSourcePlugin class after unpacking the plugin-specific config proto.
@@ -39,8 +29,8 @@ public:
    * @throw Envoy::EnvoyException If the Any proto cannot be unpacked as the type expected by the
    * plugin.
    */
-  virtual RequestSourcePtr createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
-                                                     RequestSourceContextPtr context) PURE;
+  virtual RequestSourcePtr createRequestSourcePlugin(const Envoy::Protobuf::Message& typed_config,
+                                                     Envoy::Api::ApiPtr api, Envoy::Http::RequestHeaderMapPtr header) PURE;
 };
 
 } // namespace Nighthawk

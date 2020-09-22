@@ -21,7 +21,7 @@ Envoy::ProtobufTypes::MessagePtr DummyRequestSourceConfigFactory::createEmptyCon
 
 RequestSourcePtr
 DummyRequestSourceConfigFactory::createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
-                                                           RequestSourceContextPtr) {
+                                                           Envoy::Api::ApiPtr, Envoy::Http::RequestHeaderMapPtr) {
   const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
   nighthawk::request_source::DummyPluginRequestSourceConfig config;
   Envoy::MessageUtil::unpackTo(any, config);
@@ -55,12 +55,13 @@ Envoy::ProtobufTypes::MessagePtr FileBasedRequestSourceConfigFactory::createEmpt
 }
 
 RequestSourcePtr FileBasedRequestSourceConfigFactory::createRequestSourcePlugin(
-    const Envoy::Protobuf::Message& message, RequestSourceContextPtr context) {
+    const Envoy::Protobuf::Message& message, Envoy::Api::ApiPtr api, Envoy::Http::RequestHeaderMapPtr header) {
   const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
   nighthawk::request_source::FileBasedPluginRequestSourceConfig config;
   Envoy::MessageUtil util;
+
   util.unpackTo(any, config);
-  if (context->api->fileSystem().fileSize(config.file_path()) > config.max_file_size().value()) {
+  if (api->fileSystem().fileSize(config.file_path()) > config.max_file_size().value()) {
     throw NighthawkException("file size must be less than max_file_size");
   }
   auto temp_list = std::make_unique<nighthawk::client::RequestOptionsList>();
@@ -71,12 +72,12 @@ RequestSourcePtr FileBasedRequestSourceConfigFactory::createRequestSourcePlugin(
     // Reading the file only the first time.
     if (options_list_.options_size() == 0) {
       util.loadFromFile(config.file_path(), options_list_,
-                        Envoy::ProtobufMessage::getStrictValidationVisitor(), *(context->api),
+                        Envoy::ProtobufMessage::getStrictValidationVisitor(), *api,
                         true);
     }
     temp_list->CopyFrom(options_list_);
   }
-  return std::make_unique<FileBasedRequestSourcePlugin>(config, std::move(context),
+  return std::make_unique<FileBasedRequestSourcePlugin>(config, std::move(header),
                                                         std::move(temp_list));
 }
 
@@ -84,9 +85,9 @@ REGISTER_FACTORY(FileBasedRequestSourceConfigFactory, RequestSourcePluginConfigF
 
 FileBasedRequestSourcePlugin::FileBasedRequestSourcePlugin(
     const nighthawk::request_source::FileBasedPluginRequestSourceConfig& config,
-    RequestSourceContextPtr context,
+    Envoy::Http::RequestHeaderMapPtr header,
     std::unique_ptr<nighthawk::client::RequestOptionsList> options_list)
-    : context_(std::move(context)), options_list_(std::move(options_list)),
+    : header_(std::move(header)), options_list_(std::move(options_list)),
       request_max_(config.num_requests().value()) {}
 
 RequestGenerator FileBasedRequestSourcePlugin::get() {
@@ -104,9 +105,9 @@ RequestGenerator FileBasedRequestSourcePlugin::get() {
     nighthawk::client::RequestOptions request_option = options_list_->options().at(index);
     lambda_counter++;
 
-    // Initialize the header with the values from the context header.
+    // Initialize the header with the values from the default header.
     Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
-    Envoy::Http::HeaderMapImpl::copyFrom(*header, *(context_->header));
+    Envoy::Http::HeaderMapImpl::copyFrom(*header, *header_);
 
     // Override the default values with the values from the request_option
     header->setMethod(envoy::config::core::v3::RequestMethod_Name(request_option.request_method()));
