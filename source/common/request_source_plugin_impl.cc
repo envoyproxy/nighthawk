@@ -68,6 +68,7 @@ RequestSourcePtr FileBasedRequestSourceConfigFactory::createRequestSourcePlugin(
   // Locking to avoid issues with multiple threads reading the same file.
   {
     Envoy::Thread::LockGuard lock_guard(file_lock_);
+    // Reading the file only the first time.
     if (options_list_.options_size() == 0) {
       util.loadFromFile(config.file_path(), options_list_,
                         Envoy::ProtobufMessage::getStrictValidationVisitor(), *(context->api),
