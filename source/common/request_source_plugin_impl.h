@@ -76,6 +76,7 @@ private:
   std::vector<uint32_t> request_count_;
   const uint32_t request_max_;
 };
+
 /**
  * Registered as an Envoy plugin.
  */

@@ -35,6 +35,7 @@ DummyRequestSourcePlugin::DummyRequestSourcePlugin(
     : dummy_value_{config.has_dummy_value() ? config.dummy_value().value()
                                             : std::numeric_limits<double>::infinity()} {}
 RequestGenerator DummyRequestSourcePlugin::get() {
+
   RequestGenerator request_generator = []() {
     Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
     auto returned_request_impl = std::make_unique<RequestImpl>(std::move(header));
@@ -64,6 +65,8 @@ RequestSourcePtr FileBasedRequestSourceConfigFactory::createRequestSourcePlugin(
     throw NighthawkException("file size must be less than max_file_size");
   }
   auto temp_list = std::make_unique<nighthawk::client::RequestOptionsList>();
+
+    //Locking to avoid issues with multiple threads reading the same file.
   {
     Envoy::Thread::LockGuard lock_guard(file_lock_);
     if (options_list_.options_size() == 0) {
@@ -87,16 +90,24 @@ FileBasedRequestSourcePlugin::FileBasedRequestSourcePlugin(
 RequestGenerator FileBasedRequestSourcePlugin::get() {
   uint32_t counter = 0;
   request_count_.push_back(counter);
-  uint32_t* lambda_counter = &request_count_.back();
+  uint32_t& lambda_counter = request_count_.back();
   RequestGenerator request_generator = [this, lambda_counter]() mutable -> RequestPtr {
-    if (*lambda_counter >= request_max_ && request_max_ != 0) {
+    
+    //if request_max is 0, then we never stop generating requests.
+    if (lambda_counter >= request_max_ && request_max_ != 0) {
       return nullptr;
     }
-    auto index = *lambda_counter % options_list_->options_size();
+    
+    //Increment the counter and get the request_option from the list for the current iteration.
+    auto index = lambda_counter % options_list_->options_size();
     nighthawk::client::RequestOptions request_option = options_list_->options().at(index);
-    (*lambda_counter)++;
+    lambda_counter++;
+    
+    //Initialize the header with the values from the context header.
     Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
     Envoy::Http::HeaderMapImpl::copyFrom(*header, *(context_->header));
+
+    //Override the default values with the values from the request_option
     header->setMethod(envoy::config::core::v3::RequestMethod_Name(request_option.request_method()));
     const uint32_t content_length = request_option.request_body_size().value();
     if (content_length > 0) {
