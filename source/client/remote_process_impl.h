@@ -3,6 +3,7 @@
 #include "nighthawk/client/options.h"
 #include "nighthawk/client/output_collector.h"
 #include "nighthawk/client/process.h"
+#include "nighthawk/common/nighthawk_service_client.h"
 
 #include "external/envoy/source/common/common/logger.h"
 
@@ -38,6 +39,7 @@ public:
 
 private:
   const Options& options_;
+  const std::unique_ptr<NighthawkServiceClient> service_client_;
   nighthawk::client::NighthawkService::Stub& stub_;
 };
 

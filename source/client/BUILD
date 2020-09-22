@@ -48,6 +48,7 @@ envoy_cc_library(
         "//include/nighthawk/common:base_includes",
         "//source/common:request_source_impl_lib",
         "//source/common:nighthawk_common_lib",
+        "//source/common:nighthawk_service_client_impl",
         "@envoy//source/common/common:random_generator_lib_with_external_headers",
         "@envoy//source/common/access_log:access_log_manager_lib_with_external_headers",
         "@envoy//source/common/api:api_lib_with_external_headers",
