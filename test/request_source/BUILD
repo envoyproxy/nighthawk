@@ -19,5 +19,6 @@ envoy_cc_test(
         "//source/common:request_source_plugin_impl",
         "//test/test_common:environment_lib",
         "@envoy//source/common/config:utility_lib_with_external_headers",
+        "@envoy//test/mocks/api:api_mocks",
     ],
 )
