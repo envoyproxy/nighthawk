@@ -124,12 +124,12 @@ public:
    * @param scheduled_starting_time The starting time
    */
   ScheduledStartingRateLimiter(RateLimiterPtr&& rate_limiter,
-                               const Envoy::MonotonicTime scheduled_starting_time);
+                               const Envoy::SystemTime scheduled_starting_time);
   bool tryAcquireOne() override;
   void releaseOne() override;
 
 private:
-  const Envoy::MonotonicTime scheduled_starting_time_;
+  const Envoy::SystemTime scheduled_starting_time_;
   bool aquisition_attempted_{false};
 };
 
