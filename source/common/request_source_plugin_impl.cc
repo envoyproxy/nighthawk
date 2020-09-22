@@ -60,22 +60,23 @@ RequestSourcePtr FileBasedRequestSourceConfigFactory::createRequestSourcePlugin(
   nighthawk::request_source::FileBasedPluginRequestSourceConfig config;
   Envoy::MessageUtil util;
   util.unpackTo(any, config);
-  if(context->api->fileSystem().fileSize(config.file_path()) > config.max_file_size().value())
-  {
+  if (context->api->fileSystem().fileSize(config.file_path()) > config.max_file_size().value()) {
     throw NighthawkException("file size must be less than max_file_size");
   }
   auto temp_list = std::make_unique<nighthawk::client::RequestOptionsList>();
 
-    //Locking to avoid issues with multiple threads reading the same file.
+  // Locking to avoid issues with multiple threads reading the same file.
   {
     Envoy::Thread::LockGuard lock_guard(file_lock_);
     if (options_list_.options_size() == 0) {
       util.loadFromFile(config.file_path(), options_list_,
-                        Envoy::ProtobufMessage::getStrictValidationVisitor(), *(context->api), true);
+                        Envoy::ProtobufMessage::getStrictValidationVisitor(), *(context->api),
+                        true);
     }
     temp_list->CopyFrom(options_list_);
   }
-  return std::make_unique<FileBasedRequestSourcePlugin>(config, std::move(context), std::move(temp_list));
+  return std::make_unique<FileBasedRequestSourcePlugin>(config, std::move(context),
+                                                        std::move(temp_list));
 }
 
 REGISTER_FACTORY(FileBasedRequestSourceConfigFactory, RequestSourcePluginConfigFactory);
@@ -92,22 +93,21 @@ RequestGenerator FileBasedRequestSourcePlugin::get() {
   request_count_.push_back(counter);
   uint32_t& lambda_counter = request_count_.back();
   RequestGenerator request_generator = [this, lambda_counter]() mutable -> RequestPtr {
-    
-    //if request_max is 0, then we never stop generating requests.
+    // if request_max is 0, then we never stop generating requests.
     if (lambda_counter >= request_max_ && request_max_ != 0) {
       return nullptr;
     }
-    
-    //Increment the counter and get the request_option from the list for the current iteration.
+
+    // Increment the counter and get the request_option from the list for the current iteration.
     auto index = lambda_counter % options_list_->options_size();
     nighthawk::client::RequestOptions request_option = options_list_->options().at(index);
     lambda_counter++;
-    
-    //Initialize the header with the values from the context header.
+
+    // Initialize the header with the values from the context header.
     Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
     Envoy::Http::HeaderMapImpl::copyFrom(*header, *(context_->header));
 
-    //Override the default values with the values from the request_option
+    // Override the default values with the values from the request_option
     header->setMethod(envoy::config::core::v3::RequestMethod_Name(request_option.request_method()));
     const uint32_t content_length = request_option.request_body_size().value();
     if (content_length > 0) {

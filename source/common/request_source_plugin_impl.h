@@ -59,7 +59,8 @@ using RequestOptionsIterator =
 class FileBasedRequestSourcePlugin : public RequestSource {
 public:
   explicit FileBasedRequestSourcePlugin(
-      const nighthawk::request_source::FileBasedPluginRequestSourceConfig& config, RequestSourceContextPtr context,
+      const nighthawk::request_source::FileBasedPluginRequestSourceConfig& config,
+      RequestSourceContextPtr context,
       std::unique_ptr<nighthawk::client::RequestOptionsList> options_list);
   RequestGenerator get() override;
   /**

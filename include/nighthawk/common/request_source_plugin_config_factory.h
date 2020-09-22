@@ -8,13 +8,14 @@
 
 namespace Nighthawk {
 
- struct RequestSourceContext {
-    RequestSourceContext(RequestSourceContext& context) : api(std::move(context.api)), header(std::move(context.header)) {}
-    RequestSourceContext(Envoy::Api::ApiPtr api_input, Envoy::Http::RequestHeaderMapPtr header_input) :
-   api(std::move(api_input)), header(std::move(header_input)){}    
-    Envoy::Api::ApiPtr api;
-    Envoy::Http::RequestHeaderMapPtr header;
- }; 
+struct RequestSourceContext {
+  RequestSourceContext(RequestSourceContext& context)
+      : api(std::move(context.api)), header(std::move(context.header)) {}
+  RequestSourceContext(Envoy::Api::ApiPtr api_input, Envoy::Http::RequestHeaderMapPtr header_input)
+      : api(std::move(api_input)), header(std::move(header_input)) {}
+  Envoy::Api::ApiPtr api;
+  Envoy::Http::RequestHeaderMapPtr header;
+};
 using RequestSourceContextPtr = std::unique_ptr<RequestSourceContext>;
 
 /**
