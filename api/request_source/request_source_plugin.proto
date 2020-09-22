@@ -21,8 +21,7 @@ message RPCPluginRequestSourceConfig {
 // Configuration for FileBasedPluginRequestSource (plugin name:
 // "nighthawk.file-based-request-source-plugin") that uses rpc
 message FileBasedPluginRequestSourceConfig {
-  string uri = 1;
-  string file_path = 2;
-  google.protobuf.UInt32Value num_requests = 3 [(validate.rules).uint32 = {gte: 0, lte: 1000000}];
-  google.protobuf.UInt32Value max_file_size = 4;
+  string file_path = 1;
+  google.protobuf.UInt32Value num_requests = 2 [(validate.rules).uint32 = {gte: 0, lte: 1000000}];
+  google.protobuf.UInt32Value max_file_size = 3;
 }

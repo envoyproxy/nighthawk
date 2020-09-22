@@ -42,7 +42,7 @@ public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
   RequestSourcePtr createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
-                                             Envoy::Api::Api& api) override;
+                                             RequestSourceContextPtr context) override;
 };
 
 // This factory will be activated through RequestSourceFactory in factories.h
@@ -59,7 +59,7 @@ using RequestOptionsIterator =
 class FileBasedRequestSourcePlugin : public RequestSource {
 public:
   explicit FileBasedRequestSourcePlugin(
-      const nighthawk::request_source::FileBasedPluginRequestSourceConfig& config,
+      const nighthawk::request_source::FileBasedPluginRequestSourceConfig& config, RequestSourceContextPtr context,
       std::unique_ptr<nighthawk::client::RequestOptionsList> options_list);
   RequestGenerator get() override;
   /**
@@ -70,8 +70,7 @@ public:
   void initOnThread() override;
 
 private:
-  const Nighthawk::UriImpl uri_;
-  const std::string file_path_;
+  RequestSourceContextPtr context_;
   const std::unique_ptr<nighthawk::client::RequestOptionsList> options_list_;
   std::vector<RequestOptionsIterator> request_iterators_;
   std::vector<uint32_t> request_count_;
@@ -85,7 +84,7 @@ public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
   RequestSourcePtr createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
-                                             Envoy::Api::Api& api) override;
+                                             RequestSourceContextPtr context) override;
 
 private:
   Envoy::Thread::MutexBasicLockable file_lock_;

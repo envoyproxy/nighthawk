@@ -21,20 +21,19 @@ using ::testing::Test;
 
 class DummyRequestSourcePluginTest : public Test {
 public:
-  DummyRequestSourcePluginTest() : api_(Envoy::Api::createApiForTest(stats_store_)) {}
-  Envoy::Api::ApiPtr api_;
+  DummyRequestSourcePluginTest() : context_(Envoy::Api::createApiForTest(stats_store_), Envoy::Http::RequestHeaderMapImpl::create()) {}
+  Nighthawk::RequestSourceContext context_;
   Envoy::Stats::MockIsolatedStatsStore stats_store_;
 };
 
 class FileBasedRequestSourcePluginTest : public Test {
 public:
-  FileBasedRequestSourcePluginTest() : api_(Envoy::Api::createApiForTest(stats_store_)) {}
-  Envoy::Api::ApiPtr api_;
+  FileBasedRequestSourcePluginTest() : context_(Envoy::Api::createApiForTest(stats_store_), Envoy::Http::RequestHeaderMapImpl::create()) {}
+  Nighthawk::RequestSourceContext context_;
   Envoy::Stats::MockIsolatedStatsStore stats_store_;
   nighthawk::request_source::FileBasedPluginRequestSourceConfig
   MakeFileBasedPluginConfigWithTestYaml(absl::string_view request_file) {
     nighthawk::request_source::FileBasedPluginRequestSourceConfig config;
-    config.mutable_uri()->assign("http://foo/");
     config.mutable_file_path()->assign(request_file);
     config.mutable_max_file_size()->set_value(4000);
     return config;
@@ -68,7 +67,8 @@ TEST_F(DummyRequestSourcePluginTest, CreateRequestSourcePluginCreatesCorrectPlug
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
           "nighthawk.dummy-request-source-plugin");
-  RequestSourcePtr plugin = config_factory.createRequestSourcePlugin(config_any, *api_);
+  auto context = std::make_unique<RequestSourceContext>(context_);          
+  RequestSourcePtr plugin = config_factory.createRequestSourcePlugin(config_any, std::move(context));
   EXPECT_NE(dynamic_cast<DummyRequestSourcePlugin*>(plugin.get()), nullptr);
 }
 
@@ -101,7 +101,8 @@ TEST_F(FileBasedRequestSourcePluginTest, CreateRequestSourcePluginCreatesCorrect
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
           "nighthawk.file-based-request-source-plugin");
-  RequestSourcePtr plugin = config_factory.createRequestSourcePlugin(config_any, *api_);
+  auto context = std::make_unique<RequestSourceContext>(context_);          
+  RequestSourcePtr plugin = config_factory.createRequestSourcePlugin(config_any, std::move(context));
   EXPECT_NE(dynamic_cast<FileBasedRequestSourcePlugin*>(plugin.get()), nullptr);
 }
 
@@ -116,8 +117,10 @@ TEST_F(FileBasedRequestSourcePluginTest,
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
           "nighthawk.file-based-request-source-plugin");
+  auto context = std::make_unique<RequestSourceContext>(context_);          
+
   RequestSourcePtr file_based_request_source =
-      config_factory.createRequestSourcePlugin(config_any, *api_);
+      config_factory.createRequestSourcePlugin(config_any, std::move(context));
   auto generator = file_based_request_source->get();
   auto request = generator();
   auto request2 = generator();
@@ -140,8 +143,9 @@ TEST_F(FileBasedRequestSourcePluginTest,
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
           "nighthawk.file-based-request-source-plugin");
+  auto context = std::make_unique<RequestSourceContext>(context_);          
   RequestSourcePtr file_based_request_source =
-      config_factory.createRequestSourcePlugin(config_any, *api_);
+      config_factory.createRequestSourcePlugin(config_any, std::move(context));
   auto generator = file_based_request_source->get();
   auto request = generator();
   auto request2 = generator();

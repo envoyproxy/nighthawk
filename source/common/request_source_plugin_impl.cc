@@ -21,7 +21,7 @@ Envoy::ProtobufTypes::MessagePtr DummyRequestSourceConfigFactory::createEmptyCon
 
 RequestSourcePtr
 DummyRequestSourceConfigFactory::createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
-                                                           Envoy::Api::Api&) {
+                                                           RequestSourceContextPtr) {
   const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
   nighthawk::request_source::DummyPluginRequestSourceConfig config;
   Envoy::MessageUtil::unpackTo(any, config);
@@ -54,12 +54,12 @@ Envoy::ProtobufTypes::MessagePtr FileBasedRequestSourceConfigFactory::createEmpt
 }
 
 RequestSourcePtr FileBasedRequestSourceConfigFactory::createRequestSourcePlugin(
-    const Envoy::Protobuf::Message& message, Envoy::Api::Api& api) {
+    const Envoy::Protobuf::Message& message, RequestSourceContextPtr context) {
   const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
   nighthawk::request_source::FileBasedPluginRequestSourceConfig config;
   Envoy::MessageUtil util;
   util.unpackTo(any, config);
-  if(api.fileSystem().fileSize(config.file_path()) > config.max_file_size().value())
+  if(context->api->fileSystem().fileSize(config.file_path()) > config.max_file_size().value())
   {
     throw NighthawkException("file size must be less than max_file_size");
   }
@@ -68,19 +68,20 @@ RequestSourcePtr FileBasedRequestSourceConfigFactory::createRequestSourcePlugin(
     Envoy::Thread::LockGuard lock_guard(file_lock_);
     if (options_list_.options_size() == 0) {
       util.loadFromFile(config.file_path(), options_list_,
-                        Envoy::ProtobufMessage::getStrictValidationVisitor(), api, true);
+                        Envoy::ProtobufMessage::getStrictValidationVisitor(), *(context->api), true);
     }
     temp_list->CopyFrom(options_list_);
   }
-  return std::make_unique<FileBasedRequestSourcePlugin>(config, std::move(temp_list));
+  return std::make_unique<FileBasedRequestSourcePlugin>(config, std::move(context), std::move(temp_list));
 }
 
 REGISTER_FACTORY(FileBasedRequestSourceConfigFactory, RequestSourcePluginConfigFactory);
 
 FileBasedRequestSourcePlugin::FileBasedRequestSourcePlugin(
     const nighthawk::request_source::FileBasedPluginRequestSourceConfig& config,
+    RequestSourceContextPtr context,
     std::unique_ptr<nighthawk::client::RequestOptionsList> options_list)
-    : uri_(config.uri()), file_path_(config.file_path()), options_list_(std::move(options_list)),
+    : context_(std::move(context)), options_list_(std::move(options_list)),
       request_max_(config.num_requests().value()) {}
 
 RequestGenerator FileBasedRequestSourcePlugin::get() {
@@ -95,10 +96,7 @@ RequestGenerator FileBasedRequestSourcePlugin::get() {
     nighthawk::client::RequestOptions request_option = options_list_->options().at(index);
     (*lambda_counter)++;
     Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
-    header->setPath(uri_.path());
-    header->setHost(uri_.hostAndPort());
-    header->setScheme(uri_.scheme() == "https" ? Envoy::Http::Headers::get().SchemeValues.Https
-                                               : Envoy::Http::Headers::get().SchemeValues.Http);
+    Envoy::Http::HeaderMapImpl::copyFrom(*header, *(context_->header));
     header->setMethod(envoy::config::core::v3::RequestMethod_Name(request_option.request_method()));
     const uint32_t content_length = request_option.request_body_size().value();
     if (content_length > 0) {
