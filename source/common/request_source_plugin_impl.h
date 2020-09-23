@@ -17,9 +17,9 @@ namespace Nighthawk {
 /**
  * Sample Request Source implementation for comparison.
  */
-class DummyRequestSourcePlugin : public RequestSource {
+class DummyRequestSource : public RequestSource {
 public:
-  explicit DummyRequestSourcePlugin(
+  explicit DummyRequestSource(
       const nighthawk::request_source::DummyPluginRequestSourceConfig& config);
   RequestGenerator get() override;
   /**
@@ -34,10 +34,10 @@ private:
 };
 
 /**
- * Factory that creates a DummyRequestSourcePlugin from a DummyRequestSourcePluginConfig proto.
+ * Factory that creates a DummyRequestSource from a DummyRequestSourcePluginConfig proto.
  * Registered as an Envoy plugin.
  */
-class DummyRequestSourceConfigFactory : public virtual RequestSourcePluginConfigFactory {
+class DummyRequestSourcePluginConfigFactory : public virtual RequestSourcePluginConfigFactory {
 public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
@@ -47,7 +47,7 @@ public:
 };
 
 // This factory will be activated through RequestSourceFactory in factories.h
-DECLARE_FACTORY(DummyRequestSourceConfigFactory);
+DECLARE_FACTORY(DummyRequestSourcePluginConfigFactory);
 
 using RequestOptionsIterator =
     Envoy::ProtobufWkt::internal::RepeatedPtrIterator<const nighthawk::client::RequestOptions>;
@@ -57,9 +57,9 @@ using RequestOptionsIterator =
  * from the file. Each worker will keep the file contents in memory. It will provide num_requests
  * number of requests, looping as required. 0 requests means infinite requests.
  */
-class FileBasedRequestSourcePlugin : public RequestSource {
+class RequestOptionsListRequestSource : public RequestSource {
 public:
-  explicit FileBasedRequestSourcePlugin(
+  explicit RequestOptionsListRequestSource(
       const uint32_t request_max, Envoy::Http::RequestHeaderMapPtr header,
       std::unique_ptr<nighthawk::client::RequestOptionsList> options_list);
   RequestGenerator get() override;
@@ -81,7 +81,7 @@ private:
 /**
  * Registered as an Envoy plugin.
  */
-class FileBasedRequestSourceConfigFactory : public virtual RequestSourcePluginConfigFactory {
+class FileBasedRequestSourcePluginConfigFactory : public virtual RequestSourcePluginConfigFactory {
 public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
@@ -95,12 +95,12 @@ private:
 };
 
 // This factory will be activated through RequestSourceFactory in factories.h
-DECLARE_FACTORY(FileBasedRequestSourceConfigFactory);
+DECLARE_FACTORY(FileBasedRequestSourcePluginConfigFactory);
 
 /**
  * Registered as an Envoy plugin.
  */
-class RequestOptionsListRequestSourceConfigFactory
+class RequestOptionsListRequestSourcePluginConfigFactory
     : public virtual RequestSourcePluginConfigFactory {
 public:
   std::string name() const override;
@@ -111,6 +111,6 @@ public:
 };
 
 // This factory will be activated through RequestSourceFactory in factories.h
-DECLARE_FACTORY(RequestOptionsListRequestSourceConfigFactory);
+DECLARE_FACTORY(RequestOptionsListRequestSourcePluginConfigFactory);
 
 } // namespace Nighthawk
