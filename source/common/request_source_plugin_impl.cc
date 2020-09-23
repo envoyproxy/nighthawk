@@ -49,7 +49,8 @@ std::string FileBasedRequestSourcePluginConfigFactory::name() const {
   return "nighthawk.file-based-request-source-plugin";
 }
 
-Envoy::ProtobufTypes::MessagePtr FileBasedRequestSourcePluginConfigFactory::createEmptyConfigProto() {
+Envoy::ProtobufTypes::MessagePtr
+FileBasedRequestSourcePluginConfigFactory::createEmptyConfigProto() {
   return std::make_unique<nighthawk::request_source::FileBasedPluginRequestSourceConfig>();
 }
 
@@ -77,7 +78,7 @@ RequestSourcePtr FileBasedRequestSourcePluginConfigFactory::createRequestSourceP
     temp_list->CopyFrom(options_list_);
   }
   return std::make_unique<RequestOptionsListRequestSource>(config.num_requests().value(),
-                                                        std::move(header), std::move(temp_list));
+                                                           std::move(header), std::move(temp_list));
 }
 
 REGISTER_FACTORY(FileBasedRequestSourcePluginConfigFactory, RequestSourcePluginConfigFactory);
@@ -141,9 +142,10 @@ RequestSourcePtr RequestOptionsListRequestSourcePluginConfigFactory::createReque
   Envoy::MessageUtil::unpackTo(any, config);
   auto temp_list = std::make_unique<nighthawk::client::RequestOptionsList>(config.options_list());
   return std::make_unique<RequestOptionsListRequestSource>(config.num_requests().value(),
-                                                        std::move(header), std::move(temp_list));
+                                                           std::move(header), std::move(temp_list));
 }
 
-REGISTER_FACTORY(RequestOptionsListRequestSourcePluginConfigFactory, RequestSourcePluginConfigFactory);
+REGISTER_FACTORY(RequestOptionsListRequestSourcePluginConfigFactory,
+                 RequestSourcePluginConfigFactory);
 
 } // namespace Nighthawk
