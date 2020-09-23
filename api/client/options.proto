@@ -64,6 +64,7 @@ message OutputFormat {
     YAML = 3;
     DOTTED = 4;
     FORTIO = 5;
+    EXPERIMENTAL_FORTIO_PEDANTIC = 6;
   }
   OutputFormatOptions value = 1;
 }

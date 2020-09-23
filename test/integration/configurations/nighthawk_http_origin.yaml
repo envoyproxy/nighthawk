@@ -23,14 +23,8 @@ static_resources:
               domains:
               - "*"
           http_filters:
+          - name: time-tracking
           - name: dynamic-delay
-          - name: envoy.fault
-            config:
-              max_active_faults: 100
-              delay:
-                header_delay: {}
-                percentage:
-                  numerator: 100
           - name: test-server
             config:
               response_body_size: 10
