@@ -189,3 +189,6 @@ other formats (e.g. human, fortio). It can be very useful to always store the
 json output format, yet be able to easily get to one of the other output
 formats. It’s like having the cake and eating it too!
 
+## User-specified Nighthawk logging
+
+Users can use their own Nighthawk logging options when calling **ENVOY_LOG**. Basically it would require two steps: 1) Create a logging sink delegate inherited from [Envoy SinkDelegate](https://github.com/envoyproxy/envoy/blob/master/source/common/common/logger.h). 2) Constructor a ServiceImpl object with an [Envoy Logger Context](https://github.com/envoyproxy/envoy/blob/master/source/common/common/logger.h) which contains user-specified log level and format.
