@@ -42,7 +42,8 @@ public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
   RequestSourcePtr createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
-                                             Envoy::Api::ApiPtr api, Envoy::Http::RequestHeaderMapPtr header) override;
+                                             Envoy::Api::ApiPtr api,
+                                             Envoy::Http::RequestHeaderMapPtr header) override;
 };
 
 // This factory will be activated through RequestSourceFactory in factories.h
@@ -59,8 +60,7 @@ using RequestOptionsIterator =
 class FileBasedRequestSourcePlugin : public RequestSource {
 public:
   explicit FileBasedRequestSourcePlugin(
-      const uint32_t request_max,
-      Envoy::Http::RequestHeaderMapPtr header,
+      const uint32_t request_max, Envoy::Http::RequestHeaderMapPtr header,
       std::unique_ptr<nighthawk::client::RequestOptionsList> options_list);
   RequestGenerator get() override;
   /**
@@ -86,26 +86,28 @@ public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
   RequestSourcePtr createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
-                                             Envoy::Api::ApiPtr api, Envoy::Http::RequestHeaderMapPtr header) override;
+                                             Envoy::Api::ApiPtr api,
+                                             Envoy::Http::RequestHeaderMapPtr header) override;
 
 private:
   Envoy::Thread::MutexBasicLockable file_lock_;
-  nighthawk::client::RequestOptionsList options_list_ ABSL_GUARDED_BY(file_lock_);  
+  nighthawk::client::RequestOptionsList options_list_ ABSL_GUARDED_BY(file_lock_);
 };
 
 // This factory will be activated through RequestSourceFactory in factories.h
 DECLARE_FACTORY(FileBasedRequestSourceConfigFactory);
 
-
 /**
  * Registered as an Envoy plugin.
  */
-class RequestOptionsListRequestSourceConfigFactory : public virtual RequestSourcePluginConfigFactory {
+class RequestOptionsListRequestSourceConfigFactory
+    : public virtual RequestSourcePluginConfigFactory {
 public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
   RequestSourcePtr createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
-                                             Envoy::Api::ApiPtr api, Envoy::Http::RequestHeaderMapPtr header) override;
+                                             Envoy::Api::ApiPtr api,
+                                             Envoy::Http::RequestHeaderMapPtr header) override;
 };
 
 // This factory will be activated through RequestSourceFactory in factories.h

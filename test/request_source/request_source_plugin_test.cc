@@ -23,7 +23,7 @@ using ::testing::Test;
 
 class DummyRequestSourcePluginTest : public Test {
 public:
-  DummyRequestSourcePluginTest(){}
+  DummyRequestSourcePluginTest() {}
   Envoy::Stats::MockIsolatedStatsStore stats_store_;
 };
 

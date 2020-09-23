@@ -30,7 +30,8 @@ public:
    * plugin.
    */
   virtual RequestSourcePtr createRequestSourcePlugin(const Envoy::Protobuf::Message& typed_config,
-                                                     Envoy::Api::ApiPtr api, Envoy::Http::RequestHeaderMapPtr header) PURE;
+                                                     Envoy::Api::ApiPtr api,
+                                                     Envoy::Http::RequestHeaderMapPtr header) PURE;
 };
 
 } // namespace Nighthawk
