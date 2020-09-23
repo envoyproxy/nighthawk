@@ -77,18 +77,18 @@ RequestSourcePtr FileBasedRequestSourceConfigFactory::createRequestSourcePlugin(
     }
     temp_list->CopyFrom(options_list_);
   }
-  return std::make_unique<FileBasedRequestSourcePlugin>(config, std::move(header),
+  return std::make_unique<FileBasedRequestSourcePlugin>(config.num_requests().value(), std::move(header),
                                                         std::move(temp_list));
 }
 
 REGISTER_FACTORY(FileBasedRequestSourceConfigFactory, RequestSourcePluginConfigFactory);
 
 FileBasedRequestSourcePlugin::FileBasedRequestSourcePlugin(
-    const nighthawk::request_source::FileBasedPluginRequestSourceConfig& config,
+    const uint32_t request_max,
     Envoy::Http::RequestHeaderMapPtr header,
     std::unique_ptr<nighthawk::client::RequestOptionsList> options_list)
     : header_(std::move(header)), options_list_(std::move(options_list)),
-      request_max_(config.num_requests().value()) {}
+      request_max_(request_max) {}
 
 RequestGenerator FileBasedRequestSourcePlugin::get() {
   uint32_t counter = 0;
@@ -125,5 +125,26 @@ RequestGenerator FileBasedRequestSourcePlugin::get() {
 }
 
 void FileBasedRequestSourcePlugin::initOnThread() {}
+
+std::string RequestOptionsListRequestSourceConfigFactory::name() const {
+  return "nighthawk.request-options-list-request-source-plugin";
+}
+
+Envoy::ProtobufTypes::MessagePtr RequestOptionsListRequestSourceConfigFactory::createEmptyConfigProto() {
+  return std::make_unique<nighthawk::request_source::RequestOptionsListPluginRequestSourceConfig>();
+}
+
+RequestSourcePtr
+RequestOptionsListRequestSourceConfigFactory::createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
+                                                           Envoy::Api::ApiPtr, Envoy::Http::RequestHeaderMapPtr header) {
+  const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
+  nighthawk::request_source::RequestOptionsListPluginRequestSourceConfig config;
+  Envoy::MessageUtil::unpackTo(any, config);
+  auto temp_list = std::make_unique<nighthawk::client::RequestOptionsList>(config.options_list());
+  return std::make_unique<FileBasedRequestSourcePlugin>(config.num_requests().value(), std::move(header), std::move(temp_list));
+}
+
+REGISTER_FACTORY(RequestOptionsListRequestSourceConfigFactory, RequestSourcePluginConfigFactory);
+
 
 } // namespace Nighthawk

@@ -162,24 +162,5 @@ TEST_F(FileBasedRequestSourcePluginTest,
   EXPECT_EQ(header2->getPathValue(), "/b");
   EXPECT_EQ(header3->getPathValue(), "/a");
 }
-// TEST_F(FileBasedRequestSourcePluginTest, CreateMultipleRequestSourcePluginReadsFileOnce) {
-//   nighthawk::request_source::FileBasedPluginRequestSourceConfig config =
-//       MakeFileBasedPluginConfigWithTestYaml(
-//           TestEnvironment::runfilesPath("test/request_source/test_data/test-config.yaml"));
-//   config.mutable_num_requests()->set_value(4);
-//   Envoy::ProtobufWkt::Any config_any;
-//   config_any.PackFrom(config);
-//   auto& config_factory =
-//       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
-//           "nighthawk.file-based-request-source-plugin");
-//   auto context = std::make_unique<RequestSourceContext>(
-//       Envoy::Api::createApiForTest(stats_store_), Envoy::Http::RequestHeaderMapImpl::create());
-//   auto context2 = std::make_unique<RequestSourceContext>(
-//       Envoy::Api::createApiForTest(stats_store_), Envoy::Http::RequestHeaderMapImpl::create());
-//   RequestSourcePtr file_based_request_source =
-//       config_factory.createRequestSourcePlugin(config_any, std::move(context));
-//   RequestSourcePtr file_based_request_source2 =
-//       config_factory.createRequestSourcePlugin(config_any, std::move(context2));
-// }
 } // namespace
 } // namespace Nighthawk
