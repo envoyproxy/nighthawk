@@ -98,7 +98,7 @@ FakeStepControllerConfigFactory::ValidateConfig(const Envoy::Protobuf::Message& 
 REGISTER_FACTORY(FakeStepControllerConfigFactory, StepControllerConfigFactory);
 
 envoy::config::core::v3::TypedExtensionConfig
-MakeFakeStepControllerPluginConfig(int fixed_rps_value) {
+MakeFakeStepControllerPluginConfigWithRps(int fixed_rps_value) {
   envoy::config::core::v3::TypedExtensionConfig outer_config;
   outer_config.set_name("nighthawk.fake_step_controller");
   nighthawk::adaptive_load::FakeStepControllerConfig config;
