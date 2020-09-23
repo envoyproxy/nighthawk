@@ -146,6 +146,9 @@ public:
   MockSequencerTarget* target() { return &target_; }
   TerminationPredicatePtr termination_predicate_;
 
+protected:
+  Envoy::MonotonicTime simulation_start_;
+
 private:
   NiceMock<Envoy::Event::MockTimer>* timer1_; // not owned
   NiceMock<Envoy::Event::MockTimer>* timer2_; // not owned
@@ -155,7 +158,6 @@ private:
   bool timer1_set_{};
   bool timer2_set_{};
   bool stopped_{};
-  Envoy::MonotonicTime simulation_start_;
 };
 
 // Basic rate limiter interaction test.
@@ -172,6 +174,7 @@ TEST_F(SequencerTestWithTimerEmulation, RateLimiterInteraction) {
       .WillOnce(Return(true))
       .WillOnce(Return(true))
       .WillRepeatedly(Return(false));
+  EXPECT_CALL(rate_limiter_unsafe_ref_, elapsed()).Times(2);
   EXPECT_CALL(*target(), callback(_)).Times(2).WillOnce(Return(true)).WillOnce(Return(true));
   expectDispatcherRun();
   EXPECT_CALL(platform_util_, sleep(_)).Times(AtLeast(1));
@@ -193,6 +196,7 @@ TEST_F(SequencerTestWithTimerEmulation, RateLimiterSaturatedTargetInteraction) {
       .WillOnce(Return(true))
       .WillOnce(Return(true))
       .WillRepeatedly(Return(false));
+  EXPECT_CALL(rate_limiter_unsafe_ref_, elapsed()).Times(2);
 
   EXPECT_CALL(*target(), callback(_)).Times(2).WillOnce(Return(true)).WillOnce(Return(false));
 
@@ -236,6 +240,8 @@ public:
     EXPECT_EQ(test_number_of_intervals_, sequencer.latencyStatistic().count());
     EXPECT_EQ(0, sequencer.blockedStatistic().count());
     EXPECT_EQ(2, sequencer.statistics().size());
+    const auto execution_duration = time_system_.monotonicTime() - simulation_start_;
+    EXPECT_EQ(sequencer.executionDuration(), execution_duration);
   }
 };
 

@@ -91,7 +91,7 @@ void SequencerImpl::run(bool from_periodic_timer) {
   // More importantly, it may help avoid a class of bugs that could be more serious, depending on
   // functionality (TOC/TOU).
   dispatcher_.updateApproximateMonotonicTime();
-  const auto now = last_event_time_ = time_source_.monotonicTime();
+  const auto now = time_source_.monotonicTime();
 
   last_termination_status_ = last_termination_status_ == TerminationPredicate::Status::PROCEED
                                  ? termination_predicate_->evaluateChain()
@@ -104,9 +104,6 @@ void SequencerImpl::run(bool from_periodic_timer) {
   }
 
   while (rate_limiter_->tryAcquireOne()) {
-    if (!start_time_.has_value()) {
-      start_time_ = now;
-    }
     // The rate limiter says it's OK to proceed and call the target. Let's see if the target is OK
     // with that as well.
     const bool target_could_start = target_([this, now](bool, bool) {
