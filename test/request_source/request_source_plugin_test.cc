@@ -23,13 +23,11 @@ using ::testing::Test;
 
 class DummyRequestSourcePluginTest : public Test {
 public:
-  DummyRequestSourcePluginTest() {}
   Envoy::Stats::MockIsolatedStatsStore stats_store_;
 };
 
 class FileBasedRequestSourcePluginTest : public Test {
 public:
-  FileBasedRequestSourcePluginTest() {}
   Envoy::Stats::MockIsolatedStatsStore stats_store_;
   nighthawk::request_source::FileBasedPluginRequestSourceConfig
   MakeFileBasedPluginConfigWithTestYaml(absl::string_view request_file) {
