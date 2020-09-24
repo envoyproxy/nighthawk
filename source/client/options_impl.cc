@@ -265,7 +265,14 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "Remote gRPC source that will deliver to-be-replayed traffic. Each worker will separately "
       "connect to this source. For example grpc://127.0.0.1:8443/.",
       false, "", "uri format", cmd);
-
+  TCLAP::ValueArg<std::string> request_source_plugin_config(
+      "", "request-source-plugin-config",
+      "Request Source plugin configuration in json or compact yaml. "
+      "Mutually exclusive with --request-source. Example (json): "
+      "{name:\"envoy.transport_sockets.tls\",typed_config:{"
+      "\"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\","
+      "common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES128-SHA\"]}}}}",
+      false, "", "string", cmd);
   TCLAP::SwitchArg simple_warmup(
       "", "simple-warmup",
       "Perform a simple single warmup request (per worker) before starting execution. Note that "
@@ -496,6 +503,16 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       throw MalformedArgvException(e.what());
     }
   }
+    if (!request_source_plugin_config.getValue().empty()) {
+    try {
+      request_source_plugin_config_.emplace(envoy::config::core::v3::TypedExtensionConfig());
+      Envoy::MessageUtil::loadFromJson(request_source_plugin_config.getValue(), request_source_plugin_config_.value(),
+                                       Envoy::ProtobufMessage::getStrictValidationVisitor());
+    } catch (const Envoy::EnvoyException& e) {
+      throw MalformedArgvException(e.what());
+    }
+  }
+  
   validate();
 }
 
@@ -570,6 +587,9 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   } else if (options.has_request_source()) {
     const auto& request_source_options = options.request_source();
     request_source_ = request_source_options.uri();
+  } else if (options.has_request_source_plugin_config()) {
+    request_source_plugin_config_.emplace(envoy::config::core::v3::TypedExtensionConfig());
+    request_source_plugin_config_.value().MergeFrom(options.request_source_plugin_config());
   }
 
   max_pending_requests_ =
@@ -730,7 +750,11 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
   if (requestSource() != "") {
     auto request_source = command_line_options->mutable_request_source();
     *request_source->mutable_uri() = request_source_;
-  } else {
+  } else if (request_source_plugin_config_.has_value())
+  {
+    *(command_line_options->mutable_request_source_plugin_config()) = request_source_plugin_config_.value();
+  } 
+  else {
     auto request_options = command_line_options->mutable_request_options();
     request_options->set_request_method(request_method_);
     for (const auto& header : request_headers_) {

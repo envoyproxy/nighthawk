@@ -179,6 +179,24 @@ RequestSourceFactoryImpl::create(const Envoy::Upstream::ClusterManagerPtr& clust
   }
 }
 
+absl::StatusOr<RequestSourcePtr>
+RequestSourceFactoryImpl::LoadRequestSourcePlugin(const envoy::config::core::v3::TypedExtensionConfig& config, Envoy::Api::ApiPtr api,
+    Envoy::Http::RequestHeaderMapPtr header) {
+  try {
+    auto& config_factory =
+        Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(config.name());
+    // absl::Status validation_status = config_factory.ValidateConfig(config.typed_config());
+    // if (!validation_status.ok()) {
+    //   return validation_status;
+    // }
+    return config_factory.createRequestSourcePlugin(config.typed_config(), api, header);
+  } catch (const Envoy::EnvoyException& e) {
+    return absl::InvalidArgumentError(
+        absl::StrCat("Could not load plugin: ", config.name(), ": ", e.what()));
+  }
+}
+
+
 TerminationPredicateFactoryImpl::TerminationPredicateFactoryImpl(const Options& options)
     : OptionBasedFactoryImpl(options) {}
 

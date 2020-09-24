@@ -7,6 +7,7 @@ import "google/protobuf/wrappers.proto";
 import "envoy/config/core/v3/base.proto";
 import "envoy/config/metrics/v3/stats.proto";
 import "envoy/extensions/transport_sockets/tls/v3/cert.proto";
+import "envoy/config/core/v3/extension.proto";
 import "validate/validate.proto";
 
 // Allows for static configuration of requests that should be send by the load generator.
@@ -104,6 +105,7 @@ message H1ConnectionReuseStrategy {
 
 // TODO(oschaaf): Ultimately this will be a load test specification. The fact that it
 // can arrive via CLI is just a concrete detail. Change this to reflect that.
+//highest unused number is 38
 message CommandLineOptions {
   // The target requests-per-second rate. Default: 5.
   google.protobuf.UInt32Value requests_per_second = 1
@@ -148,6 +150,8 @@ message CommandLineOptions {
     // Remote gRPC source that will deliver to-be-replayed traffic. Each worker will separately
     // connect to this source.
     RequestSource request_source = 26;
+    // Selects and configures a RequestSource plugin.
+    envoy.config.core.v3.TypedExtensionConfig request_source_plugin_config = 37;
   }
   // DEPRECATED, use --transport-socket instead. Tls context configuration in json or compact yaml.
   // Mutually exclusive with --transport-socket.
