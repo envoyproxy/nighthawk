@@ -20,7 +20,7 @@ namespace Nighthawk {
 class DummyRequestSource : public RequestSource {
 public:
   explicit DummyRequestSource(
-      const nighthawk::request_source::DummyPluginRequestSourceConfig& config);
+      const nighthawk::request_source::StubPluginConfig& config);
   RequestGenerator get() override;
   /**
    * Will be called on an intialized and running worker thread, before commencing actual work.
@@ -28,9 +28,6 @@ public:
    * needed, for example).
    */
   void initOnThread() override;
-
-private:
-  const double dummy_value_;
 };
 
 /**

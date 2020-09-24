@@ -6,24 +6,17 @@ import "google/protobuf/wrappers.proto";
 import "validate/validate.proto";
 import "api/client/options.proto";
 
-// Configuration for DummyPluginRequestSource (plugin name: "nighthawk.dummy-request-source-plugin")
-// that does nothing
-message DummyPluginRequestSourceConfig {
-  // Dummy input value.
-  google.protobuf.DoubleValue dummy_value = 1;
-}
-
-// Configuration for RPCPluginRequestSource (plugin name: "nighthawk.rpc-request-source-plugin")
-// that uses rpc
-message RPCPluginRequestSourceConfig {
-  string uri = 1;
-}
-
 // Configuration for FileBasedPluginRequestSource (plugin name:
 // "nighthawk.file-based-request-source-plugin") that uses rpc
-message FileBasedPluginRequestSourceConfig {
+message FileBasedPluginConfig {
   string file_path = 1;
   google.protobuf.UInt32Value num_requests = 2 [(validate.rules).uint32 = {gte: 0, lte: 1000000}];
   google.protobuf.UInt32Value max_file_size = 3;
 }
 
+// Configuration for StubPluginRequestSource (plugin name: "nighthawk.stub-request-source-plugin")
+// The plugin does nothing.
+message StubPluginConfig {
+  // test input value.
+  google.protobuf.DoubleValue test_value = 1;
+}
