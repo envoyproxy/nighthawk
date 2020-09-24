@@ -12,7 +12,7 @@
 namespace Nighthawk {
 
 std::string DummyRequestSourcePluginConfigFactory::name() const {
-  return "nighthawk.dummy-request-source-plugin";
+  return "nighthawk.stub-request-source-plugin";
 }
 
 Envoy::ProtobufTypes::MessagePtr DummyRequestSourcePluginConfigFactory::createEmptyConfigProto() {

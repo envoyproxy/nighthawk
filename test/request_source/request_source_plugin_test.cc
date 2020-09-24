@@ -41,7 +41,7 @@ public:
 TEST_F(DummyRequestSourcePluginTest, CreateEmptyConfigProtoCreatesCorrectType) {
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
-          "nighthawk.dummy-request-source-plugin");
+          "nighthawk.stub-request-source-plugin");
   const Envoy::ProtobufTypes::MessagePtr empty_config = config_factory.createEmptyConfigProto();
   const nighthawk::request_source::StubPluginConfig expected_config;
   EXPECT_EQ(empty_config->DebugString(), expected_config.DebugString());
@@ -54,8 +54,8 @@ TEST_F(DummyRequestSourcePluginTest, FactoryRegistrationUsesCorrectPluginName) {
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
-          "nighthawk.dummy-request-source-plugin");
-  EXPECT_EQ(config_factory.name(), "nighthawk.dummy-request-source-plugin");
+          "nighthawk.stub-request-source-plugin");
+  EXPECT_EQ(config_factory.name(), "nighthawk.stub-request-source-plugin");
 }
 
 TEST_F(DummyRequestSourcePluginTest, CreateRequestSourcePluginCreatesCorrectPluginType) {
@@ -64,7 +64,7 @@ TEST_F(DummyRequestSourcePluginTest, CreateRequestSourcePluginCreatesCorrectPlug
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
-          "nighthawk.dummy-request-source-plugin");
+          "nighthawk.stub-request-source-plugin");
   auto api = Envoy::Api::createApiForTest(stats_store_);
   auto header = Envoy::Http::RequestHeaderMapImpl::create();
   RequestSourcePtr plugin =
