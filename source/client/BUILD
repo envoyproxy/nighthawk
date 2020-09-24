@@ -90,6 +90,9 @@ envoy_cc_library(
         "@envoy//source/server:server_lib_with_external_headers",
         "@envoy//source/server/config_validation:admin_lib_with_external_headers",
         "@envoy//include/envoy/http:protocol_interface_with_external_headers",
+        "@envoy//source/common/common:statusor_lib_with_external_headers",
+        "//source/common:request_source_plugin_impl",
+
     ] + select({
         "//bazel:zipkin_disabled": [],
         "//conditions:default": [

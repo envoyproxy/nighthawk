@@ -8,6 +8,9 @@
 #include "nighthawk/common/factories.h"
 #include "nighthawk/common/termination_predicate.h"
 #include "nighthawk/common/uri.h"
+#include "external/envoy/source/common/common/statusor.h"
+#include "external/envoy/source/common/config/utility.h"
+#include "common/request_source_plugin_impl.h"
 
 #include "common/platform_util_impl.h"
 

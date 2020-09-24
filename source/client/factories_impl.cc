@@ -167,16 +167,20 @@ RequestSourceFactoryImpl::create(const Envoy::Upstream::ClusterManagerPtr& clust
     setRequestHeader(*header, option_header.header().key(), option_header.header().value());
   }
 
-  if (options_.requestSource() == "") {
-    return std::make_unique<StaticRequestSourceImpl>(std::move(header));
-  } else {
+ if (options_.requestSource() != "") {
     RELEASE_ASSERT(!service_cluster_name.empty(), "expected cluster name to be set");
     // We pass in options_.requestsPerSecond() as the header buffer length so the grpc client
     // will shoot for maintaining an amount of headers of at least one second.
     return std::make_unique<RemoteRequestSourceImpl>(cluster_manager, dispatcher, scope,
                                                      service_cluster_name, std::move(header),
                                                      options_.requestsPerSecond());
+  // } else if (options_.requestSourcePluginConfig().has_value())
+  // {
+  //   auto pluginConfig = RequestSourceFactoryImpl::LoadRequestSourcePlugin(options_.requestSourcePluginConfig().value(), api)
   }
+    else {
+    return std::make_unique<StaticRequestSourceImpl>(std::move(header));
+  } 
 }
 
 absl::StatusOr<RequestSourcePtr>
@@ -189,7 +193,7 @@ RequestSourceFactoryImpl::LoadRequestSourcePlugin(const envoy::config::core::v3:
     // if (!validation_status.ok()) {
     //   return validation_status;
     // }
-    return config_factory.createRequestSourcePlugin(config.typed_config(), api, header);
+    return config_factory.createRequestSourcePlugin(config.typed_config(), std::move(api), std::move(header));
   } catch (const Envoy::EnvoyException& e) {
     return absl::InvalidArgumentError(
         absl::StrCat("Could not load plugin: ", config.name(), ": ", e.what()));
