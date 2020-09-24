@@ -24,7 +24,9 @@ public:
    *
    * @param api Api parameter that contains timesystem, filesystem, and threadfactory.
    *
-   * @return RequestSourcePtr Pointer to the new plugin instance.
+   * @param header RequestHeaderMapPtr parameter that acts as a template header for the requestSource to modify when generating requests.
+   *
+   * @return RequestSourcePtr Pointer to the new instance of RequestSource.
    *
    * @throw Envoy::EnvoyException If the Any proto cannot be unpacked as the type expected by the
    * plugin.
