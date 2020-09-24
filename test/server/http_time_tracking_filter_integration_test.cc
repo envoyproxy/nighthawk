@@ -1,10 +1,5 @@
 #include <chrono>
 
-#include "envoy/upstream/cluster_manager.h"
-#include "envoy/upstream/upstream.h"
-
-#include "external/envoy/test/common/upstream/utility.h"
-#include "external/envoy/test/integration/http_integration.h"
 #include "external/envoy/test/test_common/simulated_time_system.h"
 
 #include "api/server/response_options.pb.h"
@@ -12,7 +7,8 @@
 
 #include "server/configuration.h"
 #include "server/http_time_tracking_filter.h"
-#include "server/well_known_headers.h"
+
+#include "test/server/http_filter_integration_test_base.h"
 
 #include "gtest/gtest.h"
 
@@ -32,53 +28,10 @@ typed_config:
 )EOF";
 
 class HttpTimeTrackingIntegrationTest
-    : public Envoy::HttpIntegrationTest,
+    : public HttpFilterIntegrationTestBase,
       public testing::TestWithParam<Envoy::Network::Address::IpVersion> {
-protected:
-  HttpTimeTrackingIntegrationTest()
-      : HttpIntegrationTest(Envoy::Http::CodecClient::Type::HTTP1, GetParam()),
-        request_headers_({{":method", "GET"}, {":path", "/"}, {":authority", "host"}}) {}
-
-  // We don't override SetUp(): tests in this file will call setup() instead to avoid having to
-  // create a fixture per filter configuration.
-  void setup(const std::string& config) {
-    config_helper_.addFilter(config);
-    HttpIntegrationTest::initialize();
-  }
-
-  // Fetches a response with request-level configuration set in the request header.
-  Envoy::IntegrationStreamDecoderPtr getResponse(absl::string_view request_level_config,
-                                                 bool setup_for_upstream_request = true) {
-    Envoy::Http::TestRequestHeaderMapImpl request_headers = request_headers_;
-    request_headers.setCopy(Nighthawk::Server::TestServer::HeaderNames::get().TestServerConfig,
-                            request_level_config);
-    return getResponse(request_headers, setup_for_upstream_request);
-  }
-
-  // Fetches a response with the default request headers, expecting the fake upstream to supply
-  // the response.
-  Envoy::IntegrationStreamDecoderPtr getResponse() { return getResponse(request_headers_); }
-
-  // Fetches a response using the provided request headers. When setup_for_upstream_request
-  // is true, the expectation will be that an upstream request will be needed to provide a
-  // response. If it is set to false, the extension is expected to supply the response, and
-  // no upstream request ought to occur.
-  Envoy::IntegrationStreamDecoderPtr
-  getResponse(const Envoy::Http::TestRequestHeaderMapImpl& request_headers,
-              bool setup_for_upstream_request = true) {
-    cleanupUpstreamAndDownstream();
-    codec_client_ = makeHttpConnection(lookupPort("http"));
-    Envoy::IntegrationStreamDecoderPtr response;
-    if (setup_for_upstream_request) {
-      response = sendRequestAndWaitForResponse(request_headers, 0, default_response_headers_, 0);
-    } else {
-      response = codec_client_->makeHeaderOnlyRequest(request_headers);
-      response->waitForEndStream();
-    }
-    return response;
-  }
-
-  const Envoy::Http::TestRequestHeaderMapImpl request_headers_;
+public:
+  HttpTimeTrackingIntegrationTest() : HttpFilterIntegrationTestBase(GetParam()){};
 };
 
 INSTANTIATE_TEST_SUITE_P(IpVersions, HttpTimeTrackingIntegrationTest,
@@ -86,13 +39,17 @@ INSTANTIATE_TEST_SUITE_P(IpVersions, HttpTimeTrackingIntegrationTest,
 
 // Verify expectations with static/file-based time-tracking configuration.
 TEST_P(HttpTimeTrackingIntegrationTest, ReturnsPositiveLatencyForStaticConfiguration) {
-  setup(fmt::format(kProtoConfigTemplate, kDefaultProtoFragment));
-  Envoy::IntegrationStreamDecoderPtr response = getResponse();
+  initializeFilterConfiguration(fmt::format(kProtoConfigTemplate, kDefaultProtoFragment));
+
+  // As the first request doesn't have a prior one, we should not observe a delta.
+  Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::UPSTREAM);
   int64_t latency;
   const Envoy::Http::HeaderEntry* latency_header_1 =
       response->headers().get(Envoy::Http::LowerCaseString(kLatencyResponseHeaderName));
   EXPECT_EQ(latency_header_1, nullptr);
-  response = getResponse();
+
+  // On the second request we should observe a delta.
+  response = getResponse(ResponseOrigin::UPSTREAM);
   const Envoy::Http::HeaderEntry* latency_header_2 =
       response->headers().get(Envoy::Http::LowerCaseString(kLatencyResponseHeaderName));
   ASSERT_NE(latency_header_2, nullptr);
@@ -102,14 +59,17 @@ TEST_P(HttpTimeTrackingIntegrationTest, ReturnsPositiveLatencyForStaticConfigura
 
 // Verify expectations with an empty time-tracking configuration.
 TEST_P(HttpTimeTrackingIntegrationTest, ReturnsPositiveLatencyForPerRequestConfiguration) {
-  setup(fmt::format(kProtoConfigTemplate, ""));
-  // Don't send any config request header
-  getResponse();
-  // Send a config request header with an empty / default config. Should be a no-op.
-  getResponse("{}");
-  // Send a config request header, this should become effective.
-  Envoy::IntegrationStreamDecoderPtr response =
-      getResponse(fmt::format("{{{}}}", kDefaultProtoFragment));
+  initializeFilterConfiguration(fmt::format(kProtoConfigTemplate, ""));
+  // As the first request doesn't have a prior one, we should not observe a delta.
+  setRequestLevelConfiguration("{}");
+  Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::UPSTREAM);
+  EXPECT_EQ(response->headers().get(Envoy::Http::LowerCaseString(kLatencyResponseHeaderName)),
+            nullptr);
+
+  // With request level configuration indicating that the timing header should be emitted,
+  // we should be able to observe it.
+  setRequestLevelConfiguration(fmt::format("{{{}}}", kDefaultProtoFragment));
+  response = getResponse(ResponseOrigin::UPSTREAM);
   const Envoy::Http::HeaderEntry* latency_header =
       response->headers().get(Envoy::Http::LowerCaseString(kLatencyResponseHeaderName));
   ASSERT_NE(latency_header, nullptr);
@@ -118,25 +78,6 @@ TEST_P(HttpTimeTrackingIntegrationTest, ReturnsPositiveLatencyForPerRequestConfi
   // TODO(oschaaf): figure out if we can use simtime here, and verify actual timing matches
   // what we'd expect using that.
   EXPECT_GT(latency, 0);
-}
-
-TEST_P(HttpTimeTrackingIntegrationTest, BehavesWellWithBadPerRequestConfiguration) {
-  setup(fmt::format(kProtoConfigTemplate, ""));
-  // Send a malformed config request header. This ought to shortcut and directly reply,
-  // hence we don't expect an upstream request.
-  Envoy::IntegrationStreamDecoderPtr response = getResponse("bad_json", false);
-  EXPECT_EQ(Envoy::Http::Utility::getResponseStatus(response->headers()), 500);
-  EXPECT_EQ(
-      response->body(),
-      "time-tracking didn't understand the request: Error merging json config: Unable to parse "
-      "JSON as proto (INVALID_ARGUMENT:Unexpected token.\nbad_json\n^): bad_json");
-  // Send an empty config header, which ought to trigger failure mode as well.
-  response = getResponse("", false);
-  EXPECT_EQ(Envoy::Http::Utility::getResponseStatus(response->headers()), 500);
-  EXPECT_EQ(
-      response->body(),
-      "time-tracking didn't understand the request: Error merging json config: Unable to "
-      "parse JSON as proto (INVALID_ARGUMENT:Unexpected end of string. Expected a value.\n\n^): ");
 }
 
 class HttpTimeTrackingFilterConfigTest : public testing::Test,
