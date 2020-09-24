@@ -125,27 +125,4 @@ RequestGenerator RequestOptionsListRequestSource::get() {
 
 void RequestOptionsListRequestSource::initOnThread() {}
 
-std::string RequestOptionsListRequestSourcePluginConfigFactory::name() const {
-  return "nighthawk.request-options-list-request-source-plugin";
-}
-
-Envoy::ProtobufTypes::MessagePtr
-RequestOptionsListRequestSourcePluginConfigFactory::createEmptyConfigProto() {
-  return std::make_unique<nighthawk::request_source::RequestOptionsListPluginRequestSourceConfig>();
-}
-
-RequestSourcePtr RequestOptionsListRequestSourcePluginConfigFactory::createRequestSourcePlugin(
-    const Envoy::Protobuf::Message& message, Envoy::Api::ApiPtr,
-    Envoy::Http::RequestHeaderMapPtr header) {
-  const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
-  nighthawk::request_source::RequestOptionsListPluginRequestSourceConfig config;
-  Envoy::MessageUtil::unpackTo(any, config);
-  auto temp_list = std::make_unique<nighthawk::client::RequestOptionsList>(config.options_list());
-  return std::make_unique<RequestOptionsListRequestSource>(config.num_requests().value(),
-                                                           std::move(header), std::move(temp_list));
-}
-
-REGISTER_FACTORY(RequestOptionsListRequestSourcePluginConfigFactory,
-                 RequestSourcePluginConfigFactory);
-
 } // namespace Nighthawk

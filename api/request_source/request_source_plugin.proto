@@ -27,9 +27,3 @@ message FileBasedPluginRequestSourceConfig {
   google.protobuf.UInt32Value max_file_size = 3;
 }
 
-// Configuration for RequestOptionsListPluginRequestSource (plugin name:
-// "nighthawk.request-options-list-request-source-plugin") that uses rpc
-message RequestOptionsListPluginRequestSourceConfig {
-  nighthawk.client.RequestOptionsList options_list = 1;
-  google.protobuf.UInt32Value num_requests = 2 [(validate.rules).uint32 = {gte: 0, lte: 1000000}];
-}

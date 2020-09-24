@@ -97,20 +97,4 @@ private:
 // This factory will be activated through RequestSourceFactory in factories.h
 DECLARE_FACTORY(FileBasedRequestSourcePluginConfigFactory);
 
-/**
- * Registered as an Envoy plugin.
- */
-class RequestOptionsListRequestSourcePluginConfigFactory
-    : public virtual RequestSourcePluginConfigFactory {
-public:
-  std::string name() const override;
-  Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
-  RequestSourcePtr createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
-                                             Envoy::Api::ApiPtr api,
-                                             Envoy::Http::RequestHeaderMapPtr header) override;
-};
-
-// This factory will be activated through RequestSourceFactory in factories.h
-DECLARE_FACTORY(RequestOptionsListRequestSourcePluginConfigFactory);
-
 } // namespace Nighthawk
