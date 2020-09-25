@@ -1,6 +1,7 @@
 #pragma once
 
 #include <random>
+#include <vector>
 
 #include "envoy/common/time.h"
 
@@ -156,7 +157,8 @@ protected:
   const RateLimiterDelegate random_distribution_generator_;
 
 private:
-  absl::optional<Envoy::MonotonicTime> distributed_start_;
+  std::vector<Envoy::MonotonicTime> distributed_timings_;
+  bool sanity_check_pending_release_{true};
 };
 
 class UniformRandomDistributionSamplerImpl : public DiscreteNumericDistributionSampler {

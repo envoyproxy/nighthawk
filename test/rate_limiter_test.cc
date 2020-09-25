@@ -191,43 +191,80 @@ TEST_F(RateLimiterTest, DistributionSamplingRateLimiterImplTest) {
 }
 
 // A rate limiter determines when acquisition is allowed, but DistributionSamplingRateLimiterImpl
-// may arbitrarily delay that. We test that principle here.
-TEST_F(RateLimiterTest, DistributionSamplingRateLimiterImplSchedulingTest) {
-  auto mock_rate_limiter = std::make_unique<NiceMock<MockRateLimiter>>();
-  MockRateLimiter& unsafe_mock_rate_limiter = *mock_rate_limiter;
-  Envoy::Event::SimulatedTimeSystem time_system;
-  auto* unsafe_discrete_numeric_distribution_sampler = new MockDiscreteNumericDistributionSampler();
-  RateLimiterPtr rate_limiter = std::make_unique<DistributionSamplingRateLimiterImpl>(
-      std::unique_ptr<DiscreteNumericDistributionSampler>(
-          unsafe_discrete_numeric_distribution_sampler),
-      std::move(mock_rate_limiter));
-  EXPECT_CALL(unsafe_mock_rate_limiter, timeSource)
-      .Times(AtLeast(1))
-      .WillRepeatedly(ReturnRef(time_system));
+// may arbitrarily delay that. We test that principle with tests that use this fixture, which
+// sets up a distribution sampling rate limiter instance to encapsulate a mock rate limiter,
+// relying on simulated time and a mock discrete numberic distribution sampler.
+class DistributionSamplingRateLimiterTest : public RateLimiterTest {
+public:
+  DistributionSamplingRateLimiterTest()
+      : mock_rate_limiter_(std::make_unique<NiceMock<MockRateLimiter>>()),
+        unsafe_mock_rate_limiter_(*mock_rate_limiter_),
+        unsafe_discrete_numeric_distribution_sampler_(new MockDiscreteNumericDistributionSampler()),
+        rate_limiter_(std::make_unique<DistributionSamplingRateLimiterImpl>(
+            std::unique_ptr<DiscreteNumericDistributionSampler>(
+                unsafe_discrete_numeric_distribution_sampler_),
+            std::move(mock_rate_limiter_))) {
+    EXPECT_CALL(unsafe_mock_rate_limiter_, timeSource)
+        .Times(AtLeast(0))
+        .WillRepeatedly(ReturnRef(time_system_));
+  }
 
-  EXPECT_CALL(unsafe_mock_rate_limiter, tryAcquireOne)
-      .Times(AtLeast(1))
-      .WillRepeatedly(Return(true));
-  EXPECT_CALL(unsafe_mock_rate_limiter, releaseOne).Times(1);
-  EXPECT_CALL(*unsafe_discrete_numeric_distribution_sampler, getValue)
-      .Times(3)
-      .WillOnce(Return(1))
-      .WillOnce(Return(0))
-      .WillOnce(Return(1));
+  std::unique_ptr<NiceMock<MockRateLimiter>> mock_rate_limiter_;
+  MockRateLimiter& unsafe_mock_rate_limiter_;
+  Envoy::Event::SimulatedTimeSystem time_system_;
+  MockDiscreteNumericDistributionSampler* unsafe_discrete_numeric_distribution_sampler_;
+  RateLimiterPtr rate_limiter_;
+};
 
+TEST_F(DistributionSamplingRateLimiterTest, SingleAcquisition) {
+  EXPECT_CALL(unsafe_mock_rate_limiter_, tryAcquireOne)
+      .WillOnce(Return(true))
+      .WillOnce(Return(false))
+      .WillOnce(Return(false));
+  EXPECT_CALL(*unsafe_discrete_numeric_distribution_sampler_, getValue).WillOnce(Return(1));
   // The distribution first yields a 1 ns offset. So we don't expect to be green lighted.
-  EXPECT_FALSE(rate_limiter->tryAcquireOne());
-  time_system.advanceTimeWait(1ns);
-  EXPECT_TRUE(rate_limiter->tryAcquireOne());
-  // We expect releaseOne to be propagated.
-  rate_limiter->releaseOne();
-  // The distribution will yield an offset of 0ns, we expect success.
-  EXPECT_TRUE(rate_limiter->tryAcquireOne());
+  EXPECT_FALSE(rate_limiter_->tryAcquireOne());
+  time_system_.advanceTimeWait(1ns);
+  EXPECT_TRUE(rate_limiter_->tryAcquireOne());
+  EXPECT_FALSE(rate_limiter_->tryAcquireOne());
+}
 
-  // We don't advanceTimeWait, and the distribution will yield a 1ns offset. No green light.
-  EXPECT_FALSE(rate_limiter->tryAcquireOne());
-  time_system.advanceTimeWait(1ns);
-  EXPECT_TRUE(rate_limiter->tryAcquireOne());
+TEST_F(DistributionSamplingRateLimiterTest, QueuedAcquisition) {
+  EXPECT_CALL(unsafe_mock_rate_limiter_, tryAcquireOne)
+      .WillOnce(Return(true))
+      .WillOnce(Return(true))
+      .WillOnce(Return(false))
+      .WillOnce(Return(false))
+      .WillOnce(Return(false));
+  EXPECT_CALL(*unsafe_discrete_numeric_distribution_sampler_, getValue)
+      .WillOnce(Return(1))
+      .WillOnce(Return(1));
+  // The distribution first yields a 1 ns offset. So we don't expect to be green lighted.
+  EXPECT_FALSE(rate_limiter_->tryAcquireOne());
+  EXPECT_FALSE(rate_limiter_->tryAcquireOne());
+  time_system_.advanceTimeWait(1ns);
+  EXPECT_TRUE(rate_limiter_->tryAcquireOne());
+  EXPECT_TRUE(rate_limiter_->tryAcquireOne());
+  EXPECT_FALSE(rate_limiter_->tryAcquireOne());
+}
+
+TEST_F(DistributionSamplingRateLimiterTest, ReleaseOneFunctionsWhenAcquired) {
+  EXPECT_CALL(unsafe_mock_rate_limiter_, tryAcquireOne).WillOnce(Return(true));
+  EXPECT_CALL(*unsafe_discrete_numeric_distribution_sampler_, getValue).WillOnce(Return(0));
+  EXPECT_TRUE(rate_limiter_->tryAcquireOne());
+  EXPECT_CALL(unsafe_mock_rate_limiter_, releaseOne).Times(1);
+  rate_limiter_->releaseOne();
+}
+
+TEST_F(DistributionSamplingRateLimiterTest, ReleaseOneDiesWhenNotAcquired) {
+  EXPECT_DEATH(rate_limiter_->releaseOne(),
+               "unexpected call to DelegatingRateLimiterImpl::releaseOne");
+  EXPECT_CALL(unsafe_mock_rate_limiter_, tryAcquireOne).WillOnce(Return(true));
+  EXPECT_CALL(*unsafe_discrete_numeric_distribution_sampler_, getValue).WillOnce(Return(0));
+  EXPECT_TRUE(rate_limiter_->tryAcquireOne());
+  rate_limiter_->releaseOne();
+  EXPECT_DEATH(rate_limiter_->releaseOne(),
+               "unexpected call to DelegatingRateLimiterImpl::releaseOne");
 }
 
 class LinearRampingRateLimiterImplTest : public Test {
