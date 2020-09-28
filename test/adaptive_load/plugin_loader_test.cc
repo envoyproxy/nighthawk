@@ -12,10 +12,12 @@
 #include "api/adaptive_load/scoring_function_impl.pb.h"
 #include "api/client/options.pb.h"
 
+#include "gtest/gtest.h"
+
+#include "gmock/gmock.h"
+
 #include "absl/status/status.h"
 #include "adaptive_load/plugin_loader.h"
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 
 namespace Nighthawk {
 

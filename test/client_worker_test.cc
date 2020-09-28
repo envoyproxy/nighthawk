@@ -15,6 +15,8 @@
 
 #include "client/client_worker_impl.h"
 
+#include "gtest/gtest.h"
+
 #include "test/mocks/client/mock_benchmark_client.h"
 #include "test/mocks/client/mock_benchmark_client_factory.h"
 #include "test/mocks/common/mock_request_source.h"
@@ -23,8 +25,6 @@
 #include "test/mocks/common/mock_sequencer_factory.h"
 #include "test/mocks/common/mock_termination_predicate.h"
 #include "test/mocks/common/mock_termination_predicate_factory.h"
-
-#include "gtest/gtest.h"
 
 using namespace testing;
 using namespace std::chrono_literals;

@@ -8,9 +8,9 @@
 
 #include "common/thread_safe_monotonic_time_stopwatch.h"
 
-#include "test/common/fake_time_source.h"
-
 #include "gtest/gtest.h"
+
+#include "test/common/fake_time_source.h"
 
 namespace Nighthawk {
 namespace {

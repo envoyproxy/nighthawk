@@ -5,12 +5,14 @@
 #include "api/adaptive_load/scoring_function_impl.pb.h"
 #include "api/client/service.pb.h"
 
+#include "gtest/gtest.h"
+
+#include "gmock/gmock.h"
+
 #include "test/adaptive_load/fake_plugins/fake_metrics_plugin/fake_metrics_plugin.h"
 #include "test/adaptive_load/minimal_output.h"
 
 #include "adaptive_load/metrics_evaluator_impl.h"
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 
 namespace Nighthawk {
 namespace {

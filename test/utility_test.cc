@@ -7,9 +7,9 @@
 #include "common/uri_impl.h"
 #include "common/utility.h"
 
-#include "test/test_common/environment.h"
-
 #include "gtest/gtest.h"
+
+#include "test/test_common/environment.h"
 
 using namespace testing;
 

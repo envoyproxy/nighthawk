@@ -1,6 +1,6 @@
-#include "test/common/fake_time_source.h"
-
 #include "gtest/gtest.h"
+
+#include "test/common/fake_time_source.h"
 
 namespace Nighthawk {
 namespace {

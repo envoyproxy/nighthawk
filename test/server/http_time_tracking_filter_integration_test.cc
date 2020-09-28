@@ -8,9 +8,9 @@
 #include "server/configuration.h"
 #include "server/http_time_tracking_filter.h"
 
-#include "test/server/http_filter_integration_test_base.h"
-
 #include "gtest/gtest.h"
+
+#include "test/server/http_filter_integration_test_base.h"
 
 namespace Nighthawk {
 namespace {

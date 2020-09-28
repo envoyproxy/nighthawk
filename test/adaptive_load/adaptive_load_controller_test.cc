@@ -27,6 +27,10 @@
 #include "api/client/service.pb.h"
 #include "api/client/service_mock.grpc.pb.h"
 
+#include "gtest/gtest.h"
+
+#include "gmock/gmock.h"
+
 #include "test/adaptive_load/fake_plugins/fake_step_controller/fake_step_controller.h"
 #include "test/common/fake_time_source.h"
 #include "test/mocks/adaptive_load/mock_metrics_evaluator.h"
@@ -41,8 +45,6 @@
 #include "adaptive_load/plugin_loader.h"
 #include "adaptive_load/scoring_function_impl.h"
 #include "adaptive_load/session_spec_proto_helper_impl.h"
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 
 namespace Nighthawk {
 

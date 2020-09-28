@@ -14,9 +14,9 @@
 #include "client/output_collector_impl.h"
 #include "client/process_impl.h"
 
-#include "test/client/utility.h"
-
 #include "gtest/gtest.h"
+
+#include "test/client/utility.h"
 
 namespace Nighthawk {
 namespace Client {

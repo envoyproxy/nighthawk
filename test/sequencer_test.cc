@@ -13,11 +13,11 @@
 #include "common/sequencer_impl.h"
 #include "common/statistic_impl.h"
 
+#include "gtest/gtest.h"
+
 #include "test/mocks/common/mock_platform_util.h"
 #include "test/mocks/common/mock_rate_limiter.h"
 #include "test/mocks/common/mock_termination_predicate.h"
-
-#include "gtest/gtest.h"
 
 using namespace std::chrono_literals;
 using namespace nighthawk::client;
