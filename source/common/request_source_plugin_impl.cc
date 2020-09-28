@@ -29,8 +29,7 @@ RequestSourcePtr DummyRequestSourcePluginConfigFactory::createRequestSourcePlugi
 
 REGISTER_FACTORY(DummyRequestSourcePluginConfigFactory, RequestSourcePluginConfigFactory);
 
-DummyRequestSource::DummyRequestSource(
-    const nighthawk::request_source::StubPluginConfig&) {}
+DummyRequestSource::DummyRequestSource(const nighthawk::request_source::StubPluginConfig&) {}
 RequestGenerator DummyRequestSource::get() {
 
   RequestGenerator request_generator = []() {
