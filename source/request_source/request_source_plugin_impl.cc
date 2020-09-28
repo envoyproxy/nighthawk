@@ -1,4 +1,4 @@
-#include "common/request_source_plugin_impl.h"
+#include "request_source/request_source_plugin_impl.h"
 
 #include "external/envoy/source/common/protobuf/message_validator_impl.h"
 #include "external/envoy/source/common/protobuf/utility.h"
