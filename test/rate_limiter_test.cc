@@ -301,8 +301,8 @@ TEST_F(DistributionSamplingRateLimiterTest, QueuedAcquisitionCorrectReleaseOrder
   // will buffer those that indicate an offset > 0. Zero-valued offsets ought to be released
   // immediately.
   std::vector<uint64_t> acquisition_timings;
-  for (uint64_t k = 0; k < input_acquisition_timings_ms.size(); k++) {
-    if (input_acquisition_timings_ms[k] == 0) {
+  for (uint64_t k : input_acquisition_timings_ms) {
+    if (k == 0) {
       EXPECT_TRUE(rate_limiter_->tryAcquireOne());
       acquisition_timings.push_back(0);
     } else {
