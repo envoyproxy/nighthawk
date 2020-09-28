@@ -157,16 +157,18 @@ DelegatingRateLimiterImpl::DelegatingRateLimiterImpl(
 
 bool DelegatingRateLimiterImpl::tryAcquireOne() {
   const Envoy::MonotonicTime now = timeSource().monotonicTime();
-  sanity_check_pending_release_ = false;
   if (rate_limiter_->tryAcquireOne()) {
     const Envoy::MonotonicTime adjusted = now + random_distribution_generator_();
+    // We track a sorted list of timings, where the one at the front is the one that should
+    // be applied the soonest.
     distributed_timings_.insert(
-        std::lower_bound(distributed_timings_.begin(), distributed_timings_.end(), adjusted),
+        std::upper_bound(distributed_timings_.begin(), distributed_timings_.end(), adjusted),
         adjusted);
   }
 
   if (!distributed_timings_.empty() && distributed_timings_.front() <= now) {
-    distributed_timings_.erase(distributed_timings_.begin());
+    distributed_timings_.pop_front();
+    sanity_check_pending_release_ = false;
     return true;
   }
 
