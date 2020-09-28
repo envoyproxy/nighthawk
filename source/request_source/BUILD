@@ -11,7 +11,8 @@ envoy_package()
 envoy_cc_library(
     name = "request_source_plugin_impl",
     srcs = [
-        "request_source_plugin_impl.cc",
+        "request_options_list_plugin_impl.cc",
+        "stub_plugin_impl.cc"
     ],
     hdrs = [
         "request_source_plugin_impl.h",

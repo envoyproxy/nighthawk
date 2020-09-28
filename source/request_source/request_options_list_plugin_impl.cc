@@ -8,40 +8,7 @@
 
 #include "common/request_impl.h"
 #include "common/request_source_impl.h"
-
 namespace Nighthawk {
-
-std::string DummyRequestSourcePluginConfigFactory::name() const {
-  return "nighthawk.stub-request-source-plugin";
-}
-
-Envoy::ProtobufTypes::MessagePtr DummyRequestSourcePluginConfigFactory::createEmptyConfigProto() {
-  return std::make_unique<nighthawk::request_source::StubPluginConfig>();
-}
-
-RequestSourcePtr DummyRequestSourcePluginConfigFactory::createRequestSourcePlugin(
-    const Envoy::Protobuf::Message& message, Envoy::Api::ApiPtr, Envoy::Http::RequestHeaderMapPtr) {
-  const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
-  nighthawk::request_source::StubPluginConfig config;
-  Envoy::MessageUtil::unpackTo(any, config);
-  return std::make_unique<DummyRequestSource>(config);
-}
-
-REGISTER_FACTORY(DummyRequestSourcePluginConfigFactory, RequestSourcePluginConfigFactory);
-
-DummyRequestSource::DummyRequestSource(const nighthawk::request_source::StubPluginConfig&) {}
-RequestGenerator DummyRequestSource::get() {
-
-  RequestGenerator request_generator = []() {
-    Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
-    auto returned_request_impl = std::make_unique<RequestImpl>(std::move(header));
-    return returned_request_impl;
-  };
-  return request_generator;
-}
-
-void DummyRequestSource::initOnThread() {}
-
 std::string FileBasedRequestSourcePluginConfigFactory::name() const {
   return "nighthawk.file-based-request-source-plugin";
 }
