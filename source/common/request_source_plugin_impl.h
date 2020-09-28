@@ -1,3 +1,4 @@
+// Implementations of RequestSourceConfigFactory and the RequestSources that those factories make.
 #pragma once
 
 #include "envoy/registry/registry.h"
@@ -14,19 +15,14 @@
 
 namespace Nighthawk {
 
-/**
- * Sample Request Source implementation for comparison.
- */
+// Sample Request Source implementation for comparison.
 class DummyRequestSource : public RequestSource {
 public:
   explicit DummyRequestSource(
       const nighthawk::request_source::StubPluginConfig& config);
   RequestGenerator get() override;
-  /**
-   * Will be called on an intialized and running worker thread, before commencing actual work.
-   * Can be used to prepare the request source implementation (opening any connection or files
-   * needed, for example).
-   */
+
+  //default implementation
   void initOnThread() override;
 };
 
@@ -36,6 +32,7 @@ public:
  */
 class DummyRequestSourcePluginConfigFactory : public virtual RequestSourcePluginConfigFactory {
 public:
+  
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
   RequestSourcePtr createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
@@ -60,11 +57,8 @@ public:
       const uint32_t request_max, Envoy::Http::RequestHeaderMapPtr header,
       std::unique_ptr<nighthawk::client::RequestOptionsList> options_list);
   RequestGenerator get() override;
-  /**
-   * Will be called on an intialized and running worker thread, before commencing actual work.
-   * Can be used to prepare the request source implementation (opening any connection or files
-   * needed, for example).
-   */
+
+  //default implementation
   void initOnThread() override;
 
 private:

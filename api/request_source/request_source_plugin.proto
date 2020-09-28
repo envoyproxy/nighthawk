@@ -19,7 +19,7 @@ message FileBasedPluginConfig {
   // num_requests = 0 means no limit on the number of requests to be produced.
   google.protobuf.UInt32Value num_requests = 2 [(validate.rules).uint32 = {gte: 0, lte: 1000000}];
   // The pluginfactory will load the file located in file_path as long as it is below max_file_size, if it's too large it will throw an error.
-  google.protobuf.UInt32Value max_file_size = 3;
+  google.protobuf.UInt32Value max_file_size = 3 [(validate.rules).uint32 = {lte: 1000000}];
 }
 
 // Configuration for StubPluginRequestSource (plugin name: "nighthawk.stub-request-source-plugin")
