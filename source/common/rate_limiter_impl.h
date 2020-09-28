@@ -1,5 +1,6 @@
 #pragma once
 
+#include <list>
 #include <random>
 
 #include "envoy/common/time.h"
@@ -156,7 +157,9 @@ protected:
   const RateLimiterDelegate random_distribution_generator_;
 
 private:
-  absl::optional<Envoy::MonotonicTime> distributed_start_;
+  std::list<Envoy::MonotonicTime> distributed_timings_;
+  // Used to enforce that releaseOne() is always paired with a successfull tryAcquireOne().
+  bool sanity_check_pending_release_{true};
 };
 
 class UniformRandomDistributionSamplerImpl : public DiscreteNumericDistributionSampler {
