@@ -12,7 +12,7 @@ envoy_cc_library(
     name = "request_source_plugin_impl",
     srcs = [
         "request_options_list_plugin_impl.cc",
-        "stub_plugin_impl.cc"
+        "stub_plugin_impl.cc",
     ],
     hdrs = [
         "request_source_plugin_impl.h",
@@ -20,10 +20,10 @@ envoy_cc_library(
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
+        "//include/nighthawk/common:request_source_plugin_config_factory_lib",
         "//source/common:nighthawk_common_lib",
         "//source/common:request_impl_lib",
         "//source/common:request_source_impl_lib",
-        "//include/nighthawk/common:request_source_plugin_config_factory_lib",
         "@envoy//source/common/common:thread_lib_with_external_headers",
         "@envoy//source/common/protobuf:message_validator_lib_with_external_headers",
         "@envoy//source/common/protobuf:protobuf_with_external_headers",

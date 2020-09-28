@@ -6,10 +6,9 @@
 #include "external/envoy/test/test_common/file_system_for_test.h"
 #include "external/envoy/test/test_common/utility.h"
 
-#include "request_source/request_source_plugin_impl.h"
-
 #include "test/test_common/environment.h"
 
+#include "request_source/request_source_plugin_impl.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 

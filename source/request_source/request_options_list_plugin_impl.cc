@@ -1,5 +1,3 @@
-#include "request_source/request_source_plugin_impl.h"
-
 #include "external/envoy/source/common/protobuf/message_validator_impl.h"
 #include "external/envoy/source/common/protobuf/utility.h"
 #include "external/envoy/source/exe/platform_impl.h"
@@ -8,6 +6,9 @@
 
 #include "common/request_impl.h"
 #include "common/request_source_impl.h"
+
+#include "request_source/request_source_plugin_impl.h"
+
 namespace Nighthawk {
 std::string FileBasedRequestSourcePluginConfigFactory::name() const {
   return "nighthawk.file-based-request-source-plugin";
