@@ -2,9 +2,9 @@
 
 #include "client/options_impl.h"
 
-#include "gtest/gtest.h"
-
 #include "test/client/utility.h"
+
+#include "gtest/gtest.h"
 
 using namespace std::chrono_literals;
 using namespace testing;

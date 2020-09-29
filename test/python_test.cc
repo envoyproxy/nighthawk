@@ -1,6 +1,6 @@
-#include "gtest/gtest.h"
-
 #include "test/test_common/environment.h"
+
+#include "gtest/gtest.h"
 
 using namespace std::chrono_literals;
 using namespace testing;

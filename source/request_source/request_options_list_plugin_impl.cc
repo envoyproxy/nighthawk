@@ -79,7 +79,8 @@ RequestGenerator RequestOptionsListRequestSource::get() {
     if (content_length > 0) {
       header->setContentLength(content_length);
     }
-    for (const envoy::config::core::v3::HeaderValueOption& option_header : request_option.request_headers()) {
+    for (const envoy::config::core::v3::HeaderValueOption& option_header :
+         request_option.request_headers()) {
       auto lower_case_key = Envoy::Http::LowerCaseString(std::string(option_header.header().key()));
       header->setCopy(lower_case_key, std::string(option_header.header().value()));
     }

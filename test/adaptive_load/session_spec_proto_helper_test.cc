@@ -6,14 +6,12 @@
 #include "api/adaptive_load/metric_spec.pb.h"
 #include "api/client/options.pb.h"
 
-#include "gtest/gtest.h"
-
-#include "gmock/gmock.h"
-
 #include "test/adaptive_load/fake_plugins/fake_metrics_plugin/fake_metrics_plugin.h"
 
 #include "adaptive_load/plugin_loader.h"
 #include "adaptive_load/session_spec_proto_helper_impl.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 namespace Nighthawk {
 

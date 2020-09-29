@@ -2,9 +2,8 @@
 
 #include "nighthawk/client/options.h"
 
-#include "gmock/gmock.h"
-
 #include "absl/types/optional.h"
+#include "gmock/gmock.h"
 
 namespace Nighthawk {
 namespace Client {

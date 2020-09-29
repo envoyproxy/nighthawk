@@ -7,9 +7,9 @@
 #include "common/frequency.h"
 #include "common/rate_limiter_impl.h"
 
-#include "gtest/gtest.h"
-
 #include "test/mocks/common/mock_rate_limiter.h"
+
+#include "gtest/gtest.h"
 
 using namespace std::chrono_literals;
 using namespace testing;

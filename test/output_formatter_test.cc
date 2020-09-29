@@ -16,13 +16,12 @@
 #include "client/output_collector_impl.h"
 #include "client/output_formatter_impl.h"
 
-#include "gtest/gtest.h"
-
 #include "test_common/environment.h"
 
 #include "test/mocks/client/mock_options.h"
 
 #include "absl/strings/str_replace.h"
+#include "gtest/gtest.h"
 
 using namespace std::chrono_literals;
 using namespace testing;

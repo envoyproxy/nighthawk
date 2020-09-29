@@ -8,9 +8,8 @@
 
 #include "grpcpp/test/mock_stream.h"
 
-#include "gtest/gtest.h"
-
 #include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 namespace Nighthawk {
 
