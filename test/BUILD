@@ -350,3 +350,14 @@ envoy_cc_test(
         "@envoy//test/test_common:utility_lib",
     ],
 )
+
+envoy_cc_test(
+    name = "milestone_test",
+    srcs = ["milestone_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/common:milestone_impl_lib",
+        "@envoy//source/common/event:real_time_system_lib_with_external_headers",
+        "@envoy//test/test_common:simulated_time_system_lib",
+    ],
+)

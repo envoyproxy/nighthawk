@@ -140,6 +140,7 @@ envoy_cc_library(
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
+        ":milestone_impl_lib",
         "//api/client:base_cc_proto",
         "//api/client:grpc_service_lib",
         "//include/nighthawk/client:client_includes",
@@ -159,5 +160,23 @@ envoy_cc_library(
         "@envoy//source/common/version:version_includes_with_external_headers",
         "@envoy//source/exe:envoy_common_lib_with_external_headers",
         "@envoy//source/server/config_validation:server_lib_with_external_headers",
+    ],
+)
+
+envoy_cc_library(
+    name = "milestone_impl_lib",
+    srcs = [
+        "milestone_impl.cc",
+    ],
+    hdrs = [
+        "milestone_impl.h",
+    ],
+    repository = "@envoy",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//include/nighthawk/common:base_includes",
+        "@envoy//include/envoy/common:time_interface",
+        "@envoy//source/common/common:assert_lib_with_external_headers",
+        "@envoy//source/common/event:real_time_system_lib_with_external_headers",
     ],
 )
