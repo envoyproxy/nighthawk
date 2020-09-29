@@ -65,9 +65,9 @@ RequestGenerator RequestOptionsListRequestSource::get() {
     }
 
     // Increment the counter and get the request_option from the list for the current iteration.
-    auto index = lambda_counter % options_list_->options_size();
+    unsigned int index = lambda_counter % options_list_->options_size();
     nighthawk::client::RequestOptions request_option = options_list_->options().at(index);
-    lambda_counter++;
+    ++lambda_counter;
 
     // Initialize the header with the values from the default header.
     Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
@@ -79,7 +79,7 @@ RequestGenerator RequestOptionsListRequestSource::get() {
     if (content_length > 0) {
       header->setContentLength(content_length);
     }
-    for (const auto& option_header : request_option.request_headers()) {
+    for (const envoy::config::core::v3::HeaderValueOption& option_header : request_option.request_headers()) {
       auto lower_case_key = Envoy::Http::LowerCaseString(std::string(option_header.header().key()));
       header->setCopy(lower_case_key, std::string(option_header.header().value()));
     }
