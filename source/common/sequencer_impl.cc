@@ -117,26 +117,28 @@ void SequencerImpl::run(bool from_periodic_timer) {
             for (auto& milestone : milestones) {
               uint64_t delta = milestone->time().time_since_epoch().count() - previous;
               previous = milestone->time().time_since_epoch().count();
-              std::cerr << milestone->name() << ": " << (delta/1e6) << "ms." << std::endl;
+              std::cerr << milestone->name() << ": " << (delta / 1e6) << "ms." << std::endl;
             }
           }
         },
         time_source_);
     milestone_tracker->addMilestone("sequencer.start");
-    const bool target_could_start = target_([this, milestone_tracker](bool, bool) {
-      // Update cached time, as we need an accurate value for latency reporting.
-      dispatcher_.updateApproximateMonotonicTime();
-      milestone_tracker->addMilestone("sequencer.callback");
-      targets_completed_++;
-      // Callbacks may fire after stop() is called. When the worker teardown runs the dispatcher,
-      // in-flight work might wrap up and fire this callback. By then we wouldn't want to
-      // re-enable any timers here.
-      if (this->running_) {
-        // Immediately schedule us to check again, as chances are we can get on with the next
-        // task.
-        spin_timer_->enableHRTimer(0ms);
-      }
-    }, milestone_tracker);
+    const bool target_could_start = target_(
+        [this, milestone_tracker](bool, bool) {
+          // Update cached time, as we need an accurate value for latency reporting.
+          dispatcher_.updateApproximateMonotonicTime();
+          milestone_tracker->addMilestone("sequencer.callback");
+          targets_completed_++;
+          // Callbacks may fire after stop() is called. When the worker teardown runs the
+          // dispatcher, in-flight work might wrap up and fire this callback. By then we wouldn't
+          // want to re-enable any timers here.
+          if (this->running_) {
+            // Immediately schedule us to check again, as chances are we can get on with the next
+            // task.
+            spin_timer_->enableHRTimer(0ms);
+          }
+        },
+        milestone_tracker);
     if (target_could_start) {
       unblockAndUpdateStatisticIfNeeded(now);
       targets_initiated_++;

@@ -6,8 +6,8 @@
 
 #include "envoy/common/pure.h"
 
-#include "nighthawk/common/operation_callback.h"
 #include "nighthawk/common/milestone.h"
+#include "nighthawk/common/operation_callback.h"
 #include "nighthawk/common/statistic.h"
 
 namespace Nighthawk {

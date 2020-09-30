@@ -8,10 +8,10 @@
 #include "envoy/http/conn_pool.h"
 #include "envoy/server/tracer_config.h"
 
+#include "nighthawk/common/milestone.h"
 #include "nighthawk/common/operation_callback.h"
 #include "nighthawk/common/request_source.h"
 #include "nighthawk/common/statistic.h"
-#include "nighthawk/common/milestone.h"
 
 #include "external/envoy/source/common/common/random_generator.h"
 #include "external/envoy/source/common/http/header_map_impl.h"
