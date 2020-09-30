@@ -7,11 +7,12 @@
 #include "envoy/common/pure.h"
 
 #include "nighthawk/common/operation_callback.h"
+#include "nighthawk/common/milestone.h"
 #include "nighthawk/common/statistic.h"
 
 namespace Nighthawk {
 
-using SequencerTarget = std::function<bool(OperationCallback)>;
+using SequencerTarget = std::function<bool(OperationCallback, std::shared_ptr<MilestoneTracker>)>;
 
 /**
  * Abstract Sequencer interface.

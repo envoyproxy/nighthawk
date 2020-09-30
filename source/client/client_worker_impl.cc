@@ -3,6 +3,7 @@
 #include "external/envoy/source/common/stats/symbol_table_impl.h"
 
 #include "common/cached_time_source_impl.h"
+#include "common/milestone_impl.h"
 #include "common/phase_impl.h"
 #include "common/termination_predicate_impl.h"
 #include "common/utility.h"
@@ -34,22 +35,23 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
       benchmark_client_(benchmark_client_factory.create(
           api, *dispatcher_, *worker_number_scope_, cluster_manager, http_tracer_,
           fmt::format("{}", worker_number), worker_number, *request_generator_)),
-      phase_(
-          std::make_unique<PhaseImpl>("main",
-                                      sequencer_factory_.create(
-                                          *time_source_, *dispatcher_,
-                                          [this](CompletionCallback f) -> bool {
-                                            return benchmark_client_->tryStartRequest(std::move(f));
-                                          },
-                                          termination_predicate_factory_.create(
-                                              *time_source_, *worker_number_scope_, starting_time),
-                                          *worker_number_scope_, starting_time),
-                                      true)),
+      phase_(std::make_unique<PhaseImpl>(
+          "main",
+          sequencer_factory_.create(
+              *time_source_, *dispatcher_,
+              [this](CompletionCallback f, std::shared_ptr<MilestoneTracker> tracker) -> bool {
+                return benchmark_client_->tryStartRequest(std::move(f), tracker);
+              },
+              termination_predicate_factory_.create(*time_source_, *worker_number_scope_,
+                                                    starting_time),
+              *worker_number_scope_, starting_time),
+          true)),
       hardcoded_warmup_style_(hardcoded_warmup_style) {}
 
 void ClientWorkerImpl::simpleWarmup() {
   ENVOY_LOG(debug, "> worker {}: warmup start.", worker_number_);
-  if (benchmark_client_->tryStartRequest([this](bool, bool) { dispatcher_->exit(); })) {
+  if (benchmark_client_->tryStartRequest([this](bool, bool) { dispatcher_->exit(); },
+                                         std::make_shared<NullMilestoneTrackerImpl>())) {
     dispatcher_->run(Envoy::Event::Dispatcher::RunType::RunUntilExit);
   } else {
     ENVOY_LOG(warn, "> worker {}: failed to initiate warmup request.", worker_number_);

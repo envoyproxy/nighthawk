@@ -115,6 +115,12 @@ void SequencerImpl::run(bool from_periodic_timer) {
           if (milestones.size() > 1) {
             latency_statistic_->addValue(
                 (milestones.back()->time() - milestones[0]->time()).count());
+            uint64_t previous = milestones.front()->time().time_since_epoch().count();
+            for (auto& milestone : milestones) {
+              uint64_t delta = milestone->time().time_since_epoch().count() - previous;
+              previous = milestone->time().time_since_epoch().count();
+              std::cerr << milestone->name() << ": " << (delta/1e6) << "ms." << std::endl;
+            }
           }
         },
         time_source_);
@@ -132,7 +138,7 @@ void SequencerImpl::run(bool from_periodic_timer) {
         // task.
         spin_timer_->enableHRTimer(0ms);
       }
-    });
+    }, milestone_tracker);
     if (target_could_start) {
       unblockAndUpdateStatisticIfNeeded(now);
       targets_initiated_++;

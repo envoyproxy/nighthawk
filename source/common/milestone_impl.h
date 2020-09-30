@@ -31,4 +31,9 @@ private:
   MilestoneCollection milestones_;
 };
 
+class NullMilestoneTrackerImpl : public MilestoneTracker {
+public:
+  void addMilestone(const char*) override{/*TODO(oschaaf): gcovr not implemented here*/};
+};
+
 } // namespace Nighthawk

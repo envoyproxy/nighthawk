@@ -126,7 +126,7 @@ public:
   void setShouldMeasureLatencies(bool measure_latencies) override {
     measure_latencies_ = measure_latencies;
   }
-  bool tryStartRequest(CompletionCallback caller_completion_callback) override;
+  bool tryStartRequest(CompletionCallback caller_completion_callback, std::shared_ptr<MilestoneTracker> milestone_tracker) override;
   Envoy::Stats::Scope& scope() const override { return *scope_; }
 
   // StreamDecoderCompletionCallback

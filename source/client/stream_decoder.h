@@ -11,6 +11,7 @@
 #include "nighthawk/common/operation_callback.h"
 #include "nighthawk/common/request_source.h"
 #include "nighthawk/common/statistic.h"
+#include "nighthawk/common/milestone.h"
 
 #include "external/envoy/source/common/common/random_generator.h"
 #include "external/envoy/source/common/http/header_map_impl.h"
@@ -41,7 +42,8 @@ class StreamDecoder : public Envoy::Http::ResponseDecoder,
 public:
   StreamDecoder(Envoy::Event::Dispatcher& dispatcher, Envoy::TimeSource& time_source,
                 StreamDecoderCompletionCallback& decoder_completion_callback,
-                OperationCallback caller_completion_callback, Statistic& connect_statistic,
+                OperationCallback caller_completion_callback,
+                std::shared_ptr<MilestoneTracker> tracker, Statistic& connect_statistic,
                 Statistic& latency_statistic, Statistic& response_header_sizes_statistic,
                 Statistic& response_body_sizes_statistic, Statistic& origin_latency_statistic,
                 HeaderMapPtr request_headers, bool measure_latencies, uint32_t request_body_size,
@@ -59,10 +61,11 @@ public:
         complete_(false), measure_latencies_(measure_latencies),
         request_body_size_(request_body_size), stream_info_(time_source_),
         random_generator_(random_generator), http_tracer_(http_tracer),
-        latency_response_header_name_(latency_response_header_name) {
+        latency_response_header_name_(latency_response_header_name), tracker_(tracker) {
     if (measure_latencies_ && http_tracer_ != nullptr) {
       setupForTracing();
     }
+    tracker_->addMilestone("connect-start");
   }
 
   // Http::StreamDecoder
@@ -122,6 +125,7 @@ private:
   Envoy::Tracing::SpanPtr active_span_;
   Envoy::StreamInfo::UpstreamTiming upstream_timing_;
   const std::string latency_response_header_name_;
+  std::shared_ptr<MilestoneTracker> tracker_;
 };
 
 } // namespace Client

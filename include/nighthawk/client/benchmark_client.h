@@ -7,6 +7,7 @@
 #include "envoy/runtime/runtime.h"
 #include "envoy/stats/store.h"
 
+#include "nighthawk/common/milestone.h"
 #include "nighthawk/common/operation_callback.h"
 #include "nighthawk/common/statistic.h"
 #include "nighthawk/common/uri.h"
@@ -47,7 +48,8 @@ public:
    * @return true if the request could be started, otherwise the request could not be started, for
    * example due to resource limits
    */
-  virtual bool tryStartRequest(CompletionCallback caller_completion_callback) PURE;
+  virtual bool tryStartRequest(CompletionCallback caller_completion_callback,
+                               std::shared_ptr<MilestoneTracker> milestone_tracker) PURE;
 
   /**
    * @return const Envoy::Stats::Scope& the statistics scope associated the benchmark client.

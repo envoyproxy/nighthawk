@@ -46,6 +46,7 @@ envoy_cc_library(
         "//api/client:base_cc_proto",
         "//include/nighthawk/client:client_includes",
         "//include/nighthawk/common:base_includes",
+        "//source/common:milestone_impl_lib",
         "//source/common:request_source_impl_lib",
         "//source/common:nighthawk_common_lib",
         "//source/common:nighthawk_service_client_impl",

@@ -13,6 +13,7 @@ namespace Client {
 
 void StreamDecoder::decodeHeaders(Envoy::Http::ResponseHeaderMapPtr&& headers, bool end_stream) {
   ASSERT(!complete_);
+  tracker_->addMilestone("decode-headers");
   upstream_timing_.onFirstUpstreamRxByteReceived(time_source_);
   complete_ = end_stream;
   response_headers_ = std::move(headers);
@@ -62,6 +63,7 @@ void StreamDecoder::decodeTrailers(Envoy::Http::ResponseTrailerMapPtr&& headers)
 void StreamDecoder::onComplete(bool success) {
   ASSERT(!success || complete_);
   if (success && measure_latencies_) {
+    tracker_->addMilestone("stream-completion");
     latency_statistic_.addValue((time_source_.monotonicTime() - request_start_).count());
     // At this point StreamDecoder::decodeHeaders() should have been called.
     if (stream_info_.response_code_.has_value()) {
@@ -86,6 +88,7 @@ void StreamDecoder::onResetStream(Envoy::Http::StreamResetReason reason,
                                   absl::string_view /* transport_failure_reason */) {
 
   stream_info_.setResponseFlag(streamResetReasonToResponseFlag(reason));
+  tracker_->addMilestone("stream-reset");
   onComplete(false);
 }
 
@@ -103,6 +106,7 @@ void StreamDecoder::onPoolReady(Envoy::Http::RequestEncoder& encoder,
                                 Envoy::Upstream::HostDescriptionConstSharedPtr,
                                 const Envoy::StreamInfo::StreamInfo&) {
   // Make sure we hear about stream resets on the encoder.
+  tracker_->addMilestone("pool-ready");
   encoder.getStream().addCallbacks(*this);
   upstream_timing_.onFirstUpstreamTxByteSent(time_source_); // XXX(oschaaf): is this correct?
   encoder.encodeHeaders(*request_headers_, request_body_size_ == 0);

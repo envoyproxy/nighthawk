@@ -131,7 +131,7 @@ StatisticPtrMap BenchmarkClientHttpImpl::statistics() const {
   return statistics;
 };
 
-bool BenchmarkClientHttpImpl::tryStartRequest(CompletionCallback caller_completion_callback) {
+bool BenchmarkClientHttpImpl::tryStartRequest(CompletionCallback caller_completion_callback, std::shared_ptr<MilestoneTracker> milestone_tracker) {
   auto* pool_ptr = pool();
   if (pool_ptr == nullptr) {
     return false;
@@ -165,6 +165,7 @@ bool BenchmarkClientHttpImpl::tryStartRequest(CompletionCallback caller_completi
 
   auto stream_decoder = new StreamDecoder(
       dispatcher_, api_.timeSource(), *this, std::move(caller_completion_callback),
+      milestone_tracker,
       *statistic_.connect_statistic, *statistic_.response_statistic,
       *statistic_.response_header_size_statistic, *statistic_.response_body_size_statistic,
       *statistic_.origin_latency_statistic, request->header(), shouldMeasureLatencies(),
