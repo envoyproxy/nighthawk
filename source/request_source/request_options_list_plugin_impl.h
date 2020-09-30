@@ -48,11 +48,9 @@ private:
 // Factory that creates a RequestOptionsListRequestSource from a FileBasedPluginConfig proto.
 // Registered as an Envoy plugin.
 // Implementation of RequestSourceConfigFactory which produces a RequestSource that keeps an
-// RequestOptionsList in memory RequestSources are used to get RequestGenerators which generate
-// requests for the benchmark client. All plugins configuration are specified in the
+// RequestOptionsList in memory, and loads it with the RequestOptions taken from a file. All plugins configuration are specified in the
 // request_source_plugin.proto This class is not thread-safe, because it loads its RequestOptionlist
-// in memory from a file when first called. The in memory RequestOptionsList is protected by
-// file_lock_. Usage: assume you are passed an appropriate Any type object called config, an Api
+// in memory from a file when first called. Usage: assume you are passed an appropriate Any type object called config, an Api
 // object called api, and a default header called header. auto& config_factory =
 //     Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
 //         "nighthawk.file-based-request-source-plugin");

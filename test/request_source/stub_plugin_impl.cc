@@ -7,7 +7,7 @@
 #include "common/request_impl.h"
 #include "common/request_source_impl.h"
 
-#include "request_source/stub_plugin_impl.h"
+#include "test/request_source/stub_plugin_impl.h"
 
 namespace Nighthawk {
 
