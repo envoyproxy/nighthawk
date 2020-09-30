@@ -11,26 +11,26 @@
 
 namespace Nighthawk {
 
-std::string DummyRequestSourcePluginConfigFactory::name() const {
+std::string StubRequestSourcePluginConfigFactory::name() const {
   return "nighthawk.stub-request-source-plugin";
 }
 
-Envoy::ProtobufTypes::MessagePtr DummyRequestSourcePluginConfigFactory::createEmptyConfigProto() {
+Envoy::ProtobufTypes::MessagePtr StubRequestSourcePluginConfigFactory::createEmptyConfigProto() {
   return std::make_unique<nighthawk::request_source::StubPluginConfig>();
 }
 
-RequestSourcePtr DummyRequestSourcePluginConfigFactory::createRequestSourcePlugin(
+RequestSourcePtr StubRequestSourcePluginConfigFactory::createRequestSourcePlugin(
     const Envoy::Protobuf::Message& message, Envoy::Api::ApiPtr, Envoy::Http::RequestHeaderMapPtr) {
   const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
   nighthawk::request_source::StubPluginConfig config;
   Envoy::MessageUtil::unpackTo(any, config);
-  return std::make_unique<DummyRequestSource>(config);
+  return std::make_unique<StubRequestSource>(config);
 }
 
-REGISTER_FACTORY(DummyRequestSourcePluginConfigFactory, RequestSourcePluginConfigFactory);
+REGISTER_FACTORY(StubRequestSourcePluginConfigFactory, RequestSourcePluginConfigFactory);
 
-DummyRequestSource::DummyRequestSource(const nighthawk::request_source::StubPluginConfig& config) : test_value_{ config.has_test_value() ? config.test_value().value() : 0} {}
-RequestGenerator DummyRequestSource::get() {
+StubRequestSource::StubRequestSource(const nighthawk::request_source::StubPluginConfig& config) : test_value_{ config.has_test_value() ? config.test_value().value() : 0} {}
+RequestGenerator StubRequestSource::get() {
 
   RequestGenerator request_generator = [this] () {
     Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
@@ -41,6 +41,6 @@ RequestGenerator DummyRequestSource::get() {
   return request_generator;
 }
 
-void DummyRequestSource::initOnThread() {}
+void StubRequestSource::initOnThread() {}
 
 } // namespace Nighthawk

@@ -16,9 +16,9 @@
 namespace Nighthawk {
 
 // Stub Request Source implementation for comparison.
-class DummyRequestSource : public RequestSource {
+class StubRequestSource : public RequestSource {
 public:
-  explicit DummyRequestSource(const nighthawk::request_source::StubPluginConfig& config);
+  explicit StubRequestSource(const nighthawk::request_source::StubPluginConfig& config);
   // The generator function will return a header whose only value is the test_value taken from the config.
   // The function is threadsafe.
   RequestGenerator get() override;
@@ -43,7 +43,7 @@ private:
 // RequestSourcePtr plugin =
 //     config_factory.createRequestSourcePlugin(config, std::move(api), std::move(header));
 
-class DummyRequestSourcePluginConfigFactory : public virtual RequestSourcePluginConfigFactory {
+class StubRequestSourcePluginConfigFactory : public virtual RequestSourcePluginConfigFactory {
 public:
   // This is a hardcoded string.
   std::string name() const override;
@@ -57,7 +57,7 @@ public:
 };
 
 // This factory will be activated through RequestSourceFactory in factories.h
-DECLARE_FACTORY(DummyRequestSourcePluginConfigFactory);
+DECLARE_FACTORY(StubRequestSourcePluginConfigFactory);
 
 // Sample Request Source for small RequestOptionsLists. Loads a copy of the RequestOptionsList in
 // memory and replays them.

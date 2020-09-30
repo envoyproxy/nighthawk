@@ -21,7 +21,7 @@ using nighthawk::request_source::StubPluginConfig;
 using ::testing::NiceMock;
 using ::testing::Test;
 
-class DummyRequestSourcePluginTest : public Test {
+class StubRequestSourcePluginTest : public Test {
 public:
   Envoy::Stats::MockIsolatedStatsStore stats_store_;
 };
@@ -38,7 +38,7 @@ public:
   }
 };
 
-TEST_F(DummyRequestSourcePluginTest, CreateEmptyConfigProtoCreatesCorrectType) {
+TEST_F(StubRequestSourcePluginTest, CreateEmptyConfigProtoCreatesCorrectType) {
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
           "nighthawk.stub-request-source-plugin");
@@ -48,7 +48,7 @@ TEST_F(DummyRequestSourcePluginTest, CreateEmptyConfigProtoCreatesCorrectType) {
   EXPECT_TRUE(Envoy::MessageUtil()(*empty_config, expected_config));
 }
 
-TEST_F(DummyRequestSourcePluginTest, FactoryRegistrationUsesCorrectPluginName) {
+TEST_F(StubRequestSourcePluginTest, FactoryRegistrationUsesCorrectPluginName) {
   nighthawk::request_source::StubPluginConfig config;
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
@@ -58,7 +58,7 @@ TEST_F(DummyRequestSourcePluginTest, FactoryRegistrationUsesCorrectPluginName) {
   EXPECT_EQ(config_factory.name(), "nighthawk.stub-request-source-plugin");
 }
 
-TEST_F(DummyRequestSourcePluginTest, CreateRequestSourcePluginCreatesCorrectPluginType) {
+TEST_F(StubRequestSourcePluginTest, CreateRequestSourcePluginCreatesCorrectPluginType) {
   nighthawk::request_source::StubPluginConfig config;
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
@@ -69,9 +69,9 @@ TEST_F(DummyRequestSourcePluginTest, CreateRequestSourcePluginCreatesCorrectPlug
   auto header = Envoy::Http::RequestHeaderMapImpl::create();
   RequestSourcePtr plugin =
       config_factory.createRequestSourcePlugin(config_any, std::move(api), std::move(header));
-  EXPECT_NE(dynamic_cast<DummyRequestSource*>(plugin.get()), nullptr);
+  EXPECT_NE(dynamic_cast<StubRequestSource*>(plugin.get()), nullptr);
 }
-TEST_F(DummyRequestSourcePluginTest, CreateRequestSourcePluginCreatesWorkingPlugin) {
+TEST_F(StubRequestSourcePluginTest, CreateRequestSourcePluginCreatesWorkingPlugin) {
   nighthawk::request_source::StubPluginConfig config;
   double test_value = 2;
   config.mutable_test_value()->set_value(test_value);
