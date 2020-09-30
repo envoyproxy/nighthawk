@@ -19,7 +19,7 @@ envoy_cc_library(
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
-        "//include/nighthawk/common:request_source_plugin_config_factory_lib",
+        "//include/nighthawk/request_source:request_source_plugin_config_factory_lib",
         "//source/common:nighthawk_common_lib",
         "//source/common:request_impl_lib",
         "//source/common:request_source_impl_lib",
@@ -42,7 +42,7 @@ envoy_cc_library(
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
-        "//include/nighthawk/common:request_source_plugin_config_factory_lib",
+        "//include/nighthawk/request_source:request_source_plugin_config_factory_lib",
         "//source/common:nighthawk_common_lib",
         "//source/common:request_impl_lib",
         "//source/common:request_source_impl_lib",

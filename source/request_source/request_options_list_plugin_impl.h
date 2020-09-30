@@ -3,7 +3,7 @@
 
 #include "envoy/registry/registry.h"
 
-#include "nighthawk/common/request_source_plugin_config_factory.h"
+#include "nighthawk/request_source/request_source_plugin_config_factory.h"
 
 #include "external/envoy/source/common/common/lock_guard.h"
 #include "external/envoy/source/common/common/thread.h"
