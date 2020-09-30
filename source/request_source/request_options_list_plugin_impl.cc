@@ -55,8 +55,7 @@ RequestOptionsListRequestSource::RequestOptionsListRequestSource(
       request_max_(request_max) {}
 
 RequestGenerator RequestOptionsListRequestSource::get() {
-  uint32_t counter = 0;
-  request_count_.push_back(counter);
+  request_count_.push_back(0);
   uint32_t& lambda_counter = request_count_.back();
   RequestGenerator request_generator = [this, lambda_counter]() mutable -> RequestPtr {
     // if request_max is 0, then we never stop generating requests.

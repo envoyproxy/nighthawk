@@ -19,12 +19,15 @@ namespace Nighthawk {
 class DummyRequestSource : public RequestSource {
 public:
   explicit DummyRequestSource(const nighthawk::request_source::StubPluginConfig& config);
-  // The generator function will only return empty headers.
+  // The generator function will return a header whose only value is the test_value taken from the config.
   // The function is threadsafe.
   RequestGenerator get() override;
 
   // default implementation
   void initOnThread() override;
+private: 
+  const double test_value_;
+
 };
 
 // Factory that creates a DummyRequestSource from a DummyRequestSourcePluginConfig proto.

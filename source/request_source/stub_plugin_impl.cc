@@ -29,11 +29,12 @@ RequestSourcePtr DummyRequestSourcePluginConfigFactory::createRequestSourcePlugi
 
 REGISTER_FACTORY(DummyRequestSourcePluginConfigFactory, RequestSourcePluginConfigFactory);
 
-DummyRequestSource::DummyRequestSource(const nighthawk::request_source::StubPluginConfig&) {}
+DummyRequestSource::DummyRequestSource(const nighthawk::request_source::StubPluginConfig& config) : test_value_{config.test_value().value()} {}
 RequestGenerator DummyRequestSource::get() {
 
-  RequestGenerator request_generator = []() {
+  RequestGenerator request_generator = [this] () {
     Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
+    header->setCopy(Envoy::Http::LowerCaseString("test_value_"), std::to_string(test_value_));
     auto returned_request_impl = std::make_unique<RequestImpl>(std::move(header));
     return returned_request_impl;
   };
