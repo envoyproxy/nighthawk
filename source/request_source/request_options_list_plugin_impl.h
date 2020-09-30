@@ -15,49 +15,6 @@
 
 namespace Nighthawk {
 
-// Stub Request Source implementation for comparison.
-class StubRequestSource : public RequestSource {
-public:
-  explicit StubRequestSource(const nighthawk::request_source::StubPluginConfig& config);
-  // The generator function will return a header whose only value is the test_value taken from the config.
-  // The function is threadsafe.
-  RequestGenerator get() override;
-
-  // default implementation
-  void initOnThread() override;
-private: 
-  const double test_value_;
-
-};
-
-// Factory that creates a DummyRequestSource from a DummyRequestSourcePluginConfig proto.
-// Registered as an Envoy plugin.
-// Stub implementation of RequestSourceConfigFactory which produces a RequestSource.
-// RequestSources are used to get RequestGenerators which generate requests for the benchmark
-// client. All plugins configuration are specified in the request_source_plugin.proto This class is
-// thread-safe, but it doesn't do anything. Usage: assume you are passed an appropriate Any type
-// object called config, an Api object called api, and a default header called header. auto&
-// config_factory =
-//     Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
-//         "nighthawk.stub-request-source-plugin");
-// RequestSourcePtr plugin =
-//     config_factory.createRequestSourcePlugin(config, std::move(api), std::move(header));
-
-class StubRequestSourcePluginConfigFactory : public virtual RequestSourcePluginConfigFactory {
-public:
-  // This is a hardcoded string.
-  std::string name() const override;
-  // This returns an empty version of the expected StubPluginConfig from request_source_plugin.proto
-  Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
-  // This is the primary method that is used to get RequestSources.
-  // This implementation is thread safe, but the RequestSource it generates doesn't do much.
-  RequestSourcePtr createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
-                                             Envoy::Api::ApiPtr api,
-                                             Envoy::Http::RequestHeaderMapPtr header) override;
-};
-
-// This factory will be activated through RequestSourceFactory in factories.h
-DECLARE_FACTORY(StubRequestSourcePluginConfigFactory);
 
 // Sample Request Source for small RequestOptionsLists. Loads a copy of the RequestOptionsList in
 // memory and replays them.
@@ -124,4 +81,5 @@ private:
 // This factory will be activated through RequestSourceFactory in factories.h
 DECLARE_FACTORY(FileBasedRequestSourcePluginConfigFactory);
 
-} // namespace Nighthawk
+
+}

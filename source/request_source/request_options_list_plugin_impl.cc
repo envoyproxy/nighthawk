@@ -7,7 +7,7 @@
 #include "common/request_impl.h"
 #include "common/request_source_impl.h"
 
-#include "request_source/request_source_plugin_impl.h"
+#include "request_source/request_options_list_plugin_impl.h"
 
 namespace Nighthawk {
 std::string FileBasedRequestSourcePluginConfigFactory::name() const {
