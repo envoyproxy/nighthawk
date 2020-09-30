@@ -108,26 +108,29 @@ void SequencerImpl::run(bool from_periodic_timer) {
   while (rate_limiter_->tryAcquireOne()) {
     // The rate limiter says it's OK to proceed and call the target. Let's see if the target is OK
     // with that as well.
-    auto milestone_tracker = std::make_shared<MilestoneTrackerImpl>(
-        [this](const MilestoneCollection& milestones) {
-          if (milestones.size() > 1) {
-            latency_statistic_->addValue(
-                (milestones.back()->time() - milestones[0]->time()).count());
-            uint64_t previous = milestones.front()->time().time_since_epoch().count();
-            for (auto& milestone : milestones) {
-              uint64_t delta = milestone->time().time_since_epoch().count() - previous;
-              previous = milestone->time().time_since_epoch().count();
-              std::cerr << milestone->name() << ": " << (delta / 1e6) << "ms." << std::endl;
-            }
-          }
-        },
-        time_source_);
-    milestone_tracker->addMilestone("sequencer.start");
+    auto delegate = [this](const MilestoneCollection& milestones) {
+      uint64_t previous = milestones.front()->time().time_since_epoch().count();
+      std::string s = "";
+      for (auto& milestone : milestones) {
+        uint64_t delta = milestone->time().time_since_epoch().count() - previous;
+        previous = milestone->time().time_since_epoch().count();
+        s = fmt::format("{} {} {}ms", s, milestone->name(), (delta / 1e3));
+      }
+      if (milestones.size() > 1) {
+        latency_statistic_->addValue((milestones.back()->time() - milestones[0]->time()).count());
+        s = fmt::format("total: {}ms. {}",
+                        (milestones.back()->time() - milestones[0]->time()).count() / 1e3, s);
+      }
+      std::cerr << s << std::endl;
+    };
+    auto milestone_tracker =
+        std::make_shared<MilestoneTrackerImpl>(delegate, time_source_, dispatcher_);
+    milestone_tracker->addMilestone("start");
     const bool target_could_start = target_(
         [this, milestone_tracker](bool, bool) {
           // Update cached time, as we need an accurate value for latency reporting.
           dispatcher_.updateApproximateMonotonicTime();
-          milestone_tracker->addMilestone("sequencer.callback");
+          milestone_tracker->addMilestone("complete");
           targets_completed_++;
           // Callbacks may fire after stop() is called. When the worker teardown runs the
           // dispatcher, in-flight work might wrap up and fire this callback. By then we wouldn't

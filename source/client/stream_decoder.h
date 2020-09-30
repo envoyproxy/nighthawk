@@ -65,7 +65,7 @@ public:
     if (measure_latencies_ && http_tracer_ != nullptr) {
       setupForTracing();
     }
-    tracker_->addMilestone("connect-start");
+    tracker_->addMilestone("queued");
   }
 
   // Http::StreamDecoder

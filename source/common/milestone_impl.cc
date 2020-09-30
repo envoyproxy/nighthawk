@@ -9,6 +9,7 @@ namespace Nighthawk {
 MilestoneTrackerImpl::~MilestoneTrackerImpl() { callback_(milestones_); }
 
 void MilestoneTrackerImpl::addMilestone(const char* name) {
+  dispatcher_.updateApproximateMonotonicTime();
   milestones_.emplace_back(std::make_unique<MilestoneImpl>(time_source_.monotonicTime(), name));
 }
 
