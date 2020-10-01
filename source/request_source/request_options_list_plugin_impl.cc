@@ -10,16 +10,16 @@
 #include "common/request_source_impl.h"
 
 namespace Nighthawk {
-std::string FileBasedRequestSourcePluginConfigFactory::name() const {
+std::string OptionsListFromFileRequestSourceFactory::name() const {
   return "nighthawk.file-based-request-source-plugin";
 }
 
 Envoy::ProtobufTypes::MessagePtr
-FileBasedRequestSourcePluginConfigFactory::createEmptyConfigProto() {
+OptionsListFromFileRequestSourceFactory::createEmptyConfigProto() {
   return std::make_unique<nighthawk::request_source::FileBasedPluginConfig>();
 }
 
-RequestSourcePtr FileBasedRequestSourcePluginConfigFactory::createRequestSourcePlugin(
+RequestSourcePtr OptionsListFromFileRequestSourceFactory::createRequestSourcePlugin(
     const Envoy::Protobuf::Message& message, Envoy::Api::Api& api,
     Envoy::Http::RequestHeaderMapPtr header) {
   const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
@@ -44,7 +44,7 @@ RequestSourcePtr FileBasedRequestSourcePluginConfigFactory::createRequestSourceP
                                                            std::move(header), options_list_);
 }
 
-REGISTER_FACTORY(FileBasedRequestSourcePluginConfigFactory, RequestSourcePluginConfigFactory);
+REGISTER_FACTORY(OptionsListFromFileRequestSourceFactory, RequestSourcePluginConfigFactory);
 
 RequestOptionsListRequestSource::RequestOptionsListRequestSource(
     const uint32_t total_requests, Envoy::Http::RequestHeaderMapPtr header,

@@ -57,7 +57,7 @@ private:
 //         "nighthawk.file-based-request-source-plugin");
 // RequestSourcePtr plugin =
 //     config_factory.createRequestSourcePlugin(config, std::move(api), std::move(header));
-class FileBasedRequestSourcePluginConfigFactory : public virtual RequestSourcePluginConfigFactory {
+class OptionsListFromFileRequestSourceFactory : public virtual RequestSourcePluginConfigFactory {
 public:
   std::string name() const override;
 
@@ -65,7 +65,7 @@ public:
 
   // This implementation is not thread safe. Only the first call to createRequestSourcePlugin will
   // load the file from memory and subsequent calls just make a copy of the options_list that was
-  // already loaded. The FileBasedRequestSourcePluginConfigFactory will not work with multiple
+  // already loaded. The OptionsListFromFileRequestSourceFactory will not work with multiple
   // different files for this reason.
   // This method will also error if the file can not be loaded correctly, e.g. the file is too large
   // or could not be found.
@@ -79,6 +79,6 @@ private:
 };
 
 // This factory will be activated through RequestSourceFactory in factories.h
-DECLARE_FACTORY(FileBasedRequestSourcePluginConfigFactory);
+DECLARE_FACTORY(OptionsListFromFileRequestSourceFactory);
 
 } // namespace Nighthawk
