@@ -44,9 +44,27 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
               },
               termination_predicate_factory_.create(*time_source_, *worker_number_scope_,
                                                     starting_time),
-              *worker_number_scope_, starting_time),
+              *worker_number_scope_, starting_time,
+              [this](const MilestoneCollection& milestones) {
+                this->onMilestoneComplete(milestones);
+              }),
           true)),
       hardcoded_warmup_style_(hardcoded_warmup_style) {}
+
+void ClientWorkerImpl::onMilestoneComplete(const MilestoneCollection& milestones) {
+  uint64_t previous = milestones.front()->time().time_since_epoch().count();
+  std::string s = "";
+  for (auto& milestone : milestones) {
+    uint64_t delta = milestone->time().time_since_epoch().count() - previous;
+    previous = milestone->time().time_since_epoch().count();
+    s = fmt::format("{} {} {}us", s, milestone->name(), (delta / 1e3));
+  }
+  if (milestones.size() > 1) {
+    s = fmt::format("total: {}us. {}",
+                    (milestones.back()->time() - milestones[0]->time()).count() / 1e3, s);
+  }
+  std::cerr << s << std::endl;
+}
 
 void ClientWorkerImpl::simpleWarmup() {
   ENVOY_LOG(debug, "> worker {}: warmup start.", worker_number_);

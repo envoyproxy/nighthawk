@@ -53,7 +53,7 @@ protected:
 
 private:
   void simpleWarmup();
-
+  void onMilestoneComplete(const MilestoneCollection& milestones);
   std::unique_ptr<Envoy::TimeSource> time_source_;
   const TerminationPredicateFactory& termination_predicate_factory_;
   const SequencerFactory& sequencer_factory_;

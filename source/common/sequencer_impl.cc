@@ -14,12 +14,13 @@ namespace Nighthawk {
 SequencerImpl::SequencerImpl(
     const PlatformUtil& platform_util, Envoy::Event::Dispatcher& dispatcher,
     Envoy::TimeSource& time_source, RateLimiterPtr&& rate_limiter, SequencerTarget target,
-    StatisticPtr&& latency_statistic, StatisticPtr&& blocked_statistic,
+    MilestoneCallback milestone_callback, StatisticPtr&& latency_statistic,
+    StatisticPtr&& blocked_statistic,
     nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions idle_strategy,
     TerminationPredicatePtr&& termination_predicate, Envoy::Stats::Scope& scope)
-    : target_(std::move(target)), platform_util_(platform_util), dispatcher_(dispatcher),
-      time_source_(time_source), rate_limiter_(std::move(rate_limiter)),
-      latency_statistic_(std::move(latency_statistic)),
+    : target_(std::move(target)), milestone_callback_(std::move(milestone_callback)),
+      platform_util_(platform_util), dispatcher_(dispatcher), time_source_(time_source),
+      rate_limiter_(std::move(rate_limiter)), latency_statistic_(std::move(latency_statistic)),
       blocked_statistic_(std::move(blocked_statistic)), idle_strategy_(idle_strategy),
       termination_predicate_(std::move(termination_predicate)),
       last_termination_status_(TerminationPredicate::Status::PROCEED),
@@ -108,23 +109,8 @@ void SequencerImpl::run(bool from_periodic_timer) {
   while (rate_limiter_->tryAcquireOne()) {
     // The rate limiter says it's OK to proceed and call the target. Let's see if the target is OK
     // with that as well.
-    auto delegate = [this](const MilestoneCollection& milestones) {
-      uint64_t previous = milestones.front()->time().time_since_epoch().count();
-      std::string s = "";
-      for (auto& milestone : milestones) {
-        uint64_t delta = milestone->time().time_since_epoch().count() - previous;
-        previous = milestone->time().time_since_epoch().count();
-        s = fmt::format("{} {} {}ms", s, milestone->name(), (delta / 1e3));
-      }
-      if (milestones.size() > 1) {
-        latency_statistic_->addValue((milestones.back()->time() - milestones[0]->time()).count());
-        s = fmt::format("total: {}ms. {}",
-                        (milestones.back()->time() - milestones[0]->time()).count() / 1e3, s);
-      }
-      std::cerr << s << std::endl;
-    };
     auto milestone_tracker =
-        std::make_shared<MilestoneTrackerImpl>(delegate, time_source_, dispatcher_);
+        std::make_shared<MilestoneTrackerImpl>(milestone_callback_, time_source_, dispatcher_);
     milestone_tracker->addMilestone("start");
     const bool target_could_start = target_(
         [this, milestone_tracker](bool, bool) {

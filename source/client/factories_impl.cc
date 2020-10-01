@@ -68,7 +68,8 @@ SequencerPtr SequencerFactoryImpl::create(Envoy::TimeSource& time_source,
                                           const SequencerTarget& sequencer_target,
                                           TerminationPredicatePtr&& termination_predicate,
                                           Envoy::Stats::Scope& scope,
-                                          const Envoy::SystemTime scheduled_starting_time) const {
+                                          const Envoy::SystemTime scheduled_starting_time,
+                                          const MilestoneCallback& milestone_callback) const {
   StatisticFactoryImpl statistic_factory(options_);
   Frequency frequency(options_.requestsPerSecond());
   RateLimiterPtr rate_limiter = std::make_unique<ScheduledStartingRateLimiter>(
@@ -88,8 +89,8 @@ SequencerPtr SequencerFactoryImpl::create(Envoy::TimeSource& time_source,
 
   return std::make_unique<SequencerImpl>(
       platform_util_, dispatcher, time_source, std::move(rate_limiter), sequencer_target,
-      statistic_factory.create(), statistic_factory.create(), options_.sequencerIdleStrategy(),
-      std::move(termination_predicate), scope);
+      milestone_callback, statistic_factory.create(), statistic_factory.create(),
+      options_.sequencerIdleStrategy(), std::move(termination_predicate), scope);
 }
 
 StatisticFactoryImpl::StatisticFactoryImpl(const Options& options)

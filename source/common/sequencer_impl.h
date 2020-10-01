@@ -45,7 +45,8 @@ public:
   SequencerImpl(
       const PlatformUtil& platform_util, Envoy::Event::Dispatcher& dispatcher,
       Envoy::TimeSource& time_source, RateLimiterPtr&& rate_limiter, SequencerTarget target,
-      StatisticPtr&& latency_statistic, StatisticPtr&& blocked_statistic,
+      MilestoneCallback milestone_callback, StatisticPtr&& latency_statistic,
+      StatisticPtr&& blocked_statistic,
       nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions idle_strategy,
       TerminationPredicatePtr&& termination_predicate, Envoy::Stats::Scope& scope);
 
@@ -108,6 +109,7 @@ protected:
 
 private:
   SequencerTarget target_;
+  MilestoneCallback milestone_callback_;
   const PlatformUtil& platform_util_;
   Envoy::Event::Dispatcher& dispatcher_;
   Envoy::TimeSource& time_source_;

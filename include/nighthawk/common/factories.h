@@ -9,6 +9,7 @@
 #include "envoy/stats/symbol_table.h"
 #include "envoy/upstream/cluster_manager.h"
 
+#include "nighthawk/common/milestone.h"
 #include "nighthawk/common/platform_util.h"
 #include "nighthawk/common/request_source.h"
 #include "nighthawk/common/sequencer.h"
@@ -24,7 +25,8 @@ public:
                               const SequencerTarget& sequencer_target,
                               TerminationPredicatePtr&& termination_predicate,
                               Envoy::Stats::Scope& scope,
-                              const Envoy::SystemTime scheduled_starting_time) const PURE;
+                              const Envoy::SystemTime scheduled_starting_time,
+                              const MilestoneCallback& milestone_callback) const PURE;
 };
 
 class StatisticFactory {
