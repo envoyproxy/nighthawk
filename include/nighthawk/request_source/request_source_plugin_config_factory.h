@@ -32,7 +32,7 @@ public:
   // @throw Envoy::EnvoyException If the Any proto cannot be unpacked as the type expected by the
   // plugin.
   virtual RequestSourcePtr createRequestSourcePlugin(const Envoy::Protobuf::Message& typed_config,
-                                                     Envoy::Api::ApiPtr api,
+                                                     Envoy::Api::Api& api,
                                                      Envoy::Http::RequestHeaderMapPtr header) PURE;
 };
 

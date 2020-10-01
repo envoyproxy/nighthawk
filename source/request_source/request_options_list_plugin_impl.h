@@ -68,7 +68,7 @@ public:
   // already loaded. The FileBasedRequestSourcePluginConfigFactory will not work with multiple
   // different files for this reason.
   RequestSourcePtr createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
-                                             Envoy::Api::ApiPtr api,
+                                             Envoy::Api::Api& api,
                                              Envoy::Http::RequestHeaderMapPtr header) override;
 
 private:

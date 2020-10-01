@@ -49,7 +49,7 @@ public:
   // This is the primary method that is used to get RequestSources.
   // This implementation is thread safe, but the RequestSource it generates doesn't do much.
   RequestSourcePtr createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
-                                             Envoy::Api::ApiPtr api,
+                                             Envoy::Api::Api& api,
                                              Envoy::Http::RequestHeaderMapPtr header) override;
 };
 

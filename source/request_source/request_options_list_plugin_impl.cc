@@ -20,14 +20,14 @@ FileBasedRequestSourcePluginConfigFactory::createEmptyConfigProto() {
 }
 
 RequestSourcePtr FileBasedRequestSourcePluginConfigFactory::createRequestSourcePlugin(
-    const Envoy::Protobuf::Message& message, Envoy::Api::ApiPtr api,
+    const Envoy::Protobuf::Message& message, Envoy::Api::Api& api,
     Envoy::Http::RequestHeaderMapPtr header) {
   const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
   nighthawk::request_source::FileBasedPluginConfig config;
   Envoy::MessageUtil util;
 
   util.unpackTo(any, config);
-  if (api->fileSystem().fileSize(config.file_path()) > config.max_file_size().value()) {
+  if (api.fileSystem().fileSize(config.file_path()) > config.max_file_size().value()) {
     throw NighthawkException("file size must be less than max_file_size");
   }
 
@@ -37,7 +37,7 @@ RequestSourcePtr FileBasedRequestSourcePluginConfigFactory::createRequestSourceP
     // Reading the file only the first time.
     if (options_list_.options_size() == 0) {
       util.loadFromFile(config.file_path(), options_list_,
-                        Envoy::ProtobufMessage::getStrictValidationVisitor(), *api, true);
+                        Envoy::ProtobufMessage::getStrictValidationVisitor(), api, true);
     }
   }
   return std::make_unique<RequestOptionsListRequestSource>(config.num_requests().value(),

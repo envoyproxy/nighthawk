@@ -20,7 +20,7 @@ Envoy::ProtobufTypes::MessagePtr StubRequestSourcePluginConfigFactory::createEmp
 }
 
 RequestSourcePtr StubRequestSourcePluginConfigFactory::createRequestSourcePlugin(
-    const Envoy::Protobuf::Message& message, Envoy::Api::ApiPtr, Envoy::Http::RequestHeaderMapPtr) {
+    const Envoy::Protobuf::Message& message, Envoy::Api::Api&, Envoy::Http::RequestHeaderMapPtr) {
   const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
   nighthawk::request_source::StubPluginConfig config;
   Envoy::MessageUtil::unpackTo(any, config);
