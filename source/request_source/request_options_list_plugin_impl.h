@@ -18,18 +18,18 @@ namespace Nighthawk {
 
 // Sample Request Source for small RequestOptionsLists. Loads a copy of the RequestOptionsList in
 // memory and replays them.
-// @param request_max The number of requests the requestGenerator produced by get() will generate. 0
+// @param total_requests The number of requests the requestGenerator produced by get() will generate. 0
 // means it is unlimited.
 // @param header the default header that will be overridden by values taken from the options_list,
 // any values not overridden will be used.
 // @param options_list A copy of the options_list will be loaded in memory. The RequestGenerator
 // produced by get() will use options from the options_list to overwrite values in the header, and
-// create new requests. if request_max is greater than the length of options_list, it will loop.
+// create new requests. if total_requests is greater than the length of options_list, it will loop.
 // This is not thread safe.
 class RequestOptionsListRequestSource : public RequestSource {
 public:
   explicit RequestOptionsListRequestSource(
-      const uint32_t request_max, Envoy::Http::RequestHeaderMapPtr header,
+      const uint32_t total_requests, Envoy::Http::RequestHeaderMapPtr header,
       const nighthawk::client::RequestOptionsList& options_list);
   // This get function is not thread safe, because multiple threads calling get simultaneously will
   // result in a collision as it attempts to update its request_count_.
@@ -42,7 +42,7 @@ private:
   Envoy::Http::RequestHeaderMapPtr header_;
   const nighthawk::client::RequestOptionsList& options_list_;
   std::vector<uint32_t> request_count_;
-  const uint32_t request_max_;
+  const uint32_t total_requests_;
 };
 
 // Factory that creates a RequestOptionsListRequestSource from a FileBasedPluginConfig proto.

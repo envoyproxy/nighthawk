@@ -47,17 +47,17 @@ RequestSourcePtr FileBasedRequestSourcePluginConfigFactory::createRequestSourceP
 REGISTER_FACTORY(FileBasedRequestSourcePluginConfigFactory, RequestSourcePluginConfigFactory);
 
 RequestOptionsListRequestSource::RequestOptionsListRequestSource(
-    const uint32_t request_max, Envoy::Http::RequestHeaderMapPtr header,
+    const uint32_t total_requests, Envoy::Http::RequestHeaderMapPtr header,
     const nighthawk::client::RequestOptionsList& options_list)
     : header_(std::move(header)), options_list_(options_list),
-      request_max_(request_max) {}
+      total_requests_(total_requests) {}
 
 RequestGenerator RequestOptionsListRequestSource::get() {
   request_count_.push_back(0);
   uint32_t& lambda_counter = request_count_.back();
   RequestGenerator request_generator = [this, lambda_counter]() mutable -> RequestPtr {
     // if request_max is 0, then we never stop generating requests.
-    if (lambda_counter >= request_max_ && request_max_ != 0) {
+    if (lambda_counter >= total_requests_ && total_requests_ != 0) {
       return nullptr;
     }
 
