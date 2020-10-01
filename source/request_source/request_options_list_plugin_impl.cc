@@ -61,7 +61,7 @@ RequestGenerator RequestOptionsListRequestSource::get() {
     }
 
     // Increment the counter and get the request_option from the list for the current iteration.
-    int index = lambda_counter % options_list_.options_size();
+    const uint32_t index = lambda_counter % options_list_.options_size();
     nighthawk::client::RequestOptions request_option = options_list_.options().at(index);
     ++lambda_counter;
 
