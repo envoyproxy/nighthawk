@@ -30,7 +30,6 @@ RequestSourcePtr FileBasedRequestSourcePluginConfigFactory::createRequestSourceP
   if (api->fileSystem().fileSize(config.file_path()) > config.max_file_size().value()) {
     throw NighthawkException("file size must be less than max_file_size");
   }
-  auto temp_list = std::make_unique<nighthawk::client::RequestOptionsList>();
 
   // Locking to avoid issues with multiple threads reading the same file.
   {
@@ -40,18 +39,17 @@ RequestSourcePtr FileBasedRequestSourcePluginConfigFactory::createRequestSourceP
       util.loadFromFile(config.file_path(), options_list_,
                         Envoy::ProtobufMessage::getStrictValidationVisitor(), *api, true);
     }
-    temp_list->CopyFrom(options_list_);
   }
   return std::make_unique<RequestOptionsListRequestSource>(config.num_requests().value(),
-                                                           std::move(header), std::move(temp_list));
+                                                           std::move(header), options_list_);
 }
 
 REGISTER_FACTORY(FileBasedRequestSourcePluginConfigFactory, RequestSourcePluginConfigFactory);
 
 RequestOptionsListRequestSource::RequestOptionsListRequestSource(
     const uint32_t request_max, Envoy::Http::RequestHeaderMapPtr header,
-    std::unique_ptr<nighthawk::client::RequestOptionsList> options_list)
-    : header_(std::move(header)), options_list_(std::move(options_list)),
+    const nighthawk::client::RequestOptionsList& options_list)
+    : header_(std::move(header)), options_list_(options_list),
       request_max_(request_max) {}
 
 RequestGenerator RequestOptionsListRequestSource::get() {
@@ -64,8 +62,8 @@ RequestGenerator RequestOptionsListRequestSource::get() {
     }
 
     // Increment the counter and get the request_option from the list for the current iteration.
-    int index = lambda_counter % options_list_->options_size();
-    nighthawk::client::RequestOptions request_option = options_list_->options().at(index);
+    int index = lambda_counter % options_list_.options_size();
+    nighthawk::client::RequestOptions request_option = options_list_.options().at(index);
     ++lambda_counter;
 
     // Initialize the header with the values from the default header.

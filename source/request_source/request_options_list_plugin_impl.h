@@ -30,7 +30,7 @@ class RequestOptionsListRequestSource : public RequestSource {
 public:
   explicit RequestOptionsListRequestSource(
       const uint32_t request_max, Envoy::Http::RequestHeaderMapPtr header,
-      std::unique_ptr<nighthawk::client::RequestOptionsList> options_list);
+      const nighthawk::client::RequestOptionsList& options_list);
   // This get function is not thread safe, because multiple threads calling get simultaneously will
   // result in a collision as it attempts to update its request_count_.
   RequestGenerator get() override;
@@ -40,7 +40,7 @@ public:
 
 private:
   Envoy::Http::RequestHeaderMapPtr header_;
-  const std::unique_ptr<nighthawk::client::RequestOptionsList> options_list_;
+  const nighthawk::client::RequestOptionsList& options_list_;
   std::vector<uint32_t> request_count_;
   const uint32_t request_max_;
 };
@@ -73,7 +73,7 @@ public:
 
 private:
   Envoy::Thread::MutexBasicLockable file_lock_;
-  nighthawk::client::RequestOptionsList options_list_ ABSL_GUARDED_BY(file_lock_);
+  nighthawk::client::RequestOptionsList options_list_;
 };
 
 // This factory will be activated through RequestSourceFactory in factories.h
