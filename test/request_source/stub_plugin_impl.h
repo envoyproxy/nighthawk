@@ -15,7 +15,7 @@ namespace Nighthawk {
 // Stub Request Source implementation for comparison.
 class StubRequestSource : public RequestSource {
 public:
-  explicit StubRequestSource(const nighthawk::request_source::StubPluginConfig& config);
+  StubRequestSource(const nighthawk::request_source::StubPluginConfig& config);
   // The generator function will return a header whose only value is the test_value taken from the config.
   // The function is threadsafe.
   RequestGenerator get() override;
@@ -42,11 +42,8 @@ private:
 
 class StubRequestSourcePluginConfigFactory : public virtual RequestSourcePluginConfigFactory {
 public:
-  // This is a hardcoded string.
   std::string name() const override;
-  // This returns an empty version of the expected StubPluginConfig from request_source_plugin.proto
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
-  // This is the primary method that is used to get RequestSources.
   // This implementation is thread safe, but the RequestSource it generates doesn't do much.
   RequestSourcePtr createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
                                              Envoy::Api::Api& api,
