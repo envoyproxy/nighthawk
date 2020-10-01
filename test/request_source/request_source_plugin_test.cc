@@ -6,9 +6,11 @@
 #include "external/envoy/test/test_common/file_system_for_test.h"
 #include "external/envoy/test/test_common/utility.h"
 
+#include "request_source/request_options_list_plugin_impl.h"
+
+#include "test/request_source/stub_plugin_impl.h"
 #include "test/test_common/environment.h"
 
-#include "request_source/request_source_plugin_impl.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -20,14 +22,18 @@ using nighthawk::request_source::StubPluginConfig;
 using ::testing::NiceMock;
 using ::testing::Test;
 
-class DummyRequestSourcePluginTest : public Test {
+class StubRequestSourcePluginTest : public Test {
 public:
+  StubRequestSourcePluginTest() : api_(Envoy::Api::createApiForTest(stats_store_)) {}
   Envoy::Stats::MockIsolatedStatsStore stats_store_;
+  Envoy::Api::ApiPtr api_;
 };
 
 class FileBasedRequestSourcePluginTest : public Test {
 public:
+  FileBasedRequestSourcePluginTest() : api_(Envoy::Api::createApiForTest(stats_store_)) {}
   Envoy::Stats::MockIsolatedStatsStore stats_store_;
+  Envoy::Api::ApiPtr api_;
   nighthawk::request_source::FileBasedPluginConfig
   MakeFileBasedPluginConfigWithTestYaml(absl::string_view request_file) {
     nighthawk::request_source::FileBasedPluginConfig config;
@@ -37,7 +43,7 @@ public:
   }
 };
 
-TEST_F(DummyRequestSourcePluginTest, CreateEmptyConfigProtoCreatesCorrectType) {
+TEST_F(StubRequestSourcePluginTest, CreateEmptyConfigProtoCreatesCorrectType) {
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
           "nighthawk.stub-request-source-plugin");
@@ -47,7 +53,7 @@ TEST_F(DummyRequestSourcePluginTest, CreateEmptyConfigProtoCreatesCorrectType) {
   EXPECT_TRUE(Envoy::MessageUtil()(*empty_config, expected_config));
 }
 
-TEST_F(DummyRequestSourcePluginTest, FactoryRegistrationUsesCorrectPluginName) {
+TEST_F(StubRequestSourcePluginTest, FactoryRegistrationUsesCorrectPluginName) {
   nighthawk::request_source::StubPluginConfig config;
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
@@ -57,20 +63,36 @@ TEST_F(DummyRequestSourcePluginTest, FactoryRegistrationUsesCorrectPluginName) {
   EXPECT_EQ(config_factory.name(), "nighthawk.stub-request-source-plugin");
 }
 
-TEST_F(DummyRequestSourcePluginTest, CreateRequestSourcePluginCreatesCorrectPluginType) {
+TEST_F(StubRequestSourcePluginTest, CreateRequestSourcePluginCreatesCorrectPluginType) {
   nighthawk::request_source::StubPluginConfig config;
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
           "nighthawk.stub-request-source-plugin");
-  auto api = Envoy::Api::createApiForTest(stats_store_);
   auto header = Envoy::Http::RequestHeaderMapImpl::create();
   RequestSourcePtr plugin =
-      config_factory.createRequestSourcePlugin(config_any, std::move(api), std::move(header));
-  EXPECT_NE(dynamic_cast<DummyRequestSource*>(plugin.get()), nullptr);
+      config_factory.createRequestSourcePlugin(config_any, *api_, std::move(header));
+  EXPECT_NE(dynamic_cast<StubRequestSource*>(plugin.get()), nullptr);
 }
-
+TEST_F(StubRequestSourcePluginTest, CreateRequestSourcePluginCreatesWorkingPlugin) {
+  nighthawk::request_source::StubPluginConfig config;
+  double test_value = 2;
+  config.mutable_test_value()->set_value(test_value);
+  Envoy::ProtobufWkt::Any config_any;
+  config_any.PackFrom(config);
+  auto& config_factory =
+      Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
+          "nighthawk.stub-request-source-plugin");
+  auto template_header = Envoy::Http::RequestHeaderMapImpl::create();
+  RequestSourcePtr plugin =
+      config_factory.createRequestSourcePlugin(config_any, *api_, std::move(template_header));
+  Nighthawk::RequestGenerator generator = plugin->get();
+  Nighthawk::RequestPtr request = generator();
+  Nighthawk::HeaderMapPtr header = request->header();
+  EXPECT_EQ(header->get(Envoy::Http::LowerCaseString("test_value"))->value().getStringView(),
+            absl::string_view(std::to_string(test_value)));
+}
 TEST_F(FileBasedRequestSourcePluginTest, CreateEmptyConfigProtoCreatesCorrectType) {
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
@@ -99,10 +121,9 @@ TEST_F(FileBasedRequestSourcePluginTest, CreateRequestSourcePluginCreatesCorrect
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
           "nighthawk.file-based-request-source-plugin");
-  auto api = Envoy::Api::createApiForTest(stats_store_);
   auto header = Envoy::Http::RequestHeaderMapImpl::create();
   RequestSourcePtr plugin =
-      config_factory.createRequestSourcePlugin(config_any, std::move(api), std::move(header));
+      config_factory.createRequestSourcePlugin(config_any, *api_, std::move(header));
   EXPECT_NE(dynamic_cast<RequestOptionsListRequestSource*>(plugin.get()), nullptr);
 }
 
@@ -116,16 +137,15 @@ TEST_F(FileBasedRequestSourcePluginTest,
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
           "nighthawk.file-based-request-source-plugin");
-  auto api = Envoy::Api::createApiForTest(stats_store_);
   auto header = Envoy::Http::RequestHeaderMapImpl::create();
   RequestSourcePtr file_based_request_source =
-      config_factory.createRequestSourcePlugin(config_any, std::move(api), std::move(header));
-  auto generator = file_based_request_source->get();
-  auto request = generator();
-  auto request2 = generator();
-  auto request3 = generator();
-  auto header1 = request->header();
-  auto header2 = request2->header();
+      config_factory.createRequestSourcePlugin(config_any, *api_, std::move(header));
+  Nighthawk::RequestGenerator generator = file_based_request_source->get();
+  Nighthawk::RequestPtr request = generator();
+  Nighthawk::RequestPtr request2 = generator();
+  Nighthawk::RequestPtr request3 = generator();
+  Nighthawk::HeaderMapPtr header1 = request->header();
+  Nighthawk::HeaderMapPtr header2 = request2->header();
   EXPECT_EQ(header1->getPathValue(), "/a");
   EXPECT_EQ(header2->getPathValue(), "/b");
   EXPECT_EQ(request3, nullptr);
@@ -141,17 +161,16 @@ TEST_F(FileBasedRequestSourcePluginTest,
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
           "nighthawk.file-based-request-source-plugin");
-  auto api = Envoy::Api::createApiForTest(stats_store_);
   auto header = Envoy::Http::RequestHeaderMapImpl::create();
   RequestSourcePtr file_based_request_source =
-      config_factory.createRequestSourcePlugin(config_any, std::move(api), std::move(header));
-  auto generator = file_based_request_source->get();
-  auto request = generator();
-  auto request2 = generator();
-  auto request3 = generator();
-  auto header1 = request->header();
-  auto header2 = request2->header();
-  auto header3 = request3->header();
+      config_factory.createRequestSourcePlugin(config_any, *api_, std::move(header));
+  Nighthawk::RequestGenerator generator = file_based_request_source->get();
+  Nighthawk::RequestPtr request = generator();
+  Nighthawk::RequestPtr request2 = generator();
+  Nighthawk::RequestPtr request3 = generator();
+  Nighthawk::HeaderMapPtr header1 = request->header();
+  Nighthawk::HeaderMapPtr header2 = request2->header();
+  Nighthawk::HeaderMapPtr header3 = request3->header();
   EXPECT_EQ(header1->getPathValue(), "/a");
   EXPECT_EQ(header2->getPathValue(), "/b");
   EXPECT_EQ(header3->getPathValue(), "/a");

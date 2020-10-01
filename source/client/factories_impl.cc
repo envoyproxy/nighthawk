@@ -63,10 +63,12 @@ BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
 SequencerFactoryImpl::SequencerFactoryImpl(const Options& options)
     : OptionBasedFactoryImpl(options) {}
 
-SequencerPtr SequencerFactoryImpl::create(
-    Envoy::TimeSource& time_source, Envoy::Event::Dispatcher& dispatcher,
-    const SequencerTarget& sequencer_target, TerminationPredicatePtr&& termination_predicate,
-    Envoy::Stats::Scope& scope, const Envoy::MonotonicTime scheduled_starting_time) const {
+SequencerPtr SequencerFactoryImpl::create(Envoy::TimeSource& time_source,
+                                          Envoy::Event::Dispatcher& dispatcher,
+                                          const SequencerTarget& sequencer_target,
+                                          TerminationPredicatePtr&& termination_predicate,
+                                          Envoy::Stats::Scope& scope,
+                                          const Envoy::SystemTime scheduled_starting_time) const {
   StatisticFactoryImpl statistic_factory(options_);
   Frequency frequency(options_.requestsPerSecond());
   RateLimiterPtr rate_limiter = std::make_unique<ScheduledStartingRateLimiter>(
@@ -87,7 +89,7 @@ SequencerPtr SequencerFactoryImpl::create(
   return std::make_unique<SequencerImpl>(
       platform_util_, dispatcher, time_source, std::move(rate_limiter), sequencer_target,
       statistic_factory.create(), statistic_factory.create(), options_.sequencerIdleStrategy(),
-      std::move(termination_predicate), scope, scheduled_starting_time);
+      std::move(termination_predicate), scope);
 }
 
 StatisticFactoryImpl::StatisticFactoryImpl(const Options& options)
@@ -206,7 +208,7 @@ TerminationPredicateFactoryImpl::TerminationPredicateFactoryImpl(const Options& 
 
 TerminationPredicatePtr
 TerminationPredicateFactoryImpl::create(Envoy::TimeSource& time_source, Envoy::Stats::Scope& scope,
-                                        const Envoy::MonotonicTime scheduled_starting_time) const {
+                                        const Envoy::SystemTime scheduled_starting_time) const {
   // We'll always link a predicate which checks for requests to cancel.
   TerminationPredicatePtr root_predicate =
       std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(

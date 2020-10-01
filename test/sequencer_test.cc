@@ -146,6 +146,9 @@ public:
   MockSequencerTarget* target() { return &target_; }
   TerminationPredicatePtr termination_predicate_;
 
+protected:
+  Envoy::MonotonicTime simulation_start_;
+
 private:
   NiceMock<Envoy::Event::MockTimer>* timer1_; // not owned
   NiceMock<Envoy::Event::MockTimer>* timer2_; // not owned
@@ -155,7 +158,6 @@ private:
   bool timer1_set_{};
   bool timer2_set_{};
   bool stopped_{};
-  Envoy::MonotonicTime simulation_start_;
 };
 
 // Basic rate limiter interaction test.
@@ -165,13 +167,14 @@ TEST_F(SequencerTestWithTimerEmulation, RateLimiterInteraction) {
   SequencerImpl sequencer(platform_util_, *dispatcher_, time_system_, std::move(rate_limiter_),
                           callback, std::make_unique<StreamingStatistic>(),
                           std::make_unique<StreamingStatistic>(), SequencerIdleStrategy::SLEEP,
-                          std::move(termination_predicate_), store_, time_system_.monotonicTime());
+                          std::move(termination_predicate_), store_);
   // Have the mock rate limiter gate two calls, and block everything else.
   EXPECT_CALL(rate_limiter_unsafe_ref_, tryAcquireOne())
       .Times(AtLeast(3))
       .WillOnce(Return(true))
       .WillOnce(Return(true))
       .WillRepeatedly(Return(false));
+  EXPECT_CALL(rate_limiter_unsafe_ref_, elapsed()).Times(2);
   EXPECT_CALL(*target(), callback(_)).Times(2).WillOnce(Return(true)).WillOnce(Return(true));
   expectDispatcherRun();
   EXPECT_CALL(platform_util_, sleep(_)).Times(AtLeast(1));
@@ -186,13 +189,14 @@ TEST_F(SequencerTestWithTimerEmulation, RateLimiterSaturatedTargetInteraction) {
   SequencerImpl sequencer(platform_util_, *dispatcher_, time_system_, std::move(rate_limiter_),
                           callback, std::make_unique<StreamingStatistic>(),
                           std::make_unique<StreamingStatistic>(), SequencerIdleStrategy::SLEEP,
-                          std::move(termination_predicate_), store_, time_system_.monotonicTime());
+                          std::move(termination_predicate_), store_);
 
   EXPECT_CALL(rate_limiter_unsafe_ref_, tryAcquireOne())
       .Times(AtLeast(3))
       .WillOnce(Return(true))
       .WillOnce(Return(true))
       .WillRepeatedly(Return(false));
+  EXPECT_CALL(rate_limiter_unsafe_ref_, elapsed()).Times(2);
 
   EXPECT_CALL(*target(), callback(_)).Times(2).WillOnce(Return(true)).WillOnce(Return(false));
 
@@ -224,10 +228,10 @@ public:
   std::unique_ptr<LinearRateLimiter> rate_limiter_;
 
   void testRegularFlow(SequencerIdleStrategy::SequencerIdleStrategyOptions idle_strategy) {
-    SequencerImpl sequencer(
-        platform_util_, *dispatcher_, time_system_, std::move(rate_limiter_), sequencer_target_,
-        std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
-        idle_strategy, std::move(termination_predicate_), store_, time_system_.monotonicTime());
+    SequencerImpl sequencer(platform_util_, *dispatcher_, time_system_, std::move(rate_limiter_),
+                            sequencer_target_, std::make_unique<StreamingStatistic>(),
+                            std::make_unique<StreamingStatistic>(), idle_strategy,
+                            std::move(termination_predicate_), store_);
     EXPECT_EQ(0, callback_test_count_);
     EXPECT_EQ(0, sequencer.latencyStatistic().count());
     sequencer.start();
@@ -236,6 +240,8 @@ public:
     EXPECT_EQ(test_number_of_intervals_, sequencer.latencyStatistic().count());
     EXPECT_EQ(0, sequencer.blockedStatistic().count());
     EXPECT_EQ(2, sequencer.statistics().size());
+    const auto execution_duration = time_system_.monotonicTime() - simulation_start_;
+    EXPECT_EQ(sequencer.executionDuration(), execution_duration);
   }
 };
 
@@ -265,7 +271,7 @@ TEST_F(SequencerIntegrationTest, AlwaysSaturatedTargetTest) {
   SequencerImpl sequencer(platform_util_, *dispatcher_, time_system_, std::move(rate_limiter_),
                           callback, std::make_unique<StreamingStatistic>(),
                           std::make_unique<StreamingStatistic>(), SequencerIdleStrategy::SLEEP,
-                          std::move(termination_predicate_), store_, time_system_.monotonicTime());
+                          std::move(termination_predicate_), store_);
   EXPECT_CALL(platform_util_, sleep(_)).Times(AtLeast(1));
   sequencer.start();
   sequencer.waitForCompletion();
@@ -283,7 +289,7 @@ TEST_F(SequencerIntegrationTest, CallbacksDoNotInfluenceTestDuration) {
   SequencerImpl sequencer(platform_util_, *dispatcher_, time_system_, std::move(rate_limiter_),
                           callback, std::make_unique<StreamingStatistic>(),
                           std::make_unique<StreamingStatistic>(), SequencerIdleStrategy::SLEEP,
-                          std::move(termination_predicate_), store_, time_system_.monotonicTime());
+                          std::move(termination_predicate_), store_);
   EXPECT_CALL(platform_util_, sleep(_)).Times(AtLeast(1));
   auto pre_timeout = time_system_.monotonicTime();
   sequencer.start();
