@@ -16,15 +16,15 @@ namespace Nighthawk {
 class StubRequestSource : public RequestSource {
 public:
   StubRequestSource(const nighthawk::request_source::StubPluginConfig& config);
-  // The generator function will return a header whose only value is the test_value taken from the config.
-  // The function is threadsafe.
+  // The generator function will return a header whose only value is the test_value taken from the
+  // config. The function is threadsafe.
   RequestGenerator get() override;
 
   // default implementation
   void initOnThread() override;
-private: 
-  const double test_value_;
 
+private:
+  const double test_value_;
 };
 
 // Factory that creates a StubRequestSource from a StubRequestSourcePluginConfig proto.
@@ -52,4 +52,4 @@ public:
 
 // This factory will be activated through RequestSourceFactory in factories.h
 DECLARE_FACTORY(StubRequestSourcePluginConfigFactory);
-}
+} // namespace Nighthawk

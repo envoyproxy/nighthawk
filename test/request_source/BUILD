@@ -30,6 +30,7 @@ envoy_cc_test_library(
         "@envoy//source/exe:platform_impl_lib",
     ],
 )
+
 envoy_cc_test(
     name = "request_source_plugin_test",
     srcs = ["request_source_plugin_test.cc"],
@@ -38,8 +39,8 @@ envoy_cc_test(
     ],
     repository = "@envoy",
     deps = [
-        "//test/request_source:stub_plugin_impl",
         "//source/request_source:request_options_list_plugin_impl",
+        "//test/request_source:stub_plugin_impl",
         "//test/test_common:environment_lib",
         "@envoy//source/common/config:utility_lib_with_external_headers",
         "@envoy//test/mocks/api:api_mocks",

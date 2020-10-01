@@ -1,3 +1,5 @@
+#include "request_source/request_options_list_plugin_impl.h"
+
 #include "external/envoy/source/common/protobuf/message_validator_impl.h"
 #include "external/envoy/source/common/protobuf/utility.h"
 #include "external/envoy/source/exe/platform_impl.h"
@@ -6,8 +8,6 @@
 
 #include "common/request_impl.h"
 #include "common/request_source_impl.h"
-
-#include "request_source/request_options_list_plugin_impl.h"
 
 namespace Nighthawk {
 std::string FileBasedRequestSourcePluginConfigFactory::name() const {
@@ -49,8 +49,7 @@ REGISTER_FACTORY(FileBasedRequestSourcePluginConfigFactory, RequestSourcePluginC
 RequestOptionsListRequestSource::RequestOptionsListRequestSource(
     const uint32_t total_requests, Envoy::Http::RequestHeaderMapPtr header,
     const nighthawk::client::RequestOptionsList& options_list)
-    : header_(std::move(header)), options_list_(options_list),
-      total_requests_(total_requests) {}
+    : header_(std::move(header)), options_list_(options_list), total_requests_(total_requests) {}
 
 RequestGenerator RequestOptionsListRequestSource::get() {
   request_count_.push_back(0);

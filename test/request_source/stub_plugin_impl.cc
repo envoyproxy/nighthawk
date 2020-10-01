@@ -1,3 +1,5 @@
+#include "test/request_source/stub_plugin_impl.h"
+
 #include "external/envoy/source/common/protobuf/message_validator_impl.h"
 #include "external/envoy/source/common/protobuf/utility.h"
 #include "external/envoy/source/exe/platform_impl.h"
@@ -6,8 +8,6 @@
 
 #include "common/request_impl.h"
 #include "common/request_source_impl.h"
-
-#include "test/request_source/stub_plugin_impl.h"
 
 namespace Nighthawk {
 
@@ -29,10 +29,11 @@ RequestSourcePtr StubRequestSourcePluginConfigFactory::createRequestSourcePlugin
 
 REGISTER_FACTORY(StubRequestSourcePluginConfigFactory, RequestSourcePluginConfigFactory);
 
-StubRequestSource::StubRequestSource(const nighthawk::request_source::StubPluginConfig& config) : test_value_{ config.has_test_value() ? config.test_value().value() : 0} {}
+StubRequestSource::StubRequestSource(const nighthawk::request_source::StubPluginConfig& config)
+    : test_value_{config.has_test_value() ? config.test_value().value() : 0} {}
 RequestGenerator StubRequestSource::get() {
 
-  RequestGenerator request_generator = [this] () {
+  RequestGenerator request_generator = [this]() {
     Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
     header->setCopy(Envoy::Http::LowerCaseString("test_value"), std::to_string(test_value_));
     auto returned_request_impl = std::make_unique<RequestImpl>(std::move(header));

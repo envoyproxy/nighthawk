@@ -64,7 +64,6 @@ envoy_basic_cc_library(
     ],
 )
 
-
 envoy_basic_cc_library(
     name = "request_source_lib",
     hdrs = [

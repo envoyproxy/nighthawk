@@ -6,9 +6,9 @@
 #include "external/envoy/test/test_common/file_system_for_test.h"
 #include "external/envoy/test/test_common/utility.h"
 
-#include "test/request_source/stub_plugin_impl.h"
 #include "request_source/request_options_list_plugin_impl.h"
 
+#include "test/request_source/stub_plugin_impl.h"
 #include "test/test_common/environment.h"
 
 #include "gmock/gmock.h"
@@ -90,7 +90,8 @@ TEST_F(StubRequestSourcePluginTest, CreateRequestSourcePluginCreatesWorkingPlugi
   Nighthawk::RequestGenerator generator = plugin->get();
   Nighthawk::RequestPtr request = generator();
   Nighthawk::HeaderMapPtr header = request->header();
-  EXPECT_EQ(header->get(Envoy::Http::LowerCaseString("test_value"))->value().getStringView(), absl::string_view(std::to_string(test_value)));
+  EXPECT_EQ(header->get(Envoy::Http::LowerCaseString("test_value"))->value().getStringView(),
+            absl::string_view(std::to_string(test_value)));
 }
 TEST_F(FileBasedRequestSourcePluginTest, CreateEmptyConfigProtoCreatesCorrectType) {
   auto& config_factory =
@@ -138,7 +139,7 @@ TEST_F(FileBasedRequestSourcePluginTest,
           "nighthawk.file-based-request-source-plugin");
   auto header = Envoy::Http::RequestHeaderMapImpl::create();
   RequestSourcePtr file_based_request_source =
-      config_factory.createRequestSourcePlugin(config_any,*api_, std::move(header));
+      config_factory.createRequestSourcePlugin(config_any, *api_, std::move(header));
   Nighthawk::RequestGenerator generator = file_based_request_source->get();
   Nighthawk::RequestPtr request = generator();
   Nighthawk::RequestPtr request2 = generator();
