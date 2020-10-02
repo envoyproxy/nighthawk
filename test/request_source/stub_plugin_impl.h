@@ -1,4 +1,5 @@
-// Test implementations of RequestSourceConfigFactory and RequestSource that perform minimum functionality for testing purposes.
+// Test implementations of RequestSourceConfigFactory and RequestSource that perform minimum
+// functionality for testing purposes.
 #pragma once
 
 #include "envoy/registry/registry.h"

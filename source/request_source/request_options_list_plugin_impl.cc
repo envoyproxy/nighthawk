@@ -14,8 +14,7 @@ std::string OptionsListFromFileRequestSourceFactory::name() const {
   return "nighthawk.file-based-request-source-plugin";
 }
 
-Envoy::ProtobufTypes::MessagePtr
-OptionsListFromFileRequestSourceFactory::createEmptyConfigProto() {
+Envoy::ProtobufTypes::MessagePtr OptionsListFromFileRequestSourceFactory::createEmptyConfigProto() {
   return std::make_unique<nighthawk::request_source::FileBasedPluginConfig>();
 }
 

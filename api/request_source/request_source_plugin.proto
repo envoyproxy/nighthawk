@@ -30,6 +30,7 @@ message FileBasedPluginConfig {
 // mechanism using a minimal version of plugin that does not require a more complicated proto or
 // file reading.
 message StubPluginConfig {
-  // test input value which is the only output value in the headers produced from the requestGenerator for the StubRequestSource.
+  // test input value which is the only output value in the headers produced from the
+  // requestGenerator for the StubRequestSource.
   google.protobuf.DoubleValue test_value = 1;
 }

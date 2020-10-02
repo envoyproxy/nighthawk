@@ -21,10 +21,10 @@ namespace Nighthawk {
 // generate. 0 means it is unlimited.
 // @param header the default header that will be overridden by values taken from the options_list,
 // any values not overridden will be used.
-// @param options_list This is const because it is intended to be shared by multiple threads. The RequestGenerator
-// produced by get() will use options from the options_list to overwrite values in the default header, and
-// create new requests. if total_requests is greater than the length of options_list, it will loop.
-// This is not thread safe.
+// @param options_list This is const because it is intended to be shared by multiple threads. The
+// RequestGenerator produced by get() will use options from the options_list to overwrite values in
+// the default header, and create new requests. if total_requests is greater than the length of
+// options_list, it will loop. This is not thread safe.
 class RequestOptionsListRequestSource : public RequestSource {
 public:
   RequestOptionsListRequestSource(const uint32_t total_requests,
