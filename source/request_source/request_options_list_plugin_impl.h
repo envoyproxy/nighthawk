@@ -1,4 +1,4 @@
-// Implementations of RequestSourceConfigFactory and the RequestSources that those factories make.
+// Implementations of RequestSourceConfigFactories that make a RequestOptionsListRequestSource.
 #pragma once
 
 #include "envoy/registry/registry.h"
@@ -21,10 +21,10 @@ namespace Nighthawk {
 // generate. 0 means it is unlimited.
 // @param header the default header that will be overridden by values taken from the options_list,
 // any values not overridden will be used.
-// @param options_list A copy of the options_list will be loaded in memory. The RequestGenerator
-// produced by get() will use options from the options_list to overwrite values in the header, and
-// create new requests. if total_requests is greater than the length of options_list, it will loop.
-// This is not thread safe.
+// @param options_list This is const because it is intended to be shared by multiple threads. The
+// RequestGenerator produced by get() will use options from the options_list to overwrite values in
+// the default header, and create new requests. if total_requests is greater than the length of
+// options_list, it will loop. This is not thread safe.
 class RequestOptionsListRequestSource : public RequestSource {
 public:
   RequestOptionsListRequestSource(const uint32_t total_requests,
@@ -49,15 +49,15 @@ private:
 // Registered as an Envoy plugin.
 // Implementation of RequestSourceConfigFactory which produces a RequestSource that keeps an
 // RequestOptionsList in memory, and loads it with the RequestOptions taken from a file. All plugins
-// configuration are specified in the request_source_plugin.proto This class is not thread-safe,
-// because it loads its RequestOptionlist in memory from a file when first called. Usage: assume you
-// are passed an appropriate Any type object called config, an Api object called api, and a default
-// header called header. auto& config_factory =
+// configuration are specified in the request_source_plugin.proto. This class is not thread-safe,
+// because it loads its RequestOptionlist in memory from a file when first called.
+// Usage: assume you are passed an appropriate Any type object called config, an Api object called
+// api, and a default header called header. auto& config_factory =
 //     Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
 //         "nighthawk.file-based-request-source-plugin");
 // RequestSourcePtr plugin =
 //     config_factory.createRequestSourcePlugin(config, std::move(api), std::move(header));
-class FileBasedRequestSourcePluginConfigFactory : public virtual RequestSourcePluginConfigFactory {
+class OptionsListFromFileRequestSourceFactory : public virtual RequestSourcePluginConfigFactory {
 public:
   std::string name() const override;
 
@@ -65,7 +65,7 @@ public:
 
   // This implementation is not thread safe. Only the first call to createRequestSourcePlugin will
   // load the file from memory and subsequent calls just make a copy of the options_list that was
-  // already loaded. The FileBasedRequestSourcePluginConfigFactory will not work with multiple
+  // already loaded. The OptionsListFromFileRequestSourceFactory will not work with multiple
   // different files for this reason.
   // This method will also error if the file can not be loaded correctly, e.g. the file is too large
   // or could not be found.
@@ -79,6 +79,6 @@ private:
 };
 
 // This factory will be activated through RequestSourceFactory in factories.h
-DECLARE_FACTORY(FileBasedRequestSourcePluginConfigFactory);
+DECLARE_FACTORY(OptionsListFromFileRequestSourceFactory);
 
 } // namespace Nighthawk

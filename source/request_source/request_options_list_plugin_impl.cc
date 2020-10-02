@@ -10,16 +10,15 @@
 #include "common/request_source_impl.h"
 
 namespace Nighthawk {
-std::string FileBasedRequestSourcePluginConfigFactory::name() const {
+std::string OptionsListFromFileRequestSourceFactory::name() const {
   return "nighthawk.file-based-request-source-plugin";
 }
 
-Envoy::ProtobufTypes::MessagePtr
-FileBasedRequestSourcePluginConfigFactory::createEmptyConfigProto() {
+Envoy::ProtobufTypes::MessagePtr OptionsListFromFileRequestSourceFactory::createEmptyConfigProto() {
   return std::make_unique<nighthawk::request_source::FileBasedPluginConfig>();
 }
 
-RequestSourcePtr FileBasedRequestSourcePluginConfigFactory::createRequestSourcePlugin(
+RequestSourcePtr OptionsListFromFileRequestSourceFactory::createRequestSourcePlugin(
     const Envoy::Protobuf::Message& message, Envoy::Api::Api& api,
     Envoy::Http::RequestHeaderMapPtr header) {
   const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
@@ -44,7 +43,7 @@ RequestSourcePtr FileBasedRequestSourcePluginConfigFactory::createRequestSourceP
                                                            std::move(header), options_list_);
 }
 
-REGISTER_FACTORY(FileBasedRequestSourcePluginConfigFactory, RequestSourcePluginConfigFactory);
+REGISTER_FACTORY(OptionsListFromFileRequestSourceFactory, RequestSourcePluginConfigFactory);
 
 RequestOptionsListRequestSource::RequestOptionsListRequestSource(
     const uint32_t total_requests, Envoy::Http::RequestHeaderMapPtr header,
@@ -61,7 +60,7 @@ RequestGenerator RequestOptionsListRequestSource::get() {
     }
 
     // Increment the counter and get the request_option from the list for the current iteration.
-    int index = lambda_counter % options_list_.options_size();
+    const uint32_t index = lambda_counter % options_list_.options_size();
     nighthawk::client::RequestOptions request_option = options_list_.options().at(index);
     ++lambda_counter;
 
