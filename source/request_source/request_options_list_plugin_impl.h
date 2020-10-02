@@ -1,4 +1,4 @@
-// Implementations of RequestSourceConfigFactory and the RequestSources that those factories make.
+// Implementations of RequestSourceConfigFactories that make a RequestOptionsListRequestSource.
 #pragma once
 
 #include "envoy/registry/registry.h"
