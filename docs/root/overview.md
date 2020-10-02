@@ -196,4 +196,4 @@ delegate) for all Nighthawk logging messages. Nighthawk utilizes the Envoy's
 logging mechanism by performing all logging via the **ENVOY_LOG** macro. To
 customize this mechanism, users need to perform two steps:
 1. Create a logging sink delegate inherited from [Envoy SinkDelegate](https://github.com/envoyproxy/envoy/blob/master/source/common/common/logger.h).
-2. Constructor a ServiceImpl object with an [Envoy Logger Context](https://github.com/envoyproxy/envoy/blob/master/source/common/common/logger.h) which contains user-specified log level and format.
+2. Construct a ServiceImpl object with an [Envoy Logger Context](https://github.com/envoyproxy/envoy/blob/master/source/common/common/logger.h) which contains user-specified log level and format.
