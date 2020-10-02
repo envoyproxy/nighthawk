@@ -1,5 +1,6 @@
 #pragma once
 
+#include <list>
 #include <random>
 
 #include "envoy/common/time.h"
@@ -124,12 +125,12 @@ public:
    * @param scheduled_starting_time The starting time
    */
   ScheduledStartingRateLimiter(RateLimiterPtr&& rate_limiter,
-                               const Envoy::MonotonicTime scheduled_starting_time);
+                               const Envoy::SystemTime scheduled_starting_time);
   bool tryAcquireOne() override;
   void releaseOne() override;
 
 private:
-  const Envoy::MonotonicTime scheduled_starting_time_;
+  const Envoy::SystemTime scheduled_starting_time_;
   bool aquisition_attempted_{false};
 };
 
@@ -156,7 +157,9 @@ protected:
   const RateLimiterDelegate random_distribution_generator_;
 
 private:
-  absl::optional<Envoy::MonotonicTime> distributed_start_;
+  std::list<Envoy::MonotonicTime> distributed_timings_;
+  // Used to enforce that releaseOne() is always paired with a successfull tryAcquireOne().
+  bool sanity_check_pending_release_{true};
 };
 
 class UniformRandomDistributionSamplerImpl : public DiscreteNumericDistributionSampler {

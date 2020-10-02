@@ -21,9 +21,9 @@ public:
   CachedTimeSourceImpl(Envoy::Event::Dispatcher& dispatcher) : dispatcher_(dispatcher) {}
 
   /**
-   * Calling this will trigger an assert.
+   * @return Envoy::SystemTime current system time.
    */
-  Envoy::SystemTime systemTime() override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; };
+  Envoy::SystemTime systemTime() override { return dispatcher_.timeSource().systemTime(); };
 
   /**
    * @return Envoy::MonotonicTime cached monotonic time.
