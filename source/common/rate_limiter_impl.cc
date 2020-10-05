@@ -53,16 +53,16 @@ void BurstingRateLimiter::releaseOne() {
 }
 
 ScheduledStartingRateLimiter::ScheduledStartingRateLimiter(
-    RateLimiterPtr&& rate_limiter, const Envoy::MonotonicTime scheduled_starting_time)
+    RateLimiterPtr&& rate_limiter, const Envoy::SystemTime scheduled_starting_time)
     : ForwardingRateLimiterImpl(std::move(rate_limiter)),
       scheduled_starting_time_(scheduled_starting_time) {
-  if (timeSource().monotonicTime() >= scheduled_starting_time_) {
+  if (timeSource().systemTime() >= scheduled_starting_time_) {
     ENVOY_LOG(error, "Scheduled starting time exceeded. This may cause unintended bursty traffic.");
   }
 }
 
 bool ScheduledStartingRateLimiter::tryAcquireOne() {
-  if (timeSource().monotonicTime() < scheduled_starting_time_) {
+  if (timeSource().systemTime() < scheduled_starting_time_) {
     aquisition_attempted_ = true;
     return false;
   }
@@ -76,7 +76,7 @@ bool ScheduledStartingRateLimiter::tryAcquireOne() {
 }
 
 void ScheduledStartingRateLimiter::releaseOne() {
-  if (timeSource().monotonicTime() < scheduled_starting_time_) {
+  if (timeSource().systemTime() < scheduled_starting_time_) {
     throw NighthawkException("Unexpected call to releaseOne()");
   }
   return rate_limiter_->releaseOne();
@@ -156,14 +156,19 @@ DelegatingRateLimiterImpl::DelegatingRateLimiterImpl(
       random_distribution_generator_(std::move(random_distribution_generator)) {}
 
 bool DelegatingRateLimiterImpl::tryAcquireOne() {
-  if (distributed_start_ == absl::nullopt) {
-    if (rate_limiter_->tryAcquireOne()) {
-      distributed_start_ = timeSource().monotonicTime() + random_distribution_generator_();
-    }
+  const Envoy::MonotonicTime now = timeSource().monotonicTime();
+  if (rate_limiter_->tryAcquireOne()) {
+    const Envoy::MonotonicTime adjusted = now + random_distribution_generator_();
+    // We track a sorted list of timings, where the one at the front is the one that should
+    // be applied the soonest.
+    distributed_timings_.insert(
+        std::upper_bound(distributed_timings_.begin(), distributed_timings_.end(), adjusted),
+        adjusted);
   }
 
-  if (distributed_start_ != absl::nullopt && distributed_start_ <= timeSource().monotonicTime()) {
-    distributed_start_ = absl::nullopt;
+  if (!distributed_timings_.empty() && distributed_timings_.front() <= now) {
+    distributed_timings_.pop_front();
+    sanity_check_pending_release_ = false;
     return true;
   }
 
@@ -171,7 +176,9 @@ bool DelegatingRateLimiterImpl::tryAcquireOne() {
 }
 
 void DelegatingRateLimiterImpl::releaseOne() {
-  distributed_start_ = absl::nullopt;
+  RELEASE_ASSERT(!sanity_check_pending_release_,
+                 "unexpected call to DelegatingRateLimiterImpl::releaseOne()");
+  sanity_check_pending_release_ = true;
   rate_limiter_->releaseOne();
 }
 
