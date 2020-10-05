@@ -1,0 +1,13 @@
+options:
+  - request_body_size: 10
+    request_headers:
+      - { header: { key: ":path", value: "/a" } }
+      - { header: { key: "foo", value: "bar" } }
+      - { header: { key: "foo", value: "bar2" } }
+      - { header: { key: "x-nh", value: "1" } }
+  - request_body_size: 10
+    request_headers:
+      - { header: { key: ":path", value: "/b" } }
+      - { header: { key: "bar", value: "foo" } }
+      - { header: { key: "bar", value: "foo2" } }
+      - { header: { key: "x-nh", value: "2" } }  
