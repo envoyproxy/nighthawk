@@ -72,7 +72,7 @@ public:
       const Envoy::Network::TransportSocketOptionsSharedPtr& transport_socket_options) override {
     if (protocol == Envoy::Http::Protocol::Http11 || protocol == Envoy::Http::Protocol::Http10) {
       auto* h1_pool =
-          new Http1PoolImpl(dispatcher, host, priority, options, transport_socket_options);
+          new Http1PoolImpl(dispatcher, random_, host, priority, options, transport_socket_options);
       h1_pool->setConnectionReuseStrategy(connection_reuse_strategy_);
       h1_pool->setPrefetchConnections(prefetch_connections_);
       return Envoy::Http::ConnectionPool::InstancePtr{h1_pool};
@@ -100,7 +100,8 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
                                             : process_wide),
       time_system_(time_system), stats_allocator_(symbol_table_), store_root_(stats_allocator_),
       api_(std::make_unique<Envoy::Api::Impl>(platform_impl_.threadFactory(), store_root_,
-                                              time_system_, platform_impl_.fileSystem())),
+                                              time_system_, platform_impl_.fileSystem(),
+                                              generator_)),
       dispatcher_(api_->allocateDispatcher("main_thread")), benchmark_client_factory_(options),
       termination_predicate_factory_(options), sequencer_factory_(options),
       request_generator_factory_(options), options_(options), init_manager_("nh_init_manager"),
