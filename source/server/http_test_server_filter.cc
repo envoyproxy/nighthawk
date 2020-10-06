@@ -41,7 +41,8 @@ HttpTestServerDecoderFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& header
   config_->computeEffectiveConfiguration(headers);
   if (end_stream) {
     if (!config_->maybeSendErrorReply(*decoder_callbacks_)) {
-      const auto effective_config = config_->getEffectiveConfiguration();
+      const absl::StatusOr<EffectiveFilterConfigurationPtr> effective_config =
+          config_->getEffectiveConfiguration();
       if (effective_config.value()->echo_request_headers()) {
         std::stringstream headers_dump;
         headers_dump << "\nRequest Headers:\n" << headers;

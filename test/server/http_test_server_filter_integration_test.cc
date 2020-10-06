@@ -9,10 +9,11 @@
 #include "gtest/gtest.h"
 
 namespace Nighthawk {
+namespace {
 
 using namespace testing;
 
-const std::string kDefaultProto = R"EOF(
+constexpr absl::string_view kDefaultProto = R"EOF(
 name: test-server
 typed_config:
   "@type": type.googleapis.com/nighthawk.server.ResponseOptions
@@ -21,7 +22,7 @@ typed_config:
   - { header: { key: "x-supplied-by", value: "nighthawk-test-server"} }
 )EOF";
 
-const std::string kNoConfigProto = R"EOF(
+constexpr absl::string_view kNoConfigProto = R"EOF(
 name: test-server
 )EOF";
 
@@ -248,4 +249,5 @@ TEST(HttpTestServerDecoderFilterTest, HeaderMerge) {
   EXPECT_EQ(3, options.response_headers_size());
 }
 
+} // namespace
 } // namespace Nighthawk
