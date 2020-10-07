@@ -45,6 +45,38 @@ RequestSourcePtr OptionsListFromFileRequestSourceFactory::createRequestSourcePlu
 
 REGISTER_FACTORY(OptionsListFromFileRequestSourceFactory, RequestSourcePluginConfigFactory);
 
+
+std::string OptionsListFromProtoRequestSourceFactory::name() const {
+  return "nighthawk.in-line-options-list-request-source-plugin";
+}
+
+Envoy::ProtobufTypes::MessagePtr
+OptionsListFromProtoRequestSourceFactory::createEmptyConfigProto() {
+  return std::make_unique<nighthawk::request_source::InLinePluginConfig>();
+}
+
+RequestSourcePtr OptionsListFromProtoRequestSourceFactory::createRequestSourcePlugin(
+    const Envoy::Protobuf::Message& message, Envoy::Api::Api&,
+    Envoy::Http::RequestHeaderMapPtr header) {
+  const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
+  nighthawk::request_source::InLinePluginConfig config;
+  Envoy::MessageUtil::unpackTo(any, config);  
+  // Locking to avoid issues with multiple threads calling this at the same time and trying to set the options_list_
+  {
+    Envoy::Thread::LockGuard lock_guard(options_list_lock_);
+    //Only loading the config into memory the first time.
+    if (options_list_.options_size() == 0) {
+      options_list_ = config.options_list();
+    }
+  }
+  return std::make_unique<RequestOptionsListRequestSource>(config.num_requests().value(),
+                                                           std::move(header), options_list_);
+}
+
+REGISTER_FACTORY(OptionsListFromProtoRequestSourceFactory,
+                 RequestSourcePluginConfigFactory);
+
+
 RequestOptionsListRequestSource::RequestOptionsListRequestSource(
     const uint32_t total_requests, Envoy::Http::RequestHeaderMapPtr header,
     const nighthawk::client::RequestOptionsList& options_list)
@@ -72,7 +104,7 @@ RequestGenerator RequestOptionsListRequestSource::get() {
     header->setMethod(envoy::config::core::v3::RequestMethod_Name(request_option.request_method()));
     const uint32_t content_length = request_option.request_body_size().value();
     if (content_length > 0) {
-      header->setContentLength(content_length);
+      header->setContentLength(content_length); //Content length is used later in stream_decoder to populate the body
     }
     for (const envoy::config::core::v3::HeaderValueOption& option_header :
          request_option.request_headers()) {
@@ -85,5 +117,6 @@ RequestGenerator RequestOptionsListRequestSource::get() {
 }
 
 void RequestOptionsListRequestSource::initOnThread() {}
+
 
 } // namespace Nighthawk

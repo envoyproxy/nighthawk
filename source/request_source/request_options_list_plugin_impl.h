@@ -81,4 +81,38 @@ private:
 // This factory will be activated through RequestSourceFactory in factories.h
 DECLARE_FACTORY(OptionsListFromFileRequestSourceFactory);
 
+// Factory that creates a RequestOptionsListRequestSource from a InLinePluginConfig proto.
+// Registered as an Envoy plugin.
+// Implementation of RequestSourceConfigFactory which produces a RequestSource that keeps an
+// RequestOptionsList in memory, and loads it with the RequestOptions passed to it from the config. All plugins
+// configuration are specified in the request_source_plugin.proto.
+// Usage: assume you are passed an appropriate Any type object called config, an Api object called
+// api, and a default header called header. auto& config_factory =
+//     Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
+//         "nighthawk.in-line-options-list-request-source-plugin");
+// RequestSourcePtr plugin =
+//     config_factory.createRequestSourcePlugin(config, std::move(api), std::move(header));
+
+class OptionsListFromProtoRequestSourceFactory
+    : public virtual RequestSourcePluginConfigFactory {
+public:
+  std::string name() const override;
+  Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
+
+  // This implementation is not thread safe. Only the first call to createRequestSourcePlugin will
+  // load the options list into memory and subsequent calls just make a copy of the options_list that was
+  // already loaded. 
+  RequestSourcePtr createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
+                                             Envoy::Api::Api& api,
+                                             Envoy::Http::RequestHeaderMapPtr header) override;
+  private:
+    Envoy::Thread::MutexBasicLockable options_list_lock_;
+    nighthawk::client::RequestOptionsList options_list_;
+
+};
+
+// This factory will be activated through RequestSourceFactory in factories.h
+DECLARE_FACTORY(OptionsListFromProtoRequestSourceFactory);
+
+
 } // namespace Nighthawk
