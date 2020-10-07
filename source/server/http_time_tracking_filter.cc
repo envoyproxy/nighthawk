@@ -47,7 +47,8 @@ Envoy::Http::FilterDataStatus HttpTimeTrackingFilter::decodeData(Envoy::Buffer::
 
 Envoy::Http::FilterHeadersStatus
 HttpTimeTrackingFilter::encodeHeaders(Envoy::Http::ResponseHeaderMap& response_headers, bool) {
-  const auto effective_config = config_->getEffectiveConfiguration();
+  const absl::StatusOr<EffectiveFilterConfigurationPtr> effective_config =
+      config_->getEffectiveConfiguration();
   if (effective_config.ok()) {
     const std::string previous_request_delta_in_response_header =
         effective_config.value()->emit_previous_request_delta_in_response_header();

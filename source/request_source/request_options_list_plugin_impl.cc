@@ -118,5 +118,4 @@ RequestGenerator RequestOptionsListRequestSource::get() {
 
 void RequestOptionsListRequestSource::initOnThread() {}
 
-
 } // namespace Nighthawk
