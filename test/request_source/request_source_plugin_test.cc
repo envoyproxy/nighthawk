@@ -52,7 +52,7 @@ public:
   nighthawk::request_source::InLinePluginConfig
   MakeInLinePluginConfig(nighthawk::client::RequestOptionsList options_list, int num_requests) {
     nighthawk::request_source::InLinePluginConfig config;
-    *config.mutable_options_list() = options_list;
+    *config.mutable_options_list() = std::move(options_list);
     config.mutable_num_requests()->set_value(num_requests);
     return config;
   }
