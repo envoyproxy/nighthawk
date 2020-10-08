@@ -27,9 +27,8 @@ namespace Nighthawk {
 // options_list, it will loop. This is not thread safe.
 class OptionsListRequestSource : public RequestSource {
 public:
-  OptionsListRequestSource(const uint32_t total_requests,
-                                  Envoy::Http::RequestHeaderMapPtr header,
-                                  const nighthawk::client::RequestOptionsList& options_list);
+  OptionsListRequestSource(const uint32_t total_requests, Envoy::Http::RequestHeaderMapPtr header,
+                           const nighthawk::client::RequestOptionsList& options_list);
 
   // This get function is not thread safe, because multiple threads calling get simultaneously will
   // result in a collision as it attempts to update its request_count_.
@@ -63,12 +62,11 @@ public:
 
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
 
-  // This implementation is not thread safe. There is a race condition because only the first call to createRequestSourcePlugin will
-  // load the file from memory and subsequent calls just make a copy of the options_list that was
-  // already loaded. The OptionsListFromFileRequestSourceFactory will not work with multiple
-  // different files for this reason.
-  // This method will also error if the file can not be loaded correctly, e.g. the file is too large
-  // or could not be found.
+  // This implementation is not thread safe. There is a race condition because only the first call
+  // to createRequestSourcePlugin will load the file from memory and subsequent calls just make a
+  // copy of the options_list that was already loaded. The OptionsListFromFileRequestSourceFactory
+  // will not work with multiple different files for this reason. This method will also error if the
+  // file can not be loaded correctly, e.g. the file is too large or could not be found.
   RequestSourcePtr createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
                                              Envoy::Api::Api& api,
                                              Envoy::Http::RequestHeaderMapPtr header) override;
@@ -98,9 +96,9 @@ public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
 
-  // This implementation is not thread safe. There is a race condition because only the first call to createRequestSourcePlugin will
-  // load the options list into memory and subsequent calls just make a copy of the options_list
-  // that was already loaded.
+  // This implementation is not thread safe. There is a race condition because only the first call
+  // to createRequestSourcePlugin will load the options list into memory and subsequent calls just
+  // make a copy of the options_list that was already loaded.
   RequestSourcePtr createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
                                              Envoy::Api::Api& api,
                                              Envoy::Http::RequestHeaderMapPtr header) override;

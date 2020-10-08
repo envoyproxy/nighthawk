@@ -38,11 +38,11 @@ RequestSourcePtr OptionsListFromFileRequestSourceFactory::createRequestSourcePlu
       nighthawk::client::RequestOptionsList loaded_list;
       util.loadFromFile(config.file_path(), loaded_list,
                         Envoy::ProtobufMessage::getStrictValidationVisitor(), api, true);
-      options_list_=loaded_list;                  
+      options_list_ = loaded_list;
     }
   }
   return std::make_unique<OptionsListRequestSource>(config.num_requests().value(),
-                                                           std::move(header), options_list_.value());
+                                                    std::move(header), options_list_.value());
 }
 
 REGISTER_FACTORY(OptionsListFromFileRequestSourceFactory, RequestSourcePluginConfigFactory);
@@ -72,7 +72,7 @@ RequestSourcePtr OptionsListFromProtoRequestSourceFactory::createRequestSourcePl
     }
   }
   return std::make_unique<OptionsListRequestSource>(config.num_requests().value(),
-                                                           std::move(header), options_list_.value());
+                                                    std::move(header), options_list_.value());
 }
 
 REGISTER_FACTORY(OptionsListFromProtoRequestSourceFactory, RequestSourcePluginConfigFactory);

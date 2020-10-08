@@ -17,7 +17,8 @@ message FileBasedPluginConfig {
   string file_path = 1;
   // The pluginfactory makes requestSources that will generate requests from the RequestOptionList
   // up to num_requests number of times. If num_requests exceeds the number of RequestOptions in the
-  // RequestOptionList located in the file at file_path, it will loop. num_requests = 0 means it will loop indefinitely, though it will still terminate by normal mechanisms.
+  // RequestOptionList located in the file at file_path, it will loop. num_requests = 0 means it
+  // will loop indefinitely, though it will still terminate by normal mechanisms.
   google.protobuf.UInt32Value num_requests = 2 [(validate.rules).uint32 = {gte: 0, lte: 1000000}];
   // The pluginfactory will load the file located in file_path as long as it is below max_file_size,
   // if it's too large it will throw an error.
@@ -31,7 +32,8 @@ message InLinePluginConfig {
   nighthawk.client.RequestOptionsList options_list = 1;
   // The pluginfactory makes requestSources that will generate requests from the RequestOptionList
   // up to num_requests number of times. If num_requests exceeds the number of RequestOptions in the
-  // options_list, it will loop. num_requests = 0 means it will loop indefinitely, though it will still terminate by normal mechanisms.
+  // options_list, it will loop. num_requests = 0 means it will loop indefinitely, though it will
+  // still terminate by normal mechanisms.
   google.protobuf.UInt32Value num_requests = 2 [(validate.rules).uint32 = {gte: 0, lte: 1000000}];
 }
 
