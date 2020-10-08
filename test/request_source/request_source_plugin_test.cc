@@ -158,6 +158,9 @@ TEST_F(FileBasedRequestSourcePluginTest,
   Nighthawk::RequestPtr request1 = generator();
   Nighthawk::RequestPtr request2 = generator();
   Nighthawk::RequestPtr request3 = generator();
+  ASSERT_NE(request1, nullptr);
+  ASSERT_NE(request2, nullptr);
+
   Nighthawk::HeaderMapPtr header1 = request1->header();
   Nighthawk::HeaderMapPtr header2 = request2->header();
   EXPECT_EQ(header1->getPathValue(), "/a");
@@ -181,6 +184,10 @@ TEST_F(FileBasedRequestSourcePluginTest,
   Nighthawk::RequestPtr request1 = generator();
   Nighthawk::RequestPtr request2 = generator();
   Nighthawk::RequestPtr request3 = generator();
+  ASSERT_NE(request1, nullptr);
+  ASSERT_NE(request2, nullptr);
+  ASSERT_NE(request3, nullptr);
+
   Nighthawk::HeaderMapPtr header1 = request1->header();
   Nighthawk::HeaderMapPtr header2 = request2->header();
   Nighthawk::HeaderMapPtr header3 = request3->header();
@@ -247,6 +254,9 @@ TEST_F(InLineRequestSourcePluginTest,
   Nighthawk::RequestPtr request1 = generator();
   Nighthawk::RequestPtr request2 = generator();
   Nighthawk::RequestPtr request3 = generator();
+  ASSERT_NE(request1, nullptr);
+  ASSERT_NE(request2, nullptr);
+  
   Nighthawk::HeaderMapPtr header1 = request1->header();
   Nighthawk::HeaderMapPtr header2 = request2->header();
   EXPECT_EQ(header1->getPathValue(), "/a");
@@ -274,6 +284,10 @@ TEST_F(InLineRequestSourcePluginTest,
   Nighthawk::RequestPtr request1 = generator();
   Nighthawk::RequestPtr request2 = generator();
   Nighthawk::RequestPtr request3 = generator();
+  ASSERT_NE(request1, nullptr);
+  ASSERT_NE(request2, nullptr);
+  ASSERT_NE(request3, nullptr);
+
   Nighthawk::HeaderMapPtr header1 = request1->header();
   Nighthawk::HeaderMapPtr header2 = request2->header();
   Nighthawk::HeaderMapPtr header3 = request3->header();
