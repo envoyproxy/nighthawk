@@ -155,10 +155,10 @@ TEST_F(FileBasedRequestSourcePluginTest,
   RequestSourcePtr file_based_request_source =
       config_factory.createRequestSourcePlugin(config_any, *api_, std::move(header));
   Nighthawk::RequestGenerator generator = file_based_request_source->get();
-  Nighthawk::RequestPtr request = generator();
+  Nighthawk::RequestPtr request1 = generator();
   Nighthawk::RequestPtr request2 = generator();
   Nighthawk::RequestPtr request3 = generator();
-  Nighthawk::HeaderMapPtr header1 = request->header();
+  Nighthawk::HeaderMapPtr header1 = request1->header();
   Nighthawk::HeaderMapPtr header2 = request2->header();
   EXPECT_EQ(header1->getPathValue(), "/a");
   EXPECT_EQ(header2->getPathValue(), "/b");
@@ -178,10 +178,10 @@ TEST_F(FileBasedRequestSourcePluginTest,
   RequestSourcePtr file_based_request_source =
       config_factory.createRequestSourcePlugin(config_any, *api_, std::move(header));
   Nighthawk::RequestGenerator generator = file_based_request_source->get();
-  Nighthawk::RequestPtr request = generator();
+  Nighthawk::RequestPtr request1 = generator();
   Nighthawk::RequestPtr request2 = generator();
   Nighthawk::RequestPtr request3 = generator();
-  Nighthawk::HeaderMapPtr header1 = request->header();
+  Nighthawk::HeaderMapPtr header1 = request1->header();
   Nighthawk::HeaderMapPtr header2 = request2->header();
   Nighthawk::HeaderMapPtr header3 = request3->header();
   EXPECT_EQ(header1->getPathValue(), "/a");
@@ -244,10 +244,10 @@ TEST_F(InLineRequestSourcePluginTest,
   RequestSourcePtr plugin =
       config_factory.createRequestSourcePlugin(config_any, *api_, std::move(header));
   Nighthawk::RequestGenerator generator = plugin->get();
-  Nighthawk::RequestPtr request = generator();
+  Nighthawk::RequestPtr request1 = generator();
   Nighthawk::RequestPtr request2 = generator();
   Nighthawk::RequestPtr request3 = generator();
-  Nighthawk::HeaderMapPtr header1 = request->header();
+  Nighthawk::HeaderMapPtr header1 = request1->header();
   Nighthawk::HeaderMapPtr header2 = request2->header();
   EXPECT_EQ(header1->getPathValue(), "/a");
   EXPECT_EQ(header2->getPathValue(), "/b");
@@ -271,10 +271,10 @@ TEST_F(InLineRequestSourcePluginTest,
   RequestSourcePtr plugin =
       config_factory.createRequestSourcePlugin(config_any, *api_, std::move(header));
   Nighthawk::RequestGenerator generator = plugin->get();
-  Nighthawk::RequestPtr request = generator();
+  Nighthawk::RequestPtr request1 = generator();
   Nighthawk::RequestPtr request2 = generator();
   Nighthawk::RequestPtr request3 = generator();
-  Nighthawk::HeaderMapPtr header1 = request->header();
+  Nighthawk::HeaderMapPtr header1 = request1->header();
   Nighthawk::HeaderMapPtr header2 = request2->header();
   Nighthawk::HeaderMapPtr header3 = request3->header();
   EXPECT_EQ(header1->getPathValue(), "/a");
