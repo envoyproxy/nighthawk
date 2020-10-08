@@ -166,7 +166,7 @@ TEST_F(FileBasedRequestSourcePluginTest,
 }
 
 TEST_F(FileBasedRequestSourcePluginTest,
-       CreateRequestSourcePluginWithMoreNumRequestsThanInFileGetsWorkingRequestGeneratorThatLoops) {
+       CreateRequestSourcePluginWithMoreNumRequestsThanInFileGetsRequestGeneratorThatLoops) {
   nighthawk::request_source::FileBasedPluginConfig config = MakeFileBasedPluginConfigWithTestYaml(
       TestEnvironment::runfilesPath("test/request_source/test_data/test-config.yaml"));
   Envoy::ProtobufWkt::Any config_any;
@@ -255,7 +255,7 @@ TEST_F(InLineRequestSourcePluginTest,
 }
 
 TEST_F(InLineRequestSourcePluginTest,
-       CreateRequestSourcePluginWithMoreNumRequestsThanInFileGetsWorkingRequestGeneratorThatLoops) {
+       CreateRequestSourcePluginWithMoreNumRequestsThanInListGetsRequestGeneratorThatLoops) {
   Envoy::MessageUtil util;
   nighthawk::client::RequestOptionsList options_list;
   util.loadFromFile(TestEnvironment::runfilesPath("test/request_source/test_data/test-config.yaml"),
