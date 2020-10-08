@@ -226,6 +226,7 @@ TEST_F(InLineRequestSourcePluginTest, CreateRequestSourcePluginCreatesCorrectPlu
       config_factory.createRequestSourcePlugin(config_any, *api_, std::move(header));
   EXPECT_NE(dynamic_cast<OptionsListRequestSource*>(plugin.get()), nullptr);
 }
+
 TEST_F(InLineRequestSourcePluginTest,
        CreateRequestSourcePluginGetsWorkingRequestGeneratorThatEndsAtNumRequest) {
   Envoy::MessageUtil util;
@@ -252,6 +253,7 @@ TEST_F(InLineRequestSourcePluginTest,
   EXPECT_EQ(header2->getPathValue(), "/b");
   EXPECT_EQ(request3, nullptr);
 }
+
 TEST_F(InLineRequestSourcePluginTest,
        CreateRequestSourcePluginWithMoreNumRequestsThanInFileGetsWorkingRequestGeneratorThatLoops) {
   Envoy::MessageUtil util;
