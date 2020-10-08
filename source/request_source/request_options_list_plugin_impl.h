@@ -1,4 +1,4 @@
-// Implementations of RequestSourceConfigFactories that make a RequestOptionsListRequestSource.
+// Implementations of RequestSourceConfigFactories that make a OptionsListRequestSource.
 #pragma once
 
 #include "envoy/registry/registry.h"
@@ -25,9 +25,9 @@ namespace Nighthawk {
 // RequestGenerator produced by get() will use options from the options_list to overwrite values in
 // the default header, and create new requests. if total_requests is greater than the length of
 // options_list, it will loop. This is not thread safe.
-class RequestOptionsListRequestSource : public RequestSource {
+class OptionsListRequestSource : public RequestSource {
 public:
-  RequestOptionsListRequestSource(const uint32_t total_requests,
+  OptionsListRequestSource(const uint32_t total_requests,
                                   Envoy::Http::RequestHeaderMapPtr header,
                                   const nighthawk::client::RequestOptionsList& options_list);
 
@@ -45,7 +45,7 @@ private:
   const uint32_t total_requests_;
 };
 
-// Factory that creates a RequestOptionsListRequestSource from a FileBasedPluginConfig proto.
+// Factory that creates a OptionsListRequestSource from a FileBasedPluginConfig proto.
 // Registered as an Envoy plugin.
 // Implementation of RequestSourceConfigFactory which produces a RequestSource that keeps an
 // RequestOptionsList in memory, and loads it with the RequestOptions taken from a file. All plugins
@@ -63,7 +63,7 @@ public:
 
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
 
-  // This implementation is not thread safe. Only the first call to createRequestSourcePlugin will
+  // This implementation is not thread safe. There is a race condition because only the first call to createRequestSourcePlugin will
   // load the file from memory and subsequent calls just make a copy of the options_list that was
   // already loaded. The OptionsListFromFileRequestSourceFactory will not work with multiple
   // different files for this reason.
@@ -75,13 +75,13 @@ public:
 
 private:
   Envoy::Thread::MutexBasicLockable file_lock_;
-  nighthawk::client::RequestOptionsList options_list_;
+  absl::optional<nighthawk::client::RequestOptionsList> options_list_;
 };
 
 // This factory will be activated through RequestSourceFactory in factories.h
 DECLARE_FACTORY(OptionsListFromFileRequestSourceFactory);
 
-// Factory that creates a RequestOptionsListRequestSource from a InLinePluginConfig proto.
+// Factory that creates a OptionsListRequestSource from a InLinePluginConfig proto.
 // Registered as an Envoy plugin.
 // Implementation of RequestSourceConfigFactory which produces a RequestSource that keeps an
 // RequestOptionsList in memory, and loads it with the RequestOptions passed to it from the config.
@@ -98,7 +98,7 @@ public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
 
-  // This implementation is not thread safe. Only the first call to createRequestSourcePlugin will
+  // This implementation is not thread safe. There is a race condition because only the first call to createRequestSourcePlugin will
   // load the options list into memory and subsequent calls just make a copy of the options_list
   // that was already loaded.
   RequestSourcePtr createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
@@ -107,7 +107,7 @@ public:
 
 private:
   Envoy::Thread::MutexBasicLockable options_list_lock_;
-  nighthawk::client::RequestOptionsList options_list_;
+  absl::optional<nighthawk::client::RequestOptionsList> options_list_;
 };
 
 // This factory will be activated through RequestSourceFactory in factories.h

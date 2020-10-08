@@ -34,13 +34,15 @@ RequestSourcePtr OptionsListFromFileRequestSourceFactory::createRequestSourcePlu
   {
     Envoy::Thread::LockGuard lock_guard(file_lock_);
     // Reading the file only the first time.
-    if (options_list_.options_size() == 0) {
-      util.loadFromFile(config.file_path(), options_list_,
+    if (!options_list_.has_value()) {
+      nighthawk::client::RequestOptionsList loaded_list;
+      util.loadFromFile(config.file_path(), loaded_list,
                         Envoy::ProtobufMessage::getStrictValidationVisitor(), api, true);
+      options_list_=loaded_list;                  
     }
   }
-  return std::make_unique<RequestOptionsListRequestSource>(config.num_requests().value(),
-                                                           std::move(header), options_list_);
+  return std::make_unique<OptionsListRequestSource>(config.num_requests().value(),
+                                                           std::move(header), options_list_.value());
 }
 
 REGISTER_FACTORY(OptionsListFromFileRequestSourceFactory, RequestSourcePluginConfigFactory);
@@ -65,22 +67,22 @@ RequestSourcePtr OptionsListFromProtoRequestSourceFactory::createRequestSourcePl
   {
     Envoy::Thread::LockGuard lock_guard(options_list_lock_);
     // Only loading the config into memory the first time.
-    if (options_list_.options_size() == 0) {
+    if (!options_list_.has_value()) {
       options_list_ = config.options_list();
     }
   }
-  return std::make_unique<RequestOptionsListRequestSource>(config.num_requests().value(),
-                                                           std::move(header), options_list_);
+  return std::make_unique<OptionsListRequestSource>(config.num_requests().value(),
+                                                           std::move(header), options_list_.value());
 }
 
 REGISTER_FACTORY(OptionsListFromProtoRequestSourceFactory, RequestSourcePluginConfigFactory);
 
-RequestOptionsListRequestSource::RequestOptionsListRequestSource(
+OptionsListRequestSource::OptionsListRequestSource(
     const uint32_t total_requests, Envoy::Http::RequestHeaderMapPtr header,
     const nighthawk::client::RequestOptionsList& options_list)
     : header_(std::move(header)), options_list_(options_list), total_requests_(total_requests) {}
 
-RequestGenerator RequestOptionsListRequestSource::get() {
+RequestGenerator OptionsListRequestSource::get() {
   request_count_.push_back(0);
   uint32_t& lambda_counter = request_count_.back();
   RequestGenerator request_generator = [this, lambda_counter]() mutable -> RequestPtr {
@@ -115,6 +117,6 @@ RequestGenerator RequestOptionsListRequestSource::get() {
   return request_generator;
 }
 
-void RequestOptionsListRequestSource::initOnThread() {}
+void OptionsListRequestSource::initOnThread() {}
 
 } // namespace Nighthawk

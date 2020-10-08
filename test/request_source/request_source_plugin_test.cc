@@ -22,6 +22,20 @@ using nighthawk::request_source::InLinePluginConfig;
 using nighthawk::request_source::StubPluginConfig;
 using ::testing::NiceMock;
 using ::testing::Test;
+    nighthawk::request_source::FileBasedPluginConfig
+  MakeFileBasedPluginConfigWithTestYaml(absl::string_view request_file) {
+    nighthawk::request_source::FileBasedPluginConfig config;
+    config.mutable_file_path()->assign(request_file);
+    config.mutable_max_file_size()->set_value(4000);
+    return config;
+  }
+      nighthawk::request_source::InLinePluginConfig
+  MakeInLinePluginConfig(nighthawk::client::RequestOptionsList options_list, int num_requests) {
+    nighthawk::request_source::InLinePluginConfig config;
+    *config.mutable_options_list() = std::move(options_list);
+    config.mutable_num_requests()->set_value(num_requests);
+    return config;
+  }
 
 class StubRequestSourcePluginTest : public Test {
 public:
@@ -35,13 +49,6 @@ public:
   FileBasedRequestSourcePluginTest() : api_(Envoy::Api::createApiForTest(stats_store_)) {}
   Envoy::Stats::MockIsolatedStatsStore stats_store_;
   Envoy::Api::ApiPtr api_;
-  nighthawk::request_source::FileBasedPluginConfig
-  MakeFileBasedPluginConfigWithTestYaml(absl::string_view request_file) {
-    nighthawk::request_source::FileBasedPluginConfig config;
-    config.mutable_file_path()->assign(request_file);
-    config.mutable_max_file_size()->set_value(4000);
-    return config;
-  }
 };
 
 class InLineRequestSourcePluginTest : public Test {
@@ -49,13 +56,6 @@ public:
   InLineRequestSourcePluginTest() : api_(Envoy::Api::createApiForTest(stats_store_)) {}
   Envoy::Stats::MockIsolatedStatsStore stats_store_;
   Envoy::Api::ApiPtr api_;
-  nighthawk::request_source::InLinePluginConfig
-  MakeInLinePluginConfig(nighthawk::client::RequestOptionsList options_list, int num_requests) {
-    nighthawk::request_source::InLinePluginConfig config;
-    *config.mutable_options_list() = std::move(options_list);
-    config.mutable_num_requests()->set_value(num_requests);
-    return config;
-  }
 };
 TEST_F(StubRequestSourcePluginTest, CreateEmptyConfigProtoCreatesCorrectType) {
   auto& config_factory =
@@ -138,7 +138,7 @@ TEST_F(FileBasedRequestSourcePluginTest, CreateRequestSourcePluginCreatesCorrect
   auto header = Envoy::Http::RequestHeaderMapImpl::create();
   RequestSourcePtr plugin =
       config_factory.createRequestSourcePlugin(config_any, *api_, std::move(header));
-  EXPECT_NE(dynamic_cast<RequestOptionsListRequestSource*>(plugin.get()), nullptr);
+  EXPECT_NE(dynamic_cast<OptionsListRequestSource*>(plugin.get()), nullptr);
 }
 
 TEST_F(FileBasedRequestSourcePluginTest,
@@ -224,7 +224,7 @@ TEST_F(InLineRequestSourcePluginTest, CreateRequestSourcePluginCreatesCorrectPlu
   auto header = Envoy::Http::RequestHeaderMapImpl::create();
   RequestSourcePtr plugin =
       config_factory.createRequestSourcePlugin(config_any, *api_, std::move(header));
-  EXPECT_NE(dynamic_cast<RequestOptionsListRequestSource*>(plugin.get()), nullptr);
+  EXPECT_NE(dynamic_cast<OptionsListRequestSource*>(plugin.get()), nullptr);
 }
 TEST_F(InLineRequestSourcePluginTest,
        CreateRequestSourcePluginGetsWorkingRequestGeneratorThatEndsAtNumRequest) {
