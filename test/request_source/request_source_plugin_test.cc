@@ -219,10 +219,10 @@ TEST_F(InLineRequestSourcePluginTest, FactoryRegistrationUsesCorrectPluginName) 
 TEST_F(InLineRequestSourcePluginTest, CreateRequestSourcePluginCreatesCorrectPluginType) {
   Envoy::MessageUtil util;
   nighthawk::client::RequestOptionsList options_list;
-  util.loadFromFile(TestEnvironment::runfilesPath("test/request_source/test_data/test-config.yaml"),
-                    options_list, Envoy::ProtobufMessage::getStrictValidationVisitor(), *api_,
-                    true);
-  nighthawk::request_source::InLinePluginConfig config = MakeInLinePluginConfig(options_list, 2);
+  util.loadFromFile(/*file to load*/ TestEnvironment::runfilesPath("test/request_source/test_data/test-config.yaml"),
+                    /*out parameter*/ options_list, /*validation visitor*/ Envoy::ProtobufMessage::getStrictValidationVisitor(), /*Api*/ *api_,
+                    /*use api boosting*/ true);
+  nighthawk::request_source::InLinePluginConfig config = MakeInLinePluginConfig(options_list, /*num_requests*/ 2);
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
@@ -238,10 +238,10 @@ TEST_F(InLineRequestSourcePluginTest,
        CreateRequestSourcePluginGetsWorkingRequestGeneratorThatEndsAtNumRequest) {
   Envoy::MessageUtil util;
   nighthawk::client::RequestOptionsList options_list;
-  util.loadFromFile(TestEnvironment::runfilesPath("test/request_source/test_data/test-config.yaml"),
-                    options_list, Envoy::ProtobufMessage::getStrictValidationVisitor(), *api_,
-                    true);
-  nighthawk::request_source::InLinePluginConfig config = MakeInLinePluginConfig(options_list, 2);
+  util.loadFromFile(/*file to load*/ TestEnvironment::runfilesPath("test/request_source/test_data/test-config.yaml"),
+                    /*out parameter*/ options_list, /*validation visitor*/ Envoy::ProtobufMessage::getStrictValidationVisitor(), /*Api*/ *api_,
+                    /*use api boosting*/ true);
+  nighthawk::request_source::InLinePluginConfig config = MakeInLinePluginConfig(options_list, /*num_requests*/ 2);
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
@@ -268,10 +268,10 @@ TEST_F(InLineRequestSourcePluginTest,
        CreateRequestSourcePluginWithMoreNumRequestsThanInListGetsRequestGeneratorThatLoops) {
   Envoy::MessageUtil util;
   nighthawk::client::RequestOptionsList options_list;
-  util.loadFromFile(TestEnvironment::runfilesPath("test/request_source/test_data/test-config.yaml"),
-                    options_list, Envoy::ProtobufMessage::getStrictValidationVisitor(), *api_,
-                    true);
-  nighthawk::request_source::InLinePluginConfig config = MakeInLinePluginConfig(options_list, 4);
+  util.loadFromFile(/*file to load*/ TestEnvironment::runfilesPath("test/request_source/test_data/test-config.yaml"),
+                    /*out parameter*/ options_list, /*validation visitor*/ Envoy::ProtobufMessage::getStrictValidationVisitor(), /*Api*/ *api_,
+                    /*use api boosting*/ true);
+  nighthawk::request_source::InLinePluginConfig config = MakeInLinePluginConfig(options_list, /*num_requests*/ 4);
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
