@@ -17,23 +17,23 @@
 namespace Nighthawk {
 
 namespace {
-using nighthawk::request_source::FileBasedPluginConfig;
-using nighthawk::request_source::InLinePluginConfig;
+using nighthawk::request_source::FileBasedOptionsListRequestSourceConfig;
+using nighthawk::request_source::InLineOptionsListRequestSourceConfig;
 using nighthawk::request_source::StubPluginConfig;
 using ::testing::NiceMock;
 using ::testing::Test;
-nighthawk::request_source::FileBasedPluginConfig
+nighthawk::request_source::FileBasedOptionsListRequestSourceConfig
 MakeFileBasedPluginConfigWithTestYaml(absl::string_view request_file) {
-  nighthawk::request_source::FileBasedPluginConfig config;
+  nighthawk::request_source::FileBasedOptionsListRequestSourceConfig config;
   config.mutable_file_path()->assign(request_file);
   config.mutable_max_file_size()->set_value(4000);
   return config;
 }
-nighthawk::request_source::InLinePluginConfig
+nighthawk::request_source::InLineOptionsListRequestSourceConfig
 MakeInLinePluginConfig(nighthawk::client::RequestOptionsList options_list, int num_requests) {
-  nighthawk::request_source::InLinePluginConfig config;
+  nighthawk::request_source::InLineOptionsListRequestSourceConfig config;
   *config.mutable_options_list() = std::move(options_list);
-  config.mutable_num_requests()->set_value(num_requests);
+  config.set_num_requests(num_requests);
   return config;
 }
 
@@ -112,13 +112,13 @@ TEST_F(FileBasedRequestSourcePluginTest, CreateEmptyConfigProtoCreatesCorrectTyp
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
           "nighthawk.file-based-request-source-plugin");
   const Envoy::ProtobufTypes::MessagePtr empty_config = config_factory.createEmptyConfigProto();
-  const nighthawk::request_source::FileBasedPluginConfig expected_config;
+  const nighthawk::request_source::FileBasedOptionsListRequestSourceConfig expected_config;
   EXPECT_EQ(empty_config->DebugString(), expected_config.DebugString());
   EXPECT_TRUE(Envoy::MessageUtil()(*empty_config, expected_config));
 }
 
 TEST_F(FileBasedRequestSourcePluginTest, FactoryRegistrationUsesCorrectPluginName) {
-  nighthawk::request_source::FileBasedPluginConfig config;
+  nighthawk::request_source::FileBasedOptionsListRequestSourceConfig config;
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
@@ -128,7 +128,7 @@ TEST_F(FileBasedRequestSourcePluginTest, FactoryRegistrationUsesCorrectPluginNam
 }
 
 TEST_F(FileBasedRequestSourcePluginTest, CreateRequestSourcePluginCreatesCorrectPluginType) {
-  nighthawk::request_source::FileBasedPluginConfig config = MakeFileBasedPluginConfigWithTestYaml(
+  nighthawk::request_source::FileBasedOptionsListRequestSourceConfig config = MakeFileBasedPluginConfigWithTestYaml(
       TestEnvironment::runfilesPath("test/request_source/test_data/test-config.yaml"));
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
@@ -143,9 +143,9 @@ TEST_F(FileBasedRequestSourcePluginTest, CreateRequestSourcePluginCreatesCorrect
 
 TEST_F(FileBasedRequestSourcePluginTest,
        CreateRequestSourcePluginGetsWorkingRequestGeneratorThatEndsAtNumRequest) {
-  nighthawk::request_source::FileBasedPluginConfig config = MakeFileBasedPluginConfigWithTestYaml(
+  nighthawk::request_source::FileBasedOptionsListRequestSourceConfig config = MakeFileBasedPluginConfigWithTestYaml(
       TestEnvironment::runfilesPath("test/request_source/test_data/test-config.yaml"));
-  config.mutable_num_requests()->set_value(2);
+  config.set_num_requests(2);
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
@@ -170,7 +170,7 @@ TEST_F(FileBasedRequestSourcePluginTest,
 
 TEST_F(FileBasedRequestSourcePluginTest,
        CreateRequestSourcePluginWithMoreNumRequestsThanInFileGetsRequestGeneratorThatLoops) {
-  nighthawk::request_source::FileBasedPluginConfig config = MakeFileBasedPluginConfigWithTestYaml(
+  nighthawk::request_source::FileBasedOptionsListRequestSourceConfig config = MakeFileBasedPluginConfigWithTestYaml(
       TestEnvironment::runfilesPath("test/request_source/test_data/test-config.yaml"));
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
@@ -201,13 +201,13 @@ TEST_F(InLineRequestSourcePluginTest, CreateEmptyConfigProtoCreatesCorrectType) 
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
           "nighthawk.in-line-options-list-request-source-plugin");
   const Envoy::ProtobufTypes::MessagePtr empty_config = config_factory.createEmptyConfigProto();
-  const nighthawk::request_source::InLinePluginConfig expected_config;
+  const nighthawk::request_source::InLineOptionsListRequestSourceConfig expected_config;
   EXPECT_EQ(empty_config->DebugString(), expected_config.DebugString());
   EXPECT_TRUE(Envoy::MessageUtil()(*empty_config, expected_config));
 }
 
 TEST_F(InLineRequestSourcePluginTest, FactoryRegistrationUsesCorrectPluginName) {
-  nighthawk::request_source::InLinePluginConfig config;
+  nighthawk::request_source::InLineOptionsListRequestSourceConfig config;
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
@@ -225,7 +225,7 @@ TEST_F(InLineRequestSourcePluginTest, CreateRequestSourcePluginCreatesCorrectPlu
                     /*validation visitor*/ Envoy::ProtobufMessage::getStrictValidationVisitor(),
                     /*Api*/ *api_,
                     /*use api boosting*/ true);
-  nighthawk::request_source::InLinePluginConfig config =
+  nighthawk::request_source::InLineOptionsListRequestSourceConfig config =
       MakeInLinePluginConfig(options_list, /*num_requests*/ 2);
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
@@ -248,7 +248,7 @@ TEST_F(InLineRequestSourcePluginTest,
                     /*validation visitor*/ Envoy::ProtobufMessage::getStrictValidationVisitor(),
                     /*Api*/ *api_,
                     /*use api boosting*/ true);
-  nighthawk::request_source::InLinePluginConfig config =
+  nighthawk::request_source::InLineOptionsListRequestSourceConfig config =
       MakeInLinePluginConfig(options_list, /*num_requests*/ 2);
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
@@ -282,7 +282,7 @@ TEST_F(InLineRequestSourcePluginTest,
                     /*validation visitor*/ Envoy::ProtobufMessage::getStrictValidationVisitor(),
                     /*Api*/ *api_,
                     /*use api boosting*/ true);
-  nighthawk::request_source::InLinePluginConfig config =
+  nighthawk::request_source::InLineOptionsListRequestSourceConfig config =
       MakeInLinePluginConfig(options_list, /*num_requests*/ 4);
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);

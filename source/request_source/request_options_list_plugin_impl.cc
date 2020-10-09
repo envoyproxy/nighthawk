@@ -10,23 +10,24 @@
 #include "common/request_source_impl.h"
 
 namespace Nighthawk {
-std::string OptionsListFromFileRequestSourceFactory::name() const {
+std::string FileBasedOptionsListRequestSourceFactory::name() const {
   return "nighthawk.file-based-request-source-plugin";
 }
 
-Envoy::ProtobufTypes::MessagePtr OptionsListFromFileRequestSourceFactory::createEmptyConfigProto() {
-  return std::make_unique<nighthawk::request_source::FileBasedPluginConfig>();
+Envoy::ProtobufTypes::MessagePtr FileBasedOptionsListRequestSourceFactory::createEmptyConfigProto() {
+  return std::make_unique<nighthawk::request_source::FileBasedOptionsListRequestSourceConfig>();
 }
 
-RequestSourcePtr OptionsListFromFileRequestSourceFactory::createRequestSourcePlugin(
+RequestSourcePtr FileBasedOptionsListRequestSourceFactory::createRequestSourcePlugin(
     const Envoy::Protobuf::Message& message, Envoy::Api::Api& api,
     Envoy::Http::RequestHeaderMapPtr header) {
   const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
-  nighthawk::request_source::FileBasedPluginConfig config;
+  nighthawk::request_source::FileBasedOptionsListRequestSourceConfig config;
   Envoy::MessageUtil util;
-
+  uint32_t max_file_size = config.has_max_file_size() ? config.max_file_size().value()
+                                                    : 1000000;
   util.unpackTo(any, config);
-  if (api.fileSystem().fileSize(config.file_path()) > config.max_file_size().value()) {
+  if (api.fileSystem().fileSize(config.file_path()) > max_file_size) {
     throw NighthawkException("file size must be less than max_file_size");
   }
 
@@ -41,26 +42,26 @@ RequestSourcePtr OptionsListFromFileRequestSourceFactory::createRequestSourcePlu
       options_list_ = loaded_list;
     }
   }
-  return std::make_unique<OptionsListRequestSource>(config.num_requests().value(),
+  return std::make_unique<OptionsListRequestSource>(config.num_requests(),
                                                     std::move(header), options_list_.value());
 }
 
-REGISTER_FACTORY(OptionsListFromFileRequestSourceFactory, RequestSourcePluginConfigFactory);
+REGISTER_FACTORY(FileBasedOptionsListRequestSourceFactory, RequestSourcePluginConfigFactory);
 
-std::string OptionsListFromProtoRequestSourceFactory::name() const {
+std::string InLineOptionsListRequestSourceFactory::name() const {
   return "nighthawk.in-line-options-list-request-source-plugin";
 }
 
 Envoy::ProtobufTypes::MessagePtr
-OptionsListFromProtoRequestSourceFactory::createEmptyConfigProto() {
-  return std::make_unique<nighthawk::request_source::InLinePluginConfig>();
+InLineOptionsListRequestSourceFactory::createEmptyConfigProto() {
+  return std::make_unique<nighthawk::request_source::InLineOptionsListRequestSourceConfig>();
 }
 
-RequestSourcePtr OptionsListFromProtoRequestSourceFactory::createRequestSourcePlugin(
+RequestSourcePtr InLineOptionsListRequestSourceFactory::createRequestSourcePlugin(
     const Envoy::Protobuf::Message& message, Envoy::Api::Api&,
     Envoy::Http::RequestHeaderMapPtr header) {
   const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
-  nighthawk::request_source::InLinePluginConfig config;
+  nighthawk::request_source::InLineOptionsListRequestSourceConfig config;
   Envoy::MessageUtil::unpackTo(any, config);
   // Locking to avoid issues with multiple threads calling this at the same time and trying to set
   // the options_list_
@@ -71,11 +72,11 @@ RequestSourcePtr OptionsListFromProtoRequestSourceFactory::createRequestSourcePl
       options_list_ = config.options_list();
     }
   }
-  return std::make_unique<OptionsListRequestSource>(config.num_requests().value(),
+  return std::make_unique<OptionsListRequestSource>(config.num_requests(),
                                                     std::move(header), options_list_.value());
 }
 
-REGISTER_FACTORY(OptionsListFromProtoRequestSourceFactory, RequestSourcePluginConfigFactory);
+REGISTER_FACTORY(InLineOptionsListRequestSourceFactory, RequestSourcePluginConfigFactory);
 
 OptionsListRequestSource::OptionsListRequestSource(
     const uint32_t total_requests, Envoy::Http::RequestHeaderMapPtr header,

@@ -44,7 +44,7 @@ private:
   const uint32_t total_requests_;
 };
 
-// Factory that creates a OptionsListRequestSource from a FileBasedPluginConfig proto.
+// Factory that creates a OptionsListRequestSource from a FileBasedOptionsListRequestSourceConfig proto.
 // Registered as an Envoy plugin.
 // Implementation of RequestSourceConfigFactory which produces a RequestSource that keeps an
 // RequestOptionsList in memory, and loads it with the RequestOptions taken from a file. All plugins
@@ -56,7 +56,7 @@ private:
 //         "nighthawk.file-based-request-source-plugin");
 // RequestSourcePtr plugin =
 //     config_factory.createRequestSourcePlugin(config, std::move(api), std::move(header));
-class OptionsListFromFileRequestSourceFactory : public virtual RequestSourcePluginConfigFactory {
+class FileBasedOptionsListRequestSourceFactory : public virtual RequestSourcePluginConfigFactory {
 public:
   std::string name() const override;
 
@@ -64,7 +64,7 @@ public:
 
   // This implementation is not thread safe. There is a race condition because only the first call
   // to createRequestSourcePlugin will load the file from memory and subsequent calls just make a
-  // copy of the options_list that was already loaded. The OptionsListFromFileRequestSourceFactory
+  // copy of the options_list that was already loaded. The FileBasedOptionsListRequestSourceFactory
   // will not work with multiple different files for this reason. This method will also error if the
   // file can not be loaded correctly, e.g. the file is too large or could not be found.
   RequestSourcePtr createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
@@ -77,9 +77,9 @@ private:
 };
 
 // This factory will be activated through RequestSourceFactory in factories.h
-DECLARE_FACTORY(OptionsListFromFileRequestSourceFactory);
+DECLARE_FACTORY(FileBasedOptionsListRequestSourceFactory);
 
-// Factory that creates a OptionsListRequestSource from a InLinePluginConfig proto.
+// Factory that creates a OptionsListRequestSource from a InLineOptionsListRequestSourceConfig proto.
 // Registered as an Envoy plugin.
 // Implementation of RequestSourceConfigFactory which produces a RequestSource that keeps an
 // RequestOptionsList in memory, and loads it with the RequestOptions passed to it from the config.
@@ -91,7 +91,7 @@ DECLARE_FACTORY(OptionsListFromFileRequestSourceFactory);
 // RequestSourcePtr plugin =
 //     config_factory.createRequestSourcePlugin(config, std::move(api), std::move(header));
 
-class OptionsListFromProtoRequestSourceFactory : public virtual RequestSourcePluginConfigFactory {
+class InLineOptionsListRequestSourceFactory : public virtual RequestSourcePluginConfigFactory {
 public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
@@ -109,6 +109,6 @@ private:
 };
 
 // This factory will be activated through RequestSourceFactory in factories.h
-DECLARE_FACTORY(OptionsListFromProtoRequestSourceFactory);
+DECLARE_FACTORY(InLineOptionsListRequestSourceFactory);
 
 } // namespace Nighthawk
