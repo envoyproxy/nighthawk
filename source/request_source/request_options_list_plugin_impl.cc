@@ -14,7 +14,8 @@ std::string FileBasedOptionsListRequestSourceFactory::name() const {
   return "nighthawk.file-based-request-source-plugin";
 }
 
-Envoy::ProtobufTypes::MessagePtr FileBasedOptionsListRequestSourceFactory::createEmptyConfigProto() {
+Envoy::ProtobufTypes::MessagePtr
+FileBasedOptionsListRequestSourceFactory::createEmptyConfigProto() {
   return std::make_unique<nighthawk::request_source::FileBasedOptionsListRequestSourceConfig>();
 }
 
@@ -24,8 +25,7 @@ RequestSourcePtr FileBasedOptionsListRequestSourceFactory::createRequestSourcePl
   const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
   nighthawk::request_source::FileBasedOptionsListRequestSourceConfig config;
   Envoy::MessageUtil util;
-  uint32_t max_file_size = config.has_max_file_size() ? config.max_file_size().value()
-                                                    : 1000000;
+  uint32_t max_file_size = config.has_max_file_size() ? config.max_file_size().value() : 1000000;
   util.unpackTo(any, config);
   if (api.fileSystem().fileSize(config.file_path()) > max_file_size) {
     throw NighthawkException("file size must be less than max_file_size");
@@ -42,8 +42,8 @@ RequestSourcePtr FileBasedOptionsListRequestSourceFactory::createRequestSourcePl
       options_list_ = loaded_list;
     }
   }
-  return std::make_unique<OptionsListRequestSource>(config.num_requests(),
-                                                    std::move(header), options_list_.value());
+  return std::make_unique<OptionsListRequestSource>(config.num_requests(), std::move(header),
+                                                    options_list_.value());
 }
 
 REGISTER_FACTORY(FileBasedOptionsListRequestSourceFactory, RequestSourcePluginConfigFactory);
@@ -52,8 +52,7 @@ std::string InLineOptionsListRequestSourceFactory::name() const {
   return "nighthawk.in-line-options-list-request-source-plugin";
 }
 
-Envoy::ProtobufTypes::MessagePtr
-InLineOptionsListRequestSourceFactory::createEmptyConfigProto() {
+Envoy::ProtobufTypes::MessagePtr InLineOptionsListRequestSourceFactory::createEmptyConfigProto() {
   return std::make_unique<nighthawk::request_source::InLineOptionsListRequestSourceConfig>();
 }
 
@@ -72,8 +71,8 @@ RequestSourcePtr InLineOptionsListRequestSourceFactory::createRequestSourcePlugi
       options_list_ = config.options_list();
     }
   }
-  return std::make_unique<OptionsListRequestSource>(config.num_requests(),
-                                                    std::move(header), options_list_.value());
+  return std::make_unique<OptionsListRequestSource>(config.num_requests(), std::move(header),
+                                                    options_list_.value());
 }
 
 REGISTER_FACTORY(InLineOptionsListRequestSourceFactory, RequestSourcePluginConfigFactory);

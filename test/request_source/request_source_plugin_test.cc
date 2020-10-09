@@ -128,8 +128,9 @@ TEST_F(FileBasedRequestSourcePluginTest, FactoryRegistrationUsesCorrectPluginNam
 }
 
 TEST_F(FileBasedRequestSourcePluginTest, CreateRequestSourcePluginCreatesCorrectPluginType) {
-  nighthawk::request_source::FileBasedOptionsListRequestSourceConfig config = MakeFileBasedPluginConfigWithTestYaml(
-      TestEnvironment::runfilesPath("test/request_source/test_data/test-config.yaml"));
+  nighthawk::request_source::FileBasedOptionsListRequestSourceConfig config =
+      MakeFileBasedPluginConfigWithTestYaml(
+          TestEnvironment::runfilesPath("test/request_source/test_data/test-config.yaml"));
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
@@ -143,8 +144,9 @@ TEST_F(FileBasedRequestSourcePluginTest, CreateRequestSourcePluginCreatesCorrect
 
 TEST_F(FileBasedRequestSourcePluginTest,
        CreateRequestSourcePluginGetsWorkingRequestGeneratorThatEndsAtNumRequest) {
-  nighthawk::request_source::FileBasedOptionsListRequestSourceConfig config = MakeFileBasedPluginConfigWithTestYaml(
-      TestEnvironment::runfilesPath("test/request_source/test_data/test-config.yaml"));
+  nighthawk::request_source::FileBasedOptionsListRequestSourceConfig config =
+      MakeFileBasedPluginConfigWithTestYaml(
+          TestEnvironment::runfilesPath("test/request_source/test_data/test-config.yaml"));
   config.set_num_requests(2);
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
@@ -170,8 +172,9 @@ TEST_F(FileBasedRequestSourcePluginTest,
 
 TEST_F(FileBasedRequestSourcePluginTest,
        CreateRequestSourcePluginWithMoreNumRequestsThanInFileGetsRequestGeneratorThatLoops) {
-  nighthawk::request_source::FileBasedOptionsListRequestSourceConfig config = MakeFileBasedPluginConfigWithTestYaml(
-      TestEnvironment::runfilesPath("test/request_source/test_data/test-config.yaml"));
+  nighthawk::request_source::FileBasedOptionsListRequestSourceConfig config =
+      MakeFileBasedPluginConfigWithTestYaml(
+          TestEnvironment::runfilesPath("test/request_source/test_data/test-config.yaml"));
   Envoy::ProtobufWkt::Any config_any;
   config_any.PackFrom(config);
   auto& config_factory =
