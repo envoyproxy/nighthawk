@@ -32,6 +32,8 @@ public:
   virtual bool callback(OperationCallback) PURE;
 };
 
+void FooMilestoneCallback(const MilestoneCollection&) {}
+
 class MockSequencerTarget : public FakeSequencerTarget {
 public:
   MOCK_METHOD1(callback, bool(OperationCallback));
@@ -165,7 +167,7 @@ TEST_F(SequencerTestWithTimerEmulation, RateLimiterInteraction) {
   SequencerTarget callback =
       std::bind(&MockSequencerTarget::callback, target(), std::placeholders::_1);
   SequencerImpl sequencer(platform_util_, *dispatcher_, time_system_, std::move(rate_limiter_),
-                          callback, std::make_unique<StreamingStatistic>(),
+                          callback, FooMilestoneCallback, std::make_unique<StreamingStatistic>(),
                           std::make_unique<StreamingStatistic>(), SequencerIdleStrategy::SLEEP,
                           std::move(termination_predicate_), store_);
   // Have the mock rate limiter gate two calls, and block everything else.
@@ -187,7 +189,7 @@ TEST_F(SequencerTestWithTimerEmulation, RateLimiterSaturatedTargetInteraction) {
   SequencerTarget callback =
       std::bind(&MockSequencerTarget::callback, target(), std::placeholders::_1);
   SequencerImpl sequencer(platform_util_, *dispatcher_, time_system_, std::move(rate_limiter_),
-                          callback, std::make_unique<StreamingStatistic>(),
+                          callback, FooMilestoneCallback, std::make_unique<StreamingStatistic>(),
                           std::make_unique<StreamingStatistic>(), SequencerIdleStrategy::SLEEP,
                           std::move(termination_predicate_), store_);
 
@@ -229,7 +231,8 @@ public:
 
   void testRegularFlow(SequencerIdleStrategy::SequencerIdleStrategyOptions idle_strategy) {
     SequencerImpl sequencer(platform_util_, *dispatcher_, time_system_, std::move(rate_limiter_),
-                            sequencer_target_, std::make_unique<StreamingStatistic>(),
+                            sequencer_target_, FooMilestoneCallback,
+                            std::make_unique<StreamingStatistic>(),
                             std::make_unique<StreamingStatistic>(), idle_strategy,
                             std::move(termination_predicate_), store_);
     EXPECT_EQ(0, callback_test_count_);
@@ -269,7 +272,7 @@ TEST_F(SequencerIntegrationTest, AlwaysSaturatedTargetTest) {
   SequencerTarget callback =
       std::bind(&SequencerIntegrationTest::saturated_test, this, std::placeholders::_1);
   SequencerImpl sequencer(platform_util_, *dispatcher_, time_system_, std::move(rate_limiter_),
-                          callback, std::make_unique<StreamingStatistic>(),
+                          callback, FooMilestoneCallback, std::make_unique<StreamingStatistic>(),
                           std::make_unique<StreamingStatistic>(), SequencerIdleStrategy::SLEEP,
                           std::move(termination_predicate_), store_);
   EXPECT_CALL(platform_util_, sleep(_)).Times(AtLeast(1));
@@ -287,7 +290,7 @@ TEST_F(SequencerIntegrationTest, CallbacksDoNotInfluenceTestDuration) {
   SequencerTarget callback =
       std::bind(&SequencerIntegrationTest::timeout_test, this, std::placeholders::_1);
   SequencerImpl sequencer(platform_util_, *dispatcher_, time_system_, std::move(rate_limiter_),
-                          callback, std::make_unique<StreamingStatistic>(),
+                          callback, FooMilestoneCallback, std::make_unique<StreamingStatistic>(),
                           std::make_unique<StreamingStatistic>(), SequencerIdleStrategy::SLEEP,
                           std::move(termination_predicate_), store_);
   EXPECT_CALL(platform_util_, sleep(_)).Times(AtLeast(1));

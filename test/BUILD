@@ -358,6 +358,7 @@ envoy_cc_test(
     deps = [
         "//source/common:milestone_impl_lib",
         "@envoy//source/common/event:real_time_system_lib_with_external_headers",
+        "@envoy//test/mocks/event:event_mocks",
         "@envoy//test/test_common:simulated_time_system_lib",
     ],
 )

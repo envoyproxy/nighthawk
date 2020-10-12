@@ -1,6 +1,7 @@
 #pragma once
 
 #include "nighthawk/client/benchmark_client.h"
+#include "nighthawk/common/milestone.h"
 
 #include "gmock/gmock.h"
 
@@ -14,7 +15,8 @@ public:
   MOCK_METHOD0(terminate, void());
   MOCK_METHOD1(setShouldMeasureLatencies, void(bool));
   MOCK_CONST_METHOD0(statistics, StatisticPtrMap());
-  MOCK_METHOD1(tryStartRequest, bool(Client::CompletionCallback));
+  MOCK_METHOD2(tryStartRequest,
+               bool(Client::CompletionCallback, std::shared_ptr<MilestoneTracker>));
   MOCK_CONST_METHOD0(scope, Envoy::Stats::Scope&());
   MOCK_CONST_METHOD0(shouldMeasureLatencies, bool());
   MOCK_CONST_METHOD0(requestHeaders, const Envoy::Http::RequestHeaderMap&());

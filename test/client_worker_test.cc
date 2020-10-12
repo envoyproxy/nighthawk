@@ -47,7 +47,7 @@ public:
         .Times(1)
         .WillOnce(Return(ByMove(std::unique_ptr<BenchmarkClient>(benchmark_client_))));
 
-    EXPECT_CALL(sequencer_factory_, create(_, _, _, _, _, _))
+    EXPECT_CALL(sequencer_factory_, create(_, _, _, _, _, _, _))
         .Times(1)
         .WillOnce(Return(ByMove(std::unique_ptr<Sequencer>(sequencer_))));
 
@@ -67,7 +67,7 @@ public:
     return map;
   }
 
-  bool CheckThreadChanged(const CompletionCallback&) {
+  bool CheckThreadChanged(const CompletionCallback&, std::shared_ptr<Nighthawk::MilestoneTracker>) {
     EXPECT_NE(thread_id_, std::this_thread::get_id());
     return false;
   }
@@ -106,7 +106,7 @@ TEST_F(ClientWorkerTest, BasicTest) {
   {
     InSequence dummy;
     EXPECT_CALL(*benchmark_client_, setShouldMeasureLatencies(false)).Times(1);
-    EXPECT_CALL(*benchmark_client_, tryStartRequest(_))
+    EXPECT_CALL(*benchmark_client_, tryStartRequest(_, _))
         .WillOnce(Invoke(this, &ClientWorkerTest::CheckThreadChanged));
     EXPECT_CALL(*benchmark_client_, setShouldMeasureLatencies(true)).Times(1);
     EXPECT_CALL(*sequencer_, start).Times(1);

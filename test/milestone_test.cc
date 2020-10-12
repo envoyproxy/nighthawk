@@ -1,4 +1,5 @@
 #include "external/envoy/source/common/event/real_time_system.h"
+#include "external/envoy/test/mocks/event/mocks.h"
 #include "external/envoy/test/test_common/simulated_time_system.h"
 
 #include "common/milestone_impl.h"
@@ -13,6 +14,7 @@ using namespace std::chrono_literals;
 class MilestoneTestWithSimtime : public testing::Test, public Envoy::Event::TestUsingSimulatedTime {
 public:
   Envoy::Event::SimulatedTimeSystem& time_system_ = simTime();
+  ::testing::NiceMock<Envoy::Event::MockDispatcher> dispatcher_;
 };
 
 TEST_F(MilestoneTestWithSimtime, BasicTest) {
@@ -24,7 +26,7 @@ TEST_F(MilestoneTestWithSimtime, BasicTest) {
         EXPECT_EQ(milestones[2]->time().time_since_epoch(), 1s);
         EXPECT_EQ(milestones[3]->time().time_since_epoch(), 2s);
       },
-      time_system_);
+      time_system_, dispatcher_);
 
   m.addMilestone("no time elapsed");
   time_system_.setMonotonicTime(1s);
@@ -37,6 +39,7 @@ TEST_F(MilestoneTestWithSimtime, BasicTest) {
 TEST(Benchmark, DISABLED_VerySimpleSpeedTest) {
   Envoy::Event::RealTimeSystem time_system;
   const uint64_t kIterations = 1000000;
+  ::testing::NiceMock<Envoy::Event::MockDispatcher> dispatcher;
 
   MilestoneTrackerImpl tracker(
       [](const MilestoneCollection& milestones) {
@@ -44,11 +47,11 @@ TEST(Benchmark, DISABLED_VerySimpleSpeedTest) {
                   << ((milestones[1]->time() - milestones[0]->time()).count() / kIterations)
                   << "ns/iteration." << std::endl;
       },
-      time_system);
+      time_system, dispatcher);
 
   tracker.addMilestone("start");
   for (uint64_t i = 0; i < kIterations; i++) {
-    MilestoneTrackerImpl m([](const MilestoneCollection&) {}, time_system);
+    MilestoneTrackerImpl m([](const MilestoneCollection&) {}, time_system, dispatcher);
     m.addMilestone("no time elapsed");
     m.addMilestone("1 second elapsed");
     m.addMilestone("0 seconds elapsed before callback");

@@ -87,12 +87,14 @@ public:
     EXPECT_CALL(dispatcher_, createTimer_(_)).Times(2);
     EXPECT_CALL(options_, jitterUniform()).Times(1).WillOnce(Return(1ns));
     Envoy::Event::SimulatedTimeSystem time_system;
-    const SequencerTarget dummy_sequencer_target = [](const CompletionCallback&) -> bool {
+    const SequencerTarget dummy_sequencer_target =
+        [](const CompletionCallback&, std::shared_ptr<Nighthawk::MilestoneTracker>) -> bool {
       return true;
     };
+    const MilestoneCallback milestone_callback = [](const MilestoneCollection&) {};
     auto sequencer = factory.create(api_->timeSource(), dispatcher_, dummy_sequencer_target,
                                     std::make_unique<MockTerminationPredicate>(), stats_store_,
-                                    time_system.systemTime() + 10ms);
+                                    time_system.systemTime() + 10ms, milestone_callback);
     EXPECT_NE(nullptr, sequencer.get());
   }
 };

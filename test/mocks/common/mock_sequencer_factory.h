@@ -9,12 +9,13 @@ namespace Nighthawk {
 class MockSequencerFactory : public SequencerFactory {
 public:
   MockSequencerFactory();
-  MOCK_CONST_METHOD6(create, SequencerPtr(Envoy::TimeSource& time_source,
+  MOCK_CONST_METHOD7(create, SequencerPtr(Envoy::TimeSource& time_source,
                                           Envoy::Event::Dispatcher& dispatcher,
                                           const SequencerTarget& sequencer_target,
                                           TerminationPredicatePtr&& termination_predicate,
                                           Envoy::Stats::Scope& scope,
-                                          const Envoy::SystemTime scheduled_starting_time));
+                                          const Envoy::SystemTime scheduled_starting_time,
+                                          const MilestoneCallback& milestone_callback));
 };
 
 } // namespace Nighthawk
