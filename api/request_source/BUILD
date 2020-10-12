@@ -16,6 +16,18 @@ api_cc_py_proto_library(
     ],
 )
 
+api_cc_py_proto_library(
+    name = "request_source_plugin",
+    srcs = [
+        "request_source_plugin.proto",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@envoy_api//envoy/config/core/v3:pkg",
+        "@nighthawk//api/client:base",
+    ],
+)
+
 cc_grpc_library(
     name = "grpc_request_source_service_lib",
     srcs = [

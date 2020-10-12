@@ -1,94 +1,39 @@
-#include "envoy/upstream/cluster_manager.h"
-#include "envoy/upstream/upstream.h"
-
-#include "external/envoy/test/common/upstream/utility.h"
-#include "external/envoy/test/integration/http_integration.h"
-
 #include "api/server/response_options.pb.h"
 #include "api/server/response_options.pb.validate.h"
 
 #include "server/configuration.h"
 #include "server/http_test_server_filter.h"
-#include "server/well_known_headers.h"
+
+#include "test/server/http_filter_integration_test_base.h"
 
 #include "gtest/gtest.h"
 
 namespace Nighthawk {
+namespace {
 
 using namespace testing;
-constexpr absl::string_view kBadJson = "bad_json";
 
-class HttpTestServerIntegrationTestBase : public Envoy::HttpIntegrationTest,
-                                          public TestWithParam<Envoy::Network::Address::IpVersion> {
+constexpr absl::string_view kDefaultProto = R"EOF(
+name: test-server
+typed_config:
+  "@type": type.googleapis.com/nighthawk.server.ResponseOptions
+  response_body_size: 10
+  response_headers:
+  - { header: { key: "x-supplied-by", value: "nighthawk-test-server"} }
+)EOF";
+
+constexpr absl::string_view kNoConfigProto = R"EOF(
+name: test-server
+)EOF";
+
+class HttpTestServerIntegrationTest : public HttpFilterIntegrationTestBase,
+                                      public TestWithParam<Envoy::Network::Address::IpVersion> {
 public:
-  HttpTestServerIntegrationTestBase()
-      : HttpIntegrationTest(Envoy::Http::CodecClient::Type::HTTP1, GetParam(), realTime()) {}
-
-  // TODO(oschaaf): Modify Envoy's Envoy::IntegrationUtil::makeSingleRequest() to allow for a way to
-  // manipulate the request headers before they get send. Then we can eliminate these copies.
-  Envoy::BufferingStreamDecoderPtr makeSingleRequest(
-      uint32_t port, absl::string_view method, absl::string_view url, absl::string_view body,
-      Envoy::Http::CodecClient::Type type, Envoy::Network::Address::IpVersion ip_version,
-      absl::string_view host, absl::string_view content_type,
-      const std::function<void(Envoy::Http::RequestHeaderMapImpl&)>& request_header_delegate) {
-    auto addr = Envoy::Network::Utility::resolveUrl(fmt::format(
-        "tcp://{}:{}", Envoy::Network::Test::getLoopbackAddressUrlString(ip_version), port));
-    return makeSingleRequest(addr, method, url, body, type, host, content_type,
-                             request_header_delegate);
-  }
-
-  Envoy::BufferingStreamDecoderPtr makeSingleRequest(
-      const Envoy::Network::Address::InstanceConstSharedPtr& addr, absl::string_view method,
-      absl::string_view url, absl::string_view body, Envoy::Http::CodecClient::Type type,
-      absl::string_view host, absl::string_view content_type,
-      const std::function<void(Envoy::Http::RequestHeaderMapImpl&)>& request_header_delegate) {
-    Envoy::Api::ApiPtr api = Envoy::Api::createApiForTest();
-    Envoy::Event::DispatcherPtr dispatcher(api->allocateDispatcher("test_thread"));
-    std::shared_ptr<Envoy::Upstream::MockClusterInfo> cluster{
-        new NiceMock<Envoy::Upstream::MockClusterInfo>()};
-    Envoy::Upstream::HostDescriptionConstSharedPtr host_description{
-        Envoy::Upstream::makeTestHostDescription(cluster, "tcp://127.0.0.1:80")};
-    Envoy::Http::CodecClientProd client(
-        type,
-        dispatcher->createClientConnection(addr, Envoy::Network::Address::InstanceConstSharedPtr(),
-                                           Envoy::Network::Test::createRawBufferSocket(), nullptr),
-        host_description, *dispatcher);
-    Envoy::BufferingStreamDecoderPtr response(
-        new Envoy::BufferingStreamDecoder([&client, &dispatcher]() -> void {
-          client.close();
-          dispatcher->exit();
-        }));
-    Envoy::Http::RequestEncoder& encoder = client.newStream(*response);
-    encoder.getStream().addCallbacks(*response);
-
-    auto headers = Envoy::Http::RequestHeaderMapImpl::create();
-    headers->setMethod(method);
-    headers->setPath(url);
-    headers->setHost(host);
-    headers->setScheme(Envoy::Http::Headers::get().SchemeValues.Http);
-    if (!content_type.empty()) {
-      headers->setContentType(content_type);
-    }
-    request_header_delegate(*headers);
-    encoder.encodeHeaders(*headers, body.empty());
-    if (!body.empty()) {
-      Envoy::Buffer::OwnedImpl body_buffer(body);
-      encoder.encodeData(body_buffer, true);
-    }
-
-    dispatcher->run(Envoy::Event::Dispatcher::RunType::Block);
-    return response;
-  }
+  HttpTestServerIntegrationTest() : HttpFilterIntegrationTestBase(GetParam()) {}
 
   void testWithResponseSize(int response_body_size, bool expect_header = true) {
-    Envoy::BufferingStreamDecoderPtr response = makeSingleRequest(
-        lookupPort("http"), "GET", "/", "", downstream_protocol_, version_, "foo.com", "",
-        [response_body_size](Envoy::Http::RequestHeaderMapImpl& request_headers) {
-          const std::string header_config =
-              fmt::format("{{response_body_size:{}}}", response_body_size);
-          request_headers.addCopy(
-              Nighthawk::Server::TestServer::HeaderNames::get().TestServerConfig, header_config);
-        });
+    setRequestLevelConfiguration(fmt::format("{{response_body_size:{}}}", response_body_size));
+    Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
     ASSERT_TRUE(response->complete());
     EXPECT_EQ("200", response->headers().Status()->value().getStringView());
     if (expect_header) {
@@ -105,39 +50,10 @@ public:
   }
 
   void testBadResponseSize(int response_body_size) {
-    Envoy::BufferingStreamDecoderPtr response = makeSingleRequest(
-        lookupPort("http"), "GET", "/", "", downstream_protocol_, version_, "foo.com", "",
-        [response_body_size](Envoy::Http::RequestHeaderMapImpl& request_headers) {
-          const std::string header_config =
-              fmt::format("{{response_body_size:{}}}", response_body_size);
-          request_headers.addCopy(
-              Nighthawk::Server::TestServer::HeaderNames::get().TestServerConfig, header_config);
-        });
+    setRequestLevelConfiguration(fmt::format("{{response_body_size:{}}}", response_body_size));
+    Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
     ASSERT_TRUE(response->complete());
     EXPECT_EQ("500", response->headers().Status()->value().getStringView());
-  }
-};
-
-class HttpTestServerIntegrationTest : public HttpTestServerIntegrationTestBase {
-public:
-  void SetUp() override { initialize(); }
-
-  void initialize() override {
-    config_helper_.addFilter(R"EOF(
-name: test-server
-typed_config:
-  "@type": type.googleapis.com/nighthawk.server.ResponseOptions
-  response_body_size: 10
-  response_headers:
-  - { header: { key: "x-supplied-by", value: "nighthawk-test-server"} }
-)EOF");
-    HttpTestServerIntegrationTestBase::initialize();
-  }
-
-  void TearDown() override {
-    cleanupUpstreamAndDownstream();
-    test_server_.reset();
-    fake_upstreams_.clear();
   }
 };
 
@@ -145,15 +61,15 @@ INSTANTIATE_TEST_SUITE_P(IpVersions, HttpTestServerIntegrationTest,
                          ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()));
 
 TEST_P(HttpTestServerIntegrationTest, TestNoHeaderConfig) {
-  Envoy::BufferingStreamDecoderPtr response =
-      makeSingleRequest(lookupPort("http"), "GET", "/", "", downstream_protocol_, version_,
-                        "foo.com", "", [](Envoy::Http::RequestHeaderMapImpl&) {});
+  initializeFilterConfiguration(kDefaultProto);
+  Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
   ASSERT_TRUE(response->complete());
   EXPECT_EQ("200", response->headers().Status()->value().getStringView());
   EXPECT_EQ(std::string(10, 'a'), response->body());
 }
 
 TEST_P(HttpTestServerIntegrationTest, TestBasics) {
+  initializeFilterConfiguration(kDefaultProto);
   testWithResponseSize(1);
   testWithResponseSize(10);
   testWithResponseSize(100);
@@ -161,30 +77,34 @@ TEST_P(HttpTestServerIntegrationTest, TestBasics) {
   testWithResponseSize(10000);
 }
 
-TEST_P(HttpTestServerIntegrationTest, TestNegative) { testBadResponseSize(-1); }
+TEST_P(HttpTestServerIntegrationTest, TestNegative) {
+  initializeFilterConfiguration(kDefaultProto);
+  testBadResponseSize(-1);
+}
 
 // TODO(oschaaf): We can't currently override with a default value ('0') in this case.
-TEST_P(HttpTestServerIntegrationTest, DISABLED_TestZeroLengthRequest) { testWithResponseSize(0); }
+TEST_P(HttpTestServerIntegrationTest, DISABLED_TestZeroLengthRequest) {
+  initializeFilterConfiguration(kDefaultProto);
+  testWithResponseSize(0);
+}
 
 TEST_P(HttpTestServerIntegrationTest, TestMaxBoundaryLengthRequest) {
+  initializeFilterConfiguration(kDefaultProto);
   const int max = 1024 * 1024 * 4;
   testWithResponseSize(max);
 }
 
 TEST_P(HttpTestServerIntegrationTest, TestTooLarge) {
+  initializeFilterConfiguration(kDefaultProto);
   const int max = 1024 * 1024 * 4;
   testBadResponseSize(max + 1);
 }
 
 TEST_P(HttpTestServerIntegrationTest, TestHeaderConfig) {
-  Envoy::BufferingStreamDecoderPtr response = makeSingleRequest(
-      lookupPort("http"), "GET", "/", "", downstream_protocol_, version_, "foo.com", "",
-      [](Envoy::Http::RequestHeaderMapImpl& request_headers) {
-        const std::string header_config =
-            R"({response_headers: [ { header: { key: "foo", value: "bar2"}, append: true } ]})";
-        request_headers.addCopy(Nighthawk::Server::TestServer::HeaderNames::get().TestServerConfig,
-                                header_config);
-      });
+  initializeFilterConfiguration(kDefaultProto);
+  setRequestLevelConfiguration(
+      R"({response_headers: [ { header: { key: "foo", value: "bar2"}, append: true } ]})");
+  Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
   ASSERT_TRUE(response->complete());
   EXPECT_EQ("200", response->headers().Status()->value().getStringView());
   EXPECT_EQ("bar2",
@@ -193,17 +113,15 @@ TEST_P(HttpTestServerIntegrationTest, TestHeaderConfig) {
 }
 
 TEST_P(HttpTestServerIntegrationTest, TestEchoHeaders) {
+  initializeFilterConfiguration(kDefaultProto);
+  setRequestLevelConfiguration("{echo_request_headers: true}");
+  setRequestHeader(Envoy::Http::LowerCaseString("gray"), "pidgeon");
+  setRequestHeader(Envoy::Http::LowerCaseString("red"), "fox");
+  setRequestHeader(Envoy::Http::LowerCaseString(":authority"), "foo.com");
+  setRequestHeader(Envoy::Http::LowerCaseString(":path"), "/somepath");
   for (auto unique_header : {"one", "two", "three"}) {
-    Envoy::BufferingStreamDecoderPtr response = makeSingleRequest(
-        lookupPort("http"), "GET", "/somepath", "", downstream_protocol_, version_, "foo.com", "",
-        [unique_header](Envoy::Http::RequestHeaderMapImpl& request_headers) {
-          request_headers.addCopy(Envoy::Http::LowerCaseString("gray"), "pidgeon");
-          request_headers.addCopy(Envoy::Http::LowerCaseString("red"), "fox");
-          request_headers.addCopy(Envoy::Http::LowerCaseString("unique_header"), unique_header);
-          request_headers.addCopy(
-              Nighthawk::Server::TestServer::HeaderNames::get().TestServerConfig,
-              "{echo_request_headers: true}");
-        });
+    setRequestHeader(Envoy::Http::LowerCaseString("unique_header"), unique_header);
+    Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
     ASSERT_TRUE(response->complete());
     EXPECT_EQ("200", response->headers().Status()->value().getStringView());
     EXPECT_THAT(response->body(), HasSubstr(R"(':authority', 'foo.com')"));
@@ -215,37 +133,16 @@ TEST_P(HttpTestServerIntegrationTest, TestEchoHeaders) {
   }
 }
 
-class HttpTestServerIntegrationNoConfigTest : public HttpTestServerIntegrationTestBase {
-public:
-  void SetUp() override { initialize(); }
-
-  void TearDown() override {
-    cleanupUpstreamAndDownstream();
-    test_server_.reset();
-    fake_upstreams_.clear();
-  }
-
-  void initialize() override {
-    config_helper_.addFilter(R"EOF(
-name: test-server
-)EOF");
-    HttpTestServerIntegrationTestBase::initialize();
-  }
-};
-
-INSTANTIATE_TEST_SUITE_P(IpVersions, HttpTestServerIntegrationNoConfigTest,
-                         ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()));
-
-TEST_P(HttpTestServerIntegrationNoConfigTest, TestNoHeaderConfig) {
-  Envoy::BufferingStreamDecoderPtr response =
-      makeSingleRequest(lookupPort("http"), "GET", "/", "", downstream_protocol_, version_,
-                        "foo.com", "", [](Envoy::Http::RequestHeaderMapImpl&) {});
+TEST_P(HttpTestServerIntegrationTest, NoNoStaticConfigHeaderConfig) {
+  initializeFilterConfiguration(kNoConfigProto);
+  Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
   ASSERT_TRUE(response->complete());
   EXPECT_EQ("200", response->headers().Status()->value().getStringView());
   EXPECT_EQ("", response->body());
 }
 
-TEST_P(HttpTestServerIntegrationNoConfigTest, TestBasics) {
+TEST_P(HttpTestServerIntegrationTest, TestNoStaticConfigBasics) {
+  initializeFilterConfiguration(kNoConfigProto);
   testWithResponseSize(1, false);
   testWithResponseSize(10, false);
   testWithResponseSize(100, false);
@@ -253,31 +150,34 @@ TEST_P(HttpTestServerIntegrationNoConfigTest, TestBasics) {
   testWithResponseSize(10000, false);
 }
 
-TEST_P(HttpTestServerIntegrationNoConfigTest, TestNegative) { testBadResponseSize(-1); }
+TEST_P(HttpTestServerIntegrationTest, TestNoStaticConfigNegative) {
+  initializeFilterConfiguration(kNoConfigProto);
+  testBadResponseSize(-1);
+}
 
-TEST_P(HttpTestServerIntegrationNoConfigTest, TestZeroLengthRequest) {
+TEST_P(HttpTestServerIntegrationTest, TestNoStaticConfigZeroLengthRequest) {
+  initializeFilterConfiguration(kNoConfigProto);
   testWithResponseSize(0, false);
 }
 
-TEST_P(HttpTestServerIntegrationNoConfigTest, TestMaxBoundaryLengthRequest) {
+TEST_P(HttpTestServerIntegrationTest, TestNoStaticConfigMaxBoundaryLengthRequest) {
+  initializeFilterConfiguration(kNoConfigProto);
   const int max = 1024 * 1024 * 4;
   testWithResponseSize(max, false);
 }
 
-TEST_P(HttpTestServerIntegrationNoConfigTest, TestTooLarge) {
+TEST_P(HttpTestServerIntegrationTest, TestNoStaticConfigTooLarge) {
+  initializeFilterConfiguration(kNoConfigProto);
   const int max = 1024 * 1024 * 4;
   testBadResponseSize(max + 1);
 }
 
-TEST_P(HttpTestServerIntegrationNoConfigTest, TestHeaderConfig) {
-  Envoy::BufferingStreamDecoderPtr response = makeSingleRequest(
-      lookupPort("http"), "GET", "/", "", downstream_protocol_, version_, "foo.com", "",
-      [](Envoy::Http::RequestHeaderMapImpl& request_headers) {
-        const std::string header_config =
-            R"({response_headers: [ { header: { key: "foo", value: "bar2"}, append: true } ]})";
-        request_headers.addCopy(Nighthawk::Server::TestServer::HeaderNames::get().TestServerConfig,
-                                header_config);
-      });
+TEST_P(HttpTestServerIntegrationTest, TestNoStaticConfigHeaderConfig) {
+  initializeFilterConfiguration(kNoConfigProto);
+  setRequestLevelConfiguration(
+      R"({response_headers: [ { header: { key: "foo", value: "bar2"}, append: true } ]})");
+  Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
+
   ASSERT_TRUE(response->complete());
   EXPECT_EQ("200", response->headers().Status()->value().getStringView());
   EXPECT_EQ("bar2",
@@ -285,24 +185,8 @@ TEST_P(HttpTestServerIntegrationNoConfigTest, TestHeaderConfig) {
   EXPECT_EQ("", response->body());
 }
 
-TEST_P(HttpTestServerIntegrationNoConfigTest, BadTestHeaderConfig) {
-  Envoy::BufferingStreamDecoderPtr response = makeSingleRequest(
-      lookupPort("http"), "GET", "/", "", downstream_protocol_, version_, "foo.com", "",
-      [](Envoy::Http::RequestHeaderMapImpl& request_headers) {
-        request_headers.addCopy(Nighthawk::Server::TestServer::HeaderNames::get().TestServerConfig,
-                                kBadJson);
-      });
-  ASSERT_TRUE(response->complete());
-  EXPECT_EQ("500", response->headers().Status()->value().getStringView());
-  EXPECT_EQ("test-server didn't understand the request: Error merging json config: Unable to parse "
-            "JSON as proto (INVALID_ARGUMENT:Unexpected token.\nbad_json\n^): bad_json",
-            response->body());
-}
-
-class HttpTestServerDecoderFilterTest : public Test {};
-
 // Here we test config-level merging as well as its application at the response-header level.
-TEST_F(HttpTestServerDecoderFilterTest, HeaderMerge) {
+TEST(HttpTestServerDecoderFilterTest, HeaderMerge) {
   nighthawk::server::ResponseOptions initial_options;
   auto response_header = initial_options.add_response_headers();
   response_header->mutable_header()->set_key("foo");
@@ -312,9 +196,11 @@ TEST_F(HttpTestServerDecoderFilterTest, HeaderMerge) {
   Server::HttpTestServerDecoderFilterConfigSharedPtr config =
       std::make_shared<Server::HttpTestServerDecoderFilterConfig>(initial_options);
   Server::HttpTestServerDecoderFilter f(config);
-  std::string error_message;
-  nighthawk::server::ResponseOptions options = config->server_config();
 
+  absl::StatusOr<Server::EffectiveFilterConfigurationPtr> options_or =
+      config->getEffectiveConfiguration();
+  ASSERT_TRUE(options_or.ok());
+  nighthawk::server::ResponseOptions options = *options_or.value();
   EXPECT_EQ(1, options.response_headers_size());
 
   EXPECT_EQ("foo", options.response_headers(0).header().key());
@@ -326,6 +212,7 @@ TEST_F(HttpTestServerDecoderFilterTest, HeaderMerge) {
   EXPECT_TRUE(Envoy::TestUtility::headerMapEqualIgnoreOrder(
       header_map, Envoy::Http::TestResponseHeaderMapImpl{{":status", "200"}, {"foo", "bar1"}}));
 
+  std::string error_message;
   EXPECT_TRUE(Server::Configuration::mergeJsonConfig(
       R"({response_headers: [ { header: { key: "foo", value: "bar2"}, append: false } ]})", options,
       error_message));
@@ -355,11 +242,12 @@ TEST_F(HttpTestServerDecoderFilterTest, HeaderMerge) {
       header_map, Envoy::Http::TestResponseHeaderMapImpl{
                       {":status", "200"}, {"foo", "bar2"}, {"foo2", "bar3"}}));
 
-  EXPECT_FALSE(Server::Configuration::mergeJsonConfig(kBadJson, options, error_message));
+  EXPECT_FALSE(Server::Configuration::mergeJsonConfig("bad_json", options, error_message));
   EXPECT_EQ("Error merging json config: Unable to parse JSON as proto (INVALID_ARGUMENT:Unexpected "
             "token.\nbad_json\n^): bad_json",
             error_message);
   EXPECT_EQ(3, options.response_headers_size());
 }
 
+} // namespace
 } // namespace Nighthawk

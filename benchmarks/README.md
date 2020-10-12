@@ -67,6 +67,7 @@ bazel test \
   --compilation_mode=opt \
   --cxxopt=-g \
   --cxxopt=-ggdb3 \
+  --define tcmalloc=gperftools \
   //benchmarks:*
 ```
 
