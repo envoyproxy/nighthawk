@@ -108,7 +108,7 @@ TEST_F(RateLimiterTest, ScheduledStartingRateLimiterTest) {
 TEST_F(RateLimiterTest, ScheduledStartingRateLimiterTestBadArgs) {
   Envoy::Event::SimulatedTimeSystem time_system;
   // Verify we enforce future-only scheduling.
-  for (const auto timing :
+  for (const auto& timing :
        std::vector<Envoy::SystemTime>{time_system.systemTime(), time_system.systemTime() - 10ms}) {
     std::unique_ptr<MockRateLimiter> mock_rate_limiter = std::make_unique<MockRateLimiter>();
     MockRateLimiter& unsafe_mock_rate_limiter = *mock_rate_limiter;
