@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -eo pipefail
+
 # ENVOY_SRCDIR should point to where Envoy source lives, while SRCDIR could be a downstream build
 # (for example envoy-filter-example).
 [[ -z "${ENVOY_SRCDIR}" ]] && ENVOY_SRCDIR="${PWD}"
@@ -119,9 +120,8 @@ else
   run_clang_tidy_diff "${DIFF_REF}"
 fi
 
-
 if [[ -s "${FIX_YAML}" ]]; then
   echo "clang-tidy check failed, potentially fixed by clang-apply-replacements:"
-  cat ${FIX_YAML}
+  cat "${FIX_YAML}"
   exit 1
 fi
