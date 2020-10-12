@@ -1,10 +1,10 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-ENVOY_COMMIT = "c318156496edc46c844822a3d1f107ee496fa449"  # October 2nd, 2020
-ENVOY_SHA = "dc4ee70d317f0310b96cb803a5c02b42589f5d1dfbfb2989f4bf72800aaa799a"
+ENVOY_COMMIT = "2097fe908f2abb718757dbd4087d793c861d7c5a"  # October 12th, 2020
+ENVOY_SHA = "323360544ee355f0eddea742b31a80a94899090db1d64029cd22880083b311c0"
 
-HDR_HISTOGRAM_C_VERSION = "0.11.1"  # September 17th, 2020
-HDR_HISTOGRAM_C_SHA = "8550071d4ae5c8229448f9b68469d6d42c620cd25111b49c696d00185e5f8329"
+HDR_HISTOGRAM_C_VERSION = "0.11.2"  # October 12th, 2020
+HDR_HISTOGRAM_C_SHA = "637f28b5f64de2e268131e4e34e6eef0b91cf5ff99167db447d9b2825eae6bad"
 
 def nighthawk_dependencies():
     http_archive(
