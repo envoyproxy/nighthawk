@@ -211,6 +211,9 @@ TEST_F(StreamDecoderTest, StreamResetReasonToResponseFlag) {
   ASSERT_EQ(StreamDecoder::streamResetReasonToResponseFlag(
                 Envoy::Http::StreamResetReason::RemoteRefusedStreamReset),
             Envoy::StreamInfo::ResponseFlag::UpstreamRemoteReset);
+  ASSERT_EQ(
+      StreamDecoder::streamResetReasonToResponseFlag(Envoy::Http::StreamResetReason::ConnectError),
+      Envoy::StreamInfo::ResponseFlag::UpstreamRemoteReset);
 }
 
 // This test parameterization structure carries the response header name that ought to be treated
