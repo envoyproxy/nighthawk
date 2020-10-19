@@ -51,7 +51,7 @@ TEST_P(HttpTimeTrackingIntegrationTest, ReturnsPositiveLatencyForStaticConfigura
   response = getResponse(ResponseOrigin::UPSTREAM);
   const Envoy::Http::HeaderMap::GetResult& latency_header =
       response->headers().get(Envoy::Http::LowerCaseString(kLatencyResponseHeaderName));
-  EXPECT_EQ(latency_header.size(), 1);
+  ASSERT_EQ(latency_header.size(), 1);
   EXPECT_TRUE(absl::SimpleAtoi(latency_header[0]->value().getStringView(), &latency));
   EXPECT_GT(latency, 0);
 }
@@ -71,7 +71,7 @@ TEST_P(HttpTimeTrackingIntegrationTest, ReturnsPositiveLatencyForPerRequestConfi
   response = getResponse(ResponseOrigin::UPSTREAM);
   const Envoy::Http::HeaderMap::GetResult& latency_header =
       response->headers().get(Envoy::Http::LowerCaseString(kLatencyResponseHeaderName));
-  EXPECT_EQ(latency_header.size(), 1);
+  ASSERT_EQ(latency_header.size(), 1);
   int64_t latency;
   EXPECT_TRUE(absl::SimpleAtoi(latency_header[0]->value().getStringView(), &latency));
   // TODO(oschaaf): figure out if we can use simtime here, and verify actual timing matches
