@@ -248,5 +248,22 @@ TEST_P(LatencyTrackingViaResponseHeaderTest, LatencyTrackingViaResponseHeader) {
   EXPECT_EQ(origin_latency_statistic_.count(), expected_count);
 }
 
+// Test that a single response carrying multiple valid latency response headers does not
+// get tracked. This will also yield a burst of warnings, which we unfortunately cannot
+// easily verify here.
+TEST_F(StreamDecoderTest, LatencyTrackingWithMultipleResponseHeadersFails) {
+  const std::string kLatencyTrackingResponseHeader = "latency-in-response-header";
+  auto decoder = new StreamDecoder(
+      *dispatcher_, time_system_, *this, [](bool, bool) {}, connect_statistic_, latency_statistic_,
+      response_header_size_statistic_, response_body_size_statistic_, origin_latency_statistic_,
+      request_headers_, false, 0, random_generator_, http_tracer_, kLatencyTrackingResponseHeader);
+  Envoy::Http::ResponseHeaderMapPtr headers{
+      new Envoy::Http::TestResponseHeaderMapImpl{{":status", "200"},
+                                                 {kLatencyTrackingResponseHeader, "1"},
+                                                 {kLatencyTrackingResponseHeader, "2"}}};
+  decoder->decodeHeaders(std::move(headers), true);
+  EXPECT_EQ(origin_latency_statistic_.count(), 0);
+}
+
 } // namespace Client
 } // namespace Nighthawk

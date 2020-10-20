@@ -24,7 +24,8 @@ void StreamDecoder::decodeHeaders(Envoy::Http::ResponseHeaderMapPtr&& headers, b
     const Envoy::Http::HeaderMap::GetResult& timing_header =
         response_headers_->get(timing_header_name);
     if (!timing_header.empty()) {
-      absl::string_view timing_value = timing_header[0]->value().getStringView();
+      absl::string_view timing_value =
+          timing_header.size() == 1 ? timing_header[0]->value().getStringView() : "multiple values";
       int64_t origin_delta;
       if (absl::SimpleAtoi(timing_value, &origin_delta) && origin_delta >= 0) {
         origin_latency_statistic_.addValue(origin_delta);

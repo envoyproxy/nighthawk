@@ -24,6 +24,9 @@ void FilterConfigurationBase::computeEffectiveConfiguration(
     } else {
       effective_config_ = absl::InvalidArgumentError(error_message);
     }
+  } else if (request_config_header.size() > 1) {
+    effective_config_ = absl::InvalidArgumentError(
+        "Received multiple configuration headers in the request, expected only one.");
   }
 }
 
