@@ -53,6 +53,16 @@ protected:
   void setRequestLevelConfiguration(absl::string_view request_level_config);
 
   /**
+   * Make getResponse add request-level configuration. Test server extensions read that
+   * configuration and merge it with their static configuration to determine a final effective
+   * configuration. See TestServerConfig in well_known_headers.h for the up to date header name.
+   *
+   * @param request_level_config Configuration to be delivered by request-header in future calls to
+   * getResponse(). For example: "{response_body_size:1024}".
+   */
+  void appendRequestLevelConfiguration(absl::string_view request_level_config);
+
+  /**
    * Switch getResponse() to use the POST request method with an entity body.
    * Doing so will make tests hit a different code paths in extensions.
    */
@@ -66,6 +76,15 @@ protected:
    */
   void setRequestHeader(const Envoy::Http::LowerCaseString& header_name,
                         absl::string_view header_value);
+
+  /**
+   * Appends a request header value.
+   *
+   * @param header_name Name of the request header to set.
+   * @param header_value Value to set for the request header.
+   */
+  void appendRequestHeader(const Envoy::Http::LowerCaseString& header_name,
+                           absl::string_view header_value);
 
   /**
    * Fetch a response, according to the options specified by the class methods. By default,

@@ -90,7 +90,8 @@ TEST_F(StubRequestSourcePluginTest, CreateRequestSourcePluginCreatesWorkingPlugi
   Nighthawk::RequestGenerator generator = plugin->get();
   Nighthawk::RequestPtr request = generator();
   Nighthawk::HeaderMapPtr header = request->header();
-  EXPECT_EQ(header->get(Envoy::Http::LowerCaseString("test_value"))->value().getStringView(),
+  ASSERT_EQ(header->get(Envoy::Http::LowerCaseString("test_value")).size(), 1);
+  EXPECT_EQ(header->get(Envoy::Http::LowerCaseString("test_value"))[0]->value().getStringView(),
             absl::string_view(std::to_string(test_value)));
 }
 TEST_F(FileBasedRequestSourcePluginTest, CreateEmptyConfigProtoCreatesCorrectType) {

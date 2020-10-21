@@ -38,8 +38,8 @@ public:
     EXPECT_EQ("200", response->headers().Status()->value().getStringView());
     if (expect_header) {
       auto inserted_header = response->headers().get(Envoy::Http::LowerCaseString("x-supplied-by"));
-      ASSERT_NE(nullptr, inserted_header);
-      EXPECT_EQ("nighthawk-test-server", inserted_header->value().getStringView());
+      ASSERT_EQ(1, inserted_header.size());
+      EXPECT_EQ("nighthawk-test-server", inserted_header[0]->value().getStringView());
     }
     if (response_body_size == 0) {
       EXPECT_EQ(nullptr, response->headers().ContentType());
@@ -107,8 +107,10 @@ TEST_P(HttpTestServerIntegrationTest, TestHeaderConfig) {
   Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
   ASSERT_TRUE(response->complete());
   EXPECT_EQ("200", response->headers().Status()->value().getStringView());
-  EXPECT_EQ("bar2",
-            response->headers().get(Envoy::Http::LowerCaseString("foo"))->value().getStringView());
+  ASSERT_EQ(1, response->headers().get(Envoy::Http::LowerCaseString("foo")).size());
+  EXPECT_EQ(
+      "bar2",
+      response->headers().get(Envoy::Http::LowerCaseString("foo"))[0]->value().getStringView());
   EXPECT_EQ(std::string(10, 'a'), response->body());
 }
 
@@ -180,8 +182,10 @@ TEST_P(HttpTestServerIntegrationTest, TestNoStaticConfigHeaderConfig) {
 
   ASSERT_TRUE(response->complete());
   EXPECT_EQ("200", response->headers().Status()->value().getStringView());
-  EXPECT_EQ("bar2",
-            response->headers().get(Envoy::Http::LowerCaseString("foo"))->value().getStringView());
+  ASSERT_EQ(1, response->headers().get(Envoy::Http::LowerCaseString("foo")).size());
+  EXPECT_EQ(
+      "bar2",
+      response->headers().get(Envoy::Http::LowerCaseString("foo"))[0]->value().getStringView());
   EXPECT_EQ("", response->body());
 }
 
