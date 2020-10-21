@@ -105,7 +105,7 @@ message H1ConnectionReuseStrategy {
 
 // TODO(oschaaf): Ultimately this will be a load test specification. The fact that it
 // can arrive via CLI is just a concrete detail. Change this to reflect that.
-//highest unused number is 38
+// highest unused number is 38
 message CommandLineOptions {
   // The target requests-per-second rate. Default: 5.
   google.protobuf.UInt32Value requests_per_second = 1

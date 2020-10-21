@@ -60,7 +60,8 @@ public:
     return sequencer_idle_strategy_;
   }
   std::string requestSource() const override { return request_source_; }
-  const absl::optional<envoy::config::core::v3::TypedExtensionConfig>& requestSourcePluginConfig() const override {
+  const absl::optional<envoy::config::core::v3::TypedExtensionConfig>&
+  requestSourcePluginConfig() const override {
     return request_source_plugin_config_;
   }
 

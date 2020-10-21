@@ -3,6 +3,7 @@
 #include "client/options_impl.h"
 
 #include "test/client/utility.h"
+#include "test/test_common/environment.h"
 
 #include "gtest/gtest.h"
 
@@ -275,6 +276,96 @@ TEST_F(OptionsImplTest, RequestSource) {
   OptionsImpl options_from_proto(*cmd);
   EXPECT_TRUE(util(*(options_from_proto.toCommandLineOptions()), *cmd));
 }
+// This test covers --RequestSourcePlugin, which can't be tested at the same time as --RequestSource
+// and some other options.
+TEST_F(OptionsImplTest, FileBasedRequestSourcePlugin) {
+  Envoy::MessageUtil util;
+  // this needs changing
+  const std::string request_source_config =
+      "{"
+      "name:\"nighthawk.file-based-request-source-plugin\","
+      "typed_config:{"
+      "\"@type\":\"type.googleapis.com/nighthawk.request_source.FileBasedPluginConfig\","
+      "file_path:\"" +
+      TestEnvironment::runfilesPath("test/request_source/test_data/test-config.yaml") +
+      "\","
+      "}"
+      "}";
+
+  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(
+      fmt::format("{} --request-source-plugin-config {} {}", client_name_, request_source_config,
+                  good_test_uri_));
+
+  // Check that our conversion to CommandLineOptionsPtr makes sense.
+  CommandLineOptionsPtr cmd = options->toCommandLineOptions();
+  EXPECT_TRUE(
+      util(cmd->request_source_plugin_config(), options->requestSourcePluginConfig().value()));
+  // Now we construct a new options from the proto we created above. This should result in an
+  // OptionsImpl instance equivalent to options. We test that by converting both to yaml strings,
+  // expecting them to be equal. This should provide helpful output when the test fails by showing
+  // the unexpected (yaml) diff.
+
+  // The predicates are defined as proto maps, and these seem to re-serialize into a different
+  // order. Hence we trim the maps to contain a single entry so they don't thwart our textual
+  // comparison below.
+  EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("benchmark.http_4xx"));
+  EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("benchmark.http_5xx"));
+  EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("requestsource.upstream_rq_5xx"));
+
+  OptionsImpl options_from_proto(*cmd);
+  std::string s1 = Envoy::MessageUtil::getYamlStringFromMessage(
+      *(options_from_proto.toCommandLineOptions()), true, true);
+  std::string s2 = Envoy::MessageUtil::getYamlStringFromMessage(*cmd, true, true);
+  EXPECT_EQ(s1, s2);
+  // For good measure, also directly test for proto equivalence, though this should be
+  // superfluous.
+  EXPECT_TRUE(util(*(options_from_proto.toCommandLineOptions()), *cmd));
+}
+
+// This test covers --RequestSourcePlugin, which can't be tested at the same time as --RequestSource
+// and some other options.
+TEST_F(OptionsImplTest, StubRequestSourcePlugin) {
+  Envoy::MessageUtil util;
+  // this needs changing
+  const std::string request_source_config =
+      "{"
+      "name:\"nighthawk.stub-request-source-plugin\","
+      "typed_config:{"
+      "\"@type\":\"type.googleapis.com/nighthawk.request_source.StubPluginConfig\","
+      "test_value:\"3\","
+      "}"
+      "}";
+
+  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(
+      fmt::format("{} --request-source-plugin-config {} {}", client_name_, request_source_config,
+                  good_test_uri_));
+
+  // Check that our conversion to CommandLineOptionsPtr makes sense.
+  CommandLineOptionsPtr cmd = options->toCommandLineOptions();
+  EXPECT_TRUE(
+      util(cmd->request_source_plugin_config(), options->requestSourcePluginConfig().value()));
+  // Now we construct a new options from the proto we created above. This should result in an
+  // OptionsImpl instance equivalent to options. We test that by converting both to yaml strings,
+  // expecting them to be equal. This should provide helpful output when the test fails by showing
+  // the unexpected (yaml) diff.
+
+  // The predicates are defined as proto maps, and these seem to re-serialize into a different
+  // order. Hence we trim the maps to contain a single entry so they don't thwart our textual
+  // comparison below.
+  EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("benchmark.http_4xx"));
+  EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("benchmark.http_5xx"));
+  EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("requestsource.upstream_rq_5xx"));
+
+  OptionsImpl options_from_proto(*cmd);
+  std::string s1 = Envoy::MessageUtil::getYamlStringFromMessage(
+      *(options_from_proto.toCommandLineOptions()), true, true);
+  std::string s2 = Envoy::MessageUtil::getYamlStringFromMessage(*cmd, true, true);
+  EXPECT_EQ(s1, s2);
+  // For good measure, also directly test for proto equivalence, though this should be
+  // superfluous.
+  EXPECT_TRUE(util(*(options_from_proto.toCommandLineOptions()), *cmd));
+}
+
 
 // We test --no-duration here and not in All above because it is exclusive to --duration.
 TEST_F(OptionsImplTest, NoDuration) {

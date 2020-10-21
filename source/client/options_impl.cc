@@ -503,16 +503,17 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       throw MalformedArgvException(e.what());
     }
   }
-    if (!request_source_plugin_config.getValue().empty()) {
+  if (!request_source_plugin_config.getValue().empty()) {
     try {
       request_source_plugin_config_.emplace(envoy::config::core::v3::TypedExtensionConfig());
-      Envoy::MessageUtil::loadFromJson(request_source_plugin_config.getValue(), request_source_plugin_config_.value(),
+      Envoy::MessageUtil::loadFromJson(request_source_plugin_config.getValue(),
+                                       request_source_plugin_config_.value(),
                                        Envoy::ProtobufMessage::getStrictValidationVisitor());
     } catch (const Envoy::EnvoyException& e) {
       throw MalformedArgvException(e.what());
     }
   }
-  
+
   validate();
 }
 
@@ -750,11 +751,10 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
   if (requestSource() != "") {
     auto request_source = command_line_options->mutable_request_source();
     *request_source->mutable_uri() = request_source_;
-  } else if (request_source_plugin_config_.has_value())
-  {
-    *(command_line_options->mutable_request_source_plugin_config()) = request_source_plugin_config_.value();
-  } 
-  else {
+  } else if (request_source_plugin_config_.has_value()) {
+    *(command_line_options->mutable_request_source_plugin_config()) =
+        request_source_plugin_config_.value();
+  } else {
     auto request_options = command_line_options->mutable_request_options();
     request_options->set_request_method(request_method_);
     for (const auto& header : request_headers_) {

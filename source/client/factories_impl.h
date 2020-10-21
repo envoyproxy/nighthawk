@@ -8,9 +8,9 @@
 #include "nighthawk/common/factories.h"
 #include "nighthawk/common/termination_predicate.h"
 #include "nighthawk/common/uri.h"
+
 #include "external/envoy/source/common/common/statusor.h"
 #include "external/envoy/source/common/config/utility.h"
-#include "request_source/request_source_plugin_impl.h"
 
 #include "common/platform_util_impl.h"
 
@@ -65,18 +65,19 @@ public:
   RequestSourcePtr create(const Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                           Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
                           absl::string_view service_cluster_name) const override;
-/**
- * Instantiates a RequestSource using a RequestSourcePluginFactory based on the plugin name in |config|, unpacking the
- * plugin-specific config proto within |config|. Validates the config proto.
- *
- * @param config Proto containing plugin name and plugin-specific config proto.
- *
- * @return absl::StatusOr<RequestSourcePtr> Initialized plugin or error status due to missing
- * plugin or config proto validation error.
- */
-absl::StatusOr<RequestSourcePtr>
-LoadRequestSourcePlugin(const envoy::config::core::v3::TypedExtensionConfig& config, Envoy::Api::ApiPtr api,
-    Envoy::Http::RequestHeaderMapPtr header);
+  /**
+   * Instantiates a RequestSource using a RequestSourcePluginFactory based on the plugin name in
+   * |config|, unpacking the plugin-specific config proto within |config|. Validates the config
+   * proto.
+   *
+   * @param config Proto containing plugin name and plugin-specific config proto.
+   *
+   * @return absl::StatusOr<RequestSourcePtr> Initialized plugin or error status due to missing
+   * plugin or config proto validation error.
+   */
+  absl::StatusOr<RequestSourcePtr>
+  LoadRequestSourcePlugin(const envoy::config::core::v3::TypedExtensionConfig& config,
+                          Envoy::Api::Api& api, Envoy::Http::RequestHeaderMapPtr header);
 
 private:
   void setRequestHeader(Envoy::Http::RequestHeaderMap& header, absl::string_view key,
