@@ -15,6 +15,9 @@ void FilterConfigurationBase::computeEffectiveConfiguration(
     const Envoy::Http::RequestHeaderMap& headers) {
   const auto& request_config_header = headers.get(TestServer::HeaderNames::get().TestServerConfig);
   if (request_config_header.size() == 1) {
+    // We could be more flexible and look for the first request header that has a value,
+    // but without a proper understanding of a real use case for that, we are assuming that any
+    // existence of duplicate headers here is an error.
     nighthawk::server::ResponseOptions response_options = *server_config_;
     std::string error_message;
     if (Configuration::mergeJsonConfig(request_config_header[0]->value().getStringView(),

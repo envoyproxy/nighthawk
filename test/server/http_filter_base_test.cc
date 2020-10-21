@@ -102,10 +102,6 @@ TEST_P(HttpFilterBaseIntegrationTest, MultipleValidConfigurationHeadersFails) {
 
 TEST_P(HttpFilterBaseIntegrationTest, SingleValidPlusEmptyConfigurationHeadersFails) {
   // Make sure we fail when both a valid configuration plus an empty configuration header is send.
-  // Note that we could be more flexible and look for the first request header that has a value,
-  // but I think the current behavior is reasonable: just assume the first request header will have
-  // the value we are after, and assume that multiple configuration headers indicate accidental user
-  // error.
   setRequestLevelConfiguration("{}");
   appendRequestLevelConfiguration("");
   Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
