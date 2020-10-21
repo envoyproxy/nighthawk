@@ -19,11 +19,11 @@ message FileBasedOptionsListRequestSourceConfig {
   // The pluginfactory makes requestSources that will generate requests from the RequestOptionList
   // up to num_requests number of times. If num_requests exceeds the number of RequestOptions in the
   // RequestOptionList located in the file at file_path, it will loop. num_requests = 0 means it
-  // will loop indefinitely, though it will still terminate by normal mechanisms. This field is
-  // optional with a default of 0.
+  // will loop indefinitely, though it will still terminate by normal mechanisms.
   uint32 num_requests = 2;
-  // The pluginfactory will load the file located in file_path as long as it is below max_file_size,
-  // if it's too large it will throw an error. This field is optional with a default of 1000000.
+  // The pluginfactory will load the file located in file_path as long as it is below max_file_size
+  // in bytes, if it's too large it will throw an error. This field is optional with a default of
+  // 1000000.
   google.protobuf.UInt32Value max_file_size = 3 [(validate.rules).uint32 = {lte: 1000000}];
 }
 
@@ -38,7 +38,7 @@ message InLineOptionsListRequestSourceConfig {
   // The pluginfactory makes requestSources that will generate requests from the RequestOptionList
   // up to num_requests number of times. If num_requests exceeds the number of RequestOptions in the
   // options_list, it will loop. num_requests = 0 means it will loop indefinitely, though it will
-  // still terminate by normal mechanisms. This field is optional with a default of 0.
+  // still terminate by normal mechanisms.
   uint32 num_requests = 2;
 }
 
@@ -48,6 +48,6 @@ message InLineOptionsListRequestSourceConfig {
 // file reading.
 message StubPluginConfig {
   // test input value which is the only output value in the headers produced from the
-  // requestGenerator for the StubRequestSource. This field is optional with a default of 0.
+  // requestGenerator for the StubRequestSource.
   google.protobuf.DoubleValue test_value = 1;
 }
