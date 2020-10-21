@@ -48,8 +48,8 @@ private:
 // proto. Registered as an Envoy plugin. Implementation of RequestSourceConfigFactory which produces
 // a RequestSource that keeps an RequestOptionsList in memory, and loads it with the RequestOptions
 // taken from a file. All plugins configuration are specified in the request_source_plugin.proto.
-// This class is not thread-safe, because it loads its RequestOptionlist in memory from a file when
-// first called. Usage: assume you are passed an appropriate Any type object called config, an Api
+// This class is thread-safe,
+// Usage: assume you are passed an appropriate Any type object called config, an Api
 // object called api, and a default header called header. auto& config_factory =
 //     Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
 //         "nighthawk.file-based-request-source-plugin");
@@ -61,10 +61,13 @@ public:
 
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
 
-  // This implementation is not thread safe. There is a race condition because only the first call
-  // to createRequestSourcePlugin will load the file from memory and subsequent calls just make a
-  // copy of the options_list that was already loaded. The FileBasedOptionsListRequestSourceFactory
-  // will not work with multiple different files for this reason. This method will also error if the
+  // This implementation is thread safe. There is currently a behaviour such that only the first
+  // call to createRequestSourcePlugin will load the options list into memory and subsequent calls
+  // just make a copy of the options_list that was already loaded. The
+  // FileBasedOptionsListRequestSourceFactory will not work with multiple different files for this
+  // reason.
+  // TODO: This memory saving is likely a premature optimization, and should be removed.
+  // This method will also error if the
   // file can not be loaded correctly, e.g. the file is too large or could not be found.
   RequestSourcePtr createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
                                              Envoy::Api::Api& api,
@@ -82,7 +85,9 @@ DECLARE_FACTORY(FileBasedOptionsListRequestSourceFactory);
 // proto. Registered as an Envoy plugin. Implementation of RequestSourceConfigFactory which produces
 // a RequestSource that keeps an RequestOptionsList in memory, and loads it with the RequestOptions
 // passed to it from the config. All plugins configuration are specified in the
-// request_source_plugin.proto. Usage: assume you are passed an appropriate Any type object called
+// request_source_plugin.proto. 
+// This class is thread-safe,
+// Usage: assume you are passed an appropriate Any type object called
 // config, an Api object called api, and a default header called header. auto& config_factory =
 //     Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
 //         "nighthawk.in-line-options-list-request-source-plugin");
@@ -94,9 +99,10 @@ public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
 
-  // This implementation is not thread safe. There is a race condition because only the first call
-  // to createRequestSourcePlugin will load the options list into memory and subsequent calls just
-  // make a copy of the options_list that was already loaded.
+  // This implementation is thread safe. There is currently a behaviour such that only the first
+  // call to createRequestSourcePlugin will load the options list into memory and subsequent calls
+  // just make a copy of the options_list that was already loaded.
+  // TODO: This memory saving is likely a premature optimization, and should be removed.
   RequestSourcePtr createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
                                              Envoy::Api::Api& api,
                                              Envoy::Http::RequestHeaderMapPtr header) override;
