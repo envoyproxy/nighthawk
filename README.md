@@ -47,6 +47,7 @@ bazel-bin/nighthawk_client  [--latency-response-header-name <string>]
 [--stats-flush-interval <uint32_t>]
 [--stats-sinks <string>] ...
 [--no-duration] [--simple-warmup]
+[--request-source-plugin-config <string>]
 [--request-source <uri format>] [--label
 <string>] ... [--multi-target-use-https]
 [--multi-target-path <string>]
@@ -108,6 +109,13 @@ will still be added. Mutually exclusive with --duration.
 Perform a simple single warmup request (per worker) before starting
 execution. Note that this will be reflected in the counters that
 Nighthawk writes to the output. Default is false.
+
+--request-source-plugin-config <string>
+Request Source plugin configuration in json or compact yaml. Mutually
+exclusive with --request-source. Example (json):
+{name:"nighthawk.stub-request-source-plugin"
+,typed_config:{"@type":"type.googleapis.com/nighthawk.request_source.S
+tubPluginConfig",test_value:"3"}}
 
 --request-source <uri format>
 Remote gRPC source that will deliver to-be-replayed traffic. Each
