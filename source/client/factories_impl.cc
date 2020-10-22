@@ -17,7 +17,6 @@
 #include "client/output_collector_impl.h"
 #include "client/output_formatter_impl.h"
 
-
 using namespace std::chrono_literals;
 
 namespace Nighthawk {
@@ -181,8 +180,6 @@ RequestSourceFactoryImpl::create(const Envoy::Upstream::ClusterManagerPtr& clust
     return std::make_unique<StaticRequestSourceImpl>(std::move(header));
   }
 }
-
-
 
 TerminationPredicateFactoryImpl::TerminationPredicateFactoryImpl(const Options& options)
     : OptionBasedFactoryImpl(options) {}
