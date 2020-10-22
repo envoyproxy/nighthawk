@@ -90,5 +90,25 @@ TEST_P(HttpFilterBaseIntegrationTest, EmptyRequestLevelConfigurationShouldFail) 
   EXPECT_THAT(response->body(), HasSubstr(kBadConfigErrorSentinel));
 }
 
+TEST_P(HttpFilterBaseIntegrationTest, MultipleValidConfigurationHeadersFails) {
+  // Make sure we fail when two valid configuration headers are send.
+  setRequestLevelConfiguration("{}");
+  appendRequestLevelConfiguration("{}");
+  Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
+  ASSERT_TRUE(response->complete());
+  EXPECT_THAT(response->body(),
+              HasSubstr("Received multiple configuration headers in the request"));
+}
+
+TEST_P(HttpFilterBaseIntegrationTest, SingleValidPlusEmptyConfigurationHeadersFails) {
+  // Make sure we fail when both a valid configuration plus an empty configuration header is send.
+  setRequestLevelConfiguration("{}");
+  appendRequestLevelConfiguration("");
+  Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
+  ASSERT_TRUE(response->complete());
+  EXPECT_THAT(response->body(),
+              HasSubstr("Received multiple configuration headers in the request"));
+}
+
 } // namespace
 } // namespace Nighthawk

@@ -24,8 +24,8 @@ function do_build () {
 }
 
 function do_opt_build () {
-    bazel build $BAZEL_BUILD_OPTIONS -c opt //:nighthawk
-    bazel build $BAZEL_BUILD_OPTIONS -c opt //benchmarks:benchmarks
+    bazel build $BAZEL_BUILD_OPTIONS -c opt --define tcmalloc=gperftools //:nighthawk
+    bazel build $BAZEL_BUILD_OPTIONS -c opt --define tcmalloc=gperftools //benchmarks:benchmarks
 }
 
 function do_test() {
@@ -39,7 +39,7 @@ function do_clang_tidy() {
 
 function do_unit_test_coverage() {
     export TEST_TARGETS="//test/... -//test:python_test"
-    export COVERAGE_THRESHOLD=93.2
+    export COVERAGE_THRESHOLD=94.0
     echo "bazel coverage build with tests ${TEST_TARGETS}"
     test/run_nighthawk_bazel_coverage.sh ${TEST_TARGETS}
     exit 0
@@ -47,7 +47,7 @@ function do_unit_test_coverage() {
 
 function do_integration_test_coverage() {
     export TEST_TARGETS="//test:python_test"
-    export COVERAGE_THRESHOLD=78.0
+    export COVERAGE_THRESHOLD=78.6
     echo "bazel coverage build with tests ${TEST_TARGETS}"
     test/run_nighthawk_bazel_coverage.sh ${TEST_TARGETS}
     exit 0
@@ -127,6 +127,7 @@ function do_benchmark_with_own_binaries() {
         --compilation_mode=opt \
         --cxxopt=-g \
         --cxxopt=-ggdb3 \
+        --define tcmalloc=gperftools \
         //benchmarks:*
 }
 
