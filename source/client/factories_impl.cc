@@ -17,7 +17,6 @@
 #include "client/output_collector_impl.h"
 #include "client/output_formatter_impl.h"
 
-#include "request_source/request_options_list_plugin_impl.h"
 
 using namespace std::chrono_literals;
 
@@ -178,33 +177,12 @@ RequestSourceFactoryImpl::create(const Envoy::Upstream::ClusterManagerPtr& clust
     return std::make_unique<RemoteRequestSourceImpl>(cluster_manager, dispatcher, scope,
                                                      service_cluster_name, std::move(header),
                                                      options_.requestsPerSecond());
-    // } else if (options_.requestSourcePluginConfig().has_value())
-    // {
-    //   auto pluginConfig =
-    //   RequestSourceFactoryImpl::LoadRequestSourcePlugin(options_.requestSourcePluginConfig().value(),
-    //   api)
   } else {
     return std::make_unique<StaticRequestSourceImpl>(std::move(header));
   }
 }
 
-absl::StatusOr<RequestSourcePtr> RequestSourceFactoryImpl::LoadRequestSourcePlugin(
-    const envoy::config::core::v3::TypedExtensionConfig& config, Envoy::Api::Api& api,
-    Envoy::Http::RequestHeaderMapPtr header) {
-  try {
-    auto& config_factory =
-        Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
-            config.name());
-    // absl::Status validation_status = config_factory.ValidateConfig(config.typed_config());
-    // if (!validation_status.ok()) {
-    //   return validation_status;
-    // }
-    return config_factory.createRequestSourcePlugin(config.typed_config(), api, std::move(header));
-  } catch (const Envoy::EnvoyException& e) {
-    return absl::InvalidArgumentError(
-        absl::StrCat("Could not load plugin: ", config.name(), ": ", e.what()));
-  }
-}
+
 
 TerminationPredicateFactoryImpl::TerminationPredicateFactoryImpl(const Options& options)
     : OptionBasedFactoryImpl(options) {}

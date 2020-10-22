@@ -269,9 +269,9 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "", "request-source-plugin-config",
       "Request Source plugin configuration in json or compact yaml. "
       "Mutually exclusive with --request-source. Example (json): "
-      "{name:\"envoy.transport_sockets.tls\",typed_config:{"
-      "\"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\","
-      "common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES128-SHA\"]}}}}",
+      "{name:\"nighthawk.stub-request-source-plugin\",typed_config:{"
+      "\"@type\":\"type.googleapis.com/nighthawk.request_source.StubPluginConfig\","
+      "test_value:\"3\"}}",
       false, "", "string", cmd);
   TCLAP::SwitchArg simple_warmup(
       "", "simple-warmup",
