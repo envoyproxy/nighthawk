@@ -285,7 +285,7 @@ TEST_F(OptionsImplTest, FileBasedRequestSourcePlugin) {
       "{"
       "name:\"nighthawk.file-based-request-source-plugin\","
       "typed_config:{"
-      "\"@type\":\"type.googleapis.com/nighthawk.request_source.FileBasedPluginConfig\","
+      "\"@type\":\"type.googleapis.com/nighthawk.request_source.FileBasedOptionsListRequestSourceConfig\","
       "file_path:\"" +
       TestEnvironment::runfilesPath("test/request_source/test_data/test-config.yaml") +
       "\","
