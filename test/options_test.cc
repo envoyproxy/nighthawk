@@ -276,8 +276,9 @@ TEST_F(OptionsImplTest, RequestSource) {
   OptionsImpl options_from_proto(*cmd);
   EXPECT_TRUE(util(*(options_from_proto.toCommandLineOptions()), *cmd));
 }
+
 // This test covers --RequestSourcePlugin, which can't be tested at the same time as --RequestSource
-// and some other options.
+// and some other options. This is the test for the inlineoptionslistplugin.
 TEST_F(OptionsImplTest, InLineOptionsListRequestSourcePlugin) {
   Envoy::MessageUtil util;
   // this needs changing
@@ -285,9 +286,10 @@ TEST_F(OptionsImplTest, InLineOptionsListRequestSourcePlugin) {
       "{"
       "name:\"nighthawk.in-line-options-list-request-source-plugin\","
       "typed_config:{"
-      "\"@type\":\"type.googleapis.com/nighthawk.request_source.InLineOptionsListRequestSourceConfig\","
+      "\"@type\":\"type.googleapis.com/"
+      "nighthawk.request_source.InLineOptionsListRequestSourceConfig\","
       "options_list:{"
-      "options:[{request_method:\"1\",request_headers:[{header:{key:\"key\",value:\"value\"}}]}]"  
+      "options:[{request_method:\"1\",request_headers:[{header:{key:\"key\",value:\"value\"}}]}]"
       "},"
       "}"
       "}";
@@ -321,8 +323,9 @@ TEST_F(OptionsImplTest, InLineOptionsListRequestSourcePlugin) {
   // superfluous.
   EXPECT_TRUE(util(*(options_from_proto.toCommandLineOptions()), *cmd));
 }
+
 // This test covers --RequestSourcePlugin, which can't be tested at the same time as --RequestSource
-// and some other options.
+// and some other options. This is the test for the filebasedplugin.
 TEST_F(OptionsImplTest, FileBasedRequestSourcePlugin) {
   Envoy::MessageUtil util;
   // this needs changing
@@ -330,7 +333,8 @@ TEST_F(OptionsImplTest, FileBasedRequestSourcePlugin) {
       "{"
       "name:\"nighthawk.file-based-request-source-plugin\","
       "typed_config:{"
-      "\"@type\":\"type.googleapis.com/nighthawk.request_source.FileBasedOptionsListRequestSourceConfig\","
+      "\"@type\":\"type.googleapis.com/"
+      "nighthawk.request_source.FileBasedOptionsListRequestSourceConfig\","
       "file_path:\"" +
       TestEnvironment::runfilesPath("test/request_source/test_data/test-config.yaml") +
       "\","
@@ -366,8 +370,9 @@ TEST_F(OptionsImplTest, FileBasedRequestSourcePlugin) {
   // superfluous.
   EXPECT_TRUE(util(*(options_from_proto.toCommandLineOptions()), *cmd));
 }
+
 // This test covers --RequestSourcePlugin, which can't be tested at the same time as --RequestSource
-// and some other options.
+// and some other options. This is the stubplugin test.
 TEST_F(OptionsImplTest, StubRequestSourcePlugin) {
   Envoy::MessageUtil util;
   // this needs changing
@@ -409,7 +414,6 @@ TEST_F(OptionsImplTest, StubRequestSourcePlugin) {
   // superfluous.
   EXPECT_TRUE(util(*(options_from_proto.toCommandLineOptions()), *cmd));
 }
-
 
 // We test --no-duration here and not in All above because it is exclusive to --duration.
 TEST_F(OptionsImplTest, NoDuration) {
