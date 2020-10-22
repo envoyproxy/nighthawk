@@ -85,7 +85,7 @@ DECLARE_FACTORY(FileBasedOptionsListRequestSourceFactory);
 // proto. Registered as an Envoy plugin. Implementation of RequestSourceConfigFactory which produces
 // a RequestSource that keeps an RequestOptionsList in memory, and loads it with the RequestOptions
 // passed to it from the config. All plugins configuration are specified in the
-// request_source_plugin.proto. 
+// request_source_plugin.proto.
 // This class is thread-safe,
 // Usage: assume you are passed an appropriate Any type object called
 // config, an Api object called api, and a default header called header. auto& config_factory =
