@@ -31,7 +31,7 @@ public:
                            const nighthawk::client::RequestOptionsList& options_list);
 
   // This get function is not thread safe, because multiple threads calling get simultaneously will
-  // result in a collision as it attempts to update its request_count_.
+  // result in a collision.
   RequestGenerator get() override;
 
   // default implementation
