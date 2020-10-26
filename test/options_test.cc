@@ -281,7 +281,6 @@ TEST_F(OptionsImplTest, RequestSource) {
 // and some other options. This is the test for the inlineoptionslistplugin.
 TEST_F(OptionsImplTest, InLineOptionsListRequestSourcePlugin) {
   Envoy::MessageUtil util;
-  // this needs changing
   const std::string request_source_config =
       "{"
       "name:\"nighthawk.in-line-options-list-request-source-plugin\","
@@ -328,7 +327,6 @@ TEST_F(OptionsImplTest, InLineOptionsListRequestSourcePlugin) {
 // and some other options. This is the test for the filebasedplugin.
 TEST_F(OptionsImplTest, FileBasedRequestSourcePlugin) {
   Envoy::MessageUtil util;
-  // this needs changing
   const std::string request_source_config =
       "{"
       "name:\"nighthawk.file-based-request-source-plugin\","
@@ -375,7 +373,6 @@ TEST_F(OptionsImplTest, FileBasedRequestSourcePlugin) {
 // and some other options. This is the stubplugin test.
 TEST_F(OptionsImplTest, StubRequestSourcePlugin) {
   Envoy::MessageUtil util;
-  // this needs changing
   const std::string request_source_config =
       "{"
       "name:\"nighthawk.stub-request-source-plugin\","
