@@ -16,8 +16,8 @@
 #include "client/benchmark_client_impl.h"
 #include "client/output_collector_impl.h"
 #include "client/output_formatter_impl.h"
-#include "request_source/request_options_list_plugin_impl.h"
 
+#include "request_source/request_options_list_plugin_impl.h"
 
 using namespace std::chrono_literals;
 
@@ -178,13 +178,13 @@ RequestSourceFactoryImpl::create(const Envoy::Upstream::ClusterManagerPtr& clust
     return std::make_unique<RemoteRequestSourceImpl>(cluster_manager, dispatcher, scope,
                                                      service_cluster_name, std::move(header),
                                                      options_.requestsPerSecond());
-  }   
+  }
   // } else if (options_.requestSourcePluginConfig().has_value())
-    // {
-    //   auto pluginConfig =
-    //   RequestSourceFactoryImpl::LoadRequestSourcePlugin(options_.requestSourcePluginConfig().value(),
-    //   api)
- else {
+  // {
+  //   auto pluginConfig =
+  //   RequestSourceFactoryImpl::LoadRequestSourcePlugin(options_.requestSourcePluginConfig().value(),
+  //   api)
+  else {
     return std::make_unique<StaticRequestSourceImpl>(std::move(header));
   }
 }
@@ -205,7 +205,6 @@ absl::StatusOr<RequestSourcePtr> RequestSourceFactoryImpl::LoadRequestSourcePlug
         absl::StrCat("Could not load plugin: ", config.name(), ": ", e.what()));
   }
 }
-
 
 TerminationPredicateFactoryImpl::TerminationPredicateFactoryImpl(const Options& options)
     : OptionBasedFactoryImpl(options) {}

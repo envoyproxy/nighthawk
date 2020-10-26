@@ -9,7 +9,7 @@ from test.integration import asserts
 
 def test_request_source_plugin_happy_flow(http_test_server_fixture):
   """Test that the nighthawkClient can run with request-source-plugin option."""
-  request_source_config ="""
+  request_source_config = """
   {
   name:"nighthawk.in-line-options-list-request-source-plugin",
   typed_config:{
@@ -19,18 +19,6 @@ def test_request_source_plugin_happy_flow(http_test_server_fixture):
   },
   }
   }"""
-  # request_source_config =(
-  # "{"
-  # "name:\"nighthawk.in-line-options-list-request-source-plugin\","
-  # "typed_config:{"
-  # "\"@type\":\"type.googleapis.com/"
-  # "nighthawk.request_source.InLineOptionsListRequestSourceConfig\","
-  # "options_list:{"
-  # "options:[{request_method:\"1\",request_headers:[{header:{key:\"key\",value:\"value\"}"
-  # "}]}]"
-  # "},"
-  # "}")
-
   parsed_json, _ = http_test_server_fixture.runNighthawkClient([
       "--termination-predicate", "benchmark.http_2xx:5", "--rps 10",
       "--request-source-plugin-config %s" % request_source_config,

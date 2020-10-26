@@ -8,6 +8,7 @@
 #include "nighthawk/common/factories.h"
 #include "nighthawk/common/termination_predicate.h"
 #include "nighthawk/common/uri.h"
+
 #include "external/envoy/source/common/common/statusor.h"
 #include "external/envoy/source/common/config/utility.h"
 
@@ -64,13 +65,14 @@ public:
   RequestSourcePtr create(const Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                           Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
                           absl::string_view service_cluster_name) const override;
+
 protected:
   Envoy::Api::Api& api_;
 
 private:
   void setRequestHeader(Envoy::Http::RequestHeaderMap& header, absl::string_view key,
                         absl::string_view value) const;
-/**
+  /**
    * Instantiates a RequestSource using a RequestSourcePluginFactory based on the plugin name in
    * |config|, unpacking the plugin-specific config proto within |config|. Validates the config
    * proto.
@@ -83,9 +85,7 @@ private:
   absl::StatusOr<RequestSourcePtr>
   LoadRequestSourcePlugin(const envoy::config::core::v3::TypedExtensionConfig& config,
                           Envoy::Api::Api& api, Envoy::Http::RequestHeaderMapPtr header);
-
 };
-
 
 class TerminationPredicateFactoryImpl : public OptionBasedFactoryImpl,
                                         public TerminationPredicateFactory {
