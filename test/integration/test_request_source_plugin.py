@@ -34,8 +34,7 @@ def test_request_source_plugin_happy_flow(http_test_server_fixture):
   parsed_json, _ = http_test_server_fixture.runNighthawkClient([
       "--termination-predicate", "benchmark.http_2xx:5", "--rps 10",
       "--request-source-plugin-config %s" % request_source_config,
-      http_test_server_fixture.getTestServerRootUri()
+      http_test_server_fixture.getTestServerRootUri(), "--request-header", "host: sni.com"
   ])
   counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   asserts.assertGreaterEqual(counters["benchmark.http_2xx"], 5)
-  asserts.assertEqual(counters["requestsource.internal.upstream_rq_200"], 1)
