@@ -84,7 +84,7 @@ private:
    */
   absl::StatusOr<RequestSourcePtr>
   LoadRequestSourcePlugin(const envoy::config::core::v3::TypedExtensionConfig& config,
-                          Envoy::Api::Api& api, Envoy::Http::RequestHeaderMapPtr header);
+                          Envoy::Api::Api& api, Envoy::Http::RequestHeaderMapPtr header) const;
 };
 
 class TerminationPredicateFactoryImpl : public OptionBasedFactoryImpl,

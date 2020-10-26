@@ -178,19 +178,25 @@ RequestSourceFactoryImpl::create(const Envoy::Upstream::ClusterManagerPtr& clust
     return std::make_unique<RemoteRequestSourceImpl>(cluster_manager, dispatcher, scope,
                                                      service_cluster_name, std::move(header),
                                                      options_.requestsPerSecond());
+  } else if (options_.requestSourcePluginConfig().has_value())
+  {
+    absl::StatusOr<RequestSourcePtr> plugin_or =
+    LoadRequestSourcePlugin(options_.requestSourcePluginConfig().value(),
+    api_, std::move(header));
+    RELEASE_ASSERT(plugin_or.ok(),
+                absl::StrCat("Request Source plugin loading error should have been caught "
+                            "during input validation: ",
+                            plugin_or.status().message()));
+    RequestSourcePtr request_source = std::move(plugin_or.value());
+    return request_source;
   }
-  // } else if (options_.requestSourcePluginConfig().has_value())
-  // {
-  //   auto pluginConfig =
-  //   RequestSourceFactoryImpl::LoadRequestSourcePlugin(options_.requestSourcePluginConfig().value(),
-  //   api)
   else {
     return std::make_unique<StaticRequestSourceImpl>(std::move(header));
   }
 }
 absl::StatusOr<RequestSourcePtr> RequestSourceFactoryImpl::LoadRequestSourcePlugin(
     const envoy::config::core::v3::TypedExtensionConfig& config, Envoy::Api::Api& api,
-    Envoy::Http::RequestHeaderMapPtr header) {
+    Envoy::Http::RequestHeaderMapPtr header) const {
   try {
     auto& config_factory =
         Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
