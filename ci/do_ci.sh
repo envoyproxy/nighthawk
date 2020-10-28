@@ -48,7 +48,7 @@ function do_unit_test_coverage() {
 function do_integration_test_coverage() {
     export TEST_TARGETS="//test:python_test"
     #TODO(#564): Revert this to 78.6
-    export COVERAGE_THRESHOLD=75
+    export COVERAGE_THRESHOLD=75.0
     echo "bazel coverage build with tests ${TEST_TARGETS}"
     test/run_nighthawk_bazel_coverage.sh ${TEST_TARGETS}
     exit 0
