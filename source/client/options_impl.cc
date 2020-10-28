@@ -263,7 +263,8 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   TCLAP::ValueArg<std::string> request_source(
       "", "request-source",
       "Remote gRPC source that will deliver to-be-replayed traffic. Each worker will separately "
-      "connect to this source. For example grpc://127.0.0.1:8443/.",
+      "connect to this source. For example grpc://127.0.0.1:8443/."
+      "Mutually exclusive with --request_source_plugin_config.",
       false, "", "uri format", cmd);
   TCLAP::ValueArg<std::string> request_source_plugin_config(
       "", "request-source-plugin-config",
@@ -502,6 +503,9 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
     } catch (const Envoy::EnvoyException& e) {
       throw MalformedArgvException(e.what());
     }
+  }
+  if (!request_source.getValue().empty() && !request_source_plugin_config.getValue().empty()) {
+    throw MalformedArgvException("--request-source and --request_source_plugin_config cannot both be set.");
   }
   if (!request_source_plugin_config.getValue().empty()) {
     try {

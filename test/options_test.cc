@@ -279,8 +279,8 @@ TEST_F(OptionsImplTest, RequestSource) {
 
 // This test covers --RequestSourcePlugin, which can't be tested at the same time as --RequestSource
 // and some other options. This is the test for the inlineoptionslistplugin.
-TEST_F(OptionsImplTest, InLineOptionsListRequestSourcePlugin) {
-  Envoy::MessageUtil util;
+TEST_F(OptionsImplTest, InLineOptionsListRequestSourcePluginIsMutuallyExclusiveWithRequestSource) {
+  const std::string request_source = "127.9.9.4:32323";
   const std::string request_source_config =
       "{"
       "name:\"nighthawk.in-line-options-list-request-source-plugin\","
@@ -292,35 +292,10 @@ TEST_F(OptionsImplTest, InLineOptionsListRequestSourcePlugin) {
       "},"
       "}"
       "}";
-
-  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(
-      fmt::format("{} --request-source-plugin-config {} {}", client_name_, request_source_config,
-                  good_test_uri_));
-
-  // Check that our conversion to CommandLineOptionsPtr makes sense.
-  CommandLineOptionsPtr cmd = options->toCommandLineOptions();
-  EXPECT_TRUE(
-      util(cmd->request_source_plugin_config(), options->requestSourcePluginConfig().value()));
-  // Now we construct a new options from the proto we created above. This should result in an
-  // OptionsImpl instance equivalent to options. We test that by converting both to yaml strings,
-  // expecting them to be equal. This should provide helpful output when the test fails by showing
-  // the unexpected (yaml) diff.
-
-  // The predicates are defined as proto maps, and these seem to re-serialize into a different
-  // order. Hence we trim the maps to contain a single entry so they don't thwart our textual
-  // comparison below.
-  EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("benchmark.http_4xx"));
-  EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("benchmark.http_5xx"));
-  EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("requestsource.upstream_rq_5xx"));
-
-  OptionsImpl options_from_proto(*cmd);
-  std::string s1 = Envoy::MessageUtil::getYamlStringFromMessage(
-      *(options_from_proto.toCommandLineOptions()), true, true);
-  std::string s2 = Envoy::MessageUtil::getYamlStringFromMessage(*cmd, true, true);
-  EXPECT_EQ(s1, s2);
-  // For good measure, also directly test for proto equivalence, though this should be
-  // superfluous.
-  EXPECT_TRUE(util(*(options_from_proto.toCommandLineOptions()), *cmd));
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(
+      fmt::format("{} --request-source-plugin-config {} --request-source {} {}", client_name_, request_source_config,
+                request_source, good_test_uri_)),
+                MalformedArgvException, "--request-source and --request_source_plugin_config cannot both be set.");
 }
 
 // This test covers --RequestSourcePlugin, which can't be tested at the same time as --RequestSource
