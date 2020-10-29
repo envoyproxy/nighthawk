@@ -176,6 +176,26 @@ TEST_F(FileBasedRequestSourcePluginTest,
 }
 
 TEST_F(FileBasedRequestSourcePluginTest,
+       CreateRequestSourcePluginWithTooLargeAFileThrowsAnError) {
+  nighthawk::request_source::FileBasedOptionsListRequestSourceConfig config =
+      MakeFileBasedPluginConfigWithTestYaml(
+          TestEnvironment::runfilesPath("test/request_source/test_data/test-config.yaml"));
+  const uint32_t max_file_size = 10;        
+  config.set_num_requests(2);
+  config.mutable_max_file_size()->set_value(max_file_size);
+  Envoy::ProtobufWkt::Any config_any;
+  config_any.PackFrom(config);
+  auto& config_factory =
+      Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
+          "nighthawk.file-based-request-source-plugin");
+  auto header = Envoy::Http::RequestHeaderMapImpl::create();
+  EXPECT_THROW_WITH_REGEX(
+      config_factory.createRequestSourcePlugin(config_any, *api_, std::move(header)),
+      NighthawkException, "file size must be less than max_file_size"
+  );
+}
+
+TEST_F(FileBasedRequestSourcePluginTest,
        CreateRequestSourcePluginWithMoreNumRequestsThanInFileGetsRequestGeneratorThatLoops) {
   nighthawk::request_source::FileBasedOptionsListRequestSourceConfig config =
       MakeFileBasedPluginConfigWithTestYaml(
