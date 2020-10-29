@@ -87,6 +87,7 @@ TEST_F(StubRequestSourcePluginTest, CreateRequestSourcePluginCreatesCorrectPlugi
   auto header = Envoy::Http::RequestHeaderMapImpl::create();
   RequestSourcePtr plugin =
       config_factory.createRequestSourcePlugin(config_any, *api_, std::move(header));
+  plugin->initOnThread();     
   EXPECT_NE(dynamic_cast<StubRequestSource*>(plugin.get()), nullptr);
 }
 TEST_F(StubRequestSourcePluginTest, CreateRequestSourcePluginCreatesWorkingPlugin) {
@@ -101,6 +102,7 @@ TEST_F(StubRequestSourcePluginTest, CreateRequestSourcePluginCreatesWorkingPlugi
   auto template_header = Envoy::Http::RequestHeaderMapImpl::create();
   RequestSourcePtr plugin =
       config_factory.createRequestSourcePlugin(config_any, *api_, std::move(template_header));
+  plugin->initOnThread();     
   Nighthawk::RequestGenerator generator = plugin->get();
   Nighthawk::RequestPtr request = generator();
   Nighthawk::HeaderMapPtr header = request->header();
@@ -140,6 +142,7 @@ TEST_F(FileBasedRequestSourcePluginTest, CreateRequestSourcePluginCreatesCorrect
   auto header = Envoy::Http::RequestHeaderMapImpl::create();
   RequestSourcePtr plugin =
       config_factory.createRequestSourcePlugin(config_any, *api_, std::move(header));
+  plugin->initOnThread();      
   EXPECT_NE(dynamic_cast<OptionsListRequestSource*>(plugin.get()), nullptr);
 }
 
@@ -157,6 +160,7 @@ TEST_F(FileBasedRequestSourcePluginTest,
   auto header = Envoy::Http::RequestHeaderMapImpl::create();
   RequestSourcePtr file_based_request_source =
       config_factory.createRequestSourcePlugin(config_any, *api_, std::move(header));
+  file_based_request_source->initOnThread();
   Nighthawk::RequestGenerator generator = file_based_request_source->get();
   Nighthawk::RequestPtr request1 = generator();
   Nighthawk::RequestPtr request2 = generator();
@@ -184,6 +188,7 @@ TEST_F(FileBasedRequestSourcePluginTest,
   auto header = Envoy::Http::RequestHeaderMapImpl::create();
   RequestSourcePtr file_based_request_source =
       config_factory.createRequestSourcePlugin(config_any, *api_, std::move(header));
+  file_based_request_source->initOnThread();    
   Nighthawk::RequestGenerator generator = file_based_request_source->get();
   Nighthawk::RequestPtr request1 = generator();
   Nighthawk::RequestPtr request2 = generator();
@@ -239,6 +244,7 @@ TEST_F(InLineRequestSourcePluginTest, CreateRequestSourcePluginCreatesCorrectPlu
   auto header = Envoy::Http::RequestHeaderMapImpl::create();
   RequestSourcePtr plugin =
       config_factory.createRequestSourcePlugin(config_any, *api_, std::move(header));
+  plugin->initOnThread();        
   EXPECT_NE(dynamic_cast<OptionsListRequestSource*>(plugin.get()), nullptr);
 }
 
@@ -262,6 +268,7 @@ TEST_F(InLineRequestSourcePluginTest,
   auto header = Envoy::Http::RequestHeaderMapImpl::create();
   RequestSourcePtr plugin =
       config_factory.createRequestSourcePlugin(config_any, *api_, std::move(header));
+  plugin->initOnThread();
   Nighthawk::RequestGenerator generator = plugin->get();
   Nighthawk::RequestPtr request1 = generator();
   Nighthawk::RequestPtr request2 = generator();
@@ -296,6 +303,7 @@ TEST_F(InLineRequestSourcePluginTest,
   auto header = Envoy::Http::RequestHeaderMapImpl::create();
   RequestSourcePtr plugin =
       config_factory.createRequestSourcePlugin(config_any, *api_, std::move(header));
+  plugin->initOnThread();
   Nighthawk::RequestGenerator generator = plugin->get();
   Nighthawk::RequestPtr request1 = generator();
   Nighthawk::RequestPtr request2 = generator();
