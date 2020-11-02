@@ -250,7 +250,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
   EXPECT_TRUE(util(cmd->stats_sinks(0), options->statsSinks()[0]));
   EXPECT_TRUE(util(cmd->stats_sinks(1), options->statsSinks()[1]));
   EXPECT_EQ(cmd->latency_response_header_name().value(), options->responseHeaderWithLatencyInput());
-
+  // TODO(#433)
   OptionsImpl options_from_proto(*cmd);
   std::string s1 = Envoy::MessageUtil::getYamlStringFromMessage(
       *(options_from_proto.toCommandLineOptions()), true, true);
@@ -273,6 +273,7 @@ TEST_F(OptionsImplTest, RequestSource) {
   // Check that our conversion to CommandLineOptionsPtr makes sense.
   CommandLineOptionsPtr cmd = options->toCommandLineOptions();
   EXPECT_EQ(cmd->request_source().uri(), request_source);
+  // TODO(#433)
   OptionsImpl options_from_proto(*cmd);
   EXPECT_TRUE(util(*(options_from_proto.toCommandLineOptions()), *cmd));
 }
@@ -335,7 +336,7 @@ TEST_F(OptionsImplTest, FileBasedRequestSourcePlugin) {
   EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("benchmark.http_4xx"));
   EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("benchmark.http_5xx"));
   EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("requestsource.upstream_rq_5xx"));
-
+  // TODO(#433)
   OptionsImpl options_from_proto(*cmd);
   std::string s1 = Envoy::MessageUtil::getYamlStringFromMessage(
       *(options_from_proto.toCommandLineOptions()), true, true);
@@ -392,7 +393,7 @@ TEST_F(OptionsImplTest, StubRequestSourcePlugin) {
   EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("benchmark.http_4xx"));
   EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("benchmark.http_5xx"));
   EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("requestsource.upstream_rq_5xx"));
-
+  // TODO(#433)
   OptionsImpl options_from_proto(*cmd);
   std::string s1 = Envoy::MessageUtil::getYamlStringFromMessage(
       *(options_from_proto.toCommandLineOptions()), true, true);
@@ -411,6 +412,7 @@ TEST_F(OptionsImplTest, NoDuration) {
   EXPECT_TRUE(options->noDuration());
   // Check that our conversion to CommandLineOptionsPtr makes sense.
   CommandLineOptionsPtr cmd = options->toCommandLineOptions();
+  // TODO(#433)
   OptionsImpl options_from_proto(*cmd);
   EXPECT_TRUE(util(*(options_from_proto.toCommandLineOptions()), *cmd));
 }
@@ -451,7 +453,7 @@ TEST_F(OptionsImplTest, TlsContext) {
   EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("benchmark.http_4xx"));
   EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("benchmark.http_5xx"));
   EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("requestsource.upstream_rq_5xx"));
-
+  // TODO(#433)
   OptionsImpl options_from_proto(*cmd);
   std::string s1 = Envoy::MessageUtil::getYamlStringFromMessage(
       *(options_from_proto.toCommandLineOptions()), true, true);
@@ -513,7 +515,7 @@ TEST_F(OptionsImplTest, MultiTarget) {
   EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("benchmark.http_4xx"));
   EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("benchmark.http_5xx"));
   EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("requestsource.upstream_rq_5xx"));
-
+  // TODO(#433)
   OptionsImpl options_from_proto(*cmd);
   std::string s1 = Envoy::MessageUtil::getYamlStringFromMessage(
       *(options_from_proto.toCommandLineOptions()), true, true);
