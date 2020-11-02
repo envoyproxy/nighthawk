@@ -289,9 +289,9 @@ TEST_P(RequestSourcePluginTestFixture, CreatesOptionsImplWithRequestSourceConfig
                   good_test_uri_));
 
   // Check that our conversion to CommandLineOptionsPtr makes sense.
-  CommandLineOptionsPtr cmd = options->toCommandLineOptions();
+  CommandLineOptionsPtr command = options->toCommandLineOptions();
   EXPECT_TRUE(
-      util(cmd->request_source_plugin_config(), options->requestSourcePluginConfig().value()));
+      util(command->request_source_plugin_config(), options->requestSourcePluginConfig().value()));
   // Now we construct a new options from the proto we created above. This should result in an
   // OptionsImpl instance equivalent to options. We test that by converting both to yaml strings,
   // expecting them to be equal. This should provide helpful output when the test fails by showing
@@ -300,20 +300,15 @@ TEST_P(RequestSourcePluginTestFixture, CreatesOptionsImplWithRequestSourceConfig
   // The predicates are defined as proto maps, and these seem to re-serialize into a different
   // order. Hence we trim the maps to contain a single entry so they don't thwart our textual
   // comparison below.
-  EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("benchmark.http_4xx"));
-  EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("benchmark.http_5xx"));
-  EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("requestsource.upstream_rq_5xx"));
+  EXPECT_EQ(1, command->mutable_failure_predicates()->erase("benchmark.http_4xx"));
+  EXPECT_EQ(1, command->mutable_failure_predicates()->erase("benchmark.http_5xx"));
+  EXPECT_EQ(1, command->mutable_failure_predicates()->erase("requestsource.upstream_rq_5xx"));
   // TODO(#433)
-  OptionsImpl options_from_proto(*cmd);
+  OptionsImpl options_from_proto(*command);
   std::string s1 = Envoy::MessageUtil::getYamlStringFromMessage(
       *(options_from_proto.toCommandLineOptions()), true, true);
-  std::string s2 = Envoy::MessageUtil::getYamlStringFromMessage(*cmd, true, true);
+  std::string s2 = Envoy::MessageUtil::getYamlStringFromMessage(*command, true, true);
   EXPECT_EQ(s1, s2);
-  // For good measure, also directly test for proto equivalence, though this should be
-  // superfluous.
-  EXPECT_TRUE(util(*(options_from_proto.toCommandLineOptions()), *cmd));
-  //   BinaryScoringFunction scoring_function(config);
-  //   EXPECT_EQ(scoring_function.EvaluateMetric(metric_value), expected_score);
 }
 
 INSTANTIATE_TEST_SUITE_P(
