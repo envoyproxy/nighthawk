@@ -292,10 +292,12 @@ TEST_F(OptionsImplTest, InLineOptionsListRequestSourcePluginIsMutuallyExclusiveW
       "},"
       "}"
       "}";
-  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(
-      fmt::format("{} --request-source-plugin-config {} --request-source {} {}", client_name_, request_source_config,
-                request_source, good_test_uri_)),
-                MalformedArgvException, "--request-source and --request_source_plugin_config cannot both be set.");
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(
+          fmt::format("{} --request-source-plugin-config {} --request-source {} {}", client_name_,
+                      request_source_config, request_source, good_test_uri_)),
+      MalformedArgvException,
+      "--request-source and --request_source_plugin_config cannot both be set.");
 }
 
 // This test covers --RequestSourcePlugin, which can't be tested at the same time as --RequestSource
@@ -342,6 +344,20 @@ TEST_F(OptionsImplTest, FileBasedRequestSourcePlugin) {
   // For good measure, also directly test for proto equivalence, though this should be
   // superfluous.
   EXPECT_TRUE(util(*(options_from_proto.toCommandLineOptions()), *cmd));
+}
+
+TEST_F(OptionsImplTest, BadRequestSourcePluginSpecification) {
+  // Bad JSON
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(fmt::format("{} --request-source-plugin-config {} {}",
+                                                 client_name_, "{broken_json:", good_test_uri_)),
+      MalformedArgvException, "Unable to parse JSON as proto");
+  // Correct JSON, but contents not according to spec.
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(
+                              fmt::format("{} --request-source-plugin-config {} {}", client_name_,
+                                          "{misspelled_field:{}}", good_test_uri_)),
+                          MalformedArgvException,
+                          "envoy.config.core.v3.TypedExtensionConfig reason INVALID_ARGUMENT");
 }
 
 // This test covers --RequestSourcePlugin, which can't be tested at the same time as --RequestSource
