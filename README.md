@@ -111,8 +111,10 @@ execution. Note that this will be reflected in the counters that
 Nighthawk writes to the output. Default is false.
 
 --request-source-plugin-config <string>
-Request Source plugin configuration in json or compact yaml. Mutually
-exclusive with --request-source. Example (json):
+[Request
+Source](https://github.com/envoyproxy/nighthawk/blob/master/docs/root/
+overview.md#requestsource) plugin configuration in json or compact
+yaml. Mutually exclusive with --request-source. Example (json):
 {name:"nighthawk.stub-request-source-plugin"
 ,typed_config:{"@type":"type.googleapis.com/nighthawk.request_source.S
 tubPluginConfig",test_value:"3"}}
@@ -120,7 +122,8 @@ tubPluginConfig",test_value:"3"}}
 --request-source <uri format>
 Remote gRPC source that will deliver to-be-replayed traffic. Each
 worker will separately connect to this source. For example
-grpc://127.0.0.1:8443/.
+grpc://127.0.0.1:8443/. Mutually exclusive with
+--request_source_plugin_config.
 
 --label <string>  (accepted multiple times)
 Label. Allows specifying multiple labels which will be persisted in

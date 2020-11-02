@@ -150,7 +150,8 @@ message CommandLineOptions {
     // Remote gRPC source that will deliver to-be-replayed traffic. Each worker will separately
     // connect to this source.
     RequestSource request_source = 26;
-    // Selects and configures a RequestSource plugin.
+    // A plugin config that is to be parsed by a RequestSourcePluginConfigFactory and used to create
+    // an in memory request source.
     envoy.config.core.v3.TypedExtensionConfig request_source_plugin_config = 37;
   }
   // DEPRECATED, use --transport-socket instead. Tls context configuration in json or compact yaml.
