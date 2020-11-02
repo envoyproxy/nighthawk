@@ -505,7 +505,8 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
     }
   }
   if (!request_source.getValue().empty() && !request_source_plugin_config.getValue().empty()) {
-    throw MalformedArgvException("--request-source and --request_source_plugin_config cannot both be set.");
+    throw MalformedArgvException(
+        "--request-source and --request_source_plugin_config cannot both be set.");
   }
   if (!request_source_plugin_config.getValue().empty()) {
     try {
