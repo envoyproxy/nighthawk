@@ -308,7 +308,7 @@ TEST_P(RequestSourcePluginTestFixture, CreatesOptionsImplWithRequestSourceConfig
       *(options_from_proto.toCommandLineOptions()), true, true);
   std::string s2 = Envoy::MessageUtil::getYamlStringFromMessage(*command, true, true);
   EXPECT_EQ(s1, s2);
-  //Additional comparison to avoid edge cases missed.
+  // Additional comparison to avoid edge cases missed.
   EXPECT_TRUE(util(*(options_from_proto.toCommandLineOptions()), *command));
 }
 
