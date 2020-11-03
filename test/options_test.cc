@@ -288,7 +288,6 @@ TEST_P(RequestSourcePluginTestFixture, CreatesOptionsImplWithRequestSourceConfig
       fmt::format("{} --request-source-plugin-config {} {}", client_name_, request_source_config,
                   good_test_uri_));
 
-  // Check that our conversion to CommandLineOptionsPtr makes sense.
   CommandLineOptionsPtr command = options->toCommandLineOptions();
   EXPECT_TRUE(
       util(command->request_source_plugin_config(), options->requestSourcePluginConfig().value()));
