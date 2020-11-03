@@ -263,11 +263,14 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   TCLAP::ValueArg<std::string> request_source(
       "", "request-source",
       "Remote gRPC source that will deliver to-be-replayed traffic. Each worker will separately "
-      "connect to this source. For example grpc://127.0.0.1:8443/.",
+      "connect to this source. For example grpc://127.0.0.1:8443/. "
+      "Mutually exclusive with --request_source_plugin_config.",
       false, "", "uri format", cmd);
   TCLAP::ValueArg<std::string> request_source_plugin_config(
       "", "request-source-plugin-config",
-      "Request Source plugin configuration in json or compact yaml. "
+      "[Request "
+      "Source](https://github.com/envoyproxy/nighthawk/blob/master/docs/root/"
+      "overview.md#requestsource) plugin configuration in json or compact yaml. "
       "Mutually exclusive with --request-source. Example (json): "
       "{name:\"nighthawk.stub-request-source-plugin\",typed_config:{"
       "\"@type\":\"type.googleapis.com/nighthawk.request_source.StubPluginConfig\","
@@ -502,6 +505,10 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
     } catch (const Envoy::EnvoyException& e) {
       throw MalformedArgvException(e.what());
     }
+  }
+  if (!request_source.getValue().empty() && !request_source_plugin_config.getValue().empty()) {
+    throw MalformedArgvException(
+        "--request-source and --request_source_plugin_config cannot both be set.");
   }
   if (!request_source_plugin_config.getValue().empty()) {
     try {
