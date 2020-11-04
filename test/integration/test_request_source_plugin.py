@@ -15,7 +15,10 @@ def test_request_source_plugin_happy_flow(http_test_server_fixture):
   typed_config:{
   "@type":"type.googleapis.com/nighthawk.request_source.InLineOptionsListRequestSourceConfig",
   options_list:{
-  options:[{request_method:"1",request_headers:[{header:{"key":"key","value":"value"}}]}]
+  options:[
+    {request_method:"1",request_body_size:"1",request_headers:[{header:{"key":"x-nighthawk-test-server-config","value":"{response_body_size:13}"}}]},
+    {request_method:"1",request_body_size:"2",request_headers:[{header:{"key":"x-nighthawk-test-server-config","value":"{response_body_size:17}"}}]},
+    ]
   },
   }
   }"""
@@ -24,5 +27,13 @@ def test_request_source_plugin_happy_flow(http_test_server_fixture):
       "--request-source-plugin-config %s" % request_source_config,
       http_test_server_fixture.getTestServerRootUri(), "--request-header", "host: sni.com"
   ])
+  print("aaaa\n")
+  print(parsed_json)
+  print("bbbb\n")
   counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
+  global_histograms = http_test_server_fixture.getNighthawkGlobalHistogramsbyIdFromJson(parsed_json)
   asserts.assertGreaterEqual(counters["benchmark.http_2xx"], 5)
+  asserts.assertEqual(int(global_histograms["benchmark_http_client.response_body_size"]["raw_max"]),
+                      17)
+  asserts.assertEqual(int(global_histograms["benchmark_http_client.response_body_size"]["raw_min"]),
+                      13)
