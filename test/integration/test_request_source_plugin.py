@@ -1,6 +1,7 @@
 """Tests for the nighthawk_service binary."""
 
 import pytest
+import os
 
 from test.integration.integration_test_fixtures import (http_test_server_fixture, server_config)
 from test.integration import utility
@@ -30,6 +31,31 @@ def test_request_source_plugin_happy_flow(http_test_server_fixture):
   counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   global_histograms = http_test_server_fixture.getNighthawkGlobalHistogramsbyIdFromJson(parsed_json)
   asserts.assertGreaterEqual(counters["benchmark.http_2xx"], 5)
+  asserts.assertEqual(int(global_histograms["benchmark_http_client.response_body_size"]["raw_max"]),
+                      17)
+  asserts.assertEqual(int(global_histograms["benchmark_http_client.response_body_size"]["raw_min"]),
+                      13)
+
+
+# TODO: This may be unnecessary, adding for additional integration coverage.
+def test_request_source_plugin_happy_flow_file_based(http_test_server_fixture):
+  """Test that the nighthawkClient can run with request-source-plugin option."""
+  base_folder = (os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+  test_file = base_folder + "/request_source/test_data/test-config.yaml"
+  request_source_config = """
+  {
+  name:"nighthawk.file-based-request-source-plugin",
+  typed_config:{
+  "@type":"type.googleapis.com/nighthawk.request_source.FileBasedOptionsListRequestSourceConfig",
+  file_path:"%s",
+  }
+  }""" % test_file
+  parsed_json, _ = http_test_server_fixture.runNighthawkClient([
+      "--rps 10",
+      "--request-source-plugin-config %s" % request_source_config,
+      http_test_server_fixture.getTestServerRootUri(), "--request-header", "host: sni.com"
+  ])
+  global_histograms = http_test_server_fixture.getNighthawkGlobalHistogramsbyIdFromJson(parsed_json)
   asserts.assertEqual(int(global_histograms["benchmark_http_client.response_body_size"]["raw_max"]),
                       17)
   asserts.assertEqual(int(global_histograms["benchmark_http_client.response_body_size"]["raw_min"]),
