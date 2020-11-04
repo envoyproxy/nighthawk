@@ -27,9 +27,6 @@ def test_request_source_plugin_happy_flow(http_test_server_fixture):
       "--request-source-plugin-config %s" % request_source_config,
       http_test_server_fixture.getTestServerRootUri(), "--request-header", "host: sni.com"
   ])
-  print("aaaa\n")
-  print(parsed_json)
-  print("bbbb\n")
   counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   global_histograms = http_test_server_fixture.getNighthawkGlobalHistogramsbyIdFromJson(parsed_json)
   asserts.assertGreaterEqual(counters["benchmark.http_2xx"], 5)
