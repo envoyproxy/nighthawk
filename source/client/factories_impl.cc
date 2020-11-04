@@ -170,7 +170,6 @@ RequestSourceFactoryImpl::create(const Envoy::Upstream::ClusterManagerPtr& clust
   for (const auto& option_header : request_options.request_headers()) {
     setRequestHeader(*header, option_header.header().key(), option_header.header().value());
   }
-
   if (!options_.requestSource().empty()) {
     RELEASE_ASSERT(!service_cluster_name.empty(), "expected cluster name to be set");
     // We pass in options_.requestsPerSecond() as the header buffer length so the grpc client
@@ -198,10 +197,6 @@ absl::StatusOr<RequestSourcePtr> RequestSourceFactoryImpl::LoadRequestSourcePlug
     auto& config_factory =
         Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
             config.name());
-    // absl::Status validation_status = config_factory.ValidateConfig(config.typed_config());
-    // if (!validation_status.ok()) {
-    //   return validation_status;
-    // }
     return config_factory.createRequestSourcePlugin(config.typed_config(), api, std::move(header));
   } catch (const Envoy::EnvoyException& e) {
     return absl::InvalidArgumentError(
