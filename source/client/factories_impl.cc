@@ -169,15 +169,15 @@ RequestSourceFactoryImpl::create(const Envoy::Upstream::ClusterManagerPtr& clust
     setRequestHeader(*header, option_header.header().key(), option_header.header().value());
   }
 
-  if (options_.requestSource() == "") {
-    return std::make_unique<StaticRequestSourceImpl>(std::move(header));
-  } else {
+  if (!options_.requestSource().empty()) {
     RELEASE_ASSERT(!service_cluster_name.empty(), "expected cluster name to be set");
     // We pass in options_.requestsPerSecond() as the header buffer length so the grpc client
     // will shoot for maintaining an amount of headers of at least one second.
     return std::make_unique<RemoteRequestSourceImpl>(cluster_manager, dispatcher, scope,
                                                      service_cluster_name, std::move(header),
                                                      options_.requestsPerSecond());
+  } else {
+    return std::make_unique<StaticRequestSourceImpl>(std::move(header));
   }
 }
 

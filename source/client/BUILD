@@ -49,6 +49,7 @@ envoy_cc_library(
         "//source/common:request_source_impl_lib",
         "//source/common:nighthawk_common_lib",
         "//source/common:nighthawk_service_client_impl",
+        "//source/request_source:request_options_list_plugin_impl",
         "@envoy//source/common/common:random_generator_lib_with_external_headers",
         "@envoy//source/common/access_log:access_log_manager_lib_with_external_headers",
         "@envoy//source/common/api:api_lib_with_external_headers",
@@ -90,6 +91,7 @@ envoy_cc_library(
         "@envoy//source/server:server_lib_with_external_headers",
         "@envoy//source/server/config_validation:admin_lib_with_external_headers",
         "@envoy//include/envoy/http:protocol_interface_with_external_headers",
+        "@envoy//source/common/common:statusor_lib_with_external_headers",
     ] + select({
         "//bazel:zipkin_disabled": [],
         "//conditions:default": [

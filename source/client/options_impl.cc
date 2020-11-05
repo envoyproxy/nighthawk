@@ -263,9 +263,19 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   TCLAP::ValueArg<std::string> request_source(
       "", "request-source",
       "Remote gRPC source that will deliver to-be-replayed traffic. Each worker will separately "
-      "connect to this source. For example grpc://127.0.0.1:8443/.",
+      "connect to this source. For example grpc://127.0.0.1:8443/. "
+      "Mutually exclusive with --request_source_plugin_config.",
       false, "", "uri format", cmd);
-
+  TCLAP::ValueArg<std::string> request_source_plugin_config(
+      "", "request-source-plugin-config",
+      "[Request "
+      "Source](https://github.com/envoyproxy/nighthawk/blob/master/docs/root/"
+      "overview.md#requestsource) plugin configuration in json or compact yaml. "
+      "Mutually exclusive with --request-source. Example (json): "
+      "{name:\"nighthawk.stub-request-source-plugin\",typed_config:{"
+      "\"@type\":\"type.googleapis.com/nighthawk.request_source.StubPluginConfig\","
+      "test_value:\"3\"}}",
+      false, "", "string", cmd);
   TCLAP::SwitchArg simple_warmup(
       "", "simple-warmup",
       "Perform a simple single warmup request (per worker) before starting execution. Note that "
@@ -496,6 +506,21 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       throw MalformedArgvException(e.what());
     }
   }
+  if (!request_source.getValue().empty() && !request_source_plugin_config.getValue().empty()) {
+    throw MalformedArgvException(
+        "--request-source and --request_source_plugin_config cannot both be set.");
+  }
+  if (!request_source_plugin_config.getValue().empty()) {
+    try {
+      request_source_plugin_config_.emplace(envoy::config::core::v3::TypedExtensionConfig());
+      Envoy::MessageUtil::loadFromJson(request_source_plugin_config.getValue(),
+                                       request_source_plugin_config_.value(),
+                                       Envoy::ProtobufMessage::getStrictValidationVisitor());
+    } catch (const Envoy::EnvoyException& e) {
+      throw MalformedArgvException(e.what());
+    }
+  }
+
   validate();
 }
 
@@ -570,6 +595,9 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   } else if (options.has_request_source()) {
     const auto& request_source_options = options.request_source();
     request_source_ = request_source_options.uri();
+  } else if (options.has_request_source_plugin_config()) {
+    request_source_plugin_config_.emplace(envoy::config::core::v3::TypedExtensionConfig());
+    request_source_plugin_config_.value().MergeFrom(options.request_source_plugin_config());
   }
 
   max_pending_requests_ =
@@ -730,6 +758,9 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
   if (requestSource() != "") {
     auto request_source = command_line_options->mutable_request_source();
     *request_source->mutable_uri() = request_source_;
+  } else if (request_source_plugin_config_.has_value()) {
+    *(command_line_options->mutable_request_source_plugin_config()) =
+        request_source_plugin_config_.value();
   } else {
     auto request_options = command_line_options->mutable_request_options();
     request_options->set_request_method(request_method_);

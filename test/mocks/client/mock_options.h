@@ -36,6 +36,8 @@ public:
   MOCK_CONST_METHOD0(sequencerIdleStrategy,
                      nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions());
   MOCK_CONST_METHOD0(requestSource, std::string());
+  MOCK_CONST_METHOD0(requestSourcePluginConfig,
+                     absl::optional<envoy::config::core::v3::TypedExtensionConfig>&());
   MOCK_CONST_METHOD0(trace, std::string());
   MOCK_CONST_METHOD0(
       h1ConnectionReuseStrategy,

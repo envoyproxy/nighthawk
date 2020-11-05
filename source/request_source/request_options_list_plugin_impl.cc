@@ -25,8 +25,8 @@ RequestSourcePtr FileBasedOptionsListRequestSourceFactory::createRequestSourcePl
   const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
   nighthawk::request_source::FileBasedOptionsListRequestSourceConfig config;
   Envoy::MessageUtil util;
-  uint32_t max_file_size = config.has_max_file_size() ? config.max_file_size().value() : 1000000;
   util.unpackTo(any, config);
+  uint32_t max_file_size = config.has_max_file_size() ? config.max_file_size().value() : 1000000;
   if (api.fileSystem().fileSize(config.file_path()) > max_file_size) {
     throw NighthawkException("file size must be less than max_file_size");
   }

@@ -60,6 +60,11 @@ public:
     return sequencer_idle_strategy_;
   }
   std::string requestSource() const override { return request_source_; }
+  const absl::optional<envoy::config::core::v3::TypedExtensionConfig>&
+  requestSourcePluginConfig() const override {
+    return request_source_plugin_config_;
+  }
+
   std::string trace() const override { return trace_; }
   nighthawk::client::H1ConnectionReuseStrategy::H1ConnectionReuseStrategyOptions
   h1ConnectionReuseStrategy() const override {
@@ -116,6 +121,8 @@ private:
   uint32_t request_body_size_{0};
   envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext tls_context_;
   absl::optional<envoy::config::core::v3::TransportSocket> transport_socket_;
+  absl::optional<envoy::config::core::v3::TypedExtensionConfig> request_source_plugin_config_;
+
   uint32_t max_pending_requests_{0};
   // This default is based the minimum recommendation for SETTINGS_MAX_CONCURRENT_STREAMS over at
   // https://tools.ietf.org/html/rfc7540#section-6.5.2
