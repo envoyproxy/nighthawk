@@ -31,7 +31,6 @@ public:
     EXPECT_EQ(expected_key, headers[0].header().key());
     EXPECT_EQ(expected_value, headers[0].header().value());
   }
-
   std::string client_name_;
   std::string good_test_uri_;
   std::string no_arg_match_;
@@ -250,7 +249,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
   EXPECT_TRUE(util(cmd->stats_sinks(0), options->statsSinks()[0]));
   EXPECT_TRUE(util(cmd->stats_sinks(1), options->statsSinks()[1]));
   EXPECT_EQ(cmd->latency_response_header_name().value(), options->responseHeaderWithLatencyInput());
-  // TODO(#433)
+  // TODO(#433) Here and below, replace comparisons once we choose a proto diff.
   OptionsImpl options_from_proto(*cmd);
   std::string s1 = Envoy::MessageUtil::getYamlStringFromMessage(
       *(options_from_proto.toCommandLineOptions()), true, true);
@@ -280,7 +279,6 @@ TEST_F(OptionsImplTest, RequestSource) {
 
 class RequestSourcePluginTestFixture : public OptionsImplTest,
                                        public WithParamInterface<std::string> {};
-
 TEST_P(RequestSourcePluginTestFixture, CreatesOptionsImplWithRequestSourceConfig) {
   Envoy::MessageUtil util;
   const std::string request_source_config = GetParam();
@@ -291,10 +289,6 @@ TEST_P(RequestSourcePluginTestFixture, CreatesOptionsImplWithRequestSourceConfig
   CommandLineOptionsPtr command = options->toCommandLineOptions();
   EXPECT_TRUE(
       util(command->request_source_plugin_config(), options->requestSourcePluginConfig().value()));
-  // Now we construct a new options from the proto we created above. This should result in an
-  // OptionsImpl instance equivalent to options. We test that by converting both to yaml strings,
-  // expecting them to be equal. This should provide helpful output when the test fails by showing
-  // the unexpected (yaml) diff.
 
   // The predicates are defined as proto maps, and these seem to re-serialize into a different
   // order. Hence we trim the maps to contain a single entry so they don't thwart our textual
@@ -302,48 +296,60 @@ TEST_P(RequestSourcePluginTestFixture, CreatesOptionsImplWithRequestSourceConfig
   EXPECT_EQ(1, command->mutable_failure_predicates()->erase("benchmark.http_4xx"));
   EXPECT_EQ(1, command->mutable_failure_predicates()->erase("benchmark.http_5xx"));
   EXPECT_EQ(1, command->mutable_failure_predicates()->erase("requestsource.upstream_rq_5xx"));
+
   // TODO(#433)
+  // Now we construct a new options from the proto we created above. This should result in an
+  // OptionsImpl instance equivalent to options. We test that by converting both to yaml strings,
+  // expecting them to be equal. This should provide helpful output when the test fails by showing
+  // the unexpected (yaml) diff.
   OptionsImpl options_from_proto(*command);
-  std::string s1 = Envoy::MessageUtil::getYamlStringFromMessage(
+  std::string yaml_for_options_proto = Envoy::MessageUtil::getYamlStringFromMessage(
       *(options_from_proto.toCommandLineOptions()), true, true);
-  std::string s2 = Envoy::MessageUtil::getYamlStringFromMessage(*command, true, true);
-  EXPECT_EQ(s1, s2);
+  std::string yaml_for_command = Envoy::MessageUtil::getYamlStringFromMessage(*command, true, true);
+  EXPECT_EQ(yaml_for_options_proto, yaml_for_command);
   // Additional comparison to avoid edge cases missed.
   EXPECT_TRUE(util(*(options_from_proto.toCommandLineOptions()), *command));
 }
-
-INSTANTIATE_TEST_SUITE_P(
-    HappyPathRequestSourceConfigJsonSuccessfullyTranslatesIntoOptions,
-    RequestSourcePluginTestFixture,
-    ::testing::ValuesIn(std::vector<std::string>{
-        "{"
-        "name:\"nighthawk.in-line-options-list-request-source-plugin\","
-        "typed_config:{"
-        "\"@type\":\"type.googleapis.com/"
-        "nighthawk.request_source.InLineOptionsListRequestSourceConfig\","
-        "options_list:{"
-        "options:[{request_method:\"1\",request_headers:[{header:{key:\"key\",value:\"value\"}}]}]"
-        "},"
-        "}"
-        "}",
-        "{"
-        "name:\"nighthawk.file-based-request-source-plugin\","
-        "typed_config:{"
-        "\"@type\":\"type.googleapis.com/"
-        "nighthawk.request_source.FileBasedOptionsListRequestSourceConfig\","
-        "file_path:\"" +
-            TestEnvironment::runfilesPath("test/request_source/test_data/test-config.yaml") +
-            "\","
-            "}"
-            "}",
-        "{"
-        "name:\"nighthawk.stub-request-source-plugin\","
-        "typed_config:{"
-        "\"@type\":\"type.googleapis.com/nighthawk.request_source.StubPluginConfig\","
-        "test_value:\"3\","
-        "}"
-        "}",
-    }));
+std::vector<std::string> RequestSourcePluginJsons() {
+  std::string file_request_source_plugin_json =
+      "{"
+      R"(name:"nighthawk.file-based-request-source-plugin",)"
+      "typed_config:{"
+      R"("@type":"type.googleapis.com/)"
+      R"(nighthawk.request_source.FileBasedOptionsListRequestSourceConfig",)"
+      R"(file_path:")" +
+      TestEnvironment::runfilesPath("test/request_source/test_data/test-config.yaml") +
+      "\","
+      "}"
+      "}";
+  std::string in_line_request_source_plugin_json =
+      "{"
+      R"(name:"nighthawk.in-line-options-list-request-source-plugin",)"
+      "typed_config:{"
+      R"("@type":"type.googleapis.com/)"
+      R"(nighthawk.request_source.InLineOptionsListRequestSourceConfig",)"
+      "options_list:{"
+      R"(options:[{request_method:"1",request_headers:[{header:{key:"key",value:"value"}}]}])"
+      "},"
+      "}"
+      "}";
+  std::string stub_request_source_plugin_json =
+      "{"
+      R"(name:"nighthawk.stub-request-source-plugin",)"
+      "typed_config:{"
+      R"("@type":"type.googleapis.com/nighthawk.request_source.StubPluginConfig",)"
+      R"(test_value:"3",)"
+      "}"
+      "}";
+  return std::vector<std::string>{
+      file_request_source_plugin_json,
+      in_line_request_source_plugin_json,
+      stub_request_source_plugin_json,
+  };
+}
+INSTANTIATE_TEST_SUITE_P(HappyPathRequestSourceConfigJsonSuccessfullyTranslatesIntoOptions,
+                         RequestSourcePluginTestFixture,
+                         ::testing::ValuesIn(RequestSourcePluginJsons()));
 
 // This test covers --RequestSourcePlugin, which can't be tested at the same time as --RequestSource
 // and some other options. This is the test for the inlineoptionslistplugin.
