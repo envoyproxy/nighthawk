@@ -24,6 +24,8 @@ Both API and implementation stability are important to Nighthawk. Since the API 
 
 * Generally Nighthawk mirrors [Envoy's policy](https://github.com/envoyproxy/envoy/blob/master/CONTRIBUTING.md#pr-review-policy-for-maintainers) with respect to maintainer review policy.
 * See [OWNERS.md](OWNERS.md) for the current list of maintainers.
+* It is helpful if you apply the label `waiting-for-review` to any PRs that are ready to be reviewed by a maintainer.
+  * Reviewers will change the label to `waiting-for-changes` when responding.
 
 # DCO: Sign your work
 

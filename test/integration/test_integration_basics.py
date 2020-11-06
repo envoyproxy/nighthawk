@@ -414,8 +414,11 @@ def test_cli_output_format(http_test_server_fixture):
   asserts.assertIn("Percentile", output)
 
 
-def test_request_body_gets_transmitted(http_test_server_fixture):
-  """Test request body transmission.
+@pytest.mark.parametrize(
+    'filter_configs',
+    ["{}", "{static_delay: \"0.01s\"}", "{emit_previous_request_delta_in_response_header: \"aa\"}"])
+def test_request_body_gets_transmitted(http_test_server_fixture, filter_configs):
+  """Test request body transmission handling code for our extensions.
 
   Ensure that the number of bytes we request for the request body gets reflected in the upstream
   connection transmitted bytes counter for h1 and h2.
@@ -433,14 +436,16 @@ def test_request_body_gets_transmitted(http_test_server_fixture):
                                       "http.ingress_http.downstream_cx_rx_bytes_total"),
         expected_received_bytes)
 
-  upload_bytes = 1024 * 1024 * 3
+  # TODO(#531): The dynamic-delay extension hangs unless we lower the request entity body size.
+  upload_bytes = 1024 * 1024 if "static_delay" in filter_configs else 1024 * 1024 * 3
   requests = 10
   args = [
       http_test_server_fixture.getTestServerRootUri(), "--duration", "100", "--rps", "100",
       "--request-body-size",
       str(upload_bytes), "--termination-predicate",
       "benchmark.http_2xx:%s" % str(requests), "--connections", "1", "--request-method", "POST",
-      "--max-active-requests", "1"
+      "--max-active-requests", "1", "--request-header",
+      "x-nighthawk-test-server-config:%s" % filter_configs
   ]
   # Test we transmit the expected amount of bytes with H1
   parsed_json, _ = http_test_server_fixture.runNighthawkClient(args)
@@ -698,6 +703,30 @@ def test_cancellation_with_infinite_duration(http_test_server_fixture):
   counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   asserts.assertCounterEqual(counters, "graceful_stop_requested", 2)
   asserts.assertCounterGreaterEqual(counters, "benchmark.http_2xx", 1)
+
+
+@pytest.mark.parametrize('server_config', [
+    "nighthawk/test/integration/configurations/nighthawk_http_origin.yaml",
+    "nighthawk/test/integration/configurations/nighthawk_track_timings.yaml"
+])
+def test_http_h1_response_header_latency_tracking(http_test_server_fixture, server_config):
+  """Test emission and tracking of response header latencies.
+
+  Run the CLI configured to track latencies delivered by response header from the test-server.
+  Ensure that the origin_latency_statistic histogram receives the correct number of inputs.
+  """
+  parsed_json, _ = http_test_server_fixture.runNighthawkClient([
+      http_test_server_fixture.getTestServerRootUri(), "--connections", "1", "--rps", "100",
+      "--duration", "100", "--termination-predicate", "benchmark.http_2xx:99",
+      "--latency-response-header-name", "x-origin-request-receipt-delta"
+  ])
+  global_histograms = http_test_server_fixture.getNighthawkGlobalHistogramsbyIdFromJson(parsed_json)
+  asserts.assertEqual(int(global_histograms["benchmark_http_client.latency_2xx"]["count"]), 100)
+  # Verify behavior is correct both with and without the timing filter enabled.
+  expected_histogram_count = 99 if "nighthawk_track_timings.yaml" in server_config else 0
+  asserts.assertEqual(
+      int(global_histograms["benchmark_http_client.origin_latency_statistic"]["count"]),
+      expected_histogram_count)
 
 
 def _run_client_with_args(args):

@@ -41,6 +41,7 @@ TEST_F(FactoriesTest, CreateBenchmarkClient) {
   EXPECT_CALL(options_, maxActiveRequests()).Times(1);
   EXPECT_CALL(options_, maxRequestsPerConnection()).Times(1);
   EXPECT_CALL(options_, openLoop()).Times(1);
+  EXPECT_CALL(options_, responseHeaderWithLatencyInput()).Times(1);
   auto cmd = std::make_unique<nighthawk::client::CommandLineOptions>();
   EXPECT_CALL(options_, toCommandLineOptions()).Times(1).WillOnce(Return(ByMove(std::move(cmd))));
   StaticRequestSourceImpl request_generator(
@@ -91,7 +92,7 @@ public:
     };
     auto sequencer = factory.create(api_->timeSource(), dispatcher_, dummy_sequencer_target,
                                     std::make_unique<MockTerminationPredicate>(), stats_store_,
-                                    time_system.monotonicTime() + 10ms);
+                                    time_system.systemTime() + 10ms);
     EXPECT_NE(nullptr, sequencer.get());
   }
 };

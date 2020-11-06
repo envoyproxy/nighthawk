@@ -51,7 +51,7 @@ BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
                                      std::make_unique<SinkableHdrStatistic>(scope, worker_id));
   auto benchmark_client = std::make_unique<BenchmarkClientHttpImpl>(
       api, dispatcher, scope, statistic, options_.h2(), cluster_manager, http_tracer, cluster_name,
-      request_generator.get(), !options_.openLoop());
+      request_generator.get(), !options_.openLoop(), options_.responseHeaderWithLatencyInput());
   auto request_options = options_.toCommandLineOptions()->request_options();
   benchmark_client->setConnectionLimit(options_.connections());
   benchmark_client->setMaxPendingRequests(options_.maxPendingRequests());
@@ -63,10 +63,12 @@ BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
 SequencerFactoryImpl::SequencerFactoryImpl(const Options& options)
     : OptionBasedFactoryImpl(options) {}
 
-SequencerPtr SequencerFactoryImpl::create(
-    Envoy::TimeSource& time_source, Envoy::Event::Dispatcher& dispatcher,
-    const SequencerTarget& sequencer_target, TerminationPredicatePtr&& termination_predicate,
-    Envoy::Stats::Scope& scope, const Envoy::MonotonicTime scheduled_starting_time) const {
+SequencerPtr SequencerFactoryImpl::create(Envoy::TimeSource& time_source,
+                                          Envoy::Event::Dispatcher& dispatcher,
+                                          const SequencerTarget& sequencer_target,
+                                          TerminationPredicatePtr&& termination_predicate,
+                                          Envoy::Stats::Scope& scope,
+                                          const Envoy::SystemTime scheduled_starting_time) const {
   StatisticFactoryImpl statistic_factory(options_);
   Frequency frequency(options_.requestsPerSecond());
   RateLimiterPtr rate_limiter = std::make_unique<ScheduledStartingRateLimiter>(
@@ -87,7 +89,7 @@ SequencerPtr SequencerFactoryImpl::create(
   return std::make_unique<SequencerImpl>(
       platform_util_, dispatcher, time_source, std::move(rate_limiter), sequencer_target,
       statistic_factory.create(), statistic_factory.create(), options_.sequencerIdleStrategy(),
-      std::move(termination_predicate), scope, scheduled_starting_time);
+      std::move(termination_predicate), scope);
 }
 
 StatisticFactoryImpl::StatisticFactoryImpl(const Options& options)
@@ -108,6 +110,8 @@ OutputFormatterPtr OutputFormatterFactoryImpl::create(
     return std::make_unique<Client::DottedStringOutputFormatterImpl>();
   case nighthawk::client::OutputFormat::FORTIO:
     return std::make_unique<Client::FortioOutputFormatterImpl>();
+  case nighthawk::client::OutputFormat::EXPERIMENTAL_FORTIO_PEDANTIC:
+    return std::make_unique<Client::FortioPedanticOutputFormatterImpl>();
   default:
     NOT_REACHED_GCOVR_EXCL_LINE;
   }
@@ -165,15 +169,15 @@ RequestSourceFactoryImpl::create(const Envoy::Upstream::ClusterManagerPtr& clust
     setRequestHeader(*header, option_header.header().key(), option_header.header().value());
   }
 
-  if (options_.requestSource() == "") {
-    return std::make_unique<StaticRequestSourceImpl>(std::move(header));
-  } else {
+  if (!options_.requestSource().empty()) {
     RELEASE_ASSERT(!service_cluster_name.empty(), "expected cluster name to be set");
     // We pass in options_.requestsPerSecond() as the header buffer length so the grpc client
     // will shoot for maintaining an amount of headers of at least one second.
     return std::make_unique<RemoteRequestSourceImpl>(cluster_manager, dispatcher, scope,
                                                      service_cluster_name, std::move(header),
                                                      options_.requestsPerSecond());
+  } else {
+    return std::make_unique<StaticRequestSourceImpl>(std::move(header));
   }
 }
 
@@ -182,7 +186,7 @@ TerminationPredicateFactoryImpl::TerminationPredicateFactoryImpl(const Options& 
 
 TerminationPredicatePtr
 TerminationPredicateFactoryImpl::create(Envoy::TimeSource& time_source, Envoy::Stats::Scope& scope,
-                                        const Envoy::MonotonicTime scheduled_starting_time) const {
+                                        const Envoy::SystemTime scheduled_starting_time) const {
   // We'll always link a predicate which checks for requests to cancel.
   TerminationPredicatePtr root_predicate =
       std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(
