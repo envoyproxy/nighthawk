@@ -65,11 +65,9 @@ public:
   RequestSourcePtr create(const Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                           Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
                           absl::string_view service_cluster_name) const override;
-
-protected:
-  Envoy::Api::Api& api_;
-
+ 
 private:
+  Envoy::Api::Api& api_;
   void setRequestHeader(Envoy::Http::RequestHeaderMap& header, absl::string_view key,
                         absl::string_view value) const;
   /**

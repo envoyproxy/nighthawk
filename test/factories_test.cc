@@ -78,17 +78,17 @@ TEST_F(FactoriesTest, CreateRequestSourcePlugin) {
       .Times(2)
       .WillRepeatedly(ReturnRef(request_source_plugin_config));
   auto cmd = std::make_unique<nighthawk::client::CommandLineOptions>();
-  auto request_headers = cmd->mutable_request_options()->add_request_headers();
+  envoy::config::core::v3::HeaderValueOption* request_headers = cmd->mutable_request_options()->add_request_headers();
   request_headers->mutable_header()->set_key("foo");
   request_headers->mutable_header()->set_value("bar");
   EXPECT_CALL(options_, toCommandLineOptions()).Times(1).WillOnce(Return(ByMove(std::move(cmd))));
   RequestSourceFactoryImpl factory(options_, *api_);
   Envoy::Upstream::ClusterManagerPtr cluster_manager;
-  auto request_source = factory.create(cluster_manager, dispatcher_,
+  Nighthawk::RequestSourcePtr request_source = factory.create(cluster_manager, dispatcher_,
                                        *stats_store_.createScope("foo."), "requestsource");
   EXPECT_NE(nullptr, request_source.get());
-  auto generator = request_source->get();
-  auto request = generator();
+  Nighthawk::RequestGenerator generator = request_source->get();
+  Nighthawk::RequestPtr request = generator();
   EXPECT_EQ("inlinepath", request->header()->getPathValue());
 }
 
@@ -102,13 +102,13 @@ TEST_F(FactoriesTest, CreateRequestSource) {
       .Times(1)
       .WillRepeatedly(ReturnRef(request_source_plugin_config));
   auto cmd = std::make_unique<nighthawk::client::CommandLineOptions>();
-  auto request_headers = cmd->mutable_request_options()->add_request_headers();
+  envoy::config::core::v3::HeaderValueOption* request_headers = cmd->mutable_request_options()->add_request_headers();
   request_headers->mutable_header()->set_key("foo");
   request_headers->mutable_header()->set_value("bar");
   EXPECT_CALL(options_, toCommandLineOptions()).Times(1).WillOnce(Return(ByMove(std::move(cmd))));
   RequestSourceFactoryImpl factory(options_, *api_);
   Envoy::Upstream::ClusterManagerPtr cluster_manager;
-  auto request_generator = factory.create(cluster_manager, dispatcher_,
+  RequestSourcePtr request_generator = factory.create(cluster_manager, dispatcher_,
                                           *stats_store_.createScope("foo."), "requestsource");
   EXPECT_NE(nullptr, request_generator.get());
 }
