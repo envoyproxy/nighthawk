@@ -31,7 +31,7 @@ HttpTimeTrackingFilter::HttpTimeTrackingFilter(HttpTimeTrackingFilterConfigShare
 Envoy::Http::FilterHeadersStatus
 HttpTimeTrackingFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& headers, bool end_stream) {
   config_->computeEffectiveConfiguration(headers);
-  if (end_stream && config_->maybeSendErrorReply(*decoder_callbacks_)) {
+  if (end_stream && config_->validateOrSendError(*decoder_callbacks_)) {
     return Envoy::Http::FilterHeadersStatus::StopIteration;
   }
   return Envoy::Http::FilterHeadersStatus::Continue;
@@ -39,7 +39,7 @@ HttpTimeTrackingFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& headers, bo
 
 Envoy::Http::FilterDataStatus HttpTimeTrackingFilter::decodeData(Envoy::Buffer::Instance&,
                                                                  bool end_stream) {
-  if (end_stream && config_->maybeSendErrorReply(*decoder_callbacks_)) {
+  if (end_stream && config_->validateOrSendError(*decoder_callbacks_)) {
     return Envoy::Http::FilterDataStatus::StopIterationNoBuffer;
   }
   return Envoy::Http::FilterDataStatus::Continue;

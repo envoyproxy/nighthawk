@@ -47,7 +47,7 @@ HttpDynamicDelayDecoderFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& head
     maybeRequestFaultFilterDelay(delay_ms, headers);
   } else {
     if (end_stream) {
-      config_->maybeSendErrorReply(*decoder_callbacks_);
+      config_->validateOrSendError(*decoder_callbacks_);
       return Envoy::Http::FilterHeadersStatus::StopIteration;
     }
     return Envoy::Http::FilterHeadersStatus::Continue;
@@ -59,7 +59,7 @@ Envoy::Http::FilterDataStatus
 HttpDynamicDelayDecoderFilter::decodeData(Envoy::Buffer::Instance& buffer, bool end_stream) {
   if (!config_->getEffectiveConfiguration().ok()) {
     if (end_stream) {
-      config_->maybeSendErrorReply(*decoder_callbacks_);
+      config_->validateOrSendError(*decoder_callbacks_);
       return Envoy::Http::FilterDataStatus::StopIterationNoBuffer;
     }
     return Envoy::Http::FilterDataStatus::Continue;
