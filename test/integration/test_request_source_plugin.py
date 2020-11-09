@@ -6,7 +6,7 @@ import os
 from test.integration.integration_test_fixtures import (http_test_server_fixture, server_config)
 from test.integration import utility
 from test.integration import asserts
-
+ 
 
 @pytest.mark.parametrize(
     "request_source_config,expected_min,expected_max",
@@ -34,8 +34,7 @@ from test.integration import asserts
   "@type":"type.googleapis.com/nighthawk.request_source.FileBasedOptionsListRequestSourceConfig",
   file_path:"%s",
   }
-  }""" % (os.path.dirname(os.path.abspath(os.path.dirname(__file__))) +
-          "/request_source/test_data/test-config.yaml"),
+  }""" % (os.path.dirname(os.path.abspath(os.path.dirname(__file__))) + "/request_source/test_data/test-config.yaml"),
                      13,
                      17,
                      id="file-based"),
