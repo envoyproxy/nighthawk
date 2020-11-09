@@ -3,6 +3,7 @@ syntax = "proto3";
 package nighthawk.client;
 
 import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
 import "envoy/config/core/v3/base.proto";
 import "envoy/config/metrics/v3/stats.proto";
@@ -219,4 +220,7 @@ message CommandLineOptions {
   // "emit_previous_request_delta_in_response_header" to record elapsed time between request
   // arrivals.
   google.protobuf.StringValue latency_response_header_name = 36;
+  // Provide an execution starting date and time. Optional, any value specified must be in the
+  // future.
+  google.protobuf.Timestamp schedule = 105;
 }

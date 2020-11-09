@@ -6,6 +6,8 @@
 
 #include "nighthawk/common/statistic.h"
 
+#include "absl/types/optional.h"
+
 namespace Nighthawk {
 namespace Client {
 
@@ -26,7 +28,8 @@ public:
    */
   virtual void addResult(absl::string_view name, const std::vector<StatisticPtr>& statistics,
                          const std::map<std::string, uint64_t>& counters,
-                         const std::chrono::nanoseconds execution_duration) PURE;
+                         const std::chrono::nanoseconds execution_duration,
+                         const absl::optional<Envoy::SystemTime>& first_acquisition_time) PURE;
   /**
    * Directly sets the output value.
    *

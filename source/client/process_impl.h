@@ -109,7 +109,7 @@ private:
    *
    * @param concurrency the amount of workers that should be created.
    */
-  void createWorkers(const uint32_t concurrency);
+  void createWorkers(const uint32_t concurrency, const absl::optional<Envoy::SystemTime>& schedule);
   std::vector<StatisticPtr> vectorizeStatisticPtrMap(const StatisticPtrMap& statistics) const;
   std::vector<StatisticPtr>
   mergeWorkerStatistics(const std::vector<ClientWorkerPtr>& workers) const;
@@ -124,7 +124,8 @@ private:
   void setupStatsSinks(const envoy::config::bootstrap::v3::Bootstrap& bootstrap,
                        std::list<std::unique_ptr<Envoy::Stats::Sink>>& stats_sinks);
   bool runInternal(OutputCollector& collector, const std::vector<UriPtr>& uris,
-                   const UriPtr& request_source_uri, const UriPtr& tracing_uri);
+                   const UriPtr& request_source_uri, const UriPtr& tracing_uri,
+                   const absl::optional<Envoy::SystemTime>& schedule);
 
   std::shared_ptr<Envoy::ProcessWide> process_wide_;
   Envoy::PlatformImpl platform_impl_;

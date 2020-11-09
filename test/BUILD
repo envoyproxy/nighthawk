@@ -153,6 +153,7 @@ envoy_cc_test(
         "//test/test_common:environment_lib",
         "@envoy//test/test_common:network_utility_lib",
         "@envoy//test/test_common:registry_lib",
+        "@envoy//test/test_common:simulated_time_system_lib",
     ],
 )
 
