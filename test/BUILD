@@ -87,6 +87,7 @@ envoy_cc_test(
         "//test/mocks/client:mock_benchmark_client",
         "//test/mocks/client:mock_options",
         "//test/mocks/common:mock_termination_predicate",
+        "//test/test_common:environment_lib",
         "@envoy//test/mocks/event:event_mocks",
         "@envoy//test/mocks/tracing:tracing_mocks",
         "@envoy//test/test_common:simulated_time_system_lib",
