@@ -8,9 +8,10 @@ from test.integration import utility
 from test.integration import asserts
 
 
-def test_request_source_plugin_happy_flow(http_test_server_fixture):
-  """Test that the nighthawkClient can run with request-source-plugin option."""
-  request_source_config = """
+@pytest.mark.parametrize(
+    "request_source_config,expected_min,expected_max",
+    [
+        pytest.param("""
   {
   name:"nighthawk.in-line-options-list-request-source-plugin",
   typed_config:{
@@ -22,7 +23,28 @@ def test_request_source_plugin_happy_flow(http_test_server_fixture):
     ]
   },
   }
-  }"""
+  }""",
+                     13,
+                     17,
+                     id="in-line"),
+        pytest.param("""
+  {
+  name:"nighthawk.file-based-request-source-plugin",
+  typed_config:{
+  "@type":"type.googleapis.com/nighthawk.request_source.FileBasedOptionsListRequestSourceConfig",
+  file_path:"%s",
+  }
+  }""" % (os.path.dirname(os.path.abspath(os.path.dirname(__file__))) +
+          "/request_source/test_data/test-config.yaml"),
+                     13,
+                     17,
+                     id="file-based"),
+    ],
+)
+def test_request_source_plugin_happy_flow_parametrized(http_test_server_fixture,
+                                                       request_source_config, expected_min,
+                                                       expected_max):
+  """Test that the nighthawkClient can run with request-source-plugin option."""
   parsed_json, _ = http_test_server_fixture.runNighthawkClient([
       "--termination-predicate", "benchmark.http_2xx:5", "--rps 10",
       "--request-source-plugin-config %s" % request_source_config,
@@ -32,31 +54,6 @@ def test_request_source_plugin_happy_flow(http_test_server_fixture):
   global_histograms = http_test_server_fixture.getNighthawkGlobalHistogramsbyIdFromJson(parsed_json)
   asserts.assertGreaterEqual(counters["benchmark.http_2xx"], 5)
   asserts.assertEqual(int(global_histograms["benchmark_http_client.response_body_size"]["raw_max"]),
-                      17)
+                      expected_max)
   asserts.assertEqual(int(global_histograms["benchmark_http_client.response_body_size"]["raw_min"]),
-                      13)
-
-
-# TODO: This may be unnecessary, adding for additional integration coverage.
-def test_request_source_plugin_happy_flow_file_based(http_test_server_fixture):
-  """Test that the nighthawkClient can run with request-source-plugin option."""
-  base_folder = (os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-  test_file = base_folder + "/request_source/test_data/test-config.yaml"
-  request_source_config = """
-  {
-  name:"nighthawk.file-based-request-source-plugin",
-  typed_config:{
-  "@type":"type.googleapis.com/nighthawk.request_source.FileBasedOptionsListRequestSourceConfig",
-  file_path:"%s",
-  }
-  }""" % test_file
-  parsed_json, _ = http_test_server_fixture.runNighthawkClient([
-      "--rps 10",
-      "--request-source-plugin-config %s" % request_source_config,
-      http_test_server_fixture.getTestServerRootUri(), "--request-header", "host: sni.com"
-  ])
-  global_histograms = http_test_server_fixture.getNighthawkGlobalHistogramsbyIdFromJson(parsed_json)
-  asserts.assertEqual(int(global_histograms["benchmark_http_client.response_body_size"]["raw_max"]),
-                      17)
-  asserts.assertEqual(int(global_histograms["benchmark_http_client.response_body_size"]["raw_min"]),
-                      13)
+                      expected_min)
