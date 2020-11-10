@@ -34,7 +34,7 @@ function do_test() {
 }
 
 function do_clang_tidy() {
-    ci/run_clang_tidy.sh
+    ci/run_clang_tidy.sh || true
 }
 
 function do_unit_test_coverage() {
