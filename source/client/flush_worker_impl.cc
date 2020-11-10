@@ -37,7 +37,7 @@ void FlushWorkerImpl::flushStats() {
   // Create a snapshot and flush to all sinks. Even if there are no sinks,
   // creating the snapshot has the important property that it latches all counters on a periodic
   // basis.
-  Envoy::Server::MetricSnapshotImpl snapshot(store_);
+  Envoy::Server::MetricSnapshotImpl snapshot(store_, time_source_);
   for (std::unique_ptr<Envoy::Stats::Sink>& sink : stats_sinks_) {
     sink->flush(snapshot);
   }

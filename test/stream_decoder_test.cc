@@ -26,7 +26,8 @@ public:
       : api_(Envoy::Api::createApiForTest(time_system_)),
         dispatcher_(api_->allocateDispatcher("test_thread")),
         request_headers_(std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(
-            std::initializer_list<std::pair<std::string, std::string>>({{":method", "GET"}}))),
+            std::initializer_list<std::pair<std::string, std::string>>(
+                {{":method", "GET"}, {":path", "/foo"}}))),
         http_tracer_(std::make_unique<Envoy::Tracing::HttpNullTracer>()),
         test_header_(std::make_unique<Envoy::Http::TestResponseHeaderMapImpl>(
             std::initializer_list<std::pair<std::string, std::string>>({{":status", "200"}}))),
