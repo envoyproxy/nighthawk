@@ -34,6 +34,7 @@ function do_test() {
 }
 
 function do_clang_tidy() {
+    # TODO(#546): deflake clang tidy runs, and remove '|| true' here.
     ci/run_clang_tidy.sh || true
 }
 
