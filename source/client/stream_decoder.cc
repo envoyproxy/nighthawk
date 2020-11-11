@@ -107,7 +107,14 @@ void StreamDecoder::onPoolReady(Envoy::Http::RequestEncoder& encoder,
   // Make sure we hear about stream resets on the encoder.
   encoder.getStream().addCallbacks(*this);
   upstream_timing_.onFirstUpstreamTxByteSent(time_source_); // XXX(oschaaf): is this correct?
-  encoder.encodeHeaders(*request_headers_, request_body_size_ == 0);
+  const Envoy::Http::Status status =
+      encoder.encodeHeaders(*request_headers_, request_body_size_ == 0);
+  if (!status.ok()) {
+    ENVOY_LOG_EVERY_POW_2(error,
+                          "Request header encoding failure. Might be missing one or more required "
+                          "HTTP headers in {}.",
+                          request_headers_);
+  }
   if (request_body_size_ > 0) {
     // TODO(https://github.com/envoyproxy/nighthawk/issues/138): This will show up in the zipkin UI
     // as 'response_size'. We add it here, optimistically assuming it will all be send. Ideally,

@@ -110,6 +110,7 @@ public:
         .WillByDefault(
             WithArgs<0>(([&called_headers](const Envoy::Http::RequestHeaderMap& specific_request) {
               called_headers.insert(getPathFromRequest(specific_request));
+              return Envoy::Http::Status();
             })));
 
     EXPECT_CALL(pool_, newStream(_, _))
