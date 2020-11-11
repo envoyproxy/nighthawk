@@ -180,14 +180,12 @@ RequestSourceFactoryImpl::create(const Envoy::Upstream::ClusterManagerPtr& clust
   } else if (options_.requestSourcePluginConfig().has_value()) {
     absl::StatusOr<RequestSourcePtr> plugin_or = LoadRequestSourcePlugin(
         options_.requestSourcePluginConfig().value(), api_, std::move(header));
-    // GCOVR_EXCL_START
     if (!plugin_or.ok()) {
       throw NighthawkException(
           absl::StrCat("Request Source plugin loading error should have been caught "
                        "during input validation: ",
                        plugin_or.status().message()));
     }
-    // GCOVR_EXCL_STOP
     RequestSourcePtr request_source = std::move(plugin_or.value());
     return request_source;
   } else {
