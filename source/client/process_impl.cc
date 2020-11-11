@@ -104,7 +104,8 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
                                               generator_)),
       dispatcher_(api_->allocateDispatcher("main_thread")), benchmark_client_factory_(options),
       termination_predicate_factory_(options), sequencer_factory_(options),
-      request_generator_factory_(options), options_(options), init_manager_("nh_init_manager"),
+      request_generator_factory_(options, *api_), options_(options),
+      init_manager_("nh_init_manager"),
       local_info_(new Envoy::LocalInfo::LocalInfoImpl(
           {}, Envoy::Network::Utility::getLocalAddress(Envoy::Network::Address::IpVersion::v4),
           "nighthawk_service_zone", "nighthawk_service_cluster", "nighthawk_service_node")),
