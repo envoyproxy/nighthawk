@@ -34,7 +34,7 @@ static_resources:
           port_value: 10000
       filter_chains:
         - filters:
-            - name: envoy.http_connection_manager
+            - name: envoy.filters.network.http_connection_manager
               config:
                 generate_request_id: false
                 codec_type: auto
@@ -175,8 +175,7 @@ bazel-bin/nighthawk_test_server  [--socket-mode <string>] [--socket-path
 [--hot-restart-version]
 [--restart-epoch <uint32_t>]
 [--log-path <string>]
-[--log-format-prefix-with-location
-<bool>] [--enable-fine-grain-logging]
+[--enable-fine-grain-logging]
 [--log-format-escaped] [--log-format
 <string>] [--component-log-level
 <string>] [-l <string>]
@@ -251,10 +250,6 @@ hot restart epoch #
 
 --log-path <string>
 Path to logfile
-
---log-format-prefix-with-location <bool>
-Prefix all occurrences of '%v' in log format with with '[%g:%#] '
-('[path/to/file.cc:99] ').
 
 --enable-fine-grain-logging
 Logger mode: enable file level log control(Fancy Logger)or not
