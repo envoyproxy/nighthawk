@@ -181,8 +181,10 @@ void ProcessImpl::createWorkers(const uint32_t concurrency,
   // TODO(oschaaf): Arguably, this ought to be the job of a rate limiter with awareness of the
   // global status quo, which we do not have right now. This has been noted in the
   // track-for-future issue.
-  const auto first_worker_start =
-      schedule.value_or(time_system_.systemTime() + kMinimalWorkerDelay);
+  const Envoy::MonotonicTime monotonic_now = time_system_.monotonicTime();
+  const std::chrono::nanoseconds offset =
+      schedule.has_value() ? schedule.value() - time_system_.systemTime() : kMinimalWorkerDelay;
+  const Envoy::MonotonicTime first_worker_start = monotonic_now + offset;
   const double inter_worker_delay_usec =
       (1. / options_.requestsPerSecond()) * 1000000 / concurrency;
   int worker_number = 0;
