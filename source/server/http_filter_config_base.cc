@@ -33,7 +33,7 @@ void FilterConfigurationBase::computeEffectiveConfiguration(
   }
 }
 
-bool FilterConfigurationBase::maybeSendErrorReply(
+bool FilterConfigurationBase::validateOrSendError(
     Envoy::Http::StreamDecoderFilterCallbacks& decoder_callbacks) const {
   if (!effective_config_.ok()) {
     decoder_callbacks.sendLocalReply(static_cast<Envoy::Http::Code>(500),

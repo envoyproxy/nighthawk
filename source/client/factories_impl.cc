@@ -17,6 +17,8 @@
 #include "client/output_collector_impl.h"
 #include "client/output_formatter_impl.h"
 
+#include "request_source/request_options_list_plugin_impl.h"
+
 using namespace std::chrono_literals;
 
 namespace Nighthawk {
@@ -117,8 +119,8 @@ OutputFormatterPtr OutputFormatterFactoryImpl::create(
   }
 }
 
-RequestSourceFactoryImpl::RequestSourceFactoryImpl(const Options& options)
-    : OptionBasedFactoryImpl(options) {}
+RequestSourceFactoryImpl::RequestSourceFactoryImpl(const Options& options, Envoy::Api::Api& api)
+    : OptionBasedFactoryImpl(options), api_(api) {}
 
 void RequestSourceFactoryImpl::setRequestHeader(Envoy::Http::RequestHeaderMap& header,
                                                 absl::string_view key,
@@ -168,7 +170,6 @@ RequestSourceFactoryImpl::create(const Envoy::Upstream::ClusterManagerPtr& clust
   for (const auto& option_header : request_options.request_headers()) {
     setRequestHeader(*header, option_header.header().key(), option_header.header().value());
   }
-
   if (!options_.requestSource().empty()) {
     RELEASE_ASSERT(!service_cluster_name.empty(), "expected cluster name to be set");
     // We pass in options_.requestsPerSecond() as the header buffer length so the grpc client
@@ -176,8 +177,32 @@ RequestSourceFactoryImpl::create(const Envoy::Upstream::ClusterManagerPtr& clust
     return std::make_unique<RemoteRequestSourceImpl>(cluster_manager, dispatcher, scope,
                                                      service_cluster_name, std::move(header),
                                                      options_.requestsPerSecond());
+  } else if (options_.requestSourcePluginConfig().has_value()) {
+    absl::StatusOr<RequestSourcePtr> plugin_or = LoadRequestSourcePlugin(
+        options_.requestSourcePluginConfig().value(), api_, std::move(header));
+    if (!plugin_or.ok()) {
+      throw NighthawkException(
+          absl::StrCat("Request Source plugin loading error should have been caught "
+                       "during input validation: ",
+                       plugin_or.status().message()));
+    }
+    RequestSourcePtr request_source = std::move(plugin_or.value());
+    return request_source;
   } else {
     return std::make_unique<StaticRequestSourceImpl>(std::move(header));
+  }
+}
+absl::StatusOr<RequestSourcePtr> RequestSourceFactoryImpl::LoadRequestSourcePlugin(
+    const envoy::config::core::v3::TypedExtensionConfig& config, Envoy::Api::Api& api,
+    Envoy::Http::RequestHeaderMapPtr header) const {
+  try {
+    auto& config_factory =
+        Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
+            config.name());
+    return config_factory.createRequestSourcePlugin(config.typed_config(), api, std::move(header));
+  } catch (const Envoy::EnvoyException& e) {
+    return absl::InvalidArgumentError(
+        absl::StrCat("Could not load plugin: ", config.name(), ": ", e.what()));
   }
 }
 

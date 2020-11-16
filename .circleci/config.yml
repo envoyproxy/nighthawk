@@ -1,6 +1,6 @@
 references:
-  envoy-build-image: &envoy-build-image # October 12th, 2020
-    envoyproxy/envoy-build-ubuntu:b480535e8423b5fd7c102fd30c92f4785519e33a
+  envoy-build-image: &envoy-build-image # November 10th, 2020
+    envoyproxy/envoy-build-ubuntu:19a268cfe3d12625380e7c61d2467c8779b58b56
 version: 2
 jobs:
   build:
