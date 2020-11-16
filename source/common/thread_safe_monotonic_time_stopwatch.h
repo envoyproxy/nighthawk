@@ -34,7 +34,7 @@ public:
 
 private:
   Envoy::Thread::MutexBasicLockable lock_;
-  Envoy::MonotonicTime start_ GUARDED_BY(lock_);
+  Envoy::MonotonicTime start_ ABSL_GUARDED_BY(lock_);
 };
 
 } // namespace Nighthawk
