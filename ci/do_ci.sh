@@ -34,8 +34,9 @@ function do_test() {
 }
 
 function do_clang_tidy() {
-    export CLANG_TIDY=clang-tidy-9
-    ci/run_clang_tidy.sh
+    ENVOY_STDLIB=libc++
+    BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS[*]}" NUM_CPUS=$NUM_CPUS ci/run_clang_tidy.sh "$@"
+    exit 0
 }
 
 function do_unit_test_coverage() {
