@@ -71,8 +71,19 @@ public:
       const Envoy::Network::ConnectionSocket::OptionsSharedPtr& options,
       const Envoy::Network::TransportSocketOptionsSharedPtr& transport_socket_options) override {
     if (protocol == Envoy::Http::Protocol::Http11 || protocol == Envoy::Http::Protocol::Http10) {
-      auto* h1_pool = new Http1PoolImpl(dispatcher, api_.randomGenerator(), host, priority, options,
-                                        transport_socket_options);
+      auto* h1_pool = new Http1PoolImpl(
+          host, priority, dispatcher, options, transport_socket_options, api_.randomGenerator(),
+          [](Envoy::Http::HttpConnPoolImplBase* pool) {
+            return std::make_unique<Envoy::Http::Http1::ActiveClient>(*pool);
+          },
+          [](Envoy::Upstream::Host::CreateConnectionData& data,
+             Envoy::Http::HttpConnPoolImplBase* pool) {
+            Envoy::Http::CodecClientPtr codec{new Envoy::Http::CodecClientProd(
+                Envoy::Http::CodecClient::Type::HTTP1, std::move(data.connection_),
+                data.host_description_, pool->dispatcher(), pool->randomGenerator())};
+            return codec;
+          },
+          std::vector<Envoy::Http::Protocol>{protocol});
       h1_pool->setConnectionReuseStrategy(connection_reuse_strategy_);
       h1_pool->setPrefetchConnections(prefetch_connections_);
       return Envoy::Http::ConnectionPool::InstancePtr{h1_pool};

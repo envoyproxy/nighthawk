@@ -75,13 +75,13 @@ struct BenchmarkClientStatistic {
   StatisticPtr origin_latency_statistic;
 };
 
-class Http1PoolImpl : public Envoy::Http::Http1::ProdConnPoolImpl {
+class Http1PoolImpl : public Envoy::Http::FixedHttpConnPoolImpl {
 public:
   enum class ConnectionReuseStrategy {
     MRU,
     LRU,
   };
-  using Envoy::Http::Http1::ProdConnPoolImpl::ProdConnPoolImpl;
+  using Envoy::Http::FixedHttpConnPoolImpl::FixedHttpConnPoolImpl;
   Envoy::Http::ConnectionPool::Cancellable*
   newStream(Envoy::Http::ResponseDecoder& response_decoder,
             Envoy::Http::ConnectionPool::Callbacks& callbacks) override;
