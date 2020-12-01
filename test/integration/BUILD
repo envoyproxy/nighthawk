@@ -9,6 +9,14 @@ licenses(["notice"])  # Apache 2
 
 envoy_package()
 
+py_test(
+    name = "test_nighthawk_test_server",
+    srcs = ["test_nighthawk_test_server.py"],
+    deps = [
+        ":integration_test_base_lean",
+    ],
+)
+
 py_library(
     name = "integration_test_base",
     data = [

@@ -40,6 +40,28 @@ def _substitute_yaml_values(runfiles_instance, obj, params):
   return obj
 
 
+# A list of message pieces that should be ignored even if logged by the test
+# server at a warning or an error severity.
+#
+# Other messages logged at either of these severities fail the test.
+_TEST_SERVER_WARN_ERROR_IGNORE_LIST = frozenset([
+    # TODO(#580) Remove these once our use of Envoy's API is updated to v3.
+    "Deprecated field: type envoy.api.v2.listener.Filter",
+    "Deprecated field: type envoy.config.filter.network.http_connection_manager.v2.HttpFilter",
+    "Configuration does not parse cleanly as v3",
+
+    # TODO(mum4k): Identify these and file issues or add explanation as necessary.
+    "Unable to use runtime singleton for feature envoy.http.headermap.lazy_map_min_size",
+    "Using deprecated extension name 'envoy.http_connection_manager' for 'envoy.filters.network.http_connection_manager'.",
+    "Using deprecated extension name 'envoy.listener.tls_inspector' for 'envoy.filters.listener.tls_inspector'.",
+    "Using deprecated extension name 'envoy.router' for 'envoy.filters.http.router'.",
+    "there is no configured limit to the number of allowed active connections. Set a limit via the runtime key overload.global_downstream_max_connections",
+
+    # Logged for normal termination, not really a warning.
+    "caught SIGTERM",
+])
+
+
 class TestServerBase(object):
   """Base class for running a server in a separate process.
 
@@ -124,8 +146,14 @@ class TestServerBase(object):
     logging.info("Test server popen() args: %s" % str.join(" ", args))
     self._server_process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = self._server_process.communicate()
-    logging.debug(stdout.decode("utf-8"))
-    logging.debug(stderr.decode("utf-8"))
+    logging.info("Process stdout: %s", stdout.decode("utf-8"))
+    logging.info("Process stderr: %s", stderr.decode("utf-8"))
+    warnings, errors = _extractWarningsAndErrors(stdout.decode() + stderr.decode(),
+                                                 _TEST_SERVER_WARN_ERROR_IGNORE_LIST)
+    if warnings:
+      [logging.warn("Process logged a warning: %s", w) for w in warnings]
+    if errors:
+      [logging.error("Process logged an error: %s", e) for e in errors]
 
   def fetchJsonFromAdminInterface(self, path):
     """Fetch and parse json from the admin interface.
@@ -253,3 +281,35 @@ class NighthawkTestServer(TestServerBase):
     stdout, stderr = process.communicate()
     assert process.wait() == 0
     return stdout.decode("utf-8").strip()
+
+
+def _extractWarningsAndErrors(process_output, ignore_list):
+  """Extract warnings and errors from the process_output.
+
+  Args:
+    process_output: A string, the stdout or stderr after running a process.
+    ignore_list: A list of strings, message pieces to ignore. If a message that
+      was logged either at a warning or at an error severity contains one of
+      these message pieces, it will be excluded from the return values.
+
+  Returns:
+    A tuple of two lists of strings, the first list contains the warnings found
+    in the process_output and the second list contains the errors found in the
+    process_output.
+  """
+  warnings = []
+  errors = []
+  for line in process_output.split('\n'):
+    should_ignore = False
+    for ignore_message in ignore_list:
+      if ignore_message in line:
+        should_ignore = True
+        break
+    if should_ignore:
+      continue
+
+    if "[warning]" in line:
+      warnings.append(line)
+    elif "[error]" in line:
+      errors.append(line)
+  return warnings, errors

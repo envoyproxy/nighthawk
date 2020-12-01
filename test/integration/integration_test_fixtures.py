@@ -123,8 +123,14 @@ class IntegrationTestBase():
     self.tag = "{timestamp}/{test_id}".format(timestamp=_TIMESTAMP, test_id=self._test_id)
     assert self._tryStartTestServers(), "Test server(s) failed to start"
 
-  def tearDown(self):
-    """Stop the server."""
+  def tearDown(self, caplog):
+    """Stop the server.
+
+    Fails the test if any warnings or errors were logged.
+
+    Args:
+      caplog: The pytest `caplog` test fixture used to examine logged messages.
+    """
     if self.grpc_service is not None:
       assert (self.grpc_service.stop() == 0)
 
@@ -133,6 +139,11 @@ class IntegrationTestBase():
       if test_server.stop() != 0:
         any_failed = True
     assert (not any_failed)
+
+    for when in ("setup", "call", "teardown"):
+      messages = [x.message for x in caplog.get_records(when) if x.levelno == logging.WARNING]
+      if messages:
+        pytest.fail("warning messages encountered during testing: {}".format(messages))
 
   def _tryStartTestServers(self):
     for i in range(self._backend_count):
@@ -366,7 +377,7 @@ def server_config():
 
 
 @pytest.fixture(params=determineIpVersionsFromEnvironment())
-def http_test_server_fixture(request, server_config):
+def http_test_server_fixture(request, server_config, caplog):
   """Fixture for setting up a test environment with the stock http server configuration.
 
   Yields:
@@ -375,11 +386,11 @@ def http_test_server_fixture(request, server_config):
   f = HttpIntegrationTestBase(request.param, server_config)
   f.setUp()
   yield f
-  f.tearDown()
+  f.tearDown(caplog)
 
 
 @pytest.fixture(params=determineIpVersionsFromEnvironment())
-def https_test_server_fixture(request, server_config):
+def https_test_server_fixture(request, server_config, caplog):
   """Fixture for setting up a test environment with the stock https server configuration.
 
   Yields:
@@ -388,11 +399,11 @@ def https_test_server_fixture(request, server_config):
   f = HttpsIntegrationTestBase(request.param, server_config)
   f.setUp()
   yield f
-  f.tearDown()
+  f.tearDown(caplog)
 
 
 @pytest.fixture(params=determineIpVersionsFromEnvironment())
-def multi_http_test_server_fixture(request, server_config):
+def multi_http_test_server_fixture(request, server_config, caplog):
   """Fixture for setting up a test environment with multiple servers, using the stock http server configuration.
 
   Yields:
@@ -401,11 +412,11 @@ def multi_http_test_server_fixture(request, server_config):
   f = MultiServerHttpIntegrationTestBase(request.param, server_config, backend_count=3)
   f.setUp()
   yield f
-  f.tearDown()
+  f.tearDown(caplog)
 
 
 @pytest.fixture(params=determineIpVersionsFromEnvironment())
-def multi_https_test_server_fixture(request, server_config):
+def multi_https_test_server_fixture(request, server_config, caplog):
   """Fixture for setting up a test environment with multiple servers, using the stock https server configuration.
 
   Yields:
@@ -414,4 +425,4 @@ def multi_https_test_server_fixture(request, server_config):
   f = MultiServerHttpsIntegrationTestBase(request.param, server_config, backend_count=3)
   f.setUp()
   yield f
-  f.tearDown()
+  f.tearDown(caplog)
