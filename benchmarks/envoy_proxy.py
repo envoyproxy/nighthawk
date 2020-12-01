@@ -92,9 +92,9 @@ class InjectHttpProxyIntegrationTestBase(HttpIntegrationTestBase):
                                                                port=proxy_server.server_port))
     self.proxy_server = proxy_server
 
-  def tearDown(self):
+  def tearDown(self, caplog):
     """Tear down the proxy and test server. Assert that both exit succesfully."""
-    super(InjectHttpProxyIntegrationTestBase, self).tearDown()
+    super(InjectHttpProxyIntegrationTestBase, self).tearDown(caplog)
     assert (self.proxy_server.stop() == 0)
 
   def getTestServerRootUri(self):
@@ -106,7 +106,7 @@ class InjectHttpProxyIntegrationTestBase(HttpIntegrationTestBase):
 
 
 @pytest.fixture(params=determineIpVersionsFromEnvironment())
-def inject_envoy_http_proxy_fixture(request, server_config, proxy_config):
+def inject_envoy_http_proxy_fixture(request, server_config, proxy_config, caplog):
   """Injects an Envoy proxy in front of the test server.
 
   NOTE: Depends on the proxy_config fixture, which must be explicitly imported
@@ -116,10 +116,11 @@ def inject_envoy_http_proxy_fixture(request, server_config, proxy_config):
     request: supplies the ip version.
     server_config: path to the server configuration template.
     proxy_config: path to the proxy configuration template.
+    caplog: The pytest `caplog` test fixture used to examine logged messages.
 
   Yields: a successfully set up InjectHttpProxyIntegrationTestBase instance.
   """
   fixture = InjectHttpProxyIntegrationTestBase(request.param, server_config, proxy_config)
   fixture.setUp()
   yield fixture
-  fixture.tearDown()
+  fixture.tearDown(caplog)
