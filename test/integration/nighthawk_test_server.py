@@ -136,8 +136,8 @@ class TestServerBase(object):
     logging.error("Test server popen() args: %s" % str.join(" ", args))
     self._server_process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = self._server_process.communicate()
-    logging.info(stdout.decode("utf-8"))
-    logging.info(stderr.decode("utf-8"))
+    logging.info("Process stdout: %s", stdout.decode("utf-8"))
+    logging.info("Process stderr: %s", stderr.decode("utf-8"))
 
   def fetchJsonFromAdminInterface(self, path):
     """Fetch and parse json from the admin interface.
@@ -195,7 +195,7 @@ class TestServerBase(object):
     return r.status_code == 200
 
   def _waitUntilServerListening(self):
-    # we allow 30 seconds for the server to have its listeners up.
+    # we allow some time for the server to have its listeners up.
     # (It seems that in sanitizer-enabled runs this can take a little while)
     timeout = time.time() + 60
     while time.time() < timeout:

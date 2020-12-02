@@ -38,7 +38,7 @@ def test_http_h1(http_test_server_fixture):
   asserts.assertCounterEqual(counters, "upstream_cx_total", 1)
   asserts.assertCounterEqual(
       counters, "upstream_cx_tx_bytes_total",
-      1400 if http_test_server_fixture.ip_version == IpVersion.IPV6 else 1450)
+      1375 if http_test_server_fixture.ip_version == IpVersion.IPV6 else 1450)
   asserts.assertCounterEqual(counters, "upstream_rq_pending_total", 1)
   asserts.assertCounterEqual(counters, "upstream_rq_total", 25)
   asserts.assertCounterEqual(counters, "default.total_match_count", 1)
@@ -259,7 +259,7 @@ def test_https_h1(https_test_server_fixture):
   asserts.assertCounterEqual(counters, "upstream_cx_total", 1)
   asserts.assertCounterEqual(
       counters, "upstream_cx_tx_bytes_total",
-      1400 if https_test_server_fixture.ip_version == IpVersion.IPV6 else 1450)
+      1375 if https_test_server_fixture.ip_version == IpVersion.IPV6 else 1450)
   asserts.assertCounterEqual(counters, "upstream_rq_pending_total", 1)
   asserts.assertCounterEqual(counters, "upstream_rq_total", 25)
   asserts.assertCounterEqual(counters, "ssl.ciphers.ECDHE-RSA-AES128-GCM-SHA256", 1)
@@ -347,7 +347,7 @@ def _do_tls_configuration_test(https_test_server_fixture, cli_parameter, use_h2)
   else:
     json_template = "%s%s%s" % (
         "{name:\"envoy.transport_sockets.tls\",typed_config:{",
-        "\"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\",",
+        "\"@type\":\"type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext\",",
         "common_tls_context:{tls_params:{cipher_suites:[\"-ALL:%s\"]}}}}")
 
   for cipher in [
