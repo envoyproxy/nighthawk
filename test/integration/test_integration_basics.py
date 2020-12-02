@@ -311,7 +311,7 @@ def _do_tls_configuration_test(https_test_server_fixture, cli_parameter, use_h2)
   else:
     json_template = "%s%s%s" % (
         "{name:\"envoy.transport_sockets.tls\",typed_config:{",
-        "\"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\",",
+        "\"@type\":\"type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext\",",
         "common_tls_context:{tls_params:{cipher_suites:[\"-ALL:%s\"]}}}}")
 
   for cipher in [

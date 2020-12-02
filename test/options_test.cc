@@ -121,7 +121,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
       "--latency-response-header-name zz",
       client_name_,
       "{name:\"envoy.transport_sockets.tls\","
-      "typed_config:{\"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\","
+      "typed_config:{\"@type\":\"type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext\","
       "common_tls_context:{tls_params:{"
       "cipher_suites:[\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"]}}}}",
       good_test_uri_, sink_json_1, sink_json_2));
@@ -144,7 +144,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
   EXPECT_EQ(1234, options->requestBodySize());
   EXPECT_EQ("name: \"envoy.transport_sockets.tls\"\n"
             "typed_config {\n"
-            "  [type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext] {\n"
+            "  [type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext] {\n"
             "    common_tls_context {\n"
             "      tls_params {\n"
             "        cipher_suites: \"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"\n"
