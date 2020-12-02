@@ -140,10 +140,14 @@ class IntegrationTestBase():
         any_failed = True
     assert (not any_failed)
 
+    messages = []
     for when in ("setup", "call", "teardown"):
-      messages = [x.message for x in caplog.get_records(when) if x.levelno == logging.WARNING]
-      if messages:
-        pytest.fail("warning messages encountered during testing: {}".format(messages))
+      for message in caplog.get_records(when):
+        if x.levelno not in (logging.WARNING, logging.ERROR):
+          continue
+        messages.append(message)
+    if messages:
+      pytest.fail("warning messages encountered during testing: {}".format(messages))
 
   def _tryStartTestServers(self):
     for i in range(self._backend_count):
