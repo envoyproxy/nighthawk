@@ -56,13 +56,14 @@ class IntegrationTestBase():
   This class will be refactored (https://github.com/envoyproxy/nighthawk/issues/258).
   """
 
-  def __init__(self, ip_version, server_config, backend_count=1):
+  def __init__(self, ip_version, server_config, backend_count=1, bootstrap_version_arg=None):
     """Initialize the IntegrationTestBase instance.
 
     Args:
       ip_version: a single IP mode that this instance will test: IpVersion.IPV4 or IpVersion.IPV6
       server_config: path to the server configuration
       backend_count: number of Nighthawk Test Server backends to run, to allow testing MultiTarget mode
+      bootstrap_version_arg: number of Nighthawk Test Server backends to run, to allow testing MultiTarget mode
     Attributes:
       ip_version: IP version that the proxy should use when listening.
       server_ip: string containing the server ip that will be used to listen
@@ -90,6 +91,7 @@ class IntegrationTestBase():
     self._test_servers = []
     self._backend_count = backend_count
     self._test_id = ""
+    self._bootstrap_version_arg = bootstrap_version_arg
 
   # TODO(oschaaf): For the NH test server, add a way to let it determine a port by itself and pull that
   # out.
@@ -141,7 +143,8 @@ class IntegrationTestBase():
                                         self.server_ip,
                                         self.ip_version,
                                         parameters=self.parameters,
-                                        tag=self.tag)
+                                        tag=self.tag,
+                                        bootstrap_version_arg=self._bootstrap_version_arg)
       if not test_server.start():
         return False
       self._test_servers.append(test_server)
@@ -297,6 +300,25 @@ class HttpIntegrationTestBase(IntegrationTestBase):
     return super(HttpIntegrationTestBase, self).getTestServerRootUri(False)
 
 
+class HttpIntegrationTestBaseWithV2Bootstrap(IntegrationTestBase):
+  """Base for running plain http tests against the Nighthawk test server.
+
+  NOTE: any script that consumes derivations of this, needs to needs also explictly
+  import server_config, to avoid errors caused by the server_config not being found
+  by pytest.
+  """
+
+  def __init__(self, ip_version, server_config):
+    """See base class."""
+    super(HttpIntegrationTestBaseWithV2Bootstrap, self).__init__(ip_version,
+                                                                 server_config,
+                                                                 bootstrap_version_arg="2")
+
+  def getTestServerRootUri(self):
+    """See base class."""
+    return super(HttpIntegrationTestBaseWithV2Bootstrap, self).getTestServerRootUri(False)
+
+
 class MultiServerHttpIntegrationTestBase(IntegrationTestBase):
   """Base for running plain http tests against multiple Nighthawk test servers."""
 
@@ -373,6 +395,19 @@ def http_test_server_fixture(request, server_config):
       HttpIntegrationTestBase: A fully set up instance. Tear down will happen automatically.
   """
   f = HttpIntegrationTestBase(request.param, server_config)
+  f.setUp()
+  yield f
+  f.tearDown()
+
+
+@pytest.fixture(params=determineIpVersionsFromEnvironment())
+def http_test_server_fixture_v2_api(request, server_config):
+  """Fixture for setting up a test environment with http server configuration that uses v2 configuration.
+
+  Yields:
+      HttpIntegrationTestBaseWithV2Bootstrap: A fully set up instance. Tear down will happen automatically.
+  """
+  f = HttpIntegrationTestBaseWithV2Bootstrap(request.param, server_config)
   f.setUp()
   yield f
   f.tearDown()

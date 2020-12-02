@@ -74,6 +74,7 @@ public:
   virtual std::vector<envoy::config::metrics::v3::StatsSink> statsSinks() const PURE;
   virtual uint32_t statsFlushInterval() const PURE;
   virtual std::string responseHeaderWithLatencyInput() const PURE;
+  virtual bool allowApiV2() const PURE;
 
   /**
    * Converts an Options instance to an equivalent CommandLineOptions instance in terms of option

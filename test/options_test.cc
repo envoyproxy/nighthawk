@@ -118,7 +118,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
       "--experimental-h2-use-multiple-connections "
       "--experimental-h1-connection-reuse-strategy lru --label label1 --label label2 {} "
       "--simple-warmup --stats-sinks {} --stats-sinks {} --stats-flush-interval 10 "
-      "--latency-response-header-name zz",
+      "--latency-response-header-name zz --allow-v2-api",
       client_name_,
       "{name:\"envoy.transport_sockets.tls\","
       "typed_config:{\"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\","
@@ -191,6 +191,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
             "183412668: \"envoy.config.metrics.v2.StatsSink\"\n",
             options->statsSinks()[1].DebugString());
   EXPECT_EQ("zz", options->responseHeaderWithLatencyInput());
+  EXPECT_TRUE(options->allowApiV2());
 
   // Check that our conversion to CommandLineOptionsPtr makes sense.
   CommandLineOptionsPtr cmd = options->toCommandLineOptions();
@@ -249,6 +250,8 @@ TEST_F(OptionsImplTest, AlmostAll) {
   EXPECT_TRUE(util(cmd->stats_sinks(0), options->statsSinks()[0]));
   EXPECT_TRUE(util(cmd->stats_sinks(1), options->statsSinks()[1]));
   EXPECT_EQ(cmd->latency_response_header_name().value(), options->responseHeaderWithLatencyInput());
+  ASSERT_TRUE(cmd->has_allow_api_v2());
+  EXPECT_EQ(cmd->allow_api_v2().value(), options->allowApiV2());
   // TODO(#433) Here and below, replace comparisons once we choose a proto diff.
   OptionsImpl options_from_proto(*cmd);
   std::string s1 = Envoy::MessageUtil::getYamlStringFromMessage(
@@ -589,6 +592,20 @@ TEST_F(OptionsImplTest, PrefetchConnectionsFlag) {
                           MalformedArgvException, "Couldn't find match for argument");
   EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
                               "{} --prefetch-connections true {}", client_name_, good_test_uri_)),
+                          MalformedArgvException, "Couldn't find match for argument");
+}
+
+TEST_F(OptionsImplTest, AllowApiV2Flag) {
+  EXPECT_FALSE(TestUtility::createOptionsImpl(fmt::format("{} {}", client_name_, good_test_uri_))
+                   ->allowApiV2());
+  EXPECT_TRUE(TestUtility::createOptionsImpl(
+                  fmt::format("{} --allow-v2-api {}", client_name_, good_test_uri_))
+                  ->allowApiV2());
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(
+                              fmt::format("{} --allow-v2-api 0 {}", client_name_, good_test_uri_)),
+                          MalformedArgvException, "Couldn't find match for argument");
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{} --allow-v2-api true {}",
+                                                                     client_name_, good_test_uri_)),
                           MalformedArgvException, "Couldn't find match for argument");
 }
 

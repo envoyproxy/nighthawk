@@ -7,6 +7,7 @@
 #include "external/envoy/test/test_common/network_utility.h"
 #include "external/envoy/test/test_common/registry.h"
 #include "external/envoy/test/test_common/utility.h"
+#include "external/envoy_api/envoy/config/bootstrap/v3/bootstrap.pb.h"
 
 #include "common/uri_impl.h"
 
@@ -176,6 +177,13 @@ TEST_P(ProcessTest, NoFlushWhenCancelExecutionBeforeLoadTestBegin) {
   numFlushes = 0;
   runProcess(RunExpectation::EXPECT_SUCCESS, true, true);
   EXPECT_EQ(numFlushes, 0);
+}
+
+TEST(RuntimeConfiguration, allowApiV2) {
+  envoy::config::bootstrap::v3::Bootstrap bootstrap;
+  EXPECT_EQ(bootstrap.DebugString(), "");
+  ProcessImpl::allowApiV2(bootstrap);
+  EXPECT_NE(bootstrap.DebugString(), "");
 }
 
 } // namespace

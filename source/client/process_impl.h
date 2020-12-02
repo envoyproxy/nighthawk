@@ -30,6 +30,7 @@
 #include "external/envoy/source/exe/process_wide.h"
 #include "external/envoy/source/extensions/transport_sockets/tls/context_manager_impl.h"
 #include "external/envoy/source/server/config_validation/admin.h"
+#include "external/envoy_api/envoy/config/bootstrap/v3/bootstrap.pb.h"
 
 #include "client/benchmark_client_impl.h"
 #include "client/factories_impl.h"
@@ -84,6 +85,12 @@ public:
 
   bool requestExecutionCancellation() override;
 
+  /**
+   * @param bootstrap The bootstrap that should have it's runtime configuration
+   * modified to allow for api v2 usage.
+   */
+  static void allowApiV2(envoy::config::bootstrap::v3::Bootstrap& bootstrap);
+
 private:
   /**
    * @brief Creates a cluster for usage by a remote request source.
@@ -99,9 +106,9 @@ private:
                                   const Uri& uri) const;
   void createBootstrapConfiguration(envoy::config::bootstrap::v3::Bootstrap& bootstrap,
                                     const std::vector<UriPtr>& uris,
-                                    const UriPtr& request_source_uri, int number_of_workers) const;
+                                    const UriPtr& request_source_uri, int number_of_workers,
+                                    bool allow_api_v2) const;
   void maybeCreateTracingDriver(const envoy::config::trace::v3::Tracing& configuration);
-
   void configureComponentLogLevels(spdlog::level::level_enum level);
   /**
    * Prepare the ProcessImpl instance by creating and configuring the workers it needs for execution

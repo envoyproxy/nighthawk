@@ -10,11 +10,10 @@ import time
 from threading import Thread
 
 from test.integration.common import IpVersion
-from test.integration.integration_test_fixtures import (http_test_server_fixture,
-                                                        https_test_server_fixture,
-                                                        multi_http_test_server_fixture,
-                                                        multi_https_test_server_fixture,
-                                                        server_config)
+from test.integration.integration_test_fixtures import (
+    http_test_server_fixture, http_test_server_fixture_v2_api, https_test_server_fixture,
+    https_test_server_fixture, multi_http_test_server_fixture, multi_https_test_server_fixture,
+    server_config)
 from test.integration import asserts
 from test.integration import utility
 
@@ -67,6 +66,43 @@ def test_http_h1(http_test_server_fixture):
       int(global_histograms["benchmark_http_client.response_header_size"]["raw_pstdev"]), 0)
 
   asserts.assertEqual(len(counters), 12)
+
+
+@pytest.mark.parametrize(
+    'server_config',
+    ["nighthawk/test/integration/configurations/nighthawk_http_origin_v2_api.yaml"])
+def test_nighthawk_test_server_v2_api(http_test_server_fixture_v2_api):
+  """Test that the v2 configuration works for the test server."""
+  parsed_json, _ = http_test_server_fixture_v2_api.runNighthawkClient([
+      http_test_server_fixture_v2_api.getTestServerRootUri(), "--duration", "100",
+      "--termination-predicate", "benchmark.http_2xx:24"
+  ])
+
+  counters = http_test_server_fixture_v2_api.getNighthawkCounterMapFromJson(parsed_json)
+  asserts.assertCounterEqual(counters, "benchmark.http_2xx", 25)
+
+
+def test_nighthawk_client_v2_api_explicitly_set(http_test_server_fixture):
+  """Test that the v2 api works when requested to."""
+  parsed_json, _ = http_test_server_fixture.runNighthawkClient([
+      http_test_server_fixture.getTestServerRootUri(), "--duration", "100",
+      "--termination-predicate", "benchmark.http_2xx:24", "--allow-v2-api", "--transport-socket",
+      "{name:\"envoy.transport_sockets.tls\",typed_config:{\"@type\":\"type.googleapis.com/envoy.config.transport_socket.raw_buffer.v2.RawBuffer\"}}"
+  ])
+
+  counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
+  asserts.assertCounterEqual(counters, "benchmark.http_2xx", 25)
+
+
+# TODO(oschaaf): This ought to work after the Envoy update.
+def DISABLED_test_nighthawk_client_v2_api_breaks_by_default(http_test_server_fixture):
+  """Test that the v2 api breaks us when it's not explicitly requested."""
+  parsed_json, _ = http_test_server_fixture.runNighthawkClient([
+      http_test_server_fixture.getTestServerRootUri(), "--duration", "100",
+      "--termination-predicate", "benchmark.http_2xx:24", "--transport-socket",
+      "{name:\"envoy.transport_sockets.tls\", typed_config:{\"@type\":\"type.googleapis.com/envoy.config.transport_socket.raw_buffer.v2.RawBuffer\"}}"
+  ],
+                                                               expect_failure=True)
 
 
 def _mini_stress_test(fixture, args):
