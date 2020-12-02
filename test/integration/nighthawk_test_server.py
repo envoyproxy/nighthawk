@@ -189,7 +189,7 @@ class TestServerBase(object):
     while time.time() < timeout:
       if self._tryUpdateFromAdminInterface():
         return True
-      time.sleep(1)
+      time.sleep(0.1)
     logging.error("Timeout in _waitUntilServerListening()")
     return False
 
