@@ -143,7 +143,7 @@ class IntegrationTestBase():
     messages = []
     for when in ("setup", "call", "teardown"):
       for message in caplog.get_records(when):
-        if x.levelno not in (logging.WARNING, logging.ERROR):
+        if message.levelno not in (logging.WARNING, logging.ERROR):
           continue
         messages.append(message)
     if messages:
