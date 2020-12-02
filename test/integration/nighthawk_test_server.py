@@ -51,7 +51,7 @@ _TEST_SERVER_WARN_ERROR_IGNORE_LIST = frozenset([
     "Deprecated field: type envoy.api.v2.listener.Filter",
     "Deprecated field: type envoy.config.filter.network.http_connection_manager.v2.HttpFilter",
 
-    # TODO(mum4k): Identify these and file issues or add explanation as necessary.
+    # TODO(#582): Identify these and file issues or add explanation as necessary.
     "Unable to use runtime singleton for feature envoy.http.headermap.lazy_map_min_size",
     "Using deprecated extension name 'envoy.http_connection_manager' for 'envoy.filters.network.http_connection_manager'.",
     "Using deprecated extension name 'envoy.listener.tls_inspector' for 'envoy.filters.listener.tls_inspector'.",
