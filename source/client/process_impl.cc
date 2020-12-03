@@ -65,14 +65,16 @@ class ClusterManagerFactory : public Envoy::Upstream::ProdClusterManagerFactory 
 public:
   using Envoy::Upstream::ProdClusterManagerFactory::ProdClusterManagerFactory;
 
-  Envoy::Http::ConnectionPool::InstancePtr allocateConnPool(
-      Envoy::Event::Dispatcher& dispatcher, Envoy::Upstream::HostConstSharedPtr host,
-      Envoy::Upstream::ResourcePriority priority, Envoy::Http::Protocol protocol,
-      const Envoy::Network::ConnectionSocket::OptionsSharedPtr& options,
-      const Envoy::Network::TransportSocketOptionsSharedPtr& transport_socket_options) override {
+  Envoy::Http::ConnectionPool::InstancePtr
+  allocateConnPool(Envoy::Event::Dispatcher& dispatcher, Envoy::Upstream::HostConstSharedPtr host,
+                   Envoy::Upstream::ResourcePriority priority, Envoy::Http::Protocol protocol,
+                   const Envoy::Network::ConnectionSocket::OptionsSharedPtr& options,
+                   const Envoy::Network::TransportSocketOptionsSharedPtr& transport_socket_options,
+                   Envoy::Upstream::ClusterConnectivityState& state) override {
     if (protocol == Envoy::Http::Protocol::Http11 || protocol == Envoy::Http::Protocol::Http10) {
       auto* h1_pool = new Http1PoolImpl(
           host, priority, dispatcher, options, transport_socket_options, api_.randomGenerator(),
+          state,
           [](Envoy::Http::HttpConnPoolImplBase* pool) {
             return std::make_unique<Envoy::Http::Http1::ActiveClient>(*pool);
           },
@@ -89,7 +91,7 @@ public:
       return Envoy::Http::ConnectionPool::InstancePtr{h1_pool};
     }
     return Envoy::Upstream::ProdClusterManagerFactory::allocateConnPool(
-        dispatcher, host, priority, protocol, options, transport_socket_options);
+        dispatcher, host, priority, protocol, options, transport_socket_options, state);
   }
 
   void setConnectionReuseStrategy(
@@ -503,7 +505,12 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
         [this]() -> void { init_manager_.initialize(init_watcher_); });
 
     Envoy::Runtime::LoaderSingleton::get().initialize(*cluster_manager_);
-
+    // TODO(oschaaf): enable prefetching, configure it
+    // see
+    // https://github.com/envoyproxy/envoy/blob/8d6299006e2f6adf160825e0d0febb3a0cb57c08/source/common/conn_pool/conn_pool_base.cc#L67
+    // if (options_.prefetch) {
+    // envoy.reloadable_features.allow_prefetch
+    //}
     std::list<std::unique_ptr<Envoy::Stats::Sink>> stats_sinks;
     setupStatsSinks(bootstrap, stats_sinks);
     std::chrono::milliseconds stats_flush_interval = std::chrono::milliseconds(

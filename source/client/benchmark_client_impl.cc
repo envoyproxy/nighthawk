@@ -54,17 +54,6 @@ BenchmarkClientStatistic::BenchmarkClientStatistic(
 Envoy::Http::ConnectionPool::Cancellable*
 Http1PoolImpl::newStream(Envoy::Http::ResponseDecoder& response_decoder,
                          Envoy::Http::ConnectionPool::Callbacks& callbacks) {
-  // In prefetch mode we try to keep the amount of connections at the configured limit.
-  if (prefetch_connections_) {
-    while (host_->cluster().resourceManager(priority_).connections().canCreate()) {
-      // We cannot rely on ::tryCreateConnection here, because that might decline without
-      // updating connections().canCreate() above. We would risk an infinite loop.
-      Envoy::ConnectionPool::ActiveClientPtr client = instantiateActiveClient();
-      connecting_stream_capacity_ += client->effectiveConcurrentStreamLimit();
-      Envoy::LinkedList::moveIntoList(std::move(client), owningList(client->state_));
-    }
-  }
-
   // By default, Envoy re-uses the most recent free connection. Here we pop from the back
   // of ready_clients_, which will pick the oldest one instead. This makes us cycle through
   // all the available connections.
