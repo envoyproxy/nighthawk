@@ -86,23 +86,26 @@ def test_nighthawk_client_v2_api_explicitly_set(http_test_server_fixture):
   """Test that the v2 api works when requested to."""
   parsed_json, _ = http_test_server_fixture.runNighthawkClient([
       http_test_server_fixture.getTestServerRootUri(), "--duration", "100",
-      "--termination-predicate", "benchmark.http_2xx:24", "--allow-v2-api", "--transport-socket",
-      "{name:\"envoy.transport_sockets.tls\",typed_config:{\"@type\":\"type.googleapis.com/envoy.config.transport_socket.raw_buffer.v2.RawBuffer\"}}"
+      "--termination-predicate", "benchmark.pool_connection_failure:0", "--failure-predicate",
+      "foo:1", "--allow-v2-api", "--transport-socket",
+      "{name:\"envoy.transport_sockets.tls\",typed_config:{\"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\",\"common_tls_context\":{}}}"
   ])
 
   counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-  asserts.assertCounterEqual(counters, "benchmark.http_2xx", 25)
+  asserts.assertCounterEqual(counters, "benchmark.pool_connection_failure", 1)
 
 
 # TODO(oschaaf): This ought to work after the Envoy update.
 def DISABLED_test_nighthawk_client_v2_api_breaks_by_default(http_test_server_fixture):
   """Test that the v2 api breaks us when it's not explicitly requested."""
-  parsed_json, _ = http_test_server_fixture.runNighthawkClient([
+  _, _ = http_test_server_fixture.runNighthawkClient([
       http_test_server_fixture.getTestServerRootUri(), "--duration", "100",
-      "--termination-predicate", "benchmark.http_2xx:24", "--transport-socket",
-      "{name:\"envoy.transport_sockets.tls\", typed_config:{\"@type\":\"type.googleapis.com/envoy.config.transport_socket.raw_buffer.v2.RawBuffer\"}}"
+      "--termination-predicate", "benchmark.pool_connection_failure:0", "--failure-predicate",
+      "foo:1", "--transport-socket",
+      "{name:\"envoy.transport_sockets.tls\",typed_config:{\"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\",\"common_tls_context\":{}}}"
   ],
-                                                               expect_failure=True)
+                                                     expect_failure=True,
+                                                     as_json=False)
 
 
 def _mini_stress_test(fixture, args):
