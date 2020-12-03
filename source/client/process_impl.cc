@@ -166,7 +166,7 @@ bool ProcessImpl::requestExecutionCancellation() {
 }
 
 void ProcessImpl::createWorkers(const uint32_t concurrency,
-                                const absl::optional<Envoy::SystemTime>& schedule) {
+                                const absl::optional<Envoy::SystemTime>& scheduled_start) {
   // TODO(oschaaf): Expose kMinimalDelay in configuration.
   const std::chrono::milliseconds kMinimalWorkerDelay = 500ms + (concurrency * 50ms);
   ASSERT(workers_.empty());
@@ -179,8 +179,9 @@ void ProcessImpl::createWorkers(const uint32_t concurrency,
   // batching/queueing effects, both initially, but also by calibrating the linear rate limiter we
   // currently have to a precise starting time, which helps later on.
   const Envoy::MonotonicTime monotonic_now = time_system_.monotonicTime();
-  const std::chrono::nanoseconds offset =
-      schedule.has_value() ? schedule.value() - time_system_.systemTime() : kMinimalWorkerDelay;
+  const std::chrono::nanoseconds offset = scheduled_start.has_value()
+                                              ? scheduled_start.value() - time_system_.systemTime()
+                                              : kMinimalWorkerDelay;
   const Envoy::MonotonicTime first_worker_start = monotonic_now + offset;
   const double inter_worker_delay_usec =
       (1. / options_.requestsPerSecond()) * 1000000 / concurrency;
@@ -448,9 +449,9 @@ void ProcessImpl::setupStatsSinks(const envoy::config::bootstrap::v3::Bootstrap&
 
 bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriPtr>& uris,
                               const UriPtr& request_source_uri, const UriPtr& tracing_uri,
-                              const absl::optional<Envoy::SystemTime>& schedule) {
+                              const absl::optional<Envoy::SystemTime>& scheduled_start) {
   const Envoy::SystemTime now = time_system_.systemTime();
-  if (schedule.value_or(now) < now) {
+  if (scheduled_start.value_or(now) < now) {
     ENVOY_LOG(error, "Scheduled execution date already transpired.");
     return false;
   }
@@ -469,7 +470,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
       store_root_.setTagProducer(Envoy::Config::Utility::createTagProducer(bootstrap));
     }
 
-    createWorkers(number_of_workers, schedule);
+    createWorkers(number_of_workers, scheduled_start);
     tls_.registerThread(*dispatcher_, true);
     store_root_.initializeThreading(*dispatcher_, tls_);
     runtime_singleton_ = std::make_unique<Envoy::Runtime::ScopedLoaderSingleton>(
