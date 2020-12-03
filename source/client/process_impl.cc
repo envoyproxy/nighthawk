@@ -178,9 +178,6 @@ void ProcessImpl::createWorkers(const uint32_t concurrency,
   // "worker_number*(1/global_frequency))", which would yield T0+[0ms, 1ms]. This helps reduce
   // batching/queueing effects, both initially, but also by calibrating the linear rate limiter we
   // currently have to a precise starting time, which helps later on.
-  // TODO(oschaaf): Arguably, this ought to be the job of a rate limiter with awareness of the
-  // global status quo, which we do not have right now. This has been noted in the
-  // track-for-future issue.
   const Envoy::MonotonicTime monotonic_now = time_system_.monotonicTime();
   const std::chrono::nanoseconds offset =
       schedule.has_value() ? schedule.value() - time_system_.systemTime() : kMinimalWorkerDelay;
@@ -607,7 +604,8 @@ bool ProcessImpl::run(OutputCollector& collector) {
   }
 
   try {
-    return runInternal(collector, uris, request_source_uri, tracing_uri, options_.schedule());
+    return runInternal(collector, uris, request_source_uri, tracing_uri,
+                       options_.scheduled_start());
   } catch (Envoy::EnvoyException& ex) {
     ENVOY_LOG(error, "Fatal exception: {}", ex.what());
     throw;

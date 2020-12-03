@@ -222,5 +222,5 @@ message CommandLineOptions {
   google.protobuf.StringValue latency_response_header_name = 36;
   // Provide an execution starting date and time. Optional, any value specified must be in the
   // future.
-  google.protobuf.Timestamp schedule = 105;
+  google.protobuf.Timestamp scheduled_start = 105;
 }

@@ -208,20 +208,20 @@ protected:
     // Note that these sleeps may seem excessively long, but sanitizer runs may need that.
     sleep(1);
     // Move time to 1 second before the scheduled execution time.
-    simTime().setSystemTime(options_->schedule().value() - 1s);
+    simTime().setSystemTime(options_->scheduled_start().value() - 1s);
     sleep(1);
     // Move time right up to the scheduled execution time.
-    simTime().setSystemTime(options_->schedule().value());
+    simTime().setSystemTime(options_->scheduled_start().value());
     sleep(1);
     // Move time past the scheduled execution time and execution duration.
-    simTime().setSystemTime(options_->schedule().value() + 2s);
+    simTime().setSystemTime(options_->scheduled_start().value() + 2s);
     // Wait for execution to wrap up.
     run_thread.join();
   }
 
   void setScheduleOnOptions(std::chrono::nanoseconds ns_since_epoch) {
     CommandLineOptionsPtr command_line = options_->toCommandLineOptions();
-    *(command_line->mutable_schedule()) =
+    *(command_line->mutable_scheduled_start()) =
         Envoy::Protobuf::util::TimeUtil::NanosecondsToTimestamp(ns_since_epoch.count());
     options_ = std::make_unique<OptionsImpl>(*command_line);
   }
@@ -245,7 +245,7 @@ TEST_P(ProcessTestWithSimTime, ScheduleAheadWorks) {
       ASSERT_EQ(output.results_size(), 1);
       EXPECT_EQ(Envoy::ProtobufUtil::TimeUtil::TimestampToNanoseconds(
                     output.results()[0].execution_start()),
-                options_->schedule().value().time_since_epoch().count());
+                options_->scheduled_start().value().time_since_epoch().count());
     });
   }
 }

@@ -26,6 +26,7 @@ public:
    * @param statistics Reference to a vector of statistics to add to the output.
    * @param counters Reference to a map of counter values, keyed by name, to add to the output.
    * @param execution_duration Execution duration associated to the to-be-added result.
+   * @param first_acquisition_time Timing of the first rate limiter acquisition.
    */
   virtual void addResult(absl::string_view name, const std::vector<StatisticPtr>& statistics,
                          const std::map<std::string, uint64_t>& counters,
