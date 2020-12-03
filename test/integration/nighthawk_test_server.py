@@ -45,18 +45,15 @@ def _substitute_yaml_values(runfiles_instance, obj, params):
 #
 # Other messages logged at either of these severities fail the test.
 _TEST_SERVER_WARN_ERROR_IGNORE_LIST = frozenset([
-    # TODO(#580) Remove these once our use of Envoy's API is updated to v3.
-    "Configuration does not parse cleanly as v3",
-    "Deprecated field: type envoy.api.v2.Cluster",
-    "Deprecated field: type envoy.api.v2.listener.Filter",
-    "Deprecated field: type envoy.config.filter.network.http_connection_manager.v2.HttpFilter",
-
     # TODO(#582): Identify these and file issues or add explanation as necessary.
     "Unable to use runtime singleton for feature envoy.http.headermap.lazy_map_min_size",
-    "Using deprecated extension name 'envoy.http_connection_manager' for 'envoy.filters.network.http_connection_manager'.",
     "Using deprecated extension name 'envoy.listener.tls_inspector' for 'envoy.filters.listener.tls_inspector'.",
-    "Using deprecated extension name 'envoy.router' for 'envoy.filters.http.router'.",
     "there is no configured limit to the number of allowed active connections. Set a limit via the runtime key overload.global_downstream_max_connections",
+
+    # A few of our filters use the same typed configuration, specifically
+    # 'test-server', 'time-tracking' and 'dynamic-delay'.
+    # For now this is by design.
+    "Double registration for type: 'nighthawk.server.ResponseOptions'",
 
     # Logged for normal termination, not really a warning.
     "caught SIGTERM",
