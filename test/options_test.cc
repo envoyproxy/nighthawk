@@ -121,7 +121,8 @@ TEST_F(OptionsImplTest, AlmostAll) {
       "--latency-response-header-name zz",
       client_name_,
       "{name:\"envoy.transport_sockets.tls\","
-      "typed_config:{\"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\","
+      "typed_config:{\"@type\":\"type.googleapis.com/"
+      "envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext\","
       "common_tls_context:{tls_params:{"
       "cipher_suites:[\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"]}}}}",
       good_test_uri_, sink_json_1, sink_json_2));
@@ -142,18 +143,19 @@ TEST_F(OptionsImplTest, AlmostAll) {
   const std::vector<std::string> expected_headers = {"f1:b1", "f2:b2", "f3:b3:b4"};
   EXPECT_EQ(expected_headers, options->requestHeaders());
   EXPECT_EQ(1234, options->requestBodySize());
-  EXPECT_EQ("name: \"envoy.transport_sockets.tls\"\n"
-            "typed_config {\n"
-            "  [type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext] {\n"
-            "    common_tls_context {\n"
-            "      tls_params {\n"
-            "        cipher_suites: \"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"\n"
-            "      }\n"
-            "    }\n"
-            "  }\n"
-            "}\n"
-            "183412668: \"envoy.api.v2.core.TransportSocket\"\n",
-            options->transportSocket().value().DebugString());
+  EXPECT_EQ(
+      "name: \"envoy.transport_sockets.tls\"\n"
+      "typed_config {\n"
+      "  [type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext] {\n"
+      "    common_tls_context {\n"
+      "      tls_params {\n"
+      "        cipher_suites: \"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"\n"
+      "      }\n"
+      "    }\n"
+      "  }\n"
+      "}\n"
+      "183412668: \"envoy.api.v2.core.TransportSocket\"\n",
+      options->transportSocket().value().DebugString());
   EXPECT_EQ(10, options->maxPendingRequests());
   EXPECT_EQ(11, options->maxActiveRequests());
   EXPECT_EQ(12, options->maxRequestsPerConnection());
