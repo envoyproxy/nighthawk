@@ -142,12 +142,12 @@ class IntegrationTestBase():
 
     warnings_and_errors = []
     for when in ("setup", "call", "teardown"):
-      for message in caplog.get_records(when):
-        if message.levelno not in (logging.WARNING, logging.ERROR):
+      for record in caplog.get_records(when):
+        if record.levelno not in (logging.WARNING, logging.ERROR):
           continue
-        warnings_and_errors.append(message)
+        warnings_and_errors.append(record.message)
     if warnings_and_errors:
-      pytest.fail("warnings or errors encountered during testing: {}".format(warnings_and_errors))
+      pytest.fail("warnings or errors encountered during testing:\n{}".format(warnings_and_errors))
 
   def _tryStartTestServers(self):
     for i in range(self._backend_count):
