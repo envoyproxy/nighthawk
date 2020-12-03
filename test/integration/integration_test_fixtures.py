@@ -63,7 +63,7 @@ class IntegrationTestBase():
       ip_version: a single IP mode that this instance will test: IpVersion.IPV4 or IpVersion.IPV6
       server_config: path to the server configuration
       backend_count: number of Nighthawk Test Server backends to run, to allow testing MultiTarget mode
-      bootstrap_version_arg: number of Nighthawk Test Server backends to run, to allow testing MultiTarget mode
+      bootstrap_version_arg: specify a bootstrap cli argument value for the test server binary.
     Attributes:
       ip_version: IP version that the proxy should use when listening.
       server_ip: string containing the server ip that will be used to listen

@@ -133,7 +133,7 @@ class TestServerBase(object):
     if self._bootstrap_version_arg is not None:
       args = args + ["--bootstrap-version", self._bootstrap_version_arg]
 
-    logging.error("Test server popen() args: %s" % str.join(" ", args))
+    logging.info("Test server popen() args: %s" % str.join(" ", args))
     self._server_process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = self._server_process.communicate()
     logging.info("Process stdout: %s", stdout.decode("utf-8"))
