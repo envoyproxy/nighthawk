@@ -43,7 +43,8 @@ bazel build -c opt //:nighthawk
 ```
 USAGE:
 
-bazel-bin/nighthawk_client  [--latency-response-header-name <string>]
+bazel-bin/nighthawk_client  [--allow-v2-api]
+[--latency-response-header-name <string>]
 [--stats-flush-interval <uint32_t>]
 [--stats-sinks <string>] ...
 [--no-duration] [--simple-warmup]
@@ -82,6 +83,9 @@ format>
 
 
 Where:
+
+--allow-v2-api
+Set to allow usage of the v2 api. (Not recommended). Default: false
 
 --latency-response-header-name <string>
 Set an optional header name that will be returned in responses, whose

@@ -130,7 +130,7 @@ class TestServerBase(object):
         self._parameterized_config_path, "-l", "debug", "--base-id", self._instance_id,
         "--admin-address-path", self._admin_address_path, "--concurrency", "1"
     ]
-    if not self._bootstrap_version_arg is None:
+    if self._bootstrap_version_arg is not None:
       args = args + ["--bootstrap-version", self._bootstrap_version_arg]
 
     logging.error("Test server popen() args: %s" % str.join(" ", args))
