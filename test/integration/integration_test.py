@@ -22,7 +22,11 @@ if __name__ == '__main__':
           "-x",
           path,
           "-n",
-          "4" if utility.isSanitizerRun() else "20"  # Number of tests to run in parallel
+          "4" if utility.isSanitizerRun() else "20",  # Number of tests to run in parallel
+          "--log-level",
+          "INFO",
+          "--log-cli-level",
+          "INFO",
       ],
       plugins=["xdist"])
   exit(r)

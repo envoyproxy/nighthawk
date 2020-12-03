@@ -75,7 +75,7 @@ class IntegrationTestBase():
     super(IntegrationTestBase, self).__init__()
     assert ip_version != IpVersion.UNKNOWN
     self.ip_version = ip_version
-    self.server_ip = "::/0" if ip_version == IpVersion.IPV6 else "0.0.0.0"
+    self.server_ip = "::" if ip_version == IpVersion.IPV6 else "0.0.0.0"
     self.server_ip = os.getenv("TEST_SERVER_EXTERNAL_IP", self.server_ip)
     self.tag = ""
     self.parameters = {}

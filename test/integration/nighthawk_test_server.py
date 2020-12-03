@@ -209,7 +209,7 @@ class TestServerBase(object):
     return r.status_code == 200
 
   def _waitUntilServerListening(self):
-    # we allow 30 seconds for the server to have its listeners up.
+    # we allow some time for the server to have its listeners up.
     # (It seems that in sanitizer-enabled runs this can take a little while)
     timeout = time.time() + 60
     while time.time() < timeout:
