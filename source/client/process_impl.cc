@@ -278,13 +278,9 @@ void ProcessImpl::allowApiV2(envoy::config::bootstrap::v3::Bootstrap& bootstrap)
       bootstrap.mutable_layered_runtime()->add_layers();
   runtime_layer->set_name("static_layer");
   Envoy::ProtobufWkt::Value proto_true;
-  proto_true.set_string_value(std::string("true"));
+  proto_true.set_string_value("true");
   (*runtime_layer->mutable_static_layer()
-        ->mutable_fields())[std::string("envoy.reloadable_features.enable_deprecated_v2_api")] =
-      proto_true;
-  (*runtime_layer->mutable_static_layer()
-        ->mutable_fields())[std::string("envoy.features.enable_all_deprecated_features")] =
-      proto_true;
+        ->mutable_fields())["envoy.reloadable_features.enable_deprecated_v2_api"] = proto_true;
 }
 
 void ProcessImpl::createBootstrapConfiguration(envoy::config::bootstrap::v3::Bootstrap& bootstrap,

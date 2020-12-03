@@ -286,7 +286,7 @@ class IntegrationTestBase():
 class HttpIntegrationTestBase(IntegrationTestBase):
   """Base for running plain http tests against the Nighthawk test server.
 
-  NOTE: any script that consumes derivations of this, needs to needs also explictly
+  NOTE: any script that consumes derivations of this, needs to also explicitly
   import server_config, to avoid errors caused by the server_config not being found
   by pytest.
   """
@@ -303,7 +303,7 @@ class HttpIntegrationTestBase(IntegrationTestBase):
 class HttpIntegrationTestBaseWithV2Bootstrap(IntegrationTestBase):
   """Base for running plain http tests against the Nighthawk test server.
 
-  NOTE: any script that consumes derivations of this, needs to needs also explictly
+  NOTE: any script that consumes derivations of this, needs to also explicitly
   import server_config, to avoid errors caused by the server_config not being found
   by pytest.
   """

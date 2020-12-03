@@ -183,7 +183,26 @@ TEST(RuntimeConfiguration, allowApiV2) {
   envoy::config::bootstrap::v3::Bootstrap bootstrap;
   EXPECT_EQ(bootstrap.DebugString(), "");
   ProcessImpl::allowApiV2(bootstrap);
-  EXPECT_NE(bootstrap.DebugString(), "");
+  std::cerr << bootstrap.DebugString() << std::endl;
+  EXPECT_EQ(bootstrap.DebugString(), R"EOF(layered_runtime {
+  layers {
+    name: "admin layer"
+    admin_layer {
+    }
+  }
+  layers {
+    name: "static_layer"
+    static_layer {
+      fields {
+        key: "envoy.reloadable_features.enable_deprecated_v2_api"
+        value {
+          string_value: "true"
+        }
+      }
+    }
+  }
+}
+)EOF");
 }
 
 } // namespace
