@@ -194,6 +194,39 @@ TEST(ApplyConfigToResponseHeaders, AppendsHeadersFromEnvoyApiV3Config) {
                                              << expected_header_map;
 }
 
+TEST(ApplyConfigToResponseHeaders, ThrowsOnInvalidConfiguration) {
+  nighthawk::server::ResponseOptions configuration;
+  configuration.add_response_headers();
+  configuration.add_v3_response_headers();
+
+  TestResponseHeaderMapImpl header_map;
+  EXPECT_THROW(applyConfigToResponseHeaders(header_map, configuration), Envoy::EnvoyException);
+}
+
+TEST(ValidateResponseOptions, DoesNotThrowOnEmptyConfiguration) {
+  nighthawk::server::ResponseOptions configuration;
+  EXPECT_NO_THROW(validateResponseOptions(configuration));
+}
+
+TEST(ValidateResponseOptions, DoesNotThrowWhenOnlyEnvoyApiV2ResponseHeadersAreSet) {
+  nighthawk::server::ResponseOptions configuration;
+  configuration.add_response_headers();
+  EXPECT_NO_THROW(validateResponseOptions(configuration));
+}
+
+TEST(ValidateResponseOptions, DoesNotThrowWhenOnlyEnvoyApiV3ResponseHeadersAreSet) {
+  nighthawk::server::ResponseOptions configuration;
+  configuration.add_v3_response_headers();
+  EXPECT_NO_THROW(validateResponseOptions(configuration));
+}
+
+TEST(ValidateResponseOptions, ThrowsWhenBothEnvoyApiV2AndV3ResponseHeadersAreSet) {
+  nighthawk::server::ResponseOptions configuration;
+  configuration.add_response_headers();
+  configuration.add_v3_response_headers();
+  EXPECT_THROW(validateResponseOptions(configuration), Envoy::EnvoyException);
+}
+
 } // namespace
 } // namespace Configuration
 } // namespace Server

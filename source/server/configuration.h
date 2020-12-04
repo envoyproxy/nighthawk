@@ -29,6 +29,8 @@ bool mergeJsonConfig(absl::string_view json, nighthawk::server::ResponseOptions&
  * @param response_headers Response headers to transform to reflect the passed in response
  * options.
  * @param response_options Configuration specifying how to transform the header map.
+ *
+ * @throws Envoy::EnvoyException if invalid response_options are provided.
  */
 void applyConfigToResponseHeaders(Envoy::Http::ResponseHeaderMap& response_headers,
                                   const nighthawk::server::ResponseOptions& response_options);
@@ -40,6 +42,13 @@ void applyConfigToResponseHeaders(Envoy::Http::ResponseHeaderMap& response_heade
  */
 envoy::config::core::v3::HeaderValueOption upgradeDeprecatedEnvoyV2HeaderValueOptionToV3(
     const envoy::api::v2::core::HeaderValueOption& v2_header_value_option);
+
+/**
+ * Validates the ResponseOptions.
+ *
+ * @throws Envoy::EnvoyException on validation errors.
+ */
+void validateResponseOptions(const nighthawk::server::ResponseOptions& response_options);
 
 } // namespace Configuration
 } // namespace Server

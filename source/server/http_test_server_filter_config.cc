@@ -19,7 +19,6 @@ public:
   Envoy::Http::FilterFactoryCb
   createFilterFactoryFromProto(const Envoy::Protobuf::Message& proto_config, const std::string&,
                                Envoy::Server::Configuration::FactoryContext& context) override {
-
     auto& validation_visitor = Envoy::ProtobufMessage::getStrictValidationVisitor();
     return createFilter(
         Envoy::MessageUtil::downcastAndValidate<const nighthawk::server::ResponseOptions&>(

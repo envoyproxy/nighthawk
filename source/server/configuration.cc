@@ -33,10 +33,11 @@ bool mergeJsonConfig(absl::string_view json, nighthawk::server::ResponseOptions&
 
 void applyConfigToResponseHeaders(Envoy::Http::ResponseHeaderMap& response_headers,
                                   const nighthawk::server::ResponseOptions& response_options) {
+  validateResponseOptions(response_options);
   nighthawk::server::ResponseOptions v3_only_response_options = response_options;
 
-  // Validation in http_filter_config_base.cc guarantees that we only get one of
-  // the fields (response_headers, v3_response_headers) set.
+  // Validation above guarantees we only get one of the fields
+  // (response_headers, v3_response_headers) set.
   for (const auto& header_value_option : v3_only_response_options.response_headers()) {
     *v3_only_response_options.add_v3_response_headers() =
         upgradeDeprecatedEnvoyV2HeaderValueOptionToV3(header_value_option);
@@ -64,6 +65,16 @@ envoy::config::core::v3::HeaderValueOption upgradeDeprecatedEnvoyV2HeaderValueOp
     v3_header->set_value(v2_header_value_option.header().value());
   }
   return v3_header_value_option;
+}
+
+void validateResponseOptions(const nighthawk::server::ResponseOptions& response_options) {
+  if (response_options.response_headers_size() > 0 &&
+      response_options.v3_response_headers_size() > 0) {
+    throw Envoy::EnvoyException(
+        absl::StrCat("invalid configuration in nighthawk::server::ResponseOptions ",
+                     "cannot specify both response_headers and v3_response_headers ",
+                     "configuration was: ", response_options.ShortDebugString()));
+  }
 }
 
 } // namespace Configuration
