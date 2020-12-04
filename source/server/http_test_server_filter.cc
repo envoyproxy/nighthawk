@@ -40,7 +40,7 @@ HttpTestServerDecoderFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& header
                                            bool end_stream) {
   config_->computeEffectiveConfiguration(headers);
   if (end_stream) {
-    if (!config_->maybeSendErrorReply(*decoder_callbacks_)) {
+    if (!config_->validateOrSendError(*decoder_callbacks_)) {
       const absl::StatusOr<EffectiveFilterConfigurationPtr> effective_config =
           config_->getEffectiveConfiguration();
       if (effective_config.value()->echo_request_headers()) {
@@ -57,7 +57,7 @@ HttpTestServerDecoderFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& header
 Envoy::Http::FilterDataStatus HttpTestServerDecoderFilter::decodeData(Envoy::Buffer::Instance&,
                                                                       bool end_stream) {
   if (end_stream) {
-    if (!config_->maybeSendErrorReply(*decoder_callbacks_)) {
+    if (!config_->validateOrSendError(*decoder_callbacks_)) {
       sendReply(*config_->getEffectiveConfiguration().value());
     }
   }
