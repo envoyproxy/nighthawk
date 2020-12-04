@@ -33,7 +33,16 @@ bool mergeJsonConfig(absl::string_view json, nighthawk::server::ResponseOptions&
 
 void applyConfigToResponseHeaders(Envoy::Http::ResponseHeaderMap& response_headers,
                                   const nighthawk::server::ResponseOptions& response_options) {
-  for (const auto& header_value_option : response_options.response_headers()) {
+  nighthawk::server::ResponseOptions v3_only_response_options = response_options;
+
+  // Validation in http_filter_config_base.cc guarantees that we only get one of
+  // the fields (response_headers, v3_response_headers) set.
+  for (const auto& header_value_option : v3_only_response_options.response_headers()) {
+    *v3_only_response_options.add_v3_response_headers() =
+        upgradeDeprecatedEnvoyV2HeaderValueOptionToV3(header_value_option);
+  }
+
+  for (const auto& header_value_option : v3_only_response_options.v3_response_headers()) {
     const auto& header = header_value_option.header();
     auto lower_case_key = Envoy::Http::LowerCaseString(header.key());
     if (!header_value_option.append().value()) {
