@@ -325,8 +325,11 @@ envoy_cc_test(
     srcs = ["request_stream_grpc_client_test.cc"],
     repository = "@envoy",
     deps = [
+        "//api/request_source:grpc_request_source_service_lib",
         "//source/common:request_stream_grpc_client_lib",
         "@envoy//test/test_common:utility_lib",
+        "@envoy_api//envoy/api/v2/core:pkg_cc_proto",
+        "@envoy_api//envoy/config/core/v3:pkg_cc_proto",
     ],
 )
 
