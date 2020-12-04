@@ -88,6 +88,7 @@ enum HeaderAddMode {
 // @param api_version determines the version of the Envoy API used in the
 // created configuration.
 // @param add_mode specifies how the header with the duplicate key is added.
+// @return a configuration for the test.
 nighthawk::server::ResponseOptions createTestConfiguration(EnvoyApiVersion api_version,
                                                            HeaderAddMode add_mode) {
   nighthawk::server::ResponseOptions configuration;
@@ -129,6 +130,7 @@ nighthawk::server::ResponseOptions createTestConfiguration(EnvoyApiVersion api_v
 // Creates the expected header map for the specified add mode.
 //
 // @param add_mode specifies how the header with the duplicate key is added.
+// @return a header map populated with the expected headers.
 TestResponseHeaderMapImpl createExpectedHeaderMap(HeaderAddMode add_mode) {
   TestResponseHeaderMapImpl expected_header_map;
   if (add_mode == ReplaceOnDuplicateKey) {

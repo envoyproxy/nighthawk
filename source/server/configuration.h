@@ -39,6 +39,7 @@ void applyConfigToResponseHeaders(Envoy::Http::ResponseHeaderMap& response_heade
  * Upgrades Envoy's HeaderValueOption from the deprecated v2 API version to v3.
  *
  * @param v2_header_value_option The HeaderValueOption to be upgraded.
+ * @return a version of HeaderValueOption upgraded to Envoy API v3.
  */
 envoy::config::core::v3::HeaderValueOption upgradeDeprecatedEnvoyV2HeaderValueOptionToV3(
     const envoy::api::v2::core::HeaderValueOption& v2_header_value_option);
