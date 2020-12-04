@@ -220,5 +220,5 @@ message CommandLineOptions {
   // arrivals.
   google.protobuf.StringValue latency_response_header_name = 36;
   // Set to allow usage of the v2 api (not recommended). Default is false.
-  google.protobuf.BoolValue allow_api_v2 = 38 [deprecated = true];
+  google.protobuf.BoolValue allow_envoy_deprecated_v2_api = 38 [deprecated = true];
 }

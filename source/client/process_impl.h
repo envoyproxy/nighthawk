@@ -89,7 +89,7 @@ public:
    * @param bootstrap The bootstrap that should have it's runtime configuration
    * modified to allow for api v2 usage.
    */
-  static void allowApiV2(envoy::config::bootstrap::v3::Bootstrap& bootstrap);
+  static void allowEnvoyDeprecatedV2Api(envoy::config::bootstrap::v3::Bootstrap& bootstrap);
 
 private:
   /**
@@ -107,7 +107,7 @@ private:
   void createBootstrapConfiguration(envoy::config::bootstrap::v3::Bootstrap& bootstrap,
                                     const std::vector<UriPtr>& uris,
                                     const UriPtr& request_source_uri, int number_of_workers,
-                                    bool allow_api_v2) const;
+                                    bool allow_envoy_deprecated_v2_api) const;
   void maybeCreateTracingDriver(const envoy::config::trace::v3::Tracing& configuration);
   void configureComponentLogLevels(spdlog::level::level_enum level);
   /**

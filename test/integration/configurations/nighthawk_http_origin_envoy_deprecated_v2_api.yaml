@@ -1,3 +1,4 @@
+# This file is intentionally using the v2 api: it is used to test support for that.
 admin:
   access_log_path: $tmpdir/nighthawk-test-server-admin-access.log
   profile_path: $tmpdir/nighthawk-test-server.prof

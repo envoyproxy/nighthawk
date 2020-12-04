@@ -57,7 +57,7 @@ public:
   MOCK_CONST_METHOD0(statsSinks, std::vector<envoy::config::metrics::v3::StatsSink>());
   MOCK_CONST_METHOD0(statsFlushInterval, uint32_t());
   MOCK_CONST_METHOD0(responseHeaderWithLatencyInput, std::string());
-  MOCK_CONST_METHOD0(allowApiV2, bool());
+  MOCK_CONST_METHOD0(allowEnvoyDeprecatedV2Api, bool());
 };
 
 } // namespace Client

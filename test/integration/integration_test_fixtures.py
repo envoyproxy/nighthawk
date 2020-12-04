@@ -301,7 +301,7 @@ class HttpIntegrationTestBase(IntegrationTestBase):
     return super(HttpIntegrationTestBase, self).getTestServerRootUri(False)
 
 
-class HttpIntegrationTestBaseWithV2Bootstrap(IntegrationTestBase):
+class HttpIntegrationTestBaseWithEnvoyDeprecatedV2Bootstrap(IntegrationTestBase):
   """Base for running plain http tests against the Nighthawk test server.
 
   NOTE: any script that consumes derivations of this, needs to also explicitly
@@ -311,13 +311,13 @@ class HttpIntegrationTestBaseWithV2Bootstrap(IntegrationTestBase):
 
   def __init__(self, ip_version, server_config):
     """See base class."""
-    super(HttpIntegrationTestBaseWithV2Bootstrap, self).__init__(ip_version,
-                                                                 server_config,
-                                                                 bootstrap_version_arg="2")
+    super(HttpIntegrationTestBaseWithEnvoyDeprecatedV2Bootstrap,
+          self).__init__(ip_version, server_config, bootstrap_version_arg="2")
 
   def getTestServerRootUri(self):
     """See base class."""
-    return super(HttpIntegrationTestBaseWithV2Bootstrap, self).getTestServerRootUri(False)
+    return super(HttpIntegrationTestBaseWithEnvoyDeprecatedV2Bootstrap,
+                 self).getTestServerRootUri(False)
 
 
 class MultiServerHttpIntegrationTestBase(IntegrationTestBase):
@@ -402,13 +402,13 @@ def http_test_server_fixture(request, server_config):
 
 
 @pytest.fixture(params=determineIpVersionsFromEnvironment())
-def http_test_server_fixture_v2_api(request, server_config):
+def http_test_server_fixture_envoy_deprecated_v2_api(request, server_config):
   """Fixture for setting up a test environment with http server configuration that uses v2 configuration.
 
   Yields:
-      HttpIntegrationTestBaseWithV2Bootstrap: A fully set up instance. Tear down will happen automatically.
+      HttpIntegrationTestBaseWithEnvoyDeprecatedV2Bootstrap: A fully set up instance. Tear down will happen automatically.
   """
-  f = HttpIntegrationTestBaseWithV2Bootstrap(request.param, server_config)
+  f = HttpIntegrationTestBaseWithEnvoyDeprecatedV2Bootstrap(request.param, server_config)
   f.setUp()
   yield f
   f.tearDown()

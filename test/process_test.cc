@@ -179,10 +179,10 @@ TEST_P(ProcessTest, NoFlushWhenCancelExecutionBeforeLoadTestBegin) {
   EXPECT_EQ(numFlushes, 0);
 }
 
-TEST(RuntimeConfiguration, allowApiV2) {
+TEST(RuntimeConfiguration, allowEnvoyDeprecatedV2Api) {
   envoy::config::bootstrap::v3::Bootstrap bootstrap;
   EXPECT_EQ(bootstrap.DebugString(), "");
-  ProcessImpl::allowApiV2(bootstrap);
+  ProcessImpl::allowEnvoyDeprecatedV2Api(bootstrap);
   std::cerr << bootstrap.DebugString() << std::endl;
   EXPECT_EQ(bootstrap.DebugString(), R"EOF(layered_runtime {
   layers {

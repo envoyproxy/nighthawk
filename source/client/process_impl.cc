@@ -270,7 +270,7 @@ ProcessImpl::mergeWorkerStatistics(const std::vector<ClientWorkerPtr>& workers) 
   return merged_statistics;
 }
 
-void ProcessImpl::allowApiV2(envoy::config::bootstrap::v3::Bootstrap& bootstrap) {
+void ProcessImpl::allowEnvoyDeprecatedV2Api(envoy::config::bootstrap::v3::Bootstrap& bootstrap) {
   auto* admin_layer = bootstrap.mutable_layered_runtime()->add_layers();
   admin_layer->set_name("admin layer");
   admin_layer->mutable_admin_layer();
@@ -286,9 +286,10 @@ void ProcessImpl::allowApiV2(envoy::config::bootstrap::v3::Bootstrap& bootstrap)
 void ProcessImpl::createBootstrapConfiguration(envoy::config::bootstrap::v3::Bootstrap& bootstrap,
                                                const std::vector<UriPtr>& uris,
                                                const UriPtr& request_source_uri,
-                                               int number_of_clusters, bool allow_api_v2) const {
-  if (allow_api_v2) {
-    allowApiV2(bootstrap);
+                                               int number_of_clusters,
+                                               bool allow_envoy_deprecated_v2_api) const {
+  if (allow_envoy_deprecated_v2_api) {
+    allowEnvoyDeprecatedV2Api(bootstrap);
   }
 
   for (int i = 0; i < number_of_clusters; i++) {
@@ -472,7 +473,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
     shutdown_ = false;
     envoy::config::bootstrap::v3::Bootstrap bootstrap;
     createBootstrapConfiguration(bootstrap, uris, request_source_uri, number_of_workers,
-                                 options_.allowApiV2());
+                                 options_.allowEnvoyDeprecatedV2Api());
     // Needs to happen as early as possible (before createWorkers()) in the instantiation to preempt
     // the objects that require stats.
     if (!options_.statsSinks().empty()) {
