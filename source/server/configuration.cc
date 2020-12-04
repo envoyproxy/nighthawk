@@ -2,6 +2,9 @@
 
 #include <string>
 
+#include "envoy/api/v2/core/base.pb.h"
+#include "envoy/config/core/v3/base.pb.h"
+
 #include "external/envoy/source/common/protobuf/message_validator_impl.h"
 #include "external/envoy/source/common/protobuf/utility.h"
 
@@ -38,6 +41,20 @@ void applyConfigToResponseHeaders(Envoy::Http::ResponseHeaderMap& response_heade
     }
     response_headers.addCopy(lower_case_key, header.value());
   }
+}
+
+envoy::config::core::v3::HeaderValueOption upgradeDeprecatedEnvoyV2HeaderValueOptionToV3(
+    const envoy::api::v2::core::HeaderValueOption& v2_header_value_option) {
+  envoy::config::core::v3::HeaderValueOption v3_header_value_option;
+  if (v2_header_value_option.has_append()) {
+    *v3_header_value_option.mutable_append() = v2_header_value_option.append();
+  }
+  if (v2_header_value_option.has_header()) {
+    envoy::config::core::v3::HeaderValue* v3_header = v3_header_value_option.mutable_header();
+    v3_header->set_key(v2_header_value_option.header().key());
+    v3_header->set_value(v2_header_value_option.header().value());
+  }
+  return v3_header_value_option;
 }
 
 } // namespace Configuration

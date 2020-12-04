@@ -2,6 +2,8 @@
 
 #include <string>
 
+#include "envoy/api/v2/core/base.pb.h"
+#include "envoy/config/core/v3/base.pb.h"
 #include "envoy/http/header_map.h"
 
 #include "api/server/response_options.pb.h"
@@ -30,6 +32,14 @@ bool mergeJsonConfig(absl::string_view json, nighthawk::server::ResponseOptions&
  */
 void applyConfigToResponseHeaders(Envoy::Http::ResponseHeaderMap& response_headers,
                                   const nighthawk::server::ResponseOptions& response_options);
+
+/**
+ * Upgrades Envoy's HeaderValueOption from the deprecated v2 API version to v3.
+ *
+ * @param v2_header_value_option The HeaderValueOption to be upgraded.
+ */
+envoy::config::core::v3::HeaderValueOption upgradeDeprecatedEnvoyV2HeaderValueOptionToV3(
+    const envoy::api::v2::core::HeaderValueOption& v2_header_value_option);
 
 } // namespace Configuration
 } // namespace Server
