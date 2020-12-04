@@ -17,6 +17,8 @@ namespace {
 
 using namespace std::chrono_literals;
 
+using ::testing::HasSubstr;
+
 const std::string kLatencyResponseHeaderName = "x-prd";
 const std::string kDefaultProtoFragment = fmt::format(
     "emit_previous_request_delta_in_response_header: \"{}\"", kLatencyResponseHeaderName);
@@ -36,6 +38,22 @@ public:
 
 INSTANTIATE_TEST_SUITE_P(IpVersions, HttpTimeTrackingIntegrationTest,
                          testing::ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()));
+
+TEST_P(HttpTimeTrackingIntegrationTest,
+       DiesWhenBothEnvoyApiV2AndV3ResponseHeadersAreSetInConfiguration) {
+  const std::string invalid_configuration = R"EOF(
+  name: time-tracking
+  typed_config:
+    "@type": type.googleapis.com/nighthawk.server.ResponseOptions
+    response_headers:
+      - { header: { key: "key1", value: "value1"} }
+    v3_response_headers:
+      - { header: { key: "key1", value: "value1"} }
+  )EOF";
+
+  ASSERT_DEATH(initializeFilterConfiguration(invalid_configuration),
+               HasSubstr("cannot specify both response_headers and v3_response_headers"));
+}
 
 // Verify expectations with static/file-based time-tracking configuration.
 TEST_P(HttpTimeTrackingIntegrationTest, ReturnsPositiveLatencyForStaticConfiguration) {
