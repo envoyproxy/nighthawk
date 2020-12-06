@@ -56,14 +56,14 @@ class IntegrationTestBase():
   This class will be refactored (https://github.com/envoyproxy/nighthawk/issues/258).
   """
 
-  def __init__(self, ip_version, server_config, backend_count=1, bootstrap_version_arg=None):
+  def __init__(self, ip_version, server_config, backend_count=1, bootstrap_version_arg=0):
     """Initialize the IntegrationTestBase instance.
 
     Args:
       ip_version: a single IP mode that this instance will test: IpVersion.IPV4 or IpVersion.IPV6
       server_config: path to the server configuration
       backend_count: number of Nighthawk Test Server backends to run, to allow testing MultiTarget mode
-      bootstrap_version_arg: specify a bootstrap cli argument value for the test server binary.
+      bootstrap_version_arg: An optional int, specify a bootstrap cli argument value for the test server binary. If None is specified, no bootstrap cli argment will be passed.
 
     Attributes:
       ip_version: IP version that the proxy should use when listening.
@@ -312,7 +312,7 @@ class HttpIntegrationTestBaseWithEnvoyDeprecatedV2Bootstrap(IntegrationTestBase)
   def __init__(self, ip_version, server_config):
     """See base class."""
     super(HttpIntegrationTestBaseWithEnvoyDeprecatedV2Bootstrap,
-          self).__init__(ip_version, server_config, bootstrap_version_arg="2")
+          self).__init__(ip_version, server_config, bootstrap_version_arg=2)
 
   def getTestServerRootUri(self):
     """See base class."""

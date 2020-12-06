@@ -59,7 +59,7 @@ class TestServerBase(object):
                server_binary_config_path_arg,
                parameters,
                tag,
-               bootstrap_version_arg=None):
+               bootstrap_version_arg=0):
     """Initialize a TestServerBase instance.
 
     Args:
@@ -70,7 +70,7 @@ class TestServerBase(object):
         server_binary_config_path_arg (str): Specify the name of the CLI argument the test server binary uses to accept a configuration path.
         parameters (dict): Supply to provide configuration template parameter replacement values.
         tag (str): Supply to get recognizeable output locations.
-        bootstrap_version_arg (str, optional): specify a bootstrap cli argument value for the test server binary.
+        bootstrap_version_arg (int, optional): specify a bootstrap cli argument value for the test server binary.
     """
     assert ip_version != IpVersion.UNKNOWN
     self.ip_version = ip_version
@@ -131,7 +131,7 @@ class TestServerBase(object):
         "--admin-address-path", self._admin_address_path, "--concurrency", "1"
     ]
     if self._bootstrap_version_arg is not None:
-      args = args + ["--bootstrap-version", self._bootstrap_version_arg]
+      args = args + ["--bootstrap-version", str(self._bootstrap_version_arg)]
 
     logging.info("Test server popen() args: %s" % str.join(" ", args))
     self._server_process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

@@ -317,7 +317,8 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
 
   TCLAP::SwitchArg allow_envoy_deprecated_v2_api(
       "", "allow-envoy-deprecated-v2-api",
-      "Set to allow usage of the v2 api. (Not recommended, support will stop soon). Default: false",
+      "Set to allow usage of the v2 api. (Not recommended, support will stop in Q1 2021). Default: "
+      "false",
       cmd);
 
   Utility::parseCommand(cmd, argc, argv);
