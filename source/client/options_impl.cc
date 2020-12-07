@@ -652,7 +652,12 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   std::copy(options.labels().begin(), options.labels().end(), std::back_inserter(labels_));
   latency_response_header_name_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(
       options, latency_response_header_name, latency_response_header_name_);
-
+  if (options.has_scheduled_start()) {
+    const auto elapsed_since_epoch = std::chrono::nanoseconds(options.scheduled_start().nanos()) +
+                                     std::chrono::seconds(options.scheduled_start().seconds());
+    scheduled_start_ =
+        Envoy::SystemTime(std::chrono::time_point<std::chrono::system_clock>(elapsed_since_epoch));
+  }
   validate();
 }
 
@@ -829,6 +834,11 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
   command_line_options->mutable_stats_flush_interval()->set_value(stats_flush_interval_);
   command_line_options->mutable_latency_response_header_name()->set_value(
       latency_response_header_name_);
+  if (scheduled_start_.has_value()) {
+    *(command_line_options->mutable_scheduled_start()) =
+        Envoy::ProtobufUtil::TimeUtil::NanosecondsToTimestamp(
+            scheduled_start_.value().time_since_epoch().count());
+  }
   return command_line_options;
 }
 

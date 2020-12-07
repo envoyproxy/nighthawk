@@ -34,7 +34,7 @@ static_resources:
           port_value: 10000
       filter_chains:
         - filters:
-            - name: envoy.filters.network.http_connection_manager
+            - name: envoy.http_connection_manager
               config:
                 generate_request_id: false
                 codec_type: auto
