@@ -59,7 +59,7 @@ class TestServerBase(object):
                server_binary_config_path_arg,
                parameters,
                tag,
-               bootstrap_version_arg=0):
+               bootstrap_version_arg=None):
     """Initialize a TestServerBase instance.
 
     Args:

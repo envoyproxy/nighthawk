@@ -56,7 +56,7 @@ class IntegrationTestBase():
   This class will be refactored (https://github.com/envoyproxy/nighthawk/issues/258).
   """
 
-  def __init__(self, ip_version, server_config, backend_count=1, bootstrap_version_arg=0):
+  def __init__(self, ip_version, server_config, backend_count=1, bootstrap_version_arg=None):
     """Initialize the IntegrationTestBase instance.
 
     Args:
