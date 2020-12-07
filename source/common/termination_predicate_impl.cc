@@ -16,8 +16,8 @@ TerminationPredicate::Status TerminationPredicateBaseImpl::evaluateChain() {
 }
 
 TerminationPredicate::Status DurationTerminationPredicateImpl::evaluate() {
-  return time_source_.systemTime() - start_ > duration_ ? TerminationPredicate::Status::TERMINATE
-                                                        : TerminationPredicate::Status::PROCEED;
+  return time_source_.monotonicTime() - start_ > duration_ ? TerminationPredicate::Status::TERMINATE
+                                                           : TerminationPredicate::Status::PROCEED;
 }
 
 TerminationPredicate::Status StatsCounterAbsoluteThresholdTerminationPredicateImpl::evaluate() {

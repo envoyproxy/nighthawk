@@ -30,14 +30,20 @@ public:
     // TODO(oschaaf): consider adding an explicit start() call to the interface.
     const auto now = time_source_.monotonicTime();
     if (start_time_ == absl::nullopt) {
+      first_acquisition_time_ = time_source_.systemTime();
       start_time_ = now;
     }
     return now - start_time_.value();
   }
 
+  absl::optional<Envoy::SystemTime> firstAcquisitionTime() const override {
+    return first_acquisition_time_;
+  }
+
 private:
   Envoy::TimeSource& time_source_;
   absl::optional<Envoy::MonotonicTime> start_time_;
+  absl::optional<Envoy::SystemTime> first_acquisition_time_;
 };
 
 /**
@@ -86,6 +92,9 @@ public:
       : rate_limiter_(std::move(rate_limiter)) {}
   Envoy::TimeSource& timeSource() override { return rate_limiter_->timeSource(); }
   std::chrono::nanoseconds elapsed() override { return rate_limiter_->elapsed(); }
+  absl::optional<Envoy::SystemTime> firstAcquisitionTime() const override {
+    return rate_limiter_->firstAcquisitionTime();
+  }
 
 protected:
   const RateLimiterPtr rate_limiter_;
@@ -125,12 +134,12 @@ public:
    * @param scheduled_starting_time The starting time
    */
   ScheduledStartingRateLimiter(RateLimiterPtr&& rate_limiter,
-                               const Envoy::SystemTime scheduled_starting_time);
+                               const Envoy::MonotonicTime scheduled_starting_time);
   bool tryAcquireOne() override;
   void releaseOne() override;
 
 private:
-  const Envoy::SystemTime scheduled_starting_time_;
+  const Envoy::MonotonicTime scheduled_starting_time_;
   bool aquisition_attempted_{false};
 };
 

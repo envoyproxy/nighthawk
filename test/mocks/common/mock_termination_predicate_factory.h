@@ -12,7 +12,7 @@ public:
   MOCK_CONST_METHOD3(create,
                      TerminationPredicatePtr(Envoy::TimeSource& time_source,
                                              Envoy::Stats::Scope& scope,
-                                             const Envoy::SystemTime scheduled_starting_time));
+                                             const Envoy::MonotonicTime scheduled_starting_time));
 };
 
 } // namespace Nighthawk

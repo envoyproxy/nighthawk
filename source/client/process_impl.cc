@@ -29,6 +29,7 @@
 #include "external/envoy/source/server/server.h"
 
 #include "absl/strings/str_replace.h"
+#include "absl/types/optional.h"
 
 // TODO(oschaaf): See if we can leverage a static module registration like Envoy does to avoid the
 // ifdefs in this file.
@@ -164,32 +165,37 @@ bool ProcessImpl::requestExecutionCancellation() {
   return true;
 }
 
-void ProcessImpl::createWorkers(const uint32_t concurrency) {
-  // TODO(oschaaf): Expose kMinimalDelay in configuration.
-  const std::chrono::milliseconds kMinimalWorkerDelay = 500ms + (concurrency * 50ms);
-  ASSERT(workers_.empty());
+Envoy::MonotonicTime
+ProcessImpl::computeFirstWorkerStart(Envoy::Event::TimeSystem& time_system,
+                                     const absl::optional<Envoy::SystemTime>& scheduled_start,
+                                     const uint32_t concurrency) {
+  const std::chrono::nanoseconds first_worker_delay =
+      scheduled_start.has_value() ? scheduled_start.value() - time_system.systemTime()
+                                  : 500ms + (concurrency * 50ms);
+  const Envoy::MonotonicTime monotonic_now = time_system.monotonicTime();
+  const Envoy::MonotonicTime first_worker_start = monotonic_now + first_worker_delay;
+  return first_worker_start;
+}
 
-  // We try to offset the start of each thread so that workers will execute tasks evenly spaced in
-  // time. Let's assume we have two workers w0/w1, which should maintain a combined global pace of
-  // 1000Hz. w0 and w1 both run at 500Hz, but ideally their execution is evenly spaced in time,
-  // and not overlapping. Workers start offsets can be computed like
-  // "worker_number*(1/global_frequency))", which would yield T0+[0ms, 1ms]. This helps reduce
-  // batching/queueing effects, both initially, but also by calibrating the linear rate limiter we
-  // currently have to a precise starting time, which helps later on.
-  // TODO(oschaaf): Arguably, this ought to be the job of a rate limiter with awareness of the
-  // global status quo, which we do not have right now. This has been noted in the
-  // track-for-future issue.
-  const auto first_worker_start = time_system_.systemTime() + kMinimalWorkerDelay;
-  const double inter_worker_delay_usec =
-      (1. / options_.requestsPerSecond()) * 1000000 / concurrency;
+std::chrono::nanoseconds ProcessImpl::computeInterWorkerDelay(const uint32_t concurrency,
+                                                              const uint32_t rps) {
+  const double inter_worker_delay_usec = (1. / rps) * 1000000 / concurrency;
+  return std::chrono::duration_cast<std::chrono::nanoseconds>(inter_worker_delay_usec * 1us);
+}
+
+void ProcessImpl::createWorkers(const uint32_t concurrency,
+                                const absl::optional<Envoy::SystemTime>& scheduled_start) {
+  ASSERT(workers_.empty());
+  const Envoy::MonotonicTime first_worker_start =
+      computeFirstWorkerStart(time_system_, scheduled_start, concurrency);
+  const std::chrono::nanoseconds inter_worker_delay =
+      computeInterWorkerDelay(concurrency, options_.requestsPerSecond());
   int worker_number = 0;
   while (workers_.size() < concurrency) {
-    const auto worker_delay = std::chrono::duration_cast<std::chrono::nanoseconds>(
-        ((inter_worker_delay_usec * worker_number) * 1us));
     workers_.push_back(std::make_unique<ClientWorkerImpl>(
         *api_, tls_, cluster_manager_, benchmark_client_factory_, termination_predicate_factory_,
         sequencer_factory_, request_generator_factory_, store_root_, worker_number,
-        first_worker_start + worker_delay, http_tracer_,
+        first_worker_start + (inter_worker_delay * worker_number), http_tracer_,
         options_.simpleWarmup() ? ClientWorkerImpl::HardCodedWarmupStyle::ON
                                 : ClientWorkerImpl::HardCodedWarmupStyle::OFF));
     worker_number++;
@@ -463,7 +469,13 @@ void ProcessImpl::setupStatsSinks(const envoy::config::bootstrap::v3::Bootstrap&
 }
 
 bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriPtr>& uris,
-                              const UriPtr& request_source_uri, const UriPtr& tracing_uri) {
+                              const UriPtr& request_source_uri, const UriPtr& tracing_uri,
+                              const absl::optional<Envoy::SystemTime>& scheduled_start) {
+  const Envoy::SystemTime now = time_system_.systemTime();
+  if (scheduled_start.value_or(now) < now) {
+    ENVOY_LOG(error, "Scheduled execution date already transpired.");
+    return false;
+  }
   {
     auto guard = std::make_unique<Envoy::Thread::LockGuard>(workers_lock_);
     if (cancelled_) {
@@ -480,7 +492,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
       store_root_.setTagProducer(Envoy::Config::Utility::createTagProducer(bootstrap));
     }
 
-    createWorkers(number_of_workers);
+    createWorkers(number_of_workers, scheduled_start);
     tls_.registerThread(*dispatcher_, true);
     store_root_.initializeThreading(*dispatcher_, tls_);
     runtime_singleton_ = std::make_unique<Envoy::Runtime::ScopedLoaderSingleton>(
@@ -541,15 +553,26 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
 
   int i = 0;
   std::chrono::nanoseconds total_execution_duration = 0ns;
+  absl::optional<Envoy::SystemTime> first_acquisition_time = absl::nullopt;
+
   for (auto& worker : workers_) {
     auto sequencer_execution_duration = worker->phase().sequencer().executionDuration();
+    absl::optional<Envoy::SystemTime> worker_first_acquisition_time =
+        worker->phase().sequencer().rate_limiter().firstAcquisitionTime();
+    if (worker_first_acquisition_time.has_value()) {
+      first_acquisition_time =
+          first_acquisition_time.has_value()
+              ? std::min(first_acquisition_time.value(), worker_first_acquisition_time.value())
+              : worker_first_acquisition_time.value();
+    }
     // We don't write per-worker results if we only have a single worker, because the global
     // results will be precisely the same.
     if (workers_.size() > 1) {
       StatisticFactoryImpl statistic_factory(options_);
       collector.addResult(fmt::format("worker_{}", i),
                           vectorizeStatisticPtrMap(worker->statistics()),
-                          worker->threadLocalCounterValues(), sequencer_execution_duration);
+                          worker->threadLocalCounterValues(), sequencer_execution_duration,
+                          worker_first_acquisition_time);
     }
     total_execution_duration += sequencer_execution_duration;
     i++;
@@ -564,7 +587,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
       store_root_, [](absl::string_view, uint64_t value) { return value > 0; });
   StatisticFactoryImpl statistic_factory(options_);
   collector.addResult("global", mergeWorkerStatistics(workers_), counters,
-                      total_execution_duration / workers_.size());
+                      total_execution_duration / workers_.size(), first_acquisition_time);
   return counters.find("sequencer.failed_terminations") == counters.end();
 }
 
@@ -604,7 +627,8 @@ bool ProcessImpl::run(OutputCollector& collector) {
   }
 
   try {
-    return runInternal(collector, uris, request_source_uri, tracing_uri);
+    return runInternal(collector, uris, request_source_uri, tracing_uri,
+                       options_.scheduled_start());
   } catch (Envoy::EnvoyException& ex) {
     ENVOY_LOG(error, "Fatal exception: {}", ex.what());
     throw;

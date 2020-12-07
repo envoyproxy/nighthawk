@@ -53,16 +53,16 @@ void BurstingRateLimiter::releaseOne() {
 }
 
 ScheduledStartingRateLimiter::ScheduledStartingRateLimiter(
-    RateLimiterPtr&& rate_limiter, const Envoy::SystemTime scheduled_starting_time)
+    RateLimiterPtr&& rate_limiter, const Envoy::MonotonicTime scheduled_starting_time)
     : ForwardingRateLimiterImpl(std::move(rate_limiter)),
       scheduled_starting_time_(scheduled_starting_time) {
-  if (timeSource().systemTime() >= scheduled_starting_time_) {
+  if (timeSource().monotonicTime() >= scheduled_starting_time_) {
     ENVOY_LOG(error, "Scheduled starting time exceeded. This may cause unintended bursty traffic.");
   }
 }
 
 bool ScheduledStartingRateLimiter::tryAcquireOne() {
-  if (timeSource().systemTime() < scheduled_starting_time_) {
+  if (timeSource().monotonicTime() < scheduled_starting_time_) {
     aquisition_attempted_ = true;
     return false;
   }
@@ -76,7 +76,7 @@ bool ScheduledStartingRateLimiter::tryAcquireOne() {
 }
 
 void ScheduledStartingRateLimiter::releaseOne() {
-  if (timeSource().systemTime() < scheduled_starting_time_) {
+  if (timeSource().monotonicTime() < scheduled_starting_time_) {
     throw NighthawkException("Unexpected call to releaseOne()");
   }
   return rate_limiter_->releaseOne();

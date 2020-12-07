@@ -58,6 +58,7 @@ public:
   MOCK_CONST_METHOD0(statsFlushInterval, uint32_t());
   MOCK_CONST_METHOD0(responseHeaderWithLatencyInput, std::string());
   MOCK_CONST_METHOD0(allowEnvoyDeprecatedV2Api, bool());
+  MOCK_CONST_METHOD0(scheduled_start, absl::optional<Envoy::SystemTime>());
 };
 
 } // namespace Client

@@ -661,6 +661,12 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
       options, latency_response_header_name, latency_response_header_name_);
   allow_envoy_deprecated_v2_api_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(
       options, allow_envoy_deprecated_v2_api, allow_envoy_deprecated_v2_api_);
+  if (options.has_scheduled_start()) {
+    const auto elapsed_since_epoch = std::chrono::nanoseconds(options.scheduled_start().nanos()) +
+                                     std::chrono::seconds(options.scheduled_start().seconds());
+    scheduled_start_ =
+        Envoy::SystemTime(std::chrono::time_point<std::chrono::system_clock>(elapsed_since_epoch));
+  }
   validate();
 }
 
@@ -839,6 +845,11 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
       latency_response_header_name_);
   command_line_options->mutable_allow_envoy_deprecated_v2_api()->set_value(
       allow_envoy_deprecated_v2_api_);
+  if (scheduled_start_.has_value()) {
+    *(command_line_options->mutable_scheduled_start()) =
+        Envoy::ProtobufUtil::TimeUtil::NanosecondsToTimestamp(
+            scheduled_start_.value().time_since_epoch().count());
+  }
   return command_line_options;
 }
 
