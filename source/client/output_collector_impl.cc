@@ -23,12 +23,19 @@ OutputCollectorImpl::OutputCollectorImpl(Envoy::TimeSource& time_source, const O
 
 nighthawk::client::Output OutputCollectorImpl::toProto() const { return output_; }
 
-void OutputCollectorImpl::addResult(absl::string_view name,
-                                    const std::vector<StatisticPtr>& statistics,
-                                    const std::map<std::string, uint64_t>& counters,
-                                    const std::chrono::nanoseconds execution_duration) {
+void OutputCollectorImpl::addResult(
+    absl::string_view name, const std::vector<StatisticPtr>& statistics,
+    const std::map<std::string, uint64_t>& counters,
+    const std::chrono::nanoseconds execution_duration,
+    const absl::optional<Envoy::SystemTime>& first_acquisition_time) {
   auto result = output_.add_results();
   result->set_name(name.data(), name.size());
+  if (first_acquisition_time.has_value()) {
+    *(result->mutable_execution_start()) = Envoy::Protobuf::util::TimeUtil::NanosecondsToTimestamp(
+        std::chrono::duration_cast<std::chrono::nanoseconds>(
+            first_acquisition_time.value().time_since_epoch())
+            .count());
+  }
   for (auto& statistic : statistics) {
     // TODO(#292): Looking at if the statistic id ends with "_size" to determine how it should be
     // serialized is kind of hacky. Maybe we should have a lookup table of sorts, to determine how

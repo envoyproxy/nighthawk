@@ -33,7 +33,7 @@ public:
                    const SequencerFactory& sequencer_factory,
                    const RequestSourceFactory& request_generator_factory,
                    Envoy::Stats::Store& store, const int worker_number,
-                   const Envoy::SystemTime starting_time,
+                   const Envoy::MonotonicTime starting_time,
                    Envoy::Tracing::HttpTracerSharedPtr& http_tracer,
                    const HardCodedWarmupStyle hardcoded_warmup_style);
   StatisticPtrMap statistics() const override;
