@@ -62,6 +62,8 @@ public:
 
   std::chrono::nanoseconds executionDuration() const override { return rate_limiter_->elapsed(); }
 
+  const RateLimiter& rate_limiter() const override { return *rate_limiter_; }
+
   double completionsPerSecond() const override {
     const double usec =
         std::chrono::duration_cast<std::chrono::microseconds>(executionDuration()).count();
