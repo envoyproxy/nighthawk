@@ -42,7 +42,8 @@ def _substitute_yaml_values(runfiles_instance, obj, params):
   return obj
 
 
-class _TestCaseWarnErrorIgnoreList(collections.namedtuple("_TestCaseWarnErrorIgnoreList", "test_case_regexp ignore_list")):
+class _TestCaseWarnErrorIgnoreList(
+    collections.namedtuple("_TestCaseWarnErrorIgnoreList", "test_case_regexp ignore_list")):
   """Maps test case names to messages that should be ignored in the test server logs.
 
   If the name of the currently executing test case matches the test_case_regexp,
@@ -56,6 +57,7 @@ class _TestCaseWarnErrorIgnoreList(collections.namedtuple("_TestCaseWarnErrorIgn
     ignore_list: A tuple of strings, messages to ignore for matching test cases.
   """
 
+
 # A list of _TestCaseWarnErrorIgnoreList instances, message pieces that should
 # be ignored even if logged by the test server at a warning or an error
 # severity.
@@ -68,31 +70,35 @@ class _TestCaseWarnErrorIgnoreList(collections.namedtuple("_TestCaseWarnErrorIgn
 _TEST_SERVER_WARN_ERROR_IGNORE_LIST = frozenset([
     # This test case purposefuly uses the deprecated Envoy v2 API which emits
     # the following warnings.
-    _TestCaseWarnErrorIgnoreList(re.compile('test_nighthawk_test_server_envoy_deprecated_v2_api'), (
-        "Configuration does not parse cleanly as v3. v2 configuration is deprecated",
-        "Deprecated field: type envoy.api.v2.listener.Filter",
-        "Deprecated field: type envoy.config.filter.network.http_connection_manager.v2.HttpFilter",
-        "Using deprecated extension name 'envoy.http_connection_manager'",
-        "Using deprecated extension name 'envoy.router'",
+    _TestCaseWarnErrorIgnoreList(
+        re.compile('test_nighthawk_test_server_envoy_deprecated_v2_api'),
+        (
+            "Configuration does not parse cleanly as v3. v2 configuration is deprecated",
+            "Deprecated field: type envoy.api.v2.listener.Filter",
+            "Deprecated field: type envoy.config.filter.network.http_connection_manager.v2.HttpFilter",
+            "Using deprecated extension name 'envoy.http_connection_manager'",
+            "Using deprecated extension name 'envoy.router'",
+        ),
     ),
-  ),
 
     # A catch-all that applies to all remaining test cases.
-    _TestCaseWarnErrorIgnoreList(re.compile('.*'), (
-      # TODO(#582): Identify these and file issues or add explanation as necessary.
-      "Unable to use runtime singleton for feature envoy.http.headermap.lazy_map_min_size",
-      "Using deprecated extension name 'envoy.listener.tls_inspector' for 'envoy.filters.listener.tls_inspector'.",
-      "there is no configured limit to the number of allowed active connections. Set a limit via the runtime key overload.global_downstream_max_connections",
+    _TestCaseWarnErrorIgnoreList(
+        re.compile('.*'),
+        (
+            # TODO(#582): Identify these and file issues or add explanation as necessary.
+            "Unable to use runtime singleton for feature envoy.http.headermap.lazy_map_min_size",
+            "Using deprecated extension name 'envoy.listener.tls_inspector' for 'envoy.filters.listener.tls_inspector'.",
+            "there is no configured limit to the number of allowed active connections. Set a limit via the runtime key overload.global_downstream_max_connections",
 
-      # A few of our filters use the same typed configuration, specifically
-      # 'test-server', 'time-tracking' and 'dynamic-delay'.
-      # For now this is by design.
-      "Double registration for type: 'nighthawk.server.ResponseOptions'",
+            # A few of our filters use the same typed configuration, specifically
+            # 'test-server', 'time-tracking' and 'dynamic-delay'.
+            # For now this is by design.
+            "Double registration for type: 'nighthawk.server.ResponseOptions'",
 
-      # Logged for normal termination, not really a warning.
-      "caught SIGTERM",
+            # Logged for normal termination, not really a warning.
+            "caught SIGTERM",
+        ),
     ),
-  ),
 ])
 
 
@@ -345,7 +351,7 @@ class NighthawkTestServer(TestServerBase):
 
 
 def _matchesAnyIgnoreListEntry(line, test_case_name, ignore_list):
-  """Determines if the line matches any of the ignore list entries for this test case.
+  """Determine if the line matches any of the ignore list entries for this test case.
 
   Args:
     line: A string, the logged line.

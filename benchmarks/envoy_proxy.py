@@ -28,7 +28,13 @@ class EnvoyProxyServer(NighthawkTestServer):
     See InjectHttpProxyIntegrationTestBase below for usage.
   """
 
-  def __init__(self, config_template_path, server_ip, ip_version, request, parameters=dict(), tag=""):
+  def __init__(self,
+               config_template_path,
+               server_ip,
+               ip_version,
+               request,
+               parameters=dict(),
+               tag=""):
     """Initialize an EnvoyProxyServer instance.
 
     Arguments:

@@ -346,8 +346,7 @@ class MultiServerHttpIntegrationTestBase(IntegrationTestBase):
 
   def __init__(self, request, server_config, backend_count):
     """See base class."""
-    super(MultiServerHttpIntegrationTestBase, self).__init__(request, server_config,
-                                                             backend_count)
+    super(MultiServerHttpIntegrationTestBase, self).__init__(request, server_config, backend_count)
 
   def getTestServerRootUri(self):
     """See base class."""
@@ -387,8 +386,7 @@ class MultiServerHttpsIntegrationTestBase(IntegrationTestBase):
 
   def __init__(self, request, server_config, backend_count):
     """See base class."""
-    super(MultiServerHttpsIntegrationTestBase, self).__init__(request, server_config,
-                                                              backend_count)
+    super(MultiServerHttpsIntegrationTestBase, self).__init__(request, server_config, backend_count)
 
   def getTestServerRootUri(self):
     """See base class."""
