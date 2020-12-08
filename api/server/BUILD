@@ -13,5 +13,6 @@ api_cc_py_proto_library(
     srcs = ["response_options.proto"],
     deps = [
         "@envoy_api//envoy/api/v2/core:pkg",
+        "@envoy_api//envoy/config/core/v3:pkg",
     ],
 )

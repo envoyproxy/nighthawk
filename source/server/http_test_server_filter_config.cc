@@ -7,6 +7,7 @@
 #include "api/server/response_options.pb.h"
 #include "api/server/response_options.pb.validate.h"
 
+#include "server/configuration.h"
 #include "server/http_test_server_filter.h"
 
 namespace Nighthawk {
@@ -19,12 +20,12 @@ public:
   Envoy::Http::FilterFactoryCb
   createFilterFactoryFromProto(const Envoy::Protobuf::Message& proto_config, const std::string&,
                                Envoy::Server::Configuration::FactoryContext& context) override {
-
     auto& validation_visitor = Envoy::ProtobufMessage::getStrictValidationVisitor();
-    return createFilter(
+    const nighthawk::server::ResponseOptions& response_options =
         Envoy::MessageUtil::downcastAndValidate<const nighthawk::server::ResponseOptions&>(
-            proto_config, validation_visitor),
-        context);
+            proto_config, validation_visitor);
+    validateResponseOptions(response_options);
+    return createFilter(response_options, context);
   }
 
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override {

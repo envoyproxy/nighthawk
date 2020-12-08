@@ -289,10 +289,28 @@ ProcessImpl::mergeWorkerStatistics(const std::vector<ClientWorkerPtr>& workers) 
   return merged_statistics;
 }
 
+void ProcessImpl::allowEnvoyDeprecatedV2Api(envoy::config::bootstrap::v3::Bootstrap& bootstrap) {
+  auto* admin_layer = bootstrap.mutable_layered_runtime()->add_layers();
+  admin_layer->set_name("admin layer");
+  admin_layer->mutable_admin_layer();
+  envoy::config::bootstrap::v3::RuntimeLayer* runtime_layer =
+      bootstrap.mutable_layered_runtime()->add_layers();
+  runtime_layer->set_name("static_layer");
+  Envoy::ProtobufWkt::Value proto_true;
+  proto_true.set_string_value("true");
+  (*runtime_layer->mutable_static_layer()
+        ->mutable_fields())["envoy.reloadable_features.enable_deprecated_v2_api"] = proto_true;
+}
+
 void ProcessImpl::createBootstrapConfiguration(envoy::config::bootstrap::v3::Bootstrap& bootstrap,
                                                const std::vector<UriPtr>& uris,
                                                const UriPtr& request_source_uri,
-                                               int number_of_clusters) const {
+                                               int number_of_clusters,
+                                               bool allow_envoy_deprecated_v2_api) const {
+  if (allow_envoy_deprecated_v2_api) {
+    allowEnvoyDeprecatedV2Api(bootstrap);
+  }
+
   for (int i = 0; i < number_of_clusters; i++) {
     auto* cluster = bootstrap.mutable_static_resources()->add_clusters();
     RELEASE_ASSERT(!uris.empty(), "illegal configuration with zero endpoints");
@@ -479,7 +497,8 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
     int number_of_workers = determineConcurrency();
     shutdown_ = false;
     envoy::config::bootstrap::v3::Bootstrap bootstrap;
-    createBootstrapConfiguration(bootstrap, uris, request_source_uri, number_of_workers);
+    createBootstrapConfiguration(bootstrap, uris, request_source_uri, number_of_workers,
+                                 options_.allowEnvoyDeprecatedV2Api());
     // Needs to happen as early as possible (before createWorkers()) in the instantiation to preempt
     // the objects that require stats.
     if (!options_.statsSinks().empty()) {
@@ -491,7 +510,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
     store_root_.initializeThreading(*dispatcher_, tls_);
     runtime_singleton_ = std::make_unique<Envoy::Runtime::ScopedLoaderSingleton>(
         Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl(
-            *dispatcher_, tls_, {}, *local_info_, store_root_, generator_,
+            *dispatcher_, tls_, bootstrap.layered_runtime(), *local_info_, store_root_, generator_,
             Envoy::ProtobufMessage::getStrictValidationVisitor(), *api_)});
     ssl_context_manager_ =
         std::make_unique<Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl>(

@@ -106,7 +106,7 @@ message H1ConnectionReuseStrategy {
 
 // TODO(oschaaf): Ultimately this will be a load test specification. The fact that it
 // can arrive via CLI is just a concrete detail. Change this to reflect that.
-// highest unused number is 38
+// highest unused number is 39
 message CommandLineOptions {
   // The target requests-per-second rate. Default: 5.
   google.protobuf.UInt32Value requests_per_second = 1
@@ -220,6 +220,8 @@ message CommandLineOptions {
   // "emit_previous_request_delta_in_response_header" to record elapsed time between request
   // arrivals.
   google.protobuf.StringValue latency_response_header_name = 36;
+  // Set to allow usage of the v2 api. (Not recommended, support will stop in Q1 2021).
+  google.protobuf.BoolValue allow_envoy_deprecated_v2_api = 38 [deprecated = true];
   // Provide an execution starting date and time. Optional, any value specified must be in the
   // future.
   google.protobuf.Timestamp scheduled_start = 105;
