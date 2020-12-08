@@ -235,12 +235,12 @@ case "$1" in
     ;;
     asan)
         setup_clang_toolchain
-        do_sanitizer "clang-asan"
+        do_sanitizer "rbe-toolchain-asan"
         exit 0
     ;;
     tsan)
         setup_clang_toolchain
-        do_sanitizer "clang-tsan"
+        do_sanitizer "rbe-toolchain-tsan"
         exit 0
     ;;
     docker)
