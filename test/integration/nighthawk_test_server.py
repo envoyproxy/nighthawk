@@ -47,9 +47,11 @@ class _TestCaseWarnErrorIgnoreList(
   """Maps test case names to messages that should be ignored in the test server logs.
 
   If the name of the currently executing test case matches the test_case_regexp,
-  any messages logged by the test server as either a WARNING or an ERROR that
-  will be checked against the ignore_list. Matching messages will be ignored,
-  any unmatched messages will fail the test case.
+  any messages logged by the test server as either a WARNING or an ERROR
+  will be checked against the ignore_list. If the logged messages contain any of
+  the messages in the ignore list as a substring, they will be ignored.
+  Any unmatched messages of either a WARNING or an ERROR severity will fail the
+  test case.
 
   Attributes:
     test_case_regexp: A compiled regular expression as returned by re.compile(),
@@ -59,16 +61,13 @@ class _TestCaseWarnErrorIgnoreList(
 
 
 # A list of _TestCaseWarnErrorIgnoreList instances, message pieces that should
-# be ignored even if logged by the test server at a warning or an error
+# be ignored even if logged by the test server at a WARNING or an ERROR
 # severity.
 #
-# This list is processed in the order as defined, if multiple test_case_regexp
-# entries match the current test case name, all the corresponding ignore lists
-# will be used.
-#
-# Non matching messages logged at either of these severities fail the test.
+# If multiple test_case_regexp entries match the current test case name, all the
+# corresponding ignore lists will be used.
 _TEST_SERVER_WARN_ERROR_IGNORE_LIST = frozenset([
-    # This test case purposefuly uses the deprecated Envoy v2 API which emits
+    # This test case purposefully uses the deprecated Envoy v2 API which emits
     # the following warnings.
     _TestCaseWarnErrorIgnoreList(
         re.compile('test_nighthawk_test_server_envoy_deprecated_v2_api'),
@@ -378,9 +377,9 @@ def _extractWarningsAndErrors(process_output, test_case_name, ignore_list):
   Args:
     process_output: A string, the stdout or stderr after running a process.
     test_case_name: A string, the name of the current test case.
-    ignore_list: A list of _TestCaseWarnErrorIgnoreList instances, message
-      pieces to ignore. If a message that was logged either at a warning or at
-      an error severity contains one of these message pieces and should be
+    ignore_list: A list of _TestCaseWarnErrorIgnoreList instances, the message
+      pieces to ignore. If a message that was logged either at a WARNING or at
+      an ERROR severity contains one of these message pieces and should be
       ignored for the current test case, it will be excluded from the return
       values.
 
