@@ -54,30 +54,35 @@ class IntegrationTestBase():
   work when there is only one test server.
 
   This class will be refactored (https://github.com/envoyproxy/nighthawk/issues/258).
+
+  Attributes:
+    ip_version: IP version that the proxy should use when listening.
+    server_ip: string containing the server ip that will be used to listen
+    tag: String. Supply this to get recognizeable output locations.
+    parameters: Dictionary. Supply this to provide template parameter replacement values.
+    grpc_service: NighthawkGrpcService instance or None. Set by startNighthawkGrpcService().
+    test_server: NighthawkTestServer instance, set during setUp().
+    nighthawk_client_path: String, path to the nighthawk_client binary.
+    request: The pytest `request` test fixture used to determine information
+      about the currently executing test case.
   """
 
-  def __init__(self, ip_version, server_config, backend_count=1, bootstrap_version_arg=None):
+  def __init__(self, request, server_config, backend_count=1, bootstrap_version_arg=None):
     """Initialize the IntegrationTestBase instance.
 
     Args:
       ip_version: a single IP mode that this instance will test: IpVersion.IPV4 or IpVersion.IPV6
+      request: The pytest `request` test fixture used to determine information
+        about the currently executing test case.
       server_config: path to the server configuration
       backend_count: number of Nighthawk Test Server backends to run, to allow testing MultiTarget mode
       bootstrap_version_arg: An optional int, specify a bootstrap cli argument value for the test server binary. If None is specified, no bootstrap cli argment will be passed.
-
-    Attributes:
-      ip_version: IP version that the proxy should use when listening.
-      server_ip: string containing the server ip that will be used to listen
-      tag: String. Supply this to get recognizeable output locations.
-      parameters: Dictionary. Supply this to provide template parameter replacement values.
-      grpc_service: NighthawkGrpcService instance or None. Set by startNighthawkGrpcService().
-      test_server: NighthawkTestServer instance, set during setUp().
-      nighthawk_client_path: String, path to the nighthawk_client binary.
     """
     super(IntegrationTestBase, self).__init__()
-    assert ip_version != IpVersion.UNKNOWN
-    self.ip_version = ip_version
-    self.server_ip = "::" if ip_version == IpVersion.IPV6 else "0.0.0.0"
+    self.request = request
+    self.ip_version = request.param
+    assert self.ip_version != IpVersion.UNKNOWN
+    self.server_ip = "::" if self.ip_version == IpVersion.IPV6 else "0.0.0.0"
     self.server_ip = os.getenv("TEST_SERVER_EXTERNAL_IP", self.server_ip)
     self.tag = ""
     self.parameters = {}
@@ -88,7 +93,7 @@ class IntegrationTestBase():
     self._nighthawk_test_config_path = server_config
     self._nighthawk_service_path = "nighthawk_service"
     self._nighthawk_output_transform_path = "nighthawk_output_transform"
-    self._socket_type = socket.AF_INET6 if ip_version == IpVersion.IPV6 else socket.AF_INET
+    self._socket_type = socket.AF_INET6 if self.ip_version == IpVersion.IPV6 else socket.AF_INET
     self._test_servers = []
     self._backend_count = backend_count
     self._test_id = ""
@@ -158,6 +163,7 @@ class IntegrationTestBase():
                                         self._nighthawk_test_config_path,
                                         self.server_ip,
                                         self.ip_version,
+                                        self.request,
                                         parameters=self.parameters,
                                         tag=self.tag,
                                         bootstrap_version_arg=self._bootstrap_version_arg)
@@ -307,9 +313,9 @@ class HttpIntegrationTestBase(IntegrationTestBase):
   by pytest.
   """
 
-  def __init__(self, ip_version, server_config):
+  def __init__(self, request, server_config):
     """See base class."""
-    super(HttpIntegrationTestBase, self).__init__(ip_version, server_config)
+    super(HttpIntegrationTestBase, self).__init__(request, server_config)
 
   def getTestServerRootUri(self):
     """See base class."""
@@ -324,10 +330,10 @@ class HttpIntegrationTestBaseWithEnvoyDeprecatedV2Bootstrap(IntegrationTestBase)
   by pytest.
   """
 
-  def __init__(self, ip_version, server_config):
+  def __init__(self, request, server_config):
     """See base class."""
     super(HttpIntegrationTestBaseWithEnvoyDeprecatedV2Bootstrap,
-          self).__init__(ip_version, server_config, bootstrap_version_arg=2)
+          self).__init__(request, server_config, bootstrap_version_arg=2)
 
   def getTestServerRootUri(self):
     """See base class."""
@@ -338,9 +344,9 @@ class HttpIntegrationTestBaseWithEnvoyDeprecatedV2Bootstrap(IntegrationTestBase)
 class MultiServerHttpIntegrationTestBase(IntegrationTestBase):
   """Base for running plain http tests against multiple Nighthawk test servers."""
 
-  def __init__(self, ip_version, server_config, backend_count):
+  def __init__(self, request, server_config, backend_count):
     """See base class."""
-    super(MultiServerHttpIntegrationTestBase, self).__init__(ip_version, server_config,
+    super(MultiServerHttpIntegrationTestBase, self).__init__(request, server_config,
                                                              backend_count)
 
   def getTestServerRootUri(self):
@@ -355,9 +361,9 @@ class MultiServerHttpIntegrationTestBase(IntegrationTestBase):
 class HttpsIntegrationTestBase(IntegrationTestBase):
   """Base for https tests against the Nighthawk test server."""
 
-  def __init__(self, ip_version, server_config):
+  def __init__(self, request, server_config):
     """See base class."""
-    super(HttpsIntegrationTestBase, self).__init__(ip_version, server_config)
+    super(HttpsIntegrationTestBase, self).__init__(request, server_config)
 
   def getTestServerRootUri(self):
     """See base class."""
@@ -367,9 +373,9 @@ class HttpsIntegrationTestBase(IntegrationTestBase):
 class SniIntegrationTestBase(HttpsIntegrationTestBase):
   """Base for https/sni tests against the Nighthawk test server."""
 
-  def __init__(self, ip_version, server_config):
+  def __init__(self, request, server_config):
     """See base class."""
-    super(SniIntegrationTestBase, self).__init__(ip_version, server_config)
+    super(SniIntegrationTestBase, self).__init__(request, server_config)
 
   def getTestServerRootUri(self):
     """See base class."""
@@ -379,9 +385,9 @@ class SniIntegrationTestBase(HttpsIntegrationTestBase):
 class MultiServerHttpsIntegrationTestBase(IntegrationTestBase):
   """Base for https tests against multiple Nighthawk test servers."""
 
-  def __init__(self, ip_version, server_config, backend_count):
+  def __init__(self, request, server_config, backend_count):
     """See base class."""
-    super(MultiServerHttpsIntegrationTestBase, self).__init__(ip_version, server_config,
+    super(MultiServerHttpsIntegrationTestBase, self).__init__(request, server_config,
                                                               backend_count)
 
   def getTestServerRootUri(self):
@@ -410,7 +416,7 @@ def http_test_server_fixture(request, server_config, caplog):
   Yields:
       HttpIntegrationTestBase: A fully set up instance. Tear down will happen automatically.
   """
-  f = HttpIntegrationTestBase(request.param, server_config)
+  f = HttpIntegrationTestBase(request, server_config)
   f.setUp()
   yield f
   f.tearDown(caplog)
@@ -423,7 +429,7 @@ def http_test_server_fixture_envoy_deprecated_v2_api(request, server_config, cap
   Yields:
       HttpIntegrationTestBaseWithEnvoyDeprecatedV2Bootstrap: A fully set up instance. Tear down will happen automatically.
   """
-  f = HttpIntegrationTestBaseWithEnvoyDeprecatedV2Bootstrap(request.param, server_config)
+  f = HttpIntegrationTestBaseWithEnvoyDeprecatedV2Bootstrap(request, server_config)
   f.setUp()
   yield f
   f.tearDown(caplog)
@@ -436,7 +442,7 @@ def https_test_server_fixture(request, server_config, caplog):
   Yields:
       HttpsIntegrationTestBase: A fully set up instance. Tear down will happen automatically.
   """
-  f = HttpsIntegrationTestBase(request.param, server_config)
+  f = HttpsIntegrationTestBase(request, server_config)
   f.setUp()
   yield f
   f.tearDown(caplog)
@@ -449,7 +455,7 @@ def multi_http_test_server_fixture(request, server_config, caplog):
   Yields:
       MultiServerHttpIntegrationTestBase: A fully set up instance. Tear down will happen automatically.
   """
-  f = MultiServerHttpIntegrationTestBase(request.param, server_config, backend_count=3)
+  f = MultiServerHttpIntegrationTestBase(request, server_config, backend_count=3)
   f.setUp()
   yield f
   f.tearDown(caplog)
@@ -462,7 +468,7 @@ def multi_https_test_server_fixture(request, server_config, caplog):
   Yields:
       MultiServerHttpsIntegrationTestBase: A fully set up instance. Tear down will happen automatically.
   """
-  f = MultiServerHttpsIntegrationTestBase(request.param, server_config, backend_count=3)
+  f = MultiServerHttpsIntegrationTestBase(request, server_config, backend_count=3)
   f.setUp()
   yield f
   f.tearDown(caplog)

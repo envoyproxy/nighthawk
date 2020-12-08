@@ -66,7 +66,7 @@ class _TestCaseWarnErrorIgnoreList(collections.namedtuple("_TestCaseWarnErrorIgn
 #
 # Non matching messages logged at either of these severities fail the test.
 _TEST_SERVER_WARN_ERROR_IGNORE_LIST = frozenset([
-    # A catch-all that applies to all remaining test cases.
+   # A catch-all that applies to all remaining test cases.
     _TestCaseWarnErrorIgnoreList(re.compile('.*'), (
       # TODO(#582): Identify these and file issues or add explanation as necessary.
       "Unable to use runtime singleton for feature envoy.http.headermap.lazy_map_min_size",
@@ -101,6 +101,7 @@ class TestServerBase(object):
                config_template_path,
                server_ip,
                ip_version,
+               request,
                server_binary_config_path_arg,
                parameters,
                tag,
@@ -112,6 +113,7 @@ class TestServerBase(object):
         config_template_path (str): specify the path to the test server configuration template.
         server_ip (str): Specify the ip address the test server should use to listen for traffic.
         ip_version (IPAddress): Specify the ip version the server should use to listen for traffic.
+        request: The pytest `request` fixture used to determin information about the currently executed test.
         server_binary_config_path_arg (str): Specify the name of the CLI argument the test server binary uses to accept a configuration path.
         parameters (dict): Supply to provide configuration template parameter replacement values.
         tag (str): Supply to get recognizeable output locations.
@@ -137,6 +139,7 @@ class TestServerBase(object):
     self._server_binary_config_path_arg = server_binary_config_path_arg
     self._bootstrap_version_arg = bootstrap_version_arg
     self._prepareForExecution()
+    self._request = request
 
   def _prepareForExecution(self):
     runfiles_instance = runfiles.Create()
@@ -184,7 +187,7 @@ class TestServerBase(object):
     logging.info("Process stdout: %s", stdout.decode("utf-8"))
     logging.info("Process stderr: %s", stderr.decode("utf-8"))
     warnings, errors = _extractWarningsAndErrors(stdout.decode() + stderr.decode(),
-                                                 "fake_test_case_name",
+                                                 self._request.node.name,
                                                  _TEST_SERVER_WARN_ERROR_IGNORE_LIST)
     if warnings:
       [logging.warn("Process logged a warning: %s", w) for w in warnings]
@@ -291,6 +294,7 @@ class NighthawkTestServer(TestServerBase):
                config_template_path,
                server_ip,
                ip_version,
+               request,
                parameters=dict(),
                tag="",
                bootstrap_version_arg=None):
@@ -301,6 +305,7 @@ class NighthawkTestServer(TestServerBase):
         config_template_path (String): Path to the nighthawk test server configuration template.
         server_ip (String): Ip address for the server to use when listening.
         ip_version (IPVersion): IPVersion enum member indicating the ip version that the server should use when listening.
+        request: The pytest `request` fixture used to determin information about the currently executed test.
         parameters (dictionary, optional): Directionary with replacement values for substition purposes in the server configuration template. Defaults to dict().
         tag (str, optional): Tags. Supply this to get recognizeable output locations. Defaults to "".
         bootstrap_version_arg (String, optional): Specify a cli argument value for --bootstrap-version when running the server.
@@ -309,6 +314,7 @@ class NighthawkTestServer(TestServerBase):
                                               config_template_path,
                                               server_ip,
                                               ip_version,
+                                              request,
                                               "--config-path",
                                               parameters,
                                               tag,
