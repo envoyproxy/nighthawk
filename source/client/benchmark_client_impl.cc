@@ -75,7 +75,7 @@ Http1PoolImpl::newStream(Envoy::Http::ResponseDecoder& response_decoder,
   }
 
   // Vanilla Envoy pool behavior.
-  return ConnPoolImpl::newStream(response_decoder, callbacks);
+  return HttpConnPoolImplBase::newStream(response_decoder, callbacks);
 }
 
 BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
