@@ -33,6 +33,11 @@ function do_test() {
     bazel test -c dbg $BAZEL_TEST_OPTIONS --test_output=all //test/...
 }
 
+function do_libcpp_test() {
+    bazel build -c dbg --config libc++ $BAZEL_BUILD_OPTIONS //test/...
+    bazel test -c dbg --config libc++ $BAZEL_TEST_OPTIONS --test_output=all //test/...
+}
+
 function do_clang_tidy() {
     # TODO(#546): deflake clang tidy runs, and remove '|| true' here.
     ci/run_clang_tidy.sh || true
@@ -268,8 +273,14 @@ case "$1" in
         do_opt_build
         exit 0
     ;;
+    libcpp_test)
+        ENVOY_STDLIB=libc++
+        setup_clang_toolchain
+        do_libcpp_test
+        exit 0
+    ;;
     *)
-        echo "must be one of [opt_build, build,test,clang_tidy,coverage,coverage_integration,asan,tsan,benchmark_with_own_binaries,docker,check_format,fix_format,test_gcc]"
+        echo "must be one of [opt_build, build,test,clang_tidy,coverage,coverage_integration,asan,tsan,benchmark_with_own_binaries,docker,check_format,fix_format,test_gcc,libcpp_test]"
         exit 1
     ;;
 esac

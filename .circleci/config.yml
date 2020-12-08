@@ -17,6 +17,13 @@ jobs:
     steps:
       - checkout
       - run: ci/do_ci.sh test
+  libcpp_test:
+    docker:
+      - image: *envoy-build-image
+    resource_class: xlarge
+    steps:
+      - checkout
+      - run: ci/do_ci.sh libcpp_test
   clang_tidy:
     docker:
       - image: *envoy-build-image
@@ -109,3 +116,4 @@ workflows:
       - benchmark
       - format
       - docker
+      - libcpp_test
