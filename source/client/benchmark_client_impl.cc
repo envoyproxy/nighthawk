@@ -56,22 +56,19 @@ Http1PoolImpl::newStream(Envoy::Http::ResponseDecoder& response_decoder,
                          Envoy::Http::ConnectionPool::Callbacks& callbacks) {
   // In prefetch mode we try to keep the amount of connections at the configured limit.
   if (prefetch_connections_) {
-    tryCreateNewConnections();
-    // while (currentUnusedCapacity()) {
-    // We cannot rely on ::tryCreateConnection here, because that might decline without
-    // updating connections().canCreate() above. We would risk an infinite loop.
-
-    // Envoy::ConnectionPool::ActiveClientPtr client = instantiateActiveClient();
-    // connecting_stream_capacity_ += client->effectiveConcurrentStreamLimit();
-    // Envoy::LinkedList::moveIntoList(std::move(client), owningList(client->state_));
-    //}
+    while (host_->cluster().resourceManager(priority_).connections().canCreate()) {
+      // We pass in a high prefetch ratio, because we don't want to throttle the prefetched
+      // connection amount like Envoy does out of the box.
+      if (!tryCreateNewConnection(10000.0)) {
+        break;
+      }
+    }
   }
 
   // By default, Envoy re-uses the most recent free connection. Here we pop from the back
   // of ready_clients_, which will pick the oldest one instead. This makes us cycle through
   // all the available connections.
   if (!ready_clients_.empty() && connection_reuse_strategy_ == ConnectionReuseStrategy::LRU) {
-    std::cerr << "@2" << std::endl;
     Envoy::Http::HttpAttachContext context({&response_decoder, &callbacks});
     attachStreamToClient(*ready_clients_.back(), context);
     return nullptr;

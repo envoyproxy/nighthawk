@@ -301,6 +301,8 @@ void ProcessImpl::allowEnvoyDeprecatedV2Api(envoy::config::bootstrap::v3::Bootst
   proto_true.set_string_value("true");
   (*runtime_layer->mutable_static_layer()
         ->mutable_fields())["envoy.reloadable_features.enable_deprecated_v2_api"] = proto_true;
+  (*runtime_layer->mutable_static_layer()
+        ->mutable_fields())["envoy.reloadable_features.allow_prefetch"] = proto_true;
 }
 
 void ProcessImpl::createBootstrapConfiguration(envoy::config::bootstrap::v3::Bootstrap& bootstrap,
@@ -537,12 +539,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
         [this]() -> void { init_manager_.initialize(init_watcher_); });
 
     Envoy::Runtime::LoaderSingleton::get().initialize(*cluster_manager_);
-    // TODO(oschaaf): enable prefetching, configure it
-    // see
-    // https://github.com/envoyproxy/envoy/blob/8d6299006e2f6adf160825e0d0febb3a0cb57c08/source/common/conn_pool/conn_pool_base.cc#L67
-    // if (options_.prefetch) {
-    // envoy.reloadable_features.allow_prefetch
-    //}
+
     std::list<std::unique_ptr<Envoy::Stats::Sink>> stats_sinks;
     setupStatsSinks(bootstrap, stats_sinks);
     std::chrono::milliseconds stats_flush_interval = std::chrono::milliseconds(

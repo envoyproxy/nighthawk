@@ -196,6 +196,12 @@ TEST(RuntimeConfiguration, allowEnvoyDeprecatedV2Api) {
     name: "static_layer"
     static_layer {
       fields {
+        key: "envoy.reloadable_features.allow_prefetch"
+        value {
+          string_value: "true"
+        }
+      }
+      fields {
         key: "envoy.reloadable_features.enable_deprecated_v2_api"
         value {
           string_value: "true"
