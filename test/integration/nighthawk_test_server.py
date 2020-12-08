@@ -1,14 +1,16 @@
 """Contains the NighthawkTestServer class, which wraps the nighthawk_test_servern binary."""
 
+import collections
 import http.client
 import json
 import logging
 import os
+import random
+import re
+import requests
 import socket
 import subprocess
 import sys
-import random
-import requests
 import tempfile
 import threading
 import time
@@ -40,23 +42,46 @@ def _substitute_yaml_values(runfiles_instance, obj, params):
   return obj
 
 
-# A list of message pieces that should be ignored even if logged by the test
-# server at a warning or an error severity.
+class _TestCaseWarnErrorIgnoreList(collections.namedtuple("_TestCaseWarnErrorIgnoreList", "test_case_regexp ignore_list")):
+  """Maps test case names to messages that should be ignored in the test server logs.
+
+  If the name of the currently executing test case matches the test_case_regexp,
+  any messages logged by the test server as either a WARNING or an ERROR that
+  will be checked against the ignore_list. Matching messages will be ignored,
+  any unmatched messages will fail the test case.
+
+  Attributes:
+    test_case_regexp: A compiled regular expression as returned by re.compile(),
+      the regexp that will be used to match test case names.
+    ignore_list: A tuple of strings, messages to ignore for matching test cases.
+  """
+
+# A list of _TestCaseWarnErrorIgnoreList instances, message pieces that should
+# be ignored even if logged by the test server at a warning or an error
+# severity.
 #
-# Other messages logged at either of these severities fail the test.
+# This list is processed in the order as defined, if multiple test_case_regexp
+# entries match the current test case name, all the corresponding ignore lists
+# will be used.
+#
+# Non matching messages logged at either of these severities fail the test.
 _TEST_SERVER_WARN_ERROR_IGNORE_LIST = frozenset([
-    # TODO(#582): Identify these and file issues or add explanation as necessary.
-    "Unable to use runtime singleton for feature envoy.http.headermap.lazy_map_min_size",
-    "Using deprecated extension name 'envoy.listener.tls_inspector' for 'envoy.filters.listener.tls_inspector'.",
-    "there is no configured limit to the number of allowed active connections. Set a limit via the runtime key overload.global_downstream_max_connections",
+    # A catch-all that applies to all remaining test cases.
+    _TestCaseWarnErrorIgnoreList(re.compile('.*'), (
+      # TODO(#582): Identify these and file issues or add explanation as necessary.
+      "Unable to use runtime singleton for feature envoy.http.headermap.lazy_map_min_size",
+      "Using deprecated extension name 'envoy.listener.tls_inspector' for 'envoy.filters.listener.tls_inspector'.",
+      "there is no configured limit to the number of allowed active connections. Set a limit via the runtime key overload.global_downstream_max_connections",
 
-    # A few of our filters use the same typed configuration, specifically
-    # 'test-server', 'time-tracking' and 'dynamic-delay'.
-    # For now this is by design.
-    "Double registration for type: 'nighthawk.server.ResponseOptions'",
+      # A few of our filters use the same typed configuration, specifically
+      # 'test-server', 'time-tracking' and 'dynamic-delay'.
+      # For now this is by design.
+      "Double registration for type: 'nighthawk.server.ResponseOptions'",
 
-    # Logged for normal termination, not really a warning.
-    "caught SIGTERM",
+      # Logged for normal termination, not really a warning.
+      "caught SIGTERM",
+    ),
+  ),
 ])
 
 
@@ -159,6 +184,7 @@ class TestServerBase(object):
     logging.info("Process stdout: %s", stdout.decode("utf-8"))
     logging.info("Process stderr: %s", stderr.decode("utf-8"))
     warnings, errors = _extractWarningsAndErrors(stdout.decode() + stderr.decode(),
+                                                 "fake_test_case_name",
                                                  _TEST_SERVER_WARN_ERROR_IGNORE_LIST)
     if warnings:
       [logging.warn("Process logged a warning: %s", w) for w in warnings]
@@ -301,14 +327,39 @@ class NighthawkTestServer(TestServerBase):
     return stdout.decode("utf-8").strip()
 
 
-def _extractWarningsAndErrors(process_output, ignore_list):
+def _matchesAnyIgnoreListEntry(line, test_case_name, ignore_list):
+  """Determines if the line matches any of the ignore list entries for this test case.
+
+  Args:
+    line: A string, the logged line.
+    test_case_name: A string, name of the currently executed test case.
+    ignore_list: A list of _TestCaseWarnErrorIgnoreList instances, the ignore
+      lists to match against.
+
+  Returns:
+    A boolean, True if the logged line matches any of the ignore list entries,
+    False otherwise.
+  """
+  for test_case_ignore_list in ignore_list:
+    if not test_case_ignore_list.test_case_regexp.match(test_case_name):
+      continue
+    for ignore_message in test_case_ignore_list.ignore_list:
+      if ignore_message in line:
+        return True
+  return False
+
+
+def _extractWarningsAndErrors(process_output, test_case_name, ignore_list):
   """Extract warnings and errors from the process_output.
 
   Args:
     process_output: A string, the stdout or stderr after running a process.
-    ignore_list: A list of strings, message pieces to ignore. If a message that
-      was logged either at a warning or at an error severity contains one of
-      these message pieces, it will be excluded from the return values.
+    test_case_name: A string, the name of the current test case.
+    ignore_list: A list of _TestCaseWarnErrorIgnoreList instances, message
+      pieces to ignore. If a message that was logged either at a warning or at
+      an error severity contains one of these message pieces and should be
+      ignored for the current test case, it will be excluded from the return
+      values.
 
   Returns:
     A tuple of two lists of strings, the first list contains the warnings found
@@ -318,12 +369,11 @@ def _extractWarningsAndErrors(process_output, ignore_list):
   warnings = []
   errors = []
   for line in process_output.split('\n'):
-    should_ignore = False
-    for ignore_message in ignore_list:
-      if ignore_message in line:
-        should_ignore = True
-        break
-    if should_ignore:
+    # Optimization - no need to examine lines that aren't errors or warnings.
+    if "[warning]" not in line and "[error]" not in line:
+      continue
+
+    if _matchesAnyIgnoreListEntry(line, test_case_name, ignore_list):
       continue
 
     if "[warning]" in line:
