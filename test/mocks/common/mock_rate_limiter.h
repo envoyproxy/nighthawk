@@ -14,6 +14,7 @@ public:
   MOCK_METHOD0(releaseOne, void());
   MOCK_METHOD0(timeSource, Envoy::TimeSource&());
   MOCK_METHOD0(elapsed, std::chrono::nanoseconds());
+  MOCK_CONST_METHOD0(firstAcquisitionTime, absl::optional<Envoy::SystemTime>());
 };
 
 class MockDiscreteNumericDistributionSampler : public DiscreteNumericDistributionSampler {

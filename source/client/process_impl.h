@@ -30,6 +30,7 @@
 #include "external/envoy/source/exe/process_wide.h"
 #include "external/envoy/source/extensions/transport_sockets/tls/context_manager_impl.h"
 #include "external/envoy/source/server/config_validation/admin.h"
+#include "external/envoy_api/envoy/config/bootstrap/v3/bootstrap.pb.h"
 
 #include "client/benchmark_client_impl.h"
 #include "client/factories_impl.h"
@@ -84,6 +85,12 @@ public:
 
   bool requestExecutionCancellation() override;
 
+  /**
+   * @param bootstrap The bootstrap that should have it's runtime configuration
+   * modified to allow for api v2 usage.
+   */
+  static void allowEnvoyDeprecatedV2Api(envoy::config::bootstrap::v3::Bootstrap& bootstrap);
+
 private:
   /**
    * @brief Creates a cluster for usage by a remote request source.
@@ -99,9 +106,9 @@ private:
                                   const Uri& uri) const;
   void createBootstrapConfiguration(envoy::config::bootstrap::v3::Bootstrap& bootstrap,
                                     const std::vector<UriPtr>& uris,
-                                    const UriPtr& request_source_uri, int number_of_workers) const;
+                                    const UriPtr& request_source_uri, int number_of_workers,
+                                    bool allow_envoy_deprecated_v2_api) const;
   void maybeCreateTracingDriver(const envoy::config::trace::v3::Tracing& configuration);
-
   void configureComponentLogLevels(spdlog::level::level_enum level);
   /**
    * Prepare the ProcessImpl instance by creating and configuring the workers it needs for execution
@@ -109,7 +116,7 @@ private:
    *
    * @param concurrency the amount of workers that should be created.
    */
-  void createWorkers(const uint32_t concurrency);
+  void createWorkers(const uint32_t concurrency, const absl::optional<Envoy::SystemTime>& schedule);
   std::vector<StatisticPtr> vectorizeStatisticPtrMap(const StatisticPtrMap& statistics) const;
   std::vector<StatisticPtr>
   mergeWorkerStatistics(const std::vector<ClientWorkerPtr>& workers) const;
@@ -124,7 +131,40 @@ private:
   void setupStatsSinks(const envoy::config::bootstrap::v3::Bootstrap& bootstrap,
                        std::list<std::unique_ptr<Envoy::Stats::Sink>>& stats_sinks);
   bool runInternal(OutputCollector& collector, const std::vector<UriPtr>& uris,
-                   const UriPtr& request_source_uri, const UriPtr& tracing_uri);
+                   const UriPtr& request_source_uri, const UriPtr& tracing_uri,
+                   const absl::optional<Envoy::SystemTime>& schedule);
+
+  /**
+   * Compute the offset at which execution should start. We adhere to the scheduled start passed in
+   * as an argument when specified, otherwise we need a delay that will be sufficient for all the
+   * workers to get up and running.
+   *
+   * @param time_system Time system used to obtain the current time.
+   * @param scheduled_start Optional scheduled start.
+   * @param concurrency The number of workers that will be used during execution.
+   * @return Envoy::MonotonicTime Time at which execution should start.
+   */
+  static Envoy::MonotonicTime
+  computeFirstWorkerStart(Envoy::Event::TimeSystem& time_system,
+                          const absl::optional<Envoy::SystemTime>& scheduled_start,
+                          const uint32_t concurrency);
+
+  /**
+   * We offset the start of each thread so that workers will execute tasks evenly spaced in
+   * time. Let's assume we have two workers w0/w1, which should maintain a combined global pace of
+   * 1000Hz. w0 and w1 both run at 500Hz, but ideally their execution is evenly spaced in time,
+   * and not overlapping. Workers start offsets can be computed like
+   * "worker_number*(1/global_frequency))", which would yield T0+[0ms, 1ms]. This helps reduce
+   * batching/queueing effects, both initially, but also by calibrating the linear rate limiter we
+   * currently have to a precise starting time, which helps later on.
+   *
+   * @param concurrency The number of workers that will be used during execution.
+   * @param rps Anticipated requests per second during execution.
+   * @return std::chrono::nanoseconds The delay that should be used as an offset between each
+   * independent worker execution start.
+   */
+  static std::chrono::nanoseconds computeInterWorkerDelay(const uint32_t concurrency,
+                                                          const uint32_t rps);
 
   std::shared_ptr<Envoy::ProcessWide> process_wide_;
   Envoy::PlatformImpl platform_impl_;

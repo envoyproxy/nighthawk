@@ -1,3 +1,4 @@
+#include <chrono>
 #include <thread>
 #include <vector>
 
@@ -6,7 +7,9 @@
 #include "external/envoy/test/test_common/environment.h"
 #include "external/envoy/test/test_common/network_utility.h"
 #include "external/envoy/test/test_common/registry.h"
+#include "external/envoy/test/test_common/simulated_time_system.h"
 #include "external/envoy/test/test_common/utility.h"
+#include "external/envoy_api/envoy/config/bootstrap/v3/bootstrap.pb.h"
 
 #include "common/uri_impl.h"
 
@@ -176,6 +179,111 @@ TEST_P(ProcessTest, NoFlushWhenCancelExecutionBeforeLoadTestBegin) {
   numFlushes = 0;
   runProcess(RunExpectation::EXPECT_SUCCESS, true, true);
   EXPECT_EQ(numFlushes, 0);
+}
+
+TEST(RuntimeConfiguration, allowEnvoyDeprecatedV2Api) {
+  envoy::config::bootstrap::v3::Bootstrap bootstrap;
+  EXPECT_EQ(bootstrap.DebugString(), "");
+  ProcessImpl::allowEnvoyDeprecatedV2Api(bootstrap);
+  std::cerr << bootstrap.DebugString() << std::endl;
+  EXPECT_EQ(bootstrap.DebugString(), R"EOF(layered_runtime {
+  layers {
+    name: "admin layer"
+    admin_layer {
+    }
+  }
+  layers {
+    name: "static_layer"
+    static_layer {
+      fields {
+        key: "envoy.reloadable_features.enable_deprecated_v2_api"
+        value {
+          string_value: "true"
+        }
+      }
+    }
+  }
+}
+)EOF");
+}
+
+/**
+ * Fixture for executing the Nighthawk process with simulated time.
+ */
+class ProcessTestWithSimTime : public Envoy::Event::TestUsingSimulatedTime,
+                               public TestWithParam<Envoy::Network::Address::IpVersion> {
+public:
+  ProcessTestWithSimTime()
+      : options_(TestUtility::createOptionsImpl(
+            fmt::format("foo --duration 1 -v error --failure-predicate foo:0 --rps 10 https://{}/",
+                        Envoy::Network::Test::getLoopbackAddressUrlString(GetParam())))){};
+
+protected:
+  void run(std::function<void(bool, const nighthawk::client::Output&)> verify_callback) {
+    auto run_thread = std::thread([this, &verify_callback] {
+      ProcessPtr process = std::make_unique<ProcessImpl>(*options_, simTime());
+      OutputCollectorImpl collector(simTime(), *options_);
+      const bool result = process->run(collector);
+      process->shutdown();
+      verify_callback(result, collector.toProto());
+    });
+
+    // We introduce real-world sleeps to give the executing ProcessImpl
+    // an opportunity to observe passage of simulated time. We increase simulated
+    // time in three steps, to give it an opportunity to start at the wrong time
+    // in case there is an error in the scheduling logic it implements.
+    // Note that these sleeps may seem excessively long, but sanitizer runs may need that.
+    sleep(1);
+    // Move time to 1 second before the scheduled execution time.
+    simTime().setSystemTime(options_->scheduled_start().value() - 1s);
+    sleep(1);
+    // Move time right up to the scheduled execution time.
+    simTime().setSystemTime(options_->scheduled_start().value());
+    sleep(1);
+    // Move time past the scheduled execution time and execution duration.
+    simTime().setSystemTime(options_->scheduled_start().value() + 2s);
+    // Wait for execution to wrap up.
+    run_thread.join();
+  }
+
+  void setScheduleOnOptions(std::chrono::nanoseconds ns_since_epoch) {
+    CommandLineOptionsPtr command_line = options_->toCommandLineOptions();
+    *(command_line->mutable_scheduled_start()) =
+        Envoy::Protobuf::util::TimeUtil::NanosecondsToTimestamp(ns_since_epoch.count());
+    options_ = std::make_unique<OptionsImpl>(*command_line);
+  }
+
+  OptionsPtr options_;
+};
+
+INSTANTIATE_TEST_SUITE_P(IpVersions, ProcessTestWithSimTime,
+                         ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()),
+                         Envoy::TestUtility::ipTestParamsToString);
+
+// Verify that scheduling execution ahead of time works, and that the execution start timestamp
+// associated to the worker result correctly reflects the scheduled time. This should be spot on
+// because we use simulated time.
+TEST_P(ProcessTestWithSimTime, ScheduleAheadWorks) {
+  for (const auto& relative_schedule : std::vector<std::chrono::nanoseconds>{30s, 1h}) {
+    setScheduleOnOptions(
+        std::chrono::nanoseconds(simTime().systemTime().time_since_epoch() + relative_schedule));
+    run([this](bool success, const nighthawk::client::Output& output) {
+      EXPECT_TRUE(success);
+      ASSERT_EQ(output.results_size(), 1);
+      EXPECT_EQ(Envoy::ProtobufUtil::TimeUtil::TimestampToNanoseconds(
+                    output.results()[0].execution_start()),
+                options_->scheduled_start().value().time_since_epoch().count());
+    });
+  }
+}
+
+// Verify that scheduling an execution in the past yields an error.
+TEST_P(ProcessTestWithSimTime, ScheduleInThePastFails) {
+  setScheduleOnOptions(std::chrono::nanoseconds(simTime().systemTime().time_since_epoch() - 1s));
+  run([](bool success, const nighthawk::client::Output& output) {
+    EXPECT_FALSE(success);
+    EXPECT_EQ(output.results_size(), 0);
+  });
 }
 
 } // namespace
