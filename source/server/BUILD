@@ -37,6 +37,8 @@ envoy_cc_library(
         "@envoy//source/common/protobuf:message_validator_lib_with_external_headers",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
         "@envoy//source/common/singleton:const_singleton_with_external_headers",
+        "@envoy_api//envoy/api/v2/core:pkg_cc_proto",
+        "@envoy_api//envoy/config/core/v3:pkg_cc_proto",
     ],
 )
 

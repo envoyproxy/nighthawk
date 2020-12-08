@@ -85,9 +85,9 @@ public:
 
   void setupCollector() {
     collector_ = std::make_unique<OutputCollectorImpl>(time_system_, options_);
-    collector_->addResult("worker_0", statistics_, counters_, 1s);
-    collector_->addResult("worker_1", statistics_, counters_, 1s);
-    collector_->addResult("global", statistics_, counters_, 1s);
+    collector_->addResult("worker_0", statistics_, counters_, 1s, time_system_.systemTime());
+    collector_->addResult("worker_1", statistics_, counters_, 1s, absl::nullopt);
+    collector_->addResult("global", statistics_, counters_, 1s, time_system_.systemTime());
   }
 
   nighthawk::client::CommandLineOptions command_line_options_;

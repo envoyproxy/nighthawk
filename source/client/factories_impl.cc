@@ -65,12 +65,10 @@ BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
 SequencerFactoryImpl::SequencerFactoryImpl(const Options& options)
     : OptionBasedFactoryImpl(options) {}
 
-SequencerPtr SequencerFactoryImpl::create(Envoy::TimeSource& time_source,
-                                          Envoy::Event::Dispatcher& dispatcher,
-                                          const SequencerTarget& sequencer_target,
-                                          TerminationPredicatePtr&& termination_predicate,
-                                          Envoy::Stats::Scope& scope,
-                                          const Envoy::SystemTime scheduled_starting_time) const {
+SequencerPtr SequencerFactoryImpl::create(
+    Envoy::TimeSource& time_source, Envoy::Event::Dispatcher& dispatcher,
+    const SequencerTarget& sequencer_target, TerminationPredicatePtr&& termination_predicate,
+    Envoy::Stats::Scope& scope, const Envoy::MonotonicTime scheduled_starting_time) const {
   StatisticFactoryImpl statistic_factory(options_);
   Frequency frequency(options_.requestsPerSecond());
   RateLimiterPtr rate_limiter = std::make_unique<ScheduledStartingRateLimiter>(
@@ -211,7 +209,7 @@ TerminationPredicateFactoryImpl::TerminationPredicateFactoryImpl(const Options& 
 
 TerminationPredicatePtr
 TerminationPredicateFactoryImpl::create(Envoy::TimeSource& time_source, Envoy::Stats::Scope& scope,
-                                        const Envoy::SystemTime scheduled_starting_time) const {
+                                        const Envoy::MonotonicTime scheduled_starting_time) const {
   // We'll always link a predicate which checks for requests to cancel.
   TerminationPredicatePtr root_predicate =
       std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(

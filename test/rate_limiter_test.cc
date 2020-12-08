@@ -76,7 +76,8 @@ TEST_F(RateLimiterTest, ScheduledStartingRateLimiterTest) {
   // scheduled delay. This should be business as usual from a functional perspective, but internally
   // this rate limiter specializes on this case to log a warning message, and we want to cover that.
   for (const bool starting_late : std::vector<bool>{false, true}) {
-    const Envoy::SystemTime scheduled_starting_time = time_system.systemTime() + schedule_delay;
+    const Envoy::MonotonicTime scheduled_starting_time =
+        time_system.monotonicTime() + schedule_delay;
     std::unique_ptr<MockRateLimiter> mock_rate_limiter = std::make_unique<MockRateLimiter>();
     MockRateLimiter& unsafe_mock_rate_limiter = *mock_rate_limiter;
     InSequence s;
@@ -95,7 +96,7 @@ TEST_F(RateLimiterTest, ScheduledStartingRateLimiterTest) {
     }
 
     // We should expect zero releases until it is time to start.
-    while (time_system.systemTime() < scheduled_starting_time) {
+    while (time_system.monotonicTime() < scheduled_starting_time) {
       EXPECT_FALSE(rate_limiter->tryAcquireOne());
       time_system.advanceTimeWait(1ms);
     }
@@ -108,8 +109,8 @@ TEST_F(RateLimiterTest, ScheduledStartingRateLimiterTest) {
 TEST_F(RateLimiterTest, ScheduledStartingRateLimiterTestBadArgs) {
   Envoy::Event::SimulatedTimeSystem time_system;
   // Verify we enforce future-only scheduling.
-  for (const auto& timing :
-       std::vector<Envoy::SystemTime>{time_system.systemTime(), time_system.systemTime() - 10ms}) {
+  for (const auto& timing : std::vector<Envoy::MonotonicTime>{time_system.monotonicTime(),
+                                                              time_system.monotonicTime() - 10ms}) {
     std::unique_ptr<MockRateLimiter> mock_rate_limiter = std::make_unique<MockRateLimiter>();
     MockRateLimiter& unsafe_mock_rate_limiter = *mock_rate_limiter;
     EXPECT_CALL(unsafe_mock_rate_limiter, timeSource)
