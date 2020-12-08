@@ -66,7 +66,18 @@ class _TestCaseWarnErrorIgnoreList(collections.namedtuple("_TestCaseWarnErrorIgn
 #
 # Non matching messages logged at either of these severities fail the test.
 _TEST_SERVER_WARN_ERROR_IGNORE_LIST = frozenset([
-   # A catch-all that applies to all remaining test cases.
+    # This test case purposefuly uses the deprecated Envoy v2 API which emits
+    # the following warnings.
+    _TestCaseWarnErrorIgnoreList(re.compile('test_nighthawk_test_server_envoy_deprecated_v2_api'), (
+        "Configuration does not parse cleanly as v3. v2 configuration is deprecated",
+        "Deprecated field: type envoy.api.v2.listener.Filter",
+        "Deprecated field: type envoy.config.filter.network.http_connection_manager.v2.HttpFilter",
+        "Using deprecated extension name 'envoy.http_connection_manager'",
+        "Using deprecated extension name 'envoy.router'",
+    ),
+  ),
+
+    # A catch-all that applies to all remaining test cases.
     _TestCaseWarnErrorIgnoreList(re.compile('.*'), (
       # TODO(#582): Identify these and file issues or add explanation as necessary.
       "Unable to use runtime singleton for feature envoy.http.headermap.lazy_map_min_size",
