@@ -2,10 +2,11 @@ syntax = "proto3";
 
 package nighthawk.server;
 
+import "envoy/api/v2/core/base.proto";
+import "envoy/config/core/v3/base.proto";
+import "google/protobuf/duration.proto";
 import "google/protobuf/wrappers.proto";
 import "validate/validate.proto";
-import "envoy/api/v2/core/base.proto";
-import "google/protobuf/duration.proto";
 
 message ConcurrencyBasedLinearDelay {
   // Minimal delay to add to replies.
@@ -20,7 +21,15 @@ message ConcurrencyBasedLinearDelay {
 // configuration will override.
 message ResponseOptions {
   // List of additional response headers.
-  repeated envoy.api.v2.core.HeaderValueOption response_headers = 1;
+  //
+  // Envoy deprecated its v2 API, prefer to use v3_response_headers instead.
+  // Mutually exclusive with v3_response_headers.
+  repeated envoy.api.v2.core.HeaderValueOption response_headers = 1 [deprecated = true];
+
+  // List of additional response headers.
+  // Mutually exclusive with response_headers.
+  repeated envoy.config.core.v3.HeaderValueOption v3_response_headers = 7;
+
   // Number of 'a' characters in the the response body.
   uint32 response_body_size = 2 [(validate.rules).uint32 = {lte: 4194304}];
   // If true, then echo request headers in the response body.

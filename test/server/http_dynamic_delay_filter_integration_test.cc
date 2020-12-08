@@ -10,6 +10,9 @@
 #include "gtest/gtest.h"
 
 namespace Nighthawk {
+namespace {
+
+using ::testing::HasSubstr;
 
 const Envoy::Http::LowerCaseString kDelayHeaderString("x-envoy-fault-delay-request");
 
@@ -37,6 +40,22 @@ public:
 
 INSTANTIATE_TEST_SUITE_P(IpVersions, HttpDynamicDelayIntegrationTest,
                          testing::ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()));
+
+TEST_P(HttpDynamicDelayIntegrationTest,
+       DiesWhenBothEnvoyApiV2AndV3ResponseHeadersAreSetInConfiguration) {
+  const std::string invalid_configuration = R"EOF(
+  name: dynamic-delay
+  typed_config:
+    "@type": type.googleapis.com/nighthawk.server.ResponseOptions
+    response_headers:
+      - { header: { key: "key1", value: "value1"} }
+    v3_response_headers:
+      - { header: { key: "key1", value: "value1"} }
+  )EOF";
+
+  ASSERT_DEATH(initializeFilterConfiguration(invalid_configuration),
+               HasSubstr("cannot specify both response_headers and v3_response_headers"));
+}
 
 // Verify expectations with an empty dynamic-delay configuration.
 TEST_P(HttpDynamicDelayIntegrationTest, NoStaticConfiguration) {
@@ -157,4 +176,5 @@ TEST_F(ComputeTest, ComputeConcurrencyBasedLinearDelayMs) {
   EXPECT_EQ(compute(4, 1, 500000, 1, 500000), 5003);
 }
 
+} // namespace
 } // namespace Nighthawk

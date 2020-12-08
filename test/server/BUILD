@@ -65,3 +65,16 @@ envoy_cc_test(
         "@envoy//test/test_common:simulated_time_system_lib",
     ],
 )
+
+envoy_cc_test(
+    name = "configuration_test",
+    srcs = ["configuration_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//api/server:response_options_proto_cc_proto",
+        "//source/server:configuration_lib",
+        "@envoy//test/test_common:utility_lib",
+        "@envoy_api//envoy/api/v2/core:pkg_cc_proto",
+        "@envoy_api//envoy/config/core/v3:pkg_cc_proto",
+    ],
+)
