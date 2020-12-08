@@ -128,7 +128,8 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
       singleton_manager_(std::make_unique<Envoy::Singleton::ManagerImpl>(api_->threadFactory())),
       access_log_manager_(std::chrono::milliseconds(1000), *api_, *dispatcher_, access_log_lock_,
                           store_root_),
-      init_watcher_("Nighthawk", []() {}), validation_context_(false, false, false) {
+      init_watcher_("Nighthawk", []() {}), validation_context_(false, false, false),
+      router_context_(store_root_.symbolTable()) {
   // Any dispatchers created after the following call will use hr timers.
   setupForHRTimers();
   std::string lower = absl::AsciiStrToLower(
@@ -519,7 +520,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
         admin_, Envoy::Runtime::LoaderSingleton::get(), store_root_, tls_,
         dispatcher_->createDnsResolver({}, false), *ssl_context_manager_, *dispatcher_,
         *local_info_, secret_manager_, validation_context_, *api_, http_context_, grpc_context_,
-        access_log_manager_, *singleton_manager_);
+        router_context_, access_log_manager_, *singleton_manager_);
     cluster_manager_factory_->setConnectionReuseStrategy(
         options_.h1ConnectionReuseStrategy() == nighthawk::client::H1ConnectionReuseStrategy::LRU
             ? Http1PoolImpl::ConnectionReuseStrategy::LRU

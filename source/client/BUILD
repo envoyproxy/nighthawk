@@ -92,6 +92,7 @@ envoy_cc_library(
         "@envoy//source/server/config_validation:admin_lib_with_external_headers",
         "@envoy//include/envoy/http:protocol_interface_with_external_headers",
         "@envoy//source/common/common:statusor_lib_with_external_headers",
+        "@envoy//source/common/router:context_lib_with_external_headers",
     ] + select({
         "//bazel:zipkin_disabled": [],
         "//conditions:default": [

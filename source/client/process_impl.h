@@ -21,6 +21,7 @@
 #include "external/envoy/source/common/grpc/context_impl.h"
 #include "external/envoy/source/common/http/context_impl.h"
 #include "external/envoy/source/common/protobuf/message_validator_impl.h"
+#include "external/envoy/source/common/router/context_impl.h"
 #include "external/envoy/source/common/secret/secret_manager_impl.h"
 #include "external/envoy/source/common/stats/allocator_impl.h"
 #include "external/envoy/source/common/stats/thread_local_store.h"
@@ -207,6 +208,7 @@ private:
   Envoy::Thread::MutexBasicLockable workers_lock_;
   bool cancelled_{false};
   std::unique_ptr<FlushWorkerImpl> flush_worker_;
+  Envoy::Router::ContextImpl router_context_;
 };
 
 } // namespace Client
