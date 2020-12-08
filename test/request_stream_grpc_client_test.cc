@@ -73,7 +73,7 @@ TEST_F(ProtoRequestHelperTest, GenericHeaderFieldsUsingDeprecatedEnvoyV2Api) {
 
 // Test the generic header api we offer in the proto api using Envoy API v3
 // primitives.
-TEST_F(ProtoRequestHelperTest, GenericHeaderFieldsUsingDeprecatedEnvoyV3Api) {
+TEST_F(ProtoRequestHelperTest, GenericHeaderFieldsUsingEnvoyV3Api) {
   RequestSpecifier* request_specifier = response_.mutable_request_specifier();
   envoy::config::core::v3::HeaderMap* headers = request_specifier->mutable_v3_headers();
   envoy::config::core::v3::HeaderValue* header_1 = headers->add_headers();
