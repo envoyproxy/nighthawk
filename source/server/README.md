@@ -165,8 +165,7 @@ USAGE:
 
 bazel-bin/nighthawk_test_server  [--socket-mode <string>] [--socket-path
 <string>] [--disable-extensions
-<string>] [--use-fake-symbol-table
-<bool>] [--cpuset-threads]
+<string>] [--cpuset-threads]
 [--enable-mutex-tracing]
 [--disable-hot-restart] [--mode
 <string>] [--parent-shutdown-time-s
@@ -207,9 +206,6 @@ Path to hot restart socket file
 
 --disable-extensions <string>
 Comma-separated list of extensions to disable
-
---use-fake-symbol-table <bool>
-Use fake symbol table implementation
 
 --cpuset-threads
 Get the default # of worker threads from cpuset size
