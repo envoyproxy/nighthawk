@@ -7,6 +7,7 @@
 #include "envoy/common/pure.h"
 
 #include "nighthawk/common/operation_callback.h"
+#include "nighthawk/common/rate_limiter.h"
 #include "nighthawk/common/statistic.h"
 
 namespace Nighthawk {
@@ -34,6 +35,11 @@ public:
    * @return std::chrono::nanoseconds actual sequencer execution duration.
    */
   virtual std::chrono::nanoseconds executionDuration() const PURE;
+
+  /**
+   * @return RateLimiter& reference to the rate limiter associated to this sequencer.
+   */
+  virtual const RateLimiter& rate_limiter() const PURE;
 
   /**
    * @return double an up-to-date completions per second rate.

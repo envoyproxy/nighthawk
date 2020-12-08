@@ -13,6 +13,7 @@ api_cc_py_proto_library(
         "@envoy_api//envoy/api/v2/auth:pkg",
         "@envoy_api//envoy/api/v2/cluster:pkg",
         "@envoy_api//envoy/api/v2/core:pkg",
+        "@envoy_api//envoy/config/core/v3:pkg",
     ],
 )
 

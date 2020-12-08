@@ -33,6 +33,12 @@ public:
    * @return Envoy::TimeSource& time_source used to track time.
    */
   virtual Envoy::TimeSource& timeSource() PURE;
+
+  /**
+   * @return absl::optional<Envoy::SystemTime> Time of the first acquisition, if any.
+   */
+  virtual absl::optional<Envoy::SystemTime> firstAcquisitionTime() const PURE;
+
   /**
    * @return std::chrono::nanoseconds elapsed since the first call to tryAcquireOne(). Used by some
    * rate limiter implementations to compute acquisition rate.

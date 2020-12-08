@@ -2,15 +2,21 @@
 
 #include <string>
 
+#include "envoy/api/v2/core/base.pb.h"
+#include "envoy/config/core/v3/base.pb.h"
 #include "envoy/stats/scope.h"
 
 #include "external/envoy/source/common/common/assert.h"
 #include "external/envoy/source/common/http/header_map_impl.h"
 #include "external/envoy/source/common/http/headers.h"
 
+#include "api/request_source/service.pb.h"
+
 #include "common/request_impl.h"
 
 namespace Nighthawk {
+
+using ::nighthawk::request_source::RequestSpecifier;
 
 const std::string RequestStreamGrpcClientImpl::METHOD_NAME =
     "nighthawk.request_source.NighthawkRequestSourceService.RequestStream";
@@ -75,15 +81,27 @@ RequestPtr ProtoRequestHelper::messageToRequest(
   RequestPtr request = std::make_unique<RequestImpl>(header);
 
   if (message.has_request_specifier()) {
-    const auto& request_specifier = message.request_specifier();
-    if (request_specifier.has_headers()) {
-      const auto& message_request_headers = request_specifier.headers();
-      for (const auto& message_header : message_request_headers.headers()) {
+    const RequestSpecifier& request_specifier = message.request_specifier();
+
+    if (request_specifier.has_v3_headers()) {
+      const envoy::config::core::v3::HeaderMap& message_request_headers =
+          request_specifier.v3_headers();
+      for (const envoy::config::core::v3::HeaderValue& message_header :
+           message_request_headers.headers()) {
+        Envoy::Http::LowerCaseString header_name(message_header.key());
+        header->remove(header_name);
+        header->addCopy(header_name, message_header.value());
+      }
+    } else if (request_specifier.has_headers()) {
+      const envoy::api::v2::core::HeaderMap& message_request_headers = request_specifier.headers();
+      for (const envoy::api::v2::core::HeaderValue& message_header :
+           message_request_headers.headers()) {
         Envoy::Http::LowerCaseString header_name(message_header.key());
         header->remove(header_name);
         header->addCopy(header_name, message_header.value());
       }
     }
+
     if (request_specifier.has_content_length()) {
       std::string s_content_length = absl::StrCat("", request_specifier.content_length().value());
       header->remove(Envoy::Http::Headers::get().ContentLength);

@@ -144,7 +144,8 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "Transport socket configuration in json or compact yaml. "
       "Mutually exclusive with --tls-context. Example (json): "
       "{name:\"envoy.transport_sockets.tls\",typed_config:{"
-      "\"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\","
+      "\"@type\":\"type.googleapis.com/"
+      "envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext\","
       "common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES128-SHA\"]}}}}",
       false, "", "string", cmd);
 
@@ -314,6 +315,12 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "Default: \"\"",
       false, "", "string", cmd);
 
+  TCLAP::SwitchArg allow_envoy_deprecated_v2_api(
+      "", "allow-envoy-deprecated-v2-api",
+      "Set to allow usage of the v2 api. (Not recommended, support will stop in Q1 2021). Default: "
+      "false",
+      cmd);
+
   Utility::parseCommand(cmd, argc, argv);
 
   // --duration and --no-duration are mutually exclusive
@@ -446,6 +453,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   }
   TCLAP_SET_IF_SPECIFIED(stats_flush_interval, stats_flush_interval_);
   TCLAP_SET_IF_SPECIFIED(latency_response_header_name, latency_response_header_name_);
+  TCLAP_SET_IF_SPECIFIED(allow_envoy_deprecated_v2_api, allow_envoy_deprecated_v2_api_);
 
   // CLI-specific tests.
   // TODO(oschaaf): as per mergconflicts's remark, it would be nice to aggregate
@@ -651,7 +659,14 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   std::copy(options.labels().begin(), options.labels().end(), std::back_inserter(labels_));
   latency_response_header_name_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(
       options, latency_response_header_name, latency_response_header_name_);
-
+  allow_envoy_deprecated_v2_api_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(
+      options, allow_envoy_deprecated_v2_api, allow_envoy_deprecated_v2_api_);
+  if (options.has_scheduled_start()) {
+    const auto elapsed_since_epoch = std::chrono::nanoseconds(options.scheduled_start().nanos()) +
+                                     std::chrono::seconds(options.scheduled_start().seconds());
+    scheduled_start_ =
+        Envoy::SystemTime(std::chrono::time_point<std::chrono::system_clock>(elapsed_since_epoch));
+  }
   validate();
 }
 
@@ -828,6 +843,13 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
   command_line_options->mutable_stats_flush_interval()->set_value(stats_flush_interval_);
   command_line_options->mutable_latency_response_header_name()->set_value(
       latency_response_header_name_);
+  command_line_options->mutable_allow_envoy_deprecated_v2_api()->set_value(
+      allow_envoy_deprecated_v2_api_);
+  if (scheduled_start_.has_value()) {
+    *(command_line_options->mutable_scheduled_start()) =
+        Envoy::ProtobufUtil::TimeUtil::NanosecondsToTimestamp(
+            scheduled_start_.value().time_since_epoch().count());
+  }
   return command_line_options;
 }
 

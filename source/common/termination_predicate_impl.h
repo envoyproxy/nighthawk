@@ -35,13 +35,13 @@ class DurationTerminationPredicateImpl : public TerminationPredicateBaseImpl {
 public:
   DurationTerminationPredicateImpl(Envoy::TimeSource& time_source,
                                    std::chrono::microseconds duration,
-                                   const Envoy::SystemTime start)
+                                   const Envoy::MonotonicTime start)
       : time_source_(time_source), start_(start), duration_(duration) {}
   TerminationPredicate::Status evaluate() override;
 
 private:
   Envoy::TimeSource& time_source_;
-  const Envoy::SystemTime start_;
+  const Envoy::MonotonicTime start_;
   std::chrono::microseconds duration_;
 };
 

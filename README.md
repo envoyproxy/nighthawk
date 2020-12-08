@@ -43,7 +43,8 @@ bazel build -c opt //:nighthawk
 ```
 USAGE:
 
-bazel-bin/nighthawk_client  [--latency-response-header-name <string>]
+bazel-bin/nighthawk_client  [--allow-envoy-deprecated-v2-api]
+[--latency-response-header-name <string>]
 [--stats-flush-interval <uint32_t>]
 [--stats-sinks <string>] ...
 [--no-duration] [--simple-warmup]
@@ -82,6 +83,10 @@ format>
 
 
 Where:
+
+--allow-envoy-deprecated-v2-api
+Set to allow usage of the v2 api. (Not recommended, support will stop
+in Q1 2021). Default: false
 
 --latency-response-header-name <string>
 Set an optional header name that will be returned in responses, whose
@@ -198,8 +203,8 @@ any other value will allow client-side queuing of requests).
 Transport socket configuration in json or compact yaml. Mutually
 exclusive with --tls-context. Example (json):
 {name:"envoy.transport_sockets.tls"
-,typed_config:{"@type":"type.googleapis.com/envoy.api.v2.auth.Upstream
-TlsContext"
+,typed_config:{"@type":"type.googleapis.com/envoy.extensions.transport
+_sockets.tls.v3.UpstreamTlsContext"
 ,common_tls_context:{tls_params:{cipher_suites:["-ALL:ECDHE-RSA-AES128
 -SHA"]}}}}
 

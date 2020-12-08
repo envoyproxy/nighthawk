@@ -69,7 +69,6 @@ public:
         (std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(header_map_param));
     EXPECT_CALL(cluster_manager(), httpConnPoolForCluster(_, _, _, _))
         .WillRepeatedly(Return(&pool_));
-    EXPECT_CALL(cluster_manager(), get(_)).WillRepeatedly(Return(&thread_local_cluster_));
     EXPECT_CALL(thread_local_cluster_, info()).WillRepeatedly(Return(cluster_info_));
 
     auto& tracer = static_cast<Envoy::Tracing::MockHttpTracer&>(*http_tracer_);
@@ -120,7 +119,7 @@ public:
           decoders_.push_back(&decoder);
           NiceMock<Envoy::StreamInfo::MockStreamInfo> stream_info;
           callbacks.onPoolReady(stream_encoder_, Envoy::Upstream::HostDescriptionConstSharedPtr{},
-                                stream_info);
+                                stream_info, {} /*absl::optional<Envoy::Http::Protocol> protocol*/);
           return nullptr;
         });
 

@@ -93,6 +93,8 @@ public:
   std::string responseHeaderWithLatencyInput() const override {
     return latency_response_header_name_;
   };
+  bool allowEnvoyDeprecatedV2Api() const override { return allow_envoy_deprecated_v2_api_; }
+  absl::optional<Envoy::SystemTime> scheduled_start() const override { return scheduled_start_; }
 
 private:
   void parsePredicates(const TCLAP::MultiArg<std::string>& arg,
@@ -149,6 +151,8 @@ private:
   std::vector<envoy::config::metrics::v3::StatsSink> stats_sinks_;
   uint32_t stats_flush_interval_{5};
   std::string latency_response_header_name_;
+  bool allow_envoy_deprecated_v2_api_{false};
+  absl::optional<Envoy::SystemTime> scheduled_start_;
 };
 
 } // namespace Client

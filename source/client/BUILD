@@ -92,6 +92,7 @@ envoy_cc_library(
         "@envoy//source/server/config_validation:admin_lib_with_external_headers",
         "@envoy//include/envoy/http:protocol_interface_with_external_headers",
         "@envoy//source/common/common:statusor_lib_with_external_headers",
+        "@envoy//source/common/router:context_lib_with_external_headers",
     ] + select({
         "//bazel:zipkin_disabled": [],
         "//conditions:default": [
@@ -156,6 +157,7 @@ envoy_cc_library(
         "//api/client:grpc_service_lib",
         "//api/request_source:grpc_request_source_service_lib",
         "@envoy//source/common/common:thread_lib_with_external_headers",
+        "@envoy_api//envoy/config/core/v3:pkg_cc_proto",
     ],
 )
 
