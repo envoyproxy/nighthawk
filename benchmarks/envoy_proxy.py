@@ -131,7 +131,7 @@ def inject_envoy_http_proxy_fixture(request, server_config, proxy_config, caplog
 
   Yields: a successfully set up InjectHttpProxyIntegrationTestBase instance.
   """
-  fixture = InjectHttpProxyIntegrationTestBase(request.param, server_config, proxy_config)
+  fixture = InjectHttpProxyIntegrationTestBase(request, server_config, proxy_config)
   fixture.setUp()
   yield fixture
   fixture.tearDown(caplog)
