@@ -55,7 +55,7 @@ static_resources:
                     typed_config:
                       "@type": type.googleapis.com/nighthawk.server.ResponseOptions
                       response_body_size: 10
-                      response_headers:
+                      v3_response_headers:
                         - { header: { key: "foo", value: "bar" } }
                         - {
                             header: { key: "foo", value: "bar2" },
