@@ -1,14 +1,16 @@
 """Contains the NighthawkTestServer class, which wraps the nighthawk_test_servern binary."""
 
+import collections
 import http.client
 import json
 import logging
 import os
+import random
+import re
+import requests
 import socket
 import subprocess
 import sys
-import random
-import requests
 import tempfile
 import threading
 import time
@@ -40,6 +42,65 @@ def _substitute_yaml_values(runfiles_instance, obj, params):
   return obj
 
 
+class _TestCaseWarnErrorIgnoreList(
+    collections.namedtuple("_TestCaseWarnErrorIgnoreList", "test_case_regexp ignore_list")):
+  """Maps test case names to messages that should be ignored in the test server logs.
+
+  If the name of the currently executing test case matches the test_case_regexp,
+  any messages logged by the test server as either a WARNING or an ERROR
+  will be checked against the ignore_list. If the logged messages contain any of
+  the messages in the ignore list as a substring, they will be ignored.
+  Any unmatched messages of either a WARNING or an ERROR severity will fail the
+  test case.
+
+  Attributes:
+    test_case_regexp: A compiled regular expression as returned by re.compile(),
+      the regexp that will be used to match test case names.
+    ignore_list: A tuple of strings, messages to ignore for matching test cases.
+  """
+
+
+# A list of _TestCaseWarnErrorIgnoreList instances, message pieces that should
+# be ignored even if logged by the test server at a WARNING or an ERROR
+# severity.
+#
+# If multiple test_case_regexp entries match the current test case name, all the
+# corresponding ignore lists will be used.
+_TEST_SERVER_WARN_ERROR_IGNORE_LIST = frozenset([
+    # This test case purposefully uses the deprecated Envoy v2 API which emits
+    # the following warnings.
+    _TestCaseWarnErrorIgnoreList(
+        re.compile('test_nighthawk_test_server_envoy_deprecated_v2_api'),
+        (
+            "Configuration does not parse cleanly as v3. v2 configuration is deprecated",
+            "Deprecated field: type envoy.api.v2.listener.Filter",
+            "Deprecated field: type envoy.config.filter.network.http_connection_manager.v2.HttpFilter",
+            "Using deprecated extension name 'envoy.http_connection_manager'",
+            "Using deprecated extension name 'envoy.router'",
+        ),
+    ),
+
+    # A catch-all that applies to all remaining test cases.
+    _TestCaseWarnErrorIgnoreList(
+        re.compile('.*'),
+        (
+            # TODO(#582): Identify these and file issues or add explanation as necessary.
+            "Unable to use runtime singleton for feature envoy.http.headermap.lazy_map_min_size",
+            "Using deprecated extension name 'envoy.listener.tls_inspector' for 'envoy.filters.listener.tls_inspector'.",
+            "there is no configured limit to the number of allowed active connections. Set a limit via the runtime key overload.global_downstream_max_connections",
+
+            # A few of our filters use the same typed configuration, specifically
+            # 'test-server', 'time-tracking' and 'dynamic-delay'.
+            # For now this is by design.
+            "Double registration for type: 'nighthawk.server.ResponseOptions'",
+
+            # Logged for normal termination, not really a warning.
+            "caught SIGTERM",
+        ),
+    ),
+])
+
+
 class TestServerBase(object):
   """Base class for running a server in a separate process.
 
@@ -56,6 +117,7 @@ class TestServerBase(object):
                config_template_path,
                server_ip,
                ip_version,
+               request,
                server_binary_config_path_arg,
                parameters,
                tag,
@@ -67,6 +129,7 @@ class TestServerBase(object):
         config_template_path (str): specify the path to the test server configuration template.
         server_ip (str): Specify the ip address the test server should use to listen for traffic.
         ip_version (IPAddress): Specify the ip version the server should use to listen for traffic.
+        request: The pytest `request` fixture used to determin information about the currently executed test.
         server_binary_config_path_arg (str): Specify the name of the CLI argument the test server binary uses to accept a configuration path.
         parameters (dict): Supply to provide configuration template parameter replacement values.
         tag (str): Supply to get recognizeable output locations.
@@ -92,6 +155,7 @@ class TestServerBase(object):
     self._server_binary_config_path_arg = server_binary_config_path_arg
     self._bootstrap_version_arg = bootstrap_version_arg
     self._prepareForExecution()
+    self._request = request
 
   def _prepareForExecution(self):
     runfiles_instance = runfiles.Create()
@@ -138,6 +202,13 @@ class TestServerBase(object):
     stdout, stderr = self._server_process.communicate()
     logging.info("Process stdout: %s", stdout.decode("utf-8"))
     logging.info("Process stderr: %s", stderr.decode("utf-8"))
+    warnings, errors = _extractWarningsAndErrors(stdout.decode() + stderr.decode(),
+                                                 self._request.node.name,
+                                                 _TEST_SERVER_WARN_ERROR_IGNORE_LIST)
+    if warnings:
+      [logging.warn("Process logged a warning: %s", w) for w in warnings]
+    if errors:
+      [logging.error("Process logged an error: %s", e) for e in errors]
 
   def fetchJsonFromAdminInterface(self, path):
     """Fetch and parse json from the admin interface.
@@ -239,6 +310,7 @@ class NighthawkTestServer(TestServerBase):
                config_template_path,
                server_ip,
                ip_version,
+               request,
                parameters=dict(),
                tag="",
                bootstrap_version_arg=None):
@@ -249,6 +321,7 @@ class NighthawkTestServer(TestServerBase):
         config_template_path (String): Path to the nighthawk test server configuration template.
         server_ip (String): Ip address for the server to use when listening.
         ip_version (IPVersion): IPVersion enum member indicating the ip version that the server should use when listening.
+        request: The pytest `request` fixture used to determin information about the currently executed test.
         parameters (dictionary, optional): Directionary with replacement values for substition purposes in the server configuration template. Defaults to dict().
         tag (str, optional): Tags. Supply this to get recognizeable output locations. Defaults to "".
         bootstrap_version_arg (String, optional): Specify a cli argument value for --bootstrap-version when running the server.
@@ -257,6 +330,7 @@ class NighthawkTestServer(TestServerBase):
                                               config_template_path,
                                               server_ip,
                                               ip_version,
+                                              request,
                                               "--config-path",
                                               parameters,
                                               tag,
@@ -273,3 +347,59 @@ class NighthawkTestServer(TestServerBase):
     stdout, stderr = process.communicate()
     assert process.wait() == 0
     return stdout.decode("utf-8").strip()
+
+
+def _matchesAnyIgnoreListEntry(line, test_case_name, ignore_list):
+  """Determine if the line matches any of the ignore list entries for this test case.
+
+  Args:
+    line: A string, the logged line.
+    test_case_name: A string, name of the currently executed test case.
+    ignore_list: A list of _TestCaseWarnErrorIgnoreList instances, the ignore
+      lists to match against.
+
+  Returns:
+    A boolean, True if the logged line matches any of the ignore list entries,
+    False otherwise.
+  """
+  for test_case_ignore_list in ignore_list:
+    if not test_case_ignore_list.test_case_regexp.match(test_case_name):
+      continue
+    for ignore_message in test_case_ignore_list.ignore_list:
+      if ignore_message in line:
+        return True
+  return False
+
+
+def _extractWarningsAndErrors(process_output, test_case_name, ignore_list):
+  """Extract warnings and errors from the process_output.
+
+  Args:
+    process_output: A string, the stdout or stderr after running a process.
+    test_case_name: A string, the name of the current test case.
+    ignore_list: A list of _TestCaseWarnErrorIgnoreList instances, the message
+      pieces to ignore. If a message that was logged either at a WARNING or at
+      an ERROR severity contains one of these message pieces and should be
+      ignored for the current test case, it will be excluded from the return
+      values.
+
+  Returns:
+    A tuple of two lists of strings, the first list contains the warnings found
+    in the process_output and the second list contains the errors found in the
+    process_output.
+  """
+  warnings = []
+  errors = []
+  for line in process_output.split('\n'):
+    # Optimization - no need to examine lines that aren't errors or warnings.
+    if "[warning]" not in line and "[error]" not in line:
+      continue
+
+    if _matchesAnyIgnoreListEntry(line, test_case_name, ignore_list):
+      continue
+
+    if "[warning]" in line:
+      warnings.append(line)
+    elif "[error]" in line:
+      errors.append(line)
+  return warnings, errors
