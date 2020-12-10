@@ -95,7 +95,7 @@ _TEST_SERVER_WARN_ERROR_IGNORE_LIST = frozenset([
             "Double registration for type: 'nighthawk.server.ResponseOptions'",
 
             # Logged for normal termination, not really a warning.
-            "caught SIGTERM",
+            "caught ENVOY_SIGTERM",
         ),
     ),
 ])

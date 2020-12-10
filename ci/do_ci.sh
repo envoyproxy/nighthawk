@@ -234,14 +234,14 @@ case "$1" in
         exit 0
     ;;
     asan)
-        ENVOY_STDLIB=libc++
+        ENVOY_STDLIB=libstdc++
         setup_clang_toolchain
         do_sanitizer "rbe-toolchain-asan"
         exit 0
     ;;
     tsan)
         setup_clang_toolchain
-        do_sanitizer "rbe-toolchain-tsan"
+        do_sanitizer "clang-tsan"
         exit 0
     ;;
     docker)
