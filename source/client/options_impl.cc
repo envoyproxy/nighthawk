@@ -662,8 +662,9 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   allow_envoy_deprecated_v2_api_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(
       options, allow_envoy_deprecated_v2_api, allow_envoy_deprecated_v2_api_);
   if (options.has_scheduled_start()) {
-    const auto elapsed_since_epoch = std::chrono::nanoseconds(options.scheduled_start().nanos()) +
-                                     std::chrono::seconds(options.scheduled_start().seconds());
+    const auto elapsed_since_epoch = std::chrono::duration_cast<std::chrono::microseconds>(
+        std::chrono::nanoseconds(options.scheduled_start().nanos()) +
+        std::chrono::seconds(options.scheduled_start().seconds()));
     scheduled_start_ =
         Envoy::SystemTime(std::chrono::time_point<std::chrono::system_clock>(elapsed_since_epoch));
   }

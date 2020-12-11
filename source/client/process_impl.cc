@@ -53,8 +53,6 @@
 #include "client/options_impl.h"
 #include "client/sni_utility.h"
 
-#include "ares.h"
-
 using namespace std::chrono_literals;
 
 namespace Nighthawk {
@@ -66,14 +64,16 @@ class ClusterManagerFactory : public Envoy::Upstream::ProdClusterManagerFactory 
 public:
   using Envoy::Upstream::ProdClusterManagerFactory::ProdClusterManagerFactory;
 
-  Envoy::Http::ConnectionPool::InstancePtr allocateConnPool(
-      Envoy::Event::Dispatcher& dispatcher, Envoy::Upstream::HostConstSharedPtr host,
-      Envoy::Upstream::ResourcePriority priority, Envoy::Http::Protocol protocol,
-      const Envoy::Network::ConnectionSocket::OptionsSharedPtr& options,
-      const Envoy::Network::TransportSocketOptionsSharedPtr& transport_socket_options) override {
+  Envoy::Http::ConnectionPool::InstancePtr
+  allocateConnPool(Envoy::Event::Dispatcher& dispatcher, Envoy::Upstream::HostConstSharedPtr host,
+                   Envoy::Upstream::ResourcePriority priority, Envoy::Http::Protocol protocol,
+                   const Envoy::Network::ConnectionSocket::OptionsSharedPtr& options,
+                   const Envoy::Network::TransportSocketOptionsSharedPtr& transport_socket_options,
+                   Envoy::Upstream::ClusterConnectivityState& state) override {
     if (protocol == Envoy::Http::Protocol::Http11 || protocol == Envoy::Http::Protocol::Http10) {
       auto* h1_pool = new Http1PoolImpl(
           host, priority, dispatcher, options, transport_socket_options, api_.randomGenerator(),
+          state,
           [](Envoy::Http::HttpConnPoolImplBase* pool) {
             return std::make_unique<Envoy::Http::Http1::ActiveClient>(*pool);
           },
@@ -90,7 +90,7 @@ public:
       return Envoy::Http::ConnectionPool::InstancePtr{h1_pool};
     }
     return Envoy::Upstream::ProdClusterManagerFactory::allocateConnPool(
-        dispatcher, host, priority, protocol, options, transport_socket_options);
+        dispatcher, host, priority, protocol, options, transport_socket_options, state);
   }
 
   void setConnectionReuseStrategy(
@@ -126,7 +126,8 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
       singleton_manager_(std::make_unique<Envoy::Singleton::ManagerImpl>(api_->threadFactory())),
       access_log_manager_(std::chrono::milliseconds(1000), *api_, *dispatcher_, access_log_lock_,
                           store_root_),
-      init_watcher_("Nighthawk", []() {}), validation_context_(false, false, false) {
+      init_watcher_("Nighthawk", []() {}), validation_context_(false, false, false),
+      router_context_(store_root_.symbolTable()) {
   // Any dispatchers created after the following call will use hr timers.
   setupForHRTimers();
   std::string lower = absl::AsciiStrToLower(
@@ -298,6 +299,8 @@ void ProcessImpl::allowEnvoyDeprecatedV2Api(envoy::config::bootstrap::v3::Bootst
   proto_true.set_string_value("true");
   (*runtime_layer->mutable_static_layer()
         ->mutable_fields())["envoy.reloadable_features.enable_deprecated_v2_api"] = proto_true;
+  (*runtime_layer->mutable_static_layer()
+        ->mutable_fields())["envoy.reloadable_features.allow_prefetch"] = proto_true;
 }
 
 void ProcessImpl::createBootstrapConfiguration(envoy::config::bootstrap::v3::Bootstrap& bootstrap,
@@ -517,7 +520,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
         admin_, Envoy::Runtime::LoaderSingleton::get(), store_root_, tls_,
         dispatcher_->createDnsResolver({}, false), *ssl_context_manager_, *dispatcher_,
         *local_info_, secret_manager_, validation_context_, *api_, http_context_, grpc_context_,
-        access_log_manager_, *singleton_manager_);
+        router_context_, access_log_manager_, *singleton_manager_);
     cluster_manager_factory_->setConnectionReuseStrategy(
         options_.h1ConnectionReuseStrategy() == nighthawk::client::H1ConnectionReuseStrategy::LRU
             ? Http1PoolImpl::ConnectionReuseStrategy::LRU

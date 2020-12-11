@@ -57,11 +57,11 @@ Http1PoolImpl::newStream(Envoy::Http::ResponseDecoder& response_decoder,
   // In prefetch mode we try to keep the amount of connections at the configured limit.
   if (prefetch_connections_) {
     while (host_->cluster().resourceManager(priority_).connections().canCreate()) {
-      // We cannot rely on ::tryCreateConnection here, because that might decline without
-      // updating connections().canCreate() above. We would risk an infinite loop.
-      Envoy::ConnectionPool::ActiveClientPtr client = instantiateActiveClient();
-      connecting_stream_capacity_ += client->effectiveConcurrentStreamLimit();
-      Envoy::LinkedList::moveIntoList(std::move(client), owningList(client->state_));
+      // We pass in a high prefetch ratio, because we don't want to throttle the prefetched
+      // connection amount like Envoy does out of the box.
+      if (!tryCreateNewConnection(10000.0)) {
+        break;
+      }
     }
   }
 
