@@ -67,9 +67,10 @@ public:
         {":scheme", "http"}, {":method", "GET"}, {":path", "/"}, {":host", "localhost"}};
     default_header_map_ =
         (std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(header_map_param));
-    EXPECT_CALL(cluster_manager(), httpConnPoolForCluster(_, _, _, _))
-        .WillRepeatedly(Return(&pool_));
+    EXPECT_CALL(cluster_manager(), getThreadLocalCluster(_))
+        .WillRepeatedly(Return(&thread_local_cluster_));
     EXPECT_CALL(thread_local_cluster_, info()).WillRepeatedly(Return(cluster_info_));
+    EXPECT_CALL(thread_local_cluster_, httpConnPool(_, _, _)).WillRepeatedly(Return(&pool_));
 
     auto& tracer = static_cast<Envoy::Tracing::MockHttpTracer&>(*http_tracer_);
     EXPECT_CALL(tracer, startSpan_(_, _, _, _))
@@ -357,7 +358,7 @@ TEST_F(BenchmarkClientHttpTest, RequestMethodPost) {
     return std::make_unique<RequestImpl>(header);
   };
 
-  EXPECT_CALL(stream_encoder_, encodeData(_, _)).Times(1);
+  EXPECT_CALL(stream_encoder_, encodeData(_, _));
   auto client_setup_parameters = ClientSetupParameters(1, 1, 1, request_generator);
   verifyBenchmarkClientProcessesExpectedInflightRequests(client_setup_parameters);
   EXPECT_EQ(1, getCounter("http_2xx"));

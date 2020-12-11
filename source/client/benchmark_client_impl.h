@@ -137,8 +137,9 @@ public:
   // Helpers
   Envoy::Http::ConnectionPool::Instance* pool() {
     auto proto = use_h2_ ? Envoy::Http::Protocol::Http2 : Envoy::Http::Protocol::Http11;
-    return cluster_manager_->httpConnPoolForCluster(
-        cluster_name_, Envoy::Upstream::ResourcePriority::Default, proto, nullptr);
+    const auto thread_local_cluster = cluster_manager_->getThreadLocalCluster(cluster_name_);
+    return thread_local_cluster->httpConnPool(Envoy::Upstream::ResourcePriority::Default, proto,
+                                              nullptr);
   }
 
 private:
