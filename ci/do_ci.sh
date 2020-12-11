@@ -234,9 +234,8 @@ case "$1" in
         exit 0
     ;;
     asan)
-        ENVOY_STDLIB=libc++
         setup_clang_toolchain
-        do_sanitizer "rbe-toolchain-asan"
+        do_sanitizer "clang-asan"
         exit 0
     ;;
     tsan)

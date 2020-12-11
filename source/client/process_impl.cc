@@ -53,8 +53,6 @@
 #include "client/options_impl.h"
 #include "client/sni_utility.h"
 
-#include "ares.h"
-
 using namespace std::chrono_literals;
 
 namespace Nighthawk {
