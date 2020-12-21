@@ -66,10 +66,18 @@ public:
 
   Envoy::Http::ConnectionPool::InstancePtr
   allocateConnPool(Envoy::Event::Dispatcher& dispatcher, Envoy::Upstream::HostConstSharedPtr host,
-                   Envoy::Upstream::ResourcePriority priority, Envoy::Http::Protocol protocol,
+                   Envoy::Upstream::ResourcePriority priority,
+                   std::vector<Envoy::Http::Protocol>& protocols,
                    const Envoy::Network::ConnectionSocket::OptionsSharedPtr& options,
                    const Envoy::Network::TransportSocketOptionsSharedPtr& transport_socket_options,
                    Envoy::Upstream::ClusterConnectivityState& state) override {
+    // This changed in
+    // https://github.com/envoyproxy/envoy/commit/93ee668a690d297ab5e8bd2cbf03771d852ebbda ALPN may
+    // be set up to negotiate a protocol, in which case we'd need a HttpConnPoolImplMixed. However,
+    // our integration tests pass, and for now this might suffice. In case we do run into the need
+    // for supporting multiple procols in a single pool, ensure we hear about it soon, by asserting.
+    RELEASE_ASSERT(protocols.size() == 1, "Expected a single protocol in protocols vector.");
+    const Envoy::Http::Protocol& protocol = protocols[0];
     if (protocol == Envoy::Http::Protocol::Http11 || protocol == Envoy::Http::Protocol::Http10) {
       auto* h1_pool = new Http1PoolImpl(
           host, priority, dispatcher, options, transport_socket_options, api_.randomGenerator(),
@@ -84,13 +92,13 @@ public:
                 data.host_description_, pool->dispatcher(), pool->randomGenerator())};
             return codec;
           },
-          std::vector<Envoy::Http::Protocol>{protocol});
+          protocols);
       h1_pool->setConnectionReuseStrategy(connection_reuse_strategy_);
       h1_pool->setPrefetchConnections(prefetch_connections_);
       return Envoy::Http::ConnectionPool::InstancePtr{h1_pool};
     }
     return Envoy::Upstream::ProdClusterManagerFactory::allocateConnPool(
-        dispatcher, host, priority, protocol, options, transport_socket_options, state);
+        dispatcher, host, priority, protocols, options, transport_socket_options, state);
   }
 
   void setConnectionReuseStrategy(

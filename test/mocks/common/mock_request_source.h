@@ -9,8 +9,8 @@ namespace Nighthawk {
 class MockRequestSource : public RequestSource {
 public:
   MockRequestSource();
-  MOCK_METHOD0(get, RequestGenerator());
-  MOCK_METHOD0(initOnThread, void());
+  MOCK_METHOD(RequestGenerator, get, ());
+  MOCK_METHOD(void, initOnThread, ());
 };
 
 } // namespace Nighthawk
