@@ -10,6 +10,9 @@
 #include "gtest/gtest.h"
 
 namespace Nighthawk {
+namespace {
+
+using ::testing::HasSubstr;
 
 const Envoy::Http::LowerCaseString kDelayHeaderString("x-envoy-fault-delay-request");
 
@@ -38,6 +41,22 @@ public:
 INSTANTIATE_TEST_SUITE_P(IpVersions, HttpDynamicDelayIntegrationTest,
                          testing::ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()));
 
+TEST_P(HttpDynamicDelayIntegrationTest,
+       DiesWhenBothEnvoyApiV2AndV3ResponseHeadersAreSetInConfiguration) {
+  const std::string invalid_configuration = R"EOF(
+  name: dynamic-delay
+  typed_config:
+    "@type": type.googleapis.com/nighthawk.server.ResponseOptions
+    response_headers:
+      - { header: { key: "key1", value: "value1"} }
+    v3_response_headers:
+      - { header: { key: "key1", value: "value1"} }
+  )EOF";
+
+  ASSERT_DEATH(initializeFilterConfiguration(invalid_configuration),
+               HasSubstr("cannot specify both response_headers and v3_response_headers"));
+}
+
 // Verify expectations with an empty dynamic-delay configuration.
 TEST_P(HttpDynamicDelayIntegrationTest, NoStaticConfiguration) {
   initializeFilterConfiguration(R"(
@@ -48,19 +67,21 @@ typed_config:
   // Don't send any config request header ...
   getResponse(ResponseOrigin::UPSTREAM);
   // ... we shouldn't observe any delay being requested via the upstream request headers.
-  EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString), nullptr);
+  EXPECT_TRUE(upstream_request_->headers().get(kDelayHeaderString).empty());
 
   // Send a config request header with an empty / default configuration ....
   setRequestLevelConfiguration("{}");
   getResponse(ResponseOrigin::UPSTREAM);
   // ... we shouldn't observe any delay being requested via the upstream request headers.
-  EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString), nullptr);
+  EXPECT_TRUE(upstream_request_->headers().get(kDelayHeaderString).empty());
 
   // Send a config request header requesting a 1.6s delay...
   setRequestLevelConfiguration("{static_delay: \"1.6s\"}");
   getResponse(ResponseOrigin::UPSTREAM);
   // ...we should observe a delay of 1.6s in the upstream request.
-  EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString)->value().getStringView(), "1600");
+  ASSERT_EQ(upstream_request_->headers().get(kDelayHeaderString).size(), 1);
+  EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString)[0]->value().getStringView(),
+            "1600");
 }
 
 // Verify expectations with static/file-based static_delay configuration.
@@ -75,13 +96,17 @@ typed_config:
   // Without any request-level configuration, we expect the statically configured static delay to
   // apply.
   getResponse(ResponseOrigin::UPSTREAM);
-  EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString)->value().getStringView(), "1330");
+  ASSERT_EQ(upstream_request_->headers().get(kDelayHeaderString).size(), 1);
+  EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString)[0]->value().getStringView(),
+            "1330");
 
   // With an empty request-level configuration, we expect the statically configured static delay to
   // apply.
   setRequestLevelConfiguration("{}");
   getResponse(ResponseOrigin::UPSTREAM);
-  EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString)->value().getStringView(), "1330");
+  ASSERT_EQ(upstream_request_->headers().get(kDelayHeaderString).size(), 1);
+  EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString)[0]->value().getStringView(),
+            "1330");
 
   // Overriding the statically configured static delay via request-level configuration should be
   // reflected in the output.
@@ -92,7 +117,7 @@ typed_config:
   // However, the seconds part is set to '0', which equates to the default of the underlying int
   // type, and the fact that we are using proto3, which doesn't merge default values.
   // Hence the following expectation will fail, as it yields 1200 instead of the expected 200.
-  // EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString)->value().getStringView(),
+  // EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString)[0]->value().getStringView(),
   // "200");
 
   // Overriding the statically configured static delay via request-level configuration should be
@@ -100,7 +125,9 @@ typed_config:
   setRequestLevelConfiguration("{static_delay: \"2.2s\"}");
   getResponse(ResponseOrigin::UPSTREAM);
   // 2.2 seconds -> 2200 ms.
-  EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString)->value().getStringView(), "2200");
+  ASSERT_EQ(upstream_request_->headers().get(kDelayHeaderString).size(), 1);
+  EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString)[0]->value().getStringView(),
+            "2200");
 }
 
 // Verify expectations with static/file-based concurrency_based_linear_delay configuration.
@@ -116,7 +143,8 @@ typed_config:
   getResponse(ResponseOrigin::UPSTREAM);
   // Based on the algorithm of concurrency_based_linear_delay, for the first request we expect to
   // observe the configured minimal_delay + concurrency_delay_factor = 0.06s -> 60ms.
-  EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString)->value().getStringView(), "60");
+  ASSERT_EQ(upstream_request_->headers().get(kDelayHeaderString).size(), 1);
+  EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString)[0]->value().getStringView(), "60");
 }
 
 class ComputeTest : public testing::Test {
@@ -148,4 +176,5 @@ TEST_F(ComputeTest, ComputeConcurrencyBasedLinearDelayMs) {
   EXPECT_EQ(compute(4, 1, 500000, 1, 500000), 5003);
 }
 
+} // namespace
 } // namespace Nighthawk

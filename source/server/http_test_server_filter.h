@@ -6,17 +6,15 @@
 
 #include "api/server/response_options.pb.h"
 
+#include "server/http_filter_config_base.h"
+
 namespace Nighthawk {
 namespace Server {
 
 // Basically this is left in as a placeholder for further configuration.
-class HttpTestServerDecoderFilterConfig {
+class HttpTestServerDecoderFilterConfig : public FilterConfigurationBase {
 public:
-  HttpTestServerDecoderFilterConfig(nighthawk::server::ResponseOptions proto_config);
-  const nighthawk::server::ResponseOptions& server_config() { return server_config_; }
-
-private:
-  const nighthawk::server::ResponseOptions server_config_;
+  HttpTestServerDecoderFilterConfig(const nighthawk::server::ResponseOptions& proto_config);
 };
 
 using HttpTestServerDecoderFilterConfigSharedPtr =
@@ -36,12 +34,9 @@ public:
   void setDecoderFilterCallbacks(Envoy::Http::StreamDecoderFilterCallbacks&) override;
 
 private:
-  void sendReply();
+  void sendReply(const nighthawk::server::ResponseOptions& options);
   const HttpTestServerDecoderFilterConfigSharedPtr config_;
   Envoy::Http::StreamDecoderFilterCallbacks* decoder_callbacks_;
-  nighthawk::server::ResponseOptions base_config_;
-  bool json_merge_error_{false};
-  std::string error_message_;
   absl::optional<std::string> request_headers_dump_;
 };
 

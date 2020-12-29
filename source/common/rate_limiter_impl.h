@@ -1,5 +1,6 @@
 #pragma once
 
+#include <list>
 #include <random>
 
 #include "envoy/common/time.h"
@@ -29,14 +30,20 @@ public:
     // TODO(oschaaf): consider adding an explicit start() call to the interface.
     const auto now = time_source_.monotonicTime();
     if (start_time_ == absl::nullopt) {
+      first_acquisition_time_ = time_source_.systemTime();
       start_time_ = now;
     }
     return now - start_time_.value();
   }
 
+  absl::optional<Envoy::SystemTime> firstAcquisitionTime() const override {
+    return first_acquisition_time_;
+  }
+
 private:
   Envoy::TimeSource& time_source_;
   absl::optional<Envoy::MonotonicTime> start_time_;
+  absl::optional<Envoy::SystemTime> first_acquisition_time_;
 };
 
 /**
@@ -85,6 +92,9 @@ public:
       : rate_limiter_(std::move(rate_limiter)) {}
   Envoy::TimeSource& timeSource() override { return rate_limiter_->timeSource(); }
   std::chrono::nanoseconds elapsed() override { return rate_limiter_->elapsed(); }
+  absl::optional<Envoy::SystemTime> firstAcquisitionTime() const override {
+    return rate_limiter_->firstAcquisitionTime();
+  }
 
 protected:
   const RateLimiterPtr rate_limiter_;
@@ -156,7 +166,9 @@ protected:
   const RateLimiterDelegate random_distribution_generator_;
 
 private:
-  absl::optional<Envoy::MonotonicTime> distributed_start_;
+  std::list<Envoy::MonotonicTime> distributed_timings_;
+  // Used to enforce that releaseOne() is always paired with a successfull tryAcquireOne().
+  bool sanity_check_pending_release_{true};
 };
 
 class UniformRandomDistributionSamplerImpl : public DiscreteNumericDistributionSampler {

@@ -190,7 +190,8 @@
      "value": "1"
     }
    ],
-   "execution_duration": "1s"
+   "execution_duration": "1s",
+   "execution_start": "2009-02-13T23:31:31.567Z"
   },
   {
    "name": "worker_1",
@@ -558,7 +559,8 @@
      "value": "1"
     }
    ],
-   "execution_duration": "1s"
+   "execution_duration": "1s",
+   "execution_start": "2009-02-13T23:31:31.567Z"
   }
  ],
  "version": {

@@ -21,9 +21,11 @@ void StreamDecoder::decodeHeaders(Envoy::Http::ResponseHeaderMapPtr&& headers, b
   stream_info_.response_code_ = static_cast<uint32_t>(response_code);
   if (!latency_response_header_name_.empty()) {
     const auto timing_header_name = Envoy::Http::LowerCaseString(latency_response_header_name_);
-    const Envoy::Http::HeaderEntry* timing_header = response_headers_->get(timing_header_name);
-    if (timing_header != nullptr) {
-      absl::string_view timing_value = timing_header->value().getStringView();
+    const Envoy::Http::HeaderMap::GetResult& timing_header =
+        response_headers_->get(timing_header_name);
+    if (!timing_header.empty()) {
+      absl::string_view timing_value =
+          timing_header.size() == 1 ? timing_header[0]->value().getStringView() : "multiple values";
       int64_t origin_delta;
       if (absl::SimpleAtoi(timing_value, &origin_delta) && origin_delta >= 0) {
         origin_latency_statistic_.addValue(origin_delta);
@@ -101,11 +103,19 @@ void StreamDecoder::onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason
 
 void StreamDecoder::onPoolReady(Envoy::Http::RequestEncoder& encoder,
                                 Envoy::Upstream::HostDescriptionConstSharedPtr,
-                                const Envoy::StreamInfo::StreamInfo&) {
+                                const Envoy::StreamInfo::StreamInfo&,
+                                absl::optional<Envoy::Http::Protocol>) {
   // Make sure we hear about stream resets on the encoder.
   encoder.getStream().addCallbacks(*this);
   upstream_timing_.onFirstUpstreamTxByteSent(time_source_); // XXX(oschaaf): is this correct?
-  encoder.encodeHeaders(*request_headers_, request_body_size_ == 0);
+  const Envoy::Http::Status status =
+      encoder.encodeHeaders(*request_headers_, request_body_size_ == 0);
+  if (!status.ok()) {
+    ENVOY_LOG_EVERY_POW_2(error,
+                          "Request header encoding failure. Might be missing one or more required "
+                          "HTTP headers in {}.",
+                          request_headers_);
+  }
   if (request_body_size_ > 0) {
     // TODO(https://github.com/envoyproxy/nighthawk/issues/138): This will show up in the zipkin UI
     // as 'response_size'. We add it here, optimistically assuming it will all be send. Ideally,
@@ -142,6 +152,7 @@ StreamDecoder::streamResetReasonToResponseFlag(Envoy::Http::StreamResetReason re
     return Envoy::StreamInfo::ResponseFlag::LocalReset;
   case Envoy::Http::StreamResetReason::Overflow:
     return Envoy::StreamInfo::ResponseFlag::UpstreamOverflow;
+  case Envoy::Http::StreamResetReason::ConnectError:
   case Envoy::Http::StreamResetReason::RemoteReset:
   case Envoy::Http::StreamResetReason::RemoteRefusedStreamReset:
     return Envoy::StreamInfo::ResponseFlag::UpstreamRemoteReset;

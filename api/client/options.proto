@@ -3,10 +3,12 @@ syntax = "proto3";
 package nighthawk.client;
 
 import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
 import "envoy/config/core/v3/base.proto";
 import "envoy/config/metrics/v3/stats.proto";
 import "envoy/extensions/transport_sockets/tls/v3/cert.proto";
+import "envoy/config/core/v3/extension.proto";
 import "validate/validate.proto";
 
 // Allows for static configuration of requests that should be send by the load generator.
@@ -16,6 +18,12 @@ message RequestOptions {
   // Our StreamDecoder depends on bounding the size here, so if this changes, an amendment
   // to that is needed as well.
   google.protobuf.UInt32Value request_body_size = 3 [(validate.rules).uint32 = {lte: 4194304}];
+}
+
+// Used for providing multiple request options, especially for RequestSourcePlugins.
+message RequestOptionsList {
+  // Each option is used for a separate request to be sent by the requestSource.
+  repeated RequestOptions options = 1;
 }
 
 // Configures a remote gRPC source that will deliver to-be-replayed request data to Nighthawks
@@ -98,6 +106,7 @@ message H1ConnectionReuseStrategy {
 
 // TODO(oschaaf): Ultimately this will be a load test specification. The fact that it
 // can arrive via CLI is just a concrete detail. Change this to reflect that.
+// highest unused number is 39
 message CommandLineOptions {
   // The target requests-per-second rate. Default: 5.
   google.protobuf.UInt32Value requests_per_second = 1
@@ -142,6 +151,9 @@ message CommandLineOptions {
     // Remote gRPC source that will deliver to-be-replayed traffic. Each worker will separately
     // connect to this source.
     RequestSource request_source = 26;
+    // A plugin config that is to be parsed by a RequestSourcePluginConfigFactory and used to create
+    // an in memory request source.
+    envoy.config.core.v3.TypedExtensionConfig request_source_plugin_config = 37;
   }
   // DEPRECATED, use --transport-socket instead. Tls context configuration in json or compact yaml.
   // Mutually exclusive with --transport-socket.
@@ -208,4 +220,9 @@ message CommandLineOptions {
   // "emit_previous_request_delta_in_response_header" to record elapsed time between request
   // arrivals.
   google.protobuf.StringValue latency_response_header_name = 36;
+  // Set to allow usage of the v2 api. (Not recommended, support will stop in Q1 2021).
+  google.protobuf.BoolValue allow_envoy_deprecated_v2_api = 38 [deprecated = true];
+  // Provide an execution starting date and time. Optional, any value specified must be in the
+  // future.
+  google.protobuf.Timestamp scheduled_start = 105;
 }

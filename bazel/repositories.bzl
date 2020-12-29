@@ -1,17 +1,19 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-ENVOY_COMMIT = "9eeba8fd427d9bd0ef947ec14a3157083cc7bf0e"  # September 17th, 2020
-ENVOY_SHA = "4537bde6652ea00db9b45c126c0519619909bc0d79c6ede02d68a8782f8c1c67"
+ENVOY_COMMIT = "867b9e23d2e48350bd1b0d1fbc392a8355f20e35"  # December 20th, 2020
+ENVOY_SHA = "b98a88bbff0c64ff08f88d2a4379dd708d1df012424d6b65c7e32773ce249a53"
 
-HDR_HISTOGRAM_C_VERSION = "0.11.1"  # September 17th, 2020
-HDR_HISTOGRAM_C_SHA = "8550071d4ae5c8229448f9b68469d6d42c620cd25111b49c696d00185e5f8329"
+HDR_HISTOGRAM_C_VERSION = "0.11.2"  # October 12th, 2020
+HDR_HISTOGRAM_C_SHA = "637f28b5f64de2e268131e4e34e6eef0b91cf5ff99167db447d9b2825eae6bad"
 
 def nighthawk_dependencies():
     http_archive(
         name = "envoy",
         sha256 = ENVOY_SHA,
         strip_prefix = "envoy-%s" % ENVOY_COMMIT,
+        # // clang-format off: Envoy's format check: Only repository_locations.bzl may contains URL references
         url = "https://github.com/envoyproxy/envoy/archive/%s.tar.gz" % ENVOY_COMMIT,
+        # // clang-format on
     )
     http_archive(
         name = "dep_hdrhistogram_c",
@@ -50,5 +52,7 @@ cc_library(
   """,
         sha256 = HDR_HISTOGRAM_C_SHA,
         strip_prefix = "HdrHistogram_c-%s" % HDR_HISTOGRAM_C_VERSION,
+        # // clang-format off
         url = "https://github.com/HdrHistogram/HdrHistogram_c/archive/%s.tar.gz" % HDR_HISTOGRAM_C_VERSION,
+        # // clang-format on
     )
