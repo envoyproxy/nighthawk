@@ -75,9 +75,9 @@ public:
    *
    * @param collector output collector implementation which will collect and hold the native output
    * format.
-   * @return true iff execution should be considered successful.
+   * @return OK if execution should be considered successful, otherwise a summary of the error.
    */
-  bool run(OutputCollector& collector) override;
+  absl::Status run(OutputCollector& collector) override;
 
   /**
    * Should be called before destruction to cleanly shut down.
@@ -131,9 +131,9 @@ private:
    */
   void setupStatsSinks(const envoy::config::bootstrap::v3::Bootstrap& bootstrap,
                        std::list<std::unique_ptr<Envoy::Stats::Sink>>& stats_sinks);
-  bool runInternal(OutputCollector& collector, const std::vector<UriPtr>& uris,
-                   const UriPtr& request_source_uri, const UriPtr& tracing_uri,
-                   const absl::optional<Envoy::SystemTime>& schedule);
+  absl::Status runInternal(OutputCollector& collector, const std::vector<UriPtr>& uris,
+                           const UriPtr& request_source_uri, const UriPtr& tracing_uri,
+                           const absl::optional<Envoy::SystemTime>& schedule);
 
   /**
    * Compute the offset at which execution should start. We adhere to the scheduled start passed in

@@ -93,7 +93,7 @@ public:
       }
     }
     const auto result =
-        process->run(collector) ? RunExpectation::EXPECT_SUCCESS : RunExpectation::EXPECT_FAILURE;
+        process->run(collector).ok() ? RunExpectation::EXPECT_SUCCESS : RunExpectation::EXPECT_FAILURE;
     EXPECT_EQ(result, expectation);
     if (do_cancel) {
       if (cancel_thread.joinable()) {
@@ -229,9 +229,9 @@ protected:
     auto run_thread = std::thread([this, &verify_callback] {
       ProcessPtr process = std::make_unique<ProcessImpl>(*options_, simTime());
       OutputCollectorImpl collector(simTime(), *options_);
-      const bool result = process->run(collector);
+      const absl::Status result = process->run(collector);
       process->shutdown();
-      verify_callback(result, collector.toProto());
+      verify_callback(result.ok(), collector.toProto());
     });
 
     // We introduce real-world sleeps to give the executing ProcessImpl

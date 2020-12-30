@@ -28,6 +28,7 @@
 #include "external/envoy/source/common/thread_local/thread_local_impl.h"
 #include "external/envoy/source/server/server.h"
 
+#include "absl/status/status.h"
 #include "absl/strings/str_replace.h"
 #include "absl/types/optional.h"
 
@@ -490,18 +491,18 @@ void ProcessImpl::setupStatsSinks(const envoy::config::bootstrap::v3::Bootstrap&
   }
 }
 
-bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriPtr>& uris,
-                              const UriPtr& request_source_uri, const UriPtr& tracing_uri,
-                              const absl::optional<Envoy::SystemTime>& scheduled_start) {
+absl::Status ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriPtr>& uris,
+                                      const UriPtr& request_source_uri, const UriPtr& tracing_uri,
+                                      const absl::optional<Envoy::SystemTime>& scheduled_start) {
   const Envoy::SystemTime now = time_system_.systemTime();
   if (scheduled_start.value_or(now) < now) {
     ENVOY_LOG(error, "Scheduled execution date already transpired.");
-    return false;
+    return absl::InternalError("Scheduled execution date already transpired.");
   }
   {
     auto guard = std::make_unique<Envoy::Thread::LockGuard>(workers_lock_);
     if (cancelled_) {
-      return true;
+      return absl::OkStatus();
     }
     int number_of_workers = determineConcurrency();
     shutdown_ = false;
@@ -610,17 +611,25 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
   StatisticFactoryImpl statistic_factory(options_);
   collector.addResult("global", mergeWorkerStatistics(workers_), counters,
                       total_execution_duration / workers_.size(), first_acquisition_time);
-  return counters.find("sequencer.failed_terminations") == counters.end();
+  if (counters.find("sequencer.failed_terminations") != counters.end()) {
+    return absl::InternalError(
+        "Terminated early because of a failure predicate. Check the output for "
+        "problematic counter values. The default Nighthawk failure predicates "
+        "report failure if Nighthawk could not connect to the target (check "
+        "port number or and http/https protocol), the target returned a 4xx "
+        "or 5xx HTTP response code, or a custom gRPC RequestSource failed. See "
+        "--failure-predicate to relax expectations.");
+  }
+  return absl::OkStatus();
 }
 
-bool ProcessImpl::run(OutputCollector& collector) {
+absl::Status ProcessImpl::run(OutputCollector& collector) {
   std::vector<UriPtr> uris;
   UriPtr request_source_uri;
   UriPtr tracing_uri;
 
   try {
-    // TODO(oschaaf): See if we can rid of resolving here.
-    // We now only do it to validate.
+    // Resolving URIs validates the syntax and also detects DNS errors.
     if (options_.uri().has_value()) {
       uris.push_back(std::make_unique<UriImpl>(options_.uri().value()));
     } else {
@@ -644,8 +653,11 @@ bool ProcessImpl::run(OutputCollector& collector) {
       tracing_uri->resolve(*dispatcher_,
                            Utility::translateFamilyOptionString(options_.addressFamily()));
     }
-  } catch (const UriException&) {
-    return false;
+  } catch (const UriException& ex) {
+    return absl::InvalidArgumentError(
+        absl::StrCat("URI exception (for example, malformed URI syntax, bad "
+                     "MultiTarget path, unresolvable host DNS): ",
+                     ex.what()));
   }
 
   try {
@@ -653,7 +665,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
                        options_.scheduled_start());
   } catch (Envoy::EnvoyException& ex) {
     ENVOY_LOG(error, "Fatal exception: {}", ex.what());
-    throw;
+    return absl::InternalError(absl::StrCat("Fatal exception: ", ex.what()));
   }
 }
 

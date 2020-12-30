@@ -74,7 +74,7 @@ bool Main::run() {
   }
   OutputFormatterFactoryImpl output_formatter_factory;
   OutputCollectorImpl output_collector(time_system, *options_);
-  bool result;
+  absl::Status result;
   {
     auto signal_handler =
         std::make_unique<SignalHandler>([&process]() { process->requestExecutionCancellation(); });
@@ -83,12 +83,13 @@ bool Main::run() {
   auto formatter = output_formatter_factory.create(options_->outputFormat());
   std::cout << formatter->formatProto(output_collector.toProto());
   process->shutdown();
-  if (!result) {
-    ENVOY_LOG(error, "An error ocurred.");
+  if (!result.ok()) {
+    ENVOY_LOG(error, "An error occurred: {}.", result.message());
+    return false;
   } else {
     ENVOY_LOG(info, "Done.");
+    return true;
   }
-  return result;
 }
 
 } // namespace Client

@@ -37,12 +37,10 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
 
   ProcessImpl process(*options, time_system_, process_wide_);
   OutputCollectorImpl output_collector(time_system_, *options);
-  const bool ok = process.run(output_collector);
-  if (!ok) {
-    response.mutable_error_detail()->set_code(grpc::StatusCode::INTERNAL);
-    // TODO(https://github.com/envoyproxy/nighthawk/issues/181): wire through error descriptions, so
-    // we can do better here.
-    response.mutable_error_detail()->set_message("Unknown failure");
+  const absl::Status run_status = process.run(output_collector);
+  if (!run_status.ok()) {
+    response.mutable_error_detail()->set_code(static_cast<int>(run_status.code()));
+    response.mutable_error_detail()->set_message(std::string(run_status.message()));
   }
   *(response.mutable_output()) = output_collector.toProto();
   process.shutdown();

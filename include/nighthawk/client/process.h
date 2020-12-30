@@ -2,6 +2,8 @@
 
 #include "nighthawk/client/output_collector.h"
 
+#include "absl/status/status.h"
+
 namespace Nighthawk {
 namespace Client {
 
@@ -15,9 +17,9 @@ public:
 
   /**
    * @param collector used to transform output into the desired format.
-   * @return bool true iff execution was successfull.
+   * @return OK if execution was successful, otherwise error details.
    */
-  virtual bool run(OutputCollector& collector) PURE;
+  virtual absl::Status run(OutputCollector& collector) PURE;
 
   /**
    * Shuts down the worker. Mandatory call before destructing.

@@ -13,6 +13,7 @@
 #include "common/uri_impl.h"
 
 #include "client/options_impl.h"
+#include "absl/status/status.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -22,7 +23,7 @@ RemoteProcessImpl::RemoteProcessImpl(const Options& options,
     : options_(options), service_client_(std::make_unique<NighthawkServiceClientImpl>()),
       stub_(stub) {}
 
-bool RemoteProcessImpl::run(OutputCollector& collector) {
+absl::Status RemoteProcessImpl::run(OutputCollector& collector) {
   Nighthawk::Client::CommandLineOptionsPtr options = options_.toCommandLineOptions();
   // We don't forward the option that requests remote execution. Today,
   // nighthawk_service will ignore the option, but if someone ever changes that this
@@ -33,10 +34,11 @@ bool RemoteProcessImpl::run(OutputCollector& collector) {
       service_client_->PerformNighthawkBenchmark(&stub_, *options);
   if (result.ok()) {
     collector.setOutput(result.value().output());
-    return true;
+    return absl::OkStatus();
   }
   ENVOY_LOG(error, "Remote execution failure: {}", result.status().message());
-  return false;
+  return absl::Status(static_cast<absl::StatusCode>(result.status().code()),
+      absl::StrCat("Remote execution failure: ", result.status().message()));
 }
 
 bool RemoteProcessImpl::requestExecutionCancellation() {
