@@ -92,8 +92,8 @@ public:
         cancel_thread.join();
       }
     }
-    const auto result =
-        process->run(collector).ok() ? RunExpectation::EXPECT_SUCCESS : RunExpectation::EXPECT_FAILURE;
+    const auto result = process->run(collector).ok() ? RunExpectation::EXPECT_SUCCESS
+                                                     : RunExpectation::EXPECT_FAILURE;
     EXPECT_EQ(result, expectation);
     if (do_cancel) {
       if (cancel_thread.joinable()) {

@@ -13,6 +13,7 @@
 #include "common/uri_impl.h"
 
 #include "client/options_impl.h"
+
 #include "absl/status/status.h"
 
 namespace Nighthawk {
@@ -38,7 +39,7 @@ absl::Status RemoteProcessImpl::run(OutputCollector& collector) {
   }
   ENVOY_LOG(error, "Remote execution failure: {}", result.status().message());
   return absl::Status(static_cast<absl::StatusCode>(result.status().code()),
-      absl::StrCat("Remote execution failure: ", result.status().message()));
+                      absl::StrCat("Remote execution failure: ", result.status().message()));
 }
 
 bool RemoteProcessImpl::requestExecutionCancellation() {

@@ -90,7 +90,7 @@ public:
     options->mutable_requests_per_second()->set_value(3);
   }
 
-  void runWithFailingValidationExpectations(bool expect_output,
+  void runWithFailingValidationExpectations(bool expect_output, int expected_error_code,
                                             absl::string_view match_error = "") {
     auto r = stub_->ExecutionStream(&context_);
     r->Write(request_, {});
@@ -100,7 +100,7 @@ public:
     ASSERT_FALSE(match_error.empty());
     EXPECT_TRUE(response_.has_error_detail());
     EXPECT_EQ(response_.has_output(), expect_output);
-    EXPECT_EQ(::grpc::StatusCode::INTERNAL, response_.error_detail().code());
+    EXPECT_EQ(response_.error_detail().code(), expected_error_code);
     EXPECT_THAT(response_.error_detail().message(), HasSubstr(std::string(match_error)));
     EXPECT_TRUE(status.ok());
   }
@@ -149,7 +149,7 @@ TEST_P(ServiceTestWithParameterizedConstructor,
   stream->WritesDone();
   EXPECT_TRUE(stream->Read(&response_));
   ASSERT_TRUE(response_.has_error_detail());
-  EXPECT_THAT(response_.error_detail().message(), HasSubstr(std::string("Unknown failure")));
+  EXPECT_THAT(response_.error_detail().message(), HasSubstr(std::string("failure predicate")));
   EXPECT_TRUE(response_.has_output());
   EXPECT_GE(response_.output().results(0).counters().size(), 8);
   ::grpc::Status status = stream->Finish();
@@ -167,7 +167,7 @@ TEST_P(ServiceTest, Basic) {
   r->WritesDone();
   EXPECT_TRUE(r->Read(&response_));
   ASSERT_TRUE(response_.has_error_detail());
-  EXPECT_THAT(response_.error_detail().message(), HasSubstr(std::string("Unknown failure")));
+  EXPECT_THAT(response_.error_detail().message(), HasSubstr(std::string("failure predicate")));
   EXPECT_TRUE(response_.has_output());
   EXPECT_GE(response_.output().results(0).counters().size(), 8);
   auto status = r->Finish();
@@ -183,7 +183,7 @@ TEST_P(ServiceTest, NoConcurrentStart) {
   EXPECT_TRUE(r->WritesDone());
   EXPECT_TRUE(r->Read(&response_));
   ASSERT_TRUE(response_.has_error_detail());
-  EXPECT_THAT(response_.error_detail().message(), HasSubstr(std::string("Unknown failure")));
+  EXPECT_THAT(response_.error_detail().message(), HasSubstr(std::string("failure predicate")));
   EXPECT_TRUE(response_.has_output());
   EXPECT_FALSE(r->Read(&response_));
   auto status = r->Finish();
@@ -207,7 +207,8 @@ TEST_P(ServiceTest, InvalidRps) {
   options->mutable_requests_per_second()->set_value(0);
   // We do not expect output, because the options proto is not valid, and can't be echoed back.
   runWithFailingValidationExpectations(
-      false, "CommandLineOptionsValidationError.RequestsPerSecond: [\"value must be inside range");
+      false, ::grpc::StatusCode::INTERNAL,
+      "CommandLineOptionsValidationError.RequestsPerSecond: [\"value must be inside range");
 }
 
 // We didn't implement updates yet, ensure we indicate so.
@@ -240,7 +241,7 @@ TEST_P(ServiceTest, Unresolvable) {
   auto options = request_.mutable_start_request()->mutable_options();
   options->mutable_uri()->set_value("http://unresolvable-host/");
   // We expect output, because the options proto is valid.
-  runWithFailingValidationExpectations(true, "Unknown failure");
+  runWithFailingValidationExpectations(true, ::grpc::StatusCode::INVALID_ARGUMENT, "URI exception");
 }
 
 } // namespace
