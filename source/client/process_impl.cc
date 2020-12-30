@@ -616,8 +616,8 @@ absl::Status ProcessImpl::runInternal(OutputCollector& collector, const std::vec
         "Terminated early because of a failure predicate. Check the output for "
         "problematic counter values. The default Nighthawk failure predicates "
         "report failure if Nighthawk could not connect to the target (check "
-        "port number or and http/https protocol), the target returned a 4xx "
-        "or 5xx HTTP response code, or a custom gRPC RequestSource failed. See "
+        "port number or http/https protocol), the target returned a 4xx or "
+        "5xx HTTP response code, or a custom gRPC RequestSource failed. See "
         "--failure-predicate to relax expectations.");
   }
   return absl::OkStatus();
