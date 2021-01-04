@@ -86,10 +86,9 @@ bool Main::run() {
   if (!result.ok()) {
     ENVOY_LOG(error, "An error occurred: {}.", result.message());
     return false;
-  } else {
-    ENVOY_LOG(info, "Done.");
-    return true;
   }
+  ENVOY_LOG(info, "Done.");
+  return true;
 }
 
 } // namespace Client
