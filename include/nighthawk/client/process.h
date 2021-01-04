@@ -17,7 +17,7 @@ public:
 
   /**
    * @param collector used to transform output into the desired format.
-   * @return OK if execution was successful, otherwise error details.
+   * @return OK if execution succeeded or was cancelled, otherwise error details.
    */
   virtual absl::Status run(OutputCollector& collector) PURE;
 
