@@ -75,8 +75,7 @@ public:
    *
    * @param collector output collector implementation which will collect and hold the native output
    * format.
-   * @return OK if execution should be considered successful (including if it was cancelled),
-   * otherwise a summary of the error.
+   * @return OK if execution was successful, otherwise error details.
    */
   absl::Status run(OutputCollector& collector) override;
 

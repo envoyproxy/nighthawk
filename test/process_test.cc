@@ -66,14 +66,12 @@ public:
 // expect failure.
 class ProcessTest : public TestWithParam<Envoy::Network::Address::IpVersion> {
 public:
-  enum class RunExpectation { EXPECT_SUCCESS, EXPECT_FAILURE };
-
   ProcessTest()
       : loopback_address_(Envoy::Network::Test::getLoopbackAddressUrlString(GetParam())),
         options_(TestUtility::createOptionsImpl(
             fmt::format("foo --duration 1 -v error --rps 10 https://{}/", loopback_address_))){};
 
-  void runProcess(RunExpectation expectation, bool do_cancel = false,
+  void runProcess(absl::StatusCode expected_status_code, bool do_cancel = false,
                   bool terminate_right_away = false) {
     ProcessPtr process = std::make_unique<ProcessImpl>(*options_, time_system_);
     OutputCollectorImpl collector(time_system_, *options_);
@@ -92,9 +90,8 @@ public:
         cancel_thread.join();
       }
     }
-    const auto result = process->run(collector).ok() ? RunExpectation::EXPECT_SUCCESS
-                                                     : RunExpectation::EXPECT_FAILURE;
-    EXPECT_EQ(result, expectation);
+    absl::Status run_status = process->run(collector);
+    EXPECT_EQ(run_status.code(), expected_status_code);
     if (do_cancel) {
       if (cancel_thread.joinable()) {
         cancel_thread.join();
@@ -127,17 +124,17 @@ INSTANTIATE_TEST_SUITE_P(IpVersions, ProcessTest,
                          Envoy::TestUtility::ipTestParamsToString);
 
 TEST_P(ProcessTest, TwoProcessInSequence) {
-  runProcess(RunExpectation::EXPECT_FAILURE);
+  runProcess(absl::StatusCode::kInternal);
   options_ = TestUtility::createOptionsImpl(
       fmt::format("foo --h2 --duration 1 --rps 10 https://{}/", loopback_address_));
-  runProcess(RunExpectation::EXPECT_FAILURE);
+  runProcess(absl::StatusCode::kInternal);
 }
 
 // TODO(oschaaf): move to python int. tests once it adds to coverage.
 TEST_P(ProcessTest, BadTracerSpec) {
   options_ = TestUtility::createOptionsImpl(
       fmt::format("foo --trace foo://localhost:79/api/v1/spans https://{}/", loopback_address_));
-  runProcess(RunExpectation::EXPECT_FAILURE);
+  runProcess(absl::StatusCode::kInvalidArgument);
 }
 
 TEST_P(ProcessTest, CancelDuringLoadTest) {
@@ -147,14 +144,14 @@ TEST_P(ProcessTest, CancelDuringLoadTest) {
   options_ = TestUtility::createOptionsImpl(
       fmt::format("foo --duration 300 --failure-predicate foo:0 --concurrency 2 https://{}/",
                   loopback_address_));
-  runProcess(RunExpectation::EXPECT_SUCCESS, true);
+  runProcess(absl::StatusCode::kCancelled, /*do_cancel=*/true);
 }
 
 TEST_P(ProcessTest, CancelExecutionBeforeBeginLoadTest) {
   options_ = TestUtility::createOptionsImpl(
       fmt::format("foo --duration 300 --failure-predicate foo:0 --concurrency 2 https://{}/",
                   loopback_address_));
-  runProcess(RunExpectation::EXPECT_SUCCESS, true, true);
+  runProcess(absl::StatusCode::kCancelled, /*do_cancel=*/true, /*terminate_right_away=*/true);
 }
 
 TEST_P(ProcessTest, RunProcessWithStatsSinkConfigured) {
@@ -165,7 +162,7 @@ TEST_P(ProcessTest, RunProcessWithStatsSinkConfigured) {
                   "--stats-sinks {} https://{}/",
                   kSinkName, loopback_address_));
   numFlushes = 0;
-  runProcess(RunExpectation::EXPECT_FAILURE);
+  runProcess(absl::StatusCode::kInternal);
   EXPECT_GT(numFlushes, 0);
 }
 
@@ -177,7 +174,7 @@ TEST_P(ProcessTest, NoFlushWhenCancelExecutionBeforeLoadTestBegin) {
                   "2 --stats-flush-interval 1 --stats-sinks {} https://{}/",
                   kSinkName, loopback_address_));
   numFlushes = 0;
-  runProcess(RunExpectation::EXPECT_SUCCESS, true, true);
+  runProcess(absl::StatusCode::kCancelled, /*do_cancel=*/true, /*terminate_right_away=*/true);
   EXPECT_EQ(numFlushes, 0);
 }
 
@@ -276,7 +273,7 @@ TEST_P(ProcessTestWithSimTime, ScheduleAheadWorks) {
     run([this](bool success, const nighthawk::client::Output& output) {
       EXPECT_TRUE(success);
       ASSERT_EQ(output.results_size(), 1);
-      EXPECT_EQ(Envoy::ProtobufUtil::TimeUtil::TimestampToNanoseconds(
+      EXPECT_EQ(Envoy::ProtobufUtil::TimeUtil::TimestampToMicroseconds(
                     output.results()[0].execution_start()),
                 options_->scheduled_start().value().time_since_epoch().count());
     });

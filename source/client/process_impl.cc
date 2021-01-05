@@ -502,7 +502,7 @@ absl::Status ProcessImpl::runInternal(OutputCollector& collector, const std::vec
   {
     auto guard = std::make_unique<Envoy::Thread::LockGuard>(workers_lock_);
     if (cancelled_) {
-      return absl::OkStatus();
+      return absl::CancelledError("Execution was cancelled before it started.");
     }
     int number_of_workers = determineConcurrency();
     shutdown_ = false;
@@ -611,6 +611,9 @@ absl::Status ProcessImpl::runInternal(OutputCollector& collector, const std::vec
   StatisticFactoryImpl statistic_factory(options_);
   collector.addResult("global", mergeWorkerStatistics(workers_), counters,
                       total_execution_duration / workers_.size(), first_acquisition_time);
+  if (cancelled_) {
+    return absl::CancelledError("Execution was cancelled.");
+  }
   if (counters.find("sequencer.failed_terminations") != counters.end()) {
     return absl::InternalError(
         "Terminated early because of a failure predicate. Check the output for problematic counter "
