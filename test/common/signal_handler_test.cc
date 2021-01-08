@@ -23,7 +23,7 @@ TEST(SignalHandlerTest, SignalGetsHandled) {
   }
 }
 
-TEST(SignalHandlerTest, DeststructDoesNotFireHandler) {
+TEST(SignalHandlerTest, DestructDoesNotFireHandler) {
   bool signal_handled = false;
   {
     SignalHandler signal_handler([&signal_handled]() { signal_handled = true; });
