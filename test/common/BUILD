@@ -38,3 +38,12 @@ envoy_cc_test(
         "@com_github_grpc_grpc//:grpc++_test",
     ],
 )
+
+envoy_cc_test(
+    name = "signal_handler_test",
+    srcs = ["signal_handler_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/common:nighthawk_common_lib",
+    ],
+)
