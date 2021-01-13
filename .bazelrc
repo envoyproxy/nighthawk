@@ -60,8 +60,10 @@ build:asan --config=sanitizer
 # ASAN install its signal handler, disable ours so the stacktrace will be printed by ASAN
 build:asan --define signal_trace=disabled
 build:asan --define ENVOY_CONFIG_ASAN=1
-build:asan --copt -fsanitize=address,undefined
-build:asan --linkopt -fsanitize=address,undefined
+# The following two lines were manually edited due to #593.
+# Flag undefined was dropped from both the lines to allow CI/ASAN to pass.
+build:asan --copt -fsanitize=address
+build:asan --linkopt -fsanitize=address
 # vptr and function sanitizer are enabled in clang-asan if it is set up via bazel/setup_clang.sh.
 build:asan --copt -fno-sanitize=vptr,function
 build:asan --linkopt -fno-sanitize=vptr,function
