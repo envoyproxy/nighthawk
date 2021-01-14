@@ -128,7 +128,8 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
       request_generator_factory_(options, *api_), options_(options),
       init_manager_("nh_init_manager"),
       local_info_(new Envoy::LocalInfo::LocalInfoImpl(
-          {}, Envoy::Network::Utility::getLocalAddress(Envoy::Network::Address::IpVersion::v4),
+          store_root_.symbolTable(), {},
+          Envoy::Network::Utility::getLocalAddress(Envoy::Network::Address::IpVersion::v4),
           "nighthawk_service_zone", "nighthawk_service_cluster", "nighthawk_service_node")),
       secret_manager_(config_tracker_), http_context_(store_root_.symbolTable()),
       grpc_context_(store_root_.symbolTable()),

@@ -57,9 +57,12 @@ public:
         origin_latency_statistic_(origin_latency_statistic),
         request_headers_(std::move(request_headers)), connect_start_(time_source_.monotonicTime()),
         complete_(false), measure_latencies_(measure_latencies),
-        request_body_size_(request_body_size), stream_info_(time_source_),
-        random_generator_(random_generator), http_tracer_(http_tracer),
-        latency_response_header_name_(latency_response_header_name) {
+        request_body_size_(request_body_size),
+        downstream_address_setter_(std::make_shared<Envoy::Network::SocketAddressSetterImpl>(
+            // The two addresses aren't used in an execution of Nighthawk.
+            /* downstream_local_address = */ nullptr, /* downstream_remote_address = */ nullptr)),
+        stream_info_(time_source_, downstream_address_setter_), random_generator_(random_generator),
+        http_tracer_(http_tracer), latency_response_header_name_(latency_response_header_name) {
     if (measure_latencies_ && http_tracer_ != nullptr) {
       setupForTracing();
     }
@@ -117,6 +120,7 @@ private:
   bool measure_latencies_;
   const uint32_t request_body_size_;
   Envoy::Tracing::EgressConfigImpl config_;
+  std::shared_ptr<Envoy::Network::SocketAddressSetterImpl> downstream_address_setter_;
   Envoy::StreamInfo::StreamInfoImpl stream_info_;
   Envoy::Random::RandomGenerator& random_generator_;
   Envoy::Tracing::HttpTracerSharedPtr& http_tracer_;
