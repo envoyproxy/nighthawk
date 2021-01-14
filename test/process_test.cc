@@ -273,7 +273,7 @@ TEST_P(ProcessTestWithSimTime, ScheduleAheadWorks) {
     run([this](bool success, const nighthawk::client::Output& output) {
       EXPECT_TRUE(success);
       ASSERT_EQ(output.results_size(), 1);
-      EXPECT_EQ(Envoy::ProtobufUtil::TimeUtil::TimestampToMicroseconds(
+      EXPECT_EQ(Envoy::ProtobufUtil::TimeUtil::TimestampToNanoseconds(
                     output.results()[0].execution_start()),
                 options_->scheduled_start().value().time_since_epoch().count());
     });
