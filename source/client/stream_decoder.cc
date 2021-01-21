@@ -182,11 +182,7 @@ void StreamDecoder::setupForTracing() {
   // segfault without it.
   const auto remote_address = Envoy::Network::Address::InstanceConstSharedPtr{
       new Envoy::Network::Address::Ipv4Instance("127.0.0.1")};
-  stream_info_.setDownstreamDirectRemoteAddress(remote_address);
-  // For good measure, we also set DownstreamRemoteAddress, as the associated getter will crash
-  // if we don't. So this is just in case anyone calls that (or Envoy starts doing so in the
-  // future).
-  stream_info_.setDownstreamRemoteAddress(remote_address);
+  downstream_address_setter_->setDirectRemoteAddressForTest(remote_address);
 }
 
 } // namespace Client
