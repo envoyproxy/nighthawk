@@ -167,6 +167,8 @@ private:
   static std::chrono::nanoseconds computeInterWorkerDelay(const uint32_t concurrency,
                                                           const uint32_t rps);
 
+  const envoy::config::core::v3::Node node_;
+  const Envoy::Protobuf::RepeatedPtrField<std::string> node_context_params_;
   std::shared_ptr<Envoy::ProcessWide> process_wide_;
   Envoy::PlatformImpl platform_impl_;
   Envoy::Event::TimeSystem& time_system_;
