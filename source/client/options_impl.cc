@@ -270,7 +270,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   TCLAP::ValueArg<std::string> request_source_plugin_config(
       "", "request-source-plugin-config",
       "[Request "
-      "Source](https://github.com/envoyproxy/nighthawk/blob/master/docs/root/"
+      "Source](https://github.com/envoyproxy/nighthawk/blob/main/docs/root/"
       "overview.md#requestsource) plugin configuration in json or compact yaml. "
       "Mutually exclusive with --request-source. Example (json): "
       "{name:\"nighthawk.stub-request-source-plugin\",typed_config:{"
