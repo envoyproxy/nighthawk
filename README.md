@@ -117,9 +117,9 @@ Nighthawk writes to the output. Default is false.
 
 --request-source-plugin-config <string>
 [Request
-Source](https://github.com/envoyproxy/nighthawk/blob/main/docs/root/
-overview.md#requestsource) plugin configuration in json or compact
-yaml. Mutually exclusive with --request-source. Example (json):
+Source](https://github.com/envoyproxy/nighthawk/blob/main/docs/root/ov
+erview.md#requestsource) plugin configuration in json or compact yaml.
+Mutually exclusive with --request-source. Example (json):
 {name:"nighthawk.stub-request-source-plugin"
 ,typed_config:{"@type":"type.googleapis.com/nighthawk.request_source.S
 tubPluginConfig",test_value:"3"}}
