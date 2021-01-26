@@ -36,15 +36,15 @@ public:
 TEST_F(FactoriesTest, CreateBenchmarkClient) {
   BenchmarkClientFactoryImpl factory(options_);
   Envoy::Upstream::ClusterManagerPtr cluster_manager;
-  EXPECT_CALL(options_, connections()).Times(1);
-  EXPECT_CALL(options_, h2()).Times(1);
-  EXPECT_CALL(options_, maxPendingRequests()).Times(1);
-  EXPECT_CALL(options_, maxActiveRequests()).Times(1);
-  EXPECT_CALL(options_, maxRequestsPerConnection()).Times(1);
-  EXPECT_CALL(options_, openLoop()).Times(1);
-  EXPECT_CALL(options_, responseHeaderWithLatencyInput()).Times(1);
+  EXPECT_CALL(options_, connections());
+  EXPECT_CALL(options_, h2());
+  EXPECT_CALL(options_, maxPendingRequests());
+  EXPECT_CALL(options_, maxActiveRequests());
+  EXPECT_CALL(options_, maxRequestsPerConnection());
+  EXPECT_CALL(options_, openLoop());
+  EXPECT_CALL(options_, responseHeaderWithLatencyInput());
   auto cmd = std::make_unique<nighthawk::client::CommandLineOptions>();
-  EXPECT_CALL(options_, toCommandLineOptions()).Times(1).WillOnce(Return(ByMove(std::move(cmd))));
+  EXPECT_CALL(options_, toCommandLineOptions()).WillOnce(Return(ByMove(std::move(cmd))));
   StaticRequestSourceImpl request_generator(
       std::make_unique<Envoy::Http::TestRequestHeaderMapImpl>());
   auto benchmark_client =
@@ -71,10 +71,10 @@ TEST_F(FactoriesTest, CreateRequestSourcePluginWithWorkingJsonReturnsWorkingRequ
   Envoy::MessageUtil::loadFromJson(request_source_plugin_config_json,
                                    request_source_plugin_config.value(),
                                    Envoy::ProtobufMessage::getStrictValidationVisitor());
-  EXPECT_CALL(options_, requestMethod()).Times(1);
-  EXPECT_CALL(options_, requestBodySize()).Times(1);
+  EXPECT_CALL(options_, requestMethod());
+  EXPECT_CALL(options_, requestBodySize());
   EXPECT_CALL(options_, uri()).Times(2).WillRepeatedly(Return("http://foo/"));
-  EXPECT_CALL(options_, requestSource()).Times(1);
+  EXPECT_CALL(options_, requestSource());
   EXPECT_CALL(options_, requestSourcePluginConfig())
       .Times(2)
       .WillRepeatedly(ReturnRef(request_source_plugin_config));
@@ -83,7 +83,7 @@ TEST_F(FactoriesTest, CreateRequestSourcePluginWithWorkingJsonReturnsWorkingRequ
       cmd->mutable_request_options()->add_request_headers();
   request_headers->mutable_header()->set_key("foo");
   request_headers->mutable_header()->set_value("bar");
-  EXPECT_CALL(options_, toCommandLineOptions()).Times(1).WillOnce(Return(ByMove(std::move(cmd))));
+  EXPECT_CALL(options_, toCommandLineOptions()).WillOnce(Return(ByMove(std::move(cmd))));
   RequestSourceFactoryImpl factory(options_, *api_);
   Envoy::Upstream::ClusterManagerPtr cluster_manager;
   Nighthawk::RequestSourcePtr request_source = factory.create(
@@ -111,10 +111,10 @@ TEST_F(FactoriesTest, CreateRequestSourcePluginWithNonWorkingJsonThrowsError) {
   Envoy::MessageUtil::loadFromJson(request_source_plugin_config_json,
                                    request_source_plugin_config.value(),
                                    Envoy::ProtobufMessage::getStrictValidationVisitor());
-  EXPECT_CALL(options_, requestMethod()).Times(1);
-  EXPECT_CALL(options_, requestBodySize()).Times(1);
+  EXPECT_CALL(options_, requestMethod());
+  EXPECT_CALL(options_, requestBodySize());
   EXPECT_CALL(options_, uri()).Times(2).WillRepeatedly(Return("http://foo/"));
-  EXPECT_CALL(options_, requestSource()).Times(1);
+  EXPECT_CALL(options_, requestSource());
   EXPECT_CALL(options_, requestSourcePluginConfig())
       .Times(2)
       .WillRepeatedly(ReturnRef(request_source_plugin_config));
@@ -123,7 +123,7 @@ TEST_F(FactoriesTest, CreateRequestSourcePluginWithNonWorkingJsonThrowsError) {
       cmd->mutable_request_options()->add_request_headers();
   request_headers->mutable_header()->set_key("foo");
   request_headers->mutable_header()->set_value("bar");
-  EXPECT_CALL(options_, toCommandLineOptions()).Times(1).WillOnce(Return(ByMove(std::move(cmd))));
+  EXPECT_CALL(options_, toCommandLineOptions()).WillOnce(Return(ByMove(std::move(cmd))));
   RequestSourceFactoryImpl factory(options_, *api_);
   Envoy::Upstream::ClusterManagerPtr cluster_manager;
   EXPECT_THROW_WITH_REGEX(
@@ -135,10 +135,10 @@ TEST_F(FactoriesTest, CreateRequestSourcePluginWithNonWorkingJsonThrowsError) {
 
 TEST_F(FactoriesTest, CreateRequestSource) {
   absl::optional<envoy::config::core::v3::TypedExtensionConfig> request_source_plugin_config;
-  EXPECT_CALL(options_, requestMethod()).Times(1);
-  EXPECT_CALL(options_, requestBodySize()).Times(1);
+  EXPECT_CALL(options_, requestMethod());
+  EXPECT_CALL(options_, requestBodySize());
   EXPECT_CALL(options_, uri()).Times(2).WillRepeatedly(Return("http://foo/"));
-  EXPECT_CALL(options_, requestSource()).Times(1);
+  EXPECT_CALL(options_, requestSource());
   EXPECT_CALL(options_, requestSourcePluginConfig())
       .Times(1)
       .WillRepeatedly(ReturnRef(request_source_plugin_config));
@@ -147,7 +147,7 @@ TEST_F(FactoriesTest, CreateRequestSource) {
       cmd->mutable_request_options()->add_request_headers();
   request_headers->mutable_header()->set_key("foo");
   request_headers->mutable_header()->set_value("bar");
-  EXPECT_CALL(options_, toCommandLineOptions()).Times(1).WillOnce(Return(ByMove(std::move(cmd))));
+  EXPECT_CALL(options_, toCommandLineOptions()).WillOnce(Return(ByMove(std::move(cmd))));
   RequestSourceFactoryImpl factory(options_, *api_);
   Envoy::Upstream::ClusterManagerPtr cluster_manager;
   RequestSourcePtr request_generator = factory.create(
@@ -157,17 +157,17 @@ TEST_F(FactoriesTest, CreateRequestSource) {
 
 TEST_F(FactoriesTest, CreateRemoteRequestSource) {
   absl::optional<envoy::config::core::v3::TypedExtensionConfig> request_source_plugin_config;
-  EXPECT_CALL(options_, requestMethod()).Times(1);
-  EXPECT_CALL(options_, requestBodySize()).Times(1);
+  EXPECT_CALL(options_, requestMethod());
+  EXPECT_CALL(options_, requestBodySize());
   EXPECT_CALL(options_, uri()).Times(2).WillRepeatedly(Return("http://foo/"));
-  EXPECT_CALL(options_, requestSource()).Times(1).WillRepeatedly(Return("http://bar/"));
-  EXPECT_CALL(options_, requestsPerSecond()).Times(1).WillRepeatedly(Return(5));
+  EXPECT_CALL(options_, requestSource()).WillOnce(Return("http://bar/"));
+  EXPECT_CALL(options_, requestsPerSecond()).WillOnce(Return(5));
   auto cmd = std::make_unique<nighthawk::client::CommandLineOptions>();
   envoy::config::core::v3::HeaderValueOption* request_headers =
       cmd->mutable_request_options()->add_request_headers();
   request_headers->mutable_header()->set_key("foo");
   request_headers->mutable_header()->set_value("bar");
-  EXPECT_CALL(options_, toCommandLineOptions()).Times(1).WillOnce(Return(ByMove(std::move(cmd))));
+  EXPECT_CALL(options_, toCommandLineOptions()).WillOnce(Return(ByMove(std::move(cmd))));
   RequestSourceFactoryImpl factory(options_, *api_);
   Envoy::Upstream::ClusterManagerPtr cluster_manager;
   RequestSourcePtr request_generator = factory.create(
@@ -185,13 +185,13 @@ public:
                                  sequencer_idle_strategy) {
     SequencerFactoryImpl factory(options_);
     MockBenchmarkClient benchmark_client;
-    EXPECT_CALL(options_, requestsPerSecond()).Times(1).WillOnce(Return(1));
-    EXPECT_CALL(options_, burstSize()).Times(1).WillOnce(Return(2));
+    EXPECT_CALL(options_, requestsPerSecond()).WillOnce(Return(1));
+    EXPECT_CALL(options_, burstSize()).WillOnce(Return(2));
     EXPECT_CALL(options_, sequencerIdleStrategy())
         .Times(1)
         .WillOnce(Return(sequencer_idle_strategy));
     EXPECT_CALL(dispatcher_, createTimer_(_)).Times(2);
-    EXPECT_CALL(options_, jitterUniform()).Times(1).WillOnce(Return(1ns));
+    EXPECT_CALL(options_, jitterUniform()).WillOnce(Return(1ns));
     Envoy::Event::SimulatedTimeSystem time_system;
     const SequencerTarget dummy_sequencer_target = [](const CompletionCallback&) -> bool {
       return true;

@@ -41,7 +41,7 @@ The interface served at localhost:8888 gives you various means to help with anal
 
 ### Envoy build
 
-See [building Envoy with Bazel](https://github.com/envoyproxy/envoy/tree/master/bazel#building-envoy-with-bazel).
+See [building Envoy with Bazel](https://github.com/envoyproxy/envoy/tree/main/bazel#building-envoy-with-bazel).
 
 Envoy’s static build is set up for profiling and can be build with:
 
@@ -49,7 +49,7 @@ Envoy’s static build is set up for profiling and can be build with:
 bazel build //source/exe:envoy-static
 ```
 
-More context: https://github.com/envoyproxy/envoy/blob/master/bazel/PPROF.md
+More context: https://github.com/envoyproxy/envoy/blob/main/bazel/PPROF.md
 
 ### Nighthawk build
 

@@ -132,7 +132,7 @@ TEST_F(FlushWorkerTest, WorkerFlushStatsPeriodically) {
   thread.join();
   // Stats flush should happen exactly once as the final flush is done in
   // FlushWorkerImpl::shutdownThread().
-  EXPECT_CALL(*sink_, flush(_)).Times(1);
+  EXPECT_CALL(*sink_, flush(_));
   worker.shutdown();
 }
 
@@ -147,7 +147,7 @@ TEST_F(FlushWorkerTest, FinalFlush) {
   worker.waitForCompletion();
   // Stats flush should happen exactly once as the final flush is done in
   // FlushWorkerImpl::shutdownThread().
-  EXPECT_CALL(*sink_, flush(_)).Times(1);
+  EXPECT_CALL(*sink_, flush(_));
   worker.shutdown();
 }
 

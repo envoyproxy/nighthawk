@@ -1,4 +1,4 @@
-# See https://github.com/envoyproxy/envoy/blob/master/bazel/README.md#disabling-extensions for details on how this system works.
+# See https://github.com/envoyproxy/envoy/blob/main/bazel/README.md#disabling-extensions for details on how this system works.
 EXTENSIONS = {
     "envoy.filters.http.router": "//source/extensions/filters/http/router:config",
     "envoy.filters.http.fault": "//source/extensions/filters/http/fault:config",

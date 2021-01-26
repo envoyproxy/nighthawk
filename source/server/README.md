@@ -15,7 +15,7 @@ bazel build -c opt :nighthawk_test_server
 ```
 
 It is possible to
-[enable additional envoy extension](https://github.com/envoyproxy/envoy/blob/master/source/extensions/extensions_build_config.bzl) by adding them [here](../../extensions_build_config.bzl) before the build.
+[enable additional envoy extension](https://github.com/envoyproxy/envoy/blob/main/source/extensions/extensions_build_config.bzl) by adding them [here](../../extensions_build_config.bzl) before the build.
 By default, Nighthawk's test server is set up with the minimum extension set needed
 for it to operate as documented.
 
@@ -55,7 +55,7 @@ static_resources:
                     typed_config:
                       "@type": type.googleapis.com/nighthawk.server.ResponseOptions
                       response_body_size: 10
-                      response_headers:
+                      v3_response_headers:
                         - { header: { key: "foo", value: "bar" } }
                         - {
                             header: { key: "foo", value: "bar2" },

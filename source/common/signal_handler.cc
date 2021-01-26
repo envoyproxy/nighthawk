@@ -23,7 +23,9 @@ SignalHandler::SignalHandler(const std::function<void()>& signal_callback) {
     RELEASE_ASSERT(close(pipe_fds_[0]) == 0, "read side close failed");
     RELEASE_ASSERT(close(pipe_fds_[1]) == 0, "write side close failed");
     pipe_fds_.clear();
-    signal_callback();
+    if (!destructing_) {
+      signal_callback();
+    }
   });
 
   signal_handler_delegate = [this](int) { onSignal(); };
@@ -32,6 +34,7 @@ SignalHandler::SignalHandler(const std::function<void()>& signal_callback) {
 }
 
 SignalHandler::~SignalHandler() {
+  destructing_ = true;
   initiateShutdown();
   if (shutdown_thread_.joinable()) {
     shutdown_thread_.join();

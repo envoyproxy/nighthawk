@@ -270,7 +270,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   TCLAP::ValueArg<std::string> request_source_plugin_config(
       "", "request-source-plugin-config",
       "[Request "
-      "Source](https://github.com/envoyproxy/nighthawk/blob/master/docs/root/"
+      "Source](https://github.com/envoyproxy/nighthawk/blob/main/docs/root/"
       "overview.md#requestsource) plugin configuration in json or compact yaml. "
       "Mutually exclusive with --request-source. Example (json): "
       "{name:\"nighthawk.stub-request-source-plugin\",typed_config:{"
@@ -662,8 +662,9 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   allow_envoy_deprecated_v2_api_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(
       options, allow_envoy_deprecated_v2_api, allow_envoy_deprecated_v2_api_);
   if (options.has_scheduled_start()) {
-    const auto elapsed_since_epoch = std::chrono::nanoseconds(options.scheduled_start().nanos()) +
-                                     std::chrono::seconds(options.scheduled_start().seconds());
+    const auto elapsed_since_epoch = std::chrono::duration_cast<std::chrono::microseconds>(
+        std::chrono::nanoseconds(options.scheduled_start().nanos()) +
+        std::chrono::seconds(options.scheduled_start().seconds()));
     scheduled_start_ =
         Envoy::SystemTime(std::chrono::time_point<std::chrono::system_clock>(elapsed_since_epoch));
   }
