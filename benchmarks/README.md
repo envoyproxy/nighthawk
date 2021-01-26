@@ -128,4 +128,4 @@ docker run -it --rm \
 - Have a mode where nighthawk_test_server provides high-res control timings in its
   access logs
 - The ability to repeat the runs multiple times and obtain stats, e.g. how much variance there is, mean, etc.
-- The ability to do A/B testing, similar to https://github.com/envoyproxy/envoy-perf/blob/master/siege/siege.py#L3.
+- The ability to do A/B testing, similar to https://github.com/envoyproxy/envoy-perf/blob/main/siege/siege.py#L3.
