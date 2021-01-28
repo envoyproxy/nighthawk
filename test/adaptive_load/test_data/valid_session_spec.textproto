@@ -22,7 +22,7 @@ testing_stage_duration {
   seconds: 10
 }
 
-# Back off if mean+2stdev latency > 2ms
+# Back off if mean+2stdev latency > 1ms
 # See https://github.com/envoyproxy/nighthawk/blob/9ade1a58c787e4d0e165cabbb42f6a410a56a865/source/adaptive_load/metrics_plugin_impl.cc#L148
 # for the full list of supported metrics.
 metric_thresholds {
