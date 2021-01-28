@@ -48,6 +48,7 @@ envoy_cc_test(
         "//include/nighthawk/adaptive_load:adaptive_load_controller",
         ":fake_time_source",
         ":minimal_output",
+        "//test/mocks/adaptive_load:mock_adaptive_load_controller",
         "//test/test_common:environment_lib",
         "@com_github_grpc_grpc//:grpc++_test",
         # "@envoy//source/common/filesystem:filesystem_lib",
@@ -65,12 +66,24 @@ envoy_cc_test(
     deps = [
         ":fake_time_source",
         ":minimal_output",
+        "//api/client:grpc_service_lib",
+        "//include/nighthawk/adaptive_load:input_variable_setter",
+        "//include/nighthawk/adaptive_load:step_controller",
         "//source/adaptive_load:adaptive_load_controller_impl",
         "//source/adaptive_load:scoring_function_impl",
+        "//source/adaptive_load:session_spec_proto_helper_impl",
         "//source/client:nighthawk_client_lib",
         "//test/adaptive_load/fake_plugins/fake_metrics_plugin",
         "//test/adaptive_load/fake_plugins/fake_step_controller",
+        "//test/common:fake_time_source",
+        "//test/mocks/adaptive_load:mock_metrics_evaluator",
+        "//test/mocks/adaptive_load:mock_session_spec_proto_helper",
+        "//test/mocks/common:mock_nighthawk_service_client",
         "@com_github_grpc_grpc//:grpc++_test",
+        "@envoy//source/common/common:assert_lib_with_external_headers",
+        "@envoy//source/common/common:statusor_lib_with_external_headers",
+        "@envoy//source/common/config:utility_lib_with_external_headers",
+        "@envoy//source/common/protobuf:protobuf_with_external_headers",
     ],
 )
 
@@ -80,6 +93,18 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         "//source/adaptive_load:input_variable_setter_impl",
+    ],
+)
+
+envoy_cc_test(
+    name = "metrics_evaluator_test",
+    srcs = ["metrics_evaluator_test.cc"],
+    repository = "@envoy",
+    deps = [
+        ":minimal_output",
+        "//source/adaptive_load:metrics_evaluator_impl",
+        "//source/adaptive_load:scoring_function_impl",
+        "//test/adaptive_load/fake_plugins/fake_metrics_plugin",
     ],
 )
 
@@ -101,6 +126,17 @@ envoy_cc_test(
         "//source/adaptive_load:plugin_loader",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
         "@envoy//test/test_common:utility_lib",
+    ],
+)
+
+envoy_cc_test(
+    name = "session_spec_proto_helper_test",
+    srcs = ["session_spec_proto_helper_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/adaptive_load:session_spec_proto_helper_impl",
+        "//test/adaptive_load/fake_plugins/fake_metrics_plugin",
+        "//test/adaptive_load/fake_plugins/fake_step_controller",
     ],
 )
 

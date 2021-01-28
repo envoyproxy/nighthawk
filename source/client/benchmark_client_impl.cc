@@ -30,14 +30,16 @@ BenchmarkClientStatistic::BenchmarkClientStatistic(BenchmarkClientStatistic&& st
       latency_3xx_statistic(std::move(statistic.latency_3xx_statistic)),
       latency_4xx_statistic(std::move(statistic.latency_4xx_statistic)),
       latency_5xx_statistic(std::move(statistic.latency_5xx_statistic)),
-      latency_xxx_statistic(std::move(statistic.latency_xxx_statistic)) {}
+      latency_xxx_statistic(std::move(statistic.latency_xxx_statistic)),
+      origin_latency_statistic(std::move(statistic.origin_latency_statistic)) {}
 
 BenchmarkClientStatistic::BenchmarkClientStatistic(
     StatisticPtr&& connect_stat, StatisticPtr&& response_stat,
     StatisticPtr&& response_header_size_stat, StatisticPtr&& response_body_size_stat,
     StatisticPtr&& latency_1xx_stat, StatisticPtr&& latency_2xx_stat,
     StatisticPtr&& latency_3xx_stat, StatisticPtr&& latency_4xx_stat,
-    StatisticPtr&& latency_5xx_stat, StatisticPtr&& latency_xxx_stat)
+    StatisticPtr&& latency_5xx_stat, StatisticPtr&& latency_xxx_stat,
+    StatisticPtr&& origin_latency_stat)
     : connect_statistic(std::move(connect_stat)), response_statistic(std::move(response_stat)),
       response_header_size_statistic(std::move(response_header_size_stat)),
       response_body_size_statistic(std::move(response_body_size_stat)),
@@ -46,7 +48,8 @@ BenchmarkClientStatistic::BenchmarkClientStatistic(
       latency_3xx_statistic(std::move(latency_3xx_stat)),
       latency_4xx_statistic(std::move(latency_4xx_stat)),
       latency_5xx_statistic(std::move(latency_5xx_stat)),
-      latency_xxx_statistic(std::move(latency_xxx_stat)) {}
+      latency_xxx_statistic(std::move(latency_xxx_stat)),
+      origin_latency_statistic(std::move(origin_latency_stat)) {}
 
 Envoy::Http::ConnectionPool::Cancellable*
 Http1PoolImpl::newStream(Envoy::Http::ResponseDecoder& response_decoder,
@@ -54,11 +57,11 @@ Http1PoolImpl::newStream(Envoy::Http::ResponseDecoder& response_decoder,
   // In prefetch mode we try to keep the amount of connections at the configured limit.
   if (prefetch_connections_) {
     while (host_->cluster().resourceManager(priority_).connections().canCreate()) {
-      // We cannot rely on ::tryCreateConnection here, because that might decline without
-      // updating connections().canCreate() above. We would risk an infinite loop.
-      Envoy::ConnectionPool::ActiveClientPtr client = instantiateActiveClient();
-      connecting_stream_capacity_ += client->effectiveConcurrentRequestLimit();
-      Envoy::LinkedList::moveIntoList(std::move(client), owningList(client->state_));
+      // We pass in a high prefetch ratio, because we don't want to throttle the prefetched
+      // connection amount like Envoy does out of the box.
+      if (!tryCreateNewConnection(10000.0)) {
+        break;
+      }
     }
   }
 
@@ -67,12 +70,12 @@ Http1PoolImpl::newStream(Envoy::Http::ResponseDecoder& response_decoder,
   // all the available connections.
   if (!ready_clients_.empty() && connection_reuse_strategy_ == ConnectionReuseStrategy::LRU) {
     Envoy::Http::HttpAttachContext context({&response_decoder, &callbacks});
-    attachRequestToClient(*ready_clients_.back(), context);
+    attachStreamToClient(*ready_clients_.back(), context);
     return nullptr;
   }
 
   // Vanilla Envoy pool behavior.
-  return ConnPoolImpl::newStream(response_decoder, callbacks);
+  return HttpConnPoolImplBase::newStream(response_decoder, callbacks);
 }
 
 BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
@@ -80,13 +83,15 @@ BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
     BenchmarkClientStatistic& statistic, bool use_h2,
     Envoy::Upstream::ClusterManagerPtr& cluster_manager,
     Envoy::Tracing::HttpTracerSharedPtr& http_tracer, absl::string_view cluster_name,
-    RequestGenerator request_generator, const bool provide_resource_backpressure)
+    RequestGenerator request_generator, const bool provide_resource_backpressure,
+    absl::string_view latency_response_header_name)
     : api_(api), dispatcher_(dispatcher), scope_(scope.createScope("benchmark.")),
       statistic_(std::move(statistic)), use_h2_(use_h2),
       benchmark_client_counters_({ALL_BENCHMARK_CLIENT_COUNTERS(POOL_COUNTER(*scope_))}),
       cluster_manager_(cluster_manager), http_tracer_(http_tracer),
       cluster_name_(std::string(cluster_name)), request_generator_(std::move(request_generator)),
-      provide_resource_backpressure_(provide_resource_backpressure) {
+      provide_resource_backpressure_(provide_resource_backpressure),
+      latency_response_header_name_(latency_response_header_name) {
   statistic_.connect_statistic->setId("benchmark_http_client.queue_to_connect");
   statistic_.response_statistic->setId("benchmark_http_client.request_to_response");
   statistic_.response_header_size_statistic->setId("benchmark_http_client.response_header_size");
@@ -97,6 +102,7 @@ BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
   statistic_.latency_4xx_statistic->setId("benchmark_http_client.latency_4xx");
   statistic_.latency_5xx_statistic->setId("benchmark_http_client.latency_5xx");
   statistic_.latency_xxx_statistic->setId("benchmark_http_client.latency_xxx");
+  statistic_.origin_latency_statistic->setId("benchmark_http_client.origin_latency_statistic");
 }
 
 void BenchmarkClientHttpImpl::terminate() {
@@ -121,6 +127,7 @@ StatisticPtrMap BenchmarkClientHttpImpl::statistics() const {
   statistics[statistic_.latency_4xx_statistic->id()] = statistic_.latency_4xx_statistic.get();
   statistics[statistic_.latency_5xx_statistic->id()] = statistic_.latency_5xx_statistic.get();
   statistics[statistic_.latency_xxx_statistic->id()] = statistic_.latency_xxx_statistic.get();
+  statistics[statistic_.origin_latency_statistic->id()] = statistic_.origin_latency_statistic.get();
   return statistics;
 };
 
@@ -151,7 +158,7 @@ bool BenchmarkClientHttpImpl::tryStartRequest(CompletionCallback caller_completi
   if (content_length_header != nullptr) {
     auto s_content_length = content_length_header->value().getStringView();
     if (!absl::SimpleAtoi(s_content_length, &content_length)) {
-      ENVOY_LOG(error, "Ignoring bad content length of {}", s_content_length);
+      ENVOY_LOG_EVERY_POW_2(error, "Ignoring bad content length of {}", s_content_length);
       content_length = 0;
     }
   }
@@ -160,7 +167,8 @@ bool BenchmarkClientHttpImpl::tryStartRequest(CompletionCallback caller_completi
       dispatcher_, api_.timeSource(), *this, std::move(caller_completion_callback),
       *statistic_.connect_statistic, *statistic_.response_statistic,
       *statistic_.response_header_size_statistic, *statistic_.response_body_size_statistic,
-      request->header(), shouldMeasureLatencies(), content_length, generator_, http_tracer_);
+      *statistic_.origin_latency_statistic, request->header(), shouldMeasureLatencies(),
+      content_length, generator_, http_tracer_, latency_response_header_name_);
   requests_initiated_++;
   pool_ptr->newStream(*stream_decoder, *stream_decoder);
   return true;

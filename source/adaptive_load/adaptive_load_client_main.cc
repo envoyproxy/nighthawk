@@ -58,9 +58,9 @@ void WriteFileOrThrow(Envoy::Filesystem::Instance& filesystem, absl::string_view
 } // namespace
 
 AdaptiveLoadClientMain::AdaptiveLoadClientMain(int argc, const char* const* argv,
-                                               Envoy::Filesystem::Instance& filesystem,
-                                               Envoy::TimeSource& time_source)
-    : filesystem_{filesystem}, time_source_{time_source} {
+                                               AdaptiveLoadController& controller,
+                                               Envoy::Filesystem::Instance& filesystem)
+    : controller_{controller}, filesystem_{filesystem} {
   TCLAP::CmdLine cmd("Adaptive Load tool that finds the optimal load on the target "
                      "through a series of Nighthawk Service benchmarks.",
                      /*delimiter=*/' ', VersionInfo::version());
@@ -107,14 +107,14 @@ uint32_t AdaptiveLoadClientMain::Run() {
     throw Nighthawk::NighthawkException("Unable to parse file \"" + spec_filename_ +
                                         "\" as a text protobuf (type " + spec.GetTypeName() + ")");
   }
-  std::shared_ptr<::grpc_impl::Channel> channel = grpc::CreateChannel(
+  std::shared_ptr<::grpc::Channel> channel = grpc::CreateChannel(
       nighthawk_service_address_, use_tls_ ? grpc::SslCredentials(grpc::SslCredentialsOptions())
                                            : grpc::InsecureChannelCredentials());
   std::unique_ptr<nighthawk::client::NighthawkService::StubInterface> stub(
       nighthawk::client::NighthawkService::NewStub(channel));
 
   absl::StatusOr<nighthawk::adaptive_load::AdaptiveLoadSessionOutput> output_or =
-      PerformAdaptiveLoadSession(stub.get(), spec, time_source_);
+      controller_.PerformAdaptiveLoadSession(stub.get(), spec);
   if (!output_or.ok()) {
     ENVOY_LOG(error, "Error in adaptive load session: {}", output_or.status().message());
     return 1;

@@ -35,6 +35,7 @@ envoy_basic_cc_library(
         "@envoy//include/envoy/common:base_includes",
         "@envoy//include/envoy/common:time_interface",
         "@envoy//include/envoy/config:typed_config_interface",
+        "@envoy//source/common/protobuf:protobuf_with_external_headers",
     ],
 )
 
@@ -49,6 +50,21 @@ envoy_basic_cc_library(
         "//api/adaptive_load:adaptive_load_proto_cc_proto",
         "@envoy//include/envoy/common:base_includes",
         "@envoy//include/envoy/config:typed_config_interface",
+    ],
+)
+
+envoy_basic_cc_library(
+    name = "metrics_evaluator",
+    hdrs = [
+        "metrics_evaluator.h",
+    ],
+    include_prefix = "nighthawk/adaptive_load",
+    deps = [
+        ":metrics_plugin",
+        "//api/adaptive_load:adaptive_load_proto_cc_proto",
+        "@envoy//include/envoy/common:base_includes",
+        "@envoy//include/envoy/config:typed_config_interface",
+        "@envoy//source/common/common:statusor_lib_with_external_headers",
     ],
 )
 
@@ -78,6 +94,19 @@ envoy_basic_cc_library(
         "//api/adaptive_load:adaptive_load_proto_cc_proto",
         "@envoy//include/envoy/common:base_includes",
         "@envoy//include/envoy/config:typed_config_interface",
+    ],
+)
+
+envoy_basic_cc_library(
+    name = "session_spec_proto_helper",
+    hdrs = [
+        "session_spec_proto_helper.h",
+    ],
+    include_prefix = "nighthawk/adaptive_load",
+    deps = [
+        "//api/adaptive_load:adaptive_load_proto_cc_proto",
+        "@com_google_absl//absl/status",
+        "@envoy//include/envoy/common:base_includes",
     ],
 )
 

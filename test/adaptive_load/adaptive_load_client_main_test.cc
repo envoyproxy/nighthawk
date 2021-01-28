@@ -5,10 +5,12 @@
 
 #include "api/adaptive_load/benchmark_result.pb.h"
 
-#include "common/filesystem/file_shared_impl.h" // fails check_format
+// #include "common/filesystem/file_shared_impl.h" // fails check_format
 
 // #include "external/envoy/source/common/filesystem/file_shared_impl.h" // check_format possible
 // fix
+
+#include "external/envoy/source/common/filesystem/file_shared_impl.h"
 
 #include "external/envoy/test/mocks/filesystem/mocks.h"
 #include "external/envoy/test/test_common/file_system_for_test.h"
@@ -18,6 +20,7 @@
 
 #include "test/adaptive_load/fake_time_source.h"
 #include "test/adaptive_load/minimal_output.h"
+#include "test/mocks/adaptive_load/mock_adaptive_load_controller.h"
 #include "test/test_common/environment.h"
 
 #include "absl/strings/string_view.h"
@@ -26,18 +29,6 @@
 #include "gtest/gtest.h"
 
 namespace Nighthawk {
-
-absl::StatusOr<nighthawk::adaptive_load::AdaptiveLoadSessionOutput>
-PerformAdaptiveLoadSession(nighthawk::client::NighthawkService::StubInterface*,
-                           const nighthawk::adaptive_load::AdaptiveLoadSessionSpec&,
-                           Envoy::TimeSource&) {
-  nighthawk::adaptive_load::AdaptiveLoadSessionOutput output;
-  nighthawk::adaptive_load::MetricEvaluation* evaluation =
-      output.mutable_adjusting_stage_results()->Add()->add_metric_evaluations();
-  evaluation->set_metric_id("com.a/b");
-  evaluation->set_metric_value(123);
-  return output;
-}
 
 namespace {
 
@@ -50,15 +41,23 @@ using ::testing::NiceMock;
 using ::testing::Return;
 using ::testing::SetArgPointee;
 
+// nighthawk::adaptive_load::AdaptiveLoadSessionOutput MakeBasicAdaptiveLoadSessionOutput() {
+//   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output;
+//   nighthawk::adaptive_load::MetricEvaluation* evaluation =
+//       output.mutable_adjusting_stage_results()->Add()->add_metric_evaluations();
+//   evaluation->set_metric_id("com.a/b");
+//   evaluation->set_metric_value(123);
+//   return output;
+// }
+
 TEST(AdaptiveLoadClientMainTest, FailsWithNoInputs) {
   const char* const argv[] = {
       "executable-name-here",
   };
-
+  NiceMock<MockAdaptiveLoadController> controller;
   Envoy::Filesystem::Instance& filesystem = Envoy::Filesystem::fileSystemForTest();
-  FakeIncrementingMonotonicTimeSource time_source;
 
-  EXPECT_THROW_WITH_REGEX(AdaptiveLoadClientMain(1, argv, filesystem, time_source),
+  EXPECT_THROW_WITH_REGEX(AdaptiveLoadClientMain(1, argv, controller, filesystem),
                           Nighthawk::Client::MalformedArgvException, "Required arguments missing");
 }
 
@@ -70,10 +69,10 @@ TEST(AdaptiveLoadClientMainTest, FailsIfSpecFileNotSet) {
       outfile.c_str(),
   };
 
+  NiceMock<MockAdaptiveLoadController> controller;
   Envoy::Filesystem::Instance& filesystem = Envoy::Filesystem::fileSystemForTest();
-  FakeIncrementingMonotonicTimeSource time_source;
 
-  EXPECT_THROW_WITH_REGEX(AdaptiveLoadClientMain(3, argv, filesystem, time_source),
+  EXPECT_THROW_WITH_REGEX(AdaptiveLoadClientMain(3, argv, controller, filesystem),
                           Nighthawk::Client::MalformedArgvException,
                           "Required argument missing: spec-file");
 }
@@ -86,10 +85,10 @@ TEST(AdaptiveLoadClientMainTest, FailsIfOutputFileNotSet) {
       infile.c_str(),
   };
 
+  NiceMock<MockAdaptiveLoadController> controller;
   Envoy::Filesystem::Instance& filesystem = Envoy::Filesystem::fileSystemForTest();
-  FakeIncrementingMonotonicTimeSource time_source;
 
-  EXPECT_THROW_WITH_REGEX(AdaptiveLoadClientMain main(3, argv, filesystem, time_source),
+  EXPECT_THROW_WITH_REGEX(AdaptiveLoadClientMain main(3, argv, controller, filesystem),
                           Nighthawk::Client::MalformedArgvException,
                           "Required argument missing: output-file");
 }
@@ -101,10 +100,10 @@ TEST(AdaptiveLoadClientMainTest, FailsWithNonexistentInputFile) {
       "executable-name-here", "--spec-file", infile.c_str(), "--output-file", outfile.c_str(),
   };
 
+  NiceMock<MockAdaptiveLoadController> controller;
   Envoy::Filesystem::Instance& filesystem = Envoy::Filesystem::fileSystemForTest();
-  FakeIncrementingMonotonicTimeSource time_source;
 
-  AdaptiveLoadClientMain main(5, argv, filesystem, time_source);
+  AdaptiveLoadClientMain main(5, argv, controller, filesystem);
   EXPECT_THROW_WITH_REGEX(main.Run(), Nighthawk::NighthawkException,
                           "Failed to read spec textproto file");
 }
@@ -117,10 +116,10 @@ TEST(AdaptiveLoadClientMainTest, FailsWithUnparseableInputFile) {
       "executable-name-here", "--spec-file", infile.c_str(), "--output-file", outfile.c_str(),
   };
 
+  NiceMock<MockAdaptiveLoadController> controller;
   Envoy::Filesystem::Instance& filesystem = Envoy::Filesystem::fileSystemForTest();
-  FakeIncrementingMonotonicTimeSource time_source;
 
-  AdaptiveLoadClientMain main(5, argv, filesystem, time_source);
+  AdaptiveLoadClientMain main(5, argv, controller, filesystem);
   EXPECT_THROW_WITH_REGEX(main.Run(), Nighthawk::NighthawkException, "Unable to parse file");
 }
 
@@ -133,10 +132,10 @@ TEST(AdaptiveLoadClientMainTest, FailsWithUnwritableOutputFile) {
       "executable-name-here", "--spec-file", infile.c_str(), "--output-file", outfile.c_str(),
   };
 
+  NiceMock<MockAdaptiveLoadController> controller;
   Envoy::Filesystem::Instance& filesystem = Envoy::Filesystem::fileSystemForTest();
-  FakeIncrementingMonotonicTimeSource time_source;
 
-  AdaptiveLoadClientMain main(5, argv, filesystem, time_source);
+  AdaptiveLoadClientMain main(5, argv, controller, filesystem);
   EXPECT_THROW_WITH_REGEX(main.Run(), Nighthawk::NighthawkException, "Unable to open output file");
 }
 
@@ -146,7 +145,7 @@ TEST(AdaptiveLoadClientMainTest, WritesOutputProtoToFile) {
       "--output-file",        "out-dummy.textproto",
   };
 
-  FakeIncrementingMonotonicTimeSource time_source;
+  NiceMock<MockAdaptiveLoadController> controller;
 
   NiceMock<Envoy::Filesystem::MockInstance> filesystem;
 
@@ -172,7 +171,7 @@ TEST(AdaptiveLoadClientMainTest, WritesOutputProtoToFile) {
   EXPECT_CALL(*file, close_())
       .WillOnce(Return(ByMove(Envoy::Filesystem::resultSuccess<bool>(true))));
 
-  AdaptiveLoadClientMain main(5, argv, filesystem, time_source);
+  AdaptiveLoadClientMain main(5, argv, controller, filesystem);
   main.Run();
 
   std::string golden_output =
@@ -186,10 +185,10 @@ TEST(AdaptiveLoadClientMainTest, DefaultsToInsecureConnection) {
       "executable-name-here", "--spec-file", "a", "--output-file", "b",
   };
 
+  NiceMock<MockAdaptiveLoadController> controller;
   Envoy::Filesystem::Instance& filesystem = Envoy::Filesystem::fileSystemForTest();
-  FakeIncrementingMonotonicTimeSource time_source;
 
-  AdaptiveLoadClientMain main(5, argv, filesystem, time_source);
+  AdaptiveLoadClientMain main(5, argv, controller, filesystem);
 
   EXPECT_THAT(main.DescribeInputs(), HasSubstr("insecure"));
 }
@@ -199,10 +198,10 @@ TEST(AdaptiveLoadClientMainTest, UsesTlsConnectionWhenSpecified) {
       "executable-name-here", "--use-tls", "--spec-file", "a", "--output-file", "b",
   };
 
+  NiceMock<MockAdaptiveLoadController> controller;
   Envoy::Filesystem::Instance& filesystem = Envoy::Filesystem::fileSystemForTest();
-  FakeIncrementingMonotonicTimeSource time_source;
 
-  AdaptiveLoadClientMain main(6, argv, filesystem, time_source);
+  AdaptiveLoadClientMain main(6, argv, controller, filesystem);
 
   EXPECT_THAT(main.DescribeInputs(), HasSubstr("TLS"));
 }
@@ -212,10 +211,10 @@ TEST(AdaptiveLoadClientMainTest, UsesDefaultNighthawkServiceAddress) {
       "executable-name-here", "--spec-file", "a", "--output-file", "b",
   };
 
+  NiceMock<MockAdaptiveLoadController> controller;
   Envoy::Filesystem::Instance& filesystem = Envoy::Filesystem::fileSystemForTest();
-  FakeIncrementingMonotonicTimeSource time_source;
 
-  AdaptiveLoadClientMain main(5, argv, filesystem, time_source);
+  AdaptiveLoadClientMain main(5, argv, controller, filesystem);
 
   EXPECT_THAT(main.DescribeInputs(), HasSubstr("localhost:8443"));
 }
@@ -231,10 +230,10 @@ TEST(AdaptiveLoadClientMainTest, UsesCustomNighthawkServiceAddress) {
       "b",
   };
 
+  NiceMock<MockAdaptiveLoadController> controller;
   Envoy::Filesystem::Instance& filesystem = Envoy::Filesystem::fileSystemForTest();
-  FakeIncrementingMonotonicTimeSource time_source;
 
-  AdaptiveLoadClientMain main(7, argv, filesystem, time_source);
+  AdaptiveLoadClientMain main(7, argv, controller, filesystem);
 
   EXPECT_THAT(main.DescribeInputs(), HasSubstr("1.2.3.4:5678"));
 }

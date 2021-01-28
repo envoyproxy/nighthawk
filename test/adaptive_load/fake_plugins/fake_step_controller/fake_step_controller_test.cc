@@ -210,15 +210,16 @@ TEST(FakeStepController, IsDoomedReturnsTrueAndSetsDoomedReasonAfterNegativeBenc
 
 TEST(MakeFakeStepControllerPluginConfig, ActivatesFakeStepControllerPlugin) {
   absl::StatusOr<StepControllerPtr> plugin_or = LoadStepControllerPlugin(
-      MakeFakeStepControllerPluginConfig(0), nighthawk::client::CommandLineOptions{});
+      MakeFakeStepControllerPluginConfigWithRps(0), nighthawk::client::CommandLineOptions{});
   ASSERT_TRUE(plugin_or.ok());
   EXPECT_NE(dynamic_cast<FakeStepController*>(plugin_or.value().get()), nullptr);
 }
 
 TEST(MakeFakeStepControllerPluginConfig, ProducesFakeStepControllerPluginWithConfiguredValue) {
   const int kExpectedRps = 5;
-  absl::StatusOr<StepControllerPtr> plugin_or = LoadStepControllerPlugin(
-      MakeFakeStepControllerPluginConfig(kExpectedRps), nighthawk::client::CommandLineOptions{});
+  absl::StatusOr<StepControllerPtr> plugin_or =
+      LoadStepControllerPlugin(MakeFakeStepControllerPluginConfigWithRps(kExpectedRps),
+                               nighthawk::client::CommandLineOptions{});
   ASSERT_TRUE(plugin_or.ok());
   auto* plugin = dynamic_cast<FakeStepController*>(plugin_or.value().get());
   ASSERT_NE(plugin, nullptr);
@@ -242,7 +243,7 @@ TEST(MakeFakeStepControllerPluginConfigWithValidationError,
 TEST(MakeFakeStepControllerPluginConfigWithInputSettingError,
      ProducesFakeStepControllerPluginWithConfiguredErrorAndCountdown) {
   const int kExpectedRpsValue = 123;
-  std::string kInputSettingErrorMessage = "artificial input setting error";
+  const std::string kInputSettingErrorMessage = "artificial input setting error";
   absl::StatusOr<StepControllerPtr> plugin_or = LoadStepControllerPlugin(
       MakeFakeStepControllerPluginConfigWithInputSettingError(
           kExpectedRpsValue, absl::DeadlineExceededError(kInputSettingErrorMessage),

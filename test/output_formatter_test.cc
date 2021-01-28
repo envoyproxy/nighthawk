@@ -85,9 +85,9 @@ public:
 
   void setupCollector() {
     collector_ = std::make_unique<OutputCollectorImpl>(time_system_, options_);
-    collector_->addResult("worker_0", statistics_, counters_, 1s);
-    collector_->addResult("worker_1", statistics_, counters_, 1s);
-    collector_->addResult("global", statistics_, counters_, 1s);
+    collector_->addResult("worker_0", statistics_, counters_, 1s, time_system_.systemTime());
+    collector_->addResult("worker_1", statistics_, counters_, 1s, absl::nullopt);
+    collector_->addResult("global", statistics_, counters_, 1s, time_system_.systemTime());
   }
 
   nighthawk::client::CommandLineOptions command_line_options_;
@@ -126,7 +126,8 @@ TEST_F(OutputCollectorTest, GetLowerCaseOutputFormats) {
   auto output_formats = OutputFormatterImpl::getLowerCaseOutputFormats();
   // When you're looking at this code you probably just added an output format.
   // This is to point out that you might want to update the list below and add a test above.
-  ASSERT_THAT(output_formats, ElementsAre("json", "human", "yaml", "dotted", "fortio"));
+  ASSERT_THAT(output_formats, ElementsAre("json", "human", "yaml", "dotted", "fortio",
+                                          "experimental_fortio_pedantic"));
 }
 
 class FortioOutputCollectorTest : public OutputCollectorTest {
@@ -186,14 +187,25 @@ public:
 };
 
 TEST_F(MediumOutputCollectorTest, FortioFormatter) {
-  const auto input_proto = loadProtoFromFile("test/test_data/output_formatter.medium.proto.gold");
+  const nighthawk::client::Output input_proto =
+      loadProtoFromFile("test/test_data/output_formatter.medium.proto.gold");
   FortioOutputFormatterImpl formatter;
   expectEqualToGoldFile(formatter.formatProto(input_proto),
                         "test/test_data/output_formatter.medium.fortio.gold");
 }
 
+TEST_F(MediumOutputCollectorTest, FortioFormatter0sJitterUniformGetsReflected) {
+  nighthawk::client::Output input_proto =
+      loadProtoFromFile("test/test_data/output_formatter.medium.proto.gold");
+  FortioOutputFormatterImpl formatter;
+  input_proto.mutable_options()->mutable_jitter_uniform()->set_nanos(0);
+  input_proto.mutable_options()->mutable_jitter_uniform()->set_seconds(0);
+  EXPECT_NE(formatter.formatProto(input_proto).find(" \"Jitter\": false,"), std::string::npos);
+}
+
 TEST_F(MediumOutputCollectorTest, ConsoleOutputFormatter) {
-  const auto input_proto = loadProtoFromFile("test/test_data/percentile-column-overflow.json");
+  const nighthawk::client::Output input_proto =
+      loadProtoFromFile("test/test_data/percentile-column-overflow.json");
   ConsoleOutputFormatterImpl formatter;
   expectEqualToGoldFile(formatter.formatProto(input_proto),
                         "test/test_data/percentile-column-overflow.txt.gold");
@@ -213,6 +225,14 @@ TEST_F(StatidToNameTest, TestTranslations) {
   for (const std::string& id : ids) {
     EXPECT_NE(ConsoleOutputFormatterImpl::statIdtoFriendlyStatName(id), id);
   }
+}
+
+TEST_F(MediumOutputCollectorTest, FortioPedanticFormatter) {
+  const nighthawk::client::Output input_proto =
+      loadProtoFromFile("test/test_data/output_formatter.medium.proto.gold");
+  FortioPedanticOutputFormatterImpl formatter;
+  expectEqualToGoldFile(formatter.formatProto(input_proto),
+                        "test/test_data/output_formatter.medium.fortio-noquirks.gold");
 }
 
 } // namespace Client

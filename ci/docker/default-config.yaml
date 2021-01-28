@@ -23,17 +23,12 @@ static_resources:
               domains:
               - "*"
           http_filters:
-          - name: envoy.fault
-            config:
-              max_active_faults: 100
-              delay:
-                header_delay: {}
-                percentage:
-                  numerator: 100
+          - name: time-tracking
+          - name: dynamic-delay
           - name: test-server
             config:
               response_body_size: 10
-              response_headers:
+              v3_response_headers:
               - { header: { key: "x-nh", value: "1"}}
           - name: envoy.router
             config:

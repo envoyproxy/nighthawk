@@ -3,6 +3,8 @@
 #include "envoy/common/time.h"
 #include "envoy/filesystem/filesystem.h"
 
+#include "nighthawk/adaptive_load/adaptive_load_controller.h"
+
 #include "external/envoy/source/common/common/logger.h"
 
 namespace Nighthawk {
@@ -19,13 +21,14 @@ public:
    *
    * @param argc Standard argc passed through from the exe entry point.
    * @param argv Standard argv passed through from the exe entry point.
-   * @param time_source Abstraction of the system clock, passed in to allow unit testing of this
+   * @param controller Adaptive load controller, passed in to allow unit testing of this class.
+   * @param filesystem Abstraction of the filesystem, passed in to allow unit testing of this
    * class.
    *
    * @throw Nighthawk::Client::MalformedArgvException If command line constraints are violated.
    */
-  AdaptiveLoadClientMain(int argc, const char* const* argv, Envoy::Filesystem::Instance& filesystem,
-                         Envoy::TimeSource& time_source);
+  AdaptiveLoadClientMain(int argc, const char* const* argv, AdaptiveLoadController& controller,
+                         Envoy::Filesystem::Instance& filesystem);
   /**
    * Loads the adaptive load session spec proto from a file, runs an adaptive load session, and
    * writes the output proto to a file. File paths are taken from class members initialized in the
@@ -45,8 +48,8 @@ private:
   bool use_tls_;
   std::string spec_filename_;
   std::string output_filename_;
+  AdaptiveLoadController& controller_;
   Envoy::Filesystem::Instance& filesystem_;
-  Envoy::TimeSource& time_source_;
 };
 
 } // namespace Nighthawk

@@ -34,21 +34,21 @@ message AdaptiveLoadSessionSpec {
   // https://github.com/envoyproxy/nighthawk/blob/master/api/client/options.proto
   //
   // The adaptive load controller will return an error if the |duration| field is set within
-  // |nighthawk_traffic_options|.
+  // |nighthawk_traffic_template|.
   //
   // If |open_loop| is unset, it will be overridden to true by the adaptive load controller. This is
   // to support the typical case where the controller needs full control over attempted requests per
   // second, which could conflict with the backpressure mechanism of closed-loop mode. Note that in
-  // standalone Nighthawk clients, closed-loop mode is the default so |open_loop| defaults to false.
+  // standalone Nighthawk clients, closed-loop mode is the default.
   //
   // The controller will override at least one field in this proto to vary the load, such as the
   // requests_per_second field or headers. Any existing value for such a field in the template will
   // be ignored.
   //
-  // All other fields in |nighthawk_traffic_options| are passed through to the
+  // All other fields in |nighthawk_traffic_template| are passed through to the
   // Nighthawk Service.
   //
-  // Note that |concurrency| in |nighthawk_traffic_options| multiplies the total
+  // Note that |concurrency| in |nighthawk_traffic_template| multiplies the total
   // RPS sent.
   //
   // Required.

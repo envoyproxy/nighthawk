@@ -41,6 +41,7 @@ envoy_cc_binary(
     deps = [
         "//source/server:http_dynamic_delay_filter_config",
         "//source/server:http_test_server_filter_config",
+        "//source/server:http_time_tracking_filter_config",
         "@envoy//source/exe:envoy_main_entry_lib",
     ],
 )

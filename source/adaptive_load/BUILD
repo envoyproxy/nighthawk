@@ -9,15 +9,26 @@ licenses(["notice"])  # Apache 2
 envoy_package()
 
 envoy_cc_library(
-    name = "adaptive_load",
+    name = "adaptive_load_controller_impl",
+    srcs = [
+        "adaptive_load_controller_impl.cc",
+    ],
+    hdrs = [
+        "adaptive_load_controller_impl.h",
+    ],
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
-        ":adaptive_load_controller_impl",
-        ":input_variable_setter_impl",
         ":metrics_plugin_impl",
-        ":scoring_function_impl",
-        ":step_controller_impl",
+        ":plugin_loader",
+        "//api/adaptive_load:adaptive_load_proto_cc_proto",
+        "//api/client:base_cc_proto",
+        "//include/nighthawk/adaptive_load:adaptive_load_controller",
+        "//include/nighthawk/adaptive_load:metrics_evaluator",
+        "//include/nighthawk/adaptive_load:scoring_function",
+        "//include/nighthawk/adaptive_load:session_spec_proto_helper",
+        "//include/nighthawk/adaptive_load:step_controller",
+        "//include/nighthawk/common:nighthawk_service_client",
     ],
 )
 
@@ -44,23 +55,19 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
-    name = "adaptive_load_controller_impl",
+    name = "config_validator_impl",
     srcs = [
-        "adaptive_load_controller_impl.cc",
+        "config_validator_impl.cc",
+    ],
+    hdrs = [
+        "config_validator_impl.h",
     ],
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
-        ":metrics_plugin_impl",
-        ":plugin_loader",
-        "//api/adaptive_load:adaptive_load_proto_cc_proto",
-        "//api/client:base_cc_proto",
-        "//api/client:grpc_service_lib",
-        "//include/nighthawk/adaptive_load:adaptive_load_controller",
-        "//include/nighthawk/adaptive_load:scoring_function",
-        "//include/nighthawk/adaptive_load:step_controller",
-        "@envoy//source/common/common:minimal_logger_lib_with_external_headers",
-        "@envoy//source/common/event:real_time_system_lib_with_external_headers",
+        "//third_party/envoy/src/source/common/config:utility_lib_with_external_headers",
+        "//third_party/envoy/src/source/common/protobuf:protobuf_with_external_headers",
+        "//third_party/nighthawk/include/nighthawk/adaptive_load:config_validator",
     ],
 )
 
@@ -78,6 +85,27 @@ envoy_cc_library(
         "//include/nighthawk/adaptive_load:input_variable_setter",
         "@envoy//source/common/config:utility_lib_with_external_headers",
         "@envoy//source/common/protobuf:protobuf_with_external_headers",
+    ],
+)
+
+envoy_cc_library(
+    name = "metrics_evaluator_impl",
+    srcs = [
+        "metrics_evaluator_impl.cc",
+    ],
+    hdrs = [
+        "metrics_evaluator_impl.h",
+    ],
+    repository = "@envoy",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":metrics_plugin_impl",
+        ":plugin_loader",
+        "//api/adaptive_load:adaptive_load_proto_cc_proto",
+        "//api/client:base_cc_proto",
+        "//include/nighthawk/adaptive_load:adaptive_load_controller",
+        "//include/nighthawk/adaptive_load:metrics_evaluator",
+        "//include/nighthawk/adaptive_load:scoring_function",
     ],
 )
 
@@ -132,6 +160,28 @@ envoy_cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//include/nighthawk/adaptive_load:scoring_function",
+        "@envoy//source/common/config:utility_lib_with_external_headers",
+        "@envoy//source/common/protobuf:protobuf_with_external_headers",
+    ],
+)
+
+envoy_cc_library(
+    name = "session_spec_proto_helper_impl",
+    srcs = [
+        "session_spec_proto_helper_impl.cc",
+    ],
+    hdrs = [
+        "session_spec_proto_helper_impl.h",
+    ],
+    repository = "@envoy",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":metrics_plugin_impl",
+        ":plugin_loader",
+        "//include/nighthawk/adaptive_load:metrics_plugin",
+        "//include/nighthawk/adaptive_load:scoring_function",
+        "//include/nighthawk/adaptive_load:session_spec_proto_helper",
+        "//include/nighthawk/adaptive_load:step_controller",
         "@envoy//source/common/config:utility_lib_with_external_headers",
         "@envoy//source/common/protobuf:protobuf_with_external_headers",
     ],

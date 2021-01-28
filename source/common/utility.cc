@@ -38,9 +38,9 @@ Utility::mapCountersFromStore(const Envoy::Stats::Store& store,
 
 size_t Utility::findPortSeparator(absl::string_view hostname) {
   if (hostname.size() > 0 && hostname[0] == '[') {
-    return hostname.find(":", hostname.find(']'));
+    return hostname.find(':', hostname.find(']'));
   }
-  return hostname.rfind(":");
+  return hostname.rfind(':');
 }
 
 Envoy::Network::DnsLookupFamily

@@ -13,6 +13,8 @@ namespace Nighthawk {
 
 /**
  * StepController for testing: Configurable convergence and doom countdowns, fixed RPS value.
+ *
+ * This class is not thread-safe.
  */
 class FakeStepController : public StepController {
 public:
@@ -88,13 +90,14 @@ DECLARE_FACTORY(FakeStepControllerConfigFactory);
  * FakeStepControllerConfig proto wrapped in an Any.
  */
 envoy::config::core::v3::TypedExtensionConfig
-MakeFakeStepControllerPluginConfig(int fixed_rps_value);
+MakeFakeStepControllerPluginConfigWithRps(int fixed_rps_value);
 
 /**
  * Creates a valid TypedExtensionConfig proto that activates a FakeStepController with a
  * FakeInputVariableSetterConfig that fails validation.
  *
- * @param artificial_validation_error An error status.
+ * @param artificial_validation_error An artificial error status to be returned by
+ * FakeStepControllerConfigFactory::ValidateConfig() when attempting LoadStepControllerPlugin().
  *
  * @return TypedExtensionConfig A proto that activates FakeStepController by name and includes
  * a FakeStepControllerConfig proto wrapped in an Any. This proto will fail validation when

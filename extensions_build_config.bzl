@@ -8,7 +8,10 @@ EXTENSIONS = {
     "envoy.transport_sockets.raw_buffer": "//source/extensions/transport_sockets/raw_buffer:config",
 }
 
-# This can be used to extend the visibility rules for Envoy extensions
-# (//:extension_config and //:extension_library in //BUILD)
-# if downstream Envoy builds need to directly reference envoy extensions.
-ADDITIONAL_VISIBILITY = []
+DISABLED_BY_DEFAULT_EXTENSIONS = {
+}
+
+# These can be changed to ["//visibility:public"], for  downstream builds which
+# need to directly reference Envoy extensions.
+EXTENSION_CONFIG_VISIBILITY = ["//visibility:public"]
+EXTENSION_PACKAGE_VISIBILITY = ["//visibility:public"]

@@ -16,7 +16,9 @@ message FakeStepControllerConfig {
   int32 fixed_rps_value = 1;
   // Artificial error that the plugin factory should return during validation. Optional.
   google.rpc.Status artificial_validation_failure = 2;
-  // Artificial error that should be returned from GetCurrentCommandLineOptions(). Optional.
+  // Artificial error that should be returned from GetCurrentCommandLineOptions(). Optional. May be
+  // used in conjunction with |artificial_input_setting_failure_countdown| to activate error
+  // behavior after a delay.
   google.rpc.Status artificial_input_setting_failure = 3;
   // Relevant only when |artificial_input_setting_failure| is set. Number of calls to
   // UpdateAndRecompute() the controller must receive before it starts to return

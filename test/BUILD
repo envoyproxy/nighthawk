@@ -87,6 +87,7 @@ envoy_cc_test(
         "//test/mocks/client:mock_benchmark_client",
         "//test/mocks/client:mock_options",
         "//test/mocks/common:mock_termination_predicate",
+        "//test/test_common:environment_lib",
         "@envoy//test/mocks/event:event_mocks",
         "@envoy//test/mocks/tracing:tracing_mocks",
         "@envoy//test/test_common:simulated_time_system_lib",
@@ -118,6 +119,7 @@ envoy_cc_test(
         "test_data/output_formatter.dotted.gold",
         "test_data/output_formatter.json.gold",
         "test_data/output_formatter.medium.fortio.gold",
+        "test_data/output_formatter.medium.fortio-noquirks.gold",
         "test_data/output_formatter.medium.proto.gold",
         "test_data/output_formatter.txt.gold",
         "test_data/output_formatter.yaml.gold",
@@ -152,6 +154,7 @@ envoy_cc_test(
         "//test/test_common:environment_lib",
         "@envoy//test/test_common:network_utility_lib",
         "@envoy//test/test_common:registry_lib",
+        "@envoy//test/test_common:simulated_time_system_lib",
     ],
 )
 
@@ -323,8 +326,11 @@ envoy_cc_test(
     srcs = ["request_stream_grpc_client_test.cc"],
     repository = "@envoy",
     deps = [
+        "//api/request_source:grpc_request_source_service_lib",
         "//source/common:request_stream_grpc_client_lib",
         "@envoy//test/test_common:utility_lib",
+        "@envoy_api//envoy/api/v2/core:pkg_cc_proto",
+        "@envoy_api//envoy/config/core/v3:pkg_cc_proto",
     ],
 )
 
@@ -334,6 +340,18 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         "//source/client:nighthawk_client_lib",
+        "@envoy//test/test_common:utility_lib",
+    ],
+)
+
+envoy_cc_test(
+    name = "stopwatch_test",
+    srcs = ["stopwatch_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/common:thread_safe_monotonic_time_stopwatch_lib",
+        "//test/common:fake_time_source",
+        "@envoy//test/test_common:simulated_time_system_lib",
         "@envoy//test/test_common:utility_lib",
     ],
 )
