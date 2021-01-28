@@ -1,7 +1,7 @@
-# This is a full Nighthawk CommandLineOptions proto.
-# Perform any customizations here such as headers.
-# We will send it as-is except with a dynamic requests_per_second value inserted.
 nighthawk_traffic_template {
+  # This is a full Nighthawk CommandLineOptions proto.
+  # Perform any customizations here such as headers.
+  # We will send it as-is except with a dynamic requests_per_second value inserted.
   uri {
     value: "http://localhost:12345/"
   }
