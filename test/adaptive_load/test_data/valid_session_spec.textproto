@@ -17,8 +17,9 @@ convergence_deadline {
   seconds: 1000
 }
 
+# Confirm the final qps with a longer benchmark.
 testing_stage_duration {
-  seconds: 60
+  seconds: 10
 }
 
 # Back off if mean+2stdev latency > 2ms
@@ -60,7 +61,7 @@ metric_thresholds {
   }
 }
 
-# Back off if <95% of requests Nighthawk sends are 2xx.
+# Back off if less than 95% of received responses were 2xx.
 metric_thresholds {
   metric_spec {
     metric_name: "success-rate"
