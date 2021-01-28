@@ -45,29 +45,18 @@ envoy_cc_library(
     deps = [
         "//api/client:base_cc_proto",
         "//api/client:grpc_service_lib",
-        "//include/nighthawk/adaptive_load:adaptive_load_controller",
+        ":adaptive_load_controller_impl",
+        ":input_variable_setter_impl",
+        ":metrics_evaluator_impl",
+        ":metrics_plugin_impl",
+        ":scoring_function_impl",
+        ":session_spec_proto_helper_impl",
+        ":step_controller_impl",
         "//source/common:nighthawk_common_lib",
         "@envoy//source/common/common:assert_lib_with_external_headers",
         "@envoy//source/common/common:minimal_logger_lib_with_external_headers",
         "@envoy//source/common/event:real_time_system_lib_with_external_headers",
         "@envoy//source/common/grpc:google_grpc_utils_lib_with_external_headers",
-    ],
-)
-
-envoy_cc_library(
-    name = "config_validator_impl",
-    srcs = [
-        "config_validator_impl.cc",
-    ],
-    hdrs = [
-        "config_validator_impl.h",
-    ],
-    repository = "@envoy",
-    visibility = ["//visibility:public"],
-    deps = [
-        "//third_party/envoy/src/source/common/config:utility_lib_with_external_headers",
-        "//third_party/envoy/src/source/common/protobuf:protobuf_with_external_headers",
-        "//third_party/nighthawk/include/nighthawk/adaptive_load:config_validator",
     ],
 )
 
