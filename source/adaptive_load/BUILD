@@ -46,6 +46,7 @@ envoy_cc_library(
         "//api/client:base_cc_proto",
         "//api/client:grpc_service_lib",
         ":adaptive_load_controller_impl",
+        ":config_validator_impl",
         ":input_variable_setter_impl",
         ":metrics_evaluator_impl",
         ":metrics_plugin_impl",
@@ -57,6 +58,23 @@ envoy_cc_library(
         "@envoy//source/common/common:minimal_logger_lib_with_external_headers",
         "@envoy//source/common/event:real_time_system_lib_with_external_headers",
         "@envoy//source/common/grpc:google_grpc_utils_lib_with_external_headers",
+    ],
+)
+
+envoy_cc_library(
+    name = "config_validator_impl",
+    srcs = [
+        "config_validator_impl.cc",
+    ],
+    hdrs = [
+        "config_validator_impl.h",
+    ],
+    repository = "@envoy",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//include/nighthawk/adaptive_load:config_validator",
+        "@envoy//source/common/config:utility_lib_with_external_headers",
+        "@envoy//source/common/protobuf:protobuf_with_external_headers",
     ],
 )
 
