@@ -161,27 +161,20 @@ TEST(AdaptiveLoadClientMainTest, WritesOutputProtoToFile) {
       .WillOnce(Return(ByMove(std::unique_ptr<NiceMock<Envoy::Filesystem::MockFile>>(file))));
 
   EXPECT_CALL(*file, open_(_))
-      //   .WillOnce(Return(ByMove(Envoy::Filesystem::resultSuccess<bool>(true))));
       .WillOnce(Return(ByMove(Envoy::Api::IoCallBoolResult(
           true, Envoy::Api::IoErrorPtr(nullptr, [](auto* err) { delete err; })))));
-  //   .WillOnce(Return(true));
   EXPECT_CALL(*file, write_(_))
       .WillRepeatedly(Invoke(
           [&actual_outfile_contents](absl::string_view data) -> Envoy::Api::IoCallSizeResult {
             actual_outfile_contents += data;
-            // return
-            // Envoy::Filesystem::resultSuccess<ssize_t>(static_cast<ssize_t>(data.length()));
-            // return static_cast<ssize_t>(data.length());
             return Envoy::Api::IoCallSizeResult(
                 static_cast<ssize_t>(data.length()),
                 Envoy::Api::IoErrorPtr(nullptr, [](auto* err) { delete err; }));
           }));
 
   EXPECT_CALL(*file, close_())
-      //   .WillOnce(Return(ByMove(Envoy::Filesystem::resultSuccess<bool>(true))));
       .WillOnce(Return(ByMove(Envoy::Api::IoCallBoolResult(
           true, Envoy::Api::IoErrorPtr(nullptr, [](auto* err) { delete err; })))));
-  //   .WillOnce(Return(true));
 
   AdaptiveLoadClientMain main(5, argv, controller, filesystem);
   main.Run();
