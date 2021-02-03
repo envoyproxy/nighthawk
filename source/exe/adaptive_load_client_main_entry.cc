@@ -30,8 +30,7 @@ int main(int argc, char* argv[]) {
                                                    spec_proto_helper, time_system);
   Envoy::PlatformImpl platform_impl;
   try {
-    Nighthawk::AdaptiveLoadClientMain program(argc, argv, controller,
-                                              platform_impl.fileSystem()); // NOLINT
+    Nighthawk::AdaptiveLoadClientMain program(argc, argv, controller, platform_impl.fileSystem());
     return program.Run();
   } catch (const Nighthawk::Client::NoServingException& e) {
     return EXIT_SUCCESS;
