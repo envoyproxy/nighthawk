@@ -31,6 +31,10 @@ namespace {
 /**
  * Writes a string to a file.
  *
+ * @param filesystem Envoy abstraction around filesystem functions, to facilitate unit testing.
+ * @param path Relative or absolute path to the file to write.
+ * @param contents String to write to the file.
+ *
  * @throw Nighthawk::NighthawkException For any filesystem error.
  */
 void WriteFileOrThrow(Envoy::Filesystem::Instance& filesystem, absl::string_view path,

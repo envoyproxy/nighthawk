@@ -34,6 +34,17 @@ using ::testing::Return;
 using ::testing::SetArgPointee;
 
 /**
+ * Envoy IO error value to simulate filesystem errors.
+ */
+class UnknownIoError : public Envoy::Api::IoError {
+public:
+  IoErrorCode getErrorCode() const override {
+    return Envoy::Api::IoError::IoErrorCode::UnknownError;
+  }
+  std::string getErrorDetails() const override { return "unknown error details"; }
+};
+
+/**
  * Creates a minimal valid output that matches test/adaptive_load/test_data/golden_output.textproto.
  *
  * @return AdaptiveLoadSessionOutput
@@ -120,7 +131,25 @@ TEST(AdaptiveLoadClientMainTest, FailsWithUnparseableInputFile) {
   EXPECT_THROW_WITH_REGEX(main.Run(), Nighthawk::NighthawkException, "Unable to parse file");
 }
 
-TEST(AdaptiveLoadClientMainTest, FailsWithUnwritableOutputFile) {
+TEST(AdaptiveLoadClientMainTest, ExitsProcessWithNonzeroStatusOnAdaptiveControllerError) {
+  std::string infile = Nighthawk::TestEnvironment::runfilesPath(
+      "test/adaptive_load/test_data/valid_session_spec.textproto");
+  std::string outfile = Nighthawk::TestEnvironment::runfilesPath(
+      "test/adaptive_load/test_data/nonexistent-dir/out.textproto");
+  const char* const argv[] = {
+      "executable-name-here", "--spec-file", infile.c_str(), "--output-file", outfile.c_str(),
+  };
+
+  MockAdaptiveLoadController controller;
+  EXPECT_CALL(controller, PerformAdaptiveLoadSession(_, _))
+      .WillOnce(Return(absl::DataLossError("error message")));
+  Envoy::Filesystem::Instance& filesystem = Envoy::Filesystem::fileSystemForTest();
+
+  AdaptiveLoadClientMain main(5, argv, controller, filesystem);
+  EXPECT_EQ(main.Run(), 1);
+}
+
+TEST(AdaptiveLoadClientMainTest, FailsIfCreatingOutputFileFails) {
   std::string infile = Nighthawk::TestEnvironment::runfilesPath(
       "test/adaptive_load/test_data/valid_session_spec.textproto");
   std::string outfile = Nighthawk::TestEnvironment::runfilesPath(
@@ -136,6 +165,107 @@ TEST(AdaptiveLoadClientMainTest, FailsWithUnwritableOutputFile) {
 
   AdaptiveLoadClientMain main(5, argv, controller, filesystem);
   EXPECT_THROW_WITH_REGEX(main.Run(), Nighthawk::NighthawkException, "Unable to open output file");
+}
+
+TEST(AdaptiveLoadClientMainTest, FailsIfOpeningOutputFileFails) {
+  const char* const argv[] = {
+      "executable-name-here", "--spec-file",         "in-dummy.textproto",
+      "--output-file",        "out-dummy.textproto",
+  };
+
+  MockAdaptiveLoadController controller;
+  EXPECT_CALL(controller, PerformAdaptiveLoadSession(_, _))
+      .WillOnce(Return(MakeBasicAdaptiveLoadSessionOutput()));
+
+  NiceMock<Envoy::Filesystem::MockInstance> filesystem;
+
+  std::string infile_contents =
+      Envoy::Filesystem::fileSystemForTest().fileReadToEnd(Nighthawk::TestEnvironment::runfilesPath(
+          std::string("test/adaptive_load/test_data/valid_session_spec.textproto")));
+  EXPECT_CALL(filesystem, fileReadToEnd(_)).WillOnce(Return(infile_contents));
+
+  NiceMock<Envoy::Filesystem::MockFile>* mock_file = new NiceMock<Envoy::Filesystem::MockFile>;
+  EXPECT_CALL(filesystem, createFile(_))
+      .WillOnce(Return(ByMove(std::unique_ptr<NiceMock<Envoy::Filesystem::MockFile>>(mock_file))));
+
+  EXPECT_CALL(*mock_file, open_(_))
+      .WillOnce(Return(ByMove(Envoy::Api::IoCallBoolResult(
+          false, Envoy::Api::IoErrorPtr(new UnknownIoError(),
+                                        [](Envoy::Api::IoError* err) { delete err; })))));
+
+  AdaptiveLoadClientMain main(5, argv, controller, filesystem);
+  EXPECT_THROW_WITH_REGEX(main.Run(), Nighthawk::NighthawkException, "Unable to open output file");
+}
+
+TEST(AdaptiveLoadClientMainTest, FailsIfWritingOutputFileFails) {
+  const char* const argv[] = {
+      "executable-name-here", "--spec-file",         "in-dummy.textproto",
+      "--output-file",        "out-dummy.textproto",
+  };
+
+  MockAdaptiveLoadController controller;
+  EXPECT_CALL(controller, PerformAdaptiveLoadSession(_, _))
+      .WillOnce(Return(MakeBasicAdaptiveLoadSessionOutput()));
+
+  NiceMock<Envoy::Filesystem::MockInstance> filesystem;
+
+  std::string infile_contents =
+      Envoy::Filesystem::fileSystemForTest().fileReadToEnd(Nighthawk::TestEnvironment::runfilesPath(
+          std::string("test/adaptive_load/test_data/valid_session_spec.textproto")));
+  EXPECT_CALL(filesystem, fileReadToEnd(_)).WillOnce(Return(infile_contents));
+
+  NiceMock<Envoy::Filesystem::MockFile>* mock_file = new NiceMock<Envoy::Filesystem::MockFile>;
+  EXPECT_CALL(filesystem, createFile(_))
+      .WillOnce(Return(ByMove(std::unique_ptr<NiceMock<Envoy::Filesystem::MockFile>>(mock_file))));
+
+  EXPECT_CALL(*mock_file, open_(_))
+      .WillOnce(Return(ByMove(Envoy::Api::IoCallBoolResult(
+          true, Envoy::Api::IoErrorPtr(nullptr, [](Envoy::Api::IoError*) {})))));
+  EXPECT_CALL(*mock_file, write_(_))
+      .WillOnce(Return(ByMove(Envoy::Api::IoCallSizeResult(
+          -1, Envoy::Api::IoErrorPtr(new UnknownIoError(),
+                                     [](Envoy::Api::IoError* err) { delete err; })))));
+  AdaptiveLoadClientMain main(5, argv, controller, filesystem);
+  EXPECT_THROW_WITH_REGEX(main.Run(), Nighthawk::NighthawkException, "Unable to write output file");
+}
+
+TEST(AdaptiveLoadClientMainTest, FailsIfClosingOutputFileFails) {
+  const char* const argv[] = {
+      "executable-name-here", "--spec-file",         "in-dummy.textproto",
+      "--output-file",        "out-dummy.textproto",
+  };
+
+  MockAdaptiveLoadController controller;
+  EXPECT_CALL(controller, PerformAdaptiveLoadSession(_, _))
+      .WillOnce(Return(MakeBasicAdaptiveLoadSessionOutput()));
+
+  NiceMock<Envoy::Filesystem::MockInstance> filesystem;
+
+  std::string infile_contents =
+      Envoy::Filesystem::fileSystemForTest().fileReadToEnd(Nighthawk::TestEnvironment::runfilesPath(
+          std::string("test/adaptive_load/test_data/valid_session_spec.textproto")));
+  EXPECT_CALL(filesystem, fileReadToEnd(_)).WillOnce(Return(infile_contents));
+
+  NiceMock<Envoy::Filesystem::MockFile>* mock_file = new NiceMock<Envoy::Filesystem::MockFile>;
+  EXPECT_CALL(filesystem, createFile(_))
+      .WillOnce(Return(ByMove(std::unique_ptr<NiceMock<Envoy::Filesystem::MockFile>>(mock_file))));
+
+  EXPECT_CALL(*mock_file, open_(_))
+      .WillOnce(Return(ByMove(Envoy::Api::IoCallBoolResult(
+          true, Envoy::Api::IoErrorPtr(nullptr, [](Envoy::Api::IoError*) {})))));
+  EXPECT_CALL(*mock_file, write_(_))
+      .WillRepeatedly(Invoke([](absl::string_view data) -> Envoy::Api::IoCallSizeResult {
+        return Envoy::Api::IoCallSizeResult(
+            static_cast<ssize_t>(data.length()),
+            Envoy::Api::IoErrorPtr(nullptr, [](Envoy::Api::IoError*) {}));
+      }));
+  EXPECT_CALL(*mock_file, close_())
+      .WillOnce(Return(ByMove(Envoy::Api::IoCallBoolResult(
+          false, Envoy::Api::IoErrorPtr(new UnknownIoError(),
+                                        [](Envoy::Api::IoError* err) { delete err; })))));
+
+  AdaptiveLoadClientMain main(5, argv, controller, filesystem);
+  EXPECT_THROW_WITH_REGEX(main.Run(), Nighthawk::NighthawkException, "Unable to close output file");
 }
 
 TEST(AdaptiveLoadClientMainTest, WritesOutputProtoToFile) {
@@ -156,25 +286,25 @@ TEST(AdaptiveLoadClientMainTest, WritesOutputProtoToFile) {
   EXPECT_CALL(filesystem, fileReadToEnd(_)).WillOnce(Return(infile_contents));
 
   std::string actual_outfile_contents;
-  NiceMock<Envoy::Filesystem::MockFile>* file = new NiceMock<Envoy::Filesystem::MockFile>;
+  NiceMock<Envoy::Filesystem::MockFile>* mock_file = new NiceMock<Envoy::Filesystem::MockFile>;
   EXPECT_CALL(filesystem, createFile(_))
-      .WillOnce(Return(ByMove(std::unique_ptr<NiceMock<Envoy::Filesystem::MockFile>>(file))));
+      .WillOnce(Return(ByMove(std::unique_ptr<NiceMock<Envoy::Filesystem::MockFile>>(mock_file))));
 
-  EXPECT_CALL(*file, open_(_))
+  EXPECT_CALL(*mock_file, open_(_))
       .WillOnce(Return(ByMove(Envoy::Api::IoCallBoolResult(
-          true, Envoy::Api::IoErrorPtr(nullptr, [](auto* err) { delete err; })))));
-  EXPECT_CALL(*file, write_(_))
+          true, Envoy::Api::IoErrorPtr(nullptr, [](Envoy::Api::IoError*) {})))));
+  EXPECT_CALL(*mock_file, write_(_))
       .WillRepeatedly(Invoke(
           [&actual_outfile_contents](absl::string_view data) -> Envoy::Api::IoCallSizeResult {
             actual_outfile_contents += data;
             return Envoy::Api::IoCallSizeResult(
                 static_cast<ssize_t>(data.length()),
-                Envoy::Api::IoErrorPtr(nullptr, [](auto* err) { delete err; }));
+                Envoy::Api::IoErrorPtr(nullptr, [](Envoy::Api::IoError*) {}));
           }));
 
-  EXPECT_CALL(*file, close_())
+  EXPECT_CALL(*mock_file, close_())
       .WillOnce(Return(ByMove(Envoy::Api::IoCallBoolResult(
-          true, Envoy::Api::IoErrorPtr(nullptr, [](auto* err) { delete err; })))));
+          true, Envoy::Api::IoErrorPtr(nullptr, [](Envoy::Api::IoError*) {})))));
 
   AdaptiveLoadClientMain main(5, argv, controller, filesystem);
   main.Run();
