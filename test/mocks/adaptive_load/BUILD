@@ -9,6 +9,16 @@ licenses(["notice"])  # Apache 2
 envoy_package()
 
 envoy_cc_mock(
+    name = "mock_adaptive_load_controller",
+    srcs = ["mock_adaptive_load_controller.cc"],
+    hdrs = ["mock_adaptive_load_controller.h"],
+    repository = "@envoy",
+    deps = [
+        "//include/nighthawk/adaptive_load:adaptive_load_controller",
+    ],
+)
+
+envoy_cc_mock(
     name = "mock_metrics_evaluator",
     srcs = ["mock_metrics_evaluator.cc"],
     hdrs = ["mock_metrics_evaluator.h"],
