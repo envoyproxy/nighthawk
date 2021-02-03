@@ -29,6 +29,6 @@ Envoy internals.
 We try to [regularly synchronize our Envoy dependency](https://github.com/envoyproxy/nighthawk/pulls?utf8=%E2%9C%93&q=is%3Apr+is%3Aclosed+%22update+envoy%22+) with the latest revision. Nighthawk reuses large parts of Envoy's build system and CI infrastructure. When we update, that looks like:
 
 - A change to [repositories.bzl](bazel/repositories.bzl) to update the commit and SHA.
-- A sync of [.bazelrc](.bazelrc) with [Envoy's version](https://github.com/envoyproxy/envoy/blob/master/.bazelrc) to update our build configurations.
-- A sync of the build image sha used in the [ci configuration](.circleci/config.yml) with [Envoy's version](https://github.com/envoyproxy/envoy/blob/master/.circleci/config.yml) to sync our CI testing environment.
+- A sync of [.bazelrc](.bazelrc) with [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/.bazelrc) to update our build configurations.
+- A sync of the build image sha used in the [ci configuration](.circleci/config.yml) with [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/.circleci/config.yml) to sync our CI testing environment.
 - Sometimes the dependency update comes with changes that break our build. We include any changes required to Nighthawk to fix that.
