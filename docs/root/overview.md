@@ -58,7 +58,7 @@ back reports per phase.
 
 ## Key concept descriptions
 
-*The c++ interface definitions for the concepts below can be found [here](https://github.com/envoyproxy/nighthawk/tree/master/include/nighthawk)*.
+*The c++ interface definitions for the concepts below can be found [here](https://github.com/envoyproxy/nighthawk/tree/main/include/nighthawk)*.
 
 ### Process
 
@@ -195,5 +195,5 @@ Users of Nighthawk can specify custom format and destination (logging sink
 delegate) for all Nighthawk logging messages. Nighthawk utilizes the Envoy's
 logging mechanism by performing all logging via the **ENVOY_LOG** macro. To
 customize this mechanism, users need to perform two steps:
-1. Create a logging sink delegate inherited from [Envoy SinkDelegate](https://github.com/envoyproxy/envoy/blob/master/source/common/common/logger.h).
-2. Construct a ServiceImpl object with an [Envoy Logger Context](https://github.com/envoyproxy/envoy/blob/master/source/common/common/logger.h) which contains user-specified log level and format.
+1. Create a logging sink delegate inherited from [Envoy SinkDelegate](https://github.com/envoyproxy/envoy/blob/main/source/common/common/logger.h).
+2. Construct a ServiceImpl object with an [Envoy Logger Context](https://github.com/envoyproxy/envoy/blob/main/source/common/common/logger.h) which contains user-specified log level and format.

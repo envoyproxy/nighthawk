@@ -26,7 +26,7 @@ It will run a selection of an example [benchmarks](test/test_discovery.py)
 extracted from `/benchmarks`, which injects Envoy between the benchmark client and test server.
 
 ```bash
-git clone https://github.com/oschaaf/nighthawk.git benchmark-test
+git clone https://github.com/envoyproxy/nighthawk.git benchmark-test
 cd benchmark-test
 bazel build //benchmarks:benchmarks
 
@@ -54,7 +54,7 @@ client and server. If not set, the benchmark suite will fall back to configuring
 Nighthawk's test server for that. Note that the build can be a lengthy process.
 
 ```bash
-git clone https://github.com/oschaaf/nighthawk.git benchmark-test
+git clone https://github.com/envoyproxy/nighthawk.git benchmark-test
 cd benchmark-test
 bazel test \
   --test_summary=detailed \
@@ -128,4 +128,4 @@ docker run -it --rm \
 - Have a mode where nighthawk_test_server provides high-res control timings in its
   access logs
 - The ability to repeat the runs multiple times and obtain stats, e.g. how much variance there is, mean, etc.
-- The ability to do A/B testing, similar to https://github.com/envoyproxy/envoy-perf/blob/master/siege/siege.py#L3.
+- The ability to do A/B testing, similar to https://github.com/envoyproxy/envoy-perf/blob/main/siege/siege.py#L3.

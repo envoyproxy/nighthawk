@@ -15,7 +15,7 @@ Nighthawk currently offers:
 
 ### Ubuntu
 
-First, follow steps 1 and 2 over at [Quick start Bazel build for developers](https://github.com/envoyproxy/envoy/blob/master/bazel/README.md#quick-start-bazel-build-for-developers).
+First, follow steps 1 and 2 over at [Quick start Bazel build for developers](https://github.com/envoyproxy/envoy/blob/main/bazel/README.md#quick-start-bazel-build-for-developers).
 
 
 ## Building and using the Nighthawk client CLI
@@ -117,9 +117,9 @@ Nighthawk writes to the output. Default is false.
 
 --request-source-plugin-config <string>
 [Request
-Source](https://github.com/envoyproxy/nighthawk/blob/master/docs/root/
-overview.md#requestsource) plugin configuration in json or compact
-yaml. Mutually exclusive with --request-source. Example (json):
+Source](https://github.com/envoyproxy/nighthawk/blob/main/docs/root/ov
+erview.md#requestsource) plugin configuration in json or compact yaml.
+Mutually exclusive with --request-source. Example (json):
 {name:"nighthawk.stub-request-source-plugin"
 ,typed_config:{"@type":"type.googleapis.com/nighthawk.request_source.S
 tubPluginConfig",test_value:"3"}}

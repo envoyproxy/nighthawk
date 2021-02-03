@@ -59,7 +59,8 @@ Http1PoolImpl::newStream(Envoy::Http::ResponseDecoder& response_decoder,
     while (host_->cluster().resourceManager(priority_).connections().canCreate()) {
       // We pass in a high prefetch ratio, because we don't want to throttle the prefetched
       // connection amount like Envoy does out of the box.
-      if (!tryCreateNewConnection(10000.0)) {
+      ConnPoolImplBase::ConnectionResult result = tryCreateNewConnection(10000.0);
+      if (result != ConnectionResult::CreatedNewConnection) {
         break;
       }
     }

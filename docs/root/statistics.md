@@ -61,7 +61,7 @@ histogram values are sent directly to the sinks. A stat
 is an interface that takes generic stat data and translates it into a
 backend-specific wire format. Currently Envoy supports the TCP and UDP
 [statsd](https://github.com/b/statsd_spec) protocol (implemented in
-[statsd.h](https://github.com/envoyproxy/envoy/blob/master/source/extensions/stat_sinks/common/statsd/statsd.h)).
+[statsd.h](https://github.com/envoyproxy/envoy/blob/main/source/extensions/stat_sinks/common/statsd/statsd.h)).
 Users can create their own Sink subclass to translate Envoy metrics into
 backend-specific format.	
 
@@ -90,7 +90,7 @@ stats.upstream_cx_length_.recordValue(...);
 Currently Envoy metrics don't support key-value map. As a result, for metrics to
 be broken down by certain dimensions, we need to define a separate metric for
 each dimension. For example, currently Nighthawk defines 
-[separate counters](https://github.com/envoyproxy/nighthawk/blob/master/source/client/benchmark_client_impl.h#L35-L40)
+[separate counters](https://github.com/envoyproxy/nighthawk/blob/main/source/client/benchmark_client_impl.h#L35-L40)
 to monitor the number of responses with corresponding response code.
 
 ## Envoy Metrics Flush	
@@ -128,7 +128,7 @@ key-value map.
 
 ## Reference	
 - [Nighthawk: architecture and key
-  concepts](https://github.com/envoyproxy/nighthawk/blob/master/docs/root/overview.md)	
+  concepts](https://github.com/envoyproxy/nighthawk/blob/main/docs/root/overview.md)	
 - [Envoy Stats
-  System](https://github.com/envoyproxy/envoy/blob/master/source/docs/stats.md)	
+  System](https://github.com/envoyproxy/envoy/blob/main/source/docs/stats.md)	
 - [Envoy Stats blog](https://blog.envoyproxy.io/envoy-stats-b65c7f363342)
