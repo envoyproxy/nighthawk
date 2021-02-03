@@ -77,31 +77,6 @@ absl::StatusOr<nighthawk::client::Statistic> GetStatistic(const nighthawk::clien
 }
 
 /**
- * Extracts a value from a StatusOr into a variable if OK; otherwise appends the error message to a
- * vector. static_casts the value to fit the variable. Ignores Status code values. For use in a
- * constructor that stores a vector of errors during initialization.
- *
- * @param status_or The StatusOr to extract. The value must be static_castable to the type of
- * |value|.
- * @param value The variable where the value should be extracted. Only written if the status is OK.
- * @param errors A place to accumulate error messages. If the status is not OK, its message is
- * appended here.
- *
- * @return bool True if the status was OK.
- */
-template <typename T, typename U>
-bool ExtractValueOrRecordError(absl::StatusOr<T> status_or, U& value,
-                               std::vector<std::string>& errors) {
-  if (status_or.ok()) {
-    value = static_cast<U>(status_or.value());
-    return true;
-  } else {
-    errors.emplace_back(status_or.status().message());
-    return false;
-  }
-}
-
-/**
  * Extracts counters from a Nighthawk Service Output proto and computes metrics from them, storing
  * the metrics in a map.
  *
