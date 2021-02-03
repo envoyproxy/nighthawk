@@ -1,6 +1,5 @@
 #pragma once
 
-#include "nighthawk/adaptive_load/config_validator.h"
 #include "nighthawk/adaptive_load/metrics_plugin.h"
 
 #include "external/envoy/source/common/common/logger.h"
