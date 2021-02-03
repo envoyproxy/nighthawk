@@ -43,8 +43,6 @@ envoy_cc_library(
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
-        "//api/client:base_cc_proto",
-        "//api/client:grpc_service_lib",
         ":adaptive_load_controller_impl",
         ":config_validator_impl",
         ":input_variable_setter_impl",
@@ -53,6 +51,8 @@ envoy_cc_library(
         ":scoring_function_impl",
         ":session_spec_proto_helper_impl",
         ":step_controller_impl",
+        "//api/client:base_cc_proto",
+        "//api/client:grpc_service_lib",
         "//source/common:nighthawk_common_lib",
         "@envoy//source/common/common:assert_lib_with_external_headers",
         "@envoy//source/common/common:minimal_logger_lib_with_external_headers",

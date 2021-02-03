@@ -24,10 +24,10 @@ public:
    */
   MockAdaptiveLoadController();
 
-  MOCK_METHOD(PerformAdaptiveLoadSession,
-              absl::StatusOr<nighthawk::adaptive_load::AdaptiveLoadSessionOutput>(
-                  nighthawk::client::NighthawkService::StubInterface* nighthawk_service_stub,
-                  const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec));
+  MOCK_METHOD(absl::StatusOr<nighthawk::adaptive_load::AdaptiveLoadSessionOutput>,
+              PerformAdaptiveLoadSession,
+              (nighthawk::client::NighthawkService::StubInterface * nighthawk_service_stub,
+               const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec));
 };
 
 } // namespace Nighthawk

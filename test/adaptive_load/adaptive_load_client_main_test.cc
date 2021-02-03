@@ -1,22 +1,15 @@
+#include "envoy/api/io_error.h"
 #include "envoy/filesystem/filesystem.h"
 
 #include "nighthawk/adaptive_load/adaptive_load_controller.h"
 #include "nighthawk/common/exception.h"
-
-#include "api/adaptive_load/benchmark_result.pb.h"
-
-// #include "common/filesystem/file_shared_impl.h" // fails check_format
-
-// #include "external/envoy/source/common/filesystem/file_shared_impl.h" // check_format possible
-// fix
-
-#include "external/envoy/source/common/filesystem/file_shared_impl.h"
 
 #include "external/envoy/test/mocks/filesystem/mocks.h"
 #include "external/envoy/test/test_common/file_system_for_test.h"
 #include "external/envoy/test/test_common/utility.h"
 
 #include "api/adaptive_load/adaptive_load.pb.h"
+#include "api/adaptive_load/benchmark_result.pb.h"
 
 #include "test/adaptive_load/fake_time_source.h"
 #include "test/adaptive_load/minimal_output.h"
@@ -41,14 +34,19 @@ using ::testing::NiceMock;
 using ::testing::Return;
 using ::testing::SetArgPointee;
 
-// nighthawk::adaptive_load::AdaptiveLoadSessionOutput MakeBasicAdaptiveLoadSessionOutput() {
-//   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output;
-//   nighthawk::adaptive_load::MetricEvaluation* evaluation =
-//       output.mutable_adjusting_stage_results()->Add()->add_metric_evaluations();
-//   evaluation->set_metric_id("com.a/b");
-//   evaluation->set_metric_value(123);
-//   return output;
-// }
+/**
+ * Creates a minimal valid output that matches test/adaptive_load/test_data/golden_output.textproto.
+ *
+ * @return AdaptiveLoadSessionOutput
+ */
+nighthawk::adaptive_load::AdaptiveLoadSessionOutput MakeBasicAdaptiveLoadSessionOutput() {
+  nighthawk::adaptive_load::AdaptiveLoadSessionOutput output;
+  nighthawk::adaptive_load::MetricEvaluation* evaluation =
+      output.mutable_adjusting_stage_results()->Add()->add_metric_evaluations();
+  evaluation->set_metric_id("com.a/b");
+  evaluation->set_metric_value(123);
+  return output;
+}
 
 TEST(AdaptiveLoadClientMainTest, FailsWithNoInputs) {
   const char* const argv[] = {
@@ -132,7 +130,9 @@ TEST(AdaptiveLoadClientMainTest, FailsWithUnwritableOutputFile) {
       "executable-name-here", "--spec-file", infile.c_str(), "--output-file", outfile.c_str(),
   };
 
-  NiceMock<MockAdaptiveLoadController> controller;
+  MockAdaptiveLoadController controller;
+  EXPECT_CALL(controller, PerformAdaptiveLoadSession(_, _))
+      .WillOnce(Return(MakeBasicAdaptiveLoadSessionOutput()));
   Envoy::Filesystem::Instance& filesystem = Envoy::Filesystem::fileSystemForTest();
 
   AdaptiveLoadClientMain main(5, argv, controller, filesystem);
@@ -145,7 +145,9 @@ TEST(AdaptiveLoadClientMainTest, WritesOutputProtoToFile) {
       "--output-file",        "out-dummy.textproto",
   };
 
-  NiceMock<MockAdaptiveLoadController> controller;
+  MockAdaptiveLoadController controller;
+  EXPECT_CALL(controller, PerformAdaptiveLoadSession(_, _))
+      .WillOnce(Return(MakeBasicAdaptiveLoadSessionOutput()));
 
   NiceMock<Envoy::Filesystem::MockInstance> filesystem;
 
@@ -160,16 +162,27 @@ TEST(AdaptiveLoadClientMainTest, WritesOutputProtoToFile) {
       .WillOnce(Return(ByMove(std::unique_ptr<NiceMock<Envoy::Filesystem::MockFile>>(file))));
 
   EXPECT_CALL(*file, open_(_))
-      .WillOnce(Return(ByMove(Envoy::Filesystem::resultSuccess<bool>(true))));
+      //   .WillOnce(Return(ByMove(Envoy::Filesystem::resultSuccess<bool>(true))));
+      .WillOnce(Return(ByMove(Envoy::Api::IoCallBoolResult(
+          true, Envoy::Api::IoErrorPtr(nullptr, [](auto* err) { delete err; })))));
+  //   .WillOnce(Return(true));
   EXPECT_CALL(*file, write_(_))
       .WillRepeatedly(Invoke(
           [&actual_outfile_contents](absl::string_view data) -> Envoy::Api::IoCallSizeResult {
             actual_outfile_contents += data;
-            return Envoy::Filesystem::resultSuccess<ssize_t>(static_cast<ssize_t>(data.length()));
+            // return
+            // Envoy::Filesystem::resultSuccess<ssize_t>(static_cast<ssize_t>(data.length()));
+            // return static_cast<ssize_t>(data.length());
+            return Envoy::Api::IoCallSizeResult(
+                static_cast<ssize_t>(data.length()),
+                Envoy::Api::IoErrorPtr(nullptr, [](auto* err) { delete err; }));
           }));
 
   EXPECT_CALL(*file, close_())
-      .WillOnce(Return(ByMove(Envoy::Filesystem::resultSuccess<bool>(true))));
+      //   .WillOnce(Return(ByMove(Envoy::Filesystem::resultSuccess<bool>(true))));
+      .WillOnce(Return(ByMove(Envoy::Api::IoCallBoolResult(
+          true, Envoy::Api::IoErrorPtr(nullptr, [](auto* err) { delete err; })))));
+  //   .WillOnce(Return(true));
 
   AdaptiveLoadClientMain main(5, argv, controller, filesystem);
   main.Run();
