@@ -10,17 +10,6 @@ licenses(["notice"])  # Apache 2
 envoy_package()
 
 envoy_cc_test_library(
-    name = "fake_time_source",
-    srcs = ["fake_time_source.cc"],
-    hdrs = ["fake_time_source.h"],
-    repository = "@envoy",
-    deps = [
-        "//source/client:nighthawk_client_lib",
-        "@com_google_absl//absl/time",
-    ],
-)
-
-envoy_cc_test_library(
     name = "minimal_output",
     srcs = ["minimal_output.cc"],
     hdrs = ["minimal_output.h"],
@@ -42,7 +31,6 @@ envoy_cc_test(
     ],
     repository = "@envoy",
     deps = [
-        ":fake_time_source",
         ":minimal_output",
         "//include/nighthawk/adaptive_load:adaptive_load_controller",
         "//source/adaptive_load:adaptive_load_client_main",
@@ -60,7 +48,6 @@ envoy_cc_test(
     srcs = ["adaptive_load_controller_test.cc"],
     repository = "@envoy",
     deps = [
-        ":fake_time_source",
         ":minimal_output",
         "//api/client:grpc_service_lib",
         "//include/nighthawk/adaptive_load:input_variable_setter",
