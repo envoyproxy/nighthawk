@@ -19,9 +19,9 @@ envoy_cc_library(
     deps = [
         "//source/adaptive_load:adaptive_load_client_main",
         "//source/common:nighthawk_service_client_impl",
+        "//source/common:version_linkstamp",
         "@envoy//source/exe:platform_header_lib_with_external_headers",
         "@envoy//source/exe:platform_impl_lib",
-        "//source/common:version_linkstamp",
     ],
 )
 
