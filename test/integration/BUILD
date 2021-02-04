@@ -17,6 +17,8 @@ py_library(
         "configurations/nighthawk_https_origin.yaml",
         "configurations/nighthawk_track_timings.yaml",
         "configurations/sni_origin.yaml",
+        "//test/request_source:testdata",
+        # "//test/request_source:test_data/test-config.yaml",
         "//:nighthawk_client",
         "//:nighthawk_output_transform",
         "//:nighthawk_service",
