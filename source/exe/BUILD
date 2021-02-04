@@ -21,6 +21,7 @@ envoy_cc_library(
         "//source/common:nighthawk_service_client_impl",
         "@envoy//source/exe:platform_header_lib_with_external_headers",
         "@envoy//source/exe:platform_impl_lib",
+        "//source/common:version_linkstamp",
     ],
 )
 
