@@ -357,7 +357,7 @@ def _do_tls_configuration_test(https_test_server_fixture, cli_parameter, use_h2)
 
   for cipher in [
       "ECDHE-RSA-AES128-SHA",
-      "ECDHE-RSA-CHACHA20-POLY1305",
+      # "ECDHE-RSA-CHACHA20-POLY1305",
   ]:
     parsed_json, _ = https_test_server_fixture.runNighthawkClient((["--h2"] if use_h2 else []) + [
         "--termination-predicate", "benchmark.http_2xx:0", cli_parameter, json_template % cipher,
