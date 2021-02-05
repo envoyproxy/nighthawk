@@ -1,9 +1,16 @@
 nighthawk_traffic_template {
-  # This is a full Nighthawk CommandLineOptions proto.
-  # Perform any customizations here such as headers.
-  # We will send it as-is except with a dynamic requests_per_second value inserted.
+  # This is a full Nighthawk CommandLineOptions proto, input to Nighthawk Service.
+  # The adaptive load controller will send this proto as-is to the Nighthawk Service,
+  # except with a dynamic requests_per_second value inserted.
+  #
+  # See https://github.com/envoyproxy/nighthawk/blob/main/api/client/options.proto
+  # for full details on available settings.
+  #
+  # Note that the address of the system under test is set here.
+  #
+  # Add any customizations here such as headers.
   uri {
-    value: "http://localhost:12345/"
+    value: "http://127.0.0.1:12345/"
   }
 }
 
