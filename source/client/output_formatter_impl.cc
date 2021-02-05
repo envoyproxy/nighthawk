@@ -3,6 +3,7 @@
 #include <google/protobuf/util/time_util.h>
 
 #include <chrono>
+#include <regex>
 #include <sstream>
 
 #include "nighthawk/common/exception.h"
@@ -391,6 +392,26 @@ const nighthawk::client::DurationHistogram FortioOutputFormatterImpl::renderFort
                        }
                      });
   return fortio_histogram;
+}
+
+std::string
+FortioPedanticOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
+  std::string res = FortioOutputFormatterImpl::formatProto(output);
+  // clang-format off
+  // Fix two types of quirks. We disable linting because we use std::regex directly.
+  // This should be OK as the regular expression we use can be trusted.
+  // 1. We misdefined RequestedRPS as an int, whereas Fortio outputs that as a string.
+  res = std::regex_replace(res, std::regex(R"EOF("RequestedQPS"\: ([0-9]*))EOF"),
+                           R"EOF("RequestedQPS": "$1")EOF");
+  // 2. Our uint64's get serialized as json strings. Fortio outputs them as json integers.
+  // An example of a string that would match the regular expression below would be:
+  // "Count": "100", which then would be replaced to look like: "Count": 100.
+  // NOTE: [0-9][0-9][0-9] looks for string fields referring to http status codes, which get counted.
+ res = std::regex_replace(
+      res, std::regex(R"EOF("([0-9][0-9][0-9]|Count|BytesSent|BytesReceived)"\: "([0-9]*)")EOF"),
+      R"EOF("$1": $2)EOF");
+  // clang-format on
+  return res;
 }
 
 } // namespace Client

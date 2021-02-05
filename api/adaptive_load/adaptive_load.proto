@@ -31,7 +31,7 @@ message AdaptiveLoadSessionSpec {
   // visualization. Optional.
   repeated MetricSpec informational_metric_specs = 3;
   // A proto describing Nighthawk Service traffic. See
-  // https://github.com/envoyproxy/nighthawk/blob/master/api/client/options.proto
+  // https://github.com/envoyproxy/nighthawk/blob/main/api/client/options.proto
   //
   // The adaptive load controller will return an error if the |duration| field is set within
   // |nighthawk_traffic_template|.

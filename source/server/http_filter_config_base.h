@@ -9,7 +9,6 @@
 #include "api/server/response_options.pb.h"
 
 #include "server/configuration.h"
-#include "server/well_known_headers.h"
 
 #include "absl/status/status.h"
 
@@ -53,7 +52,7 @@ public:
    * @param decoder_callbacks Decoder used to generate the reply.
    * @return true iff an error reply was generated.
    */
-  bool maybeSendErrorReply(Envoy::Http::StreamDecoderFilterCallbacks& decoder_callbacks) const;
+  bool validateOrSendError(Envoy::Http::StreamDecoderFilterCallbacks& decoder_callbacks) const;
 
   /**
    * @brief Get the effective configuration. Depending on state ,this could be one of static

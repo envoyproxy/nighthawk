@@ -20,7 +20,8 @@ public:
 
   void addResult(absl::string_view name, const std::vector<StatisticPtr>& statistics,
                  const std::map<std::string, uint64_t>& counters,
-                 const std::chrono::nanoseconds execution_duration) override;
+                 const std::chrono::nanoseconds execution_duration,
+                 const absl::optional<Envoy::SystemTime>& first_acquisition_time) override;
   void setOutput(const nighthawk::client::Output& output) override { output_ = output; }
 
   nighthawk::client::Output toProto() const override;

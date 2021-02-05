@@ -45,8 +45,8 @@ public:
 TEST_F(WorkerTest, WorkerExecutesOnThread) {
   InSequence in_sequence;
 
-  EXPECT_CALL(tls_, registerThread(_, false)).Times(1);
-  EXPECT_CALL(tls_, allocateSlot()).Times(1);
+  EXPECT_CALL(tls_, registerThread(_, false));
+  EXPECT_CALL(tls_, allocateSlot());
 
   TestWorker worker(*api_, tls_);
   NiceMock<Envoy::Event::MockDispatcher> dispatcher;
@@ -57,7 +57,7 @@ TEST_F(WorkerTest, WorkerExecutesOnThread) {
   worker.start();
   worker.waitForCompletion();
 
-  EXPECT_CALL(tls_, shutdownThread()).Times(1);
+  EXPECT_CALL(tls_, shutdownThread());
   ASSERT_TRUE(worker.ran_);
   worker.shutdown();
 }

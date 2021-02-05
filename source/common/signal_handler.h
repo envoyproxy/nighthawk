@@ -69,6 +69,7 @@ private:
   // the read side will handle the actual shut down of the gRPC service without having to worry
   // about signal-safety.
   std::vector<int> pipe_fds_;
+  bool destructing_{false};
 };
 
 using SignalHandlerPtr = std::unique_ptr<SignalHandler>;

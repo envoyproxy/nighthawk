@@ -11,10 +11,11 @@ static_resources:
           port_value: 0
       filter_chains:
         - filters:
-            - name: envoy.http_connection_manager
-              config:
+            - name: envoy.filters.network.http_connection_manager
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
                 generate_request_id: false
-                codec_type: auto
+                codec_type: AUTO
                 stat_prefix: ingress_http
                 route_config:
                   name: local_route
@@ -24,19 +25,24 @@ static_resources:
                         - "*"
                 http_filters:
                   - name: test-server
-                    config:
+                    typed_config:
+                      "@type": type.googleapis.com/nighthawk.server.ResponseOptions
                       response_body_size: 10
-                      response_headers:
+                      v3_response_headers:
                         - { header: { key: "x-nh", value: "1" } }
-                  - name: envoy.router
-                    config:
+                  - name: envoy.filters.http.router
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
                       dynamic_stats: false
-          tls_context:
-            common_tls_context:
-              tls_certificates:
-                - certificate_chain:
-                    inline_string: |
-                      @inject-runfile:nighthawk/external/envoy/test/config/integration/certs/servercert.pem
-                  private_key:
-                    inline_string: |
-                      @inject-runfile:nighthawk/external/envoy/test/config/integration/certs/serverkey.pem
+          transport_socket:
+            name: tls
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
+              common_tls_context:
+                tls_certificates:
+                  - certificate_chain:
+                      inline_string: |
+                        @inject-runfile:nighthawk/external/envoy/test/config/integration/certs/servercert.pem
+                    private_key:
+                      inline_string: |
+                        @inject-runfile:nighthawk/external/envoy/test/config/integration/certs/serverkey.pem

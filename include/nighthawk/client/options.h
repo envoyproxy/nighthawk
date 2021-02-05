@@ -6,6 +6,7 @@
 #include <string>
 
 #include "envoy/common/pure.h"
+#include "envoy/common/time.h"
 #include "envoy/config/cluster/v3/cluster.pb.h"
 #include "envoy/config/core/v3/base.pb.h"
 #include "envoy/config/metrics/v3/stats.pb.h"
@@ -54,6 +55,8 @@ public:
   virtual nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions
   sequencerIdleStrategy() const PURE;
   virtual std::string requestSource() const PURE;
+  virtual const absl::optional<envoy::config::core::v3::TypedExtensionConfig>&
+  requestSourcePluginConfig() const PURE;
   virtual std::string trace() const PURE;
   virtual nighthawk::client::H1ConnectionReuseStrategy::H1ConnectionReuseStrategyOptions
   h1ConnectionReuseStrategy() const PURE;
@@ -72,7 +75,9 @@ public:
   virtual std::vector<envoy::config::metrics::v3::StatsSink> statsSinks() const PURE;
   virtual uint32_t statsFlushInterval() const PURE;
   virtual std::string responseHeaderWithLatencyInput() const PURE;
+  virtual bool allowEnvoyDeprecatedV2Api() const PURE;
 
+  virtual absl::optional<Envoy::SystemTime> scheduled_start() const PURE;
   /**
    * Converts an Options instance to an equivalent CommandLineOptions instance in terms of option
    * values.

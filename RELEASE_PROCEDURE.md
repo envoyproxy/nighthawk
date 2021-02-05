@@ -14,7 +14,7 @@
 
 ## Release steps
 
-1. Speculatively bump the version in [version_info.h](source/common/version_info.h) to the version you determined earlier. This may result in version gaps if a release attempt fails, but avoids having to freeze merges to master and/or having to work with release branches. In short it helps keeping the release procedure lean and mean and eliminates the need for blocking others while this procedure is in-flight.
+1. Speculatively bump the version in [version_info.h](source/common/version_info.h) to the version you determined earlier. This may result in version gaps if a release attempt fails, but avoids having to freeze merges to main and/or having to work with release branches. In short it helps keeping the release procedure lean and mean and eliminates the need for blocking others while this procedure is in-flight.
 2. Draft a [GitHub tagged release](https://github.com/envoyproxy/nighthawk/releases/new). Earlier releases are tagged like `v0.1`, but as of `0.3.0`we are using [semantic versioning](https://semver.org/spec/v2.0.0.html)
 3. Perform thorough testing of the targeted revision to double down on stability [1]
 4. Create an optimized build for comparing with the previous release. Changes in performance

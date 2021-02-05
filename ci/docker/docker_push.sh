@@ -12,8 +12,8 @@ fi
 
 DOCKER_IMAGE_PREFIX="${DOCKER_IMAGE_PREFIX:-envoyproxy/nighthawk}"
 
-# push the nighthawk image on tags or merge to master
-if [[  "$CIRCLE_BRANCH" = 'master' ]]; then
+# push the nighthawk image on tags or merge to main
+if [[  "$CIRCLE_BRANCH" = 'main' ]]; then
     docker login -u "$DOCKERHUB_USERNAME" -p "$DOCKERHUB_PASSWORD"
     docker push "${DOCKER_IMAGE_PREFIX}-dev:latest"
     docker tag "${DOCKER_IMAGE_PREFIX}-dev:latest" "${DOCKER_IMAGE_PREFIX}-dev:${CIRCLE_SHA1}"
@@ -26,6 +26,6 @@ else
         docker tag "${DOCKER_IMAGE_PREFIX}:${TAG}" "${DOCKER_IMAGE_PREFIX}:${TAG}"
         docker push "${DOCKER_IMAGE_PREFIX}:${TAG}"
     else
-        echo 'Ignoring non-master branch for docker push.'
+        echo 'Ignoring non-main branch for docker push.'
     fi
 fi

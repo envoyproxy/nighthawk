@@ -8,7 +8,7 @@ WORKDIR /usr/local/bin/benchmarks
 
 COPY benchmarks /usr/local/bin/benchmarks/
 
-RUN apk add --no-cache docker=19.03.12-r0 openrc=0.42.1-r11 python3>=3.8.5
+RUN apk add --no-cache docker=20.10.2-r0 openrc=0.42.1-r19 python3>=3.8.5
 RUN rc-update add docker boot
 
 RUN if [ ! -e /usr/bin/python ]; then ln -sf python3 /usr/bin/python; fi && \
