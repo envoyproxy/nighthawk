@@ -2,8 +2,10 @@
 
 #include <cmath>
 #include <cstdio>
+#include <fstream>
 #include <sstream>
 
+#include "external/dep_hdrhistogram_c/src/hdr_histogram_log.h"
 #include "external/envoy/source/common/common/assert.h"
 #include "external/envoy/source/common/protobuf/utility.h"
 
@@ -67,6 +69,14 @@ uint64_t StatisticImpl::count() const { return count_; }
 uint64_t StatisticImpl::min() const { return min_; };
 
 uint64_t StatisticImpl::max() const { return max_; };
+
+absl::StatusOr<std::unique_ptr<std::istream>> StatisticImpl::serializeNative() const {
+  return absl::Status(absl::StatusCode::kUnimplemented, "serializeNative not implemented.");
+}
+
+absl::Status StatisticImpl::deserializeNative(std::istream&) {
+  return absl::Status(absl::StatusCode::kUnimplemented, "deserializeNative not implemented.");
+}
 
 void SimpleStatistic::addValue(uint64_t value) {
   StatisticImpl::addValue(value);
@@ -234,6 +244,31 @@ nighthawk::client::Statistic HdrStatistic::toProto(SerializationDomain domain) c
   }
 
   return proto;
+}
+
+absl::StatusOr<std::unique_ptr<std::istream>> HdrStatistic::serializeNative() const {
+  char* data;
+  if (hdr_log_encode(histogram_, &data) == 0) {
+    absl::string_view s(data, strlen(data));
+    auto ss = std::make_unique<std::stringstream>();
+    *ss << s;
+    free(data);
+    return ss;
+  }
+  ENVOY_LOG(error, "Failed to write HdrHistogram data.");
+  return absl::Status(absl::StatusCode::kInternal, "Failed to write HdrHistogram data");
+}
+
+absl::Status HdrStatistic::deserializeNative(std::istream& stream) {
+  std::string s(std::istreambuf_iterator<char>(stream), {});
+  struct hdr_histogram* new_histogram = nullptr;
+  if (hdr_log_decode(&new_histogram, const_cast<char*>(s.c_str()), s.length()) == 0) {
+    hdr_close(histogram_);
+    histogram_ = new_histogram;
+    return absl::OkStatus();
+  }
+  ENVOY_LOG(error, "Failed to read back HdrHistogram data.");
+  return absl::Status(absl::StatusCode::kInternal, "Failed to read back HdrHistogram data");
 }
 
 CircllhistStatistic::CircllhistStatistic() {
