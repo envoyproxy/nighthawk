@@ -87,3 +87,15 @@ envoy_basic_cc_library(
         "@envoy//include/envoy/common:time_interface",
     ],
 )
+
+envoy_basic_cc_library(
+    name = "sink_lib",
+    hdrs = [
+        "sink.h",
+    ],
+    include_prefix = "nighthawk/common",
+    deps = [
+        "//api/client:grpc_service_lib",
+        "@envoy//source/common/common:statusor_lib_with_external_headers",
+    ],
+)
