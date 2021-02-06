@@ -307,9 +307,9 @@ TEST(StatisticTest, HdrStatisticPercentilesProto) {
   util.loadFromJson(Envoy::Filesystem::fileSystemForTest().fileReadToEnd(
                         TestEnvironment::runfilesPath("test/test_data/hdr_proto_json.gold")),
                     parsed_json_proto, Envoy::ProtobufMessage::getStrictValidationVisitor());
-  const std::string json = util.getJsonStringFromMessage(
+  const std::string json = util.getJsonStringFromMessageOrDie(
       statistic.toProto(Statistic::SerializationDomain::DURATION), true, true);
-  const std::string golden_json = util.getJsonStringFromMessage(parsed_json_proto, true, true);
+  const std::string golden_json = util.getJsonStringFromMessageOrDie(parsed_json_proto, true, true);
   EXPECT_THAT(statistic.toProto(Statistic::SerializationDomain::DURATION),
               Envoy::ProtoEq(parsed_json_proto))
       << json << "\n"
@@ -329,9 +329,9 @@ TEST(StatisticTest, CircllhistStatisticPercentilesProto) {
   util.loadFromJson(Envoy::Filesystem::fileSystemForTest().fileReadToEnd(
                         TestEnvironment::runfilesPath("test/test_data/circllhist_proto_json.gold")),
                     parsed_json_proto, Envoy::ProtobufMessage::getStrictValidationVisitor());
-  const std::string json = util.getJsonStringFromMessage(
+  const std::string json = util.getJsonStringFromMessageOrDie(
       statistic.toProto(Statistic::SerializationDomain::DURATION), true, true);
-  const std::string golden_json = util.getJsonStringFromMessage(parsed_json_proto, true, true);
+  const std::string golden_json = util.getJsonStringFromMessageOrDie(parsed_json_proto, true, true);
   EXPECT_THAT(statistic.toProto(Statistic::SerializationDomain::DURATION),
               Envoy::ProtoEq(parsed_json_proto))
       << json << "\n"
