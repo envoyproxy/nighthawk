@@ -4,4 +4,4 @@ namespace Nighthawk {
 
 MockSink::MockSink() = default;
 
-}
+} // namespace Nighthawk

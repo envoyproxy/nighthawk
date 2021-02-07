@@ -21,14 +21,26 @@ public:
   virtual ~Sink() = default;
 
   /**
-   * Stores a fragement of the execution results.
+   * Store an ExecutionResponse instance. Can be called multiple times for the same execution_id to
+   * persist multiple fragments that together will represent results belonging to a single
+   * execution.
    *
-   * @param response
+   * @param response Specify an ExecutionResponse instance that should be persisted. The
+   * ExecutionResponse must have its execution_id set.
+   * @return absl::Status Indicates if the operation succeeded or not.
    */
   virtual absl::Status
   StoreExecutionResultPiece(const ::nighthawk::client::ExecutionResponse& response) const PURE;
+
+  /**
+   * Attempt to load a vector of ExecutionResponse instances associated to an execution id.
+   *
+   * @param execution_id Specify an execution_id that the desired set of ExecutionResponse
+   * instances are tagged with.
+   * @return const absl::StatusOr<std::vector<::nighthawk::client::ExecutionResponse>>
+   */
   virtual const absl::StatusOr<std::vector<::nighthawk::client::ExecutionResponse>>
-  LoadExecutionResult(absl::string_view id) const PURE;
+  LoadExecutionResult(absl::string_view execution_id) const PURE;
 };
 
 } // namespace Nighthawk
