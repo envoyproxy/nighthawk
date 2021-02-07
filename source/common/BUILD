@@ -177,5 +177,6 @@ envoy_cc_library(
     deps = [
         "//include/nighthawk/common:sink_lib",
         "@envoy//source/common/common:minimal_logger_lib_with_external_headers",
+        "@envoy//source/common/common:random_generator_lib_with_external_headers",
     ],
 )
