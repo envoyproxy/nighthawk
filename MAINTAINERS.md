@@ -46,4 +46,10 @@ We aim to [synchronize our Envoy dependency](https://github.com/envoyproxy/night
 1. Sync (copy) [.bazelrc](.bazelrc) from [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/.bazelrc) to update our build configurations. Be sure to retain our local modifications, all lines that are unique to Nighthawk are marked with comment `# unique`.
 1. Sync (copy) [.bazelversion](.bazelversion) from [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/.bazelversion) to ensure we are using the same build system version.
 1. Run `ci/do_ci.sh test`. Sometimes the dependency update comes with changes that break our build. Include any changes required to Nighthawk to fix that in the same PR.
-1. Create a PR with title like `Update Envoy to 9753819 (Jan 24th 2021)`, describe all performed changes in the PR's descriotion.
+1. Create a PR with a title like `Update Envoy to 9753819 (Jan 24th 2021)`, describe all performed changes in the PR's descriotion.
+1. (optional) If the PR ends up modifying any c++ files, execute `ci/do_ci.sh
+   fix_format` to reformat the files and avoid a CI failure.
+1. (optional) If the PR ends up modifying any CLI arguments, you may need to
+   execute `tools/update_cli_readme_documentation.sh --mode fix` to regenerate
+   the portion of our documentation that captures the CLI help output. This will
+   prevent a CI failure.
