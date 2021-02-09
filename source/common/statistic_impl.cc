@@ -249,11 +249,11 @@ nighthawk::client::Statistic HdrStatistic::toProto(SerializationDomain domain) c
 absl::StatusOr<std::unique_ptr<std::istream>> HdrStatistic::serializeNative() const {
   char* data;
   if (hdr_log_encode(histogram_, &data) == 0) {
-    absl::string_view s(data, strlen(data));
-    auto ss = std::make_unique<std::stringstream>();
-    *ss << s;
+    auto write_stream = std::make_unique<std::stringstream>();
+    *write_stream << absl::string_view(data, strlen(data));
+    // Free the memory allocated by hrd_log_encode.
     free(data);
-    return ss;
+    return write_stream;
   }
   ENVOY_LOG(error, "Failed to write HdrHistogram data.");
   return absl::Status(absl::StatusCode::kInternal, "Failed to write HdrHistogram data");
@@ -262,8 +262,12 @@ absl::StatusOr<std::unique_ptr<std::istream>> HdrStatistic::serializeNative() co
 absl::Status HdrStatistic::deserializeNative(std::istream& stream) {
   std::string s(std::istreambuf_iterator<char>(stream), {});
   struct hdr_histogram* new_histogram = nullptr;
+  // hdr_log_decode allocates memory for the new hdr histogram.
   if (hdr_log_decode(&new_histogram, const_cast<char*>(s.c_str()), s.length()) == 0) {
+    // Free the memory allocated by our current hdr histogram.
     hdr_close(histogram_);
+    // Swap in the new histogram.
+    // NOTE: Our destructor will eventually call hdr_close on the new one.
     histogram_ = new_histogram;
     return absl::OkStatus();
   }
