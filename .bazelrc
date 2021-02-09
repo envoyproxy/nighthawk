@@ -1,11 +1,12 @@
-# The following .bazelrc content is forked from the main Envoy repository. This is necessary since
-# this needs to be available before we can access the Envoy repository contents via Bazel.
-
-build:clang-asan --test_timeout=900
-build:clang-tsan --test_timeout=900
-# See https://github.com/envoyproxy/nighthawk/issues/405
-build:macos --copt -UDEBUG
-
+# The following .bazelrc content is forked from the main Envoy repository.                  # unique
+# This is  necessary since this needs to be available before we can access                  # unique
+# the Envoy repository contents via Bazel.                                                  # unique
+                                                                                            # unique
+build:clang-asan --test_timeout=900                                                         # unique
+build:clang-tsan --test_timeout=900                                                         # unique
+# See https://github.com/envoyproxy/nighthawk/issues/405                                    # unique
+build:macos --copt -UDEBUG                                                                  # unique
+                                                                                            # unique
 # Envoy specific Bazel build/test options.
 
 # Bazel doesn't need more than 200MB of memory for local build based on memory profiling:
@@ -60,10 +61,10 @@ build:asan --config=sanitizer
 # ASAN install its signal handler, disable ours so the stacktrace will be printed by ASAN
 build:asan --define signal_trace=disabled
 build:asan --define ENVOY_CONFIG_ASAN=1
-# The following two lines were manually edited due to #593.
-# Flag undefined was dropped from both the lines to allow CI/ASAN to pass.
-build:asan --copt -fsanitize=address
-build:asan --linkopt -fsanitize=address
+# The following two lines were manually edited due to #593.                                 # unique
+# Flag undefined was dropped from both the lines to allow CI/ASAN to pass.                  # unique
+build:asan --copt -fsanitize=address                                                        # unique
+build:asan --linkopt -fsanitize=address                                                     # unique
 # vptr and function sanitizer are enabled in clang-asan if it is set up via bazel/setup_clang.sh.
 build:asan --copt -fno-sanitize=vptr,function
 build:asan --linkopt -fno-sanitize=vptr,function
