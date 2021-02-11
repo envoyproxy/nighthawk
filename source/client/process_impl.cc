@@ -618,9 +618,13 @@ absl::Status ProcessImpl::runInternal(OutputCollector& collector, const std::vec
   if (counters.find("sequencer.failed_terminations") != counters.end()) {
     return absl::InternalError(
         "Terminated early because of a failure predicate. Check the output for problematic counter "
-        "values. The default Nighthawk failure predicates report failure if Nighthawk could not "
-        "connect to the target (check port number or http/https protocol), the target returned a "
-        "4xx or 5xx HTTP response code (check URI path), or a custom gRPC RequestSource failed. "
+        "values. The default Nighthawk failure predicates report failure if (1) Nighthawk could "
+        "not connect to the target (see 'benchmark.pool_connection_failure' counter; check the "
+        "address and port number, and try explicitly setting --address-family v4 or v6, especially "
+        "when using 'localhost' or DNS), (2) the protocol was not supported by the target (see "
+        "'benchmark.stream_reset' counter; check http/https in the URI, --h2), (3) the target "
+        "returned a 4xx or 5xx HTTP response code (see 'benchmark.http_#xx' counters; check the "
+        "URI path and the server config), or (4) a custom gRPC RequestSource failed. "
         "--failure-predicate can be used to relax expectations.");
   }
   return absl::OkStatus();
