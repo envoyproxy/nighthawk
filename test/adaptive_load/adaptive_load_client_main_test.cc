@@ -226,7 +226,8 @@ TEST(AdaptiveLoadClientMainTest, FailsIfWritingOutputFileFails) {
           -1, Envoy::Api::IoErrorPtr(new UnknownIoError(),
                                      [](Envoy::Api::IoError* err) { delete err; })))));
   AdaptiveLoadClientMain main(5, argv, controller, filesystem);
-  EXPECT_THROW_WITH_REGEX(main.Run(), Nighthawk::NighthawkException, "Unable to write output file");
+  EXPECT_THROW_WITH_REGEX(main.Run(), Nighthawk::NighthawkException,
+                          "Unable to write to output file");
 }
 
 TEST(AdaptiveLoadClientMainTest, FailsIfClosingOutputFileFails) {
