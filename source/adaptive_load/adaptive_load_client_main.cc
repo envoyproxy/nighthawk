@@ -49,7 +49,7 @@ void WriteFileOrThrow(Envoy::Filesystem::Instance& filesystem, absl::string_view
   }
   const Envoy::Api::IoCallSizeResult write_result = file->write(contents);
   if (!write_result.ok()) {
-    throw Nighthawk::NighthawkException(absl::StrCat("Unable to write output file \"", path,
+    throw Nighthawk::NighthawkException(absl::StrCat("Unable to write to output file \"", path,
                                                      "\": ", write_result.err_->getErrorDetails()));
   }
   const Envoy::Api::IoCallBoolResult close_result = file->close();
