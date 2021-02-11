@@ -1,0 +1,98 @@
+nighthawk_traffic_template {
+  # This is a full Nighthawk CommandLineOptions proto, input to Nighthawk Service.
+  # The adaptive load controller will send this proto as-is to the Nighthawk Service,
+  # except with a dynamic requests_per_second value inserted.
+  #
+  # See https://github.com/envoyproxy/nighthawk/blob/main/api/client/options.proto
+  # for full details on available settings.
+  #
+  # Note that the address of the system under test is set here.
+  #
+  # Add any customizations here such as headers.
+  uri {
+    value: "http://127.0.0.1:12345/"
+  }
+}
+
+# 3 seconds per benchmark is good for demos.
+# 60 seconds per benchmark has been found to reduce noise.
+measuring_period {
+  seconds: 3
+}
+
+convergence_deadline {
+  seconds: 1000
+}
+
+# Confirm the final qps with a longer benchmark.
+testing_stage_duration {
+  seconds: 10
+}
+
+# Back off if the latency statistic is over a threshold.
+# See https://github.com/envoyproxy/nighthawk/blob/9ade1a58c787e4d0e165cabbb42f6a410a56a865/source/adaptive_load/metrics_plugin_impl.cc#L148
+# for the full list of supported metrics.
+metric_thresholds {
+  # metric_spec { metric_name: "latency-ns-mean-plus-2stdev" }
+  metric_spec { metric_name: "latency-ns-max" }
+  threshold_spec {
+    scoring_function {
+      name: "nighthawk.binary_scoring"
+      typed_config {
+        [type.googleapis.com/
+         nighthawk.adaptive_load.BinaryScoringFunctionConfig] {
+          # 1,000,000 ns = 1 ms
+          upper_threshold { value: 1000000 }
+        }
+      }
+    }
+  }
+}
+
+# Back off if Nighthawk internal limitations prevented sending >5% of requests.
+metric_thresholds {
+  metric_spec {
+    metric_name: "send-rate"
+  }
+  threshold_spec {
+    scoring_function {
+      name: "nighthawk.binary_scoring"
+      typed_config {
+        [type.googleapis.com/nighthawk.adaptive_load.BinaryScoringFunctionConfig] {
+          lower_threshold {
+            value: 0.95
+          }
+        }
+      }
+    }
+  }
+}
+
+# Back off if less than 95% of received responses were 2xx.
+metric_thresholds {
+  metric_spec {
+    metric_name: "success-rate"
+  }
+  threshold_spec {
+    scoring_function {
+      name: "nighthawk.binary_scoring"
+      typed_config {
+        [type.googleapis.com/nighthawk.adaptive_load.BinaryScoringFunctionConfig] {
+          lower_threshold {
+            value: 0.95
+          }
+        }
+      }
+    }
+  }
+}
+
+# Exponential search starting with 10 qps
+step_controller_config {
+  name: "nighthawk.exponential_search"
+  typed_config {
+    [type.googleapis.com/nighthawk.adaptive_load.ExponentialSearchStepControllerConfig] {
+      initial_value: 10.0
+    }
+  }
+}
