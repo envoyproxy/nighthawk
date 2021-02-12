@@ -165,6 +165,7 @@ private:
   const RequestGenerator request_generator_;
   const bool provide_resource_backpressure_;
   const std::string latency_response_header_name_;
+  Envoy::Event::TimerPtr drain_timer_;
 };
 
 } // namespace Client
