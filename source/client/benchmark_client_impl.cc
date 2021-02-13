@@ -118,7 +118,6 @@ void BenchmarkClientHttpImpl::terminate() {
       drain_timer_->disableTimer();
       dispatcher_.exit();
     });
-    pool()->drainConnections();
     // Set up a timer with a callback which caps the time we wait for the pool to drain.
     drain_timer_ = dispatcher_.createTimer([this]() -> void {
       ENVOY_LOG(info, "Wait for the connection pool drain timed out, proceeding to hard shutdown.");

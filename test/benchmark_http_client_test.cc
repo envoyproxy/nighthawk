@@ -424,21 +424,18 @@ TEST_F(BenchmarkClientHttpTest, DrainTimeoutFires) {
   RequestGenerator default_request_generator = getDefaultRequestGenerator();
   setupBenchmarkClient(default_request_generator);
   EXPECT_CALL(pool_, newStream(_, _))
-      .WillOnce([this](Envoy::Http::ResponseDecoder& decoder,
-                       Envoy::Http::ConnectionPool::Callbacks& callbacks)
-                    -> Envoy::Http::ConnectionPool::Cancellable* {
-        decoders_.push_back(&decoder);
-        NiceMock<Envoy::StreamInfo::MockStreamInfo> stream_info;
-        callbacks.onPoolReady(stream_encoder_, Envoy::Upstream::HostDescriptionConstSharedPtr{},
-                              stream_info, {} /*absl::optional<Envoy::Http::Protocol> protocol*/);
-        // Now that there's an active stream, terminate the benchmark client. The benchmark client
-        // has to rely on the drain timeout to wrap up execution.
-        client_->terminate();
-        return nullptr;
-      });
+      .WillOnce(
+          [this](Envoy::Http::ResponseDecoder& decoder, Envoy::Http::ConnectionPool::Callbacks&)
+              -> Envoy::Http::ConnectionPool::Cancellable* {
+            // The decoder self-terminates in normal operation, but in this test that won't
+            // happen. Se we delete it ourselves. Note that we run our integration test with
+            // asan, so any leaks in real usage ought to be caught there.
+            delete &decoder;
+            client_->terminate();
+            return nullptr;
+          });
   EXPECT_CALL(pool_, hasActiveConnections()).WillOnce([]() -> bool { return true; });
   EXPECT_CALL(pool_, addDrainedCallback(_));
-  EXPECT_CALL(pool_, drainConnections());
   // We don't expect the callback that we pass here to fire.
   client_->tryStartRequest([](bool, bool) { EXPECT_TRUE(false); });
   // To get past this, the drain timeout within the benchmark client must execute.
