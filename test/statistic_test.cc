@@ -209,6 +209,42 @@ TYPED_TEST(TypedStatisticTest, ProtoOutputEmptyStats) {
   EXPECT_EQ(proto.pstdev().nanos(), 0);
 }
 
+TYPED_TEST(TypedStatisticTest, NativeRoundtrip) {
+  TypeParam a;
+
+  a.setId("bar");
+  a.addValue(6543456);
+  a.addValue(342335);
+  a.addValue(543);
+
+  const absl::StatusOr<std::unique_ptr<std::istream>> status_or_stream = a.serializeNative();
+  if (status_or_stream.ok()) {
+    // If the histogram states it implements native serialization/deserialization, put it through
+    // a round trip test.
+    TypeParam b;
+    absl::Status status = b.deserializeNative(*status_or_stream.value());
+    EXPECT_TRUE(status.ok());
+    EXPECT_EQ(3, b.count());
+    EXPECT_EQ(a.count(), b.count());
+    EXPECT_EQ(a.mean(), b.mean());
+    EXPECT_EQ(a.pstdev(), b.pstdev());
+  } else {
+    EXPECT_EQ(status_or_stream.status().code(), absl::StatusCode::kUnimplemented);
+  }
+}
+
+TYPED_TEST(TypedStatisticTest, AttemptsToDeserializeBogusBehaveWell) {
+  // Deserializing corrupted data should either result in the statistic reporting
+  // it didn't implement deserialization, or having it report an internal failure.
+  const std::vector<absl::StatusCode> expected_status_list{absl::StatusCode::kInternal,
+                                                           absl::StatusCode::kUnimplemented};
+  TypeParam a;
+  std::istringstream bogus_input(std::string("BOGUS"));
+  const absl::Status status = a.deserializeNative(bogus_input);
+  EXPECT_FALSE(status.ok());
+  EXPECT_THAT(expected_status_list, Contains(status.code()));
+}
+
 TYPED_TEST(TypedStatisticTest, StringOutput) {
   TypeParam a;
 
@@ -307,9 +343,9 @@ TEST(StatisticTest, HdrStatisticPercentilesProto) {
   util.loadFromJson(Envoy::Filesystem::fileSystemForTest().fileReadToEnd(
                         TestEnvironment::runfilesPath("test/test_data/hdr_proto_json.gold")),
                     parsed_json_proto, Envoy::ProtobufMessage::getStrictValidationVisitor());
-  const std::string json = util.getJsonStringFromMessage(
+  const std::string json = util.getJsonStringFromMessageOrDie(
       statistic.toProto(Statistic::SerializationDomain::DURATION), true, true);
-  const std::string golden_json = util.getJsonStringFromMessage(parsed_json_proto, true, true);
+  const std::string golden_json = util.getJsonStringFromMessageOrDie(parsed_json_proto, true, true);
   EXPECT_THAT(statistic.toProto(Statistic::SerializationDomain::DURATION),
               Envoy::ProtoEq(parsed_json_proto))
       << json << "\n"
@@ -329,9 +365,9 @@ TEST(StatisticTest, CircllhistStatisticPercentilesProto) {
   util.loadFromJson(Envoy::Filesystem::fileSystemForTest().fileReadToEnd(
                         TestEnvironment::runfilesPath("test/test_data/circllhist_proto_json.gold")),
                     parsed_json_proto, Envoy::ProtobufMessage::getStrictValidationVisitor());
-  const std::string json = util.getJsonStringFromMessage(
+  const std::string json = util.getJsonStringFromMessageOrDie(
       statistic.toProto(Statistic::SerializationDomain::DURATION), true, true);
-  const std::string golden_json = util.getJsonStringFromMessage(parsed_json_proto, true, true);
+  const std::string golden_json = util.getJsonStringFromMessageOrDie(parsed_json_proto, true, true);
   EXPECT_THAT(statistic.toProto(Statistic::SerializationDomain::DURATION),
               Envoy::ProtoEq(parsed_json_proto))
       << json << "\n"

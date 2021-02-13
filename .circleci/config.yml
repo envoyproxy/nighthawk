@@ -30,7 +30,9 @@ jobs:
     resource_class: xlarge
     steps:
       - checkout
-      - run: ci/do_ci.sh test_gcc
+      - run:
+          command: ci/do_ci.sh test_gcc
+          no_output_timeout: 30m
   coverage:
     docker:
       - image: *envoy-build-image
