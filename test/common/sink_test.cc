@@ -1,3 +1,6 @@
+#include <filesystem>
+#include <fstream>
+
 #include "external/envoy/source/common/common/random_generator.h"
 
 #include "common/sink_impl.h"
@@ -109,7 +112,27 @@ TYPED_TEST(TypedSinkTest, BadGuidInvalidCharacter) {
       "'14e75b2a-3e31-4x62-9279-add1e54091f9' is not a guid: unexpected character encountered.");
 }
 
-TYPED_TEST(TypedSinkTest, CorruptedFile) {}
+TEST(FileSinkTest, CorruptedFile) {
+  FileSinkImpl sink;
+  const std::string execution_id = "14e75b2a-3e31-4162-9279-add1e54091f9";
+  std::error_code error_code;
+  std::filesystem::remove_all("/tmp/nh/" + execution_id + "/", error_code);
+  nighthawk::client::ExecutionResponse result_to_store;
+  *(result_to_store.mutable_execution_id()) = execution_id;
+  ASSERT_TRUE(sink.StoreExecutionResultPiece(result_to_store).ok());
+  auto status = sink.LoadExecutionResult(execution_id);
+  ASSERT_TRUE(status.ok());
+  EXPECT_EQ(status.value().size(), 1);
+  {
+    std::ofstream outfile;
+    outfile.open("/tmp/nh/" + execution_id + "/badfile", std::ios_base::out);
+    outfile << "this makes no sense";
+  }
+  status = sink.LoadExecutionResult(execution_id);
+  ASSERT_FALSE(status.ok());
+  EXPECT_EQ(status.status().message(),
+            "Failure reading/parsing '\"/tmp/nh/14e75b2a-3e31-4162-9279-add1e54091f9/badfile\"'.");
+}
 
 } // namespace
 } // namespace Nighthawk

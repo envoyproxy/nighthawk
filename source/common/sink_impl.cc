@@ -58,9 +58,8 @@ absl::Status FileSinkImpl::StoreExecutionResultPiece(
   }
   // Next we write to a tmp file, and if that succeeds, we swap it atomically to the target path.
   {
-    auto ofs = std::make_unique<std::ofstream>(name_buffer.data(),
-                                               std::ios_base::out | std::ios_base::binary);
-    if (!response.SerializeToOstream(ofs.get())) {
+    std::ofstream ofs(name_buffer.data(), std::ios_base::out | std::ios_base::binary);
+    if (!response.SerializeToOstream(&ofs)) {
       return absl::Status(absl::StatusCode::kNotFound, "Failure writing to temp file");
     }
   }
