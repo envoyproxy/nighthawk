@@ -424,8 +424,13 @@ TEST_F(BenchmarkClientHttpTest, DrainTimeoutFires) {
   RequestGenerator default_request_generator = getDefaultRequestGenerator();
   setupBenchmarkClient(default_request_generator);
   EXPECT_CALL(pool_, newStream(_, _))
-      .WillOnce([this](Envoy::Http::ResponseDecoder&, Envoy::Http::ConnectionPool::Callbacks&)
+      .WillOnce([this](Envoy::Http::ResponseDecoder& decoder,
+                       Envoy::Http::ConnectionPool::Callbacks& callbacks)
                     -> Envoy::Http::ConnectionPool::Cancellable* {
+        decoders_.push_back(&decoder);
+        NiceMock<Envoy::StreamInfo::MockStreamInfo> stream_info;
+        callbacks.onPoolReady(stream_encoder_, Envoy::Upstream::HostDescriptionConstSharedPtr{},
+                              stream_info, {} /*absl::optional<Envoy::Http::Protocol> protocol*/);
         // Now that there's an active stream, terminate the benchmark client. The benchmark client
         // has to rely on the drain timeout to wrap up execution.
         client_->terminate();

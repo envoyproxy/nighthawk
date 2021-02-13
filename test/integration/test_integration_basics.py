@@ -814,6 +814,6 @@ def test_drain(https_test_server_fixture):
   t1 = time.time()
   time_delta = t1 - t0
   counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-  assert time_delta < 20  # lots of slack to avoid failure in slow CI executions.
+  assert time_delta < 40  # *lots* of slack to avoid failure in slow CI executions.
   asserts.assertCounterGreaterEqual(counters, "upstream_cx_http1_total", 1)
   asserts.assertNotIn("benchmark.http_2xx", counters)
