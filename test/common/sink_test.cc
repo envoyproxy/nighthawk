@@ -72,6 +72,11 @@ TYPED_TEST(TypedSinkTest, Append) {
   EXPECT_EQ(status_or_execution_responses.value().size(), 2);
 }
 
+// As of today, we constrain execution id to a guid. This way the file sink implementation
+// ensures that it can safely use it to create directories. In the future, other sinks may not
+// have to worry about such things. In that case it makes sense to add a validation call
+// to the sink interface to make this implementation specific, and make the tests below
+// implementation specific too.
 TYPED_TEST(TypedSinkTest, BadGuidShortString) {
   TypeParam sink;
   const auto status_or_execution_responses =
