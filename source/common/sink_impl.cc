@@ -45,26 +45,33 @@ absl::Status FileSinkImpl::StoreExecutionResultPiece(
   if (!status.ok()) {
     return status;
   }
-  std::filesystem::create_directories("/tmp/nh/" + std::string(execution_id) + "/");
+  std::error_code error_code;
+  std::filesystem::create_directories("/tmp/nh/" + std::string(execution_id) + "/", error_code);
+  // Note error_code will not be set if an existing directory existed.
+  if (error_code.value()) {
+    return absl::Status(absl::StatusCode::kInternal, error_code.message());
+  }
   std::array<char, L_tmpnam> name_buffer;
   // TODO(oschaaf): tmpname complaint from compiler, dangerous.
   if (!std::tmpnam(name_buffer.data())) {
     return absl::Status(absl::StatusCode::kInternal, "Failure creating temp file");
   }
-  std::ofstream ofs(name_buffer.data(), std::ios_base::out | std::ios_base::binary);
-  if (!response.SerializeToOstream(&ofs)) {
-    return absl::Status(absl::StatusCode::kNotFound, "Failure writing to temp file");
+  // Next we write to a tmp file, and if that succeeds, we swap it atomically to the target path.
+  {
+    auto ofs = std::make_unique<std::ofstream>(name_buffer.data(),
+                                               std::ios_base::out | std::ios_base::binary);
+    if (!response.SerializeToOstream(ofs.get())) {
+      return absl::Status(absl::StatusCode::kNotFound, "Failure writing to temp file");
+    }
   }
-  ofs.close();
   std::filesystem::path filesystem_path(name_buffer.data());
-  try {
-    const std::string new_name =
-        "/tmp/nh/" + std::string(execution_id) + "/" + std::string(filesystem_path.filename());
-    std::filesystem::rename(name_buffer.data(), new_name);
-    ENVOY_LOG_MISC(trace, "Stored '{}'.", new_name);
-  } catch (std::exception& ex) {
-    return absl::Status(absl::StatusCode::kInternal, ex.what());
+  const std::string new_name =
+      "/tmp/nh/" + std::string(execution_id) + "/" + std::string(filesystem_path.filename());
+  std::filesystem::rename(name_buffer.data(), new_name, error_code);
+  if (error_code.value()) {
+    return absl::Status(absl::StatusCode::kInternal, error_code.message());
   }
+  ENVOY_LOG_MISC(trace, "Stored '{}'.", new_name);
   return absl::Status();
 }
 
@@ -77,9 +84,13 @@ FileSinkImpl::LoadExecutionResult(absl::string_view execution_id) const {
 
   std::filesystem::path filesystem_directory_path("/tmp/nh/" + std::string(execution_id) + "/");
   std::vector<::nighthawk::client::ExecutionResponse> responses;
-  std::error_code ec;
+  std::error_code error_code;
 
-  for (const auto& it : std::filesystem::directory_iterator(filesystem_directory_path, ec)) {
+  for (const auto& it :
+       std::filesystem::directory_iterator(filesystem_directory_path, error_code)) {
+    if (error_code.value()) {
+      break;
+    }
     ::nighthawk::client::ExecutionResponse response;
     std::ifstream ifs(it.path(), std::ios_base::binary);
     if (!response.ParseFromIstream(&ifs)) {
@@ -90,9 +101,8 @@ FileSinkImpl::LoadExecutionResult(absl::string_view execution_id) const {
     }
     responses.push_back(response);
   }
-  if (ec.value()) {
-    // TODO(oschaaf): could ec.message() contain sensitive information?
-    return absl::Status(absl::StatusCode::kNotFound, ec.message());
+  if (error_code.value()) {
+    return absl::Status(absl::StatusCode::kNotFound, error_code.message());
   }
   return responses;
 }
