@@ -34,12 +34,9 @@ function do_test() {
 }
 
 function do_clang_tidy() {
-    set -x
     # clang-tidy will warn on standard library issues with libc++    
-    ENVOY_STDLIB="libstdc++"
     BAZEL_BUILD_OPTIONS=("--config=clang" "${BAZEL_BUILD_OPTIONS[@]}")
-    BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS[*]}" NUM_CPUS=$NUM_CPUS ci/run_clang_tidy.sh "$@"
-    exit 0
+    BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS[*]}" NUM_CPUS=$NUM_CPUS ci/run_clang_tidy.sh
 }
 
 function do_unit_test_coverage() {

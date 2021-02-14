@@ -127,7 +127,4 @@ if [[ -s "${FIX_YAML}" ]]; then
   echo "clang-tidy check failed, potentially fixed by clang-apply-replacements:"
   cat "${FIX_YAML}"
   exit 1
-else
-  echo "clang-tidy check passes"
-  exit 0
 fi
