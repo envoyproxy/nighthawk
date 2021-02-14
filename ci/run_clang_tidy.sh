@@ -91,7 +91,6 @@ function filter_excludes() {
 }
 
 function run_clang_tidy() {
-  set -x
   python3 "${LLVM_PREFIX}/share/clang/run-clang-tidy.py" \
     -clang-tidy-binary="${CLANG_TIDY}" \
     -clang-apply-replacements-binary="${CLANG_APPLY_REPLACEMENTS}" \
@@ -125,9 +124,10 @@ else
 fi
 
 if [[ -s "${FIX_YAML}" ]]; then
-  if grep -q '[^[:space:]]' "${FIX_YAML}"; then
-    echo "clang-tidy check failed, potentially fixed by clang-apply-replacements:"
-    cat "${FIX_YAML}"
-    exit 1
-  fi
+  echo "clang-tidy check failed, potentially fixed by clang-apply-replacements:"
+  cat "${FIX_YAML}"
+  exit 1
+else
+  echo "clang-tidy check passes"
+  exit 0
 fi
