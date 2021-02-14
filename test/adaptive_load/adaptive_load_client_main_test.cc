@@ -59,19 +59,19 @@ nighthawk::adaptive_load::AdaptiveLoadSessionOutput MakeBasicAdaptiveLoadSession
 }
 
 TEST(AdaptiveLoadClientMainTest, FailsWithNoInputs) {
-  const char* const argv[] = {
+  const std::vector<const char*> argv = {
       "executable-name-here",
   };
   NiceMock<MockAdaptiveLoadController> controller;
   Envoy::Filesystem::Instance& filesystem = Envoy::Filesystem::fileSystemForTest();
 
-  EXPECT_THROW_WITH_REGEX(AdaptiveLoadClientMain(1, argv, controller, filesystem),
+  EXPECT_THROW_WITH_REGEX(AdaptiveLoadClientMain(1, argv.data(), controller, filesystem),
                           Nighthawk::Client::MalformedArgvException, "Required arguments missing");
 }
 
 TEST(AdaptiveLoadClientMainTest, FailsIfSpecFileNotSet) {
   std::string outfile = Nighthawk::TestEnvironment::runfilesPath("unused.textproto");
-  const char* const argv[] = {
+  const std::vector<const char*> argv = {
       "executable-name-here",
       "--output-file",
       outfile.c_str(),
@@ -80,14 +80,14 @@ TEST(AdaptiveLoadClientMainTest, FailsIfSpecFileNotSet) {
   NiceMock<MockAdaptiveLoadController> controller;
   Envoy::Filesystem::Instance& filesystem = Envoy::Filesystem::fileSystemForTest();
 
-  EXPECT_THROW_WITH_REGEX(AdaptiveLoadClientMain(3, argv, controller, filesystem),
+  EXPECT_THROW_WITH_REGEX(AdaptiveLoadClientMain(3, argv.data(), controller, filesystem),
                           Nighthawk::Client::MalformedArgvException,
                           "Required argument missing: spec-file");
 }
 
 TEST(AdaptiveLoadClientMainTest, FailsIfOutputFileNotSet) {
   std::string infile = Nighthawk::TestEnvironment::runfilesPath("unused.textproto");
-  const char* const argv[] = {
+  const std::vector<const char*> argv = {
       "executable-name-here",
       "--spec-file",
       infile.c_str(),
@@ -96,7 +96,7 @@ TEST(AdaptiveLoadClientMainTest, FailsIfOutputFileNotSet) {
   NiceMock<MockAdaptiveLoadController> controller;
   Envoy::Filesystem::Instance& filesystem = Envoy::Filesystem::fileSystemForTest();
 
-  EXPECT_THROW_WITH_REGEX(AdaptiveLoadClientMain main(3, argv, controller, filesystem),
+  EXPECT_THROW_WITH_REGEX(AdaptiveLoadClientMain main(3, argv.data(), controller, filesystem),
                           Nighthawk::Client::MalformedArgvException,
                           "Required argument missing: output-file");
 }
@@ -104,14 +104,14 @@ TEST(AdaptiveLoadClientMainTest, FailsIfOutputFileNotSet) {
 TEST(AdaptiveLoadClientMainTest, FailsWithNonexistentInputFile) {
   std::string infile = Nighthawk::TestEnvironment::runfilesPath("nonexistent.textproto");
   std::string outfile = Nighthawk::TestEnvironment::runfilesPath("unused.textproto");
-  const char* const argv[] = {
+  const std::vector<const char*> argv = {
       "executable-name-here", "--spec-file", infile.c_str(), "--output-file", outfile.c_str(),
   };
 
   NiceMock<MockAdaptiveLoadController> controller;
   Envoy::Filesystem::Instance& filesystem = Envoy::Filesystem::fileSystemForTest();
 
-  AdaptiveLoadClientMain main(5, argv, controller, filesystem);
+  AdaptiveLoadClientMain main(5, argv.data(), controller, filesystem);
   EXPECT_THROW_WITH_REGEX(main.Run(), Nighthawk::NighthawkException,
                           "Failed to read spec textproto file");
 }
@@ -120,14 +120,14 @@ TEST(AdaptiveLoadClientMainTest, FailsWithUnparseableInputFile) {
   std::string infile = Nighthawk::TestEnvironment::runfilesPath(
       "test/adaptive_load/test_data/invalid_session_spec.textproto");
   std::string outfile = Nighthawk::TestEnvironment::runfilesPath("unused.textproto");
-  const char* const argv[] = {
+  const std::vector<const char*> argv = {
       "executable-name-here", "--spec-file", infile.c_str(), "--output-file", outfile.c_str(),
   };
 
   NiceMock<MockAdaptiveLoadController> controller;
   Envoy::Filesystem::Instance& filesystem = Envoy::Filesystem::fileSystemForTest();
 
-  AdaptiveLoadClientMain main(5, argv, controller, filesystem);
+  AdaptiveLoadClientMain main(5, argv.data(), controller, filesystem);
   EXPECT_THROW_WITH_REGEX(main.Run(), Nighthawk::NighthawkException, "Unable to parse file");
 }
 
@@ -136,7 +136,7 @@ TEST(AdaptiveLoadClientMainTest, ExitsProcessWithNonzeroStatusOnAdaptiveControll
       "test/adaptive_load/test_data/valid_session_spec.textproto");
   std::string outfile = Nighthawk::TestEnvironment::runfilesPath(
       "test/adaptive_load/test_data/nonexistent-dir/out.textproto");
-  const char* const argv[] = {
+  const std::vector<const char*> argv = {
       "executable-name-here", "--spec-file", infile.c_str(), "--output-file", outfile.c_str(),
   };
 
@@ -145,7 +145,7 @@ TEST(AdaptiveLoadClientMainTest, ExitsProcessWithNonzeroStatusOnAdaptiveControll
       .WillOnce(Return(absl::DataLossError("error message")));
   Envoy::Filesystem::Instance& filesystem = Envoy::Filesystem::fileSystemForTest();
 
-  AdaptiveLoadClientMain main(5, argv, controller, filesystem);
+  AdaptiveLoadClientMain main(5, argv.data(), controller, filesystem);
   EXPECT_EQ(main.Run(), 1);
 }
 
@@ -154,7 +154,7 @@ TEST(AdaptiveLoadClientMainTest, FailsIfCreatingOutputFileFails) {
       "test/adaptive_load/test_data/valid_session_spec.textproto");
   std::string outfile = Nighthawk::TestEnvironment::runfilesPath(
       "test/adaptive_load/test_data/nonexistent-dir/out.textproto");
-  const char* const argv[] = {
+  const std::vector<const char*> argv = {
       "executable-name-here", "--spec-file", infile.c_str(), "--output-file", outfile.c_str(),
   };
 
@@ -163,12 +163,12 @@ TEST(AdaptiveLoadClientMainTest, FailsIfCreatingOutputFileFails) {
       .WillOnce(Return(MakeBasicAdaptiveLoadSessionOutput()));
   Envoy::Filesystem::Instance& filesystem = Envoy::Filesystem::fileSystemForTest();
 
-  AdaptiveLoadClientMain main(5, argv, controller, filesystem);
+  AdaptiveLoadClientMain main(5, argv.data(), controller, filesystem);
   EXPECT_THROW_WITH_REGEX(main.Run(), Nighthawk::NighthawkException, "Unable to open output file");
 }
 
 TEST(AdaptiveLoadClientMainTest, FailsIfOpeningOutputFileFails) {
-  const char* const argv[] = {
+  const std::vector<const char*> argv = {
       "executable-name-here", "--spec-file",         "in-dummy.textproto",
       "--output-file",        "out-dummy.textproto",
   };
@@ -184,7 +184,7 @@ TEST(AdaptiveLoadClientMainTest, FailsIfOpeningOutputFileFails) {
           std::string("test/adaptive_load/test_data/valid_session_spec.textproto")));
   EXPECT_CALL(filesystem, fileReadToEnd(_)).WillOnce(Return(infile_contents));
 
-  NiceMock<Envoy::Filesystem::MockFile>* mock_file = new NiceMock<Envoy::Filesystem::MockFile>;
+  auto* mock_file = new NiceMock<Envoy::Filesystem::MockFile>;
   EXPECT_CALL(filesystem, createFile(_))
       .WillOnce(Return(ByMove(std::unique_ptr<NiceMock<Envoy::Filesystem::MockFile>>(mock_file))));
 
@@ -193,12 +193,12 @@ TEST(AdaptiveLoadClientMainTest, FailsIfOpeningOutputFileFails) {
           false, Envoy::Api::IoErrorPtr(new UnknownIoError(),
                                         [](Envoy::Api::IoError* err) { delete err; })))));
 
-  AdaptiveLoadClientMain main(5, argv, controller, filesystem);
+  AdaptiveLoadClientMain main(5, argv.data(), controller, filesystem);
   EXPECT_THROW_WITH_REGEX(main.Run(), Nighthawk::NighthawkException, "Unable to open output file");
 }
 
 TEST(AdaptiveLoadClientMainTest, FailsIfWritingOutputFileFails) {
-  const char* const argv[] = {
+  const std::vector<const char*> argv = {
       "executable-name-here", "--spec-file",         "in-dummy.textproto",
       "--output-file",        "out-dummy.textproto",
   };
@@ -214,7 +214,7 @@ TEST(AdaptiveLoadClientMainTest, FailsIfWritingOutputFileFails) {
           std::string("test/adaptive_load/test_data/valid_session_spec.textproto")));
   EXPECT_CALL(filesystem, fileReadToEnd(_)).WillOnce(Return(infile_contents));
 
-  NiceMock<Envoy::Filesystem::MockFile>* mock_file = new NiceMock<Envoy::Filesystem::MockFile>;
+  auto* mock_file = new NiceMock<Envoy::Filesystem::MockFile>;
   EXPECT_CALL(filesystem, createFile(_))
       .WillOnce(Return(ByMove(std::unique_ptr<NiceMock<Envoy::Filesystem::MockFile>>(mock_file))));
 
@@ -225,13 +225,13 @@ TEST(AdaptiveLoadClientMainTest, FailsIfWritingOutputFileFails) {
       .WillOnce(Return(ByMove(Envoy::Api::IoCallSizeResult(
           -1, Envoy::Api::IoErrorPtr(new UnknownIoError(),
                                      [](Envoy::Api::IoError* err) { delete err; })))));
-  AdaptiveLoadClientMain main(5, argv, controller, filesystem);
+  AdaptiveLoadClientMain main(5, argv.data(), controller, filesystem);
   EXPECT_THROW_WITH_REGEX(main.Run(), Nighthawk::NighthawkException,
                           "Unable to write to output file");
 }
 
 TEST(AdaptiveLoadClientMainTest, FailsIfClosingOutputFileFails) {
-  const char* const argv[] = {
+  const std::vector<const char*> argv = {
       "executable-name-here", "--spec-file",         "in-dummy.textproto",
       "--output-file",        "out-dummy.textproto",
   };
@@ -247,7 +247,7 @@ TEST(AdaptiveLoadClientMainTest, FailsIfClosingOutputFileFails) {
           std::string("test/adaptive_load/test_data/valid_session_spec.textproto")));
   EXPECT_CALL(filesystem, fileReadToEnd(_)).WillOnce(Return(infile_contents));
 
-  NiceMock<Envoy::Filesystem::MockFile>* mock_file = new NiceMock<Envoy::Filesystem::MockFile>;
+  auto* mock_file = new NiceMock<Envoy::Filesystem::MockFile>;
   EXPECT_CALL(filesystem, createFile(_))
       .WillOnce(Return(ByMove(std::unique_ptr<NiceMock<Envoy::Filesystem::MockFile>>(mock_file))));
 
@@ -265,12 +265,12 @@ TEST(AdaptiveLoadClientMainTest, FailsIfClosingOutputFileFails) {
           false, Envoy::Api::IoErrorPtr(new UnknownIoError(),
                                         [](Envoy::Api::IoError* err) { delete err; })))));
 
-  AdaptiveLoadClientMain main(5, argv, controller, filesystem);
+  AdaptiveLoadClientMain main(5, argv.data(), controller, filesystem);
   EXPECT_THROW_WITH_REGEX(main.Run(), Nighthawk::NighthawkException, "Unable to close output file");
 }
 
 TEST(AdaptiveLoadClientMainTest, WritesOutputProtoToFile) {
-  const char* const argv[] = {
+  const std::vector<const char*> argv = {
       "executable-name-here", "--spec-file",         "in-dummy.textproto",
       "--output-file",        "out-dummy.textproto",
   };
@@ -287,7 +287,7 @@ TEST(AdaptiveLoadClientMainTest, WritesOutputProtoToFile) {
   EXPECT_CALL(filesystem, fileReadToEnd(_)).WillOnce(Return(infile_contents));
 
   std::string actual_outfile_contents;
-  NiceMock<Envoy::Filesystem::MockFile>* mock_file = new NiceMock<Envoy::Filesystem::MockFile>;
+  auto* mock_file = new NiceMock<Envoy::Filesystem::MockFile>;
   EXPECT_CALL(filesystem, createFile(_))
       .WillOnce(Return(ByMove(std::unique_ptr<NiceMock<Envoy::Filesystem::MockFile>>(mock_file))));
 
@@ -307,7 +307,7 @@ TEST(AdaptiveLoadClientMainTest, WritesOutputProtoToFile) {
       .WillOnce(Return(ByMove(Envoy::Api::IoCallBoolResult(
           true, Envoy::Api::IoErrorPtr(nullptr, [](Envoy::Api::IoError*) {})))));
 
-  AdaptiveLoadClientMain main(5, argv, controller, filesystem);
+  AdaptiveLoadClientMain main(5, argv.data(), controller, filesystem);
   main.Run();
 
   std::string golden_output =
@@ -317,46 +317,46 @@ TEST(AdaptiveLoadClientMainTest, WritesOutputProtoToFile) {
 }
 
 TEST(AdaptiveLoadClientMainTest, DefaultsToInsecureConnection) {
-  const char* const argv[] = {
+  const std::vector<const char*> argv = {
       "executable-name-here", "--spec-file", "a", "--output-file", "b",
   };
 
   NiceMock<MockAdaptiveLoadController> controller;
   Envoy::Filesystem::Instance& filesystem = Envoy::Filesystem::fileSystemForTest();
 
-  AdaptiveLoadClientMain main(5, argv, controller, filesystem);
+  AdaptiveLoadClientMain main(5, argv.data(), controller, filesystem);
 
   EXPECT_THAT(main.DescribeInputs(), HasSubstr("insecure"));
 }
 
 TEST(AdaptiveLoadClientMainTest, UsesTlsConnectionWhenSpecified) {
-  const char* const argv[] = {
+  const std::vector<const char*> argv = {
       "executable-name-here", "--use-tls", "--spec-file", "a", "--output-file", "b",
   };
 
   NiceMock<MockAdaptiveLoadController> controller;
   Envoy::Filesystem::Instance& filesystem = Envoy::Filesystem::fileSystemForTest();
 
-  AdaptiveLoadClientMain main(6, argv, controller, filesystem);
+  AdaptiveLoadClientMain main(6, argv.data(), controller, filesystem);
 
   EXPECT_THAT(main.DescribeInputs(), HasSubstr("TLS"));
 }
 
 TEST(AdaptiveLoadClientMainTest, UsesDefaultNighthawkServiceAddress) {
-  const char* const argv[] = {
+  const std::vector<const char*> argv = {
       "executable-name-here", "--spec-file", "a", "--output-file", "b",
   };
 
   NiceMock<MockAdaptiveLoadController> controller;
   Envoy::Filesystem::Instance& filesystem = Envoy::Filesystem::fileSystemForTest();
 
-  AdaptiveLoadClientMain main(5, argv, controller, filesystem);
+  AdaptiveLoadClientMain main(5, argv.data(), controller, filesystem);
 
   EXPECT_THAT(main.DescribeInputs(), HasSubstr("localhost:8443"));
 }
 
 TEST(AdaptiveLoadClientMainTest, UsesCustomNighthawkServiceAddress) {
-  const char* const argv[] = {
+  const std::vector<const char*> argv = {
       "executable-name-here",
       "--nighthawk-service-address",
       "1.2.3.4:5678",
@@ -369,7 +369,7 @@ TEST(AdaptiveLoadClientMainTest, UsesCustomNighthawkServiceAddress) {
   NiceMock<MockAdaptiveLoadController> controller;
   Envoy::Filesystem::Instance& filesystem = Envoy::Filesystem::fileSystemForTest();
 
-  AdaptiveLoadClientMain main(7, argv, controller, filesystem);
+  AdaptiveLoadClientMain main(7, argv.data(), controller, filesystem);
 
   EXPECT_THAT(main.DescribeInputs(), HasSubstr("1.2.3.4:5678"));
 }
