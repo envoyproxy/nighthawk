@@ -216,7 +216,7 @@ public:
   int worker_number_{0};
   Client::BenchmarkClientStatistic statistic_;
   std::shared_ptr<Envoy::Http::RequestHeaderMap> default_header_map_;
-}; // namespace Nighthawk
+};
 
 TEST_F(BenchmarkClientHttpTest, BasicTestH1200) {
   response_code_ = "200";
@@ -419,4 +419,28 @@ TEST_F(BenchmarkClientHttpTest, RequestGeneratorProvidingDifferentPathsSendsRequ
                                                          &expected_requests);
   EXPECT_EQ(2, getCounter("http_2xx"));
 }
+
+TEST_F(BenchmarkClientHttpTest, DrainTimeoutFires) {
+  RequestGenerator default_request_generator = getDefaultRequestGenerator();
+  setupBenchmarkClient(default_request_generator);
+  EXPECT_CALL(pool_, newStream(_, _))
+      .WillOnce(
+          [this](Envoy::Http::ResponseDecoder& decoder, Envoy::Http::ConnectionPool::Callbacks&)
+              -> Envoy::Http::ConnectionPool::Cancellable* {
+            // The decoder self-terminates in normal operation, but in this test that won't
+            // happen. Se we delete it ourselves. Note that we run our integration test with
+            // asan, so any leaks in real usage ought to be caught there.
+            delete &decoder;
+            client_->terminate();
+            return nullptr;
+          });
+  EXPECT_CALL(pool_, hasActiveConnections()).WillOnce([]() -> bool { return true; });
+  EXPECT_CALL(pool_, addDrainedCallback(_));
+  // We don't expect the callback that we pass here to fire.
+  client_->tryStartRequest([](bool, bool) { EXPECT_TRUE(false); });
+  // To get past this, the drain timeout within the benchmark client must execute.
+  dispatcher_->run(Envoy::Event::Dispatcher::RunType::Block);
+  EXPECT_EQ(0, getCounter("http_2xx"));
+}
+
 } // namespace Nighthawk
