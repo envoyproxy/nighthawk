@@ -24,6 +24,7 @@ static_resources:
                       domains:
                         - "*"
                 http_filters:
+                  - name: dynamic-delay
                   - name: test-server
                     typed_config:
                       "@type": type.googleapis.com/nighthawk.server.ResponseOptions
