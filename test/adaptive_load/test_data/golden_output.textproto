@@ -1,0 +1,6 @@
+adjusting_stage_results {
+  metric_evaluations {
+    metric_id: "com.a/b"
+    metric_value: 123
+  }
+}

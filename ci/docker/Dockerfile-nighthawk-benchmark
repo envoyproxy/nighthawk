@@ -1,4 +1,4 @@
-FROM frolvlad/alpine-glibc
+FROM frolvlad/alpine-glibc:alpine-3.13_glibc-2.32
 
 CMD ["./benchmarks" "--help"]
 ENV RUNFILES_DIR=/usr/local/bin/benchmarks/benchmarks.runfiles
@@ -8,7 +8,7 @@ WORKDIR /usr/local/bin/benchmarks
 
 COPY benchmarks /usr/local/bin/benchmarks/
 
-RUN apk add --no-cache docker=20.10.2-r0 openrc=0.42.1-r19 python3>=3.8.5
+RUN apk add --no-cache docker=20.10.3-r0 openrc=0.42.1-r19 python3=3.8.7-r0
 RUN rc-update add docker boot
 
 RUN if [ ! -e /usr/bin/python ]; then ln -sf python3 /usr/bin/python; fi && \

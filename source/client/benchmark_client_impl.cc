@@ -107,9 +107,23 @@ BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
 }
 
 void BenchmarkClientHttpImpl::terminate() {
-  if (pool() != nullptr) {
-    pool()->addDrainedCallback([this]() -> void { dispatcher_.exit(); });
-    pool()->drainConnections();
+  if (pool() != nullptr && pool()->hasActiveConnections()) {
+    // We don't report what happens after this call in the output, but latencies may still be
+    // reported via callbacks. This may happen after a long time (60s), which HdrHistogram can't
+    // track the way we configure it today, as that exceeds the max that it can record.
+    // No harm is done, but it does result in log lines warning about it. Avoid that, by
+    // disabling latency measurement here.
+    setShouldMeasureLatencies(false);
+    pool()->addDrainedCallback([this]() -> void {
+      drain_timer_->disableTimer();
+      dispatcher_.exit();
+    });
+    // Set up a timer with a callback which caps the time we wait for the pool to drain.
+    drain_timer_ = dispatcher_.createTimer([this]() -> void {
+      ENVOY_LOG(info, "Wait for the connection pool drain timed out, proceeding to hard shutdown.");
+      dispatcher_.exit();
+    });
+    drain_timer_->enableTimer(5s);
     dispatcher_.run(Envoy::Event::Dispatcher::RunType::RunUntilExit);
   }
 }
