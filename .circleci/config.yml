@@ -1,5 +1,5 @@
 references:
-  envoy-build-image: &envoy-build-image # Februari 14th, 2021
+  envoy-build-image: &envoy-build-image # February 14th, 2021
     envoyproxy/envoy-build-ubuntu:c8fa4235714003ba0896287ee2f91cae06e0e407
 version: 2
 jobs:
