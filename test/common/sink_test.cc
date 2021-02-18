@@ -30,7 +30,7 @@ TYPED_TEST(TypedSinkTest, BasicSaveAndLoad) {
   nighthawk::client::ExecutionResponse result_to_store;
   *(result_to_store.mutable_execution_id()) = this->executionIdForTest();
   absl::Status status = sink.StoreExecutionResultPiece(result_to_store);
-  ASSERT_EQ(status.ok(), true);
+  ASSERT_TRUE(status.ok());
   const auto status_or_execution_responses = sink.LoadExecutionResult(this->executionIdForTest());
   ASSERT_EQ(status_or_execution_responses.ok(), true);
   ASSERT_EQ(status_or_execution_responses.value().size(), 1);
@@ -49,7 +49,7 @@ TYPED_TEST(TypedSinkTest, EmptyKeyStoreFails) {
   nighthawk::client::ExecutionResponse result_to_store;
   *(result_to_store.mutable_execution_id()) = "";
   const absl::Status status = sink.StoreExecutionResultPiece(result_to_store);
-  ASSERT_EQ(status.ok(), false);
+  ASSERT_FALSE(status.ok());
   EXPECT_EQ(status.code(), absl::StatusCode::kInvalidArgument);
   EXPECT_EQ(status.message(), "'' is not a guid: bad string length.");
 }
@@ -68,9 +68,9 @@ TYPED_TEST(TypedSinkTest, Append) {
   nighthawk::client::ExecutionResponse result_to_store;
   *(result_to_store.mutable_execution_id()) = this->executionIdForTest();
   absl::Status status = sink.StoreExecutionResultPiece(result_to_store);
-  ASSERT_EQ(status.ok(), true);
+  ASSERT_TRUE(status.ok());
   status = sink.StoreExecutionResultPiece(result_to_store);
-  ASSERT_EQ(status.ok(), true);
+  ASSERT_TRUE(status.ok());
   const auto status_or_execution_responses = sink.LoadExecutionResult(this->executionIdForTest());
   EXPECT_EQ(status_or_execution_responses.value().size(), 2);
 }
