@@ -135,7 +135,7 @@ TEST(FileSinkTest, CorruptedFile) {
   status = sink.LoadExecutionResult(execution_id);
   ASSERT_FALSE(status.ok());
   EXPECT_EQ(status.status().message(),
-            "Failure reading/parsing '\"/tmp/nh/14e75b2a-3e31-4162-9279-add1e54091f9/badfile\"'.");
+            "Failed to parse ExecutionResponse '\"/tmp/nh/14e75b2a-3e31-4162-9279-add1e54091f9/badfile\"'.");
 }
 
 } // namespace
