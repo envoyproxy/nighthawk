@@ -52,7 +52,7 @@ absl::Status FileSinkImpl::StoreExecutionResultPiece(
     return absl::Status(absl::StatusCode::kInternal, error_code.message());
   }
   std::array<char, L_tmpnam> name_buffer;
-  // TODO(oschaaf): tmpname complaint from compiler, dangerous.
+  // This emits a compiler warning: the use of `tmpnam' is dangerous, better use `mkstemp'.
   if (!std::tmpnam(name_buffer.data())) {
     return absl::Status(absl::StatusCode::kInternal, "Failure creating temp file");
   }
@@ -60,7 +60,7 @@ absl::Status FileSinkImpl::StoreExecutionResultPiece(
   {
     std::ofstream ofs(name_buffer.data(), std::ios_base::out | std::ios_base::binary);
     if (!response.SerializeToOstream(&ofs)) {
-      return absl::Status(absl::StatusCode::kNotFound, "Failure writing to temp file");
+      return absl::Status(absl::StatusCode::kInternal, "Failure writing to temp file");
     }
   }
   std::filesystem::path filesystem_path(name_buffer.data());
@@ -78,7 +78,7 @@ const absl::StatusOr<std::vector<::nighthawk::client::ExecutionResponse>>
 FileSinkImpl::LoadExecutionResult(absl::string_view execution_id) const {
   absl::Status status = verifyStringIsGuid(execution_id);
   if (!status.ok()) {
-    return status; //
+    return status;
   }
 
   std::filesystem::path filesystem_directory_path("/tmp/nh/" + std::string(execution_id) + "/");
@@ -94,7 +94,7 @@ FileSinkImpl::LoadExecutionResult(absl::string_view execution_id) const {
     std::ifstream ifs(it.path(), std::ios_base::binary);
     if (!response.ParseFromIstream(&ifs)) {
       return absl::Status(absl::StatusCode::kInternal,
-                          fmt::format("Failure reading/parsing '{}'.", it.path()));
+                          fmt::format("Failed to parse ExecutionResponse '{}'.", it.path()));
     } else {
       ENVOY_LOG_MISC(trace, "Loaded '{}'.", it.path());
     }

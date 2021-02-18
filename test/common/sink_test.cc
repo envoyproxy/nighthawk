@@ -16,6 +16,10 @@ using SinkTypes = ::testing::Types<FileSinkImpl>;
 template <typename T> class TypedSinkTest : public ::testing::Test {
 public:
   void SetUp() override { uuid_ = random_.uuid(); }
+  void TearDown() override {
+    std::error_code error_code;
+    std::filesystem::remove_all(std::filesystem::path("/tmp/nh/" + uuid_), error_code);
+  }
   std::string executionIdForTest() const { return uuid_; }
 
 private:
