@@ -56,15 +56,19 @@ important maintenance task. When performing the update, follow this procedure:
   ```
   INFO: SHA256 (https://github.com/envoyproxy/envoy/archive/9753819331d1547c4b8294546a6461a3777958f5.tar.gz) = f4d26c7e78c0a478d959ea8bc877f260d4658a8b44e294e3a400f20ad44d41a3
   ```
-  1. Update `ENVOY_SHA` in [bazel/repositories.bzl](bazel/repositories.bzl) to
+1. Update `ENVOY_SHA` in [bazel/repositories.bzl](bazel/repositories.bzl) to
      this value.
 1. Sync (copy) [.bazelrc](.bazelrc) from
    [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/.bazelrc) to
    update our build configurations. Be sure to retain our local modifications,
    all lines that are unique to Nighthawk are marked with comment `# unique`.
+1. In the updated [.bazelrc](.bazelrc) search for `experimental_docker_image`.
+   Copy the SHA and update `envoy-build-image:sha` over at the top of [.circleci/config.yml](.circleci/config.yml).
 1. Sync (copy) [.bazelversion](.bazelversion) from
    [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/.bazelversion)
    to ensure we are using the same build system version.
+1. Sync (copy) [ci/run_envoy_docker.sh](ci/run_envoy_docker.sh) from
+   [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/ci/run_envoy_docker.sh).
 1. Run `ci/do_ci.sh test`. Sometimes the dependency update comes with changes
    that break our build. Include any changes required to Nighthawk to fix that
    in the same PR.
