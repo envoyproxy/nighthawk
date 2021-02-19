@@ -34,8 +34,9 @@ function do_test() {
 }
 
 function do_clang_tidy() {
-    # TODO(#546): deflake clang tidy runs, and remove '|| true' here.
-    ci/run_clang_tidy.sh || true
+    # clang-tidy will warn on standard library issues with libc++    
+    BAZEL_BUILD_OPTIONS=("--config=clang" "${BAZEL_BUILD_OPTIONS[@]}")
+    BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS[*]}" NUM_CPUS=4 ci/run_clang_tidy.sh
 }
 
 function do_unit_test_coverage() {
