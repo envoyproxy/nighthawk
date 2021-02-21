@@ -298,7 +298,7 @@ TEST(HttpTestServerDecoderFilterTest, HeaderMerge) {
   EXPECT_FALSE(Server::Configuration::mergeJsonConfig("bad_json", options, error_message));
   EXPECT_THAT(error_message,
               testing::HasSubstr("Error merging json config: Unable to parse JSON as proto "
-                                 "(INVALID_ARGUMENT: Unexpected token.\nbad_json\n^): bad_json"));
+                                 "(INVALID_ARGUMENT:Unexpected token.\nbad_json\n^): bad_json"));
   EXPECT_EQ(3, options.response_headers_size());
 }
 
