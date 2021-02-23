@@ -65,29 +65,29 @@ AdaptiveLoadClientMain::AdaptiveLoadClientMain(int argc, const char* const* argv
                                                AdaptiveLoadController& controller,
                                                Envoy::Filesystem::Instance& filesystem)
     : controller_{controller}, filesystem_{filesystem} {
-  TCLAP::CmdLine cmd("Adaptive Load tool that finds the optimal load on the target "
+  TCLAP::CmdLine cmd("Adaptive Load tool that finds the optimal load on the target " // NOLINT
                      "through a series of Nighthawk Service benchmarks.",
                      /*delimiter=*/' ', VersionInfo::version());
 
   TCLAP::ValueArg<std::string> nighthawk_service_address(
-      /*flag_name=*/"", "nighthawk-service-address",
+      /*flag=*/"", "nighthawk-service-address",
       "host:port for Nighthawk Service. To enable TLS, set --use-tls.",
-      /*required=*/false, "localhost:8443", "string", cmd);
+      /*req=*/false, "localhost:8443", "string", cmd);
   TCLAP::SwitchArg use_tls(
-      /*flag_name=*/"", "use-tls",
+      /*flag=*/"", "use-tls",
       "Use TLS for the gRPC connection from this program to the Nighthawk Service. Set environment "
       "variable GRPC_DEFAULT_SSL_ROOTS_FILE_PATH to override the default root certificates.",
       cmd);
   TCLAP::ValueArg<std::string> spec_filename(
-      /*flag_name=*/"", "spec-file",
+      /*flag=*/"", "spec-file",
       "Path to a textproto file describing the adaptive load session "
       "(nighthawk::adaptive_load::AdaptiveLoadSessionSpec).",
-      /*required=*/true, /*default_value=*/"", "string", cmd);
+      /*req=*/true, /*val=*/"", "string", cmd);
   TCLAP::ValueArg<std::string> output_filename(
-      /*flag_name=*/"", "output-file",
+      /*flag=*/"", "output-file",
       "Path to write adaptive load session output textproto "
       "(nighthawk::adaptive_load::AdaptiveLoadSessionOutput).",
-      /*required=*/true, /*default_value=*/"", "string", cmd);
+      /*req=*/true, /*val=*/"", "string", cmd);
 
   Nighthawk::Utility::parseCommand(cmd, argc, argv);
 

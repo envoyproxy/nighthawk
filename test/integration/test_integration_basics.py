@@ -794,3 +794,26 @@ def test_client_cli_bad_uri(http_test_server_fixture):
                                                        expect_failure=True,
                                                        as_json=False)
   assert "Invalid target URI" in err
+
+
+@pytest.mark.parametrize('server_config',
+                         ["nighthawk/test/integration/configurations/nighthawk_https_origin.yaml"])
+def test_drain(https_test_server_fixture):
+  """Test that the pool drain timeout is effective, and we terminate in a timely fashion.
+
+  Sets up the test server to delay replies 100 seconds. Our execution will only last 3 seconds, so we
+  expect to observe no replies. Termination should be cut short by the drain timeout, which means
+  that we should have results in approximately execution duration + drain timeout = 8 seconds.
+  (the pool drain timeout is hard coded to 5 seconds as of writing this).
+  """
+  t0 = time.time()
+  parsed_json, _ = https_test_server_fixture.runNighthawkClient([
+      https_test_server_fixture.getTestServerRootUri(), "--rps", "100", "--duration", "3",
+      "--request-header", "x-nighthawk-test-server-config: {static_delay: \"100s\"}"
+  ])
+  t1 = time.time()
+  time_delta = t1 - t0
+  counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
+  assert time_delta < 40  # *lots* of slack to avoid failure in slow CI executions.
+  asserts.assertCounterGreaterEqual(counters, "upstream_cx_http1_total", 1)
+  asserts.assertNotIn("benchmark.http_2xx", counters)
