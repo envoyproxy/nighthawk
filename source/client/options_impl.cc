@@ -673,11 +673,12 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
 
 void OptionsImpl::setNonTrivialDefaults() {
   concurrency_ = "1";
-  // By default, we don't tolerate error status codes and connection failures, and will report
-  // upon observing those.
+  // By default, we don't tolerate error status codes, connection failures, or stream resets which
+  // could indicate a protocol mismatch, and will report upon observing those.
   failure_predicates_["benchmark.http_4xx"] = 0;
   failure_predicates_["benchmark.http_5xx"] = 0;
   failure_predicates_["benchmark.pool_connection_failure"] = 0;
+  failure_predicates_["benchmark.stream_reset"] = 0;
   // Also, fail fast when a remote request source is specified that we can't connect to or otherwise
   // fails.
   failure_predicates_["requestsource.upstream_rq_5xx"] = 0;
