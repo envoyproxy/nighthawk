@@ -622,7 +622,7 @@ absl::Status ProcessImpl::runInternal(OutputCollector& collector, const std::vec
         "not connect to the target (see 'benchmark.pool_connection_failure' counter; check the "
         "address and port number, and try explicitly setting --address-family v4 or v6, especially "
         "when using DNS; instead of localhost try 127.0.0.1 or ::1 explicitly), (2) the protocol "
-        "was not supported by the target (see 'benchmark.stream_reset' counter; check http/https "
+        "was not supported by the target (see 'benchmark.stream_resets' counter; check http/https "
         "in the URI, --h2), (3) the target returned a 4xx or 5xx HTTP response code (see "
         "'benchmark.http_#xx' counters; check the URI path and the server config), or (4) a custom "
         "gRPC RequestSource failed. --failure-predicate can be used to relax expectations.");
