@@ -2,8 +2,10 @@
 
 #include <cmath>
 #include <cstdio>
+#include <fstream>
 #include <sstream>
 
+#include "external/dep_hdrhistogram_c/src/hdr_histogram_log.h"
 #include "external/envoy/source/common/common/assert.h"
 #include "external/envoy/source/common/protobuf/utility.h"
 
@@ -67,6 +69,14 @@ uint64_t StatisticImpl::count() const { return count_; }
 uint64_t StatisticImpl::min() const { return min_; };
 
 uint64_t StatisticImpl::max() const { return max_; };
+
+absl::StatusOr<std::unique_ptr<std::istream>> StatisticImpl::serializeNative() const {
+  return absl::Status(absl::StatusCode::kUnimplemented, "serializeNative not implemented.");
+}
+
+absl::Status StatisticImpl::deserializeNative(std::istream&) {
+  return absl::Status(absl::StatusCode::kUnimplemented, "deserializeNative not implemented.");
+}
 
 void SimpleStatistic::addValue(uint64_t value) {
   StatisticImpl::addValue(value);
@@ -234,6 +244,35 @@ nighthawk::client::Statistic HdrStatistic::toProto(SerializationDomain domain) c
   }
 
   return proto;
+}
+
+absl::StatusOr<std::unique_ptr<std::istream>> HdrStatistic::serializeNative() const {
+  char* data;
+  if (hdr_log_encode(histogram_, &data) == 0) {
+    auto write_stream = std::make_unique<std::stringstream>();
+    *write_stream << absl::string_view(data, strlen(data));
+    // Free the memory allocated by hrd_log_encode.
+    free(data);
+    return write_stream;
+  }
+  ENVOY_LOG(error, "Failed to write HdrHistogram data.");
+  return absl::Status(absl::StatusCode::kInternal, "Failed to write HdrHistogram data");
+}
+
+absl::Status HdrStatistic::deserializeNative(std::istream& stream) {
+  std::string s(std::istreambuf_iterator<char>(stream), {});
+  struct hdr_histogram* new_histogram = nullptr;
+  // hdr_log_decode allocates memory for the new hdr histogram.
+  if (hdr_log_decode(&new_histogram, const_cast<char*>(s.c_str()), s.length()) == 0) {
+    // Free the memory allocated by our current hdr histogram.
+    hdr_close(histogram_);
+    // Swap in the new histogram.
+    // NOTE: Our destructor will eventually call hdr_close on the new one.
+    histogram_ = new_histogram;
+    return absl::OkStatus();
+  }
+  ENVOY_LOG(error, "Failed to read back HdrHistogram data.");
+  return absl::Status(absl::StatusCode::kInternal, "Failed to read back HdrHistogram data");
 }
 
 CircllhistStatistic::CircllhistStatistic() {

@@ -34,7 +34,7 @@ public:
 
 class MockSequencerTarget : public FakeSequencerTarget {
 public:
-  MOCK_METHOD1(callback, bool(OperationCallback));
+  MOCK_METHOD(bool, callback, (OperationCallback));
 };
 
 class SequencerTestBase : public testing::Test {
@@ -201,7 +201,7 @@ TEST_F(SequencerTestWithTimerEmulation, RateLimiterSaturatedTargetInteraction) {
   EXPECT_CALL(*target(), callback(_)).Times(2).WillOnce(Return(true)).WillOnce(Return(false));
 
   // The sequencer should call RateLimiter::releaseOne() when the target returns false.
-  EXPECT_CALL(rate_limiter_unsafe_ref_, releaseOne()).Times(1);
+  EXPECT_CALL(rate_limiter_unsafe_ref_, releaseOne());
   expectDispatcherRun();
 
   EXPECT_CALL(platform_util_, sleep(_)).Times(AtLeast(1));

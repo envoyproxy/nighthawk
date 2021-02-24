@@ -1,4 +1,4 @@
-# See https://github.com/envoyproxy/envoy/blob/master/bazel/README.md#disabling-extensions for details on how this system works.
+# See https://github.com/envoyproxy/envoy/blob/main/bazel/README.md#disabling-extensions for details on how this system works.
 EXTENSIONS = {
     "envoy.filters.http.router": "//source/extensions/filters/http/router:config",
     "envoy.filters.http.fault": "//source/extensions/filters/http/fault:config",
@@ -6,6 +6,9 @@ EXTENSIONS = {
     "envoy.filters.network.http_connection_manager": "//source/extensions/filters/network/http_connection_manager:config",
     "envoy.tracers.zipkin": "//source/extensions/tracers/zipkin:config",
     "envoy.transport_sockets.raw_buffer": "//source/extensions/transport_sockets/raw_buffer:config",
+}
+
+DISABLED_BY_DEFAULT_EXTENSIONS = {
 }
 
 # These can be changed to ["//visibility:public"], for  downstream builds which

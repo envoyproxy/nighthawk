@@ -18,7 +18,7 @@ static_resources:
       transport_socket:
         name: envoy.transport_sockets.tls
         typed_config:
-          "@type": type.googleapis.com/envoy.api.v2.auth.DownstreamTlsContext
+          "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
           common_tls_context:
             tls_certificates:
               - certificate_chain:
@@ -36,7 +36,7 @@ static_resources:
       transport_socket:
         name: envoy.transport_sockets.tls
         typed_config:
-          "@type": type.googleapis.com/envoy.api.v2.auth.DownstreamTlsContext
+          "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
           common_tls_context:
             tls_certificates:
               - certificate_chain: 
@@ -46,10 +46,11 @@ static_resources:
                   inline_string: |
                     @inject-runfile:nighthawk/external/envoy/test/config/integration/certs/serverkey.pem
       filters:
-      - name: envoy.http_connection_manager
-        config:
+      - name: envoy.filters.network.http_connection_manager
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
           generate_request_id: false
-          codec_type: auto
+          codec_type: AUTO
           stat_prefix: ingress_http
           route_config:
             name: local_route
@@ -59,18 +60,21 @@ static_resources:
               - "sni.com"
           http_filters:
           - name: test-server
-            config:
+            typed_config:
+              "@type": type.googleapis.com/nighthawk.server.ResponseOptions
               response_body_size: 10
-              response_headers:
+              v3_response_headers:
               - { header: { key: "x-nh", value: "1"}}
-          - name: envoy.router
-            config:
+          - name: envoy.filters.http.router
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
               dynamic_stats: false
     - filters:
-      - name: envoy.http_connection_manager
-        config:
+      - name: envoy.filters.network.http_connection_manager
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
           generate_request_id: false
-          codec_type: auto
+          codec_type: AUTO
           stat_prefix: ingress_http
           route_config:
             name: local_route
@@ -80,10 +84,12 @@ static_resources:
               - "*"
           http_filters:
           - name: test-server
-            config:
+            typed_config:
+              "@type": type.googleapis.com/nighthawk.server.ResponseOptions
               response_body_size: 10
-              response_headers:
+              v3_response_headers:
               - { header: { key: "x-nh", value: "1"}}
-          - name: envoy.router
-            config:
+          - name: envoy.filters.http.router
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
               dynamic_stats: false

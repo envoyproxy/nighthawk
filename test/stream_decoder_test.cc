@@ -26,7 +26,8 @@ public:
       : api_(Envoy::Api::createApiForTest(time_system_)),
         dispatcher_(api_->allocateDispatcher("test_thread")),
         request_headers_(std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(
-            std::initializer_list<std::pair<std::string, std::string>>({{":method", "GET"}}))),
+            std::initializer_list<std::pair<std::string, std::string>>(
+                {{":method", "GET"}, {":path", "/foo"}}))),
         http_tracer_(std::make_unique<Envoy::Tracing::HttpNullTracer>()),
         test_header_(std::make_unique<Envoy::Http::TestResponseHeaderMapImpl>(
             std::initializer_list<std::pair<std::string, std::string>>({{":status", "200"}}))),
@@ -117,7 +118,8 @@ TEST_F(StreamDecoderTest, LatencyIsNotMeasured) {
   NiceMock<Envoy::StreamInfo::MockStreamInfo> stream_info;
   EXPECT_CALL(stream_encoder,
               encodeHeaders(Envoy::HeaderMapEqualRef(request_headers_.get()), true));
-  decoder->onPoolReady(stream_encoder, ptr, stream_info);
+  decoder->onPoolReady(stream_encoder, ptr, stream_info,
+                       {} /*absl::optional<Envoy::Http::Protocol> protocol*/);
   decoder->decodeHeaders(std::move(test_header_), true);
   EXPECT_EQ(0, connect_statistic_.count());
   EXPECT_EQ(0, latency_statistic_.count());
@@ -134,9 +136,9 @@ TEST_F(StreamDecoderTest, LatencyIsMeasured) {
                      const Envoy::Tracing::Decision) -> Envoy::Tracing::Span* {
             EXPECT_EQ(Envoy::Tracing::OperationName::Egress, config.operationName());
             auto* span = new Envoy::Tracing::MockSpan();
-            EXPECT_CALL(*span, injectContext(_)).Times(1);
+            EXPECT_CALL(*span, injectContext(_));
             EXPECT_CALL(*span, setTag(_, _)).Times(12);
-            EXPECT_CALL(*span, finishSpan()).Times(1);
+            EXPECT_CALL(*span, finishSpan());
             return span;
           }));
 
@@ -152,7 +154,8 @@ TEST_F(StreamDecoderTest, LatencyIsMeasured) {
   Envoy::Upstream::HostDescriptionConstSharedPtr ptr;
   NiceMock<Envoy::StreamInfo::MockStreamInfo> stream_info;
   EXPECT_CALL(stream_encoder, encodeHeaders(_, true));
-  decoder->onPoolReady(stream_encoder, ptr, stream_info);
+  decoder->onPoolReady(stream_encoder, ptr, stream_info,
+                       {} /*absl::optional<Envoy::Http::Protocol> protocol*/);
   EXPECT_EQ(1, connect_statistic_.count());
   decoder->decodeHeaders(std::move(test_header_), false);
   EXPECT_EQ(0, stream_decoder_export_latency_callbacks_);
@@ -211,6 +214,9 @@ TEST_F(StreamDecoderTest, StreamResetReasonToResponseFlag) {
   ASSERT_EQ(StreamDecoder::streamResetReasonToResponseFlag(
                 Envoy::Http::StreamResetReason::RemoteRefusedStreamReset),
             Envoy::StreamInfo::ResponseFlag::UpstreamRemoteReset);
+  ASSERT_EQ(
+      StreamDecoder::streamResetReasonToResponseFlag(Envoy::Http::StreamResetReason::ConnectError),
+      Envoy::StreamInfo::ResponseFlag::UpstreamRemoteReset);
 }
 
 // This test parameterization structure carries the response header name that ought to be treated
@@ -243,6 +249,23 @@ TEST_P(LatencyTrackingViaResponseHeaderTest, LatencyTrackingViaResponseHeader) {
   decoder->decodeHeaders(std::move(headers), true);
   const uint64_t expected_count = std::get<1>(param) ? 1 : 0;
   EXPECT_EQ(origin_latency_statistic_.count(), expected_count);
+}
+
+// Test that a single response carrying multiple valid latency response headers does not
+// get tracked. This will also yield a burst of warnings, which we unfortunately cannot
+// easily verify here.
+TEST_F(StreamDecoderTest, LatencyTrackingWithMultipleResponseHeadersFails) {
+  const std::string kLatencyTrackingResponseHeader = "latency-in-response-header";
+  auto decoder = new StreamDecoder(
+      *dispatcher_, time_system_, *this, [](bool, bool) {}, connect_statistic_, latency_statistic_,
+      response_header_size_statistic_, response_body_size_statistic_, origin_latency_statistic_,
+      request_headers_, false, 0, random_generator_, http_tracer_, kLatencyTrackingResponseHeader);
+  Envoy::Http::ResponseHeaderMapPtr headers{
+      new Envoy::Http::TestResponseHeaderMapImpl{{":status", "200"},
+                                                 {kLatencyTrackingResponseHeader, "1"},
+                                                 {kLatencyTrackingResponseHeader, "2"}}};
+  decoder->decodeHeaders(std::move(headers), true);
+  EXPECT_EQ(origin_latency_statistic_.count(), 0);
 }
 
 } // namespace Client

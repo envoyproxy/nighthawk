@@ -75,13 +75,13 @@ struct BenchmarkClientStatistic {
   StatisticPtr origin_latency_statistic;
 };
 
-class Http1PoolImpl : public Envoy::Http::Http1::ProdConnPoolImpl {
+class Http1PoolImpl : public Envoy::Http::FixedHttpConnPoolImpl {
 public:
   enum class ConnectionReuseStrategy {
     MRU,
     LRU,
   };
-  using Envoy::Http::Http1::ProdConnPoolImpl::ProdConnPoolImpl;
+  using Envoy::Http::FixedHttpConnPoolImpl::FixedHttpConnPoolImpl;
   Envoy::Http::ConnectionPool::Cancellable*
   newStream(Envoy::Http::ResponseDecoder& response_decoder,
             Envoy::Http::ConnectionPool::Callbacks& callbacks) override;
@@ -137,8 +137,9 @@ public:
   // Helpers
   Envoy::Http::ConnectionPool::Instance* pool() {
     auto proto = use_h2_ ? Envoy::Http::Protocol::Http2 : Envoy::Http::Protocol::Http11;
-    return cluster_manager_->httpConnPoolForCluster(
-        cluster_name_, Envoy::Upstream::ResourcePriority::Default, proto, nullptr);
+    const auto thread_local_cluster = cluster_manager_->getThreadLocalCluster(cluster_name_);
+    return thread_local_cluster->httpConnPool(Envoy::Upstream::ResourcePriority::Default, proto,
+                                              nullptr);
   }
 
 private:
@@ -164,6 +165,7 @@ private:
   const RequestGenerator request_generator_;
   const bool provide_resource_backpressure_;
   const std::string latency_response_header_name_;
+  Envoy::Event::TimerPtr drain_timer_;
 };
 
 } // namespace Client

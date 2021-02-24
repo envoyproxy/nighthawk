@@ -28,7 +28,7 @@ static_resources:
           - name: test-server
             config:
               response_body_size: 10
-              response_headers:
+              v3_response_headers:
               - { header: { key: "x-nh", value: "1"}}
           - name: envoy.router
             config:

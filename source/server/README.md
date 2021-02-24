@@ -15,7 +15,7 @@ bazel build -c opt :nighthawk_test_server
 ```
 
 It is possible to
-[enable additional envoy extension](https://github.com/envoyproxy/envoy/blob/master/source/extensions/extensions_build_config.bzl) by adding them [here](../../extensions_build_config.bzl) before the build.
+[enable additional envoy extension](https://github.com/envoyproxy/envoy/blob/main/source/extensions/extensions_build_config.bzl) by adding them [here](../../extensions_build_config.bzl) before the build.
 By default, Nighthawk's test server is set up with the minimum extension set needed
 for it to operate as documented.
 
@@ -34,10 +34,11 @@ static_resources:
           port_value: 10000
       filter_chains:
         - filters:
-            - name: envoy.http_connection_manager
-              config:
+            - name: envoy.filters.network.http_connection_manager
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
                 generate_request_id: false
-                codec_type: auto
+                codec_type: AUTO
                 stat_prefix: ingress_http
                 route_config:
                   name: local_route
@@ -47,20 +48,23 @@ static_resources:
                         - "*"
                 http_filters:
                   - name: dynamic-delay
-                    config:
+                    typed_config:
+                      "@type": type.googleapis.com/nighthawk.server.ResponseOptions
                       static_delay: 0.5s
                   - name: test-server # before envoy.router because order matters!
-                    config:
+                    typed_config:
+                      "@type": type.googleapis.com/nighthawk.server.ResponseOptions
                       response_body_size: 10
-                      response_headers:
+                      v3_response_headers:
                         - { header: { key: "foo", value: "bar" } }
                         - {
                             header: { key: "foo", value: "bar2" },
                             append: true,
                           }
                         - { header: { key: "x-nh", value: "1" } }
-                  - name: envoy.router
-                    config:
+                  - name: envoy.filters.http.router
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
                       dynamic_stats: false
 admin:
   access_log_path: /tmp/envoy.log
@@ -146,7 +150,7 @@ same time.
 
 ```
 # If you already have Envoy running, you might need to set --base-id to allow the test-server to start.
-➜ /bazel-bin/nighthawk/source/server/server --config-path /path/to/test-server-server.yaml
+➜ /bazel-bin/nighthawk/source/server/server --config-path /path/to/test-server.yaml
 
 # Verify the test server with a curl command similar to:
 ➜ curl -H "x-nighthawk-test-server-config: {response_body_size:20, static_delay: \"0s\"}" -vv 127.0.0.1:10000
@@ -161,8 +165,7 @@ USAGE:
 
 bazel-bin/nighthawk_test_server  [--socket-mode <string>] [--socket-path
 <string>] [--disable-extensions
-<string>] [--use-fake-symbol-table
-<bool>] [--cpuset-threads]
+<string>] [--cpuset-threads]
 [--enable-mutex-tracing]
 [--disable-hot-restart] [--mode
 <string>] [--parent-shutdown-time-s
@@ -175,8 +178,7 @@ bazel-bin/nighthawk_test_server  [--socket-mode <string>] [--socket-path
 [--hot-restart-version]
 [--restart-epoch <uint32_t>]
 [--log-path <string>]
-[--log-format-prefix-with-location
-<bool>] [--enable-fine-grain-logging]
+[--enable-fine-grain-logging]
 [--log-format-escaped] [--log-format
 <string>] [--component-log-level
 <string>] [-l <string>]
@@ -204,9 +206,6 @@ Path to hot restart socket file
 
 --disable-extensions <string>
 Comma-separated list of extensions to disable
-
---use-fake-symbol-table <bool>
-Use fake symbol table implementation
 
 --cpuset-threads
 Get the default # of worker threads from cpuset size
@@ -251,10 +250,6 @@ hot restart epoch #
 
 --log-path <string>
 Path to logfile
-
---log-format-prefix-with-location <bool>
-Prefix all occurrences of '%v' in log format with with '[%g:%#] '
-('[path/to/file.cc:99] ').
 
 --enable-fine-grain-logging
 Logger mode: enable file level log control(Fancy Logger)or not

@@ -1,0 +1,11 @@
+options:
+  - request_method: 1
+    request_body_size: 10
+    request_headers:
+      - { header: { key: ":path", value: "/a" } }  
+      - { header: { key: "x-nighthawk-test-server-config", value: "{response_body_size:13}" } }
+  - request_method: 1
+    request_body_size: 10
+    request_headers:
+      - { header: { key: ":path", value: "/b" } }  
+      - { header: { key: "x-nighthawk-test-server-config", value: "{response_body_size:17}" } }  

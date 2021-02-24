@@ -2,6 +2,8 @@
 
 #include <grpc++/grpc++.h>
 
+#include "envoy/config/core/v3/base.pb.h"
+
 #include "common/request_source_impl.h"
 
 #include "client/client.h"
@@ -106,7 +108,7 @@ void ServiceImpl::writeResponse(const nighthawk::client::ExecutionResponse& resp
 }
 
 namespace {
-void addHeader(envoy::api::v2::core::HeaderMap* map, absl::string_view key,
+void addHeader(envoy::config::core::v3::HeaderMap* map, absl::string_view key,
                absl::string_view value) {
   auto* request_header = map->add_headers();
   request_header->set_key(std::string(key));
@@ -144,7 +146,7 @@ RequestSourcePtr RequestSourceServiceImpl::createStaticEmptyRequestSource(const 
       HeaderMapPtr headers = request->header();
       nighthawk::request_source::RequestStreamResponse response;
       auto* request_specifier = response.mutable_request_specifier();
-      auto* request_headers = request_specifier->mutable_headers();
+      auto* request_headers = request_specifier->mutable_v3_headers();
       headers->iterate([&request_headers](const Envoy::Http::HeaderEntry& header)
                            -> Envoy::Http::HeaderMap::Iterate {
         addHeader(request_headers, header.key().getStringView(), header.value().getStringView());

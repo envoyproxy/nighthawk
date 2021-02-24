@@ -17,6 +17,8 @@
 #include "client/output_collector_impl.h"
 #include "client/output_formatter_impl.h"
 
+#include "request_source/request_options_list_plugin_impl.h"
+
 using namespace std::chrono_literals;
 
 namespace Nighthawk {
@@ -63,12 +65,10 @@ BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
 SequencerFactoryImpl::SequencerFactoryImpl(const Options& options)
     : OptionBasedFactoryImpl(options) {}
 
-SequencerPtr SequencerFactoryImpl::create(Envoy::TimeSource& time_source,
-                                          Envoy::Event::Dispatcher& dispatcher,
-                                          const SequencerTarget& sequencer_target,
-                                          TerminationPredicatePtr&& termination_predicate,
-                                          Envoy::Stats::Scope& scope,
-                                          const Envoy::SystemTime scheduled_starting_time) const {
+SequencerPtr SequencerFactoryImpl::create(
+    Envoy::TimeSource& time_source, Envoy::Event::Dispatcher& dispatcher,
+    const SequencerTarget& sequencer_target, TerminationPredicatePtr&& termination_predicate,
+    Envoy::Stats::Scope& scope, const Envoy::MonotonicTime scheduled_starting_time) const {
   StatisticFactoryImpl statistic_factory(options_);
   Frequency frequency(options_.requestsPerSecond());
   RateLimiterPtr rate_limiter = std::make_unique<ScheduledStartingRateLimiter>(
@@ -117,8 +117,8 @@ OutputFormatterPtr OutputFormatterFactoryImpl::create(
   }
 }
 
-RequestSourceFactoryImpl::RequestSourceFactoryImpl(const Options& options)
-    : OptionBasedFactoryImpl(options) {}
+RequestSourceFactoryImpl::RequestSourceFactoryImpl(const Options& options, Envoy::Api::Api& api)
+    : OptionBasedFactoryImpl(options), api_(api) {}
 
 void RequestSourceFactoryImpl::setRequestHeader(Envoy::Http::RequestHeaderMap& header,
                                                 absl::string_view key,
@@ -168,16 +168,39 @@ RequestSourceFactoryImpl::create(const Envoy::Upstream::ClusterManagerPtr& clust
   for (const auto& option_header : request_options.request_headers()) {
     setRequestHeader(*header, option_header.header().key(), option_header.header().value());
   }
-
-  if (options_.requestSource() == "") {
-    return std::make_unique<StaticRequestSourceImpl>(std::move(header));
-  } else {
+  if (!options_.requestSource().empty()) {
     RELEASE_ASSERT(!service_cluster_name.empty(), "expected cluster name to be set");
     // We pass in options_.requestsPerSecond() as the header buffer length so the grpc client
     // will shoot for maintaining an amount of headers of at least one second.
     return std::make_unique<RemoteRequestSourceImpl>(cluster_manager, dispatcher, scope,
                                                      service_cluster_name, std::move(header),
                                                      options_.requestsPerSecond());
+  } else if (options_.requestSourcePluginConfig().has_value()) {
+    absl::StatusOr<RequestSourcePtr> plugin_or = LoadRequestSourcePlugin(
+        options_.requestSourcePluginConfig().value(), api_, std::move(header));
+    if (!plugin_or.ok()) {
+      throw NighthawkException(
+          absl::StrCat("Request Source plugin loading error should have been caught "
+                       "during input validation: ",
+                       plugin_or.status().message()));
+    }
+    RequestSourcePtr request_source = std::move(plugin_or.value());
+    return request_source;
+  } else {
+    return std::make_unique<StaticRequestSourceImpl>(std::move(header));
+  }
+}
+absl::StatusOr<RequestSourcePtr> RequestSourceFactoryImpl::LoadRequestSourcePlugin(
+    const envoy::config::core::v3::TypedExtensionConfig& config, Envoy::Api::Api& api,
+    Envoy::Http::RequestHeaderMapPtr header) const {
+  try {
+    auto& config_factory =
+        Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
+            config.name());
+    return config_factory.createRequestSourcePlugin(config.typed_config(), api, std::move(header));
+  } catch (const Envoy::EnvoyException& e) {
+    return absl::InvalidArgumentError(
+        absl::StrCat("Could not load plugin: ", config.name(), ": ", e.what()));
   }
 }
 
@@ -186,7 +209,7 @@ TerminationPredicateFactoryImpl::TerminationPredicateFactoryImpl(const Options& 
 
 TerminationPredicatePtr
 TerminationPredicateFactoryImpl::create(Envoy::TimeSource& time_source, Envoy::Stats::Scope& scope,
-                                        const Envoy::SystemTime scheduled_starting_time) const {
+                                        const Envoy::MonotonicTime scheduled_starting_time) const {
   // We'll always link a predicate which checks for requests to cancel.
   TerminationPredicatePtr root_predicate =
       std::make_unique<StatsCounterAbsoluteThresholdTerminationPredicateImpl>(

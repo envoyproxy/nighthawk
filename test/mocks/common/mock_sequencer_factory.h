@@ -14,7 +14,7 @@ public:
                                           const SequencerTarget& sequencer_target,
                                           TerminationPredicatePtr&& termination_predicate,
                                           Envoy::Stats::Scope& scope,
-                                          const Envoy::SystemTime scheduled_starting_time));
+                                          const Envoy::MonotonicTime scheduled_starting_time));
 };
 
 } // namespace Nighthawk

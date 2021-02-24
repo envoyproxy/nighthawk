@@ -11,13 +11,13 @@ class MockBenchmarkClient : public BenchmarkClient {
 public:
   MockBenchmarkClient();
 
-  MOCK_METHOD0(terminate, void());
-  MOCK_METHOD1(setShouldMeasureLatencies, void(bool));
-  MOCK_CONST_METHOD0(statistics, StatisticPtrMap());
-  MOCK_METHOD1(tryStartRequest, bool(Client::CompletionCallback));
-  MOCK_CONST_METHOD0(scope, Envoy::Stats::Scope&());
-  MOCK_CONST_METHOD0(shouldMeasureLatencies, bool());
-  MOCK_CONST_METHOD0(requestHeaders, const Envoy::Http::RequestHeaderMap&());
+  MOCK_METHOD(void, terminate, ());
+  MOCK_METHOD(void, setShouldMeasureLatencies, (bool));
+  MOCK_METHOD(StatisticPtrMap, statistics, (), (const));
+  MOCK_METHOD(bool, tryStartRequest, (Client::CompletionCallback));
+  MOCK_METHOD(Envoy::Stats::Scope&, scope, (), (const));
+  MOCK_METHOD(bool, shouldMeasureLatencies, (), (const));
+  MOCK_METHOD(const Envoy::Http::RequestHeaderMap&, requestHeaders, (), (const));
 };
 
 } // namespace Client

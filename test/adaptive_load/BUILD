@@ -22,6 +22,28 @@ envoy_cc_test_library(
 )
 
 envoy_cc_test(
+    name = "adaptive_load_client_main_test",
+    srcs = ["adaptive_load_client_main_test.cc"],
+    data = [
+        "test_data/golden_output.textproto",
+        "test_data/invalid_session_spec.textproto",
+        "test_data/valid_session_spec.textproto",
+    ],
+    repository = "@envoy",
+    deps = [
+        ":minimal_output",
+        "//include/nighthawk/adaptive_load:adaptive_load_controller",
+        "//source/adaptive_load:adaptive_load_client_main",
+        "//test/mocks/adaptive_load:mock_adaptive_load_controller",
+        "//test/test_common:environment_lib",
+        "@com_github_grpc_grpc//:grpc++_test",
+        "@envoy//source/common/protobuf:utility_lib_with_external_headers",
+        "@envoy//test/mocks/filesystem:filesystem_mocks",
+        "@envoy//test/test_common:utility_lib",
+    ],
+)
+
+envoy_cc_test(
     name = "adaptive_load_controller_test",
     srcs = ["adaptive_load_controller_test.cc"],
     repository = "@envoy",

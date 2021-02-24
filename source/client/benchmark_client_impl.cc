@@ -57,11 +57,12 @@ Http1PoolImpl::newStream(Envoy::Http::ResponseDecoder& response_decoder,
   // In prefetch mode we try to keep the amount of connections at the configured limit.
   if (prefetch_connections_) {
     while (host_->cluster().resourceManager(priority_).connections().canCreate()) {
-      // We cannot rely on ::tryCreateConnection here, because that might decline without
-      // updating connections().canCreate() above. We would risk an infinite loop.
-      Envoy::ConnectionPool::ActiveClientPtr client = instantiateActiveClient();
-      connecting_stream_capacity_ += client->effectiveConcurrentStreamLimit();
-      Envoy::LinkedList::moveIntoList(std::move(client), owningList(client->state_));
+      // We pass in a high prefetch ratio, because we don't want to throttle the prefetched
+      // connection amount like Envoy does out of the box.
+      ConnPoolImplBase::ConnectionResult result = tryCreateNewConnection(10000.0);
+      if (result != ConnectionResult::CreatedNewConnection) {
+        break;
+      }
     }
   }
 
@@ -75,7 +76,7 @@ Http1PoolImpl::newStream(Envoy::Http::ResponseDecoder& response_decoder,
   }
 
   // Vanilla Envoy pool behavior.
-  return ConnPoolImpl::newStream(response_decoder, callbacks);
+  return HttpConnPoolImplBase::newStream(response_decoder, callbacks);
 }
 
 BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
@@ -106,9 +107,23 @@ BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
 }
 
 void BenchmarkClientHttpImpl::terminate() {
-  if (pool() != nullptr) {
-    pool()->addDrainedCallback([this]() -> void { dispatcher_.exit(); });
-    pool()->drainConnections();
+  if (pool() != nullptr && pool()->hasActiveConnections()) {
+    // We don't report what happens after this call in the output, but latencies may still be
+    // reported via callbacks. This may happen after a long time (60s), which HdrHistogram can't
+    // track the way we configure it today, as that exceeds the max that it can record.
+    // No harm is done, but it does result in log lines warning about it. Avoid that, by
+    // disabling latency measurement here.
+    setShouldMeasureLatencies(false);
+    pool()->addDrainedCallback([this]() -> void {
+      drain_timer_->disableTimer();
+      dispatcher_.exit();
+    });
+    // Set up a timer with a callback which caps the time we wait for the pool to drain.
+    drain_timer_ = dispatcher_.createTimer([this]() -> void {
+      ENVOY_LOG(info, "Wait for the connection pool drain timed out, proceeding to hard shutdown.");
+      dispatcher_.exit();
+    });
+    drain_timer_->enableTimer(5s);
     dispatcher_.run(Envoy::Event::Dispatcher::RunType::RunUntilExit);
   }
 }

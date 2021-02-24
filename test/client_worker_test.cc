@@ -54,7 +54,7 @@ public:
     EXPECT_CALL(request_generator_factory_, create(_, _, _, _))
         .Times(1)
         .WillOnce(Return(ByMove(std::unique_ptr<RequestSource>(request_generator_))));
-    EXPECT_CALL(*request_generator_, initOnThread()).Times(1);
+    EXPECT_CALL(*request_generator_, initOnThread());
 
     EXPECT_CALL(termination_predicate_factory_, create(_, _, _))
         .WillOnce(Return(ByMove(createMockTerminationPredicate())));
@@ -105,26 +105,26 @@ TEST_F(ClientWorkerTest, BasicTest) {
 
   {
     InSequence dummy;
-    EXPECT_CALL(*benchmark_client_, setShouldMeasureLatencies(false)).Times(1);
+    EXPECT_CALL(*benchmark_client_, setShouldMeasureLatencies(false));
     EXPECT_CALL(*benchmark_client_, tryStartRequest(_))
         .WillOnce(Invoke(this, &ClientWorkerTest::CheckThreadChanged));
-    EXPECT_CALL(*benchmark_client_, setShouldMeasureLatencies(true)).Times(1);
-    EXPECT_CALL(*sequencer_, start).Times(1);
-    EXPECT_CALL(*sequencer_, waitForCompletion).Times(1);
-    EXPECT_CALL(*benchmark_client_, terminate()).Times(1);
+    EXPECT_CALL(*benchmark_client_, setShouldMeasureLatencies(true));
+    EXPECT_CALL(*sequencer_, start);
+    EXPECT_CALL(*sequencer_, waitForCompletion);
+    EXPECT_CALL(*benchmark_client_, terminate());
   }
   int worker_number = 12345;
 
   auto worker = std::make_unique<ClientWorkerImpl>(
       *api_, tls_, cluster_manager_ptr_, benchmark_client_factory_, termination_predicate_factory_,
       sequencer_factory_, request_generator_factory_, store_, worker_number,
-      time_system_.systemTime(), http_tracer_, ClientWorkerImpl::HardCodedWarmupStyle::ON);
+      time_system_.monotonicTime(), http_tracer_, ClientWorkerImpl::HardCodedWarmupStyle::ON);
 
   worker->start();
   worker->waitForCompletion();
 
-  EXPECT_CALL(*benchmark_client_, statistics()).Times(1).WillOnce(Return(createStatisticPtrMap()));
-  EXPECT_CALL(*sequencer_, statistics()).Times(1).WillOnce(Return(createStatisticPtrMap()));
+  EXPECT_CALL(*benchmark_client_, statistics()).WillOnce(Return(createStatisticPtrMap()));
+  EXPECT_CALL(*sequencer_, statistics()).WillOnce(Return(createStatisticPtrMap()));
 
   auto statistics = worker->statistics();
   EXPECT_EQ(2, statistics.size());

@@ -13,6 +13,7 @@ py_library(
     name = "integration_test_base",
     data = [
         "configurations/nighthawk_http_origin.yaml",
+        "configurations/nighthawk_http_origin_envoy_deprecated_v2_api.yaml",
         "configurations/nighthawk_https_origin.yaml",
         "configurations/nighthawk_track_timings.yaml",
         "configurations/sni_origin.yaml",
@@ -106,6 +107,12 @@ py_library(
     deps = [":integration_test_base"],
 )
 
+py_library(
+    name = "test_request_source_plugin_lib",
+    srcs = ["test_request_source_plugin.py"],
+    deps = [":integration_test_base"],
+)
+
 py_binary(
     name = "integration_test",
     srcs = ["integration_test.py"],
@@ -122,5 +129,6 @@ py_binary(
         ":test_integration_zipkin_lib",
         ":test_output_transform_lib",
         ":test_remote_execution_lib",
+        ":test_request_source_plugin_lib",
     ],
 )
