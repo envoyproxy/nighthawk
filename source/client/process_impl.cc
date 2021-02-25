@@ -37,8 +37,8 @@
 #include "external/envoy/source/extensions/tracers/zipkin/zipkin_tracer_impl.h"
 #endif
 #include "external/envoy/source/extensions/transport_sockets/well_known_names.h"
-#include "external/envoy/source/server/options_impl_platform.h"
 #include "external/envoy/source/server/options_impl.h"
+#include "external/envoy/source/server/options_impl_platform.h"
 
 #include "api/client/options.pb.h"
 #include "api/client/output.pb.h"
@@ -526,8 +526,9 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
     ssl_context_manager_ =
         std::make_unique<Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl>(
             time_system_);
-    const char *fake_argv[] = { "", nullptr };
-    const Envoy::OptionsImpl envoy_options(1, fake_argv, [](bool) { return "disable"; }, spdlog::level::info);
+    const char* fake_argv[] = {"", nullptr};
+    const Envoy::OptionsImpl envoy_options(
+        1, fake_argv, [](bool) { return "disable"; }, spdlog::level::info);
     cluster_manager_factory_ = std::make_unique<ClusterManagerFactory>(
         admin_, Envoy::Runtime::LoaderSingleton::get(), store_root_, tls_,
         dispatcher_->createDnsResolver({}, false), *ssl_context_manager_, *dispatcher_,
