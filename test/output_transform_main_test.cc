@@ -10,7 +10,6 @@
 #include "client/output_transform_main.h"
 
 #include "absl/strings/match.h"
-
 #include "gtest/gtest.h"
 
 using namespace testing;
