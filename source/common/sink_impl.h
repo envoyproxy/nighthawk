@@ -4,11 +4,15 @@
 
 namespace Nighthawk {
 
+/**
+ * Filesystem based implementation of Sink. Uses /tmp/nh/{execution_id}/ to store and load
+ * data.
+ */
 class FileSinkImpl : public Sink {
 public:
   absl::Status
   StoreExecutionResultPiece(const ::nighthawk::client::ExecutionResponse& response) const override;
-  const absl::StatusOr<std::vector<::nighthawk::client::ExecutionResponse>>
+  absl::StatusOr<std::vector<::nighthawk::client::ExecutionResponse>>
   LoadExecutionResult(absl::string_view id) const override;
 };
 

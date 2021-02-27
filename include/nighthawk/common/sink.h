@@ -37,9 +37,10 @@ public:
    *
    * @param execution_id Specify an execution_id that the desired set of ExecutionResponse
    * instances are tagged with.
-   * @return const absl::StatusOr<std::vector<::nighthawk::client::ExecutionResponse>>
+   * @return absl::StatusOr<std::vector<::nighthawk::client::ExecutionResponse>>.
+   * When no fragments are found for the provided execution id, status kNotFound is returned.
    */
-  virtual const absl::StatusOr<std::vector<::nighthawk::client::ExecutionResponse>>
+  virtual absl::StatusOr<std::vector<::nighthawk::client::ExecutionResponse>>
   LoadExecutionResult(absl::string_view execution_id) const PURE;
 };
 

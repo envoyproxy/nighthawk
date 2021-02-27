@@ -51,22 +51,20 @@ absl::Status FileSinkImpl::StoreExecutionResultPiece(
   if (error_code.value()) {
     return absl::Status(absl::StatusCode::kInternal, error_code.message());
   }
-  std::array<char, L_tmpnam> name_buffer;
-  // This emits a compiler warning: the use of `tmpnam' is dangerous, better use `mkstemp'.
-  if (!std::tmpnam(name_buffer.data())) {
-    return absl::Status(absl::StatusCode::kInternal, "Failure creating temp file");
-  }
-  // Next we write to a tmp file, and if that succeeds, we swap it atomically to the target path.
+  // Write to a tmp file, and if that succeeds, we swap it atomically to the target path,
+  // to make the completely written file visible to consumers of LoadExecutionResult.
+  Envoy::Random::RandomGeneratorImpl random;
+  const std::string uid = "/tmp/nighthawk_" + random.uuid();
   {
-    std::ofstream ofs(name_buffer.data(), std::ios_base::out | std::ios_base::binary);
+    std::ofstream ofs(uid.data(), std::ios_base::out | std::ios_base::binary);
     if (!response.SerializeToOstream(&ofs)) {
       return absl::Status(absl::StatusCode::kInternal, "Failure writing to temp file");
     }
   }
-  std::filesystem::path filesystem_path(name_buffer.data());
+  std::filesystem::path filesystem_path(uid.data());
   const std::string new_name =
       "/tmp/nh/" + std::string(execution_id) + "/" + std::string(filesystem_path.filename());
-  std::filesystem::rename(name_buffer.data(), new_name, error_code);
+  std::filesystem::rename(uid.data(), new_name, error_code);
   if (error_code.value()) {
     return absl::Status(absl::StatusCode::kInternal, error_code.message());
   }
@@ -74,7 +72,7 @@ absl::Status FileSinkImpl::StoreExecutionResultPiece(
   return absl::Status();
 }
 
-const absl::StatusOr<std::vector<::nighthawk::client::ExecutionResponse>>
+absl::StatusOr<std::vector<::nighthawk::client::ExecutionResponse>>
 FileSinkImpl::LoadExecutionResult(absl::string_view execution_id) const {
   absl::Status status = verifyStringIsGuid(execution_id);
   if (!status.ok()) {

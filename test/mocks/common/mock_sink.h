@@ -13,7 +13,7 @@ public:
                      absl::Status(const ::nighthawk::client::ExecutionResponse&));
   MOCK_CONST_METHOD1(
       LoadExecutionResult,
-      const absl::StatusOr<std::vector<::nighthawk::client::ExecutionResponse>>(absl::string_view));
+      absl::StatusOr<std::vector<::nighthawk::client::ExecutionResponse>>(absl::string_view));
 };
 
 } // namespace Nighthawk
