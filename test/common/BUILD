@@ -40,6 +40,16 @@ envoy_cc_test(
 )
 
 envoy_cc_test(
+    name = "nighthawk_sink_client_test",
+    srcs = ["nighthawk_sink_client_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/common:nighthawk_sink_client_impl",
+        "@com_github_grpc_grpc//:grpc++_test",
+    ],
+)
+
+envoy_cc_test(
     name = "sink_test",
     srcs = ["sink_test.cc"],
     repository = "@envoy",
