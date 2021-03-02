@@ -10,7 +10,7 @@
 namespace Nighthawk {
 namespace {
 
-absl::Status verifyStringIsGuid(absl::string_view s) {
+absl::Status verifyCanBeUsedAsDirectoryName(absl::string_view s) {
   Envoy::Random::RandomGeneratorImpl random;
   const std::string reference_value = random.uuid();
   const std::string err_template = "'{}' is not a guid: {}";
@@ -41,7 +41,7 @@ absl::Status verifyStringIsGuid(absl::string_view s) {
 absl::Status FileSinkImpl::StoreExecutionResultPiece(
     const ::nighthawk::client::ExecutionResponse& response) const {
   const std::string& execution_id = response.execution_id();
-  absl::Status status = verifyStringIsGuid(execution_id);
+  absl::Status status = verifyCanBeUsedAsDirectoryName(execution_id);
   if (!status.ok()) {
     return status;
   }
@@ -74,7 +74,7 @@ absl::Status FileSinkImpl::StoreExecutionResultPiece(
 
 absl::StatusOr<std::vector<::nighthawk::client::ExecutionResponse>>
 FileSinkImpl::LoadExecutionResult(absl::string_view execution_id) const {
-  absl::Status status = verifyStringIsGuid(execution_id);
+  absl::Status status = verifyCanBeUsedAsDirectoryName(execution_id);
   if (!status.ok()) {
     return status;
   }
