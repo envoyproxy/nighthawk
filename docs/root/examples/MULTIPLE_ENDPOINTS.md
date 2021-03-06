@@ -13,7 +13,7 @@ This example has been useful to test a mesh that exposed multiple endpoints, whi
 This example illustrates the following features:
 
 - [Request Source](https://github.com/envoyproxy/nighthawk/blob/261abb62c40afbdebb317f320fe67f1a1da1838f/api/request_source/request_source_plugin.proto#L15) (specifically the file-based implementation).
-- [Multi-targetting](https://github.com/envoyproxy/nighthawk/blob/261abb62c40afbdebb317f320fe67f1a1da1838f/api/client/options.proto#L84)
+- [Multi-targeting](https://github.com/envoyproxy/nighthawk/blob/261abb62c40afbdebb317f320fe67f1a1da1838f/api/client/options.proto#L84)
 
 ## Steps
 
