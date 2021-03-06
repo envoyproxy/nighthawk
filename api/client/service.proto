@@ -49,7 +49,7 @@ service NighthawkService {
 
 // Encapsulates an ExecutionResponse.
 message StoreExecutionRequest {
-  // Response must contain the effective execution id, which will be used as a lookup key.0
+  // Response contains the effective execution id, which will serve as the lookup key.
   ExecutionResponse execution_response = 1;
 }
 
@@ -73,7 +73,7 @@ service NighthawkSink {
   rpc StoreExecutionResponseStream(stream StoreExecutionRequest) returns (StoreExecutionResponse) {
   }
 
-  // Gets the stored response of an execution, keyed by execution id.
+  // Gets the stored responses associated to an execution, keyed by execution id.
   rpc SinkRequestStream(stream SinkRequest) returns (stream SinkResponse) {
   }
 }
