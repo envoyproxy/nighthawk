@@ -32,6 +32,10 @@ message ExecutionRequest {
 message ExecutionResponse {
   Output output = 1;
   google.rpc.Status error_detail = 7;
+  // Opaque identifier for lookup purposes. This will be taken from CommandLineOptions if set,
+  // if it is not set there it will be auto-generated. The format used for auto-generated
+  // identifiers may change at any time.
+  string execution_id = 8;
 }
 
 service NighthawkService {

@@ -37,6 +37,7 @@
 #include "external/envoy/source/extensions/tracers/zipkin/zipkin_tracer_impl.h"
 #endif
 #include "external/envoy/source/extensions/transport_sockets/well_known_names.h"
+#include "external/envoy/source/server/options_impl.h"
 #include "external/envoy/source/server/options_impl_platform.h"
 
 #include "api/client/options.pb.h"
@@ -173,6 +174,7 @@ void ProcessImpl::shutdown() {
     cluster_manager_->shutdown();
   }
   tls_.shutdownThread();
+  dispatcher_->shutdown();
   shutdown_ = true;
 }
 
@@ -525,11 +527,17 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
     ssl_context_manager_ =
         std::make_unique<Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl>(
             time_system_);
+
+    const Envoy::OptionsImpl::HotRestartVersionCb hot_restart_version_cb = [](bool) {
+      return "hot restart is disabled";
+    };
+    const Envoy::OptionsImpl envoy_options(
+        /* args = */ {"process_impl"}, hot_restart_version_cb, spdlog::level::info);
     cluster_manager_factory_ = std::make_unique<ClusterManagerFactory>(
         admin_, Envoy::Runtime::LoaderSingleton::get(), store_root_, tls_,
         dispatcher_->createDnsResolver({}, false), *ssl_context_manager_, *dispatcher_,
         *local_info_, secret_manager_, validation_context_, *api_, http_context_, grpc_context_,
-        router_context_, access_log_manager_, *singleton_manager_);
+        router_context_, access_log_manager_, *singleton_manager_, envoy_options);
     cluster_manager_factory_->setConnectionReuseStrategy(
         options_.h1ConnectionReuseStrategy() == nighthawk::client::H1ConnectionReuseStrategy::LRU
             ? Http1PoolImpl::ConnectionReuseStrategy::LRU
