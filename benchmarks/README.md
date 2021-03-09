@@ -101,7 +101,7 @@ docker run -it --rm \
   --env NH_DOCKER_IMAGE="envoyproxy/nighthawk-dev:latest" \
   --env ENVOY_DOCKER_IMAGE_TO_TEST="envoyproxy/envoy-dev:f61b096f6a2dd3a9c74b9a9369a6ea398dbe1f0f" \
   --env TMPDIR="${OUTDIR}" \
-  oschaaf/benchmark-dev:latest ./benchmarks --log-cli-level=info -vvvv
+  envoyproxy/nighthawk-benchmark-dev:latest ./benchmarks --log-cli-level=info -vvvv
 ```
 
 # TODOs

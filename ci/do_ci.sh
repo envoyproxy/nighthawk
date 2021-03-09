@@ -149,6 +149,7 @@ function do_docker() {
     ./ci/docker/docker_build.sh
     ./ci/docker/docker_push.sh
     ./ci/docker/benchmark_build.sh
+    ./ci/docker/benchmark_push.sh
 }
 
 function do_fix_format() {
