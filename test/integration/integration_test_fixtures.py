@@ -153,6 +153,8 @@ class IntegrationTestBase():
       for record in caplog.get_records(when):
         if record.levelno not in (logging.WARNING, logging.ERROR):
           continue
+        if "Unable to use runtime singleton for feature" in record.message:
+          continue
         warnings_and_errors.append(record.message)
     if warnings_and_errors:
       pytest.fail("warnings or errors encountered during testing:\n{}".format(warnings_and_errors))
