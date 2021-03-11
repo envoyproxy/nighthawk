@@ -41,7 +41,7 @@ function do_clang_tidy() {
 
 function do_unit_test_coverage() {
     export TEST_TARGETS="//test/... -//test:python_test"
-    export COVERAGE_THRESHOLD=94.3
+    export COVERAGE_THRESHOLD=94.2
     echo "bazel coverage build with tests ${TEST_TARGETS}"
     test/run_nighthawk_bazel_coverage.sh ${TEST_TARGETS}
     exit 0
@@ -149,6 +149,7 @@ function do_docker() {
     ./ci/docker/docker_build.sh
     ./ci/docker/docker_push.sh
     ./ci/docker/benchmark_build.sh
+    ./ci/docker/benchmark_push.sh
 }
 
 function do_fix_format() {

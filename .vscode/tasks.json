@@ -245,6 +245,7 @@
         "//test:sni_utility_test",
         "//test/server:http_test_server_filter_integration_test",
         "//test/server:http_dynamic_delay_filter_integration_test",
+        "//test/common:sink_test",
         "//test/..."
       ],
       "default": "//test/..."

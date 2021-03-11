@@ -84,7 +84,7 @@ envoy_cc_library(
         "@envoy//source/exe:platform_header_lib_with_external_headers",
         "@envoy//source/exe:platform_impl_lib",
         "@envoy//source/exe:process_wide_lib_with_external_headers",
-        "@envoy//source/common/http:request_id_extension_lib_with_external_headers",
+        "@envoy//source/extensions/request_id/uuid:config_with_external_headers",
         "@envoy//source/extensions/transport_sockets:well_known_names_with_external_headers",
         "@envoy//source/extensions/transport_sockets/tls:context_lib_with_external_headers",
         "@envoy//source/server:options_lib_with_external_headers",

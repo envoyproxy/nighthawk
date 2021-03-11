@@ -86,6 +86,7 @@ _TEST_SERVER_WARN_ERROR_IGNORE_LIST = frozenset([
         (
             # TODO(#582): Identify these and file issues or add explanation as necessary.
             "Unable to use runtime singleton for feature envoy.http.headermap.lazy_map_min_size",
+            "Unable to use runtime singleton for feature envoy.reloadable_features.header_map_correctly_coalesce_cookies",
             "Using deprecated extension name 'envoy.listener.tls_inspector' for 'envoy.filters.listener.tls_inspector'.",
             "there is no configured limit to the number of allowed active connections. Set a limit via the runtime key overload.global_downstream_max_connections",
 

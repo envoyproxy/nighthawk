@@ -163,9 +163,10 @@ same time.
 ```
 USAGE:
 
-bazel-bin/nighthawk_test_server  [--socket-mode <string>] [--socket-path
-<string>] [--disable-extensions
-<string>] [--cpuset-threads]
+bazel-bin/nighthawk_test_server  [--enable-core-dump] [--socket-mode
+<string>] [--socket-path <string>]
+[--disable-extensions <string>]
+[--cpuset-threads]
 [--enable-mutex-tracing]
 [--disable-hot-restart] [--mode
 <string>] [--parent-shutdown-time-s
@@ -197,6 +198,9 @@ bazel-bin/nighthawk_test_server  [--socket-mode <string>] [--socket-path
 
 
 Where:
+
+--enable-core-dump
+Enable core dumps
 
 --socket-mode <string>
 Socket file permission
