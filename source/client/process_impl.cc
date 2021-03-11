@@ -65,13 +65,12 @@ class ClusterManagerFactory : public Envoy::Upstream::ProdClusterManagerFactory 
 public:
   using Envoy::Upstream::ProdClusterManagerFactory::ProdClusterManagerFactory;
 
-  Envoy::Http::ConnectionPool::InstancePtr
-  allocateConnPool(Envoy::Event::Dispatcher& dispatcher, Envoy::Upstream::HostConstSharedPtr host,
-                   Envoy::Upstream::ResourcePriority priority,
-                   std::vector<Envoy::Http::Protocol>& protocols,
-                   const Envoy::Network::ConnectionSocket::OptionsSharedPtr& options,
-                   const Envoy::Network::TransportSocketOptionsSharedPtr& transport_socket_options,
-                   Envoy::Upstream::ClusterConnectivityState& state) override {
+  Envoy::Http::ConnectionPool::InstancePtr allocateConnPool(
+      Envoy::Event::Dispatcher& dispatcher, Envoy::Upstream::HostConstSharedPtr host,
+      Envoy::Upstream::ResourcePriority priority, std::vector<Envoy::Http::Protocol>& protocols,
+      const Envoy::Network::ConnectionSocket::OptionsSharedPtr& options,
+      const Envoy::Network::TransportSocketOptionsSharedPtr& transport_socket_options,
+      Envoy::TimeSource& time_source, Envoy::Upstream::ClusterConnectivityState& state) override {
     // This changed in
     // https://github.com/envoyproxy/envoy/commit/93ee668a690d297ab5e8bd2cbf03771d852ebbda ALPN may
     // be set up to negotiate a protocol, in which case we'd need a HttpConnPoolImplMixed. However,
@@ -99,7 +98,8 @@ public:
       return Envoy::Http::ConnectionPool::InstancePtr{h1_pool};
     }
     return Envoy::Upstream::ProdClusterManagerFactory::allocateConnPool(
-        dispatcher, host, priority, protocols, options, transport_socket_options, state);
+        dispatcher, host, priority, protocols, options, transport_socket_options, time_source,
+        state);
   }
 
   void setConnectionReuseStrategy(
