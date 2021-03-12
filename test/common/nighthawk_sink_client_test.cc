@@ -156,8 +156,6 @@ TEST(StoreExecutionResponseStream, PropagatesErrorIfNighthawkServiceGrpcStreamCl
   EXPECT_THAT(response.status().message(), HasSubstr("Finish failure status message"));
 }
 
-// ---
-
 TEST(SinkRequest, UsesSpecifiedCommandLineOptions) {
   SinkRequest request;
   nighthawk::sink::MockNighthawkSinkStub mock_nighthawk_sink_stub;
