@@ -3,6 +3,7 @@ syntax = "proto3";
 package nighthawk.sink;
 
 import "api/client/service.proto";
+import "validate/validate.proto";
 
 // Encapsulates an ExecutionResponse.
 message StoreExecutionRequest {
@@ -15,8 +16,8 @@ message StoreExecutionResponse {
 }
 
 message SinkRequest {
-  // Unique id for lookup purposes.
-  string execution_id = 1;
+  // Unique id for lookup purposes. Required.
+  string execution_id = 1 [(validate.rules).string.min_len = 1];
 }
 
 message SinkResponse {
