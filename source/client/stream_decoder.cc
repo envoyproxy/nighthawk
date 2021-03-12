@@ -3,10 +3,10 @@
 #include <memory>
 
 #include "external/envoy/source/common/http/http1/codec_impl.h"
-#include "external/envoy/source/common/http/request_id_extension_uuid_impl.h"
 #include "external/envoy/source/common/http/utility.h"
 #include "external/envoy/source/common/network/address_impl.h"
 #include "external/envoy/source/common/stream_info/stream_info_impl.h"
+#include "external/envoy/source/extensions/request_id/uuid/config.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -172,9 +172,11 @@ void StreamDecoder::setupForTracing() {
   Envoy::Http::RequestHeaderMapPtr headers_copy = Envoy::Http::RequestHeaderMapImpl::create();
   Envoy::Http::HeaderMapImpl::copyFrom(*headers_copy, *request_headers_);
   Envoy::Tracing::Decision tracing_decision = {Envoy::Tracing::Reason::ClientForced, true};
-  Envoy::Http::UUIDRequestIDExtension uuid_generator(random_generator_);
+  envoy::extensions::request_id::uuid::v3::UuidRequestIdConfig uuid_request_id_config;
+  Envoy::Extensions::RequestId::UUIDRequestIDExtension uuid_generator(uuid_request_id_config,
+                                                                      random_generator_);
   uuid_generator.set(*headers_copy, true);
-  uuid_generator.setTraceStatus(*headers_copy, Envoy::Http::TraceStatus::Client);
+  uuid_generator.setTraceReason(*headers_copy, Envoy::Tracing::Reason::ClientForced);
   active_span_ = http_tracer_->startSpan(config_, *headers_copy, stream_info_, tracing_decision);
   active_span_->injectContext(*headers_copy);
   request_headers_.reset(headers_copy.release());

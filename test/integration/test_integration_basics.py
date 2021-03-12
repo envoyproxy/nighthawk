@@ -36,9 +36,7 @@ def test_http_h1(http_test_server_fixture):
   asserts.assertCounterEqual(counters, "upstream_cx_http1_total", 1)
   asserts.assertCounterEqual(counters, "upstream_cx_rx_bytes_total", 3400)
   asserts.assertCounterEqual(counters, "upstream_cx_total", 1)
-  asserts.assertCounterEqual(
-      counters, "upstream_cx_tx_bytes_total",
-      1375 if http_test_server_fixture.ip_version == IpVersion.IPV6 else 1450)
+  asserts.assertCounterGreaterEqual(counters, "upstream_cx_tx_bytes_total", 500)
   asserts.assertCounterEqual(counters, "upstream_rq_pending_total", 1)
   asserts.assertCounterEqual(counters, "upstream_rq_total", 25)
   asserts.assertCounterEqual(counters, "default.total_match_count", 1)
@@ -262,9 +260,7 @@ def test_https_h1(https_test_server_fixture):
   asserts.assertCounterEqual(counters, "upstream_cx_http1_total", 1)
   asserts.assertCounterEqual(counters, "upstream_cx_rx_bytes_total", 3400)
   asserts.assertCounterEqual(counters, "upstream_cx_total", 1)
-  asserts.assertCounterEqual(
-      counters, "upstream_cx_tx_bytes_total",
-      1375 if https_test_server_fixture.ip_version == IpVersion.IPV6 else 1450)
+  asserts.assertCounterGreaterEqual(counters, "upstream_cx_tx_bytes_total", 500)
   asserts.assertCounterEqual(counters, "upstream_rq_pending_total", 1)
   asserts.assertCounterEqual(counters, "upstream_rq_total", 25)
   asserts.assertCounterEqual(counters, "ssl.ciphers.ECDHE-RSA-AES128-GCM-SHA256", 1)
