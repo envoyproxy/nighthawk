@@ -46,34 +46,3 @@ service NighthawkService {
   rpc ExecutionStream(stream ExecutionRequest) returns (stream ExecutionResponse) {
   }
 }
-
-// Encapsulates an ExecutionResponse.
-message StoreExecutionRequest {
-  // Response contains the effective execution id, which will serve as the lookup key.
-  ExecutionResponse execution_response = 1;
-}
-
-// Empty return value message, that serves as a future extension point.
-message StoreExecutionResponse {
-}
-
-message SinkRequest {
-  // Unique id for lookup purposes.
-  string execution_id = 1;
-}
-
-message SinkResponse {
-  // Response associated to the requested execution id.
-  ExecutionResponse execution_response = 1;
-}
-
-service NighthawkSink {
-  // Accepts a stream of execution responses, which is the return value of
-  // NighthawkService.ExecutionStream. Workers can forward their results using this method.
-  rpc StoreExecutionResponseStream(stream StoreExecutionRequest) returns (StoreExecutionResponse) {
-  }
-
-  // Gets the stored responses associated to an execution, keyed by execution id.
-  rpc SinkRequestStream(stream SinkRequest) returns (stream SinkResponse) {
-  }
-}

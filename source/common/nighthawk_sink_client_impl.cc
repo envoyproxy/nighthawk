@@ -4,13 +4,13 @@
 
 namespace Nighthawk {
 
-absl::StatusOr<nighthawk::client::StoreExecutionResponse>
+absl::StatusOr<nighthawk::sink::StoreExecutionResponse>
 NighthawkSinkClientImpl::StoreExecutionResponseStream(
-    nighthawk::client::NighthawkSink::StubInterface* nighthawk_sink_stub,
-    const nighthawk::client::StoreExecutionRequest& store_execution_request) const {
+    nighthawk::sink::NighthawkSink::StubInterface* nighthawk_sink_stub,
+    const nighthawk::sink::StoreExecutionRequest& store_execution_request) const {
   ::grpc::ClientContext context;
-  ::nighthawk::client::StoreExecutionResponse store_execution_response;
-  std::shared_ptr<::grpc::ClientWriterInterface<::nighthawk::client::StoreExecutionRequest>> stream(
+  ::nighthawk::sink::StoreExecutionResponse store_execution_response;
+  std::shared_ptr<::grpc::ClientWriterInterface<::nighthawk::sink::StoreExecutionRequest>> stream(
       nighthawk_sink_stub->StoreExecutionResponseStream(&context, &store_execution_response));
   if (!stream->Write(store_execution_request)) {
     return absl::UnavailableError("Failed to write request to the Nighthawk Sink gRPC channel.");
@@ -24,14 +24,14 @@ NighthawkSinkClientImpl::StoreExecutionResponseStream(
   return store_execution_response;
 }
 
-absl::StatusOr<nighthawk::client::SinkResponse> NighthawkSinkClientImpl::SinkRequestStream(
-    nighthawk::client::NighthawkSink::StubInterface& nighthawk_sink_stub,
-    const nighthawk::client::SinkRequest& sink_request) const {
-  nighthawk::client::SinkResponse response;
+absl::StatusOr<nighthawk::sink::SinkResponse> NighthawkSinkClientImpl::SinkRequestStream(
+    nighthawk::sink::NighthawkSink::StubInterface& nighthawk_sink_stub,
+    const nighthawk::sink::SinkRequest& sink_request) const {
+  nighthawk::sink::SinkResponse response;
 
   ::grpc::ClientContext context;
-  std::shared_ptr<::grpc::ClientReaderWriterInterface<nighthawk::client::SinkRequest,
-                                                      nighthawk::client::SinkResponse>>
+  std::shared_ptr<::grpc::ClientReaderWriterInterface<nighthawk::sink::SinkRequest,
+                                                      nighthawk::sink::SinkResponse>>
       stream(nighthawk_sink_stub.SinkRequestStream(&context));
 
   if (!stream->Write(sink_request)) {
