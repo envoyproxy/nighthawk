@@ -6,12 +6,12 @@ namespace Nighthawk {
 
 absl::StatusOr<nighthawk::sink::StoreExecutionResponse>
 NighthawkSinkClientImpl::StoreExecutionResponseStream(
-    nighthawk::sink::NighthawkSink::StubInterface* nighthawk_sink_stub,
+    nighthawk::sink::NighthawkSink::StubInterface& nighthawk_sink_stub,
     const nighthawk::sink::StoreExecutionRequest& store_execution_request) const {
   ::grpc::ClientContext context;
   ::nighthawk::sink::StoreExecutionResponse store_execution_response;
   std::shared_ptr<::grpc::ClientWriterInterface<::nighthawk::sink::StoreExecutionRequest>> stream(
-      nighthawk_sink_stub->StoreExecutionResponseStream(&context, &store_execution_response));
+      nighthawk_sink_stub.StoreExecutionResponseStream(&context, &store_execution_response));
   if (!stream->Write(store_execution_request)) {
     return absl::UnavailableError("Failed to write request to the Nighthawk Sink gRPC channel.");
   } else if (!stream->WritesDone()) {

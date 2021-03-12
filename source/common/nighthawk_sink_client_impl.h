@@ -14,7 +14,7 @@ namespace Nighthawk {
 class NighthawkSinkClientImpl : public NighthawkSinkClient {
 public:
   absl::StatusOr<nighthawk::sink::StoreExecutionResponse> StoreExecutionResponseStream(
-      nighthawk::sink::NighthawkSink::StubInterface* nighthawk_sink_stub,
+      nighthawk::sink::NighthawkSink::StubInterface& nighthawk_sink_stub,
       const nighthawk::sink::StoreExecutionRequest& store_execution_request) const override;
 
   absl::StatusOr<nighthawk::sink::SinkResponse>

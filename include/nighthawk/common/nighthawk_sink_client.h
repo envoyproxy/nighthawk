@@ -23,7 +23,7 @@ public:
    * @return absl::StatusOr<nighthawk::sink::StoreExecutionResponse>
    */
   virtual absl::StatusOr<nighthawk::sink::StoreExecutionResponse> StoreExecutionResponseStream(
-      nighthawk::sink::NighthawkSink::StubInterface* nighthawk_sink_stub,
+      nighthawk::sink::NighthawkSink::StubInterface& nighthawk_sink_stub,
       const nighthawk::sink::StoreExecutionRequest& store_execution_request) const PURE;
 
   /**

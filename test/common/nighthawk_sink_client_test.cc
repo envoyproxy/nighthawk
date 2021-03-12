@@ -66,9 +66,9 @@ TEST(StoreExecutionResponseStream, UsesSpecifiedExecutionResponseArguments) {
   *request_2.mutable_execution_response() = execution_response_2;
 
   absl::StatusOr<nighthawk::sink::StoreExecutionResponse> response_1 =
-      client.StoreExecutionResponseStream(&mock_nighthawk_sink_stub, request_1);
+      client.StoreExecutionResponseStream(mock_nighthawk_sink_stub, request_1);
   absl::StatusOr<nighthawk::sink::StoreExecutionResponse> response_2 =
-      client.StoreExecutionResponseStream(&mock_nighthawk_sink_stub, request_2);
+      client.StoreExecutionResponseStream(mock_nighthawk_sink_stub, request_2);
   EXPECT_EQ(observed_request_1.DebugString(), request_1.DebugString());
   EXPECT_EQ(observed_request_2.DebugString(), request_2.DebugString());
   EXPECT_TRUE(MessageDifferencer::Equivalent(observed_request_1, request_1));
@@ -90,7 +90,7 @@ TEST(StoreExecutionResponseStream, ReturnsResponseSuccessfully) {
 
   NighthawkSinkClientImpl client;
   absl::StatusOr<nighthawk::sink::StoreExecutionResponse> response =
-      client.StoreExecutionResponseStream(&mock_nighthawk_sink_stub, {});
+      client.StoreExecutionResponseStream(mock_nighthawk_sink_stub, {});
   EXPECT_TRUE(response.ok());
 }
 
@@ -107,7 +107,7 @@ TEST(StoreExecutionResponseStream, ReturnsErrorIfNighthawkServiceWriteFails) {
 
   NighthawkSinkClientImpl client;
   absl::StatusOr<nighthawk::sink::StoreExecutionResponse> response =
-      client.StoreExecutionResponseStream(&mock_nighthawk_sink_stub, {});
+      client.StoreExecutionResponseStream(mock_nighthawk_sink_stub, {});
   ASSERT_FALSE(response.ok());
   EXPECT_EQ(response.status().code(), absl::StatusCode::kUnavailable);
   EXPECT_THAT(response.status().message(), HasSubstr("Failed to write"));
@@ -127,7 +127,7 @@ TEST(StoreExecutionResponseStream, ReturnsErrorIfNighthawkServiceWritesDoneFails
 
   NighthawkSinkClientImpl client;
   absl::StatusOr<nighthawk::sink::StoreExecutionResponse> response =
-      client.StoreExecutionResponseStream(&mock_nighthawk_sink_stub, {});
+      client.StoreExecutionResponseStream(mock_nighthawk_sink_stub, {});
   ASSERT_FALSE(response.ok());
   EXPECT_EQ(response.status().code(), absl::StatusCode::kInternal);
   EXPECT_THAT(response.status().message(), HasSubstr("WritesDone() failed"));
@@ -150,7 +150,7 @@ TEST(StoreExecutionResponseStream, PropagatesErrorIfNighthawkServiceGrpcStreamCl
 
   NighthawkSinkClientImpl client;
   absl::StatusOr<nighthawk::sink::StoreExecutionResponse> response =
-      client.StoreExecutionResponseStream(&mock_nighthawk_sink_stub, {});
+      client.StoreExecutionResponseStream(mock_nighthawk_sink_stub, {});
   ASSERT_FALSE(response.ok());
   EXPECT_EQ(response.status().code(), absl::StatusCode::kPermissionDenied);
   EXPECT_THAT(response.status().message(), HasSubstr("Finish failure status message"));
