@@ -42,6 +42,20 @@ absl::StatusOr<nighthawk::sink::SinkResponse> NighthawkSinkClientImpl::SinkReque
 
   bool got_response = false;
   while (stream->Read(&response)) {
+    /*
+      At the proto api level we support returning a stream of results. The sink service proto api
+      reflects this, and accepts what NighthawkService. ExecutionStream returns as a parameter
+      (though we wrap it in StoreExecutionRequest messages for extensibility purposes). So this
+      implies a stream, and not a single message.
+
+      Having said that, today we constrain what we return to a single message in the implementations
+      where this is relevant. That's why we assert here, to make sure that stays put until an
+      explicit choice is made otherwise.
+
+      Why do this? The intent of NighthawkService. ExecutionStream was to be able to stream
+      intermediate updates some day. So having streams in the api's keeps the door open on streaming
+      intermediary updates, without forcing a change the proto api.
+    */
     RELEASE_ASSERT(!got_response,
                    "Sink Service has started responding with more than one message.");
     got_response = true;
