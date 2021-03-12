@@ -20,23 +20,23 @@ public:
    *
    * @param nighthawk_sink_stub Used to open a channel to the sink service.
    * @param store_execution_request Provide the message that the sink should store.
-   * @return absl::StatusOr<nighthawk::sink::StoreExecutionResponse>
+   * @return absl::StatusOr<nighthawk::StoreExecutionResponse>
    */
-  virtual absl::StatusOr<nighthawk::sink::StoreExecutionResponse> StoreExecutionResponseStream(
-      nighthawk::sink::NighthawkSink::StubInterface& nighthawk_sink_stub,
-      const nighthawk::sink::StoreExecutionRequest& store_execution_request) const PURE;
+  virtual absl::StatusOr<nighthawk::StoreExecutionResponse> StoreExecutionResponseStream(
+      nighthawk::NighthawkSink::StubInterface& nighthawk_sink_stub,
+      const nighthawk::StoreExecutionRequest& store_execution_request) const PURE;
 
   /**
    * Look up ExecutionResponse messages in the sink.
    *
    * @param nighthawk_sink_stub Used to open a channel to the sink service.
    * @param sink_request Provide the message that the sink should handle.
-   * @return absl::StatusOr<nighthawk::sink::SinkResponse> Either a status indicating failure, or
+   * @return absl::StatusOr<nighthawk::SinkResponse> Either a status indicating failure, or
    * a SinkResponse upon success.
    */
-  virtual absl::StatusOr<nighthawk::sink::SinkResponse>
-  SinkRequestStream(nighthawk::sink::NighthawkSink::StubInterface& nighthawk_sink_stub,
-                    const nighthawk::sink::SinkRequest& sink_request) const PURE;
+  virtual absl::StatusOr<nighthawk::SinkResponse>
+  SinkRequestStream(nighthawk::NighthawkSink::StubInterface& nighthawk_sink_stub,
+                    const nighthawk::SinkRequest& sink_request) const PURE;
 };
 
 } // namespace Nighthawk
