@@ -1,6 +1,6 @@
 #pragma once
 
-#include "nighthawk/common/sink.h"
+#include "nighthawk/sink/sink.h"
 
 namespace Nighthawk {
 
