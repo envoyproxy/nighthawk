@@ -163,20 +163,3 @@ envoy_cc_library(
         "@envoy//source/server/config_validation:server_lib_with_external_headers",
     ],
 )
-
-envoy_cc_library(
-    name = "sink_impl_lib",
-    srcs = [
-        "sink_impl.cc",
-    ],
-    hdrs = [
-        "sink_impl.h",
-    ],
-    repository = "@envoy",
-    visibility = ["//visibility:public"],
-    deps = [
-        "//include/nighthawk/sink:sink_lib",
-        "@envoy//source/common/common:minimal_logger_lib_with_external_headers",
-        "@envoy//source/common/common:random_generator_lib_with_external_headers",
-    ],
-)
