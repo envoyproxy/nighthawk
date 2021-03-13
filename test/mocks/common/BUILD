@@ -97,13 +97,3 @@ envoy_cc_mock(
         "//include/nighthawk/common:base_includes",
     ],
 )
-
-envoy_cc_mock(
-    name = "mock_sink",
-    srcs = ["mock_sink.cc"],
-    hdrs = ["mock_sink.h"],
-    repository = "@envoy",
-    deps = [
-        "//include/nighthawk/common:sink_lib",
-    ],
-)
