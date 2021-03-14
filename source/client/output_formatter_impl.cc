@@ -143,7 +143,7 @@ std::string ConsoleOutputFormatterImpl::statIdtoFriendlyStatName(absl::string_vi
 }
 
 std::string JsonOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
-  return Envoy::MessageUtil::getJsonStringFromMessageOrDie(output, true, true);
+  return Envoy::MessageUtil::getJsonStringFromMessageOrError(output, true, true);
 }
 
 std::string YamlOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
@@ -320,7 +320,7 @@ std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Outp
   if (statistic != nullptr) {
     fortio_output.mutable_headersizes()->CopyFrom(renderFortioDurationHistogram(*statistic));
   }
-  return Envoy::MessageUtil::getJsonStringFromMessageOrDie(fortio_output, true, true);
+  return Envoy::MessageUtil::getJsonStringFromMessageOrError(fortio_output, true, true);
 }
 
 const nighthawk::client::DurationHistogram FortioOutputFormatterImpl::renderFortioDurationHistogram(
