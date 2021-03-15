@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package nighthawk;
+
+import "envoy/config/core/v3/address.proto";
+
+import "api/client/service.proto";
+import "api/sink/sink.proto";
+
+import "validate/validate.proto";
+
+// Perform an execution request through an intermediate service that will in
+// turn delegate to one or more other services for actual handling.
+message DistributedRequest {
+  oneof distributed_request_type {
+    client.ExecutionRequest execution_request = 1;
+    SinkRequest sink_request = 2;
+  }
+  // Specify one or more services that will handle the inner message associated to this.
+  repeated envoy.config.core.v3.Address services = 3 [(validate.rules).repeated .min_items = 1];
+}
+
+// Carries responses associated with a DistributedRequest.
+message DistributedResponse {
+}
+
+// Service which distributes messages to one or more other services for handling, and streams back
+// response messages.
+service NighthawkDistributor {
+  // Propagate the message wrapped in DistributedRequest to one or more other services for handling.
+  rpc DistributedRequestStream(stream DistributedRequest) returns (stream DistributedResponse) {
+  }
+}
