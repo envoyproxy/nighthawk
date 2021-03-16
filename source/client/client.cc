@@ -81,7 +81,12 @@ bool Main::run() {
     result = process->run(output_collector);
   }
   auto formatter = output_formatter_factory.create(options_->outputFormat());
-  std::cout << formatter->formatProto(output_collector.toProto());
+  absl::StatusOr<std::string> formatted_proto = formatter->formatProto(output_collector.toProto());
+  if (formatted_proto.ok()) {
+    std::cout << formatter->formatProto(output_collector.toProto());
+  } else {
+    ENVOY_LOG(error, "An error occured while formatting proto");
+  }
   process->shutdown();
   if (!result) {
     ENVOY_LOG(error, "An error ocurred.");

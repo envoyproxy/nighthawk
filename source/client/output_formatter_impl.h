@@ -28,7 +28,7 @@ protected:
 
 class ConsoleOutputFormatterImpl : public OutputFormatterImpl {
 public:
-  std::string formatProto(const nighthawk::client::Output& output) const override;
+  absl::StatusOr<std::string> formatProto(const nighthawk::client::Output& output) const override;
   static std::string statIdtoFriendlyStatName(absl::string_view stat_id);
 
 private:
@@ -37,22 +37,22 @@ private:
 
 class JsonOutputFormatterImpl : public OutputFormatterImpl {
 public:
-  std::string formatProto(const nighthawk::client::Output& output) const override;
+  absl::StatusOr<std::string> formatProto(const nighthawk::client::Output& output) const override;
 };
 
 class YamlOutputFormatterImpl : public OutputFormatterImpl {
 public:
-  std::string formatProto(const nighthawk::client::Output& output) const override;
+  absl::StatusOr<std::string> formatProto(const nighthawk::client::Output& output) const override;
 };
 
 class DottedStringOutputFormatterImpl : public OutputFormatterImpl {
 public:
-  std::string formatProto(const nighthawk::client::Output& output) const override;
+  absl::StatusOr<std::string> formatProto(const nighthawk::client::Output& output) const override;
 };
 
 class FortioOutputFormatterImpl : public OutputFormatterImpl {
 public:
-  std::string formatProto(const nighthawk::client::Output& output) const override;
+  absl::StatusOr<std::string> formatProto(const nighthawk::client::Output& output) const override;
 
 protected:
   /**
@@ -126,7 +126,7 @@ public:
    * @param output Nighthawk's native output proto that will be transformed.
    * @return std::string Fortio formatted json string.
    */
-  std::string formatProto(const nighthawk::client::Output& output) const override;
+  absl::StatusOr<std::string> formatProto(const nighthawk::client::Output& output) const override;
 };
 
 } // namespace Client

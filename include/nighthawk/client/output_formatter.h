@@ -8,6 +8,7 @@
 
 #include "api/client/output.pb.validate.h"
 
+
 namespace Nighthawk {
 namespace Client {
 
@@ -19,10 +20,10 @@ public:
   virtual ~OutputFormatter() = default;
 
   /**
-   * @return std::string serialized representation of output. The specific format depends
-   * on the derived class, for example human-readable or json.
+   * @return absl::StatusOr<std::string> serialized representation of output, if not error.
+   * The specific format depends on the derived class, for example human-readable or json.
    */
-  virtual std::string formatProto(const nighthawk::client::Output& output) const PURE;
+  virtual absl::StatusOr<std::string> formatProto(const nighthawk::client::Output& output) const PURE;
 };
 
 using OutputFormatterPtr = std::unique_ptr<OutputFormatter>;

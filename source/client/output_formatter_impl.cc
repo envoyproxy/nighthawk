@@ -51,7 +51,7 @@ void OutputFormatterImpl::iteratePercentiles(
   }
 }
 
-std::string ConsoleOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
+absl::StatusOr<std::string> ConsoleOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
   std::stringstream ss;
   ss << "Nighthawk - A layer 7 protocol benchmarking tool." << std::endl << std::endl;
   for (const auto& result : output.results()) {
@@ -114,7 +114,7 @@ std::string ConsoleOutputFormatterImpl::formatProto(const nighthawk::client::Out
     }
   }
 
-  return ss.str();
+  return absl::OkStatus(absl::StatusCode::kOk, ss.str());
 }
 
 std::string ConsoleOutputFormatterImpl::formatProtoDuration(
@@ -142,15 +142,15 @@ std::string ConsoleOutputFormatterImpl::statIdtoFriendlyStatName(absl::string_vi
   return std::string(stat_id);
 }
 
-std::string JsonOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
-  return Envoy::MessageUtil::getJsonStringFromMessageOrError(output, true, true);
+absl::StatusOr<std::string> JsonOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
+  return Envoy::MessageUtil::getJsonStringFromMessage(output, true, true);
 }
 
-std::string YamlOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
+absl::StatusOr<std::string> YamlOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
   return Envoy::MessageUtil::getYamlStringFromMessage(output, true, true);
 }
 
-std::string
+absl::StatusOr<std::string>
 DottedStringOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
   std::stringstream ss;
   for (const auto& result : output.results()) {
@@ -203,7 +203,7 @@ DottedStringOutputFormatterImpl::formatProto(const nighthawk::client::Output& ou
       ss << fmt::format("{}:{}", prefix, counter.value()) << std::endl;
     }
   }
-  return ss.str();
+  return absl::OkStatus(absl::StatusCode::kOk, ss.str());
 }
 
 const nighthawk::client::Result&
@@ -255,7 +255,7 @@ FortioOutputFormatterImpl::durationToSeconds(const Envoy::ProtobufWkt::Duration&
   return Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(duration) / 1e9;
 }
 
-std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
+absl::StatusOr<std::string> FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
   nighthawk::client::FortioResult fortio_output;
   // Iff there's only a single worker we will have only a single result. Otherwise the number of
   // workers can be derived by substracting one from the number of results (for the
@@ -394,9 +394,13 @@ const nighthawk::client::DurationHistogram FortioOutputFormatterImpl::renderFort
   return fortio_histogram;
 }
 
-std::string
+absl::StatusOr<std::string>
 FortioPedanticOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
-  std::string res = FortioOutputFormatterImpl::formatProto(output);
+  absl::StatusOr<std::string> res_status = FortioOutputFormatterImpl::formatProto(output);
+  if (!res_status.ok()) {
+    return res_status;
+  }
+  std::string res = *res_status;
   // clang-format off
   // Fix two types of quirks. We disable linting because we use std::regex directly.
   // This should be OK as the regular expression we use can be trusted.
