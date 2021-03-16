@@ -114,7 +114,7 @@ absl::StatusOr<std::string> ConsoleOutputFormatterImpl::formatProto(const nighth
     }
   }
 
-  return absl::OkStatus(absl::StatusCode::kOk, ss.str());
+  return absl::Status(absl::StatusCode::kOk, ss.str());
 }
 
 std::string ConsoleOutputFormatterImpl::formatProtoDuration(
@@ -203,10 +203,10 @@ DottedStringOutputFormatterImpl::formatProto(const nighthawk::client::Output& ou
       ss << fmt::format("{}:{}", prefix, counter.value()) << std::endl;
     }
   }
-  return absl::OkStatus(absl::StatusCode::kOk, ss.str());
+  return absl::Status(absl::StatusCode::kOk, ss.str());
 }
 
-const nighthawk::client::Result&
+absl::StatusOr<const nighthawk::client::Result&>
 FortioOutputFormatterImpl::getGlobalResult(const nighthawk::client::Output& output) const {
   for (const auto& nh_result : output.results()) {
     if (nh_result.name() == "global") {
@@ -214,7 +214,7 @@ FortioOutputFormatterImpl::getGlobalResult(const nighthawk::client::Output& outp
     }
   }
 
-  throw NighthawkException("Nighthawk output was malformed, contains no 'global' results.");
+  return absl::Status(absl::StatusCode::kInvalidArgument, "Nighthawk output was malformed, contains no 'global' results.");
 }
 
 uint64_t FortioOutputFormatterImpl::getCounterValue(const nighthawk::client::Result& result,
@@ -239,10 +239,10 @@ FortioOutputFormatterImpl::findStatistic(const nighthawk::client::Result& result
   return nullptr;
 }
 
-std::chrono::nanoseconds FortioOutputFormatterImpl::getAverageExecutionDuration(
+absl::StatusOr<std::chrono::nanoseconds> FortioOutputFormatterImpl::getAverageExecutionDuration(
     const nighthawk::client::Output& output) const {
   if (!output.results_size()) {
-    throw NighthawkException("No results in output");
+    return absl::Status(absl::StatusCode::kNotFound, "No results in output");
   }
   const auto& r = output.results().at(output.results_size() - 1);
   ASSERT(r.name() == "global");
@@ -320,7 +320,7 @@ absl::StatusOr<std::string> FortioOutputFormatterImpl::formatProto(const nightha
   if (statistic != nullptr) {
     fortio_output.mutable_headersizes()->CopyFrom(renderFortioDurationHistogram(*statistic));
   }
-  return Envoy::MessageUtil::getJsonStringFromMessageOrError(fortio_output, true, true);
+  return Envoy::MessageUtil::getJsonStringFromMessage(fortio_output, true, true);
 }
 
 const nighthawk::client::DurationHistogram FortioOutputFormatterImpl::renderFortioDurationHistogram(
