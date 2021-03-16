@@ -43,8 +43,8 @@ void RemoteRequestSourceImpl::connectToRequestStreamGrpcService() {
   envoy::config::core::v3::GrpcService grpc_service;
   grpc_service.mutable_envoy_grpc()->set_cluster_name(service_cluster_name_);
   Envoy::Grpc::AsyncClientFactoryPtr cluster_manager =
-      cluster_manager_->grpcAsyncClientManager().factoryForGrpcService(
-          grpc_service, scope_, Envoy::Grpc::AsyncClientFactoryClusterChecks::Skip);
+      cluster_manager_->grpcAsyncClientManager().factoryForGrpcService(grpc_service, scope_,
+                                                                       /*skip_cluster_check=*/true);
   grpc_client_ = std::make_unique<RequestStreamGrpcClientImpl>(
       cluster_manager->create(), dispatcher_, *base_header_, header_buffer_length_);
   grpc_client_->start();

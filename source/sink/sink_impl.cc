@@ -1,4 +1,4 @@
-#include "common/sink_impl.h"
+#include "sink/sink_impl.h"
 
 #include <array>
 #include <filesystem>
