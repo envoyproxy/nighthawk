@@ -85,8 +85,7 @@ format>
 Where:
 
 --allow-envoy-deprecated-v2-api
-Set to allow usage of the v2 api. (Not recommended, support will stop
-in Q1 2021). Default: false
+DEPRECATED, not supported anymore.
 
 --latency-response-header-name <string>
 Set an optional header name that will be returned in responses, whose
