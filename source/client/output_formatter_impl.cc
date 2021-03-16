@@ -14,10 +14,10 @@
 
 #include "common/version_info.h"
 
-#include "absl/strings/str_cat.h"
-#include "absl/strings/strip.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/strip.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -53,7 +53,8 @@ void OutputFormatterImpl::iteratePercentiles(
   }
 }
 
-absl::StatusOr<std::string> ConsoleOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
+absl::StatusOr<std::string>
+ConsoleOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
   std::stringstream ss;
   ss << "Nighthawk - A layer 7 protocol benchmarking tool." << std::endl << std::endl;
   for (const auto& result : output.results()) {
@@ -144,11 +145,13 @@ std::string ConsoleOutputFormatterImpl::statIdtoFriendlyStatName(absl::string_vi
   return std::string(stat_id);
 }
 
-absl::StatusOr<std::string> JsonOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
+absl::StatusOr<std::string>
+JsonOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
   return Envoy::MessageUtil::getJsonStringFromMessage(output, true, true);
 }
 
-absl::StatusOr<std::string> YamlOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
+absl::StatusOr<std::string>
+YamlOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
   return Envoy::MessageUtil::getYamlStringFromMessage(output, true, true);
 }
 
@@ -216,7 +219,8 @@ FortioOutputFormatterImpl::getGlobalResult(const nighthawk::client::Output& outp
     }
   }
 
-  return absl::Status(absl::StatusCode::kInvalidArgument, "Nighthawk output was malformed, contains no 'global' results.");
+  return absl::Status(absl::StatusCode::kInvalidArgument,
+                      "Nighthawk output was malformed, contains no 'global' results.");
 }
 
 uint64_t FortioOutputFormatterImpl::getCounterValue(const nighthawk::client::Result& result,
@@ -257,7 +261,8 @@ FortioOutputFormatterImpl::durationToSeconds(const Envoy::ProtobufWkt::Duration&
   return Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(duration) / 1e9;
 }
 
-absl::StatusOr<std::string> FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
+absl::StatusOr<std::string>
+FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
   nighthawk::client::FortioResult fortio_output;
   // Iff there's only a single worker we will have only a single result. Otherwise the number of
   // workers can be derived by substracting one from the number of results (for the

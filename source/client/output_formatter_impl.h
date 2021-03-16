@@ -11,9 +11,9 @@
 #include "api/client/output.pb.h"
 #include "api/client/transform/fortio.pb.h"
 
-#include "absl/strings/string_view.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/string_view.h"
 
 namespace Nighthawk {
 namespace Client {

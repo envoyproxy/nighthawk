@@ -345,7 +345,8 @@ TEST(StatisticTest, HdrStatisticPercentilesProto) {
                     parsed_json_proto, Envoy::ProtobufMessage::getStrictValidationVisitor());
   const std::string json = util.getJsonStringFromMessageOrError(
       statistic.toProto(Statistic::SerializationDomain::DURATION), true, true);
-  const std::string golden_json = util.getJsonStringFromMessageOrError(parsed_json_proto, true, true);
+  const std::string golden_json =
+      util.getJsonStringFromMessageOrError(parsed_json_proto, true, true);
   EXPECT_THAT(statistic.toProto(Statistic::SerializationDomain::DURATION),
               Envoy::ProtoEq(parsed_json_proto))
       << json << "\n"
@@ -367,7 +368,8 @@ TEST(StatisticTest, CircllhistStatisticPercentilesProto) {
                     parsed_json_proto, Envoy::ProtobufMessage::getStrictValidationVisitor());
   const std::string json = util.getJsonStringFromMessageOrError(
       statistic.toProto(Statistic::SerializationDomain::DURATION), true, true);
-  const std::string golden_json = util.getJsonStringFromMessageOrError(parsed_json_proto, true, true);
+  const std::string golden_json =
+      util.getJsonStringFromMessageOrError(parsed_json_proto, true, true);
   EXPECT_THAT(statistic.toProto(Statistic::SerializationDomain::DURATION),
               Envoy::ProtoEq(parsed_json_proto))
       << json << "\n"

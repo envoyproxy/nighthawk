@@ -25,7 +25,8 @@ public:
    * @return absl::StatusOr<std::string> serialized representation of output, if not error.
    * The specific format depends on the derived class, for example human-readable or json.
    */
-  virtual absl::StatusOr<std::string> formatProto(const nighthawk::client::Output& output) const PURE;
+  virtual absl::StatusOr<std::string>
+  formatProto(const nighthawk::client::Output& output) const PURE;
 };
 
 using OutputFormatterPtr = std::unique_ptr<OutputFormatter>;
