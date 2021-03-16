@@ -34,6 +34,9 @@
 #include "client/process_impl.h"
 #include "client/remote_process_impl.h"
 
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
+
 using namespace std::chrono_literals;
 
 namespace Nighthawk {

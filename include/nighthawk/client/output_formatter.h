@@ -7,8 +7,9 @@
 #include "envoy/common/pure.h"
 
 #include "api/client/output.pb.validate.h"
-#include "absl/status/status.h"
 
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 
 namespace Nighthawk {
 namespace Client {
