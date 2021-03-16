@@ -16,6 +16,7 @@
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/strip.h"
+#include "absl/status/status.h"
 
 namespace Nighthawk {
 namespace Client {
