@@ -1,4 +1,4 @@
-#include "test/mocks/common/mock_sink.h"
+#include "test/mocks/sink/mock_sink.h"
 
 namespace Nighthawk {
 

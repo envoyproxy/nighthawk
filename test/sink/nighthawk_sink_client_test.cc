@@ -3,7 +3,7 @@
 #include "api/sink/sink.grpc.pb.h"
 #include "api/sink/sink_mock.grpc.pb.h"
 
-#include "common/nighthawk_sink_client_impl.h"
+#include "sink/nighthawk_sink_client_impl.h"
 
 #include "grpcpp/test/mock_stream.h"
 

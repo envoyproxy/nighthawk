@@ -421,19 +421,6 @@ def http_test_server_fixture(request, server_config, caplog):
 
 
 @pytest.fixture(params=determineIpVersionsFromEnvironment())
-def http_test_server_fixture_envoy_deprecated_v2_api(request, server_config, caplog):
-  """Fixture for setting up a test environment with http server configuration that uses v2 configuration.
-
-  Yields:
-      HttpIntegrationTestBaseWithEnvoyDeprecatedV2Bootstrap: A fully set up instance. Tear down will happen automatically.
-  """
-  f = HttpIntegrationTestBaseWithEnvoyDeprecatedV2Bootstrap(request, server_config)
-  f.setUp()
-  yield f
-  f.tearDown(caplog)
-
-
-@pytest.fixture(params=determineIpVersionsFromEnvironment())
 def https_test_server_fixture(request, server_config, caplog):
   """Fixture for setting up a test environment with the stock https server configuration.
 
