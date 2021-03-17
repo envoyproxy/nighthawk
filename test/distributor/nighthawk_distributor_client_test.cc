@@ -40,15 +40,15 @@ TEST(DistributedRequest, UsesSpecifiedCommandLineOptions) {
         EXPECT_CALL(*mock_reader_writer, Read(_)).WillOnce(Return(true)).WillOnce(Return(false));
         // Capture the Nighthawk request DistributedRequest sends on the channel.
         EXPECT_CALL(*mock_reader_writer, Write(_, _))
-            .WillOnce(::testing::DoAll(::testing::SaveArg<0>(&request), Return(true)));
+            .WillOnce(DoAll(SaveArg<0>(&request), Return(true)));
         EXPECT_CALL(*mock_reader_writer, WritesDone()).WillOnce(Return(true));
         EXPECT_CALL(*mock_reader_writer, Finish()).WillOnce(Return(::grpc::Status::OK));
         return mock_reader_writer;
       });
 
-  ::nighthawk::DistributedRequest distributed_request;
-  ::nighthawk::client::ExecutionRequest execution_request;
-  ::nighthawk::client::StartRequest start_request;
+  nighthawk::DistributedRequest distributed_request;
+  nighthawk::client::ExecutionRequest execution_request;
+  nighthawk::client::StartRequest start_request;
   CommandLineOptions command_line_options;
   command_line_options.mutable_requests_per_second()->set_value(kExpectedRps);
   *(start_request.mutable_options()) = command_line_options;
@@ -58,9 +58,6 @@ TEST(DistributedRequest, UsesSpecifiedCommandLineOptions) {
   absl::StatusOr<DistributedResponse> distributed_response_or =
       client.DistributedRequest(mock_nighthawk_service_stub, distributed_request);
   EXPECT_TRUE(distributed_response_or.ok());
-  ASSERT_TRUE(request.has_execution_request());
-  ASSERT_TRUE(request.execution_request().has_start_request());
-  ASSERT_TRUE(request.execution_request().start_request().has_options());
   EXPECT_EQ(request.execution_request().start_request().options().requests_per_second().value(),
             kExpectedRps);
 }
@@ -87,7 +84,7 @@ TEST(DistributedRequest, ReturnsNighthawkResponseSuccessfully) {
 
   NighthawkDistributorClientImpl client;
   absl::StatusOr<DistributedResponse> response_or =
-      client.DistributedRequest(mock_nighthawk_service_stub, ::nighthawk::DistributedRequest());
+      client.DistributedRequest(mock_nighthawk_service_stub, nighthawk::DistributedRequest());
   EXPECT_TRUE(response_or.ok());
   DistributedResponse actual_response = response_or.value();
   EXPECT_TRUE(MessageDifferencer::Equivalent(actual_response, expected_response));
@@ -110,7 +107,7 @@ TEST(DistributedRequest, ReturnsErrorIfNighthawkServiceDoesNotSendResponse) {
 
   NighthawkDistributorClientImpl client;
   absl::StatusOr<DistributedResponse> response_or =
-      client.DistributedRequest(mock_nighthawk_service_stub, ::nighthawk::DistributedRequest());
+      client.DistributedRequest(mock_nighthawk_service_stub, nighthawk::DistributedRequest());
   ASSERT_FALSE(response_or.ok());
   EXPECT_EQ(response_or.status().code(), absl::StatusCode::kInternal);
   EXPECT_THAT(response_or.status().message(),
@@ -131,7 +128,7 @@ TEST(DistributedRequest, ReturnsErrorIfNighthawkServiceWriteFails) {
 
   NighthawkDistributorClientImpl client;
   absl::StatusOr<DistributedResponse> response_or =
-      client.DistributedRequest(mock_nighthawk_service_stub, ::nighthawk::DistributedRequest());
+      client.DistributedRequest(mock_nighthawk_service_stub, nighthawk::DistributedRequest());
   ASSERT_FALSE(response_or.ok());
   EXPECT_EQ(response_or.status().code(), absl::StatusCode::kUnavailable);
   EXPECT_THAT(response_or.status().message(), HasSubstr("Failed to write"));
@@ -152,7 +149,7 @@ TEST(DistributedRequest, ReturnsErrorIfNighthawkServiceWritesDoneFails) {
 
   NighthawkDistributorClientImpl client;
   absl::StatusOr<DistributedResponse> response_or =
-      client.DistributedRequest(mock_nighthawk_service_stub, ::nighthawk::DistributedRequest());
+      client.DistributedRequest(mock_nighthawk_service_stub, nighthawk::DistributedRequest());
   ASSERT_FALSE(response_or.ok());
   EXPECT_EQ(response_or.status().code(), absl::StatusCode::kInternal);
   EXPECT_THAT(response_or.status().message(), HasSubstr("WritesDone() failed"));
@@ -178,7 +175,7 @@ TEST(DistributedRequest, PropagatesErrorIfNighthawkServiceGrpcStreamClosesAbnorm
 
   NighthawkDistributorClientImpl client;
   absl::StatusOr<DistributedResponse> response_or =
-      client.DistributedRequest(mock_nighthawk_service_stub, ::nighthawk::DistributedRequest());
+      client.DistributedRequest(mock_nighthawk_service_stub, nighthawk::DistributedRequest());
   ASSERT_FALSE(response_or.ok());
   EXPECT_EQ(response_or.status().code(), absl::StatusCode::kPermissionDenied);
   EXPECT_THAT(response_or.status().message(), HasSubstr("Finish failure status message"));
