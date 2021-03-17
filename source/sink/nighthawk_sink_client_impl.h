@@ -1,4 +1,6 @@
-#include "nighthawk/common/nighthawk_sink_client.h"
+#pragma once
+
+#include "nighthawk/sink/nighthawk_sink_client.h"
 
 #include "external/envoy/source/common/common/statusor.h"
 #include "external/envoy/source/common/protobuf/protobuf.h"
