@@ -10,9 +10,11 @@ import time
 from threading import Thread
 
 from test.integration.common import IpVersion
-from test.integration.integration_test_fixtures import (
-    http_test_server_fixture, https_test_server_fixture, https_test_server_fixture,
-    multi_http_test_server_fixture, multi_https_test_server_fixture, server_config)
+from test.integration.integration_test_fixtures import (http_test_server_fixture,
+                                                        https_test_server_fixture,
+                                                        multi_http_test_server_fixture,
+                                                        multi_https_test_server_fixture,
+                                                        server_config)
 from test.integration import asserts
 from test.integration import utility
 
@@ -63,19 +65,6 @@ def test_http_h1(http_test_server_fixture):
       int(global_histograms["benchmark_http_client.response_header_size"]["raw_pstdev"]), 0)
 
   asserts.assertEqual(len(counters), 12)
-
-
-# TODO(oschaaf): This ought to work after the Envoy update.
-def DISABLED_test_nighthawk_client_v2_api_breaks_by_default(http_test_server_fixture):
-  """Test that the v2 api breaks us when it's not explicitly requested."""
-  _, _ = http_test_server_fixture.runNighthawkClient([
-      http_test_server_fixture.getTestServerRootUri(), "--duration", "100",
-      "--termination-predicate", "benchmark.pool_connection_failure:0", "--failure-predicate",
-      "foo:1", "--transport-socket",
-      "{name:\"envoy.transport_sockets.tls\",typed_config:{\"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\",\"common_tls_context\":{}}}"
-  ],
-                                                     expect_failure=True,
-                                                     as_json=False)
 
 
 def _mini_stress_test(fixture, args):
