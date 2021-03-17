@@ -61,10 +61,9 @@ protected:
    * Return the result that represents all workers (the one with the "global" name).
    *
    * @param output the Nighthawk output proto
-   * @return the corresponding global result
-   * @throws NighthawkException if global result is not found
+   * @return the corresponding global result, or absl::Status if failed
    */
-  const nighthawk::client::Result& getGlobalResult(const nighthawk::client::Output& output) const;
+  absl::StatusOr<const nighthawk::client::Result&> getGlobalResult(const nighthawk::client::Output& output) const;
 
   /**
    * Return the counter with the specified name.
@@ -99,7 +98,7 @@ protected:
    * @param output the Nighthawk output proto
    * @return the corresponding average execution duration in nanoseconds
    */
-  std::chrono::nanoseconds
+  absl::StatusOr<std::chrono::nanoseconds>
   getAverageExecutionDuration(const nighthawk::client::Output& output) const;
 
   /**

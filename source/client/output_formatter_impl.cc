@@ -117,7 +117,7 @@ ConsoleOutputFormatterImpl::formatProto(const nighthawk::client::Output& output)
     }
   }
 
-  return absl::Status(absl::StatusCode::kOk, ss.str());
+  return ss.str();
 }
 
 std::string ConsoleOutputFormatterImpl::formatProtoDuration(
@@ -147,12 +147,14 @@ std::string ConsoleOutputFormatterImpl::statIdtoFriendlyStatName(absl::string_vi
 
 absl::StatusOr<std::string>
 JsonOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
-  return Envoy::MessageUtil::getJsonStringFromMessage(output, true, true);
+  auto status_proto = Envoy::MessageUtil::getJsonStringFromMessage(output, true, true);
+  return absl::Status(static_cast<absl::StatusCode>(status_proto.code()), status_proto.message());
 }
 
 absl::StatusOr<std::string>
 YamlOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
-  return Envoy::MessageUtil::getYamlStringFromMessage(output, true, true);
+  auto status_proto = Envoy::MessageUtil::getYamlStringFromMessage(output, true, true);
+  return absl::Status(static_cast<absl::StatusCode>(status_proto.code()), status_proto.message());
 }
 
 absl::StatusOr<std::string>
@@ -208,7 +210,7 @@ DottedStringOutputFormatterImpl::formatProto(const nighthawk::client::Output& ou
       ss << fmt::format("{}:{}", prefix, counter.value()) << std::endl;
     }
   }
-  return absl::Status(absl::StatusCode::kOk, ss.str());
+  return ss.str();
 }
 
 absl::StatusOr<const nighthawk::client::Result&>
@@ -219,7 +221,7 @@ FortioOutputFormatterImpl::getGlobalResult(const nighthawk::client::Output& outp
     }
   }
 
-  return absl::Status(absl::StatusCode::kInvalidArgument,
+  return absl::Status(absl::StatusCode::kInternal,
                       "Nighthawk output was malformed, contains no 'global' results.");
 }
 
@@ -327,7 +329,8 @@ FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) 
   if (statistic != nullptr) {
     fortio_output.mutable_headersizes()->CopyFrom(renderFortioDurationHistogram(*statistic));
   }
-  return Envoy::MessageUtil::getJsonStringFromMessage(fortio_output, true, true);
+  auto status_proto = Envoy::MessageUtil::getJsonStringFromMessage(fortio_output, true, true);
+  return absl::Status(static_cast<absl::StatusCode>(status_proto.code()), status_proto.message());
 }
 
 const nighthawk::client::DurationHistogram FortioOutputFormatterImpl::renderFortioDurationHistogram(
