@@ -20,8 +20,5 @@ envoy_cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//include/nighthawk/distributor:nighthawk_distributor_client",
-        "@envoy//source/common/common:assert_lib_with_external_headers",
-        "@envoy//source/common/common:statusor_lib_with_external_headers",
-        "@envoy//source/common/protobuf:protobuf_with_external_headers",
     ],
 )

@@ -1,3 +1,5 @@
+#pragma once
+
 #include "nighthawk/common/nighthawk_distributor_client.h"
 
 namespace Nighthawk {
