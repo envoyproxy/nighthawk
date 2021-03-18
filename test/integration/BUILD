@@ -21,6 +21,7 @@ py_library(
         "//:nighthawk_output_transform",
         "//:nighthawk_service",
         "//:nighthawk_test_server",
+        "//test/request_source:testdata",
         "@envoy//test/config/integration/certs",
     ],
     deps = [
