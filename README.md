@@ -43,8 +43,7 @@ bazel build -c opt //:nighthawk
 ```
 USAGE:
 
-bazel-bin/nighthawk_client  [--allow-envoy-deprecated-v2-api]
-[--latency-response-header-name <string>]
+bazel-bin/nighthawk_client  [--latency-response-header-name <string>]
 [--stats-flush-interval <uint32_t>]
 [--stats-sinks <string>] ...
 [--no-duration] [--simple-warmup]
@@ -83,9 +82,6 @@ format>
 
 
 Where:
-
---allow-envoy-deprecated-v2-api
-DEPRECATED, not supported anymore.
 
 --latency-response-header-name <string>
 Set an optional header name that will be returned in responses, whose
