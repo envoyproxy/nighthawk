@@ -9,8 +9,10 @@ import "api/sink/sink.proto";
 
 import "validate/validate.proto";
 
-// Perform an execution request through an intermediate service that will in
-// turn delegate to one or more other services for actual handling.
+// Perform an execution request through an intermediate service that will in turn delegate to one or
+// more other services for actual handling. Concretely an execution request can be propagated to
+// multiple Nighthawk load generator services, and sink requests can be propagated to exactly one
+// Sink service.
 message DistributedRequest {
   oneof distributed_request_type {
     client.ExecutionRequest execution_request = 1;

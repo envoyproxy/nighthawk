@@ -16,7 +16,7 @@ public:
   virtual ~NighthawkDistributorClient() = default;
 
   /**
-   * @brief Propagate messages to one or more other services for handling.
+   * Propagate messages to one or more other services for handling.
    *
    * @param nighthawk_distributor_stub Used to open a channel to the distributor service.
    * @param distributed_request Provide the message that the distributor service should propagate.
