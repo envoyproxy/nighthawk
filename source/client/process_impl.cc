@@ -505,7 +505,8 @@ absl::Status ProcessImpl::runInternal(OutputCollector& collector, const std::vec
   {
     auto guard = std::make_unique<Envoy::Thread::LockGuard>(workers_lock_);
     if (cancelled_) {
-      return absl::CancelledError("Execution was cancelled before it started.");
+      ENVOY_LOG(info, "Execution was cancelled before it started.");
+      return absl::OkStatus();
     }
     int number_of_workers = determineConcurrency();
     shutdown_ = false;
@@ -621,7 +622,8 @@ absl::Status ProcessImpl::runInternal(OutputCollector& collector, const std::vec
   collector.addResult("global", mergeWorkerStatistics(workers_), counters,
                       total_execution_duration / workers_.size(), first_acquisition_time);
   if (cancelled_) {
-    return absl::CancelledError("Execution was cancelled.");
+    ENVOY_LOG(info, "Execution was cancelled.");
+    return absl::OkStatus();
   }
   if (counters.find("sequencer.failed_terminations") != counters.end()) {
     return absl::InternalError(
