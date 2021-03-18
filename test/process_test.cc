@@ -144,14 +144,14 @@ TEST_P(ProcessTest, CancelDuringLoadTest) {
   options_ = TestUtility::createOptionsImpl(
       fmt::format("foo --duration 300 --failure-predicate foo:0 --concurrency 2 https://{}/",
                   loopback_address_));
-  runProcess(absl::StatusCode::kCancelled, /*do_cancel=*/true);
+  runProcess(absl::StatusCode::kOk, /*do_cancel=*/true);
 }
 
 TEST_P(ProcessTest, CancelExecutionBeforeBeginLoadTest) {
   options_ = TestUtility::createOptionsImpl(
       fmt::format("foo --duration 300 --failure-predicate foo:0 --concurrency 2 https://{}/",
                   loopback_address_));
-  runProcess(absl::StatusCode::kCancelled, /*do_cancel=*/true, /*terminate_right_away=*/true);
+  runProcess(absl::StatusCode::kOk, /*do_cancel=*/true, /*terminate_right_away=*/true);
 }
 
 TEST_P(ProcessTest, RunProcessWithStatsSinkConfigured) {
@@ -174,7 +174,7 @@ TEST_P(ProcessTest, NoFlushWhenCancelExecutionBeforeLoadTestBegin) {
                   "2 --stats-flush-interval 1 --stats-sinks {} https://{}/",
                   kSinkName, loopback_address_));
   numFlushes = 0;
-  runProcess(absl::StatusCode::kCancelled, /*do_cancel=*/true, /*terminate_right_away=*/true);
+  runProcess(absl::StatusCode::kOk, /*do_cancel=*/true, /*terminate_right_away=*/true);
   EXPECT_EQ(numFlushes, 0);
 }
 
