@@ -65,19 +65,6 @@ def test_http_h1(http_test_server_fixture):
   asserts.assertEqual(len(counters), 12)
 
 
-# TODO(oschaaf): This ought to work after the Envoy update.
-def DISABLED_test_nighthawk_client_v2_api_breaks_by_default(http_test_server_fixture):
-  """Test that the v2 api breaks us when it's not explicitly requested."""
-  _, _ = http_test_server_fixture.runNighthawkClient([
-      http_test_server_fixture.getTestServerRootUri(), "--duration", "100",
-      "--termination-predicate", "benchmark.pool_connection_failure:0", "--failure-predicate",
-      "foo:1", "--transport-socket",
-      "{name:\"envoy.transport_sockets.tls\",typed_config:{\"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\",\"common_tls_context\":{}}}"
-  ],
-                                                     expect_failure=True,
-                                                     as_json=False)
-
-
 def _mini_stress_test(fixture, args):
   # run a test with more rps then we can handle, and a very small client-side queue.
   # we should observe both lots of successfull requests as well as time spend in blocking mode.,

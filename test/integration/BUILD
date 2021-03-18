@@ -13,7 +13,6 @@ py_library(
     name = "integration_test_base",
     data = [
         "configurations/nighthawk_http_origin.yaml",
-        "configurations/nighthawk_http_origin_envoy_deprecated_v2_api.yaml",
         "configurations/nighthawk_https_origin.yaml",
         "configurations/nighthawk_track_timings.yaml",
         "configurations/sni_origin.yaml",

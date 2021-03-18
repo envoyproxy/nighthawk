@@ -113,16 +113,8 @@ class TestServerBase(object):
     tmpdir: String, indicates the location used to store outputs like logs.
   """
 
-  def __init__(self,
-               server_binary_path,
-               config_template_path,
-               server_ip,
-               ip_version,
-               request,
-               server_binary_config_path_arg,
-               parameters,
-               tag,
-               bootstrap_version_arg=None):
+  def __init__(self, server_binary_path, config_template_path, server_ip, ip_version, request,
+               server_binary_config_path_arg, parameters, tag):
     """Initialize a TestServerBase instance.
 
     Args:
@@ -134,7 +126,6 @@ class TestServerBase(object):
         server_binary_config_path_arg (str): Specify the name of the CLI argument the test server binary uses to accept a configuration path.
         parameters (dict): Supply to provide configuration template parameter replacement values.
         tag (str): Supply to get recognizeable output locations.
-        bootstrap_version_arg (int, optional): specify a bootstrap cli argument value for the test server binary.
     """
     assert ip_version != IpVersion.UNKNOWN
     self.ip_version = ip_version
@@ -154,7 +145,6 @@ class TestServerBase(object):
     self._parameterized_config_path = ""
     self._instance_id = str(random.randint(1, 1024 * 1024 * 1024))
     self._server_binary_config_path_arg = server_binary_config_path_arg
-    self._bootstrap_version_arg = bootstrap_version_arg
     self._prepareForExecution()
     self._request = request
 
@@ -195,8 +185,6 @@ class TestServerBase(object):
         self._parameterized_config_path, "-l", "debug", "--base-id", self._instance_id,
         "--admin-address-path", self._admin_address_path, "--concurrency", "1"
     ]
-    if self._bootstrap_version_arg is not None:
-      args = args + ["--bootstrap-version", str(self._bootstrap_version_arg)]
 
     logging.info("Test server popen() args: %s" % str.join(" ", args))
     self._server_process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -313,8 +301,7 @@ class NighthawkTestServer(TestServerBase):
                ip_version,
                request,
                parameters=dict(),
-               tag="",
-               bootstrap_version_arg=None):
+               tag=""):
     """Initialize a NighthawkTestServer instance.
 
     Args:
@@ -325,17 +312,9 @@ class NighthawkTestServer(TestServerBase):
         request: The pytest `request` fixture used to determin information about the currently executed test.
         parameters (dictionary, optional): Directionary with replacement values for substition purposes in the server configuration template. Defaults to dict().
         tag (str, optional): Tags. Supply this to get recognizeable output locations. Defaults to "".
-        bootstrap_version_arg (String, optional): Specify a cli argument value for --bootstrap-version when running the server.
     """
-    super(NighthawkTestServer, self).__init__(server_binary_path,
-                                              config_template_path,
-                                              server_ip,
-                                              ip_version,
-                                              request,
-                                              "--config-path",
-                                              parameters,
-                                              tag,
-                                              bootstrap_version_arg=bootstrap_version_arg)
+    super(NighthawkTestServer, self).__init__(server_binary_path, config_template_path, server_ip,
+                                              ip_version, request, "--config-path", parameters, tag)
 
   def getCliVersionString(self):
     """Get the version string as written to the output by the CLI."""

@@ -67,7 +67,7 @@ class IntegrationTestBase():
       about the currently executing test case.
   """
 
-  def __init__(self, request, server_config, backend_count=1, bootstrap_version_arg=None):
+  def __init__(self, request, server_config, backend_count=1):
     """Initialize the IntegrationTestBase instance.
 
     Args:
@@ -76,7 +76,6 @@ class IntegrationTestBase():
         about the currently executing test case.
       server_config: path to the server configuration
       backend_count: number of Nighthawk Test Server backends to run, to allow testing MultiTarget mode
-      bootstrap_version_arg: An optional int, specify a bootstrap cli argument value for the test server binary. If None is specified, no bootstrap cli argment will be passed.
     """
     super(IntegrationTestBase, self).__init__()
     self.request = request
@@ -97,7 +96,6 @@ class IntegrationTestBase():
     self._test_servers = []
     self._backend_count = backend_count
     self._test_id = ""
-    self._bootstrap_version_arg = bootstrap_version_arg
 
   # TODO(oschaaf): For the NH test server, add a way to let it determine a port by itself and pull that
   # out.
@@ -165,8 +163,7 @@ class IntegrationTestBase():
                                         self.ip_version,
                                         self.request,
                                         parameters=self.parameters,
-                                        tag=self.tag,
-                                        bootstrap_version_arg=self._bootstrap_version_arg)
+                                        tag=self.tag)
       if not test_server.start():
         return False
       self._test_servers.append(test_server)
@@ -320,25 +317,6 @@ class HttpIntegrationTestBase(IntegrationTestBase):
   def getTestServerRootUri(self):
     """See base class."""
     return super(HttpIntegrationTestBase, self).getTestServerRootUri(False)
-
-
-class HttpIntegrationTestBaseWithEnvoyDeprecatedV2Bootstrap(IntegrationTestBase):
-  """Base for running plain http tests against the Nighthawk test server.
-
-  NOTE: any script that consumes derivations of this, needs to also explicitly
-  import server_config, to avoid errors caused by the server_config not being found
-  by pytest.
-  """
-
-  def __init__(self, request, server_config):
-    """See base class."""
-    super(HttpIntegrationTestBaseWithEnvoyDeprecatedV2Bootstrap,
-          self).__init__(request, server_config, bootstrap_version_arg=2)
-
-  def getTestServerRootUri(self):
-    """See base class."""
-    return super(HttpIntegrationTestBaseWithEnvoyDeprecatedV2Bootstrap,
-                 self).getTestServerRootUri(False)
 
 
 class MultiServerHttpIntegrationTestBase(IntegrationTestBase):
