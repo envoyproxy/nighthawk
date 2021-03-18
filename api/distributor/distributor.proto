@@ -5,19 +5,13 @@ package nighthawk;
 import "envoy/config/core/v3/address.proto";
 
 import "api/client/service.proto";
-import "api/sink/sink.proto";
 
 import "validate/validate.proto";
 
 // Perform an execution request through an intermediate service that will in turn delegate to one or
-// more other services for actual handling. Concretely an execution request can be propagated to
-// multiple Nighthawk load generator services, and sink requests can be propagated to exactly one
-// Sink service.
+// more other services Nighthawk load generator services.
 message DistributedRequest {
-  oneof distributed_request_type {
-    client.ExecutionRequest execution_request = 1;
-    SinkRequest sink_request = 2;
-  }
+  client.ExecutionRequest execution_request = 1;
   // Specify one or more services that will handle the inner message associated to this.
   repeated envoy.config.core.v3.Address services = 3 [(validate.rules).repeated .min_items = 1];
 }
