@@ -351,7 +351,7 @@ std::vector<std::string> RequestSourcePluginJsons() {
 }
 INSTANTIATE_TEST_SUITE_P(HappyPathRequestSourceConfigJsonSuccessfullyTranslatesIntoOptions,
                          RequestSourcePluginTestFixture,
-                         ::testing::ValuesIn(RequestSourcePluginJsons()));
+                         testing::ValuesIn(RequestSourcePluginJsons()));
 
 // This test covers --RequestSourcePlugin, which can't be tested at the same time as --RequestSource
 // and some other options. This is the test for the inlineoptionslistplugin.

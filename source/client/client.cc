@@ -53,7 +53,7 @@ bool Main::run() {
   Envoy::Event::RealTimeSystem time_system; // NO_CHECK_FORMAT(real_time)
   ProcessPtr process;
   std::unique_ptr<nighthawk::client::NighthawkService::Stub> stub;
-  std::shared_ptr<::grpc::Channel> channel;
+  std::shared_ptr<grpc::Channel> channel;
 
   if (options_->nighthawkService() != "") {
     UriPtr uri;
