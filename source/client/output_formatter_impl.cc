@@ -148,7 +148,8 @@ std::string ConsoleOutputFormatterImpl::statIdtoFriendlyStatName(absl::string_vi
 absl::StatusOr<std::string>
 JsonOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
   auto status_proto = Envoy::MessageUtil::getJsonStringFromMessage(output, true, true);
-  return absl::Status(static_cast<absl::StatusCode>(status_proto.status().error_code()), static_cast<absl::string_view>(status_proto.value()));
+  return absl::Status(static_cast<absl::StatusCode>(status_proto.status().error_code()),
+                      static_cast<absl::string_view>(status_proto.value()));
 }
 
 absl::StatusOr<std::string>
@@ -213,16 +214,15 @@ DottedStringOutputFormatterImpl::formatProto(const nighthawk::client::Output& ou
   return ss.str();
 }
 
-absl::StatusOr<const nighthawk::client::Result&>
+const nighthawk::client::Result
 FortioOutputFormatterImpl::getGlobalResult(const nighthawk::client::Output& output) const {
   for (const auto& nh_result : output.results()) {
     if (nh_result.name() == "global") {
-      return absl::StatusOr<const nighthawk::client::Result&>(absl::StatusCode::kOk, nh_result);
+      return nh_result;
     }
   }
 
-  // Nighthawk output was malformed, contains no 'global' results.
-  return absl::StatusOr<const nighthawk::client::Result&>(absl::StatusCode::kInternal, output.results()[0]);
+  throw NighthawkException("Nighthawk output was malformed, contains no 'global' results.");
 }
 
 uint64_t FortioOutputFormatterImpl::getCounterValue(const nighthawk::client::Result& result,
@@ -283,7 +283,8 @@ FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) 
   *fortio_output.mutable_requestedduration() = output.options().duration();
   auto actual_duration_status = getAverageExecutionDuration(output);
   if (!actual_duration_status.ok()) {
-    return absl::Status(absl::StatusCode::kInternal, "Error while getting average execution duration");
+    return absl::Status(absl::StatusCode::kInternal,
+                        "Error while getting average execution duration");
   }
   auto actual_duration = *actual_duration_status;
   fortio_output.set_actualduration(actual_duration.count());
@@ -334,7 +335,8 @@ FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) 
     fortio_output.mutable_headersizes()->CopyFrom(renderFortioDurationHistogram(*statistic));
   }
   auto status_proto = Envoy::MessageUtil::getJsonStringFromMessage(fortio_output, true, true);
-  return absl::Status(static_cast<absl::StatusCode>(status_proto.status().error_code()), static_cast<absl::string_view>(status_proto.value()));
+  return absl::Status(static_cast<absl::StatusCode>(status_proto.status().error_code()),
+                      static_cast<absl::string_view>(status_proto.value()));
 }
 
 const nighthawk::client::DurationHistogram FortioOutputFormatterImpl::renderFortioDurationHistogram(
