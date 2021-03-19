@@ -283,7 +283,7 @@ FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) 
   *fortio_output.mutable_requestedduration() = output.options().duration();
   auto actual_duration_status = getAverageExecutionDuration(output);
   if (!actual_duration_status.ok()) {
-    return absl::Status(absl::kInternal, "Error while getting average execution duration");
+    return absl::Status(absl::StatusCode::kInternal, "Error while getting average execution duration");
   }
   auto actual_duration = *actual_duration_status;
   fortio_output.set_actualduration(actual_duration.count());
