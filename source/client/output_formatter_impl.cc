@@ -217,12 +217,12 @@ absl::StatusOr<const nighthawk::client::Result&>
 FortioOutputFormatterImpl::getGlobalResult(const nighthawk::client::Output& output) const {
   for (const auto& nh_result : output.results()) {
     if (nh_result.name() == "global") {
-      return nh_result;
+      return absl::StatusOr<const nighthawk::client::Result&>(absl::StatusCode::kOk, nh_result);
     }
   }
 
-  return absl::Status(absl::StatusCode::kInternal,
-                      "Nighthawk output was malformed, contains no 'global' results.");
+  // Nighthawk output was malformed, contains no 'global' results.
+  return absl::StatusOr<const nighthawk::client::Result&>(absl::StatusCode::kInternal, output.results()[0]);
 }
 
 uint64_t FortioOutputFormatterImpl::getCounterValue(const nighthawk::client::Result& result,
@@ -281,7 +281,11 @@ FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) 
                                  output.options().requests_per_second().value());
   fortio_output.set_url(output.options().uri().value());
   *fortio_output.mutable_requestedduration() = output.options().duration();
-  auto actual_duration = getAverageExecutionDuration(output);
+  auto actual_duration_status = getAverageExecutionDuration(output);
+  if (!actual_duration_status.ok()) {
+    return absl::Status(absl::kInternal, "Error while getting average execution duration");
+  }
+  auto actual_duration = *actual_duration_status;
   fortio_output.set_actualduration(actual_duration.count());
   fortio_output.set_jitter(output.options().has_jitter_uniform() &&
                            (output.options().jitter_uniform().nanos() > 0 ||
