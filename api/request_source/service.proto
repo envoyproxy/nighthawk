@@ -2,8 +2,9 @@ syntax = "proto3";
 
 package nighthawk.request_source;
 
-import "google/protobuf/wrappers.proto";
 import "envoy/api/v2/core/base.proto";
+import "envoy/config/core/v3/base.proto";
+import "google/protobuf/wrappers.proto";
 
 // Used to request a RequestStreamResponse.
 message RequestStreamRequest {
@@ -37,9 +38,18 @@ message RequestSpecifier {
   // Request content length. The client will transfer the number of bytes specified here for the
   // request body.
   google.protobuf.UInt32Value content_length = 4;
-  // Request header replacements. Any existing header(s) with the same name will be removed
-  // before setting.
-  envoy.api.v2.core.HeaderMap headers = 5;
+
+  oneof oneof_headers {
+    // Request header replacements. Any existing header(s) with the same name will be removed
+    // before setting.
+    //
+    // Envoy deprecated its v2 API, prefer to use v3_headers instead.
+    envoy.api.v2.core.HeaderMap headers = 5 [deprecated = true];
+
+    // Request header replacements. Any existing header(s) with the same name will be removed
+    // before setting.
+    envoy.config.core.v3.HeaderMap v3_headers = 6;
+  }
   // TODO(oschaaf): nice to have
   // google.protobuf.StringValue sni_hostname = 10;
 }

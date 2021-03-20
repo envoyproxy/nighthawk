@@ -17,6 +17,8 @@ namespace {
 
 using namespace std::chrono_literals;
 
+using ::testing::HasSubstr;
+
 const std::string kLatencyResponseHeaderName = "x-prd";
 const std::string kDefaultProtoFragment = fmt::format(
     "emit_previous_request_delta_in_response_header: \"{}\"", kLatencyResponseHeaderName);
@@ -37,6 +39,22 @@ public:
 INSTANTIATE_TEST_SUITE_P(IpVersions, HttpTimeTrackingIntegrationTest,
                          testing::ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()));
 
+TEST_P(HttpTimeTrackingIntegrationTest,
+       DiesWhenBothEnvoyApiV2AndV3ResponseHeadersAreSetInConfiguration) {
+  const std::string invalid_configuration = R"EOF(
+  name: time-tracking
+  typed_config:
+    "@type": type.googleapis.com/nighthawk.server.ResponseOptions
+    response_headers:
+      - { header: { key: "key1", value: "value1"} }
+    v3_response_headers:
+      - { header: { key: "key1", value: "value1"} }
+  )EOF";
+
+  ASSERT_DEATH(initializeFilterConfiguration(invalid_configuration),
+               HasSubstr("cannot specify both response_headers and v3_response_headers"));
+}
+
 // Verify expectations with static/file-based time-tracking configuration.
 TEST_P(HttpTimeTrackingIntegrationTest, ReturnsPositiveLatencyForStaticConfiguration) {
   initializeFilterConfiguration(fmt::format(kProtoConfigTemplate, kDefaultProtoFragment));
@@ -44,16 +62,15 @@ TEST_P(HttpTimeTrackingIntegrationTest, ReturnsPositiveLatencyForStaticConfigura
   // As the first request doesn't have a prior one, we should not observe a delta.
   Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::UPSTREAM);
   int64_t latency;
-  const Envoy::Http::HeaderEntry* latency_header_1 =
-      response->headers().get(Envoy::Http::LowerCaseString(kLatencyResponseHeaderName));
-  EXPECT_EQ(latency_header_1, nullptr);
+  EXPECT_EQ(
+      response->headers().get(Envoy::Http::LowerCaseString(kLatencyResponseHeaderName)).size(), 0);
 
   // On the second request we should observe a delta.
   response = getResponse(ResponseOrigin::UPSTREAM);
-  const Envoy::Http::HeaderEntry* latency_header_2 =
+  const Envoy::Http::HeaderMap::GetResult& latency_header =
       response->headers().get(Envoy::Http::LowerCaseString(kLatencyResponseHeaderName));
-  ASSERT_NE(latency_header_2, nullptr);
-  EXPECT_TRUE(absl::SimpleAtoi(latency_header_2->value().getStringView(), &latency));
+  ASSERT_EQ(latency_header.size(), 1);
+  EXPECT_TRUE(absl::SimpleAtoi(latency_header[0]->value().getStringView(), &latency));
   EXPECT_GT(latency, 0);
 }
 
@@ -63,18 +80,18 @@ TEST_P(HttpTimeTrackingIntegrationTest, ReturnsPositiveLatencyForPerRequestConfi
   // As the first request doesn't have a prior one, we should not observe a delta.
   setRequestLevelConfiguration("{}");
   Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::UPSTREAM);
-  EXPECT_EQ(response->headers().get(Envoy::Http::LowerCaseString(kLatencyResponseHeaderName)),
-            nullptr);
+  EXPECT_TRUE(
+      response->headers().get(Envoy::Http::LowerCaseString(kLatencyResponseHeaderName)).empty());
 
   // With request level configuration indicating that the timing header should be emitted,
   // we should be able to observe it.
   setRequestLevelConfiguration(fmt::format("{{{}}}", kDefaultProtoFragment));
   response = getResponse(ResponseOrigin::UPSTREAM);
-  const Envoy::Http::HeaderEntry* latency_header =
+  const Envoy::Http::HeaderMap::GetResult& latency_header =
       response->headers().get(Envoy::Http::LowerCaseString(kLatencyResponseHeaderName));
-  ASSERT_NE(latency_header, nullptr);
+  ASSERT_EQ(latency_header.size(), 1);
   int64_t latency;
-  EXPECT_TRUE(absl::SimpleAtoi(latency_header->value().getStringView(), &latency));
+  EXPECT_TRUE(absl::SimpleAtoi(latency_header[0]->value().getStringView(), &latency));
   // TODO(oschaaf): figure out if we can use simtime here, and verify actual timing matches
   // what we'd expect using that.
   EXPECT_GT(latency, 0);

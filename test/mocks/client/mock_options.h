@@ -36,6 +36,8 @@ public:
   MOCK_CONST_METHOD0(sequencerIdleStrategy,
                      nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions());
   MOCK_CONST_METHOD0(requestSource, std::string());
+  MOCK_CONST_METHOD0(requestSourcePluginConfig,
+                     absl::optional<envoy::config::core::v3::TypedExtensionConfig>&());
   MOCK_CONST_METHOD0(trace, std::string());
   MOCK_CONST_METHOD0(
       h1ConnectionReuseStrategy,
@@ -55,6 +57,7 @@ public:
   MOCK_CONST_METHOD0(statsSinks, std::vector<envoy::config::metrics::v3::StatsSink>());
   MOCK_CONST_METHOD0(statsFlushInterval, uint32_t());
   MOCK_CONST_METHOD0(responseHeaderWithLatencyInput, std::string());
+  MOCK_CONST_METHOD0(scheduled_start, absl::optional<Envoy::SystemTime>());
 };
 
 } // namespace Client

@@ -45,22 +45,22 @@ public:
     logging_context_ = std::move(logging_context);
   }
 
-  ::grpc::Status ExecutionStream(
-      ::grpc::ServerContext* context,
-      ::grpc::ServerReaderWriter<::nighthawk::client::ExecutionResponse,
-                                 ::nighthawk::client::ExecutionRequest>* stream) override;
+  grpc::Status
+  ExecutionStream(grpc::ServerContext* context,
+                  grpc::ServerReaderWriter<nighthawk::client::ExecutionResponse,
+                                           nighthawk::client::ExecutionRequest>* stream) override;
 
 private:
   void handleExecutionRequest(const nighthawk::client::ExecutionRequest& request);
   void writeResponse(const nighthawk::client::ExecutionResponse& response);
-  ::grpc::Status finishGrpcStream(const bool success, absl::string_view description = "");
+  grpc::Status finishGrpcStream(const bool success, absl::string_view description = "");
 
   std::unique_ptr<Envoy::Logger::Context> logging_context_;
   std::shared_ptr<Envoy::ProcessWide> process_wide_;
   Envoy::Event::RealTimeSystem time_system_; // NO_CHECK_FORMAT(real_time)
   Envoy::Thread::MutexBasicLockable log_lock_;
-  ::grpc::ServerReaderWriter<::nighthawk::client::ExecutionResponse,
-                             ::nighthawk::client::ExecutionRequest>* stream_;
+  grpc::ServerReaderWriter<nighthawk::client::ExecutionResponse,
+                           nighthawk::client::ExecutionRequest>* stream_;
   std::future<void> future_;
   // accepted_lock_ and accepted_event_ are used to synchronize the threads
   // when starting up a future to service a test, and ensure the code servicing it
@@ -81,11 +81,10 @@ class RequestSourceServiceImpl final
       public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 
 public:
-  ::grpc::Status
-  RequestStream(::grpc::ServerContext* context,
-                ::grpc::ServerReaderWriter<::nighthawk::request_source::RequestStreamResponse,
-                                           ::nighthawk::request_source::RequestStreamRequest>*
-                    stream) override;
+  grpc::Status RequestStream(
+      grpc::ServerContext* context,
+      grpc::ServerReaderWriter<nighthawk::request_source::RequestStreamResponse,
+                               nighthawk::request_source::RequestStreamRequest>* stream) override;
 
 private:
   RequestSourcePtr createStaticEmptyRequestSource(const uint32_t amount);

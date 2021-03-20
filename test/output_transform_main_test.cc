@@ -9,6 +9,7 @@
 #include "client/output_formatter_impl.h"
 #include "client/output_transform_main.h"
 
+#include "absl/strings/match.h"
 #include "gtest/gtest.h"
 
 using namespace testing;
@@ -59,12 +60,12 @@ TEST_F(OutputTransformMainTest, HappyFlowForAllOutputFormats) {
   for (const std::string& output_format : OutputFormatterImpl::getLowerCaseOutputFormats()) {
     std::vector<const char*> argv = {"foo", "--output-format", output_format.c_str()};
     nighthawk::client::Output output;
-    if (output_format.find("fortio") != std::string::npos) {
+    if (absl::StrContains(output_format, "fortio")) {
       // The fortio output formatter mandates at least a single global result or it throws.
       output.add_results()->set_name("global");
     }
     output.mutable_options()->mutable_uri()->set_value("http://127.0.0.1/");
-    stream_ << Envoy::MessageUtil::getJsonStringFromMessage(output, true, true);
+    stream_ << Envoy::MessageUtil::getJsonStringFromMessageOrDie(output, true, true);
     OutputTransformMain main(argv.size(), argv.data(), stream_);
     EXPECT_EQ(main.run(), 0);
   }

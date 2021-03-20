@@ -15,7 +15,7 @@ Nighthawk currently offers:
 
 ### Ubuntu
 
-First, follow steps 1 and 2 over at [Quick start Bazel build for developers](https://github.com/envoyproxy/envoy/blob/master/bazel/README.md#quick-start-bazel-build-for-developers).
+First, follow steps 1 and 2 over at [Quick start Bazel build for developers](https://github.com/envoyproxy/envoy/blob/main/bazel/README.md#quick-start-bazel-build-for-developers).
 
 
 ## Building and using the Nighthawk client CLI
@@ -47,6 +47,7 @@ bazel-bin/nighthawk_client  [--latency-response-header-name <string>]
 [--stats-flush-interval <uint32_t>]
 [--stats-sinks <string>] ...
 [--no-duration] [--simple-warmup]
+[--request-source-plugin-config <string>]
 [--request-source <uri format>] [--label
 <string>] ... [--multi-target-use-https]
 [--multi-target-path <string>]
@@ -109,10 +110,20 @@ Perform a simple single warmup request (per worker) before starting
 execution. Note that this will be reflected in the counters that
 Nighthawk writes to the output. Default is false.
 
+--request-source-plugin-config <string>
+[Request
+Source](https://github.com/envoyproxy/nighthawk/blob/main/docs/root/ov
+erview.md#requestsource) plugin configuration in json or compact yaml.
+Mutually exclusive with --request-source. Example (json):
+{name:"nighthawk.stub-request-source-plugin"
+,typed_config:{"@type":"type.googleapis.com/nighthawk.request_source.S
+tubPluginConfig",test_value:"3"}}
+
 --request-source <uri format>
 Remote gRPC source that will deliver to-be-replayed traffic. Each
 worker will separately connect to this source. For example
-grpc://127.0.0.1:8443/.
+grpc://127.0.0.1:8443/. Mutually exclusive with
+--request_source_plugin_config.
 
 --label <string>  (accepted multiple times)
 Label. Allows specifying multiple labels which will be persisted in
@@ -187,8 +198,8 @@ any other value will allow client-side queuing of requests).
 Transport socket configuration in json or compact yaml. Mutually
 exclusive with --tls-context. Example (json):
 {name:"envoy.transport_sockets.tls"
-,typed_config:{"@type":"type.googleapis.com/envoy.api.v2.auth.Upstream
-TlsContext"
+,typed_config:{"@type":"type.googleapis.com/envoy.extensions.transport
+_sockets.tls.v3.UpstreamTlsContext"
 ,common_tls_context:{tls_params:{cipher_suites:["-ALL:ECDHE-RSA-AES128
 -SHA"]}}}}
 

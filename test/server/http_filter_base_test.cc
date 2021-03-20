@@ -43,21 +43,21 @@ protected:
 
 INSTANTIATE_TEST_SUITE_P(
     IpVersions, HttpFilterBaseIntegrationTest,
-    ::testing::Combine(testing::ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()),
-                       testing::ValuesIn({absl::string_view(R"EOF(
+    testing::Combine(testing::ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()),
+                     testing::ValuesIn({absl::string_view(R"EOF(
 name: time-tracking
 typed_config:
   "@type": type.googleapis.com/nighthawk.server.ResponseOptions
   emit_previous_request_delta_in_response_header: "foo"
 )EOF"),
-                                          absl::string_view(R"EOF(
+                                        absl::string_view(R"EOF(
 name: dynamic-delay
 typed_config:
   "@type": type.googleapis.com/nighthawk.server.ResponseOptions
   static_delay: 0.1s
 )EOF"),
-                                          absl::string_view("name: test-server")}),
-                       testing::ValuesIn({TestRequestMethod::GET, TestRequestMethod::POST})));
+                                        absl::string_view("name: test-server")}),
+                     testing::ValuesIn({TestRequestMethod::GET, TestRequestMethod::POST})));
 
 TEST_P(HttpFilterBaseIntegrationTest, NoRequestLevelConfigurationShouldSucceed) {
   Envoy::IntegrationStreamDecoderPtr response = getResponse(getHappyFlowResponseOrigin());
@@ -88,6 +88,26 @@ TEST_P(HttpFilterBaseIntegrationTest, EmptyRequestLevelConfigurationShouldFail) 
   Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
   EXPECT_EQ(Envoy::Http::Utility::getResponseStatus(response->headers()), 500);
   EXPECT_THAT(response->body(), HasSubstr(kBadConfigErrorSentinel));
+}
+
+TEST_P(HttpFilterBaseIntegrationTest, MultipleValidConfigurationHeadersFails) {
+  // Make sure we fail when two valid configuration headers are send.
+  setRequestLevelConfiguration("{}");
+  appendRequestLevelConfiguration("{}");
+  Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
+  ASSERT_TRUE(response->complete());
+  EXPECT_THAT(response->body(),
+              HasSubstr("Received multiple configuration headers in the request"));
+}
+
+TEST_P(HttpFilterBaseIntegrationTest, SingleValidPlusEmptyConfigurationHeadersFails) {
+  // Make sure we fail when both a valid configuration plus an empty configuration header is send.
+  setRequestLevelConfiguration("{}");
+  appendRequestLevelConfiguration("");
+  Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
+  ASSERT_TRUE(response->complete());
+  EXPECT_THAT(response->body(),
+              HasSubstr("Received multiple configuration headers in the request"));
 }
 
 } // namespace

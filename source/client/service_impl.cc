@@ -2,6 +2,8 @@
 
 #include <grpc++/grpc++.h>
 
+#include "envoy/config/core/v3/base.pb.h"
+
 #include "common/request_source_impl.h"
 
 #include "client/client.h"
@@ -58,7 +60,7 @@ void ServiceImpl::writeResponse(const nighthawk::client::ExecutionResponse& resp
   }
 }
 
-::grpc::Status ServiceImpl::finishGrpcStream(const bool success, absl::string_view description) {
+grpc::Status ServiceImpl::finishGrpcStream(const bool success, absl::string_view description) {
   // We may get here while there's still an active future in-flight in the error-paths.
   // Allow it to wrap up and put it's response on the stream before finishing the stream.
   if (future_.valid()) {
@@ -73,10 +75,10 @@ void ServiceImpl::writeResponse(const nighthawk::client::ExecutionResponse& resp
 // TODO(oschaaf): unit-test Process, create MockProcess & use in service_test.cc / client_test.cc
 // TODO(oschaaf): should we merge incoming request options with defaults?
 // TODO(oschaaf): aggregate the client's logs and forward them in the grpc response.
-::grpc::Status ServiceImpl::ExecutionStream(
-    ::grpc::ServerContext* /*context*/,
-    ::grpc::ServerReaderWriter<::nighthawk::client::ExecutionResponse,
-                               ::nighthawk::client::ExecutionRequest>* stream) {
+grpc::Status ServiceImpl::ExecutionStream(
+    grpc::ServerContext* /*context*/,
+    grpc::ServerReaderWriter<nighthawk::client::ExecutionResponse,
+                             nighthawk::client::ExecutionRequest>* stream) {
   nighthawk::client::ExecutionRequest request;
   stream_ = stream;
 
@@ -106,7 +108,7 @@ void ServiceImpl::writeResponse(const nighthawk::client::ExecutionResponse& resp
 }
 
 namespace {
-void addHeader(envoy::api::v2::core::HeaderMap* map, absl::string_view key,
+void addHeader(envoy::config::core::v3::HeaderMap* map, absl::string_view key,
                absl::string_view value) {
   auto* request_header = map->add_headers();
   request_header->set_key(std::string(key));
@@ -120,10 +122,10 @@ RequestSourcePtr RequestSourceServiceImpl::createStaticEmptyRequestSource(const 
   return std::make_unique<StaticRequestSourceImpl>(std::move(header), amount);
 }
 
-::grpc::Status RequestSourceServiceImpl::RequestStream(
-    ::grpc::ServerContext* /*context*/,
-    ::grpc::ServerReaderWriter<::nighthawk::request_source::RequestStreamResponse,
-                               ::nighthawk::request_source::RequestStreamRequest>* stream) {
+grpc::Status RequestSourceServiceImpl::RequestStream(
+    grpc::ServerContext* /*context*/,
+    grpc::ServerReaderWriter<nighthawk::request_source::RequestStreamResponse,
+                             nighthawk::request_source::RequestStreamRequest>* stream) {
   nighthawk::request_source::RequestStreamRequest request;
   bool ok = true;
   while (stream->Read(&request)) {
@@ -144,7 +146,7 @@ RequestSourcePtr RequestSourceServiceImpl::createStaticEmptyRequestSource(const 
       HeaderMapPtr headers = request->header();
       nighthawk::request_source::RequestStreamResponse response;
       auto* request_specifier = response.mutable_request_specifier();
-      auto* request_headers = request_specifier->mutable_headers();
+      auto* request_headers = request_specifier->mutable_v3_headers();
       headers->iterate([&request_headers](const Envoy::Http::HeaderEntry& header)
                            -> Envoy::Http::HeaderMap::Iterate {
         addHeader(request_headers, header.key().getStringView(), header.value().getStringView());

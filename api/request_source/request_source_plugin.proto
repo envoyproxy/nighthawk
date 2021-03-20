@@ -7,22 +7,39 @@ import "google/protobuf/wrappers.proto";
 import "validate/validate.proto";
 import "api/client/options.proto";
 
-// Configuration for FileBasedPluginRequestSource (plugin name:
-// "nighthawk.file-based-request-source-plugin")
+// Configuration for OptionsListFromFileRequestSourceFactory (plugin name:
+// "nighthawk.file-options-list-request-source-plugin")
 // The factory will load the RequestOptionsList from the file, and then passes it to the
 // requestSource it generates. The resulting request source will loop over the RequestOptionsList it
 // is passed.
-message FileBasedPluginConfig {
+message FileBasedOptionsListRequestSourceConfig {
   // The file_path is the path to a file that contains a RequestOptionList in json or yaml format.
+  // This field is required.
   string file_path = 1;
   // The pluginfactory makes requestSources that will generate requests from the RequestOptionList
   // up to num_requests number of times. If num_requests exceeds the number of RequestOptions in the
-  // RequestOptionList located in the file at file_path, it will loop. num_requests = 0 means no
-  // limit on the number of requests to be produced.
-  google.protobuf.UInt32Value num_requests = 2 [(validate.rules).uint32 = {gte: 0, lte: 1000000}];
-  // The pluginfactory will load the file located in file_path as long as it is below max_file_size,
-  // if it's too large it will throw an error.
+  // RequestOptionList located in the file at file_path, it will loop. num_requests = 0 means it
+  // will loop indefinitely, though it will still terminate by normal mechanisms.
+  uint32 num_requests = 2;
+  // The pluginfactory will load the file located in file_path as long as it is below max_file_size
+  // in bytes, if it's too large it will throw an error. This field is optional with a default of
+  // 1000000.
   google.protobuf.UInt32Value max_file_size = 3 [(validate.rules).uint32 = {lte: 1000000}];
+}
+
+// Configuration for OptionsListFromProtoRequestSourceFactory (plugin name:
+// "nighthawk.in-line-options-list-request-source-plugin")
+// The resulting request source will loop over the RequestOptionsList it
+// is passed.
+message InLineOptionsListRequestSourceConfig {
+  // The options_list will be used to generate Requests in the RequestSource. This field is
+  // required.
+  nighthawk.client.RequestOptionsList options_list = 1;
+  // The pluginfactory makes requestSources that will generate requests from the RequestOptionList
+  // up to num_requests number of times. If num_requests exceeds the number of RequestOptions in the
+  // options_list, it will loop. num_requests = 0 means it will loop indefinitely, though it will
+  // still terminate by normal mechanisms.
+  uint32 num_requests = 2;
 }
 
 // Configuration for StubPluginRequestSource (plugin name: "nighthawk.stub-request-source-plugin")

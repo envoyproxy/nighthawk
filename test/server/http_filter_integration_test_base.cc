@@ -21,6 +21,12 @@ void HttpFilterIntegrationTestBase::setRequestLevelConfiguration(
   setRequestHeader(Server::TestServer::HeaderNames::get().TestServerConfig, request_level_config);
 }
 
+void HttpFilterIntegrationTestBase::appendRequestLevelConfiguration(
+    absl::string_view request_level_config) {
+  appendRequestHeader(Server::TestServer::HeaderNames::get().TestServerConfig,
+                      request_level_config);
+}
+
 void HttpFilterIntegrationTestBase::switchToPostWithEntityBody() {
   setRequestHeader(Envoy::Http::Headers::get().Method,
                    Envoy::Http::Headers::get().MethodValues.Post);
@@ -29,6 +35,11 @@ void HttpFilterIntegrationTestBase::switchToPostWithEntityBody() {
 void HttpFilterIntegrationTestBase::setRequestHeader(
     const Envoy::Http::LowerCaseString& header_name, absl::string_view header_value) {
   request_headers_.setCopy(header_name, header_value);
+}
+
+void HttpFilterIntegrationTestBase::appendRequestHeader(
+    const Envoy::Http::LowerCaseString& header_name, absl::string_view header_value) {
+  request_headers_.addCopy(header_name, header_value);
 }
 
 Envoy::IntegrationStreamDecoderPtr

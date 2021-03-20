@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Builds a docker image benchmark-dev:latest containing the benchmark scripts
+# Builds a docker image nighthawk-benchmark-dev:latest containing the benchmark scripts
 
 # Stop on errors.
 set -e

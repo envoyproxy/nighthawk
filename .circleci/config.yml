@@ -1,6 +1,6 @@
 references:
-  envoy-build-image: &envoy-build-image # October 12th, 2020
-    envoyproxy/envoy-build-ubuntu:b480535e8423b5fd7c102fd30c92f4785519e33a
+  envoy-build-image: &envoy-build-image # March 8th, 2021
+    envoyproxy/envoy-build-ubuntu:e33c93e6d79804bf95ff80426d10bdcc9096c785
 version: 2
 jobs:
   build:
@@ -30,7 +30,9 @@ jobs:
     resource_class: xlarge
     steps:
       - checkout
-      - run: ci/do_ci.sh test_gcc
+      - run:
+          command: ci/do_ci.sh test_gcc
+          no_output_timeout: 30m
   coverage:
     docker:
       - image: *envoy-build-image

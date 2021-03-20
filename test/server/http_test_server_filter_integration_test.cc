@@ -13,6 +13,8 @@ namespace {
 
 using namespace testing;
 
+using ::testing::HasSubstr;
+
 constexpr absl::string_view kDefaultProto = R"EOF(
 name: test-server
 typed_config:
@@ -38,8 +40,8 @@ public:
     EXPECT_EQ("200", response->headers().Status()->value().getStringView());
     if (expect_header) {
       auto inserted_header = response->headers().get(Envoy::Http::LowerCaseString("x-supplied-by"));
-      ASSERT_NE(nullptr, inserted_header);
-      EXPECT_EQ("nighthawk-test-server", inserted_header->value().getStringView());
+      ASSERT_EQ(1, inserted_header.size());
+      EXPECT_EQ("nighthawk-test-server", inserted_header[0]->value().getStringView());
     }
     if (response_body_size == 0) {
       EXPECT_EQ(nullptr, response->headers().ContentType());
@@ -100,16 +102,65 @@ TEST_P(HttpTestServerIntegrationTest, TestTooLarge) {
   testBadResponseSize(max + 1);
 }
 
-TEST_P(HttpTestServerIntegrationTest, TestHeaderConfig) {
+TEST_P(HttpTestServerIntegrationTest, TestHeaderConfigUsingEnvoyApiV2) {
   initializeFilterConfiguration(kDefaultProto);
   setRequestLevelConfiguration(
       R"({response_headers: [ { header: { key: "foo", value: "bar2"}, append: true } ]})");
   Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
   ASSERT_TRUE(response->complete());
   EXPECT_EQ("200", response->headers().Status()->value().getStringView());
-  EXPECT_EQ("bar2",
-            response->headers().get(Envoy::Http::LowerCaseString("foo"))->value().getStringView());
+  ASSERT_EQ(1, response->headers().get(Envoy::Http::LowerCaseString("foo")).size());
+  EXPECT_EQ(
+      "bar2",
+      response->headers().get(Envoy::Http::LowerCaseString("foo"))[0]->value().getStringView());
   EXPECT_EQ(std::string(10, 'a'), response->body());
+}
+
+TEST_P(HttpTestServerIntegrationTest, TestHeaderConfigUsingEnvoyApiV3) {
+  const std::string v3_configuration = R"EOF(
+  name: test-server
+  typed_config:
+    "@type": type.googleapis.com/nighthawk.server.ResponseOptions
+    response_body_size: 10
+    v3_response_headers:
+    - { header: { key: "foo", value: "bar2"}, append: true }
+  )EOF";
+
+  initializeFilterConfiguration(v3_configuration);
+  Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
+  ASSERT_TRUE(response->complete());
+  EXPECT_EQ("200", response->headers().Status()->value().getStringView());
+  ASSERT_EQ(1, response->headers().get(Envoy::Http::LowerCaseString("foo")).size());
+  EXPECT_EQ(
+      "bar2",
+      response->headers().get(Envoy::Http::LowerCaseString("foo"))[0]->value().getStringView());
+  EXPECT_EQ(std::string(10, 'a'), response->body());
+}
+
+TEST_P(HttpTestServerIntegrationTest,
+       DiesWhenRequestLevelConfigurationResultsInBothEnvoyApiV2AndV3ResponseHeadersSet) {
+  initializeFilterConfiguration(kDefaultProto);
+  setRequestLevelConfiguration(
+      R"({v3_response_headers: [ { header: { key: "foo", value: "bar2"}, append: true } ]})");
+
+  ASSERT_DEATH(getResponse(ResponseOrigin::EXTENSION),
+               HasSubstr("cannot specify both response_headers and v3_response_headers"));
+}
+
+TEST_P(HttpTestServerIntegrationTest,
+       DiesWhenBothEnvoyApiV2AndV3ResponseHeadersAreSetInConfiguration) {
+  const std::string invalid_configuration = R"EOF(
+  name: test-server
+  typed_config:
+    "@type": type.googleapis.com/nighthawk.server.ResponseOptions
+    response_headers:
+      - { header: { key: "key1", value: "value1"} }
+    v3_response_headers:
+      - { header: { key: "key1", value: "value1"} }
+  )EOF";
+
+  ASSERT_DEATH(initializeFilterConfiguration(invalid_configuration),
+               HasSubstr("cannot specify both response_headers and v3_response_headers"));
 }
 
 TEST_P(HttpTestServerIntegrationTest, TestEchoHeaders) {
@@ -180,8 +231,10 @@ TEST_P(HttpTestServerIntegrationTest, TestNoStaticConfigHeaderConfig) {
 
   ASSERT_TRUE(response->complete());
   EXPECT_EQ("200", response->headers().Status()->value().getStringView());
-  EXPECT_EQ("bar2",
-            response->headers().get(Envoy::Http::LowerCaseString("foo"))->value().getStringView());
+  ASSERT_EQ(1, response->headers().get(Envoy::Http::LowerCaseString("foo")).size());
+  EXPECT_EQ(
+      "bar2",
+      response->headers().get(Envoy::Http::LowerCaseString("foo"))[0]->value().getStringView());
   EXPECT_EQ("", response->body());
 }
 
@@ -243,9 +296,9 @@ TEST(HttpTestServerDecoderFilterTest, HeaderMerge) {
                       {":status", "200"}, {"foo", "bar2"}, {"foo2", "bar3"}}));
 
   EXPECT_FALSE(Server::Configuration::mergeJsonConfig("bad_json", options, error_message));
-  EXPECT_EQ("Error merging json config: Unable to parse JSON as proto (INVALID_ARGUMENT:Unexpected "
-            "token.\nbad_json\n^): bad_json",
-            error_message);
+  EXPECT_THAT(error_message,
+              testing::HasSubstr("Error merging json config: Unable to parse JSON as proto "
+                                 "(INVALID_ARGUMENT:Unexpected token.\nbad_json\n^): bad_json"));
   EXPECT_EQ(3, options.response_headers_size());
 }
 

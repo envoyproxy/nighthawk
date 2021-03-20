@@ -10,11 +10,9 @@ import time
 from threading import Thread
 
 from test.integration.common import IpVersion
-from test.integration.integration_test_fixtures import (http_test_server_fixture,
-                                                        https_test_server_fixture,
-                                                        multi_http_test_server_fixture,
-                                                        multi_https_test_server_fixture,
-                                                        server_config)
+from test.integration.integration_test_fixtures import (
+    http_test_server_fixture, https_test_server_fixture, https_test_server_fixture,
+    multi_http_test_server_fixture, multi_https_test_server_fixture, server_config)
 from test.integration import asserts
 from test.integration import utility
 
@@ -37,9 +35,7 @@ def test_http_h1(http_test_server_fixture):
   asserts.assertCounterEqual(counters, "upstream_cx_http1_total", 1)
   asserts.assertCounterEqual(counters, "upstream_cx_rx_bytes_total", 3400)
   asserts.assertCounterEqual(counters, "upstream_cx_total", 1)
-  asserts.assertCounterEqual(
-      counters, "upstream_cx_tx_bytes_total",
-      1400 if http_test_server_fixture.ip_version == IpVersion.IPV6 else 1450)
+  asserts.assertCounterGreaterEqual(counters, "upstream_cx_tx_bytes_total", 500)
   asserts.assertCounterEqual(counters, "upstream_rq_pending_total", 1)
   asserts.assertCounterEqual(counters, "upstream_rq_total", 25)
   asserts.assertCounterEqual(counters, "default.total_match_count", 1)
@@ -221,9 +217,7 @@ def test_https_h1(https_test_server_fixture):
   asserts.assertCounterEqual(counters, "upstream_cx_http1_total", 1)
   asserts.assertCounterEqual(counters, "upstream_cx_rx_bytes_total", 3400)
   asserts.assertCounterEqual(counters, "upstream_cx_total", 1)
-  asserts.assertCounterEqual(
-      counters, "upstream_cx_tx_bytes_total",
-      1400 if https_test_server_fixture.ip_version == IpVersion.IPV6 else 1450)
+  asserts.assertCounterGreaterEqual(counters, "upstream_cx_tx_bytes_total", 500)
   asserts.assertCounterEqual(counters, "upstream_rq_pending_total", 1)
   asserts.assertCounterEqual(counters, "upstream_rq_total", 25)
   asserts.assertCounterEqual(counters, "ssl.ciphers.ECDHE-RSA-AES128-GCM-SHA256", 1)
@@ -311,7 +305,7 @@ def _do_tls_configuration_test(https_test_server_fixture, cli_parameter, use_h2)
   else:
     json_template = "%s%s%s" % (
         "{name:\"envoy.transport_sockets.tls\",typed_config:{",
-        "\"@type\":\"type.googleapis.com/envoy.api.v2.auth.UpstreamTlsContext\",",
+        "\"@type\":\"type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext\",",
         "common_tls_context:{tls_params:{cipher_suites:[\"-ALL:%s\"]}}}}")
 
   for cipher in [
@@ -753,3 +747,26 @@ def test_client_cli_bad_uri(http_test_server_fixture):
                                                        expect_failure=True,
                                                        as_json=False)
   assert "Invalid target URI" in err
+
+
+@pytest.mark.parametrize('server_config',
+                         ["nighthawk/test/integration/configurations/nighthawk_https_origin.yaml"])
+def test_drain(https_test_server_fixture):
+  """Test that the pool drain timeout is effective, and we terminate in a timely fashion.
+
+  Sets up the test server to delay replies 100 seconds. Our execution will only last 3 seconds, so we
+  expect to observe no replies. Termination should be cut short by the drain timeout, which means
+  that we should have results in approximately execution duration + drain timeout = 8 seconds.
+  (the pool drain timeout is hard coded to 5 seconds as of writing this).
+  """
+  t0 = time.time()
+  parsed_json, _ = https_test_server_fixture.runNighthawkClient([
+      https_test_server_fixture.getTestServerRootUri(), "--rps", "100", "--duration", "3",
+      "--request-header", "x-nighthawk-test-server-config: {static_delay: \"100s\"}"
+  ])
+  t1 = time.time()
+  time_delta = t1 - t0
+  counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
+  assert time_delta < 40  # *lots* of slack to avoid failure in slow CI executions.
+  asserts.assertCounterGreaterEqual(counters, "upstream_cx_http1_total", 1)
+  asserts.assertNotIn("benchmark.http_2xx", counters)

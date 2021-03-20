@@ -36,13 +36,15 @@ RemoteRequestSourceImpl::RemoteRequestSourceImpl(
 void RemoteRequestSourceImpl::connectToRequestStreamGrpcService() {
   Envoy::TimeSource& time_source = dispatcher_.timeSource();
   const auto clusters = cluster_manager_->clusters();
-  const bool have_cluster = clusters.find(service_cluster_name_) != clusters.end();
+  const bool have_cluster =
+      clusters.active_clusters_.find(service_cluster_name_) != clusters.active_clusters_.end();
   ASSERT(have_cluster);
   const std::chrono::seconds STREAM_SETUP_TIMEOUT = 60s;
   envoy::config::core::v3::GrpcService grpc_service;
   grpc_service.mutable_envoy_grpc()->set_cluster_name(service_cluster_name_);
   Envoy::Grpc::AsyncClientFactoryPtr cluster_manager =
-      cluster_manager_->grpcAsyncClientManager().factoryForGrpcService(grpc_service, scope_, true);
+      cluster_manager_->grpcAsyncClientManager().factoryForGrpcService(grpc_service, scope_,
+                                                                       /*skip_cluster_check=*/true);
   grpc_client_ = std::make_unique<RequestStreamGrpcClientImpl>(
       cluster_manager->create(), dispatcher_, *base_header_, header_buffer_length_);
   grpc_client_->start();

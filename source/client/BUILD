@@ -50,6 +50,7 @@ envoy_cc_library(
         "//source/common:request_source_impl_lib",
         "//source/common:nighthawk_common_lib",
         "//source/common:nighthawk_service_client_impl",
+        "//source/request_source:request_options_list_plugin_impl",
         "@envoy//source/common/common:random_generator_lib_with_external_headers",
         "@envoy//source/common/access_log:access_log_manager_lib_with_external_headers",
         "@envoy//source/common/api:api_lib_with_external_headers",
@@ -84,13 +85,15 @@ envoy_cc_library(
         "@envoy//source/exe:platform_header_lib_with_external_headers",
         "@envoy//source/exe:platform_impl_lib",
         "@envoy//source/exe:process_wide_lib_with_external_headers",
-        "@envoy//source/common/http:request_id_extension_lib_with_external_headers",
+        "@envoy//source/extensions/request_id/uuid:config_with_external_headers",
         "@envoy//source/extensions/transport_sockets:well_known_names_with_external_headers",
         "@envoy//source/extensions/transport_sockets/tls:context_lib_with_external_headers",
         "@envoy//source/server:options_lib_with_external_headers",
         "@envoy//source/server:server_lib_with_external_headers",
         "@envoy//source/server/config_validation:admin_lib_with_external_headers",
         "@envoy//include/envoy/http:protocol_interface_with_external_headers",
+        "@envoy//source/common/common:statusor_lib_with_external_headers",
+        "@envoy//source/common/router:context_lib_with_external_headers",
     ] + select({
         "//bazel:zipkin_disabled": [],
         "//conditions:default": [
@@ -155,6 +158,7 @@ envoy_cc_library(
         "//api/client:grpc_service_lib",
         "//api/request_source:grpc_request_source_service_lib",
         "@envoy//source/common/common:thread_lib_with_external_headers",
+        "@envoy_api//envoy/config/core/v3:pkg_cc_proto",
     ],
 )
 
