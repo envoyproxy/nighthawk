@@ -22,7 +22,7 @@ public:
   virtual ~OutputFormatter() = default;
 
   /**
-   * @return absl::StatusOr<std::string> serialized representation of output, if not error.
+   * @return absl::StatusOr<std::string> serialized representation of output, or an error.
    * The specific format depends on the derived class, for example human-readable or json.
    */
   virtual absl::StatusOr<std::string>
