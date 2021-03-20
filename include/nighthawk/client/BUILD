@@ -9,16 +9,32 @@ licenses(["notice"])  # Apache 2
 envoy_package()
 
 envoy_basic_cc_library(
+    name = "options_lib",
+    hdrs = [
+        "options.h",
+    ],
+    include_prefix = "nighthawk/client",
+    deps = [
+        "//api/client:base_cc_proto",
+        "//include/nighthawk/common:base_includes",
+        "@envoy//include/envoy/common:time_interface",
+        "@envoy//source/common/common:minimal_logger_lib_with_external_headers",
+        "@envoy_api//envoy/config/cluster/v3:pkg_cc_proto",
+        "@envoy_api//envoy/config/metrics/v3:pkg_cc_proto",
+    ],
+)
+
+envoy_basic_cc_library(
     name = "client_includes",
     hdrs = [
         "benchmark_client.h",
         "client_worker.h",
         "factories.h",
-        "options.h",
         "process.h",
     ],
     include_prefix = "nighthawk/client",
     deps = [
+        ":options_lib",
         ":output_collector_lib",
         ":output_formatter_lib",
         "//api/client:base_cc_proto",
