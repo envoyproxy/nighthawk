@@ -106,7 +106,7 @@ TEST_F(ClientWorkerTest, BasicTest) {
   {
     InSequence dummy;
     EXPECT_CALL(*benchmark_client_, setShouldMeasureLatencies(false));
-    EXPECT_CALL(*benchmark_client_, tryStartRequest(_,_))
+    EXPECT_CALL(*benchmark_client_, tryStartRequest(_, _))
         .WillOnce(Invoke(this, &ClientWorkerTest::CheckThreadChanged));
     EXPECT_CALL(*benchmark_client_, setShouldMeasureLatencies(true));
     EXPECT_CALL(*sequencer_, start);

@@ -37,7 +37,7 @@ TEST_F(MilestoneTestWithSimtime, BasicTest) {
 }
 
 TEST(Benchmark, DISABLED_VerySimpleSpeedTest) {
-  Envoy::Event::RealTimeSystem time_system;
+  Envoy::Event::RealTimeSystem time_system; // NO_CHECK_FORMAT(real_time))
   const uint64_t kIterations = 1000000;
   ::testing::NiceMock<Envoy::Event::MockDispatcher> dispatcher;
 

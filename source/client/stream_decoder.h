@@ -64,7 +64,8 @@ public:
             // The two addresses aren't used in an execution of Nighthawk.
             /* downstream_local_address = */ nullptr, /* downstream_remote_address = */ nullptr)),
         stream_info_(time_source_, downstream_address_setter_), random_generator_(random_generator),
-        http_tracer_(http_tracer), latency_response_header_name_(latency_response_header_name), tracker_(tracker) {
+        http_tracer_(http_tracer), latency_response_header_name_(latency_response_header_name),
+        tracker_(tracker) {
     if (measure_latencies_ && http_tracer_ != nullptr) {
       setupForTracing();
     }
