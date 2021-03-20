@@ -111,7 +111,7 @@ uint32_t AdaptiveLoadClientMain::Run() {
     throw Nighthawk::NighthawkException("Unable to parse file \"" + spec_filename_ +
                                         "\" as a text protobuf (type " + spec.GetTypeName() + ")");
   }
-  std::shared_ptr<::grpc::Channel> channel = grpc::CreateChannel(
+  std::shared_ptr<grpc::Channel> channel = grpc::CreateChannel(
       nighthawk_service_address_, use_tls_ ? grpc::SslCredentials(grpc::SslCredentialsOptions())
                                            : grpc::InsecureChannelCredentials());
   std::unique_ptr<nighthawk::client::NighthawkService::StubInterface> stub(
