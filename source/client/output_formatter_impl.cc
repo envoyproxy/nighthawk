@@ -148,14 +148,19 @@ std::string ConsoleOutputFormatterImpl::statIdtoFriendlyStatName(absl::string_vi
 absl::StatusOr<std::string>
 JsonOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
   auto status_proto = Envoy::MessageUtil::getJsonStringFromMessage(output, true, true);
-  return absl::Status(static_cast<absl::StatusCode>(status_proto.status().error_code()),
-                      static_cast<absl::string_view>(status_proto.value()));
+  if (status_proto.ok()) {
+    return status_proto.value();
+  } else {
+    return absl::Status(
+        static_cast<absl::StatusCode>(status_proto.status().error_code()),
+        static_cast<absl::string_view>(status_proto.status().error_message().as_string()));
+  }
 }
 
 absl::StatusOr<std::string>
 YamlOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
   std::string yaml_string = Envoy::MessageUtil::getYamlStringFromMessage(output, true, true);
-  return absl::Status(absl::StatusCode::kOk, static_cast<absl::string_view>(yaml_string));
+  return yaml_string;
 }
 
 absl::StatusOr<std::string>
@@ -335,8 +340,13 @@ FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) 
     fortio_output.mutable_headersizes()->CopyFrom(renderFortioDurationHistogram(*statistic));
   }
   auto status_proto = Envoy::MessageUtil::getJsonStringFromMessage(fortio_output, true, true);
-  return absl::Status(static_cast<absl::StatusCode>(status_proto.status().error_code()),
-                      static_cast<absl::string_view>(status_proto.value()));
+  if (status_proto.ok()) {
+    return status_proto.value();
+  } else {
+    return absl::Status(
+        static_cast<absl::StatusCode>(status_proto.status().error_code()),
+        static_cast<absl::string_view>(status_proto.status().error_message().as_string()));
+  }
 }
 
 const nighthawk::client::DurationHistogram FortioOutputFormatterImpl::renderFortioDurationHistogram(
