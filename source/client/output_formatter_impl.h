@@ -63,7 +63,7 @@ protected:
    * @param output the Nighthawk output proto
    * @return the corresponding global result, or absl::Status if failed
    */
-  const nighthawk::client::Result getGlobalResult(const nighthawk::client::Output& output) const;
+  absl::StatusOr<const nighthawk::client::Result> getGlobalResult(const nighthawk::client::Output& output) const;
 
   /**
    * Return the counter with the specified name.

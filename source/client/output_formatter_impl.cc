@@ -219,7 +219,7 @@ DottedStringOutputFormatterImpl::formatProto(const nighthawk::client::Output& ou
   return ss.str();
 }
 
-const nighthawk::client::Result
+absl::StatusOr<const nighthawk::client::Result>
 FortioOutputFormatterImpl::getGlobalResult(const nighthawk::client::Output& output) const {
   for (const auto& nh_result : output.results()) {
     if (nh_result.name() == "global") {
@@ -227,7 +227,7 @@ FortioOutputFormatterImpl::getGlobalResult(const nighthawk::client::Output& outp
     }
   }
 
-  throw NighthawkException("Nighthawk output was malformed, contains no 'global' results.");
+  return absl::Status(absl::StatusCode::kInternal, "Nighthawk output was malformed, contains no 'global' results.");
 }
 
 uint64_t FortioOutputFormatterImpl::getCounterValue(const nighthawk::client::Result& result,
@@ -311,7 +311,11 @@ FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) 
   fortio_output.set_numthreads(number_of_connections);
 
   // Get the result that represents all workers (global)
-  const auto& nh_global_result = getGlobalResult(output);
+  auto nh_global_result_status = getGlobalResult(output);
+  if (!nh_global_result_status.ok()) {
+    return absl::Status(nh_global_result_status.status().code(), nh_global_result_status.status().message());
+  }
+  const auto& nh_global_result = nh_global_result_status.value();
 
   // Fill in the actual QPS based on the counters
   const double actual_qps =
