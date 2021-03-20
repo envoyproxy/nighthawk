@@ -227,7 +227,8 @@ FortioOutputFormatterImpl::getGlobalResult(const nighthawk::client::Output& outp
     }
   }
 
-  return absl::Status(absl::StatusCode::kInternal, "Nighthawk output was malformed, contains no 'global' results.");
+  return absl::Status(absl::StatusCode::kInternal,
+                      "Nighthawk output was malformed, contains no 'global' results.");
 }
 
 uint64_t FortioOutputFormatterImpl::getCounterValue(const nighthawk::client::Result& result,
@@ -313,7 +314,8 @@ FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) 
   // Get the result that represents all workers (global)
   auto nh_global_result_status = getGlobalResult(output);
   if (!nh_global_result_status.ok()) {
-    return absl::Status(nh_global_result_status.status().code(), nh_global_result_status.status().message());
+    return absl::Status(nh_global_result_status.status().code(),
+                        nh_global_result_status.status().message());
   }
   const auto& nh_global_result = nh_global_result_status.value();
 
