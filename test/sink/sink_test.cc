@@ -11,7 +11,7 @@ namespace Nighthawk {
 namespace {
 
 // Future sink implementations register here for testing top level generic sink behavior.
-using SinkTypes = testing::Types<FileSinkImpl>;
+using SinkTypes = testing::Types<FileSinkImpl, InMemorySinkImpl>;
 
 template <typename T> class TypedSinkTest : public testing::Test {
 public:
@@ -55,7 +55,7 @@ TYPED_TEST(TypedSinkTest, EmptyKeyStoreFails) {
   const absl::Status status = sink.StoreExecutionResultPiece(result_to_store);
   ASSERT_FALSE(status.ok());
   EXPECT_EQ(status.code(), absl::StatusCode::kInvalidArgument);
-  EXPECT_EQ(status.message(), "'' is not a guid: bad string length.");
+  EXPECT_EQ(status.message(), "empty key is not allowed.");
 }
 
 TYPED_TEST(TypedSinkTest, EmptyKeyLoadFails) {
@@ -63,8 +63,7 @@ TYPED_TEST(TypedSinkTest, EmptyKeyLoadFails) {
   const auto status_or_execution_responses = sink.LoadExecutionResult("");
   ASSERT_EQ(status_or_execution_responses.ok(), false);
   EXPECT_EQ(status_or_execution_responses.status().code(), absl::StatusCode::kInvalidArgument);
-  EXPECT_EQ(status_or_execution_responses.status().message(),
-            "'' is not a guid: bad string length.");
+  EXPECT_EQ(status_or_execution_responses.status().message(), "empty key is not allowed.");
 }
 
 TYPED_TEST(TypedSinkTest, Append) {
@@ -79,13 +78,8 @@ TYPED_TEST(TypedSinkTest, Append) {
   EXPECT_EQ(status_or_execution_responses.value().size(), 2);
 }
 
-// As of today, we constrain execution id to a guid. This way the file sink implementation
-// ensures that it can safely use it to create directories. In the future, other sinks may not
-// have to worry about such things. In that case it makes sense to add a validation call
-// to the sink interface to make this implementation specific, and make the tests below
-// implementation specific too.
-TYPED_TEST(TypedSinkTest, BadGuidShortString) {
-  TypeParam sink;
+TEST(FileSinkTest, BadGuidShortString) {
+  FileSinkImpl sink;
   const auto status_or_execution_responses =
       sink.LoadExecutionResult("14e75b2a-3e31-4a62-9279-add1e54091f");
   ASSERT_EQ(status_or_execution_responses.ok(), false);
@@ -94,8 +88,8 @@ TYPED_TEST(TypedSinkTest, BadGuidShortString) {
             "'14e75b2a-3e31-4a62-9279-add1e54091f' is not a guid: bad string length.");
 }
 
-TYPED_TEST(TypedSinkTest, BadGuidBadDashPlacement) {
-  TypeParam sink;
+TEST(FileSinkTest, BadGuidBadDashPlacement) {
+  FileSinkImpl sink;
   const auto status_or_execution_responses =
       sink.LoadExecutionResult("14e75b2a3-e31-4a62-9279-add1e54091f9");
   ASSERT_EQ(status_or_execution_responses.ok(), false);
@@ -105,8 +99,8 @@ TYPED_TEST(TypedSinkTest, BadGuidBadDashPlacement) {
             "positions not met.");
 }
 
-TYPED_TEST(TypedSinkTest, BadGuidInvalidCharacter) {
-  TypeParam sink;
+TEST(FileSinkTest, BadGuidInvalidCharacter) {
+  FileSinkImpl sink;
   const auto status_or_execution_responses =
       sink.LoadExecutionResult("14e75b2a-3e31-4x62-9279-add1e54091f9");
   ASSERT_EQ(status_or_execution_responses.ok(), false);

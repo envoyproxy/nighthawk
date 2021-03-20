@@ -36,12 +36,22 @@ absl::Status verifyCanBeUsedAsDirectoryName(absl::string_view s) {
   return absl::OkStatus();
 }
 
+absl::Status validateKey(absl::string_view key, const bool validate_as_directory_name) {
+  absl::Status status =
+      key.empty() ? absl::Status(absl::StatusCode::kInvalidArgument, "empty key is not allowed.")
+                  : absl::OkStatus();
+  if (status.ok() && validate_as_directory_name) {
+    status = verifyCanBeUsedAsDirectoryName(key);
+  }
+  return status;
+}
+
 } // namespace
 
-absl::Status FileSinkImpl::StoreExecutionResultPiece(
-    const nighthawk::client::ExecutionResponse& response) const {
+absl::Status
+FileSinkImpl::StoreExecutionResultPiece(const nighthawk::client::ExecutionResponse& response) {
   const std::string& execution_id = response.execution_id();
-  absl::Status status = verifyCanBeUsedAsDirectoryName(execution_id);
+  absl::Status status = validateKey(execution_id, true);
   if (!status.ok()) {
     return status;
   }
@@ -74,11 +84,10 @@ absl::Status FileSinkImpl::StoreExecutionResultPiece(
 
 absl::StatusOr<std::vector<nighthawk::client::ExecutionResponse>>
 FileSinkImpl::LoadExecutionResult(absl::string_view execution_id) const {
-  absl::Status status = verifyCanBeUsedAsDirectoryName(execution_id);
+  absl::Status status = validateKey(execution_id, true);
   if (!status.ok()) {
     return status;
   }
-
   std::filesystem::path filesystem_directory_path("/tmp/nh/" + std::string(execution_id) + "/");
   std::vector<nighthawk::client::ExecutionResponse> responses;
   std::error_code error_code;
@@ -102,6 +111,32 @@ FileSinkImpl::LoadExecutionResult(absl::string_view execution_id) const {
     return absl::Status(absl::StatusCode::kNotFound, error_code.message());
   }
   return responses;
+}
+
+absl::Status
+InMemorySinkImpl::StoreExecutionResultPiece(const nighthawk::client::ExecutionResponse& response) {
+  absl::Status status = validateKey(response.execution_id(), false);
+  if (!status.ok()) {
+    return status;
+  }
+  auto iterator =
+      map_.insert({response.execution_id(), std::vector<nighthawk::client::ExecutionResponse>()})
+          .first;
+  iterator->second.push_back(response);
+  return absl::Status();
+}
+
+absl::StatusOr<std::vector<nighthawk::client::ExecutionResponse>>
+InMemorySinkImpl::LoadExecutionResult(absl::string_view execution_id) const {
+  absl::Status status = validateKey(execution_id, false);
+  if (!status.ok()) {
+    return status;
+  }
+  auto iterator = map_.find(execution_id);
+  if (iterator != map_.end()) {
+    return (*iterator).second;
+  }
+  return absl::Status(absl::StatusCode::kNotFound, "Not found");
 }
 
 } // namespace Nighthawk
