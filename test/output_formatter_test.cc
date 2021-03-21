@@ -252,7 +252,7 @@ TEST_F(MediumOutputCollectorTest, FortioPedanticFormatter) {
 TEST_F(MediumOutputCollectorTest, FortioPedanticFormatterMissingGlobalResult) {
   nighthawk::client::Output output_proto = collector_->toProto();
   output_proto.clear_results();
-  
+
   FortioPedanticOutputFormatterImpl formatter;
   EXPECT_FALSE((formatter.formatProto(output_proto)).ok());
 }
