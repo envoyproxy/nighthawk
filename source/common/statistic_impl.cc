@@ -9,6 +9,8 @@
 #include "external/envoy/source/common/common/assert.h"
 #include "external/envoy/source/common/protobuf/utility.h"
 
+#include "api/stats/internal.pb.h"
+
 namespace Nighthawk {
 
 namespace {
@@ -102,6 +104,38 @@ StatisticPtr SimpleStatistic::combine(const Statistic& statistic) const {
   combined->sum_x_ = a.sum_x_ + b.sum_x_;
   combined->sum_x2_ = a.sum_x2_ + b.sum_x2_;
   return combined;
+}
+
+absl::StatusOr<std::unique_ptr<std::istream>> SimpleStatistic::serializeNative() const {
+  nighthawk::InternalSimpleStatistic proto;
+  proto.set_id(id());
+  proto.set_count(count());
+  proto.set_min(min());
+  proto.set_max(max());
+  proto.set_sum_x(sum_x_);
+  proto.set_sum_x_2(sum_x2_);
+
+  std::string tmp;
+  proto.SerializeToString(&tmp);
+  auto write_stream = std::make_unique<std::stringstream>();
+  *write_stream << tmp;
+  return write_stream;
+}
+
+absl::Status SimpleStatistic::deserializeNative(std::istream& stream) {
+  nighthawk::InternalSimpleStatistic proto;
+  std::string tmp(std::istreambuf_iterator<char>(stream), {});
+  if (!proto.ParseFromString(tmp)) {
+    ENVOY_LOG(error, "Failed to read back SimpleStatistic data.");
+    return absl::Status(absl::StatusCode::kInternal, "Failed to read back SimpleStatistic data");
+  }
+  id_ = proto.id();
+  count_ = proto.count();
+  min_ = proto.min();
+  max_ = proto.max();
+  sum_x_ = proto.sum_x();
+  sum_x2_ = proto.sum_x_2();
+  return absl::OkStatus();
 }
 
 void StreamingStatistic::addValue(uint64_t value) {

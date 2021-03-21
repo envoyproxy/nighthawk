@@ -144,6 +144,7 @@ envoy_cc_library(
     deps = [
         "//api/client:base_cc_proto",
         "//api/client:grpc_service_lib",
+        "//api/stats:internal_cc_proto",
         "//include/nighthawk/client:client_includes",
         "//include/nighthawk/common:base_includes",
         "@com_google_absl//absl/random",
