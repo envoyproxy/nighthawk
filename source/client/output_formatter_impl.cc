@@ -146,14 +146,7 @@ std::string ConsoleOutputFormatterImpl::statIdtoFriendlyStatName(absl::string_vi
 
 absl::StatusOr<std::string>
 JsonOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
-  auto status_proto = Envoy::MessageUtil::getJsonStringFromMessage(output, true, true);
-  if (status_proto.ok()) {
-    return status_proto.value();
-  } else {
-    return absl::Status(
-        static_cast<absl::StatusCode>(status_proto.status().error_code()),
-        static_cast<absl::string_view>(status_proto.status().error_message().as_string()));
-  }
+  return Envoy::MessageUtil::getJsonStringFromMessage(output, true, true).value();
 }
 
 absl::StatusOr<std::string>
@@ -312,10 +305,6 @@ FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) 
 
   // Get the result that represents all workers (global)
   auto nh_global_result_status = getGlobalResult(output);
-  if (!nh_global_result_status.ok()) {
-    return absl::Status(nh_global_result_status.status().code(),
-                        nh_global_result_status.status().message());
-  }
   const auto& nh_global_result = nh_global_result_status.value();
 
   // Fill in the actual QPS based on the counters
