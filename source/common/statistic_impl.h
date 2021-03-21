@@ -96,6 +96,8 @@ public:
   StatisticPtr createNewInstanceOfSameType() const override {
     return std::make_unique<StreamingStatistic>();
   };
+  absl::StatusOr<std::unique_ptr<std::istream>> serializeNative() const override;
+  absl::Status deserializeNative(std::istream&) override;
 
 private:
   double mean_{0};

@@ -2,9 +2,10 @@ syntax = "proto3";
 
 package nighthawk;
 
-// Internal proto for representing SimpleStatistic in a way that allows
+// Internal protos for representing Statistics in a way that allows
 // "lossless" reconstruction. Do not consume / rely on this in any other place
 // then Nighthawk code as this may be subject to change.
+
 message InternalSimpleStatistic {
   uint64 count = 1;
   string id = 2;
@@ -12,4 +13,13 @@ message InternalSimpleStatistic {
   uint64 max = 6;
   double sum_x = 7;
   double sum_x_2 = 8;
+}
+
+message InternalStreamingStatistic {
+  uint64 count = 1;
+  string id = 2;
+  uint64 min = 5;
+  uint64 max = 6;
+  double mean = 7;
+  double accumulated_variance = 8;
 }
