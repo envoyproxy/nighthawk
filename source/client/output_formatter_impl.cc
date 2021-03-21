@@ -333,14 +333,7 @@ FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) 
   if (statistic != nullptr) {
     fortio_output.mutable_headersizes()->CopyFrom(renderFortioDurationHistogram(*statistic));
   }
-  auto status_proto = Envoy::MessageUtil::getJsonStringFromMessage(fortio_output, true, true);
-  if (status_proto.ok()) {
-    return status_proto.value();
-  } else {
-    return absl::Status(
-        static_cast<absl::StatusCode>(status_proto.status().error_code()),
-        static_cast<absl::string_view>(status_proto.status().error_message().as_string()));
-  }
+  return Envoy::MessageUtil::getJsonStringFromMessage(fortio_output, true, true).value();
 }
 
 const nighthawk::client::DurationHistogram FortioOutputFormatterImpl::renderFortioDurationHistogram(

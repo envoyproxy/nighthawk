@@ -7,6 +7,7 @@
 #include "nighthawk/client/output_formatter.h"
 
 #include "external/envoy/source/common/protobuf/protobuf.h"
+#include "external/com_google_googletest/googletest/include/gtest/gtest_prod.h"
 
 #include "api/client/output.pb.h"
 #include "api/client/transform/fortio.pb.h"
@@ -53,6 +54,7 @@ public:
 };
 
 class FortioOutputFormatterImpl : public OutputFormatterImpl {
+  FRIEND_TEST(FortioOutputCollectorTest, MissingGlobalResultGetGlobalResult);
 public:
   absl::StatusOr<std::string> formatProto(const nighthawk::client::Output& output) const override;
 

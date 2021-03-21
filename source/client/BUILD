@@ -137,6 +137,7 @@ envoy_cc_library(
         "//source/common:nighthawk_common_lib",
         "@envoy//source/common/network:utility_lib_with_external_headers",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
+        "@com_google_googletest//:gtest",
     ],
 )
 

@@ -156,6 +156,14 @@ TEST_F(FortioOutputCollectorTest, MissingGlobalResult) {
   EXPECT_FALSE((formatter.formatProto(output_proto)).ok());
 }
 
+TEST_F(FortioOutputCollectorTest, MissingGlobalResultGetGlobalResult) {
+  nighthawk::client::Output output_proto = collector_->toProto();
+  output_proto.clear_results();
+
+  FortioOutputFormatterImpl formatter;
+  EXPECT_FALSE((formatter.getGlobalResult(output_proto)).ok());
+}
+
 TEST_F(FortioOutputCollectorTest, MissingCounter) {
   nighthawk::client::Output output_proto = collector_->toProto();
   output_proto.mutable_results(2)->clear_counters();
@@ -239,6 +247,14 @@ TEST_F(MediumOutputCollectorTest, FortioPedanticFormatter) {
   FortioPedanticOutputFormatterImpl formatter;
   expectEqualToGoldFile((formatter.formatProto(input_proto)).value(),
                         "test/test_data/output_formatter.medium.fortio-noquirks.gold");
+}
+
+TEST_F(MediumOutputCollectorTest, FortioPedanticFormatterMissingGlobalResult) {
+  nighthawk::client::Output output_proto = collector_->toProto();
+  output_proto.clear_results();
+  
+  FortioPedanticOutputFormatterImpl formatter;
+  EXPECT_FALSE((formatter.formatProto(output_proto)).ok());
 }
 
 } // namespace Client
