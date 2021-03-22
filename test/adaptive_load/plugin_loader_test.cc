@@ -22,6 +22,7 @@ namespace Nighthawk {
 namespace {
 
 using ::envoy::config::core::v3::TypedExtensionConfig;
+using ::testing::HasSubstr;
 
 // A special value that causes ValidateConfig to return an error when included in the config
 // protos of the fake plugins in this file.
@@ -243,7 +244,7 @@ TEST(PluginUtilTest, ReturnsErrorFromInputVariableSetterConfigValidator) {
   config.set_name("nighthawk.test-input-variable-setter");
   *config.mutable_typed_config() = CreateTypedConfigAny(kBadConfigThreshold);
   EXPECT_THAT(LoadInputVariableSetterPlugin(config).status().message(),
-              ::testing::HasSubstr("input validation failed"));
+              HasSubstr("input validation failed"));
 }
 
 TEST(PluginUtilTest, PropagatesConfigProtoToInputVariableSetter) {
@@ -261,7 +262,7 @@ TEST(PluginUtilTest, ReturnsErrorWhenInputVariableSetterPluginNotFound) {
   config.set_name("nonexistent-input-variable-setter");
   *config.mutable_typed_config() = CreateTypedConfigAny(0.0);
   EXPECT_THAT(LoadInputVariableSetterPlugin(config).status().message(),
-              ::testing::HasSubstr("Didn't find a registered implementation"));
+              HasSubstr("Didn't find a registered implementation"));
 }
 
 TEST(PluginUtilTest, CreatesCorrectScoringFunctionType) {
@@ -278,7 +279,7 @@ TEST(PluginUtilTest, ReturnsErrorFromScoringFunctionConfigValidator) {
   config.set_name("nighthawk.test-scoring-function");
   *config.mutable_typed_config() = CreateTypedConfigAny(kBadConfigThreshold);
   EXPECT_THAT(LoadScoringFunctionPlugin(config).status().message(),
-              ::testing::HasSubstr("input validation failed"));
+              HasSubstr("input validation failed"));
 }
 
 TEST(PluginUtilTest, PropagatesConfigProtoToScoringFunction) {
@@ -296,7 +297,7 @@ TEST(PluginUtilTest, ReturnsErrorWhenScoringFunctionPluginNotFound) {
   config.set_name("nonexistent-scoring-function");
   *config.mutable_typed_config() = CreateTypedConfigAny(0.0);
   EXPECT_THAT(LoadScoringFunctionPlugin(config).status().message(),
-              ::testing::HasSubstr("Didn't find a registered implementation"));
+              HasSubstr("Didn't find a registered implementation"));
 }
 
 TEST(PluginUtilTest, CreatesCorrectMetricsPluginType) {
@@ -312,8 +313,7 @@ TEST(PluginUtilTest, ReturnsErrorFromMetricsPluginConfigValidator) {
   TypedExtensionConfig config;
   config.set_name("nighthawk.test-metrics-plugin");
   *config.mutable_typed_config() = CreateTypedConfigAny(kBadConfigThreshold);
-  EXPECT_THAT(LoadMetricsPlugin(config).status().message(),
-              ::testing::HasSubstr("input validation failed"));
+  EXPECT_THAT(LoadMetricsPlugin(config).status().message(), HasSubstr("input validation failed"));
 }
 
 TEST(PluginUtilTest, PropagatesConfigProtoToMetricsPlugin) {
@@ -331,7 +331,7 @@ TEST(PluginUtilTest, ReturnsErrorWhenMetricsPluginNotFound) {
   config.set_name("nonexistent-metrics-plugin");
   *config.mutable_typed_config() = CreateTypedConfigAny(0.0);
   EXPECT_THAT(LoadMetricsPlugin(config).status().message(),
-              ::testing::HasSubstr("Didn't find a registered implementation"));
+              HasSubstr("Didn't find a registered implementation"));
 }
 
 TEST(PluginUtilTest, CreatesCorrectStepControllerType) {
@@ -350,7 +350,7 @@ TEST(PluginUtilTest, ReturnsErrorFromStepControllerConfigValidator) {
   *config.mutable_typed_config() = CreateTypedConfigAny(kBadConfigThreshold);
   nighthawk::client::CommandLineOptions options_template;
   EXPECT_THAT(LoadStepControllerPlugin(config, options_template).status().message(),
-              ::testing::HasSubstr("input validation failed"));
+              HasSubstr("input validation failed"));
 }
 
 TEST(PluginUtilTest, PropagatesConfigProtoToStepController) {
@@ -382,7 +382,7 @@ TEST(PluginUtilTest, ReturnsErrorWhenStepControllerPluginNotFound) {
   *config.mutable_typed_config() = CreateTypedConfigAny(0.0);
   nighthawk::client::CommandLineOptions options_template;
   EXPECT_THAT(LoadStepControllerPlugin(config, options_template).status().message(),
-              ::testing::HasSubstr("Didn't find a registered implementation"));
+              HasSubstr("Didn't find a registered implementation"));
 }
 
 } // namespace

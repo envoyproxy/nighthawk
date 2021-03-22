@@ -220,9 +220,9 @@ message CommandLineOptions {
   // "emit_previous_request_delta_in_response_header" to record elapsed time between request
   // arrivals.
   google.protobuf.StringValue latency_response_header_name = 36;
-  // Set to allow usage of the v2 api. (Not recommended, support will stop in Q1 2021).
-  google.protobuf.BoolValue allow_envoy_deprecated_v2_api = 38 [deprecated = true];
   // Provide an execution starting date and time. Optional, any value specified must be in the
   // future.
   google.protobuf.Timestamp scheduled_start = 105;
+
+  reserved 38; // deprecated
 }

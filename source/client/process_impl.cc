@@ -37,6 +37,7 @@
 #include "external/envoy/source/extensions/tracers/zipkin/zipkin_tracer_impl.h"
 #endif
 #include "external/envoy/source/extensions/transport_sockets/well_known_names.h"
+#include "external/envoy/source/server/options_impl.h"
 #include "external/envoy/source/server/options_impl_platform.h"
 
 #include "api/client/options.pb.h"
@@ -64,13 +65,12 @@ class ClusterManagerFactory : public Envoy::Upstream::ProdClusterManagerFactory 
 public:
   using Envoy::Upstream::ProdClusterManagerFactory::ProdClusterManagerFactory;
 
-  Envoy::Http::ConnectionPool::InstancePtr
-  allocateConnPool(Envoy::Event::Dispatcher& dispatcher, Envoy::Upstream::HostConstSharedPtr host,
-                   Envoy::Upstream::ResourcePriority priority,
-                   std::vector<Envoy::Http::Protocol>& protocols,
-                   const Envoy::Network::ConnectionSocket::OptionsSharedPtr& options,
-                   const Envoy::Network::TransportSocketOptionsSharedPtr& transport_socket_options,
-                   Envoy::Upstream::ClusterConnectivityState& state) override {
+  Envoy::Http::ConnectionPool::InstancePtr allocateConnPool(
+      Envoy::Event::Dispatcher& dispatcher, Envoy::Upstream::HostConstSharedPtr host,
+      Envoy::Upstream::ResourcePriority priority, std::vector<Envoy::Http::Protocol>& protocols,
+      const Envoy::Network::ConnectionSocket::OptionsSharedPtr& options,
+      const Envoy::Network::TransportSocketOptionsSharedPtr& transport_socket_options,
+      Envoy::TimeSource& time_source, Envoy::Upstream::ClusterConnectivityState& state) override {
     // This changed in
     // https://github.com/envoyproxy/envoy/commit/93ee668a690d297ab5e8bd2cbf03771d852ebbda ALPN may
     // be set up to negotiate a protocol, in which case we'd need a HttpConnPoolImplMixed. However,
@@ -98,7 +98,8 @@ public:
       return Envoy::Http::ConnectionPool::InstancePtr{h1_pool};
     }
     return Envoy::Upstream::ProdClusterManagerFactory::allocateConnPool(
-        dispatcher, host, priority, protocols, options, transport_socket_options, state);
+        dispatcher, host, priority, protocols, options, transport_socket_options, time_source,
+        state);
   }
 
   void setConnectionReuseStrategy(
@@ -173,6 +174,7 @@ void ProcessImpl::shutdown() {
     cluster_manager_->shutdown();
   }
   tls_.shutdownThread();
+  dispatcher_->shutdown();
   shutdown_ = true;
 }
 
@@ -297,30 +299,10 @@ ProcessImpl::mergeWorkerStatistics(const std::vector<ClientWorkerPtr>& workers) 
   return merged_statistics;
 }
 
-void ProcessImpl::allowEnvoyDeprecatedV2Api(envoy::config::bootstrap::v3::Bootstrap& bootstrap) {
-  auto* admin_layer = bootstrap.mutable_layered_runtime()->add_layers();
-  admin_layer->set_name("admin layer");
-  admin_layer->mutable_admin_layer();
-  envoy::config::bootstrap::v3::RuntimeLayer* runtime_layer =
-      bootstrap.mutable_layered_runtime()->add_layers();
-  runtime_layer->set_name("static_layer");
-  Envoy::ProtobufWkt::Value proto_true;
-  proto_true.set_string_value("true");
-  (*runtime_layer->mutable_static_layer()
-        ->mutable_fields())["envoy.reloadable_features.enable_deprecated_v2_api"] = proto_true;
-  (*runtime_layer->mutable_static_layer()
-        ->mutable_fields())["envoy.reloadable_features.allow_prefetch"] = proto_true;
-}
-
 void ProcessImpl::createBootstrapConfiguration(envoy::config::bootstrap::v3::Bootstrap& bootstrap,
                                                const std::vector<UriPtr>& uris,
                                                const UriPtr& request_source_uri,
-                                               int number_of_clusters,
-                                               bool allow_envoy_deprecated_v2_api) const {
-  if (allow_envoy_deprecated_v2_api) {
-    allowEnvoyDeprecatedV2Api(bootstrap);
-  }
-
+                                               int number_of_clusters) const {
   for (int i = 0; i < number_of_clusters; i++) {
     auto* cluster = bootstrap.mutable_static_resources()->add_clusters();
     RELEASE_ASSERT(!uris.empty(), "illegal configuration with zero endpoints");
@@ -507,8 +489,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
     int number_of_workers = determineConcurrency();
     shutdown_ = false;
     envoy::config::bootstrap::v3::Bootstrap bootstrap;
-    createBootstrapConfiguration(bootstrap, uris, request_source_uri, number_of_workers,
-                                 options_.allowEnvoyDeprecatedV2Api());
+    createBootstrapConfiguration(bootstrap, uris, request_source_uri, number_of_workers);
     // Needs to happen as early as possible (before createWorkers()) in the instantiation to preempt
     // the objects that require stats.
     if (!options_.statsSinks().empty()) {
@@ -520,16 +501,22 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
     store_root_.initializeThreading(*dispatcher_, tls_);
     runtime_singleton_ = std::make_unique<Envoy::Runtime::ScopedLoaderSingleton>(
         Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl(
-            *dispatcher_, tls_, bootstrap.layered_runtime(), *local_info_, store_root_, generator_,
+            *dispatcher_, tls_, {}, *local_info_, store_root_, generator_,
             Envoy::ProtobufMessage::getStrictValidationVisitor(), *api_)});
     ssl_context_manager_ =
         std::make_unique<Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl>(
             time_system_);
+
+    const Envoy::OptionsImpl::HotRestartVersionCb hot_restart_version_cb = [](bool) {
+      return "hot restart is disabled";
+    };
+    const Envoy::OptionsImpl envoy_options(
+        /* args = */ {"process_impl"}, hot_restart_version_cb, spdlog::level::info);
     cluster_manager_factory_ = std::make_unique<ClusterManagerFactory>(
         admin_, Envoy::Runtime::LoaderSingleton::get(), store_root_, tls_,
         dispatcher_->createDnsResolver({}, false), *ssl_context_manager_, *dispatcher_,
         *local_info_, secret_manager_, validation_context_, *api_, http_context_, grpc_context_,
-        router_context_, access_log_manager_, *singleton_manager_);
+        router_context_, access_log_manager_, *singleton_manager_, envoy_options);
     cluster_manager_factory_->setConnectionReuseStrategy(
         options_.h1ConnectionReuseStrategy() == nighthawk::client::H1ConnectionReuseStrategy::LRU
             ? Http1PoolImpl::ConnectionReuseStrategy::LRU

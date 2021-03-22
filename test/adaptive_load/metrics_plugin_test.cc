@@ -13,7 +13,7 @@ namespace Nighthawk {
 namespace {
 
 class NighthawkStatsEmulatedMetricsPluginFixture
-    : public ::testing::TestWithParam<std::tuple<std::string, double>> {};
+    : public testing::TestWithParam<std::tuple<std::string, double>> {};
 
 TEST_P(NighthawkStatsEmulatedMetricsPluginFixture, ComputesCorrectMetric) {
   NighthawkStatsEmulatedMetricsPlugin plugin =
@@ -35,17 +35,17 @@ TEST_P(NighthawkStatsEmulatedMetricsPluginFixture, ComputesCorrectMetric) {
 
 INSTANTIATE_TEST_SUITE_P(
     NighthawkStatsEmulatedMetricsPluginValuesTests, NighthawkStatsEmulatedMetricsPluginFixture,
-    ::testing::Values(std::make_tuple<std::string, double>("achieved-rps", 256),
-                      std::make_tuple<std::string, double>("attempted-rps", 1024),
-                      std::make_tuple<std::string, double>("latency-ns-max", 600.0),
-                      std::make_tuple<std::string, double>("latency-ns-mean", 500.0),
-                      std::make_tuple<std::string, double>("latency-ns-mean-plus-1stdev", 511.0),
-                      std::make_tuple<std::string, double>("latency-ns-mean-plus-2stdev", 522.0),
-                      std::make_tuple<std::string, double>("latency-ns-mean-plus-3stdev", 533.0),
-                      std::make_tuple<std::string, double>("latency-ns-min", 400.0),
-                      std::make_tuple<std::string, double>("latency-ns-pstdev", 11.0),
-                      std::make_tuple<std::string, double>("send-rate", 0.25),
-                      std::make_tuple<std::string, double>("success-rate", 0.125)));
+    testing::Values(std::make_tuple<std::string, double>("achieved-rps", 256),
+                    std::make_tuple<std::string, double>("attempted-rps", 1024),
+                    std::make_tuple<std::string, double>("latency-ns-max", 600.0),
+                    std::make_tuple<std::string, double>("latency-ns-mean", 500.0),
+                    std::make_tuple<std::string, double>("latency-ns-mean-plus-1stdev", 511.0),
+                    std::make_tuple<std::string, double>("latency-ns-mean-plus-2stdev", 522.0),
+                    std::make_tuple<std::string, double>("latency-ns-mean-plus-3stdev", 533.0),
+                    std::make_tuple<std::string, double>("latency-ns-min", 400.0),
+                    std::make_tuple<std::string, double>("latency-ns-pstdev", 11.0),
+                    std::make_tuple<std::string, double>("send-rate", 0.25),
+                    std::make_tuple<std::string, double>("success-rate", 0.125)));
 
 TEST(NighthawkStatsEmulatedMetricsPlugin, ReturnsErrorIfGlobalResultMissing) {
   nighthawk::client::Output empty_output;
@@ -221,11 +221,11 @@ TEST(NighthawkStatsEmulatedMetricsPlugin, ReturnsCorrectSupportedMetricNames) {
   NighthawkStatsEmulatedMetricsPlugin plugin = NighthawkStatsEmulatedMetricsPlugin({});
   std::vector<std::string> supported_metrics = plugin.GetAllSupportedMetricNames();
   EXPECT_THAT(supported_metrics,
-              ::testing::ElementsAre("achieved-rps", "attempted-rps", "latency-ns-max",
-                                     "latency-ns-mean", "latency-ns-mean-plus-1stdev",
-                                     "latency-ns-mean-plus-2stdev", "latency-ns-mean-plus-3stdev",
-                                     "latency-ns-min", "latency-ns-pstdev", "send-rate",
-                                     "success-rate"));
+              testing::ElementsAre("achieved-rps", "attempted-rps", "latency-ns-max",
+                                   "latency-ns-mean", "latency-ns-mean-plus-1stdev",
+                                   "latency-ns-mean-plus-2stdev", "latency-ns-mean-plus-3stdev",
+                                   "latency-ns-min", "latency-ns-pstdev", "send-rate",
+                                   "success-rate"));
 }
 
 } // namespace
