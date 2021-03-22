@@ -58,7 +58,7 @@ void ServiceImpl::writeResponse(const nighthawk::client::ExecutionResponse& resp
   }
 }
 
-::grpc::Status ServiceImpl::finishGrpcStream(const bool success, absl::string_view description) {
+grpc::Status ServiceImpl::finishGrpcStream(const bool success, absl::string_view description) {
   // We may get here while there's still an active future in-flight in the error-paths.
   // Allow it to wrap up and put it's response on the stream before finishing the stream.
   if (future_.valid()) {
@@ -73,10 +73,10 @@ void ServiceImpl::writeResponse(const nighthawk::client::ExecutionResponse& resp
 // TODO(oschaaf): unit-test Process, create MockProcess & use in service_test.cc / client_test.cc
 // TODO(oschaaf): should we merge incoming request options with defaults?
 // TODO(oschaaf): aggregate the client's logs and forward them in the grpc response.
-::grpc::Status ServiceImpl::ExecutionStream(
-    ::grpc::ServerContext* /*context*/,
-    ::grpc::ServerReaderWriter<::nighthawk::client::ExecutionResponse,
-                               ::nighthawk::client::ExecutionRequest>* stream) {
+grpc::Status ServiceImpl::ExecutionStream(
+    grpc::ServerContext* /*context*/,
+    grpc::ServerReaderWriter<nighthawk::client::ExecutionResponse,
+                             nighthawk::client::ExecutionRequest>* stream) {
   nighthawk::client::ExecutionRequest request;
   stream_ = stream;
 
@@ -120,10 +120,10 @@ RequestSourcePtr RequestSourceServiceImpl::createStaticEmptyRequestSource(const 
   return std::make_unique<StaticRequestSourceImpl>(std::move(header), amount);
 }
 
-::grpc::Status RequestSourceServiceImpl::RequestStream(
-    ::grpc::ServerContext* /*context*/,
-    ::grpc::ServerReaderWriter<::nighthawk::request_source::RequestStreamResponse,
-                               ::nighthawk::request_source::RequestStreamRequest>* stream) {
+grpc::Status RequestSourceServiceImpl::RequestStream(
+    grpc::ServerContext* /*context*/,
+    grpc::ServerReaderWriter<nighthawk::request_source::RequestStreamResponse,
+                             nighthawk::request_source::RequestStreamRequest>* stream) {
   nighthawk::request_source::RequestStreamRequest request;
   bool ok = true;
   while (stream->Read(&request)) {

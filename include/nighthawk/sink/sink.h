@@ -30,17 +30,17 @@ public:
    * @return absl::Status Indicates if the operation succeeded or not.
    */
   virtual absl::Status
-  StoreExecutionResultPiece(const ::nighthawk::client::ExecutionResponse& response) const PURE;
+  StoreExecutionResultPiece(const nighthawk::client::ExecutionResponse& response) const PURE;
 
   /**
    * Attempt to load a vector of ExecutionResponse instances associated to an execution id.
    *
    * @param execution_id Specify an execution_id that the desired set of ExecutionResponse
    * instances are tagged with.
-   * @return absl::StatusOr<std::vector<::nighthawk::client::ExecutionResponse>>.
+   * @return absl::StatusOr<std::vector<nighthawk::client::ExecutionResponse>>.
    * When no fragments are found for the provided execution id, status kNotFound is returned.
    */
-  virtual absl::StatusOr<std::vector<::nighthawk::client::ExecutionResponse>>
+  virtual absl::StatusOr<std::vector<nighthawk::client::ExecutionResponse>>
   LoadExecutionResult(absl::string_view execution_id) const PURE;
 };
 

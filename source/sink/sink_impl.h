@@ -11,8 +11,8 @@ namespace Nighthawk {
 class FileSinkImpl : public Sink {
 public:
   absl::Status
-  StoreExecutionResultPiece(const ::nighthawk::client::ExecutionResponse& response) const override;
-  absl::StatusOr<std::vector<::nighthawk::client::ExecutionResponse>>
+  StoreExecutionResultPiece(const nighthawk::client::ExecutionResponse& response) const override;
+  absl::StatusOr<std::vector<nighthawk::client::ExecutionResponse>>
   LoadExecutionResult(absl::string_view id) const override;
 };
 

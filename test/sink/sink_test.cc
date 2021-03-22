@@ -11,9 +11,9 @@ namespace Nighthawk {
 namespace {
 
 // Future sink implementations register here for testing top level generic sink behavior.
-using SinkTypes = ::testing::Types<FileSinkImpl>;
+using SinkTypes = testing::Types<FileSinkImpl>;
 
-template <typename T> class TypedSinkTest : public ::testing::Test {
+template <typename T> class TypedSinkTest : public testing::Test {
 public:
   void SetUp() override { uuid_ = random_.uuid(); }
   void TearDown() override {

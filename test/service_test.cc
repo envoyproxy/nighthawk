@@ -143,7 +143,7 @@ INSTANTIATE_TEST_SUITE_P(IpVersions, ServiceTestWithParameterizedConstructor,
 
 TEST_P(ServiceTestWithParameterizedConstructor,
        ConstructorWithLoggingContextParameterCanRespondToRequests) {
-  std::unique_ptr<::grpc::ClientReaderWriter<ExecutionRequest, ExecutionResponse>> stream =
+  std::unique_ptr<grpc::ClientReaderWriter<ExecutionRequest, ExecutionResponse>> stream =
       stub_->ExecutionStream(&context_);
   stream->Write(request_, {});
   stream->WritesDone();
@@ -152,7 +152,7 @@ TEST_P(ServiceTestWithParameterizedConstructor,
   EXPECT_THAT(response_.error_detail().message(), HasSubstr(std::string("failure predicate")));
   EXPECT_TRUE(response_.has_output());
   EXPECT_GE(response_.output().results(0).counters().size(), 8);
-  ::grpc::Status status = stream->Finish();
+  grpc::Status status = stream->Finish();
   EXPECT_TRUE(status.ok());
 }
 

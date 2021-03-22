@@ -64,7 +64,7 @@ TEST(FakeStepControllerConfigFactory, ValidateConfigWithBadConfigProtoReturnsErr
 }
 
 TEST(FakeStepControllerConfigFactory, ValidateConfigWithAritificialValidationErrorReturnsError) {
-  const int kExpectedStatusCode = ::grpc::DATA_LOSS;
+  const int kExpectedStatusCode = grpc::DATA_LOSS;
   const std::string kExpectedStatusMessage = "artificial validation error";
   FakeStepControllerConfig config;
   config.mutable_artificial_validation_failure()->set_code(kExpectedStatusCode);
@@ -113,7 +113,7 @@ TEST(FakeStepController, GetCurrentCommandLineOptionsReturnsRpsFromConfig) {
 
 TEST(FakeStepController, GetCurrentCommandLineOptionsReturnsArtificialErrorImmediately) {
   FakeStepControllerConfig config;
-  const int kExpectedCode = ::grpc::DEADLINE_EXCEEDED;
+  const int kExpectedCode = grpc::DEADLINE_EXCEEDED;
   const std::string kExpectedMessage = "artificial input setting error";
   config.mutable_artificial_input_setting_failure()->set_code(kExpectedCode);
   config.mutable_artificial_input_setting_failure()->set_message(kExpectedMessage);
@@ -129,7 +129,7 @@ TEST(FakeStepController, GetCurrentCommandLineOptionsReturnsArtificialErrorImmed
 
 TEST(FakeStepController, GetCurrentCommandLineOptionsReturnsArtificialErrorAfterCountdown) {
   FakeStepControllerConfig config;
-  const int kExpectedCode = ::grpc::DEADLINE_EXCEEDED;
+  const int kExpectedCode = grpc::DEADLINE_EXCEEDED;
   const std::string kExpectedMessage = "artificial input setting error";
   config.mutable_artificial_input_setting_failure()->set_code(kExpectedCode);
   config.mutable_artificial_input_setting_failure()->set_message(kExpectedMessage);
