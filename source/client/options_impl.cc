@@ -588,7 +588,7 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
       request_headers_.push_back(header_string);
     }
     if (request_options.request_method() !=
-        ::envoy::config::core::v3::RequestMethod::METHOD_UNSPECIFIED) {
+        envoy::config::core::v3::RequestMethod::METHOD_UNSPECIFIED) {
       request_method_ = request_options.request_method();
     }
     request_body_size_ =

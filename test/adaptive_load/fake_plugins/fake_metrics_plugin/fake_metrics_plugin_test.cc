@@ -112,7 +112,7 @@ TEST(FakeMetricsPlugin, GetAllSupportedMetricNamesReturnsCorrectValues) {
 
   FakeMetricsPlugin metrics_plugin(config);
   EXPECT_THAT(metrics_plugin.GetAllSupportedMetricNames(),
-              ::testing::UnorderedElementsAre("metric1", "metric2"));
+              testing::UnorderedElementsAre("metric1", "metric2"));
 }
 
 TEST(MakeFakeMetricsPluginTypedExtensionConfig, SetsCorrectPluginName) {

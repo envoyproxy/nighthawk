@@ -40,9 +40,9 @@ TEST(PerformNighthawkBenchmark, UsesSpecifiedCommandLineOptions) {
         EXPECT_CALL(*mock_reader_writer, Read(_)).WillOnce(Return(true)).WillOnce(Return(false));
         // Capture the Nighthawk request PerformNighthawkBenchmark sends on the channel.
         EXPECT_CALL(*mock_reader_writer, Write(_, _))
-            .WillOnce(::testing::DoAll(::testing::SaveArg<0>(&request), Return(true)));
+            .WillOnce(DoAll(SaveArg<0>(&request), Return(true)));
         EXPECT_CALL(*mock_reader_writer, WritesDone()).WillOnce(Return(true));
-        EXPECT_CALL(*mock_reader_writer, Finish()).WillOnce(Return(::grpc::Status::OK));
+        EXPECT_CALL(*mock_reader_writer, Finish()).WillOnce(Return(grpc::Status::OK));
         return mock_reader_writer;
       });
 
@@ -71,7 +71,7 @@ TEST(PerformNighthawkBenchmark, ReturnsNighthawkResponseSuccessfully) {
             .WillOnce(Return(false));
         EXPECT_CALL(*mock_reader_writer, Write(_, _)).WillOnce(Return(true));
         EXPECT_CALL(*mock_reader_writer, WritesDone()).WillOnce(Return(true));
-        EXPECT_CALL(*mock_reader_writer, Finish()).WillOnce(Return(::grpc::Status::OK));
+        EXPECT_CALL(*mock_reader_writer, Finish()).WillOnce(Return(grpc::Status::OK));
         return mock_reader_writer;
       });
 
@@ -157,8 +157,7 @@ TEST(PerformNighthawkBenchmark, PropagatesErrorIfNighthawkServiceGrpcStreamClose
     EXPECT_CALL(*mock_reader_writer, Write(_, _)).WillOnce(Return(true));
     EXPECT_CALL(*mock_reader_writer, WritesDone()).WillOnce(Return(true));
     EXPECT_CALL(*mock_reader_writer, Finish())
-        .WillOnce(
-            Return(::grpc::Status(::grpc::PERMISSION_DENIED, "Finish failure status message")));
+        .WillOnce(Return(grpc::Status(grpc::PERMISSION_DENIED, "Finish failure status message")));
     return mock_reader_writer;
   });
 

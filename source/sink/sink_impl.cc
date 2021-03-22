@@ -39,7 +39,7 @@ absl::Status verifyCanBeUsedAsDirectoryName(absl::string_view s) {
 } // namespace
 
 absl::Status FileSinkImpl::StoreExecutionResultPiece(
-    const ::nighthawk::client::ExecutionResponse& response) const {
+    const nighthawk::client::ExecutionResponse& response) const {
   const std::string& execution_id = response.execution_id();
   absl::Status status = verifyCanBeUsedAsDirectoryName(execution_id);
   if (!status.ok()) {
@@ -72,7 +72,7 @@ absl::Status FileSinkImpl::StoreExecutionResultPiece(
   return absl::Status();
 }
 
-absl::StatusOr<std::vector<::nighthawk::client::ExecutionResponse>>
+absl::StatusOr<std::vector<nighthawk::client::ExecutionResponse>>
 FileSinkImpl::LoadExecutionResult(absl::string_view execution_id) const {
   absl::Status status = verifyCanBeUsedAsDirectoryName(execution_id);
   if (!status.ok()) {
@@ -80,7 +80,7 @@ FileSinkImpl::LoadExecutionResult(absl::string_view execution_id) const {
   }
 
   std::filesystem::path filesystem_directory_path("/tmp/nh/" + std::string(execution_id) + "/");
-  std::vector<::nighthawk::client::ExecutionResponse> responses;
+  std::vector<nighthawk::client::ExecutionResponse> responses;
   std::error_code error_code;
 
   for (const auto& it :
@@ -88,7 +88,7 @@ FileSinkImpl::LoadExecutionResult(absl::string_view execution_id) const {
     if (error_code.value()) {
       break;
     }
-    ::nighthawk::client::ExecutionResponse response;
+    nighthawk::client::ExecutionResponse response;
     std::ifstream ifs(it.path(), std::ios_base::binary);
     if (!response.ParseFromIstream(&ifs)) {
       return absl::Status(absl::StatusCode::kInternal,
