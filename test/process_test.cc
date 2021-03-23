@@ -245,7 +245,9 @@ TEST_P(ProcessTestWithSimTime, ScheduleAheadWorks) {
       ASSERT_EQ(output.results_size(), 1);
       EXPECT_EQ(Envoy::ProtobufUtil::TimeUtil::TimestampToNanoseconds(
                     output.results()[0].execution_start()),
-                options_->scheduled_start().value().time_since_epoch().count());
+                std::chrono::duration_cast<std::chrono::nanoseconds>(
+                    options_->scheduled_start().value().time_since_epoch())
+                    .count());
     });
   }
 }
