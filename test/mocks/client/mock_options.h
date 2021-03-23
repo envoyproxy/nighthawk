@@ -58,6 +58,7 @@ public:
   MOCK_CONST_METHOD0(statsFlushInterval, uint32_t());
   MOCK_CONST_METHOD0(responseHeaderWithLatencyInput, std::string());
   MOCK_CONST_METHOD0(scheduled_start, absl::optional<Envoy::SystemTime>());
+  MOCK_CONST_METHOD0(executionId, absl::optional<std::string>());
 };
 
 } // namespace Client

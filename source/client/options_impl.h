@@ -94,6 +94,7 @@ public:
     return latency_response_header_name_;
   };
   absl::optional<Envoy::SystemTime> scheduled_start() const override { return scheduled_start_; }
+  absl::optional<std::string> executionId() const override { return execution_id_; }
 
 private:
   void parsePredicates(const TCLAP::MultiArg<std::string>& arg,
@@ -151,6 +152,7 @@ private:
   uint32_t stats_flush_interval_{5};
   std::string latency_response_header_name_;
   absl::optional<Envoy::SystemTime> scheduled_start_;
+  absl::optional<std::string> execution_id_;
 };
 
 } // namespace Client
