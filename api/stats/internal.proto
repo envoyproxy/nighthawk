@@ -4,7 +4,7 @@ package nighthawk;
 
 // Internal protos for representing Statistics in a way that allows
 // "lossless" reconstruction. Do not consume / rely on this in any other place
-// then Nighthawk code as this may be subject to change.
+// than Nighthawk code as this may be subject to change.
 
 message InternalSimpleStatistic {
   uint64 count = 1;
