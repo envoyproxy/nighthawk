@@ -39,7 +39,9 @@ namespace {
  */
 void WriteFileOrThrow(Envoy::Filesystem::Instance& filesystem, absl::string_view path,
                       absl::string_view contents) {
-  Envoy::Filesystem::FilePtr file = filesystem.createFile(std::string(path));
+  Envoy::Filesystem::FilePathAndType file_path_and_type(Envoy::Filesystem::DestinationType::File,
+                                                        path);
+  Envoy::Filesystem::FilePtr file = filesystem.createFile(file_path_and_type);
   const Envoy::Api::IoCallBoolResult open_result =
       file->open(((1 << Envoy::Filesystem::File::Operation::Write)) |
                  (1 << (Envoy::Filesystem::File::Operation::Create)));
