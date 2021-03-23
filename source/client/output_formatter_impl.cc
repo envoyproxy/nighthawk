@@ -210,7 +210,7 @@ DottedStringOutputFormatterImpl::formatProto(const nighthawk::client::Output& ou
   return ss.str();
 }
 
-absl::StatusOr<const nighthawk::client::Result>
+absl::optional<const nighthawk::client::Result>
 FortioOutputFormatterImpl::getGlobalResult(const nighthawk::client::Output& output) const {
   for (const auto& nh_result : output.results()) {
     if (nh_result.name() == "global") {
@@ -218,8 +218,7 @@ FortioOutputFormatterImpl::getGlobalResult(const nighthawk::client::Output& outp
     }
   }
 
-  return absl::Status(absl::StatusCode::kInternal,
-                      "Nighthawk output was malformed, contains no 'global' results.");
+  return absl::nullopt;
 }
 
 uint64_t FortioOutputFormatterImpl::getCounterValue(const nighthawk::client::Result& result,
@@ -305,8 +304,12 @@ FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) 
   fortio_output.set_numthreads(number_of_connections);
 
   // Get the result that represents all workers (global)
-  auto nh_global_result_status = getGlobalResult(output);
-  const auto& nh_global_result = nh_global_result_status.value();
+  absl::optional<const nighthawk::client::Result> nh_global_result_optional =
+      getGlobalResult(output);
+  if (!nh_global_result_optional.has_value()) {
+    return absl::Status(absl::StatusCode::kNotFound, "formatProto global result not found");
+  }
+  const auto& nh_global_result = nh_global_result_optional.value();
 
   // Fill in the actual QPS based on the counters
   const double actual_qps =

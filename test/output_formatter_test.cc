@@ -161,7 +161,7 @@ TEST_F(FortioOutputCollectorTest, MissingGlobalResultGetGlobalResult) {
   output_proto.clear_results();
 
   FortioOutputFormatterImpl formatter;
-  EXPECT_FALSE((formatter.getGlobalResult(output_proto)).ok());
+  EXPECT_FALSE((formatter.getGlobalResult(output_proto)).has_value());
 }
 
 TEST_F(FortioOutputCollectorTest, MissingCounter) {
