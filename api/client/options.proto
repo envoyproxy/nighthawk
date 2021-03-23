@@ -106,7 +106,7 @@ message H1ConnectionReuseStrategy {
 
 // TODO(oschaaf): Ultimately this will be a load test specification. The fact that it
 // can arrive via CLI is just a concrete detail. Change this to reflect that.
-// highest unused number is 39
+// highest unused number is 107
 message CommandLineOptions {
   // The target requests-per-second rate. Default: 5.
   google.protobuf.UInt32Value requests_per_second = 1
@@ -225,4 +225,10 @@ message CommandLineOptions {
   google.protobuf.Timestamp scheduled_start = 105;
 
   reserved 38; // deprecated
+  // Provide a unique execution id. Will be reflected in the output when set.
+  // This is intended for future use in horizontally scaled scenarios in mind.
+  // When populating this field, it is recommended to use unique identifiers for forward
+  // compatibility purposes. In the future, this field may be auto-populated when left unset and
+  // circumstances mandate so (distributed load test execution).
+  google.protobuf.StringValue execution_id = 106;
 }

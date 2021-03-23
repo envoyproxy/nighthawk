@@ -659,6 +659,9 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
     scheduled_start_ =
         Envoy::SystemTime(std::chrono::time_point<std::chrono::system_clock>(elapsed_since_epoch));
   }
+  if (options.has_execution_id()) {
+    execution_id_ = options.execution_id().value();
+  }
   validate();
 }
 
@@ -839,6 +842,9 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
     *(command_line_options->mutable_scheduled_start()) =
         Envoy::ProtobufUtil::TimeUtil::NanosecondsToTimestamp(
             scheduled_start_.value().time_since_epoch().count());
+  }
+  if (execution_id_.has_value()) {
+    command_line_options->mutable_execution_id()->set_value(execution_id_.value());
   }
   return command_line_options;
 }

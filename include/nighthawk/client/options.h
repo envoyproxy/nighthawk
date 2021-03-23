@@ -77,6 +77,8 @@ public:
   virtual std::string responseHeaderWithLatencyInput() const PURE;
 
   virtual absl::optional<Envoy::SystemTime> scheduled_start() const PURE;
+  virtual absl::optional<std::string> executionId() const PURE;
+
   /**
    * Converts an Options instance to an equivalent CommandLineOptions instance in terms of option
    * values.
