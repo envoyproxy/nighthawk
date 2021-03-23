@@ -151,8 +151,7 @@ JsonOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) co
 
 absl::StatusOr<std::string>
 YamlOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
-  std::string yaml_string = Envoy::MessageUtil::getYamlStringFromMessage(output, true, true);
-  return yaml_string;
+  return Envoy::MessageUtil::getYamlStringFromMessage(output, true, true);
 }
 
 absl::StatusOr<std::string>
@@ -248,7 +247,8 @@ FortioOutputFormatterImpl::findStatistic(const nighthawk::client::Result& result
 absl::StatusOr<std::chrono::nanoseconds> FortioOutputFormatterImpl::getAverageExecutionDuration(
     const nighthawk::client::Output& output) const {
   if (!output.results_size()) {
-    return absl::Status(absl::StatusCode::kNotFound, "No results in output");
+    return absl::Status(absl::StatusCode::kNotFound,
+                        "getAverageExecutionDuration found no results in output");
   }
   const auto& r = output.results().at(output.results_size() - 1);
   ASSERT(r.name() == "global");
@@ -279,12 +279,13 @@ FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) 
                                  output.options().requests_per_second().value());
   fortio_output.set_url(output.options().uri().value());
   *fortio_output.mutable_requestedduration() = output.options().duration();
-  auto actual_duration_status = getAverageExecutionDuration(output);
+  absl::StatusOr<std::chrono::nanoseconds> actual_duration_status =
+      getAverageExecutionDuration(output);
   if (!actual_duration_status.ok()) {
-    return absl::Status(absl::StatusCode::kInternal,
-                        "Error while getting average execution duration");
+    return absl::Status(actual_duration_status.status().code(),
+                        actual_duration_status.status().message());
   }
-  auto actual_duration = *actual_duration_status;
+  std::chrono::nanoseconds actual_duration = *actual_duration_status;
   fortio_output.set_actualduration(actual_duration.count());
   fortio_output.set_jitter(output.options().has_jitter_uniform() &&
                            (output.options().jitter_uniform().nanos() > 0 ||
