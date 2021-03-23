@@ -139,7 +139,8 @@ void StreamDecoder::onPoolReady(Envoy::Http::RequestEncoder& encoder,
   }
 }
 
-// TODO(https://github.com/envoyproxy/nighthawk/issues/139): duplicated from the envoy code base.
+// TODO(https://github.com/envoyproxy/nighthawk/issues/139): duplicated from
+// envoy/source/common/router/router.cc
 Envoy::StreamInfo::ResponseFlag
 StreamDecoder::streamResetReasonToResponseFlag(Envoy::Http::StreamResetReason reset_reason) {
   switch (reset_reason) {
@@ -156,6 +157,8 @@ StreamDecoder::streamResetReasonToResponseFlag(Envoy::Http::StreamResetReason re
   case Envoy::Http::StreamResetReason::RemoteReset:
   case Envoy::Http::StreamResetReason::RemoteRefusedStreamReset:
     return Envoy::StreamInfo::ResponseFlag::UpstreamRemoteReset;
+  case Envoy::Http::StreamResetReason::ProtocolError:
+    return Envoy::StreamInfo::ResponseFlag::UpstreamProtocolError;
   }
   NOT_REACHED_GCOVR_EXCL_LINE;
 }
