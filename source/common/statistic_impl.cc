@@ -9,7 +9,7 @@
 #include "external/envoy/source/common/common/assert.h"
 #include "external/envoy/source/common/protobuf/utility.h"
 
-#include "api/stats/internal.pb.h"
+#include "internal_proto/statistic/statistic.pb.h"
 
 namespace Nighthawk {
 
@@ -107,7 +107,7 @@ StatisticPtr SimpleStatistic::combine(const Statistic& statistic) const {
 }
 
 absl::StatusOr<std::unique_ptr<std::istream>> SimpleStatistic::serializeNative() const {
-  nighthawk::InternalSimpleStatistic proto;
+  nighthawk::internal::SimpleStatistic proto;
   proto.set_id(id());
   proto.set_count(count());
   proto.set_min(min());
@@ -123,7 +123,7 @@ absl::StatusOr<std::unique_ptr<std::istream>> SimpleStatistic::serializeNative()
 }
 
 absl::Status SimpleStatistic::deserializeNative(std::istream& stream) {
-  nighthawk::InternalSimpleStatistic proto;
+  nighthawk::internal::SimpleStatistic proto;
   std::string tmp(std::istreambuf_iterator<char>(stream), {});
   if (!proto.ParseFromString(tmp)) {
     ENVOY_LOG(error, "Failed to read back SimpleStatistic data.");
@@ -177,7 +177,7 @@ StatisticPtr StreamingStatistic::combine(const Statistic& statistic) const {
 }
 
 absl::StatusOr<std::unique_ptr<std::istream>> StreamingStatistic::serializeNative() const {
-  nighthawk::InternalStreamingStatistic proto;
+  nighthawk::internal::StreamingStatistic proto;
   proto.set_id(id());
   proto.set_count(count());
   proto.set_min(min());
@@ -193,7 +193,7 @@ absl::StatusOr<std::unique_ptr<std::istream>> StreamingStatistic::serializeNativ
 }
 
 absl::Status StreamingStatistic::deserializeNative(std::istream& stream) {
-  nighthawk::InternalStreamingStatistic proto;
+  nighthawk::internal::StreamingStatistic proto;
   std::string tmp(std::istreambuf_iterator<char>(stream), {});
   if (!proto.ParseFromString(tmp)) {
     ENVOY_LOG(error, "Failed to read back StreamingStatistic data.");
