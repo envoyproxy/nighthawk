@@ -146,6 +146,7 @@ envoy_cc_library(
         "//api/client:grpc_service_lib",
         "//include/nighthawk/client:client_includes",
         "//include/nighthawk/common:base_includes",
+        "//internal_proto/statistic:statistic_cc_proto",
         "@com_google_absl//absl/random",
         "@com_google_absl//absl/strings",
         "@dep_hdrhistogram_c//:hdrhistogram_c",

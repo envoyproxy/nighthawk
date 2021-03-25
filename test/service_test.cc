@@ -206,8 +206,7 @@ TEST_P(ServiceTest, InvalidRps) {
   auto options = request_.mutable_start_request()->mutable_options();
   options->mutable_requests_per_second()->set_value(0);
   // We do not expect output, because the options proto is not valid, and can't be echoed back.
-  runWithFailingValidationExpectations(
-      false, "CommandLineOptionsValidationError.RequestsPerSecond: [\"value must be inside range");
+  runWithFailingValidationExpectations(false, "value must be inside range");
 }
 
 // We didn't implement updates yet, ensure we indicate so.
