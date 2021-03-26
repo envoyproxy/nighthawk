@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package nighthawk.internal;
+
+// This package contains proto definitions which allow serialization / deserialization
+// of statistics implementations. Naming maps 1:1 with the statistics implementations
+// over at source/common/statistics_impl.h. See the code & doc comments there for further
+// information about the corresponding statistics implementations.
+
+message SimpleStatistic {
+  uint64 count = 1;
+  string id = 2;
+  uint64 min = 5;
+  uint64 max = 6;
+  double sum_x = 7;
+  double sum_x_2 = 8;
+}
+
+message StreamingStatistic {
+  uint64 count = 1;
+  string id = 2;
+  uint64 min = 5;
+  uint64 max = 6;
+  double mean = 7;
+  double accumulated_variance = 8;
+}
