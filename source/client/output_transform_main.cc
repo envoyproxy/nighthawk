@@ -58,7 +58,12 @@ uint32_t OutputTransformMain::run() {
   }
   OutputFormatterFactoryImpl factory;
   OutputFormatterPtr formatter = factory.create(translated_format);
-  std::cout << formatter->formatProto(output);
+  absl::StatusOr<std::string> format_status = formatter->formatProto(output);
+  if (!format_status.ok()) {
+    ENVOY_LOG(error, "error while formatting proto");
+    return 1;
+  }
+  std::cout << *format_status;
   return 0;
 }
 
