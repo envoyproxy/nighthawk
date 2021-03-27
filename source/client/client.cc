@@ -88,8 +88,9 @@ bool Main::run() {
   if (!formatted_proto.ok()) {
     ENVOY_LOG(error, "An error occured while formatting proto");
     result = false;
+  } else {
+    std::cout << *formatted_proto;
   }
-  std::cout << *formatted_proto;
   process->shutdown();
   if (!result) {
     ENVOY_LOG(error, "An error ocurred.");
