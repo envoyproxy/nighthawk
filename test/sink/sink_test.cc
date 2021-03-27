@@ -130,6 +130,7 @@ TEST(FileSinkTest, CorruptedFile) {
   status = sink.LoadExecutionResult(execution_id);
   ASSERT_FALSE(status.ok());
   EXPECT_THAT(status.status().message(), testing::HasSubstr("Failed to parse ExecutionResponse"));
+  std::filesystem::remove_all("/tmp/nh/" + execution_id + "/", error_code);
 }
 
 } // namespace
