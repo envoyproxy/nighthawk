@@ -14,6 +14,7 @@
 
 #include "common/version_info.h"
 
+#include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/strip.h"
 
@@ -51,7 +52,8 @@ void OutputFormatterImpl::iteratePercentiles(
   }
 }
 
-std::string ConsoleOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
+absl::StatusOr<std::string>
+ConsoleOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
   std::stringstream ss;
   ss << "Nighthawk - A layer 7 protocol benchmarking tool." << std::endl << std::endl;
   for (const auto& result : output.results()) {
@@ -142,15 +144,17 @@ std::string ConsoleOutputFormatterImpl::statIdtoFriendlyStatName(absl::string_vi
   return std::string(stat_id);
 }
 
-std::string JsonOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
-  return Envoy::MessageUtil::getJsonStringFromMessageOrDie(output, true, true);
+absl::StatusOr<std::string>
+JsonOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
+  return Envoy::MessageUtil::getJsonStringFromMessage(output, true, true).value();
 }
 
-std::string YamlOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
+absl::StatusOr<std::string>
+YamlOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
   return Envoy::MessageUtil::getYamlStringFromMessage(output, true, true);
 }
 
-std::string
+absl::StatusOr<std::string>
 DottedStringOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
   std::stringstream ss;
   for (const auto& result : output.results()) {
@@ -206,7 +210,7 @@ DottedStringOutputFormatterImpl::formatProto(const nighthawk::client::Output& ou
   return ss.str();
 }
 
-const nighthawk::client::Result&
+absl::optional<const nighthawk::client::Result>
 FortioOutputFormatterImpl::getGlobalResult(const nighthawk::client::Output& output) const {
   for (const auto& nh_result : output.results()) {
     if (nh_result.name() == "global") {
@@ -214,7 +218,7 @@ FortioOutputFormatterImpl::getGlobalResult(const nighthawk::client::Output& outp
     }
   }
 
-  throw NighthawkException("Nighthawk output was malformed, contains no 'global' results.");
+  return absl::nullopt;
 }
 
 uint64_t FortioOutputFormatterImpl::getCounterValue(const nighthawk::client::Result& result,
@@ -239,10 +243,11 @@ FortioOutputFormatterImpl::findStatistic(const nighthawk::client::Result& result
   return nullptr;
 }
 
-std::chrono::nanoseconds FortioOutputFormatterImpl::getAverageExecutionDuration(
+absl::StatusOr<std::chrono::nanoseconds> FortioOutputFormatterImpl::getAverageExecutionDuration(
     const nighthawk::client::Output& output) const {
   if (!output.results_size()) {
-    throw NighthawkException("No results in output");
+    return absl::Status(absl::StatusCode::kNotFound,
+                        "getAverageExecutionDuration found no results in output");
   }
   const auto& r = output.results().at(output.results_size() - 1);
   ASSERT(r.name() == "global");
@@ -255,7 +260,8 @@ FortioOutputFormatterImpl::durationToSeconds(const Envoy::ProtobufWkt::Duration&
   return Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(duration) / 1e9;
 }
 
-std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
+absl::StatusOr<std::string>
+FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
   nighthawk::client::FortioResult fortio_output;
   // Iff there's only a single worker we will have only a single result. Otherwise the number of
   // workers can be derived by substracting one from the number of results (for the
@@ -272,7 +278,13 @@ std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Outp
                                  output.options().requests_per_second().value());
   fortio_output.set_url(output.options().uri().value());
   *fortio_output.mutable_requestedduration() = output.options().duration();
-  auto actual_duration = getAverageExecutionDuration(output);
+  absl::StatusOr<std::chrono::nanoseconds> actual_duration_status =
+      getAverageExecutionDuration(output);
+  if (!actual_duration_status.ok()) {
+    return absl::Status(actual_duration_status.status().code(),
+                        actual_duration_status.status().message());
+  }
+  std::chrono::nanoseconds actual_duration = *actual_duration_status;
   fortio_output.set_actualduration(actual_duration.count());
   fortio_output.set_jitter(output.options().has_jitter_uniform() &&
                            (output.options().jitter_uniform().nanos() > 0 ||
@@ -292,7 +304,12 @@ std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Outp
   fortio_output.set_numthreads(number_of_connections);
 
   // Get the result that represents all workers (global)
-  const auto& nh_global_result = getGlobalResult(output);
+  absl::optional<const nighthawk::client::Result> nh_global_result_optional =
+      getGlobalResult(output);
+  if (!nh_global_result_optional.has_value()) {
+    return absl::Status(absl::StatusCode::kNotFound, "formatProto global result not found");
+  }
+  const auto& nh_global_result = nh_global_result_optional.value();
 
   // Fill in the actual QPS based on the counters
   const double actual_qps =
@@ -320,7 +337,7 @@ std::string FortioOutputFormatterImpl::formatProto(const nighthawk::client::Outp
   if (statistic != nullptr) {
     fortio_output.mutable_headersizes()->CopyFrom(renderFortioDurationHistogram(*statistic));
   }
-  return Envoy::MessageUtil::getJsonStringFromMessageOrDie(fortio_output, true, true);
+  return Envoy::MessageUtil::getJsonStringFromMessage(fortio_output, true, true).value();
 }
 
 const nighthawk::client::DurationHistogram FortioOutputFormatterImpl::renderFortioDurationHistogram(
@@ -394,9 +411,13 @@ const nighthawk::client::DurationHistogram FortioOutputFormatterImpl::renderFort
   return fortio_histogram;
 }
 
-std::string
+absl::StatusOr<std::string>
 FortioPedanticOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
-  std::string res = FortioOutputFormatterImpl::formatProto(output);
+  absl::StatusOr<std::string> res_status = FortioOutputFormatterImpl::formatProto(output);
+  if (!res_status.ok()) {
+    return res_status;
+  }
+  std::string res = *res_status;
   // clang-format off
   // Fix two types of quirks. We disable linting because we use std::regex directly.
   // This should be OK as the regular expression we use can be trusted.

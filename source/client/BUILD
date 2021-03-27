@@ -152,6 +152,7 @@ envoy_cc_library(
         "//api/client/transform:transform_cc_proto",
         "//include/nighthawk/client:client_includes",
         "//source/common:nighthawk_common_lib",
+        "@com_google_googletest//:gtest",
         "@envoy//source/common/network:utility_lib_with_external_headers",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
     ],
