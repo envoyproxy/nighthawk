@@ -6,12 +6,16 @@
 
 #include "nighthawk/client/output_formatter.h"
 
+#include "external/com_google_googletest/googletest/include/gtest/gtest_prod.h"
 #include "external/envoy/source/common/protobuf/protobuf.h"
 
 #include "api/client/output.pb.h"
 #include "api/client/transform/fortio.pb.h"
 
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/optional.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -28,7 +32,7 @@ protected:
 
 class ConsoleOutputFormatterImpl : public OutputFormatterImpl {
 public:
-  std::string formatProto(const nighthawk::client::Output& output) const override;
+  absl::StatusOr<std::string> formatProto(const nighthawk::client::Output& output) const override;
   static std::string statIdtoFriendlyStatName(absl::string_view stat_id);
 
 private:
@@ -37,32 +41,34 @@ private:
 
 class JsonOutputFormatterImpl : public OutputFormatterImpl {
 public:
-  std::string formatProto(const nighthawk::client::Output& output) const override;
+  absl::StatusOr<std::string> formatProto(const nighthawk::client::Output& output) const override;
 };
 
 class YamlOutputFormatterImpl : public OutputFormatterImpl {
 public:
-  std::string formatProto(const nighthawk::client::Output& output) const override;
+  absl::StatusOr<std::string> formatProto(const nighthawk::client::Output& output) const override;
 };
 
 class DottedStringOutputFormatterImpl : public OutputFormatterImpl {
 public:
-  std::string formatProto(const nighthawk::client::Output& output) const override;
+  absl::StatusOr<std::string> formatProto(const nighthawk::client::Output& output) const override;
 };
 
 class FortioOutputFormatterImpl : public OutputFormatterImpl {
+  FRIEND_TEST(FortioOutputCollectorTest, MissingGlobalResultGetGlobalResult);
+
 public:
-  std::string formatProto(const nighthawk::client::Output& output) const override;
+  absl::StatusOr<std::string> formatProto(const nighthawk::client::Output& output) const override;
 
 protected:
   /**
    * Return the result that represents all workers (the one with the "global" name).
    *
    * @param output the Nighthawk output proto
-   * @return the corresponding global result
-   * @throws NighthawkException if global result is not found
+   * @return the corresponding global result, or absl::Status if failed
    */
-  const nighthawk::client::Result& getGlobalResult(const nighthawk::client::Output& output) const;
+  absl::optional<const nighthawk::client::Result>
+  getGlobalResult(const nighthawk::client::Output& output) const;
 
   /**
    * Return the counter with the specified name.
@@ -97,7 +103,7 @@ protected:
    * @param output the Nighthawk output proto
    * @return the corresponding average execution duration in nanoseconds
    */
-  std::chrono::nanoseconds
+  absl::StatusOr<std::chrono::nanoseconds>
   getAverageExecutionDuration(const nighthawk::client::Output& output) const;
 
   /**
@@ -126,7 +132,7 @@ public:
    * @param output Nighthawk's native output proto that will be transformed.
    * @return std::string Fortio formatted json string.
    */
-  std::string formatProto(const nighthawk::client::Output& output) const override;
+  absl::StatusOr<std::string> formatProto(const nighthawk::client::Output& output) const override;
 };
 
 } // namespace Client
