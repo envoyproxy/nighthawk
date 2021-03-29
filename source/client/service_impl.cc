@@ -42,7 +42,7 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
     response.mutable_error_detail()->set_code(grpc::StatusCode::INTERNAL);
     // TODO(https://github.com/envoyproxy/nighthawk/issues/181): wire through error descriptions, so
     // we can do better here.
-    response.mutable_error_detail()->set_message("Unknown failure");
+    response.mutable_error_detail()->set_message("Unknown failure. See Nighthawk Service logs.");
   }
   *(response.mutable_output()) = output_collector.toProto();
   process.shutdown();
