@@ -43,21 +43,21 @@ protected:
 
 INSTANTIATE_TEST_SUITE_P(
     IpVersions, HttpFilterBaseIntegrationTest,
-    ::testing::Combine(testing::ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()),
-                       testing::ValuesIn({absl::string_view(R"EOF(
+    testing::Combine(testing::ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()),
+                     testing::ValuesIn({absl::string_view(R"EOF(
 name: time-tracking
 typed_config:
   "@type": type.googleapis.com/nighthawk.server.ResponseOptions
   emit_previous_request_delta_in_response_header: "foo"
 )EOF"),
-                                          absl::string_view(R"EOF(
+                                        absl::string_view(R"EOF(
 name: dynamic-delay
 typed_config:
   "@type": type.googleapis.com/nighthawk.server.ResponseOptions
   static_delay: 0.1s
 )EOF"),
-                                          absl::string_view("name: test-server")}),
-                       testing::ValuesIn({TestRequestMethod::GET, TestRequestMethod::POST})));
+                                        absl::string_view("name: test-server")}),
+                     testing::ValuesIn({TestRequestMethod::GET, TestRequestMethod::POST})));
 
 TEST_P(HttpFilterBaseIntegrationTest, NoRequestLevelConfigurationShouldSucceed) {
   Envoy::IntegrationStreamDecoderPtr response = getResponse(getHappyFlowResponseOrigin());

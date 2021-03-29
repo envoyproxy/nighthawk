@@ -3,10 +3,10 @@
 #include <memory>
 
 #include "external/envoy/source/common/http/http1/codec_impl.h"
-#include "external/envoy/source/common/http/request_id_extension_uuid_impl.h"
 #include "external/envoy/source/common/http/utility.h"
 #include "external/envoy/source/common/network/address_impl.h"
 #include "external/envoy/source/common/stream_info/stream_info_impl.h"
+#include "external/envoy/source/extensions/request_id/uuid/config.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -139,7 +139,8 @@ void StreamDecoder::onPoolReady(Envoy::Http::RequestEncoder& encoder,
   }
 }
 
-// TODO(https://github.com/envoyproxy/nighthawk/issues/139): duplicated from the envoy code base.
+// TODO(https://github.com/envoyproxy/nighthawk/issues/139): duplicated from
+// envoy/source/common/router/router.cc
 Envoy::StreamInfo::ResponseFlag
 StreamDecoder::streamResetReasonToResponseFlag(Envoy::Http::StreamResetReason reset_reason) {
   switch (reset_reason) {
@@ -156,6 +157,8 @@ StreamDecoder::streamResetReasonToResponseFlag(Envoy::Http::StreamResetReason re
   case Envoy::Http::StreamResetReason::RemoteReset:
   case Envoy::Http::StreamResetReason::RemoteRefusedStreamReset:
     return Envoy::StreamInfo::ResponseFlag::UpstreamRemoteReset;
+  case Envoy::Http::StreamResetReason::ProtocolError:
+    return Envoy::StreamInfo::ResponseFlag::UpstreamProtocolError;
   }
   NOT_REACHED_GCOVR_EXCL_LINE;
 }
@@ -172,9 +175,11 @@ void StreamDecoder::setupForTracing() {
   Envoy::Http::RequestHeaderMapPtr headers_copy = Envoy::Http::RequestHeaderMapImpl::create();
   Envoy::Http::HeaderMapImpl::copyFrom(*headers_copy, *request_headers_);
   Envoy::Tracing::Decision tracing_decision = {Envoy::Tracing::Reason::ClientForced, true};
-  Envoy::Http::UUIDRequestIDExtension uuid_generator(random_generator_);
+  envoy::extensions::request_id::uuid::v3::UuidRequestIdConfig uuid_request_id_config;
+  Envoy::Extensions::RequestId::UUIDRequestIDExtension uuid_generator(uuid_request_id_config,
+                                                                      random_generator_);
   uuid_generator.set(*headers_copy, true);
-  uuid_generator.setTraceStatus(*headers_copy, Envoy::Http::TraceStatus::Client);
+  uuid_generator.setTraceReason(*headers_copy, Envoy::Tracing::Reason::ClientForced);
   active_span_ = http_tracer_->startSpan(config_, *headers_copy, stream_info_, tracing_decision);
   active_span_->injectContext(*headers_copy);
   request_headers_.reset(headers_copy.release());

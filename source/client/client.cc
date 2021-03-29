@@ -34,6 +34,9 @@
 #include "client/process_impl.h"
 #include "client/remote_process_impl.h"
 
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
+
 using namespace std::chrono_literals;
 
 namespace Nighthawk {
@@ -53,7 +56,7 @@ bool Main::run() {
   Envoy::Event::RealTimeSystem time_system; // NO_CHECK_FORMAT(real_time)
   ProcessPtr process;
   std::unique_ptr<nighthawk::client::NighthawkService::Stub> stub;
-  std::shared_ptr<::grpc::Channel> channel;
+  std::shared_ptr<grpc::Channel> channel;
 
   if (options_->nighthawkService() != "") {
     UriPtr uri;
@@ -81,7 +84,13 @@ bool Main::run() {
     result = process->run(output_collector);
   }
   auto formatter = output_formatter_factory.create(options_->outputFormat());
-  std::cout << formatter->formatProto(output_collector.toProto());
+  absl::StatusOr<std::string> formatted_proto = formatter->formatProto(output_collector.toProto());
+  if (!formatted_proto.ok()) {
+    ENVOY_LOG(error, "An error occured while formatting proto");
+    result = false;
+  } else {
+    std::cout << *formatted_proto;
+  }
   process->shutdown();
   if (!result) {
     ENVOY_LOG(error, "An error ocurred.");

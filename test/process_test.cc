@@ -9,7 +9,6 @@
 #include "external/envoy/test/test_common/registry.h"
 #include "external/envoy/test/test_common/simulated_time_system.h"
 #include "external/envoy/test/test_common/utility.h"
-#include "external/envoy_api/envoy/config/bootstrap/v3/bootstrap.pb.h"
 
 #include "common/uri_impl.h"
 
@@ -181,38 +180,6 @@ TEST_P(ProcessTest, NoFlushWhenCancelExecutionBeforeLoadTestBegin) {
   EXPECT_EQ(numFlushes, 0);
 }
 
-TEST(RuntimeConfiguration, allowEnvoyDeprecatedV2Api) {
-  envoy::config::bootstrap::v3::Bootstrap bootstrap;
-  EXPECT_EQ(bootstrap.DebugString(), "");
-  ProcessImpl::allowEnvoyDeprecatedV2Api(bootstrap);
-  std::cerr << bootstrap.DebugString() << std::endl;
-  EXPECT_EQ(bootstrap.DebugString(), R"EOF(layered_runtime {
-  layers {
-    name: "admin layer"
-    admin_layer {
-    }
-  }
-  layers {
-    name: "static_layer"
-    static_layer {
-      fields {
-        key: "envoy.reloadable_features.allow_prefetch"
-        value {
-          string_value: "true"
-        }
-      }
-      fields {
-        key: "envoy.reloadable_features.enable_deprecated_v2_api"
-        value {
-          string_value: "true"
-        }
-      }
-    }
-  }
-}
-)EOF");
-}
-
 /**
  * Fixture for executing the Nighthawk process with simulated time.
  */
@@ -278,7 +245,9 @@ TEST_P(ProcessTestWithSimTime, ScheduleAheadWorks) {
       ASSERT_EQ(output.results_size(), 1);
       EXPECT_EQ(Envoy::ProtobufUtil::TimeUtil::TimestampToNanoseconds(
                     output.results()[0].execution_start()),
-                options_->scheduled_start().value().time_since_epoch().count());
+                std::chrono::duration_cast<std::chrono::nanoseconds>(
+                    options_->scheduled_start().value().time_since_epoch())
+                    .count());
     });
   }
 }

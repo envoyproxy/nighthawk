@@ -39,7 +39,9 @@ namespace {
  */
 void WriteFileOrThrow(Envoy::Filesystem::Instance& filesystem, absl::string_view path,
                       absl::string_view contents) {
-  Envoy::Filesystem::FilePtr file = filesystem.createFile(std::string(path));
+  Envoy::Filesystem::FilePathAndType file_path_and_type(Envoy::Filesystem::DestinationType::File,
+                                                        path);
+  Envoy::Filesystem::FilePtr file = filesystem.createFile(file_path_and_type);
   const Envoy::Api::IoCallBoolResult open_result =
       file->open(((1 << Envoy::Filesystem::File::Operation::Write)) |
                  (1 << (Envoy::Filesystem::File::Operation::Create)));
@@ -111,7 +113,7 @@ uint32_t AdaptiveLoadClientMain::Run() {
     throw Nighthawk::NighthawkException("Unable to parse file \"" + spec_filename_ +
                                         "\" as a text protobuf (type " + spec.GetTypeName() + ")");
   }
-  std::shared_ptr<::grpc::Channel> channel = grpc::CreateChannel(
+  std::shared_ptr<grpc::Channel> channel = grpc::CreateChannel(
       nighthawk_service_address_, use_tls_ ? grpc::SslCredentials(grpc::SslCredentialsOptions())
                                            : grpc::InsecureChannelCredentials());
   std::unique_ptr<nighthawk::client::NighthawkService::StubInterface> stub(

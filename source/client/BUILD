@@ -9,6 +9,25 @@ licenses(["notice"])  # Apache 2
 envoy_package()
 
 envoy_cc_library(
+    name = "options_impl_lib",
+    srcs = [
+        "options_impl.cc",
+    ],
+    hdrs = [
+        "options_impl.h",
+    ],
+    repository = "@envoy",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":output_formatter_impl_lib",
+        "//include/nighthawk/client:options_lib",
+        "@envoy//source/common/protobuf:message_validator_lib_with_external_headers",
+        "@envoy//source/common/protobuf:utility_lib_with_external_headers",
+        "@envoy//source/server:options_lib_with_external_headers",
+    ],
+)
+
+envoy_cc_library(
     name = "nighthawk_client_lib",
     srcs = [
         "benchmark_client_impl.cc",
@@ -16,7 +35,6 @@ envoy_cc_library(
         "client_worker_impl.cc",
         "factories_impl.cc",
         "flush_worker_impl.cc",
-        "options_impl.cc",
         "process_impl.cc",
         "remote_process_impl.cc",
         "sni_utility.cc",
@@ -28,7 +46,6 @@ envoy_cc_library(
         "client_worker_impl.h",
         "factories_impl.h",
         "flush_worker_impl.h",
-        "options_impl.h",
         "process_impl.h",
         "remote_process_impl.h",
         "sni_utility.h",
@@ -41,6 +58,7 @@ envoy_cc_library(
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
+        ":options_impl_lib",
         ":output_collector_impl_lib",
         ":output_formatter_impl_lib",
         "//api/client:base_cc_proto",
@@ -84,10 +102,9 @@ envoy_cc_library(
         "@envoy//source/exe:platform_header_lib_with_external_headers",
         "@envoy//source/exe:platform_impl_lib",
         "@envoy//source/exe:process_wide_lib_with_external_headers",
-        "@envoy//source/common/http:request_id_extension_lib_with_external_headers",
+        "@envoy//source/extensions/request_id/uuid:config_with_external_headers",
         "@envoy//source/extensions/transport_sockets:well_known_names_with_external_headers",
         "@envoy//source/extensions/transport_sockets/tls:context_lib_with_external_headers",
-        "@envoy//source/server:options_lib_with_external_headers",
         "@envoy//source/server:server_lib_with_external_headers",
         "@envoy//source/server/config_validation:admin_lib_with_external_headers",
         "@envoy//include/envoy/http:protocol_interface_with_external_headers",
@@ -135,6 +152,7 @@ envoy_cc_library(
         "//api/client/transform:transform_cc_proto",
         "//include/nighthawk/client:client_includes",
         "//source/common:nighthawk_common_lib",
+        "@com_google_googletest//:gtest",
         "@envoy//source/common/network:utility_lib_with_external_headers",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
     ],

@@ -74,6 +74,7 @@ public:
   void decodeData(Envoy::Buffer::Instance&, bool end_stream) override;
   void decodeTrailers(Envoy::Http::ResponseTrailerMapPtr&& trailers) override;
   void decodeMetadata(Envoy::Http::MetadataMapPtr&&) override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; }
+  void dumpState(std::ostream&, int) const override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; }
 
   // Http::StreamCallbacks
   void onResetStream(Envoy::Http::StreamResetReason reason,
