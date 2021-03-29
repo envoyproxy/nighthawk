@@ -42,7 +42,18 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
     response.mutable_error_detail()->set_code(grpc::StatusCode::INTERNAL);
     // TODO(https://github.com/envoyproxy/nighthawk/issues/181): wire through error descriptions, so
     // we can do better here.
-    response.mutable_error_detail()->set_message("Unknown failure. See Nighthawk Service logs.");
+    response.mutable_error_detail()->set_message(
+        "Unknown failure. See Nighthawk Service logs. Make sure the URI is well formed and the DNS "
+        "name resolves (if applicable). Check the output for problematic counter values. The "
+        "default Nighthawk failure predicates report failure if (1) Nighthawk could not connect to "
+        "the target (see 'benchmark.pool_connection_failure' counter; check the address and port "
+        "number, and try explicitly setting --address-family v4 or v6, especially when using DNS; "
+        "instead of localhost try 127.0.0.1 or ::1 explicitly), (2) the protocol was not supported "
+        "by the target (see 'benchmark.stream_resets' counter; check http/https in the URI, --h2), "
+        "(3) the target returned a 4xx or 5xx HTTP response code (see 'benchmark.http_4xx' and "
+        "'benchmark.http_5xx' counters; check the URI path and the server config), or (4) a custom "
+        "gRPC RequestSource failed. To relax expectations, set explicit failure predicates in the "
+        "benchmark request.");
   }
   *(response.mutable_output()) = output_collector.toProto();
   process.shutdown();
