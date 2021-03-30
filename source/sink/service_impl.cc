@@ -11,7 +11,7 @@ namespace Nighthawk {
 
 using ::Envoy::Protobuf::util::MessageDifferencer;
 
-SinkServiceImpl::SinkServiceImpl(std::unique_ptr<Sink>&& sink) : sink_(std::move(sink)) {}
+SinkServiceImpl::SinkServiceImpl(std::unique_ptr<Sink> sink) : sink_(std::move(sink)) {}
 
 grpc::Status SinkServiceImpl::StoreExecutionResponseStream(
     grpc::ServerContext*, grpc::ServerReader<nighthawk::StoreExecutionRequest>* request_reader,
@@ -20,7 +20,7 @@ grpc::Status SinkServiceImpl::StoreExecutionResponseStream(
   while (request_reader->Read(&request)) {
     ENVOY_LOG(info, "StoreExecutionResponseStream request {}", request.DebugString());
     const nighthawk::client::ExecutionResponse& response_to_store = request.execution_response();
-    const auto status = sink_->StoreExecutionResultPiece(response_to_store);
+    const absl::Status status = sink_->StoreExecutionResultPiece(response_to_store);
     if (!status.ok()) {
       ENVOY_LOG(error, "StoreExecutionResponseStream failure: {}", status.ToString());
       return grpc::Status(grpc::StatusCode::INTERNAL, status.ToString());
@@ -29,42 +29,38 @@ grpc::Status SinkServiceImpl::StoreExecutionResponseStream(
   return grpc::Status::OK;
 };
 
-grpc::Status SinkServiceImpl::SinkRequestStream(
-    grpc::ServerContext*,
-    grpc::ServerReaderWriter<nighthawk::SinkResponse, nighthawk::SinkRequest>* stream) {
-  nighthawk::SinkRequest request;
-  absl::Status status = absl::OkStatus();
-  while (stream->Read(&request)) {
-    ENVOY_LOG(trace, "Inbound SinkRequest {}", request.DebugString());
-    absl::StatusOr<std::vector<nighthawk::client::ExecutionResponse>>
-        status_or_execution_responses = sink_->LoadExecutionResult(request.execution_id());
-    status.Update(status_or_execution_responses.status());
-    if (status.ok()) {
-      const std::vector<nighthawk::client::ExecutionResponse>& responses =
-          status_or_execution_responses.value();
-      absl::StatusOr<nighthawk::client::ExecutionResponse> response =
-          mergeExecutionResponses(request.execution_id(), responses);
-      status.Update(response.status());
-      if (status.ok()) {
-        nighthawk::SinkResponse sink_response;
-        *(sink_response.mutable_execution_response()) = response.value();
-        if (!stream->Write(sink_response)) {
-          status.Update(
-              absl::Status(absl::StatusCode::kInternal, "Failure writing response to stream."));
-        }
-      }
-    }
-    if (!status.ok()) {
-      ENVOY_LOG(error, "Failure while handling SinkRequest: {} -> {}", request.DebugString(),
-                status.ToString());
-      break;
-    }
-  }
-  grpc::Status grpc_status =
+grpc::Status SinkServiceImpl::abslStatusToGrpcStatus(const absl::Status status) {
+  const grpc::Status grpc_status =
       status.ok() ? grpc::Status::OK : grpc::Status(grpc::StatusCode::INTERNAL, status.ToString());
   ENVOY_LOG(trace, "Finishing stream with status {} / message {}.", grpc_status.error_code(),
             grpc_status.error_message());
   return grpc_status;
+}
+
+grpc::Status SinkServiceImpl::SinkRequestStream(
+    grpc::ServerContext*,
+    grpc::ServerReaderWriter<nighthawk::SinkResponse, nighthawk::SinkRequest>* stream) {
+  nighthawk::SinkRequest request;
+  while (stream->Read(&request)) {
+    ENVOY_LOG(trace, "Inbound SinkRequest {}", request.DebugString());
+    absl::StatusOr<std::vector<nighthawk::client::ExecutionResponse>> execution_responses =
+        sink_->LoadExecutionResult(request.execution_id());
+    if (!execution_responses.status().ok()) {
+      return abslStatusToGrpcStatus(execution_responses.status());
+    }
+    absl::StatusOr<nighthawk::client::ExecutionResponse> response =
+        mergeExecutionResponses(request.execution_id(), *execution_responses);
+    if (!response.status().ok()) {
+      return abslStatusToGrpcStatus(response.status());
+    }
+    nighthawk::SinkResponse sink_response;
+    *(sink_response.mutable_execution_response()) = *response;
+    if (!stream->Write(sink_response)) {
+      return abslStatusToGrpcStatus(
+          absl::Status(absl::StatusCode::kInternal, "Failure writing response to stream."));
+    }
+  }
+  return abslStatusToGrpcStatus(absl::OkStatus());
 }
 
 absl::Status mergeOutput(const nighthawk::client::Output& input_to_merge,
@@ -72,9 +68,9 @@ absl::Status mergeOutput(const nighthawk::client::Output& input_to_merge,
   if (!merge_target.has_options()) {
     // If no options are set, that means this is the first part of the merge.
     // Set some properties that shouldbe equal amongst all Output instances.
-    *(merge_target.mutable_options()) = input_to_merge.options();
-    *(merge_target.mutable_timestamp()) = input_to_merge.timestamp();
-    *(merge_target.mutable_version()) = input_to_merge.version();
+    *merge_target.mutable_options() = input_to_merge.options();
+    *merge_target.mutable_timestamp() = input_to_merge.timestamp();
+    *merge_target.mutable_version() = input_to_merge.version();
   } else {
     // Options used should not diverge for a executions under a single execution id.
     // Versions probably shouldn't either. We sanity check these things here, and
@@ -93,7 +89,7 @@ absl::Status mergeOutput(const nighthawk::client::Output& input_to_merge,
     }
   }
   // Append all input results into our own results.
-  for (const auto& result : input_to_merge.results()) {
+  for (const nighthawk::client::Result& result : input_to_merge.results()) {
     merge_target.add_results()->MergeFrom(result);
   }
   return absl::OkStatus();

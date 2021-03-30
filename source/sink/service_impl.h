@@ -52,7 +52,7 @@ public:
    *
    * @param sink Sink backend that will be used to load and store.
    */
-  SinkServiceImpl(std::unique_ptr<Sink>&& sink);
+  SinkServiceImpl(std::unique_ptr<Sink> sink);
 
   grpc::Status
   StoreExecutionResponseStream(grpc::ServerContext* context,
@@ -64,6 +64,7 @@ public:
       grpc::ServerReaderWriter<nighthawk::SinkResponse, nighthawk::SinkRequest>* stream) override;
 
 private:
+  grpc::Status abslStatusToGrpcStatus(const absl::Status status);
   std::unique_ptr<Sink> sink_;
 };
 

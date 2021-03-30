@@ -77,14 +77,15 @@ TEST_P(SinkServiceTest, LoadSingleResultWithJustExecutionResponse) {
   response.mutable_execution_id()->assign(kTestId);
   response.mutable_output();
   request_.set_execution_id(kTestId);
-  auto r = stub_->SinkRequestStream(&context_);
+  std::unique_ptr<grpc::ClientReaderWriter<SinkRequest, SinkResponse>> reader_writer =
+      stub_->SinkRequestStream(&context_);
   EXPECT_CALL(*sink_, LoadExecutionResult(kTestId)).WillOnce(Return(response_from_mock_sink));
-  r->Write(request_, {});
-  EXPECT_TRUE(r->WritesDone());
-  ASSERT_TRUE(r->Read(&response_));
+  reader_writer->Write(request_, {});
+  EXPECT_TRUE(reader_writer->WritesDone());
+  ASSERT_TRUE(reader_writer->Read(&response_));
   EXPECT_TRUE(response_.has_execution_response());
   EXPECT_EQ(response_.execution_response().execution_id(), kTestId);
-  EXPECT_TRUE(r->Finish().ok());
+  EXPECT_TRUE(reader_writer->Finish().ok());
 }
 
 TEST_P(SinkServiceTest, LoadSingleSinkYieldsWrongExecutionId) {
@@ -94,12 +95,13 @@ TEST_P(SinkServiceTest, LoadSingleSinkYieldsWrongExecutionId) {
       std::vector<ExecutionResponse>{{}};
   response_from_mock_sink.value().at(0).mutable_execution_id()->assign("wrong-id");
   request_.set_execution_id(kTestId);
-  auto r = stub_->SinkRequestStream(&context_);
+  std::unique_ptr<grpc::ClientReaderWriter<SinkRequest, SinkResponse>> reader_writer =
+      stub_->SinkRequestStream(&context_);
   EXPECT_CALL(*sink_, LoadExecutionResult(kTestId)).WillOnce(Return(response_from_mock_sink));
-  r->Write(request_, {});
-  EXPECT_TRUE(r->WritesDone());
-  EXPECT_FALSE(r->Read(&response_));
-  grpc::Status status = r->Finish();
+  reader_writer->Write(request_, {});
+  EXPECT_TRUE(reader_writer->WritesDone());
+  EXPECT_FALSE(reader_writer->Read(&response_));
+  grpc::Status status = reader_writer->Finish();
   EXPECT_FALSE(status.ok());
   EXPECT_EQ(status.error_message(), "INTERNAL: Expected execution_id 'test-id' got 'wrong-id'");
 }
@@ -110,12 +112,13 @@ TEST_P(SinkServiceTest, LoadSingleSinkYieldsEmptyResultSet) {
   absl::StatusOr<std::vector<ExecutionResponse>> response_from_mock_sink =
       std::vector<ExecutionResponse>{};
   request_.set_execution_id(kTestId);
-  auto r = stub_->SinkRequestStream(&context_);
+  std::unique_ptr<grpc::ClientReaderWriter<SinkRequest, SinkResponse>> reader_writer =
+      stub_->SinkRequestStream(&context_);
   EXPECT_CALL(*sink_, LoadExecutionResult(kTestId)).WillOnce(Return(response_from_mock_sink));
-  r->Write(request_, {});
-  EXPECT_TRUE(r->WritesDone());
-  EXPECT_FALSE(r->Read(&response_));
-  grpc::Status status = r->Finish();
+  reader_writer->Write(request_, {});
+  EXPECT_TRUE(reader_writer->WritesDone());
+  EXPECT_FALSE(reader_writer->Read(&response_));
+  grpc::Status status = reader_writer->Finish();
   EXPECT_FALSE(status.ok());
   EXPECT_EQ(status.error_message(), "NOT_FOUND: No results");
 }
@@ -139,13 +142,14 @@ TEST_P(SinkServiceTest, LoadTwoResultsWithExecutionResponseWhereOneHasErrorDetai
 
   request_.set_execution_id(kTestId);
 
-  auto r = stub_->SinkRequestStream(&context_);
+  std::unique_ptr<grpc::ClientReaderWriter<SinkRequest, SinkResponse>> reader_writer =
+      stub_->SinkRequestStream(&context_);
   EXPECT_CALL(*sink_, LoadExecutionResult(kTestId)).WillOnce(Return(response_from_mock_sink));
-  r->Write(request_, {});
-  EXPECT_TRUE(r->WritesDone());
+  reader_writer->Write(request_, {});
+  EXPECT_TRUE(reader_writer->WritesDone());
 
   // Make sure that the response we get reflects what the mock sink's Load call returned.
-  ASSERT_TRUE(r->Read(&response_));
+  ASSERT_TRUE(reader_writer->Read(&response_));
   EXPECT_TRUE(response_.has_execution_response());
   EXPECT_EQ(response_.execution_response().execution_id(), kTestId);
   ASSERT_TRUE(response_.execution_response().has_error_detail());
@@ -158,18 +162,19 @@ TEST_P(SinkServiceTest, LoadTwoResultsWithExecutionResponseWhereOneHasErrorDetai
   Envoy::MessageUtil::unpackTo(response_.execution_response().error_detail().details(0), status);
   // TODO(XXX): proper equivalence test.
   EXPECT_EQ(status.DebugString(), error_detail->DebugString());
-  EXPECT_TRUE(r->Finish().ok());
+  EXPECT_TRUE(reader_writer->Finish().ok());
 }
 
 TEST_P(SinkServiceTest, LoadWhenSinkYieldsFailureStatus) {
   absl::StatusOr<std::vector<ExecutionResponse>> response_from_mock_sink =
       absl::InvalidArgumentError("test");
-  auto r = stub_->SinkRequestStream(&context_);
+  std::unique_ptr<grpc::ClientReaderWriter<SinkRequest, SinkResponse>> reader_writer =
+      stub_->SinkRequestStream(&context_);
   EXPECT_CALL(*sink_, LoadExecutionResult(_)).WillOnce(Return(response_from_mock_sink));
-  r->Write(request_, {});
-  EXPECT_TRUE(r->WritesDone());
-  EXPECT_FALSE(r->Read(&response_));
-  grpc::Status status = r->Finish();
+  reader_writer->Write(request_, {});
+  EXPECT_TRUE(reader_writer->WritesDone());
+  EXPECT_FALSE(reader_writer->Read(&response_));
+  grpc::Status status = reader_writer->Finish();
   EXPECT_FALSE(status.ok());
   EXPECT_EQ(status.error_message(), "INVALID_ARGUMENT: test");
 }
@@ -177,12 +182,13 @@ TEST_P(SinkServiceTest, LoadWhenSinkYieldsFailureStatus) {
 TEST_P(SinkServiceTest, ResultWriteFailure) {
   // This test covers the flow where the gRPC service fails while writing a reply message to the
   // stream. We don't have any expectations other then that the service doesn't crash in that flow.
-  auto r = stub_->SinkRequestStream(&context_);
+  std::unique_ptr<grpc::ClientReaderWriter<SinkRequest, SinkResponse>> reader_writer =
+      stub_->SinkRequestStream(&context_);
   absl::Notification notification;
   EXPECT_CALL(*sink_, LoadExecutionResult(_))
       .WillOnce(testing::DoAll(Invoke([&notification]() { notification.Notify(); }),
                                Return(std::vector<ExecutionResponse>{{}, {}})));
-  EXPECT_TRUE(r->Write(request_, {}));
+  EXPECT_TRUE(reader_writer->Write(request_, {}));
   // Wait for the expected invokation to avoid a race with test execution end.
   notification.WaitForNotification();
   context_.TryCancel();
@@ -205,13 +211,14 @@ TEST_P(SinkServiceTest, LoadWithOutputMergeFailure) {
   request_.set_execution_id(kTestId);
   nighthawk::client::CommandLineOptions* options_2 = response_2.mutable_output()->mutable_options();
   options_2->mutable_requests_per_second()->set_value(2);
-  auto r = stub_->SinkRequestStream(&context_);
+  std::unique_ptr<grpc::ClientReaderWriter<SinkRequest, SinkResponse>> reader_writer =
+      stub_->SinkRequestStream(&context_);
   EXPECT_CALL(*sink_, LoadExecutionResult(kTestId)).WillOnce(Return(response_from_mock_sink));
-  r->Write(request_, {});
-  EXPECT_TRUE(r->WritesDone());
-  ASSERT_FALSE(r->Read(&response_));
+  reader_writer->Write(request_, {});
+  EXPECT_TRUE(reader_writer->WritesDone());
+  ASSERT_FALSE(reader_writer->Read(&response_));
   EXPECT_FALSE(response_.has_execution_response());
-  grpc::Status status = r->Finish();
+  grpc::Status status = reader_writer->Finish();
   EXPECT_FALSE(status.ok());
   EXPECT_THAT(status.error_message(), HasSubstr("INTERNAL: Options divergence detected"));
 }
@@ -219,39 +226,43 @@ TEST_P(SinkServiceTest, LoadWithOutputMergeFailure) {
 TEST_P(SinkServiceTest, StoreExecutionResponseStreamOK) {
   StoreExecutionResponse response;
   ExecutionResponse result_to_store;
-  auto r = stub_->StoreExecutionResponseStream(&context_, &response);
+  std::unique_ptr<::grpc::ClientWriter<::nighthawk::StoreExecutionRequest>> writer =
+      stub_->StoreExecutionResponseStream(&context_, &response);
   EXPECT_CALL(*sink_, StoreExecutionResultPiece(_))
       .WillOnce(Return(absl::OkStatus()))
       .WillOnce(Return(absl::OkStatus()));
-  EXPECT_TRUE(r->Write({}));
-  EXPECT_TRUE(r->Write({}));
-  EXPECT_TRUE(r->WritesDone());
-  grpc::Status status = r->Finish();
+  EXPECT_TRUE(writer->Write({}));
+  EXPECT_TRUE(writer->Write({}));
+  EXPECT_TRUE(writer->WritesDone());
+  grpc::Status status = writer->Finish();
   EXPECT_TRUE(status.ok());
 }
 
 TEST_P(SinkServiceTest, StoreExecutionResponseStreamFailure) {
   StoreExecutionResponse response;
   ExecutionResponse result_to_store;
-  auto r = stub_->StoreExecutionResponseStream(&context_, &response);
+  std::unique_ptr<::grpc::ClientWriter<::nighthawk::StoreExecutionRequest>> writer =
+      stub_->StoreExecutionResponseStream(&context_, &response);
   EXPECT_CALL(*sink_, StoreExecutionResultPiece(_))
       .WillOnce(Return(absl::InvalidArgumentError("test")));
-  EXPECT_TRUE(r->Write({}));
-  EXPECT_TRUE(r->WritesDone());
-  grpc::Status status = r->Finish();
+  EXPECT_TRUE(writer->Write({}));
+  EXPECT_TRUE(writer->WritesDone());
+  grpc::Status status = writer->Finish();
   EXPECT_FALSE(status.ok());
 }
 
 TEST(ResponseVectorHandling, EmptyVectorYieldsNotOK) {
   std::vector<ExecutionResponse> responses;
-  absl::StatusOr<ExecutionResponse> response = mergeExecutionResponses("foo", responses);
+  absl::StatusOr<ExecutionResponse> response =
+      mergeExecutionResponses(/*execution_id=*/"foo", responses);
   EXPECT_FALSE(response.ok());
 }
 
 TEST(ResponseVectorHandling, NoResultsInOutputYieldsNone) {
   ExecutionResponse result;
   std::vector<ExecutionResponse> responses{result, result, result};
-  absl::StatusOr<ExecutionResponse> response = mergeExecutionResponses("", responses);
+  absl::StatusOr<ExecutionResponse> response =
+      mergeExecutionResponses(/*execution_id=*/"", responses);
   EXPECT_TRUE(response.ok());
   EXPECT_EQ(response.value().output().results().size(), 0);
 }
@@ -260,26 +271,24 @@ TEST(ResponseVectorHandling, MergeThreeYieldsThree) {
   ExecutionResponse result;
   result.mutable_output()->add_results();
   std::vector<ExecutionResponse> responses{result, result, result};
-  absl::StatusOr<ExecutionResponse> response = mergeExecutionResponses("", responses);
+  absl::StatusOr<ExecutionResponse> response =
+      mergeExecutionResponses(/*execution_id=*/"", responses);
   EXPECT_TRUE(response.ok());
   EXPECT_EQ(response.value().output().results().size(), 3);
 }
 
 TEST(MergeOutputs, MergeDivergingOptionsInResultsFails) {
-  const std::string kTestId = "test-id";
   std::vector<ExecutionResponse> responses;
-  ExecutionResponse response_1;
-  response_1.mutable_execution_id()->assign(kTestId);
-  nighthawk::client::CommandLineOptions* options_1 = response_1.mutable_output()->mutable_options();
+  nighthawk::client::Output output_1;
+  nighthawk::client::CommandLineOptions* options_1 = output_1.mutable_options();
   options_1->mutable_requests_per_second()->set_value(1);
-  ExecutionResponse response_2;
-  response_2.mutable_execution_id()->assign(kTestId);
-  nighthawk::client::CommandLineOptions* options_2 = response_2.mutable_output()->mutable_options();
+  nighthawk::client::Output output_2;
+  nighthawk::client::CommandLineOptions* options_2 = output_2.mutable_options();
   options_2->mutable_requests_per_second()->set_value(2);
   nighthawk::client::Output merged_output;
-  absl::Status status_1 = mergeOutput(response_1.output(), merged_output);
+  absl::Status status_1 = mergeOutput(output_1, merged_output);
   EXPECT_TRUE(status_1.ok());
-  absl::Status status_2 = mergeOutput(response_2.output(), merged_output);
+  absl::Status status_2 = mergeOutput(output_2, merged_output);
   EXPECT_FALSE(status_2.ok());
   EXPECT_THAT(status_2.message(), HasSubstr("Options divergence detected"));
 }
