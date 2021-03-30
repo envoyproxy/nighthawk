@@ -5,6 +5,7 @@
 
 #include "sink/sink_impl.h"
 
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 namespace Nighthawk {
@@ -112,9 +113,9 @@ TEST(FileSinkTest, BadGuidInvalidCharacter) {
 
 TEST(FileSinkTest, CorruptedFile) {
   FileSinkImpl sink;
-  const std::string execution_id = "14e75b2a-3e31-4162-9279-add1e54091f9";
+  Envoy::Random::RandomGeneratorImpl random;
+  const std::string execution_id = random.uuid();
   std::error_code error_code;
-  std::filesystem::remove_all("/tmp/nh/" + execution_id + "/", error_code);
   nighthawk::client::ExecutionResponse result_to_store;
   *(result_to_store.mutable_execution_id()) = execution_id;
   ASSERT_TRUE(sink.StoreExecutionResultPiece(result_to_store).ok());
@@ -128,9 +129,8 @@ TEST(FileSinkTest, CorruptedFile) {
   }
   status = sink.LoadExecutionResult(execution_id);
   ASSERT_FALSE(status.ok());
-  EXPECT_EQ(status.status().message(),
-            "Failed to parse ExecutionResponse "
-            "'\"/tmp/nh/14e75b2a-3e31-4162-9279-add1e54091f9/badfile\"'.");
+  EXPECT_THAT(status.status().message(), testing::HasSubstr("Failed to parse ExecutionResponse"));
+  std::filesystem::remove_all("/tmp/nh/" + execution_id + "/", error_code);
 }
 
 } // namespace
