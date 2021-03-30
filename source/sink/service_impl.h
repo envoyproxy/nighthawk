@@ -64,7 +64,7 @@ public:
       grpc::ServerReaderWriter<nighthawk::SinkResponse, nighthawk::SinkRequest>* stream) override;
 
 private:
-  grpc::Status abslStatusToGrpcStatus(const absl::Status status);
+  grpc::Status abslStatusToGrpcStatus(const absl::Status& status);
   std::unique_ptr<Sink> sink_;
 };
 

@@ -29,8 +29,8 @@ grpc::Status SinkServiceImpl::StoreExecutionResponseStream(
   return grpc::Status::OK;
 };
 
-grpc::Status SinkServiceImpl::abslStatusToGrpcStatus(const absl::Status status) {
-  const grpc::Status grpc_status =
+grpc::Status SinkServiceImpl::abslStatusToGrpcStatus(const absl::Status& status) {
+  grpc::Status grpc_status =
       status.ok() ? grpc::Status::OK : grpc::Status(grpc::StatusCode::INTERNAL, status.ToString());
   ENVOY_LOG(trace, "Finishing stream with status {} / message {}.", grpc_status.error_code(),
             grpc_status.error_message());
