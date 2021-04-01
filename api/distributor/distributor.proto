@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package nighthawk;
 
+import "google/rpc/status.proto";
+
 import "envoy/config/core/v3/address.proto";
 
 import "api/client/service.proto";
@@ -16,8 +18,18 @@ message DistributedRequest {
   repeated envoy.config.core.v3.Address services = 3 [(validate.rules).repeated .min_items = 1];
 }
 
+message DistributedResponseFragment {
+  oneof distributed_response_type {
+    google.rpc.Status error = 1;
+    nighthawk.client.ExecutionResponse execution_response = 2;
+  }
+  // The service that is associated to this fragment.
+  envoy.config.core.v3.Address service = 3;
+}
+
 // Carries responses associated with a DistributedRequest.
 message DistributedResponse {
+  repeated DistributedResponseFragment fragment = 1;
 }
 
 // Service which distributes messages to one or more other services for handling, and streams back
