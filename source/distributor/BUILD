@@ -40,5 +40,7 @@ envoy_cc_library(
         "@envoy//source/common/common:assert_lib_with_external_headers",
         "@envoy//source/common/common:minimal_logger_lib_with_external_headers",
         "@envoy//source/common/common:statusor_lib_with_external_headers",
+        "@envoy//source/common/protobuf:message_validator_lib_with_external_headers",
+        "@envoy//source/common/protobuf:utility_lib_with_external_headers",
     ],
 )

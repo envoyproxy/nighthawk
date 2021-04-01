@@ -41,6 +41,11 @@ public:
     builder.RegisterService(service_.get());
     server_ = builder.BuildAndStart();
     setupGrpcClient();
+    request_.mutable_execution_request()->mutable_start_request();
+    envoy::config::core::v3::SocketAddress* socket_address =
+        request_.add_services()->mutable_socket_address();
+    socket_address->set_address("127.0.0.1");
+    socket_address->set_port_value(80);
   }
 
   void TearDown() override { server_->Shutdown(); }
@@ -80,6 +85,7 @@ INSTANTIATE_TEST_SUITE_P(IpVersions, DistributorServiceTest,
                          Envoy::TestUtility::ipTestParamsToString);
 
 TEST_P(DistributorServiceTest, NoExecutionRequestFails) {
+  request_.clear_execution_request();
   std::unique_ptr<grpc::ClientReaderWriter<DistributedRequest, DistributedResponse>> reader_writer =
       stub_->DistributedRequestStream(&context_);
   EXPECT_TRUE(reader_writer->Write(request_, {}));
@@ -94,36 +100,34 @@ TEST_P(DistributorServiceTest, NoExecutionRequestFails) {
 TEST_P(DistributorServiceTest, NoServicesSpecifiedFails) {
   std::unique_ptr<grpc::ClientReaderWriter<DistributedRequest, DistributedResponse>> reader_writer =
       stub_->DistributedRequestStream(&context_);
-  request_.mutable_execution_request();
+  request_.clear_services();
   reader_writer->Write(request_, {});
   EXPECT_TRUE(reader_writer->WritesDone());
   ASSERT_FALSE(reader_writer->Read(&response_));
   auto status = reader_writer->Finish();
   EXPECT_EQ(status.error_code(), grpc::StatusCode::INVALID_ARGUMENT);
-  EXPECT_THAT(status.error_message(),
-              HasSubstr("DistributedRequest.ExecutionRequest MUST specify one or more services"));
+  EXPECT_THAT(
+      status.error_message(),
+      HasSubstr("DistributedRequestValidationError.Services: value must contain at least 1 item"));
 }
 
 TEST_P(DistributorServiceTest, NoStartRequestSpecifiedFails) {
   std::unique_ptr<grpc::ClientReaderWriter<DistributedRequest, DistributedResponse>> reader_writer =
       stub_->DistributedRequestStream(&context_);
-  request_.mutable_execution_request();
-  request_.add_services();
+  request_.mutable_execution_request()->clear_start_request();
   EXPECT_TRUE(reader_writer->Write(request_, {}));
   EXPECT_TRUE(reader_writer->WritesDone());
   ASSERT_FALSE(reader_writer->Read(&response_));
   auto status = reader_writer->Finish();
   EXPECT_EQ(status.error_code(), grpc::StatusCode::INVALID_ARGUMENT);
   EXPECT_THAT(status.error_message(),
-              HasSubstr("DistributedRequest.ExecutionRequest MUST have StartRequest"));
+              HasSubstr("embedded message failed validation | caused by field: "
+                        "\"command_specific_options\", reason: is required"));
 }
 
 TEST_P(DistributorServiceTest, NoOptionsForStartRequestFails) {
   std::unique_ptr<grpc::ClientReaderWriter<DistributedRequest, DistributedResponse>> reader_writer =
       stub_->DistributedRequestStream(&context_);
-  request_.add_services();
-  ExecutionRequest* execution_request = request_.mutable_execution_request();
-  execution_request->mutable_start_request();
   reader_writer->Write(request_, {});
   EXPECT_TRUE(reader_writer->WritesDone());
   ASSERT_FALSE(reader_writer->Read(&response_));
@@ -137,7 +141,6 @@ TEST_P(DistributorServiceTest, NoOptionsForStartRequestFails) {
 TEST_P(DistributorServiceTest, ValidStartRequestNonExistingServiceYieldsResponseAndGrpcErrorCode) {
   std::unique_ptr<grpc::ClientReaderWriter<DistributedRequest, DistributedResponse>> reader_writer =
       stub_->DistributedRequestStream(&context_);
-  request_.add_services();
   ExecutionRequest* execution_request = request_.mutable_execution_request();
   execution_request->mutable_start_request()->mutable_options();
   EXPECT_TRUE(reader_writer->Write(request_, {}));
@@ -162,8 +165,7 @@ TEST_P(DistributorServiceWithMockServiceClientTest, DistributeToTwoServicesYield
   EXPECT_CALL(*mock_nighthawk_service_client_, PerformNighthawkBenchmark(_, _)).Times(2);
   std::unique_ptr<grpc::ClientReaderWriter<DistributedRequest, DistributedResponse>> reader_writer =
       stub_->DistributedRequestStream(&context_);
-  request_.add_services();
-  request_.add_services();
+  *request_.add_services() = request_.services(0);
   ExecutionRequest* execution_request = request_.mutable_execution_request();
   execution_request->mutable_start_request()->mutable_options();
   EXPECT_TRUE(reader_writer->Write(request_, {}));
@@ -174,14 +176,14 @@ TEST_P(DistributorServiceWithMockServiceClientTest, DistributeToTwoServicesYield
   EXPECT_EQ(response_.fragment_size(), 2);
 }
 
-TEST_P(DistributorServiceWithMockServiceClientTest, DistributeToSingleServiceErrorYieldsFailure) {
+TEST_P(DistributorServiceWithMockServiceClientTest,
+       DistributeToSingleServiceErrorReplyYieldsFailure) {
   const std::string kExpectedErrorMessage = "artificial nighthawk service error";
   EXPECT_CALL(*mock_nighthawk_service_client_, PerformNighthawkBenchmark(_, _))
       .WillOnce(Return(absl::DataLossError(kExpectedErrorMessage)));
 
   std::unique_ptr<grpc::ClientReaderWriter<DistributedRequest, DistributedResponse>> reader_writer =
       stub_->DistributedRequestStream(&context_);
-  request_.add_services();
   ExecutionRequest* execution_request = request_.mutable_execution_request();
   execution_request->mutable_start_request()->mutable_options();
   EXPECT_TRUE(reader_writer->Write(request_, {}));
@@ -204,7 +206,6 @@ TEST_P(DistributorServiceWithMockServiceClientTest, ServiceSideWriteFailure) {
                                Return(nighthawk::client::ExecutionResponse())));
   std::unique_ptr<grpc::ClientReaderWriter<DistributedRequest, DistributedResponse>> reader_writer =
       stub_->DistributedRequestStream(&context_);
-  request_.add_services();
   ExecutionRequest* execution_request = request_.mutable_execution_request();
   execution_request->mutable_start_request()->mutable_options();
   EXPECT_TRUE(reader_writer->Write(request_, {}));

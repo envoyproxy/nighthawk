@@ -5,22 +5,24 @@
 #include "envoy/config/core/v3/base.pb.h"
 
 #include "external/envoy/source/common/common/assert.h"
+#include "external/envoy/source/common/protobuf/message_validator_impl.h"
+#include "external/envoy/source/common/protobuf/utility.h"
+
+#include "api/distributor/distributor.pb.validate.h"
 
 namespace Nighthawk {
 
 ::grpc::Status NighthawkDistributorServiceImpl::validateRequest(
     const ::nighthawk::DistributedRequest& request) const {
-  // xxx: why the std::strings() below?
+  auto& validation_visitor = Envoy::ProtobufMessage::getStrictValidationVisitor();
+  try {
+    Envoy::MessageUtil::validate(request, validation_visitor);
+  } catch (const Envoy::ProtoValidationException& e) {
+    return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, e.what());
+  }
+
   if (request.has_execution_request()) {
-    if (request.services_size() == 0) {
-      return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT,
-                          "DistributedRequest.ExecutionRequest MUST specify one or more services.");
-    }
     const ::nighthawk::client::ExecutionRequest& execution_request = request.execution_request();
-    if (!execution_request.has_start_request()) {
-      return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT,
-                          "DistributedRequest.ExecutionRequest MUST have StartRequest.");
-    }
     if (!execution_request.start_request().has_options()) {
       return grpc::Status(
           grpc::StatusCode::INVALID_ARGUMENT,
