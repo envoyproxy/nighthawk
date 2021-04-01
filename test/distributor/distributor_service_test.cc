@@ -158,10 +158,11 @@ INSTANTIATE_TEST_SUITE_P(IpVersions, DistributorServiceWithMockServiceClientTest
                          ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()),
                          Envoy::TestUtility::ipTestParamsToString);
 
-TEST_P(DistributorServiceWithMockServiceClientTest, DistributeToSingleServiceOkYieldsOk) {
-  EXPECT_CALL(*mock_nighthawk_service_client_, PerformNighthawkBenchmark(_, _));
+TEST_P(DistributorServiceWithMockServiceClientTest, DistributeToTwoServicesYieldsOk) {
+  EXPECT_CALL(*mock_nighthawk_service_client_, PerformNighthawkBenchmark(_, _)).Times(2);
   std::unique_ptr<grpc::ClientReaderWriter<DistributedRequest, DistributedResponse>> reader_writer =
       stub_->DistributedRequestStream(&context_);
+  request_.add_services();
   request_.add_services();
   ExecutionRequest* execution_request = request_.mutable_execution_request();
   execution_request->mutable_start_request()->mutable_options();
@@ -170,6 +171,7 @@ TEST_P(DistributorServiceWithMockServiceClientTest, DistributeToSingleServiceOkY
   ASSERT_TRUE(reader_writer->Read(&response_));
   auto status = reader_writer->Finish();
   EXPECT_TRUE(status.ok());
+  EXPECT_EQ(response_.fragment_size(), 2);
 }
 
 TEST_P(DistributorServiceWithMockServiceClientTest, DistributeToSingleServiceErrorYieldsFailure) {
@@ -188,8 +190,9 @@ TEST_P(DistributorServiceWithMockServiceClientTest, DistributeToSingleServiceErr
   auto status = reader_writer->Finish();
   EXPECT_FALSE(status.ok());
   EXPECT_THAT(status.error_message(), HasSubstr("One or more execution requests failed"));
+  ASSERT_EQ(response_.fragment_size(), 1);
   EXPECT_THAT(response_.fragment(0).error().message(),
-              HasSubstr("artificial nighthawk service error"));  
+              HasSubstr("artificial nighthawk service error"));
 }
 
 TEST_P(DistributorServiceWithMockServiceClientTest, ServiceSideWriteFailure) {

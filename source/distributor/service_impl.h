@@ -19,14 +19,22 @@
 
 namespace Nighthawk {
 
+/**
+ * Implements a real-world distributor gRPC service.
+ */
 class NighthawkDistributorServiceImpl final
     : public nighthawk::NighthawkDistributor::Service,
       public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
-
 public:
-public:
+  /**
+   * Construct a new gRPC distributor service instance.
+   *
+   * @param service_client gRPC client that will be used to communicate with Nighthawk's load
+   * generator services.
+   */
   NighthawkDistributorServiceImpl(std::unique_ptr<NighthawkServiceClient> service_client)
       : service_client_(std::move(service_client)) {}
+
   grpc::Status DistributedRequestStream(
       grpc::ServerContext* context,
       grpc::ServerReaderWriter<nighthawk::DistributedResponse, nighthawk::DistributedRequest>*
