@@ -12,6 +12,7 @@
 
 #include "test/mocks/common/mock_nighthawk_service_client.h"
 
+#include "absl/synchronization/notification.h"
 #include "gtest/gtest.h"
 
 namespace Nighthawk {
@@ -81,7 +82,7 @@ INSTANTIATE_TEST_SUITE_P(IpVersions, DistributorServiceTest,
 TEST_P(DistributorServiceTest, NoExecutionRequestFails) {
   std::unique_ptr<grpc::ClientReaderWriter<DistributedRequest, DistributedResponse>> reader_writer =
       stub_->DistributedRequestStream(&context_);
-  reader_writer->Write(request_, {});
+  EXPECT_TRUE(reader_writer->Write(request_, {}));
   EXPECT_TRUE(reader_writer->WritesDone());
   ASSERT_FALSE(reader_writer->Read(&response_));
   auto status = reader_writer->Finish();
@@ -108,7 +109,7 @@ TEST_P(DistributorServiceTest, NoStartRequestSpecifiedFails) {
       stub_->DistributedRequestStream(&context_);
   request_.mutable_execution_request();
   request_.add_services();
-  reader_writer->Write(request_, {});
+  EXPECT_TRUE(reader_writer->Write(request_, {}));
   EXPECT_TRUE(reader_writer->WritesDone());
   ASSERT_FALSE(reader_writer->Read(&response_));
   auto status = reader_writer->Finish();
@@ -139,7 +140,7 @@ TEST_P(DistributorServiceTest, ValidStartRequestNonExistingServiceYieldsResponse
   request_.add_services();
   ExecutionRequest* execution_request = request_.mutable_execution_request();
   execution_request->mutable_start_request()->mutable_options();
-  reader_writer->Write(request_, {});
+  EXPECT_TRUE(reader_writer->Write(request_, {}));
   EXPECT_TRUE(reader_writer->WritesDone());
   ASSERT_TRUE(reader_writer->Read(&response_));
   auto status = reader_writer->Finish();
@@ -158,14 +159,13 @@ INSTANTIATE_TEST_SUITE_P(IpVersions, DistributorServiceWithMockServiceClientTest
                          Envoy::TestUtility::ipTestParamsToString);
 
 TEST_P(DistributorServiceWithMockServiceClientTest, DistributeToSingleServiceOkYieldsOk) {
-  const std::string kExpectedErrorMessage = "artificial nighthawk service error";
   EXPECT_CALL(*mock_nighthawk_service_client_, PerformNighthawkBenchmark(_, _));
   std::unique_ptr<grpc::ClientReaderWriter<DistributedRequest, DistributedResponse>> reader_writer =
       stub_->DistributedRequestStream(&context_);
   request_.add_services();
   ExecutionRequest* execution_request = request_.mutable_execution_request();
   execution_request->mutable_start_request()->mutable_options();
-  reader_writer->Write(request_, {});
+  EXPECT_TRUE(reader_writer->Write(request_, {}));
   EXPECT_TRUE(reader_writer->WritesDone());
   ASSERT_TRUE(reader_writer->Read(&response_));
   auto status = reader_writer->Finish();
@@ -182,11 +182,32 @@ TEST_P(DistributorServiceWithMockServiceClientTest, DistributeToSingleServiceErr
   request_.add_services();
   ExecutionRequest* execution_request = request_.mutable_execution_request();
   execution_request->mutable_start_request()->mutable_options();
-  reader_writer->Write(request_, {});
+  EXPECT_TRUE(reader_writer->Write(request_, {}));
   EXPECT_TRUE(reader_writer->WritesDone());
   ASSERT_TRUE(reader_writer->Read(&response_));
   auto status = reader_writer->Finish();
   EXPECT_FALSE(status.ok());
+  EXPECT_THAT(status.error_message(), HasSubstr("One or more execution requests failed"));
+  EXPECT_THAT(response_.fragment(0).error().message(),
+              HasSubstr("artificial nighthawk service error"));  
+}
+
+TEST_P(DistributorServiceWithMockServiceClientTest, ServiceSideWriteFailure) {
+  // This test covers the flow where the gRPC service fails while writing a reply message to the
+  // stream. We don't have any expectations other then that the service doesn't crash in that flow.
+  absl::Notification notification;
+  EXPECT_CALL(*mock_nighthawk_service_client_, PerformNighthawkBenchmark(_, _))
+      .WillOnce(testing::DoAll(Invoke([&notification]() { notification.Notify(); }),
+                               Return(nighthawk::client::ExecutionResponse())));
+  std::unique_ptr<grpc::ClientReaderWriter<DistributedRequest, DistributedResponse>> reader_writer =
+      stub_->DistributedRequestStream(&context_);
+  request_.add_services();
+  ExecutionRequest* execution_request = request_.mutable_execution_request();
+  execution_request->mutable_start_request()->mutable_options();
+  EXPECT_TRUE(reader_writer->Write(request_, {}));
+  // Wait for the expected invokation to avoid a race with test execution end.
+  notification.WaitForNotification();
+  context_.TryCancel();
 }
 
 } // namespace
