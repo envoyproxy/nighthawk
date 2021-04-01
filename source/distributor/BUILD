@@ -35,8 +35,7 @@ envoy_cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//api/distributor:distributor_grpc_lib",
-        "//source/common:nighthawk_service_client_impl",
-        "//source/sink:nighthawk_sink_client_impl",
+        "//include/nighthawk/common:nighthawk_service_client",
         "@com_github_grpc_grpc//:grpc++",
         "@envoy//source/common/common:assert_lib_with_external_headers",
         "@envoy//source/common/common:minimal_logger_lib_with_external_headers",

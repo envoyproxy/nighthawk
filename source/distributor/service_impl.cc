@@ -6,10 +6,6 @@
 
 #include "external/envoy/source/common/common/assert.h"
 
-#include "common/nighthawk_service_client_impl.h"
-
-#include "sink/nighthawk_sink_client_impl.h"
-
 namespace Nighthawk {
 
 ::grpc::Status NighthawkDistributorServiceImpl::validateRequest(
@@ -41,14 +37,14 @@ absl::StatusOr<nighthawk::client::ExecutionResponse>
 NighthawkDistributorServiceImpl::handleExecutionRequest(
     const envoy::config::core::v3::Address& service,
     const ::nighthawk::client::ExecutionRequest& request) const {
-  NighthawkServiceClientImpl client;
+  RELEASE_ASSERT(service_client_ != nullptr, "service_client_ != nullptr");
   std::unique_ptr<nighthawk::client::NighthawkService::Stub> stub;
   std::shared_ptr<::grpc::Channel> channel;
   channel = grpc::CreateChannel(fmt::format("{}:{}", service.socket_address().address(),
                                             service.socket_address().port_value()),
                                 grpc::InsecureChannelCredentials());
   stub = std::make_unique<nighthawk::client::NighthawkService::Stub>(channel);
-  return client.PerformNighthawkBenchmark(stub.get(), request.start_request().options());
+  return service_client_->PerformNighthawkBenchmark(stub.get(), request.start_request().options());
 }
 
 // Translates one or more backend response into a single reply message

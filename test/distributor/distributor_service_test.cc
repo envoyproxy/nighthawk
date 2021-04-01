@@ -6,7 +6,11 @@
 
 #include "api/distributor/distributor.pb.h"
 
+#include "common/nighthawk_service_client_impl.h"
+
 #include "distributor/service_impl.h"
+
+#include "test/mocks/common/mock_nighthawk_service_client.h"
 
 #include "gtest/gtest.h"
 
@@ -24,7 +28,10 @@ using ::testing::ValuesIn;
 class DistributorServiceTest : public TestWithParam<Envoy::Network::Address::IpVersion> {
 public:
   void SetUp() override {
-    service_ = std::make_unique<NighthawkDistributorServiceImpl>();
+    if (service_ == nullptr) {
+      service_ = std::make_unique<NighthawkDistributorServiceImpl>(
+          std::make_unique<NighthawkServiceClientImpl>());
+    }
     grpc::ServerBuilder builder;
     loopback_address_ = Envoy::Network::Test::getLoopbackAddressUrlString(GetParam());
 
@@ -52,6 +59,19 @@ public:
   std::unique_ptr<nighthawk::NighthawkDistributor::Stub> stub_;
   std::string loopback_address_;
   int grpc_server_port_{0};
+};
+
+class DistributorServiceWithMockServiceClientTest : public DistributorServiceTest {
+public:
+  void SetUp() override {
+    auto client = std::make_unique<MockNighthawkServiceClient>();
+    mock_nighthawk_service_client_ = client.get();
+    service_ = std::make_unique<NighthawkDistributorServiceImpl>(std::move(client));
+    ON_CALL(*mock_nighthawk_service_client_, PerformNighthawkBenchmark)
+        .WillByDefault(Return(nighthawk::client::ExecutionResponse()));
+    DistributorServiceTest::SetUp();
+  }
+  MockNighthawkServiceClient* mock_nighthawk_service_client_;
 };
 
 INSTANTIATE_TEST_SUITE_P(IpVersions, DistributorServiceTest,
@@ -131,6 +151,42 @@ TEST_P(DistributorServiceTest, ValidStartRequestNonExistingServiceYieldsResponse
   EXPECT_THAT(response_.fragment(0).error().message(),
               HasSubstr("Distributed Execution Request failed: Failed to write request to the "
                         "Nighthawk Service gRPC channel"));
+}
+
+INSTANTIATE_TEST_SUITE_P(IpVersions, DistributorServiceWithMockServiceClientTest,
+                         ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()),
+                         Envoy::TestUtility::ipTestParamsToString);
+
+TEST_P(DistributorServiceWithMockServiceClientTest, DistributeToSingleServiceOkYieldsOk) {
+  const std::string kExpectedErrorMessage = "artificial nighthawk service error";
+  EXPECT_CALL(*mock_nighthawk_service_client_, PerformNighthawkBenchmark(_, _));
+  std::unique_ptr<grpc::ClientReaderWriter<DistributedRequest, DistributedResponse>> reader_writer =
+      stub_->DistributedRequestStream(&context_);
+  request_.add_services();
+  ExecutionRequest* execution_request = request_.mutable_execution_request();
+  execution_request->mutable_start_request()->mutable_options();
+  reader_writer->Write(request_, {});
+  EXPECT_TRUE(reader_writer->WritesDone());
+  ASSERT_TRUE(reader_writer->Read(&response_));
+  auto status = reader_writer->Finish();
+  EXPECT_TRUE(status.ok());
+}
+
+TEST_P(DistributorServiceWithMockServiceClientTest, DistributeToSingleServiceErrorYieldsFailure) {
+  const std::string kExpectedErrorMessage = "artificial nighthawk service error";
+  EXPECT_CALL(*mock_nighthawk_service_client_, PerformNighthawkBenchmark(_, _))
+      .WillOnce(Return(absl::DataLossError(kExpectedErrorMessage)));
+
+  std::unique_ptr<grpc::ClientReaderWriter<DistributedRequest, DistributedResponse>> reader_writer =
+      stub_->DistributedRequestStream(&context_);
+  request_.add_services();
+  ExecutionRequest* execution_request = request_.mutable_execution_request();
+  execution_request->mutable_start_request()->mutable_options();
+  reader_writer->Write(request_, {});
+  EXPECT_TRUE(reader_writer->WritesDone());
+  ASSERT_TRUE(reader_writer->Read(&response_));
+  auto status = reader_writer->Finish();
+  EXPECT_FALSE(status.ok());
 }
 
 } // namespace

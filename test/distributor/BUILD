@@ -23,7 +23,9 @@ envoy_cc_test(
     srcs = ["distributor_service_test.cc"],
     repository = "@envoy",
     deps = [
+        "//source/common:nighthawk_service_client_impl",
         "//source/distributor:grpc_service_lib",
+        "//test/mocks/common:mock_nighthawk_service_client",
         "//test/test_common:environment_lib",
         "@envoy//test/test_common:network_utility_lib",
     ],

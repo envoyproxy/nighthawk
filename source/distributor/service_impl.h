@@ -15,6 +15,8 @@
 #include "external/envoy/source/common/common/logger.h"
 #include "external/envoy/source/common/common/statusor.h"
 
+#include "nighthawk/common/nighthawk_service_client.h"
+
 namespace Nighthawk {
 
 class NighthawkDistributorServiceImpl final
@@ -22,6 +24,9 @@ class NighthawkDistributorServiceImpl final
       public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 
 public:
+public:
+  NighthawkDistributorServiceImpl(std::unique_ptr<NighthawkServiceClient> service_client)
+      : service_client_(std::move(service_client)) {}
   grpc::Status DistributedRequestStream(
       grpc::ServerContext* context,
       grpc::ServerReaderWriter<nighthawk::DistributedResponse, nighthawk::DistributedRequest>*
@@ -34,6 +39,8 @@ private:
   absl::StatusOr<nighthawk::client::ExecutionResponse>
   handleExecutionRequest(const envoy::config::core::v3::Address& service,
                          const nighthawk::client::ExecutionRequest& request) const;
+
+  std::unique_ptr<NighthawkServiceClient> service_client_;
 };
 
 } // namespace Nighthawk
