@@ -1,21 +1,13 @@
 #pragma once
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic warning "-Wunused-parameter"
-#endif
 
 #include <tuple>
 
-#include "api/distributor/distributor.grpc.pb.h"
-
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
+#include "nighthawk/common/nighthawk_service_client.h"
 
 #include "external/envoy/source/common/common/logger.h"
 #include "external/envoy/source/common/common/statusor.h"
 
-#include "nighthawk/common/nighthawk_service_client.h"
+#include "api/distributor/distributor.grpc.pb.h"
 
 namespace Nighthawk {
 
