@@ -28,3 +28,15 @@ envoy_cc_test(
         "@com_github_grpc_grpc//:grpc++_test",
     ],
 )
+
+envoy_cc_test(
+    name = "sink_service_test",
+    srcs = ["sink_service_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/sink:grpc_service_lib",
+        "//test/mocks/sink:mock_sink",
+        "//test/test_common:environment_lib",
+        "@envoy//test/test_common:network_utility_lib",
+    ],
+)
