@@ -41,7 +41,6 @@ public:
           stream) override;
 
 private:
-  grpc::Status validateRequest(const nighthawk::DistributedRequest& request) const;
   std::tuple<grpc::Status, nighthawk::DistributedResponse>
   handleRequest(const nighthawk::DistributedRequest& request) const;
   absl::StatusOr<nighthawk::client::ExecutionResponse>

@@ -11,10 +11,11 @@
 #include "api/distributor/distributor.pb.validate.h"
 
 namespace Nighthawk {
+namespace {
 
-::grpc::Status NighthawkDistributorServiceImpl::validateRequest(
-    const ::nighthawk::DistributedRequest& request) const {
-  auto& validation_visitor = Envoy::ProtobufMessage::getStrictValidationVisitor();
+grpc::Status validateRequest(const nighthawk::DistributedRequest& request) {
+  Envoy::ProtobufMessage::ValidationVisitor& validation_visitor =
+      Envoy::ProtobufMessage::getStrictValidationVisitor();
   try {
     Envoy::MessageUtil::validate(request, validation_visitor);
   } catch (const Envoy::ProtoValidationException& e) {
@@ -22,7 +23,7 @@ namespace Nighthawk {
   }
 
   if (request.has_execution_request()) {
-    const ::nighthawk::client::ExecutionRequest& execution_request = request.execution_request();
+    const nighthawk::client::ExecutionRequest& execution_request = request.execution_request();
     if (!execution_request.start_request().has_options()) {
       return grpc::Status(
           grpc::StatusCode::INVALID_ARGUMENT,
@@ -32,27 +33,28 @@ namespace Nighthawk {
     return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT,
                         "DistributedRequest.ExecutionRequest MUST be specified.");
   }
-  return ::grpc::Status::OK;
+  return grpc::Status::OK;
 }
+
+} // namespace
 
 absl::StatusOr<nighthawk::client::ExecutionResponse>
 NighthawkDistributorServiceImpl::handleExecutionRequest(
     const envoy::config::core::v3::Address& service,
-    const ::nighthawk::client::ExecutionRequest& request) const {
+    const nighthawk::client::ExecutionRequest& request) const {
   RELEASE_ASSERT(service_client_ != nullptr, "service_client_ != nullptr");
-  std::unique_ptr<nighthawk::client::NighthawkService::Stub> stub;
-  std::shared_ptr<::grpc::Channel> channel;
+  std::shared_ptr<grpc::Channel> channel;
   channel = grpc::CreateChannel(fmt::format("{}:{}", service.socket_address().address(),
                                             service.socket_address().port_value()),
                                 grpc::InsecureChannelCredentials());
-  stub = std::make_unique<nighthawk::client::NighthawkService::Stub>(channel);
+  std::unique_ptr<nighthawk::client::NighthawkService::Stub> stub =
+      std::make_unique<nighthawk::client::NighthawkService::Stub>(channel);
   return service_client_->PerformNighthawkBenchmark(stub.get(), request.start_request().options());
 }
 
 // Translates one or more backend response into a single reply message
 std::tuple<grpc::Status, nighthawk::DistributedResponse>
-NighthawkDistributorServiceImpl::handleRequest(
-    const ::nighthawk::DistributedRequest& request) const {
+NighthawkDistributorServiceImpl::handleRequest(const nighthawk::DistributedRequest& request) const {
   RELEASE_ASSERT(request.has_execution_request(), "request.has_execution_request()");
   RELEASE_ASSERT(request.services_size() != 0, "services_size() == 0");
   RELEASE_ASSERT(request.execution_request().has_start_request(), "no start_request");
@@ -83,12 +85,12 @@ NighthawkDistributorServiceImpl::handleRequest(
           response};
 }
 
-::grpc::Status NighthawkDistributorServiceImpl::DistributedRequestStream(
-    ::grpc::ServerContext*,
-    ::grpc::ServerReaderWriter<::nighthawk::DistributedResponse, ::nighthawk::DistributedRequest>*
+grpc::Status NighthawkDistributorServiceImpl::DistributedRequestStream(
+    grpc::ServerContext*,
+    grpc::ServerReaderWriter<nighthawk::DistributedResponse, nighthawk::DistributedRequest>*
         stream) {
   nighthawk::DistributedRequest request;
-  ::grpc::Status status = grpc::Status::OK;
+  grpc::Status status = grpc::Status::OK;
   while (status.ok() && stream->Read(&request)) {
     ENVOY_LOG(trace, "Inbound DistributedRequest {}", request.DebugString());
     status = validateRequest(request);
