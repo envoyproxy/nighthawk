@@ -22,8 +22,7 @@ grpc::Status SinkServiceImpl::StoreExecutionResponseStream(
   nighthawk::StoreExecutionRequest request;
   while (request_reader->Read(&request)) {
     ENVOY_LOG(trace, "StoreExecutionResponseStream request {}", request.DebugString());
-    const nighthawk::client::ExecutionResponse& response_to_store = request.execution_response();
-    const absl::Status status = sink_->StoreExecutionResultPiece(response_to_store);
+    const absl::Status status = sink_->StoreExecutionResultPiece(request.execution_response());
     if (!status.ok()) {
       return abslStatusToGrpcStatus(status);
     }
