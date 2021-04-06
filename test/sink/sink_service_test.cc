@@ -74,7 +74,7 @@ TEST_P(SinkServiceTest, LoadSingleResultWithJustExecutionResponse) {
   absl::StatusOr<std::vector<ExecutionResponse>> response_from_mock_sink =
       std::vector<ExecutionResponse>{{}};
   ExecutionResponse& response = response_from_mock_sink.value().at(0);
-  response.mutable_execution_id()->assign(kTestId);
+  response.set_execution_id(kTestId);
   response.mutable_output();
   request_.set_execution_id(kTestId);
   std::unique_ptr<grpc::ClientReaderWriter<SinkRequest, SinkResponse>> reader_writer =
@@ -93,7 +93,7 @@ TEST_P(SinkServiceTest, LoadSingleSinkYieldsWrongExecutionId) {
   const std::string kTestId = "test-id";
   absl::StatusOr<std::vector<ExecutionResponse>> response_from_mock_sink =
       std::vector<ExecutionResponse>{{}};
-  response_from_mock_sink.value().at(0).mutable_execution_id()->assign("wrong-id");
+  response_from_mock_sink.value().at(0).set_execution_id("wrong-id");
   request_.set_execution_id(kTestId);
   std::unique_ptr<grpc::ClientReaderWriter<SinkRequest, SinkResponse>> reader_writer =
       stub_->SinkRequestStream(&context_);
@@ -131,10 +131,10 @@ TEST_P(SinkServiceTest, LoadTwoResultsWithExecutionResponseWhereOneHasErrorDetai
   absl::StatusOr<std::vector<ExecutionResponse>> response_from_mock_sink =
       std::vector<ExecutionResponse>{{}, {}};
   ExecutionResponse& response = response_from_mock_sink.value().at(0);
-  response.mutable_execution_id()->assign(kTestId);
+  response.set_execution_id(kTestId);
   response.mutable_output();
   ExecutionResponse& response_2 = response_from_mock_sink.value().at(1);
-  response_2.mutable_execution_id()->assign(kTestId);
+  response_2.set_execution_id(kTestId);
   response_2.mutable_output();
   google::rpc::Status* error_detail = response.mutable_error_detail();
   error_detail->set_code(-5);
@@ -201,12 +201,12 @@ TEST_P(SinkServiceTest, LoadWithOutputMergeFailure) {
   absl::StatusOr<std::vector<ExecutionResponse>> response_from_mock_sink =
       std::vector<ExecutionResponse>{{}, {}};
   ExecutionResponse& response = response_from_mock_sink.value().at(0);
-  response.mutable_execution_id()->assign(kTestId);
+  response.set_execution_id(kTestId);
   response.mutable_output();
   nighthawk::client::CommandLineOptions* options_1 = response.mutable_output()->mutable_options();
   options_1->mutable_requests_per_second()->set_value(1);
   ExecutionResponse& response_2 = response_from_mock_sink.value().at(1);
-  response_2.mutable_execution_id()->assign(kTestId);
+  response_2.set_execution_id(kTestId);
   response_2.mutable_output();
   request_.set_execution_id(kTestId);
   nighthawk::client::CommandLineOptions* options_2 = response_2.mutable_output()->mutable_options();
@@ -239,6 +239,19 @@ TEST_P(SinkServiceTest, StoreExecutionResponseStreamOK) {
 }
 
 TEST_P(SinkServiceTest, StoreExecutionResponseStreamFailure) {
+  StoreExecutionResponse response;
+  ExecutionResponse result_to_store;
+  std::unique_ptr<::grpc::ClientWriter<::nighthawk::StoreExecutionRequest>> writer =
+      stub_->StoreExecutionResponseStream(&context_, &response);
+  EXPECT_CALL(*sink_, StoreExecutionResultPiece(_))
+      .WillOnce(Return(absl::InvalidArgumentError("test")));
+  EXPECT_TRUE(writer->Write({}));
+  EXPECT_TRUE(writer->WritesDone());
+  grpc::Status status = writer->Finish();
+  EXPECT_FALSE(status.ok());
+}
+
+TEST_P(SinkServiceTest, StoreExecutionResponseStreamNullReader) {
   StoreExecutionResponse response;
   ExecutionResponse result_to_store;
   std::unique_ptr<::grpc::ClientWriter<::nighthawk::StoreExecutionRequest>> writer =
@@ -297,10 +310,10 @@ TEST(MergeOutputs, MergeDivergingVersionsInResultsFails) {
   const std::string kTestId = "test-id";
   std::vector<ExecutionResponse> responses;
   ExecutionResponse response_1;
-  response_1.mutable_execution_id()->assign(kTestId);
+  response_1.set_execution_id(kTestId);
   response_1.mutable_output()->mutable_version()->mutable_version()->set_major_number(1);
   ExecutionResponse response_2;
-  response_2.mutable_execution_id()->assign(kTestId);
+  response_2.set_execution_id(kTestId);
   response_2.mutable_output()->mutable_version()->mutable_version()->set_major_number(2);
   nighthawk::client::Output merged_output;
   absl::Status status_1 = mergeOutput(response_1.output(), merged_output);

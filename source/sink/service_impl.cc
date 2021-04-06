@@ -4,6 +4,8 @@
 
 #include "envoy/config/core/v3/base.pb.h"
 
+#include "external/envoy/source/common/common/assert.h"
+
 #include "sink/nighthawk_sink_client_impl.h"
 #include "sink/sink_impl.h"
 
@@ -16,24 +18,24 @@ SinkServiceImpl::SinkServiceImpl(std::unique_ptr<Sink> sink) : sink_(std::move(s
 grpc::Status SinkServiceImpl::StoreExecutionResponseStream(
     grpc::ServerContext*, grpc::ServerReader<nighthawk::StoreExecutionRequest>* request_reader,
     nighthawk::StoreExecutionResponse*) {
+  RELEASE_ASSERT(request_reader != nullptr, "stream == nullptr");
   nighthawk::StoreExecutionRequest request;
   while (request_reader->Read(&request)) {
-    ENVOY_LOG(info, "StoreExecutionResponseStream request {}", request.DebugString());
+    ENVOY_LOG(trace, "StoreExecutionResponseStream request {}", request.DebugString());
     const nighthawk::client::ExecutionResponse& response_to_store = request.execution_response();
     const absl::Status status = sink_->StoreExecutionResultPiece(response_to_store);
     if (!status.ok()) {
-      ENVOY_LOG(error, "StoreExecutionResponseStream failure: {}", status.ToString());
-      return grpc::Status(grpc::StatusCode::INTERNAL, status.ToString());
+      return abslStatusToGrpcStatus(status);
     }
   }
   return grpc::Status::OK;
 };
 
-grpc::Status SinkServiceImpl::abslStatusToGrpcStatus(const absl::Status& status) {
+grpc::Status abslStatusToGrpcStatus(const absl::Status& status) {
   grpc::Status grpc_status =
       status.ok() ? grpc::Status::OK : grpc::Status(grpc::StatusCode::INTERNAL, status.ToString());
-  ENVOY_LOG(trace, "Finishing stream with status {} / message {}.", grpc_status.error_code(),
-            grpc_status.error_message());
+  ENVOY_LOG_MISC(trace, "Finishing stream with status {} / message {}.", grpc_status.error_code(),
+                 grpc_status.error_message());
   return grpc_status;
 }
 
@@ -41,6 +43,7 @@ grpc::Status SinkServiceImpl::SinkRequestStream(
     grpc::ServerContext*,
     grpc::ServerReaderWriter<nighthawk::SinkResponse, nighthawk::SinkRequest>* stream) {
   nighthawk::SinkRequest request;
+  RELEASE_ASSERT(stream != nullptr, "stream == nullptr");
   while (stream->Read(&request)) {
     ENVOY_LOG(trace, "Inbound SinkRequest {}", request.DebugString());
     absl::StatusOr<std::vector<nighthawk::client::ExecutionResponse>> execution_responses =
@@ -72,7 +75,7 @@ absl::Status mergeOutput(const nighthawk::client::Output& input_to_merge,
     *merge_target.mutable_timestamp() = input_to_merge.timestamp();
     *merge_target.mutable_version() = input_to_merge.version();
   } else {
-    // Options used should not diverge for a executions under a single execution id.
+    // Options used should not diverge for executions under a single execution id.
     // Versions probably shouldn't either. We sanity check these things here, and
     // report on error when we detect any mismatch.
     if (!MessageDifferencer::Equivalent(input_to_merge.options(), merge_target.options())) {

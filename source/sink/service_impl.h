@@ -41,6 +41,14 @@ absl::Status mergeOutput(const nighthawk::client::Output& source,
                          nighthawk::client::Output& target);
 
 /**
+ * Obtain a grpc::Status based on an absl::Status
+ *
+ * @param status To be translated.
+ * @return grpc::Status the translated gRPC status.
+ */
+grpc::Status abslStatusToGrpcStatus(const absl::Status& status);
+
+/**
  * Implements a real-world sink gRPC service.
  */
 class SinkServiceImpl final : public nighthawk::NighthawkSink::Service,
@@ -64,7 +72,6 @@ public:
       grpc::ServerReaderWriter<nighthawk::SinkResponse, nighthawk::SinkRequest>* stream) override;
 
 private:
-  grpc::Status abslStatusToGrpcStatus(const absl::Status& status);
   std::unique_ptr<Sink> sink_;
 };
 
