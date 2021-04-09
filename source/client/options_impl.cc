@@ -672,6 +672,7 @@ void OptionsImpl::setNonTrivialDefaults() {
   failure_predicates_["benchmark.http_4xx"] = 0;
   failure_predicates_["benchmark.http_5xx"] = 0;
   failure_predicates_["benchmark.pool_connection_failure"] = 0;
+  failure_predicates_["benchmark.stream_resets"] = 0;
   // Also, fail fast when a remote request source is specified that we can't connect to or otherwise
   // fails.
   failure_predicates_["requestsource.upstream_rq_5xx"] = 0;
