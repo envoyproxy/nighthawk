@@ -22,8 +22,6 @@ startup --host_jvm_args=-Xmx2g
 build --workspace_status_command="bash bazel/get_workspace_status"
 build --experimental_strict_action_env=true
 build --host_force_python=PY3
-build --action_env=BAZEL_LINKLIBS=-l%:libstdc++.a
-build --action_env=BAZEL_LINKOPTS=-lm
 build --host_javabase=@bazel_tools//tools/jdk:remote_jdk11
 build --javabase=@bazel_tools//tools/jdk:remote_jdk11
 build --enable_platform_specific_config
@@ -35,6 +33,8 @@ build:linux --cxxopt=-std=c++17
 build:linux --conlyopt=-fexceptions
 build:linux --fission=dbg,opt
 build:linux --features=per_object_debug_info
+build:linux --action_env=BAZEL_LINKLIBS=-l%:libstdc++.a
+build:linux --action_env=BAZEL_LINKOPTS=-lm
 
 # We already have absl in the build, define absl=1 to tell googletest to use absl for backtrace.
 build --define absl=1
@@ -61,6 +61,8 @@ build:asan --config=sanitizer
 # ASAN install its signal handler, disable ours so the stacktrace will be printed by ASAN
 build:asan --define signal_trace=disabled
 build:asan --define ENVOY_CONFIG_ASAN=1
+build:asan --copt -fsanitize=address,undefined
+build:asan --linkopt -fsanitize=address,undefined
 # The following two lines were manually edited due to #593.                                 # unique
 # Flag undefined was dropped from both the lines to allow CI/ASAN to pass.                  # unique
 build:asan --copt -fsanitize=address                                                        # unique
@@ -83,6 +85,9 @@ build:clang-asan --linkopt -fuse-ld=lld
 
 # macOS ASAN/UBSAN
 build:macos --cxxopt=-std=c++17
+build:macos --action_env=BAZEL_LINKLIBS=-l%:libstdc++.a
+build:macos --action_env=BAZEL_LINKOPTS=-lm
+
 build:macos-asan --config=asan
 # Workaround, see https://github.com/bazelbuild/bazel/issues/6932
 build:macos-asan --copt -Wno-macro-redefined
@@ -363,7 +368,6 @@ build:clang-cl --copt="-Wno-builtin-macro-redefined"
 #     overrides a member function but is not marked 'override'
 #   MOCK_METHOD(void, addCallbacks, (StreamCallbacks & callbacks));
 build:clang-cl --copt="-Wno-inconsistent-missing-override"
-build:clang-cl --action_env=USE_CLANG_CL=1
 
 # Defaults to 'auto' - Off for windows, so override to linux behavior
 build:windows --enable_runfiles=yes
