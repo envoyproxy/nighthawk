@@ -36,6 +36,7 @@ public:
   void testWithResponseSize(int response_body_size, bool expect_header = true) {
     setRequestLevelConfiguration(fmt::format("{{response_body_size:{}}}", response_body_size));
     Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
+    ASSERT_TRUE(response->waitForEndStream());
     ASSERT_TRUE(response->complete());
     EXPECT_EQ("200", response->headers().Status()->value().getStringView());
     if (expect_header) {
@@ -54,6 +55,7 @@ public:
   void testBadResponseSize(int response_body_size) {
     setRequestLevelConfiguration(fmt::format("{{response_body_size:{}}}", response_body_size));
     Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
+    ASSERT_TRUE(response->waitForEndStream());
     ASSERT_TRUE(response->complete());
     EXPECT_EQ("500", response->headers().Status()->value().getStringView());
   }
@@ -65,6 +67,7 @@ INSTANTIATE_TEST_SUITE_P(IpVersions, HttpTestServerIntegrationTest,
 TEST_P(HttpTestServerIntegrationTest, TestNoHeaderConfig) {
   initializeFilterConfiguration(kDefaultProto);
   Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
+  ASSERT_TRUE(response->waitForEndStream());
   ASSERT_TRUE(response->complete());
   EXPECT_EQ("200", response->headers().Status()->value().getStringView());
   EXPECT_EQ(std::string(10, 'a'), response->body());
@@ -107,6 +110,7 @@ TEST_P(HttpTestServerIntegrationTest, TestHeaderConfigUsingEnvoyApiV2) {
   setRequestLevelConfiguration(
       R"({response_headers: [ { header: { key: "foo", value: "bar2"}, append: true } ]})");
   Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
+  ASSERT_TRUE(response->waitForEndStream());
   ASSERT_TRUE(response->complete());
   EXPECT_EQ("200", response->headers().Status()->value().getStringView());
   ASSERT_EQ(1, response->headers().get(Envoy::Http::LowerCaseString("foo")).size());
@@ -128,6 +132,7 @@ TEST_P(HttpTestServerIntegrationTest, TestHeaderConfigUsingEnvoyApiV3) {
 
   initializeFilterConfiguration(v3_configuration);
   Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
+  ASSERT_TRUE(response->waitForEndStream());
   ASSERT_TRUE(response->complete());
   EXPECT_EQ("200", response->headers().Status()->value().getStringView());
   ASSERT_EQ(1, response->headers().get(Envoy::Http::LowerCaseString("foo")).size());
@@ -143,7 +148,7 @@ TEST_P(HttpTestServerIntegrationTest,
   setRequestLevelConfiguration(
       R"({v3_response_headers: [ { header: { key: "foo", value: "bar2"}, append: true } ]})");
 
-  ASSERT_DEATH(getResponse(ResponseOrigin::EXTENSION),
+  ASSERT_DEATH(ASSERT_TRUE(getResponse(ResponseOrigin::EXTENSION)->waitForEndStream()),
                HasSubstr("cannot specify both response_headers and v3_response_headers"));
 }
 
@@ -173,6 +178,7 @@ TEST_P(HttpTestServerIntegrationTest, TestEchoHeaders) {
   for (auto unique_header : {"one", "two", "three"}) {
     setRequestHeader(Envoy::Http::LowerCaseString("unique_header"), unique_header);
     Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
+    ASSERT_TRUE(response->waitForEndStream());
     ASSERT_TRUE(response->complete());
     EXPECT_EQ("200", response->headers().Status()->value().getStringView());
     EXPECT_THAT(response->body(), HasSubstr(R"(':authority', 'foo.com')"));
@@ -187,6 +193,7 @@ TEST_P(HttpTestServerIntegrationTest, TestEchoHeaders) {
 TEST_P(HttpTestServerIntegrationTest, NoNoStaticConfigHeaderConfig) {
   initializeFilterConfiguration(kNoConfigProto);
   Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
+  ASSERT_TRUE(response->waitForEndStream());
   ASSERT_TRUE(response->complete());
   EXPECT_EQ("200", response->headers().Status()->value().getStringView());
   EXPECT_EQ("", response->body());
@@ -229,6 +236,7 @@ TEST_P(HttpTestServerIntegrationTest, TestNoStaticConfigHeaderConfig) {
       R"({response_headers: [ { header: { key: "foo", value: "bar2"}, append: true } ]})");
   Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
 
+  ASSERT_TRUE(response->waitForEndStream());
   ASSERT_TRUE(response->complete());
   EXPECT_EQ("200", response->headers().Status()->value().getStringView());
   ASSERT_EQ(1, response->headers().get(Envoy::Http::LowerCaseString("foo")).size());

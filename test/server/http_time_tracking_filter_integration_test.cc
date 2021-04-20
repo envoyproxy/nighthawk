@@ -61,12 +61,14 @@ TEST_P(HttpTimeTrackingIntegrationTest, ReturnsPositiveLatencyForStaticConfigura
 
   // As the first request doesn't have a prior one, we should not observe a delta.
   Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::UPSTREAM);
+  ASSERT_TRUE(response->waitForEndStream());
   int64_t latency;
   EXPECT_EQ(
       response->headers().get(Envoy::Http::LowerCaseString(kLatencyResponseHeaderName)).size(), 0);
 
   // On the second request we should observe a delta.
   response = getResponse(ResponseOrigin::UPSTREAM);
+  ASSERT_TRUE(response->waitForEndStream());
   const Envoy::Http::HeaderMap::GetResult& latency_header =
       response->headers().get(Envoy::Http::LowerCaseString(kLatencyResponseHeaderName));
   ASSERT_EQ(latency_header.size(), 1);
@@ -80,6 +82,7 @@ TEST_P(HttpTimeTrackingIntegrationTest, ReturnsPositiveLatencyForPerRequestConfi
   // As the first request doesn't have a prior one, we should not observe a delta.
   setRequestLevelConfiguration("{}");
   Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::UPSTREAM);
+  ASSERT_TRUE(response->waitForEndStream());
   EXPECT_TRUE(
       response->headers().get(Envoy::Http::LowerCaseString(kLatencyResponseHeaderName)).empty());
 
@@ -87,6 +90,7 @@ TEST_P(HttpTimeTrackingIntegrationTest, ReturnsPositiveLatencyForPerRequestConfi
   // we should be able to observe it.
   setRequestLevelConfiguration(fmt::format("{{{}}}", kDefaultProtoFragment));
   response = getResponse(ResponseOrigin::UPSTREAM);
+  ASSERT_TRUE(response->waitForEndStream());
   const Envoy::Http::HeaderMap::GetResult& latency_header =
       response->headers().get(Envoy::Http::LowerCaseString(kLatencyResponseHeaderName));
   ASSERT_EQ(latency_header.size(), 1);
