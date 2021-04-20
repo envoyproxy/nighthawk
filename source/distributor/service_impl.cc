@@ -66,14 +66,14 @@ NighthawkDistributorServiceImpl::handleRequest(const nighthawk::DistributedReque
   for (const envoy::config::core::v3::Address& service : request.services()) {
     absl::StatusOr<nighthawk::client::ExecutionResponse> execution_response =
         handleExecutionRequest(service, request.execution_request());
-    nighthawk::DistributedResponseFragment* response_fragment = response.add_fragment();
-    response_fragment->mutable_service()->MergeFrom(service);
+    nighthawk::DistributedServiceResponse* service_response = response.add_service_response();
+    service_response->mutable_service()->MergeFrom(service);
     if (execution_response.ok()) {
-      *response_fragment->mutable_execution_response() = execution_response.value();
+      *service_response->mutable_execution_response() = execution_response.value();
     } else {
-      response_fragment->mutable_error()->set_code(
+      service_response->mutable_error()->set_code(
           static_cast<int>(execution_response.status().code()));
-      response_fragment->mutable_error()->set_message(
+      service_response->mutable_error()->set_message(
           std::string("Distributed Execution Request failed: ") +
           std::string(execution_response.status().message()));
       has_errors = true;

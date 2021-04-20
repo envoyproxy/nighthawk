@@ -149,10 +149,10 @@ TEST_P(DistributorServiceTest, ValidStartRequestNonExistingServiceYieldsResponse
   auto status = reader_writer->Finish();
   EXPECT_FALSE(status.ok());
   EXPECT_THAT(status.error_message(), HasSubstr("One or more execution requests failed"));
-  ASSERT_EQ(response_.fragment_size(), 1);
-  EXPECT_TRUE(response_.fragment(0).has_error());
-  EXPECT_EQ(response_.fragment(0).error().code(), grpc::StatusCode::UNAVAILABLE);
-  EXPECT_THAT(response_.fragment(0).error().message(),
+  ASSERT_EQ(response_.service_response_size(), 1);
+  EXPECT_TRUE(response_.service_response(0).has_error());
+  EXPECT_EQ(response_.service_response(0).error().code(), grpc::StatusCode::UNAVAILABLE);
+  EXPECT_THAT(response_.service_response(0).error().message(),
               HasSubstr("Distributed Execution Request failed: Failed to write request to the "
                         "Nighthawk Service gRPC channel"));
 }
@@ -173,7 +173,7 @@ TEST_P(DistributorServiceWithMockServiceClientTest, DistributeToTwoServicesYield
   ASSERT_TRUE(reader_writer->Read(&response_));
   auto status = reader_writer->Finish();
   EXPECT_TRUE(status.ok());
-  EXPECT_EQ(response_.fragment_size(), 2);
+  EXPECT_EQ(response_.service_response_size(), 2);
 }
 
 TEST_P(DistributorServiceWithMockServiceClientTest,
@@ -192,8 +192,8 @@ TEST_P(DistributorServiceWithMockServiceClientTest,
   auto status = reader_writer->Finish();
   EXPECT_FALSE(status.ok());
   EXPECT_THAT(status.error_message(), HasSubstr("One or more execution requests failed"));
-  ASSERT_EQ(response_.fragment_size(), 1);
-  EXPECT_THAT(response_.fragment(0).error().message(),
+  ASSERT_EQ(response_.service_response_size(), 1);
+  EXPECT_THAT(response_.service_response(0).error().message(),
               HasSubstr("artificial nighthawk service error"));
 }
 
