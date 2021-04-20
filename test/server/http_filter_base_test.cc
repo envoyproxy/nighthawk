@@ -61,6 +61,7 @@ typed_config:
 
 TEST_P(HttpFilterBaseIntegrationTest, NoRequestLevelConfigurationShouldSucceed) {
   Envoy::IntegrationStreamDecoderPtr response = getResponse(getHappyFlowResponseOrigin());
+  ASSERT_TRUE(response->waitForEndStream());
   ASSERT_TRUE(response->complete());
   EXPECT_EQ("200", response->headers().Status()->value().getStringView());
   EXPECT_TRUE(response->body().empty());
@@ -69,6 +70,7 @@ TEST_P(HttpFilterBaseIntegrationTest, NoRequestLevelConfigurationShouldSucceed) 
 TEST_P(HttpFilterBaseIntegrationTest, EmptyJsonRequestLevelConfigurationShouldSucceed) {
   setRequestLevelConfiguration("{}");
   Envoy::IntegrationStreamDecoderPtr response = getResponse(getHappyFlowResponseOrigin());
+  ASSERT_TRUE(response->waitForEndStream());
   ASSERT_TRUE(response->complete());
   EXPECT_EQ("200", response->headers().Status()->value().getStringView());
   EXPECT_TRUE(response->body().empty());
@@ -78,6 +80,7 @@ TEST_P(HttpFilterBaseIntegrationTest, BadJsonAsRequestLevelConfigurationShouldFa
   // When sending bad request-level configuration, the extension ought to reply directly.
   setRequestLevelConfiguration("bad_json");
   Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
+  ASSERT_TRUE(response->waitForEndStream());
   EXPECT_EQ(Envoy::Http::Utility::getResponseStatus(response->headers()), 500);
   EXPECT_THAT(response->body(), HasSubstr(kBadConfigErrorSentinel));
 }
@@ -86,6 +89,7 @@ TEST_P(HttpFilterBaseIntegrationTest, EmptyRequestLevelConfigurationShouldFail) 
   // When sending empty request-level configuration, the extension ought to reply directly.
   setRequestLevelConfiguration("");
   Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
+  ASSERT_TRUE(response->waitForEndStream());
   EXPECT_EQ(Envoy::Http::Utility::getResponseStatus(response->headers()), 500);
   EXPECT_THAT(response->body(), HasSubstr(kBadConfigErrorSentinel));
 }
@@ -95,6 +99,7 @@ TEST_P(HttpFilterBaseIntegrationTest, MultipleValidConfigurationHeadersFails) {
   setRequestLevelConfiguration("{}");
   appendRequestLevelConfiguration("{}");
   Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
+  ASSERT_TRUE(response->waitForEndStream());
   ASSERT_TRUE(response->complete());
   EXPECT_THAT(response->body(),
               HasSubstr("Received multiple configuration headers in the request"));
@@ -105,6 +110,7 @@ TEST_P(HttpFilterBaseIntegrationTest, SingleValidPlusEmptyConfigurationHeadersFa
   setRequestLevelConfiguration("{}");
   appendRequestLevelConfiguration("");
   Envoy::IntegrationStreamDecoderPtr response = getResponse(ResponseOrigin::EXTENSION);
+  ASSERT_TRUE(response->waitForEndStream());
   ASSERT_TRUE(response->complete());
   EXPECT_THAT(response->body(),
               HasSubstr("Received multiple configuration headers in the request"));
