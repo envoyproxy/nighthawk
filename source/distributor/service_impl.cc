@@ -55,12 +55,7 @@ NighthawkDistributorServiceImpl::handleExecutionRequest(
 // Translates one or more backend response into a single reply message
 std::tuple<grpc::Status, nighthawk::DistributedResponse>
 NighthawkDistributorServiceImpl::handleRequest(const nighthawk::DistributedRequest& request) const {
-  RELEASE_ASSERT(request.has_execution_request(), "request.has_execution_request()");
-  RELEASE_ASSERT(request.services_size() != 0, "services_size() == 0");
-  RELEASE_ASSERT(request.execution_request().has_start_request(), "no start_request");
-  RELEASE_ASSERT(request.execution_request().start_request().has_options(), "no options");
   ENVOY_LOG(trace, "Handling execution request");
-
   nighthawk::DistributedResponse response;
   bool has_errors = false;
   for (const envoy::config::core::v3::Address& service : request.services()) {
