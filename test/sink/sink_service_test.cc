@@ -189,7 +189,7 @@ TEST_P(SinkServiceTest, ResultWriteFailure) {
       .WillOnce(testing::DoAll(Invoke([&notification]() { notification.Notify(); }),
                                Return(std::vector<ExecutionResponse>{{}, {}})));
   EXPECT_TRUE(reader_writer->Write(request_, {}));
-  // Wait for the expected invokation to avoid a race with test execution end.
+  // Wait for the expected invocation to avoid a race with test execution end.
   notification.WaitForNotification();
   context_.TryCancel();
 }
