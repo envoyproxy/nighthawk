@@ -65,7 +65,7 @@ TEST_F(OutputTransformMainTest, HappyFlowForAllOutputFormats) {
       output.add_results()->set_name("global");
     }
     output.mutable_options()->mutable_uri()->set_value("http://127.0.0.1/");
-    stream_ << Envoy::MessageUtil::getJsonStringFromMessageOrDie(output, true, true);
+    stream_ << Envoy::MessageUtil::getJsonStringFromMessageOrError(output, true, true);
     OutputTransformMain main(argv.size(), argv.data(), stream_);
     EXPECT_EQ(main.run(), 0);
   }

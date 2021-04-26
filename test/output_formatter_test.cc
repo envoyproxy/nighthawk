@@ -100,25 +100,27 @@ public:
 
 TEST_F(OutputCollectorTest, CliFormatter) {
   ConsoleOutputFormatterImpl formatter;
-  expectEqualToGoldFile(formatter.formatProto(collector_->toProto()),
+  expectEqualToGoldFile(*(formatter.formatProto(collector_->toProto())),
                         "test/test_data/output_formatter.txt.gold");
 }
 
 TEST_F(OutputCollectorTest, JsonFormatter) {
   JsonOutputFormatterImpl formatter;
-  expectEqualToGoldFile(formatter.formatProto(collector_->toProto()),
+  EXPECT_EQ((formatter.formatProto(collector_->toProto())).ok(), true);
+  expectEqualToGoldFile((formatter.formatProto(collector_->toProto())).value(),
                         "test/test_data/output_formatter.json.gold");
 }
 
 TEST_F(OutputCollectorTest, YamlFormatter) {
   YamlOutputFormatterImpl formatter;
-  expectEqualToGoldFile(formatter.formatProto(collector_->toProto()),
+  EXPECT_EQ((formatter.formatProto(collector_->toProto())).ok(), true);
+  expectEqualToGoldFile((formatter.formatProto(collector_->toProto())).value(),
                         "test/test_data/output_formatter.yaml.gold");
 }
 
 TEST_F(OutputCollectorTest, DottedFormatter) {
   DottedStringOutputFormatterImpl formatter;
-  expectEqualToGoldFile(formatter.formatProto(collector_->toProto()),
+  expectEqualToGoldFile((formatter.formatProto(collector_->toProto())).value(),
                         "test/test_data/output_formatter.dotted.gold");
 }
 
@@ -151,27 +153,38 @@ TEST_F(FortioOutputCollectorTest, MissingGlobalResult) {
   output_proto.clear_results();
 
   FortioOutputFormatterImpl formatter;
-  ASSERT_THROW(formatter.formatProto(output_proto), NighthawkException);
+  EXPECT_FALSE((formatter.formatProto(output_proto)).ok());
+}
+
+TEST_F(FortioOutputCollectorTest, MissingGlobalResultGetGlobalResult) {
+  nighthawk::client::Output output_proto = collector_->toProto();
+  output_proto.clear_results();
+
+  FortioOutputFormatterImpl formatter;
+  EXPECT_FALSE((formatter.getGlobalResult(output_proto)).has_value());
 }
 
 TEST_F(FortioOutputCollectorTest, MissingCounter) {
   nighthawk::client::Output output_proto = collector_->toProto();
   output_proto.mutable_results(2)->clear_counters();
   FortioOutputFormatterImpl formatter;
-  ASSERT_NO_THROW(formatter.formatProto(output_proto));
+  EXPECT_TRUE((formatter.formatProto(output_proto)).ok());
+  ASSERT_NO_THROW((formatter.formatProto(output_proto)).value());
 }
 
 TEST_F(FortioOutputCollectorTest, MissingStatistic) {
   nighthawk::client::Output output_proto = collector_->toProto();
   output_proto.mutable_results(2)->clear_statistics();
   FortioOutputFormatterImpl formatter;
-  ASSERT_NO_THROW(formatter.formatProto(output_proto));
+  EXPECT_TRUE((formatter.formatProto(output_proto)).ok());
+  ASSERT_NO_THROW((formatter.formatProto(output_proto)).value());
 }
 
 TEST_F(FortioOutputCollectorTest, NoExceptions) {
   nighthawk::client::Output output_proto = collector_->toProto();
   FortioOutputFormatterImpl formatter;
-  ASSERT_NO_THROW(formatter.formatProto(output_proto));
+  EXPECT_TRUE((formatter.formatProto(output_proto)).ok());
+  ASSERT_NO_THROW((formatter.formatProto(output_proto)).value());
 }
 
 class MediumOutputCollectorTest : public OutputCollectorTest {
@@ -190,7 +203,7 @@ TEST_F(MediumOutputCollectorTest, FortioFormatter) {
   const nighthawk::client::Output input_proto =
       loadProtoFromFile("test/test_data/output_formatter.medium.proto.gold");
   FortioOutputFormatterImpl formatter;
-  expectEqualToGoldFile(formatter.formatProto(input_proto),
+  expectEqualToGoldFile((formatter.formatProto(input_proto)).value(),
                         "test/test_data/output_formatter.medium.fortio.gold");
 }
 
@@ -200,14 +213,15 @@ TEST_F(MediumOutputCollectorTest, FortioFormatter0sJitterUniformGetsReflected) {
   FortioOutputFormatterImpl formatter;
   input_proto.mutable_options()->mutable_jitter_uniform()->set_nanos(0);
   input_proto.mutable_options()->mutable_jitter_uniform()->set_seconds(0);
-  EXPECT_NE(formatter.formatProto(input_proto).find(" \"Jitter\": false,"), std::string::npos);
+  EXPECT_NE((formatter.formatProto(input_proto)).value().find(" \"Jitter\": false,"),
+            std::string::npos);
 }
 
 TEST_F(MediumOutputCollectorTest, ConsoleOutputFormatter) {
   const nighthawk::client::Output input_proto =
       loadProtoFromFile("test/test_data/percentile-column-overflow.json");
   ConsoleOutputFormatterImpl formatter;
-  expectEqualToGoldFile(formatter.formatProto(input_proto),
+  expectEqualToGoldFile((formatter.formatProto(input_proto)).value(),
                         "test/test_data/percentile-column-overflow.txt.gold");
 }
 
@@ -231,8 +245,16 @@ TEST_F(MediumOutputCollectorTest, FortioPedanticFormatter) {
   const nighthawk::client::Output input_proto =
       loadProtoFromFile("test/test_data/output_formatter.medium.proto.gold");
   FortioPedanticOutputFormatterImpl formatter;
-  expectEqualToGoldFile(formatter.formatProto(input_proto),
+  expectEqualToGoldFile((formatter.formatProto(input_proto)).value(),
                         "test/test_data/output_formatter.medium.fortio-noquirks.gold");
+}
+
+TEST_F(MediumOutputCollectorTest, FortioPedanticFormatterMissingGlobalResult) {
+  nighthawk::client::Output output_proto = collector_->toProto();
+  output_proto.clear_results();
+
+  FortioPedanticOutputFormatterImpl formatter;
+  EXPECT_FALSE((formatter.formatProto(output_proto)).ok());
 }
 
 } // namespace Client

@@ -9,6 +9,13 @@ licenses(["notice"])  # Apache 2
 
 envoy_package()
 
+filegroup(
+    name = "testdata",
+    srcs = [
+        "test_data/test-config.yaml",
+    ],
+)
+
 envoy_cc_test_library(
     name = "stub_plugin_impl",
     srcs = [

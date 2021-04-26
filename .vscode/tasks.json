@@ -223,6 +223,7 @@
       "options": [
           "//test/sink:sink_test",
           "//test/sink:nighthawk_sink_client_test",
+          "//test/sink:sink_service_test",
           "//test/server:http_time_tracking_filter_integration_test",
           "//test/server:http_test_server_filter_integration_test",
           "//test/server:http_filter_base_test",

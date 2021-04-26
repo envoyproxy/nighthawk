@@ -30,7 +30,7 @@ public:
    * @return absl::Status Indicates if the operation succeeded or not.
    */
   virtual absl::Status
-  StoreExecutionResultPiece(const nighthawk::client::ExecutionResponse& response) const PURE;
+  StoreExecutionResultPiece(const nighthawk::client::ExecutionResponse& response) PURE;
 
   /**
    * Attempt to load a vector of ExecutionResponse instances associated to an execution id.

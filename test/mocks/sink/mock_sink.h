@@ -9,11 +9,10 @@ namespace Nighthawk {
 class MockSink : public Sink {
 public:
   MockSink();
-  MOCK_CONST_METHOD1(StoreExecutionResultPiece,
-                     absl::Status(const nighthawk::client::ExecutionResponse&));
-  MOCK_CONST_METHOD1(
-      LoadExecutionResult,
-      absl::StatusOr<std::vector<nighthawk::client::ExecutionResponse>>(absl::string_view));
+  MOCK_METHOD(absl::Status, StoreExecutionResultPiece,
+              (const nighthawk::client::ExecutionResponse&));
+  MOCK_METHOD(absl::StatusOr<std::vector<nighthawk::client::ExecutionResponse>>,
+              LoadExecutionResult, (absl::string_view), (const));
 };
 
 } // namespace Nighthawk

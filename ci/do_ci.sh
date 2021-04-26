@@ -17,6 +17,7 @@ export BAZEL_OPTIONS=${BAZEL_OPTIONS:=""}
 export BAZEL_BUILD_EXTRA_OPTIONS=${BAZEL_BUILD_EXTRA_OPTIONS:=""}
 export SRCDIR=${SRCDIR:="${PWD}"}
 export CLANG_FORMAT=clang-format
+export NIGHTHAWK_BUILD_ARCH=$(uname -m)
 
 function do_build () {
     bazel build $BAZEL_BUILD_OPTIONS //:nighthawk
@@ -41,7 +42,7 @@ function do_clang_tidy() {
 
 function do_unit_test_coverage() {
     export TEST_TARGETS="//test/... -//test:python_test"
-    export COVERAGE_THRESHOLD=94.2
+    export COVERAGE_THRESHOLD=94.1
     echo "bazel coverage build with tests ${TEST_TARGETS}"
     test/run_nighthawk_bazel_coverage.sh ${TEST_TARGETS}
     exit 0
@@ -60,6 +61,8 @@ function setup_gcc_toolchain() {
     export CC=gcc
     export CXX=g++
     export BAZEL_COMPILER=gcc
+    [[ "${NIGHTHAWK_BUILD_ARCH}" == "aarch64" ]] && BAZEL_BUILD_OPTIONS="$BAZEL_BUILD_OPTIONS --copt -march=armv8-a+crypto"
+    [[ "${NIGHTHAWK_BUILD_ARCH}" == "aarch64" ]] && BAZEL_TEST_OPTIONS="$BAZEL_TEST_OPTIONS --copt -march=armv8-a+crypto"
     echo "$CC/$CXX toolchain configured"
 }
 

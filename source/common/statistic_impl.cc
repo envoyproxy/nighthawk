@@ -9,6 +9,8 @@
 #include "external/envoy/source/common/common/assert.h"
 #include "external/envoy/source/common/protobuf/utility.h"
 
+#include "internal_proto/statistic/statistic.pb.h"
+
 namespace Nighthawk {
 
 namespace {
@@ -104,6 +106,38 @@ StatisticPtr SimpleStatistic::combine(const Statistic& statistic) const {
   return combined;
 }
 
+absl::StatusOr<std::unique_ptr<std::istream>> SimpleStatistic::serializeNative() const {
+  nighthawk::internal::SimpleStatistic proto;
+  proto.set_id(id());
+  proto.set_count(count());
+  proto.set_min(min());
+  proto.set_max(max());
+  proto.set_sum_x(sum_x_);
+  proto.set_sum_x_2(sum_x2_);
+
+  std::string tmp;
+  proto.SerializeToString(&tmp);
+  auto write_stream = std::make_unique<std::stringstream>();
+  *write_stream << tmp;
+  return write_stream;
+}
+
+absl::Status SimpleStatistic::deserializeNative(std::istream& stream) {
+  nighthawk::internal::SimpleStatistic proto;
+  std::string tmp(std::istreambuf_iterator<char>(stream), {});
+  if (!proto.ParseFromString(tmp)) {
+    ENVOY_LOG(error, "Failed to read back SimpleStatistic data.");
+    return absl::Status(absl::StatusCode::kInternal, "Failed to read back SimpleStatistic data");
+  }
+  id_ = proto.id();
+  count_ = proto.count();
+  min_ = proto.min();
+  max_ = proto.max();
+  sum_x_ = proto.sum_x();
+  sum_x2_ = proto.sum_x_2();
+  return absl::OkStatus();
+}
+
 void StreamingStatistic::addValue(uint64_t value) {
   double delta, delta_n;
   StatisticImpl::addValue(value);
@@ -140,6 +174,38 @@ StatisticPtr StreamingStatistic::combine(const Statistic& statistic) const {
       a.accumulated_variance_ + b.accumulated_variance_ +
       pow(a_mean - b_mean, 2) * a.count() * b.count() / combined->count();
   return combined;
+}
+
+absl::StatusOr<std::unique_ptr<std::istream>> StreamingStatistic::serializeNative() const {
+  nighthawk::internal::StreamingStatistic proto;
+  proto.set_id(id());
+  proto.set_count(count());
+  proto.set_min(min());
+  proto.set_max(max());
+  proto.set_mean(mean_);
+  proto.set_accumulated_variance(accumulated_variance_);
+
+  std::string tmp;
+  proto.SerializeToString(&tmp);
+  auto write_stream = std::make_unique<std::stringstream>();
+  *write_stream << tmp;
+  return write_stream;
+}
+
+absl::Status StreamingStatistic::deserializeNative(std::istream& stream) {
+  nighthawk::internal::StreamingStatistic proto;
+  std::string tmp(std::istreambuf_iterator<char>(stream), {});
+  if (!proto.ParseFromString(tmp)) {
+    ENVOY_LOG(error, "Failed to read back StreamingStatistic data.");
+    return absl::Status(absl::StatusCode::kInternal, "Failed to read back StreamingStatistic data");
+  }
+  id_ = proto.id();
+  count_ = proto.count();
+  min_ = proto.min();
+  max_ = proto.max();
+  mean_ = proto.mean();
+  accumulated_variance_ = proto.accumulated_variance();
+  return absl::OkStatus();
 }
 
 InMemoryStatistic::InMemoryStatistic() : streaming_stats_(std::make_unique<StreamingStatistic>()) {}
