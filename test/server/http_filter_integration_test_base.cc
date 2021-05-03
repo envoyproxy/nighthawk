@@ -66,7 +66,6 @@ HttpFilterIntegrationTestBase::getResponse(ResponseOrigin expected_origin) {
     } else {
       response = codec_client_->makeHeaderOnlyRequest(request_headers_);
     }
-    response->waitForEndStream();
   }
   return response;
 }

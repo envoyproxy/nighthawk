@@ -65,19 +65,19 @@ typed_config:
   "@type": type.googleapis.com/nighthawk.server.ResponseOptions
 )");
   // Don't send any config request header ...
-  getResponse(ResponseOrigin::UPSTREAM);
+  ASSERT_TRUE(getResponse(ResponseOrigin::UPSTREAM)->waitForEndStream());
   // ... we shouldn't observe any delay being requested via the upstream request headers.
   EXPECT_TRUE(upstream_request_->headers().get(kDelayHeaderString).empty());
 
   // Send a config request header with an empty / default configuration ....
   setRequestLevelConfiguration("{}");
-  getResponse(ResponseOrigin::UPSTREAM);
+  ASSERT_TRUE(getResponse(ResponseOrigin::UPSTREAM)->waitForEndStream());
   // ... we shouldn't observe any delay being requested via the upstream request headers.
   EXPECT_TRUE(upstream_request_->headers().get(kDelayHeaderString).empty());
 
   // Send a config request header requesting a 1.6s delay...
   setRequestLevelConfiguration("{static_delay: \"1.6s\"}");
-  getResponse(ResponseOrigin::UPSTREAM);
+  ASSERT_TRUE(getResponse(ResponseOrigin::UPSTREAM)->waitForEndStream());
   // ...we should observe a delay of 1.6s in the upstream request.
   ASSERT_EQ(upstream_request_->headers().get(kDelayHeaderString).size(), 1);
   EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString)[0]->value().getStringView(),
@@ -95,7 +95,7 @@ typed_config:
 
   // Without any request-level configuration, we expect the statically configured static delay to
   // apply.
-  getResponse(ResponseOrigin::UPSTREAM);
+  ASSERT_TRUE(getResponse(ResponseOrigin::UPSTREAM)->waitForEndStream());
   ASSERT_EQ(upstream_request_->headers().get(kDelayHeaderString).size(), 1);
   EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString)[0]->value().getStringView(),
             "1330");
@@ -103,7 +103,7 @@ typed_config:
   // With an empty request-level configuration, we expect the statically configured static delay to
   // apply.
   setRequestLevelConfiguration("{}");
-  getResponse(ResponseOrigin::UPSTREAM);
+  ASSERT_TRUE(getResponse(ResponseOrigin::UPSTREAM)->waitForEndStream());
   ASSERT_EQ(upstream_request_->headers().get(kDelayHeaderString).size(), 1);
   EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString)[0]->value().getStringView(),
             "1330");
@@ -111,7 +111,7 @@ typed_config:
   // Overriding the statically configured static delay via request-level configuration should be
   // reflected in the output.
   setRequestLevelConfiguration("{static_delay: \"0.2s\"}");
-  getResponse(ResponseOrigin::UPSTREAM);
+  ASSERT_TRUE(getResponse(ResponseOrigin::UPSTREAM)->waitForEndStream());
   // TODO(#392): This fails, because the duration is a two-field message: it would make here to see
   // both the number of seconds and nanoseconds to be overridden.
   // However, the seconds part is set to '0', which equates to the default of the underlying int
@@ -123,7 +123,7 @@ typed_config:
   // Overriding the statically configured static delay via request-level configuration should be
   // reflected in the output.
   setRequestLevelConfiguration("{static_delay: \"2.2s\"}");
-  getResponse(ResponseOrigin::UPSTREAM);
+  ASSERT_TRUE(getResponse(ResponseOrigin::UPSTREAM)->waitForEndStream());
   // 2.2 seconds -> 2200 ms.
   ASSERT_EQ(upstream_request_->headers().get(kDelayHeaderString).size(), 1);
   EXPECT_EQ(upstream_request_->headers().get(kDelayHeaderString)[0]->value().getStringView(),
@@ -140,7 +140,7 @@ typed_config:
     minimal_delay: 0.05s
     concurrency_delay_factor: 0.01s
 )EOF");
-  getResponse(ResponseOrigin::UPSTREAM);
+  ASSERT_TRUE(getResponse(ResponseOrigin::UPSTREAM)->waitForEndStream());
   // Based on the algorithm of concurrency_based_linear_delay, for the first request we expect to
   // observe the configured minimal_delay + concurrency_delay_factor = 0.06s -> 60ms.
   ASSERT_EQ(upstream_request_->headers().get(kDelayHeaderString).size(), 1);

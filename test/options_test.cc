@@ -297,6 +297,7 @@ TEST_P(RequestSourcePluginTestFixture, CreatesOptionsImplWithRequestSourceConfig
   // comparison below.
   EXPECT_EQ(1, command->mutable_failure_predicates()->erase("benchmark.http_4xx"));
   EXPECT_EQ(1, command->mutable_failure_predicates()->erase("benchmark.http_5xx"));
+  EXPECT_EQ(1, command->mutable_failure_predicates()->erase("benchmark.stream_resets"));
   EXPECT_EQ(1, command->mutable_failure_predicates()->erase("requestsource.upstream_rq_5xx"));
 
   // TODO(#433)
@@ -438,6 +439,7 @@ TEST_F(OptionsImplTest, TlsContext) {
   // comparison below.
   EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("benchmark.http_4xx"));
   EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("benchmark.http_5xx"));
+  EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("benchmark.stream_resets"));
   EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("requestsource.upstream_rq_5xx"));
   // TODO(#433)
   OptionsImpl options_from_proto(*cmd);
@@ -500,6 +502,7 @@ TEST_F(OptionsImplTest, MultiTarget) {
   // textual comparison below.
   EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("benchmark.http_4xx"));
   EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("benchmark.http_5xx"));
+  EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("benchmark.stream_resets"));
   EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("requestsource.upstream_rq_5xx"));
   // TODO(#433)
   OptionsImpl options_from_proto(*cmd);

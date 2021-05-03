@@ -8,6 +8,7 @@
 #include <memory>
 #include <random>
 
+#include "envoy/network/address.h"
 #include "envoy/server/filter_config.h"
 #include "envoy/stats/sink.h"
 #include "envoy/stats/store.h"
@@ -136,8 +137,9 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
       singleton_manager_(std::make_unique<Envoy::Singleton::ManagerImpl>(api_->threadFactory())),
       access_log_manager_(std::chrono::milliseconds(1000), *api_, *dispatcher_, access_log_lock_,
                           store_root_),
-      init_watcher_("Nighthawk", []() {}), validation_context_(false, false, false),
-      router_context_(store_root_.symbolTable()) {
+      init_watcher_("Nighthawk", []() {}),
+      admin_(Envoy::Network::Address::InstanceConstSharedPtr()),
+      validation_context_(false, false, false), router_context_(store_root_.symbolTable()) {
   // Any dispatchers created after the following call will use hr timers.
   setupForHRTimers();
   std::string lower = absl::AsciiStrToLower(
@@ -598,7 +600,23 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
   StatisticFactoryImpl statistic_factory(options_);
   collector.addResult("global", mergeWorkerStatistics(workers_), counters,
                       total_execution_duration / workers_.size(), first_acquisition_time);
-  return counters.find("sequencer.failed_terminations") == counters.end();
+  if (counters.find("sequencer.failed_terminations") == counters.end()) {
+    return true;
+  } else {
+    ENVOY_LOG(error, "Terminated early because of a failure predicate.");
+    ENVOY_LOG(
+        info,
+        "Check the output for problematic counter values. The default Nighthawk failure predicates "
+        "report failure if (1) Nighthawk could not connect to the target (see "
+        "'benchmark.pool_connection_failure' counter; check the address and port number, and try "
+        "explicitly setting --address-family v4 or v6, especially when using DNS; instead of "
+        "localhost try 127.0.0.1 or ::1 explicitly), (2) the protocol was not supported by the "
+        "target (see 'benchmark.stream_resets' counter; check http/https in the URI, --h2), (3) "
+        "the target returned a 4xx or 5xx HTTP response code (see 'benchmark.http_4xx' and "
+        "'benchmark.http_5xx' counters; check the URI path and the server config), or (4) a custom "
+        "gRPC RequestSource failed. --failure-predicate can be used to relax expectations.");
+    return false;
+  }
 }
 
 bool ProcessImpl::run(OutputCollector& collector) {
@@ -632,7 +650,11 @@ bool ProcessImpl::run(OutputCollector& collector) {
       tracing_uri->resolve(*dispatcher_,
                            Utility::translateFamilyOptionString(options_.addressFamily()));
     }
-  } catch (const UriException&) {
+  } catch (const UriException& ex) {
+    ENVOY_LOG(error,
+              "URI exception (for example, malformed URI syntax, bad "
+              "MultiTarget path, unresolvable host DNS): {}",
+              ex.what());
     return false;
   }
 
