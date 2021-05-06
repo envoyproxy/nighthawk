@@ -13,7 +13,6 @@
 #include "external/envoy/source/common/common/logger.h"
 #include "external/envoy/source/common/common/statusor.h"
 #include "external/envoy/source/common/protobuf/protobuf.h"
-#include "external/envoy/source/common/protobuf/utility.h"
 
 #include "api/adaptive_load/adaptive_load.pb.h"
 #include "api/adaptive_load/benchmark_result.pb.h"
@@ -176,13 +175,9 @@ absl::StatusOr<AdaptiveLoadSessionOutput> AdaptiveLoadControllerImpl::PerformAda
     if (spec.has_benchmark_cooldown_duration()) {
       ENVOY_LOG_MISC(info, "Cooling down before the next benchmark for duration: {}",
                      spec.benchmark_cooldown_duration());
-      absl::StatusOr<uint64_t> sleep_time_ms =
-          Envoy::Protobuf::util::TimeUtil::DurationToMilliseconds(
-              spec.benchmark_cooldown_duration());
-      if (!sleep_time_ms.ok()) {
-        return sleep_time_ms.status();
-      }
-      absl::SleepFor(absl::Milliseconds(*sleep_time_ms));
+      uint64_t sleep_time_ms = Envoy::Protobuf::util::TimeUtil::DurationToMilliseconds(
+          spec.benchmark_cooldown_duration());
+      absl::SleepFor(absl::Milliseconds(sleep_time_ms));
     }
 
     const std::chrono::nanoseconds time_limit_ns(
