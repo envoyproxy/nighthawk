@@ -63,6 +63,11 @@ message AdaptiveLoadSessionSpec {
   // confirm the performance at the level of load found in the adjusting stage.
   // Optional, default 30 seconds.
   google.protobuf.Duration testing_stage_duration = 7;
+  // The duration to wait between individual short benchmarks during the
+  // adjusting stage and between the last short benchmark of the adjusting stage
+  // and the testing stage.
+  // Optional, defaults no zero duration.
+  google.protobuf.Duration benchmark_cooldown_duration = 9;
   // Selects and configures a StepController plugin. Required.
   envoy.config.core.v3.TypedExtensionConfig step_controller_config = 8
       [(validate.rules).message.required = true];

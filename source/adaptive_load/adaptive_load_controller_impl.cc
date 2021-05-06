@@ -13,6 +13,7 @@
 #include "external/envoy/source/common/common/logger.h"
 #include "external/envoy/source/common/common/statusor.h"
 #include "external/envoy/source/common/protobuf/protobuf.h"
+#include "external/envoy/source/common/protobuf/utility.h"
 
 #include "api/adaptive_load/adaptive_load.pb.h"
 #include "api/adaptive_load/benchmark_result.pb.h"
@@ -82,6 +83,22 @@ StepControllerPtr LoadStepControllerPluginFromSpec(const AdaptiveLoadSessionSpec
           "StepController plugin loading error should have been caught during input validation: ",
           step_controller_or.status().message()));
   return std::move(step_controller_or.value());
+}
+
+/**
+ * Converts the duration proto to a number of milliseconds.
+ *
+ * @param duration the duration to convert.
+ *
+ * @return the number of milliseconds or an error if the conversion failed.
+ */
+absl::StatusOr<uint64_t>
+ProtobufDurationToMilliseconds(const Envoy::ProtobufWkt::Duration& duration) noexcept {
+  try {
+    return Envoy::DurationUtil::durationToMilliseconds(duration);
+  } catch (const Envoy::EnvoyException& e) {
+    return absl::InternalError(e.what());
+  }
 }
 
 } // namespace
@@ -171,6 +188,17 @@ absl::StatusOr<AdaptiveLoadSessionOutput> AdaptiveLoadControllerImpl::PerformAda
     }
     BenchmarkResult result = result_or.value();
     *output.mutable_adjusting_stage_results()->Add() = result;
+
+    if (spec.has_benchmark_cooldown_duration()) {
+      ENVOY_LOG_MISC(info, "Cooling down before the next benchmark for duration: {}",
+                     spec.benchmark_cooldown_duration());
+      absl::StatusOr<uint64_t> sleep_milliseconds =
+          ProtobufDurationToMilliseconds(spec.benchmark_cooldown_duration());
+      if (!sleep_milliseconds.ok()) {
+        return sleep_milliseconds.status();
+      }
+      absl::SleepFor(absl::Milliseconds(*sleep_milliseconds));
+    }
 
     const std::chrono::nanoseconds time_limit_ns(
         Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(spec.convergence_deadline()));
