@@ -326,8 +326,8 @@ TEST_F(AdaptiveLoadControllerImplFixture, FailsWhenBenchmarkCooldownDurationIsNe
   absl::StatusOr<AdaptiveLoadSessionOutput> output_or =
       controller.PerformAdaptiveLoadSession(&mock_nighthawk_service_stub_, spec);
   ASSERT_FALSE(output_or.ok());
-  EXPECT_EQ(output_or.status().code(), absl::StatusCode::kInternal);
-  EXPECT_THAT(output_or.status().message(), HasSubstr("duration"));
+  EXPECT_EQ(output_or.status().code(), absl::StatusCode::kInvalidArgument);
+  EXPECT_THAT(output_or.status().message(), HasSubstr("BenchmarkCooldownDuration"));
 }
 
 } // namespace
