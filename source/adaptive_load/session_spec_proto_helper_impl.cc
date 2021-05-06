@@ -3,8 +3,6 @@
 #include "nighthawk/adaptive_load/metrics_plugin.h"
 #include "nighthawk/adaptive_load/step_controller.h"
 
-#include "external/envoy/source/common/protobuf/utility.h"
-
 #include "api/adaptive_load/adaptive_load.pb.h"
 #include "api/adaptive_load/adaptive_load.pb.validate.h"
 #include "api/adaptive_load/metric_spec.pb.h"
