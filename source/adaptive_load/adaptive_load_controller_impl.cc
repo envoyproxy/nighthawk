@@ -172,6 +172,14 @@ absl::StatusOr<AdaptiveLoadSessionOutput> AdaptiveLoadControllerImpl::PerformAda
     BenchmarkResult result = result_or.value();
     *output.mutable_adjusting_stage_results()->Add() = result;
 
+    if (spec.has_benchmark_cooldown_duration()) {
+      ENVOY_LOG_MISC(info, "Cooling down before the next benchmark for duration: {}",
+                     spec.benchmark_cooldown_duration());
+      uint64_t sleep_time_ms = Envoy::Protobuf::util::TimeUtil::DurationToMilliseconds(
+          spec.benchmark_cooldown_duration());
+      absl::SleepFor(absl::Milliseconds(sleep_time_ms));
+    }
+
     const std::chrono::nanoseconds time_limit_ns(
         Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(spec.convergence_deadline()));
     const auto elapsed_time_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
