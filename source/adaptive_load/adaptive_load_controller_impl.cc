@@ -66,6 +66,29 @@ LoadMetricsPlugins(const AdaptiveLoadSessionSpec& spec) {
 }
 
 /**
+ * Logs the execution response excluding all non-global results and the
+ * statistics from the global result.
+ *
+ * @param response is the execution response that should be logged.
+ */
+void LogGlobalResultExcludingStatistics(const nighthawk::client::ExecutionResponse& response) {
+  nighthawk::client::ExecutionResponse stripped = response;
+  stripped.mutable_output()->clear_results();
+  for (const nighthawk::client::Result& result : response.output().results()) {
+    if (result.name() != "global") {
+      continue;
+    }
+    nighthawk::client::Result* stripped_result = stripped.mutable_output()->add_results();
+    *stripped_result = result;
+    stripped_result->clear_statistics();
+  }
+  ENVOY_LOG_MISC(info,
+                 "Got result (stripped to just the global result excluding "
+                 "statistics): {}",
+                 stripped.DebugString());
+}
+
+/**
  * Loads and initializes a StepController plugin requested in the session spec. Assumes
  * the spec has already been validated; crashes the process otherwise.
  *
@@ -122,6 +145,7 @@ absl::StatusOr<BenchmarkResult> AdaptiveLoadControllerImpl::PerformAndAnalyzeNig
     return nighthawk_response_or.status();
   }
   nighthawk::client::ExecutionResponse nighthawk_response = nighthawk_response_or.value();
+  LogGlobalResultExcludingStatistics(nighthawk_response);
 
   absl::StatusOr<BenchmarkResult> benchmark_result_or =
       metrics_evaluator_.AnalyzeNighthawkBenchmark(nighthawk_response, spec,
