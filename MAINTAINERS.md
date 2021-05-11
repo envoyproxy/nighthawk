@@ -73,7 +73,7 @@ important maintenance task. When performing the update, follow this procedure:
    that break our build. Include any changes required to Nighthawk to fix that
    in the same PR.
 1. Create a PR with a title like `Update Envoy to 9753819 (Jan 24th 2021)`,
-   describe all performed changes in the PR's descriotion.
+   describe all performed changes in the PR's description.
 1. If the PR ends up modifying any c++ files, execute `ci/do_ci.sh fix_format`
    to reformat the files and avoid a CI failure.
 1. If the PR ends up modifying any CLI arguments, execute
