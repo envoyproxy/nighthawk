@@ -16,4 +16,12 @@ Envoy::MonotonicTime FakeIncrementingMonotonicTimeSource::monotonicTime() {
   return result;
 }
 
+void FakeIncrementingMonotonicTimeSource::setSystemTimeSeconds(int seconds) {
+  system_seconds_since_epoch_ = seconds;
+}
+
+void FakeIncrementingMonotonicTimeSource::setMonotonicTimeSeconds(int seconds) {
+  monotonic_seconds_since_epoch_ = seconds;
+}
+
 } // namespace Nighthawk

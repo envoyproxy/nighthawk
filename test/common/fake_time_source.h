@@ -21,6 +21,19 @@ public:
    */
   Envoy::MonotonicTime monotonicTime() override;
 
+  /**
+   * Sets the current value of the system time.
+   *
+   * @param seconds the number of seconds to set the system time to.
+   */
+  void setSystemTimeSeconds(int seconds);
+  /**
+   * Sets the current value of the monotonic time.
+   *
+   * @param seconds the number of seconds to set the monotonic time to.
+   */
+  void setMonotonicTimeSeconds(int seconds);
+
 private:
   int system_seconds_since_epoch_{0};
   int monotonic_seconds_since_epoch_{0};
