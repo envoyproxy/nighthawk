@@ -6,7 +6,7 @@ namespace Nighthawk {
 /**
  * Fake time source that ticks 1 second on every query, starting from the Unix epoch.
  */
-class FakeIncrementingMonotonicTimeSource : public Envoy::TimeSource {
+class FakeIncrementingTimeSource : public Envoy::TimeSource {
 public:
   /**
    * Ticks forward 1 second on each call.

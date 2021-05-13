@@ -119,7 +119,7 @@ public:
 protected:
   NiceMock<MockNighthawkServiceClient> mock_nighthawk_service_client_;
   NiceMock<MockMetricsEvaluator> mock_metrics_evaluator_;
-  FakeIncrementingMonotonicTimeSource fake_time_source_;
+  FakeIncrementingTimeSource fake_time_source_;
   MockNighthawkServiceStub mock_nighthawk_service_stub_;
   // Real spec helper is simpler to use because SetSessionSpecDefaults preserves values a test
   // sets in the spec; the mock inconveniently discards the input and returns an empty spec.
