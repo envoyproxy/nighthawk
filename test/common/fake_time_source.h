@@ -4,15 +4,14 @@
 
 namespace Nighthawk {
 /**
- * Fake time source that ticks 1 second on every query, starting from the Unix epoch. Supports only
- * monotonicTime().
+ * Fake time source that ticks 1 second on every query, starting from the Unix epoch.
  */
 class FakeIncrementingMonotonicTimeSource : public Envoy::TimeSource {
 public:
   /**
-   * Not supported.
+   * Ticks forward 1 second on each call.
    *
-   * @return Envoy::SystemTime Fixed value of the Unix epoch.
+   * @return Envoy::SystemTime Fake time value.
    */
   Envoy::SystemTime systemTime() override;
   /**
@@ -23,7 +22,8 @@ public:
   Envoy::MonotonicTime monotonicTime() override;
 
 private:
-  int seconds_since_epoch_{0};
+  int system_seconds_since_epoch_{0};
+  int monotonic_seconds_since_epoch_{0};
 };
 
 } // namespace Nighthawk
