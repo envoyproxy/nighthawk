@@ -27,7 +27,7 @@ jobs:
   test_gcc:
     docker:
       - image: *envoy-build-image
-    resource_class: xlarge
+    resource_class: 22xlarge
     steps:
       - checkout
       - run:
