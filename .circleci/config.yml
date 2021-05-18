@@ -24,15 +24,6 @@ jobs:
     steps:
       - checkout
       - run: ci/do_ci.sh clang_tidy
-  test_gcc:
-    docker:
-      - image: *envoy-build-image
-    resource_class: 2xlarge
-    steps:
-      - checkout
-      - run:
-          command: ci/do_ci.sh test_gcc
-          no_output_timeout: 30m
   coverage:
     docker:
       - image: *envoy-build-image
@@ -102,7 +93,6 @@ workflows:
     jobs:
       - build
       - test
-      - test_gcc
       - clang_tidy
       - coverage
       - integration_test_coverage
