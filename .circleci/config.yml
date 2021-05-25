@@ -1,6 +1,6 @@
 references:
-  envoy-build-image: &envoy-build-image # March 8th, 2021
-    envoyproxy/envoy-build-ubuntu:e33c93e6d79804bf95ff80426d10bdcc9096c785
+  envoy-build-image: &envoy-build-image # May 10th, 2021
+    envoyproxy/envoy-build-ubuntu:55d9e4719d2bd0accce8f829b44dab70cd42112a
 version: 2
 jobs:
   build:
@@ -24,15 +24,6 @@ jobs:
     steps:
       - checkout
       - run: ci/do_ci.sh clang_tidy
-  test_gcc:
-    docker:
-      - image: *envoy-build-image
-    resource_class: xlarge
-    steps:
-      - checkout
-      - run:
-          command: ci/do_ci.sh test_gcc
-          no_output_timeout: 30m
   coverage:
     docker:
       - image: *envoy-build-image
@@ -102,7 +93,6 @@ workflows:
     jobs:
       - build
       - test
-      - test_gcc
       - clang_tidy
       - coverage
       - integration_test_coverage

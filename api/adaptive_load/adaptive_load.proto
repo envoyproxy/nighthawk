@@ -55,14 +55,23 @@ message AdaptiveLoadSessionSpec {
   nighthawk.client.CommandLineOptions nighthawk_traffic_template = 4
       [(validate.rules).message.required = true];
   // The duration of each short benchmark during the adjusting stage. Optional, default 10 seconds.
-  google.protobuf.Duration measuring_period = 5 [(validate.rules).duration.gt.seconds = 0];
-  // Maximum amount of time the adjusting stage should wait for convergence
-  // before returning an error. Optional, default 300 seconds.
-  google.protobuf.Duration convergence_deadline = 6 [(validate.rules).duration.gt.seconds = 0];
+  google.protobuf.Duration measuring_period = 5
+      [(validate.rules).duration = {gt {seconds: 0 nanos: 0}}];
+  //  Maximum amount of time the adjusting stage should wait for convergence
+  //  before returning an error. Optional, default 300 seconds.
+  google.protobuf.Duration convergence_deadline = 6
+      [(validate.rules).duration = {gt {seconds: 0 nanos: 0}}];
   // The duration of the single benchmark session of the testing stage to
   // confirm the performance at the level of load found in the adjusting stage.
   // Optional, default 30 seconds.
-  google.protobuf.Duration testing_stage_duration = 7;
+  google.protobuf.Duration testing_stage_duration = 7
+      [(validate.rules).duration = {gt {seconds: 0 nanos: 0}}];
+  // The duration to wait between individual short benchmarks during the
+  // adjusting stage and between the last short benchmark of the adjusting stage
+  // and the testing stage.
+  // Optional, defaults to zero duration.
+  google.protobuf.Duration benchmark_cooldown_duration = 9
+      [(validate.rules).duration = {gt {seconds: 0 nanos: 0}}];
   // Selects and configures a StepController plugin. Required.
   envoy.config.core.v3.TypedExtensionConfig step_controller_config = 8
       [(validate.rules).message.required = true];
