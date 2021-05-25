@@ -70,7 +70,7 @@ public:
       Envoy::Event::Dispatcher& dispatcher, Envoy::Upstream::HostConstSharedPtr host,
       Envoy::Upstream::ResourcePriority priority, std::vector<Envoy::Http::Protocol>& protocols,
       const absl::optional<envoy::config::core::v3::AlternateProtocolsCacheOptions>&
-                       alternate_protocol_options,
+          alternate_protocol_options,
       const Envoy::Network::ConnectionSocket::OptionsSharedPtr& options,
       const Envoy::Network::TransportSocketOptionsSharedPtr& transport_socket_options,
       Envoy::TimeSource& time_source, Envoy::Upstream::ClusterConnectivityState& state) override {
@@ -101,8 +101,8 @@ public:
       return Envoy::Http::ConnectionPool::InstancePtr{h1_pool};
     }
     return Envoy::Upstream::ProdClusterManagerFactory::allocateConnPool(
-        dispatcher, host, priority, protocols, alternate_protocol_options, options, transport_socket_options, time_source,
-        state);
+        dispatcher, host, priority, protocols, alternate_protocol_options, options,
+        transport_socket_options, time_source, state);
   }
 
   void setConnectionReuseStrategy(
