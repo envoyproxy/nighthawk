@@ -6,6 +6,7 @@ syntax = "proto3";
 package nighthawk.adaptive_load;
 
 import "api/client/output.proto";
+import "google/protobuf/timestamp.proto";
 import "google/rpc/status.proto";
 
 // Records the status of a single metric during a benchmark session.
@@ -33,4 +34,9 @@ message BenchmarkResult {
   // Status of all declared metrics during this benchmark session. Not present
   // in the event of Nighthawk Service errors.
   repeated MetricEvaluation metric_evaluations = 3;
+
+  // The time this benchmark session started.
+  google.protobuf.Timestamp start_time = 4;
+  // The time this benchmark session ended.
+  google.protobuf.Timestamp end_time = 5;
 }
