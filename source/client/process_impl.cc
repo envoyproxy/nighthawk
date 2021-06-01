@@ -8,6 +8,7 @@
 #include <memory>
 #include <random>
 
+#include "envoy/network/address.h"
 #include "envoy/server/filter_config.h"
 #include "envoy/stats/sink.h"
 #include "envoy/stats/store.h"
@@ -68,6 +69,8 @@ public:
   Envoy::Http::ConnectionPool::InstancePtr allocateConnPool(
       Envoy::Event::Dispatcher& dispatcher, Envoy::Upstream::HostConstSharedPtr host,
       Envoy::Upstream::ResourcePriority priority, std::vector<Envoy::Http::Protocol>& protocols,
+      const absl::optional<envoy::config::core::v3::AlternateProtocolsCacheOptions>&
+          alternate_protocol_options,
       const Envoy::Network::ConnectionSocket::OptionsSharedPtr& options,
       const Envoy::Network::TransportSocketOptionsSharedPtr& transport_socket_options,
       Envoy::TimeSource& time_source, Envoy::Upstream::ClusterConnectivityState& state) override {
@@ -98,8 +101,8 @@ public:
       return Envoy::Http::ConnectionPool::InstancePtr{h1_pool};
     }
     return Envoy::Upstream::ProdClusterManagerFactory::allocateConnPool(
-        dispatcher, host, priority, protocols, options, transport_socket_options, time_source,
-        state);
+        dispatcher, host, priority, protocols, alternate_protocol_options, options,
+        transport_socket_options, time_source, state);
   }
 
   void setConnectionReuseStrategy(
@@ -136,8 +139,9 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
       singleton_manager_(std::make_unique<Envoy::Singleton::ManagerImpl>(api_->threadFactory())),
       access_log_manager_(std::chrono::milliseconds(1000), *api_, *dispatcher_, access_log_lock_,
                           store_root_),
-      init_watcher_("Nighthawk", []() {}), validation_context_(false, false, false),
-      router_context_(store_root_.symbolTable()) {
+      init_watcher_("Nighthawk", []() {}),
+      admin_(Envoy::Network::Address::InstanceConstSharedPtr()),
+      validation_context_(false, false, false), router_context_(store_root_.symbolTable()) {
   // Any dispatchers created after the following call will use hr timers.
   setupForHRTimers();
   std::string lower = absl::AsciiStrToLower(

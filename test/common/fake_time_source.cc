@@ -2,16 +2,26 @@
 
 namespace Nighthawk {
 
-Envoy::SystemTime FakeIncrementingMonotonicTimeSource::systemTime() {
+Envoy::SystemTime FakeIncrementingTimeSource::systemTime() {
   Envoy::SystemTime epoch;
-  return epoch;
+  Envoy::SystemTime result = epoch + std::chrono::seconds(system_seconds_since_epoch_);
+  ++system_seconds_since_epoch_;
+  return result;
 }
 
-Envoy::MonotonicTime FakeIncrementingMonotonicTimeSource::monotonicTime() {
+Envoy::MonotonicTime FakeIncrementingTimeSource::monotonicTime() {
   Envoy::MonotonicTime epoch;
-  Envoy::MonotonicTime result = epoch + std::chrono::seconds(seconds_since_epoch_);
-  ++seconds_since_epoch_;
+  Envoy::MonotonicTime result = epoch + std::chrono::seconds(monotonic_seconds_since_epoch_);
+  ++monotonic_seconds_since_epoch_;
   return result;
+}
+
+void FakeIncrementingTimeSource::setSystemTimeSeconds(int seconds) {
+  system_seconds_since_epoch_ = seconds;
+}
+
+void FakeIncrementingTimeSource::setMonotonicTimeSeconds(int seconds) {
+  monotonic_seconds_since_epoch_ = seconds;
 }
 
 } // namespace Nighthawk

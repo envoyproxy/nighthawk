@@ -38,7 +38,7 @@ TEST(ThreadSafeStopwatchTest, ThreadedStopwatchSpamming) {
   constexpr uint64_t kFakeTimeSourceDefaultTick = 1000000000;
   constexpr uint32_t kNumThreads = 100;
   ThreadSafeMontonicTimeStopwatch stopwatch;
-  FakeIncrementingMonotonicTimeSource time_system;
+  FakeIncrementingTimeSource time_system;
   std::vector<std::thread> threads(kNumThreads);
   std::promise<void> signal_all_threads_running;
   std::shared_future<void> future(signal_all_threads_running.get_future());
