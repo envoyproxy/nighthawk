@@ -1,6 +1,7 @@
 #include <functional>
 #include <thread>
 
+#include "external/envoy/envoy/upstream/cluster_manager.h"
 #include "external/envoy/source/common/common/random_generator.h"
 #include "external/envoy/source/common/runtime/runtime_impl.h"
 #include "external/envoy/source/common/stats/isolated_store_impl.h"
@@ -8,7 +9,6 @@
 #include "external/envoy/test/mocks/protobuf/mocks.h"
 #include "external/envoy/test/mocks/thread_local/mocks.h"
 #include "external/envoy/test/test_common/simulated_time_system.h"
-#include "external/envoy/upstream/cluster_manager.h"
 
 #include "source/client/client_worker_impl.h"
 #include "source/common/statistic_impl.h"
