@@ -10,7 +10,7 @@
 #include "envoy/stats/store.h"
 #include "envoy/thread_local/thread_local.h"
 
-#include "common/worker_impl.h"
+#include "source/common/worker_impl.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -26,9 +26,9 @@ public:
   // variables stats_sinks_ and stats_flush_interval_.
   // @param stats_flush_interval time interval between each flush.
   // @param api supplies the Api instance for WorkerImpl's constructor. See
-  // envoy/include/envoy/api/api.h for its definition.
+  // envoy/envoy/api/api.h for its definition.
   // @param tls supplies the ThreadLocal::Instance for WorkerImpl's constructor.
-  // See envoy/include/envoy/thread_local/thread_local.h for its definition.
+  // See envoy/envoy/thread_local/thread_local.h for its definition.
   // @param store supplies the stats store instance for WorkerImpl's constructor.
   // @param stats_sinks list of configured stats sinks where the stats will be
   // flushed to.

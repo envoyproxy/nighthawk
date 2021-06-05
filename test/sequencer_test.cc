@@ -9,9 +9,9 @@
 #include "external/envoy/test/mocks/event/mocks.h"
 #include "external/envoy/test/test_common/simulated_time_system.h"
 
-#include "common/rate_limiter_impl.h"
-#include "common/sequencer_impl.h"
-#include "common/statistic_impl.h"
+#include "source/common/rate_limiter_impl.h"
+#include "source/common/sequencer_impl.h"
+#include "source/common/statistic_impl.h"
 
 #include "test/mocks/common/mock_platform_util.h"
 #include "test/mocks/common/mock_rate_limiter.h"

@@ -18,9 +18,9 @@ envoy_basic_cc_library(
         ":config_validator",
         "//api/adaptive_load:adaptive_load_proto_cc_proto",
         "//api/client:grpc_service_lib",
-        "@envoy//include/envoy/common:base_includes",
-        "@envoy//include/envoy/common:time_interface",
-        "@envoy//include/envoy/config:typed_config_interface",
+        "@envoy//envoy/common:base_includes",
+        "@envoy//envoy/common:time_interface",
+        "@envoy//envoy/config:typed_config_interface",
         "@envoy//source/common/common:statusor_lib_with_external_headers",
     ],
 )
@@ -32,9 +32,9 @@ envoy_basic_cc_library(
     ],
     include_prefix = "nighthawk/adaptive_load",
     deps = [
-        "@envoy//include/envoy/common:base_includes",
-        "@envoy//include/envoy/common:time_interface",
-        "@envoy//include/envoy/config:typed_config_interface",
+        "@envoy//envoy/common:base_includes",
+        "@envoy//envoy/common:time_interface",
+        "@envoy//envoy/config:typed_config_interface",
         "@envoy//source/common/protobuf:protobuf_with_external_headers",
     ],
 )
@@ -48,8 +48,8 @@ envoy_basic_cc_library(
     deps = [
         ":config_validator",
         "//api/adaptive_load:adaptive_load_proto_cc_proto",
-        "@envoy//include/envoy/common:base_includes",
-        "@envoy//include/envoy/config:typed_config_interface",
+        "@envoy//envoy/common:base_includes",
+        "@envoy//envoy/config:typed_config_interface",
     ],
 )
 
@@ -62,8 +62,8 @@ envoy_basic_cc_library(
     deps = [
         ":metrics_plugin",
         "//api/adaptive_load:adaptive_load_proto_cc_proto",
-        "@envoy//include/envoy/common:base_includes",
-        "@envoy//include/envoy/config:typed_config_interface",
+        "@envoy//envoy/common:base_includes",
+        "@envoy//envoy/config:typed_config_interface",
         "@envoy//source/common/common:statusor_lib_with_external_headers",
     ],
 )
@@ -77,8 +77,8 @@ envoy_basic_cc_library(
     deps = [
         ":config_validator",
         "//api/adaptive_load:adaptive_load_proto_cc_proto",
-        "@envoy//include/envoy/common:base_includes",
-        "@envoy//include/envoy/config:typed_config_interface",
+        "@envoy//envoy/common:base_includes",
+        "@envoy//envoy/config:typed_config_interface",
         "@envoy//source/common/common:statusor_lib_with_external_headers",
     ],
 )
@@ -92,8 +92,8 @@ envoy_basic_cc_library(
     deps = [
         ":config_validator",
         "//api/adaptive_load:adaptive_load_proto_cc_proto",
-        "@envoy//include/envoy/common:base_includes",
-        "@envoy//include/envoy/config:typed_config_interface",
+        "@envoy//envoy/common:base_includes",
+        "@envoy//envoy/config:typed_config_interface",
     ],
 )
 
@@ -106,7 +106,7 @@ envoy_basic_cc_library(
     deps = [
         "//api/adaptive_load:adaptive_load_proto_cc_proto",
         "@com_google_absl//absl/status",
-        "@envoy//include/envoy/common:base_includes",
+        "@envoy//envoy/common:base_includes",
     ],
 )
 
@@ -119,7 +119,7 @@ envoy_basic_cc_library(
     deps = [
         ":config_validator",
         "//api/adaptive_load:adaptive_load_proto_cc_proto",
-        "@envoy//include/envoy/common:base_includes",
-        "@envoy//include/envoy/config:typed_config_interface",
+        "@envoy//envoy/common:base_includes",
+        "@envoy//envoy/config:typed_config_interface",
     ],
 )

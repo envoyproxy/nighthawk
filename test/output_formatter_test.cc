@@ -10,11 +10,10 @@
 #include "api/client/options.pb.h"
 #include "api/client/output.pb.h"
 
-#include "common/statistic_impl.h"
-#include "common/version_info.h"
-
-#include "client/output_collector_impl.h"
-#include "client/output_formatter_impl.h"
+#include "source/client/output_collector_impl.h"
+#include "source/client/output_formatter_impl.h"
+#include "source/common/statistic_impl.h"
+#include "source/common/version_info.h"
 
 #include "test_common/environment.h"
 

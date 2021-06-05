@@ -26,7 +26,7 @@ envoy_cc_test_library(
     ],
     repository = "@envoy",
     deps = [
-        "//include/nighthawk/request_source:request_source_plugin_config_factory_lib",
+        "//nighthawk/request_source:request_source_plugin_config_factory_lib",
         "//source/common:nighthawk_common_lib",
         "//source/common:request_impl_lib",
         "//source/common:request_source_impl_lib",

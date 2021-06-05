@@ -19,7 +19,7 @@ envoy_cc_library(
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
-        "//include/nighthawk/sink:nighthawk_sink_client",
+        "//nighthawk/sink:nighthawk_sink_client",
     ],
 )
 
@@ -34,7 +34,7 @@ envoy_cc_library(
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
-        "//include/nighthawk/sink:sink_lib",
+        "//nighthawk/sink:sink_lib",
         "@envoy//source/common/common:minimal_logger_lib_with_external_headers",
         "@envoy//source/common/common:random_generator_lib_with_external_headers",
     ],

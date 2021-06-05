@@ -17,7 +17,7 @@ envoy_basic_cc_library(
     deps = [
         "//api/distributor:distributor_cc_proto",
         "//api/distributor:distributor_grpc_lib",
-        "@envoy//include/envoy/common:base_includes",
+        "@envoy//envoy/common:base_includes",
         "@envoy//source/common/common:assert_lib_with_external_headers",
         "@envoy//source/common/common:statusor_lib_with_external_headers",
         "@envoy//source/common/protobuf:protobuf_with_external_headers",

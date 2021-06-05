@@ -1,4 +1,4 @@
-#include "common/sequencer_impl.h"
+#include "source/common/sequencer_impl.h"
 
 #include "nighthawk/common/exception.h"
 #include "nighthawk/common/platform_util.h"

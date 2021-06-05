@@ -22,9 +22,8 @@
 
 #include "api/client/options.pb.h"
 
-#include "common/statistic_impl.h"
-
-#include "client/stream_decoder.h"
+#include "source/client/stream_decoder.h"
+#include "source/common/statistic_impl.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -138,8 +137,13 @@ public:
   Envoy::Http::ConnectionPool::Instance* pool() {
     auto proto = use_h2_ ? Envoy::Http::Protocol::Http2 : Envoy::Http::Protocol::Http11;
     const auto thread_local_cluster = cluster_manager_->getThreadLocalCluster(cluster_name_);
-    return thread_local_cluster->httpConnPool(Envoy::Upstream::ResourcePriority::Default, proto,
-                                              nullptr);
+    absl::optional<Envoy::Upstream::HttpPoolData> pool_data = thread_local_cluster->httpConnPool(
+        Envoy::Upstream::ResourcePriority::Default, proto, nullptr);
+    if (pool_data.has_value()) {
+      return pool_data->pool();
+    } else {
+      return nullptr;
+    }
   }
 
 private:

@@ -1,4 +1,4 @@
-#include "adaptive_load/adaptive_load_controller_impl.h"
+#include "source/adaptive_load/adaptive_load_controller_impl.h"
 
 #include <chrono>
 
@@ -22,12 +22,13 @@
 #include "api/client/output.pb.h"
 #include "api/client/service.grpc.pb.h"
 
+#include "source/adaptive_load/metrics_plugin_impl.h"
+#include "source/adaptive_load/plugin_loader.h"
+
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
-#include "adaptive_load/metrics_plugin_impl.h"
-#include "adaptive_load/plugin_loader.h"
 
 namespace Nighthawk {
 

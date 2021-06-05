@@ -6,8 +6,8 @@
 
 #include "api/client/service.pb.h"
 
-#include "client/output_formatter_impl.h"
-#include "client/output_transform_main.h"
+#include "source/client/output_formatter_impl.h"
+#include "source/client/output_transform_main.h"
 
 #include "absl/strings/match.h"
 #include "gtest/gtest.h"

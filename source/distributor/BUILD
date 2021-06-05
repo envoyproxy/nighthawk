@@ -19,7 +19,7 @@ envoy_cc_library(
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
-        "//include/nighthawk/distributor:nighthawk_distributor_client",
+        "//nighthawk/distributor:nighthawk_distributor_client",
     ],
 )
 
@@ -35,7 +35,7 @@ envoy_cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//api/distributor:distributor_grpc_lib",
-        "//include/nighthawk/common:nighthawk_service_client",
+        "//nighthawk/common:nighthawk_service_client",
         "@com_github_grpc_grpc//:grpc++",
         "@envoy//source/common/common:assert_lib_with_external_headers",
         "@envoy//source/common/common:minimal_logger_lib_with_external_headers",

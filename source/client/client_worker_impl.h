@@ -17,7 +17,7 @@
 #include "nighthawk/common/sequencer.h"
 #include "nighthawk/common/termination_predicate.h"
 
-#include "common/worker_impl.h"
+#include "source/common/worker_impl.h"
 
 namespace Nighthawk {
 namespace Client {

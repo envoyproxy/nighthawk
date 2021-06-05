@@ -6,13 +6,13 @@
 #include "external/envoy/source/common/event/real_time_system.h"
 #include "external/envoy/source/exe/platform_impl.h"
 
-#include "common/nighthawk_service_client_impl.h"
+#include "source/adaptive_load/adaptive_load_client_main.h"
+#include "source/adaptive_load/adaptive_load_controller_impl.h"
+#include "source/adaptive_load/metrics_evaluator_impl.h"
+#include "source/adaptive_load/session_spec_proto_helper_impl.h"
+#include "source/common/nighthawk_service_client_impl.h"
 
 #include "absl/debugging/symbolize.h"
-#include "adaptive_load/adaptive_load_client_main.h"
-#include "adaptive_load/adaptive_load_controller_impl.h"
-#include "adaptive_load/metrics_evaluator_impl.h"
-#include "adaptive_load/session_spec_proto_helper_impl.h"
 
 // NOLINT(namespace-nighthawk)
 

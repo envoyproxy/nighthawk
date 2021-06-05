@@ -27,6 +27,12 @@
 #include "api/client/service.pb.h"
 #include "api/client/service_mock.grpc.pb.h"
 
+#include "source/adaptive_load/adaptive_load_controller_impl.h"
+#include "source/adaptive_load/metrics_plugin_impl.h"
+#include "source/adaptive_load/plugin_loader.h"
+#include "source/adaptive_load/scoring_function_impl.h"
+#include "source/adaptive_load/session_spec_proto_helper_impl.h"
+
 #include "test/adaptive_load/fake_plugins/fake_step_controller/fake_step_controller.h"
 #include "test/common/fake_time_source.h"
 #include "test/mocks/adaptive_load/mock_metrics_evaluator.h"
@@ -36,11 +42,6 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_join.h"
-#include "adaptive_load/adaptive_load_controller_impl.h"
-#include "adaptive_load/metrics_plugin_impl.h"
-#include "adaptive_load/plugin_loader.h"
-#include "adaptive_load/scoring_function_impl.h"
-#include "adaptive_load/session_spec_proto_helper_impl.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 

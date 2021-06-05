@@ -6,8 +6,8 @@
 
 #include "api/client/options.pb.h"
 
-#include "common/request_impl.h"
-#include "common/request_source_impl.h"
+#include "source/common/request_impl.h"
+#include "source/common/request_source_impl.h"
 
 namespace Nighthawk {
 
