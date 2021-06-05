@@ -54,6 +54,7 @@ public:
       : api_(Envoy::Api::createApiForTest(time_system_)),
         dispatcher_(api_->allocateDispatcher("test_thread")),
         cluster_manager_(std::make_unique<Envoy::Upstream::MockClusterManager>()),
+        pool_data_([]() {}, &pool_),
         cluster_info_(std::make_unique<Envoy::Upstream::MockClusterInfo>()),
         http_tracer_(std::make_unique<Envoy::Tracing::MockHttpTracer>()), response_code_("200"),
         statistic_(std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
@@ -69,7 +70,7 @@ public:
     EXPECT_CALL(cluster_manager(), getThreadLocalCluster(_))
         .WillRepeatedly(Return(&thread_local_cluster_));
     EXPECT_CALL(thread_local_cluster_, info()).WillRepeatedly(Return(cluster_info_));
-    EXPECT_CALL(thread_local_cluster_, httpConnPool(_, _, _)).WillRepeatedly(Return(&pool_));
+    EXPECT_CALL(thread_local_cluster_, httpConnPool(_, _, _)).WillRepeatedly(Return(pool_data_));
 
     auto& tracer = static_cast<Envoy::Tracing::MockHttpTracer&>(*http_tracer_);
     EXPECT_CALL(tracer, startSpan_(_, _, _, _))
@@ -205,6 +206,7 @@ public:
   std::unique_ptr<Client::BenchmarkClientHttpImpl> client_;
   Envoy::Upstream::ClusterManagerPtr cluster_manager_;
   Envoy::Http::ConnectionPool::MockInstance pool_;
+  Envoy::Upstream::HttpPoolData pool_data_;
   Envoy::ProcessWide process_wide;
   std::vector<Envoy::Http::ResponseDecoder*> decoders_;
   NiceMock<Envoy::Http::MockRequestEncoder> stream_encoder_;
