@@ -4,9 +4,8 @@
 #include <memory>
 #include <string>
 
-#include "envoy/common/exception.h"
-#include "envoy/common/pure.h"
-
+#include "external/envoy/envoy/common/exception.h"
+#include "external/envoy/envoy/common/pure.h"
 #include "external/envoy/source/common/common/non_copyable.h"
 
 #include "api/client/output.pb.h"

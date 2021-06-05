@@ -2,10 +2,6 @@
 
 #include <map>
 
-#include "envoy/network/address.h"
-#include "envoy/stats/store.h"
-#include "envoy/tracing/http_tracer.h"
-
 #include "nighthawk/client/client_worker.h"
 #include "nighthawk/client/factories.h"
 #include "nighthawk/client/options.h"
@@ -14,6 +10,9 @@
 #include "nighthawk/common/statistic.h"
 
 #include "external/envoy/envoy/api/api.h"
+#include "external/envoy/envoy/network/address.h"
+#include "external/envoy/envoy/stats/store.h"
+#include "external/envoy/envoy/tracing/http_tracer.h"
 #include "external/envoy/source/common/access_log/access_log_manager_impl.h"
 #include "external/envoy/source/common/common/logger.h"
 #include "external/envoy/source/common/common/random_generator.h"

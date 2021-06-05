@@ -5,11 +5,10 @@
 #include <string>
 #include <utility>
 
-#include "envoy/common/exception.h"
-
 #include "nighthawk/adaptive_load/adaptive_load_controller.h"
 #include "nighthawk/common/exception.h"
 
+#include "external/envoy/envoy/common/exception.h"
 #include "external/envoy/source/common/grpc/google_grpc_utils.h"
 #include "external/envoy/source/common/protobuf/protobuf.h"
 

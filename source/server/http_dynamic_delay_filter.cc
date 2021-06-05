@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "envoy/server/filter_config.h"
+#include "external/envoy/envoy/server/filter_config.h"
 
 #include "source/server/configuration.h"
 #include "source/server/well_known_headers.h"

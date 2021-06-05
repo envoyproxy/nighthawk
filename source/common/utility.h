@@ -2,10 +2,9 @@
 
 #include <string>
 
-#include "envoy/stats/store.h"
-
 #include "nighthawk/common/exception.h"
 
+#include "external/envoy/envoy/stats/store.h"
 #include "external/envoy/source/common/network/dns_impl.h"
 
 #include "api/client/options.pb.h"

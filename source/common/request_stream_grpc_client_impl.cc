@@ -4,8 +4,8 @@
 
 #include "envoy/api/v2/core/base.pb.h"
 #include "envoy/config/core/v3/base.pb.h"
-#include "envoy/stats/scope.h"
 
+#include "external/envoy/envoy/stats/scope.h"
 #include "external/envoy/source/common/common/assert.h"
 #include "external/envoy/source/common/http/header_map_impl.h"
 #include "external/envoy/source/common/http/headers.h"

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "envoy/registry/registry.h"
-
 #include "nighthawk/adaptive_load/input_variable_setter.h"
+
+#include "external/envoy/envoy/registry/registry.h"
 
 #include "api/adaptive_load/input_variable_setter_impl.pb.h"
 

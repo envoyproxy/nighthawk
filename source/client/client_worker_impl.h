@@ -2,10 +2,6 @@
 
 #include <vector>
 
-#include "envoy/event/dispatcher.h"
-#include "envoy/stats/store.h"
-#include "envoy/thread_local/thread_local.h"
-
 #include "nighthawk/client/benchmark_client.h"
 #include "nighthawk/client/client_worker.h"
 #include "nighthawk/client/factories.h"
@@ -16,6 +12,9 @@
 #include "nighthawk/common/termination_predicate.h"
 
 #include "external/envoy/envoy/api/api.h"
+#include "external/envoy/envoy/event/dispatcher.h"
+#include "external/envoy/envoy/stats/store.h"
+#include "external/envoy/envoy/thread_local/thread_local.h"
 #include "external/envoy/envoy/upstream/cluster_manager.h"
 
 #include "source/common/worker_impl.h"

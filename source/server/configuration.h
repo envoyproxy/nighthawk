@@ -4,7 +4,8 @@
 
 #include "envoy/api/v2/core/base.pb.h"
 #include "envoy/config/core/v3/base.pb.h"
-#include "envoy/http/header_map.h"
+
+#include "external/envoy/envoy/http/header_map.h"
 
 #include "api/server/response_options.pb.h"
 

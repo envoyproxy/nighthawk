@@ -2,9 +2,8 @@
 
 #include <cstdint>
 
-#include "envoy/event/dispatcher.h"
-
 #include "external/envoy/envoy/common/time.h"
+#include "external/envoy/envoy/event/dispatcher.h"
 
 namespace Nighthawk {
 

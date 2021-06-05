@@ -3,12 +3,11 @@
 #include <future>
 #include <thread>
 
-#include "envoy/stats/store.h"
-
 #include "nighthawk/common/worker.h"
 
 #include "external/envoy/envoy/api/api.h"
 #include "external/envoy/envoy/common/time.h"
+#include "external/envoy/envoy/stats/store.h"
 #include "external/envoy/source/common/common/lock_guard.h"
 #include "external/envoy/source/common/common/logger.h"
 #include "external/envoy/source/common/common/thread.h"

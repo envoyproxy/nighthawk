@@ -1,5 +1,4 @@
-#include "envoy/common/exception.h"
-
+#include "external/envoy/envoy/common/exception.h"
 #include "external/envoy/source/common/config/utility.h"
 #include "external/envoy/test/mocks/api/mocks.h"
 #include "external/envoy/test/mocks/stats/mocks.h"

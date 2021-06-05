@@ -1,8 +1,8 @@
 #pragma once
 
-#include "envoy/http/header_map.h"
-
 #include "nighthawk/common/request.h"
+
+#include "external/envoy/envoy/http/header_map.h"
 
 namespace Nighthawk {
 

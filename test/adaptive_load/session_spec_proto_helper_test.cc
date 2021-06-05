@@ -1,5 +1,4 @@
-#include "envoy/registry/registry.h"
-
+#include "external/envoy/envoy/registry/registry.h"
 #include "external/envoy/source/common/config/utility.h"
 
 #include "api/adaptive_load/adaptive_load.pb.h"

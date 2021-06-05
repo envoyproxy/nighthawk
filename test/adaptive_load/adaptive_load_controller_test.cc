@@ -1,7 +1,6 @@
 #include <chrono>
 
 #include "envoy/config/core/v3/base.pb.h"
-#include "envoy/registry/registry.h"
 
 #include "nighthawk/adaptive_load/adaptive_load_controller.h"
 #include "nighthawk/adaptive_load/input_variable_setter.h"
@@ -10,6 +9,7 @@
 #include "nighthawk/adaptive_load/scoring_function.h"
 #include "nighthawk/adaptive_load/step_controller.h"
 
+#include "external/envoy/envoy/registry/registry.h"
 #include "external/envoy/source/common/common/statusor.h"
 #include "external/envoy/source/common/config/utility.h"
 #include "external/envoy/source/common/protobuf/protobuf.h"

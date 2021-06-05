@@ -2,9 +2,9 @@
 
 #include <memory>
 
-#include "envoy/common/pure.h"
-
 #include "nighthawk/common/statistic.h"
+
+#include "external/envoy/envoy/common/pure.h"
 
 namespace Nighthawk {
 

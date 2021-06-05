@@ -2,10 +2,6 @@
 
 #include <memory>
 
-#include "envoy/common/pure.h"
-#include "envoy/event/dispatcher.h"
-#include "envoy/stats/symbol_table.h"
-
 #include "nighthawk/common/platform_util.h"
 #include "nighthawk/common/request_source.h"
 #include "nighthawk/common/sequencer.h"
@@ -13,7 +9,10 @@
 #include "nighthawk/common/termination_predicate.h"
 
 #include "external/envoy/envoy/api/api.h"
+#include "external/envoy/envoy/common/pure.h"
 #include "external/envoy/envoy/common/time.h"
+#include "external/envoy/envoy/event/dispatcher.h"
+#include "external/envoy/envoy/stats/symbol_table.h"
 #include "external/envoy/envoy/upstream/cluster_manager.h"
 
 namespace Nighthawk {

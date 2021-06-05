@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "envoy/server/filter_config.h"
+#include "external/envoy/envoy/server/filter_config.h"
 
 #include "source/common/thread_safe_monotonic_time_stopwatch.h"
 #include "source/server/configuration.h"

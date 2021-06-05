@@ -2,9 +2,9 @@
 // functionality for testing purposes.
 #pragma once
 
-#include "envoy/registry/registry.h"
-
 #include "nighthawk/request_source/request_source_plugin_config_factory.h"
+
+#include "external/envoy/envoy/registry/registry.h"
 
 #include "api/client/options.pb.h"
 #include "api/request_source/request_source_plugin.pb.h"

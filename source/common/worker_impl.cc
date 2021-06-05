@@ -1,7 +1,7 @@
 #include "source/common/worker_impl.h"
 
-#include "envoy/runtime/runtime.h"
-#include "envoy/thread_local/thread_local.h"
+#include "external/envoy/envoy/runtime/runtime.h"
+#include "external/envoy/envoy/thread_local/thread_local.h"
 
 namespace Nighthawk {
 

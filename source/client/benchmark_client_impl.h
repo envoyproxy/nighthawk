@@ -1,19 +1,18 @@
 #pragma once
 
-#include "envoy/event/dispatcher.h"
-#include "envoy/http/conn_pool.h"
-#include "envoy/network/address.h"
-#include "envoy/runtime/runtime.h"
-#include "envoy/stats/scope.h"
-#include "envoy/stats/store.h"
-#include "envoy/upstream/upstream.h"
-
 #include "nighthawk/client/benchmark_client.h"
 #include "nighthawk/common/request_source.h"
 #include "nighthawk/common/sequencer.h"
 #include "nighthawk/common/statistic.h"
 
 #include "external/envoy/envoy/api/api.h"
+#include "external/envoy/envoy/event/dispatcher.h"
+#include "external/envoy/envoy/http/conn_pool.h"
+#include "external/envoy/envoy/network/address.h"
+#include "external/envoy/envoy/runtime/runtime.h"
+#include "external/envoy/envoy/stats/scope.h"
+#include "external/envoy/envoy/stats/store.h"
+#include "external/envoy/envoy/upstream/upstream.h"
 #include "external/envoy/source/common/common/logger.h"
 #include "external/envoy/source/common/common/random_generator.h"
 #include "external/envoy/source/common/http/http1/conn_pool.h"
