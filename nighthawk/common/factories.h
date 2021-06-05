@@ -2,18 +2,19 @@
 
 #include <memory>
 
-#include "envoy/api/api.h"
 #include "envoy/common/pure.h"
-#include "envoy/common/time.h"
 #include "envoy/event/dispatcher.h"
 #include "envoy/stats/symbol_table.h"
-#include "envoy/upstream/cluster_manager.h"
 
 #include "nighthawk/common/platform_util.h"
 #include "nighthawk/common/request_source.h"
 #include "nighthawk/common/sequencer.h"
 #include "nighthawk/common/statistic.h"
 #include "nighthawk/common/termination_predicate.h"
+
+#include "external/envoy/envoy/api/api.h"
+#include "external/envoy/envoy/common/time.h"
+#include "external/envoy/envoy/upstream/cluster_manager.h"
 
 namespace Nighthawk {
 

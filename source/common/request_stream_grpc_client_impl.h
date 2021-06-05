@@ -6,11 +6,11 @@
 #include "envoy/grpc/async_client.h"
 #include "envoy/grpc/async_client_manager.h"
 #include "envoy/stats/scope.h"
-#include "envoy/upstream/cluster_manager.h"
 
 #include "nighthawk/common/request.h"
 #include "nighthawk/common/request_stream_grpc_client.h"
 
+#include "external/envoy/envoy/upstream/cluster_manager.h"
 #include "external/envoy/source/common/common/logger.h"
 #include "external/envoy/source/common/grpc/typed_async_client.h"
 #include "external/envoy/source/common/http/header_map_impl.h"

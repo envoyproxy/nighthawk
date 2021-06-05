@@ -1,10 +1,11 @@
 #pragma once
 
-#include "envoy/api/api.h"
 #include "envoy/common/pure.h"
 #include "envoy/config/typed_config.h"
 
 #include "nighthawk/common/request_source.h"
+
+#include "external/envoy/envoy/api/api.h"
 
 namespace Nighthawk {
 

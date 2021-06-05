@@ -2,11 +2,10 @@
 
 #include <cstdint>
 
-#include "envoy/common/time.h"
-
 #include "nighthawk/client/output_formatter.h"
 
 #include "external/com_google_googletest/googletest/include/gtest/gtest_prod.h"
+#include "external/envoy/envoy/common/time.h"
 #include "external/envoy/source/common/protobuf/protobuf.h"
 
 #include "api/client/output.pb.h"

@@ -6,12 +6,13 @@
 #include <string>
 
 #include "envoy/common/pure.h"
-#include "envoy/common/time.h"
 #include "envoy/config/cluster/v3/cluster.pb.h"
 #include "envoy/config/core/v3/base.pb.h"
 #include "envoy/config/metrics/v3/stats.pb.h"
 
 #include "nighthawk/common/termination_predicate.h"
+
+#include "external/envoy/envoy/common/time.h"
 
 #include "api/client/options.pb.h"
 

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "envoy/common/pure.h"
-#include "envoy/common/time.h"
 #include "envoy/event/dispatcher.h"
 
 #include "nighthawk/common/platform_util.h"
@@ -10,6 +9,7 @@
 #include "nighthawk/common/statistic.h"
 #include "nighthawk/common/termination_predicate.h"
 
+#include "external/envoy/envoy/common/time.h"
 #include "external/envoy/source/common/common/logger.h"
 
 namespace Nighthawk {

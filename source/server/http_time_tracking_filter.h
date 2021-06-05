@@ -2,11 +2,11 @@
 
 #include <string>
 
-#include "envoy/common/time.h"
 #include "envoy/server/filter_config.h"
 
 #include "nighthawk/common/stopwatch.h"
 
+#include "external/envoy/envoy/common/time.h"
 #include "external/envoy/source/extensions/filters/http/common/pass_through_filter.h"
 
 #include "api/server/response_options.pb.h"

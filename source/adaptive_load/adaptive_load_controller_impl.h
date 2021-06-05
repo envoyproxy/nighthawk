@@ -1,10 +1,10 @@
-#include "envoy/common/time.h"
-
 #include "nighthawk/adaptive_load/adaptive_load_controller.h"
 #include "nighthawk/adaptive_load/metrics_evaluator.h"
 #include "nighthawk/adaptive_load/session_spec_proto_helper.h"
 #include "nighthawk/adaptive_load/step_controller.h"
 #include "nighthawk/common/nighthawk_service_client.h"
+
+#include "external/envoy/envoy/common/time.h"
 
 namespace Nighthawk {
 

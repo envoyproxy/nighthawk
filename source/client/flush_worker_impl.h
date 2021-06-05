@@ -4,11 +4,11 @@
 
 #include <vector>
 
-#include "envoy/api/api.h"
-#include "envoy/event/dispatcher.h"
-#include "envoy/stats/sink.h"
-#include "envoy/stats/store.h"
-#include "envoy/thread_local/thread_local.h"
+#include "external/envoy/envoy/api/api.h"
+#include "external/envoy/envoy/event/dispatcher.h"
+#include "external/envoy/envoy/stats/sink.h"
+#include "external/envoy/envoy/stats/store.h"
+#include "external/envoy/envoy/thread_local/thread_local.h"
 
 #include "source/common/worker_impl.h"
 

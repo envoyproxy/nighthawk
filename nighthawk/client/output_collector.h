@@ -3,9 +3,10 @@
 #include <memory>
 
 #include "envoy/common/pure.h"
-#include "envoy/common/time.h"
 
 #include "nighthawk/common/statistic.h"
+
+#include "external/envoy/envoy/common/time.h"
 
 #include "absl/types/optional.h"
 
