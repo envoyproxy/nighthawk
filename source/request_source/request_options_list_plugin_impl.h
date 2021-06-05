@@ -1,10 +1,9 @@
 // Implementations of RequestSourceConfigFactories that make a OptionsListRequestSource.
 #pragma once
 
-#include "envoy/registry/registry.h"
-
 #include "nighthawk/request_source/request_source_plugin_config_factory.h"
 
+#include "external/envoy/envoy/registry/registry.h"
 #include "external/envoy/source/common/common/lock_guard.h"
 #include "external/envoy/source/common/common/thread.h"
 

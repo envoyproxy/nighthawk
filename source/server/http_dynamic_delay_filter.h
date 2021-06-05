@@ -3,8 +3,7 @@
 #include <atomic>
 #include <string>
 
-#include "envoy/server/filter_config.h"
-
+#include "external/envoy/envoy/server/filter_config.h"
 #include "external/envoy/source/extensions/filters/http/fault/fault_filter.h"
 
 #include "api/server/response_options.pb.h"

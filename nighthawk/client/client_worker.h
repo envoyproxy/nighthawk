@@ -2,13 +2,13 @@
 
 #include <memory>
 
-#include "envoy/common/pure.h"
-#include "envoy/stats/store.h"
-
 #include "nighthawk/client/benchmark_client.h"
 #include "nighthawk/common/phase.h"
 #include "nighthawk/common/statistic.h"
 #include "nighthawk/common/worker.h"
+
+#include "external/envoy/envoy/common/pure.h"
+#include "external/envoy/envoy/stats/store.h"
 
 namespace Nighthawk {
 namespace Client {

@@ -8,10 +8,9 @@
 #include <memory>
 #include <random>
 
-#include "envoy/stats/store.h"
-
 #include "nighthawk/client/output_collector.h"
 
+#include "external/envoy/envoy/stats/store.h"
 #include "external/envoy/source/common/common/cleanup.h"
 #include "external/envoy/source/common/event/dispatcher_impl.h"
 #include "external/envoy/source/common/event/real_time_system.h"

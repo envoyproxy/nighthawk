@@ -2,8 +2,7 @@
 
 #include <string>
 
-#include "envoy/http/header_map.h"
-
+#include "external/envoy/envoy/http/header_map.h"
 #include "external/envoy/source/common/singleton/const_singleton.h"
 
 namespace Nighthawk {

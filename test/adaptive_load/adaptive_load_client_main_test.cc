@@ -1,9 +1,8 @@
-#include "envoy/api/io_error.h"
-#include "envoy/filesystem/filesystem.h"
-
 #include "nighthawk/adaptive_load/adaptive_load_controller.h"
 #include "nighthawk/common/exception.h"
 
+#include "external/envoy/envoy/api/io_error.h"
+#include "external/envoy/envoy/filesystem/filesystem.h"
 #include "external/envoy/test/mocks/filesystem/mocks.h"
 #include "external/envoy/test/test_common/file_system_for_test.h"
 #include "external/envoy/test/test_common/utility.h"

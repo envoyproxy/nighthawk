@@ -1,6 +1,6 @@
 #include "test/adaptive_load/fake_plugins/fake_metrics_plugin/fake_metrics_plugin.h"
 
-#include "envoy/common/exception.h"
+#include "external/envoy/envoy/common/exception.h"
 
 #include "api/adaptive_load/benchmark_result.pb.h"
 

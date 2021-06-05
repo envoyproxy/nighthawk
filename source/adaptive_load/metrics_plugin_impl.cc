@@ -2,8 +2,7 @@
 
 #include <cmath>
 
-#include "envoy/registry/registry.h"
-
+#include "external/envoy/envoy/registry/registry.h"
 #include "external/envoy/source/common/common/assert.h"
 #include "external/envoy/source/common/protobuf/protobuf.h"
 

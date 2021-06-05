@@ -1,7 +1,6 @@
-#include "envoy/registry/registry.h"
-
 #include "nighthawk/adaptive_load/input_variable_setter.h"
 
+#include "external/envoy/envoy/registry/registry.h"
 #include "external/envoy/source/common/config/utility.h"
 
 #include "api/adaptive_load/benchmark_result.pb.h"

@@ -1,7 +1,6 @@
 #include <string>
 
-#include "envoy/registry/registry.h"
-
+#include "external/envoy/envoy/registry/registry.h"
 #include "external/envoy/source/common/protobuf/message_validator_impl.h"
 
 #include "api/server/response_options.pb.h"

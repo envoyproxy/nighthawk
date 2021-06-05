@@ -1,11 +1,11 @@
 #include "envoy/config/core/v3/base.pb.h"
-#include "envoy/registry/registry.h"
 
 #include "nighthawk/adaptive_load/input_variable_setter.h"
 #include "nighthawk/adaptive_load/metrics_plugin.h"
 #include "nighthawk/adaptive_load/scoring_function.h"
 #include "nighthawk/adaptive_load/step_controller.h"
 
+#include "external/envoy/envoy/registry/registry.h"
 #include "external/envoy/source/common/config/utility.h"
 
 #include "api/adaptive_load/benchmark_result.pb.h"

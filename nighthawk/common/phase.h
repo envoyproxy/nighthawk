@@ -3,9 +3,9 @@
 
 #include <memory>
 
-#include "envoy/common/pure.h"
-
 #include "nighthawk/common/sequencer.h"
+
+#include "external/envoy/envoy/common/pure.h"
 
 namespace Nighthawk {
 

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "envoy/registry/registry.h"
-
 #include "nighthawk/adaptive_load/metrics_plugin.h"
+
+#include "external/envoy/envoy/registry/registry.h"
 
 #include "api/client/options.pb.h"
 

@@ -8,14 +8,13 @@
 #include <memory>
 #include <random>
 
-#include "envoy/network/address.h"
-#include "envoy/server/filter_config.h"
-#include "envoy/stats/sink.h"
-#include "envoy/stats/store.h"
-
 #include "nighthawk/client/output_collector.h"
 #include "nighthawk/common/factories.h"
 
+#include "external/envoy/envoy/network/address.h"
+#include "external/envoy/envoy/server/filter_config.h"
+#include "external/envoy/envoy/stats/sink.h"
+#include "external/envoy/envoy/stats/store.h"
 #include "external/envoy/source/common/api/api_impl.h"
 #include "external/envoy/source/common/common/cleanup.h"
 #include "external/envoy/source/common/config/utility.h"

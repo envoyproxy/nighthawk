@@ -1,7 +1,6 @@
 #pragma once
 
-#include "envoy/common/pure.h"
-
+#include "external/envoy/envoy/common/pure.h"
 #include "external/envoy/envoy/common/time.h"
 
 namespace Nighthawk {

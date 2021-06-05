@@ -1,9 +1,9 @@
 // Implementations of ScoringFunction plugins and corresponding factories.
 #pragma once
 
-#include "envoy/registry/registry.h"
-
 #include "nighthawk/adaptive_load/scoring_function.h"
+
+#include "external/envoy/envoy/registry/registry.h"
 
 #include "api/adaptive_load/scoring_function_impl.pb.h"
 

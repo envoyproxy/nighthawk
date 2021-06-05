@@ -2,11 +2,10 @@
 
 #pragma once
 
-#include "envoy/common/pure.h"
-#include "envoy/config/typed_config.h"
-
 #include "nighthawk/adaptive_load/config_validator.h"
 
+#include "external/envoy/envoy/common/pure.h"
+#include "external/envoy/envoy/config/typed_config.h"
 #include "external/envoy/source/common/protobuf/protobuf.h"
 
 #include "api/client/options.pb.h"

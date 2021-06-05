@@ -3,8 +3,7 @@
 
 #include <vector>
 
-#include "envoy/common/pure.h"
-
+#include "external/envoy/envoy/common/pure.h"
 #include "external/envoy/source/common/common/statusor.h"
 
 #include "api/client/service.grpc.pb.h"

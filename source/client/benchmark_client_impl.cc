@@ -1,10 +1,9 @@
 #include "source/client/benchmark_client_impl.h"
 
-#include "envoy/event/dispatcher.h"
-#include "envoy/thread_local/thread_local.h"
-
 #include "nighthawk/common/statistic.h"
 
+#include "external/envoy/envoy/event/dispatcher.h"
+#include "external/envoy/envoy/thread_local/thread_local.h"
 #include "external/envoy/source/common/http/header_map_impl.h"
 #include "external/envoy/source/common/http/headers.h"
 #include "external/envoy/source/common/http/utility.h"

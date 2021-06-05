@@ -3,13 +3,12 @@
 #include <queue>
 #include <string>
 
-#include "envoy/grpc/async_client.h"
-#include "envoy/grpc/async_client_manager.h"
-#include "envoy/stats/scope.h"
-
 #include "nighthawk/common/request.h"
 #include "nighthawk/common/request_stream_grpc_client.h"
 
+#include "external/envoy/envoy/grpc/async_client.h"
+#include "external/envoy/envoy/grpc/async_client_manager.h"
+#include "external/envoy/envoy/stats/scope.h"
 #include "external/envoy/envoy/upstream/cluster_manager.h"
 #include "external/envoy/source/common/common/logger.h"
 #include "external/envoy/source/common/grpc/typed_async_client.h"
