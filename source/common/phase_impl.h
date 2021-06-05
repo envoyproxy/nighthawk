@@ -1,10 +1,9 @@
 
 #pragma once
 
-#include "envoy/common/time.h"
-
 #include "nighthawk/common/phase.h"
 
+#include "external/envoy/envoy/common/time.h"
 #include "external/envoy/source/common/common/logger.h"
 
 #include "absl/types/optional.h"

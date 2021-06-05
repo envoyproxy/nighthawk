@@ -2,10 +2,10 @@
 
 #include <cstdint>
 
-#include "envoy/common/time.h"
-
 #include "nighthawk/client/options.h"
 #include "nighthawk/client/output_collector.h"
+
+#include "external/envoy/envoy/common/time.h"
 
 namespace Nighthawk {
 namespace Client {

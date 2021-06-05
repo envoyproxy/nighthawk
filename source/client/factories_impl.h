@@ -1,14 +1,14 @@
 #pragma once
 
-#include "envoy/api/api.h"
 #include "envoy/event/dispatcher.h"
-#include "envoy/upstream/cluster_manager.h"
 
 #include "nighthawk/client/factories.h"
 #include "nighthawk/common/factories.h"
 #include "nighthawk/common/termination_predicate.h"
 #include "nighthawk/common/uri.h"
 
+#include "external/envoy/envoy/api/api.h"
+#include "external/envoy/envoy/upstream/cluster_manager.h"
 #include "external/envoy/source/common/common/statusor.h"
 #include "external/envoy/source/common/config/utility.h"
 

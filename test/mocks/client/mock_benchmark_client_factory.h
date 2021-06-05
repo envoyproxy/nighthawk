@@ -1,10 +1,11 @@
 #pragma once
 
-#include "envoy/api/api.h"
 #include "envoy/event/dispatcher.h"
-#include "envoy/upstream/cluster_manager.h"
 
 #include "nighthawk/client/factories.h"
+
+#include "external/envoy/envoy/api/api.h"
+#include "external/envoy/envoy/upstream/cluster_manager.h"
 
 #include "gmock/gmock.h"
 

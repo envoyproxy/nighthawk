@@ -1,9 +1,10 @@
 #include <chrono>
 
-#include "envoy/common/time.h"
 #include "envoy/stats/store.h"
 
 #include "nighthawk/common/termination_predicate.h"
+
+#include "external/envoy/envoy/common/time.h"
 
 namespace Nighthawk {
 

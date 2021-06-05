@@ -1,10 +1,10 @@
 #pragma once
 
-#include "envoy/common/time.h"
 #include "envoy/filesystem/filesystem.h"
 
 #include "nighthawk/adaptive_load/adaptive_load_controller.h"
 
+#include "external/envoy/envoy/common/time.h"
 #include "external/envoy/source/common/common/logger.h"
 
 namespace Nighthawk {

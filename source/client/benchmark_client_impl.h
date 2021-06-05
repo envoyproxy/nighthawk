@@ -1,6 +1,5 @@
 #pragma once
 
-#include "envoy/api/api.h"
 #include "envoy/event/dispatcher.h"
 #include "envoy/http/conn_pool.h"
 #include "envoy/network/address.h"
@@ -14,6 +13,7 @@
 #include "nighthawk/common/sequencer.h"
 #include "nighthawk/common/statistic.h"
 
+#include "external/envoy/envoy/api/api.h"
 #include "external/envoy/source/common/common/logger.h"
 #include "external/envoy/source/common/common/random_generator.h"
 #include "external/envoy/source/common/http/http1/conn_pool.h"
