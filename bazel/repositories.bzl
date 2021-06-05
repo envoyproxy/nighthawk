@@ -1,19 +1,23 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-ENVOY_COMMIT = "1c03ddcbd6feb5ad2507ce52d9aeaf52a3156554"  # June 1, 2021
-ENVOY_SHA = "c4fbbda0a434ba71f5859602f111fee1d8ea98c0d7ecee702ec8a620aa888744"
+ENVOY_COMMIT = "72bf41fb0ecc039f196be02f534bfc2c9c69f348"  # June 4, 2021
+ENVOY_SHA = "db07426cf02fa2f8ed9891e64adf67ced39e72cdcce9ba121d420b471cc96766"
 
 HDR_HISTOGRAM_C_VERSION = "0.11.2"  # October 12th, 2020
 HDR_HISTOGRAM_C_SHA = "637f28b5f64de2e268131e4e34e6eef0b91cf5ff99167db447d9b2825eae6bad"
 
 def nighthawk_dependencies():
-    http_archive(
+    #    http_archive(
+    #        name = "envoy",
+    #        sha256 = ENVOY_SHA,
+    #        strip_prefix = "envoy-%s" % ENVOY_COMMIT,
+    #        # // clang-format off: Envoy's format check: Only repository_locations.bzl may contains URL references
+    #        url = "https://github.com/envoyproxy/envoy/archive/%s.tar.gz" % ENVOY_COMMIT,
+    #        # // clang-format on
+    #    )
+    native.local_repository(
         name = "envoy",
-        sha256 = ENVOY_SHA,
-        strip_prefix = "envoy-%s" % ENVOY_COMMIT,
-        # // clang-format off: Envoy's format check: Only repository_locations.bzl may contains URL references
-        url = "https://github.com/envoyproxy/envoy/archive/%s.tar.gz" % ENVOY_COMMIT,
-        # // clang-format on
+        path = "/usr/local/google/home/mumak/github/mum4k/envoy",
     )
     http_archive(
         name = "dep_hdrhistogram_c",

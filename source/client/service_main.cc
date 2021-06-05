@@ -1,14 +1,13 @@
-#include "client/service_main.h"
+#include "source/client/service_main.h"
 
 #include <fstream>
 #include <iostream>
 
 #include "nighthawk/common/exception.h"
 
-#include "common/utility.h"
-#include "common/version_info.h"
-
-#include "client/service_impl.h"
+#include "source/client/service_impl.h"
+#include "source/common/utility.h"
+#include "source/common/version_info.h"
 
 #include "absl/strings/strip.h"
 #include "tclap/CmdLine.h"

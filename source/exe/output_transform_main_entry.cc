@@ -2,7 +2,7 @@
 
 #include "nighthawk/common/exception.h"
 
-#include "client/output_transform_main.h"
+#include "source/client/output_transform_main.h"
 
 #include "absl/debugging/symbolize.h"
 

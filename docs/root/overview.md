@@ -58,7 +58,7 @@ back reports per phase.
 
 ## Key concept descriptions
 
-*The c++ interface definitions for the concepts below can be found [here](https://github.com/envoyproxy/nighthawk/tree/main/include/nighthawk)*.
+*The c++ interface definitions for the concepts below can be found [here](https://github.com/envoyproxy/nighthawk/tree/main/nighthawk)*.
 
 ### Process
 

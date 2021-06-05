@@ -1,4 +1,4 @@
-#include "request_source/request_options_list_plugin_impl.h"
+#include "source/request_source/request_options_list_plugin_impl.h"
 
 #include "external/envoy/source/common/protobuf/message_validator_impl.h"
 #include "external/envoy/source/common/protobuf/utility.h"
@@ -6,8 +6,8 @@
 
 #include "api/client/options.pb.h"
 
-#include "common/request_impl.h"
-#include "common/request_source_impl.h"
+#include "source/common/request_impl.h"
+#include "source/common/request_source_impl.h"
 
 namespace Nighthawk {
 std::string FileBasedOptionsListRequestSourceFactory::name() const {

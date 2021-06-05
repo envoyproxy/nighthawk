@@ -1,4 +1,4 @@
-#include "adaptive_load/adaptive_load_client_main.h"
+#include "source/adaptive_load/adaptive_load_client_main.h"
 
 #include <cstring>
 #include <memory>
@@ -17,8 +17,8 @@
 #include "api/client/service.grpc.pb.h"
 #include "api/client/service.pb.h"
 
-#include "common/utility.h"
-#include "common/version_info.h"
+#include "source/common/utility.h"
+#include "source/common/version_info.h"
 
 #include "fmt/ranges.h"
 #include "google/rpc/status.pb.h"

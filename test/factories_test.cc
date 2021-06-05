@@ -4,9 +4,8 @@
 #include "external/envoy/test/test_common/simulated_time_system.h"
 #include "external/envoy/test/test_common/utility.h"
 
-#include "common/request_source_impl.h"
-
-#include "client/factories_impl.h"
+#include "source/client/factories_impl.h"
+#include "source/common/request_source_impl.h"
 
 #include "test/mocks/client/mock_benchmark_client.h"
 #include "test/mocks/client/mock_options.h"

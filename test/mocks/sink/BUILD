@@ -14,6 +14,6 @@ envoy_cc_mock(
     hdrs = ["mock_sink.h"],
     repository = "@envoy",
     deps = [
-        "//include/nighthawk/sink:sink_lib",
+        "//nighthawk/sink:sink_lib",
     ],
 )

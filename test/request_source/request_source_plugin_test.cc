@@ -6,7 +6,7 @@
 #include "external/envoy/test/test_common/file_system_for_test.h"
 #include "external/envoy/test/test_common/utility.h"
 
-#include "request_source/request_options_list_plugin_impl.h"
+#include "source/request_source/request_options_list_plugin_impl.h"
 
 #include "test/request_source/stub_plugin_impl.h"
 #include "test/test_common/environment.h"

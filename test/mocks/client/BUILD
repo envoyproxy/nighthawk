@@ -14,7 +14,7 @@ envoy_cc_mock(
     hdrs = ["mock_options.h"],
     repository = "@envoy",
     deps = [
-        "//include/nighthawk/client:client_includes",
+        "//nighthawk/client:client_includes",
         "@envoy//source/common/protobuf:message_validator_lib_with_external_headers",
     ],
 )
@@ -25,7 +25,7 @@ envoy_cc_mock(
     hdrs = ["mock_benchmark_client.h"],
     repository = "@envoy",
     deps = [
-        "//include/nighthawk/client:client_includes",
+        "//nighthawk/client:client_includes",
     ],
 )
 
@@ -35,6 +35,6 @@ envoy_cc_mock(
     hdrs = ["mock_benchmark_client_factory.h"],
     repository = "@envoy",
     deps = [
-        "//include/nighthawk/client:client_includes",
+        "//nighthawk/client:client_includes",
     ],
 )

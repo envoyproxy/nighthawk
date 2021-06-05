@@ -11,7 +11,7 @@
 #include "external/envoy/test/test_common/file_system_for_test.h"
 #include "external/envoy/test/test_common/utility.h"
 
-#include "common/statistic_impl.h"
+#include "source/common/statistic_impl.h"
 
 #include "test/test_common/environment.h"
 

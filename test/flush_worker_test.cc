@@ -11,7 +11,7 @@
 #include "external/envoy/test/mocks/stats/mocks.h"
 #include "external/envoy/test/mocks/thread_local/mocks.h"
 
-#include "client/flush_worker_impl.h"
+#include "source/client/flush_worker_impl.h"
 
 #include "gtest/gtest.h"
 

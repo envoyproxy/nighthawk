@@ -32,7 +32,7 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         ":minimal_output",
-        "//include/nighthawk/adaptive_load:adaptive_load_controller",
+        "//nighthawk/adaptive_load:adaptive_load_controller",
         "//source/adaptive_load:adaptive_load_client_main",
         "//test/mocks/adaptive_load:mock_adaptive_load_controller",
         "//test/test_common:environment_lib",
@@ -50,8 +50,8 @@ envoy_cc_test(
     deps = [
         ":minimal_output",
         "//api/client:grpc_service_lib",
-        "//include/nighthawk/adaptive_load:input_variable_setter",
-        "//include/nighthawk/adaptive_load:step_controller",
+        "//nighthawk/adaptive_load:input_variable_setter",
+        "//nighthawk/adaptive_load:step_controller",
         "//source/adaptive_load:adaptive_load_controller_impl",
         "//source/adaptive_load:scoring_function_impl",
         "//source/adaptive_load:session_spec_proto_helper_impl",

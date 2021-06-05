@@ -34,8 +34,8 @@ envoy_cc_test_library(
     deps = [
         ":fake_step_controller_proto_cc_proto",
         "//api/client:grpc_service_lib",
-        "//include/nighthawk/adaptive_load:input_variable_setter",
-        "//include/nighthawk/adaptive_load:step_controller",
+        "//nighthawk/adaptive_load:input_variable_setter",
+        "//nighthawk/adaptive_load:step_controller",
         "@envoy//source/common/common:assert_lib_with_external_headers",
         "@envoy//source/common/common:statusor_lib_with_external_headers",
         "@envoy//source/common/config:utility_lib_with_external_headers",

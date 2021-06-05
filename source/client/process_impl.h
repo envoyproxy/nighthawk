@@ -33,9 +33,9 @@
 #include "external/envoy/source/server/config_validation/admin.h"
 #include "external/envoy_api/envoy/config/bootstrap/v3/bootstrap.pb.h"
 
-#include "client/benchmark_client_impl.h"
-#include "client/factories_impl.h"
-#include "client/flush_worker_impl.h"
+#include "source/client/benchmark_client_impl.h"
+#include "source/client/factories_impl.h"
+#include "source/client/flush_worker_impl.h"
 
 namespace Nighthawk {
 namespace Client {
