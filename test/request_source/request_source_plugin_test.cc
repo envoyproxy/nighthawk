@@ -23,9 +23,9 @@ using nighthawk::request_source::StubPluginConfig;
 using ::testing::NiceMock;
 using ::testing::Test;
 nighthawk::request_source::FileBasedOptionsListRequestSourceConfig
-MakeFileBasedPluginConfigWithTestYaml(absl::string_view request_file) {
+MakeFileBasedPluginConfigWithTestYaml(const std::string& request_file) {
   nighthawk::request_source::FileBasedOptionsListRequestSourceConfig config;
-  config.mutable_file_path()->assign(request_file);
+  config.set_file_path(request_file);
   config.mutable_max_file_size()->set_value(4000);
   return config;
 }
