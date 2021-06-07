@@ -1,10 +1,10 @@
-#include "common/request_source_impl.h"
+#include "source/common/request_source_impl.h"
 
 #include <chrono>
 
 #include "external/envoy/source/common/common/assert.h"
 
-#include "common/request_impl.h"
+#include "source/common/request_impl.h"
 
 namespace Nighthawk {
 

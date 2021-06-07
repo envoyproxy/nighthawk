@@ -107,10 +107,11 @@ envoy_cc_library(
         "@envoy//source/extensions/transport_sockets/tls:context_lib_with_external_headers",
         "@envoy//source/server:server_lib_with_external_headers",
         "@envoy//source/server/config_validation:admin_lib_with_external_headers",
-        "@envoy//include/envoy/http:protocol_interface_with_external_headers",
-        "@envoy//include/envoy/network:address_interface",
+        "@envoy//envoy/http:protocol_interface_with_external_headers",
+        "@envoy//envoy/network:address_interface",
         "@envoy//source/common/common:statusor_lib_with_external_headers",
         "@envoy//source/common/router:context_lib_with_external_headers",
+        "@envoy_api//envoy/config/core/v3:pkg_cc_proto",
     ] + select({
         "//bazel:zipkin_disabled": [],
         "//conditions:default": [

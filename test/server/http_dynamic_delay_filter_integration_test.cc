@@ -2,8 +2,8 @@
 
 #include "api/server/response_options.pb.h"
 
-#include "server/configuration.h"
-#include "server/http_dynamic_delay_filter.h"
+#include "source/server/configuration.h"
+#include "source/server/http_dynamic_delay_filter.h"
 
 #include "test/server/http_filter_integration_test_base.h"
 

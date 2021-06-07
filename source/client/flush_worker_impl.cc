@@ -1,9 +1,9 @@
-#include "client/flush_worker_impl.h"
+#include "source/client/flush_worker_impl.h"
 
 #include "external/envoy/source/common/stats/symbol_table_impl.h"
 #include "external/envoy/source/server/server.h"
 
-#include "common/utility.h"
+#include "source/common/utility.h"
 
 namespace Nighthawk {
 namespace Client {

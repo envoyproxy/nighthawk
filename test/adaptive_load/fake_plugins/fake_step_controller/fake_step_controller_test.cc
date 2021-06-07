@@ -5,9 +5,10 @@
 #include "api/adaptive_load/benchmark_result.pb.h"
 #include "api/client/options.pb.h"
 
+#include "source/adaptive_load/plugin_loader.h"
+
 #include "test/adaptive_load/fake_plugins/fake_step_controller/fake_step_controller.h"
 
-#include "adaptive_load/plugin_loader.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 

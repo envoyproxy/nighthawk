@@ -1,4 +1,4 @@
-#include "client/benchmark_client_impl.h"
+#include "source/client/benchmark_client_impl.h"
 
 #include "envoy/event/dispatcher.h"
 #include "envoy/thread_local/thread_local.h"
@@ -10,7 +10,7 @@
 #include "external/envoy/source/common/http/utility.h"
 #include "external/envoy/source/common/network/utility.h"
 
-#include "client/stream_decoder.h"
+#include "source/client/stream_decoder.h"
 
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_split.h"
@@ -107,17 +107,21 @@ BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
 }
 
 void BenchmarkClientHttpImpl::terminate() {
-  if (pool() != nullptr && pool()->hasActiveConnections()) {
+  auto pool_data = pool();
+  if (pool_data.has_value() &&
+      ::Envoy::Upstream::HttpPoolDataPeer(pool_data.value()).getPool()->hasActiveConnections()) {
     // We don't report what happens after this call in the output, but latencies may still be
     // reported via callbacks. This may happen after a long time (60s), which HdrHistogram can't
     // track the way we configure it today, as that exceeds the max that it can record.
     // No harm is done, but it does result in log lines warning about it. Avoid that, by
     // disabling latency measurement here.
     setShouldMeasureLatencies(false);
-    pool()->addDrainedCallback([this]() -> void {
-      drain_timer_->disableTimer();
-      dispatcher_.exit();
-    });
+    ::Envoy::Upstream::HttpPoolDataPeer(pool_data.value())
+        .getPool()
+        ->addDrainedCallback([this]() -> void {
+          drain_timer_->disableTimer();
+          dispatcher_.exit();
+        });
     // Set up a timer with a callback which caps the time we wait for the pool to drain.
     drain_timer_ = dispatcher_.createTimer([this]() -> void {
       ENVOY_LOG(info, "Wait for the connection pool drain timed out, proceeding to hard shutdown.");
@@ -147,8 +151,8 @@ StatisticPtrMap BenchmarkClientHttpImpl::statistics() const {
 };
 
 bool BenchmarkClientHttpImpl::tryStartRequest(CompletionCallback caller_completion_callback) {
-  auto* pool_ptr = pool();
-  if (pool_ptr == nullptr) {
+  auto pool_data = pool();
+  if (!pool_data.has_value()) {
     return false;
   }
   if (provide_resource_backpressure_) {
@@ -185,7 +189,7 @@ bool BenchmarkClientHttpImpl::tryStartRequest(CompletionCallback caller_completi
       *statistic_.origin_latency_statistic, request->header(), shouldMeasureLatencies(),
       content_length, generator_, http_tracer_, latency_response_header_name_);
   requests_initiated_++;
-  pool_ptr->newStream(*stream_decoder, *stream_decoder);
+  pool_data.value().newStream(*stream_decoder, *stream_decoder);
   return true;
 }
 

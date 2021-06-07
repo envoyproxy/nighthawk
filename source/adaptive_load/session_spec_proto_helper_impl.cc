@@ -1,4 +1,4 @@
-#include "adaptive_load/session_spec_proto_helper_impl.h"
+#include "source/adaptive_load/session_spec_proto_helper_impl.h"
 
 #include "nighthawk/adaptive_load/metrics_plugin.h"
 #include "nighthawk/adaptive_load/step_controller.h"
@@ -7,12 +7,13 @@
 #include "api/adaptive_load/adaptive_load.pb.validate.h"
 #include "api/adaptive_load/metric_spec.pb.h"
 
+#include "source/adaptive_load/metrics_plugin_impl.h"
+#include "source/adaptive_load/plugin_loader.h"
+
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
-#include "adaptive_load/metrics_plugin_impl.h"
-#include "adaptive_load/plugin_loader.h"
 
 namespace Nighthawk {
 

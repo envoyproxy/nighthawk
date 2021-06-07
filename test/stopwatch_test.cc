@@ -6,7 +6,7 @@
 #include "external/envoy/test/test_common/simulated_time_system.h"
 #include "external/envoy/test/test_common/utility.h"
 
-#include "common/thread_safe_monotonic_time_stopwatch.h"
+#include "source/common/thread_safe_monotonic_time_stopwatch.h"
 
 #include "test/common/fake_time_source.h"
 
