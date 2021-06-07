@@ -29,7 +29,7 @@
 
 #include "client/stream_decoder.h"
 
-// TODO(yanavlasov): temporary hack to until Envoy::Upstream::HttpPoolData supports
+// TODO(#695): temporary hack to until Envoy::Upstream::HttpPoolData supports
 // hasActiveConnections
 namespace Envoy {
 namespace Upstream {
