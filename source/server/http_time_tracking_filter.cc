@@ -1,13 +1,12 @@
-#include "server/http_time_tracking_filter.h"
+#include "source/server/http_time_tracking_filter.h"
 
 #include <string>
 
 #include "envoy/server/filter_config.h"
 
-#include "common/thread_safe_monotonic_time_stopwatch.h"
-
-#include "server/configuration.h"
-#include "server/well_known_headers.h"
+#include "source/common/thread_safe_monotonic_time_stopwatch.h"
+#include "source/server/configuration.h"
+#include "source/server/well_known_headers.h"
 
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"

@@ -2,9 +2,10 @@
 
 #include "external/envoy/source/common/config/utility.h"
 
+#include "source/adaptive_load/metrics_plugin_impl.h"
+
 #include "test/adaptive_load/minimal_output.h"
 
-#include "adaptive_load/metrics_plugin_impl.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 

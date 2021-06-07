@@ -1,8 +1,7 @@
 #include "external/envoy/test/test_common/utility.h"
 
-#include "common/uri_impl.h"
-
-#include "client/sni_utility.h"
+#include "source/client/sni_utility.h"
+#include "source/common/uri_impl.h"
 
 #include "gtest/gtest.h"
 

@@ -3,7 +3,7 @@
 #include "external/envoy/test/test_common/environment.h"
 #include "external/envoy/test/test_common/utility.h"
 
-#include "client/client.h"
+#include "source/client/client.h"
 
 #include "test/client/utility.h"
 

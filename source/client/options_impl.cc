@@ -1,15 +1,14 @@
-#include "client/options_impl.h"
+#include "source/client/options_impl.h"
 
 #include "external/envoy/source/common/protobuf/message_validator_impl.h"
 #include "external/envoy/source/common/protobuf/utility.h"
 
 #include "api/client/options.pb.validate.h"
 
-#include "common/uri_impl.h"
-#include "common/utility.h"
-#include "common/version_info.h"
-
-#include "client/output_formatter_impl.h"
+#include "source/client/output_formatter_impl.h"
+#include "source/common/uri_impl.h"
+#include "source/common/utility.h"
+#include "source/common/version_info.h"
 
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_split.h"

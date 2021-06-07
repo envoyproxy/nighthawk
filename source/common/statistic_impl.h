@@ -9,7 +9,7 @@
 #include "external/envoy/source/common/common/logger.h"
 #include "external/envoy/source/common/stats/histogram_impl.h"
 
-#include "common/frequency.h"
+#include "source/common/frequency.h"
 
 namespace Nighthawk {
 

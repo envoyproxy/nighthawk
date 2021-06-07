@@ -1,4 +1,4 @@
-#include "adaptive_load/step_controller_impl.h"
+#include "source/adaptive_load/step_controller_impl.h"
 
 #include <memory>
 
@@ -9,8 +9,8 @@
 #include "api/adaptive_load/metric_spec.pb.h"
 #include "api/adaptive_load/step_controller_impl.pb.h"
 
-#include "adaptive_load/input_variable_setter_impl.h"
-#include "adaptive_load/plugin_loader.h"
+#include "source/adaptive_load/input_variable_setter_impl.h"
+#include "source/adaptive_load/plugin_loader.h"
 
 namespace Nighthawk {
 

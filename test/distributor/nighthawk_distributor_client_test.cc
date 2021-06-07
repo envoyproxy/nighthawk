@@ -4,7 +4,7 @@
 #include "api/distributor/distributor.grpc.pb.h"
 #include "api/distributor/distributor_mock.grpc.pb.h"
 
-#include "distributor/nighthawk_distributor_client_impl.h"
+#include "source/distributor/nighthawk_distributor_client_impl.h"
 
 #include "grpcpp/test/mock_stream.h"
 

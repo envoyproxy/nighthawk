@@ -1,11 +1,11 @@
-#include "client/client_worker_impl.h"
+#include "source/client/client_worker_impl.h"
 
 #include "external/envoy/source/common/stats/symbol_table_impl.h"
 
-#include "common/cached_time_source_impl.h"
-#include "common/phase_impl.h"
-#include "common/termination_predicate_impl.h"
-#include "common/utility.h"
+#include "source/common/cached_time_source_impl.h"
+#include "source/common/phase_impl.h"
+#include "source/common/termination_predicate_impl.h"
+#include "source/common/utility.h"
 
 namespace Nighthawk {
 namespace Client {

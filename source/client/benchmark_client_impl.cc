@@ -1,4 +1,4 @@
-#include "client/benchmark_client_impl.h"
+#include "source/client/benchmark_client_impl.h"
 
 #include "envoy/event/dispatcher.h"
 #include "envoy/thread_local/thread_local.h"
@@ -10,7 +10,7 @@
 #include "external/envoy/source/common/http/utility.h"
 #include "external/envoy/source/common/network/utility.h"
 
-#include "client/stream_decoder.h"
+#include "source/client/stream_decoder.h"
 
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_split.h"

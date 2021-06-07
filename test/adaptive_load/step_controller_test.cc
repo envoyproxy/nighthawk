@@ -9,8 +9,9 @@
 #include "api/adaptive_load/step_controller_impl.pb.h"
 #include "api/client/options.pb.h"
 
-#include "adaptive_load/plugin_loader.h"
-#include "adaptive_load/step_controller_impl.h"
+#include "source/adaptive_load/plugin_loader.h"
+#include "source/adaptive_load/step_controller_impl.h"
+
 #include "fake_plugins/fake_input_variable_setter/fake_input_variable_setter.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

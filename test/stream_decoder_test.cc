@@ -8,9 +8,8 @@
 #include "external/envoy/test/mocks/http/mocks.h"
 #include "external/envoy/test/mocks/stream_info/mocks.h"
 
-#include "common/statistic_impl.h"
-
-#include "client/stream_decoder.h"
+#include "source/client/stream_decoder.h"
+#include "source/common/statistic_impl.h"
 
 #include "gtest/gtest.h"
 

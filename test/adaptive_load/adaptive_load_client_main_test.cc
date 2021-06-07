@@ -11,12 +11,13 @@
 #include "api/adaptive_load/adaptive_load.pb.h"
 #include "api/adaptive_load/benchmark_result.pb.h"
 
+#include "source/adaptive_load/adaptive_load_client_main.h"
+
 #include "test/adaptive_load/minimal_output.h"
 #include "test/mocks/adaptive_load/mock_adaptive_load_controller.h"
 #include "test/test_common/environment.h"
 
 #include "absl/strings/string_view.h"
-#include "adaptive_load/adaptive_load_client_main.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 

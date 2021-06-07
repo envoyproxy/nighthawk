@@ -22,12 +22,8 @@
 
 #include "api/client/options.pb.h"
 
-#include "common/statistic_impl.h"
-
 #include "source/client/stream_decoder.h"
 #include "source/common/statistic_impl.h"
-
-#include "client/stream_decoder.h"
 
 // TODO(#695): temporary hack to until Envoy::Upstream::HttpPoolData supports
 // hasActiveConnections

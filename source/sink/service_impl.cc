@@ -1,4 +1,4 @@
-#include "sink/service_impl.h"
+#include "source/sink/service_impl.h"
 
 #include <grpc++/grpc++.h>
 
@@ -6,8 +6,8 @@
 
 #include "external/envoy/source/common/common/assert.h"
 
-#include "sink/nighthawk_sink_client_impl.h"
-#include "sink/sink_impl.h"
+#include "source/sink/nighthawk_sink_client_impl.h"
+#include "source/sink/sink_impl.h"
 
 namespace Nighthawk {
 
