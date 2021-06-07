@@ -25,7 +25,7 @@
 #include "source/client/stream_decoder.h"
 #include "source/common/statistic_impl.h"
 
-// TODO(yanavlasov): temporary hack to until Envoy::Upstream::HttpPoolData supports
+// TODO(#695): temporary hack to until Envoy::Upstream::HttpPoolData supports
 // hasActiveConnections
 namespace Envoy {
 namespace Upstream {

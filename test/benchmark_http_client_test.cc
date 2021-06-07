@@ -70,7 +70,7 @@ public:
         .WillRepeatedly(Return(&thread_local_cluster_));
     EXPECT_CALL(thread_local_cluster_, info()).WillRepeatedly(Return(cluster_info_));
     EXPECT_CALL(thread_local_cluster_, httpConnPool(_, _, _))
-        .WillRepeatedly(Return(::Envoy::Upstream::HttpPoolData([]() {}, &pool_)));
+        .WillRepeatedly(Return(Envoy::Upstream::HttpPoolData([]() {}, &pool_)));
 
     auto& tracer = static_cast<Envoy::Tracing::MockHttpTracer&>(*http_tracer_);
     EXPECT_CALL(tracer, startSpan_(_, _, _, _))

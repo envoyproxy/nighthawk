@@ -107,16 +107,16 @@ BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
 }
 
 void BenchmarkClientHttpImpl::terminate() {
-  auto pool_data = pool();
+  absl::optional<Envoy::Upstream::HttpPoolData> pool_data = pool();
   if (pool_data.has_value() &&
-      ::Envoy::Upstream::HttpPoolDataPeer(pool_data.value()).getPool()->hasActiveConnections()) {
+      Envoy::Upstream::HttpPoolDataPeer(pool_data.value()).getPool()->hasActiveConnections()) {
     // We don't report what happens after this call in the output, but latencies may still be
     // reported via callbacks. This may happen after a long time (60s), which HdrHistogram can't
     // track the way we configure it today, as that exceeds the max that it can record.
     // No harm is done, but it does result in log lines warning about it. Avoid that, by
     // disabling latency measurement here.
     setShouldMeasureLatencies(false);
-    ::Envoy::Upstream::HttpPoolDataPeer(pool_data.value())
+    Envoy::Upstream::HttpPoolDataPeer(pool_data.value())
         .getPool()
         ->addDrainedCallback([this]() -> void {
           drain_timer_->disableTimer();
@@ -151,7 +151,7 @@ StatisticPtrMap BenchmarkClientHttpImpl::statistics() const {
 };
 
 bool BenchmarkClientHttpImpl::tryStartRequest(CompletionCallback caller_completion_callback) {
-  auto pool_data = pool();
+  absl::optional<Envoy::Upstream::HttpPoolData> pool_data = pool();
   if (!pool_data.has_value()) {
     return false;
   }

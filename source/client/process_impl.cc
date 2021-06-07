@@ -518,11 +518,12 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
     };
     const Envoy::OptionsImpl envoy_options(
         /* args = */ {"process_impl"}, hot_restart_version_cb, spdlog::level::info);
+    envoy::config::core::v3::DnsResolverOptions dns_resolver_options;
     cluster_manager_factory_ = std::make_unique<ClusterManagerFactory>(
         admin_, Envoy::Runtime::LoaderSingleton::get(), store_root_, tls_,
-        dispatcher_->createDnsResolver({}, dns_options), *ssl_context_manager_, *dispatcher_,
-        *local_info_, secret_manager_, validation_context_, *api_, http_context_, grpc_context_,
-        router_context_, access_log_manager_, *singleton_manager_, envoy_options);
+        dispatcher_->createDnsResolver({}, dns_resolver_options), *ssl_context_manager_,
+        *dispatcher_, *local_info_, secret_manager_, validation_context_, *api_, http_context_,
+        grpc_context_, router_context_, access_log_manager_, *singleton_manager_, envoy_options);
     cluster_manager_factory_->setConnectionReuseStrategy(
         options_.h1ConnectionReuseStrategy() == nighthawk::client::H1ConnectionReuseStrategy::LRU
             ? Http1PoolImpl::ConnectionReuseStrategy::LRU

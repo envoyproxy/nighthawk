@@ -63,8 +63,8 @@ UriImpl::UriImpl(absl::string_view uri, absl::string_view default_scheme)
 
 bool UriImpl::performDnsLookup(Envoy::Event::Dispatcher& dispatcher,
                                const Envoy::Network::DnsLookupFamily dns_lookup_family) {
-  ::envoy::config::core::v3::DnsResolverOptions options;
-  auto dns_resolver = dispatcher.createDnsResolver({}, options);
+  envoy::config::core::v3::DnsResolverOptions dns_resolver_options;
+  auto dns_resolver = dispatcher.createDnsResolver({}, dns_resolver_options);
   std::string hostname = std::string(hostWithoutPort());
 
   if (!hostname.empty() && hostname[0] == '[' && hostname[hostname.size() - 1] == ']') {
