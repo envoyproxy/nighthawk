@@ -139,7 +139,9 @@ class IntegrationTestBase():
     """
     if self.grpc_service is not None:
       if self.grpc_service.stop() != 0:
-        pytest.fail("the Nighthawk GRPC service reported a non-zero exit code when stopped, log lines:\n{}".format('\n'.join(self.grpc_service.log_lines)))
+        pytest.fail(
+            "the Nighthawk GRPC service reported a non-zero exit code when stopped, log lines:\n{}".
+            format('\n'.join(self.grpc_service.log_lines)))
 
     any_failed = False
     for test_server in self._test_servers:
