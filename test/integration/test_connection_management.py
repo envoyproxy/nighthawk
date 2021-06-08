@@ -23,7 +23,7 @@ def _run_with_number_of_connections(fixture,
   # We add a delay to responses to make sure connections are needed, as the pool creates connections on-demand.
   args = [
       fixture.getTestServerRootUri(), "--rps",
-      str(rps), "--duration", "2", "--request-header", "x-envoy-fault-delay-request:500",
+      str(rps), "--duration", "5", "--request-header", "x-envoy-fault-delay-request:500",
       "--max-pending-requests",
       str(max_pending_requests), "--max-requests-per-connection",
       str(requests_per_connection), "--connections",

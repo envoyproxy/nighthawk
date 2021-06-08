@@ -109,6 +109,7 @@ py_library(
 py_library(
     name = "test_request_source_plugin_lib",
     srcs = ["test_request_source_plugin.py"],
+    data = ["//test/request_source:testdata"],
     deps = [":integration_test_base"],
 )
 
