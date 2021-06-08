@@ -108,20 +108,17 @@ BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
 
 void BenchmarkClientHttpImpl::terminate() {
   absl::optional<Envoy::Upstream::HttpPoolData> pool_data = pool();
-  if (pool_data.has_value() &&
-      Envoy::Upstream::HttpPoolDataPeer(pool_data.value()).getPool()->hasActiveConnections()) {
+  if (pool_data.has_value() && pool_data.value().hasActiveConnections()) {
     // We don't report what happens after this call in the output, but latencies may still be
     // reported via callbacks. This may happen after a long time (60s), which HdrHistogram can't
     // track the way we configure it today, as that exceeds the max that it can record.
     // No harm is done, but it does result in log lines warning about it. Avoid that, by
     // disabling latency measurement here.
     setShouldMeasureLatencies(false);
-    Envoy::Upstream::HttpPoolDataPeer(pool_data.value())
-        .getPool()
-        ->addDrainedCallback([this]() -> void {
-          drain_timer_->disableTimer();
-          dispatcher_.exit();
-        });
+    pool_data.value().addDrainedCallback([this]() -> void {
+      drain_timer_->disableTimer();
+      dispatcher_.exit();
+    });
     // Set up a timer with a callback which caps the time we wait for the pool to drain.
     drain_timer_ = dispatcher_.createTimer([this]() -> void {
       ENVOY_LOG(info, "Wait for the connection pool drain timed out, proceeding to hard shutdown.");

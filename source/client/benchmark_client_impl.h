@@ -25,21 +25,6 @@
 #include "source/client/stream_decoder.h"
 #include "source/common/statistic_impl.h"
 
-// TODO(#695): temporary hack to until Envoy::Upstream::HttpPoolData supports
-// hasActiveConnections
-namespace Envoy {
-namespace Upstream {
-class HttpPoolDataPeer {
-public:
-  HttpPoolDataPeer(HttpPoolData& data) : data_(data) {}
-  Http::ConnectionPool::Instance* getPool() { return data_.pool_; };
-
-private:
-  HttpPoolData& data_;
-};
-} // namespace Upstream
-} // namespace Envoy
-
 namespace Nighthawk {
 namespace Client {
 

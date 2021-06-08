@@ -38,7 +38,6 @@
 #ifdef ZIPKIN_ENABLED
 #include "external/envoy/source/extensions/tracers/zipkin/zipkin_tracer_impl.h"
 #endif
-#include "external/envoy/source/extensions/transport_sockets/well_known_names.h"
 #include "external/envoy/source/server/options_impl.h"
 #include "external/envoy/source/server/options_impl_platform.h"
 
