@@ -81,12 +81,22 @@ class RequestSourceServiceImpl final
       public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 
 public:
+  /**
+   * Constructs a new RequestSourceServiceImpl instance.
+   */
+  RequestSourceServiceImpl() {
+    logging_context_ = std::make_unique<Envoy::Logger::Context>(
+        spdlog::level::from_str("info"), "[%T.%f][%t][%L] %v", log_lock_, false);
+  }
+
   grpc::Status RequestStream(
       grpc::ServerContext* context,
       grpc::ServerReaderWriter<nighthawk::request_source::RequestStreamResponse,
                                nighthawk::request_source::RequestStreamRequest>* stream) override;
 
 private:
+  std::unique_ptr<Envoy::Logger::Context> logging_context_;
+  Envoy::Thread::MutexBasicLockable log_lock_;
   RequestSourcePtr createStaticEmptyRequestSource(const uint32_t amount);
 };
 
