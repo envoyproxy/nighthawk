@@ -23,7 +23,7 @@ def _run_with_number_of_connections(fixture,
   # We add a delay to responses to make sure connections are needed, as the pool creates connections on-demand.
   args = [
       fixture.getTestServerRootUri(), "--rps",
-      str(rps), "--duration", "5", "--request-header", "x-envoy-fault-delay-request:500",
+      str(rps), "--duration", "2", "--request-header", "x-envoy-fault-delay-request:500",
       "--max-pending-requests",
       str(max_pending_requests), "--max-requests-per-connection",
       str(requests_per_connection), "--connections",
@@ -48,7 +48,7 @@ def test_http_h1_connection_management_1(http_test_server_fixture):
 @pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable in sanitizer runs")
 def test_http_h1_connection_management_2(http_test_server_fixture):
   """Test http h1 connection management with 2 connections and queueing disabled."""
-  _run_with_number_of_connections(http_test_server_fixture, 2)
+  _run_with_number_of_connections(http_test_server_fixture, 2, requests_per_connection=200)
 
 
 # A series that tests with queueing enabled
