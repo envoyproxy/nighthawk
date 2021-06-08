@@ -138,7 +138,10 @@ class IntegrationTestBase():
       caplog: The pytest `caplog` test fixture used to examine logged messages.
     """
     if self.grpc_service is not None:
-      assert (self.grpc_service.stop() == 0)
+      if self.grpc_service.stop() != 0:
+        pytest.fail(
+            "the Nighthawk GRPC service reported a non-zero exit code when stopped, log lines:\n{}".
+            format('\n'.join(self.grpc_service.log_lines)))
 
     any_failed = False
     for test_server in self._test_servers:
