@@ -31,7 +31,7 @@ function do_opt_build () {
 
 function do_test() {
     bazel build -c dbg $BAZEL_BUILD_OPTIONS //test/...
-    bazel test -c dbg $BAZEL_TEST_OPTIONS --test_output=all //test:python_test
+    bazel test -c dbg $BAZEL_TEST_OPTIONS --test_output=all //test/...
 }
 
 function do_clang_tidy() {
