@@ -4,6 +4,10 @@ import os
 import subprocess
 
 
+class Error(Exception):
+  """Raised on errors in this module."""
+
+
 def isSanitizerRun():
   """Determine if the current execution is a tsan/asan/ubsan run.
 
@@ -27,3 +31,33 @@ def run_binary_with_args(binary, args):
   test_rundir = os.path.join(os.environ["TEST_SRCDIR"], os.environ["TEST_WORKSPACE"])
   args = "%s %s" % (os.path.join(test_rundir, binary), args)
   return subprocess.getstatusoutput(args)
+
+
+def get_execution_duration_from_global_result_json(global_result_json):
+  """Retrieve the actual execution duration from the global result.
+
+  Args:
+    global_result_json: A string, JSON representation of the Nighthawk's global
+      result.
+
+  Returns:
+    A float, the actual execution duration in seconds.
+
+  Raises:
+    Error: if the global result doesn't contain the execution duration.
+    Error: if the execution duration is in an unexpected format.
+  """
+  if "execution_duration" not in global_result_json:
+    raise Error(
+        "execution_duration not present in the global result:\n{}".format(global_result_json))
+
+  # Encoded as a string that ends in the "s" suffix.
+  # E.g. "3.000000001s".
+  # https://googleapis.dev/ruby/google-cloud-scheduler/latest/Google/Protobuf/Duration.html
+  duration_json_string = global_result_json["execution_duration"]
+
+  if not duration_json_string.endswith('s'):
+    raise Error(
+        "the execution_duration '{} doesn't end with the expected suffix 's' for seconds".format(
+            duration_json_string))
+  return float(duration_json_string.rstrip('s'))
