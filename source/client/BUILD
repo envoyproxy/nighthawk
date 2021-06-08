@@ -103,7 +103,6 @@ envoy_cc_library(
         "@envoy//source/exe:platform_impl_lib",
         "@envoy//source/exe:process_wide_lib_with_external_headers",
         "@envoy//source/extensions/request_id/uuid:config_with_external_headers",
-        "@envoy//source/extensions/transport_sockets:well_known_names_with_external_headers",
         "@envoy//source/extensions/transport_sockets/tls:context_lib_with_external_headers",
         "@envoy//source/server:server_lib_with_external_headers",
         "@envoy//source/server/config_validation:admin_lib_with_external_headers",
