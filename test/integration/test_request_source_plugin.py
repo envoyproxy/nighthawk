@@ -35,7 +35,7 @@ from test.integration import asserts
   file_path:"%s",
   }
   }""" % (os.path.dirname(os.path.abspath(os.path.dirname(__file__))) +
-          "/request_source/test_data/test-config.yaml"),
+          "/request_source/test_data/test-config-ab.yaml"),
                      13,
                      17,
                      id="file-based"),
