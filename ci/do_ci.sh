@@ -30,8 +30,11 @@ function do_opt_build () {
 }
 
 function do_test() {
-    bazel build -c dbg $BAZEL_BUILD_OPTIONS //test/...
-    bazel test -c dbg $BAZEL_TEST_OPTIONS --test_output=all //test/...
+    # The environment variable CI is used to determine if some expensive tests
+    # that cannot run locally should be executed.
+    # E.g. test_http_h1_mini_stress_test_open_loop.
+    bazel build -c dbg $BAZEL_BUILD_OPTIONS --action_env=CI //test/...
+    bazel test -c dbg $BAZEL_TEST_OPTIONS --test_output=all --action_env=CI //test/...
 }
 
 function do_clang_tidy() {
