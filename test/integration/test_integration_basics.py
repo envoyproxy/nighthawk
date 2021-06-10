@@ -21,6 +21,7 @@ from test.integration import utility
 # for the server side as well.
 
 
+@pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable and very slow in sanitizer runs")
 def test_http_h1(http_test_server_fixture):
   """Test http1 over plain http.
 
