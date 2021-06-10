@@ -80,3 +80,4 @@ important maintenance task. When performing the update, follow this procedure:
    `tools/update_cli_readme_documentation.sh --mode fix` to regenerate the
    portion of our documentation that captures the CLI help output. This will
    prevent a CI failure.
+1. Temporarily we have an issue with test_gcc: https://github.com/envoyproxy/nighthawk/issues/686 Please try to run this locally while it is not being run in ci.
