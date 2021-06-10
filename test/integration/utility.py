@@ -20,13 +20,14 @@ def isSanitizerRun():
 def isRunningInCircleCi():
   """Determine if the current execution is running in circleci.
 
-  Depends on the environment variable CIRCLECI=true which circleci uses by
-  default.
+  Depends on the environment variable IS_RUNNING_IN_CIRCLECI which is configured
+  in the project settings, see:
+    https://circleci.com/docs/2.0/env-vars/#setting-an-environment-variable-in-a-project
 
   Returns:
       bool: True iff the current execution is running in circleci.
   """
-  return True if os.environ.get("CIRCLECI", "false") == "true" else False
+  return True if os.environ.get("IS_RUNNING_IN_CIRCLECI", "no") == "yes" else False
 
 
 def run_binary_with_args(binary, args):
