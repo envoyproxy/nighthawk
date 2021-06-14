@@ -6,9 +6,8 @@
 
 #include "api/distributor/distributor.pb.h"
 
-#include "common/nighthawk_service_client_impl.h"
-
-#include "distributor/service_impl.h"
+#include "source/common/nighthawk_service_client_impl.h"
+#include "source/distributor/service_impl.h"
 
 #include "test/mocks/common/mock_nighthawk_service_client.h"
 

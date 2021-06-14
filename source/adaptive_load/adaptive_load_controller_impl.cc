@@ -1,4 +1,4 @@
-#include "adaptive_load/adaptive_load_controller_impl.h"
+#include "source/adaptive_load/adaptive_load_controller_impl.h"
 
 #include <chrono>
 
@@ -13,6 +13,7 @@
 #include "external/envoy/source/common/common/logger.h"
 #include "external/envoy/source/common/common/statusor.h"
 #include "external/envoy/source/common/protobuf/protobuf.h"
+#include "external/envoy/source/common/protobuf/utility.h"
 
 #include "api/adaptive_load/adaptive_load.pb.h"
 #include "api/adaptive_load/benchmark_result.pb.h"
@@ -21,12 +22,13 @@
 #include "api/client/output.pb.h"
 #include "api/client/service.grpc.pb.h"
 
+#include "source/adaptive_load/metrics_plugin_impl.h"
+#include "source/adaptive_load/plugin_loader.h"
+
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
-#include "adaptive_load/metrics_plugin_impl.h"
-#include "adaptive_load/plugin_loader.h"
 
 namespace Nighthawk {
 
@@ -63,6 +65,29 @@ LoadMetricsPlugins(const AdaptiveLoadSessionSpec& spec) {
     name_to_custom_metrics_plugin_map[config.name()] = std::move(metrics_plugin_or.value());
   }
   return name_to_custom_metrics_plugin_map;
+}
+
+/**
+ * Logs the execution response excluding all non-global results and the
+ * statistics from the global result.
+ *
+ * @param response is the execution response that should be logged.
+ */
+void LogGlobalResultExcludingStatistics(const nighthawk::client::ExecutionResponse& response) {
+  nighthawk::client::ExecutionResponse stripped = response;
+  stripped.mutable_output()->clear_results();
+  for (const nighthawk::client::Result& result : response.output().results()) {
+    if (result.name() != "global") {
+      continue;
+    }
+    nighthawk::client::Result* stripped_result = stripped.mutable_output()->add_results();
+    *stripped_result = result;
+    stripped_result->clear_statistics();
+  }
+  ENVOY_LOG_MISC(info,
+                 "Got result (stripped to just the global result excluding "
+                 "statistics): {}",
+                 stripped.DebugString());
 }
 
 /**
@@ -113,15 +138,18 @@ absl::StatusOr<BenchmarkResult> AdaptiveLoadControllerImpl::PerformAndAnalyzeNig
   *command_line_options.mutable_duration() = std::move(duration);
 
   ENVOY_LOG_MISC(info, "Sending load: {}", command_line_options.DebugString());
+  Envoy::SystemTime start_time = time_source_.systemTime();
   absl::StatusOr<nighthawk::client::ExecutionResponse> nighthawk_response_or =
       nighthawk_service_client_.PerformNighthawkBenchmark(nighthawk_service_stub,
                                                           command_line_options);
+  Envoy::SystemTime end_time = time_source_.systemTime();
   if (!nighthawk_response_or.ok()) {
     ENVOY_LOG_MISC(error, "Nighthawk Service error: {}: {}", nighthawk_response_or.status().code(),
                    nighthawk_response_or.status().message());
     return nighthawk_response_or.status();
   }
   nighthawk::client::ExecutionResponse nighthawk_response = nighthawk_response_or.value();
+  LogGlobalResultExcludingStatistics(nighthawk_response);
 
   absl::StatusOr<BenchmarkResult> benchmark_result_or =
       metrics_evaluator_.AnalyzeNighthawkBenchmark(nighthawk_response, spec,
@@ -132,6 +160,9 @@ absl::StatusOr<BenchmarkResult> AdaptiveLoadControllerImpl::PerformAndAnalyzeNig
     return benchmark_result_or.status();
   }
   BenchmarkResult benchmark_result = benchmark_result_or.value();
+  Envoy::TimestampUtil::systemClockToTimestamp(start_time, *benchmark_result.mutable_start_time());
+  Envoy::TimestampUtil::systemClockToTimestamp(end_time, *benchmark_result.mutable_end_time());
+
   for (const MetricEvaluation& evaluation : benchmark_result.metric_evaluations()) {
     ENVOY_LOG_MISC(info, "Evaluation: {}", evaluation.DebugString());
   }
@@ -171,6 +202,14 @@ absl::StatusOr<AdaptiveLoadSessionOutput> AdaptiveLoadControllerImpl::PerformAda
     }
     BenchmarkResult result = result_or.value();
     *output.mutable_adjusting_stage_results()->Add() = result;
+
+    if (spec.has_benchmark_cooldown_duration()) {
+      ENVOY_LOG_MISC(info, "Cooling down before the next benchmark for duration: {}",
+                     spec.benchmark_cooldown_duration());
+      uint64_t sleep_time_ms = Envoy::Protobuf::util::TimeUtil::DurationToMilliseconds(
+          spec.benchmark_cooldown_duration());
+      absl::SleepFor(absl::Milliseconds(sleep_time_ms));
+    }
 
     const std::chrono::nanoseconds time_limit_ns(
         Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(spec.convergence_deadline()));

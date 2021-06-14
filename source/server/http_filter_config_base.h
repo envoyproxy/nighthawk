@@ -8,7 +8,7 @@
 
 #include "api/server/response_options.pb.h"
 
-#include "server/configuration.h"
+#include "source/server/configuration.h"
 
 #include "absl/status/status.h"
 

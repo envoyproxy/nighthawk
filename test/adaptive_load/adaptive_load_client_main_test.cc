@@ -11,12 +11,13 @@
 #include "api/adaptive_load/adaptive_load.pb.h"
 #include "api/adaptive_load/benchmark_result.pb.h"
 
+#include "source/adaptive_load/adaptive_load_client_main.h"
+
 #include "test/adaptive_load/minimal_output.h"
 #include "test/mocks/adaptive_load/mock_adaptive_load_controller.h"
 #include "test/test_common/environment.h"
 
 #include "absl/strings/string_view.h"
-#include "adaptive_load/adaptive_load_client_main.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -297,7 +298,7 @@ TEST(AdaptiveLoadClientMainTest, WritesOutputProtoToFile) {
   EXPECT_CALL(*mock_file, write_(_))
       .WillRepeatedly(Invoke(
           [&actual_outfile_contents](absl::string_view data) -> Envoy::Api::IoCallSizeResult {
-            actual_outfile_contents += data;
+            actual_outfile_contents += std::string(data);
             return Envoy::Api::IoCallSizeResult(
                 static_cast<ssize_t>(data.length()),
                 Envoy::Api::IoErrorPtr(nullptr, [](Envoy::Api::IoError*) {}));

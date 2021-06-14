@@ -27,6 +27,12 @@
 #include "api/client/service.pb.h"
 #include "api/client/service_mock.grpc.pb.h"
 
+#include "source/adaptive_load/adaptive_load_controller_impl.h"
+#include "source/adaptive_load/metrics_plugin_impl.h"
+#include "source/adaptive_load/plugin_loader.h"
+#include "source/adaptive_load/scoring_function_impl.h"
+#include "source/adaptive_load/session_spec_proto_helper_impl.h"
+
 #include "test/adaptive_load/fake_plugins/fake_step_controller/fake_step_controller.h"
 #include "test/common/fake_time_source.h"
 #include "test/mocks/adaptive_load/mock_metrics_evaluator.h"
@@ -36,11 +42,6 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_join.h"
-#include "adaptive_load/adaptive_load_controller_impl.h"
-#include "adaptive_load/metrics_plugin_impl.h"
-#include "adaptive_load/plugin_loader.h"
-#include "adaptive_load/scoring_function_impl.h"
-#include "adaptive_load/session_spec_proto_helper_impl.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -65,6 +66,9 @@ using ::testing::NiceMock;
 using ::testing::Return;
 using ::testing::SaveArg;
 using ::testing::SetArgPointee;
+
+// The start time used in these tests.
+const int kFakeStartTimeSeconds = 10;
 
 /**
  * Creates a valid BenchmarkResult proto with only the score set. Useful for controlling the
@@ -107,6 +111,8 @@ AdaptiveLoadSessionSpec MakeValidAdaptiveLoadSessionSpec() {
 class AdaptiveLoadControllerImplFixture : public testing::Test {
 public:
   void SetUp() override {
+    fake_time_source_.setSystemTimeSeconds(kFakeStartTimeSeconds);
+
     ON_CALL(mock_nighthawk_service_client_, PerformNighthawkBenchmark)
         .WillByDefault(Return(nighthawk::client::ExecutionResponse()));
   }
@@ -114,7 +120,7 @@ public:
 protected:
   NiceMock<MockNighthawkServiceClient> mock_nighthawk_service_client_;
   NiceMock<MockMetricsEvaluator> mock_metrics_evaluator_;
-  FakeIncrementingMonotonicTimeSource fake_time_source_;
+  FakeIncrementingTimeSource fake_time_source_;
   MockNighthawkServiceStub mock_nighthawk_service_stub_;
   // Real spec helper is simpler to use because SetSessionSpecDefaults preserves values a test
   // sets in the spec; the mock inconveniently discards the input and returns an empty spec.
@@ -265,6 +271,9 @@ TEST_F(AdaptiveLoadControllerImplFixture, PropagatesErrorFromMetricsEvaluator) {
 
 TEST_F(AdaptiveLoadControllerImplFixture, StoresAdjustingStageResult) {
   BenchmarkResult expected_benchmark_result = MakeBenchmarkResultWithScore(1.0);
+  expected_benchmark_result.mutable_start_time()->set_seconds(kFakeStartTimeSeconds);
+  expected_benchmark_result.mutable_end_time()->set_seconds(kFakeStartTimeSeconds + 1);
+
   EXPECT_CALL(mock_metrics_evaluator_, AnalyzeNighthawkBenchmark(_, _, _))
       .WillRepeatedly(Return(expected_benchmark_result));
 
@@ -283,6 +292,11 @@ TEST_F(AdaptiveLoadControllerImplFixture, StoresAdjustingStageResult) {
 
 TEST_F(AdaptiveLoadControllerImplFixture, StoresTestingStageResult) {
   BenchmarkResult expected_benchmark_result = MakeBenchmarkResultWithScore(1.0);
+  // Times kFakeStartTimeSeconds and kFakeStartTimeSeconds + 1 are taken by the
+  // adjusting stage.
+  expected_benchmark_result.mutable_start_time()->set_seconds(kFakeStartTimeSeconds + 2);
+  expected_benchmark_result.mutable_end_time()->set_seconds(kFakeStartTimeSeconds + 3);
+
   EXPECT_CALL(mock_metrics_evaluator_, AnalyzeNighthawkBenchmark(_, _, _))
       .WillRepeatedly(Return(expected_benchmark_result));
 
@@ -296,6 +310,38 @@ TEST_F(AdaptiveLoadControllerImplFixture, StoresTestingStageResult) {
   const BenchmarkResult& actual_benchmark_result = output_or.value().testing_stage_result();
   EXPECT_TRUE(MessageDifferencer::Equivalent(actual_benchmark_result, expected_benchmark_result));
   EXPECT_EQ(actual_benchmark_result.DebugString(), expected_benchmark_result.DebugString());
+}
+
+TEST_F(AdaptiveLoadControllerImplFixture, SucceedsWhenBenchmarkCooldownRequested) {
+  BenchmarkResult expected_benchmark_result = MakeBenchmarkResultWithScore(1.0);
+  EXPECT_CALL(mock_metrics_evaluator_, AnalyzeNighthawkBenchmark(_, _, _))
+      .WillRepeatedly(Return(expected_benchmark_result));
+
+  AdaptiveLoadControllerImpl controller(mock_nighthawk_service_client_, mock_metrics_evaluator_,
+                                        real_spec_proto_helper_, fake_time_source_);
+
+  AdaptiveLoadSessionSpec spec = MakeValidAdaptiveLoadSessionSpec();
+  spec.mutable_benchmark_cooldown_duration()->set_nanos(10);
+  absl::StatusOr<AdaptiveLoadSessionOutput> output_or =
+      controller.PerformAdaptiveLoadSession(&mock_nighthawk_service_stub_, spec);
+  EXPECT_TRUE(output_or.ok());
+}
+
+TEST_F(AdaptiveLoadControllerImplFixture, FailsWhenBenchmarkCooldownDurationIsNegative) {
+  BenchmarkResult expected_benchmark_result = MakeBenchmarkResultWithScore(1.0);
+  EXPECT_CALL(mock_metrics_evaluator_, AnalyzeNighthawkBenchmark(_, _, _))
+      .WillRepeatedly(Return(expected_benchmark_result));
+
+  AdaptiveLoadControllerImpl controller(mock_nighthawk_service_client_, mock_metrics_evaluator_,
+                                        real_spec_proto_helper_, fake_time_source_);
+
+  AdaptiveLoadSessionSpec spec = MakeValidAdaptiveLoadSessionSpec();
+  spec.mutable_benchmark_cooldown_duration()->set_nanos(-10);
+  absl::StatusOr<AdaptiveLoadSessionOutput> output_or =
+      controller.PerformAdaptiveLoadSession(&mock_nighthawk_service_stub_, spec);
+  ASSERT_FALSE(output_or.ok());
+  EXPECT_EQ(output_or.status().code(), absl::StatusCode::kInvalidArgument);
+  EXPECT_THAT(output_or.status().message(), HasSubstr("BenchmarkCooldownDuration"));
 }
 
 } // namespace

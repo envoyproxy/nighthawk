@@ -7,7 +7,7 @@
 #include "external/envoy/test/mocks/protobuf/mocks.h"
 #include "external/envoy/test/mocks/thread_local/mocks.h"
 
-#include "common/worker_impl.h"
+#include "source/common/worker_impl.h"
 
 #include "gtest/gtest.h"
 

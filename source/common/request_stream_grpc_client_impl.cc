@@ -1,4 +1,4 @@
-#include "common/request_stream_grpc_client_impl.h"
+#include "source/common/request_stream_grpc_client_impl.h"
 
 #include <string>
 
@@ -12,7 +12,7 @@
 
 #include "api/request_source/service.pb.h"
 
-#include "common/request_impl.h"
+#include "source/common/request_impl.h"
 
 namespace Nighthawk {
 

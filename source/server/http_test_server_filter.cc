@@ -1,11 +1,11 @@
-#include "server/http_test_server_filter.h"
+#include "source/server/http_test_server_filter.h"
 
 #include <string>
 
 #include "envoy/server/filter_config.h"
 
-#include "server/configuration.h"
-#include "server/well_known_headers.h"
+#include "source/server/configuration.h"
+#include "source/server/well_known_headers.h"
 
 #include "absl/strings/numbers.h"
 

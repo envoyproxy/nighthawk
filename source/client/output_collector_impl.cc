@@ -1,4 +1,4 @@
-#include "client/output_collector_impl.h"
+#include "source/client/output_collector_impl.h"
 
 #include <google/protobuf/util/time_util.h>
 
@@ -7,7 +7,7 @@
 
 #include "external/envoy/source/common/protobuf/utility.h"
 
-#include "common/version_info.h"
+#include "source/common/version_info.h"
 
 namespace Nighthawk {
 namespace Client {

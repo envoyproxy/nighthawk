@@ -6,7 +6,7 @@
 #include "external/envoy/test/test_common/simulated_time_system.h"
 #include "external/envoy/test/test_common/utility.h"
 
-#include "common/thread_safe_monotonic_time_stopwatch.h"
+#include "source/common/thread_safe_monotonic_time_stopwatch.h"
 
 #include "test/common/fake_time_source.h"
 
@@ -38,7 +38,7 @@ TEST(ThreadSafeStopwatchTest, ThreadedStopwatchSpamming) {
   constexpr uint64_t kFakeTimeSourceDefaultTick = 1000000000;
   constexpr uint32_t kNumThreads = 100;
   ThreadSafeMontonicTimeStopwatch stopwatch;
-  FakeIncrementingMonotonicTimeSource time_system;
+  FakeIncrementingTimeSource time_system;
   std::vector<std::thread> threads(kNumThreads);
   std::promise<void> signal_all_threads_running;
   std::shared_future<void> future(signal_all_threads_running.get_future());

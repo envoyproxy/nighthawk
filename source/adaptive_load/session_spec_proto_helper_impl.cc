@@ -1,16 +1,19 @@
-#include "adaptive_load/session_spec_proto_helper_impl.h"
+#include "source/adaptive_load/session_spec_proto_helper_impl.h"
 
 #include "nighthawk/adaptive_load/metrics_plugin.h"
 #include "nighthawk/adaptive_load/step_controller.h"
 
 #include "api/adaptive_load/adaptive_load.pb.h"
+#include "api/adaptive_load/adaptive_load.pb.validate.h"
 #include "api/adaptive_load/metric_spec.pb.h"
 
+#include "source/adaptive_load/metrics_plugin_impl.h"
+#include "source/adaptive_load/plugin_loader.h"
+
 #include "absl/container/flat_hash_map.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
-#include "adaptive_load/metrics_plugin_impl.h"
-#include "adaptive_load/plugin_loader.h"
 
 namespace Nighthawk {
 
@@ -55,6 +58,15 @@ absl::Status AdaptiveLoadSessionSpecProtoHelperImpl::CheckSessionSpec(
         "nighthawk_traffic_template should not have |duration| set. Set |measuring_period| "
         "and |testing_stage_duration| in the AdaptiveLoadSessionSpec proto instead.");
   }
+
+  {
+    std::string validation_error;
+    if (!Validate(spec, &validation_error)) {
+      errors.push_back(
+          absl::StrCat("the AdaptiveLoadSessionSpec doesn't validate: ", validation_error));
+    }
+  }
+
   absl::flat_hash_map<std::string, MetricsPluginPtr> plugin_from_name;
   std::vector<std::string> plugin_names = {"nighthawk.builtin"};
   plugin_from_name["nighthawk.builtin"] =

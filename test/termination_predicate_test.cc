@@ -5,7 +5,7 @@
 #include "external/envoy/test/test_common/simulated_time_system.h"
 #include "external/envoy/test/test_common/utility.h"
 
-#include "common/termination_predicate_impl.h"
+#include "source/common/termination_predicate_impl.h"
 
 #include "gtest/gtest.h"
 

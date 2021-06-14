@@ -4,8 +4,8 @@
 #include "external/envoy/source/common/stats/isolated_store_impl.h"
 #include "external/envoy/test/test_common/utility.h"
 
-#include "common/uri_impl.h"
-#include "common/utility.h"
+#include "source/common/uri_impl.h"
+#include "source/common/utility.h"
 
 #include "test/test_common/environment.h"
 

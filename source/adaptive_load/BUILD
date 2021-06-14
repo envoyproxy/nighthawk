@@ -29,6 +29,7 @@ envoy_cc_library(
         "//include/nighthawk/adaptive_load:session_spec_proto_helper",
         "//include/nighthawk/adaptive_load:step_controller",
         "//include/nighthawk/common:nighthawk_service_client",
+        "@envoy//source/common/protobuf:utility_lib_with_external_headers",
     ],
 )
 

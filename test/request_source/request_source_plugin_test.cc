@@ -6,7 +6,7 @@
 #include "external/envoy/test/test_common/file_system_for_test.h"
 #include "external/envoy/test/test_common/utility.h"
 
-#include "request_source/request_options_list_plugin_impl.h"
+#include "source/request_source/request_options_list_plugin_impl.h"
 
 #include "test/request_source/stub_plugin_impl.h"
 #include "test/test_common/environment.h"
@@ -23,9 +23,9 @@ using nighthawk::request_source::StubPluginConfig;
 using ::testing::NiceMock;
 using ::testing::Test;
 nighthawk::request_source::FileBasedOptionsListRequestSourceConfig
-MakeFileBasedPluginConfigWithTestYaml(absl::string_view request_file) {
+MakeFileBasedPluginConfigWithTestYaml(const std::string& request_file) {
   nighthawk::request_source::FileBasedOptionsListRequestSourceConfig config;
-  config.mutable_file_path()->assign(request_file);
+  config.set_file_path(request_file);
   config.mutable_max_file_size()->set_value(4000);
   return config;
 }

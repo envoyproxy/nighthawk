@@ -1,6 +1,6 @@
-#include "server/http_dynamic_delay_filter.h"
-#include "server/http_test_server_filter.h"
-#include "server/http_time_tracking_filter.h"
+#include "source/server/http_dynamic_delay_filter.h"
+#include "source/server/http_test_server_filter.h"
+#include "source/server/http_time_tracking_filter.h"
 
 #include "test/server/http_filter_integration_test_base.h"
 

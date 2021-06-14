@@ -6,10 +6,11 @@
 #include "api/adaptive_load/metric_spec.pb.h"
 #include "api/client/options.pb.h"
 
+#include "source/adaptive_load/plugin_loader.h"
+#include "source/adaptive_load/session_spec_proto_helper_impl.h"
+
 #include "test/adaptive_load/fake_plugins/fake_metrics_plugin/fake_metrics_plugin.h"
 
-#include "adaptive_load/plugin_loader.h"
-#include "adaptive_load/session_spec_proto_helper_impl.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -18,6 +19,7 @@ namespace Nighthawk {
 namespace {
 
 using ::nighthawk::adaptive_load::AdaptiveLoadSessionSpec;
+using ::nighthawk::adaptive_load::MetricSpecWithThreshold;
 using ::testing::HasSubstr;
 
 TEST(SetSessionSpecDefaults, SetsDefaultValueIfOpenLoopUnset) {
@@ -95,8 +97,7 @@ TEST(SetSessionSpecDefaults, SetsDefaultScoredMetricPluginNameIfUnset) {
 TEST(SetSessionSpecDefaults, PreservesExplicitScoredMetricPluginName) {
   const std::string kExpectedMetricsPluginName = "a";
   AdaptiveLoadSessionSpec original_spec;
-  nighthawk::adaptive_load::MetricSpecWithThreshold* spec_threshold =
-      original_spec.mutable_metric_thresholds()->Add();
+  MetricSpecWithThreshold* spec_threshold = original_spec.mutable_metric_thresholds()->Add();
   spec_threshold->mutable_metric_spec()->set_metrics_plugin_name(kExpectedMetricsPluginName);
   AdaptiveLoadSessionSpecProtoHelperImpl helper;
   AdaptiveLoadSessionSpec spec = helper.SetSessionSpecDefaults(original_spec);
@@ -117,8 +118,7 @@ TEST(SetSessionSpecDefaults, SetsDefaultScoredMetricWeightIfUnset) {
 TEST(SetSessionSpecDefaults, PreservesExplicitScoredMetricWeight) {
   const double kExpectedWeight = 123.0;
   AdaptiveLoadSessionSpec original_spec;
-  nighthawk::adaptive_load::MetricSpecWithThreshold* spec_threshold =
-      original_spec.mutable_metric_thresholds()->Add();
+  MetricSpecWithThreshold* spec_threshold = original_spec.mutable_metric_thresholds()->Add();
   spec_threshold->mutable_threshold_spec()->mutable_weight()->set_value(kExpectedWeight);
   AdaptiveLoadSessionSpecProtoHelperImpl helper;
   AdaptiveLoadSessionSpec spec = helper.SetSessionSpecDefaults(original_spec);
@@ -145,6 +145,100 @@ TEST(SetSessionSpecDefaults, PreservesExplicitInformationalMetricPluginName) {
   AdaptiveLoadSessionSpec spec = helper.SetSessionSpecDefaults(original_spec);
   ASSERT_GT(spec.informational_metric_specs_size(), 0);
   EXPECT_EQ(spec.informational_metric_specs(0).metrics_plugin_name(), kExpectedMetricsPluginName);
+}
+
+// Returns a load session spec that can pass PGV (protoc-gen-validate).
+AdaptiveLoadSessionSpec MakeSpecThatPassesProtoValidation() {
+  AdaptiveLoadSessionSpecProtoHelperImpl helper;
+  AdaptiveLoadSessionSpec spec;
+
+  spec.mutable_nighthawk_traffic_template();
+  helper.SetSessionSpecDefaults(spec);
+  MetricSpecWithThreshold* spec_threshold = spec.mutable_metric_thresholds()->Add();
+  spec_threshold->mutable_metric_spec()->set_metric_name("bogus");
+  spec_threshold->mutable_threshold_spec()->mutable_scoring_function()->set_name("bogus");
+  spec_threshold->mutable_threshold_spec()->mutable_scoring_function()->mutable_typed_config();
+  return spec;
+}
+
+TEST(CheckSessionSpec, RejectsMeasuringPeriodIfSecondsNegative) {
+  AdaptiveLoadSessionSpec spec = MakeSpecThatPassesProtoValidation();
+  spec.mutable_measuring_period()->set_seconds(-1);
+
+  AdaptiveLoadSessionSpecProtoHelperImpl helper;
+  absl::Status status = helper.CheckSessionSpec(spec);
+  EXPECT_EQ(status.code(), absl::StatusCode::kInvalidArgument);
+  EXPECT_THAT(status.message(), HasSubstr("MeasuringPeriod"));
+}
+
+TEST(CheckSessionSpec, RejectsMeasuringPeriodIfNanosNegative) {
+  AdaptiveLoadSessionSpec spec = MakeSpecThatPassesProtoValidation();
+  spec.mutable_measuring_period()->set_nanos(-1);
+
+  AdaptiveLoadSessionSpecProtoHelperImpl helper;
+  absl::Status status = helper.CheckSessionSpec(spec);
+  EXPECT_EQ(status.code(), absl::StatusCode::kInvalidArgument);
+  EXPECT_THAT(status.message(), HasSubstr("MeasuringPeriod"));
+}
+
+TEST(CheckSessionSpec, RejectsConvergenceDeadlineIfSecondsNegative) {
+  AdaptiveLoadSessionSpec spec = MakeSpecThatPassesProtoValidation();
+  spec.mutable_convergence_deadline()->set_seconds(-1);
+
+  AdaptiveLoadSessionSpecProtoHelperImpl helper;
+  absl::Status status = helper.CheckSessionSpec(spec);
+  EXPECT_EQ(status.code(), absl::StatusCode::kInvalidArgument);
+  EXPECT_THAT(status.message(), HasSubstr("ConvergenceDeadline"));
+}
+
+TEST(CheckSessionSpec, RejectsConvergenceDeadlineIfNanosNegative) {
+  AdaptiveLoadSessionSpec spec = MakeSpecThatPassesProtoValidation();
+  spec.mutable_convergence_deadline()->set_nanos(-1);
+
+  AdaptiveLoadSessionSpecProtoHelperImpl helper;
+  absl::Status status = helper.CheckSessionSpec(spec);
+  EXPECT_EQ(status.code(), absl::StatusCode::kInvalidArgument);
+  EXPECT_THAT(status.message(), HasSubstr("ConvergenceDeadline"));
+}
+
+TEST(CheckSessionSpec, RejectsTestingStageDurationIfSecondsNegative) {
+  AdaptiveLoadSessionSpec spec = MakeSpecThatPassesProtoValidation();
+  spec.mutable_testing_stage_duration()->set_seconds(-1);
+
+  AdaptiveLoadSessionSpecProtoHelperImpl helper;
+  absl::Status status = helper.CheckSessionSpec(spec);
+  EXPECT_EQ(status.code(), absl::StatusCode::kInvalidArgument);
+  EXPECT_THAT(status.message(), HasSubstr("TestingStageDuration"));
+}
+
+TEST(CheckSessionSpec, RejectsTestingStageDurationIfNanosNegative) {
+  AdaptiveLoadSessionSpec spec = MakeSpecThatPassesProtoValidation();
+  spec.mutable_testing_stage_duration()->set_nanos(-1);
+
+  AdaptiveLoadSessionSpecProtoHelperImpl helper;
+  absl::Status status = helper.CheckSessionSpec(spec);
+  EXPECT_EQ(status.code(), absl::StatusCode::kInvalidArgument);
+  EXPECT_THAT(status.message(), HasSubstr("TestingStageDuration"));
+}
+
+TEST(CheckSessionSpec, RejectsBenchmarkCooldownDurationIfSecondsNegative) {
+  AdaptiveLoadSessionSpec spec = MakeSpecThatPassesProtoValidation();
+  spec.mutable_benchmark_cooldown_duration()->set_seconds(-1);
+
+  AdaptiveLoadSessionSpecProtoHelperImpl helper;
+  absl::Status status = helper.CheckSessionSpec(spec);
+  EXPECT_EQ(status.code(), absl::StatusCode::kInvalidArgument);
+  EXPECT_THAT(status.message(), HasSubstr("BenchmarkCooldownDuration"));
+}
+
+TEST(CheckSessionSpec, RejectsBenchmarkCooldownDurationIfNanosNegative) {
+  AdaptiveLoadSessionSpec spec = MakeSpecThatPassesProtoValidation();
+  spec.mutable_benchmark_cooldown_duration()->set_nanos(-1);
+
+  AdaptiveLoadSessionSpecProtoHelperImpl helper;
+  absl::Status status = helper.CheckSessionSpec(spec);
+  EXPECT_EQ(status.code(), absl::StatusCode::kInvalidArgument);
+  EXPECT_THAT(status.message(), HasSubstr("BenchmarkCooldownDuration"));
 }
 
 TEST(CheckSessionSpec, RejectsDurationIfSet) {
@@ -178,8 +272,7 @@ TEST(CheckSessionSpec, RejectsInvalidStepControllerPlugin) {
 
 TEST(CheckSessionSpec, RejectsInvalidScoringFunctionPlugin) {
   AdaptiveLoadSessionSpec spec;
-  nighthawk::adaptive_load::MetricSpecWithThreshold* spec_threshold =
-      spec.mutable_metric_thresholds()->Add();
+  MetricSpecWithThreshold* spec_threshold = spec.mutable_metric_thresholds()->Add();
   spec_threshold->mutable_threshold_spec()->mutable_scoring_function()->set_name("bogus");
   AdaptiveLoadSessionSpecProtoHelperImpl helper;
   absl::Status status = helper.CheckSessionSpec(spec);
@@ -189,8 +282,7 @@ TEST(CheckSessionSpec, RejectsInvalidScoringFunctionPlugin) {
 
 TEST(CheckSessionSpec, RejectsScoredMetricWithUndeclaredMetricsPluginName) {
   AdaptiveLoadSessionSpec spec;
-  nighthawk::adaptive_load::MetricSpecWithThreshold* spec_threshold =
-      spec.mutable_metric_thresholds()->Add();
+  MetricSpecWithThreshold* spec_threshold = spec.mutable_metric_thresholds()->Add();
   spec_threshold->mutable_metric_spec()->set_metrics_plugin_name("bogus");
   AdaptiveLoadSessionSpecProtoHelperImpl helper;
   absl::Status status = helper.CheckSessionSpec(spec);
@@ -211,8 +303,7 @@ TEST(CheckSessionSpec, RejectsInformationalMetricWithUndeclaredMetricsPluginName
 
 TEST(CheckSessionSpec, RejectsScoredMetricWithNonexistentDefaultMetricsPluginMetric) {
   AdaptiveLoadSessionSpec spec;
-  nighthawk::adaptive_load::MetricSpecWithThreshold* spec_threshold =
-      spec.mutable_metric_thresholds()->Add();
+  MetricSpecWithThreshold* spec_threshold = spec.mutable_metric_thresholds()->Add();
   spec_threshold->mutable_metric_spec()->set_metric_name("bogus");
   spec_threshold->mutable_metric_spec()->set_metrics_plugin_name("nighthawk.builtin");
   AdaptiveLoadSessionSpecProtoHelperImpl helper;
@@ -237,8 +328,7 @@ TEST(CheckSessionSpec, RejectsScoredMetricWithNonexistentCustomMetricsPluginMetr
   AdaptiveLoadSessionSpec spec;
   *spec.mutable_metrics_plugin_configs()->Add() = MakeFakeMetricsPluginTypedExtensionConfig(
       nighthawk::adaptive_load::FakeMetricsPluginConfig());
-  nighthawk::adaptive_load::MetricSpecWithThreshold* spec_threshold =
-      spec.mutable_metric_thresholds()->Add();
+  MetricSpecWithThreshold* spec_threshold = spec.mutable_metric_thresholds()->Add();
   spec_threshold->mutable_metric_spec()->set_metric_name("bogus");
   spec_threshold->mutable_metric_spec()->set_metrics_plugin_name("nighthawk.fake_metrics_plugin");
   AdaptiveLoadSessionSpecProtoHelperImpl helper;

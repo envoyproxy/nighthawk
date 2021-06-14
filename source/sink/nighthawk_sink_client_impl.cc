@@ -1,4 +1,4 @@
-#include "sink/nighthawk_sink_client_impl.h"
+#include "source/sink/nighthawk_sink_client_impl.h"
 
 #include "external/envoy/source/common/common/assert.h"
 
