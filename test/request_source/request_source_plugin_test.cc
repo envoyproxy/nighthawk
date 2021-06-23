@@ -84,7 +84,7 @@ TEST_F(StubRequestSourcePluginTest, CreateRequestSourcePluginCreatesCorrectPlugi
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
           "nighthawk.stub-request-source-plugin");
-  auto header = Envoy::Http::RequestHeaderMapImpl::create();
+  Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
   RequestSourcePtr plugin =
       config_factory.createRequestSourcePlugin(config_any, *api_, std::move(header));
   plugin->initOnThread();
@@ -99,7 +99,7 @@ TEST_F(StubRequestSourcePluginTest, CreateRequestSourcePluginCreatesWorkingPlugi
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
           "nighthawk.stub-request-source-plugin");
-  auto template_header = Envoy::Http::RequestHeaderMapImpl::create();
+  Envoy::Http::RequestHeaderMapPtr template_header = Envoy::Http::RequestHeaderMapImpl::create();
   RequestSourcePtr plugin =
       config_factory.createRequestSourcePlugin(config_any, *api_, std::move(template_header));
   plugin->initOnThread();
@@ -139,7 +139,7 @@ TEST_F(FileBasedRequestSourcePluginTest, CreateRequestSourcePluginCreatesCorrect
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
           "nighthawk.file-based-request-source-plugin");
-  auto header = Envoy::Http::RequestHeaderMapImpl::create();
+  Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
   RequestSourcePtr plugin =
       config_factory.createRequestSourcePlugin(config_any, *api_, std::move(header));
   plugin->initOnThread();
@@ -157,7 +157,7 @@ TEST_F(FileBasedRequestSourcePluginTest,
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
           "nighthawk.file-based-request-source-plugin");
-  auto header = Envoy::Http::RequestHeaderMapImpl::create();
+  Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
   RequestSourcePtr file_based_request_source =
       config_factory.createRequestSourcePlugin(config_any, *api_, std::move(header));
   file_based_request_source->initOnThread();
@@ -187,7 +187,7 @@ TEST_F(FileBasedRequestSourcePluginTest, CreateRequestSourcePluginWithTooLargeAF
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
           "nighthawk.file-based-request-source-plugin");
-  auto header = Envoy::Http::RequestHeaderMapImpl::create();
+  Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
   EXPECT_THROW_WITH_REGEX(
       config_factory.createRequestSourcePlugin(config_any, *api_, std::move(header)),
       NighthawkException, "file size must be less than max_file_size");
@@ -203,7 +203,7 @@ TEST_F(FileBasedRequestSourcePluginTest,
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
           "nighthawk.file-based-request-source-plugin");
-  auto header = Envoy::Http::RequestHeaderMapImpl::create();
+  Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
   RequestSourcePtr file_based_request_source =
       config_factory.createRequestSourcePlugin(config_any, *api_, std::move(header));
   file_based_request_source->initOnThread();
@@ -243,8 +243,8 @@ TEST_F(
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
           "nighthawk.file-based-request-source-plugin");
-  auto header_ab = Envoy::Http::RequestHeaderMapImpl::create();
-  auto header_c = Envoy::Http::RequestHeaderMapImpl::create();
+  Envoy::Http::RequestHeaderMapPtr header_ab = Envoy::Http::RequestHeaderMapImpl::create();
+  Envoy::Http::RequestHeaderMapPtr header_c = Envoy::Http::RequestHeaderMapImpl::create();
 
   RequestSourcePtr plugin_ab =
       config_factory.createRequestSourcePlugin(config_ab_any, *api_, std::move(header_ab));
@@ -316,7 +316,7 @@ TEST_F(InLineRequestSourcePluginTest, CreateRequestSourcePluginCreatesCorrectPlu
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
           "nighthawk.in-line-options-list-request-source-plugin");
-  auto header = Envoy::Http::RequestHeaderMapImpl::create();
+  Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
   RequestSourcePtr plugin =
       config_factory.createRequestSourcePlugin(config_any, *api_, std::move(header));
   plugin->initOnThread();
@@ -340,7 +340,7 @@ TEST_F(InLineRequestSourcePluginTest,
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
           "nighthawk.in-line-options-list-request-source-plugin");
-  auto header = Envoy::Http::RequestHeaderMapImpl::create();
+  Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
   RequestSourcePtr plugin =
       config_factory.createRequestSourcePlugin(config_any, *api_, std::move(header));
   plugin->initOnThread();
@@ -375,7 +375,7 @@ TEST_F(InLineRequestSourcePluginTest,
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
           "nighthawk.in-line-options-list-request-source-plugin");
-  auto header = Envoy::Http::RequestHeaderMapImpl::create();
+  Envoy::Http::RequestHeaderMapPtr header = Envoy::Http::RequestHeaderMapImpl::create();
   RequestSourcePtr plugin =
       config_factory.createRequestSourcePlugin(config_any, *api_, std::move(header));
   plugin->initOnThread();
@@ -427,8 +427,8 @@ TEST_F(
   auto& config_factory =
       Envoy::Config::Utility::getAndCheckFactoryByName<RequestSourcePluginConfigFactory>(
           "nighthawk.in-line-options-list-request-source-plugin");
-  auto header_ab = Envoy::Http::RequestHeaderMapImpl::create();
-  auto header_c = Envoy::Http::RequestHeaderMapImpl::create();
+  Envoy::Http::RequestHeaderMapPtr header_ab = Envoy::Http::RequestHeaderMapImpl::create();
+  Envoy::Http::RequestHeaderMapPtr header_c = Envoy::Http::RequestHeaderMapImpl::create();
 
   RequestSourcePtr plugin_ab =
       config_factory.createRequestSourcePlugin(config_ab_any, *api_, std::move(header_ab));
