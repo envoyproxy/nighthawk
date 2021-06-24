@@ -8,7 +8,7 @@
 
 #include "api/sink/sink.pb.h"
 
-#include "sink/service_impl.h"
+#include "source/sink/service_impl.h"
 
 #include "test/mocks/sink/mock_sink.h"
 

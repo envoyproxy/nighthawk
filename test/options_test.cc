@@ -1,6 +1,6 @@
 #include "external/envoy/test/test_common/utility.h"
 
-#include "client/options_impl.h"
+#include "source/client/options_impl.h"
 
 #include "test/client/utility.h"
 #include "test/test_common/environment.h"

@@ -1,4 +1,4 @@
-#include "client/output_formatter_impl.h"
+#include "source/client/output_formatter_impl.h"
 
 #include <google/protobuf/util/time_util.h>
 
@@ -12,7 +12,7 @@
 
 #include "api/client/transform/fortio.pb.h"
 
-#include "common/version_info.h"
+#include "source/common/version_info.h"
 
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"

@@ -6,7 +6,7 @@
 #include "external/envoy/test/test_common/network_utility.h"
 #include "external/envoy/test/test_common/utility.h"
 
-#include "client/service_main.h"
+#include "source/client/service_main.h"
 
 #include "gtest/gtest.h"
 

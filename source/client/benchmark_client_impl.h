@@ -22,9 +22,8 @@
 
 #include "api/client/options.pb.h"
 
-#include "common/statistic_impl.h"
-
-#include "client/stream_decoder.h"
+#include "source/client/stream_decoder.h"
+#include "source/common/statistic_impl.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -135,7 +134,7 @@ public:
   void exportLatency(const uint32_t response_code, const uint64_t latency_ns) override;
 
   // Helpers
-  Envoy::Http::ConnectionPool::Instance* pool() {
+  absl::optional<::Envoy::Upstream::HttpPoolData> pool() {
     auto proto = use_h2_ ? Envoy::Http::Protocol::Http2 : Envoy::Http::Protocol::Http11;
     const auto thread_local_cluster = cluster_manager_->getThreadLocalCluster(cluster_name_);
     return thread_local_cluster->httpConnPool(Envoy::Upstream::ResourcePriority::Default, proto,

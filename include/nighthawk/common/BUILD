@@ -29,7 +29,7 @@ envoy_basic_cc_library(
     deps = [
         ":request_lib",
         "//api/client:base_cc_proto",
-        "@envoy//include/envoy/upstream:cluster_manager_interface_with_external_headers",
+        "@envoy//envoy/upstream:cluster_manager_interface_with_external_headers",
         "@envoy//source/common/common:minimal_logger_lib",
         "@envoy//source/common/common:non_copyable_with_external_headers",
         "@envoy//source/common/common:statusor_lib_with_external_headers",
@@ -47,7 +47,7 @@ envoy_basic_cc_library(
     deps = [
         "//api/client:base_cc_proto",
         "//api/client:grpc_service_lib",
-        "@envoy//include/envoy/common:base_includes",
+        "@envoy//envoy/common:base_includes",
         "@envoy//source/common/common:assert_lib_with_external_headers",
         "@envoy//source/common/common:statusor_lib_with_external_headers",
         "@envoy//source/common/protobuf:protobuf_with_external_headers",
@@ -84,7 +84,7 @@ envoy_basic_cc_library(
     ],
     include_prefix = "nighthawk/common",
     deps = [
-        "@envoy//include/envoy/common:base_includes",
-        "@envoy//include/envoy/common:time_interface",
+        "@envoy//envoy/common:base_includes",
+        "@envoy//envoy/common:time_interface",
     ],
 )

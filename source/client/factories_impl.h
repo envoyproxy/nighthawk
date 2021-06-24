@@ -12,7 +12,7 @@
 #include "external/envoy/source/common/common/statusor.h"
 #include "external/envoy/source/common/config/utility.h"
 
-#include "common/platform_util_impl.h"
+#include "source/common/platform_util_impl.h"
 
 namespace Nighthawk {
 namespace Client {

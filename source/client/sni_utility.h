@@ -5,7 +5,7 @@
 
 #include "nighthawk/common/uri.h"
 
-#include "external/envoy/include/envoy/http/protocol.h"
+#include "external/envoy//envoy/http/protocol.h"
 
 namespace Nighthawk {
 namespace Client {

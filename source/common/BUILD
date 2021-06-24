@@ -52,9 +52,9 @@ envoy_cc_library(
         "//api/request_source:grpc_request_source_service_lib",
         "//include/nighthawk/common:base_includes",
         "//include/nighthawk/common:request_lib",
-        "@envoy//include/envoy/grpc:async_client_interface_with_external_headers",
-        "@envoy//include/envoy/grpc:async_client_manager_interface_with_external_headers",
-        "@envoy//include/envoy/upstream:cluster_manager_interface_with_external_headers",
+        "@envoy//envoy/grpc:async_client_interface_with_external_headers",
+        "@envoy//envoy/grpc:async_client_manager_interface_with_external_headers",
+        "@envoy//envoy/upstream:cluster_manager_interface_with_external_headers",
         "@envoy//source/common/common:assert_lib_with_external_headers",
         "@envoy//source/common/common:minimal_logger_lib_with_external_headers",
         "@envoy//source/common/grpc:typed_async_client_lib_with_external_headers",
@@ -104,7 +104,7 @@ envoy_cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//include/nighthawk/common:stopwatch_lib",
-        "@envoy//include/envoy/common:time_interface",
+        "@envoy//envoy/common:time_interface",
         "@envoy//source/common/common:lock_guard_lib_with_external_headers",
         "@envoy//source/common/common:thread_lib_with_external_headers",
     ],
@@ -162,5 +162,6 @@ envoy_cc_library(
         "@envoy//source/common/version:version_includes_with_external_headers",
         "@envoy//source/exe:envoy_common_lib_with_external_headers",
         "@envoy//source/server/config_validation:server_lib_with_external_headers",
+        "@envoy_api//envoy/config/core/v3:pkg_cc_proto",
     ],
 )

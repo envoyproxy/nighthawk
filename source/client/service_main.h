@@ -12,9 +12,8 @@
 
 #include "api/client/service.pb.h"
 
-#include "common/signal_handler.h"
-
-#include "client/service_impl.h"
+#include "source/client/service_impl.h"
+#include "source/common/signal_handler.h"
 
 #include "tclap/CmdLine.h"
 

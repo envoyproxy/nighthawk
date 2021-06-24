@@ -2,10 +2,11 @@
 
 import json
 import logging
+import math
 import os
+import pytest
 import subprocess
 import sys
-import pytest
 import time
 from threading import Thread
 
@@ -20,6 +21,7 @@ from test.integration import utility
 # for the server side as well.
 
 
+@pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable and very slow in sanitizer runs")
 def test_http_h1(http_test_server_fixture):
   """Test http1 over plain http.
 
@@ -138,6 +140,8 @@ def test_http_h2_mini_stress_test_without_client_side_queueing(http_test_server_
   asserts.assertNotIn("upstream_rq_pending_overflow", counters)
 
 
+@pytest.mark.skipif(not utility.isRunningInCircleCi(),
+                    reason="Has very high failure rate in local executions.")
 @pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable and very slow in sanitizer runs")
 def test_http_h1_mini_stress_test_open_loop(http_test_server_fixture):
   """Run an H1 open loop stress test. We expect higher pending and overflow counts."""
@@ -150,6 +154,8 @@ def test_http_h1_mini_stress_test_open_loop(http_test_server_fixture):
   asserts.assertCounterGreater(counters, "benchmark.pool_overflow", 10)
 
 
+@pytest.mark.skipif(not utility.isRunningInCircleCi(),
+                    reason="Has very high failure rate in local executions.")
 @pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable and very slow in sanitizer runs")
 def test_http_h2_mini_stress_test_open_loop(http_test_server_fixture):
   """Run an H2 open loop stress test. We expect higher overflow counts."""
@@ -639,7 +645,7 @@ def qps_parameterization_fixture(request):
   yield param
 
 
-@pytest.fixture(scope="function", params=[1, 3])
+@pytest.fixture(scope="function", params=[5, 10])
 def duration_parameterization_fixture(request):
   """Yield duration values to iterate test parameterization on."""
   param = request.param
@@ -658,19 +664,29 @@ def test_http_request_release_timing(http_test_server_fixture, qps_parameterizat
         str(concurrency)
     ])
 
-    total_requests = qps_parameterization_fixture * concurrency * duration_parameterization_fixture
     global_histograms = http_test_server_fixture.getNighthawkGlobalHistogramsbyIdFromJson(
         parsed_json)
     counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-    asserts.assertEqual(
+
+    global_result = http_test_server_fixture.getGlobalResults(parsed_json)
+    actual_duration = utility.get_execution_duration_from_global_result_json(global_result)
+    # Ensure Nighthawk managed to execute for at least some time.
+    assert actual_duration >= 1
+
+    # The actual duration is a float, flooring if here allows us to use
+    # the GreaterEqual matchers below.
+    total_requests = qps_parameterization_fixture * concurrency * math.floor(actual_duration)
+    asserts.assertGreaterEqual(
         int(global_histograms["benchmark_http_client.request_to_response"]["count"]),
         total_requests)
-    asserts.assertEqual(int(global_histograms["benchmark_http_client.queue_to_connect"]["count"]),
-                        total_requests)
-    asserts.assertEqual(int(global_histograms["benchmark_http_client.latency_2xx"]["count"]),
-                        total_requests)
+    asserts.assertGreaterEqual(
+        int(global_histograms["benchmark_http_client.queue_to_connect"]["count"]), total_requests)
+    asserts.assertGreaterEqual(int(global_histograms["benchmark_http_client.latency_2xx"]["count"]),
+                               total_requests)
 
-    asserts.assertCounterEqual(counters, "benchmark.http_2xx", (total_requests))
+    asserts.assertCounterGreaterEqual(counters, "benchmark.http_2xx", (total_requests))
+    # Give system resources some time to recover after the last execution.
+    time.sleep(2)
 
 
 def _send_sigterm(process):

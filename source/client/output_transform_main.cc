@@ -1,4 +1,4 @@
-#include "client/output_transform_main.h"
+#include "source/client/output_transform_main.h"
 
 #include "nighthawk/common/exception.h"
 
@@ -6,13 +6,12 @@
 
 #include "api/client/service.pb.h"
 
-#include "common/utility.h"
-#include "common/version_info.h"
-
-#include "client/factories_impl.h"
-#include "client/options_impl.h"
-#include "client/output_collector_impl.h"
-#include "client/output_formatter_impl.h"
+#include "source/client/factories_impl.h"
+#include "source/client/options_impl.h"
+#include "source/client/output_collector_impl.h"
+#include "source/client/output_formatter_impl.h"
+#include "source/common/utility.h"
+#include "source/common/version_info.h"
 
 #include "absl/strings/strip.h"
 #include "fmt/ranges.h"

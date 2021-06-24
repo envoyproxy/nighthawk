@@ -5,7 +5,7 @@
 
 #include "api/server/response_options.pb.validate.h"
 
-#include "server/configuration.h"
+#include "source/server/configuration.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
