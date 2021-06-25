@@ -56,3 +56,8 @@ cc_library(
         url = "https://github.com/HdrHistogram/HdrHistogram_c/archive/%s.tar.gz" % HDR_HISTOGRAM_C_VERSION,
         # // clang-format on
     )
+    # // GRPC has a dependency on gtest which needs to be bound: https://github.com/grpc/grpc/commit/decc199ca8472b3e55b9779aafc0c682514b70c7 but envoy binds to googletest instead which doesn't seem to work in this case. https://github.com/envoyproxy/envoy/pull/16687/files#R507
+    native.bind(
+        name = "gtest",
+        actual = "@com_google_googletest//:gtest",
+    )
