@@ -159,6 +159,8 @@ StreamDecoder::streamResetReasonToResponseFlag(Envoy::Http::StreamResetReason re
     return Envoy::StreamInfo::ResponseFlag::UpstreamRemoteReset;
   case Envoy::Http::StreamResetReason::ProtocolError:
     return Envoy::StreamInfo::ResponseFlag::UpstreamProtocolError;
+  case Envoy::Http::StreamResetReason::OverloadManager:
+    return Envoy::StreamInfo::ResponseFlag::OverloadManager;
   }
   NOT_REACHED_GCOVR_EXCL_LINE;
 }
