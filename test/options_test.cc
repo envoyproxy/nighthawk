@@ -321,7 +321,7 @@ std::vector<std::string> RequestSourcePluginJsons() {
       R"("@type":"type.googleapis.com/)"
       R"(nighthawk.request_source.FileBasedOptionsListRequestSourceConfig",)"
       R"(file_path:")" +
-      TestEnvironment::runfilesPath("test/request_source/test_data/test-config.yaml") +
+      TestEnvironment::runfilesPath("test/request_source/test_data/test-config-ab.yaml") +
       "\","
       "}"
       "}";
