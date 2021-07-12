@@ -10,7 +10,7 @@
 #include "envoy/stats/store.h"
 #include "envoy/thread_local/thread_local.h"
 
-#include "common/worker_impl.h"
+#include "source/common/worker_impl.h"
 
 namespace Nighthawk {
 namespace Client {

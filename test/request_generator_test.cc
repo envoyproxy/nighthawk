@@ -2,7 +2,7 @@
 
 #include "external/envoy/test/test_common/utility.h"
 
-#include "common/request_source_impl.h"
+#include "source/common/request_source_impl.h"
 
 #include "gtest/gtest.h"
 

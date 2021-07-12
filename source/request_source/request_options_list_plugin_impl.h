@@ -11,7 +11,7 @@
 #include "api/client/options.pb.h"
 #include "api/request_source/request_source_plugin.pb.h"
 
-#include "common/uri_impl.h"
+#include "source/common/uri_impl.h"
 
 namespace Nighthawk {
 
@@ -21,14 +21,16 @@ namespace Nighthawk {
 // generate. 0 means it is unlimited.
 // @param header the default header that will be overridden by values taken from the options_list,
 // any values not overridden will be used.
-// @param options_list This is const because it is intended to be shared by multiple threads. The
-// RequestGenerator produced by get() will use options from the options_list to overwrite values in
-// the default header, and create new requests. if total_requests is greater than the length of
-// options_list, it will loop. This is not thread safe.
+// @param options_list This is const because it is not intended to be modified by the request
+// source. The RequestGenerator produced by get() will use options from the options_list to
+// overwrite values in the default header, and create new requests. if total_requests is greater
+// than the length of options_list, it will loop. If the options_list_ is empty, we just return the
+// default header. This is not thread safe.
 class OptionsListRequestSource : public RequestSource {
 public:
-  OptionsListRequestSource(const uint32_t total_requests, Envoy::Http::RequestHeaderMapPtr header,
-                           const nighthawk::client::RequestOptionsList& options_list);
+  OptionsListRequestSource(
+      const uint32_t total_requests, Envoy::Http::RequestHeaderMapPtr header,
+      std::unique_ptr<const nighthawk::client::RequestOptionsList> options_list);
 
   // This get function is not thread safe, because multiple threads calling get simultaneously will
   // result in a collision.
@@ -39,7 +41,7 @@ public:
 
 private:
   Envoy::Http::RequestHeaderMapPtr header_;
-  const nighthawk::client::RequestOptionsList& options_list_;
+  std::unique_ptr<const nighthawk::client::RequestOptionsList> options_list_;
   std::vector<uint32_t> request_count_;
   const uint32_t total_requests_;
 };
@@ -61,21 +63,15 @@ public:
 
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
 
-  // This implementation is thread safe. There is currently a behaviour such that only the first
-  // call to createRequestSourcePlugin will load the options list into memory and subsequent calls
-  // just make a copy of the options_list that was already loaded. The
-  // FileBasedOptionsListRequestSourceFactory will not work with multiple different files for this
-  // reason.
-  // TODO: This memory saving is likely a premature optimization, and should be removed.
-  // This method will also error if the
-  // file can not be loaded correctly, e.g. the file is too large or could not be found.
+  // This implementation is thread safe, and uses a locking mechanism to prevent more than one
+  // thread reading the file at the same time. This method will error if the file can not be loaded
+  // correctly, e.g. the file is too large or could not be found.
   RequestSourcePtr createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
                                              Envoy::Api::Api& api,
                                              Envoy::Http::RequestHeaderMapPtr header) override;
 
 private:
   Envoy::Thread::MutexBasicLockable file_lock_;
-  absl::optional<nighthawk::client::RequestOptionsList> options_list_;
 };
 
 // This factory will be activated through RequestSourceFactory in factories.h
@@ -99,17 +95,10 @@ public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
 
-  // This implementation is thread safe. There is currently a behaviour such that only the first
-  // call to createRequestSourcePlugin will load the options list into memory and subsequent calls
-  // just make a copy of the options_list that was already loaded.
-  // TODO: This memory saving is likely a premature optimization, and should be removed.
+  // This implementation is thread safe.
   RequestSourcePtr createRequestSourcePlugin(const Envoy::Protobuf::Message& message,
                                              Envoy::Api::Api& api,
                                              Envoy::Http::RequestHeaderMapPtr header) override;
-
-private:
-  Envoy::Thread::MutexBasicLockable options_list_lock_;
-  absl::optional<nighthawk::client::RequestOptionsList> options_list_;
 };
 
 // This factory will be activated through RequestSourceFactory in factories.h

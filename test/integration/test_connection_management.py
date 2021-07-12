@@ -48,7 +48,7 @@ def test_http_h1_connection_management_1(http_test_server_fixture):
 @pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable in sanitizer runs")
 def test_http_h1_connection_management_2(http_test_server_fixture):
   """Test http h1 connection management with 2 connections and queueing disabled."""
-  _run_with_number_of_connections(http_test_server_fixture, 2)
+  _run_with_number_of_connections(http_test_server_fixture, 2, run_test_expectation=False)
 
 
 # A series that tests with queueing enabled

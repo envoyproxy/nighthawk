@@ -17,7 +17,7 @@ envoy_basic_cc_library(
     deps = [
         "//api/client:base_cc_proto",
         "//include/nighthawk/common:base_includes",
-        "@envoy//include/envoy/common:time_interface",
+        "@envoy//envoy/common:time_interface",
         "@envoy//source/common/common:minimal_logger_lib_with_external_headers",
         "@envoy_api//envoy/config/cluster/v3:pkg_cc_proto",
         "@envoy_api//envoy/config/metrics/v3:pkg_cc_proto",
@@ -40,8 +40,8 @@ envoy_basic_cc_library(
         "//api/client:base_cc_proto",
         "//include/nighthawk/common:base_includes",
         "//include/nighthawk/common:request_source_lib",
-        "@envoy//include/envoy/common:base_includes",
-        "@envoy//include/envoy/http:conn_pool_interface_with_external_headers",
+        "@envoy//envoy/common:base_includes",
+        "@envoy//envoy/http:conn_pool_interface_with_external_headers",
         "@envoy//source/common/api:api_lib_with_external_headers",
         "@envoy//source/common/common:minimal_logger_lib_with_external_headers",
         "@envoy//source/common/common:non_copyable_with_external_headers",
@@ -60,7 +60,7 @@ envoy_basic_cc_library(
     deps = [
         "//api/client:base_cc_proto",
         "//include/nighthawk/common:base_includes",
-        "@envoy//include/envoy/common:base_includes",
+        "@envoy//envoy/common:base_includes",
     ],
 )
 
@@ -70,6 +70,6 @@ envoy_basic_cc_library(
     include_prefix = "nighthawk/client",
     deps = [
         "//api/client:base_cc_proto",
-        "@envoy//include/envoy/common:base_includes",
+        "@envoy//envoy/common:base_includes",
     ],
 )

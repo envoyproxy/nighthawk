@@ -27,7 +27,7 @@ namespace Nighthawk {
  * status in case sanity checks failed.
  */
 absl::StatusOr<nighthawk::client::ExecutionResponse>
-mergeExecutionResponses(absl::string_view execution_id,
+mergeExecutionResponses(const std::string& execution_id,
                         const std::vector<nighthawk::client::ExecutionResponse>& responses);
 
 /**

@@ -1,6 +1,6 @@
 #include "test/server/http_filter_integration_test_base.h"
 
-#include "server/well_known_headers.h"
+#include "source/server/well_known_headers.h"
 
 #include "gtest/gtest.h"
 

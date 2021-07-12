@@ -1,23 +1,21 @@
-#include "client/factories_impl.h"
+#include "source/client/factories_impl.h"
 
 #include "external/envoy/source/common/http/header_map_impl.h"
 
 #include "api/client/options.pb.h"
 
-#include "common/platform_util_impl.h"
-#include "common/rate_limiter_impl.h"
-#include "common/request_source_impl.h"
-#include "common/sequencer_impl.h"
-#include "common/statistic_impl.h"
-#include "common/termination_predicate_impl.h"
-#include "common/uri_impl.h"
-#include "common/utility.h"
-
-#include "client/benchmark_client_impl.h"
-#include "client/output_collector_impl.h"
-#include "client/output_formatter_impl.h"
-
-#include "request_source/request_options_list_plugin_impl.h"
+#include "source/client/benchmark_client_impl.h"
+#include "source/client/output_collector_impl.h"
+#include "source/client/output_formatter_impl.h"
+#include "source/common/platform_util_impl.h"
+#include "source/common/rate_limiter_impl.h"
+#include "source/common/request_source_impl.h"
+#include "source/common/sequencer_impl.h"
+#include "source/common/statistic_impl.h"
+#include "source/common/termination_predicate_impl.h"
+#include "source/common/uri_impl.h"
+#include "source/common/utility.h"
+#include "source/request_source/request_options_list_plugin_impl.h"
 
 using namespace std::chrono_literals;
 

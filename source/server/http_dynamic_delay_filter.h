@@ -9,7 +9,7 @@
 
 #include "api/server/response_options.pb.h"
 
-#include "server/http_filter_config_base.h"
+#include "source/server/http_filter_config_base.h"
 
 namespace Nighthawk {
 namespace Server {

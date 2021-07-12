@@ -3,7 +3,7 @@
 
 #include "external/envoy/source/common/common/random_generator.h"
 
-#include "sink/sink_impl.h"
+#include "source/sink/sink_impl.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

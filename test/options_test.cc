@@ -1,6 +1,6 @@
 #include "external/envoy/test/test_common/utility.h"
 
-#include "client/options_impl.h"
+#include "source/client/options_impl.h"
 
 #include "test/client/utility.h"
 #include "test/test_common/environment.h"
@@ -321,7 +321,7 @@ std::vector<std::string> RequestSourcePluginJsons() {
       R"("@type":"type.googleapis.com/)"
       R"(nighthawk.request_source.FileBasedOptionsListRequestSourceConfig",)"
       R"(file_path:")" +
-      TestEnvironment::runfilesPath("test/request_source/test_data/test-config.yaml") +
+      TestEnvironment::runfilesPath("test/request_source/test_data/test-config-ab.yaml") +
       "\","
       "}"
       "}";
