@@ -115,7 +115,7 @@ void BenchmarkClientHttpImpl::terminate() {
     // No harm is done, but it does result in log lines warning about it. Avoid that, by
     // disabling latency measurement here.
     setShouldMeasureLatencies(false);
-    pool_data.value().addDrainedCallback([this]() -> void {
+    pool_data.value().addIdleCallback([this]() -> void {
       drain_timer_->disableTimer();
       dispatcher_.exit();
     });
