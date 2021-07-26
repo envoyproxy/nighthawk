@@ -72,7 +72,7 @@ public:
       const absl::optional<envoy::config::core::v3::AlternateProtocolsCacheOptions>&
           alternate_protocol_options,
       const Envoy::Network::ConnectionSocket::OptionsSharedPtr& options,
-      const Envoy::Network::TransportSocketOptionsSharedPtr& transport_socket_options,
+      const Envoy::Network::TransportSocketOptionsConstSharedPtr& transport_socket_options,
       Envoy::TimeSource& time_source, Envoy::Upstream::ClusterConnectivityState& state) override {
     // This changed in
     // https://github.com/envoyproxy/envoy/commit/93ee668a690d297ab5e8bd2cbf03771d852ebbda ALPN may
