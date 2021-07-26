@@ -23,7 +23,7 @@ run --color=yes
 
 build --color=yes
 build --workspace_status_command="bash bazel/get_workspace_status"
-build --experimental_strict_action_env=true
+build --incompatible_strict_action_env
 build --host_force_python=PY3
 build --host_javabase=@bazel_tools//tools/jdk:remote_jdk11
 build --javabase=@bazel_tools//tools/jdk:remote_jdk11
@@ -68,6 +68,8 @@ build:asan --config=sanitizer
 # ASAN install its signal handler, disable ours so the stacktrace will be printed by ASAN
 build:asan --define signal_trace=disabled
 build:asan --define ENVOY_CONFIG_ASAN=1
+build:asan --copt -fsanitize=address,undefined
+build:asan --linkopt -fsanitize=address,undefined
 # The following two lines were manually edited due to #593.                                 # unique
 # Flag undefined was dropped from both the lines to allow CI/ASAN to pass.                  # unique
 build:asan --copt -fsanitize=address                                                        # unique
@@ -90,6 +92,8 @@ build:clang-asan --linkopt -fuse-ld=lld
 
 # macOS ASAN/UBSAN
 build:macos --cxxopt=-std=c++17
+build:macos --action_env=PATH=/usr/bin:/bin:/opt/homebrew/bin:/usr/local/bin:/opt/local/bin
+build:macos --host_action_env=PATH=/usr/bin:/bin:/opt/homebrew/bin:/usr/local/bin:/opt/local/bin
 
 build:macos-asan --config=asan
 # Workaround, see https://github.com/bazelbuild/bazel/issues/6932

@@ -129,7 +129,7 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
       dispatcher_(api_->allocateDispatcher("main_thread")), benchmark_client_factory_(options),
       termination_predicate_factory_(options), sequencer_factory_(options),
       request_generator_factory_(options, *api_), options_(options),
-      init_manager_("nh_init_manager"),
+      quic_stat_names_(store_root_.symbolTable()), init_manager_("nh_init_manager"),
       local_info_(new Envoy::LocalInfo::LocalInfoImpl(
           store_root_.symbolTable(), node_, node_context_params_,
           Envoy::Network::Utility::getLocalAddress(Envoy::Network::Address::IpVersion::v4),
@@ -522,7 +522,8 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
         admin_, Envoy::Runtime::LoaderSingleton::get(), store_root_, tls_,
         dispatcher_->createDnsResolver({}, dns_resolver_options), *ssl_context_manager_,
         *dispatcher_, *local_info_, secret_manager_, validation_context_, *api_, http_context_,
-        grpc_context_, router_context_, access_log_manager_, *singleton_manager_, envoy_options);
+        grpc_context_, router_context_, access_log_manager_, *singleton_manager_, envoy_options,
+        quic_stat_names_);
     cluster_manager_factory_->setConnectionReuseStrategy(
         options_.h1ConnectionReuseStrategy() == nighthawk::client::H1ConnectionReuseStrategy::LRU
             ? Http1PoolImpl::ConnectionReuseStrategy::LRU
