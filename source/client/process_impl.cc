@@ -123,13 +123,14 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
     : process_wide_(process_wide == nullptr ? std::make_shared<Envoy::ProcessWide>()
                                             : process_wide),
       time_system_(time_system), stats_allocator_(symbol_table_), store_root_(stats_allocator_),
+      quic_stat_names_(store_root_.symbolTable()),
       api_(std::make_unique<Envoy::Api::Impl>(platform_impl_.threadFactory(), store_root_,
                                               time_system_, platform_impl_.fileSystem(),
                                               generator_)),
       dispatcher_(api_->allocateDispatcher("main_thread")), benchmark_client_factory_(options),
       termination_predicate_factory_(options), sequencer_factory_(options),
       request_generator_factory_(options, *api_), options_(options),
-      quic_stat_names_(store_root_.symbolTable()), init_manager_("nh_init_manager"),
+      init_manager_("nh_init_manager"),
       local_info_(new Envoy::LocalInfo::LocalInfoImpl(
           store_root_.symbolTable(), node_, node_context_params_,
           Envoy::Network::Utility::getLocalAddress(Envoy::Network::Address::IpVersion::v4),
