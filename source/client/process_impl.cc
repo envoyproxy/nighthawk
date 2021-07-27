@@ -123,6 +123,7 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
     : process_wide_(process_wide == nullptr ? std::make_shared<Envoy::ProcessWide>()
                                             : process_wide),
       time_system_(time_system), stats_allocator_(symbol_table_), store_root_(stats_allocator_),
+      quic_stat_names_(store_root_.symbolTable()),
       api_(std::make_unique<Envoy::Api::Impl>(platform_impl_.threadFactory(), store_root_,
                                               time_system_, platform_impl_.fileSystem(),
                                               generator_)),
@@ -522,7 +523,8 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
         admin_, Envoy::Runtime::LoaderSingleton::get(), store_root_, tls_,
         dispatcher_->createDnsResolver({}, dns_resolver_options), *ssl_context_manager_,
         *dispatcher_, *local_info_, secret_manager_, validation_context_, *api_, http_context_,
-        grpc_context_, router_context_, access_log_manager_, *singleton_manager_, envoy_options);
+        grpc_context_, router_context_, access_log_manager_, *singleton_manager_, envoy_options,
+        quic_stat_names_);
     cluster_manager_factory_->setConnectionReuseStrategy(
         options_.h1ConnectionReuseStrategy() == nighthawk::client::H1ConnectionReuseStrategy::LRU
             ? Http1PoolImpl::ConnectionReuseStrategy::LRU

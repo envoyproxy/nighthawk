@@ -21,6 +21,7 @@
 #include "external/envoy/source/common/grpc/context_impl.h"
 #include "external/envoy/source/common/http/context_impl.h"
 #include "external/envoy/source/common/protobuf/message_validator_impl.h"
+#include "external/envoy/source/common/quic/quic_stat_names.h"
 #include "external/envoy/source/common/router/context_impl.h"
 #include "external/envoy/source/common/secret/secret_manager_impl.h"
 #include "external/envoy/source/common/stats/allocator_impl.h"
@@ -169,6 +170,7 @@ private:
   Envoy::Stats::AllocatorImpl stats_allocator_;
   Envoy::ThreadLocal::InstanceImpl tls_;
   Envoy::Stats::ThreadLocalStoreImpl store_root_;
+  Envoy::Quic::QuicStatNames quic_stat_names_;
   Envoy::Api::ApiPtr api_;
   Envoy::Event::DispatcherPtr dispatcher_;
   std::vector<ClientWorkerPtr> workers_;
