@@ -44,3 +44,23 @@ envoy_cc_library(
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
     ],
 )
+
+envoy_cc_library(
+    name = "distributed_process_impl_lib",
+    srcs = [
+        "distributed_process_impl.cc",
+    ],
+    hdrs = [
+        "distributed_process_impl.h",
+    ],
+    repository = "@envoy",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//source/client:options_impl_lib",
+        "//source/distributor:nighthawk_distributor_client_impl",
+        "//source/sink:nighthawk_sink_client_impl",
+        "@envoy//source/common/common:random_generator_lib_with_external_headers",
+        "@envoy//source/common/protobuf:message_validator_lib_with_external_headers",
+        "@envoy//source/common/protobuf:utility_lib_with_external_headers",
+    ],
+)

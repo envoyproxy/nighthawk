@@ -94,6 +94,13 @@ public:
     return latency_response_header_name_;
   };
   absl::optional<Envoy::SystemTime> scheduled_start() const override { return scheduled_start_; }
+  absl::optional<nighthawk::client::SinkConfiguration> sink() const override { return sink_; };
+  absl::optional<nighthawk::client::DistributorConfiguration> distributor() const override {
+    return distributor_;
+  };
+  absl::optional<nighthawk::client::ExecutionConfiguration> services() const override {
+    return services_;
+  };
   absl::optional<std::string> executionId() const override { return execution_id_; }
 
 private:
@@ -152,6 +159,9 @@ private:
   uint32_t stats_flush_interval_{5};
   std::string latency_response_header_name_;
   absl::optional<Envoy::SystemTime> scheduled_start_;
+  absl::optional<nighthawk::client::SinkConfiguration> sink_;
+  absl::optional<nighthawk::client::DistributorConfiguration> distributor_;
+  absl::optional<nighthawk::client::ExecutionConfiguration> services_;
   absl::optional<std::string> execution_id_;
 };
 

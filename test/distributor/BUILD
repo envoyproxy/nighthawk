@@ -30,3 +30,15 @@ envoy_cc_test(
         "@envoy//test/test_common:network_utility_lib",
     ],
 )
+
+envoy_cc_test(
+    name = "distributed_process_impl_test",
+    srcs = ["distributed_process_impl_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/distributor:distributed_process_impl_lib",
+        "//test/client:utility_lib",
+        "@com_github_grpc_grpc//:grpc++_test",
+        "@envoy//test/test_common:simulated_time_system_lib",
+    ],
+)

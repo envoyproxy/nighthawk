@@ -77,6 +77,9 @@ public:
   virtual std::string responseHeaderWithLatencyInput() const PURE;
 
   virtual absl::optional<Envoy::SystemTime> scheduled_start() const PURE;
+  virtual absl::optional<nighthawk::client::SinkConfiguration> sink() const PURE;
+  virtual absl::optional<nighthawk::client::DistributorConfiguration> distributor() const PURE;
+  virtual absl::optional<nighthawk::client::ExecutionConfiguration> services() const PURE;
   virtual absl::optional<std::string> executionId() const PURE;
 
   /**

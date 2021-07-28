@@ -5,6 +5,7 @@ package nighthawk.client;
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
+import "envoy/config/core/v3/address.proto";
 import "envoy/config/core/v3/base.proto";
 import "envoy/config/metrics/v3/stats.proto";
 import "envoy/extensions/transport_sockets/tls/v3/cert.proto";
@@ -104,9 +105,21 @@ message H1ConnectionReuseStrategy {
   H1ConnectionReuseStrategyOptions value = 1;
 }
 
+message SinkConfiguration {
+  envoy.config.core.v3.Address address = 1;
+}
+
+message DistributorConfiguration {
+  envoy.config.core.v3.Address address = 1;
+}
+
+message ExecutionConfiguration {
+  repeated envoy.config.core.v3.Address addresses = 1;
+}
+
 // TODO(oschaaf): Ultimately this will be a load test specification. The fact that it
 // can arrive via CLI is just a concrete detail. Change this to reflect that.
-// highest unused number is 107
+// highest unused number is 110
 message CommandLineOptions {
   // The target requests-per-second rate. Default: 5.
   google.protobuf.UInt32Value requests_per_second = 1
@@ -197,7 +210,8 @@ message CommandLineOptions {
   // Nighthawk service uri for running CLI in remote host mode. Example: grpc://localhost:8843/.
   // Default is empty.
   // NOTE: not relevant to gRPC service
-  google.protobuf.StringValue nighthawk_service = 31; // [(validate.rules).string.uri = true];
+  // NOTE: deprecated, favor execution_services below instead.
+  google.protobuf.StringValue nighthawk_service = 31 [deprecated = true];
   // Use experimental HTTP/2 pool which will use multiple connections.
   // WARNING: feature may be removed or changed in the future!
   google.protobuf.BoolValue experimental_h2_use_multiple_connections = 30;
@@ -231,4 +245,13 @@ message CommandLineOptions {
   // compatibility purposes. In the future, this field may be auto-populated when left unset and
   // circumstances mandate so (distributed load test execution).
   google.protobuf.StringValue execution_id = 106;
+  // Specify the address of a sink to have load testing client(s) submit their results to it.
+  // When specified, an empty result will be returned immediately, and clients are expected to
+  // follow up with a distinct query to the sink later on to obtain results.
+  SinkConfiguration sink = 107;
+  // Specify a distributor service that will in turn delegate handlingone or more nighthawk service
+  // gRPC instances.
+  DistributorConfiguration distributor = 108;
+  //
+  ExecutionConfiguration services = 109;
 }
