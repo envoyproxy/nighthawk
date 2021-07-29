@@ -43,7 +43,9 @@ bazel build -c opt //:nighthawk
 ```
 USAGE:
 
-bazel-bin/nighthawk_client  [--latency-response-header-name <string>]
+bazel-bin/nighthawk_client  [--services <string>] ... [--distributor
+<string>] [--sink <string>]
+[--latency-response-header-name <string>]
 [--stats-flush-interval <uint32_t>]
 [--stats-sinks <string>] ...
 [--no-duration] [--simple-warmup]
@@ -82,6 +84,15 @@ format>
 
 
 Where:
+
+--services <string>  (accepted multiple times)
+Services
+
+--distributor <string>
+Set an optional distributor address. Default: ""
+
+--sink <string>
+Set an optional sink address for storing results. Default: ""
 
 --latency-response-header-name <string>
 Set an optional header name that will be returned in responses, whose
