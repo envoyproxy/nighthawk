@@ -26,7 +26,7 @@ DistributedProcessImpl::DistributedProcessImpl(
 
 absl::StatusOr<const nighthawk::DistributedResponse> DistributedProcessImpl::sendDistributedRequest(
     const ::nighthawk::DistributedRequest& request) const {
-  const absl::StatusOr<const nighthawk::DistributedResponse> result =
+  absl::StatusOr<const nighthawk::DistributedResponse> result =
       distributor_client_->DistributedRequest(distributor_stub_, request);
   if (!result.ok()) {
     ENVOY_LOG(error, "Distributed request failure: {}", result.status().message());
@@ -38,7 +38,7 @@ absl::StatusOr<const nighthawk::DistributedResponse> DistributedProcessImpl::sen
 
 absl::StatusOr<const nighthawk::SinkResponse>
 DistributedProcessImpl::sendSinkRequest(const ::nighthawk::SinkRequest& request) const {
-  const absl::StatusOr<const nighthawk::SinkResponse> result =
+  absl::StatusOr<const nighthawk::SinkResponse> result =
       sink_client_->SinkRequestStream(sink_stub_, request);
   if (!result.ok()) {
     ENVOY_LOG(error, "Sink request failure: {}", result.status().message());
