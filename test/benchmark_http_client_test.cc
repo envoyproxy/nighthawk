@@ -435,7 +435,7 @@ TEST_F(BenchmarkClientHttpTest, DrainTimeoutFires) {
             return nullptr;
           });
   EXPECT_CALL(pool_, hasActiveConnections()).WillOnce([]() -> bool { return true; });
-  EXPECT_CALL(pool_, addDrainedCallback(_));
+  EXPECT_CALL(pool_, addIdleCallback(_));
   // We don't expect the callback that we pass here to fire.
   client_->tryStartRequest([](bool, bool) { EXPECT_TRUE(false); });
   // To get past this, the drain timeout within the benchmark client must execute.
