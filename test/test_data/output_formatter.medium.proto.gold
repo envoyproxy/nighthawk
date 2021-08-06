@@ -46,7 +46,7 @@
   "uri": "https://www.google.com/",
   "trace": "",
   "open_loop": false,
-  "experimental_h2_use_multiple_connections": false,
+  "max_concurrent_streams": 2147483647,
   "labels": "Nighthawk",
   "jitter_uniform": "0.000000494s",
  },
