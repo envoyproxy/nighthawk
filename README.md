@@ -60,7 +60,8 @@ bazel-bin/nighthawk_client  [--latency-response-header-name <string>]
 uint64_t>] ... [--termination-predicate
 <string, uint64_t>] ... [--trace <uri
 format>] [--sequencer-idle-strategy <spin
-|poll|sleep>] [--max-requests-per-connection
+|poll|sleep>] [--max-concurrent-streams
+<uint32_t>] [--max-requests-per-connection
 <uint32_t>] [--max-active-requests
 <uint32_t>] [--max-pending-requests
 <uint32_t>] [--transport-socket <string>]
@@ -74,11 +75,11 @@ format>] [--sequencer-idle-strategy <spin
 <json|human|yaml|dotted|fortio
 |experimental_fortio_pedantic>] [-v <trace
 |debug|info|warn|error|critical>]
-[--concurrency <string>] [--h2] [--timeout
-<uint32_t>] [--duration <uint32_t>]
-[--connections <uint32_t>] [--rps
-<uint32_t>] [--] [--version] [-h] <uri
-format>
+[--concurrency <string>] [--h3] [--h2]
+[--timeout <uint32_t>] [--duration
+<uint32_t>] [--connections <uint32_t>]
+[--rps <uint32_t>] [--] [--version] [-h]
+<uri format>
 
 
 Where:
@@ -145,8 +146,8 @@ spread traffic across all endpoints with round robin distribution.
 Mutually exclusive with providing a URI.
 
 --experimental-h2-use-multiple-connections
-Use experimental HTTP/2 pool which will use multiple connections.
-WARNING: feature may be removed or changed in the future!
+DO NOT USE: This options is deprecated, if this behavior is desired,
+set --max-concurrent-streams to one instead.
 
 --nighthawk-service <uri format>
 Nighthawk service uri. Example: grpc://localhost:8843/. Default is
@@ -182,6 +183,10 @@ empty.
 --sequencer-idle-strategy <spin|poll|sleep>
 Choose between using a busy spin/yield loop or have the thread poll or
 sleep while waiting for the next scheduled request (default: spin).
+
+--max-concurrent-streams <uint32_t>
+Max concurrent streams allowed on one HTTP/2 or HTTP/3 connection.
+Does not apply to HTTP/1. (default: 2147483647).
 
 --max-requests-per-connection <uint32_t>
 Max requests per connection (default: 4294937295).
@@ -250,8 +255,15 @@ Nighthawk process. Note that increasing this results in an effective
 load multiplier combined with the configured --rps and --connections
 values. Default: 1.
 
+--h3
+Encapsulate requests in HTTP/3 Quic. Mutually exclusive with --h2.
+Requests are encapsulated in HTTP/1 by default when neither of --h2 or
+--h3 is used.
+
 --h2
-Use HTTP/2
+Encapsulate requests in HTTP/2. Mutually exclusive with --h3. Requests
+are encapsulated in HTTP/1 by default when neither of --h2 or --h3 is
+used.
 
 --timeout <uint32_t>
 Connection connect timeout period in seconds. Default: 30.
