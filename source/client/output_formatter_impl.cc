@@ -292,11 +292,11 @@ FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) 
   fortio_output.set_runtype("HTTP");
 
   // The stock Envoy h2 pool doesn't offer support for multiple connections here. So we must ignore
-  // the connections setting when h2 is enabled and the experimental h2-pool which supports multiple
-  // connections isn't enabled. Also, the number of workers acts as a multiplier.
+  // the connections setting when h2 is enabled and the h2-pool is allowed to send multiple streams
+  // over a single connection (i.e. it won't be using multiple connections).
+  // Also, the number of workers acts as a multiplier.
   const uint32_t number_of_connections =
-      ((output.options().h2().value() &&
-        !output.options().experimental_h2_use_multiple_connections().value())
+      ((output.options().h2().value() && output.options().max_concurrent_streams().value() > 1)
            ? 1
            : output.options().connections().value()) *
       number_of_workers;
