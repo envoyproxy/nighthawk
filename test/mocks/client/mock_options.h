@@ -16,7 +16,7 @@ public:
   MOCK_CONST_METHOD0(duration, std::chrono::seconds());
   MOCK_CONST_METHOD0(timeout, std::chrono::seconds());
   MOCK_CONST_METHOD0(uri, absl::optional<std::string>());
-  MOCK_CONST_METHOD0(h2, bool());
+  MOCK_CONST_METHOD0(upstreamProtocol, Envoy::Http::Protocol());
   MOCK_CONST_METHOD0(concurrency, std::string());
   MOCK_CONST_METHOD0(verbosity, nighthawk::client::Verbosity::VerbosityOptions());
   MOCK_CONST_METHOD0(outputFormat, nighthawk::client::OutputFormat::OutputFormatOptions());
@@ -32,6 +32,7 @@ public:
   MOCK_CONST_METHOD0(maxPendingRequests, uint32_t());
   MOCK_CONST_METHOD0(maxActiveRequests, uint32_t());
   MOCK_CONST_METHOD0(maxRequestsPerConnection, uint32_t());
+  MOCK_CONST_METHOD0(maxConcurrentStreams, uint32_t());
   MOCK_CONST_METHOD0(toCommandLineOptions, CommandLineOptionsPtr());
   MOCK_CONST_METHOD0(sequencerIdleStrategy,
                      nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions());
@@ -47,7 +48,6 @@ public:
   MOCK_CONST_METHOD0(openLoop, bool());
   MOCK_CONST_METHOD0(jitterUniform, std::chrono::nanoseconds());
   MOCK_CONST_METHOD0(nighthawkService, std::string());
-  MOCK_CONST_METHOD0(h2UseMultipleConnections, bool());
   MOCK_CONST_METHOD0(multiTargetEndpoints, std::vector<nighthawk::client::MultiTarget::Endpoint>());
   MOCK_CONST_METHOD0(multiTargetPath, std::string());
   MOCK_CONST_METHOD0(multiTargetUseHttps, bool());
