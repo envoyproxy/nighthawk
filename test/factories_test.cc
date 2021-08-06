@@ -36,7 +36,7 @@ TEST_F(FactoriesTest, CreateBenchmarkClient) {
   BenchmarkClientFactoryImpl factory(options_);
   Envoy::Upstream::ClusterManagerPtr cluster_manager;
   EXPECT_CALL(options_, connections());
-  EXPECT_CALL(options_, h2());
+  EXPECT_CALL(options_, upstreamProtocol()).WillOnce(Return(Envoy::Http::Protocol::Http11));
   EXPECT_CALL(options_, maxPendingRequests());
   EXPECT_CALL(options_, maxActiveRequests());
   EXPECT_CALL(options_, maxRequestsPerConnection());

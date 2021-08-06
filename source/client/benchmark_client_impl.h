@@ -102,7 +102,8 @@ class BenchmarkClientHttpImpl : public BenchmarkClient,
 public:
   BenchmarkClientHttpImpl(Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher,
                           Envoy::Stats::Scope& scope, BenchmarkClientStatistic& statistic,
-                          bool use_h2, Envoy::Upstream::ClusterManagerPtr& cluster_manager,
+                          Envoy::Http::Protocol upstream_protocol,
+                          Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                           Envoy::Tracing::HttpTracerSharedPtr& http_tracer,
                           absl::string_view cluster_name, RequestGenerator request_generator,
                           const bool provide_resource_backpressure,
@@ -135,10 +136,9 @@ public:
 
   // Helpers
   absl::optional<::Envoy::Upstream::HttpPoolData> pool() {
-    auto proto = use_h2_ ? Envoy::Http::Protocol::Http2 : Envoy::Http::Protocol::Http11;
     const auto thread_local_cluster = cluster_manager_->getThreadLocalCluster(cluster_name_);
-    return thread_local_cluster->httpConnPool(Envoy::Upstream::ResourcePriority::Default, proto,
-                                              nullptr);
+    return thread_local_cluster->httpConnPool(Envoy::Upstream::ResourcePriority::Default,
+                                              upstream_protocol_, nullptr);
   }
 
 private:
@@ -146,7 +146,7 @@ private:
   Envoy::Event::Dispatcher& dispatcher_;
   Envoy::Stats::ScopePtr scope_;
   BenchmarkClientStatistic statistic_;
-  const bool use_h2_;
+  const Envoy::Http::Protocol upstream_protocol_;
   std::chrono::seconds timeout_{5s};
   uint32_t connection_limit_{1};
   uint32_t max_pending_requests_{1};
