@@ -56,7 +56,15 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       fmt::format("Connection connect timeout period in seconds. Default: {}.", timeout_), false, 0,
       "uint32_t", cmd);
 
-  TCLAP::SwitchArg h2("", "h2", "Use HTTP/2", cmd);
+  TCLAP::SwitchArg h2("", "h2",
+                      "Encapsulate requests in HTTP/2. Mutually exclusive with --h3. Requests are "
+                      "encapsulated in HTTP/1 by default when neither of --h2 or --h3 is used.",
+                      cmd);
+  TCLAP::SwitchArg h3(
+      "", "h3",
+      "Encapsulate requests in HTTP/3 Quic. Mutually exclusive with --h2. Requests are "
+      "encapsulated in HTTP/1 by default when neither of --h2 or --h3 is used.",
+      cmd);
 
   TCLAP::ValueArg<std::string> concurrency(
       "", "concurrency",
@@ -167,6 +175,12 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "", "max-requests-per-connection",
       fmt::format("Max requests per connection (default: {}).", max_requests_per_connection_),
       false, 0, "uint32_t", cmd);
+  TCLAP::ValueArg<uint32_t> max_concurrent_streams(
+      "", "max-concurrent-streams",
+      fmt::format("Max concurrent streams allowed on one HTTP/2 or HTTP/3 connection. Does not "
+                  "apply to HTTP/1. (default: {}).",
+                  max_concurrent_streams_),
+      false, 0, "uint32_t", cmd);
 
   std::vector<std::string> sequencer_idle_strategies = {"spin", "poll", "sleep"};
   TCLAP::ValuesConstraint<std::string> sequencer_idle_strategies_allowed(sequencer_idle_strategies);
@@ -223,8 +237,8 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "uri format", cmd);
   TCLAP::SwitchArg h2_use_multiple_connections(
       "", "experimental-h2-use-multiple-connections",
-      "Use experimental HTTP/2 pool which will use multiple connections. WARNING: feature may be "
-      "removed or changed in the future!",
+      "DO NOT USE: This options is deprecated, if this behavior is desired, set "
+      "--max-concurrent-streams to one instead.",
       cmd);
 
   TCLAP::MultiArg<std::string> multi_target_endpoints(
@@ -316,6 +330,12 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
 
   Utility::parseCommand(cmd, argc, argv);
 
+  // --experimental-h2-use-multiple-connections is deprecated.
+  if (h2_use_multiple_connections.isSet()) {
+    throw MalformedArgvException("--experimental-h2-use-multiple-connections is deprecated, set "
+                                 "--max-concurrent-streams to one instead");
+  }
+
   // --duration and --no-duration are mutually exclusive
   // Would love to have used cmd.xorAdd here, but that prevents
   // us from having a default duration when neither arg is specified,
@@ -338,7 +358,13 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   if (uri.isSet()) {
     uri_ = uri.getValue();
   }
+
+  if (h2.getValue() == true && h3.getValue() == true) {
+    throw MalformedArgvException("--h2 and --h3 are mutually exclusive");
+  }
   TCLAP_SET_IF_SPECIFIED(h2, h2_);
+  TCLAP_SET_IF_SPECIFIED(h3, h3_);
+
   TCLAP_SET_IF_SPECIFIED(concurrency, concurrency_);
   // TODO(oschaaf): is there a generic way to set these enum values?
   if (verbosity.isSet()) {
@@ -374,6 +400,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   TCLAP_SET_IF_SPECIFIED(max_pending_requests, max_pending_requests_);
   TCLAP_SET_IF_SPECIFIED(max_active_requests, max_active_requests_);
   TCLAP_SET_IF_SPECIFIED(max_requests_per_connection, max_requests_per_connection_);
+  TCLAP_SET_IF_SPECIFIED(max_concurrent_streams, max_concurrent_streams_);
   if (sequencer_idle_strategy.isSet()) {
     std::string upper_cased = sequencer_idle_strategy.getValue();
     absl::AsciiStrToUpper(&upper_cased);
@@ -411,7 +438,6 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
     }
   }
   TCLAP_SET_IF_SPECIFIED(nighthawk_service, nighthawk_service_);
-  TCLAP_SET_IF_SPECIFIED(h2_use_multiple_connections, h2_use_multiple_connections_);
   TCLAP_SET_IF_SPECIFIED(multi_target_use_https, multi_target_use_https_);
   TCLAP_SET_IF_SPECIFIED(multi_target_path, multi_target_path_);
   if (multi_target_endpoints.isSet()) {
@@ -477,6 +503,11 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   if (max_requests_per_connection_ > largest_acceptable_uint32_option_value) {
     throw MalformedArgvException("Invalid value for --max-requests-per-connection");
   }
+  if (max_concurrent_streams_ > largest_acceptable_concurrent_streams_value) {
+    throw MalformedArgvException(fmt::format(
+        "Invalid value {} for --max_concurrent_streams, the largest allowed value is {}.",
+        max_concurrent_streams_, largest_acceptable_concurrent_streams_value));
+  }
   if (stats_flush_interval_ > largest_acceptable_uint32_option_value) {
     throw MalformedArgvException("Invalid value for --stats-flush-interval");
   }
@@ -522,6 +553,16 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   }
 
   validate();
+}
+
+Envoy::Http::Protocol OptionsImpl::upstreamProtocol() const {
+  if (h2_) {
+    return Envoy::Http::Protocol::Http2;
+  } else if (h3_) {
+    return Envoy::Http::Protocol::Http3;
+  } else {
+    return Envoy::Http::Protocol::Http11;
+  }
 }
 
 void OptionsImpl::parsePredicates(const TCLAP::MultiArg<std::string>& arg,
@@ -570,7 +611,10 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
       multi_target_endpoints_.push_back(endpoint);
     }
   }
+
   h2_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, h2, h2_);
+  h3_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, h3, h3_);
+
   concurrency_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, concurrency, concurrency_);
   verbosity_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, verbosity, verbosity_);
   output_format_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, output_format, output_format_);
@@ -606,6 +650,8 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
       PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, max_active_requests, max_active_requests_);
   max_requests_per_connection_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(
       options, max_requests_per_connection, max_requests_per_connection_);
+  max_concurrent_streams_ =
+      PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, max_concurrent_streams, max_concurrent_streams_);
   connections_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, connections, connections_);
   sequencer_idle_strategy_ =
       PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, sequencer_idle_strategy, sequencer_idle_strategy_);
@@ -679,6 +725,11 @@ void OptionsImpl::setNonTrivialDefaults() {
 }
 
 void OptionsImpl::validate() const {
+  if (h2_use_multiple_connections_) {
+    throw MalformedArgvException(
+        "The experimental_h2_use_multiple_connections option is deprecated, set "
+        "max_concurrent_streams to one instead.");
+  }
   // concurrency must be either 'auto' or a positive integer.
   if (concurrency_ != "auto") {
     int parsed_concurrency;
@@ -744,7 +795,13 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
   }
   command_line_options->mutable_requests_per_second()->set_value(requests_per_second_);
   command_line_options->mutable_timeout()->set_seconds(timeout_);
-  command_line_options->mutable_h2()->set_value(h2_);
+
+  if (h2_) {
+    command_line_options->mutable_h2()->set_value(h2_);
+  } else if (h3_) {
+    command_line_options->mutable_h3()->set_value(h3_);
+  }
+
   if (uri_.has_value()) {
     command_line_options->mutable_uri()->set_value(uri_.value());
   } else {
@@ -805,6 +862,7 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
   command_line_options->mutable_max_active_requests()->set_value(max_active_requests_);
   command_line_options->mutable_max_requests_per_connection()->set_value(
       max_requests_per_connection_);
+  command_line_options->mutable_max_concurrent_streams()->set_value(max_concurrent_streams_);
   command_line_options->mutable_sequencer_idle_strategy()->set_value(sequencer_idle_strategy_);
   command_line_options->mutable_trace()->set_value(trace_);
   command_line_options->mutable_experimental_h1_connection_reuse_strategy()->set_value(
@@ -823,8 +881,6 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
         Envoy::Protobuf::util::TimeUtil::NanosecondsToDuration(jitter_uniform_.count());
   }
   command_line_options->mutable_nighthawk_service()->set_value(nighthawk_service_);
-  command_line_options->mutable_experimental_h2_use_multiple_connections()->set_value(
-      h2_use_multiple_connections_);
   for (const auto& label : labels_) {
     *command_line_options->add_labels() = label;
   }
