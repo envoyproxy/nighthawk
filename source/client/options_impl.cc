@@ -330,7 +330,6 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
 
   Utility::parseCommand(cmd, argc, argv);
 
-  // --experimental-h2-use-multiple-connections is deprecated.
   if (h2_use_multiple_connections.isSet()) {
     throw MalformedArgvException("--experimental-h2-use-multiple-connections is deprecated, set "
                                  "--max-concurrent-streams to one instead");

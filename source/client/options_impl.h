@@ -23,6 +23,8 @@ public:
   static constexpr uint32_t largest_acceptable_uint32_option_value = UINT32_MAX - 30000;
 
   // The largest acceptable value for the maxConcurrentStreams() option.
+  // Source:
+  // https://github.com/envoyproxy/envoy/blob/70aa8c8f0af949ee1fe965b0a826c9a3e2c634f0/api/envoy/config/core/v3/protocol.proto#L304-L316
   static constexpr uint32_t largest_acceptable_concurrent_streams_value = 2147483647;
 
   OptionsImpl(int argc, const char* const* argv);

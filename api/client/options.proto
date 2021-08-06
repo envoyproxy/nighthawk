@@ -170,7 +170,7 @@ message CommandLineOptions {
   // client-side queuing of requests).
   google.protobuf.UInt32Value max_pending_requests = 14;
   // The maximum allowed number of concurrently active requests.
-  // HTTP/2 and HTTP/3 only. (default: 100).
+  // HTTP/2 and HTTP/3 only, does not apply to HTTP/1. (default: 100).
   google.protobuf.UInt32Value max_active_requests = 15 [(validate.rules).uint32 = {gte: 1}];
   // Max requests per connection (default: 4294937295).
   google.protobuf.UInt32Value max_requests_per_connection = 16 [(validate.rules).uint32 = {gte: 1}];
@@ -221,9 +221,7 @@ message CommandLineOptions {
   // single connection. If the limit is reached, Nighthawk may queue requests or
   // use additional connections depending on the other configuration values.
   // E.g. setting this to 1 makes Nighthawk use a new connection for each
-  // request.
-  //
-  // (default: 2147483647).
+  // request. (default: 2147483647).
   google.protobuf.UInt32Value max_concurrent_streams = 108
       [(validate.rules).uint32 = {lte: 2147483647 gte: 1}];
 
