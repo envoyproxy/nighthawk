@@ -45,7 +45,7 @@ absl::StatusOr<Bootstrap> parseBootstrapFromText(const std::string& bootstrap_te
 
 class CreateBootstrapConfigurationTest : public testing::Test {
 protected:
-  CreateBootstrapConfigurationTest() {}
+  CreateBootstrapConfigurationTest() = default;
 
   // Resolves all the uris_, so they can be passed to createBootstrapConfiguration().
   void resolveAllUris() {
@@ -53,6 +53,9 @@ protected:
 
     EXPECT_CALL(*mock_resolver_, resolve(_, _, _))
         .WillRepeatedly(Invoke([](const std::string&, Envoy::Network::DnsLookupFamily,
+                                  // Even though clang-tidy is right, we cannot
+                                  // change the function declaration here.
+                                  // NOLINTNEXTLINE(performance-unnecessary-value-param)
                                   Envoy::Network::DnsResolver::ResolveCb callback) {
           callback(Envoy::Network::DnsResolver::ResolutionStatus::Success,
                    Envoy::TestUtility::makeDnsResponse({"127.0.0.1"}));
