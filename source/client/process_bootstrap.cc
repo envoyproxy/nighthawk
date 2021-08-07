@@ -8,6 +8,7 @@
 
 #include "external/envoy/source/common/common/statusor.h"
 #include "external/envoy_api/envoy/config/bootstrap/v3/bootstrap.pb.h"
+#include "external/envoy_api/envoy/extensions/transport_sockets/quic/v3/quic_transport.pb.h"
 #include "external/envoy_api/envoy/extensions/upstreams/http/v3/http_protocol_options.pb.h"
 
 #include "source/client/sni_utility.h"
@@ -19,11 +20,13 @@ using ::envoy::config::bootstrap::v3::Bootstrap;
 using ::envoy::config::cluster::v3::CircuitBreakers;
 using ::envoy::config::cluster::v3::Cluster;
 using ::envoy::config::core::v3::Http2ProtocolOptions;
+using ::envoy::config::core::v3::Http3ProtocolOptions;
 using ::envoy::config::core::v3::SocketAddress;
 using ::envoy::config::core::v3::TransportSocket;
 using ::envoy::config::endpoint::v3::ClusterLoadAssignment;
 using ::envoy::config::endpoint::v3::LocalityLbEndpoints;
 using ::envoy::config::metrics::v3::StatsSink;
+using ::envoy::extensions::transport_sockets::quic::v3::QuicUpstreamTransport;
 using ::envoy::extensions::transport_sockets::tls::v3::CommonTlsContext;
 using ::envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext;
 
@@ -77,7 +80,6 @@ absl::StatusOr<TransportSocket> createTransportSocket(const Client::Options& opt
   }
 
   TransportSocket transport_socket;
-  transport_socket.set_name("envoy.transport_sockets.tls");
 
   UpstreamTlsContext upstream_tls_context = options.tlsContext();
   const std::string sni_host = Client::SniUtility::computeSniHost(uris, options.requestHeaders(),
@@ -88,16 +90,24 @@ absl::StatusOr<TransportSocket> createTransportSocket(const Client::Options& opt
 
   CommonTlsContext* common_tls_context = upstream_tls_context.mutable_common_tls_context();
   if (options.upstreamProtocol() == Envoy::Http::Protocol::Http2) {
+    transport_socket.set_name("envoy.transport_sockets.tls");
     common_tls_context->add_alpn_protocols("h2");
+    transport_socket.mutable_typed_config()->PackFrom(upstream_tls_context);
 
   } else if (options.upstreamProtocol() == Envoy::Http::Protocol::Http3) {
-    return absl::UnimplementedError("HTTP/3 Quic support isn't implemented yet.");
+    transport_socket.set_name("envoy.transport_sockets.quic");
+    common_tls_context->add_alpn_protocols("h3");
+
+    QuicUpstreamTransport quic_upstream_transport;
+    *quic_upstream_transport.mutable_upstream_tls_context() = upstream_tls_context;
+    transport_socket.mutable_typed_config()->PackFrom(quic_upstream_transport);
 
   } else {
+    transport_socket.set_name("envoy.transport_sockets.tls");
     common_tls_context->add_alpn_protocols("http/1.1");
+    transport_socket.mutable_typed_config()->PackFrom(upstream_tls_context);
   }
 
-  transport_socket.mutable_typed_config()->PackFrom(upstream_tls_context);
   return transport_socket;
 }
 
@@ -137,6 +147,13 @@ Cluster createNighthawkClusterForWorker(const Client::Options& options,
     Http2ProtocolOptions* http2_options =
         http_options.mutable_explicit_http_config()->mutable_http2_protocol_options();
     http2_options->mutable_max_concurrent_streams()->set_value(options.maxConcurrentStreams());
+
+  } else if (options.upstreamProtocol() == Envoy::Http::Protocol::Http3) {
+    Http3ProtocolOptions* http3_options =
+        http_options.mutable_explicit_http_config()->mutable_http3_protocol_options();
+    http3_options->mutable_quic_protocol_options()->mutable_max_concurrent_streams()->set_value(
+        options.maxConcurrentStreams());
+
   } else {
     http_options.mutable_explicit_http_config()->mutable_http_protocol_options();
   }
