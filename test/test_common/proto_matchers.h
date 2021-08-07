@@ -45,7 +45,7 @@ private:
 //   proto2::Message expected_proto;
 //
 //   EXPECT_THAT(actual_proto, EqualsProto(expected_proto));
-MATCHER_P(EqualsProto, expected_proto, "") {
+MATCHER_P(EqualsProto, expected_proto, "is equal to the expected_proto") {
   std::string diff;
   Envoy::Protobuf::util::MessageDifferencer differ;
   differ.ReportDifferencesToString(&diff);

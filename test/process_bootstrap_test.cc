@@ -639,6 +639,157 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithRequestSourceAndCus
   EXPECT_THAT(*bootstrap, EqualsProto(*expected_bootstrap));
 }
 
+TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithRequestSourceAndMultipleWorkers) {
+  uris_.push_back(std::make_unique<UriImpl>("http://www.example.org"));
+  request_source_uri_ = std::make_unique<UriImpl>("127.0.0.1:6000");
+  resolveAllUris();
+
+  std::unique_ptr<Client::OptionsImpl> options = Client::TestUtility::createOptionsImpl(
+      "nighthawk_client --timeout 10 http://www.example.org");
+
+  absl::StatusOr<Bootstrap> expected_bootstrap = parseBootstrapFromText(R"pb(
+    static_resources {
+      clusters {
+        name: "0"
+        type: STATIC
+        connect_timeout {
+          seconds: 10
+        }
+        max_requests_per_connection {
+          value: 4294937295
+        }
+        circuit_breakers {
+          thresholds {
+            max_connections {
+              value: 100
+            }
+            max_pending_requests {
+              value: 1
+            }
+            max_requests {
+              value: 100
+            }
+            max_retries {
+            }
+          }
+        }
+        load_assignment {
+          cluster_name: "0"
+          endpoints {
+            lb_endpoints {
+              endpoint {
+                address {
+                  socket_address {
+                    address: "127.0.0.1"
+                    port_value: 80
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      clusters {
+        name: "0.requestsource"
+        type: STATIC
+        connect_timeout {
+          seconds: 10
+        }
+        http2_protocol_options {
+        }
+        load_assignment {
+          cluster_name: "0.requestsource"
+          endpoints {
+            lb_endpoints {
+              endpoint {
+                address {
+                  socket_address {
+                    address: "127.0.0.1"
+                    port_value: 6000
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      clusters {
+        name: "1"
+        type: STATIC
+        connect_timeout {
+          seconds: 10
+        }
+        max_requests_per_connection {
+          value: 4294937295
+        }
+        circuit_breakers {
+          thresholds {
+            max_connections {
+              value: 100
+            }
+            max_pending_requests {
+              value: 1
+            }
+            max_requests {
+              value: 100
+            }
+            max_retries {
+            }
+          }
+        }
+        load_assignment {
+          cluster_name: "1"
+          endpoints {
+            lb_endpoints {
+              endpoint {
+                address {
+                  socket_address {
+                    address: "127.0.0.1"
+                    port_value: 80
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      clusters {
+        name: "1.requestsource"
+        type: STATIC
+        connect_timeout {
+          seconds: 10
+        }
+        http2_protocol_options {
+        }
+        load_assignment {
+          cluster_name: "1.requestsource"
+          endpoints {
+            lb_endpoints {
+              endpoint {
+                address {
+                  socket_address {
+                    address: "127.0.0.1"
+                    port_value: 6000
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    stats_flush_interval {
+      seconds: 5
+    }
+  )pb");
+  ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
+
+  absl::StatusOr<Bootstrap> bootstrap = createBootstrapConfiguration(
+      *options, uris_, request_source_uri_, /* number_of_workers = */ 2);
+  ASSERT_THAT(bootstrap, StatusIs(absl::StatusCode::kOk));
+  EXPECT_THAT(*bootstrap, EqualsProto(*expected_bootstrap));
+}
+
 TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithCustomOptions) {
   uris_.push_back(std::make_unique<UriImpl>("https://www.example.org"));
   resolveAllUris();
