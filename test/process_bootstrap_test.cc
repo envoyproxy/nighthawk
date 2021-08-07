@@ -4,12 +4,13 @@
 #include "nighthawk/common/uri.h"
 
 #include "external/envoy/source/common/common/statusor.h"
+#include "external/envoy/source/common/protobuf/message_validator_impl.h"
 #include "external/envoy/source/common/protobuf/protobuf.h"
 #include "external/envoy/test/mocks/event/mocks.h"
 #include "external/envoy/test/mocks/network/mocks.h"
 #include "external/envoy/test/test_common/status_utility.h"
 #include "external/envoy/test/test_common/utility.h"
-#include "external/envoy_api/envoy/config/bootstrap/v3/bootstrap.pb.h"
+#include "external/envoy_api/envoy/config/bootstrap/v3/bootstrap.pb.validate.h"
 #include "external/envoy_api/envoy/config/core/v3/base.pb.h"
 #include "external/envoy_api/envoy/extensions/transport_sockets/tls/v3/tls.pb.h"
 
@@ -148,6 +149,9 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH1) {
       createBootstrapConfiguration(*options, uris_, request_source_uri_, number_of_workers_);
   ASSERT_THAT(bootstrap, StatusIs(absl::StatusCode::kOk));
   EXPECT_THAT(*bootstrap, EqualsProto(*expected_bootstrap));
+
+  // Ensure the generated bootstrap is valid.
+  Envoy::MessageUtil::validate(*bootstrap, Envoy::ProtobufMessage::getStrictValidationVisitor());
 }
 
 TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH1WithMultipleUris) {
@@ -221,6 +225,9 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH1WithMultipleUris) 
       createBootstrapConfiguration(*options, uris_, request_source_uri_, number_of_workers_);
   ASSERT_THAT(bootstrap, StatusIs(absl::StatusCode::kOk));
   EXPECT_THAT(*bootstrap, EqualsProto(*expected_bootstrap));
+
+  // Ensure the generated bootstrap is valid.
+  Envoy::MessageUtil::validate(*bootstrap, Envoy::ProtobufMessage::getStrictValidationVisitor());
 }
 
 TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH1WithTls) {
@@ -294,6 +301,9 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH1WithTls) {
       createBootstrapConfiguration(*options, uris_, request_source_uri_, number_of_workers_);
   ASSERT_THAT(bootstrap, StatusIs(absl::StatusCode::kOk));
   EXPECT_THAT(*bootstrap, EqualsProto(*expected_bootstrap));
+
+  // Ensure the generated bootstrap is valid.
+  Envoy::MessageUtil::validate(*bootstrap, Envoy::ProtobufMessage::getStrictValidationVisitor());
 }
 
 TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH1AndMultipleWorkers) {
@@ -396,6 +406,9 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH1AndMultipleWorkers
       *options, uris_, request_source_uri_, /* number_of_workers = */ 2);
   ASSERT_THAT(bootstrap, StatusIs(absl::StatusCode::kOk));
   EXPECT_THAT(*bootstrap, EqualsProto(*expected_bootstrap));
+
+  // Ensure the generated bootstrap is valid.
+  Envoy::MessageUtil::validate(*bootstrap, Envoy::ProtobufMessage::getStrictValidationVisitor());
 }
 
 TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH2) {
@@ -463,6 +476,9 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH2) {
       createBootstrapConfiguration(*options, uris_, request_source_uri_, number_of_workers_);
   ASSERT_THAT(bootstrap, StatusIs(absl::StatusCode::kOk));
   EXPECT_THAT(*bootstrap, EqualsProto(*expected_bootstrap));
+
+  // Ensure the generated bootstrap is valid.
+  Envoy::MessageUtil::validate(*bootstrap, Envoy::ProtobufMessage::getStrictValidationVisitor());
 }
 
 TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH2WithTls) {
@@ -541,6 +557,9 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH2WithTls) {
       createBootstrapConfiguration(*options, uris_, request_source_uri_, number_of_workers_);
   ASSERT_THAT(bootstrap, StatusIs(absl::StatusCode::kOk));
   EXPECT_THAT(*bootstrap, EqualsProto(*expected_bootstrap));
+
+  // Ensure the generated bootstrap is valid.
+  Envoy::MessageUtil::validate(*bootstrap, Envoy::ProtobufMessage::getStrictValidationVisitor());
 }
 
 TEST_F(CreateBootstrapConfigurationTest, FailsForUnimplementedH3) {
@@ -640,6 +659,9 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithRequestSourceAndCus
       createBootstrapConfiguration(*options, uris_, request_source_uri_, number_of_workers_);
   ASSERT_THAT(bootstrap, StatusIs(absl::StatusCode::kOk));
   EXPECT_THAT(*bootstrap, EqualsProto(*expected_bootstrap));
+
+  // Ensure the generated bootstrap is valid.
+  Envoy::MessageUtil::validate(*bootstrap, Envoy::ProtobufMessage::getStrictValidationVisitor());
 }
 
 TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithRequestSourceAndMultipleWorkers) {
@@ -791,6 +813,9 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithRequestSourceAndMul
       *options, uris_, request_source_uri_, /* number_of_workers = */ 2);
   ASSERT_THAT(bootstrap, StatusIs(absl::StatusCode::kOk));
   EXPECT_THAT(*bootstrap, EqualsProto(*expected_bootstrap));
+
+  // Ensure the generated bootstrap is valid.
+  Envoy::MessageUtil::validate(*bootstrap, Envoy::ProtobufMessage::getStrictValidationVisitor());
 }
 
 TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithCustomOptions) {
@@ -889,6 +914,9 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithCustomOptions) {
       createBootstrapConfiguration(*options, uris_, request_source_uri_, number_of_workers_);
   ASSERT_THAT(bootstrap, StatusIs(absl::StatusCode::kOk));
   EXPECT_THAT(*bootstrap, EqualsProto(*expected_bootstrap));
+
+  // Ensure the generated bootstrap is valid.
+  Envoy::MessageUtil::validate(*bootstrap, Envoy::ProtobufMessage::getStrictValidationVisitor());
 }
 
 TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapSetsMaxRequestToAtLeastOne) {
@@ -951,6 +979,9 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapSetsMaxRequestToAtLeast
       createBootstrapConfiguration(*options, uris_, request_source_uri_, number_of_workers_);
   ASSERT_THAT(bootstrap, StatusIs(absl::StatusCode::kOk));
   EXPECT_THAT(*bootstrap, EqualsProto(*expected_bootstrap));
+
+  // Ensure the generated bootstrap is valid.
+  Envoy::MessageUtil::validate(*bootstrap, Envoy::ProtobufMessage::getStrictValidationVisitor());
 }
 
 TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithCustomTransportSocket) {
@@ -1035,6 +1066,9 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithCustomTransportSock
       createBootstrapConfiguration(*options, uris_, request_source_uri_, number_of_workers_);
   ASSERT_THAT(bootstrap, StatusIs(absl::StatusCode::kOk));
   EXPECT_THAT(*bootstrap, EqualsProto(*expected_bootstrap));
+
+  // Ensure the generated bootstrap is valid.
+  Envoy::MessageUtil::validate(*bootstrap, Envoy::ProtobufMessage::getStrictValidationVisitor());
 }
 
 TEST_F(CreateBootstrapConfigurationTest, DeterminesSniFromRequestHeader) {
@@ -1110,6 +1144,9 @@ TEST_F(CreateBootstrapConfigurationTest, DeterminesSniFromRequestHeader) {
       createBootstrapConfiguration(*options, uris_, request_source_uri_, number_of_workers_);
   ASSERT_THAT(bootstrap, StatusIs(absl::StatusCode::kOk));
   EXPECT_THAT(*bootstrap, EqualsProto(*expected_bootstrap));
+
+  // Ensure the generated bootstrap is valid.
+  Envoy::MessageUtil::validate(*bootstrap, Envoy::ProtobufMessage::getStrictValidationVisitor());
 }
 
 } // namespace
