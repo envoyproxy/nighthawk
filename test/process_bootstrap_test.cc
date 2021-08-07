@@ -143,6 +143,10 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH1) {
                   value: 4294937295
                 }
               }
+              explicit_http_config {
+                http_protocol_options {
+                }
+              }
             }
           }
         }
@@ -226,6 +230,10 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH1WithMultipleUris) 
               common_http_protocol_options {
                 max_requests_per_connection {
                   value: 4294937295
+                }
+              }
+              explicit_http_config {
+                http_protocol_options {
                 }
               }
             }
@@ -313,6 +321,10 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH1WithTls) {
                   value: 4294937295
                 }
               }
+              explicit_http_config {
+                http_protocol_options {
+                }
+              }
             }
           }
         }
@@ -387,6 +399,10 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH1AndMultipleWorkers
                   value: 4294937295
                 }
               }
+              explicit_http_config {
+                http_protocol_options {
+                }
+              }
             }
           }
         }
@@ -434,6 +450,10 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH1AndMultipleWorkers
               common_http_protocol_options {
                 max_requests_per_connection {
                   value: 4294937295
+                }
+              }
+              explicit_http_config {
+                http_protocol_options {
                 }
               }
             }
@@ -696,6 +716,10 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithRequestSourceAndCus
                   value: 4294937295
                 }
               }
+              explicit_http_config {
+                http_protocol_options {
+                }
+              }
             }
           }
         }
@@ -804,6 +828,10 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithRequestSourceAndMul
                   value: 4294937295
                 }
               }
+              explicit_http_config {
+                http_protocol_options {
+                }
+              }
             }
           }
         }
@@ -884,6 +912,10 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithRequestSourceAndMul
               common_http_protocol_options {
                 max_requests_per_connection {
                   value: 4294937295
+                }
+              }
+              explicit_http_config {
+                http_protocol_options {
                 }
               }
             }
@@ -1021,6 +1053,10 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithCustomOptions) {
                   value: 4294937295
                 }
               }
+              explicit_http_config {
+                http_protocol_options {
+                }
+              }
             }
           }
         }
@@ -1101,6 +1137,10 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapSetsMaxRequestToAtLeast
               common_http_protocol_options {
                 max_requests_per_connection {
                   value: 4294937295
+                }
+              }
+              explicit_http_config {
+                http_protocol_options {
                 }
               }
             }
@@ -1199,6 +1239,10 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithCustomTransportSock
                   value: 4294937295
                 }
               }
+              explicit_http_config {
+                http_protocol_options {
+                }
+              }
             }
           }
         }
@@ -1284,6 +1328,10 @@ TEST_F(CreateBootstrapConfigurationTest, DeterminesSniFromRequestHeader) {
               common_http_protocol_options {
                 max_requests_per_connection {
                   value: 4294937295
+                }
+              }
+              explicit_http_config {
+                http_protocol_options {
                 }
               }
             }

@@ -137,6 +137,8 @@ Cluster createNighthawkClusterForWorker(const Client::Options& options,
     Http2ProtocolOptions* http2_options =
         http_options.mutable_explicit_http_config()->mutable_http2_protocol_options();
     http2_options->mutable_max_concurrent_streams()->set_value(options.maxConcurrentStreams());
+  } else {
+    http_options.mutable_explicit_http_config()->mutable_http_protocol_options();
   }
 
   (*cluster.mutable_typed_extension_protocol_options())
