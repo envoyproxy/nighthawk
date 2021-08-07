@@ -88,21 +88,9 @@ public:
   bool requestExecutionCancellation() override;
 
 private:
-  /**
-   * @brief Creates a cluster for usage by a remote request source.
-   *
-   * @param uri The parsed uri of the remote request source.
-   * @param worker_number The worker number that we are creating this cluster for.
-   * @param config The bootstrap configuration that will be modified.
-   */
-  void addRequestSourceCluster(const Uri& uri, int worker_number,
-                               envoy::config::bootstrap::v3::Bootstrap& config) const;
   void addTracingCluster(envoy::config::bootstrap::v3::Bootstrap& bootstrap, const Uri& uri) const;
   void setupTracingImplementation(envoy::config::bootstrap::v3::Bootstrap& bootstrap,
                                   const Uri& uri) const;
-  void createBootstrapConfiguration(envoy::config::bootstrap::v3::Bootstrap& bootstrap,
-                                    const std::vector<UriPtr>& uris,
-                                    const UriPtr& request_source_uri, int number_of_workers) const;
   void maybeCreateTracingDriver(const envoy::config::trace::v3::Tracing& configuration);
   void configureComponentLogLevels(spdlog::level::level_enum level);
   /**
