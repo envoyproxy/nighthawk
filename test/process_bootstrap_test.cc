@@ -103,9 +103,6 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH1) {
         connect_timeout {
           seconds: 30
         }
-        max_requests_per_connection {
-          value: 4294937295
-        }
         circuit_breakers {
           thresholds {
             max_connections {
@@ -131,6 +128,18 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH1) {
                     address: "127.0.0.1"
                     port_value: 80
                   }
+                }
+              }
+            }
+          }
+        }
+        typed_extension_protocol_options {
+          key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
+          value {
+            [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
+              common_http_protocol_options {
+                max_requests_per_connection {
+                  value: 4294937295
                 }
               }
             }
@@ -166,9 +175,6 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH1WithMultipleUris) 
         connect_timeout {
           seconds: 30
         }
-        max_requests_per_connection {
-          value: 4294937295
-        }
         circuit_breakers {
           thresholds {
             max_connections {
@@ -209,6 +215,18 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH1WithMultipleUris) 
             }
           }
         }
+        typed_extension_protocol_options {
+          key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
+          value {
+            [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
+              common_http_protocol_options {
+                max_requests_per_connection {
+                  value: 4294937295
+                }
+              }
+            }
+          }
+        }
       }
     }
     stats_flush_interval {
@@ -237,9 +255,6 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH1WithTls) {
         type: STATIC
         connect_timeout {
           seconds: 30
-        }
-        max_requests_per_connection {
-          value: 4294937295
         }
         circuit_breakers {
           thresholds {
@@ -282,6 +297,18 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH1WithTls) {
             }
           }
         }
+        typed_extension_protocol_options {
+          key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
+          value {
+            [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
+              common_http_protocol_options {
+                max_requests_per_connection {
+                  value: 4294937295
+                }
+              }
+            }
+          }
+        }
       }
     }
     stats_flush_interval {
@@ -310,9 +337,6 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH1AndMultipleWorkers
         type: STATIC
         connect_timeout {
           seconds: 30
-        }
-        max_requests_per_connection {
-          value: 4294937295
         }
         circuit_breakers {
           thresholds {
@@ -344,15 +368,24 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH1AndMultipleWorkers
             }
           }
         }
+        typed_extension_protocol_options {
+          key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
+          value {
+            [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
+              common_http_protocol_options {
+                max_requests_per_connection {
+                  value: 4294937295
+                }
+              }
+            }
+          }
+        }
       }
       clusters {
         name: "1"
         type: STATIC
         connect_timeout {
           seconds: 30
-        }
-        max_requests_per_connection {
-          value: 4294937295
         }
         circuit_breakers {
           thresholds {
@@ -379,6 +412,18 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH1AndMultipleWorkers
                     address: "127.0.0.1"
                     port_value: 80
                   }
+                }
+              }
+            }
+          }
+        }
+        typed_extension_protocol_options {
+          key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
+          value {
+            [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
+              common_http_protocol_options {
+                max_requests_per_connection {
+                  value: 4294937295
                 }
               }
             }
@@ -413,9 +458,6 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH2) {
         connect_timeout {
           seconds: 30
         }
-        max_requests_per_connection {
-          value: 4294937295
-        }
         circuit_breakers {
           thresholds {
             max_connections {
@@ -431,11 +473,6 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH2) {
             }
           }
         }
-        http2_protocol_options {
-          max_concurrent_streams {
-            value: 2147483647
-          }
-        }
         load_assignment {
           cluster_name: "0"
           endpoints {
@@ -445,6 +482,25 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH2) {
                   socket_address {
                     address: "127.0.0.1"
                     port_value: 80
+                  }
+                }
+              }
+            }
+          }
+        }
+        typed_extension_protocol_options {
+          key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
+          value {
+            [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
+              common_http_protocol_options {
+                max_requests_per_connection {
+                  value: 4294937295
+                }
+              }
+              explicit_http_config {
+                http2_protocol_options {
+                  max_concurrent_streams {
+                    value: 2147483647
                   }
                 }
               }
@@ -480,9 +536,6 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH2WithTls) {
         connect_timeout {
           seconds: 30
         }
-        max_requests_per_connection {
-          value: 4294937295
-        }
         circuit_breakers {
           thresholds {
             max_connections {
@@ -496,11 +549,6 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH2WithTls) {
             }
             max_retries {
             }
-          }
-        }
-        http2_protocol_options {
-          max_concurrent_streams {
-            value: 2147483647
           }
         }
         transport_socket {
@@ -523,6 +571,25 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH2WithTls) {
                   socket_address {
                     address: "127.0.0.1"
                     port_value: 443
+                  }
+                }
+              }
+            }
+          }
+        }
+        typed_extension_protocol_options {
+          key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
+          value {
+            [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
+              common_http_protocol_options {
+                max_requests_per_connection {
+                  value: 4294937295
+                }
+              }
+              explicit_http_config {
+                http2_protocol_options {
+                  max_concurrent_streams {
+                    value: 2147483647
                   }
                 }
               }
@@ -571,9 +638,6 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithRequestSourceAndCus
         connect_timeout {
           seconds: 10
         }
-        max_requests_per_connection {
-          value: 4294937295
-        }
         circuit_breakers {
           thresholds {
             max_connections {
@@ -604,14 +668,24 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithRequestSourceAndCus
             }
           }
         }
+        typed_extension_protocol_options {
+          key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
+          value {
+            [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
+              common_http_protocol_options {
+                max_requests_per_connection {
+                  value: 4294937295
+                }
+              }
+            }
+          }
+        }
       }
       clusters {
         name: "0.requestsource"
         type: STATIC
         connect_timeout {
           seconds: 10
-        }
-        http2_protocol_options {
         }
         load_assignment {
           cluster_name: "0.requestsource"
@@ -623,6 +697,17 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithRequestSourceAndCus
                     address: "127.0.0.1"
                     port_value: 6000
                   }
+                }
+              }
+            }
+          }
+        }
+        typed_extension_protocol_options {
+          key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
+          value {
+            [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
+              explicit_http_config {
+                http2_protocol_options {
                 }
               }
             }
@@ -658,9 +743,6 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithRequestSourceAndMul
         connect_timeout {
           seconds: 10
         }
-        max_requests_per_connection {
-          value: 4294937295
-        }
         circuit_breakers {
           thresholds {
             max_connections {
@@ -691,14 +773,24 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithRequestSourceAndMul
             }
           }
         }
+        typed_extension_protocol_options {
+          key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
+          value {
+            [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
+              common_http_protocol_options {
+                max_requests_per_connection {
+                  value: 4294937295
+                }
+              }
+            }
+          }
+        }
       }
       clusters {
         name: "0.requestsource"
         type: STATIC
         connect_timeout {
           seconds: 10
-        }
-        http2_protocol_options {
         }
         load_assignment {
           cluster_name: "0.requestsource"
@@ -715,15 +807,23 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithRequestSourceAndMul
             }
           }
         }
+        typed_extension_protocol_options {
+          key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
+          value {
+            [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
+              explicit_http_config {
+                http2_protocol_options {
+                }
+              }
+            }
+          }
+        }
       }
       clusters {
         name: "1"
         type: STATIC
         connect_timeout {
           seconds: 10
-        }
-        max_requests_per_connection {
-          value: 4294937295
         }
         circuit_breakers {
           thresholds {
@@ -755,14 +855,24 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithRequestSourceAndMul
             }
           }
         }
+        typed_extension_protocol_options {
+          key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
+          value {
+            [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
+              common_http_protocol_options {
+                max_requests_per_connection {
+                  value: 4294937295
+                }
+              }
+            }
+          }
+        }
       }
       clusters {
         name: "1.requestsource"
         type: STATIC
         connect_timeout {
           seconds: 10
-        }
-        http2_protocol_options {
         }
         load_assignment {
           cluster_name: "1.requestsource"
@@ -774,6 +884,17 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithRequestSourceAndMul
                     address: "127.0.0.1"
                     port_value: 6000
                   }
+                }
+              }
+            }
+          }
+        }
+        typed_extension_protocol_options {
+          key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
+          value {
+            [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
+              explicit_http_config {
+                http2_protocol_options {
                 }
               }
             }
@@ -822,9 +943,6 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithCustomOptions) {
         connect_timeout {
           seconds: 30
         }
-        max_requests_per_connection {
-          value: 4294937295
-        }
         circuit_breakers {
           thresholds {
             max_connections {
@@ -869,6 +987,18 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithCustomOptions) {
             }
           }
         }
+        typed_extension_protocol_options {
+          key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
+          value {
+            [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
+              common_http_protocol_options {
+                max_requests_per_connection {
+                  value: 4294937295
+                }
+              }
+            }
+          }
+        }
       }
     }
     stats_sinks {
@@ -906,9 +1036,6 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapSetsMaxRequestToAtLeast
         connect_timeout {
           seconds: 30
         }
-        max_requests_per_connection {
-          value: 4294937295
-        }
         circuit_breakers {
           thresholds {
             max_connections {
@@ -934,6 +1061,18 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapSetsMaxRequestToAtLeast
                     address: "127.0.0.1"
                     port_value: 80
                   }
+                }
+              }
+            }
+          }
+        }
+        typed_extension_protocol_options {
+          key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
+          value {
+            [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
+              common_http_protocol_options {
+                max_requests_per_connection {
+                  value: 4294937295
                 }
               }
             }
@@ -978,9 +1117,6 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithCustomTransportSock
         connect_timeout {
           seconds: 30
         }
-        max_requests_per_connection {
-          value: 4294937295
-        }
         circuit_breakers {
           thresholds {
             max_connections {
@@ -1023,6 +1159,18 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithCustomTransportSock
             }
           }
         }
+        typed_extension_protocol_options {
+          key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
+          value {
+            [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
+              common_http_protocol_options {
+                max_requests_per_connection {
+                  value: 4294937295
+                }
+              }
+            }
+          }
+        }
       }
     }
     stats_flush_interval {
@@ -1053,9 +1201,6 @@ TEST_F(CreateBootstrapConfigurationTest, DeterminesSniFromRequestHeader) {
         type: STATIC
         connect_timeout {
           seconds: 30
-        }
-        max_requests_per_connection {
-          value: 4294937295
         }
         circuit_breakers {
           thresholds {
@@ -1093,6 +1238,18 @@ TEST_F(CreateBootstrapConfigurationTest, DeterminesSniFromRequestHeader) {
                     address: "127.0.0.1"
                     port_value: 443
                   }
+                }
+              }
+            }
+          }
+        }
+        typed_extension_protocol_options {
+          key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
+          value {
+            [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
+              common_http_protocol_options {
+                max_requests_per_connection {
+                  value: 4294937295
                 }
               }
             }

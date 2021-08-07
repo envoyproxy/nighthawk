@@ -8,6 +8,7 @@
 
 #include "external/envoy/source/common/common/statusor.h"
 #include "external/envoy_api/envoy/config/bootstrap/v3/bootstrap.pb.h"
+#include "external/envoy_api/envoy/extensions/upstreams/http/v3/http_protocol_options.pb.h"
 
 #include "source/client/sni_utility.h"
 
@@ -17,6 +18,7 @@ namespace {
 using ::envoy::config::bootstrap::v3::Bootstrap;
 using ::envoy::config::cluster::v3::CircuitBreakers;
 using ::envoy::config::cluster::v3::Cluster;
+using ::envoy::config::core::v3::Http2ProtocolOptions;
 using ::envoy::config::core::v3::SocketAddress;
 using ::envoy::config::core::v3::TransportSocket;
 using ::envoy::config::endpoint::v3::ClusterLoadAssignment;
@@ -40,7 +42,13 @@ void addUriToEndpoints(const Uri& uri, LocalityLbEndpoints* endpoints) {
 Cluster createRequestSourceClusterForWorker(const Client::Options& options,
                                             const Uri& request_source_uri, int worker_number) {
   Cluster cluster;
-  cluster.mutable_http2_protocol_options();
+
+  envoy::extensions::upstreams::http::v3::HttpProtocolOptions http_options;
+  http_options.mutable_explicit_http_config()->mutable_http2_protocol_options();
+  (*cluster.mutable_typed_extension_protocol_options())
+      ["envoy.extensions.upstreams.http.v3.HttpProtocolOptions"]
+          .PackFrom(http_options);
+
   cluster.set_name(fmt::format("{}.requestsource", worker_number));
   cluster.set_type(Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
   cluster.mutable_connect_timeout()->set_seconds(options.timeout().count());
@@ -119,13 +127,21 @@ Cluster createNighthawkClusterForWorker(const Client::Options& options,
 
   cluster.set_name(fmt::format("{}", worker_number));
   cluster.mutable_connect_timeout()->set_seconds(options.timeout().count());
-  cluster.mutable_max_requests_per_connection()->set_value(options.maxRequestsPerConnection());
+
+  envoy::extensions::upstreams::http::v3::HttpProtocolOptions http_options;
+  http_options.mutable_common_http_protocol_options()
+      ->mutable_max_requests_per_connection()
+      ->set_value(options.maxRequestsPerConnection());
 
   if (options.upstreamProtocol() == Envoy::Http::Protocol::Http2) {
-    auto* cluster_http2_protocol_options = cluster.mutable_http2_protocol_options();
-    cluster_http2_protocol_options->mutable_max_concurrent_streams()->set_value(
-        options.maxConcurrentStreams());
+    Http2ProtocolOptions* http2_options =
+        http_options.mutable_explicit_http_config()->mutable_http2_protocol_options();
+    http2_options->mutable_max_concurrent_streams()->set_value(options.maxConcurrentStreams());
   }
+
+  (*cluster.mutable_typed_extension_protocol_options())
+      ["envoy.extensions.upstreams.http.v3.HttpProtocolOptions"]
+          .PackFrom(http_options);
 
   *cluster.mutable_circuit_breakers() = createCircuitBreakers(options);
 
