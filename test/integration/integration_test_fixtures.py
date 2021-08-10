@@ -81,7 +81,7 @@ class IntegrationTestBase():
     self.request = request
     self.ip_version = request.param
     assert self.ip_version != IpVersion.UNKNOWN
-    self.server_ip = "::" if self.ip_version == IpVersion.IPV6 else "0.0.0.0"
+    self.server_ip = "::1" if self.ip_version == IpVersion.IPV6 else "127.0.0.1"
     self.server_ip = os.getenv("TEST_SERVER_EXTERNAL_IP", self.server_ip)
     self.tag = ""
     self.parameters = {}
@@ -251,7 +251,7 @@ class IntegrationTestBase():
       args.append("--address-family v6")
     if as_json:
       args.append("--output-format json")
-    logging.info("Nighthawk client popen() args: [%s]" % args)
+    logging.info("Nighthawk client popen() args: %s" % str.join(" ", args))
     client_process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = client_process.communicate()
     logs = stderr.decode('utf-8')
