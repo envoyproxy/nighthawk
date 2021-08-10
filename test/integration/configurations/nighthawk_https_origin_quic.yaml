@@ -17,8 +17,6 @@ static_resources:
           port_value: 0
       udp_listener_config:
         quic_options: {}
-        downstream_socket_config:
-          prefer_gro: true
       filter_chains:
         - filters:
             - name: envoy.filters.network.http_connection_manager
