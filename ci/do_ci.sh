@@ -44,6 +44,7 @@ BUILD_PARTS=(
 function run_on_build_parts() {
     local command="$1"
     for part in ${BUILD_PARTS[@]}; do
+        echo "run_on_build_parts: running command $command $part"
         eval "$command $part"
         if (( $? != 0 )); then
             echo "Error executing $command $part."
