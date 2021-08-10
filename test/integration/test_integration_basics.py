@@ -294,6 +294,32 @@ def test_https_h2_multiple_connections(https_test_server_fixture):
   asserts.assertCounterGreaterEqual(counters, "upstream_cx_http2_total", 10)
 
 
+@pytest.mark.parametrize('server_config',
+                         ["nighthawk/test/integration/configurations/nighthawk_https_origin_quic.yaml"])
+def test_h3_quic(https_test_server_fixture):
+  """Test http3 quic.
+
+  Runs the CLI configured to use HTTP/3 Quic against our test server, and sanity
+  checks statistics from both client and server.
+  """
+  parsed_json, _ = https_test_server_fixture.runNighthawkClient([
+      "--h3",
+      https_test_server_fixture.getTestServerRootUri(), "--rps", "100", "--duration", "100",
+      "--termination-predicate", "benchmark.http_2xx:24", "--max-active-requests", "1",
+      # Envoy doesn't support disabling certificate verification on Quic
+      # connections, so the host in our requests has to match the hostname in
+      # the leaf certificate.
+      "--request-header", "Host:www.lyft.com"
+  ])
+  counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
+  asserts.assertCounterEqual(counters, "benchmark.http_2xx", 25)
+  asserts.assertCounterEqual(counters, "upstream_cx_http3_total", 1)
+  asserts.assertCounterEqual(counters, "upstream_cx_total", 1)
+  asserts.assertCounterEqual(counters, "upstream_rq_pending_total", 1)
+  asserts.assertCounterEqual(counters, "upstream_rq_total", 25)
+  asserts.assertCounterEqual(counters, "default.total_match_count", 1)
+
+
 def _do_tls_configuration_test(https_test_server_fixture, cli_parameter, use_h2):
   """Test with different ciphers.
 
