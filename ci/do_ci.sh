@@ -239,9 +239,10 @@ if [ -n "$CIRCLECI" ]; then
     fi
     NUM_CPUS=8
     if [[ "$1" == "test_gcc" ]]; then
-        NUM_CPUS=4
+        NUM_CPUS=2
+        BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} --jobs=${NUM_CPUS} --discard_analysis_cache --notrack_incremental_state --nokeep_state_after_build"
     fi
-    echo "Running with ${NUM_CPUS} cpus"
+    echo "Running with ${NUM_CPUS} cpus and BAZEL_BUILD_OPTIONS: ${BAZEL_BUILD_OPTIONS}"
     BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} --jobs=${NUM_CPUS}"
 fi
 
