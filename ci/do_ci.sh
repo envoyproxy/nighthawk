@@ -29,7 +29,15 @@ BUILD_PARTS=(
     "//source/server/..."
     "//source/request_source/..."
     "//source/adaptive_load/..."
+    "//test/adaptive_load/..."
+    "//test/client/..."
+    "//test/common/..."
+    "//test/distributor/..."
     "//test/mocks/..."
+    "//test/request_source/..."
+    "//test/server/..."
+    "//test/sink/..."
+    "//test/integration/..."
     "//test/..."
 )
 
