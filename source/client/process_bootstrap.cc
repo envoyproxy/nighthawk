@@ -54,7 +54,7 @@ Cluster createRequestSourceClusterForWorker(const Client::Options& options,
 
 // Determines whether the generated bootstrap requires transport socket
 // configuration.
-// Transport socket is required of the URI scheme is "https", or if the user
+// Transport socket is required if the URI scheme is "https", or if the user
 // specified a custom transport socket on the command line.
 bool needTransportSocket(const Client::Options& options, const std::vector<UriPtr>& uris) {
   return uris[0]->scheme() == "https" || options.transportSocket().has_value();
@@ -63,7 +63,7 @@ bool needTransportSocket(const Client::Options& options, const std::vector<UriPt
 // Creates the transport socket configuration.
 absl::StatusOr<TransportSocket> createTransportSocket(const Client::Options& options,
                                                       const std::vector<UriPtr>& uris) {
-  // User specified a transport socket configuration takes precedence.
+  // User specified transport socket configuration takes precedence.
   if (options.transportSocket().has_value()) {
     return options.transportSocket().value();
   }
