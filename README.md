@@ -146,7 +146,7 @@ spread traffic across all endpoints with round robin distribution.
 Mutually exclusive with providing a URI.
 
 --experimental-h2-use-multiple-connections
-DO NOT USE: This options is deprecated, if this behavior is desired,
+DO NOT USE: This option is deprecated, if this behavior is desired,
 set --max-concurrent-streams to one instead.
 
 --nighthawk-service <uri format>
