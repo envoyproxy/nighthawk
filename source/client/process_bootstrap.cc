@@ -42,7 +42,7 @@ Cluster createRequestSourceClusterForWorker(const Client::Options& options,
   Cluster cluster;
   cluster.mutable_http2_protocol_options();
   cluster.set_name(fmt::format("{}.requestsource", worker_number));
-  cluster.set_type(Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
+  cluster.set_type(Cluster::STATIC);
   cluster.mutable_connect_timeout()->set_seconds(options.timeout().count());
 
   ClusterLoadAssignment* load_assignment = cluster.mutable_load_assignment();
@@ -129,7 +129,7 @@ Cluster createNighthawkClusterForWorker(const Client::Options& options,
 
   *cluster.mutable_circuit_breakers() = createCircuitBreakers(options);
 
-  cluster.set_type(Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
+  cluster.set_type(Cluster::STATIC);
 
   ClusterLoadAssignment* load_assignment = cluster.mutable_load_assignment();
   load_assignment->set_cluster_name(cluster.name());
