@@ -146,14 +146,13 @@ absl::StatusOr<Bootstrap> createBootstrapConfiguration(const Client::Options& op
                                                        const std::vector<UriPtr>& uris,
                                                        const UriPtr& request_source_uri,
                                                        int number_of_workers) {
+  if (uris.empty()) {
+    return absl::InvalidArgumentError(
+        "illegal configuration with zero endpoints, at least one uri must be specified");
+  }
+
   Bootstrap bootstrap;
-
   for (int worker_number = 0; worker_number < number_of_workers; worker_number++) {
-    if (uris.empty()) {
-      return absl::InvalidArgumentError(
-          "illegal configuration with zero endpoints, at least one uri must be specified");
-    }
-
     Cluster nighthawk_cluster = createNighthawkClusterForWorker(options, uris, worker_number);
 
     if (needTransportSocket(options, uris)) {
