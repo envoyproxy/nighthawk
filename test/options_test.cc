@@ -591,9 +591,31 @@ TEST_F(OptionsImplTest, UsesHttp11ByDefault) {
   EXPECT_EQ(Envoy::Http::Protocol::Http11, converted_option->upstreamProtocol());
 }
 
+TEST_F(OptionsImplTest, UsesHttp1WhenUpstreamProtocolHttp1IsSet) {
+  const std::unique_ptr<OptionsImpl> option = TestUtility::createOptionsImpl(
+      fmt::format("{} --upstream-protocol http1 {}", client_name_, good_test_uri_));
+
+  EXPECT_EQ(Envoy::Http::Protocol::Http11, option->upstreamProtocol());
+  // Verify the default remains HTTP/1.1 when converting back from proto.
+  CommandLineOptionsPtr proto = option->toCommandLineOptions();
+  const auto converted_option = std::make_unique<OptionsImpl>(*proto);
+  EXPECT_EQ(Envoy::Http::Protocol::Http11, converted_option->upstreamProtocol());
+}
+
 TEST_F(OptionsImplTest, UsesHttp2WhenH2FlagIsSet) {
   const std::unique_ptr<OptionsImpl> option =
       TestUtility::createOptionsImpl(fmt::format("{} --h2 {}", client_name_, good_test_uri_));
+
+  EXPECT_EQ(Envoy::Http::Protocol::Http2, option->upstreamProtocol());
+  // Verify the default remains HTTP/2 when converting back from proto.
+  CommandLineOptionsPtr proto = option->toCommandLineOptions();
+  const auto converted_option = std::make_unique<OptionsImpl>(*proto);
+  EXPECT_EQ(Envoy::Http::Protocol::Http2, converted_option->upstreamProtocol());
+}
+
+TEST_F(OptionsImplTest, UsesHttp2WhenUpstreamProtocolHttp2IsSet) {
+  const std::unique_ptr<OptionsImpl> option = TestUtility::createOptionsImpl(
+      fmt::format("{} --upstream-protocol http2 {}", client_name_, good_test_uri_));
 
   EXPECT_EQ(Envoy::Http::Protocol::Http2, option->upstreamProtocol());
   // Verify the default remains HTTP/2 when converting back from proto.
@@ -611,9 +633,9 @@ TEST_F(OptionsImplTest, FailsForInvalidH2FlagValues) {
       MalformedArgvException, "Couldn't find match for argument");
 }
 
-TEST_F(OptionsImplTest, UsesHttp3WhenH3FlagIsSet) {
-  const std::unique_ptr<OptionsImpl> option =
-      TestUtility::createOptionsImpl(fmt::format("{} --h3 {}", client_name_, good_test_uri_));
+TEST_F(OptionsImplTest, UsesHttp3WhenUpstreamProtocolHttp3IsSet) {
+  const std::unique_ptr<OptionsImpl> option = TestUtility::createOptionsImpl(
+      fmt::format("{} --upstream-protocol http3 {}", client_name_, good_test_uri_));
 
   EXPECT_EQ(Envoy::Http::Protocol::Http3, option->upstreamProtocol());
   // Verify the default remains HTTP/3 when converting back from proto.
@@ -622,19 +644,33 @@ TEST_F(OptionsImplTest, UsesHttp3WhenH3FlagIsSet) {
   EXPECT_EQ(Envoy::Http::Protocol::Http3, converted_option->upstreamProtocol());
 }
 
-TEST_F(OptionsImplTest, FailsForInvalidH3FlagValues) {
-  EXPECT_THROW_WITH_REGEX(
-      TestUtility::createOptionsImpl(fmt::format("{} --h3 0 {}", client_name_, good_test_uri_)),
-      MalformedArgvException, "Couldn't find match for argument");
-  EXPECT_THROW_WITH_REGEX(
-      TestUtility::createOptionsImpl(fmt::format("{} --h3 true {}", client_name_, good_test_uri_)),
-      MalformedArgvException, "Couldn't find match for argument");
+TEST_F(OptionsImplTest, UsesHttp3WhenUpstreamProtocolShortFormFlagIsSet) {
+  const std::unique_ptr<OptionsImpl> option =
+      TestUtility::createOptionsImpl(fmt::format("{} -p http3 {}", client_name_, good_test_uri_));
+
+  EXPECT_EQ(Envoy::Http::Protocol::Http3, option->upstreamProtocol());
+  // Verify the default remains HTTP/3 when converting back from proto.
+  CommandLineOptionsPtr proto = option->toCommandLineOptions();
+  const auto converted_option = std::make_unique<OptionsImpl>(*proto);
+  EXPECT_EQ(Envoy::Http::Protocol::Http3, converted_option->upstreamProtocol());
 }
 
-TEST_F(OptionsImplTest, FailsWhenBothH2AndH3AreSet) {
-  EXPECT_THROW_WITH_REGEX(
-      TestUtility::createOptionsImpl(fmt::format("{} --h2 --h3 http://foo", client_name_)),
-      MalformedArgvException, "mutually exclusive");
+TEST_F(OptionsImplTest, FailsForInvalidUpstreamProtocolFlagValues) {
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{} --upstream-protocol 0 {}",
+                                                                     client_name_, good_test_uri_)),
+                          MalformedArgvException, "does not meet constraint");
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                              "{} --upstream-protocol true {}", client_name_, good_test_uri_)),
+                          MalformedArgvException, "does not meet constraint");
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                              "{} --upstream-protocol http0 {}", client_name_, good_test_uri_)),
+                          MalformedArgvException, "does not meet constraint");
+}
+
+TEST_F(OptionsImplTest, FailsWhenBothH2AndUpstreamProtocolAreSet) {
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                              "{} --h2 --upstream-protocol http1 http://foo", client_name_)),
+                          MalformedArgvException, "mutually exclusive");
 }
 
 TEST_F(OptionsImplTest, FailsWhenDeprecatedExperimentalH2UseMultipleConnectionsIsSetOnCommandLine) {

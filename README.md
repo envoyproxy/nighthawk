@@ -75,11 +75,11 @@ format>] [--sequencer-idle-strategy <spin
 <json|human|yaml|dotted|fortio
 |experimental_fortio_pedantic>] [-v <trace
 |debug|info|warn|error|critical>]
-[--concurrency <string>] [--h3] [--h2]
-[--timeout <uint32_t>] [--duration
-<uint32_t>] [--connections <uint32_t>]
-[--rps <uint32_t>] [--] [--version] [-h]
-<uri format>
+[--concurrency <string>] [-p <http1|http2
+|http3>] [--h2] [--timeout <uint32_t>]
+[--duration <uint32_t>] [--connections
+<uint32_t>] [--rps <uint32_t>] [--]
+[--version] [-h] <uri format>
 
 
 Where:
@@ -255,15 +255,16 @@ Nighthawk process. Note that increasing this results in an effective
 load multiplier combined with the configured --rps and --connections
 values. Default: 1.
 
---h3
-Encapsulate requests in HTTP/3 Quic. Mutually exclusive with --h2.
-Requests are encapsulated in HTTP/1 by default when neither of --h2 or
---h3 is used.
+-p <http1|http2|http3>,  --upstream-protocol <http1|http2|http3>
+The protocol to encapsulate requests in. Possible values: [http1,
+http2, http3]. The default protocol is 'http1' when neither of --h2 or
+--upstream-protocol is used. Mutually exclusive with --h2.
 
 --h2
-Encapsulate requests in HTTP/2. Mutually exclusive with --h3. Requests
-are encapsulated in HTTP/1 by default when neither of --h2 or --h3 is
-used.
+DEPRECATED, use --upstream-protocol instead. Encapsulate requests in
+HTTP/2. Mutually exclusive with --upstream-protocol. Requests are
+encapsulated in HTTP/1 by default when neither of --h2 or
+--upstream-protocol is used.
 
 --timeout <uint32_t>
 Connection connect timeout period in seconds. Default: 30.
