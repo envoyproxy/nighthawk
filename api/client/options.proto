@@ -104,6 +104,21 @@ message H1ConnectionReuseStrategy {
   H1ConnectionReuseStrategyOptions value = 1;
 }
 
+message UpstreamProtocol {
+  enum UpstreamProtocolOptions {
+    // Encapsulate requests in HTTP/1.
+    // This is the default option.
+    HTTP1 = 0;
+    // Encapsulate requests in HTTP/2.
+    HTTP2 = 1;
+    // Encapsulate requests in HTTP/3 Quic.
+    HTTP3 = 2;
+  }
+
+  // The protocol to encapsulate requests in.
+  UpstreamProtocolOptions value = 1;
+}
+
 // TODO(oschaaf): Ultimately this will be a load test specification. The fact that it
 // can arrive via CLI is just a concrete detail. Change this to reflect that.
 // Highest unused number is 109.
@@ -125,10 +140,13 @@ message CommandLineOptions {
   // The protocol to use when encapsulating requests.
   // Defaults to HTTP/1 if no value is selected.
   oneof request_protocol {
-    // Use HTTP/2.
-    google.protobuf.BoolValue h2 = 5;
-    // Use HTTP/3 Quic.
-    google.protobuf.BoolValue h3 = 107;
+    // Use HTTP/2 upstream protocol.
+    // This option is deprecated, set the upstream_protocol to select the
+    // protocol to use when encapsulating requests.
+    google.protobuf.BoolValue h2 = 5 [deprecated = true];
+
+    // The upstream protocol to use when encapsulating requests.
+    UpstreamProtocol upstream_protocol = 107;
   }
 
   // The number of concurrent event loops that should be used. Specify 'auto' to let

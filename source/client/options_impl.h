@@ -113,8 +113,9 @@ private:
   uint32_t duration_{5};
   uint32_t timeout_{30};
   absl::optional<std::string> uri_;
-  bool h2_{false};
-  bool h3_{false};
+  bool h2_{false}; // Deprecated.
+  nighthawk::client::UpstreamProtocol::UpstreamProtocolOptions upstream_protocol_{
+      nighthawk::client::UpstreamProtocol::HTTP1};
   std::string concurrency_;
   nighthawk::client::Verbosity::VerbosityOptions verbosity_{nighthawk::client::Verbosity::WARN};
   nighthawk::client::OutputFormat::OutputFormatOptions output_format_{
