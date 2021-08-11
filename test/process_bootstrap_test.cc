@@ -923,6 +923,8 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapSetsMaxRequestToAtLeast
   uris_.push_back(std::make_unique<UriImpl>("http://www.example.org"));
   resolveAllUris();
 
+  // The tested behavior is that even though we set --max-pending-requests 0,
+  // the code will configure a value of 1.
   std::unique_ptr<Client::OptionsImpl> options = Client::TestUtility::createOptionsImpl(
       "nighthawk_client --max-pending-requests 0 http://www.example.org");
 
