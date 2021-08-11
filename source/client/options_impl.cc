@@ -247,7 +247,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "uri format", cmd);
   TCLAP::SwitchArg h2_use_multiple_connections(
       "", "experimental-h2-use-multiple-connections",
-      "DO NOT USE: This options is deprecated, if this behavior is desired, set "
+      "DO NOT USE: This option is deprecated, if this behavior is desired, set "
       "--max-concurrent-streams to one instead.",
       cmd);
 
