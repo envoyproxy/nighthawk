@@ -14,7 +14,7 @@ namespace Nighthawk {
  * The created bootstrap configuration can be used to upstream requests to the
  * specified uris.
  *
- * @param options are the options Nighthawk was started with.
+ * @param options are the options this Nighthawk execution was triggered with.
  * @param uris are the endpoints to which the requests will be upstreamed. At
  *        least one uri must be specified. It is assumed that all the uris have
  *        the same scheme (e.g. https). All the uri objects must already be

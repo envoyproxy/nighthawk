@@ -50,7 +50,7 @@ Cluster createRequestSourceClusterForWorker(const Client::Options& options,
           .PackFrom(http_options);
 
   cluster.set_name(fmt::format("{}.requestsource", worker_number));
-  cluster.set_type(Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
+  cluster.set_type(Cluster::STATIC);
   cluster.mutable_connect_timeout()->set_seconds(options.timeout().count());
 
   ClusterLoadAssignment* load_assignment = cluster.mutable_load_assignment();
@@ -62,7 +62,7 @@ Cluster createRequestSourceClusterForWorker(const Client::Options& options,
 
 // Determines whether the generated bootstrap requires transport socket
 // configuration.
-// Transport socket is required of the URI scheme is "https", or if the user
+// Transport socket is required if the URI scheme is "https", or if the user
 // specified a custom transport socket on the command line.
 bool needTransportSocket(const Client::Options& options, const std::vector<UriPtr>& uris) {
   return uris[0]->scheme() == "https" || options.transportSocket().has_value();
@@ -71,7 +71,7 @@ bool needTransportSocket(const Client::Options& options, const std::vector<UriPt
 // Creates the transport socket configuration.
 absl::StatusOr<TransportSocket> createTransportSocket(const Client::Options& options,
                                                       const std::vector<UriPtr>& uris) {
-  // User specified a transport socket configuration takes precedence.
+  // User specified transport socket configuration takes precedence.
   if (options.transportSocket().has_value()) {
     return options.transportSocket().value();
   }
@@ -147,7 +147,7 @@ Cluster createNighthawkClusterForWorker(const Client::Options& options,
 
   *cluster.mutable_circuit_breakers() = createCircuitBreakers(options);
 
-  cluster.set_type(Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
+  cluster.set_type(Cluster::STATIC);
 
   ClusterLoadAssignment* load_assignment = cluster.mutable_load_assignment();
   load_assignment->set_cluster_name(cluster.name());
@@ -164,14 +164,13 @@ absl::StatusOr<Bootstrap> createBootstrapConfiguration(const Client::Options& op
                                                        const std::vector<UriPtr>& uris,
                                                        const UriPtr& request_source_uri,
                                                        int number_of_workers) {
+  if (uris.empty()) {
+    return absl::InvalidArgumentError(
+        "illegal configuration with zero endpoints, at least one uri must be specified");
+  }
+
   Bootstrap bootstrap;
-
   for (int worker_number = 0; worker_number < number_of_workers; worker_number++) {
-    if (uris.empty()) {
-      return absl::InvalidArgumentError(
-          "illegal configuration with zero endpoints, at least one uri must be specified");
-    }
-
     Cluster nighthawk_cluster = createNighthawkClusterForWorker(options, uris, worker_number);
 
     if (needTransportSocket(options, uris)) {
