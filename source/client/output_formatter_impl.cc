@@ -266,15 +266,8 @@ FortioOutputFormatterImpl::durationToSeconds(const Envoy::ProtobufWkt::Duration&
 // Returns true iff the options indicate that Nighthawk was using HTTP/2 or
 // HTTP/3 Quic as the upstream protocol.
 bool isUsingH2OrH3(const nighthawk::client::CommandLineOptions& options) {
-  if (options.h2().value()) {
-    return true;
-  } else if (options.upstream_protocol().value() == UpstreamProtocol::HTTP2) {
-    return true;
-  } else if (options.upstream_protocol().value() == UpstreamProtocol::HTTP3) {
-    return true;
-  } else {
-    return false;
-  }
+  return options.h2().value() || options.upstream_protocol().value() == UpstreamProtocol::HTTP2 ||
+         options.upstream_protocol().value() == UpstreamProtocol::HTTP3;
 }
 
 // Calculates the number of threads, i.e. the number of connections nighthawk
