@@ -29,15 +29,7 @@ BUILD_PARTS=(
     "//source/server/..."
     "//source/request_source/..."
     "//source/adaptive_load/..."
-    "//test/adaptive_load/..."
-    "//test/client/..."
-    "//test/common/..."
-    "//test/distributor/..."
     "//test/mocks/..."
-    "//test/request_source/..."
-    "//test/server/..."
-    "//test/sink/..."
-    "//test/integration/..."
     "//test/..."
 )
 
@@ -240,7 +232,8 @@ if [ -n "$CIRCLECI" ]; then
     NUM_CPUS=8
     if [[ "$1" == "test_gcc" ]]; then
         NUM_CPUS=2
-        BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} --jobs=${NUM_CPUS} --discard_analysis_cache --notrack_incremental_state --nokeep_state_after_build"
+        BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} \
+          --discard_analysis_cache --notrack_incremental_state --nokeep_state_after_build"
     fi
     echo "Running with ${NUM_CPUS} cpus and BAZEL_BUILD_OPTIONS: ${BAZEL_BUILD_OPTIONS}"
     BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} --jobs=${NUM_CPUS}"
