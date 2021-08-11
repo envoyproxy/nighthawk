@@ -303,7 +303,7 @@ def test_h3_quic(https_test_server_fixture):
   checks statistics from both client and server.
   """
   parsed_json, _ = https_test_server_fixture.runNighthawkClient([
-      "--h3",
+      "--upstream-protocol http3",
       https_test_server_fixture.getTestServerRootUri(),
       "--rps",
       "100",
