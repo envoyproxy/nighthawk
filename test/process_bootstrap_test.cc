@@ -567,7 +567,7 @@ TEST_F(CreateBootstrapConfigurationTest, FailsForUnimplementedH3) {
   resolveAllUris();
 
   std::unique_ptr<Client::OptionsImpl> options = Client::TestUtility::createOptionsImpl(
-      "nighthawk_client --upstream-protocol http3 https://www.example.org");
+      "nighthawk_client --protocol http3 https://www.example.org");
 
   absl::StatusOr<Bootstrap> bootstrap =
       createBootstrapConfiguration(*options, uris_, request_source_uri_, number_of_workers_);

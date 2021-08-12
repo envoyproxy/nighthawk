@@ -57,15 +57,15 @@ absl::StatusOr<Bootstrap> createBootstrapConfiguration(const Client::Options& op
       transport_socket->set_name("envoy.transport_sockets.tls");
       envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext context =
           options.tlsContext();
-      const std::string sni_host = Client::SniUtility::computeSniHost(
-          uris, options.requestHeaders(), options.upstreamProtocol());
+      const std::string sni_host =
+          Client::SniUtility::computeSniHost(uris, options.requestHeaders(), options.protocol());
       if (!sni_host.empty()) {
         *context.mutable_sni() = sni_host;
       }
       auto* common_tls_context = context.mutable_common_tls_context();
-      if (options.upstreamProtocol() == Envoy::Http::Protocol::Http2) {
+      if (options.protocol() == Envoy::Http::Protocol::Http2) {
         common_tls_context->add_alpn_protocols("h2");
-      } else if (options.upstreamProtocol() == Envoy::Http::Protocol::Http3) {
+      } else if (options.protocol() == Envoy::Http::Protocol::Http3) {
         return absl::UnimplementedError("HTTP/3 Quic support isn't implemented yet.");
       } else {
         common_tls_context->add_alpn_protocols("http/1.1");
@@ -78,7 +78,7 @@ absl::StatusOr<Bootstrap> createBootstrapConfiguration(const Client::Options& op
     cluster->set_name(fmt::format("{}", i));
     cluster->mutable_connect_timeout()->set_seconds(options.timeout().count());
     cluster->mutable_max_requests_per_connection()->set_value(options.maxRequestsPerConnection());
-    if (options.upstreamProtocol() == Envoy::Http::Protocol::Http2) {
+    if (options.protocol() == Envoy::Http::Protocol::Http2) {
       auto* cluster_http2_protocol_options = cluster->mutable_http2_protocol_options();
       cluster_http2_protocol_options->mutable_max_concurrent_streams()->set_value(
           options.maxConcurrentStreams());
