@@ -13,7 +13,8 @@ from threading import Thread
 from test.integration.common import IpVersion
 from test.integration.integration_test_fixtures import (
     http_test_server_fixture, https_test_server_fixture, https_test_server_fixture,
-    multi_http_test_server_fixture, multi_https_test_server_fixture, server_config)
+    multi_http_test_server_fixture, multi_https_test_server_fixture, quic_test_server_fixture,
+    server_config, server_config_quic)
 from test.integration import asserts
 from test.integration import utility
 
@@ -292,6 +293,38 @@ def test_https_h2_multiple_connections(https_test_server_fixture):
   # Empirical observation shows we may end up creating more then 10 connections.
   # This is stock Envoy h/2 pool behavior.
   asserts.assertCounterGreaterEqual(counters, "upstream_cx_http2_total", 10)
+
+
+def test_h3_quic(quic_test_server_fixture):
+  """Test http3 quic.
+
+  Runs the CLI configured to use HTTP/3 Quic against our test server, and sanity
+  checks statistics from both client and server.
+  """
+  parsed_json, _ = quic_test_server_fixture.runNighthawkClient([
+      "--protocol http3",
+      quic_test_server_fixture.getTestServerRootUri(),
+      "--rps",
+      "100",
+      "--duration",
+      "100",
+      "--termination-predicate",
+      "benchmark.http_2xx:24",
+      "--max-active-requests",
+      "1",
+      # Envoy doesn't support disabling certificate verification on Quic
+      # connections, so the host in our requests has to match the hostname in
+      # the leaf certificate.
+      "--request-header",
+      "Host:www.lyft.com"
+  ])
+  counters = quic_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
+  asserts.assertCounterEqual(counters, "benchmark.http_2xx", 25)
+  asserts.assertCounterEqual(counters, "upstream_cx_http3_total", 1)
+  asserts.assertCounterEqual(counters, "upstream_cx_total", 1)
+  asserts.assertCounterEqual(counters, "upstream_rq_pending_total", 1)
+  asserts.assertCounterEqual(counters, "upstream_rq_total", 25)
+  asserts.assertCounterEqual(counters, "default.total_match_count", 1)
 
 
 def _do_tls_configuration_test(https_test_server_fixture, cli_parameter, use_h2):
