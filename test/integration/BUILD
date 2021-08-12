@@ -9,13 +9,15 @@ licenses(["notice"])  # Apache 2
 
 envoy_package()
 
+filegroup(
+    name = "test_server_configs",
+    data = glob(["configurations/*"]),
+)
+
 py_library(
     name = "integration_test_base",
     data = [
-        "configurations/nighthawk_http_origin.yaml",
-        "configurations/nighthawk_https_origin.yaml",
-        "configurations/nighthawk_track_timings.yaml",
-        "configurations/sni_origin.yaml",
+        ":test_server_configs",
         "//:nighthawk_client",
         "//:nighthawk_output_transform",
         "//:nighthawk_service",
@@ -38,9 +40,7 @@ py_library(
         "utility.py",
     ],
     data = [
-        "configurations/nighthawk_http_origin.yaml",
-        "configurations/nighthawk_https_origin.yaml",
-        "configurations/sni_origin.yaml",
+        ":test_server_configs",
         "@envoy//test/config/integration/certs",
     ],
     deps = [
