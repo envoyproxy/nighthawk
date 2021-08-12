@@ -82,19 +82,19 @@ absl::StatusOr<TransportSocket> createTransportSocket(const Client::Options& opt
   TransportSocket transport_socket;
 
   UpstreamTlsContext upstream_tls_context = options.tlsContext();
-  const std::string sni_host = Client::SniUtility::computeSniHost(uris, options.requestHeaders(),
-                                                                  options.upstreamProtocol());
+  const std::string sni_host =
+      Client::SniUtility::computeSniHost(uris, options.requestHeaders(), options.protocol());
   if (!sni_host.empty()) {
     *upstream_tls_context.mutable_sni() = sni_host;
   }
 
   CommonTlsContext* common_tls_context = upstream_tls_context.mutable_common_tls_context();
-  if (options.upstreamProtocol() == Envoy::Http::Protocol::Http2) {
+  if (options.protocol() == Envoy::Http::Protocol::Http2) {
     transport_socket.set_name("envoy.transport_sockets.tls");
     common_tls_context->add_alpn_protocols("h2");
     transport_socket.mutable_typed_config()->PackFrom(upstream_tls_context);
 
-  } else if (options.upstreamProtocol() == Envoy::Http::Protocol::Http3) {
+  } else if (options.protocol() == Envoy::Http::Protocol::Http3) {
     transport_socket.set_name("envoy.transport_sockets.quic");
     common_tls_context->add_alpn_protocols("h3");
 
@@ -143,12 +143,12 @@ Cluster createNighthawkClusterForWorker(const Client::Options& options,
       ->mutable_max_requests_per_connection()
       ->set_value(options.maxRequestsPerConnection());
 
-  if (options.upstreamProtocol() == Envoy::Http::Protocol::Http2) {
+  if (options.protocol() == Envoy::Http::Protocol::Http2) {
     Http2ProtocolOptions* http2_options =
         http_options.mutable_explicit_http_config()->mutable_http2_protocol_options();
     http2_options->mutable_max_concurrent_streams()->set_value(options.maxConcurrentStreams());
 
-  } else if (options.upstreamProtocol() == Envoy::Http::Protocol::Http3) {
+  } else if (options.protocol() == Envoy::Http::Protocol::Http3) {
     Http3ProtocolOptions* http3_options =
         http_options.mutable_explicit_http_config()->mutable_http3_protocol_options();
     http3_options->mutable_quic_protocol_options()->mutable_max_concurrent_streams()->set_value(

@@ -16,7 +16,7 @@ public:
   MOCK_CONST_METHOD0(duration, std::chrono::seconds());
   MOCK_CONST_METHOD0(timeout, std::chrono::seconds());
   MOCK_CONST_METHOD0(uri, absl::optional<std::string>());
-  MOCK_CONST_METHOD0(upstreamProtocol, Envoy::Http::Protocol());
+  MOCK_CONST_METHOD0(protocol, Envoy::Http::Protocol());
   MOCK_CONST_METHOD0(concurrency, std::string());
   MOCK_CONST_METHOD0(verbosity, nighthawk::client::Verbosity::VerbosityOptions());
   MOCK_CONST_METHOD0(outputFormat, nighthawk::client::OutputFormat::OutputFormatOptions());

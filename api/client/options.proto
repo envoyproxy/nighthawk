@@ -104,19 +104,24 @@ message H1ConnectionReuseStrategy {
   H1ConnectionReuseStrategyOptions value = 1;
 }
 
-message UpstreamProtocol {
-  enum UpstreamProtocolOptions {
+message Protocol {
+  enum ProtocolOptions {
     // Encapsulate requests in HTTP/1.
     // This is the default option.
     HTTP1 = 0;
     // Encapsulate requests in HTTP/2.
     HTTP2 = 1;
     // Encapsulate requests in HTTP/3 Quic.
+    //
+    // Note that certificate verification for HTTP/3 Quic connections currently
+    // cannot be skipped, make sure to include a host or an authority header
+    // that will pass the SAN/SNI verification.
+    // See https://github.com/envoyproxy/nighthawk/issues/727.
     HTTP3 = 2;
   }
 
   // The protocol to encapsulate requests in.
-  UpstreamProtocolOptions value = 1;
+  ProtocolOptions value = 1;
 }
 
 // TODO(oschaaf): Ultimately this will be a load test specification. The fact that it
@@ -139,14 +144,13 @@ message CommandLineOptions {
 
   // The protocol to use when encapsulating requests.
   // Defaults to HTTP/1 if no value is selected.
-  oneof request_protocol {
-    // Use HTTP/2 upstream protocol.
-    // This option is deprecated, set the upstream_protocol to select the
-    // protocol to use when encapsulating requests.
+  oneof oneof_protocol {
+    // Use HTTP/2 protocol.
+    // This option is deprecated, set the protocol option instead.
     google.protobuf.BoolValue h2 = 5 [deprecated = true];
 
-    // The upstream protocol to use when encapsulating requests.
-    UpstreamProtocol upstream_protocol = 107;
+    // The protocol to use when encapsulating requests.
+    Protocol protocol = 107;
   }
 
   // The number of concurrent event loops that should be used. Specify 'auto' to let
