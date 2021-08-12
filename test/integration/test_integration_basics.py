@@ -13,7 +13,8 @@ from threading import Thread
 from test.integration.common import IpVersion
 from test.integration.integration_test_fixtures import (
     http_test_server_fixture, https_test_server_fixture, https_test_server_fixture,
-    multi_http_test_server_fixture, multi_https_test_server_fixture, server_config)
+    multi_http_test_server_fixture, multi_https_test_server_fixture, quic_test_server_fixture,
+    server_config, server_config_quic)
 from test.integration import asserts
 from test.integration import utility
 
@@ -294,17 +295,15 @@ def test_https_h2_multiple_connections(https_test_server_fixture):
   asserts.assertCounterGreaterEqual(counters, "upstream_cx_http2_total", 10)
 
 
-@pytest.mark.parametrize(
-    'server_config', ["nighthawk/test/integration/configurations/nighthawk_https_origin_quic.yaml"])
-def test_h3_quic(https_test_server_fixture):
+def test_h3_quic(quic_test_server_fixture):
   """Test http3 quic.
 
   Runs the CLI configured to use HTTP/3 Quic against our test server, and sanity
   checks statistics from both client and server.
   """
-  parsed_json, _ = https_test_server_fixture.runNighthawkClient([
+  parsed_json, _ = quic_test_server_fixture.runNighthawkClient([
       "--protocol http3",
-      https_test_server_fixture.getTestServerRootUri(),
+      quic_test_server_fixture.getTestServerRootUri(),
       "--rps",
       "100",
       "--duration",
@@ -319,7 +318,7 @@ def test_h3_quic(https_test_server_fixture):
       "--request-header",
       "Host:www.lyft.com"
   ])
-  counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
+  counters = quic_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   asserts.assertCounterEqual(counters, "benchmark.http_2xx", 25)
   asserts.assertCounterEqual(counters, "upstream_cx_http3_total", 1)
   asserts.assertCounterEqual(counters, "upstream_cx_total", 1)
