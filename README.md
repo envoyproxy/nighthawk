@@ -255,16 +255,15 @@ Nighthawk process. Note that increasing this results in an effective
 load multiplier combined with the configured --rps and --connections
 values. Default: 1.
 
--p <http1|http2|http3>,  --upstream-protocol <http1|http2|http3>
+-p <http1|http2|http3>,  --protocol <http1|http2|http3>
 The protocol to encapsulate requests in. Possible values: [http1,
 http2, http3]. The default protocol is 'http1' when neither of --h2 or
---upstream-protocol is used. Mutually exclusive with --h2.
+--protocol is used. Mutually exclusive with --h2.
 
 --h2
-DEPRECATED, use --upstream-protocol instead. Encapsulate requests in
-HTTP/2. Mutually exclusive with --upstream-protocol. Requests are
-encapsulated in HTTP/1 by default when neither of --h2 or
---upstream-protocol is used.
+DEPRECATED, use --protocol instead. Encapsulate requests in HTTP/2.
+Mutually exclusive with --protocol. Requests are encapsulated in
+HTTP/1 by default when neither of --h2 or --protocol is used.
 
 --timeout <uint32_t>
 Connection connect timeout period in seconds. Default: 30.

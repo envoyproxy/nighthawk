@@ -81,13 +81,13 @@ Http1PoolImpl::newStream(Envoy::Http::ResponseDecoder& response_decoder,
 
 BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
     Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
-    BenchmarkClientStatistic& statistic, Envoy::Http::Protocol upstream_protocol,
+    BenchmarkClientStatistic& statistic, Envoy::Http::Protocol protocol,
     Envoy::Upstream::ClusterManagerPtr& cluster_manager,
     Envoy::Tracing::HttpTracerSharedPtr& http_tracer, absl::string_view cluster_name,
     RequestGenerator request_generator, const bool provide_resource_backpressure,
     absl::string_view latency_response_header_name)
     : api_(api), dispatcher_(dispatcher), scope_(scope.createScope("benchmark.")),
-      statistic_(std::move(statistic)), upstream_protocol_(upstream_protocol),
+      statistic_(std::move(statistic)), protocol_(protocol),
       benchmark_client_counters_({ALL_BENCHMARK_CLIENT_COUNTERS(POOL_COUNTER(*scope_))}),
       cluster_manager_(cluster_manager), http_tracer_(http_tracer),
       cluster_name_(std::string(cluster_name)), request_generator_(std::move(request_generator)),
@@ -154,8 +154,7 @@ bool BenchmarkClientHttpImpl::tryStartRequest(CompletionCallback caller_completi
   }
   if (provide_resource_backpressure_) {
     uint64_t max_active_requests = 0;
-    if (upstream_protocol_ == Envoy::Http::Protocol::Http2 ||
-        upstream_protocol_ == Envoy::Http::Protocol::Http3) {
+    if (protocol_ == Envoy::Http::Protocol::Http2 || protocol_ == Envoy::Http::Protocol::Http3) {
       max_active_requests = max_active_requests_;
     } else {
       max_active_requests = connection_limit_;

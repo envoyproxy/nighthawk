@@ -102,7 +102,7 @@ class BenchmarkClientHttpImpl : public BenchmarkClient,
 public:
   BenchmarkClientHttpImpl(Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher,
                           Envoy::Stats::Scope& scope, BenchmarkClientStatistic& statistic,
-                          Envoy::Http::Protocol upstream_protocol,
+                          Envoy::Http::Protocol protocol,
                           Envoy::Upstream::ClusterManagerPtr& cluster_manager,
                           Envoy::Tracing::HttpTracerSharedPtr& http_tracer,
                           absl::string_view cluster_name, RequestGenerator request_generator,
@@ -137,8 +137,8 @@ public:
   // Helpers
   absl::optional<::Envoy::Upstream::HttpPoolData> pool() {
     const auto thread_local_cluster = cluster_manager_->getThreadLocalCluster(cluster_name_);
-    return thread_local_cluster->httpConnPool(Envoy::Upstream::ResourcePriority::Default,
-                                              upstream_protocol_, nullptr);
+    return thread_local_cluster->httpConnPool(Envoy::Upstream::ResourcePriority::Default, protocol_,
+                                              nullptr);
   }
 
 private:
@@ -146,7 +146,7 @@ private:
   Envoy::Event::Dispatcher& dispatcher_;
   Envoy::Stats::ScopePtr scope_;
   BenchmarkClientStatistic statistic_;
-  const Envoy::Http::Protocol upstream_protocol_;
+  const Envoy::Http::Protocol protocol_;
   std::chrono::seconds timeout_{5s};
   uint32_t connection_limit_{1};
   uint32_t max_pending_requests_{1};
