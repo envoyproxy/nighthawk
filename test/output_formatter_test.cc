@@ -28,7 +28,7 @@ using namespace testing;
 namespace Nighthawk {
 namespace Client {
 
-using ::nighthawk::client::UpstreamProtocol;
+using ::nighthawk::client::Protocol;
 
 class OutputCollectorTest : public Test {
 public:
@@ -273,12 +273,12 @@ TEST_F(MediumOutputCollectorTest, CalculatesNumThreadsForH2ThatUsesSingleStreamO
   EXPECT_EQ(300, result.numthreads());
 }
 
-TEST_F(MediumOutputCollectorTest, CalculatesNumThreadsForH2SetViaUpstreamProtocol) {
+TEST_F(MediumOutputCollectorTest, CalculatesNumThreadsForH2SetViaProtocol) {
   nighthawk::client::Output input_proto =
       loadProtoFromFile("test/test_data/output_formatter.medium.proto.gold");
   FortioOutputFormatterImpl formatter;
 
-  input_proto.mutable_options()->mutable_upstream_protocol()->set_value(UpstreamProtocol::HTTP2);
+  input_proto.mutable_options()->mutable_protocol()->set_value(Protocol::HTTP2);
 
   absl::StatusOr<std::string> result_json = formatter.formatProto(input_proto);
   ASSERT_TRUE(result_json.status().ok());
@@ -298,7 +298,7 @@ TEST_F(MediumOutputCollectorTest,
       loadProtoFromFile("test/test_data/output_formatter.medium.proto.gold");
   FortioOutputFormatterImpl formatter;
 
-  input_proto.mutable_options()->mutable_upstream_protocol()->set_value(UpstreamProtocol::HTTP3);
+  input_proto.mutable_options()->mutable_protocol()->set_value(Protocol::HTTP3);
 
   absl::StatusOr<std::string> result_json = formatter.formatProto(input_proto);
   ASSERT_TRUE(result_json.status().ok());
@@ -317,7 +317,7 @@ TEST_F(MediumOutputCollectorTest, CalculatesNumThreadsForH3ThatUsesSingleStreamO
       loadProtoFromFile("test/test_data/output_formatter.medium.proto.gold");
   FortioOutputFormatterImpl formatter;
 
-  input_proto.mutable_options()->mutable_upstream_protocol()->set_value(UpstreamProtocol::HTTP3);
+  input_proto.mutable_options()->mutable_protocol()->set_value(Protocol::HTTP3);
   input_proto.mutable_options()->mutable_max_concurrent_streams()->set_value(1);
 
   absl::StatusOr<std::string> result_json = formatter.formatProto(input_proto);

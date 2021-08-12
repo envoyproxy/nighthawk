@@ -22,7 +22,7 @@
 namespace Nighthawk {
 namespace Client {
 
-using ::nighthawk::client::UpstreamProtocol;
+using ::nighthawk::client::Protocol;
 
 std::vector<std::string> OutputFormatterImpl::getLowerCaseOutputFormats() {
   const Envoy::Protobuf::EnumDescriptor* enum_descriptor =
@@ -264,10 +264,10 @@ FortioOutputFormatterImpl::durationToSeconds(const Envoy::ProtobufWkt::Duration&
 }
 
 // Returns true iff the options indicate that Nighthawk was using HTTP/2 or
-// HTTP/3 Quic as the upstream protocol.
+// HTTP/3 Quic as the protocol.
 bool isUsingH2OrH3(const nighthawk::client::CommandLineOptions& options) {
-  return options.h2().value() || options.upstream_protocol().value() == UpstreamProtocol::HTTP2 ||
-         options.upstream_protocol().value() == UpstreamProtocol::HTTP3;
+  return options.h2().value() || options.protocol().value() == Protocol::HTTP2 ||
+         options.protocol().value() == Protocol::HTTP3;
 }
 
 // Calculates the number of threads, i.e. the number of connections nighthawk
