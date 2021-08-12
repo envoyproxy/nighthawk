@@ -263,32 +263,6 @@ FortioOutputFormatterImpl::durationToSeconds(const Envoy::ProtobufWkt::Duration&
   return Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(duration) / 1e9;
 }
 
-// Returns true iff the options indicate that Nighthawk was using HTTP/2 or
-// HTTP/3 Quic as the protocol.
-bool isUsingH2OrH3(const nighthawk::client::CommandLineOptions& options) {
-  return options.h2().value() || options.protocol().value() == Protocol::HTTP2 ||
-         options.protocol().value() == Protocol::HTTP3;
-}
-
-// Calculates the number of threads, i.e. the number of connections nighthawk
-// was using when running with the specified number of workers and options.
-uint32_t calculateNumberOfThreads(uint32_t number_of_workers,
-                                  const nighthawk::client::CommandLineOptions& options) {
-  // The stock Envoy h2 pool doesn't offer support for multiple connections
-  // here. So we must ignore the connections setting when h2/h3 is enabled and
-  // the h2/h3-pool is allowed to send multiple streams over a single connection
-  // (i.e. it won't be using multiple connections).
-  // Also, the number of workers acts as a multiplier.
-  uint32_t number_of_connections = 0;
-  if (isUsingH2OrH3(options) && options.max_concurrent_streams().value() > 1) {
-    number_of_connections = 1;
-  } else {
-    number_of_connections = options.connections().value();
-  }
-
-  return number_of_connections * number_of_workers;
-}
-
 absl::StatusOr<std::string>
 FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
   nighthawk::client::FortioResult fortio_output;
@@ -321,7 +295,7 @@ FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) 
   fortio_output.set_runtype("HTTP");
 
   // This displays as "connections" in the UI, not threads.
-  fortio_output.set_numthreads(calculateNumberOfThreads(number_of_workers, output.options()));
+  fortio_output.set_numthreads(output.options().connections().value() * number_of_workers);
 
   // Get the result that represents all workers (global)
   absl::optional<const nighthawk::client::Result> nh_global_result_optional =
