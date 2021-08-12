@@ -50,7 +50,7 @@ BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
                                      std::make_unique<SinkableHdrStatistic>(scope, worker_id),
                                      std::make_unique<SinkableHdrStatistic>(scope, worker_id));
   auto benchmark_client = std::make_unique<BenchmarkClientHttpImpl>(
-      api, dispatcher, scope, statistic, options_.upstreamProtocol(), cluster_manager, http_tracer,
+      api, dispatcher, scope, statistic, options_.protocol(), cluster_manager, http_tracer,
       cluster_name, request_generator.get(), !options_.openLoop(),
       options_.responseHeaderWithLatencyInput());
   auto request_options = options_.toCommandLineOptions()->request_options();

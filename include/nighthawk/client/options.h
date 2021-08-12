@@ -37,9 +37,9 @@ public:
   // URI is absent when the user specified --multi-target-* instead.
   virtual absl::optional<std::string> uri() const PURE;
 
-  // The upstream protocol to encapsulate requests in.
+  // The protocol to encapsulate requests in.
   // Defaults to HTTP/1.1 if the user doesn't make an explicit selection.
-  virtual Envoy::Http::Protocol upstreamProtocol() const PURE;
+  virtual Envoy::Http::Protocol protocol() const PURE;
 
   virtual std::string concurrency() const PURE;
   virtual nighthawk::client::Verbosity::VerbosityOptions verbosity() const PURE;
