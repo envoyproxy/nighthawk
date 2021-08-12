@@ -317,14 +317,14 @@ void ProcessImpl::createBootstrapConfiguration(envoy::config::bootstrap::v3::Boo
       envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext context =
           options_.tlsContext();
       const std::string sni_host =
-          SniUtility::computeSniHost(uris, options_.requestHeaders(), options_.upstreamProtocol());
+          SniUtility::computeSniHost(uris, options_.requestHeaders(), options_.protocol());
       if (!sni_host.empty()) {
         *context.mutable_sni() = sni_host;
       }
       auto* common_tls_context = context.mutable_common_tls_context();
-      if (options_.upstreamProtocol() == Envoy::Http::Protocol::Http2) {
+      if (options_.protocol() == Envoy::Http::Protocol::Http2) {
         common_tls_context->add_alpn_protocols("h2");
-      } else if (options_.upstreamProtocol() == Envoy::Http::Protocol::Http3) {
+      } else if (options_.protocol() == Envoy::Http::Protocol::Http3) {
         throw NighthawkException("HTTP/3 Quic support isn't implemented yet.");
       } else {
         common_tls_context->add_alpn_protocols("http/1.1");
@@ -337,7 +337,7 @@ void ProcessImpl::createBootstrapConfiguration(envoy::config::bootstrap::v3::Boo
     cluster->set_name(fmt::format("{}", i));
     cluster->mutable_connect_timeout()->set_seconds(options_.timeout().count());
     cluster->mutable_max_requests_per_connection()->set_value(options_.maxRequestsPerConnection());
-    if (options_.upstreamProtocol() == Envoy::Http::Protocol::Http2) {
+    if (options_.protocol() == Envoy::Http::Protocol::Http2) {
       auto* cluster_http2_protocol_options = cluster->mutable_http2_protocol_options();
       cluster_http2_protocol_options->mutable_max_concurrent_streams()->set_value(
           options_.maxConcurrentStreams());

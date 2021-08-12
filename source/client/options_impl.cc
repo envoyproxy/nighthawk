@@ -18,7 +18,7 @@
 namespace Nighthawk {
 namespace Client {
 
-using ::nighthawk::client::UpstreamProtocol;
+using ::nighthawk::client::Protocol;
 
 #define TCLAP_SET_IF_SPECIFIED(command, value_member)                                              \
   ((value_member) = (((command).isSet()) ? ((command).getValue()) : (value_member)))
@@ -60,21 +60,20 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
 
   TCLAP::SwitchArg h2(
       "", "h2",
-      "DEPRECATED, use --upstream-protocol instead. Encapsulate requests in HTTP/2. Mutually "
-      "exclusive with --upstream-protocol. Requests are encapsulated in HTTP/1 by default when "
-      "neither of --h2 or --upstream-protocol is used.",
+      "DEPRECATED, use --protocol instead. Encapsulate requests in HTTP/2. Mutually "
+      "exclusive with --protocol. Requests are encapsulated in HTTP/1 by default when "
+      "neither of --h2 or --protocol is used.",
       cmd);
-  std::vector<std::string> upstream_protocols = {"http1", "http2", "http3"};
-  TCLAP::ValuesConstraint<std::string> upstream_protocols_allowed(upstream_protocols);
-  TCLAP::ValueArg<std::string> upstream_protocol(
-      "p", "upstream-protocol",
+  std::vector<std::string> protocols = {"http1", "http2", "http3"};
+  TCLAP::ValuesConstraint<std::string> protocols_allowed(protocols);
+  TCLAP::ValueArg<std::string> protocol(
+      "p", "protocol",
       fmt::format(
           "The protocol to encapsulate requests in. Possible values: [http1, http2, "
           "http3]. The default protocol is '{}' when neither of --h2 or "
-          "--upstream-protocol is used. Mutually exclusive with --h2.",
-          absl::AsciiStrToLower(nighthawk::client::UpstreamProtocol_UpstreamProtocolOptions_Name(
-              upstream_protocol_))),
-      false, "", &upstream_protocols_allowed, cmd);
+          "--protocol is used. Mutually exclusive with --h2.",
+          absl::AsciiStrToLower(nighthawk::client::Protocol_ProtocolOptions_Name(protocol_))),
+      false, "", &protocols_allowed, cmd);
 
   TCLAP::ValueArg<std::string> concurrency(
       "", "concurrency",
@@ -368,22 +367,21 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
     uri_ = uri.getValue();
   }
 
-  if (h2.isSet() && upstream_protocol.isSet()) {
-    throw MalformedArgvException("--h2 and --upstream-protocol are mutually exclusive");
+  if (h2.isSet() && protocol.isSet()) {
+    throw MalformedArgvException("--h2 and --protocol are mutually exclusive");
   }
   if (h2.isSet()) {
-    ENVOY_LOG(warn, "--h2 is deprecated, use --upstream-protocol http2 instead.");
+    ENVOY_LOG(warn, "--h2 is deprecated, use --protocol http2 instead.");
   }
   TCLAP_SET_IF_SPECIFIED(h2, h2_);
 
   TCLAP_SET_IF_SPECIFIED(concurrency, concurrency_);
   // TODO(oschaaf): is there a generic way to set these enum values?
-  if (upstream_protocol.isSet()) {
-    std::string upper_cased = upstream_protocol.getValue();
+  if (protocol.isSet()) {
+    std::string upper_cased = protocol.getValue();
     absl::AsciiStrToUpper(&upper_cased);
-    RELEASE_ASSERT(nighthawk::client::UpstreamProtocol::UpstreamProtocolOptions_Parse(
-                       upper_cased, &upstream_protocol_),
-                   "Failed to parse upstream-protocol");
+    RELEASE_ASSERT(nighthawk::client::Protocol::ProtocolOptions_Parse(upper_cased, &protocol_),
+                   "Failed to parse protocol");
   }
   if (verbosity.isSet()) {
     std::string upper_cased = verbosity.getValue();
@@ -573,10 +571,10 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   validate();
 }
 
-Envoy::Http::Protocol OptionsImpl::upstreamProtocol() const {
-  if (h2_ || upstream_protocol_ == UpstreamProtocol::HTTP2) {
+Envoy::Http::Protocol OptionsImpl::protocol() const {
+  if (h2_ || protocol_ == Protocol::HTTP2) {
     return Envoy::Http::Protocol::Http2;
-  } else if (upstream_protocol_ == UpstreamProtocol::HTTP3) {
+  } else if (protocol_ == Protocol::HTTP3) {
     return Envoy::Http::Protocol::Http3;
   } else {
     return Envoy::Http::Protocol::Http11;
@@ -631,8 +629,7 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   }
 
   h2_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, h2, h2_);
-  upstream_protocol_ =
-      PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, upstream_protocol, upstream_protocol_);
+  protocol_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, protocol, protocol_);
 
   concurrency_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, concurrency, concurrency_);
   verbosity_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, verbosity, verbosity_);
@@ -818,7 +815,7 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
   if (h2_) {
     command_line_options->mutable_h2()->set_value(h2_);
   } else {
-    command_line_options->mutable_upstream_protocol()->set_value(upstream_protocol_);
+    command_line_options->mutable_protocol()->set_value(protocol_);
   }
 
   if (uri_.has_value()) {
