@@ -218,7 +218,7 @@ TEST_F(MediumOutputCollectorTest, FortioFormatter0sJitterUniformGetsReflected) {
             std::string::npos);
 }
 
-TEST_F(MediumOutputCollectorTest, CalculatesNumThreadsForH1) {
+TEST_F(MediumOutputCollectorTest, CalculatesNumThreads) {
   nighthawk::client::Output input_proto =
       loadProtoFromFile("test/test_data/output_formatter.medium.proto.gold");
   FortioOutputFormatterImpl formatter;
@@ -229,105 +229,6 @@ TEST_F(MediumOutputCollectorTest, CalculatesNumThreadsForH1) {
   Envoy::MessageUtil::loadFromJson(*result_json, result,
                                    Envoy::ProtobufMessage::getStrictValidationVisitor());
 
-  // Expect 300 threads (3 workers * 100 connections).
-  EXPECT_EQ(300, result.numthreads());
-}
-
-TEST_F(MediumOutputCollectorTest,
-       CalculatesNumThreadsForH2ThatCanUseMultipleStreamsOverConnection) {
-  nighthawk::client::Output input_proto =
-      loadProtoFromFile("test/test_data/output_formatter.medium.proto.gold");
-  FortioOutputFormatterImpl formatter;
-
-  input_proto.mutable_options()->mutable_h2()->set_value(true);
-
-  absl::StatusOr<std::string> result_json = formatter.formatProto(input_proto);
-  ASSERT_TRUE(result_json.status().ok());
-  nighthawk::client::FortioResult result;
-  Envoy::MessageUtil::loadFromJson(*result_json, result,
-                                   Envoy::ProtobufMessage::getStrictValidationVisitor());
-
-  // When H2 is allowed to use multiple streams over each connection, it is
-  // assumed it will only use one connection per worker.
-  // Expect 3 threads (3 workers * 1 connection).
-  EXPECT_EQ(3, result.numthreads());
-}
-
-TEST_F(MediumOutputCollectorTest, CalculatesNumThreadsForH2ThatUsesSingleStreamOverEachConnection) {
-  nighthawk::client::Output input_proto =
-      loadProtoFromFile("test/test_data/output_formatter.medium.proto.gold");
-  FortioOutputFormatterImpl formatter;
-
-  input_proto.mutable_options()->mutable_h2()->set_value(true);
-  input_proto.mutable_options()->mutable_max_concurrent_streams()->set_value(1);
-
-  absl::StatusOr<std::string> result_json = formatter.formatProto(input_proto);
-  ASSERT_TRUE(result_json.status().ok());
-  nighthawk::client::FortioResult result;
-  Envoy::MessageUtil::loadFromJson(*result_json, result,
-                                   Envoy::ProtobufMessage::getStrictValidationVisitor());
-
-  // When H2 is limited to a single stream per connection, it will behave like
-  // H1.
-  // Expect 300 threads (3 workers * 100 connections).
-  EXPECT_EQ(300, result.numthreads());
-}
-
-TEST_F(MediumOutputCollectorTest, CalculatesNumThreadsForH2SetViaProtocol) {
-  nighthawk::client::Output input_proto =
-      loadProtoFromFile("test/test_data/output_formatter.medium.proto.gold");
-  FortioOutputFormatterImpl formatter;
-
-  input_proto.mutable_options()->mutable_protocol()->set_value(Protocol::HTTP2);
-
-  absl::StatusOr<std::string> result_json = formatter.formatProto(input_proto);
-  ASSERT_TRUE(result_json.status().ok());
-  nighthawk::client::FortioResult result;
-  Envoy::MessageUtil::loadFromJson(*result_json, result,
-                                   Envoy::ProtobufMessage::getStrictValidationVisitor());
-
-  // When H2 is allowed to use multiple streams over each connection, it is
-  // assumed it will only use one connection per worker.
-  // Expect 3 threads (3 workers * 1 connection).
-  EXPECT_EQ(3, result.numthreads());
-}
-
-TEST_F(MediumOutputCollectorTest,
-       CalculatesNumThreadsForH3ThatCanUseMultipleStreamsOverConnection) {
-  nighthawk::client::Output input_proto =
-      loadProtoFromFile("test/test_data/output_formatter.medium.proto.gold");
-  FortioOutputFormatterImpl formatter;
-
-  input_proto.mutable_options()->mutable_protocol()->set_value(Protocol::HTTP3);
-
-  absl::StatusOr<std::string> result_json = formatter.formatProto(input_proto);
-  ASSERT_TRUE(result_json.status().ok());
-  nighthawk::client::FortioResult result;
-  Envoy::MessageUtil::loadFromJson(*result_json, result,
-                                   Envoy::ProtobufMessage::getStrictValidationVisitor());
-
-  // When H3 is allowed to use multiple streams over each connection, it is
-  // assumed it will only use one connection per worker.
-  // Expect 3 threads (3 workers * 1 connection).
-  EXPECT_EQ(3, result.numthreads());
-}
-
-TEST_F(MediumOutputCollectorTest, CalculatesNumThreadsForH3ThatUsesSingleStreamOverEachConnection) {
-  nighthawk::client::Output input_proto =
-      loadProtoFromFile("test/test_data/output_formatter.medium.proto.gold");
-  FortioOutputFormatterImpl formatter;
-
-  input_proto.mutable_options()->mutable_protocol()->set_value(Protocol::HTTP3);
-  input_proto.mutable_options()->mutable_max_concurrent_streams()->set_value(1);
-
-  absl::StatusOr<std::string> result_json = formatter.formatProto(input_proto);
-  ASSERT_TRUE(result_json.status().ok());
-  nighthawk::client::FortioResult result;
-  Envoy::MessageUtil::loadFromJson(*result_json, result,
-                                   Envoy::ProtobufMessage::getStrictValidationVisitor());
-
-  // When H3 is limited to a single stream per connection, it will behave like
-  // H1.
   // Expect 300 threads (3 workers * 100 connections).
   EXPECT_EQ(300, result.numthreads());
 }
