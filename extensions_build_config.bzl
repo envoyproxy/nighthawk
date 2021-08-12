@@ -6,6 +6,7 @@ EXTENSIONS = {
     "envoy.filters.network.http_connection_manager": "//source/extensions/filters/network/http_connection_manager:config",
     "envoy.tracers.zipkin": "//source/extensions/tracers/zipkin:config",
     "envoy.transport_sockets.raw_buffer": "//source/extensions/transport_sockets/raw_buffer:config",
+    "envoy.access_loggers.file": "//source/extensions/access_loggers/file:config",
 }
 
 DISABLED_BY_DEFAULT_EXTENSIONS = {
