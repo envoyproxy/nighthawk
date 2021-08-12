@@ -371,6 +371,9 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   if (h2.isSet() && upstream_protocol.isSet()) {
     throw MalformedArgvException("--h2 and --upstream-protocol are mutually exclusive");
   }
+  if (h2.isSet()) {
+    ENVOY_LOG(warn, "--h2 is deprecated, use --upstream-protocol http2 instead.");
+  }
   TCLAP_SET_IF_SPECIFIED(h2, h2_);
 
   TCLAP_SET_IF_SPECIFIED(concurrency, concurrency_);
