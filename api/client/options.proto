@@ -112,6 +112,11 @@ message UpstreamProtocol {
     // Encapsulate requests in HTTP/2.
     HTTP2 = 1;
     // Encapsulate requests in HTTP/3 Quic.
+    //
+    // Note that certificate verification for HTTP/3 Quic connections currently
+    // cannot be skipped, make sure to include a host or an authority header
+    // that will pass the SAN/SNI verification.
+    // See https://github.com/envoyproxy/nighthawk/issues/727.
     HTTP3 = 2;
   }
 
