@@ -159,6 +159,7 @@ private:
   Envoy::ThreadLocal::InstanceImpl tls_;
   Envoy::Stats::ThreadLocalStoreImpl store_root_;
   Envoy::Quic::QuicStatNames quic_stat_names_;
+  envoy::config::bootstrap::v3::Bootstrap bootstrap_;
   Envoy::Api::ApiPtr api_;
   Envoy::Event::DispatcherPtr dispatcher_;
   std::vector<ClientWorkerPtr> workers_;
