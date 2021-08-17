@@ -22,6 +22,11 @@ public:
   // large values. We just cap values, hoping we catch accidental wraparound to a reasonable extent.
   static constexpr uint32_t largest_acceptable_uint32_option_value = UINT32_MAX - 30000;
 
+  // The largest acceptable value for the maxConcurrentStreams() option.
+  // Source:
+  // https://github.com/envoyproxy/envoy/blob/70aa8c8f0af949ee1fe965b0a826c9a3e2c634f0/api/envoy/config/core/v3/protocol.proto#L304-L316
+  static constexpr uint32_t largest_acceptable_concurrent_streams_value = 2147483647;
+
   OptionsImpl(int argc, const char* const* argv);
   OptionsImpl(const nighthawk::client::CommandLineOptions& options);
   Client::CommandLineOptionsPtr toCommandLineOptions() const override;
@@ -31,7 +36,7 @@ public:
   std::chrono::seconds duration() const override { return std::chrono::seconds(duration_); }
   std::chrono::seconds timeout() const override { return std::chrono::seconds(timeout_); }
   absl::optional<std::string> uri() const override { return uri_; }
-  bool h2() const override { return h2_; }
+  Envoy::Http::Protocol protocol() const override;
   std::string concurrency() const override { return concurrency_; }
   nighthawk::client::Verbosity::VerbosityOptions verbosity() const override { return verbosity_; };
   nighthawk::client::OutputFormat::OutputFormatOptions outputFormat() const override {
@@ -55,6 +60,7 @@ public:
   uint32_t maxPendingRequests() const override { return max_pending_requests_; }
   uint32_t maxActiveRequests() const override { return max_active_requests_; }
   uint32_t maxRequestsPerConnection() const override { return max_requests_per_connection_; }
+  uint32_t maxConcurrentStreams() const override { return max_concurrent_streams_; }
   nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions
   sequencerIdleStrategy() const override {
     return sequencer_idle_strategy_;
@@ -76,7 +82,6 @@ public:
 
   std::chrono::nanoseconds jitterUniform() const override { return jitter_uniform_; }
   std::string nighthawkService() const override { return nighthawk_service_; }
-  bool h2UseMultipleConnections() const override { return h2_use_multiple_connections_; }
   std::vector<std::string> labels() const override { return labels_; };
 
   std::vector<nighthawk::client::MultiTarget::Endpoint> multiTargetEndpoints() const override {
@@ -115,7 +120,8 @@ private:
   uint32_t duration_{5};
   uint32_t timeout_{30};
   absl::optional<std::string> uri_;
-  bool h2_{false};
+  bool h2_{false}; // Deprecated.
+  nighthawk::client::Protocol::ProtocolOptions protocol_{nighthawk::client::Protocol::HTTP1};
   std::string concurrency_;
   nighthawk::client::Verbosity::VerbosityOptions verbosity_{nighthawk::client::Verbosity::WARN};
   nighthawk::client::OutputFormat::OutputFormatOptions output_format_{
@@ -137,6 +143,7 @@ private:
   // https://tools.ietf.org/html/rfc7540#section-6.5.2
   uint32_t max_active_requests_{100};
   uint32_t max_requests_per_connection_{largest_acceptable_uint32_option_value};
+  uint32_t max_concurrent_streams_{largest_acceptable_concurrent_streams_value};
   nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions sequencer_idle_strategy_{
       nighthawk::client::SequencerIdleStrategy::SPIN};
   std::string request_source_;
@@ -148,7 +155,7 @@ private:
   bool open_loop_{false};
   std::chrono::nanoseconds jitter_uniform_;
   std::string nighthawk_service_;
-  bool h2_use_multiple_connections_{false};
+  bool h2_use_multiple_connections_{false}; // Deprecated.
   std::vector<nighthawk::client::MultiTarget::Endpoint> multi_target_endpoints_;
   std::string multi_target_path_;
   bool multi_target_use_https_{false};

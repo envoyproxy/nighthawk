@@ -117,9 +117,29 @@ message ExecutionConfiguration {
   repeated envoy.config.core.v3.Address addresses = 1;
 }
 
+message Protocol {
+  enum ProtocolOptions {
+    // Encapsulate requests in HTTP/1.
+    // This is the default option.
+    HTTP1 = 0;
+    // Encapsulate requests in HTTP/2.
+    HTTP2 = 1;
+    // Encapsulate requests in HTTP/3 Quic.
+    //
+    // Note that certificate verification for HTTP/3 Quic connections currently
+    // cannot be skipped, make sure to include a host or an authority header
+    // that will pass the SAN/SNI verification.
+    // See https://github.com/envoyproxy/nighthawk/issues/727.
+    HTTP3 = 2;
+  }
+
+  // The protocol to encapsulate requests in.
+  ProtocolOptions value = 1;
+}
+
 // TODO(oschaaf): Ultimately this will be a load test specification. The fact that it
 // can arrive via CLI is just a concrete detail. Change this to reflect that.
-// highest unused number is 110
+// highest unused number is 113
 message CommandLineOptions {
   // The target requests-per-second rate. Default: 5.
   google.protobuf.UInt32Value requests_per_second = 1
@@ -134,8 +154,18 @@ message CommandLineOptions {
   }
   // Connection connect timeout period in seconds. Default: 30.
   google.protobuf.Duration timeout = 4 [(validate.rules).duration.gte.seconds = 0];
-  // Use HTTP/2
-  google.protobuf.BoolValue h2 = 5;
+
+  // The protocol to use when encapsulating requests.
+  // Defaults to HTTP/1 if no value is selected.
+  oneof oneof_protocol {
+    // Use HTTP/2 protocol.
+    // This option is deprecated, set the protocol option instead.
+    google.protobuf.BoolValue h2 = 5 [deprecated = true];
+
+    // The protocol to use when encapsulating requests.
+    Protocol protocol = 107;
+  }
+
   // The number of concurrent event loops that should be used. Specify 'auto' to let
   // Nighthawk leverage all vCPUs that have affinity to the Nighthawk process. Note that
   // increasing this results in an effective load multiplier combined with the configured
@@ -174,7 +204,8 @@ message CommandLineOptions {
   // Max pending requests (default: 0, no client side queuing. Specifying any other value will allow
   // client-side queuing of requests).
   google.protobuf.UInt32Value max_pending_requests = 14;
-  // The maximum allowed number of concurrently active requests. HTTP/2 only. (default: 100).
+  // The maximum allowed number of concurrently active requests.
+  // HTTP/2 and HTTP/3 only, does not apply to HTTP/1. (default: 100).
   google.protobuf.UInt32Value max_active_requests = 15 [(validate.rules).uint32 = {gte: 1}];
   // Max requests per connection (default: 4294937295).
   google.protobuf.UInt32Value max_requests_per_connection = 16 [(validate.rules).uint32 = {gte: 1}];
@@ -209,12 +240,24 @@ message CommandLineOptions {
   google.protobuf.Duration jitter_uniform = 25 [(validate.rules).duration.gte.nanos = 0];
   // Nighthawk service uri for running CLI in remote host mode. Example: grpc://localhost:8843/.
   // Default is empty.
-  // NOTE: not relevant to gRPC service
-  // NOTE: deprecated, favor execution_services below instead.
+  // DO NOT USE: This option is deprecated, favor execution_services below instead.
   google.protobuf.StringValue nighthawk_service = 31 [deprecated = true];
-  // Use experimental HTTP/2 pool which will use multiple connections.
-  // WARNING: feature may be removed or changed in the future!
-  google.protobuf.BoolValue experimental_h2_use_multiple_connections = 30;
+  // DO NOT USE: This options is deprecated, if this behavior is desired, set
+  // max_concurrent_streams to one instead.
+  google.protobuf.BoolValue experimental_h2_use_multiple_connections = 30 [deprecated = true];
+  // The maximum concurrent streams allowed on one HTTP/2 or HTTP/3 connection.
+  //
+  // Does not apply to HTTP/1.
+  // See https://httpwg.org/specs/rfc7540.html#rfc.section.5.1.2 for more
+  // details.
+  //
+  // This limits how many streams Nighthawk will initiate concurrently on a
+  // single connection. If the limit is reached, Nighthawk may queue requests or
+  // use additional connections depending on the other configuration values.
+  // E.g. setting this to 1 makes Nighthawk use a new connection for each
+  // request. (default: 2147483647).
+  google.protobuf.UInt32Value max_concurrent_streams = 108
+      [(validate.rules).uint32 = {lte: 2147483647 gte: 1}];
   // Label. Allows specifying multiple labels which will be persisted in structured output formats.
   repeated string labels = 28;
   // TransportSocket configuration to use in every request
@@ -248,10 +291,10 @@ message CommandLineOptions {
   // Specify the address of a sink to have load testing client(s) submit their results to it.
   // When specified, an empty result will be returned immediately, and clients are expected to
   // follow up with a distinct query to the sink later on to obtain results.
-  SinkConfiguration sink = 107;
+  SinkConfiguration sink = 110;
   // Specify a distributor service that will in turn delegate handlingone or more nighthawk service
   // gRPC instances.
-  DistributorConfiguration distributor = 108;
+  DistributorConfiguration distributor = 111;
   //
-  ExecutionConfiguration services = 109;
+  ExecutionConfiguration services = 112;
 }

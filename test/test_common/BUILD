@@ -18,3 +18,13 @@ envoy_cc_test_library(
         "@envoy//test/test_common:environment_lib",
     ],
 )
+
+envoy_cc_test_library(
+    name = "proto_matchers",
+    srcs = ["proto_matchers.cc"],
+    hdrs = ["proto_matchers.h"],
+    repository = "@envoy",
+    deps = [
+        "@envoy//test/test_common:utility_lib",
+    ],
+)

@@ -179,8 +179,8 @@ public:
   // verifyBenchmarkClientProcessesExpectedInflightRequests.
   void setupBenchmarkClient(const RequestGenerator& request_generator) {
     client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
-        *api_, *dispatcher_, store_, statistic_, /*use_h2*/ false, cluster_manager_, http_tracer_,
-        "benchmark", request_generator, /*provide_resource_backpressure*/ true,
+        *api_, *dispatcher_, store_, statistic_, Envoy::Http::Protocol::Http11, cluster_manager_,
+        http_tracer_, "benchmark", request_generator, /*provide_resource_backpressure*/ true,
         /*response_header_with_latency_input=*/"");
   }
 
@@ -435,7 +435,7 @@ TEST_F(BenchmarkClientHttpTest, DrainTimeoutFires) {
             return nullptr;
           });
   EXPECT_CALL(pool_, hasActiveConnections()).WillOnce([]() -> bool { return true; });
-  EXPECT_CALL(pool_, addDrainedCallback(_));
+  EXPECT_CALL(pool_, addIdleCallback(_));
   // We don't expect the callback that we pass here to fire.
   client_->tryStartRequest([](bool, bool) { EXPECT_TRUE(false); });
   // To get past this, the drain timeout within the benchmark client must execute.
