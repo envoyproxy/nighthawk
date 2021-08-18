@@ -232,74 +232,74 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH1WithMultipleTarget
       "www.example2.org:80 --multi-target-path /");
 
   absl::StatusOr<Bootstrap> expected_bootstrap = parseBootstrapFromText(R"pb(
-     static_resources {
-       clusters {
-         name: "0"
-         type: STATIC
-         connect_timeout {
-           seconds: 30
-         }
-         circuit_breakers {
-           thresholds {
-             max_connections {
-               value: 100
-             }
-             max_pending_requests {
-               value: 1
-             }
-             max_requests {
-               value: 100
-             }
-             max_retries {
-             }
-           }
-         }
-         load_assignment {
-           cluster_name: "0"
-           endpoints {
-             lb_endpoints {
-               endpoint {
-                 address {
-                   socket_address {
-                     address: "127.0.0.1"
-                     port_value: 80
-                   }
-                 }
-               }
-             }
-             lb_endpoints {
-               endpoint {
-                 address {
-                   socket_address {
-                     address: "127.0.0.1"
-                     port_value: 80
-                   }
-                 }
-               }
-             }
-           }
-         }
-         typed_extension_protocol_options {
-           key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
-           value {
-             [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
-               common_http_protocol_options {
-                 max_requests_per_connection {
-                   value: 4294937295
-                 }
-               }
-               explicit_http_config {
-                 http_protocol_options {
-                 }
-               }
-             }
-           }
-         }
-       }
-     }
-     stats_flush_interval {
-       seconds: 5
-     }
+    static_resources {
+      clusters {
+        name: "0"
+        type: STATIC
+        connect_timeout {
+          seconds: 30
+        }
+        circuit_breakers {
+          thresholds {
+            max_connections {
+              value: 100
+            }
+            max_pending_requests {
+              value: 1
+            }
+            max_requests {
+              value: 100
+            }
+            max_retries {
+            }
+          }
+        }
+        load_assignment {
+          cluster_name: "0"
+          endpoints {
+            lb_endpoints {
+              endpoint {
+                address {
+                  socket_address {
+                    address: "127.0.0.1"
+                    port_value: 80
+                  }
+                }
+              }
+            }
+            lb_endpoints {
+              endpoint {
+                address {
+                  socket_address {
+                    address: "127.0.0.1"
+                    port_value: 80
+                  }
+                }
+              }
+            }
+          }
+        }
+        typed_extension_protocol_options {
+          key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
+          value {
+            [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
+              common_http_protocol_options {
+                max_requests_per_connection {
+                  value: 4294937295
+                }
+              }
+              explicit_http_config {
+                http_protocol_options {
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    stats_flush_interval {
+      seconds: 5
+    }
    )pb");
   ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
 
@@ -319,75 +319,75 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH1WithTls) {
       Client::TestUtility::createOptionsImpl("nighthawk_client https://www.example.org");
 
   absl::StatusOr<Bootstrap> expected_bootstrap = parseBootstrapFromText(R"pb(
-     static_resources {
-       clusters {
-         name: "0"
-         type: STATIC
-         connect_timeout {
-           seconds: 30
-         }
-         circuit_breakers {
-           thresholds {
-             max_connections {
-               value: 100
-             }
-             max_pending_requests {
-               value: 1
-             }
-             max_requests {
-               value: 100
-             }
-             max_retries {
-             }
-           }
-         }
-         transport_socket {
-           name: "envoy.transport_sockets.tls"
-           typed_config {
-             [type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext] {
-               common_tls_context {
-                 alpn_protocols: "http/1.1"
-               }
-               sni: "www.example.org"
-             }
-           }
-         }
-         load_assignment {
-           cluster_name: "0"
-           endpoints {
-             lb_endpoints {
-               endpoint {
-                 address {
-                   socket_address {
-                     address: "127.0.0.1"
-                     port_value: 443
-                   }
-                 }
-               }
-             }
-           }
-         }
-         typed_extension_protocol_options {
-           key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
-           value {
-             [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
-               common_http_protocol_options {
-                 max_requests_per_connection {
-                   value: 4294937295
-                 }
-               }
-               explicit_http_config {
-                 http_protocol_options {
-                 }
-               }
-             }
-           }
-         }
-       }
-     }
-     stats_flush_interval {
-       seconds: 5
-     }
+    static_resources {
+      clusters {
+        name: "0"
+        type: STATIC
+        connect_timeout {
+          seconds: 30
+        }
+        circuit_breakers {
+          thresholds {
+            max_connections {
+              value: 100
+            }
+            max_pending_requests {
+              value: 1
+            }
+            max_requests {
+              value: 100
+            }
+            max_retries {
+            }
+          }
+        }
+        transport_socket {
+          name: "envoy.transport_sockets.tls"
+          typed_config {
+            [type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext] {
+              common_tls_context {
+                alpn_protocols: "http/1.1"
+              }
+              sni: "www.example.org"
+            }
+          }
+        }
+        load_assignment {
+          cluster_name: "0"
+          endpoints {
+            lb_endpoints {
+              endpoint {
+                address {
+                  socket_address {
+                    address: "127.0.0.1"
+                    port_value: 443
+                  }
+                }
+              }
+            }
+          }
+        }
+        typed_extension_protocol_options {
+          key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
+          value {
+            [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
+              common_http_protocol_options {
+                max_requests_per_connection {
+                  value: 4294937295
+                }
+              }
+              explicit_http_config {
+                http_protocol_options {
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    stats_flush_interval {
+      seconds: 5
+    }
    )pb");
   ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
 
@@ -407,117 +407,117 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH1AndMultipleWorkers
       Client::TestUtility::createOptionsImpl("nighthawk_client http://www.example.org");
 
   absl::StatusOr<Bootstrap> expected_bootstrap = parseBootstrapFromText(R"pb(
-     static_resources {
-       clusters {
-         name: "0"
-         type: STATIC
-         connect_timeout {
-           seconds: 30
-         }
-         circuit_breakers {
-           thresholds {
-             max_connections {
-               value: 100
-             }
-             max_pending_requests {
-               value: 1
-             }
-             max_requests {
-               value: 100
-             }
-             max_retries {
-             }
-           }
-         }
-         load_assignment {
-           cluster_name: "0"
-           endpoints {
-             lb_endpoints {
-               endpoint {
-                 address {
-                   socket_address {
-                     address: "127.0.0.1"
-                     port_value: 80
-                   }
-                 }
-               }
-             }
-           }
-         }
-         typed_extension_protocol_options {
-           key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
-           value {
-             [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
-               common_http_protocol_options {
-                 max_requests_per_connection {
-                   value: 4294937295
-                 }
-               }
-               explicit_http_config {
-                 http_protocol_options {
-                 }
-               }
-             }
-           }
-         }
-       }
-       clusters {
-         name: "1"
-         type: STATIC
-         connect_timeout {
-           seconds: 30
-         }
-         circuit_breakers {
-           thresholds {
-             max_connections {
-               value: 100
-             }
-             max_pending_requests {
-               value: 1
-             }
-             max_requests {
-               value: 100
-             }
-             max_retries {
-             }
-           }
-         }
-         load_assignment {
-           cluster_name: "1"
-           endpoints {
-             lb_endpoints {
-               endpoint {
-                 address {
-                   socket_address {
-                     address: "127.0.0.1"
-                     port_value: 80
-                   }
-                 }
-               }
-             }
-           }
-         }
-         typed_extension_protocol_options {
-           key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
-           value {
-             [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
-               common_http_protocol_options {
-                 max_requests_per_connection {
-                   value: 4294937295
-                 }
-               }
-               explicit_http_config {
-                 http_protocol_options {
-                 }
-               }
-             }
-           }
-         }
-       }
-     }
-     stats_flush_interval {
-       seconds: 5
-     }
+    static_resources {
+      clusters {
+        name: "0"
+        type: STATIC
+        connect_timeout {
+          seconds: 30
+        }
+        circuit_breakers {
+          thresholds {
+            max_connections {
+              value: 100
+            }
+            max_pending_requests {
+              value: 1
+            }
+            max_requests {
+              value: 100
+            }
+            max_retries {
+            }
+          }
+        }
+        load_assignment {
+          cluster_name: "0"
+          endpoints {
+            lb_endpoints {
+              endpoint {
+                address {
+                  socket_address {
+                    address: "127.0.0.1"
+                    port_value: 80
+                  }
+                }
+              }
+            }
+          }
+        }
+        typed_extension_protocol_options {
+          key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
+          value {
+            [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
+              common_http_protocol_options {
+                max_requests_per_connection {
+                  value: 4294937295
+                }
+              }
+              explicit_http_config {
+                http_protocol_options {
+                }
+              }
+            }
+          }
+        }
+      }
+      clusters {
+        name: "1"
+        type: STATIC
+        connect_timeout {
+          seconds: 30
+        }
+        circuit_breakers {
+          thresholds {
+            max_connections {
+              value: 100
+            }
+            max_pending_requests {
+              value: 1
+            }
+            max_requests {
+              value: 100
+            }
+            max_retries {
+            }
+          }
+        }
+        load_assignment {
+          cluster_name: "1"
+          endpoints {
+            lb_endpoints {
+              endpoint {
+                address {
+                  socket_address {
+                    address: "127.0.0.1"
+                    port_value: 80
+                  }
+                }
+              }
+            }
+          }
+        }
+        typed_extension_protocol_options {
+          key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
+          value {
+            [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
+              common_http_protocol_options {
+                max_requests_per_connection {
+                  value: 4294937295
+                }
+              }
+              explicit_http_config {
+                http_protocol_options {
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    stats_flush_interval {
+      seconds: 5
+    }
    )pb");
   ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
 
@@ -537,67 +537,67 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH2) {
       Client::TestUtility::createOptionsImpl("nighthawk_client --h2 http://www.example.org");
 
   absl::StatusOr<Bootstrap> expected_bootstrap = parseBootstrapFromText(R"pb(
-     static_resources {
-       clusters {
-         name: "0"
-         type: STATIC
-         connect_timeout {
-           seconds: 30
-         }
-         circuit_breakers {
-           thresholds {
-             max_connections {
-               value: 100
-             }
-             max_pending_requests {
-               value: 1
-             }
-             max_requests {
-               value: 100
-             }
-             max_retries {
-             }
-           }
-         }
-         load_assignment {
-           cluster_name: "0"
-           endpoints {
-             lb_endpoints {
-               endpoint {
-                 address {
-                   socket_address {
-                     address: "127.0.0.1"
-                     port_value: 80
-                   }
-                 }
-               }
-             }
-           }
-         }
-         typed_extension_protocol_options {
-           key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
-           value {
-             [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
-               common_http_protocol_options {
-                 max_requests_per_connection {
-                   value: 4294937295
-                 }
-               }
-               explicit_http_config {
-                 http2_protocol_options {
-                   max_concurrent_streams {
-                     value: 2147483647
-                   }
-                 }
-               }
-             }
-           }
-         }
-       }
-     }
-     stats_flush_interval {
-       seconds: 5
-     }
+    static_resources {
+      clusters {
+        name: "0"
+        type: STATIC
+        connect_timeout {
+          seconds: 30
+        }
+        circuit_breakers {
+          thresholds {
+            max_connections {
+              value: 100
+            }
+            max_pending_requests {
+              value: 1
+            }
+            max_requests {
+              value: 100
+            }
+            max_retries {
+            }
+          }
+        }
+        load_assignment {
+          cluster_name: "0"
+          endpoints {
+            lb_endpoints {
+              endpoint {
+                address {
+                  socket_address {
+                    address: "127.0.0.1"
+                    port_value: 80
+                  }
+                }
+              }
+            }
+          }
+        }
+        typed_extension_protocol_options {
+          key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
+          value {
+            [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
+              common_http_protocol_options {
+                max_requests_per_connection {
+                  value: 4294937295
+                }
+              }
+              explicit_http_config {
+                http2_protocol_options {
+                  max_concurrent_streams {
+                    value: 2147483647
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    stats_flush_interval {
+      seconds: 5
+    }
    )pb");
   ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
 
@@ -617,78 +617,78 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH2WithTls) {
       Client::TestUtility::createOptionsImpl("nighthawk_client --h2 https://www.example.org");
 
   absl::StatusOr<Bootstrap> expected_bootstrap = parseBootstrapFromText(R"pb(
-     static_resources {
-       clusters {
-         name: "0"
-         type: STATIC
-         connect_timeout {
-           seconds: 30
-         }
-         circuit_breakers {
-           thresholds {
-             max_connections {
-               value: 100
-             }
-             max_pending_requests {
-               value: 1
-             }
-             max_requests {
-               value: 100
-             }
-             max_retries {
-             }
-           }
-         }
-         transport_socket {
-           name: "envoy.transport_sockets.tls"
-           typed_config {
-             [type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext] {
-               common_tls_context {
-                 alpn_protocols: "h2"
-               }
-               sni: "www.example.org"
-             }
-           }
-         }
-         load_assignment {
-           cluster_name: "0"
-           endpoints {
-             lb_endpoints {
-               endpoint {
-                 address {
-                   socket_address {
-                     address: "127.0.0.1"
-                     port_value: 443
-                   }
-                 }
-               }
-             }
-           }
-         }
-         typed_extension_protocol_options {
-           key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
-           value {
-             [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
-               common_http_protocol_options {
-                 max_requests_per_connection {
-                   value: 4294937295
-                 }
-               }
-               explicit_http_config {
-                 http2_protocol_options {
-                   max_concurrent_streams {
-                     value: 2147483647
-                   }
-                 }
-               }
-             }
-           }
-         }
-       }
-     }
-     stats_flush_interval {
-       seconds: 5
-     }
+    static_resources {
+      clusters {
+        name: "0"
+        type: STATIC
+        connect_timeout {
+          seconds: 30
+        }
+        circuit_breakers {
+          thresholds {
+            max_connections {
+              value: 100
+            }
+            max_pending_requests {
+              value: 1
+            }
+            max_requests {
+              value: 100
+            }
+            max_retries {
+            }
+          }
+        }
+        transport_socket {
+          name: "envoy.transport_sockets.tls"
+          typed_config {
+            [type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext] {
+              common_tls_context {
+                alpn_protocols: "h2"
+              }
+              sni: "www.example.org"
+            }
+          }
+        }
+        load_assignment {
+          cluster_name: "0"
+          endpoints {
+            lb_endpoints {
+              endpoint {
+                address {
+                  socket_address {
+                    address: "127.0.0.1"
+                    port_value: 443
+                  }
+                }
+              }
+            }
+          }
+        }
+        typed_extension_protocol_options {
+          key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
+          value {
+            [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
+              common_http_protocol_options {
+                max_requests_per_connection {
+                  value: 4294937295
+                }
+              }
+              explicit_http_config {
+                http2_protocol_options {
+                  max_concurrent_streams {
+                    value: 2147483647
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    stats_flush_interval {
+      seconds: 5
+    }
    )pb");
   ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
 
@@ -708,83 +708,83 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH3) {
       "nighthawk_client --protocol http3 https://www.example.org");
 
   absl::StatusOr<Bootstrap> expected_bootstrap = parseBootstrapFromText(R"pb(
-     static_resources {
-       clusters {
-         name: "0"
-         type: STATIC
-         connect_timeout {
-           seconds: 30
-         }
-         circuit_breakers {
-           thresholds {
-             max_connections {
-               value: 100
-             }
-             max_pending_requests {
-               value: 1
-             }
-             max_requests {
-               value: 100
-             }
-             max_retries {
-             }
-           }
-         }
-         transport_socket {
-           name: "envoy.transport_sockets.quic"
-           typed_config {
-             [type.googleapis.com/envoy.extensions.transport_sockets.quic.v3.QuicUpstreamTransport]
-             {
-               upstream_tls_context {
-                 common_tls_context {
-                   alpn_protocols: "h3"
-                 }
-                 sni: "www.example.org"
-               }
-             }
-           }
-         }
-         load_assignment {
-           cluster_name: "0"
-           endpoints {
-             lb_endpoints {
-               endpoint {
-                 address {
-                   socket_address {
-                     address: "127.0.0.1"
-                     port_value: 443
-                   }
-                 }
-               }
-             }
-           }
-         }
-         typed_extension_protocol_options {
-           key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
-           value {
-             [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
-               common_http_protocol_options {
-                 max_requests_per_connection {
-                   value: 4294937295
-                 }
-               }
-               explicit_http_config {
-                 http3_protocol_options {
-                   quic_protocol_options {
-                     max_concurrent_streams {
-                       value: 2147483647
-                     }
-                   }
-                 }
-               }
-             }
-           }
-         }
-       }
-     }
-     stats_flush_interval {
-       seconds: 5
-     }
+    static_resources {
+      clusters {
+        name: "0"
+        type: STATIC
+        connect_timeout {
+          seconds: 30
+        }
+        circuit_breakers {
+          thresholds {
+            max_connections {
+              value: 100
+            }
+            max_pending_requests {
+              value: 1
+            }
+            max_requests {
+              value: 100
+            }
+            max_retries {
+            }
+          }
+        }
+        transport_socket {
+          name: "envoy.transport_sockets.quic"
+          typed_config {
+            [type.googleapis.com/envoy.extensions.transport_sockets.quic.v3.QuicUpstreamTransport]
+            {
+              upstream_tls_context {
+                common_tls_context {
+                  alpn_protocols: "h3"
+                }
+                sni: "www.example.org"
+              }
+            }
+          }
+        }
+        load_assignment {
+          cluster_name: "0"
+          endpoints {
+            lb_endpoints {
+              endpoint {
+                address {
+                  socket_address {
+                    address: "127.0.0.1"
+                    port_value: 443
+                  }
+                }
+              }
+            }
+          }
+        }
+        typed_extension_protocol_options {
+          key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
+          value {
+            [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
+              common_http_protocol_options {
+                max_requests_per_connection {
+                  value: 4294937295
+                }
+              }
+              explicit_http_config {
+                http3_protocol_options {
+                  quic_protocol_options {
+                    max_concurrent_streams {
+                      value: 2147483647
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    stats_flush_interval {
+      seconds: 5
+    }
    )pb");
   ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
 
@@ -804,97 +804,97 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithRequestSourceAndCus
       "nighthawk_client --timeout 10 http://www.example.org --request-source 127.0.0.1:6000");
 
   absl::StatusOr<Bootstrap> expected_bootstrap = parseBootstrapFromText(R"pb(
-     static_resources {
-       clusters {
-         name: "0"
-         type: STATIC
-         connect_timeout {
-           seconds: 10
-         }
-         circuit_breakers {
-           thresholds {
-             max_connections {
-               value: 100
-             }
-             max_pending_requests {
-               value: 1
-             }
-             max_requests {
-               value: 100
-             }
-             max_retries {
-             }
-           }
-         }
-         load_assignment {
-           cluster_name: "0"
-           endpoints {
-             lb_endpoints {
-               endpoint {
-                 address {
-                   socket_address {
-                     address: "127.0.0.1"
-                     port_value: 80
-                   }
-                 }
-               }
-             }
-           }
-         }
-         typed_extension_protocol_options {
-           key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
-           value {
-             [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
-               common_http_protocol_options {
-                 max_requests_per_connection {
-                   value: 4294937295
-                 }
-               }
-               explicit_http_config {
-                 http_protocol_options {
-                 }
-               }
-             }
-           }
-         }
-       }
-       clusters {
-         name: "0.requestsource"
-         type: STATIC
-         connect_timeout {
-           seconds: 10
-         }
-         load_assignment {
-           cluster_name: "0.requestsource"
-           endpoints {
-             lb_endpoints {
-               endpoint {
-                 address {
-                   socket_address {
-                     address: "127.0.0.1"
-                     port_value: 6000
-                   }
-                 }
-               }
-             }
-           }
-         }
-         typed_extension_protocol_options {
-           key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
-           value {
-             [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
-               explicit_http_config {
-                 http2_protocol_options {
-                 }
-               }
-             }
-           }
-         }
-       }
-     }
-     stats_flush_interval {
-       seconds: 5
-     }
+    static_resources {
+      clusters {
+        name: "0"
+        type: STATIC
+        connect_timeout {
+          seconds: 10
+        }
+        circuit_breakers {
+          thresholds {
+            max_connections {
+              value: 100
+            }
+            max_pending_requests {
+              value: 1
+            }
+            max_requests {
+              value: 100
+            }
+            max_retries {
+            }
+          }
+        }
+        load_assignment {
+          cluster_name: "0"
+          endpoints {
+            lb_endpoints {
+              endpoint {
+                address {
+                  socket_address {
+                    address: "127.0.0.1"
+                    port_value: 80
+                  }
+                }
+              }
+            }
+          }
+        }
+        typed_extension_protocol_options {
+          key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
+          value {
+            [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
+              common_http_protocol_options {
+                max_requests_per_connection {
+                  value: 4294937295
+                }
+              }
+              explicit_http_config {
+                http_protocol_options {
+                }
+              }
+            }
+          }
+        }
+      }
+      clusters {
+        name: "0.requestsource"
+        type: STATIC
+        connect_timeout {
+          seconds: 10
+        }
+        load_assignment {
+          cluster_name: "0.requestsource"
+          endpoints {
+            lb_endpoints {
+              endpoint {
+                address {
+                  socket_address {
+                    address: "127.0.0.1"
+                    port_value: 6000
+                  }
+                }
+              }
+            }
+          }
+        }
+        typed_extension_protocol_options {
+          key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
+          value {
+            [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
+              explicit_http_config {
+                http2_protocol_options {
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    stats_flush_interval {
+      seconds: 5
+    }
    )pb");
   ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
 
@@ -914,183 +914,183 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithRequestSourceAndMul
       "nighthawk_client --timeout 10 http://www.example.org --request-source 127.0.0.1:6000");
 
   absl::StatusOr<Bootstrap> expected_bootstrap = parseBootstrapFromText(R"pb(
-     static_resources {
-       clusters {
-         name: "0"
-         type: STATIC
-         connect_timeout {
-           seconds: 10
-         }
-         circuit_breakers {
-           thresholds {
-             max_connections {
-               value: 100
-             }
-             max_pending_requests {
-               value: 1
-             }
-             max_requests {
-               value: 100
-             }
-             max_retries {
-             }
-           }
-         }
-         load_assignment {
-           cluster_name: "0"
-           endpoints {
-             lb_endpoints {
-               endpoint {
-                 address {
-                   socket_address {
-                     address: "127.0.0.1"
-                     port_value: 80
-                   }
-                 }
-               }
-             }
-           }
-         }
-         typed_extension_protocol_options {
-           key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
-           value {
-             [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
-               common_http_protocol_options {
-                 max_requests_per_connection {
-                   value: 4294937295
-                 }
-               }
-               explicit_http_config {
-                 http_protocol_options {
-                 }
-               }
-             }
-           }
-         }
-       }
-       clusters {
-         name: "0.requestsource"
-         type: STATIC
-         connect_timeout {
-           seconds: 10
-         }
-         load_assignment {
-           cluster_name: "0.requestsource"
-           endpoints {
-             lb_endpoints {
-               endpoint {
-                 address {
-                   socket_address {
-                     address: "127.0.0.1"
-                     port_value: 6000
-                   }
-                 }
-               }
-             }
-           }
-         }
-         typed_extension_protocol_options {
-           key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
-           value {
-             [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
-               explicit_http_config {
-                 http2_protocol_options {
-                 }
-               }
-             }
-           }
-         }
-       }
-       clusters {
-         name: "1"
-         type: STATIC
-         connect_timeout {
-           seconds: 10
-         }
-         circuit_breakers {
-           thresholds {
-             max_connections {
-               value: 100
-             }
-             max_pending_requests {
-               value: 1
-             }
-             max_requests {
-               value: 100
-             }
-             max_retries {
-             }
-           }
-         }
-         load_assignment {
-           cluster_name: "1"
-           endpoints {
-             lb_endpoints {
-               endpoint {
-                 address {
-                   socket_address {
-                     address: "127.0.0.1"
-                     port_value: 80
-                   }
-                 }
-               }
-             }
-           }
-         }
-         typed_extension_protocol_options {
-           key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
-           value {
-             [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
-               common_http_protocol_options {
-                 max_requests_per_connection {
-                   value: 4294937295
-                 }
-               }
-               explicit_http_config {
-                 http_protocol_options {
-                 }
-               }
-             }
-           }
-         }
-       }
-       clusters {
-         name: "1.requestsource"
-         type: STATIC
-         connect_timeout {
-           seconds: 10
-         }
-         load_assignment {
-           cluster_name: "1.requestsource"
-           endpoints {
-             lb_endpoints {
-               endpoint {
-                 address {
-                   socket_address {
-                     address: "127.0.0.1"
-                     port_value: 6000
-                   }
-                 }
-               }
-             }
-           }
-         }
-         typed_extension_protocol_options {
-           key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
-           value {
-             [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
-               explicit_http_config {
-                 http2_protocol_options {
-                 }
-               }
-             }
-           }
-         }
-       }
-     }
-     stats_flush_interval {
-       seconds: 5
-     }
+    static_resources {
+      clusters {
+        name: "0"
+        type: STATIC
+        connect_timeout {
+          seconds: 10
+        }
+        circuit_breakers {
+          thresholds {
+            max_connections {
+              value: 100
+            }
+            max_pending_requests {
+              value: 1
+            }
+            max_requests {
+              value: 100
+            }
+            max_retries {
+            }
+          }
+        }
+        load_assignment {
+          cluster_name: "0"
+          endpoints {
+            lb_endpoints {
+              endpoint {
+                address {
+                  socket_address {
+                    address: "127.0.0.1"
+                    port_value: 80
+                  }
+                }
+              }
+            }
+          }
+        }
+        typed_extension_protocol_options {
+          key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
+          value {
+            [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
+              common_http_protocol_options {
+                max_requests_per_connection {
+                  value: 4294937295
+                }
+              }
+              explicit_http_config {
+                http_protocol_options {
+                }
+              }
+            }
+          }
+        }
+      }
+      clusters {
+        name: "0.requestsource"
+        type: STATIC
+        connect_timeout {
+          seconds: 10
+        }
+        load_assignment {
+          cluster_name: "0.requestsource"
+          endpoints {
+            lb_endpoints {
+              endpoint {
+                address {
+                  socket_address {
+                    address: "127.0.0.1"
+                    port_value: 6000
+                  }
+                }
+              }
+            }
+          }
+        }
+        typed_extension_protocol_options {
+          key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
+          value {
+            [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
+              explicit_http_config {
+                http2_protocol_options {
+                }
+              }
+            }
+          }
+        }
+      }
+      clusters {
+        name: "1"
+        type: STATIC
+        connect_timeout {
+          seconds: 10
+        }
+        circuit_breakers {
+          thresholds {
+            max_connections {
+              value: 100
+            }
+            max_pending_requests {
+              value: 1
+            }
+            max_requests {
+              value: 100
+            }
+            max_retries {
+            }
+          }
+        }
+        load_assignment {
+          cluster_name: "1"
+          endpoints {
+            lb_endpoints {
+              endpoint {
+                address {
+                  socket_address {
+                    address: "127.0.0.1"
+                    port_value: 80
+                  }
+                }
+              }
+            }
+          }
+        }
+        typed_extension_protocol_options {
+          key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
+          value {
+            [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
+              common_http_protocol_options {
+                max_requests_per_connection {
+                  value: 4294937295
+                }
+              }
+              explicit_http_config {
+                http_protocol_options {
+                }
+              }
+            }
+          }
+        }
+      }
+      clusters {
+        name: "1.requestsource"
+        type: STATIC
+        connect_timeout {
+          seconds: 10
+        }
+        load_assignment {
+          cluster_name: "1.requestsource"
+          endpoints {
+            lb_endpoints {
+              endpoint {
+                address {
+                  socket_address {
+                    address: "127.0.0.1"
+                    port_value: 6000
+                  }
+                }
+              }
+            }
+          }
+        }
+        typed_extension_protocol_options {
+          key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
+          value {
+            [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
+              explicit_http_config {
+                http2_protocol_options {
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    stats_flush_interval {
+      seconds: 5
+    }
    )pb");
   ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
 
@@ -1124,86 +1124,86 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithCustomOptions) {
                                                          stats_sink_json, tls_context_json));
 
   absl::StatusOr<Bootstrap> expected_bootstrap = parseBootstrapFromText(R"pb(
-     static_resources {
-       clusters {
-         name: "0"
-         type: STATIC
-         connect_timeout {
-           seconds: 30
-         }
-         circuit_breakers {
-           thresholds {
-             max_connections {
-               value: 100
-             }
-             max_pending_requests {
-               value: 10
-             }
-             max_requests {
-               value: 100
-             }
-             max_retries {
-             }
-           }
-         }
-         transport_socket {
-           name: "envoy.transport_sockets.tls"
-           typed_config {
-             [type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext] {
-               common_tls_context {
-                 tls_params {
-                   cipher_suites: "-ALL:ECDHE-RSA-AES256-GCM-SHA384"
-                 }
-                 alpn_protocols: "http/1.1"
-               }
-               sni: "www.example.org"
-             }
-           }
-         }
-         load_assignment {
-           cluster_name: "0"
-           endpoints {
-             lb_endpoints {
-               endpoint {
-                 address {
-                   socket_address {
-                     address: "127.0.0.1"
-                     port_value: 443
-                   }
-                 }
-               }
-             }
-           }
-         }
-         typed_extension_protocol_options {
-           key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
-           value {
-             [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
-               common_http_protocol_options {
-                 max_requests_per_connection {
-                   value: 4294937295
-                 }
-               }
-               explicit_http_config {
-                 http_protocol_options {
-                 }
-               }
-             }
-           }
-         }
-       }
-     }
-     stats_sinks {
-       name: "envoy.stat_sinks.statsd"
-       typed_config {
-         [type.googleapis.com/envoy.config.metrics.v3.StatsdSink] {
-           tcp_cluster_name: "statsd"
-         }
-       }
-     }
-     stats_flush_interval {
-       seconds: 20
-     }
+    static_resources {
+      clusters {
+        name: "0"
+        type: STATIC
+        connect_timeout {
+          seconds: 30
+        }
+        circuit_breakers {
+          thresholds {
+            max_connections {
+              value: 100
+            }
+            max_pending_requests {
+              value: 10
+            }
+            max_requests {
+              value: 100
+            }
+            max_retries {
+            }
+          }
+        }
+        transport_socket {
+          name: "envoy.transport_sockets.tls"
+          typed_config {
+            [type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext] {
+              common_tls_context {
+                tls_params {
+                  cipher_suites: "-ALL:ECDHE-RSA-AES256-GCM-SHA384"
+                }
+                alpn_protocols: "http/1.1"
+              }
+              sni: "www.example.org"
+            }
+          }
+        }
+        load_assignment {
+          cluster_name: "0"
+          endpoints {
+            lb_endpoints {
+              endpoint {
+                address {
+                  socket_address {
+                    address: "127.0.0.1"
+                    port_value: 443
+                  }
+                }
+              }
+            }
+          }
+        }
+        typed_extension_protocol_options {
+          key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
+          value {
+            [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
+              common_http_protocol_options {
+                max_requests_per_connection {
+                  value: 4294937295
+                }
+              }
+              explicit_http_config {
+                http_protocol_options {
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    stats_sinks {
+      name: "envoy.stat_sinks.statsd"
+      typed_config {
+        [type.googleapis.com/envoy.config.metrics.v3.StatsdSink] {
+          tcp_cluster_name: "statsd"
+        }
+      }
+    }
+    stats_flush_interval {
+      seconds: 20
+    }
    )pb");
   ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
 
@@ -1225,64 +1225,64 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapSetsMaxRequestToAtLeast
       "nighthawk_client --max-pending-requests 0 http://www.example.org");
 
   absl::StatusOr<Bootstrap> expected_bootstrap = parseBootstrapFromText(R"pb(
-     static_resources {
-       clusters {
-         name: "0"
-         type: STATIC
-         connect_timeout {
-           seconds: 30
-         }
-         circuit_breakers {
-           thresholds {
-             max_connections {
-               value: 100
-             }
-             max_pending_requests {
-               value: 1
-             }
-             max_requests {
-               value: 100
-             }
-             max_retries {
-             }
-           }
-         }
-         load_assignment {
-           cluster_name: "0"
-           endpoints {
-             lb_endpoints {
-               endpoint {
-                 address {
-                   socket_address {
-                     address: "127.0.0.1"
-                     port_value: 80
-                   }
-                 }
-               }
-             }
-           }
-         }
-         typed_extension_protocol_options {
-           key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
-           value {
-             [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
-               common_http_protocol_options {
-                 max_requests_per_connection {
-                   value: 4294937295
-                 }
-               }
-               explicit_http_config {
-                 http_protocol_options {
-                 }
-               }
-             }
-           }
-         }
-       }
-     }
-     stats_flush_interval {
-       seconds: 5
-     }
+    static_resources {
+      clusters {
+        name: "0"
+        type: STATIC
+        connect_timeout {
+          seconds: 30
+        }
+        circuit_breakers {
+          thresholds {
+            max_connections {
+              value: 100
+            }
+            max_pending_requests {
+              value: 1
+            }
+            max_requests {
+              value: 100
+            }
+            max_retries {
+            }
+          }
+        }
+        load_assignment {
+          cluster_name: "0"
+          endpoints {
+            lb_endpoints {
+              endpoint {
+                address {
+                  socket_address {
+                    address: "127.0.0.1"
+                    port_value: 80
+                  }
+                }
+              }
+            }
+          }
+        }
+        typed_extension_protocol_options {
+          key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
+          value {
+            [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
+              common_http_protocol_options {
+                max_requests_per_connection {
+                  value: 4294937295
+                }
+              }
+              explicit_http_config {
+                http_protocol_options {
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    stats_flush_interval {
+      seconds: 5
+    }
    )pb");
   ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
 
@@ -1312,76 +1312,76 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithCustomTransportSock
                                                          transport_socket_json));
 
   absl::StatusOr<Bootstrap> expected_bootstrap = parseBootstrapFromText(R"pb(
-     static_resources {
-       clusters {
-         name: "0"
-         type: STATIC
-         connect_timeout {
-           seconds: 30
-         }
-         circuit_breakers {
-           thresholds {
-             max_connections {
-               value: 100
-             }
-             max_pending_requests {
-               value: 1
-             }
-             max_requests {
-               value: 100
-             }
-             max_retries {
-             }
-           }
-         }
-         transport_socket {
-           name: "envoy.transport_sockets.tls"
-           typed_config {
-             [type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext] {
-               common_tls_context {
-                 tls_params {
-                   cipher_suites: "-ALL:ECDHE-RSA-AES256-GCM-SHA384"
-                 }
-               }
-             }
-           }
-         }
-         load_assignment {
-           cluster_name: "0"
-           endpoints {
-             lb_endpoints {
-               endpoint {
-                 address {
-                   socket_address {
-                     address: "127.0.0.1"
-                     port_value: 443
-                   }
-                 }
-               }
-             }
-           }
-         }
-         typed_extension_protocol_options {
-           key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
-           value {
-             [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
-               common_http_protocol_options {
-                 max_requests_per_connection {
-                   value: 4294937295
-                 }
-               }
-               explicit_http_config {
-                 http_protocol_options {
-                 }
-               }
-             }
-           }
-         }
-       }
-     }
-     stats_flush_interval {
-       seconds: 5
-     }
+    static_resources {
+      clusters {
+        name: "0"
+        type: STATIC
+        connect_timeout {
+          seconds: 30
+        }
+        circuit_breakers {
+          thresholds {
+            max_connections {
+              value: 100
+            }
+            max_pending_requests {
+              value: 1
+            }
+            max_requests {
+              value: 100
+            }
+            max_retries {
+            }
+          }
+        }
+        transport_socket {
+          name: "envoy.transport_sockets.tls"
+          typed_config {
+            [type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext] {
+              common_tls_context {
+                tls_params {
+                  cipher_suites: "-ALL:ECDHE-RSA-AES256-GCM-SHA384"
+                }
+              }
+            }
+          }
+        }
+        load_assignment {
+          cluster_name: "0"
+          endpoints {
+            lb_endpoints {
+              endpoint {
+                address {
+                  socket_address {
+                    address: "127.0.0.1"
+                    port_value: 443
+                  }
+                }
+              }
+            }
+          }
+        }
+        typed_extension_protocol_options {
+          key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
+          value {
+            [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
+              common_http_protocol_options {
+                max_requests_per_connection {
+                  value: 4294937295
+                }
+              }
+              explicit_http_config {
+                http_protocol_options {
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    stats_flush_interval {
+      seconds: 5
+    }
    )pb");
   ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
 
@@ -1403,75 +1403,75 @@ TEST_F(CreateBootstrapConfigurationTest, DeterminesSniFromRequestHeader) {
                                              "https://www.example.org");
 
   absl::StatusOr<Bootstrap> expected_bootstrap = parseBootstrapFromText(R"pb(
-     static_resources {
-       clusters {
-         name: "0"
-         type: STATIC
-         connect_timeout {
-           seconds: 30
-         }
-         circuit_breakers {
-           thresholds {
-             max_connections {
-               value: 100
-             }
-             max_pending_requests {
-               value: 1
-             }
-             max_requests {
-               value: 100
-             }
-             max_retries {
-             }
-           }
-         }
-         transport_socket {
-           name: "envoy.transport_sockets.tls"
-           typed_config {
-             [type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext] {
-               common_tls_context {
-                 alpn_protocols: "http/1.1"
-               }
-               sni: "test.example.com"
-             }
-           }
-         }
-         load_assignment {
-           cluster_name: "0"
-           endpoints {
-             lb_endpoints {
-               endpoint {
-                 address {
-                   socket_address {
-                     address: "127.0.0.1"
-                     port_value: 443
-                   }
-                 }
-               }
-             }
-           }
-         }
-         typed_extension_protocol_options {
-           key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
-           value {
-             [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
-               common_http_protocol_options {
-                 max_requests_per_connection {
-                   value: 4294937295
-                 }
-               }
-               explicit_http_config {
-                 http_protocol_options {
-                 }
-               }
-             }
-           }
-         }
-       }
-     }
-     stats_flush_interval {
-       seconds: 5
-     }
+    static_resources {
+      clusters {
+        name: "0"
+        type: STATIC
+        connect_timeout {
+          seconds: 30
+        }
+        circuit_breakers {
+          thresholds {
+            max_connections {
+              value: 100
+            }
+            max_pending_requests {
+              value: 1
+            }
+            max_requests {
+              value: 100
+            }
+            max_retries {
+            }
+          }
+        }
+        transport_socket {
+          name: "envoy.transport_sockets.tls"
+          typed_config {
+            [type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext] {
+              common_tls_context {
+                alpn_protocols: "http/1.1"
+              }
+              sni: "test.example.com"
+            }
+          }
+        }
+        load_assignment {
+          cluster_name: "0"
+          endpoints {
+            lb_endpoints {
+              endpoint {
+                address {
+                  socket_address {
+                    address: "127.0.0.1"
+                    port_value: 443
+                  }
+                }
+              }
+            }
+          }
+        }
+        typed_extension_protocol_options {
+          key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
+          value {
+            [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
+              common_http_protocol_options {
+                max_requests_per_connection {
+                  value: 4294937295
+                }
+              }
+              explicit_http_config {
+                http_protocol_options {
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    stats_flush_interval {
+      seconds: 5
+    }
    )pb");
   ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
 
