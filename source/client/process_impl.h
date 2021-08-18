@@ -107,8 +107,7 @@ private:
    */
   void setupStatsSinks(const envoy::config::bootstrap::v3::Bootstrap& bootstrap,
                        std::list<std::unique_ptr<Envoy::Stats::Sink>>& stats_sinks);
-  bool runInternal(OutputCollector& collector, const std::vector<UriPtr>& uris,
-                   const UriPtr& request_source_uri, const UriPtr& tracing_uri,
+  bool runInternal(OutputCollector& collector, const UriPtr& tracing_uri,
                    const absl::optional<Envoy::SystemTime>& schedule);
 
   /**

@@ -396,8 +396,7 @@ void ProcessImpl::setupStatsSinks(const envoy::config::bootstrap::v3::Bootstrap&
   }
 }
 
-bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriPtr>& uris,
-                              const UriPtr& request_source_uri, const UriPtr& tracing_uri,
+bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_uri,
                               const absl::optional<Envoy::SystemTime>& scheduled_start) {
   const Envoy::SystemTime now = time_system_.systemTime();
   if (scheduled_start.value_or(now) < now) {
@@ -412,7 +411,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
     shutdown_ = false;
 
     absl::StatusOr<envoy::config::bootstrap::v3::Bootstrap> bootstrap =
-        createBootstrapConfiguration(options_, uris, request_source_uri, number_of_workers_);
+        createBootstrapConfiguration(*dispatcher_, options_, number_of_workers_);
     if (!bootstrap.ok()) {
       ENVOY_LOG(error, "Failed to create bootstrap configuration: {}",
                 bootstrap.status().message());
@@ -550,31 +549,9 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
 }
 
 bool ProcessImpl::run(OutputCollector& collector) {
-  std::vector<UriPtr> uris;
-  UriPtr request_source_uri;
   UriPtr tracing_uri;
 
   try {
-    // TODO(oschaaf): See if we can rid of resolving here.
-    // We now only do it to validate.
-    if (options_.uri().has_value()) {
-      uris.push_back(std::make_unique<UriImpl>(options_.uri().value()));
-    } else {
-      for (const nighthawk::client::MultiTarget::Endpoint& endpoint :
-           options_.multiTargetEndpoints()) {
-        uris.push_back(std::make_unique<UriImpl>(fmt::format(
-            "{}://{}:{}{}", options_.multiTargetUseHttps() ? "https" : "http",
-            endpoint.address().value(), endpoint.port().value(), options_.multiTargetPath())));
-      }
-    }
-    for (const UriPtr& uri : uris) {
-      uri->resolve(*dispatcher_, Utility::translateFamilyOptionString(options_.addressFamily()));
-    }
-    if (options_.requestSource() != "") {
-      request_source_uri = std::make_unique<UriImpl>(options_.requestSource());
-      request_source_uri->resolve(*dispatcher_,
-                                  Utility::translateFamilyOptionString(options_.addressFamily()));
-    }
     if (options_.trace() != "") {
       tracing_uri = std::make_unique<UriImpl>(options_.trace());
       tracing_uri->resolve(*dispatcher_,
@@ -589,8 +566,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
   }
 
   try {
-    return runInternal(collector, uris, request_source_uri, tracing_uri,
-                       options_.scheduled_start());
+    return runInternal(collector, tracing_uri, options_.scheduled_start());
   } catch (Envoy::EnvoyException& ex) {
     ENVOY_LOG(error, "Fatal exception: {}", ex.what());
     throw;
