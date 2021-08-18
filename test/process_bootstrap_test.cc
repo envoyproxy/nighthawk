@@ -300,7 +300,7 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH1WithMultipleTarget
     stats_flush_interval {
       seconds: 5
     }
-   )pb");
+  )pb");
   ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
 
   absl::StatusOr<Bootstrap> bootstrap =
@@ -388,7 +388,7 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH1WithTls) {
     stats_flush_interval {
       seconds: 5
     }
-   )pb");
+  )pb");
   ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
 
   absl::StatusOr<Bootstrap> bootstrap =
@@ -518,7 +518,7 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH1AndMultipleWorkers
     stats_flush_interval {
       seconds: 5
     }
-   )pb");
+  )pb");
   ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
 
   absl::StatusOr<Bootstrap> bootstrap =
@@ -598,7 +598,7 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH2) {
     stats_flush_interval {
       seconds: 5
     }
-   )pb");
+  )pb");
   ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
 
   absl::StatusOr<Bootstrap> bootstrap =
@@ -689,7 +689,7 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH2WithTls) {
     stats_flush_interval {
       seconds: 5
     }
-   )pb");
+  )pb");
   ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
 
   absl::StatusOr<Bootstrap> bootstrap =
@@ -785,7 +785,7 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH3) {
     stats_flush_interval {
       seconds: 5
     }
-   )pb");
+  )pb");
   ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
 
   absl::StatusOr<Bootstrap> bootstrap =
@@ -895,7 +895,7 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithRequestSourceAndCus
     stats_flush_interval {
       seconds: 5
     }
-   )pb");
+  )pb");
   ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
 
   absl::StatusOr<Bootstrap> bootstrap =
@@ -1091,7 +1091,7 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithRequestSourceAndMul
     stats_flush_interval {
       seconds: 5
     }
-   )pb");
+  )pb");
   ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
 
   absl::StatusOr<Bootstrap> bootstrap =
@@ -1204,7 +1204,7 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithCustomOptions) {
     stats_flush_interval {
       seconds: 20
     }
-   )pb");
+  )pb");
   ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
 
   absl::StatusOr<Bootstrap> bootstrap =
@@ -1283,7 +1283,7 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapSetsMaxRequestToAtLeast
     stats_flush_interval {
       seconds: 5
     }
-   )pb");
+  )pb");
   ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
 
   absl::StatusOr<Bootstrap> bootstrap =
@@ -1382,7 +1382,7 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithCustomTransportSock
     stats_flush_interval {
       seconds: 5
     }
-   )pb");
+  )pb");
   ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
 
   absl::StatusOr<Bootstrap> bootstrap =
@@ -1472,7 +1472,7 @@ TEST_F(CreateBootstrapConfigurationTest, DeterminesSniFromRequestHeader) {
     stats_flush_interval {
       seconds: 5
     }
-   )pb");
+  )pb");
   ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
 
   absl::StatusOr<Bootstrap> bootstrap =
