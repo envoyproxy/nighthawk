@@ -4,6 +4,7 @@
 
 #include "nighthawk/common/exception.h"
 
+#include "external/envoy/source/common/common/statusor.h"
 #include "external/envoy/test/test_common/environment.h"
 #include "external/envoy/test/test_common/network_utility.h"
 #include "external/envoy/test/test_common/registry.h"
@@ -71,9 +72,15 @@ public:
         options_(TestUtility::createOptionsImpl(
             fmt::format("foo --duration 1 -v error --rps 10 https://{}/", loopback_address_))){};
 
-  void runProcess(RunExpectation expectation, bool do_cancel = false,
-                  bool terminate_right_away = false) {
-    ProcessPtr process = std::make_unique<ProcessImpl>(*options_, time_system_);
+  absl::Status runProcess(RunExpectation expectation, bool do_cancel = false,
+                          bool terminate_right_away = false) {
+    absl::StatusOr<ProcessPtr> process_or_status =
+        ProcessImpl::CreateProcessImpl(*options_, time_system_);
+    if (!process_or_status.ok()) {
+      return process_or_status.status();
+    }
+    ProcessPtr process = std::move(process_or_status.value());
+
     OutputCollectorImpl collector(time_system_, *options_);
     std::thread cancel_thread;
     if (do_cancel) {
@@ -113,6 +120,7 @@ public:
       }
     }
     process->shutdown();
+    return absl::OkStatus();
   }
 
   const std::string loopback_address_;
@@ -125,17 +133,17 @@ INSTANTIATE_TEST_SUITE_P(IpVersions, ProcessTest,
                          Envoy::TestUtility::ipTestParamsToString);
 
 TEST_P(ProcessTest, TwoProcessInSequence) {
-  runProcess(RunExpectation::EXPECT_FAILURE);
+  ASSERT_TRUE(runProcess(RunExpectation::EXPECT_FAILURE).ok());
   options_ = TestUtility::createOptionsImpl(
       fmt::format("foo --h2 --duration 1 --rps 10 https://{}/", loopback_address_));
-  runProcess(RunExpectation::EXPECT_FAILURE);
+  EXPECT_TRUE(runProcess(RunExpectation::EXPECT_FAILURE).ok());
 }
 
 // TODO(oschaaf): move to python int. tests once it adds to coverage.
 TEST_P(ProcessTest, BadTracerSpec) {
   options_ = TestUtility::createOptionsImpl(
       fmt::format("foo --trace foo://localhost:79/api/v1/spans https://{}/", loopback_address_));
-  runProcess(RunExpectation::EXPECT_FAILURE);
+  EXPECT_TRUE(runProcess(RunExpectation::EXPECT_FAILURE).ok());
 }
 
 TEST_P(ProcessTest, CancelDuringLoadTest) {
@@ -145,14 +153,14 @@ TEST_P(ProcessTest, CancelDuringLoadTest) {
   options_ = TestUtility::createOptionsImpl(
       fmt::format("foo --duration 300 --failure-predicate foo:0 --concurrency 2 https://{}/",
                   loopback_address_));
-  runProcess(RunExpectation::EXPECT_SUCCESS, true);
+  EXPECT_TRUE(runProcess(RunExpectation::EXPECT_SUCCESS, true).ok());
 }
 
 TEST_P(ProcessTest, CancelExecutionBeforeBeginLoadTest) {
   options_ = TestUtility::createOptionsImpl(
       fmt::format("foo --duration 300 --failure-predicate foo:0 --concurrency 2 https://{}/",
                   loopback_address_));
-  runProcess(RunExpectation::EXPECT_SUCCESS, true, true);
+  EXPECT_TRUE(runProcess(RunExpectation::EXPECT_SUCCESS, true, true).ok());
 }
 
 TEST_P(ProcessTest, RunProcessWithStatsSinkConfigured) {
@@ -163,7 +171,7 @@ TEST_P(ProcessTest, RunProcessWithStatsSinkConfigured) {
                   "--stats-sinks {} https://{}/",
                   kSinkName, loopback_address_));
   numFlushes = 0;
-  runProcess(RunExpectation::EXPECT_FAILURE);
+  ASSERT_TRUE(runProcess(RunExpectation::EXPECT_FAILURE).ok());
   EXPECT_GT(numFlushes, 0);
 }
 
@@ -175,7 +183,7 @@ TEST_P(ProcessTest, NoFlushWhenCancelExecutionBeforeLoadTestBegin) {
                   "2 --stats-flush-interval 1 --stats-sinks {} https://{}/",
                   kSinkName, loopback_address_));
   numFlushes = 0;
-  runProcess(RunExpectation::EXPECT_SUCCESS, true, true);
+  ASSERT_TRUE(runProcess(RunExpectation::EXPECT_SUCCESS, true, true).ok());
   EXPECT_EQ(numFlushes, 0);
 }
 
@@ -191,9 +199,18 @@ public:
                         Envoy::Network::Test::getLoopbackAddressUrlString(GetParam())))){};
 
 protected:
-  void run(std::function<void(bool, const nighthawk::client::Output&)> verify_callback) {
-    auto run_thread = std::thread([this, &verify_callback] {
-      ProcessPtr process = std::make_unique<ProcessImpl>(*options_, simTime());
+  absl::Status run(std::function<void(bool, const nighthawk::client::Output&)> verify_callback) {
+    absl::Status process_status;
+
+    auto run_thread = std::thread([this, &verify_callback, &process_status] {
+      absl::StatusOr<ProcessPtr> process_or_status =
+          ProcessImpl::CreateProcessImpl(*options_, simTime());
+      if (!process_or_status.ok()) {
+        process_status = process_or_status.status();
+        return;
+      }
+
+      ProcessPtr process = std::move(process_or_status.value());
       OutputCollectorImpl collector(simTime(), *options_);
       const bool result = process->run(collector);
       process->shutdown();
@@ -216,6 +233,8 @@ protected:
     simTime().setSystemTime(options_->scheduled_start().value() + 2s);
     // Wait for execution to wrap up.
     run_thread.join();
+
+    return process_status;
   }
 
   void setScheduleOnOptions(std::chrono::nanoseconds ns_since_epoch) {
@@ -239,25 +258,25 @@ TEST_P(ProcessTestWithSimTime, ScheduleAheadWorks) {
   for (const auto& relative_schedule : std::vector<std::chrono::nanoseconds>{30s, 1h}) {
     setScheduleOnOptions(
         std::chrono::nanoseconds(simTime().systemTime().time_since_epoch() + relative_schedule));
-    run([this](bool success, const nighthawk::client::Output& output) {
-      EXPECT_TRUE(success);
-      ASSERT_EQ(output.results_size(), 1);
-      EXPECT_EQ(Envoy::ProtobufUtil::TimeUtil::TimestampToNanoseconds(
-                    output.results()[0].execution_start()),
-                std::chrono::duration_cast<std::chrono::nanoseconds>(
-                    options_->scheduled_start().value().time_since_epoch())
-                    .count());
-    });
+    EXPECT_TRUE(run([this](bool success, const nighthawk::client::Output& output) {
+                  EXPECT_TRUE(success);
+                  ASSERT_EQ(output.results_size(), 1);
+                  EXPECT_EQ(Envoy::ProtobufUtil::TimeUtil::TimestampToNanoseconds(
+                                output.results()[0].execution_start()),
+                            std::chrono::duration_cast<std::chrono::nanoseconds>(
+                                options_->scheduled_start().value().time_since_epoch())
+                                .count());
+                }).ok());
   }
 }
 
 // Verify that scheduling an execution in the past yields an error.
 TEST_P(ProcessTestWithSimTime, ScheduleInThePastFails) {
   setScheduleOnOptions(std::chrono::nanoseconds(simTime().systemTime().time_since_epoch() - 1s));
-  run([](bool success, const nighthawk::client::Output& output) {
-    EXPECT_FALSE(success);
-    EXPECT_EQ(output.results_size(), 0);
-  });
+  EXPECT_TRUE(run([](bool success, const nighthawk::client::Output& output) {
+                EXPECT_FALSE(success);
+                EXPECT_EQ(output.results_size(), 0);
+              }).ok());
 }
 
 } // namespace
