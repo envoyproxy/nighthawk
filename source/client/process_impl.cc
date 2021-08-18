@@ -194,7 +194,7 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
 absl::StatusOr<ProcessPtr>
 ProcessImpl::CreateProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
                                const std::shared_ptr<Envoy::ProcessWide>& process_wide) {
-  auto process = std::make_unique<ProcessImpl>(options, time_system, process_wide);
+  std::unique_ptr<ProcessImpl> process(new ProcessImpl(options, time_system, process_wide));
 
   absl::StatusOr<Bootstrap> bootstrap = createBootstrapConfiguration(
       *process->dispatcher_, process->options_, process->number_of_workers_);

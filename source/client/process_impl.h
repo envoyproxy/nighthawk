@@ -66,8 +66,6 @@ public:
   CreateProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
                     const std::shared_ptr<Envoy::ProcessWide>& process_wide = nullptr);
 
-  ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
-              const std::shared_ptr<Envoy::ProcessWide>& process_wide = nullptr);
   ~ProcessImpl() override;
 
   /**
@@ -87,6 +85,10 @@ public:
   bool requestExecutionCancellation() override;
 
 private:
+  // Use CreateProcessImpl to construct an instance of ProcessImpl.
+  ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
+              const std::shared_ptr<Envoy::ProcessWide>& process_wide = nullptr);
+
   void addTracingCluster(envoy::config::bootstrap::v3::Bootstrap& bootstrap, const Uri& uri) const;
   void setupTracingImplementation(envoy::config::bootstrap::v3::Bootstrap& bootstrap,
                                   const Uri& uri) const;
