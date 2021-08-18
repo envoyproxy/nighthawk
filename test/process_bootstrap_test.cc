@@ -733,8 +733,7 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH3) {
         transport_socket {
           name: "envoy.transport_sockets.quic"
           typed_config {
-            [type.googleapis.com/envoy.extensions.transport_sockets.quic.v3.QuicUpstreamTransport]
-            {
+            [type.googleapis.com/envoy.extensions.transport_sockets.quic.v3.QuicUpstreamTransport] {
               upstream_tls_context {
                 common_tls_context {
                   alpn_protocols: "h3"
