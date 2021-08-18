@@ -217,7 +217,7 @@ ProcessImpl::CreateProcessImpl(const Options& options, Envoy::Event::TimeSystem&
   // ProcessImpl, i.e. before we start running the process.
   process->bootstrap_ = *bootstrap;
 
-  return std::move(process);
+  return process;
 }
 
 ProcessImpl::~ProcessImpl() {
