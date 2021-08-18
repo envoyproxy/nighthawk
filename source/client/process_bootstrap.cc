@@ -12,6 +12,8 @@
 #include "external/envoy_api/envoy/extensions/upstreams/http/v3/http_protocol_options.pb.h"
 
 #include "source/client/sni_utility.h"
+#include "source/common/uri_impl.h"
+#include "source/common/utility.h"
 
 namespace Nighthawk {
 namespace {
@@ -175,15 +177,52 @@ Cluster createNighthawkClusterForWorker(const Client::Options& options,
   return cluster;
 }
 
+// Extracts URIs of the targets and the request source (if specified) from the
+// Nighthawk options.
+// Resolves all the extracted URIs.
+absl::Status extractAndResolveUrisFromOptions(Envoy::Event::Dispatcher& dispatcher,
+                                              const Client::Options& options,
+                                              std::vector<UriPtr>* uris,
+                                              UriPtr* request_source_uri) {
+  try {
+    if (options.uri().has_value()) {
+      uris->push_back(std::make_unique<UriImpl>(options.uri().value()));
+    } else {
+      for (const nighthawk::client::MultiTarget::Endpoint& endpoint :
+           options.multiTargetEndpoints()) {
+        uris->push_back(std::make_unique<UriImpl>(fmt::format(
+            "{}://{}:{}{}", options.multiTargetUseHttps() ? "https" : "http",
+            endpoint.address().value(), endpoint.port().value(), options.multiTargetPath())));
+      }
+    }
+    for (const UriPtr& uri : *uris) {
+      uri->resolve(dispatcher, Utility::translateFamilyOptionString(options.addressFamily()));
+    }
+    if (options.requestSource() != "") {
+      *request_source_uri = std::make_unique<UriImpl>(options.requestSource());
+      (*request_source_uri)
+          ->resolve(dispatcher, Utility::translateFamilyOptionString(options.addressFamily()));
+    }
+  } catch (const UriException& ex) {
+    return absl::InvalidArgumentError(
+        fmt::format("URI exception (for example, malformed URI syntax, bad MultiTarget path, "
+                    "unresolvable host DNS): {}",
+                    ex.what()));
+  }
+  return absl::OkStatus();
+}
+
 } // namespace
 
-absl::StatusOr<Bootstrap> createBootstrapConfiguration(const Client::Options& options,
-                                                       const std::vector<UriPtr>& uris,
-                                                       const UriPtr& request_source_uri,
+absl::StatusOr<Bootstrap> createBootstrapConfiguration(Envoy::Event::Dispatcher& dispatcher,
+                                                       const Client::Options& options,
                                                        int number_of_workers) {
-  if (uris.empty()) {
-    return absl::InvalidArgumentError(
-        "illegal configuration with zero endpoints, at least one uri must be specified");
+  std::vector<UriPtr> uris;
+  UriPtr request_source_uri;
+  absl::Status uri_status =
+      extractAndResolveUrisFromOptions(dispatcher, options, &uris, &request_source_uri);
+  if (!uri_status.ok()) {
+    return uri_status;
   }
 
   Bootstrap bootstrap;

@@ -17,6 +17,7 @@
 #include "external/envoy/source/common/access_log/access_log_manager_impl.h"
 #include "external/envoy/source/common/common/logger.h"
 #include "external/envoy/source/common/common/random_generator.h"
+#include "external/envoy/source/common/common/statusor.h"
 #include "external/envoy/source/common/event/real_time_system.h"
 #include "external/envoy/source/common/grpc/context_impl.h"
 #include "external/envoy/source/common/http/context_impl.h"
@@ -52,7 +53,7 @@ class ClusterManagerFactory;
 class ProcessImpl : public Process, public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
   /**
-   * Instantiates a ProcessImpl
+   * Creates a ProcessImpl.
    * @param options provides the options configuration to be used.
    * @param time_system provides the Envoy::Event::TimeSystem implementation that will be used.
    * @param process_wide optional parameter which can be used to pass a pre-setup reference to
@@ -61,15 +62,11 @@ public:
    * If this parameter is not supplied, ProcessImpl will contruct its own Envoy::ProcessWide
    * instance.
    */
-  ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
-              const std::shared_ptr<Envoy::ProcessWide>& process_wide = nullptr);
-  ~ProcessImpl() override;
+  static absl::StatusOr<ProcessPtr>
+  CreateProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
+                    const std::shared_ptr<Envoy::ProcessWide>& process_wide = nullptr);
 
-  /**
-   * @return uint32_t the concurrency we determined should run at based on configuration and
-   * available machine resources.
-   */
-  uint32_t determineConcurrency() const;
+  ~ProcessImpl() override;
 
   /**
    * Runs the process.
@@ -88,6 +85,10 @@ public:
   bool requestExecutionCancellation() override;
 
 private:
+  // Use CreateProcessImpl to construct an instance of ProcessImpl.
+  ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
+              const std::shared_ptr<Envoy::ProcessWide>& process_wide = nullptr);
+
   void addTracingCluster(envoy::config::bootstrap::v3::Bootstrap& bootstrap, const Uri& uri) const;
   void setupTracingImplementation(envoy::config::bootstrap::v3::Bootstrap& bootstrap,
                                   const Uri& uri) const;
@@ -113,8 +114,7 @@ private:
    */
   void setupStatsSinks(const envoy::config::bootstrap::v3::Bootstrap& bootstrap,
                        std::list<std::unique_ptr<Envoy::Stats::Sink>>& stats_sinks);
-  bool runInternal(OutputCollector& collector, const std::vector<UriPtr>& uris,
-                   const UriPtr& request_source_uri, const UriPtr& tracing_uri,
+  bool runInternal(OutputCollector& collector, const UriPtr& tracing_uri,
                    const absl::optional<Envoy::SystemTime>& schedule);
 
   /**
@@ -151,6 +151,8 @@ private:
 
   const envoy::config::core::v3::Node node_;
   const Envoy::Protobuf::RepeatedPtrField<std::string> node_context_params_;
+  const Options& options_;
+  const int number_of_workers_;
   std::shared_ptr<Envoy::ProcessWide> process_wide_;
   Envoy::PlatformImpl platform_impl_;
   Envoy::Event::TimeSystem& time_system_;
@@ -159,6 +161,7 @@ private:
   Envoy::ThreadLocal::InstanceImpl tls_;
   Envoy::Stats::ThreadLocalStoreImpl store_root_;
   Envoy::Quic::QuicStatNames quic_stat_names_;
+  envoy::config::bootstrap::v3::Bootstrap bootstrap_;
   Envoy::Api::ApiPtr api_;
   Envoy::Event::DispatcherPtr dispatcher_;
   std::vector<ClientWorkerPtr> workers_;
@@ -166,7 +169,6 @@ private:
   const TerminationPredicateFactoryImpl termination_predicate_factory_;
   const SequencerFactoryImpl sequencer_factory_;
   const RequestSourceFactoryImpl request_generator_factory_;
-  const Options& options_;
 
   Envoy::Init::ManagerImpl init_manager_;
   Envoy::LocalInfo::LocalInfoPtr local_info_;
