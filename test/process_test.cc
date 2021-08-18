@@ -132,6 +132,12 @@ INSTANTIATE_TEST_SUITE_P(IpVersions, ProcessTest,
                          ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()),
                          Envoy::TestUtility::ipTestParamsToString);
 
+TEST_P(ProcessTest, FailsToCreateProcessOnUnresolvableHost) {
+  options_ =
+      TestUtility::createOptionsImpl("foo --h2 --duration 1 --rps 10 https://unresolveable.host/");
+  EXPECT_FALSE(runProcess(RunExpectation::EXPECT_FAILURE).ok());
+}
+
 TEST_P(ProcessTest, TwoProcessInSequence) {
   ASSERT_TRUE(runProcess(RunExpectation::EXPECT_FAILURE).ok());
   options_ = TestUtility::createOptionsImpl(
