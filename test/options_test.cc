@@ -118,7 +118,8 @@ TEST_F(OptionsImplTest, AlmostAll) {
       "--max-concurrent-streams 42 "
       "--experimental-h1-connection-reuse-strategy lru --label label1 --label label2 {} "
       "--simple-warmup --stats-sinks {} --stats-sinks {} --stats-flush-interval 10 "
-      "--latency-response-header-name zz",
+      "--latency-response-header-name zz --services 1.1.1.1:8443 --services 1.1.1.2:8443 "
+      "--sink 1.1.1.3:8443 --distributor 1.1.1.4:8443 ",
       client_name_,
       "{name:\"envoy.transport_sockets.tls\","
       "typed_config:{\"@type\":\"type.googleapis.com/"
@@ -193,6 +194,36 @@ TEST_F(OptionsImplTest, AlmostAll) {
             "183412668: \"envoy.config.metrics.v2.StatsSink\"\n",
             options->statsSinks()[1].DebugString());
   EXPECT_EQ("zz", options->responseHeaderWithLatencyInput());
+  ASSERT_TRUE(options->services().has_value());
+  EXPECT_EQ("addresses {\n"
+            "  socket_address {\n"
+            "    address: \"1.1.1.1\"\n"
+            "    port_value: 8443\n"
+            "  }\n"
+            "}\n"
+            "addresses {\n"
+            "  socket_address {\n"
+            "    address: \"1.1.1.2\"\n"
+            "    port_value: 8443\n"
+            "  }\n"
+            "}\n",
+            options->services().value().DebugString());
+  ASSERT_TRUE(options->sink().has_value());
+  EXPECT_EQ("address {\n"
+            "  socket_address {\n"
+            "    address: \"1.1.1.3\"\n"
+            "    port_value: 8443\n"
+            "  }\n"
+            "}\n",
+            options->sink().value().DebugString());
+  ASSERT_TRUE(options->distributor().has_value());
+  EXPECT_EQ("address {\n"
+            "  socket_address {\n"
+            "    address: \"1.1.1.4\"\n"
+            "    port_value: 8443\n"
+            "  }\n"
+            "}\n",
+            options->distributor().value().DebugString());
 
   // Check that our conversion to CommandLineOptionsPtr makes sense.
   CommandLineOptionsPtr cmd = options->toCommandLineOptions();
@@ -250,6 +281,10 @@ TEST_F(OptionsImplTest, AlmostAll) {
   EXPECT_TRUE(util(cmd->stats_sinks(0), options->statsSinks()[0]));
   EXPECT_TRUE(util(cmd->stats_sinks(1), options->statsSinks()[1]));
   EXPECT_EQ(cmd->latency_response_header_name().value(), options->responseHeaderWithLatencyInput());
+  EXPECT_TRUE(util(cmd->services(), options->services().value()));
+  EXPECT_TRUE(util(cmd->sink(), options->sink().value()));
+  EXPECT_TRUE(util(cmd->distributor(), options->distributor().value()));
+
   // TODO(#433) Here and below, replace comparisons once we choose a proto diff.
   OptionsImpl options_from_proto(*cmd);
   std::string s1 = Envoy::MessageUtil::getYamlStringFromMessage(
@@ -1031,6 +1066,24 @@ TEST_F(OptionsImplTest, H1ConnectionReuseStrategyValuesAreConstrained) {
           "{} {} --experimental-h1-connection-reuse-strategy foo", client_name_, good_test_uri_)),
       MalformedArgvException, "experimental-h1-connection-reuse-strategy");
 }
+
+class OptionsImplProtoAddressTest : public OptionsImplTest,
+                                    public WithParamInterface<const char*> {};
+
+TEST_P(OptionsImplProtoAddressTest, ParseAddressWeirdValueTrows) {
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format("{} --{} aa@#$", client_name_,
+                                                                     GetParam(), good_test_uri_)),
+                          MalformedArgvException, "must be in the format");
+}
+
+TEST_P(OptionsImplProtoAddressTest, ParseAddressForgottenPortTrows) {
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                              "{} --{} 1.1.1.1", client_name_, GetParam(), good_test_uri_)),
+                          MalformedArgvException, "must be in the format");
+}
+
+INSTANTIATE_TEST_SUITE_P(AddressValuedOptionsTests, OptionsImplProtoAddressTest,
+                         Values("services", "sink", "distributor"));
 
 } // namespace Client
 } // namespace Nighthawk
