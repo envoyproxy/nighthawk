@@ -64,6 +64,8 @@ namespace Nighthawk {
 namespace Client {
 namespace {
 
+using ::envoy::config::bootstrap::v3::Bootstrap;
+
 // Helps in generating a bootstrap for the process.
 // This is a class only to allow the use of the ENVOY_LOG macros.
 class BootstrapFactory : public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
@@ -187,6 +189,34 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
   std::string lower = absl::AsciiStrToLower(
       nighthawk::client::Verbosity::VerbosityOptions_Name(options_.verbosity()));
   configureComponentLogLevels(spdlog::level::from_str(lower));
+}
+
+absl::StatusOr<ProcessPtr>
+ProcessImpl::CreateProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
+                               const std::shared_ptr<Envoy::ProcessWide>& process_wide) {
+  auto process = std::make_unique<ProcessImpl>(options, time_system, process_wide);
+
+  absl::StatusOr<Bootstrap> bootstrap = createBootstrapConfiguration(
+      *process->dispatcher_, process->options_, process->number_of_workers_);
+  if (!bootstrap.ok()) {
+    ENVOY_LOG(error, "Failed to create bootstrap configuration: {}", bootstrap.status().message());
+    return bootstrap.status();
+  }
+
+  // Ideally we would create the bootstrap first and then pass it to the
+  // constructor of Envoy::Api::Api. That cannot be done because of a circular
+  // dependency:
+  // 1) The constructor of Envoy::Api::Api requires an instance of Bootstrap.
+  // 2) The bootstrap generator requires an Envoy::Event::Dispatcher to resolve
+  //    URIs to IPs required in the Bootstrap.
+  // 3) The constructor of Envoy::Event::Dispatcher requires Envoy::Api::Api.
+  //
+  // Replacing the bootstrap_ after the Envoy::Api::Api has been created is
+  // assumed to be safe, because we still do it while constructing the
+  // ProcessImpl, i.e. before we start running the process.
+  process->bootstrap_ = *bootstrap;
+
+  return std::move(process);
 }
 
 ProcessImpl::~ProcessImpl() {

@@ -17,6 +17,7 @@
 #include "external/envoy/source/common/access_log/access_log_manager_impl.h"
 #include "external/envoy/source/common/common/logger.h"
 #include "external/envoy/source/common/common/random_generator.h"
+#include "external/envoy/source/common/common/statusor.h"
 #include "external/envoy/source/common/event/real_time_system.h"
 #include "external/envoy/source/common/grpc/context_impl.h"
 #include "external/envoy/source/common/http/context_impl.h"
@@ -52,7 +53,7 @@ class ClusterManagerFactory;
 class ProcessImpl : public Process, public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
   /**
-   * Instantiates a ProcessImpl
+   * Creates a ProcessImpl.
    * @param options provides the options configuration to be used.
    * @param time_system provides the Envoy::Event::TimeSystem implementation that will be used.
    * @param process_wide optional parameter which can be used to pass a pre-setup reference to
@@ -61,6 +62,10 @@ public:
    * If this parameter is not supplied, ProcessImpl will contruct its own Envoy::ProcessWide
    * instance.
    */
+  static absl::StatusOr<ProcessPtr>
+  CreateProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
+                    const std::shared_ptr<Envoy::ProcessWide>& process_wide = nullptr);
+
   ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
               const std::shared_ptr<Envoy::ProcessWide>& process_wide = nullptr);
   ~ProcessImpl() override;
@@ -154,7 +159,7 @@ private:
   Envoy::ThreadLocal::InstanceImpl tls_;
   Envoy::Stats::ThreadLocalStoreImpl store_root_;
   Envoy::Quic::QuicStatNames quic_stat_names_;
-  const envoy::config::bootstrap::v3::Bootstrap bootstrap_;
+  envoy::config::bootstrap::v3::Bootstrap bootstrap_;
   Envoy::Api::ApiPtr api_;
   Envoy::Event::DispatcherPtr dispatcher_;
   std::vector<ClientWorkerPtr> workers_;
