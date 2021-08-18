@@ -200,6 +200,7 @@ ProcessImpl::CreateProcessImpl(const Options& options, Envoy::Event::TimeSystem&
       *process->dispatcher_, process->options_, process->number_of_workers_);
   if (!bootstrap.ok()) {
     ENVOY_LOG(error, "Failed to create bootstrap configuration: {}", bootstrap.status().message());
+    process->shutdown();
     return bootstrap.status();
   }
 
@@ -440,18 +441,10 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
     }
     shutdown_ = false;
 
-    absl::StatusOr<envoy::config::bootstrap::v3::Bootstrap> bootstrap =
-        createBootstrapConfiguration(*dispatcher_, options_, number_of_workers_);
-    if (!bootstrap.ok()) {
-      ENVOY_LOG(error, "Failed to create bootstrap configuration: {}",
-                bootstrap.status().message());
-      return false;
-    }
-
     // Needs to happen as early as possible (before createWorkers()) in the instantiation to preempt
     // the objects that require stats.
     if (!options_.statsSinks().empty()) {
-      store_root_.setTagProducer(Envoy::Config::Utility::createTagProducer(*bootstrap));
+      store_root_.setTagProducer(Envoy::Config::Utility::createTagProducer(bootstrap_));
     }
 
     createWorkers(number_of_workers_, scheduled_start);
@@ -484,21 +477,21 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
             : Http1PoolImpl::ConnectionReuseStrategy::MRU);
     cluster_manager_factory_->setPrefetchConnections(options_.prefetchConnections());
     if (tracing_uri != nullptr) {
-      setupTracingImplementation(*bootstrap, *tracing_uri);
-      addTracingCluster(*bootstrap, *tracing_uri);
+      setupTracingImplementation(bootstrap_, *tracing_uri);
+      addTracingCluster(bootstrap_, *tracing_uri);
     }
-    ENVOY_LOG(debug, "Computed configuration: {}", bootstrap->DebugString());
-    cluster_manager_ = cluster_manager_factory_->clusterManagerFromProto(*bootstrap);
-    maybeCreateTracingDriver(bootstrap->tracing());
+    ENVOY_LOG(debug, "Computed configuration: {}", bootstrap_.DebugString());
+    cluster_manager_ = cluster_manager_factory_->clusterManagerFromProto(bootstrap_);
+    maybeCreateTracingDriver(bootstrap_.tracing());
     cluster_manager_->setInitializedCb(
         [this]() -> void { init_manager_.initialize(init_watcher_); });
 
     Envoy::Runtime::LoaderSingleton::get().initialize(*cluster_manager_);
 
     std::list<std::unique_ptr<Envoy::Stats::Sink>> stats_sinks;
-    setupStatsSinks(*bootstrap, stats_sinks);
+    setupStatsSinks(bootstrap_, stats_sinks);
     std::chrono::milliseconds stats_flush_interval = std::chrono::milliseconds(
-        Envoy::DurationUtil::durationToMilliseconds(bootstrap->stats_flush_interval()));
+        Envoy::DurationUtil::durationToMilliseconds(bootstrap_.stats_flush_interval()));
 
     if (!options_.statsSinks().empty()) {
       // There should be only a single live flush worker instance at any time.
