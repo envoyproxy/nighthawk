@@ -66,12 +66,6 @@ public:
   ~ProcessImpl() override;
 
   /**
-   * @return uint32_t the concurrency we determined should run at based on configuration and
-   * available machine resources.
-   */
-  uint32_t determineConcurrency() const;
-
-  /**
    * Runs the process.
    *
    * @param collector output collector implementation which will collect and hold the native output
@@ -151,6 +145,8 @@ private:
 
   const envoy::config::core::v3::Node node_;
   const Envoy::Protobuf::RepeatedPtrField<std::string> node_context_params_;
+  const Options& options_;
+  const int number_of_workers_;
   std::shared_ptr<Envoy::ProcessWide> process_wide_;
   Envoy::PlatformImpl platform_impl_;
   Envoy::Event::TimeSystem& time_system_;
@@ -159,6 +155,7 @@ private:
   Envoy::ThreadLocal::InstanceImpl tls_;
   Envoy::Stats::ThreadLocalStoreImpl store_root_;
   Envoy::Quic::QuicStatNames quic_stat_names_;
+  const envoy::config::bootstrap::v3::Bootstrap bootstrap_;
   Envoy::Api::ApiPtr api_;
   Envoy::Event::DispatcherPtr dispatcher_;
   std::vector<ClientWorkerPtr> workers_;
@@ -166,7 +163,6 @@ private:
   const TerminationPredicateFactoryImpl termination_predicate_factory_;
   const SequencerFactoryImpl sequencer_factory_;
   const RequestSourceFactoryImpl request_generator_factory_;
-  const Options& options_;
 
   Envoy::Init::ManagerImpl init_manager_;
   Envoy::LocalInfo::LocalInfoPtr local_info_;

@@ -62,6 +62,42 @@ using namespace std::chrono_literals;
 
 namespace Nighthawk {
 namespace Client {
+namespace {
+
+// Helps in generating a bootstrap for the process.
+// This is a class only to allow the use of the ENVOY_LOG macros.
+class BootstrapFactory : public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
+public:
+  // Determines the concurrency Nighthawk should use based on configuration
+  // (options) and the available machine resources.
+  static uint32_t determineConcurrency(const Options& options) {
+    uint32_t cpu_cores_with_affinity = Envoy::OptionsImplPlatform::getCpuCount();
+    bool autoscale = options.concurrency() == "auto";
+    // TODO(oschaaf): Maybe, in the case where the concurrency flag is left out, but
+    // affinity is set / we don't have affinity with all cores, we should default to autoscale.
+    // (e.g. we are called via taskset).
+    uint32_t concurrency = autoscale ? cpu_cores_with_affinity : std::stoi(options.concurrency());
+
+    if (autoscale) {
+      ENVOY_LOG(info, "Detected {} (v)CPUs with affinity..", cpu_cores_with_affinity);
+    }
+    std::string duration_as_string =
+        options.noDuration() ? "No time limit"
+                             : fmt::format("Time limit: {} seconds", options.duration().count());
+    ENVOY_LOG(info, "Starting {} threads / event loops. {}.", concurrency, duration_as_string);
+    ENVOY_LOG(info, "Global targets: {} connections and {} calls per second.",
+              options.connections() * concurrency, options.requestsPerSecond() * concurrency);
+
+    if (concurrency > 1) {
+      ENVOY_LOG(info, "   (Per-worker targets: {} connections and {} calls per second)",
+                options.connections(), options.requestsPerSecond());
+    }
+
+    return concurrency;
+  }
+};
+
+} // namespace
 
 // We customize ProdClusterManagerFactory for the sole purpose of returning our specialized
 // http1 pool to the benchmark client, which allows us to offer connection prefetching.
@@ -123,17 +159,17 @@ private:
 
 ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
                          const std::shared_ptr<Envoy::ProcessWide>& process_wide)
-    : process_wide_(process_wide == nullptr ? std::make_shared<Envoy::ProcessWide>()
+    : options_(options), number_of_workers_(BootstrapFactory::determineConcurrency(options_)),
+      process_wide_(process_wide == nullptr ? std::make_shared<Envoy::ProcessWide>()
                                             : process_wide),
       time_system_(time_system), stats_allocator_(symbol_table_), store_root_(stats_allocator_),
       quic_stat_names_(store_root_.symbolTable()),
       api_(std::make_unique<Envoy::Api::Impl>(platform_impl_.threadFactory(), store_root_,
-                                              time_system_, platform_impl_.fileSystem(),
-                                              generator_)),
+                                              time_system_, platform_impl_.fileSystem(), generator_,
+                                              bootstrap_)),
       dispatcher_(api_->allocateDispatcher("main_thread")), benchmark_client_factory_(options),
       termination_predicate_factory_(options), sequencer_factory_(options),
-      request_generator_factory_(options, *api_), options_(options),
-      init_manager_("nh_init_manager"),
+      request_generator_factory_(options, *api_), init_manager_("nh_init_manager"),
       local_info_(new Envoy::LocalInfo::LocalInfoImpl(
           store_root_.symbolTable(), node_, node_context_params_,
           Envoy::Network::Utility::getLocalAddress(Envoy::Network::Address::IpVersion::v4),
@@ -239,32 +275,6 @@ void ProcessImpl::configureComponentLogLevels(spdlog::level::level_enum level) {
   Envoy::Logger::Registry::setLogLevel(level);
   Envoy::Logger::Logger* logger_to_change = Envoy::Logger::Registry::logger("main");
   logger_to_change->setLevel(level);
-}
-
-uint32_t ProcessImpl::determineConcurrency() const {
-  uint32_t cpu_cores_with_affinity = Envoy::OptionsImplPlatform::getCpuCount();
-  bool autoscale = options_.concurrency() == "auto";
-  // TODO(oschaaf): Maybe, in the case where the concurrency flag is left out, but
-  // affinity is set / we don't have affinity with all cores, we should default to autoscale.
-  // (e.g. we are called via taskset).
-  uint32_t concurrency = autoscale ? cpu_cores_with_affinity : std::stoi(options_.concurrency());
-
-  if (autoscale) {
-    ENVOY_LOG(info, "Detected {} (v)CPUs with affinity..", cpu_cores_with_affinity);
-  }
-  std::string duration_as_string =
-      options_.noDuration() ? "No time limit"
-                            : fmt::format("Time limit: {} seconds", options_.duration().count());
-  ENVOY_LOG(info, "Starting {} threads / event loops. {}.", concurrency, duration_as_string);
-  ENVOY_LOG(info, "Global targets: {} connections and {} calls per second.",
-            options_.connections() * concurrency, options_.requestsPerSecond() * concurrency);
-
-  if (concurrency > 1) {
-    ENVOY_LOG(info, "   (Per-worker targets: {} connections and {} calls per second)",
-              options_.connections(), options_.requestsPerSecond());
-  }
-
-  return concurrency;
 }
 
 std::vector<StatisticPtr>
@@ -399,11 +409,10 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
     if (cancelled_) {
       return true;
     }
-    int number_of_workers = determineConcurrency();
     shutdown_ = false;
 
     absl::StatusOr<envoy::config::bootstrap::v3::Bootstrap> bootstrap =
-        createBootstrapConfiguration(options_, uris, request_source_uri, number_of_workers);
+        createBootstrapConfiguration(options_, uris, request_source_uri, number_of_workers_);
     if (!bootstrap.ok()) {
       ENVOY_LOG(error, "Failed to create bootstrap configuration: {}",
                 bootstrap.status().message());
@@ -416,7 +425,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
       store_root_.setTagProducer(Envoy::Config::Utility::createTagProducer(*bootstrap));
     }
 
-    createWorkers(number_of_workers, scheduled_start);
+    createWorkers(number_of_workers_, scheduled_start);
     tls_.registerThread(*dispatcher_, true);
     store_root_.initializeThreading(*dispatcher_, tls_);
     runtime_singleton_ = std::make_unique<Envoy::Runtime::ScopedLoaderSingleton>(
