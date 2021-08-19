@@ -61,6 +61,12 @@ void RemoteRequestSourceImpl::connectToRequestStreamGrpcService() {
 
 void RemoteRequestSourceImpl::initOnThread() { connectToRequestStreamGrpcService(); }
 
+void RemoteRequestSourceImpl::destroyOnThread() {
+  // The RequestStreamGrpcClientImpl uses Envoy::Grpc::AsyncClient which demands
+  // to be destroyed on the same thread it was constructed from.
+  grpc_client_.reset();
+}
+
 RequestGenerator RemoteRequestSourceImpl::get() {
   return [this]() -> RequestPtr { return grpc_client_->maybeDequeue(); };
 }

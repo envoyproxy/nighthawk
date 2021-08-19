@@ -23,6 +23,7 @@ public:
 
   // default implementation
   void initOnThread() override;
+  void destroyOnThread() override;
 
 private:
   const double test_value_;
