@@ -72,7 +72,13 @@ bool Main::run() {
     stub = std::make_unique<nighthawk::client::NighthawkService::Stub>(channel);
     process = std::make_unique<RemoteProcessImpl>(*options_, *stub);
   } else {
-    process = std::make_unique<ProcessImpl>(*options_, time_system);
+    absl::StatusOr<ProcessPtr> process_or_status =
+        ProcessImpl::CreateProcessImpl(*options_, time_system);
+    if (!process_or_status.ok()) {
+      ENVOY_LOG(error, "Unable to create ProcessImpl: {}", process_or_status.status().ToString());
+      return false;
+    }
+    process = std::move(*process_or_status);
   }
   OutputFormatterFactoryImpl output_formatter_factory;
   OutputCollectorImpl output_collector(time_system, *options_);

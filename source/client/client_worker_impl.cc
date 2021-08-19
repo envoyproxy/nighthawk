@@ -85,7 +85,10 @@ void ClientWorkerImpl::work() {
   // should be consistent.
 }
 
-void ClientWorkerImpl::shutdownThread() { benchmark_client_->terminate(); }
+void ClientWorkerImpl::shutdownThread() {
+  benchmark_client_->terminate();
+  request_generator_->destroyOnThread();
+}
 
 void ClientWorkerImpl::requestExecutionCancellation() {
   // We just bump a counter, which is watched by a static termination predicate.

@@ -23,6 +23,12 @@ public:
    * needed, for example).
    */
   virtual void initOnThread() PURE;
+
+  /**
+   * Will be called on an initialized and running worker thread, after the work
+   * has been done and just before the worker gets destroyed.
+   */
+  virtual void destroyOnThread() PURE;
 };
 
 using RequestSourcePtr = std::unique_ptr<RequestSource>;
