@@ -54,6 +54,7 @@ public:
         .Times(1)
         .WillOnce(Return(ByMove(std::unique_ptr<RequestSource>(request_generator_))));
     EXPECT_CALL(*request_generator_, initOnThread());
+    EXPECT_CALL(*request_generator_, destroyOnThread());
 
     EXPECT_CALL(termination_predicate_factory_, create(_, _, _))
         .WillOnce(Return(ByMove(createMockTerminationPredicate())));

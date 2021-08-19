@@ -112,5 +112,6 @@ RequestGenerator OptionsListRequestSource::get() {
 }
 
 void OptionsListRequestSource::initOnThread() {}
+void OptionsListRequestSource::destroyOnThread() {}
 
 } // namespace Nighthawk
