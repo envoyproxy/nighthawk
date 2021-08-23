@@ -1,14 +1,13 @@
-#include "client/service_impl.h"
+#include "source/client/service_impl.h"
 
 #include <grpc++/grpc++.h>
 
 #include "envoy/config/core/v3/base.pb.h"
 
-#include "common/request_source_impl.h"
-
-#include "client/client.h"
-#include "client/options_impl.h"
-#include "client/output_collector_impl.h"
+#include "source/client/client.h"
+#include "source/client/options_impl.h"
+#include "source/client/output_collector_impl.h"
+#include "source/common/request_source_impl.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -35,9 +34,19 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
     return;
   }
 
-  ProcessImpl process(*options, time_system_, process_wide_);
+  absl::StatusOr<ProcessPtr> process_or_status =
+      ProcessImpl::CreateProcessImpl(*options, time_system_, process_wide_);
+  if (!process_or_status.ok()) {
+    response.mutable_error_detail()->set_code(grpc::StatusCode::INTERNAL);
+    response.mutable_error_detail()->set_message(
+        fmt::format("Unable to create ProcessImpl: {}", process_or_status.status().ToString()));
+    writeResponse(response);
+    return;
+  }
+  ProcessPtr process = std::move(*process_or_status);
+
   OutputCollectorImpl output_collector(time_system_, *options);
-  const bool ok = process.run(output_collector);
+  const bool ok = process->run(output_collector);
   if (!ok) {
     response.mutable_error_detail()->set_code(grpc::StatusCode::INTERNAL);
     // TODO(https://github.com/envoyproxy/nighthawk/issues/181): wire through error descriptions, so
@@ -56,7 +65,7 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
         "benchmark request.");
   }
   *(response.mutable_output()) = output_collector.toProto();
-  process.shutdown();
+  process->shutdown();
   // We release before writing the response to avoid a race with the client's follow up request
   // coming in before we release the lock, which would lead up to us declining service when
   // we should not.

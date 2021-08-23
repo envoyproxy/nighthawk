@@ -1,4 +1,4 @@
-#include "sink/service_impl.h"
+#include "source/sink/service_impl.h"
 
 #include <grpc++/grpc++.h>
 
@@ -6,8 +6,8 @@
 
 #include "external/envoy/source/common/common/assert.h"
 
-#include "sink/nighthawk_sink_client_impl.h"
-#include "sink/sink_impl.h"
+#include "source/sink/nighthawk_sink_client_impl.h"
+#include "source/sink/sink_impl.h"
 
 namespace Nighthawk {
 
@@ -98,7 +98,7 @@ absl::Status mergeOutput(const nighthawk::client::Output& input_to_merge,
 }
 
 absl::StatusOr<nighthawk::client::ExecutionResponse>
-mergeExecutionResponses(absl::string_view requested_execution_id,
+mergeExecutionResponses(const std::string& requested_execution_id,
                         const std::vector<nighthawk::client::ExecutionResponse>& responses) {
   if (responses.size() == 0) {
     return absl::Status(absl::StatusCode::kNotFound, "No results");
@@ -106,7 +106,7 @@ mergeExecutionResponses(absl::string_view requested_execution_id,
 
   nighthawk::client::ExecutionResponse aggregated_response;
   nighthawk::client::Output aggregated_output;
-  aggregated_response.mutable_execution_id()->assign(requested_execution_id);
+  aggregated_response.set_execution_id(requested_execution_id);
   for (const nighthawk::client::ExecutionResponse& execution_response : responses) {
     if (execution_response.execution_id() != requested_execution_id) {
       return absl::Status(absl::StatusCode::kInternal,

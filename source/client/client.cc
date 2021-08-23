@@ -1,4 +1,4 @@
-#include "client/client.h"
+#include "source/client/client.h"
 
 #include <grpc++/grpc++.h>
 
@@ -22,17 +22,16 @@
 #include "api/client/output.pb.h"
 #include "api/client/service.grpc.pb.h"
 
-#include "common/frequency.h"
-#include "common/signal_handler.h"
-#include "common/uri_impl.h"
-#include "common/utility.h"
-
-#include "client/client_worker_impl.h"
-#include "client/factories_impl.h"
-#include "client/options_impl.h"
-#include "client/output_collector_impl.h"
-#include "client/process_impl.h"
-#include "client/remote_process_impl.h"
+#include "source/client/client_worker_impl.h"
+#include "source/client/factories_impl.h"
+#include "source/client/options_impl.h"
+#include "source/client/output_collector_impl.h"
+#include "source/client/process_impl.h"
+#include "source/client/remote_process_impl.h"
+#include "source/common/frequency.h"
+#include "source/common/signal_handler.h"
+#include "source/common/uri_impl.h"
+#include "source/common/utility.h"
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
@@ -73,7 +72,13 @@ bool Main::run() {
     stub = std::make_unique<nighthawk::client::NighthawkService::Stub>(channel);
     process = std::make_unique<RemoteProcessImpl>(*options_, *stub);
   } else {
-    process = std::make_unique<ProcessImpl>(*options_, time_system);
+    absl::StatusOr<ProcessPtr> process_or_status =
+        ProcessImpl::CreateProcessImpl(*options_, time_system);
+    if (!process_or_status.ok()) {
+      ENVOY_LOG(error, "Unable to create ProcessImpl: {}", process_or_status.status().ToString());
+      return false;
+    }
+    process = std::move(*process_or_status);
   }
   OutputFormatterFactoryImpl output_formatter_factory;
   OutputCollectorImpl output_collector(time_system, *options_);

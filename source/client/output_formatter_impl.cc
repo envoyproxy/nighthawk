@@ -1,4 +1,4 @@
-#include "client/output_formatter_impl.h"
+#include "source/client/output_formatter_impl.h"
 
 #include <google/protobuf/util/time_util.h>
 
@@ -10,9 +10,10 @@
 
 #include "external/envoy/source/common/protobuf/utility.h"
 
+#include "api/client/options.pb.h"
 #include "api/client/transform/fortio.pb.h"
 
-#include "common/version_info.h"
+#include "source/common/version_info.h"
 
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
@@ -20,6 +21,8 @@
 
 namespace Nighthawk {
 namespace Client {
+
+using ::nighthawk::client::Protocol;
 
 std::vector<std::string> OutputFormatterImpl::getLowerCaseOutputFormats() {
   const Envoy::Protobuf::EnumDescriptor* enum_descriptor =
@@ -291,17 +294,8 @@ FortioOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) 
                             output.options().jitter_uniform().seconds() > 0));
   fortio_output.set_runtype("HTTP");
 
-  // The stock Envoy h2 pool doesn't offer support for multiple connections here. So we must ignore
-  // the connections setting when h2 is enabled and the experimental h2-pool which supports multiple
-  // connections isn't enabled. Also, the number of workers acts as a multiplier.
-  const uint32_t number_of_connections =
-      ((output.options().h2().value() &&
-        !output.options().experimental_h2_use_multiple_connections().value())
-           ? 1
-           : output.options().connections().value()) *
-      number_of_workers;
   // This displays as "connections" in the UI, not threads.
-  fortio_output.set_numthreads(number_of_connections);
+  fortio_output.set_numthreads(output.options().connections().value() * number_of_workers);
 
   // Get the result that represents all workers (global)
   absl::optional<const nighthawk::client::Result> nh_global_result_optional =

@@ -138,7 +138,10 @@ class IntegrationTestBase():
       caplog: The pytest `caplog` test fixture used to examine logged messages.
     """
     if self.grpc_service is not None:
-      assert (self.grpc_service.stop() == 0)
+      if self.grpc_service.stop() != 0:
+        pytest.fail(
+            "the Nighthawk GRPC service reported a non-zero exit code when stopped, log lines:\n{}".
+            format('\n'.join(self.grpc_service.log_lines)))
 
     any_failed = False
     for test_server in self._test_servers:
@@ -248,14 +251,14 @@ class IntegrationTestBase():
       args.append("--address-family v6")
     if as_json:
       args.append("--output-format json")
-    logging.info("Nighthawk client popen() args: [%s]" % args)
+    logging.info("Nighthawk client popen() args: %s" % str.join(" ", args))
     client_process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = client_process.communicate()
     logs = stderr.decode('utf-8')
     output = stdout.decode('utf-8')
-    logging.debug("Nighthawk client stdout: [%s]" % output)
+    logging.info("Nighthawk client stdout: [%s]" % output)
     if logs:
-      logging.debug("Nighthawk client stderr: [%s]" % logs)
+      logging.info("Nighthawk client stderr: [%s]" % logs)
     if as_json:
       output = json.loads(output)
     if expect_failure:
@@ -347,6 +350,16 @@ class HttpsIntegrationTestBase(IntegrationTestBase):
     return super(HttpsIntegrationTestBase, self).getTestServerRootUri(True)
 
 
+class QuicIntegrationTestBase(HttpsIntegrationTestBase):
+  """Base for Quic tests against the Nighthawk test server."""
+
+  def __init__(self, request, server_config_quic):
+    """See base class."""
+    super(QuicIntegrationTestBase, self).__init__(request, server_config_quic)
+    # Quic tests require specific IP rather than "all IPs" as the target.
+    self.server_ip = "::1" if self.ip_version == IpVersion.IPV6 else "127.0.0.1"
+
+
 class SniIntegrationTestBase(HttpsIntegrationTestBase):
   """Base for https/sni tests against the Nighthawk test server."""
 
@@ -385,6 +398,16 @@ def server_config():
   yield "nighthawk/test/integration/configurations/nighthawk_http_origin.yaml"
 
 
+@pytest.fixture()
+def server_config_quic():
+  """Fixture which yields the path to a server configuration with Quic listener.
+
+  Yields:
+      String: Path to the stock server configuration.
+  """
+  yield "nighthawk/test/integration/configurations/nighthawk_https_origin_quic.yaml"
+
+
 @pytest.fixture(params=determineIpVersionsFromEnvironment())
 def http_test_server_fixture(request, server_config, caplog):
   """Fixture for setting up a test environment with the stock http server configuration.
@@ -406,6 +429,19 @@ def https_test_server_fixture(request, server_config, caplog):
       HttpsIntegrationTestBase: A fully set up instance. Tear down will happen automatically.
   """
   f = HttpsIntegrationTestBase(request, server_config)
+  f.setUp()
+  yield f
+  f.tearDown(caplog)
+
+
+@pytest.fixture(params=determineIpVersionsFromEnvironment())
+def quic_test_server_fixture(request, server_config_quic, caplog):
+  """Fixture for setting up a test environment with a server that has a Quic listener.
+
+  Yields:
+      QuicIntegrationTestBase: A fully set up instance. Tear down will happen automatically.
+  """
+  f = QuicIntegrationTestBase(request, server_config_quic)
   f.setUp()
   yield f
   f.tearDown(caplog)

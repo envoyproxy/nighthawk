@@ -9,7 +9,7 @@
 #include "api/client/options.pb.h"
 #include "api/request_source/request_source_plugin.pb.h"
 
-#include "common/uri_impl.h"
+#include "source/common/uri_impl.h"
 
 namespace Nighthawk {
 
@@ -23,6 +23,7 @@ public:
 
   // default implementation
   void initOnThread() override;
+  void destroyOnThread() override;
 
 private:
   const double test_value_;

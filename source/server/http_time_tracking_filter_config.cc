@@ -7,8 +7,8 @@
 #include "api/server/response_options.pb.h"
 #include "api/server/response_options.pb.validate.h"
 
-#include "server/configuration.h"
-#include "server/http_time_tracking_filter.h"
+#include "source/server/configuration.h"
+#include "source/server/http_time_tracking_filter.h"
 
 namespace Nighthawk {
 namespace Server {

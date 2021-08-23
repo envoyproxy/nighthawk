@@ -11,9 +11,8 @@
 #include "external/envoy/test/mocks/thread_local/mocks.h"
 #include "external/envoy/test/test_common/simulated_time_system.h"
 
-#include "common/statistic_impl.h"
-
-#include "client/client_worker_impl.h"
+#include "source/client/client_worker_impl.h"
+#include "source/common/statistic_impl.h"
 
 #include "test/mocks/client/mock_benchmark_client.h"
 #include "test/mocks/client/mock_benchmark_client_factory.h"
@@ -55,6 +54,7 @@ public:
         .Times(1)
         .WillOnce(Return(ByMove(std::unique_ptr<RequestSource>(request_generator_))));
     EXPECT_CALL(*request_generator_, initOnThread());
+    EXPECT_CALL(*request_generator_, destroyOnThread());
 
     EXPECT_CALL(termination_predicate_factory_, create(_, _, _))
         .WillOnce(Return(ByMove(createMockTerminationPredicate())));

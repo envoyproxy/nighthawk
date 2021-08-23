@@ -339,8 +339,29 @@ envoy_cc_test(
     srcs = ["sni_utility_test.cc"],
     repository = "@envoy",
     deps = [
-        "//source/client:nighthawk_client_lib",
+        "//source/client:sni_utility",
         "@envoy//test/test_common:utility_lib",
+    ],
+)
+
+envoy_cc_test(
+    name = "process_bootstrap_test",
+    srcs = ["process_bootstrap_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/client:options_impl_lib",
+        "//source/client:process_bootstrap",
+        "//source/common:nighthawk_common_lib",
+        "//test/client:utility_lib",
+        "//test/mocks/client:mock_options",
+        "//test/test_common:proto_matchers",
+        "@envoy//test/mocks/event:event_mocks",
+        "@envoy//test/mocks/network:network_mocks",
+        "@envoy//test/test_common:status_utility_lib",
+        "@envoy//test/test_common:utility_lib",
+        "@envoy_api//envoy/config/bootstrap/v3:pkg_cc_proto",
+        "@envoy_api//envoy/config/core/v3:pkg_cc_proto",
+        "@envoy_api//envoy/extensions/transport_sockets/tls/v3:pkg_cc_proto",
     ],
 )
 

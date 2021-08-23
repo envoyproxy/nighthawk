@@ -1,6 +1,6 @@
 #include "nighthawk/common/exception.h"
 
-#include "client/client.h"
+#include "source/client/client.h"
 
 #include "absl/debugging/symbolize.h"
 

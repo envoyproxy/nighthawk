@@ -2,17 +2,19 @@
 
 import json
 import logging
+import math
 import os
+import pytest
 import subprocess
 import sys
-import pytest
 import time
 from threading import Thread
 
 from test.integration.common import IpVersion
 from test.integration.integration_test_fixtures import (
     http_test_server_fixture, https_test_server_fixture, https_test_server_fixture,
-    multi_http_test_server_fixture, multi_https_test_server_fixture, server_config)
+    multi_http_test_server_fixture, multi_https_test_server_fixture, quic_test_server_fixture,
+    server_config, server_config_quic)
 from test.integration import asserts
 from test.integration import utility
 
@@ -20,6 +22,7 @@ from test.integration import utility
 # for the server side as well.
 
 
+@pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable and very slow in sanitizer runs")
 def test_http_h1(http_test_server_fixture):
   """Test http1 over plain http.
 
@@ -138,6 +141,8 @@ def test_http_h2_mini_stress_test_without_client_side_queueing(http_test_server_
   asserts.assertNotIn("upstream_rq_pending_overflow", counters)
 
 
+@pytest.mark.skipif(not utility.isRunningInCircleCi(),
+                    reason="Has very high failure rate in local executions.")
 @pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable and very slow in sanitizer runs")
 def test_http_h1_mini_stress_test_open_loop(http_test_server_fixture):
   """Run an H1 open loop stress test. We expect higher pending and overflow counts."""
@@ -150,6 +155,8 @@ def test_http_h1_mini_stress_test_open_loop(http_test_server_fixture):
   asserts.assertCounterGreater(counters, "benchmark.pool_overflow", 10)
 
 
+@pytest.mark.skipif(not utility.isRunningInCircleCi(),
+                    reason="Has very high failure rate in local executions.")
 @pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable and very slow in sanitizer runs")
 def test_http_h2_mini_stress_test_open_loop(http_test_server_fixture):
   """Run an H2 open loop stress test. We expect higher overflow counts."""
@@ -279,14 +286,45 @@ def test_https_h2_multiple_connections(https_test_server_fixture):
       "--h2",
       https_test_server_fixture.getTestServerRootUri(), "--rps", "100", "--duration", "100",
       "--termination-predicate", "benchmark.http_2xx:99", "--max-active-requests", "10",
-      "--max-pending-requests", "10", "--experimental-h2-use-multiple-connections", "--burst-size",
-      "10"
+      "--max-pending-requests", "10", "--max-concurrent-streams", "1", "--burst-size", "10"
   ])
   counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   asserts.assertCounterGreaterEqual(counters, "benchmark.http_2xx", 100)
   # Empirical observation shows we may end up creating more then 10 connections.
   # This is stock Envoy h/2 pool behavior.
   asserts.assertCounterGreaterEqual(counters, "upstream_cx_http2_total", 10)
+
+
+def test_h3_quic(quic_test_server_fixture):
+  """Test http3 quic.
+
+  Runs the CLI configured to use HTTP/3 Quic against our test server, and sanity
+  checks statistics from both client and server.
+  """
+  parsed_json, _ = quic_test_server_fixture.runNighthawkClient([
+      "--protocol http3",
+      quic_test_server_fixture.getTestServerRootUri(),
+      "--rps",
+      "100",
+      "--duration",
+      "100",
+      "--termination-predicate",
+      "benchmark.http_2xx:24",
+      "--max-active-requests",
+      "1",
+      # Envoy doesn't support disabling certificate verification on Quic
+      # connections, so the host in our requests has to match the hostname in
+      # the leaf certificate.
+      "--request-header",
+      "Host:www.lyft.com"
+  ])
+  counters = quic_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
+  asserts.assertCounterEqual(counters, "benchmark.http_2xx", 25)
+  asserts.assertCounterEqual(counters, "upstream_cx_http3_total", 1)
+  asserts.assertCounterEqual(counters, "upstream_cx_total", 1)
+  asserts.assertCounterEqual(counters, "upstream_rq_pending_total", 1)
+  asserts.assertCounterEqual(counters, "upstream_rq_total", 25)
+  asserts.assertCounterEqual(counters, "default.total_match_count", 1)
 
 
 def _do_tls_configuration_test(https_test_server_fixture, cli_parameter, use_h2):
@@ -639,7 +677,7 @@ def qps_parameterization_fixture(request):
   yield param
 
 
-@pytest.fixture(scope="function", params=[1, 3])
+@pytest.fixture(scope="function", params=[5, 10])
 def duration_parameterization_fixture(request):
   """Yield duration values to iterate test parameterization on."""
   param = request.param
@@ -658,19 +696,29 @@ def test_http_request_release_timing(http_test_server_fixture, qps_parameterizat
         str(concurrency)
     ])
 
-    total_requests = qps_parameterization_fixture * concurrency * duration_parameterization_fixture
     global_histograms = http_test_server_fixture.getNighthawkGlobalHistogramsbyIdFromJson(
         parsed_json)
     counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-    asserts.assertEqual(
+
+    global_result = http_test_server_fixture.getGlobalResults(parsed_json)
+    actual_duration = utility.get_execution_duration_from_global_result_json(global_result)
+    # Ensure Nighthawk managed to execute for at least some time.
+    assert actual_duration >= 1
+
+    # The actual duration is a float, flooring if here allows us to use
+    # the GreaterEqual matchers below.
+    total_requests = qps_parameterization_fixture * concurrency * math.floor(actual_duration)
+    asserts.assertGreaterEqual(
         int(global_histograms["benchmark_http_client.request_to_response"]["count"]),
         total_requests)
-    asserts.assertEqual(int(global_histograms["benchmark_http_client.queue_to_connect"]["count"]),
-                        total_requests)
-    asserts.assertEqual(int(global_histograms["benchmark_http_client.latency_2xx"]["count"]),
-                        total_requests)
+    asserts.assertGreaterEqual(
+        int(global_histograms["benchmark_http_client.queue_to_connect"]["count"]), total_requests)
+    asserts.assertGreaterEqual(int(global_histograms["benchmark_http_client.latency_2xx"]["count"]),
+                               total_requests)
 
-    asserts.assertCounterEqual(counters, "benchmark.http_2xx", (total_requests))
+    asserts.assertCounterGreaterEqual(counters, "benchmark.http_2xx", (total_requests))
+    # Give system resources some time to recover after the last execution.
+    time.sleep(2)
 
 
 def _send_sigterm(process):

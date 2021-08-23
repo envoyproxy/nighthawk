@@ -7,7 +7,7 @@
 
 #include "external/envoy/source/common/common/logger.h"
 
-#include "common/request_stream_grpc_client_impl.h"
+#include "source/common/request_stream_grpc_client_impl.h"
 
 namespace Nighthawk {
 
@@ -27,6 +27,7 @@ public:
                           const uint64_t max_yields = UINT64_MAX);
   RequestGenerator get() override;
   void initOnThread() override{};
+  void destroyOnThread() override{};
 
 private:
   const HeaderMapPtr header_;
@@ -55,6 +56,7 @@ public:
                           uint32_t header_buffer_length);
   RequestGenerator get() override;
   void initOnThread() override;
+  void destroyOnThread() override;
 
 private:
   void connectToRequestStreamGrpcService();

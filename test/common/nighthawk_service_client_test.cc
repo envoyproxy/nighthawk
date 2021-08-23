@@ -4,7 +4,7 @@
 #include "api/client/service.grpc.pb.h"
 #include "api/client/service_mock.grpc.pb.h"
 
-#include "common/nighthawk_service_client_impl.h"
+#include "source/common/nighthawk_service_client_impl.h"
 
 #include "grpcpp/test/mock_stream.h"
 

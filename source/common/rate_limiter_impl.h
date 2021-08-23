@@ -9,7 +9,7 @@
 
 #include "external/envoy/source/common/common/logger.h"
 
-#include "common/frequency.h"
+#include "source/common/frequency.h"
 
 #include "absl/random/random.h"
 #include "absl/random/zipf_distribution.h"

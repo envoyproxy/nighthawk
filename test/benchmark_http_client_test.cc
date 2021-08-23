@@ -13,12 +13,11 @@
 #include "external/envoy/test/mocks/upstream/mocks.h"
 #include "external/envoy/test/test_common/network_utility.h"
 
-#include "common/request_impl.h"
-#include "common/statistic_impl.h"
-#include "common/uri_impl.h"
-#include "common/utility.h"
-
-#include "client/benchmark_client_impl.h"
+#include "source/client/benchmark_client_impl.h"
+#include "source/common/request_impl.h"
+#include "source/common/statistic_impl.h"
+#include "source/common/uri_impl.h"
+#include "source/common/utility.h"
 
 #include "gtest/gtest.h"
 
@@ -70,7 +69,8 @@ public:
     EXPECT_CALL(cluster_manager(), getThreadLocalCluster(_))
         .WillRepeatedly(Return(&thread_local_cluster_));
     EXPECT_CALL(thread_local_cluster_, info()).WillRepeatedly(Return(cluster_info_));
-    EXPECT_CALL(thread_local_cluster_, httpConnPool(_, _, _)).WillRepeatedly(Return(&pool_));
+    EXPECT_CALL(thread_local_cluster_, httpConnPool(_, _, _))
+        .WillRepeatedly(Return(Envoy::Upstream::HttpPoolData([]() {}, &pool_)));
 
     auto& tracer = static_cast<Envoy::Tracing::MockHttpTracer&>(*http_tracer_);
     EXPECT_CALL(tracer, startSpan_(_, _, _, _))
@@ -179,8 +179,8 @@ public:
   // verifyBenchmarkClientProcessesExpectedInflightRequests.
   void setupBenchmarkClient(const RequestGenerator& request_generator) {
     client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
-        *api_, *dispatcher_, store_, statistic_, /*use_h2*/ false, cluster_manager_, http_tracer_,
-        "benchmark", request_generator, /*provide_resource_backpressure*/ true,
+        *api_, *dispatcher_, store_, statistic_, Envoy::Http::Protocol::Http11, cluster_manager_,
+        http_tracer_, "benchmark", request_generator, /*provide_resource_backpressure*/ true,
         /*response_header_with_latency_input=*/"");
   }
 
@@ -435,7 +435,7 @@ TEST_F(BenchmarkClientHttpTest, DrainTimeoutFires) {
             return nullptr;
           });
   EXPECT_CALL(pool_, hasActiveConnections()).WillOnce([]() -> bool { return true; });
-  EXPECT_CALL(pool_, addDrainedCallback(_));
+  EXPECT_CALL(pool_, addIdleCallback(_));
   // We don't expect the callback that we pass here to fire.
   client_->tryStartRequest([](bool, bool) { EXPECT_TRUE(false); });
   // To get past this, the drain timeout within the benchmark client must execute.

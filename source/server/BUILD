@@ -32,7 +32,7 @@ envoy_cc_library(
     deps = [
         ":well_known_headers_lib",
         "//api/server:response_options_proto_cc_proto",
-        "@envoy//include/envoy/server:filter_config_interface_with_external_headers",
+        "@envoy//envoy/server:filter_config_interface_with_external_headers",
         "@envoy//source/common/common:statusor_lib_with_external_headers",
         "@envoy//source/common/protobuf:message_validator_lib_with_external_headers",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
@@ -87,7 +87,7 @@ envoy_cc_library(
     repository = "@envoy",
     deps = [
         ":http_test_server_filter_lib",
-        "@envoy//include/envoy/server:filter_config_interface_with_external_headers",
+        "@envoy//envoy/server:filter_config_interface_with_external_headers",
     ],
 )
 
@@ -97,7 +97,7 @@ envoy_cc_library(
     repository = "@envoy",
     deps = [
         ":http_dynamic_delay_filter_lib",
-        "@envoy//include/envoy/server:filter_config_interface_with_external_headers",
+        "@envoy//envoy/server:filter_config_interface_with_external_headers",
     ],
 )
 
@@ -107,6 +107,6 @@ envoy_cc_library(
     repository = "@envoy",
     deps = [
         ":http_time_tracking_filter_lib",
-        "@envoy//include/envoy/server:filter_config_interface_with_external_headers",
+        "@envoy//envoy/server:filter_config_interface_with_external_headers",
     ],
 )

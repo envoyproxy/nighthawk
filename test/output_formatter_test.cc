@@ -10,11 +10,10 @@
 #include "api/client/options.pb.h"
 #include "api/client/output.pb.h"
 
-#include "common/statistic_impl.h"
-#include "common/version_info.h"
-
-#include "client/output_collector_impl.h"
-#include "client/output_formatter_impl.h"
+#include "source/client/output_collector_impl.h"
+#include "source/client/output_formatter_impl.h"
+#include "source/common/statistic_impl.h"
+#include "source/common/version_info.h"
 
 #include "test_common/environment.h"
 
@@ -28,6 +27,8 @@ using namespace testing;
 
 namespace Nighthawk {
 namespace Client {
+
+using ::nighthawk::client::Protocol;
 
 class OutputCollectorTest : public Test {
 public:
@@ -215,6 +216,21 @@ TEST_F(MediumOutputCollectorTest, FortioFormatter0sJitterUniformGetsReflected) {
   input_proto.mutable_options()->mutable_jitter_uniform()->set_seconds(0);
   EXPECT_NE((formatter.formatProto(input_proto)).value().find(" \"Jitter\": false,"),
             std::string::npos);
+}
+
+TEST_F(MediumOutputCollectorTest, CalculatesNumThreads) {
+  nighthawk::client::Output input_proto =
+      loadProtoFromFile("test/test_data/output_formatter.medium.proto.gold");
+  FortioOutputFormatterImpl formatter;
+
+  absl::StatusOr<std::string> result_json = formatter.formatProto(input_proto);
+  ASSERT_TRUE(result_json.status().ok());
+  nighthawk::client::FortioResult result;
+  Envoy::MessageUtil::loadFromJson(*result_json, result,
+                                   Envoy::ProtobufMessage::getStrictValidationVisitor());
+
+  // Expect 300 threads (3 workers * 100 connections).
+  EXPECT_EQ(300, result.numthreads());
 }
 
 TEST_F(MediumOutputCollectorTest, ConsoleOutputFormatter) {

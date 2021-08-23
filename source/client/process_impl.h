@@ -17,10 +17,12 @@
 #include "external/envoy/source/common/access_log/access_log_manager_impl.h"
 #include "external/envoy/source/common/common/logger.h"
 #include "external/envoy/source/common/common/random_generator.h"
+#include "external/envoy/source/common/common/statusor.h"
 #include "external/envoy/source/common/event/real_time_system.h"
 #include "external/envoy/source/common/grpc/context_impl.h"
 #include "external/envoy/source/common/http/context_impl.h"
 #include "external/envoy/source/common/protobuf/message_validator_impl.h"
+#include "external/envoy/source/common/quic/quic_stat_names.h"
 #include "external/envoy/source/common/router/context_impl.h"
 #include "external/envoy/source/common/secret/secret_manager_impl.h"
 #include "external/envoy/source/common/stats/allocator_impl.h"
@@ -33,9 +35,9 @@
 #include "external/envoy/source/server/config_validation/admin.h"
 #include "external/envoy_api/envoy/config/bootstrap/v3/bootstrap.pb.h"
 
-#include "client/benchmark_client_impl.h"
-#include "client/factories_impl.h"
-#include "client/flush_worker_impl.h"
+#include "source/client/benchmark_client_impl.h"
+#include "source/client/factories_impl.h"
+#include "source/client/flush_worker_impl.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -51,7 +53,7 @@ class ClusterManagerFactory;
 class ProcessImpl : public Process, public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
   /**
-   * Instantiates a ProcessImpl
+   * Creates a ProcessImpl.
    * @param options provides the options configuration to be used.
    * @param time_system provides the Envoy::Event::TimeSystem implementation that will be used.
    * @param process_wide optional parameter which can be used to pass a pre-setup reference to
@@ -60,15 +62,11 @@ public:
    * If this parameter is not supplied, ProcessImpl will contruct its own Envoy::ProcessWide
    * instance.
    */
-  ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
-              const std::shared_ptr<Envoy::ProcessWide>& process_wide = nullptr);
-  ~ProcessImpl() override;
+  static absl::StatusOr<ProcessPtr>
+  CreateProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
+                    const std::shared_ptr<Envoy::ProcessWide>& process_wide = nullptr);
 
-  /**
-   * @return uint32_t the concurrency we determined should run at based on configuration and
-   * available machine resources.
-   */
-  uint32_t determineConcurrency() const;
+  ~ProcessImpl() override;
 
   /**
    * Runs the process.
@@ -87,21 +85,13 @@ public:
   bool requestExecutionCancellation() override;
 
 private:
-  /**
-   * @brief Creates a cluster for usage by a remote request source.
-   *
-   * @param uri The parsed uri of the remote request source.
-   * @param worker_number The worker number that we are creating this cluster for.
-   * @param config The bootstrap configuration that will be modified.
-   */
-  void addRequestSourceCluster(const Uri& uri, int worker_number,
-                               envoy::config::bootstrap::v3::Bootstrap& config) const;
+  // Use CreateProcessImpl to construct an instance of ProcessImpl.
+  ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
+              const std::shared_ptr<Envoy::ProcessWide>& process_wide = nullptr);
+
   void addTracingCluster(envoy::config::bootstrap::v3::Bootstrap& bootstrap, const Uri& uri) const;
   void setupTracingImplementation(envoy::config::bootstrap::v3::Bootstrap& bootstrap,
                                   const Uri& uri) const;
-  void createBootstrapConfiguration(envoy::config::bootstrap::v3::Bootstrap& bootstrap,
-                                    const std::vector<UriPtr>& uris,
-                                    const UriPtr& request_source_uri, int number_of_workers) const;
   void maybeCreateTracingDriver(const envoy::config::trace::v3::Tracing& configuration);
   void configureComponentLogLevels(spdlog::level::level_enum level);
   /**
@@ -124,8 +114,7 @@ private:
    */
   void setupStatsSinks(const envoy::config::bootstrap::v3::Bootstrap& bootstrap,
                        std::list<std::unique_ptr<Envoy::Stats::Sink>>& stats_sinks);
-  bool runInternal(OutputCollector& collector, const std::vector<UriPtr>& uris,
-                   const UriPtr& request_source_uri, const UriPtr& tracing_uri,
+  bool runInternal(OutputCollector& collector, const UriPtr& tracing_uri,
                    const absl::optional<Envoy::SystemTime>& schedule);
 
   /**
@@ -162,6 +151,8 @@ private:
 
   const envoy::config::core::v3::Node node_;
   const Envoy::Protobuf::RepeatedPtrField<std::string> node_context_params_;
+  const Options& options_;
+  const int number_of_workers_;
   std::shared_ptr<Envoy::ProcessWide> process_wide_;
   Envoy::PlatformImpl platform_impl_;
   Envoy::Event::TimeSystem& time_system_;
@@ -169,6 +160,8 @@ private:
   Envoy::Stats::AllocatorImpl stats_allocator_;
   Envoy::ThreadLocal::InstanceImpl tls_;
   Envoy::Stats::ThreadLocalStoreImpl store_root_;
+  Envoy::Quic::QuicStatNames quic_stat_names_;
+  envoy::config::bootstrap::v3::Bootstrap bootstrap_;
   Envoy::Api::ApiPtr api_;
   Envoy::Event::DispatcherPtr dispatcher_;
   std::vector<ClientWorkerPtr> workers_;
@@ -176,7 +169,6 @@ private:
   const TerminationPredicateFactoryImpl termination_predicate_factory_;
   const SequencerFactoryImpl sequencer_factory_;
   const RequestSourceFactoryImpl request_generator_factory_;
-  const Options& options_;
 
   Envoy::Init::ManagerImpl init_manager_;
   Envoy::LocalInfo::LocalInfoPtr local_info_;

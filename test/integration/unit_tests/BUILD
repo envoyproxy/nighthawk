@@ -9,3 +9,11 @@ py_test(
         "//test/integration:integration_test_base_lean",
     ],
 )
+
+py_test(
+    name = "test_utility",
+    srcs = ["test_utility.py"],
+    deps = [
+        "//test/integration:integration_test_base_lean",
+    ],
+)

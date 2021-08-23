@@ -104,16 +104,12 @@ timing offsets to an underlying **RateLimiter**) and **LinearRampingRateLimiter*
 ### BenchmarkClient
 
 As of today, there’s a single implementation called **BenchmarkClientImpl**,
-which wraps Envoy’s **Upstream** concept and (slightly) customized H1/H2
+which wraps Envoy’s **Upstream** concept and (slightly) customized H1/H2/H3
 **Pool** concepts. For executing requests, the pool will be requested to create
 a **StreamEncoder**, and Nighthawk will pass its own **StreamDecoderImpl** into
 that as an argument. The integration surface between **BenchmarkClient** is
 defined via `BenchmarkClient::tryStartRequest()` and a callback specification
 which will be fired upon completion of a successfully started request.
-
-For H3, it is anticipated that it will fit into this model, but if all else
-fails, it will be entirely possible to wire in a new type of
-**BenchmarkClient**.
 
 ### RequestSource
 

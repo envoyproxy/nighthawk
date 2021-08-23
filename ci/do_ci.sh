@@ -19,6 +19,40 @@ export SRCDIR=${SRCDIR:="${PWD}"}
 export CLANG_FORMAT=clang-format
 export NIGHTHAWK_BUILD_ARCH=$(uname -m)
 
+# We build in steps to avoid running out of memory in CI.
+# This list doesn't have to be complete, execution of bazel test will build any
+# remaining targets.
+# The order matters here, dependencies are placed before dependents.
+BUILD_PARTS=(
+    "//api/..."
+    "//source/exe/..."
+    "//source/server/..."
+    "//source/request_source/..."
+    "//source/adaptive_load/..."
+    "//test/mocks/..."
+    "//test/..."
+)
+
+#######################################
+# Runs the specified command on all the BUILD_PARTS.
+# Arguments:
+#   The command to execute, each part will be appended as the last argument to
+#   this command.
+# Returns:
+#   0 on success, exits with return code 1 on failure.
+#######################################
+function run_on_build_parts() {
+    local command="$1"
+    for part in ${BUILD_PARTS[@]}; do
+        echo "run_on_build_parts: running command $command $part"
+        eval "$command $part"
+        if (( $? != 0 )); then
+            echo "Error executing $command $part."
+            exit 1
+        fi
+    done
+}
+
 function do_build () {
     bazel build $BAZEL_BUILD_OPTIONS //:nighthawk
     tools/update_cli_readme_documentation.sh --mode check
@@ -30,8 +64,11 @@ function do_opt_build () {
 }
 
 function do_test() {
-    bazel build -c dbg $BAZEL_BUILD_OPTIONS //test/...
-    bazel test -c dbg $BAZEL_TEST_OPTIONS --test_output=all //test/...
+    # The environment variable CI is used to determine if some expensive tests
+    # that cannot run locally should be executed.
+    # E.g. test_http_h1_mini_stress_test_open_loop.
+    run_on_build_parts "bazel build -c dbg $BAZEL_BUILD_OPTIONS --action_env=CI"
+    bazel test -c dbg $BAZEL_TEST_OPTIONS --test_output=all --action_env=CI //test/...
 }
 
 function do_clang_tidy() {
@@ -42,7 +79,7 @@ function do_clang_tidy() {
 
 function do_unit_test_coverage() {
     export TEST_TARGETS="//test/... -//test:python_test"
-    export COVERAGE_THRESHOLD=94.1
+    export COVERAGE_THRESHOLD=93.2
     echo "bazel coverage build with tests ${TEST_TARGETS}"
     test/run_nighthawk_bazel_coverage.sh ${TEST_TARGETS}
     exit 0
@@ -99,10 +136,7 @@ function do_sanitizer() {
     cd "${SRCDIR}"
 
     # We build this in steps to avoid running out of memory in CI
-    run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config="$CONFIG" -- //source/exe/... && \
-    run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config="$CONFIG" -- //source/server/... && \
-    run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config="$CONFIG" -- //test/mocks/... && \
-    run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config="$CONFIG" -- //test/... && \
+    run_on_build_parts "run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config=$CONFIG --"
     run_bazel test ${BAZEL_TEST_OPTIONS} -c dbg --config="$CONFIG" -- //test/...
 }
 
@@ -197,9 +231,11 @@ if [ -n "$CIRCLECI" ]; then
     fi
     NUM_CPUS=8
     if [[ "$1" == "test_gcc" ]]; then
-        NUM_CPUS=4
+        NUM_CPUS=2
+        BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} \
+          --discard_analysis_cache --notrack_incremental_state --nokeep_state_after_build"
     fi
-    echo "Running with ${NUM_CPUS} cpus"
+    echo "Running with ${NUM_CPUS} cpus and BAZEL_BUILD_OPTIONS: ${BAZEL_BUILD_OPTIONS}"
     BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} --jobs=${NUM_CPUS}"
 fi
 

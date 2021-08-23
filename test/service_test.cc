@@ -10,7 +10,7 @@
 
 #include "api/client/service.pb.h"
 
-#include "client/service_impl.h"
+#include "source/client/service_impl.h"
 
 #include "gtest/gtest.h"
 
@@ -239,7 +239,7 @@ TEST_P(ServiceTest, Unresolvable) {
   auto options = request_.mutable_start_request()->mutable_options();
   options->mutable_uri()->set_value("http://unresolvable-host/");
   // We expect output, because the options proto is valid.
-  runWithFailingValidationExpectations(true, "Unknown failure");
+  runWithFailingValidationExpectations(false, "Unable to create ProcessImpl");
 }
 
 } // namespace

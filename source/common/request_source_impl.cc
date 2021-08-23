@@ -1,10 +1,10 @@
-#include "common/request_source_impl.h"
+#include "source/common/request_source_impl.h"
 
 #include <chrono>
 
 #include "external/envoy/source/common/common/assert.h"
 
-#include "common/request_impl.h"
+#include "source/common/request_impl.h"
 
 namespace Nighthawk {
 
@@ -46,7 +46,8 @@ void RemoteRequestSourceImpl::connectToRequestStreamGrpcService() {
       cluster_manager_->grpcAsyncClientManager().factoryForGrpcService(grpc_service, scope_,
                                                                        /*skip_cluster_check=*/true);
   grpc_client_ = std::make_unique<RequestStreamGrpcClientImpl>(
-      cluster_manager->create(), dispatcher_, *base_header_, header_buffer_length_);
+      cluster_manager->createUncachedRawAsyncClient(), dispatcher_, *base_header_,
+      header_buffer_length_);
   grpc_client_->start();
   const Envoy::MonotonicTime start = time_source.monotonicTime();
   bool timeout = false;
@@ -59,6 +60,12 @@ void RemoteRequestSourceImpl::connectToRequestStreamGrpcService() {
 }
 
 void RemoteRequestSourceImpl::initOnThread() { connectToRequestStreamGrpcService(); }
+
+void RemoteRequestSourceImpl::destroyOnThread() {
+  // The RequestStreamGrpcClientImpl uses Envoy::Grpc::AsyncClient which demands
+  // to be destroyed on the same thread it was constructed from.
+  grpc_client_.reset();
+}
 
 RequestGenerator RemoteRequestSourceImpl::get() {
   return [this]() -> RequestPtr { return grpc_client_->maybeDequeue(); };

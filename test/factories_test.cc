@@ -4,9 +4,8 @@
 #include "external/envoy/test/test_common/simulated_time_system.h"
 #include "external/envoy/test/test_common/utility.h"
 
-#include "common/request_source_impl.h"
-
-#include "client/factories_impl.h"
+#include "source/client/factories_impl.h"
+#include "source/common/request_source_impl.h"
 
 #include "test/mocks/client/mock_benchmark_client.h"
 #include "test/mocks/client/mock_options.h"
@@ -37,7 +36,7 @@ TEST_F(FactoriesTest, CreateBenchmarkClient) {
   BenchmarkClientFactoryImpl factory(options_);
   Envoy::Upstream::ClusterManagerPtr cluster_manager;
   EXPECT_CALL(options_, connections());
-  EXPECT_CALL(options_, h2());
+  EXPECT_CALL(options_, protocol()).WillOnce(Return(Envoy::Http::Protocol::Http11));
   EXPECT_CALL(options_, maxPendingRequests());
   EXPECT_CALL(options_, maxActiveRequests());
   EXPECT_CALL(options_, maxRequestsPerConnection());
