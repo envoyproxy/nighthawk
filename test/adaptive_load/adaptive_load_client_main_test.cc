@@ -43,6 +43,7 @@ public:
     return Envoy::Api::IoError::IoErrorCode::UnknownError;
   }
   std::string getErrorDetails() const override { return "unknown error details"; }
+  int getSystemErrorCode() const override { return 1; }
 };
 
 /**
