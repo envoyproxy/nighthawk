@@ -307,8 +307,7 @@ TEST_F(InLineRequestSourcePluginTest, CreateRequestSourcePluginCreatesCorrectPlu
                         "test/request_source/test_data/test-config-ab.yaml"),
                     /*out parameter*/ options_list,
                     /*validation visitor*/ Envoy::ProtobufMessage::getStrictValidationVisitor(),
-                    /*Api*/ *api_,
-                    /*use api boosting*/ true);
+                    /*Api*/ *api_);
   nighthawk::request_source::InLineOptionsListRequestSourceConfig config =
       MakeInLinePluginConfig(options_list, /*num_requests*/ 2);
   Envoy::ProtobufWkt::Any config_any;
@@ -331,8 +330,7 @@ TEST_F(InLineRequestSourcePluginTest,
                         "test/request_source/test_data/test-config-ab.yaml"),
                     /*out parameter*/ options_list,
                     /*validation visitor*/ Envoy::ProtobufMessage::getStrictValidationVisitor(),
-                    /*Api*/ *api_,
-                    /*use api boosting*/ true);
+                    /*Api*/ *api_);
   nighthawk::request_source::InLineOptionsListRequestSourceConfig config =
       MakeInLinePluginConfig(options_list, /*num_requests*/ 2);
   Envoy::ProtobufWkt::Any config_any;
@@ -366,8 +364,7 @@ TEST_F(InLineRequestSourcePluginTest,
                         "test/request_source/test_data/test-config-ab.yaml"),
                     /*out parameter*/ options_list,
                     /*validation visitor*/ Envoy::ProtobufMessage::getStrictValidationVisitor(),
-                    /*Api*/ *api_,
-                    /*use api boosting*/ true);
+                    /*Api*/ *api_);
   nighthawk::request_source::InLineOptionsListRequestSourceConfig config =
       MakeInLinePluginConfig(options_list, /*num_requests*/ 4);
   Envoy::ProtobufWkt::Any config_any;
@@ -404,15 +401,13 @@ TEST_F(
                         "test/request_source/test_data/test-config-ab.yaml"),
                     /*out parameter*/ options_list_ab,
                     /*validation visitor*/ Envoy::ProtobufMessage::getStrictValidationVisitor(),
-                    /*Api*/ *api_,
-                    /*use api boosting*/ true);
+                    /*Api*/ *api_);
   nighthawk::client::RequestOptionsList options_list_c;
   util.loadFromFile(/*file to load*/ Nighthawk::TestEnvironment::runfilesPath(
                         "test/request_source/test_data/test-config-c.yaml"),
                     /*out parameter*/ options_list_c,
                     /*validation visitor*/ Envoy::ProtobufMessage::getStrictValidationVisitor(),
-                    /*Api*/ *api_,
-                    /*use api boosting*/ true);
+                    /*Api*/ *api_);
 
   nighthawk::request_source::InLineOptionsListRequestSourceConfig config_ab =
       MakeInLinePluginConfig(options_list_ab, /*num_requests*/ 2);
