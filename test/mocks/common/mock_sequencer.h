@@ -11,13 +11,14 @@ class MockSequencer : public Sequencer {
 public:
   MockSequencer();
 
-  MOCK_METHOD(void, start, ());
-  MOCK_METHOD(void, waitForCompletion, ());
-  MOCK_METHOD(double, completionsPerSecond, (), (const));
-  MOCK_METHOD(std::chrono::nanoseconds, executionDuration, (), (const));
-  MOCK_METHOD(StatisticPtrMap, statistics, (), (const));
+  MOCK_METHOD(void, start, (), (override));
+  MOCK_METHOD(void, waitForCompletion, (), (override));
+  MOCK_METHOD(double, completionsPerSecond, (), (const, override));
+  MOCK_METHOD(std::chrono::nanoseconds, executionDuration, (),
+              (const, override));
+  MOCK_METHOD(StatisticPtrMap, statistics, (), (const, override));
   MOCK_METHOD(void, cancel, ());
-  MOCK_METHOD(RateLimiter&, rate_limiter, (), (const));
+  MOCK_METHOD(RateLimiter&, rate_limiter, (), (const, override));
 };
 
 } // namespace Nighthawk

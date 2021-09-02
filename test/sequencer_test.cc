@@ -34,7 +34,7 @@ public:
 
 class MockSequencerTarget : public FakeSequencerTarget {
 public:
-  MOCK_METHOD(bool, callback, (OperationCallback));
+ MOCK_METHOD(bool, callback, (OperationCallback), (override));
 };
 
 class SequencerTestBase : public testing::Test {
