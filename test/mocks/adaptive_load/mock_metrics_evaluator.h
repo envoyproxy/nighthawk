@@ -24,23 +24,27 @@ public:
    */
   MockMetricsEvaluator();
 
-  MOCK_CONST_METHOD3(EvaluateMetric,
-                     absl::StatusOr<nighthawk::adaptive_load::MetricEvaluation>(
-                         const nighthawk::adaptive_load::MetricSpec& metric_spec,
-                         MetricsPlugin& metrics_plugin,
-                         const nighthawk::adaptive_load::ThresholdSpec* threshold_spec));
+  MOCK_METHOD(absl::StatusOr<nighthawk::adaptive_load::MetricEvaluation>,
+              EvaluateMetric,
+              (const nighthawk::adaptive_load::MetricSpec& metric_spec,
+               MetricsPlugin& metrics_plugin,
+               const nighthawk::adaptive_load::ThresholdSpec* threshold_spec),
+              (const, override));
 
-  MOCK_CONST_METHOD1(ExtractMetricSpecs,
-                     const std::vector<std::pair<const nighthawk::adaptive_load::MetricSpec*,
-                                                 const nighthawk::adaptive_load::ThresholdSpec*>>(
-                         const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec));
+  MOCK_METHOD((const std::vector<
+                  std::pair<const nighthawk::adaptive_load::MetricSpec*,
+                            const nighthawk::adaptive_load::ThresholdSpec*>>),
+              ExtractMetricSpecs,
+              (const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec),
+              (const, override));
 
-  MOCK_CONST_METHOD3(
-      AnalyzeNighthawkBenchmark,
-      absl::StatusOr<nighthawk::adaptive_load::BenchmarkResult>(
-          const nighthawk::client::ExecutionResponse& execution_response,
-          const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec,
-          const absl::flat_hash_map<std::string, MetricsPluginPtr>& name_to_custom_plugin_map));
+  MOCK_METHOD(absl::StatusOr<nighthawk::adaptive_load::BenchmarkResult>,
+              AnalyzeNighthawkBenchmark,
+              (const nighthawk::client::ExecutionResponse& execution_response,
+               const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec,
+               (const absl::flat_hash_map<std::string, MetricsPluginPtr>&
+                    name_to_custom_plugin_map)),
+              (const, override));
 };
 
 } // namespace Nighthawk
