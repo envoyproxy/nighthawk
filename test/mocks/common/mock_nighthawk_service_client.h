@@ -23,8 +23,7 @@ public:
    */
   MockNighthawkServiceClient();
 
-  MOCK_METHOD(absl::StatusOr<nighthawk::client::ExecutionResponse>,
-              PerformNighthawkBenchmark,
+  MOCK_METHOD(absl::StatusOr<nighthawk::client::ExecutionResponse>, PerformNighthawkBenchmark,
               (nighthawk::client::NighthawkService::StubInterface * stub,
                const nighthawk::client::CommandLineOptions& options),
               (const, override));

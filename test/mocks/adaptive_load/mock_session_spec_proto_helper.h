@@ -32,13 +32,10 @@ public:
    */
   MockAdaptiveLoadSessionSpecProtoHelper();
 
-  MOCK_METHOD(nighthawk::adaptive_load::AdaptiveLoadSessionSpec,
-              SetSessionSpecDefaults,
-              (const nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec),
-              (const, override));
+  MOCK_METHOD(nighthawk::adaptive_load::AdaptiveLoadSessionSpec, SetSessionSpecDefaults,
+              (const nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec), (const, override));
   MOCK_METHOD(absl::Status, CheckSessionSpec,
-              (const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec),
-              (const, override));
+              (const nighthawk::adaptive_load::AdaptiveLoadSessionSpec& spec), (const, override));
 };
 
 } // namespace Nighthawk

@@ -15,10 +15,9 @@ class MockBenchmarkClientFactory : public BenchmarkClientFactory {
 public:
   MockBenchmarkClientFactory();
   MOCK_METHOD(BenchmarkClientPtr, create,
-              (Envoy::Api::Api&, Envoy::Event::Dispatcher&,
-               Envoy::Stats::Scope&, Envoy::Upstream::ClusterManagerPtr&,
-               Envoy::Tracing::HttpTracerSharedPtr&, absl::string_view, int,
-               RequestSource& request_generator),
+              (Envoy::Api::Api&, Envoy::Event::Dispatcher&, Envoy::Stats::Scope&,
+               Envoy::Upstream::ClusterManagerPtr&, Envoy::Tracing::HttpTracerSharedPtr&,
+               absl::string_view, int, RequestSource& request_generator),
               (const, override));
 };
 

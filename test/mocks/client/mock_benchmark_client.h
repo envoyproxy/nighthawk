@@ -17,9 +17,8 @@ public:
   MOCK_METHOD(bool, tryStartRequest, (Client::CompletionCallback), (override));
   MOCK_METHOD(Envoy::Stats::Scope&, scope, (), (const, override));
   MOCK_METHOD(bool, shouldMeasureLatencies, (), (const, override));
-  MOCK_METHOD(const Envoy::Http::RequestHeaderMap&, requestHeaders, (),
-              (const));
+  MOCK_METHOD(const Envoy::Http::RequestHeaderMap&, requestHeaders, (), (const));
 };
 
 } // namespace Client
-}  // namespace Nighthawk
+} // namespace Nighthawk

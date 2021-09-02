@@ -14,8 +14,7 @@ public:
   MOCK_METHOD(void, start, (), (override));
   MOCK_METHOD(void, waitForCompletion, (), (override));
   MOCK_METHOD(double, completionsPerSecond, (), (const, override));
-  MOCK_METHOD(std::chrono::nanoseconds, executionDuration, (),
-              (const, override));
+  MOCK_METHOD(std::chrono::nanoseconds, executionDuration, (), (const, override));
   MOCK_METHOD(StatisticPtrMap, statistics, (), (const, override));
   MOCK_METHOD(void, cancel, ());
   MOCK_METHOD(RateLimiter&, rate_limiter, (), (const, override));
