@@ -16,7 +16,8 @@ public:
   MOCK_METHOD(std::chrono::seconds, duration, (), (const, override));
   MOCK_METHOD(std::chrono::seconds, timeout, (), (const, override));
   MOCK_METHOD(absl::optional<std::string>, uri, (), (const, override));
-  MOCK_METHOD(bool, h2, (), (const, override));
+  MOCK_METHOD(bool, h2, (), (const));
+  MOCK_METHOD(Envoy::Http::Protocol, protocol, (), (const, override));
   MOCK_METHOD(std::string, concurrency, (), (const, override));
   MOCK_METHOD(nighthawk::client::Verbosity::VerbosityOptions, verbosity, (), (const, override));
   MOCK_METHOD(nighthawk::client::OutputFormat::OutputFormatOptions, outputFormat, (),
@@ -35,6 +36,7 @@ public:
   MOCK_METHOD(uint32_t, maxPendingRequests, (), (const, override));
   MOCK_METHOD(uint32_t, maxActiveRequests, (), (const, override));
   MOCK_METHOD(uint32_t, maxRequestsPerConnection, (), (const, override));
+  MOCK_METHOD(uint32_t, maxConcurrentStreams, (), (const, override));
   MOCK_METHOD(CommandLineOptionsPtr, toCommandLineOptions, (), (const, override));
   MOCK_METHOD(nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions,
               sequencerIdleStrategy, (), (const, override));
@@ -49,7 +51,7 @@ public:
   MOCK_METHOD(bool, openLoop, (), (const, override));
   MOCK_METHOD(std::chrono::nanoseconds, jitterUniform, (), (const, override));
   MOCK_METHOD(std::string, nighthawkService, (), (const, override));
-  MOCK_METHOD(bool, h2UseMultipleConnections, (), (const, override));
+  MOCK_METHOD(bool, h2UseMultipleConnections, (), (const));
   MOCK_METHOD(std::vector<nighthawk::client::MultiTarget::Endpoint>, multiTargetEndpoints, (),
               (const, override));
   MOCK_METHOD(std::string, multiTargetPath, (), (const, override));
@@ -61,8 +63,9 @@ public:
               (const, override));
   MOCK_METHOD(uint32_t, statsFlushInterval, (), (const, override));
   MOCK_METHOD(std::string, responseHeaderWithLatencyInput, (), (const, override));
-  MOCK_METHOD(bool, allowEnvoyDeprecatedV2Api, (), (const, override));
+  MOCK_METHOD(bool, allowEnvoyDeprecatedV2Api, (), (const));
   MOCK_METHOD(absl::optional<Envoy::SystemTime>, scheduled_start, (), (const, override));
+  MOCK_METHOD(absl::optional<std::string>, executionId, (), (const, override));
 };
 
 } // namespace Client

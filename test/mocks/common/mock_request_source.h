@@ -11,6 +11,7 @@ public:
   MockRequestSource();
   MOCK_METHOD(RequestGenerator, get, (), (override));
   MOCK_METHOD(void, initOnThread, (), (override));
+  MOCK_METHOD(void, destroyOnThread, (), (override));
 };
 
 } // namespace Nighthawk
