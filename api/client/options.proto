@@ -208,7 +208,7 @@ message CommandLineOptions {
     // Defines multiple URIs to benchmark
     MultiTarget multi_target = 29;
   }
-  // Trace uri. Example: zipkin://localhost:9411/api/v1/spans. Default is empty.
+  // Trace uri. Example: zipkin://localhost:9411/api/v2/spans. Default is empty.
   google.protobuf.StringValue trace = 19; // [(validate.rules).string.uri = true];
   // Choose picking the most recently used, or least-recently-used connections for re-use.(default:
   // mru). WARNING: this option is experimental and may be removed or changed in the future!

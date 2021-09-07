@@ -69,7 +69,7 @@ TEST_F(ClientTest, TracingRun) {
   argv.push_back("error");
   argv.push_back("http://localhost:63657/");
   argv.push_back("--trace");
-  argv.push_back("zipkin://localhost:9411/api/v1/spans");
+  argv.push_back("zipkin://localhost:9411/api/v2/spans");
   Main program(argv.size(), argv.data());
   EXPECT_FALSE(program.run());
 }

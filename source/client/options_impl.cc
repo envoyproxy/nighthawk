@@ -204,7 +204,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       false, "", &sequencer_idle_strategies_allowed, cmd);
 
   TCLAP::ValueArg<std::string> trace(
-      "", "trace", "Trace uri. Example: zipkin://localhost:9411/api/v1/spans. Default is empty.",
+      "", "trace", "Trace uri. Example: zipkin://localhost:9411/api/v2/spans. Default is empty.",
       false, "", "uri format", cmd);
   TCLAP::MultiArg<std::string> termination_predicates(
       "", "termination-predicate",
