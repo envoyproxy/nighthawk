@@ -188,11 +188,9 @@ bazel-bin/nighthawk_test_server  [--enable-core-dump] [--socket-mode
 [--ignore-unknown-dynamic-fields]
 [--reject-unknown-dynamic-fields]
 [--allow-unknown-static-fields]
-[--allow-unknown-fields]
-[--bootstrap-version <string>]
-[--config-yaml <string>] [-c <string>]
-[--concurrency <uint32_t>]
-[--base-id-path <string>]
+[--allow-unknown-fields] [--config-yaml
+<string>] [-c <string>] [--concurrency
+<uint32_t>] [--base-id-path <string>]
 [--use-dynamic-base-id] [--base-id
 <uint32_t>] [--] [--version] [-h]
 
@@ -294,10 +292,6 @@ allow unknown fields in static configuration
 
 --allow-unknown-fields
 allow unknown fields in static configuration (DEPRECATED)
-
---bootstrap-version <string>
-API version to parse the bootstrap config as (e.g. 3). If unset, all
-known versions will be attempted
 
 --config-yaml <string>
 Inline YAML configuration, merges with the contents of --config-path

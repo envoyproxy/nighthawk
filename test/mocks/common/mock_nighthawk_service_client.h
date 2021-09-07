@@ -23,10 +23,10 @@ public:
    */
   MockNighthawkServiceClient();
 
-  MOCK_CONST_METHOD2(PerformNighthawkBenchmark,
-                     absl::StatusOr<nighthawk::client::ExecutionResponse>(
-                         nighthawk::client::NighthawkService::StubInterface* stub,
-                         const nighthawk::client::CommandLineOptions& options));
+  MOCK_METHOD(absl::StatusOr<nighthawk::client::ExecutionResponse>, PerformNighthawkBenchmark,
+              (nighthawk::client::NighthawkService::StubInterface * stub,
+               const nighthawk::client::CommandLineOptions& options),
+              (const, override));
 };
 
 } // namespace Nighthawk

@@ -44,6 +44,7 @@ BUILD_PARTS=(
 function run_on_build_parts() {
     local command="$1"
     for part in ${BUILD_PARTS[@]}; do
+        echo "run_on_build_parts: running command $command $part"
         eval "$command $part"
         if (( $? != 0 )); then
             echo "Error executing $command $part."
@@ -78,7 +79,7 @@ function do_clang_tidy() {
 
 function do_unit_test_coverage() {
     export TEST_TARGETS="//test/... -//test:python_test"
-    export COVERAGE_THRESHOLD=94.1
+    export COVERAGE_THRESHOLD=93.2
     echo "bazel coverage build with tests ${TEST_TARGETS}"
     test/run_nighthawk_bazel_coverage.sh ${TEST_TARGETS}
     exit 0
@@ -230,9 +231,11 @@ if [ -n "$CIRCLECI" ]; then
     fi
     NUM_CPUS=8
     if [[ "$1" == "test_gcc" ]]; then
-        NUM_CPUS=4
+        NUM_CPUS=2
+        BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} \
+          --discard_analysis_cache --notrack_incremental_state --nokeep_state_after_build"
     fi
-    echo "Running with ${NUM_CPUS} cpus"
+    echo "Running with ${NUM_CPUS} cpus and BAZEL_BUILD_OPTIONS: ${BAZEL_BUILD_OPTIONS}"
     BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} --jobs=${NUM_CPUS}"
 fi
 

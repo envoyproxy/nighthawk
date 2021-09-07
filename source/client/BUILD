@@ -28,6 +28,33 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
+    name = "sni_utility",
+    srcs = ["sni_utility.cc"],
+    hdrs = ["sni_utility.h"],
+    repository = "@envoy",
+    visibility = ["//:__subpackages__"],
+    deps = [
+        "//source/common:nighthawk_common_lib",
+        "@envoy//envoy/http:protocol_interface_with_external_headers",
+    ],
+)
+
+envoy_cc_library(
+    name = "process_bootstrap",
+    srcs = ["process_bootstrap.cc"],
+    hdrs = ["process_bootstrap.h"],
+    repository = "@envoy",
+    visibility = ["//:__subpackages__"],
+    deps = [
+        ":sni_utility",
+        "//include/nighthawk/client:options_lib",
+        "//source/common:nighthawk_common_lib",
+        "@envoy//source/common/common:statusor_lib_with_external_headers",
+        "@envoy_api//envoy/config/bootstrap/v3:pkg_cc_proto",
+    ],
+)
+
+envoy_cc_library(
     name = "nighthawk_client_lib",
     srcs = [
         "benchmark_client_impl.cc",
@@ -37,7 +64,6 @@ envoy_cc_library(
         "flush_worker_impl.cc",
         "process_impl.cc",
         "remote_process_impl.cc",
-        "sni_utility.cc",
         "stream_decoder.cc",
     ],
     hdrs = [
@@ -48,7 +74,6 @@ envoy_cc_library(
         "flush_worker_impl.h",
         "process_impl.h",
         "remote_process_impl.h",
-        "sni_utility.h",
         "stream_decoder.h",
     ],
     copts = select({
@@ -61,6 +86,7 @@ envoy_cc_library(
         ":options_impl_lib",
         ":output_collector_impl_lib",
         ":output_formatter_impl_lib",
+        ":process_bootstrap",
         "//api/client:base_cc_proto",
         "//include/nighthawk/client:client_includes",
         "//include/nighthawk/common:base_includes",

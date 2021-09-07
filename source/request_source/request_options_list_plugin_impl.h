@@ -38,6 +38,7 @@ public:
 
   // default implementation
   void initOnThread() override;
+  void destroyOnThread() override;
 
 private:
   Envoy::Http::RequestHeaderMapPtr header_;

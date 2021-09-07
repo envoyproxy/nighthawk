@@ -18,6 +18,7 @@ envoy_basic_cc_library(
         "//api/client:base_cc_proto",
         "//include/nighthawk/common:base_includes",
         "@envoy//envoy/common:time_interface",
+        "@envoy//envoy/http:protocol_interface_with_external_headers",
         "@envoy//source/common/common:minimal_logger_lib_with_external_headers",
         "@envoy_api//envoy/config/cluster/v3:pkg_cc_proto",
         "@envoy_api//envoy/config/metrics/v3:pkg_cc_proto",

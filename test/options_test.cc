@@ -115,7 +115,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
       "--max-active-requests 11 --max-requests-per-connection 12 --sequencer-idle-strategy sleep "
       "--termination-predicate t1:1 --termination-predicate t2:2 --failure-predicate f1:1 "
       "--failure-predicate f2:2 --jitter-uniform .00001s "
-      "--experimental-h2-use-multiple-connections "
+      "--max-concurrent-streams 42 "
       "--experimental-h1-connection-reuse-strategy lru --label label1 --label label2 {} "
       "--simple-warmup --stats-sinks {} --stats-sinks {} --stats-flush-interval 10 "
       "--latency-response-header-name zz",
@@ -131,7 +131,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
   EXPECT_EQ(5, options->connections());
   EXPECT_EQ(6s, options->duration());
   EXPECT_EQ(7s, options->timeout());
-  EXPECT_EQ(true, options->h2());
+  EXPECT_EQ(Envoy::Http::Protocol::Http2, options->protocol());
   EXPECT_EQ("8", options->concurrency());
   EXPECT_EQ(nighthawk::client::Verbosity::ERROR, options->verbosity());
   EXPECT_EQ(nighthawk::client::OutputFormat::YAML, options->outputFormat());
@@ -153,8 +153,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
       "      }\n"
       "    }\n"
       "  }\n"
-      "}\n"
-      "183412668: \"envoy.api.v2.core.TransportSocket\"\n",
+      "}\n",
       options->transportSocket().value().DebugString());
   EXPECT_EQ(10, options->maxPendingRequests());
   EXPECT_EQ(11, options->maxActiveRequests());
@@ -167,7 +166,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
   EXPECT_EQ(1, options->failurePredicates()["f1"]);
   EXPECT_EQ(2, options->failurePredicates()["f2"]);
   EXPECT_EQ(10us, options->jitterUniform());
-  EXPECT_EQ(true, options->h2UseMultipleConnections());
+  EXPECT_EQ(42, options->maxConcurrentStreams());
   EXPECT_EQ(nighthawk::client::H1ConnectionReuseStrategy::LRU,
             options->h1ConnectionReuseStrategy());
   const std::vector<std::string> expected_labels{"label1", "label2"};
@@ -180,8 +179,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
             "  [type.googleapis.com/envoy.config.metrics.v3.StatsdSink] {\n"
             "    tcp_cluster_name: \"statsd\"\n"
             "  }\n"
-            "}\n"
-            "183412668: \"envoy.config.metrics.v2.StatsSink\"\n",
+            "}\n",
             options->statsSinks()[0].DebugString());
   EXPECT_EQ("name: \"envoy.stat_sinks.statsd\"\n"
             "typed_config {\n"
@@ -189,8 +187,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
             "    tcp_cluster_name: \"statsd\"\n"
             "    prefix: \"nighthawk\"\n"
             "  }\n"
-            "}\n"
-            "183412668: \"envoy.config.metrics.v2.StatsSink\"\n",
+            "}\n",
             options->statsSinks()[1].DebugString());
   EXPECT_EQ("zz", options->responseHeaderWithLatencyInput());
 
@@ -200,7 +197,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
   EXPECT_EQ(cmd->connections().value(), options->connections());
   EXPECT_EQ(cmd->duration().seconds(), options->duration().count());
   EXPECT_EQ(cmd->timeout().seconds(), options->timeout().count());
-  EXPECT_EQ(cmd->h2().value(), options->h2());
+  EXPECT_TRUE(cmd->h2().value());
   EXPECT_EQ(cmd->concurrency().value(), options->concurrency());
   EXPECT_EQ(cmd->verbosity().value(), options->verbosity());
   EXPECT_EQ(cmd->output_format().value(), options->outputFormat());
@@ -240,8 +237,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
   EXPECT_EQ(1, cmd->mutable_failure_predicates()->erase("f1"));
   EXPECT_EQ(1, cmd->mutable_termination_predicates()->erase("t1"));
   EXPECT_EQ(cmd->jitter_uniform().nanos(), options->jitterUniform().count());
-  EXPECT_EQ(cmd->experimental_h2_use_multiple_connections().value(),
-            options->h2UseMultipleConnections());
+  EXPECT_EQ(cmd->max_concurrent_streams().value(), options->maxConcurrentStreams());
   EXPECT_EQ(cmd->experimental_h1_connection_reuse_strategy().value(),
             options->h1ConnectionReuseStrategy());
   EXPECT_THAT(cmd->labels(), ElementsAreArray(expected_labels));
@@ -418,11 +414,8 @@ TEST_F(OptionsImplTest, TlsContext) {
   EXPECT_EQ("common_tls_context {\n"
             "  tls_params {\n"
             "    cipher_suites: \"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"\n"
-            "    183412668: \"envoy.api.v2.auth.TlsParameters\"\n"
             "  }\n"
-            "  183412668: \"envoy.api.v2.auth.CommonTlsContext\"\n"
-            "}\n"
-            "183412668: \"envoy.api.v2.auth.UpstreamTlsContext\"\n",
+            "}\n",
             options->tlsContext().DebugString());
 
   // Check that our conversion to CommandLineOptionsPtr makes sense.
@@ -568,19 +561,126 @@ INSTANTIATE_TEST_SUITE_P(IntOptionTests, OptionsImplIntTest,
                                 "burst-size", "max-pending-requests", "max-active-requests",
                                 "max-requests-per-connection"));
 
-// Test behaviour of the boolean valued --h2 flag.
-TEST_F(OptionsImplTest, H2Flag) {
-  EXPECT_FALSE(
-      TestUtility::createOptionsImpl(fmt::format("{} {}", client_name_, good_test_uri_))->h2());
-  EXPECT_TRUE(
-      TestUtility::createOptionsImpl(fmt::format("{} --h2 {}", client_name_, good_test_uri_))
-          ->h2());
+TEST_F(OptionsImplTest, MaxConcurrentStreamsHasDefaultValue) {
+  const std::unique_ptr<OptionsImpl> option =
+      TestUtility::createOptionsImpl(fmt::format("{} {}", client_name_, good_test_uri_));
+
+  EXPECT_EQ(OptionsImpl::largest_acceptable_concurrent_streams_value,
+            option->maxConcurrentStreams());
+  // Verify the default remains when converting back from proto.
+  CommandLineOptionsPtr proto = option->toCommandLineOptions();
+  const auto converted_option = std::make_unique<OptionsImpl>(*proto);
+  EXPECT_EQ(OptionsImpl::largest_acceptable_concurrent_streams_value,
+            converted_option->maxConcurrentStreams());
+}
+
+TEST_F(OptionsImplTest, UsesHttp11ByDefault) {
+  const std::unique_ptr<OptionsImpl> option =
+      TestUtility::createOptionsImpl(fmt::format("{} {}", client_name_, good_test_uri_));
+
+  EXPECT_EQ(Envoy::Http::Protocol::Http11, option->protocol());
+  // Verify the default remains HTTP/1.1 when converting back from proto.
+  CommandLineOptionsPtr proto = option->toCommandLineOptions();
+  const auto converted_option = std::make_unique<OptionsImpl>(*proto);
+  EXPECT_EQ(Envoy::Http::Protocol::Http11, converted_option->protocol());
+}
+
+TEST_F(OptionsImplTest, UsesHttp1WhenProtocolHttp1IsSet) {
+  const std::unique_ptr<OptionsImpl> option = TestUtility::createOptionsImpl(
+      fmt::format("{} --protocol http1 {}", client_name_, good_test_uri_));
+
+  EXPECT_EQ(Envoy::Http::Protocol::Http11, option->protocol());
+  // Verify the default remains HTTP/1.1 when converting back from proto.
+  CommandLineOptionsPtr proto = option->toCommandLineOptions();
+  const auto converted_option = std::make_unique<OptionsImpl>(*proto);
+  EXPECT_EQ(Envoy::Http::Protocol::Http11, converted_option->protocol());
+}
+
+TEST_F(OptionsImplTest, UsesHttp2WhenH2FlagIsSet) {
+  const std::unique_ptr<OptionsImpl> option =
+      TestUtility::createOptionsImpl(fmt::format("{} --h2 {}", client_name_, good_test_uri_));
+
+  EXPECT_EQ(Envoy::Http::Protocol::Http2, option->protocol());
+  // Verify the default remains HTTP/2 when converting back from proto.
+  CommandLineOptionsPtr proto = option->toCommandLineOptions();
+  const auto converted_option = std::make_unique<OptionsImpl>(*proto);
+  EXPECT_EQ(Envoy::Http::Protocol::Http2, converted_option->protocol());
+}
+
+TEST_F(OptionsImplTest, UsesHttp2WhenProtocolHttp2IsSet) {
+  const std::unique_ptr<OptionsImpl> option = TestUtility::createOptionsImpl(
+      fmt::format("{} --protocol http2 {}", client_name_, good_test_uri_));
+
+  EXPECT_EQ(Envoy::Http::Protocol::Http2, option->protocol());
+  // Verify the default remains HTTP/2 when converting back from proto.
+  CommandLineOptionsPtr proto = option->toCommandLineOptions();
+  const auto converted_option = std::make_unique<OptionsImpl>(*proto);
+  EXPECT_EQ(Envoy::Http::Protocol::Http2, converted_option->protocol());
+}
+
+TEST_F(OptionsImplTest, FailsForInvalidH2FlagValues) {
   EXPECT_THROW_WITH_REGEX(
       TestUtility::createOptionsImpl(fmt::format("{} --h2 0 {}", client_name_, good_test_uri_)),
       MalformedArgvException, "Couldn't find match for argument");
   EXPECT_THROW_WITH_REGEX(
       TestUtility::createOptionsImpl(fmt::format("{} --h2 true {}", client_name_, good_test_uri_)),
       MalformedArgvException, "Couldn't find match for argument");
+}
+
+TEST_F(OptionsImplTest, UsesHttp3WhenProtocolHttp3IsSet) {
+  const std::unique_ptr<OptionsImpl> option = TestUtility::createOptionsImpl(
+      fmt::format("{} --protocol http3 {}", client_name_, good_test_uri_));
+
+  EXPECT_EQ(Envoy::Http::Protocol::Http3, option->protocol());
+  // Verify the default remains HTTP/3 when converting back from proto.
+  CommandLineOptionsPtr proto = option->toCommandLineOptions();
+  const auto converted_option = std::make_unique<OptionsImpl>(*proto);
+  EXPECT_EQ(Envoy::Http::Protocol::Http3, converted_option->protocol());
+}
+
+TEST_F(OptionsImplTest, UsesHttp3WhenProtocolShortFormFlagIsSet) {
+  const std::unique_ptr<OptionsImpl> option =
+      TestUtility::createOptionsImpl(fmt::format("{} -p http3 {}", client_name_, good_test_uri_));
+
+  EXPECT_EQ(Envoy::Http::Protocol::Http3, option->protocol());
+  // Verify the default remains HTTP/3 when converting back from proto.
+  CommandLineOptionsPtr proto = option->toCommandLineOptions();
+  const auto converted_option = std::make_unique<OptionsImpl>(*proto);
+  EXPECT_EQ(Envoy::Http::Protocol::Http3, converted_option->protocol());
+}
+
+TEST_F(OptionsImplTest, FailsForInvalidProtocolFlagValues) {
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(
+                              fmt::format("{} --protocol 0 {}", client_name_, good_test_uri_)),
+                          MalformedArgvException, "does not meet constraint");
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(
+                              fmt::format("{} --protocol true {}", client_name_, good_test_uri_)),
+                          MalformedArgvException, "does not meet constraint");
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(
+                              fmt::format("{} --protocol http0 {}", client_name_, good_test_uri_)),
+                          MalformedArgvException, "does not meet constraint");
+}
+
+TEST_F(OptionsImplTest, FailsWhenBothH2AndProtocolAreSet) {
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(
+                              fmt::format("{} --h2 --protocol http1 http://foo", client_name_)),
+                          MalformedArgvException, "mutually exclusive");
+}
+
+TEST_F(OptionsImplTest, FailsWhenDeprecatedExperimentalH2UseMultipleConnectionsIsSetOnCommandLine) {
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(
+          fmt::format("{} --experimental-h2-use-multiple-connections http://foo", client_name_)),
+      MalformedArgvException, "experimental-h2-use-multiple-connections");
+}
+
+TEST_F(OptionsImplTest, FailsWhenDeprecatedExperimentalH2UseMultipleConnectionsIsSetViaProto) {
+  const std::unique_ptr<OptionsImpl> option =
+      TestUtility::createOptionsImpl(fmt::format("{} http://127.0.0.1/", client_name_));
+  CommandLineOptionsPtr proto = option->toCommandLineOptions();
+  proto->mutable_experimental_h2_use_multiple_connections()->set_value(true);
+  EXPECT_THROW_WITH_REGEX(std::make_unique<OptionsImpl>(*proto), MalformedArgvException,
+                          "experimental_h2_use_multiple_connections");
 }
 
 TEST_F(OptionsImplTest, PrefetchConnectionsFlag) {

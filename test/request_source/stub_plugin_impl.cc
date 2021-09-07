@@ -43,5 +43,6 @@ RequestGenerator StubRequestSource::get() {
 }
 
 void StubRequestSource::initOnThread() {}
+void StubRequestSource::destroyOnThread() {}
 
 } // namespace Nighthawk

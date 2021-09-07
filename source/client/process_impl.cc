@@ -18,6 +18,7 @@
 
 #include "external/envoy/source/common/api/api_impl.h"
 #include "external/envoy/source/common/common/cleanup.h"
+#include "external/envoy/source/common/common/statusor.h"
 #include "external/envoy/source/common/config/utility.h"
 #include "external/envoy/source/common/event/dispatcher_impl.h"
 #include "external/envoy/source/common/event/real_time_system.h"
@@ -29,6 +30,8 @@
 #include "external/envoy/source/common/thread_local/thread_local_impl.h"
 #include "external/envoy/source/server/server.h"
 #include "external/envoy_api/envoy/config/core/v3/resolver.pb.h"
+
+#include "source/client/process_bootstrap.h"
 
 #include "absl/strings/str_replace.h"
 #include "absl/types/optional.h"
@@ -59,6 +62,44 @@ using namespace std::chrono_literals;
 
 namespace Nighthawk {
 namespace Client {
+namespace {
+
+using ::envoy::config::bootstrap::v3::Bootstrap;
+
+// Helps in generating a bootstrap for the process.
+// This is a class only to allow the use of the ENVOY_LOG macros.
+class BootstrapFactory : public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
+public:
+  // Determines the concurrency Nighthawk should use based on configuration
+  // (options) and the available machine resources.
+  static uint32_t determineConcurrency(const Options& options) {
+    uint32_t cpu_cores_with_affinity = Envoy::OptionsImplPlatform::getCpuCount();
+    bool autoscale = options.concurrency() == "auto";
+    // TODO(oschaaf): Maybe, in the case where the concurrency flag is left out, but
+    // affinity is set / we don't have affinity with all cores, we should default to autoscale.
+    // (e.g. we are called via taskset).
+    uint32_t concurrency = autoscale ? cpu_cores_with_affinity : std::stoi(options.concurrency());
+
+    if (autoscale) {
+      ENVOY_LOG(info, "Detected {} (v)CPUs with affinity..", cpu_cores_with_affinity);
+    }
+    std::string duration_as_string =
+        options.noDuration() ? "No time limit"
+                             : fmt::format("Time limit: {} seconds", options.duration().count());
+    ENVOY_LOG(info, "Starting {} threads / event loops. {}.", concurrency, duration_as_string);
+    ENVOY_LOG(info, "Global targets: {} connections and {} calls per second.",
+              options.connections() * concurrency, options.requestsPerSecond() * concurrency);
+
+    if (concurrency > 1) {
+      ENVOY_LOG(info, "   (Per-worker targets: {} connections and {} calls per second)",
+                options.connections(), options.requestsPerSecond());
+    }
+
+    return concurrency;
+  }
+};
+
+} // namespace
 
 // We customize ProdClusterManagerFactory for the sole purpose of returning our specialized
 // http1 pool to the benchmark client, which allows us to offer connection prefetching.
@@ -120,16 +161,17 @@ private:
 
 ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
                          const std::shared_ptr<Envoy::ProcessWide>& process_wide)
-    : process_wide_(process_wide == nullptr ? std::make_shared<Envoy::ProcessWide>()
+    : options_(options), number_of_workers_(BootstrapFactory::determineConcurrency(options_)),
+      process_wide_(process_wide == nullptr ? std::make_shared<Envoy::ProcessWide>()
                                             : process_wide),
       time_system_(time_system), stats_allocator_(symbol_table_), store_root_(stats_allocator_),
+      quic_stat_names_(store_root_.symbolTable()),
       api_(std::make_unique<Envoy::Api::Impl>(platform_impl_.threadFactory(), store_root_,
-                                              time_system_, platform_impl_.fileSystem(),
-                                              generator_)),
+                                              time_system_, platform_impl_.fileSystem(), generator_,
+                                              bootstrap_)),
       dispatcher_(api_->allocateDispatcher("main_thread")), benchmark_client_factory_(options),
       termination_predicate_factory_(options), sequencer_factory_(options),
-      request_generator_factory_(options, *api_), options_(options),
-      init_manager_("nh_init_manager"),
+      request_generator_factory_(options, *api_), init_manager_("nh_init_manager"),
       local_info_(new Envoy::LocalInfo::LocalInfoImpl(
           store_root_.symbolTable(), node_, node_context_params_,
           Envoy::Network::Utility::getLocalAddress(Envoy::Network::Address::IpVersion::v4),
@@ -147,6 +189,35 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
   std::string lower = absl::AsciiStrToLower(
       nighthawk::client::Verbosity::VerbosityOptions_Name(options_.verbosity()));
   configureComponentLogLevels(spdlog::level::from_str(lower));
+}
+
+absl::StatusOr<ProcessPtr>
+ProcessImpl::CreateProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
+                               const std::shared_ptr<Envoy::ProcessWide>& process_wide) {
+  std::unique_ptr<ProcessImpl> process(new ProcessImpl(options, time_system, process_wide));
+
+  absl::StatusOr<Bootstrap> bootstrap = createBootstrapConfiguration(
+      *process->dispatcher_, process->options_, process->number_of_workers_);
+  if (!bootstrap.ok()) {
+    ENVOY_LOG(error, "Failed to create bootstrap configuration: {}", bootstrap.status().message());
+    process->shutdown();
+    return bootstrap.status();
+  }
+
+  // Ideally we would create the bootstrap first and then pass it to the
+  // constructor of Envoy::Api::Api. That cannot be done because of a circular
+  // dependency:
+  // 1) The constructor of Envoy::Api::Api requires an instance of Bootstrap.
+  // 2) The bootstrap generator requires an Envoy::Event::Dispatcher to resolve
+  //    URIs to IPs required in the Bootstrap.
+  // 3) The constructor of Envoy::Event::Dispatcher requires Envoy::Api::Api.
+  //
+  // Replacing the bootstrap_ after the Envoy::Api::Api has been created is
+  // assumed to be safe, because we still do it while constructing the
+  // ProcessImpl, i.e. before we start running the process.
+  process->bootstrap_ = *bootstrap;
+
+  return process;
 }
 
 ProcessImpl::~ProcessImpl() {
@@ -237,32 +308,6 @@ void ProcessImpl::configureComponentLogLevels(spdlog::level::level_enum level) {
   logger_to_change->setLevel(level);
 }
 
-uint32_t ProcessImpl::determineConcurrency() const {
-  uint32_t cpu_cores_with_affinity = Envoy::OptionsImplPlatform::getCpuCount();
-  bool autoscale = options_.concurrency() == "auto";
-  // TODO(oschaaf): Maybe, in the case where the concurrency flag is left out, but
-  // affinity is set / we don't have affinity with all cores, we should default to autoscale.
-  // (e.g. we are called via taskset).
-  uint32_t concurrency = autoscale ? cpu_cores_with_affinity : std::stoi(options_.concurrency());
-
-  if (autoscale) {
-    ENVOY_LOG(info, "Detected {} (v)CPUs with affinity..", cpu_cores_with_affinity);
-  }
-  std::string duration_as_string =
-      options_.noDuration() ? "No time limit"
-                            : fmt::format("Time limit: {} seconds", options_.duration().count());
-  ENVOY_LOG(info, "Starting {} threads / event loops. {}.", concurrency, duration_as_string);
-  ENVOY_LOG(info, "Global targets: {} connections and {} calls per second.",
-            options_.connections() * concurrency, options_.requestsPerSecond() * concurrency);
-
-  if (concurrency > 1) {
-    ENVOY_LOG(info, "   (Per-worker targets: {} connections and {} calls per second)",
-              options_.connections(), options_.requestsPerSecond());
-  }
-
-  return concurrency;
-}
-
 std::vector<StatisticPtr>
 ProcessImpl::vectorizeStatisticPtrMap(const StatisticPtrMap& statistics) const {
   std::vector<StatisticPtr> v;
@@ -301,80 +346,6 @@ ProcessImpl::mergeWorkerStatistics(const std::vector<ClientWorkerPtr>& workers) 
     }
   }
   return merged_statistics;
-}
-
-void ProcessImpl::createBootstrapConfiguration(envoy::config::bootstrap::v3::Bootstrap& bootstrap,
-                                               const std::vector<UriPtr>& uris,
-                                               const UriPtr& request_source_uri,
-                                               int number_of_clusters) const {
-  for (int i = 0; i < number_of_clusters; i++) {
-    auto* cluster = bootstrap.mutable_static_resources()->add_clusters();
-    RELEASE_ASSERT(!uris.empty(), "illegal configuration with zero endpoints");
-    if (uris[0]->scheme() == "https") {
-      auto* transport_socket = cluster->mutable_transport_socket();
-      transport_socket->set_name("envoy.transport_sockets.tls");
-      envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext context =
-          options_.tlsContext();
-      const std::string sni_host = SniUtility::computeSniHost(
-          uris, options_.requestHeaders(),
-          options_.h2() ? Envoy::Http::Protocol::Http2 : Envoy::Http::Protocol::Http11);
-      if (!sni_host.empty()) {
-        *context.mutable_sni() = sni_host;
-      }
-      auto* common_tls_context = context.mutable_common_tls_context();
-      if (options_.h2()) {
-        common_tls_context->add_alpn_protocols("h2");
-      } else {
-        common_tls_context->add_alpn_protocols("http/1.1");
-      }
-      transport_socket->mutable_typed_config()->PackFrom(context);
-    }
-    if (options_.transportSocket().has_value()) {
-      *cluster->mutable_transport_socket() = options_.transportSocket().value();
-    }
-    cluster->set_name(fmt::format("{}", i));
-    cluster->mutable_connect_timeout()->set_seconds(options_.timeout().count());
-    cluster->mutable_max_requests_per_connection()->set_value(options_.maxRequestsPerConnection());
-    if (options_.h2()) {
-      auto* cluster_http2_protocol_options = cluster->mutable_http2_protocol_options();
-      if (options_.h2UseMultipleConnections()) {
-        cluster_http2_protocol_options->mutable_max_concurrent_streams()->set_value(1);
-      }
-    }
-
-    auto thresholds = cluster->mutable_circuit_breakers()->add_thresholds();
-    // We do not support any retrying.
-    thresholds->mutable_max_retries()->set_value(0);
-    thresholds->mutable_max_connections()->set_value(options_.connections());
-    // We specialize on 0 below, as that is not supported natively. The benchmark client will track
-    // in flight work and avoid creating pending requests in this case.
-    thresholds->mutable_max_pending_requests()->set_value(
-        options_.maxPendingRequests() == 0 ? 1 : options_.maxPendingRequests());
-    thresholds->mutable_max_requests()->set_value(options_.maxActiveRequests());
-
-    cluster->set_type(
-        envoy::config::cluster::v3::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
-
-    auto* load_assignment = cluster->mutable_load_assignment();
-    load_assignment->set_cluster_name(cluster->name());
-    auto* endpoints = cluster->mutable_load_assignment()->add_endpoints();
-    for (const UriPtr& uri : uris) {
-      auto* socket = endpoints->add_lb_endpoints()
-                         ->mutable_endpoint()
-                         ->mutable_address()
-                         ->mutable_socket_address();
-      socket->set_address(uri->address()->ip()->addressAsString());
-      socket->set_port_value(uri->port());
-    }
-    if (request_source_uri != nullptr) {
-      addRequestSourceCluster(*request_source_uri, i, bootstrap);
-    }
-  }
-
-  for (const envoy::config::metrics::v3::StatsSink& stats_sink : options_.statsSinks()) {
-    *bootstrap.add_stats_sinks() = stats_sink;
-  }
-  bootstrap.mutable_stats_flush_interval()->set_seconds(options_.statsFlushInterval());
 }
 
 void ProcessImpl::addTracingCluster(envoy::config::bootstrap::v3::Bootstrap& bootstrap,
@@ -443,27 +414,6 @@ void ProcessImpl::maybeCreateTracingDriver(const envoy::config::trace::v3::Traci
   }
 }
 
-void ProcessImpl::addRequestSourceCluster(
-    const Uri& uri, int worker_number, envoy::config::bootstrap::v3::Bootstrap& bootstrap) const {
-  auto* cluster = bootstrap.mutable_static_resources()->add_clusters();
-  cluster->mutable_http2_protocol_options();
-  cluster->set_name(fmt::format("{}.requestsource", worker_number));
-  cluster->set_type(
-      envoy::config::cluster::v3::Cluster::DiscoveryType::Cluster_DiscoveryType_STATIC);
-  cluster->mutable_connect_timeout()->set_seconds(options_.timeout().count());
-
-  auto* load_assignment = cluster->mutable_load_assignment();
-  load_assignment->set_cluster_name(cluster->name());
-  auto* socket = cluster->mutable_load_assignment()
-                     ->add_endpoints()
-                     ->add_lb_endpoints()
-                     ->mutable_endpoint()
-                     ->mutable_address()
-                     ->mutable_socket_address();
-  socket->set_address(uri.address()->ip()->addressAsString());
-  socket->set_port_value(uri.port());
-}
-
 void ProcessImpl::setupStatsSinks(const envoy::config::bootstrap::v3::Bootstrap& bootstrap,
                                   std::list<std::unique_ptr<Envoy::Stats::Sink>>& stats_sinks) {
   for (const envoy::config::metrics::v3::StatsSink& stats_sink : bootstrap.stats_sinks()) {
@@ -477,8 +427,7 @@ void ProcessImpl::setupStatsSinks(const envoy::config::bootstrap::v3::Bootstrap&
   }
 }
 
-bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriPtr>& uris,
-                              const UriPtr& request_source_uri, const UriPtr& tracing_uri,
+bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_uri,
                               const absl::optional<Envoy::SystemTime>& scheduled_start) {
   const Envoy::SystemTime now = time_system_.systemTime();
   if (scheduled_start.value_or(now) < now) {
@@ -490,17 +439,15 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
     if (cancelled_) {
       return true;
     }
-    int number_of_workers = determineConcurrency();
     shutdown_ = false;
-    envoy::config::bootstrap::v3::Bootstrap bootstrap;
-    createBootstrapConfiguration(bootstrap, uris, request_source_uri, number_of_workers);
+
     // Needs to happen as early as possible (before createWorkers()) in the instantiation to preempt
     // the objects that require stats.
     if (!options_.statsSinks().empty()) {
-      store_root_.setTagProducer(Envoy::Config::Utility::createTagProducer(bootstrap));
+      store_root_.setTagProducer(Envoy::Config::Utility::createTagProducer(bootstrap_));
     }
 
-    createWorkers(number_of_workers, scheduled_start);
+    createWorkers(number_of_workers_, scheduled_start);
     tls_.registerThread(*dispatcher_, true);
     store_root_.initializeThreading(*dispatcher_, tls_);
     runtime_singleton_ = std::make_unique<Envoy::Runtime::ScopedLoaderSingleton>(
@@ -522,28 +469,29 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
         admin_, Envoy::Runtime::LoaderSingleton::get(), store_root_, tls_,
         dispatcher_->createDnsResolver({}, dns_resolver_options), *ssl_context_manager_,
         *dispatcher_, *local_info_, secret_manager_, validation_context_, *api_, http_context_,
-        grpc_context_, router_context_, access_log_manager_, *singleton_manager_, envoy_options);
+        grpc_context_, router_context_, access_log_manager_, *singleton_manager_, envoy_options,
+        quic_stat_names_);
     cluster_manager_factory_->setConnectionReuseStrategy(
         options_.h1ConnectionReuseStrategy() == nighthawk::client::H1ConnectionReuseStrategy::LRU
             ? Http1PoolImpl::ConnectionReuseStrategy::LRU
             : Http1PoolImpl::ConnectionReuseStrategy::MRU);
     cluster_manager_factory_->setPrefetchConnections(options_.prefetchConnections());
     if (tracing_uri != nullptr) {
-      setupTracingImplementation(bootstrap, *tracing_uri);
-      addTracingCluster(bootstrap, *tracing_uri);
+      setupTracingImplementation(bootstrap_, *tracing_uri);
+      addTracingCluster(bootstrap_, *tracing_uri);
     }
-    ENVOY_LOG(debug, "Computed configuration: {}", bootstrap.DebugString());
-    cluster_manager_ = cluster_manager_factory_->clusterManagerFromProto(bootstrap);
-    maybeCreateTracingDriver(bootstrap.tracing());
+    ENVOY_LOG(debug, "Computed configuration: {}", bootstrap_.DebugString());
+    cluster_manager_ = cluster_manager_factory_->clusterManagerFromProto(bootstrap_);
+    maybeCreateTracingDriver(bootstrap_.tracing());
     cluster_manager_->setInitializedCb(
         [this]() -> void { init_manager_.initialize(init_watcher_); });
 
     Envoy::Runtime::LoaderSingleton::get().initialize(*cluster_manager_);
 
     std::list<std::unique_ptr<Envoy::Stats::Sink>> stats_sinks;
-    setupStatsSinks(bootstrap, stats_sinks);
+    setupStatsSinks(bootstrap_, stats_sinks);
     std::chrono::milliseconds stats_flush_interval = std::chrono::milliseconds(
-        Envoy::DurationUtil::durationToMilliseconds(bootstrap.stats_flush_interval()));
+        Envoy::DurationUtil::durationToMilliseconds(bootstrap_.stats_flush_interval()));
 
     if (!options_.statsSinks().empty()) {
       // There should be only a single live flush worker instance at any time.
@@ -624,31 +572,9 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const std::vector<UriP
 }
 
 bool ProcessImpl::run(OutputCollector& collector) {
-  std::vector<UriPtr> uris;
-  UriPtr request_source_uri;
   UriPtr tracing_uri;
 
   try {
-    // TODO(oschaaf): See if we can rid of resolving here.
-    // We now only do it to validate.
-    if (options_.uri().has_value()) {
-      uris.push_back(std::make_unique<UriImpl>(options_.uri().value()));
-    } else {
-      for (const nighthawk::client::MultiTarget::Endpoint& endpoint :
-           options_.multiTargetEndpoints()) {
-        uris.push_back(std::make_unique<UriImpl>(fmt::format(
-            "{}://{}:{}{}", options_.multiTargetUseHttps() ? "https" : "http",
-            endpoint.address().value(), endpoint.port().value(), options_.multiTargetPath())));
-      }
-    }
-    for (const UriPtr& uri : uris) {
-      uri->resolve(*dispatcher_, Utility::translateFamilyOptionString(options_.addressFamily()));
-    }
-    if (options_.requestSource() != "") {
-      request_source_uri = std::make_unique<UriImpl>(options_.requestSource());
-      request_source_uri->resolve(*dispatcher_,
-                                  Utility::translateFamilyOptionString(options_.addressFamily()));
-    }
     if (options_.trace() != "") {
       tracing_uri = std::make_unique<UriImpl>(options_.trace());
       tracing_uri->resolve(*dispatcher_,
@@ -663,8 +589,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
   }
 
   try {
-    return runInternal(collector, uris, request_source_uri, tracing_uri,
-                       options_.scheduled_start());
+    return runInternal(collector, tracing_uri, options_.scheduled_start());
   } catch (Envoy::EnvoyException& ex) {
     ENVOY_LOG(error, "Fatal exception: {}", ex.what());
     throw;
