@@ -378,6 +378,7 @@ void ProcessImpl::setupTracingImplementation(envoy::config::bootstrap::v3::Boots
   envoy::config::trace::v3::ZipkinConfig config;
   config.mutable_collector_cluster()->assign(kTracingClusterName);
   config.mutable_collector_endpoint()->assign(std::string(uri.path()));
+  config.set_collector_endpoint_version(envoy::config::trace::v3::ZipkinConfig::HTTP_JSON);
   config.mutable_shared_span_context()->set_value(true);
   http->mutable_typed_config()->PackFrom(config);
 #else
