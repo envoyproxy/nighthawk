@@ -124,8 +124,8 @@ public:
     const Envoy::Http::Protocol& protocol = protocols[0];
     if (protocol == Envoy::Http::Protocol::Http11 || protocol == Envoy::Http::Protocol::Http10) {
       auto* h1_pool = new Http1PoolImpl(
-          host, priority, dispatcher, options, transport_socket_options, api_.randomGenerator(),
-          state,
+          host, priority, dispatcher, options, transport_socket_options,
+          context_.api().randomGenerator(), state,
           [](Envoy::Http::HttpConnPoolImplBase* pool) {
             return std::make_unique<Envoy::Http::Http1::ActiveClient>(*pool);
           },
