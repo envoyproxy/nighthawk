@@ -16,3 +16,4 @@ DISABLED_BY_DEFAULT_EXTENSIONS = {
 # need to directly reference Envoy extensions.
 EXTENSION_CONFIG_VISIBILITY = ["//visibility:public"]
 EXTENSION_PACKAGE_VISIBILITY = ["//visibility:public"]
+CONTRIB_EXTENSION_PACKAGE_VISIBILITY = ["//:contrib_library"]
