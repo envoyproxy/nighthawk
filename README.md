@@ -177,7 +177,7 @@ Termination predicate. Allows specifying a counter name plus threshold
 value for terminating execution.
 
 --trace <uri format>
-Trace uri. Example: zipkin://localhost:9411/api/v1/spans. Default is
+Trace uri. Example: zipkin://localhost:9411/api/v2/spans. Default is
 empty.
 
 --sequencer-idle-strategy <spin|poll|sleep>

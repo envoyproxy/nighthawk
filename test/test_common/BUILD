@@ -21,7 +21,6 @@ envoy_cc_test_library(
 
 envoy_cc_test_library(
     name = "proto_matchers",
-    srcs = ["proto_matchers.cc"],
     hdrs = ["proto_matchers.h"],
     repository = "@envoy",
     deps = [

@@ -10,8 +10,8 @@ class MockPlatformUtil : public PlatformUtil {
 public:
   MockPlatformUtil();
 
-  MOCK_CONST_METHOD0(yieldCurrentThread, void());
-  MOCK_CONST_METHOD1(sleep, void(std::chrono::microseconds));
+  MOCK_METHOD(void, yieldCurrentThread, (), (const, override));
+  MOCK_METHOD(void, sleep, (std::chrono::microseconds), (const, override));
 };
 
 } // namespace Nighthawk

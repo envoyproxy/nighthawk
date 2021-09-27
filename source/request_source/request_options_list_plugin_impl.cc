@@ -35,7 +35,7 @@ RequestSourcePtr FileBasedOptionsListRequestSourceFactory::createRequestSourcePl
   {
     Envoy::Thread::LockGuard lock_guard(file_lock_);
     util.loadFromFile(config.file_path(), loaded_list,
-                      Envoy::ProtobufMessage::getStrictValidationVisitor(), api, true);
+                      Envoy::ProtobufMessage::getStrictValidationVisitor(), api);
   }
   auto loaded_list_ptr = std::make_unique<const nighthawk::client::RequestOptionsList>(loaded_list);
   return std::make_unique<OptionsListRequestSource>(config.num_requests(), std::move(header),
