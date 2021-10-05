@@ -14,7 +14,7 @@ static_resources:
         address: $server_ip
         port_value: 0
     listener_filters:
-    - name: "envoy.listener.tls_inspector"
+    - name: "envoy.filters.listener.tls_inspector"
       typed_config: {}
     filter_chains:
     - filter_chain_match:
@@ -32,7 +32,7 @@ static_resources:
                   inline_string: |
                     @inject-runfile:nighthawk/external/envoy/test/config/integration/certs/serverkey.pem
     listener_filters:
-    - name: "envoy.listener.tls_inspector"
+    - name: "envoy.filters.listener.tls_inspector"
       typed_config: {}
     filter_chains:
     - filter_chain_match:
