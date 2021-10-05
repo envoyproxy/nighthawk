@@ -684,7 +684,7 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
     transport_socket_.value().MergeFrom(options.transport_socket());
   }
 
-  if (options.failure_predicates().size()) {
+  if (!options.failure_predicates().empty()) {
     failure_predicates_.clear();
   }
   for (const auto& predicate : options.failure_predicates()) {
