@@ -91,14 +91,10 @@ function filter_excludes() {
 }
 
 function run_clang_tidy() {
-  # TODO(#750): Re-enable bugprone-narrowing-conversions.
-  ENABLED_CHECKS="default,-bugprone-narrowing-conversions"
-
   python3 "${LLVM_PREFIX}/share/clang/run-clang-tidy.py" \
     -clang-tidy-binary="${CLANG_TIDY}" \
     -clang-apply-replacements-binary="${CLANG_APPLY_REPLACEMENTS}" \
     -export-fixes=${FIX_YAML} -j "${NUM_CPUS:-0}" -p "${SRCDIR}" -quiet \
-    -checks=${ENABLED_CHECKS} \
     ${APPLY_CLANG_TIDY_FIXES:+-fix} "$@"
 }
 
