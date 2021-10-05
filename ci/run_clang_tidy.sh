@@ -91,9 +91,8 @@ function filter_excludes() {
 }
 
 function run_clang_tidy() {
-  # *: Enable all default checks.
   # TODO(#750): Re-enable bugprone-narrowing-conversions.
-  ENABLED_CHECKS="*,-bugprone-narrowing-conversions"
+  ENABLED_CHECKS="default,-bugprone-narrowing-conversions"
 
   python3 "${LLVM_PREFIX}/share/clang/run-clang-tidy.py" \
     -clang-tidy-binary="${CLANG_TIDY}" \
