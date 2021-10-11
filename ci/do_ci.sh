@@ -79,7 +79,8 @@ function do_clang_tidy() {
 
 function do_unit_test_coverage() {
     export TEST_TARGETS="//test/... -//test:python_test"
-    export COVERAGE_THRESHOLD=93.2
+    # TODO(https://github.com/envoyproxy/nighthawk/issues/747): Increase back to 93.2 when coverage flakiness address
+    export COVERAGE_THRESHOLD=92
     echo "bazel coverage build with tests ${TEST_TARGETS}"
     test/run_nighthawk_bazel_coverage.sh ${TEST_TARGETS}
     exit 0

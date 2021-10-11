@@ -124,8 +124,8 @@ public:
     const Envoy::Http::Protocol& protocol = protocols[0];
     if (protocol == Envoy::Http::Protocol::Http11 || protocol == Envoy::Http::Protocol::Http10) {
       auto* h1_pool = new Http1PoolImpl(
-          host, priority, dispatcher, options, transport_socket_options, api_.randomGenerator(),
-          state,
+          host, priority, dispatcher, options, transport_socket_options,
+          context_.api().randomGenerator(), state,
           [](Envoy::Http::HttpConnPoolImplBase* pool) {
             return std::make_unique<Envoy::Http::Http1::ActiveClient>(*pool);
           },
@@ -378,6 +378,7 @@ void ProcessImpl::setupTracingImplementation(envoy::config::bootstrap::v3::Boots
   envoy::config::trace::v3::ZipkinConfig config;
   config.mutable_collector_cluster()->assign(kTracingClusterName);
   config.mutable_collector_endpoint()->assign(std::string(uri.path()));
+  config.set_collector_endpoint_version(envoy::config::trace::v3::ZipkinConfig::HTTP_JSON);
   config.mutable_shared_span_context()->set_value(true);
   http->mutable_typed_config()->PackFrom(config);
 #else

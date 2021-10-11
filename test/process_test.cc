@@ -148,7 +148,7 @@ TEST_P(ProcessTest, TwoProcessInSequence) {
 // TODO(oschaaf): move to python int. tests once it adds to coverage.
 TEST_P(ProcessTest, BadTracerSpec) {
   options_ = TestUtility::createOptionsImpl(
-      fmt::format("foo --trace foo://localhost:79/api/v1/spans https://{}/", loopback_address_));
+      fmt::format("foo --trace foo://localhost:79/api/v2/spans https://{}/", loopback_address_));
   EXPECT_TRUE(runProcess(RunExpectation::EXPECT_FAILURE).ok());
 }
 
