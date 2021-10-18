@@ -8,8 +8,8 @@
 #include "nighthawk/common/uri.h"
 
 #include "external/envoy/source/common/common/logger.h"
-#include "external/envoy/source/common/network/dns_impl.h"
 #include "external/envoy/source/common/network/utility.h"
+#include "external/envoy/source/extensions/network/dns_resolver/cares/dns_impl.h"
 
 #include "absl/strings/string_view.h"
 
@@ -25,6 +25,7 @@ public:
   absl::string_view scheme() const override { return scheme_; }
   Envoy::Network::Address::InstanceConstSharedPtr
   resolve(Envoy::Event::Dispatcher& dispatcher,
+          Envoy::Api::Api& api, 
           const Envoy::Network::DnsLookupFamily dns_lookup_family) override;
   Envoy::Network::Address::InstanceConstSharedPtr address() const override {
     ASSERT(resolve_attempted_, "resolve() must be called first.");
@@ -34,6 +35,7 @@ public:
 private:
   bool isValid() const;
   bool performDnsLookup(Envoy::Event::Dispatcher& dispatcher,
+                        Envoy::Api::Api& api,
                         const Envoy::Network::DnsLookupFamily dns_lookup_family);
 
   // TODO(oschaaf): username, password, query etc. But we may want to look at

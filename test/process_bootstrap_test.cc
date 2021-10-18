@@ -50,6 +50,7 @@ protected:
 
   // Sets mock expectations when the code under test resolves the URIs provided in the options.
   void setupUriResolutionExpectations() {
+    // TODO(zhangtom): This needs to be fixed. 
     ON_CALL(mock_dispatcher_, createDnsResolver(_, _)).WillByDefault(Return(mock_resolver_));
 
     EXPECT_CALL(*mock_resolver_, resolve(_, _, _))

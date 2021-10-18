@@ -24,7 +24,7 @@ namespace Nighthawk {
  * @return the created bootstrap configuration.
  */
 absl::StatusOr<envoy::config::bootstrap::v3::Bootstrap>
-createBootstrapConfiguration(Envoy::Event::Dispatcher& dispatcher, const Client::Options& options,
-                             int number_of_workers);
+createBootstrapConfiguration(Envoy::Event::Dispatcher& dispatcher, Envoy::Api::Api& api,
+                             const Client::Options& options, int number_of_workers);
 
 } // namespace Nighthawk

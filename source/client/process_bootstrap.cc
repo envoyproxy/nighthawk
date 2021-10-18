@@ -181,6 +181,7 @@ Cluster createNighthawkClusterForWorker(const Client::Options& options,
 // Nighthawk options.
 // Resolves all the extracted URIs.
 absl::Status extractAndResolveUrisFromOptions(Envoy::Event::Dispatcher& dispatcher,
+                                              Envoy::Api::Api& api,
                                               const Client::Options& options,
                                               std::vector<UriPtr>* uris,
                                               UriPtr* request_source_uri) {
@@ -196,12 +197,12 @@ absl::Status extractAndResolveUrisFromOptions(Envoy::Event::Dispatcher& dispatch
       }
     }
     for (const UriPtr& uri : *uris) {
-      uri->resolve(dispatcher, Utility::translateFamilyOptionString(options.addressFamily()));
+      uri->resolve(dispatcher, api, Utility::translateFamilyOptionString(options.addressFamily()));
     }
     if (options.requestSource() != "") {
       *request_source_uri = std::make_unique<UriImpl>(options.requestSource());
       (*request_source_uri)
-          ->resolve(dispatcher, Utility::translateFamilyOptionString(options.addressFamily()));
+          ->resolve(dispatcher, api, Utility::translateFamilyOptionString(options.addressFamily()));
     }
   } catch (const UriException& ex) {
     return absl::InvalidArgumentError(
@@ -215,12 +216,13 @@ absl::Status extractAndResolveUrisFromOptions(Envoy::Event::Dispatcher& dispatch
 } // namespace
 
 absl::StatusOr<Bootstrap> createBootstrapConfiguration(Envoy::Event::Dispatcher& dispatcher,
+                                                       Envoy::Api::Api& api,
                                                        const Client::Options& options,
                                                        int number_of_workers) {
   std::vector<UriPtr> uris;
   UriPtr request_source_uri;
   absl::Status uri_status =
-      extractAndResolveUrisFromOptions(dispatcher, options, &uris, &request_source_uri);
+      extractAndResolveUrisFromOptions(dispatcher, api, options, &uris, &request_source_uri);
   if (!uri_status.ok()) {
     return uri_status;
   }

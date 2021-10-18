@@ -4,8 +4,8 @@
 
 #include "nighthawk/common/exception.h"
 
-#include "external/envoy/source/common/network/dns_impl.h"
 #include "external/envoy/source/common/network/utility.h"
+#include "external/envoy/source/extensions/network/dns_resolver/cares/dns_impl.h"
 
 #include "absl/strings/string_view.h"
 
@@ -58,12 +58,14 @@ public:
   /**
    * Synchronously resolves the parsed host from the uri to an ip-address.
    * @param dispatcher Dispatcher to use for resolving.
+   * @param api Api to use for resolving.
    * @param dns_lookup_family Allows specifying Ipv4, Ipv6, or Auto as the preferred returned
    * address family.
    * @return Envoy::Network::Address::InstanceConstSharedPtr the resolved address.
    */
   virtual Envoy::Network::Address::InstanceConstSharedPtr
   resolve(Envoy::Event::Dispatcher& dispatcher,
+          Envoy::Api::Api& api,
           const Envoy::Network::DnsLookupFamily dns_lookup_family) PURE;
 
   /**

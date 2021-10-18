@@ -95,7 +95,7 @@ public:
     Envoy::Api::ApiPtr api = Envoy::Api::createApiForTest();
     auto dispatcher = api->allocateDispatcher("uri_resolution_thread");
     auto u = UriImpl(uri);
-    return u.resolve(*dispatcher, address_family);
+    return u.resolve(*dispatcher, *api, address_family);
   }
 };
 
@@ -145,8 +145,8 @@ TEST_P(UtilityAddressResolutionTest, ResolveTwiceReturnsCached) {
   auto dispatcher = api->allocateDispatcher("test_thread");
   auto u = UriImpl("localhost");
 
-  EXPECT_EQ(u.resolve(*dispatcher, address_family).get(),
-            u.resolve(*dispatcher, address_family).get());
+  EXPECT_EQ(u.resolve(*dispatcher, *api, address_family).get(),
+            u.resolve(*dispatcher, *api, address_family).get());
 }
 
 TEST_F(UtilityTest, TranslateAddressFamilyGoodValues) {

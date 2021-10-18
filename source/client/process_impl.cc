@@ -24,6 +24,7 @@
 #include "external/envoy/source/common/event/real_time_system.h"
 #include "external/envoy/source/common/init/manager_impl.h"
 #include "external/envoy/source/common/local_info/local_info_impl.h"
+#include "external/envoy/source/common/network/dns_resolver/dns_factory.h"
 #include "external/envoy/source/common/network/utility.h"
 #include "external/envoy/source/common/runtime/runtime_impl.h"
 #include "external/envoy/source/common/singleton/manager_impl.h"
@@ -197,7 +198,7 @@ ProcessImpl::CreateProcessImpl(const Options& options, Envoy::Event::TimeSystem&
   std::unique_ptr<ProcessImpl> process(new ProcessImpl(options, time_system, process_wide));
 
   absl::StatusOr<Bootstrap> bootstrap = createBootstrapConfiguration(
-      *process->dispatcher_, process->options_, process->number_of_workers_);
+      *process->dispatcher_, *process->api_, process->options_, process->number_of_workers_);
   if (!bootstrap.ok()) {
     ENVOY_LOG(error, "Failed to create bootstrap configuration: {}", bootstrap.status().message());
     process->shutdown();
@@ -465,10 +466,14 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
     };
     const Envoy::OptionsImpl envoy_options(
         /* args = */ {"process_impl"}, hot_restart_version_cb, spdlog::level::info);
-    envoy::config::core::v3::DnsResolverOptions dns_resolver_options;
+    envoy::config::core::v3::TypedExtensionConfig typed_dns_resolver_config;
+    Envoy::Network::makeDefaultCaresDnsResolverConfig(typed_dns_resolver_config);
+    Envoy::Network::DnsResolverFactory& dns_resolver_factory =
+        Envoy::Network::createDefaultDnsResolverFactory(typed_dns_resolver_config);
+    auto dns_resolver = dns_resolver_factory.createDnsResolver(*dispatcher_, *api_, typed_dns_resolver_config);
     cluster_manager_factory_ = std::make_unique<ClusterManagerFactory>(
         admin_, Envoy::Runtime::LoaderSingleton::get(), store_root_, tls_,
-        dispatcher_->createDnsResolver({}, dns_resolver_options), *ssl_context_manager_,
+        dns_resolver, *ssl_context_manager_,
         *dispatcher_, *local_info_, secret_manager_, validation_context_, *api_, http_context_,
         grpc_context_, router_context_, access_log_manager_, *singleton_manager_, envoy_options,
         quic_stat_names_);
@@ -579,6 +584,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
     if (options_.trace() != "") {
       tracing_uri = std::make_unique<UriImpl>(options_.trace());
       tracing_uri->resolve(*dispatcher_,
+                           *api_,
                            Utility::translateFamilyOptionString(options_.addressFamily()));
     }
   } catch (const UriException& ex) {
