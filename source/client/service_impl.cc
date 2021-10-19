@@ -34,7 +34,6 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
     return;
   }
   envoy::config::core::v3::TypedExtensionConfig typed_dns_resolver_config;
-  Envoy::Network::makeDefaultCaresDnsResolverConfig(typed_dns_resolver_config);
   Envoy::Network::DnsResolverFactory& dns_resolver_factory =
       Envoy::Network::createDefaultDnsResolverFactory(typed_dns_resolver_config);
 

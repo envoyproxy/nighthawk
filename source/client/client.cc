@@ -73,7 +73,6 @@ bool Main::run() {
     process = std::make_unique<RemoteProcessImpl>(*options_, *stub);
   } else {
     envoy::config::core::v3::TypedExtensionConfig typed_dns_resolver_config;
-    Envoy::Network::makeDefaultCaresDnsResolverConfig(typed_dns_resolver_config);
     Envoy::Network::DnsResolverFactory& dns_resolver_factory =
         Envoy::Network::createDefaultDnsResolverFactory(typed_dns_resolver_config);
     absl::StatusOr<ProcessPtr> process_or_status = ProcessImpl::CreateProcessImpl(

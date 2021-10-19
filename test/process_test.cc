@@ -75,7 +75,6 @@ public:
   absl::Status runProcess(RunExpectation expectation, bool do_cancel = false,
                           bool terminate_right_away = false) {
     envoy::config::core::v3::TypedExtensionConfig typed_dns_resolver_config;
-    Envoy::Network::makeDefaultCaresDnsResolverConfig(typed_dns_resolver_config);
     Envoy::Network::DnsResolverFactory& dns_resolver_factory =
         Envoy::Network::createDefaultDnsResolverFactory(typed_dns_resolver_config);
     absl::StatusOr<ProcessPtr> process_or_status = ProcessImpl::CreateProcessImpl(
@@ -214,7 +213,6 @@ protected:
 
     auto run_thread = std::thread([this, &verify_callback, &process_status] {
       envoy::config::core::v3::TypedExtensionConfig typed_dns_resolver_config;
-      Envoy::Network::makeDefaultCaresDnsResolverConfig(typed_dns_resolver_config);
       Envoy::Network::DnsResolverFactory& dns_resolver_factory =
           Envoy::Network::createDefaultDnsResolverFactory(typed_dns_resolver_config);
       absl::StatusOr<ProcessPtr> process_or_status = ProcessImpl::CreateProcessImpl(
