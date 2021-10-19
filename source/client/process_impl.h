@@ -56,10 +56,10 @@ public:
   /**
    * Creates a ProcessImpl.
    * @param options provides the options configuration to be used.
-   * @param dns_resolver_factory provides a pluggable factory to create a DNS resolver to look up
-   * DNS names within the bootstrap.
-   * @param typed_dns_resolver_config the config used when creating dns_resolver_factory, to also
-   * be passed in when creating a resolver.
+   * @param dns_resolver_factory provides a pluggable factory to create a DNS resolver. The
+   * resolver is used for resolving DNS names in the bootstrap and then by the cluster manager.
+   * @param typed_dns_resolver_config the config that defined the dns_resolver_factory, also
+   * needed as an input to createDnsResolver() on the factory.
    * @param time_system provides the Envoy::Event::TimeSystem implementation that will be used.
    * @param process_wide optional parameter which can be used to pass a pre-setup reference to
    * an active Envoy::ProcessWide instance. ProcessImpl will add a reference to this when passed,
