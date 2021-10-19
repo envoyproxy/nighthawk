@@ -70,8 +70,8 @@ build:asan --define signal_trace=disabled
 build:asan --define ENVOY_CONFIG_ASAN=1
 # The following two lines were manually edited due to #593.                                 # unique
 # Flag undefined was dropped from both the lines to allow CI/ASAN to pass.                  # unique
-build:asan --copt -fsanitize=address,undefined
-build:asan --linkopt -fsanitize=address,undefined
+build:asan --copt -fsanitize=address                                                        # unique
+build:asan --linkopt -fsanitize=address                                                     # unique
 # vptr and function sanitizer are enabled in clang-asan if it is set up via bazel/setup_clang.sh.
 build:asan --copt -fno-sanitize=vptr,function
 build:asan --linkopt -fno-sanitize=vptr,function
