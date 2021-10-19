@@ -48,7 +48,6 @@ envoy_basic_cc_library(
         "@envoy//source/common/common:non_copyable_with_external_headers",
         "@envoy//source/common/protobuf:protobuf_with_external_headers",
         "@envoy//source/common/runtime:runtime_lib_with_external_headers",
-        "@envoy//source/extensions/network/dns_resolver/cares:config_with_external_headers",
         "@envoy_api//envoy/api/v2:pkg_cc_proto",
         "@envoy_api//envoy/config/metrics/v3:pkg_cc_proto",
     ],
