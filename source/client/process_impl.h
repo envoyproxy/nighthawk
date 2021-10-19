@@ -191,8 +191,8 @@ private:
   Envoy::Singleton::ManagerPtr singleton_manager_;
   Envoy::AccessLog::AccessLogManagerImpl access_log_manager_;
   Envoy::Network::DnsResolverFactory& dns_resolver_factory_;
-  // Config that was used to create dns_resolver_factory_. Also must be provided when creating a
-  // resolver.
+  // Config that was used to create dns_resolver_factory_. Also must be provided when calling the
+  // factory to create a resolver.
   envoy::config::core::v3::TypedExtensionConfig typed_dns_resolver_config_;
 
   std::unique_ptr<Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl>
