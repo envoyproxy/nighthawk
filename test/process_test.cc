@@ -78,7 +78,7 @@ public:
     Envoy::Network::DnsResolverFactory& dns_resolver_factory =
         Envoy::Network::createDefaultDnsResolverFactory(typed_dns_resolver_config);
     absl::StatusOr<ProcessPtr> process_or_status = ProcessImpl::CreateProcessImpl(
-        *options_, dns_resolver_factory, typed_dns_resolver_config, time_system_);
+        *options_, dns_resolver_factory, std::move(typed_dns_resolver_config), time_system_);
     if (!process_or_status.ok()) {
       return process_or_status.status();
     }
@@ -216,7 +216,7 @@ protected:
       Envoy::Network::DnsResolverFactory& dns_resolver_factory =
           Envoy::Network::createDefaultDnsResolverFactory(typed_dns_resolver_config);
       absl::StatusOr<ProcessPtr> process_or_status = ProcessImpl::CreateProcessImpl(
-          *options_, dns_resolver_factory, typed_dns_resolver_config, simTime());
+          *options_, dns_resolver_factory, std::move(typed_dns_resolver_config), simTime());
       if (!process_or_status.ok()) {
         process_status = process_or_status.status();
         return;

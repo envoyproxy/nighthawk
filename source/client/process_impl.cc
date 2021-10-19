@@ -202,7 +202,8 @@ absl::StatusOr<ProcessPtr> ProcessImpl::CreateProcessImpl(
     Envoy::Event::TimeSystem& time_system,
     const std::shared_ptr<Envoy::ProcessWide>& process_wide) {
   std::unique_ptr<ProcessImpl> process(new ProcessImpl(options, time_system, dns_resolver_factory,
-                                                       typed_dns_resolver_config, process_wide));
+                                                       std::move(typed_dns_resolver_config),
+                                                       process_wide));
 
   absl::StatusOr<Bootstrap> bootstrap = createBootstrapConfiguration(
       *process->dispatcher_, *process->api_, process->options_, process->dns_resolver_factory_,

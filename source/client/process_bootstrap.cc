@@ -220,7 +220,7 @@ absl::Status extractAndResolveUrisFromOptions(Envoy::Event::Dispatcher& dispatch
 absl::StatusOr<Bootstrap> createBootstrapConfiguration(
     Envoy::Event::Dispatcher& dispatcher, Envoy::Api::Api& api, const Client::Options& options,
     Envoy::Network::DnsResolverFactory& dns_resolver_factory,
-    envoy::config::core::v3::TypedExtensionConfig typed_dns_resolver_config,
+    const envoy::config::core::v3::TypedExtensionConfig& typed_dns_resolver_config,
     int number_of_workers) {
   Envoy::Network::DnsResolverSharedPtr dns_resolver =
       dns_resolver_factory.createDnsResolver(dispatcher, api, typed_dns_resolver_config);

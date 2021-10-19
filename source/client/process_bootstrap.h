@@ -31,6 +31,7 @@ namespace Nighthawk {
 absl::StatusOr<envoy::config::bootstrap::v3::Bootstrap> createBootstrapConfiguration(
     Envoy::Event::Dispatcher& dispatcher, Envoy::Api::Api& api, const Client::Options& options,
     Envoy::Network::DnsResolverFactory& dns_resolver_factory,
-    envoy::config::core::v3::TypedExtensionConfig typed_dns_resolver_config, int number_of_workers);
+    const envoy::config::core::v3::TypedExtensionConfig& typed_dns_resolver_config,
+    int number_of_workers);
 
 } // namespace Nighthawk
