@@ -125,7 +125,7 @@ private:
   void setupStatsSinks(const envoy::config::bootstrap::v3::Bootstrap& bootstrap,
                        std::list<std::unique_ptr<Envoy::Stats::Sink>>& stats_sinks);
   bool runInternal(OutputCollector& collector, const UriPtr& tracing_uri,
-                   Envoy::Network::DnsResolverSharedPtr dns_resolver,
+                   const Envoy::Network::DnsResolverSharedPtr& dns_resolver,
                    const absl::optional<Envoy::SystemTime>& schedule);
 
   /**

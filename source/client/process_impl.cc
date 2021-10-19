@@ -439,7 +439,7 @@ void ProcessImpl::setupStatsSinks(const envoy::config::bootstrap::v3::Bootstrap&
 }
 
 bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_uri,
-                              Envoy::Network::DnsResolverSharedPtr dns_resolver,
+                              const Envoy::Network::DnsResolverSharedPtr& dns_resolver,
                               const absl::optional<Envoy::SystemTime>& scheduled_start) {
   const Envoy::SystemTime now = time_system_.systemTime();
   if (scheduled_start.value_or(now) < now) {
