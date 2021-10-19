@@ -6,6 +6,7 @@
 #include "external/envoy/source/common/common/statusor.h"
 #include "external/envoy/source/common/protobuf/message_validator_impl.h"
 #include "external/envoy/source/common/protobuf/protobuf.h"
+#include "external/envoy/test/mocks/api/mocks.h"
 #include "external/envoy/test/mocks/event/mocks.h"
 #include "external/envoy/test/mocks/network/mocks.h"
 #include "external/envoy/test/test_common/status_utility.h"
@@ -50,8 +51,8 @@ protected:
 
   // Sets mock expectations when the code under test resolves the URIs provided in the options.
   void setupUriResolutionExpectations() {
-    // TODO(zhangtom): This needs to be fixed. 
-    ON_CALL(mock_dispatcher_, createDnsResolver(_, _)).WillByDefault(Return(mock_resolver_));
+    ON_CALL(mock_dns_resolver_factory_, createDnsResolver(_, _, _))
+        .WillByDefault(Return(mock_resolver_));
 
     EXPECT_CALL(*mock_resolver_, resolve(_, _, _))
         .WillRepeatedly(Invoke([](const std::string&, Envoy::Network::DnsLookupFamily,
@@ -69,6 +70,8 @@ protected:
       std::make_shared<Envoy::Network::MockDnsResolver>()};
   NiceMock<Envoy::Event::MockDispatcher> mock_dispatcher_;
   int number_of_workers_{1};
+  NiceMock<Envoy::Network::MockDnsResolverFactory> mock_dns_resolver_factory_;
+  envoy::config::core::v3::TypedExtensionConfig typed_dns_resolver_config_;
 };
 
 TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH1) {
@@ -139,8 +142,10 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH1) {
   )pb");
   ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
 
+  NiceMock<Envoy::Api::MockApi> api;
   absl::StatusOr<Bootstrap> bootstrap =
-      createBootstrapConfiguration(mock_dispatcher_, *options, number_of_workers_);
+      createBootstrapConfiguration(mock_dispatcher_, api, *options, mock_dns_resolver_factory_,
+                                   typed_dns_resolver_config_, number_of_workers_);
   ASSERT_THAT(bootstrap, StatusIs(absl::StatusCode::kOk));
   EXPECT_THAT(*bootstrap, EqualsProto(*expected_bootstrap));
 
@@ -216,8 +221,10 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH1RespectingPortInUr
   )pb");
   ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
 
+  NiceMock<Envoy::Api::MockApi> api;
   absl::StatusOr<Bootstrap> bootstrap =
-      createBootstrapConfiguration(mock_dispatcher_, *options, number_of_workers_);
+      createBootstrapConfiguration(mock_dispatcher_, api, *options, mock_dns_resolver_factory_,
+                                   typed_dns_resolver_config_, number_of_workers_);
   ASSERT_THAT(bootstrap, StatusIs(absl::StatusCode::kOk));
   EXPECT_THAT(*bootstrap, EqualsProto(*expected_bootstrap));
 
@@ -304,8 +311,10 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH1WithMultipleTarget
   )pb");
   ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
 
+  NiceMock<Envoy::Api::MockApi> api;
   absl::StatusOr<Bootstrap> bootstrap =
-      createBootstrapConfiguration(mock_dispatcher_, *options, number_of_workers_);
+      createBootstrapConfiguration(mock_dispatcher_, api, *options, mock_dns_resolver_factory_,
+                                   typed_dns_resolver_config_, number_of_workers_);
   ASSERT_THAT(bootstrap, StatusIs(absl::StatusCode::kOk));
   EXPECT_THAT(*bootstrap, EqualsProto(*expected_bootstrap));
 
@@ -392,8 +401,10 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH1WithTls) {
   )pb");
   ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
 
+  NiceMock<Envoy::Api::MockApi> api;
   absl::StatusOr<Bootstrap> bootstrap =
-      createBootstrapConfiguration(mock_dispatcher_, *options, number_of_workers_);
+      createBootstrapConfiguration(mock_dispatcher_, api, *options, mock_dns_resolver_factory_,
+                                   typed_dns_resolver_config_, number_of_workers_);
   ASSERT_THAT(bootstrap, StatusIs(absl::StatusCode::kOk));
   EXPECT_THAT(*bootstrap, EqualsProto(*expected_bootstrap));
 
@@ -522,8 +533,10 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH1AndMultipleWorkers
   )pb");
   ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
 
+  NiceMock<Envoy::Api::MockApi> api;
   absl::StatusOr<Bootstrap> bootstrap =
-      createBootstrapConfiguration(mock_dispatcher_, *options, /* number_of_workers = */ 2);
+      createBootstrapConfiguration(mock_dispatcher_, api, *options, mock_dns_resolver_factory_,
+                                   typed_dns_resolver_config_, /* number_of_workers = */ 2);
   ASSERT_THAT(bootstrap, StatusIs(absl::StatusCode::kOk));
   EXPECT_THAT(*bootstrap, EqualsProto(*expected_bootstrap));
 
@@ -602,8 +615,10 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH2) {
   )pb");
   ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
 
+  NiceMock<Envoy::Api::MockApi> api;
   absl::StatusOr<Bootstrap> bootstrap =
-      createBootstrapConfiguration(mock_dispatcher_, *options, number_of_workers_);
+      createBootstrapConfiguration(mock_dispatcher_, api, *options, mock_dns_resolver_factory_,
+                                   typed_dns_resolver_config_, number_of_workers_);
   ASSERT_THAT(bootstrap, StatusIs(absl::StatusCode::kOk));
   EXPECT_THAT(*bootstrap, EqualsProto(*expected_bootstrap));
 
@@ -693,8 +708,10 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH2WithTls) {
   )pb");
   ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
 
+  NiceMock<Envoy::Api::MockApi> api;
   absl::StatusOr<Bootstrap> bootstrap =
-      createBootstrapConfiguration(mock_dispatcher_, *options, number_of_workers_);
+      createBootstrapConfiguration(mock_dispatcher_, api, *options, mock_dns_resolver_factory_,
+                                   typed_dns_resolver_config_, number_of_workers_);
   ASSERT_THAT(bootstrap, StatusIs(absl::StatusCode::kOk));
   EXPECT_THAT(*bootstrap, EqualsProto(*expected_bootstrap));
 
@@ -788,8 +805,10 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH3) {
   )pb");
   ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
 
+  NiceMock<Envoy::Api::MockApi> api;
   absl::StatusOr<Bootstrap> bootstrap =
-      createBootstrapConfiguration(mock_dispatcher_, *options, number_of_workers_);
+      createBootstrapConfiguration(mock_dispatcher_, api, *options, mock_dns_resolver_factory_,
+                                   typed_dns_resolver_config_, number_of_workers_);
   ASSERT_THAT(bootstrap, StatusIs(absl::StatusCode::kOk));
   EXPECT_THAT(*bootstrap, EqualsProto(*expected_bootstrap));
 
@@ -898,8 +917,10 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithRequestSourceAndCus
   )pb");
   ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
 
+  NiceMock<Envoy::Api::MockApi> api;
   absl::StatusOr<Bootstrap> bootstrap =
-      createBootstrapConfiguration(mock_dispatcher_, *options, number_of_workers_);
+      createBootstrapConfiguration(mock_dispatcher_, api, *options, mock_dns_resolver_factory_,
+                                   typed_dns_resolver_config_, number_of_workers_);
   ASSERT_THAT(bootstrap, StatusIs(absl::StatusCode::kOk));
   EXPECT_THAT(*bootstrap, EqualsProto(*expected_bootstrap));
 
@@ -1094,8 +1115,10 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithRequestSourceAndMul
   )pb");
   ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
 
+  NiceMock<Envoy::Api::MockApi> api;
   absl::StatusOr<Bootstrap> bootstrap =
-      createBootstrapConfiguration(mock_dispatcher_, *options, /* number_of_workers = */ 2);
+      createBootstrapConfiguration(mock_dispatcher_, api, *options, mock_dns_resolver_factory_,
+                                   typed_dns_resolver_config_, /* number_of_workers = */ 2);
   ASSERT_THAT(bootstrap, StatusIs(absl::StatusCode::kOk));
   EXPECT_THAT(*bootstrap, EqualsProto(*expected_bootstrap));
 
@@ -1207,8 +1230,10 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithCustomOptions) {
   )pb");
   ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
 
+  NiceMock<Envoy::Api::MockApi> api;
   absl::StatusOr<Bootstrap> bootstrap =
-      createBootstrapConfiguration(mock_dispatcher_, *options, number_of_workers_);
+      createBootstrapConfiguration(mock_dispatcher_, api, *options, mock_dns_resolver_factory_,
+                                   typed_dns_resolver_config_, number_of_workers_);
   ASSERT_THAT(bootstrap, StatusIs(absl::StatusCode::kOk));
   EXPECT_THAT(*bootstrap, EqualsProto(*expected_bootstrap));
 
@@ -1286,8 +1311,10 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapSetsMaxRequestToAtLeast
   )pb");
   ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
 
+  NiceMock<Envoy::Api::MockApi> api;
   absl::StatusOr<Bootstrap> bootstrap =
-      createBootstrapConfiguration(mock_dispatcher_, *options, number_of_workers_);
+      createBootstrapConfiguration(mock_dispatcher_, api, *options, mock_dns_resolver_factory_,
+                                   typed_dns_resolver_config_, number_of_workers_);
   ASSERT_THAT(bootstrap, StatusIs(absl::StatusCode::kOk));
   EXPECT_THAT(*bootstrap, EqualsProto(*expected_bootstrap));
 
@@ -1385,8 +1412,10 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithCustomTransportSock
   )pb");
   ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
 
+  NiceMock<Envoy::Api::MockApi> api;
   absl::StatusOr<Bootstrap> bootstrap =
-      createBootstrapConfiguration(mock_dispatcher_, *options, number_of_workers_);
+      createBootstrapConfiguration(mock_dispatcher_, api, *options, mock_dns_resolver_factory_,
+                                   typed_dns_resolver_config_, number_of_workers_);
   ASSERT_THAT(bootstrap, StatusIs(absl::StatusCode::kOk));
   EXPECT_THAT(*bootstrap, EqualsProto(*expected_bootstrap));
 
@@ -1475,8 +1504,10 @@ TEST_F(CreateBootstrapConfigurationTest, DeterminesSniFromRequestHeader) {
   )pb");
   ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
 
+  NiceMock<Envoy::Api::MockApi> api;
   absl::StatusOr<Bootstrap> bootstrap =
-      createBootstrapConfiguration(mock_dispatcher_, *options, number_of_workers_);
+      createBootstrapConfiguration(mock_dispatcher_, api, *options, mock_dns_resolver_factory_,
+                                   typed_dns_resolver_config_, number_of_workers_);
   ASSERT_THAT(bootstrap, StatusIs(absl::StatusCode::kOk));
   EXPECT_THAT(*bootstrap, EqualsProto(*expected_bootstrap));
 

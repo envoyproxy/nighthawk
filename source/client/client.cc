@@ -72,8 +72,12 @@ bool Main::run() {
     stub = std::make_unique<nighthawk::client::NighthawkService::Stub>(channel);
     process = std::make_unique<RemoteProcessImpl>(*options_, *stub);
   } else {
-    absl::StatusOr<ProcessPtr> process_or_status =
-        ProcessImpl::CreateProcessImpl(*options_, time_system);
+    envoy::config::core::v3::TypedExtensionConfig typed_dns_resolver_config;
+    Envoy::Network::makeDefaultCaresDnsResolverConfig(typed_dns_resolver_config);
+    Envoy::Network::DnsResolverFactory& dns_resolver_factory =
+        Envoy::Network::createDefaultDnsResolverFactory(typed_dns_resolver_config);
+    absl::StatusOr<ProcessPtr> process_or_status = ProcessImpl::CreateProcessImpl(
+        *options_, dns_resolver_factory, typed_dns_resolver_config, time_system);
     if (!process_or_status.ok()) {
       ENVOY_LOG(error, "Unable to create ProcessImpl: {}", process_or_status.status().ToString());
       return false;

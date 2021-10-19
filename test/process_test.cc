@@ -74,8 +74,12 @@ public:
 
   absl::Status runProcess(RunExpectation expectation, bool do_cancel = false,
                           bool terminate_right_away = false) {
-    absl::StatusOr<ProcessPtr> process_or_status =
-        ProcessImpl::CreateProcessImpl(*options_, time_system_);
+    envoy::config::core::v3::TypedExtensionConfig typed_dns_resolver_config;
+    Envoy::Network::makeDefaultCaresDnsResolverConfig(typed_dns_resolver_config);
+    Envoy::Network::DnsResolverFactory& dns_resolver_factory =
+        Envoy::Network::createDefaultDnsResolverFactory(typed_dns_resolver_config);
+    absl::StatusOr<ProcessPtr> process_or_status = ProcessImpl::CreateProcessImpl(
+        *options_, dns_resolver_factory, typed_dns_resolver_config, time_system_);
     if (!process_or_status.ok()) {
       return process_or_status.status();
     }
@@ -209,8 +213,12 @@ protected:
     absl::Status process_status;
 
     auto run_thread = std::thread([this, &verify_callback, &process_status] {
-      absl::StatusOr<ProcessPtr> process_or_status =
-          ProcessImpl::CreateProcessImpl(*options_, simTime());
+      envoy::config::core::v3::TypedExtensionConfig typed_dns_resolver_config;
+      Envoy::Network::makeDefaultCaresDnsResolverConfig(typed_dns_resolver_config);
+      Envoy::Network::DnsResolverFactory& dns_resolver_factory =
+          Envoy::Network::createDefaultDnsResolverFactory(typed_dns_resolver_config);
+      absl::StatusOr<ProcessPtr> process_or_status = ProcessImpl::CreateProcessImpl(
+          *options_, dns_resolver_factory, typed_dns_resolver_config, simTime());
       if (!process_or_status.ok()) {
         process_status = process_or_status.status();
         return;

@@ -355,6 +355,7 @@ envoy_cc_test(
         "//test/client:utility_lib",
         "//test/mocks/client:mock_options",
         "//test/test_common:proto_matchers",
+        "@envoy//test/mocks/api:api_mocks",
         "@envoy//test/mocks/event:event_mocks",
         "@envoy//test/mocks/network:network_mocks",
         "@envoy//test/test_common:status_utility_lib",
