@@ -182,6 +182,7 @@ Cluster createNighthawkClusterForWorker(const Client::Options& options,
 // Resolves all the extracted URIs.
 absl::Status extractAndResolveUrisFromOptions(Envoy::Event::Dispatcher& dispatcher,
                                               const Client::Options& options,
+                                              Envoy::Network::DnsResolver& dns_resolver,
                                               std::vector<UriPtr>* uris,
                                               UriPtr* request_source_uri) {
   try {
@@ -196,12 +197,14 @@ absl::Status extractAndResolveUrisFromOptions(Envoy::Event::Dispatcher& dispatch
       }
     }
     for (const UriPtr& uri : *uris) {
-      uri->resolve(dispatcher, Utility::translateFamilyOptionString(options.addressFamily()));
+      uri->resolve(dispatcher, dns_resolver,
+                   Utility::translateFamilyOptionString(options.addressFamily()));
     }
     if (options.requestSource() != "") {
       *request_source_uri = std::make_unique<UriImpl>(options.requestSource());
       (*request_source_uri)
-          ->resolve(dispatcher, Utility::translateFamilyOptionString(options.addressFamily()));
+          ->resolve(dispatcher, dns_resolver,
+                    Utility::translateFamilyOptionString(options.addressFamily()));
     }
   } catch (const UriException& ex) {
     return absl::InvalidArgumentError(
@@ -214,13 +217,17 @@ absl::Status extractAndResolveUrisFromOptions(Envoy::Event::Dispatcher& dispatch
 
 } // namespace
 
-absl::StatusOr<Bootstrap> createBootstrapConfiguration(Envoy::Event::Dispatcher& dispatcher,
-                                                       const Client::Options& options,
-                                                       int number_of_workers) {
+absl::StatusOr<Bootstrap> createBootstrapConfiguration(
+    Envoy::Event::Dispatcher& dispatcher, Envoy::Api::Api& api, const Client::Options& options,
+    Envoy::Network::DnsResolverFactory& dns_resolver_factory,
+    const envoy::config::core::v3::TypedExtensionConfig& typed_dns_resolver_config,
+    int number_of_workers) {
+  Envoy::Network::DnsResolverSharedPtr dns_resolver =
+      dns_resolver_factory.createDnsResolver(dispatcher, api, typed_dns_resolver_config);
   std::vector<UriPtr> uris;
   UriPtr request_source_uri;
-  absl::Status uri_status =
-      extractAndResolveUrisFromOptions(dispatcher, options, &uris, &request_source_uri);
+  absl::Status uri_status = extractAndResolveUrisFromOptions(dispatcher, options, *dns_resolver,
+                                                             &uris, &request_source_uri);
   if (!uri_status.ok()) {
     return uri_status;
   }
