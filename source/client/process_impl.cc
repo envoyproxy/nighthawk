@@ -588,7 +588,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
   try {
     if (options_.trace() != "") {
       tracing_uri = std::make_unique<UriImpl>(options_.trace());
-      tracing_uri->resolve(*dispatcher_, dns_resolver,
+      tracing_uri->resolve(*dispatcher_, *dns_resolver,
                            Utility::translateFamilyOptionString(options_.addressFamily()));
     }
   } catch (const UriException& ex) {

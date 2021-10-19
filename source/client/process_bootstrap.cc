@@ -182,7 +182,7 @@ Cluster createNighthawkClusterForWorker(const Client::Options& options,
 // Resolves all the extracted URIs.
 absl::Status extractAndResolveUrisFromOptions(Envoy::Event::Dispatcher& dispatcher,
                                               const Client::Options& options,
-                                              Envoy::Network::DnsResolverSharedPtr dns_resolver,
+                                              Envoy::Network::DnsResolver& dns_resolver,
                                               std::vector<UriPtr>* uris,
                                               UriPtr* request_source_uri) {
   try {
@@ -226,7 +226,7 @@ absl::StatusOr<Bootstrap> createBootstrapConfiguration(
       dns_resolver_factory.createDnsResolver(dispatcher, api, typed_dns_resolver_config);
   std::vector<UriPtr> uris;
   UriPtr request_source_uri;
-  absl::Status uri_status = extractAndResolveUrisFromOptions(dispatcher, options, dns_resolver,
+  absl::Status uri_status = extractAndResolveUrisFromOptions(dispatcher, options, *dns_resolver,
                                                              &uris, &request_source_uri);
   if (!uri_status.ok()) {
     return uri_status;

@@ -64,7 +64,7 @@ public:
    * @return Envoy::Network::Address::InstanceConstSharedPtr the resolved address.
    */
   virtual Envoy::Network::Address::InstanceConstSharedPtr
-  resolve(Envoy::Event::Dispatcher& dispatcher, Envoy::Network::DnsResolverSharedPtr dns_resolver,
+  resolve(Envoy::Event::Dispatcher& dispatcher, Envoy::Network::DnsResolver& dns_resolver,
           const Envoy::Network::DnsLookupFamily dns_lookup_family) PURE;
 
   /**

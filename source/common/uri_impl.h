@@ -24,7 +24,7 @@ public:
   uint64_t port() const override { return port_; }
   absl::string_view scheme() const override { return scheme_; }
   Envoy::Network::Address::InstanceConstSharedPtr
-  resolve(Envoy::Event::Dispatcher& dispatcher, Envoy::Network::DnsResolverSharedPtr dns_resolver,
+  resolve(Envoy::Event::Dispatcher& dispatcher, Envoy::Network::DnsResolver& dns_resolver,
           const Envoy::Network::DnsLookupFamily dns_lookup_family) override;
   Envoy::Network::Address::InstanceConstSharedPtr address() const override {
     ASSERT(resolve_attempted_, "resolve() must be called first.");
@@ -34,7 +34,7 @@ public:
 private:
   bool isValid() const;
   bool performDnsLookup(Envoy::Event::Dispatcher& dispatcher,
-                        Envoy::Network::DnsResolverSharedPtr dns_resolver,
+                        Envoy::Network::DnsResolver& dns_resolver,
                         const Envoy::Network::DnsLookupFamily dns_lookup_family);
 
   // TODO(oschaaf): username, password, query etc. But we may want to look at

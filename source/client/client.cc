@@ -76,7 +76,7 @@ bool Main::run() {
     Envoy::Network::DnsResolverFactory& dns_resolver_factory =
         Envoy::Network::createDefaultDnsResolverFactory(typed_dns_resolver_config);
     absl::StatusOr<ProcessPtr> process_or_status = ProcessImpl::CreateProcessImpl(
-        *options_, dns_resolver_factory, typed_dns_resolver_config, time_system);
+        *options_, dns_resolver_factory, std::move(typed_dns_resolver_config), time_system);
     if (!process_or_status.ok()) {
       ENVOY_LOG(error, "Unable to create ProcessImpl: {}", process_or_status.status().ToString());
       return false;

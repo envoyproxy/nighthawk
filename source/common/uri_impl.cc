@@ -63,7 +63,7 @@ UriImpl::UriImpl(absl::string_view uri, absl::string_view default_scheme)
 }
 
 bool UriImpl::performDnsLookup(Envoy::Event::Dispatcher& dispatcher,
-                               Envoy::Network::DnsResolverSharedPtr dns_resolver,
+                               Envoy::Network::DnsResolver& dns_resolver,
                                const Envoy::Network::DnsLookupFamily dns_lookup_family) {
   std::string hostname = std::string(hostWithoutPort());
 
@@ -71,7 +71,7 @@ bool UriImpl::performDnsLookup(Envoy::Event::Dispatcher& dispatcher,
     hostname = absl::StrReplaceAll(hostname, {{"[", ""}, {"]", ""}});
   }
 
-  Envoy::Network::ActiveDnsQuery* active_dns_query_ = dns_resolver->resolve(
+  Envoy::Network::ActiveDnsQuery* active_dns_query_ = dns_resolver.resolve(
       hostname, dns_lookup_family,
       [this, &dispatcher,
        &active_dns_query_](Envoy::Network::DnsResolver::ResolutionStatus status,
@@ -92,8 +92,7 @@ bool UriImpl::performDnsLookup(Envoy::Event::Dispatcher& dispatcher,
 }
 
 Envoy::Network::Address::InstanceConstSharedPtr
-UriImpl::resolve(Envoy::Event::Dispatcher& dispatcher,
-                 Envoy::Network::DnsResolverSharedPtr dns_resolver,
+UriImpl::resolve(Envoy::Event::Dispatcher& dispatcher, Envoy::Network::DnsResolver& dns_resolver,
                  const Envoy::Network::DnsLookupFamily dns_lookup_family) {
   if (resolve_attempted_) {
     return address_;
