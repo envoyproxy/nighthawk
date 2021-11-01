@@ -5,7 +5,7 @@
 
 #include "external/envoy/source/common/common/statusor.h"
 #include "external/envoy/source/common/event/dispatcher_impl.h"
-#include "external/envoy/source/common/network/dns_resolver/dns_factory.h"
+#include "external/envoy/source/common/network/dns_resolver/dns_factory_util.h"
 #include "external/envoy_api/envoy/config/bootstrap/v3/bootstrap.pb.h"
 
 namespace Nighthawk {
