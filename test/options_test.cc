@@ -153,8 +153,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
       "      }\n"
       "    }\n"
       "  }\n"
-      "}\n"
-      "183412668: \"envoy.api.v2.core.TransportSocket\"\n",
+      "}\n",
       options->transportSocket().value().DebugString());
   EXPECT_EQ(10, options->maxPendingRequests());
   EXPECT_EQ(11, options->maxActiveRequests());
@@ -180,8 +179,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
             "  [type.googleapis.com/envoy.config.metrics.v3.StatsdSink] {\n"
             "    tcp_cluster_name: \"statsd\"\n"
             "  }\n"
-            "}\n"
-            "183412668: \"envoy.config.metrics.v2.StatsSink\"\n",
+            "}\n",
             options->statsSinks()[0].DebugString());
   EXPECT_EQ("name: \"envoy.stat_sinks.statsd\"\n"
             "typed_config {\n"
@@ -189,8 +187,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
             "    tcp_cluster_name: \"statsd\"\n"
             "    prefix: \"nighthawk\"\n"
             "  }\n"
-            "}\n"
-            "183412668: \"envoy.config.metrics.v2.StatsSink\"\n",
+            "}\n",
             options->statsSinks()[1].DebugString());
   EXPECT_EQ("zz", options->responseHeaderWithLatencyInput());
 
@@ -417,11 +414,8 @@ TEST_F(OptionsImplTest, TlsContext) {
   EXPECT_EQ("common_tls_context {\n"
             "  tls_params {\n"
             "    cipher_suites: \"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"\n"
-            "    183412668: \"envoy.api.v2.auth.TlsParameters\"\n"
             "  }\n"
-            "  183412668: \"envoy.api.v2.auth.CommonTlsContext\"\n"
-            "}\n"
-            "183412668: \"envoy.api.v2.auth.UpstreamTlsContext\"\n",
+            "}\n",
             options->tlsContext().DebugString());
 
   // Check that our conversion to CommandLineOptionsPtr makes sense.
