@@ -21,7 +21,7 @@
 #include "external/envoy/source/common/event/real_time_system.h"
 #include "external/envoy/source/common/grpc/context_impl.h"
 #include "external/envoy/source/common/http/context_impl.h"
-#include "external/envoy/source/common/network/dns_resolver/dns_factory.h"
+#include "external/envoy/source/common/network/dns_resolver/dns_factory_util.h"
 #include "external/envoy/source/common/protobuf/message_validator_impl.h"
 #include "external/envoy/source/common/quic/quic_stat_names.h"
 #include "external/envoy/source/common/router/context_impl.h"

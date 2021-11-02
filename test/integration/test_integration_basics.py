@@ -312,6 +312,9 @@ def test_h3_quic(quic_test_server_fixture):
       "benchmark.http_2xx:24",
       "--max-active-requests",
       "1",
+      # TODO(mum4k): Envoy assumes this to be 100. Remove when fixed upstream.
+      "--max-concurrent-streams",
+      "100",
       # Envoy doesn't support disabling certificate verification on Quic
       # connections, so the host in our requests has to match the hostname in
       # the leaf certificate.

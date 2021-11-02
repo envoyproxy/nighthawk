@@ -1,7 +1,7 @@
 #include "source/common/uri_impl.h"
 
 #include "external/envoy/source/common/http/utility.h"
-#include "external/envoy/source/common/network/dns_resolver/dns_factory.h"
+#include "external/envoy/source/common/network/dns_resolver/dns_factory_util.h"
 #include "external/envoy/source/common/network/utility.h"
 #include "external/envoy_api/envoy/config/core/v3/resolver.pb.h"
 
