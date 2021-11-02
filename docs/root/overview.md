@@ -115,10 +115,21 @@ which will be fired upon completion of a successfully started request.
 
 **RequestSource** is an abstraction that allows us to implement different ways
 for **BenchmarkClient** to get information on what the request that it is about
-to fire off should look like. Today, two implementations exist: a static one,
-which will repeat the same request over and over, as well as one that pulls
-dynamic request data from a grpc service. The latter can, for example, be used
-to implement log-replay.
+to fire off should look like. A couple of implementations exist:
+
+- a [static
+  one](https://github.com/envoyproxy/nighthawk/blob/9f97c2d9cb86b84a158ccba33832d135e1b96c7a/source/common/request_source_impl.h#L20),
+  which will repeat the same request over and over.
+- a [dynamic
+  one](https://github.com/envoyproxy/nighthawk/blob/9f97c2d9cb86b84a158ccba33832d135e1b96c7a/source/common/request_source_impl.h#L41)
+  that pulls request data from a gRPC service. This one can be used to implement
+  log-replay.
+- a request source
+  [plugin](https://github.com/envoyproxy/nighthawk/blob/9f97c2d9cb86b84a158ccba33832d135e1b96c7a/source/request_source/request_options_list_plugin_impl.h#L61)
+  which reads request from a file.
+- a request source
+  [plugin](https://github.com/envoyproxy/nighthawk/blob/9f97c2d9cb86b84a158ccba33832d135e1b96c7a/source/request_source/request_options_list_plugin_impl.h#L94)
+  which replays requests from memory.
 
 ### StreamDecoder
 

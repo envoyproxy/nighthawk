@@ -33,9 +33,13 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
     writeResponse(response);
     return;
   }
+  envoy::config::core::v3::TypedExtensionConfig typed_dns_resolver_config;
+  Envoy::Network::DnsResolverFactory& dns_resolver_factory =
+      Envoy::Network::createDefaultDnsResolverFactory(typed_dns_resolver_config);
 
-  absl::StatusOr<ProcessPtr> process_or_status =
-      ProcessImpl::CreateProcessImpl(*options, time_system_, process_wide_);
+  absl::StatusOr<ProcessPtr> process_or_status = ProcessImpl::CreateProcessImpl(
+      *options, dns_resolver_factory, std::move(typed_dns_resolver_config), time_system_,
+      process_wide_);
   if (!process_or_status.ok()) {
     response.mutable_error_detail()->set_code(grpc::StatusCode::INTERNAL);
     response.mutable_error_detail()->set_message(

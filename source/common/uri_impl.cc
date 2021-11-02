@@ -1,6 +1,7 @@
 #include "source/common/uri_impl.h"
 
 #include "external/envoy/source/common/http/utility.h"
+#include "external/envoy/source/common/network/dns_resolver/dns_factory.h"
 #include "external/envoy/source/common/network/utility.h"
 #include "external/envoy_api/envoy/config/core/v3/resolver.pb.h"
 
@@ -62,16 +63,15 @@ UriImpl::UriImpl(absl::string_view uri, absl::string_view default_scheme)
 }
 
 bool UriImpl::performDnsLookup(Envoy::Event::Dispatcher& dispatcher,
+                               Envoy::Network::DnsResolver& dns_resolver,
                                const Envoy::Network::DnsLookupFamily dns_lookup_family) {
-  envoy::config::core::v3::DnsResolverOptions dns_resolver_options;
-  auto dns_resolver = dispatcher.createDnsResolver({}, dns_resolver_options);
   std::string hostname = std::string(hostWithoutPort());
 
   if (!hostname.empty() && hostname[0] == '[' && hostname[hostname.size() - 1] == ']') {
     hostname = absl::StrReplaceAll(hostname, {{"[", ""}, {"]", ""}});
   }
 
-  Envoy::Network::ActiveDnsQuery* active_dns_query_ = dns_resolver->resolve(
+  Envoy::Network::ActiveDnsQuery* active_dns_query_ = dns_resolver.resolve(
       hostname, dns_lookup_family,
       [this, &dispatcher,
        &active_dns_query_](Envoy::Network::DnsResolver::ResolutionStatus status,
@@ -92,14 +92,14 @@ bool UriImpl::performDnsLookup(Envoy::Event::Dispatcher& dispatcher,
 }
 
 Envoy::Network::Address::InstanceConstSharedPtr
-UriImpl::resolve(Envoy::Event::Dispatcher& dispatcher,
+UriImpl::resolve(Envoy::Event::Dispatcher& dispatcher, Envoy::Network::DnsResolver& dns_resolver,
                  const Envoy::Network::DnsLookupFamily dns_lookup_family) {
   if (resolve_attempted_) {
     return address_;
   }
   resolve_attempted_ = true;
 
-  bool ok = performDnsLookup(dispatcher, dns_lookup_family);
+  bool ok = performDnsLookup(dispatcher, dns_resolver, dns_lookup_family);
 
   // Ensure that we figured out a fitting match for the requested dns lookup family.
   ok = ok && !((dns_lookup_family == Envoy::Network::DnsLookupFamily::V6Only &&
