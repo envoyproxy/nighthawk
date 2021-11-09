@@ -82,16 +82,19 @@ if __name__ == "__main__":
   target_path = pathlib.Path(readme_md_path)
   with target_path.open("r", encoding="utf-8") as f:
     original_contents = target_path.read_text(encoding="utf-8")
-    replacement_pattern = _REPLACEMENT_PATTERN_TEMPLATE.format(begin_marker=_BEGIN_MARKER, binary=args.binary, end_marker=_END_MARKER)
+    replacement_pattern = _REPLACEMENT_PATTERN_TEMPLATE.format(begin_marker=_BEGIN_MARKER,
+                                                               binary=args.binary,
+                                                               end_marker=_END_MARKER)
     match_pattern = f".*{replacement_pattern}.*"
     if not re.match(match_pattern, original_contents, flags=re.DOTALL):
-        logging.error("The original content in /%s doesn't match our replacement pattern '%s'. "
-                      "If the file has the expected markers, this is likely a bug in "
-                      "update_cli_readme_documentation.py.",
-                      args.readme, match_pattern)
-        sys.exit(-1)
+      logging.error(
+          "The original content in /%s doesn't match our replacement pattern '%s'. "
+          "If the file has the expected markers, this is likely a bug in "
+          "update_cli_readme_documentation.py.", args.readme, match_pattern)
+      sys.exit(-1)
 
-    replacement = _REPLACEMENT_TEMPLATE.format(begin_marker=_BEGIN_MARKER, cli_help_text=cli_help_text,
+    replacement = _REPLACEMENT_TEMPLATE.format(begin_marker=_BEGIN_MARKER,
+                                               cli_help_text=cli_help_text,
                                                end_marker=_END_MARKER)
     replaced = re.sub(replacement_pattern, replacement, original_contents, flags=re.DOTALL)
     # Avoid check_format flagging "over-enthousiastic" whitespace
