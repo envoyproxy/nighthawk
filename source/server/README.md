@@ -332,4 +332,268 @@ Displays usage information and exits.
 
 
 envoy
+``tag:value``. Only alphanumeric values are allowed for
+tag names. For tag values all characters are permitted except for '.'
+(dot). This flag can be repeated multiple times to set multiple
+universal tags. Multiple values for the same tag name are not
+allowed.
+
+--enable-core-dump
+Enable core dumps
+
+--socket-mode <string>
+Socket file permission
+
+--socket-path <string>
+Path to hot restart socket file
+
+--disable-extensions <string>
+Comma-separated list of extensions to disable
+
+--cpuset-threads
+Get the default # of worker threads from cpuset size
+
+--enable-mutex-tracing
+Enable mutex contention tracing functionality
+
+--disable-hot-restart
+Disable hot restart functionality
+
+--mode <string>
+One of 'serve' (default; validate configs and then serve traffic
+normally) or 'validate' (validate configs and exit).
+
+--parent-shutdown-time-s <uint32_t>
+Hot restart parent shutdown time in seconds
+
+--drain-strategy <string>
+Hot restart drain sequence behaviour, one of 'gradual' (default) or
+'immediate'.
+
+--drain-time-s <uint32_t>
+Hot restart and LDS removal drain time in seconds
+
+--file-flush-interval-msec <uint32_t>
+Interval for log flushing in msec
+
+--service-zone <string>
+Zone name
+
+--service-node <string>
+Node name
+
+--service-cluster <string>
+Cluster name
+
+--hot-restart-version
+hot restart compatibility version
+
+--restart-epoch <uint32_t>
+hot restart epoch #
+
+--log-path <string>
+Path to logfile
+
+--enable-fine-grain-logging
+Logger mode: enable file level log control(Fancy Logger)or not
+
+--log-format-escaped
+Escape c-style escape sequences in the application logs
+
+--log-format <string>
+Log message format in spdlog syntax (see
+https://github.com/gabime/spdlog/wiki/3.-Custom-formatting)
+
+Default is "[%Y-%m-%d %T.%e][%t][%l][%n] [%g:%#] %v"
+
+--component-log-level <string>
+Comma separated list of component log levels. For example
+upstream:debug,config:trace
+
+-l <string>,  --log-level <string>
+Log levels: [trace][debug][info][warning
+|warn][error][critical][off]
+
+Default is [info]
+
+--local-address-ip-version <string>
+The local IP address version (v4 or v6).
+
+--admin-address-path <string>
+Admin address path
+
+--ignore-unknown-dynamic-fields
+ignore unknown fields in dynamic configuration
+
+--reject-unknown-dynamic-fields
+reject unknown fields in dynamic configuration
+
+--allow-unknown-static-fields
+allow unknown fields in static configuration
+
+--allow-unknown-fields
+allow unknown fields in static configuration (DEPRECATED)
+
+--config-yaml <string>
+Inline YAML configuration, merges with the contents of --config-path
+
+-c <string>,  --config-path <string>
+Path to configuration file
+
+--concurrency <uint32_t>
+# of worker threads to run
+
+--base-id-path <string>
+path to which the base ID is written
+
+--use-dynamic-base-id
+the server chooses a base ID dynamically. Supersedes a static base ID.
+May not be used when the restart epoch is non-zero.
+
+--base-id <uint32_t>
+base ID so that multiple envoys can run on the same host if needed
+
+--,  --ignore_rest
+Ignores the rest of the labeled arguments following this flag.
+
+--version
+Displays version information and exits.
+
+-h,  --help
+Displays usage information and exits.
+
+
+envoy
+``tag:value``. Only alphanumeric values are allowed for
+tag names. For tag values all characters are permitted except for '.'
+(dot). This flag can be repeated multiple times to set multiple
+universal tags. Multiple values for the same tag name are not
+allowed.
+
+--enable-core-dump
+Enable core dumps
+
+--socket-mode <string>
+Socket file permission
+
+--socket-path <string>
+Path to hot restart socket file
+
+--disable-extensions <string>
+Comma-separated list of extensions to disable
+
+--cpuset-threads
+Get the default # of worker threads from cpuset size
+
+--enable-mutex-tracing
+Enable mutex contention tracing functionality
+
+--disable-hot-restart
+Disable hot restart functionality
+
+--mode <string>
+One of 'serve' (default; validate configs and then serve traffic
+normally) or 'validate' (validate configs and exit).
+
+--parent-shutdown-time-s <uint32_t>
+Hot restart parent shutdown time in seconds
+
+--drain-strategy <string>
+Hot restart drain sequence behaviour, one of 'gradual' (default) or
+'immediate'.
+
+--drain-time-s <uint32_t>
+Hot restart and LDS removal drain time in seconds
+
+--file-flush-interval-msec <uint32_t>
+Interval for log flushing in msec
+
+--service-zone <string>
+Zone name
+
+--service-node <string>
+Node name
+
+--service-cluster <string>
+Cluster name
+
+--hot-restart-version
+hot restart compatibility version
+
+--restart-epoch <uint32_t>
+hot restart epoch #
+
+--log-path <string>
+Path to logfile
+
+--enable-fine-grain-logging
+Logger mode: enable file level log control(Fancy Logger)or not
+
+--log-format-escaped
+Escape c-style escape sequences in the application logs
+
+--log-format <string>
+Log message format in spdlog syntax (see
+https://github.com/gabime/spdlog/wiki/3.-Custom-formatting)
+
+Default is "[%Y-%m-%d %T.%e][%t][%l][%n] [%g:%#] %v"
+
+--component-log-level <string>
+Comma separated list of component log levels. For example
+upstream:debug,config:trace
+
+-l <string>,  --log-level <string>
+Log levels: [trace][debug][info][warning
+|warn][error][critical][off]
+
+Default is [info]
+
+--local-address-ip-version <string>
+The local IP address version (v4 or v6).
+
+--admin-address-path <string>
+Admin address path
+
+--ignore-unknown-dynamic-fields
+ignore unknown fields in dynamic configuration
+
+--reject-unknown-dynamic-fields
+reject unknown fields in dynamic configuration
+
+--allow-unknown-static-fields
+allow unknown fields in static configuration
+
+--allow-unknown-fields
+allow unknown fields in static configuration (DEPRECATED)
+
+--config-yaml <string>
+Inline YAML configuration, merges with the contents of --config-path
+
+-c <string>,  --config-path <string>
+Path to configuration file
+
+--concurrency <uint32_t>
+# of worker threads to run
+
+--base-id-path <string>
+path to which the base ID is written
+
+--use-dynamic-base-id
+the server chooses a base ID dynamically. Supersedes a static base ID.
+May not be used when the restart epoch is non-zero.
+
+--base-id <uint32_t>
+base ID so that multiple envoys can run on the same host if needed
+
+--,  --ignore_rest
+Ignores the rest of the labeled arguments following this flag.
+
+--version
+Displays version information and exits.
+
+-h,  --help
+Displays usage information and exits.
+
+
+envoy
 ```
