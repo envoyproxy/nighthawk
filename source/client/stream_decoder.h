@@ -69,7 +69,7 @@ public:
   }
 
   // Http::StreamDecoder
-  void decode100ContinueHeaders(Envoy::Http::ResponseHeaderMapPtr&&) override {}
+  void decode1xxHeaders(Envoy::Http::ResponseHeaderMapPtr&&) override {}
   void decodeHeaders(Envoy::Http::ResponseHeaderMapPtr&& headers, bool end_stream) override;
   void decodeData(Envoy::Buffer::Instance&, bool end_stream) override;
   void decodeTrailers(Envoy::Http::ResponseTrailerMapPtr&& trailers) override;

@@ -24,6 +24,7 @@
 #include "external/envoy/source/common/event/real_time_system.h"
 #include "external/envoy/source/common/init/manager_impl.h"
 #include "external/envoy/source/common/local_info/local_info_impl.h"
+#include "external/envoy/source/common/network/dns_resolver/dns_factory_util.h"
 #include "external/envoy/source/common/network/utility.h"
 #include "external/envoy/source/common/runtime/runtime_impl.h"
 #include "external/envoy/source/common/singleton/manager_impl.h"
@@ -160,6 +161,8 @@ private:
 };
 
 ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
+                         Envoy::Network::DnsResolverFactory& dns_resolver_factory,
+                         envoy::config::core::v3::TypedExtensionConfig typed_dns_resolver_config,
                          const std::shared_ptr<Envoy::ProcessWide>& process_wide)
     : options_(options), number_of_workers_(BootstrapFactory::determineConcurrency(options_)),
       process_wide_(process_wide == nullptr ? std::make_shared<Envoy::ProcessWide>()
@@ -181,6 +184,8 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
       singleton_manager_(std::make_unique<Envoy::Singleton::ManagerImpl>(api_->threadFactory())),
       access_log_manager_(std::chrono::milliseconds(1000), *api_, *dispatcher_, access_log_lock_,
                           store_root_),
+      dns_resolver_factory_(dns_resolver_factory),
+      typed_dns_resolver_config_(std::move(typed_dns_resolver_config)),
       init_watcher_("Nighthawk", []() {}),
       admin_(Envoy::Network::Address::InstanceConstSharedPtr()),
       validation_context_(false, false, false), router_context_(store_root_.symbolTable()) {
@@ -191,13 +196,18 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
   configureComponentLogLevels(spdlog::level::from_str(lower));
 }
 
-absl::StatusOr<ProcessPtr>
-ProcessImpl::CreateProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
-                               const std::shared_ptr<Envoy::ProcessWide>& process_wide) {
-  std::unique_ptr<ProcessImpl> process(new ProcessImpl(options, time_system, process_wide));
+absl::StatusOr<ProcessPtr> ProcessImpl::CreateProcessImpl(
+    const Options& options, Envoy::Network::DnsResolverFactory& dns_resolver_factory,
+    envoy::config::core::v3::TypedExtensionConfig typed_dns_resolver_config,
+    Envoy::Event::TimeSystem& time_system,
+    const std::shared_ptr<Envoy::ProcessWide>& process_wide) {
+  std::unique_ptr<ProcessImpl> process(new ProcessImpl(options, time_system, dns_resolver_factory,
+                                                       std::move(typed_dns_resolver_config),
+                                                       process_wide));
 
   absl::StatusOr<Bootstrap> bootstrap = createBootstrapConfiguration(
-      *process->dispatcher_, process->options_, process->number_of_workers_);
+      *process->dispatcher_, *process->api_, process->options_, process->dns_resolver_factory_,
+      process->typed_dns_resolver_config_, process->number_of_workers_);
   if (!bootstrap.ok()) {
     ENVOY_LOG(error, "Failed to create bootstrap configuration: {}", bootstrap.status().message());
     process->shutdown();
@@ -429,6 +439,7 @@ void ProcessImpl::setupStatsSinks(const envoy::config::bootstrap::v3::Bootstrap&
 }
 
 bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_uri,
+                              const Envoy::Network::DnsResolverSharedPtr& dns_resolver,
                               const absl::optional<Envoy::SystemTime>& scheduled_start) {
   const Envoy::SystemTime now = time_system_.systemTime();
   if (scheduled_start.value_or(now) < now) {
@@ -442,10 +453,16 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
     }
     shutdown_ = false;
 
+    const Envoy::OptionsImpl::HotRestartVersionCb hot_restart_version_cb = [](bool) {
+      return "hot restart is disabled";
+    };
+    const Envoy::OptionsImpl envoy_options(
+        /* args = */ {"process_impl"}, hot_restart_version_cb, spdlog::level::info);
     // Needs to happen as early as possible (before createWorkers()) in the instantiation to preempt
     // the objects that require stats.
     if (!options_.statsSinks().empty()) {
-      store_root_.setTagProducer(Envoy::Config::Utility::createTagProducer(bootstrap_));
+      store_root_.setTagProducer(
+          Envoy::Config::Utility::createTagProducer(bootstrap_, envoy_options.statsTags()));
     }
 
     createWorkers(number_of_workers_, scheduled_start);
@@ -459,19 +476,11 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
         std::make_unique<Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl>(
             time_system_);
 
-    ::envoy::config::core::v3::DnsResolverOptions dns_options;
-    const Envoy::OptionsImpl::HotRestartVersionCb hot_restart_version_cb = [](bool) {
-      return "hot restart is disabled";
-    };
-    const Envoy::OptionsImpl envoy_options(
-        /* args = */ {"process_impl"}, hot_restart_version_cb, spdlog::level::info);
-    envoy::config::core::v3::DnsResolverOptions dns_resolver_options;
     cluster_manager_factory_ = std::make_unique<ClusterManagerFactory>(
-        admin_, Envoy::Runtime::LoaderSingleton::get(), store_root_, tls_,
-        dispatcher_->createDnsResolver({}, dns_resolver_options), *ssl_context_manager_,
-        *dispatcher_, *local_info_, secret_manager_, validation_context_, *api_, http_context_,
-        grpc_context_, router_context_, access_log_manager_, *singleton_manager_, envoy_options,
-        quic_stat_names_);
+        admin_, Envoy::Runtime::LoaderSingleton::get(), store_root_, tls_, dns_resolver,
+        *ssl_context_manager_, *dispatcher_, *local_info_, secret_manager_, validation_context_,
+        *api_, http_context_, grpc_context_, router_context_, access_log_manager_,
+        *singleton_manager_, envoy_options, quic_stat_names_);
     cluster_manager_factory_->setConnectionReuseStrategy(
         options_.h1ConnectionReuseStrategy() == nighthawk::client::H1ConnectionReuseStrategy::LRU
             ? Http1PoolImpl::ConnectionReuseStrategy::LRU
@@ -575,10 +584,12 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
 bool ProcessImpl::run(OutputCollector& collector) {
   UriPtr tracing_uri;
 
+  Envoy::Network::DnsResolverSharedPtr dns_resolver =
+      dns_resolver_factory_.createDnsResolver(*dispatcher_, *api_, typed_dns_resolver_config_);
   try {
     if (options_.trace() != "") {
       tracing_uri = std::make_unique<UriImpl>(options_.trace());
-      tracing_uri->resolve(*dispatcher_,
+      tracing_uri->resolve(*dispatcher_, *dns_resolver,
                            Utility::translateFamilyOptionString(options_.addressFamily()));
     }
   } catch (const UriException& ex) {
@@ -590,7 +601,7 @@ bool ProcessImpl::run(OutputCollector& collector) {
   }
 
   try {
-    return runInternal(collector, tracing_uri, options_.scheduled_start());
+    return runInternal(collector, tracing_uri, dns_resolver, options_.scheduled_start());
   } catch (Envoy::EnvoyException& ex) {
     ENVOY_LOG(error, "Fatal exception: {}", ex.what());
     throw;

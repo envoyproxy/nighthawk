@@ -1,5 +1,6 @@
 #include <string>
 
+#include "external/envoy/source/common/network/dns_resolver/dns_factory_util.h"
 #include "external/envoy/source/common/network/utility.h"
 #include "external/envoy/source/common/stats/isolated_store_impl.h"
 #include "external/envoy/test/test_common/utility.h"
@@ -94,8 +95,13 @@ public:
   testResolution(absl::string_view uri, Envoy::Network::DnsLookupFamily address_family) {
     Envoy::Api::ApiPtr api = Envoy::Api::createApiForTest();
     auto dispatcher = api->allocateDispatcher("uri_resolution_thread");
+    envoy::config::core::v3::TypedExtensionConfig typed_dns_resolver_config;
+    Envoy::Network::DnsResolverFactory& dns_resolver_factory =
+        Envoy::Network::createDefaultDnsResolverFactory(typed_dns_resolver_config);
+    Envoy::Network::DnsResolverSharedPtr dns_resolver =
+        dns_resolver_factory.createDnsResolver(*dispatcher, *api, typed_dns_resolver_config);
     auto u = UriImpl(uri);
-    return u.resolve(*dispatcher, address_family);
+    return u.resolve(*dispatcher, *dns_resolver, address_family);
   }
 };
 
@@ -143,10 +149,15 @@ TEST_P(UtilityAddressResolutionTest, ResolveTwiceReturnsCached) {
 
   Envoy::Api::ApiPtr api = Envoy::Api::createApiForTest();
   auto dispatcher = api->allocateDispatcher("test_thread");
+  envoy::config::core::v3::TypedExtensionConfig typed_dns_resolver_config;
+  Envoy::Network::DnsResolverFactory& dns_resolver_factory =
+      Envoy::Network::createDefaultDnsResolverFactory(typed_dns_resolver_config);
+  Envoy::Network::DnsResolverSharedPtr dns_resolver =
+      dns_resolver_factory.createDnsResolver(*dispatcher, *api, typed_dns_resolver_config);
   auto u = UriImpl("localhost");
 
-  EXPECT_EQ(u.resolve(*dispatcher, address_family).get(),
-            u.resolve(*dispatcher, address_family).get());
+  EXPECT_EQ(u.resolve(*dispatcher, *dns_resolver, address_family).get(),
+            u.resolve(*dispatcher, *dns_resolver, address_family).get());
 }
 
 TEST_F(UtilityTest, TranslateAddressFamilyGoodValues) {
