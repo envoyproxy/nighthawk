@@ -3,9 +3,9 @@
 #include "envoy/common/time.h"
 #include "envoy/stats/store.h"
 
-#include "external/envoy/source/common/common/assert.h"
-
 #include "nighthawk/common/termination_predicate.h"
+
+#include "external/envoy/source/common/common/assert.h"
 
 namespace Nighthawk {
 
