@@ -491,11 +491,10 @@ def test_request_body_gets_transmitted(http_test_server_fixture, filter_configs)
   check_upload_expectations(http_test_server_fixture, parsed_json, upload_bytes * requests,
                             upload_bytes * requests * 2)
 
-
 def test_http_h1_termination_predicate(http_test_server_fixture):
   """Test with a termination predicate.
 
-  Should result in successfull execution, with 10 successfull requests.
+  Should result in successful execution, with 10 successful requests.
   We would expect 25 based on rps and duration.
   """
   parsed_json, _ = http_test_server_fixture.runNighthawkClient([
