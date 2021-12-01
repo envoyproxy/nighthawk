@@ -56,7 +56,7 @@ This diagram outlines the architecture of the adaptive load controller:
 
 ![Adaptive Controller Architecture](images/adaptive_controller_architecture.png)
 
-The **adaptive load controller** binary talk to a Nighthawk server over gRPC.
+The **adaptive load controller** binary talks to a Nighthawk server over gRPC.
 The controller accepts its
 [configuration](https://github.com/envoyproxy/nighthawk/blob/main/api/adaptive_load/adaptive_load.proto)
 in protocol buffer format.
