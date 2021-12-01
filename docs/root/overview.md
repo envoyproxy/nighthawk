@@ -9,15 +9,19 @@ The following diagram outlines the overall architecture of Nighthawk.
 Nighthawk exposes its API either via a [command line
 interface](https://github.com/envoyproxy/nighthawk/blob/main/source/exe/client_main_entry.cc)
 (CLI) or as a [gRPC
-server](https://github.com/envoyproxy/nighthawk/blob/main/source/exe/service_main_entry.cc).
+server](https://github.com/envoyproxy/nighthawk/blob/main/source/exe/service_main_entry.cc)
+with a [proto
+API](https://github.com/envoyproxy/nighthawk/blob/main/api/client/service.proto).
 When running as a CLI, Nighthawk will run a single execution and print out the
 results. When running as a gRPC server, Nighthawk is capable of performing
 multiple executions one after another, returning results to the gRPC client.
 
-In either of the execution modes,
+In either of the execution modes, the
 [Options](https://github.com/envoyproxy/nighthawk/blob/main/source/client/options_impl.h)
-object abstracts all the options selected by the user and provides them to the
-rest of the Nighthawk architecture.
+object abstracts all the
+[options](https://github.com/envoyproxy/nighthawk/blob/main/api/client/options.proto)
+selected by the user and provides them to the rest of the Nighthawk
+architecture.
 
 Nighthawk creates a
 [Process](https://github.com/envoyproxy/nighthawk/blob/main/source/client/process_impl.h)
@@ -28,13 +32,14 @@ used to initialize an Envoy upstream cluster manager.
 The **Process** instance creates multiple [Client
 workers](https://github.com/envoyproxy/nighthawk/blob/main/source/client/client_worker_impl.h)
 that get access to the Envoy upstream cluster manager and drive the execution.
-See the next section for a detail view into the worker architecture.
+See the [next section](#client-worker-architecture) for a detail view into the
+worker architecture.
 
 Once the execution finishes, the [Output
 Collector](https://github.com/envoyproxy/nighthawk/blob/main/source/client/output_collector_impl.h)
 provides results collected from individual **Client workers** to the [Output
 formatter](https://github.com/envoyproxy/nighthawk/blob/main/source/client/output_formatter_impl.h)
-which will represents the results in a format selected by the user.
+which represents the results in the format selected by the user.
 
 ### Client worker architecture
 
@@ -45,8 +50,8 @@ Each **Client worker** runs a
 which is responsible for maintaining the pace of requests that was specified by
 the user. To maintain the pace, the **Sequencer** queries a
 [RateLimiter](https://github.com/envoyproxy/nighthawk/blob/main/source/common/rate_limiter_impl.h)
-for [request-release timings](terminology.md#request-release-timings). When it
-is time to release a request,
+for [request-release timing](terminology.md#request-release-timing). When it
+is time to release a request, the
 [BenchmarkClient](https://github.com/envoyproxy/nighthawk/blob/main/source/client/benchmark_client_impl.h)
 is requested to do so by the **Sequencer**.
 
@@ -54,15 +59,15 @@ is requested to do so by the **Sequencer**.
 [RequestSource](https://github.com/envoyproxy/nighthawk/blob/main/source/common/request_source_impl.h)
 and asks its underlying **Connection pool** to create a
 [StreamDecoder](https://github.com/envoyproxy/nighthawk/blob/main/source/client/stream_decoder.h)
-for releasing the request. The **StreamDecoder** sends the requests and emits
+which releases the request. The **StreamDecoder** sends the request and emits
 events as it progresses (connection pool ready, completion, etc...).
 
 The timings of each requests along with other statistics are recorded into the
 [Statistic](https://github.com/envoyproxy/nighthawk/blob/main/source/common/statistic_impl.h)
-object and reported to the **Sequencer** for for tracking of the in-flight work.
+object and reported to the **Sequencer** for tracking of the in-flight work.
 
-The **Sequencer** is also responsible for terminating the execution. This is
-done by querying the configured
+The **Sequencer** is also responsible for termination of the execution. This is
+done by querying
 [TerminationPredicates](https://github.com/envoyproxy/nighthawk/blob/main/source/common/termination_predicate_impl.h)
 to determine if the configured conditions for termination have been reached.
 
