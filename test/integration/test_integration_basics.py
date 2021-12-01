@@ -491,6 +491,7 @@ def test_request_body_gets_transmitted(http_test_server_fixture, filter_configs)
   check_upload_expectations(http_test_server_fixture, parsed_json, upload_bytes * requests,
                             upload_bytes * requests * 2)
 
+
 def test_http_h1_termination_predicate(http_test_server_fixture):
   """Test with a termination predicate.
 
