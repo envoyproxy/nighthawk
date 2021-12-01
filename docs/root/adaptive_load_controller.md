@@ -145,7 +145,7 @@ A valid configuration contains a `nighthawk_traffic_template` which is the base
 configuration for Nighthawk to be used in the iterations. The chosen input
 variable setter alters variables in this template.
 
-The configuration also contains a selection of plugins, their individual
+The configuration also contains a selection of metrics, their individual
 configuration and a set of timers that determine the duration and deadline of
 the individual stages used in the adaptive mode.
 
@@ -196,7 +196,7 @@ thresholds to ensure stable test results. A typical adaptive mode configuration
 will contain the following metric thresholds:
 
 *  Send rate to ensure Nighthawk has enough resources to deliver the load.
-*  Success rate to ensure the System under test is responding.
+*  Success rate to ensure the system under test is responding.
 *  Latency to ensure the system under test responds in reasonable time.
 *  CPU usage of the system under test to get a direct feedback on how much load
    is landing on it.
