@@ -90,19 +90,19 @@ The existing metrics plugins are implemented in the
 [metrics_plugin_impl.cc](https://github.com/envoyproxy/nighthawk/blob/main/source/adaptive_load/metrics_plugin_impl.cc)
 file.
 
-Metric Plugin          | Plugin Name                   | Description
----------------------- | ----------------------------- | -----------
-Attempted RPS          | `attempted-rps`               | The request per seconds (RPS) value Nighthawk attempted in the iteration.
-Achieved RPS           | `achieved-rps`                | The request per seconds (RPS) value Nighthawk achieved in the iteration.
-Send rate              | `send-rate`                   | A percentage of planned requests that Nighthawk managed to send in the iteration.
-Success rate           | `success-rate`                | A percentage of the sent requests that resulted in HTTP code 200 in the iteration.
-Minimum latency        | `latency-ns-min`              | The minimum latency in nanoseconds observed by Nighthawk in the iteration.
-Mean latency           | `latency-ns-mean`             | The average latency in nanoseconds observed by Nighthawk in the iteration.
-Maximum latency        | `latency-ns-max`              | The maximum latency in nanoseconds observed by Nighthawk in the iteration.
-Mean + 1*stdev latency | `latency-ns-mean-plus-1stdev` | Calculated as average latency plus one standard deviation in nanoseconds as observed by Nighthawk in the iteration.
-Mean + 2*stdev latency | `latency-ns-mean-plus-2stdev` | Calculated as average latency plus two standard deviations in nanoseconds as observed by Nighthawk in the iteration.
-Mean + 3*stdev latency | `latency-ns-mean-plus-3stdev` | Calculated as average latency plus three standard deviations in nanoseconds as observed by Nighthawk in the iteration.
-Stdev latency          | `latency-ns-pstdev`           | The standard deviation of latencies in nanoseconds as observed by Nighthawk in the iteration.
+Metric Plugin           | Plugin Name | Metric Name                   | Description
+----------------------- | ----------- | ----------------------------- | -----------
+Attempted RPS           | `builtin`   | `attempted-rps`               | The request per seconds (RPS) value Nighthawk attempted in the iteration.
+Achieved RPS            | `builtin`   | `achieved-rps`                | The request per seconds (RPS) value Nighthawk achieved in the iteration.
+Send rate               | `builtin`   | `send-rate`                   | A percentage of planned requests that Nighthawk managed to send in the iteration.
+Success rate            | `builtin`   | `success-rate`                | A percentage of the sent requests that resulted in HTTP code 200 in the iteration.
+Minimum latency         | `builtin`   | `latency-ns-min`              | The minimum latency in nanoseconds observed by Nighthawk in the iteration.
+Mean latency            | `builtin`   | `latency-ns-mean`             | The average latency in nanoseconds observed by Nighthawk in the iteration.
+Maximum latency         | `builtin`   | `latency-ns-max`              | The maximum latency in nanoseconds observed by Nighthawk in the iteration.
+Mean + 1x stdev latency | `builtin`   | `latency-ns-mean-plus-1stdev` | Calculated as average latency plus one standard deviation in nanoseconds as observed by Nighthawk in the iteration.
+Mean + 2x stdev latency | `builtin`   | `latency-ns-mean-plus-2stdev` | Calculated as average latency plus two standard deviations in nanoseconds as observed by Nighthawk in the iteration.
+Mean + 3x stdev latency | `builtin`   | `latency-ns-mean-plus-3stdev` | Calculated as average latency plus three standard deviations in nanoseconds as observed by Nighthawk in the iteration.
+Stdev latency           | `builtin`   | `latency-ns-pstdev`           | The standard deviation of latencies in nanoseconds as observed by Nighthawk in the iteration.
 
 ### Available step controllers
 
