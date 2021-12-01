@@ -554,13 +554,11 @@ def test_multiple_backends_http_h1(multi_http_test_server_fixture):
   asserts.assertCounterEqual(counters, "upstream_rq_pending_total", 3)
   asserts.assertCounterEqual(counters, "upstream_rq_total", 25)
   asserts.assertCounterEqual(counters, "default.total_match_count", 3)
-  total_2xx = 0
   for parsed_server_json in multi_http_test_server_fixture.getAllTestServerStatisticsJsons():
     single_2xx = multi_http_test_server_fixture.getServerStatFromJson(
         parsed_server_json, "http.ingress_http.downstream_rq_2xx")
-    asserts.assertBetweenInclusive(single_2xx, 8, 9)
-    total_2xx += single_2xx
-  asserts.assertBetweenInclusive(total_2xx, 24, 25)
+    # Confirm that each backend receives some traffic
+    asserts.assertGreaterEqual(single_2xx, 1)
 
 
 @pytest.mark.parametrize('server_config',
