@@ -1,11 +1,9 @@
 # The Adaptive Load Controller
 
 The adaptive load controller is a standalone
-[library](https://github.com/envoyproxy/nighthawk/tree/main/source/adaptive_load)
-with a [proto based
-API](https://github.com/envoyproxy/nighthawk/tree/main/api/adaptive_load). It is
-an abstraction built on top of Nighthawk that implements an adaptive execution
-mode.
+[library](../../source/adaptive_load) with a [proto based
+API](../../api/adaptive_load). It is an abstraction built on top of Nighthawk
+that implements an adaptive execution mode.
 
 ## Motivation
 
@@ -59,8 +57,8 @@ This diagram outlines the architecture of the adaptive load controller:
 
 The **adaptive load controller** binary talks to a Nighthawk server over gRPC.
 The controller accepts its
-[configuration](https://github.com/envoyproxy/nighthawk/blob/main/api/adaptive_load/adaptive_load.proto)
-in protocol buffer format.
+[configuration](../../api/adaptive_load/adaptive_load.proto) in protocol buffer
+format.
 
 The **config validator** validates the provided configuration, ensuring that
 the adaptive mode can successfully execute.
@@ -88,7 +86,7 @@ implementations that are included in this repository.
 ### Available metric plugins
 
 The existing metrics plugins are implemented in the
-[metrics_plugin_impl.cc](https://github.com/envoyproxy/nighthawk/blob/main/source/adaptive_load/metrics_plugin_impl.cc)
+[metrics_plugin_impl.cc](../../source/adaptive_load/metrics_plugin_impl.cc)
 file.
 
 Metric Plugin           | Plugin Name | Metric Name                   | Description
@@ -108,7 +106,7 @@ Stdev latency           | `builtin`   | `latency-ns-pstdev`           | The stan
 ### Available step controllers
 
 The existing step controllers are implemented in the
-[step_controller_impl.cc](https://github.com/envoyproxy/nighthawk/blob/main/source/adaptive_load/step_controller_impl.cc)
+[step_controller_impl.cc](../../source/adaptive_load/step_controller_impl.cc)
 file.
 
 Step controller      | Plugin Name                    | Description
@@ -118,7 +116,7 @@ Exponential search   | `nighthawk.exponential_search` | Implements the exponenti
 ### Available metric scoring functions
 
 The existing metric scoring functions are implemented in the
-[scoring_function_impl.cc](https://github.com/envoyproxy/nighthawk/blob/main/source/adaptive_load/scoring_function_impl.cc)
+[scoring_function_impl.cc](../../source/adaptive_load/scoring_function_impl.cc)
 file.
 
 Scoring function | Plugin Name                | Description
@@ -129,7 +127,7 @@ Linear scoring   | `nighthawk.linear_scoring` | Evaluation of the metric value w
 ### Available input variable setters
 
 The existing input variable setters are implemented in the
-[input_variable_setter_impl.cc](https://github.com/envoyproxy/nighthawk/blob/main/source/adaptive_load/input_variable_setter_impl.cc)
+[input_variable_setter_impl.cc](../../source/adaptive_load/input_variable_setter_impl.cc)
 file.
 
 Input variable setter | Plugin Name     | Description
@@ -139,7 +137,7 @@ RPS                   | `nighthawk.rps` | Sets the RPS value in the Nighthawk co
 ## Configuration
 
 The controller accepts its
-[configuration](https://github.com/envoyproxy/nighthawk/blob/main/api/adaptive_load/adaptive_load.proto)
+[configuration](../../api/adaptive_load/adaptive_load.proto)
 in protocol buffer format.
 
 A valid configuration contains a `nighthawk_traffic_template` which is the base
@@ -147,7 +145,7 @@ configuration for Nighthawk to be used in the iterations. The chosen input
 variable setter alters variables in this template. Note that the adaptive load
 controller overrides some values in the configuration, e.g. it will always
 `open_loop` to true. The full set of overrides can be found in the
-[session_spec_proto_helper_impl.h](https://github.com/envoyproxy/nighthawk/blob/main/source/adaptive_load/session_spec_proto_helper_impl.h).
+[session_spec_proto_helper_impl.h](../../source/adaptive_load/session_spec_proto_helper_impl.h).
 
 The configuration also contains a selection of metrics, their individual
 configuration and a set of timers that determine the duration and deadline of
