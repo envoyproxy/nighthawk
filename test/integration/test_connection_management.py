@@ -111,7 +111,6 @@ def test_h1_pool_strategy_mru(http_test_server_fixture):
 
   Test that with the "mru" strategy only the first created connection gets to send requests.
   """
-
   _, logs = http_test_server_fixture.runNighthawkClient([
       "--rps 5", "-v", "trace", "--duration", "20", "--connections", "2", "--prefetch-connections",
       "--experimental-h1-connection-reuse-strategy", "mru", "--termination-predicate",
