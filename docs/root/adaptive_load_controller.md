@@ -2,9 +2,10 @@
 
 The adaptive load controller is a standalone
 [library](https://github.com/envoyproxy/nighthawk/tree/main/source/adaptive_load)
-with [proto based
+with a [proto based
 API](https://github.com/envoyproxy/nighthawk/tree/main/api/adaptive_load). It is
-an abstraction built on to of Nighthawk that implements an adaptive execution mode.
+an abstraction built on top of Nighthawk that implements an adaptive execution
+mode.
 
 ## Motivation
 
@@ -36,7 +37,7 @@ Nighthawk with varying test parameters in search for the optimal configuration.
 The individual Nighthawk executions use the
 [open-loop](terminology.md#open-loop) mode. The controller collects metrics
 after each iteration and evaluates them according to configured thresholds in
-order to determine of the configuration used in the iteration is optimal. Once
+order to determine if the configuration used in the iteration is optimal. Once
 the controller finds the optimal test configuration, it enters the testing
 stage.
 
@@ -143,7 +144,10 @@ in protocol buffer format.
 
 A valid configuration contains a `nighthawk_traffic_template` which is the base
 configuration for Nighthawk to be used in the iterations. The chosen input
-variable setter alters variables in this template.
+variable setter alters variables in this template. Note that the adaptive load
+controller overrides some values in the configuration, e.g. it will always
+`open_loop` to true. The full set of overrides can be found in the
+[session_spec_proto_helper_impl.h](https://github.com/envoyproxy/nighthawk/blob/main/source/adaptive_load/session_spec_proto_helper_impl.h).
 
 The configuration also contains a selection of metrics, their individual
 configuration and a set of timers that determine the duration and deadline of
