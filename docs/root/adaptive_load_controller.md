@@ -143,7 +143,7 @@ in protocol buffer format.
 A valid configuration contains a `nighthawk_traffic_template` which is the base
 configuration for Nighthawk to be used in the iterations. The chosen input
 variable setter alters variables in this template. Note that the adaptive load
-controller overrides some values in the configuration, e.g. it will always
+controller overrides some values in the configuration, e.g. it will always set
 `open_loop` to true. The full set of overrides can be found in the
 [session_spec_proto_helper_impl.h](../../source/adaptive_load/session_spec_proto_helper_impl.h).
 
