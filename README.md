@@ -40,7 +40,9 @@ bazel build -c opt //:nighthawk
 ➜ bazel-bin/nighthawk_client --help
 ```
 
+<!-- BEGIN USAGE -->
 ```
+
 USAGE:
 
 bazel-bin/nighthawk_client  [--services <string>] ... [--distributor
@@ -188,7 +190,7 @@ Termination predicate. Allows specifying a counter name plus threshold
 value for terminating execution.
 
 --trace <uri format>
-Trace uri. Example: zipkin://localhost:9411/api/v1/spans. Default is
+Trace uri. Example: zipkin://localhost:9411/api/v2/spans. Default is
 empty.
 
 --sequencer-idle-strategy <spin|poll|sleep>
@@ -307,7 +309,9 @@ benchmark a single endpoint. For multiple endpoints, set
 
 
 L7 (HTTP/HTTPS/HTTP2) performance characterization tool.
+
 ```
+<!-- END USAGE -->
 
 ### Nighthawk gRPC service
 
@@ -318,7 +322,9 @@ The gRPC service can be used to start a server which is able to perform back-to-
 ➜ bazel-bin/nighthawk_service --help
 ```
 
+<!-- BEGIN USAGE -->
 ```
+
 USAGE:
 
 bazel-bin/nighthawk_service  [--service <traffic-generator-service
@@ -351,7 +357,9 @@ Displays usage information and exits.
 
 
 L7 (HTTP/HTTPS/HTTP2) performance characterization tool.
+
 ```
+<!-- END USAGE -->
 
 ### Nighthawk output transformation utility
 
@@ -362,7 +370,9 @@ Nighthawk comes with a tool to transform its json output to its other supported 
 ➜ bazel-bin/nighthawk_output_transform --help
 ```
 
+<!-- BEGIN USAGE -->
 ```
+
 USAGE:
 
 bazel-bin/nighthawk_output_transform  --output-format <json|human|yaml
@@ -389,7 +399,9 @@ Displays usage information and exits.
 
 
 L7 (HTTP/HTTPS/HTTP2) performance characterization transformation tool.
+
 ```
+<!-- END USAGE -->
 
 ## A sample benchmark run
 

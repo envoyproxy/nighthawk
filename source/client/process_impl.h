@@ -21,6 +21,7 @@
 #include "external/envoy/source/common/event/real_time_system.h"
 #include "external/envoy/source/common/grpc/context_impl.h"
 #include "external/envoy/source/common/http/context_impl.h"
+#include "external/envoy/source/common/network/dns_resolver/dns_factory_util.h"
 #include "external/envoy/source/common/protobuf/message_validator_impl.h"
 #include "external/envoy/source/common/quic/quic_stat_names.h"
 #include "external/envoy/source/common/router/context_impl.h"
@@ -55,6 +56,10 @@ public:
   /**
    * Creates a ProcessImpl.
    * @param options provides the options configuration to be used.
+   * @param dns_resolver_factory provides a pluggable factory to create a DNS resolver. The
+   * resolver is used for resolving DNS names in the bootstrap and then by the cluster manager.
+   * @param typed_dns_resolver_config the config that defined the dns_resolver_factory, also
+   * needed as an input to createDnsResolver() on the factory.
    * @param time_system provides the Envoy::Event::TimeSystem implementation that will be used.
    * @param process_wide optional parameter which can be used to pass a pre-setup reference to
    * an active Envoy::ProcessWide instance. ProcessImpl will add a reference to this when passed,
@@ -63,7 +68,10 @@ public:
    * instance.
    */
   static absl::StatusOr<ProcessPtr>
-  CreateProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
+  CreateProcessImpl(const Options& options,
+                    Envoy::Network::DnsResolverFactory& dns_resolver_factory,
+                    envoy::config::core::v3::TypedExtensionConfig typed_dns_resolver_config,
+                    Envoy::Event::TimeSystem& time_system,
                     const std::shared_ptr<Envoy::ProcessWide>& process_wide = nullptr);
 
   ~ProcessImpl() override;
@@ -87,6 +95,8 @@ public:
 private:
   // Use CreateProcessImpl to construct an instance of ProcessImpl.
   ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
+              Envoy::Network::DnsResolverFactory& dns_resolver_factory,
+              envoy::config::core::v3::TypedExtensionConfig typed_dns_resolver_config,
               const std::shared_ptr<Envoy::ProcessWide>& process_wide = nullptr);
 
   void addTracingCluster(envoy::config::bootstrap::v3::Bootstrap& bootstrap, const Uri& uri) const;
@@ -115,6 +125,7 @@ private:
   void setupStatsSinks(const envoy::config::bootstrap::v3::Bootstrap& bootstrap,
                        std::list<std::unique_ptr<Envoy::Stats::Sink>>& stats_sinks);
   bool runInternal(OutputCollector& collector, const UriPtr& tracing_uri,
+                   const Envoy::Network::DnsResolverSharedPtr& dns_resolver,
                    const absl::optional<Envoy::SystemTime>& schedule);
 
   /**
@@ -169,7 +180,6 @@ private:
   const TerminationPredicateFactoryImpl termination_predicate_factory_;
   const SequencerFactoryImpl sequencer_factory_;
   const RequestSourceFactoryImpl request_generator_factory_;
-
   Envoy::Init::ManagerImpl init_manager_;
   Envoy::LocalInfo::LocalInfoPtr local_info_;
   Envoy::Random::RandomGeneratorImpl generator_;
@@ -180,6 +190,10 @@ private:
   Envoy::Thread::MutexBasicLockable access_log_lock_;
   Envoy::Singleton::ManagerPtr singleton_manager_;
   Envoy::AccessLog::AccessLogManagerImpl access_log_manager_;
+  Envoy::Network::DnsResolverFactory& dns_resolver_factory_;
+  // Config that was used to create dns_resolver_factory_. Also must be provided when calling the
+  // factory to create a resolver.
+  envoy::config::core::v3::TypedExtensionConfig typed_dns_resolver_config_;
 
   std::unique_ptr<Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl>
       ssl_context_manager_;

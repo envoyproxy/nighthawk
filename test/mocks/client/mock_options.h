@@ -11,57 +11,64 @@ namespace Client {
 class MockOptions : public Options {
 public:
   MockOptions();
-  MOCK_CONST_METHOD0(requestsPerSecond, uint32_t());
-  MOCK_CONST_METHOD0(connections, uint32_t());
-  MOCK_CONST_METHOD0(duration, std::chrono::seconds());
-  MOCK_CONST_METHOD0(timeout, std::chrono::seconds());
-  MOCK_CONST_METHOD0(uri, absl::optional<std::string>());
-  MOCK_CONST_METHOD0(protocol, Envoy::Http::Protocol());
-  MOCK_CONST_METHOD0(concurrency, std::string());
-  MOCK_CONST_METHOD0(verbosity, nighthawk::client::Verbosity::VerbosityOptions());
-  MOCK_CONST_METHOD0(outputFormat, nighthawk::client::OutputFormat::OutputFormatOptions());
-  MOCK_CONST_METHOD0(prefetchConnections, bool());
-  MOCK_CONST_METHOD0(burstSize, uint32_t());
-  MOCK_CONST_METHOD0(addressFamily, nighthawk::client::AddressFamily::AddressFamilyOptions());
-  MOCK_CONST_METHOD0(requestMethod, envoy::config::core::v3::RequestMethod());
-  MOCK_CONST_METHOD0(requestHeaders, std::vector<std::string>());
-  MOCK_CONST_METHOD0(requestBodySize, uint32_t());
-  MOCK_CONST_METHOD0(tlsContext,
-                     envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext&());
-  MOCK_CONST_METHOD0(transportSocket, absl::optional<envoy::config::core::v3::TransportSocket>&());
-  MOCK_CONST_METHOD0(maxPendingRequests, uint32_t());
-  MOCK_CONST_METHOD0(maxActiveRequests, uint32_t());
-  MOCK_CONST_METHOD0(maxRequestsPerConnection, uint32_t());
-  MOCK_CONST_METHOD0(maxConcurrentStreams, uint32_t());
-  MOCK_CONST_METHOD0(toCommandLineOptions, CommandLineOptionsPtr());
-  MOCK_CONST_METHOD0(sequencerIdleStrategy,
-                     nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions());
-  MOCK_CONST_METHOD0(requestSource, std::string());
-  MOCK_CONST_METHOD0(requestSourcePluginConfig,
-                     absl::optional<envoy::config::core::v3::TypedExtensionConfig>&());
-  MOCK_CONST_METHOD0(trace, std::string());
-  MOCK_CONST_METHOD0(
-      h1ConnectionReuseStrategy,
-      nighthawk::client::H1ConnectionReuseStrategy::H1ConnectionReuseStrategyOptions());
-  MOCK_CONST_METHOD0(terminationPredicates, TerminationPredicateMap());
-  MOCK_CONST_METHOD0(failurePredicates, TerminationPredicateMap());
-  MOCK_CONST_METHOD0(openLoop, bool());
-  MOCK_CONST_METHOD0(jitterUniform, std::chrono::nanoseconds());
-  MOCK_CONST_METHOD0(nighthawkService, std::string());
-  MOCK_CONST_METHOD0(multiTargetEndpoints, std::vector<nighthawk::client::MultiTarget::Endpoint>());
-  MOCK_CONST_METHOD0(multiTargetPath, std::string());
-  MOCK_CONST_METHOD0(multiTargetUseHttps, bool());
-  MOCK_CONST_METHOD0(labels, std::vector<std::string>());
-  MOCK_CONST_METHOD0(simpleWarmup, bool());
-  MOCK_CONST_METHOD0(noDuration, bool());
-  MOCK_CONST_METHOD0(statsSinks, std::vector<envoy::config::metrics::v3::StatsSink>());
-  MOCK_CONST_METHOD0(statsFlushInterval, uint32_t());
-  MOCK_CONST_METHOD0(responseHeaderWithLatencyInput, std::string());
-  MOCK_CONST_METHOD0(scheduled_start, absl::optional<Envoy::SystemTime>());
-  MOCK_CONST_METHOD0(sink, absl::optional<nighthawk::client::SinkConfiguration>());
-  MOCK_CONST_METHOD0(distributor, absl::optional<nighthawk::client::DistributorConfiguration>());
-  MOCK_CONST_METHOD0(services, absl::optional<nighthawk::client::ExecutionConfiguration>());
-  MOCK_CONST_METHOD0(executionId, absl::optional<std::string>());
+  MOCK_METHOD(uint32_t, requestsPerSecond, (), (const, override));
+  MOCK_METHOD(uint32_t, connections, (), (const, override));
+  MOCK_METHOD(std::chrono::seconds, duration, (), (const, override));
+  MOCK_METHOD(std::chrono::seconds, timeout, (), (const, override));
+  MOCK_METHOD(absl::optional<std::string>, uri, (), (const, override));
+  MOCK_METHOD(bool, h2, (), (const));
+  MOCK_METHOD(Envoy::Http::Protocol, protocol, (), (const, override));
+  MOCK_METHOD(std::string, concurrency, (), (const, override));
+  MOCK_METHOD(nighthawk::client::Verbosity::VerbosityOptions, verbosity, (), (const, override));
+  MOCK_METHOD(nighthawk::client::OutputFormat::OutputFormatOptions, outputFormat, (),
+              (const, override));
+  MOCK_METHOD(bool, prefetchConnections, (), (const, override));
+  MOCK_METHOD(uint32_t, burstSize, (), (const, override));
+  MOCK_METHOD(nighthawk::client::AddressFamily::AddressFamilyOptions, addressFamily, (),
+              (const, override));
+  MOCK_METHOD(envoy::config::core::v3::RequestMethod, requestMethod, (), (const, override));
+  MOCK_METHOD(std::vector<std::string>, requestHeaders, (), (const, override));
+  MOCK_METHOD(uint32_t, requestBodySize, (), (const, override));
+  MOCK_METHOD(envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext&, tlsContext, (),
+              (const, override));
+  MOCK_METHOD(absl::optional<envoy::config::core::v3::TransportSocket>&, transportSocket, (),
+              (const, override));
+  MOCK_METHOD(uint32_t, maxPendingRequests, (), (const, override));
+  MOCK_METHOD(uint32_t, maxActiveRequests, (), (const, override));
+  MOCK_METHOD(uint32_t, maxRequestsPerConnection, (), (const, override));
+  MOCK_METHOD(uint32_t, maxConcurrentStreams, (), (const, override));
+  MOCK_METHOD(CommandLineOptionsPtr, toCommandLineOptions, (), (const, override));
+  MOCK_METHOD(nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions,
+              sequencerIdleStrategy, (), (const, override));
+  MOCK_METHOD(std::string, requestSource, (), (const, override));
+  MOCK_METHOD(absl::optional<envoy::config::core::v3::TypedExtensionConfig>&,
+              requestSourcePluginConfig, (), (const, override));
+  MOCK_METHOD(std::string, trace, (), (const, override));
+  MOCK_METHOD(nighthawk::client::H1ConnectionReuseStrategy::H1ConnectionReuseStrategyOptions,
+              h1ConnectionReuseStrategy, (), (const, override));
+  MOCK_METHOD(TerminationPredicateMap, terminationPredicates, (), (const, override));
+  MOCK_METHOD(TerminationPredicateMap, failurePredicates, (), (const, override));
+  MOCK_METHOD(bool, openLoop, (), (const, override));
+  MOCK_METHOD(std::chrono::nanoseconds, jitterUniform, (), (const, override));
+  MOCK_METHOD(std::string, nighthawkService, (), (const, override));
+  MOCK_METHOD(bool, h2UseMultipleConnections, (), (const));
+  MOCK_METHOD(std::vector<nighthawk::client::MultiTarget::Endpoint>, multiTargetEndpoints, (),
+              (const, override));
+  MOCK_METHOD(std::string, multiTargetPath, (), (const, override));
+  MOCK_METHOD(bool, multiTargetUseHttps, (), (const, override));
+  MOCK_METHOD(std::vector<std::string>, labels, (), (const, override));
+  MOCK_METHOD(bool, simpleWarmup, (), (const, override));
+  MOCK_METHOD(bool, noDuration, (), (const, override));
+  MOCK_METHOD(std::vector<envoy::config::metrics::v3::StatsSink>, statsSinks, (),
+              (const, override));
+  MOCK_METHOD(uint32_t, statsFlushInterval, (), (const, override));
+  MOCK_METHOD(std::string, responseHeaderWithLatencyInput, (), (const, override));
+  MOCK_METHOD(bool, allowEnvoyDeprecatedV2Api, (), (const));
+  MOCK_METHOD(absl::optional<Envoy::SystemTime>, scheduled_start, (), (const, override));
+  MOCK_METHOD(absl::optional<nighthawk::client::SinkConfiguration>, sink, (), (const, override));
+  MOCK_METHOD(absl::optional<nighthawk::client::DistributorConfiguration>, distributor, (), (const, override));
+  MOCK_METHOD(absl::optional<nighthawk::client::ExecutionConfiguration>, services, (), (const, override));
+  MOCK_METHOD(absl::optional<std::string>, executionId, (), (const, override));
 };
 
 } // namespace Client

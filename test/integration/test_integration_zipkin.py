@@ -19,7 +19,7 @@ def test_tracing_zipkin(http_test_server_fixture):
   # Boot up an actual zipkin server to accept spans we send here & validate based on that.
   parsed_json, _ = http_test_server_fixture.runNighthawkClient([
       "--duration 5", "--termination-predicate", "benchmark.http_2xx:49", "--rps 100",
-      "--trace zipkin://localhost:79/api/v1/spans",
+      "--trace zipkin://localhost:79/api/v2/spans",
       http_test_server_fixture.getTestServerRootUri()
   ])
   counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
