@@ -806,7 +806,7 @@ def test_drain(https_test_server_fixture):
   expect to observe no replies. Termination should be cut short by the drain timeout, which means
   that we should have results in approximately execution duration + drain timeout = 35 seconds.
   (the pool drain timeout is hard coded to 5 seconds as of writing this). 
-  If drain timeout is reached, a message will be logged to the user. 
+  If drain timeout is reached, a message will be logged to the user.
   """
   parsed_json, logs = https_test_server_fixture.runNighthawkClient([
       https_test_server_fixture.getTestServerRootUri(), "--rps", "100", "--duration", "20",
