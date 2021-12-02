@@ -118,7 +118,7 @@ def test_h1_pool_strategy_mru(http_test_server_fixture):
       http_test_server_fixture.getTestServerRootUri()
   ])
 
-  # Expect the second connection to send any messages
+  # Expect the second connection to not send any messages
   asserts.assertNotIn("[C1] message complete", logs)
   # Expect that we sent some traffic through the first connection
   asserts.assertGreater(_count_log_lines_with_substring(logs, "[C0] message complete"), 0)
