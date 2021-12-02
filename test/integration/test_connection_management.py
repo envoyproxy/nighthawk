@@ -109,7 +109,7 @@ def test_http_h2_connection_management_single_request_per_conn_1(http_test_serve
 def test_h1_pool_strategy_mru(http_test_server_fixture):
   """Test connection re-use strategies of the http 1 connection pool.
 
-  Test that with the "mru" strategy only the first created connection gets to send requests.
+  Test that with the "most recently used" (mru) strategy only the first created connection gets to send requests.
   """
   _, logs = http_test_server_fixture.runNighthawkClient([
       "--rps 5", "-v", "trace", "--duration", "20", "--connections", "2", "--prefetch-connections",
@@ -127,7 +127,7 @@ def test_h1_pool_strategy_mru(http_test_server_fixture):
 def test_h1_pool_strategy_lru(http_test_server_fixture):
   """Test connection re-use strategies of the http 1 connection pool.
 
-  Test that with the "lru" strategy, we expect all connections to be used and have roughly equal distribution.
+  Test that with the "least recently used" (lru) strategy all connections are used with roughly equal distribution.
   """
   requests = 12
   connections = 3
