@@ -684,7 +684,9 @@ def duration_parameterization_fixture(request):
   yield param
 
 
-@pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable in sanitizer runs")
+@pytest.mark.skipif(utility.isSanitizerRun() or utility.isRunningInCircleCi(),
+                    reason="Unstable in sanitizer runs. "
+                    "Unstable in CircleCI. See https://github.com/envoyproxy/nighthawk/issues/773")
 def test_http_request_release_timing(http_test_server_fixture, qps_parameterization_fixture,
                                      duration_parameterization_fixture):
   """Test latency-sample-, query- and reply- counts in various configurations."""
