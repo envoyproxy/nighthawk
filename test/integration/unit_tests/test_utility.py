@@ -52,5 +52,24 @@ def test_count_log_lines_with_substring_counts_only_lines_with_substring():
   assert count == 2
 
 
+def test_count_log_lines_with_substring_returns_zero_for_no_matches():
+  """Test that returns zero if there are no matching lines."""
+  logs = """
+  DEBUG: log example 1 \r\n
+  ERROR: log example 2 \r\n
+  ERROR: log example 3 \r\n
+  INFO: log example 1 \r\n
+  """
+  count = utility.count_log_lines_with_substring(logs, "log example 4")
+  assert count == 0
+
+
+def test_count_log_lines_with_substring_returns_zero_with_empty_logs():
+  """Test that returns zero if there are no logs."""
+  logs = """"""
+  count = utility.count_log_lines_with_substring(logs, "log example 4")
+  assert count == 0
+
+
 if __name__ == "__main__":
   raise SystemExit(pytest.main([__file__]))

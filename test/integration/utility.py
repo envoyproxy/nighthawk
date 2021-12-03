@@ -78,10 +78,10 @@ def count_log_lines_with_substring(logs, substring):
   """Count the number of log lines containing the supplied substring.
 
   Args:
-    logs: Nighthawk client log output.
-    substring: the substring to search for.
+    logs: A string, Nighthawk client log output.
+    substring: A string, the substring to search for.
 
   Returns:
-    the number of log entries that contain the substring.
+    An integer, the number of log entries that contain the substring.
   """
   return len([line for line in logs.split(os.linesep) if substring in line])
