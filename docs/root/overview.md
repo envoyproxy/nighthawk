@@ -45,19 +45,25 @@ Each **Client worker** runs a
 which is responsible for maintaining the pace of requests that was specified by
 the user. To maintain the pace, the **Sequencer** queries a
 [RateLimiter](../../source/common/rate_limiter_impl.h)
-for [request-release timing](terminology.md#request-release-timing). When it
+for [request-release timing](terminology.md#request-release-timing). At
+appropriate intervals, the **Sequencer** asks the **BenchmarkClient** to send
+requests.
+
+When it
 is time to release a request, the
 [BenchmarkClient](../../source/client/benchmark_client_impl.h)
 is requested to do so by the **Sequencer**.
 
-**BenchMarkClient** retrieves data for the next request from the configured
+**BenchmarkClient** retrieves data for the next request from the configured
 [RequestSource](../../source/common/request_source_impl.h)
 and asks its underlying **Connection pool** to create a
-[StreamDecoder](../../source/client/stream_decoder.h)
-which releases the request. The **StreamDecoder** sends the request and emits
-events as it progresses (connection pool ready, completion, etc...).
+[StreamDecoder](../../source/client/stream_decoder.h). A **StreamDecoder**
+instance manages the full lifetime of a single request. There are multiple
+instances of **StreamDecoder**, one per request. The **StreamDecoder** sends
+the request and processes events (connection pool ready, completion, etc...) as
+it progresses.
 
-The timings of each requests along with other statistics are recorded into the
+The timings of each request along with other statistics are recorded into the
 [Statistic](../../source/common/statistic_impl.h)
 object and reported to the **Sequencer** for tracking of the in-flight work.
 
