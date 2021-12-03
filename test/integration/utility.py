@@ -82,6 +82,6 @@ def count_log_lines_with_substring(logs, substring):
     substring: the substring to search for.
 
   Returns:
-    the number of log entries that countain the substring.
+    the number of log entries that contain the substring.
   """
   return len([line for line in logs.split(os.linesep) if substring in line])
