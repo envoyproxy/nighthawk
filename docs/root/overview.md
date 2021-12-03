@@ -207,5 +207,5 @@ customize this mechanism, users need to perform two steps:
 
 ## Navigating the codebase
 
-See [navigating the codebase](docs/root/navigating_the_codebase.md) for a
-description of the directory structure.
+See [navigating the codebase](navigating_the_codebase.md) for a description of
+the directory structure.
