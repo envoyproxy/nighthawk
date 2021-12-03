@@ -38,10 +38,6 @@ def _run_with_number_of_connections(fixture,
   return counters
 
 
-def _count_log_lines_with_substring(logs, substring):
-  return float(len([line for line in logs.split(os.linesep) if substring in line]))
-
-
 # A series that tests with queueing disabled
 @pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable in sanitizer runs")
 def test_http_h1_connection_management_1(http_test_server_fixture):
@@ -121,7 +117,7 @@ def test_h1_pool_strategy_mru(http_test_server_fixture):
   # Expect the second connection to not send any messages
   asserts.assertNotIn("[C1] message complete", logs)
   # Expect that we sent some traffic through the first connection
-  asserts.assertGreater(_count_log_lines_with_substring(logs, "[C0] message complete"), 0)
+  asserts.assertIn("[C0] message complete", logs)
 
 
 def test_h1_pool_strategy_lru(http_test_server_fixture):
@@ -150,12 +146,13 @@ def test_h1_pool_strategy_lru(http_test_server_fixture):
 
   line_counts = []
   for i in range(1, connections):
-    line_counts.append(_count_log_lines_with_substring(logs, "[C%d] message complete" % i))
+    line_counts.append(
+        float(utility.count_log_lines_with_substring(logs, "[C%d] message complete" % i)))
 
   average_line_count = sum(line_counts) / len(line_counts)
   for line_count in line_counts:
     asserts.assertBetweenInclusive(
         line_count,
-        # provide a little slack
-        average_line_count - 1,
-        average_line_count + 1)
+        # provide a little slack. Minimum of 2 as envoy logs "message complete" twice per request.
+        average_line_count - 2,
+        average_line_count + 2)

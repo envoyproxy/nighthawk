@@ -40,5 +40,17 @@ def test_get_execution_duration_from_global_result_json_missing_suffix():
     utility.get_execution_duration_from_global_result_json(global_result_json)
 
 
+def test_count_log_lines_with_substring_counts_only_lines_with_substring():
+  """Test that only lines with substring are counted."""
+  logs = """
+  DEBUG: log example 1 \r\n
+  ERROR: log example 2 \r\n
+  ERROR: log example 3 \r\n
+  INFO: log example 1 \r\n
+  """
+  count = utility.count_log_lines_with_substring(logs, "ERROR")
+  assert count == 2
+
+
 if __name__ == "__main__":
   raise SystemExit(pytest.main([__file__]))
