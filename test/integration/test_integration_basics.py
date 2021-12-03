@@ -350,10 +350,12 @@ def _do_tls_configuration_test(https_test_server_fixture, cli_parameter, use_h2)
       "ECDHE-RSA-AES128-SHA",
       "ECDHE-RSA-CHACHA20-POLY1305",
   ]:
-    parsed_json, _ = https_test_server_fixture.runNighthawkClient((["--h2"] if use_h2 else []) + [
-        "--termination-predicate", "benchmark.http_2xx:0", cli_parameter, json_template % cipher,
-        https_test_server_fixture.getTestServerRootUri()
-    ])
+    parsed_json, _ = https_test_server_fixture.runNighthawkClient(
+        (["--protocol", "http2"] if use_h2 else []) + [
+            "--duration", "10", "--termination-predicate", "benchmark.http_2xx:0", cli_parameter,
+            json_template % cipher,
+            https_test_server_fixture.getTestServerRootUri()
+        ])
     counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
     asserts.assertCounterGreaterEqual(counters, "ssl.ciphers.%s" % cipher, 1)
 
