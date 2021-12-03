@@ -172,5 +172,5 @@ The **request_source** directories
 of components belonging to the implementations of the [request
 source](overview.md#requestsource).
 
-The [server](../../source/server) contains code belonging to the [Nighthawk test
-server](overview.md#nighthawk_test_server).
+The [server](../../source/server) directory contains code belonging to the
+[Nighthawk test server](overview.md#nighthawk_test_server).
