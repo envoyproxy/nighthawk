@@ -204,3 +204,8 @@ logging mechanism by performing all logging via the **ENVOY_LOG** macro. To
 customize this mechanism, users need to perform two steps:
 1. Create a logging sink delegate inherited from [Envoy SinkDelegate](https://github.com/envoyproxy/envoy/blob/main/source/common/common/logger.h).
 2. Construct a ServiceImpl object with an [Envoy Logger Context](https://github.com/envoyproxy/envoy/blob/main/source/common/common/logger.h) which contains user-specified log level and format.
+
+## Navigating the codebase
+
+See [navigating the codebase](docs/root/navigating_the_codebase.md) for a
+description of the directory structure.
