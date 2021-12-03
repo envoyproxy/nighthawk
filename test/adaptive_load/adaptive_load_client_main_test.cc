@@ -4,6 +4,7 @@
 #include "nighthawk/adaptive_load/adaptive_load_controller.h"
 #include "nighthawk/common/exception.h"
 
+#include "third_party/envoy/src/source/common/protobuf/protobuf.h"
 #include "external/envoy/test/mocks/filesystem/mocks.h"
 #include "external/envoy/test/test_common/file_system_for_test.h"
 #include "external/envoy/test/test_common/utility.h"
@@ -312,10 +313,12 @@ TEST(AdaptiveLoadClientMainTest, WritesOutputProtoToFile) {
   AdaptiveLoadClientMain main(5, argv.data(), controller, filesystem);
   main.Run();
 
-  std::string golden_output =
+  std::string golden_text =
       Envoy::Filesystem::fileSystemForTest().fileReadToEnd(Nighthawk::TestEnvironment::runfilesPath(
           std::string("test/adaptive_load/test_data/golden_output.textproto")));
-  EXPECT_EQ(actual_outfile_contents, golden_output);
+  nighthawk::adaptive_load::AdaptiveLoadSessionOutput golden_proto;
+  Envoy::Protobuf::TextFormat::ParseFromString(golden_text, &golden_proto);
+  EXPECT_EQ(actual_outfile_contents, golden_proto.DebugString());
 }
 
 TEST(AdaptiveLoadClientMainTest, DefaultsToInsecureConnection) {
