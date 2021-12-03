@@ -141,34 +141,37 @@ The **source** directory has the following subdirectories:
     ├── server
     └── sink
 ```
-The **adaptive_load** directories ([include](../../include/adaptive_load),
+The **adaptive_load** directories
+([include](../../include/nighthawk/adaptive_load),
 [source](../../source/adaptive_load)) contain the declarations and definitions
 of components belonging to the [adaptive load
 controller](adaptive_load_controller.md).
 
-The **client** directories ([include](../../include/client),
+The **client** directories ([include](../../include/nighthawk/client),
 [source](../../source/client)) contain the declarations and definitions of the
 main Nighthawk components as outlined in the [overview](overview.md).
 
-The **common** directories ([include](../../include/common),
+The **common** directories ([include](../../include/nighthawk/common),
 [source](../../source/common)) contain code that is used by the Nighthawk
 client and at least one other component, e.g. the Nighthawk test server, the
 request source, etc.
 
-The **distributor** ([include](../../include/distributor),
+The **distributor** ([include](../../include/nighthawk/distributor),
 [source](../../source/distributor)) and **sink**
-([include](../../include/sink), [source](../../source/sink)) directories are
-related to an ongoing effort to allow Nighthawk to scale horizontally. See
-[#369](https://github.com/envoyproxy/nighthawk/issues/369) for more details.
+([include](../../include/nighthawk/sink), [source](../../source/sink))
+directories are related to an ongoing effort to allow Nighthawk to scale
+horizontally. See [#369](https://github.com/envoyproxy/nighthawk/issues/369) for
+more details.
 
 The [exe](../../source/exe) directory contains build targets for the main
 [Nighthawk binaries](overview.md#nighthawk-binaries).
 
-The **request_source** directories ([include](../../include/request_source),
+The **request_source** directories
+([include](../../include/nighthawk/request_source),
 [source](../../source/request_source)) contain the declarations and definitions
 of components belonging to the implementations of the [request
 source](overview.md#requestsource).
 
-The **server** directories ([include](../../include/server),
+The **server** directories ([include](../../include/nighthawk/server),
 [source](../../source/server)) contain the declarations and definitions
 belonging to the [Nighthawk test server](overview.md#nighthawk_test_server).
