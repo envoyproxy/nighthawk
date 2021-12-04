@@ -123,6 +123,7 @@ envoy_cc_library(
         "@envoy//source/common/thread_local:thread_local_lib_with_external_headers",
         "@envoy//source/common/tracing:http_tracer_lib_with_external_headers",
         "@envoy//source/common/upstream:cluster_manager_lib_with_external_headers",
+        "@envoy//source/common/version:version_linkstamp",
         "@envoy//source/exe:envoy_common_lib_with_external_headers",
         "@envoy//source/exe:platform_header_lib_with_external_headers",
         "@envoy//source/exe:platform_impl_lib",
