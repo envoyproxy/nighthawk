@@ -102,36 +102,57 @@ def test_http_h2_connection_management_single_request_per_conn_1(http_test_serve
   _connection_management_test_request_per_connection(http_test_server_fixture, 5, True)
 
 
-def test_h1_pool_strategy(http_test_server_fixture):
+def test_h1_pool_strategy_mru(http_test_server_fixture):
   """Test connection re-use strategies of the http 1 connection pool.
 
-  Test that with the "mru" strategy only the first created connection gets to send requests.
-  Then, with the "lru" strategy, we expect the other connection to be used as well.
+  Test that with the "most recently used" (mru) strategy only the first created connection gets to send requests.
   """
-
-  def countLogLinesWithSubstring(logs, substring):
-    return len([line for line in logs.split(os.linesep) if substring in line])
-
   _, logs = http_test_server_fixture.runNighthawkClient([
-      "--rps 5", "-v", "trace", "--connections", "2", "--prefetch-connections",
+      "--rps 5", "-v", "trace", "--duration", "20", "--connections", "2", "--prefetch-connections",
       "--experimental-h1-connection-reuse-strategy", "mru", "--termination-predicate",
       "benchmark.http_2xx:4",
       http_test_server_fixture.getTestServerRootUri()
   ])
 
+  # Expect the second connection to not send any messages
   asserts.assertNotIn("[C1] message complete", logs)
-  asserts.assertEqual(countLogLinesWithSubstring(logs, "[C0] message complete"), 10)
+  # Expect that we sent some traffic through the first connection
+  asserts.assertIn("[C0] message complete", logs)
 
+
+def test_h1_pool_strategy_lru(http_test_server_fixture):
+  """Test connection re-use strategies of the http 1 connection pool.
+
+  Test that with the "least recently used" (lru) strategy all connections are used with roughly equal distribution.
+  """
   requests = 12
   connections = 3
   _, logs = http_test_server_fixture.runNighthawkClient([
-      "--rps", "5", "-v trace", "--connections",
-      str(connections), "--prefetch-connections", "--experimental-h1-connection-reuse-strategy",
-      "lru", "--termination-predicate",
+      "--rps",
+      "5",
+      "-v trace",
+      "--duration",
+      "20",
+      "--connections",
+      str(connections),
+      "--prefetch-connections",
+      "--experimental-h1-connection-reuse-strategy",
+      "lru",
+      "--termination-predicate",
+      # termination-predicate takes affect when it exceeds the limit. Therefore, set the limit to 1 less than the desired number of requests.
       "benchmark.http_2xx:%d" % (requests - 1),
       http_test_server_fixture.getTestServerRootUri()
   ])
+
+  line_counts = []
   for i in range(1, connections):
-    line_count = countLogLinesWithSubstring(logs, "[C%d] message complete" % i)
-    strict_count = (requests / connections) * 2
-    asserts.assertBetweenInclusive(line_count, strict_count, strict_count)
+    line_counts.append(
+        float(utility.count_log_lines_with_substring(logs, "[C%d] message complete" % i)))
+
+  average_line_count = sum(line_counts) / len(line_counts)
+  for line_count in line_counts:
+    asserts.assertBetweenInclusive(
+        line_count,
+        # provide a little slack. Minimum of 2 as envoy logs "message complete" twice per request.
+        average_line_count - 2,
+        average_line_count + 2)
