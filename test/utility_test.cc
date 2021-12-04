@@ -106,7 +106,7 @@ public:
 };
 
 INSTANTIATE_TEST_SUITE_P(IpVersions, UtilityAddressResolutionTest,
-                         ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()),
+                         ValuesIn(TestEnvironment::getIpVersionsForTest()),
                          Envoy::TestUtility::ipTestParamsToString);
 
 TEST_P(UtilityAddressResolutionTest, AddressResolution) {
