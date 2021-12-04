@@ -95,9 +95,10 @@ The [adaptive_load](../../api/adaptive_load) directory contains protocol buffer
 messages that are used to configure the [adaptive load
 controller](adaptive_load_controller.md).
 
-The [client](../../api/client) directory contains the main API of the Nighthawk
-CLI and the gRPC service definition when Nighthawk runs as a gRPC server. See
-[overview](overview.md) for more details.
+The [client](../../api/client) directory contains the main API for Nighthawk's
+traffic/load generation - both the CLI and the gRPC service definition. The CLI
+is used when Nighthawk runs locally and the gRPC service definition is used when
+Nighthawk runs as a gRPC server. See [overview](overview.md) for more details.
 
 The [distributor](../../api/distributor) and [sink](../../api/sink) directories
 are related to an ongoing effort to allow Nighthawk to scale horizontally. See
