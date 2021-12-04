@@ -106,7 +106,7 @@ nighthawk::server::ResponseOptions createTestConfiguration(EnvoyApiVersion api_v
     header3->mutable_header()->set_key("key1");
     header3->mutable_header()->set_value("header3_value");
     if (add_mode == AppendOnDuplicateKey) {
-      header3->mutable_append()->set_value("true");
+      header3->mutable_append()->set_value(true);
     }
   } else if (api_version == EnvoyApiV3) {
     envoy::config::core::v3::HeaderValueOption* header1 = configuration.add_v3_response_headers();
@@ -121,7 +121,7 @@ nighthawk::server::ResponseOptions createTestConfiguration(EnvoyApiVersion api_v
     header3->mutable_header()->set_key("key1");
     header3->mutable_header()->set_value("header3_value");
     if (add_mode == AppendOnDuplicateKey) {
-      header3->mutable_append()->set_value("true");
+      header3->mutable_append()->set_value(true);
     }
   }
   return configuration;
