@@ -13,7 +13,7 @@ envoy_basic_cc_library(
     hdrs = [
         "nighthawk_distributor_client.h",
     ],
-    include_prefix = "nighthawk/common",
+    include_prefix = "nighthawk/distributor",
     deps = [
         "//api/distributor:distributor_cc_proto",
         "//api/distributor:distributor_grpc_lib",
