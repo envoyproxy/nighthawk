@@ -1,6 +1,6 @@
 load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
 
-licenses(["notice"])  # Apache 2
+licenses(["notice"])
 
 py_binary(
     name = "benchmarks",

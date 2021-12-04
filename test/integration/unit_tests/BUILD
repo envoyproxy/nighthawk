@@ -1,6 +1,6 @@
 load("@rules_python//python:defs.bzl", "py_test")
 
-licenses(["notice"])  # Apache 2
+licenses(["notice"])
 
 py_test(
     name = "test_nighthawk_test_server",

@@ -1,6 +1,6 @@
 load("@rules_python//python:defs.bzl", "py_binary")
 
-licenses(["notice"])  # Apache 2
+licenses(["notice"])
 
 exports_files([
     "check_envoy_includes.py",
