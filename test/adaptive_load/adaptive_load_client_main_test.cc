@@ -4,7 +4,7 @@
 #include "nighthawk/adaptive_load/adaptive_load_controller.h"
 #include "nighthawk/common/exception.h"
 
-#include "external/envoy/src/source/common/protobuf/protobuf.h"
+#include "external/envoy/source/common/protobuf/protobuf.h"
 #include "external/envoy/test/mocks/filesystem/mocks.h"
 #include "external/envoy/test/test_common/file_system_for_test.h"
 #include "external/envoy/test/test_common/utility.h"
