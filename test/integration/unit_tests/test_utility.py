@@ -66,7 +66,7 @@ def test_count_log_lines_with_substring_returns_zero_for_no_matches():
 
 def test_count_log_lines_with_substring_returns_zero_with_empty_logs():
   """Test that returns zero if there are no logs."""
-  logs = """"""
+  logs = ""
   count = utility.count_log_lines_with_substring(logs, "log example 4")
   assert count == 0
 
