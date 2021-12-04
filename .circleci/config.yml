@@ -100,14 +100,4 @@ workflows:
   version: 2
   all:
     jobs:
-      - build
-      - test
-      - test_gcc
-      - clang_tidy
-      - coverage
       - integration_test_coverage
-      - asan
-      - tsan
-      - benchmark
-      - format
-      - docker
