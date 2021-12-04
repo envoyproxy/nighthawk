@@ -20,9 +20,9 @@ directory structure of Nighthawk's repository looks as follows:
 └── WORKSPACE
 ```
 
-The [api](../../api) directory contains the public APIs of Nighthawk and its
-components. See [the API](#the-apis) section for more details on the exposed
-APIs.
+The [api](../../api) directory contains the public protocol buffer APIs of
+Nighthawk and its components. See [the API](#the-apis) section for more details
+on the exposed APIs.
 
 The [benchmarks](../../benchmarks) directory contains a test suite built on top
 of Nighthawk's integration tests that allows users to develop their own
