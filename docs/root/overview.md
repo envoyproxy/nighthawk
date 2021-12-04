@@ -204,3 +204,10 @@ logging mechanism by performing all logging via the **ENVOY_LOG** macro. To
 customize this mechanism, users need to perform two steps:
 1. Create a logging sink delegate inherited from [Envoy SinkDelegate](https://github.com/envoyproxy/envoy/blob/main/source/common/common/logger.h).
 2. Construct a ServiceImpl object with an [Envoy Logger Context](https://github.com/envoyproxy/envoy/blob/main/source/common/common/logger.h) which contains user-specified log level and format.
+
+## Adaptive load controller
+
+The [adaptive load controller](adaptive_load_controller.md) is a standalone
+[library](https://github.com/envoyproxy/nighthawk/tree/main/source/adaptive_load),
+an abstraction on top of Nighthawk, that determines the maximum load the system
+under test can sustain.
