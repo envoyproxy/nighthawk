@@ -350,10 +350,12 @@ def _do_tls_configuration_test(https_test_server_fixture, cli_parameter, use_h2)
       "ECDHE-RSA-AES128-SHA",
       "ECDHE-RSA-CHACHA20-POLY1305",
   ]:
-    parsed_json, _ = https_test_server_fixture.runNighthawkClient((["--h2"] if use_h2 else []) + [
-        "--termination-predicate", "benchmark.http_2xx:0", cli_parameter, json_template % cipher,
-        https_test_server_fixture.getTestServerRootUri()
-    ])
+    parsed_json, _ = https_test_server_fixture.runNighthawkClient(
+        (["--protocol", "http2"] if use_h2 else []) + [
+            "--duration", "10", "--termination-predicate", "benchmark.http_2xx:0", cli_parameter,
+            json_template % cipher,
+            https_test_server_fixture.getTestServerRootUri()
+        ])
     counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
     asserts.assertCounterGreaterEqual(counters, "ssl.ciphers.%s" % cipher, 1)
 
@@ -554,13 +556,11 @@ def test_multiple_backends_http_h1(multi_http_test_server_fixture):
   asserts.assertCounterEqual(counters, "upstream_rq_pending_total", 3)
   asserts.assertCounterEqual(counters, "upstream_rq_total", 25)
   asserts.assertCounterEqual(counters, "default.total_match_count", 3)
-  total_2xx = 0
   for parsed_server_json in multi_http_test_server_fixture.getAllTestServerStatisticsJsons():
     single_2xx = multi_http_test_server_fixture.getServerStatFromJson(
         parsed_server_json, "http.ingress_http.downstream_rq_2xx")
-    asserts.assertBetweenInclusive(single_2xx, 8, 9)
-    total_2xx += single_2xx
-  asserts.assertBetweenInclusive(total_2xx, 24, 25)
+    # Confirm that each backend receives some traffic
+    asserts.assertGreaterEqual(single_2xx, 1)
 
 
 @pytest.mark.parametrize('server_config',
@@ -684,7 +684,9 @@ def duration_parameterization_fixture(request):
   yield param
 
 
-@pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable in sanitizer runs")
+@pytest.mark.skipif(utility.isSanitizerRun() or utility.isRunningInCircleCi(),
+                    reason="Unstable in sanitizer runs. "
+                    "Unstable in CircleCI. See https://github.com/envoyproxy/nighthawk/issues/773")
 def test_http_request_release_timing(http_test_server_fixture, qps_parameterization_fixture,
                                      duration_parameterization_fixture):
   """Test latency-sample-, query- and reply- counts in various configurations."""
@@ -802,19 +804,18 @@ def test_client_cli_bad_uri(http_test_server_fixture):
 def test_drain(https_test_server_fixture):
   """Test that the pool drain timeout is effective, and we terminate in a timely fashion.
 
-  Sets up the test server to delay replies 100 seconds. Our execution will only last 3 seconds, so we
+  Sets up the test server to delay replies 100 seconds. Our execution will only last 30 seconds, so we
   expect to observe no replies. Termination should be cut short by the drain timeout, which means
-  that we should have results in approximately execution duration + drain timeout = 8 seconds.
+  that we should have results in approximately execution duration + drain timeout = 35 seconds.
   (the pool drain timeout is hard coded to 5 seconds as of writing this).
+  If drain timeout is reached, a message will be logged to the user.
   """
-  t0 = time.time()
-  parsed_json, _ = https_test_server_fixture.runNighthawkClient([
-      https_test_server_fixture.getTestServerRootUri(), "--rps", "100", "--duration", "3",
+  parsed_json, logs = https_test_server_fixture.runNighthawkClient([
+      https_test_server_fixture.getTestServerRootUri(), "--rps", "100", "--duration", "20",
       "--request-header", "x-nighthawk-test-server-config: {static_delay: \"100s\"}"
   ])
-  t1 = time.time()
-  time_delta = t1 - t0
   counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-  assert time_delta < 40  # *lots* of slack to avoid failure in slow CI executions.
   asserts.assertCounterGreaterEqual(counters, "upstream_cx_http1_total", 1)
   asserts.assertNotIn("benchmark.http_2xx", counters)
+  asserts.assertIn("Wait for the connection pool drain timed out, proceeding to hard shutdown",
+                   logs)

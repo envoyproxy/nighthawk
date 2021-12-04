@@ -209,3 +209,10 @@ customize this mechanism, users need to perform two steps:
 
 See [navigating the codebase](navigating_the_codebase.md) for a description of
 the directory structure.
+
+## Adaptive load controller
+
+The [adaptive load controller](adaptive_load_controller.md) is a standalone
+[library](https://github.com/envoyproxy/nighthawk/tree/main/source/adaptive_load),
+an abstraction on top of Nighthawk, that determines the maximum load the system
+under test can sustain.
