@@ -841,8 +841,7 @@ TEST_F(OptionsImplTest, BadTlsContextSpecification) {
   EXPECT_THROW_WITH_REGEX(
       TestUtility::createOptionsImpl(fmt::format("{} --tls-context {} http://foo/", client_name_,
                                                  "{misspelled_tls_context:{}}")),
-      MalformedArgvException,
-      "envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext reason INVALID_ARGUMENT");
+      MalformedArgvException, "reason INVALID_ARGUMENT");
 }
 
 TEST_F(OptionsImplTest, BadTransportSocketSpecification) {
@@ -857,7 +856,7 @@ TEST_F(OptionsImplTest, BadTransportSocketSpecification) {
                                                  client_name_, "{misspelled_transport_socket:{}}")),
       MalformedArgvException,
       "Protobuf message \\(type envoy.config.core.v3.TransportSocket reason "
-      "INVALID_ARGUMENT:misspelled_transport_socket: Cannot find field.\\) has unknown fields");
+      "INVALID_ARGUMENT: misspelled_transport_socket: Cannot find field.\\) has unknown fields");
 }
 
 TEST_F(OptionsImplTest, BadStatsSinksSpecification) {

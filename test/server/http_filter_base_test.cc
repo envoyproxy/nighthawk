@@ -15,7 +15,7 @@ enum TestRequestMethod { GET, POST };
 
 const std::string kBadConfigErrorSentinel =
     "didn't understand the request: Error merging json config: Unable to parse "
-    "JSON as proto (INVALID_ARGUMENT:Unexpected";
+    "JSON as proto (INVALID_ARGUMENT: Unexpected";
 
 class HttpFilterBaseIntegrationTest
     : public HttpFilterIntegrationTestBase,
