@@ -35,9 +35,10 @@ def test_http_h1(http_test_server_fixture):
   ])
   counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   asserts.assertCounterEqual(counters, "benchmark.http_2xx", 25)
-  asserts.assertCounterEqual(counters, "upstream_cx_http1_total", 1)
   asserts.assertCounterEqual(counters, "upstream_cx_rx_bytes_total", 3400)
-  asserts.assertCounterEqual(counters, "upstream_cx_total", 1)
+  # # of upstream_cx > # of backend connections is possible for H1, as new connections will spawn if the existing clients cannot keep up with the RPS.
+  asserts.assertCounterGreaterEqual(counters, "upstream_cx_http1_total", 1)
+  asserts.assertCounterGreaterEqual(counters, "upstream_cx_total", 1)
   asserts.assertCounterGreaterEqual(counters, "upstream_cx_tx_bytes_total", 500)
   asserts.assertCounterEqual(counters, "upstream_rq_pending_total", 1)
   asserts.assertCounterEqual(counters, "upstream_rq_total", 25)
@@ -196,7 +197,7 @@ def test_http_concurrency(http_test_server_fixture):
   """Test that concurrency acts like a multiplier."""
   parsed_json, _ = http_test_server_fixture.runNighthawkClient([
       "--concurrency 4 --rps 100 --connections 1", "--duration", "100", "--termination-predicate",
-      "benchmark.http_2xx:24",
+      "benchmark.http_2xx:24", "--prefetch-connections",
       http_test_server_fixture.getTestServerRootUri()
   ])
   counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
@@ -204,7 +205,8 @@ def test_http_concurrency(http_test_server_fixture):
   # Quite a loose expectation, but this may fluctuate depending on server load.
   # Ideally we'd see 4 workers * 5 rps * 5s = 100 requests total
   asserts.assertCounterEqual(counters, "benchmark.http_2xx", 100)
-  asserts.assertCounterEqual(counters, "upstream_cx_http1_total", 4)
+  # # of upstream_cx > # of backend connections is possible for H1, as new connections will spawn if the existing clients cannot keep up with the RPS.
+  asserts.assertCounterGreaterEqual(counters, "upstream_cx_http1_total", 4)
 
 
 @pytest.mark.parametrize('server_config',
@@ -221,9 +223,10 @@ def test_https_h1(https_test_server_fixture):
   ])
   counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   asserts.assertCounterEqual(counters, "benchmark.http_2xx", 25)
-  asserts.assertCounterEqual(counters, "upstream_cx_http1_total", 1)
   asserts.assertCounterEqual(counters, "upstream_cx_rx_bytes_total", 3400)
-  asserts.assertCounterEqual(counters, "upstream_cx_total", 1)
+  # # of upstream_cx > # of backend connections is possible for H1, as new connections will spawn if the existing clients cannot keep up with the RPS.
+  asserts.assertCounterGreaterEqual(counters, "upstream_cx_http1_total", 1)
+  asserts.assertCounterGreaterEqual(counters, "upstream_cx_total", 1)
   asserts.assertCounterGreaterEqual(counters, "upstream_cx_tx_bytes_total", 500)
   asserts.assertCounterEqual(counters, "upstream_rq_pending_total", 1)
   asserts.assertCounterEqual(counters, "upstream_rq_total", 25)
@@ -538,8 +541,14 @@ def test_multiple_backends_http_h1(multi_http_test_server_fixture):
   checks statistics from both client and server.
   """
   nighthawk_client_args = [
-      "--multi-target-path", "/", "--duration", "100", "--termination-predicate",
-      "benchmark.http_2xx:24", "--connections", "3"
+      "--multi-target-path",
+      "/",
+      "--duration",
+      "100",
+      "--termination-predicate",
+      "benchmark.http_2xx:24",
+      "--connections",
+      "3",
   ]
   for uri in multi_http_test_server_fixture.getAllTestServerRootUris():
     nighthawk_client_args.append("--multi-target-endpoint")
@@ -549,9 +558,10 @@ def test_multiple_backends_http_h1(multi_http_test_server_fixture):
 
   counters = multi_http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   asserts.assertCounterEqual(counters, "benchmark.http_2xx", 25)
-  asserts.assertCounterEqual(counters, "upstream_cx_http1_total", 3)
+  # # of upstream_cx > # of backend connections is possible for H1, as new connections will spawn if the existing clients cannot keep up with the RPS.
+  asserts.assertCounterGreaterEqual(counters, "upstream_cx_http1_total", 3)
+  asserts.assertCounterGreaterEqual(counters, "upstream_cx_total", 3)
   asserts.assertCounterGreater(counters, "upstream_cx_rx_bytes_total", 0)
-  asserts.assertCounterEqual(counters, "upstream_cx_total", 3)
   asserts.assertCounterGreater(counters, "upstream_cx_tx_bytes_total", 0)
   asserts.assertCounterEqual(counters, "upstream_rq_pending_total", 3)
   asserts.assertCounterEqual(counters, "upstream_rq_total", 25)
@@ -583,9 +593,10 @@ def test_multiple_backends_https_h1(multi_https_test_server_fixture):
 
   counters = multi_https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   asserts.assertCounterEqual(counters, "benchmark.http_2xx", 25)
-  asserts.assertCounterEqual(counters, "upstream_cx_http1_total", 3)
   asserts.assertCounterGreater(counters, "upstream_cx_rx_bytes_total", 0)
-  asserts.assertCounterEqual(counters, "upstream_cx_total", 3)
+  # # of upstream_cx > # of backend connections is possible for H1, as new connections will spawn if the existing clients cannot keep up with the RPS.
+  asserts.assertCounterGreaterEqual(counters, "upstream_cx_http1_total", 3)
+  asserts.assertCounterGreaterEqual(counters, "upstream_cx_total", 3)
   asserts.assertCounterGreater(counters, "upstream_cx_tx_bytes_total", 0)
   asserts.assertCounterEqual(counters, "upstream_rq_pending_total", 3)
   asserts.assertCounterEqual(counters, "upstream_rq_total", 25)
@@ -610,6 +621,7 @@ def test_https_h1_sni(https_test_server_fixture):
   ])
   counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   asserts.assertCounterGreaterEqual(counters, "benchmark.http_2xx", 1)
+  # # of upstream_cx > # of backend connections is possible for H1, as new connections will spawn if the existing clients cannot keep up with the RPS.
   asserts.assertCounterGreaterEqual(counters, "upstream_cx_http1_total", 1)
   asserts.assertCounterGreaterEqual(counters, "ssl.handshake", 1)
 
@@ -627,6 +639,7 @@ def test_https_h1_sni(https_test_server_fixture):
 
   counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   asserts.assertCounterGreaterEqual(counters, "benchmark.http_2xx", 1)
+  # # of upstream_cx > # of backend connections is possible for H1, as new connections will spawn if the existing clients cannot keep up with the RPS.
   asserts.assertCounterGreaterEqual(counters, "upstream_cx_http1_total", 1)
   asserts.assertNotIn("ssl.handshake", counters)
 
