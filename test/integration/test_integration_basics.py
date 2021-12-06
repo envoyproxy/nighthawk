@@ -539,7 +539,7 @@ def test_multiple_backends_http_h1(multi_http_test_server_fixture):
   """
   nighthawk_client_args = [
       "--multi-target-path", "/", "--duration", "100", "--termination-predicate",
-      "benchmark.http_2xx:24"
+      "benchmark.http_2xx:24", "--connections", "3"
   ]
   for uri in multi_http_test_server_fixture.getAllTestServerRootUris():
     nighthawk_client_args.append("--multi-target-endpoint")
@@ -573,7 +573,7 @@ def test_multiple_backends_https_h1(multi_https_test_server_fixture):
   """
   nighthawk_client_args = [
       "--multi-target-use-https", "--multi-target-path", "/", "--duration", "100",
-      "--termination-predicate", "benchmark.http_2xx:24"
+      "--termination-predicate", "benchmark.http_2xx:24", "--connections", "3"
   ]
   for uri in multi_https_test_server_fixture.getAllTestServerRootUris():
     nighthawk_client_args.append("--multi-target-endpoint")
