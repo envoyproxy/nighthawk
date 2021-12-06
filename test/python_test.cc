@@ -17,6 +17,7 @@ TEST_F(PythonTest, IntegrationTests) {
   char env[] = "NH_INTEGRATION_TEST_SANITIZER_RUN=1";
   putenv(env);
 #endif
+  system("env"); // TODO(tomjzzhang): Remove. Testing to see if CI environment variables are passed.
   ASSERT_EQ(0, system(path.c_str()));
 }
 
