@@ -196,7 +196,7 @@ def test_http_concurrency(http_test_server_fixture):
   """Test that concurrency acts like a multiplier."""
   parsed_json, _ = http_test_server_fixture.runNighthawkClient([
       "--concurrency 4 --rps 100 --connections 1", "--duration", "100", "--termination-predicate",
-      "benchmark.http_2xx:24",
+      "benchmark.http_2xx:24",  "-v", "trace",
       http_test_server_fixture.getTestServerRootUri()
   ])
   counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
@@ -539,13 +539,13 @@ def test_multiple_backends_http_h1(multi_http_test_server_fixture):
   """
   nighthawk_client_args = [
       "--multi-target-path", "/", "--duration", "100", "--termination-predicate",
-      "benchmark.http_2xx:24"
+      "benchmark.http_2xx:24", "-v", "trace"
   ]
   for uri in multi_http_test_server_fixture.getAllTestServerRootUris():
     nighthawk_client_args.append("--multi-target-endpoint")
     nighthawk_client_args.append(uri.replace("http://", "").replace("/", ""))
 
-  parsed_json, stderr = multi_http_test_server_fixture.runNighthawkClient(nighthawk_client_args)
+  parsed_json, _ = multi_http_test_server_fixture.runNighthawkClient(nighthawk_client_args)
 
   counters = multi_http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   asserts.assertCounterEqual(counters, "benchmark.http_2xx", 25)
@@ -573,13 +573,13 @@ def test_multiple_backends_https_h1(multi_https_test_server_fixture):
   """
   nighthawk_client_args = [
       "--multi-target-use-https", "--multi-target-path", "/", "--duration", "100",
-      "--termination-predicate", "benchmark.http_2xx:24"
+      "--termination-predicate", "benchmark.http_2xx:24", "-v", "trace"
   ]
   for uri in multi_https_test_server_fixture.getAllTestServerRootUris():
     nighthawk_client_args.append("--multi-target-endpoint")
     nighthawk_client_args.append(uri.replace("https://", "").replace("/", ""))
 
-  parsed_json, stderr = multi_https_test_server_fixture.runNighthawkClient(nighthawk_client_args)
+  parsed_json, _ = multi_https_test_server_fixture.runNighthawkClient(nighthawk_client_args)
 
   counters = multi_https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   asserts.assertCounterEqual(counters, "benchmark.http_2xx", 25)
