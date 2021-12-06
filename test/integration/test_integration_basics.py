@@ -41,7 +41,7 @@ def test_http_h1(http_test_server_fixture):
   asserts.assertCounterGreaterEqual(counters, "upstream_cx_http1_total", 1)
   asserts.assertCounterGreaterEqual(counters, "upstream_cx_total", 1)
   asserts.assertCounterGreaterEqual(counters, "upstream_cx_tx_bytes_total", 500)
-  asserts.assertCounterEqual(counters, "upstream_rq_pending_total", 1)
+  asserts.assertCounterGreaterEqual(counters, "upstream_rq_pending_total", 1)
   asserts.assertCounterEqual(counters, "upstream_rq_total", 25)
   asserts.assertCounterEqual(counters, "default.total_match_count", 1)
 
@@ -232,7 +232,7 @@ def test_https_h1(https_test_server_fixture):
   asserts.assertCounterGreaterEqual(counters, "upstream_cx_http1_total", 1)
   asserts.assertCounterGreaterEqual(counters, "upstream_cx_total", 1)
   asserts.assertCounterGreaterEqual(counters, "upstream_cx_tx_bytes_total", 500)
-  asserts.assertCounterEqual(counters, "upstream_rq_pending_total", 1)
+  asserts.assertCounterGreaterEqual(counters, "upstream_rq_pending_total", 1)
   asserts.assertCounterEqual(counters, "upstream_rq_total", 25)
   asserts.assertCounterEqual(counters, "ssl.ciphers.ECDHE-RSA-AES128-GCM-SHA256", 1)
   asserts.assertCounterEqual(counters, "ssl.curves.X25519", 1)
@@ -561,9 +561,9 @@ def test_multiple_backends_http_h1(multi_http_test_server_fixture):
   # will spawn if the existing clients cannot keep up with the RPS.
   asserts.assertCounterGreaterEqual(counters, "upstream_cx_http1_total", 3)
   asserts.assertCounterGreaterEqual(counters, "upstream_cx_total", 3)
+  asserts.assertCounterGreaterEqual(counters, "upstream_rq_pending_total", 3)
   asserts.assertCounterGreater(counters, "upstream_cx_rx_bytes_total", 0)
   asserts.assertCounterGreater(counters, "upstream_cx_tx_bytes_total", 0)
-  asserts.assertCounterEqual(counters, "upstream_rq_pending_total", 3)
   asserts.assertCounterEqual(counters, "upstream_rq_total", 25)
   asserts.assertCounterEqual(counters, "default.total_match_count", 3)
   for parsed_server_json in multi_http_test_server_fixture.getAllTestServerStatisticsJsons():
@@ -599,8 +599,8 @@ def test_multiple_backends_https_h1(multi_https_test_server_fixture):
   # will spawn if the existing clients cannot keep up with the RPS.
   asserts.assertCounterGreaterEqual(counters, "upstream_cx_http1_total", 3)
   asserts.assertCounterGreaterEqual(counters, "upstream_cx_total", 3)
+  asserts.assertCounterGreaterEqual(counters, "upstream_rq_pending_total", 3)
   asserts.assertCounterGreater(counters, "upstream_cx_tx_bytes_total", 0)
-  asserts.assertCounterEqual(counters, "upstream_rq_pending_total", 3)
   asserts.assertCounterEqual(counters, "upstream_rq_total", 25)
   asserts.assertCounterEqual(counters, "default.total_match_count", 3)
   total_2xx = 0
