@@ -603,8 +603,8 @@ def test_multiple_backends_https_h1(multi_https_test_server_fixture):
   asserts.assertCounterGreater(counters, "upstream_cx_tx_bytes_total", 0)
   asserts.assertCounterEqual(counters, "upstream_rq_total", 25)
   asserts.assertCounterEqual(counters, "default.total_match_count", 3)
-  for parsed_server_json in multi_http_test_server_fixture.getAllTestServerStatisticsJsons():
-    single_2xx = multi_http_test_server_fixture.getServerStatFromJson(
+  for parsed_server_json in multi_https_test_server_fixture.getAllTestServerStatisticsJsons():
+    single_2xx = multi_https_test_server_fixture.getServerStatFromJson(
         parsed_server_json, "http.ingress_http.downstream_rq_2xx")
     # Confirm that each backend receives some traffic
     asserts.assertGreaterEqual(single_2xx, 1)
