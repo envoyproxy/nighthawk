@@ -6,7 +6,7 @@ load(
     "envoy_package",
 )
 
-licenses(["notice"])
+licenses(["notice"])  # Apache 2
 
 envoy_package()
 

@@ -4,9 +4,7 @@ load(
     "envoy_package",
 )
 
-licenses(["notice"])
-
-exports_files(["LICENSE"])
+licenses(["notice"])  # Apache 2
 
 envoy_package()
 

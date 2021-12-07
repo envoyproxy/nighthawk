@@ -5,7 +5,7 @@ load(
 )
 load("@python_pip_deps//:requirements.bzl", "requirement")
 
-licenses(["notice"])
+licenses(["notice"])  # Apache 2
 
 envoy_package()
 
