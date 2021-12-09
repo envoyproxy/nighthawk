@@ -72,3 +72,16 @@ def get_execution_duration_from_global_result_json(global_result_json):
         "the execution_duration '{} doesn't end with the expected suffix 's' for seconds".format(
             duration_json_string))
   return float(duration_json_string.rstrip('s'))
+
+
+def count_log_lines_with_substring(logs, substring):
+  """Count the number of log lines containing the supplied substring.
+
+  Args:
+    logs: A string, Nighthawk client log output.
+    substring: A string, the substring to search for.
+
+  Returns:
+    An integer, the number of log entries that contain the substring.
+  """
+  return len([line for line in logs.split(os.linesep) if substring in line])

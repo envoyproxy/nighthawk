@@ -11,6 +11,11 @@ Nighthawk currently offers:
 - A simple [test server](source/server/README.md) which is capable of generating dynamic response sizes, as well as inject delays.
 - A binary to transform nighthawk output to well-known formats, allowing integration with other systems and dashboards.
 
+## Navigating the codebase
+
+See [navigating the codebase](docs/root/navigating_the_codebase.md) for a
+description of the directory structure.
+
 ## Prerequisites
 
 ### Ubuntu
