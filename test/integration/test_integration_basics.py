@@ -67,7 +67,7 @@ def test_http_h1(http_test_server_fixture):
   asserts.assertEqual(
       int(global_histograms["benchmark_http_client.response_header_size"]["raw_pstdev"]), 0)
 
-  asserts.assertEqual(len(counters), 12)
+  asserts.assertGreaterEqual(len(counters), 12)
 
 
 def _mini_stress_test(fixture, args):
@@ -191,7 +191,7 @@ def test_http_h2(http_test_server_fixture):
   asserts.assertCounterEqual(counters, "upstream_rq_pending_total", 1)
   asserts.assertCounterEqual(counters, "upstream_rq_total", 25)
   asserts.assertCounterEqual(counters, "default.total_match_count", 1)
-  asserts.assertEqual(len(counters), 12)
+  asserts.assertGreaterEqual(len(counters), 12)
 
 
 def test_http_concurrency(http_test_server_fixture):
