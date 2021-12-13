@@ -11,6 +11,11 @@ Nighthawk currently offers:
 - A simple [test server](source/server/README.md) which is capable of generating dynamic response sizes, as well as inject delays.
 - A binary to transform nighthawk output to well-known formats, allowing integration with other systems and dashboards.
 
+## Navigating the codebase
+
+See [navigating the codebase](docs/root/navigating_the_codebase.md) for a
+description of the directory structure.
+
 ## Prerequisites
 
 ### Ubuntu
@@ -40,7 +45,9 @@ bazel build -c opt //:nighthawk
 ➜ bazel-bin/nighthawk_client --help
 ```
 
+<!-- BEGIN USAGE -->
 ```
+
 USAGE:
 
 bazel-bin/nighthawk_client  [--latency-response-header-name <string>]
@@ -296,7 +303,9 @@ benchmark a single endpoint. For multiple endpoints, set
 
 
 L7 (HTTP/HTTPS/HTTP2) performance characterization tool.
+
 ```
+<!-- END USAGE -->
 
 ### Nighthawk gRPC service
 
@@ -307,7 +316,9 @@ The gRPC service can be used to start a server which is able to perform back-to-
 ➜ bazel-bin/nighthawk_service --help
 ```
 
+<!-- BEGIN USAGE -->
 ```
+
 USAGE:
 
 bazel-bin/nighthawk_service  [--service <traffic-generator-service
@@ -340,7 +351,9 @@ Displays usage information and exits.
 
 
 L7 (HTTP/HTTPS/HTTP2) performance characterization tool.
+
 ```
+<!-- END USAGE -->
 
 ### Nighthawk output transformation utility
 
@@ -351,7 +364,9 @@ Nighthawk comes with a tool to transform its json output to its other supported 
 ➜ bazel-bin/nighthawk_output_transform --help
 ```
 
+<!-- BEGIN USAGE -->
 ```
+
 USAGE:
 
 bazel-bin/nighthawk_output_transform  --output-format <json|human|yaml
@@ -378,7 +393,9 @@ Displays usage information and exits.
 
 
 L7 (HTTP/HTTPS/HTTP2) performance characterization transformation tool.
+
 ```
+<!-- END USAGE -->
 
 ## A sample benchmark run
 

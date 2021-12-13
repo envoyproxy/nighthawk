@@ -5,6 +5,8 @@
 
 #include "nighthawk/common/termination_predicate.h"
 
+#include "external/envoy/source/common/common/assert.h"
+
 namespace Nighthawk {
 
 class TerminationPredicateBaseImpl : public TerminationPredicate {

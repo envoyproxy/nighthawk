@@ -24,7 +24,7 @@
 #include "external/envoy/source/common/event/real_time_system.h"
 #include "external/envoy/source/common/init/manager_impl.h"
 #include "external/envoy/source/common/local_info/local_info_impl.h"
-#include "external/envoy/source/common/network/dns_resolver/dns_factory.h"
+#include "external/envoy/source/common/network/dns_resolver/dns_factory_util.h"
 #include "external/envoy/source/common/network/utility.h"
 #include "external/envoy/source/common/runtime/runtime_impl.h"
 #include "external/envoy/source/common/singleton/manager_impl.h"
@@ -453,10 +453,16 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
     }
     shutdown_ = false;
 
+    const Envoy::OptionsImpl::HotRestartVersionCb hot_restart_version_cb = [](bool) {
+      return "hot restart is disabled";
+    };
+    const Envoy::OptionsImpl envoy_options(
+        /* args = */ {"process_impl"}, hot_restart_version_cb, spdlog::level::info);
     // Needs to happen as early as possible (before createWorkers()) in the instantiation to preempt
     // the objects that require stats.
     if (!options_.statsSinks().empty()) {
-      store_root_.setTagProducer(Envoy::Config::Utility::createTagProducer(bootstrap_));
+      store_root_.setTagProducer(
+          Envoy::Config::Utility::createTagProducer(bootstrap_, envoy_options.statsTags()));
     }
 
     createWorkers(number_of_workers_, scheduled_start);
@@ -470,11 +476,6 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
         std::make_unique<Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl>(
             time_system_);
 
-    const Envoy::OptionsImpl::HotRestartVersionCb hot_restart_version_cb = [](bool) {
-      return "hot restart is disabled";
-    };
-    const Envoy::OptionsImpl envoy_options(
-        /* args = */ {"process_impl"}, hot_restart_version_cb, spdlog::level::info);
     cluster_manager_factory_ = std::make_unique<ClusterManagerFactory>(
         admin_, Envoy::Runtime::LoaderSingleton::get(), store_root_, tls_, dns_resolver,
         *ssl_context_manager_, *dispatcher_, *local_info_, secret_manager_, validation_context_,
