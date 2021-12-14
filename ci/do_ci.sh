@@ -68,7 +68,7 @@ function do_test() {
     # that cannot run locally should be executed.
     # E.g. test_http_h1_mini_stress_test_open_loop.
     run_on_build_parts "bazel build -c dbg $BAZEL_BUILD_OPTIONS --action_env=CI"
-    bazel test -c dbg $BAZEL_TEST_OPTIONS --test_output=all --action_env=CI //test/...
+    bazel test -c dbg $BAZEL_TEST_OPTIONS --test_output=all --action_env=CI //test:python_test
 }
 
 function do_clang_tidy() {
@@ -219,7 +219,13 @@ if grep 'docker\|lxc' /proc/1/cgroup; then
     export BAZEL="bazel"
 fi
 
-export BAZEL_EXTRA_TEST_OPTIONS="--test_env=ENVOY_IP_TEST_VERSIONS=v4only ${BAZEL_EXTRA_TEST_OPTIONS}"
+if [ -n "$CIRCLECI" ]; then
+  # TODO(https://github.com/envoyproxy/nighthawk/issues/578): Enable IPv6 tests in CI.
+  export BAZEL_EXTRA_TEST_OPTIONS="--test_env=ENVOY_IP_TEST_VERSIONS=v4only ${BAZEL_EXTRA_TEST_OPTIONS}"
+else
+  export BAZEL_EXTRA_TEST_OPTIONS="--test_env=ENVOY_IP_TEST_VERSIONS=all ${BAZEL_EXTRA_TEST_OPTIONS}"
+fi
+
 export BAZEL_BUILD_OPTIONS=" \
 --verbose_failures ${BAZEL_OPTIONS} --action_env=HOME --action_env=PYTHONUSERBASE \
 --experimental_local_memory_estimate \
