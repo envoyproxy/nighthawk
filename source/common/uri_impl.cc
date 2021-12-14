@@ -79,7 +79,7 @@ bool UriImpl::performDnsLookup(Envoy::Event::Dispatcher& dispatcher,
         active_dns_query_ = nullptr;
         if (!response.empty() && status == Envoy::Network::DnsResolver::ResolutionStatus::Success) {
           address_ =
-              Envoy::Network::Utility::getAddressWithPort(*response.front().address_, port());
+              Envoy::Network::Utility::getAddressWithPort(*response.front().addrInfo().address_, port());
           ENVOY_LOG(debug, "DNS resolution complete for {} ({} entries, using {}).",
                     hostWithoutPort(), response.size(), address_->asString());
         }

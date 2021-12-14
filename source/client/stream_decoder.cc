@@ -13,7 +13,7 @@ namespace Client {
 
 void StreamDecoder::decodeHeaders(Envoy::Http::ResponseHeaderMapPtr&& headers, bool end_stream) {
   ASSERT(!complete_);
-  upstream_timing_.onFirstUpstreamRxByteReceived(time_source_);
+  stream_info_.upstreamInfo()->upstreamTiming().onFirstUpstreamRxByteReceived(time_source_);
   complete_ = end_stream;
   response_headers_ = std::move(headers);
   response_header_sizes_statistic_.addValue(response_headers_->byteSize());
@@ -74,10 +74,9 @@ void StreamDecoder::onComplete(bool success) {
       ENVOY_LOG_EVERY_POW_2(warn, "response_code is not available in onComplete");
     }
   }
-  upstream_timing_.onLastUpstreamRxByteReceived(time_source_);
+  stream_info_.upstreamInfo()->upstreamTiming().onLastUpstreamRxByteReceived(time_source_);
   response_body_sizes_statistic_.addValue(stream_info_.bytesSent());
   stream_info_.onRequestComplete();
-  stream_info_.setUpstreamTiming(upstream_timing_);
   decoder_completion_callback_.onComplete(success, *response_headers_);
   finalizeActiveSpan();
   caller_completion_callback_(complete_, success);
@@ -107,7 +106,7 @@ void StreamDecoder::onPoolReady(Envoy::Http::RequestEncoder& encoder,
                                 absl::optional<Envoy::Http::Protocol>) {
   // Make sure we hear about stream resets on the encoder.
   encoder.getStream().addCallbacks(*this);
-  upstream_timing_.onFirstUpstreamTxByteSent(time_source_); // XXX(oschaaf): is this correct?
+  stream_info_.upstreamInfo()->upstreamTiming().onFirstUpstreamTxByteSent(time_source_); // XXX(oschaaf): is this correct?
   const Envoy::Http::Status status =
       encoder.encodeHeaders(*request_headers_, request_body_size_ == 0);
   if (!status.ok()) {
