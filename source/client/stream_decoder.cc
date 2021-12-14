@@ -106,7 +106,8 @@ void StreamDecoder::onPoolReady(Envoy::Http::RequestEncoder& encoder,
                                 absl::optional<Envoy::Http::Protocol>) {
   // Make sure we hear about stream resets on the encoder.
   encoder.getStream().addCallbacks(*this);
-  stream_info_.upstreamInfo()->upstreamTiming().onFirstUpstreamTxByteSent(time_source_); // XXX(oschaaf): is this correct?
+  stream_info_.upstreamInfo()->upstreamTiming().onFirstUpstreamTxByteSent(
+      time_source_); // XXX(oschaaf): is this correct?
   const Envoy::Http::Status status =
       encoder.encodeHeaders(*request_headers_, request_body_size_ == 0);
   if (!status.ok()) {

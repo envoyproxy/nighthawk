@@ -78,8 +78,8 @@ bool UriImpl::performDnsLookup(Envoy::Event::Dispatcher& dispatcher,
                            std::list<Envoy::Network::DnsResponse>&& response) -> void {
         active_dns_query_ = nullptr;
         if (!response.empty() && status == Envoy::Network::DnsResolver::ResolutionStatus::Success) {
-          address_ =
-              Envoy::Network::Utility::getAddressWithPort(*response.front().addrInfo().address_, port());
+          address_ = Envoy::Network::Utility::getAddressWithPort(
+              *response.front().addrInfo().address_, port());
           ENVOY_LOG(debug, "DNS resolution complete for {} ({} entries, using {}).",
                     hostWithoutPort(), response.size(), address_->asString());
         }
