@@ -66,6 +66,7 @@ public:
     if (measure_latencies_ && http_tracer_ != nullptr) {
       setupForTracing();
     }
+    stream_info_.setUpstreamInfo(std::make_shared<Envoy::StreamInfo::UpstreamInfoImpl>());
   }
 
   // Http::StreamDecoder
@@ -126,7 +127,6 @@ private:
   Envoy::Random::RandomGenerator& random_generator_;
   Envoy::Tracing::HttpTracerSharedPtr& http_tracer_;
   Envoy::Tracing::SpanPtr active_span_;
-  Envoy::StreamInfo::UpstreamTiming upstream_timing_;
   const std::string latency_response_header_name_;
 };
 
