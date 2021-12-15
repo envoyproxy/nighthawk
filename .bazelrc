@@ -1,5 +1,5 @@
 # The following .bazelrc content is forked from the main Envoy repository.                  # unique
-# This is  necessary since this needs to be available before we can access                  # unique
+# This is necessary since this needs to be available before we can access                   # unique
 # the Envoy repository contents via Bazel.                                                  # unique
                                                                                             # unique
 build:clang-asan --test_timeout=900                                                         # unique
