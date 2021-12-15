@@ -69,6 +69,10 @@ important maintenance task. When performing the update, follow this procedure:
    to ensure we are using the same build system version.
 1. Sync (copy) [ci/run_envoy_docker.sh](ci/run_envoy_docker.sh) from
    [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/ci/run_envoy_docker.sh).
+1. Sync (copy) [tools/gen_compilation_database.py](tools/gen_compilation_database.py) from
+   [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/.bazelrc) to
+   update our build configurations. Be sure to retain our local modifications,
+   all lines that are unique to Nighthawk are marked with comment `# unique`.
 1. Run `ci/do_ci.sh test`. Sometimes the dependency update comes with changes
    that break our build. Include any changes required to Nighthawk to fix that
    in the same PR.

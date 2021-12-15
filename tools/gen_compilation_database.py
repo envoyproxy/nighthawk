@@ -15,17 +15,17 @@ def generate_compilation_database(args):
   # We need to download all remote outputs for generated source code. This option lives here to override those
   # specified in bazelrc.
   bazel_options = shlex.split(os.environ.get("BAZEL_BUILD_OPTIONS", "")) + [
-    "--config=compdb",
-    "--remote_download_outputs=all",
+      "--config=compdb",
+      "--remote_download_outputs=all",
   ]
 
   subprocess.check_call(["bazel", "build"] + bazel_options + [
-    "--aspects=@bazel_compdb//:aspects.bzl%compilation_database_aspect",
-    "--output_groups=compdb_files,header_files"
+      "--aspects=@bazel_compdb//:aspects.bzl%compilation_database_aspect",
+      "--output_groups=compdb_files,header_files"
   ] + args.bazel_targets)
 
-  execroot = subprocess.check_output(["bazel", "info", "execution_root"]
-                     + bazel_options).decode().strip()
+  execroot = subprocess.check_output(["bazel", "info", "execution_root"] +
+                                     bazel_options).decode().strip()
 
   db_entries = []
   for db in Path(execroot).glob('**/*.compile_commands.json'):
@@ -35,8 +35,7 @@ def generate_compilation_database(args):
     if 'directory' in db_entry and db_entry['directory'] == '__EXEC_ROOT__':
       db_entry['directory'] = execroot
     if 'command' in db_entry:
-      db_entry['command'] = (
-        db_entry['command'].replace('-isysroot __BAZEL_XCODE_SDKROOT__', ''))
+      db_entry['command'] = (db_entry['command'].replace('-isysroot __BAZEL_XCODE_SDKROOT__', ''))
     return db_entry
 
   return list(map(replace_execroot_marker, db_entries))
@@ -83,8 +82,7 @@ def modify_compile_command(target, args):
     options += " -Wno-unused-function"
     # By treating external/envoy* as C++ files we are able to use this script from subrepos that
     # depend on Envoy targets.
-    if not target["file"].startswith("external/") or target["file"].startswith(
-        "external/envoy"):
+    if not target["file"].startswith("external/") or target["file"].startswith("external/envoy"):
       # *.h file is treated as C header by default while our headers files are all C++17.
       options = "-x c++ -std=c++17 -fexceptions " + options
 
@@ -105,6 +103,6 @@ if __name__ == "__main__":
   parser.add_argument('--include_genfiles', action='store_true')
   parser.add_argument('--include_headers', action='store_true')
   parser.add_argument('--vscode', action='store_true')
-  parser.add_argument('bazel_targets', nargs='*', default=["//..."])                          # unique
+  parser.add_argument('bazel_targets', nargs='*', default=["//..."])  # unique
   args = parser.parse_args()
   fix_compilation_database(args, generate_compilation_database(args))
