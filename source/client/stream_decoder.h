@@ -74,8 +74,8 @@ public:
   void decodeHeaders(Envoy::Http::ResponseHeaderMapPtr&& headers, bool end_stream) override;
   void decodeData(Envoy::Buffer::Instance&, bool end_stream) override;
   void decodeTrailers(Envoy::Http::ResponseTrailerMapPtr&& trailers) override;
-  void decodeMetadata(Envoy::Http::MetadataMapPtr&&) override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; }
-  void dumpState(std::ostream&, int) const override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; }
+  void decodeMetadata(Envoy::Http::MetadataMapPtr&&) override { PANIC("not implemented"); }
+  void dumpState(std::ostream&, int) const override { PANIC("not implemented"); }
 
   // Http::StreamCallbacks
   void onResetStream(Envoy::Http::StreamResetReason reason,
