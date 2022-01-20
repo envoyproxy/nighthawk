@@ -52,8 +52,8 @@ USAGE:
 
 bazel-bin/nighthawk_client  [--latency-response-header-name <string>]
 [--stats-flush-interval <uint32_t>]
-[--stats-sinks <string>] ...
-[--no-duration] [--simple-warmup]
+[--stats-sinks <string>] ... [--no-duration]
+[--simple-warmup]
 [--request-source-plugin-config <string>]
 [--request-source <uri format>] [--label
 <string>] ... [--multi-target-use-https]
