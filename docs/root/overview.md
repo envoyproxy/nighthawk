@@ -1,60 +1,76 @@
 # Nighthawk: architecture and key concepts
 
-## High level interaction model
+## Architecture
 
-**Process** creates one or more **Workers**. **Worker** will run **Sequencer**,
-which in turn queries **RateLimiter** for [request-release
-timings](terminology.md#request-release-timings). When it is time to release a
-request, **BenchmarkClient** will be requested to do so by **Sequencer**.
-**BenchMarkClient** will then ask its underlying **Pool** to create a
-**StreamDecoder** for releasing the actual request. **StreamDecoder** will query the
-request data it needs to send from the configured **RequestSource**, and send it
-off. **StreamDecoder** will emit events as it progresses (pool ready,
-completion, etc), and timings will subsequently be recorded into **Statistic**
-as well as get bubbled up to **Sequencer** for tracking in-flight work and
-**Statistic** bookkeeping.
+The following diagram outlines the overall architecture of Nighthawk.
 
-**Sequencer** will query the configured **TerminationPredicates** to terminate
-when and how to terminate execution. When all **Workers** have finished,
-**Process** will collect the results from all **Workers** via
-**OutputCollector**, and run **OutputFormatter** to transform to the requested
-output format.
+![Nighthawk architecture](images/nighthawk_architecture.png)
 
-However, it is said that pictures say more then words, so here is a block
-diagram.
+Nighthawk exposes its API either via a [command line
+interface](../../source/exe/client_main_entry.cc) (CLI) or as a [gRPC
+server](../../source/exe/service_main_entry.cc) with a [proto
+API](../../api/client/service.proto).
+When running as a CLI, Nighthawk will run a single execution and print out the
+results. When running as a gRPC server, Nighthawk is capable of performing
+multiple executions one after another, returning results to the gRPC client.
 
-![Draft diagram](draft-high-level-diagram.png)
+In either of the execution modes, the
+[Options](../../source/client/options_impl.h) object abstracts all the
+[options](../../api/client/options.proto) selected by the user and provides them
+to the rest of the Nighthawk architecture.
 
-[TODO(#249):add a real diagram](https://github.com/envoyproxy/nighthawk/issues/249)
+Nighthawk creates a [Process](../../source/client/process_impl.h)
+instance that generates Envoy bootstrap configuration capable of upstreaming
+requests with the protocol and options selected by the user. This bootstrap is
+used to initialize an Envoy upstream cluster manager.
 
-## Notable upcoming changes
+The **Process** instance creates multiple [Client
+workers](../../source/client/client_worker_impl.h) that get access to the Envoy
+upstream cluster manager and drive the execution.
+See the [next section](#client-worker-architecture) for a detail view into the
+worker architecture.
 
-Calling out two new concepts that may get proposed in the future, and cause some
-churn in the code base as we inject them.
+Once the execution finishes, the [Output
+Collector](../../source/client/output_collector_impl.h)
+provides results collected from individual **Client workers** to the [Output
+formatter](../../source/client/output_formatter_impl.h)
+which represents the results in the format selected by the user.
 
-### Phases
+### Client worker architecture
 
-One notable addition / change that may get proposed in the near future is the
-introduction of **Phase**. **Phase** would represent a distinct stage of an
-execution, for example a warm-up. It would then be useful to have
-per-phase reporting of latencies as well as counters and latencies.
+![Client worker architecture](images/client_worker_architecture.png)
 
-Concretely, a warm-up phase could be represented by a distinct duration
-termination predicate and a ramping rate limiter. Upon completion, the `hot`
-BenchmarkClient with its associated pool would then be live-transferred to the
-next configured phase, after which execution can continue.
+Each **Client worker** runs a
+[Sequencer](../../source/common/sequencer_impl.h)
+which is responsible for maintaining the pace of requests that was specified by
+the user. To maintain the pace, the **Sequencer** queries a
+[RateLimiter](../../source/common/rate_limiter_impl.h)
+for [request-release timing](terminology.md#request-release-timing). At
+appropriate intervals, the **Sequencer** asks the **BenchmarkClient** to send
+requests.
 
-One other reason to have this is that it would enable remote- and/or cli-
-controlled ramping of certain test parameters by associating those to different
-phases. Termination predicates can be leveraged to immediately terminate the
-current phase after injecting a new one, allowing for real-time steering via
-gRPC and/or CLI.
+When it
+is time to release a request, the
+[BenchmarkClient](../../source/client/benchmark_client_impl.h)
+is requested to do so by the **Sequencer**.
 
-### Streaming parameterization and output stats
+**BenchmarkClient** retrieves data for the next request from the configured
+[RequestSource](../../source/common/request_source_impl.h)
+and asks its underlying **Connection pool** to create a
+[StreamDecoder](../../source/client/stream_decoder.h). A **StreamDecoder**
+instance manages the full lifetime of a single request. There are multiple
+instances of **StreamDecoder**, one per request. The **StreamDecoder** sends
+the request and processes events (connection pool ready, completion, etc...) as
+it progresses.
 
-Once we have phases, the gRPC service, and perhaps the CLI, would be natural
-candidates to follow up with to allow dynamic phase injection, as well as send
-back reports per phase.
+The timings of each request along with other statistics are recorded into the
+[Statistic](../../source/common/statistic_impl.h)
+object and reported to the **Sequencer** for tracking of the in-flight work.
+
+The **Sequencer** is also responsible for termination of the execution. This is
+done by querying
+[TerminationPredicates](../../source/common/termination_predicate_impl.h)
+to determine if the configured conditions for termination have been reached.
 
 ## Key concept descriptions
 
@@ -105,11 +121,12 @@ timing offsets to an underlying **RateLimiter**) and **LinearRampingRateLimiter*
 
 As of today, there’s a single implementation called **BenchmarkClientImpl**,
 which wraps Envoy’s **Upstream** concept and (slightly) customized H1/H2/H3
-**Pool** concepts. For executing requests, the pool will be requested to create
-a **StreamEncoder**, and Nighthawk will pass its own **StreamDecoderImpl** into
-that as an argument. The integration surface between **BenchmarkClient** is
-defined via `BenchmarkClient::tryStartRequest()` and a callback specification
-which will be fired upon completion of a successfully started request.
+**Connection Pool** concepts. For executing requests, the connection pool will
+be requested to create a **StreamEncoder**, and Nighthawk will pass its own
+**StreamDecoderImpl** into that as an argument. The integration surface between
+**BenchmarkClient** is defined via `BenchmarkClient::tryStartRequest()` and a
+callback specification which will be fired upon completion of a successfully
+started request.
 
 ### RequestSource
 
@@ -163,7 +180,7 @@ we don't need percentiles. For various reasons, HdrHistogram might get replaced
 by [libcirclhist](https://github.com/envoyproxy/nighthawk/issues/115) in the
 near future.
 
-### H1Pool & H2Pool
+### H1 & H2 Connection pools
 
 Nighthawk derives its own version of these from the vanilla Envoy ones. It does
 that to implement things like pro-active connection pre-fetching and H2
@@ -196,6 +213,36 @@ other formats (e.g. human, fortio). It can be very useful to always store the
 json output format, yet be able to easily get to one of the other output
 formats. It’s like having the cake and eating it too!
 
+## Notable upcoming changes
+
+Calling out two new concepts that may get proposed in the future, and cause some
+churn in the code base as we inject them.
+
+### Phases
+
+One notable addition / change that may get proposed in the near future is the
+introduction of **Phase**. **Phase** would represent a distinct stage of an
+execution, for example a warm-up. It would then be useful to have
+per-phase reporting of latencies as well as counters and latencies.
+
+Concretely, a warm-up phase could be represented by a distinct duration
+termination predicate and a ramping rate limiter. Upon completion, the `hot`
+BenchmarkClient with its associated connection pool would then be
+live-transferred to the next configured phase, after which execution can
+continue.
+
+One other reason to have this is that it would enable remote- and/or cli-
+controlled ramping of certain test parameters by associating those to different
+phases. Termination predicates can be leveraged to immediately terminate the
+current phase after injecting a new one, allowing for real-time steering via
+gRPC and/or CLI.
+
+### Streaming parameterization and output stats
+
+Once we have phases, the gRPC service, and perhaps the CLI, would be natural
+candidates to follow up with to allow dynamic phase injection, as well as send
+back reports per phase.
+
 ## User-specified Nighthawk logging
 
 Users of Nighthawk can specify custom format and destination (logging sink
@@ -204,3 +251,15 @@ logging mechanism by performing all logging via the **ENVOY_LOG** macro. To
 customize this mechanism, users need to perform two steps:
 1. Create a logging sink delegate inherited from [Envoy SinkDelegate](https://github.com/envoyproxy/envoy/blob/main/source/common/common/logger.h).
 2. Construct a ServiceImpl object with an [Envoy Logger Context](https://github.com/envoyproxy/envoy/blob/main/source/common/common/logger.h) which contains user-specified log level and format.
+
+## Navigating the codebase
+
+See [navigating the codebase](navigating_the_codebase.md) for a description of
+the directory structure.
+
+## Adaptive load controller
+
+The [adaptive load controller](adaptive_load_controller.md) is a standalone
+[library](https://github.com/envoyproxy/nighthawk/tree/main/source/adaptive_load),
+an abstraction on top of Nighthawk, that determines the maximum load the system
+under test can sustain.

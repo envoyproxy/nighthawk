@@ -1,19 +1,17 @@
 #!/usr/bin/env python3
 
-# Except for the targets (search for @@@) this file is a 1:1 copy of Envoy's
+# Except for the targets (search for # unique) this file is a 1:1 copy of Envoy's.          # unique
 
 import argparse
-import glob
 import json
-import logging
 import os
 import shlex
 import subprocess
 from pathlib import Path
 
 
-# This method is equivalent to https://github.com/grailbio/bazel-compilation-database/blob/master/generate.sh
-def generateCompilationDatabase(args):
+# This method is equivalent to https://github.com/grailbio/bazel-compilation-database/blob/master/generate.py
+def generate_compilation_database(args):
   # We need to download all remote outputs for generated source code. This option lives here to override those
   # specified in bazelrc.
   bazel_options = shlex.split(os.environ.get("BAZEL_BUILD_OPTIONS", "")) + [
@@ -29,23 +27,30 @@ def generateCompilationDatabase(args):
   execroot = subprocess.check_output(["bazel", "info", "execution_root"] +
                                      bazel_options).decode().strip()
 
-  compdb = []
-  for compdb_file in Path(execroot).glob("**/*.compile_commands.json"):
-    compdb.extend(json.loads("[" + compdb_file.read_text().replace("__EXEC_ROOT__", execroot) +
-                             "]"))
-  return compdb
+  db_entries = []
+  for db in Path(execroot).glob('**/*.compile_commands.json'):
+    db_entries.extend(json.loads(db.read_text()))
+
+  def replace_execroot_marker(db_entry):
+    if 'directory' in db_entry and db_entry['directory'] == '__EXEC_ROOT__':
+      db_entry['directory'] = execroot
+    if 'command' in db_entry:
+      db_entry['command'] = (db_entry['command'].replace('-isysroot __BAZEL_XCODE_SDKROOT__', ''))
+    return db_entry
+
+  return list(map(replace_execroot_marker, db_entries))
 
 
-def isHeader(filename):
+def is_header(filename):
   for ext in (".h", ".hh", ".hpp", ".hxx"):
     if filename.endswith(ext):
       return True
   return False
 
 
-def isCompileTarget(target, args):
+def is_compile_target(target, args):
   filename = target["file"]
-  if not args.include_headers and isHeader(filename):
+  if not args.include_headers and is_header(filename):
     return False
 
   if not args.include_genfiles:
@@ -59,7 +64,7 @@ def isCompileTarget(target, args):
   return True
 
 
-def modifyCompileCommand(target, args):
+def modify_compile_command(target, args):
   cc, options = target["command"].split(" ", 1)
 
   # Workaround for bazel added C++11 options, those doesn't affect build itself but
@@ -72,10 +77,12 @@ def modifyCompileCommand(target, args):
     # old-style "-I".
     options = options.replace("-iquote ", "-I ")
 
-  if isHeader(target["file"]):
+  if is_header(target["file"]):
     options += " -Wno-pragma-once-outside-header -Wno-unused-const-variable"
     options += " -Wno-unused-function"
-    if not target["file"].startswith("external/"):
+    # By treating external/envoy* as C++ files we are able to use this script from subrepos that
+    # depend on Envoy targets.
+    if not target["file"].startswith("external/") or target["file"].startswith("external/envoy"):
       # *.h file is treated as C header by default while our headers files are all C++17.
       options = "-x c++ -std=c++17 -fexceptions " + options
 
@@ -83,8 +90,8 @@ def modifyCompileCommand(target, args):
   return target
 
 
-def fixCompilationDatabase(args, db):
-  db = [modifyCompileCommand(target, args) for target in db if isCompileTarget(target, args)]
+def fix_compilation_database(args, db):
+  db = [modify_compile_command(target, args) for target in db if is_compile_target(target, args)]
 
   with open("compile_commands.json", "w") as db_file:
     json.dump(db, db_file, indent=2)
@@ -96,7 +103,6 @@ if __name__ == "__main__":
   parser.add_argument('--include_genfiles', action='store_true')
   parser.add_argument('--include_headers', action='store_true')
   parser.add_argument('--vscode', action='store_true')
-  # @@@
-  parser.add_argument('bazel_targets', nargs='*', default=["//..."])
+  parser.add_argument('bazel_targets', nargs='*', default=["//..."])  # unique
   args = parser.parse_args()
-  fixCompilationDatabase(args, generateCompilationDatabase(args))
+  fix_compilation_database(args, generate_compilation_database(args))

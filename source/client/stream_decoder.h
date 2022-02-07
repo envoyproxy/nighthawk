@@ -66,6 +66,7 @@ public:
     if (measure_latencies_ && http_tracer_ != nullptr) {
       setupForTracing();
     }
+    stream_info_.setUpstreamInfo(std::make_shared<Envoy::StreamInfo::UpstreamInfoImpl>());
   }
 
   // Http::StreamDecoder
@@ -73,8 +74,8 @@ public:
   void decodeHeaders(Envoy::Http::ResponseHeaderMapPtr&& headers, bool end_stream) override;
   void decodeData(Envoy::Buffer::Instance&, bool end_stream) override;
   void decodeTrailers(Envoy::Http::ResponseTrailerMapPtr&& trailers) override;
-  void decodeMetadata(Envoy::Http::MetadataMapPtr&&) override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; }
-  void dumpState(std::ostream&, int) const override { NOT_IMPLEMENTED_GCOVR_EXCL_LINE; }
+  void decodeMetadata(Envoy::Http::MetadataMapPtr&&) override { PANIC("not implemented"); }
+  void dumpState(std::ostream&, int) const override { PANIC("not implemented"); }
 
   // Http::StreamCallbacks
   void onResetStream(Envoy::Http::StreamResetReason reason,
@@ -126,7 +127,6 @@ private:
   Envoy::Random::RandomGenerator& random_generator_;
   Envoy::Tracing::HttpTracerSharedPtr& http_tracer_;
   Envoy::Tracing::SpanPtr active_span_;
-  Envoy::StreamInfo::UpstreamTiming upstream_timing_;
   const std::string latency_response_header_name_;
 };
 

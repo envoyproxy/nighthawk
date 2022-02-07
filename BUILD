@@ -6,6 +6,8 @@ load(
 
 licenses(["notice"])  # Apache 2
 
+exports_files(["LICENSE"])
+
 envoy_package()
 
 filegroup(

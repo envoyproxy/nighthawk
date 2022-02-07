@@ -1,5 +1,5 @@
 # The following .bazelrc content is forked from the main Envoy repository.                  # unique
-# This is  necessary since this needs to be available before we can access                  # unique
+# This is necessary since this needs to be available before we can access                   # unique
 # the Envoy repository contents via Bazel.                                                  # unique
                                                                                             # unique
 build:clang-asan --test_timeout=900                                                         # unique
@@ -35,6 +35,7 @@ common --experimental_allow_tags_propagation
 # Enable position independent code (this is the default on macOS and Windows)
 # (Workaround for https://github.com/bazelbuild/rules_foreign_cc/issues/421)
 build:linux --copt=-fPIC
+build:linux --copt=-Wno-deprecated-declarations
 build:linux --cxxopt=-std=c++17
 build:linux --conlyopt=-fexceptions
 build:linux --fission=dbg,opt
@@ -89,6 +90,7 @@ build:asan --copt -O1
 build:asan --copt -fno-optimize-sibling-calls
 
 # Clang ASAN/UBSAN
+build:clang-asan --config=clang
 build:clang-asan --config=asan
 build:clang-asan --linkopt -fuse-ld=lld
 build:clang-asan --linkopt --rtlib=compiler-rt
@@ -333,7 +335,7 @@ build:plain-fuzzer --copt=-fsanitize=fuzzer-no-link
 build:plain-fuzzer --linkopt=-fsanitize=fuzzer-no-link
 
 build:asan-fuzzer --config=plain-fuzzer
-build:asan-fuzzer --config=asan
+build:asan-fuzzer --config=clang-asan
 build:asan-fuzzer --copt=-fno-omit-frame-pointer
 # Remove UBSAN halt_on_error to avoid crashing on protobuf errors.
 build:asan-fuzzer --test_env=UBSAN_OPTIONS=print_stacktrace=1
