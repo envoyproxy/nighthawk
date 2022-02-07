@@ -1,6 +1,6 @@
 #include "source/client/client_worker_impl.h"
 
-#include "external/envoy/source/common/stats/symbol_table_impl.h"
+#include "external/envoy/source/common/stats/symbol_table.h"
 
 #include "source/common/cached_time_source_impl.h"
 #include "source/common/phase_impl.h"
