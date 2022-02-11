@@ -256,6 +256,11 @@ absl::StatusOr<Bootstrap> createBootstrapConfiguration(
   }
   bootstrap.mutable_stats_flush_interval()->set_seconds(options.statsFlushInterval());
 
+  if (options.upstreamBindConfig().has_value()) {
+    *bootstrap.mutable_cluster_manager()->mutable_upstream_bind_config() =
+        options.upstreamBindConfig().value();
+  }
+
   return bootstrap;
 }
 

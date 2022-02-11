@@ -72,6 +72,7 @@ format>] [--sequencer-idle-strategy <spin
 <uint32_t>] [--max-active-requests
 <uint32_t>] [--max-pending-requests
 <uint32_t>] [--transport-socket <string>]
+[--upstream-bind-config <string>]
 [--tls-context <string>]
 [--request-body-size <uint32_t>]
 [--request-header <string>] ...
@@ -214,6 +215,13 @@ exclusive with --tls-context. Example (json):
 _sockets.tls.v3.UpstreamTlsContext"
 ,common_tls_context:{tls_params:{cipher_suites:["-ALL:ECDHE-RSA-AES128
 -SHA"]}}}}
+
+--upstream-bind-config <string>
+BindConfig in json or compact yaml. If specified, this configuration
+is used to bind newly established upstream connections. Allows
+selecting the source address, port and socket options used when
+sending requests. Example (json): {source_address:{address:"127.0.0.1"
+,port_value:0}}
 
 --tls-context <string>
 DEPRECATED, use --transport-socket instead. Tls context configuration

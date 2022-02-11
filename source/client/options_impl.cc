@@ -155,6 +155,15 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "{common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES128-SHA\"]}}}",
       false, "", "string", cmd);
 
+  TCLAP::ValueArg<std::string> upstream_bind_config(
+      "", "upstream-bind-config",
+      "BindConfig in json or compact yaml. If specified, this configuration is used to bind newly "
+      "established upstream connections. "
+      "Allows selecting the source address, port and socket options used when sending requests. "
+      "Example (json): "
+      "{source_address:{address:\"127.0.0.1\",port_value:0}}",
+      false, "", "string", cmd);
+
   TCLAP::ValueArg<std::string> transport_socket(
       "", "transport-socket",
       "Transport socket configuration in json or compact yaml. "
@@ -544,6 +553,16 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       throw MalformedArgvException(e.what());
     }
   }
+  if (!upstream_bind_config.getValue().empty()) {
+    try {
+      upstream_bind_config_.emplace(envoy::config::core::v3::BindConfig());
+      Envoy::MessageUtil::loadFromJson(upstream_bind_config.getValue(),
+                                       upstream_bind_config_.value(),
+                                       Envoy::ProtobufMessage::getStrictValidationVisitor());
+    } catch (const Envoy::EnvoyException& e) {
+      throw MalformedArgvException(e.what());
+    }
+  }
   if (!transport_socket.getValue().empty()) {
     try {
       transport_socket_.emplace(envoy::config::core::v3::TransportSocket());
@@ -679,6 +698,10 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
 
   tls_context_.MergeFrom(options.tls_context());
 
+  if (options.has_upstream_bind_config()) {
+    upstream_bind_config_.emplace(envoy::config::core::v3::BindConfig());
+    upstream_bind_config_.value().MergeFrom(options.upstream_bind_config());
+  }
   if (options.has_transport_socket()) {
     transport_socket_.emplace(envoy::config::core::v3::TransportSocket());
     transport_socket_.value().MergeFrom(options.transport_socket());
@@ -870,6 +893,9 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
   // But as this field is about to get eliminated this minimal effort shortcut may be more suitable.
   if (tls_context_.ByteSizeLong() > 0) {
     *(command_line_options->mutable_tls_context()) = tls_context_;
+  }
+  if (upstream_bind_config_.has_value()) {
+    *(command_line_options->mutable_upstream_bind_config()) = upstream_bind_config_.value();
   }
   if (transport_socket_.has_value()) {
     *(command_line_options->mutable_transport_socket()) = transport_socket_.value();

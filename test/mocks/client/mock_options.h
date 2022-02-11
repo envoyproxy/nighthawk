@@ -31,6 +31,8 @@ public:
   MOCK_METHOD(uint32_t, requestBodySize, (), (const, override));
   MOCK_METHOD(envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext&, tlsContext, (),
               (const, override));
+  MOCK_METHOD(absl::optional<envoy::config::core::v3::BindConfig>&, upstreamBindConfig, (),
+              (const, override));
   MOCK_METHOD(absl::optional<envoy::config::core::v3::TransportSocket>&, transportSocket, (),
               (const, override));
   MOCK_METHOD(uint32_t, maxPendingRequests, (), (const, override));
