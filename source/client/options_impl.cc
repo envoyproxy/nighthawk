@@ -150,14 +150,14 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   TCLAP::ValueArg<std::string> tls_context(
       "", "tls-context",
       "DEPRECATED, use --transport-socket instead. "
-      "Tls context configuration in json or compact yaml. "
+      "TlS context configuration in json. "
       "Mutually exclusive with --transport-socket. Example (json): "
       "{common_tls_context:{tls_params:{cipher_suites:[\"-ALL:ECDHE-RSA-AES128-SHA\"]}}}",
       false, "", "string", cmd);
 
   TCLAP::ValueArg<std::string> upstream_bind_config(
       "", "upstream-bind-config",
-      "BindConfig in json or compact yaml. If specified, this configuration is used to bind newly "
+      "BindConfig in json. If specified, this configuration is used to bind newly "
       "established upstream connections. "
       "Allows selecting the source address, port and socket options used when sending requests. "
       "Example (json): "
@@ -166,7 +166,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
 
   TCLAP::ValueArg<std::string> transport_socket(
       "", "transport-socket",
-      "Transport socket configuration in json or compact yaml. "
+      "Transport socket configuration in json. "
       "Mutually exclusive with --tls-context. Example (json): "
       "{name:\"envoy.transport_sockets.tls\",typed_config:{"
       "\"@type\":\"type.googleapis.com/"
@@ -302,7 +302,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "", "request-source-plugin-config",
       "[Request "
       "Source](https://github.com/envoyproxy/nighthawk/blob/main/docs/root/"
-      "overview.md#requestsource) plugin configuration in json or compact yaml. "
+      "overview.md#requestsource) plugin configuration in json. "
       "Mutually exclusive with --request-source. Example (json): "
       "{name:\"nighthawk.stub-request-source-plugin\",typed_config:{"
       "\"@type\":\"type.googleapis.com/nighthawk.request_source.StubPluginConfig\","
@@ -321,7 +321,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       cmd);
   TCLAP::MultiArg<std::string> stats_sinks(
       "", "stats-sinks",
-      "Stats sinks (in json or compact yaml) where Nighthawk "
+      "Stats sinks (in json) where Nighthawk "
       "metrics will be flushed. This argument is intended to "
       "be specified multiple times. Example (json): "
       "{name:\"envoy.stat_sinks.statsd\",typed_config:{\"@type\":\"type."
