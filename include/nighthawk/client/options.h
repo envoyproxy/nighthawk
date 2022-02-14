@@ -8,6 +8,7 @@
 #include "envoy/common/pure.h"
 #include "envoy/common/time.h"
 #include "envoy/config/cluster/v3/cluster.pb.h"
+#include "envoy/config/core/v3/address.pb.h"
 #include "envoy/config/core/v3/base.pb.h"
 #include "envoy/config/metrics/v3/stats.pb.h"
 #include "envoy/http/protocol.h"
@@ -52,6 +53,8 @@ public:
   virtual uint32_t requestBodySize() const PURE;
   virtual const envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext&
   tlsContext() const PURE;
+  virtual const absl::optional<envoy::config::core::v3::BindConfig>&
+  upstreamBindConfig() const PURE;
   virtual const absl::optional<envoy::config::core::v3::TransportSocket>&
   transportSocket() const PURE;
   virtual uint32_t maxPendingRequests() const PURE;

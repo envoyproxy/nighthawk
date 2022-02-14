@@ -109,6 +109,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
       "{} --rps 4 --connections 5 --duration 6 --timeout 7 --h2 "
       "--concurrency 8 --verbosity error --output-format yaml --prefetch-connections "
       "--burst-size 13 --address-family v6 --request-method POST --request-body-size 1234 "
+      "--upstream-bind-config {} "
       "--transport-socket {} "
       "--request-header f1:b1 --request-header f2:b2 --request-header f3:b3:b4 "
       "--max-pending-requests 10 "
@@ -119,7 +120,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
       "--experimental-h1-connection-reuse-strategy lru --label label1 --label label2 {} "
       "--simple-warmup --stats-sinks {} --stats-sinks {} --stats-flush-interval 10 "
       "--latency-response-header-name zz",
-      client_name_,
+      client_name_, "{source_address:{address:\"127.0.0.1\",port_value:0}}",
       "{name:\"envoy.transport_sockets.tls\","
       "typed_config:{\"@type\":\"type.googleapis.com/"
       "envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext\","
@@ -843,6 +844,21 @@ TEST_F(OptionsImplTest, BadTlsContextSpecification) {
                                                  "{misspelled_tls_context:{}}")),
       MalformedArgvException,
       "envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext reason INVALID_ARGUMENT");
+}
+
+TEST_F(OptionsImplTest, BadUpstreamBindConfigSpecification) {
+  // Bad JSON.
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(
+          fmt::format("{} --upstream-bind-config {} http://foo/", client_name_, "{broken_json:")),
+      MalformedArgvException, "Unable to parse JSON as proto");
+  // Correct JSON, but contents not according to spec.
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(fmt::format("{} --upstream-bind-config {} http://foo/",
+                                                 client_name_, "{invalid_bind_config:{}}")),
+      MalformedArgvException,
+      "Protobuf message \\(type envoy.config.core.v3.BindConfig reason "
+      "INVALID_ARGUMENT:invalid_bind_config: Cannot find field.\\) has unknown fields");
 }
 
 TEST_F(OptionsImplTest, BadTransportSocketSpecification) {

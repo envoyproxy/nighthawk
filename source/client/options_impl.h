@@ -54,6 +54,9 @@ public:
   tlsContext() const override {
     return tls_context_;
   };
+  const absl::optional<envoy::config::core::v3::BindConfig>& upstreamBindConfig() const override {
+    return upstream_bind_config_;
+  }
   const absl::optional<envoy::config::core::v3::TransportSocket>& transportSocket() const override {
     return transport_socket_;
   }
@@ -128,6 +131,7 @@ private:
   std::vector<std::string> request_headers_;
   uint32_t request_body_size_{0};
   envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext tls_context_;
+  absl::optional<envoy::config::core::v3::BindConfig> upstream_bind_config_;
   absl::optional<envoy::config::core::v3::TransportSocket> transport_socket_;
   absl::optional<envoy::config::core::v3::TypedExtensionConfig> request_source_plugin_config_;
 
