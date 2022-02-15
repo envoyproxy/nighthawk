@@ -83,7 +83,8 @@ public:
   using Envoy::Http::FixedHttpConnPoolImpl::FixedHttpConnPoolImpl;
   Envoy::Http::ConnectionPool::Cancellable*
   newStream(Envoy::Http::ResponseDecoder& response_decoder,
-            Envoy::Http::ConnectionPool::Callbacks& callbacks) override;
+            Envoy::Http::ConnectionPool::Callbacks& callbacks,
+            const Instance::StreamOptions& options) override;
   void setConnectionReuseStrategy(const ConnectionReuseStrategy connection_reuse_strategy) {
     connection_reuse_strategy_ = connection_reuse_strategy;
   }
