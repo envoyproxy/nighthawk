@@ -380,7 +380,6 @@ def _extractWarningsAndErrors(process_output, test_case_name, ignore_list):
 
     if "[warning]" in line:
       warnings.append(line)
-    # Temporary hack until fixed upstream. Log does not need to be an error.
-    elif "[error]" in line and "external/envoy/source/server/admin/admin_filter.cc" not in line:
+    elif "[error]" in line:
       errors.append(line)
   return warnings, errors
