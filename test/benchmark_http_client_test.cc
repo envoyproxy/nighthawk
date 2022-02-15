@@ -113,9 +113,10 @@ public:
               return Envoy::Http::Status();
             })));
 
-    EXPECT_CALL(pool_, newStream(_, _))
+    EXPECT_CALL(pool_, newStream(_, _, _))
         .WillRepeatedly([this](Envoy::Http::ResponseDecoder& decoder,
-                               Envoy::Http::ConnectionPool::Callbacks& callbacks)
+                               Envoy::Http::ConnectionPool::Callbacks& callbacks, 
+                               const Envoy::Http::ConnectionPool::Instance& options)
                             -> Envoy::Http::ConnectionPool::Cancellable* {
           decoders_.push_back(&decoder);
           NiceMock<Envoy::StreamInfo::MockStreamInfo> stream_info;
