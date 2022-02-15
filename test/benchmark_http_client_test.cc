@@ -116,7 +116,7 @@ public:
     EXPECT_CALL(pool_, newStream(_, _, _))
         .WillRepeatedly([this](Envoy::Http::ResponseDecoder& decoder,
                                Envoy::Http::ConnectionPool::Callbacks& callbacks,
-                               const Envoy::Http::ConnectionPool::Instance& options)
+                               const Envoy::Http::ConnectionPool::Instance::StreamOptions&)
                             -> Envoy::Http::ConnectionPool::Cancellable* {
           decoders_.push_back(&decoder);
           NiceMock<Envoy::StreamInfo::MockStreamInfo> stream_info;
@@ -424,17 +424,18 @@ TEST_F(BenchmarkClientHttpTest, RequestGeneratorProvidingDifferentPathsSendsRequ
 TEST_F(BenchmarkClientHttpTest, DrainTimeoutFires) {
   RequestGenerator default_request_generator = getDefaultRequestGenerator();
   setupBenchmarkClient(default_request_generator);
-  EXPECT_CALL(pool_, newStream(_, _))
-      .WillOnce(
-          [this](Envoy::Http::ResponseDecoder& decoder, Envoy::Http::ConnectionPool::Callbacks&)
-              -> Envoy::Http::ConnectionPool::Cancellable* {
-            // The decoder self-terminates in normal operation, but in this test that won't
-            // happen. Se we delete it ourselves. Note that we run our integration test with
-            // asan, so any leaks in real usage ought to be caught there.
-            delete &decoder;
-            client_->terminate();
-            return nullptr;
-          });
+  EXPECT_CALL(pool_, newStream(_, _, _))
+      .WillOnce([this](Envoy::Http::ResponseDecoder& decoder,
+                       Envoy::Http::ConnectionPool::Callbacks&,
+                       const Envoy::Http::ConnectionPool::Instance::StreamOptions&)
+                    -> Envoy::Http::ConnectionPool::Cancellable* {
+        // The decoder self-terminates in normal operation, but in this test that won't
+        // happen. Se we delete it ourselves. Note that we run our integration test with
+        // asan, so any leaks in real usage ought to be caught there.
+        delete &decoder;
+        client_->terminate();
+        return nullptr;
+      });
   EXPECT_CALL(pool_, hasActiveConnections()).WillOnce([]() -> bool { return true; });
   EXPECT_CALL(pool_, addIdleCallback(_));
   // We don't expect the callback that we pass here to fire.
