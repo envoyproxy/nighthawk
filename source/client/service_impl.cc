@@ -125,7 +125,7 @@ grpc::Status ServiceImpl::ExecutionStream(
     } else if (request.has_update_request() || request.has_cancellation_request()) {
       return finishGrpcStream(false, "Request is not supported yet.");
     } else {
-      NOT_REACHED_GCOVR_EXCL_LINE;
+      PANIC("not reached");
     }
   }
   return finishGrpcStream(true);

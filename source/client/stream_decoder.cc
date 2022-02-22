@@ -162,7 +162,7 @@ StreamDecoder::streamResetReasonToResponseFlag(Envoy::Http::StreamResetReason re
   case Envoy::Http::StreamResetReason::OverloadManager:
     return Envoy::StreamInfo::ResponseFlag::OverloadManager;
   }
-  NOT_REACHED_GCOVR_EXCL_LINE;
+  PANIC("not reached");
 }
 
 void StreamDecoder::finalizeActiveSpan() {
