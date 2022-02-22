@@ -49,26 +49,26 @@ def is_header(filename):
 
 
 def is_compile_target(target, args):
-    filename = target["file"]
-    if is_header(filename):
-        if args.include_all:
-            return True
-        if not args.include_headers:
-            return False
+  filename = target["file"]
+  if is_header(filename):
+    if args.include_all:
+      return True
+    if not args.include_headers:
+      return False
 
-    if filename.startswith("bazel-out/"):
-        if args.include_all:
-            return True
-        if not args.include_genfiles:
-            return False
+  if filename.startswith("bazel-out/"):
+    if args.include_all:
+      return True
+    if not args.include_genfiles:
+      return False
 
-    if filename.startswith("external/"):
-        if args.include_all:
-            return True
-        if not args.include_external:
-            return False
+  if filename.startswith("external/"):
+    if args.include_all:
+      return True
+    if not args.include_external:
+      return False
 
-    return True
+  return True
 
 
 def modify_compile_command(target, args):
