@@ -49,19 +49,26 @@ def is_header(filename):
 
 
 def is_compile_target(target, args):
-  filename = target["file"]
-  if not args.include_headers and is_header(filename):
-    return False
+    filename = target["file"]
+    if is_header(filename):
+        if args.include_all:
+            return True
+        if not args.include_headers:
+            return False
 
-  if not args.include_genfiles:
     if filename.startswith("bazel-out/"):
-      return False
+        if args.include_all:
+            return True
+        if not args.include_genfiles:
+            return False
 
-  if not args.include_external:
     if filename.startswith("external/"):
-      return False
+        if args.include_all:
+            return True
+        if not args.include_external:
+            return False
 
-  return True
+    return True
 
 
 def modify_compile_command(target, args):
@@ -103,6 +110,7 @@ if __name__ == "__main__":
   parser.add_argument('--include_genfiles', action='store_true')
   parser.add_argument('--include_headers', action='store_true')
   parser.add_argument('--vscode', action='store_true')
+  parser.add_argument('--include_all', action='store_true')
   parser.add_argument('bazel_targets', nargs='*', default=["//..."])  # unique
   args = parser.parse_args()
   fix_compilation_database(args, generate_compilation_database(args))
