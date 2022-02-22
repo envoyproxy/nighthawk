@@ -38,17 +38,15 @@ void HttpTestServerDecoderFilter::sendReply(const nighthawk::server::ResponseOpt
 Envoy::Http::FilterHeadersStatus
 HttpTestServerDecoderFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& headers,
                                            bool end_stream) {
-  config_->computeEffectiveConfiguration(headers);
+  effective_config_ = config_->computeEffectiveConfiguration(headers);
   if (end_stream) {
-    if (!config_->validateOrSendError(*decoder_callbacks_)) {
-      const absl::StatusOr<EffectiveFilterConfigurationPtr> effective_config =
-          config_->getEffectiveConfiguration();
-      if (effective_config.value()->echo_request_headers()) {
+    if (!config_->validateOrSendError(effective_config_, *decoder_callbacks_)) {
+      if (effective_config_.value()->echo_request_headers()) {
         std::stringstream headers_dump;
         headers_dump << "\nRequest Headers:\n" << headers;
         request_headers_dump_ = headers_dump.str();
       }
-      sendReply(*effective_config.value());
+      sendReply(*effective_config_.value());
     }
   }
   return Envoy::Http::FilterHeadersStatus::StopIteration;
@@ -57,8 +55,8 @@ HttpTestServerDecoderFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& header
 Envoy::Http::FilterDataStatus HttpTestServerDecoderFilter::decodeData(Envoy::Buffer::Instance&,
                                                                       bool end_stream) {
   if (end_stream) {
-    if (!config_->validateOrSendError(*decoder_callbacks_)) {
-      sendReply(*config_->getEffectiveConfiguration().value());
+    if (!config_->validateOrSendError(effective_config_, *decoder_callbacks_)) {
+      sendReply(*effective_config_.value());
     }
   }
   return Envoy::Http::FilterDataStatus::StopIterationNoBuffer;

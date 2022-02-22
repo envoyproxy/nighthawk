@@ -68,6 +68,7 @@ public:
 
 private:
   const HttpTimeTrackingFilterConfigSharedPtr config_;
+  absl::StatusOr<EffectiveFilterConfigurationPtr> effective_config_;
   uint64_t last_request_delta_ns_;
 };
 
