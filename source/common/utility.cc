@@ -53,7 +53,7 @@ Utility::translateFamilyOptionString(nighthawk::client::AddressFamily::AddressFa
   case nighthawk::client::AddressFamily_AddressFamilyOptions_AUTO:
     return Envoy::Network::DnsLookupFamily::Auto;
   default:
-    NOT_REACHED_GCOVR_EXCL_LINE;
+    PANIC("not reached");
   }
 }
 
