@@ -57,7 +57,7 @@ HttpDynamicDelayDecoderFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& head
 
 Envoy::Http::FilterDataStatus
 HttpDynamicDelayDecoderFilter::decodeData(Envoy::Buffer::Instance& buffer, bool end_stream) {
-  if (effective_config_.ok()) {
+  if (!effective_config_.ok()) {
     if (end_stream) {
       config_->validateOrSendError(effective_config_, *decoder_callbacks_);
       return Envoy::Http::FilterDataStatus::StopIterationNoBuffer;
