@@ -61,8 +61,8 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
   *(response.mutable_output()) = output_collector.toProto();
   process->shutdown();
   // We indicate the benchmark ended before writing the response to avoid a race
-  // with the client's follow up request coming in which might be the request to
-  // start the next benchmark. This only applies if the client chooses to run
+  // with the client's follow up request coming in, which might be a request to
+  // start the next benchmark. This is only relevant if the client chooses to run
   // multiple benchmarks within the same gRPC stream.
   {
     Envoy::Thread::LockGuard lock(lock_);
@@ -113,6 +113,7 @@ grpc::Status ServiceImpl::ExecutionStream(
         return finishGrpcStream(false, "Only a single benchmark session is allowed at a time.");
       }
 
+      // Gets set back to false in ServiceImpl::handleExecutionRequest.
       benchmark_in_progress_ = true;
       // We pass in std::launch::async to avoid lazy evaluation, as we want this to run
       // asap. See: https://en.cppreference.com/w/cpp/thread/async
