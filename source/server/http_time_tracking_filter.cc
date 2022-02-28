@@ -29,8 +29,8 @@ HttpTimeTrackingFilter::HttpTimeTrackingFilter(HttpTimeTrackingFilterConfigShare
 
 Envoy::Http::FilterHeadersStatus
 HttpTimeTrackingFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& headers, bool end_stream) {
-  config_->computeEffectiveConfiguration(headers);
-  if (end_stream && config_->validateOrSendError(*decoder_callbacks_)) {
+  effective_config_ = config_->computeEffectiveConfiguration(headers);
+  if (end_stream && config_->validateOrSendError(effective_config_, *decoder_callbacks_)) {
     return Envoy::Http::FilterHeadersStatus::StopIteration;
   }
   return Envoy::Http::FilterHeadersStatus::Continue;
@@ -38,7 +38,7 @@ HttpTimeTrackingFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& headers, bo
 
 Envoy::Http::FilterDataStatus HttpTimeTrackingFilter::decodeData(Envoy::Buffer::Instance&,
                                                                  bool end_stream) {
-  if (end_stream && config_->validateOrSendError(*decoder_callbacks_)) {
+  if (end_stream && config_->validateOrSendError(effective_config_, *decoder_callbacks_)) {
     return Envoy::Http::FilterDataStatus::StopIterationNoBuffer;
   }
   return Envoy::Http::FilterDataStatus::Continue;
@@ -46,11 +46,9 @@ Envoy::Http::FilterDataStatus HttpTimeTrackingFilter::decodeData(Envoy::Buffer::
 
 Envoy::Http::FilterHeadersStatus
 HttpTimeTrackingFilter::encodeHeaders(Envoy::Http::ResponseHeaderMap& response_headers, bool) {
-  const absl::StatusOr<EffectiveFilterConfigurationPtr> effective_config =
-      config_->getEffectiveConfiguration();
-  if (effective_config.ok()) {
+  if (effective_config_.ok()) {
     const std::string previous_request_delta_in_response_header =
-        effective_config.value()->emit_previous_request_delta_in_response_header();
+        effective_config_.value()->emit_previous_request_delta_in_response_header();
     if (!previous_request_delta_in_response_header.empty() && last_request_delta_ns_ > 0) {
       response_headers.appendCopy(
           Envoy::Http::LowerCaseString(previous_request_delta_in_response_header),

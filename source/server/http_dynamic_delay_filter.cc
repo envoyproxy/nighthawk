@@ -40,14 +40,14 @@ void HttpDynamicDelayDecoderFilter::onDestroy() {
 Envoy::Http::FilterHeadersStatus
 HttpDynamicDelayDecoderFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& headers,
                                              bool end_stream) {
-  config_->computeEffectiveConfiguration(headers);
-  if (config_->getEffectiveConfiguration().ok()) {
-    const absl::optional<int64_t> delay_ms = computeDelayMs(
-        *config_->getEffectiveConfiguration().value(), config_->approximateFilterInstances());
+  effective_config_ = config_->computeEffectiveConfiguration(headers);
+  if (effective_config_.ok()) {
+    const absl::optional<int64_t> delay_ms =
+        computeDelayMs(*effective_config_.value(), config_->approximateFilterInstances());
     maybeRequestFaultFilterDelay(delay_ms, headers);
   } else {
     if (end_stream) {
-      config_->validateOrSendError(*decoder_callbacks_);
+      config_->validateOrSendError(effective_config_, *decoder_callbacks_);
       return Envoy::Http::FilterHeadersStatus::StopIteration;
     }
     return Envoy::Http::FilterHeadersStatus::Continue;
@@ -57,9 +57,9 @@ HttpDynamicDelayDecoderFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& head
 
 Envoy::Http::FilterDataStatus
 HttpDynamicDelayDecoderFilter::decodeData(Envoy::Buffer::Instance& buffer, bool end_stream) {
-  if (!config_->getEffectiveConfiguration().ok()) {
+  if (!effective_config_.ok()) {
     if (end_stream) {
-      config_->validateOrSendError(*decoder_callbacks_);
+      config_->validateOrSendError(effective_config_, *decoder_callbacks_);
       return Envoy::Http::FilterDataStatus::StopIterationNoBuffer;
     }
     return Envoy::Http::FilterDataStatus::Continue;

@@ -53,7 +53,8 @@ BenchmarkClientStatistic::BenchmarkClientStatistic(
 
 Envoy::Http::ConnectionPool::Cancellable*
 Http1PoolImpl::newStream(Envoy::Http::ResponseDecoder& response_decoder,
-                         Envoy::Http::ConnectionPool::Callbacks& callbacks) {
+                         Envoy::Http::ConnectionPool::Callbacks& callbacks,
+                         const Instance::StreamOptions& options) {
   // In prefetch mode we try to keep the amount of connections at the configured limit.
   if (prefetch_connections_) {
     while (host_->cluster().resourceManager(priority_).connections().canCreate()) {
@@ -76,7 +77,7 @@ Http1PoolImpl::newStream(Envoy::Http::ResponseDecoder& response_decoder,
   }
 
   // Vanilla Envoy pool behavior.
-  return HttpConnPoolImplBase::newStream(response_decoder, callbacks);
+  return HttpConnPoolImplBase::newStream(response_decoder, callbacks, options);
 }
 
 BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
@@ -191,7 +192,9 @@ bool BenchmarkClientHttpImpl::tryStartRequest(CompletionCallback caller_completi
       *statistic_.origin_latency_statistic, request->header(), shouldMeasureLatencies(),
       content_length, generator_, http_tracer_, latency_response_header_name_);
   requests_initiated_++;
-  pool_data.value().newStream(*stream_decoder, *stream_decoder);
+  pool_data.value().newStream(*stream_decoder, *stream_decoder,
+                              {/*can_send_early_data_=*/false,
+                               /*can_use_http3_=*/true});
   return true;
 }
 
@@ -232,7 +235,7 @@ void BenchmarkClientHttpImpl::onPoolFailure(Envoy::Http::ConnectionPool::PoolFai
   case Envoy::Http::ConnectionPool::PoolFailureReason::Timeout:
     break;
   default:
-    NOT_REACHED_GCOVR_EXCL_LINE;
+    PANIC("not reached");
   }
 }
 

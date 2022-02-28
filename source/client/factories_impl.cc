@@ -112,7 +112,7 @@ OutputFormatterPtr OutputFormatterFactoryImpl::create(
   case nighthawk::client::OutputFormat::EXPERIMENTAL_FORTIO_PEDANTIC:
     return std::make_unique<Client::FortioPedanticOutputFormatterImpl>();
   default:
-    NOT_REACHED_GCOVR_EXCL_LINE;
+    PANIC("not reached");
   }
 }
 

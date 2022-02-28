@@ -36,6 +36,7 @@ public:
 private:
   void sendReply(const nighthawk::server::ResponseOptions& options);
   const HttpTestServerDecoderFilterConfigSharedPtr config_;
+  absl::StatusOr<EffectiveFilterConfigurationPtr> effective_config_;
   Envoy::Http::StreamDecoderFilterCallbacks* decoder_callbacks_;
   absl::optional<std::string> request_headers_dump_;
 };

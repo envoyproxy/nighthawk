@@ -6,7 +6,6 @@
 #include "envoy/common/pure.h"
 #include "envoy/common/time.h"
 #include "envoy/event/dispatcher.h"
-#include "envoy/stats/symbol_table.h"
 #include "envoy/upstream/cluster_manager.h"
 
 #include "nighthawk/common/platform_util.h"
