@@ -100,7 +100,7 @@ public:
   }
 };
 
-// An implementation of Envoy::Server::Instance used as a placeholder.  None of its methods
+// An implementation of Envoy::Server::Instance used as a placeholder. None of its methods
 // should be called because Nighthawk is not a real Envoy that performs xDS config validation.
 class NullServerInstance : public Envoy::Server::Instance {
   Envoy::Server::Admin& admin() override { PANIC("not implemented"); }
