@@ -127,7 +127,7 @@ message Protocol {
 
 // TODO(oschaaf): Ultimately this will be a load test specification. The fact that it
 // can arrive via CLI is just a concrete detail. Change this to reflect that.
-// Highest unused number is 110.
+// Highest unused number is 111.
 message CommandLineOptions {
   // The target requests-per-second rate. Default: 5.
   google.protobuf.UInt32Value requests_per_second = 1
@@ -264,10 +264,20 @@ message CommandLineOptions {
   google.protobuf.BoolValue simple_warmup = 32;
   // Optional set of stat sinks where Nighthawk metrics will be flushed to.
   repeated envoy.config.metrics.v3.StatsSink stats_sinks = 34;
-  // Time interval (number of seconds) between periodical flushes to configured stats sinks. If not
-  // specified the default is 5 seconds. Time interval must be at least 1s and at most 300s.
-  google.protobuf.UInt32Value stats_flush_interval = 35
-      [(validate.rules).uint32 = {gte: 1, lte: 300}];
+
+  oneof oneof_stats_flush_interval {
+    // Time interval (number of seconds) between periodical flushes to
+    // configured stats sinks. If not specified the default is 5 seconds.
+    // stats_flush_interval must be at least 1s and at most 300s.
+    google.protobuf.UInt32Value stats_flush_interval = 35
+        [(validate.rules).uint32 = {gte: 1, lte: 300}];
+
+    // Time interval in Duration between periodical flushes to configured stats
+    // sinks.
+    google.protobuf.Duration stats_flush_interval_duration = 110
+        [(validate.rules).duration.gte.nanos = 0];
+  }
+
   // Set an optional header name that will be returned in responses, whose values will be tracked in
   // a latency histogram if set. Can be used in tandem with the test server's response option
   // "emit_previous_request_delta_in_response_header" to record elapsed time between request

@@ -1,6 +1,7 @@
 #include "source/client/options_impl.h"
 
 #include "external/envoy/source/common/protobuf/message_validator_impl.h"
+#include "external/envoy/source/common/protobuf/protobuf.h"
 #include "external/envoy/source/common/protobuf/utility.h"
 
 #include "api/client/options.pb.validate.h"
@@ -331,10 +332,16 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
 
   TCLAP::ValueArg<uint32_t> stats_flush_interval(
       "", "stats-flush-interval",
-      fmt::format("Time interval (in seconds) between flushes to configured "
-                  "stats sinks. Default: {}.",
-                  stats_flush_interval_),
+      fmt::format(
+          "Time interval (in seconds) between flushes to configured "
+          "stats sinks. Mutually exclusive with --stats-flush-interval-duration. Default: {}.",
+          stats_flush_interval_),
       false, 5, "uint32_t", cmd);
+  TCLAP::ValueArg<std::string> stats_flush_interval_duration(
+      "", "stats-flush-interval-duration",
+      "Time interval (in Duration) between flushes to configured stats sinks. Mutually exclusive "
+      "with --stats-flush-interval.",
+      false, "", "duration", cmd);
 
   TCLAP::ValueArg<std::string> latency_response_header_name(
       "", "latency-response-header-name",
@@ -362,10 +369,19 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
     throw MalformedArgvException("--duration and --no-duration are mutually exclusive");
   }
 
-  // Verify that if --stats-flush-interval is set, then --stats-sinks must also be set.
-  if (stats_flush_interval.isSet() && !stats_sinks.isSet()) {
+  // --stats-flush-interval and --stats-flush-interval-duration are mutually exclusive.
+  if (stats_flush_interval.isSet() && stats_flush_interval_duration.isSet()) {
+    throw MalformedArgvException("--stats-flush-interval and --stats-flush-interval-duration are "
+                                 "mutually exclusive");
+  }
+
+  // Verify that if --stats-flush-interval or --stats-flush-interval-duration is
+  // set, then --stats-sinks must also be set.
+  if ((stats_flush_interval.isSet() || stats_flush_interval_duration.isSet()) &&
+      !stats_sinks.isSet()) {
     throw MalformedArgvException(
-        "if --stats-flush-interval is set, then --stats-sinks must also be set");
+        "if --stats-flush-interval or --stats-flush-interval-duration is set, "
+        "then --stats-sinks must also be set");
   }
 
   TCLAP_SET_IF_SPECIFIED(requests_per_second, requests_per_second_);
@@ -496,6 +512,17 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
     }
   }
   TCLAP_SET_IF_SPECIFIED(stats_flush_interval, stats_flush_interval_);
+  if (stats_flush_interval_duration.isSet()) {
+    if (Envoy::Protobuf::util::TimeUtil::FromString(stats_flush_interval_duration.getValue(),
+                                                    &stats_flush_interval_duration_)) {
+      if (stats_flush_interval_duration_.nanos() < 0 ||
+          stats_flush_interval_duration_.seconds() < 0) {
+        throw MalformedArgvException("--stats-flush-interval-duration is out of range");
+      }
+    } else {
+      throw MalformedArgvException("Invalid value for --stats-flush-interval-duration");
+    }
+  }
   TCLAP_SET_IF_SPECIFIED(latency_response_header_name, latency_response_header_name_);
 
   // CLI-specific tests.
@@ -725,6 +752,9 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   }
   stats_flush_interval_ =
       PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, stats_flush_interval, stats_flush_interval_);
+  if (options.has_stats_flush_interval_duration()) {
+    stats_flush_interval_duration_ = options.stats_flush_interval_duration();
+  }
   nighthawk_service_ =
       PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, nighthawk_service, nighthawk_service_);
   h2_use_multiple_connections_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(
@@ -933,7 +963,11 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
   for (const envoy::config::metrics::v3::StatsSink& stats_sink : stats_sinks_) {
     *command_line_options->add_stats_sinks() = stats_sink;
   }
-  command_line_options->mutable_stats_flush_interval()->set_value(stats_flush_interval_);
+  if (stats_flush_interval_duration_.seconds() > 0 || stats_flush_interval_duration_.nanos() > 0) {
+    *command_line_options->mutable_stats_flush_interval_duration() = stats_flush_interval_duration_;
+  } else {
+    command_line_options->mutable_stats_flush_interval()->set_value(stats_flush_interval_);
+  }
   command_line_options->mutable_latency_response_header_name()->set_value(
       latency_response_header_name_);
   if (scheduled_start_.has_value()) {
