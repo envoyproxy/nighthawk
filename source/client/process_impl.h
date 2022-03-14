@@ -4,6 +4,7 @@
 
 #include "envoy/api/api.h"
 #include "envoy/network/address.h"
+#include "envoy/server/instance.h"
 #include "envoy/stats/store.h"
 #include "envoy/tracing/http_tracer.h"
 
@@ -210,6 +211,9 @@ private:
   bool cancelled_{false};
   std::unique_ptr<FlushWorkerImpl> flush_worker_;
   Envoy::Router::ContextImpl router_context_;
+  // Null server implementation used as a placeholder. Its methods should never get called
+  // because Nighthawk is not a full Envoy server that performs xDS config validation.
+  std::unique_ptr<Envoy::Server::Instance> server_;
 };
 
 } // namespace Client
