@@ -136,4 +136,4 @@ def test_extractWarningsAndErrors_applies_all_matching_ignore_lists():
 
 
 if __name__ == "__main__":
-  raise SystemExit(pytest.main([__file__]))
+  raise SystemExit(pytest.main([__file__, "--assert=plain"]))
