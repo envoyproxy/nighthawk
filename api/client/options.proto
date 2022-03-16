@@ -275,7 +275,7 @@ message CommandLineOptions {
     // Time interval in Duration between periodical flushes to configured stats
     // sinks.
     google.protobuf.Duration stats_flush_interval_duration = 110
-        [(validate.rules).duration.gte.nanos = 0];
+        [(validate.rules).duration = {gte {seconds: 0 nanos: 0}}];
   }
 
   // Set an optional header name that will be returned in responses, whose values will be tracked in

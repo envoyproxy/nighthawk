@@ -339,8 +339,8 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       false, 5, "uint32_t", cmd);
   TCLAP::ValueArg<std::string> stats_flush_interval_duration(
       "", "stats-flush-interval-duration",
-      "Time interval (in Duration) between flushes to configured stats sinks. Mutually exclusive "
-      "with --stats-flush-interval.",
+      "Time interval (in Duration) between flushes to configured stats sinks. For example '1s' or "
+      "'1.000000001s'. Mutually exclusive with --stats-flush-interval.",
       false, "", "duration", cmd);
 
   TCLAP::ValueArg<std::string> latency_response_header_name(

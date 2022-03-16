@@ -121,23 +121,32 @@ TEST_F(OptionsImplTest, InvalidStatsFlushIntervalDuration) {
       MalformedArgvException, "Invalid value for --stats-flush-interval-duration");
 }
 
-TEST_F(OptionsImplTest, OutOfRangeStatsFlushIntervalDuration) {
+TEST_F(OptionsImplTest, SecondsOutOfRangeStatsFlushIntervalDuration) {
+  const std::string sink_json =
+      "{name:\"envoy.stat_sinks.statsd\",typed_config:{\"@type\":\"type."
+      "googleapis.com/"
+      "envoy.config.metrics.v3.StatsdSink\",tcp_cluster_name:\"statsd\"}}";
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                              "{} --stats-flush-interval-duration -1s --stats-sinks {} http://foo",
+                              client_name_, sink_json)),
+                          MalformedArgvException,
+                          "--stats-flush-interval-duration is out of range");
+}
+
+TEST_F(OptionsImplTest, NanosOutOfRangeStatsFlushIntervalDuration) {
   const std::string sink_json =
       "{name:\"envoy.stat_sinks.statsd\",typed_config:{\"@type\":\"type."
       "googleapis.com/"
       "envoy.config.metrics.v3.StatsdSink\",tcp_cluster_name:\"statsd\"}}";
   EXPECT_THROW_WITH_REGEX(
       TestUtility::createOptionsImpl(fmt::format(
-          "{} --stats-flush-interval-duration -1.000000001s --stats-sinks {} http://foo",
+          "{} --stats-flush-interval-duration -0.000000001s --stats-sinks {} http://foo",
           client_name_, sink_json)),
       MalformedArgvException, "--stats-flush-interval-duration is out of range");
 }
 
-TEST_F(OptionsImplTest, StatsFlushIntervalAndStatsFlushIntervalDurationSanity) {
-  const std::string sink_json =
-      "{name:\"envoy.stat_sinks.statsd\",typed_config:{\"@type\":\"type."
-      "googleapis.com/"
-      "envoy.config.metrics.v3.StatsdSink\",tcp_cluster_name:\"statsd\"}}";
+TEST_F(OptionsImplTest,
+       SanityCheckDefaultWhenBothStatsFlushIntervalAndStatsFlushIntervalDurationNotSet) {
   std::unique_ptr<OptionsImpl> options =
       TestUtility::createOptionsImpl(fmt::format("{} http://foo", client_name_));
   EXPECT_EQ(5, options->statsFlushInterval());
@@ -148,11 +157,18 @@ TEST_F(OptionsImplTest, StatsFlushIntervalAndStatsFlushIntervalDurationSanity) {
   EXPECT_FALSE(cmd->has_stats_flush_interval_duration());
   ASSERT_TRUE(cmd->has_stats_flush_interval());
   EXPECT_EQ(5, cmd->stats_flush_interval().value());
+}
 
-  options = TestUtility::createOptionsImpl(
+TEST_F(OptionsImplTest, SanityCheckWhenStatsFlushIntervalDurationIsSet) {
+  const std::string sink_json =
+      "{name:\"envoy.stat_sinks.statsd\",typed_config:{\"@type\":\"type."
+      "googleapis.com/"
+      "envoy.config.metrics.v3.StatsdSink\",tcp_cluster_name:\"statsd\"}}";
+  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(
       fmt::format("{} --stats-flush-interval-duration 1.000000001s --stats-sinks {} http://foo",
                   client_name_, sink_json));
-  cmd = options->toCommandLineOptions();
+  CommandLineOptionsPtr cmd = options->toCommandLineOptions();
+  EXPECT_FALSE(cmd->has_stats_flush_interval());
   ASSERT_TRUE(cmd->has_stats_flush_interval_duration());
   EXPECT_EQ(1, cmd->stats_flush_interval_duration().seconds());
   EXPECT_EQ(1, cmd->stats_flush_interval_duration().nanos());

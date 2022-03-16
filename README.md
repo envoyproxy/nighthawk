@@ -102,7 +102,8 @@ time between request arrivals. Default: ""
 
 --stats-flush-interval-duration <duration>
 Time interval (in Duration) between flushes to configured stats sinks.
-Mutually exclusive with --stats-flush-interval.
+For example '1s' or '1.000000001s'. Mutually exclusive with
+--stats-flush-interval.
 
 --stats-flush-interval <uint32_t>
 Time interval (in seconds) between flushes to configured stats sinks.
