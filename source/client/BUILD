@@ -133,6 +133,7 @@ envoy_cc_library(
         "@envoy//source/server/config_validation:admin_lib_with_external_headers",
         "@envoy//envoy/http:protocol_interface_with_external_headers",
         "@envoy//envoy/network:address_interface",
+        "@envoy//envoy/server:instance_interface",
         "@envoy//source/common/common:statusor_lib_with_external_headers",
         "@envoy//source/common/router:context_lib_with_external_headers",
         "@envoy_api//envoy/config/core/v3:pkg_cc_proto",
