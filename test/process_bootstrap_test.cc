@@ -1241,6 +1241,122 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithCustomOptions) {
   Envoy::MessageUtil::validate(*bootstrap, Envoy::ProtobufMessage::getStrictValidationVisitor());
 }
 
+TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithStatsFlushIntervalDuration) {
+  setupUriResolutionExpectations();
+
+  const std::string stats_sink_json =
+      "{name:\"envoy.stat_sinks.statsd\",typed_config:{\"@type\":\"type."
+      "googleapis.com/"
+      "envoy.config.metrics.v3.StatsdSink\",tcp_cluster_name:\"statsd\"}}";
+
+  const std::string tls_context_json = "{common_tls_context:{tls_params:{"
+                                       "cipher_suites:[\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"]}}}";
+
+  std::unique_ptr<Client::OptionsImpl> options = Client::TestUtility::createOptionsImpl(
+      fmt::format("nighthawk_client "
+                  "--max-pending-requests 10 "
+                  "--stats-sinks {} "
+                  "--stats-flush-interval-duration 1.000000001s "
+                  "--tls-context {} "
+                  "https://www.example.org",
+                  stats_sink_json, tls_context_json));
+
+  absl::StatusOr<Bootstrap> expected_bootstrap = parseBootstrapFromText(R"pb(
+    static_resources {
+      clusters {
+        name: "0"
+        type: STATIC
+        connect_timeout {
+          seconds: 30
+        }
+        circuit_breakers {
+          thresholds {
+            max_connections {
+              value: 100
+            }
+            max_pending_requests {
+              value: 10
+            }
+            max_requests {
+              value: 100
+            }
+            max_retries {
+            }
+          }
+        }
+        transport_socket {
+          name: "envoy.transport_sockets.tls"
+          typed_config {
+            [type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext] {
+              common_tls_context {
+                tls_params {
+                  cipher_suites: "-ALL:ECDHE-RSA-AES256-GCM-SHA384"
+                }
+                alpn_protocols: "http/1.1"
+              }
+              sni: "www.example.org"
+            }
+          }
+        }
+        load_assignment {
+          cluster_name: "0"
+          endpoints {
+            lb_endpoints {
+              endpoint {
+                address {
+                  socket_address {
+                    address: "127.0.0.1"
+                    port_value: 443
+                  }
+                }
+              }
+            }
+          }
+        }
+        typed_extension_protocol_options {
+          key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
+          value {
+            [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
+              common_http_protocol_options {
+                max_requests_per_connection {
+                  value: 4294937295
+                }
+              }
+              explicit_http_config {
+                http_protocol_options {
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    stats_sinks {
+      name: "envoy.stat_sinks.statsd"
+      typed_config {
+        [type.googleapis.com/envoy.config.metrics.v3.StatsdSink] {
+          tcp_cluster_name: "statsd"
+        }
+      }
+    }
+    stats_flush_interval {
+      seconds: 1
+      nanos: 1
+    }
+  )pb");
+  ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
+
+  NiceMock<Envoy::Api::MockApi> api;
+  absl::StatusOr<Bootstrap> bootstrap =
+      createBootstrapConfiguration(mock_dispatcher_, api, *options, mock_dns_resolver_factory_,
+                                   typed_dns_resolver_config_, number_of_workers_);
+  ASSERT_THAT(bootstrap, StatusIs(absl::StatusCode::kOk));
+  EXPECT_THAT(*bootstrap, EqualsProto(*expected_bootstrap));
+
+  // Ensure the generated bootstrap is valid.
+  Envoy::MessageUtil::validate(*bootstrap, Envoy::ProtobufMessage::getStrictValidationVisitor());
+}
+
 TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapSetsMaxRequestToAtLeastOne) {
   setupUriResolutionExpectations();
 

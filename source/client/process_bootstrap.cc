@@ -254,7 +254,13 @@ absl::StatusOr<Bootstrap> createBootstrapConfiguration(
   for (const StatsSink& stats_sink : options.statsSinks()) {
     *bootstrap.add_stats_sinks() = stats_sink;
   }
-  bootstrap.mutable_stats_flush_interval()->set_seconds(options.statsFlushInterval());
+
+  if (options.statsFlushIntervalDuration().seconds() > 0 ||
+      options.statsFlushIntervalDuration().nanos() > 0) {
+    *bootstrap.mutable_stats_flush_interval() = options.statsFlushIntervalDuration();
+  } else {
+    bootstrap.mutable_stats_flush_interval()->set_seconds(options.statsFlushInterval());
+  }
 
   if (options.upstreamBindConfig().has_value()) {
     *bootstrap.mutable_cluster_manager()->mutable_upstream_bind_config() =
