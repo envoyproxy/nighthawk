@@ -258,8 +258,10 @@ TEST(HttpTestServerDecoderFilterTest, HeaderMerge) {
       std::make_shared<Server::HttpTestServerDecoderFilterConfig>(initial_options);
   Server::HttpTestServerDecoderFilter f(config);
 
+  Envoy::Http::TestRequestHeaderMapImpl request_headers{
+      {":method", "GET"}, {":path", "/"}, {":authority", "test.com"}, {"foo", "bar2"}};
   absl::StatusOr<Server::EffectiveFilterConfigurationPtr> options_or =
-      config->getEffectiveConfiguration();
+      config->computeEffectiveConfiguration(request_headers);
   ASSERT_TRUE(options_or.ok());
   nighthawk::server::ResponseOptions options = *options_or.value();
   EXPECT_EQ(1, options.response_headers_size());

@@ -31,6 +31,8 @@ public:
   MOCK_METHOD(uint32_t, requestBodySize, (), (const, override));
   MOCK_METHOD(envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext&, tlsContext, (),
               (const, override));
+  MOCK_METHOD(absl::optional<envoy::config::core::v3::BindConfig>&, upstreamBindConfig, (),
+              (const, override));
   MOCK_METHOD(absl::optional<envoy::config::core::v3::TransportSocket>&, transportSocket, (),
               (const, override));
   MOCK_METHOD(uint32_t, maxPendingRequests, (), (const, override));
@@ -62,6 +64,7 @@ public:
   MOCK_METHOD(std::vector<envoy::config::metrics::v3::StatsSink>, statsSinks, (),
               (const, override));
   MOCK_METHOD(uint32_t, statsFlushInterval, (), (const, override));
+  MOCK_METHOD(Envoy::ProtobufWkt::Duration, statsFlushIntervalDuration, (), (const, override));
   MOCK_METHOD(std::string, responseHeaderWithLatencyInput, (), (const, override));
   MOCK_METHOD(bool, allowEnvoyDeprecatedV2Api, (), (const));
   MOCK_METHOD(absl::optional<Envoy::SystemTime>, scheduled_start, (), (const, override));

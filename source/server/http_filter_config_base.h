@@ -42,28 +42,22 @@ public:
    * any configuration provided via request headers.
    *
    * @param request_headers Full set of request headers to be inspected for configuration.
+   * @return const absl::StatusOr<EffectiveFilterConfigurationPtr> The effective configuration, or
+   * an error status.
    */
-  void computeEffectiveConfiguration(const Envoy::Http::RequestHeaderMap& request_headers);
+  const absl::StatusOr<EffectiveFilterConfigurationPtr>
+  computeEffectiveConfiguration(const Envoy::Http::RequestHeaderMap& request_headers);
 
   /**
    * Send an error reply based on status of the effective configuration. For example, when dynamic
    * configuration delivered via request headers could not be parsed or was out of spec.
    *
+   * @param effective_config Effective filter configuration.
    * @param decoder_callbacks Decoder used to generate the reply.
    * @return true iff an error reply was generated.
    */
-  bool validateOrSendError(Envoy::Http::StreamDecoderFilterCallbacks& decoder_callbacks) const;
-
-  /**
-   * @brief Get the effective configuration. Depending on state ,this could be one of static
-   * configuration, dynamic configuration, or an error status.
-   *
-   * @return const absl::StatusOr<EffectiveFilterConfigurationPtr> The effective configuration, or
-   * an error status.
-   */
-  const absl::StatusOr<EffectiveFilterConfigurationPtr> getEffectiveConfiguration() const {
-    return effective_config_;
-  }
+  bool validateOrSendError(absl::StatusOr<EffectiveFilterConfigurationPtr>& effective_config,
+                           Envoy::Http::StreamDecoderFilterCallbacks& decoder_callbacks) const;
 
   /**
    * @return absl::string_view Name of the filter that constructed this instance.
@@ -73,7 +67,6 @@ public:
 private:
   const std::string filter_name_;
   const std::shared_ptr<nighthawk::server::ResponseOptions> server_config_;
-  absl::StatusOr<EffectiveFilterConfigurationPtr> effective_config_;
 };
 
 } // namespace Server

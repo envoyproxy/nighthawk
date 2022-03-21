@@ -334,6 +334,39 @@ def test_h3_quic(quic_test_server_fixture):
   asserts.assertCounterEqual(counters, "default.total_match_count", 1)
 
 
+def test_h3_quic_with_custom_upstream_bind_configuration(quic_test_server_fixture):
+  """Test http3 quic with a custom upstream bind configuration.
+
+  Runs the CLI configured to use HTTP/3 Quic against our test server, and sanity
+  checks statistics from both client and server. Sets custom address to bind
+  upstream requests to.
+  """
+  address = quic_test_server_fixture.server_ip
+  upstream_bind_config = f"{{source_address:{{address:\"{address}\",port_value:0}}}}"
+
+  parsed_json, _ = quic_test_server_fixture.runNighthawkClient([
+      "--protocol http3",
+      quic_test_server_fixture.getTestServerRootUri(),
+      "--rps",
+      "100",
+      "--duration",
+      "100",
+      "--termination-predicate",
+      "benchmark.http_2xx:24",
+      "--max-active-requests",
+      "1",
+      # Envoy doesn't support disabling certificate verification on Quic
+      # connections, so the host in our requests has to match the hostname in
+      # the leaf certificate.
+      "--request-header",
+      "Host:www.lyft.com",
+      "--upstream-bind-config %s" % upstream_bind_config
+  ])
+  counters = quic_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
+  asserts.assertCounterEqual(counters, "benchmark.http_2xx", 25)
+  asserts.assertCounterEqual(counters, "upstream_cx_http3_total", 1)
+
+
 def _do_tls_configuration_test(https_test_server_fixture, cli_parameter, use_h2):
   """Test with different ciphers.
 

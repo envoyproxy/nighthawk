@@ -51,6 +51,7 @@ bazel build -c opt //:nighthawk
 USAGE:
 
 bazel-bin/nighthawk_client  [--latency-response-header-name <string>]
+[--stats-flush-interval-duration <duration>]
 [--stats-flush-interval <uint32_t>]
 [--stats-sinks <string>] ... [--no-duration]
 [--simple-warmup]
@@ -72,6 +73,7 @@ format>] [--sequencer-idle-strategy <spin
 <uint32_t>] [--max-active-requests
 <uint32_t>] [--max-pending-requests
 <uint32_t>] [--transport-socket <string>]
+[--upstream-bind-config <string>]
 [--tls-context <string>]
 [--request-body-size <uint32_t>]
 [--request-header <string>] ...
@@ -98,14 +100,19 @@ tandem with the test server's response option
 "emit_previous_request_delta_in_response_header" to record elapsed
 time between request arrivals. Default: ""
 
+--stats-flush-interval-duration <duration>
+Time interval (in Duration) between flushes to configured stats sinks.
+For example '1s' or '1.000000001s'. Mutually exclusive with
+--stats-flush-interval.
+
 --stats-flush-interval <uint32_t>
 Time interval (in seconds) between flushes to configured stats sinks.
-Default: 5.
+Mutually exclusive with --stats-flush-interval-duration. Default: 5.
 
 --stats-sinks <string>  (accepted multiple times)
-Stats sinks (in json or compact yaml) where Nighthawk metrics will be
-flushed. This argument is intended to be specified multiple times.
-Example (json): {name:"envoy.stat_sinks.statsd"
+Stats sinks (in json) where Nighthawk metrics will be flushed. This
+argument is intended to be specified multiple times. Example (json):
+{name:"envoy.stat_sinks.statsd"
 ,typed_config:{"@type":"type.googleapis.com/envoy.config.metrics.v3.St
 atsdSink",tcp_cluster_name:"statsd"}}
 
@@ -121,8 +128,8 @@ Nighthawk writes to the output. Default is false.
 --request-source-plugin-config <string>
 [Request
 Source](https://github.com/envoyproxy/nighthawk/blob/main/docs/root/ov
-erview.md#requestsource) plugin configuration in json or compact yaml.
-Mutually exclusive with --request-source. Example (json):
+erview.md#requestsource) plugin configuration in json. Mutually
+exclusive with --request-source. Example (json):
 {name:"nighthawk.stub-request-source-plugin"
 ,typed_config:{"@type":"type.googleapis.com/nighthawk.request_source.S
 tubPluginConfig",test_value:"3"}}
@@ -207,18 +214,22 @@ Max pending requests (default: 0, no client side queuing. Specifying
 any other value will allow client-side queuing of requests).
 
 --transport-socket <string>
-Transport socket configuration in json or compact yaml. Mutually
-exclusive with --tls-context. Example (json):
-{name:"envoy.transport_sockets.tls"
+Transport socket configuration in json. Mutually exclusive with
+--tls-context. Example (json): {name:"envoy.transport_sockets.tls"
 ,typed_config:{"@type":"type.googleapis.com/envoy.extensions.transport
 _sockets.tls.v3.UpstreamTlsContext"
 ,common_tls_context:{tls_params:{cipher_suites:["-ALL:ECDHE-RSA-AES128
 -SHA"]}}}}
 
+--upstream-bind-config <string>
+BindConfig in json. If specified, this configuration is used to bind
+newly established upstream connections. Allows selecting the source
+address, port and socket options used when sending requests. Example
+(json): {source_address:{address:"127.0.0.1",port_value:0}}
+
 --tls-context <string>
-DEPRECATED, use --transport-socket instead. Tls context configuration
-in json or compact yaml. Mutually exclusive with --transport-socket.
-Example (json):
+DEPRECATED, use --transport-socket instead. TlS context configuration
+in json. Mutually exclusive with --transport-socket. Example (json):
 {common_tls_context:{tls_params:{cipher_suites:["-ALL:ECDHE-RSA-AES128
 -SHA"]}}}
 

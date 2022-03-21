@@ -160,6 +160,7 @@ public:
 
 private:
   const HttpDynamicDelayDecoderFilterConfigSharedPtr config_;
+  absl::StatusOr<EffectiveFilterConfigurationPtr> effective_config_;
   Envoy::Http::StreamDecoderFilterCallbacks* decoder_callbacks_;
   bool destroyed_{false};
 };

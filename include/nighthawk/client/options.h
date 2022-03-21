@@ -8,11 +8,14 @@
 #include "envoy/common/pure.h"
 #include "envoy/common/time.h"
 #include "envoy/config/cluster/v3/cluster.pb.h"
+#include "envoy/config/core/v3/address.pb.h"
 #include "envoy/config/core/v3/base.pb.h"
 #include "envoy/config/metrics/v3/stats.pb.h"
 #include "envoy/http/protocol.h"
 
 #include "nighthawk/common/termination_predicate.h"
+
+#include "external/envoy/source/common/protobuf/protobuf.h"
 
 #include "api/client/options.pb.h"
 
@@ -52,6 +55,8 @@ public:
   virtual uint32_t requestBodySize() const PURE;
   virtual const envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext&
   tlsContext() const PURE;
+  virtual const absl::optional<envoy::config::core::v3::BindConfig>&
+  upstreamBindConfig() const PURE;
   virtual const absl::optional<envoy::config::core::v3::TransportSocket>&
   transportSocket() const PURE;
   virtual uint32_t maxPendingRequests() const PURE;
@@ -83,6 +88,7 @@ public:
   virtual bool noDuration() const PURE;
   virtual std::vector<envoy::config::metrics::v3::StatsSink> statsSinks() const PURE;
   virtual uint32_t statsFlushInterval() const PURE;
+  virtual Envoy::ProtobufWkt::Duration statsFlushIntervalDuration() const PURE;
   virtual std::string responseHeaderWithLatencyInput() const PURE;
 
   virtual absl::optional<Envoy::SystemTime> scheduled_start() const PURE;

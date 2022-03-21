@@ -9,6 +9,7 @@
 #include "nighthawk/common/exception.h"
 
 #include "external/envoy/source/common/common/logger.h"
+#include "external/envoy/source/common/protobuf/protobuf.h"
 
 #include "absl/types/optional.h"
 #include "tclap/CmdLine.h"
@@ -54,6 +55,9 @@ public:
   tlsContext() const override {
     return tls_context_;
   };
+  const absl::optional<envoy::config::core::v3::BindConfig>& upstreamBindConfig() const override {
+    return upstream_bind_config_;
+  }
   const absl::optional<envoy::config::core::v3::TransportSocket>& transportSocket() const override {
     return transport_socket_;
   }
@@ -95,6 +99,9 @@ public:
     return stats_sinks_;
   }
   uint32_t statsFlushInterval() const override { return stats_flush_interval_; }
+  Envoy::ProtobufWkt::Duration statsFlushIntervalDuration() const override {
+    return stats_flush_interval_duration_;
+  }
   std::string responseHeaderWithLatencyInput() const override {
     return latency_response_header_name_;
   };
@@ -128,6 +135,7 @@ private:
   std::vector<std::string> request_headers_;
   uint32_t request_body_size_{0};
   envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext tls_context_;
+  absl::optional<envoy::config::core::v3::BindConfig> upstream_bind_config_;
   absl::optional<envoy::config::core::v3::TransportSocket> transport_socket_;
   absl::optional<envoy::config::core::v3::TypedExtensionConfig> request_source_plugin_config_;
 
@@ -157,6 +165,7 @@ private:
   bool no_duration_{false};
   std::vector<envoy::config::metrics::v3::StatsSink> stats_sinks_;
   uint32_t stats_flush_interval_{5};
+  Envoy::ProtobufWkt::Duration stats_flush_interval_duration_;
   std::string latency_response_header_name_;
   absl::optional<Envoy::SystemTime> scheduled_start_;
   absl::optional<std::string> execution_id_;
