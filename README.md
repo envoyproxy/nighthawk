@@ -257,8 +257,8 @@ Use proactive connection prefetching (HTTP/1 only).
 
 --output-format <json|human|yaml|dotted|fortio
 |experimental_fortio_pedantic>
-Output format. Possible values: {"json", "human", "yaml", "dotted",
-"fortio", "experimental_fortio_pedantic"}. The default output format
+Output format. Possible values: ["json", "human", "yaml", "dotted",
+"fortio", "experimental_fortio_pedantic"]. The default output format
 is 'human'.
 
 -v <trace|debug|info|warn|error|critical>,  --verbosity <trace|debug
@@ -390,8 +390,8 @@ Where:
 
 --output-format <json|human|yaml|dotted|fortio
 |experimental_fortio_pedantic>
-(required)  Output format. Possible values: {"json", "human", "yaml",
-"dotted", "fortio", "experimental_fortio_pedantic"}.
+(required)  Output format. Possible values: ["json", "human", "yaml",
+"dotted", "fortio", "experimental_fortio_pedantic"].
 
 --,  --ignore_rest
 Ignores the rest of the labeled arguments following this flag.
