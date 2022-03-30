@@ -4,6 +4,7 @@ parameters:
   type: string
   default: build 
 
+steps:
 - bash: |
     echo "disk space at beginning of build:"
     df -h
