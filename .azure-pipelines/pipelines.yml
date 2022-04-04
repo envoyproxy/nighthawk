@@ -1,0 +1,23 @@
+trigger:
+  branches:
+    include:
+    - "main"
+
+stages:
+- stage: check
+  dependsOn: []
+  jobs:
+  - job: bazel
+    displayName: "do_ci.sh"
+    dependsOn: []
+    strategy:
+      maxParallel: 1
+      matrix:
+        build:
+          CI_TARGET: "build"
+    timeoutInMinutes: 120
+    pool: "x64-large"
+    steps:
+    - template: bazel.yml
+      parameters:
+        ciTarget: $(CI_TARGET)
