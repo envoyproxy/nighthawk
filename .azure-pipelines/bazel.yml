@@ -13,6 +13,8 @@ steps:
 - script: ci/run_envoy_docker.sh 'ci/do_ci.sh ${{ parameters.ciTarget }}'
   workingDirectory: $(Build.SourcesDirectory)
   displayName: "Run the CI script"
+  env:
+    BAZEL_REMOTE_CACHE: $(LocalBuildCache)
 
 - bash: |
     echo "disk space at end of build:"
