@@ -241,11 +241,9 @@ if [ -n "$CIRCLECI" ]; then
         BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} \
           --discard_analysis_cache --notrack_incremental_state --nokeep_state_after_build"
     fi
-    echo "Running with ${NUM_CPUS} cpus and BAZEL_BUILD_OPTIONS: ${BAZEL_BUILD_OPTIONS}"
     BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} --jobs=${NUM_CPUS}"
-else
-    echo "Running with ${NUM_CPUS} cpus and BAZEL_BUILD_OPTIONS: ${BAZEL_BUILD_OPTIONS}"
 fi
+echo "Running with ${NUM_CPUS} cpus and BAZEL_BUILD_OPTIONS: ${BAZEL_BUILD_OPTIONS}"
 
 export BAZEL_TEST_OPTIONS="${BAZEL_BUILD_OPTIONS} --test_env=HOME --test_env=PYTHONUSERBASE \
 --test_env=UBSAN_OPTIONS=print_stacktrace=1 \
