@@ -6,6 +6,101 @@ trigger:
 stages:
 - stage: check
   dependsOn: []
+  pool: "x64-large"
+  jobs:
+  - job: bazel
+    displayName: "do_ci.sh"
+    dependsOn: []
+    strategy:
+      maxParallel: 2
+      matrix:
+        build:
+          CI_TARGET: "build"
+        format:
+          CI_TARGET: "format"
+    timeoutInMinutes: 120
+    steps:
+    - template: bazel.yml
+      parameters:
+        ciTarget: $(CI_TARGET)
+  - job: bazel
+    displayName: "do_ci.sh"
+    dependsOn: []
+    strategy:
+      maxParallel: 1
+      matrix:
+        clang_tidy:
+          CI_TARGET: "clang_tidy"
+    timeoutInMinutes: 120
+    steps:
+    - template: bazel.yml
+      parameters:
+        ciTarget: $(CI_TARGET)
+
+- stage: test
+  dependsOn: ["check"]
+  pool: "x64-large"
+  jobs:
+  - job: bazel
+    displayName: "do_ci.sh"
+    dependsOn: []
+    strategy:
+      # Both test and benchmark need dedicated resources for stability.
+      maxParallel: 1
+      matrix:
+        test:
+          CI_TARGET: "test"
+        benchmark:
+          CI_TARGET: "benchmark"
+    timeoutInMinutes: 120
+    steps:
+    - template: bazel.yml
+      parameters:
+        ciTarget: $(CI_TARGET)
+
+- stage: sanitizers
+  dependsOn: ["test"]
+  pool: "x64-large"
+  jobs:
+  - job: bazel
+    displayName: "do_ci.sh"
+    dependsOn: []
+    strategy:
+      maxParallel: 2
+      matrix:
+        asan:
+          CI_TARGET: "asan"
+        tsan:
+          CI_TARGET: "tsan"
+    timeoutInMinutes: 120
+    steps:
+    - template: bazel.yml
+      parameters:
+        ciTarget: $(CI_TARGET)
+
+- stage: coverage
+  dependsOn: ["sanitizers"]
+  pool: "x64-large"
+  jobs:
+  - job: bazel
+    displayName: "do_ci.sh"
+    dependsOn: []
+    strategy:
+      maxParallel: 2
+      matrix:
+        coverage:
+          CI_TARGET: "coverage"
+        coverage_integration:
+          CI_TARGET: "coverage_integration"
+    timeoutInMinutes: 120
+    steps:
+    - template: bazel.yml
+      parameters:
+        ciTarget: $(CI_TARGET)
+
+- stage: test_gcc
+  dependsOn: ["check"]
+  pool: "x64-large"
   jobs:
   - job: bazel
     displayName: "do_ci.sh"
@@ -13,12 +108,9 @@ stages:
     strategy:
       maxParallel: 1
       matrix:
-        build:
-          CI_TARGET: "build"
-        test:
-          CI_TARGET: "test"
+        test_gcc:
+          CI_TARGET: "test_gcc"
     timeoutInMinutes: 120
-    pool: "x64-large"
     steps:
     - template: bazel.yml
       parameters:
