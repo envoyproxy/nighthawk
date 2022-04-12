@@ -98,7 +98,7 @@ stages:
         ciTarget: $(CI_TARGET)
 
 - stage: coverage
-  dependsOn: ["sanitizers"]
+  dependsOn: ["test"]
   pool: "x64-large"
   jobs:
   - job: coverage
