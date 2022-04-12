@@ -8,8 +8,7 @@ stages:
   dependsOn: []
   pool: "x64-large"
   jobs:
-  - job: bazel
-    displayName: "do_ci.sh"
+  - job: build_and_format
     dependsOn: []
     strategy:
       maxParallel: 2
@@ -23,8 +22,7 @@ stages:
     - template: bazel.yml
       parameters:
         ciTarget: $(CI_TARGET)
-  - job: bazel
-    displayName: "do_ci.sh"
+  - job: clang_tidy
     dependsOn: []
     strategy:
       maxParallel: 1
@@ -41,9 +39,7 @@ stages:
   dependsOn: ["check"]
   pool: "x64-large"
   jobs:
-  - job: bazel
-    displayName: "do_ci.sh"
-    dependsOn: []
+  - job: test_and_benchmark
     strategy:
       # Both test and benchmark need dedicated resources for stability.
       maxParallel: 1
@@ -62,9 +58,7 @@ stages:
   dependsOn: ["test"]
   pool: "x64-large"
   jobs:
-  - job: bazel
-    displayName: "do_ci.sh"
-    dependsOn: []
+  - job: sanitizers
     strategy:
       maxParallel: 2
       matrix:
@@ -82,9 +76,7 @@ stages:
   dependsOn: ["sanitizers"]
   pool: "x64-large"
   jobs:
-  - job: bazel
-    displayName: "do_ci.sh"
-    dependsOn: []
+  - job: coverage
     strategy:
       maxParallel: 2
       matrix:
@@ -102,9 +94,7 @@ stages:
   dependsOn: ["check"]
   pool: "x64-large"
   jobs:
-  - job: bazel
-    displayName: "do_ci.sh"
-    dependsOn: []
+  - job: test_gcc
     strategy:
       maxParallel: 1
       matrix:
