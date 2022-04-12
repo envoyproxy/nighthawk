@@ -75,7 +75,11 @@ function do_test() {
 function do_clang_tidy() {
     # clang-tidy will warn on standard library issues with libc++    
     BAZEL_BUILD_OPTIONS=("--config=clang" "${BAZEL_BUILD_OPTIONS[@]}")
-    BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS[*]}" NUM_CPUS=4 ci/run_clang_tidy.sh
+    if [ -n "$CIRCLECI" ]; then
+      BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS[*]}" NUM_CPUS=4 ci/run_clang_tidy.sh
+    else
+      BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS[*]}" ci/run_clang_tidy.sh
+    fi
 }
 
 function do_unit_test_coverage() {
