@@ -37,7 +37,7 @@ stages:
         test:
           CI_TARGET: "test"
         benchmark:
-          CI_TARGET: "benchmark"
+          CI_TARGET: "benchmark_with_own_binaries"
     timeoutInMinutes: 120
     steps:
     - template: bazel.yml
