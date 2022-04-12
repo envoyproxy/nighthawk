@@ -1,0 +1,25 @@
+parameters:
+- name: ciTarget
+  displayName: "CI target"
+  type: string
+  default: build 
+
+steps:
+- bash: |
+    echo "disk space at beginning of build:"
+    df -h
+  displayName: "Check disk space at beginning"
+
+- script: ci/run_envoy_docker.sh 'ci/do_ci.sh ${{ parameters.ciTarget }}'
+  workingDirectory: $(Build.SourcesDirectory)
+  displayName: "Run the CI script"
+  env:
+    BAZEL_REMOTE_CACHE: $(LocalBuildCache)
+
+- bash: |
+    echo "disk space at end of build:"
+    df -h
+    # Cleanup offending files with unicode names
+    rm -rf $(Build.StagingDirectory)/tmp/*/*/external/go_sdk/test/fixedbugs
+  displayName: "Check disk space at end"
+  condition: always()

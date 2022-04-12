@@ -51,6 +51,7 @@ bazel build -c opt //:nighthawk
 USAGE:
 
 bazel-bin/nighthawk_client  [--latency-response-header-name <string>]
+[--stats-flush-interval-duration <duration>]
 [--stats-flush-interval <uint32_t>]
 [--stats-sinks <string>] ... [--no-duration]
 [--simple-warmup]
@@ -99,9 +100,14 @@ tandem with the test server's response option
 "emit_previous_request_delta_in_response_header" to record elapsed
 time between request arrivals. Default: ""
 
+--stats-flush-interval-duration <duration>
+Time interval (in Duration) between flushes to configured stats sinks.
+For example '1s' or '1.000000001s'. Mutually exclusive with
+--stats-flush-interval.
+
 --stats-flush-interval <uint32_t>
 Time interval (in seconds) between flushes to configured stats sinks.
-Default: 5.
+Mutually exclusive with --stats-flush-interval-duration. Default: 5.
 
 --stats-sinks <string>  (accepted multiple times)
 Stats sinks (in json) where Nighthawk metrics will be flushed. This
@@ -251,8 +257,8 @@ Use proactive connection prefetching (HTTP/1 only).
 
 --output-format <json|human|yaml|dotted|fortio
 |experimental_fortio_pedantic>
-Output format. Possible values: {"json", "human", "yaml", "dotted",
-"fortio", "experimental_fortio_pedantic"}. The default output format
+Output format. Possible values: ["json", "human", "yaml", "dotted",
+"fortio", "experimental_fortio_pedantic"]. The default output format
 is 'human'.
 
 -v <trace|debug|info|warn|error|critical>,  --verbosity <trace|debug
@@ -384,8 +390,8 @@ Where:
 
 --output-format <json|human|yaml|dotted|fortio
 |experimental_fortio_pedantic>
-(required)  Output format. Possible values: {"json", "human", "yaml",
-"dotted", "fortio", "experimental_fortio_pedantic"}.
+(required)  Output format. Possible values: ["json", "human", "yaml",
+"dotted", "fortio", "experimental_fortio_pedantic"].
 
 --,  --ignore_rest
 Ignores the rest of the labeled arguments following this flag.

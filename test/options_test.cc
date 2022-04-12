@@ -84,11 +84,94 @@ TEST_F(OptionsImplTest, DurationAndNoDurationSanity) {
   EXPECT_TRUE(cmd->no_duration().value());
 }
 
+TEST_F(OptionsImplTest, StatsFlushIntervalAndStatsFlushIntervalDurationAreMutuallyExclusive) {
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(
+          fmt::format("{} --stats-flush-interval 5 --stats-flush-interval-duration 1s http://foo",
+                      client_name_)),
+      MalformedArgvException, "mutually exclusive");
+}
+
 TEST_F(OptionsImplTest, StatsSinksMustBeSetWhenStatsFlushIntervalSet) {
   EXPECT_THROW_WITH_REGEX(
       TestUtility::createOptionsImpl(fmt::format("{} --stats-flush-interval 10", client_name_)),
       MalformedArgvException,
-      "if --stats-flush-interval is set, then --stats-sinks must also be set");
+      "if --stats-flush-interval or --stats-flush-interval-duration is set, then --stats-sinks "
+      "must also be set");
+}
+
+TEST_F(OptionsImplTest, StatsSinksMustBeSetWhenStatsFlushIntervalDurationSet) {
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                              "{} --stats-flush-interval-duration 1.000000001s", client_name_)),
+                          MalformedArgvException,
+                          "if --stats-flush-interval or --stats-flush-interval-duration is set, "
+                          "then --stats-sinks must also be set");
+}
+
+TEST_F(OptionsImplTest, InvalidStatsFlushIntervalDuration) {
+  const std::string sink_json =
+      "{name:\"envoy.stat_sinks.statsd\",typed_config:{\"@type\":\"type."
+      "googleapis.com/"
+      "envoy.config.metrics.v3.StatsdSink\",tcp_cluster_name:\"statsd\"}}";
+
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(fmt::format(
+          "{} --stats-flush-interval-duration invalid-duration --stats-sinks {} http://foo",
+          client_name_, sink_json)),
+      MalformedArgvException, "Invalid value for --stats-flush-interval-duration");
+}
+
+TEST_F(OptionsImplTest, SecondsOutOfRangeStatsFlushIntervalDuration) {
+  const std::string sink_json =
+      "{name:\"envoy.stat_sinks.statsd\",typed_config:{\"@type\":\"type."
+      "googleapis.com/"
+      "envoy.config.metrics.v3.StatsdSink\",tcp_cluster_name:\"statsd\"}}";
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                              "{} --stats-flush-interval-duration -1s --stats-sinks {} http://foo",
+                              client_name_, sink_json)),
+                          MalformedArgvException,
+                          "--stats-flush-interval-duration is out of range");
+}
+
+TEST_F(OptionsImplTest, NanosOutOfRangeStatsFlushIntervalDuration) {
+  const std::string sink_json =
+      "{name:\"envoy.stat_sinks.statsd\",typed_config:{\"@type\":\"type."
+      "googleapis.com/"
+      "envoy.config.metrics.v3.StatsdSink\",tcp_cluster_name:\"statsd\"}}";
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(fmt::format(
+          "{} --stats-flush-interval-duration -0.000000001s --stats-sinks {} http://foo",
+          client_name_, sink_json)),
+      MalformedArgvException, "--stats-flush-interval-duration is out of range");
+}
+
+TEST_F(OptionsImplTest,
+       SanityCheckDefaultWhenBothStatsFlushIntervalAndStatsFlushIntervalDurationNotSet) {
+  std::unique_ptr<OptionsImpl> options =
+      TestUtility::createOptionsImpl(fmt::format("{} http://foo", client_name_));
+  EXPECT_EQ(5, options->statsFlushInterval());
+  EXPECT_EQ(0, options->statsFlushIntervalDuration().seconds());
+  EXPECT_EQ(0, options->statsFlushIntervalDuration().nanos());
+
+  CommandLineOptionsPtr cmd = options->toCommandLineOptions();
+  EXPECT_FALSE(cmd->has_stats_flush_interval_duration());
+  ASSERT_TRUE(cmd->has_stats_flush_interval());
+  EXPECT_EQ(5, cmd->stats_flush_interval().value());
+}
+
+TEST_F(OptionsImplTest, SanityCheckWhenStatsFlushIntervalDurationIsSet) {
+  const std::string sink_json =
+      "{name:\"envoy.stat_sinks.statsd\",typed_config:{\"@type\":\"type."
+      "googleapis.com/"
+      "envoy.config.metrics.v3.StatsdSink\",tcp_cluster_name:\"statsd\"}}";
+  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(
+      fmt::format("{} --stats-flush-interval-duration 1.000000001s --stats-sinks {} http://foo",
+                  client_name_, sink_json));
+  CommandLineOptionsPtr cmd = options->toCommandLineOptions();
+  EXPECT_FALSE(cmd->has_stats_flush_interval());
+  ASSERT_TRUE(cmd->has_stats_flush_interval_duration());
+  EXPECT_EQ(1, cmd->stats_flush_interval_duration().seconds());
+  EXPECT_EQ(1, cmd->stats_flush_interval_duration().nanos());
 }
 
 // This test should cover every option we offer, except some mutually exclusive ones that
