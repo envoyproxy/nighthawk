@@ -9,6 +9,7 @@
 #include "external/envoy/test/test_common/network_utility.h"
 #include "external/envoy/test/test_common/registry.h"
 #include "external/envoy/test/test_common/simulated_time_system.h"
+#include "external/envoy/test/test_common/test_runtime.h"
 #include "external/envoy/test/test_common/utility.h"
 
 #include "source/client/options_impl.h"
@@ -173,6 +174,10 @@ TEST_P(ProcessTest, CancelExecutionBeforeBeginLoadTest) {
 }
 
 TEST_P(ProcessTest, RunProcessWithStatsSinkConfigured) {
+  // TODO(Dubious90): Instead of applying this flag, move the factory into its own file, register
+  // it, and call it by its type
+  Envoy::TestScopedRuntime scoped_runtime;
+  scoped_runtime.mergeValues({{"envoy.reloadable_features.no_extension_lookup_by_name", "false"}});
   FakeStatsSinkFactory factory;
   Envoy::Registry::InjectFactory<NighthawkStatsSinkFactory> registered(factory);
   options_ = TestUtility::createOptionsImpl(
