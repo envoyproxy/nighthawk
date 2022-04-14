@@ -286,6 +286,7 @@ envoy_cc_test(
 # libraries as dependencies.
 envoy_cc_test(
     name = "python_test",
+    size = "enormous",
     srcs = ["python_test.cc"],
     data = ["//test/integration:integration_test"],
     repository = "@envoy",
