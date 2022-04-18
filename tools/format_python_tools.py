@@ -5,14 +5,18 @@ import sys
 
 from yapf.yapflib.yapf_api import FormatFile
 
-EXCLUDE_LIST = ['generated', 'venv', ".cache"]
+# Directories in which we don't format files.
+EXCLUDE_DIRECTORIES = ['generated', 'venv', ".cache"]
+
+# Files that are excluded from formatting.
+EXCLUDE_FILES = ['gen_compilation_database.py']
 
 
 def collectFiles():
   """Collect all Python files in the tools directory.
 
   Returns: A collection of python files in the tools directory excluding
-    any directories in the EXCLUDE_LIST constant.
+    any directories in the EXCLUDE_DIRECTORIES constant.
   """
   # TODO: Add ability to collect a specific file or files.
   matches = []
@@ -21,8 +25,10 @@ def collectFiles():
   if path_parts[-1] == 'tools':
     dirname = '/'.join(path_parts[:-1])
   for root, dirnames, filenames in os.walk(dirname):
-    dirnames[:] = [d for d in dirnames if d not in EXCLUDE_LIST]
+    dirnames[:] = [d for d in dirnames if d not in EXCLUDE_DIRECTORIES]
     for filename in fnmatch.filter(filenames, '*.py'):
+      if filename in EXCLUDE_FILES:
+        continue
       matches.append(os.path.join(root, filename))
   return matches
 
