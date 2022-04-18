@@ -387,8 +387,8 @@ def _do_tls_configuration_test(https_test_server_fixture, cli_parameter, use_h2)
         "common_tls_context:{tls_params:{cipher_suites:[\"-ALL:%s\"]}}}}")
 
   for cipher in [
-      "ECDHE-RSA-AES128-SHA",
-      "ECDHE-RSA-CHACHA20-POLY1305",
+      "AES128-GCM-SHA256",
+      "ECDHE-RSA-AES256-GCM-SHA384",
   ]:
     parsed_json, _ = https_test_server_fixture.runNighthawkClient(
         (["--protocol", "http2"] if use_h2 else []) + [
