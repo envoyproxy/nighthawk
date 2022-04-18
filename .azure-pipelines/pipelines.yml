@@ -115,3 +115,23 @@ stages:
     - template: bazel.yml
       parameters:
         ciTarget: $(CI_TARGET)
+
+- stage: release
+  dependsOn:
+  - "clang_tidy"
+  - "test_gcc"
+  - "sanitizers"
+  - "coverage"
+  pool: "x64-large"
+  jobs:
+  - job: release
+    displayName: "do_ci.sh"
+    strategy:
+      matrix:
+        release:
+          CI_TARGET: "docker"
+    timeoutInMinutes: 120
+    steps:
+    - template: bazel.yml
+      parameters:
+        ciTarget: $(CI_TARGET)
