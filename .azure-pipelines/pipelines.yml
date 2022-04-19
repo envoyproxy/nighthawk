@@ -128,7 +128,7 @@ stages:
   - "test_gcc"
   - "sanitizers"
   - "coverage"
-  condition: ne(variables['PostSubmit'], true)
+  condition: eq(variables['PostSubmit'], true)
   pool: "x64-large"
   jobs:
   - job: release
