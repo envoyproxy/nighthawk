@@ -2,14 +2,7 @@
 
 set -eo pipefail
 set +x
-#set -u
-
-if [[ -n "$DOCKERHUB_USERNAME" ]]; then
-  echo "Username is set."
-fi
-if [[ -n "$DOCKERHUB_PASSWORD" ]]; then
-  echo "Password is set."
-fi
+set -u
 
 if [ $# -eq 0 ]; then
     set -- "help"

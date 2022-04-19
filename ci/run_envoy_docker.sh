@@ -98,7 +98,7 @@ docker run --rm \
        -e SYSTEM_STAGEDISPLAYNAME \
        -e SYSTEM_JOBDISPLAYNAME \
        -e SYSTEM_PULLREQUEST_PULLREQUESTNUMBER \
-       -e DOCKERHUB_USERNAME \
-       -e DOCKERHUB_PASSWORD \
+       -e DOCKERHUB_USERNAME `# unique` \
+       -e DOCKERHUB_PASSWORD `# unique` \
        "${ENVOY_BUILD_IMAGE}" \
        "${START_COMMAND[@]}"

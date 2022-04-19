@@ -18,13 +18,6 @@ echo "Running docker_azp_push.sh for DOCKER_IMAGE_PREFIX=${DOCKER_IMAGE_PREFIX} 
 #  exit 0
 #fi
 
-if [[ -n "$DOCKERHUB_USERNAME" ]]; then
-  echo "Username is set."
-fi
-if [[ -n "$DOCKERHUB_PASSWORD" ]]; then
-  echo "Password is set."
-fi
-
 docker login -u "$DOCKERHUB_USERNAME" -p "$DOCKERHUB_PASSWORD"
 
 echo docker push "${DOCKER_IMAGE_PREFIX}-dev:latest"
