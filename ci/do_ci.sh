@@ -199,10 +199,15 @@ function do_docker_azp() {
     echo "docker in AZP..."
     cd "${SRCDIR}"
     # Note that we implicitly test the opt build in CI here.
+    echo "do_docker_azp: Running do_docker_azp."
     do_opt_build
+    echo "do_docker_azp: Running ci/docker/docker_build.sh."
     ./ci/docker/docker_build.sh
+    echo "do_docker_azp: Running ci/docker/docker_azp_push.sh."
     ./ci/docker/docker_azp_push.sh
+    echo "do_docker_azp: Running ci/docker/benchmark_build.sh."
     ./ci/docker/benchmark_build.sh
+    echo "do_docker_azp: Running ci/docker/benchmark_azp_push.sh."
     ./ci/docker/benchmark_azp_push.sh
 }
 
