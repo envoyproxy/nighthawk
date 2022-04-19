@@ -187,7 +187,7 @@ function do_check_format() {
 function do_docker() {
     echo "docker..."
     cd "${SRCDIR}"
-    # Note that we implicitly test the opt build in CI here.
+    # Note that we implicly test the opt build in CI here
     do_opt_build
     ./ci/docker/docker_build.sh
     ./ci/docker/docker_push.sh
@@ -199,7 +199,7 @@ function do_docker_azp() {
     echo "docker in AZP..."
     cd "${SRCDIR}"
     # Note that we implicitly test the opt build in CI here.
-    echo "do_docker_azp: Running do_docker_azp."
+    echo "do_docker_azp: Running do_opt_build."
     do_opt_build
     echo "do_docker_azp: Running ci/docker/docker_build.sh."
     ./ci/docker/docker_build.sh
