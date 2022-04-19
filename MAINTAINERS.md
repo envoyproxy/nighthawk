@@ -69,6 +69,8 @@ important maintenance task. When performing the update, follow this procedure:
    to ensure we are using the same build system version.
 1. Sync (copy) [ci/run_envoy_docker.sh](ci/run_envoy_docker.sh) from
    [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/ci/run_envoy_docker.sh).
+   Be sure to retain our local modifications, all lines that are unique to
+   Nighthawk are marked with comment `# unique`.
 1. Sync (copy) [tools/gen_compilation_database.py](tools/gen_compilation_database.py) from
    [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/tools/gen_compilation_database.py) to
    update our build configurations. Be sure to retain our local modifications,
