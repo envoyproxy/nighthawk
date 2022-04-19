@@ -122,6 +122,7 @@ stages:
   - "test_gcc"
   - "sanitizers"
   - "coverage"
+  condition: ne(variables['PostSubmit'], true)
   pool: "x64-large"
   jobs:
   - job: release
@@ -129,8 +130,14 @@ stages:
     strategy:
       matrix:
         release:
-          CI_TARGET: "docker"
+          CI_TARGET: "docker_azp"
     timeoutInMinutes: 120
+    workingDirectory: $(Build.SourcesDirectory)
+    env:
+      AZP_BRANCH: $(Build.SourceBranch)
+      AZP_SHA1: $(Build.SourceVersion)
+      DOCKERHUB_USERNAME: $(DockerUsername)
+      DOCKERHUB_PASSWORD: $(DockerPassword)
     steps:
     - template: bazel.yml
       parameters:
