@@ -10,7 +10,7 @@ MAIN_BRANCH="refs/heads/main"
 
 DOCKER_IMAGE_PREFIX="${DOCKER_IMAGE_PREFIX:-envoyproxy/nighthawk}"
 
-echo "Running docker_azp_push.sh for DOCKER_IMAGE_PREFIX=${DOCKER_IMAGE_PREFIX} and AZP_BRANCH=${AZP_BRANCH}."
+echo "Running docker_azp_push.sh for DOCKER_IMAGE_PREFIX=${DOCKER_IMAGE_PREFIX}, AZP_BRANCH=${AZP_BRANCH} and AZP_SHA1=${AZP_SHA1}."
 
 # Only push images for main builds.
 #if [[ "${AZP_BRANCH}" != "${MAIN_BRANCH}" ]]; then
