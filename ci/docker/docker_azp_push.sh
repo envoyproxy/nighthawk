@@ -20,6 +20,6 @@ echo "Running docker_azp_push.sh for DOCKER_IMAGE_PREFIX=${DOCKER_IMAGE_PREFIX} 
 
 docker login -u "$DOCKERHUB_USERNAME" -p "$DOCKERHUB_PASSWORD"
 
-echo docker push "${DOCKER_IMAGE_PREFIX}-dev:latest"
-echo docker tag "${DOCKER_IMAGE_PREFIX}-dev:latest" \
+docker push "${DOCKER_IMAGE_PREFIX}-dev:latest"
+docker tag "${DOCKER_IMAGE_PREFIX}-dev:latest" \
   "${DOCKER_IMAGE_PREFIX}-dev:${AZP_SHA1}"
