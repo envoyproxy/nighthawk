@@ -195,6 +195,22 @@ function do_docker() {
     ./ci/docker/benchmark_push.sh
 }
 
+function do_docker_azp() {
+    echo "docker in AZP..."
+    cd "${SRCDIR}"
+    # Note that we implicitly test the opt build in CI here.
+    echo "do_docker_azp: Running do_opt_build."
+    do_opt_build
+    echo "do_docker_azp: Running ci/docker/docker_build.sh."
+    ./ci/docker/docker_build.sh
+    echo "do_docker_azp: Running ci/docker/docker_azp_push.sh."
+    ./ci/docker/docker_azp_push.sh
+    echo "do_docker_azp: Running ci/docker/benchmark_build.sh."
+    ./ci/docker/benchmark_build.sh
+    echo "do_docker_azp: Running ci/docker/benchmark_azp_push.sh."
+    ./ci/docker/benchmark_azp_push.sh
+}
+
 function do_fix_format() {
     echo "fix_format..."
     cd "${SRCDIR}"
@@ -299,6 +315,11 @@ case "$1" in
         do_docker
         exit 0
     ;;
+    docker_azp)
+        setup_clang_toolchain
+        do_docker_azp
+        exit 0
+    ;;
     check_format)
         setup_clang_toolchain
         do_check_format
@@ -320,7 +341,7 @@ case "$1" in
         exit 0
     ;;
     *)
-        echo "must be one of [opt_build, build,test,clang_tidy,coverage,coverage_integration,asan,tsan,benchmark_with_own_binaries,docker,check_format,fix_format,test_gcc]"
+        echo "must be one of [opt_build, build,test,clang_tidy,coverage,coverage_integration,asan,tsan,benchmark_with_own_binaries,docker,docker_azp,check_format,fix_format,test_gcc]"
         exit 1
     ;;
 esac
