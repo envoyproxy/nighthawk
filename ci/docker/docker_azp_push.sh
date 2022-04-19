@@ -13,10 +13,10 @@ DOCKER_IMAGE_PREFIX="${DOCKER_IMAGE_PREFIX:-envoyproxy/nighthawk}"
 echo "Running docker_azp_push.sh for DOCKER_IMAGE_PREFIX=${DOCKER_IMAGE_PREFIX}, AZP_BRANCH=${AZP_BRANCH} and AZP_SHA1=${AZP_SHA1}."
 
 # Only push images for main builds.
-#if [[ "${AZP_BRANCH}" != "${MAIN_BRANCH}" ]]; then
-#  echo 'Ignoring non-main branch or tag for docker push.'
-#  exit 0
-#fi
+if [[ "${AZP_BRANCH}" != "${MAIN_BRANCH}" ]]; then
+  echo 'Ignoring non-main branch or tag for docker push.'
+  exit 0
+fi
 
 docker login -u "$DOCKERHUB_USERNAME" -p "$DOCKERHUB_PASSWORD"
 
