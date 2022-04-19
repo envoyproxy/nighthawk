@@ -6,6 +6,7 @@ trigger:
 stages:
 - stage: check
   dependsOn: []
+  condition: contains(variables['DoesNotExist'], true) # skip for debugging
   pool: "x64-large"
   jobs:
   - job: build_and_format
@@ -26,6 +27,7 @@ stages:
 
 - stage: test
   dependsOn: ["check"]
+  condition: contains(variables['DoesNotExist'], true) # skip for debugging
   pool: "x64-large"
   jobs:
   - job: test_and_benchmark
@@ -46,6 +48,7 @@ stages:
 
 - stage: clang_tidy
   dependsOn: ["check"]
+  condition: contains(variables['DoesNotExist'], true) # skip for debugging
   pool: "x64-large"
   jobs:
   - job: clang_tidy
@@ -63,6 +66,7 @@ stages:
 
 - stage: test_gcc
   dependsOn: ["check"]
+  condition: contains(variables['DoesNotExist'], true) # skip for debugging
   pool: "x64-large"
   jobs:
   - job: test_gcc
@@ -80,6 +84,7 @@ stages:
 
 - stage: sanitizers
   dependsOn: ["test"]
+  condition: contains(variables['DoesNotExist'], true) # skip for debugging
   pool: "x64-large"
   jobs:
   - job: sanitizers
@@ -99,6 +104,7 @@ stages:
 
 - stage: coverage
   dependsOn: ["test"]
+  condition: contains(variables['DoesNotExist'], true) # skip for debugging
   pool: "x64-large"
   jobs:
   - job: coverage
