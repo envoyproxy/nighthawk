@@ -132,12 +132,6 @@ stages:
         release:
           CI_TARGET: "docker_azp"
     timeoutInMinutes: 120
-    workingDirectory: $(Build.SourcesDirectory)
-    env:
-      AZP_BRANCH: $(Build.SourceBranch)
-      AZP_SHA1: $(Build.SourceVersion)
-      DOCKERHUB_USERNAME: $(DockerUsername)
-      DOCKERHUB_PASSWORD: $(DockerPassword)
     steps:
     - template: bazel.yml
       parameters:

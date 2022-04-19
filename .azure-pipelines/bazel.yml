@@ -15,6 +15,10 @@ steps:
   displayName: "Run the CI script"
   env:
     BAZEL_REMOTE_CACHE: $(LocalBuildCache)
+    AZP_BRANCH: $(Build.SourceBranch)
+    AZP_SHA1: $(Build.SourceVersion)
+    DOCKERHUB_USERNAME: $(DockerUsername)
+    DOCKERHUB_PASSWORD: $(DockerPassword)
 
 - bash: |
     echo "disk space at end of build:"
