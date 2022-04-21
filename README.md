@@ -20,7 +20,7 @@ description of the directory structure.
 
 ### Prerequisites
 
-Note that Nighthawk uses [Envoy code](https://github.com/envoyproxy/envoy)
+Note that Nighthawk uses [Envoy's code](https://github.com/envoyproxy/envoy)
 directly, so building Envoy is a prerequisite for building Nighthawk. Start by
 looking at [Envoy's
 building](https://www.envoyproxy.io/docs/envoy/latest/start/building.html)
@@ -45,6 +45,7 @@ include commands that are documented in the prerequisites section above.
 
 #### Install required packages
 
+Run the following command to install the required packages.
 ```
 sudo apt-get install \
    autoconf \
@@ -60,13 +61,15 @@ sudo apt-get install \
    virtualenv
 ```
 
-#### Install Clang / LLVM
+#### Install Clang/LLVM
 
 Note that depending on the Ubuntu version you may need to manually install a
 never version of Clang/LLVM. If you do, be sure to use Ubuntu's
 `update-alternatives` or a similar approach to switch to using the newer
-Clang/LLVM. See #832 for one possible approach.
+Clang/LLVM. See [issue#832](https://github.com/envoyproxy/nighthawk/issues/832)
+for one possible approach.
 
+Run the following commands to install Clang/LLVM.
 ```
 sudo apt install -y lld clang llvm lld lldb
 sudo apt install -y clang-{format,tidy,tools} clang-doc clang-examples
@@ -77,6 +80,7 @@ sudo apt install -y clang-{format,tidy,tools} clang-doc clang-examples
 [Bazelisk](https://github.com/bazelbuild/bazelisk) is recommended, since it
 automatically chooses and downloads the appropriate Bazel version.
 
+Run the following to install Bazelisk.
 ```
 sudo wget -O /usr/local/bin/bazel https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-$([ $(uname -m) = "aarch64" ] && echo "arm64" || echo "amd64")
 sudo chmod +x /usr/local/bin/bazel
@@ -84,6 +88,8 @@ sudo chmod +x /usr/local/bin/bazel
 
 #### Clone Nighthawk and setup Clang as the compiler
 
+Run the following to clone the Nighthawk repository and instruct Bazel to use
+Clang.
 ```
 git clone https://github.com/envoyproxy/nighthawk
 cd nighthawk/
@@ -102,7 +108,8 @@ Or to execute its tests.
 ci/do_ci.sh test
 ```
 
-Note that after building, the Nighthawk binaries are located in the `bazel-bin/` directory.
+Note that after building completes, the Nighthawk binaries are located in the
+`bazel-bin/` directory located at the root of the cloned Nighthawk repository.
 
 ## Using the Nighthawk client CLI
 
