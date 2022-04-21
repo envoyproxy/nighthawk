@@ -16,30 +16,97 @@ Nighthawk currently offers:
 See [navigating the codebase](docs/root/navigating_the_codebase.md) for a
 description of the directory structure.
 
-## Prerequisites
+## Building Nighthawk
 
-### Ubuntu
+### Prerequisites
 
-First, follow steps 1 and 2 over at [Quick start Bazel build for developers](https://github.com/envoyproxy/envoy/blob/main/bazel/README.md#quick-start-bazel-build-for-developers).
+Note that Nighthawk uses [Envoy code](https://github.com/envoyproxy/envoy)
+directly, so building Envoy is a prerequisite for building Nighthawk. Start by
+looking at [Envoy's
+building](https://www.envoyproxy.io/docs/envoy/latest/start/building.html)
+documentation.
 
+#### Compiler requirements
 
-## Building and using the Nighthawk client CLI
+The main supported way of building Nighthawk is with the Clang compiler. At
+least Clang/LLVM 12+ is needed to successfully build Nighthawk.
 
-For building the Nighthawk test server, see [here](source/server/README.md).
+#### Bazel
 
-### Test it
+Both Envoy and Nighthawk use the [Bazel](https://bazel.build/) build tool. The
+steps required to set up Bazel are documented in Envoy's [Quick start Bazel
+build for
+developers](https://github.com/envoyproxy/envoy/blob/main/bazel/README.md#quick-start-bazel-build-for-developers).
 
-```bash
-bazel test -c dbg //test/...
+### Building on Ubuntu
+
+This section outlines the steps needed to build on Ubuntu. Note that these steps
+include commands that are documented in the prerequisites section above.
+
+#### Install required packages
+
+```
+sudo apt-get install \
+   autoconf \
+   automake \
+   cmake \
+   curl \
+   libtool \
+   make \
+   ninja-build \
+   patch \
+   python3-pip \
+   unzip \
+   virtualenv
 ```
 
-### Build it
+#### Install Clang / LLVM
 
-```bash
-bazel build -c opt //:nighthawk
+Note that depending on the Ubuntu version you may need to manually install a
+never version of Clang/LLVM. If you do, be sure to use Ubuntu's
+`update-alternatives` or a similar approach to switch to using the newer
+Clang/LLVM. See #832 for one possible approach.
+
+```
+sudo apt install -y lld clang llvm lld lldb
+sudo apt install -y clang-{format,tidy,tools} clang-doc clang-examples
 ```
 
-### Using the CLI
+#### Install Bazelisk instead of bazel
+
+[Bazelisk](https://github.com/bazelbuild/bazelisk) is recommended, since it
+automatically chooses and downloads the appropriate Bazel version.
+
+```
+sudo wget -O /usr/local/bin/bazel https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-$([ $(uname -m) = "aarch64" ] && echo "arm64" || echo "amd64")
+sudo chmod +x /usr/local/bin/bazel
+```
+
+#### Clone Nighthawk and setup Clang as the compiler
+
+```
+git clone https://github.com/envoyproxy/nighthawk
+cd nighthawk/
+echo "build --config=clang" >> user.bazelrc
+```
+
+#### Build and testing  Nighthawk
+
+You can now use the CI script to build Nighthawk.
+```
+ci/do_ci.sh build
+```
+
+Or to execute its tests.
+```
+ci/do_ci.sh test
+```
+
+Note that after building, the Nighthawk binaries are located in the `bazel-bin/` directory.
+
+## Using the Nighthawk client CLI
+
+For using the Nighthawk test server, see [here](source/server/README.md).
 
 ```bash
 ➜ bazel-bin/nighthawk_client --help
