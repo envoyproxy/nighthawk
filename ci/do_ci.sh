@@ -283,7 +283,7 @@ case "$1" in
     ;;
     docker)
         setup_clang_toolchain
-        do_docker_azp
+        do_docker
         exit 0
     ;;
     check_format)
