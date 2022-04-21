@@ -63,9 +63,9 @@ sudo apt-get install \
 
 #### Install Clang/LLVM
 
-Note that depending on the Ubuntu version you may need to manually install a
-never version of Clang/LLVM. The current version of Clang can be verified by
-running:
+Note that depending on the chosen Ubuntu version, you may need to manually
+install a never version of Clang/LLVM. The installed version of Clang can be
+verified by running:
 ```
 clang -v
 ```
