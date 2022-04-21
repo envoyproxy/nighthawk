@@ -11,7 +11,6 @@ fi
 export BUILDIFIER_BIN="${BUILDIFIER_BIN:=/usr/local/bin/buildifier}"
 export BUILDOZER_BIN="${BUILDOZER_BIN:=/usr/local/bin/buildozer}"
 export NUM_CPUS=${NUM_CPUS:=$(grep -c ^processor /proc/cpuinfo)}
-export CIRCLECI=${CIRCLECI:=""}
 export BAZEL_EXTRA_TEST_OPTIONS=${BAZEL_EXTRA_TEST_OPTIONS:=""}
 export BAZEL_OPTIONS=${BAZEL_OPTIONS:=""}
 export BAZEL_BUILD_EXTRA_OPTIONS=${BAZEL_BUILD_EXTRA_OPTIONS:=""}
@@ -75,11 +74,7 @@ function do_test() {
 function do_clang_tidy() {
     # clang-tidy will warn on standard library issues with libc++    
     BAZEL_BUILD_OPTIONS=("--config=clang" "${BAZEL_BUILD_OPTIONS[@]}")
-    if [ -n "$CIRCLECI" ]; then
-      BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS[*]}" NUM_CPUS=4 ci/run_clang_tidy.sh
-    else
-      BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS[*]}" ci/run_clang_tidy.sh
-    fi
+    BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS[*]}" ci/run_clang_tidy.sh
 }
 
 function do_unit_test_coverage() {
@@ -187,28 +182,17 @@ function do_check_format() {
 function do_docker() {
     echo "docker..."
     cd "${SRCDIR}"
-    # Note that we implicly test the opt build in CI here
-    do_opt_build
-    ./ci/docker/docker_build.sh
-    ./ci/docker/docker_push.sh
-    ./ci/docker/benchmark_build.sh
-    ./ci/docker/benchmark_push.sh
-}
-
-function do_docker_azp() {
-    echo "docker in AZP..."
-    cd "${SRCDIR}"
     # Note that we implicitly test the opt build in CI here.
-    echo "do_docker_azp: Running do_opt_build."
+    echo "do_docker: Running do_opt_build."
     do_opt_build
-    echo "do_docker_azp: Running ci/docker/docker_build.sh."
+    echo "do_docker: Running ci/docker/docker_build.sh."
     ./ci/docker/docker_build.sh
-    echo "do_docker_azp: Running ci/docker/docker_azp_push.sh."
-    ./ci/docker/docker_azp_push.sh
-    echo "do_docker_azp: Running ci/docker/benchmark_build.sh."
+    echo "do_docker: Running ci/docker/docker_push.sh."
+    ./ci/docker/docker_push.sh
+    echo "do_docker: Running ci/docker/benchmark_build.sh."
     ./ci/docker/benchmark_build.sh
-    echo "do_docker_azp: Running ci/docker/benchmark_azp_push.sh."
-    ./ci/docker/benchmark_azp_push.sh
+    echo "do_docker: Running ci/docker/benchmark_push.sh."
+    ./ci/docker/benchmark_push.sh
 }
 
 function do_fix_format() {
@@ -250,19 +234,6 @@ export BAZEL_BUILD_OPTIONS=" \
 --experimental_local_memory_estimate \
 --show_task_finish --experimental_generate_json_trace_profile ${BAZEL_BUILD_EXTRA_OPTIONS}"
 
-if [ -n "$CIRCLECI" ]; then
-    if [[ -f "${HOME:-/root}/.gitconfig" ]]; then
-        mv "${HOME:-/root}/.gitconfig" "${HOME:-/root}/.gitconfig_save"
-        echo 1
-    fi
-    NUM_CPUS=8
-    if [[ "$1" == "test_gcc" ]]; then
-        NUM_CPUS=2
-        BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} \
-          --discard_analysis_cache --notrack_incremental_state --nokeep_state_after_build"
-    fi
-    BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} --jobs=${NUM_CPUS}"
-fi
 echo "Running with ${NUM_CPUS} cpus and BAZEL_BUILD_OPTIONS: ${BAZEL_BUILD_OPTIONS}"
 
 export BAZEL_TEST_OPTIONS="${BAZEL_BUILD_OPTIONS} --test_env=HOME --test_env=PYTHONUSERBASE \
@@ -312,11 +283,6 @@ case "$1" in
     ;;
     docker)
         setup_clang_toolchain
-        do_docker
-        exit 0
-    ;;
-    docker_azp)
-        setup_clang_toolchain
         do_docker_azp
         exit 0
     ;;
@@ -341,7 +307,7 @@ case "$1" in
         exit 0
     ;;
     *)
-        echo "must be one of [opt_build, build,test,clang_tidy,coverage,coverage_integration,asan,tsan,benchmark_with_own_binaries,docker,docker_azp,check_format,fix_format,test_gcc]"
+        echo "must be one of [opt_build, build,test,clang_tidy,coverage,coverage_integration,asan,tsan,benchmark_with_own_binaries,docker,check_format,fix_format,test_gcc]"
         exit 1
     ;;
 esac
