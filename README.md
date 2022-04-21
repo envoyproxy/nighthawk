@@ -64,7 +64,13 @@ sudo apt-get install \
 #### Install Clang/LLVM
 
 Note that depending on the Ubuntu version you may need to manually install a
-never version of Clang/LLVM. If you do, be sure to use Ubuntu's
+never version of Clang/LLVM. The current version of Clang can be verified by
+running:
+```
+clang -v
+```
+
+If you do need to install a newer version, be sure to use Ubuntu's
 `update-alternatives` or a similar approach to switch to using the newer
 Clang/LLVM. See [issue#832](https://github.com/envoyproxy/nighthawk/issues/832)
 for one possible approach.
