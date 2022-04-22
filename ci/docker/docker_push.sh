@@ -1,31 +1,25 @@
 #!/bin/bash
 
-# Do not ever set -x here, it is a security hazard as it will place the credentials below in the
-# CircleCI logs.
+# Do not ever set -x here, it might leak credentials.
 set -e
 set +x
 
-if [[ -n "$CIRCLE_PULL_REQUEST" ]]; then
-    echo 'Ignoring PR branch for docker push.'
-    exit 0
-fi
+# This is how AZP identifies the branch, see the Build.SourceBranch variable in:
+# https://docs.microsoft.com/en-us/azure/devops/pipelines/build/variables?view=azure-devops&tabs=yaml#build-variables-devops-services
+MAIN_BRANCH="refs/heads/main"
 
 DOCKER_IMAGE_PREFIX="${DOCKER_IMAGE_PREFIX:-envoyproxy/nighthawk}"
 
-# push the nighthawk image on tags or merge to main
-if [[  "$CIRCLE_BRANCH" = 'main' ]]; then
-    docker login -u "$DOCKERHUB_USERNAME" -p "$DOCKERHUB_PASSWORD"
-    docker push "${DOCKER_IMAGE_PREFIX}-dev:latest"
-    docker tag "${DOCKER_IMAGE_PREFIX}-dev:latest" "${DOCKER_IMAGE_PREFIX}-dev:${CIRCLE_SHA1}"
-    docker push "${DOCKER_IMAGE_PREFIX}-dev:${CIRCLE_SHA1}"
-else
-    if [[ -n "$CIRCLE_TAG" ]]; then
-        TAG="$CIRCLE_TAG"
-        docker login -u "$DOCKERHUB_USERNAME" -p "$DOCKERHUB_PASSWORD"
-        docker push "${DOCKER_IMAGE_PREFIX}:${TAG}"
-        docker tag "${DOCKER_IMAGE_PREFIX}:${TAG}" "${DOCKER_IMAGE_PREFIX}:${TAG}"
-        docker push "${DOCKER_IMAGE_PREFIX}:${TAG}"
-    else
-        echo 'Ignoring non-main branch for docker push.'
-    fi
+echo "Running docker_azp_push.sh for DOCKER_IMAGE_PREFIX=${DOCKER_IMAGE_PREFIX}, AZP_BRANCH=${AZP_BRANCH} and AZP_SHA1=${AZP_SHA1}."
+
+# Only push images for main builds.
+if [[ "${AZP_BRANCH}" != "${MAIN_BRANCH}" ]]; then
+  echo 'Ignoring non-main branch or tag for docker push.'
+  exit 0
 fi
+
+docker login -u "$DOCKERHUB_USERNAME" -p "$DOCKERHUB_PASSWORD"
+
+docker push "${DOCKER_IMAGE_PREFIX}-dev:latest"
+docker tag "${DOCKER_IMAGE_PREFIX}-dev:latest" \
+  "${DOCKER_IMAGE_PREFIX}-dev:${AZP_SHA1}"

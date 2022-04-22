@@ -62,8 +62,6 @@ important maintenance task. When performing the update, follow this procedure:
    [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/.bazelrc) to
    update our build configurations. Be sure to retain our local modifications,
    all lines that are unique to Nighthawk are marked with comment `# unique`.
-   1. If [.bazelrc](.bazelrc) was modified, search for `experimental_docker_image`.
-      Copy the SHA and update `envoyproxy/envoy-build-ubuntu` over at the top of [.circleci/config.yml](.circleci/config.yml).
 1. Sync (copy) [.bazelversion](.bazelversion) from
    [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/.bazelversion)
    to ensure we are using the same build system version.

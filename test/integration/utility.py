@@ -17,17 +17,6 @@ def isSanitizerRun():
   return True if os.environ.get("NH_INTEGRATION_TEST_SANITIZER_RUN", 0) == "1" else False
 
 
-def isRunningInCircleCi():
-  """Determine if the current execution is running in circleci.
-
-  Depends on the environment variable CI=true which circleci sets by default.
-
-  Returns:
-      bool: True iff the current execution is running in circleci.
-  """
-  return True if os.environ.get("CI", "false") == "true" else False
-
-
 def run_binary_with_args(binary, args):
   """Execute a Nighthawk binary with the provided arguments.
 
