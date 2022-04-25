@@ -177,7 +177,8 @@ public:
           alternate_protocol_options,
       const Envoy::Network::ConnectionSocket::OptionsSharedPtr& options,
       const Envoy::Network::TransportSocketOptionsConstSharedPtr& transport_socket_options,
-      Envoy::TimeSource& time_source, Envoy::Upstream::ClusterConnectivityState& state) override {
+      Envoy::TimeSource& time_source, Envoy::Upstream::ClusterConnectivityState& state,
+      Envoy::Http::PersistentQuicInfoPtr& quic_info) override {
     // This changed in
     // https://github.com/envoyproxy/envoy/commit/93ee668a690d297ab5e8bd2cbf03771d852ebbda ALPN may
     // be set up to negotiate a protocol, in which case we'd need a HttpConnPoolImplMixed. However,
@@ -206,7 +207,7 @@ public:
     }
     return Envoy::Upstream::ProdClusterManagerFactory::allocateConnPool(
         dispatcher, host, priority, protocols, alternate_protocol_options, options,
-        transport_socket_options, time_source, state);
+        transport_socket_options, time_source, state, quic_info);
   }
 
   void setConnectionReuseStrategy(

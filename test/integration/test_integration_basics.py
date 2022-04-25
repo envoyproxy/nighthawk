@@ -143,8 +143,6 @@ def test_http_h2_mini_stress_test_without_client_side_queueing(http_test_server_
   asserts.assertNotIn("upstream_rq_pending_overflow", counters)
 
 
-@pytest.mark.skipif(not utility.isRunningInCircleCi(),
-                    reason="Has very high failure rate in local executions.")
 @pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable and very slow in sanitizer runs")
 def test_http_h1_mini_stress_test_open_loop(http_test_server_fixture):
   """Run an H1 open loop stress test. We expect higher pending and overflow counts."""
@@ -157,8 +155,6 @@ def test_http_h1_mini_stress_test_open_loop(http_test_server_fixture):
   asserts.assertCounterGreater(counters, "benchmark.pool_overflow", 10)
 
 
-@pytest.mark.skipif(not utility.isRunningInCircleCi(),
-                    reason="Has very high failure rate in local executions.")
 @pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable and very slow in sanitizer runs")
 def test_http_h2_mini_stress_test_open_loop(http_test_server_fixture):
   """Run an H2 open loop stress test. We expect higher overflow counts."""
@@ -387,8 +383,8 @@ def _do_tls_configuration_test(https_test_server_fixture, cli_parameter, use_h2)
         "common_tls_context:{tls_params:{cipher_suites:[\"-ALL:%s\"]}}}}")
 
   for cipher in [
-      "ECDHE-RSA-AES128-SHA",
-      "ECDHE-RSA-CHACHA20-POLY1305",
+      "AES128-GCM-SHA256",
+      "ECDHE-RSA-AES256-GCM-SHA384",
   ]:
     parsed_json, _ = https_test_server_fixture.runNighthawkClient(
         (["--protocol", "http2"] if use_h2 else []) + [
@@ -732,9 +728,7 @@ def duration_parameterization_fixture(request):
   yield param
 
 
-@pytest.mark.skipif(utility.isSanitizerRun() or utility.isRunningInCircleCi(),
-                    reason="Unstable in sanitizer runs. "
-                    "Unstable in CircleCI. See https://github.com/envoyproxy/nighthawk/issues/773")
+@pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable in sanitizer runs.")
 def test_http_request_release_timing(http_test_server_fixture, qps_parameterization_fixture,
                                      duration_parameterization_fixture):
   """Test latency-sample-, query- and reply- counts in various configurations."""

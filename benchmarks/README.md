@@ -109,7 +109,7 @@ docker run -it --rm \
 - Copy out the artifacts and push those to a gcp bucket. Current status:
   - cpu profiles are dumped to tmp per test (named according to the test). ideally we'd
     also dump flamegraph svg's
-- Enhance the UI. Currently we rely on CircleCI to directory-list our artifacts. This is
+- Enhance the UI. Currently we rely on CI to directory-list our artifacts. This is
   is pretty bare-bones, ideally we'd have something more fancy and we would be able to
   visualize test data historically.
 - Use taskset/cpuset when starting processes.

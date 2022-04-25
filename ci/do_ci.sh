@@ -11,13 +11,13 @@ fi
 export BUILDIFIER_BIN="${BUILDIFIER_BIN:=/usr/local/bin/buildifier}"
 export BUILDOZER_BIN="${BUILDOZER_BIN:=/usr/local/bin/buildozer}"
 export NUM_CPUS=${NUM_CPUS:=$(grep -c ^processor /proc/cpuinfo)}
-export CIRCLECI=${CIRCLECI:=""}
 export BAZEL_EXTRA_TEST_OPTIONS=${BAZEL_EXTRA_TEST_OPTIONS:=""}
 export BAZEL_OPTIONS=${BAZEL_OPTIONS:=""}
 export BAZEL_BUILD_EXTRA_OPTIONS=${BAZEL_BUILD_EXTRA_OPTIONS:=""}
 export SRCDIR=${SRCDIR:="${PWD}"}
 export CLANG_FORMAT=clang-format
 export NIGHTHAWK_BUILD_ARCH=$(uname -m)
+export BAZEL_REMOTE_CACHE=${BAZEL_REMOTE_CACHE:=""}
 
 # We build in steps to avoid running out of memory in CI.
 # This list doesn't have to be complete, execution of bazel test will build any
@@ -74,7 +74,7 @@ function do_test() {
 function do_clang_tidy() {
     # clang-tidy will warn on standard library issues with libc++    
     BAZEL_BUILD_OPTIONS=("--config=clang" "${BAZEL_BUILD_OPTIONS[@]}")
-    BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS[*]}" NUM_CPUS=4 ci/run_clang_tidy.sh
+    BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS[*]}" ci/run_clang_tidy.sh
 }
 
 function do_unit_test_coverage() {
@@ -88,8 +88,8 @@ function do_unit_test_coverage() {
 
 function do_integration_test_coverage() {
     export TEST_TARGETS="//test:python_test"
-    #TODO(#564): Revert this to 78.6
-    export COVERAGE_THRESHOLD=75.0
+    # TODO(#830): Raise the integration test coverage.
+    export COVERAGE_THRESHOLD=74.2
     echo "bazel coverage build with tests ${TEST_TARGETS}"
     test/run_nighthawk_bazel_coverage.sh ${TEST_TARGETS}
     exit 0
@@ -182,11 +182,16 @@ function do_check_format() {
 function do_docker() {
     echo "docker..."
     cd "${SRCDIR}"
-    # Note that we implicly test the opt build in CI here
+    # Note that we implicitly test the opt build in CI here.
+    echo "do_docker: Running do_opt_build."
     do_opt_build
+    echo "do_docker: Running ci/docker/docker_build.sh."
     ./ci/docker/docker_build.sh
+    echo "do_docker: Running ci/docker/docker_push.sh."
     ./ci/docker/docker_push.sh
+    echo "do_docker: Running ci/docker/benchmark_build.sh."
     ./ci/docker/benchmark_build.sh
+    echo "do_docker: Running ci/docker/benchmark_push.sh."
     ./ci/docker/benchmark_push.sh
 }
 
@@ -219,26 +224,17 @@ if grep 'docker\|lxc' /proc/1/cgroup; then
     export BAZEL="bazel"
 fi
 
+if [ -n "${BAZEL_REMOTE_CACHE}" ]; then
+  export BAZEL_BUILD_EXTRA_OPTIONS="${BAZEL_BUILD_EXTRA_OPTIONS} --remote_cache=${BAZEL_REMOTE_CACHE}"
+fi
+
 export BAZEL_EXTRA_TEST_OPTIONS="--test_env=ENVOY_IP_TEST_VERSIONS=v4only ${BAZEL_EXTRA_TEST_OPTIONS}"
 export BAZEL_BUILD_OPTIONS=" \
 --verbose_failures ${BAZEL_OPTIONS} --action_env=HOME --action_env=PYTHONUSERBASE \
 --experimental_local_memory_estimate \
 --show_task_finish --experimental_generate_json_trace_profile ${BAZEL_BUILD_EXTRA_OPTIONS}"
 
-if [ -n "$CIRCLECI" ]; then
-    if [[ -f "${HOME:-/root}/.gitconfig" ]]; then
-        mv "${HOME:-/root}/.gitconfig" "${HOME:-/root}/.gitconfig_save"
-        echo 1
-    fi
-    NUM_CPUS=8
-    if [[ "$1" == "test_gcc" ]]; then
-        NUM_CPUS=2
-        BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} \
-          --discard_analysis_cache --notrack_incremental_state --nokeep_state_after_build"
-    fi
-    echo "Running with ${NUM_CPUS} cpus and BAZEL_BUILD_OPTIONS: ${BAZEL_BUILD_OPTIONS}"
-    BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} --jobs=${NUM_CPUS}"
-fi
+echo "Running with ${NUM_CPUS} cpus and BAZEL_BUILD_OPTIONS: ${BAZEL_BUILD_OPTIONS}"
 
 export BAZEL_TEST_OPTIONS="${BAZEL_BUILD_OPTIONS} --test_env=HOME --test_env=PYTHONUSERBASE \
 --test_env=UBSAN_OPTIONS=print_stacktrace=1 \

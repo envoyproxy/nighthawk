@@ -1,7 +1,7 @@
 Nighthawk - A layer 7 protocol benchmarking tool.
 
 foo (1 samples)
-  min: 0 | mean: 0.0 | max: 0 | pstdev: 0.0
+  min: 0 | mean: 0 | max: 0 | pstdev: 0
 
   Percentile  Count       Value          
   0.99931641  1           0s 000ms 000us 

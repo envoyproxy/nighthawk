@@ -155,6 +155,7 @@ envoy_cc_test(
         "@envoy//test/test_common:network_utility_lib",
         "@envoy//test/test_common:registry_lib",
         "@envoy//test/test_common:simulated_time_system_lib",
+        "@envoy//test/test_common:test_runtime_lib",
     ],
 )
 
@@ -285,6 +286,7 @@ envoy_cc_test(
 # libraries as dependencies.
 envoy_cc_test(
     name = "python_test",
+    size = "enormous",
     srcs = ["python_test.cc"],
     data = ["//test/integration:integration_test"],
     repository = "@envoy",
