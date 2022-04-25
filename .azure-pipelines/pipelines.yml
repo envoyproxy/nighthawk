@@ -130,7 +130,7 @@ stages:
     strategy:
       matrix:
         release:
-          CI_TARGET: "docker_azp"
+          CI_TARGET: "docker"
     timeoutInMinutes: 120
     steps:
     - template: bazel.yml
