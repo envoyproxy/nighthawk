@@ -54,7 +54,6 @@ function run_on_build_parts() {
 }
 
 function do_build () {
-    exit 1
     bazel build $BAZEL_BUILD_OPTIONS //:nighthawk
     tools/update_cli_readme_documentation.sh --mode check
 }
