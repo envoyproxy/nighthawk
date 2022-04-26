@@ -143,6 +143,8 @@ def test_http_h2_mini_stress_test_without_client_side_queueing(http_test_server_
   asserts.assertNotIn("upstream_rq_pending_overflow", counters)
 
 
+@pytest.mark.skipif(not utility.isRunningInAzpCi(),
+                    reason="Has very high failure rate in local executions.")
 @pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable and very slow in sanitizer runs")
 def test_http_h1_mini_stress_test_open_loop(http_test_server_fixture):
   """Run an H1 open loop stress test. We expect higher pending and overflow counts."""
@@ -155,6 +157,8 @@ def test_http_h1_mini_stress_test_open_loop(http_test_server_fixture):
   asserts.assertCounterGreater(counters, "benchmark.pool_overflow", 10)
 
 
+@pytest.mark.skipif(not utility.isRunningInAzpCi(),
+                    reason="Has very high failure rate in local executions.")
 @pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable and very slow in sanitizer runs")
 def test_http_h2_mini_stress_test_open_loop(http_test_server_fixture):
   """Run an H2 open loop stress test. We expect higher overflow counts."""
