@@ -48,7 +48,7 @@ important maintenance task. When performing the update, follow this procedure:
       sha256 after the first bazel execution.
       Example content of `bazel/repositories.bzl` after the edits:
          ```
-         ENVOY_COMMIT = "9753819331d1547c4b8294546a6461a3777958f5"  # Jan 24th, 2021
+         ENVOY_COMMIT = "9753819331d1547c4b8294546a6461a3777958f5"
          ENVOY_SHA = ""
          ```
    1. Run `ci/do_ci.sh build`, notice the sha256 value at the top of the output,

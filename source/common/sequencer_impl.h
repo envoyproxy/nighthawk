@@ -126,7 +126,7 @@ private:
   nighthawk::client::SequencerIdleStrategy::SequencerIdleStrategyOptions idle_strategy_;
   TerminationPredicatePtr termination_predicate_;
   TerminationPredicate::Status last_termination_status_;
-  Envoy::Stats::ScopePtr scope_;
+  Envoy::Stats::ScopeSharedPtr scope_;
   SequencerStats sequencer_stats_;
 };
 
