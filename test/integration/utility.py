@@ -74,3 +74,15 @@ def count_log_lines_with_substring(logs, substring):
     An integer, the number of log entries that contain the substring.
   """
   return len([line for line in logs.split(os.linesep) if substring in line])
+
+
+def isRunningInAzpCi():
+  """Determine if the current execution is running in the AZP CI.
+
+  Depends on the environment variable AZP_BRANCH which is set in
+  .azure-pipelines/bazel.yml.
+
+  Returns:
+      bool: True iff the current execution is running in the AZP CI.
+  """
+  return True if os.environ.get("AZP_BRANCH", "") else False
