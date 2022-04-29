@@ -54,7 +54,6 @@ function run_on_build_parts() {
 }
 
 function do_build () {
-    exit 1
     bazel build $BAZEL_BUILD_OPTIONS //:nighthawk
     tools/update_cli_readme_documentation.sh --mode check
 }
@@ -174,7 +173,6 @@ function do_benchmark_with_own_binaries() {
 }
 
 function do_check_format() {
-    exit 1
     echo "check_format..."
     cd "${SRCDIR}"
     ./tools/check_format.sh check
