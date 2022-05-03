@@ -232,7 +232,7 @@ export BAZEL_EXTRA_TEST_OPTIONS="--test_env=ENVOY_IP_TEST_VERSIONS=v4only ${BAZE
 export BAZEL_BUILD_OPTIONS=" \
 --verbose_failures ${BAZEL_OPTIONS} --action_env=HOME --action_env=PYTHONUSERBASE \
 --experimental_local_memory_estimate \
---show_task_finish --experimental_generate_json_trace_profile ${BAZEL_BUILD_EXTRA_OPTIONS}"
+--experimental_generate_json_trace_profile ${BAZEL_BUILD_EXTRA_OPTIONS}"
 
 echo "Running with ${NUM_CPUS} cpus and BAZEL_BUILD_OPTIONS: ${BAZEL_BUILD_OPTIONS}"
 
