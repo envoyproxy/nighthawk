@@ -48,7 +48,7 @@ important maintenance task. When performing the update, follow this procedure:
       sha256 after the first bazel execution.
       Example content of `bazel/repositories.bzl` after the edits:
          ```
-         ENVOY_COMMIT = "9753819331d1547c4b8294546a6461a3777958f5"  # Jan 24th, 2021
+         ENVOY_COMMIT = "9753819331d1547c4b8294546a6461a3777958f5"
          ENVOY_SHA = ""
          ```
    1. Run `ci/do_ci.sh build`, notice the sha256 value at the top of the output,
@@ -62,13 +62,13 @@ important maintenance task. When performing the update, follow this procedure:
    [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/.bazelrc) to
    update our build configurations. Be sure to retain our local modifications,
    all lines that are unique to Nighthawk are marked with comment `# unique`.
-   1. If [.bazelrc](.bazelrc) was modified, search for `experimental_docker_image`.
-      Copy the SHA and update `envoyproxy/envoy-build-ubuntu` over at the top of [.circleci/config.yml](.circleci/config.yml).
 1. Sync (copy) [.bazelversion](.bazelversion) from
    [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/.bazelversion)
    to ensure we are using the same build system version.
 1. Sync (copy) [ci/run_envoy_docker.sh](ci/run_envoy_docker.sh) from
    [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/ci/run_envoy_docker.sh).
+   Be sure to retain our local modifications, all lines that are unique to
+   Nighthawk are marked with comment `# unique`.
 1. Sync (copy) [tools/gen_compilation_database.py](tools/gen_compilation_database.py) from
    [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/tools/gen_compilation_database.py) to
    update our build configurations. Be sure to retain our local modifications,

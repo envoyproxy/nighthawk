@@ -145,7 +145,7 @@ public:
 private:
   Envoy::Api::Api& api_;
   Envoy::Event::Dispatcher& dispatcher_;
-  Envoy::Stats::ScopePtr scope_;
+  Envoy::Stats::ScopeSharedPtr scope_;
   BenchmarkClientStatistic statistic_;
   const Envoy::Http::Protocol protocol_;
   std::chrono::seconds timeout_{5s};

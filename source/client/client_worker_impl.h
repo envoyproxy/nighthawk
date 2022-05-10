@@ -57,8 +57,8 @@ private:
   std::unique_ptr<Envoy::TimeSource> time_source_;
   const TerminationPredicateFactory& termination_predicate_factory_;
   const SequencerFactory& sequencer_factory_;
-  Envoy::Stats::ScopePtr worker_scope_;
-  Envoy::Stats::ScopePtr worker_number_scope_;
+  Envoy::Stats::ScopeSharedPtr worker_scope_;
+  Envoy::Stats::ScopeSharedPtr worker_number_scope_;
   const int worker_number_;
   Envoy::Tracing::HttpTracerSharedPtr& http_tracer_;
   RequestSourcePtr request_generator_;

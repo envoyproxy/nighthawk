@@ -11,7 +11,6 @@ fi
 export BUILDIFIER_BIN="${BUILDIFIER_BIN:=/usr/local/bin/buildifier}"
 export BUILDOZER_BIN="${BUILDOZER_BIN:=/usr/local/bin/buildozer}"
 export NUM_CPUS=${NUM_CPUS:=$(grep -c ^processor /proc/cpuinfo)}
-export CIRCLECI=${CIRCLECI:=""}
 export BAZEL_EXTRA_TEST_OPTIONS=${BAZEL_EXTRA_TEST_OPTIONS:=""}
 export BAZEL_OPTIONS=${BAZEL_OPTIONS:=""}
 export BAZEL_BUILD_EXTRA_OPTIONS=${BAZEL_BUILD_EXTRA_OPTIONS:=""}
@@ -65,21 +64,17 @@ function do_opt_build () {
 }
 
 function do_test() {
-    # The environment variable CI is used to determine if some expensive tests
-    # that cannot run locally should be executed.
+    # The environment variable AZP_BRANCH is used to determine if some expensive
+    # tests that cannot run locally should be executed.
     # E.g. test_http_h1_mini_stress_test_open_loop.
-    run_on_build_parts "bazel build -c dbg $BAZEL_BUILD_OPTIONS --action_env=CI"
-    bazel test -c dbg $BAZEL_TEST_OPTIONS --test_output=all --action_env=CI //test/...
+    run_on_build_parts "bazel build -c dbg $BAZEL_BUILD_OPTIONS --action_env=AZP_BRANCH"
+    bazel test -c dbg $BAZEL_TEST_OPTIONS --test_output=all --action_env=AZP_BRANCH //test/...
 }
 
 function do_clang_tidy() {
     # clang-tidy will warn on standard library issues with libc++    
     BAZEL_BUILD_OPTIONS=("--config=clang" "${BAZEL_BUILD_OPTIONS[@]}")
-    if [ -n "$CIRCLECI" ]; then
-      BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS[*]}" NUM_CPUS=4 ci/run_clang_tidy.sh
-    else
-      BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS[*]}" ci/run_clang_tidy.sh
-    fi
+    BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS[*]}" ci/run_clang_tidy.sh
 }
 
 function do_unit_test_coverage() {
@@ -187,11 +182,16 @@ function do_check_format() {
 function do_docker() {
     echo "docker..."
     cd "${SRCDIR}"
-    # Note that we implicly test the opt build in CI here
+    # Note that we implicitly test the opt build in CI here.
+    echo "do_docker: Running do_opt_build."
     do_opt_build
+    echo "do_docker: Running ci/docker/docker_build.sh."
     ./ci/docker/docker_build.sh
+    echo "do_docker: Running ci/docker/docker_push.sh."
     ./ci/docker/docker_push.sh
+    echo "do_docker: Running ci/docker/benchmark_build.sh."
     ./ci/docker/benchmark_build.sh
+    echo "do_docker: Running ci/docker/benchmark_push.sh."
     ./ci/docker/benchmark_push.sh
 }
 
@@ -232,21 +232,8 @@ export BAZEL_EXTRA_TEST_OPTIONS="--test_env=ENVOY_IP_TEST_VERSIONS=v4only ${BAZE
 export BAZEL_BUILD_OPTIONS=" \
 --verbose_failures ${BAZEL_OPTIONS} --action_env=HOME --action_env=PYTHONUSERBASE \
 --experimental_local_memory_estimate \
---show_task_finish --experimental_generate_json_trace_profile ${BAZEL_BUILD_EXTRA_OPTIONS}"
+--experimental_generate_json_trace_profile ${BAZEL_BUILD_EXTRA_OPTIONS}"
 
-if [ -n "$CIRCLECI" ]; then
-    if [[ -f "${HOME:-/root}/.gitconfig" ]]; then
-        mv "${HOME:-/root}/.gitconfig" "${HOME:-/root}/.gitconfig_save"
-        echo 1
-    fi
-    NUM_CPUS=8
-    if [[ "$1" == "test_gcc" ]]; then
-        NUM_CPUS=2
-        BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} \
-          --discard_analysis_cache --notrack_incremental_state --nokeep_state_after_build"
-    fi
-    BAZEL_BUILD_OPTIONS="${BAZEL_BUILD_OPTIONS} --jobs=${NUM_CPUS}"
-fi
 echo "Running with ${NUM_CPUS} cpus and BAZEL_BUILD_OPTIONS: ${BAZEL_BUILD_OPTIONS}"
 
 export BAZEL_TEST_OPTIONS="${BAZEL_BUILD_OPTIONS} --test_env=HOME --test_env=PYTHONUSERBASE \
