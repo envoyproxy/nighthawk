@@ -118,7 +118,7 @@ private:
   Envoy::Http::ResponseTrailerMapPtr trailer_headers_;
   const Envoy::MonotonicTime connect_start_;
   Envoy::MonotonicTime request_start_;
-  bool complete_;
+  bool complete_ = false;
   bool measure_latencies_;
   const uint32_t request_body_size_;
   Envoy::Tracing::EgressConfigImpl config_;

@@ -73,11 +73,11 @@ uint64_t StatisticImpl::min() const { return min_; };
 uint64_t StatisticImpl::max() const { return max_; };
 
 absl::StatusOr<std::unique_ptr<std::istream>> StatisticImpl::serializeNative() const {
-  return absl::Status(absl::StatusCode::kUnimplemented, "serializeNative not implemented.");
+  return absl::Status{absl::StatusCode::kUnimplemented, "serializeNative not implemented."};
 }
 
 absl::Status StatisticImpl::deserializeNative(std::istream&) {
-  return absl::Status(absl::StatusCode::kUnimplemented, "deserializeNative not implemented.");
+  return absl::Status{absl::StatusCode::kUnimplemented, "deserializeNative not implemented."};
 }
 
 void SimpleStatistic::addValue(uint64_t value) {
@@ -197,7 +197,7 @@ absl::Status StreamingStatistic::deserializeNative(std::istream& stream) {
   std::string tmp(std::istreambuf_iterator<char>(stream), {});
   if (!proto.ParseFromString(tmp)) {
     ENVOY_LOG(error, "Failed to read back StreamingStatistic data.");
-    return absl::Status(absl::StatusCode::kInternal, "Failed to read back StreamingStatistic data");
+    return absl::Status{absl::StatusCode::kInternal, "Failed to read back StreamingStatistic data"};
   }
   id_ = proto.id();
   count_ = proto.count();
@@ -338,7 +338,7 @@ absl::Status HdrStatistic::deserializeNative(std::istream& stream) {
     return absl::OkStatus();
   }
   ENVOY_LOG(error, "Failed to read back HdrHistogram data.");
-  return absl::Status(absl::StatusCode::kInternal, "Failed to read back HdrHistogram data");
+  return absl::Status{absl::StatusCode::kInternal, "Failed to read back HdrHistogram data"};
 }
 
 CircllhistStatistic::CircllhistStatistic() {
