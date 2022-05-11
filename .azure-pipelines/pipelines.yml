@@ -118,7 +118,7 @@ stages:
 
 - stage: release
   dependsOn:
-  # - "clang_tidy"
+  - "clang_tidy"
   - "test_gcc"
   - "sanitizers"
   - "coverage"
