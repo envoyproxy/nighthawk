@@ -127,7 +127,7 @@ absl::Status SimpleStatistic::deserializeNative(std::istream& stream) {
   std::string tmp(std::istreambuf_iterator<char>(stream), {});
   if (!proto.ParseFromString(tmp)) {
     ENVOY_LOG(error, "Failed to read back SimpleStatistic data.");
-    return absl::Status(absl::StatusCode::kInternal, "Failed to read back SimpleStatistic data");
+    return absl::Status{absl::StatusCode::kInternal, "Failed to read back SimpleStatistic data"};
   }
   id_ = proto.id();
   count_ = proto.count();
