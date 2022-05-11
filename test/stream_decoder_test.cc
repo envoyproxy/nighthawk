@@ -135,7 +135,7 @@ TEST_F(StreamDecoderTest, LatencyIsMeasured) {
                      const Envoy::Tracing::Decision) -> Envoy::Tracing::Span* {
             EXPECT_EQ(Envoy::Tracing::OperationName::Egress, config.operationName());
             auto* span = new Envoy::Tracing::MockSpan();
-            EXPECT_CALL(*span, injectContext(_));
+            EXPECT_CALL(*span, injectContext(_, _));
             EXPECT_CALL(*span, setTag(_, _)).Times(12);
             EXPECT_CALL(*span, finishSpan());
             return span;
