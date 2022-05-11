@@ -92,6 +92,9 @@ function filter_excludes() {
 
 function run_clang_tidy() {
   echo "Running clang_tidy with NUM_CPUS: ${NUM_CPUS:-0}."
+  ls  "${LLVM_PREFIX}/share/clang/"
+  ls  "${LLVM_PREFIX}/share/"
+  uname -m
   python3 "${LLVM_PREFIX}/share/clang/run-clang-tidy.py" \
     -clang-tidy-binary="${CLANG_TIDY}" \
     -clang-apply-replacements-binary="${CLANG_APPLY_REPLACEMENTS}" \
