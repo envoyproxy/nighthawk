@@ -259,9 +259,9 @@ TEST(AdaptiveLoadClientMainTest, FailsIfClosingOutputFileFails) {
           true, Envoy::Api::IoErrorPtr(nullptr, [](Envoy::Api::IoError*) {})))));
   EXPECT_CALL(*mock_file, write_(_))
       .WillRepeatedly(Invoke([](absl::string_view data) -> Envoy::Api::IoCallSizeResult {
-        return Envoy::Api::IoCallSizeResult(
+        return Envoy::Api::IoCallSizeResult{
             static_cast<ssize_t>(data.length()),
-            Envoy::Api::IoErrorPtr(nullptr, [](Envoy::Api::IoError*) {}));
+            Envoy::Api::IoErrorPtr(nullptr, [](Envoy::Api::IoError*) {})};
       }));
   EXPECT_CALL(*mock_file, close_())
       .WillOnce(Return(ByMove(Envoy::Api::IoCallBoolResult(
@@ -301,9 +301,9 @@ TEST(AdaptiveLoadClientMainTest, WritesOutputProtoToFile) {
       .WillRepeatedly(Invoke(
           [&actual_outfile_contents](absl::string_view data) -> Envoy::Api::IoCallSizeResult {
             actual_outfile_contents += std::string(data);
-            return Envoy::Api::IoCallSizeResult(
+            return Envoy::Api::IoCallSizeResult{
                 static_cast<ssize_t>(data.length()),
-                Envoy::Api::IoErrorPtr(nullptr, [](Envoy::Api::IoError*) {}));
+                Envoy::Api::IoErrorPtr(nullptr, [](Envoy::Api::IoError*) {})};
           }));
 
   EXPECT_CALL(*mock_file, close_())

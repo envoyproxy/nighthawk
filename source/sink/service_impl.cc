@@ -78,16 +78,16 @@ absl::Status mergeOutput(const nighthawk::client::Output& input_to_merge,
     // Versions probably shouldn't either. We sanity check these things here, and
     // report on error when we detect any mismatch.
     if (!MessageDifferencer::Equivalent(input_to_merge.options(), merge_target.options())) {
-      return absl::Status(absl::StatusCode::kInternal,
+      return absl::Status{absl::StatusCode::kInternal,
                           fmt::format("Options divergence detected: {} vs {}.",
                                       merge_target.options().DebugString(),
-                                      input_to_merge.options().DebugString()));
+                                      input_to_merge.options().DebugString())};
     }
     if (!MessageDifferencer::Equivalent(input_to_merge.version(), merge_target.version())) {
-      return absl::Status(absl::StatusCode::kInternal,
+      return absl::Status{absl::StatusCode::kInternal,
                           fmt::format("Version divergence detected: {} vs {}.",
                                       merge_target.version().DebugString(),
-                                      input_to_merge.version().DebugString()));
+                                      input_to_merge.version().DebugString())};
     }
   }
   // Append all input results into our own results.

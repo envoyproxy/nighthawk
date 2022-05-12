@@ -44,23 +44,22 @@ stages:
       parameters:
         ciTarget: $(CI_TARGET)
 
-# TODO(#849): Renable target when file issue is resolved.
-# - stage: clang_tidy
-#   dependsOn: ["check"]
-#   pool: "x64-large"
-#   jobs:
-#   - job: clang_tidy
-#     displayName: "do_ci.sh"
-#     strategy:
-#       maxParallel: 1
-#       matrix:
-#         clang_tidy:
-#           CI_TARGET: "clang_tidy"
-#     timeoutInMinutes: 120
-#     steps:
-#     - template: bazel.yml
-#       parameters:
-#         ciTarget: $(CI_TARGET)
+- stage: clang_tidy
+  dependsOn: ["check"]
+  pool: "x64-large"
+  jobs:
+  - job: clang_tidy
+    displayName: "do_ci.sh"
+    strategy:
+      maxParallel: 1
+      matrix:
+        clang_tidy:
+          CI_TARGET: "clang_tidy"
+    timeoutInMinutes: 120
+    steps:
+    - template: bazel.yml
+      parameters:
+        ciTarget: $(CI_TARGET)
 
 - stage: test_gcc
   dependsOn: ["check"]
@@ -119,7 +118,7 @@ stages:
 
 - stage: release
   dependsOn:
-  # - "clang_tidy"
+  - "clang_tidy"
   - "test_gcc"
   - "sanitizers"
   - "coverage"
