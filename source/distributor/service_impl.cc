@@ -19,19 +19,19 @@ grpc::Status validateRequest(const nighthawk::DistributedRequest& request) {
   try {
     Envoy::MessageUtil::validate(request, validation_visitor);
   } catch (const Envoy::ProtoValidationException& e) {
-    return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, e.what());
+    return grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, e.what()};
   }
 
   if (request.has_execution_request()) {
     const nighthawk::client::ExecutionRequest& execution_request = request.execution_request();
     if (!execution_request.start_request().has_options()) {
-      return grpc::Status(
+      return grpc::Status{
           grpc::StatusCode::INVALID_ARGUMENT,
-          "DistributedRequest.ExecutionRequest.StartRequest MUST have CommandLineOptions.");
+          "DistributedRequest.ExecutionRequest.StartRequest MUST have CommandLineOptions."};
     }
   } else {
-    return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT,
-                        "DistributedRequest.ExecutionRequest MUST be specified.");
+    return grpc::Status{grpc::StatusCode::INVALID_ARGUMENT,
+                        "DistributedRequest.ExecutionRequest MUST be specified."};
   }
   return grpc::Status::OK;
 }
