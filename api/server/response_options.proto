@@ -48,3 +48,11 @@ message ResponseOptions {
   // responses 3 and 2>.
   string emit_previous_request_delta_in_response_header = 6;
 }
+
+message DynamicDelayConfiguration {
+  ResponseOptions response_options = 1;
+}
+
+message TimeTrackingConfiguration {
+  ResponseOptions response_options = 1;
+}

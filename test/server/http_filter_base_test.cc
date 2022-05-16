@@ -47,14 +47,16 @@ INSTANTIATE_TEST_SUITE_P(
                      testing::ValuesIn({absl::string_view(R"EOF(
 name: time-tracking
 typed_config:
-  "@type": type.googleapis.com/nighthawk.server.ResponseOptions
-  emit_previous_request_delta_in_response_header: "foo"
+  "@type": type.googleapis.com/nighthawk.server.TimeTrackingConfiguration
+  response_options:
+    emit_previous_request_delta_in_response_header: "foo"
 )EOF"),
                                         absl::string_view(R"EOF(
 name: dynamic-delay
 typed_config:
-  "@type": type.googleapis.com/nighthawk.server.ResponseOptions
-  static_delay: 0.1s
+  "@type": type.googleapis.com/nighthawk.server.DynamicDelayConfiguration
+  response_options:
+    static_delay: 0.1s
 )EOF"),
                                         absl::string_view("name: test-server")}),
                      testing::ValuesIn({TestRequestMethod::GET, TestRequestMethod::POST})));
