@@ -26,7 +26,7 @@ public:
     const nighthawk::server::DynamicDelayConfiguration& dynamic_delay_configuration =
         Envoy::MessageUtil::downcastAndValidate<
             const nighthawk::server::DynamicDelayConfiguration&>(proto_config, validation_visitor);
-    validateResponseOptions(dynamic_delay_configuration.response_options());
+    validateResponseOptions(dynamic_delay_configuration.experimental_response_options());
     return createFilter(dynamic_delay_configuration, context);
   }
 

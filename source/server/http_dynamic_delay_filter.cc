@@ -16,7 +16,8 @@ HttpDynamicDelayDecoderFilterConfig::HttpDynamicDelayDecoderFilterConfig(
     const nighthawk::server::DynamicDelayConfiguration& proto_config,
     Envoy::Runtime::Loader& runtime, const std::string& stats_prefix, Envoy::Stats::Scope& scope,
     Envoy::TimeSource& time_source)
-    : FilterConfigurationBase(proto_config.response_options(), "dynamic-delay"), runtime_(runtime),
+    : FilterConfigurationBase(proto_config.experimental_response_options(), "dynamic-delay"),
+      runtime_(runtime),
       stats_prefix_(absl::StrCat(stats_prefix, fmt::format("{}.", filter_name()))), scope_(scope),
       time_source_(time_source) {}
 

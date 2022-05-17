@@ -16,7 +16,7 @@ namespace Server {
 
 HttpTimeTrackingFilterConfig::HttpTimeTrackingFilterConfig(
     const nighthawk::server::TimeTrackingConfiguration& proto_config)
-    : FilterConfigurationBase(proto_config.response_options(), "time-tracking"),
+    : FilterConfigurationBase(proto_config.experimental_response_options(), "time-tracking"),
       stopwatch_(std::make_unique<ThreadSafeMontonicTimeStopwatch>()) {}
 
 uint64_t

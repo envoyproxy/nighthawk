@@ -35,7 +35,7 @@ static_resources:
                   - name: dynamic-delay
                     typed_config:
                       "@type": type.googleapis.com/nighthawk.server.DynamicDelayConfiguration
-                      response_options:
+                      experimental_response_options:
                         response_body_size: 10
                         v3_response_headers:
                           - { header: { key: "x-nh", value: "1" } }

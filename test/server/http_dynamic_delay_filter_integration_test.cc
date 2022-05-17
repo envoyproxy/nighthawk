@@ -47,7 +47,7 @@ TEST_P(HttpDynamicDelayIntegrationTest,
   name: dynamic-delay
   typed_config:
     "@type": type.googleapis.com/nighthawk.server.DynamicDelayConfiguration
-    response_options:
+    experimental_response_options:
       response_headers:
         - { header: { key: "key1", value: "value1"} }
       v3_response_headers:
@@ -91,7 +91,7 @@ TEST_P(HttpDynamicDelayIntegrationTest, StaticConfigurationStaticDelay) {
 name: dynamic-delay
 typed_config:
   "@type": type.googleapis.com/nighthawk.server.DynamicDelayConfiguration
-  response_options:
+  experimental_response_options:
     static_delay: 1.33s
 )EOF");
 
@@ -138,7 +138,7 @@ TEST_P(HttpDynamicDelayIntegrationTest, StaticConfigurationConcurrentDelay) {
 name: dynamic-delay
 typed_config:
   "@type": type.googleapis.com/nighthawk.server.DynamicDelayConfiguration
-  response_options:
+  experimental_response_options:
     concurrency_based_linear_delay:
       minimal_delay: 0.05s
       concurrency_delay_factor: 0.01s

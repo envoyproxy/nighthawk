@@ -48,14 +48,14 @@ INSTANTIATE_TEST_SUITE_P(
 name: time-tracking
 typed_config:
   "@type": type.googleapis.com/nighthawk.server.TimeTrackingConfiguration
-  response_options:
+  experimental_response_options:
     emit_previous_request_delta_in_response_header: "foo"
 )EOF"),
                                         absl::string_view(R"EOF(
 name: dynamic-delay
 typed_config:
   "@type": type.googleapis.com/nighthawk.server.DynamicDelayConfiguration
-  response_options:
+  experimental_response_options:
     static_delay: 0.1s
 )EOF"),
                                         absl::string_view("name: test-server")}),

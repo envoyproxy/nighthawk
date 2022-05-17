@@ -35,7 +35,7 @@ static_resources:
           - name: time-tracking
             typed_config:
               "@type": type.googleapis.com/nighthawk.server.TimeTrackingConfiguration
-              response_options:
+              experimental_response_options:
                 emit_previous_request_delta_in_response_header: x-origin-request-receipt-delta
           - name: test-server
             typed_config:

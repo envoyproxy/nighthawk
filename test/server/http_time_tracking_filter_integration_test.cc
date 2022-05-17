@@ -26,7 +26,7 @@ const std::string kProtoConfigTemplate = R"EOF(
 name: time-tracking
 typed_config:
   "@type": type.googleapis.com/nighthawk.server.TimeTrackingConfiguration
-  response_options:
+  experimental_response_options:
     {}
 )EOF";
 
@@ -46,7 +46,7 @@ TEST_P(HttpTimeTrackingIntegrationTest,
   name: time-tracking
   typed_config:
     "@type": type.googleapis.com/nighthawk.server.TimeTrackingConfiguration
-    response_options:
+    experimental_response_options:
       response_headers:
         - { header: { key: "key1", value: "value1"} }
       v3_response_headers:
