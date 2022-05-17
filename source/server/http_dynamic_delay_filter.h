@@ -25,8 +25,8 @@ public:
   /**
    * Constructs a new HttpDynamicDelayDecoderFilterConfig instance.
    *
-   * @param proto_config The proto configuration of the filter. Will be tranlated internally into
-   * the right configuration for the base class structure (the failt filter and config).
+   * @param proto_config The proto configuration of the filter. Will be translated internally into
+   * the right configuration for the base class structure (the fault filter and config).
    * @param runtime Envoy runtime to be used by the filter.
    * @param stats_prefix Prefix to use by the filter when it names statistics. E.g.
    * dynamic-delay.fault.delays_injected: 1

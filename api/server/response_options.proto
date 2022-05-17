@@ -49,10 +49,16 @@ message ResponseOptions {
   string emit_previous_request_delta_in_response_header = 6;
 }
 
+// Configures the dynamic-delay test filter.
 message DynamicDelayConfiguration {
-  ResponseOptions response_options = 1;
+  // This is a temporary solution to allow this functionality to continue, but will likely be
+  // reconfigured soon.
+  ResponseOptions experimental_response_options = 1;
 }
 
+// Configures the time-tracking test filter
 message TimeTrackingConfiguration {
-  ResponseOptions response_options = 1;
+  // This is a temporary solution to allow this functionality to continue, but will likely be
+  // reconfigured soon.
+  ResponseOptions experimental_response_options = 1;
 }
