@@ -25,8 +25,9 @@ const std::string kDefaultProtoFragment = fmt::format(
 const std::string kProtoConfigTemplate = R"EOF(
 name: time-tracking
 typed_config:
-  "@type": type.googleapis.com/nighthawk.server.ResponseOptions
-  {}
+  "@type": type.googleapis.com/nighthawk.server.TimeTrackingConfiguration
+  experimental_response_options:
+    {}
 )EOF";
 
 class HttpTimeTrackingIntegrationTest
@@ -44,11 +45,12 @@ TEST_P(HttpTimeTrackingIntegrationTest,
   const std::string invalid_configuration = R"EOF(
   name: time-tracking
   typed_config:
-    "@type": type.googleapis.com/nighthawk.server.ResponseOptions
-    response_headers:
-      - { header: { key: "key1", value: "value1"} }
-    v3_response_headers:
-      - { header: { key: "key1", value: "value1"} }
+    "@type": type.googleapis.com/nighthawk.server.TimeTrackingConfiguration
+    experimental_response_options:
+      response_headers:
+        - { header: { key: "key1", value: "value1"} }
+      v3_response_headers:
+        - { header: { key: "key1", value: "value1"} }
   )EOF";
 
   ASSERT_DEATH(initializeFilterConfiguration(invalid_configuration),

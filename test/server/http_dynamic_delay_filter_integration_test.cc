@@ -46,11 +46,12 @@ TEST_P(HttpDynamicDelayIntegrationTest,
   const std::string invalid_configuration = R"EOF(
   name: dynamic-delay
   typed_config:
-    "@type": type.googleapis.com/nighthawk.server.ResponseOptions
-    response_headers:
-      - { header: { key: "key1", value: "value1"} }
-    v3_response_headers:
-      - { header: { key: "key1", value: "value1"} }
+    "@type": type.googleapis.com/nighthawk.server.DynamicDelayConfiguration
+    experimental_response_options:
+      response_headers:
+        - { header: { key: "key1", value: "value1"} }
+      v3_response_headers:
+        - { header: { key: "key1", value: "value1"} }
   )EOF";
 
   ASSERT_DEATH(initializeFilterConfiguration(invalid_configuration),
@@ -62,7 +63,7 @@ TEST_P(HttpDynamicDelayIntegrationTest, NoStaticConfiguration) {
   initializeFilterConfiguration(R"(
 name: dynamic-delay
 typed_config:
-  "@type": type.googleapis.com/nighthawk.server.ResponseOptions
+  "@type": type.googleapis.com/nighthawk.server.DynamicDelayConfiguration
 )");
   // Don't send any config request header ...
   ASSERT_TRUE(getResponse(ResponseOrigin::UPSTREAM)->waitForEndStream());
@@ -89,8 +90,9 @@ TEST_P(HttpDynamicDelayIntegrationTest, StaticConfigurationStaticDelay) {
   initializeFilterConfiguration(R"EOF(
 name: dynamic-delay
 typed_config:
-  "@type": type.googleapis.com/nighthawk.server.ResponseOptions
-  static_delay: 1.33s
+  "@type": type.googleapis.com/nighthawk.server.DynamicDelayConfiguration
+  experimental_response_options:
+    static_delay: 1.33s
 )EOF");
 
   // Without any request-level configuration, we expect the statically configured static delay to
@@ -135,10 +137,11 @@ TEST_P(HttpDynamicDelayIntegrationTest, StaticConfigurationConcurrentDelay) {
   initializeFilterConfiguration(R"EOF(
 name: dynamic-delay
 typed_config:
-  "@type": type.googleapis.com/nighthawk.server.ResponseOptions
-  concurrency_based_linear_delay:
-    minimal_delay: 0.05s
-    concurrency_delay_factor: 0.01s
+  "@type": type.googleapis.com/nighthawk.server.DynamicDelayConfiguration
+  experimental_response_options:
+    concurrency_based_linear_delay:
+      minimal_delay: 0.05s
+      concurrency_delay_factor: 0.01s
 )EOF");
   ASSERT_TRUE(getResponse(ResponseOrigin::UPSTREAM)->waitForEndStream());
   // Based on the algorithm of concurrency_based_linear_delay, for the first request we expect to

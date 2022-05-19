@@ -34,8 +34,9 @@ static_resources:
             # Here we set up the time-tracking extension to emit request-arrival delta timings in a response header.
           - name: time-tracking
             typed_config:
-              "@type": type.googleapis.com/nighthawk.server.ResponseOptions
-              emit_previous_request_delta_in_response_header: x-origin-request-receipt-delta
+              "@type": type.googleapis.com/nighthawk.server.TimeTrackingConfiguration
+              experimental_response_options:
+                emit_previous_request_delta_in_response_header: x-origin-request-receipt-delta
           - name: test-server
             typed_config:
               "@type": type.googleapis.com/nighthawk.server.ResponseOptions

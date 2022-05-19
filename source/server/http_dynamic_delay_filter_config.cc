@@ -23,22 +23,23 @@ public:
                                Envoy::Server::Configuration::FactoryContext& context) override {
 
     auto& validation_visitor = Envoy::ProtobufMessage::getStrictValidationVisitor();
-    const nighthawk::server::ResponseOptions& response_options =
-        Envoy::MessageUtil::downcastAndValidate<const nighthawk::server::ResponseOptions&>(
-            proto_config, validation_visitor);
-    validateResponseOptions(response_options);
-    return createFilter(response_options, context);
+    const nighthawk::server::DynamicDelayConfiguration& dynamic_delay_configuration =
+        Envoy::MessageUtil::downcastAndValidate<
+            const nighthawk::server::DynamicDelayConfiguration&>(proto_config, validation_visitor);
+    validateResponseOptions(dynamic_delay_configuration.experimental_response_options());
+    return createFilter(dynamic_delay_configuration, context);
   }
 
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override {
-    return Envoy::ProtobufTypes::MessagePtr{new nighthawk::server::ResponseOptions()};
+    return Envoy::ProtobufTypes::MessagePtr{new nighthawk::server::DynamicDelayConfiguration()};
   }
 
   std::string name() const override { return "dynamic-delay"; }
 
 private:
-  Envoy::Http::FilterFactoryCb createFilter(const nighthawk::server::ResponseOptions& proto_config,
-                                            Envoy::Server::Configuration::FactoryContext& context) {
+  Envoy::Http::FilterFactoryCb
+  createFilter(const nighthawk::server::DynamicDelayConfiguration& proto_config,
+               Envoy::Server::Configuration::FactoryContext& context) {
     Nighthawk::Server::HttpDynamicDelayDecoderFilterConfigSharedPtr config =
         std::make_shared<Nighthawk::Server::HttpDynamicDelayDecoderFilterConfig>(
             Nighthawk::Server::HttpDynamicDelayDecoderFilterConfig(
