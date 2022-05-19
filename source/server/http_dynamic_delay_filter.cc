@@ -7,19 +7,26 @@
 #include "source/server/configuration.h"
 #include "source/server/well_known_headers.h"
 
+#include "api/server/dynamic_delay.pb.validate.h"
+
 #include "absl/strings/str_cat.h"
 
 namespace Nighthawk {
 namespace Server {
 
+using ::nighthawk::server::DynamicDelayConfiguration;
+
 HttpDynamicDelayDecoderFilterConfig::HttpDynamicDelayDecoderFilterConfig(
-    const nighthawk::server::DynamicDelayConfiguration& proto_config,
+    const DynamicDelayConfiguration& proto_config,
     Envoy::Runtime::Loader& runtime, const std::string& stats_prefix, Envoy::Stats::Scope& scope,
     Envoy::TimeSource& time_source)
-    : FilterConfigurationBase(proto_config.experimental_response_options(), "dynamic-delay"),
-      runtime_(runtime),
+    : FilterConfigurationBase("dynamic-delay"), runtime_(runtime),
       stats_prefix_(absl::StrCat(stats_prefix, fmt::format("{}.", filter_name()))), scope_(scope),
-      time_source_(time_source) {}
+      time_source_(time_source), server_config_(std::make_shared<DynamicDelayConfiguration>(proto_config)) {}
+
+std::shared_ptr<const DynamicDelayConfiguration> HttpDynamicDelayDecoderFilterConfig::getServerConfig() {
+  return server_config_;
+}
 
 HttpDynamicDelayDecoderFilter::HttpDynamicDelayDecoderFilter(
     HttpDynamicDelayDecoderFilterConfigSharedPtr config)
@@ -42,14 +49,14 @@ void HttpDynamicDelayDecoderFilter::onDestroy() {
 Envoy::Http::FilterHeadersStatus
 HttpDynamicDelayDecoderFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& headers,
                                              bool end_stream) {
-  effective_config_ = config_->computeEffectiveConfiguration(headers);
+  effective_config_ = Configuration::computeEffectiveConfiguration<DynamicDelayConfiguration>(config_->getServerConfig(), headers);
   if (effective_config_.ok()) {
     const absl::optional<int64_t> delay_ms =
         computeDelayMs(*effective_config_.value(), config_->approximateFilterInstances());
     maybeRequestFaultFilterDelay(delay_ms, headers);
   } else {
     if (end_stream) {
-      config_->validateOrSendError(effective_config_, *decoder_callbacks_);
+      config_->validateOrSendError(effective_config_.status(), *decoder_callbacks_);
       return Envoy::Http::FilterHeadersStatus::StopIteration;
     }
     return Envoy::Http::FilterHeadersStatus::Continue;
@@ -61,7 +68,7 @@ Envoy::Http::FilterDataStatus
 HttpDynamicDelayDecoderFilter::decodeData(Envoy::Buffer::Instance& buffer, bool end_stream) {
   if (!effective_config_.ok()) {
     if (end_stream) {
-      config_->validateOrSendError(effective_config_, *decoder_callbacks_);
+      config_->validateOrSendError(effective_config_.status(), *decoder_callbacks_);
       return Envoy::Http::FilterDataStatus::StopIterationNoBuffer;
     }
     return Envoy::Http::FilterDataStatus::Continue;
@@ -70,14 +77,13 @@ HttpDynamicDelayDecoderFilter::decodeData(Envoy::Buffer::Instance& buffer, bool 
 }
 
 absl::optional<int64_t> HttpDynamicDelayDecoderFilter::computeDelayMs(
-    const nighthawk::server::ResponseOptions& response_options, const uint64_t concurrency) {
+    const DynamicDelayConfiguration& config, const uint64_t concurrency) {
   absl::optional<int64_t> delay_ms;
-  if (response_options.has_static_delay()) {
-    delay_ms =
-        Envoy::Protobuf::util::TimeUtil::DurationToMilliseconds(response_options.static_delay());
-  } else if (response_options.has_concurrency_based_linear_delay()) {
+  if (config.has_static_delay()) {
+    delay_ms = Envoy::Protobuf::util::TimeUtil::DurationToMilliseconds(config.static_delay());
+  } else if (config.has_concurrency_based_linear_delay()) {
     const nighthawk::server::ConcurrencyBasedLinearDelay& concurrency_config =
-        response_options.concurrency_based_linear_delay();
+        config.concurrency_based_linear_delay();
     delay_ms = computeConcurrencyBasedLinearDelayMs(concurrency, concurrency_config.minimal_delay(),
                                                     concurrency_config.concurrency_delay_factor());
   }

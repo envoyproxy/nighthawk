@@ -3,9 +3,14 @@
 
 #include "external/envoy/test/test_common/utility.h"
 
+#include "api/server/response_options.pb.h"
 #include "api/server/response_options.pb.validate.h"
+#include "api/server/time_tracking.pb.h"
+#include "api/server/time_tracking.pb.validate.h"
 
 #include "source/server/configuration.h"
+
+#include "test/test_common/proto_matchers.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -17,6 +22,67 @@ namespace {
 
 using ::Envoy::Http::LowerCaseString;
 using ::Envoy::Http::TestResponseHeaderMapImpl;
+using ::Envoy::Protobuf::TextFormat;
+using ::nighthawk::server::ResponseOptions;
+using ::nighthawk::server::TimeTrackingConfiguration;
+using ::testing::HasSubstr;
+
+TEST(MergeJsonConfig, AddsInUnsetValuesToConfig) {
+  ResponseOptions options;
+  TextFormat::ParseFromString("response_body_size: 23", &options);
+  ResponseOptions expected_options;
+  TextFormat::ParseFromString(R"(
+    response_body_size: 23
+    echo_request_headers: true
+  )",
+                              &expected_options);
+  std::string error;
+  EXPECT_TRUE(mergeJsonConfig<ResponseOptions>("{'echo_request_headers': true}", options, error));
+  EXPECT_THAT(options, EqualsProto(expected_options));
+}
+
+TEST(MergeJsonConfig, OverridesSetValues) {
+  ResponseOptions options;
+  TextFormat::ParseFromString(R"(
+    response_body_size: 23
+    echo_request_headers: false
+  )",
+                              &options);
+  ResponseOptions expected_options;
+  TextFormat::ParseFromString(R"(
+    response_body_size: 23
+    echo_request_headers: true
+  )",
+                              &expected_options);
+  std::string error;
+  EXPECT_TRUE(mergeJsonConfig<ResponseOptions>("{'echo_request_headers': true}", options, error));
+  EXPECT_THAT(options, EqualsProto(expected_options));
+}
+
+TEST(MergeJsonConfig, ErrorsGracefullyForInvalidJsonConfig) {
+  ResponseOptions options;
+  TextFormat::ParseFromString(R"(
+    response_body_size: 23
+    echo_request_headers: false
+  )",
+                              &options);
+  std::string error;
+  EXPECT_FALSE(mergeJsonConfig<ResponseOptions>("{'not_a_field': true}", options, error));
+  EXPECT_THAT(error, HasSubstr("INVALID_ARGUMENT"));
+}
+
+TEST(MergeJsonConfig, WorksForOtherFilterConfigurations) {
+  TimeTrackingConfiguration config;
+  TimeTrackingConfiguration expected_config;
+  TextFormat::ParseFromString(R"(
+    emit_previous_request_delta_in_response_header: 'time-tracking-header'
+  )",
+                              &expected_config);
+  std::string error;
+  EXPECT_TRUE(mergeJsonConfig<TimeTrackingConfiguration>(
+      "{'emit_previous_request_delta_in_response_header': 'time-tracking-header'}", config, error));
+  EXPECT_THAT(config, EqualsProto(expected_config));
+}
 
 TEST(UpgradeDeprecatedEnvoyV2HeaderValueOptionToV3Test, UpgradesEmptyHeaderValue) {
   envoy::api::v2::core::HeaderValueOption v2_header_value_option;
