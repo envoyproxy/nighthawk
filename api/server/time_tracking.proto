@@ -13,5 +13,5 @@ message TimeTrackingConfiguration {
   // responses 3 and 2>.
   string emit_previous_request_delta_in_response_header = 2;
 
-  reserved = 1;
+  reserved 1;
 }
