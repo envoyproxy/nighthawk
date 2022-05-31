@@ -73,6 +73,10 @@ public:
    */
   std::string stats_prefix() { return stats_prefix_; }
 
+  /**
+   * @return std::shared_ptr<const nighthawk::server::DynamicDelayConfiguration> the base
+   * configuration for this filter.
+   */
   std::shared_ptr<const nighthawk::server::DynamicDelayConfiguration> getServerConfig();
 
 private:

@@ -6,13 +6,7 @@
 #include "envoy/config/core/v3/base.pb.h"
 #include "envoy/http/header_map.h"
 
-#include "external/envoy/source/common/common/statusor.h"
-#include "external/envoy/source/common/protobuf/message_validator_impl.h"
-#include "external/envoy/source/common/protobuf/utility.h"
-
 #include "api/server/response_options.pb.h"
-
-#include "source/server/well_known_headers.h"
 
 namespace Nighthawk {
 namespace Server {
