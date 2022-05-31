@@ -569,7 +569,7 @@ def test_request_body_gets_transmitted(http_test_server_fixture, filter_configs)
       str(upload_bytes), "--termination-predicate",
       "benchmark.http_2xx:%s" % str(requests), "--connections", "1", "--request-method", "POST",
       "--max-active-requests", "1", "--request-header",
-      "x-nighthawk-test-server-config:%s" % filter_configs
+      "x-nighthawk-dynamic-delay-config:%s" % filter_configs
   ]
   # Test we transmit the expected amount of bytes with H1
   parsed_json, _ = http_test_server_fixture.runNighthawkClient(args)

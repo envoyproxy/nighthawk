@@ -37,8 +37,9 @@ TEST(MergeJsonConfig, AddsInUnsetValuesToConfig) {
   )",
                               &expected_options);
   std::string error;
-  EXPECT_TRUE(mergeJsonConfig<ResponseOptions>("{'echo_request_headers': true}", options, error));
+  EXPECT_TRUE(mergeJsonConfig("{'echo_request_headers': true}", options, error));
   EXPECT_THAT(options, EqualsProto(expected_options));
+  EXPECT_EQ(error, "");
 }
 
 TEST(MergeJsonConfig, OverridesSetValues) {
@@ -55,8 +56,9 @@ TEST(MergeJsonConfig, OverridesSetValues) {
   )",
                               &expected_options);
   std::string error;
-  EXPECT_TRUE(mergeJsonConfig<ResponseOptions>("{'echo_request_headers': true}", options, error));
+  EXPECT_TRUE(mergeJsonConfig("{'echo_request_headers': true}", options, error));
   EXPECT_THAT(options, EqualsProto(expected_options));
+  EXPECT_EQ(error, "");
 }
 
 TEST(MergeJsonConfig, ErrorsGracefullyForInvalidJsonConfig) {
@@ -67,21 +69,43 @@ TEST(MergeJsonConfig, ErrorsGracefullyForInvalidJsonConfig) {
   )",
                               &options);
   std::string error;
-  EXPECT_FALSE(mergeJsonConfig<ResponseOptions>("{'not_a_field': true}", options, error));
+  EXPECT_FALSE(mergeJsonConfig("{'not_a_field': true}", options, error));
   EXPECT_THAT(error, HasSubstr("INVALID_ARGUMENT"));
 }
 
-TEST(MergeJsonConfig, WorksForOtherFilterConfigurations) {
-  TimeTrackingConfiguration config;
-  TimeTrackingConfiguration expected_config;
+TEST(MergeJsonConfig, AppendsHeadersWhenCalledFor) {
+  ResponseOptions options;
   TextFormat::ParseFromString(R"(
-    emit_previous_request_delta_in_response_header: 'time-tracking-header'
+    v3_response_headers {
+      header {
+        key: "foo"
+        value: "bar1"
+      }
+    }
   )",
-                              &expected_config);
+                              &options);
+  ResponseOptions expected_options;
+  TextFormat::ParseFromString(R"(
+    v3_response_headers {
+      header {
+        key: "foo"
+        value: "bar1"
+      }
+    }
+    v3_response_headers {
+      header {
+        key: "foo"
+        value: "bar2"
+      }
+    }
+  )",
+                              &expected_options);
+  std::string header_json =
+      R"({v3_response_headers: [ { header: { key: "foo", value: "bar2"} } ]})";
   std::string error;
-  EXPECT_TRUE(mergeJsonConfig<TimeTrackingConfiguration>(
-      "{'emit_previous_request_delta_in_response_header': 'time-tracking-header'}", config, error));
-  EXPECT_THAT(config, EqualsProto(expected_config));
+  EXPECT_TRUE(mergeJsonConfig(header_json, options, error));
+  EXPECT_EQ(error, "");
+  EXPECT_THAT(options, EqualsProto(expected_options));
 }
 
 TEST(UpgradeDeprecatedEnvoyV2HeaderValueOptionToV3Test, UpgradesEmptyHeaderValue) {

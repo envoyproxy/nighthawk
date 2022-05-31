@@ -71,7 +71,8 @@ public:
 
 private:
   const HttpTimeTrackingFilterConfigSharedPtr config_;
-  absl::StatusOr<std::shared_ptr<const nighthawk::server::TimeTrackingConfiguration>> effective_config_;
+  absl::StatusOr<std::shared_ptr<const nighthawk::server::TimeTrackingConfiguration>>
+      effective_config_;
   uint64_t last_request_delta_ns_;
 };
 

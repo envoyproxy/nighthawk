@@ -41,7 +41,6 @@ public:
 INSTANTIATE_TEST_SUITE_P(IpVersions, HttpDynamicDelayIntegrationTest,
                          testing::ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()));
 
-
 // Verify expectations with an empty dynamic-delay configuration.
 TEST_P(HttpDynamicDelayIntegrationTest, NoStaticConfiguration) {
   initializeFilterConfiguration(R"(

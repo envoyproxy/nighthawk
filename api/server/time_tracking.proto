@@ -11,5 +11,7 @@ message TimeTrackingConfiguration {
   // with: Response 1: No x-abc header because there's no previous response. Response 2: Header
   // x-abc: <ns elapsed between responses 2 and 1>. Response 3: Header x-abc: <ns elapsed between
   // responses 3 and 2>.
-  string emit_previous_request_delta_in_response_header = 6;
+  string emit_previous_request_delta_in_response_header = 2;
+
+  reserved = 1;
 }

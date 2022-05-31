@@ -4,27 +4,83 @@
 
 #include "envoy/server/filter_config.h"
 
+#include "api/server/dynamic_delay.pb.validate.h"
+
 #include "source/server/configuration.h"
 #include "source/server/well_known_headers.h"
-
-#include "api/server/dynamic_delay.pb.validate.h"
 
 #include "absl/strings/str_cat.h"
 
 namespace Nighthawk {
 namespace Server {
+namespace {
 
 using ::nighthawk::server::DynamicDelayConfiguration;
+using ::nighthawk::server::ResponseOptions;
+
+// Cherry-picks the relevant fields from the header_json, which should be a ResponseOptions proto,
+// and merges them into the base_config.
+absl::Status cherryPickDynamicDelayConfiguration(absl::string_view header_json,
+                                                 DynamicDelayConfiguration& base_config) {
+  try {
+    ResponseOptions response_options;
+    auto& validation_visitor = Envoy::ProtobufMessage::getStrictValidationVisitor();
+    Envoy::MessageUtil::loadFromJson(std::string(header_json), response_options,
+                                     validation_visitor);
+    switch (response_options.oneof_delay_options_case()) {
+    case ResponseOptions::OneofDelayOptionsCase::kStaticDelay:
+      *base_config.mutable_static_delay() = response_options.static_delay();
+      break;
+    case ResponseOptions::OneofDelayOptionsCase::kConcurrencyBasedLinearDelay:
+      *base_config.mutable_concurrency_based_linear_delay() =
+          response_options.concurrency_based_linear_delay();
+      break;
+    case ResponseOptions::OneofDelayOptionsCase::ONEOF_DELAY_OPTIONS_NOT_SET:
+      break; // No action required.
+    }
+  } catch (const Envoy::EnvoyException& exception) {
+    return absl::InvalidArgumentError(
+        fmt::format("Error merging json config: {}", exception.what()));
+  }
+  return absl::OkStatus();
+}
+
+const absl::StatusOr<std::shared_ptr<const DynamicDelayConfiguration>>
+computeEffectiveConfiguration(std::shared_ptr<const DynamicDelayConfiguration> base_filter_config,
+                              const Envoy::Http::RequestHeaderMap& request_headers) {
+  const auto& request_config_header =
+      request_headers.get(TestServer::HeaderNames::get().TestServerConfig);
+  if (request_config_header.size() == 1) {
+    // We could be more flexible and look for the first request header that has a value,
+    // but without a proper understanding of a real use case for that, we are assuming that any
+    // existence of duplicate headers here is an error.
+    DynamicDelayConfiguration modified_filter_config = *base_filter_config;
+    absl::Status cherry_pick_status = cherryPickDynamicDelayConfiguration(
+        request_config_header[0]->value().getStringView(), modified_filter_config);
+    if (cherry_pick_status.ok()) {
+      return std::make_shared<const DynamicDelayConfiguration>(std::move(modified_filter_config));
+    } else {
+      return cherry_pick_status;
+    }
+  } else if (request_config_header.size() > 1) {
+    return absl::InvalidArgumentError(
+        "Received multiple configuration headers in the request, expected only one.");
+  }
+  return base_filter_config;
+}
+
+} // namespace
 
 HttpDynamicDelayDecoderFilterConfig::HttpDynamicDelayDecoderFilterConfig(
-    const DynamicDelayConfiguration& proto_config,
-    Envoy::Runtime::Loader& runtime, const std::string& stats_prefix, Envoy::Stats::Scope& scope,
-    Envoy::TimeSource& time_source)
+    const DynamicDelayConfiguration& proto_config, Envoy::Runtime::Loader& runtime,
+    const std::string& stats_prefix, Envoy::Stats::Scope& scope, Envoy::TimeSource& time_source)
     : FilterConfigurationBase("dynamic-delay"), runtime_(runtime),
       stats_prefix_(absl::StrCat(stats_prefix, fmt::format("{}.", filter_name()))), scope_(scope),
-      time_source_(time_source), server_config_(std::make_shared<DynamicDelayConfiguration>(proto_config)) {}
+      time_source_(time_source),
+      server_config_(std::make_shared<DynamicDelayConfiguration>(proto_config)) {}
 
-std::shared_ptr<const DynamicDelayConfiguration> HttpDynamicDelayDecoderFilterConfig::getServerConfig() {
+std::shared_ptr<const DynamicDelayConfiguration>
+HttpDynamicDelayDecoderFilterConfig::getServerConfig() {
   return server_config_;
 }
 
@@ -49,7 +105,7 @@ void HttpDynamicDelayDecoderFilter::onDestroy() {
 Envoy::Http::FilterHeadersStatus
 HttpDynamicDelayDecoderFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& headers,
                                              bool end_stream) {
-  effective_config_ = Configuration::computeEffectiveConfiguration<DynamicDelayConfiguration>(config_->getServerConfig(), headers);
+  effective_config_ = computeEffectiveConfiguration(config_->getServerConfig(), headers);
   if (effective_config_.ok()) {
     const absl::optional<int64_t> delay_ms =
         computeDelayMs(*effective_config_.value(), config_->approximateFilterInstances());
@@ -76,8 +132,9 @@ HttpDynamicDelayDecoderFilter::decodeData(Envoy::Buffer::Instance& buffer, bool 
   return Envoy::Extensions::HttpFilters::Fault::FaultFilter::decodeData(buffer, end_stream);
 }
 
-absl::optional<int64_t> HttpDynamicDelayDecoderFilter::computeDelayMs(
-    const DynamicDelayConfiguration& config, const uint64_t concurrency) {
+absl::optional<int64_t>
+HttpDynamicDelayDecoderFilter::computeDelayMs(const DynamicDelayConfiguration& config,
+                                              const uint64_t concurrency) {
   absl::optional<int64_t> delay_ms;
   if (config.has_static_delay()) {
     delay_ms = Envoy::Protobuf::util::TimeUtil::DurationToMilliseconds(config.static_delay());

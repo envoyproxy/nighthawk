@@ -163,7 +163,8 @@ public:
 
 private:
   const HttpDynamicDelayDecoderFilterConfigSharedPtr config_;
-  absl::StatusOr<std::shared_ptr<const nighthawk::server::DynamicDelayConfiguration>> effective_config_;
+  absl::StatusOr<std::shared_ptr<const nighthawk::server::DynamicDelayConfiguration>>
+      effective_config_;
   Envoy::Http::StreamDecoderFilterCallbacks* decoder_callbacks_;
   bool destroyed_{false};
 };

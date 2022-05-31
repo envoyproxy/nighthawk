@@ -13,9 +13,35 @@
 
 namespace Nighthawk {
 namespace Server {
+namespace {
 
 using ::nighthawk::server::ResponseOptions;
-using ::Nighthawk::Server::Configuration::computeEffectiveConfiguration;
+
+const absl::StatusOr<std::shared_ptr<const ResponseOptions>>
+computeEffectiveConfiguration(std::shared_ptr<const ResponseOptions> base_filter_config,
+                              const Envoy::Http::RequestHeaderMap& request_headers) {
+  const auto& request_config_header =
+      request_headers.get(TestServer::HeaderNames::get().TestServerConfig);
+  if (request_config_header.size() == 1) {
+    // We could be more flexible and look for the first request header that has a value,
+    // but without a proper understanding of a real use case for that, we are assuming that any
+    // existence of duplicate headers here is an error.
+    ResponseOptions modified_filter_config = *base_filter_config;
+    std::string error_message;
+    if (Configuration::mergeJsonConfig(request_config_header[0]->value().getStringView(),
+                                       modified_filter_config, error_message)) {
+      return std::make_shared<const ResponseOptions>(std::move(modified_filter_config));
+    } else {
+      return absl::InvalidArgumentError(error_message);
+    }
+  } else if (request_config_header.size() > 1) {
+    return absl::InvalidArgumentError(
+        "Received multiple configuration headers in the request, expected only one.");
+  }
+  return base_filter_config;
+}
+
+} // namespace
 
 HttpTestServerDecoderFilterConfig::HttpTestServerDecoderFilterConfig(
     const ResponseOptions& proto_config)
@@ -48,8 +74,7 @@ void HttpTestServerDecoderFilter::sendReply(const ResponseOptions& options) {
 Envoy::Http::FilterHeadersStatus
 HttpTestServerDecoderFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& headers,
                                            bool end_stream) {
-  effective_config_ =
-      computeEffectiveConfiguration<ResponseOptions>(config_->getServerConfig(), headers);
+  effective_config_ = computeEffectiveConfiguration(config_->getServerConfig(), headers);
   if (end_stream) {
     if (!config_->validateOrSendError(effective_config_.status(), *decoder_callbacks_)) {
       if (effective_config_.value()->echo_request_headers()) {
