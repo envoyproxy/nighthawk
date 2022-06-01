@@ -50,9 +50,8 @@ envoy_cc_library(
     deps = [
         ":configuration_lib",
         "//api/server:response_options_proto_cc_proto",
-        "@envoy//source/exe:envoy_common_lib_with_external_headers",
         "@envoy//source/common/common:statusor_lib_with_external_headers",
-
+        "@envoy//source/exe:envoy_common_lib_with_external_headers",
     ],
 )
 
@@ -65,9 +64,9 @@ envoy_cc_library(
         ":configuration_lib",
         "//api/server:response_options_proto_cc_proto",
         "//source/common:thread_safe_monotonic_time_stopwatch_lib",
+        "@envoy//source/common/common:statusor_lib_with_external_headers",
         "@envoy//source/exe:envoy_common_lib_with_external_headers",
         "@envoy//source/extensions/filters/http/common:pass_through_filter_lib_with_external_headers",
-        "@envoy//source/common/common:statusor_lib_with_external_headers",
     ],
 )
 
@@ -79,9 +78,9 @@ envoy_cc_library(
     deps = [
         ":configuration_lib",
         "//api/server:response_options_proto_cc_proto",
+        "@envoy//source/common/common:statusor_lib_with_external_headers",
         "@envoy//source/exe:envoy_common_lib_with_external_headers",
         "@envoy//source/extensions/filters/http/fault:fault_filter_lib_with_external_headers",
-        "@envoy//source/common/common:statusor_lib_with_external_headers",
     ],
 )
 
