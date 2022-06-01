@@ -1,8 +1,5 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-#ENVOY_COMMIT = "d8f0f22d11dcde0839b75ab4ad3ec355dc4aebdd"
-#ENVOY_SHA = ""
-
 ENVOY_COMMIT = "e4f443a075b9fd8ad194444778144457c5d4b83a"
 ENVOY_SHA = "d5a88e46076f8839c6ba09e8b60d2b67e08ec406692306ad417dd58c1f7e12f6"
 
