@@ -4,6 +4,8 @@
 
 #include "envoy/server/filter_config.h"
 
+#include "external/envoy/source/common/common/statusor.h"
+
 #include "api/server/response_options.pb.h"
 
 #include "source/server/http_filter_config_base.h"
