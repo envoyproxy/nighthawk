@@ -48,7 +48,8 @@ HttpTestServerDecoderFilterConfig::HttpTestServerDecoderFilterConfig(
     : FilterConfigurationBase("test-server"),
       server_config_(std::make_shared<ResponseOptions>(proto_config)) {}
 
-std::shared_ptr<const ResponseOptions> HttpTestServerDecoderFilterConfig::getStartupFilterConfiguration() {
+std::shared_ptr<const ResponseOptions>
+HttpTestServerDecoderFilterConfig::getStartupFilterConfiguration() {
   return server_config_;
 }
 
@@ -74,7 +75,8 @@ void HttpTestServerDecoderFilter::sendReply(const ResponseOptions& options) {
 Envoy::Http::FilterHeadersStatus
 HttpTestServerDecoderFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& headers,
                                            bool end_stream) {
-  effective_config_ = computeEffectiveConfiguration(config_->getStartupFilterConfiguration(), headers);
+  effective_config_ =
+      computeEffectiveConfiguration(config_->getStartupFilterConfiguration(), headers);
   if (end_stream) {
     if (!config_->validateOrSendError(effective_config_.status(), *decoder_callbacks_)) {
       if (effective_config_.value()->echo_request_headers()) {

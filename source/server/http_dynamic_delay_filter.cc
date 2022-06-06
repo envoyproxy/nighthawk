@@ -105,7 +105,8 @@ void HttpDynamicDelayDecoderFilter::onDestroy() {
 Envoy::Http::FilterHeadersStatus
 HttpDynamicDelayDecoderFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& headers,
                                              bool end_stream) {
-  effective_config_ = computeEffectiveConfiguration(config_->getStartupFilterConfiguration(), headers);
+  effective_config_ =
+      computeEffectiveConfiguration(config_->getStartupFilterConfiguration(), headers);
   if (effective_config_.ok()) {
     const absl::optional<int64_t> delay_ms =
         computeDelayMs(*effective_config_.value(), config_->approximateFilterInstances());

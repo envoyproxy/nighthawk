@@ -80,7 +80,8 @@ public:
    * @return std::shared_ptr<const nighthawk::server::DynamicDelayConfiguration> the base
    * configuration for this filter.
    */
-  std::shared_ptr<const nighthawk::server::DynamicDelayConfiguration> getStartupFilterConfiguration();
+  std::shared_ptr<const nighthawk::server::DynamicDelayConfiguration>
+  getStartupFilterConfiguration();
 
 private:
   static std::atomic<uint64_t>& instances() {

@@ -46,7 +46,8 @@ public:
    * @return std::shared_ptr<const nighthawk::server::TimeTrackingConfiguration> the base
    * configuration for this filter.
    */
-  std::shared_ptr<const nighthawk::server::TimeTrackingConfiguration> getStartupFilterConfiguration();
+  std::shared_ptr<const nighthawk::server::TimeTrackingConfiguration>
+  getStartupFilterConfiguration();
 
 private:
   std::unique_ptr<Stopwatch> stopwatch_;
