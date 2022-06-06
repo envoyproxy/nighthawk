@@ -77,8 +77,8 @@ public:
   std::string stats_prefix() { return stats_prefix_; }
 
   /**
-   * @return std::shared_ptr<const nighthawk::server::DynamicDelayConfiguration> the base
-   * configuration for this filter.
+   * @return std::shared_ptr<const nighthawk::server::TimeTrackingConfiguration> the startup
+   * configuration for this filter, which may get overridden by in-flight headers.
    */
   std::shared_ptr<const nighthawk::server::DynamicDelayConfiguration>
   getStartupFilterConfiguration();

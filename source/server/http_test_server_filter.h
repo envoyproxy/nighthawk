@@ -19,8 +19,8 @@ public:
   HttpTestServerDecoderFilterConfig(const nighthawk::server::ResponseOptions& proto_config);
 
   /**
-   * @return std::shared_ptr<const nighthawk::server::TimeTrackingConfiguration> the base
-   * configuration for this filter.
+   * @return std::shared_ptr<const nighthawk::server::TimeTrackingConfiguration> the startup
+   * configuration for this filter, which may get overridden by in-flight headers.
    */
   std::shared_ptr<const nighthawk::server::ResponseOptions> getStartupFilterConfiguration();
 

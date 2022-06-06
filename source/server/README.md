@@ -74,13 +74,19 @@ admin:
       port_value: 8081
 ```
 
-## Response Options config
+## Nighthawk Test Server Filter Configurations
 
-The [ResponseOptions proto](/api/server/response_options.proto) is shared by
-the `Test Server` and `Dynamic Delay` filter extensions. Each filter will
-interpret the parts that are relevant to it. This allows specifying what
-a response should look like in a single message, which can be done at request
-time via the optional `x-nighthawk-test-server-config` request-header.
+The [ResponseOptions proto](/api/server/response_options.proto) used to be 
+shared by the `Test Server`, `Dynamic Delay`, and `Time Tracking` filter
+extensions. Now, each of these filters has its own primary configuration, respectively:
+
+- [ResponseOptions](/api/server/response_options.proto) for `Test Server` 
+- [DynamicDelayConfiguration](/api/server/dynamic_delay.proto) for `Dynamic Delay`
+- [TimeTrackingConfiguration](/api/server/time_tracking.proto) for `Time Tracking`
+
+However, currently, each filter still uses the same `x-nighthawk-test-server-config`
+request-header, which is a ResponseOptions proto. When this header is provided, each
+filter will interpret only the parts that are relevant to it.
 
 ### Test Server
 
@@ -134,7 +140,9 @@ This example shows that intermediate proxy has added `x-forwarded-proto` and
 
 ### Dynamic Delay
 
-The Dynamic Delay interprets the `oneof_delay_options` part in the [ResponseOptions proto](/api/server/response_options.proto). If specified, it can be used to:
+The Dynamic Delay interprets the `DynamicDelayConfiguration` for startup configuration, and the
+`oneof_delay_options` part in the [ResponseOptions proto](/api/server/response_options.proto) for
+`x-nighthawk-test-server-config`. If specified, it can be used to:
 
 - Configure a static delay via `static_delay`.
 - Configure a delay which linearly increase as the number of active requests grows, representing a simplified model of an overloaded server, via `concurrency_based_linear_delay`.

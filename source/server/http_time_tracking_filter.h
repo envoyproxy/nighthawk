@@ -43,8 +43,8 @@ public:
   uint64_t getElapsedNanosSinceLastRequest(Envoy::TimeSource& time_source);
 
   /**
-   * @return std::shared_ptr<const nighthawk::server::TimeTrackingConfiguration> the base
-   * configuration for this filter.
+   * @return std::shared_ptr<const nighthawk::server::TimeTrackingConfiguration> the startup
+   * configuration for this filter, which may get overridden by in-flight headers.
    */
   std::shared_ptr<const nighthawk::server::TimeTrackingConfiguration>
   getStartupFilterConfiguration();
