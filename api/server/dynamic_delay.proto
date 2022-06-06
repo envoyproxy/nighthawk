@@ -1,3 +1,4 @@
+// Proto file supporting any configuration related to the dynamic delay filter.
 syntax = "proto3";
 
 import "api/server/response_options.proto";

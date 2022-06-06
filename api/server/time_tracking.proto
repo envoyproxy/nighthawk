@@ -1,6 +1,5 @@
+// Proto file supporting any configuration related to the time tracking filter.
 syntax = "proto3";
-
-import "api/server/response_options.proto";
 
 package nighthawk.server;
 

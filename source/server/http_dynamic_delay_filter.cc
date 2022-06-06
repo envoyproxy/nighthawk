@@ -80,7 +80,7 @@ HttpDynamicDelayDecoderFilterConfig::HttpDynamicDelayDecoderFilterConfig(
       server_config_(std::make_shared<DynamicDelayConfiguration>(proto_config)) {}
 
 std::shared_ptr<const DynamicDelayConfiguration>
-HttpDynamicDelayDecoderFilterConfig::getServerConfig() {
+HttpDynamicDelayDecoderFilterConfig::getStartupFilterConfiguration() {
   return server_config_;
 }
 
@@ -105,7 +105,7 @@ void HttpDynamicDelayDecoderFilter::onDestroy() {
 Envoy::Http::FilterHeadersStatus
 HttpDynamicDelayDecoderFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& headers,
                                              bool end_stream) {
-  effective_config_ = computeEffectiveConfiguration(config_->getServerConfig(), headers);
+  effective_config_ = computeEffectiveConfiguration(config_->getStartupFilterConfiguration(), headers);
   if (effective_config_.ok()) {
     const absl::optional<int64_t> delay_ms =
         computeDelayMs(*effective_config_.value(), config_->approximateFilterInstances());

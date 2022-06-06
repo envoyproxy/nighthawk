@@ -82,7 +82,7 @@ HttpTimeTrackingFilterConfig::getElapsedNanosSinceLastRequest(Envoy::TimeSource&
   return stopwatch_->getElapsedNsAndReset(time_source);
 }
 
-std::shared_ptr<const TimeTrackingConfiguration> HttpTimeTrackingFilterConfig::getServerConfig() {
+std::shared_ptr<const TimeTrackingConfiguration> HttpTimeTrackingFilterConfig::getStartupFilterConfiguration() {
   return server_config_;
 }
 
@@ -91,7 +91,7 @@ HttpTimeTrackingFilter::HttpTimeTrackingFilter(HttpTimeTrackingFilterConfigShare
 
 Envoy::Http::FilterHeadersStatus
 HttpTimeTrackingFilter::decodeHeaders(Envoy::Http::RequestHeaderMap& headers, bool end_stream) {
-  effective_config_ = computeEffectiveConfiguration(config_->getServerConfig(), headers);
+  effective_config_ = computeEffectiveConfiguration(config_->getStartupFilterConfiguration(), headers);
   if (end_stream && config_->validateOrSendError(effective_config_.status(), *decoder_callbacks_)) {
     return Envoy::Http::FilterHeadersStatus::StopIteration;
   }
