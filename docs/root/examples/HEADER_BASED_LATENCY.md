@@ -24,8 +24,7 @@ Another use-case is tracking request-arrival time deltas using a feature of the 
     - name: time-tracking
     typed_config:
         "@type": type.googleapis.com/nighthawk.server.TimeTrackingConfiguration
-        experimental_response_options:
-          emit_previous_request_delta_in_response_header: x-origin-request-receipt-delta
+        emit_previous_request_delta_in_response_header: x-origin-request-receipt-delta
     - name: test-server
     typed_config:
         "@type": type.googleapis.com/nighthawk.server.ResponseOptions

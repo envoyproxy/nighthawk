@@ -14,8 +14,7 @@ using ::testing::HasSubstr;
 enum TestRequestMethod { GET, POST };
 
 const std::string kBadConfigErrorSentinel =
-    "didn't understand the request: Error merging json config: Unable to parse "
-    "JSON as proto (INVALID_ARGUMENT:Unexpected";
+    "Unable to parse JSON as proto (INVALID_ARGUMENT:Unexpected";
 
 class HttpFilterBaseIntegrationTest
     : public HttpFilterIntegrationTestBase,
@@ -48,15 +47,13 @@ INSTANTIATE_TEST_SUITE_P(
 name: time-tracking
 typed_config:
   "@type": type.googleapis.com/nighthawk.server.TimeTrackingConfiguration
-  experimental_response_options:
-    emit_previous_request_delta_in_response_header: "foo"
+  emit_previous_request_delta_in_response_header: "foo"
 )EOF"),
                                         absl::string_view(R"EOF(
 name: dynamic-delay
 typed_config:
   "@type": type.googleapis.com/nighthawk.server.DynamicDelayConfiguration
-  experimental_response_options:
-    static_delay: 0.1s
+  static_delay: 0.1s
 )EOF"),
                                         absl::string_view("name: test-server")}),
                      testing::ValuesIn({TestRequestMethod::GET, TestRequestMethod::POST})));
