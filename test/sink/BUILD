@@ -47,5 +47,5 @@ api_cc_py_proto_library(
     srcs = [
         "test_stats_sink_config.proto",
     ],
-    visibility = ["//visibility:public"],
+    visibility = ["//visibility:private"],
 )

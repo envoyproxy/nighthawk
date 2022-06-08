@@ -57,8 +57,7 @@ public:
   }
 
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override {
-    // Using Struct instead of a custom per-filter empty config proto
-    // This is only allowed in tests.
+    // Uses empty config proto.
     return Envoy::ProtobufTypes::MessagePtr{new nighthawk::TestStatsSinkConfig()};
   }
 
