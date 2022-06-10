@@ -53,8 +53,3 @@ static_resources:
                     private_key:
                       inline_string: |
                         @inject-runfile:nighthawk/external/envoy/test/config/integration/certs/serverkey.pem
-layered_runtime:
-  layers:
-  - name: static_layer
-    static_layer:
-      envoy.reloadable_features.no_extension_lookup_by_name: false
