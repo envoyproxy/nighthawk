@@ -50,7 +50,8 @@ static_resources:
                   - name: dynamic-delay
                     typed_config:
                       "@type": type.googleapis.com/nighthawk.server.DynamicDelayConfiguration
-                      static_delay: 0.5s
+                      experimental_response_options:
+                        static_delay: 0.5s
                   - name: test-server # before envoy.router because order matters!
                     typed_config:
                       "@type": type.googleapis.com/nighthawk.server.ResponseOptions
