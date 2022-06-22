@@ -486,6 +486,7 @@ Displays usage information and exits.
 L7 (HTTP/HTTPS/HTTP2) performance characterization transformation tool.
 
 ```
+<!-- END USAGE -->
 
 **Example:** transform json output to fortio compatible format
 
@@ -494,8 +495,6 @@ L7 (HTTP/HTTPS/HTTP2) performance characterization transformation tool.
 ```
 ➜ /your/json/output/file.json | bazel-bin/nighthawk_output_transform --output-format fortio
 ```
-
-<!-- END USAGE -->
 
 ## A sample benchmark run
 
