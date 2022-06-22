@@ -488,6 +488,14 @@ L7 (HTTP/HTTPS/HTTP2) performance characterization transformation tool.
 ```
 <!-- END USAGE -->
 
+**Example:** transform json output to fortio compatible format
+
+> Notice that the default output format for `nighthawk_client` is "human", therefore to produce a json output you must run `nighthawk_client` with `--output-format json`. This json output is the one that can be transformed to the different formats as shown in the example below.
+
+```
+➜ /your/json/output/file.json | bazel-bin/nighthawk_output_transform --output-format fortio
+```
+
 ## A sample benchmark run
 
 ```bash
