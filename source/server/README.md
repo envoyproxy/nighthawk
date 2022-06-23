@@ -273,7 +273,7 @@ hot restart epoch #
 Path to logfile
 
 --enable-fine-grain-logging
-Logger mode: enable file level log control(Fancy Logger)or not
+Logger mode: enable file level log control (Fine-Grain Logger) or not
 
 --log-format-escaped
 Escape c-style escape sequences in the application logs
