@@ -272,7 +272,7 @@ class IntegrationTestBase():
 
     Arguments:
       json: String containing raw json output obtained via nighthawk_client --output-format=json
-      format: String that specifies the desired output format. Must be one of [human|yaml|dotted-string|fortio]. Optional, defaults to "human".
+      format: String that specifies the desired output format. Must be one of [human|yaml|dotted-string|fortio|csv]. Optional, defaults to "human".
     """
     # TODO(oschaaf): validate format arg.
     args = []
