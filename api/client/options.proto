@@ -68,6 +68,7 @@ message OutputFormat {
     DOTTED = 4;
     FORTIO = 5;
     EXPERIMENTAL_FORTIO_PEDANTIC = 6;
+    CSV = 7;
   }
   OutputFormatOptions value = 1;
 }
@@ -164,7 +165,7 @@ message CommandLineOptions {
   // error, critical]. The default level is 'info'.
   Verbosity verbosity = 7;
   // Output format. Possible values: {"json", "human", "yaml", "dotted",
-  // "fortio"}. The default output format is 'human'.
+  // "fortio", "csv}. The default output format is 'human'.
   // NOTE: not relevant to gRPC service
   OutputFormat output_format = 8;
   // Use proactive connection prefetching (HTTP/1 only).

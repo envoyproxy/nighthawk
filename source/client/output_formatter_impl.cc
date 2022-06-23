@@ -158,6 +158,100 @@ YamlOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) co
 }
 
 absl::StatusOr<std::string>
+CsvOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
+
+  std::stringstream ss;
+  ss << "Nighthawk - A layer 7 protocol benchmarking tool." << std::endl << std::endl;
+  for (const auto& result : output.results()) {
+    if (result.name() == "global") {
+      for (const auto& statistic : result.statistics()) {
+        // Don't show output for statistics that have no samples.
+        if (statistic.count() == 0) {
+          continue;
+        }
+        const std::string s_min = statistic.has_min() ? formatProtoDuration(statistic.min())
+                                                      : fmt::format("{}", statistic.raw_min());
+        const std::string s_max = statistic.has_max() ? formatProtoDuration(statistic.max())
+                                                      : fmt::format("{}", statistic.raw_max());
+        const std::string s_mean = statistic.has_mean() ? formatProtoDuration(statistic.mean())
+                                                        : fmt::format("{}", statistic.raw_mean());
+        const std::string s_pstdev = statistic.has_pstdev()
+                                         ? formatProtoDuration(statistic.pstdev())
+                                         : fmt::format("{}", statistic.raw_pstdev());
+
+        ss << fmt::format("{} ({} samples)", statIdtoFriendlyStatName(statistic.id()),
+                          statistic.count())
+           << std::endl;
+
+        // Descriptive statistics
+        ss << "Min,Mean,Max,Pstdev" << std::endl;
+        ss << fmt::format("{},{},{},{}", s_min, s_mean, s_max, s_pstdev) << std::endl;
+
+        bool header_written = false;
+        iteratePercentiles(statistic, [&ss, this, &header_written](
+                                          const nighthawk::client::Percentile& percentile) {
+          const auto p = percentile.percentile();
+          // Don't show the min / max, as we already show that above.
+          if (p > 0 && p < 1) {
+            // Table headers
+            if (!header_written) {
+              ss << "Percentile,Count,Value(microseconds),Value" << std::endl;
+              header_written = true;
+            }
+            auto s_percentile = fmt::format("{:.{}g}", p, 8);
+            ss << fmt::format("{},{},{},{}", s_percentile, percentile.count(),
+                              Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(percentile.duration()),
+                              percentile.has_duration()
+                                  ? formatProtoDuration(percentile.duration())
+                                  : fmt::format("{}", static_cast<int64_t>(percentile.raw_value())),
+                              15)
+               << std::endl;
+          }
+        });
+        ss << std::endl;
+      }
+      
+      // Counters
+      ss << fmt::format("{},{},{}", "Counter", "Value", "Per second") << std::endl;
+      for (const auto& counter : result.counters()) {
+        const auto nanos =
+            Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(result.execution_duration());
+        ss << fmt::format("{},{},{:.{}f}", counter.name(), counter.value(),
+                          counter.value() / (nanos / 1e9), 2)
+           << std::endl;
+      }
+      ss << std::endl;
+    }
+  }
+  return ss.str();
+}
+
+std::string CsvOutputFormatterImpl::formatProtoDuration(
+    const Envoy::ProtobufWkt::Duration& duration) const {
+  auto c = Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(duration);
+  return fmt::format("{}s {:03}ms {:03}us", (c % 1'000'000'000) / 1'000'000,
+                     (c % 1'000'000) / 1'000, c % 1'000);
+}
+
+std::string CsvOutputFormatterImpl::statIdtoFriendlyStatName(absl::string_view stat_id) {
+  if (stat_id == "benchmark_http_client.queue_to_connect") {
+    return "Queueing and connection setup latency";
+  } else if (stat_id == "benchmark_http_client.request_to_response") {
+    return "Request start to response end";
+  } else if (stat_id == "sequencer.callback") {
+    return "Initiation to completion";
+  } else if (stat_id == "sequencer.blocking") {
+    return "Blocking. Results are skewed when significant numbers are reported here.";
+  } else if (stat_id == "benchmark_http_client.response_body_size") {
+    return "Response body size in bytes";
+  } else if (stat_id == "benchmark_http_client.response_header_size") {
+    return "Response header size in bytes";
+  }
+
+  return std::string(stat_id);
+}
+
+absl::StatusOr<std::string>
 DottedStringOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) const {
   std::stringstream ss;
   for (const auto& result : output.results()) {

@@ -49,6 +49,15 @@ public:
   absl::StatusOr<std::string> formatProto(const nighthawk::client::Output& output) const override;
 };
 
+class CsvOutputFormatterImpl : public OutputFormatterImpl {
+public:
+  absl::StatusOr<std::string> formatProto(const nighthawk::client::Output& output) const override;
+  static std::string statIdtoFriendlyStatName(absl::string_view stat_id);
+
+private:
+  std::string formatProtoDuration(const Envoy::ProtobufWkt::Duration& duration) const;
+};
+
 class DottedStringOutputFormatterImpl : public OutputFormatterImpl {
 public:
   absl::StatusOr<std::string> formatProto(const nighthawk::client::Output& output) const override;
