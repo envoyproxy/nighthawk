@@ -107,8 +107,6 @@ docker run --rm \
        -e ENVOY_BUILD_TARGET \
        -e ENVOY_BUILD_DEBUG_INFORMATION \
        -e SYSTEM_PULLREQUEST_PULLREQUESTNUMBER \
-       -e DOCKERHUB_USERNAME `# unique` \
-       -e DOCKERHUB_PASSWORD `# unique` \
        -e GCS_ARTIFACT_BUCKET \
        -e GITHUB_TOKEN \
        -e BUILD_SOURCEBRANCHNAME \
@@ -120,5 +118,7 @@ docker run --rm \
        -e SYSTEM_STAGEDISPLAYNAME \
        -e SYSTEM_JOBDISPLAYNAME \
        -e SYSTEM_PULLREQUEST_PULLREQUESTNUMBER \
+       -e DOCKERHUB_USERNAME `# unique` \
+       -e DOCKERHUB_PASSWORD `# unique` \
        "${ENVOY_BUILD_IMAGE}" \
        "${START_COMMAND[@]}"
