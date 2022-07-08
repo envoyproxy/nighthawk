@@ -151,11 +151,15 @@ Cluster createNighthawkClusterForWorker(const Client::Options& options,
     http2_options->mutable_max_concurrent_streams()->set_value(options.maxConcurrentStreams());
 
   } else if (options.protocol() == Envoy::Http::Protocol::Http3) {
-    Http3ProtocolOptions* http3_options =
-        http_options.mutable_explicit_http_config()->mutable_http3_protocol_options();
-    http3_options->mutable_quic_protocol_options()->mutable_max_concurrent_streams()->set_value(
-        options.maxConcurrentStreams());
-
+    if (options.http3ProtocolOptions().has_value()) {
+      *http_options.mutable_explicit_http_config()->mutable_http3_protocol_options() =
+          options.http3ProtocolOptions().value();
+    } else {
+      Http3ProtocolOptions* http3_options =
+          http_options.mutable_explicit_http_config()->mutable_http3_protocol_options();
+      http3_options->mutable_quic_protocol_options()->mutable_max_concurrent_streams()->set_value(
+          options.maxConcurrentStreams());
+    }
   } else {
     http_options.mutable_explicit_http_config()->mutable_http_protocol_options();
   }
