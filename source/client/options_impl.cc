@@ -19,6 +19,7 @@
 namespace Nighthawk {
 namespace Client {
 
+using ::envoy::config::core::v3::Http3ProtocolOptions;
 using ::nighthawk::client::Protocol;
 
 #define TCLAP_SET_IF_SPECIFIED(command, value_member)                                              \
@@ -75,6 +76,14 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
           "--protocol is used. Mutually exclusive with --h2.",
           absl::AsciiStrToLower(nighthawk::client::Protocol_ProtocolOptions_Name(protocol_))),
       false, "", &protocols_allowed, cmd);
+  TCLAP::ValueArg<std::string> http3_protocol_options(
+      "", "http3-protocol-options",
+      "HTTP3 protocol options in json. If specified, Nighthawk uses these HTTP3 protocol options "
+      "when sending requests. Only valid with --protocol http3. Exclusive with any other command "
+      "line option that would modify the http3 protocol options, e.g. --max-concurrent-streams. "
+      "Example (json): "
+      "{quic_protocol_options:{max_concurrent_streams:1}}",
+      false, "", "string", cmd);
 
   TCLAP::ValueArg<std::string> concurrency(
       "", "concurrency",
@@ -408,6 +417,28 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
     RELEASE_ASSERT(nighthawk::client::Protocol::ProtocolOptions_Parse(upper_cased, &protocol_),
                    "Failed to parse protocol");
   }
+
+  if (!http3_protocol_options.getValue().empty()) {
+    if (protocol_ != Protocol::HTTP3) {
+      throw MalformedArgvException(
+          "--http3-protocol-options can only be used with --protocol http3");
+    }
+
+    if (max_concurrent_streams.isSet()) {
+      throw MalformedArgvException(
+          "--http3-protocol-options and --max-concurrent-streams are mutually exclusive");
+    }
+
+    try {
+      http3_protocol_options_.emplace(Http3ProtocolOptions());
+      Envoy::MessageUtil::loadFromJson(http3_protocol_options.getValue(),
+                                       http3_protocol_options_.value(),
+                                       Envoy::ProtobufMessage::getStrictValidationVisitor());
+    } catch (const Envoy::EnvoyException& e) {
+      throw MalformedArgvException(e.what());
+    }
+  }
+
   if (verbosity.isSet()) {
     std::string upper_cased = verbosity.getValue();
     absl::AsciiStrToUpper(&upper_cased);
@@ -677,6 +708,11 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   h2_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, h2, h2_);
   protocol_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, protocol, protocol_);
 
+  if (options.has_http3_protocol_options()) {
+    http3_protocol_options_.emplace(Http3ProtocolOptions());
+    http3_protocol_options_.value().MergeFrom(options.http3_protocol_options());
+  }
+
   concurrency_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, concurrency, concurrency_);
   verbosity_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, verbosity, verbosity_);
   output_format_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(options, output_format, output_format_);
@@ -869,6 +905,10 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
     command_line_options->mutable_h2()->set_value(h2_);
   } else {
     command_line_options->mutable_protocol()->set_value(protocol_);
+  }
+
+  if (http3_protocol_options_.has_value()) {
+    *(command_line_options->mutable_http3_protocol_options()) = http3_protocol_options_.value();
   }
 
   if (uri_.has_value()) {

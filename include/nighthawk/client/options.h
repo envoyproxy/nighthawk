@@ -10,6 +10,7 @@
 #include "envoy/config/cluster/v3/cluster.pb.h"
 #include "envoy/config/core/v3/address.pb.h"
 #include "envoy/config/core/v3/base.pb.h"
+#include "envoy/config/core/v3/protocol.pb.h"
 #include "envoy/config/metrics/v3/stats.pb.h"
 #include "envoy/http/protocol.h"
 
@@ -43,6 +44,10 @@ public:
   // The protocol to encapsulate requests in.
   // Defaults to HTTP/1.1 if the user doesn't make an explicit selection.
   virtual Envoy::Http::Protocol protocol() const PURE;
+
+  // The following sets specific protocol options.
+  virtual const absl::optional<envoy::config::core::v3::Http3ProtocolOptions>&
+  http3ProtocolOptions() const PURE;
 
   virtual std::string concurrency() const PURE;
   virtual nighthawk::client::Verbosity::VerbosityOptions verbosity() const PURE;

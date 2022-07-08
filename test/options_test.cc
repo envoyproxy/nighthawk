@@ -751,6 +751,38 @@ TEST_F(OptionsImplTest, FailsWhenBothH2AndProtocolAreSet) {
                           MalformedArgvException, "mutually exclusive");
 }
 
+TEST_F(OptionsImplTest, BadHttp3ProtocolOptionsSpecification) {
+  // Bad JSON.
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                              "{} --protocol http3 --http3-protocol-options {} http://foo/",
+                              client_name_, "{broken_json:")),
+                          MalformedArgvException, "Unable to parse JSON as proto");
+  // Correct JSON, but contents not according to spec.
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(
+          fmt::format("{} --protocol http3 --http3-protocol-options {} http://foo/", client_name_,
+                      "{invalid_http3_protocol_options:{}}")),
+      MalformedArgvException,
+      "Protobuf message \\(type envoy.config.core.v3.Http3ProtocolOptions reason "
+      "INVALID_ARGUMENT:invalid_http3_protocol_options: Cannot find field.\\) has unknown fields");
+}
+
+TEST_F(OptionsImplTest, FailsWhenHttp3ProtocolOptionsSpecifiedForNonHttp3) {
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                              "{} --protocol http2 --http3-protocol-options {} http://foo/",
+                              client_name_, "{quic_protocol_options:{max_concurrent_streams:1}}")),
+                          MalformedArgvException,
+                          "--http3-protocol-options can only be used with --protocol http3");
+}
+
+TEST_F(OptionsImplTest, FailsWhenBothHttp3ProtocolOptionsAndMaxConcurrentStreamsAreSet) {
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(fmt::format(
+          "{} --protocol http3 --http3-protocol-options {} --max-concurrent-streams 2 http://foo/",
+          client_name_, "{max_concurrent_streams:1}")),
+      MalformedArgvException, "");
+}
+
 TEST_F(OptionsImplTest, FailsWhenDeprecatedExperimentalH2UseMultipleConnectionsIsSetOnCommandLine) {
   EXPECT_THROW_WITH_REGEX(
       TestUtility::createOptionsImpl(
