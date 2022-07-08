@@ -181,11 +181,13 @@ format>] [--sequencer-idle-strategy <spin
 <json|human|yaml|dotted|fortio
 |experimental_fortio_pedantic>] [-v <trace
 |debug|info|warn|error|critical>]
-[--concurrency <string>] [-p <http1|http2
-|http3>] [--h2] [--timeout <uint32_t>]
-[--duration <uint32_t>] [--connections
-<uint32_t>] [--rps <uint32_t>] [--]
-[--version] [-h] <uri format>
+[--concurrency <string>]
+[--http3-protocol-options <string>] [-p
+<http1|http2|http3>] [--h2] [--timeout
+<uint32_t>] [--duration <uint32_t>]
+[--connections <uint32_t>] [--rps
+<uint32_t>] [--] [--version] [-h] <uri
+format>
 
 
 Where:
@@ -369,6 +371,14 @@ The number of concurrent event loops that should be used. Specify
 Nighthawk process. Note that increasing this results in an effective
 load multiplier combined with the configured --rps and --connections
 values. Default: 1.
+
+--http3-protocol-options <string>
+HTTP3 protocol options in json. If specified, Nighthawk uses these
+HTTP3 protocol options when sending requests. Only valid with
+--protocol http3. Exclusive with any other command line option that
+would modify the http3 protocol options, e.g.
+--max-concurrent-streams. Example (json):
+{quic_protocol_options:{max_concurrent_streams:1}}
 
 -p <http1|http2|http3>,  --protocol <http1|http2|http3>
 The protocol to encapsulate requests in. Possible values: [http1,
