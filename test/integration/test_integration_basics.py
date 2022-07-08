@@ -340,8 +340,7 @@ def test_h3_quic_with_custom_http3_protocol_options(quic_test_server_fixture):
   Sets the maximum number of concurrent streams to one and verifies that
   Nighthawk uses multiple connections.
   """
-  address = quic_test_server_fixture.server_ip
-  http3_protocol_options = f"{{quic_protocol_options:{{max_concurrent_streams:1}}}}"
+  http3_protocol_options = "{quic_protocol_options:{max_concurrent_streams:1}}"
 
   parsed_json, _ = quic_test_server_fixture.runNighthawkClient([
       "--protocol http3",
@@ -354,8 +353,10 @@ def test_h3_quic_with_custom_http3_protocol_options(quic_test_server_fixture):
       "benchmark.http_2xx:99",
       "--max-active-requests",
       "10",
-      "--max-pending-requests", "10",
-      "--burst-size", "10",
+      "--max-pending-requests",
+      "10",
+      "--burst-size",
+      "10",
       # Envoy doesn't support disabling certificate verification on Quic
       # connections, so the host in our requests has to match the hostname in
       # the leaf certificate.
