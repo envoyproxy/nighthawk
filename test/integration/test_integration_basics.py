@@ -334,6 +334,40 @@ def test_h3_quic(quic_test_server_fixture):
   asserts.assertCounterEqual(counters, "default.total_match_count", 1)
 
 
+def test_h3_quic_with_custom_http3_protocol_options(quic_test_server_fixture):
+  """Test http3 quic with custom http3 protocol options.
+
+  Sets the maximum number of concurrent streams to one and verifies that
+  Nighthawk uses multiple connections.
+  """
+  address = quic_test_server_fixture.server_ip
+  http3_protocol_options = f"{{quic_protocol_options:{{max_concurrent_streams:1}}}}"
+
+  parsed_json, _ = quic_test_server_fixture.runNighthawkClient([
+      "--protocol http3",
+      quic_test_server_fixture.getTestServerRootUri(),
+      "--rps",
+      "100",
+      "--duration",
+      "100",
+      "--termination-predicate",
+      "benchmark.http_2xx:99",
+      "--max-active-requests",
+      "10",
+      "--max-pending-requests", "10",
+      "--burst-size", "10",
+      # Envoy doesn't support disabling certificate verification on Quic
+      # connections, so the host in our requests has to match the hostname in
+      # the leaf certificate.
+      "--request-header",
+      "Host:www.lyft.com",
+      "--http3-protocol-options %s" % http3_protocol_options
+  ])
+  counters = quic_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
+  asserts.assertCounterEqual(counters, "benchmark.http_2xx", 100)
+  asserts.assertCounterGreaterEqual(counters, "upstream_cx_http3_total", 10)
+
+
 def test_h3_quic_with_custom_upstream_bind_configuration(quic_test_server_fixture):
   """Test http3 quic with a custom upstream bind configuration.
 
