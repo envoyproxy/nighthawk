@@ -23,7 +23,7 @@ Another use-case is tracking request-arrival time deltas using a feature of the 
     http_filters:
     - name: time-tracking
     typed_config:
-        "@type": type.googleapis.com/nighthawk.server.ResponseOptions
+        "@type": type.googleapis.com/nighthawk.server.TimeTrackingConfiguration
         emit_previous_request_delta_in_response_header: x-origin-request-receipt-delta
     - name: test-server
     typed_config:

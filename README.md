@@ -102,6 +102,23 @@ cd nighthawk/
 echo "build --config=clang" >> user.bazelrc
 ```
 
+#### Install Python libraries
+
+Recommended: Use `virtualenv` to avoid conflicts between Nighthawk's Python package version requirements and other versions already on your system:
+```
+virtualenv ~/my_nh_venv
+source ~/my_nh_venv/bin/activate
+```
+
+Note: Avoid creating the environment under the Nighthawk project directory.
+
+Install Python packages required for Nighthawk (whether using `virtualenv` or not):
+```
+pip3 install --user -r requirements.txt
+```
+
+If `pip3 install` fails, you will need to troubleshoot the Python environment before attempting to build and test Nighthawk.
+
 #### Build and testing  Nighthawk
 
 You can now use the CI script to build Nighthawk.
@@ -487,6 +504,14 @@ L7 (HTTP/HTTPS/HTTP2) performance characterization transformation tool.
 
 ```
 <!-- END USAGE -->
+
+**Example:** transform json output to fortio compatible format
+
+> Notice that the default output format for `nighthawk_client` is "human", therefore to produce a json output you must run `nighthawk_client` with `--output-format json`. This json output is the one that can be transformed to the different formats as shown in the example below.
+
+```
+➜ /your/json/output/file.json | bazel-bin/nighthawk_output_transform --output-format fortio
+```
 
 ## A sample benchmark run
 

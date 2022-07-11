@@ -64,11 +64,11 @@ function do_opt_build () {
 }
 
 function do_test() {
-    # The environment variable CI is used to determine if some expensive tests
-    # that cannot run locally should be executed.
+    # The environment variable AZP_BRANCH is used to determine if some expensive
+    # tests that cannot run locally should be executed.
     # E.g. test_http_h1_mini_stress_test_open_loop.
-    run_on_build_parts "bazel build -c dbg $BAZEL_BUILD_OPTIONS --action_env=CI"
-    bazel test -c dbg $BAZEL_TEST_OPTIONS --test_output=all --action_env=CI //test/...
+    run_on_build_parts "bazel build -c dbg $BAZEL_BUILD_OPTIONS --action_env=AZP_BRANCH"
+    bazel test -c dbg $BAZEL_TEST_OPTIONS --test_output=all --action_env=AZP_BRANCH //test/...
 }
 
 function do_clang_tidy() {
@@ -232,7 +232,7 @@ export BAZEL_EXTRA_TEST_OPTIONS="--test_env=ENVOY_IP_TEST_VERSIONS=v4only ${BAZE
 export BAZEL_BUILD_OPTIONS=" \
 --verbose_failures ${BAZEL_OPTIONS} --action_env=HOME --action_env=PYTHONUSERBASE \
 --experimental_local_memory_estimate \
---show_task_finish --experimental_generate_json_trace_profile ${BAZEL_BUILD_EXTRA_OPTIONS}"
+--experimental_generate_json_trace_profile ${BAZEL_BUILD_EXTRA_OPTIONS}"
 
 echo "Running with ${NUM_CPUS} cpus and BAZEL_BUILD_OPTIONS: ${BAZEL_BUILD_OPTIONS}"
 

@@ -56,8 +56,7 @@ public:
         response_body_sizes_statistic_(response_body_sizes_statistic),
         origin_latency_statistic_(origin_latency_statistic),
         request_headers_(std::move(request_headers)), connect_start_(time_source_.monotonicTime()),
-        complete_(false), measure_latencies_(measure_latencies),
-        request_body_size_(request_body_size),
+        measure_latencies_(measure_latencies), request_body_size_(request_body_size),
         downstream_address_setter_(std::make_shared<Envoy::Network::ConnectionInfoSetterImpl>(
             // The two addresses aren't used in an execution of Nighthawk.
             /* downstream_local_address = */ nullptr, /* downstream_remote_address = */ nullptr)),
@@ -89,7 +88,7 @@ public:
                      Envoy::Upstream::HostDescriptionConstSharedPtr host) override;
   void onPoolReady(Envoy::Http::RequestEncoder& encoder,
                    Envoy::Upstream::HostDescriptionConstSharedPtr host,
-                   const Envoy::StreamInfo::StreamInfo& stream_info,
+                   Envoy::StreamInfo::StreamInfo& stream_info,
                    absl::optional<Envoy::Http::Protocol> protocol) override;
 
   static Envoy::StreamInfo::ResponseFlag
@@ -118,7 +117,7 @@ private:
   Envoy::Http::ResponseTrailerMapPtr trailer_headers_;
   const Envoy::MonotonicTime connect_start_;
   Envoy::MonotonicTime request_start_;
-  bool complete_;
+  bool complete_ = false;
   bool measure_latencies_;
   const uint32_t request_body_size_;
   Envoy::Tracing::EgressConfigImpl config_;

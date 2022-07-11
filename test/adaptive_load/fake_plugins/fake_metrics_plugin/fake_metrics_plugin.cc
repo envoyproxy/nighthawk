@@ -11,7 +11,7 @@ namespace Nighthawk {
 namespace {
 
 absl::Status GetStatusFromProtoRpcStatus(const google::rpc::Status& status_proto) {
-  return absl::Status(static_cast<absl::StatusCode>(status_proto.code()), status_proto.message());
+  return absl::Status{static_cast<absl::StatusCode>(status_proto.code()), status_proto.message()};
 }
 
 absl::StatusOr<double> StatusOrFromFakeMetricProto(

@@ -191,7 +191,7 @@ public:
           host, priority, dispatcher, options, transport_socket_options,
           context_.api().randomGenerator(), state,
           [](Envoy::Http::HttpConnPoolImplBase* pool) {
-            return std::make_unique<Envoy::Http::Http1::ActiveClient>(*pool);
+            return std::make_unique<Envoy::Http::Http1::ActiveClient>(*pool, absl::nullopt);
           },
           [](Envoy::Upstream::Host::CreateConnectionData& data,
              Envoy::Http::HttpConnPoolImplBase* pool) {

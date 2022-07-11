@@ -151,6 +151,7 @@ envoy_cc_test(
     deps = [
         "//source/client:nighthawk_client_lib",
         "//test/client:utility_lib",
+        "//test/sink:test_stats_sink_config_proto_cc_proto",
         "//test/test_common:environment_lib",
         "@envoy//test/test_common:network_utility_lib",
         "@envoy//test/test_common:registry_lib",

@@ -102,7 +102,7 @@ void StreamDecoder::onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason
 
 void StreamDecoder::onPoolReady(Envoy::Http::RequestEncoder& encoder,
                                 Envoy::Upstream::HostDescriptionConstSharedPtr,
-                                const Envoy::StreamInfo::StreamInfo&,
+                                Envoy::StreamInfo::StreamInfo&,
                                 absl::optional<Envoy::Http::Protocol>) {
   // Make sure we hear about stream resets on the encoder.
   encoder.getStream().addCallbacks(*this);
@@ -183,7 +183,7 @@ void StreamDecoder::setupForTracing() {
   uuid_generator.set(*headers_copy, true);
   uuid_generator.setTraceReason(*headers_copy, Envoy::Tracing::Reason::ClientForced);
   active_span_ = http_tracer_->startSpan(config_, *headers_copy, stream_info_, tracing_decision);
-  active_span_->injectContext(*headers_copy);
+  active_span_->injectContext(*headers_copy, /*upstream=*/nullptr);
   request_headers_.reset(headers_copy.release());
   // We pass in a fake remote address; recently trace finalization mandates setting this, and will
   // segfault without it.

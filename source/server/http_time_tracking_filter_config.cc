@@ -4,8 +4,8 @@
 
 #include "external/envoy/source/common/protobuf/message_validator_impl.h"
 
-#include "api/server/response_options.pb.h"
-#include "api/server/response_options.pb.validate.h"
+#include "api/server/time_tracking.pb.h"
+#include "api/server/time_tracking.pb.validate.h"
 
 #include "source/server/configuration.h"
 #include "source/server/http_time_tracking_filter.h"
@@ -22,22 +22,22 @@ public:
                                Envoy::Server::Configuration::FactoryContext& context) override {
     Envoy::ProtobufMessage::ValidationVisitor& validation_visitor =
         Envoy::ProtobufMessage::getStrictValidationVisitor();
-    const nighthawk::server::ResponseOptions& response_options =
-        Envoy::MessageUtil::downcastAndValidate<const nighthawk::server::ResponseOptions&>(
-            proto_config, validation_visitor);
-    validateResponseOptions(response_options);
-    return createFilter(response_options, context);
+    const nighthawk::server::TimeTrackingConfiguration& time_tracking_configuration =
+        Envoy::MessageUtil::downcastAndValidate<
+            const nighthawk::server::TimeTrackingConfiguration&>(proto_config, validation_visitor);
+    return createFilter(time_tracking_configuration, context);
   }
 
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override {
-    return Envoy::ProtobufTypes::MessagePtr{new nighthawk::server::ResponseOptions()};
+    return Envoy::ProtobufTypes::MessagePtr{new nighthawk::server::TimeTrackingConfiguration()};
   }
 
   std::string name() const override { return "time-tracking"; }
 
 private:
-  Envoy::Http::FilterFactoryCb createFilter(const nighthawk::server::ResponseOptions& proto_config,
-                                            Envoy::Server::Configuration::FactoryContext&) {
+  Envoy::Http::FilterFactoryCb
+  createFilter(const nighthawk::server::TimeTrackingConfiguration& proto_config,
+               Envoy::Server::Configuration::FactoryContext&) {
     Nighthawk::Server::HttpTimeTrackingFilterConfigSharedPtr config =
         std::make_shared<Nighthawk::Server::HttpTimeTrackingFilterConfig>(
             Nighthawk::Server::HttpTimeTrackingFilterConfig(proto_config));

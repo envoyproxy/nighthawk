@@ -143,6 +143,8 @@ def test_http_h2_mini_stress_test_without_client_side_queueing(http_test_server_
   asserts.assertNotIn("upstream_rq_pending_overflow", counters)
 
 
+@pytest.mark.skipif(not utility.isRunningInAzpCi(),
+                    reason="Has very high failure rate in local executions.")
 @pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable and very slow in sanitizer runs")
 def test_http_h1_mini_stress_test_open_loop(http_test_server_fixture):
   """Run an H1 open loop stress test. We expect higher pending and overflow counts."""
@@ -155,6 +157,8 @@ def test_http_h1_mini_stress_test_open_loop(http_test_server_fixture):
   asserts.assertCounterGreater(counters, "benchmark.pool_overflow", 10)
 
 
+@pytest.mark.skipif(not utility.isRunningInAzpCi(),
+                    reason="Has very high failure rate in local executions.")
 @pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable and very slow in sanitizer runs")
 def test_http_h2_mini_stress_test_open_loop(http_test_server_fixture):
   """Run an H2 open loop stress test. We expect higher overflow counts."""
@@ -363,7 +367,7 @@ def test_h3_quic_with_custom_upstream_bind_configuration(quic_test_server_fixtur
   asserts.assertCounterEqual(counters, "upstream_cx_http3_total", 1)
 
 
-def _do_tls_configuration_test(https_test_server_fixture, cli_parameter, use_h2):
+def _do_tls_configuration_test(https_test_server_fixture, cli_parameter, use_h2, ciphers):
   """Test with different ciphers.
 
   For a given choice of (--tls-context, --transport-socket) x (H1, H2),
@@ -373,6 +377,7 @@ def _do_tls_configuration_test(https_test_server_fixture, cli_parameter, use_h2)
     https_test_server_fixture: pytest.fixture that controls a test server and client
     cli_parameter: string, --tls-context or --transport-socket
     use_h2: boolean, whether to pass --h2
+    ciphers: list[string], list of ciphers to use with TLS
   """
   if cli_parameter == "--tls-context":
     json_template = "{common_tls_context:{tls_params:{cipher_suites:[\"-ALL:%s\"]}}}"
@@ -382,10 +387,7 @@ def _do_tls_configuration_test(https_test_server_fixture, cli_parameter, use_h2)
         "\"@type\":\"type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext\",",
         "common_tls_context:{tls_params:{cipher_suites:[\"-ALL:%s\"]}}}}")
 
-  for cipher in [
-      "AES128-GCM-SHA256",
-      "ECDHE-RSA-AES256-GCM-SHA384",
-  ]:
+  for cipher in ciphers:
     parsed_json, _ = https_test_server_fixture.runNighthawkClient(
         (["--protocol", "http2"] if use_h2 else []) + [
             "--duration", "10", "--termination-predicate", "benchmark.http_2xx:0", cli_parameter,
@@ -398,30 +400,82 @@ def _do_tls_configuration_test(https_test_server_fixture, cli_parameter, use_h2)
 
 @pytest.mark.parametrize('server_config',
                          ["nighthawk/test/integration/configurations/nighthawk_https_origin.yaml"])
-def test_https_h1_tls_context_configuration(https_test_server_fixture):
-  """Test that specifying tls cipher suites works with the h1 pool."""
-  _do_tls_configuration_test(https_test_server_fixture, "--tls-context", use_h2=False)
+def test_https_h1_tls_context_configuration_rsa(https_test_server_fixture):
+  """Test that specifying RSA compatible tls cipher suites works with the h1 pool."""
+  _do_tls_configuration_test(https_test_server_fixture,
+                             "--tls-context",
+                             use_h2=False,
+                             ciphers=["ECDHE-RSA-AES256-GCM-SHA384"])
 
 
 @pytest.mark.parametrize('server_config',
                          ["nighthawk/test/integration/configurations/nighthawk_https_origin.yaml"])
-def test_https_h1_transport_socket_configuration(https_test_server_fixture):
-  """Test that specifying tls cipher suites via transport socket works with the h1 pool."""
-  _do_tls_configuration_test(https_test_server_fixture, "--transport-socket", use_h2=False)
+def test_https_h1_transport_socket_configuration_rsa(https_test_server_fixture):
+  """Test that specifying RSA compatible tls cipher suites via transport socket works with the h1 pool."""
+  _do_tls_configuration_test(https_test_server_fixture,
+                             "--transport-socket",
+                             use_h2=False,
+                             ciphers=["ECDHE-RSA-AES256-GCM-SHA384"])
 
 
 @pytest.mark.parametrize('server_config',
                          ["nighthawk/test/integration/configurations/nighthawk_https_origin.yaml"])
-def test_https_h2_tls_context_configuration(https_test_server_fixture):
-  """Test that specifying tls cipher suites works with the h2 pool."""
-  _do_tls_configuration_test(https_test_server_fixture, "--tls-context", use_h2=True)
+def test_https_h2_tls_context_configuration_rsa(https_test_server_fixture):
+  """Test that specifying RSA compatible tls cipher suites works with the h2 pool."""
+  _do_tls_configuration_test(https_test_server_fixture,
+                             "--tls-context",
+                             use_h2=True,
+                             ciphers=["ECDHE-RSA-AES256-GCM-SHA384"])
 
 
 @pytest.mark.parametrize('server_config',
                          ["nighthawk/test/integration/configurations/nighthawk_https_origin.yaml"])
-def test_https_h2_transport_socket_configuration(https_test_server_fixture):
-  """Test that specifying tls cipher suites via transport socket works with the h2 pool."""
-  _do_tls_configuration_test(https_test_server_fixture, "--transport-socket", use_h2=True)
+def test_https_h2_transport_socket_configuration_rsa(https_test_server_fixture):
+  """Test that specifying RSA compatible tls cipher suites via transport socket works with the h2 pool."""
+  _do_tls_configuration_test(https_test_server_fixture,
+                             "--transport-socket",
+                             use_h2=True,
+                             ciphers=["ECDHE-RSA-AES256-GCM-SHA384"])
+
+
+@pytest.mark.parametrize(
+    'server_config', ["nighthawk/test/integration/configurations/nighthawk_https_origin_dsa.yaml"])
+def test_https_h1_tls_context_configuration_dsa(https_test_server_fixture):
+  """Test that specifying DSA comptible tls cipher suites works with the h1 pool."""
+  _do_tls_configuration_test(https_test_server_fixture,
+                             "--tls-context",
+                             use_h2=False,
+                             ciphers=["ECDHE-ECDSA-AES256-GCM-SHA384"])
+
+
+@pytest.mark.parametrize(
+    'server_config', ["nighthawk/test/integration/configurations/nighthawk_https_origin_dsa.yaml"])
+def test_https_h1_transport_socket_configuration_dsa(https_test_server_fixture):
+  """Test that specifying DSA comptible tls cipher suites via transport socket works with the h1 pool."""
+  _do_tls_configuration_test(https_test_server_fixture,
+                             "--transport-socket",
+                             use_h2=False,
+                             ciphers=["ECDHE-ECDSA-AES256-GCM-SHA384"])
+
+
+@pytest.mark.parametrize(
+    'server_config', ["nighthawk/test/integration/configurations/nighthawk_https_origin_dsa.yaml"])
+def test_https_h2_tls_context_configuration_dsa(https_test_server_fixture):
+  """Test that specifying DSA comptible tls cipher suites works with the h2 pool."""
+  _do_tls_configuration_test(https_test_server_fixture,
+                             "--tls-context",
+                             use_h2=True,
+                             ciphers=["ECDHE-ECDSA-AES256-GCM-SHA384"])
+
+
+@pytest.mark.parametrize(
+    'server_config', ["nighthawk/test/integration/configurations/nighthawk_https_origin_dsa.yaml"])
+def test_https_h2_transport_socket_configuration_dsa(https_test_server_fixture):
+  """Test that specifying DSA comptible tls cipher suites via transport socket works with the h2 pool."""
+  _do_tls_configuration_test(https_test_server_fixture,
+                             "--transport-socket",
+                             use_h2=True,
+                             ciphers=["ECDHE-ECDSA-AES256-GCM-SHA384"])
 
 
 @pytest.mark.parametrize('server_config',
@@ -515,7 +569,7 @@ def test_request_body_gets_transmitted(http_test_server_fixture, filter_configs)
       str(upload_bytes), "--termination-predicate",
       "benchmark.http_2xx:%s" % str(requests), "--connections", "1", "--request-method", "POST",
       "--max-active-requests", "1", "--request-header",
-      "x-nighthawk-test-server-config:%s" % filter_configs
+      "x-nighthawk-dynamic-delay-config:%s" % filter_configs
   ]
   # Test we transmit the expected amount of bytes with H1
   parsed_json, _ = http_test_server_fixture.runNighthawkClient(args)

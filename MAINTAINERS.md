@@ -48,7 +48,7 @@ important maintenance task. When performing the update, follow this procedure:
       sha256 after the first bazel execution.
       Example content of `bazel/repositories.bzl` after the edits:
          ```
-         ENVOY_COMMIT = "9753819331d1547c4b8294546a6461a3777958f5"  # Jan 24th, 2021
+         ENVOY_COMMIT = "9753819331d1547c4b8294546a6461a3777958f5"
          ENVOY_SHA = ""
          ```
    1. Run `ci/do_ci.sh build`, notice the sha256 value at the top of the output,
@@ -76,10 +76,10 @@ important maintenance task. When performing the update, follow this procedure:
 1. Run `ci/do_ci.sh test`. Sometimes the dependency update comes with changes
    that break our build. Include any changes required to Nighthawk to fix that
    in the same PR.
-1. Create a PR with a title like `Update Envoy to 9753819 (Jan 24th 2021)`,
-   describe all performed changes in the PR's description.
 1. If the PR ends up modifying any c++ files, execute `ci/do_ci.sh fix_format`
    to reformat the files and avoid a CI failure.
 1. Execute `tools/update_cli_readme_documentation.sh --mode fix` to regenerate the
    portion of our documentation that captures the CLI help output. This will
    prevent a CI failure in case any flags changed in the PR or upstream.
+1. Create a PR with a title like `Update Envoy to 9753819 (Jan 24th 2021)`,
+   describe all performed changes in the PR's description.

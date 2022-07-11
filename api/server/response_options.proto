@@ -35,12 +35,21 @@ message ResponseOptions {
   // If true, then echo request headers in the response body.
   bool echo_request_headers = 3;
 
+  // IMPORTANT:
+  // The below fields are only for use in the x-nighthawk-test-server-config header.
+  // They do not have any behavior on the test server filter, but rather the dynamic-delay
+  // and time-tracking filters. For server-level configuration, please provide the
+  // configuration in the appropriate configuration proto.
+
+  // Provides request-level configuration that overrides DynamicDelayConfiguration.
   oneof oneof_delay_options {
     // Static delay duration.
     google.protobuf.Duration static_delay = 4 [(validate.rules).duration.gte.nanos = 0];
     // Concurrency based linear delay configuration.
     ConcurrencyBasedLinearDelay concurrency_based_linear_delay = 5;
   }
+
+  // Provides request-level configuration that overrides TimeTrackingConfiguration.
   // If set, makes the extension include timing data in the supplied response header name.
   // For example, when set to "x-abc", and 3 requests are performed, the test server will respond
   // with: Response 1: No x-abc header because there's no previous response. Response 2: Header

@@ -4,8 +4,6 @@
 
 #include "envoy/server/filter_config.h"
 
-#include "external/envoy/source/common/common/statusor.h"
-
 #include "api/server/response_options.pb.h"
 
 #include "source/server/configuration.h"
@@ -14,12 +12,6 @@
 
 namespace Nighthawk {
 namespace Server {
-
-/**
- * Canonical representation of the effective filter configuration.
- * We use a shared pointer to avoid copying in the static configuration flow.
- */
-using EffectiveFilterConfigurationPtr = std::shared_ptr<const nighthawk::server::ResponseOptions>;
 
 /**
  * Provides functionality for parsing and merging request-header based configuration, as well as
@@ -34,19 +26,7 @@ public:
    * @param filter_name name of the extension that is consuming this. Used during error response
    * generation.
    */
-  FilterConfigurationBase(const nighthawk::server::ResponseOptions& proto_config,
-                          absl::string_view filter_name);
-
-  /**
-   * Copmute the effective configuration, based on considering the static configuration as well as
-   * any configuration provided via request headers.
-   *
-   * @param request_headers Full set of request headers to be inspected for configuration.
-   * @return const absl::StatusOr<EffectiveFilterConfigurationPtr> The effective configuration, or
-   * an error status.
-   */
-  const absl::StatusOr<EffectiveFilterConfigurationPtr>
-  computeEffectiveConfiguration(const Envoy::Http::RequestHeaderMap& request_headers);
+  FilterConfigurationBase(absl::string_view filter_name);
 
   /**
    * Send an error reply based on status of the effective configuration. For example, when dynamic
@@ -56,7 +36,7 @@ public:
    * @param decoder_callbacks Decoder used to generate the reply.
    * @return true iff an error reply was generated.
    */
-  bool validateOrSendError(absl::StatusOr<EffectiveFilterConfigurationPtr>& effective_config,
+  bool validateOrSendError(const absl::Status& effective_config,
                            Envoy::Http::StreamDecoderFilterCallbacks& decoder_callbacks) const;
 
   /**
@@ -66,7 +46,6 @@ public:
 
 private:
   const std::string filter_name_;
-  const std::shared_ptr<nighthawk::server::ResponseOptions> server_config_;
 };
 
 } // namespace Server

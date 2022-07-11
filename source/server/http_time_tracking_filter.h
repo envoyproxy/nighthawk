@@ -7,9 +7,12 @@
 
 #include "nighthawk/common/stopwatch.h"
 
+#include "external/envoy/source/common/common/statusor.h"
+#include "external/envoy/source/common/protobuf/message_validator_impl.h"
+#include "external/envoy/source/common/protobuf/utility.h"
 #include "external/envoy/source/extensions/filters/http/common/pass_through_filter.h"
 
-#include "api/server/response_options.pb.h"
+#include "api/server/time_tracking.pb.h"
 
 #include "source/server/http_filter_config_base.h"
 
@@ -27,7 +30,7 @@ public:
    *
    * @param proto_config The proto configuration of the filter.
    */
-  HttpTimeTrackingFilterConfig(const nighthawk::server::ResponseOptions& proto_config);
+  HttpTimeTrackingFilterConfig(const nighthawk::server::TimeTrackingConfiguration& proto_config);
 
   /**
    * Gets the number of elapsed nanoseconds since the last call (server wide).
@@ -39,8 +42,16 @@ public:
    */
   uint64_t getElapsedNanosSinceLastRequest(Envoy::TimeSource& time_source);
 
+  /**
+   * @return std::shared_ptr<const nighthawk::server::TimeTrackingConfiguration> the startup
+   * configuration for this filter, which may get overridden by in-flight headers.
+   */
+  std::shared_ptr<const nighthawk::server::TimeTrackingConfiguration>
+  getStartupFilterConfiguration();
+
 private:
   std::unique_ptr<Stopwatch> stopwatch_;
+  std::shared_ptr<const nighthawk::server::TimeTrackingConfiguration> server_config_;
 };
 
 using HttpTimeTrackingFilterConfigSharedPtr = std::shared_ptr<HttpTimeTrackingFilterConfig>;
@@ -68,7 +79,8 @@ public:
 
 private:
   const HttpTimeTrackingFilterConfigSharedPtr config_;
-  absl::StatusOr<EffectiveFilterConfigurationPtr> effective_config_;
+  absl::StatusOr<std::shared_ptr<const nighthawk::server::TimeTrackingConfiguration>>
+      effective_config_;
   uint64_t last_request_delta_ns_;
 };
 
