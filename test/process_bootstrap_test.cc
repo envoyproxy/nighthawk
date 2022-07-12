@@ -816,6 +816,204 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH3) {
   Envoy::MessageUtil::validate(*bootstrap, Envoy::ProtobufMessage::getStrictValidationVisitor());
 }
 
+TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH3WithCustomMaxConcurrentStreams) {
+  setupUriResolutionExpectations();
+
+  std::unique_ptr<Client::OptionsImpl> options = Client::TestUtility::createOptionsImpl(
+      "nighthawk_client --protocol http3 --max-concurrent-streams 42 https://www.example.org");
+
+  absl::StatusOr<Bootstrap> expected_bootstrap = parseBootstrapFromText(R"pb(
+    static_resources {
+      clusters {
+        name: "0"
+        type: STATIC
+        connect_timeout {
+          seconds: 30
+        }
+        circuit_breakers {
+          thresholds {
+            max_connections {
+              value: 100
+            }
+            max_pending_requests {
+              value: 1
+            }
+            max_requests {
+              value: 100
+            }
+            max_retries {
+            }
+          }
+        }
+        transport_socket {
+          name: "envoy.transport_sockets.quic"
+          typed_config {
+            [type.googleapis.com/envoy.extensions.transport_sockets.quic.v3.QuicUpstreamTransport] {
+              upstream_tls_context {
+                common_tls_context {
+                  alpn_protocols: "h3"
+                }
+                sni: "www.example.org"
+              }
+            }
+          }
+        }
+        load_assignment {
+          cluster_name: "0"
+          endpoints {
+            lb_endpoints {
+              endpoint {
+                address {
+                  socket_address {
+                    address: "127.0.0.1"
+                    port_value: 443
+                  }
+                }
+              }
+            }
+          }
+        }
+        typed_extension_protocol_options {
+          key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
+          value {
+            [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
+              common_http_protocol_options {
+                max_requests_per_connection {
+                  value: 4294937295
+                }
+              }
+              explicit_http_config {
+                http3_protocol_options {
+                  quic_protocol_options {
+                    max_concurrent_streams {
+                      value: 42
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    stats_flush_interval {
+      seconds: 5
+    }
+  )pb");
+  ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
+
+  NiceMock<Envoy::Api::MockApi> api;
+  absl::StatusOr<Bootstrap> bootstrap =
+      createBootstrapConfiguration(mock_dispatcher_, api, *options, mock_dns_resolver_factory_,
+                                   typed_dns_resolver_config_, number_of_workers_);
+  ASSERT_THAT(bootstrap, StatusIs(absl::StatusCode::kOk));
+  EXPECT_THAT(*bootstrap, EqualsProto(*expected_bootstrap));
+
+  // Ensure the generated bootstrap is valid.
+  Envoy::MessageUtil::validate(*bootstrap, Envoy::ProtobufMessage::getStrictValidationVisitor());
+}
+
+TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH3WithCustomHttp3ProtocolOptions) {
+  setupUriResolutionExpectations();
+
+  const std::string http3_protocol_options_json =
+      "{quic_protocol_options:{max_concurrent_streams:1}}";
+
+  std::unique_ptr<Client::OptionsImpl> options = Client::TestUtility::createOptionsImpl(fmt::format(
+      "nighthawk_client --protocol http3 --http3-protocol-options {} https://www.example.org",
+      http3_protocol_options_json));
+
+  absl::StatusOr<Bootstrap> expected_bootstrap = parseBootstrapFromText(R"pb(
+    static_resources {
+      clusters {
+        name: "0"
+        type: STATIC
+        connect_timeout {
+          seconds: 30
+        }
+        circuit_breakers {
+          thresholds {
+            max_connections {
+              value: 100
+            }
+            max_pending_requests {
+              value: 1
+            }
+            max_requests {
+              value: 100
+            }
+            max_retries {
+            }
+          }
+        }
+        transport_socket {
+          name: "envoy.transport_sockets.quic"
+          typed_config {
+            [type.googleapis.com/envoy.extensions.transport_sockets.quic.v3.QuicUpstreamTransport] {
+              upstream_tls_context {
+                common_tls_context {
+                  alpn_protocols: "h3"
+                }
+                sni: "www.example.org"
+              }
+            }
+          }
+        }
+        load_assignment {
+          cluster_name: "0"
+          endpoints {
+            lb_endpoints {
+              endpoint {
+                address {
+                  socket_address {
+                    address: "127.0.0.1"
+                    port_value: 443
+                  }
+                }
+              }
+            }
+          }
+        }
+        typed_extension_protocol_options {
+          key: "envoy.extensions.upstreams.http.v3.HttpProtocolOptions"
+          value {
+            [type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions] {
+              common_http_protocol_options {
+                max_requests_per_connection {
+                  value: 4294937295
+                }
+              }
+              explicit_http_config {
+                http3_protocol_options {
+                  quic_protocol_options {
+                    max_concurrent_streams {
+                      value: 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    stats_flush_interval {
+      seconds: 5
+    }
+  )pb");
+  ASSERT_THAT(expected_bootstrap, StatusIs(absl::StatusCode::kOk));
+
+  NiceMock<Envoy::Api::MockApi> api;
+  absl::StatusOr<Bootstrap> bootstrap =
+      createBootstrapConfiguration(mock_dispatcher_, api, *options, mock_dns_resolver_factory_,
+                                   typed_dns_resolver_config_, number_of_workers_);
+  ASSERT_THAT(bootstrap, StatusIs(absl::StatusCode::kOk));
+  EXPECT_THAT(*bootstrap, EqualsProto(*expected_bootstrap));
+
+  // Ensure the generated bootstrap is valid.
+  Envoy::MessageUtil::validate(*bootstrap, Envoy::ProtobufMessage::getStrictValidationVisitor());
+}
+
 TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapWithRequestSourceAndCustomTimeout) {
   setupUriResolutionExpectations();
 

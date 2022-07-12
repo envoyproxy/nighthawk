@@ -18,6 +18,8 @@ public:
   MOCK_METHOD(absl::optional<std::string>, uri, (), (const, override));
   MOCK_METHOD(bool, h2, (), (const));
   MOCK_METHOD(Envoy::Http::Protocol, protocol, (), (const, override));
+  MOCK_METHOD(absl::optional<envoy::config::core::v3::Http3ProtocolOptions>&, http3ProtocolOptions,
+              (), (const, override));
   MOCK_METHOD(std::string, concurrency, (), (const, override));
   MOCK_METHOD(nighthawk::client::Verbosity::VerbosityOptions, verbosity, (), (const, override));
   MOCK_METHOD(nighthawk::client::OutputFormat::OutputFormatOptions, outputFormat, (),
