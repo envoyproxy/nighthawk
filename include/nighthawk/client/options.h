@@ -45,7 +45,7 @@ public:
   // Defaults to HTTP/1.1 if the user doesn't make an explicit selection.
   virtual Envoy::Http::Protocol protocol() const PURE;
 
-  // The following sets specific protocol options.
+  // The following sets specific protocol options for http3.
   virtual const absl::optional<envoy::config::core::v3::Http3ProtocolOptions>&
   http3ProtocolOptions() const PURE;
 
