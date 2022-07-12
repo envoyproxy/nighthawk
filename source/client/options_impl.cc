@@ -78,10 +78,10 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       false, "", &protocols_allowed, cmd);
   TCLAP::ValueArg<std::string> http3_protocol_options(
       "", "http3-protocol-options",
-      "HTTP3 protocol options in json. If specified, Nighthawk uses these HTTP3 protocol options "
-      "when sending requests. Only valid with --protocol http3. Mutually exclusive with any other "
-      "command line option that would modify the http3 protocol options, e.g. "
-      "--max-concurrent-streams. Example (json): "
+      "HTTP3 protocol options (envoy::config::core::v3::Http3ProtocolOptions) in json. If "
+      "specified, Nighthawk uses these HTTP3 protocol options when sending requests. Only valid "
+      "with --protocol http3. Mutually exclusive with any other command line option that would "
+      "modify the http3 protocol options, e.g. --max-concurrent-streams. Example (json): "
       "{quic_protocol_options:{max_concurrent_streams:1}}",
       false, "", "string", cmd);
 

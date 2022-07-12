@@ -373,11 +373,11 @@ load multiplier combined with the configured --rps and --connections
 values. Default: 1.
 
 --http3-protocol-options <string>
-HTTP3 protocol options in json. If specified, Nighthawk uses these
-HTTP3 protocol options when sending requests. Only valid with
---protocol http3. Exclusive with any other command line option that
-would modify the http3 protocol options, e.g.
---max-concurrent-streams. Example (json):
+HTTP3 protocol options (envoy::config::core::v3::Http3ProtocolOptions)
+in json. If specified, Nighthawk uses these HTTP3 protocol options
+when sending requests. Only valid with --protocol http3. Mutually
+exclusive with any other command line option that would modify the
+http3 protocol options, e.g. --max-concurrent-streams. Example (json):
 {quic_protocol_options:{max_concurrent_streams:1}}
 
 -p <http1|http2|http3>,  --protocol <http1|http2|http3>
