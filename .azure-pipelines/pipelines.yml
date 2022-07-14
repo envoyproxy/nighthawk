@@ -3,6 +3,7 @@ trigger:
     include:
     - "main"
 
+stages:
 - stage: test_gcc
   pool: "x64-large"
   jobs:
