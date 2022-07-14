@@ -20,7 +20,7 @@ TEST_F(PythonTest, IntegrationTests) {
   char env[] = "NH_INTEGRATION_TEST_SANITIZER_RUN=1";
   putenv(env);
 #endif
-  ASSERT_EQ(0, system(path.c_str()));
+  ASSERT_EQ(0, system(altered_cmd.c_str()));
 }
 
 } // namespace Nighthawk
