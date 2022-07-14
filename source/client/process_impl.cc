@@ -197,8 +197,7 @@ public:
              Envoy::Http::HttpConnPoolImplBase* pool) {
             Envoy::Http::CodecClientPtr codec{new Envoy::Http::CodecClientProd(
                 Envoy::Http::CodecClient::Type::HTTP1, std::move(data.connection_),
-                data.host_description_, pool->dispatcher(), pool->randomGenerator(),
-                pool->transportSocketOptions())};
+                data.host_description_, pool->dispatcher(), pool->randomGenerator())};
             return codec;
           },
           protocols);
