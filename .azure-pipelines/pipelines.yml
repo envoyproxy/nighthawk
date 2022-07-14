@@ -4,7 +4,28 @@ trigger:
     - "main"
 
 stages:
+- stage: check
+  dependsOn: []
+  pool: "x64-large"
+  jobs:
+  - job: build_and_format
+    displayName: "do_ci.sh"
+    dependsOn: []
+    strategy:
+      maxParallel: 2
+      matrix:
+        build:
+          CI_TARGET: "build"
+        format:
+          CI_TARGET: "check_format"
+    timeoutInMinutes: 120
+    steps:
+    - template: bazel.yml
+      parameters:
+        ciTarget: $(CI_TARGET)
+
 - stage: test_gcc
+  dependsOn: ["check"]
   pool: "x64-large"
   jobs:
   - job: test_gcc
