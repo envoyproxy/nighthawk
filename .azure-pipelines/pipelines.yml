@@ -4,115 +4,16 @@ trigger:
     - "main"
 
 stages:
-- stage: check
-  dependsOn: []
+- stage: test_gcc
   pool: "x64-large"
   jobs:
-  - job: build_and_format
-    displayName: "do_ci.sh"
-    dependsOn: []
-    strategy:
-      maxParallel: 2
-      matrix:
-        build:
-          CI_TARGET: "build"
-        format:
-          CI_TARGET: "check_format"
-    timeoutInMinutes: 120
-    steps:
-    - template: bazel.yml
-      parameters:
-        ciTarget: $(CI_TARGET)
-
-- stage: test
-  dependsOn: ["check"]
-  pool: "x64-large"
-  jobs:
-  - job: test_and_benchmark
-    displayName: "do_ci.sh"
-    strategy:
-      # Both test and benchmark need dedicated resources for stability.
-      maxParallel: 1
-      matrix:
-        test:
-          CI_TARGET: "test"
-        benchmark:
-          CI_TARGET: "benchmark_with_own_binaries"
-    timeoutInMinutes: 120
-    steps:
-    - template: bazel.yml
-      parameters:
-        ciTarget: $(CI_TARGET)
-
-- stage: clang_tidy
-  dependsOn: ["check"]
-  pool: "x64-large"
-  jobs:
-  - job: clang_tidy
+  - job: test_gcc
     displayName: "do_ci.sh"
     strategy:
       maxParallel: 1
       matrix:
-        clang_tidy:
-          CI_TARGET: "clang_tidy"
-    timeoutInMinutes: 120
-    steps:
-    - template: bazel.yml
-      parameters:
-        ciTarget: $(CI_TARGET)
-
-- stage: sanitizers
-  dependsOn: ["test"]
-  pool: "x64-large"
-  jobs:
-  - job: sanitizers
-    displayName: "do_ci.sh"
-    strategy:
-      maxParallel: 2
-      matrix:
-        asan:
-          CI_TARGET: "asan"
-        tsan:
-          CI_TARGET: "tsan"
-    timeoutInMinutes: 120
-    steps:
-    - template: bazel.yml
-      parameters:
-        ciTarget: $(CI_TARGET)
-
-- stage: coverage
-  dependsOn: ["test"]
-  pool: "x64-large"
-  jobs:
-  - job: coverage
-    displayName: "do_ci.sh"
-    strategy:
-      maxParallel: 2
-      matrix:
-        coverage:
-          CI_TARGET: "coverage"
-        coverage_integration:
-          CI_TARGET: "coverage_integration"
-    timeoutInMinutes: 120
-    steps:
-    - template: bazel.yml
-      parameters:
-        ciTarget: $(CI_TARGET)
-
-- stage: release
-  dependsOn:
-  - "clang_tidy"
-  - "sanitizers"
-  - "coverage"
-  condition: eq(variables['PostSubmit'], true)
-  pool: "x64-large"
-  jobs:
-  - job: release
-    displayName: "do_ci.sh"
-    strategy:
-      matrix:
-        release:
-          CI_TARGET: "docker"
+        test_gcc:
+          CI_TARGET: "test_gcc"
     timeoutInMinutes: 120
     steps:
     - template: bazel.yml
