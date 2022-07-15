@@ -45,6 +45,7 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
     response.mutable_error_detail()->set_message(
         fmt::format("Unable to create ProcessImpl: {}", process_or_status.status().ToString()));
     writeResponse(response);
+    Envoy::Network::DnsResolverFactory::terminateFactories();
     return;
   }
   ProcessPtr process = std::move(*process_or_status);
