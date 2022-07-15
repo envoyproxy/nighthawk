@@ -13,8 +13,7 @@ using ::testing::HasSubstr;
 
 enum TestRequestMethod { GET, POST };
 
-const std::string kBadConfigErrorSentinel =
-    "Unable to parse JSON as proto (INVALID_ARGUMENT:Unexpected";
+const std::string kBadConfigErrorSentinel = "Unable to parse JSON as proto";
 
 class HttpFilterBaseIntegrationTest
     : public HttpFilterIntegrationTestBase,
