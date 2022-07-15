@@ -324,6 +324,7 @@ void ProcessImpl::shutdown() {
   }
   tls_.shutdownThread();
   dispatcher_->shutdown();
+  Envoy::Network::DnsResolverFactory::terminateFactories();
   shutdown_ = true;
 }
 

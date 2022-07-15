@@ -40,12 +40,12 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
   absl::StatusOr<ProcessPtr> process_or_status = ProcessImpl::CreateProcessImpl(
       *options, dns_resolver_factory, std::move(typed_dns_resolver_config), time_system_,
       process_wide_);
-  Envoy::Network::DnsResolverFactory::terminateFactories();
   if (!process_or_status.ok()) {
     response.mutable_error_detail()->set_code(grpc::StatusCode::INTERNAL);
     response.mutable_error_detail()->set_message(
         fmt::format("Unable to create ProcessImpl: {}", process_or_status.status().ToString()));
     writeResponse(response);
+    Envoy::Network::DnsResolverFactory::terminateFactories();
     return;
   }
   ProcessPtr process = std::move(*process_or_status);
