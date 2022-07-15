@@ -84,7 +84,13 @@ sudo apt install -y clang-{format,tidy,tools} clang-doc clang-examples
 #### Install Bazelisk instead of bazel
 
 [Bazelisk](https://github.com/bazelbuild/bazelisk) is recommended, since it
-automatically chooses and downloads the appropriate Bazel version.
+automatically chooses and downloads the appropriate Bazel version. If you
+already have Bazel installed, it is strongly recommended to remove it.
+
+Run the following to remove bazel.
+```
+sudo apt-get remove bazel
+```
 
 Run the following to install Bazelisk.
 ```
