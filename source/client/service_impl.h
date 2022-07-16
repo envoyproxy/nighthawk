@@ -95,8 +95,8 @@ public:
                                nighthawk::request_source::RequestStreamRequest>* stream) override;
 
 private:
-  std::unique_ptr<Envoy::Logger::Context> logging_context_;
   Envoy::Thread::MutexBasicLockable log_lock_;
+  std::unique_ptr<Envoy::Logger::Context> logging_context_;
   RequestSourcePtr createStaticEmptyRequestSource(const uint32_t amount);
 };
 
