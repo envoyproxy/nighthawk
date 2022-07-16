@@ -55,10 +55,10 @@ private:
   void writeResponse(const nighthawk::client::ExecutionResponse& response);
   grpc::Status finishGrpcStream(const bool success, absl::string_view description = "");
 
+  Envoy::Thread::MutexBasicLockable log_lock_;
   std::unique_ptr<Envoy::Logger::Context> logging_context_;
   std::shared_ptr<Envoy::ProcessWide> process_wide_;
   Envoy::Event::RealTimeSystem time_system_; // NO_CHECK_FORMAT(real_time)
-  Envoy::Thread::MutexBasicLockable log_lock_;
   grpc::ServerReaderWriter<nighthawk::client::ExecutionResponse,
                            nighthawk::client::ExecutionRequest>* stream_;
   std::future<void> future_;
