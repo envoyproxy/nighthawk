@@ -83,3 +83,37 @@ important maintenance task. When performing the update, follow this procedure:
    prevent a CI failure in case any flags changed in the PR or upstream.
 1. Create a PR with a title like `Update Envoy to 9753819 (Jan 24th 2021)`,
    describe all performed changes in the PR's description.
+
+## Identifying an Envoy commit that introduced a breakage
+
+### Background
+
+Sometimes CI tests fail after updating Nighthawk to an Envoy dependency. If the
+root cause is hard to be identified, the bisect could be worth a try.
+
+### How to bisect
+
+The bisect is used to find the problematic Envoy commit between the commit from
+the last successful Nighthawk update and the current commit that Nighthawk needs
+to be updated to.
+
+Following the
+[update process](https://github.com/envoyproxy/nighthawk/blob/main/MAINTAINERS.md#updates-to-the-envoy-dependency)
+to update Nighthawk to a specific Envoy commit for each Envoy commit being
+tested in the bisect.
+
+- Usually the local `do_ci.sh` test is enough and the most efficient.
+- If you do need to test in github CI (e.g. the local `do_ci.sh` passes while the
+  github CI fails), creating a draft PR to execute the CI tests. See an example PR
+  for bisecting [here](https://github.com/envoyproxy/nighthawk/pull/874).
+
+### Optimizations to speed up testing
+
+- You can just test the failed tests by commenting out the others. For testing
+  locally, modifying `ci/do_ci.sh`. For testing in the github CI, modifying
+  `.azure-pipelines/pipelines.yml` (See this [example](https://github.com/envoyproxy/nighthawk/pull/874/files)).
+
+- If it is the unit test or integration test that fails, you can modify the
+  test code to only run the failure tests. See the `test/python_test.cc` in
+  this [PR](https://github.com/envoyproxy/nighthawk/pull/874/files) for
+  running the selected Nighthawk python integration tests.
