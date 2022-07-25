@@ -162,6 +162,9 @@ class NullServerInstance : public Envoy::Server::Instance {
   }
 };
 
+// Implementation of Envoy::Server::Configuration::ServerFactoryContext used as a placeholder. None
+// of its methods should be called because Nighthawk is not a real Envoy that performs xDS config
+// validation.
 class NullServerFactoryContext : public Envoy::Server::Configuration::ServerFactoryContext {
   const Envoy::Server::Options& options() override { PANIC("not implemented"); };
 
