@@ -1,1 +1,1 @@
-6.0.0-pre.20220421.3
+6.0.0-pre.20220421.3 # Pin version for now until https://github.com/envoyproxy/envoy/issues/22406 is resolved.
