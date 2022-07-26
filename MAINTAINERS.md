@@ -98,10 +98,10 @@ the last successful Nighthawk update and the current commit that Nighthawk needs
 to be updated to.
 
 Following the
-[update process](https://github.com/envoyproxy/nighthawk/blob/main/MAINTAINERS.md#updates-to-the-envoy-dependency)
-to update Nighthawk to a specific Envoy commit for each Envoy commit being tested
-in the bisect. Generally, you can do this by only changing the `ENVOY_COMMIT` and
-leaving `ENVOY_SHA` blank in the `repositories.bzl` file.
+[update process](MAINTAINERS.md#updates-to-the-envoy-dependency) to update Nighthawk to a
+specific Envoy commit for each Envoy commit being tested in the bisect. Generally, you can
+do this by only changing the `ENVOY_COMMIT` and leaving `ENVOY_SHA` blank in the
+`repositories.bzl` file.
 
 - Usually the local `do_ci.sh` test is enough and the most efficient.
 - If you do need to test in github CI (e.g. the local `do_ci.sh` passes while the
