@@ -597,7 +597,6 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
         std::make_unique<Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl>(
             time_system_);
 
-    // Try and see if this dummy version will work.
     cluster_manager_factory_ = std::make_unique<ClusterManagerFactory>(
         *server_factory_context_, admin_, Envoy::Runtime::LoaderSingleton::get(), store_root_, tls_,
         dns_resolver, *ssl_context_manager_, *dispatcher_, *local_info_, secret_manager_,

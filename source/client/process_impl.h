@@ -214,7 +214,7 @@ private:
   // Null server implementation used as a placeholder. Its methods should never get called
   // because Nighthawk is not a full Envoy server that performs xDS config validation.
   std::unique_ptr<Envoy::Server::Instance> server_;
-  // Null server factory for the same reason as above.
+  // Null server factory context implementation for the same reason as above.
   std::unique_ptr<Envoy::Server::Configuration::ServerFactoryContext> server_factory_context_;
 };
 
