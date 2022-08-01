@@ -84,6 +84,47 @@ important maintenance task. When performing the update, follow this procedure:
 1. Create a PR with a title like `Update Envoy to 9753819 (Jan 24th 2021)`,
    describe all performed changes in the PR's description.
 
+## Update python dependencies
+
+We should check our python dependencies periodically for major version updates. Here is an easy
+way to check for major dependency updates:
+
+1. Create and activate a virtual env:
+
+```
+virtualenv pip_update_env
+source pip_update_env/bin/activate
+```
+
+NOTE: if `pip_update_env/bin/activate` appears to not exist, try
+`pip_update_env/local/bin/activate` instead.
+
+2. Install dependencies:
+
+```
+pip install -r requirements.txt
+```
+
+3. Check for outdated dependencies:
+
+```
+pip list --outdated
+```
+
+This will likely show both outdated dependencies based on requirements.txt and other outdated
+dependencies you may have in addition, such as to `pip` itself. Here, we are only interested in
+cross-referencing the ones that appear with the ones in requirements.txt.
+
+If you find any, you can either try updating the dependency in requirements.txt yourself or create
+an issue for the change and assign it to one of the nighthawk maintainers.
+
+4. When done, clean up the virtual env:
+
+```
+deactivate
+rm -rf pip_update_env
+```
+
 ## Identifying an Envoy commit that introduced a breakage
 
 ### Background
