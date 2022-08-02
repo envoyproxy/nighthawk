@@ -132,7 +132,7 @@ update these dependencies monthly. Here is an easy way to check for major depend
 If you encounter an error that looks like:
 
 ```
-RROR: REDACTED/nighthawk/test/integration/BUILD:32:11: no such package '@python_pip_deps//pypi__more_itertools':
+ERROR: REDACTED/nighthawk/test/integration/BUILD:32:11: no such package '@python_pip_deps//pypi__more_itertools':
 BUILD file not found in directory 'pypi__more_itertools' of external repository @python_pip_deps. Add a BUILD
 file to a directory to mark it as a package. and referenced by '//test/integration:integration_test_base_lean'
 ```
