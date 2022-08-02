@@ -91,8 +91,6 @@ MetricsEvaluatorImpl::AnalyzeNighthawkBenchmark(
                         nighthawk_response.error_detail().message());
   }
 
-  // nighthawk_response.output.timestamp
-  // nighthawk_response.output.options.duration
   nighthawk::adaptive_load::BenchmarkResult benchmark_result;
   *benchmark_result.mutable_nighthawk_service_output() = nighthawk_response.output();
 
