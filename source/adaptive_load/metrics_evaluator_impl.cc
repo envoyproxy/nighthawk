@@ -4,7 +4,6 @@
 
 #include "api/adaptive_load/metric_spec.pb.h"
 
-#include "nighthawk/adaptive_load/metrics_evaluator.h"
 #include "source/adaptive_load/metrics_plugin_impl.h"
 #include "source/adaptive_load/plugin_loader.h"
 

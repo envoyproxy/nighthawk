@@ -38,7 +38,7 @@ public:
 
   /**
    * Obtains the numeric metric with the given name, usually by querying an outside system. Provides
-   * start_time and duration of measurement period for the plugin to utilitize.
+   * measuring_period to allow plugins to determine what time period is relevant.
    *
    * @param metric_name The name of the metric to retrieve. Must be supported by the plugin.
    * @param measuring_period the time period when the metric is relevant.
