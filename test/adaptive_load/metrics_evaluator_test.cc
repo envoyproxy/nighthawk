@@ -382,7 +382,7 @@ TEST(AnalyzeNighthawkBenchmark, CorrectlyPrioritizesWithMeasuringPeriodImplement
 
   const std::string kMetricName = "metric";
   const std::string kWithMeasuringPeriodStatusMessage =
-      "Call for 'metric' with measuring period starting at 1970-01-01T00:00:00Z for 10s";
+      "Call for 'metric' with measuring period starting at 1970-01-01T00:01:00Z for 10s";
 
   FakeMetricsPluginConfig metrics_plugin_config;
 
@@ -392,6 +392,9 @@ TEST(AnalyzeNighthawkBenchmark, CorrectlyPrioritizesWithMeasuringPeriodImplement
   *spec.mutable_informational_metric_specs()->Add() = metric_spec;
 
   nighthawk::client::ExecutionResponse nighthawk_response = MakeNighthawkResponseWithSendRate(1.0);
+  // Make the first result is unique to verify it is being used.
+  nighthawk_response.mutable_output()->mutable_results(0)->mutable_execution_start()->set_seconds(
+      60);
   absl::flat_hash_map<std::string, MetricsPluginPtr> name_to_custom_metrics_plugin_map;
   name_to_custom_metrics_plugin_map["nighthawk.fake_metrics_plugin"] =
       std::make_unique<FakeMetricsPluginWithMeasuringPeriod>(metrics_plugin_config);
@@ -405,7 +408,28 @@ TEST(AnalyzeNighthawkBenchmark, CorrectlyPrioritizesWithMeasuringPeriodImplement
   EXPECT_THAT(result_or.status().message(), HasSubstr(kWithMeasuringPeriodStatusMessage));
 }
 
-// TODO(zhangtom): Unit test that errors out with no results proto.
+TEST(AnalyzeNighthawkBenchmark, FailsWithNoResults) {
+  nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
+
+  const std::string kMetricName = "bad-metric";
+
+  FakeMetricsPluginConfig metrics_plugin_config;
+  MetricSpec metric_spec;
+
+  nighthawk::client::ExecutionResponse nighthawk_response = MakeNighthawkResponseWithSendRate(1.0);
+  nighthawk_response.mutable_output()->clear_results();
+
+  absl::flat_hash_map<std::string, MetricsPluginPtr> name_to_custom_metrics_plugin_map;
+  name_to_custom_metrics_plugin_map["nighthawk.fake_metrics_plugin"] =
+      std::make_unique<FakeMetricsPlugin>(metrics_plugin_config);
+
+  MetricsEvaluatorImpl evaluator;
+  absl::StatusOr<BenchmarkResult> result_or = evaluator.AnalyzeNighthawkBenchmark(
+      nighthawk_response, spec, name_to_custom_metrics_plugin_map);
+  ASSERT_FALSE(result_or.ok());
+  EXPECT_EQ(result_or.status().code(), absl::StatusCode::kInvalidArgument);
+  EXPECT_THAT(result_or.status().message(), HasSubstr("output.results cannot be empty."));
+}
 
 } // namespace
 } // namespace Nighthawk
