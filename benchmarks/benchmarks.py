@@ -10,7 +10,7 @@ import pytest
 if __name__ == '__main__':
   path = os.path.dirname(os.path.realpath(__file__))
   r = pytest.main([
-      "--assert=plain", "--rootdir=" + path, "-x", path, "-p", "no:cacheprovider", "--log-level",
+      "--rootdir=" + path, "-x", path, "-p", "no:cacheprovider", "--log-level",
       "INFO", "--log-cli-level", "INFO", *sys.argv
   ])
   exit(r)
