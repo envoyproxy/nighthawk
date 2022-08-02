@@ -1,6 +1,7 @@
 #pragma once
 
 #include "nighthawk/adaptive_load/metrics_evaluator.h"
+#include "nighthawk/adaptive_load/metrics_plugin.h"
 
 #include "gmock/gmock.h"
 
@@ -28,8 +29,7 @@ public:
               (const nighthawk::adaptive_load::MetricSpec& metric_spec,
                MetricsPlugin& metrics_plugin,
                const nighthawk::adaptive_load::ThresholdSpec* threshold_spec,
-               const google::protobuf::Timestamp& timestamp,
-               const google::protobuf::Duration& duration),
+               const MeasuringPeriod& measuring_period),
               (const, override));
 
   MOCK_METHOD((const std::vector<std::pair<const nighthawk::adaptive_load::MetricSpec*,

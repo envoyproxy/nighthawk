@@ -243,9 +243,8 @@ TEST(NighthawkStatsEmulatedMetricsPlugin, GetMetricByNameWithTimeReturnsUnImplem
           /*pstdev_ns=*/11,
       }));
 
-  google::protobuf::Timestamp start_time;
-  google::protobuf::Duration duration;
-  EXPECT_THAT(plugin.GetMetricByNameWithTime("x", start_time, duration).status().code(),
+  MeasuringPeriod measuring_period;
+  EXPECT_THAT(plugin.GetMetricByNameWithMeasuringPeriod("x", measuring_period).status().code(),
               absl::StatusCode::kUnimplemented);
 }
 

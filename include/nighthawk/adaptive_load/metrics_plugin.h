@@ -11,6 +11,14 @@
 
 namespace Nighthawk {
 
+// Describes the period in which a Metrics plugin should measure.
+struct MeasuringPeriod {
+  // The beginning of the time period where nighthawk is measuring.
+  google::protobuf::Timestamp start_time;
+  // The duration of the time period nighthawk is measuring.
+  google::protobuf::Duration duration;
+};
+
 /**
  * An interface for plugins that retrieve platform-specific metrics from outside data sources.
  * Connection info is passed via a plugin-specific config proto.
@@ -33,16 +41,14 @@ public:
    * start_time and duration of measurement period for the plugin to utilitize.
    *
    * @param metric_name The name of the metric to retrieve. Must be supported by the plugin.
-   * @param start_time start_time with duration indicates when the metric is relevant.
-   * @param duration start_time with duration indicates when the metric is relevant.
+   * @param measuring_period the time period when the metric is relevant.
    *
    * @return StatusOr<double> The metric value, or an error status if the metric was unsupported or
    * unavailable.
    */
   virtual absl::StatusOr<double>
-  GetMetricByNameWithTime(absl::string_view metric_name,
-                          const google::protobuf::Timestamp& start_time,
-                          const google::protobuf::Duration& duration);
+  GetMetricByNameWithMeasuringPeriod(absl::string_view metric_name,
+                                     const MeasuringPeriod& measuring_period);
 
   /**
    * All metric names implemented by this plugin, for use in input validation.

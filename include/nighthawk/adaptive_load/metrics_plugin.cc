@@ -5,10 +5,9 @@
 
 namespace Nighthawk {
 
-absl::StatusOr<double> MetricsPlugin::GetMetricByNameWithTime(
+absl::StatusOr<double> MetricsPlugin::GetMetricByNameWithMeasuringPeriod(
     [[maybe_unused]] absl::string_view metric_name,
-    [[maybe_unused]] const google::protobuf::Timestamp& start_time,
-    [[maybe_unused]] const google::protobuf::Duration& duration) {
+    [[maybe_unused]] const MeasuringPeriod& measuring_period) {
   return absl::Status{absl::StatusCode::kUnimplemented, "GetMetricByNameWithTime not implemented."};
 }
 

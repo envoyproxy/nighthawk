@@ -4,6 +4,7 @@
 
 #include "api/adaptive_load/metric_spec.pb.h"
 
+#include "nighthawk/adaptive_load/metrics_evaluator.h"
 #include "source/adaptive_load/metrics_plugin_impl.h"
 #include "source/adaptive_load/plugin_loader.h"
 
@@ -15,12 +16,23 @@ using ::nighthawk::adaptive_load::MetricSpec;
 using ::nighthawk::adaptive_load::MetricSpecWithThreshold;
 using ::nighthawk::adaptive_load::ThresholdSpec;
 
+// Extract estimated measuring period from Nighthawk output proto.
+absl::StatusOr<MeasuringPeriod> GetMeasuringPeriod(const nighthawk::client::Output& output) {
+  if (output.results().empty()) {
+    return absl::Status{absl::StatusCode::kInvalidArgument, "output.results cannot be empty."};
+  }
+  // Assume the first result is a good representation for the entire run.
+  MeasuringPeriod time_interval;
+  time_interval.start_time = output.results(0).execution_start();
+  time_interval.duration = output.results(0).execution_duration();
+  return time_interval;
+}
+
 // Utility function for GetMetric functionality with fallback logic.
 absl::StatusOr<double> GetMetric(MetricsPlugin& metrics_plugin, absl::string_view metric_name,
-                                 const google::protobuf::Timestamp& start_time,
-                                 const google::protobuf::Duration& duration) {
+                                 const MeasuringPeriod& measuring_period) {
   absl::StatusOr<double> metric_value_or =
-      metrics_plugin.GetMetricByNameWithTime(metric_name, start_time, duration);
+      metrics_plugin.GetMetricByNameWithMeasuringPeriod(metric_name, measuring_period);
   // If the metric plugin does not support WithTime implementation (i.e. is using the default
   // implementation), default to GetMetricByName
   if (metric_value_or.status().code() == absl::StatusCode::kUnimplemented) {
@@ -34,13 +46,12 @@ absl::StatusOr<double> GetMetric(MetricsPlugin& metrics_plugin, absl::string_vie
 absl::StatusOr<nighthawk::adaptive_load::MetricEvaluation>
 MetricsEvaluatorImpl::EvaluateMetric(const MetricSpec& metric_spec, MetricsPlugin& metrics_plugin,
                                      const ThresholdSpec* threshold_spec,
-                                     const google::protobuf::Timestamp& start_time,
-                                     const google::protobuf::Duration& duration) const {
+                                     const MeasuringPeriod& measuring_period) const {
   nighthawk::adaptive_load::MetricEvaluation evaluation;
   evaluation.set_metric_id(
       absl::StrCat(metric_spec.metrics_plugin_name(), "/", metric_spec.metric_name()));
   const absl::StatusOr<double> metric_value_or =
-      GetMetric(metrics_plugin, metric_spec.metric_name(), start_time, duration);
+      GetMetric(metrics_plugin, metric_spec.metric_name(), measuring_period);
   if (!metric_value_or.ok()) {
     return absl::Status(static_cast<absl::StatusCode>(metric_value_or.status().code()),
                         absl::StrCat("Error calling MetricsPlugin '",
@@ -107,14 +118,18 @@ MetricsEvaluatorImpl::AnalyzeNighthawkBenchmark(
   const std::vector<std::pair<const MetricSpec*, const ThresholdSpec*>> spec_threshold_pairs =
       ExtractMetricSpecs(spec);
 
+  absl::StatusOr<MeasuringPeriod> measuring_period_or =
+      GetMeasuringPeriod(nighthawk_response.output());
+  if (!measuring_period_or.ok()) {
+    return measuring_period_or.status();
+  }
   std::vector<std::string> errors;
   for (const std::pair<const MetricSpec*, const ThresholdSpec*>& spec_threshold_pair :
        spec_threshold_pairs) {
     absl::StatusOr<nighthawk::adaptive_load::MetricEvaluation> evaluation_or =
         EvaluateMetric(*spec_threshold_pair.first,
                        *name_to_plugin_map[spec_threshold_pair.first->metrics_plugin_name()],
-                       spec_threshold_pair.second, nighthawk_response.output().timestamp(),
-                       nighthawk_response.output().options().duration());
+                       spec_threshold_pair.second, *measuring_period_or);
     if (!evaluation_or.ok()) {
       errors.emplace_back(absl::StrCat("Error evaluating metric: ", evaluation_or.status().code(),
                                        ": ", evaluation_or.status().message()));

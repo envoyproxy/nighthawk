@@ -35,6 +35,8 @@ private:
   absl::flat_hash_map<std::string, absl::StatusOr<double>> value_or_error_from_name_;
 };
 
+// TODO(zhangtom): Create a child class of above that overrides WithMeasuringPeriod.
+
 /**
  * Factory that creates a FakeMetricsPlugin plugin from a FakeMetricsPluginConfig proto.
  * Registered as an Envoy plugin.
