@@ -73,6 +73,9 @@ important maintenance task. When performing the update, follow this procedure:
    [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/tools/gen_compilation_database.py) to
    update our build configurations. Be sure to retain our local modifications,
    all lines that are unique to Nighthawk are marked with comment `# unique`.
+1. If [requirements.txt](requirements.txt) has not been updated in the last month (based on comment at top
+   of file), check for major dependency updates. See
+   [Finding python dependencies](#finding-python-dependencies) below for instructions.
 1. Run `ci/do_ci.sh test`. Sometimes the dependency update comes with changes
    that break our build. Include any changes required to Nighthawk to fix that
    in the same PR.
@@ -86,8 +89,8 @@ important maintenance task. When performing the update, follow this procedure:
 
 ## Finding python dependencies
 
-We should check our python dependencies periodically for major version updates. Here is an easy
-way to check for major dependency updates:
+We should check our python dependencies periodically for major version updates. We attempt to
+update these dependencies monthly. Here is an easy way to check for major dependency updates:
 
 1. Create and activate a virtual env:
    ```
@@ -112,8 +115,10 @@ way to check for major dependency updates:
    dependencies you may have in addition, such as to `pip` itself. Here, we are only interested in
    cross-referencing the ones that appear with the ones in requirements.txt.
 
-   If you find any, you can either try updating the dependency in requirements.txt yourself or create
-   an issue for the change and assign it to one of the nighthawk maintainers.
+1. If you find any dependency updates, you can either try updating the dependency in requirements.txt yourself
+   or create an issue for the change and assign it to one of the nighthawk maintainers.
+
+   If there are not any dependency updates, please update the timestamp at the top of the file.
 
 1. When done, clean up the virtual env:
 
@@ -127,7 +132,9 @@ way to check for major dependency updates:
 If you encounter an error that looks like:
 
 ```
-RROR: REDACTED/nighthawk/test/integration/BUILD:32:11: no such package '@python_pip_deps//pypi__more_itertools': BUILD file not found in directory 'pypi__more_itertools' of external repository @python_pip_deps. Add a BUILD file to a directory to mark it as a package. and referenced by '//test/integration:integration_test_base_lean'
+RROR: REDACTED/nighthawk/test/integration/BUILD:32:11: no such package '@python_pip_deps//pypi__more_itertools':
+BUILD file not found in directory 'pypi__more_itertools' of external repository @python_pip_deps. Add a BUILD
+file to a directory to mark it as a package. and referenced by '//test/integration:integration_test_base_lean'
 ```
 
 Then we are missing a dependency from requirements.txt. This may happen due to changing other
