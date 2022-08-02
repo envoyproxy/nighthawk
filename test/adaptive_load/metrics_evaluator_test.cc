@@ -377,7 +377,33 @@ TEST(AnalyzeNighthawkBenchmark, UsesBuiltinMetricsPluginForUnspecifiedPluginName
   EXPECT_EQ(result_or.value().metric_evaluations()[0].metric_value(), kExpectedSendRate);
 }
 
-// TODO(zhangtom): Unit test that implements fallback logic.
+TEST(AnalyzeNighthawkBenchmark, CorrectlyPrioritizesWithMeasuringPeriodImplementation) {
+  nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
+
+  const std::string kMetricName = "metric";
+  const std::string kWithMeasuringPeriodStatusMessage =
+      "Call for 'metric' with measuring period starting at 1970-01-01T00:00:00Z for 10s";
+
+  FakeMetricsPluginConfig metrics_plugin_config;
+
+  MetricSpec metric_spec;
+  metric_spec.set_metrics_plugin_name("nighthawk.fake_metrics_plugin");
+  metric_spec.set_metric_name(kMetricName);
+  *spec.mutable_informational_metric_specs()->Add() = metric_spec;
+
+  nighthawk::client::ExecutionResponse nighthawk_response = MakeNighthawkResponseWithSendRate(1.0);
+  absl::flat_hash_map<std::string, MetricsPluginPtr> name_to_custom_metrics_plugin_map;
+  name_to_custom_metrics_plugin_map["nighthawk.fake_metrics_plugin"] =
+      std::make_unique<FakeMetricsPluginWithMeasuringPeriod>(metrics_plugin_config);
+
+  MetricsEvaluatorImpl evaluator;
+  absl::StatusOr<BenchmarkResult> result_or = evaluator.AnalyzeNighthawkBenchmark(
+      nighthawk_response, spec, name_to_custom_metrics_plugin_map);
+  ASSERT_FALSE(result_or.ok());
+  // All errors during evaluation are rolled up into a single InternalError.
+  EXPECT_EQ(result_or.status().code(), absl::StatusCode::kInternal);
+  EXPECT_THAT(result_or.status().message(), HasSubstr(kWithMeasuringPeriodStatusMessage));
+}
 
 // TODO(zhangtom): Unit test that errors out with no results proto.
 

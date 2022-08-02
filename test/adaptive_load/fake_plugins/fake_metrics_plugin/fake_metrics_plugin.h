@@ -35,7 +35,21 @@ private:
   absl::flat_hash_map<std::string, absl::StatusOr<double>> value_or_error_from_name_;
 };
 
-// TODO(zhangtom): Create a child class of above that overrides WithMeasuringPeriod.
+// MetricsPlugin for testing to test GetMetricByNameWithMeasuringPeriod override behavior.
+class FakeMetricsPluginWithMeasuringPeriod : public FakeMetricsPlugin {
+public:
+  /**
+   * Initializes the fake plugin with a FakeMetricsPluginConfig proto.
+   *
+   * @param config FakeMetricsPluginConfig proto for setting the fixed metric value.
+   */
+  explicit FakeMetricsPluginWithMeasuringPeriod(
+      const nighthawk::adaptive_load::FakeMetricsPluginConfig& config);
+
+  absl::StatusOr<double>
+  GetMetricByNameWithMeasuringPeriod(absl::string_view metric_name,
+                                     const MeasuringPeriod& measuring_period) override;
+};
 
 /**
  * Factory that creates a FakeMetricsPlugin plugin from a FakeMetricsPluginConfig proto.
