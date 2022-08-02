@@ -79,9 +79,12 @@ TEST(EvaluateMetric, SetsMetricIdForValidMetric) {
   metric_spec.set_metrics_plugin_name("nighthawk.fake_metrics_plugin");
   metric_spec.set_metric_name(kMetricName);
 
+  google::protobuf::Timestamp start_time;
+  google::protobuf::Duration duration;
+
   MetricsEvaluatorImpl evaluator;
-  absl::StatusOr<MetricEvaluation> evaluation_or =
-      evaluator.EvaluateMetric(metric_spec, fake_plugin, /*threshold_spec=*/nullptr);
+  absl::StatusOr<MetricEvaluation> evaluation_or = evaluator.EvaluateMetric(
+      metric_spec, fake_plugin, /*threshold_spec=*/nullptr, start_time, duration);
   ASSERT_TRUE(evaluation_or.ok());
   nighthawk::adaptive_load::MetricEvaluation evaluation = evaluation_or.value();
   EXPECT_EQ(evaluation.metric_id(), "nighthawk.fake_metrics_plugin/good-metric");
@@ -102,9 +105,12 @@ TEST(EvaluateMetric, PropagatesMetricsPluginError) {
   metric_spec.set_metrics_plugin_name("nighthawk.fake_metrics_plugin");
   metric_spec.set_metric_name(kMetricName);
 
+  google::protobuf::Timestamp start_time;
+  google::protobuf::Duration duration;
+
   MetricsEvaluatorImpl evaluator;
-  absl::StatusOr<MetricEvaluation> evaluation_or =
-      evaluator.EvaluateMetric(metric_spec, fake_plugin, /*threshold_spec=*/nullptr);
+  absl::StatusOr<MetricEvaluation> evaluation_or = evaluator.EvaluateMetric(
+      metric_spec, fake_plugin, /*threshold_spec=*/nullptr, start_time, duration);
   ASSERT_FALSE(evaluation_or.ok());
   EXPECT_EQ(static_cast<int>(evaluation_or.status().code()), kExpectedStatusCode);
   EXPECT_THAT(evaluation_or.status().message(), HasSubstr(kExpectedStatusMessage));
@@ -123,9 +129,12 @@ TEST(EvaluateMetric, StoresMetricValueForValidMetric) {
   metric_spec.set_metrics_plugin_name("nighthawk.fake_metrics_plugin");
   metric_spec.set_metric_name(kMetricName);
 
+  google::protobuf::Timestamp start_time;
+  google::protobuf::Duration duration;
+
   MetricsEvaluatorImpl evaluator;
-  absl::StatusOr<MetricEvaluation> evaluation_or =
-      evaluator.EvaluateMetric(metric_spec, fake_plugin, /*threshold_spec=*/nullptr);
+  absl::StatusOr<MetricEvaluation> evaluation_or = evaluator.EvaluateMetric(
+      metric_spec, fake_plugin, /*threshold_spec=*/nullptr, start_time, duration);
   ASSERT_TRUE(evaluation_or.ok());
   EXPECT_EQ(evaluation_or.value().metric_value(), kExpectedValue);
 }
@@ -144,9 +153,12 @@ TEST(EvaluateMetric, SetsWeightToZeroForValidInformationalMetric) {
   metric_spec.set_metrics_plugin_name("nighthawk.fake_metrics_plugin");
   metric_spec.set_metric_name(kMetricName);
 
+  google::protobuf::Timestamp start_time;
+  google::protobuf::Duration duration;
+
   MetricsEvaluatorImpl evaluator;
-  absl::StatusOr<MetricEvaluation> evaluation_or =
-      evaluator.EvaluateMetric(metric_spec, fake_plugin, /*threshold_spec=*/nullptr);
+  absl::StatusOr<MetricEvaluation> evaluation_or = evaluator.EvaluateMetric(
+      metric_spec, fake_plugin, /*threshold_spec=*/nullptr, start_time, duration);
   ASSERT_TRUE(evaluation_or.ok());
   EXPECT_EQ(evaluation_or.value().weight(), 0.0);
 }
@@ -172,9 +184,12 @@ TEST(EvaluateMetric, SetsWeightForValidScoredMetric) {
   *threshold_spec.mutable_scoring_function() =
       MakeLowerThresholdBinaryScoringFunctionConfig(kLowerThreshold);
 
+  google::protobuf::Timestamp start_time;
+  google::protobuf::Duration duration;
+
   MetricsEvaluatorImpl evaluator;
   absl::StatusOr<MetricEvaluation> evaluation_or =
-      evaluator.EvaluateMetric(metric_spec, fake_plugin, &threshold_spec);
+      evaluator.EvaluateMetric(metric_spec, fake_plugin, &threshold_spec, start_time, duration);
   ASSERT_TRUE(evaluation_or.ok());
   EXPECT_EQ(evaluation_or.value().weight(), kExpectedWeight);
 }
@@ -198,9 +213,12 @@ TEST(EvaluateMetric, SetsScoreForValidMetric) {
   *threshold_spec.mutable_scoring_function() =
       MakeLowerThresholdBinaryScoringFunctionConfig(kLowerThreshold);
 
+  google::protobuf::Timestamp start_time;
+  google::protobuf::Duration duration;
+
   MetricsEvaluatorImpl evaluator;
   absl::StatusOr<MetricEvaluation> evaluation_or =
-      evaluator.EvaluateMetric(metric_spec, fake_plugin, &threshold_spec);
+      evaluator.EvaluateMetric(metric_spec, fake_plugin, &threshold_spec, start_time, duration);
   ASSERT_TRUE(evaluation_or.ok());
   EXPECT_EQ(evaluation_or.value().threshold_score(), -1.0);
 }

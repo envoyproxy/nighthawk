@@ -27,7 +27,9 @@ public:
   MOCK_METHOD(absl::StatusOr<nighthawk::adaptive_load::MetricEvaluation>, EvaluateMetric,
               (const nighthawk::adaptive_load::MetricSpec& metric_spec,
                MetricsPlugin& metrics_plugin,
-               const nighthawk::adaptive_load::ThresholdSpec* threshold_spec),
+               const nighthawk::adaptive_load::ThresholdSpec* threshold_spec,
+               const google::protobuf::Timestamp& timestamp,
+               const google::protobuf::Duration& duration),
               (const, override));
 
   MOCK_METHOD((const std::vector<std::pair<const nighthawk::adaptive_load::MetricSpec*,

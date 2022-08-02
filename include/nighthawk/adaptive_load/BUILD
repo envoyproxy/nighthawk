@@ -70,6 +70,9 @@ envoy_basic_cc_library(
 
 envoy_basic_cc_library(
     name = "metrics_plugin",
+    srcs = [
+        "metrics_plugin.cc",
+    ],
     hdrs = [
         "metrics_plugin.h",
     ],

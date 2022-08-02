@@ -229,6 +229,26 @@ TEST(NighthawkStatsEmulatedMetricsPlugin, ReturnsCorrectSupportedMetricNames) {
                                    "success-rate"));
 }
 
+TEST(NighthawkStatsEmulatedMetricsPlugin, GetMetricByNameWithTimeReturnsUnImplementedError) {
+  NighthawkStatsEmulatedMetricsPlugin plugin =
+      NighthawkStatsEmulatedMetricsPlugin(MakeSimpleNighthawkOutput({
+          /*concurrency=*/"auto",
+          /*requests_per_second=*/1024,
+          /*actual_duration_seconds=*/0,
+          /*upstream_rq_total=*/2560,
+          /*response_count_2xx=*/320,
+          /*min_ns=*/400,
+          /*mean_ns=*/500,
+          /*max_ns=*/600,
+          /*pstdev_ns=*/11,
+      }));
+
+  google::protobuf::Timestamp start_time;
+  google::protobuf::Duration duration;
+  EXPECT_THAT(plugin.GetMetricByNameWithTime("x", start_time, duration).status().code(),
+              absl::StatusCode::kUnimplemented);
+}
+
 } // namespace
 
 } // namespace Nighthawk

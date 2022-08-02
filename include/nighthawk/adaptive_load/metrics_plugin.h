@@ -27,6 +27,23 @@ public:
    * unavailable.
    */
   virtual absl::StatusOr<double> GetMetricByName(absl::string_view metric_name) PURE;
+
+  /**
+   * Obtains the numeric metric with the given name, usually by querying an outside system. Provides
+   * start_time and duration of measurement period for the plugin to utilitize.
+   *
+   * @param metric_name The name of the metric to retrieve. Must be supported by the plugin.
+   * @param start_time start_time with duration indicates when the metric is relevant.
+   * @param duration start_time with duration indicates when the metric is relevant.
+   *
+   * @return StatusOr<double> The metric value, or an error status if the metric was unsupported or
+   * unavailable.
+   */
+  virtual absl::StatusOr<double>
+  GetMetricByNameWithTime(absl::string_view metric_name,
+                          const google::protobuf::Timestamp& start_time,
+                          const google::protobuf::Duration& duration);
+
   /**
    * All metric names implemented by this plugin, for use in input validation.
    *
