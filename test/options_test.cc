@@ -4,11 +4,13 @@
 
 #include "test/client/utility.h"
 #include "test/test_common/environment.h"
+#include "test/test_common/proto_matchers.h"
 
 #include "gtest/gtest.h"
 
 using namespace std::chrono_literals;
 using namespace testing;
+using ::Envoy::Protobuf::TextFormat;
 
 namespace Nighthawk {
 namespace Client {
@@ -227,18 +229,24 @@ TEST_F(OptionsImplTest, AlmostAll) {
   const std::vector<std::string> expected_headers = {"f1:b1", "f2:b2", "f3:b3:b4"};
   EXPECT_EQ(expected_headers, options->requestHeaders());
   EXPECT_EQ(1234, options->requestBodySize());
-  EXPECT_EQ(
-      "name: \"envoy.transport_sockets.tls\"\n"
-      "typed_config {\n"
-      "  [type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext] {\n"
-      "    common_tls_context {\n"
-      "      tls_params {\n"
-      "        cipher_suites: \"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"\n"
-      "      }\n"
-      "    }\n"
-      "  }\n"
-      "}\n",
-      options->transportSocket().value().DebugString());
+
+  envoy::config::core::v3::TransportSocket expected_transport_socket;
+  TextFormat::ParseFromString(
+      R"pb(name: "envoy.transport_sockets.tls"
+           typed_config {
+             [type.googleapis.com/
+              envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext] {
+               common_tls_context {
+                 tls_params {
+                   cipher_suites: "-ALL:ECDHE-RSA-AES256-GCM-SHA384"
+                 }
+               }
+             }
+           })pb",
+      &expected_transport_socket);
+  EXPECT_THAT(
+      options->transportSocket().value(),
+      EqualsProto(expected_transport_socket));
   EXPECT_EQ(10, options->maxPendingRequests());
   EXPECT_EQ(11, options->maxActiveRequests());
   EXPECT_EQ(12, options->maxRequestsPerConnection());
@@ -258,21 +266,27 @@ TEST_F(OptionsImplTest, AlmostAll) {
   EXPECT_TRUE(options->simpleWarmup());
   EXPECT_EQ(10, options->statsFlushInterval());
   ASSERT_EQ(2, options->statsSinks().size());
-  EXPECT_EQ("name: \"envoy.stat_sinks.statsd\"\n"
-            "typed_config {\n"
-            "  [type.googleapis.com/envoy.config.metrics.v3.StatsdSink] {\n"
-            "    tcp_cluster_name: \"statsd\"\n"
-            "  }\n"
-            "}\n",
-            options->statsSinks()[0].DebugString());
-  EXPECT_EQ("name: \"envoy.stat_sinks.statsd\"\n"
-            "typed_config {\n"
-            "  [type.googleapis.com/envoy.config.metrics.v3.StatsdSink] {\n"
-            "    tcp_cluster_name: \"statsd\"\n"
-            "    prefix: \"nighthawk\"\n"
-            "  }\n"
-            "}\n",
-            options->statsSinks()[1].DebugString());
+  envoy::config::metrics::v3::StatsSink expected_stats_sink1;
+  TextFormat::ParseFromString(
+      R"pb(name: "envoy.stat_sinks.statsd"
+           typed_config {
+             [type.googleapis.com/envoy.config.metrics.v3.StatsdSink] {
+               tcp_cluster_name: "statsd"
+             }
+           })pb",
+      &expected_stats_sink1);
+  EXPECT_THAT(options->statsSinks()[0], EqualsProto(expected_stats_sink1));
+  envoy::config::metrics::v3::StatsSink expected_stats_sink2;
+  TextFormat::ParseFromString(
+      R"pb(name: "envoy.stat_sinks.statsd"
+           typed_config {
+             [type.googleapis.com/envoy.config.metrics.v3.StatsdSink] {
+               tcp_cluster_name: "statsd"
+               prefix: "nighthawk"
+             }
+           })pb",
+      &expected_stats_sink2);
+  EXPECT_THAT(options->statsSinks()[1], EqualsProto(expected_stats_sink2));
   EXPECT_EQ("zz", options->responseHeaderWithLatencyInput());
 
   // Check that our conversion to CommandLineOptionsPtr makes sense.
@@ -495,12 +509,14 @@ TEST_F(OptionsImplTest, TlsContext) {
                   "cipher_suites:[\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"]}}}",
                   good_test_uri_));
 
-  EXPECT_EQ("common_tls_context {\n"
-            "  tls_params {\n"
-            "    cipher_suites: \"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"\n"
-            "  }\n"
-            "}\n",
-            options->tlsContext().DebugString());
+  envoy::extensions::transport_sockets::tls::v3::UpstreamTlsContext expected_tls_context;
+  TextFormat::ParseFromString(
+      R"pb(common_tls_context {
+             tls_params { cipher_suites: "-ALL:ECDHE-RSA-AES256-GCM-SHA384" }
+           })pb",
+      &expected_tls_context);
+
+  EXPECT_THAT(options->tlsContext(), EqualsProto(expected_tls_context));
 
   // Check that our conversion to CommandLineOptionsPtr makes sense.
   CommandLineOptionsPtr cmd = options->toCommandLineOptions();
