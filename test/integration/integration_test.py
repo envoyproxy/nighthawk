@@ -12,7 +12,6 @@ if __name__ == '__main__':
   test_selection_arg = sys.argv[1] if len(sys.argv) > 1 else ""
   r = pytest.main(
       [
-          "--assert=plain",
           "--rootdir=" + path,
           "-vvvv",
           "--showlocals",  # Don't abbreviate/truncate long values in asserts.
