@@ -43,7 +43,7 @@ public:
    * MetricSpec.
    * @param threshold_spec A proto describing the threshold and scoring function. Nullptr if the
    * metric is informational only.
-   * @param measuring_period The time period where the metric is relevant
+   * @param reporting_period The time period where the metric is relevant
    *
    * @return StatusOr<MetricEvaluation> A proto containing the metric value (and its score if a
    * threshold was specified), or an error status if the metric could not be obtained from the
@@ -53,7 +53,7 @@ public:
   EvaluateMetric(const nighthawk::adaptive_load::MetricSpec& metric_spec,
                  MetricsPlugin& metrics_plugin,
                  const nighthawk::adaptive_load::ThresholdSpec* threshold_spec,
-                 const MeasuringPeriod& measuring_period) const PURE;
+                 const ReportingPeriod& reporting_period) const PURE;
 
   /**
    * Extracts pointers to metric descriptors and corresponding thresholds from a top-level adaptive

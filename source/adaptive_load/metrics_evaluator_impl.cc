@@ -16,24 +16,43 @@ using ::nighthawk::adaptive_load::MetricSpecWithThreshold;
 using ::nighthawk::adaptive_load::ThresholdSpec;
 
 // Extract estimated measuring period from Nighthawk output proto.
-absl::StatusOr<MeasuringPeriod> GetMeasuringPeriod(const nighthawk::client::Output& output) {
+absl::StatusOr<ReportingPeriod> GetReportingPeriod(const nighthawk::client::Output& output) {
   if (output.results().empty()) {
     return absl::Status{absl::StatusCode::kInvalidArgument, "output.results cannot be empty."};
   }
-  // Assume the first result is a good representation for the entire run.
-  MeasuringPeriod time_interval;
-  time_interval.start_time = output.results(0).execution_start();
-  time_interval.duration = output.results(0).execution_duration();
-  return time_interval;
+  // Find the reporting_period in which all workers are active and thus sending the intended amount
+  // of traffic.
+  ReportingPeriod reporting_period;
+  google::protobuf::Timestamp max_start_time = output.results(0).execution_start();
+  google::protobuf::Timestamp min_end_time =
+      output.results(0).execution_start() + output.results(0).execution_duration();
+  for (const auto& result : output.results()) {
+    if (result.execution_start() > max_start_time) {
+      max_start_time = result.execution_start();
+    }
+    if (result.execution_start() + result.execution_duration() < min_end_time) {
+      min_end_time = result.execution_start() + result.execution_duration();
+    }
+  }
+  // we've calculated a negative duration. This indicates that nighthawk never actually reached the
+  // intended load among all workers.
+  if (min_end_time <= max_start_time) {
+    return absl::Status{absl::StatusCode::kInvalidArgument,
+                        "Reported execution times in output.results indicate that there is no time "
+                        "where all workers were active."};
+  }
+  reporting_period.start_time = max_start_time;
+  reporting_period.duration = min_end_time - max_start_time;
+  return reporting_period;
 }
 
 // Utility function for GetMetric functionality with fallback logic.
 absl::StatusOr<double> GetMetric(MetricsPlugin& metrics_plugin, absl::string_view metric_name,
-                                 const MeasuringPeriod& measuring_period) {
+                                 const ReportingPeriod& reporting_period) {
   absl::StatusOr<double> metric_value_or =
-      metrics_plugin.GetMetricByNameWithMeasuringPeriod(metric_name, measuring_period);
-  // If the metric plugin does not support WithTime implementation (i.e. is using the default
-  // implementation), default to GetMetricByName
+      metrics_plugin.GetMetricByNameWithReportingPeriod(metric_name, reporting_period);
+  // If the metric plugin does not support WithReportingPeriod implementation (i.e. is using the
+  // default implementation), default to GetMetricByName
   if (metric_value_or.status().code() == absl::StatusCode::kUnimplemented) {
     return metrics_plugin.GetMetricByName(metric_name);
   }
@@ -45,12 +64,12 @@ absl::StatusOr<double> GetMetric(MetricsPlugin& metrics_plugin, absl::string_vie
 absl::StatusOr<nighthawk::adaptive_load::MetricEvaluation>
 MetricsEvaluatorImpl::EvaluateMetric(const MetricSpec& metric_spec, MetricsPlugin& metrics_plugin,
                                      const ThresholdSpec* threshold_spec,
-                                     const MeasuringPeriod& measuring_period) const {
+                                     const ReportingPeriod& reporting_period) const {
   nighthawk::adaptive_load::MetricEvaluation evaluation;
   evaluation.set_metric_id(
       absl::StrCat(metric_spec.metrics_plugin_name(), "/", metric_spec.metric_name()));
   const absl::StatusOr<double> metric_value_or =
-      GetMetric(metrics_plugin, metric_spec.metric_name(), measuring_period);
+      GetMetric(metrics_plugin, metric_spec.metric_name(), reporting_period);
   if (!metric_value_or.ok()) {
     return absl::Status(static_cast<absl::StatusCode>(metric_value_or.status().code()),
                         absl::StrCat("Error calling MetricsPlugin '",
@@ -117,10 +136,10 @@ MetricsEvaluatorImpl::AnalyzeNighthawkBenchmark(
   const std::vector<std::pair<const MetricSpec*, const ThresholdSpec*>> spec_threshold_pairs =
       ExtractMetricSpecs(spec);
 
-  absl::StatusOr<MeasuringPeriod> measuring_period_or =
-      GetMeasuringPeriod(nighthawk_response.output());
-  if (!measuring_period_or.ok()) {
-    return measuring_period_or.status();
+  absl::StatusOr<ReportingPeriod> reporting_period_or =
+      GetReportingPeriod(nighthawk_response.output());
+  if (!reporting_period_or.ok()) {
+    return reporting_period_or.status();
   }
   std::vector<std::string> errors;
   for (const std::pair<const MetricSpec*, const ThresholdSpec*>& spec_threshold_pair :
@@ -128,7 +147,7 @@ MetricsEvaluatorImpl::AnalyzeNighthawkBenchmark(
     absl::StatusOr<nighthawk::adaptive_load::MetricEvaluation> evaluation_or =
         EvaluateMetric(*spec_threshold_pair.first,
                        *name_to_plugin_map[spec_threshold_pair.first->metrics_plugin_name()],
-                       spec_threshold_pair.second, *measuring_period_or);
+                       spec_threshold_pair.second, *reporting_period_or);
     if (!evaluation_or.ok()) {
       errors.emplace_back(absl::StrCat("Error evaluating metric: ", evaluation_or.status().code(),
                                        ": ", evaluation_or.status().message()));

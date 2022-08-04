@@ -8,7 +8,7 @@ public:
   EvaluateMetric(const nighthawk::adaptive_load::MetricSpec& metric_spec,
                  MetricsPlugin& metrics_plugin,
                  const nighthawk::adaptive_load::ThresholdSpec* threshold_spec,
-                 const MeasuringPeriod& measuring_period) const override;
+                 const ReportingPeriod& reporting_period) const override;
 
   const std::vector<std::pair<const nighthawk::adaptive_load::MetricSpec*,
                               const nighthawk::adaptive_load::ThresholdSpec*>>

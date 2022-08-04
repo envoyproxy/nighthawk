@@ -41,17 +41,6 @@ absl::StatusOr<double> FakeMetricsPlugin::GetMetricByName(absl::string_view metr
   return value_or_error_from_name_[metric_name];
 }
 
-FakeMetricsPluginWithMeasuringPeriod::FakeMetricsPluginWithMeasuringPeriod(
-    const nighthawk::adaptive_load::FakeMetricsPluginConfig& config)
-    : FakeMetricsPlugin(config) {}
-
-absl::StatusOr<double> FakeMetricsPluginWithMeasuringPeriod::GetMetricByNameWithMeasuringPeriod(
-    absl::string_view metric_name, const MeasuringPeriod& measuring_period) {
-  return absl::InternalError(
-      absl::StrCat("Call for '", metric_name, "' with measuring period starting at ",
-                   Envoy::Protobuf::util::TimeUtil::ToString(measuring_period.start_time), " for ",
-                   Envoy::Protobuf::util::TimeUtil::ToString(measuring_period.duration)));
-}
 
 const std::vector<std::string> FakeMetricsPlugin::GetAllSupportedMetricNames() const {
   std::vector<std::string> metric_names;

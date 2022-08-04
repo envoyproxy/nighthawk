@@ -11,7 +11,9 @@
 namespace Nighthawk {
 
 /**
- * MetricsPlugin for testing, supporting fixed values and artificial errors.
+ * MetricsPlugin for testing, supporting fixed values and artificial errors. Note that this class
+ * intentionally does not override GetMetricByNameWithReportingPeriod to properly test fallback
+ * behavior.
  */
 class FakeMetricsPlugin : public MetricsPlugin {
 public:
@@ -33,22 +35,6 @@ public:
 
 private:
   absl::flat_hash_map<std::string, absl::StatusOr<double>> value_or_error_from_name_;
-};
-
-// MetricsPlugin for testing to test GetMetricByNameWithMeasuringPeriod override behavior.
-class FakeMetricsPluginWithMeasuringPeriod : public FakeMetricsPlugin {
-public:
-  /**
-   * Initializes the fake plugin with a FakeMetricsPluginConfig proto.
-   *
-   * @param config FakeMetricsPluginConfig proto for setting the fixed metric value.
-   */
-  explicit FakeMetricsPluginWithMeasuringPeriod(
-      const nighthawk::adaptive_load::FakeMetricsPluginConfig& config);
-
-  absl::StatusOr<double>
-  GetMetricByNameWithMeasuringPeriod(absl::string_view metric_name,
-                                     const MeasuringPeriod& measuring_period) override;
 };
 
 /**

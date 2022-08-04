@@ -5,10 +5,11 @@
 
 namespace Nighthawk {
 
-absl::StatusOr<double> MetricsPlugin::GetMetricByNameWithMeasuringPeriod(
+absl::StatusOr<double> MetricsPlugin::GetMetricByNameWithReportingPeriod(
     [[maybe_unused]] absl::string_view metric_name,
-    [[maybe_unused]] const MeasuringPeriod& measuring_period) {
-  return absl::Status{absl::StatusCode::kUnimplemented, "GetMetricByNameWithTime not implemented."};
+    [[maybe_unused]] const ReportingPeriod& reporting_period) {
+  return absl::Status{absl::StatusCode::kUnimplemented,
+                      "GetMetricByNameWithReportingPeriod not implemented."};
 }
 
 } // namespace Nighthawk

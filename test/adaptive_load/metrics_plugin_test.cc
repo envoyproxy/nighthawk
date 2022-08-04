@@ -243,8 +243,8 @@ TEST(NighthawkStatsEmulatedMetricsPlugin, GetMetricByNameWithTimeReturnsUnImplem
           /*pstdev_ns=*/11,
       }));
 
-  MeasuringPeriod measuring_period;
-  EXPECT_THAT(plugin.GetMetricByNameWithMeasuringPeriod("x", measuring_period).status().code(),
+  ReportingPeriod reporting_period;
+  EXPECT_THAT(plugin.GetMetricByNameWithReportingPeriod("x", reporting_period).status().code(),
               absl::StatusCode::kUnimplemented);
 }
 
