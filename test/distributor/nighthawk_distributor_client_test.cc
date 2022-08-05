@@ -6,6 +6,8 @@
 
 #include "source/distributor/nighthawk_distributor_client_impl.h"
 
+#include "test/test_common/proto_matchers.h"
+
 #include "grpcpp/test/mock_stream.h"
 
 #include "gmock/gmock.h"
@@ -88,7 +90,7 @@ TEST(DistributedRequest, ReturnsNighthawkResponseSuccessfully) {
   EXPECT_TRUE(response_or.ok());
   DistributedResponse actual_response = response_or.value();
   EXPECT_TRUE(MessageDifferencer::Equivalent(actual_response, expected_response));
-  EXPECT_EQ(actual_response.DebugString(), expected_response.DebugString());
+  EXPECT_THAT(actual_response, EqualsProto(expected_response));
 }
 
 TEST(DistributedRequest, ReturnsErrorIfNighthawkServiceDoesNotSendResponse) {

@@ -9,6 +9,7 @@
 
 #include "test/adaptive_load/fake_plugins/fake_metrics_plugin/fake_metrics_plugin.h"
 #include "test/adaptive_load/fake_plugins/fake_metrics_plugin/fake_metrics_plugin.pb.h"
+#include "test/test_common/proto_matchers.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -29,8 +30,7 @@ TEST(FakeMetricsPluginConfigFactory, CreateEmptyConfigProtoCreatesCorrectType) {
           "nighthawk.fake_metrics_plugin");
   Envoy::ProtobufTypes::MessagePtr empty_config = config_factory.createEmptyConfigProto();
   FakeMetricsPluginConfig expected_config;
-  EXPECT_EQ(empty_config->DebugString(), expected_config.DebugString());
-  EXPECT_TRUE(MessageDifferencer::Equivalent(*empty_config, expected_config));
+  EXPECT_THAT(*empty_config, EqualsProto(expected_config));
 }
 
 TEST(FakeMetricsPluginConfigFactory, FactoryRegistersUnderCorrectName) {
@@ -130,8 +130,7 @@ TEST(MakeFakeMetricsPluginTypedExtensionConfig, PacksGivenConfigProto) {
       MakeFakeMetricsPluginTypedExtensionConfig(expected_config);
   nighthawk::adaptive_load::FakeMetricsPluginConfig actual_config;
   Envoy::MessageUtil::unpackTo(activator.typed_config(), actual_config);
-  EXPECT_EQ(expected_config.DebugString(), actual_config.DebugString());
-  EXPECT_TRUE(MessageDifferencer::Equivalent(expected_config, actual_config));
+  EXPECT_THAT(expected_config, EqualsProto(actual_config));
 }
 
 } // namespace

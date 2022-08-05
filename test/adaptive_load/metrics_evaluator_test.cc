@@ -9,6 +9,7 @@
 
 #include "test/adaptive_load/fake_plugins/fake_metrics_plugin/fake_metrics_plugin.h"
 #include "test/adaptive_load/minimal_output.h"
+#include "test/test_common/proto_matchers.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -223,8 +224,7 @@ TEST(ExtractMetricSpecs, ExtractsScoredMetricAndThresholdForValidMetric) {
   ASSERT_GT(spec_threshold_pairs.size(), 0);
   EXPECT_EQ(spec_threshold_pairs[0].first->metric_name(), kExpectedMetricName);
   ASSERT_NE(spec_threshold_pairs[0].second, nullptr);
-  EXPECT_TRUE(MessageDifferencer::Equivalent(*spec_threshold_pairs[0].second, threshold_spec));
-  EXPECT_EQ(spec_threshold_pairs[0].second->DebugString(), threshold_spec.DebugString());
+  EXPECT_THAT(*spec_threshold_pairs[0].second, EqualsProto(threshold_spec));
 }
 
 TEST(ExtractMetricSpecs, ExtractsValueForValidInformationalMetric) {
@@ -273,8 +273,8 @@ TEST(AnalyzeNighthawkBenchmark, StoresNighthawkResultForSuccessfulMetricEvaluati
 
   EXPECT_TRUE(MessageDifferencer::Equivalent(result_or.value().nighthawk_service_output(),
                                              nighthawk_response.output()));
-  EXPECT_EQ(result_or.value().nighthawk_service_output().DebugString(),
-            nighthawk_response.output().DebugString());
+  EXPECT_THAT(result_or.value().nighthawk_service_output(),
+            EqualsProto(nighthawk_response.output()));
 }
 
 TEST(AnalyzeNighthawkBenchmark, StoresScoreForSuccessfulMetricEvaluation) {

@@ -38,6 +38,7 @@
 #include "test/mocks/adaptive_load/mock_metrics_evaluator.h"
 #include "test/mocks/adaptive_load/mock_session_spec_proto_helper.h"
 #include "test/mocks/common/mock_nighthawk_service_client.h"
+#include "test/test_common/proto_matchers.h"
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
@@ -286,8 +287,7 @@ TEST_F(AdaptiveLoadControllerImplFixture, StoresAdjustingStageResult) {
   ASSERT_TRUE(output_or.ok());
   ASSERT_EQ(output_or.value().adjusting_stage_results_size(), 1);
   const BenchmarkResult& actual_benchmark_result = output_or.value().adjusting_stage_results(0);
-  EXPECT_TRUE(MessageDifferencer::Equivalent(actual_benchmark_result, expected_benchmark_result));
-  EXPECT_EQ(actual_benchmark_result.DebugString(), expected_benchmark_result.DebugString());
+  EXPECT_THAT(actual_benchmark_result, EqualsProto(expected_benchmark_result));
 }
 
 TEST_F(AdaptiveLoadControllerImplFixture, StoresTestingStageResult) {
@@ -308,8 +308,7 @@ TEST_F(AdaptiveLoadControllerImplFixture, StoresTestingStageResult) {
       controller.PerformAdaptiveLoadSession(&mock_nighthawk_service_stub_, spec);
   ASSERT_TRUE(output_or.ok());
   const BenchmarkResult& actual_benchmark_result = output_or.value().testing_stage_result();
-  EXPECT_TRUE(MessageDifferencer::Equivalent(actual_benchmark_result, expected_benchmark_result));
-  EXPECT_EQ(actual_benchmark_result.DebugString(), expected_benchmark_result.DebugString());
+  EXPECT_THAT(actual_benchmark_result, EqualsProto(expected_benchmark_result));
 }
 
 TEST_F(AdaptiveLoadControllerImplFixture, SucceedsWhenBenchmarkCooldownRequested) {

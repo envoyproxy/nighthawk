@@ -8,6 +8,7 @@
 #include "source/adaptive_load/plugin_loader.h"
 
 #include "test/adaptive_load/fake_plugins/fake_input_variable_setter/fake_input_variable_setter.h"
+#include "test/test_common/proto_matchers.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -26,7 +27,7 @@ TEST(FakeInputVariableSetterConfigFactory, CreateEmptyConfigProtoCreatesCorrectT
           "nighthawk.fake_input_variable_setter");
   Envoy::ProtobufTypes::MessagePtr message = config_factory.createEmptyConfigProto();
   FakeInputVariableSetterConfig expected_config;
-  EXPECT_EQ(message->DebugString(), expected_config.DebugString());
+  EXPECT_THAT(*message, EqualsProto(expected_config));
 }
 
 TEST(FakeInputVariableSetterConfigFactory, FactoryRegistersUnderCorrectName) {

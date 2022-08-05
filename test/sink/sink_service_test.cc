@@ -11,6 +11,7 @@
 #include "source/sink/service_impl.h"
 
 #include "test/mocks/sink/mock_sink.h"
+#include "test/test_common/proto_matchers.h"
 
 #include "absl/synchronization/notification.h"
 #include "gtest/gtest.h"
@@ -161,7 +162,7 @@ TEST_P(SinkServiceTest, LoadTwoResultsWithExecutionResponseWhereOneHasErrorDetai
   ::google::rpc::Status status;
   Envoy::MessageUtil::unpackTo(response_.execution_response().error_detail().details(0), status);
   // TODO(XXX): proper equivalence test.
-  EXPECT_EQ(status.DebugString(), error_detail->DebugString());
+  EXPECT_THAT(status, EqualsProto(*error_detail));
   EXPECT_TRUE(reader_writer->Finish().ok());
 }
 
