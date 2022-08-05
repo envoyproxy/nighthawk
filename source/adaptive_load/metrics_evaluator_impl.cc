@@ -15,7 +15,8 @@ using ::nighthawk::adaptive_load::MetricSpec;
 using ::nighthawk::adaptive_load::MetricSpecWithThreshold;
 using ::nighthawk::adaptive_load::ThresholdSpec;
 
-// Extract estimated measuring period from Nighthawk output proto.
+// Extract estimated reporting period from Nighthawk output proto. Reporting period is the time when
+// in when all workers are active and thus sending the intended amount of traffic.
 absl::StatusOr<ReportingPeriod> GetReportingPeriod(const nighthawk::client::Output& output) {
   if (output.results().empty()) {
     return absl::Status{absl::StatusCode::kInvalidArgument, "output.results cannot be empty."};

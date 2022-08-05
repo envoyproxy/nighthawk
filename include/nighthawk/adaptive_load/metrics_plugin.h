@@ -53,7 +53,7 @@ public:
    *
    * @param metric_name The name of the metric to retrieve. Must be supported by the plugin.
    * @param reporting_period the time period the Nighthawk test iteration is sending the intended
-   * load (i.e. the time period in which the metrics are of interest.)
+   * load (i.e. the time period in which the metrics are of interest).
    *
    * @return StatusOr<double> The metric value, or an error status if the metric was unsupported or
    * unavailable.

@@ -420,7 +420,6 @@ TEST(AnalyzeNighthawkBenchmark, ReturnsErrorWithReportingPeriodImplementation) {
   absl::StatusOr<BenchmarkResult> result_or = evaluator.AnalyzeNighthawkBenchmark(
       nighthawk_response, spec, name_to_custom_metrics_plugin_map);
   ASSERT_FALSE(result_or.ok());
-  // All errors during evaluation are rolled up into a single InternalError.
   EXPECT_EQ(result_or.status().code(), absl::StatusCode::kInternal);
   EXPECT_THAT(result_or.status().message(), HasSubstr(kWithReportingPeriodStatusMessage));
 }
@@ -483,7 +482,7 @@ void SetTimeAndDurationOnResult(nighthawk::client::Result* result, int64_t time_
   result->mutable_execution_duration()->set_nanos(0);
 }
 
-TEST(AnalyzeNighthawkBenchmark, FailsWithDurationWhereAllWorkersAreActive) {
+TEST(AnalyzeNighthawkBenchmark, FailsWithDurationWhereAllWorkersAreNeverActive) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
   nighthawk::client::ExecutionResponse nighthawk_response = MakeNighthawkResponseWithSendRate(1.0);
   SetTimeAndDurationOnResult(nighthawk_response.mutable_output()->mutable_results(0), 0, 100);
@@ -500,7 +499,7 @@ TEST(AnalyzeNighthawkBenchmark, FailsWithDurationWhereAllWorkersAreActive) {
                         "where all workers were active."));
 }
 
-TEST(AnalyzeNighthawkBenchmark, SelectsOverlappingReportingWithAllWorkers) {
+TEST(AnalyzeNighthawkBenchmark, SelectsOverlappingReportingPeriodWithAllWorkers) {
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
   const std::string kMetricName = "good-metric";
   FakeMetricsPluginConfig metrics_plugin_config;
