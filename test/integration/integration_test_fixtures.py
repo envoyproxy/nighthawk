@@ -105,7 +105,7 @@ class IntegrationTestBase():
     Theoretically it is possible that another process
     will steal the port before our caller is able to leverage it, but we take that chance.
     The upside is that we can push the port upon the server we are about to start through configuration
-    which is compatible accross servers.
+    which is compatible across servers.
     """
     with socket.socket(self._socket_type, socket.SOCK_STREAM) as sock:
       sock.bind((address, 0))
