@@ -26,6 +26,7 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         "//source/sink:nighthawk_sink_client_impl",
+        "//test/test_common:proto_matchers",
         "@com_github_grpc_grpc//:grpc++_test",
     ],
 )
@@ -38,6 +39,7 @@ envoy_cc_test(
         "//source/sink:grpc_service_lib",
         "//test/mocks/sink:mock_sink",
         "//test/test_common:environment_lib",
+        "//test/test_common:proto_matchers",
         "@envoy//test/test_common:network_utility_lib",
     ],
 )

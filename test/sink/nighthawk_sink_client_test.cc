@@ -6,6 +6,8 @@
 
 #include "source/sink/nighthawk_sink_client_impl.h"
 
+#include "test/test_common/proto_matchers.h"
+
 #include "grpcpp/test/mock_stream.h"
 
 #include "gmock/gmock.h"
@@ -68,10 +70,8 @@ TEST(StoreExecutionResponseStream, UsesSpecifiedExecutionResponseArguments) {
       client.StoreExecutionResponseStream(mock_nighthawk_sink_stub, request_1);
   absl::StatusOr<nighthawk::StoreExecutionResponse> response_2 =
       client.StoreExecutionResponseStream(mock_nighthawk_sink_stub, request_2);
-  EXPECT_EQ(observed_request_1.DebugString(), request_1.DebugString());
-  EXPECT_EQ(observed_request_2.DebugString(), request_2.DebugString());
-  EXPECT_TRUE(MessageDifferencer::Equivalent(observed_request_1, request_1));
-  EXPECT_TRUE(MessageDifferencer::Equivalent(observed_request_2, request_2));
+  EXPECT_THAT(observed_request_1, EqualsProto(request_1));
+  EXPECT_THAT(observed_request_2, EqualsProto(request_2));
 }
 
 TEST(StoreExecutionResponseStream, ReturnsResponseSuccessfully) {
@@ -208,8 +208,7 @@ TEST(SinkRequest, ReturnsNighthawkResponseSuccessfully) {
       client.SinkRequestStream(mock_nighthawk_sink_stub, nighthawk::SinkRequest());
   EXPECT_TRUE(response_or.ok());
   SinkResponse actual_response = response_or.value();
-  EXPECT_TRUE(MessageDifferencer::Equivalent(actual_response, expected_response));
-  EXPECT_EQ(actual_response.DebugString(), expected_response.DebugString());
+  EXPECT_THAT(actual_response, EqualsProto(expected_response));
 }
 
 TEST(SinkRequest, WillFinishIfNighthawkServiceDoesNotSendResponse) {

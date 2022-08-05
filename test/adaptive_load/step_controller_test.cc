@@ -12,6 +12,8 @@
 #include "source/adaptive_load/plugin_loader.h"
 #include "source/adaptive_load/step_controller_impl.h"
 
+#include "test/test_common/proto_matchers.h"
+
 #include "fake_plugins/fake_input_variable_setter/fake_input_variable_setter.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -36,7 +38,7 @@ TEST(ExponentialSearchStepControllerConfigFactory, GeneratesEmptyConfigProto) {
           "nighthawk.exponential_search");
   Envoy::ProtobufTypes::MessagePtr message = config_factory.createEmptyConfigProto();
   nighthawk::adaptive_load::ExponentialSearchStepControllerConfig expected_config;
-  EXPECT_EQ(message->DebugString(), expected_config.DebugString());
+  EXPECT_THAT(*message, EqualsProto(expected_config));
 }
 
 TEST(ExponentialSearchStepControllerConfigFactory, CreatesCorrectFactoryName) {
