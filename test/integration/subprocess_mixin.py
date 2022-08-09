@@ -1,3 +1,5 @@
+"""Mixin for managing child subprocess with an additional thread."""
+
 from threading import Thread, Condition
 import subprocess
 import logging
@@ -8,6 +10,7 @@ class SubprocessMixin(ABC):
   """Mixin used to manage launching subprocess using a separate Python thread."""
 
   def __init__(self):
+    """Creates SubprocessMixin."""
     self._server_thread = Thread(target=self._serverThreadRunner)
     self._server_process = None
     self._has_launched = False
@@ -17,7 +20,7 @@ class SubprocessMixin(ABC):
 
   @abstractmethod
   def _argsForSubprocess(self) -> list[str]:
-    """Returns the args to launch the subprocess."""
+    """Return the args to launch the subprocess."""
     pass
 
   def _serverThreadRunner(self):
@@ -33,7 +36,7 @@ class SubprocessMixin(ABC):
     return self.stdout, self.stderr
 
   def launchSubprocess(self):
-    """Start the subprocess. """
+    """Start the subprocess."""
     self._server_thread.daemon = True
     self._server_thread.start()
 
@@ -48,7 +51,7 @@ class SubprocessMixin(ABC):
       assert self._has_launched
 
   def waitForSubprocessNotRunning(self):
-    """Waits for the subprocess to not be running assuming it exits."""
+    """Wait for the subprocess to not be running assuming it exits."""
     if not self._has_launched or not self._server_thread.is_alive():
       return
     self._server_thread.join()
