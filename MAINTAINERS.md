@@ -73,6 +73,10 @@ important maintenance task. When performing the update, follow this procedure:
    [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/tools/gen_compilation_database.py) to
    update our build configurations. Be sure to retain our local modifications,
    all lines that are unique to Nighthawk are marked with comment `# unique`.
+1. Sync (copy) [tools/code_format/config.yaml](tools/code_format/config.yaml) from
+   [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/tools/code_format/config.yaml) to
+   update our format checker configuration. Be sure to retain our local modifications,
+   all lines that are unique to Nighthawk are marked with comment `# unique`.
 1. If [requirements.txt](requirements.txt) has not been updated in the last month (based on comment at top
    of file), check for major dependency updates. See
    [Finding python dependencies](#finding-python-dependencies) below for instructions.
