@@ -10,7 +10,7 @@ class SubprocessMixin(ABC):
   """Mixin used to manage launching subprocess using a separate Python thread."""
 
   def __init__(self):
-    """Creates SubprocessMixin."""
+    """Create SubprocessMixin."""
     self._server_thread = Thread(target=self._serverThreadRunner)
     self._server_process = None
     self._has_launched = False

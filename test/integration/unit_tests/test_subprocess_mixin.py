@@ -9,7 +9,7 @@ class TestSubprocessMixin(SubprocessMixin):
   """Helper class for testing the SubprocessMixin."""
 
   def __init__(self, args):
-    """Creates the TestSubprocessMixin."""
+    """Create the TestSubprocessMixin."""
     super().__init__()
     self.args = args
 
