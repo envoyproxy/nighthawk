@@ -7,7 +7,11 @@ from abc import ABC, abstractmethod
 
 
 class SubprocessMixin(ABC):
-  """Mixin used to manage launching subprocess using a separate Python thread."""
+  """Mixin used to manage launching subprocess using a separate Python thread.
+
+  See test_subprocess_captures_stdout and test_subprocess_stop to see usage
+  of the mixin.
+  """
 
   def __init__(self):
     """Create SubprocessMixin."""
@@ -15,8 +19,6 @@ class SubprocessMixin(ABC):
     self._server_process = None
     self._has_launched = False
     self._has_launched_cv = Condition()
-    self.stdout = b''
-    self.stderr = b''
 
   @abstractmethod
   def _argsForSubprocess(self) -> list[str]:
@@ -24,16 +26,21 @@ class SubprocessMixin(ABC):
     pass
 
   def _serverThreadRunner(self):
+    """Routine executed by the python thread that launches the child subprocess.
+
+    Derived classes may wish to extend this to use the stdout, stderr of
+    the child process.
+    """
     args = self._argsForSubprocess()
     logging.info("Test server popen() args: %s" % str.join(" ", args))
     self._server_process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     with self._has_launched_cv:
       self._has_launched = True
       self._has_launched_cv.notify_all()
-    self.stdout, self.stderr = self._server_process.communicate()
-    logging.info("Process stdout: %s", self.stdout.decode("utf-8"))
-    logging.info("Process stderr: %s", self.stderr.decode("utf-8"))
-    return self.stdout, self.stderr
+    stdout, stderr = self._server_process.communicate()
+    logging.info("Process stdout: %s", stdout.decode("utf-8"))
+    logging.info("Process stderr: %s", stderr.decode("utf-8"))
+    return stdout, stderr
 
   def launchSubprocess(self):
     """Start the subprocess."""

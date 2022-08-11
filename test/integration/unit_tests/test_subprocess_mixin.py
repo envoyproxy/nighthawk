@@ -12,9 +12,14 @@ class TestSubprocessMixin(SubprocessMixin):
     """Create the TestSubprocessMixin."""
     super().__init__()
     self.args = args
+    self.stdout = b''
+    self.stderr = b''
 
   def _argsForSubprocess(self) -> list[str]:
     return self.args
+
+  def _serverThreadRunner(self):
+    self.stdout, self.stderr = super()._serverThreadRunner()
 
 
 def test_subprocess_captures_stdout():
@@ -28,11 +33,11 @@ def test_subprocess_captures_stdout():
 
 def test_subprocess_captures_stderr():
   """Test the subprocess captures stderr."""
-  child_process = TestSubprocessMixin(["echo", "stderr", "1>2"])
+  child_process = TestSubprocessMixin(["logger", "--no-act", "-s", "stderr"])
   child_process.launchSubprocess()
   child_process.waitUntilSubprocessLaunched()
   child_process.waitForSubprocessNotRunning()
-  assert b'stderr' in child_process.stdout
+  assert b'stderr' in child_process.stderr
 
 
 def test_subprocess_stop():
