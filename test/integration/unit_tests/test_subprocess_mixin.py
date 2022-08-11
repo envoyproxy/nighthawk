@@ -24,7 +24,7 @@ class TestSubprocessMixin(SubprocessMixin):
 
 def test_subprocess_captures_stdout():
   """Test the subprocess captures stdout."""
-  child_process = TestSubprocessMixin(["echo", "stdout"])
+  child_process = TestSubprocessMixin(['echo', 'stdout'])
   child_process.launchSubprocess()
   child_process.waitUntilSubprocessLaunched()
   child_process.waitForSubprocessNotRunning()
@@ -33,16 +33,16 @@ def test_subprocess_captures_stdout():
 
 def test_subprocess_captures_stderr():
   """Test the subprocess captures stderr."""
-  child_process = TestSubprocessMixin(["logger", "--no-act", "-s", "stderr"])
+  child_process = TestSubprocessMixin(['logger', '--no-act', '-s', 'stderr'])
   child_process.launchSubprocess()
   child_process.waitUntilSubprocessLaunched()
   child_process.waitForSubprocessNotRunning()
-  assert b'stderr' in child_process.stderr
+  assert child_process.stderr != b''
 
 
 def test_subprocess_stop():
   """Test the subprocess can be stopped."""
-  child_process = TestSubprocessMixin(["sleep", "120"])
+  child_process = TestSubprocessMixin(['sleep', '120'])
   child_process.launchSubprocess()
   child_process.waitUntilSubprocessLaunched()
   ret_code = child_process.stopSubprocess()
@@ -50,5 +50,5 @@ def test_subprocess_stop():
   assert ret_code != 0
 
 
-if __name__ == "__main__":
-  raise SystemExit(pytest.main([__file__, "--assert=plain"]))
+if __name__ == '__main__':
+  raise SystemExit(pytest.main([__file__, '--assert=plain']))
