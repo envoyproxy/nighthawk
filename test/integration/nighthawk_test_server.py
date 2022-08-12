@@ -20,6 +20,7 @@ from pathlib import Path
 from rules_python.python.runfiles import runfiles
 
 from test.integration.common import IpVersion, NighthawkException
+from test.integration.subprocess_mixin import SubprocessMixin
 
 
 def _substitute_yaml_values(runfiles_instance, obj, params):
@@ -102,7 +103,7 @@ _TEST_SERVER_WARN_ERROR_IGNORE_LIST = frozenset([
 ])
 
 
-class TestServerBase(object):
+class TestServerBase(SubprocessMixin):
   """Base class for running a server in a separate process.
 
   Attributes:
@@ -127,6 +128,7 @@ class TestServerBase(object):
         parameters (dict): Supply to provide configuration template parameter replacement values.
         tag (str): Supply to get recognizeable output locations.
     """
+    SubprocessMixin.__init__(self)
     assert ip_version != IpVersion.UNKNOWN
     self.ip_version = ip_version
     self.server_ip = server_ip
@@ -170,7 +172,7 @@ class TestServerBase(object):
                                      dir=self.tmpdir) as tmp:
       self._admin_address_path = tmp.name
 
-  def _serverThreadRunner(self):
+  def _argsForSubprocess(self):
     args = []
     if self.docker_image != "":
       # TODO(#383): As of https://github.com/envoyproxy/envoy/commit/e8a2d1e24dc9a0da5273442204ec3cdfad1e7ca8
@@ -185,12 +187,10 @@ class TestServerBase(object):
         self._parameterized_config_path, "-l", "debug", "--base-id", self._instance_id,
         "--admin-address-path", self._admin_address_path, "--concurrency", "1"
     ]
+    return args
 
-    logging.info("Test server popen() args: %s" % str.join(" ", args))
-    self._server_process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr = self._server_process.communicate()
-    logging.info("Process stdout: %s", stdout.decode("utf-8"))
-    logging.info("Process stderr: %s", stderr.decode("utf-8"))
+  def _serverThreadRunner(self):
+    stdout, stderr = super()._serverThreadRunner()
     warnings, errors = _extractWarningsAndErrors(stdout.decode() + stderr.decode(),
                                                  self._request.node.name,
                                                  _TEST_SERVER_WARN_ERROR_IGNORE_LIST)
@@ -271,8 +271,7 @@ class TestServerBase(object):
     Returns:
         Bool: True iff the server started successfully.
     """
-    self._server_thread.daemon = True
-    self._server_thread.start()
+    self.launchSubprocess()
     return self._waitUntilServerListening()
 
   def stop(self):
@@ -282,9 +281,7 @@ class TestServerBase(object):
         Int: exit code of the server process.
     """
     os.remove(self._admin_address_path)
-    self._server_process.terminate()
-    self._server_thread.join()
-    return self._server_process.returncode
+    return self.stopSubprocess()
 
 
 class NighthawkTestServer(TestServerBase):
