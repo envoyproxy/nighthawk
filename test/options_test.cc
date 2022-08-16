@@ -779,8 +779,7 @@ TEST_F(OptionsImplTest, BadHttp3ProtocolOptionsSpecification) {
           fmt::format("{} --protocol http3 --http3-protocol-options {} http://foo/", client_name_,
                       "{invalid_http3_protocol_options:{}}")),
       MalformedArgvException,
-      "Protobuf message \\(type envoy.config.core.v3.Http3ProtocolOptions reason "
-      "INVALID_ARGUMENT:invalid_http3_protocol_options: Cannot find field.\\) has unknown fields");
+      "INVALID_ARGUMENT");
 }
 
 TEST_F(OptionsImplTest, FailsWhenHttp3ProtocolOptionsSpecifiedForNonHttp3) {
@@ -974,7 +973,7 @@ TEST_F(OptionsImplTest, BadTlsContextSpecification) {
       TestUtility::createOptionsImpl(fmt::format("{} --tls-context {} http://foo/", client_name_,
                                                  "{misspelled_tls_context:{}}")),
       MalformedArgvException,
-      "envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext reason INVALID_ARGUMENT");
+      "INVALID_ARGUMENT");
 }
 
 TEST_F(OptionsImplTest, BadUpstreamBindConfigSpecification) {
@@ -988,8 +987,7 @@ TEST_F(OptionsImplTest, BadUpstreamBindConfigSpecification) {
       TestUtility::createOptionsImpl(fmt::format("{} --upstream-bind-config {} http://foo/",
                                                  client_name_, "{invalid_bind_config:{}}")),
       MalformedArgvException,
-      "Protobuf message \\(type envoy.config.core.v3.BindConfig reason "
-      "INVALID_ARGUMENT:invalid_bind_config: Cannot find field.\\) has unknown fields");
+      "INVALID_ARGUMENT");
 }
 
 TEST_F(OptionsImplTest, BadTransportSocketSpecification) {
@@ -1003,8 +1001,7 @@ TEST_F(OptionsImplTest, BadTransportSocketSpecification) {
       TestUtility::createOptionsImpl(fmt::format("{} --transport-socket {} http://foo/",
                                                  client_name_, "{misspelled_transport_socket:{}}")),
       MalformedArgvException,
-      "Protobuf message \\(type envoy.config.core.v3.TransportSocket reason "
-      "INVALID_ARGUMENT:misspelled_transport_socket: Cannot find field.\\) has unknown fields");
+      "INVALID_ARGUMENT");
 }
 
 TEST_F(OptionsImplTest, BadStatsSinksSpecification) {
@@ -1016,7 +1013,7 @@ TEST_F(OptionsImplTest, BadStatsSinksSpecification) {
   EXPECT_THROW_WITH_REGEX(
       TestUtility::createOptionsImpl(fmt::format("{} --stats-sinks {} http://foo/", client_name_,
                                                  "{misspelled_stats_sink:{}}")),
-      MalformedArgvException, "misspelled_stats_sink: Cannot find field");
+      MalformedArgvException, "INVALID_ARGUMENT");
 }
 
 class OptionsImplPredicateBasedOptionsTest : public OptionsImplTest,
