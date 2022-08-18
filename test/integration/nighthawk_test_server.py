@@ -195,7 +195,7 @@ class TestServerBase(object):
                                                  self._request.node.name,
                                                  _TEST_SERVER_WARN_ERROR_IGNORE_LIST)
     if warnings:
-      [logging.warn("Process logged a warning: %s", w) for w in warnings]
+      [logging.warning("Process logged a warning: %s", w) for w in warnings]
     if errors:
       [logging.error("Process logged an error: %s", e) for e in errors]
 
