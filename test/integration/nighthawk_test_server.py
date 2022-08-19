@@ -23,26 +23,6 @@ from test.integration.common import IpVersion, NighthawkException
 from test.integration.subprocess_mixin import SubprocessMixin
 
 
-def _substitute_yaml_values(runfiles_instance, obj, params):
-  if isinstance(obj, dict):
-    for k, v in obj.items():
-      obj[k] = _substitute_yaml_values(runfiles_instance, v, params)
-  elif isinstance(obj, list):
-    for i in range(len(obj)):
-      obj[i] = _substitute_yaml_values(runfiles_instance, obj[i], params)
-  else:
-    if isinstance(obj, str):
-      # Inspect string values and substitute where applicable.
-      INJECT_RUNFILE_MARKER = '@inject-runfile:'
-      if obj[0] == '$':
-        return Template(obj).substitute(params)
-      elif obj.startswith(INJECT_RUNFILE_MARKER):
-        with open(runfiles_instance.Rlocation(obj[len(INJECT_RUNFILE_MARKER):].strip()),
-                  'r') as file:
-          return file.read()
-  return obj
-
-
 class _TestCaseWarnErrorIgnoreList(
     collections.namedtuple("_TestCaseWarnErrorIgnoreList", "test_case_regexp ignore_list")):
   """Maps test case names to messages that should be ignored in the test server logs.
@@ -151,10 +131,14 @@ class TestServerBase(SubprocessMixin):
     self._request = request
 
   def _prepareForExecution(self):
+    """Set up initial configuration files.
+
+    Derived classes may wish to extend to for additional configuration files.
+    """
     runfiles_instance = runfiles.Create()
     with open(runfiles_instance.Rlocation(self._config_template_path)) as f:
       data = yaml.load(f, Loader=yaml.FullLoader)
-      data = _substitute_yaml_values(runfiles_instance, data, self._parameters)
+      data = TestServerBase._substitute_yaml_values(runfiles_instance, data, self._parameters)
 
     Path(self.tmpdir).mkdir(parents=True, exist_ok=True)
 
@@ -233,6 +217,12 @@ class TestServerBase(SubprocessMixin):
     self.admin_port = tmp[len(tmp) - 1]
     try:
       listeners = self.fetchJsonFromAdminInterface("/listeners?format=json")
+      logging.info(f"Listeners: {listeners}")
+
+      # Can be empty on initial load.
+      if not listeners:
+        return False
+
       # Right now we assume there's only a single listener
       self.server_port = listeners["listener_statuses"][0]["local_address"]["socket_address"][
           "port_value"]
@@ -282,6 +272,27 @@ class TestServerBase(SubprocessMixin):
     """
     os.remove(self._admin_address_path)
     return self.stopSubprocess()
+
+  @staticmethod
+  def _substitute_yaml_values(runfiles_instance, obj, params):
+    """Substitute params into the given template."""
+    if isinstance(obj, dict):
+      for k, v in obj.items():
+        obj[k] = TestServerBase._substitute_yaml_values(runfiles_instance, v, params)
+    elif isinstance(obj, list):
+      for i in range(len(obj)):
+        obj[i] = TestServerBase._substitute_yaml_values(runfiles_instance, obj[i], params)
+    else:
+      if isinstance(obj, str):
+        # Inspect string values and substitute where applicable.
+        INJECT_RUNFILE_MARKER = '@inject-runfile:'
+        if obj[0] == '$':
+          return Template(obj).substitute(params)
+        elif obj.startswith(INJECT_RUNFILE_MARKER):
+          with open(runfiles_instance.Rlocation(obj[len(INJECT_RUNFILE_MARKER):].strip()),
+                    'r') as file:
+            return file.read()
+    return obj
 
 
 class NighthawkTestServer(TestServerBase):

@@ -15,6 +15,13 @@ filegroup(
 )
 
 py_library(
+    name = "subprocess_mixin_lib",
+    srcs = [
+        "subprocess_mixin.py",
+    ],
+)
+
+py_library(
     name = "integration_test_base",
     data = [
         ":test_server_configs",
@@ -37,7 +44,6 @@ py_library(
         "integration_test_fixtures.py",
         "nighthawk_grpc_service.py",
         "nighthawk_test_server.py",
-        "subprocess_mixin.py",
         "utility.py",
     ],
     data = [
@@ -45,6 +51,7 @@ py_library(
         "@envoy//test/config/integration/certs",
     ],
     deps = [
+        ":subprocess_mixin_lib",
         "@rules_python//python/runfiles",
         requirement("requests"),
         # The following are implied by 'request'.

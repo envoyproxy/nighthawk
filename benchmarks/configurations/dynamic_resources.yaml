@@ -1,0 +1,14 @@
+node:
+  cluster: test-cluster
+  id: test-id
+admin:
+  access_log_path: $tmpdir/envoyproxy-admin-access.log
+  profile_path: $tmpdir/envoyproxy.prof
+  address:
+    socket_address: { address: $proxy_ip, port_value: 0 }
+dynamic_resources:
+  # TODO(kbaichoo): have this in the tmpdir
+  cds_config:
+    path: $tmpdir/new_cds.pb
+  lds_config:
+    path: $tmpdir/lds.yaml
