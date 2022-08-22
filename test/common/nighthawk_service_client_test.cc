@@ -6,9 +6,8 @@
 
 #include "source/common/nighthawk_service_client_impl.h"
 
+#include "test/test_common/mock_stream.h"
 #include "test/test_common/proto_matchers.h"
-
-#include "grpcpp/test/mock_stream.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -37,7 +36,7 @@ TEST(PerformNighthawkBenchmark, UsesSpecifiedCommandLineOptions) {
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
       .WillOnce([&request](grpc::ClientContext*) {
         auto* mock_reader_writer =
-            new grpc::testing::MockClientReaderWriter<ExecutionRequest, ExecutionResponse>();
+            new MockClientReaderWriter<ExecutionRequest, ExecutionResponse>();
         // PerformNighthawkBenchmark currently expects Read to return true exactly once.
         EXPECT_CALL(*mock_reader_writer, Read(_)).WillOnce(Return(true)).WillOnce(Return(false));
         // Capture the Nighthawk request PerformNighthawkBenchmark sends on the channel.
@@ -65,7 +64,7 @@ TEST(PerformNighthawkBenchmark, ReturnsNighthawkResponseSuccessfully) {
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw)
       .WillOnce([&expected_response](grpc::ClientContext*) {
         auto* mock_reader_writer =
-            new grpc::testing::MockClientReaderWriter<ExecutionRequest, ExecutionResponse>();
+            new MockClientReaderWriter<ExecutionRequest, ExecutionResponse>();
         // PerformNighthawkBenchmark currently expects Read to return true exactly once.
         // Capture the gRPC response proto as it is written to the output parameter.
         EXPECT_CALL(*mock_reader_writer, Read(_))
@@ -91,8 +90,7 @@ TEST(PerformNighthawkBenchmark, ReturnsErrorIfNighthawkServiceDoesNotSendRespons
   // Configure the mock Nighthawk Service stub to return an inner mock channel when the code under
   // test requests a channel. Set call expectations on the inner mock channel.
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw).WillOnce([](grpc::ClientContext*) {
-    auto* mock_reader_writer =
-        new grpc::testing::MockClientReaderWriter<ExecutionRequest, ExecutionResponse>();
+    auto* mock_reader_writer = new MockClientReaderWriter<ExecutionRequest, ExecutionResponse>();
     EXPECT_CALL(*mock_reader_writer, Read(_)).WillOnce(Return(false));
     EXPECT_CALL(*mock_reader_writer, Write(_, _)).WillOnce(Return(true));
     EXPECT_CALL(*mock_reader_writer, WritesDone()).WillOnce(Return(true));
@@ -113,8 +111,7 @@ TEST(PerformNighthawkBenchmark, ReturnsErrorIfNighthawkServiceWriteFails) {
   // Configure the mock Nighthawk Service stub to return an inner mock channel when the code under
   // test requests a channel. Set call expectations on the inner mock channel.
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw).WillOnce([](grpc::ClientContext*) {
-    auto* mock_reader_writer =
-        new grpc::testing::MockClientReaderWriter<ExecutionRequest, ExecutionResponse>();
+    auto* mock_reader_writer = new MockClientReaderWriter<ExecutionRequest, ExecutionResponse>();
     EXPECT_CALL(*mock_reader_writer, Write(_, _)).WillOnce(Return(false));
     return mock_reader_writer;
   });
@@ -132,8 +129,7 @@ TEST(PerformNighthawkBenchmark, ReturnsErrorIfNighthawkServiceWritesDoneFails) {
   // Configure the mock Nighthawk Service stub to return an inner mock channel when the code under
   // test requests a channel. Set call expectations on the inner mock channel.
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw).WillOnce([](grpc::ClientContext*) {
-    auto* mock_reader_writer =
-        new grpc::testing::MockClientReaderWriter<ExecutionRequest, ExecutionResponse>();
+    auto* mock_reader_writer = new MockClientReaderWriter<ExecutionRequest, ExecutionResponse>();
     EXPECT_CALL(*mock_reader_writer, Write(_, _)).WillOnce(Return(true));
     EXPECT_CALL(*mock_reader_writer, WritesDone()).WillOnce(Return(false));
     return mock_reader_writer;
@@ -152,8 +148,7 @@ TEST(PerformNighthawkBenchmark, PropagatesErrorIfNighthawkServiceGrpcStreamClose
   // Configure the mock Nighthawk Service stub to return an inner mock channel when the code under
   // test requests a channel. Set call expectations on the inner mock channel.
   EXPECT_CALL(mock_nighthawk_service_stub, ExecutionStreamRaw).WillOnce([](grpc::ClientContext*) {
-    auto* mock_reader_writer =
-        new grpc::testing::MockClientReaderWriter<ExecutionRequest, ExecutionResponse>();
+    auto* mock_reader_writer = new MockClientReaderWriter<ExecutionRequest, ExecutionResponse>();
     // PerformNighthawkBenchmark currently expects Read to return true exactly once.
     EXPECT_CALL(*mock_reader_writer, Read(_)).WillOnce(Return(true)).WillOnce(Return(false));
     EXPECT_CALL(*mock_reader_writer, Write(_, _)).WillOnce(Return(true));
