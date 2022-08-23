@@ -16,7 +16,8 @@ class DynamicConfigController(SubprocessMixin):
     """Create DynamicConfigController."""
     super().__init__()
     runfiles_instance = runfiles.Create()
-    self.binary_path = runfiles_instance.Rlocation('nighthawk/dynamic_config/dynamic_config_manager')
+    self.binary_path = runfiles_instance.Rlocation(
+        'nighthawk/dynamic_config/dynamic_config_manager')
     self.settings = dynamic_config_settings
 
   def _argsForSubprocess(self) -> list[str]:
