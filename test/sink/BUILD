@@ -15,6 +15,7 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         "//source/sink:sink_impl_lib",
+        "//test/test_common:mock_stream",  # necessary to pass coverage tests.
         "@envoy//source/common/common:random_generator_lib_with_external_headers",
     ],
 )
