@@ -27,3 +27,13 @@ envoy_cc_test_library(
         "@envoy//test/test_common:utility_lib",
     ],
 )
+
+envoy_cc_test_library(
+    name = "mock_stream",
+    hdrs = ["mock_stream.h"],
+    repository = "@envoy",
+    deps = [
+        "@com_github_grpc_grpc//:grpc++",
+        "@envoy//test/test_common:utility_lib",
+    ],
+)
