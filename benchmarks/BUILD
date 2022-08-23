@@ -3,9 +3,9 @@ load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
 licenses(["notice"])  # Apache 2
 
 py_binary(
-    name = "benchmarks",
+    name = "static_benchmarks",
     srcs = [
-        "benchmarks.py",
+        "static_benchmarks.py",
     ],
     srcs_version = "PY2AND3",
     deps = [
@@ -15,12 +15,12 @@ py_binary(
 )
 
 py_test(
-    name = "test_benchmarks",
+    name = "test_static_benchmarks",
     srcs = [
-        "benchmarks.py",
-        "test/test_discovery.py",
+        "static_benchmarks.py",
+        "static_test/test_discovery.py",
     ],
-    main = "benchmarks.py",
+    main = "static_benchmarks.py",
     srcs_version = "PY2AND3",
     deps = [
         ":benchmarks_envoy_proxy_lib",
@@ -35,7 +35,7 @@ py_library(
     ],
     data = [
         "configurations/envoy_proxy.yaml",
-        "test/templates/simple_plot.html",
+        "templates/simple_plot.html",
     ],
     srcs_version = "PY2AND3",
     deps = [
@@ -52,18 +52,18 @@ py_library(
     data = [
         "configurations/dynamic_resources.yaml",
         "configurations/lds.yaml",
-        "test/templates/simple_plot.html",
+        "templates/simple_plot.html",
     ],
     srcs_version = "PY2AND3",
 )
 
 py_test(
-    name = "test_benchmarks_dynamic_envoy",
+    name = "test_dynamic_benchmarks",
     srcs = [
-        "benchmarks.py",
-        "test/test_cds_churn_with_traffic.py",
+        "dynamic_benchmarks.py",
+        "dynamic_test/test_cds_churn_with_traffic.py",
     ],
-    main = "benchmarks.py",
+    main = "dynamic_benchmarks.py",
     srcs_version = "PY2AND3",
     deps = [
         ":benchmarks_dynamic_envoy_proxy_lib",
@@ -75,9 +75,9 @@ py_test(
 py_binary(
     name = "dynamic_benchmarks",
     srcs = [
-        "benchmarks.py",
+        "dynamic_benchmarks.py",
     ],
-    main = "benchmarks.py",
+    main = "dynamic_benchmarks.py",
     srcs_version = "PY2AND3",
     deps = [
         ":benchmarks_dynamic_envoy_proxy_lib",
