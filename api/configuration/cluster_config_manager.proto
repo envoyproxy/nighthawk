@@ -28,10 +28,7 @@ message DynamicClusterConfigManagerSettings {
   repeated Cluster clusters = 1;
 
   // How often to refresh the configuration.
-  google.protobuf.Duration refresh_interval = 2 [(validate.rules).duration = {
-    lte {}
-    gte {seconds: 0}
-  }];
+  google.protobuf.Duration refresh_interval = 2 [(validate.rules).duration = {gte {seconds: 0}}];
 
   // File to serialize the refreshed configuration to.
   // If omitted defaults to "new_cds.pb".
