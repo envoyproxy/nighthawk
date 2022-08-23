@@ -1,6 +1,7 @@
 """Controller for the DynamicConfigManager process."""
 
 from test.integration.subprocess_mixin import SubprocessMixin
+from rules_python.python.runfiles import runfiles
 import base64
 import os
 from os.path import exists
@@ -14,9 +15,8 @@ class DynamicConfigController(SubprocessMixin):
   def __init__(self, dynamic_config_settings):
     """Create DynamicConfigController."""
     super().__init__()
-    self.binary_path = os.getenv('DYNAMIC_CONFIG_PATH')
-    assert self.binary_path, \
-        f"Env variable 'DYNAMIC_CONFIG_PATH' is {self.binary_path}, expected it to be set."
+    runfiles_instance = runfiles.Create()
+    self.binary_path = runfiles_instance.Rlocation('nighthawk/dynamic_config/dynamic_config_manager')
     self.settings = dynamic_config_settings
 
   def _argsForSubprocess(self) -> list[str]:

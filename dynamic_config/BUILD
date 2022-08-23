@@ -42,10 +42,13 @@ py_binary(
 py_binary(
     name = "dynamic_config_server",
     srcs = ["dynamic_config_server.py"],
+    data = [
+        ":dynamic_config_manager",
+    ],
     python_version = "PY3",
     visibility = ["//visibility:public"],
     deps = [
-        ":dynamic_config_manager_lib",
         "//test/integration:subprocess_mixin_lib",
+        "@rules_python//python/runfiles",
     ],
 )

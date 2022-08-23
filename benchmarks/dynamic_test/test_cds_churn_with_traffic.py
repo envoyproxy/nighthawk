@@ -60,7 +60,7 @@ def _run_benchmark(fixture,
     with open(os.path.join(fixture.test_server.tmpdir, "proxy_version.txt"), "w") as f:
       f.write(fixture.proxy_server.getCliVersionString())
   r = runfiles.Create()
-  copyfile(r.Rlocation("nighthawk/benchmarks/test/templates/simple_plot.html"),
+  copyfile(r.Rlocation("nighthawk/benchmarks/templates/simple_plot.html"),
            os.path.join(fixture.test_server.tmpdir, "simple_plot.html"))
 
 

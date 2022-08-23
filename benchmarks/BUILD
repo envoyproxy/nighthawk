@@ -55,6 +55,9 @@ py_library(
         "templates/simple_plot.html",
     ],
     srcs_version = "PY2AND3",
+    deps = [
+        "//api/configuration:cluster_config_manager_py_proto",
+    ],
 )
 
 py_test(
@@ -81,6 +84,6 @@ py_binary(
     srcs_version = "PY2AND3",
     deps = [
         ":benchmarks_dynamic_envoy_proxy_lib",
-        "//test/integration:integration_test_base_lean",
+        "//test/integration:integration_test_base",
     ],
 )
