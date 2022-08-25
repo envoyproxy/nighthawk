@@ -7,7 +7,6 @@ admin:
   address:
     socket_address: { address: $proxy_ip, port_value: 0 }
 dynamic_resources:
-  # TODO(kbaichoo): have this in the tmpdir
   cds_config:
     path: $tmpdir/new_cds.pb
   lds_config:

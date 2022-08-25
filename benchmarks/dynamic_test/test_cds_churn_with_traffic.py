@@ -4,15 +4,11 @@
 Test with Cluster churn with active traffic.
 """
 
-import logging
-import json
 import pytest
-import os
 
 from dynamic_config_envoy_proxy import (dynamic_config_settings,
                                         inject_dynamic_envoy_http_proxy_fixture, proxy_config)
-from rules_python.python.runfiles import runfiles
-from shutil import copyfile
+from benchmarks.utilities import output_benchmark_results
 from test.integration import asserts
 
 
@@ -40,28 +36,8 @@ def _run_benchmark(fixture,
 
   parsed_json, _ = fixture.runNighthawkClient(args, expect_failure=True)
 
-  # TODO(kbaichoo): refactor common test output to utilities.
-  # dump human readable output to logs
-  json_as_string = json.dumps(parsed_json)
-  human_output = fixture.transformNighthawkJson(json_as_string, "human")
-  logging.info(human_output)
-
-  with open(os.path.join(fixture.test_server.tmpdir, "nighthawk-human.txt"), "w") as f:
-    f.write(human_output)
-  with open(os.path.join(fixture.test_server.tmpdir, "nighthawk.json"), "w") as f:
-    f.write(json_as_string)
-  with open(os.path.join(fixture.test_server.tmpdir, "nighthawk.yaml"), "w") as f:
-    f.write(fixture.transformNighthawkJson(json_as_string, "yaml"))
-  with open(os.path.join(fixture.test_server.tmpdir, "fortio.json"), "w") as f:
-    f.write(fixture.transformNighthawkJson(json_as_string, "fortio"))
-  with open(os.path.join(fixture.test_server.tmpdir, "server_version.txt"), "w") as f:
-    f.write(fixture.test_server.getCliVersionString())
-  if hasattr(fixture, "proxy_server"):
-    with open(os.path.join(fixture.test_server.tmpdir, "proxy_version.txt"), "w") as f:
-      f.write(fixture.proxy_server.getCliVersionString())
-  r = runfiles.Create()
-  copyfile(r.Rlocation("nighthawk/benchmarks/templates/simple_plot.html"),
-           os.path.join(fixture.test_server.tmpdir, "simple_plot.html"))
+  # output test results
+  output_benchmark_results(parsed_json, fixture)
 
 
 # Test via injected Envoy

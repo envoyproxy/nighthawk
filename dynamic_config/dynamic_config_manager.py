@@ -162,16 +162,14 @@ class DynamicClusterConfigManager(DynamicConfigManager):
 
   def serializeToFile(self):
     """Serialize current configuration of clusters to output file."""
-    # TODO(kbaichoo): Log the new contents in human readable instead and remove
-    # versioned files.
-    # Version files to simplify post-test debugging.
     contents = self.active_config.SerializeToString()
-    versioned_file = self.output_file + self.active_config.version_info
+    versioned_file = self.output_file + '.tmp'
     with open(versioned_file, 'wb') as f:
       f.write(contents)
     # Triggers the update to be picked up.
     os.replace(versioned_file, self.output_file)
-    logging.info(f'Refreshed configuration at {self.output_file} new contents:\n{contents}')
+    logging.info(
+        f'Refreshed configuration at {self.output_file} new contents:\n{self.active_config}')
 
   def serialize(self) -> str:
     """Serialize current configuration of clusters."""

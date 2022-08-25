@@ -10,6 +10,7 @@ py_binary(
     srcs_version = "PY2AND3",
     deps = [
         ":benchmarks_envoy_proxy_lib",
+        ":utilities_lib",
         "//test/integration:integration_test_base_lean",
     ],
 )
@@ -24,6 +25,7 @@ py_test(
     srcs_version = "PY2AND3",
     deps = [
         ":benchmarks_envoy_proxy_lib",
+        ":utilities_lib",
         "//test/integration:integration_test_base",
     ],
 )
@@ -35,7 +37,6 @@ py_library(
     ],
     data = [
         "configurations/envoy_proxy.yaml",
-        "templates/simple_plot.html",
     ],
     srcs_version = "PY2AND3",
     deps = [
@@ -52,7 +53,6 @@ py_library(
     data = [
         "configurations/dynamic_resources.yaml",
         "configurations/lds.yaml",
-        "templates/simple_plot.html",
     ],
     srcs_version = "PY2AND3",
     deps = [
@@ -70,6 +70,7 @@ py_test(
     srcs_version = "PY2AND3",
     deps = [
         ":benchmarks_dynamic_envoy_proxy_lib",
+        ":utilities_lib",
         "//dynamic_config:dynamic_config_server",
         "//test/integration:integration_test_base",
     ],
@@ -84,6 +85,21 @@ py_binary(
     srcs_version = "PY2AND3",
     deps = [
         ":benchmarks_dynamic_envoy_proxy_lib",
+        ":utilities_lib",
         "//test/integration:integration_test_base",
+    ],
+)
+
+py_library(
+    name = "utilities_lib",
+    srcs = [
+        "utilities.py",
+    ],
+    data = [
+        "templates/simple_plot.html",
+    ],
+    srcs_version = "PY2AND3",
+    deps = [
+        "@rules_python//python/runfiles",
     ],
 )
