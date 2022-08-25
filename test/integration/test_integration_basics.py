@@ -655,6 +655,42 @@ def test_bad_arg_error_messages(http_test_server_fixture):
       as_json=False)
   assert "Bad argument: Termination predicate 'a:a' has an out of range threshold." in err
 
+@pytest.mark.parametrize('server_config',
+                         ["nighthawk/test/integration/configurations/nighthawk_5_listeners_http_origin.yaml"])
+def test_multiple_listener_on_backend(http_test_server_fixture):
+  """Test that we can load-test multiple listeners on a single backend.
+
+  Runs the CLI configured to use plain HTTP/1 against a single test servers, and sanity
+  checks statistics from both client and server.
+  """
+  nighthawk_client_args = [
+      "--multi-target-path", "/", "--duration", "100", "--termination-predicate",
+      "benchmark.http_2xx:24"
+  ]
+  for uri in http_test_server_fixture.getAllTestServerRootUris():
+    nighthawk_client_args.append("--multi-target-endpoint")
+    nighthawk_client_args.append(uri.replace("http://", "").replace("/", ""))
+
+  parsed_json, stderr = http_test_server_fixture.runNighthawkClient(nighthawk_client_args)
+
+  counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
+  asserts.assertCounterEqual(counters, "benchmark.http_2xx", 25)
+  # Assert that we at least have 1 connection per backend. It is possible that
+  # the # of upstream_cx > # of backend connections for H1 as new connections
+  # will spawn if the existing clients cannot keep up with the RPS.
+  asserts.assertCounterGreaterEqual(counters, "upstream_cx_http1_total", 3)
+  asserts.assertCounterGreaterEqual(counters, "upstream_cx_total", 3)
+  asserts.assertCounterGreaterEqual(counters, "upstream_rq_pending_total", 3)
+  asserts.assertCounterGreater(counters, "upstream_cx_rx_bytes_total", 0)
+  asserts.assertCounterGreater(counters, "upstream_cx_tx_bytes_total", 0)
+  asserts.assertCounterEqual(counters, "upstream_rq_total", 25)
+  asserts.assertCounterEqual(counters, "default.total_match_count", 5)
+  for parsed_server_json in http_test_server_fixture.getAllTestServerStatisticsJsons():
+    single_2xx = http_test_server_fixture.getServerStatFromJson(
+        parsed_server_json, "http.ingress_http.downstream_rq_2xx")
+    # Confirm that each backend receives some traffic
+    asserts.assertGreaterEqual(single_2xx, 1)
+
 
 def test_multiple_backends_http_h1(multi_http_test_server_fixture):
   """Test that we can load-test multiple backends on http.

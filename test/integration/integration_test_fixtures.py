@@ -201,17 +201,36 @@ class IntegrationTestBase():
 
     uri = "%s://%s:%s/" % ("https" if https else "http", uri_host, self.test_server.server_port)
     return uri
+  
+  def getTestServerRootUris(self, test_server=None, https=False):
+    """Get list of the http://host:port/ that can be used to query the provided test_server.
+
+    If no test_server is provided, defaults to the first test server setup.
+    """
+    uri_host = self.server_ip
+    if self.ip_version == IpVersion.IPV6:
+      uri_host = "[%s]" % self.server_ip
+
+    if not test_server:
+      test_server = self.test_server
+
+    return [
+        "%s://%s:%s/" % ("https" if https else "http", uri_host, port)
+        for port in test_server.server_ports
+    ]
 
   def getAllTestServerRootUris(self, https=False):
     """Get the list of http://host:port/ that can be used to query the servers we started in setUp()."""
     uri_host = self.server_ip
     if self.ip_version == IpVersion.IPV6:
       uri_host = "[%s]" % self.server_ip
+    
+    uris = []
+    for test_server in self._test_servers:
+      uris.extend(self.getTestServerRootUris(test_server, https))
 
-    return [
-        "%s://%s:%s/" % ("https" if https else "http", uri_host, test_server.server_port)
-        for test_server in self._test_servers
-    ]
+    return uris
+      
 
   def getTestServerStatisticsJson(self):
     """Grab a statistics snapshot from the test server."""
