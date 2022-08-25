@@ -655,8 +655,10 @@ def test_bad_arg_error_messages(http_test_server_fixture):
       as_json=False)
   assert "Bad argument: Termination predicate 'a:a' has an out of range threshold." in err
 
-@pytest.mark.parametrize('server_config',
-                         ["nighthawk/test/integration/configurations/nighthawk_5_listeners_http_origin.yaml"])
+
+@pytest.mark.parametrize(
+    'server_config',
+    ["nighthawk/test/integration/configurations/nighthawk_5_listeners_http_origin.yaml"])
 def test_multiple_listener_on_backend(http_test_server_fixture):
   """Test that we can load-test multiple listeners on a single backend.
 
