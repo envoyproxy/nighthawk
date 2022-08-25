@@ -122,7 +122,7 @@ class DynamicClusterConfigManager(DynamicConfigManager):
       # Randomly pick a number of clusters to add
       num_clusters_to_add = random.randrange(0, len(self.inactive_clusters) + 1)
 
-      # All clusters active or 0 clusters choosen, do nothing.
+      # All clusters active or 0 clusters chosen, do nothing.
       if not self.inactive_clusters or not num_clusters_to_add:
         return
 
@@ -135,7 +135,7 @@ class DynamicClusterConfigManager(DynamicConfigManager):
       resources = self.active_config.resources
       num_clusters_to_remove = random.randrange(0, len(resources) + 1)
 
-      # All clusters inactive or 0 clusters choosen, do nothing.
+      # All clusters inactive or 0 clusters chosen, do nothing.
       if not resources or not num_clusters_to_remove:
         return
 
@@ -189,6 +189,6 @@ if __name__ == '__main__':
   settings = cluster_manager_pb2.DynamicClusterConfigManagerSettings()
   settings.ParseFromString(base64_decoded)
 
-  mgr = DynamicClusterConfigManager(settings)
+  manager = DynamicClusterConfigManager(settings)
   logging.info('Starting dynamic updates. Terminate the process to stop.')
-  mgr.start()
+  manager.start()
