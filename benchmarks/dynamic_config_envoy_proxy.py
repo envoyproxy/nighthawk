@@ -11,7 +11,7 @@ import nighthawk.api.configuration.cluster_config_manager_pb2 as cluster_manager
 
 
 @pytest.fixture()
-def proxy_config():
+def proxy_config() -> Generator[str, None, None]:
   """Yield the stock Envoy proxy configuration."""
   yield "nighthawk/benchmarks/configurations/envoy_proxy.yaml"
 
@@ -19,7 +19,7 @@ def proxy_config():
 # TODO(kbaichoo): Stubbed implementation. Will be enhanced to
 # leverage backend addresses.
 @pytest.fixture()
-def dynamic_config_settings():
+def dynamic_config_settings() -> Generator[DynamicClusterConfigManagerSettings, None, None]:
   """Yield the stock Envoy proxy configuration."""
   settings = cluster_manager_pb2.DynamicClusterConfigManagerSettings()
   settings.refresh_interval.seconds = 5
@@ -36,7 +36,7 @@ class InjectDynamicHttpProxyIntegrationTestBase(InjectHttpProxyIntegrationTestBa
   task which dynamically configure the Envoy. Both will be listening for plain http traffic.
   """
 
-  def __init__(self, request, server_config, proxy_config, dynamic_config_settings):
+  def __init__(self, request : FixtureRequest, server_config : str, proxy_config : str, dynamic_config_settings : DynamicClusterConfigManagerSettings):
     """Initialize an InjectDynamicHttpProxyIntegrationTestBase.
 
     Arguments:
@@ -61,7 +61,7 @@ class InjectDynamicHttpProxyIntegrationTestBase(InjectHttpProxyIntegrationTestBa
     self.dynamic_config_settings.output_file = output_file
     logging.info(f"Injecting dynamic configuration. Output file: {output_file}")
 
-    # TODO(kbaichoo): we only hardcode single endpoint, but will expand on this.
+    # TODO(kbaichoo): we only hardcode a single endpoint, but will expand on this.
     endpoints = self.dynamic_config_settings.clusters[0].endpoints.add()
     endpoints.ip = self.test_server.server_ip
     endpoints.port = self.test_server.server_port
@@ -83,7 +83,7 @@ def inject_dynamic_envoy_http_proxy_fixture(request, server_config, proxy_config
   """Injects a dynamically configured Envoy proxy in front of the test server.
 
   Arguments:
-    request: supplies the ip version.
+    request: The pytest `request` test fixture used to determine information about the currently executing test case.
     server_config: path to the server configuration template.
     proxy_config: path to the proxy configuration template.
     dynamic_config_binary_path: path to the dynamic configuration binary.
