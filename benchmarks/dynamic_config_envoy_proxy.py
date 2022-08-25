@@ -3,11 +3,12 @@
 import pytest
 import logging
 import os
+from typing import Generator
 
 from test.integration.integration_test_fixtures import determineIpVersionsFromEnvironment
 from envoy_proxy import EnvoyProxyServer, InjectHttpProxyIntegrationTestBase
 from dynamic_config.dynamic_config_server import DynamicConfigController
-import nighthawk.api.configuration.cluster_config_manager_pb2 as cluster_manager_pb2
+from nighthawk.api.configuration.cluster_config_manager_pb2 import DynamicClusterConfigManagerSettings
 
 
 @pytest.fixture()
@@ -21,7 +22,7 @@ def proxy_config() -> Generator[str, None, None]:
 @pytest.fixture()
 def dynamic_config_settings() -> Generator[DynamicClusterConfigManagerSettings, None, None]:
   """Yield the stock Envoy proxy configuration."""
-  settings = cluster_manager_pb2.DynamicClusterConfigManagerSettings()
+  settings = DynamicClusterConfigManagerSettings()
   settings.refresh_interval.seconds = 5
   settings.output_file = 'new_cds.pb'
   cluster = settings.clusters.add()
@@ -36,7 +37,8 @@ class InjectDynamicHttpProxyIntegrationTestBase(InjectHttpProxyIntegrationTestBa
   task which dynamically configure the Envoy. Both will be listening for plain http traffic.
   """
 
-  def __init__(self, request : FixtureRequest, server_config : str, proxy_config : str, dynamic_config_settings : DynamicClusterConfigManagerSettings):
+  def __init__(self, request, server_config: str, proxy_config: str,
+               dynamic_config_settings: DynamicClusterConfigManagerSettings):
     """Initialize an InjectDynamicHttpProxyIntegrationTestBase.
 
     Arguments:

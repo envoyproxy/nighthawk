@@ -108,6 +108,7 @@ class DynamicClusterConfigManager(DynamicConfigManager):
         self.active_config.resources.add().Pack(clusters.pop())
       else:
         self.inactive_clusters.append(clusters.pop())
+    # TODO(kbaichoo): refactor "new_cds.pb" into a shared constants file.
     self.output_file = config.output_file if config.output_file else "new_cds.pb"
     # TODO(kbaichoo): Handle nanos get ignored
     self.refresh_interval = config.refresh_interval.ToSeconds()
