@@ -1,0 +1,16 @@
+// Proto file supporting any configuration related to the time tracking filter.
+syntax = "proto3";
+
+package nighthawk.server;
+
+// Configures the time-tracking filter.
+message TimeTrackingConfiguration {
+  // If set, makes the extension include timing data in the supplied response header name.
+  // For example, when set to "x-abc", and 3 requests are performed, the test server will respond
+  // with: Response 1: No x-abc header because there's no previous response. Response 2: Header
+  // x-abc: <ns elapsed between responses 2 and 1>. Response 3: Header x-abc: <ns elapsed between
+  // responses 3 and 2>.
+  string emit_previous_request_delta_in_response_header = 2;
+
+  reserved 1;
+}

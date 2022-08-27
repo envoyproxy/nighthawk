@@ -35,8 +35,7 @@ static_resources:
           - name: time-tracking
             typed_config:
               "@type": type.googleapis.com/nighthawk.server.TimeTrackingConfiguration
-              experimental_response_options:
-                emit_previous_request_delta_in_response_header: x-origin-request-receipt-delta
+              emit_previous_request_delta_in_response_header: x-origin-request-receipt-delta
           - name: test-server
             typed_config:
               "@type": type.googleapis.com/nighthawk.server.ResponseOptions
@@ -45,8 +44,3 @@ static_resources:
             typed_config:
               "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
               dynamic_stats: false
-layered_runtime:
-  layers:
-  - name: static_layer
-    static_layer:
-      envoy.reloadable_features.no_extension_lookup_by_name: false

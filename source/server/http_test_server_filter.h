@@ -4,6 +4,8 @@
 
 #include "envoy/server/filter_config.h"
 
+#include "external/envoy/source/common/common/statusor.h"
+
 #include "api/server/response_options.pb.h"
 
 #include "source/server/http_filter_config_base.h"
@@ -15,6 +17,15 @@ namespace Server {
 class HttpTestServerDecoderFilterConfig : public FilterConfigurationBase {
 public:
   HttpTestServerDecoderFilterConfig(const nighthawk::server::ResponseOptions& proto_config);
+
+  /**
+   * @return std::shared_ptr<const nighthawk::server::TimeTrackingConfiguration> the startup
+   * configuration for this filter, which may get overridden by in-flight headers.
+   */
+  std::shared_ptr<const nighthawk::server::ResponseOptions> getStartupFilterConfiguration();
+
+private:
+  std::shared_ptr<const nighthawk::server::ResponseOptions> server_config_;
 };
 
 using HttpTestServerDecoderFilterConfigSharedPtr =
@@ -36,7 +47,7 @@ public:
 private:
   void sendReply(const nighthawk::server::ResponseOptions& options);
   const HttpTestServerDecoderFilterConfigSharedPtr config_;
-  absl::StatusOr<EffectiveFilterConfigurationPtr> effective_config_;
+  absl::StatusOr<std::shared_ptr<const nighthawk::server::ResponseOptions>> effective_config_;
   Envoy::Http::StreamDecoderFilterCallbacks* decoder_callbacks_;
   absl::optional<std::string> request_headers_dump_;
 };

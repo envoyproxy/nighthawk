@@ -18,6 +18,7 @@
 #include "source/common/uri_impl.h"
 
 #include "test/client/utility.h"
+#include "test/sink/test_stats_sink_config.pb.h"
 
 #include "gtest/gtest.h"
 
@@ -28,7 +29,10 @@ namespace {
 using ::testing::TestWithParam;
 using ::testing::ValuesIn;
 
-constexpr absl::string_view kSinkName = "{name:\"nighthawk.fake_stats_sink\"}";
+constexpr absl::string_view kSinkConfig =
+    "{name:\"nighthawk.fake_stats_sink\",typed_config:{\"@type\":\"type."
+    "googleapis.com/"
+    "nighthawk.TestStatsSinkConfig\"}}";
 // Global variable keeps count of number of flushes in FakeStatsSink. It is reset
 // to 0 when a new FakeStatsSink is created.
 int numFlushes = 0;
@@ -53,9 +57,8 @@ public:
   }
 
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override {
-    // Using Struct instead of a custom per-filter empty config proto
-    // This is only allowed in tests.
-    return Envoy::ProtobufTypes::MessagePtr{new Envoy::ProtobufWkt::Struct()};
+    // Uses empty config proto.
+    return Envoy::ProtobufTypes::MessagePtr{new nighthawk::TestStatsSinkConfig()};
   }
 
   std::string name() const override { return "nighthawk.fake_stats_sink"; }
@@ -183,7 +186,7 @@ TEST_P(ProcessTest, RunProcessWithStatsSinkConfigured) {
   options_ = TestUtility::createOptionsImpl(
       fmt::format("foo --h2 --duration 1 --rps 10 --stats-flush-interval 1 "
                   "--stats-sinks {} https://{}/",
-                  kSinkName, loopback_address_));
+                  kSinkConfig, loopback_address_));
   numFlushes = 0;
   ASSERT_TRUE(runProcess(RunExpectation::EXPECT_FAILURE).ok());
   EXPECT_GT(numFlushes, 0);
@@ -195,7 +198,7 @@ TEST_P(ProcessTest, NoFlushWhenCancelExecutionBeforeLoadTestBegin) {
   options_ = TestUtility::createOptionsImpl(
       fmt::format("foo --duration 300 --failure-predicate foo:0 --concurrency "
                   "2 --stats-flush-interval 1 --stats-sinks {} https://{}/",
-                  kSinkName, loopback_address_));
+                  kSinkConfig, loopback_address_));
   numFlushes = 0;
   ASSERT_TRUE(runProcess(RunExpectation::EXPECT_SUCCESS, true, true).ok());
   EXPECT_EQ(numFlushes, 0);

@@ -10,6 +10,7 @@
 
 #include "test/request_source/stub_plugin_impl.h"
 #include "test/test_common/environment.h"
+#include "test/test_common/proto_matchers.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -63,8 +64,7 @@ TEST_F(StubRequestSourcePluginTest, CreateEmptyConfigProtoCreatesCorrectType) {
           "nighthawk.stub-request-source-plugin");
   const Envoy::ProtobufTypes::MessagePtr empty_config = config_factory.createEmptyConfigProto();
   const nighthawk::request_source::StubPluginConfig expected_config;
-  EXPECT_EQ(empty_config->DebugString(), expected_config.DebugString());
-  EXPECT_TRUE(Envoy::MessageUtil()(*empty_config, expected_config));
+  EXPECT_THAT(*empty_config, EqualsProto(expected_config));
 }
 
 TEST_F(StubRequestSourcePluginTest, FactoryRegistrationUsesCorrectPluginName) {
@@ -116,8 +116,7 @@ TEST_F(FileBasedRequestSourcePluginTest, CreateEmptyConfigProtoCreatesCorrectTyp
           "nighthawk.file-based-request-source-plugin");
   const Envoy::ProtobufTypes::MessagePtr empty_config = config_factory.createEmptyConfigProto();
   const nighthawk::request_source::FileBasedOptionsListRequestSourceConfig expected_config;
-  EXPECT_EQ(empty_config->DebugString(), expected_config.DebugString());
-  EXPECT_TRUE(Envoy::MessageUtil()(*empty_config, expected_config));
+  EXPECT_THAT(*empty_config, EqualsProto(expected_config));
 }
 
 TEST_F(FileBasedRequestSourcePluginTest, FactoryRegistrationUsesCorrectPluginName) {
@@ -286,8 +285,7 @@ TEST_F(InLineRequestSourcePluginTest, CreateEmptyConfigProtoCreatesCorrectType) 
           "nighthawk.in-line-options-list-request-source-plugin");
   const Envoy::ProtobufTypes::MessagePtr empty_config = config_factory.createEmptyConfigProto();
   const nighthawk::request_source::InLineOptionsListRequestSourceConfig expected_config;
-  EXPECT_EQ(empty_config->DebugString(), expected_config.DebugString());
-  EXPECT_TRUE(Envoy::MessageUtil()(*empty_config, expected_config));
+  EXPECT_THAT(*empty_config, EqualsProto(expected_config));
 }
 
 TEST_F(InLineRequestSourcePluginTest, FactoryRegistrationUsesCorrectPluginName) {

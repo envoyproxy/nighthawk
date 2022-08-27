@@ -84,7 +84,13 @@ sudo apt install -y clang-{format,tidy,tools} clang-doc clang-examples
 #### Install Bazelisk instead of bazel
 
 [Bazelisk](https://github.com/bazelbuild/bazelisk) is recommended, since it
-automatically chooses and downloads the appropriate Bazel version.
+automatically chooses and downloads the appropriate Bazel version. If you
+already have Bazel installed, it is strongly recommended to remove it.
+
+Run the following to remove bazel.
+```
+sudo apt-get remove bazel
+```
 
 Run the following to install Bazelisk.
 ```
@@ -101,6 +107,23 @@ git clone https://github.com/envoyproxy/nighthawk
 cd nighthawk/
 echo "build --config=clang" >> user.bazelrc
 ```
+
+#### Install Python libraries
+
+Recommended: Use `virtualenv` to avoid conflicts between Nighthawk's Python package version requirements and other versions already on your system:
+```
+virtualenv ~/my_nh_venv
+source ~/my_nh_venv/bin/activate
+```
+
+Note: Avoid creating the environment under the Nighthawk project directory.
+
+Install Python packages required for Nighthawk (whether using `virtualenv` or not):
+```
+pip3 install --user -r requirements.txt
+```
+
+If `pip3 install` fails, you will need to troubleshoot the Python environment before attempting to build and test Nighthawk.
 
 #### Build and testing  Nighthawk
 
@@ -164,11 +187,13 @@ format>] [--sequencer-idle-strategy <spin
 <json|human|yaml|dotted|fortio
 |experimental_fortio_pedantic>] [-v <trace
 |debug|info|warn|error|critical>]
-[--concurrency <string>] [-p <http1|http2
-|http3>] [--h2] [--timeout <uint32_t>]
-[--duration <uint32_t>] [--connections
-<uint32_t>] [--rps <uint32_t>] [--]
-[--version] [-h] <uri format>
+[--concurrency <string>]
+[--http3-protocol-options <string>] [-p
+<http1|http2|http3>] [--h2] [--timeout
+<uint32_t>] [--duration <uint32_t>]
+[--connections <uint32_t>] [--rps
+<uint32_t>] [--] [--version] [-h] <uri
+format>
 
 
 Where:
@@ -353,6 +378,14 @@ Nighthawk process. Note that increasing this results in an effective
 load multiplier combined with the configured --rps and --connections
 values. Default: 1.
 
+--http3-protocol-options <string>
+HTTP3 protocol options (envoy::config::core::v3::Http3ProtocolOptions)
+in json. If specified, Nighthawk uses these HTTP3 protocol options
+when sending requests. Only valid with --protocol http3. Mutually
+exclusive with any other command line option that would modify the
+http3 protocol options, e.g. --max-concurrent-streams. Example (json):
+{quic_protocol_options:{max_concurrent_streams:1}}
+
 -p <http1|http2|http3>,  --protocol <http1|http2|http3>
 The protocol to encapsulate requests in. Possible values: [http1,
 http2, http3]. The default protocol is 'http1' when neither of --h2 or
@@ -487,6 +520,14 @@ L7 (HTTP/HTTPS/HTTP2) performance characterization transformation tool.
 
 ```
 <!-- END USAGE -->
+
+**Example:** transform json output to fortio compatible format
+
+> Notice that the default output format for `nighthawk_client` is "human", therefore to produce a json output you must run `nighthawk_client` with `--output-format json`. This json output is the one that can be transformed to the different formats as shown in the example below.
+
+```
+➜ /your/json/output/file.json | bazel-bin/nighthawk_output_transform --output-format fortio
+```
 
 ## A sample benchmark run
 

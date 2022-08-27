@@ -67,7 +67,7 @@ class InjectHttpProxyIntegrationTestBase(HttpIntegrationTestBase):
   """Proxy and Test server fixture.
 
   Fixture which spins up a Nighthawk test server as well as an Envoy proxy
-  which directs traffic to that. Both will be listing for plain http traffic.
+  which directs traffic to that. Both will be listening for plain http traffic.
   """
 
   def __init__(self, request, server_config, proxy_config):

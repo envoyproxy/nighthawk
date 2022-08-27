@@ -72,4 +72,4 @@ def test_count_log_lines_with_substring_returns_zero_with_empty_logs():
 
 
 if __name__ == "__main__":
-  raise SystemExit(pytest.main([__file__, "--assert=plain"]))
+  raise SystemExit(pytest.main([__file__]))

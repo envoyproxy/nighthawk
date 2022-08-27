@@ -41,23 +41,6 @@ public:
 INSTANTIATE_TEST_SUITE_P(IpVersions, HttpDynamicDelayIntegrationTest,
                          testing::ValuesIn(Envoy::TestEnvironment::getIpVersionsForTest()));
 
-TEST_P(HttpDynamicDelayIntegrationTest,
-       DiesWhenBothEnvoyApiV2AndV3ResponseHeadersAreSetInConfiguration) {
-  const std::string invalid_configuration = R"EOF(
-  name: dynamic-delay
-  typed_config:
-    "@type": type.googleapis.com/nighthawk.server.DynamicDelayConfiguration
-    experimental_response_options:
-      response_headers:
-        - { header: { key: "key1", value: "value1"} }
-      v3_response_headers:
-        - { header: { key: "key1", value: "value1"} }
-  )EOF";
-
-  ASSERT_DEATH(initializeFilterConfiguration(invalid_configuration),
-               HasSubstr("cannot specify both response_headers and v3_response_headers"));
-}
-
 // Verify expectations with an empty dynamic-delay configuration.
 TEST_P(HttpDynamicDelayIntegrationTest, NoStaticConfiguration) {
   initializeFilterConfiguration(R"(
@@ -91,8 +74,7 @@ TEST_P(HttpDynamicDelayIntegrationTest, StaticConfigurationStaticDelay) {
 name: dynamic-delay
 typed_config:
   "@type": type.googleapis.com/nighthawk.server.DynamicDelayConfiguration
-  experimental_response_options:
-    static_delay: 1.33s
+  static_delay: 1.33s
 )EOF");
 
   // Without any request-level configuration, we expect the statically configured static delay to
@@ -138,10 +120,9 @@ TEST_P(HttpDynamicDelayIntegrationTest, StaticConfigurationConcurrentDelay) {
 name: dynamic-delay
 typed_config:
   "@type": type.googleapis.com/nighthawk.server.DynamicDelayConfiguration
-  experimental_response_options:
-    concurrency_based_linear_delay:
-      minimal_delay: 0.05s
-      concurrency_delay_factor: 0.01s
+  concurrency_based_linear_delay:
+    minimal_delay: 0.05s
+    concurrency_delay_factor: 0.01s
 )EOF");
   ASSERT_TRUE(getResponse(ResponseOrigin::UPSTREAM)->waitForEndStream());
   // Based on the algorithm of concurrency_based_linear_delay, for the first request we expect to

@@ -1,0 +1,20 @@
+// Proto file supporting any configuration related to the dynamic delay filter.
+syntax = "proto3";
+
+import "api/server/response_options.proto";
+import "google/protobuf/duration.proto";
+import "validate/validate.proto";
+
+package nighthawk.server;
+
+// Configures the dynamic-delay filter.
+message DynamicDelayConfiguration {
+  oneof oneof_delay_options {
+    // Static delay duration.
+    google.protobuf.Duration static_delay = 2 [(validate.rules).duration.gte.nanos = 0];
+    // Concurrency based linear delay configuration.
+    ConcurrencyBasedLinearDelay concurrency_based_linear_delay = 3;
+  }
+
+  reserved 1;
+}

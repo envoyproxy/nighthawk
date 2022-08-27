@@ -6,6 +6,8 @@
 
 #include "source/adaptive_load/scoring_function_impl.h"
 
+#include "test/test_common/proto_matchers.h"
+
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -19,8 +21,7 @@ TEST(BinaryScoringFunctionConfigFactory, CreateEmptyConfigProtoCreatesCorrectTyp
           "nighthawk.binary_scoring");
   const Envoy::ProtobufTypes::MessagePtr empty_config = config_factory.createEmptyConfigProto();
   const nighthawk::adaptive_load::BinaryScoringFunctionConfig expected_config;
-  EXPECT_EQ(empty_config->DebugString(), expected_config.DebugString());
-  EXPECT_TRUE(Envoy::MessageUtil()(*empty_config, expected_config));
+  EXPECT_THAT(*empty_config, EqualsProto(expected_config));
 }
 
 TEST(LinearScoringFunctionConfigFactory, CreateEmptyConfigProtoCreatesCorrectType) {
@@ -29,8 +30,7 @@ TEST(LinearScoringFunctionConfigFactory, CreateEmptyConfigProtoCreatesCorrectTyp
           "nighthawk.linear_scoring");
   const Envoy::ProtobufTypes::MessagePtr empty_config = config_factory.createEmptyConfigProto();
   const nighthawk::adaptive_load::LinearScoringFunctionConfig expected_config;
-  EXPECT_EQ(empty_config->DebugString(), expected_config.DebugString());
-  EXPECT_TRUE(Envoy::MessageUtil()(*empty_config, expected_config));
+  EXPECT_THAT(*empty_config, EqualsProto(expected_config));
 }
 
 TEST(BinaryScoringFunctionConfigFactory, FactoryRegistrationUsesCorrectPluginName) {

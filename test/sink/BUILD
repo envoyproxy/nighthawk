@@ -3,6 +3,7 @@ load(
     "envoy_cc_test",
     "envoy_package",
 )
+load("@envoy_api//bazel:api_build_system.bzl", "api_cc_py_proto_library")
 
 licenses(["notice"])  # Apache 2
 
@@ -14,7 +15,7 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         "//source/sink:sink_impl_lib",
-        "@com_github_grpc_grpc//:grpc++_test",  # Avoids undefined symbol _ZN4grpc24g_core_codegen_interfaceE in coverage test build.
+        "//test/test_common:mock_stream",  # necessary to pass coverage tests.
         "@envoy//source/common/common:random_generator_lib_with_external_headers",
     ],
 )
@@ -25,7 +26,8 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         "//source/sink:nighthawk_sink_client_impl",
-        "@com_github_grpc_grpc//:grpc++_test",
+        "//test/test_common:mock_stream",
+        "//test/test_common:proto_matchers",
     ],
 )
 
@@ -37,6 +39,15 @@ envoy_cc_test(
         "//source/sink:grpc_service_lib",
         "//test/mocks/sink:mock_sink",
         "//test/test_common:environment_lib",
+        "//test/test_common:proto_matchers",
         "@envoy//test/test_common:network_utility_lib",
     ],
+)
+
+api_cc_py_proto_library(
+    name = "test_stats_sink_config_proto",
+    srcs = [
+        "test_stats_sink_config.proto",
+    ],
+    visibility = ["//visibility:private"],
 )

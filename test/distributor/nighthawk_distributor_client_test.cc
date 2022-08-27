@@ -6,7 +6,8 @@
 
 #include "source/distributor/nighthawk_distributor_client_impl.h"
 
-#include "grpcpp/test/mock_stream.h"
+#include "test/test_common/mock_stream.h"
+#include "test/test_common/proto_matchers.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -35,7 +36,7 @@ TEST(DistributedRequest, UsesSpecifiedCommandLineOptions) {
   EXPECT_CALL(mock_nighthawk_service_stub, DistributedRequestStreamRaw)
       .WillOnce([&request](grpc::ClientContext*) {
         auto* mock_reader_writer =
-            new grpc::testing::MockClientReaderWriter<DistributedRequest, DistributedResponse>();
+            new MockClientReaderWriter<DistributedRequest, DistributedResponse>();
         // DistributedRequest currently expects Read to return true exactly once.
         EXPECT_CALL(*mock_reader_writer, Read(_)).WillOnce(Return(true)).WillOnce(Return(false));
         // Capture the Nighthawk request DistributedRequest sends on the channel.
@@ -70,7 +71,7 @@ TEST(DistributedRequest, ReturnsNighthawkResponseSuccessfully) {
   EXPECT_CALL(mock_nighthawk_service_stub, DistributedRequestStreamRaw)
       .WillOnce([&expected_response](grpc::ClientContext*) {
         auto* mock_reader_writer =
-            new grpc::testing::MockClientReaderWriter<DistributedRequest, DistributedResponse>();
+            new MockClientReaderWriter<DistributedRequest, DistributedResponse>();
         // DistributedRequest currently expects Read to return true exactly once.
         // Capture the gRPC response proto as it is written to the output parameter.
         EXPECT_CALL(*mock_reader_writer, Read(_))
@@ -88,7 +89,7 @@ TEST(DistributedRequest, ReturnsNighthawkResponseSuccessfully) {
   EXPECT_TRUE(response_or.ok());
   DistributedResponse actual_response = response_or.value();
   EXPECT_TRUE(MessageDifferencer::Equivalent(actual_response, expected_response));
-  EXPECT_EQ(actual_response.DebugString(), expected_response.DebugString());
+  EXPECT_THAT(actual_response, EqualsProto(expected_response));
 }
 
 TEST(DistributedRequest, ReturnsErrorIfNighthawkServiceDoesNotSendResponse) {
@@ -98,7 +99,7 @@ TEST(DistributedRequest, ReturnsErrorIfNighthawkServiceDoesNotSendResponse) {
   EXPECT_CALL(mock_nighthawk_service_stub, DistributedRequestStreamRaw)
       .WillOnce([](grpc::ClientContext*) {
         auto* mock_reader_writer =
-            new grpc::testing::MockClientReaderWriter<DistributedRequest, DistributedResponse>();
+            new MockClientReaderWriter<DistributedRequest, DistributedResponse>();
         EXPECT_CALL(*mock_reader_writer, Read(_)).WillOnce(Return(false));
         EXPECT_CALL(*mock_reader_writer, Write(_, _)).WillOnce(Return(true));
         EXPECT_CALL(*mock_reader_writer, WritesDone()).WillOnce(Return(true));
@@ -121,7 +122,7 @@ TEST(DistributedRequest, ReturnsErrorIfNighthawkServiceWriteFails) {
   EXPECT_CALL(mock_nighthawk_service_stub, DistributedRequestStreamRaw)
       .WillOnce([](grpc::ClientContext*) {
         auto* mock_reader_writer =
-            new grpc::testing::MockClientReaderWriter<DistributedRequest, DistributedResponse>();
+            new MockClientReaderWriter<DistributedRequest, DistributedResponse>();
         EXPECT_CALL(*mock_reader_writer, Write(_, _)).WillOnce(Return(false));
         return mock_reader_writer;
       });
@@ -141,7 +142,7 @@ TEST(DistributedRequest, ReturnsErrorIfNighthawkServiceWritesDoneFails) {
   EXPECT_CALL(mock_nighthawk_service_stub, DistributedRequestStreamRaw)
       .WillOnce([](grpc::ClientContext*) {
         auto* mock_reader_writer =
-            new grpc::testing::MockClientReaderWriter<DistributedRequest, DistributedResponse>();
+            new MockClientReaderWriter<DistributedRequest, DistributedResponse>();
         EXPECT_CALL(*mock_reader_writer, Write(_, _)).WillOnce(Return(true));
         EXPECT_CALL(*mock_reader_writer, WritesDone()).WillOnce(Return(false));
         return mock_reader_writer;
@@ -162,7 +163,7 @@ TEST(DistributedRequest, PropagatesErrorIfNighthawkServiceGrpcStreamClosesAbnorm
   EXPECT_CALL(mock_nighthawk_service_stub, DistributedRequestStreamRaw)
       .WillOnce([](grpc::ClientContext*) {
         auto* mock_reader_writer =
-            new grpc::testing::MockClientReaderWriter<DistributedRequest, DistributedResponse>();
+            new MockClientReaderWriter<DistributedRequest, DistributedResponse>();
         // DistributedRequest currently expects Read to return true exactly once.
         EXPECT_CALL(*mock_reader_writer, Read(_)).WillOnce(Return(true)).WillOnce(Return(false));
         EXPECT_CALL(*mock_reader_writer, Write(_, _)).WillOnce(Return(true));

@@ -162,6 +162,61 @@ class NullServerInstance : public Envoy::Server::Instance {
   }
 };
 
+// Implementation of Envoy::Server::Configuration::ServerFactoryContext used as a placeholder. None
+// of its methods should be called because Nighthawk is not a real Envoy that performs xDS config
+// validation.
+class NullServerFactoryContext : public Envoy::Server::Configuration::ServerFactoryContext {
+  const Envoy::Server::Options& options() override { PANIC("not implemented"); };
+
+  Envoy::Event::Dispatcher& mainThreadDispatcher() override { PANIC("not implemented"); };
+
+  Envoy::Api::Api& api() override { PANIC("not implemented"); };
+
+  Envoy::LocalInfo::LocalInfo& localInfo() const override { PANIC("not implemented"); };
+
+  Envoy::Server::Admin& admin() override { PANIC("not implemented"); };
+
+  Envoy::Runtime::Loader& runtime() override { PANIC("not implemented"); };
+
+  Envoy::Singleton::Manager& singletonManager() override { PANIC("not implemented"); };
+
+  Envoy::ProtobufMessage::ValidationVisitor& messageValidationVisitor() override {
+    PANIC("not implemented");
+  };
+
+  Envoy::Stats::Scope& scope() override { PANIC("not implemented"); };
+
+  Envoy::Stats::Scope& serverScope() override { PANIC("not implemented"); };
+
+  Envoy::ThreadLocal::SlotAllocator& threadLocal() override { PANIC("not implemented"); };
+
+  Envoy::Upstream::ClusterManager& clusterManager() override { PANIC("not implemented"); };
+
+  Envoy::ProtobufMessage::ValidationContext& messageValidationContext() override {
+    PANIC("not implemented");
+  };
+
+  Envoy::TimeSource& timeSource() override { PANIC("not implemented"); };
+
+  Envoy::AccessLog::AccessLogManager& accessLogManager() override { PANIC("not implemented"); };
+
+  Envoy::Server::ServerLifecycleNotifier& lifecycleNotifier() override {
+    PANIC("not implemented");
+  };
+
+  Envoy::Init::Manager& initManager() override { PANIC("not implemented"); };
+
+  Envoy::Grpc::Context& grpcContext() override { PANIC("not implemented"); };
+
+  Envoy::Router::Context& routerContext() override { PANIC("not implemented"); };
+
+  Envoy::Server::DrainManager& drainManager() override { PANIC("not implemented"); };
+
+  Envoy::Server::Configuration::StatsConfig& statsConfig() override { PANIC("not implemented"); }
+
+  envoy::config::bootstrap::v3::Bootstrap& bootstrap() override { PANIC("not implemented"); }
+};
+
 } // namespace
 
 // We customize ProdClusterManagerFactory for the sole purpose of returning our specialized
@@ -197,7 +252,8 @@ public:
              Envoy::Http::HttpConnPoolImplBase* pool) {
             Envoy::Http::CodecClientPtr codec{new Envoy::Http::CodecClientProd(
                 Envoy::Http::CodecClient::Type::HTTP1, std::move(data.connection_),
-                data.host_description_, pool->dispatcher(), pool->randomGenerator())};
+                data.host_description_, pool->dispatcher(), pool->randomGenerator(),
+                pool->transportSocketOptions())};
             return codec;
           },
           protocols);
@@ -252,7 +308,8 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
       init_watcher_("Nighthawk", []() {}),
       admin_(Envoy::Network::Address::InstanceConstSharedPtr()),
       validation_context_(false, false, false), router_context_(store_root_.symbolTable()),
-      server_(std::make_unique<NullServerInstance>()) {
+      server_(std::make_unique<NullServerInstance>()),
+      server_factory_context_(std::make_unique<NullServerFactoryContext>()) {
   // Any dispatchers created after the following call will use hr timers.
   setupForHRTimers();
   std::string lower = absl::AsciiStrToLower(
@@ -541,10 +598,10 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
             time_system_);
 
     cluster_manager_factory_ = std::make_unique<ClusterManagerFactory>(
-        admin_, Envoy::Runtime::LoaderSingleton::get(), store_root_, tls_, dns_resolver,
-        *ssl_context_manager_, *dispatcher_, *local_info_, secret_manager_, validation_context_,
-        *api_, http_context_, grpc_context_, router_context_, access_log_manager_,
-        *singleton_manager_, envoy_options, quic_stat_names_, *server_);
+        *server_factory_context_, admin_, Envoy::Runtime::LoaderSingleton::get(), store_root_, tls_,
+        dns_resolver, *ssl_context_manager_, *dispatcher_, *local_info_, secret_manager_,
+        validation_context_, *api_, http_context_, grpc_context_, router_context_,
+        access_log_manager_, *singleton_manager_, envoy_options, quic_stat_names_, *server_);
     cluster_manager_factory_->setConnectionReuseStrategy(
         options_.h1ConnectionReuseStrategy() == nighthawk::client::H1ConnectionReuseStrategy::LRU
             ? Http1PoolImpl::ConnectionReuseStrategy::LRU

@@ -41,6 +41,7 @@ absl::StatusOr<double> FakeMetricsPlugin::GetMetricByName(absl::string_view metr
   return value_or_error_from_name_[metric_name];
 }
 
+
 const std::vector<std::string> FakeMetricsPlugin::GetAllSupportedMetricNames() const {
   std::vector<std::string> metric_names;
   for (const auto& key_value : value_or_error_from_name_) {

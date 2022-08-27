@@ -7,6 +7,7 @@ import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
 import "envoy/config/core/v3/address.proto";
 import "envoy/config/core/v3/base.proto";
+import "envoy/config/core/v3/protocol.proto";
 import "envoy/config/metrics/v3/stats.proto";
 import "envoy/extensions/transport_sockets/tls/v3/cert.proto";
 import "envoy/config/core/v3/extension.proto";
@@ -128,7 +129,7 @@ message Protocol {
 
 // TODO(oschaaf): Ultimately this will be a load test specification. The fact that it
 // can arrive via CLI is just a concrete detail. Change this to reflect that.
-// Highest unused number is 111.
+// Highest unused number is 112.
 message CommandLineOptions {
   // The target requests-per-second rate. Default: 5.
   google.protobuf.UInt32Value requests_per_second = 1
@@ -154,6 +155,12 @@ message CommandLineOptions {
     // The protocol to use when encapsulating requests.
     Protocol protocol = 107;
   }
+
+  // Allows user to set specific HTTP3 protocol options.
+  // Only valid when protocol is set to HTTP3.
+  // Is exclusive with any other command line option that would modify the
+  // http3 protocol options, e.g. max_concurrent_streams.
+  envoy.config.core.v3.Http3ProtocolOptions http3_protocol_options = 111;
 
   // The number of concurrent event loops that should be used. Specify 'auto' to let
   // Nighthawk leverage all vCPUs that have affinity to the Nighthawk process. Note that

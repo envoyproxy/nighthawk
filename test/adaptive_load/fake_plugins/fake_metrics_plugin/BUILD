@@ -48,6 +48,7 @@ envoy_cc_test(
     deps = [
         ":fake_metrics_plugin",
         "//source/adaptive_load:plugin_loader",
+        "//test/test_common:proto_matchers",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
         "@envoy//test/test_common:utility_lib",
     ],

@@ -36,7 +36,6 @@ envoy_cc_test(
         "//source/adaptive_load:adaptive_load_client_main",
         "//test/mocks/adaptive_load:mock_adaptive_load_controller",
         "//test/test_common:environment_lib",
-        "@com_github_grpc_grpc//:grpc++_test",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
         "@envoy//test/mocks/filesystem:filesystem_mocks",
         "@envoy//test/test_common:utility_lib",
@@ -60,6 +59,7 @@ envoy_cc_test(
         "//test/mocks/adaptive_load:mock_metrics_evaluator",
         "//test/mocks/adaptive_load:mock_session_spec_proto_helper",
         "//test/mocks/common:mock_nighthawk_service_client",
+        "//test/test_common:proto_matchers",
         "@envoy//source/common/common:assert_lib_with_external_headers",
         "@envoy//source/common/common:statusor_lib_with_external_headers",
         "@envoy//source/common/config:utility_lib_with_external_headers",
@@ -73,6 +73,7 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         "//source/adaptive_load:input_variable_setter_impl",
+        "//test/test_common:proto_matchers",
     ],
 )
 
@@ -85,6 +86,7 @@ envoy_cc_test(
         "//source/adaptive_load:metrics_evaluator_impl",
         "//source/adaptive_load:scoring_function_impl",
         "//test/adaptive_load/fake_plugins/fake_metrics_plugin",
+        "//test/test_common:proto_matchers",
     ],
 )
 
@@ -126,6 +128,7 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         "//source/adaptive_load:scoring_function_impl",
+        "//test/test_common:proto_matchers",
     ],
 )
 
@@ -137,5 +140,6 @@ envoy_cc_test(
         "//source/adaptive_load:step_controller_impl",
         "//test/adaptive_load/fake_plugins/fake_input_variable_setter",
         "//test/adaptive_load/fake_plugins/fake_metrics_plugin",
+        "//test/test_common:proto_matchers",
     ],
 )
