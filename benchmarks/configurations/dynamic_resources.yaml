@@ -1,3 +1,4 @@
+# Bootstrap configuration for Envoy with filesystem CDS and LDS.
 node:
   cluster: test-cluster
   id: test-id

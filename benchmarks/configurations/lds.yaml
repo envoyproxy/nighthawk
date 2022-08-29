@@ -1,3 +1,4 @@
+# Dynamic listener configuration for Envoy.
 resources:
 - "@type": type.googleapis.com/envoy.config.listener.v3.Listener
   name: listener_0
