@@ -12,7 +12,7 @@ from rules_python.python.runfiles import runfiles
 
 from test.integration.integration_test_fixtures import (HttpIntegrationTestBase,
                                                         determineIpVersionsFromEnvironment)
-from test.integration.nighthawk_test_server import NighthawkTestServer
+from test.integration.nighthawk_test_server import (NighthawkTestServer, substitute_yaml_values)
 from string import Template
 
 
@@ -73,7 +73,7 @@ class EnvoyProxyServer(NighthawkTestServer):
       runfiles_instance = runfiles.Create()
       with open(runfiles_instance.Rlocation('nighthawk/benchmarks/configurations/lds.yaml')) as f:
         data = yaml.load(f, Loader=yaml.FullLoader)
-        data = self._substitute_yaml_values(runfiles_instance, data, self._parameters)
+        data = substitute_yaml_values(runfiles_instance, data, self._parameters)
 
       listener_file_path = os.path.join(self.tmpdir, 'lds.yaml')
       logging.info(f"Creating listener file in {listener_file_path}.")

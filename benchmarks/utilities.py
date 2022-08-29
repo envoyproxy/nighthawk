@@ -7,8 +7,13 @@ import os
 from shutil import copyfile
 
 
-def output_benchmark_results(json_results, fixture):
-  """Output the benchmark results."""
+def output_benchmark_results(json_results: dict, fixture):
+  """Output the benchmark results from the nighthawk client through various artifacts.
+
+  Args:
+    json_results (dict): results returned from the nighthawk client parsed into a dict.
+    fixture: test fixture used to run the nighthawk client.
+  """
   output_dir = fixture.test_server.tmpdir
   json_as_string = json.dumps(json_results)
   human_output = fixture.transformNighthawkJson(json_as_string, "human")

@@ -23,6 +23,28 @@ from test.integration.common import IpVersion, NighthawkException
 from test.integration.subprocess_mixin import SubprocessMixin
 
 
+# TODO(kbaichoo): migrate to a utility file.
+def substitute_yaml_values(runfiles_instance, obj, params):
+  """Substitute params into the given template."""
+  if isinstance(obj, dict):
+    for k, v in obj.items():
+      obj[k] = substitute_yaml_values(runfiles_instance, v, params)
+  elif isinstance(obj, list):
+    for i in range(len(obj)):
+      obj[i] = substitute_yaml_values(runfiles_instance, obj[i], params)
+  else:
+    if isinstance(obj, str):
+      # Inspect string values and substitute where applicable.
+      INJECT_RUNFILE_MARKER = '@inject-runfile:'
+      if obj[0] == '$':
+        return Template(obj).substitute(params)
+      elif obj.startswith(INJECT_RUNFILE_MARKER):
+        with open(runfiles_instance.Rlocation(obj[len(INJECT_RUNFILE_MARKER):].strip()),
+                  'r') as file:
+          return file.read()
+  return obj
+
+
 class _TestCaseWarnErrorIgnoreList(
     collections.namedtuple("_TestCaseWarnErrorIgnoreList", "test_case_regexp ignore_list")):
   """Maps test case names to messages that should be ignored in the test server logs.
@@ -138,7 +160,7 @@ class TestServerBase(SubprocessMixin):
     runfiles_instance = runfiles.Create()
     with open(runfiles_instance.Rlocation(self._config_template_path)) as f:
       data = yaml.load(f, Loader=yaml.FullLoader)
-      data = TestServerBase._substitute_yaml_values(runfiles_instance, data, self._parameters)
+      data = substitute_yaml_values(runfiles_instance, data, self._parameters)
 
     Path(self.tmpdir).mkdir(parents=True, exist_ok=True)
 
@@ -272,28 +294,6 @@ class TestServerBase(SubprocessMixin):
     """
     os.remove(self._admin_address_path)
     return self.stopSubprocess()
-
-  # TODO(kbaichoo): migrate to a utility file.
-  @staticmethod
-  def _substitute_yaml_values(runfiles_instance, obj, params):
-    """Substitute params into the given template."""
-    if isinstance(obj, dict):
-      for k, v in obj.items():
-        obj[k] = TestServerBase._substitute_yaml_values(runfiles_instance, v, params)
-    elif isinstance(obj, list):
-      for i in range(len(obj)):
-        obj[i] = TestServerBase._substitute_yaml_values(runfiles_instance, obj[i], params)
-    else:
-      if isinstance(obj, str):
-        # Inspect string values and substitute where applicable.
-        INJECT_RUNFILE_MARKER = '@inject-runfile:'
-        if obj[0] == '$':
-          return Template(obj).substitute(params)
-        elif obj.startswith(INJECT_RUNFILE_MARKER):
-          with open(runfiles_instance.Rlocation(obj[len(INJECT_RUNFILE_MARKER):].strip()),
-                    'r') as file:
-            return file.read()
-    return obj
 
 
 class NighthawkTestServer(TestServerBase):

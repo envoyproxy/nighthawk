@@ -10,7 +10,11 @@ import logging
 
 
 class DynamicConfigController(SubprocessMixin):
-  """Controller for the Dynamic Configuration Manager."""
+  """Controller for the Dynamic Configuration Manager.
+
+  Manages the subprocess used to generate Dynamic Configuration.
+  See SubprocessMixin for usage.
+  """
 
   def __init__(self, dynamic_config_settings):
     """Create DynamicConfigController."""

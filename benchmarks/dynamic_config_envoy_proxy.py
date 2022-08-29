@@ -35,6 +35,9 @@ class InjectDynamicHttpProxyIntegrationTestBase(InjectHttpProxyIntegrationTestBa
 
   Fixture which spins up a Nighthawk test server, an Envoy proxy and a xDS configuration
   task which dynamically configure the Envoy. Both will be listening for plain http traffic.
+
+  Attributes:
+    See base class.
   """
 
   def __init__(self, request, server_config: str, proxy_config: str,
@@ -50,7 +53,7 @@ class InjectDynamicHttpProxyIntegrationTestBase(InjectHttpProxyIntegrationTestBa
     """
     super(InjectDynamicHttpProxyIntegrationTestBase, self).__init__(request, server_config,
                                                                     proxy_config)
-    self.dynamic_config_settings = dynamic_config_settings
+    self._dynamic_config_settings = dynamic_config_settings
 
   def setUp(self):
     """Set up the injected Envoy proxy as well as the test server.
@@ -59,24 +62,24 @@ class InjectDynamicHttpProxyIntegrationTestBase(InjectHttpProxyIntegrationTestBa
     """
     super(InjectDynamicHttpProxyIntegrationTestBase, self).setUp()
 
-    output_file = os.path.join(self.test_server.tmpdir, self.dynamic_config_settings.output_file)
-    self.dynamic_config_settings.output_file = output_file
+    output_file = os.path.join(self.test_server.tmpdir, self._dynamic_config_settings.output_file)
+    self._dynamic_config_settings.output_file = output_file
     logging.info(f"Injecting dynamic configuration. Output file: {output_file}")
 
     # TODO(kbaichoo): we only hardcode a single endpoint, but will expand on this.
-    endpoints = self.dynamic_config_settings.clusters[0].endpoints.add()
+    endpoints = self._dynamic_config_settings.clusters[0].endpoints.add()
     endpoints.ip = self.test_server.server_ip
     endpoints.port = self.test_server.server_port
 
-    self.dynamic_config_controller = DynamicConfigController(self.dynamic_config_settings)
+    self._dynamic_config_controller = DynamicConfigController(self._dynamic_config_settings)
 
-    assert (self.dynamic_config_controller.start())
+    assert (self._dynamic_config_controller.start())
     logging.info("dynamic configuration running")
 
   def tearDown(self, caplog):
     """Tear down the proxy and test server. Assert that both exit succesfully."""
     super(InjectDynamicHttpProxyIntegrationTestBase, self).tearDown(caplog)
-    self.dynamic_config_controller.stop()
+    self._dynamic_config_controller.stop()
 
 
 @pytest.fixture(params=determineIpVersionsFromEnvironment())
