@@ -111,7 +111,8 @@ class TestServerBase(SubprocessMixin):
   Attributes:
     ip_version: IP version that the proxy should use when listening.
     server_ip: string containing the server ip that will be used to listen
-    server_port: Integer, get the port used by the server to listen for traffic.
+    server_port: int, get the first port used by the server to listen for traffic.
+    server_ports: list[int], a list of all ports used by the server to listen for traffic. Empty until fetched.
     docker_image: String, supplies a docker image for execution of the test server binary. Sourced from environment variable NH_DOCKER_IMAGE.
     tmpdir: String, indicates the location used to store outputs like logs.
   """
@@ -135,6 +136,7 @@ class TestServerBase(SubprocessMixin):
     self.ip_version = ip_version
     self.server_ip = server_ip
     self.server_port = -1
+    self.server_ports = []
     self.docker_image = os.getenv("NH_DOCKER_IMAGE", "")
     self.tmpdir = os.path.join(os.getenv("TMPDIR", "/tmp/nighthawk_benchmark/"), tag + "/")
     self._server_binary_path = server_binary_path
@@ -239,15 +241,13 @@ class TestServerBase(SubprocessMixin):
     self.admin_port = tmp[len(tmp) - 1]
     try:
       listeners = self.fetchJsonFromAdminInterface("/listeners?format=json")
-      logging.info(f"Listeners: {listeners}")
-
-      # Can be empty on initial load.
-      if not listeners:
+      # We assume the listeners all use the same address.
+      for listener in listeners["listener_statuses"]:
+        port = listener["local_address"]["socket_address"]["port_value"]
+        self.server_ports.append(port)
+      if not self.server_ports:
         return False
-
-      # Right now we assume there's only a single listener
-      self.server_port = listeners["listener_statuses"][0]["local_address"]["socket_address"][
-          "port_value"]
+      self.server_port = self.server_ports[0]
       return True
     except requests.exceptions.ConnectionError:
       return False
