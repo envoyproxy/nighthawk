@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package nighthawk;
+
+// Empty config currently required for us to support envoy plugin lookup, which
+// is by unique proto.
+message TestStatsSinkConfig {
+}

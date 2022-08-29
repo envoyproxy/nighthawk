@@ -37,6 +37,7 @@ py_library(
         "integration_test_fixtures.py",
         "nighthawk_grpc_service.py",
         "nighthawk_test_server.py",
+        "subprocess_mixin.py",
         "utility.py",
     ],
     data = [

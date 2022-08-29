@@ -11,7 +11,9 @@
 namespace Nighthawk {
 
 /**
- * MetricsPlugin for testing, supporting fixed values and artificial errors.
+ * MetricsPlugin for testing, supporting fixed values and artificial errors. Note that this class
+ * intentionally does not override GetMetricByNameWithReportingPeriod to properly test fallback
+ * behavior.
  */
 class FakeMetricsPlugin : public MetricsPlugin {
 public:

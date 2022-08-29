@@ -8,6 +8,7 @@
 #include "source/adaptive_load/plugin_loader.h"
 
 #include "test/adaptive_load/fake_plugins/fake_step_controller/fake_step_controller.h"
+#include "test/test_common/proto_matchers.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -28,8 +29,7 @@ TEST(FakeStepControllerConfigFactory, CreateEmptyConfigProtoCreatesCorrectType) 
           "nighthawk.fake_step_controller");
   Envoy::ProtobufTypes::MessagePtr empty_config = config_factory.createEmptyConfigProto();
   FakeStepControllerConfig expected_config;
-  EXPECT_EQ(empty_config->DebugString(), expected_config.DebugString());
-  EXPECT_TRUE(MessageDifferencer::Equivalent(*empty_config, expected_config));
+  EXPECT_THAT(*empty_config, EqualsProto(expected_config));
 }
 
 TEST(FakeStepControllerConfigFactory, FactoryRegistersUnderCorrectName) {

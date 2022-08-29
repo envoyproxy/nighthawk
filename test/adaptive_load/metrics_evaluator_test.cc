@@ -1,4 +1,5 @@
 #include "external/envoy/source/common/protobuf/protobuf.h"
+#include "external/envoy/test/mocks/common.h"
 
 #include "api/adaptive_load/benchmark_result.pb.h"
 #include "api/adaptive_load/metric_spec.pb.h"
@@ -9,6 +10,7 @@
 
 #include "test/adaptive_load/fake_plugins/fake_metrics_plugin/fake_metrics_plugin.h"
 #include "test/adaptive_load/minimal_output.h"
+#include "test/test_common/proto_matchers.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -22,7 +24,24 @@ using ::nighthawk::adaptive_load::FakeMetricsPluginConfig;
 using ::nighthawk::adaptive_load::MetricEvaluation;
 using ::nighthawk::adaptive_load::MetricSpec;
 using ::nighthawk::adaptive_load::ThresholdSpec;
+
+using ::testing::_;
+using ::testing::AllOf;
+using ::testing::Eq;
+using ::testing::Field;
 using ::testing::HasSubstr;
+using ::testing::Return;
+
+// For testing MetricPlugin with GetMetricByNameWithReportingPeriod defined.
+class MockMetricsPluginWithReportingPeriod : public FakeMetricsPlugin {
+public:
+  explicit MockMetricsPluginWithReportingPeriod(
+      const nighthawk::adaptive_load::FakeMetricsPluginConfig& config)
+      : FakeMetricsPlugin(config) {}
+
+  MOCK_METHOD(absl::StatusOr<double>, GetMetricByNameWithReportingPeriod,
+              (absl::string_view metric_name, const ReportingPeriod& reporting_period), (override));
+};
 
 /**
  * Creates a valid TypedExtensionConfig proto selecting the real BinaryScoringFunction plugin
@@ -79,9 +98,11 @@ TEST(EvaluateMetric, SetsMetricIdForValidMetric) {
   metric_spec.set_metrics_plugin_name("nighthawk.fake_metrics_plugin");
   metric_spec.set_metric_name(kMetricName);
 
+  ReportingPeriod reporting_period;
+
   MetricsEvaluatorImpl evaluator;
-  absl::StatusOr<MetricEvaluation> evaluation_or =
-      evaluator.EvaluateMetric(metric_spec, fake_plugin, /*threshold_spec=*/nullptr);
+  absl::StatusOr<MetricEvaluation> evaluation_or = evaluator.EvaluateMetric(
+      metric_spec, fake_plugin, /*threshold_spec=*/nullptr, reporting_period);
   ASSERT_TRUE(evaluation_or.ok());
   nighthawk::adaptive_load::MetricEvaluation evaluation = evaluation_or.value();
   EXPECT_EQ(evaluation.metric_id(), "nighthawk.fake_metrics_plugin/good-metric");
@@ -102,9 +123,11 @@ TEST(EvaluateMetric, PropagatesMetricsPluginError) {
   metric_spec.set_metrics_plugin_name("nighthawk.fake_metrics_plugin");
   metric_spec.set_metric_name(kMetricName);
 
+  ReportingPeriod reporting_period;
+
   MetricsEvaluatorImpl evaluator;
-  absl::StatusOr<MetricEvaluation> evaluation_or =
-      evaluator.EvaluateMetric(metric_spec, fake_plugin, /*threshold_spec=*/nullptr);
+  absl::StatusOr<MetricEvaluation> evaluation_or = evaluator.EvaluateMetric(
+      metric_spec, fake_plugin, /*threshold_spec=*/nullptr, reporting_period);
   ASSERT_FALSE(evaluation_or.ok());
   EXPECT_EQ(static_cast<int>(evaluation_or.status().code()), kExpectedStatusCode);
   EXPECT_THAT(evaluation_or.status().message(), HasSubstr(kExpectedStatusMessage));
@@ -123,9 +146,11 @@ TEST(EvaluateMetric, StoresMetricValueForValidMetric) {
   metric_spec.set_metrics_plugin_name("nighthawk.fake_metrics_plugin");
   metric_spec.set_metric_name(kMetricName);
 
+  ReportingPeriod reporting_period;
+
   MetricsEvaluatorImpl evaluator;
-  absl::StatusOr<MetricEvaluation> evaluation_or =
-      evaluator.EvaluateMetric(metric_spec, fake_plugin, /*threshold_spec=*/nullptr);
+  absl::StatusOr<MetricEvaluation> evaluation_or = evaluator.EvaluateMetric(
+      metric_spec, fake_plugin, /*threshold_spec=*/nullptr, reporting_period);
   ASSERT_TRUE(evaluation_or.ok());
   EXPECT_EQ(evaluation_or.value().metric_value(), kExpectedValue);
 }
@@ -144,9 +169,11 @@ TEST(EvaluateMetric, SetsWeightToZeroForValidInformationalMetric) {
   metric_spec.set_metrics_plugin_name("nighthawk.fake_metrics_plugin");
   metric_spec.set_metric_name(kMetricName);
 
+  ReportingPeriod reporting_period;
+
   MetricsEvaluatorImpl evaluator;
-  absl::StatusOr<MetricEvaluation> evaluation_or =
-      evaluator.EvaluateMetric(metric_spec, fake_plugin, /*threshold_spec=*/nullptr);
+  absl::StatusOr<MetricEvaluation> evaluation_or = evaluator.EvaluateMetric(
+      metric_spec, fake_plugin, /*threshold_spec=*/nullptr, reporting_period);
   ASSERT_TRUE(evaluation_or.ok());
   EXPECT_EQ(evaluation_or.value().weight(), 0.0);
 }
@@ -172,9 +199,11 @@ TEST(EvaluateMetric, SetsWeightForValidScoredMetric) {
   *threshold_spec.mutable_scoring_function() =
       MakeLowerThresholdBinaryScoringFunctionConfig(kLowerThreshold);
 
+  ReportingPeriod reporting_period;
+
   MetricsEvaluatorImpl evaluator;
   absl::StatusOr<MetricEvaluation> evaluation_or =
-      evaluator.EvaluateMetric(metric_spec, fake_plugin, &threshold_spec);
+      evaluator.EvaluateMetric(metric_spec, fake_plugin, &threshold_spec, reporting_period);
   ASSERT_TRUE(evaluation_or.ok());
   EXPECT_EQ(evaluation_or.value().weight(), kExpectedWeight);
 }
@@ -198,9 +227,11 @@ TEST(EvaluateMetric, SetsScoreForValidMetric) {
   *threshold_spec.mutable_scoring_function() =
       MakeLowerThresholdBinaryScoringFunctionConfig(kLowerThreshold);
 
+  ReportingPeriod reporting_period;
+
   MetricsEvaluatorImpl evaluator;
   absl::StatusOr<MetricEvaluation> evaluation_or =
-      evaluator.EvaluateMetric(metric_spec, fake_plugin, &threshold_spec);
+      evaluator.EvaluateMetric(metric_spec, fake_plugin, &threshold_spec, reporting_period);
   ASSERT_TRUE(evaluation_or.ok());
   EXPECT_EQ(evaluation_or.value().threshold_score(), -1.0);
 }
@@ -223,8 +254,7 @@ TEST(ExtractMetricSpecs, ExtractsScoredMetricAndThresholdForValidMetric) {
   ASSERT_GT(spec_threshold_pairs.size(), 0);
   EXPECT_EQ(spec_threshold_pairs[0].first->metric_name(), kExpectedMetricName);
   ASSERT_NE(spec_threshold_pairs[0].second, nullptr);
-  EXPECT_TRUE(MessageDifferencer::Equivalent(*spec_threshold_pairs[0].second, threshold_spec));
-  EXPECT_EQ(spec_threshold_pairs[0].second->DebugString(), threshold_spec.DebugString());
+  EXPECT_THAT(*spec_threshold_pairs[0].second, EqualsProto(threshold_spec));
 }
 
 TEST(ExtractMetricSpecs, ExtractsValueForValidInformationalMetric) {
@@ -273,8 +303,8 @@ TEST(AnalyzeNighthawkBenchmark, StoresNighthawkResultForSuccessfulMetricEvaluati
 
   EXPECT_TRUE(MessageDifferencer::Equivalent(result_or.value().nighthawk_service_output(),
                                              nighthawk_response.output()));
-  EXPECT_EQ(result_or.value().nighthawk_service_output().DebugString(),
-            nighthawk_response.output().DebugString());
+  EXPECT_THAT(result_or.value().nighthawk_service_output(),
+            EqualsProto(nighthawk_response.output()));
 }
 
 TEST(AnalyzeNighthawkBenchmark, StoresScoreForSuccessfulMetricEvaluation) {
@@ -363,6 +393,145 @@ TEST(AnalyzeNighthawkBenchmark, UsesBuiltinMetricsPluginForUnspecifiedPluginName
   ASSERT_TRUE(result_or.ok());
   ASSERT_GT(result_or.value().metric_evaluations().size(), 0);
   EXPECT_EQ(result_or.value().metric_evaluations()[0].metric_value(), kExpectedSendRate);
+}
+
+TEST(AnalyzeNighthawkBenchmark, ReturnsErrorWithReportingPeriodImplementation) {
+  nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
+
+  const std::string kMetricName = "metric";
+  const std::string kWithReportingPeriodStatusMessage = "GetMetricByNameWithReportingPeriod Error";
+
+  FakeMetricsPluginConfig metrics_plugin_config;
+
+  MetricSpec metric_spec;
+  metric_spec.set_metrics_plugin_name("nighthawk.fake_metrics_plugin");
+  metric_spec.set_metric_name(kMetricName);
+  *spec.mutable_informational_metric_specs()->Add() = metric_spec;
+
+  nighthawk::client::ExecutionResponse nighthawk_response = MakeNighthawkResponseWithSendRate(1.0);
+  absl::flat_hash_map<std::string, MetricsPluginPtr> name_to_custom_metrics_plugin_map;
+  std::unique_ptr<MockMetricsPluginWithReportingPeriod> plugin =
+      std::make_unique<MockMetricsPluginWithReportingPeriod>(metrics_plugin_config);
+  EXPECT_CALL(*plugin, GetMetricByNameWithReportingPeriod(_, _))
+      .WillRepeatedly(Return(absl::InternalError(kWithReportingPeriodStatusMessage)));
+  name_to_custom_metrics_plugin_map["nighthawk.fake_metrics_plugin"] = std::move(plugin);
+
+  MetricsEvaluatorImpl evaluator;
+  absl::StatusOr<BenchmarkResult> result_or = evaluator.AnalyzeNighthawkBenchmark(
+      nighthawk_response, spec, name_to_custom_metrics_plugin_map);
+  ASSERT_FALSE(result_or.ok());
+  EXPECT_EQ(result_or.status().code(), absl::StatusCode::kInternal);
+  EXPECT_THAT(result_or.status().message(), HasSubstr(kWithReportingPeriodStatusMessage));
+}
+
+TEST(AnalyzeNighthawkBenchmark, ReturnsSuccessWithReportingPeriodImplementation) {
+  nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
+
+  const std::string kMetricName = "good-metric";
+  const double kDeprecatedMetricValue = 123.0;
+
+  FakeMetricsPluginConfig metrics_plugin_config;
+  FakeMetricsPluginConfig::FakeMetric* fake_metric =
+      metrics_plugin_config.mutable_fake_metrics()->Add();
+  fake_metric->set_name(kMetricName);
+  fake_metric->set_value(kDeprecatedMetricValue);
+
+  MetricSpec metric_spec;
+  metric_spec.set_metrics_plugin_name("nighthawk.fake_metrics_plugin");
+  metric_spec.set_metric_name(kMetricName);
+
+  *spec.mutable_informational_metric_specs()->Add() = metric_spec;
+
+  const double kOverrideMetricValue = 1337;
+  nighthawk::client::ExecutionResponse nighthawk_response = MakeNighthawkResponseWithSendRate(1.0);
+  absl::flat_hash_map<std::string, MetricsPluginPtr> name_to_custom_metrics_plugin_map;
+  std::unique_ptr<MockMetricsPluginWithReportingPeriod> plugin =
+      std::make_unique<MockMetricsPluginWithReportingPeriod>(metrics_plugin_config);
+  EXPECT_CALL(*plugin, GetMetricByNameWithReportingPeriod(_, _))
+      .WillRepeatedly(Return(kOverrideMetricValue));
+  name_to_custom_metrics_plugin_map["nighthawk.fake_metrics_plugin"] = std::move(plugin);
+
+  MetricsEvaluatorImpl evaluator;
+  absl::StatusOr<BenchmarkResult> result_or = evaluator.AnalyzeNighthawkBenchmark(
+      nighthawk_response, spec, name_to_custom_metrics_plugin_map);
+  ASSERT_TRUE(result_or.ok());
+  ASSERT_GT(result_or.value().metric_evaluations().size(), 0);
+  EXPECT_EQ(result_or.value().metric_evaluations()[0].metric_value(), kOverrideMetricValue);
+}
+
+TEST(AnalyzeNighthawkBenchmark, FailsWithNoResults) {
+  nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
+  nighthawk::client::ExecutionResponse nighthawk_response = MakeNighthawkResponseWithSendRate(1.0);
+  nighthawk_response.mutable_output()->clear_results();
+  absl::flat_hash_map<std::string, MetricsPluginPtr> name_to_custom_metrics_plugin_map;
+
+  MetricsEvaluatorImpl evaluator;
+  absl::StatusOr<BenchmarkResult> result_or = evaluator.AnalyzeNighthawkBenchmark(
+      nighthawk_response, spec, name_to_custom_metrics_plugin_map);
+  ASSERT_FALSE(result_or.ok());
+  EXPECT_EQ(result_or.status().code(), absl::StatusCode::kInvalidArgument);
+  EXPECT_THAT(result_or.status().message(), HasSubstr("output.results cannot be empty."));
+}
+
+// Utility to set the execution time and execution duration of a results object.
+void SetTimeAndDurationOnResult(nighthawk::client::Result* result, int64_t time_seconds,
+                                int64_t duration_seconds) {
+  result->mutable_execution_start()->set_seconds(time_seconds);
+  result->mutable_execution_start()->set_nanos(0);
+  result->mutable_execution_duration()->set_seconds(duration_seconds);
+  result->mutable_execution_duration()->set_nanos(0);
+}
+
+TEST(AnalyzeNighthawkBenchmark, FailsWithDurationWhereAllWorkersAreNeverActive) {
+  nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
+  nighthawk::client::ExecutionResponse nighthawk_response = MakeNighthawkResponseWithSendRate(1.0);
+  SetTimeAndDurationOnResult(nighthawk_response.mutable_output()->mutable_results(0), 0, 100);
+  SetTimeAndDurationOnResult(nighthawk_response.mutable_output()->add_results(), 100, 100);
+  absl::flat_hash_map<std::string, MetricsPluginPtr> name_to_custom_metrics_plugin_map;
+
+  MetricsEvaluatorImpl evaluator;
+  absl::StatusOr<BenchmarkResult> result_or = evaluator.AnalyzeNighthawkBenchmark(
+      nighthawk_response, spec, name_to_custom_metrics_plugin_map);
+  ASSERT_FALSE(result_or.ok());
+  EXPECT_EQ(result_or.status().code(), absl::StatusCode::kInvalidArgument);
+  EXPECT_THAT(result_or.status().message(),
+              HasSubstr("Reported execution times in output.results indicate that there is no time "
+                        "where all workers were active."));
+}
+
+TEST(AnalyzeNighthawkBenchmark, SelectsOverlappingReportingPeriodWithAllWorkers) {
+  nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
+  const std::string kMetricName = "good-metric";
+  FakeMetricsPluginConfig metrics_plugin_config;
+  MetricSpec metric_spec;
+  metric_spec.set_metrics_plugin_name("nighthawk.fake_metrics_plugin");
+  metric_spec.set_metric_name(kMetricName);
+  *spec.mutable_informational_metric_specs()->Add() = metric_spec;
+
+  nighthawk::client::ExecutionResponse nighthawk_response = MakeNighthawkResponseWithSendRate(1.0);
+  SetTimeAndDurationOnResult(nighthawk_response.mutable_output()->mutable_results(0), 0, 100);
+  SetTimeAndDurationOnResult(nighthawk_response.mutable_output()->add_results(), 50, 100);
+  SetTimeAndDurationOnResult(nighthawk_response.mutable_output()->add_results(), 25, 50);
+
+  // Overlapping time for all is 50 -> 75.
+  ReportingPeriod kExpectedReportingPeriod;
+  kExpectedReportingPeriod.start_time.set_seconds(50);
+  kExpectedReportingPeriod.duration.set_seconds(25);
+  absl::flat_hash_map<std::string, MetricsPluginPtr> name_to_custom_metrics_plugin_map;
+  std::unique_ptr<MockMetricsPluginWithReportingPeriod> plugin =
+      std::make_unique<MockMetricsPluginWithReportingPeriod>(metrics_plugin_config);
+  EXPECT_CALL(
+      *plugin,
+      GetMetricByNameWithReportingPeriod(
+          _, AllOf(Field(&ReportingPeriod::start_time, Eq(kExpectedReportingPeriod.start_time)),
+                   Field(&ReportingPeriod::duration, Eq(kExpectedReportingPeriod.duration)))))
+      .WillOnce(Return(10));
+  name_to_custom_metrics_plugin_map["nighthawk.fake_metrics_plugin"] = std::move(plugin);
+
+  MetricsEvaluatorImpl evaluator;
+  absl::StatusOr<BenchmarkResult> result_or = evaluator.AnalyzeNighthawkBenchmark(
+      nighthawk_response, spec, name_to_custom_metrics_plugin_map);
+  ASSERT_TRUE(result_or.ok());
 }
 
 } // namespace
