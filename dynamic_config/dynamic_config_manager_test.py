@@ -59,12 +59,13 @@ def test_can_mutate_clusters(config):
   config.ParseFromString(cm.serialize())
 
   # Due to randomness in mutate, we check valid mutation states after invoking.
-  if cm._last_mutate_action() == DynamicClusterConfigManager.Action.ADD:
+  if cm.getLastMutateActionForTesting() == DynamicClusterConfigManager.Action.ADD:
     assert (len(config.resources) == 1 or len(config.resources) == 2)
-  elif cm._last_mutate_action() == DynamicClusterConfigManager.Action.REMOVE:
+  elif cm.getLastMutateActionForTesting() == DynamicClusterConfigManager.Action.REMOVE:
     assert (len(config.resources) == 1 or len(config.resources) == 0)
   else:
-    raise NotImplementedError('Action: {} is not implemented.'.format(cm._last_mutate_action()))
+    raise NotImplementedError('Action: {} is not implemented.'.format(
+        cm.getLastMutateActionForTesting()))
 
 
 if __name__ == '__main__':
