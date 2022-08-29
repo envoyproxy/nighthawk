@@ -10,7 +10,7 @@ from test.integration.integration_test_fixtures import (http_test_server_fixture
                                                         https_test_server_fixture)
 from test.integration import asserts
 from envoy_proxy import (inject_envoy_http_proxy_fixture, proxy_config)
-from benchmarks.utilities import output_benchmark_results
+from benchmarks import utilities
 
 
 def _run_benchmark(fixture,
@@ -54,7 +54,7 @@ def _run_benchmark(fixture,
   # Could potentially set thresholds on acceptable latency here.
 
   # output test results
-  output_benchmark_results(parsed_json, fixture)
+  utilities.output_benchmark_results(parsed_json, fixture)
 
 
 # Test via injected Envoy

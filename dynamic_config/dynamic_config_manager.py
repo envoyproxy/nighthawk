@@ -2,19 +2,17 @@
 
 import json
 import yaml
-from enum import Enum
+import enum
 from google.protobuf import json_format
 
-from abc import ABC, abstractmethod
-import envoy.config.cluster.v3.cluster_pb2 as cluster_pb2
-import envoy.service.discovery.v3.discovery_pb2 as discovery_pb2
-import envoy.extensions.upstreams.http.v3.http_protocol_options_pb2 as http_protocol_options_pb2
-import envoy.extensions.transport_sockets.tls.v3.tls_pb2 as tls_pb2
-import nighthawk.api.configuration.cluster_config_manager_pb2 as cluster_manager_pb2
+import abc
+from envoy.config.cluster.v3 import cluster_pb2
+from envoy.service.discovery.v3 import discovery_pb2
+from envoy.extensions.upstreams.http.v3 import http_protocol_options_pb2
+from envoy.extensions.transport_sockets.tls.v3 import tls_pb2
+from nighthawk.api.configuration import cluster_config_manager_pb2
 
 import random
-
-from google.protobuf import json_format
 import argparse
 import time
 import base64
@@ -22,7 +20,7 @@ import logging
 import os
 
 
-class DynamicConfigManager(ABC):
+class DynamicConfigManager(abc.ABC):
   """Base class for Dynamic configuration components.
 
   Provides an interface for starting dynamic configuration.
@@ -44,12 +42,12 @@ class DynamicConfigManager(ABC):
     """Stop periodically executing a method."""
     self._exit = True
 
-  @abstractmethod
+  @abc.abstractmethod
   def timeBeforeNextUpdate(self):
     """Provide the time before the next execution."""
     pass
 
-  @abstractmethod
+  @abc.abstractmethod
   def execute(self):
     """Periodically execute this method."""
     pass
@@ -58,7 +56,7 @@ class DynamicConfigManager(ABC):
 class DynamicClusterConfigManager(DynamicConfigManager):
   """Encapsulates dynamic cluster configuration."""
 
-  class Action(Enum):
+  class Action(enum.Enum):
     """Enum class for mutation actions to configuration."""
 
     ADD = 1
@@ -88,7 +86,7 @@ class DynamicClusterConfigManager(DynamicConfigManager):
 
   mutate_actions = list(Action)
 
-  def __init__(self, config: cluster_manager_pb2.DynamicClusterConfigManagerSettings):
+  def __init__(self, config: cluster_config_manager_pb2.DynamicClusterConfigManagerSettings):
     """Create a DynamicClusterConfigManager."""
     DynamicConfigManager.__init__(self)
     self._active_config = discovery_pb2.DiscoveryResponse()
@@ -103,8 +101,8 @@ class DynamicClusterConfigManager(DynamicConfigManager):
     # Tracks the last mutated action. Used for testing.
     self._last_mutate_action = None
 
-  def _parseAvailableClusters(self,
-                              config: cluster_manager_pb2.DynamicClusterConfigManagerSettings):
+  def _parseAvailableClusters(
+      self, config: cluster_config_manager_pb2.DynamicClusterConfigManagerSettings):
     clusters = []
     for service_config in config.clusters:
       new_cluster = cluster_pb2.Cluster()
@@ -204,7 +202,7 @@ if __name__ == '__main__':
   args = parser.parse_args()
 
   base64_decoded = base64.b64decode(args.config, validate=True)
-  settings = cluster_manager_pb2.DynamicClusterConfigManagerSettings()
+  settings = cluster_config_manager_pb2.DynamicClusterConfigManagerSettings()
   settings.ParseFromString(base64_decoded)
 
   manager = DynamicClusterConfigManager(settings)

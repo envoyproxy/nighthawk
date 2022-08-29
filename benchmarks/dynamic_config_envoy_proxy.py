@@ -5,10 +5,10 @@ import logging
 import os
 from typing import Generator
 
-from test.integration.integration_test_fixtures import determineIpVersionsFromEnvironment
-from envoy_proxy import EnvoyProxyServer, InjectHttpProxyIntegrationTestBase
-from dynamic_config.dynamic_config_server import DynamicConfigController
-from nighthawk.api.configuration.cluster_config_manager_pb2 import DynamicClusterConfigManagerSettings
+from test.integration import integration_test_fixtures
+import envoy_proxy
+from dynamic_config import dynamic_config_server
+from nighthawk.api.configuration import cluster_config_manager_pb2
 
 
 @pytest.fixture()
@@ -20,9 +20,10 @@ def proxy_config() -> Generator[str, None, None]:
 # TODO(kbaichoo): Stubbed implementation. Will be enhanced to
 # leverage backend addresses.
 @pytest.fixture()
-def dynamic_config_settings() -> Generator[DynamicClusterConfigManagerSettings, None, None]:
+def dynamic_config_settings(
+) -> Generator[cluster_config_manager_pb2.DynamicClusterConfigManagerSettings, None, None]:
   """Yield the stock Envoy proxy configuration."""
-  settings = DynamicClusterConfigManagerSettings()
+  settings = cluster_config_manager_pb2.DynamicClusterConfigManagerSettings()
   settings.refresh_interval.seconds = 5
   settings.output_file = 'new_cds.pb'
   cluster = settings.clusters.add()
@@ -30,7 +31,7 @@ def dynamic_config_settings() -> Generator[DynamicClusterConfigManagerSettings, 
   yield settings
 
 
-class InjectDynamicHttpProxyIntegrationTestBase(InjectHttpProxyIntegrationTestBase):
+class InjectDynamicHttpProxyIntegrationTestBase(envoy_proxy.InjectHttpProxyIntegrationTestBase):
   """Proxy and Test server fixture.
 
   Fixture which spins up a Nighthawk test server, an Envoy proxy and a xDS configuration
@@ -40,8 +41,9 @@ class InjectDynamicHttpProxyIntegrationTestBase(InjectHttpProxyIntegrationTestBa
     See base class.
   """
 
-  def __init__(self, request, server_config: str, proxy_config: str,
-               dynamic_config_settings: DynamicClusterConfigManagerSettings):
+  def __init__(
+      self, request, server_config: str, proxy_config: str,
+      dynamic_config_settings: cluster_config_manager_pb2.DynamicClusterConfigManagerSettings):
     """Initialize an InjectDynamicHttpProxyIntegrationTestBase.
 
     Arguments:
@@ -71,7 +73,8 @@ class InjectDynamicHttpProxyIntegrationTestBase(InjectHttpProxyIntegrationTestBa
     endpoints.ip = self.test_server.server_ip
     endpoints.port = self.test_server.server_port
 
-    self._dynamic_config_controller = DynamicConfigController(self._dynamic_config_settings)
+    self._dynamic_config_controller = dynamic_config_server.DynamicConfigController(
+        self._dynamic_config_settings)
 
     assert (self._dynamic_config_controller.start())
     logging.info("dynamic configuration running")
@@ -82,7 +85,7 @@ class InjectDynamicHttpProxyIntegrationTestBase(InjectHttpProxyIntegrationTestBa
     self._dynamic_config_controller.stop()
 
 
-@pytest.fixture(params=determineIpVersionsFromEnvironment())
+@pytest.fixture(params=integration_test_fixtures.determineIpVersionsFromEnvironment())
 def inject_dynamic_envoy_http_proxy_fixture(request, server_config, proxy_config,
                                             dynamic_config_settings, caplog):
   """Injects a dynamically configured Envoy proxy in front of the test server.

@@ -8,8 +8,7 @@ import pytest
 
 from dynamic_config_envoy_proxy import (dynamic_config_settings,
                                         inject_dynamic_envoy_http_proxy_fixture, proxy_config)
-from benchmarks.utilities import output_benchmark_results
-from test.integration import asserts
+from benchmarks import utilities
 
 
 def _run_benchmark(fixture,
@@ -37,7 +36,7 @@ def _run_benchmark(fixture,
   parsed_json, _ = fixture.runNighthawkClient(args, expect_failure=True)
 
   # output test results
-  output_benchmark_results(parsed_json, fixture)
+  utilities.output_benchmark_results(parsed_json, fixture)
 
 
 # Test via injected Envoy

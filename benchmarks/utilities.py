@@ -4,7 +4,7 @@ import logging
 import json
 from rules_python.python.runfiles import runfiles
 import os
-from shutil import copyfile
+import shutil
 
 
 def output_benchmark_results(json_results: dict, fixture):
@@ -33,5 +33,5 @@ def output_benchmark_results(json_results: dict, fixture):
     with open(os.path.join(output_dir, "proxy_version.txt"), "w") as f:
       f.write(fixture.proxy_server.getCliVersionString())
   r = runfiles.Create()
-  copyfile(r.Rlocation("nighthawk/benchmarks/templates/simple_plot.html"),
-           os.path.join(fixture.test_server.tmpdir, "simple_plot.html"))
+  shutil.copyfile(r.Rlocation("nighthawk/benchmarks/templates/simple_plot.html"),
+                  os.path.join(fixture.test_server.tmpdir, "simple_plot.html"))

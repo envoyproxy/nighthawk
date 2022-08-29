@@ -10,13 +10,10 @@ import pytest
 import yaml
 from rules_python.python.runfiles import runfiles
 
-from test.integration.integration_test_fixtures import (HttpIntegrationTestBase,
-                                                        determineIpVersionsFromEnvironment)
-from test.integration.nighthawk_test_server import (NighthawkTestServer, substitute_yaml_values)
-from string import Template
+from test.integration import integration_test_fixtures, nighthawk_test_server
 
 
-class EnvoyProxyServer(NighthawkTestServer):
+class EnvoyProxyServer(nighthawk_test_server.NighthawkTestServer):
   """Envoy proxy server abstraction.
 
   Note that it derives from NighthawkTestServer, as that is implemented as a customized
@@ -73,7 +70,8 @@ class EnvoyProxyServer(NighthawkTestServer):
       runfiles_instance = runfiles.Create()
       with open(runfiles_instance.Rlocation('nighthawk/benchmarks/configurations/lds.yaml')) as f:
         data = yaml.load(f, Loader=yaml.FullLoader)
-        data = substitute_yaml_values(runfiles_instance, data, self._parameters)
+        data = nighthawk_test_server.substitute_yaml_values(runfiles_instance, data,
+                                                            self._parameters)
 
       listener_file_path = os.path.join(self.tmpdir, 'lds.yaml')
       logging.info(f"Creating listener file in {listener_file_path}.")
@@ -92,7 +90,7 @@ def proxy_config():
   yield "nighthawk/benchmarks/configurations/envoy_proxy.yaml"
 
 
-class InjectHttpProxyIntegrationTestBase(HttpIntegrationTestBase):
+class InjectHttpProxyIntegrationTestBase(integration_test_fixtures.HttpIntegrationTestBase):
   """Proxy and Test server fixture.
 
   Fixture which spins up a Nighthawk test server as well as an Envoy proxy
@@ -147,7 +145,7 @@ class InjectHttpProxyIntegrationTestBase(HttpIntegrationTestBase):
     return root_uri
 
 
-@pytest.fixture(params=determineIpVersionsFromEnvironment())
+@pytest.fixture(params=integration_test_fixtures.determineIpVersionsFromEnvironment())
 def inject_envoy_http_proxy_fixture(request, server_config, proxy_config, caplog):
   """Injects an Envoy proxy in front of the test server.
 
