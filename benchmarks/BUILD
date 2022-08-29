@@ -3,7 +3,7 @@ load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
 licenses(["notice"])  # Apache 2
 
 py_binary(
-    name = "static_benchmarks",
+    name = "benchmarks",
     srcs = [
         "static_benchmarks.py",
     ],
@@ -16,10 +16,10 @@ py_binary(
 )
 
 py_test(
-    name = "test_static_benchmarks",
+    name = "test_benchmarks",
     srcs = [
         "static_benchmarks.py",
-        "static_test/test_discovery.py",
+        "test/test_discovery.py",
     ],
     main = "static_benchmarks.py",
     srcs_version = "PY2AND3",

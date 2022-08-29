@@ -22,7 +22,7 @@ The benchmark will drop a visual in each test directory.
 ## Example: Docker based execution, scavaging benchmark/
 
 This scripts shows how to use the benchmarking suite.
-It will run a selection of an example [static benchmarks](static_test/test_discovery.py)
+It will run a selection of an example [static benchmarks](test/test_discovery.py)
 extracted from `/benchmarks`, which injects Envoy between the benchmark client and test server.
 It will also run an example [dynamic
 benchmark](dynamic_test/test_cds_churn_with_traffic.py) which adds dynamic
@@ -45,7 +45,7 @@ export ENVOY_DOCKER_IMAGE_TO_TEST="envoyproxy/envoy-dev:74290ef76a76fbbf50f072dc
 export ENVOY_PATH="envoy"
 
 # run all static configuration benchmark tests starting with test_http_h1_small in benchmarks/
-bazel-bin/benchmarks/static_benchmarks --log-cli-level=info -vvvv -k test_http_h1_small benchmarks/static_test/
+bazel-bin/benchmarks/static_benchmarks --log-cli-level=info -vvvv -k test_http_h1_small benchmarks/test/
 # run all dynamic configuration benchmark tests
 bazel-bin/benchmarks/dynamic_benchmarks --log-cli-level=info -vvvv  benchmarks/dynamic_test/
 ```
