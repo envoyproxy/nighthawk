@@ -23,13 +23,15 @@ from test.integration.common import IpVersion, NighthawkException
 from test.integration.subprocess_mixin import SubprocessMixin
 
 
-def _substitute_yaml_values(runfiles_instance, obj, params):
+# TODO(kbaichoo): migrate to a utility file.
+def substitute_yaml_values(runfiles_instance, obj, params):
+  """Substitute params into the given template."""
   if isinstance(obj, dict):
     for k, v in obj.items():
-      obj[k] = _substitute_yaml_values(runfiles_instance, v, params)
+      obj[k] = substitute_yaml_values(runfiles_instance, v, params)
   elif isinstance(obj, list):
     for i in range(len(obj)):
-      obj[i] = _substitute_yaml_values(runfiles_instance, obj[i], params)
+      obj[i] = substitute_yaml_values(runfiles_instance, obj[i], params)
   else:
     if isinstance(obj, str):
       # Inspect string values and substitute where applicable.
@@ -153,10 +155,14 @@ class TestServerBase(SubprocessMixin):
     self._request = request
 
   def _prepareForExecution(self):
+    """Set up initial configuration files.
+
+    Derived classes may wish to extend to for additional configuration files.
+    """
     runfiles_instance = runfiles.Create()
     with open(runfiles_instance.Rlocation(self._config_template_path)) as f:
       data = yaml.load(f, Loader=yaml.FullLoader)
-      data = _substitute_yaml_values(runfiles_instance, data, self._parameters)
+      data = substitute_yaml_values(runfiles_instance, data, self._parameters)
 
     Path(self.tmpdir).mkdir(parents=True, exist_ok=True)
 
