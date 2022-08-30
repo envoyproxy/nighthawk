@@ -124,9 +124,9 @@ ConsoleOutputFormatterImpl::formatProto(const nighthawk::client::Output& output)
 
 std::string ConsoleOutputFormatterImpl::formatProtoDuration(
     const Envoy::ProtobufWkt::Duration& duration) const {
-  auto c = Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(duration);
-  return fmt::format("{}s {:03}ms {:03}us", (c % 1'000'000'000) / 1'000'000,
-                     (c % 1'000'000) / 1'000, c % 1'000);
+  auto microseconds = Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(duration);
+  return fmt::format("{}s {:03}ms {:03}us", (microseconds % 1'000'000'000) / 1'000'000,
+                     (microseconds % 1'000'000) / 1'000, microseconds % 1'000);
 }
 
 std::string ConsoleOutputFormatterImpl::statIdtoFriendlyStatName(absl::string_view stat_id) {
@@ -228,9 +228,9 @@ CsvOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) con
 
 std::string CsvOutputFormatterImpl::formatProtoDuration(
     const Envoy::ProtobufWkt::Duration& duration) const {
-  auto c = Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(duration);
-  return fmt::format("{}s {:03}ms {:03}us", (c % 1'000'000'000) / 1'000'000,
-                     (c % 1'000'000) / 1'000, c % 1'000);
+  auto microseconds = Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(duration);
+  return fmt::format("{}s {:03}ms {:03}us", (microseconds % 1'000'000'000) / 1'000'000,
+                     (microseconds % 1'000'000) / 1'000, microseconds % 1'000);
 }
 
 std::string CsvOutputFormatterImpl::statIdtoFriendlyStatName(absl::string_view stat_id) {
