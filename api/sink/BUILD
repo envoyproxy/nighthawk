@@ -25,7 +25,6 @@ cc_grpc_library(
     proto_only = False,
     use_external = False,
     visibility = ["//visibility:public"],
-    well_known_protos = True,
     deps = [
         ":sink_cc_proto",
     ],
