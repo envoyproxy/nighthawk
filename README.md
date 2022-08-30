@@ -185,8 +185,8 @@ format>] [--sequencer-idle-strategy <spin
 <auto|v4|v6>] [--burst-size <uint32_t>]
 [--prefetch-connections] [--output-format
 <json|human|yaml|dotted|fortio
-|experimental_fortio_pedantic|csv>] [-v <trace
-|debug|info|warn|error|critical>]
+|experimental_fortio_pedantic|csv>] [-v
+<trace|debug|info|warn|error|critical>]
 [--concurrency <string>]
 [--http3-protocol-options <string>] [-p
 <http1|http2|http3>] [--h2] [--timeout

@@ -162,9 +162,9 @@ CsvOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) con
 
   std::stringstream ss;
   ss << "Nighthawk - A layer 7 protocol benchmarking tool." << std::endl << std::endl;
-  for (const auto& result : output.results()) {
+  for (const nighthawk::client::Result& result : output.results()) {
     if (result.name() == "global") {
-      for (const auto& statistic : result.statistics()) {
+      for (const nighthawk::client::Statistic& statistic : result.statistics()) {
         // Don't show output for statistics that have no samples.
         if (statistic.count() == 0) {
           continue;
@@ -190,7 +190,7 @@ CsvOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) con
         bool header_written = false;
         iteratePercentiles(statistic, [&ss, this, &header_written](
                                           const nighthawk::client::Percentile& percentile) {
-          const auto p = percentile.percentile();
+          const double p = percentile.percentile();
           // Don't show the min / max, as we already show that above.
           if (p > 0 && p < 1) {
             // Table headers
@@ -198,7 +198,7 @@ CsvOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) con
               ss << "Percentile,Count,Value(microseconds),Value" << std::endl;
               header_written = true;
             }
-            auto s_percentile = fmt::format("{:.{}g}", p, 8);
+            std::string s_percentile = fmt::format("{:.{}g}", p, 8);
             ss << fmt::format("{},{},{},{}", s_percentile, percentile.count(),
                               Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(percentile.duration()),
                               percentile.has_duration()
@@ -213,8 +213,8 @@ CsvOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) con
       
       // Counters
       ss << fmt::format("{},{},{}", "Counter", "Value", "Per second") << std::endl;
-      for (const auto& counter : result.counters()) {
-        const auto nanos =
+      for (const nighthawk::client::Counter& counter : result.counters()) {
+        const int64_t nanos =
             Envoy::Protobuf::util::TimeUtil::DurationToNanoseconds(result.execution_duration());
         ss << fmt::format("{},{},{:.{}f}", counter.name(), counter.value(),
                           counter.value() / (nanos / 1e9), 2)
@@ -228,7 +228,7 @@ CsvOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) con
 
 std::string CsvOutputFormatterImpl::formatProtoDuration(
     const Envoy::ProtobufWkt::Duration& duration) const {
-  auto microseconds = Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(duration);
+  int64_t microseconds = Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(duration);
   return fmt::format("{}s {:03}ms {:03}us", (microseconds % 1'000'000'000) / 1'000'000,
                      (microseconds % 1'000'000) / 1'000, microseconds % 1'000);
 }
