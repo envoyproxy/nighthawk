@@ -7,6 +7,7 @@ py_binary(
     srcs = [
         "static_benchmarks.py",
     ],
+    main = "static_benchmarks.py",
     srcs_version = "PY2AND3",
     deps = [
         ":benchmarks_envoy_proxy_lib",
