@@ -4,8 +4,8 @@
 
 #include "external/envoy/source/common/protobuf/message_validator_impl.h"
 
-#include "api/server/response_options.pb.h"
-#include "api/server/response_options.pb.validate.h"
+#include "api/server/dynamic_delay.pb.h"
+#include "api/server/dynamic_delay.pb.validate.h"
 
 #include "source/server/configuration.h"
 #include "source/server/http_dynamic_delay_filter.h"
@@ -26,7 +26,6 @@ public:
     const nighthawk::server::DynamicDelayConfiguration& dynamic_delay_configuration =
         Envoy::MessageUtil::downcastAndValidate<
             const nighthawk::server::DynamicDelayConfiguration&>(proto_config, validation_visitor);
-    validateResponseOptions(dynamic_delay_configuration.experimental_response_options());
     return createFilter(dynamic_delay_configuration, context);
   }
 

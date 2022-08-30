@@ -35,7 +35,8 @@ envoy_cc_test(
     repository = "@envoy",
     deps = [
         "//source/common:nighthawk_service_client_impl",
-        "@com_github_grpc_grpc//:grpc++_test",
+        "//test/test_common:mock_stream",
+        "//test/test_common:proto_matchers",
     ],
 )
 

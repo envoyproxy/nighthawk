@@ -5,9 +5,12 @@
 
 #include "envoy/server/filter_config.h"
 
+#include "external/envoy/source/common/common/statusor.h"
+#include "external/envoy/source/common/protobuf/message_validator_impl.h"
+#include "external/envoy/source/common/protobuf/utility.h"
 #include "external/envoy/source/extensions/filters/http/fault/fault_filter.h"
 
-#include "api/server/response_options.pb.h"
+#include "api/server/dynamic_delay.pb.h"
 
 #include "source/server/http_filter_config_base.h"
 
@@ -73,6 +76,13 @@ public:
    */
   std::string stats_prefix() { return stats_prefix_; }
 
+  /**
+   * @return std::shared_ptr<const nighthawk::server::TimeTrackingConfiguration> the startup
+   * configuration for this filter, which may get overridden by in-flight headers.
+   */
+  std::shared_ptr<const nighthawk::server::DynamicDelayConfiguration>
+  getStartupFilterConfiguration();
+
 private:
   static std::atomic<uint64_t>& instances() {
     // We lazy-init the atomic to avoid static initialization / a fiasco.
@@ -83,6 +93,7 @@ private:
   const std::string stats_prefix_;
   Envoy::Stats::Scope& scope_;
   Envoy::TimeSource& time_source_;
+  std::shared_ptr<const nighthawk::server::DynamicDelayConfiguration> server_config_;
 };
 
 using HttpDynamicDelayDecoderFilterConfigSharedPtr =
@@ -127,15 +138,15 @@ public:
   }
 
   /**
-   * Compute the delay in milliseconds, based on provided response options and number of active
-   * requests.
+   * Compute the delay in milliseconds, based on provided dynamic delay configuration and
+   * number of active requests.
    *
-   * @param response_options Response options configuration.
+   * @param configuration Dynamic delay configuration.
    * @param concurrency The number of concurrenct active requests.
    * @return absl::optional<int64_t> The computed delay in milliseconds, if any.
    */
   static absl::optional<int64_t>
-  computeDelayMs(const nighthawk::server::ResponseOptions& response_options,
+  computeDelayMs(const nighthawk::server::DynamicDelayConfiguration& configuration,
                  const uint64_t concurrency);
 
   /**
@@ -160,7 +171,8 @@ public:
 
 private:
   const HttpDynamicDelayDecoderFilterConfigSharedPtr config_;
-  absl::StatusOr<EffectiveFilterConfigurationPtr> effective_config_;
+  absl::StatusOr<std::shared_ptr<const nighthawk::server::DynamicDelayConfiguration>>
+      effective_config_;
   Envoy::Http::StreamDecoderFilterCallbacks* decoder_callbacks_;
   bool destroyed_{false};
 };

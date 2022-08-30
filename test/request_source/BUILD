@@ -51,6 +51,7 @@ envoy_cc_test(
         "//source/request_source:request_options_list_plugin_impl",
         "//test/request_source:stub_plugin_impl",
         "//test/test_common:environment_lib",
+        "//test/test_common:proto_matchers",
         "@envoy//source/common/config:utility_lib_with_external_headers",
         "@envoy//test/mocks/api:api_mocks",
     ],

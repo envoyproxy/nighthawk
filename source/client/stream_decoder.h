@@ -88,7 +88,7 @@ public:
                      Envoy::Upstream::HostDescriptionConstSharedPtr host) override;
   void onPoolReady(Envoy::Http::RequestEncoder& encoder,
                    Envoy::Upstream::HostDescriptionConstSharedPtr host,
-                   const Envoy::StreamInfo::StreamInfo& stream_info,
+                   Envoy::StreamInfo::StreamInfo& stream_info,
                    absl::optional<Envoy::Http::Protocol> protocol) override;
 
   static Envoy::StreamInfo::ResponseFlag

@@ -102,7 +102,7 @@ void StreamDecoder::onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason
 
 void StreamDecoder::onPoolReady(Envoy::Http::RequestEncoder& encoder,
                                 Envoy::Upstream::HostDescriptionConstSharedPtr,
-                                const Envoy::StreamInfo::StreamInfo&,
+                                Envoy::StreamInfo::StreamInfo&,
                                 absl::optional<Envoy::Http::Protocol>) {
   // Make sure we hear about stream resets on the encoder.
   encoder.getStream().addCallbacks(*this);

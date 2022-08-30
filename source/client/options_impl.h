@@ -37,7 +37,13 @@ public:
   std::chrono::seconds duration() const override { return std::chrono::seconds(duration_); }
   std::chrono::seconds timeout() const override { return std::chrono::seconds(timeout_); }
   absl::optional<std::string> uri() const override { return uri_; }
+
   Envoy::Http::Protocol protocol() const override;
+  const absl::optional<envoy::config::core::v3::Http3ProtocolOptions>&
+  http3ProtocolOptions() const override {
+    return http3_protocol_options_;
+  }
+
   std::string concurrency() const override { return concurrency_; }
   nighthawk::client::Verbosity::VerbosityOptions verbosity() const override { return verbosity_; };
   nighthawk::client::OutputFormat::OutputFormatOptions outputFormat() const override {
@@ -120,8 +126,11 @@ private:
   uint32_t duration_{5};
   uint32_t timeout_{30};
   absl::optional<std::string> uri_;
+
   bool h2_{false}; // Deprecated.
   nighthawk::client::Protocol::ProtocolOptions protocol_{nighthawk::client::Protocol::HTTP1};
+  absl::optional<envoy::config::core::v3::Http3ProtocolOptions> http3_protocol_options_;
+
   std::string concurrency_;
   nighthawk::client::Verbosity::VerbosityOptions verbosity_{nighthawk::client::Verbosity::WARN};
   nighthawk::client::OutputFormat::OutputFormatOptions output_format_{
