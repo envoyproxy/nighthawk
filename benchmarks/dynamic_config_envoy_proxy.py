@@ -17,8 +17,6 @@ def proxy_config() -> Generator[str, None, None]:
   yield "nighthawk/benchmarks/configurations/envoy_proxy.yaml"
 
 
-# TODO(kbaichoo): Stubbed implementation. Will be enhanced to
-# leverage backend addresses.
 @pytest.fixture()
 def dynamic_config_settings(
 ) -> Generator[cluster_config_manager_pb2.DynamicClusterConfigManagerSettings, None, None]:
