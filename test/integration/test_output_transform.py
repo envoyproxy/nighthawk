@@ -45,7 +45,7 @@ def test_output_transform_101():
   asserts.assertEqual(process.returncode, 0)
   asserts.assertIn("Nighthawk - A layer 7 protocol benchmarking tool",
                    process.stdout.decode("utf-8"))
-                   
+
 
 def test_output_transform_csv():
   """Run an arbitrary load test, which outputs to csv.
