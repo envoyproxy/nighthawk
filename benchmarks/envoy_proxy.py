@@ -10,7 +10,7 @@ import pytest
 import yaml
 from rules_python.python.runfiles import runfiles
 
-from test.integration import integration_test_fixtures, nighthawk_test_server
+from test.integration import integration_test_fixtures, nighthawk_test_server, utility
 
 
 class EnvoyProxyServer(nighthawk_test_server.NighthawkTestServer):
@@ -70,8 +70,7 @@ class EnvoyProxyServer(nighthawk_test_server.NighthawkTestServer):
       runfiles_instance = runfiles.Create()
       with open(runfiles_instance.Rlocation('nighthawk/benchmarks/configurations/lds.yaml')) as f:
         data = yaml.load(f, Loader=yaml.FullLoader)
-        data = nighthawk_test_server.substitute_yaml_values(runfiles_instance, data,
-                                                            self._parameters)
+        data = utility.substitute_yaml_values(runfiles_instance, data, self._parameters)
 
       listener_file_path = os.path.join(self.tmpdir, 'lds.yaml')
       logging.info(f"Creating listener file in {listener_file_path}.")

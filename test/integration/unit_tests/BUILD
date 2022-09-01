@@ -13,6 +13,9 @@ py_test(
 py_test(
     name = "test_utility",
     srcs = ["test_utility.py"],
+    data = [
+        "injected_file.txt",
+    ],
     deps = [
         "//test/integration:integration_test_base_lean",
     ],
