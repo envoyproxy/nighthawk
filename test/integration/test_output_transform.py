@@ -57,4 +57,3 @@ def test_output_transform_csv():
                            stdout=subprocess.PIPE)
   asserts.assertIn("Nighthawk - A layer 7 protocol benchmarking tool",
                    process.stdout.decode("utf-8"))
-
