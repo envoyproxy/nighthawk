@@ -55,27 +55,6 @@ def test_output_transform_csv():
       "--output-format", "csv"
   ],
                            stdout=subprocess.PIPE)
-  asserts.assertEqual(process.returncode, 0)
   asserts.assertIn("Nighthawk - A layer 7 protocol benchmarking tool",
                    process.stdout.decode("utf-8"))
 
-
-def test_output_transform_json_to_csv():
-  """Run an arbitrary load test, which outputs to json.
-
-  This json output is then transformed to csv output.
-  """
-  test_rundir = os.path.join(os.environ["TEST_SRCDIR"], os.environ["TEST_WORKSPACE"])
-  process = subprocess.run([
-      os.path.join(test_rundir, "nighthawk_client"), "--duration", "1", "--rps", "1", "127.0.0.1",
-      "--output-format", "json"
-  ],
-                           stdout=subprocess.PIPE)
-  output = process.stdout
-  process = subprocess.run(
-      [os.path.join(test_rundir, "nighthawk_output_transform"), "--output-format", "csv"],
-      stdout=subprocess.PIPE,
-      input=output)
-  asserts.assertEqual(process.returncode, 0)
-  asserts.assertIn("Nighthawk - A layer 7 protocol benchmarking tool",
-                   process.stdout.decode("utf-8"))
