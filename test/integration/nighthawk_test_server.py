@@ -20,15 +20,18 @@ from pathlib import Path
 from rules_python.python.runfiles import runfiles
 
 from test.integration.common import IpVersion, NighthawkException
+from test.integration.subprocess_mixin import SubprocessMixin
 
 
-def _substitute_yaml_values(runfiles_instance, obj, params):
+# TODO(kbaichoo): migrate to a utility file.
+def substitute_yaml_values(runfiles_instance, obj, params):
+  """Substitute params into the given template."""
   if isinstance(obj, dict):
     for k, v in obj.items():
-      obj[k] = _substitute_yaml_values(runfiles_instance, v, params)
+      obj[k] = substitute_yaml_values(runfiles_instance, v, params)
   elif isinstance(obj, list):
     for i in range(len(obj)):
-      obj[i] = _substitute_yaml_values(runfiles_instance, obj[i], params)
+      obj[i] = substitute_yaml_values(runfiles_instance, obj[i], params)
   else:
     if isinstance(obj, str):
       # Inspect string values and substitute where applicable.
@@ -102,13 +105,14 @@ _TEST_SERVER_WARN_ERROR_IGNORE_LIST = frozenset([
 ])
 
 
-class TestServerBase(object):
+class TestServerBase(SubprocessMixin):
   """Base class for running a server in a separate process.
 
   Attributes:
     ip_version: IP version that the proxy should use when listening.
     server_ip: string containing the server ip that will be used to listen
-    server_port: Integer, get the port used by the server to listen for traffic.
+    server_port: int, get the first port used by the server to listen for traffic.
+    server_ports: list[int], a list of all ports used by the server to listen for traffic. Empty until fetched.
     docker_image: String, supplies a docker image for execution of the test server binary. Sourced from environment variable NH_DOCKER_IMAGE.
     tmpdir: String, indicates the location used to store outputs like logs.
   """
@@ -127,10 +131,12 @@ class TestServerBase(object):
         parameters (dict): Supply to provide configuration template parameter replacement values.
         tag (str): Supply to get recognizeable output locations.
     """
+    SubprocessMixin.__init__(self)
     assert ip_version != IpVersion.UNKNOWN
     self.ip_version = ip_version
     self.server_ip = server_ip
     self.server_port = -1
+    self.server_ports = []
     self.docker_image = os.getenv("NH_DOCKER_IMAGE", "")
     self.tmpdir = os.path.join(os.getenv("TMPDIR", "/tmp/nighthawk_benchmark/"), tag + "/")
     self._server_binary_path = server_binary_path
@@ -149,10 +155,14 @@ class TestServerBase(object):
     self._request = request
 
   def _prepareForExecution(self):
+    """Set up initial configuration files.
+
+    Derived classes may wish to extend to for additional configuration files.
+    """
     runfiles_instance = runfiles.Create()
     with open(runfiles_instance.Rlocation(self._config_template_path)) as f:
       data = yaml.load(f, Loader=yaml.FullLoader)
-      data = _substitute_yaml_values(runfiles_instance, data, self._parameters)
+      data = substitute_yaml_values(runfiles_instance, data, self._parameters)
 
     Path(self.tmpdir).mkdir(parents=True, exist_ok=True)
 
@@ -170,7 +180,7 @@ class TestServerBase(object):
                                      dir=self.tmpdir) as tmp:
       self._admin_address_path = tmp.name
 
-  def _serverThreadRunner(self):
+  def _argsForSubprocess(self):
     args = []
     if self.docker_image != "":
       # TODO(#383): As of https://github.com/envoyproxy/envoy/commit/e8a2d1e24dc9a0da5273442204ec3cdfad1e7ca8
@@ -185,17 +195,15 @@ class TestServerBase(object):
         self._parameterized_config_path, "-l", "debug", "--base-id", self._instance_id,
         "--admin-address-path", self._admin_address_path, "--concurrency", "1"
     ]
+    return args
 
-    logging.info("Test server popen() args: %s" % str.join(" ", args))
-    self._server_process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr = self._server_process.communicate()
-    logging.info("Process stdout: %s", stdout.decode("utf-8"))
-    logging.info("Process stderr: %s", stderr.decode("utf-8"))
+  def _serverThreadRunner(self):
+    stdout, stderr = super()._serverThreadRunner()
     warnings, errors = _extractWarningsAndErrors(stdout.decode() + stderr.decode(),
                                                  self._request.node.name,
                                                  _TEST_SERVER_WARN_ERROR_IGNORE_LIST)
     if warnings:
-      [logging.warn("Process logged a warning: %s", w) for w in warnings]
+      [logging.warning("Process logged a warning: %s", w) for w in warnings]
     if errors:
       [logging.error("Process logged an error: %s", e) for e in errors]
 
@@ -233,9 +241,13 @@ class TestServerBase(object):
     self.admin_port = tmp[len(tmp) - 1]
     try:
       listeners = self.fetchJsonFromAdminInterface("/listeners?format=json")
-      # Right now we assume there's only a single listener
-      self.server_port = listeners["listener_statuses"][0]["local_address"]["socket_address"][
-          "port_value"]
+      # We assume the listeners all use the same address.
+      for listener in listeners["listener_statuses"]:
+        port = listener["local_address"]["socket_address"]["port_value"]
+        self.server_ports.append(port)
+      if not self.server_ports:
+        return False
+      self.server_port = self.server_ports[0]
       return True
     except requests.exceptions.ConnectionError:
       return False
@@ -271,8 +283,7 @@ class TestServerBase(object):
     Returns:
         Bool: True iff the server started successfully.
     """
-    self._server_thread.daemon = True
-    self._server_thread.start()
+    self.launchSubprocess()
     return self._waitUntilServerListening()
 
   def stop(self):
@@ -282,9 +293,7 @@ class TestServerBase(object):
         Int: exit code of the server process.
     """
     os.remove(self._admin_address_path)
-    self._server_process.terminate()
-    self._server_thread.join()
-    return self._server_process.returncode
+    return self.stopSubprocess()
 
 
 class NighthawkTestServer(TestServerBase):

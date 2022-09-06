@@ -7,13 +7,13 @@ Contains customized fixture & EnvoyProxyServer abstraction for use in tests.
 import logging
 import os
 import pytest
+import yaml
+from rules_python.python.runfiles import runfiles
 
-from test.integration.integration_test_fixtures import (HttpIntegrationTestBase,
-                                                        determineIpVersionsFromEnvironment)
-from test.integration.nighthawk_test_server import NighthawkTestServer
+from test.integration import integration_test_fixtures, nighthawk_test_server
 
 
-class EnvoyProxyServer(NighthawkTestServer):
+class EnvoyProxyServer(nighthawk_test_server.NighthawkTestServer):
   """Envoy proxy server abstraction.
 
   Note that it derives from NighthawkTestServer, as that is implemented as a customized
@@ -56,6 +56,33 @@ class EnvoyProxyServer(NighthawkTestServer):
                                            tag=tag)
     self.docker_image = os.getenv("ENVOY_DOCKER_IMAGE_TO_TEST", "")
 
+  def _prepareForExecution(self):
+    super(EnvoyProxyServer, self)._prepareForExecution()
+    # TODO(kbaichoo): Migrate to namedtuple in follow up.
+    if "dynamic" in self._config_template_path:
+      logging.info("Preparing Envoy for dynamic configuration.")
+
+      cluster_file_path = os.path.join(self.tmpdir, 'new_cds.pb')
+      logging.info(f"Creating empty cluster file in {cluster_file_path}.")
+      open(cluster_file_path, 'wb').close()
+
+      # Transfer static lds over
+      runfiles_instance = runfiles.Create()
+      with open(runfiles_instance.Rlocation('nighthawk/benchmarks/configurations/lds.yaml')) as f:
+        data = yaml.load(f, Loader=yaml.FullLoader)
+        data = nighthawk_test_server.substitute_yaml_values(runfiles_instance, data,
+                                                            self._parameters)
+
+      listener_file_path = os.path.join(self.tmpdir, 'lds.yaml')
+      logging.info(f"Creating listener file in {listener_file_path}.")
+      with open(listener_file_path, 'w') as f:
+        yaml.safe_dump(data,
+                       f,
+                       default_flow_style=False,
+                       explicit_start=True,
+                       allow_unicode=True,
+                       encoding='utf-8')
+
 
 @pytest.fixture()
 def proxy_config():
@@ -63,11 +90,11 @@ def proxy_config():
   yield "nighthawk/benchmarks/configurations/envoy_proxy.yaml"
 
 
-class InjectHttpProxyIntegrationTestBase(HttpIntegrationTestBase):
+class InjectHttpProxyIntegrationTestBase(integration_test_fixtures.HttpIntegrationTestBase):
   """Proxy and Test server fixture.
 
   Fixture which spins up a Nighthawk test server as well as an Envoy proxy
-  which directs traffic to that. Both will be listing for plain http traffic.
+  which directs traffic to that. Both will be listening for plain http traffic.
   """
 
   def __init__(self, request, server_config, proxy_config):
@@ -88,6 +115,8 @@ class InjectHttpProxyIntegrationTestBase(HttpIntegrationTestBase):
     Assert that both started successfully, and return afterwards.
     """
     super(InjectHttpProxyIntegrationTestBase, self).setUp()
+
+    logging.info(f"Proxy config {self._proxy_config}")
     logging.info("injecting envoy proxy ...")
     # TODO(oschaaf): how should this interact with multiple backends?
     self.parameters["proxy_ip"] = self.test_server.server_ip
@@ -116,7 +145,7 @@ class InjectHttpProxyIntegrationTestBase(HttpIntegrationTestBase):
     return root_uri
 
 
-@pytest.fixture(params=determineIpVersionsFromEnvironment())
+@pytest.fixture(params=integration_test_fixtures.determineIpVersionsFromEnvironment())
 def inject_envoy_http_proxy_fixture(request, server_config, proxy_config, caplog):
   """Injects an Envoy proxy in front of the test server.
 

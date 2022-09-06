@@ -17,3 +17,11 @@ py_test(
         "//test/integration:integration_test_base_lean",
     ],
 )
+
+py_test(
+    name = "test_subprocess_mixin",
+    srcs = ["test_subprocess_mixin.py"],
+    deps = [
+        "//test/integration:integration_test_base_lean",
+    ],
+)

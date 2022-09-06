@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package nighthawk;
+
+import "google/protobuf/duration.proto";
+
+import "validate/validate.proto";
+
+// Settings to configure dynamic cluster configuration.
+message DynamicClusterConfigManagerSettings {
+  message Cluster {
+    // Unique name of this cluster. Required.
+    string name = 1 [(validate.rules).string.min_len = 1];
+
+    // The endpoints backing this cluster.
+    repeated Endpoint endpoints = 2;
+  }
+
+  message Endpoint {
+    // IP address for the endpoint.
+    string ip = 1 [(validate.rules).string.ip = true];
+    // Port that the endpoint is listening on.
+    uint32 port = 2 [(validate.rules).uint32 = {lt: 65535 gt: 0}];
+  }
+
+  // Represents all possible clusters that the cluster config manager
+  // use to generate CDS updates.
+  repeated Cluster clusters = 1;
+
+  // How often to refresh the configuration.
+  google.protobuf.Duration refresh_interval = 2 [(validate.rules).duration = {gte {seconds: 0}}];
+
+  // File to serialize the refreshed configuration to.
+  // If omitted defaults to "new_cds.pb".
+  // The file extension is critical, right now only binary
+  // protos are supported.
+  string output_file = 3;
+}
