@@ -77,7 +77,7 @@ important maintenance task. When performing the update, follow this procedure:
    [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/tools/code_format/config.yaml) to
    update our format checker configuration. Be sure to retain our local modifications,
    all lines that are unique to Nighthawk are marked with comment `# unique`.
-1. If [requirements.txt](requirements.txt) has not been updated in the last month (based on comment at top
+1. If [requirements.txt](requirements.txt) has not been updated in the last 30 days (based on comment at top
    of file), check for major dependency updates. See
    [Finding python dependencies](#finding-python-dependencies) below for instructions.
 1. Run `ci/do_ci.sh test`. Sometimes the dependency update comes with changes
