@@ -54,10 +54,12 @@ py_library(
     data = [
         "configurations/dynamic_resources.yaml",
         "configurations/lds.yaml",
+        "configurations/request_source_five_clusters.json",
     ],
     srcs_version = "PY2AND3",
     deps = [
         "//api/configuration:cluster_config_manager_py_proto",
+        "@rules_python//python/runfiles",
     ],
 )
 

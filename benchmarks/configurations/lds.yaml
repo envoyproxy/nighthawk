@@ -20,7 +20,47 @@ resources:
         route_config:
           name: local_route
           virtual_hosts:
-          - name: local_service
+          - name: cluster_one_service
+            domains:
+            - "cluster_one.com"
+            routes:
+            - match:
+                prefix: "/"
+              route:
+                cluster: cluster_one
+          - name: cluster_two_service
+            domains:
+            - "cluster_two.com"
+            routes:
+            - match:
+                prefix: "/"
+              route:
+                cluster: cluster_two
+          - name: cluster_three_service
+            domains:
+            - "cluster_three.com"
+            routes:
+            - match:
+                prefix: "/"
+              route:
+                cluster: cluster_three
+          - name: cluster_four_service
+            domains:
+            - "cluster_four.com"
+            routes:
+            - match:
+                prefix: "/"
+              route:
+                cluster: cluster_four
+          - name: cluster_five_service
+            domains:
+            - "cluster_five.com"
+            routes:
+            - match:
+                prefix: "/"
+              route:
+                cluster: cluster_five
+          - name: fallback_service
             domains:
             - "*"
             routes:

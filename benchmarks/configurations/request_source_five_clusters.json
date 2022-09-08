@@ -1,0 +1,65 @@
+{
+  "name": "nighthawk.in-line-options-list-request-source-plugin",
+  "typedConfig": {
+    "@type": "type.googleapis.com/nighthawk.request_source.InLineOptionsListRequestSourceConfig",
+    "optionsList": {
+      "options": [
+        {
+          "requestHeaders": [
+            {
+              "header": {
+                "key": "HOST",
+                "value": "cluster_one.com"
+              }
+            }
+          ],
+          "requestMethod": "GET"
+        },
+        {
+          "requestHeaders": [
+            {
+              "header": {
+                "key": "HOST",
+                "value": "cluster_two.com"
+              }
+            }
+          ],
+          "requestMethod": "GET"
+        },
+        {
+          "requestHeaders": [
+            {
+              "header": {
+                "key": "HOST",
+                "value": "cluster_three.com"
+              }
+            }
+          ],
+          "requestMethod": "GET"
+        },
+        {
+          "requestHeaders": [
+            {
+              "header": {
+                "key": "HOST",
+                "value": "cluster_four.com"
+              }
+            }
+          ],
+          "requestMethod": "GET"
+        },
+        {
+          "requestHeaders": [
+            {
+              "header": {
+                "key": "HOST",
+                "value": "cluster_five.com"
+              }
+            }
+          ],
+          "requestMethod": "GET"
+        }
+      ]
+    }
+  }
+}
