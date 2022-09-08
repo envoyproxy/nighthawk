@@ -4,10 +4,32 @@ import os
 import subprocess
 import string
 from typing import Union
+from collections import namedtuple
 
 
 class Error(Exception):
   """Raised on errors in this module."""
+
+
+# Helper class to parse ip, port.
+SocketAddress = namedtuple('SocketAddress', ['ip', 'port'])
+
+
+def parseUrisToSocketAddress(uris: list[str]) -> list[SocketAddress]:
+  """Parse a list of uris returning the corresponding list of SocketAddresses.
+
+  Args:
+    uris: List of uri strings of the format http://<ip>:<port>, the ip address can be IPv4 or IPv6.
+
+  Returns:
+    The corresponding list of SocketAddress for each URI.
+  """
+  addresses = []
+  for uri in uris:
+    ip_and_port = uri.split('/')[2]
+    ip, port = ip_and_port.rsplit(':', maxsplit=1)
+    addresses.append(SocketAddress(ip, int(port)))
+  return addresses
 
 
 def isSanitizerRun():

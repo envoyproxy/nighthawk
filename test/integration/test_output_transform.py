@@ -45,3 +45,15 @@ def test_output_transform_101():
   asserts.assertEqual(process.returncode, 0)
   asserts.assertIn("Nighthawk - A layer 7 protocol benchmarking tool",
                    process.stdout.decode("utf-8"))
+
+
+def test_output_transform_csv():
+  """Run an arbitrary load test, which outputs to csv."""
+  test_rundir = os.path.join(os.environ["TEST_SRCDIR"], os.environ["TEST_WORKSPACE"])
+  process = subprocess.run([
+      os.path.join(test_rundir, "nighthawk_client"), "--duration", "1", "--rps", "1", "127.0.0.1",
+      "--output-format", "csv"
+  ],
+                           stdout=subprocess.PIPE)
+  asserts.assertIn("Nighthawk - A layer 7 protocol benchmarking tool",
+                   process.stdout.decode("utf-8"))

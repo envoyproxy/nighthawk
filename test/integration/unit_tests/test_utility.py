@@ -95,5 +95,13 @@ def test_substitute_yaml_values():
   assert 'File used to test we can inject files into yaml.' in result['injected_file']
 
 
+def test_parse_uris_to_socket_address():
+  """Test parse uri for both ipv4 and ipv6."""
+  addresses = ["http://1.2.3.45:2022", "http://2001:db8:3333:4444:CCCC:DDDD:EEEE:FFFF:9001"]
+  v4_address, v6_address = utility.parseUrisToSocketAddress(addresses)
+  assert v4_address.ip == "1.2.3.45" and v4_address.port == 2022
+  assert v6_address.ip == "2001:db8:3333:4444:CCCC:DDDD:EEEE:FFFF" and v6_address.port == 9001
+
+
 if __name__ == "__main__":
   raise SystemExit(pytest.main([__file__]))

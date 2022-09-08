@@ -1,0 +1,24 @@
+Nighthawk - A layer 7 protocol benchmarking tool.
+
+stat_id (3 samples)
+Min,Mean,Max,Pstdev
+0s 001ms 000us,0s 002ms 000us,0s 003ms 000us,0s 000ms 816us
+
+foo_size (4 samples)
+Min,Mean,Max,Pstdev
+14,15.5,17,1.118033988749895
+Percentile,Count,Value(microseconds),Value
+0.5,2,0,15
+0.75,3,0,16
+
+foo_latency (4 samples)
+Min,Mean,Max,Pstdev
+0s 000ms 180us,0s 000ms 195us,0s 000ms 210us,0s 000ms 011us
+Percentile,Count,Value(microseconds),Value
+0.5,2,190,0s 000ms 190us
+0.75,3,200,0s 000ms 200us
+
+Counter,Value,Per second
+bar,2,2.00
+foo,1,1.00
+

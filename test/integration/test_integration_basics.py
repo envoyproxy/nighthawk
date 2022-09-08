@@ -365,7 +365,7 @@ def test_h3_quic_with_custom_http3_protocol_options(quic_test_server_fixture):
       "--http3-protocol-options %s" % http3_protocol_options
   ])
   counters = quic_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-  asserts.assertCounterEqual(counters, "benchmark.http_2xx", 100)
+  asserts.assertCounterGreaterEqual(counters, "benchmark.http_2xx", 100)
   asserts.assertCounterGreaterEqual(counters, "upstream_cx_http3_total", 10)
 
 

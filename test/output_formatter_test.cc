@@ -125,12 +125,18 @@ TEST_F(OutputCollectorTest, DottedFormatter) {
                         "test/test_data/output_formatter.dotted.gold");
 }
 
+TEST_F(OutputCollectorTest, CsvFormatter) {
+  CsvOutputFormatterImpl formatter;
+  expectEqualToGoldFile((formatter.formatProto(collector_->toProto())).value(),
+                        "test/test_data/output_formatter.csv.gold");
+}
+
 TEST_F(OutputCollectorTest, GetLowerCaseOutputFormats) {
   auto output_formats = OutputFormatterImpl::getLowerCaseOutputFormats();
   // When you're looking at this code you probably just added an output format.
   // This is to point out that you might want to update the list below and add a test above.
   ASSERT_THAT(output_formats, ElementsAre("json", "human", "yaml", "dotted", "fortio",
-                                          "experimental_fortio_pedantic"));
+                                          "experimental_fortio_pedantic","csv"));
 }
 
 class FortioOutputCollectorTest : public OutputCollectorTest {
