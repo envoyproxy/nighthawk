@@ -5,7 +5,7 @@ import logging
 import os
 from typing import Generator
 
-from test.integration import integration_test_fixtures, common
+from test.integration import integration_test_fixtures, common, utility
 import envoy_proxy
 from dynamic_config import dynamic_config_server
 from nighthawk.api.configuration import cluster_config_manager_pb2
@@ -86,11 +86,7 @@ class InjectDynamicHttpProxyIntegrationTestBase(envoy_proxy.InjectHttpProxyInteg
 
   def _assignEndpointsToClusters(self, clusters):
     """Process all backend endpoints, round robin assigning to the given clusters."""
-    available_endpoints = []
-
-    for endpoint in self.getAllTestServerRootUris():
-      ip_and_port = endpoint.split('/')[2]
-      available_endpoints.append(ip_and_port)
+    available_endpoints = utility.parseUrisToSocketAddress(self.getAllTestServerRootUris())
 
     for cluster in clusters:
       new_cluster = self._dynamic_config_settings.clusters.add()
@@ -98,9 +94,8 @@ class InjectDynamicHttpProxyIntegrationTestBase(envoy_proxy.InjectHttpProxyInteg
     cluster_idx = 0
     for endpoint in available_endpoints:
       new_endpoint = self._dynamic_config_settings.clusters[cluster_idx].endpoints.add()
-      ip, port = endpoint.rsplit(':', maxsplit=1)
-      new_endpoint.ip = ip
-      new_endpoint.port = int(port)
+      new_endpoint.ip = endpoint.ip
+      new_endpoint.port = endpoint.port
       cluster_idx = (cluster_idx + 1) % len(clusters)
 
   def tearDown(self, caplog):
