@@ -75,6 +75,13 @@ def test_count_log_lines_with_substring_returns_zero_with_empty_logs():
 
 def test_substitute_yaml_values():
   """Test that exercises substituting values into a yaml template."""
+  # Try to debug runfiles in CI.
+  import os
+  import logging
+  runfile_manifest = os.environ['RUNFILES_MANIFEST_FILE']
+  runfile_dir = os.environ['RUNFILES_DIR']
+  logging.error(f"runfile env vars: {runfile_manifest}, {runfile_dir}")
+
   template_string = """
     foo_list:
       - foo: $foo_val1
