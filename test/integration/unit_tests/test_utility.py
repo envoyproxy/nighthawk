@@ -78,8 +78,9 @@ def test_substitute_yaml_values():
   # Try to debug runfiles in CI.
   import os
   import logging
-  runfile_manifest = os.environ['RUNFILES_MANIFEST_FILE']
-  runfile_dir = os.environ['RUNFILES_DIR']
+
+  runfile_manifest = os.environ.get('RUNFILES_MANIFEST_FILE')
+  runfile_dir = os.environ.get('RUNFILES_DIR')
   logging.error(f"runfile env vars: {runfile_manifest}, {runfile_dir}")
 
   template_string = """
