@@ -128,7 +128,7 @@ message Protocol {
 
 // TODO(oschaaf): Ultimately this will be a load test specification. The fact that it
 // can arrive via CLI is just a concrete detail. Change this to reflect that.
-// Highest unused number is 112.
+// Next unused number is 113.
 message CommandLineOptions {
   // The target requests-per-second rate. Default: 5.
   google.protobuf.UInt32Value requests_per_second = 1
@@ -301,4 +301,8 @@ message CommandLineOptions {
   // compatibility purposes. In the future, this field may be auto-populated when left unset and
   // circumstances mandate so (distributed load test execution).
   google.protobuf.StringValue execution_id = 106;
+
+  // Optional set of plugin config to be parsed by a UserDefinedOutputPlugin and used to parse 
+  // responses to provide additional output to each Result.
+  repeated envoy.config.core.v3.TypedExtensionConfig user_defined_plugin_config = 112;
 }
