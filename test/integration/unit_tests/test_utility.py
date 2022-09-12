@@ -75,19 +75,11 @@ def test_count_log_lines_with_substring_returns_zero_with_empty_logs():
 
 def test_substitute_yaml_values():
   """Test that exercises substituting values into a yaml template."""
-  # Try to debug runfiles in CI.
-  import os
-  import logging
-
-  runfile_manifest = os.environ.get('RUNFILES_MANIFEST_FILE')
-  runfile_dir = os.environ.get('RUNFILES_DIR')
-  logging.error(f"runfile env vars: {runfile_manifest}, {runfile_dir}")
-
+  # TODO: expand this to handle injected_files.
   template_string = """
     foo_list:
       - foo: $foo_val1
       - foo: $foo_val2
-    injected_file: '@inject-runfile:nighthawk/test/integration/unit_tests/injected_file.txt'
   """
   loaded_yaml = yaml.load(template_string, Loader=yaml.FullLoader)
 
@@ -100,7 +92,6 @@ def test_substitute_yaml_values():
   result = utility.substitute_yaml_values(runfiles_instance, loaded_yaml, params)
   assert result['foo_list'][0]['foo'] == params['foo_val1']
   assert result['foo_list'][1]['foo'] == params['foo_val2']
-  assert 'File used to test we can inject files into yaml.' in result['injected_file']
 
 
 def test_parse_uris_to_socket_address():

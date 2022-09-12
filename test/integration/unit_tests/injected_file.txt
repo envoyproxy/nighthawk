@@ -1,1 +1,0 @@
-File used to test we can inject files into yaml.
