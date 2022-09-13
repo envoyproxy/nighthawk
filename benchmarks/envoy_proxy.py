@@ -66,6 +66,11 @@ class EnvoyProxyServer(nighthawk_test_server.NighthawkTestServer):
       logging.info(f"Creating empty cluster file in {cluster_file_path}.")
       open(cluster_file_path, 'wb').close()
 
+      # Create empty eds file.
+      eds_file_path = os.path.join(self.tmpdir, 'new_eds.pb')
+      logging.info(f"Creating empty eds file in {eds_file_path}.")
+      open(eds_file_path, 'wb').close()
+
       # Transfer static lds over
       runfiles_instance = runfiles.Create()
       with open(runfiles_instance.Rlocation('nighthawk/benchmarks/configurations/lds.yaml')) as f:

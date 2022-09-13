@@ -23,7 +23,9 @@ py_library(
     srcs_version = "PY3",
     deps = [
         "//api/configuration:cluster_config_manager_py_proto",
+        "//api/configuration:endpoints_config_manager_py_proto",
         "@envoy_api//envoy/config/cluster/v3:pkg_py_proto",
+        "@envoy_api//envoy/config/endpoint/v3:pkg_py_proto",
         "@envoy_api//envoy/extensions/filters/network/http_connection_manager/v3:pkg_py_proto",
         "@envoy_api//envoy/extensions/transport_sockets/tls/v3:pkg_py_proto",
         "@envoy_api//envoy/extensions/upstreams/http/v3:pkg_py_proto",

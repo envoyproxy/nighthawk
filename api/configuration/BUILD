@@ -12,3 +12,14 @@ api_cc_py_proto_library(
         "@envoy_api//envoy/config/core/v3:pkg",
     ],
 )
+
+api_cc_py_proto_library(
+    name = "endpoints_config_manager",
+    srcs = [
+        "endpoints_config_manager.proto",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@envoy_api//envoy/config/core/v3:pkg",
+    ],
+)

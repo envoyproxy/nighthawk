@@ -53,6 +53,7 @@ py_library(
     ],
     data = [
         "configurations/dynamic_resources.yaml",
+        "configurations/dynamic_resources_eds.yaml",
         "configurations/lds.yaml",
         "configurations/request_source_five_clusters.json",
     ],
