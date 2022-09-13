@@ -100,122 +100,153 @@ public:
   }
 };
 
-// Implementation of Envoy::Server::Instance used as a placeholder. None of its methods
-// should be called because Nighthawk is not a real Envoy that performs xDS config validation.
-class NullServerInstance : public Envoy::Server::Instance {
-  Envoy::Server::Admin& admin() override { PANIC("not implemented"); }
-  Envoy::Api::Api& api() override { PANIC("not implemented"); }
-  Envoy::Upstream::ClusterManager& clusterManager() override { PANIC("not implemented"); }
+// Implementation of Envoy::Server::Instance. Only methods used by Envoy's code
+// when Nighthawk is running are implemented.
+class NighthawkServerInstance : public Envoy::Server::Instance {
+ public:
+  NighthawkServerInstance(Envoy::Server::Admin& admin, Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher,
+                          Envoy::AccessLog::AccessLogManager& log_manager,
+                          Envoy::Server::Options& options,
+                          Envoy::Runtime::Loader& runtime, Envoy::Singleton::Manager& singleton_manager, Envoy::ThreadLocal::Instance& tls,
+                          Envoy::LocalInfo::LocalInfo& local_info) :
+                            admin_(admin), api_(api), dispatcher_(dispatcher), log_manager_(log_manager),
+                            options_(options),
+                            runtime_(runtime), singleton_manager_(singleton_manager), tls_(tls), local_info_(local_info) {}
+
+  Envoy::Server::Admin& admin() override { return admin_; }
+  Envoy::Api::Api& api() override { return api_; }
+  Envoy::Upstream::ClusterManager& clusterManager() override { PANIC("NighthawkServerInstance::clusterManager not implemented"); }
   const Envoy::Upstream::ClusterManager& clusterManager() const override {
-    PANIC("not implemented");
+    PANIC("NighthawkServerInstance::clusterManager not implemented");
   }
-  Envoy::Ssl::ContextManager& sslContextManager() override { PANIC("not implemented"); }
-  Envoy::Event::Dispatcher& dispatcher() override { PANIC("not implemented"); }
-  Envoy::Network::DnsResolverSharedPtr dnsResolver() override { PANIC("not implemented"); }
-  void drainListeners() override { PANIC("not implemented"); }
-  Envoy::Server::DrainManager& drainManager() override { PANIC("not implemented"); }
-  Envoy::AccessLog::AccessLogManager& accessLogManager() override { PANIC("not implemented"); }
-  void failHealthcheck(bool) override { PANIC("not implemented"); }
-  bool healthCheckFailed() override { PANIC("not implemented"); }
-  Envoy::Server::HotRestart& hotRestart() override { PANIC("not implemented"); }
-  Envoy::Init::Manager& initManager() override { PANIC("not implemented"); }
-  Envoy::Server::ListenerManager& listenerManager() override { PANIC("not implemented"); }
-  Envoy::MutexTracer* mutexTracer() override { PANIC("not implemented"); }
-  Envoy::Server::OverloadManager& overloadManager() override { PANIC("not implemented"); }
-  Envoy::Secret::SecretManager& secretManager() override { PANIC("not implemented"); }
-  const Envoy::Server::Options& options() override { PANIC("not implemented"); }
-  Envoy::Runtime::Loader& runtime() override { PANIC("not implemented"); }
-  Envoy::Server::ServerLifecycleNotifier& lifecycleNotifier() override { PANIC("not implemented"); }
-  void shutdown() override { PANIC("not implemented"); }
-  bool isShutdown() override { PANIC("not implemented"); }
-  void shutdownAdmin() override { PANIC("not implemented"); }
-  Envoy::Singleton::Manager& singletonManager() override { PANIC("not implemented"); }
-  time_t startTimeCurrentEpoch() override { PANIC("not implemented"); }
-  time_t startTimeFirstEpoch() override { PANIC("not implemented"); }
-  Envoy::Stats::Store& stats() override { PANIC("not implemented"); }
-  Envoy::Grpc::Context& grpcContext() override { PANIC("not implemented"); }
-  Envoy::Http::Context& httpContext() override { PANIC("not implemented"); }
-  Envoy::Router::Context& routerContext() override { PANIC("not implemented"); }
-  Envoy::ProcessContextOptRef processContext() override { PANIC("not implemented"); }
-  Envoy::ThreadLocal::Instance& threadLocal() override { PANIC("not implemented"); }
-  Envoy::LocalInfo::LocalInfo& localInfo() const override { PANIC("not implemented"); }
-  Envoy::TimeSource& timeSource() override { PANIC("not implemented"); }
-  void flushStats() override { PANIC("not implemented"); }
+  Envoy::Ssl::ContextManager& sslContextManager() override { PANIC("NighthawkServerInstance::sslContextManager not implemented"); }
+  Envoy::Event::Dispatcher& dispatcher() override { return dispatcher_; }
+  Envoy::Network::DnsResolverSharedPtr dnsResolver() override { PANIC("NighthawkServerInstance::dnsResolver not implemented"); }
+  void drainListeners() override { PANIC("NighthawkServerInstance::drainListeners not implemented"); }
+  Envoy::Server::DrainManager& drainManager() override { PANIC("NighthawkServerInstance::drainManager not implemented"); }
+  Envoy::AccessLog::AccessLogManager& accessLogManager() override { return log_manager_; }
+  void failHealthcheck(bool) override { PANIC("NighthawkServerInstance::failHealthcheck not implemented"); }
+  bool healthCheckFailed() override { PANIC("NighthawkServerInstance::healthCheckFailed not implemented"); }
+  Envoy::Server::HotRestart& hotRestart() override { PANIC("NighthawkServerInstance::hotRestart not implemented"); }
+  Envoy::Init::Manager& initManager() override { PANIC("NighthawkServerInstance::initManager not implemented"); }
+  Envoy::Server::ListenerManager& listenerManager() override { PANIC("NighthawkServerInstance::listenerManager not implemented"); }
+  Envoy::MutexTracer* mutexTracer() override { PANIC("NighthawkServerInstance::mutexTracer not implemented"); }
+  Envoy::Server::OverloadManager& overloadManager() override { PANIC("NighthawkServerInstance::overloadManager not implemented"); }
+  Envoy::Secret::SecretManager& secretManager() override { PANIC("NighthawkServerInstance::secretManager not implemented"); }
+  const Envoy::Server::Options& options() override { return options_; }
+  Envoy::Runtime::Loader& runtime() override { return runtime_; }
+  Envoy::Server::ServerLifecycleNotifier& lifecycleNotifier() override { PANIC("NighthawkServerInstance::lifecycleNotifier not implemented"); }
+  void shutdown() override { PANIC("NighthawkServerInstance::shutdown not implemented"); }
+  bool isShutdown() override { PANIC("NighthawkServerInstance::isShutdown not implemented"); }
+  void shutdownAdmin() override { PANIC("NighthawkServerInstance::shutdownAdmin not implemented"); }
+  Envoy::Singleton::Manager& singletonManager() override { return singleton_manager_; }
+  time_t startTimeCurrentEpoch() override { PANIC("NighthawkServerInstance::startTimeCurrentEpoch not implemented"); }
+  time_t startTimeFirstEpoch() override { PANIC("NighthawkServerInstance::startTimeFirstEpoch not implemented"); }
+  Envoy::Stats::Store& stats() override { PANIC("NighthawkServerInstance::stats not implemented"); }
+  Envoy::Grpc::Context& grpcContext() override { PANIC("NighthawkServerInstance::grpcContext not implemented"); }
+  Envoy::Http::Context& httpContext() override { PANIC("NighthawkServerInstance::httpContext not implemented"); }
+  Envoy::Router::Context& routerContext() override { PANIC("NighthawkServerInstance::routerContext not implemented"); }
+  Envoy::ProcessContextOptRef processContext() override { PANIC("NighthawkServerInstance::processContext not implemented"); }
+  Envoy::ThreadLocal::Instance& threadLocal() override { return tls_; }
+  Envoy::LocalInfo::LocalInfo& localInfo() const override { return local_info_; }
+  Envoy::TimeSource& timeSource() override { PANIC("NighthawkServerInstance::timeSource not implemented"); }
+  void flushStats() override { PANIC("NighthawkServerInstance::flushStats not implemented"); }
   Envoy::ProtobufMessage::ValidationContext& messageValidationContext() override {
-    PANIC("not implemented");
+    PANIC("NighthawkServerInstance::messageValidationContext not implemented");
   }
-  Envoy::Server::Configuration::StatsConfig& statsConfig() override { PANIC("not implemented"); }
-  envoy::config::bootstrap::v3::Bootstrap& bootstrap() override { PANIC("not implemented"); }
+  Envoy::Server::Configuration::StatsConfig& statsConfig() override { PANIC("NighthawkServerInstance::statsConfig not implemented"); }
+  envoy::config::bootstrap::v3::Bootstrap& bootstrap() override { PANIC("NighthawkServerInstance::bootstrap not implemented"); }
   Envoy::Server::Configuration::ServerFactoryContext& serverFactoryContext() override {
-    PANIC("not implemented");
+    PANIC("NighthawkServerInstance::serverFactoryContext not implemented");
   }
   Envoy::Server::Configuration::TransportSocketFactoryContext&
   transportSocketFactoryContext() override {
-    PANIC("not implemented");
+    PANIC("NighthawkServerInstance::transportSocketFactoryContext not implemented");
   }
   void setDefaultTracingConfig(const envoy::config::trace::v3::Tracing&) override {
-    PANIC("not implemented");
+    PANIC("NighthawkServerInstance::setDefaultTracingConfig not implemented");
   }
-  bool enableReusePortDefault() override { PANIC("not implemented"); }
+  bool enableReusePortDefault() override { PANIC("NighthawkServerInstance::enableReusePortDefault not implemented"); }
   void setSinkPredicates(std::unique_ptr<Envoy::Stats::SinkPredicates>&&) override {
-    PANIC("not implemented");
+    PANIC("NighthawkServerInstance::setSinkPredicates not implemented");
   }
+
+ private:
+  Envoy::Server::Admin& admin_;
+  Envoy::Api::Api& api_;
+  Envoy::Event::Dispatcher& dispatcher_;
+  Envoy::AccessLog::AccessLogManager& log_manager_;
+  Envoy::Server::Options& options_;
+  Envoy::Runtime::Loader& runtime_;
+  Envoy::Singleton::Manager& singleton_manager_;
+  Envoy::ThreadLocal::Instance& tls_;
+  Envoy::LocalInfo::LocalInfo& local_info_;
+
 };
 
-// Implementation of Envoy::Server::Configuration::ServerFactoryContext used as a placeholder. None
-// of its methods should be called because Nighthawk is not a real Envoy that performs xDS config
-// validation.
-class NullServerFactoryContext : public Envoy::Server::Configuration::ServerFactoryContext {
-  const Envoy::Server::Options& options() override { PANIC("not implemented"); };
+// Implementation of Envoy::Server::Configuration::ServerFactoryContext.
+class NighthawkServerFactoryContext : public Envoy::Server::Configuration::ServerFactoryContext {
+ public:
+  NighthawkServerFactoryContext(Envoy::Server::Instance& server) : server_(server) {}
 
-  Envoy::Event::Dispatcher& mainThreadDispatcher() override { PANIC("not implemented"); };
+  const Envoy::Server::Options& options() override { return server_.options(); };
 
-  Envoy::Api::Api& api() override { PANIC("not implemented"); };
+  Envoy::Event::Dispatcher& mainThreadDispatcher() override { return server_.dispatcher(); }
 
-  Envoy::LocalInfo::LocalInfo& localInfo() const override { PANIC("not implemented"); };
+  Envoy::Api::Api& api() override { return server_.api(); }
 
-  Envoy::Server::Admin& admin() override { PANIC("not implemented"); };
+  Envoy::LocalInfo::LocalInfo& localInfo() const override { return server_.localInfo(); }
 
-  Envoy::Runtime::Loader& runtime() override { PANIC("not implemented"); };
+  Envoy::Server::Admin& admin() override { return server_.admin(); }
 
-  Envoy::Singleton::Manager& singletonManager() override { PANIC("not implemented"); };
+  Envoy::Runtime::Loader& runtime() override { return server_.runtime(); }
+
+  Envoy::Singleton::Manager& singletonManager() override { return server_.singletonManager(); }
 
   Envoy::ProtobufMessage::ValidationVisitor& messageValidationVisitor() override {
-    PANIC("not implemented");
+    return Envoy::ProtobufMessage::getStrictValidationVisitor();
   };
 
-  Envoy::Stats::Scope& scope() override { PANIC("not implemented"); };
+  Envoy::Stats::Scope& scope() override { PANIC("NighthawkServerFactoryContext::scope not implemented"); };
 
-  Envoy::Stats::Scope& serverScope() override { PANIC("not implemented"); };
+  Envoy::Stats::Scope& serverScope() override { PANIC("NighthawkServerFactoryContext::serverScope not implemented"); };
 
-  Envoy::ThreadLocal::SlotAllocator& threadLocal() override { PANIC("not implemented"); };
+  Envoy::ThreadLocal::SlotAllocator& threadLocal() override { return server_.threadLocal(); }
 
-  Envoy::Upstream::ClusterManager& clusterManager() override { PANIC("not implemented"); };
+  Envoy::Upstream::ClusterManager& clusterManager() override { PANIC("NighthawkServerFactoryContext::clusterManager not implemented"); };
 
   Envoy::ProtobufMessage::ValidationContext& messageValidationContext() override {
-    PANIC("not implemented");
+    PANIC("NighthawkServerFactoryContext::messageValidationContext not implemented");
   };
 
-  Envoy::TimeSource& timeSource() override { PANIC("not implemented"); };
+  Envoy::TimeSource& timeSource() override { PANIC("NighthawkServerFactoryContext::timeSource not implemented"); };
 
-  Envoy::AccessLog::AccessLogManager& accessLogManager() override { PANIC("not implemented"); };
+  Envoy::AccessLog::AccessLogManager& accessLogManager() override { return server_.accessLogManager(); }
 
   Envoy::Server::ServerLifecycleNotifier& lifecycleNotifier() override {
-    PANIC("not implemented");
+    PANIC("NighthawkServerFactoryContext::lifecycleNotifier not implemented");
   };
 
-  Envoy::Init::Manager& initManager() override { PANIC("not implemented"); };
+  Envoy::Init::Manager& initManager() override { PANIC("NighthawkServerFactoryContext::initManager not implemented"); };
 
-  Envoy::Grpc::Context& grpcContext() override { PANIC("not implemented"); };
+  Envoy::Grpc::Context& grpcContext() override { PANIC("NighthawkServerFactoryContext::grpcContext not implemented"); };
 
-  Envoy::Router::Context& routerContext() override { PANIC("not implemented"); };
+  Envoy::Router::Context& routerContext() override { PANIC("NighthawkServerFactoryContext::routerContext not implemented"); };
 
-  Envoy::Server::DrainManager& drainManager() override { PANIC("not implemented"); };
+  Envoy::Server::DrainManager& drainManager() override { PANIC("NighthawkServerFactoryContext::drainManager not implemented"); };
 
-  Envoy::Server::Configuration::StatsConfig& statsConfig() override { PANIC("not implemented"); }
+  Envoy::Server::Configuration::StatsConfig& statsConfig() override { PANIC("NighthawkServerFactoryContext::statsConfig not implemented"); }
 
-  envoy::config::bootstrap::v3::Bootstrap& bootstrap() override { PANIC("not implemented"); }
+  envoy::config::bootstrap::v3::Bootstrap& bootstrap() override { PANIC("NighthawkServerFactoryContext::bootstrap not implemented"); }
+
+ private:
+  Envoy::Server::Instance& server_;
 };
+
+// Disables the hot restart Envoy functionality.
+std::string HotRestartDisabled(bool) {
+  return "hot restart is disabled";
+}
 
 } // namespace
 
@@ -308,8 +339,7 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
       init_watcher_("Nighthawk", []() {}),
       admin_(Envoy::Network::Address::InstanceConstSharedPtr()),
       validation_context_(false, false, false), router_context_(store_root_.symbolTable()),
-      server_(std::make_unique<NullServerInstance>()),
-      server_factory_context_(std::make_unique<NullServerFactoryContext>()) {
+      envoy_options_(/* args = */ {"process_impl"}, HotRestartDisabled, spdlog::level::info) {
   // Any dispatchers created after the following call will use hr timers.
   setupForHRTimers();
   std::string lower = absl::AsciiStrToLower(
@@ -574,16 +604,11 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
     }
     shutdown_ = false;
 
-    const Envoy::OptionsImpl::HotRestartVersionCb hot_restart_version_cb = [](bool) {
-      return "hot restart is disabled";
-    };
-    const Envoy::OptionsImpl envoy_options(
-        /* args = */ {"process_impl"}, hot_restart_version_cb, spdlog::level::info);
     // Needs to happen as early as possible (before createWorkers()) in the instantiation to preempt
     // the objects that require stats.
     if (!options_.statsSinks().empty()) {
       store_root_.setTagProducer(
-          Envoy::Config::Utility::createTagProducer(bootstrap_, envoy_options.statsTags()));
+          Envoy::Config::Utility::createTagProducer(bootstrap_, envoy_options_.statsTags()));
     }
 
     createWorkers(number_of_workers_, scheduled_start);
@@ -597,11 +622,13 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
         std::make_unique<Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl>(
             time_system_);
 
+    server_ = std::make_unique<NighthawkServerInstance>(admin_, *api_, *dispatcher_, access_log_manager_, envoy_options_, runtime_singleton_->instance(), *singleton_manager_, tls_, *local_info_);
+    server_factory_context_ = std::make_unique<NighthawkServerFactoryContext>(*server_);
     cluster_manager_factory_ = std::make_unique<ClusterManagerFactory>(
         *server_factory_context_, admin_, Envoy::Runtime::LoaderSingleton::get(), store_root_, tls_,
         dns_resolver, *ssl_context_manager_, *dispatcher_, *local_info_, secret_manager_,
         validation_context_, *api_, http_context_, grpc_context_, router_context_,
-        access_log_manager_, *singleton_manager_, envoy_options, quic_stat_names_, *server_);
+        access_log_manager_, *singleton_manager_, envoy_options_, quic_stat_names_, *server_);
     cluster_manager_factory_->setConnectionReuseStrategy(
         options_.h1ConnectionReuseStrategy() == nighthawk::client::H1ConnectionReuseStrategy::LRU
             ? Http1PoolImpl::ConnectionReuseStrategy::LRU
