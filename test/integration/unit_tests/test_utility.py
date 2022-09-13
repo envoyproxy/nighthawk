@@ -2,7 +2,9 @@
 
 import pytest
 import re
+import yaml
 
+from rules_python.python.runfiles import runfiles
 from test.integration import utility
 
 
@@ -69,6 +71,27 @@ def test_count_log_lines_with_substring_returns_zero_with_empty_logs():
   logs = ""
   count = utility.count_log_lines_with_substring(logs, "log example 4")
   assert count == 0
+
+
+def test_substitute_yaml_values():
+  """Test that exercises substituting values into a yaml template."""
+  # TODO: expand this to handle injected_files.
+  template_string = """
+    foo_list:
+      - foo: $foo_val1
+      - foo: $foo_val2
+  """
+  loaded_yaml = yaml.load(template_string, Loader=yaml.FullLoader)
+
+  params = {
+      'foo_val1': 'bar1',
+      'foo_val2': 'bar2',
+  }
+
+  runfiles_instance = runfiles.Create()
+  result = utility.substitute_yaml_values(runfiles_instance, loaded_yaml, params)
+  assert result['foo_list'][0]['foo'] == params['foo_val1']
+  assert result['foo_list'][1]['foo'] == params['foo_val2']
 
 
 def test_parse_uris_to_socket_address():
