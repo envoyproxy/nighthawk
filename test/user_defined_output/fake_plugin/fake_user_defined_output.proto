@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package nighthawk;
+
+// Configuration for FakeUserDefinedOutputPlugin (plugin name: "nighthawk.fake_step_controller") that returns
+// a fixed RPS value and changes converged and doomed states based on the latest reported
+// BenchmarkResult. Can also be programmed to return a proto validation failure, return an error
+// from input value setting every time, or return an error after some number of UpdateAndRecompute()
+// iterations.
+message FakeUserDefinedOutputConfig {
+  // Configures handleResponseData to fail after data_failure_countdown calls.
+  bool fail_data = 1;
+  int32 data_failure_countdown = 2;
+
+  // Configures handleResponseHeaders to fail after header_failure_countdown calls.
+  bool fail_headers = 3;
+  int32 header_failure_countdown = 4;
+
+  // Causes the plugin to fail on getPerWorkerOutput step.
+  bool fail_per_worker_output = 5;
+}
+
+message FakeUserDefinedOutput {
+  int32 data_called = 1;
+  int32 headers_called = 2;
+
+  string worker_name = 3;
+}
