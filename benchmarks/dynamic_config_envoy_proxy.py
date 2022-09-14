@@ -5,7 +5,7 @@ import logging
 import os
 from typing import Generator
 
-from test.integration import integration_test_fixtures
+from test.integration import integration_test_fixtures, common, utility
 import envoy_proxy
 from dynamic_config import dynamic_config_server
 from nighthawk.api.configuration import cluster_config_manager_pb2
@@ -17,8 +17,6 @@ def proxy_config() -> Generator[str, None, None]:
   yield "nighthawk/benchmarks/configurations/envoy_proxy.yaml"
 
 
-# TODO(kbaichoo): Stubbed implementation. Will be enhanced to
-# leverage backend addresses.
 @pytest.fixture()
 def dynamic_config_settings(
 ) -> Generator[cluster_config_manager_pb2.DynamicClusterConfigManagerSettings, None, None]:
@@ -26,8 +24,6 @@ def dynamic_config_settings(
   settings = cluster_config_manager_pb2.DynamicClusterConfigManagerSettings()
   settings.refresh_interval.seconds = 5
   settings.output_file = 'new_cds.pb'
-  cluster = settings.clusters.add()
-  cluster.name = 'service_envoyproxy_io'
   yield settings
 
 
@@ -68,16 +64,39 @@ class InjectDynamicHttpProxyIntegrationTestBase(envoy_proxy.InjectHttpProxyInteg
     self._dynamic_config_settings.output_file = output_file
     logging.info(f"Injecting dynamic configuration. Output file: {output_file}")
 
-    # TODO(kbaichoo): we only hardcode a single endpoint, but will expand on this.
-    endpoints = self._dynamic_config_settings.clusters[0].endpoints.add()
-    endpoints.ip = self.test_server.server_ip
-    endpoints.port = self.test_server.server_port
+    # TODO(kbaichoo): Don't hardcode the clusters based on path configuration.
+    if '15_listeners' in self._nighthawk_test_config_path:
+      clusters = [
+          'cluster_one',
+          'cluster_two',
+          'cluster_three',
+          'cluster_four',
+          'cluster_five',
+      ]
+    else:
+      clusters = ['service_envoyproxy_io']
+
+    self._assignEndpointsToClusters(clusters)
 
     self._dynamic_config_controller = dynamic_config_server.DynamicConfigController(
         self._dynamic_config_settings)
 
     assert (self._dynamic_config_controller.start())
     logging.info("dynamic configuration running")
+
+  def _assignEndpointsToClusters(self, clusters):
+    """Process all backend endpoints, round robin assigning to the given clusters."""
+    available_endpoints = utility.parseUrisToSocketAddress(self.getAllTestServerRootUris())
+
+    for cluster in clusters:
+      new_cluster = self._dynamic_config_settings.clusters.add()
+      new_cluster.name = cluster
+    cluster_idx = 0
+    for endpoint in available_endpoints:
+      new_endpoint = self._dynamic_config_settings.clusters[cluster_idx].endpoints.add()
+      new_endpoint.ip = endpoint.ip
+      new_endpoint.port = endpoint.port
+      cluster_idx = (cluster_idx + 1) % len(clusters)
 
   def tearDown(self, caplog):
     """Tear down the proxy and test server. Assert that both exit succesfully."""

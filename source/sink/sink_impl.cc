@@ -137,3 +137,10 @@ InMemorySinkImpl::LoadExecutionResult(absl::string_view execution_id) const {
 }
 
 } // namespace Nighthawk
+
+
+// NOLINT(namespace-nighthawk)
+namespace fmt {
+// Allow fmtlib to use operator << defined in std::filesystem::path.
+template <> struct formatter<::std::filesystem::path> : ostream_formatter {};
+}  // namespace fmt

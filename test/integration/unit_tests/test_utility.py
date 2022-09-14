@@ -2,7 +2,9 @@
 
 import pytest
 import re
+import yaml
 
+from rules_python.python.runfiles import runfiles
 from test.integration import utility
 
 
@@ -69,6 +71,35 @@ def test_count_log_lines_with_substring_returns_zero_with_empty_logs():
   logs = ""
   count = utility.count_log_lines_with_substring(logs, "log example 4")
   assert count == 0
+
+
+def test_substitute_yaml_values():
+  """Test that exercises substituting values into a yaml template."""
+  # TODO: expand this to handle injected_files.
+  template_string = """
+    foo_list:
+      - foo: $foo_val1
+      - foo: $foo_val2
+  """
+  loaded_yaml = yaml.load(template_string, Loader=yaml.FullLoader)
+
+  params = {
+      'foo_val1': 'bar1',
+      'foo_val2': 'bar2',
+  }
+
+  runfiles_instance = runfiles.Create()
+  result = utility.substitute_yaml_values(runfiles_instance, loaded_yaml, params)
+  assert result['foo_list'][0]['foo'] == params['foo_val1']
+  assert result['foo_list'][1]['foo'] == params['foo_val2']
+
+
+def test_parse_uris_to_socket_address():
+  """Test parse uri for both ipv4 and ipv6."""
+  addresses = ["http://1.2.3.45:2022", "http://2001:db8:3333:4444:CCCC:DDDD:EEEE:FFFF:9001"]
+  v4_address, v6_address = utility.parseUrisToSocketAddress(addresses)
+  assert v4_address.ip == "1.2.3.45" and v4_address.port == 2022
+  assert v6_address.ip == "2001:db8:3333:4444:CCCC:DDDD:EEEE:FFFF" and v6_address.port == 9001
 
 
 if __name__ == "__main__":

@@ -2,10 +2,34 @@
 
 import os
 import subprocess
+import string
+from typing import Union
+from collections import namedtuple
 
 
 class Error(Exception):
   """Raised on errors in this module."""
+
+
+# Helper class to parse ip, port.
+SocketAddress = namedtuple('SocketAddress', ['ip', 'port'])
+
+
+def parseUrisToSocketAddress(uris: list[str]) -> list[SocketAddress]:
+  """Parse a list of uris returning the corresponding list of SocketAddresses.
+
+  Args:
+    uris: List of uri strings of the format http://<ip>:<port>, the ip address can be IPv4 or IPv6.
+
+  Returns:
+    The corresponding list of SocketAddress for each URI.
+  """
+  addresses = []
+  for uri in uris:
+    ip_and_port = uri.split('/')[2]
+    ip, port = ip_and_port.rsplit(':', maxsplit=1)
+    addresses.append(SocketAddress(ip, int(port)))
+  return addresses
 
 
 def isSanitizerRun():
@@ -86,3 +110,31 @@ def isRunningInAzpCi():
       bool: True iff the current execution is running in the AZP CI.
   """
   return True if os.environ.get("AZP_BRANCH", "") else False
+
+
+def substitute_yaml_values(runfiles_instance, obj: Union[dict, list, str], params: dict) -> str:
+  """Substitute params into the given template.
+
+  Args:
+    runfiles_instance: A Runfiles instance.
+    obj: Either a list of templates strings, a dict of template string or a template string.
+    params: dict used to populate the provided templates.
+
+  Returns:
+      str: The template with the substituted parameters.
+  """
+  if isinstance(obj, dict):
+    for k, v in obj.items():
+      obj[k] = substitute_yaml_values(runfiles_instance, v, params)
+  elif isinstance(obj, list):
+    for i in range(len(obj)):
+      obj[i] = substitute_yaml_values(runfiles_instance, obj[i], params)
+  elif isinstance(obj, str):
+    # Inspect string values and substitute where applicable.
+    INJECT_RUNFILE_MARKER = '@inject-runfile:'
+    if obj[0] == '$':
+      return string.Template(obj).substitute(params)
+    elif obj.startswith(INJECT_RUNFILE_MARKER):
+      with open(runfiles_instance.Rlocation(obj[len(INJECT_RUNFILE_MARKER):].strip()), 'r') as file:
+        return file.read()
+  return obj

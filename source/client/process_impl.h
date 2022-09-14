@@ -35,6 +35,7 @@
 #include "external/envoy/source/exe/process_wide.h"
 #include "external/envoy/source/extensions/transport_sockets/tls/context_manager_impl.h"
 #include "external/envoy/source/server/config_validation/admin.h"
+#include "external/envoy/source/server/options_impl.h"
 #include "external/envoy_api/envoy/config/bootstrap/v3/bootstrap.pb.h"
 
 #include "source/client/benchmark_client_impl.h"
@@ -211,6 +212,7 @@ private:
   bool cancelled_{false};
   std::unique_ptr<FlushWorkerImpl> flush_worker_;
   Envoy::Router::ContextImpl router_context_;
+  Envoy::OptionsImpl envoy_options_;
   // Null server implementation used as a placeholder. Its methods should never get called
   // because Nighthawk is not a full Envoy server that performs xDS config validation.
   std::unique_ptr<Envoy::Server::Instance> server_;

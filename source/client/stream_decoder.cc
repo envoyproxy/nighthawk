@@ -2,6 +2,8 @@
 
 #include <memory>
 
+#include "fmt/ostream.h"
+
 #include "external/envoy/source/common/http/http1/codec_impl.h"
 #include "external/envoy/source/common/http/utility.h"
 #include "external/envoy/source/common/network/address_impl.h"
@@ -194,3 +196,9 @@ void StreamDecoder::setupForTracing() {
 
 } // namespace Client
 } // namespace Nighthawk
+
+// NOLINT(namespace-nighthawk)
+namespace fmt {
+// Allow fmtlib to use operator << defined in HeaderMapPtr.
+template <> struct formatter<::Nighthawk::HeaderMapPtr> : ostream_formatter {};
+} // namespace fmt

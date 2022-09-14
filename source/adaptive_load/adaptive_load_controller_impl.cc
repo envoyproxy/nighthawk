@@ -128,7 +128,7 @@ absl::StatusOr<BenchmarkResult> AdaptiveLoadControllerImpl::PerformAndAnalyzeNig
       step_controller.GetCurrentCommandLineOptions();
   if (!command_line_options_or.ok()) {
     ENVOY_LOG_MISC(error, "Error constructing Nighthawk input: {}: {}",
-                   command_line_options_or.status().code(),
+                   command_line_options_or.status().raw_code(),
                    command_line_options_or.status().message());
     return command_line_options_or.status();
   }
@@ -144,7 +144,7 @@ absl::StatusOr<BenchmarkResult> AdaptiveLoadControllerImpl::PerformAndAnalyzeNig
                                                           command_line_options);
   Envoy::SystemTime end_time = time_source_.systemTime();
   if (!nighthawk_response_or.ok()) {
-    ENVOY_LOG_MISC(error, "Nighthawk Service error: {}: {}", nighthawk_response_or.status().code(),
+    ENVOY_LOG_MISC(error, "Nighthawk Service error: {}: {}", nighthawk_response_or.status().raw_code(),
                    nighthawk_response_or.status().message());
     return nighthawk_response_or.status();
   }
@@ -155,7 +155,7 @@ absl::StatusOr<BenchmarkResult> AdaptiveLoadControllerImpl::PerformAndAnalyzeNig
       metrics_evaluator_.AnalyzeNighthawkBenchmark(nighthawk_response, spec,
                                                    name_to_custom_plugin_map);
   if (!benchmark_result_or.ok()) {
-    ENVOY_LOG_MISC(error, "Benchmark scoring error: {}: {}", benchmark_result_or.status().code(),
+    ENVOY_LOG_MISC(error, "Benchmark scoring error: {}: {}", benchmark_result_or.status().raw_code(),
                    benchmark_result_or.status().message());
     return benchmark_result_or.status();
   }
@@ -205,7 +205,7 @@ absl::StatusOr<AdaptiveLoadSessionOutput> AdaptiveLoadControllerImpl::PerformAda
 
     if (spec.has_benchmark_cooldown_duration()) {
       ENVOY_LOG_MISC(info, "Cooling down before the next benchmark for duration: {}",
-                     spec.benchmark_cooldown_duration());
+                     spec.benchmark_cooldown_duration().ShortDebugString());
       uint64_t sleep_time_ms = Envoy::Protobuf::util::TimeUtil::DurationToMilliseconds(
           spec.benchmark_cooldown_duration());
       absl::SleepFor(absl::Milliseconds(sleep_time_ms));
