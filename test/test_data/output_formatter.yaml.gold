@@ -7,6 +7,8 @@ options:
     []
   stats_sinks:
     []
+  user_defined_plugin_config:
+    []
   connections: 0
   duration: 1s
 results:
@@ -125,6 +127,8 @@ results:
         value: 2
       - name: foo
         value: 1
+    user_defined_outputs:
+      []
     execution_duration: 1s
     execution_start: 2009-02-13T23:31:31.567Z
   - name: worker_1
@@ -242,6 +246,8 @@ results:
         value: 2
       - name: foo
         value: 1
+    user_defined_outputs:
+      []
     execution_duration: 1s
   - name: global
     statistics:
@@ -358,6 +364,8 @@ results:
         value: 2
       - name: foo
         value: 1
+    user_defined_outputs:
+      []
     execution_duration: 1s
     execution_start: 2009-02-13T23:31:31.567Z
 version:

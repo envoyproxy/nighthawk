@@ -10,7 +10,7 @@ using ::nighthawk::FakeUserDefinedOutputConfig;
 FakeUserDefinedOutputPlugin::FakeUserDefinedOutputPlugin(
     FakeUserDefinedOutputConfig config,
     WorkerMetadata worker_metadata)
-    : config_(config), worker_metadata_(worker_metadata) {}
+    : config_(std::move(config)), worker_metadata_(std::move(worker_metadata)) {}
 
 absl::Status FakeUserDefinedOutputPlugin::handleResponseHeaders(const Envoy::Http::ResponseHeaderMapPtr&&) {
   headers_called_++;
