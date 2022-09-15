@@ -89,7 +89,8 @@ py_binary(
     deps = [
         ":benchmarks_dynamic_envoy_proxy_lib",
         ":utilities_lib",
-        "//test/integration:integration_test_base",
+        "//dynamic_config:dynamic_config_server",
+        "//test/integration:integration_test_base_lean",
     ],
 )
 
