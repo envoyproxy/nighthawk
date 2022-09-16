@@ -21,6 +21,36 @@ import logging
 import os
 
 
+def _parseAvailableClusters(config: cluster_config_manager_pb2.DynamicClusterConfigManagerSettings,
+                            cluster_template: cluster_pb2.Cluster):
+  clusters = []
+  for service_config in config.clusters:
+    new_cluster = cluster_pb2.Cluster()
+    new_cluster.CopyFrom(cluster_template)
+    new_cluster.load_assignment.cluster_name = new_cluster.name = service_config.name
+    for endpoint_config in service_config.endpoints:
+      host = new_cluster.load_assignment.endpoints[0].lb_endpoints.add()
+      socket_address = host.endpoint.address.socket_address
+      socket_address.address = endpoint_config.ip
+      socket_address.port_value = int(endpoint_config.port)
+    clusters.append(new_cluster)
+  return clusters
+
+
+def _parseAvailableEndpoints(
+    endpoints: list[endpoints_config_manager_pb2.DynamicEndpointsConfigManagerSettings.Endpoint]
+) -> list[endpoint_components_pb2.LbEndpoint]:
+  """Parse the available endpoints."""
+  parsed_endpoints = []
+  for endpoint_config in endpoints:
+    host = endpoint_components_pb2.LbEndpoint()
+    socket_address = host.endpoint.address.socket_address
+    socket_address.address = endpoint_config.ip
+    socket_address.port_value = int(endpoint_config.port)
+    parsed_endpoints.append(host)
+  return parsed_endpoints
+
+
 class DynamicConfigManager(abc.ABC):
   """Base class for Dynamic configuration components.
 
@@ -93,7 +123,7 @@ class DynamicClusterConfigManager(DynamicConfigManager):
     self._active_config = discovery_pb2.DiscoveryResponse()
     self._active_config.version_info = "1"
     self._inactive_clusters = []
-    clusters = self._parseAvailableClusters(config)
+    clusters = _parseAvailableClusters(config, self.__class__.cluster_template)
     self._randomlyAssignInitialClusters(clusters)
     # TODO(kbaichoo): refactor "new_cds.pb" into a shared constants file.
     self._output_file = config.output_file if config.output_file else "new_cds.pb"
@@ -101,21 +131,6 @@ class DynamicClusterConfigManager(DynamicConfigManager):
     self._refresh_interval = config.refresh_interval.ToSeconds()
     # Tracks the last mutated action. Used for testing.
     self._last_mutate_action = None
-
-  def _parseAvailableClusters(
-      self, config: cluster_config_manager_pb2.DynamicClusterConfigManagerSettings):
-    clusters = []
-    for service_config in config.clusters:
-      new_cluster = cluster_pb2.Cluster()
-      new_cluster.CopyFrom(self.cluster_template)
-      new_cluster.load_assignment.cluster_name = new_cluster.name = service_config.name
-      for endpoint_config in service_config.endpoints:
-        host = new_cluster.load_assignment.endpoints[0].lb_endpoints.add()
-        socket_address = host.endpoint.address.socket_address
-        socket_address.address = endpoint_config.ip
-        socket_address.port_value = int(endpoint_config.port)
-      clusters.append(new_cluster)
-    return clusters
 
   def _randomlyAssignInitialClusters(self, clusters: list[cluster_pb2.Cluster]):
     while clusters:
@@ -153,7 +168,11 @@ class DynamicClusterConfigManager(DynamicConfigManager):
       self._inactive_clusters.append(unpacked_cluster)
 
   def mutate(self):
-    """Invoke to randomly mutate the current cluster configuration."""
+    """Invoke to randomly mutate the current cluster configuration.
+
+    Raises:
+      NotImplementedError: If a newly added mutate action is not implemented.
+    """
     action = random.choice(self.mutate_actions)
     self._last_mutate_action = action
     if action == self.__class__.Action.ADD:
@@ -211,7 +230,7 @@ class DynamicEndpointsConfigManager(DynamicConfigManager):
     # Convience hook to add endpoints.
     self._lb_endpoints = self._cluster_load_assignment.endpoints[0].lb_endpoints
 
-    endpoints = self._parseAvailableEndpoints(config.cluster.endpoints)
+    endpoints = _parseAvailableEndpoints(config.cluster.endpoints)
     self._inactive_endpoints = []
     self._randomlyAssignInitialEndpoints(endpoints)
     # TODO(kbaichoo): refactor into a shared constants file.
@@ -220,20 +239,6 @@ class DynamicEndpointsConfigManager(DynamicConfigManager):
     self._refresh_interval = config.refresh_interval.ToSeconds()
     # Tracks the last mutated action. Used for testing.
     self._last_mutate_action = None
-
-  def _parseAvailableEndpoints(
-      self,
-      endpoints: list[endpoints_config_manager_pb2.DynamicEndpointsConfigManagerSettings.Endpoint]
-  ) -> list[endpoint_components_pb2.LbEndpoint]:
-    """Parse the available endpoints."""
-    parsed_endpoints = []
-    for endpoint_config in endpoints:
-      host = endpoint_components_pb2.LbEndpoint()
-      socket_address = host.endpoint.address.socket_address
-      socket_address.address = endpoint_config.ip
-      socket_address.port_value = int(endpoint_config.port)
-      parsed_endpoints.append(host)
-    return parsed_endpoints
 
   def _randomlyAssignInitialEndpoints(self, endpoints: list[endpoint_components_pb2.LbEndpoint]):
     while endpoints:
@@ -244,7 +249,11 @@ class DynamicEndpointsConfigManager(DynamicConfigManager):
         self._inactive_endpoints.append(endpoints.pop())
 
   def mutate(self):
-    """Invoke to randomly mutate the current endpoint configuration."""
+    """Invoke to randomly mutate the current endpoint configuration.
+
+    Raises:
+      NotImplementedError: If a newly added mutate action is not implemented.
+    """
     action = random.choice(self.mutate_actions)
     self._last_mutate_action = action
     if action == self.__class__.Action.ADD:
