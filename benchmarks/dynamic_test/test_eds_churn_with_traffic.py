@@ -12,7 +12,7 @@ from benchmarks import utilities as benchmarks_utilities
 from typing import Generator
 from rules_python.python.runfiles import runfiles
 from nighthawk.api.configuration import endpoints_config_manager_pb2
-from test.test_integration import utility
+from test.integration import utility
 
 
 def _base_eds_config(
