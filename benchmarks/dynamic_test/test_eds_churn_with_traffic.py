@@ -8,10 +8,11 @@ import pytest
 import os
 
 from dynamic_config_envoy_proxy import (inject_dynamic_envoy_http_proxy_fixture, proxy_config)
-from benchmarks import utilities
+from benchmarks import utilities as benchmarks_utilities
 from typing import Generator
 from rules_python.python.runfiles import runfiles
 from nighthawk.api.configuration import endpoints_config_manager_pb2
+from test.test_integration import utility
 
 
 def _base_eds_config(
@@ -53,7 +54,7 @@ def _run_benchmark(fixture,
   parsed_json, _ = fixture.runNighthawkClient(args, check_return_code=False)
 
   # output test results
-  utilities.output_benchmark_results(parsed_json, fixture)
+  benchmarks_utilities.output_benchmark_results(parsed_json, fixture)
 
 
 def _readRunfile(path: str) -> str:
@@ -62,7 +63,9 @@ def _readRunfile(path: str) -> str:
     return f.read()
 
 
-def _assignEndpointsToClusters(config, cluster, available_endpoints):
+def _assignEndpointsToClusters(
+    config: endpoints_config_manager_pb2.DynamicEndpointsConfigManagerSettings, cluster: str,
+    available_endpoints: list[utility.SocketAddress]):
   """Assign the given backend endpoints to the cluster."""
   config.cluster.name = cluster
   for endpoint in available_endpoints:
@@ -71,7 +74,7 @@ def _assignEndpointsToClusters(config, cluster, available_endpoints):
     new_endpoint.port = endpoint.port
 
 
-def _config_generation_single_cluster(temp_dir, endpoints):
+def _config_generation_single_cluster(temp_dir: str, endpoints: list[utility.SocketAddress]):
   """Configure EDS churn for a single cluster."""
   config = _base_eds_config(temp_dir)
   clusters = 'service_envoyproxy_io'

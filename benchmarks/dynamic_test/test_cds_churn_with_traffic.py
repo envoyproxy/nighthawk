@@ -8,13 +8,15 @@ import pytest
 import os
 
 from dynamic_config_envoy_proxy import (inject_dynamic_envoy_http_proxy_fixture, proxy_config)
-from benchmarks import utilities
+from benchmarks import utilities as benchmarks_utilities
 from typing import Generator
 from rules_python.python.runfiles import runfiles
 from nighthawk.api.configuration import cluster_config_manager_pb2
+from test.test_integration import utility
 
 
-def _base_cds_config(temp_dir) -> cluster_config_manager_pb2.DynamicClusterConfigManagerSettings:
+def _base_cds_config(
+    temp_dir: str) -> cluster_config_manager_pb2.DynamicClusterConfigManagerSettings:
   settings = cluster_config_manager_pb2.DynamicClusterConfigManagerSettings()
   settings.refresh_interval.seconds = 5
   settings.output_file = os.path.join(temp_dir, 'new_cds.pb')
@@ -22,7 +24,9 @@ def _base_cds_config(temp_dir) -> cluster_config_manager_pb2.DynamicClusterConfi
 
 
 # TODO(kbaichoo): migrate to common test utility
-def _assignEndpointsToClusters(config, clusters, available_endpoints):
+def _assignEndpointsToClusters(
+    config: cluster_config_manager_pb2.DynamicClusterConfigManagerSettings, clusters: list[str],
+    available_endpoints: list[utility.SocketAddress]):
   """Process all backend endpoints, round robin assigning to the given clusters."""
   for cluster in clusters:
     new_cluster = config.clusters.add()
@@ -66,7 +70,7 @@ def _run_benchmark(fixture,
   parsed_json, _ = fixture.runNighthawkClient(args, expect_failure=True)
 
   # output test results
-  utilities.output_benchmark_results(parsed_json, fixture)
+  benchmarks_utilities.output_benchmark_results(parsed_json, fixture)
 
 
 def _readRunfile(path: str) -> str:
@@ -75,7 +79,7 @@ def _readRunfile(path: str) -> str:
     return f.read()
 
 
-def _config_generation_single_cluster(temp_dir, endpoints):
+def _config_generation_single_cluster(temp_dir: str, endpoints: list[utility.SocketAddress]):
   """Configure CDS churn for a single cluster."""
   config = _base_cds_config(temp_dir)
   clusters = ['service_envoyproxy_io']
@@ -99,7 +103,7 @@ def request_source_config() -> Generator[str, None, None]:
   yield "nighthawk/benchmarks/configurations/request_source_five_clusters.json"
 
 
-def _config_generation_five_cluster(temp_dir, endpoints):
+def _config_generation_five_cluster(temp_dir: str, endpoints: list[utility.SocketAddress]):
   """Configure CDS churn for five clusters."""
   config = _base_cds_config(temp_dir)
   clusters = [
