@@ -3,24 +3,13 @@ load("@python_pip_deps//:requirements.bzl", "requirement")
 
 licenses(["notice"])  # Apache 2
 
-py_test(
-    name = "dynamic_config_manager_test",
-    srcs = [
-        "dynamic_config_manager_test.py",
-    ],
-    srcs_version = "PY3",
-    deps = [
-        ":dynamic_config_manager_lib",
-        requirement("pytest"),
-    ],
-)
-
 py_library(
     name = "dynamic_config_manager_lib",
     srcs = [
         "dynamic_config_manager.py",
     ],
     srcs_version = "PY3",
+    visibility = ["//test/dynamic_config:__pkg__"],
     deps = [
         "//api/configuration:cluster_config_manager_py_proto",
         "//api/configuration:endpoints_config_manager_py_proto",
