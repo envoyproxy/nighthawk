@@ -10,13 +10,19 @@ import random
 from envoy.service.discovery.v3 import discovery_pb2
 
 
-def toggle_bool(choices):
-  """Use to deterministically patch random choice when initially assigning resources, starting with True."""
-  if not hasattr(toggle_bool, "next_value"):
-    toggle_bool.next_value = True
-  ret = toggle_bool.next_value
-  toggle_bool.next_value = not ret
-  return ret
+class ToggleBool:
+  """Callable to deterministically patch random choice when initially assigning resources."""
+
+  def __init__(self):
+    """Create a ToggleBool."""
+    self.next_value = True
+
+  def __call__(self, choices):
+    """Given bool choices, toggle between returning True and False."""
+    assert all(isinstance(x, bool) for x in choices)
+    ret = self.next_value
+    self.next_value = not ret
+    return ret
 
 
 def _add_endpoint(cluster, ip, port):
@@ -43,7 +49,7 @@ def cluster_config():
 
 def test_initialize_clusters_randomly(cluster_config):
   """Test that clusters are randomly selected in initial configuration."""
-  with mock.patch('random.choice', side_effect=toggle_bool) as _:
+  with mock.patch('random.choice', side_effect=ToggleBool()) as _:
     cluster_manager = dynamic_config_manager.DynamicClusterConfigManager(cluster_config)
     config = discovery_pb2.DiscoveryResponse()
     config.ParseFromString(cluster_manager.serialize())
@@ -52,7 +58,7 @@ def test_initialize_clusters_randomly(cluster_config):
 
 def test_can_mutate_clusters(cluster_config):
   """Test that we can randomly mutate the configuration."""
-  with mock.patch('random.choice', side_effect=toggle_bool) as _:
+  with mock.patch('random.choice', side_effect=ToggleBool()) as _:
     cluster_manager = dynamic_config_manager.DynamicClusterConfigManager(cluster_config)
 
   cluster_manager.mutate()
@@ -85,7 +91,7 @@ def endpoints_config():
 
 def test_initialize_endpoints_randomly(endpoints_config):
   """Test that clusters are randomly selected in initial configuration."""
-  with mock.patch('random.choice', side_effect=toggle_bool) as _:
+  with mock.patch('random.choice', side_effect=ToggleBool()) as _:
     endpoints_manager = dynamic_config_manager.DynamicEndpointsConfigManager(endpoints_config)
 
   config = discovery_pb2.DiscoveryResponse()
