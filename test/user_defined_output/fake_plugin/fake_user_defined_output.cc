@@ -12,7 +12,8 @@ FakeUserDefinedOutputPlugin::FakeUserDefinedOutputPlugin(
     WorkerMetadata worker_metadata)
     : config_(std::move(config)), worker_metadata_(std::move(worker_metadata)) {}
 
-absl::Status FakeUserDefinedOutputPlugin::handleResponseHeaders(const Envoy::Http::ResponseHeaderMapPtr&&) {
+absl::Status FakeUserDefinedOutputPlugin::handleResponseHeaders(
+  const Envoy::Http::ResponseHeaderMapPtr&&) {
   headers_called_++;
 
   return absl::OkStatus();
@@ -54,7 +55,9 @@ UserDefinedOutputPluginPtr FakeUserDefinedOutputPluginFactory::createUserDefined
   return std::make_unique<FakeUserDefinedOutputPlugin>(config, worker_metadata);
 }
 
-absl::Status FakeUserDefinedOutputPluginFactory::AggregateGlobalOutput(absl::Span<const google::protobuf::Any> per_worker_outputs, google::protobuf::Any& global_output_any) {
+absl::Status FakeUserDefinedOutputPluginFactory::AggregateGlobalOutput(
+  absl::Span<const google::protobuf::Any> per_worker_outputs,
+  google::protobuf::Any& global_output_any) {
   FakeUserDefinedOutput global_output;
   global_output.set_worker_name("global");
   int data_called = 0;

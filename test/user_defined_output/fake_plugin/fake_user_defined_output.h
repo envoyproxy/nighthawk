@@ -49,8 +49,8 @@ private:
 };
 
 /**
- * Factory that creates a FakeUserDefinedOutputPlugin plugin from a FakeUserDefinedOutputConfig proto.
- * Registered as an Envoy plugin.
+ * Factory that creates a FakeUserDefinedOutputPlugin plugin from a FakeUserDefinedOutputConfig
+ * proto. Registered as an Envoy plugin.
  */
 class FakeUserDefinedOutputPluginFactory : public UserDefinedOutputPluginFactory {
 public:
@@ -60,7 +60,9 @@ public:
       const Envoy::Protobuf::Message& config_any,
       const WorkerMetadata& worker_metadata) override;
   
-  absl::Status AggregateGlobalOutput(absl::Span<const google::protobuf::Any> per_worker_outputs, google::protobuf::Any& global_output_any) override;
+  absl::Status AggregateGlobalOutput(
+    absl::Span<const google::protobuf::Any> per_worker_outputs,
+    google::protobuf::Any& global_output_any) override;
 };
 
 // This factory is activated through LoadStepControllerPlugin in plugin_util.h.
