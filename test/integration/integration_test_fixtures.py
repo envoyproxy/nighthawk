@@ -246,7 +246,12 @@ class IntegrationTestBase():
         return int(counter["value"])
     return None
 
-  def runNighthawkClient(self, args, expect_failure=False, timeout=30, as_json=True):
+  def runNighthawkClient(self,
+                         args,
+                         expect_failure=False,
+                         timeout=30,
+                         as_json=True,
+                         check_return_code=True):
     """Run Nighthawk against the test server.
 
     Returns a string containing json-formatted result plus logs.
@@ -275,10 +280,11 @@ class IntegrationTestBase():
       logging.info("Nighthawk client stderr: [%s]" % logs)
     if as_json:
       output = json.loads(output)
-    if expect_failure:
-      assert (client_process.returncode != 0)
-    else:
-      assert (client_process.returncode == 0)
+    if check_return_code:
+      if expect_failure:
+        assert (client_process.returncode != 0)
+      else:
+        assert (client_process.returncode == 0)
     return output, logs
 
   def transformNighthawkJson(self, json, format="human"):
