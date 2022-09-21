@@ -225,7 +225,7 @@ dir_order:                                                                     #
   - external                                                                   # unique
   - api                                                                        # unique
   - common                                                                     # unique
-  - source                                                                     # unique                                                                     # unique
+  - source                                                                     # unique
   - exeserver                                                                  # unique
   - client                                                                     # unique
   - distributor                                                                # unique
