@@ -161,8 +161,7 @@ TEST(SinkRequest, UsesSpecifiedCommandLineOptions) {
   // test requests a channel. Set call expectations on the inner mock channel.
   EXPECT_CALL(mock_nighthawk_sink_stub, SinkRequestStreamRaw)
       .WillOnce([&request](grpc::ClientContext*) {
-        auto* mock_reader_writer =
-            new MockClientReaderWriter<SinkRequest, SinkResponse>();
+        auto* mock_reader_writer = new MockClientReaderWriter<SinkRequest, SinkResponse>();
         // SinkRequest currently expects Read to return true exactly once.
         EXPECT_CALL(*mock_reader_writer, Read(_)).WillOnce(Return(true)).WillOnce(Return(false));
         // Capture the Nighthawk request SinkRequest sends on the channel.
@@ -189,8 +188,7 @@ TEST(SinkRequest, ReturnsNighthawkResponseSuccessfully) {
   // test requests a channel. Set call expectations on the inner mock channel.
   EXPECT_CALL(mock_nighthawk_sink_stub, SinkRequestStreamRaw)
       .WillOnce([&expected_response](grpc::ClientContext*) {
-        auto* mock_reader_writer =
-            new MockClientReaderWriter<SinkRequest, SinkResponse>();
+        auto* mock_reader_writer = new MockClientReaderWriter<SinkRequest, SinkResponse>();
         // SinkRequest currently expects Read to return true exactly once.
         // Capture the gRPC response proto as it is written to the output parameter.
         EXPECT_CALL(*mock_reader_writer, Read(_))
@@ -215,8 +213,7 @@ TEST(SinkRequest, WillFinishIfNighthawkServiceDoesNotSendResponse) {
   // Configure the mock Nighthawk Service stub to return an inner mock channel when the code under
   // test requests a channel. Set call expectations on the inner mock channel.
   EXPECT_CALL(mock_nighthawk_sink_stub, SinkRequestStreamRaw).WillOnce([](grpc::ClientContext*) {
-    auto* mock_reader_writer =
-        new MockClientReaderWriter<SinkRequest, SinkResponse>();
+    auto* mock_reader_writer = new MockClientReaderWriter<SinkRequest, SinkResponse>();
     EXPECT_CALL(*mock_reader_writer, Read(_)).WillOnce(Return(false));
     EXPECT_CALL(*mock_reader_writer, Write(_, _)).WillOnce(Return(true));
     EXPECT_CALL(*mock_reader_writer, WritesDone()).WillOnce(Return(true));
@@ -235,8 +232,7 @@ TEST(SinkRequest, ReturnsErrorIfNighthawkServiceWriteFails) {
   // Configure the mock Nighthawk Service stub to return an inner mock channel when the code under
   // test requests a channel. Set call expectations on the inner mock channel.
   EXPECT_CALL(mock_nighthawk_sink_stub, SinkRequestStreamRaw).WillOnce([](grpc::ClientContext*) {
-    auto* mock_reader_writer =
-        new MockClientReaderWriter<SinkRequest, SinkResponse>();
+    auto* mock_reader_writer = new MockClientReaderWriter<SinkRequest, SinkResponse>();
     EXPECT_CALL(*mock_reader_writer, Write(_, _)).WillOnce(Return(false));
     return mock_reader_writer;
   });
@@ -254,8 +250,7 @@ TEST(SinkRequest, ReturnsErrorIfNighthawkServiceWritesDoneFails) {
   // Configure the mock Nighthawk Service stub to return an inner mock channel when the code under
   // test requests a channel. Set call expectations on the inner mock channel.
   EXPECT_CALL(mock_nighthawk_sink_stub, SinkRequestStreamRaw).WillOnce([](grpc::ClientContext*) {
-    auto* mock_reader_writer =
-        new MockClientReaderWriter<SinkRequest, SinkResponse>();
+    auto* mock_reader_writer = new MockClientReaderWriter<SinkRequest, SinkResponse>();
     EXPECT_CALL(*mock_reader_writer, Write(_, _)).WillOnce(Return(true));
     EXPECT_CALL(*mock_reader_writer, WritesDone()).WillOnce(Return(false));
     return mock_reader_writer;
@@ -274,8 +269,7 @@ TEST(SinkRequest, PropagatesErrorIfNighthawkServiceGrpcStreamClosesAbnormally) {
   // Configure the mock Nighthawk Service stub to return an inner mock channel when the code under
   // test requests a channel. Set call expectations on the inner mock channel.
   EXPECT_CALL(mock_nighthawk_sink_stub, SinkRequestStreamRaw).WillOnce([](grpc::ClientContext*) {
-    auto* mock_reader_writer =
-        new MockClientReaderWriter<SinkRequest, SinkResponse>();
+    auto* mock_reader_writer = new MockClientReaderWriter<SinkRequest, SinkResponse>();
     // SinkRequest currently expects Read to return true exactly once.
     EXPECT_CALL(*mock_reader_writer, Read(_)).WillOnce(Return(true)).WillOnce(Return(false));
     EXPECT_CALL(*mock_reader_writer, Write(_, _)).WillOnce(Return(true));
