@@ -4,7 +4,7 @@
   "failure_predicates": {},
   "labels": [],
   "stats_sinks": [],
-  "user_defined_plugin_config": [],
+  "user_defined_plugin_configs": [],
   "connections": 0,
   "duration": "1s"
  },
