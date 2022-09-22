@@ -2,10 +2,9 @@ syntax = "proto3";
 
 package nighthawk;
 
-// Configuration for FakeUserDefinedOutputPlugin (plugin name: "nighthawk.fake_step_controller")
-// that returns a fixed RPS value and changes converged and doomed states based on the latest
-// reported BenchmarkResult. Can also be programmed to return a proto validation failure or 
-// return an error after some number of each step.
+// Configuration for FakeUserDefinedOutputPlugin (plugin name: "nighthawk.fake_user_defined_output")
+// that counts the number of times each api is called. Can also be programmed to return a proto
+// validation failure or return an error after some number of each step.
 message FakeUserDefinedOutputConfig {
   // Configures handleResponseData to fail after data_failure_countdown calls.
   bool fail_data = 1;
@@ -19,9 +18,13 @@ message FakeUserDefinedOutputConfig {
   bool fail_per_worker_output = 5;
 }
 
+// Output proto for the FakeUserDefinedOutputPlugin.
 message FakeUserDefinedOutput {
+  // These fields count the number of times each api is called.
   int32 data_called = 1;
   int32 headers_called = 2;
 
+  // Reports which worker created this plugin instance. Will say "global" for the global
+  // output.
   string worker_name = 3;
 }

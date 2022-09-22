@@ -4,6 +4,8 @@
 
 #include "nighthawk/user_defined_output/user_defined_output_plugin.h"
 
+#include "external/envoy/source/common/common/statusor.h"
+
 #include "api/client/options.pb.h"
 #include "api/client/service.grpc.pb.h"
 
@@ -40,7 +42,7 @@ public:
   /**
    * Get the output for this instance of the plugin, packing it into output.
    */
-  absl::Status getPerWorkerOutput(google::protobuf::Any& output_any) override;
+  absl::StatusOr<google::protobuf::Any> getPerWorkerOutput() override;
 private:
   int data_called_ = 0;
   int headers_called_ = 0;
@@ -60,9 +62,8 @@ public:
       const Envoy::Protobuf::Message& config_any,
       const WorkerMetadata& worker_metadata) override;
   
-  absl::Status AggregateGlobalOutput(
-    absl::Span<const google::protobuf::Any> per_worker_outputs,
-    google::protobuf::Any& global_output_any) override;
+  absl::StatusOr<google::protobuf::Any> AggregateGlobalOutput(
+    absl::Span<const google::protobuf::Any> per_worker_outputs) override;
 };
 
 // This factory is activated through LoadStepControllerPlugin in plugin_util.h.

@@ -5,6 +5,7 @@
 #include "envoy/buffer/buffer.h"
 #include "envoy/common/pure.h"
 #include "envoy/config/typed_config.h"
+#include "external/envoy/source/common/common/statusor.h"
 
 #include "external/envoy/source/common/http/header_map_impl.h"
 
@@ -30,14 +31,19 @@ public:
    * Receives the headers from a single HTTP response, and allows the plugin to collect data based
    * on those headers.
    * 
+   * Plugins should return statuses for invalid data or when they fail to process the data. Any
+   * status will be logged and increment a counter that will be added to the worker Result. Callers
+   * can also provide a failure predicate for this counter that will abort the request after n
+   * plugin failures.
+   * 
    * @param headers
    */
   virtual absl::Status handleResponseHeaders(
     const Envoy::Http::ResponseHeaderMapPtr&& headers) PURE;
 
   /**
-   * Receives the data from a single HTTP response, and allows the plugin to collect data based on
-   * that data.
+   * Receives a single response body, and allows the plugin to collect data based on
+   * that response body.
    * 
    * @param response_data
    */
@@ -46,9 +52,9 @@ public:
   /**
    * Get the output for this instance of the plugin, packed into an Any proto object.
    * 
-   * @param output Any object to pack the per_worker output into to add to the global Result.
+   * @return output Any-packed per_worker output to add to the worker's Result.
    */
-  virtual absl::Status getPerWorkerOutput(google::protobuf::Any& output_any) PURE;
+  virtual absl::StatusOr<google::protobuf::Any> getPerWorkerOutput() PURE;
 };
 
 using UserDefinedOutputPluginPtr = std::unique_ptr<UserDefinedOutputPlugin>;
@@ -92,12 +98,10 @@ public:
    * 
    * @param per_worker_outputs List of the outputs that every per-worker instance of the User
    *    Defined Output Plugin created.
-   * @param global_output Any object to pack the aggregated output into to add to the global
-   *    Result.
-   * @return absl::Status
+
+   * @return global_output Any-packed aggregated output to add to the global Result.
    */
-  virtual absl::Status AggregateGlobalOutput(
-    absl::Span<const google::protobuf::Any> per_worker_outputs,
-    google::protobuf::Any& global_output_any) PURE;
+  virtual absl::StatusOr<google::protobuf::Any> AggregateGlobalOutput(
+    absl::Span<const google::protobuf::Any> per_worker_outputs) PURE;
 };
 }  // namespace Nighthawk

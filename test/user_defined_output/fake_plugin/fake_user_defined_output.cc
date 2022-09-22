@@ -25,19 +25,16 @@ absl::Status FakeUserDefinedOutputPlugin::handleResponseData(const Envoy::Buffer
   return absl::OkStatus();
 }
 
-absl::Status FakeUserDefinedOutputPlugin::getPerWorkerOutput(google::protobuf::Any& output_any) {
+absl::StatusOr<google::protobuf::Any> FakeUserDefinedOutputPlugin::getPerWorkerOutput() {
   FakeUserDefinedOutput output;
   output.set_data_called(data_called_);
   output.set_headers_called(headers_called_);
   output.set_worker_name(worker_metadata_.name);
 
+  google::protobuf::Any output_any;
   output_any.PackFrom(output);
-
-  return absl::OkStatus();
+  return output_any;
 }
-
-
-// BROKEN BELOW HERE
 
 std::string FakeUserDefinedOutputPluginFactory::name() const {
   return "nighthawk.fake_user_defined_output";
@@ -55,26 +52,33 @@ UserDefinedOutputPluginPtr FakeUserDefinedOutputPluginFactory::createUserDefined
   return std::make_unique<FakeUserDefinedOutputPlugin>(config, worker_metadata);
 }
 
-absl::Status FakeUserDefinedOutputPluginFactory::AggregateGlobalOutput(
-  absl::Span<const google::protobuf::Any> per_worker_outputs,
-  google::protobuf::Any& global_output_any) {
+absl::StatusOr<google::protobuf::Any> FakeUserDefinedOutputPluginFactory::AggregateGlobalOutput(
+  absl::Span<const google::protobuf::Any> per_worker_outputs) {
   FakeUserDefinedOutput global_output;
   global_output.set_worker_name("global");
   int data_called = 0;
   int headers_called = 0;
   for (const google::protobuf::Any& any : per_worker_outputs) {
     FakeUserDefinedOutput output;
-    any.UnpackTo(&output);
-    data_called += output.data_called();
-    headers_called += output.headers_called();
+    if (any.UnpackTo(&output)) {
+      data_called += output.data_called();
+      headers_called += output.headers_called();
+    }
+    else {
+      return absl::InternalError(absl::StrCat(
+        "Unable to unpack Any into a FakeUserDefinedOutput: ",
+        any.ShortDebugString()
+      ));
+    }
   }
 
   global_output.set_data_called(data_called);
   global_output.set_headers_called(headers_called);
 
-  global_output_any.PackFrom(global_output);
+  google::protobuf::Any global_any;
+  global_any.PackFrom(global_output);
 
-  return absl::OkStatus();
+  return global_any;
 }
 
 REGISTER_FACTORY(FakeUserDefinedOutputPluginFactory, UserDefinedOutputPluginFactory);
