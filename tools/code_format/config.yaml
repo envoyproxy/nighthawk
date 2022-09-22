@@ -226,7 +226,8 @@ dir_order:                                                                     #
   - api                                                                        # unique
   - common                                                                     # unique
   - source                                                                     # unique
-  - exeserver                                                                  # unique
+  - exe                                                                        # unique
+  - server                                                                     # unique
   - client                                                                     # unique
   - distributor                                                                # unique
   - sink                                                                       # unique
