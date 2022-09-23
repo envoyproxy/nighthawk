@@ -136,7 +136,7 @@ TEST_F(OutputCollectorTest, GetLowerCaseOutputFormats) {
   // When you're looking at this code you probably just added an output format.
   // This is to point out that you might want to update the list below and add a test above.
   ASSERT_THAT(output_formats, ElementsAre("json", "human", "yaml", "dotted", "fortio",
-                                          "experimental_fortio_pedantic","csv"));
+                                          "experimental_fortio_pedantic", "csv"));
 }
 
 class FortioOutputCollectorTest : public OutputCollectorTest {

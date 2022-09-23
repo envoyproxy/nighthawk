@@ -244,9 +244,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
              }
            })pb",
       &expected_transport_socket);
-  EXPECT_THAT(
-      options->transportSocket().value(),
-      EqualsProto(expected_transport_socket));
+  EXPECT_THAT(options->transportSocket().value(), EqualsProto(expected_transport_socket));
   EXPECT_EQ(10, options->maxPendingRequests());
   EXPECT_EQ(11, options->maxActiveRequests());
   EXPECT_EQ(12, options->maxRequestsPerConnection());
@@ -774,12 +772,10 @@ TEST_F(OptionsImplTest, BadHttp3ProtocolOptionsSpecification) {
                               client_name_, "{broken_json:")),
                           MalformedArgvException, "Unable to parse JSON as proto");
   // Correct JSON, but contents not according to spec.
-  EXPECT_THROW_WITH_REGEX(
-      TestUtility::createOptionsImpl(
-          fmt::format("{} --protocol http3 --http3-protocol-options {} http://foo/", client_name_,
-                      "{invalid_http3_protocol_options:{}}")),
-      MalformedArgvException,
-      "INVALID_ARGUMENT");
+  EXPECT_THROW_WITH_REGEX(TestUtility::createOptionsImpl(fmt::format(
+                              "{} --protocol http3 --http3-protocol-options {} http://foo/",
+                              client_name_, "{invalid_http3_protocol_options:{}}")),
+                          MalformedArgvException, "INVALID_ARGUMENT");
 }
 
 TEST_F(OptionsImplTest, FailsWhenHttp3ProtocolOptionsSpecifiedForNonHttp3) {
@@ -972,8 +968,7 @@ TEST_F(OptionsImplTest, BadTlsContextSpecification) {
   EXPECT_THROW_WITH_REGEX(
       TestUtility::createOptionsImpl(fmt::format("{} --tls-context {} http://foo/", client_name_,
                                                  "{misspelled_tls_context:{}}")),
-      MalformedArgvException,
-      "INVALID_ARGUMENT");
+      MalformedArgvException, "INVALID_ARGUMENT");
 }
 
 TEST_F(OptionsImplTest, BadUpstreamBindConfigSpecification) {
@@ -986,8 +981,7 @@ TEST_F(OptionsImplTest, BadUpstreamBindConfigSpecification) {
   EXPECT_THROW_WITH_REGEX(
       TestUtility::createOptionsImpl(fmt::format("{} --upstream-bind-config {} http://foo/",
                                                  client_name_, "{invalid_bind_config:{}}")),
-      MalformedArgvException,
-      "INVALID_ARGUMENT");
+      MalformedArgvException, "INVALID_ARGUMENT");
 }
 
 TEST_F(OptionsImplTest, BadTransportSocketSpecification) {
@@ -1000,8 +994,7 @@ TEST_F(OptionsImplTest, BadTransportSocketSpecification) {
   EXPECT_THROW_WITH_REGEX(
       TestUtility::createOptionsImpl(fmt::format("{} --transport-socket {} http://foo/",
                                                  client_name_, "{misspelled_transport_socket:{}}")),
-      MalformedArgvException,
-      "INVALID_ARGUMENT");
+      MalformedArgvException, "INVALID_ARGUMENT");
 }
 
 TEST_F(OptionsImplTest, BadStatsSinksSpecification) {
