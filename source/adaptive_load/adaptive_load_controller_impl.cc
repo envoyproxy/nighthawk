@@ -144,7 +144,8 @@ absl::StatusOr<BenchmarkResult> AdaptiveLoadControllerImpl::PerformAndAnalyzeNig
                                                           command_line_options);
   Envoy::SystemTime end_time = time_source_.systemTime();
   if (!nighthawk_response_or.ok()) {
-    ENVOY_LOG_MISC(error, "Nighthawk Service error: {}: {}", nighthawk_response_or.status().raw_code(),
+    ENVOY_LOG_MISC(error, "Nighthawk Service error: {}: {}",
+                   nighthawk_response_or.status().raw_code(),
                    nighthawk_response_or.status().message());
     return nighthawk_response_or.status();
   }
@@ -155,8 +156,8 @@ absl::StatusOr<BenchmarkResult> AdaptiveLoadControllerImpl::PerformAndAnalyzeNig
       metrics_evaluator_.AnalyzeNighthawkBenchmark(nighthawk_response, spec,
                                                    name_to_custom_plugin_map);
   if (!benchmark_result_or.ok()) {
-    ENVOY_LOG_MISC(error, "Benchmark scoring error: {}: {}", benchmark_result_or.status().raw_code(),
-                   benchmark_result_or.status().message());
+    ENVOY_LOG_MISC(error, "Benchmark scoring error: {}: {}",
+                   benchmark_result_or.status().raw_code(), benchmark_result_or.status().message());
     return benchmark_result_or.status();
   }
   BenchmarkResult benchmark_result = benchmark_result_or.value();

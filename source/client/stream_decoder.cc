@@ -2,13 +2,13 @@
 
 #include <memory>
 
-#include "fmt/ostream.h"
-
 #include "external/envoy/source/common/http/http1/codec_impl.h"
 #include "external/envoy/source/common/http/utility.h"
 #include "external/envoy/source/common/network/address_impl.h"
 #include "external/envoy/source/common/stream_info/stream_info_impl.h"
 #include "external/envoy/source/extensions/request_id/uuid/config.h"
+
+#include "fmt/ostream.h"
 
 namespace Nighthawk {
 namespace Client {

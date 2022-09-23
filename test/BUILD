@@ -117,8 +117,8 @@ envoy_cc_test(
     name = "output_formatter_test",
     srcs = ["output_formatter_test.cc"],
     data = [
-        "test_data/output_formatter.dotted.gold",
         "test_data/output_formatter.csv.gold",
+        "test_data/output_formatter.dotted.gold",
         "test_data/output_formatter.json.gold",
         "test_data/output_formatter.medium.fortio.gold",
         "test_data/output_formatter.medium.fortio-noquirks.gold",

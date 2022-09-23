@@ -1,7 +1,8 @@
 #pragma once
 
 #include <gmock/gmock.h>
-#include <grpcpp/support/sync_stream.h>
+
+#include "grpcpp/support/sync_stream.h"
 
 namespace Nighthawk {
 

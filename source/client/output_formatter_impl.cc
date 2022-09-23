@@ -200,7 +200,8 @@ CsvOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) con
             }
             std::string s_percentile = fmt::format("{:.{}g}", p, 8);
             ss << fmt::format("{},{},{},{}", s_percentile, percentile.count(),
-                              Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(percentile.duration()),
+                              Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(
+                                  percentile.duration()),
                               percentile.has_duration()
                                   ? formatProtoDuration(percentile.duration())
                                   : fmt::format("{}", static_cast<int64_t>(percentile.raw_value())),
@@ -210,7 +211,7 @@ CsvOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) con
         });
         ss << std::endl;
       }
-      
+
       // Counters
       ss << fmt::format("{},{},{}", "Counter", "Value", "Per second") << std::endl;
       for (const nighthawk::client::Counter& counter : result.counters()) {
@@ -226,8 +227,8 @@ CsvOutputFormatterImpl::formatProto(const nighthawk::client::Output& output) con
   return ss.str();
 }
 
-std::string CsvOutputFormatterImpl::formatProtoDuration(
-    const Envoy::ProtobufWkt::Duration& duration) const {
+std::string
+CsvOutputFormatterImpl::formatProtoDuration(const Envoy::ProtobufWkt::Duration& duration) const {
   int64_t microseconds = Envoy::Protobuf::util::TimeUtil::DurationToMicroseconds(duration);
   return fmt::format("{}s {:03}ms {:03}us", (microseconds % 1'000'000'000) / 1'000'000,
                      (microseconds % 1'000'000) / 1'000, microseconds % 1'000);
