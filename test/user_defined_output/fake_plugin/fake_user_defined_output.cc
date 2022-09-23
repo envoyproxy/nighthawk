@@ -7,13 +7,12 @@ namespace Nighthawk {
 using ::nighthawk::FakeUserDefinedOutput;
 using ::nighthawk::FakeUserDefinedOutputConfig;
 
-FakeUserDefinedOutputPlugin::FakeUserDefinedOutputPlugin(
-    FakeUserDefinedOutputConfig config,
-    WorkerMetadata worker_metadata)
+FakeUserDefinedOutputPlugin::FakeUserDefinedOutputPlugin(FakeUserDefinedOutputConfig config,
+                                                         WorkerMetadata worker_metadata)
     : config_(std::move(config)), worker_metadata_(std::move(worker_metadata)) {}
 
-absl::Status FakeUserDefinedOutputPlugin::handleResponseHeaders(
-  const Envoy::Http::ResponseHeaderMapPtr&&) {
+absl::Status
+FakeUserDefinedOutputPlugin::handleResponseHeaders(const Envoy::Http::ResponseHeaderMapPtr&&) {
   headers_called_++;
 
   return absl::OkStatus();
@@ -44,8 +43,7 @@ Envoy::ProtobufTypes::MessagePtr FakeUserDefinedOutputPluginFactory::createEmpty
 }
 
 UserDefinedOutputPluginPtr FakeUserDefinedOutputPluginFactory::createUserDefinedOutputPlugin(
-    const Envoy::Protobuf::Message& message,
-    const WorkerMetadata& worker_metadata) {
+    const Envoy::Protobuf::Message& message, const WorkerMetadata& worker_metadata) {
   const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
   FakeUserDefinedOutputConfig config;
   Envoy::MessageUtil::unpackTo(any, config);
@@ -53,7 +51,7 @@ UserDefinedOutputPluginPtr FakeUserDefinedOutputPluginFactory::createUserDefined
 }
 
 absl::StatusOr<google::protobuf::Any> FakeUserDefinedOutputPluginFactory::AggregateGlobalOutput(
-  absl::Span<const google::protobuf::Any> per_worker_outputs) {
+    absl::Span<const google::protobuf::Any> per_worker_outputs) {
   FakeUserDefinedOutput global_output;
   global_output.set_worker_name("global");
   int data_called = 0;
@@ -63,12 +61,9 @@ absl::StatusOr<google::protobuf::Any> FakeUserDefinedOutputPluginFactory::Aggreg
     if (any.UnpackTo(&output)) {
       data_called += output.data_called();
       headers_called += output.headers_called();
-    }
-    else {
-      return absl::InternalError(absl::StrCat(
-        "Unable to unpack Any into a FakeUserDefinedOutput: ",
-        any.ShortDebugString()
-      ));
+    } else {
+      return absl::InternalError(absl::StrCat("Unable to unpack Any into a FakeUserDefinedOutput: ",
+                                              any.ShortDebugString()));
     }
   }
 

@@ -3,7 +3,6 @@
 #include "external/envoy/source/common/config/utility.h"
 
 #include "test/test_common/proto_matchers.h"
-
 #include "test/user_defined_output/fake_plugin/fake_user_defined_output.h"
 #include "test/user_defined_output/fake_plugin/fake_user_defined_output.pb.h"
 

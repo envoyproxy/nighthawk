@@ -5,10 +5,9 @@
 #include "envoy/buffer/buffer.h"
 #include "envoy/common/pure.h"
 #include "envoy/config/typed_config.h"
+
 #include "external/envoy/source/common/common/statusor.h"
-
 #include "external/envoy/source/common/http/header_map_impl.h"
-
 
 namespace Nighthawk {
 
@@ -30,28 +29,28 @@ public:
   /**
    * Receives the headers from a single HTTP response, and allows the plugin to collect data based
    * on those headers.
-   * 
+   *
    * Plugins should return statuses for invalid data or when they fail to process the data. Any
    * status will be logged and increment a counter that will be added to the worker Result. Callers
    * can also provide a failure predicate for this counter that will abort the request after n
    * plugin failures.
-   * 
+   *
    * @param headers
    */
-  virtual absl::Status handleResponseHeaders(
-    const Envoy::Http::ResponseHeaderMapPtr&& headers) PURE;
+  virtual absl::Status
+  handleResponseHeaders(const Envoy::Http::ResponseHeaderMapPtr&& headers) PURE;
 
   /**
    * Receives a single response body, and allows the plugin to collect data based on
    * that response body.
-   * 
+   *
    * @param response_data
    */
   virtual absl::Status handleResponseData(const Envoy::Buffer::Instance& response_data) PURE;
 
   /**
    * Get the output for this instance of the plugin, packed into an Any proto object.
-   * 
+   *
    * @return output Any-packed per_worker output to add to the worker's Result.
    */
   virtual absl::StatusOr<google::protobuf::Any> getPerWorkerOutput() PURE;
@@ -78,30 +77,31 @@ public:
    * @return UserDefinedOutputPluginPtr Pointer to the new instance of UserDefinedOutputPlugin.
    *
    * @throw Envoy::EnvoyException If the Any proto cannot be unpacked as the type expected by the
-   * plugin.   
-  */
-  virtual UserDefinedOutputPluginPtr createUserDefinedOutputPlugin(
-    const Envoy::Protobuf::Message& typed_config, const WorkerMetadata& worker_metadata) PURE;
+   * plugin.
+   */
+  virtual UserDefinedOutputPluginPtr
+  createUserDefinedOutputPlugin(const Envoy::Protobuf::Message& typed_config,
+                                const WorkerMetadata& worker_metadata) PURE;
 
   /**
    * Aggregates the outputs from every worker's UserDefinedOutputPlugin instance into a global
    * output, representing the cumulative data across all of the plugins combined.
-   * 
+   *
    * The protobuf type of the inputs and output must all be the same type.
-   * 
+   *
    * Pseudocode Example:
    *     AggregateGlobalOutput(
    *      {int_value: 1, array_value: ["a"]}, {int_value: 2, array_value: ["b","c"]}
    *     )
    *   Might return:
    *     {int_value: 3, array_value: ["a","b","c"]}
-   * 
+   *
    * @param per_worker_outputs List of the outputs that every per-worker instance of the User
    *    Defined Output Plugin created.
 
    * @return global_output Any-packed aggregated output to add to the global Result.
    */
-  virtual absl::StatusOr<google::protobuf::Any> AggregateGlobalOutput(
-    absl::Span<const google::protobuf::Any> per_worker_outputs) PURE;
+  virtual absl::StatusOr<google::protobuf::Any>
+  AggregateGlobalOutput(absl::Span<const google::protobuf::Any> per_worker_outputs) PURE;
 };
-}  // namespace Nighthawk
+} // namespace Nighthawk

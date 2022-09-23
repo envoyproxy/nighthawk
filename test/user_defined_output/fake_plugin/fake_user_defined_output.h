@@ -29,7 +29,7 @@ public:
   FakeUserDefinedOutputPlugin(nighthawk::FakeUserDefinedOutputConfig config,
                               WorkerMetadata worker_metadata);
 
-   /**
+  /**
    * Receives the headers from a single HTTP response. Increments headers_called_.
    */
   absl::Status handleResponseHeaders(const Envoy::Http::ResponseHeaderMapPtr&& headers) override;
@@ -43,6 +43,7 @@ public:
    * Get the output for this instance of the plugin, packing it into output.
    */
   absl::StatusOr<google::protobuf::Any> getPerWorkerOutput() override;
+
 private:
   int data_called_ = 0;
   int headers_called_ = 0;
@@ -58,12 +59,12 @@ class FakeUserDefinedOutputPluginFactory : public UserDefinedOutputPluginFactory
 public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
-  UserDefinedOutputPluginPtr createUserDefinedOutputPlugin(
-      const Envoy::Protobuf::Message& config_any,
-      const WorkerMetadata& worker_metadata) override;
-  
-  absl::StatusOr<google::protobuf::Any> AggregateGlobalOutput(
-    absl::Span<const google::protobuf::Any> per_worker_outputs) override;
+  UserDefinedOutputPluginPtr
+  createUserDefinedOutputPlugin(const Envoy::Protobuf::Message& config_any,
+                                const WorkerMetadata& worker_metadata) override;
+
+  absl::StatusOr<google::protobuf::Any>
+  AggregateGlobalOutput(absl::Span<const google::protobuf::Any> per_worker_outputs) override;
 };
 
 // This factory is activated through LoadStepControllerPlugin in plugin_util.h.
