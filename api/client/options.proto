@@ -305,5 +305,6 @@ message CommandLineOptions {
 
   // Optional set of plugin configs to be parsed by a UserDefinedOutputPlugin and used to parse
   // responses to provide additional output to each Result.
+  // Nighthawk will crash
   repeated envoy.config.core.v3.TypedExtensionConfig user_defined_plugin_configs = 112;
 }

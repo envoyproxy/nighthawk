@@ -14,13 +14,24 @@ namespace Nighthawk {
 // Information about a Nighthawk worker thread. May expand to contain more fields over time as
 // desired.
 struct WorkerMetadata {
-  std::string name;
+  // Identifies which worker instantiated the plugin instance.
+  int worker_number;
 };
 
 /**
  * An interface for the UserDefinedOutputPlugin that receives responses and allows users to
- * attach their own custome output to each worker Result.
+ * attach their own custom output to each worker Result.
  *
+ * All UserDefinedOutputPlugins must be thread safe, as it may receive multiple responses
+ * simultaneously. In addition, handleResponseData and handleResponseHeaders may be called in any
+ * order or possibly concurrently. GetPerWorkerOutput is guaranteed to be called after
+ * handleResponseData and handleResponseHeaders have been called for every relevant response.
+ *
+ * TODO(dubious90): Throughout file, update comments to contain counter names and other related
+ * specifics.
+ * 
+ * TODO(dubious90): Comment on behavior of "relevant responses". e.g. If this plugin still gets
+ * called on pool_overflows or other edge cases
  */
 class UserDefinedOutputPlugin {
 public:
@@ -31,9 +42,11 @@ public:
    * on those headers.
    *
    * Plugins should return statuses for invalid data or when they fail to process the data. Any
-   * status will be logged and increment a counter that will be added to the worker Result. Callers
-   * can also provide a failure predicate for this counter that will abort the request after n
-   * plugin failures.
+   * non-ok status will be logged and increment a counter that will be added to the worker Result.
+   * Callers can also provide a failure predicate for this counter that will abort the request
+   * after n plugin failures.
+   *
+   * Must be thread safe.
    *
    * @param headers
    */
@@ -44,12 +57,29 @@ public:
    * Receives a single response body, and allows the plugin to collect data based on
    * that response body.
    *
+   * Plugins should return statuses for invalid data or when they fail to process the data. Any
+   * non-ok status will be logged and increment a counter that will be added to the worker Result.
+   * Callers can also provide a failure predicate for this counter that will abort the request
+   * after n plugin failures.
+   *
+   * Must be thread safe.
+   *
    * @param response_data
    */
   virtual absl::Status handleResponseData(const Envoy::Buffer::Instance& response_data) PURE;
 
   /**
    * Get the output for this instance of the plugin, packed into an Any proto object.
+   *
+   * Nighthawk ensures that this is called after responses are returned. However, if a plugin's
+   * handleResponseHeaders or handleResponseData do any asynchronous work, this method should
+   * ensure that handleResponseData and handleResponseHeaders are completed before this function
+   * processes.
+   *
+   * Plugins should return statuses for invalid data or when they fail to process the data. Any
+   * non-ok status will be logged and increment a counter that will be added to the worker Result.
+   * Callers can also provide a failure predicate for this counter that will abort the request
+   * after n plugin failures.
    *
    * @return output Any-packed per_worker output to add to the worker's Result.
    */

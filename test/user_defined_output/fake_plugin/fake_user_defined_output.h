@@ -14,9 +14,14 @@
 namespace Nighthawk {
 
 /**
- * UserDefinedOutputPlugin for testing: ...
+ * UserDefinedOutputPlugin for testing: Counts the number of times each api method is called,
+ * and also allows a failure setting after a certain number of calls for each method.
  *
+ * This plugin should be used in tests to prove that plugins receive the correct calls and can
+ * handle failures appropriately.
+ * 
  * This class is not thread-safe.
+ * TODO(dubious90): This plugin must be thread safe.
  */
 class FakeUserDefinedOutputPlugin : public UserDefinedOutputPlugin {
 public:
