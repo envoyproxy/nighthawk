@@ -21,7 +21,7 @@ using ::nighthawk::FakeUserDefinedOutput;
 using ::nighthawk::FakeUserDefinedOutputConfig;
 using ::testing::HasSubstr;
 
-UserDefinedOutputPluginPtr CreatePlugin(std::string config_textproto, int worker_number) {
+UserDefinedOutputPluginPtr CreatePlugin(const std::string& config_textproto, int worker_number) {
   FakeUserDefinedOutputConfig config;
   TextFormat::ParseFromString(config_textproto, &config);
 
@@ -35,7 +35,7 @@ UserDefinedOutputPluginPtr CreatePlugin(std::string config_textproto, int worker
   return factory.createUserDefinedOutputPlugin(config_any, metadata);
 }
 
-Envoy::ProtobufWkt::Any CreateOutput(std::string textproto) {
+Envoy::ProtobufWkt::Any CreateOutput(const std::string& textproto) {
   FakeUserDefinedOutput output;
   TextFormat::ParseFromString(textproto, &output);
 
