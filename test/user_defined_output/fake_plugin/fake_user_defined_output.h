@@ -19,7 +19,7 @@ namespace Nighthawk {
  *
  * This plugin should be used in tests to prove that plugins receive the correct calls and can
  * handle failures appropriately.
- * 
+ *
  * This class is not thread-safe.
  * TODO(dubious90): This plugin must be thread safe.
  */

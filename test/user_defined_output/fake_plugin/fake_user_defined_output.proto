@@ -9,13 +9,13 @@ message FakeUserDefinedOutputConfig {
   // Configures handleResponseData to fail after data_failure_countdown calls.
   bool fail_data = 1;
   // If fail_data is true, how many times handleResponseData should successfully return before
-  // failing.
+  // failing. Defaults to 0.
   int32 data_failure_countdown = 2;
 
   // Configures handleResponseHeaders to fail after header_failure_countdown calls.
   bool fail_headers = 3;
   // If fail_headers is true, how many times handleResponseHeaders should successfully return
-  // before failing.
+  // before failing. Defaults to 0.
   int32 header_failure_countdown = 4;
 
   // Causes the plugin to fail on getPerWorkerOutput step.

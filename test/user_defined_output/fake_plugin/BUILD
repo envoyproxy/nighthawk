@@ -49,8 +49,10 @@ envoy_cc_test(
     deps = [
         ":fake_user_defined_output",
         ":fake_user_defined_output_proto_cc_proto",
+        "//test/client:utility_lib",
         "//test/test_common:proto_matchers",
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
+        "@envoy//test/mocks/buffer:buffer_mocks",
         "@envoy//test/test_common:utility_lib",
     ],
 )

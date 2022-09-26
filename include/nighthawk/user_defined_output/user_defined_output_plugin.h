@@ -29,7 +29,7 @@ struct WorkerMetadata {
  *
  * TODO(dubious90): Throughout file, update comments to contain counter names and other related
  * specifics.
- * 
+ *
  * TODO(dubious90): Comment on behavior of "relevant responses". e.g. If this plugin still gets
  * called on pool_overflows or other edge cases
  */
