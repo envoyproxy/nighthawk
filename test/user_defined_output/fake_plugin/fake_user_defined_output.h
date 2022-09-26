@@ -47,7 +47,7 @@ public:
   /**
    * Get the output for this instance of the plugin, packing it into output.
    */
-  absl::StatusOr<google::protobuf::Any> getPerWorkerOutput() override;
+  absl::StatusOr<Envoy::ProtobufWkt::Any> getPerWorkerOutput() override;
 
 private:
   int data_called_ = 0;
@@ -68,8 +68,8 @@ public:
   createUserDefinedOutputPlugin(const Envoy::Protobuf::Message& config_any,
                                 const WorkerMetadata& worker_metadata) override;
 
-  absl::StatusOr<google::protobuf::Any>
-  AggregateGlobalOutput(absl::Span<const google::protobuf::Any> per_worker_outputs) override;
+  absl::StatusOr<Envoy::ProtobufWkt::Any>
+  AggregateGlobalOutput(absl::Span<const Envoy::ProtobufWkt::Any> per_worker_outputs) override;
 };
 
 // This factory is activated through LoadStepControllerPlugin in plugin_util.h.

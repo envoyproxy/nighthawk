@@ -34,7 +34,7 @@ absl::Status FakeUserDefinedOutputPlugin::handleResponseData(const Envoy::Buffer
   return absl::OkStatus();
 }
 
-absl::StatusOr<google::protobuf::Any> FakeUserDefinedOutputPlugin::getPerWorkerOutput() {
+absl::StatusOr<Envoy::ProtobufWkt::Any> FakeUserDefinedOutputPlugin::getPerWorkerOutput() {
   if (config_.fail_per_worker_output()) {
     return absl::InternalError(
         "Intentional FakeUserDefinedOutputPlugin failure on getting PerWorkerOutput");
@@ -44,7 +44,7 @@ absl::StatusOr<google::protobuf::Any> FakeUserDefinedOutputPlugin::getPerWorkerO
   output.set_headers_called(headers_called_);
   output.set_worker_name(absl::StrCat("worker_", worker_metadata_.worker_number));
 
-  google::protobuf::Any output_any;
+  Envoy::ProtobufWkt::Any output_any;
   output_any.PackFrom(output);
   return output_any;
 }
@@ -64,13 +64,13 @@ UserDefinedOutputPluginPtr FakeUserDefinedOutputPluginFactory::createUserDefined
   return std::make_unique<FakeUserDefinedOutputPlugin>(config, worker_metadata);
 }
 
-absl::StatusOr<google::protobuf::Any> FakeUserDefinedOutputPluginFactory::AggregateGlobalOutput(
-    absl::Span<const google::protobuf::Any> per_worker_outputs) {
+absl::StatusOr<Envoy::ProtobufWkt::Any> FakeUserDefinedOutputPluginFactory::AggregateGlobalOutput(
+    absl::Span<const Envoy::ProtobufWkt::Any> per_worker_outputs) {
   FakeUserDefinedOutput global_output;
   global_output.set_worker_name("global");
   int data_called = 0;
   int headers_called = 0;
-  for (const google::protobuf::Any& any : per_worker_outputs) {
+  for (const Envoy::ProtobufWkt::Any& any : per_worker_outputs) {
     FakeUserDefinedOutput output;
     absl::Status status = Envoy::MessageUtil::unpackToNoThrow(any, output);
     if (status.ok()) {
@@ -84,7 +84,7 @@ absl::StatusOr<google::protobuf::Any> FakeUserDefinedOutputPluginFactory::Aggreg
   global_output.set_data_called(data_called);
   global_output.set_headers_called(headers_called);
 
-  google::protobuf::Any global_any;
+  Envoy::ProtobufWkt::Any global_any;
   global_any.PackFrom(global_output);
 
   return global_any;

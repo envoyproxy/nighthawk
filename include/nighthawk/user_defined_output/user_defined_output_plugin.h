@@ -83,7 +83,7 @@ public:
    *
    * @return output Any-packed per_worker output to add to the worker's Result.
    */
-  virtual absl::StatusOr<google::protobuf::Any> getPerWorkerOutput() PURE;
+  virtual absl::StatusOr<Envoy::ProtobufWkt::Any> getPerWorkerOutput() PURE;
 };
 
 using UserDefinedOutputPluginPtr = std::unique_ptr<UserDefinedOutputPlugin>;
@@ -131,7 +131,7 @@ public:
 
    * @return global_output Any-packed aggregated output to add to the global Result.
    */
-  virtual absl::StatusOr<google::protobuf::Any>
-  AggregateGlobalOutput(absl::Span<const google::protobuf::Any> per_worker_outputs) PURE;
+  virtual absl::StatusOr<Envoy::ProtobufWkt::Any>
+  AggregateGlobalOutput(absl::Span<Envoy::ProtobufWkt::Any> per_worker_outputs) PURE;
 };
 } // namespace Nighthawk
