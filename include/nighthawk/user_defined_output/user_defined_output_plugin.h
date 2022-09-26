@@ -119,6 +119,11 @@ public:
    *
    * The protobuf type of the inputs and output must all be the same type.
    *
+   * This method should return statuses for invalid data or when they fail to process the data. Any
+   * non-ok status will be logged and increment a counter that will be added to the worker Result.
+   * Callers can also provide a failure predicate for this counter that will abort the request
+   * after n plugin failures.
+   *
    * Pseudocode Example:
    *     AggregateGlobalOutput(
    *      {int_value: 1, array_value: ["a"]}, {int_value: 2, array_value: ["b","c"]}
