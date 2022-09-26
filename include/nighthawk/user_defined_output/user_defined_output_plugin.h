@@ -137,6 +137,6 @@ public:
    * @return global_output Any-packed aggregated output to add to the global Result.
    */
   virtual absl::StatusOr<Envoy::ProtobufWkt::Any>
-  AggregateGlobalOutput(absl::Span<Envoy::ProtobufWkt::Any> per_worker_outputs) PURE;
+  AggregateGlobalOutput(absl::Span<const Envoy::ProtobufWkt::Any> per_worker_outputs) PURE;
 };
 } // namespace Nighthawk

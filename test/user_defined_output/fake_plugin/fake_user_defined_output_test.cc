@@ -146,7 +146,7 @@ TEST(HandleResponseData, FailsAfterCorrectIterationsIfConfigured) {
 }
 
 TEST(AggregateGlobalOutput, BuildsOutputsCorrectly) {
-  std::vector<const Envoy::ProtobufWkt::Any> per_worker_outputs = {
+  std::vector<Envoy::ProtobufWkt::Any> per_worker_outputs({
       CreateOutput(R"pb(
     data_called: 1
     headers_called: 3
@@ -157,7 +157,7 @@ TEST(AggregateGlobalOutput, BuildsOutputsCorrectly) {
     headers_called: 7
     worker_name: "worker_1"
   )pb"),
-  };
+  });
 
   Envoy::ProtobufWkt::Any expected_aggregate = CreateOutput(R"pb(
     data_called: 6
@@ -178,7 +178,7 @@ TEST(AggregateGlobalOutput, FailsElegantlyWithIncorrectInput) {
   Envoy::ProtobufWkt::Any invalid_any;
   FakeUserDefinedOutputConfig wrong_type;
   invalid_any.PackFrom(wrong_type);
-  std::vector<const Envoy::ProtobufWkt::Any> per_worker_outputs = {invalid_any};
+  std::vector<Envoy::ProtobufWkt::Any> per_worker_outputs = {invalid_any};
 
   auto& factory = Envoy::Config::Utility::getAndCheckFactoryByName<UserDefinedOutputPluginFactory>(
       "nighthawk.fake_user_defined_output");
