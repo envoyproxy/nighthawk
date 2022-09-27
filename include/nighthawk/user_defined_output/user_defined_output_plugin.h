@@ -50,8 +50,7 @@ public:
    *
    * @param headers
    */
-  virtual absl::Status
-  handleResponseHeaders(const Envoy::Http::ResponseHeaderMapPtr&& headers) PURE;
+  virtual absl::Status handleResponseHeaders(const Envoy::Http::ResponseHeaderMap* headers) PURE;
 
   /**
    * Receives a single response body, and allows the plugin to collect data based on

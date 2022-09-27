@@ -37,7 +37,7 @@ public:
   /**
    * Receives the headers from a single HTTP response. Increments headers_called_.
    */
-  absl::Status handleResponseHeaders(const Envoy::Http::ResponseHeaderMapPtr&& headers) override;
+  absl::Status handleResponseHeaders(const Envoy::Http::ResponseHeaderMap* headers) override;
 
   /**
    * Receives the data from a single HTTP response. Increments data_called_.
