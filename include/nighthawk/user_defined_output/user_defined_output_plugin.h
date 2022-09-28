@@ -23,7 +23,7 @@ struct WorkerMetadata {
  * attach their own custom output to each worker Result.
  *
  * All UserDefinedOutputPlugins must be thread safe, as it may receive multiple responses
- * simultaneously. In addition, handleResponseData and handleResponseHeaders may be called in any
+ * concurrently. In addition, handleResponseData and handleResponseHeaders may be called in any
  * order or possibly concurrently. GetPerWorkerOutput is guaranteed to be called after
  * handleResponseData and handleResponseHeaders have been called for every relevant response.
  *
