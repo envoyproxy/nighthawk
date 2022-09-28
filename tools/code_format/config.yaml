@@ -234,6 +234,7 @@ dir_order:                                                                     #
   - sink                                                                       # unique
   - grpcpp                                                                     # unique
   - request_source                                                             # unique
+  - user_defined_output                                                        # unique
   - test_common                                                                # unique
   - test                                                                       # unique
 
