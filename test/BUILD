@@ -110,6 +110,7 @@ envoy_cc_test(
         "//test/client:utility_lib",
         "//test/test_common:environment_lib",
         "//test/test_common:proto_matchers",
+        "//test/user_defined_output/fake_plugin:fake_user_defined_output",
     ],
 )
 
@@ -155,6 +156,7 @@ envoy_cc_test(
         "//test/client:utility_lib",
         "//test/sink:test_stats_sink_config_proto_cc_proto",
         "//test/test_common:environment_lib",
+        "//test/user_defined_output/fake_plugin:fake_user_defined_output",
         "@envoy//test/test_common:network_utility_lib",
         "@envoy//test/test_common:registry_lib",
         "@envoy//test/test_common:simulated_time_system_lib",

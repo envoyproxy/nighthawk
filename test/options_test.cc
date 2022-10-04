@@ -5,6 +5,7 @@
 #include "test/client/utility.h"
 #include "test/test_common/environment.h"
 #include "test/test_common/proto_matchers.h"
+#include "test/user_defined_output/fake_plugin/fake_user_defined_output.pb.h"
 
 #include "gtest/gtest.h"
 
@@ -190,6 +191,10 @@ TEST_F(OptionsImplTest, AlmostAll) {
       "envoy.config.metrics.v3.StatsdSink\",tcp_cluster_name:\"statsd\",prefix:"
       "\"nighthawk\"}}";
 
+  const std::string user_defined_output_plugin =
+      "{name:\"nighthawk.fake_user_defined_output\",typed_config:"
+      "{\"@type\":\"type.googleapis.com/nighthawk.FakeUserDefinedOutputConfig\"}}";
+
   std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(fmt::format(
       "{} --rps 4 --connections 5 --duration 6 --timeout 7 --h2 "
       "--concurrency 8 --verbosity error --output-format yaml --prefetch-connections "
@@ -204,14 +209,14 @@ TEST_F(OptionsImplTest, AlmostAll) {
       "--max-concurrent-streams 42 "
       "--experimental-h1-connection-reuse-strategy lru --label label1 --label label2 {} "
       "--simple-warmup --stats-sinks {} --stats-sinks {} --stats-flush-interval 10 "
-      "--latency-response-header-name zz",
+      "--latency-response-header-name zz --user-defined-plugin-config {}",
       client_name_, "{source_address:{address:\"127.0.0.1\",port_value:0}}",
       "{name:\"envoy.transport_sockets.tls\","
       "typed_config:{\"@type\":\"type.googleapis.com/"
       "envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext\","
       "common_tls_context:{tls_params:{"
       "cipher_suites:[\"-ALL:ECDHE-RSA-AES256-GCM-SHA384\"]}}}}",
-      good_test_uri_, sink_json_1, sink_json_2));
+      good_test_uri_, sink_json_1, sink_json_2, user_defined_output_plugin));
 
   EXPECT_EQ(4, options->requestsPerSecond());
   EXPECT_EQ(5, options->connections());
@@ -287,6 +292,16 @@ TEST_F(OptionsImplTest, AlmostAll) {
   EXPECT_THAT(options->statsSinks()[1], EqualsProto(expected_stats_sink2));
   EXPECT_EQ("zz", options->responseHeaderWithLatencyInput());
 
+  nighthawk::FakeUserDefinedOutputConfig expected_user_defined_output_config;
+  nighthawk::FakeUserDefinedOutputConfig actual_user_defined_output_config;
+  EXPECT_EQ(options->userDefinedOutputPluginConfigs().size(), 1);
+  envoy::config::core::v3::TypedExtensionConfig extension_config =
+      options->userDefinedOutputPluginConfigs()[0];
+  EXPECT_TRUE(Envoy::MessageUtil::unpackToNoThrow(extension_config.typed_config(),
+                                                  actual_user_defined_output_config)
+                  .ok());
+  EXPECT_THAT(actual_user_defined_output_config, EqualsProto(expected_user_defined_output_config));
+
   // Check that our conversion to CommandLineOptionsPtr makes sense.
   CommandLineOptionsPtr cmd = options->toCommandLineOptions();
   EXPECT_EQ(cmd->requests_per_second().value(), options->requestsPerSecond());
@@ -343,6 +358,11 @@ TEST_F(OptionsImplTest, AlmostAll) {
   EXPECT_TRUE(util(cmd->stats_sinks(0), options->statsSinks()[0]));
   EXPECT_TRUE(util(cmd->stats_sinks(1), options->statsSinks()[1]));
   EXPECT_EQ(cmd->latency_response_header_name().value(), options->responseHeaderWithLatencyInput());
+  EXPECT_EQ(cmd->user_defined_plugin_configs_size(),
+            options->userDefinedOutputPluginConfigs().size());
+  EXPECT_TRUE(
+      util(cmd->user_defined_plugin_configs(0), options->userDefinedOutputPluginConfigs()[0]));
+
   // TODO(#433) Here and below, replace comparisons once we choose a proto diff.
   OptionsImpl options_from_proto(*cmd);
   std::string s1 = Envoy::MessageUtil::getYamlStringFromMessage(

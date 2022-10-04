@@ -114,6 +114,11 @@ public:
   absl::optional<Envoy::SystemTime> scheduled_start() const override { return scheduled_start_; }
   absl::optional<std::string> executionId() const override { return execution_id_; }
 
+  const std::vector<envoy::config::core::v3::TypedExtensionConfig>&
+  userDefinedOutputPluginConfigs() const override {
+    return user_defined_output_plugin_configs_;
+  }
+
 private:
   void parsePredicates(const TCLAP::MultiArg<std::string>& arg,
                        TerminationPredicateMap& predicates);
@@ -178,6 +183,7 @@ private:
   std::string latency_response_header_name_;
   absl::optional<Envoy::SystemTime> scheduled_start_;
   absl::optional<std::string> execution_id_;
+  std::vector<envoy::config::core::v3::TypedExtensionConfig> user_defined_output_plugin_configs_{};
 };
 
 } // namespace Client

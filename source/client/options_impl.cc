@@ -362,6 +362,16 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "Default: \"\"",
       false, "", "string", cmd);
 
+  // TODO(nbperry): Use better example when one exists.
+  TCLAP::MultiArg<std::string> user_defined_output_plugin_configs(
+      "", "user-defined-plugin-config",
+      "WIP - will throw unimplemented error. Optional configurations for plugins that collect data "
+      "about responses received by NH and attach a corresponding UserDefinedOutput to the Result. "
+      "Example (json): {name:\"nighthawk.fake_user_defined_output\",typed_config:{"
+      "\"@type\":\"type.googleapis.com/nighthawk.FakeUserDefinedOutputConfig\","
+      "fail_data:\"false\"}}",
+      false, "string", cmd);
+
   Utility::parseCommand(cmd, argc, argv);
 
   if (h2_use_multiple_connections.isSet()) {
@@ -644,6 +654,18 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       throw MalformedArgvException(e.what());
     }
   }
+  if (!user_defined_output_plugin_configs.getValue().empty()) {
+    for (std::string plugin_config_string : user_defined_output_plugin_configs.getValue()) {
+      try {
+        envoy::config::core::v3::TypedExtensionConfig typed_config;
+        Envoy::MessageUtil::loadFromJson(plugin_config_string, typed_config,
+                                         Envoy::ProtobufMessage::getStrictValidationVisitor());
+        user_defined_output_plugin_configs_.push_back(typed_config);
+      } catch (const Envoy::EnvoyException& e) {
+        throw MalformedArgvException(e.what());
+      }
+    }
+  }
 
   validate();
 }
@@ -811,6 +833,10 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
   }
   if (options.has_execution_id()) {
     execution_id_ = options.execution_id().value();
+  }
+  for (const envoy::config::core::v3::TypedExtensionConfig& typed_config :
+       options.user_defined_plugin_configs()) {
+    user_defined_output_plugin_configs_.push_back(typed_config);
   }
   validate();
 }
@@ -1017,6 +1043,10 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
   }
   if (execution_id_.has_value()) {
     command_line_options->mutable_execution_id()->set_value(execution_id_.value());
+  }
+  for (const envoy::config::core::v3::TypedExtensionConfig& config :
+       user_defined_output_plugin_configs_) {
+    *command_line_options->add_user_defined_plugin_configs() = config;
   }
   return command_line_options;
 }
