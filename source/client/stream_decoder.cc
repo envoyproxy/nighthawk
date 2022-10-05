@@ -116,7 +116,7 @@ void StreamDecoder::onPoolReady(Envoy::Http::RequestEncoder& encoder,
     ENVOY_LOG_EVERY_POW_2(error,
                           "Request header encoding failure. Might be missing one or more required "
                           "HTTP headers in {}.",
-                          request_headers_);
+                          *request_headers_);
   }
   if (request_body_size_ > 0) {
     // TODO(https://github.com/envoyproxy/nighthawk/issues/138): This will show up in the zipkin UI
