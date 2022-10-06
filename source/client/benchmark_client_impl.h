@@ -13,6 +13,7 @@
 #include "nighthawk/common/request_source.h"
 #include "nighthawk/common/sequencer.h"
 #include "nighthawk/common/statistic.h"
+#include "nighthawk/user_defined_output_plugin/user_defined_output_plugin.h"
 
 #include "external/envoy/source/common/common/logger.h"
 #include "external/envoy/source/common/common/random_generator.h"
@@ -108,7 +109,8 @@ public:
                           Envoy::Tracing::HttpTracerSharedPtr& http_tracer,
                           absl::string_view cluster_name, RequestGenerator request_generator,
                           const bool provide_resource_backpressure,
-                          absl::string_view latency_response_header_name);
+                          absl::string_view latency_response_header_name,
+                          const std::vector<UserDefinedOutputPluginPtr>& user_defined_output_plugins);
   void setConnectionLimit(uint32_t connection_limit) { connection_limit_ = connection_limit; }
   void setMaxPendingRequests(uint32_t max_pending_requests) {
     max_pending_requests_ = max_pending_requests;
@@ -166,6 +168,7 @@ private:
   const bool provide_resource_backpressure_;
   const std::string latency_response_header_name_;
   Envoy::Event::TimerPtr drain_timer_;
+  const std::vector<UserDefinedOutputPluginPtr>& user_defined_output_plugins_;
 };
 
 } // namespace Client

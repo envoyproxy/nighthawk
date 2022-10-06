@@ -21,7 +21,8 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
                                    Envoy::Stats::Store& store, const int worker_number,
                                    const Envoy::MonotonicTime starting_time,
                                    Envoy::Tracing::HttpTracerSharedPtr& http_tracer,
-                                   const HardCodedWarmupStyle hardcoded_warmup_style)
+                                   const HardCodedWarmupStyle hardcoded_warmup_style,
+                                   std::vector<UserDefinedOutputPluginPtr> user_defined_output_plugins)
     : WorkerImpl(api, tls, store),
       time_source_(std::make_unique<CachedTimeSourceImpl>(*dispatcher_)),
       termination_predicate_factory_(termination_predicate_factory),
@@ -45,7 +46,7 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
                                               *time_source_, *worker_number_scope_, starting_time),
                                           *worker_number_scope_, starting_time),
                                       true)),
-      hardcoded_warmup_style_(hardcoded_warmup_style) {}
+      hardcoded_warmup_style_(hardcoded_warmup_style), user_defined_output_plugins_(std::move(user_defined_output_plugins)) {}
 
 void ClientWorkerImpl::simpleWarmup() {
   ENVOY_LOG(debug, "> worker {}: warmup start.", worker_number_);

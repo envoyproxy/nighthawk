@@ -16,6 +16,7 @@
 #include "nighthawk/common/request_source.h"
 #include "nighthawk/common/sequencer.h"
 #include "nighthawk/common/termination_predicate.h"
+#include "nighthawk/user_defined_output/user_defined_output_plugin.h"
 
 #include "source/common/worker_impl.h"
 
@@ -35,7 +36,8 @@ public:
                    Envoy::Stats::Store& store, const int worker_number,
                    const Envoy::MonotonicTime starting_time,
                    Envoy::Tracing::HttpTracerSharedPtr& http_tracer,
-                   const HardCodedWarmupStyle hardcoded_warmup_style);
+                   const HardCodedWarmupStyle hardcoded_warmup_style,
+                   std::vector<UserDefinedOutputPluginPtr> user_defined_output_plugins);
   StatisticPtrMap statistics() const override;
 
   const std::map<std::string, uint64_t>& threadLocalCounterValues() override {
@@ -67,6 +69,7 @@ private:
   Envoy::LocalInfo::LocalInfoPtr local_info_;
   std::map<std::string, uint64_t> threadLocalCounterValues_;
   const HardCodedWarmupStyle hardcoded_warmup_style_;
+  std::vector<UserDefinedOutputPluginPtr> user_defined_output_plugins_;
 };
 
 using ClientWorkerImplPtr = std::unique_ptr<ClientWorkerImpl>;
