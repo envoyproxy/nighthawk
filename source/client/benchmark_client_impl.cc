@@ -4,7 +4,7 @@
 #include "envoy/thread_local/thread_local.h"
 
 #include "nighthawk/common/statistic.h"
-#include "nighthawk/user_defined_output_plugin/user_defined_output_plugin.h"
+#include "nighthawk/user_defined_output/user_defined_output_plugin.h"
 
 #include "external/envoy/source/common/http/header_map_impl.h"
 #include "external/envoy/source/common/http/headers.h"
@@ -87,14 +87,16 @@ BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
     Envoy::Upstream::ClusterManagerPtr& cluster_manager,
     Envoy::Tracing::HttpTracerSharedPtr& http_tracer, absl::string_view cluster_name,
     RequestGenerator request_generator, const bool provide_resource_backpressure,
-    absl::string_view latency_response_header_name, const std::vector<UserDefinedOutputPluginPtr>& user_defined_output_plugins)
+    absl::string_view latency_response_header_name,
+    std::vector<UserDefinedOutputPluginPtr> user_defined_output_plugins)
     : api_(api), dispatcher_(dispatcher), scope_(scope.createScope("benchmark.")),
       statistic_(std::move(statistic)), protocol_(protocol),
       benchmark_client_counters_({ALL_BENCHMARK_CLIENT_COUNTERS(POOL_COUNTER(*scope_))}),
       cluster_manager_(cluster_manager), http_tracer_(http_tracer),
       cluster_name_(std::string(cluster_name)), request_generator_(std::move(request_generator)),
       provide_resource_backpressure_(provide_resource_backpressure),
-      latency_response_header_name_(latency_response_header_name), user_defined_output_plugins_(user_defined_output_plugins_) {
+      latency_response_header_name_(latency_response_header_name),
+      user_defined_output_plugins_(std::move(user_defined_output_plugins)) {
   statistic_.connect_statistic->setId("benchmark_http_client.queue_to_connect");
   statistic_.response_statistic->setId("benchmark_http_client.request_to_response");
   statistic_.response_header_size_statistic->setId("benchmark_http_client.response_header_size");

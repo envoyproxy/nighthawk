@@ -12,17 +12,17 @@ namespace Client {
 
 using namespace std::chrono_literals;
 
-ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Instance& tls,
-                                   Envoy::Upstream::ClusterManagerPtr& cluster_manager,
-                                   const BenchmarkClientFactory& benchmark_client_factory,
-                                   const TerminationPredicateFactory& termination_predicate_factory,
-                                   const SequencerFactory& sequencer_factory,
-                                   const RequestSourceFactory& request_generator_factory,
-                                   Envoy::Stats::Store& store, const int worker_number,
-                                   const Envoy::MonotonicTime starting_time,
-                                   Envoy::Tracing::HttpTracerSharedPtr& http_tracer,
-                                   const HardCodedWarmupStyle hardcoded_warmup_style,
-                                   std::vector<UserDefinedOutputPluginPtr> user_defined_output_plugins)
+ClientWorkerImpl::ClientWorkerImpl(
+    Envoy::Api::Api& api, Envoy::ThreadLocal::Instance& tls,
+    Envoy::Upstream::ClusterManagerPtr& cluster_manager,
+    const BenchmarkClientFactory& benchmark_client_factory,
+    const TerminationPredicateFactory& termination_predicate_factory,
+    const SequencerFactory& sequencer_factory,
+    const RequestSourceFactory& request_generator_factory, Envoy::Stats::Store& store,
+    const int worker_number, const Envoy::MonotonicTime starting_time,
+    Envoy::Tracing::HttpTracerSharedPtr& http_tracer,
+    const HardCodedWarmupStyle hardcoded_warmup_style,
+    std::vector<UserDefinedOutputPluginPtr> user_defined_output_plugins)
     : WorkerImpl(api, tls, store),
       time_source_(std::make_unique<CachedTimeSourceImpl>(*dispatcher_)),
       termination_predicate_factory_(termination_predicate_factory),
@@ -34,7 +34,8 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
                                            fmt::format("{}.requestsource", worker_number))),
       benchmark_client_(benchmark_client_factory.create(
           api, *dispatcher_, *worker_number_scope_, cluster_manager, http_tracer_,
-          fmt::format("{}", worker_number), worker_number, *request_generator_)),
+          fmt::format("{}", worker_number), worker_number, *request_generator_,
+          std::move(user_defined_output_plugins))),
       phase_(
           std::make_unique<PhaseImpl>("main",
                                       sequencer_factory_.create(
@@ -46,7 +47,8 @@ ClientWorkerImpl::ClientWorkerImpl(Envoy::Api::Api& api, Envoy::ThreadLocal::Ins
                                               *time_source_, *worker_number_scope_, starting_time),
                                           *worker_number_scope_, starting_time),
                                       true)),
-      hardcoded_warmup_style_(hardcoded_warmup_style), user_defined_output_plugins_(std::move(user_defined_output_plugins)) {}
+      hardcoded_warmup_style_(hardcoded_warmup_style),
+      user_defined_output_plugins_(std::move(user_defined_output_plugins)) {}
 
 void ClientWorkerImpl::simpleWarmup() {
   ENVOY_LOG(debug, "> worker {}: warmup start.", worker_number_);

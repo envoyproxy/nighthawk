@@ -30,12 +30,12 @@ protected:
 class BenchmarkClientFactoryImpl : public OptionBasedFactoryImpl, public BenchmarkClientFactory {
 public:
   BenchmarkClientFactoryImpl(const Options& options);
-  BenchmarkClientPtr create(Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher,
-                            Envoy::Stats::Scope& scope,
-                            Envoy::Upstream::ClusterManagerPtr& cluster_manager,
-                            Envoy::Tracing::HttpTracerSharedPtr& http_tracer,
-                            absl::string_view cluster_name, int worker_id,
-                            RequestSource& request_generator) const override;
+  BenchmarkClientPtr
+  create(Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
+         Envoy::Upstream::ClusterManagerPtr& cluster_manager,
+         Envoy::Tracing::HttpTracerSharedPtr& http_tracer, absl::string_view cluster_name,
+         int worker_id, RequestSource& request_generator,
+         std::vector<UserDefinedOutputPluginPtr> user_defined_output_plugins) const override;
 };
 
 class SequencerFactoryImpl : public OptionBasedFactoryImpl, public SequencerFactory {

@@ -655,7 +655,7 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
     }
   }
   if (!user_defined_output_plugin_configs.getValue().empty()) {
-    for (std::string plugin_config_string : user_defined_output_plugin_configs.getValue()) {
+    for (const std::string& plugin_config_string : user_defined_output_plugin_configs.getValue()) {
       try {
         envoy::config::core::v3::TypedExtensionConfig typed_config;
         Envoy::MessageUtil::loadFromJson(plugin_config_string, typed_config,

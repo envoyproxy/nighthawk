@@ -15,6 +15,7 @@
 
 #include "nighthawk/client/output_collector.h"
 #include "nighthawk/common/factories.h"
+#include "nighthawk/user_defined_output/user_defined_output_plugin.h"
 
 #include "external/envoy/source/common/api/api_impl.h"
 #include "external/envoy/source/common/common/cleanup.h"
@@ -66,6 +67,23 @@ namespace Client {
 namespace {
 
 using ::envoy::config::bootstrap::v3::Bootstrap;
+
+absl::StatusOr<std::vector<UserDefinedOutputPluginPtr>>
+createUserDefinedOutputs(std::vector<UserDefinedOutputPluginFactory*> factories,
+                         std::vector<envoy::config::core::v3::TypedExtensionConfig> configs,
+                         int worker_number) {
+  if (factories.size() != configs.size()) {
+    return absl::InternalError("Invalid setup - factories and configs have different sizes.");
+  }
+  std::vector<UserDefinedOutputPluginPtr> plugins(factories.size());
+
+  for (uint32_t i = 0; i < factories.size(); i++) {
+    WorkerMetadata metadata;
+    metadata.worker_number = worker_number;
+    plugins.push_back(factories[i]->createUserDefinedOutputPlugin(configs[i], metadata));
+  }
+  return plugins;
+}
 
 // Helps in generating a bootstrap for the process.
 // This is a class only to allow the use of the ENVOY_LOG macros.
@@ -434,6 +452,8 @@ absl::StatusOr<ProcessPtr> ProcessImpl::CreateProcessImpl(
     return bootstrap.status();
   }
 
+  createUserDefinedOutputFactories();
+
   // Ideally we would create the bootstrap first and then pass it to the
   // constructor of Envoy::Api::Api. That cannot be done because of a circular
   // dependency:
@@ -511,6 +531,15 @@ std::chrono::nanoseconds ProcessImpl::computeInterWorkerDelay(const uint32_t con
   return std::chrono::duration_cast<std::chrono::nanoseconds>(inter_worker_delay_usec * 1us);
 }
 
+void ProcessImpl::createUserDefinedOutputFactories() {
+  for (const envoy::config::core::v3::TypedExtensionConfig& config :
+       options_.userDefinedOutputPluginConfigs()) {
+    UserDefinedOutputPluginFactory* factory =
+        Envoy::Config::Utility::getAndCheckFactory<UserDefinedOutputPluginFactory>(config, false);
+    user_defined_output_factories_.push_back(factory);
+  }
+}
+
 void ProcessImpl::createWorkers(const uint32_t concurrency,
                                 const absl::optional<Envoy::SystemTime>& scheduled_start) {
   ASSERT(workers_.empty());
@@ -520,12 +549,16 @@ void ProcessImpl::createWorkers(const uint32_t concurrency,
       computeInterWorkerDelay(concurrency, options_.requestsPerSecond());
   int worker_number = 0;
   while (workers_.size() < concurrency) {
+    absl::StatusOr<std::vector<UserDefinedOutputPluginPtr>> plugins_or =
+        createUserDefinedOutputs(user_defined_output_factories_,
+                                 options_.userDefinedOutputPluginConfigs(), worker_number);
     workers_.push_back(std::make_unique<ClientWorkerImpl>(
         *api_, tls_, cluster_manager_, benchmark_client_factory_, termination_predicate_factory_,
         sequencer_factory_, request_generator_factory_, store_root_, worker_number,
         first_worker_start + (inter_worker_delay * worker_number), http_tracer_,
         options_.simpleWarmup() ? ClientWorkerImpl::HardCodedWarmupStyle::ON
-                                : ClientWorkerImpl::HardCodedWarmupStyle::OFF));
+                                : ClientWorkerImpl::HardCodedWarmupStyle::OFF,
+        std::move(*plugins_or)));
     worker_number++;
   }
 }

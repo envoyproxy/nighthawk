@@ -1,5 +1,7 @@
 #include "source/client/factories_impl.h"
 
+#include "nighthawk/user_defined_output/user_defined_output_plugin.h"
+
 #include "external/envoy/source/common/http/header_map_impl.h"
 
 #include "api/client/options.pb.h"
@@ -31,7 +33,8 @@ BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
     Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
     Envoy::Upstream::ClusterManagerPtr& cluster_manager,
     Envoy::Tracing::HttpTracerSharedPtr& http_tracer, absl::string_view cluster_name, int worker_id,
-    RequestSource& request_generator) const {
+    RequestSource& request_generator,
+    std::vector<UserDefinedOutputPluginPtr> user_defined_output_plugins) const {
   StatisticFactoryImpl statistic_factory(options_);
   // While we lack options to configure which statistic backend goes where, we directly pass
   // StreamingStatistic for the stats that track response sizes. Ideally we would have options
@@ -52,7 +55,7 @@ BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
   auto benchmark_client = std::make_unique<BenchmarkClientHttpImpl>(
       api, dispatcher, scope, statistic, options_.protocol(), cluster_manager, http_tracer,
       cluster_name, request_generator.get(), !options_.openLoop(),
-      options_.responseHeaderWithLatencyInput());
+      options_.responseHeaderWithLatencyInput(), std::move(user_defined_output_plugins));
   auto request_options = options_.toCommandLineOptions()->request_options();
   benchmark_client->setConnectionLimit(options_.connections());
   benchmark_client->setMaxPendingRequests(options_.maxPendingRequests());

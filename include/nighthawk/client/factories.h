@@ -17,6 +17,7 @@
 #include "nighthawk/common/statistic.h"
 #include "nighthawk/common/termination_predicate.h"
 #include "nighthawk/common/uri.h"
+#include "nighthawk/user_defined_output/user_defined_output_plugin.h"
 
 namespace Nighthawk {
 namespace Client {
@@ -42,12 +43,12 @@ public:
    *
    * @return BenchmarkClientPtr pointer to a BenchmarkClient instance.
    */
-  virtual BenchmarkClientPtr create(Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher,
-                                    Envoy::Stats::Scope& scope,
-                                    Envoy::Upstream::ClusterManagerPtr& cluster_manager,
-                                    Envoy::Tracing::HttpTracerSharedPtr& http_tracer,
-                                    absl::string_view cluster_name, int worker_id,
-                                    RequestSource& request_source) const PURE;
+  virtual BenchmarkClientPtr
+  create(Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
+         Envoy::Upstream::ClusterManagerPtr& cluster_manager,
+         Envoy::Tracing::HttpTracerSharedPtr& http_tracer, absl::string_view cluster_name,
+         int worker_id, RequestSource& request_source,
+         std::vector<UserDefinedOutputPluginPtr> user_defined_output_plugins) const PURE;
 };
 
 class OutputFormatterFactory {
