@@ -425,7 +425,7 @@ absl::StatusOr<ProcessPtr> ProcessImpl::CreateProcessImpl(
                                                        std::move(typed_dns_resolver_config),
                                                        process_wide));
 
-  if (options.userDefinedOutputPluginConfigs().size() > 0) {
+  if (!options.userDefinedOutputPluginConfigs().empty()) {
     ENVOY_LOG(error, "User Defined Output Plugin feature is still being implemented.");
     process->shutdown();
     return absl::UnimplementedError(

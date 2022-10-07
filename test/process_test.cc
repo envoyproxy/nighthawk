@@ -208,16 +208,16 @@ TEST_P(ProcessTest, FailsIfUserDefinedOutputPluginSpecified) {
   const std::string user_defined_output_plugin =
       "{name:\"nighthawk.fake_user_defined_output\",typed_config:"
       "{\"@type\":\"type.googleapis.com/nighthawk.FakeUserDefinedOutputConfig\"}}";
-  OptionsPtr options =
+  OptionsPtr options(
       TestUtility::createOptionsImpl(fmt::format("foo --user-defined-plugin-config {} https://{}/",
-                                                 user_defined_output_plugin, loopback_address_));
+                                                 user_defined_output_plugin, loopback_address_)));
   envoy::config::core::v3::TypedExtensionConfig typed_dns_resolver_config;
   Envoy::Network::DnsResolverFactory& dns_resolver_factory =
       Envoy::Network::createDefaultDnsResolverFactory(typed_dns_resolver_config);
 
-  absl::StatusOr<ProcessPtr> process_or_status = ProcessImpl::CreateProcessImpl(
+  absl::StatusOr<ProcessPtr> process = ProcessImpl::CreateProcessImpl(
       *options, dns_resolver_factory, std::move(typed_dns_resolver_config), time_system_);
-  EXPECT_EQ(process_or_status.status().code(), absl::StatusCode::kUnimplemented);
+  EXPECT_EQ(process.status().code(), absl::StatusCode::kUnimplemented);
 }
 
 /**
