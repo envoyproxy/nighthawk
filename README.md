@@ -153,7 +153,8 @@ For using the Nighthawk test server, see [here](source/server/README.md).
 
 USAGE:
 
-bazel-bin/nighthawk_client  [--latency-response-header-name <string>]
+bazel-bin/nighthawk_client  [--user-defined-plugin-config <string>] ...
+[--latency-response-header-name <string>]
 [--stats-flush-interval-duration <duration>]
 [--stats-flush-interval <uint32_t>]
 [--stats-sinks <string>] ... [--no-duration]
@@ -197,6 +198,14 @@ format>
 
 
 Where:
+
+--user-defined-plugin-config <string>  (accepted multiple times)
+WIP - will throw unimplemented error. Optional configurations for
+plugins that collect data about responses received by NH and attach a
+corresponding UserDefinedOutput to the Result. Example (json):
+{name:"nighthawk.fake_user_defined_output"
+,typed_config:{"@type":"type.googleapis.com/nighthawk.FakeUserDefinedO
+utputConfig",fail_data:"false"}}
 
 --latency-response-header-name <string>
 Set an optional header name that will be returned in responses, whose
