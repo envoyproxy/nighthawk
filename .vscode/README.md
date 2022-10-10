@@ -3,7 +3,7 @@
 Install VSCode and click `file->open workspace` in the menu.
 Next, open [nighthawk.code-workspace](../nighthawk.code-workspace).
 
-You can now use `shift+ctrl+p` or `shitf-command+p` (osx) to run
+You can now use `shift+ctrl+p` or `shift-command+p` (osx) to run
 various [tasks](tasks.json) associated to Nighthawk development,
 by selecting `Tasks: run task` in the dropdown:
 
