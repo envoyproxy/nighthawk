@@ -542,7 +542,8 @@ void ProcessImpl::createUserDefinedOutputFactories() {
   for (const envoy::config::core::v3::TypedExtensionConfig& config :
        options_.userDefinedOutputPluginConfigs()) {
     UserDefinedOutputPluginFactory* factory =
-        Envoy::Config::Utility::getAndCheckFactory<UserDefinedOutputPluginFactory>(config, false);
+        Envoy::Config::Utility::getAndCheckFactory<UserDefinedOutputPluginFactory>(
+            config, /*is_optional=*/false);
     user_defined_output_factories_.push_back(factory);
   }
 }
@@ -556,16 +557,20 @@ void ProcessImpl::createWorkers(const uint32_t concurrency,
       computeInterWorkerDelay(concurrency, options_.requestsPerSecond());
   int worker_number = 0;
   while (workers_.size() < concurrency) {
-    absl::StatusOr<std::vector<UserDefinedOutputPluginPtr>> plugins_or =
-        createUserDefinedOutputs(user_defined_output_factories_,
-                                 options_.userDefinedOutputPluginConfigs(), worker_number);
+    absl::StatusOr<std::vector<UserDefinedOutputPluginPtr>> plugins = createUserDefinedOutputs(
+        user_defined_output_factories_, options_.userDefinedOutputPluginConfigs(), worker_number);
+    if (!plugins.ok()) {
+      throw NighthawkException(
+          absl::StrCat("Received error while starting user defined output factories: ",
+                       plugins.status().message()));
+    }
     workers_.push_back(std::make_unique<ClientWorkerImpl>(
         *api_, tls_, cluster_manager_, benchmark_client_factory_, termination_predicate_factory_,
         sequencer_factory_, request_generator_factory_, store_root_, worker_number,
         first_worker_start + (inter_worker_delay * worker_number), http_tracer_,
         options_.simpleWarmup() ? ClientWorkerImpl::HardCodedWarmupStyle::ON
                                 : ClientWorkerImpl::HardCodedWarmupStyle::OFF,
-        std::move(*plugins_or)));
+        std::move(*plugins)));
     worker_number++;
   }
 }
