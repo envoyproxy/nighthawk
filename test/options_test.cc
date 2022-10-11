@@ -1183,5 +1183,17 @@ TEST_F(OptionsImplTest, H1ConnectionReuseStrategyValuesAreConstrained) {
       MalformedArgvException, "experimental-h1-connection-reuse-strategy");
 }
 
+// TODO(nbperry): Add unit test for instantiating multiple User Defined Output Plugins once a second
+// plugin exists.
+
+TEST_F(OptionsImplTest, ThrowsMalformedArgvExceptionForInvalidTypedExtensionConfig) {
+  // Invalid configuration because it's missing a typed_config field.
+  std::string config = "{name:\"nighthawk.fake_user_defined_output\"}";
+  EXPECT_THROW_WITH_REGEX(
+      TestUtility::createOptionsImpl(fmt::format("{} {} --user-defined-plugin-config {}",
+                                                 client_name_, good_test_uri_, config)),
+      MalformedArgvException, "UserDefinedPluginConfigs");
+}
+
 } // namespace Client
 } // namespace Nighthawk

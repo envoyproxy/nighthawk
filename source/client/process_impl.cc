@@ -443,6 +443,13 @@ absl::StatusOr<ProcessPtr> ProcessImpl::CreateProcessImpl(
                                                        std::move(typed_dns_resolver_config),
                                                        process_wide));
 
+  if (!options.userDefinedOutputPluginConfigs().empty()) {
+    ENVOY_LOG(error, "User Defined Output Plugin feature is still being implemented.");
+    process->shutdown();
+    return absl::UnimplementedError(
+        "User Defined Output Plugin feature is still being implemented.");
+  }
+
   absl::StatusOr<Bootstrap> bootstrap = createBootstrapConfiguration(
       *process->dispatcher_, *process->api_, process->options_, process->dns_resolver_factory_,
       process->typed_dns_resolver_config_, process->number_of_workers_);
