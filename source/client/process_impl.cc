@@ -459,7 +459,7 @@ absl::StatusOr<ProcessPtr> ProcessImpl::CreateProcessImpl(
     return bootstrap.status();
   }
 
-  createUserDefinedOutputFactories();
+  process->createUserDefinedOutputFactories();
 
   // Ideally we would create the bootstrap first and then pass it to the
   // constructor of Envoy::Api::Api. That cannot be done because of a circular
