@@ -60,6 +60,8 @@
 #include "source/client/options_impl.h"
 #include "source/client/sni_utility.h"
 
+#include "source/user_defined_output/user_defined_output_plugin_creator.h"
+
 using namespace std::chrono_literals;
 
 namespace Nighthawk {
@@ -67,23 +69,7 @@ namespace Client {
 namespace {
 
 using ::envoy::config::bootstrap::v3::Bootstrap;
-
-absl::StatusOr<std::vector<UserDefinedOutputPluginPtr>>
-createUserDefinedOutputs(std::vector<UserDefinedOutputPluginFactory*> factories,
-                         std::vector<envoy::config::core::v3::TypedExtensionConfig> configs,
-                         int worker_number) {
-  if (factories.size() != configs.size()) {
-    return absl::InternalError("Invalid setup - factories and configs have different sizes.");
-  }
-  std::vector<UserDefinedOutputPluginPtr> plugins(factories.size());
-
-  for (uint32_t i = 0; i < factories.size(); i++) {
-    WorkerMetadata metadata;
-    metadata.worker_number = worker_number;
-    plugins.push_back(factories[i]->createUserDefinedOutputPlugin(configs[i], metadata));
-  }
-  return plugins;
-}
+using ::envoy::config::core::v3::TypedExtensionConfig;
 
 // Helps in generating a bootstrap for the process.
 // This is a class only to allow the use of the ENVOY_LOG macros.
@@ -399,7 +385,7 @@ private:
 
 ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
                          Envoy::Network::DnsResolverFactory& dns_resolver_factory,
-                         envoy::config::core::v3::TypedExtensionConfig typed_dns_resolver_config,
+                         TypedExtensionConfig typed_dns_resolver_config,
                          const std::shared_ptr<Envoy::ProcessWide>& process_wide)
     : options_(options), number_of_workers_(BootstrapFactory::determineConcurrency(options_)),
       process_wide_(process_wide == nullptr ? std::make_shared<Envoy::ProcessWide>()
@@ -436,8 +422,7 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
 
 absl::StatusOr<ProcessPtr> ProcessImpl::CreateProcessImpl(
     const Options& options, Envoy::Network::DnsResolverFactory& dns_resolver_factory,
-    envoy::config::core::v3::TypedExtensionConfig typed_dns_resolver_config,
-    Envoy::Event::TimeSystem& time_system,
+    TypedExtensionConfig typed_dns_resolver_config, Envoy::Event::TimeSystem& time_system,
     const std::shared_ptr<Envoy::ProcessWide>& process_wide) {
   std::unique_ptr<ProcessImpl> process(new ProcessImpl(options, time_system, dns_resolver_factory,
                                                        std::move(typed_dns_resolver_config),
@@ -458,8 +443,6 @@ absl::StatusOr<ProcessPtr> ProcessImpl::CreateProcessImpl(
     process->shutdown();
     return bootstrap.status();
   }
-
-  process->createUserDefinedOutputFactories();
 
   // Ideally we would create the bootstrap first and then pass it to the
   // constructor of Envoy::Api::Api. That cannot be done because of a circular
@@ -538,13 +521,16 @@ std::chrono::nanoseconds ProcessImpl::computeInterWorkerDelay(const uint32_t con
   return std::chrono::duration_cast<std::chrono::nanoseconds>(inter_worker_delay_usec * 1us);
 }
 
-void ProcessImpl::createUserDefinedOutputFactories() {
-  for (const envoy::config::core::v3::TypedExtensionConfig& config :
-       options_.userDefinedOutputPluginConfigs()) {
-    UserDefinedOutputPluginFactory* factory =
-        Envoy::Config::Utility::getAndCheckFactory<UserDefinedOutputPluginFactory>(
-            config, /*is_optional=*/false);
-    user_defined_output_factories_.push_back(factory);
+void ProcessImpl::populateUserDefinedOutputFactories(
+    const std::vector<TypedExtensionConfig>& typed_configs) {
+  if (user_defined_output_factories_.empty()) {
+    for (const TypedExtensionConfig& config : typed_configs) {
+      UserDefinedOutputPluginFactory* factory =
+          Envoy::Config::Utility::getAndCheckFactory<UserDefinedOutputPluginFactory>(
+              config, /*is_optional=*/false);
+      std::pair<TypedExtensionConfig, UserDefinedOutputPluginFactory*> pair(config, factory);
+      user_defined_output_factories_.push_back(pair);
+    }
   }
 }
 
@@ -557,8 +543,10 @@ void ProcessImpl::createWorkers(const uint32_t concurrency,
       computeInterWorkerDelay(concurrency, options_.requestsPerSecond());
   int worker_number = 0;
   while (workers_.size() < concurrency) {
-    absl::StatusOr<std::vector<UserDefinedOutputPluginPtr>> plugins = createUserDefinedOutputs(
-        user_defined_output_factories_, options_.userDefinedOutputPluginConfigs(), worker_number);
+    // TODO(nbperry): move to helper function
+    populateUserDefinedOutputFactories(options_.userDefinedOutputPluginConfigs());
+    absl::StatusOr<std::vector<UserDefinedOutputPluginPtr>> plugins =
+        createUserDefinedOutputPlugins(user_defined_output_factories_, worker_number);
     if (!plugins.ok()) {
       throw NighthawkException(
           absl::StrCat("Received error while starting user defined output factories: ",

@@ -95,6 +95,7 @@ envoy_cc_library(
         "//source/common:nighthawk_common_lib",
         "//source/common:nighthawk_service_client_impl",
         "//source/request_source:request_options_list_plugin_impl",
+        "//source/user_defined_output:user_defined_output_plugin_creator",
         "@envoy//source/common/common:random_generator_lib_with_external_headers",
         "@envoy//source/common/access_log:access_log_manager_lib_with_external_headers",
         "@envoy//source/common/api:api_lib_with_external_headers",

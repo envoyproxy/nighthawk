@@ -107,7 +107,8 @@ private:
   void maybeCreateTracingDriver(const envoy::config::trace::v3::Tracing& configuration);
   void configureComponentLogLevels(spdlog::level::level_enum level);
 
-  void createUserDefinedOutputFactories();
+  void populateUserDefinedOutputFactories(
+      const std::vector<envoy::config::core::v3::TypedExtensionConfig>& typed_configs);
   /**
    * Prepare the ProcessImpl instance by creating and configuring the workers it needs for execution
    * of the load test.
@@ -220,7 +221,9 @@ private:
   std::unique_ptr<Envoy::Server::Instance> server_;
   // Null server factory context implementation for the same reason as above.
   std::unique_ptr<Envoy::Server::Configuration::ServerFactoryContext> server_factory_context_;
-  std::vector<UserDefinedOutputPluginFactory*> user_defined_output_factories_;
+  std::vector<
+      std::pair<envoy::config::core::v3::TypedExtensionConfig, UserDefinedOutputPluginFactory*>>
+      user_defined_output_factories_{};
 };
 
 } // namespace Client
