@@ -47,8 +47,7 @@ ClientWorkerImpl::ClientWorkerImpl(
                                               *time_source_, *worker_number_scope_, starting_time),
                                           *worker_number_scope_, starting_time),
                                       true)),
-      hardcoded_warmup_style_(hardcoded_warmup_style),
-      user_defined_output_plugins_(std::move(user_defined_output_plugins)) {}
+      hardcoded_warmup_style_(hardcoded_warmup_style) {}
 
 void ClientWorkerImpl::simpleWarmup() {
   ENVOY_LOG(debug, "> worker {}: warmup start.", worker_number_);

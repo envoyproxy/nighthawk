@@ -25,9 +25,8 @@ CreateFactoryConfigPair(const std::string& plugin_name, const std::string& confi
   *typed_config.mutable_name() = plugin_name;
   typed_config.mutable_typed_config()->PackFrom(config);
 
-  UserDefinedOutputPluginFactory* factory =
-      Envoy::Config::Utility::getAndCheckFactory<UserDefinedOutputPluginFactory>(typed_config,
-                                                                                 false);
+  auto* factory = Envoy::Config::Utility::getAndCheckFactory<UserDefinedOutputPluginFactory>(
+      typed_config, false);
 
   return {typed_config, factory};
 }

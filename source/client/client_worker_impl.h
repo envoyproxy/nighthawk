@@ -69,7 +69,6 @@ private:
   Envoy::LocalInfo::LocalInfoPtr local_info_;
   std::map<std::string, uint64_t> threadLocalCounterValues_;
   const HardCodedWarmupStyle hardcoded_warmup_style_;
-  std::vector<UserDefinedOutputPluginPtr> user_defined_output_plugins_;
 };
 
 using ClientWorkerImplPtr = std::unique_ptr<ClientWorkerImpl>;

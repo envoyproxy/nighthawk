@@ -168,7 +168,7 @@ private:
   const bool provide_resource_backpressure_;
   const std::string latency_response_header_name_;
   Envoy::Event::TimerPtr drain_timer_;
-  [[maybe_unused]] std::vector<UserDefinedOutputPluginPtr> user_defined_output_plugins_;
+  std::vector<UserDefinedOutputPluginPtr> user_defined_output_plugins_;
 };
 
 } // namespace Client

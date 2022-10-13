@@ -94,6 +94,16 @@ public:
 
   bool requestExecutionCancellation() override;
 
+  /**
+   * Initializes the User Defined Output Plugin factories that will be used in this process, stores
+   * them in this process, and returns a reference to them.
+   *
+   * @return a vector of pairs, with the TypedExtensionConfig and its corresponding factory.
+   */
+  std::vector<
+      std::pair<envoy::config::core::v3::TypedExtensionConfig, UserDefinedOutputPluginFactory*>>&
+  populateUserDefinedOutputFactories();
+
 private:
   // Use CreateProcessImpl to construct an instance of ProcessImpl.
   ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
@@ -107,15 +117,14 @@ private:
   void maybeCreateTracingDriver(const envoy::config::trace::v3::Tracing& configuration);
   void configureComponentLogLevels(spdlog::level::level_enum level);
 
-  void populateUserDefinedOutputFactories(
-      const std::vector<envoy::config::core::v3::TypedExtensionConfig>& typed_configs);
   /**
    * Prepare the ProcessImpl instance by creating and configuring the workers it needs for execution
    * of the load test.
    *
    * @param concurrency the amount of workers that should be created.
    */
-  void createWorkers(const uint32_t concurrency, const absl::optional<Envoy::SystemTime>& schedule);
+  absl::Status createWorkers(const uint32_t concurrency,
+                             const absl::optional<Envoy::SystemTime>& schedule);
   std::vector<StatisticPtr> vectorizeStatisticPtrMap(const StatisticPtrMap& statistics) const;
   std::vector<StatisticPtr>
   mergeWorkerStatistics(const std::vector<ClientWorkerPtr>& workers) const;
@@ -221,6 +230,8 @@ private:
   std::unique_ptr<Envoy::Server::Instance> server_;
   // Null server factory context implementation for the same reason as above.
   std::unique_ptr<Envoy::Server::Configuration::ServerFactoryContext> server_factory_context_;
+  // The set of User Defined Output plugin factories and their corresponding configuration, used to
+  // add plugin instances to each worker, and to aggregate outputs for the global result.
   std::vector<
       std::pair<envoy::config::core::v3::TypedExtensionConfig, UserDefinedOutputPluginFactory*>>
       user_defined_output_factories_{};

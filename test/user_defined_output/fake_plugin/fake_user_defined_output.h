@@ -70,6 +70,14 @@ public:
 
   absl::StatusOr<Envoy::ProtobufWkt::Any>
   AggregateGlobalOutput(absl::Span<const Envoy::ProtobufWkt::Any> per_worker_outputs) override;
+
+  /**
+   * Returns the number of times this factory was called to make a plugin.
+   */
+  int getPluginCount();
+
+private:
+  int plugin_count_{0};
 };
 
 // This factory is activated through LoadStepControllerPlugin in plugin_util.h.

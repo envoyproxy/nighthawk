@@ -34,12 +34,14 @@ public:
    * @param scope stats scope for any stats tracked by the benchmark client.
    * @param cluster_manager Cluster manager preconfigured with our target cluster.
    * @param http_tracer Shared pointer to an http tracer implementation (e.g. Zipkin).
-   * @param cluster_name Name of the cluster that this benchmark client
-   * will use. In conjunction with cluster_manager this will allow the this BenchmarkClient to
-   * access the target connection pool.
+   * @param cluster_name Name of the cluster that this benchmark client will use. In conjunction
+   * with cluster_manager this will allow the BenchmarkClient to access the target connection
+   * pool.
    * @param worker_id Worker number.
    * @param request_source Source of request-specifiers. Will be queries every time the
    * BenchmarkClient is asked to issue a request.
+   * @param user_defined_output_plugins A set of plugin instances that listen for responses, store
+   * data, and provide addenda to the nighthawk result.
    *
    * @return BenchmarkClientPtr pointer to a BenchmarkClient instance.
    */
