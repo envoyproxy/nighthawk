@@ -2,8 +2,6 @@
 
 #include <memory>
 
-#include "envoy/config/typed_config.h"
-
 #include "nighthawk/user_defined_output/user_defined_output_plugin.h"
 
 #include "external/envoy/source/common/common/statusor.h"
