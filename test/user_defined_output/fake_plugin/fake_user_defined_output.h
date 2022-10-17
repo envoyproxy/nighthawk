@@ -7,7 +7,6 @@
 #include "external/envoy/source/common/common/statusor.h"
 
 #include "api/client/options.pb.h"
-#include "api/client/service.grpc.pb.h"
 
 #include "test/user_defined_output/fake_plugin/fake_user_defined_output.pb.h"
 

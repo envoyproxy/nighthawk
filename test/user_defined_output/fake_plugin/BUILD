@@ -33,7 +33,6 @@ envoy_cc_test_library(
     repository = "@envoy",
     deps = [
         ":fake_user_defined_output_proto_cc_proto",
-        "//api/client:grpc_service_lib",
         "//include/nighthawk/user_defined_output:user_defined_output_plugin",
         "@envoy//source/common/common:assert_lib_with_external_headers",
         "@envoy//source/common/common:statusor_lib_with_external_headers",
