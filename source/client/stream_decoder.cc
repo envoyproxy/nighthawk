@@ -8,6 +8,8 @@
 #include "external/envoy/source/common/stream_info/stream_info_impl.h"
 #include "external/envoy/source/extensions/request_id/uuid/config.h"
 
+#include "fmt/ostream.h"
+
 namespace Nighthawk {
 namespace Client {
 
@@ -114,7 +116,7 @@ void StreamDecoder::onPoolReady(Envoy::Http::RequestEncoder& encoder,
     ENVOY_LOG_EVERY_POW_2(error,
                           "Request header encoding failure. Might be missing one or more required "
                           "HTTP headers in {}.",
-                          request_headers_);
+                          *request_headers_);
   }
   if (request_body_size_ > 0) {
     // TODO(https://github.com/envoyproxy/nighthawk/issues/138): This will show up in the zipkin UI
@@ -194,3 +196,9 @@ void StreamDecoder::setupForTracing() {
 
 } // namespace Client
 } // namespace Nighthawk
+
+// NOLINT(namespace-nighthawk)
+namespace fmt {
+// Allow fmtlib to use operator << defined in HeaderMapPtr.
+template <> struct formatter<::Nighthawk::HeaderMapPtr> : ostream_formatter {};
+} // namespace fmt

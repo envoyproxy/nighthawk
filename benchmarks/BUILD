@@ -53,11 +53,14 @@ py_library(
     ],
     data = [
         "configurations/dynamic_resources.yaml",
+        "configurations/dynamic_resources_eds.yaml",
         "configurations/lds.yaml",
+        "configurations/request_source_five_clusters.json",
     ],
     srcs_version = "PY2AND3",
     deps = [
         "//api/configuration:cluster_config_manager_py_proto",
+        "@rules_python//python/runfiles",
     ],
 )
 
@@ -87,7 +90,8 @@ py_binary(
     deps = [
         ":benchmarks_dynamic_envoy_proxy_lib",
         ":utilities_lib",
-        "//test/integration:integration_test_base",
+        "//dynamic_config:dynamic_config_server",
+        "//test/integration:integration_test_base_lean",
     ],
 )
 

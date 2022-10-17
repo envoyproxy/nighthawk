@@ -153,7 +153,8 @@ For using the Nighthawk test server, see [here](source/server/README.md).
 
 USAGE:
 
-bazel-bin/nighthawk_client  [--latency-response-header-name <string>]
+bazel-bin/nighthawk_client  [--user-defined-plugin-config <string>] ...
+[--latency-response-header-name <string>]
 [--stats-flush-interval-duration <duration>]
 [--stats-flush-interval <uint32_t>]
 [--stats-sinks <string>] ... [--no-duration]
@@ -185,8 +186,8 @@ format>] [--sequencer-idle-strategy <spin
 <auto|v4|v6>] [--burst-size <uint32_t>]
 [--prefetch-connections] [--output-format
 <json|human|yaml|dotted|fortio
-|experimental_fortio_pedantic>] [-v <trace
-|debug|info|warn|error|critical>]
+|experimental_fortio_pedantic|csv>] [-v
+<trace|debug|info|warn|error|critical>]
 [--concurrency <string>]
 [--http3-protocol-options <string>] [-p
 <http1|http2|http3>] [--h2] [--timeout
@@ -197,6 +198,14 @@ format>
 
 
 Where:
+
+--user-defined-plugin-config <string>  (accepted multiple times)
+WIP - will throw unimplemented error. Optional configurations for
+plugins that collect data about responses received by NH and attach a
+corresponding UserDefinedOutput to the Result. Example (json):
+{name:"nighthawk.fake_user_defined_output"
+,typed_config:{"@type":"type.googleapis.com/nighthawk.FakeUserDefinedO
+utputConfig",fail_data:"false"}}
 
 --latency-response-header-name <string>
 Set an optional header name that will be returned in responses, whose
@@ -361,10 +370,10 @@ Release requests in bursts of the specified size (default: 0).
 Use proactive connection prefetching (HTTP/1 only).
 
 --output-format <json|human|yaml|dotted|fortio
-|experimental_fortio_pedantic>
+|experimental_fortio_pedantic|csv>
 Output format. Possible values: ["json", "human", "yaml", "dotted",
-"fortio", "experimental_fortio_pedantic"]. The default output format
-is 'human'.
+"fortio", "experimental_fortio_pedantic", "csv"]. The default output
+format is 'human'.
 
 -v <trace|debug|info|warn|error|critical>,  --verbosity <trace|debug
 |info|warn|error|critical>
@@ -495,16 +504,16 @@ USAGE:
 
 bazel-bin/nighthawk_output_transform  --output-format <json|human|yaml
 |dotted|fortio
-|experimental_fortio_pedantic> [--]
-[--version] [-h]
+|experimental_fortio_pedantic|csv>
+[--] [--version] [-h]
 
 
 Where:
 
 --output-format <json|human|yaml|dotted|fortio
-|experimental_fortio_pedantic>
+|experimental_fortio_pedantic|csv>
 (required)  Output format. Possible values: ["json", "human", "yaml",
-"dotted", "fortio", "experimental_fortio_pedantic"].
+"dotted", "fortio", "experimental_fortio_pedantic", "csv"].
 
 --,  --ignore_rest
 Ignores the rest of the labeled arguments following this flag.

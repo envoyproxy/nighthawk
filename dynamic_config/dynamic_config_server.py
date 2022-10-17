@@ -1,5 +1,6 @@
 """Controller for the DynamicConfigManager process."""
 
+from google.protobuf import any_pb2
 from test.integration import subprocess_mixin
 from rules_python.python.runfiles import runfiles
 import base64
@@ -25,10 +26,10 @@ class DynamicConfigController(subprocess_mixin.SubprocessMixin):
     self._settings = dynamic_config_settings
 
   def _argsForSubprocess(self) -> list[str]:
-    return [
-        self._binary_path, '--config',
-        str(base64.b64encode(self._settings.SerializeToString()), 'UTF-8')
-    ]
+    wrapped_proto = any_pb2.Any()
+    wrapped_proto.Pack(self._settings)
+    serialized_wrapped_proto = wrapped_proto.SerializeToString()
+    return [self._binary_path, '--config', str(base64.b64encode(serialized_wrapped_proto), 'UTF-8')]
 
   def start(self):
     """Start the DynamicConfigManager process.

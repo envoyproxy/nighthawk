@@ -71,6 +71,8 @@ public:
   MOCK_METHOD(bool, allowEnvoyDeprecatedV2Api, (), (const));
   MOCK_METHOD(absl::optional<Envoy::SystemTime>, scheduled_start, (), (const, override));
   MOCK_METHOD(absl::optional<std::string>, executionId, (), (const, override));
+  MOCK_METHOD(const std::vector<envoy::config::core::v3::TypedExtensionConfig>&,
+              userDefinedOutputPluginConfigs, (), (const, override));
 };
 
 } // namespace Client

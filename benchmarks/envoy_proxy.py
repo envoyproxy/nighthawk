@@ -10,7 +10,7 @@ import pytest
 import yaml
 from rules_python.python.runfiles import runfiles
 
-from test.integration import integration_test_fixtures, nighthawk_test_server
+from test.integration import integration_test_fixtures, nighthawk_test_server, utility
 
 
 class EnvoyProxyServer(nighthawk_test_server.NighthawkTestServer):
@@ -66,12 +66,16 @@ class EnvoyProxyServer(nighthawk_test_server.NighthawkTestServer):
       logging.info(f"Creating empty cluster file in {cluster_file_path}.")
       open(cluster_file_path, 'wb').close()
 
+      # Create empty eds file.
+      eds_file_path = os.path.join(self.tmpdir, 'new_eds.pb')
+      logging.info(f"Creating empty eds file in {eds_file_path}.")
+      open(eds_file_path, 'wb').close()
+
       # Transfer static lds over
       runfiles_instance = runfiles.Create()
       with open(runfiles_instance.Rlocation('nighthawk/benchmarks/configurations/lds.yaml')) as f:
         data = yaml.load(f, Loader=yaml.FullLoader)
-        data = nighthawk_test_server.substitute_yaml_values(runfiles_instance, data,
-                                                            self._parameters)
+        data = utility.substitute_yaml_values(runfiles_instance, data, self._parameters)
 
       listener_file_path = os.path.join(self.tmpdir, 'lds.yaml')
       logging.info(f"Creating listener file in {listener_file_path}.")

@@ -4,6 +4,7 @@
   "failure_predicates": {},
   "labels": [],
   "stats_sinks": [],
+  "user_defined_plugin_configs": [],
   "connections": 0,
   "duration": "1s"
  },
@@ -190,6 +191,7 @@
      "value": "1"
     }
    ],
+   "user_defined_outputs": [],
    "execution_duration": "1s",
    "execution_start": "2009-02-13T23:31:31.567Z"
   },
@@ -375,6 +377,7 @@
      "value": "1"
     }
    ],
+   "user_defined_outputs": [],
    "execution_duration": "1s"
   },
   {
@@ -559,6 +562,7 @@
      "value": "1"
     }
    ],
+   "user_defined_outputs": [],
    "execution_duration": "1s",
    "execution_start": "2009-02-13T23:31:31.567Z"
   }

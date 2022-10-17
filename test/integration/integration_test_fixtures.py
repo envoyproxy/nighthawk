@@ -246,7 +246,12 @@ class IntegrationTestBase():
         return int(counter["value"])
     return None
 
-  def runNighthawkClient(self, args, expect_failure=False, timeout=30, as_json=True):
+  def runNighthawkClient(self,
+                         args,
+                         expect_failure=False,
+                         timeout=30,
+                         as_json=True,
+                         check_return_code=True):
     """Run Nighthawk against the test server.
 
     Returns a string containing json-formatted result plus logs.
@@ -275,10 +280,11 @@ class IntegrationTestBase():
       logging.info("Nighthawk client stderr: [%s]" % logs)
     if as_json:
       output = json.loads(output)
-    if expect_failure:
-      assert (client_process.returncode != 0)
-    else:
-      assert (client_process.returncode == 0)
+    if check_return_code:
+      if expect_failure:
+        assert (client_process.returncode != 0)
+      else:
+        assert (client_process.returncode == 0)
     return output, logs
 
   def transformNighthawkJson(self, json, format="human"):
@@ -286,7 +292,7 @@ class IntegrationTestBase():
 
     Arguments:
       json: String containing raw json output obtained via nighthawk_client --output-format=json
-      format: String that specifies the desired output format. Must be one of [human|yaml|dotted-string|fortio]. Optional, defaults to "human".
+      format: String that specifies the desired output format. Must be one of [human|yaml|dotted-string|fortio|csv]. Optional, defaults to "human".
     """
     # TODO(oschaaf): validate format arg.
     args = []

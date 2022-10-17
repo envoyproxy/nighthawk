@@ -49,6 +49,40 @@ public:
   absl::StatusOr<std::string> formatProto(const nighthawk::client::Output& output) const override;
 };
 
+/**
+ * Formats Nighthawk output to csv
+ */
+class CsvOutputFormatterImpl : public OutputFormatterImpl {
+public:
+  /**
+   * Transforms the Nighthawk output to csv format.
+   *
+   * @param output the Nighthawk output proto
+   * @return the Nighthawk output as a csv string
+   */
+  absl::StatusOr<std::string> formatProto(const nighthawk::client::Output& output) const override;
+
+  /**
+   * Return name associated with the specified stat id.
+   *
+   * @param stat_id id that represents a specific stat. Example:
+   * "benchmark_http_client.queue_to_connect"
+   * @return name or description (as string) associated with the specified stat id
+   */
+  static std::string statIdtoFriendlyStatName(absl::string_view stat_id);
+
+private:
+  /**
+   * Transforms an Envoy::ProtobufWkt::Duration to a human-readable string in the format of "{}s
+   * {:03}ms {:03}us".
+   *
+   * @param duration the Envoy::ProtobufWkt::Duration& to transform
+   * @return the human-readable string representation of the specified duration. Example: "11s 033ms
+   * 190us"
+   */
+  std::string formatProtoDuration(const Envoy::ProtobufWkt::Duration& duration) const;
+};
+
 class DottedStringOutputFormatterImpl : public OutputFormatterImpl {
 public:
   absl::StatusOr<std::string> formatProto(const nighthawk::client::Output& output) const override;

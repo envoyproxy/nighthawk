@@ -232,7 +232,7 @@ INSTANTIATE_TEST_SUITE_P(
     OutputFormats, OutputFormatterFactoryTest,
     ValuesIn({nighthawk::client::OutputFormat::HUMAN, nighthawk::client::OutputFormat::JSON,
               nighthawk::client::OutputFormat::YAML, nighthawk::client::OutputFormat::DOTTED,
-              nighthawk::client::OutputFormat::FORTIO}));
+              nighthawk::client::OutputFormat::FORTIO, nighthawk::client::OutputFormat::CSV}));
 
 } // namespace Client
 } // namespace Nighthawk

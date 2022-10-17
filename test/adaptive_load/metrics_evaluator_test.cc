@@ -304,7 +304,7 @@ TEST(AnalyzeNighthawkBenchmark, StoresNighthawkResultForSuccessfulMetricEvaluati
   EXPECT_TRUE(MessageDifferencer::Equivalent(result_or.value().nighthawk_service_output(),
                                              nighthawk_response.output()));
   EXPECT_THAT(result_or.value().nighthawk_service_output(),
-            EqualsProto(nighthawk_response.output()));
+              EqualsProto(nighthawk_response.output()));
 }
 
 TEST(AnalyzeNighthawkBenchmark, StoresScoreForSuccessfulMetricEvaluation) {

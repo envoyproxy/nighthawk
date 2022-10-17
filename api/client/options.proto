@@ -69,6 +69,7 @@ message OutputFormat {
     DOTTED = 4;
     FORTIO = 5;
     EXPERIMENTAL_FORTIO_PEDANTIC = 6;
+    CSV = 7;
   }
   OutputFormatOptions value = 1;
 }
@@ -128,7 +129,7 @@ message Protocol {
 
 // TODO(oschaaf): Ultimately this will be a load test specification. The fact that it
 // can arrive via CLI is just a concrete detail. Change this to reflect that.
-// Highest unused number is 112.
+// Next unused number is 113.
 message CommandLineOptions {
   // The target requests-per-second rate. Default: 5.
   google.protobuf.UInt32Value requests_per_second = 1
@@ -171,7 +172,7 @@ message CommandLineOptions {
   // error, critical]. The default level is 'info'.
   Verbosity verbosity = 7;
   // Output format. Possible values: {"json", "human", "yaml", "dotted",
-  // "fortio"}. The default output format is 'human'.
+  // "fortio", "csv}. The default output format is 'human'.
   // NOTE: not relevant to gRPC service
   OutputFormat output_format = 8;
   // Use proactive connection prefetching (HTTP/1 only).
@@ -301,4 +302,10 @@ message CommandLineOptions {
   // compatibility purposes. In the future, this field may be auto-populated when left unset and
   // circumstances mandate so (distributed load test execution).
   google.protobuf.StringValue execution_id = 106;
+
+  // Optional set of plugin configs to be parsed by a UserDefinedOutputPlugin and used to parse
+  // responses to provide additional output to each Result.
+  // Nighthawk will abort an execution attempt if a user_defined_plugin_config is provided but the
+  // associated plugin factory is not registered through Envoy's plugin system.
+  repeated envoy.config.core.v3.TypedExtensionConfig user_defined_plugin_configs = 112;
 }

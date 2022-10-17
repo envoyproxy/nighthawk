@@ -35,7 +35,8 @@ suffixes:
 paths:
   # Path prefixes to exclude from checking
   excluded:
-  - .
+  # this exclusion prevents all of our files from being formatted              # unique
+  # - .                                                                        # unique
   - bazel/external/http_parser/
   - bazel/toolchains/configs/
   - bazel-
@@ -119,6 +120,8 @@ paths:
     - ci/prebuilt
     - source/common/protobuf
     - test/extensions/bootstrap/wasm/test_data
+    - .                                                                        # unique
+    # TODO(915): Remove this inclusion when all direct references removed      # unique
 
   # Files that are allowed to use try without main thread assertion.
   raw_try:
@@ -165,6 +168,7 @@ paths:
   # Files in these paths can use MessageLite::SerializeAsString
   serialize_as_string:
     include:
+    - contrib/config/source/kv_store_xds_delegate.cc
     - source/common/protobuf/utility.cc
     - source/extensions/filters/http/grpc_json_transcoder/json_transcoder_filter.cc
     - test/common/grpc/codec_fuzz_test.cc
@@ -184,6 +188,7 @@ paths:
     - source/common/common/regex.cc
     - source/common/common/utility.cc
     - source/common/formatter/substitution_formatter.cc
+    - source/common/router/header_parser_utils.cc
     - source/common/stats/tag_extractor_impl.h
     - source/common/stats/tag_extractor_impl.cc
     - source/common/version/version.cc
@@ -215,14 +220,24 @@ paths:
     - test/extensions/stats_sinks/wasm/wasm_stat_sink_test.cc
     - test/test_common/wasm_base.h
 
-dir_order:
-  - envoy
-  - common
-  - source
-  - exe
-  - server
-  - extensions
-  - test
+dir_order:                                                                     # unique
+  - envoy                                                                      # unique
+  - nighthawk                                                                  # unique
+  - external/source/envoy                                                      # unique
+  - external                                                                   # unique
+  - api                                                                        # unique
+  - common                                                                     # unique
+  - source                                                                     # unique
+  - exe                                                                        # unique
+  - server                                                                     # unique
+  - client                                                                     # unique
+  - distributor                                                                # unique
+  - sink                                                                       # unique
+  - grpcpp                                                                     # unique
+  - request_source                                                             # unique
+  - user_defined_output                                                        # unique
+  - test_common                                                                # unique
+  - test                                                                       # unique
 
 re:
   codeowners_contrib: (/contrib/[^@]*\s+)(@.*)
@@ -239,7 +254,8 @@ re:
   line_number: ^(\d+)[a|c|d]?\d*(?:,\d+[a|c|d]?\d*)?$
   mangled_protobuf_name: envoy::[a-z0-9_:]+::[A-Z][a-z]\w*_\w*_[A-Z]{2}
   maintainers: .*github.com.(.*)\)\)
-  old_mock_method: MOCK_METHOD\d
+  # TODO(914): Stop overriding this when we are using the correct MOCK_METHOD  # unique
+  old_mock_method: dontmatchanything                                           # unique
   proto_validation_string: \bmin_bytes\b
   owner: "@\\S+"
   runtime_guard_flag: RUNTIME_GUARD\((.*)\);
@@ -295,3 +311,6 @@ visibility_excludes:
 - source/extensions/transport_sockets/common/BUILD
 - source/extensions/udp_packet_writer/default/BUILD
 - source/extensions/udp_packet_writer/gso/BUILD
+- source/extensions/path/uri_template_lib/BUILD
+- source/extensions/path/match/uri_template/BUILD
+- source/extensions/path/rewrite/uri_template/BUILD
