@@ -16,6 +16,7 @@
 namespace Nighthawk {
 namespace {
 
+using ::Envoy::Http::TestResponseHeaderMapImpl;
 using ::google::protobuf::TextFormat;
 using ::nighthawk::FakeUserDefinedOutput;
 using ::nighthawk::FakeUserDefinedOutputConfig;
@@ -101,8 +102,9 @@ TEST(GetPerWorkerOutput, FailsIfConfiguredToFail) {
 
 TEST(HandleResponseHeaders, IncrementsHeadersCalledCount) {
   UserDefinedOutputPluginPtr plugin = CreatePlugin("", /*worker_number=*/0);
-  EXPECT_TRUE(plugin->handleResponseHeaders({}).ok());
-  EXPECT_TRUE(plugin->handleResponseHeaders({}).ok());
+  TestResponseHeaderMapImpl headers{};
+  EXPECT_TRUE(plugin->handleResponseHeaders(headers).ok());
+  EXPECT_TRUE(plugin->handleResponseHeaders(headers).ok());
 
   Envoy::ProtobufWkt::Any expected_output = CreateOutput(R"pb(
     headers_called: 2
@@ -116,9 +118,10 @@ TEST(HandleResponseHeaders, IncrementsHeadersCalledCount) {
 TEST(HandleResponseHeaders, FailsAfterCorrectIterationsIfConfigured) {
   UserDefinedOutputPluginPtr plugin =
       CreatePlugin("fail_headers: true   header_failure_countdown: 2", /*worker_number=*/0);
-  EXPECT_TRUE(plugin->handleResponseHeaders({}).ok());
-  EXPECT_TRUE(plugin->handleResponseHeaders({}).ok());
-  EXPECT_EQ(plugin->handleResponseHeaders({}).code(), absl::StatusCode::kInternal);
+  TestResponseHeaderMapImpl headers{};
+  EXPECT_TRUE(plugin->handleResponseHeaders(headers).ok());
+  EXPECT_TRUE(plugin->handleResponseHeaders(headers).ok());
+  EXPECT_EQ(plugin->handleResponseHeaders(headers).code(), absl::StatusCode::kInternal);
 }
 
 TEST(HandleResponseData, IncrementsDataCalledCount) {

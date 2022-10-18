@@ -40,6 +40,7 @@ public:
   void exportLatency(const uint32_t, const uint64_t) override {
     stream_decoder_export_latency_callbacks_++;
   }
+  void handleResponseData(const Envoy::Buffer::Instance&) override { called_data_++; }
 
   Envoy::Event::TestRealTimeSystem time_system_;
   Envoy::Stats::IsolatedStoreImpl store_;
@@ -54,6 +55,7 @@ public:
   uint64_t stream_decoder_completion_callbacks_{0};
   uint64_t pool_failures_{0};
   uint64_t stream_decoder_export_latency_callbacks_{0};
+  uint64_t called_data_{0};
   Envoy::Random::RandomGeneratorImpl random_generator_;
   Envoy::Tracing::HttpTracerSharedPtr http_tracer_;
   Envoy::Http::ResponseHeaderMapPtr test_header_;
@@ -71,6 +73,7 @@ TEST_F(StreamDecoderTest, HeaderOnlyTest) {
   EXPECT_TRUE(is_complete);
   EXPECT_EQ(1, stream_decoder_completion_callbacks_);
   EXPECT_EQ(0, stream_decoder_export_latency_callbacks_);
+  EXPECT_EQ(0, called_data_);
 }
 
 TEST_F(StreamDecoderTest, HeaderWithBodyTest) {
@@ -88,6 +91,7 @@ TEST_F(StreamDecoderTest, HeaderWithBodyTest) {
   decoder->decodeData(buf, true);
   EXPECT_TRUE(is_complete);
   EXPECT_EQ(1, stream_decoder_completion_callbacks_);
+  EXPECT_EQ(2, called_data_);
 }
 
 TEST_F(StreamDecoderTest, TrailerTest) {
