@@ -58,6 +58,7 @@ Envoy::ProtobufTypes::MessagePtr FakeUserDefinedOutputPluginFactory::createEmpty
 
 UserDefinedOutputPluginPtr FakeUserDefinedOutputPluginFactory::createUserDefinedOutputPlugin(
     const Envoy::Protobuf::Message& message, const WorkerMetadata& worker_metadata) {
+  plugin_count_++;
   const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
   FakeUserDefinedOutputConfig config;
   Envoy::MessageUtil::unpackTo(any, config);
@@ -89,6 +90,8 @@ absl::StatusOr<Envoy::ProtobufWkt::Any> FakeUserDefinedOutputPluginFactory::Aggr
 
   return global_any;
 }
+
+int FakeUserDefinedOutputPluginFactory::getPluginCount() { return plugin_count_; }
 
 REGISTER_FACTORY(FakeUserDefinedOutputPluginFactory, UserDefinedOutputPluginFactory);
 

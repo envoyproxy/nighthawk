@@ -3,6 +3,8 @@
 
 #include "envoy/upstream/cluster_manager.h"
 
+#include "nighthawk/user_defined_output/user_defined_output_plugin.h"
+
 #include "external/envoy/source/common/common/random_generator.h"
 #include "external/envoy/source/common/runtime/runtime_impl.h"
 #include "external/envoy/source/common/stats/isolated_store_impl.h"
@@ -42,7 +44,7 @@ public:
     sequencer_ = new MockSequencer();
     request_generator_ = new MockRequestSource();
 
-    EXPECT_CALL(benchmark_client_factory_, create(_, _, _, _, _, _, _, _))
+    EXPECT_CALL(benchmark_client_factory_, create(_, _, _, _, _, _, _, _, _))
         .Times(1)
         .WillOnce(Return(ByMove(std::unique_ptr<BenchmarkClient>(benchmark_client_))));
 
@@ -115,10 +117,13 @@ TEST_F(ClientWorkerTest, BasicTest) {
   }
   int worker_number = 12345;
 
+  std::vector<UserDefinedOutputPluginPtr> user_defined_output_plugins;
+
   auto worker = std::make_unique<ClientWorkerImpl>(
       *api_, tls_, cluster_manager_ptr_, benchmark_client_factory_, termination_predicate_factory_,
       sequencer_factory_, request_generator_factory_, store_, worker_number,
-      time_system_.monotonicTime(), http_tracer_, ClientWorkerImpl::HardCodedWarmupStyle::ON);
+      time_system_.monotonicTime(), http_tracer_, ClientWorkerImpl::HardCodedWarmupStyle::ON,
+      std::move(user_defined_output_plugins));
 
   worker->start();
   worker->waitForCompletion();

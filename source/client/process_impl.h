@@ -106,13 +106,15 @@ private:
                                   const Uri& uri) const;
   void maybeCreateTracingDriver(const envoy::config::trace::v3::Tracing& configuration);
   void configureComponentLogLevels(spdlog::level::level_enum level);
+
   /**
    * Prepare the ProcessImpl instance by creating and configuring the workers it needs for execution
    * of the load test.
    *
    * @param concurrency the amount of workers that should be created.
    */
-  void createWorkers(const uint32_t concurrency, const absl::optional<Envoy::SystemTime>& schedule);
+  absl::Status createWorkers(const uint32_t concurrency,
+                             const absl::optional<Envoy::SystemTime>& schedule);
   std::vector<StatisticPtr> vectorizeStatisticPtrMap(const StatisticPtrMap& statistics) const;
   std::vector<StatisticPtr>
   mergeWorkerStatistics(const std::vector<ClientWorkerPtr>& workers) const;
@@ -218,6 +220,11 @@ private:
   std::unique_ptr<Envoy::Server::Instance> server_;
   // Null server factory context implementation for the same reason as above.
   std::unique_ptr<Envoy::Server::Configuration::ServerFactoryContext> server_factory_context_;
+  // The set of User Defined Output plugin factories and their corresponding configuration, used to
+  // add plugin instances to each worker, and to aggregate outputs for the global result.
+  std::vector<
+      std::pair<envoy::config::core::v3::TypedExtensionConfig, UserDefinedOutputPluginFactory*>>
+      user_defined_output_factories_{};
 };
 
 } // namespace Client

@@ -42,6 +42,7 @@ envoy_basic_cc_library(
         "//api/client:base_cc_proto",
         "//include/nighthawk/common:base_includes",
         "//include/nighthawk/common:request_source_lib",
+        "//include/nighthawk/user_defined_output:user_defined_output_plugin",
         "@envoy//envoy/common:base_includes",
         "@envoy//envoy/http:conn_pool_interface_with_external_headers",
         "@envoy//source/common/api:api_lib_with_external_headers",

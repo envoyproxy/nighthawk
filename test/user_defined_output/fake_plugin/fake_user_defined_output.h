@@ -7,7 +7,6 @@
 #include "external/envoy/source/common/common/statusor.h"
 
 #include "api/client/options.pb.h"
-#include "api/client/service.grpc.pb.h"
 
 #include "test/user_defined_output/fake_plugin/fake_user_defined_output.pb.h"
 
@@ -70,6 +69,14 @@ public:
 
   absl::StatusOr<Envoy::ProtobufWkt::Any>
   AggregateGlobalOutput(absl::Span<const Envoy::ProtobufWkt::Any> per_worker_outputs) override;
+
+  /**
+   * Returns the number of times this factory was called to make a plugin.
+   */
+  int getPluginCount();
+
+private:
+  int plugin_count_{0};
 };
 
 // This factory is activated through LoadStepControllerPlugin in plugin_util.h.

@@ -5,6 +5,7 @@
 #include "envoy/upstream/cluster_manager.h"
 
 #include "nighthawk/client/factories.h"
+#include "nighthawk/user_defined_output/user_defined_output_plugin.h"
 
 #include "gmock/gmock.h"
 
@@ -17,7 +18,8 @@ public:
   MOCK_METHOD(BenchmarkClientPtr, create,
               (Envoy::Api::Api&, Envoy::Event::Dispatcher&, Envoy::Stats::Scope&,
                Envoy::Upstream::ClusterManagerPtr&, Envoy::Tracing::HttpTracerSharedPtr&,
-               absl::string_view, int, RequestSource& request_generator),
+               absl::string_view, int, RequestSource& request_generator,
+               std::vector<UserDefinedOutputPluginPtr> user_defined_output_plugins),
               (const, override));
 };
 

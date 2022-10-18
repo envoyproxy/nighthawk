@@ -15,6 +15,7 @@
 
 #include "nighthawk/client/output_collector.h"
 #include "nighthawk/common/factories.h"
+#include "nighthawk/user_defined_output/user_defined_output_plugin.h"
 
 #include "external/envoy/source/common/api/api_impl.h"
 #include "external/envoy/source/common/common/cleanup.h"
@@ -59,6 +60,8 @@
 #include "source/client/options_impl.h"
 #include "source/client/sni_utility.h"
 
+#include "source/user_defined_output/user_defined_output_plugin_creator.h"
+
 using namespace std::chrono_literals;
 
 namespace Nighthawk {
@@ -66,6 +69,7 @@ namespace Client {
 namespace {
 
 using ::envoy::config::bootstrap::v3::Bootstrap;
+using ::envoy::config::core::v3::TypedExtensionConfig;
 
 // Helps in generating a bootstrap for the process.
 // This is a class only to allow the use of the ENVOY_LOG macros.
@@ -314,6 +318,26 @@ private:
   Envoy::Server::Instance& server_;
 };
 
+/**
+ * Compiles a list of factories and the configurations they will use to create plugins.
+ *
+ * @param options The options used for initializing the process
+ * @return std::vector<std::pair<TypedExtensionConfig, UserDefinedOutputPluginFactory*>> vector of
+ * pairs, each containing a factory and its corresponding configuration.
+ */
+std::vector<std::pair<TypedExtensionConfig, UserDefinedOutputPluginFactory*>>
+getUserDefinedFactoryConfigPairs(const Options& options) {
+  std::vector<std::pair<TypedExtensionConfig, UserDefinedOutputPluginFactory*>>
+      factory_config_pairs;
+  for (const TypedExtensionConfig& config : options.userDefinedOutputPluginConfigs()) {
+    auto* factory = Envoy::Config::Utility::getAndCheckFactory<UserDefinedOutputPluginFactory>(
+        config, /*is_optional=*/false);
+    std::pair<TypedExtensionConfig, UserDefinedOutputPluginFactory*> pair(config, factory);
+    factory_config_pairs.push_back(pair);
+  }
+  return factory_config_pairs;
+}
+
 // Disables the hot restart Envoy functionality.
 std::string HotRestartDisabled(bool) { return "hot restart is disabled"; }
 
@@ -381,7 +405,7 @@ private:
 
 ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
                          Envoy::Network::DnsResolverFactory& dns_resolver_factory,
-                         envoy::config::core::v3::TypedExtensionConfig typed_dns_resolver_config,
+                         TypedExtensionConfig typed_dns_resolver_config,
                          const std::shared_ptr<Envoy::ProcessWide>& process_wide)
     : options_(options), number_of_workers_(BootstrapFactory::determineConcurrency(options_)),
       process_wide_(process_wide == nullptr ? std::make_shared<Envoy::ProcessWide>()
@@ -418,19 +442,11 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
 
 absl::StatusOr<ProcessPtr> ProcessImpl::CreateProcessImpl(
     const Options& options, Envoy::Network::DnsResolverFactory& dns_resolver_factory,
-    envoy::config::core::v3::TypedExtensionConfig typed_dns_resolver_config,
-    Envoy::Event::TimeSystem& time_system,
+    TypedExtensionConfig typed_dns_resolver_config, Envoy::Event::TimeSystem& time_system,
     const std::shared_ptr<Envoy::ProcessWide>& process_wide) {
   std::unique_ptr<ProcessImpl> process(new ProcessImpl(options, time_system, dns_resolver_factory,
                                                        std::move(typed_dns_resolver_config),
                                                        process_wide));
-
-  if (!options.userDefinedOutputPluginConfigs().empty()) {
-    ENVOY_LOG(error, "User Defined Output Plugin feature is still being implemented.");
-    process->shutdown();
-    return absl::UnimplementedError(
-        "User Defined Output Plugin feature is still being implemented.");
-  }
 
   absl::StatusOr<Bootstrap> bootstrap = createBootstrapConfiguration(
       *process->dispatcher_, *process->api_, process->options_, process->dns_resolver_factory_,
@@ -453,6 +469,7 @@ absl::StatusOr<ProcessPtr> ProcessImpl::CreateProcessImpl(
   // assumed to be safe, because we still do it while constructing the
   // ProcessImpl, i.e. before we start running the process.
   process->bootstrap_ = *bootstrap;
+  process->user_defined_output_factories_ = getUserDefinedFactoryConfigPairs(options);
 
   return process;
 }
@@ -518,8 +535,8 @@ std::chrono::nanoseconds ProcessImpl::computeInterWorkerDelay(const uint32_t con
   return std::chrono::duration_cast<std::chrono::nanoseconds>(inter_worker_delay_usec * 1us);
 }
 
-void ProcessImpl::createWorkers(const uint32_t concurrency,
-                                const absl::optional<Envoy::SystemTime>& scheduled_start) {
+absl::Status ProcessImpl::createWorkers(const uint32_t concurrency,
+                                        const absl::optional<Envoy::SystemTime>& scheduled_start) {
   ASSERT(workers_.empty());
   const Envoy::MonotonicTime first_worker_start =
       computeFirstWorkerStart(time_system_, scheduled_start, concurrency);
@@ -527,14 +544,22 @@ void ProcessImpl::createWorkers(const uint32_t concurrency,
       computeInterWorkerDelay(concurrency, options_.requestsPerSecond());
   int worker_number = 0;
   while (workers_.size() < concurrency) {
+    std::vector<UserDefinedOutputPluginPtr> plugins =
+        createUserDefinedOutputPlugins(user_defined_output_factories_, worker_number);
+    if (!plugins.empty()) {
+      return absl::UnimplementedError(
+          "User Defined Output Plugin feature is still being implemented.");
+    }
     workers_.push_back(std::make_unique<ClientWorkerImpl>(
         *api_, tls_, cluster_manager_, benchmark_client_factory_, termination_predicate_factory_,
         sequencer_factory_, request_generator_factory_, store_root_, worker_number,
         first_worker_start + (inter_worker_delay * worker_number), http_tracer_,
         options_.simpleWarmup() ? ClientWorkerImpl::HardCodedWarmupStyle::ON
-                                : ClientWorkerImpl::HardCodedWarmupStyle::OFF));
+                                : ClientWorkerImpl::HardCodedWarmupStyle::OFF,
+        std::move(plugins)));
     worker_number++;
   }
+  return absl::OkStatus();
 }
 
 void ProcessImpl::configureComponentLogLevels(spdlog::level::level_enum level) {
@@ -687,7 +712,11 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
           Envoy::Config::Utility::createTagProducer(bootstrap_, envoy_options_.statsTags()));
     }
 
-    createWorkers(number_of_workers_, scheduled_start);
+    absl::Status workers_status = createWorkers(number_of_workers_, scheduled_start);
+    if (!workers_status.ok()) {
+      ENVOY_LOG(error, "createWorkers failed. Received bad status: {}", workers_status.message());
+      return false;
+    }
     tls_.registerThread(*dispatcher_, true);
     store_root_.initializeThreading(*dispatcher_, tls_);
     runtime_singleton_ = std::make_unique<Envoy::Runtime::ScopedLoaderSingleton>(
