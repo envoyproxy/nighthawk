@@ -108,7 +108,7 @@ public:
         cancel_thread.join();
       }
     }
-    RunExpectation result =
+    const RunExpectation result =
         process->run(collector) ? RunExpectation::EXPECT_SUCCESS : RunExpectation::EXPECT_FAILURE;
     EXPECT_EQ(result, expectation);
     if (do_cancel) {
@@ -181,11 +181,6 @@ TEST_P(ProcessTest, CancelExecutionBeforeBeginLoadTest) {
 }
 
 TEST_P(ProcessTest, RunProcessWithStatsSinkConfigured) {
-  // TODO(Dubious90): Instead of applying this flag, move the factory into its own file, register
-  // it, and call it by its type
-  // Envoy::TestScopedRuntime scoped_runtime;
-  // scoped_runtime.mergeValues({{"envoy.reloadable_features.no_extension_lookup_by_name",
-  // "false"}});
   FakeStatsSinkFactory factory;
   Envoy::Registry::InjectFactory<NighthawkStatsSinkFactory> registered(factory);
   options_ = TestUtility::createOptionsImpl(
@@ -231,8 +226,8 @@ TEST_P(ProcessTest, CreatesNoUserDefinedOutputPluginsIfNoConfigs) {
   EXPECT_EQ(factory.getPluginCount(), 0);
 }
 
-// TODO(nbperry): Add tests for one or more plugins being created properly, once we aren't returning
-// with unimplemented.
+// TODO(dubious90): Add tests for one or more plugins being created properly, once we aren't
+// returning with unimplemented.
 
 /**
  * Fixture for executing the Nighthawk process with simulated time.

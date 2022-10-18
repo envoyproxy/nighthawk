@@ -544,14 +544,9 @@ absl::Status ProcessImpl::createWorkers(const uint32_t concurrency,
       computeInterWorkerDelay(concurrency, options_.requestsPerSecond());
   int worker_number = 0;
   while (workers_.size() < concurrency) {
-    absl::StatusOr<std::vector<UserDefinedOutputPluginPtr>> plugins =
+    std::vector<UserDefinedOutputPluginPtr> plugins =
         createUserDefinedOutputPlugins(user_defined_output_factories_, worker_number);
-    if (!plugins.ok()) {
-      ENVOY_LOG(error, absl::StrCat("Received error while starting user defined output factories: ",
-                                    plugins.status().message()));
-      return plugins.status();
-    }
-    if (!plugins->empty()) {
+    if (!plugins.empty()) {
       return absl::UnimplementedError(
           "User Defined Output Plugin feature is still being implemented.");
     }
@@ -561,7 +556,7 @@ absl::Status ProcessImpl::createWorkers(const uint32_t concurrency,
         first_worker_start + (inter_worker_delay * worker_number), http_tracer_,
         options_.simpleWarmup() ? ClientWorkerImpl::HardCodedWarmupStyle::ON
                                 : ClientWorkerImpl::HardCodedWarmupStyle::OFF,
-        std::move(*plugins)));
+        std::move(plugins)));
     worker_number++;
   }
   return absl::OkStatus();
@@ -719,8 +714,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
 
     absl::Status workers_status = createWorkers(number_of_workers_, scheduled_start);
     if (!workers_status.ok()) {
-      ENVOY_LOG(error, absl::StrCat("createWorkers failed. Received bad status: ",
-                                    workers_status.message()));
+      ENVOY_LOG(error, "createWorkers failed. Received bad status: {}", workers_status.message());
       return false;
     }
     tls_.registerThread(*dispatcher_, true);

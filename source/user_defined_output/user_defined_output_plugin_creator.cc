@@ -15,8 +15,7 @@ std::vector<UserDefinedOutputPluginPtr> createUserDefinedOutputPlugins(
     int worker_number) {
   std::vector<UserDefinedOutputPluginPtr> plugins;
 
-  for (std::pair<TypedExtensionConfig, UserDefinedOutputPluginFactory*>& pair :
-       factory_config_pairs) {
+  for (auto& pair : factory_config_pairs) {
     WorkerMetadata metadata;
     metadata.worker_number = worker_number;
     TypedExtensionConfig config = pair.first;

@@ -51,7 +51,7 @@ TEST(CreateUserDefinedOutputPlugins, CreatesPluginsForEachConfig) {
   EXPECT_EQ(plugins.size(), 1);
   EXPECT_NE(dynamic_cast<FakeUserDefinedOutputPlugin*>(plugins[0].get()), nullptr);
 
-  // TODO(nbperry): Test multiple plugins when multiple plugin types exist.
+  // TODO(dubious90): Test multiple plugins when multiple plugin types exist.
 }
 
 } // namespace

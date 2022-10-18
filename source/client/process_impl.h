@@ -94,16 +94,6 @@ public:
 
   bool requestExecutionCancellation() override;
 
-  /**
-   * Initializes the User Defined Output Plugin factories that will be used in this process, stores
-   * them in this process, and returns a reference to them.
-   *
-   * @return a vector of pairs, with the TypedExtensionConfig and its corresponding factory.
-   */
-  std::vector<
-      std::pair<envoy::config::core::v3::TypedExtensionConfig, UserDefinedOutputPluginFactory*>>&
-  populateUserDefinedOutputFactories();
-
 private:
   // Use CreateProcessImpl to construct an instance of ProcessImpl.
   ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
