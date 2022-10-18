@@ -40,7 +40,9 @@ using namespace std::chrono_literals;
   COUNTER(http_5xx)                                                                                \
   COUNTER(http_xxx)                                                                                \
   COUNTER(pool_overflow)                                                                           \
-  COUNTER(pool_connection_failure)
+  COUNTER(pool_connection_failure)                                                                 \
+  COUNTER(user_defined_plugin_handle_headers_failure)                                              \
+  COUNTER(user_defined_plugin_handle_data_failure)
 
 // For counter metrics, Nighthawk use Envoy Counter directly. For histogram metrics, Nighthawk uses
 // its own Statistic instead of Envoy Histogram. Here BenchmarkClientCounters contains only counters
@@ -136,6 +138,7 @@ public:
   void onComplete(bool success, const Envoy::Http::ResponseHeaderMap& headers) override;
   void onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason reason) override;
   void exportLatency(const uint32_t response_code, const uint64_t latency_ns) override;
+  void handleResponseData(const Envoy::Buffer::Instance& response_data) override;
 
   // Helpers
   absl::optional<::Envoy::Upstream::HttpPoolData> pool() {
