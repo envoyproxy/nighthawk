@@ -60,6 +60,14 @@ public:
    * @return bool indicating if latency measurement is enabled.
    */
   virtual bool shouldMeasureLatencies() const PURE;
+
+  /**
+   * Get any additional output that this benchmark client may have stored while sending and
+   * receiving requests.
+   *
+   * @return a vector of protos. Not guaranteed for all of the Any protobufs to have the same underlying type.
+   */
+  virtual std::vector<Envoy::ProtobufWkt::Any> getAdditionalOutput() const PURE;
 };
 
 using BenchmarkClientPtr = std::unique_ptr<BenchmarkClient>;

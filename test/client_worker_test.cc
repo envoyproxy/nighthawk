@@ -133,6 +133,11 @@ TEST_F(ClientWorkerTest, BasicTest) {
 
   auto statistics = worker->statistics();
   EXPECT_EQ(2, statistics.size());
+  std::vector<Envoy::ProtobufWkt::Any> mocked_vector{};
+  EXPECT_CALL(*benchmark_client_, getAdditionalOutput()).WillOnce(Return(mocked_vector));
+  std::vector<Envoy::ProtobufWkt::Any> outputs = worker->getAdditionalOutput();
+  EXPECT_TRUE(outputs.empty());
+
   worker->shutdown();
 }
 

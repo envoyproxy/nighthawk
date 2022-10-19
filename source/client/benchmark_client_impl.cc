@@ -274,5 +274,21 @@ void BenchmarkClientHttpImpl::exportLatency(const uint32_t response_code,
   }
 }
 
+std::vector<Envoy::ProtobufWkt::Any> BenchmarkClientHttpImpl::getAdditionalOutput() const {
+  std::vector<Envoy::ProtobufWkt::Any> outputs;
+  for (const UserDefinedOutputPluginPtr& plugin : user_defined_output_plugins_) {
+    absl::StatusOr<Envoy::ProtobufWkt::Any> message = plugin->getPerWorkerOutput();
+    if (!message.ok()) {
+      ENVOY_LOG(error, "Plugin with class type {} received error status: ", typeid(plugin).name(),
+                message.status().message());
+      benchmark_client_counters_.user_defined_plugin_per_worker_output_failure_.inc();
+    }
+    else {
+      outputs.push_back(*message);
+    }
+  }
+  return outputs;
+}
+
 } // namespace Client
 } // namespace Nighthawk

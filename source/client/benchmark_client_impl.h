@@ -42,7 +42,8 @@ using namespace std::chrono_literals;
   COUNTER(pool_overflow)                                                                           \
   COUNTER(pool_connection_failure)                                                                 \
   COUNTER(user_defined_plugin_handle_headers_failure)                                              \
-  COUNTER(user_defined_plugin_handle_data_failure)
+  COUNTER(user_defined_plugin_handle_data_failure)                                                 \
+  COUNTER(user_defined_plugin_per_worker_output_failure)
 
 // For counter metrics, Nighthawk use Envoy Counter directly. For histogram metrics, Nighthawk uses
 // its own Statistic instead of Envoy Histogram. Here BenchmarkClientCounters contains only counters
@@ -133,6 +134,13 @@ public:
   }
   bool tryStartRequest(CompletionCallback caller_completion_callback) override;
   Envoy::Stats::Scope& scope() const override { return *scope_; }
+
+  /**
+   * Returns additional output from any specified User Defined Output plugins.
+   *
+   * @return vector of Envoy::ProtobufWkt::Any, each of which may be a different underlying proto.
+   */
+  std::vector<Envoy::ProtobufWkt::Any> getAdditionalOutput() const override;
 
   // StreamDecoderCompletionCallback
   void onComplete(bool success, const Envoy::Http::ResponseHeaderMap& headers) override;

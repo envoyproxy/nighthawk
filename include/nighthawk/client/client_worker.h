@@ -39,6 +39,15 @@ public:
    * Requests execution cancellation.
    */
   virtual void requestExecutionCancellation() PURE;
+
+  /**
+   * Get any additional output that this worker may have stored while sending and receiving
+   * requests.
+   *
+   * @return a vector of protos. Not guaranteed for all of the Any protobufs to have the same
+   * underlying type.
+   */
+  virtual std::vector<Envoy::ProtobufWkt::Any> getAdditionalOutput() const PURE;
 };
 
 using ClientWorkerPtr = std::unique_ptr<ClientWorker>;

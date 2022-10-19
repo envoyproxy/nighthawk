@@ -110,5 +110,9 @@ StatisticPtrMap ClientWorkerImpl::statistics() const {
   return statistics;
 }
 
+std::vector<Envoy::ProtobufWkt::Any> ClientWorkerImpl::getAdditionalOutput() const {
+  return benchmark_client_->getAdditionalOutput();
+}
+
 } // namespace Client
 } // namespace Nighthawk
