@@ -65,7 +65,8 @@ public:
    * Get any additional output that this benchmark client may have stored while sending and
    * receiving requests.
    *
-   * @return a vector of protos. Not guaranteed for all of the Any protobufs to have the same underlying type.
+   * @return a vector of protos. Not guaranteed for all of the Any protobufs to have the same
+   * underlying type.
    */
   virtual std::vector<Envoy::ProtobufWkt::Any> getAdditionalOutput() const PURE;
 };

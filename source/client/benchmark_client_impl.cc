@@ -282,8 +282,7 @@ std::vector<Envoy::ProtobufWkt::Any> BenchmarkClientHttpImpl::getAdditionalOutpu
       ENVOY_LOG(error, "Plugin with class type {} received error status: ", typeid(plugin).name(),
                 message.status().message());
       benchmark_client_counters_.user_defined_plugin_per_worker_output_failure_.inc();
-    }
-    else {
+    } else {
       outputs.push_back(*message);
     }
   }
