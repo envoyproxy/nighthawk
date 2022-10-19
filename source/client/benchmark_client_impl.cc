@@ -224,6 +224,21 @@ void BenchmarkClientHttpImpl::onComplete(bool success,
       benchmark_client_counters_.http_xxx_.inc();
     }
   }
+  for (UserDefinedOutputPluginPtr& plugin : user_defined_output_plugins_) {
+    absl::Status status = plugin->handleResponseHeaders(headers);
+    if (!status.ok()) {
+      benchmark_client_counters_.user_defined_plugin_handle_headers_failure_.inc();
+    }
+  }
+}
+
+void BenchmarkClientHttpImpl::handleResponseData(const Envoy::Buffer::Instance& response_data) {
+  for (UserDefinedOutputPluginPtr& plugin : user_defined_output_plugins_) {
+    absl::Status status = plugin->handleResponseData(response_data);
+    if (!status.ok()) {
+      benchmark_client_counters_.user_defined_plugin_handle_data_failure_.inc();
+    }
+  }
 }
 
 void BenchmarkClientHttpImpl::onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason reason) {

@@ -12,7 +12,7 @@ FakeUserDefinedOutputPlugin::FakeUserDefinedOutputPlugin(FakeUserDefinedOutputCo
     : config_(std::move(config)), worker_metadata_(worker_metadata) {}
 
 absl::Status
-FakeUserDefinedOutputPlugin::handleResponseHeaders(const Envoy::Http::ResponseHeaderMap*) {
+FakeUserDefinedOutputPlugin::handleResponseHeaders(const Envoy::Http::ResponseHeaderMap&) {
   headers_called_++;
   if (config_.fail_headers()) {
     if (headers_called_ > config_.header_failure_countdown()) {

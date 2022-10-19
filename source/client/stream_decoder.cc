@@ -51,6 +51,7 @@ void StreamDecoder::decodeData(Envoy::Buffer::Instance& data, bool end_stream) {
   if (complete_) {
     onComplete(true);
   }
+  decoder_completion_callback_.handleResponseData(data);
 }
 
 void StreamDecoder::decodeTrailers(Envoy::Http::ResponseTrailerMapPtr&& headers) {
