@@ -21,6 +21,7 @@
 #include "source/common/uri_impl.h"
 #include "source/common/utility.h"
 
+#include "test/test_common/proto_matchers.h"
 #include "test/user_defined_output/fake_plugin/fake_user_defined_output.h"
 #include "test/user_defined_output/fake_plugin/fake_user_defined_output.pb.h"
 
@@ -462,7 +463,9 @@ CreateTestUserDefinedOutputPlugin(const std::string& typed_config_textproto) {
 
   auto* factory = Envoy::Config::Utility::getAndCheckFactory<UserDefinedOutputPluginFactory>(
       typed_config, false);
-  return factory->createUserDefinedOutputPlugin(typed_config.typed_config(), {});
+  WorkerMetadata metadata{};
+  metadata.worker_number = 1;
+  return factory->createUserDefinedOutputPlugin(typed_config.typed_config(), metadata);
 }
 
 TEST_F(BenchmarkClientHttpTest, CallsUserDefinedPluginHandleHeaders) {
@@ -484,9 +487,9 @@ TEST_F(BenchmarkClientHttpTest, CallsUserDefinedPluginHandleHeaders) {
   client_->onComplete(true, headers);
   client_->onComplete(true, headers);
   absl::StatusOr<Envoy::ProtobufWkt::Any> output_any = plugin_ptr->getPerWorkerOutput();
-  EXPECT_TRUE(output_any.ok());
+  ASSERT_TRUE(output_any.ok());
   nighthawk::FakeUserDefinedOutput output;
-  EXPECT_TRUE(Envoy::MessageUtil::unpackToNoThrow(*output_any, output).ok());
+  ASSERT_TRUE(Envoy::MessageUtil::unpackToNoThrow(*output_any, output).ok());
   EXPECT_EQ(output.headers_called(), 2);
   EXPECT_EQ(getCounter("user_defined_plugin_handle_headers_failure"), 0);
 }
@@ -512,9 +515,9 @@ TEST_F(BenchmarkClientHttpTest, IncrementsCounterWhenUserDefinedPluginHandleHead
   client_->onComplete(true, headers);
   client_->onComplete(true, headers);
   absl::StatusOr<Envoy::ProtobufWkt::Any> output_any = plugin_ptr->getPerWorkerOutput();
-  EXPECT_TRUE(output_any.ok());
+  ASSERT_TRUE(output_any.ok());
   nighthawk::FakeUserDefinedOutput output;
-  EXPECT_TRUE(Envoy::MessageUtil::unpackToNoThrow(*output_any, output).ok());
+  ASSERT_TRUE(Envoy::MessageUtil::unpackToNoThrow(*output_any, output).ok());
   EXPECT_EQ(output.headers_called(), 2);
   EXPECT_EQ(getCounter("user_defined_plugin_handle_headers_failure"), 2);
 }
@@ -535,9 +538,9 @@ TEST_F(BenchmarkClientHttpTest, CallsUserDefinedPluginHandleData) {
   client_->handleResponseData(buffer);
   client_->handleResponseData(buffer);
   absl::StatusOr<Envoy::ProtobufWkt::Any> output_any = plugin_ptr->getPerWorkerOutput();
-  EXPECT_TRUE(output_any.ok());
+  ASSERT_TRUE(output_any.ok());
   nighthawk::FakeUserDefinedOutput output;
-  EXPECT_TRUE(Envoy::MessageUtil::unpackToNoThrow(*output_any, output).ok());
+  ASSERT_TRUE(Envoy::MessageUtil::unpackToNoThrow(*output_any, output).ok());
   EXPECT_EQ(output.data_called(), 2);
   EXPECT_EQ(getCounter("user_defined_plugin_handle_data_failure"), 0);
 }
@@ -560,11 +563,58 @@ TEST_F(BenchmarkClientHttpTest, IncrementsCounterWhenUserDefinedPluginHandleData
   client_->handleResponseData(buffer);
   client_->handleResponseData(buffer);
   absl::StatusOr<Envoy::ProtobufWkt::Any> output_any = plugin_ptr->getPerWorkerOutput();
-  EXPECT_TRUE(output_any.ok());
+  ASSERT_TRUE(output_any.ok());
   nighthawk::FakeUserDefinedOutput output;
-  EXPECT_TRUE(Envoy::MessageUtil::unpackToNoThrow(*output_any, output).ok());
+  ASSERT_TRUE(Envoy::MessageUtil::unpackToNoThrow(*output_any, output).ok());
   EXPECT_EQ(output.data_called(), 2);
   EXPECT_EQ(getCounter("user_defined_plugin_handle_data_failure"), 2);
+}
+
+TEST_F(BenchmarkClientHttpTest, GetUserDefinedOutputResultsReturnsResults) {
+  RequestGenerator default_request_generator = getDefaultRequestGenerator();
+  Envoy::Http::TestResponseHeaderMapImpl headers({
+      {":status", "200"},
+      {"test_header_name", "test_header_value"},
+  });
+  Envoy::MockBuffer buffer;
+  UserDefinedOutputPluginPtr plugin = CreateTestUserDefinedOutputPlugin(R"(
+    name: "nighthawk.fake_user_defined_output",
+    typed_config {
+      [type.googleapis.com/nighthawk.FakeUserDefinedOutputConfig] {}
+    }
+  )");
+  UserDefinedOutputPlugin* plugin_ptr = plugin.get();
+  user_defined_output_plugins_.push_back(std::move(plugin));
+  setupBenchmarkClient(default_request_generator);
+
+  client_->onComplete(true, headers);
+  client_->handleResponseData(buffer);
+  absl::StatusOr<Envoy::ProtobufWkt::Any> expected_output = plugin_ptr->getPerWorkerOutput();
+  ASSERT_TRUE(expected_output.ok());
+
+  std::vector<Envoy::ProtobufWkt::Any> outputs = client_->getUserDefinedOutputResults();
+  EXPECT_EQ(outputs.size(), 1);
+  EXPECT_THAT(outputs[0], EqualsProto(*expected_output));
+}
+
+TEST_F(BenchmarkClientHttpTest,
+       getUserDefinedOutputResultsIncrementsCountersWhenPluginsReturnErrors) {
+  RequestGenerator default_request_generator = getDefaultRequestGenerator();
+  UserDefinedOutputPluginPtr plugin = CreateTestUserDefinedOutputPlugin(R"(
+    name: "nighthawk.fake_user_defined_output",
+    typed_config {
+      [type.googleapis.com/nighthawk.FakeUserDefinedOutputConfig] {
+        fail_per_worker_output: true
+      }
+    }
+  )");
+  // UserDefinedOutputPlugin* plugin_ptr = plugin.get();
+  user_defined_output_plugins_.push_back(std::move(plugin));
+  setupBenchmarkClient(default_request_generator);
+
+  std::vector<Envoy::ProtobufWkt::Any> outputs = client_->getUserDefinedOutputResults();
+  EXPECT_TRUE(outputs.empty());
+  EXPECT_EQ(getCounter("user_defined_plugin_per_worker_output_failure"), 1);
 }
 
 } // namespace Nighthawk

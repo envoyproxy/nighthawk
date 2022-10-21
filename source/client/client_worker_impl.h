@@ -50,6 +50,13 @@ public:
 
   void requestExecutionCancellation() override;
 
+  /**
+   * Returns additional output from any specified User Defined Output plugins.
+   *
+   * @return vector of Envoy::ProtobufWkt::Any, each of which may be a different underlying proto.
+   */
+  std::vector<Envoy::ProtobufWkt::Any> getUserDefinedOutputResults() const override;
+
 protected:
   void work() override;
 

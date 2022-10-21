@@ -16,6 +16,7 @@ envoy_cc_test(
         "//source/client:nighthawk_client_lib",
         "//source/common:request_impl_lib",
         "//test/test_common:environment_lib",
+        "//test/test_common:proto_matchers",
         "//test/user_defined_output/fake_plugin:fake_user_defined_output",
         "//test/user_defined_output/fake_plugin:fake_user_defined_output_proto_cc_proto",
         "@envoy//source/common/http:header_map_lib_with_external_headers",

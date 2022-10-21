@@ -82,7 +82,7 @@ public:
    *
    * @return output Any-packed per_worker output to add to the worker's Result.
    */
-  virtual absl::StatusOr<Envoy::ProtobufWkt::Any> getPerWorkerOutput() PURE;
+  virtual absl::StatusOr<Envoy::ProtobufWkt::Any> getPerWorkerOutput() const PURE;
 };
 
 using UserDefinedOutputPluginPtr = std::unique_ptr<UserDefinedOutputPlugin>;

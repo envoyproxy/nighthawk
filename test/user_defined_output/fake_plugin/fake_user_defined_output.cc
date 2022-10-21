@@ -34,7 +34,7 @@ absl::Status FakeUserDefinedOutputPlugin::handleResponseData(const Envoy::Buffer
   return absl::OkStatus();
 }
 
-absl::StatusOr<Envoy::ProtobufWkt::Any> FakeUserDefinedOutputPlugin::getPerWorkerOutput() {
+absl::StatusOr<Envoy::ProtobufWkt::Any> FakeUserDefinedOutputPlugin::getPerWorkerOutput() const {
   if (config_.fail_per_worker_output()) {
     return absl::InternalError(
         "Intentional FakeUserDefinedOutputPlugin failure on getting PerWorkerOutput");

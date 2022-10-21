@@ -46,7 +46,7 @@ public:
   /**
    * Get the output for this instance of the plugin, packing it into output.
    */
-  absl::StatusOr<Envoy::ProtobufWkt::Any> getPerWorkerOutput() override;
+  absl::StatusOr<Envoy::ProtobufWkt::Any> getPerWorkerOutput() const override;
 
 private:
   int data_called_ = 0;
