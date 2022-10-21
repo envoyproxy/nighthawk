@@ -55,7 +55,7 @@ public:
    *
    * @return vector of Envoy::ProtobufWkt::Any, each of which may be a different underlying proto.
    */
-  std::vector<Envoy::ProtobufWkt::Any> getAdditionalOutput() const override;
+  std::vector<Envoy::ProtobufWkt::Any> getUserDefinedOutputResults() const override;
 
 protected:
   void work() override;

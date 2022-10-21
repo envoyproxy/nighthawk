@@ -570,7 +570,7 @@ TEST_F(BenchmarkClientHttpTest, IncrementsCounterWhenUserDefinedPluginHandleData
   EXPECT_EQ(getCounter("user_defined_plugin_handle_data_failure"), 2);
 }
 
-TEST_F(BenchmarkClientHttpTest, GetAdditionalOutputReturnsUserDefinedOutputs) {
+TEST_F(BenchmarkClientHttpTest, GetUserDefinedOutputResultsReturnsResults) {
   RequestGenerator default_request_generator = getDefaultRequestGenerator();
   Envoy::Http::TestResponseHeaderMapImpl headers({
       {":status", "200"},
@@ -592,12 +592,13 @@ TEST_F(BenchmarkClientHttpTest, GetAdditionalOutputReturnsUserDefinedOutputs) {
   absl::StatusOr<Envoy::ProtobufWkt::Any> expected_output = plugin_ptr->getPerWorkerOutput();
   ASSERT_TRUE(expected_output.ok());
 
-  std::vector<Envoy::ProtobufWkt::Any> outputs = client_->getAdditionalOutput();
+  std::vector<Envoy::ProtobufWkt::Any> outputs = client_->getUserDefinedOutputResults();
   EXPECT_EQ(outputs.size(), 1);
   EXPECT_THAT(outputs[0], EqualsProto(*expected_output));
 }
 
-TEST_F(BenchmarkClientHttpTest, GetAdditionalOutputIncrementsCountersWhenPluginsReturnErrors) {
+TEST_F(BenchmarkClientHttpTest,
+       getUserDefinedOutputResultsIncrementsCountersWhenPluginsReturnErrors) {
   RequestGenerator default_request_generator = getDefaultRequestGenerator();
   UserDefinedOutputPluginPtr plugin = CreateTestUserDefinedOutputPlugin(R"(
     name: "nighthawk.fake_user_defined_output",
@@ -611,7 +612,7 @@ TEST_F(BenchmarkClientHttpTest, GetAdditionalOutputIncrementsCountersWhenPlugins
   user_defined_output_plugins_.push_back(std::move(plugin));
   setupBenchmarkClient(default_request_generator);
 
-  std::vector<Envoy::ProtobufWkt::Any> outputs = client_->getAdditionalOutput();
+  std::vector<Envoy::ProtobufWkt::Any> outputs = client_->getUserDefinedOutputResults();
   EXPECT_TRUE(outputs.empty());
   EXPECT_EQ(getCounter("user_defined_plugin_per_worker_output_failure"), 1);
 }
