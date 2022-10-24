@@ -7,8 +7,8 @@
 #include "envoy/config/typed_config.h"
 
 #include "external/envoy/source/common/common/statusor.h"
-#include "external/envoy/source/common/config/utility.h"
 #include "external/envoy/source/common/http/header_map_impl.h"
+#include "external/envoy_api/envoy/config/core/v3/extension.pb.h"
 
 namespace Nighthawk {
 

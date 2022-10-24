@@ -18,8 +18,12 @@ std::vector<UserDefinedOutputNamePluginPair> createUserDefinedOutputPlugins(
     metadata.worker_number = worker_number;
     TypedExtensionConfig config = pair.first;
     UserDefinedOutputPluginFactory* factory = pair.second;
-    plugins.push_back(
-        {factory->name(), factory->createUserDefinedOutputPlugin(config.typed_config(), metadata)});
+
+    UserDefinedOutputNamePluginPair name_plugin_pair;
+    name_plugin_pair.first = factory->name();
+    name_plugin_pair.second =
+        factory->createUserDefinedOutputPlugin(config.typed_config(), metadata);
+    plugins.emplace_back(std::move(name_plugin_pair));
   }
 
   return plugins;
