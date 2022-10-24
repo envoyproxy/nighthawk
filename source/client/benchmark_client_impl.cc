@@ -88,7 +88,7 @@ BenchmarkClientHttpImpl::BenchmarkClientHttpImpl(
     Envoy::Tracing::HttpTracerSharedPtr& http_tracer, absl::string_view cluster_name,
     RequestGenerator request_generator, const bool provide_resource_backpressure,
     absl::string_view latency_response_header_name,
-    std::vector<UserDefinedOutputPluginPtr> user_defined_output_plugins)
+    std::vector<UserDefinedOutputNamePluginPair> user_defined_output_plugins)
     : api_(api), dispatcher_(dispatcher), scope_(scope.createScope("benchmark.")),
       statistic_(std::move(statistic)), protocol_(protocol),
       benchmark_client_counters_({ALL_BENCHMARK_CLIENT_COUNTERS(POOL_COUNTER(*scope_))}),
@@ -224,8 +224,8 @@ void BenchmarkClientHttpImpl::onComplete(bool success,
       benchmark_client_counters_.http_xxx_.inc();
     }
   }
-  for (UserDefinedOutputPluginPtr& plugin : user_defined_output_plugins_) {
-    absl::Status status = plugin->handleResponseHeaders(headers);
+  for (UserDefinedOutputNamePluginPair& plugin : user_defined_output_plugins_) {
+    absl::Status status = plugin.second->handleResponseHeaders(headers);
     if (!status.ok()) {
       benchmark_client_counters_.user_defined_plugin_handle_headers_failure_.inc();
     }
@@ -233,8 +233,8 @@ void BenchmarkClientHttpImpl::onComplete(bool success,
 }
 
 void BenchmarkClientHttpImpl::handleResponseData(const Envoy::Buffer::Instance& response_data) {
-  for (UserDefinedOutputPluginPtr& plugin : user_defined_output_plugins_) {
-    absl::Status status = plugin->handleResponseData(response_data);
+  for (UserDefinedOutputNamePluginPair& plugin : user_defined_output_plugins_) {
+    absl::Status status = plugin.second->handleResponseData(response_data);
     if (!status.ok()) {
       benchmark_client_counters_.user_defined_plugin_handle_data_failure_.inc();
     }
@@ -274,16 +274,20 @@ void BenchmarkClientHttpImpl::exportLatency(const uint32_t response_code,
   }
 }
 
-std::vector<Envoy::ProtobufWkt::Any> BenchmarkClientHttpImpl::getUserDefinedOutputResults() const {
-  std::vector<Envoy::ProtobufWkt::Any> outputs;
-  for (const UserDefinedOutputPluginPtr& plugin : user_defined_output_plugins_) {
-    absl::StatusOr<Envoy::ProtobufWkt::Any> message = plugin->getPerWorkerOutput();
+std::vector<nighthawk::client::UserDefinedOutput>
+BenchmarkClientHttpImpl::getUserDefinedOutputResults() const {
+  std::vector<nighthawk::client::UserDefinedOutput> outputs;
+  for (const UserDefinedOutputNamePluginPair& plugin : user_defined_output_plugins_) {
+    absl::StatusOr<Envoy::ProtobufWkt::Any> message = plugin.second->getPerWorkerOutput();
     if (!message.ok()) {
-      ENVOY_LOG(error, "Plugin with class type {} received error status: ", typeid(plugin).name(),
+      ENVOY_LOG(error, "Plugin with class type {} received error status: ", plugin.first,
                 message.status().message());
       benchmark_client_counters_.user_defined_plugin_per_worker_output_failure_.inc();
     } else {
-      outputs.push_back(*message);
+      nighthawk::client::UserDefinedOutput output_result;
+      output_result.set_plugin_name(plugin.first);
+      *output_result.mutable_typed_output() = *message;
+      outputs.push_back(output_result);
     }
   }
   return outputs;

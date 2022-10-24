@@ -50,7 +50,7 @@ public:
          Envoy::Upstream::ClusterManagerPtr& cluster_manager,
          Envoy::Tracing::HttpTracerSharedPtr& http_tracer, absl::string_view cluster_name,
          int worker_id, RequestSource& request_source,
-         std::vector<UserDefinedOutputPluginPtr> user_defined_output_plugins) const PURE;
+         std::vector<UserDefinedOutputNamePluginPair> user_defined_output_plugins) const PURE;
 };
 
 class OutputFormatterFactory {

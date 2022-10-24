@@ -37,7 +37,7 @@ public:
                    const Envoy::MonotonicTime starting_time,
                    Envoy::Tracing::HttpTracerSharedPtr& http_tracer,
                    const HardCodedWarmupStyle hardcoded_warmup_style,
-                   std::vector<UserDefinedOutputPluginPtr> user_defined_output_plugins);
+                   std::vector<UserDefinedOutputNamePluginPair> user_defined_output_plugins);
   StatisticPtrMap statistics() const override;
 
   const std::map<std::string, uint64_t>& threadLocalCounterValues() override {
@@ -52,10 +52,8 @@ public:
 
   /**
    * Returns additional output from any specified User Defined Output plugins.
-   *
-   * @return vector of Envoy::ProtobufWkt::Any, each of which may be a different underlying proto.
    */
-  std::vector<Envoy::ProtobufWkt::Any> getUserDefinedOutputResults() const override;
+  std::vector<nighthawk::client::UserDefinedOutput> getUserDefinedOutputResults() const override;
 
 protected:
   void work() override;

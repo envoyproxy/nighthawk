@@ -222,9 +222,7 @@ private:
   std::unique_ptr<Envoy::Server::Configuration::ServerFactoryContext> server_factory_context_;
   // The set of User Defined Output plugin factories and their corresponding configuration, used to
   // add plugin instances to each worker, and to aggregate outputs for the global result.
-  std::vector<
-      std::pair<envoy::config::core::v3::TypedExtensionConfig, UserDefinedOutputPluginFactory*>>
-      user_defined_output_factories_{};
+  std::vector<UserDefinedOutputConfigFactoryPair> user_defined_output_factories_{};
 };
 
 } // namespace Client

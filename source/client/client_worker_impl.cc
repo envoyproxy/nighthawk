@@ -22,7 +22,7 @@ ClientWorkerImpl::ClientWorkerImpl(
     const int worker_number, const Envoy::MonotonicTime starting_time,
     Envoy::Tracing::HttpTracerSharedPtr& http_tracer,
     const HardCodedWarmupStyle hardcoded_warmup_style,
-    std::vector<UserDefinedOutputPluginPtr> user_defined_output_plugins)
+    std::vector<UserDefinedOutputNamePluginPair> user_defined_output_plugins)
     : WorkerImpl(api, tls, store),
       time_source_(std::make_unique<CachedTimeSourceImpl>(*dispatcher_)),
       termination_predicate_factory_(termination_predicate_factory),
@@ -110,7 +110,8 @@ StatisticPtrMap ClientWorkerImpl::statistics() const {
   return statistics;
 }
 
-std::vector<Envoy::ProtobufWkt::Any> ClientWorkerImpl::getUserDefinedOutputResults() const {
+std::vector<nighthawk::client::UserDefinedOutput>
+ClientWorkerImpl::getUserDefinedOutputResults() const {
   return benchmark_client_->getUserDefinedOutputResults();
 }
 
