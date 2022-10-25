@@ -325,14 +325,13 @@ private:
  * @return std::vector<std::pair<TypedExtensionConfig, UserDefinedOutputPluginFactory*>> vector of
  * pairs, each containing a factory and its corresponding configuration.
  */
-std::vector<std::pair<TypedExtensionConfig, UserDefinedOutputPluginFactory*>>
+std::vector<UserDefinedOutputConfigFactoryPair>
 getUserDefinedFactoryConfigPairs(const Options& options) {
-  std::vector<std::pair<TypedExtensionConfig, UserDefinedOutputPluginFactory*>>
-      factory_config_pairs;
+  std::vector<UserDefinedOutputConfigFactoryPair> factory_config_pairs;
   for (const TypedExtensionConfig& config : options.userDefinedOutputPluginConfigs()) {
     auto* factory = Envoy::Config::Utility::getAndCheckFactory<UserDefinedOutputPluginFactory>(
         config, /*is_optional=*/false);
-    std::pair<TypedExtensionConfig, UserDefinedOutputPluginFactory*> pair(config, factory);
+    UserDefinedOutputConfigFactoryPair pair(config, factory);
     factory_config_pairs.push_back(pair);
   }
   return factory_config_pairs;
@@ -544,7 +543,7 @@ absl::Status ProcessImpl::createWorkers(const uint32_t concurrency,
       computeInterWorkerDelay(concurrency, options_.requestsPerSecond());
   int worker_number = 0;
   while (workers_.size() < concurrency) {
-    std::vector<UserDefinedOutputPluginPtr> plugins =
+    std::vector<UserDefinedOutputNamePluginPair> plugins =
         createUserDefinedOutputPlugins(user_defined_output_factories_, worker_number);
     if (!plugins.empty()) {
       return absl::UnimplementedError(

@@ -113,7 +113,7 @@ public:
                           absl::string_view cluster_name, RequestGenerator request_generator,
                           const bool provide_resource_backpressure,
                           absl::string_view latency_response_header_name,
-                          std::vector<UserDefinedOutputPluginPtr> user_defined_output_plugins);
+                          std::vector<UserDefinedOutputNamePluginPair> user_defined_output_plugins);
   void setConnectionLimit(uint32_t connection_limit) { connection_limit_ = connection_limit; }
   void setMaxPendingRequests(uint32_t max_pending_requests) {
     max_pending_requests_ = max_pending_requests;
@@ -137,10 +137,8 @@ public:
 
   /**
    * Returns additional output from any specified User Defined Output plugins.
-   *
-   * @return vector of Envoy::ProtobufWkt::Any, each of which may be a different underlying proto.
    */
-  std::vector<Envoy::ProtobufWkt::Any> getUserDefinedOutputResults() const override;
+  std::vector<nighthawk::client::UserDefinedOutput> getUserDefinedOutputResults() const override;
 
   // StreamDecoderCompletionCallback
   void onComplete(bool success, const Envoy::Http::ResponseHeaderMap& headers) override;
@@ -179,7 +177,7 @@ private:
   const bool provide_resource_backpressure_;
   const std::string latency_response_header_name_;
   Envoy::Event::TimerPtr drain_timer_;
-  std::vector<UserDefinedOutputPluginPtr> user_defined_output_plugins_;
+  std::vector<UserDefinedOutputNamePluginPair> user_defined_output_plugins_;
 };
 
 } // namespace Client

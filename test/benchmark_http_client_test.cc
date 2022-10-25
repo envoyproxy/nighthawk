@@ -227,7 +227,7 @@ public:
   int worker_number_{0};
   Client::BenchmarkClientStatistic statistic_;
   std::shared_ptr<Envoy::Http::RequestHeaderMap> default_header_map_;
-  std::vector<UserDefinedOutputPluginPtr> user_defined_output_plugins_{};
+  std::vector<UserDefinedOutputNamePluginPair> user_defined_output_plugins_{};
 };
 
 TEST_F(BenchmarkClientHttpTest, BasicTestH1200) {
@@ -481,7 +481,10 @@ TEST_F(BenchmarkClientHttpTest, CallsUserDefinedPluginHandleHeaders) {
     }
   )");
   UserDefinedOutputPlugin* plugin_ptr = plugin.get();
-  user_defined_output_plugins_.push_back(std::move(plugin));
+  UserDefinedOutputNamePluginPair pair;
+  pair.first = "nighthawk.fake_user_defined_output";
+  pair.second = std::move(plugin);
+  user_defined_output_plugins_.push_back(std::move(pair));
   setupBenchmarkClient(default_request_generator);
 
   client_->onComplete(true, headers);
@@ -509,7 +512,10 @@ TEST_F(BenchmarkClientHttpTest, IncrementsCounterWhenUserDefinedPluginHandleHead
     }
   )");
   UserDefinedOutputPlugin* plugin_ptr = plugin.get();
-  user_defined_output_plugins_.push_back(std::move(plugin));
+  UserDefinedOutputNamePluginPair pair;
+  pair.first = "nighthawk.fake_user_defined_output";
+  pair.second = std::move(plugin);
+  user_defined_output_plugins_.push_back(std::move(pair));
   setupBenchmarkClient(default_request_generator);
 
   client_->onComplete(true, headers);
@@ -532,7 +538,10 @@ TEST_F(BenchmarkClientHttpTest, CallsUserDefinedPluginHandleData) {
     }
   )");
   UserDefinedOutputPlugin* plugin_ptr = plugin.get();
-  user_defined_output_plugins_.push_back(std::move(plugin));
+  UserDefinedOutputNamePluginPair pair;
+  pair.first = "nighthawk.fake_user_defined_output";
+  pair.second = std::move(plugin);
+  user_defined_output_plugins_.push_back(std::move(pair));
   setupBenchmarkClient(default_request_generator);
 
   client_->handleResponseData(buffer);
@@ -557,7 +566,10 @@ TEST_F(BenchmarkClientHttpTest, IncrementsCounterWhenUserDefinedPluginHandleData
     }
   )");
   UserDefinedOutputPlugin* plugin_ptr = plugin.get();
-  user_defined_output_plugins_.push_back(std::move(plugin));
+  UserDefinedOutputNamePluginPair pair;
+  pair.first = "nighthawk.fake_user_defined_output";
+  pair.second = std::move(plugin);
+  user_defined_output_plugins_.push_back(std::move(pair));
   setupBenchmarkClient(default_request_generator);
 
   client_->handleResponseData(buffer);
@@ -584,17 +596,24 @@ TEST_F(BenchmarkClientHttpTest, GetUserDefinedOutputResultsReturnsResults) {
     }
   )");
   UserDefinedOutputPlugin* plugin_ptr = plugin.get();
-  user_defined_output_plugins_.push_back(std::move(plugin));
+  UserDefinedOutputNamePluginPair pair;
+  pair.first = "nighthawk.fake_user_defined_output";
+  pair.second = std::move(plugin);
+  user_defined_output_plugins_.push_back(std::move(pair));
   setupBenchmarkClient(default_request_generator);
 
   client_->onComplete(true, headers);
   client_->handleResponseData(buffer);
-  absl::StatusOr<Envoy::ProtobufWkt::Any> expected_output = plugin_ptr->getPerWorkerOutput();
-  ASSERT_TRUE(expected_output.ok());
+  absl::StatusOr<Envoy::ProtobufWkt::Any> expected_any = plugin_ptr->getPerWorkerOutput();
+  ASSERT_TRUE(expected_any.ok());
+  nighthawk::client::UserDefinedOutput expected_output;
+  *expected_output.mutable_typed_output() = *expected_any;
+  expected_output.set_plugin_name("nighthawk.fake_user_defined_output");
 
-  std::vector<Envoy::ProtobufWkt::Any> outputs = client_->getUserDefinedOutputResults();
+  std::vector<nighthawk::client::UserDefinedOutput> outputs =
+      client_->getUserDefinedOutputResults();
   EXPECT_EQ(outputs.size(), 1);
-  EXPECT_THAT(outputs[0], EqualsProto(*expected_output));
+  EXPECT_THAT(outputs[0], EqualsProto(expected_output));
 }
 
 TEST_F(BenchmarkClientHttpTest,
@@ -608,11 +627,14 @@ TEST_F(BenchmarkClientHttpTest,
       }
     }
   )");
-  // UserDefinedOutputPlugin* plugin_ptr = plugin.get();
-  user_defined_output_plugins_.push_back(std::move(plugin));
+  UserDefinedOutputNamePluginPair pair;
+  pair.first = "nighthawk.fake_user_defined_output";
+  pair.second = std::move(plugin);
+  user_defined_output_plugins_.push_back(std::move(pair));
   setupBenchmarkClient(default_request_generator);
 
-  std::vector<Envoy::ProtobufWkt::Any> outputs = client_->getUserDefinedOutputResults();
+  std::vector<nighthawk::client::UserDefinedOutput> outputs =
+      client_->getUserDefinedOutputResults();
   EXPECT_TRUE(outputs.empty());
   EXPECT_EQ(getCounter("user_defined_plugin_per_worker_output_failure"), 1);
 }

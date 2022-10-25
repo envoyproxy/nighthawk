@@ -117,7 +117,7 @@ TEST_F(ClientWorkerTest, BasicTest) {
   }
   int worker_number = 12345;
 
-  std::vector<UserDefinedOutputPluginPtr> user_defined_output_plugins;
+  std::vector<UserDefinedOutputNamePluginPair> user_defined_output_plugins;
 
   auto worker = std::make_unique<ClientWorkerImpl>(
       *api_, tls_, cluster_manager_ptr_, benchmark_client_factory_, termination_predicate_factory_,
@@ -133,9 +133,9 @@ TEST_F(ClientWorkerTest, BasicTest) {
 
   auto statistics = worker->statistics();
   EXPECT_EQ(2, statistics.size());
-  std::vector<Envoy::ProtobufWkt::Any> mocked_vector{};
+  std::vector<nighthawk::client::UserDefinedOutput> mocked_vector{};
   EXPECT_CALL(*benchmark_client_, getUserDefinedOutputResults()).WillOnce(Return(mocked_vector));
-  std::vector<Envoy::ProtobufWkt::Any> outputs = worker->getUserDefinedOutputResults();
+  std::vector<nighthawk::client::UserDefinedOutput> outputs = worker->getUserDefinedOutputResults();
   EXPECT_TRUE(outputs.empty());
 
   worker->shutdown();

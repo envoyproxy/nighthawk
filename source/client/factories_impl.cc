@@ -34,7 +34,7 @@ BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
     Envoy::Upstream::ClusterManagerPtr& cluster_manager,
     Envoy::Tracing::HttpTracerSharedPtr& http_tracer, absl::string_view cluster_name, int worker_id,
     RequestSource& request_generator,
-    std::vector<UserDefinedOutputPluginPtr> user_defined_output_plugins) const {
+    std::vector<UserDefinedOutputNamePluginPair> user_defined_output_plugins) const {
   StatisticFactoryImpl statistic_factory(options_);
   // While we lack options to configure which statistic backend goes where, we directly pass
   // StreamingStatistic for the stats that track response sizes. Ideally we would have options

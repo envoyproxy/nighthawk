@@ -19,7 +19,7 @@ public:
               (Envoy::Api::Api&, Envoy::Event::Dispatcher&, Envoy::Stats::Scope&,
                Envoy::Upstream::ClusterManagerPtr&, Envoy::Tracing::HttpTracerSharedPtr&,
                absl::string_view, int, RequestSource& request_generator,
-               std::vector<UserDefinedOutputPluginPtr> user_defined_output_plugins),
+               std::vector<UserDefinedOutputNamePluginPair> user_defined_output_plugins),
               (const, override));
 };
 

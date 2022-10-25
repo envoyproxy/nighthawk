@@ -90,7 +90,7 @@ function do_integration_test_coverage() {
     export TEST_TARGETS="//test:python_test"
     # TODO(#830): Raise the integration test coverage.
     # TODO(nbperry): Raise back to 73 when User Defined Output plugin completed
-    export COVERAGE_THRESHOLD=72.3
+    export COVERAGE_THRESHOLD=72.2
     echo "bazel coverage build with tests ${TEST_TARGETS}"
     test/run_nighthawk_bazel_coverage.sh ${TEST_TARGETS}
     exit 0

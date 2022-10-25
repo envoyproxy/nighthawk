@@ -18,8 +18,8 @@ using ::google::protobuf::TextFormat;
 using ::nighthawk::FakeUserDefinedOutputConfig;
 using ::testing::HasSubstr;
 
-std::pair<TypedExtensionConfig, UserDefinedOutputPluginFactory*>
-CreateFactoryConfigPair(const std::string& plugin_name, const std::string& config_textproto) {
+UserDefinedOutputConfigFactoryPair CreateFactoryConfigPair(const std::string& plugin_name,
+                                                           const std::string& config_textproto) {
   FakeUserDefinedOutputConfig config;
   TextFormat::ParseFromString(config_textproto, &config);
 
@@ -34,22 +34,21 @@ CreateFactoryConfigPair(const std::string& plugin_name, const std::string& confi
 }
 
 TEST(CreateUserDefinedOutputPlugins, ReturnsEmptyVectorWhenNoConfigs) {
-  std::vector<std::pair<TypedExtensionConfig, UserDefinedOutputPluginFactory*>>
-      config_factory_pairs{};
-  std::vector<UserDefinedOutputPluginPtr> plugins{};
+  std::vector<UserDefinedOutputConfigFactoryPair> config_factory_pairs{};
+  std::vector<UserDefinedOutputNamePluginPair> plugins{};
   EXPECT_EQ(createUserDefinedOutputPlugins(config_factory_pairs, 0), plugins);
 }
 
 TEST(CreateUserDefinedOutputPlugins, CreatesPluginsForEachConfig) {
-  std::vector<std::pair<TypedExtensionConfig, UserDefinedOutputPluginFactory*>>
-      config_factory_pairs{};
+  std::vector<UserDefinedOutputConfigFactoryPair> config_factory_pairs{};
   config_factory_pairs.push_back(CreateFactoryConfigPair("nighthawk.fake_user_defined_output",
                                                          "fail_per_worker_output: false"));
 
-  std::vector<UserDefinedOutputPluginPtr> plugins =
+  std::vector<UserDefinedOutputNamePluginPair> plugins =
       createUserDefinedOutputPlugins(config_factory_pairs, 0);
   EXPECT_EQ(plugins.size(), 1);
-  EXPECT_NE(dynamic_cast<FakeUserDefinedOutputPlugin*>(plugins[0].get()), nullptr);
+  EXPECT_EQ(plugins[0].first, "nighthawk.fake_user_defined_output");
+  EXPECT_NE(dynamic_cast<FakeUserDefinedOutputPlugin*>(plugins[0].second.get()), nullptr);
 
   // TODO(dubious90): Test multiple plugins when multiple plugin types exist.
 }

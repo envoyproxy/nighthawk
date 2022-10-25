@@ -18,7 +18,7 @@ public:
   MOCK_METHOD(Envoy::Stats::Scope&, scope, (), (const, override));
   MOCK_METHOD(bool, shouldMeasureLatencies, (), (const, override));
   MOCK_METHOD(const Envoy::Http::RequestHeaderMap&, requestHeaders, (), (const));
-  MOCK_METHOD(std::vector<Envoy::ProtobufWkt::Any>, getUserDefinedOutputResults, (),
+  MOCK_METHOD(std::vector<nighthawk::client::UserDefinedOutput>, getUserDefinedOutputResults, (),
               (const, override));
 };
 

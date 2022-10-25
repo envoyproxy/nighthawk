@@ -8,6 +8,7 @@
 
 #include "external/envoy/source/common/common/statusor.h"
 #include "external/envoy/source/common/http/header_map_impl.h"
+#include "external/envoy_api/envoy/config/core/v3/extension.pb.h"
 
 namespace Nighthawk {
 
@@ -138,4 +139,9 @@ public:
   virtual absl::StatusOr<Envoy::ProtobufWkt::Any>
   AggregateGlobalOutput(absl::Span<const Envoy::ProtobufWkt::Any> per_worker_outputs) PURE;
 };
+
+using UserDefinedOutputConfigFactoryPair =
+    std::pair<envoy::config::core::v3::TypedExtensionConfig, UserDefinedOutputPluginFactory*>;
+using UserDefinedOutputNamePluginPair = std::pair<std::string, UserDefinedOutputPluginPtr>;
+
 } // namespace Nighthawk
