@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package nighthawk;
+
+message HeaderNames {
+  repeated string header_names = 1;
+}
+
+// Configuration for LogResponseHeadersPlugin (plugin name: "nighthawk.log_response_headers")
+// that logs headers that match a given name.
+message LogResponseHeadersConfig {
+  enum LoggingMode {
+    LM_UNKNOWN = 0;
+    LM_LOG_ALL_RESPONSES = 1;
+    LM_ONLY_LOG_ERRORS = 2;
+  }
+
+  oneof header_scope_oneof {
+    bool log_all_headers = 1;
+    HeaderNames log_headers_with_names = 2;
+  }
+
+  LoggingMode logging_mode = 3;
+}
+
+// Output proto for the LogResponseHeadersPlugin. Returns no information.
+message LogResponseHeadersOutput {
+}
