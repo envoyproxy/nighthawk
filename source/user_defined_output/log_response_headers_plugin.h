@@ -1,5 +1,6 @@
 #pragma once
 
+#include "envoy/http/header_map.h"
 #include "envoy/registry/registry.h"
 
 #include "nighthawk/user_defined_output/user_defined_output_plugin.h"
@@ -10,12 +11,22 @@
 
 namespace Nighthawk {
 
+// An abstract class used by LogResponseHeadersPlugin for logging headers.
+class HeaderLogger {
+public:
+  virtual void LogHeader(Envoy::Http::HeaderEntry header_entry) PURE;
+};
+
+class EnvoyHeaderLogger : public HeaderLogger,
+                          public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
+  void LogHeader(Envoy::Http::HeaderEntry header_entry) override;
+};
+
 /**
  * UserDefinedOutputPlugin for logging response headers received. Stores no internal data. Can be
  * configured to log specific headers only, or only in specific situations.
  */
-class LogResponseHeadersPlugin : public UserDefinedOutputPlugin,
-                                 public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
+class LogResponseHeadersPlugin : public UserDefinedOutputPlugin {
 public:
   /**
    * Initializes the User Defined Output Plugin.
@@ -25,7 +36,7 @@ public:
    * @param worker_metadata Information from the calling worker.
    */
   LogResponseHeadersPlugin(nighthawk::LogResponseHeadersConfig config,
-                           WorkerMetadata worker_metadata);
+                           WorkerMetadata worker_metadata, HeaderLogger logger);
 
   /**
    * Logs headers according to the provided configuration.
@@ -44,6 +55,7 @@ public:
 
 private:
   nighthawk::LogResponseHeadersConfig config_;
+  std::unique_ptr<HeaderLogger> header_logger_;
 };
 
 /**
