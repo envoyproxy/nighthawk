@@ -20,7 +20,7 @@ using ::nighthawk::client::UserDefinedOutput;
 
 class OutputCollectorTest : public Test, public Envoy::Event::TestUsingSimulatedTime {
 public:
-  OutputCollectorTest() {}
+  OutputCollectorTest() = default;
 };
 
 TEST_F(OutputCollectorTest, AddResultCanAddUserDefinedOutputs) {
