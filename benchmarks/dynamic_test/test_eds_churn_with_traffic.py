@@ -16,6 +16,7 @@ from test.integration import utility
 
 _BENCHMARK_DURATION = int(os.environ.get("NIGHTHAWK_BENCHMARK_DURATION", 30))
 
+
 def _base_eds_config(
     temp_dir) -> endpoints_config_manager_pb2.DynamicEndpointsConfigManagerSettings:
   settings = endpoints_config_manager_pb2.DynamicEndpointsConfigManagerSettings()

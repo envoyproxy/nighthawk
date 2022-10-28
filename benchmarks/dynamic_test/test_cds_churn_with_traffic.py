@@ -16,6 +16,7 @@ from test.integration import utility
 
 _BENCHMARK_DURATION = int(os.environ.get("NIGHTHAWK_BENCHMARK_DURATION", 30))
 
+
 def _base_cds_config(
     temp_dir: str) -> cluster_config_manager_pb2.DynamicClusterConfigManagerSettings:
   settings = cluster_config_manager_pb2.DynamicClusterConfigManagerSettings()
