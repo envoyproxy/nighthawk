@@ -19,12 +19,13 @@ using ::google::protobuf::TextFormat;
 using ::nighthawk::client::UserDefinedOutput;
 
 class OutputCollectorTest : public Test, public Envoy::Event::TestUsingSimulatedTime {
-  public:
-    OutputCollectorTest() {}
+public:
+  OutputCollectorTest() {}
 };
 
 TEST_F(OutputCollectorTest, AddResultCanAddUserDefinedOutputs) {
-  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl("foo https://unresolved.host/");
+  std::unique_ptr<OptionsImpl> options =
+      TestUtility::createOptionsImpl("foo https://unresolved.host/");
   OutputCollectorImpl collector(simTime(), *options);
 
   std::map<std::string, uint64_t> empty_map{};
@@ -36,20 +37,21 @@ TEST_F(OutputCollectorTest, AddResultCanAddUserDefinedOutputs) {
     typed_config {
       [type.googleapis.com/nighthawk.FakeUserDefinedOutput] {worker_name: "test_worker"}
     }
-  )pb", &output1);
+  )pb",
+                              &output1);
   UserDefinedOutput output2;
   TextFormat::ParseFromString(R"pb(name: "nighthawk.fake_user_defined_output"
     typed_config {
       [type.googleapis.com/google.protobuf.StringValue] {value: "my_test_value"}
     }
-  )pb", &output2);
+  )pb",
+                              &output2);
   user_defined_outputs.push_back(output1);
   user_defined_outputs.push_back(output2);
 
   collector.addResult(/*name = */ "worker_1",
                       /*statistics=*/{},
-                      /*counters=*/empty_map,
-                      execution_duration,
+                      /*counters=*/empty_map, execution_duration,
                       /*first_acquisition_time=*/absl::nullopt, user_defined_outputs);
 
   nighthawk::client::Output full_output = collector.toProto();
@@ -60,7 +62,8 @@ TEST_F(OutputCollectorTest, AddResultCanAddUserDefinedOutputs) {
 }
 
 TEST_F(OutputCollectorTest, AddResultWorksWithNoUserDefinedOutputs) {
-  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl("foo https://unresolved.host/");
+  std::unique_ptr<OptionsImpl> options =
+      TestUtility::createOptionsImpl("foo https://unresolved.host/");
   OutputCollectorImpl collector(simTime(), *options);
 
   std::map<std::string, uint64_t> empty_map{};
@@ -69,8 +72,7 @@ TEST_F(OutputCollectorTest, AddResultWorksWithNoUserDefinedOutputs) {
 
   collector.addResult(/*name = */ "worker_1",
                       /*statistics=*/{},
-                      /*counters=*/empty_map,
-                      execution_duration,
+                      /*counters=*/empty_map, execution_duration,
                       /*first_acquisition_time=*/absl::nullopt, user_defined_outputs);
 
   nighthawk::client::Output full_output = collector.toProto();

@@ -800,7 +800,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
       collector.addResult(fmt::format("worker_{}", i),
                           vectorizeStatisticPtrMap(worker->statistics()),
                           worker->threadLocalCounterValues(), sequencer_execution_duration,
-                          worker_first_acquisition_time);
+                          worker_first_acquisition_time, /*user_defined_output_results*/ {});
     }
     total_execution_duration += sequencer_execution_duration;
     i++;
@@ -815,7 +815,8 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
       store_root_, [](absl::string_view, uint64_t value) { return value > 0; });
   StatisticFactoryImpl statistic_factory(options_);
   collector.addResult("global", mergeWorkerStatistics(workers_), counters,
-                      total_execution_duration / workers_.size(), first_acquisition_time);
+                      total_execution_duration / workers_.size(), first_acquisition_time,
+                      /*user_defined_output_results*/ {});
   if (counters.find("sequencer.failed_terminations") == counters.end()) {
     return true;
   } else {

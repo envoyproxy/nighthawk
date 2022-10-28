@@ -27,7 +27,8 @@ void OutputCollectorImpl::addResult(
     absl::string_view name, const std::vector<StatisticPtr>& statistics,
     const std::map<std::string, uint64_t>& counters,
     const std::chrono::nanoseconds execution_duration,
-    const absl::optional<Envoy::SystemTime>& first_acquisition_time) {
+    const absl::optional<Envoy::SystemTime>& first_acquisition_time,
+    const std::vector<nighthawk::client::UserDefinedOutput>& user_defined_output_results) {
   auto result = output_.add_results();
   result->set_name(name.data(), name.size());
   if (first_acquisition_time.has_value()) {
@@ -53,6 +54,11 @@ void OutputCollectorImpl::addResult(
   }
   *result->mutable_execution_duration() =
       Envoy::Protobuf::util::TimeUtil::NanosecondsToDuration(execution_duration.count());
+
+  for (const nighthawk::client::UserDefinedOutput& user_defined_result :
+       user_defined_output_results) {
+    *result->add_user_defined_outputs() = user_defined_result;
+  }
 }
 
 } // namespace Client
