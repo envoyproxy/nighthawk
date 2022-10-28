@@ -14,6 +14,7 @@ from rules_python.python.runfiles import runfiles
 from nighthawk.api.configuration import endpoints_config_manager_pb2
 from test.integration import utility
 
+_BENCHMARK_DURATION = int(os.environ.get("NIGHTHAWK_BENCHMARK_DURATION", 30))
 
 def _base_eds_config(
     temp_dir) -> endpoints_config_manager_pb2.DynamicEndpointsConfigManagerSettings:
@@ -25,7 +26,7 @@ def _base_eds_config(
 
 def _run_benchmark(fixture,
                    rps=1000,
-                   duration=30,
+                   duration=_BENCHMARK_DURATION,
                    max_connections=1,
                    max_active_requests=100,
                    request_body_size=0,

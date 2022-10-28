@@ -69,6 +69,7 @@ py_test(
     srcs = [
         "dynamic_benchmarks.py",
         "dynamic_test/test_cds_churn_with_traffic.py",
+        "dynamic_test/test_eds_churn_with_traffic.py",
     ],
     main = "dynamic_benchmarks.py",
     srcs_version = "PY2AND3",
