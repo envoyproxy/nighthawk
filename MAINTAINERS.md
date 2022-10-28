@@ -101,8 +101,8 @@ update these dependencies monthly. Here is an easy way to check for major depend
    virtualenv pip_update_env
    source pip_update_env/bin/activate
    ```
-   NOTE: if `pip_update_env/bin/activate` appears to not exist, try
-   `pip_update_env/local/bin/activate` instead.
+   NOTE: if `pip_update_env/bin/activate` appears to not exist, try setting
+   `export DEB_PYTHON_INSTALL_LAYOUT='deb'` and recreating the virtualenv.
 
 1. Install dependencies:
 
