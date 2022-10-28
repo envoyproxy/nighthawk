@@ -155,8 +155,6 @@ envoy_cc_test(
         "//test/test_common:environment_lib",
         "//test/test_common:proto_matchers",
         "//test/user_defined_output/fake_plugin:fake_user_defined_output",
-        # "@envoy//test/test_common:network_utility_lib",
-        # "@envoy//test/test_common:registry_lib",
         "@envoy//test/test_common:simulated_time_system_lib",
     ],
 )
