@@ -93,8 +93,8 @@ important maintenance task. When performing the update, follow this procedure:
 
 ## Finding python dependencies
 
-We should check our python dependencies periodically for major version updates. We attempt to
-update these dependencies monthly. Here is an easy way to check for major dependency updates:
+We should check our python dependencies periodically for all version updates. We attempt to
+update these dependencies monthly. Here is an easy way to check for dependency updates:
 
 1. Create and activate a virtual env:
    ```
@@ -119,8 +119,10 @@ update these dependencies monthly. Here is an easy way to check for major depend
    dependencies you may have in addition, such as to `pip` itself. Here, we are only interested in
    cross-referencing the ones that appear with the ones in requirements.txt.
 
-1. If you find any dependency updates, you can either try updating the dependency in requirements.txt yourself
-   or create an issue for the change and assign it to one of the nighthawk maintainers.
+1. If you find any dependency updates, you can either try updating the dependency in
+   requirements.txt yourself or create an issue for the change and assign it to one of the
+   nighthawk maintainers. If you do it yourself, note that all versions must be pinned to conform
+   with rules_python.
 
    If there are not any dependency updates, please update the timestamp at the top of the file.
 
