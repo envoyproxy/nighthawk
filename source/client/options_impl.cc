@@ -693,7 +693,7 @@ void OptionsImpl::parsePredicates(const TCLAP::MultiArg<std::string>& arg,
           fmt::format("Termination predicate '{}' is badly formatted.", predicate));
     }
 
-    uint32_t threshold = 0;
+    uint64_t threshold = 0;
     if (absl::SimpleAtoi(split_predicate[1], &threshold)) {
       predicates[split_predicate[0]] = threshold;
     } else {
