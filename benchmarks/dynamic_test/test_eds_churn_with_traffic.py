@@ -42,7 +42,11 @@ def _run_benchmark(fixture,
       str(max_active_requests), "--concurrency",
       str(concurrency), "--request-header",
       "x-nighthawk-test-server-config:{response_body_size:%s}" % response_size,
-      "--experimental-h1-connection-reuse-strategy", "lru", "--prefetch-connections"
+      "--experimental-h1-connection-reuse-strategy", "lru", "--prefetch-connections",
+      "--failure-predicate benchmark.http_3xx:4294967295",
+      "--failure-predicate benchmark.http_4xx:4294967295",
+      "--failure-predicate benchmark.http_5xx:4294967295",
+      "--failure-predicate benchmark.pool_connection_failure:4294967295"
   ]
 
   if request_body_size > 0:
