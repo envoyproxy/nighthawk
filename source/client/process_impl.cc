@@ -858,7 +858,10 @@ bool ProcessImpl::run(OutputCollector& collector) {
   try {
     return runInternal(collector, tracing_uri, dns_resolver, options_.scheduled_start());
   } catch (Envoy::EnvoyException& ex) {
-    ENVOY_LOG(error, "Fatal exception: {}", ex.what());
+    ENVOY_LOG(error, "Fatal EnvoyException exception: {}", ex.what());
+    throw;
+  } catch (NighthawkException& ex) {
+    ENVOY_LOG(error, "Fatal NighthawkException exception: {}", ex.what());
     throw;
   }
 }
