@@ -17,3 +17,6 @@ DISABLED_BY_DEFAULT_EXTENSIONS = {
 EXTENSION_CONFIG_VISIBILITY = ["//visibility:public"]
 EXTENSION_PACKAGE_VISIBILITY = ["//visibility:public"]
 CONTRIB_EXTENSION_PACKAGE_VISIBILITY = ["//:contrib_library"]
+
+# Set this variable to true to disable alwayslink for envoy_cc_library.
+LEGACY_ALWAYSLINK = 1
