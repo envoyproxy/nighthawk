@@ -298,7 +298,7 @@ experimental and may be removed or changed in the future!
 --failure-predicate <string, uint64_t>  (accepted multiple times)
 Failure predicate. Allows specifying a counter name plus threshold
 value for failing execution. Defaults to not tolerating error status
-codes and connection errors.
+codes and connection errors. Example: benchmark.http_5xx:4294967295.
 
 --termination-predicate <string, uint64_t>  (accepted multiple times)
 Termination predicate. Allows specifying a counter name plus threshold

@@ -14,6 +14,8 @@ from rules_python.python.runfiles import runfiles
 from nighthawk.api.configuration import cluster_config_manager_pb2
 from test.integration import utility
 
+_BENCHMARK_DURATION = int(os.environ.get("NIGHTHAWK_BENCHMARK_DURATION", 30))
+
 
 def _base_cds_config(
     temp_dir: str) -> cluster_config_manager_pb2.DynamicClusterConfigManagerSettings:
@@ -41,7 +43,7 @@ def _assignEndpointsToClusters(
 
 def _run_benchmark(fixture,
                    rps=1000,
-                   duration=30,
+                   duration=_BENCHMARK_DURATION,
                    max_connections=1,
                    max_active_requests=100,
                    request_body_size=0,
@@ -56,7 +58,11 @@ def _run_benchmark(fixture,
       str(max_active_requests), "--concurrency",
       str(concurrency), "--request-header",
       "x-nighthawk-test-server-config:{response_body_size:%s}" % response_size,
-      "--experimental-h1-connection-reuse-strategy", "lru", "--prefetch-connections"
+      "--experimental-h1-connection-reuse-strategy", "lru", "--prefetch-connections",
+      "--failure-predicate benchmark.http_3xx:4294967295",
+      "--failure-predicate benchmark.http_4xx:4294967295",
+      "--failure-predicate benchmark.http_5xx:4294967295",
+      "--failure-predicate benchmark.pool_connection_failure:4294967295"
   ]
 
   if request_body_size > 0:
@@ -67,7 +73,7 @@ def _run_benchmark(fixture,
     args.append("--request-source-plugin-config")
     args.append(_readRunfile(request_source_config))
 
-  parsed_json, _ = fixture.runNighthawkClient(args, expect_failure=True)
+  parsed_json, _ = fixture.runNighthawkClient(args, check_return_code=False)
 
   # output test results
   benchmarks_utilities.output_benchmark_results(parsed_json, fixture)

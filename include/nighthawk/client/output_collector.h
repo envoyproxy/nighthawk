@@ -27,11 +27,15 @@ public:
    * @param counters Reference to a map of counter values, keyed by name, to add to the output.
    * @param execution_duration Execution duration associated to the to-be-added result.
    * @param first_acquisition_time Timing of the first rate limiter acquisition.
+   * @param user_defined_output_results A set of the user defined output data to attach to the
+   * Result.
    */
-  virtual void addResult(absl::string_view name, const std::vector<StatisticPtr>& statistics,
-                         const std::map<std::string, uint64_t>& counters,
-                         const std::chrono::nanoseconds execution_duration,
-                         const absl::optional<Envoy::SystemTime>& first_acquisition_time) PURE;
+  virtual void addResult(
+      absl::string_view name, const std::vector<StatisticPtr>& statistics,
+      const std::map<std::string, uint64_t>& counters,
+      const std::chrono::nanoseconds execution_duration,
+      const absl::optional<Envoy::SystemTime>& first_acquisition_time,
+      const std::vector<nighthawk::client::UserDefinedOutput>& user_defined_output_results) PURE;
   /**
    * Directly sets the output value.
    *
