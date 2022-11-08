@@ -9,13 +9,9 @@
 
 namespace Nighthawk {
 
-namespace {
-
 using ::Envoy::Http::HeaderEntry;
 using ::Envoy::Http::HeaderMap;
 using ::nighthawk::LogResponseHeadersConfig;
-
-} // namespace
 
 void EnvoyHeaderLogger::LogHeader(const Envoy::Http::HeaderEntry& header_entry) {
   ENVOY_LOG(info, "Received Header with name {} and value {}", header_entry.key().getStringView(),
@@ -48,8 +44,8 @@ absl::Status LogResponseHeadersPlugin::handleResponseHeaders(
   } else {
     // Iterate through the named headers and log them.
     for (const std::string& header_name : config_.log_headers_with_name()) {
-      Envoy::Http::LowerCaseString lowercase_header_name(header_name);
-      HeaderMap::GetResult get_result = response_headers.get(lowercase_header_name);
+      const Envoy::Http::LowerCaseString lowercase_header_name(header_name);
+      const HeaderMap::GetResult get_result = response_headers.get(lowercase_header_name);
       for (uint i = 0; i < get_result.size(); i++) {
         const HeaderEntry* header_entry = get_result[i];
         header_logger_->LogHeader(*header_entry);
@@ -77,6 +73,7 @@ absl::StatusOr<Envoy::ProtobufWkt::Any> LogResponseHeadersPlugin::getPerWorkerOu
 std::string LogResponseHeadersPluginFactory::name() const {
   return "nighthawk.log_response_headers_plugin";
 }
+
 Envoy::ProtobufTypes::MessagePtr LogResponseHeadersPluginFactory::createEmptyConfigProto() {
   return std::make_unique<LogResponseHeadersConfig>();
 }

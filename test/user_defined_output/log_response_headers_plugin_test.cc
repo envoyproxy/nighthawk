@@ -25,7 +25,6 @@ using ::Envoy::Http::TestResponseHeaderMapImpl;
 using ::google::protobuf::TextFormat;
 using ::nighthawk::LogResponseHeadersConfig;
 using ::nighthawk::LogResponseHeadersOutput;
-using ::testing::HasSubstr;
 
 // Fake Header Logger to enable testing of LogResponseHeadersPlugin. Keeps track of logged headers.
 class FakeHeaderLogger : public HeaderLogger {
@@ -41,9 +40,9 @@ private:
 };
 
 /**
- * @brief Create a Plugin object
+ * Creates a LogResponseHeadersPlugin.
  *
- * @param config_textproto the textproto of the LogResponseHeadersConfig
+ * @param config_textproto the textproto of the LogResponseHeadersConfig.
  * @param fake_logger if not nullptr, injects this header logger to use in the created
  * LogResponseHeadersPlugin.
  * @return UserDefinedOutputPluginPtr
@@ -70,6 +69,9 @@ UserDefinedOutputPluginPtr CreatePlugin(const std::string& config_textproto,
   return plugin;
 }
 
+/**
+ * Creates an empty LogResponseHeadersOutput.
+ */
 Envoy::ProtobufWkt::Any CreateOutput() {
   LogResponseHeadersOutput output;
 

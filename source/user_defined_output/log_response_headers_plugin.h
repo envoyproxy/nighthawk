@@ -14,9 +14,7 @@ namespace Nighthawk {
 // An abstract class used by LogResponseHeadersPlugin for logging headers.
 class HeaderLogger {
 public:
-  /**
-   * Logs the provided header entry.
-   */
+  // Logs the provided header entry.
   virtual void LogHeader(const Envoy::Http::HeaderEntry& header_entry) PURE;
   virtual ~HeaderLogger() = default;
 };
@@ -28,16 +26,16 @@ public:
 };
 
 /**
- * UserDefinedOutputPlugin for logging response headers received. Stores no internal data. Can be
- * configured to log only headers with specific names, or based on the status codes.
+ * UserDefinedOutputPlugin for logging response headers received. Can be configured to log only
+ * headers with specific names, or based on response status codes.
  */
 class LogResponseHeadersPlugin : public UserDefinedOutputPlugin {
 public:
   /**
    * Initializes the User Defined Output Plugin.
    *
-   * @param config LogResponseHeadersConfig proto for setting when this plugin will log which
-   * headers
+   * @param config LogResponseHeadersConfig configuration determining when this plugin will log
+   * which headers
    * @param worker_metadata Information from the calling worker.
    */
   LogResponseHeadersPlugin(nighthawk::LogResponseHeadersConfig config,

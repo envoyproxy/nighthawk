@@ -25,14 +25,10 @@ envoy_cc_test(
     srcs = ["log_response_headers_plugin_test.cc"],
     repository = "@envoy",
     deps = [
-        "//include/nighthawk/user_defined_output:user_defined_output_plugin",
         "//api/user_defined_output:log_response_headers_proto_cc_proto",
+        "//include/nighthawk/user_defined_output:user_defined_output_plugin",
         "//source/user_defined_output:log_response_headers_plugin",
-        "@envoy//test/mocks/buffer:buffer_mocks",
-
-        # "//test/client:utility_lib",
         "//test/test_common:proto_matchers",
-        # "@envoy//source/common/protobuf:utility_lib_with_external_headers",
-        # "@envoy//test/test_common:utility_lib",
+        "@envoy//test/mocks/buffer:buffer_mocks",
     ],
 )
