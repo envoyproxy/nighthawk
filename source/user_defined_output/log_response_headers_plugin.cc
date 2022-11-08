@@ -27,9 +27,9 @@ LogResponseHeadersPlugin::LogResponseHeadersPlugin(LogResponseHeadersConfig conf
 
 absl::Status LogResponseHeadersPlugin::handleResponseHeaders(
     const Envoy::Http::ResponseHeaderMap& response_headers) {
-  if (config_.logging_mode() == LogResponseHeadersConfig::LM_ONLY_LOG_ERRORS) {
+  if (config_.logging_mode() == LogResponseHeadersConfig::LM_SKIP_200_LEVEL_RESPONSES) {
     const uint64_t response_code = Envoy::Http::Utility::getResponseStatus(response_headers);
-    if (response_code < 300) {
+    if (response_code >= 200 && response_code < 300) {
       return absl::OkStatus();
     }
   } else if (config_.logging_mode() == LogResponseHeadersConfig::LM_LOG_ALL_RESPONSES) {
@@ -38,18 +38,16 @@ absl::Status LogResponseHeadersPlugin::handleResponseHeaders(
         "Invalid configuration for LogResponseHeadersPlugin. Must provide a valid LoggingMode");
   }
 
-  switch (config_.header_scope_oneof_case()) {
-  case LogResponseHeadersConfig::kLogAllHeaders:
-    if (config_.log_all_headers()) {
-      HeaderMap::ConstIterateCb log_header_callback = [this](const HeaderEntry& header_entry) {
-        header_logger_->LogHeader(header_entry);
-        return HeaderMap::Iterate::Continue;
-      };
-      response_headers.iterate(log_header_callback);
-    }
-    break;
-  case LogResponseHeadersConfig::kLogHeadersWithNames:
-    for (std::string header_name : config_.log_headers_with_names().header_names()) {
+  // If there are no named headers to log, log every header.
+  if (config_.log_headers_with_name_size() == 0) {
+    HeaderMap::ConstIterateCb log_header_callback = [this](const HeaderEntry& header_entry) {
+      header_logger_->LogHeader(header_entry);
+      return HeaderMap::Iterate::Continue;
+    };
+    response_headers.iterate(log_header_callback);
+  } else {
+    // Iterate through the named headers and log them.
+    for (const std::string& header_name : config_.log_headers_with_name()) {
       Envoy::Http::LowerCaseString lowercase_header_name(header_name);
       HeaderMap::GetResult get_result = response_headers.get(lowercase_header_name);
       for (uint i = 0; i < get_result.size(); i++) {
@@ -57,11 +55,7 @@ absl::Status LogResponseHeadersPlugin::handleResponseHeaders(
         header_logger_->LogHeader(*header_entry);
       }
     }
-    break;
-  default:
-    return absl::InvalidArgumentError("Invalid configuration for LogResponseHeadersPlugin. Must "
-                                      "provide either log_all_headers or log_headers_with_names");
-  };
+  }
   return absl::OkStatus();
 }
 

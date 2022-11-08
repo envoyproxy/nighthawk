@@ -119,7 +119,7 @@ TEST(HandleResponseHeaders, LogsAllHeadersIfConfigured) {
   std::unique_ptr<FakeHeaderLogger> logger = std::make_unique<FakeHeaderLogger>();
   FakeHeaderLogger* logger_ptr = logger.get();
   UserDefinedOutputPluginPtr plugin =
-      CreatePlugin("log_all_headers:true logging_mode:LM_LOG_ALL_RESPONSES", std::move(logger));
+      CreatePlugin("logging_mode:LM_LOG_ALL_RESPONSES", std::move(logger));
   TestResponseHeaderMapImpl headers{
       {":status", "200"}, {"mytestheader1", "myvalue1"}, {"mytestheader2", "myvalue2"}};
   EXPECT_TRUE(plugin->handleResponseHeaders(headers).ok());
@@ -137,10 +137,9 @@ TEST(HandleResponseHeaders, LogsSpecifiedHeaders) {
   std::unique_ptr<FakeHeaderLogger> logger = std::make_unique<FakeHeaderLogger>();
   FakeHeaderLogger* logger_ptr = logger.get();
   UserDefinedOutputPluginPtr plugin = CreatePlugin(R"(logging_mode:LM_LOG_ALL_RESPONSES
-      log_headers_with_names {
-        header_names: "mytestheader1"
-        header_names: "mytestheader2"
-      })",
+      log_headers_with_name: "mytestheader1"
+      log_headers_with_name: "mytestheader2"
+  )",
                                                    std::move(logger));
   TestResponseHeaderMapImpl headers{
       {":status", "200"}, {"mytestheader1", "myvalue1"}, {"mytestheader2", "myvalue2"}};
@@ -157,29 +156,32 @@ TEST(HandleResponseHeaders, OnlyLogsOnErrorsIfConfigured) {
   std::unique_ptr<FakeHeaderLogger> logger = std::make_unique<FakeHeaderLogger>();
   FakeHeaderLogger* logger_ptr = logger.get();
   UserDefinedOutputPluginPtr plugin =
-      CreatePlugin("log_all_headers:true logging_mode:LM_ONLY_LOG_ERRORS", std::move(logger));
-  TestResponseHeaderMapImpl headers_200{{":status", "200"}, {"mytestheader1", "myvalue1"}};
-  TestResponseHeaderMapImpl headers_400{{":status", "400"}, {"mytestheader1", "myvalue1"}};
-  TestResponseHeaderMapImpl headers_500{{":status", "500"}, {"mytestheader1", "myvalue1"}};
+      CreatePlugin("logging_mode:LM_SKIP_200_LEVEL_RESPONSES", std::move(logger));
+  TestResponseHeaderMapImpl headers_200{{":status", "200"}};
+  TestResponseHeaderMapImpl headers_400{{":status", "400"}};
+  TestResponseHeaderMapImpl headers_500{{":status", "500"}};
+  TestResponseHeaderMapImpl headers_100{{":status", "100"}};
   EXPECT_TRUE(plugin->handleResponseHeaders(headers_200).ok());
   std::vector<const HeaderEntry*> logged_headers = logger_ptr->getHeaderEntries();
   EXPECT_TRUE(logged_headers.empty());
 
   EXPECT_TRUE(plugin->handleResponseHeaders(headers_400).ok());
   logged_headers = logger_ptr->getHeaderEntries();
-  EXPECT_EQ(logged_headers.size(), 2);
+  EXPECT_EQ(logged_headers.size(), 1);
   EXPECT_EQ(logged_headers[0]->key().getStringView(), ":status");
   EXPECT_EQ(logged_headers[0]->value().getStringView(), "400");
-  EXPECT_EQ(logged_headers[1]->key().getStringView(), "mytestheader1");
-  EXPECT_EQ(logged_headers[1]->value().getStringView(), "myvalue1");
 
   EXPECT_TRUE(plugin->handleResponseHeaders(headers_500).ok());
   logged_headers = logger_ptr->getHeaderEntries();
-  EXPECT_EQ(logged_headers.size(), 4);
+  EXPECT_EQ(logged_headers.size(), 2);
+  EXPECT_EQ(logged_headers[1]->key().getStringView(), ":status");
+  EXPECT_EQ(logged_headers[1]->value().getStringView(), "500");
+
+  EXPECT_TRUE(plugin->handleResponseHeaders(headers_100).ok());
+  logged_headers = logger_ptr->getHeaderEntries();
+  EXPECT_EQ(logged_headers.size(), 3);
   EXPECT_EQ(logged_headers[2]->key().getStringView(), ":status");
-  EXPECT_EQ(logged_headers[2]->value().getStringView(), "500");
-  EXPECT_EQ(logged_headers[3]->key().getStringView(), "mytestheader1");
-  EXPECT_EQ(logged_headers[3]->value().getStringView(), "myvalue1");
+  EXPECT_EQ(logged_headers[2]->value().getStringView(), "100");
 }
 
 TEST(HandleResponseHeaders, FailsWithInvalidLoggingMode) {
