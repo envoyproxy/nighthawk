@@ -61,8 +61,7 @@ UserDefinedOutputPluginPtr CreatePlugin(const std::string& config_textproto,
 
   UserDefinedOutputPluginPtr plugin = factory.createUserDefinedOutputPlugin(config_any, metadata);
   if (header_logger != nullptr) {
-    LogResponseHeadersPlugin* logging_plugin =
-        dynamic_cast<LogResponseHeadersPlugin*>(plugin.get());
+    auto logging_plugin = dynamic_cast<LogResponseHeadersPlugin*>(plugin.get());
     logging_plugin->injectHeaderLogger(std::move(header_logger));
   }
 
