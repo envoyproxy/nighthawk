@@ -17,14 +17,13 @@ using ::nighthawk::LogResponseHeadersConfig;
 
 } // namespace
 
-void EnvoyHeaderLogger::LogHeader(Envoy::Http::HeaderEntry header_entry) {
+void EnvoyHeaderLogger::LogHeader(const Envoy::Http::HeaderEntry& header_entry) {
   ENVOY_LOG(info, "Received Header with name {} and value {}", header_entry.key().getStringView(),
             header_entry.value().getStringView());
 }
 
-LogResponseHeadersPlugin::LogResponseHeadersPlugin(LogResponseHeadersConfig config, WorkerMetadata,
-                                                   HeaderLogger header_logger)
-    : config_(std::move(config)), header_logger_(std::move(header_logger)) {}
+LogResponseHeadersPlugin::LogResponseHeadersPlugin(LogResponseHeadersConfig config, WorkerMetadata)
+    : config_(std::move(config)), header_logger_(std::make_unique<EnvoyHeaderLogger>()) {}
 
 absl::Status LogResponseHeadersPlugin::handleResponseHeaders(
     const Envoy::Http::ResponseHeaderMap& response_headers) {
@@ -42,8 +41,8 @@ absl::Status LogResponseHeadersPlugin::handleResponseHeaders(
   switch (config_.header_scope_oneof_case()) {
   case LogResponseHeadersConfig::kLogAllHeaders:
     if (config_.log_all_headers()) {
-      HeaderMap::ConstIterateCb log_header_callback = [](const HeaderEntry& header_entry) {
-        header_logger_.LogHeader(header_entry);
+      HeaderMap::ConstIterateCb log_header_callback = [this](const HeaderEntry& header_entry) {
+        header_logger_->LogHeader(header_entry);
         return HeaderMap::Iterate::Continue;
       };
       response_headers.iterate(log_header_callback);
@@ -55,7 +54,7 @@ absl::Status LogResponseHeadersPlugin::handleResponseHeaders(
       HeaderMap::GetResult get_result = response_headers.get(lowercase_header_name);
       for (uint i = 0; i < get_result.size(); i++) {
         const HeaderEntry* header_entry = get_result[i];
-        header_logger_.LogHeader(*header_entry);
+        header_logger_->LogHeader(*header_entry);
       }
     }
     break;
@@ -64,6 +63,10 @@ absl::Status LogResponseHeadersPlugin::handleResponseHeaders(
                                       "provide either log_all_headers or log_headers_with_names");
   };
   return absl::OkStatus();
+}
+
+void LogResponseHeadersPlugin::injectHeaderLogger(std::unique_ptr<HeaderLogger> logger) {
+  header_logger_ = std::move(logger);
 }
 
 absl::Status LogResponseHeadersPlugin::handleResponseData(const Envoy::Buffer::Instance&) {
@@ -90,10 +93,7 @@ UserDefinedOutputPluginPtr LogResponseHeadersPluginFactory::createUserDefinedOut
   LogResponseHeadersConfig config;
   Envoy::MessageUtil::unpackTo(any, config);
 
-  EnvoyHeaderLogger envoy_logger;
-
-  return std::make_unique<LogResponseHeadersPlugin>(config, worker_metadata,
-                                                    std::move(envoy_logger));
+  return std::make_unique<LogResponseHeadersPlugin>(config, worker_metadata);
 }
 
 absl::StatusOr<Envoy::ProtobufWkt::Any>

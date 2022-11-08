@@ -14,17 +14,22 @@ namespace Nighthawk {
 // An abstract class used by LogResponseHeadersPlugin for logging headers.
 class HeaderLogger {
 public:
-  virtual void LogHeader(Envoy::Http::HeaderEntry header_entry) PURE;
+  /**
+   * Logs the provided header entry.
+   */
+  virtual void LogHeader(const Envoy::Http::HeaderEntry& header_entry) PURE;
+  virtual ~HeaderLogger() = default;
 };
 
 class EnvoyHeaderLogger : public HeaderLogger,
                           public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
-  void LogHeader(Envoy::Http::HeaderEntry header_entry) override;
+public:
+  void LogHeader(const Envoy::Http::HeaderEntry& header_entry) override;
 };
 
 /**
  * UserDefinedOutputPlugin for logging response headers received. Stores no internal data. Can be
- * configured to log specific headers only, or only in specific situations.
+ * configured to log only headers with specific names, or based on the status codes.
  */
 class LogResponseHeadersPlugin : public UserDefinedOutputPlugin {
 public:
@@ -36,7 +41,7 @@ public:
    * @param worker_metadata Information from the calling worker.
    */
   LogResponseHeadersPlugin(nighthawk::LogResponseHeadersConfig config,
-                           WorkerMetadata worker_metadata, HeaderLogger logger);
+                           WorkerMetadata worker_metadata);
 
   /**
    * Logs headers according to the provided configuration.
@@ -52,6 +57,11 @@ public:
    * Returns empty LogHeadersOutput.
    */
   absl::StatusOr<Envoy::ProtobufWkt::Any> getPerWorkerOutput() const override;
+
+  /**
+   * Use a specific header logger implementation, rather than the default EnvoyHeaderLogger.
+   */
+  void injectHeaderLogger(std::unique_ptr<HeaderLogger> logger);
 
 private:
   nighthawk::LogResponseHeadersConfig config_;
