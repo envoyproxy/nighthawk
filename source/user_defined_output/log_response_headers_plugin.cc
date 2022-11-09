@@ -23,13 +23,17 @@ LogResponseHeadersPlugin::LogResponseHeadersPlugin(LogResponseHeadersConfig conf
 
 absl::Status LogResponseHeadersPlugin::handleResponseHeaders(
     const Envoy::Http::ResponseHeaderMap& response_headers) {
-  if (config_.logging_mode() == LogResponseHeadersConfig::LM_SKIP_200_LEVEL_RESPONSES) {
+  switch (config_.logging_mode()) {
+  case LogResponseHeadersConfig::LM_SKIP_200_LEVEL_RESPONSES: {
     const uint64_t response_code = Envoy::Http::Utility::getResponseStatus(response_headers);
     if (response_code >= 200 && response_code < 300) {
       return absl::OkStatus();
     }
-  } else if (config_.logging_mode() == LogResponseHeadersConfig::LM_LOG_ALL_RESPONSES) {
-  } else {
+    break;
+  }
+  case LogResponseHeadersConfig::LM_LOG_ALL_RESPONSES:
+    break;
+  default:
     return absl::InvalidArgumentError(
         "Invalid configuration for LogResponseHeadersPlugin. Must provide a valid LoggingMode");
   }

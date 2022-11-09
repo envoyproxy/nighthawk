@@ -137,10 +137,9 @@ TEST(HandleResponseHeaders, LogsAllHeadersIfConfigured) {
 TEST(HandleResponseHeaders, LogsSpecifiedHeaders) {
   std::unique_ptr<FakeHeaderLogger> logger = std::make_unique<FakeHeaderLogger>();
   FakeHeaderLogger* logger_ptr = logger.get();
-  UserDefinedOutputPluginPtr plugin = CreatePlugin(R"(logging_mode:LM_LOG_ALL_RESPONSES
-      log_headers_with_name: "mytestheader1"
-      log_headers_with_name: "mytestheader2"
-  )",
+  UserDefinedOutputPluginPtr plugin = CreatePlugin(R"(logging_mode: LM_LOG_ALL_RESPONSES
+                                                      log_headers_with_name: "mytestheader1"
+                                                      log_headers_with_name: "mytestheader2")",
                                                    std::move(logger));
   TestResponseHeaderMapImpl headers{
       {":status", "200"}, {"mytestheader1", "myvalue1"}, {"mytestheader2", "myvalue2"}};
