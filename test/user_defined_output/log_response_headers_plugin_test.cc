@@ -48,8 +48,8 @@ private:
  * LogResponseHeadersPlugin.
  * @return UserDefinedOutputPluginPtr
  */
-UserDefinedOutputPluginPtr CreatePlugin(const std::string& config_textproto,
-                                        std::unique_ptr<HeaderLogger> header_logger) {
+absl::StatusOr<UserDefinedOutputPluginPtr>
+CreatePlugin(const std::string& config_textproto, std::unique_ptr<HeaderLogger> header_logger) {
   LogResponseHeadersConfig config;
   TextFormat::ParseFromString(config_textproto, &config);
 
@@ -60,9 +60,12 @@ UserDefinedOutputPluginPtr CreatePlugin(const std::string& config_textproto,
   WorkerMetadata metadata;
   metadata.worker_number = 1;
 
-  UserDefinedOutputPluginPtr plugin = factory.createUserDefinedOutputPlugin(config_any, metadata);
-  auto logging_plugin = dynamic_cast<LogResponseHeadersPlugin*>(plugin.get());
-  logging_plugin->injectHeaderLogger(std::move(header_logger));
+  absl::StatusOr<UserDefinedOutputPluginPtr> plugin =
+      factory.createUserDefinedOutputPlugin(config_any, metadata);
+  if (plugin.ok()) {
+    auto logging_plugin = dynamic_cast<LogResponseHeadersPlugin*>((*plugin).get());
+    logging_plugin->injectHeaderLogger(std::move(header_logger));
+  }
 
   return plugin;
 }
@@ -97,20 +100,20 @@ TEST(LogResponseHeadersPluginFactory, FactoryRegistersUnderCorrectName) {
 }
 
 TEST(LogResponseHeadersPluginFactory, CreateUserDefinedOutputPluginCreatesCorrectPluginType) {
-  LogResponseHeadersConfig config;
-  Envoy::ProtobufWkt::Any config_any;
-  config_any.PackFrom(config);
-  auto& factory = Envoy::Config::Utility::getAndCheckFactoryByName<UserDefinedOutputPluginFactory>(
-      "nighthawk.log_response_headers_plugin");
-  UserDefinedOutputPluginPtr plugin = factory.createUserDefinedOutputPlugin(config_any, {});
-  EXPECT_NE(dynamic_cast<LogResponseHeadersPlugin*>(plugin.get()), nullptr);
+  std::unique_ptr<FakeHeaderLogger> logger = std::make_unique<FakeHeaderLogger>();
+  absl::StatusOr<UserDefinedOutputPluginPtr> plugin =
+      CreatePlugin("logging_mode: LM_LOG_ALL_RESPONSES", std::move(logger));
+  EXPECT_TRUE(plugin.ok());
+
+  EXPECT_NE(dynamic_cast<LogResponseHeadersPlugin*>(plugin->get()), nullptr);
 }
 
 TEST(GetPerWorkerOutput, ReturnsProtoOfCorrectType) {
   std::unique_ptr<FakeHeaderLogger> logger = std::make_unique<FakeHeaderLogger>();
-  UserDefinedOutputPluginPtr plugin = CreatePlugin("", std::move(logger));
-
-  absl::StatusOr<Envoy::ProtobufWkt::Any> any_or = plugin->getPerWorkerOutput();
+  absl::StatusOr<UserDefinedOutputPluginPtr> plugin =
+      CreatePlugin("logging_mode: LM_LOG_ALL_RESPONSES", std::move(logger));
+  EXPECT_TRUE(plugin.ok());
+  absl::StatusOr<Envoy::ProtobufWkt::Any> any_or = (*plugin)->getPerWorkerOutput();
   EXPECT_TRUE(any_or.status().ok());
   EXPECT_TRUE(any_or->Is<LogResponseHeadersOutput>());
 }
@@ -118,11 +121,12 @@ TEST(GetPerWorkerOutput, ReturnsProtoOfCorrectType) {
 TEST(HandleResponseHeaders, LogsAllHeadersIfConfigured) {
   std::unique_ptr<FakeHeaderLogger> logger = std::make_unique<FakeHeaderLogger>();
   FakeHeaderLogger* logger_ptr = logger.get();
-  UserDefinedOutputPluginPtr plugin =
+  absl::StatusOr<UserDefinedOutputPluginPtr> plugin =
       CreatePlugin("logging_mode:LM_LOG_ALL_RESPONSES", std::move(logger));
+  EXPECT_TRUE(plugin.ok());
   TestResponseHeaderMapImpl headers{
       {":status", "200"}, {"mytestheader1", "myvalue1"}, {"mytestheader2", "myvalue2"}};
-  EXPECT_TRUE(plugin->handleResponseHeaders(headers).ok());
+  EXPECT_TRUE((*plugin)->handleResponseHeaders(headers).ok());
   std::vector<const HeaderEntry*> logged_headers = logger_ptr->getHeaderEntries();
   EXPECT_EQ(logged_headers.size(), 3);
   EXPECT_EQ(logged_headers[0]->key().getStringView(), ":status");
@@ -136,13 +140,14 @@ TEST(HandleResponseHeaders, LogsAllHeadersIfConfigured) {
 TEST(HandleResponseHeaders, LogsSpecifiedHeaders) {
   std::unique_ptr<FakeHeaderLogger> logger = std::make_unique<FakeHeaderLogger>();
   FakeHeaderLogger* logger_ptr = logger.get();
-  UserDefinedOutputPluginPtr plugin = CreatePlugin(R"(logging_mode: LM_LOG_ALL_RESPONSES
-                                                      log_headers_with_name: "mytestheader1"
-                                                      log_headers_with_name: "mytestheader2")",
-                                                   std::move(logger));
+  absl::StatusOr<UserDefinedOutputPluginPtr> plugin =
+      CreatePlugin(R"(logging_mode: LM_LOG_ALL_RESPONSES
+                      log_headers_with_name: "mytestheader1"
+                      log_headers_with_name: "mytestheader2")",
+                   std::move(logger));
   TestResponseHeaderMapImpl headers{
       {":status", "200"}, {"mytestheader1", "myvalue1"}, {"mytestheader2", "myvalue2"}};
-  EXPECT_TRUE(plugin->handleResponseHeaders(headers).ok());
+  EXPECT_TRUE((*plugin)->handleResponseHeaders(headers).ok());
   std::vector<const HeaderEntry*> logged_headers = logger_ptr->getHeaderEntries();
   EXPECT_EQ(logged_headers.size(), 2);
   EXPECT_EQ(logged_headers[0]->key().getStringView(), "mytestheader1");
@@ -154,74 +159,73 @@ TEST(HandleResponseHeaders, LogsSpecifiedHeaders) {
 TEST(HandleResponseHeaders, OnlyLogsOnErrorsIfConfigured) {
   std::unique_ptr<FakeHeaderLogger> logger = std::make_unique<FakeHeaderLogger>();
   FakeHeaderLogger* logger_ptr = logger.get();
-  UserDefinedOutputPluginPtr plugin =
+  absl::StatusOr<UserDefinedOutputPluginPtr> plugin =
       CreatePlugin("logging_mode:LM_SKIP_200_LEVEL_RESPONSES", std::move(logger));
+  EXPECT_TRUE(plugin.ok());
   TestResponseHeaderMapImpl headers_200{{":status", "200"}};
   TestResponseHeaderMapImpl headers_400{{":status", "400"}};
   TestResponseHeaderMapImpl headers_500{{":status", "500"}};
   TestResponseHeaderMapImpl headers_100{{":status", "100"}};
-  EXPECT_TRUE(plugin->handleResponseHeaders(headers_200).ok());
+  EXPECT_TRUE((*plugin)->handleResponseHeaders(headers_200).ok());
   std::vector<const HeaderEntry*> logged_headers = logger_ptr->getHeaderEntries();
   EXPECT_TRUE(logged_headers.empty());
 
-  EXPECT_TRUE(plugin->handleResponseHeaders(headers_400).ok());
+  EXPECT_TRUE((*plugin)->handleResponseHeaders(headers_400).ok());
   logged_headers = logger_ptr->getHeaderEntries();
   EXPECT_EQ(logged_headers.size(), 1);
   EXPECT_EQ(logged_headers[0]->key().getStringView(), ":status");
   EXPECT_EQ(logged_headers[0]->value().getStringView(), "400");
 
-  EXPECT_TRUE(plugin->handleResponseHeaders(headers_500).ok());
+  EXPECT_TRUE((*plugin)->handleResponseHeaders(headers_500).ok());
   logged_headers = logger_ptr->getHeaderEntries();
   EXPECT_EQ(logged_headers.size(), 2);
   EXPECT_EQ(logged_headers[1]->key().getStringView(), ":status");
   EXPECT_EQ(logged_headers[1]->value().getStringView(), "500");
 
-  EXPECT_TRUE(plugin->handleResponseHeaders(headers_100).ok());
+  EXPECT_TRUE((*plugin)->handleResponseHeaders(headers_100).ok());
   logged_headers = logger_ptr->getHeaderEntries();
   EXPECT_EQ(logged_headers.size(), 3);
   EXPECT_EQ(logged_headers[2]->key().getStringView(), ":status");
   EXPECT_EQ(logged_headers[2]->value().getStringView(), "100");
 }
 
-// TODO(dubious90): These tests will move to plugin creation tests when possible.
-TEST(HandleResponseHeaders, FailsWithInvalidLoggingMode) {
+TEST(CreateUserDefinedOutputPlugin, FailsWithInvalidLoggingMode) {
   std::unique_ptr<FakeHeaderLogger> logger = std::make_unique<FakeHeaderLogger>();
-  UserDefinedOutputPluginPtr plugin = CreatePlugin("", std::move(logger));
-  TestResponseHeaderMapImpl headers{};
-  absl::Status status = plugin->handleResponseHeaders(headers);
-  EXPECT_EQ(status.code(), absl::StatusCode::kInvalidArgument);
-  EXPECT_THAT(status.message(), HasSubstr("LoggingMode"));
+  absl::StatusOr<UserDefinedOutputPluginPtr> plugin = CreatePlugin("", std::move(logger));
+
+  EXPECT_EQ(plugin.status().code(), absl::StatusCode::kInvalidArgument);
+  EXPECT_THAT(plugin.status().message(), HasSubstr("LoggingMode"));
 }
 
-TEST(HandleResponseHeaders, FailsOnEmptyHeaderNames) {
+TEST(CreateUserDefinedOutputPlugin, FailsOnEmptyHeaderNames) {
   std::unique_ptr<FakeHeaderLogger> logger = std::make_unique<FakeHeaderLogger>();
-  UserDefinedOutputPluginPtr plugin = CreatePlugin(R"(logging_mode:LM_LOG_ALL_RESPONSES
-                                                      log_headers_with_name:"")",
-                                                   std::move(logger));
-  TestResponseHeaderMapImpl headers{};
-  absl::Status status = plugin->handleResponseHeaders(headers);
-  EXPECT_EQ(status.code(), absl::StatusCode::kInvalidArgument);
-  EXPECT_THAT(status.message(), HasSubstr("Received empty header"));
+  absl::StatusOr<UserDefinedOutputPluginPtr> plugin =
+      CreatePlugin(R"(logging_mode:LM_LOG_ALL_RESPONSES
+                      log_headers_with_name:"")",
+                   std::move(logger));
+  EXPECT_EQ(plugin.status().code(), absl::StatusCode::kInvalidArgument);
+  EXPECT_THAT(plugin.status().message(), HasSubstr("Received empty header"));
 }
 
-TEST(HandleResponseHeaders, FailsOnDuplicateHeaderNames) {
+TEST(CreateUserDefinedOutputPlugin, FailsOnDuplicateHeaderNames) {
   std::unique_ptr<FakeHeaderLogger> logger = std::make_unique<FakeHeaderLogger>();
-  UserDefinedOutputPluginPtr plugin = CreatePlugin(R"(logging_mode: LM_LOG_ALL_RESPONSES
-                                                      log_headers_with_name:"header"
-                                                      log_headers_with_name:"header")",
-                                                   std::move(logger));
-  TestResponseHeaderMapImpl headers{};
-  absl::Status status = plugin->handleResponseHeaders(headers);
-  EXPECT_EQ(status.code(), absl::StatusCode::kInvalidArgument);
-  EXPECT_THAT(status.message(), HasSubstr("Duplicate header"));
+  absl::StatusOr<UserDefinedOutputPluginPtr> plugin =
+      CreatePlugin(R"(logging_mode: LM_LOG_ALL_RESPONSES
+                      log_headers_with_name:"header"
+                      log_headers_with_name:"header")",
+                   std::move(logger));
+  EXPECT_EQ(plugin.status().code(), absl::StatusCode::kInvalidArgument);
+  EXPECT_THAT(plugin.status().message(), HasSubstr("Duplicate header"));
 }
 
 TEST(HandleResponseData, ReturnsOk) {
   std::unique_ptr<FakeHeaderLogger> logger = std::make_unique<FakeHeaderLogger>();
-  UserDefinedOutputPluginPtr plugin = CreatePlugin("", std::move(logger));
+  absl::StatusOr<UserDefinedOutputPluginPtr> plugin =
+      CreatePlugin("logging_mode: LM_LOG_ALL_RESPONSES", std::move(logger));
+  EXPECT_TRUE(plugin.ok());
   Envoy::MockBuffer buffer;
-  EXPECT_TRUE(plugin->handleResponseData(buffer).ok());
-  EXPECT_TRUE(plugin->handleResponseData(buffer).ok());
+  EXPECT_TRUE((*plugin)->handleResponseData(buffer).ok());
+  EXPECT_TRUE((*plugin)->handleResponseData(buffer).ok());
 }
 
 TEST(AggregateGlobalOutput, ReturnsEmptyProto) {

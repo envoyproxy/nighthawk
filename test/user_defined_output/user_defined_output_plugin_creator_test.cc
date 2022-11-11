@@ -36,7 +36,10 @@ UserDefinedOutputConfigFactoryPair CreateFactoryConfigPair(const std::string& pl
 TEST(CreateUserDefinedOutputPlugins, ReturnsEmptyVectorWhenNoConfigs) {
   std::vector<UserDefinedOutputConfigFactoryPair> config_factory_pairs{};
   std::vector<UserDefinedOutputNamePluginPair> plugins{};
-  EXPECT_EQ(createUserDefinedOutputPlugins(config_factory_pairs, 0), plugins);
+  absl::StatusOr<std::vector<UserDefinedOutputNamePluginPair>> user_defined_output_plugin_pairs =
+      createUserDefinedOutputPlugins(config_factory_pairs, 0);
+  EXPECT_TRUE(user_defined_output_plugin_pairs.ok());
+  EXPECT_EQ(*user_defined_output_plugin_pairs, plugins);
 }
 
 TEST(CreateUserDefinedOutputPlugins, CreatesPluginsForEachConfig) {
@@ -44,11 +47,12 @@ TEST(CreateUserDefinedOutputPlugins, CreatesPluginsForEachConfig) {
   config_factory_pairs.push_back(CreateFactoryConfigPair("nighthawk.fake_user_defined_output",
                                                          "fail_per_worker_output: false"));
 
-  std::vector<UserDefinedOutputNamePluginPair> plugins =
+  absl::StatusOr<std::vector<UserDefinedOutputNamePluginPair>> plugins =
       createUserDefinedOutputPlugins(config_factory_pairs, 0);
-  EXPECT_EQ(plugins.size(), 1);
-  EXPECT_EQ(plugins[0].first, "nighthawk.fake_user_defined_output");
-  EXPECT_NE(dynamic_cast<FakeUserDefinedOutputPlugin*>(plugins[0].second.get()), nullptr);
+  EXPECT_TRUE(plugins.ok());
+  EXPECT_EQ(plugins->size(), 1);
+  EXPECT_EQ((*plugins)[0].first, "nighthawk.fake_user_defined_output");
+  EXPECT_NE(dynamic_cast<FakeUserDefinedOutputPlugin*>((*plugins)[0].second.get()), nullptr);
 
   // TODO(dubious90): Test multiple plugins when multiple plugin types exist.
 }

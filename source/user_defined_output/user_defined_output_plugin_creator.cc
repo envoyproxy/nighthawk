@@ -9,7 +9,7 @@ namespace Nighthawk {
 
 using envoy::config::core::v3::TypedExtensionConfig;
 
-std::vector<UserDefinedOutputNamePluginPair> createUserDefinedOutputPlugins(
+absl::StatusOr<std::vector<UserDefinedOutputNamePluginPair>> createUserDefinedOutputPlugins(
     std::vector<UserDefinedOutputConfigFactoryPair>& factory_config_pairs, int worker_number) {
   std::vector<UserDefinedOutputNamePluginPair> plugins;
 
@@ -19,10 +19,16 @@ std::vector<UserDefinedOutputNamePluginPair> createUserDefinedOutputPlugins(
     TypedExtensionConfig config = pair.first;
     UserDefinedOutputPluginFactory* factory = pair.second;
 
+    absl::StatusOr<UserDefinedOutputPluginPtr> plugin =
+        factory->createUserDefinedOutputPlugin(config.typed_config(), metadata);
+    if (!plugin.ok()) {
+      return plugin.status();
+    }
+
     UserDefinedOutputNamePluginPair name_plugin_pair;
     name_plugin_pair.first = factory->name();
-    name_plugin_pair.second =
-        factory->createUserDefinedOutputPlugin(config.typed_config(), metadata);
+    name_plugin_pair.second = std::move(*plugin);
+    ;
     plugins.emplace_back(std::move(name_plugin_pair));
   }
 
