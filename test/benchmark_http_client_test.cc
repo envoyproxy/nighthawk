@@ -465,7 +465,7 @@ CreateTestUserDefinedOutputPlugin(const std::string& typed_config_textproto) {
       typed_config, false);
   WorkerMetadata metadata{};
   metadata.worker_number = 1;
-  return factory->createUserDefinedOutputPlugin(typed_config.typed_config(), metadata);
+  return *factory->createUserDefinedOutputPlugin(typed_config.typed_config(), metadata);
 }
 
 TEST_F(BenchmarkClientHttpTest, CallsUserDefinedPluginHandleHeaders) {
