@@ -25,3 +25,22 @@ envoy_cc_library(
         "@envoy//source/common/config:utility_lib_with_external_headers",
     ],
 )
+
+envoy_cc_library(
+    name = "log_response_headers_plugin",
+    srcs = [
+        "log_response_headers_plugin.cc",
+    ],
+    hdrs = [
+        "log_response_headers_plugin.h",
+    ],
+    repository = "@envoy",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//api/user_defined_output:log_response_headers_proto_cc_proto",
+        "//include/nighthawk/user_defined_output:user_defined_output_plugin",
+        "@envoy//envoy/config:typed_config_interface",
+        "@envoy//source/common/common:statusor_lib_with_external_headers",
+        "@envoy//source/common/config:utility_lib_with_external_headers",
+    ],
+)
