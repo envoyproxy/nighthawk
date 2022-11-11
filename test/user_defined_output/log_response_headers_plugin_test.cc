@@ -25,6 +25,7 @@ using ::Envoy::Http::TestResponseHeaderMapImpl;
 using ::google::protobuf::TextFormat;
 using ::nighthawk::LogResponseHeadersConfig;
 using ::nighthawk::LogResponseHeadersOutput;
+using ::testing::HasSubstr;
 
 // Fake Header Logger to enable testing of LogResponseHeadersPlugin. Keeps track of logged headers.
 class FakeHeaderLogger : public HeaderLogger {
@@ -60,10 +61,8 @@ UserDefinedOutputPluginPtr CreatePlugin(const std::string& config_textproto,
   metadata.worker_number = 1;
 
   UserDefinedOutputPluginPtr plugin = factory.createUserDefinedOutputPlugin(config_any, metadata);
-  if (header_logger != nullptr) {
-    auto logging_plugin = dynamic_cast<LogResponseHeadersPlugin*>(plugin.get());
-    logging_plugin->injectHeaderLogger(std::move(header_logger));
-  }
+  auto logging_plugin = dynamic_cast<LogResponseHeadersPlugin*>(plugin.get());
+  logging_plugin->injectHeaderLogger(std::move(header_logger));
 
   return plugin;
 }
@@ -108,7 +107,7 @@ TEST(LogResponseHeadersPluginFactory, CreateUserDefinedOutputPluginCreatesCorrec
 }
 
 TEST(GetPerWorkerOutput, ReturnsProtoOfCorrectType) {
-  std::unique_ptr<HeaderLogger> logger = nullptr;
+  std::unique_ptr<FakeHeaderLogger> logger = std::make_unique<FakeHeaderLogger>();
   UserDefinedOutputPluginPtr plugin = CreatePlugin("", std::move(logger));
 
   absl::StatusOr<Envoy::ProtobufWkt::Any> any_or = plugin->getPerWorkerOutput();
@@ -184,22 +183,41 @@ TEST(HandleResponseHeaders, OnlyLogsOnErrorsIfConfigured) {
   EXPECT_EQ(logged_headers[2]->value().getStringView(), "100");
 }
 
+// TODO(dubious90): These tests will move to plugin creation tests when possible.
 TEST(HandleResponseHeaders, FailsWithInvalidLoggingMode) {
-  std::unique_ptr<HeaderLogger> logger = nullptr;
+  std::unique_ptr<FakeHeaderLogger> logger = std::make_unique<FakeHeaderLogger>();
   UserDefinedOutputPluginPtr plugin = CreatePlugin("", std::move(logger));
   TestResponseHeaderMapImpl headers{};
-  EXPECT_EQ(plugin->handleResponseHeaders(headers).code(), absl::StatusCode::kInvalidArgument);
+  absl::Status status = plugin->handleResponseHeaders(headers);
+  EXPECT_EQ(status.code(), absl::StatusCode::kInvalidArgument);
+  EXPECT_THAT(status.message(), HasSubstr("LoggingMode"));
 }
 
-TEST(HandleResponseHeaders, FailsWithInvalidHeaderScope) {
-  std::unique_ptr<HeaderLogger> logger = nullptr;
-  UserDefinedOutputPluginPtr plugin = CreatePlugin("log_all_headers:true", std::move(logger));
+TEST(HandleResponseHeaders, FailsOnEmptyHeaderNames) {
+  std::unique_ptr<FakeHeaderLogger> logger = std::make_unique<FakeHeaderLogger>();
+  UserDefinedOutputPluginPtr plugin = CreatePlugin(R"(logging_mode:LM_LOG_ALL_RESPONSES
+                                                      log_headers_with_name:"")",
+                                                   std::move(logger));
   TestResponseHeaderMapImpl headers{};
-  EXPECT_EQ(plugin->handleResponseHeaders(headers).code(), absl::StatusCode::kInvalidArgument);
+  absl::Status status = plugin->handleResponseHeaders(headers);
+  EXPECT_EQ(status.code(), absl::StatusCode::kInvalidArgument);
+  EXPECT_THAT(status.message(), HasSubstr("Received empty header"));
+}
+
+TEST(HandleResponseHeaders, FailsOnDuplicateHeaderNames) {
+  std::unique_ptr<FakeHeaderLogger> logger = std::make_unique<FakeHeaderLogger>();
+  UserDefinedOutputPluginPtr plugin = CreatePlugin(R"(logging_mode: LM_LOG_ALL_RESPONSES
+                                                      log_headers_with_name:"header"
+                                                      log_headers_with_name:"header")",
+                                                   std::move(logger));
+  TestResponseHeaderMapImpl headers{};
+  absl::Status status = plugin->handleResponseHeaders(headers);
+  EXPECT_EQ(status.code(), absl::StatusCode::kInvalidArgument);
+  EXPECT_THAT(status.message(), HasSubstr("Duplicate header"));
 }
 
 TEST(HandleResponseData, ReturnsOk) {
-  std::unique_ptr<HeaderLogger> logger = nullptr;
+  std::unique_ptr<FakeHeaderLogger> logger = std::make_unique<FakeHeaderLogger>();
   UserDefinedOutputPluginPtr plugin = CreatePlugin("", std::move(logger));
   Envoy::MockBuffer buffer;
   EXPECT_TRUE(plugin->handleResponseData(buffer).ok());

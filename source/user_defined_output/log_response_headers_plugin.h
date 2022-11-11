@@ -19,6 +19,8 @@ public:
   virtual ~HeaderLogger() = default;
 };
 
+// Default logger for LogResponseHeadersPlugin that uses the ENVOY_LOG macro to log.
+// Thread safe.
 class EnvoyHeaderLogger : public HeaderLogger,
                           public Envoy::Logger::Loggable<Envoy::Logger::Id::main> {
 public:
@@ -28,6 +30,9 @@ public:
 /**
  * UserDefinedOutputPlugin for logging response headers received. Can be configured to log only
  * headers with specific names, or based on response status codes.
+ *
+ * This method is thread safe as long as InjectHeader is not used, which should only be used for
+ * testing.
  */
 class LogResponseHeadersPlugin : public UserDefinedOutputPlugin {
 public:
@@ -58,6 +63,8 @@ public:
 
   /**
    * Use a specific header logger implementation, rather than the default EnvoyHeaderLogger.
+   *
+   * This method should only be used for testing and is not thread safe.
    */
   void injectHeaderLogger(std::unique_ptr<HeaderLogger> logger);
 

@@ -7,14 +7,16 @@ package nighthawk;
 message LogResponseHeadersConfig {
   enum LoggingMode {
     LM_UNKNOWN = 0;
-    // Log every response that comes in. (May impact Nighthawk performance)
+    // Log every response that comes in. Note that logging every response will result in a more
+    // significant reduction of Nighthawk's performance.
     LM_LOG_ALL_RESPONSES = 1;
     // Only log headers for responses with status codes <200, >=300
     LM_SKIP_200_LEVEL_RESPONSES = 2;
   }
 
   // When logging a response's headers, log only headers with names provided here. If no names are
-  // provided, will instead log all headers.
+  // provided, will instead log all headers. Causes errors if any provided value is empty string
+  // or a duplicate of an existing value.
   repeated string log_headers_with_name = 1;
 
   // Specifies which responses have their headers logged.
