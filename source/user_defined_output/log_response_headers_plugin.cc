@@ -49,7 +49,7 @@ void logSpecifiedHeaders(HeaderLogger* header_logger,
   }
 }
 
-absl::Status validateConfig(LogResponseHeadersConfig config) {
+absl::Status validateConfig(const LogResponseHeadersConfig& config) {
   if (config.logging_mode() == LogResponseHeadersConfig::LM_UNKNOWN) {
     return absl::InvalidArgumentError(
         "Invalid configuration for LogResponseHeadersPlugin. Must provide a valid LoggingMode");
