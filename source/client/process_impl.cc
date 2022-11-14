@@ -732,7 +732,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
     server_factory_context_ = std::make_unique<NighthawkServerFactoryContext>(*server_);
     cluster_manager_factory_ = std::make_unique<ClusterManagerFactory>(
         *server_factory_context_, admin_, Envoy::Runtime::LoaderSingleton::get(), store_root_, tls_,
-        dns_resolver, *ssl_context_manager_, *dispatcher_, *local_info_, secret_manager_,
+        [dns_resolver]() -> Envoy::Network::DnsResolverSharedPtr { return dns_resolver; }, *ssl_context_manager_, *dispatcher_, *local_info_, secret_manager_,
         validation_context_, *api_, http_context_, grpc_context_, router_context_,
         access_log_manager_, *singleton_manager_, envoy_options_, quic_stat_names_, *server_);
     cluster_manager_factory_->setConnectionReuseStrategy(
