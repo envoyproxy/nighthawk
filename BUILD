@@ -34,6 +34,7 @@ envoy_cc_binary(
     repository = "@envoy",
     deps = [
         "//source/exe:nighthawk_client_entry_lib",
+        "@envoy//source/extensions/network/dns_resolver/cares:config",
     ],
 )
 
