@@ -114,7 +114,7 @@ TEST(GetPerWorkerOutput, ReturnsProtoOfCorrectType) {
       CreatePlugin("logging_mode: LM_LOG_ALL_RESPONSES", std::move(logger));
   ASSERT_TRUE(plugin.ok());
   absl::StatusOr<Envoy::ProtobufWkt::Any> any_or = (*plugin)->getPerWorkerOutput();
-  EXPECT_TRUE(any_or.status().ok());
+  ASSERT_TRUE(any_or.status().ok());
   EXPECT_TRUE(any_or->Is<LogResponseHeadersOutput>());
 }
 
@@ -241,7 +241,7 @@ TEST(AggregateGlobalOutput, ReturnsEmptyProto) {
   absl::StatusOr<Envoy::ProtobufWkt::Any> any_or =
       factory.AggregateGlobalOutput(per_worker_outputs);
 
-  EXPECT_TRUE(any_or.status().ok());
+  ASSERT_TRUE(any_or.status().ok());
   EXPECT_THAT(*any_or, EqualsProto(expected_aggregate));
 }
 
