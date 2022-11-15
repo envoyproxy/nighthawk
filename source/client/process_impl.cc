@@ -337,6 +337,74 @@ getUserDefinedFactoryConfigPairs(const Options& options) {
   return factory_config_pairs;
 }
 
+/**
+ * Takes in a single worker's user defined outputs and collects them into the
+ * user_defined_results_by_plugin map.
+ *
+ * @param user_defined_results_by_plugin A map of plugin name to the set of collected results for
+ * that plugin.
+ * @param worker_user_defined_results The per worker results to collect and organize.
+ */
+void collectUserDefinedResults(
+    absl::flat_hash_map<std::string, std::vector<Envoy::ProtobufWkt::Any>>*
+        user_defined_results_by_plugin,
+    const std::vector<nighthawk::client::UserDefinedOutput>& worker_user_defined_results) {
+  for (const nighthawk::client::UserDefinedOutput& user_defined_result :
+       worker_user_defined_results) {
+    std::vector<Envoy::ProtobufWkt::Any> cross_worker_results_for_plugin{};
+    if (user_defined_results_by_plugin.contains(user_defined_result.plugin_name())) {
+      cross_worker_results_for_plugin =
+          user_defined_results_by_plugin.find(user_defined_result.plugin_name())->second;
+    }
+    cross_worker_results_for_plugin.emplace_back(user_defined_result.typed_output());
+    user_defined_results_by_plugin.try_emplace(user_defined_result.plugin_name(),
+                                               cross_worker_results_for_plugin);
+  }
+}
+
+/**
+ * For each provided user defined output plugin factory, aggregates all of its corresponding results
+ * into a global user defined output.
+ *
+ * @param user_defined_results_by_plugin A map of plugin name to the set of collected results for
+ * that plugin.
+ * @param user_defined_output_factories A vector of the plugin factories used in this execution
+ * process.
+ * @return std::vector<nighthawk::client::UserDefinedOutput> The aggregated global results for each
+ * plugin.
+ */
+std::vector<nighthawk::client::UserDefinedOutput> compileGlobalUserDefinedPluginResults(
+    const absl::flat_hash_map<std::string, std::vector<Envoy::ProtobufWkt::Any>>&
+        user_defined_results_by_plugin,
+    const std::vector<UserDefinedOutputConfigFactoryPair>& user_defined_output_factories) {
+  std::vector<nighthawk::client::UserDefinedOutput> global_outputs;
+  for (const UserDefinedOutputConfigFactoryPair& config_factory_pair :
+       user_defined_output_factories) {
+    UserDefinedOutputPluginFactory* factory = config_factory_pair.second;
+    auto it = user_defined_results_by_plugin.find(factory->name());
+    if (it != user_defined_results_by_plugin.end()) {
+      absl::StatusOr<Envoy::ProtobufWkt::Any> global_output_any =
+          factory->AggregateGlobalOutput(it->second);
+      if (global_output_any.ok()) {
+        nighthawk::client::UserDefinedOutput global_output;
+        *global_output.mutable_typed_output() = *global_output_any;
+        global_output.set_plugin_name(factory->name());
+        global_outputs.emplace_back(global_output);
+      } else {
+        // ENVOY_LOG(error, global_output_any.status().message());
+        // TODO(nbperry): increment a counter?
+      }
+    } else {
+      // ENVOY_LOG(
+      //     warn,
+      //     "No per worker outputs found for User Defined Output Plugin with name {} and config:
+      //     {}", factory->name(), config_factory_pair.first.ShortDebugString());
+      // TODO(nbperry): increment a counter?
+    }
+  }
+  return global_outputs;
+}
+
 // Disables the hot restart Envoy functionality.
 std::string HotRestartDisabled(bool) { return "hot restart is disabled"; }
 
@@ -782,7 +850,10 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
   int i = 0;
   std::chrono::nanoseconds total_execution_duration = 0ns;
   absl::optional<Envoy::SystemTime> first_acquisition_time = absl::nullopt;
-
+  // Maps registered user defined output plugin name to the output results for every worker's plugin
+  // of that name.
+  absl::flat_hash_map<std::string, std::vector<Envoy::ProtobufWkt::Any>>
+      user_defined_results_by_plugin{};
   for (auto& worker : workers_) {
     auto sequencer_execution_duration = worker->phase().sequencer().executionDuration();
     absl::optional<Envoy::SystemTime> worker_first_acquisition_time =
@@ -793,6 +864,8 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
               ? std::min(first_acquisition_time.value(), worker_first_acquisition_time.value())
               : worker_first_acquisition_time.value();
     }
+    collectUserDefinedResults(user_defined_results_by_plugin,
+                              worker->getUserDefinedOutputResults());
     // We don't write per-worker results if we only have a single worker, because the global
     // results will be precisely the same.
     if (workers_.size() > 1) {
@@ -800,7 +873,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
       collector.addResult(fmt::format("worker_{}", i),
                           vectorizeStatisticPtrMap(worker->statistics()),
                           worker->threadLocalCounterValues(), sequencer_execution_duration,
-                          worker_first_acquisition_time, /*user_defined_output_results*/ {});
+                          worker_first_acquisition_time, worker_user_defined_results);
     }
     total_execution_duration += sequencer_execution_duration;
     i++;
@@ -814,9 +887,12 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
   const auto& counters = Utility().mapCountersFromStore(
       store_root_, [](absl::string_view, uint64_t value) { return value > 0; });
   StatisticFactoryImpl statistic_factory(options_);
+  std::vector<nighthawk::client::UserDefinedOutput> global_user_defined_results =
+      compileGlobalUserDefinedPluginResults(user_defined_output_factories_,
+                                            user_defined_results_by_plugin);
   collector.addResult("global", mergeWorkerStatistics(workers_), counters,
                       total_execution_duration / workers_.size(), first_acquisition_time,
-                      /*user_defined_output_results*/ {});
+                      global_user_defined_results);
   if (counters.find("sequencer.failed_terminations") == counters.end()) {
     return true;
   } else {
