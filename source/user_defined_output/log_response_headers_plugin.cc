@@ -126,11 +126,14 @@ absl::StatusOr<UserDefinedOutputPluginPtr>
 LogResponseHeadersPluginFactory::createUserDefinedOutputPlugin(
     const Envoy::ProtobufWkt::Any& message, const WorkerMetadata& worker_metadata) {
   LogResponseHeadersConfig config;
-  Envoy::MessageUtil::unpackTo(message, config);
+  absl::Status unpack_status = Envoy::MessageUtil::unpackToNoThrow(message, config);
+  if (!unpack_status.ok()) {
+    return unpack_status;
+  }
 
-  absl::Status status = validateConfig(config);
-  if (!status.ok()) {
-    return status;
+  absl::Status validate_status = validateConfig(config);
+  if (!validate_status.ok()) {
+    return validate_status;
   }
   return std::make_unique<LogResponseHeadersPlugin>(config, worker_metadata);
 }

@@ -103,7 +103,7 @@ TEST(LogResponseHeadersPluginFactory, CreateUserDefinedOutputPluginCreatesCorrec
   std::unique_ptr<FakeHeaderLogger> logger = std::make_unique<FakeHeaderLogger>();
   absl::StatusOr<UserDefinedOutputPluginPtr> plugin =
       CreatePlugin("logging_mode: LM_LOG_ALL_RESPONSES", std::move(logger));
-  EXPECT_TRUE(plugin.ok());
+  ASSERT_TRUE(plugin.ok());
 
   EXPECT_NE(dynamic_cast<LogResponseHeadersPlugin*>(plugin->get()), nullptr);
 }
@@ -112,7 +112,7 @@ TEST(GetPerWorkerOutput, ReturnsProtoOfCorrectType) {
   std::unique_ptr<FakeHeaderLogger> logger = std::make_unique<FakeHeaderLogger>();
   absl::StatusOr<UserDefinedOutputPluginPtr> plugin =
       CreatePlugin("logging_mode: LM_LOG_ALL_RESPONSES", std::move(logger));
-  EXPECT_TRUE(plugin.ok());
+  ASSERT_TRUE(plugin.ok());
   absl::StatusOr<Envoy::ProtobufWkt::Any> any_or = (*plugin)->getPerWorkerOutput();
   EXPECT_TRUE(any_or.status().ok());
   EXPECT_TRUE(any_or->Is<LogResponseHeadersOutput>());
@@ -123,7 +123,7 @@ TEST(HandleResponseHeaders, LogsAllHeadersIfConfigured) {
   FakeHeaderLogger* logger_ptr = logger.get();
   absl::StatusOr<UserDefinedOutputPluginPtr> plugin =
       CreatePlugin("logging_mode:LM_LOG_ALL_RESPONSES", std::move(logger));
-  EXPECT_TRUE(plugin.ok());
+  ASSERT_TRUE(plugin.ok());
   TestResponseHeaderMapImpl headers{
       {":status", "200"}, {"mytestheader1", "myvalue1"}, {"mytestheader2", "myvalue2"}};
   EXPECT_TRUE((*plugin)->handleResponseHeaders(headers).ok());
@@ -161,7 +161,7 @@ TEST(HandleResponseHeaders, OnlyLogsOnErrorsIfConfigured) {
   FakeHeaderLogger* logger_ptr = logger.get();
   absl::StatusOr<UserDefinedOutputPluginPtr> plugin =
       CreatePlugin("logging_mode:LM_SKIP_200_LEVEL_RESPONSES", std::move(logger));
-  EXPECT_TRUE(plugin.ok());
+  ASSERT_TRUE(plugin.ok());
   TestResponseHeaderMapImpl headers_200{{":status", "200"}};
   TestResponseHeaderMapImpl headers_400{{":status", "400"}};
   TestResponseHeaderMapImpl headers_500{{":status", "500"}};
@@ -222,7 +222,7 @@ TEST(HandleResponseData, ReturnsOk) {
   std::unique_ptr<FakeHeaderLogger> logger = std::make_unique<FakeHeaderLogger>();
   absl::StatusOr<UserDefinedOutputPluginPtr> plugin =
       CreatePlugin("logging_mode: LM_LOG_ALL_RESPONSES", std::move(logger));
-  EXPECT_TRUE(plugin.ok());
+  ASSERT_TRUE(plugin.ok());
   Envoy::MockBuffer buffer;
   EXPECT_TRUE((*plugin)->handleResponseData(buffer).ok());
   EXPECT_TRUE((*plugin)->handleResponseData(buffer).ok());

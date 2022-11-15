@@ -72,13 +72,13 @@ TEST(FakeUserDefinedOutputPluginFactory, CreateUserDefinedOutputPluginCreatesCor
       "nighthawk.fake_user_defined_output");
   absl::StatusOr<UserDefinedOutputPluginPtr> plugin =
       factory.createUserDefinedOutputPlugin(config_any, {});
-  EXPECT_TRUE(plugin.ok());
+  ASSERT_TRUE(plugin.ok());
   EXPECT_NE(dynamic_cast<FakeUserDefinedOutputPlugin*>(plugin->get()), nullptr);
 }
 
 TEST(GetPerWorkerOutput, ReturnsProtoOfCorrectType) {
   absl::StatusOr<UserDefinedOutputPluginPtr> plugin = CreatePlugin("", /*worker_number=*/0);
-  EXPECT_TRUE(plugin.ok());
+  ASSERT_TRUE(plugin.ok());
 
   absl::StatusOr<Envoy::ProtobufWkt::Any> any_or = (*plugin)->getPerWorkerOutput();
   EXPECT_TRUE(any_or.status().ok());
@@ -87,7 +87,7 @@ TEST(GetPerWorkerOutput, ReturnsProtoOfCorrectType) {
 
 TEST(GetPerWorkerOutput, ReturnsCorrectWorkerNumber) {
   absl::StatusOr<UserDefinedOutputPluginPtr> plugin = CreatePlugin("", /*worker_number=*/13);
-  EXPECT_TRUE(plugin.ok());
+  ASSERT_TRUE(plugin.ok());
 
   Envoy::ProtobufWkt::Any expected_output = CreateOutput(R"pb(
     worker_name: "worker_13"
@@ -100,7 +100,7 @@ TEST(GetPerWorkerOutput, ReturnsCorrectWorkerNumber) {
 TEST(GetPerWorkerOutput, FailsIfConfiguredToFail) {
   absl::StatusOr<UserDefinedOutputPluginPtr> plugin =
       CreatePlugin("fail_per_worker_output: true", /*worker_number=*/13);
-  EXPECT_TRUE(plugin.ok());
+  ASSERT_TRUE(plugin.ok());
 
   absl::StatusOr<Envoy::ProtobufWkt::Any> any_or = (*plugin)->getPerWorkerOutput();
   EXPECT_EQ(any_or.status().code(), absl::StatusCode::kInternal);
@@ -108,7 +108,7 @@ TEST(GetPerWorkerOutput, FailsIfConfiguredToFail) {
 
 TEST(HandleResponseHeaders, IncrementsHeadersCalledCount) {
   absl::StatusOr<UserDefinedOutputPluginPtr> plugin = CreatePlugin("", /*worker_number=*/0);
-  EXPECT_TRUE(plugin.ok());
+  ASSERT_TRUE(plugin.ok());
   TestResponseHeaderMapImpl headers{};
   EXPECT_TRUE((*plugin)->handleResponseHeaders(headers).ok());
   EXPECT_TRUE((*plugin)->handleResponseHeaders(headers).ok());
@@ -125,7 +125,7 @@ TEST(HandleResponseHeaders, IncrementsHeadersCalledCount) {
 TEST(HandleResponseHeaders, FailsAfterCorrectIterationsIfConfigured) {
   absl::StatusOr<UserDefinedOutputPluginPtr> plugin =
       CreatePlugin("fail_headers: true   header_failure_countdown: 2", /*worker_number=*/0);
-  EXPECT_TRUE(plugin.ok());
+  ASSERT_TRUE(plugin.ok());
   TestResponseHeaderMapImpl headers{};
   EXPECT_TRUE((*plugin)->handleResponseHeaders(headers).ok());
   EXPECT_TRUE((*plugin)->handleResponseHeaders(headers).ok());
@@ -134,7 +134,7 @@ TEST(HandleResponseHeaders, FailsAfterCorrectIterationsIfConfigured) {
 
 TEST(HandleResponseData, IncrementsDataCalledCount) {
   absl::StatusOr<UserDefinedOutputPluginPtr> plugin = CreatePlugin("", /*worker_number=*/0);
-  EXPECT_TRUE(plugin.ok());
+  ASSERT_TRUE(plugin.ok());
   Envoy::MockBuffer buffer;
   EXPECT_TRUE((*plugin)->handleResponseData(buffer).ok());
   EXPECT_TRUE((*plugin)->handleResponseData(buffer).ok());
@@ -151,7 +151,7 @@ TEST(HandleResponseData, IncrementsDataCalledCount) {
 TEST(HandleResponseData, FailsAfterCorrectIterationsIfConfigured) {
   absl::StatusOr<UserDefinedOutputPluginPtr> plugin =
       CreatePlugin("fail_data: true   data_failure_countdown: 2", /*worker_number=*/0);
-  EXPECT_TRUE(plugin.ok());
+  ASSERT_TRUE(plugin.ok());
   Envoy::MockBuffer buffer;
   EXPECT_TRUE((*plugin)->handleResponseData(buffer).ok());
   EXPECT_TRUE((*plugin)->handleResponseData(buffer).ok());
@@ -183,7 +183,7 @@ TEST(AggregateGlobalOutput, BuildsOutputsCorrectly) {
   absl::StatusOr<Envoy::ProtobufWkt::Any> any_or =
       factory.AggregateGlobalOutput(per_worker_outputs);
 
-  EXPECT_TRUE(any_or.status().ok());
+  ASSERT_TRUE(any_or.status().ok());
   EXPECT_THAT(*any_or, EqualsProto(expected_aggregate));
 }
 

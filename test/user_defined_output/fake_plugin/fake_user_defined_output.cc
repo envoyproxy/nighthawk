@@ -61,7 +61,10 @@ FakeUserDefinedOutputPluginFactory::createUserDefinedOutputPlugin(
     const Envoy::ProtobufWkt::Any& message, const WorkerMetadata& worker_metadata) {
   plugin_count_++;
   FakeUserDefinedOutputConfig config;
-  Envoy::MessageUtil::unpackTo(message, config);
+  absl::Status status = Envoy::MessageUtil::unpackToNoThrow(message, config);
+  if (!status.ok()) {
+    return status;
+  }
   return std::make_unique<FakeUserDefinedOutputPlugin>(config, worker_metadata);
 }
 

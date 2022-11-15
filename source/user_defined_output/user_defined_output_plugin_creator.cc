@@ -28,7 +28,6 @@ absl::StatusOr<std::vector<UserDefinedOutputNamePluginPair>> createUserDefinedOu
     UserDefinedOutputNamePluginPair name_plugin_pair;
     name_plugin_pair.first = factory->name();
     name_plugin_pair.second = std::move(*plugin);
-    ;
     plugins.emplace_back(std::move(name_plugin_pair));
   }
 

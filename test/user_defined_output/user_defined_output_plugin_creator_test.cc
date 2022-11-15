@@ -38,7 +38,7 @@ TEST(CreateUserDefinedOutputPlugins, ReturnsEmptyVectorWhenNoConfigs) {
   std::vector<UserDefinedOutputNamePluginPair> plugins{};
   absl::StatusOr<std::vector<UserDefinedOutputNamePluginPair>> user_defined_output_plugin_pairs =
       createUserDefinedOutputPlugins(config_factory_pairs, 0);
-  EXPECT_TRUE(user_defined_output_plugin_pairs.ok());
+  ASSERT_TRUE(user_defined_output_plugin_pairs.ok());
   EXPECT_EQ(*user_defined_output_plugin_pairs, plugins);
 }
 
@@ -49,7 +49,7 @@ TEST(CreateUserDefinedOutputPlugins, CreatesPluginsForEachConfig) {
 
   absl::StatusOr<std::vector<UserDefinedOutputNamePluginPair>> plugins =
       createUserDefinedOutputPlugins(config_factory_pairs, 0);
-  EXPECT_TRUE(plugins.ok());
+  ASSERT_TRUE(plugins.ok());
   EXPECT_EQ(plugins->size(), 1);
   EXPECT_EQ((*plugins)[0].first, "nighthawk.fake_user_defined_output");
   EXPECT_NE(dynamic_cast<FakeUserDefinedOutputPlugin*>((*plugins)[0].second.get()), nullptr);
