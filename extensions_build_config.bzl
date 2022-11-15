@@ -7,6 +7,7 @@ EXTENSIONS = {
     "envoy.tracers.zipkin": "//source/extensions/tracers/zipkin:config",
     "envoy.transport_sockets.raw_buffer": "//source/extensions/transport_sockets/raw_buffer:config",
     "envoy.access_loggers.file": "//source/extensions/access_loggers/file:config",
+    "envoy.network.dns_resolver.cares": "//source/extensions/network/dns_resolver/cares:config",
 }
 
 DISABLED_BY_DEFAULT_EXTENSIONS = {
