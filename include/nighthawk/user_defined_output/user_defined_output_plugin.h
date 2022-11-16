@@ -109,8 +109,8 @@ public:
    * @throw Envoy::EnvoyException If the Any proto cannot be unpacked as the type expected by the
    * plugin.
    */
-  virtual UserDefinedOutputPluginPtr
-  createUserDefinedOutputPlugin(const Envoy::Protobuf::Message& typed_config,
+  virtual absl::StatusOr<UserDefinedOutputPluginPtr>
+  createUserDefinedOutputPlugin(const Envoy::ProtobufWkt::Any& typed_config,
                                 const WorkerMetadata& worker_metadata) PURE;
 
   /**

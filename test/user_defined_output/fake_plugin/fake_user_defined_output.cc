@@ -56,12 +56,15 @@ Envoy::ProtobufTypes::MessagePtr FakeUserDefinedOutputPluginFactory::createEmpty
   return std::make_unique<FakeUserDefinedOutputConfig>();
 }
 
-UserDefinedOutputPluginPtr FakeUserDefinedOutputPluginFactory::createUserDefinedOutputPlugin(
-    const Envoy::Protobuf::Message& message, const WorkerMetadata& worker_metadata) {
+absl::StatusOr<UserDefinedOutputPluginPtr>
+FakeUserDefinedOutputPluginFactory::createUserDefinedOutputPlugin(
+    const Envoy::ProtobufWkt::Any& message, const WorkerMetadata& worker_metadata) {
   plugin_count_++;
-  const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
   FakeUserDefinedOutputConfig config;
-  Envoy::MessageUtil::unpackTo(any, config);
+  absl::Status status = Envoy::MessageUtil::unpackToNoThrow(message, config);
+  if (!status.ok()) {
+    return status;
+  }
   return std::make_unique<FakeUserDefinedOutputPlugin>(config, worker_metadata);
 }
 

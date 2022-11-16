@@ -92,12 +92,6 @@ LogResponseHeadersPlugin::LogResponseHeadersPlugin(LogResponseHeadersConfig conf
 
 absl::Status LogResponseHeadersPlugin::handleResponseHeaders(
     const Envoy::Http::ResponseHeaderMap& response_headers) {
-  // TODO(dubious90): validate config on plugin creation when possible.
-  absl::Status status = validateConfig(config_);
-  if (!status.ok()) {
-    return status;
-  }
-
   if (shouldLogResponse(config_, response_headers)) {
     if (config_.log_headers_with_name_size() == 0) {
       logAllHeaders(header_logger_.get(), response_headers);
@@ -128,13 +122,19 @@ Envoy::ProtobufTypes::MessagePtr LogResponseHeadersPluginFactory::createEmptyCon
   return std::make_unique<LogResponseHeadersConfig>();
 }
 
-UserDefinedOutputPluginPtr LogResponseHeadersPluginFactory::createUserDefinedOutputPlugin(
-    const Envoy::Protobuf::Message& message, const WorkerMetadata& worker_metadata) {
-  const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
+absl::StatusOr<UserDefinedOutputPluginPtr>
+LogResponseHeadersPluginFactory::createUserDefinedOutputPlugin(
+    const Envoy::ProtobufWkt::Any& message, const WorkerMetadata& worker_metadata) {
   LogResponseHeadersConfig config;
+  absl::Status unpack_status = Envoy::MessageUtil::unpackToNoThrow(message, config);
+  if (!unpack_status.ok()) {
+    return unpack_status;
+  }
 
-  Envoy::MessageUtil::unpackTo(any, config);
-
+  absl::Status validate_status = validateConfig(config);
+  if (!validate_status.ok()) {
+    return validate_status;
+  }
   return std::make_unique<LogResponseHeadersPlugin>(config, worker_metadata);
 }
 

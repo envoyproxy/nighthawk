@@ -543,9 +543,12 @@ absl::Status ProcessImpl::createWorkers(const uint32_t concurrency,
       computeInterWorkerDelay(concurrency, options_.requestsPerSecond());
   int worker_number = 0;
   while (workers_.size() < concurrency) {
-    std::vector<UserDefinedOutputNamePluginPair> plugins =
+    absl::StatusOr<std::vector<UserDefinedOutputNamePluginPair>> plugins =
         createUserDefinedOutputPlugins(user_defined_output_factories_, worker_number);
-    if (!plugins.empty()) {
+    if (!plugins.ok()) {
+      return plugins.status();
+    }
+    if (!plugins->empty()) {
       return absl::UnimplementedError(
           "User Defined Output Plugin feature is still being implemented.");
     }
@@ -555,7 +558,7 @@ absl::Status ProcessImpl::createWorkers(const uint32_t concurrency,
         first_worker_start + (inter_worker_delay * worker_number), http_tracer_,
         options_.simpleWarmup() ? ClientWorkerImpl::HardCodedWarmupStyle::ON
                                 : ClientWorkerImpl::HardCodedWarmupStyle::OFF,
-        std::move(plugins)));
+        std::move(*plugins)));
     worker_number++;
   }
   return absl::OkStatus();

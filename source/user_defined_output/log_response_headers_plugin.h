@@ -81,8 +81,8 @@ class LogResponseHeadersPluginFactory : public UserDefinedOutputPluginFactory {
 public:
   std::string name() const override;
   Envoy::ProtobufTypes::MessagePtr createEmptyConfigProto() override;
-  UserDefinedOutputPluginPtr
-  createUserDefinedOutputPlugin(const Envoy::Protobuf::Message& config_any,
+  absl::StatusOr<UserDefinedOutputPluginPtr>
+  createUserDefinedOutputPlugin(const Envoy::ProtobufWkt::Any& config_any,
                                 const WorkerMetadata& worker_metadata) override;
 
   absl::StatusOr<Envoy::ProtobufWkt::Any>
