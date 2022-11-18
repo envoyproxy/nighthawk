@@ -117,10 +117,12 @@ stages:
       parameters:
         ciTarget: $(CI_TARGET)
     - task: CmdLine@2
+      condition: always()
       displayName: "Tree of Build.StagingDirectory."
       inputs:
         script: 'tree $(Build.StagingDirectory)'
     - task: PublishPipelineArtifact@1
+      condition: always()
       displayName: 'Publish the line coverage report'
       inputs:
         targetPath: $(Build.StagingDirectory)/coverage_html.zip
