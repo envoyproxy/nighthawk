@@ -116,6 +116,26 @@ stages:
     - template: bazel.yml
       parameters:
         ciTarget: $(CI_TARGET)
+    - task: Bash@3
+      displayName: 'Find the zip file in Build.StagingDirectory.'
+      inputs:
+        workingDirectory: $(Build.StagingDirectory)
+        script: find . -iname \*.zip
+    - task: Bash@3
+      displayName: 'List all the files in Build.StagingDirectory'
+      inputs:
+        workingDirectory: $(Build.StagingDirectory)
+        script: find . -iname \*.zip
+    - task: Bash@3
+      displayName: 'Find the zip file in System.DefaultWorkingDirectory.'
+      inputs:
+        workingDirectory: $(System.DefaultWorkingDirectory)
+        script: find . -iname \*.zip
+    - task: Bash@3
+      displayName: 'List all the files in System.DefaultWorkingDirectory'
+      inputs:
+        workingDirectory: $(System.DefaultWorkingDirectory)
+        script: find . -iname \*.zip
     - task: PublishPipelineArtifact@1
       displayName: 'Publish the line coverage report'
       inputs:
