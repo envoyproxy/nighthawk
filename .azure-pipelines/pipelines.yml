@@ -115,16 +115,6 @@ stages:
     - template: bazel.yml
       parameters:
         ciTarget: $(CI_TARGET)
-    - task: CmdLine@2
-      condition: always()
-      displayName: "Tree of Build.SourcesDirectory."
-      inputs:
-        script: 'ls -R $(Build.SourcesDirectory)'
-    - task: CmdLine@2
-      condition: always()
-      displayName: "Tree of Agent.WorkFolder."
-      inputs:
-        script: 'ls -R $(Agent.WorkFolder)'
     - task: PublishPipelineArtifact@1
       condition: always()
       displayName: 'Publish the line coverage report'
