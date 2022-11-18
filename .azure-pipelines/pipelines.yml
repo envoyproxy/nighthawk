@@ -123,7 +123,7 @@ stages:
     - task: PublishPipelineArtifact@1
       displayName: 'Publish the line coverage report'
       inputs:
-        targetPath: $(Build.StagingDirectory)/source/coverage_html.zip
+        targetPath: $(Build.StagingDirectory)/coverage_html.zip
         artifactName: CoverageReport
 
 #- stage: release
