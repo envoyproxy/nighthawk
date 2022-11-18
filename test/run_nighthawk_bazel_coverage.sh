@@ -58,3 +58,4 @@ then
   fi
 fi
 echo "HTML coverage report is in ${COVERAGE_DIR}/index.html"
+echo "If running in Azure Pipelines, the coverage report is published as a pipeline artifact."
