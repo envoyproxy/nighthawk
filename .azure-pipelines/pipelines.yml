@@ -115,6 +115,11 @@ stages:
     - template: bazel.yml
       parameters:
         ciTarget: $(CI_TARGET)
+    - task: PublishPipelineArtifact@1
+      displayName: 'Publish the line coverage report'
+      inputs:
+        targetPath: $(System.DefaultWorkingDirectory)/source/coverage_html.zip
+        artifactName: CoverageReport
 
 - stage: release
   dependsOn:
