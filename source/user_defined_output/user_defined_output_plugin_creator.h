@@ -20,7 +20,7 @@ namespace Nighthawk {
  * @throws EnvoyException if the config is invalid or couldn't find a corresponding User Defined
  * Output Plugin.
  */
-std::vector<UserDefinedOutputNamePluginPair>
+absl::StatusOr<std::vector<UserDefinedOutputNamePluginPair>>
 createUserDefinedOutputPlugins(std::vector<UserDefinedOutputConfigFactoryPair>& factory_pairs,
                                int worker_number);
 

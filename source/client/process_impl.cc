@@ -611,15 +611,18 @@ absl::Status ProcessImpl::createWorkers(const uint32_t concurrency,
       computeInterWorkerDelay(concurrency, options_.requestsPerSecond());
   int worker_number = 0;
   while (workers_.size() < concurrency) {
-    std::vector<UserDefinedOutputNamePluginPair> plugins =
+    absl::StatusOr<std::vector<UserDefinedOutputNamePluginPair>> plugins =
         createUserDefinedOutputPlugins(user_defined_output_factories_, worker_number);
+    if (!plugins.ok()) {
+      return plugins.status();
+    }
     workers_.push_back(std::make_unique<ClientWorkerImpl>(
         *api_, tls_, cluster_manager_, benchmark_client_factory_, termination_predicate_factory_,
         sequencer_factory_, request_generator_factory_, store_root_, worker_number,
         first_worker_start + (inter_worker_delay * worker_number), http_tracer_,
         options_.simpleWarmup() ? ClientWorkerImpl::HardCodedWarmupStyle::ON
                                 : ClientWorkerImpl::HardCodedWarmupStyle::OFF,
-        std::move(plugins)));
+        std::move(*plugins)));
     worker_number++;
   }
   return absl::OkStatus();
@@ -796,9 +799,10 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
     server_factory_context_ = std::make_unique<NighthawkServerFactoryContext>(*server_);
     cluster_manager_factory_ = std::make_unique<ClusterManagerFactory>(
         *server_factory_context_, admin_, Envoy::Runtime::LoaderSingleton::get(), store_root_, tls_,
-        dns_resolver, *ssl_context_manager_, *dispatcher_, *local_info_, secret_manager_,
-        validation_context_, *api_, http_context_, grpc_context_, router_context_,
-        access_log_manager_, *singleton_manager_, envoy_options_, quic_stat_names_, *server_);
+        [dns_resolver]() -> Envoy::Network::DnsResolverSharedPtr { return dns_resolver; },
+        *ssl_context_manager_, *dispatcher_, *local_info_, secret_manager_, validation_context_,
+        *api_, http_context_, grpc_context_, router_context_, access_log_manager_,
+        *singleton_manager_, envoy_options_, quic_stat_names_, *server_);
     cluster_manager_factory_->setConnectionReuseStrategy(
         options_.h1ConnectionReuseStrategy() == nighthawk::client::H1ConnectionReuseStrategy::LRU
             ? Http1PoolImpl::ConnectionReuseStrategy::LRU
