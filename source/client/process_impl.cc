@@ -352,13 +352,13 @@ void collectUserDefinedResults(
   for (const nighthawk::client::UserDefinedOutput& user_defined_result :
        worker_user_defined_results) {
     std::vector<Envoy::ProtobufWkt::Any> cross_worker_results_for_plugin{};
-    if (user_defined_results_by_plugin.contains(user_defined_result.plugin_name())) {
+    if (user_defined_results_by_plugin->contains(user_defined_result.plugin_name())) {
       cross_worker_results_for_plugin =
-          user_defined_results_by_plugin.find(user_defined_result.plugin_name())->second;
+          user_defined_results_by_plugin->find(user_defined_result.plugin_name())->second;
     }
     cross_worker_results_for_plugin.emplace_back(user_defined_result.typed_output());
-    user_defined_results_by_plugin.try_emplace(user_defined_result.plugin_name(),
-                                               cross_worker_results_for_plugin);
+    user_defined_results_by_plugin->try_emplace(user_defined_result.plugin_name(),
+                                                cross_worker_results_for_plugin);
   }
 }
 
@@ -613,10 +613,6 @@ absl::Status ProcessImpl::createWorkers(const uint32_t concurrency,
   while (workers_.size() < concurrency) {
     std::vector<UserDefinedOutputNamePluginPair> plugins =
         createUserDefinedOutputPlugins(user_defined_output_factories_, worker_number);
-    if (!plugins.empty()) {
-      return absl::UnimplementedError(
-          "User Defined Output Plugin feature is still being implemented.");
-    }
     workers_.push_back(std::make_unique<ClientWorkerImpl>(
         *api_, tls_, cluster_manager_, benchmark_client_factory_, termination_predicate_factory_,
         sequencer_factory_, request_generator_factory_, store_root_, worker_number,
@@ -641,7 +637,7 @@ std::vector<StatisticPtr>
 ProcessImpl::vectorizeStatisticPtrMap(const StatisticPtrMap& statistics) const {
   std::vector<StatisticPtr> v;
   for (const auto& statistic : statistics) {
-    // Clone the orinal statistic into a new one.
+    // Clone the original statistic into a new one.
     auto new_statistic =
         statistic.second->createNewInstanceOfSameType()->combine(*(statistic.second));
     new_statistic->setId(statistic.first);
@@ -864,8 +860,9 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
               ? std::min(first_acquisition_time.value(), worker_first_acquisition_time.value())
               : worker_first_acquisition_time.value();
     }
-    collectUserDefinedResults(user_defined_results_by_plugin,
-                              worker->getUserDefinedOutputResults());
+    std::vector<nighthawk::client::UserDefinedOutput> worker_user_defined_results =
+        worker->getUserDefinedOutputResults();
+    collectUserDefinedResults(&user_defined_results_by_plugin, worker_user_defined_results);
     // We don't write per-worker results if we only have a single worker, because the global
     // results will be precisely the same.
     if (workers_.size() > 1) {
@@ -884,18 +881,21 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
   // sure the global aggregated numbers line up, we must take care not to shut down the benchmark
   // client before we do this, as that will increment certain counters like connections closed,
   // etc.
-  const auto& counters = Utility().mapCountersFromStore(
+  const std::map<std::string, uint64_t>& counters = Utility().mapCountersFromStore(
       store_root_, [](absl::string_view, uint64_t value) { return value > 0; });
   StatisticFactoryImpl statistic_factory(options_);
   std::vector<nighthawk::client::UserDefinedOutput> global_user_defined_results =
-      compileGlobalUserDefinedPluginResults(user_defined_output_factories_,
-                                            user_defined_results_by_plugin);
+      compileGlobalUserDefinedPluginResults(user_defined_results_by_plugin,
+                                            user_defined_output_factories_);
   collector.addResult("global", mergeWorkerStatistics(workers_), counters,
                       total_execution_duration / workers_.size(), first_acquisition_time,
                       global_user_defined_results);
   if (counters.find("sequencer.failed_terminations") == counters.end()) {
     return true;
   } else {
+    for (auto const& [key, val] : counters) {
+      ENVOY_LOG(info, "Key: {}, Value: {}", key, val);
+    }
     ENVOY_LOG(error, "Terminated early because of a failure predicate.");
     ENVOY_LOG(
         info,
