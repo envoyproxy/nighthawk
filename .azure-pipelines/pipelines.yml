@@ -119,7 +119,7 @@ stages:
     - task: PublishPipelineArtifact@1
       displayName: 'Publish the line coverage report'
       inputs:
-        targetPath: $(System.DefaultWorkingDirectory)/source/coverage_html.zip
+        targetPath: $(System.DefaultWorkingDirectory)/nighthawk/source/coverage_html.zip
         artifactName: CoverageReport
 
 #- stage: release
