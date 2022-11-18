@@ -2,7 +2,7 @@
 
 # derived from test/run_envoy_bazel_coverage.sh over the Envoy repo.
 
-set -eo pipefail
+#set -eo pipefail
 set +x
 set -u
 
