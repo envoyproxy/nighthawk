@@ -108,7 +108,7 @@ public:
 // when Nighthawk is running are implemented.
 class NighthawkServerInstance : public Envoy::Server::Instance {
 public:
-  NighthawkServerInstance(Envoy::Server::Admin& admin, Envoy::Api::Api& api,
+  NighthawkServerInstance(OptRef<Envoy::Server::Admin> admin, Envoy::Api::Api& api,
                           Envoy::Event::Dispatcher& dispatcher,
                           Envoy::AccessLog::AccessLogManager& log_manager,
                           Envoy::Server::Options& options, Envoy::Runtime::Loader& runtime,
@@ -119,7 +119,7 @@ public:
         options_(options), runtime_(runtime), singleton_manager_(singleton_manager), tls_(tls),
         local_info_(local_info) {}
 
-  Envoy::Server::Admin& admin() override { return admin_; }
+  OptRef<Envoy::Server::Admin> admin() override { return admin_; }
   Envoy::Api::Api& api() override { return api_; }
   Envoy::Upstream::ClusterManager& clusterManager() override {
     PANIC("NighthawkServerInstance::clusterManager not implemented");
@@ -226,7 +226,7 @@ public:
   }
 
 private:
-  Envoy::Server::Admin& admin_;
+  OptRef<Envoy::Server::Admin> admin_;
   Envoy::Api::Api& api_;
   Envoy::Event::Dispatcher& dispatcher_;
   Envoy::AccessLog::AccessLogManager& log_manager_;
@@ -250,7 +250,7 @@ public:
 
   Envoy::LocalInfo::LocalInfo& localInfo() const override { return server_.localInfo(); }
 
-  Envoy::Server::Admin& admin() override { return server_.admin(); }
+  OptRef<Envoy::Server::Admin> admin() override { return server_.admin(); }
 
   Envoy::Runtime::Loader& runtime() override { return server_.runtime(); }
 
