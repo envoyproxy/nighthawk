@@ -8,6 +8,7 @@
 #include <memory>
 #include <random>
 
+#include "envoy/common/optref.h"
 #include "envoy/network/address.h"
 #include "envoy/server/filter_config.h"
 #include "envoy/stats/sink.h"
