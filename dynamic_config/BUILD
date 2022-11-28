@@ -3,6 +3,10 @@ load("@python_pip_deps//:requirements.bzl", "requirement")
 
 licenses(["notice"])  # Apache 2
 
+package(
+    default_testonly = True,
+)
+
 py_library(
     name = "dynamic_config_manager_lib",
     srcs = [

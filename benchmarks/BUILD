@@ -2,9 +2,12 @@ load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
 
 licenses(["notice"])  # Apache 2
 
+package(
+    default_testonly = True,
+)
+
 py_binary(
     name = "benchmarks",
-    testonly = True,
     srcs = [
         "static_benchmarks.py",
     ],
