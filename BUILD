@@ -1,6 +1,7 @@
 load(
     "@envoy//bazel:envoy_build_system.bzl",
     "envoy_cc_binary",
+    "envoy_cc_test_binary",
     "envoy_package",
 )
 
@@ -34,6 +35,16 @@ envoy_cc_binary(
     repository = "@envoy",
     deps = [
         "//source/exe:nighthawk_client_entry_lib",
+    ],
+)
+
+# A testonly version of the nighthawk client, intended to be built with any required test plugins
+# to enable integration test use cases.
+envoy_cc_test_binary(
+    name = "nighthawk_client_testonly",
+    repository = "@envoy",
+    deps = [
+        "//source/exe:nighthawk_client_entry_lib_testonly",
     ],
 )
 

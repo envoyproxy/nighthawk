@@ -89,7 +89,6 @@ public:
     absl::StatusOr<ProcessPtr> process_or_status = ProcessImpl::CreateProcessImpl(
         *options_, dns_resolver_factory, std::move(typed_dns_resolver_config), time_system_);
     if (!process_or_status.ok()) {
-      std::cout << "Returning invalid process";
       return process_or_status.status();
     }
     ProcessPtr process = std::move(process_or_status.value());
@@ -217,25 +216,26 @@ TEST_P(ProcessTest, CreatesUserDefinedOutputPluginPerWorkerThread) {
       fmt::format("foo --concurrency 2 --user-defined-plugin-config {} https://{}/",
                   user_defined_output_plugin, loopback_address_));
 
+  // Expect connection failure, but ensure that User Defined Outputs were set up correctly.
   EXPECT_TRUE(runProcess(RunExpectation::EXPECT_FAILURE).ok());
   EXPECT_EQ(factory.getPluginCount(), 2);
 }
 
 TEST_P(ProcessTest, ReturnsUserDefinedOutputsInResults) {
-  FakeUserDefinedOutputPluginFactory factory1;
-  Envoy::Registry::InjectFactory<UserDefinedOutputPluginFactory> registered1(factory1);
-  LogResponseHeadersPluginFactory factory2;
-  Envoy::Registry::InjectFactory<UserDefinedOutputPluginFactory> registered2(factory2);
   const std::string fake_plugin =
       "{name:\"nighthawk.fake_user_defined_output\",typed_config:"
       "{\"@type\":\"type.googleapis.com/nighthawk.FakeUserDefinedOutputConfig\"}}";
   const std::string logging_plugin =
       "{name:\"nighthawk.log_response_headers_plugin\",typed_config:"
-      "{\"@type\":\"type.googleapis.com/nighthawk.LogResponseHeadersConfig\"}}";
+      "{\"@type\":\"type.googleapis.com/nighthawk.LogResponseHeadersConfig\","
+      "logging_mode:\"LM_LOG_ALL_RESPONSES\"}}";
   options_ =
       TestUtility::createOptionsImpl(fmt::format("foo --concurrency 1 --user-defined-plugin-config "
                                                  "{} --user-defined-plugin-config {} https://{}/",
                                                  fake_plugin, logging_plugin, loopback_address_));
+
+  // Expect connection failure, but ensure that User Defined Outputs were set up correctly.
+  EXPECT_TRUE(runProcess(RunExpectation::EXPECT_FAILURE).ok());
 
   nighthawk::client::UserDefinedOutput expected_fake_user_defined_output;
   TextFormat::ParseFromString(R"(plugin_name: "nighthawk.fake_user_defined_output"
@@ -269,15 +269,28 @@ TEST_P(ProcessTest, ReturnsUserDefinedOutputsInResults) {
   EXPECT_THAT(actual_logging_output, EqualsProto(expected_logging_output));
 }
 
+TEST_P(ProcessTest, FailsIfAnyUserDefinedOutputPluginsFailToCreate) {
+  const std::string valid_plugin =
+      "{name:\"nighthawk.fake_user_defined_output\",typed_config:"
+      "{\"@type\":\"type.googleapis.com/nighthawk.FakeUserDefinedOutputConfig\"}}";
+  const std::string invalid_logging_plugin =
+      "{name:\"nighthawk.fake_user_defined_output\",typed_config:"
+      "{\"@type\":\"type.googleapis.com/nighthawk.LogResponseHeadersConfig\"}}";
+  options_ = TestUtility::createOptionsImpl(
+      fmt::format("foo --concurrency 1 --user-defined-plugin-config "
+                  "{} --user-defined-plugin-config {} https://{}/",
+                  valid_plugin, invalid_logging_plugin, loopback_address_));
+
+  EXPECT_TRUE(runProcess(RunExpectation::EXPECT_FAILURE).ok());
+  // We always expect failure, so also ensure that actually no work was done.
+  EXPECT_EQ(output_proto_.results_size(), 0);
+}
+
 TEST_P(ProcessTest, CreatesNoUserDefinedOutputPluginsIfNoConfigs) {
-  FakeUserDefinedOutputPluginFactory factory;
-  Envoy::Registry::InjectFactory<FakeUserDefinedOutputPluginFactory> registered(factory);
   options_ = TestUtility::createOptionsImpl(fmt::format("foo https://{}/", loopback_address_));
 
-  EXPECT_TRUE(
-      runProcess(RunExpectation::EXPECT_SUCCESS, /*do_cancel=*/true, /*terminate_right_away=*/true)
-          .ok());
-  EXPECT_EQ(factory.getPluginCount(), 0);
+  EXPECT_TRUE(runProcess(RunExpectation::EXPECT_FAILURE).ok());
+  EXPECT_EQ(output_proto_.results(0).user_defined_outputs_size(), 0);
 }
 
 /**

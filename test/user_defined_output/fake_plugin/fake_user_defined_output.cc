@@ -13,6 +13,7 @@ FakeUserDefinedOutputPlugin::FakeUserDefinedOutputPlugin(FakeUserDefinedOutputCo
 
 absl::Status
 FakeUserDefinedOutputPlugin::handleResponseHeaders(const Envoy::Http::ResponseHeaderMap&) {
+  Envoy::Thread::LockGuard guard(headers_lock_);
   headers_called_++;
   if (config_.fail_headers()) {
     if (headers_called_ > config_.header_failure_countdown()) {
@@ -23,18 +24,25 @@ FakeUserDefinedOutputPlugin::handleResponseHeaders(const Envoy::Http::ResponseHe
   return absl::OkStatus();
 }
 
-absl::Status FakeUserDefinedOutputPlugin::handleResponseData(const Envoy::Buffer::Instance&) {
+absl::Status FakeUserDefinedOutputPlugin::handleResponseData(const Envoy::Buffer::Instance& data) {
+  Envoy::Thread::LockGuard guard(data_lock_);
+  if (data.toString().empty()) {
+    // handleResponseData seemingly gets called twice per request, once always empty, once with the
+    // expected data.
+    return absl::OkStatus();
+  }
   data_called_++;
   if (config_.fail_data()) {
     if (data_called_ > config_.data_failure_countdown()) {
       return absl::InternalError("Intentional FakeUserDefinedOutputPlugin failure on data");
     }
   }
-
   return absl::OkStatus();
 }
 
 absl::StatusOr<Envoy::ProtobufWkt::Any> FakeUserDefinedOutputPlugin::getPerWorkerOutput() const {
+  Envoy::Thread::LockGuard data_guard(data_lock_);
+  Envoy::Thread::LockGuard headers_guard(headers_lock_);
   if (config_.fail_per_worker_output()) {
     return absl::InternalError(
         "Intentional FakeUserDefinedOutputPlugin failure on getting PerWorkerOutput");

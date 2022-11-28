@@ -87,7 +87,7 @@ class IntegrationTestBase():
     self.parameters = {}
     self.grpc_service = None
     self.test_server = None
-    self.nighthawk_client_path = "nighthawk_client"
+    self.nighthawk_client_path = "nighthawk_client_testonly"
     self._nighthawk_test_server_path = "nighthawk_test_server"
     self._nighthawk_test_config_path = server_config
     self._nighthawk_service_path = "nighthawk_service"
@@ -187,6 +187,13 @@ class IntegrationTestBase():
         for counter in self.getGlobalResults(parsed_json)["counters"]
     }
 
+  def getUserDefinedOutputsFromJson(self, parsed_json, result_name):
+    """Get the user defined outputs included in the result with the specified name."""
+    return {
+        counter["name"]: int(counter["value"])
+        for counter in self.getGlobalResults(parsed_json)["counters"]
+    }
+
   def getNighthawkGlobalHistogramsbyIdFromJson(self, parsed_json):
     """Get the global histograms from the json indexed by id."""
     return {
@@ -279,6 +286,8 @@ class IntegrationTestBase():
     if logs:
       logging.info("Nighthawk client stderr: [%s]" % logs)
     if as_json:
+      # Debugging note: This line fails without message if the nighthawk binary performs a std::cout
+      # for any debugging purposes.
       output = json.loads(output)
     if check_return_code:
       if expect_failure:

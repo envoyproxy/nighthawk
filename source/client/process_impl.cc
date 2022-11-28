@@ -357,8 +357,8 @@ void collectUserDefinedResults(
           user_defined_results_by_plugin->find(user_defined_result.plugin_name())->second;
     }
     cross_worker_results_for_plugin.emplace_back(user_defined_result.typed_output());
-    user_defined_results_by_plugin->try_emplace(user_defined_result.plugin_name(),
-                                                cross_worker_results_for_plugin);
+    user_defined_results_by_plugin->insert_or_assign(user_defined_result.plugin_name(),
+                                                     cross_worker_results_for_plugin);
   }
 }
 
