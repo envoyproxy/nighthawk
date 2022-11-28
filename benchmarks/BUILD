@@ -4,6 +4,7 @@ licenses(["notice"])  # Apache 2
 
 py_binary(
     name = "benchmarks",
+    testonly = True,
     srcs = [
         "static_benchmarks.py",
     ],

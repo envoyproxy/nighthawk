@@ -132,12 +132,16 @@ TEST(HandleResponseHeaders, FailsAfterCorrectIterationsIfConfigured) {
   EXPECT_EQ((*plugin)->handleResponseHeaders(headers).code(), absl::StatusCode::kInternal);
 }
 
-TEST(HandleResponseData, IncrementsDataCalledCount) {
+TEST(HandleResponseData, IncrementsDataCalledCountIfNotEmpty) {
   absl::StatusOr<UserDefinedOutputPluginPtr> plugin = CreatePlugin("", /*worker_number=*/0);
   ASSERT_TRUE(plugin.ok());
-  Envoy::MockBuffer buffer;
-  EXPECT_TRUE((*plugin)->handleResponseData(buffer).ok());
-  EXPECT_TRUE((*plugin)->handleResponseData(buffer).ok());
+  Envoy::MockBuffer filled_buffer;
+  filled_buffer.add("notempty");
+  Envoy::MockBuffer empty_buffer;
+  EXPECT_TRUE((*plugin)->handleResponseData(filled_buffer).ok());
+  EXPECT_TRUE((*plugin)->handleResponseData(filled_buffer).ok());
+  EXPECT_TRUE((*plugin)->handleResponseData(empty_buffer).ok());
+  EXPECT_TRUE((*plugin)->handleResponseData(empty_buffer).ok());
 
   Envoy::ProtobufWkt::Any expected_output = CreateOutput(R"pb(
     data_called: 2
@@ -153,6 +157,7 @@ TEST(HandleResponseData, FailsAfterCorrectIterationsIfConfigured) {
       CreatePlugin("fail_data: true   data_failure_countdown: 2", /*worker_number=*/0);
   ASSERT_TRUE(plugin.ok());
   Envoy::MockBuffer buffer;
+  buffer.add("notempty");
   EXPECT_TRUE((*plugin)->handleResponseData(buffer).ok());
   EXPECT_TRUE((*plugin)->handleResponseData(buffer).ok());
   EXPECT_EQ((*plugin)->handleResponseData(buffer).code(), absl::StatusCode::kInternal);
