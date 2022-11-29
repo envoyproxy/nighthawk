@@ -42,8 +42,7 @@ using namespace std::chrono_literals;
   COUNTER(pool_overflow)                                                                           \
   COUNTER(pool_connection_failure)                                                                 \
   COUNTER(user_defined_plugin_handle_headers_failure)                                              \
-  COUNTER(user_defined_plugin_handle_data_failure)                                                 \
-  COUNTER(user_defined_plugin_per_worker_output_failure)
+  COUNTER(user_defined_plugin_handle_data_failure)
 
 // For counter metrics, Nighthawk use Envoy Counter directly. For histogram metrics, Nighthawk uses
 // its own Statistic instead of Envoy Histogram. Here BenchmarkClientCounters contains only counters
