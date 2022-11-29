@@ -16,7 +16,6 @@ filegroup(
 
 py_library(
     name = "subprocess_mixin_lib",
-    testonly = True,
     srcs = [
         "subprocess_mixin.py",
     ],
@@ -24,7 +23,6 @@ py_library(
 
 py_library(
     name = "utility_lib",
-    testonly = True,
     srcs = [
         "utility.py",
     ],
@@ -32,7 +30,6 @@ py_library(
 
 py_library(
     name = "integration_test_base",
-    testonly = True,
     data = [
         ":test_server_configs",
         "//:nighthawk_client_testonly",
@@ -50,7 +47,6 @@ py_library(
 
 py_library(
     name = "integration_test_base_lean",
-    testonly = True,
     srcs = [
         "asserts.py",
         "common.py",
@@ -93,49 +89,42 @@ py_library(
 
 py_library(
     name = "test_integration_basics_lib",
-    testonly = True,
     srcs = ["test_integration_basics.py"],
     deps = [":integration_test_base"],
 )
 
 py_library(
     name = "test_connection_management_lib",
-    testonly = True,
     srcs = ["test_connection_management.py"],
     deps = [":integration_test_base"],
 )
 
 py_library(
     name = "test_integration_zipkin_lib",
-    testonly = True,
     srcs = ["test_integration_zipkin.py"],
     deps = [":integration_test_base"],
 )
 
 py_library(
     name = "test_grpc_service_lib",
-    testonly = True,
     srcs = ["test_grpc_service.py"],
     deps = [":integration_test_base"],
 )
 
 py_library(
     name = "test_remote_execution_lib",
-    testonly = True,
     srcs = ["test_remote_execution.py"],
     deps = [":integration_test_base"],
 )
 
 py_library(
     name = "test_output_transform_lib",
-    testonly = True,
     srcs = ["test_output_transform.py"],
     deps = [":integration_test_base"],
 )
 
 py_library(
     name = "test_request_source_plugin_lib",
-    testonly = True,
     srcs = ["test_request_source_plugin.py"],
     data = ["//test/request_source:testdata"],
     deps = [":integration_test_base"],
@@ -143,14 +132,12 @@ py_library(
 
 py_library(
     name = "test_user_defined_output_plugins_lib",
-    testonly = True,
     srcs = ["test_user_defined_output_plugins.py"],
     deps = [":integration_test_base"],
 )
 
 py_binary(
     name = "integration_test",
-    testonly = True,
     srcs = ["integration_test.py"],
     args = select({
         "//bazel:zipkin_disabled": [
