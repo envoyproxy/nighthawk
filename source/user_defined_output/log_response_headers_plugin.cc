@@ -138,8 +138,8 @@ LogResponseHeadersPluginFactory::createUserDefinedOutputPlugin(
   return std::make_unique<LogResponseHeadersPlugin>(config, worker_metadata);
 }
 
-absl::StatusOr<Envoy::ProtobufWkt::Any>
-LogResponseHeadersPluginFactory::AggregateGlobalOutput(absl::Span<const Envoy::ProtobufWkt::Any>) {
+absl::StatusOr<Envoy::ProtobufWkt::Any> LogResponseHeadersPluginFactory::AggregateGlobalOutput(
+    absl::Span<const nighthawk::client::UserDefinedOutput>) {
   return createEmptyOutput();
 }
 

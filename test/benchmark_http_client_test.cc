@@ -531,6 +531,7 @@ TEST_F(BenchmarkClientHttpTest, IncrementsCounterWhenUserDefinedPluginHandleHead
 TEST_F(BenchmarkClientHttpTest, CallsUserDefinedPluginHandleData) {
   RequestGenerator default_request_generator = getDefaultRequestGenerator();
   Envoy::MockBuffer buffer;
+  buffer.add("notempty");
   UserDefinedOutputPluginPtr plugin = CreateTestUserDefinedOutputPlugin(R"(
     name: "nighthawk.fake_user_defined_output",
     typed_config {
@@ -557,6 +558,7 @@ TEST_F(BenchmarkClientHttpTest, CallsUserDefinedPluginHandleData) {
 TEST_F(BenchmarkClientHttpTest, IncrementsCounterWhenUserDefinedPluginHandleDataFails) {
   RequestGenerator default_request_generator = getDefaultRequestGenerator();
   Envoy::MockBuffer buffer;
+  buffer.add("notempty");
   UserDefinedOutputPluginPtr plugin = CreateTestUserDefinedOutputPlugin(R"(
     name: "nighthawk.fake_user_defined_output",
     typed_config {
@@ -589,6 +591,7 @@ TEST_F(BenchmarkClientHttpTest, GetUserDefinedOutputResultsReturnsResults) {
       {"test_header_name", "test_header_value"},
   });
   Envoy::MockBuffer buffer;
+  buffer.add("notempty");
   UserDefinedOutputPluginPtr plugin = CreateTestUserDefinedOutputPlugin(R"(
     name: "nighthawk.fake_user_defined_output",
     typed_config {

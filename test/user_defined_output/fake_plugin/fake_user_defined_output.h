@@ -4,7 +4,9 @@
 
 #include "nighthawk/user_defined_output/user_defined_output_plugin.h"
 
+#include "external/envoy/source/common/common/lock_guard.h"
 #include "external/envoy/source/common/common/statusor.h"
+#include "external/envoy/source/common/common/thread.h"
 
 #include "api/client/options.pb.h"
 
@@ -19,8 +21,7 @@ namespace Nighthawk {
  * This plugin should be used in tests to prove that plugins receive the correct calls and can
  * handle failures appropriately.
  *
- * This class is not thread-safe.
- * TODO(dubious90): This plugin must be thread safe.
+ * This class is thread-safe.
  */
 class FakeUserDefinedOutputPlugin : public UserDefinedOutputPlugin {
 public:
@@ -49,8 +50,10 @@ public:
   absl::StatusOr<Envoy::ProtobufWkt::Any> getPerWorkerOutput() const override;
 
 private:
-  int data_called_ = 0;
-  int headers_called_ = 0;
+  mutable Envoy::Thread::MutexBasicLockable data_lock_;
+  mutable Envoy::Thread::MutexBasicLockable headers_lock_;
+  int data_called_ ABSL_GUARDED_BY(data_lock_) = 0;
+  int headers_called_ ABSL_GUARDED_BY(headers_lock_) = 0;
   const nighthawk::FakeUserDefinedOutputConfig config_;
   const WorkerMetadata worker_metadata_;
 };
@@ -67,8 +70,8 @@ public:
   createUserDefinedOutputPlugin(const Envoy::ProtobufWkt::Any& config_any,
                                 const WorkerMetadata& worker_metadata) override;
 
-  absl::StatusOr<Envoy::ProtobufWkt::Any>
-  AggregateGlobalOutput(absl::Span<const Envoy::ProtobufWkt::Any> per_worker_outputs) override;
+  absl::StatusOr<Envoy::ProtobufWkt::Any> AggregateGlobalOutput(
+      absl::Span<const nighthawk::client::UserDefinedOutput> per_worker_outputs) override;
 
   /**
    * Returns the number of times this factory was called to make a plugin.
