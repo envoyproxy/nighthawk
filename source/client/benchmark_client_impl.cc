@@ -278,17 +278,17 @@ std::vector<nighthawk::client::UserDefinedOutput>
 BenchmarkClientHttpImpl::getUserDefinedOutputResults() const {
   std::vector<nighthawk::client::UserDefinedOutput> outputs;
   for (const UserDefinedOutputNamePluginPair& plugin : user_defined_output_plugins_) {
-    absl::StatusOr<Envoy::ProtobufWkt::Any> message = plugin.second->getPerWorkerOutput();
-    if (!message.ok()) {
+    absl::StatusOr<Envoy::ProtobufWkt::Any> per_worker_output = plugin.second->getPerWorkerOutput();
+    nighthawk::client::UserDefinedOutput output_result;
+    output_result.set_plugin_name(plugin.first);
+    if (!per_worker_output.ok()) {
       ENVOY_LOG(error, "Plugin with class type {} received error status: ", plugin.first,
-                message.status().message());
-      benchmark_client_counters_.user_defined_plugin_per_worker_output_failure_.inc();
+                per_worker_output.status().message());
+      *output_result.mutable_error_message() = per_worker_output.status().ToString();
     } else {
-      nighthawk::client::UserDefinedOutput output_result;
-      output_result.set_plugin_name(plugin.first);
-      *output_result.mutable_typed_output() = *message;
-      outputs.push_back(output_result);
+      *output_result.mutable_typed_output() = *per_worker_output;
     }
+    outputs.push_back(output_result);
   }
   return outputs;
 }
