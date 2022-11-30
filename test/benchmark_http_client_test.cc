@@ -616,8 +616,7 @@ TEST_F(BenchmarkClientHttpTest, GetUserDefinedOutputResultsReturnsResults) {
   EXPECT_THAT(outputs[0], EqualsProto(expected_output));
 }
 
-TEST_F(BenchmarkClientHttpTest,
-       getUserDefinedOutputResultsIncrementsCountersWhenPluginsReturnErrors) {
+TEST_F(BenchmarkClientHttpTest, GetUserDefinedOutputResultsIncludesErrorsWhenPluginsReturnErrors) {
   RequestGenerator default_request_generator = getDefaultRequestGenerator();
   UserDefinedOutputPluginPtr plugin = CreateTestUserDefinedOutputPlugin(R"(
     name: "nighthawk.fake_user_defined_output",
@@ -635,8 +634,13 @@ TEST_F(BenchmarkClientHttpTest,
 
   std::vector<nighthawk::client::UserDefinedOutput> outputs =
       client_->getUserDefinedOutputResults();
-  EXPECT_TRUE(outputs.empty());
-  EXPECT_EQ(getCounter("user_defined_plugin_per_worker_output_failure"), 1);
+  EXPECT_EQ(outputs.size(), 1);
+
+  nighthawk::client::UserDefinedOutput expected_output;
+  expected_output.set_plugin_name("nighthawk.fake_user_defined_output");
+  *expected_output.mutable_error_message() =
+      "INTERNAL: Intentional FakeUserDefinedOutputPlugin failure on getting PerWorkerOutput";
+  EXPECT_THAT(outputs[0], EqualsProto(expected_output));
 }
 
 } // namespace Nighthawk

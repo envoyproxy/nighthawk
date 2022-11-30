@@ -49,8 +49,12 @@ message Statistic {
 message UserDefinedOutput {
   // The official name of the plugin as registered through Envoy's plugin registration system.
   string plugin_name = 1;
-  // The typed output defined by the plugin containing specific data that the plugin collected.
-  google.protobuf.Any typed_output = 2;
+  oneof output_type {
+    // The typed output defined by the plugin containing specific data that the plugin collected.
+    google.protobuf.Any typed_output = 2;
+    // The error returned by the plugin when trying to generate the output.
+    string error_message = 3;
+  }
 }
 
 // The set of output collected by Nighthawk for each worker, or for the aggregate of all workers.
