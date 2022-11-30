@@ -187,13 +187,6 @@ class IntegrationTestBase():
         for counter in self.getGlobalResults(parsed_json)["counters"]
     }
 
-  def getUserDefinedOutputsFromJson(self, parsed_json, result_name):
-    """Get the user defined outputs included in the result with the specified name."""
-    return {
-        counter["name"]: int(counter["value"])
-        for counter in self.getGlobalResults(parsed_json)["counters"]
-    }
-
   def getNighthawkGlobalHistogramsbyIdFromJson(self, parsed_json):
     """Get the global histograms from the json indexed by id."""
     return {

@@ -39,23 +39,6 @@ envoy_cc_library(
     ],
 )
 
-# A testonly version of the nighthawk client, intended to be built with any required test plugins
-# to enable integration test use cases.
-envoy_cc_library(
-    name = "nighthawk_client_entry_lib_testonly",
-    srcs = ["client_main_entry.cc"],
-    external_deps = [
-        "abseil_symbolize",
-    ],
-    repository = "@envoy",
-    deps = [
-        "//source/client:nighthawk_client_lib",
-        "//source/common:version_linkstamp",
-        "//source/user_defined_output:log_response_headers_plugin",
-        "//test/user_defined_output/fake_plugin:fake_user_defined_output",
-    ],
-)
-
 envoy_cc_library(
     name = "nighthawk_service_entry_lib",
     srcs = ["service_main_entry.cc"],

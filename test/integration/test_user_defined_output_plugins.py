@@ -181,9 +181,11 @@ def test_output_generation_produces_errors_successfully(http_test_server_fixture
     asserts.assertEqual(len(user_defined_outputs), 1)
     user_defined_output = user_defined_outputs[0]
     if result_name == "global":
-      asserts.assertIn("Cannot aggregate if any per_worker_outputs failed", user_defined_output["error_message"])
+      asserts.assertIn("Cannot aggregate if any per_worker_outputs failed",
+                       user_defined_output["error_message"])
     else:
-      asserts.assertIn("Intentional FakeUserDefinedOutputPlugin failure on getting PerWorkerOutput", user_defined_output["error_message"])
+      asserts.assertIn("Intentional FakeUserDefinedOutputPlugin failure on getting PerWorkerOutput",
+                       user_defined_output["error_message"])
 
 
 # test get_output failure

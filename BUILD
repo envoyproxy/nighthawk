@@ -43,7 +43,9 @@ envoy_cc_binary(
     name = "nighthawk_client_testonly",
     repository = "@envoy",
     deps = [
-        "//source/exe:nighthawk_client_entry_lib_testonly",
+        "//source/exe:nighthawk_client_entry_lib",
+        "//source/user_defined_output:log_response_headers_plugin",
+        "//test/user_defined_output/fake_plugin:fake_user_defined_output",
     ],
 )
 
