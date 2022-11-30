@@ -71,15 +71,25 @@ CreatePlugin(const std::string& config_textproto, std::unique_ptr<HeaderLogger> 
 }
 
 /**
- * Creates an empty LogResponseHeadersOutput.
+ * Creates an empty LogResponseHeadersOutput, packed into an Any.
  */
-Envoy::ProtobufWkt::Any CreateOutput() {
+Envoy::ProtobufWkt::Any CreateOutputAny() {
   LogResponseHeadersOutput output;
 
   Envoy::ProtobufWkt::Any output_any;
   output_any.PackFrom(output);
 
   return output_any;
+}
+
+/**
+ * Creates a LogResponseHeadersOutput, packed into a UserDefinedOutput.
+ */
+nighthawk::client::UserDefinedOutput CreateUserDefinedOutput() {
+  nighthawk::client::UserDefinedOutput output;
+  *output.mutable_plugin_name() = "nighthawk.log_response_headers_plugin";
+  *output.mutable_typed_output() = CreateOutputAny();
+  return output;
 }
 
 TEST(LogResponseHeadersPluginFactory, CreateEmptyConfigProtoCreatesCorrectType) {
@@ -229,12 +239,12 @@ TEST(HandleResponseData, ReturnsOk) {
 }
 
 TEST(AggregateGlobalOutput, ReturnsEmptyProto) {
-  std::vector<Envoy::ProtobufWkt::Any> per_worker_outputs({
-      CreateOutput(),
-      CreateOutput(),
+  std::vector<nighthawk::client::UserDefinedOutput> per_worker_outputs({
+      CreateUserDefinedOutput(),
+      CreateUserDefinedOutput(),
   });
 
-  Envoy::ProtobufWkt::Any expected_aggregate = CreateOutput();
+  Envoy::ProtobufWkt::Any expected_aggregate = CreateOutputAny();
 
   auto& factory = Envoy::Config::Utility::getAndCheckFactoryByName<UserDefinedOutputPluginFactory>(
       "nighthawk.log_response_headers_plugin");

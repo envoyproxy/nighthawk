@@ -10,6 +10,8 @@
 #include "external/envoy/source/common/http/header_map_impl.h"
 #include "external/envoy_api/envoy/config/core/v3/extension.pb.h"
 
+#include "api/client/output.pb.h"
+
 namespace Nighthawk {
 
 // Information about a Nighthawk worker thread. May expand to contain more fields over time as
@@ -136,8 +138,8 @@ public:
 
    * @return global_output Any-packed aggregated output to add to the global Result.
    */
-  virtual absl::StatusOr<Envoy::ProtobufWkt::Any>
-  AggregateGlobalOutput(absl::Span<const Envoy::ProtobufWkt::Any> per_worker_outputs) PURE;
+  virtual absl::StatusOr<Envoy::ProtobufWkt::Any> AggregateGlobalOutput(
+      absl::Span<const nighthawk::client::UserDefinedOutput> per_worker_outputs) PURE;
 };
 
 using UserDefinedOutputConfigFactoryPair =

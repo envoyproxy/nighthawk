@@ -347,17 +347,17 @@ getUserDefinedFactoryConfigPairs(const Options& options) {
  * @param worker_user_defined_results The per worker results to collect and organize.
  */
 void collectUserDefinedResults(
-    absl::flat_hash_map<std::string, std::vector<Envoy::ProtobufWkt::Any>>*
+    absl::flat_hash_map<std::string, std::vector<nighthawk::client::UserDefinedOutput>>*
         user_defined_results_by_plugin,
     const std::vector<nighthawk::client::UserDefinedOutput>& worker_user_defined_results) {
   for (const nighthawk::client::UserDefinedOutput& user_defined_result :
        worker_user_defined_results) {
-    std::vector<Envoy::ProtobufWkt::Any> cross_worker_results_for_plugin{};
+    std::vector<nighthawk::client::UserDefinedOutput> cross_worker_results_for_plugin{};
     if (user_defined_results_by_plugin->contains(user_defined_result.plugin_name())) {
       cross_worker_results_for_plugin =
           user_defined_results_by_plugin->find(user_defined_result.plugin_name())->second;
     }
-    cross_worker_results_for_plugin.emplace_back(user_defined_result.typed_output());
+    cross_worker_results_for_plugin.emplace_back(user_defined_result);
     user_defined_results_by_plugin->insert_or_assign(user_defined_result.plugin_name(),
                                                      cross_worker_results_for_plugin);
   }
@@ -375,33 +375,29 @@ void collectUserDefinedResults(
  * plugin.
  */
 std::vector<nighthawk::client::UserDefinedOutput> compileGlobalUserDefinedPluginResults(
-    const absl::flat_hash_map<std::string, std::vector<Envoy::ProtobufWkt::Any>>&
+    const absl::flat_hash_map<std::string, std::vector<nighthawk::client::UserDefinedOutput>>&
         user_defined_results_by_plugin,
     const std::vector<UserDefinedOutputConfigFactoryPair>& user_defined_output_factories) {
   std::vector<nighthawk::client::UserDefinedOutput> global_outputs;
   for (const UserDefinedOutputConfigFactoryPair& config_factory_pair :
        user_defined_output_factories) {
     UserDefinedOutputPluginFactory* factory = config_factory_pair.second;
+    nighthawk::client::UserDefinedOutput global_output;
+    global_output.set_plugin_name(factory->name());
+
     auto it = user_defined_results_by_plugin.find(factory->name());
     if (it != user_defined_results_by_plugin.end()) {
       absl::StatusOr<Envoy::ProtobufWkt::Any> global_output_any =
           factory->AggregateGlobalOutput(it->second);
       if (global_output_any.ok()) {
-        nighthawk::client::UserDefinedOutput global_output;
         *global_output.mutable_typed_output() = *global_output_any;
-        global_output.set_plugin_name(factory->name());
-        global_outputs.emplace_back(global_output);
       } else {
-        // ENVOY_LOG(error, global_output_any.status().message());
-        // TODO(nbperry): increment a counter?
+        *global_output.mutable_error_message() = global_output_any.status().ToString();
       }
     } else {
-      // ENVOY_LOG(
-      //     warn,
-      //     "No per worker outputs found for User Defined Output Plugin with name {} and config:
-      //     {}", factory->name(), config_factory_pair.first.ShortDebugString());
-      // TODO(nbperry): increment a counter?
+      *global_output.mutable_error_message() = "INTERNAL: No per worker outputs found";
     }
+    global_outputs.emplace_back(global_output);
   }
   return global_outputs;
 }
@@ -853,7 +849,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
   absl::optional<Envoy::SystemTime> first_acquisition_time = absl::nullopt;
   // Maps registered user defined output plugin name to the output results for every worker's plugin
   // of that name.
-  absl::flat_hash_map<std::string, std::vector<Envoy::ProtobufWkt::Any>>
+  absl::flat_hash_map<std::string, std::vector<nighthawk::client::UserDefinedOutput>>
       user_defined_results_by_plugin{};
   for (auto& worker : workers_) {
     auto sequencer_execution_duration = worker->phase().sequencer().executionDuration();

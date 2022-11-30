@@ -158,7 +158,7 @@ def test_handle_data_failure_increments_counter(http_test_server_fixture):
 
 @pytest.mark.parametrize('server_config',
                          ["nighthawk/test/integration/configurations/nighthawk_http_origin.yaml"])
-def test_get_per_worker_output_failure_increments_counter_and_moves_on(http_test_server_fixture):
+def test_output_generation_produces_errors_successfully(http_test_server_fixture):
   """Checks that a User Defined Output Plugin produces correct output."""
   fake_plugin_config = (
       "{name:\"nighthawk.fake_user_defined_output\","
@@ -171,15 +171,19 @@ def test_get_per_worker_output_failure_increments_counter_and_moves_on(http_test
       "--user-defined-plugin-config", fake_plugin_config
   ])
   counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
-  asserts.assertCounterGreaterEqual(counters, "benchmark.http_2xx", 20)
-  asserts.assertCounterEqual(counters, "benchmark.user_defined_plugin_per_worker_output_failure", 2)
+  asserts.assertCounterGreaterEqual(counters, "benchmark.http_2xx", 25)
 
   user_defined_outputs_by_result = getUserDefinedOutputsFromJson(parsed_json)
   asserts.assertEqual(len(user_defined_outputs_by_result), 3)
 
   for result_name in user_defined_outputs_by_result:
     user_defined_outputs = user_defined_outputs_by_result[result_name]
-    asserts.assertEqual(len(user_defined_outputs), 0)
+    asserts.assertEqual(len(user_defined_outputs), 1)
+    user_defined_output = user_defined_outputs[0]
+    if result_name == "global":
+      asserts.assertIn("Cannot aggregate if any per_worker_outputs failed", user_defined_output["error_message"])
+    else:
+      asserts.assertIn("Intentional FakeUserDefinedOutputPlugin failure on getting PerWorkerOutput", user_defined_output["error_message"])
 
 
 # test get_output failure

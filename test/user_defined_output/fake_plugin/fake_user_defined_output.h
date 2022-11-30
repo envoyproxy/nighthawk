@@ -70,8 +70,8 @@ public:
   createUserDefinedOutputPlugin(const Envoy::ProtobufWkt::Any& config_any,
                                 const WorkerMetadata& worker_metadata) override;
 
-  absl::StatusOr<Envoy::ProtobufWkt::Any>
-  AggregateGlobalOutput(absl::Span<const Envoy::ProtobufWkt::Any> per_worker_outputs) override;
+  absl::StatusOr<Envoy::ProtobufWkt::Any> AggregateGlobalOutput(
+      absl::Span<const nighthawk::client::UserDefinedOutput> per_worker_outputs) override;
 
   /**
    * Returns the number of times this factory was called to make a plugin.

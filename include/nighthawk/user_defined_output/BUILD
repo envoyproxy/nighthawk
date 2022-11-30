@@ -15,6 +15,7 @@ envoy_basic_cc_library(
     ],
     include_prefix = "nighthawk/user_defined_output",
     deps = [
+        "//api/client:base_cc_proto",
         "@envoy//envoy/buffer:buffer_interface",
         "@envoy//envoy/common:base_includes",
         "@envoy//source/common/common:statusor_lib_with_external_headers",
