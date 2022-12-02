@@ -50,10 +50,9 @@ public:
   absl::StatusOr<Envoy::ProtobufWkt::Any> getPerWorkerOutput() const override;
 
 private:
-  mutable Envoy::Thread::MutexBasicLockable data_lock_;
-  mutable Envoy::Thread::MutexBasicLockable headers_lock_;
-  int data_called_ ABSL_GUARDED_BY(data_lock_) = 0;
-  int headers_called_ ABSL_GUARDED_BY(headers_lock_) = 0;
+  mutable Envoy::Thread::MutexBasicLockable lock_;
+  int data_called_ ABSL_GUARDED_BY(lock_) = 0;
+  int headers_called_ ABSL_GUARDED_BY(lock_) = 0;
   const nighthawk::FakeUserDefinedOutputConfig config_;
   const WorkerMetadata worker_metadata_;
 };

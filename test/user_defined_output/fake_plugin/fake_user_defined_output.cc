@@ -13,7 +13,7 @@ FakeUserDefinedOutputPlugin::FakeUserDefinedOutputPlugin(FakeUserDefinedOutputCo
 
 absl::Status
 FakeUserDefinedOutputPlugin::handleResponseHeaders(const Envoy::Http::ResponseHeaderMap&) {
-  Envoy::Thread::LockGuard guard(headers_lock_);
+  Envoy::Thread::LockGuard guard(lock_);
   headers_called_++;
   if (config_.fail_headers()) {
     if (headers_called_ > config_.header_failure_countdown()) {
@@ -25,10 +25,10 @@ FakeUserDefinedOutputPlugin::handleResponseHeaders(const Envoy::Http::ResponseHe
 }
 
 absl::Status FakeUserDefinedOutputPlugin::handleResponseData(const Envoy::Buffer::Instance& data) {
-  Envoy::Thread::LockGuard guard(data_lock_);
+  Envoy::Thread::LockGuard guard(lock_);
   if (data.toString().empty()) {
-    // handleResponseData seemingly gets called twice per request, once always empty, once with the
-    // expected data.
+    // TODO(950): handleResponseData seemingly gets called twice per request, once always empty,
+    // once with the expected data.
     return absl::OkStatus();
   }
   data_called_++;
@@ -41,8 +41,7 @@ absl::Status FakeUserDefinedOutputPlugin::handleResponseData(const Envoy::Buffer
 }
 
 absl::StatusOr<Envoy::ProtobufWkt::Any> FakeUserDefinedOutputPlugin::getPerWorkerOutput() const {
-  Envoy::Thread::LockGuard data_guard(data_lock_);
-  Envoy::Thread::LockGuard headers_guard(headers_lock_);
+  Envoy::Thread::LockGuard guard(lock_);
   if (config_.fail_per_worker_output()) {
     return absl::InternalError(
         "Intentional FakeUserDefinedOutputPlugin failure on getting PerWorkerOutput");
@@ -94,8 +93,11 @@ absl::StatusOr<Envoy::ProtobufWkt::Any> FakeUserDefinedOutputPluginFactory::Aggr
         return status;
       }
     } else {
+      // This does not exit NH execution, but the UserDefinedOutput on the global output will return
+      // this error message instead of a typed_output.
       return absl::InvalidArgumentError(
-          absl::StrCat("Cannot aggregate if any per_worker_outputs failed. Received: ",
+          absl::StrCat("Cannot aggregate if any per_worker_outputs failed. See per worker outputs "
+                       "for full failure information. First failure was: ",
                        user_defined_output.error_message()));
     }
   }
