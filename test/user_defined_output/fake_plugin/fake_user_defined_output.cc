@@ -13,6 +13,7 @@ FakeUserDefinedOutputPlugin::FakeUserDefinedOutputPlugin(FakeUserDefinedOutputCo
 
 absl::Status
 FakeUserDefinedOutputPlugin::handleResponseHeaders(const Envoy::Http::ResponseHeaderMap&) {
+  Envoy::Thread::LockGuard guard(lock_);
   headers_called_++;
   if (config_.fail_headers()) {
     if (headers_called_ > config_.header_failure_countdown()) {
@@ -23,18 +24,24 @@ FakeUserDefinedOutputPlugin::handleResponseHeaders(const Envoy::Http::ResponseHe
   return absl::OkStatus();
 }
 
-absl::Status FakeUserDefinedOutputPlugin::handleResponseData(const Envoy::Buffer::Instance&) {
+absl::Status FakeUserDefinedOutputPlugin::handleResponseData(const Envoy::Buffer::Instance& data) {
+  Envoy::Thread::LockGuard guard(lock_);
+  if (data.toString().empty()) {
+    // TODO(950): handleResponseData seemingly gets called twice per request, once always empty,
+    // once with the expected data.
+    return absl::OkStatus();
+  }
   data_called_++;
   if (config_.fail_data()) {
     if (data_called_ > config_.data_failure_countdown()) {
       return absl::InternalError("Intentional FakeUserDefinedOutputPlugin failure on data");
     }
   }
-
   return absl::OkStatus();
 }
 
 absl::StatusOr<Envoy::ProtobufWkt::Any> FakeUserDefinedOutputPlugin::getPerWorkerOutput() const {
+  Envoy::Thread::LockGuard guard(lock_);
   if (config_.fail_per_worker_output()) {
     return absl::InternalError(
         "Intentional FakeUserDefinedOutputPlugin failure on getting PerWorkerOutput");
@@ -69,28 +76,36 @@ FakeUserDefinedOutputPluginFactory::createUserDefinedOutputPlugin(
 }
 
 absl::StatusOr<Envoy::ProtobufWkt::Any> FakeUserDefinedOutputPluginFactory::AggregateGlobalOutput(
-    absl::Span<const Envoy::ProtobufWkt::Any> per_worker_outputs) {
+    absl::Span<const nighthawk::client::UserDefinedOutput> per_worker_outputs) {
   FakeUserDefinedOutput global_output;
   global_output.set_worker_name("global");
   int data_called = 0;
   int headers_called = 0;
-  for (const Envoy::ProtobufWkt::Any& any : per_worker_outputs) {
-    FakeUserDefinedOutput output;
-    absl::Status status = Envoy::MessageUtil::unpackToNoThrow(any, output);
-    if (status.ok()) {
-      data_called += output.data_called();
-      headers_called += output.headers_called();
+  for (const nighthawk::client::UserDefinedOutput& user_defined_output : per_worker_outputs) {
+    if (user_defined_output.has_typed_output()) {
+      Envoy::ProtobufWkt::Any any = user_defined_output.typed_output();
+      FakeUserDefinedOutput output;
+      absl::Status status = Envoy::MessageUtil::unpackToNoThrow(any, output);
+      if (status.ok()) {
+        data_called += output.data_called();
+        headers_called += output.headers_called();
+      } else {
+        return status;
+      }
     } else {
-      return status;
+      // This does not exit NH execution, but the UserDefinedOutput on the global output will return
+      // this error message instead of a typed_output.
+      return absl::InvalidArgumentError(
+          absl::StrCat("Cannot aggregate if any per_worker_outputs failed. See per worker outputs "
+                       "for full failure information. First failure was: ",
+                       user_defined_output.error_message()));
     }
   }
-
   global_output.set_data_called(data_called);
   global_output.set_headers_called(headers_called);
 
   Envoy::ProtobufWkt::Any global_any;
   global_any.PackFrom(global_output);
-
   return global_any;
 }
 
