@@ -340,25 +340,25 @@ getUserDefinedFactoryConfigPairs(const Options& options) {
 
 /**
  * Takes in a single worker's user defined outputs and collects them into the
- * user_defined_results_by_plugin map.
+ * user_defined_outputs_by_plugin map. When called for each worker, transforms the outputs from
+ * being mapped by Worker to being mapped by Plugin.
  *
- * @param user_defined_results_by_plugin A map of plugin name to the set of collected results for
- * that plugin.
- * @param worker_user_defined_results The per worker results to collect and organize.
+ * @param user_defined_outputs_by_plugin The map that this function will collect the worker data
+ * into, maps plugin name to the set of results for that plugin.
+ * @param worker_user_defined_outputs The per worker results to collect and organize.
  */
-void collectUserDefinedResults(
+void collectUserDefinedOutputs(
     absl::flat_hash_map<std::string, std::vector<nighthawk::client::UserDefinedOutput>>*
-        user_defined_results_by_plugin,
-    const std::vector<nighthawk::client::UserDefinedOutput>& worker_user_defined_results) {
-  for (const nighthawk::client::UserDefinedOutput& user_defined_result :
-       worker_user_defined_results) {
-    std::vector<nighthawk::client::UserDefinedOutput> cross_worker_results_for_plugin{};
-    if (user_defined_results_by_plugin->contains(user_defined_result.plugin_name())) {
-      cross_worker_results_for_plugin =
-          user_defined_results_by_plugin->find(user_defined_result.plugin_name())->second;
-    }
-    cross_worker_results_for_plugin.emplace_back(user_defined_result);
-    user_defined_results_by_plugin->insert_or_assign(user_defined_result.plugin_name(),
+        user_defined_outputs_by_plugin,
+    const std::vector<nighthawk::client::UserDefinedOutput>& worker_user_defined_outputs) {
+  for (const nighthawk::client::UserDefinedOutput& user_defined_output :
+       worker_user_defined_outputs) {
+    std::vector<nighthawk::client::UserDefinedOutput> cross_worker_results_for_plugin =
+        (user_defined_outputs_by_plugin->contains(user_defined_output.plugin_name())
+             ? user_defined_outputs_by_plugin->find(user_defined_output.plugin_name())->second
+             : std::vector<nighthawk::client::UserDefinedOutput>{});
+    cross_worker_results_for_plugin.emplace_back(user_defined_output);
+    user_defined_outputs_by_plugin->insert_or_assign(user_defined_output.plugin_name(),
                                                      cross_worker_results_for_plugin);
   }
 }
@@ -367,16 +367,16 @@ void collectUserDefinedResults(
  * For each provided user defined output plugin factory, aggregates all of its corresponding results
  * into a global user defined output.
  *
- * @param user_defined_results_by_plugin A map of plugin name to the set of collected results for
+ * @param user_defined_outputs_by_plugin A map of plugin name to the set of collected results for
  * that plugin.
  * @param user_defined_output_factories A vector of the plugin factories used in this execution
  * process.
  * @return std::vector<nighthawk::client::UserDefinedOutput> The aggregated global results for each
  * plugin.
  */
-std::vector<nighthawk::client::UserDefinedOutput> compileGlobalUserDefinedPluginResults(
+std::vector<nighthawk::client::UserDefinedOutput> compileGlobalUserDefinedPluginOutputs(
     const absl::flat_hash_map<std::string, std::vector<nighthawk::client::UserDefinedOutput>>&
-        user_defined_results_by_plugin,
+        user_defined_outputs_by_plugin,
     const std::vector<UserDefinedOutputConfigFactoryPair>& user_defined_output_factories) {
   std::vector<nighthawk::client::UserDefinedOutput> global_outputs;
   for (const UserDefinedOutputConfigFactoryPair& config_factory_pair :
@@ -385,8 +385,8 @@ std::vector<nighthawk::client::UserDefinedOutput> compileGlobalUserDefinedPlugin
     nighthawk::client::UserDefinedOutput global_output;
     global_output.set_plugin_name(factory->name());
 
-    auto it = user_defined_results_by_plugin.find(factory->name());
-    if (it != user_defined_results_by_plugin.end()) {
+    auto it = user_defined_outputs_by_plugin.find(factory->name());
+    if (it != user_defined_outputs_by_plugin.end()) {
       absl::StatusOr<Envoy::ProtobufWkt::Any> global_output_any =
           factory->AggregateGlobalOutput(it->second);
       if (global_output_any.ok()) {
@@ -395,7 +395,8 @@ std::vector<nighthawk::client::UserDefinedOutput> compileGlobalUserDefinedPlugin
         *global_output.mutable_error_message() = global_output_any.status().ToString();
       }
     } else {
-      *global_output.mutable_error_message() = "INTERNAL: No per worker outputs found";
+      throw NighthawkException(
+          "No per worker outputs found for a factory when performing aggregation");
     }
     global_outputs.emplace_back(global_output);
   }
@@ -850,7 +851,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
   // Maps registered user defined output plugin name to the output results for every worker's plugin
   // of that name.
   absl::flat_hash_map<std::string, std::vector<nighthawk::client::UserDefinedOutput>>
-      user_defined_results_by_plugin{};
+      user_defined_outputs_by_plugin{};
   for (auto& worker : workers_) {
     auto sequencer_execution_duration = worker->phase().sequencer().executionDuration();
     absl::optional<Envoy::SystemTime> worker_first_acquisition_time =
@@ -861,9 +862,9 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
               ? std::min(first_acquisition_time.value(), worker_first_acquisition_time.value())
               : worker_first_acquisition_time.value();
     }
-    std::vector<nighthawk::client::UserDefinedOutput> worker_user_defined_results =
+    std::vector<nighthawk::client::UserDefinedOutput> worker_user_defined_outputs =
         worker->getUserDefinedOutputResults();
-    collectUserDefinedResults(&user_defined_results_by_plugin, worker_user_defined_results);
+    collectUserDefinedOutputs(&user_defined_outputs_by_plugin, worker_user_defined_outputs);
     // We don't write per-worker results if we only have a single worker, because the global
     // results will be precisely the same.
     if (workers_.size() > 1) {
@@ -871,7 +872,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
       collector.addResult(fmt::format("worker_{}", i),
                           vectorizeStatisticPtrMap(worker->statistics()),
                           worker->threadLocalCounterValues(), sequencer_execution_duration,
-                          worker_first_acquisition_time, worker_user_defined_results);
+                          worker_first_acquisition_time, worker_user_defined_outputs);
     }
     total_execution_duration += sequencer_execution_duration;
     i++;
@@ -885,18 +886,15 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
   const std::map<std::string, uint64_t>& counters = Utility().mapCountersFromStore(
       store_root_, [](absl::string_view, uint64_t value) { return value > 0; });
   StatisticFactoryImpl statistic_factory(options_);
-  std::vector<nighthawk::client::UserDefinedOutput> global_user_defined_results =
-      compileGlobalUserDefinedPluginResults(user_defined_results_by_plugin,
+  std::vector<nighthawk::client::UserDefinedOutput> global_user_defined_outputs =
+      compileGlobalUserDefinedPluginOutputs(user_defined_outputs_by_plugin,
                                             user_defined_output_factories_);
   collector.addResult("global", mergeWorkerStatistics(workers_), counters,
                       total_execution_duration / workers_.size(), first_acquisition_time,
-                      global_user_defined_results);
+                      global_user_defined_outputs);
   if (counters.find("sequencer.failed_terminations") == counters.end()) {
     return true;
   } else {
-    for (auto const& [key, val] : counters) {
-      ENVOY_LOG(info, "Key: {}, Value: {}", key, val);
-    }
     ENVOY_LOG(error, "Terminated early because of a failure predicate.");
     ENVOY_LOG(
         info,

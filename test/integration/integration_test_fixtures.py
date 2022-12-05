@@ -279,8 +279,6 @@ class IntegrationTestBase():
     if logs:
       logging.info("Nighthawk client stderr: [%s]" % logs)
     if as_json:
-      # Debugging note: This line fails without message if the nighthawk binary performs a std::cout
-      # for any debugging purposes.
       output = json.loads(output)
     if check_return_code:
       if expect_failure:

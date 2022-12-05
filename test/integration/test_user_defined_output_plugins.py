@@ -21,9 +21,6 @@ def getUserDefinedOutputsFromJson(parsed_json):
   return {result["name"]: result["user_defined_outputs"] for result in parsed_json["results"]}
 
 
-# logging_plugin = "{name:\"nighthawk.fake_user_defined_output\",typed_config:{\"@type\":\"type.googleapis.com/nighthawk.LogResponseHeadersConfig\"}}"
-
-
 @pytest.mark.parametrize('server_config',
                          ["nighthawk/test/integration/configurations/nighthawk_http_origin.yaml"])
 def test_all_plugin_apis_called(http_test_server_fixture):
@@ -59,7 +56,7 @@ def test_all_plugin_apis_called(http_test_server_fixture):
 @pytest.mark.parametrize('server_config',
                          ["nighthawk/test/integration/configurations/nighthawk_http_origin.yaml"])
 def test_multiple_plugins_succeed(http_test_server_fixture):
-  """Checks that a User Defined Output Plugin produces correct output."""
+  """Checks that multiple User Defined Output Plugins produces correct output."""
   fake_plugin_config = (
       "{name:\"nighthawk.fake_user_defined_output\","
       "typed_config:{\"@type\":\"type.googleapis.com/nighthawk.FakeUserDefinedOutputConfig\"}}")
@@ -95,7 +92,7 @@ def test_multiple_plugins_succeed(http_test_server_fixture):
 @pytest.mark.parametrize('server_config',
                          ["nighthawk/test/integration/configurations/nighthawk_http_origin.yaml"])
 def test_handle_headers_failure_increments_counter(http_test_server_fixture):
-  """Checks that a User Defined Output Plugin produces correct output."""
+  """Checks that counters are incremented properly for handleResponseHeaders failures."""
   fake_plugin_config = (
       "{name:\"nighthawk.fake_user_defined_output\","
       "typed_config:{\"@type\":\"type.googleapis.com/nighthawk.FakeUserDefinedOutputConfig\","
@@ -127,7 +124,7 @@ def test_handle_headers_failure_increments_counter(http_test_server_fixture):
 @pytest.mark.parametrize('server_config',
                          ["nighthawk/test/integration/configurations/nighthawk_http_origin.yaml"])
 def test_handle_data_failure_increments_counter(http_test_server_fixture):
-  """Checks that a User Defined Output Plugin produces correct output."""
+  """Checks that counters are incremented properly for handleResponseData failures."""
   fake_plugin_config = (
       "{name:\"nighthawk.fake_user_defined_output\","
       "typed_config:{\"@type\":\"type.googleapis.com/nighthawk.FakeUserDefinedOutputConfig\","
@@ -159,7 +156,7 @@ def test_handle_data_failure_increments_counter(http_test_server_fixture):
 @pytest.mark.parametrize('server_config',
                          ["nighthawk/test/integration/configurations/nighthawk_http_origin.yaml"])
 def test_output_generation_produces_errors_successfully(http_test_server_fixture):
-  """Checks that a User Defined Output Plugin produces correct output."""
+  """Checks that errors are propagated when getPerWorkerOutput or AggregateGlobalOutput fail."""
   fake_plugin_config = (
       "{name:\"nighthawk.fake_user_defined_output\","
       "typed_config:{\"@type\":\"type.googleapis.com/nighthawk.FakeUserDefinedOutputConfig\","
@@ -186,7 +183,3 @@ def test_output_generation_produces_errors_successfully(http_test_server_fixture
     else:
       asserts.assertIn("Intentional FakeUserDefinedOutputPlugin failure on getting PerWorkerOutput",
                        user_defined_output["error_message"])
-
-
-# test get_output failure
-# test aggregation failure
