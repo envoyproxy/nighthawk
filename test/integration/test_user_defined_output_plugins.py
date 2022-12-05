@@ -40,17 +40,15 @@ def test_all_plugin_apis_called(http_test_server_fixture):
   user_defined_outputs_by_result = getUserDefinedOutputsFromJson(parsed_json)
   asserts.assertEqual(len(user_defined_outputs_by_result), 3)
 
-  for result_name in user_defined_outputs_by_result:
-    user_defined_outputs = user_defined_outputs_by_result[result_name]
+  for result_name, user_defined_outputs in user_defined_outputs_by_result.items():
     asserts.assertEqual(len(user_defined_outputs), 1)
     user_defined_output = user_defined_outputs[0]
     asserts.assertEqual(user_defined_output["plugin_name"], "nighthawk.fake_user_defined_output")
-    if result_name == "global":
-      asserts.assertGreaterEqual(user_defined_output["typed_output"]["data_called"], 50)
-      asserts.assertGreaterEqual(user_defined_output["typed_output"]["headers_called"], 50)
-    else:
-      asserts.assertGreaterEqual(user_defined_output["typed_output"]["data_called"], 25)
-      asserts.assertGreaterEqual(user_defined_output["typed_output"]["headers_called"], 25)
+
+    expected_count = 50 if result_name == "global" else 25
+    asserts.assertGreaterEqual(user_defined_output["typed_output"]["data_called"], expected_count)
+    asserts.assertGreaterEqual(user_defined_output["typed_output"]["headers_called"],
+                               expected_count)
 
 
 @pytest.mark.parametrize('server_config',
@@ -116,6 +114,8 @@ def test_handle_headers_failure_increments_counter(http_test_server_fixture):
   asserts.assertGreaterEqual(user_defined_output["typed_output"]["data_called"], 20)
   asserts.assertGreaterEqual(user_defined_output["typed_output"]["headers_called"], 20)
 
+  # We subtract header_failure_countdown (9) from the data_called number. The first 9
+  # handleResponseHeaders calls should succeed.
   expected_failure_counter = user_defined_output["typed_output"]["headers_called"] - 9
   asserts.assertCounterEqual(counters, "benchmark.user_defined_plugin_handle_headers_failure",
                              expected_failure_counter)
@@ -148,6 +148,8 @@ def test_handle_data_failure_increments_counter(http_test_server_fixture):
   asserts.assertGreaterEqual(user_defined_output["typed_output"]["data_called"], 20)
   asserts.assertGreaterEqual(user_defined_output["typed_output"]["headers_called"], 20)
 
+  # We subtract data_failure_countdown (9) from the data_called number. The first 9
+  # handleResponseData calls should succeed.
   expected_failure_counter = user_defined_output["typed_output"]["data_called"] - 9
   asserts.assertCounterEqual(counters, "benchmark.user_defined_plugin_handle_data_failure",
                              expected_failure_counter)
@@ -173,8 +175,7 @@ def test_output_generation_produces_errors_successfully(http_test_server_fixture
   user_defined_outputs_by_result = getUserDefinedOutputsFromJson(parsed_json)
   asserts.assertEqual(len(user_defined_outputs_by_result), 3)
 
-  for result_name in user_defined_outputs_by_result:
-    user_defined_outputs = user_defined_outputs_by_result[result_name]
+  for result_name, user_defined_outputs in user_defined_outputs_by_result.items():
     asserts.assertEqual(len(user_defined_outputs), 1)
     user_defined_output = user_defined_outputs[0]
     if result_name == "global":
