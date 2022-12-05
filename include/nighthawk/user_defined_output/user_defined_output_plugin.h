@@ -79,9 +79,8 @@ public:
    * processes.
    *
    * Plugins should return statuses for invalid data or when they fail to process the data. Any
-   * non-ok status will be logged and increment a counter that will be added to the worker Result.
-   * Callers can also provide a failure predicate for this counter that will abort the request
-   * after n plugin failures.
+   * non-ok status will be logged and included as a UserDefinedOutput with an error_message instead
+   * of a typed_output. Standard nighthawk processing will be unaffected.
    *
    * @return output Any-packed per_worker output to add to the worker's Result.
    */
@@ -119,12 +118,14 @@ public:
    * Aggregates the outputs from every worker's UserDefinedOutputPlugin instance into a global
    * output, representing the cumulative data across all of the plugins combined.
    *
-   * The protobuf type of the inputs and output must all be the same type.
+   * If a plugin returned an error when generating its per-worker output, it will still be included
+   * in per_worker_outputs as a UserDefinedOutput with an error message. It is up to the plugin
+   * author the correct thing to do on aggregation if one or more of the per worker outputs
+   * contains errors.
    *
    * This method should return statuses for invalid data or when they fail to process the data. Any
-   * non-ok status will be logged and increment a counter that will be added to the worker Result.
-   * Callers can also provide a failure predicate for this counter that will abort the request
-   * after n plugin failures.
+   * non-ok status will be logged and included as a UserDefinedOutput with an error_message instead
+   * of a typed_output. Standard nighthawk processing will be unaffected.
    *
    * Pseudocode Example:
    *     AggregateGlobalOutput(
@@ -134,7 +135,7 @@ public:
    *     {int_value: 3, array_value: ["a","b","c"]}
    *
    * @param per_worker_outputs List of the outputs that every per-worker instance of the User
-   *    Defined Output Plugin created.
+   *    Defined Output Plugin created, including errors in generating that output.
 
    * @return global_output Any-packed aggregated output to add to the global Result.
    */
