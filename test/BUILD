@@ -16,10 +16,15 @@ envoy_cc_test(
         "//source/client:nighthawk_client_lib",
         "//source/common:request_impl_lib",
         "//test/test_common:environment_lib",
+        "//test/test_common:proto_matchers",
+        "//test/user_defined_output/fake_plugin:fake_user_defined_output",
+        "//test/user_defined_output/fake_plugin:fake_user_defined_output_proto_cc_proto",
         "@envoy//source/common/http:header_map_lib_with_external_headers",
         "@envoy//source/common/network:utility_lib_with_external_headers",
+        "@envoy//source/common/protobuf:utility_lib_with_external_headers",
         "@envoy//source/common/stats:isolated_store_lib_with_external_headers",
         "@envoy//source/exe:process_wide_lib_with_external_headers",
+        "@envoy//test/mocks/buffer:buffer_mocks",
         "@envoy//test/mocks/runtime:runtime_mocks",
         "@envoy//test/mocks/stream_info:stream_info_mocks",
         "@envoy//test/mocks/thread_local:thread_local_mocks",
@@ -141,6 +146,20 @@ envoy_cc_test(
 )
 
 envoy_cc_test(
+    name = "output_collector_test",
+    srcs = ["output_collector_test.cc"],
+    repository = "@envoy",
+    deps = [
+        "//source/client:nighthawk_client_lib",
+        "//test/client:utility_lib",
+        "//test/test_common:environment_lib",
+        "//test/test_common:proto_matchers",
+        "//test/user_defined_output/fake_plugin:fake_user_defined_output",
+        "@envoy//test/test_common:simulated_time_system_lib",
+    ],
+)
+
+envoy_cc_test(
     name = "platform_util_test",
     srcs = ["platform_util_test.cc"],
     repository = "@envoy",
@@ -156,6 +175,7 @@ envoy_cc_test(
         "//test/client:utility_lib",
         "//test/sink:test_stats_sink_config_proto_cc_proto",
         "//test/test_common:environment_lib",
+        "//test/test_common:proto_matchers",
         "//test/user_defined_output/fake_plugin:fake_user_defined_output",
         "@envoy//test/test_common:network_utility_lib",
         "@envoy//test/test_common:registry_lib",

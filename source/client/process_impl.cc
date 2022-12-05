@@ -8,6 +8,7 @@
 #include <memory>
 #include <random>
 
+#include "envoy/common/optref.h"
 #include "envoy/network/address.h"
 #include "envoy/server/filter_config.h"
 #include "envoy/stats/sink.h"
@@ -15,6 +16,7 @@
 
 #include "nighthawk/client/output_collector.h"
 #include "nighthawk/common/factories.h"
+#include "nighthawk/user_defined_output/user_defined_output_plugin.h"
 
 #include "external/envoy/source/common/api/api_impl.h"
 #include "external/envoy/source/common/common/cleanup.h"
@@ -59,6 +61,8 @@
 #include "source/client/options_impl.h"
 #include "source/client/sni_utility.h"
 
+#include "source/user_defined_output/user_defined_output_plugin_creator.h"
+
 using namespace std::chrono_literals;
 
 namespace Nighthawk {
@@ -66,6 +70,7 @@ namespace Client {
 namespace {
 
 using ::envoy::config::bootstrap::v3::Bootstrap;
+using ::envoy::config::core::v3::TypedExtensionConfig;
 
 // Helps in generating a bootstrap for the process.
 // This is a class only to allow the use of the ENVOY_LOG macros.
@@ -104,7 +109,7 @@ public:
 // when Nighthawk is running are implemented.
 class NighthawkServerInstance : public Envoy::Server::Instance {
 public:
-  NighthawkServerInstance(Envoy::Server::Admin& admin, Envoy::Api::Api& api,
+  NighthawkServerInstance(Envoy::OptRef<Envoy::Server::Admin> admin, Envoy::Api::Api& api,
                           Envoy::Event::Dispatcher& dispatcher,
                           Envoy::AccessLog::AccessLogManager& log_manager,
                           Envoy::Server::Options& options, Envoy::Runtime::Loader& runtime,
@@ -115,7 +120,7 @@ public:
         options_(options), runtime_(runtime), singleton_manager_(singleton_manager), tls_(tls),
         local_info_(local_info) {}
 
-  Envoy::Server::Admin& admin() override { return admin_; }
+  Envoy::OptRef<Envoy::Server::Admin> admin() override { return admin_; }
   Envoy::Api::Api& api() override { return api_; }
   Envoy::Upstream::ClusterManager& clusterManager() override {
     PANIC("NighthawkServerInstance::clusterManager not implemented");
@@ -222,7 +227,7 @@ public:
   }
 
 private:
-  Envoy::Server::Admin& admin_;
+  Envoy::OptRef<Envoy::Server::Admin> admin_;
   Envoy::Api::Api& api_;
   Envoy::Event::Dispatcher& dispatcher_;
   Envoy::AccessLog::AccessLogManager& log_manager_;
@@ -246,7 +251,7 @@ public:
 
   Envoy::LocalInfo::LocalInfo& localInfo() const override { return server_.localInfo(); }
 
-  Envoy::Server::Admin& admin() override { return server_.admin(); }
+  Envoy::OptRef<Envoy::Server::Admin> admin() override { return server_.admin(); }
 
   Envoy::Runtime::Loader& runtime() override { return server_.runtime(); }
 
@@ -313,6 +318,25 @@ public:
 private:
   Envoy::Server::Instance& server_;
 };
+
+/**
+ * Compiles a list of factories and the configurations they will use to create plugins.
+ *
+ * @param options The options used for initializing the process
+ * @return std::vector<std::pair<TypedExtensionConfig, UserDefinedOutputPluginFactory*>> vector of
+ * pairs, each containing a factory and its corresponding configuration.
+ */
+std::vector<UserDefinedOutputConfigFactoryPair>
+getUserDefinedFactoryConfigPairs(const Options& options) {
+  std::vector<UserDefinedOutputConfigFactoryPair> factory_config_pairs;
+  for (const TypedExtensionConfig& config : options.userDefinedOutputPluginConfigs()) {
+    auto* factory = Envoy::Config::Utility::getAndCheckFactory<UserDefinedOutputPluginFactory>(
+        config, /*is_optional=*/false);
+    UserDefinedOutputConfigFactoryPair pair(config, factory);
+    factory_config_pairs.push_back(pair);
+  }
+  return factory_config_pairs;
+}
 
 // Disables the hot restart Envoy functionality.
 std::string HotRestartDisabled(bool) { return "hot restart is disabled"; }
@@ -381,7 +405,7 @@ private:
 
 ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_system,
                          Envoy::Network::DnsResolverFactory& dns_resolver_factory,
-                         envoy::config::core::v3::TypedExtensionConfig typed_dns_resolver_config,
+                         TypedExtensionConfig typed_dns_resolver_config,
                          const std::shared_ptr<Envoy::ProcessWide>& process_wide)
     : options_(options), number_of_workers_(BootstrapFactory::determineConcurrency(options_)),
       process_wide_(process_wide == nullptr ? std::make_shared<Envoy::ProcessWide>()
@@ -418,19 +442,11 @@ ProcessImpl::ProcessImpl(const Options& options, Envoy::Event::TimeSystem& time_
 
 absl::StatusOr<ProcessPtr> ProcessImpl::CreateProcessImpl(
     const Options& options, Envoy::Network::DnsResolverFactory& dns_resolver_factory,
-    envoy::config::core::v3::TypedExtensionConfig typed_dns_resolver_config,
-    Envoy::Event::TimeSystem& time_system,
+    TypedExtensionConfig typed_dns_resolver_config, Envoy::Event::TimeSystem& time_system,
     const std::shared_ptr<Envoy::ProcessWide>& process_wide) {
   std::unique_ptr<ProcessImpl> process(new ProcessImpl(options, time_system, dns_resolver_factory,
                                                        std::move(typed_dns_resolver_config),
                                                        process_wide));
-
-  if (!options.userDefinedOutputPluginConfigs().empty()) {
-    ENVOY_LOG(error, "User Defined Output Plugin feature is still being implemented.");
-    process->shutdown();
-    return absl::UnimplementedError(
-        "User Defined Output Plugin feature is still being implemented.");
-  }
 
   absl::StatusOr<Bootstrap> bootstrap = createBootstrapConfiguration(
       *process->dispatcher_, *process->api_, process->options_, process->dns_resolver_factory_,
@@ -453,6 +469,7 @@ absl::StatusOr<ProcessPtr> ProcessImpl::CreateProcessImpl(
   // assumed to be safe, because we still do it while constructing the
   // ProcessImpl, i.e. before we start running the process.
   process->bootstrap_ = *bootstrap;
+  process->user_defined_output_factories_ = getUserDefinedFactoryConfigPairs(options);
 
   return process;
 }
@@ -518,8 +535,8 @@ std::chrono::nanoseconds ProcessImpl::computeInterWorkerDelay(const uint32_t con
   return std::chrono::duration_cast<std::chrono::nanoseconds>(inter_worker_delay_usec * 1us);
 }
 
-void ProcessImpl::createWorkers(const uint32_t concurrency,
-                                const absl::optional<Envoy::SystemTime>& scheduled_start) {
+absl::Status ProcessImpl::createWorkers(const uint32_t concurrency,
+                                        const absl::optional<Envoy::SystemTime>& scheduled_start) {
   ASSERT(workers_.empty());
   const Envoy::MonotonicTime first_worker_start =
       computeFirstWorkerStart(time_system_, scheduled_start, concurrency);
@@ -527,14 +544,25 @@ void ProcessImpl::createWorkers(const uint32_t concurrency,
       computeInterWorkerDelay(concurrency, options_.requestsPerSecond());
   int worker_number = 0;
   while (workers_.size() < concurrency) {
+    absl::StatusOr<std::vector<UserDefinedOutputNamePluginPair>> plugins =
+        createUserDefinedOutputPlugins(user_defined_output_factories_, worker_number);
+    if (!plugins.ok()) {
+      return plugins.status();
+    }
+    if (!plugins->empty()) {
+      return absl::UnimplementedError(
+          "User Defined Output Plugin feature is still being implemented.");
+    }
     workers_.push_back(std::make_unique<ClientWorkerImpl>(
         *api_, tls_, cluster_manager_, benchmark_client_factory_, termination_predicate_factory_,
         sequencer_factory_, request_generator_factory_, store_root_, worker_number,
         first_worker_start + (inter_worker_delay * worker_number), http_tracer_,
         options_.simpleWarmup() ? ClientWorkerImpl::HardCodedWarmupStyle::ON
-                                : ClientWorkerImpl::HardCodedWarmupStyle::OFF));
+                                : ClientWorkerImpl::HardCodedWarmupStyle::OFF,
+        std::move(*plugins)));
     worker_number++;
   }
+  return absl::OkStatus();
 }
 
 void ProcessImpl::configureComponentLogLevels(spdlog::level::level_enum level) {
@@ -687,7 +715,11 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
           Envoy::Config::Utility::createTagProducer(bootstrap_, envoy_options_.statsTags()));
     }
 
-    createWorkers(number_of_workers_, scheduled_start);
+    absl::Status workers_status = createWorkers(number_of_workers_, scheduled_start);
+    if (!workers_status.ok()) {
+      ENVOY_LOG(error, "createWorkers failed. Received bad status: {}", workers_status.message());
+      return false;
+    }
     tls_.registerThread(*dispatcher_, true);
     store_root_.initializeThreading(*dispatcher_, tls_);
     runtime_singleton_ = std::make_unique<Envoy::Runtime::ScopedLoaderSingleton>(
@@ -704,9 +736,10 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
     server_factory_context_ = std::make_unique<NighthawkServerFactoryContext>(*server_);
     cluster_manager_factory_ = std::make_unique<ClusterManagerFactory>(
         *server_factory_context_, admin_, Envoy::Runtime::LoaderSingleton::get(), store_root_, tls_,
-        dns_resolver, *ssl_context_manager_, *dispatcher_, *local_info_, secret_manager_,
-        validation_context_, *api_, http_context_, grpc_context_, router_context_,
-        access_log_manager_, *singleton_manager_, envoy_options_, quic_stat_names_, *server_);
+        [dns_resolver]() -> Envoy::Network::DnsResolverSharedPtr { return dns_resolver; },
+        *ssl_context_manager_, *dispatcher_, *local_info_, secret_manager_, validation_context_,
+        *api_, http_context_, grpc_context_, router_context_, access_log_manager_,
+        *singleton_manager_, envoy_options_, quic_stat_names_, *server_);
     cluster_manager_factory_->setConnectionReuseStrategy(
         options_.h1ConnectionReuseStrategy() == nighthawk::client::H1ConnectionReuseStrategy::LRU
             ? Http1PoolImpl::ConnectionReuseStrategy::LRU
@@ -772,7 +805,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
       collector.addResult(fmt::format("worker_{}", i),
                           vectorizeStatisticPtrMap(worker->statistics()),
                           worker->threadLocalCounterValues(), sequencer_execution_duration,
-                          worker_first_acquisition_time);
+                          worker_first_acquisition_time, /*user_defined_output_results*/ {});
     }
     total_execution_duration += sequencer_execution_duration;
     i++;
@@ -787,7 +820,8 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
       store_root_, [](absl::string_view, uint64_t value) { return value > 0; });
   StatisticFactoryImpl statistic_factory(options_);
   collector.addResult("global", mergeWorkerStatistics(workers_), counters,
-                      total_execution_duration / workers_.size(), first_acquisition_time);
+                      total_execution_duration / workers_.size(), first_acquisition_time,
+                      /*user_defined_output_results*/ {});
   if (counters.find("sequencer.failed_terminations") == counters.end()) {
     return true;
   } else {
@@ -829,7 +863,10 @@ bool ProcessImpl::run(OutputCollector& collector) {
   try {
     return runInternal(collector, tracing_uri, dns_resolver, options_.scheduled_start());
   } catch (Envoy::EnvoyException& ex) {
-    ENVOY_LOG(error, "Fatal exception: {}", ex.what());
+    ENVOY_LOG(error, "Fatal EnvoyException exception: {}", ex.what());
+    throw;
+  } catch (NighthawkException& ex) {
+    ENVOY_LOG(error, "Fatal NighthawkException exception: {}", ex.what());
     throw;
   }
 }

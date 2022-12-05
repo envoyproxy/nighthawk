@@ -233,7 +233,8 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
   TCLAP::MultiArg<std::string> failure_predicates(
       "", "failure-predicate",
       "Failure predicate. Allows specifying a counter name plus threshold value for "
-      "failing execution. Defaults to not tolerating error status codes and connection errors.",
+      "failing execution. Defaults to not tolerating error status codes and connection errors. "
+      "Example: benchmark.http_5xx:4294967295.",
       false, "string, uint64_t", cmd);
 
   std::vector<std::string> h1_connection_reuse_strategies = {"mru", "lru"};
@@ -693,7 +694,7 @@ void OptionsImpl::parsePredicates(const TCLAP::MultiArg<std::string>& arg,
           fmt::format("Termination predicate '{}' is badly formatted.", predicate));
     }
 
-    uint32_t threshold = 0;
+    uint64_t threshold = 0;
     if (absl::SimpleAtoi(split_predicate[1], &threshold)) {
       predicates[split_predicate[0]] = threshold;
     } else {

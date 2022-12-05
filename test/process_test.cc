@@ -19,6 +19,8 @@
 
 #include "test/client/utility.h"
 #include "test/sink/test_stats_sink_config.pb.h"
+#include "test/test_common/proto_matchers.h"
+#include "test/user_defined_output/fake_plugin/fake_user_defined_output.h"
 
 #include "gtest/gtest.h"
 
@@ -26,6 +28,8 @@ namespace Nighthawk {
 namespace Client {
 namespace {
 
+using ::envoy::config::core::v3::TypedExtensionConfig;
+using ::google::protobuf::TextFormat;
 using ::testing::TestWithParam;
 using ::testing::ValuesIn;
 
@@ -78,7 +82,7 @@ public:
 
   absl::Status runProcess(RunExpectation expectation, bool do_cancel = false,
                           bool terminate_right_away = false) {
-    envoy::config::core::v3::TypedExtensionConfig typed_dns_resolver_config;
+    TypedExtensionConfig typed_dns_resolver_config;
     Envoy::Network::DnsResolverFactory& dns_resolver_factory =
         Envoy::Network::createDefaultDnsResolverFactory(typed_dns_resolver_config);
     absl::StatusOr<ProcessPtr> process_or_status = ProcessImpl::CreateProcessImpl(
@@ -104,7 +108,7 @@ public:
         cancel_thread.join();
       }
     }
-    const auto result =
+    const RunExpectation result =
         process->run(collector) ? RunExpectation::EXPECT_SUCCESS : RunExpectation::EXPECT_FAILURE;
     EXPECT_EQ(result, expectation);
     if (do_cancel) {
@@ -177,10 +181,6 @@ TEST_P(ProcessTest, CancelExecutionBeforeBeginLoadTest) {
 }
 
 TEST_P(ProcessTest, RunProcessWithStatsSinkConfigured) {
-  // TODO(Dubious90): Instead of applying this flag, move the factory into its own file, register
-  // it, and call it by its type
-  Envoy::TestScopedRuntime scoped_runtime;
-  scoped_runtime.mergeValues({{"envoy.reloadable_features.no_extension_lookup_by_name", "false"}});
   FakeStatsSinkFactory factory;
   Envoy::Registry::InjectFactory<NighthawkStatsSinkFactory> registered(factory);
   options_ = TestUtility::createOptionsImpl(
@@ -208,17 +208,26 @@ TEST_P(ProcessTest, FailsIfUserDefinedOutputPluginSpecified) {
   const std::string user_defined_output_plugin =
       "{name:\"nighthawk.fake_user_defined_output\",typed_config:"
       "{\"@type\":\"type.googleapis.com/nighthawk.FakeUserDefinedOutputConfig\"}}";
-  OptionsPtr options(
+  options_ =
       TestUtility::createOptionsImpl(fmt::format("foo --user-defined-plugin-config {} https://{}/",
-                                                 user_defined_output_plugin, loopback_address_)));
-  envoy::config::core::v3::TypedExtensionConfig typed_dns_resolver_config;
-  Envoy::Network::DnsResolverFactory& dns_resolver_factory =
-      Envoy::Network::createDefaultDnsResolverFactory(typed_dns_resolver_config);
+                                                 user_defined_output_plugin, loopback_address_));
 
-  absl::StatusOr<ProcessPtr> process = ProcessImpl::CreateProcessImpl(
-      *options, dns_resolver_factory, std::move(typed_dns_resolver_config), time_system_);
-  EXPECT_EQ(process.status().code(), absl::StatusCode::kUnimplemented);
+  EXPECT_TRUE(runProcess(RunExpectation::EXPECT_FAILURE).ok());
 }
+
+TEST_P(ProcessTest, CreatesNoUserDefinedOutputPluginsIfNoConfigs) {
+  FakeUserDefinedOutputPluginFactory factory;
+  Envoy::Registry::InjectFactory<FakeUserDefinedOutputPluginFactory> registered(factory);
+  options_ = TestUtility::createOptionsImpl(fmt::format("foo https://{}/", loopback_address_));
+
+  EXPECT_TRUE(
+      runProcess(RunExpectation::EXPECT_SUCCESS, /*do_cancel=*/true, /*terminate_right_away=*/true)
+          .ok());
+  EXPECT_EQ(factory.getPluginCount(), 0);
+}
+
+// TODO(dubious90): Add tests for one or more plugins being created properly, once we aren't
+// returning with unimplemented.
 
 /**
  * Fixture for executing the Nighthawk process with simulated time.
@@ -236,7 +245,7 @@ protected:
     absl::Status process_status;
 
     auto run_thread = std::thread([this, &verify_callback, &process_status] {
-      envoy::config::core::v3::TypedExtensionConfig typed_dns_resolver_config;
+      TypedExtensionConfig typed_dns_resolver_config;
       Envoy::Network::DnsResolverFactory& dns_resolver_factory =
           Envoy::Network::createDefaultDnsResolverFactory(typed_dns_resolver_config);
       absl::StatusOr<ProcessPtr> process_or_status = ProcessImpl::CreateProcessImpl(

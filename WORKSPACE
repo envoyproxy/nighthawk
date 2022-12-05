@@ -34,11 +34,15 @@ load("@envoy//bazel:dependency_imports.bzl", "envoy_dependency_imports")
 envoy_dependency_imports()
 
 # For PIP support:
-load("@rules_python//python:pip.bzl", "pip_install")
+load("@rules_python//python:pip.bzl", "pip_parse")
 
 # This rule translates the specified requirements.txt into
-# @my_deps//:requirements.bzl, which itself exposes a pip_install method.
-pip_install(
+# @my_deps//:requirements.bzl, which itself exposes a pip_parse method.
+pip_parse(
     name = "python_pip_deps",
     requirements = "//:requirements.txt",
 )
+
+load("@python_pip_deps//:requirements.bzl", "install_deps")
+
+install_deps()

@@ -42,6 +42,8 @@ cp bazel-out/_coverage/_coverage_report.dat "${COVERAGE_DATA}"
 
 COVERAGE_VALUE=$(genhtml --prefix ${PWD} --output "${COVERAGE_DIR}" "${COVERAGE_DATA}" | grep lines... | cut -d ' ' -f 4)
 COVERAGE_VALUE=${COVERAGE_VALUE%?}
+echo "Zipping coverage report to ${SRCDIR}/coverage_html.zip".
+zip -r "${SRCDIR}/coverage_html.zip" "${COVERAGE_DIR}"
 
 [[ -z "${ENVOY_COVERAGE_DIR}" ]] || rsync -av "${COVERAGE_DIR}"/ "${ENVOY_COVERAGE_DIR}"
 
@@ -56,3 +58,4 @@ then
   fi
 fi
 echo "HTML coverage report is in ${COVERAGE_DIR}/index.html"
+echo "If running in Azure Pipelines, the coverage report is published as a pipeline artifact."

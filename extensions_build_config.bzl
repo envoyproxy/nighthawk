@@ -7,6 +7,10 @@ EXTENSIONS = {
     "envoy.tracers.zipkin": "//source/extensions/tracers/zipkin:config",
     "envoy.transport_sockets.raw_buffer": "//source/extensions/transport_sockets/raw_buffer:config",
     "envoy.access_loggers.file": "//source/extensions/access_loggers/file:config",
+    "envoy.clusters.eds": "//source/extensions/clusters/eds:eds_lib",
+    "envoy.clusters.static": "//source/extensions/clusters/static:static_cluster_lib",
+    "envoy.clusters.strict_dns": "//source/extensions/clusters/strict_dns:strict_dns_cluster_lib",
+    "envoy.network.dns_resolver.cares": "//source/extensions/network/dns_resolver/cares:config",
 }
 
 DISABLED_BY_DEFAULT_EXTENSIONS = {
@@ -17,3 +21,7 @@ DISABLED_BY_DEFAULT_EXTENSIONS = {
 EXTENSION_CONFIG_VISIBILITY = ["//visibility:public"]
 EXTENSION_PACKAGE_VISIBILITY = ["//visibility:public"]
 CONTRIB_EXTENSION_PACKAGE_VISIBILITY = ["//:contrib_library"]
+MOBILE_PACKAGE_VISIBILITY = ["//:mobile_library"]
+
+# Set this variable to true to disable alwayslink for envoy_cc_library.
+LEGACY_ALWAYSLINK = 1

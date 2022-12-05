@@ -97,11 +97,6 @@ class DynamicClusterConfigManager(DynamicConfigManager):
 
   cluster_template_string = b"""
     name: some_service
-    # Upstream TLS configuration.
-    transport_socket:
-      name: envoy.transport_sockets.tls
-      typed_config:
-        "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
     load_assignment:
       cluster_name: some_service
       # Static endpoint assignment.

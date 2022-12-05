@@ -13,6 +13,7 @@
 #include "nighthawk/common/request_source.h"
 #include "nighthawk/common/sequencer.h"
 #include "nighthawk/common/statistic.h"
+#include "nighthawk/user_defined_output/user_defined_output_plugin.h"
 
 #include "external/envoy/source/common/common/logger.h"
 #include "external/envoy/source/common/common/random_generator.h"
@@ -39,7 +40,9 @@ using namespace std::chrono_literals;
   COUNTER(http_5xx)                                                                                \
   COUNTER(http_xxx)                                                                                \
   COUNTER(pool_overflow)                                                                           \
-  COUNTER(pool_connection_failure)
+  COUNTER(pool_connection_failure)                                                                 \
+  COUNTER(user_defined_plugin_handle_headers_failure)                                              \
+  COUNTER(user_defined_plugin_handle_data_failure)
 
 // For counter metrics, Nighthawk use Envoy Counter directly. For histogram metrics, Nighthawk uses
 // its own Statistic instead of Envoy Histogram. Here BenchmarkClientCounters contains only counters
@@ -108,7 +111,8 @@ public:
                           Envoy::Tracing::HttpTracerSharedPtr& http_tracer,
                           absl::string_view cluster_name, RequestGenerator request_generator,
                           const bool provide_resource_backpressure,
-                          absl::string_view latency_response_header_name);
+                          absl::string_view latency_response_header_name,
+                          std::vector<UserDefinedOutputNamePluginPair> user_defined_output_plugins);
   void setConnectionLimit(uint32_t connection_limit) { connection_limit_ = connection_limit; }
   void setMaxPendingRequests(uint32_t max_pending_requests) {
     max_pending_requests_ = max_pending_requests;
@@ -130,10 +134,16 @@ public:
   bool tryStartRequest(CompletionCallback caller_completion_callback) override;
   Envoy::Stats::Scope& scope() const override { return *scope_; }
 
+  /**
+   * Returns additional output from any specified User Defined Output plugins.
+   */
+  std::vector<nighthawk::client::UserDefinedOutput> getUserDefinedOutputResults() const override;
+
   // StreamDecoderCompletionCallback
   void onComplete(bool success, const Envoy::Http::ResponseHeaderMap& headers) override;
   void onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason reason) override;
   void exportLatency(const uint32_t response_code, const uint64_t latency_ns) override;
+  void handleResponseData(const Envoy::Buffer::Instance& response_data) override;
 
   // Helpers
   absl::optional<::Envoy::Upstream::HttpPoolData> pool() {
@@ -166,6 +176,7 @@ private:
   const bool provide_resource_backpressure_;
   const std::string latency_response_header_name_;
   Envoy::Event::TimerPtr drain_timer_;
+  std::vector<UserDefinedOutputNamePluginPair> user_defined_output_plugins_;
 };
 
 } // namespace Client

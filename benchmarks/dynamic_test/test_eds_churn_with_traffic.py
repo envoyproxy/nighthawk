@@ -14,6 +14,8 @@ from rules_python.python.runfiles import runfiles
 from nighthawk.api.configuration import endpoints_config_manager_pb2
 from test.integration import utility
 
+_BENCHMARK_DURATION = int(os.environ.get("NIGHTHAWK_BENCHMARK_DURATION", 30))
+
 
 def _base_eds_config(
     temp_dir) -> endpoints_config_manager_pb2.DynamicEndpointsConfigManagerSettings:
@@ -25,7 +27,7 @@ def _base_eds_config(
 
 def _run_benchmark(fixture,
                    rps=1000,
-                   duration=30,
+                   duration=_BENCHMARK_DURATION,
                    max_connections=1,
                    max_active_requests=100,
                    request_body_size=0,
@@ -40,7 +42,11 @@ def _run_benchmark(fixture,
       str(max_active_requests), "--concurrency",
       str(concurrency), "--request-header",
       "x-nighthawk-test-server-config:{response_body_size:%s}" % response_size,
-      "--experimental-h1-connection-reuse-strategy", "lru", "--prefetch-connections"
+      "--experimental-h1-connection-reuse-strategy", "lru", "--prefetch-connections",
+      "--failure-predicate benchmark.http_3xx:4294967295",
+      "--failure-predicate benchmark.http_4xx:4294967295",
+      "--failure-predicate benchmark.http_5xx:4294967295",
+      "--failure-predicate benchmark.pool_connection_failure:4294967295"
   ]
 
   if request_body_size > 0:

@@ -8,6 +8,9 @@
 
 #include "external/envoy/source/common/common/statusor.h"
 #include "external/envoy/source/common/http/header_map_impl.h"
+#include "external/envoy_api/envoy/config/core/v3/extension.pb.h"
+
+#include "api/client/output.pb.h"
 
 namespace Nighthawk {
 
@@ -50,7 +53,7 @@ public:
    *
    * @param headers
    */
-  virtual absl::Status handleResponseHeaders(const Envoy::Http::ResponseHeaderMap* headers) PURE;
+  virtual absl::Status handleResponseHeaders(const Envoy::Http::ResponseHeaderMap& headers) PURE;
 
   /**
    * Receives a single response body, and allows the plugin to collect data based on
@@ -76,13 +79,12 @@ public:
    * processes.
    *
    * Plugins should return statuses for invalid data or when they fail to process the data. Any
-   * non-ok status will be logged and increment a counter that will be added to the worker Result.
-   * Callers can also provide a failure predicate for this counter that will abort the request
-   * after n plugin failures.
+   * non-ok status will be logged and included as a UserDefinedOutput with an error_message instead
+   * of a typed_output. Standard nighthawk processing will be unaffected.
    *
    * @return output Any-packed per_worker output to add to the worker's Result.
    */
-  virtual absl::StatusOr<Envoy::ProtobufWkt::Any> getPerWorkerOutput() PURE;
+  virtual absl::StatusOr<Envoy::ProtobufWkt::Any> getPerWorkerOutput() const PURE;
 };
 
 using UserDefinedOutputPluginPtr = std::unique_ptr<UserDefinedOutputPlugin>;
@@ -108,20 +110,22 @@ public:
    * @throw Envoy::EnvoyException If the Any proto cannot be unpacked as the type expected by the
    * plugin.
    */
-  virtual UserDefinedOutputPluginPtr
-  createUserDefinedOutputPlugin(const Envoy::Protobuf::Message& typed_config,
+  virtual absl::StatusOr<UserDefinedOutputPluginPtr>
+  createUserDefinedOutputPlugin(const Envoy::ProtobufWkt::Any& typed_config,
                                 const WorkerMetadata& worker_metadata) PURE;
 
   /**
    * Aggregates the outputs from every worker's UserDefinedOutputPlugin instance into a global
    * output, representing the cumulative data across all of the plugins combined.
    *
-   * The protobuf type of the inputs and output must all be the same type.
+   * If a plugin returned an error when generating its per-worker output, it will still be included
+   * in per_worker_outputs as a UserDefinedOutput with an error message. It is up to the plugin
+   * author the correct thing to do on aggregation if one or more of the per worker outputs
+   * contains errors.
    *
    * This method should return statuses for invalid data or when they fail to process the data. Any
-   * non-ok status will be logged and increment a counter that will be added to the worker Result.
-   * Callers can also provide a failure predicate for this counter that will abort the request
-   * after n plugin failures.
+   * non-ok status will be logged and included as a UserDefinedOutput with an error_message instead
+   * of a typed_output. Standard nighthawk processing will be unaffected.
    *
    * Pseudocode Example:
    *     AggregateGlobalOutput(
@@ -131,11 +135,16 @@ public:
    *     {int_value: 3, array_value: ["a","b","c"]}
    *
    * @param per_worker_outputs List of the outputs that every per-worker instance of the User
-   *    Defined Output Plugin created.
+   *    Defined Output Plugin created, including errors in generating that output.
 
    * @return global_output Any-packed aggregated output to add to the global Result.
    */
-  virtual absl::StatusOr<Envoy::ProtobufWkt::Any>
-  AggregateGlobalOutput(absl::Span<const Envoy::ProtobufWkt::Any> per_worker_outputs) PURE;
+  virtual absl::StatusOr<Envoy::ProtobufWkt::Any> AggregateGlobalOutput(
+      absl::Span<const nighthawk::client::UserDefinedOutput> per_worker_outputs) PURE;
 };
+
+using UserDefinedOutputConfigFactoryPair =
+    std::pair<envoy::config::core::v3::TypedExtensionConfig, UserDefinedOutputPluginFactory*>;
+using UserDefinedOutputNamePluginPair = std::pair<std::string, UserDefinedOutputPluginPtr>;
+
 } // namespace Nighthawk
