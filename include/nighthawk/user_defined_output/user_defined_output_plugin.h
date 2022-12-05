@@ -28,13 +28,16 @@ struct WorkerMetadata {
  * All UserDefinedOutputPlugins must be thread safe, as it may receive multiple responses
  * concurrently. In addition, handleResponseData and handleResponseHeaders may be called in any
  * order or possibly concurrently. GetPerWorkerOutput is guaranteed to be called after
- * handleResponseData and handleResponseHeaders have been called for every relevant response.
+ * handleResponseData and handleResponseHeaders have been called for every response in its worker
+ * thread.
  *
- * TODO(dubious90): Throughout file, update comments to contain counter names and other related
- * specifics.
+ * handleResponseData and handleResponseHeaders are only called on valid http responses for which
+ * the request actually was sent out. For more information, see
+ * https://www.envoyproxy.io/docs/envoy/latest/intro/life_of_a_request#http-filter-chain-processing.
+ * They are each called by the corresponding decode api.
  *
- * TODO(dubious90): Comment on behavior of "relevant responses". e.g. If this plugin still gets
- * called on pool_overflows or other edge cases
+ * Note that GetPerWorkerOutput will be called regardless of whether or not
+ * handleResponseHeaders/handleResponseData were ever successfully called.
  */
 class UserDefinedOutputPlugin {
 public:
@@ -45,7 +48,8 @@ public:
    * on those headers.
    *
    * Plugins should return statuses for invalid data or when they fail to process the data. Any
-   * non-ok status will be logged and increment a counter that will be added to the worker Result.
+   * non-ok status will be logged and increment a counter
+   * (benchmark.user_defined_plugin_handle_headers_failure) that will be added to the worker Result.
    * Callers can also provide a failure predicate for this counter that will abort the request
    * after n plugin failures.
    *
@@ -60,7 +64,8 @@ public:
    * that response body.
    *
    * Plugins should return statuses for invalid data or when they fail to process the data. Any
-   * non-ok status will be logged and increment a counter that will be added to the worker Result.
+   * non-ok status will be logged and increment a counter
+   * (benchmark.user_defined_plugin_handle_data_failure) that will be added to the worker Result.
    * Callers can also provide a failure predicate for this counter that will abort the request
    * after n plugin failures.
    *
