@@ -348,18 +348,17 @@ getUserDefinedFactoryConfigPairs(const Options& options) {
  * @param worker_user_defined_outputs The per worker results to collect and organize.
  */
 void collectUserDefinedOutputs(
-    absl::flat_hash_map<std::string, std::vector<nighthawk::client::UserDefinedOutput>>*
+    absl::flat_hash_map<std::string, std::vector<nighthawk::client::UserDefinedOutput>>&
         user_defined_outputs_by_plugin,
     const std::vector<nighthawk::client::UserDefinedOutput>& worker_user_defined_outputs) {
   for (const nighthawk::client::UserDefinedOutput& user_defined_output :
        worker_user_defined_outputs) {
-    std::vector<nighthawk::client::UserDefinedOutput> cross_worker_results_for_plugin =
-        (user_defined_outputs_by_plugin->contains(user_defined_output.plugin_name())
-             ? user_defined_outputs_by_plugin->find(user_defined_output.plugin_name())->second
-             : std::vector<nighthawk::client::UserDefinedOutput>{});
-    cross_worker_results_for_plugin.emplace_back(user_defined_output);
-    user_defined_outputs_by_plugin->insert_or_assign(user_defined_output.plugin_name(),
-                                                     cross_worker_results_for_plugin);
+    absl::string_view plugin_name = user_defined_output.plugin_name();
+    if (!user_defined_outputs_by_plugin.contains(plugin_name)) {
+      user_defined_outputs_by_plugin[plugin_name] = {user_defined_output};
+    } else {
+      user_defined_outputs_by_plugin[plugin_name].push_back(user_defined_output);
+    }
   }
 }
 
@@ -395,10 +394,10 @@ std::vector<nighthawk::client::UserDefinedOutput> compileGlobalUserDefinedPlugin
         *global_output.mutable_error_message() = global_output_any.status().ToString();
       }
     } else {
-      throw NighthawkException(
-          "No per worker outputs found for a factory when performing aggregation");
+      *global_output.mutable_error_message() =
+          "No per worker outputs found for a factory when performing aggregation";
     }
-    global_outputs.emplace_back(global_output);
+    global_outputs.push_back(global_output);
   }
   return global_outputs;
 }
@@ -864,7 +863,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
     }
     std::vector<nighthawk::client::UserDefinedOutput> worker_user_defined_outputs =
         worker->getUserDefinedOutputResults();
-    collectUserDefinedOutputs(&user_defined_outputs_by_plugin, worker_user_defined_outputs);
+    collectUserDefinedOutputs(user_defined_outputs_by_plugin, worker_user_defined_outputs);
     // We don't write per-worker results if we only have a single worker, because the global
     // results will be precisely the same.
     if (workers_.size() > 1) {
