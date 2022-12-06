@@ -37,6 +37,18 @@ envoy_cc_binary(
     ],
 )
 
+# A testonly version of the nighthawk client, intended to be built with any required test plugins
+# to enable integration test use cases.
+envoy_cc_binary(
+    name = "nighthawk_client_testonly",
+    repository = "@envoy",
+    deps = [
+        "//source/exe:nighthawk_client_entry_lib",
+        "//source/user_defined_output:log_response_headers_plugin",
+        "//test/user_defined_output/fake_plugin:fake_user_defined_output",
+    ],
+)
+
 envoy_cc_binary(
     name = "nighthawk_test_server",
     repository = "@envoy",

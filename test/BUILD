@@ -171,7 +171,9 @@ envoy_cc_test(
     srcs = ["process_test.cc"],
     repository = "@envoy",
     deps = [
+        "//api/user_defined_output:log_response_headers_proto_cc_proto",
         "//source/client:nighthawk_client_lib",
+        "//source/user_defined_output:log_response_headers_plugin",
         "//test/client:utility_lib",
         "//test/sink:test_stats_sink_config_proto_cc_proto",
         "//test/test_common:environment_lib",

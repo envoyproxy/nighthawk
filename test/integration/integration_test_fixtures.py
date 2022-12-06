@@ -87,7 +87,7 @@ class IntegrationTestBase():
     self.parameters = {}
     self.grpc_service = None
     self.test_server = None
-    self.nighthawk_client_path = "nighthawk_client"
+    self.nighthawk_client_path = "nighthawk_client_testonly"
     self._nighthawk_test_server_path = "nighthawk_test_server"
     self._nighthawk_test_config_path = server_config
     self._nighthawk_service_path = "nighthawk_service"

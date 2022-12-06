@@ -943,7 +943,7 @@ def test_http_h1_response_header_latency_tracking(http_test_server_fixture, serv
 
 
 def _run_client_with_args(args):
-  return utility.run_binary_with_args("nighthawk_client", args)
+  return utility.run_binary_with_args("nighthawk_client_testonly", args)
 
 
 def test_client_help():

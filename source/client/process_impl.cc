@@ -338,6 +338,70 @@ getUserDefinedFactoryConfigPairs(const Options& options) {
   return factory_config_pairs;
 }
 
+/**
+ * Takes in a single worker's user defined outputs and collects them into the
+ * user_defined_outputs_by_plugin map. When called for each worker, transforms the outputs from
+ * being mapped by Worker to being mapped by Plugin.
+ *
+ * @param user_defined_outputs_by_plugin The map that this function will collect the worker data
+ * into, maps plugin name to the set of results for that plugin.
+ * @param worker_user_defined_outputs The per worker results to collect and organize.
+ */
+void collectUserDefinedOutputs(
+    absl::flat_hash_map<std::string, std::vector<nighthawk::client::UserDefinedOutput>>&
+        user_defined_outputs_by_plugin,
+    const std::vector<nighthawk::client::UserDefinedOutput>& worker_user_defined_outputs) {
+  for (const nighthawk::client::UserDefinedOutput& user_defined_output :
+       worker_user_defined_outputs) {
+    absl::string_view plugin_name = user_defined_output.plugin_name();
+    if (!user_defined_outputs_by_plugin.contains(plugin_name)) {
+      user_defined_outputs_by_plugin[plugin_name] = {user_defined_output};
+    } else {
+      user_defined_outputs_by_plugin[plugin_name].push_back(user_defined_output);
+    }
+  }
+}
+
+/**
+ * For each provided user defined output plugin factory, aggregates all of its corresponding results
+ * into a global user defined output.
+ *
+ * @param user_defined_outputs_by_plugin A map of plugin name to the set of collected results for
+ * that plugin.
+ * @param user_defined_output_factories A vector of the plugin factories used in this execution
+ * process.
+ * @return std::vector<nighthawk::client::UserDefinedOutput> The aggregated global results for each
+ * plugin.
+ */
+std::vector<nighthawk::client::UserDefinedOutput> compileGlobalUserDefinedPluginOutputs(
+    const absl::flat_hash_map<std::string, std::vector<nighthawk::client::UserDefinedOutput>>&
+        user_defined_outputs_by_plugin,
+    const std::vector<UserDefinedOutputConfigFactoryPair>& user_defined_output_factories) {
+  std::vector<nighthawk::client::UserDefinedOutput> global_outputs;
+  for (const UserDefinedOutputConfigFactoryPair& config_factory_pair :
+       user_defined_output_factories) {
+    UserDefinedOutputPluginFactory* factory = config_factory_pair.second;
+    nighthawk::client::UserDefinedOutput global_output;
+    global_output.set_plugin_name(factory->name());
+
+    auto it = user_defined_outputs_by_plugin.find(factory->name());
+    if (it != user_defined_outputs_by_plugin.end()) {
+      absl::StatusOr<Envoy::ProtobufWkt::Any> global_output_any =
+          factory->AggregateGlobalOutput(it->second);
+      if (global_output_any.ok()) {
+        *global_output.mutable_typed_output() = *global_output_any;
+      } else {
+        *global_output.mutable_error_message() = global_output_any.status().ToString();
+      }
+    } else {
+      *global_output.mutable_error_message() =
+          "No per worker outputs found for a factory when performing aggregation";
+    }
+    global_outputs.push_back(global_output);
+  }
+  return global_outputs;
+}
+
 // Disables the hot restart Envoy functionality.
 std::string HotRestartDisabled(bool) { return "hot restart is disabled"; }
 
@@ -549,10 +613,6 @@ absl::Status ProcessImpl::createWorkers(const uint32_t concurrency,
     if (!plugins.ok()) {
       return plugins.status();
     }
-    if (!plugins->empty()) {
-      return absl::UnimplementedError(
-          "User Defined Output Plugin feature is still being implemented.");
-    }
     workers_.push_back(std::make_unique<ClientWorkerImpl>(
         *api_, tls_, cluster_manager_, benchmark_client_factory_, termination_predicate_factory_,
         sequencer_factory_, request_generator_factory_, store_root_, worker_number,
@@ -577,7 +637,7 @@ std::vector<StatisticPtr>
 ProcessImpl::vectorizeStatisticPtrMap(const StatisticPtrMap& statistics) const {
   std::vector<StatisticPtr> v;
   for (const auto& statistic : statistics) {
-    // Clone the orinal statistic into a new one.
+    // Clone the original statistic into a new one.
     auto new_statistic =
         statistic.second->createNewInstanceOfSameType()->combine(*(statistic.second));
     new_statistic->setId(statistic.first);
@@ -787,7 +847,10 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
   int i = 0;
   std::chrono::nanoseconds total_execution_duration = 0ns;
   absl::optional<Envoy::SystemTime> first_acquisition_time = absl::nullopt;
-
+  // Maps registered user defined output plugin name to the output results for every worker's plugin
+  // of that name.
+  absl::flat_hash_map<std::string, std::vector<nighthawk::client::UserDefinedOutput>>
+      user_defined_outputs_by_plugin{};
   for (auto& worker : workers_) {
     auto sequencer_execution_duration = worker->phase().sequencer().executionDuration();
     absl::optional<Envoy::SystemTime> worker_first_acquisition_time =
@@ -798,6 +861,9 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
               ? std::min(first_acquisition_time.value(), worker_first_acquisition_time.value())
               : worker_first_acquisition_time.value();
     }
+    std::vector<nighthawk::client::UserDefinedOutput> worker_user_defined_outputs =
+        worker->getUserDefinedOutputResults();
+    collectUserDefinedOutputs(user_defined_outputs_by_plugin, worker_user_defined_outputs);
     // We don't write per-worker results if we only have a single worker, because the global
     // results will be precisely the same.
     if (workers_.size() > 1) {
@@ -805,7 +871,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
       collector.addResult(fmt::format("worker_{}", i),
                           vectorizeStatisticPtrMap(worker->statistics()),
                           worker->threadLocalCounterValues(), sequencer_execution_duration,
-                          worker_first_acquisition_time, /*user_defined_output_results*/ {});
+                          worker_first_acquisition_time, worker_user_defined_outputs);
     }
     total_execution_duration += sequencer_execution_duration;
     i++;
@@ -816,12 +882,15 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
   // sure the global aggregated numbers line up, we must take care not to shut down the benchmark
   // client before we do this, as that will increment certain counters like connections closed,
   // etc.
-  const auto& counters = Utility().mapCountersFromStore(
+  const std::map<std::string, uint64_t>& counters = Utility().mapCountersFromStore(
       store_root_, [](absl::string_view, uint64_t value) { return value > 0; });
   StatisticFactoryImpl statistic_factory(options_);
+  std::vector<nighthawk::client::UserDefinedOutput> global_user_defined_outputs =
+      compileGlobalUserDefinedPluginOutputs(user_defined_outputs_by_plugin,
+                                            user_defined_output_factories_);
   collector.addResult("global", mergeWorkerStatistics(workers_), counters,
                       total_execution_duration / workers_.size(), first_acquisition_time,
-                      /*user_defined_output_results*/ {});
+                      global_user_defined_outputs);
   if (counters.find("sequencer.failed_terminations") == counters.end()) {
     return true;
   } else {
