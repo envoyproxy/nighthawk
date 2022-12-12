@@ -124,9 +124,9 @@ Envoy::ProtobufTypes::MessagePtr LogResponseHeadersPluginFactory::createEmptyCon
 
 absl::StatusOr<UserDefinedOutputPluginPtr>
 LogResponseHeadersPluginFactory::createUserDefinedOutputPlugin(
-    const Envoy::ProtobufWkt::Any& message, const WorkerMetadata& worker_metadata) {
+    const Envoy::ProtobufWkt::Any& config_any, const WorkerMetadata& worker_metadata) {
   LogResponseHeadersConfig config;
-  absl::Status unpack_status = Envoy::MessageUtil::unpackToNoThrow(message, config);
+  absl::Status unpack_status = Envoy::MessageUtil::unpackToNoThrow(config_any, config);
   if (!unpack_status.ok()) {
     return unpack_status;
   }
