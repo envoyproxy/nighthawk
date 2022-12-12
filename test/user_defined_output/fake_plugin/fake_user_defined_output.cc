@@ -65,10 +65,10 @@ Envoy::ProtobufTypes::MessagePtr FakeUserDefinedOutputPluginFactory::createEmpty
 
 absl::StatusOr<UserDefinedOutputPluginPtr>
 FakeUserDefinedOutputPluginFactory::createUserDefinedOutputPlugin(
-    const Envoy::ProtobufWkt::Any& message, const WorkerMetadata& worker_metadata) {
+    const Envoy::ProtobufWkt::Any& config_any, const WorkerMetadata& worker_metadata) {
   plugin_count_++;
   FakeUserDefinedOutputConfig config;
-  absl::Status status = Envoy::MessageUtil::unpackToNoThrow(message, config);
+  absl::Status status = Envoy::MessageUtil::unpackToNoThrow(config_any, config);
   if (!status.ok()) {
     return status;
   }
