@@ -425,7 +425,7 @@ void SinkableHdrStatistic::recordValue(uint64_t value) {
   HdrStatistic::addValue(value);
   // Currently in Envoy Scope implementation, deliverHistogramToSinks() will flush the histogram
   // value directly to stats Sinks.
-  scope_.deliverHistogramToSinks(*this, value);
+  scope_.store().deliverHistogramToSinks(*this, value);
 }
 
 std::string SinkableHdrStatistic::tagExtractedName() const {
@@ -444,7 +444,7 @@ void SinkableCircllhistStatistic::recordValue(uint64_t value) {
   CircllhistStatistic::addValue(value);
   // Currently in Envoy Scope implementation, deliverHistogramToSinks() will flush the histogram
   // value directly to stats Sinks.
-  scope_.deliverHistogramToSinks(*this, value);
+  scope_.store().deliverHistogramToSinks(*this, value);
 }
 
 std::string SinkableCircllhistStatistic::tagExtractedName() const {
