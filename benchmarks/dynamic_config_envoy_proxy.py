@@ -77,8 +77,8 @@ def inject_dynamic_envoy_http_proxy_fixture(request, server_config, proxy_config
     dynamic_config_generator: Function used to generate the settings for the configuration generator.
     caplog: The pytest `caplog` test fixture used to examine logged messages.
 
-  Yields: a successfully set up InjectDynamicHttpProxyIntegrationTestBase
-  instance.
+  Yields:
+    A successfully set up InjectDynamicHttpProxyIntegrationTestBase instance.
   """
   fixture = InjectDynamicHttpProxyIntegrationTestBase(request, server_config, proxy_config,
                                                       dynamic_config_generator)

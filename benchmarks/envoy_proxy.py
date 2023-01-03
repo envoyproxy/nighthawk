@@ -162,7 +162,8 @@ def inject_envoy_http_proxy_fixture(request, server_config, proxy_config, caplog
     proxy_config: path to the proxy configuration template.
     caplog: The pytest `caplog` test fixture used to examine logged messages.
 
-  Yields: a successfully set up InjectHttpProxyIntegrationTestBase instance.
+  Yields:
+    A successfully set up InjectHttpProxyIntegrationTestBase instance.
   """
   fixture = InjectHttpProxyIntegrationTestBase(request, server_config, proxy_config)
   fixture.setUp()
