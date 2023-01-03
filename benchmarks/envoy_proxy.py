@@ -37,7 +37,7 @@ class EnvoyProxyServer(nighthawk_test_server.NighthawkTestServer):
                tag=""):
     """Initialize an EnvoyProxyServer instance.
 
-    Arguments:
+    Args:
       config_template_path: Configuration template for the proxy.
       server_ip: IP address for the proxy to use.
       ip_version: IP version that the proxy should use when listening.
@@ -104,7 +104,7 @@ class InjectHttpProxyIntegrationTestBase(integration_test_fixtures.HttpIntegrati
   def __init__(self, request, server_config, proxy_config):
     """Initialize an InjectHttpProxyIntegrationTestBase.
 
-    Arguments:
+    Args:
       request: The pytest `request` test fixture used to determine information
         about the currently executing test case.
       server_config: Path to the server configuration.
@@ -156,13 +156,14 @@ def inject_envoy_http_proxy_fixture(request, server_config, proxy_config, caplog
   NOTE: Depends on the proxy_config fixture, which must be explicitly imported
   into the consuming module when using this fixture.
 
-  Arguments:
+  Args:
     request: supplies the ip version.
     server_config: path to the server configuration template.
     proxy_config: path to the proxy configuration template.
     caplog: The pytest `caplog` test fixture used to examine logged messages.
 
-  Yields: a successfully set up InjectHttpProxyIntegrationTestBase instance.
+  Yields:
+    A successfully set up InjectHttpProxyIntegrationTestBase instance.
   """
   fixture = InjectHttpProxyIntegrationTestBase(request, server_config, proxy_config)
   fixture.setUp()

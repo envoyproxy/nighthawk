@@ -290,7 +290,7 @@ class IntegrationTestBase():
   def transformNighthawkJson(self, json, format="human"):
     """Use to obtain one of the supported output from Nighthawk's raw json output.
 
-    Arguments:
+    Args:
       json: String containing raw json output obtained via nighthawk_client --output-format=json
       format: String that specifies the desired output format. Must be one of [human|yaml|dotted-string|fortio|csv]. Optional, defaults to "human".
     """
