@@ -32,7 +32,7 @@ class InjectDynamicHttpProxyIntegrationTestBase(envoy_proxy.InjectHttpProxyInteg
                                                   message.Message]):
     """Initialize an InjectDynamicHttpProxyIntegrationTestBase.
 
-    Arguments:
+    Args:
       request: The pytest `request` test fixture used to determine information
         about the currently executing test case.
       server_config: Path to the server configuration.
@@ -70,7 +70,7 @@ def inject_dynamic_envoy_http_proxy_fixture(request, server_config, proxy_config
                                             dynamic_config_generator, caplog):
   """Injects a dynamically configured Envoy proxy in front of the test server.
 
-  Arguments:
+  Args:
     request: The pytest `request` test fixture used to determine information about the currently executing test case.
     server_config: Path to the server configuration template.
     proxy_config: Path to the proxy configuration template.
