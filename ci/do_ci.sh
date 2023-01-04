@@ -83,7 +83,7 @@ function do_unit_test_coverage() {
     export COVERAGE_THRESHOLD=92
     echo "bazel coverage build with tests ${TEST_TARGETS}"
     test/run_nighthawk_bazel_coverage.sh ${TEST_TARGETS}
-    exit 0
+    exit 1
 }
 
 function do_integration_test_coverage() {
