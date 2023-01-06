@@ -118,7 +118,7 @@ stages:
       displayName: 'Publish the line coverage report'
       inputs:
         targetPath: $(Build.SourcesDirectory)/coverage_html.zip
-        artifactName: UnitTestCoverageReport
+        artifactName: UnitTestCoverageReport-$(System.JobAttempt)
 
 - stage: coverage_integration
   dependsOn: ["test"]
