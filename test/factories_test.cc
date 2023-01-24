@@ -23,7 +23,7 @@ class FactoriesTest : public Test {
 public:
   FactoriesTest()
       : api_(Envoy::Api::createApiForTest(stats_store_)),
-        http_tracer_(std::make_unique<Envoy::Tracing::MockHttpTracer>()) {}
+        http_tracer_(std::make_unique<Envoy::Tracing::MockTracer>()) {}
 
   Envoy::Api::ApiPtr api_;
   Envoy::Stats::MockIsolatedStatsStore stats_store_;
