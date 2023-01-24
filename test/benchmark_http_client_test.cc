@@ -190,8 +190,9 @@ public:
   // verifyBenchmarkClientProcessesExpectedInflightRequests.
   void setupBenchmarkClient(const RequestGenerator& request_generator) {
     client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
-        *api_, *dispatcher_, *store_.rootScope(), statistic_, Envoy::Http::Protocol::Http11, cluster_manager_,
-        http_tracer_, "benchmark", request_generator, /*provide_resource_backpressure*/ true,
+        *api_, *dispatcher_, *store_.rootScope(), statistic_, Envoy::Http::Protocol::Http11,
+        cluster_manager_, http_tracer_, "benchmark", request_generator,
+        /*provide_resource_backpressure*/ true,
         /*response_header_with_latency_input=*/"", std::move(user_defined_output_plugins_));
   }
 
