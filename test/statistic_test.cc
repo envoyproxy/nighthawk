@@ -431,7 +431,7 @@ TYPED_TEST_SUITE(SinkableStatisticTest, SinkableTypes);
 
 TYPED_TEST(SinkableStatisticTest, EmptySinkableStatistic) {
   Envoy::Stats::MockIsolatedStatsStore mock_store;
-  TypeParam stat(mock_store);
+  TypeParam stat(*mock_store.rootScope());
   EXPECT_EQ(0, stat.count());
   EXPECT_TRUE(std::isnan(stat.mean()));
   EXPECT_TRUE(std::isnan(stat.pvariance()));
@@ -448,7 +448,7 @@ TYPED_TEST(SinkableStatisticTest, EmptySinkableStatistic) {
 TYPED_TEST(SinkableStatisticTest, SimpleSinkableStatistic) {
   Envoy::Stats::MockIsolatedStatsStore mock_store;
   const int worker_id = 0;
-  TypeParam stat(mock_store, worker_id);
+  TypeParam stat(*mock_store.rootScope(), worker_id);
   const uint64_t sample_value = 123;
   const std::string stat_name = "stat_name";
 
