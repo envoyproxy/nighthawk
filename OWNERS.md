@@ -6,7 +6,7 @@ active maintainers if you have questions or topics for discussion.
 # Active Maintainers
 
 * Jakub Sobon ([mum4k](https://github.com/mum4k)) (mumak@google.com)
-* Eric Rosenquist ([eric846](https://github.com/eric846))
+* ([eric846](https://github.com/eric846))
 
 # Emeritus maintainers
 
