@@ -175,6 +175,7 @@ private:
   Envoy::Stats::AllocatorImpl stats_allocator_;
   Envoy::ThreadLocal::InstanceImpl tls_;
   Envoy::Stats::ThreadLocalStoreImpl store_root_;
+  Envoy::Stats::Scope& scope_root_{*store_root_.rootScope()};
   Envoy::Quic::QuicStatNames quic_stat_names_;
   envoy::config::bootstrap::v3::Bootstrap bootstrap_;
   Envoy::Api::ApiPtr api_;

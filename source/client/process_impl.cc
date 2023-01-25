@@ -730,7 +730,7 @@ void ProcessImpl::maybeCreateTracingDriver(const envoy::config::trace::v3::Traci
     auto zipkin_config = dynamic_cast<const envoy::config::trace::v3::ZipkinConfig&>(*message);
     Envoy::Tracing::DriverPtr zipkin_driver =
         std::make_unique<Envoy::Extensions::Tracers::Zipkin::Driver>(
-            zipkin_config, *cluster_manager_, store_root_, tls_,
+            zipkin_config, *cluster_manager_, scope_root_, tls_,
             Envoy::Runtime::LoaderSingleton::get(), *local_info_, generator_, time_system_);
     http_tracer_ =
         std::make_unique<Envoy::Tracing::TracerImpl>(std::move(zipkin_driver), *local_info_);
