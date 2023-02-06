@@ -27,7 +27,7 @@ public:
         request_headers_(std::make_shared<Envoy::Http::TestRequestHeaderMapImpl>(
             std::initializer_list<std::pair<std::string, std::string>>(
                 {{":method", "GET"}, {":path", "/foo"}}))),
-        http_tracer_(std::make_unique<Envoy::Tracing::HttpNullTracer>()),
+        http_tracer_(std::make_unique<Envoy::Tracing::NullTracer>()),
         test_header_(std::make_unique<Envoy::Http::TestResponseHeaderMapImpl>(
             std::initializer_list<std::pair<std::string, std::string>>({{":status", "200"}}))),
         test_trailer_(std::make_unique<Envoy::Http::TestResponseTrailerMapImpl>(
@@ -130,11 +130,11 @@ TEST_F(StreamDecoderTest, LatencyIsNotMeasured) {
 }
 
 TEST_F(StreamDecoderTest, LatencyIsMeasured) {
-  http_tracer_ = std::make_unique<Envoy::Tracing::MockHttpTracer>();
-  EXPECT_CALL(*dynamic_cast<Envoy::Tracing::MockHttpTracer*>(http_tracer_.get()),
+  http_tracer_ = std::make_unique<Envoy::Tracing::MockTracer>();
+  EXPECT_CALL(*dynamic_cast<Envoy::Tracing::MockTracer*>(http_tracer_.get()),
               startSpan_(_, _, _, _))
       .WillRepeatedly(
-          Invoke([&](const Envoy::Tracing::Config& config, const Envoy::Http::HeaderMap&,
+          Invoke([&](const Envoy::Tracing::Config& config, Envoy::Tracing::TraceContext&,
                      const Envoy::StreamInfo::StreamInfo&,
                      const Envoy::Tracing::Decision) -> Envoy::Tracing::Span* {
             EXPECT_EQ(Envoy::Tracing::OperationName::Egress, config.operationName());

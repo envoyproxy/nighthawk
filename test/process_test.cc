@@ -16,6 +16,7 @@
 #include "source/client/output_collector_impl.h"
 #include "source/client/process_impl.h"
 #include "source/common/uri_impl.h"
+#include "source/user_defined_output/log_response_headers_plugin.h"
 
 #include "test/client/utility.h"
 #include "test/sink/test_stats_sink_config.pb.h"
@@ -30,6 +31,7 @@ namespace {
 
 using ::envoy::config::core::v3::TypedExtensionConfig;
 using ::google::protobuf::TextFormat;
+using ::testing::HasSubstr;
 using ::testing::TestWithParam;
 using ::testing::ValuesIn;
 
@@ -110,17 +112,17 @@ public:
     }
     const RunExpectation result =
         process->run(collector) ? RunExpectation::EXPECT_SUCCESS : RunExpectation::EXPECT_FAILURE;
+    output_proto_ = collector.toProto();
     EXPECT_EQ(result, expectation);
     if (do_cancel) {
       if (cancel_thread.joinable()) {
         cancel_thread.join();
       }
-      auto proto = collector.toProto();
       if (terminate_right_away) {
-        EXPECT_EQ(0, proto.results().size());
+        EXPECT_EQ(0, output_proto_.results().size());
       } else {
         int graceful_stop_requested = 0;
-        for (const auto& result : proto.results()) {
+        for (const auto& result : output_proto_.results()) {
           for (const auto& counter : result.counters()) {
             if (counter.name() == "graceful_stop_requested") {
               graceful_stop_requested++;
@@ -136,6 +138,7 @@ public:
 
   const std::string loopback_address_;
   OptionsPtr options_;
+  nighthawk::client::Output output_proto_;
   Envoy::Event::RealTimeSystem time_system_; // NO_CHECK_FORMAT(real_time)
 };
 
@@ -204,30 +207,134 @@ TEST_P(ProcessTest, NoFlushWhenCancelExecutionBeforeLoadTestBegin) {
   EXPECT_EQ(numFlushes, 0);
 }
 
-TEST_P(ProcessTest, FailsIfUserDefinedOutputPluginSpecified) {
+TEST_P(ProcessTest, CreatesUserDefinedOutputPluginPerWorkerThread) {
+  FakeUserDefinedOutputPluginFactory factory;
+  Envoy::Registry::InjectFactory<UserDefinedOutputPluginFactory> registered(factory);
   const std::string user_defined_output_plugin =
       "{name:\"nighthawk.fake_user_defined_output\",typed_config:"
       "{\"@type\":\"type.googleapis.com/nighthawk.FakeUserDefinedOutputConfig\"}}";
+  options_ = TestUtility::createOptionsImpl(
+      fmt::format("foo --concurrency 2 --user-defined-plugin-config {} https://{}/",
+                  user_defined_output_plugin, loopback_address_));
+
+  // Expect connection failure, but ensure that User Defined Outputs were set up correctly.
+  EXPECT_TRUE(runProcess(RunExpectation::EXPECT_FAILURE).ok());
+  EXPECT_EQ(factory.getPluginCount(), 2);
+}
+
+TEST_P(ProcessTest, ReturnsUserDefinedOutputsInResults) {
+  const std::string fake_plugin =
+      "{name:\"nighthawk.fake_user_defined_output\",typed_config:"
+      "{\"@type\":\"type.googleapis.com/nighthawk.FakeUserDefinedOutputConfig\"}}";
+  const std::string logging_plugin =
+      "{name:\"nighthawk.log_response_headers_plugin\",typed_config:"
+      "{\"@type\":\"type.googleapis.com/nighthawk.LogResponseHeadersConfig\","
+      "logging_mode:\"LM_LOG_ALL_RESPONSES\"}}";
   options_ =
-      TestUtility::createOptionsImpl(fmt::format("foo --user-defined-plugin-config {} https://{}/",
-                                                 user_defined_output_plugin, loopback_address_));
+      TestUtility::createOptionsImpl(fmt::format("foo --concurrency 1 --user-defined-plugin-config "
+                                                 "{} --user-defined-plugin-config {} https://{}/",
+                                                 fake_plugin, logging_plugin, loopback_address_));
+
+  // Expect connection failure, but ensure that User Defined Outputs were set up correctly.
+  EXPECT_TRUE(runProcess(RunExpectation::EXPECT_FAILURE).ok());
+
+  nighthawk::client::UserDefinedOutput expected_fake_user_defined_output;
+  TextFormat::ParseFromString(R"(plugin_name: "nighthawk.fake_user_defined_output"
+                                 typed_output {
+                                   [type.googleapis.com/nighthawk.FakeUserDefinedOutput] {
+                                     worker_name: "global"
+                                   }
+                                 }
+                                 )",
+                              &expected_fake_user_defined_output);
+  nighthawk::client::UserDefinedOutput expected_logging_output;
+  TextFormat::ParseFromString(R"(plugin_name: "nighthawk.log_response_headers_plugin"
+                                 typed_output {
+                                   [type.googleapis.com/nighthawk.LogResponseHeadersOutput] {}
+                                 }
+                                 )",
+                              &expected_logging_output);
+
+  ASSERT_EQ(output_proto_.results_size(), 1);
+  const nighthawk::client::Result& result = output_proto_.results(0);
+  ASSERT_EQ(result.user_defined_outputs_size(), 2);
+  const nighthawk::client::UserDefinedOutput actual_fake_output =
+      result.user_defined_outputs(0).plugin_name() == "nighthawk.fake_user_defined_output"
+          ? result.user_defined_outputs(0)
+          : result.user_defined_outputs(1);
+  const nighthawk::client::UserDefinedOutput actual_logging_output =
+      result.user_defined_outputs(0).plugin_name() == "nighthawk.log_response_headers_plugin"
+          ? result.user_defined_outputs(0)
+          : result.user_defined_outputs(1);
+  EXPECT_THAT(actual_fake_output, EqualsProto(expected_fake_user_defined_output));
+  EXPECT_THAT(actual_logging_output, EqualsProto(expected_logging_output));
+}
+
+TEST_P(ProcessTest, ReturnsUserDefinedOutputErrorWhenAggregateFails) {
+  const std::string fake_plugin =
+      "{name:\"nighthawk.fake_user_defined_output\",typed_config:"
+      "{\"@type\":\"type.googleapis.com/nighthawk.FakeUserDefinedOutputConfig\","
+      "fail_per_worker_output:true}}";
+  const std::string logging_plugin =
+      "{name:\"nighthawk.log_response_headers_plugin\",typed_config:"
+      "{\"@type\":\"type.googleapis.com/nighthawk.LogResponseHeadersConfig\","
+      "logging_mode:\"LM_LOG_ALL_RESPONSES\"}}";
+  options_ =
+      TestUtility::createOptionsImpl(fmt::format("foo --concurrency 1 --user-defined-plugin-config "
+                                                 "{} --user-defined-plugin-config {} https://{}/",
+                                                 fake_plugin, logging_plugin, loopback_address_));
+
+  // Expect connection failure, but ensure that User Defined Outputs were set up correctly.
+  EXPECT_TRUE(runProcess(RunExpectation::EXPECT_FAILURE).ok());
+
+  nighthawk::client::UserDefinedOutput expected_logging_output;
+  TextFormat::ParseFromString(R"(plugin_name: "nighthawk.log_response_headers_plugin"
+                                 typed_output {
+                                   [type.googleapis.com/nighthawk.LogResponseHeadersOutput] {}
+                                 }
+                                 )",
+                              &expected_logging_output);
+
+  ASSERT_EQ(output_proto_.results_size(), 1);
+  const nighthawk::client::Result& result = output_proto_.results(0);
+  ASSERT_EQ(result.user_defined_outputs_size(), 2);
+  const nighthawk::client::UserDefinedOutput actual_fake_output =
+      result.user_defined_outputs(0).plugin_name() == "nighthawk.fake_user_defined_output"
+          ? result.user_defined_outputs(0)
+          : result.user_defined_outputs(1);
+  const nighthawk::client::UserDefinedOutput actual_logging_output =
+      result.user_defined_outputs(0).plugin_name() == "nighthawk.log_response_headers_plugin"
+          ? result.user_defined_outputs(0)
+          : result.user_defined_outputs(1);
+  EXPECT_THAT(actual_logging_output, EqualsProto(expected_logging_output));
+  EXPECT_FALSE(actual_fake_output.has_typed_output());
+  EXPECT_THAT(actual_fake_output.error_message(),
+              HasSubstr("Cannot aggregate if any per_worker_outputs failed"));
+}
+
+TEST_P(ProcessTest, FailsIfAnyUserDefinedOutputPluginsFailToCreate) {
+  const std::string valid_plugin =
+      "{name:\"nighthawk.fake_user_defined_output\",typed_config:"
+      "{\"@type\":\"type.googleapis.com/nighthawk.FakeUserDefinedOutputConfig\"}}";
+  const std::string invalid_logging_plugin =
+      "{name:\"nighthawk.fake_user_defined_output\",typed_config:"
+      "{\"@type\":\"type.googleapis.com/nighthawk.LogResponseHeadersConfig\"}}";
+  options_ = TestUtility::createOptionsImpl(
+      fmt::format("foo --concurrency 1 --user-defined-plugin-config "
+                  "{} --user-defined-plugin-config {} https://{}/",
+                  valid_plugin, invalid_logging_plugin, loopback_address_));
 
   EXPECT_TRUE(runProcess(RunExpectation::EXPECT_FAILURE).ok());
+  // We always expect failure, so also ensure that actually no work was done.
+  EXPECT_EQ(output_proto_.results_size(), 0);
 }
 
 TEST_P(ProcessTest, CreatesNoUserDefinedOutputPluginsIfNoConfigs) {
-  FakeUserDefinedOutputPluginFactory factory;
-  Envoy::Registry::InjectFactory<FakeUserDefinedOutputPluginFactory> registered(factory);
   options_ = TestUtility::createOptionsImpl(fmt::format("foo https://{}/", loopback_address_));
 
-  EXPECT_TRUE(
-      runProcess(RunExpectation::EXPECT_SUCCESS, /*do_cancel=*/true, /*terminate_right_away=*/true)
-          .ok());
-  EXPECT_EQ(factory.getPluginCount(), 0);
+  EXPECT_TRUE(runProcess(RunExpectation::EXPECT_FAILURE).ok());
+  EXPECT_EQ(output_proto_.results(0).user_defined_outputs_size(), 0);
 }
-
-// TODO(dubious90): Add tests for one or more plugins being created properly, once we aren't
-// returning with unimplemented.
 
 /**
  * Fixture for executing the Nighthawk process with simulated time.

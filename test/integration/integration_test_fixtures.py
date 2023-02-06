@@ -87,7 +87,7 @@ class IntegrationTestBase():
     self.parameters = {}
     self.grpc_service = None
     self.test_server = None
-    self.nighthawk_client_path = "nighthawk_client"
+    self.nighthawk_client_path = "nighthawk_client_testonly"
     self._nighthawk_test_server_path = "nighthawk_test_server"
     self._nighthawk_test_config_path = server_config
     self._nighthawk_service_path = "nighthawk_service"
@@ -290,7 +290,7 @@ class IntegrationTestBase():
   def transformNighthawkJson(self, json, format="human"):
     """Use to obtain one of the supported output from Nighthawk's raw json output.
 
-    Arguments:
+    Args:
       json: String containing raw json output obtained via nighthawk_client --output-format=json
       format: String that specifies the desired output format. Must be one of [human|yaml|dotted-string|fortio|csv]. Optional, defaults to "human".
     """

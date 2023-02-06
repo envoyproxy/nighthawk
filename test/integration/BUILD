@@ -32,10 +32,12 @@ py_library(
     name = "integration_test_base",
     data = [
         ":test_server_configs",
-        "//:nighthawk_client",
+        "//:nighthawk_client_testonly",
         "//:nighthawk_output_transform",
         "//:nighthawk_service",
         "//:nighthawk_test_server",
+        "//test/user_defined_output/fake_plugin:fake_user_defined_output",
+        "//test/user_defined_output/fake_plugin:fake_user_defined_output_proto_py_proto",
         "@envoy//test/config/integration/certs",
     ],
     deps = [
@@ -128,6 +130,12 @@ py_library(
     deps = [":integration_test_base"],
 )
 
+py_library(
+    name = "test_user_defined_output_plugins_lib",
+    srcs = ["test_user_defined_output_plugins.py"],
+    deps = [":integration_test_base"],
+)
+
 py_binary(
     name = "integration_test",
     srcs = ["integration_test.py"],
@@ -145,5 +153,6 @@ py_binary(
         ":test_output_transform_lib",
         ":test_remote_execution_lib",
         ":test_request_source_plugin_lib",
+        ":test_user_defined_output_plugins_lib",
     ],
 )

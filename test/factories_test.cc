@@ -23,10 +23,11 @@ class FactoriesTest : public Test {
 public:
   FactoriesTest()
       : api_(Envoy::Api::createApiForTest(stats_store_)),
-        http_tracer_(std::make_unique<Envoy::Tracing::MockHttpTracer>()) {}
+        http_tracer_(std::make_unique<Envoy::Tracing::MockTracer>()) {}
 
   Envoy::Api::ApiPtr api_;
   Envoy::Stats::MockIsolatedStatsStore stats_store_;
+  Envoy::Stats::Scope& stats_scope_{*stats_store_.rootScope()};
   Envoy::Event::MockDispatcher dispatcher_;
   MockOptions options_;
   Envoy::Tracing::HttpTracerSharedPtr http_tracer_;
@@ -47,7 +48,7 @@ TEST_F(FactoriesTest, CreateBenchmarkClient) {
   StaticRequestSourceImpl request_generator(
       std::make_unique<Envoy::Http::TestRequestHeaderMapImpl>());
   auto benchmark_client =
-      factory.create(*api_, dispatcher_, stats_store_, cluster_manager, http_tracer_, "foocluster",
+      factory.create(*api_, dispatcher_, stats_scope_, cluster_manager, http_tracer_, "foocluster",
                      /*worker_id=*/0, request_generator, {});
   EXPECT_NE(nullptr, benchmark_client.get());
 }
@@ -86,7 +87,7 @@ TEST_F(FactoriesTest, CreateRequestSourcePluginWithWorkingJsonReturnsWorkingRequ
   RequestSourceFactoryImpl factory(options_, *api_);
   Envoy::Upstream::ClusterManagerPtr cluster_manager;
   Nighthawk::RequestSourcePtr request_source = factory.create(
-      cluster_manager, dispatcher_, *stats_store_.createScope("foo."), "requestsource");
+      cluster_manager, dispatcher_, *stats_scope_.createScope("foo."), "requestsource");
   EXPECT_NE(nullptr, request_source.get());
   Nighthawk::RequestGenerator generator = request_source->get();
   Nighthawk::RequestPtr request = generator();
@@ -126,7 +127,7 @@ TEST_F(FactoriesTest, CreateRequestSourcePluginWithNonWorkingJsonThrowsError) {
   RequestSourceFactoryImpl factory(options_, *api_);
   Envoy::Upstream::ClusterManagerPtr cluster_manager;
   EXPECT_THROW_WITH_REGEX(
-      factory.create(cluster_manager, dispatcher_, *stats_store_.createScope("foo."),
+      factory.create(cluster_manager, dispatcher_, *stats_scope_.createScope("foo."),
                      "requestsource"),
       NighthawkException,
       "Request Source plugin loading error should have been caught during input validation");
@@ -150,7 +151,7 @@ TEST_F(FactoriesTest, CreateRequestSource) {
   RequestSourceFactoryImpl factory(options_, *api_);
   Envoy::Upstream::ClusterManagerPtr cluster_manager;
   RequestSourcePtr request_generator = factory.create(
-      cluster_manager, dispatcher_, *stats_store_.createScope("foo."), "requestsource");
+      cluster_manager, dispatcher_, *stats_scope_.createScope("foo."), "requestsource");
   EXPECT_NE(nullptr, request_generator.get());
 }
 
@@ -170,7 +171,7 @@ TEST_F(FactoriesTest, CreateRemoteRequestSource) {
   RequestSourceFactoryImpl factory(options_, *api_);
   Envoy::Upstream::ClusterManagerPtr cluster_manager;
   RequestSourcePtr request_generator = factory.create(
-      cluster_manager, dispatcher_, *stats_store_.createScope("foo."), "requestsource");
+      cluster_manager, dispatcher_, *stats_scope_.createScope("foo."), "requestsource");
   EXPECT_NE(nullptr, request_generator.get());
 }
 
@@ -196,7 +197,7 @@ public:
       return true;
     };
     auto sequencer = factory.create(api_->timeSource(), dispatcher_, dummy_sequencer_target,
-                                    std::make_unique<MockTerminationPredicate>(), stats_store_,
+                                    std::make_unique<MockTerminationPredicate>(), stats_scope_,
                                     time_system.monotonicTime() + 10ms);
     EXPECT_NE(nullptr, sequencer.get());
   }
