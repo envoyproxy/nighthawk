@@ -259,7 +259,6 @@ re:
   maintainers: .*github.com.(.*)\)\)
   # TODO(914): Stop overriding this when we are using the correct MOCK_METHOD  # unique
   old_mock_method: dontmatchanything                                           # unique
-  proto_validation_string: \bmin_bytes\b
   owner: "@\\S+"
   runtime_guard_flag: RUNTIME_GUARD\((.*)\);
   test_name_starting_lc: TEST(_.\(.*,\s|\()[a-z].*\)\s\{
