@@ -13,7 +13,7 @@ namespace {
 absl::Status verifyCanBeUsedAsDirectoryName(absl::string_view s) {
   Envoy::Random::RandomGeneratorImpl random;
   const std::string reference_value = random.uuid();
-  const std::string err_template = "'{}' is not a guid: {}";
+  constexpr absl::string_view err_template = "'{}' is not a guid: {}";
 
   if (s.size() != reference_value.size()) {
     return absl::InvalidArgumentError(fmt::format(err_template, s, "bad string length."));
