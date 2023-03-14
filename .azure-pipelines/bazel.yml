@@ -2,7 +2,7 @@ parameters:
 - name: ciTarget
   displayName: "CI target"
   type: string
-  default: build 
+  default: build
 
 steps:
 - bash: |
@@ -19,6 +19,8 @@ steps:
     AZP_SHA1: $(Build.SourceVersion)
     DOCKERHUB_USERNAME: $(DockerUsername)
     DOCKERHUB_PASSWORD: $(DockerPassword)
+    # Ideally this is only enabled when actually required.
+    ENVOY_DOCKER_IN_DOCKER: 1
 
 - bash: |
     echo "disk space at end of build:"
