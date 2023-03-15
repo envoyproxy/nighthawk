@@ -18,6 +18,8 @@ export SRCDIR=${SRCDIR:="${PWD}"}
 export CLANG_FORMAT=clang-format
 export NIGHTHAWK_BUILD_ARCH=$(uname -m)
 export BAZEL_REMOTE_CACHE=${BAZEL_REMOTE_CACHE:=""}
+# The directory to copy built binaries to.
+export BUILD_DIR="/tmp/bins"
 
 # We build in steps to avoid running out of memory in CI.
 # This list doesn't have to be complete, execution of bazel test will build any
@@ -53,14 +55,51 @@ function run_on_build_parts() {
     done
 }
 
+#######################################
+# Conditionally copies binaries from bazel-bin into the specified directory.
+# Arguments:
+#   An optional directory to copy the built binaries into. If not provided,
+#   binaries won't be copied anywhere and this function is a no-op.
+# Returns:
+#   0 on success, exits with return code 1 on failure.
+#######################################
+function maybe_copy_binaries_to_directory () {
+    if [ -n "${BUILD_DIR}" ]; then
+      echo "Copying built binaries to ${BUILD_DIR}."
+      cp -vf bazel-bin/* ${BUILD_DIR}
+    fi
+}
+
+#######################################
+# Builds non-optimized (fastbuild) binaries of Nighthawk.
+#
+# Verifies documentation for the binaries is updated.
+#
+# Arguments:
+#   An optional directory to copy the built binaries into. If not provided,
+#   binaries won't be copied anywhere.
+# Returns:
+#   0 on success, exits with return code 1 on failure.
+#######################################
 function do_build () {
     bazel build $BAZEL_BUILD_OPTIONS //:nighthawk
     tools/update_cli_readme_documentation.sh --mode check
+    maybe_copy_binaries_to_directory
 }
 
+
+#######################################
+# Builds optimized binaries of Nighthawk.
+# Arguments:
+#   An optional directory to copy the built binaries into. If not provided,
+#   binaries won't be copied anywhere.
+# Returns:
+#   0 on success, exits with return code 1 on failure.
+#######################################
 function do_opt_build () {
     bazel build $BAZEL_BUILD_OPTIONS -c opt --define tcmalloc=gperftools //:nighthawk
     bazel build $BAZEL_BUILD_OPTIONS -c opt --define tcmalloc=gperftools //benchmarks:benchmarks
+    maybe_copy_binaries_to_directory
 }
 
 function do_test() {
@@ -213,6 +252,7 @@ if grep 'docker\|lxc' /proc/1/cgroup; then
     export PYTHONUSERBASE="${FAKE_HOME}"
 
     export BUILD_DIR=/build
+    echo "Running in Docker, built binaries will be copied into ${BUILD_DIR}."
     if [[ ! -d "${BUILD_DIR}" ]]
     then
         echo "${BUILD_DIR} mount missing - did you forget -v <something>:${BUILD_DIR}? Creating."
@@ -308,7 +348,7 @@ case "$1" in
         exit 0
     ;;
     *)
-        echo "must be one of [opt_build, build,test,clang_tidy,coverage,coverage_integration,asan,tsan,benchmark_with_own_binaries,docker,check_format,fix_format,test_gcc]"
+        echo "must be one of [opt_build,build,test,clang_tidy,coverage,coverage_integration,asan,tsan,benchmark_with_own_binaries,docker,check_format,fix_format,test_gcc]"
         exit 1
     ;;
 esac
