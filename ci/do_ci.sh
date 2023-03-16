@@ -19,7 +19,7 @@ export CLANG_FORMAT=clang-format
 export NIGHTHAWK_BUILD_ARCH=$(uname -m)
 export BAZEL_REMOTE_CACHE=${BAZEL_REMOTE_CACHE:=""}
 # The directory to copy built binaries to.
-export BUILD_DIR="/tmp/bins"
+export BUILD_DIR=""
 
 # We build in steps to avoid running out of memory in CI.
 # This list doesn't have to be complete, execution of bazel test will build any
