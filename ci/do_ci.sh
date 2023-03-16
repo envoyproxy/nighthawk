@@ -66,7 +66,14 @@ function run_on_build_parts() {
 function maybe_copy_binaries_to_directory () {
     if [ -n "${BUILD_DIR}" ]; then
       echo "Copying built binaries to ${BUILD_DIR}."
-      cp -vf bazel-bin/* ${BUILD_DIR}
+      for BINARY_NAME in \
+        "nighthawk_adaptive_load_client" \
+        "nighthawk_client" \
+        "nighthawk_output_transform" \
+        "nighthawk_service" \
+        "nighthawk_test_server"; do
+        cp -vf bazel-bin/${BINARY_NAME} ${BUILD_DIR}
+      done
     fi
 }
 
