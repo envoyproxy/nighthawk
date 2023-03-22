@@ -19,6 +19,7 @@ export CLANG_FORMAT=clang-format
 export NIGHTHAWK_BUILD_ARCH=$(uname -m)
 export BAZEL_REMOTE_CACHE=${BAZEL_REMOTE_CACHE:=""}
 export NO_BUILD_SETUP=${NO_BUILD_SETUP:=""}
+export ENVOY_RBE=${ENVOY_RBE:=""}
 # The directory to copy built binaries to.
 export BUILD_DIR=""
 
@@ -148,21 +149,47 @@ function do_integration_test_coverage() {
 }
 
 function setup_gcc_toolchain() {
-    export CC=gcc
-    export CXX=g++
-    export BAZEL_COMPILER=gcc
-    [[ "${NIGHTHAWK_BUILD_ARCH}" == "aarch64" ]] && BAZEL_BUILD_OPTIONS="$BAZEL_BUILD_OPTIONS --copt -march=armv8-a+crypto"
-    [[ "${NIGHTHAWK_BUILD_ARCH}" == "aarch64" ]] && BAZEL_TEST_OPTIONS="$BAZEL_TEST_OPTIONS --copt -march=armv8-a+crypto"
-    echo "$CC/$CXX toolchain configured"
+    if [[ -n "${ENVOY_STDLIB}" && "${ENVOY_STDLIB}" != "libstdc++" ]]; then
+      echo "gcc toolchain doesn't support ${ENVOY_STDLIB}."
+      exit 1
+    fi
+
+    BAZEL_BUILD_OPTIONS+=("--config=gcc")
+
+    if [[ -z "${ENVOY_RBE}" ]]; then
+      export CC=gcc
+      export CXX=g++
+      export BAZEL_COMPILER=gcc
+      [[ "${NIGHTHAWK_BUILD_ARCH}" == "aarch64" ]] && BAZEL_BUILD_OPTIONS="$BAZEL_BUILD_OPTIONS --copt -march=armv8-a+crypto"
+      [[ "${NIGHTHAWK_BUILD_ARCH}" == "aarch64" ]] && BAZEL_TEST_OPTIONS="$BAZEL_TEST_OPTIONS --copt -march=armv8-a+crypto"
+      echo "local $CC/$CXX toolchain configured"
+    else
+      BAZEL_BUILD_OPTIONS+=("--config=remote-gcc")
+      echo "remote $CC/$CXX toolchain configured"
+    fi
 }
 
 function setup_clang_toolchain() {
     export PATH=/opt/llvm/bin:$PATH
-    export CC=clang
-    export CXX=clang++
-    export ASAN_SYMBOLIZER_PATH=/opt/llvm/bin/llvm-symbolizer
-    export BAZEL_COMPILER=clang
-    echo "$CC/$CXX toolchain configured"
+    ENVOY_STDLIB="${ENVOY_STDLIB:-libc++}"
+    if [[ -z "${ENVOY_RBE}" ]]; then
+      if [[ "${ENVOY_STDLIB}" == "libc++" ]]; then
+        BAZEL_BUILD_OPTIONS+=("--config=libc++")
+        echo "local libc++ toolchain configured"
+      else
+        BAZEL_BUILD_OPTIONS+=("--config=clang")
+        echo "local $CC/$CXX toolchain configured"
+      fi
+    else
+      if [[ "${ENVOY_STDLIB}" == "libc++" ]]; then
+        BAZEL_BUILD_OPTIONS+=("--config=remote-clang-libc++")
+        echo "remote libc++ toolchain configured"
+      else
+        BAZEL_BUILD_OPTIONS+=("--config=remote-clang")
+        echo "remote $CC/$CXX toolchain configured"
+      fi
+    fi
+    echo "clang toolchain with ${ENVOY_STDLIB} configured"
 }
 
 function run_bazel() {
@@ -284,9 +311,7 @@ fi
 export BAZEL_EXTRA_TEST_OPTIONS="--test_env=ENVOY_IP_TEST_VERSIONS=v4only ${BAZEL_EXTRA_TEST_OPTIONS}"
 export BAZEL_BUILD_OPTIONS=" \
 --verbose_failures ${BAZEL_OPTIONS} --action_env=HOME --action_env=PYTHONUSERBASE \
-${BAZEL_BUILD_EXTRA_OPTIONS}"
-#--experimental_local_memory_estimate \
-#--experimental_generate_json_trace_profile ${BAZEL_BUILD_EXTRA_OPTIONS}"
+--experimental_generate_json_trace_profile ${BAZEL_BUILD_EXTRA_OPTIONS}"
 
 echo "Running with ${NUM_CPUS} cpus and BAZEL_BUILD_OPTIONS: ${BAZEL_BUILD_OPTIONS}"
 
