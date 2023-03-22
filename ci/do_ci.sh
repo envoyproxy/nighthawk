@@ -284,8 +284,9 @@ fi
 export BAZEL_EXTRA_TEST_OPTIONS="--test_env=ENVOY_IP_TEST_VERSIONS=v4only ${BAZEL_EXTRA_TEST_OPTIONS}"
 export BAZEL_BUILD_OPTIONS=" \
 --verbose_failures ${BAZEL_OPTIONS} --action_env=HOME --action_env=PYTHONUSERBASE \
---experimental_local_memory_estimate \
---experimental_generate_json_trace_profile ${BAZEL_BUILD_EXTRA_OPTIONS}"
+${BAZEL_BUILD_EXTRA_OPTIONS}
+#--experimental_local_memory_estimate \
+#--experimental_generate_json_trace_profile ${BAZEL_BUILD_EXTRA_OPTIONS}"
 
 echo "Running with ${NUM_CPUS} cpus and BAZEL_BUILD_OPTIONS: ${BAZEL_BUILD_OPTIONS}"
 
