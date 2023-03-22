@@ -151,11 +151,6 @@ function do_integration_test_coverage() {
 }
 
 function setup_gcc_toolchain() {
-    if [[ -n "${ENVOY_STDLIB}" && "${ENVOY_STDLIB}" != "libstdc++" ]]; then
-      echo "gcc toolchain doesn't support ${ENVOY_STDLIB}."
-      exit 1
-    fi
-
     BAZEL_BUILD_OPTIONS+=("--config=gcc")
 
     if [[ -z "${ENVOY_RBE}" ]]; then
