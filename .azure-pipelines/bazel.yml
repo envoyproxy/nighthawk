@@ -3,6 +3,11 @@ parameters:
   displayName: "CI target"
   type: string
   default: build
+- name: bazelBuildExtraOptions
+  # Additional options to pass to Bazel while building.
+  displayName: "Bazel extra build options"
+  type: string
+  default: ""
 - name: rbe
   # If set to true, build is performed using the RBE service.
   displayName: "Enable RBE"
@@ -20,7 +25,6 @@ steps:
   displayName: "Run the CI script"
   env:
     ENVOY_DOCKER_BUILD_DIR: $(Build.StagingDirectory)
-    BAZEL_REMOTE_CACHE: $(LocalBuildCache)
     AZP_BRANCH: $(Build.SourceBranch)
     AZP_SHA1: $(Build.SourceVersion)
     DOCKERHUB_USERNAME: $(DockerUsername)
