@@ -25,6 +25,7 @@ stages:
     - template: bazel.yml
       parameters:
         ciTarget: $(CI_TARGET)
+        rbe: true
 
 #- stage: test
 #  dependsOn: ["check"]
