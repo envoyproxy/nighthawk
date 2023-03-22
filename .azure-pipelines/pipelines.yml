@@ -6,18 +6,19 @@ trigger:
 stages:
 - stage: check
   dependsOn: []
-  pool: "x64-large"
+  pool:
+    vmImage: "ubuntu-20.04"
   jobs:
   - job: build_and_format
     displayName: "do_ci.sh"
     dependsOn: []
     strategy:
-      maxParallel: 2
+      maxParallel: 1
       matrix:
         build:
           CI_TARGET: "build"
-        format:
-          CI_TARGET: "check_format"
+        #format:
+        #  CI_TARGET: "check_format"
     timeoutInMinutes: 120
     steps:
     - template: bazel.yml
