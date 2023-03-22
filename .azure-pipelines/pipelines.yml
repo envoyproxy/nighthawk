@@ -6,14 +6,15 @@ trigger:
 stages:
 - stage: check
   dependsOn: []
-  pool:
-    vmImage: "ubuntu-20.04"
+  pool: "x64-large"
+  #pool:
+  #  vmImage: "ubuntu-20.04"
   jobs:
   - job: build_and_format
     displayName: "do_ci.sh"
     dependsOn: []
     strategy:
-      maxParallel: 1
+      maxParallel: 2
       matrix:
         build:
           CI_TARGET: "build"
