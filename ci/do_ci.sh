@@ -167,6 +167,8 @@ function setup_gcc_toolchain() {
       BAZEL_BUILD_OPTIONS+=("--config=remote-gcc")
       echo "remote $CC/$CXX toolchain configured"
     fi
+
+    echo "Running with ${NUM_CPUS} cpus and BAZEL_BUILD_OPTIONS: ${BAZEL_BUILD_OPTIONS}"
 }
 
 function setup_clang_toolchain() {
@@ -189,7 +191,8 @@ function setup_clang_toolchain() {
         echo "remote $CC/$CXX toolchain configured"
       fi
     fi
-    echo "clang toolchain with ${ENVOY_STDLIB} configured"
+
+    echo "Running with ${NUM_CPUS} cpus and BAZEL_BUILD_OPTIONS: ${BAZEL_BUILD_OPTIONS}"
 }
 
 function run_bazel() {
@@ -312,8 +315,6 @@ export BAZEL_EXTRA_TEST_OPTIONS="--test_env=ENVOY_IP_TEST_VERSIONS=v4only ${BAZE
 export BAZEL_BUILD_OPTIONS=" \
 --verbose_failures ${BAZEL_OPTIONS} --action_env=HOME --action_env=PYTHONUSERBASE \
 --experimental_generate_json_trace_profile ${BAZEL_BUILD_EXTRA_OPTIONS}"
-
-echo "Running with ${NUM_CPUS} cpus and BAZEL_BUILD_OPTIONS: ${BAZEL_BUILD_OPTIONS}"
 
 export BAZEL_TEST_OPTIONS="${BAZEL_BUILD_OPTIONS} --test_env=HOME --test_env=PYTHONUSERBASE \
 --test_env=UBSAN_OPTIONS=print_stacktrace=1 \
