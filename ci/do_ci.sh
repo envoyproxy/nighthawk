@@ -21,6 +21,10 @@ export BAZEL_REMOTE_CACHE=${BAZEL_REMOTE_CACHE:=""}
 # The directory to copy built binaries to.
 export BUILD_DIR=""
 
+if [[ -z "$NO_BUILD_SETUP" ]]; then
+    . "$(dirname "$0")"/setup_cache.sh
+fi
+
 # We build in steps to avoid running out of memory in CI.
 # This list doesn't have to be complete, execution of bazel test will build any
 # remaining targets.
@@ -272,9 +276,9 @@ if grep 'docker\|lxc' /proc/1/cgroup; then
     export BAZEL="bazel"
 fi
 
-if [ -n "${BAZEL_REMOTE_CACHE}" ]; then
-  export BAZEL_BUILD_EXTRA_OPTIONS="${BAZEL_BUILD_EXTRA_OPTIONS} --remote_cache=${BAZEL_REMOTE_CACHE}"
-fi
+#if [ -n "${BAZEL_REMOTE_CACHE}" ]; then
+#  export BAZEL_BUILD_EXTRA_OPTIONS="${BAZEL_BUILD_EXTRA_OPTIONS} --remote_cache=${BAZEL_REMOTE_CACHE}"
+#fi
 
 export BAZEL_EXTRA_TEST_OPTIONS="--test_env=ENVOY_IP_TEST_VERSIONS=v4only ${BAZEL_EXTRA_TEST_OPTIONS}"
 export BAZEL_BUILD_OPTIONS=" \
