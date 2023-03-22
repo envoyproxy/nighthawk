@@ -21,15 +21,13 @@ export ENVOY_RBE=${ENVOY_RBE:=""}
 # The directory to copy built binaries to.
 export BUILD_DIR=""
 
-BAZEL_BUILD_EXTRA_OPTIONS="--config=remote-ci --jobs=33"
+if [[ -z "$NO_BUILD_SETUP" ]]; then
+    . "$(dirname "$0")"/setup_cache.sh
+fi
 
 read -ra BAZEL_BUILD_EXTRA_OPTIONS <<< "${BAZEL_BUILD_EXTRA_OPTIONS:-}"
 read -ra BAZEL_EXTRA_TEST_OPTIONS <<< "${BAZEL_EXTRA_TEST_OPTIONS:-}"
 read -ra BAZEL_OPTIONS <<< "${BAZEL_OPTIONS:-}"
-
-if [[ -z "$NO_BUILD_SETUP" ]]; then
-    . "$(dirname "$0")"/setup_cache.sh
-fi
 
 # We build in steps to avoid running out of memory in CI.
 # This list doesn't have to be complete, execution of bazel test will build any
