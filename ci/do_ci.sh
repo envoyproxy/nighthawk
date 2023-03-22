@@ -21,6 +21,8 @@ export ENVOY_RBE=${ENVOY_RBE:=""}
 # The directory to copy built binaries to.
 export BUILD_DIR=""
 
+BAZEL_BUILD_EXTRA_OPTIONS="--config=remote-ci --jobs=33"
+
 read -ra BAZEL_BUILD_EXTRA_OPTIONS <<< "${BAZEL_BUILD_EXTRA_OPTIONS:-}"
 read -ra BAZEL_EXTRA_TEST_OPTIONS <<< "${BAZEL_EXTRA_TEST_OPTIONS:-}"
 read -ra BAZEL_OPTIONS <<< "${BAZEL_OPTIONS:-}"
@@ -162,8 +164,8 @@ function setup_gcc_toolchain() {
       export CC=gcc
       export CXX=g++
       export BAZEL_COMPILER=gcc
-      [[ "${NIGHTHAWK_BUILD_ARCH}" == "aarch64" ]] && BAZEL_BUILD_OPTIONS+=("--copt -march=armv8-a+crypto")
-      [[ "${NIGHTHAWK_BUILD_ARCH}" == "aarch64" ]] && BAZEL_TEST_OPTIONS+=("--copt -march=armv8-a+crypto")
+      [[ "${NIGHTHAWK_BUILD_ARCH}" == "aarch64" ]] && BAZEL_BUILD_OPTIONS+=("--copt" "-march=armv8-a+crypto")
+      [[ "${NIGHTHAWK_BUILD_ARCH}" == "aarch64" ]] && BAZEL_TEST_OPTIONS+=("--copt" "-march=armv8-a+crypto")
       echo "local $CC/$CXX toolchain configured"
     else
       BAZEL_BUILD_OPTIONS+=("--config=remote-gcc")
@@ -195,7 +197,6 @@ function setup_clang_toolchain() {
     fi
 
     echo "Running with ${NUM_CPUS} cpus and BAZEL_BUILD_OPTIONS: ${BAZEL_BUILD_OPTIONS[@]}"
-    #exit 1
 }
 
 function run_bazel() {
@@ -309,10 +310,6 @@ if grep 'docker\|lxc' /proc/1/cgroup; then
     export TEST_TMPDIR=/build/tmp
     export BAZEL="bazel"
 fi
-
-#if [ -n "${BAZEL_REMOTE_CACHE}" ]; then
-#  export BAZEL_BUILD_EXTRA_OPTIONS="${BAZEL_BUILD_EXTRA_OPTIONS} --remote_cache=${BAZEL_REMOTE_CACHE}"
-#fi
 
 export BAZEL_EXTRA_TEST_OPTIONS+=("--test_env=ENVOY_IP_TEST_VERSIONS=v4only")
 export BAZEL_BUILD_OPTIONS=(
