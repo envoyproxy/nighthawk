@@ -11,17 +11,19 @@ fi
 export BUILDIFIER_BIN="${BUILDIFIER_BIN:=/usr/local/bin/buildifier}"
 export BUILDOZER_BIN="${BUILDOZER_BIN:=/usr/local/bin/buildozer}"
 export NUM_CPUS=${NUM_CPUS:=$(grep -c ^processor /proc/cpuinfo)}
-export BAZEL_EXTRA_TEST_OPTIONS=${BAZEL_EXTRA_TEST_OPTIONS:=""}
-export BAZEL_OPTIONS=${BAZEL_OPTIONS:=""}
-export BAZEL_BUILD_EXTRA_OPTIONS=${BAZEL_BUILD_EXTRA_OPTIONS:=""}
 export SRCDIR=${SRCDIR:="${PWD}"}
 export CLANG_FORMAT=clang-format
 export NIGHTHAWK_BUILD_ARCH=$(uname -m)
 export BAZEL_REMOTE_CACHE=${BAZEL_REMOTE_CACHE:=""}
+export GCP_SERVICE_ACCOUNT_KEY=${GCP_SERVICE_ACCOUNT_KEY:=""}
 export NO_BUILD_SETUP=${NO_BUILD_SETUP:=""}
 export ENVOY_RBE=${ENVOY_RBE:=""}
 # The directory to copy built binaries to.
 export BUILD_DIR=""
+
+read -ra BAZEL_BUILD_EXTRA_OPTIONS <<< "${BAZEL_BUILD_EXTRA_OPTIONS:-}"
+read -ra BAZEL_EXTRA_TEST_OPTIONS <<< "${BAZEL_EXTRA_TEST_OPTIONS:-}"
+read -ra BAZEL_OPTIONS <<< "${BAZEL_OPTIONS:-}"
 
 if [[ -z "$NO_BUILD_SETUP" ]]; then
     . "$(dirname "$0")"/setup_cache.sh
@@ -95,7 +97,7 @@ function maybe_copy_binaries_to_directory () {
 #   0 on success, exits with return code 1 on failure.
 #######################################
 function do_build () {
-    bazel build $BAZEL_BUILD_OPTIONS //:nighthawk
+    bazel build "${BAZEL_BUILD_OPTIONS[@]}" //:nighthawk
     tools/update_cli_readme_documentation.sh --mode check
     maybe_copy_binaries_to_directory
 }
@@ -110,8 +112,8 @@ function do_build () {
 #   0 on success, exits with return code 1 on failure.
 #######################################
 function do_opt_build () {
-    bazel build $BAZEL_BUILD_OPTIONS -c opt --define tcmalloc=gperftools //:nighthawk
-    bazel build $BAZEL_BUILD_OPTIONS -c opt --define tcmalloc=gperftools //benchmarks:benchmarks
+    bazel build "${BAZEL_BUILD_OPTIONS[@]}" -c opt --define tcmalloc=gperftools //:nighthawk
+    bazel build "${BAZEL_BUILD_OPTIONS[@]}" -c opt --define tcmalloc=gperftools //benchmarks:benchmarks
     maybe_copy_binaries_to_directory
 }
 
@@ -119,8 +121,8 @@ function do_test() {
     # The environment variable AZP_BRANCH is used to determine if some expensive
     # tests that cannot run locally should be executed.
     # E.g. test_http_h1_mini_stress_test_open_loop.
-    run_on_build_parts "bazel build -c dbg $BAZEL_BUILD_OPTIONS --action_env=AZP_BRANCH"
-    bazel test -c dbg $BAZEL_TEST_OPTIONS --test_output=all --action_env=AZP_BRANCH //test/...
+    run_on_build_parts "bazel build -c dbg "${BAZEL_BUILD_OPTIONS[@]}" --action_env=AZP_BRANCH"
+    bazel test -c dbg "${BAZEL_TEST_OPTIONS[@]}" --test_output=all --action_env=AZP_BRANCH //test/...
 }
 
 function do_clang_tidy() {
@@ -160,15 +162,15 @@ function setup_gcc_toolchain() {
       export CC=gcc
       export CXX=g++
       export BAZEL_COMPILER=gcc
-      [[ "${NIGHTHAWK_BUILD_ARCH}" == "aarch64" ]] && BAZEL_BUILD_OPTIONS="$BAZEL_BUILD_OPTIONS --copt -march=armv8-a+crypto"
-      [[ "${NIGHTHAWK_BUILD_ARCH}" == "aarch64" ]] && BAZEL_TEST_OPTIONS="$BAZEL_TEST_OPTIONS --copt -march=armv8-a+crypto"
+      [[ "${NIGHTHAWK_BUILD_ARCH}" == "aarch64" ]] && BAZEL_BUILD_OPTIONS+=("--copt -march=armv8-a+crypto")
+      [[ "${NIGHTHAWK_BUILD_ARCH}" == "aarch64" ]] && BAZEL_TEST_OPTIONS+=("--copt -march=armv8-a+crypto")
       echo "local $CC/$CXX toolchain configured"
     else
       BAZEL_BUILD_OPTIONS+=("--config=remote-gcc")
       echo "remote $CC/$CXX toolchain configured"
     fi
 
-    echo "Running with ${NUM_CPUS} cpus and BAZEL_BUILD_OPTIONS: ${BAZEL_BUILD_OPTIONS}"
+    echo "Running with ${NUM_CPUS} cpus and BAZEL_BUILD_OPTIONS: ${BAZEL_BUILD_OPTIONS[@]}"
 }
 
 function setup_clang_toolchain() {
@@ -192,7 +194,8 @@ function setup_clang_toolchain() {
       fi
     fi
 
-    echo "Running with ${NUM_CPUS} cpus and BAZEL_BUILD_OPTIONS: ${BAZEL_BUILD_OPTIONS}"
+    echo "Running with ${NUM_CPUS} cpus and BAZEL_BUILD_OPTIONS: ${BAZEL_BUILD_OPTIONS[@]}"
+    #exit 1
 }
 
 function run_bazel() {
@@ -219,8 +222,8 @@ function do_sanitizer() {
     cd "${SRCDIR}"
 
     # We build this in steps to avoid running out of memory in CI
-    run_on_build_parts "run_bazel build ${BAZEL_TEST_OPTIONS} -c dbg --config=$CONFIG --"
-    run_bazel test ${BAZEL_TEST_OPTIONS} -c dbg --config="$CONFIG" -- //test/...
+    run_on_build_parts "run_bazel build "${BAZEL_TEST_OPTIONS[@]}" -c dbg --config=$CONFIG --"
+    run_bazel test "${BAZEL_TEST_OPTIONS[@]}" -c dbg --config="$CONFIG" -- //test/...
 }
 
 function cleanup_benchmark_artifacts {
@@ -243,7 +246,7 @@ function do_benchmark_with_own_binaries() {
     export TMPDIR="${SRCDIR}/generated"
     mkdir -p "${TMPDIR}"
     trap cleanup_benchmark_artifacts EXIT
-    run_bazel test ${BAZEL_TEST_OPTIONS} --test_summary=detailed \
+    run_bazel test "${BAZEL_TEST_OPTIONS[@]}" --test_summary=detailed \
         --test_arg=--log-cli-level=info \
         --test_env=HEAPPROFILE= \
         --test_env=HEAPCHECK= \
@@ -311,14 +314,24 @@ fi
 #  export BAZEL_BUILD_EXTRA_OPTIONS="${BAZEL_BUILD_EXTRA_OPTIONS} --remote_cache=${BAZEL_REMOTE_CACHE}"
 #fi
 
-export BAZEL_EXTRA_TEST_OPTIONS="--test_env=ENVOY_IP_TEST_VERSIONS=v4only ${BAZEL_EXTRA_TEST_OPTIONS}"
-export BAZEL_BUILD_OPTIONS=" \
---verbose_failures ${BAZEL_OPTIONS} --action_env=HOME --action_env=PYTHONUSERBASE \
---experimental_generate_json_trace_profile ${BAZEL_BUILD_EXTRA_OPTIONS}"
+export BAZEL_EXTRA_TEST_OPTIONS+=("--test_env=ENVOY_IP_TEST_VERSIONS=v4only")
+export BAZEL_BUILD_OPTIONS=(
+    --verbose_failures
+    --noshow_progress
+    --noshow_loading_progress
+    --experimental_generate_json_trace_profile
+    --experimental_repository_cache_hardlinks
+    "${BAZEL_OPTIONS[@]}"
+    --action_env=HOME
+    --action_env=PYTHONUSERBASE
+    "${BAZEL_BUILD_EXTRA_OPTIONS[@]}")
 
-export BAZEL_TEST_OPTIONS="${BAZEL_BUILD_OPTIONS} --test_env=HOME --test_env=PYTHONUSERBASE \
---test_env=UBSAN_OPTIONS=print_stacktrace=1 \
---cache_test_results=no --test_output=all ${BAZEL_EXTRA_TEST_OPTIONS}"
+export BAZEL_TEST_OPTIONS=(
+    "${BAZEL_BUILD_OPTIONS[@]}"
+    --test_env=UBSAN_OPTIONS=print_stacktrace=1
+    --cache_test_results=no
+     --test_output=all
+     "${BAZEL_EXTRA_TEST_OPTIONS[@]}")
 
 case "$1" in
     build)
