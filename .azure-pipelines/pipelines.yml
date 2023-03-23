@@ -6,9 +6,8 @@ trigger:
 stages:
 - stage: check
   dependsOn: []
-  pool: "x64-large"
-  #pool:
-  #  vmImage: "ubuntu-20.04"
+  pool:
+    vmImage: "ubuntu-20.04"
   jobs:
   - job: build_and_format
     displayName: "do_ci.sh"
@@ -145,7 +144,6 @@ stages:
     - template: bazel.yml
       parameters:
         ciTarget: $(CI_TARGET)
-        rbe: false
     - task: PublishPipelineArtifact@1
       condition: always()
       displayName: 'Publish the line coverage report'
