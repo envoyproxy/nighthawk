@@ -156,7 +156,6 @@ function setup_gcc_toolchain() {
     [[ "${NIGHTHAWK_BUILD_ARCH}" == "aarch64" ]] && BAZEL_BUILD_OPTIONS="$BAZEL_BUILD_OPTIONS --copt -march=armv8-a+crypto"
     [[ "${NIGHTHAWK_BUILD_ARCH}" == "aarch64" ]] && BAZEL_TEST_OPTIONS="$BAZEL_TEST_OPTIONS --copt -march=armv8-a+crypto"
     echo "$CC/$CXX toolchain configured"
-    BAZEL_BUILD_OPTIONS+=("--config=gcc")
 
     echo "Running with ${NUM_CPUS} cpus and BAZEL_BUILD_OPTIONS: ${BAZEL_BUILD_OPTIONS[@]}"
 }
@@ -172,7 +171,7 @@ function setup_clang_toolchain() {
     else
       if [[ "${ENVOY_STDLIB}" == "libc++" ]]; then
         BAZEL_BUILD_OPTIONS+=("--config=remote-clang-libc++")
-        echo "remote libc++ toolchain configured"
+        echo "remote-clang-libc++ toolchain configured"
       else
         BAZEL_BUILD_OPTIONS+=("--config=remote-clang")
         echo "remote-clang toolchain configured"
