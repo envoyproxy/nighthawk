@@ -150,34 +150,25 @@ function do_integration_test_coverage() {
 }
 
 function setup_gcc_toolchain() {
+    export CC=gcc
+    export CXX=g++
+    export BAZEL_COMPILER=gcc
+    [[ "${NIGHTHAWK_BUILD_ARCH}" == "aarch64" ]] && BAZEL_BUILD_OPTIONS="$BAZEL_BUILD_OPTIONS --copt -march=armv8-a+crypto"
+    [[ "${NIGHTHAWK_BUILD_ARCH}" == "aarch64" ]] && BAZEL_TEST_OPTIONS="$BAZEL_TEST_OPTIONS --copt -march=armv8-a+crypto"
+    echo "$CC/$CXX toolchain configured"
     BAZEL_BUILD_OPTIONS+=("--config=gcc")
-
-    if [[ -z "${ENVOY_RBE}" ]]; then
-      export CC=gcc
-      export CXX=g++
-      export BAZEL_COMPILER=gcc
-      [[ "${NIGHTHAWK_BUILD_ARCH}" == "aarch64" ]] && BAZEL_BUILD_OPTIONS+=("--copt" "-march=armv8-a+crypto")
-      [[ "${NIGHTHAWK_BUILD_ARCH}" == "aarch64" ]] && BAZEL_TEST_OPTIONS+=("--copt" "-march=armv8-a+crypto")
-      echo "local $CC/$CXX toolchain configured"
-    else
-      BAZEL_BUILD_OPTIONS+=("--config=remote-gcc")
-      echo "remote-gcc toolchain configured"
-    fi
 
     echo "Running with ${NUM_CPUS} cpus and BAZEL_BUILD_OPTIONS: ${BAZEL_BUILD_OPTIONS[@]}"
 }
 
 function setup_clang_toolchain() {
-    export PATH=/opt/llvm/bin:$PATH
-    ENVOY_STDLIB="${ENVOY_STDLIB:-libc++}"
     if [[ -z "${ENVOY_RBE}" ]]; then
-      if [[ "${ENVOY_STDLIB}" == "libc++" ]]; then
-        BAZEL_BUILD_OPTIONS+=("--config=libc++")
-        echo "local libc++ toolchain configured"
-      else
-        BAZEL_BUILD_OPTIONS+=("--config=clang")
-        echo "local $CC/$CXX toolchain configured"
-      fi
+      export PATH=/opt/llvm/bin:$PATH
+      export CC=clang
+      export CXX=clang++
+      export ASAN_SYMBOLIZER_PATH=/opt/llvm/bin/llvm-symbolizer
+      export BAZEL_COMPILER=clang
+      echo "$CC/$CXX toolchain configured"
     else
       if [[ "${ENVOY_STDLIB}" == "libc++" ]]; then
         BAZEL_BUILD_OPTIONS+=("--config=remote-clang-libc++")
