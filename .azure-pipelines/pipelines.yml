@@ -48,25 +48,6 @@ stages:
       parameters:
         ciTarget: $(CI_TARGET)
 
-- stage: benchmark
-  #dependsOn: ["check"]
-  dependsOn: []
-  pool: "x64-large"
-  jobs:
-  - job: benchmark
-    displayName: "do_ci.sh"
-    strategy:
-      # Both test and benchmark need dedicated resources for stability.
-      maxParallel: 1
-      matrix:
-        benchmark:
-          CI_TARGET: "benchmark_with_own_binaries"
-    timeoutInMinutes: 120
-    steps:
-    - template: bazel.yml
-      parameters:
-        ciTarget: $(CI_TARGET)
-
 - stage: clang_tidy
   #dependsOn: ["check"]
   dependsOn: []
