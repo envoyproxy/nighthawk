@@ -12,7 +12,7 @@ parameters:
   # If set to true, build is performed using the RBE service.
   displayName: "Enable RBE"
   type: boolean
-  default: true
+  default: false
 
 steps:
 - bash: |
@@ -40,10 +40,6 @@ steps:
     ${{ if eq(parameters.rbe, false) }}:
       BAZEL_BUILD_EXTRA_OPTIONS: "${{ parameters.bazelBuildExtraOptions }}"
       BAZEL_REMOTE_CACHE: $(LocalBuildCache)
-      ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
-        BAZEL_REMOTE_INSTANCE: "instances/$(System.PullRequest.TargetBranch)"
-      ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
-        BAZEL_REMOTE_INSTANCE: "instances/$(Build.SourceBranchName)"
 
 - bash: |
     echo "disk space at end of build:"
