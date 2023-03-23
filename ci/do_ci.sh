@@ -17,6 +17,7 @@ export NIGHTHAWK_BUILD_ARCH=$(uname -m)
 export BAZEL_REMOTE_CACHE=${BAZEL_REMOTE_CACHE:=""}
 export GCP_SERVICE_ACCOUNT_KEY=${GCP_SERVICE_ACCOUNT_KEY:=""}
 export NO_BUILD_SETUP=${NO_BUILD_SETUP:=""}
+export ENVOY_STDLIB="${ENVOY_STDLIB:-libc++}"
 export ENVOY_RBE=${ENVOY_RBE:=""}
 # The directory to copy built binaries to.
 export BUILD_DIR=""
@@ -296,8 +297,6 @@ fi
 export BAZEL_EXTRA_TEST_OPTIONS+=("--test_env=ENVOY_IP_TEST_VERSIONS=v4only")
 export BAZEL_BUILD_OPTIONS=(
     --verbose_failures
-    --noshow_progress
-    --noshow_loading_progress
     --experimental_generate_json_trace_profile
     --experimental_repository_cache_hardlinks
     "${BAZEL_OPTIONS[@]}"
