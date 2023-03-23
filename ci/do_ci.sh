@@ -52,9 +52,8 @@ BUILD_PARTS=(
 #   0 on success, exits with return code 1 on failure.
 #######################################
 function run_on_build_parts() {
-    local command="$1"
+    local command="$@"
     for part in ${BUILD_PARTS[@]}; do
-        echo "run_on_build_parts: running command $command $part"
         eval "$command $part"
         if (( $? != 0 )); then
             echo "Error executing $command $part."
@@ -162,7 +161,7 @@ function setup_gcc_toolchain() {
       echo "local $CC/$CXX toolchain configured"
     else
       BAZEL_BUILD_OPTIONS+=("--config=remote-gcc")
-      echo "remote $CC/$CXX toolchain configured"
+      echo "remote-gcc toolchain configured"
     fi
 
     echo "Running with ${NUM_CPUS} cpus and BAZEL_BUILD_OPTIONS: ${BAZEL_BUILD_OPTIONS[@]}"
@@ -185,7 +184,7 @@ function setup_clang_toolchain() {
         echo "remote libc++ toolchain configured"
       else
         BAZEL_BUILD_OPTIONS+=("--config=remote-clang")
-        echo "remote $CC/$CXX toolchain configured"
+        echo "remote-clang toolchain configured"
       fi
     fi
 
