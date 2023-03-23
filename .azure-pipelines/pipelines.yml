@@ -9,14 +9,31 @@ stages:
   pool:
     vmImage: "ubuntu-20.04"
   jobs:
-  - job: build_and_format
+  - job: build
     displayName: "do_ci.sh"
     dependsOn: []
     strategy:
-      maxParallel: 2
+      maxParallel: 1
       matrix:
         build:
           CI_TARGET: "build"
+    timeoutInMinutes: 120
+    steps:
+    - template: bazel.yml
+      parameters:
+        ciTarget: $(CI_TARGET)
+        rbe: true
+
+- stage: format
+  dependsOn: []
+  pool: "x64-large"
+  jobs:
+  - job: format
+    displayName: "do_ci.sh"
+    dependsOn: []
+    strategy:
+      maxParallel: 1
+      matrix:
         format:
           CI_TARGET: "check_format"
     timeoutInMinutes: 120
@@ -24,7 +41,6 @@ stages:
     - template: bazel.yml
       parameters:
         ciTarget: $(CI_TARGET)
-        rbe: true
 
 - stage: test
   #dependsOn: ["check"]
