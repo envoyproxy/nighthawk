@@ -27,17 +27,32 @@ stages:
         ciTarget: $(CI_TARGET)
 
 - stage: test
-  dependsOn: ["check"]
+  #dependsOn: ["check"]
   pool: "x64-large"
   jobs:
-  - job: test_and_benchmark
+  - job: test
+    displayName: "do_ci.sh"
+    strategy:
+      maxParallel: 1
+      matrix:
+        test:
+          CI_TARGET: "test"
+    timeoutInMinutes: 120
+    steps:
+    - template: bazel.yml
+      parameters:
+        ciTarget: $(CI_TARGET)
+
+- stage: benchmark
+  #dependsOn: ["check"]
+  pool: "x64-large"
+  jobs:
+  - job: benchmark
     displayName: "do_ci.sh"
     strategy:
       # Both test and benchmark need dedicated resources for stability.
       maxParallel: 1
       matrix:
-        test:
-          CI_TARGET: "test"
         benchmark:
           CI_TARGET: "benchmark_with_own_binaries"
     timeoutInMinutes: 120
@@ -45,9 +60,10 @@ stages:
     - template: bazel.yml
       parameters:
         ciTarget: $(CI_TARGET)
+        rbe: false
 
 - stage: clang_tidy
-  dependsOn: ["check"]
+  #dependsOn: ["check"]
   pool: "x64-large"
   jobs:
   - job: clang_tidy
@@ -62,9 +78,10 @@ stages:
     - template: bazel.yml
       parameters:
         ciTarget: $(CI_TARGET)
+        rbe: false
 
 - stage: test_gcc
-  dependsOn: ["check"]
+  #dependsOn: ["check"]
   pool: "x64-large"
   jobs:
   - job: test_gcc
@@ -81,7 +98,7 @@ stages:
         ciTarget: $(CI_TARGET)
 
 - stage: sanitizers
-  dependsOn: ["test"]
+  #dependsOn: ["test"]
   pool: "x64-large"
   jobs:
   - job: sanitizers
@@ -100,7 +117,7 @@ stages:
         ciTarget: $(CI_TARGET)
 
 - stage: coverage_unit
-  dependsOn: ["test"]
+  #dependsOn: ["test"]
   pool: "x64-large"
   jobs:
   - job: coverage_unit
@@ -124,7 +141,7 @@ stages:
         artifactName: UnitTestCoverageReport-$(System.JobAttempt)
 
 - stage: coverage_integration
-  dependsOn: ["test"]
+  #dependsOn: ["test"]
   pool: "x64-large"
   jobs:
   - job: coverage_integration
