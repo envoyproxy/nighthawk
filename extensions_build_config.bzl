@@ -11,6 +11,8 @@ EXTENSIONS = {
     "envoy.clusters.static": "//source/extensions/clusters/static:static_cluster_lib",
     "envoy.clusters.strict_dns": "//source/extensions/clusters/strict_dns:strict_dns_cluster_lib",
     "envoy.network.dns_resolver.cares": "//source/extensions/network/dns_resolver/cares:config",
+    "envoy.config_subscription.filesystem": "//source/extensions/config_subscription/filesystem:filesystem_subscription_lib",
+    "envoy.config_subscription.filesystem_collection": "//source/extensions/config_subscription/filesystem:filesystem_subscription_lib",
 }
 
 DISABLED_BY_DEFAULT_EXTENSIONS = {
