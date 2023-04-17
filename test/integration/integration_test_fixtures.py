@@ -154,6 +154,9 @@ class IntegrationTestBase():
       for record in caplog.get_records(when):
         if record.levelno not in (logging.WARNING, logging.ERROR):
           continue
+        # Temporary hack until fixed upstream. Log does not need to be an error.
+        if "external/envoy/source/server/overload_manager_impl.cc" in record.message:
+          continue
         warnings_and_errors.append(record.message)
     if warnings_and_errors:
       pytest.fail("warnings or errors encountered during testing:\n{}".format(warnings_and_errors))
