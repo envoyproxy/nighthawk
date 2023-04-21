@@ -147,7 +147,9 @@ void StreamDecoder::onPoolReady(Envoy::Http::RequestEncoder& encoder,
 Envoy::StreamInfo::ResponseFlag
 StreamDecoder::streamResetReasonToResponseFlag(Envoy::Http::StreamResetReason reset_reason) {
   switch (reset_reason) {
-  case Envoy::Http::StreamResetReason::ConnectionFailure:
+  case Envoy::Http::StreamResetReason::LocalConnectionFailure:
+  case Envoy::Http::StreamResetReason::RemoteConnectionFailure:
+  case Envoy::Http::StreamResetReason::ConnectionTimeout:
     return Envoy::StreamInfo::ResponseFlag::UpstreamConnectionFailure;
   case Envoy::Http::StreamResetReason::ConnectionTermination:
     return Envoy::StreamInfo::ResponseFlag::UpstreamConnectionTermination;
