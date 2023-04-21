@@ -197,7 +197,13 @@ TEST_F(StreamDecoderTest, PoolFailureTest) {
 
 TEST_F(StreamDecoderTest, StreamResetReasonToResponseFlag) {
   ASSERT_EQ(StreamDecoder::streamResetReasonToResponseFlag(
-                Envoy::Http::StreamResetReason::ConnectionFailure),
+                Envoy::Http::StreamResetReason::LocalConnectionFailure),
+            Envoy::StreamInfo::ResponseFlag::UpstreamConnectionFailure);
+  ASSERT_EQ(StreamDecoder::streamResetReasonToResponseFlag(
+                Envoy::Http::StreamResetReason::RemoteConnectionFailure),
+            Envoy::StreamInfo::ResponseFlag::UpstreamConnectionFailure);
+  ASSERT_EQ(StreamDecoder::streamResetReasonToResponseFlag(
+                Envoy::Http::StreamResetReason::ConnectionTimeout),
             Envoy::StreamInfo::ResponseFlag::UpstreamConnectionFailure);
   ASSERT_EQ(StreamDecoder::streamResetReasonToResponseFlag(
                 Envoy::Http::StreamResetReason::ConnectionTermination),
