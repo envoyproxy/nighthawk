@@ -108,8 +108,8 @@ public:
                           Envoy::Stats::Scope& scope, BenchmarkClientStatistic& statistic,
                           Envoy::Http::Protocol protocol,
                           Envoy::Upstream::ClusterManagerPtr& cluster_manager,
-                          Envoy::Tracing::TracerSharedPtr& tracer,
-                          absl::string_view cluster_name, RequestGenerator request_generator,
+                          Envoy::Tracing::TracerSharedPtr& tracer, absl::string_view cluster_name,
+                          RequestGenerator request_generator,
                           const bool provide_resource_backpressure,
                           absl::string_view latency_response_header_name,
                           std::vector<UserDefinedOutputNamePluginPair> user_defined_output_plugins);

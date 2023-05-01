@@ -48,8 +48,8 @@ public:
   virtual BenchmarkClientPtr
   create(Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
          Envoy::Upstream::ClusterManagerPtr& cluster_manager,
-         Envoy::Tracing::TracerSharedPtr& tracer, absl::string_view cluster_name,
-         int worker_id, RequestSource& request_source,
+         Envoy::Tracing::TracerSharedPtr& tracer, absl::string_view cluster_name, int worker_id,
+         RequestSource& request_source,
          std::vector<UserDefinedOutputNamePluginPair> user_defined_output_plugins) const PURE;
 };
 

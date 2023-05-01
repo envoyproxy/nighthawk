@@ -131,8 +131,7 @@ TEST_F(StreamDecoderTest, LatencyIsNotMeasured) {
 
 TEST_F(StreamDecoderTest, LatencyIsMeasured) {
   tracer_ = std::make_unique<Envoy::Tracing::MockTracer>();
-  EXPECT_CALL(*dynamic_cast<Envoy::Tracing::MockTracer*>(tracer_.get()),
-              startSpan_(_, _, _, _))
+  EXPECT_CALL(*dynamic_cast<Envoy::Tracing::MockTracer*>(tracer_.get()), startSpan_(_, _, _, _))
       .WillRepeatedly(
           Invoke([&](const Envoy::Tracing::Config& config, Envoy::Tracing::TraceContext&,
                      const Envoy::StreamInfo::StreamInfo&,

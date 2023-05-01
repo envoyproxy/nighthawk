@@ -20,8 +20,7 @@ ClientWorkerImpl::ClientWorkerImpl(
     const SequencerFactory& sequencer_factory,
     const RequestSourceFactory& request_generator_factory, Envoy::Stats::Store& store,
     const int worker_number, const Envoy::MonotonicTime starting_time,
-    Envoy::Tracing::TracerSharedPtr& tracer,
-    const HardCodedWarmupStyle hardcoded_warmup_style,
+    Envoy::Tracing::TracerSharedPtr& tracer, const HardCodedWarmupStyle hardcoded_warmup_style,
     std::vector<UserDefinedOutputNamePluginPair> user_defined_output_plugins)
     : WorkerImpl(api, tls, store),
       time_source_(std::make_unique<CachedTimeSourceImpl>(*dispatcher_)),
