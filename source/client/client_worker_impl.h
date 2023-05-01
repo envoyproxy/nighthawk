@@ -35,7 +35,7 @@ public:
                    const RequestSourceFactory& request_generator_factory,
                    Envoy::Stats::Store& store, const int worker_number,
                    const Envoy::MonotonicTime starting_time,
-                   Envoy::Tracing::HttpTracerSharedPtr& http_tracer,
+                   Envoy::Tracing::TracerSharedPtr& tracer,
                    const HardCodedWarmupStyle hardcoded_warmup_style,
                    std::vector<UserDefinedOutputNamePluginPair> user_defined_output_plugins);
   StatisticPtrMap statistics() const override;
@@ -67,7 +67,7 @@ private:
   Envoy::Stats::ScopeSharedPtr worker_scope_;
   Envoy::Stats::ScopeSharedPtr worker_number_scope_;
   const int worker_number_;
-  Envoy::Tracing::HttpTracerSharedPtr& http_tracer_;
+  Envoy::Tracing::TracerSharedPtr& tracer_;
   RequestSourcePtr request_generator_;
   BenchmarkClientPtr benchmark_client_;
   PhasePtr phase_;

@@ -17,7 +17,7 @@ public:
   MockBenchmarkClientFactory();
   MOCK_METHOD(BenchmarkClientPtr, create,
               (Envoy::Api::Api&, Envoy::Event::Dispatcher&, Envoy::Stats::Scope&,
-               Envoy::Upstream::ClusterManagerPtr&, Envoy::Tracing::HttpTracerSharedPtr&,
+               Envoy::Upstream::ClusterManagerPtr&, Envoy::Tracing::TracerSharedPtr&,
                absl::string_view, int, RequestSource& request_generator,
                std::vector<UserDefinedOutputNamePluginPair> user_defined_output_plugins),
               (const, override));

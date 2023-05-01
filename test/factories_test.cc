@@ -23,14 +23,14 @@ class FactoriesTest : public Test {
 public:
   FactoriesTest()
       : api_(Envoy::Api::createApiForTest(stats_store_)),
-        http_tracer_(std::make_unique<Envoy::Tracing::MockTracer>()) {}
+        tracer_(std::make_unique<Envoy::Tracing::MockTracer>()) {}
 
   Envoy::Api::ApiPtr api_;
   Envoy::Stats::MockIsolatedStatsStore stats_store_;
   Envoy::Stats::Scope& stats_scope_{*stats_store_.rootScope()};
   Envoy::Event::MockDispatcher dispatcher_;
   MockOptions options_;
-  Envoy::Tracing::HttpTracerSharedPtr http_tracer_;
+  Envoy::Tracing::TracerSharedPtr tracer_;
 };
 
 TEST_F(FactoriesTest, CreateBenchmarkClient) {
@@ -48,7 +48,7 @@ TEST_F(FactoriesTest, CreateBenchmarkClient) {
   StaticRequestSourceImpl request_generator(
       std::make_unique<Envoy::Http::TestRequestHeaderMapImpl>());
   auto benchmark_client =
-      factory.create(*api_, dispatcher_, stats_scope_, cluster_manager, http_tracer_, "foocluster",
+      factory.create(*api_, dispatcher_, stats_scope_, cluster_manager, tracer_, "foocluster",
                      /*worker_id=*/0, request_generator, {});
   EXPECT_NE(nullptr, benchmark_client.get());
 }

@@ -6,7 +6,7 @@
 #include "envoy/network/address.h"
 #include "envoy/server/instance.h"
 #include "envoy/stats/store.h"
-#include "envoy/tracing/http_tracer.h"
+#include "envoy/tracing/tracer.h"
 
 #include "nighthawk/client/client_worker.h"
 #include "nighthawk/client/factories.h"
@@ -207,7 +207,7 @@ private:
   Envoy::Upstream::ClusterManagerPtr cluster_manager_{};
   std::unique_ptr<Envoy::Runtime::ScopedLoaderSingleton> runtime_singleton_;
   Envoy::Init::WatcherImpl init_watcher_;
-  Envoy::Tracing::HttpTracerSharedPtr http_tracer_;
+  Envoy::Tracing::TracerSharedPtr tracer_;
   Envoy::Server::ValidationAdmin admin_;
   Envoy::ProtobufMessage::ProdValidationContextImpl validation_context_;
   bool shutdown_{true};
