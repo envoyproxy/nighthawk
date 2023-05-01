@@ -108,7 +108,7 @@ public:
                           Envoy::Stats::Scope& scope, BenchmarkClientStatistic& statistic,
                           Envoy::Http::Protocol protocol,
                           Envoy::Upstream::ClusterManagerPtr& cluster_manager,
-                          Envoy::Tracing::HttpTracerSharedPtr& http_tracer,
+                          Envoy::Tracing::TracerSharedPtr& tracer,
                           absl::string_view cluster_name, RequestGenerator request_generator,
                           const bool provide_resource_backpressure,
                           absl::string_view latency_response_header_name,
@@ -170,7 +170,7 @@ private:
   bool measure_latencies_{};
   BenchmarkClientCounters benchmark_client_counters_;
   Envoy::Upstream::ClusterManagerPtr& cluster_manager_;
-  Envoy::Tracing::HttpTracerSharedPtr& http_tracer_;
+  Envoy::Tracing::TracerSharedPtr& tracer_;
   std::string cluster_name_;
   const RequestGenerator request_generator_;
   const bool provide_resource_backpressure_;

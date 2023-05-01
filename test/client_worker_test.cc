@@ -99,7 +99,7 @@ public:
   NiceMock<Envoy::LocalInfo::MockLocalInfo> local_info_;
   NiceMock<Envoy::ProtobufMessage::MockValidationVisitor> validation_visitor_;
   Envoy::Upstream::ClusterManagerPtr cluster_manager_ptr_;
-  Envoy::Tracing::HttpTracerSharedPtr http_tracer_;
+  Envoy::Tracing::TracerSharedPtr tracer_;
 };
 
 TEST_F(ClientWorkerTest, BasicTest) {
@@ -122,7 +122,7 @@ TEST_F(ClientWorkerTest, BasicTest) {
   auto worker = std::make_unique<ClientWorkerImpl>(
       *api_, tls_, cluster_manager_ptr_, benchmark_client_factory_, termination_predicate_factory_,
       sequencer_factory_, request_generator_factory_, store_, worker_number,
-      time_system_.monotonicTime(), http_tracer_, ClientWorkerImpl::HardCodedWarmupStyle::ON,
+      time_system_.monotonicTime(), tracer_, ClientWorkerImpl::HardCodedWarmupStyle::ON,
       std::move(user_defined_output_plugins));
 
   worker->start();

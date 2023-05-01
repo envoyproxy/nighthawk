@@ -20,7 +20,7 @@ ClientWorkerImpl::ClientWorkerImpl(
     const SequencerFactory& sequencer_factory,
     const RequestSourceFactory& request_generator_factory, Envoy::Stats::Store& store,
     const int worker_number, const Envoy::MonotonicTime starting_time,
-    Envoy::Tracing::HttpTracerSharedPtr& http_tracer,
+    Envoy::Tracing::TracerSharedPtr& tracer,
     const HardCodedWarmupStyle hardcoded_warmup_style,
     std::vector<UserDefinedOutputNamePluginPair> user_defined_output_plugins)
     : WorkerImpl(api, tls, store),
@@ -28,12 +28,12 @@ ClientWorkerImpl::ClientWorkerImpl(
       termination_predicate_factory_(termination_predicate_factory),
       sequencer_factory_(sequencer_factory), worker_scope_(store_.createScope("cluster.")),
       worker_number_scope_(worker_scope_->createScope(fmt::format("{}.", worker_number))),
-      worker_number_(worker_number), http_tracer_(http_tracer),
+      worker_number_(worker_number), tracer_(tracer),
       request_generator_(
           request_generator_factory.create(cluster_manager, *dispatcher_, *worker_number_scope_,
                                            fmt::format("{}.requestsource", worker_number))),
       benchmark_client_(benchmark_client_factory.create(
-          api, *dispatcher_, *worker_number_scope_, cluster_manager, http_tracer_,
+          api, *dispatcher_, *worker_number_scope_, cluster_manager, tracer_,
           fmt::format("{}", worker_number), worker_number, *request_generator_,
           std::move(user_defined_output_plugins))),
       phase_(

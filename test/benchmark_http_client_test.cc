@@ -65,7 +65,7 @@ public:
         dispatcher_(api_->allocateDispatcher("test_thread")),
         cluster_manager_(std::make_unique<Envoy::Upstream::MockClusterManager>()),
         cluster_info_(std::make_unique<Envoy::Upstream::MockClusterInfo>()),
-        http_tracer_(std::make_unique<Envoy::Tracing::MockTracer>()), response_code_("200"),
+        tracer_(std::make_unique<Envoy::Tracing::MockTracer>()), response_code_("200"),
         statistic_(std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
                    std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
                    std::make_unique<StreamingStatistic>(), std::make_unique<StreamingStatistic>(),
@@ -82,7 +82,7 @@ public:
     EXPECT_CALL(thread_local_cluster_, httpConnPool(_, _, _))
         .WillRepeatedly(Return(Envoy::Upstream::HttpPoolData([]() {}, &pool_)));
 
-    auto& tracer = static_cast<Envoy::Tracing::MockTracer&>(*http_tracer_);
+    auto& tracer = static_cast<Envoy::Tracing::MockTracer&>(*tracer_);
     EXPECT_CALL(tracer, startSpan_(_, _, _, _))
         .WillRepeatedly([](const Envoy::Tracing::Config& config, Envoy::Tracing::TraceContext&,
                            const Envoy::StreamInfo::StreamInfo&,
@@ -191,7 +191,7 @@ public:
   void setupBenchmarkClient(const RequestGenerator& request_generator) {
     client_ = std::make_unique<Client::BenchmarkClientHttpImpl>(
         *api_, *dispatcher_, *store_.rootScope(), statistic_, Envoy::Http::Protocol::Http11,
-        cluster_manager_, http_tracer_, "benchmark", request_generator,
+        cluster_manager_, tracer_, "benchmark", request_generator,
         /*provide_resource_backpressure*/ true,
         /*response_header_with_latency_input=*/"", std::move(user_defined_output_plugins_));
   }
@@ -223,7 +223,7 @@ public:
   NiceMock<Envoy::Http::MockRequestEncoder> stream_encoder_;
   Envoy::Upstream::MockThreadLocalCluster thread_local_cluster_;
   Envoy::Upstream::ClusterInfoConstSharedPtr cluster_info_;
-  Envoy::Tracing::HttpTracerSharedPtr http_tracer_;
+  Envoy::Tracing::TracerSharedPtr tracer_;
   std::string response_code_;
   int worker_number_{0};
   Client::BenchmarkClientStatistic statistic_;

@@ -32,7 +32,7 @@ BenchmarkClientFactoryImpl::BenchmarkClientFactoryImpl(const Options& options)
 BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
     Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
     Envoy::Upstream::ClusterManagerPtr& cluster_manager,
-    Envoy::Tracing::HttpTracerSharedPtr& http_tracer, absl::string_view cluster_name, int worker_id,
+    Envoy::Tracing::TracerSharedPtr& tracer, absl::string_view cluster_name, int worker_id,
     RequestSource& request_generator,
     std::vector<UserDefinedOutputNamePluginPair> user_defined_output_plugins) const {
   StatisticFactoryImpl statistic_factory(options_);
@@ -53,7 +53,7 @@ BenchmarkClientPtr BenchmarkClientFactoryImpl::create(
                                      std::make_unique<SinkableHdrStatistic>(scope, worker_id),
                                      std::make_unique<SinkableHdrStatistic>(scope, worker_id));
   auto benchmark_client = std::make_unique<BenchmarkClientHttpImpl>(
-      api, dispatcher, scope, statistic, options_.protocol(), cluster_manager, http_tracer,
+      api, dispatcher, scope, statistic, options_.protocol(), cluster_manager, tracer,
       cluster_name, request_generator.get(), !options_.openLoop(),
       options_.responseHeaderWithLatencyInput(), std::move(user_defined_output_plugins));
   auto request_options = options_.toCommandLineOptions()->request_options();

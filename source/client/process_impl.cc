@@ -115,10 +115,14 @@ public:
                           Envoy::Server::Options& options, Envoy::Runtime::Loader& runtime,
                           Envoy::Singleton::Manager& singleton_manager,
                           Envoy::ThreadLocal::Instance& tls,
-                          Envoy::LocalInfo::LocalInfo& local_info)
+                          Envoy::LocalInfo::LocalInfo& local_info,
+                          Envoy::ProtobufMessage::ProdValidationContextImpl& validation_context,
+                          Envoy::Grpc::Context& grpc_context,
+                          Envoy::Router::Context& router_context)
       : admin_(admin), api_(api), dispatcher_(dispatcher), log_manager_(log_manager),
         options_(options), runtime_(runtime), singleton_manager_(singleton_manager), tls_(tls),
-        local_info_(local_info) {}
+        local_info_(local_info), validation_context_(validation_context), grpc_context_(grpc_context),
+        router_context_(router_context) {}
 
   Envoy::OptRef<Envoy::Server::Admin> admin() override { return admin_; }
   Envoy::Api::Api& api() override { return api_; }
@@ -183,13 +187,13 @@ public:
   }
   Envoy::Stats::Store& stats() override { PANIC("NighthawkServerInstance::stats not implemented"); }
   Envoy::Grpc::Context& grpcContext() override {
-    PANIC("NighthawkServerInstance::grpcContext not implemented");
+    return grpc_context_;
   }
   Envoy::Http::Context& httpContext() override {
     PANIC("NighthawkServerInstance::httpContext not implemented");
   }
   Envoy::Router::Context& routerContext() override {
-    PANIC("NighthawkServerInstance::routerContext not implemented");
+    return router_context_;
   }
   Envoy::ProcessContextOptRef processContext() override {
     PANIC("NighthawkServerInstance::processContext not implemented");
@@ -197,11 +201,11 @@ public:
   Envoy::ThreadLocal::Instance& threadLocal() override { return tls_; }
   Envoy::LocalInfo::LocalInfo& localInfo() const override { return local_info_; }
   Envoy::TimeSource& timeSource() override {
-    PANIC("NighthawkServerInstance::timeSource not implemented");
+    return api_.timeSource();
   }
   void flushStats() override { PANIC("NighthawkServerInstance::flushStats not implemented"); }
   Envoy::ProtobufMessage::ValidationContext& messageValidationContext() override {
-    PANIC("NighthawkServerInstance::messageValidationContext not implemented");
+    return validation_context_;
   }
   Envoy::Server::Configuration::StatsConfig& statsConfig() override {
     PANIC("NighthawkServerInstance::statsConfig not implemented");
@@ -236,12 +240,16 @@ private:
   Envoy::Singleton::Manager& singleton_manager_;
   Envoy::ThreadLocal::Instance& tls_;
   Envoy::LocalInfo::LocalInfo& local_info_;
+  Envoy::ProtobufMessage::ProdValidationContextImpl& validation_context_;
+  Envoy::Grpc::Context& grpc_context_;
+  Envoy::Router::Context& router_context_;
 };
 
 // Implementation of Envoy::Server::Configuration::ServerFactoryContext.
 class NighthawkServerFactoryContext : public Envoy::Server::Configuration::ServerFactoryContext {
 public:
-  NighthawkServerFactoryContext(Envoy::Server::Instance& server) : server_(server) {}
+  NighthawkServerFactoryContext(Envoy::Server::Instance& server, Envoy::Stats::Scope& server_scope)
+      : server_(server), server_scope_(server_scope) {}
 
   const Envoy::Server::Options& options() override { return server_.options(); };
 
@@ -266,7 +274,7 @@ public:
   };
 
   Envoy::Stats::Scope& serverScope() override {
-    PANIC("NighthawkServerFactoryContext::serverScope not implemented");
+    return server_scope_;
   };
 
   Envoy::ThreadLocal::SlotAllocator& threadLocal() override { return server_.threadLocal(); }
@@ -276,11 +284,11 @@ public:
   };
 
   Envoy::ProtobufMessage::ValidationContext& messageValidationContext() override {
-    PANIC("NighthawkServerFactoryContext::messageValidationContext not implemented");
+    return server_.messageValidationContext();
   };
 
   Envoy::TimeSource& timeSource() override {
-    PANIC("NighthawkServerFactoryContext::timeSource not implemented");
+    return server_.timeSource();
   };
 
   Envoy::AccessLog::AccessLogManager& accessLogManager() override {
@@ -296,11 +304,11 @@ public:
   };
 
   Envoy::Grpc::Context& grpcContext() override {
-    PANIC("NighthawkServerFactoryContext::grpcContext not implemented");
+    return server_.grpcContext();
   };
 
   Envoy::Router::Context& routerContext() override {
-    PANIC("NighthawkServerFactoryContext::routerContext not implemented");
+    return server_.routerContext();
   };
 
   Envoy::Server::DrainManager& drainManager() override {
@@ -317,6 +325,7 @@ public:
 
 private:
   Envoy::Server::Instance& server_;
+  Envoy::Stats::Scope& server_scope_;
 };
 
 /**
@@ -616,7 +625,7 @@ absl::Status ProcessImpl::createWorkers(const uint32_t concurrency,
     workers_.push_back(std::make_unique<ClientWorkerImpl>(
         *api_, tls_, cluster_manager_, benchmark_client_factory_, termination_predicate_factory_,
         sequencer_factory_, request_generator_factory_, store_root_, worker_number,
-        first_worker_start + (inter_worker_delay * worker_number), http_tracer_,
+        first_worker_start + (inter_worker_delay * worker_number), tracer_,
         options_.simpleWarmup() ? ClientWorkerImpl::HardCodedWarmupStyle::ON
                                 : ClientWorkerImpl::HardCodedWarmupStyle::OFF,
         std::move(*plugins)));
@@ -732,7 +741,7 @@ void ProcessImpl::maybeCreateTracingDriver(const envoy::config::trace::v3::Traci
         std::make_unique<Envoy::Extensions::Tracers::Zipkin::Driver>(
             zipkin_config, *cluster_manager_, scope_root_, tls_,
             Envoy::Runtime::LoaderSingleton::get(), *local_info_, generator_, time_system_);
-    http_tracer_ =
+    tracer_ =
         std::make_unique<Envoy::Tracing::TracerImpl>(std::move(zipkin_driver), *local_info_);
 #else
     ENVOY_LOG(error, "Not build with any tracing support");
@@ -792,14 +801,13 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
 
     server_ = std::make_unique<NighthawkServerInstance>(
         admin_, *api_, *dispatcher_, access_log_manager_, envoy_options_,
-        runtime_singleton_->instance(), *singleton_manager_, tls_, *local_info_);
-    server_factory_context_ = std::make_unique<NighthawkServerFactoryContext>(*server_);
+        runtime_singleton_->instance(), *singleton_manager_, tls_, *local_info_, validation_context_,
+        grpc_context_, router_context_);
+    server_factory_context_ = std::make_unique<NighthawkServerFactoryContext>(*server_, scope_root_);
     cluster_manager_factory_ = std::make_unique<ClusterManagerFactory>(
-        *server_factory_context_, admin_, Envoy::Runtime::LoaderSingleton::get(), store_root_, tls_,
+        *server_factory_context_, store_root_, tls_, http_context_,
         [dns_resolver]() -> Envoy::Network::DnsResolverSharedPtr { return dns_resolver; },
-        *ssl_context_manager_, *dispatcher_, *local_info_, secret_manager_, validation_context_,
-        *api_, http_context_, grpc_context_, router_context_, access_log_manager_,
-        *singleton_manager_, envoy_options_, quic_stat_names_, *server_);
+        *ssl_context_manager_, secret_manager_, quic_stat_names_, *server_);
     cluster_manager_factory_->setConnectionReuseStrategy(
         options_.h1ConnectionReuseStrategy() == nighthawk::client::H1ConnectionReuseStrategy::LRU
             ? Http1PoolImpl::ConnectionReuseStrategy::LRU
