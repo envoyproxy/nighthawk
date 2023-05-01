@@ -16,7 +16,6 @@
 #include "external/envoy/source/common/http/header_map_impl.h"
 #include "external/envoy/source/common/stream_info/stream_info_impl.h"
 #include "external/envoy/source/common/tracing/http_tracer_impl.h"
-#include "external/envoy/source/common/tracing/tracer_impl.h"
 
 namespace Nighthawk {
 namespace Client {
