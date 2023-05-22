@@ -105,6 +105,24 @@ public:
   }
 };
 
+// Implementation of dummy StatsConfig.
+class StatsConfigImpl : public Envoy::Server::Configuration::StatsConfig {
+public:
+  StatsConfigImpl() : flush_interval_(std::chrono::seconds(5)){};
+
+  const std::list<Envoy::Stats::SinkPtr>& sinks() const override { return sinks_; }
+  std::chrono::milliseconds flushInterval() const override { return flush_interval_; }
+  bool flushOnAdmin() const override { return false; }
+
+  void addSink(Envoy::Stats::SinkPtr sink) { sinks_.emplace_back(std::move(sink)); }
+
+  bool enableDeferredCreationStats() const { return false; }
+
+private:
+  std::list<Envoy::Stats::SinkPtr> sinks_;
+  const std::chrono::milliseconds flush_interval_;
+};
+
 // Implementation of Envoy::Server::Instance. Only methods used by Envoy's code
 // when Nighthawk is running are implemented.
 class NighthawkServerInstance : public Envoy::Server::Instance {
@@ -201,9 +219,7 @@ public:
   Envoy::ProtobufMessage::ValidationContext& messageValidationContext() override {
     return validation_context_;
   }
-  Envoy::Server::Configuration::StatsConfig& statsConfig() override {
-    PANIC("NighthawkServerInstance::statsConfig not implemented");
-  }
+  Envoy::Server::Configuration::StatsConfig& statsConfig() override { return stats_config_; }
   envoy::config::bootstrap::v3::Bootstrap& bootstrap() override {
     PANIC("NighthawkServerInstance::bootstrap not implemented");
   }
@@ -237,6 +253,7 @@ private:
   Envoy::ProtobufMessage::ProdValidationContextImpl& validation_context_;
   Envoy::Grpc::Context& grpc_context_;
   Envoy::Router::Context& router_context_;
+  StatsConfigImpl stats_config_;
 };
 
 // Implementation of Envoy::Server::Configuration::ServerFactoryContext.
@@ -302,7 +319,7 @@ public:
   };
 
   Envoy::Server::Configuration::StatsConfig& statsConfig() override {
-    PANIC("NighthawkServerFactoryContext::statsConfig not implemented");
+    return server_.statsConfig();
   }
 
   envoy::config::bootstrap::v3::Bootstrap& bootstrap() override {
