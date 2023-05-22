@@ -147,7 +147,9 @@ void StreamDecoder::onPoolReady(Envoy::Http::RequestEncoder& encoder,
 Envoy::StreamInfo::ResponseFlag
 StreamDecoder::streamResetReasonToResponseFlag(Envoy::Http::StreamResetReason reset_reason) {
   switch (reset_reason) {
-  case Envoy::Http::StreamResetReason::ConnectionFailure:
+  case Envoy::Http::StreamResetReason::LocalConnectionFailure:
+  case Envoy::Http::StreamResetReason::RemoteConnectionFailure:
+  case Envoy::Http::StreamResetReason::ConnectionTimeout:
     return Envoy::StreamInfo::ResponseFlag::UpstreamConnectionFailure;
   case Envoy::Http::StreamResetReason::ConnectionTermination:
     return Envoy::StreamInfo::ResponseFlag::UpstreamConnectionTermination;
@@ -185,7 +187,7 @@ void StreamDecoder::setupForTracing() {
                                                                       random_generator_);
   uuid_generator.set(*headers_copy, true);
   uuid_generator.setTraceReason(*headers_copy, Envoy::Tracing::Reason::ClientForced);
-  active_span_ = http_tracer_->startSpan(config_, *headers_copy, stream_info_, tracing_decision);
+  active_span_ = tracer_->startSpan(config_, *headers_copy, stream_info_, tracing_decision);
   active_span_->injectContext(*headers_copy, /*upstream=*/nullptr);
   request_headers_.reset(headers_copy.release());
   // We pass in a fake remote address; recently trace finalization mandates setting this, and will

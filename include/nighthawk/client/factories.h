@@ -33,7 +33,7 @@ public:
    * @param dispatcher supplies the owning thread's dispatcher.
    * @param scope stats scope for any stats tracked by the benchmark client.
    * @param cluster_manager Cluster manager preconfigured with our target cluster.
-   * @param http_tracer Shared pointer to an http tracer implementation (e.g. Zipkin).
+   * @param tracer Shared pointer to a tracer implementation (e.g. Zipkin).
    * @param cluster_name Name of the cluster that this benchmark client will use. In conjunction
    * with cluster_manager this will allow the BenchmarkClient to access the target connection
    * pool.
@@ -48,8 +48,8 @@ public:
   virtual BenchmarkClientPtr
   create(Envoy::Api::Api& api, Envoy::Event::Dispatcher& dispatcher, Envoy::Stats::Scope& scope,
          Envoy::Upstream::ClusterManagerPtr& cluster_manager,
-         Envoy::Tracing::HttpTracerSharedPtr& http_tracer, absl::string_view cluster_name,
-         int worker_id, RequestSource& request_source,
+         Envoy::Tracing::TracerSharedPtr& tracer, absl::string_view cluster_name, int worker_id,
+         RequestSource& request_source,
          std::vector<UserDefinedOutputNamePluginPair> user_defined_output_plugins) const PURE;
 };
 

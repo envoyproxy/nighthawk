@@ -22,7 +22,7 @@ using ::testing::HasSubstr;
 const std::string kLatencyResponseHeaderName = "x-prd";
 const std::string kDefaultProtoFragment = fmt::format(
     "emit_previous_request_delta_in_response_header: \"{}\"", kLatencyResponseHeaderName);
-const std::string kProtoConfigTemplate = R"EOF(
+constexpr absl::string_view kProtoConfigTemplate = R"EOF(
 name: time-tracking
 typed_config:
   "@type": type.googleapis.com/nighthawk.server.TimeTrackingConfiguration

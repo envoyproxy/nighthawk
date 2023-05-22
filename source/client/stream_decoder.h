@@ -47,7 +47,7 @@ public:
                 Statistic& response_body_sizes_statistic, Statistic& origin_latency_statistic,
                 HeaderMapPtr request_headers, bool measure_latencies, uint32_t request_body_size,
                 Envoy::Random::RandomGenerator& random_generator,
-                Envoy::Tracing::HttpTracerSharedPtr& http_tracer,
+                Envoy::Tracing::TracerSharedPtr& tracer,
                 absl::string_view latency_response_header_name)
       : dispatcher_(dispatcher), time_source_(time_source),
         decoder_completion_callback_(decoder_completion_callback),
@@ -62,8 +62,8 @@ public:
             // The two addresses aren't used in an execution of Nighthawk.
             /* downstream_local_address = */ nullptr, /* downstream_remote_address = */ nullptr)),
         stream_info_(time_source_, downstream_address_setter_), random_generator_(random_generator),
-        http_tracer_(http_tracer), latency_response_header_name_(latency_response_header_name) {
-    if (measure_latencies_ && http_tracer_ != nullptr) {
+        tracer_(tracer), latency_response_header_name_(latency_response_header_name) {
+    if (measure_latencies_ && tracer_ != nullptr) {
       setupForTracing();
     }
     stream_info_.setUpstreamInfo(std::make_shared<Envoy::StreamInfo::UpstreamInfoImpl>());
@@ -125,7 +125,7 @@ private:
   std::shared_ptr<Envoy::Network::ConnectionInfoSetterImpl> downstream_address_setter_;
   Envoy::StreamInfo::StreamInfoImpl stream_info_;
   Envoy::Random::RandomGenerator& random_generator_;
-  Envoy::Tracing::HttpTracerSharedPtr& http_tracer_;
+  Envoy::Tracing::TracerSharedPtr& tracer_;
   Envoy::Tracing::SpanPtr active_span_;
   const std::string latency_response_header_name_;
 };
