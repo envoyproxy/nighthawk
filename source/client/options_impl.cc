@@ -802,9 +802,10 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
     transport_socket_.value().MergeFrom(options.transport_socket());
   }
 
-  if ((options.has_no_default_failure_predicates() &&
-       options.no_default_failure_predicates().value()) ||
-      !options.failure_predicates().empty()) {
+  if (options.has_no_default_failure_predicates()) {
+    no_default_failure_predicates_ = options.no_default_failure_predicates().value();
+  }
+  if (no_default_failure_predicates_ || !options.failure_predicates().empty()) {
     failure_predicates_.clear();
   }
   for (const auto& predicate : options.failure_predicates()) {
