@@ -129,7 +129,7 @@ message Protocol {
 
 // TODO(oschaaf): Ultimately this will be a load test specification. The fact that it
 // can arrive via CLI is just a concrete detail. Change this to reflect that.
-// Next unused number is 113.
+// Next unused number is 114.
 message CommandLineOptions {
   // The target requests-per-second rate. Default: 5.
   google.protobuf.UInt32Value requests_per_second = 1
@@ -228,6 +228,9 @@ message CommandLineOptions {
   // Allows specifying a counter name plus threshold value for failing execution. Defaults to not
   // tolerating error status codes and connection errors.
   map<string, uint64> failure_predicates = 24;
+  // Disables the default failure predicates, indicating that Nighthawk should continue sending load
+  // after observing error status codes and connection errors.
+  google.protobuf.BoolValue no_default_failure_predicates = 113;
   // Enable open loop mode. When enabled, the benchmark client will not provide backpressure when
   // resource limits are hit.
   google.protobuf.BoolValue open_loop = 21;

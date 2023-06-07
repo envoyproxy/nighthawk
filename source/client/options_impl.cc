@@ -236,6 +236,11 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
       "failing execution. Defaults to not tolerating error status codes and connection errors. "
       "Example: benchmark.http_5xx:4294967295.",
       false, "string, uint64_t", cmd);
+  TCLAP::SwitchArg no_default_failure_predicates(
+      "", "no-default-failure-predicates",
+      "Disables the default failure predicates, indicating that Nighthawk should continue sending "
+      "load after observing error status codes and connection errors.",
+      cmd);
 
   std::vector<std::string> h1_connection_reuse_strategies = {"mru", "lru"};
   TCLAP::ValuesConstraint<std::string> h1_connection_reuse_strategies_allowed(
@@ -505,6 +510,10 @@ OptionsImpl::OptionsImpl(int argc, const char* const* argv) {
 
   TCLAP_SET_IF_SPECIFIED(trace, trace_);
   parsePredicates(termination_predicates, termination_predicates_);
+  TCLAP_SET_IF_SPECIFIED(no_default_failure_predicates, no_default_failure_predicates_);
+  if (no_default_failure_predicates_) {
+    failure_predicates_.clear();
+  }
   parsePredicates(failure_predicates, failure_predicates_);
   TCLAP_SET_IF_SPECIFIED(open_loop, open_loop_);
   if (jitter_uniform.isSet()) {
@@ -793,7 +802,9 @@ OptionsImpl::OptionsImpl(const nighthawk::client::CommandLineOptions& options) {
     transport_socket_.value().MergeFrom(options.transport_socket());
   }
 
-  if (!options.failure_predicates().empty()) {
+  if ((options.has_no_default_failure_predicates() &&
+       options.no_default_failure_predicates().value()) ||
+      !options.failure_predicates().empty()) {
     failure_predicates_.clear();
   }
   for (const auto& predicate : options.failure_predicates()) {
@@ -1014,6 +1025,8 @@ CommandLineOptionsPtr OptionsImpl::toCommandLineOptionsInternal() const {
   for (const auto& predicate : failure_predicates_) {
     failure_predicates_option->insert({predicate.first, predicate.second});
   }
+  command_line_options->mutable_no_default_failure_predicates()->set_value(
+      no_default_failure_predicates_);
   command_line_options->mutable_open_loop()->set_value(open_loop_);
   if (jitter_uniform_.count() > 0) {
     *command_line_options->mutable_jitter_uniform() =
