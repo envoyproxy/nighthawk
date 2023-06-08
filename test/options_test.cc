@@ -908,8 +908,8 @@ TEST_F(OptionsImplTest, AutoConcurrencyValueParsedOK) {
 }
 
 TEST_F(OptionsImplTest, NoDefaultFailurePredicates) {
-  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(fmt::format(
-    "{} --no-default-failure-predicates {}", client_name_, good_test_uri_));
+  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(
+      fmt::format("{} --no-default-failure-predicates {}", client_name_, good_test_uri_));
   EXPECT_EQ(0, options->failurePredicates().size());
 }
 
