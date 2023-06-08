@@ -5,6 +5,7 @@ import logging
 import math
 import os
 import pytest
+import re
 import subprocess
 import sys
 import time
@@ -645,6 +646,21 @@ def test_http_h1_failure_predicate(http_test_server_fixture):
                                                                expect_failure=True)
   counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   asserts.assertCounterEqual(counters, "benchmark.http_2xx", 1)
+
+
+def test_http_h1_no_default_failure_predicates(http_test_server_fixture):
+  """Test with no default failure predicates.
+
+  Point the client at a bogus port, but disable the default failure predicates.
+  Should result in successful execution despite pool connection failure.
+  """
+  root_uri = re.sub(":[0-9]+", ":123", http_test_server_fixture.getTestServerRootUri())
+  parsed_json, _ = http_test_server_fixture.runNighthawkClient([
+      root_uri, "--duration", "5", "--rps", "500", "--connections", "1",
+      "--no-default-failure-predicates"
+  ])
+  counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
+  asserts.assertCounterEqual(counters, "benchmark.pool_connection_failure", 1)
 
 
 def test_bad_arg_error_messages(http_test_server_fixture):
