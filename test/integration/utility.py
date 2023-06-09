@@ -147,7 +147,7 @@ def replace_port(root_uri: str, port: int) -> str:
   Args:
     root_uri: A root uri of a Nighthawk test server, expected to contain a port.
     port: A new port to substitute.
-  
+
   Returns:
     str: A new root uri.
   """
