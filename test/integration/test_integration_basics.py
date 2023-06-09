@@ -5,7 +5,6 @@ import logging
 import math
 import os
 import pytest
-import re
 import subprocess
 import sys
 import time
@@ -651,10 +650,12 @@ def test_http_h1_failure_predicate(http_test_server_fixture):
 def test_http_h1_no_default_failure_predicates(http_test_server_fixture):
   """Test with no default failure predicates.
 
-  Point the client at a bogus port, but disable the default failure predicates.
-  Should result in successful execution despite pool connection failure.
+  Point the client at a bogus port, which causes an immediate pool connection failure, but disable
+  the default failure predicates. By default, without --no-default-failure-predicates, this would
+  cause the Nighthawk client to fail immediately. With the flag set, we expect successful execution
+  despite the error.
   """
-  root_uri = re.sub(":[0-9]+", ":123", http_test_server_fixture.getTestServerRootUri())
+  root_uri = utility.replace_port(http_test_server_fixture.getTestServerRootUri(), 123)
   parsed_json, _ = http_test_server_fixture.runNighthawkClient([
       root_uri, "--duration", "5", "--rps", "500", "--connections", "1",
       "--no-default-failure-predicates"
