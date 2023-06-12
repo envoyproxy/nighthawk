@@ -142,7 +142,7 @@ def substitute_yaml_values(runfiles_instance, obj: Union[dict, list, str], param
 
 
 def replace_port(root_uri: str, port: int) -> str:
-  """Replaces a port number in an existing root URI with a new port number.
+  """Replace a port number in an existing root URI with a new port number.
 
   Args:
     root_uri: A root uri of a Nighthawk test server, expected to contain a port.
