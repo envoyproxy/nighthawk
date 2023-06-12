@@ -647,6 +647,23 @@ def test_http_h1_failure_predicate(http_test_server_fixture):
   asserts.assertCounterEqual(counters, "benchmark.http_2xx", 1)
 
 
+def test_http_h1_no_default_failure_predicates(http_test_server_fixture):
+  """Test with no default failure predicates.
+
+  Point the client at a bogus port, which causes an immediate pool connection failure, but disable
+  the default failure predicates. By default, without --no-default-failure-predicates, this would
+  cause the Nighthawk client to fail immediately. With the flag set, we expect successful execution
+  despite the error.
+  """
+  root_uri = utility.replace_port(http_test_server_fixture.getTestServerRootUri(), 123)
+  parsed_json, _ = http_test_server_fixture.runNighthawkClient([
+      root_uri, "--duration", "5", "--rps", "500", "--connections", "1",
+      "--no-default-failure-predicates"
+  ])
+  counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
+  asserts.assertCounterEqual(counters, "benchmark.pool_connection_failure", 1)
+
+
 def test_bad_arg_error_messages(http_test_server_fixture):
   """Test arguments that pass proto validation, but are found to be no good nonetheless, result in reasonable error messages."""
   _, err = http_test_server_fixture.runNighthawkClient(

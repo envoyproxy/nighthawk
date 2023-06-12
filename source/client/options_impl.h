@@ -88,6 +88,7 @@ public:
   }
   TerminationPredicateMap terminationPredicates() const override { return termination_predicates_; }
   TerminationPredicateMap failurePredicates() const override { return failure_predicates_; }
+  bool noDefaultFailurePredicates() const override { return no_default_failure_predicates_; }
   bool openLoop() const override { return open_loop_; }
 
   std::chrono::nanoseconds jitterUniform() const override { return jitter_uniform_; }
@@ -167,6 +168,7 @@ private:
       experimental_h1_connection_reuse_strategy_{nighthawk::client::H1ConnectionReuseStrategy::MRU};
   TerminationPredicateMap termination_predicates_;
   TerminationPredicateMap failure_predicates_;
+  bool no_default_failure_predicates_{false};
   bool open_loop_{false};
   std::chrono::nanoseconds jitter_uniform_;
   std::string nighthawk_service_;

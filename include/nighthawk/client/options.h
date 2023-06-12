@@ -82,6 +82,7 @@ public:
   h1ConnectionReuseStrategy() const PURE;
   virtual TerminationPredicateMap terminationPredicates() const PURE;
   virtual TerminationPredicateMap failurePredicates() const PURE;
+  virtual bool noDefaultFailurePredicates() const PURE;
   virtual bool openLoop() const PURE;
   virtual std::chrono::nanoseconds jitterUniform() const PURE;
   virtual std::string nighthawkService() const PURE;
