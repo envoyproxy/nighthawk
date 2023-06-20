@@ -205,7 +205,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
       "--max-pending-requests 10 "
       "--max-active-requests 11 --max-requests-per-connection 12 --sequencer-idle-strategy sleep "
       "--termination-predicate t1:1 --termination-predicate t2:2 --failure-predicate f1:1 "
-      "--failure-predicate f2:2 --jitter-uniform .00001s "
+      "--failure-predicate f2:2 --no-default-failure-predicates --jitter-uniform .00001s "
       "--max-concurrent-streams 42 "
       "--experimental-h1-connection-reuse-strategy lru --label label1 --label label2 {} "
       "--simple-warmup --stats-sinks {} --stats-sinks {} --stats-flush-interval 10 "
@@ -260,6 +260,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
   ASSERT_EQ(2, options->failurePredicates().size());
   EXPECT_EQ(1, options->failurePredicates()["f1"]);
   EXPECT_EQ(2, options->failurePredicates()["f2"]);
+  EXPECT_TRUE(options->noDefaultFailurePredicates());
   EXPECT_EQ(10us, options->jitterUniform());
   EXPECT_EQ(42, options->maxConcurrentStreams());
   EXPECT_EQ(nighthawk::client::H1ConnectionReuseStrategy::LRU,
@@ -337,6 +338,7 @@ TEST_F(OptionsImplTest, AlmostAll) {
   ASSERT_EQ(2, cmd->failure_predicates_size());
   EXPECT_EQ(cmd->failure_predicates().at("f1"), 1);
   EXPECT_EQ(cmd->failure_predicates().at("f2"), 2);
+  EXPECT_TRUE(cmd->no_default_failure_predicates().value());
 
   // Now we construct a new options from the proto we created above. This should result in an
   // OptionsImpl instance equivalent to options. We test that by converting both to yaml strings,
@@ -903,6 +905,12 @@ TEST_F(OptionsImplTest, AutoConcurrencyValueParsedOK) {
   std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(
       fmt::format("{} --concurrency auto {} ", client_name_, good_test_uri_));
   EXPECT_EQ("auto", options->concurrency());
+}
+
+TEST_F(OptionsImplTest, NoDefaultFailurePredicates) {
+  std::unique_ptr<OptionsImpl> options = TestUtility::createOptionsImpl(
+      fmt::format("{} --no-default-failure-predicates {}", client_name_, good_test_uri_));
+  EXPECT_EQ(0, options->failurePredicates().size());
 }
 
 class OptionsImplVerbosityTest : public OptionsImplTest, public WithParamInterface<const char*> {};

@@ -168,11 +168,12 @@ bazel-bin/nighthawk_client  [--user-defined-plugin-config <string>] ...
 [--nighthawk-service <uri format>]
 [--jitter-uniform <duration>] [--open-loop]
 [--experimental-h1-connection-reuse-strategy
-<mru|lru>] [--failure-predicate <string,
-uint64_t>] ... [--termination-predicate
-<string, uint64_t>] ... [--trace <uri
-format>] [--sequencer-idle-strategy <spin
-|poll|sleep>] [--max-concurrent-streams
+<mru|lru>] [--no-default-failure-predicates]
+[--failure-predicate <string, uint64_t>] ...
+[--termination-predicate <string, uint64_t>]
+... [--trace <uri format>]
+[--sequencer-idle-strategy <spin|poll
+|sleep>] [--max-concurrent-streams
 <uint32_t>] [--max-requests-per-connection
 <uint32_t>] [--max-active-requests
 <uint32_t>] [--max-pending-requests
@@ -294,6 +295,11 @@ provide backpressure when resource limits are hit.
 Choose picking the most recently used, or least-recently-used
 connections for re-use.(default: mru). WARNING: this option is
 experimental and may be removed or changed in the future!
+
+--no-default-failure-predicates
+Disables the default failure predicates, indicating that Nighthawk
+should continue sending load after observing error status codes and
+connection errors.
 
 --failure-predicate <string, uint64_t>  (accepted multiple times)
 Failure predicate. Allows specifying a counter name plus threshold

@@ -229,6 +229,7 @@ public:
   // Envoy::Stats::Histogram
   void recordValue(uint64_t value) override;
   bool used() const override { return count() > 0; }
+  bool hidden() const override { return false; }
   // Overriding name() to return Nighthawk::Statistic::id().
   std::string name() const override { return id(); }
   // Overriding tagExtractedName() to return string(worker_id) + "." + Nighthawk::Statistic::id()
@@ -250,6 +251,7 @@ public:
   // Envoy::Stats::Histogram
   void recordValue(uint64_t value) override;
   bool used() const override { return count() > 0; }
+  bool hidden() const override { return false; }
   // Overriding name() to return Nighthawk::Statistic::id().
   std::string name() const override { return id(); }
   // Overriding tagExtractedName() to return string(worker_id) + "." + Nighthawk::Statistic::id()

@@ -1,6 +1,7 @@
 """Packages utility methods for tests."""
 
 import os
+import re
 import subprocess
 import string
 from typing import Union
@@ -138,3 +139,16 @@ def substitute_yaml_values(runfiles_instance, obj: Union[dict, list, str], param
       with open(runfiles_instance.Rlocation(obj[len(INJECT_RUNFILE_MARKER):].strip()), 'r') as file:
         return file.read()
   return obj
+
+
+def replace_port(root_uri: str, port: int) -> str:
+  """Replace a port number in an existing root URI with a new port number.
+
+  Args:
+    root_uri: A root uri of a Nighthawk test server, expected to contain a port.
+    port: A new port to substitute.
+
+  Returns:
+    str: A new root uri.
+  """
+  return re.sub(":[0-9]+([^:]*)", ":%d\\1" % port, root_uri)

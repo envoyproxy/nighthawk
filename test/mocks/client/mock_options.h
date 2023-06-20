@@ -52,6 +52,7 @@ public:
               h1ConnectionReuseStrategy, (), (const, override));
   MOCK_METHOD(TerminationPredicateMap, terminationPredicates, (), (const, override));
   MOCK_METHOD(TerminationPredicateMap, failurePredicates, (), (const, override));
+  MOCK_METHOD(bool, noDefaultFailurePredicates, (), (const, override));
   MOCK_METHOD(bool, openLoop, (), (const, override));
   MOCK_METHOD(std::chrono::nanoseconds, jitterUniform, (), (const, override));
   MOCK_METHOD(std::string, nighthawkService, (), (const, override));

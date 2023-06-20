@@ -4,8 +4,11 @@
 Entry point for benchmark execution.
 """
 import os
-import sys
 import pytest
+import sys
+
+# Workaround for https://github.com/bazelbuild/rules_python/issues/1221
+sys.path += [os.path.dirname(__file__)]
 
 if __name__ == '__main__':
   path = os.path.dirname(os.path.realpath(__file__))

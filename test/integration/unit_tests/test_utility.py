@@ -102,5 +102,11 @@ def test_parse_uris_to_socket_address():
   assert v6_address.ip == "2001:db8:3333:4444:CCCC:DDDD:EEEE:FFFF" and v6_address.port == 9001
 
 
+def test_replace_port():
+  """Test replace port for both ipv4 and ipv6."""
+  assert utility.replace_port("http://0.0.0.0:8080/", 123) == "http://0.0.0.0:123/"
+  assert utility.replace_port("http://[::]:8080/", 123) == "http://[::]:123/"
+
+
 if __name__ == "__main__":
   raise SystemExit(pytest.main([__file__]))
