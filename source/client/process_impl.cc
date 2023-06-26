@@ -116,7 +116,7 @@ public:
 
   void addSink(Envoy::Stats::SinkPtr sink) { sinks_.emplace_back(std::move(sink)); }
 
-  bool enableDeferredCreationStats() const { return false; }
+  bool enableDeferredCreationStats() const override { return false; }
 
 private:
   std::list<Envoy::Stats::SinkPtr> sinks_;
