@@ -18,6 +18,7 @@
 #include "source/common/statistic_impl.h"
 #include "source/common/version_info.h"
 
+#include "test_common/environment.h"
 #include "test_common/proto_matchers.h"
 
 #include "test/client/utility.h"

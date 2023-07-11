@@ -141,6 +141,7 @@ envoy_cc_test(
         "//source/common:nighthawk_common_lib",
         "//test/client:utility_lib",
         "//test/mocks/client:mock_options",
+        "//test/test_common:environment_lib",
         "//test/test_common:proto_matchers",
         "@envoy//test/test_common:simulated_time_system_lib",
         "@envoy//test/test_common:test_runtime_lib",
