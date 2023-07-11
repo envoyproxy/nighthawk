@@ -2,10 +2,13 @@
 
 #include "nighthawk/common/exception.h"
 
+#include "external/envoy/source/common/common/statusor.h"
 #include "external/envoy/source/common/protobuf/message_validator_impl.h"
 #include "external/envoy/source/common/protobuf/utility.h"
 #include "external/envoy/test/test_common/file_system_for_test.h"
 #include "external/envoy/test/test_common/simulated_time_system.h"
+#include "external/envoy/test/test_common/test_runtime.h"
+#include "external/envoy/test/test_common/utility.h"
 
 #include "api/client/options.pb.h"
 #include "api/client/output.pb.h"
@@ -16,7 +19,9 @@
 #include "source/common/version_info.h"
 
 #include "test_common/environment.h"
+#include "test_common/proto_matchers.h"
 
+#include "test/client/utility.h"
 #include "test/mocks/client/mock_options.h"
 
 #include "absl/strings/str_replace.h"
@@ -84,6 +89,19 @@ public:
     EXPECT_EQ(s, output);
   }
 
+  std::string readGoldFile(absl::string_view path) {
+    std::string s = Envoy::Filesystem::fileSystemForTest().fileReadToEnd(
+        TestEnvironment::runfilesPath(std::string(path)));
+    const auto version = VersionInfo::buildVersion().version();
+    const std::string major = fmt::format("{}", version.major_number());
+    const std::string minor = fmt::format("{}", version.minor_number());
+    const std::string patch = fmt::format("{}", version.patch());
+    s = absl::StrReplaceAll(s, {{"@version_major@", major}});
+    s = absl::StrReplaceAll(s, {{"@version_minor@", minor}});
+    s = absl::StrReplaceAll(s, {{"@version_patch@", patch}});
+    return s;
+  }
+
   void setupCollector() {
     collector_ = std::make_unique<OutputCollectorImpl>(time_system_, options_);
     collector_->addResult("worker_0", statistics_, counters_, 1s, time_system_.systemTime(), {});
@@ -108,15 +126,23 @@ TEST_F(OutputCollectorTest, CliFormatter) {
 TEST_F(OutputCollectorTest, JsonFormatter) {
   JsonOutputFormatterImpl formatter;
   EXPECT_EQ((formatter.formatProto(collector_->toProto())).ok(), true);
-  expectEqualToGoldFile((formatter.formatProto(collector_->toProto())).value(),
-                        "test/test_data/output_formatter.json.gold");
+  std::string expected_str = readGoldFile("test/test_data/output_formatter.json.gold");
+  nighthawk::client::Output expected_output_proto, output_proto;
+  google::protobuf::TextFormat::ParseFromString(expected_str, &expected_output_proto);
+  google::protobuf::TextFormat::ParseFromString(
+      (formatter.formatProto(collector_->toProto())).value(), &output_proto);
+  EXPECT_THAT(output_proto, EqualsProto(expected_output_proto));
 }
 
 TEST_F(OutputCollectorTest, YamlFormatter) {
   YamlOutputFormatterImpl formatter;
   EXPECT_EQ((formatter.formatProto(collector_->toProto())).ok(), true);
-  expectEqualToGoldFile((formatter.formatProto(collector_->toProto())).value(),
-                        "test/test_data/output_formatter.yaml.gold");
+  std::string expected_str = readGoldFile("test/test_data/output_formatter.yaml.gold");
+  nighthawk::client::Output expected_output_proto, output_proto;
+  google::protobuf::TextFormat::ParseFromString(expected_str, &expected_output_proto);
+  google::protobuf::TextFormat::ParseFromString(
+      (formatter.formatProto(collector_->toProto())).value(), &output_proto);
+  EXPECT_THAT(output_proto, EqualsProto(expected_output_proto));
 }
 
 TEST_F(OutputCollectorTest, DottedFormatter) {
@@ -209,9 +235,13 @@ public:
 TEST_F(MediumOutputCollectorTest, FortioFormatter) {
   const nighthawk::client::Output input_proto =
       loadProtoFromFile("test/test_data/output_formatter.medium.proto.gold");
+  std::string expected_str = readGoldFile("test/test_data/output_formatter.medium.fortio.gold");
+  nighthawk::client::Output expected_output_proto, output_proto;
+  google::protobuf::TextFormat::ParseFromString(expected_str, &expected_output_proto);
   FortioOutputFormatterImpl formatter;
-  expectEqualToGoldFile((formatter.formatProto(input_proto)).value(),
-                        "test/test_data/output_formatter.medium.fortio.gold");
+  google::protobuf::TextFormat::ParseFromString((formatter.formatProto(input_proto)).value(),
+                                                &output_proto);
+  EXPECT_THAT(output_proto, EqualsProto(expected_output_proto));
 }
 
 TEST_F(MediumOutputCollectorTest, FortioFormatter0sJitterUniformGetsReflected) {
@@ -266,9 +296,14 @@ TEST_F(StatidToNameTest, TestTranslations) {
 TEST_F(MediumOutputCollectorTest, FortioPedanticFormatter) {
   const nighthawk::client::Output input_proto =
       loadProtoFromFile("test/test_data/output_formatter.medium.proto.gold");
+  std::string expected_str =
+      readGoldFile("test/test_data/output_formatter.medium.fortio-noquirks.gold");
+  nighthawk::client::Output expected_output_proto, output_proto;
+  google::protobuf::TextFormat::ParseFromString(expected_str, &expected_output_proto);
   FortioPedanticOutputFormatterImpl formatter;
-  expectEqualToGoldFile((formatter.formatProto(input_proto)).value(),
-                        "test/test_data/output_formatter.medium.fortio-noquirks.gold");
+  google::protobuf::TextFormat::ParseFromString((formatter.formatProto(input_proto)).value(),
+                                                &output_proto);
+  EXPECT_THAT(output_proto, EqualsProto(expected_output_proto));
 }
 
 TEST_F(MediumOutputCollectorTest, FortioPedanticFormatterMissingGlobalResult) {

@@ -139,9 +139,13 @@ envoy_cc_test(
         "//source/client:output_collector_impl_lib",
         "//source/client:output_formatter_impl_lib",
         "//source/common:nighthawk_common_lib",
+        "//test/client:utility_lib",
         "//test/mocks/client:mock_options",
         "//test/test_common:environment_lib",
+        "//test/test_common:proto_matchers",
         "@envoy//test/test_common:simulated_time_system_lib",
+        "@envoy//test/test_common:test_runtime_lib",
+        "@envoy//test/test_common:utility_lib",
     ],
 )
 
