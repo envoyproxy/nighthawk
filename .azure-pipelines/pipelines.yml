@@ -120,30 +120,8 @@ stages:
         targetPath: $(Build.SourcesDirectory)/coverage_html.zip
         artifactName: UnitTestCoverageReport-$(System.JobAttempt)
 
-- stage: coverage_integration
-  dependsOn: ["test"]
-  pool: "envoy-x64-large"
-  jobs:
-  - job: coverage_integration
-    displayName: "do_ci.sh"
-    strategy:
-      maxParallel: 1
-      matrix:
-        coverage_integration:
-          CI_TARGET: "coverage_integration"
-    timeoutInMinutes: 120
-    steps:
-    - template: bazel.yml
-      parameters:
-        ciTarget: $(CI_TARGET)
-    - task: PublishPipelineArtifact@1
-      condition: always()
-      displayName: 'Publish the line coverage report'
-      inputs:
-        targetPath: $(Build.SourcesDirectory)/coverage_html.zip
-        artifactName: IntegrationTestCoverageReport
-
-
+# TODO: coverage_integration stage was temporarily removed due to the issue
+# reported by https://github.com/envoyproxy/nighthawk/issues/1006
 - stage: release
   dependsOn:
   - "clang_tidy"
