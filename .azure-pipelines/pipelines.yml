@@ -120,7 +120,7 @@ stages:
         targetPath: $(Build.SourcesDirectory)/coverage_html.zip
         artifactName: UnitTestCoverageReport-$(System.JobAttempt)
 
-# TODO: coverage_integration stage was temporarily removed due to the issue
+# coverage_integration stage was temporarily removed due to the issue
 # reported by https://github.com/envoyproxy/nighthawk/issues/1006
 - stage: release
   dependsOn:
@@ -128,7 +128,6 @@ stages:
   - "test_gcc"
   - "sanitizers"
   - "coverage_unit"
-  - "coverage_integration"
   condition: eq(variables['PostSubmit'], true)
   pool: "envoy-x64-large"
   jobs:
