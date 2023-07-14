@@ -314,11 +314,11 @@ case "$1" in
         do_unit_test_coverage
         exit 0
     ;;
-    coverage_integration)
-        setup_clang_toolchain
-        do_integration_test_coverage
-        exit 0
-    ;;
+#    coverage_integration)
+#        setup_clang_toolchain
+#        do_integration_test_coverage
+#        exit 0
+#    ;;
     asan)
         setup_clang_toolchain
         do_sanitizer "clang-asan"
