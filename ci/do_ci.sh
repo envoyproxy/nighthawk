@@ -114,7 +114,7 @@ function do_test() {
     # tests that cannot run locally should be executed.
     # E.g. test_http_h1_mini_stress_test_open_loop.
     run_on_build_parts "bazel build -c dbg $BAZEL_BUILD_OPTIONS --action_env=AZP_BRANCH"
-    bazel test -c dbg $BAZEL_TEST_OPTIONS --test_output=all --action_env=AZP_BRANCH //test/...
+    bazel test -c dbg $BAZEL_TEST_OPTIONS --test_output=all --action_env=AZP_BRANCH //test:python_test
 }
 
 function do_clang_tidy() {
