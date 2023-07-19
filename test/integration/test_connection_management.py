@@ -40,6 +40,86 @@ def _run_with_number_of_connections(fixture,
 
 # A series that tests with queueing disabled
 @pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable in sanitizer runs")
+def test_http_h1_connection_management_1(http_test_server_fixture):
+  """Test http h1 connection management with 1 connection and queueing disabled."""
+  _run_with_number_of_connections(http_test_server_fixture, 1)
+
+
+@pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable in sanitizer runs")
+def test_http_h1_connection_management_2(http_test_server_fixture):
+  """Test http h1 connection management with 2 connections and queueing disabled."""
+  _run_with_number_of_connections(http_test_server_fixture, 2, run_test_expectation=False)
+
+
+# A series that tests with queueing enabled
+@pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable in sanitizer runs")
+def test_http_h1_connection_management_with_queue_1(http_test_server_fixture):
+  """Test http h1 connection management with 1 connection and queueing enabled."""
+  _run_with_number_of_connections(http_test_server_fixture, 1, max_pending_requests=5)
+
+
+@pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable in sanitizer runs")
+def test_http_h1_connection_management_with_queue_5(http_test_server_fixture):
+  """Test http h1 connection management with 5 connections and queueing enabled."""
+  _run_with_number_of_connections(http_test_server_fixture, 5, max_pending_requests=5)
+
+
+def _connection_management_test_request_per_connection(fixture, requests_per_connection, use_h2):
+  max_requests_per_conn = 5
+  counters = _run_with_number_of_connections(fixture,
+                                             1,
+                                             max_pending_requests=1,
+                                             requests_per_connection=max_requests_per_conn,
+                                             run_test_expectation=False,
+                                             h2=use_h2)
+  requests = counters["upstream_rq_total"]
+  asserts.assertCounterBetweenInclusive(counters, "upstream_cx_total",
+                                        (requests / max_requests_per_conn),
+                                        (requests / max_requests_per_conn) + 1)
+
+
+@pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable in sanitizer runs")
+def test_http_h1_connection_management_single_request_per_conn_1(http_test_server_fixture):
+  """Test h1 with a single request_per_connection."""
+  _connection_management_test_request_per_connection(http_test_server_fixture, 1, False)
+
+
+@pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable in sanitizer runs")
+def test_http_h1_connection_management_single_request_per_conn_5(http_test_server_fixture):
+  """Test h1 with a request_per_connection set to 5."""
+  _connection_management_test_request_per_connection(http_test_server_fixture, 5, False)
+
+
+@pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable in sanitizer runs")
+def test_http_h2_connection_management_single_request_per_conn_1(http_test_server_fixture):
+  """Test h2 with a single request_per_connection."""
+  _connection_management_test_request_per_connection(http_test_server_fixture, 1, True)
+
+
+@pytest.mark.skipif(utility.isSanitizerRun(), reason="Unstable in sanitizer runs")
+def test_http_h2_connection_management_single_request_per_conn_1(http_test_server_fixture):
+  """Test h2 with a request_per_connection set to 5."""
+  _connection_management_test_request_per_connection(http_test_server_fixture, 5, True)
+
+
+def test_h1_pool_strategy_mru(http_test_server_fixture):
+  """Test connection re-use strategies of the http 1 connection pool.
+
+  Test that with the "most recently used" (mru) strategy only the first created connection gets to send requests.
+  """
+  _, logs = http_test_server_fixture.runNighthawkClient([
+      "--rps 5", "-v", "trace", "--duration", "20", "--connections", "2", "--prefetch-connections",
+      "--experimental-h1-connection-reuse-strategy", "mru", "--termination-predicate",
+      "benchmark.http_2xx:4",
+      http_test_server_fixture.getTestServerRootUri()
+  ])
+
+  # Expect the second connection to not send any messages
+  asserts.assertNotIn("[Tags: \"ConnectionId\":\"1\"] message complete", logs)
+  # Expect that we sent some traffic through the first connection
+  asserts.assertIn("[Tags: \"ConnectionId\":\"0\"] message complete", logs)
+
+
 def test_h1_pool_strategy_lru(http_test_server_fixture):
   """Test connection re-use strategies of the http 1 connection pool.
 
