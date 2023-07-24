@@ -1,8 +1,8 @@
-# Last updated 2023-06-26
+# Last updated 2023-07-24
 apipkg==3.0.1
 chardet==5.1.0
-importlib_metadata==6.4.1
-more_itertools==9.1.0
+importlib_metadata==6.8.0
+more_itertools==10.0.0
 py==1.11.0
 pytest==7.4.0
 pytest-dependency==0.5.1 # versions below 1.0.0 are unstable, so we should only take in bugfixes automatically
@@ -10,17 +10,17 @@ pytest-xdist==3.3.1
 pyyaml==6.0.0
 requests==2.31.0
 six==1.16.0
-zipp==3.15.0
+zipp==3.16.2
 # TODO(935): Remove all below dependencies after using actual dependency manager if possible.
-certifi==2023.5.7
-urllib3==2.0.3
+certifi==2023.7.22
+urllib3==2.0.4
 idna==3.4
 pluggy==1.2.0
 packaging==23.1
 attrs==23.1.0
 iniconfig==2.0.0
-execnet==1.9.0
+execnet==2.0.2
 tomli==2.0.1
 pyparsing==3.1.0
 charset_normalizer==2.1.1 # Don't update charset_normalizer to 3.x.x; the latest requests==2.28.1 can only use >=2 <3.
-exceptiongroup==1.1.1
+exceptiongroup==1.1.2
