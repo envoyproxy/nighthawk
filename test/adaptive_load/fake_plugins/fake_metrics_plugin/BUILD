@@ -43,7 +43,6 @@ envoy_cc_test_library(
 
 envoy_cc_test(
     name = "fake_metrics_plugin_test",
-    size = "large",
     srcs = ["fake_metrics_plugin_test.cc"],
     repository = "@envoy",
     deps = [

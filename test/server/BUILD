@@ -22,7 +22,6 @@ envoy_cc_test_library(
 
 envoy_cc_test(
     name = "http_filter_base_test",
-    size = "large",
     srcs = ["http_filter_base_test.cc"],
     repository = "@envoy",
     deps = [
@@ -35,7 +34,6 @@ envoy_cc_test(
 
 envoy_cc_test(
     name = "http_test_server_filter_integration_test",
-    size = "large",
     srcs = ["http_test_server_filter_integration_test.cc"],
     repository = "@envoy",
     deps = [
@@ -47,7 +45,6 @@ envoy_cc_test(
 
 envoy_cc_test(
     name = "http_dynamic_delay_filter_integration_test",
-    size = "large",
     srcs = ["http_dynamic_delay_filter_integration_test.cc"],
     repository = "@envoy",
     deps = [
@@ -59,7 +56,6 @@ envoy_cc_test(
 
 envoy_cc_test(
     name = "http_time_tracking_filter_integration_test",
-    size = "large",
     srcs = ["http_time_tracking_filter_integration_test.cc"],
     repository = "@envoy",
     deps = [
@@ -72,7 +68,6 @@ envoy_cc_test(
 
 envoy_cc_test(
     name = "configuration_test",
-    size = "large",
     srcs = ["configuration_test.cc"],
     repository = "@envoy",
     deps = [
