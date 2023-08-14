@@ -121,6 +121,7 @@ envoy_cc_test(
 
 envoy_cc_test(
     name = "output_formatter_test",
+    size = "large"
     srcs = ["output_formatter_test.cc"],
     data = [
         "test_data/output_formatter.csv.gold",
@@ -189,6 +190,7 @@ envoy_cc_test(
 
 envoy_cc_test(
     name = "rate_limiter_test",
+    size = "large",
     srcs = ["rate_limiter_test.cc"],
     repository = "@envoy",
     deps = [

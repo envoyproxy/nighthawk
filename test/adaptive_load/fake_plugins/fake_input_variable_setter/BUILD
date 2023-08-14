@@ -44,6 +44,7 @@ envoy_cc_test_library(
 
 envoy_cc_test(
     name = "fake_input_variable_setter_test",
+    size = "large",
     srcs = ["fake_input_variable_setter_test.cc"],
     repository = "@envoy",
     deps = [
