@@ -30,6 +30,7 @@ else
   COVERAGE_TARGETS=//test/...
 fi
 
+COVERAGE_TARGETS=//test:process_bootstrap_test
 
 # The environment variable CI is used to determine if some expensive tests that
 # cannot run locally should be executed.

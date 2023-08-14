@@ -32,6 +32,7 @@ envoy_basic_cc_library(
     include_prefix = "nighthawk/sink",
     deps = [
         "//api/client:grpc_service_lib",
+        "@envoy//envoy/common:base_includes",
         "@envoy//source/common/common:statusor_lib_with_external_headers",
     ],
 )
