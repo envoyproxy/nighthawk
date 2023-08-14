@@ -121,7 +121,7 @@ envoy_cc_test(
 
 envoy_cc_test(
     name = "output_formatter_test",
-    size = "large"
+    size = "large",
     srcs = ["output_formatter_test.cc"],
     data = [
         "test_data/output_formatter.csv.gold",
