@@ -34,7 +34,7 @@ fi
 # The environment variable CI is used to determine if some expensive tests that
 # cannot run locally should be executed.
 # E.g. test_http_h1_mini_stress_test_open_loop.
-BAZEL_BUILD_OPTIONS+=" --config=test-coverage --test_tag_filters=-nocoverage --test_env=ENVOY_IP_TEST_VERSIONS=v4only --action_env=CI"
+BAZEL_BUILD_OPTIONS+=" --test_timeout=900 --config=test-coverage --test_tag_filters=-nocoverage --test_env=ENVOY_IP_TEST_VERSIONS=v4only --action_env=CI"
 bazel coverage ${BAZEL_BUILD_OPTIONS} --cache_test_results=no --test_output=all -- ${COVERAGE_TARGETS}
 COVERAGE_DATA="${COVERAGE_DIR}/coverage.dat"
 
