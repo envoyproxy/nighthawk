@@ -110,6 +110,7 @@ envoy_basic_cc_library(
         "//api/adaptive_load:adaptive_load_proto_cc_proto",
         "@com_google_absl//absl/status",
         "@envoy//envoy/common:base_includes",
+        "@envoy//envoy/common:pure_lib",
     ],
 )
 
