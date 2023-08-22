@@ -3,19 +3,20 @@ trigger:
     include:
     - "main"
 
-- stage: test
-  pool: "envoy-x64-large"
-  jobs:
-  - job: test_and_benchmark
-    displayName: "do_ci.sh"
-    strategy:
-      # Both test and benchmark need dedicated resources for stability.
-      maxParallel: 1
-      matrix:
-        benchmark:
-          CI_TARGET: "benchmark_with_own_binaries"
-    timeoutInMinutes: 120
-    steps:
-    - template: bazel.yml
-      parameters:
-        ciTarget: $(CI_TARGET)
+stages:
+  - stage: test
+    pool: "envoy-x64-large"
+    jobs:
+    - job: test_and_benchmark
+      displayName: "do_ci.sh"
+      strategy:
+        # Both test and benchmark need dedicated resources for stability.
+        maxParallel: 1
+        matrix:
+          benchmark:
+            CI_TARGET: "benchmark_with_own_binaries"
+      timeoutInMinutes: 120
+      steps:
+      - template: bazel.yml
+        parameters:
+          ciTarget: $(CI_TARGET)
