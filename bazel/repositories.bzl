@@ -1,5 +1,10 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
+# Pure refactor: 1a37802c9c8b2a163305774bbbf2ba21318531d2
+# .bazelrc change: 748d4d56ad433caed921866d61c6fbb0ed156a6b 
+# docker changes: dd1059d851bfe2aae2357cbf5f5574a98acb1af6
+# .bazel version change: c33afb435881d177a207080b91588a7edcb66bf2
+# Encap of response code: d3c384ae5d7f9ea4e72e711e419d218af3e26a17
 ENVOY_COMMIT = "8004b60fc9902f65b58c4a9153eb065d1a4152dc"
 ENVOY_SHA = "030d940a0eab63eacc21c9b0b1296ac8f2313a13fc01c54138be83443dbb2ccb"
 
