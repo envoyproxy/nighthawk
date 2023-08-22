@@ -14,7 +14,7 @@ from benchmarks import utilities
 
 
 def _run_benchmark(fixture,
-                   rps=500,
+                   rps=1000,
                    duration=30,
                    max_connections=1,
                    max_active_requests=100,
@@ -66,13 +66,13 @@ def test_http_h1_small_request_small_reply_via(inject_envoy_http_proxy_fixture,
   _run_benchmark(inject_envoy_http_proxy_fixture)
 
 
-# via Envoy, 4 workers. global targets: 500 qps / 4 connections.
+# via Envoy, 4 workers. global targets: 1000 qps / 4 connections.
 @pytest.mark.parametrize('proxy_config', ["nighthawk/benchmarks/configurations/envoy_proxy.yaml"])
 @pytest.mark.parametrize('server_config',
                          ["nighthawk/test/integration/configurations/nighthawk_http_origin.yaml"])
 def test_http_h1_small_request_small_reply_via_multiple_workers(inject_envoy_http_proxy_fixture,
                                                                 proxy_config):  # noqa
-  _run_benchmark(inject_envoy_http_proxy_fixture, rps=125, concurrency=4)
+  _run_benchmark(inject_envoy_http_proxy_fixture, rps=250, concurrency=4)
 
 
 # Test the origin directly, using a stock fixture
@@ -82,12 +82,12 @@ def test_http_h1_small_request_small_reply_direct(http_test_server_fixture):  # 
   _run_benchmark(http_test_server_fixture)
 
 
-# Direct, 4 workers. global targets: 500 qps / 4 connections.
+# Direct, 4 workers. global targets: 1000 qps / 4 connections.
 @pytest.mark.parametrize('server_config',
                          ["nighthawk/test/integration/configurations/nighthawk_http_origin.yaml"])
 def test_http_h1_small_request_small_reply_direct_multiple_workers(
     http_test_server_fixture):  # noqa
-  _run_benchmark(http_test_server_fixture, rps=125, concurrency=4)
+  _run_benchmark(http_test_server_fixture, rps=250, concurrency=4)
 
 
 @pytest.mark.parametrize('server_config',

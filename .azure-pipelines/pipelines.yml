@@ -34,8 +34,6 @@ stages:
       # Both test and benchmark need dedicated resources for stability.
       maxParallel: 1
       matrix:
-        test:
-          CI_TARGET: "test"
         benchmark:
           CI_TARGET: "benchmark_with_own_binaries"
     timeoutInMinutes: 120
