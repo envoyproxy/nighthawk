@@ -1,12 +1,12 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-# Pure refactor: 1a37802c9c8b2a163305774bbbf2ba21318531d2
-# .bazelrc change: 748d4d56ad433caed921866d61c6fbb0ed156a6b 
-# docker changes: dd1059d851bfe2aae2357cbf5f5574a98acb1af6
-# .bazel version change: c33afb435881d177a207080b91588a7edcb66bf2
+# Pure refactor: 1a37802c9c8b2a163305774bbbf2ba21318531d2 - yesterday
+# .bazelrc change: 748d4d56ad433caed921866d61c6fbb0ed156a6b - 3 days ago
+# docker changes: dd1059d851bfe2aae2357cbf5f5574a98acb1af6 - 4 days ago
+# .bazel version change: c33afb435881d177a207080b91588a7edcb66bf2 
 # Encap of response code: d3c384ae5d7f9ea4e72e711e419d218af3e26a17
-ENVOY_COMMIT = "8004b60fc9902f65b58c4a9153eb065d1a4152dc"
-ENVOY_SHA = "030d940a0eab63eacc21c9b0b1296ac8f2313a13fc01c54138be83443dbb2ccb"
+ENVOY_COMMIT = "dd1059d851bfe2aae2357cbf5f5574a98acb1af6"
+ENVOY_SHA = "cf30bcea4af374c8d85836475a1ce2070bfacfa71dde4e450459b2b3abef6010"
 
 HDR_HISTOGRAM_C_VERSION = "0.11.2"  # October 12th, 2020
 HDR_HISTOGRAM_C_SHA = "637f28b5f64de2e268131e4e34e6eef0b91cf5ff99167db447d9b2825eae6bad"
