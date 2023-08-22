@@ -11,7 +11,7 @@ fi
 export BUILDIFIER_BIN="${BUILDIFIER_BIN:=/usr/local/bin/buildifier}"
 export BUILDOZER_BIN="${BUILDOZER_BIN:=/usr/local/bin/buildozer}"
 export NUM_CPUS=${NUM_CPUS:=$(grep -c ^processor /proc/cpuinfo)}
-export BAZEL_EXTRA_TEST_OPTIONS=${BAZEL_EXTRA_TEST_OPTIONS:=""}
+export BAZEL_EXTRA_TEST_OPTIONS=${BAZEL_EXTRA_TEST_OPTIONS:="--experimental_ui_max_stdouterr_bytes=-1"}
 export BAZEL_OPTIONS=${BAZEL_OPTIONS:=""}
 export BAZEL_BUILD_EXTRA_OPTIONS=${BAZEL_BUILD_EXTRA_OPTIONS:=""}
 export SRCDIR=${SRCDIR:="${PWD}"}
