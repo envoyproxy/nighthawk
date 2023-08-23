@@ -33,6 +33,7 @@ envoy_basic_cc_library(
     deps = [
         "//api/client:grpc_service_lib",
         "@envoy//envoy/common:base_includes",
+        "@envoy//envoy/common:pure_lib",
         "@envoy//source/common/common:statusor_lib_with_external_headers",
     ],
 )

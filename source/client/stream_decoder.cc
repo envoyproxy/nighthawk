@@ -20,7 +20,7 @@ void StreamDecoder::decodeHeaders(Envoy::Http::ResponseHeaderMapPtr&& headers, b
   response_headers_ = std::move(headers);
   response_header_sizes_statistic_.addValue(response_headers_->byteSize());
   const uint64_t response_code = Envoy::Http::Utility::getResponseStatus(*response_headers_);
-  stream_info_.response_code_ = static_cast<uint32_t>(response_code);
+  stream_info_.setResponseCode(static_cast<uint32_t>(response_code));
   if (!latency_response_header_name_.empty()) {
     const auto timing_header_name = Envoy::Http::LowerCaseString(latency_response_header_name_);
     const Envoy::Http::HeaderMap::GetResult& timing_header =
@@ -69,9 +69,9 @@ void StreamDecoder::onComplete(bool success) {
   if (success && measure_latencies_) {
     latency_statistic_.addValue((time_source_.monotonicTime() - request_start_).count());
     // At this point StreamDecoder::decodeHeaders() should have been called.
-    if (stream_info_.response_code_.has_value()) {
+    if (stream_info_.responseCode().has_value()) {
       decoder_completion_callback_.exportLatency(
-          stream_info_.response_code_.value(),
+          stream_info_.responseCode().value(),
           (time_source_.monotonicTime() - request_start_).count());
     } else {
       ENVOY_LOG_EVERY_POW_2(warn, "response_code is not available in onComplete");
