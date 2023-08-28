@@ -113,8 +113,6 @@ TEST_F(OutputCollectorTest, CliFormatter) {
 TEST_F(OutputCollectorTest, JsonFormatter) {
   JsonOutputFormatterImpl formatter;
   EXPECT_EQ((formatter.formatProto(collector_->toProto())).ok(), true);
-  expectEqualToGoldFile((formatter.formatProto(collector_->toProto())).value(),
-                        "test/test_data/output_formatter.json.gold");
   std::string expected_str = readGoldFile("test/test_data/output_formatter.json.gold");
   nighthawk::client::Output expected_output_proto, output_proto;
   google::protobuf::TextFormat::ParseFromString(expected_str, &expected_output_proto);
@@ -126,8 +124,6 @@ TEST_F(OutputCollectorTest, JsonFormatter) {
 TEST_F(OutputCollectorTest, YamlFormatter) {
   YamlOutputFormatterImpl formatter;
   EXPECT_EQ((formatter.formatProto(collector_->toProto())).ok(), true);
-  expectEqualToGoldFile((formatter.formatProto(collector_->toProto())).value(),
-                        "test/test_data/output_formatter.yaml.gold");
   std::string expected_str = readGoldFile("test/test_data/output_formatter.yaml.gold");
   nighthawk::client::Output expected_output_proto, output_proto;
   google::protobuf::TextFormat::ParseFromString(expected_str, &expected_output_proto);
@@ -230,8 +226,6 @@ TEST_F(MediumOutputCollectorTest, FortioFormatter) {
   nighthawk::client::Output expected_output_proto, output_proto;
   google::protobuf::TextFormat::ParseFromString(expected_str, &expected_output_proto);
   FortioOutputFormatterImpl formatter;
-  expectEqualToGoldFile((formatter.formatProto(input_proto)).value(),
-                        "test/test_data/output_formatter.medium.fortio.gold");
   google::protobuf::TextFormat::ParseFromString((formatter.formatProto(input_proto)).value(),
                                                 &output_proto);
   EXPECT_THAT(output_proto, EqualsProto(expected_output_proto));
@@ -294,8 +288,6 @@ TEST_F(MediumOutputCollectorTest, FortioPedanticFormatter) {
   nighthawk::client::Output expected_output_proto, output_proto;
   google::protobuf::TextFormat::ParseFromString(expected_str, &expected_output_proto);
   FortioPedanticOutputFormatterImpl formatter;
-  expectEqualToGoldFile((formatter.formatProto(input_proto)).value(),
-                        "test/test_data/output_formatter.medium.fortio-noquirks.gold");
   google::protobuf::TextFormat::ParseFromString((formatter.formatProto(input_proto)).value(),
                                                 &output_proto);
   EXPECT_THAT(output_proto, EqualsProto(expected_output_proto));

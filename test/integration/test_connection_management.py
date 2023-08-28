@@ -115,9 +115,9 @@ def test_h1_pool_strategy_mru(http_test_server_fixture):
   ])
 
   # Expect the second connection to not send any messages
-  asserts.assertNotIn("[C1] message complete", logs)
+  asserts.assertNotIn("[Tags: \"ConnectionId\":\"1\"] message complete", logs)
   # Expect that we sent some traffic through the first connection
-  asserts.assertIn("[C0] message complete", logs)
+  asserts.assertIn("[Tags: \"ConnectionId\":\"0\"] message complete", logs)
 
 
 def test_h1_pool_strategy_lru(http_test_server_fixture):
