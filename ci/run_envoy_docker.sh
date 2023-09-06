@@ -22,7 +22,7 @@ if is_windows; then
   # Container networking is unreliable in the most recently built images, pin Windows to a known
   # good container. This can create a mismatch between the host environment, and the toolchain
   # environment.
-  ENVOY_BUILD_SHA=41c5a05d708972d703661b702a63ef5060125c33
+  #ENVOY_BUILD_SHA=41c5a05d708972d703661b702a63ef5060125c33
   # TODO(sunjayBhatia): Currently ENVOY_DOCKER_OPTIONS is ignored on Windows because
   # CI sets it to a Linux-specific value. Undo this once https://github.com/envoyproxy/envoy/issues/13272
   # is resolved.
@@ -75,12 +75,13 @@ fi
 
 # The IMAGE_ID defaults to the CI hash but can be set to an arbitrary image ID (found with 'docker
 # images').
-if [[ -z "${IMAGE_ID}" ]]; then
-    IMAGE_ID="${ENVOY_BUILD_SHA}"
-    if ! is_windows && [[ -n "$ENVOY_BUILD_CONTAINER_SHA" ]]; then
-        IMAGE_ID="${ENVOY_BUILD_SHA}@sha256:${ENVOY_BUILD_CONTAINER_SHA}"
-    fi
-fi
+[[ -z "${IMAGE_ID}" ]] && IMAGE_ID="${ENVOY_BUILD_SHA}"
+#if [[ -z "${IMAGE_ID}" ]]; then
+#    IMAGE_ID="${ENVOY_BUILD_SHA}"
+#    if ! is_windows && [[ -n "$ENVOY_BUILD_CONTAINER_SHA" ]]; then
+#        IMAGE_ID="${ENVOY_BUILD_SHA}@sha256:${ENVOY_BUILD_CONTAINER_SHA}"
+#    fi
+#fi
 [[ -z "${ENVOY_DOCKER_BUILD_DIR}" ]] && ENVOY_DOCKER_BUILD_DIR="${DEFAULT_ENVOY_DOCKER_BUILD_DIR}"
 # Replace backslash with forward slash for Windows style paths
 ENVOY_DOCKER_BUILD_DIR="${ENVOY_DOCKER_BUILD_DIR//\\//}"
