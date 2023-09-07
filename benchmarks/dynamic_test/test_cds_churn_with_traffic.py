@@ -42,7 +42,7 @@ def _assignEndpointsToClusters(
 
 
 def _run_benchmark(fixture,
-                   rps=1000,
+                   rps=500,
                    duration=_BENCHMARK_DURATION,
                    max_connections=1,
                    max_active_requests=100,
