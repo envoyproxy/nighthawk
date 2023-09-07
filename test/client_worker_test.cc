@@ -94,7 +94,7 @@ public:
   MockRequestSource* request_generator_;
   Envoy::Random::RandomGeneratorImpl rand_;
   NiceMock<Envoy::Event::MockDispatcher> dispatcher_;
-  std::unique_ptr<Envoy::Runtime::Loader> loader_;
+  Envoy::Runtime::LoaderPtr loader_;
   NiceMock<Envoy::LocalInfo::MockLocalInfo> local_info_;
   NiceMock<Envoy::ProtobufMessage::MockValidationVisitor> validation_visitor_;
   Envoy::Upstream::ClusterManagerPtr cluster_manager_ptr_;

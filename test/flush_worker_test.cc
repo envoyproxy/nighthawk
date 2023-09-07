@@ -96,7 +96,7 @@ public:
   NiceMock<Envoy::ThreadLocal::MockInstance> tls_;
   // owned by FlushWorkerImpl's dispatcher member variable.
   NiceMock<Envoy::Event::MockDispatcher>* dispatcher_ = nullptr;
-  std::unique_ptr<Envoy::Runtime::Loader> loader_;
+  Envoy::Runtime::LoaderPtr loader_;
 
   // owned by FlushWorkerImpl's stat_flush_timer_ member variable.
   NiceMock<Envoy::Event::MockTimer>* timer_;
