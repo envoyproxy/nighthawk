@@ -93,7 +93,7 @@ echo "envoy_commit=$envoy_commit"
 echo "Click here: https://github.com/envoyproxy/envoy/commit/$envoy_commit"
 ```
 
-Click the link in the terminal to double check the date of the latest commit.
+Click the link in the terminal to double check the date of the Envoy commit to which we will be updating Nighthawk.
 
 ### Step 4
 
@@ -219,7 +219,7 @@ Sync (copy) [.bazelversion](.bazelversion) from
 #### Example commands
 
 ```bash
-cp -v $envoy_dir/.bazelversion .bazelversion
+cp -v "$envoy_dir/.bazelversion" ".bazelversion"
 ```
 
 ### Step 8
