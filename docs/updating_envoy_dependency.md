@@ -6,22 +6,23 @@ For general information about maintainer responsibilities in the Nighthawk codeb
 
 ## Background
 
-We aim to
-[synchronize our Envoy dependency](https://github.com/envoyproxy/nighthawk/pulls?utf8=%E2%9C%93&q=is%3Apr+is%3Aclosed+%22update+envoy%22+)
-with the latest revision weekly. Nighthawk reuses large parts of Envoy's build
+We aim to synchronize our Envoy dependency with hte latest revision weekly
+([PRs](https://github.com/envoyproxy/nighthawk/pulls?utf8=%E2%9C%93&q=is%3Apr+is%3Aclosed+%22update+envoy%22+)).
+
+Nighthawk reuses large parts of Envoy's build
 system and codebase, so keeping Nighthawk up to date with Envoy's changes is an
 important maintenance task.
 
 ## Update Procedure
 
-The text of each step is **official**, but shell commands are **suggestions**.
-Feel free to accomplish the step in any way you prefer, and please update the
+The text of each step is **official**, but the example shell commands are **suggestions**.
+Feel free to accomplish each step in any way you prefer, and please update the
 text or commands if you notice any issues.
 
-It is highly recommended to perform the following steps in a `screen` or `tmux`
-session to avoid losing the shell variables that are accumulated.
+It is highly recommended to perform the shell commands in a `screen` or `tmux`
+session to avoid losing the shell variables that are accumulated across commands.
 
-All steps are ready to be pasted in a shell.
+All example commands in this document are **ready to paste**.
 
 ### Step 0
 
