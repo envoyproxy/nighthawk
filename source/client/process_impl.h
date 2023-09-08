@@ -205,7 +205,7 @@ private:
 
   std::unique_ptr<ClusterManagerFactory> cluster_manager_factory_;
   Envoy::Upstream::ClusterManagerPtr cluster_manager_{};
-  std::unique_ptr<Envoy::Runtime::ScopedLoaderSingleton> runtime_singleton_;
+  Envoy::Runtime::LoaderPtr runtime_loader_;
   Envoy::Init::WatcherImpl init_watcher_;
   Envoy::Tracing::TracerSharedPtr tracer_;
   Envoy::Server::ValidationAdmin admin_;

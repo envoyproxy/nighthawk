@@ -50,10 +50,9 @@ TEST_F(WorkerTest, WorkerExecutesOnThread) {
 
   TestWorker worker(*api_, tls_);
   NiceMock<Envoy::Event::MockDispatcher> dispatcher;
-  std::unique_ptr<Envoy::Runtime::ScopedLoaderSingleton> loader =
-      std::make_unique<Envoy::Runtime::ScopedLoaderSingleton>(
+  Envoy::Runtime::LoaderPtr loader =
           Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl(
-              dispatcher, tls_, {}, local_info_, test_store_, rand_, validation_visitor_, *api_)});
+              dispatcher, tls_, {}, local_info_, test_store_, rand_, validation_visitor_, *api_)};
   worker.start();
   worker.waitForCompletion();
 

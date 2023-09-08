@@ -25,8 +25,6 @@ void WorkerImpl::start() {
   started_ = true;
   shutdown_ = false;
   thread_ = std::thread([this]() {
-    RELEASE_ASSERT(Envoy::Runtime::LoaderSingleton::getExisting() != nullptr,
-                   "Couldn't get runtime");
     dispatcher_->run(Envoy::Event::Dispatcher::RunType::NonBlock);
     work();
     complete_.set_value();
