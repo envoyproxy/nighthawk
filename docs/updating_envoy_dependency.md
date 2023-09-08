@@ -274,7 +274,7 @@ head -1 requirements.txt
 - If less than 30 days ago, skip to next step.
 - If more than 30 days ago, do the rest of this step.
 
-TLDR:
+##### In brief
 
 ```bash
 virtualenv pip_update_env
@@ -283,13 +283,16 @@ pip install -r requirements.txt
 pip list --outdated
 ```
 
+```bash
+vi requirements.txt
+```
 
 ```bash
 deactivate
 rm -rf pip_update_env
 ```
 
-In detail:
+##### In detail
 
 1. Create and activate a virtual env:
    ```bash
