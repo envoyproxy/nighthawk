@@ -26,7 +26,7 @@ All example commands in this document are **ready to paste**.
 
 ### Step 0
 
-Ensure sure you are in the directory expected by the steps in this guide:
+Ensure you are in the directory expected by the steps in this guide:
 
 ```bash
 ls -d .git api ci docs include source || (echo "These steps should be executed in a directory containing .git, api, ci, docs, include, source, etc.")
@@ -63,6 +63,7 @@ Create a new branch from `main`, e.g. `envoy-update-123456789`.
 #### Example commands
 
 ```bash
+git checkout main
 branch="envoy-update-$(date +%s)"
 git checkout -b $branch
 ```
@@ -96,6 +97,8 @@ Click the link in the console to double check the date of the latest commit.
 
 ### Step 4
 
+See **Example commands** below for shell commands for this entire step.
+
 Edit [bazel/repositories.bzl](bazel/repositories.bzl):
 1. Update `ENVOY_COMMIT` to the latest Envoy's commit from 
    [this page](https://github.com/envoyproxy/envoy/commits/main). (Clicking on the
@@ -117,7 +120,7 @@ Edit [bazel/repositories.bzl](bazel/repositories.bzl):
 
 #### Example commands
 
-Overwrite ENVOY_COMMIT and ENVOY_SHA in bazel/repositories.bzl:
+Overwrite `ENVOY_COMMIT` and `ENVOY_SHA` in `bazel/repositories.bzl`:
 
 ```bash
 sed -i -e "s/ENVOY_COMMIT =.*/ENVOY_COMMIT = \"${envoy_commit}\"/" bazel/repositories.bzl
@@ -142,7 +145,7 @@ envoy_sha=$(ci/do_ci.sh build 2>&1 | head -30 | egrep -m 1 -o '[0-9a-f]{64}')
 echo "envoy_sha=$envoy_sha"
 ```
 
-If we successfully obtained the new SHA, set ENVOY_SHA:
+If we successfully obtained the new SHA, set `ENVOY_SHA`:
 
 ```bash
 sed -i -e "s/ENVOY_SHA =.*/ENVOY_SHA = \"$envoy_sha\"/" bazel/repositories.bzl
@@ -157,15 +160,7 @@ At this point:
 
 ### Step 5
 
-Sync (copy) [.bazelrc](.bazelrc) from
-   [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/.bazelrc) to
-   update our build configurations. Be sure to retain our local modifications,
-   all lines that are unique to Nighthawk are marked with comment `# unique`.
-
-#### Example commands
-
-Declare a Bash function `merge_from_envoy` that will be used repeatedly in steps 5-9.
-
+Set up a Bash function `merge_from_envoy` that will be used repeatedly in the example commands in steps 6-10.
 
 Paste the following into the shell:
 
@@ -186,29 +181,36 @@ merge_from_envoy() {
 }
 ```
 
-This will only work in a shell where `$envoy_dir` was previously set (see
-Step 3).
+This will only work in a shell where `$envoy_dir` was previously set and we
+cloned Envoy locally (see Step 3).
 
-Sync `.bazelrc`:
+When running this function, in the terminal you will see:
+
+- commit id of Envoy's version of the file (e.g. c9d883afbd9bf5046f6bb6dbfab724bbcc104123)
+- a diff of Envoy (left) and Nighthawk (right)
+
+Our goal is to transfer changes from Envoy to Nighthawk, preserving certain Nighthawk-specific changes marked with `#unique`.
+
+To take a closer look at an Envoy commit, visit `https://github.com/envoyproxy/envoy/commit/INSERT_COMMIT_ID_HERE`. This is helpful when it's hard to tell from the diff how the file should look.
+
+Updates in the Envoy file should be selectively pasted into the Nighthawk file using a text editor, possibly in a second terminal.
+
+Once you have done some partial work, save the file and repeat the `merge_from_envoy` command in the original terminal to check the diff again. This can be done iteratively.
+
+### Step 6
+
+Sync (copy) [.bazelrc](.bazelrc) from
+   [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/.bazelrc) to
+   update our build configurations. Be sure to retain our local modifications,
+   all lines that are unique to Nighthawk are marked with comment `# unique`.
+
+#### Example commands
 
 ```bash
 merge_from_envoy ".bazelrc"
 ```
 
-In the terminal you will see:
-
-- commit id of Envoy's version of the file (e.g. c9d883afbd9bf5046f6bb6dbfab724bbcc104123)
-- a diff of Envoy (left) and Nighthawk (right)
-
-Our goal is to transfer changes from Envoy to Nighthawk, preserving certain Nighthawk-specific changes marked with #unique.
-
-To take a closer look at an Envoy commit, visit `https://github.com/envoyproxy/envoy/commit/INSERT_COMMIT_ID_HERE`. This is helpful when it's hard to tell from the diff how the file should look.
-
-Updates in the Envoy file should be selectively pasted into the Nighthawk file using vi, probably in an extra terminal.
-
-Once you have done some partial work, save the file and repeat the `merge_from_envoy` command in the original terminal to check the diff again. This can be done iteratively.
-
-### Step 6
+### Step 7
 
 Sync (copy) [.bazelversion](.bazelversion) from
    [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/.bazelversion)
@@ -220,7 +222,7 @@ Sync (copy) [.bazelversion](.bazelversion) from
 cp -v $envoy_dir/.bazelversion .bazelversion
 ```
 
-### Step 7
+### Step 8
 
 Sync (copy) [ci/run_envoy_docker.sh](ci/run_envoy_docker.sh) from
    [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/ci/run_envoy_docker.sh).
@@ -233,7 +235,7 @@ Sync (copy) [ci/run_envoy_docker.sh](ci/run_envoy_docker.sh) from
 merge_from_envoy "ci/run_envoy_docker.sh"
 ```
 
-### Step 8
+### Step 9
 
 Sync (copy) [tools/gen_compilation_database.py](tools/gen_compilation_database.py) from
    [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/tools/gen_compilation_database.py) to
@@ -246,7 +248,7 @@ Sync (copy) [tools/gen_compilation_database.py](tools/gen_compilation_database.p
 merge_from_envoy "tools/gen_compilation_database.py"
 ```
 
-### Step 9
+### Step 10
 
 Sync (copy) [tools/code_format/config.yaml](tools/code_format/config.yaml) from
    [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/tools/code_format/config.yaml) to
@@ -259,7 +261,7 @@ Sync (copy) [tools/code_format/config.yaml](tools/code_format/config.yaml) from
 merge_from_envoy "tools/code_format/config.yaml"
 ```
 
-### Step 10
+### Step 11
 If [requirements.txt](requirements.txt) has not been updated in the last 30 days (based on comment at top
    of file), check for major dependency updates.
 
@@ -326,7 +328,7 @@ In detail:
    rm -rf pip_update_env
    ```
 
-### Step 11
+### Step 12
 
 Run:
 
@@ -344,7 +346,7 @@ If there are build failures or persistent test failures, you will need to fix th
 
 See [Troubleshooting](#troubleshooting) for tips.
 
-### Step 12
+### Step 13
 
 If the PR ends up modifying any C++ files, execute:
 
@@ -356,7 +358,7 @@ to reformat the files and avoid a CI failure.
 
 If you get an error from the script, you may need to clean up first: `rm -rf tools/pyformat/`.
 
-### Step 13
+### Step 14
 
 Execute:
 
@@ -368,7 +370,7 @@ to regenerate the
    portion of our documentation that captures the CLI help output. This will
    prevent a CI failure in case any flags changed in the PR or upstream.
 
-### Step 14
+### Step 15
 
 Create a PR with a title like `Update Envoy to 9753819 (Jan 24th 2021)`,
    describe all performed changes in the PR's description.
