@@ -354,12 +354,12 @@ See [Troubleshooting](#troubleshooting) for tips.
 If the PR ends up modifying any C++ files, execute:
 
 ```bash
+rm -rf tools/pyformat/
 ci/do_ci.sh fix_format
 ```
 
-to reformat the files and avoid a CI failure.
+to reformat the files and avoid a CI format check failure.
 
-If you get an error from the script, you may need to clean up first: `rm -rf tools/pyformat/`.
 
 ### Step 14
 
