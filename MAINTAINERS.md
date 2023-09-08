@@ -37,6 +37,6 @@ with the latest revision weekly. Nighthawk reuses large parts of Envoy's build
 system and codebase, so keeping Nighthawk up to date with Envoy's changes is an
 important maintenance task.
 
-See [Updating the Envoy Dependency](docs/updating_envoy_dependency.md) for
+See [Updating the Envoy Dependency](docs/root/updating_envoy_dependency.md) for
 the procedure.
 
