@@ -6,7 +6,7 @@ For general information about maintainer responsibilities in the Nighthawk codeb
 
 ## Background
 
-We aim to synchronize our Envoy dependency with hte latest revision weekly
+We aim to synchronize our Envoy dependency with the latest revision weekly
 ([PRs](https://github.com/envoyproxy/nighthawk/pulls?utf8=%E2%9C%93&q=is%3Apr+is%3Aclosed+%22update+envoy%22+)).
 
 Nighthawk reuses large parts of Envoy's build
