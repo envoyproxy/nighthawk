@@ -6,7 +6,7 @@ For general information about maintainer responsibilities in the Nighthawk codeb
 
 ## Background
 
-We aim to synchronize our Envoy dependency with the latest revision weekly
+We aim to synchronize our Envoy dependency with the latest revision **weekly**
 ([PRs](https://github.com/envoyproxy/nighthawk/pulls?utf8=%E2%9C%93&q=is%3Apr+is%3Aclosed+%22update+envoy%22+)).
 
 Nighthawk reuses large parts of Envoy's build
@@ -46,7 +46,7 @@ Create a fork of Nighthawk, or fetch upstream and merge changes into your fork i
 
 #### Example commands
 
-The following commands assume that you already have a fork and that the remote is named `upstream`.
+The following commands assume that you already have a fork and that the remote of `https://github.com/envoyproxy/nighthawk` is named `upstream`.
 
 ```bash
 git fetch
@@ -70,7 +70,7 @@ git checkout -b $branch
 
 ### Step 3
 
-Clone the Envoy repo into a temp directory.
+Clone the Envoy repo (https://github.com/envoyproxy/envoy.git) into a temp directory.
 
 
 #### Example commands
@@ -93,11 +93,11 @@ echo "envoy_commit=$envoy_commit"
 echo "Click here: https://github.com/envoyproxy/envoy/commit/$envoy_commit"
 ```
 
-Click the link in the console to double check the date of the latest commit.
+Click the link in the terminal to double check the date of the latest commit.
 
 ### Step 4
 
-See **Example commands** below for shell commands for this entire step.
+(See **Example commands** for shell commands covering this entire step.)
 
 Edit [bazel/repositories.bzl](bazel/repositories.bzl):
 1. Update `ENVOY_COMMIT` to the latest Envoy's commit from 
