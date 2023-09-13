@@ -1,8 +1,8 @@
 # Updating Nighthawk's Envoy Dependency
 
-This document aims to assist [maintainers](OWNERS.md).
+This document aims to assist [maintainers](/OWNERS.md).
 
-For general information about maintainer responsibilities in the Nighthawk codebase, see [MAINTAINERS.md](MAINTAINERS.md).
+For general information about maintainer responsibilities in the Nighthawk codebase, see [MAINTAINERS.md](/MAINTAINERS.md).
 
 ## Background
 
@@ -99,7 +99,7 @@ Click the link in the terminal to double check the date of the Envoy commit to w
 
 (See **Example commands** for shell commands covering this entire step.)
 
-Edit [bazel/repositories.bzl](bazel/repositories.bzl):
+Edit [bazel/repositories.bzl](/bazel/repositories.bzl):
 1. Update `ENVOY_COMMIT` to the latest Envoy's commit from 
    [this page](https://github.com/envoyproxy/envoy/commits/main). (Clicking on the
    short commit id opens a page that contains the fully expanded commit id).
@@ -115,7 +115,7 @@ Edit [bazel/repositories.bzl](bazel/repositories.bzl):
       ```
       INFO: SHA256 (https://github.com/envoyproxy/envoy/archive/9753819331d1547c4b8294546a6461a3777958f5.tar.gz) = f4d26c7e78c0a478d959ea8bc877f260d4658a8b44e294e3a400f20ad44d41a3
       ```
-1. Update `ENVOY_SHA` in [bazel/repositories.bzl](bazel/repositories.bzl) to
+1. Update `ENVOY_SHA` in [bazel/repositories.bzl](/bazel/repositories.bzl) to
       this value.
 
 #### Example commands
@@ -199,7 +199,7 @@ Once you have done some partial work, save the file and repeat the `merge_from_e
 
 ### Step 6
 
-Sync (copy) [.bazelrc](.bazelrc) from
+Sync (copy) [.bazelrc](/.bazelrc) from
    [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/.bazelrc) to
    update our build configurations. Be sure to retain our local modifications,
    all lines that are unique to Nighthawk are marked with comment `# unique`.
@@ -212,7 +212,7 @@ merge_from_envoy ".bazelrc"
 
 ### Step 7
 
-Sync (copy) [.bazelversion](.bazelversion) from
+Sync (copy) [.bazelversion](/.bazelversion) from
    [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/.bazelversion)
    to ensure we are using the same build system version.
 
@@ -224,7 +224,7 @@ cp -v "$envoy_dir/.bazelversion" ".bazelversion"
 
 ### Step 8
 
-Sync (copy) [ci/run_envoy_docker.sh](ci/run_envoy_docker.sh) from
+Sync (copy) [ci/run_envoy_docker.sh](/ci/run_envoy_docker.sh) from
    [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/ci/run_envoy_docker.sh).
    Be sure to retain our local modifications, all lines that are unique to
    Nighthawk are marked with comment `# unique`.
@@ -237,7 +237,7 @@ merge_from_envoy "ci/run_envoy_docker.sh"
 
 ### Step 9
 
-Sync (copy) [tools/gen_compilation_database.py](tools/gen_compilation_database.py) from
+Sync (copy) [tools/gen_compilation_database.py](/tools/gen_compilation_database.py) from
    [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/tools/gen_compilation_database.py) to
    update our build configurations. Be sure to retain our local modifications,
    all lines that are unique to Nighthawk are marked with comment `# unique`.
@@ -250,7 +250,7 @@ merge_from_envoy "tools/gen_compilation_database.py"
 
 ### Step 10
 
-Sync (copy) [tools/code_format/config.yaml](tools/code_format/config.yaml) from
+Sync (copy) [tools/code_format/config.yaml](/tools/code_format/config.yaml) from
    [Envoy's version](https://github.com/envoyproxy/envoy/blob/main/tools/code_format/config.yaml) to
    update our format checker configuration. Be sure to retain our local modifications,
    all lines that are unique to Nighthawk are marked with comment `# unique`.
@@ -262,7 +262,7 @@ merge_from_envoy "tools/code_format/config.yaml"
 ```
 
 ### Step 11
-If [requirements.txt](requirements.txt) has not been updated in the last 30 days (based on comment at top
+If [requirements.txt](/requirements.txt) has not been updated in the last 30 days (based on comment at top
    of file), check for major dependency updates.
 
 #### Example commands
@@ -442,7 +442,7 @@ the last successful Nighthawk update and the current commit that Nighthawk needs
 to be updated to.
 
 Following the
-[update process](MAINTAINERS.md#updates-to-the-envoy-dependency) to update Nighthawk to a
+[update process](/MAINTAINERS.md#updates-to-the-envoy-dependency) to update Nighthawk to a
 specific Envoy commit for each Envoy commit being tested in the bisect. Generally, you can
 do this by only changing the `ENVOY_COMMIT` and leaving `ENVOY_SHA` blank in the
 `repositories.bzl` file.
