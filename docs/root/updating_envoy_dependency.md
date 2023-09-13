@@ -135,7 +135,10 @@ At this point:
 - `ENVOY_COMMIT` should be a new value
 - `ENVOY_SHA` should be blank
 
-Obtain the new Envoy SHA by running the first part of a build:
+The easiest way to obtain the Envoy SHA is to run a build from a clean state. In
+this case the Envoy SHA is printed to Bazel's stdout. The following commands
+extract the Envoy SHA from the Bazel's stdout (assuming the build succeeds):
+
 
 ```bash
 bazel clean --expunge
@@ -144,6 +147,11 @@ envoy_sha=$(ci/do_ci.sh build 2>&1 | head -30 | egrep -m 1 -o '[0-9a-f]{64}')
 
 echo "envoy_sha=$envoy_sha"
 ```
+
+Note that this will wait for the whole build to finish.
+
+If this command failed to set `$envoy_sha` to a long alphanumeric string, most likely the build
+failed. We will need to run `ci/do_ci.sh build` to debug at this point.
 
 If we successfully obtained the new SHA, set `ENVOY_SHA`:
 
@@ -336,6 +344,7 @@ rm -rf pip_update_env
 Run:
 
 ```bash
+ci/do_ci.sh build
 ci/do_ci.sh test
 ```
 
@@ -343,9 +352,7 @@ Sometimes the dependency update comes with changes
    that break our build. Include any changes required to Nighthawk to fix that
    in the same PR.
 
-If the tests fail, try rerunning a few times.
-
-If there are build failures or persistent test failures, you will need to fix them at this point.
+If there are build failures or test failures, you will need to fix them at this point.
 
 See [Troubleshooting](#troubleshooting) for tips.
 
@@ -354,16 +361,24 @@ See [Troubleshooting](#troubleshooting) for tips.
 If the PR ends up modifying any C++ files, execute:
 
 ```bash
-rm -rf tools/pyformat/
 ci/do_ci.sh fix_format
 ```
 
 to reformat the files and avoid a CI format check failure.
 
 
+If you get a Python error message not related to the purpose of the script, this can sometimes be fixed by:
+
+```bash
+rm -rf tools/pyformat/
+```
+
+and retrying the format command.
+
+
 ### Step 14
 
-Execute:
+If Nighthawk command line flags have been changed, execute:
 
 ```bash
 tools/update_cli_readme_documentation.sh --mode fix
@@ -376,7 +391,8 @@ to regenerate the
 ### Step 15
 
 Create a PR with a title like `Update Envoy to 9753819 (Jan 24th 2021)`,
-   describe all performed changes in the PR's description.
+   describe all performed changes in the PR's description ([example PR
+   description](https://github.com/envoyproxy/nighthawk/pull/758)).
 
 #### Example commands
 
