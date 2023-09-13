@@ -345,14 +345,21 @@ Run:
 
 ```bash
 ci/do_ci.sh build
-ci/do_ci.sh test
 ```
 
 Sometimes the dependency update comes with changes
    that break our build. Include any changes required to Nighthawk to fix that
    in the same PR.
 
-If there are build failures or test failures, you will need to fix them at this point.
+If there are build failures, you will need to fix them at this point.
+
+Then ensure that unit and integration tests pass:
+
+```bash
+ci/do_ci.sh test
+```
+
+Some test failures require code changes to fix.
 
 See [Troubleshooting](#troubleshooting) for tips.
 
