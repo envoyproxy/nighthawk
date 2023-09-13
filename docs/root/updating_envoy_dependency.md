@@ -136,8 +136,9 @@ At this point:
 - `ENVOY_SHA` should be blank
 
 The easiest way to obtain the Envoy SHA is to run a build from a clean state. In
-this case the Envoy SHA is printed to Bazel's stdout. The following commands
-extract the Envoy SHA from the Bazel's stdout (assuming the build succeeds):
+this case the Envoy SHA is printed to Bazel's stdout near the beginning of the
+build. The following commands extract the Envoy SHA from the Bazel's stdout (assuming the build progresses far
+enough):
 
 
 ```bash
