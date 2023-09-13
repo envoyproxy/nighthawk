@@ -151,7 +151,7 @@ echo "envoy_sha=$envoy_sha"
 Note that this will wait for the whole build to finish.
 
 If this command failed to set `$envoy_sha` to a long alphanumeric string, most likely the build
-failed. We will need to run `ci/do_ci.sh build` to debug at this point.
+failed because of code changes upstream. We will need to run `ci/do_ci.sh build` to debug at this point.
 
 If we successfully obtained the new SHA, set `ENVOY_SHA`:
 
