@@ -157,7 +157,7 @@ public:
   Envoy::Network::DnsResolverSharedPtr dnsResolver() override {
     PANIC("NighthawkServerInstance::dnsResolver not implemented");
   }
-  void drainListeners() override {
+  void drainListeners(Envoy::OptRef<const Envoy::Network::ExtraShutdownListenerOptions>) override {
     PANIC("NighthawkServerInstance::drainListeners not implemented");
   }
   Envoy::Server::DrainManager& drainManager() override {

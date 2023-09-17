@@ -94,6 +94,7 @@ paths:
     - source/common/matcher/field_matcher.h
     - source/common/protobuf/visitor_helper.h
     - source/extensions/common/matcher/trie_matcher.h
+    - envoy/common/exception.h
     # legacy core files which throw exceptions. We can add to this list but strongly prefer
     # StausOr where possible.
     - source/common/upstream/cds_api_helper.cc
@@ -123,7 +124,6 @@ paths:
     - source/common/stats/tag_extractor_impl.cc
     - source/common/stats/tag_producer_impl.cc
     - source/common/http/http2/codec_impl.cc
-    - source/common/http/filter_chain_helper.cc
     - source/common/http/utility.cc
     - source/common/http/hash_policy.cc
     - source/common/http/conn_manager_utility.cc
@@ -136,7 +136,6 @@ paths:
     - source/common/secret/secret_manager_impl.cc
     - source/common/secret/sds_api.cc
     - source/common/grpc/async_client_manager_impl.cc
-    - source/common/grpc/common.cc
     - source/common/grpc/google_grpc_utils.cc
     - source/common/tcp_proxy/tcp_proxy.cc
     - source/common/config/subscription_factory_impl.cc
