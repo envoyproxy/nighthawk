@@ -264,10 +264,10 @@ Node name
 Cluster name
 
 --hot-restart-version
-hot restart compatibility version
+Hot restart compatibility version
 
 --restart-epoch <uint32_t>
-hot restart epoch #
+Hot restart epoch #
 
 --log-path <string>
 Path to logfile
@@ -285,7 +285,7 @@ https://github.com/gabime/spdlog/wiki/3.-Custom-formatting)
 Default is "[%Y-%m-%d %T.%e][%t][%l][%n] [%g:%#] %v"
 
 --component-log-level <string>
-Comma separated list of component log levels. For example
+Comma-separated list of component log levels. For example
 upstream:debug,config:trace
 
 -l <string>,  --log-level <string>
@@ -301,16 +301,16 @@ The local IP address version (v4 or v6).
 Admin address path
 
 --ignore-unknown-dynamic-fields
-ignore unknown fields in dynamic configuration
+Ignore unknown fields in dynamic configuration
 
 --reject-unknown-dynamic-fields
-reject unknown fields in dynamic configuration
+Reject unknown fields in dynamic configuration
 
 --allow-unknown-static-fields
-allow unknown fields in static configuration
+Allow unknown fields in static configuration
 
 --allow-unknown-fields
-allow unknown fields in static configuration (DEPRECATED)
+Allow unknown fields in static configuration (DEPRECATED)
 
 --config-yaml <string>
 Inline YAML configuration, merges with the contents of --config-path
@@ -322,14 +322,14 @@ Path to configuration file
 # of worker threads to run
 
 --base-id-path <string>
-path to which the base ID is written
+Path to which the base ID is written
 
 --use-dynamic-base-id
-the server chooses a base ID dynamically. Supersedes a static base ID.
+The server chooses a base ID dynamically. Supersedes a static base ID.
 May not be used when the restart epoch is non-zero.
 
 --base-id <uint32_t>
-base ID so that multiple envoys can run on the same host if needed
+Base ID so that multiple envoys can run on the same host if needed
 
 --,  --ignore_rest
 Ignores the rest of the labeled arguments following this flag.

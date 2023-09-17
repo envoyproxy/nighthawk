@@ -36,9 +36,8 @@ public:
     Envoy::Random::RandomGeneratorImpl rand;
     NiceMock<Envoy::LocalInfo::MockLocalInfo> local_info;
     NiceMock<Envoy::ProtobufMessage::MockValidationVisitor> validation_visitor;
-    loader_ = std::make_unique<Envoy::Runtime::ScopedLoaderSingleton>(
-        Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl(
-            *dispatcher_, tls_, {}, local_info, store_, rand, validation_visitor, api_)});
+    loader_ = Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl(
+            *dispatcher_, tls_, {}, local_info, store_, rand, validation_visitor, api_)};
     sink_ = new StrictMock<Envoy::Stats::MockSink>();
     stats_sinks_.emplace_back(sink_);
 
@@ -97,7 +96,7 @@ public:
   NiceMock<Envoy::ThreadLocal::MockInstance> tls_;
   // owned by FlushWorkerImpl's dispatcher member variable.
   NiceMock<Envoy::Event::MockDispatcher>* dispatcher_ = nullptr;
-  std::unique_ptr<Envoy::Runtime::ScopedLoaderSingleton> loader_;
+  Envoy::Runtime::LoaderPtr loader_;
 
   // owned by FlushWorkerImpl's stat_flush_timer_ member variable.
   NiceMock<Envoy::Event::MockTimer>* timer_;

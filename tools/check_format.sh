@@ -12,7 +12,7 @@ FULL_CHECK="./../$CURRENT_DIRECTORY"
 TO_CHECK="${2:-$FULL_CHECK}"
 # TODO(https://github.com/envoyproxy/nighthawk/issues/165): fully excluding everything
 # from the build fixer isn't ideal.
-bazel run @envoy//tools/code_format:check_format.py -- \
+bazel run @envoy//tools/code_format:check_format -- \
   --skip_envoy_build_rule_check  --namespace_check Nighthawk \
   --build_fixer_check_excluded_paths=$TO_CHECK \
   $1 $TO_CHECK
