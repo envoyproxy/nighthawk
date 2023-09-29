@@ -341,7 +341,7 @@ TEST(StatisticTest, HdrStatisticPercentilesProto) {
 
   Envoy::MessageUtil util;
   util.loadFromJson(Envoy::Filesystem::fileSystemForTest().fileReadToEnd(
-                        TestEnvironment::runfilesPath("test/test_data/hdr_proto_json.gold")),
+                        TestEnvironment::runfilesPath("test/test_data/hdr_proto_json.gold")).value(),
                     parsed_json_proto, Envoy::ProtobufMessage::getStrictValidationVisitor());
   const std::string json = util.getJsonStringFromMessageOrError(
       statistic.toProto(Statistic::SerializationDomain::DURATION), true, true);
@@ -364,7 +364,7 @@ TEST(StatisticTest, CircllhistStatisticPercentilesProto) {
 
   Envoy::MessageUtil util;
   util.loadFromJson(Envoy::Filesystem::fileSystemForTest().fileReadToEnd(
-                        TestEnvironment::runfilesPath("test/test_data/circllhist_proto_json.gold")),
+                        TestEnvironment::runfilesPath("test/test_data/circllhist_proto_json.gold")).value(),
                     parsed_json_proto, Envoy::ProtobufMessage::getStrictValidationVisitor());
   const std::string json = util.getJsonStringFromMessageOrError(
       statistic.toProto(Statistic::SerializationDomain::DURATION), true, true);

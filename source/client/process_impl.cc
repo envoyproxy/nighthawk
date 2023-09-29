@@ -241,7 +241,7 @@ public:
   }
 
 private:
-  Envoy::OptRef<Envoy::Server::Admin> admin_;
+Envoy::OptRef<Envoy::Server::Admin> admin_;
   Envoy::Api::Api& api_;
   Envoy::Event::Dispatcher& dispatcher_;
   Envoy::AccessLog::AccessLogManager& log_manager_;
@@ -310,7 +310,7 @@ public:
     PANIC("NighthawkServerFactoryContext::initManager not implemented");
   };
 
-  Envoy::Http::Context& httpContext() override { return server_.httpContext(); }
+
 
   Envoy::Grpc::Context& grpcContext() override { return server_.grpcContext(); };
 

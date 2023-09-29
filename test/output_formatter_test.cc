@@ -79,7 +79,7 @@ public:
 
   std::string readGoldFile(absl::string_view path) {
     std::string s = Envoy::Filesystem::fileSystemForTest().fileReadToEnd(
-        TestEnvironment::runfilesPath(std::string(path)));
+        TestEnvironment::runfilesPath(std::string(path))).value();
     const auto version = VersionInfo::buildVersion().version();
     const std::string major = fmt::format("{}", version.major_number());
     const std::string minor = fmt::format("{}", version.minor_number());
@@ -212,7 +212,7 @@ public:
   nighthawk::client::Output loadProtoFromFile(absl::string_view path) {
     nighthawk::client::Output proto;
     const auto contents = Envoy::Filesystem::fileSystemForTest().fileReadToEnd(
-        TestEnvironment::runfilesPath(std::string(path)));
+        TestEnvironment::runfilesPath(std::string(path))).value();
     Envoy::MessageUtil::loadFromJson(contents, proto,
                                      Envoy::ProtobufMessage::getStrictValidationVisitor());
     return proto;

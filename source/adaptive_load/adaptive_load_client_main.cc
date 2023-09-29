@@ -101,13 +101,13 @@ AdaptiveLoadClientMain::AdaptiveLoadClientMain(int argc, const char* const* argv
 
 uint32_t AdaptiveLoadClientMain::Run() {
   ENVOY_LOG(info, "Attempting adaptive load session: {}", DescribeInputs());
-  std::string spec_textproto;
-  try {
-    spec_textproto = filesystem_.fileReadToEnd(spec_filename_);
-  } catch (const Envoy::EnvoyException& e) {
+  absl::StatusOr<std::string> spec_textproto_or_error = filesystem_.fileReadToEnd(spec_filename_);
+  if (!spec_textproto_or_error.ok()) {
     throw Nighthawk::NighthawkException("Failed to read spec textproto file \"" + spec_filename_ +
-                                        "\": " + e.what());
-  }
+                                        "\": " + std::string(spec_textproto_or_error.status().message()));
+  }   
+  std::string spec_textproto = spec_textproto_or_error.value();
+  
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
   if (!Envoy::Protobuf::TextFormat::ParseFromString(spec_textproto, &spec)) {
     throw Nighthawk::NighthawkException("Unable to parse file \"" + spec_filename_ +
