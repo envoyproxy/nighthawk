@@ -241,7 +241,7 @@ public:
   }
 
 private:
-Envoy::OptRef<Envoy::Server::Admin> admin_;
+  Envoy::OptRef<Envoy::Server::Admin> admin_;
   Envoy::Api::Api& api_;
   Envoy::Event::Dispatcher& dispatcher_;
   Envoy::AccessLog::AccessLogManager& log_manager_;
