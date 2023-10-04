@@ -310,7 +310,7 @@ public:
     PANIC("NighthawkServerFactoryContext::initManager not implemented");
   };
 
-  Envoy::Http::Context& httpContext() override { return server_.httpContext(); }
+
 
   Envoy::Grpc::Context& grpcContext() override { return server_.grpcContext(); };
 
