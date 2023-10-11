@@ -69,6 +69,7 @@ _TEST_SERVER_WARN_ERROR_IGNORE_LIST = frozenset([
             "Unable to use runtime singleton for feature envoy.http.headermap.lazy_map_min_size",
             "Unable to use runtime singleton for feature envoy.reloadable_features.header_map_correctly_coalesce_cookies",
             "Using deprecated extension name 'envoy.listener.tls_inspector' for 'envoy.filters.listener.tls_inspector'.",
+            "'envoy.extensions.resource_monitors.downstream_connections.v3.DownstreamConnectionsConfig' is contained in proto file 'envoy/extensions/resource_monitors/downstream_connections/v3/downstream_connections.proto' marked as work-in-progress",
 
             # A few of our filters use the same typed configuration, specifically
             # 'test-server', 'time-tracking' and 'dynamic-delay'.
