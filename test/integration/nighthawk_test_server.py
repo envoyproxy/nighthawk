@@ -71,7 +71,6 @@ _TEST_SERVER_WARN_ERROR_IGNORE_LIST = frozenset([
             "Using deprecated extension name 'envoy.listener.tls_inspector' for 'envoy.filters.listener.tls_inspector'.",
             "There is no configured limit to the number of allowed active downstream connections",
 
-
             # A few of our filters use the same typed configuration, specifically
             # 'test-server', 'time-tracking' and 'dynamic-delay'.
             # For now this is by design.
