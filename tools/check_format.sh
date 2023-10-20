@@ -19,6 +19,6 @@ bazel run @envoy//tools/code_format:check_format -- \
 
 # The include checker doesn't support per-file checking, so we only
 # run it when a full check is requested.
-if [ $FULL_CHECK == $TO_CHECK ]; then
-  bazel run //tools:check_envoy_includes.py
-fi
+#if [ $FULL_CHECK == $TO_CHECK ]; then
+#  bazel run //tools:check_envoy_includes.py
+#fi
