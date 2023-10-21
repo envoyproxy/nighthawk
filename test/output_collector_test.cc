@@ -15,8 +15,8 @@ namespace Nighthawk {
 namespace Client {
 namespace {
 
-using ::google::protobuf::TextFormat;
 using ::nighthawk::client::UserDefinedOutput;
+using ::proto2::TextFormat;
 
 class OutputCollectorTest : public Test, public Envoy::Event::TestUsingSimulatedTime {
 public:

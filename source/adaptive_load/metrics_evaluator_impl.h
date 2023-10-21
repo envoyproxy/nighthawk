@@ -1,3 +1,5 @@
+#pragma once
+
 #include "nighthawk/adaptive_load/metrics_evaluator.h"
 
 namespace Nighthawk {

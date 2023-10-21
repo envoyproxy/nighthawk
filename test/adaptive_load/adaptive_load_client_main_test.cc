@@ -183,8 +183,10 @@ TEST(AdaptiveLoadClientMainTest, FailsIfOpeningOutputFileFails) {
   NiceMock<Envoy::Filesystem::MockInstance> filesystem;
 
   std::string infile_contents =
-      Envoy::Filesystem::fileSystemForTest().fileReadToEnd(Nighthawk::TestEnvironment::runfilesPath(
-          std::string("test/adaptive_load/test_data/valid_session_spec.textproto"))).value();
+      Envoy::Filesystem::fileSystemForTest()
+          .fileReadToEnd(Nighthawk::TestEnvironment::runfilesPath(
+              std::string("test/adaptive_load/test_data/valid_session_spec.textproto")))
+          .value();
   EXPECT_CALL(filesystem, fileReadToEnd(_)).WillOnce(Return(infile_contents));
 
   auto* mock_file = new NiceMock<Envoy::Filesystem::MockFile>;
@@ -213,8 +215,10 @@ TEST(AdaptiveLoadClientMainTest, FailsIfWritingOutputFileFails) {
   NiceMock<Envoy::Filesystem::MockInstance> filesystem;
 
   std::string infile_contents =
-      Envoy::Filesystem::fileSystemForTest().fileReadToEnd(Nighthawk::TestEnvironment::runfilesPath(
-          std::string("test/adaptive_load/test_data/valid_session_spec.textproto"))).value();
+      Envoy::Filesystem::fileSystemForTest()
+          .fileReadToEnd(Nighthawk::TestEnvironment::runfilesPath(
+              std::string("test/adaptive_load/test_data/valid_session_spec.textproto")))
+          .value();
   EXPECT_CALL(filesystem, fileReadToEnd(_)).WillOnce(Return(infile_contents));
 
   auto* mock_file = new NiceMock<Envoy::Filesystem::MockFile>;
@@ -246,8 +250,10 @@ TEST(AdaptiveLoadClientMainTest, FailsIfClosingOutputFileFails) {
   NiceMock<Envoy::Filesystem::MockInstance> filesystem;
 
   std::string infile_contents =
-      Envoy::Filesystem::fileSystemForTest().fileReadToEnd(Nighthawk::TestEnvironment::runfilesPath(
-          std::string("test/adaptive_load/test_data/valid_session_spec.textproto"))).value();
+      Envoy::Filesystem::fileSystemForTest()
+          .fileReadToEnd(Nighthawk::TestEnvironment::runfilesPath(
+              std::string("test/adaptive_load/test_data/valid_session_spec.textproto")))
+          .value();
   EXPECT_CALL(filesystem, fileReadToEnd(_)).WillOnce(Return(infile_contents));
 
   auto* mock_file = new NiceMock<Envoy::Filesystem::MockFile>;
@@ -285,8 +291,10 @@ TEST(AdaptiveLoadClientMainTest, WritesOutputProtoToFile) {
   NiceMock<Envoy::Filesystem::MockInstance> filesystem;
 
   std::string infile_contents =
-      Envoy::Filesystem::fileSystemForTest().fileReadToEnd(Nighthawk::TestEnvironment::runfilesPath(
-          std::string("test/adaptive_load/test_data/valid_session_spec.textproto"))).value();
+      Envoy::Filesystem::fileSystemForTest()
+          .fileReadToEnd(Nighthawk::TestEnvironment::runfilesPath(
+              std::string("test/adaptive_load/test_data/valid_session_spec.textproto")))
+          .value();
   EXPECT_CALL(filesystem, fileReadToEnd(_)).WillOnce(Return(infile_contents));
 
   std::string actual_outfile_contents;
@@ -313,9 +321,10 @@ TEST(AdaptiveLoadClientMainTest, WritesOutputProtoToFile) {
   AdaptiveLoadClientMain main(5, argv.data(), controller, filesystem);
   main.Run();
 
-  std::string golden_text =
-      Envoy::Filesystem::fileSystemForTest().fileReadToEnd(Nighthawk::TestEnvironment::runfilesPath(
-          std::string("test/adaptive_load/test_data/golden_output.textproto"))).value();
+  std::string golden_text = Envoy::Filesystem::fileSystemForTest()
+                                .fileReadToEnd(Nighthawk::TestEnvironment::runfilesPath(std::string(
+                                    "test/adaptive_load/test_data/golden_output.textproto")))
+                                .value();
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput golden_proto;
   Envoy::Protobuf::TextFormat::ParseFromString(golden_text, &golden_proto);
   EXPECT_EQ(actual_outfile_contents, golden_proto.DebugString());

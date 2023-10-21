@@ -1,3 +1,5 @@
+#pragma once
+
 // Interfaces for InputVariableSetter plugins and plugin factories.
 
 #pragma once

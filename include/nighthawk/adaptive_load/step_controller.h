@@ -1,3 +1,5 @@
+#pragma once
+
 // Interfaces for StepController plugins and plugin factories.
 
 #pragma once

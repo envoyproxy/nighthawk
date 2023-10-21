@@ -1,3 +1,5 @@
+#pragma once
+
 // Implementations of RequestSourceConfigFactories that make a OptionsListRequestSource.
 #pragma once
 

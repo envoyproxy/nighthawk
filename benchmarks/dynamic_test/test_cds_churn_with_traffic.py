@@ -100,6 +100,7 @@ def _config_generation_single_cluster(temp_dir: str, endpoints: list[utility.Soc
 @pytest.mark.parametrize('dynamic_config_generator', [_config_generation_single_cluster])
 def test_dynamic_http_single_cluster_traffic(inject_dynamic_envoy_http_proxy_fixture,
                                              proxy_config):  # noqa
+  """Dynamic HTTP test on a single cluster."""
   _run_benchmark(inject_dynamic_envoy_http_proxy_fixture)
 
 

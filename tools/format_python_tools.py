@@ -12,7 +12,7 @@ EXCLUDE_DIRECTORIES = ['generated', 'venv', ".cache"]
 EXCLUDE_FILES = ['gen_compilation_database.py']
 
 
-def   collectFiles(directory):
+def collectFiles(directory):
   """Collect all Python files in the tools directory.
 
   Returns: A collection of python files in the tools directory excluding
@@ -29,7 +29,6 @@ def   collectFiles(directory):
     for filename in fnmatch.filter(filenames, '*.py'):
       if filename in EXCLUDE_FILES:
         continue
-      print("XXXXXX adding %s", os.path.join(root, filename))
       matches.append(os.path.join(root, filename))
   return matches
 
@@ -77,7 +76,10 @@ if __name__ == '__main__':
                       choices=['check', 'fix'],
                       default='check',
                       help='Fix invalid syntax in files.')
-  parser.add_argument('--directory', default='.', help='directory where to search for Python files that will be formatted. Default ".".')
+  parser.add_argument(
+      '--directory',
+      default='.',
+      help='directory where to search for Python files that will be formatted. Default ".".')
   args = parser.parse_args()
   is_valid = validateFormat(args.directory, args.action == 'fix')
   sys.exit(0 if is_valid else 1)

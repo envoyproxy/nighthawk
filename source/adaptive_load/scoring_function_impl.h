@@ -1,3 +1,5 @@
+#pragma once
+
 // Implementations of ScoringFunction plugins and corresponding factories.
 #pragma once
 

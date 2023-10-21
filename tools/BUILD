@@ -1,3 +1,4 @@
+load("@python_pip_deps//:requirements.bzl", "entry_point")
 load("@python_pip_deps//:requirements.bzl", "requirement")
 load("@rules_python//python:defs.bzl", "py_binary")
 
@@ -33,5 +34,14 @@ py_binary(
         requirement("pyflakes"),
         requirement("snowballstemmer"),
         requirement("yapf"),
+    ],
+)
+
+py_binary(
+    name = "flake8",
+    srcs = ["flake8.py"],
+    deps = [
+        requirement("flake8"),
+        requirement("flake8-docstrings"),
     ],
 )

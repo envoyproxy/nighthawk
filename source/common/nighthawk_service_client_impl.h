@@ -1,3 +1,5 @@
+#pragma once
+
 #include "nighthawk/common/nighthawk_service_client.h"
 
 #include "external/envoy/source/common/common/statusor.h"
