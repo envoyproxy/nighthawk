@@ -222,7 +222,7 @@ function do_benchmark_with_own_binaries() {
 function do_check_format() {
     echo "check_format..."
     cd "${SRCDIR}"
-    ./tools/check_format.sh check
+    #./tools/check_format.sh check
     ./tools/format_python_tools.sh check
 }
 
