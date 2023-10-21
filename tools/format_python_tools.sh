@@ -4,9 +4,6 @@ set -e
 
 DIRECTORY=${PWD}
 
-sudo apt-get update
-sudo apt-get install python3-distutils
-
 echo "Running Python format check..."
 bazel run //tools:format_python_tools -- --directory=${DIRECTORY} $1
 

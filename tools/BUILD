@@ -34,6 +34,7 @@ py_binary(
     name = "flake8",
     srcs = ["flake8.py"],
     deps = [
+        requirement("setuptools"),
         requirement("flake8"),
         requirement("flake8-docstrings"),
     ],
