@@ -26,13 +26,6 @@ py_binary(
         ":.style.yapf",
     ],
     deps = [
-        requirement("flake8"),
-        requirement("flake8-docstrings"),
-        requirement("mccabe"),
-        requirement("pycodestyle"),
-        requirement("pydocstyle"),
-        requirement("pyflakes"),
-        requirement("snowballstemmer"),
         requirement("yapf"),
     ],
 )

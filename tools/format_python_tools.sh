@@ -5,7 +5,7 @@ set -e
 DIRECTORY=${PWD}
 
 echo "Running Python format check..."
-#bazel run //tools:format_python_tools -- --directory=${DIRECTORY} $1
+bazel run //tools:format_python_tools -- --directory=${DIRECTORY} $1
 
 echo "Running Python3 flake8 check..."
 EXCLUDE="venv,format_python_tools.py,gen_compilation_database.py"
@@ -22,6 +22,7 @@ EXCLUDE="venv,format_python_tools.py,gen_compilation_database.py"
 # We ignore false positives because of what look like pytest peculiarities
 # F401 Module imported but unused
 # F811 Redefinition of unused name from line n
+sudo apt-get install python3-distutils
 bazel run //tools:flake8 -- ${DIRECTORY} --exclude=${EXCLUDE} --ignore=E114,E111,E501,F401,F811,E124,E125,E126,W504,D --count --show-source --statistics
 bazel run //tools:flake8 -- ${DIRECTORY} --exclude=${EXCLUDE} --docstring-convention pep257 --select=D --count --show-source --statistics
 bazel run //tools:flake8 -- ${DIRECTORY} --exclude=${EXCLUDE} --docstring-convention google --select=D --count --show-source --statistics
