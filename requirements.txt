@@ -16,6 +16,7 @@ pytest-xdist==3.3.1
 pytest==7.4.2
 pyyaml==6.0.1
 requests==2.31.0
+setuptools==68.2.2
 six==1.16.0
 snowballstemmer==2.2.0
 yapf==0.40.2
