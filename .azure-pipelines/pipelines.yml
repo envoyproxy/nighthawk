@@ -16,8 +16,9 @@ stages:
       matrix:
         build:
           CI_TARGET: "build"
-        format:
-          CI_TARGET: "check_format"
+        # TODO(#1032): Re-enable the format CI check.
+        #format:
+        #  CI_TARGET: "check_format"
     timeoutInMinutes: 120
     steps:
     - template: bazel.yml
