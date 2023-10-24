@@ -142,9 +142,7 @@ public:
         local_info_(local_info), validation_context_(validation_context),
         grpc_context_(grpc_context), router_context_(router_context) {}
 
-  void run() override {
-    PANIC("NighthawkServerInstance::run not implemented");
-  }
+  void run() override { PANIC("NighthawkServerInstance::run not implemented"); }
   Envoy::OptRef<Envoy::Server::Admin> admin() override { return admin_; }
   Envoy::Api::Api& api() override { return api_; }
   Envoy::Upstream::ClusterManager& clusterManager() override {
