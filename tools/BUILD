@@ -1,3 +1,5 @@
+load("@python_pip_deps//:requirements.bzl", "entry_point")
+load("@python_pip_deps//:requirements.bzl", "requirement")
 load("@rules_python//python:defs.bzl", "py_binary")
 
 licenses(["notice"])  # Apache 2
@@ -14,5 +16,25 @@ py_binary(
         "//:nighthawk_output_transform",
         "//:nighthawk_service",
         "//:nighthawk_test_server",
+    ],
+)
+
+py_binary(
+    name = "format_python_tools",
+    srcs = ["format_python_tools.py"],
+    data = [
+        ":.style.yapf",
+    ],
+    deps = [
+        requirement("yapf"),
+    ],
+)
+
+py_binary(
+    name = "flake8",
+    srcs = ["flake8.py"],
+    deps = [
+        requirement("flake8"),
+        requirement("flake8-docstrings"),
     ],
 )

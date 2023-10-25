@@ -12,7 +12,7 @@ EXCLUDE_DIRECTORIES = ['generated', 'venv', ".cache"]
 EXCLUDE_FILES = ['gen_compilation_database.py']
 
 
-def collectFiles():
+def collectFiles(directory):
   """Collect all Python files in the tools directory.
 
   Returns: A collection of python files in the tools directory excluding
@@ -21,10 +21,10 @@ def collectFiles():
   # TODO: Add ability to collect a specific file or files.
   matches = []
   path_parts = os.getcwd().split('/')
-  dirname = '.'
-  if path_parts[-1] == 'tools':
-    dirname = '/'.join(path_parts[:-1])
-  for root, dirnames, filenames in os.walk(dirname):
+  #dirname = '.'
+  #if path_parts[-1] == 'tools':
+  #  dirname = '/'.join(path_parts[:-1])
+  for root, dirnames, filenames in os.walk(directory):
     dirnames[:] = [d for d in dirnames if d not in EXCLUDE_DIRECTORIES]
     for filename in fnmatch.filter(filenames, '*.py'):
       if filename in EXCLUDE_FILES:
@@ -33,7 +33,7 @@ def collectFiles():
   return matches
 
 
-def validateFormat(fix=False):
+def validateFormat(directory, fix=False):
   """Check the format of python files in the tools directory.
 
     Arguments:
@@ -42,9 +42,9 @@ def validateFormat(fix=False):
   fixes_required = False
   failed_update_files = set()
   successful_update_files = set()
-  for python_file in collectFiles():
+  for python_file in collectFiles(directory):
     reformatted_source, encoding, changed = FormatFile(python_file,
-                                                       style_config='.style.yapf',
+                                                       style_config='./tools/.style.yapf',
                                                        in_place=fix,
                                                        print_diff=not fix)
     if not fix:
@@ -76,6 +76,10 @@ if __name__ == '__main__':
                       choices=['check', 'fix'],
                       default='check',
                       help='Fix invalid syntax in files.')
+  parser.add_argument(
+      '--directory',
+      default='.',
+      help='directory where to search for Python files that will be formatted. Default ".".')
   args = parser.parse_args()
-  is_valid = validateFormat(args.action == 'fix')
+  is_valid = validateFormat(args.directory, args.action == 'fix')
   sys.exit(0 if is_valid else 1)
