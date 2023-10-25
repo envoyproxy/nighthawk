@@ -30,7 +30,7 @@ namespace Client {
 namespace {
 
 using ::envoy::config::core::v3::TypedExtensionConfig;
-using ::proto2::TextFormat;
+using ::Envoy::Protobuf::TextFormat;
 using ::testing::HasSubstr;
 using ::testing::TestWithParam;
 using ::testing::ValuesIn;

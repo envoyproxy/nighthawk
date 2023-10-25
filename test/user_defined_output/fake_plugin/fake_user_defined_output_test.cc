@@ -19,9 +19,9 @@ namespace Nighthawk {
 namespace {
 
 using ::Envoy::Http::TestResponseHeaderMapImpl;
+using ::Envoy::Protobuf::TextFormat;
 using ::nighthawk::FakeUserDefinedOutput;
 using ::nighthawk::FakeUserDefinedOutputConfig;
-using ::proto2::TextFormat;
 using ::testing::HasSubstr;
 
 absl::StatusOr<UserDefinedOutputPluginPtr> CreatePlugin(const std::string& config_textproto,

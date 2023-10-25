@@ -15,9 +15,9 @@ namespace Nighthawk {
 namespace {
 
 using ::envoy::config::core::v3::TypedExtensionConfig;
+using ::Envoy::Protobuf::TextFormat;
 using ::nighthawk::FakeUserDefinedOutputConfig;
 using ::nighthawk::LogResponseHeadersConfig;
-using ::proto2::TextFormat;
 using ::testing::HasSubstr;
 
 UserDefinedOutputConfigFactoryPair

@@ -22,9 +22,9 @@ namespace {
 
 using ::Envoy::Http::HeaderEntry;
 using ::Envoy::Http::TestResponseHeaderMapImpl;
+using ::Envoy::Protobuf::TextFormat;
 using ::nighthawk::LogResponseHeadersConfig;
 using ::nighthawk::LogResponseHeadersOutput;
-using ::proto2::TextFormat;
 using ::testing::HasSubstr;
 
 // Fake Header Logger to enable testing of LogResponseHeadersPlugin. Keeps track of logged headers.
