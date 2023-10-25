@@ -37,10 +37,10 @@ def collectFiles(directory):
 def validateFormat(directory, fix=False):
   """Check the format of python files in the tools directory.
 
-    Args:
-      fix: a flag to indicate if fixes should be applied.
-    directory: A string, path to a directory where to look for files that should
-      be checked for correct formatting.
+  Args:
+    fix: a flag to indicate if fixes should be applied.
+    directory: A string, path to a directory where to look for files that
+      should be checked for correct formatting.
   """
   fixes_required = False
   failed_update_files = set()
