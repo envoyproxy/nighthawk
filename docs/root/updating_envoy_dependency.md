@@ -271,74 +271,27 @@ merge_from_envoy "tools/code_format/config.yaml"
 ```
 
 ### Step 11
-If [requirements.txt](/requirements.txt) has not been updated in the last 30 days (based on comment at top
-   of file), check for major dependency updates.
+Perform this step if [tools/base/requirements.in](/tools/base/requirements.in)
+has not been updated in the last 30 days (based on comment at top of file).
 
-#### Example commands
+The Python dependencies need to be updated regularly. The list of packages
+Nighthawk codebase uses is listed in
+[tools/base/requirements.in](/tools/base/requirements.in). This file specifies
+version constraints and it is our goal to use the latest compatible version of
+every package. Ideally all constraints are in the `>=` format. If an
+incompatibility is found, you can pin a package by specifying a `<=` constraint.
+These should always be accompanied with a comment explaining them.
 
-```bash
-head -1 requirements.txt
-```
-
-- If less than 30 days ago, skip to next step.
-- If more than 30 days ago, do the rest of this step.
-
-##### In brief
-
-```bash
-virtualenv pip_update_env
-source pip_update_env/bin/activate
-pip install -r requirements.txt
-pip list --outdated
-```
+First attempt to remove all existing pins and update the dependencies by
+running:
 
 ```bash
-vi requirements.txt
+bazel run //tools/base:requirements.update
 ```
 
-```bash
-deactivate
-rm -rf pip_update_env
-```
-
-##### In detail
-
-1. Create and activate a virtual env:
-   ```bash
-   virtualenv pip_update_env
-   source pip_update_env/bin/activate
-   ```
-   NOTE: if `pip_update_env/bin/activate` appears to not exist, try setting
-   `export DEB_PYTHON_INSTALL_LAYOUT='deb'` and recreating the virtualenv.
-
-1. Install dependencies:
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-1. Check for outdated dependencies:
-
-   ```bash
-   pip list --outdated
-   ```
-   This will likely show both outdated dependencies based on requirements.txt and other outdated
-   dependencies you may have in addition, such as to `pip` itself. Here, we are only interested in
-   cross-referencing the ones that appear with the ones in `requirements.txt`.
-
-1. If you find any dependency updates, you can either try updating the dependency in
-   `requirements.txt` yourself or create an issue for the change and assign it to one of the
-   nighthawk maintainers. If you do it yourself, note that all versions must be pinned to conform
-   with `rules_python`.
-
-   If there are not any dependency updates, please update the timestamp at the top of the file.
-
-1. When done, clean up the virtual env:
-
-   ```bash
-   deactivate
-   rm -rf pip_update_env
-   ```
+This will use the configuration from
+[tools/base/requirements.in](/tools/base/requirements.in) and update the lock
+file [tools/base/requirements.txt](/tools/base/requirements.txt).
 
 ### Step 12
 
@@ -363,6 +316,12 @@ ci/do_ci.sh test
 Some test failures require code changes to fix.
 
 See [Troubleshooting](#troubleshooting) for tips.
+
+If you removed any pins or updated Python dependencies in the previous step, you
+may see new failures due to these updates. Re-introduce dependency pins as necessary and execute the update
+command Step 11 again. Repeat this until the tests pass and document the need for any
+pins in [tools/base/requirements.in](/tools/base/requirements.in).
+
 
 ### Step 13
 
