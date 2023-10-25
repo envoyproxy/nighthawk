@@ -274,16 +274,27 @@ merge_from_envoy "tools/code_format/config.yaml"
 Perform this step if [tools/base/requirements.in](/tools/base/requirements.in)
 has not been updated in the last 30 days (based on comment at top of file).
 
-The Python dependencies need to be updated regularly. The list of packages
-Nighthawk codebase uses is listed in
-[tools/base/requirements.in](/tools/base/requirements.in). This file specifies
-version constraints and it is our goal to use the latest compatible version of
-every package. Ideally all constraints are in the `>=` format. If an
-incompatibility is found, you can pin a package by specifying a `<=` constraint.
-These should always be accompanied with a comment explaining them.
+```bash
+head -1 requirements.txt
+```
 
-First attempt to remove all existing pins and update the dependencies by
-running:
+- If less than 30 days ago, skip to next step.
+- If more than 30 days ago, do the rest of this step.
+
+The Python dependencies need to be updated regularly. The list of packages
+the Nighthawk codebase uses is listed in
+[tools/base/requirements.in](/tools/base/requirements.in). This file specifies
+version constraints and it is our goal to use the latest but still compatible
+compatible version of every package. Ideally all constraints are in the `>=`
+format. If an incompatibility is found, you can pin a package by specifying a
+`<=` constraint. These should always be accompanied with a comment explaining
+them. Avoid using `==` constraint to the extent possible.
+
+First attempt to remove all existing pins in
+[tools/base/requirements.in](/tools/base/requirements.in) to see if they are
+still necessary. Once done editting
+[tools/base/requirements.in](/tools/base/requirements.in), update the
+dependencies by running:
 
 ```bash
 bazel run //tools/base:requirements.update
