@@ -21,9 +21,6 @@ def collectFiles(directory):
   # TODO: Add ability to collect a specific file or files.
   matches = []
   path_parts = os.getcwd().split('/')
-  #dirname = '.'
-  #if path_parts[-1] == 'tools':
-  #  dirname = '/'.join(path_parts[:-1])
   for root, dirnames, filenames in os.walk(directory):
     dirnames[:] = [d for d in dirnames if d not in EXCLUDE_DIRECTORIES]
     for filename in fnmatch.filter(filenames, '*.py'):
