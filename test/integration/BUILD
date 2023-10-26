@@ -3,7 +3,7 @@ load(
     "@envoy//bazel:envoy_build_system.bzl",
     "envoy_package",
 )
-load("@python_pip_deps//:requirements.bzl", "requirement")
+load("@nh_pip3//:requirements.bzl", "requirement")
 
 licenses(["notice"])  # Apache 2
 

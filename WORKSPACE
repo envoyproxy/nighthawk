@@ -37,6 +37,6 @@ load("//bazel:python_dependencies.bzl", "nighthawk_python_dependencies")
 
 nighthawk_python_dependencies()
 
-load("@python_pip_deps//:requirements.bzl", python_pip_deps = "install_deps")
+load("@nh_pip3//:requirements.bzl", nh_pip3 = "install_deps")
 
-python_pip_deps()
+nh_pip3()

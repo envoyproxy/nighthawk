@@ -15,15 +15,16 @@ EXCLUDE_FILES = ['gen_compilation_database.py']
 def collectFiles(directory):
   """Collect all Python files in the tools directory.
 
+  Args:
+    directory: A string, path to a directory where to look for files that should
+      be checked for correct formatting.
+
   Returns: A collection of python files in the tools directory excluding
     any directories in the EXCLUDE_DIRECTORIES constant.
   """
   # TODO: Add ability to collect a specific file or files.
   matches = []
   path_parts = os.getcwd().split('/')
-  #dirname = '.'
-  #if path_parts[-1] == 'tools':
-  #  dirname = '/'.join(path_parts[:-1])
   for root, dirnames, filenames in os.walk(directory):
     dirnames[:] = [d for d in dirnames if d not in EXCLUDE_DIRECTORIES]
     for filename in fnmatch.filter(filenames, '*.py'):
@@ -36,8 +37,10 @@ def collectFiles(directory):
 def validateFormat(directory, fix=False):
   """Check the format of python files in the tools directory.
 
-    Arguments:
-      fix: a flag to indicate if fixes should be applied.
+  Args:
+    fix: a flag to indicate if fixes should be applied.
+    directory: A string, path to a directory where to look for files that
+      should be checked for correct formatting.
   """
   fixes_required = False
   failed_update_files = set()
