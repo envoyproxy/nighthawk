@@ -1,15 +1,24 @@
 # Last updated 2023-10-20
 apipkg==3.0.2
 chardet==5.2.0
+flake8-docstrings==1.7.0
+flake8==6.1.0
 importlib_metadata==6.8.0
+mccabe==0.7.0
 more_itertools==10.1.0
+platformdirs==3.11.0
 py==1.11.0
-pytest==7.4.2
+pycodestyle==2.11.1
+pydocstyle==6.3.0
+pyflakes==3.1.0
 pytest-dependency==0.5.1 # versions below 1.0.0 are unstable, so we should only take in bugfixes automatically
 pytest-xdist==3.3.1
+pytest==7.4.2
 pyyaml==6.0.1
 requests==2.31.0
 six==1.16.0
+snowballstemmer==2.2.0
+yapf==0.40.2
 zipp==3.17.0
 # TODO(935): Remove all below dependencies after using actual dependency manager if possible.
 certifi==2023.7.22
