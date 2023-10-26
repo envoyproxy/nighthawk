@@ -412,8 +412,8 @@ git checkout main
 If you encounter an error that looks like:
 
 ```
-ERROR: REDACTED/nighthawk/test/integration/BUILD:32:11: no such package '@python_pip_deps//pypi__more_itertools':
-BUILD file not found in directory 'pypi__more_itertools' of external repository @python_pip_deps. Add a BUILD
+ERROR: REDACTED/nighthawk/test/integration/BUILD:32:11: no such package '@nh_pip3//pypi__more_itertools':
+BUILD file not found in directory 'pypi__more_itertools' of external repository @nh_pip3. Add a BUILD
 file to a directory to mark it as a package. and referenced by '//test/integration:integration_test_base_lean'
 ```
 

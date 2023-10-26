@@ -1,5 +1,5 @@
 load("@rules_python//python:defs.bzl", "py_test")
-load("@python_pip_deps//:requirements.bzl", "requirement")
+load("@nh_pip3//:requirements.bzl", "requirement")
 
 licenses(["notice"])  # Apache 2
 
