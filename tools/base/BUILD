@@ -8,9 +8,7 @@ envoy_package()
 compile_pip_requirements(
     name = "requirements",
     extra_args = [
-        "--allow-unsafe",
         "--generate-hashes",
         "--reuse-hashes",
-        "--resolver=backtracking",
     ],
 )
