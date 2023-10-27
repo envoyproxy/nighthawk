@@ -1,7 +1,6 @@
 #pragma once
 
 // Implementations of RequestSourceConfigFactories that make a OptionsListRequestSource.
-#pragma once
 
 #include "envoy/registry/registry.h"
 

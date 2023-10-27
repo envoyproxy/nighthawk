@@ -2,7 +2,6 @@
 
 // Flush worker implementation. Flush worker periodically flushes metrics
 // snapshot to all configured stats sinks in Nighthawk.
-#pragma once
 
 #include <vector>
 

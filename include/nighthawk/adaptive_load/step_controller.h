@@ -2,8 +2,6 @@
 
 // Interfaces for StepController plugins and plugin factories.
 
-#pragma once
-
 #include "envoy/common/pure.h"
 #include "envoy/config/typed_config.h"
 
