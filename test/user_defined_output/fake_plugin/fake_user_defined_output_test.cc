@@ -19,7 +19,7 @@ namespace Nighthawk {
 namespace {
 
 using ::Envoy::Http::TestResponseHeaderMapImpl;
-using ::google::protobuf::TextFormat;
+using ::Envoy::Protobuf::TextFormat;
 using ::nighthawk::FakeUserDefinedOutput;
 using ::nighthawk::FakeUserDefinedOutputConfig;
 using ::testing::HasSubstr;

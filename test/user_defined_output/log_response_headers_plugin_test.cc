@@ -22,7 +22,7 @@ namespace {
 
 using ::Envoy::Http::HeaderEntry;
 using ::Envoy::Http::TestResponseHeaderMapImpl;
-using ::google::protobuf::TextFormat;
+using ::Envoy::Protobuf::TextFormat;
 using ::nighthawk::LogResponseHeadersConfig;
 using ::nighthawk::LogResponseHeadersOutput;
 using ::testing::HasSubstr;

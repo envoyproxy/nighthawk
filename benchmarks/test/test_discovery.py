@@ -57,36 +57,42 @@ def _run_benchmark(fixture,
   utilities.output_benchmark_results(parsed_json, fixture)
 
 
-# Test via injected Envoy
 @pytest.mark.parametrize('proxy_config', ["nighthawk/benchmarks/configurations/envoy_proxy.yaml"])
 @pytest.mark.parametrize('server_config',
                          ["nighthawk/test/integration/configurations/nighthawk_http_origin.yaml"])
 def test_http_h1_small_request_small_reply_via(inject_envoy_http_proxy_fixture,
                                                proxy_config):  # noqa
+  """H1 test with small request and reply via injected Envoy."""
   _run_benchmark(inject_envoy_http_proxy_fixture)
 
 
-# via Envoy, 4 workers. global targets: 1000 qps / 4 connections.
 @pytest.mark.parametrize('proxy_config', ["nighthawk/benchmarks/configurations/envoy_proxy.yaml"])
 @pytest.mark.parametrize('server_config',
                          ["nighthawk/test/integration/configurations/nighthawk_http_origin.yaml"])
 def test_http_h1_small_request_small_reply_via_multiple_workers(inject_envoy_http_proxy_fixture,
                                                                 proxy_config):  # noqa
+  """H1 test with small request and reply via multiple workers.
+
+  via Envoy, 4 workers. global targets: 1000 qps / 4 connections.
+  """
   _run_benchmark(inject_envoy_http_proxy_fixture, rps=125, concurrency=4)
 
 
-# Test the origin directly, using a stock fixture
 @pytest.mark.parametrize('server_config',
                          ["nighthawk/test/integration/configurations/nighthawk_http_origin.yaml"])
 def test_http_h1_small_request_small_reply_direct(http_test_server_fixture):  # noqa
+  """H1 test with small request and reply that tests the origin directly, using a stock fixture."""
   _run_benchmark(http_test_server_fixture)
 
 
-# Direct, 4 workers. global targets: 1000 qps / 4 connections.
 @pytest.mark.parametrize('server_config',
                          ["nighthawk/test/integration/configurations/nighthawk_http_origin.yaml"])
 def test_http_h1_small_request_small_reply_direct_multiple_workers(
     http_test_server_fixture):  # noqa
+  """H1 test with small request and reply that tests the origin directly.
+
+  4 workers. global targets: 1000 qps / 4 connections.
+  """
   _run_benchmark(http_test_server_fixture, rps=125, concurrency=4)
 
 

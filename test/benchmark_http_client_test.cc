@@ -34,7 +34,7 @@ namespace Nighthawk {
 namespace {
 
 using ::envoy::config::core::v3::TypedExtensionConfig;
-using ::google::protobuf::TextFormat;
+using ::Envoy::Protobuf::TextFormat;
 
 // Helper function to get headers in a set that should be verified during the test.
 std::string getPathFromRequest(const Envoy::Http::RequestHeaderMap& header) {

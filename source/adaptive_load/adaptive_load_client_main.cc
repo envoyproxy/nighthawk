@@ -105,8 +105,8 @@ uint32_t AdaptiveLoadClientMain::Run() {
   if (!spec_textproto.ok()) {
     throw Nighthawk::NighthawkException("Failed to read spec textproto file \"" + spec_filename_ +
                                         "\": " + std::string(spec_textproto.status().message()));
-  }   
-  
+  }
+
   nighthawk::adaptive_load::AdaptiveLoadSessionSpec spec;
   if (!Envoy::Protobuf::TextFormat::ParseFromString(*spec_textproto, &spec)) {
     throw Nighthawk::NighthawkException("Unable to parse file \"" + spec_filename_ +

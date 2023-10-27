@@ -1,6 +1,6 @@
-// Interfaces for MetricsPlugin plugins and plugin factories.
-
 #pragma once
+
+// Interfaces for MetricsPlugin plugins and plugin factories.
 
 #include "envoy/common/pure.h"
 #include "envoy/config/typed_config.h"
@@ -20,10 +20,10 @@ struct ReportingPeriod {
   // start time of the latest (current) iteration of Nighthawk test in the adaptive stage. See
   // https://github.com/envoyproxy/nighthawk/blob/main/docs/root/adaptive_load_controller.md#the-adaptive-load-controller
   // for more information on adaptive load testing.
-  google::protobuf::Timestamp start_time;
+  Envoy::ProtobufWkt::Timestamp start_time;
 
   // The duration of the time where nighthawk is sending the intended load in the adaptive stage.
-  google::protobuf::Duration duration;
+  Envoy::ProtobufWkt::Duration duration;
 };
 
 /**
