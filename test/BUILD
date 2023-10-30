@@ -80,6 +80,7 @@ envoy_cc_test(
         "@envoy//test/mocks/local_info:local_info_mocks",
         "@envoy//test/mocks/protobuf:protobuf_mocks",
         "@envoy//test/mocks/thread_local:thread_local_mocks",
+        "@envoy//test/mocks/upstream:cluster_manager_mocks",
     ],
 )
 

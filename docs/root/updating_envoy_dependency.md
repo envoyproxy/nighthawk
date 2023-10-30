@@ -272,10 +272,10 @@ merge_from_envoy "tools/code_format/config.yaml"
 
 ### Step 11
 Perform this step if [tools/base/requirements.in](/tools/base/requirements.in)
-has not been updated in the last 30 days (based on comment at top of file).
+has not been updated in the last 30 days.
 
 ```bash
-head -1 requirements.txt
+ls -l tools/base/requirements.txt
 ```
 
 - If less than 30 days ago, skip to next step.
