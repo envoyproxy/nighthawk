@@ -835,8 +835,8 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
 
     if (!options_.statsSinks().empty()) {
       // There should be only a single live flush worker instance at any time.
-      flush_worker_ = std::make_unique<FlushWorkerImpl>(stats_flush_interval, *api_, tls_,
-                                                        store_root_, stats_sinks);
+      flush_worker_ = std::make_unique<FlushWorkerImpl>(
+          stats_flush_interval, *api_, tls_, store_root_, stats_sinks, *cluster_manager_);
       flush_worker_->start();
     }
 

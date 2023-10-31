@@ -11,8 +11,10 @@ namespace Client {
 FlushWorkerImpl::FlushWorkerImpl(const std::chrono::milliseconds& stats_flush_interval,
                                  Envoy::Api::Api& api, Envoy::ThreadLocal::Instance& tls,
                                  Envoy::Stats::Store& store,
-                                 std::list<std::unique_ptr<Envoy::Stats::Sink>>& stats_sinks)
-    : WorkerImpl(api, tls, store), stats_flush_interval_(stats_flush_interval) {
+                                 std::list<std::unique_ptr<Envoy::Stats::Sink>>& stats_sinks,
+                                 Envoy::Upstream::ClusterManager& cluster_manager)
+    : WorkerImpl(api, tls, store), stats_flush_interval_(stats_flush_interval),
+      cluster_manager_(cluster_manager) {
   for (auto& sink : stats_sinks) {
     stats_sinks_.emplace_back(std::move(sink));
   }
@@ -37,7 +39,7 @@ void FlushWorkerImpl::flushStats() {
   // Create a snapshot and flush to all sinks. Even if there are no sinks,
   // creating the snapshot has the important property that it latches all counters on a periodic
   // basis.
-  Envoy::Server::MetricSnapshotImpl snapshot(store_, time_source_);
+  Envoy::Server::MetricSnapshotImpl snapshot(store_, cluster_manager_, time_source_);
   for (std::unique_ptr<Envoy::Stats::Sink>& sink : stats_sinks_) {
     sink->flush(snapshot);
   }
