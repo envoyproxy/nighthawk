@@ -1,3 +1,5 @@
+#pragma once
+
 #include <string>
 
 #include "external/envoy/source/common/protobuf/protobuf.h"

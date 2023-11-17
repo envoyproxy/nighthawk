@@ -1,3 +1,5 @@
+#pragma once
+
 #include "nighthawk/adaptive_load/session_spec_proto_helper.h"
 
 namespace Nighthawk {

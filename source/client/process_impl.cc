@@ -142,6 +142,7 @@ public:
         local_info_(local_info), validation_context_(validation_context),
         grpc_context_(grpc_context), router_context_(router_context) {}
 
+  void run() override { PANIC("NighthawkServerInstance::run not implemented"); }
   Envoy::OptRef<Envoy::Server::Admin> admin() override { return admin_; }
   Envoy::Api::Api& api() override { return api_; }
   Envoy::Upstream::ClusterManager& clusterManager() override {
@@ -157,7 +158,7 @@ public:
   Envoy::Network::DnsResolverSharedPtr dnsResolver() override {
     PANIC("NighthawkServerInstance::dnsResolver not implemented");
   }
-  void drainListeners() override {
+  void drainListeners(Envoy::OptRef<const Envoy::Network::ExtraShutdownListenerOptions>) override {
     PANIC("NighthawkServerInstance::drainListeners not implemented");
   }
   Envoy::Server::DrainManager& drainManager() override {
@@ -742,8 +743,8 @@ void ProcessImpl::maybeCreateTracingDriver(const envoy::config::trace::v3::Traci
     auto zipkin_config = dynamic_cast<const envoy::config::trace::v3::ZipkinConfig&>(*message);
     Envoy::Tracing::DriverPtr zipkin_driver =
         std::make_unique<Envoy::Extensions::Tracers::Zipkin::Driver>(
-            zipkin_config, *cluster_manager_, scope_root_, tls_,
-            *runtime_loader_.get(), *local_info_, generator_, time_system_);
+            zipkin_config, *cluster_manager_, scope_root_, tls_, *runtime_loader_.get(),
+            *local_info_, generator_, time_system_);
     tracer_ = std::make_unique<Envoy::Tracing::TracerImpl>(std::move(zipkin_driver), *local_info_);
 #else
     ENVOY_LOG(error, "Not build with any tracing support");
@@ -794,16 +795,16 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
     tls_.registerThread(*dispatcher_, true);
     store_root_.initializeThreading(*dispatcher_, tls_);
     runtime_loader_ = Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl(
-            *dispatcher_, tls_, {}, *local_info_, store_root_, generator_,
-            Envoy::ProtobufMessage::getStrictValidationVisitor(), *api_)};
+        *dispatcher_, tls_, {}, *local_info_, store_root_, generator_,
+        Envoy::ProtobufMessage::getStrictValidationVisitor(), *api_)};
     ssl_context_manager_ =
         std::make_unique<Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl>(
             time_system_);
 
     server_ = std::make_unique<NighthawkServerInstance>(
-        admin_, *api_, *dispatcher_, access_log_manager_, envoy_options_,
-        *runtime_loader_.get(), *singleton_manager_, tls_, *local_info_,
-        validation_context_, grpc_context_, router_context_);
+        admin_, *api_, *dispatcher_, access_log_manager_, envoy_options_, *runtime_loader_.get(),
+        *singleton_manager_, tls_, *local_info_, validation_context_, grpc_context_,
+        router_context_);
     server_factory_context_ =
         std::make_unique<NighthawkServerFactoryContext>(*server_, scope_root_);
     cluster_manager_factory_ = std::make_unique<ClusterManagerFactory>(
@@ -834,8 +835,8 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
 
     if (!options_.statsSinks().empty()) {
       // There should be only a single live flush worker instance at any time.
-      flush_worker_ = std::make_unique<FlushWorkerImpl>(stats_flush_interval, *api_, tls_,
-                                                        store_root_, stats_sinks);
+      flush_worker_ = std::make_unique<FlushWorkerImpl>(
+          stats_flush_interval, *api_, tls_, store_root_, stats_sinks, *cluster_manager_);
       flush_worker_->start();
     }
 

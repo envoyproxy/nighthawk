@@ -1,3 +1,5 @@
+#pragma once
+
 #include "envoy/common/time.h"
 
 #include "nighthawk/adaptive_load/adaptive_load_controller.h"

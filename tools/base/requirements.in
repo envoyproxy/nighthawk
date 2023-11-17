@@ -1,0 +1,23 @@
+# Last updated 2023-10-27
+apipkg
+attrs
+certifi
+chardet
+execnet
+flake8_docstrings
+idna
+importlib_metadata
+iniconfig
+more_itertools
+packaging
+pluggy
+py
+pytest
+pytest-dependency
+pytest-xdist
+pyyaml
+requests
+six
+urllib3
+yapf
+zipp

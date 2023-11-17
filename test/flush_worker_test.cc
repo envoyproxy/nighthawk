@@ -10,6 +10,7 @@
 #include "external/envoy/test/mocks/protobuf/mocks.h"
 #include "external/envoy/test/mocks/stats/mocks.h"
 #include "external/envoy/test/mocks/thread_local/mocks.h"
+#include "external/envoy/test/mocks/upstream/cluster_manager.h"
 
 #include "source/client/flush_worker_impl.h"
 
@@ -37,7 +38,7 @@ public:
     NiceMock<Envoy::LocalInfo::MockLocalInfo> local_info;
     NiceMock<Envoy::ProtobufMessage::MockValidationVisitor> validation_visitor;
     loader_ = Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl(
-            *dispatcher_, tls_, {}, local_info, store_, rand, validation_visitor, api_)};
+        *dispatcher_, tls_, {}, local_info, store_, rand, validation_visitor, api_)};
     sink_ = new StrictMock<Envoy::Stats::MockSink>();
     stats_sinks_.emplace_back(sink_);
 
@@ -113,8 +114,10 @@ public:
 TEST_F(FlushWorkerTest, WorkerFlushStatsPeriodically) {
   std::chrono::milliseconds stats_flush_interval{10};
   setupDispatcherTimerEmulation();
+  NiceMock<Envoy::Upstream::MockClusterManager> mock_cluster_manager;
 
-  FlushWorkerImpl worker(stats_flush_interval, api_, tls_, store_, stats_sinks_);
+  FlushWorkerImpl worker(stats_flush_interval, api_, tls_, store_, stats_sinks_,
+                         mock_cluster_manager);
 
   std::thread thread = std::thread([&worker, this] {
     // Wait for the while loop to run kNumTimerLoops times in simulateTimerLoop().
@@ -139,8 +142,10 @@ TEST_F(FlushWorkerTest, WorkerFlushStatsPeriodically) {
 // even when the dispatcher and timer is not set up (expectDispatcherRun() is not called).
 TEST_F(FlushWorkerTest, FinalFlush) {
   std::chrono::milliseconds stats_flush_interval{10};
+  NiceMock<Envoy::Upstream::MockClusterManager> mock_cluster_manager;
 
-  FlushWorkerImpl worker(stats_flush_interval, api_, tls_, store_, stats_sinks_);
+  FlushWorkerImpl worker(stats_flush_interval, api_, tls_, store_, stats_sinks_,
+                         mock_cluster_manager);
 
   worker.start();
   worker.waitForCompletion();

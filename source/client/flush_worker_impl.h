@@ -1,6 +1,7 @@
+#pragma once
+
 // Flush worker implementation. Flush worker periodically flushes metrics
 // snapshot to all configured stats sinks in Nighthawk.
-#pragma once
 
 #include <vector>
 
@@ -34,7 +35,8 @@ public:
   // flushed to.
   FlushWorkerImpl(const std::chrono::milliseconds& stats_flush_interval, Envoy::Api::Api& api,
                   Envoy::ThreadLocal::Instance& tls, Envoy::Stats::Store& store,
-                  std::list<std::unique_ptr<Envoy::Stats::Sink>>& stats_sinks);
+                  std::list<std::unique_ptr<Envoy::Stats::Sink>>& stats_sinks,
+                  Envoy::Upstream::ClusterManager& cluster_manager);
 
   void shutdownThread() override;
 
@@ -54,6 +56,7 @@ private:
   std::list<std::unique_ptr<Envoy::Stats::Sink>> stats_sinks_;
   const std::chrono::milliseconds stats_flush_interval_;
   Envoy::Event::TimerPtr stat_flush_timer_;
+  Envoy::Upstream::ClusterManager& cluster_manager_;
 };
 
 } // namespace Client

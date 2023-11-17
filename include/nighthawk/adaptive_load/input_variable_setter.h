@@ -1,6 +1,6 @@
-// Interfaces for InputVariableSetter plugins and plugin factories.
-
 #pragma once
+
+// Interfaces for InputVariableSetter plugins and plugin factories.
 
 #include "envoy/common/pure.h"
 #include "envoy/config/typed_config.h"

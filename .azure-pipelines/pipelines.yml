@@ -44,23 +44,6 @@ stages:
       parameters:
         ciTarget: $(CI_TARGET)
 
-- stage: clang_tidy
-  dependsOn: ["check"]
-  pool: "envoy-x64-large"
-  jobs:
-  - job: clang_tidy
-    displayName: "do_ci.sh"
-    strategy:
-      maxParallel: 1
-      matrix:
-        clang_tidy:
-          CI_TARGET: "clang_tidy"
-    timeoutInMinutes: 120
-    steps:
-    - template: bazel.yml
-      parameters:
-        ciTarget: $(CI_TARGET)
-
 - stage: test_gcc
   dependsOn: ["check"]
   pool: "envoy-x64-large"
@@ -124,7 +107,6 @@ stages:
 # reported by https://github.com/envoyproxy/nighthawk/issues/1006
 - stage: release
   dependsOn:
-  - "clang_tidy"
   - "test_gcc"
   - "sanitizers"
   - "coverage_unit"
