@@ -18,7 +18,7 @@ namespace {
 class HttpDynamicDelayDecoderFilterConfigFactory
     : public Envoy::Server::Configuration::NamedHttpFilterConfigFactory {
 public:
-  Envoy::Http::FilterFactoryCb
+  absl::StatusOr<Envoy::Http::FilterFactoryCb>
   createFilterFactoryFromProto(const Envoy::Protobuf::Message& proto_config, const std::string&,
                                Envoy::Server::Configuration::FactoryContext& context) override {
 
@@ -36,7 +36,7 @@ public:
   std::string name() const override { return "dynamic-delay"; }
 
 private:
-  Envoy::Http::FilterFactoryCb
+  absl::StatusOr<Envoy::Http::FilterFactoryCb>
   createFilter(const nighthawk::server::DynamicDelayConfiguration& proto_config,
                Envoy::Server::Configuration::FactoryContext& context) {
     Nighthawk::Server::HttpDynamicDelayDecoderFilterConfigSharedPtr config =

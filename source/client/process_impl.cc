@@ -327,6 +327,18 @@ public:
     PANIC("NighthawkServerFactoryContext::bootstrap not implemented");
   }
 
+  Envoy::Http::Context& httpContext() override {
+    PANIC("NighthawkServerFactoryContext::httpContext not implemented");
+  }
+
+  Envoy::Server::OverloadManager& overloadManager() override {
+    PANIC("NighthawkServerFactoryContext::overloadManager not implemented");
+  }
+
+  bool healthCheckFailed() const override {
+    PANIC("NighthawkServerFactoryContext::healthCheckFailed not implemented");
+  }
+
 private:
   Envoy::Server::Instance& server_;
   Envoy::Stats::Scope& server_scope_;

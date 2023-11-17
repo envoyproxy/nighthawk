@@ -17,7 +17,7 @@ namespace Configuration {
 class HttpTestServerDecoderFilterConfig
     : public Envoy::Server::Configuration::NamedHttpFilterConfigFactory {
 public:
-  Envoy::Http::FilterFactoryCb
+  absl::StatusOr<Envoy::Http::FilterFactoryCb>
   createFilterFactoryFromProto(const Envoy::Protobuf::Message& proto_config, const std::string&,
                                Envoy::Server::Configuration::FactoryContext& context) override {
     auto& validation_visitor = Envoy::ProtobufMessage::getStrictValidationVisitor();
@@ -35,8 +35,9 @@ public:
   std::string name() const override { return "test-server"; }
 
 private:
-  Envoy::Http::FilterFactoryCb createFilter(const nighthawk::server::ResponseOptions& proto_config,
-                                            Envoy::Server::Configuration::FactoryContext&) {
+  absl::StatusOr<Envoy::Http::FilterFactoryCb>
+  createFilter(const nighthawk::server::ResponseOptions& proto_config,
+               Envoy::Server::Configuration::FactoryContext&) {
     Nighthawk::Server::HttpTestServerDecoderFilterConfigSharedPtr config =
         std::make_shared<Nighthawk::Server::HttpTestServerDecoderFilterConfig>(
             Nighthawk::Server::HttpTestServerDecoderFilterConfig(proto_config));
