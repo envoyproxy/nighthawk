@@ -333,6 +333,8 @@ may see new failures due to these updates. Re-introduce dependency pins as neces
 command Step 11 again. Repeat this until the tests pass and document the need for any
 pins in [tools/base/requirements.in](/tools/base/requirements.in).
 
+If you updated the Python dependencies, update the date at the top of the
+[tools/base/requirements.in](/tools/base/requirements.in) file.
 
 ### Step 13
 
