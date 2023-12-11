@@ -59,7 +59,7 @@ else
           && usermod -a -G pcap envoybuild \
           && chown envoybuild:envoygroup /build \
           && chown envoybuild /proc/self/fd/2 \
-          && sudo -EHs -u envoybuild bash -c 'cd /source && $*'")
+          && sudo -EHs -u envoybuild bash -c 'cd ${ENVOY_DOCKER_SOURCE_DIR} && $*'")
 fi
 
 if [[ -n "$ENVOY_DOCKER_PLATFORM" ]]; then
