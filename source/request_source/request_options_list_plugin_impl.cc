@@ -23,7 +23,7 @@ FileBasedOptionsListRequestSourceFactory::createEmptyConfigProto() {
 RequestSourcePtr FileBasedOptionsListRequestSourceFactory::createRequestSourcePlugin(
     const Envoy::Protobuf::Message& message, Envoy::Api::Api& api,
     Envoy::Http::RequestHeaderMapPtr header) {
-  const auto* any = Envoy::Protobuf::DynamicCastToGenerated<Envoy::ProtobufWkt::Any>(&message);
+  const auto* any = Envoy::Protobuf::DynamicCastToGenerated<const Envoy::ProtobufWkt::Any>(&message);
   nighthawk::request_source::FileBasedOptionsListRequestSourceConfig config;
   Envoy::MessageUtil util;
   util.unpackTo(*any, config);
@@ -56,7 +56,7 @@ Envoy::ProtobufTypes::MessagePtr InLineOptionsListRequestSourceFactory::createEm
 RequestSourcePtr InLineOptionsListRequestSourceFactory::createRequestSourcePlugin(
     const Envoy::Protobuf::Message& message, Envoy::Api::Api&,
     Envoy::Http::RequestHeaderMapPtr header) {
-  const auto* any = Envoy::Protobuf::DynamicCastToGenerated<Envoy::ProtobufWkt::Any>(&message);
+  const auto* any = Envoy::Protobuf::DynamicCastToGenerated<const Envoy::ProtobufWkt::Any>(&message);
   nighthawk::request_source::InLineOptionsListRequestSourceConfig config;
   Envoy::MessageUtil::unpackTo(*any, config);
   auto loaded_list_ptr =

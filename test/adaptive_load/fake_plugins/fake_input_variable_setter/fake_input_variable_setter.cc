@@ -37,7 +37,7 @@ Envoy::ProtobufTypes::MessagePtr FakeInputVariableSetterConfigFactory::createEmp
 
 InputVariableSetterPtr FakeInputVariableSetterConfigFactory::createInputVariableSetter(
     const Envoy::Protobuf::Message& message) {
-  const auto* any = Envoy::Protobuf::DynamicCastToGenerated<Envoy::ProtobufWkt::Any>(&message);
+  const auto* any = Envoy::Protobuf::DynamicCastToGenerated<const Envoy::ProtobufWkt::Any>(&message);
   nighthawk::adaptive_load::FakeInputVariableSetterConfig config;
   Envoy::MessageUtil::unpackTo(*any, config);
   return std::make_unique<FakeInputVariableSetter>(config);
@@ -46,7 +46,7 @@ InputVariableSetterPtr FakeInputVariableSetterConfigFactory::createInputVariable
 absl::Status FakeInputVariableSetterConfigFactory::ValidateConfig(
     const Envoy::Protobuf::Message& message) const {
   try {
-    const auto* any = Envoy::Protobuf::DynamicCastToGenerated<Envoy::ProtobufWkt::Any>(&message);
+    const auto* any = Envoy::Protobuf::DynamicCastToGenerated<const Envoy::ProtobufWkt::Any>(&message);
     nighthawk::adaptive_load::FakeInputVariableSetterConfig config;
     Envoy::MessageUtil::unpackTo(*any, config);
     if (config.has_artificial_validation_failure()) {

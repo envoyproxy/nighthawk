@@ -59,7 +59,7 @@ Envoy::ProtobufTypes::MessagePtr FakeMetricsPluginConfigFactory::createEmptyConf
 
 MetricsPluginPtr
 FakeMetricsPluginConfigFactory::createMetricsPlugin(const Envoy::Protobuf::Message& message) {
-  const auto* any = Envoy::Protobuf::DynamicCastToGenerated<Envoy::ProtobufWkt::Any>(&message);
+  const auto* any = Envoy::Protobuf::DynamicCastToGenerated<const Envoy::ProtobufWkt::Any>(&message);
   nighthawk::adaptive_load::FakeMetricsPluginConfig config;
   Envoy::MessageUtil::unpackTo(*any, config);
   return std::make_unique<FakeMetricsPlugin>(config);
@@ -68,7 +68,7 @@ FakeMetricsPluginConfigFactory::createMetricsPlugin(const Envoy::Protobuf::Messa
 absl::Status
 FakeMetricsPluginConfigFactory::ValidateConfig(const Envoy::Protobuf::Message& message) const {
   try {
-    const auto* any = Envoy::Protobuf::DynamicCastToGenerated<Envoy::ProtobufWkt::Any>(&message);
+    const auto* any = Envoy::Protobuf::DynamicCastToGenerated<const Envoy::ProtobufWkt::Any>(&message);
     nighthawk::adaptive_load::FakeMetricsPluginConfig config;
     Envoy::MessageUtil::unpackTo(*any, config);
     if (config.has_artificial_validation_failure()) {

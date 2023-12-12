@@ -754,7 +754,7 @@ void ProcessImpl::maybeCreateTracingDriver(const envoy::config::trace::v3::Traci
     Envoy::ProtobufTypes::MessagePtr message = Envoy::Config::Utility::translateToFactoryConfig(
         configuration.http(), Envoy::ProtobufMessage::getStrictValidationVisitor(), factory);
     auto* zipkin_config =
-        Envoy::Protobuf::DynamicCastToGenerated<envoy::config::trace::v3::ZipkinConfig>(
+        Envoy::Protobuf::DynamicCastToGenerated<const envoy::config::trace::v3::ZipkinConfig>(
             message.get());
     Envoy::Tracing::DriverPtr zipkin_driver =
         std::make_unique<Envoy::Extensions::Tracers::Zipkin::Driver>(
