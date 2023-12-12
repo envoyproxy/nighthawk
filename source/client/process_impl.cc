@@ -315,6 +315,10 @@ public:
 
   Envoy::Router::Context& routerContext() override { return server_.routerContext(); };
 
+  Envoy::ProcessContextOptRef processContext() override {
+    PANIC("NighthawkServerFactoryContext::processContext not implemented");
+  }
+
   Envoy::Server::DrainManager& drainManager() override {
     PANIC("NighthawkServerFactoryContext::drainManager not implemented");
   };
