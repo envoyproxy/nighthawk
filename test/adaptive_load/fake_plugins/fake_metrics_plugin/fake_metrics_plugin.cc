@@ -2,6 +2,8 @@
 
 #include "envoy/common/exception.h"
 
+#include "external/envoy/source/common/protobuf/protobuf.h"
+
 #include "api/adaptive_load/benchmark_result.pb.h"
 
 #include "test/adaptive_load/fake_plugins/fake_metrics_plugin/fake_metrics_plugin.pb.h"
@@ -57,18 +59,18 @@ Envoy::ProtobufTypes::MessagePtr FakeMetricsPluginConfigFactory::createEmptyConf
 
 MetricsPluginPtr
 FakeMetricsPluginConfigFactory::createMetricsPlugin(const Envoy::Protobuf::Message& message) {
-  const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
+  const auto* any = Envoy::Protobuf::DynamicCastToGenerated<Envoy::ProtobufWkt::Any>(&message);
   nighthawk::adaptive_load::FakeMetricsPluginConfig config;
-  Envoy::MessageUtil::unpackTo(any, config);
+  Envoy::MessageUtil::unpackTo(*any, config);
   return std::make_unique<FakeMetricsPlugin>(config);
 }
 
 absl::Status
 FakeMetricsPluginConfigFactory::ValidateConfig(const Envoy::Protobuf::Message& message) const {
   try {
-    const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
+    const auto* any = Envoy::Protobuf::DynamicCastToGenerated<Envoy::ProtobufWkt::Any>(&message);
     nighthawk::adaptive_load::FakeMetricsPluginConfig config;
-    Envoy::MessageUtil::unpackTo(any, config);
+    Envoy::MessageUtil::unpackTo(*any, config);
     if (config.has_artificial_validation_failure()) {
       return GetStatusFromProtoRpcStatus(config.artificial_validation_failure());
     }

@@ -1,6 +1,7 @@
 #include "test/request_source/stub_plugin_impl.h"
 
 #include "external/envoy/source/common/protobuf/message_validator_impl.h"
+#include "external/envoy/source/common/protobuf/protobuf.h"
 #include "external/envoy/source/common/protobuf/utility.h"
 #include "external/envoy/source/exe/platform_impl.h"
 
@@ -21,9 +22,9 @@ Envoy::ProtobufTypes::MessagePtr StubRequestSourcePluginConfigFactory::createEmp
 
 RequestSourcePtr StubRequestSourcePluginConfigFactory::createRequestSourcePlugin(
     const Envoy::Protobuf::Message& message, Envoy::Api::Api&, Envoy::Http::RequestHeaderMapPtr) {
-  const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
+  const auto* any = Envoy::Protobuf::DynamicCastToGenerated<Envoy::ProtobufWkt::Any>(&message);
   nighthawk::request_source::StubPluginConfig config;
-  Envoy::MessageUtil::unpackTo(any, config);
+  Envoy::MessageUtil::unpackTo(*any, config);
   return std::make_unique<StubRequestSource>(config);
 }
 

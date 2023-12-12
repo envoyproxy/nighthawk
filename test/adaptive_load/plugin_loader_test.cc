@@ -7,6 +7,7 @@
 #include "nighthawk/adaptive_load/step_controller.h"
 
 #include "external/envoy/source/common/config/utility.h"
+#include "external/envoy/source/common/protobuf/protobuf.h"
 
 #include "api/adaptive_load/benchmark_result.pb.h"
 #include "api/adaptive_load/scoring_function_impl.pb.h"
@@ -37,9 +38,9 @@ const double kBadConfigThreshold = 98765.0;
  * @return Status InvalidArgument if threshold is kBadConfigThreshold, OK otherwise.
  */
 absl::Status DoValidateConfig(const Envoy::Protobuf::Message& message) {
-  const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
+  const auto* any = Envoy::Protobuf::DynamicCastToGenerated<Envoy::ProtobufWkt::Any>(&message);
   nighthawk::adaptive_load::LinearScoringFunctionConfig config;
-  Envoy::MessageUtil::unpackTo(any, config);
+  Envoy::MessageUtil::unpackTo(*any, config);
   return config.threshold() == kBadConfigThreshold
              ? absl::InvalidArgumentError("input validation failed")
              : absl::OkStatus();
@@ -81,9 +82,9 @@ public:
 
   InputVariableSetterPtr
   createInputVariableSetter(const Envoy::Protobuf::Message& message) override {
-    const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
+    const auto* any = Envoy::Protobuf::DynamicCastToGenerated<Envoy::ProtobufWkt::Any>(&message);
     nighthawk::adaptive_load::LinearScoringFunctionConfig config;
-    Envoy::MessageUtil::unpackTo(any, config);
+    Envoy::MessageUtil::unpackTo(*any, config);
     return std::make_unique<TestInputVariableSetter>(config);
   }
 };
@@ -119,9 +120,9 @@ public:
     return DoValidateConfig(message);
   }
   ScoringFunctionPtr createScoringFunction(const Envoy::Protobuf::Message& message) override {
-    const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
+    const auto* any = Envoy::Protobuf::DynamicCastToGenerated<Envoy::ProtobufWkt::Any>(&message);
     nighthawk::adaptive_load::LinearScoringFunctionConfig config;
-    Envoy::MessageUtil::unpackTo(any, config);
+    Envoy::MessageUtil::unpackTo(*any, config);
     return std::make_unique<TestScoringFunction>(config);
   }
 };
@@ -158,9 +159,9 @@ public:
     return DoValidateConfig(message);
   }
   MetricsPluginPtr createMetricsPlugin(const Envoy::Protobuf::Message& message) override {
-    const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
+    const auto* any = Envoy::Protobuf::DynamicCastToGenerated<Envoy::ProtobufWkt::Any>(&message);
     nighthawk::adaptive_load::LinearScoringFunctionConfig config;
-    Envoy::MessageUtil::unpackTo(any, config);
+    Envoy::MessageUtil::unpackTo(*any, config);
     return std::make_unique<TestMetricsPlugin>(config);
   }
 };
@@ -208,9 +209,9 @@ public:
   StepControllerPtr createStepController(
       const Envoy::Protobuf::Message& message,
       const nighthawk::client::CommandLineOptions& command_line_options_template) override {
-    const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
+    const auto* any = Envoy::Protobuf::DynamicCastToGenerated<Envoy::ProtobufWkt::Any>(&message);
     nighthawk::adaptive_load::LinearScoringFunctionConfig config;
-    Envoy::MessageUtil::unpackTo(any, config);
+    Envoy::MessageUtil::unpackTo(*any, config);
     return std::make_unique<TestStepController>(config, command_line_options_template);
   }
 };

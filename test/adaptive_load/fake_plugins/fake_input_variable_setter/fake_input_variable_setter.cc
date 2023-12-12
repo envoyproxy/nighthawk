@@ -1,5 +1,7 @@
 #include "test/adaptive_load/fake_plugins/fake_input_variable_setter/fake_input_variable_setter.h"
 
+#include "external/envoy/source/common/protobuf/protobuf.h"
+
 namespace Nighthawk {
 
 namespace {
@@ -35,18 +37,18 @@ Envoy::ProtobufTypes::MessagePtr FakeInputVariableSetterConfigFactory::createEmp
 
 InputVariableSetterPtr FakeInputVariableSetterConfigFactory::createInputVariableSetter(
     const Envoy::Protobuf::Message& message) {
-  const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
+  const auto* any = Envoy::Protobuf::DynamicCastToGenerated<Envoy::ProtobufWkt::Any>(&message);
   nighthawk::adaptive_load::FakeInputVariableSetterConfig config;
-  Envoy::MessageUtil::unpackTo(any, config);
+  Envoy::MessageUtil::unpackTo(*any, config);
   return std::make_unique<FakeInputVariableSetter>(config);
 }
 
 absl::Status FakeInputVariableSetterConfigFactory::ValidateConfig(
     const Envoy::Protobuf::Message& message) const {
   try {
-    const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
+    const auto* any = Envoy::Protobuf::DynamicCastToGenerated<Envoy::ProtobufWkt::Any>(&message);
     nighthawk::adaptive_load::FakeInputVariableSetterConfig config;
-    Envoy::MessageUtil::unpackTo(any, config);
+    Envoy::MessageUtil::unpackTo(*any, config);
     if (config.has_artificial_validation_failure()) {
       return StatusFromProtoRpcStatus(config.artificial_validation_failure());
     }
