@@ -130,7 +130,7 @@ envoy_cc_library(
         "@envoy//source/common/thread_local:thread_local_lib_with_external_headers",
         "@envoy//source/common/tracing:tracer_lib_with_external_headers",
         "@envoy//source/common/upstream:cluster_manager_lib_with_external_headers",
-        "@envoy//source/exe:envoy_common_lib_with_external_headers",
+        "@envoy//source/exe:all_extensions_lib_with_external_headers",
         "@envoy//source/exe:platform_header_lib_with_external_headers",
         "@envoy//source/exe:platform_impl_lib",
         "@envoy//source/exe:process_wide_lib_with_external_headers",

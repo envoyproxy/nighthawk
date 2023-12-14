@@ -160,7 +160,7 @@ envoy_cc_library(
         "@envoy//source/common/protobuf:utility_lib_with_external_headers",
         "@envoy//source/common/stats:histogram_lib_with_external_headers",
         "@envoy//source/common/version:version_includes_with_external_headers",
-        "@envoy//source/exe:main_common_lib_with_external_headers",
+        "@envoy//source/exe:main_common_with_all_extensions_lib_with_external_headers",
         "@envoy//source/server/config_validation:server_lib_with_external_headers",
         "@envoy_api//envoy/config/core/v3:pkg_cc_proto",
     ],

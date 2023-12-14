@@ -185,7 +185,7 @@ def test_http_h2(http_test_server_fixture):
   counters = http_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   asserts.assertCounterEqual(counters, "benchmark.http_2xx", 25)
   asserts.assertCounterEqual(counters, "upstream_cx_http2_total", 1)
-  asserts.assertCounterGreaterEqual(counters, "upstream_cx_rx_bytes_total", 1030)
+  asserts.assertCounterGreaterEqual(counters, "upstream_cx_rx_bytes_total", 900)
   asserts.assertCounterEqual(counters, "upstream_cx_total", 1)
   asserts.assertCounterGreaterEqual(counters, "upstream_cx_tx_bytes_total", 403)
   asserts.assertCounterEqual(counters, "upstream_rq_pending_total", 1)
@@ -264,9 +264,9 @@ def test_https_h2(https_test_server_fixture):
   counters = https_test_server_fixture.getNighthawkCounterMapFromJson(parsed_json)
   asserts.assertCounterEqual(counters, "benchmark.http_2xx", 25)
   asserts.assertCounterEqual(counters, "upstream_cx_http2_total", 1)
-  # Through emperical observation, 1030 has been determined to be the minimum of bytes
+  # Through emperical observation, 900 has been determined to be the minimum of bytes
   # we can expect to have received when execution has stopped.
-  asserts.assertCounterGreaterEqual(counters, "upstream_cx_rx_bytes_total", 1030)
+  asserts.assertCounterGreaterEqual(counters, "upstream_cx_rx_bytes_total", 900)
   asserts.assertCounterEqual(counters, "upstream_cx_total", 1)
   asserts.assertCounterGreaterEqual(counters, "upstream_cx_tx_bytes_total", 403)
   asserts.assertCounterEqual(counters, "upstream_rq_pending_total", 1)

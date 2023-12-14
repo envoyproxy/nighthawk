@@ -602,6 +602,9 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH2) {
                   max_concurrent_streams {
                     value: 2147483647
                   }
+                  use_oghttp2_codec {
+                    value: false
+                  }
                 }
               }
             }
@@ -694,6 +697,9 @@ TEST_F(CreateBootstrapConfigurationTest, CreatesBootstrapForH2WithTls) {
                 http2_protocol_options {
                   max_concurrent_streams {
                     value: 2147483647
+                  }
+                  use_oghttp2_codec {
+                    value: false
                   }
                 }
               }

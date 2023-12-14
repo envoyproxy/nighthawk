@@ -149,6 +149,7 @@ Cluster createNighthawkClusterForWorker(const Client::Options& options,
     Http2ProtocolOptions* http2_options =
         http_options.mutable_explicit_http_config()->mutable_http2_protocol_options();
     http2_options->mutable_max_concurrent_streams()->set_value(options.maxConcurrentStreams());
+    http2_options->mutable_use_oghttp2_codec()->set_value(false);
 
   } else if (options.protocol() == Envoy::Http::Protocol::Http3) {
     if (options.http3ProtocolOptions().has_value()) {
