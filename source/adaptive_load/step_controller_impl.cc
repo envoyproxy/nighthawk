@@ -50,9 +50,10 @@ std::string ExponentialSearchStepControllerConfigFactory::name() const {
 
 absl::Status ExponentialSearchStepControllerConfigFactory::ValidateConfig(
     const Envoy::Protobuf::Message& message) const {
-  const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
+  const auto* any =
+      Envoy::Protobuf::DynamicCastToGenerated<const Envoy::ProtobufWkt::Any>(&message);
   ExponentialSearchStepControllerConfig config;
-  Envoy::MessageUtil::unpackTo(any, config);
+  Envoy::MessageUtil::unpackTo(*any, config);
   if (config.has_input_variable_setter()) {
     return LoadInputVariableSetterPlugin(config.input_variable_setter()).status();
   }
@@ -62,9 +63,10 @@ absl::Status ExponentialSearchStepControllerConfigFactory::ValidateConfig(
 StepControllerPtr ExponentialSearchStepControllerConfigFactory::createStepController(
     const Envoy::Protobuf::Message& message,
     const nighthawk::client::CommandLineOptions& command_line_options_template) {
-  const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
+  const auto* any =
+      Envoy::Protobuf::DynamicCastToGenerated<const Envoy::ProtobufWkt::Any>(&message);
   ExponentialSearchStepControllerConfig config;
-  Envoy::MessageUtil::unpackTo(any, config);
+  Envoy::MessageUtil::unpackTo(*any, config);
   return std::make_unique<ExponentialSearchStepController>(config, command_line_options_template);
 }
 

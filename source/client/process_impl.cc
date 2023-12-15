@@ -28,6 +28,7 @@
 #include "external/envoy/source/common/local_info/local_info_impl.h"
 #include "external/envoy/source/common/network/dns_resolver/dns_factory_util.h"
 #include "external/envoy/source/common/network/utility.h"
+#include "external/envoy/source/common/protobuf/protobuf.h"
 #include "external/envoy/source/common/runtime/runtime_impl.h"
 #include "external/envoy/source/common/singleton/manager_impl.h"
 #include "external/envoy/source/common/thread_local/thread_local_impl.h"
@@ -756,10 +757,12 @@ void ProcessImpl::maybeCreateTracingDriver(const envoy::config::trace::v3::Traci
             configuration.http());
     Envoy::ProtobufTypes::MessagePtr message = Envoy::Config::Utility::translateToFactoryConfig(
         configuration.http(), Envoy::ProtobufMessage::getStrictValidationVisitor(), factory);
-    auto zipkin_config = dynamic_cast<const envoy::config::trace::v3::ZipkinConfig&>(*message);
+    const auto* zipkin_config =
+        Envoy::Protobuf::DynamicCastToGenerated<const envoy::config::trace::v3::ZipkinConfig>(
+            message.get());
     Envoy::Tracing::DriverPtr zipkin_driver =
         std::make_unique<Envoy::Extensions::Tracers::Zipkin::Driver>(
-            zipkin_config, *cluster_manager_, scope_root_, tls_, *runtime_loader_.get(),
+            *zipkin_config, *cluster_manager_, scope_root_, tls_, *runtime_loader_.get(),
             *local_info_, generator_, time_system_);
     tracer_ = std::make_unique<Envoy::Tracing::TracerImpl>(std::move(zipkin_driver), *local_info_);
 #else
