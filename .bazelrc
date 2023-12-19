@@ -101,7 +101,6 @@ build:clang-pch --define=ENVOY_CLANG_PCH=1
 
 # Use gold linker for gcc compiler.
 build:gcc --linkopt=-fuse-ld=gold
-build:gcc --copt -Wno-redundant-move #unique
 
 # Clang-tidy
 # TODO(phlax): enable this, its throwing some errors as well as finding more issues
