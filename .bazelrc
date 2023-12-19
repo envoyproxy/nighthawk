@@ -401,7 +401,7 @@ build:docker-tsan --config=rbe-toolchain-tsan
 # CI configurations
 build:remote-ci --config=ci
 build:remote-ci --remote_download_minimal
-build:remote-ci --define=tcmalloc=disabled # unique
+build:remote-ci --action_env=BAZEL_BUILD_OPTIONS="--define=tcmalloc=gperftools"
 
 # Note this config is used by mobile CI also.
 build:ci --noshow_progress
