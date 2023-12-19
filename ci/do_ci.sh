@@ -113,7 +113,7 @@ function do_test() {
     # The environment variable AZP_BRANCH is used to determine if some expensive
     # tests that cannot run locally should be executed.
     # E.g. test_http_h1_mini_stress_test_open_loop.
-    run_on_build_parts "bazel build -c dbg $BAZEL_BUILD_OPTIONS --define tcmalloc=disabled --action_env=AZP_BRANCH"
+    run_on_build_parts "bazel build -c dbg $BAZEL_BUILD_OPTIONS --action_env=AZP_BRANCH"
     bazel test -c dbg $BAZEL_TEST_OPTIONS --test_output=all --action_env=AZP_BRANCH //test/...
 }
 
@@ -148,7 +148,7 @@ function setup_gcc_toolchain() {
     export BAZEL_COMPILER=gcc
     [[ "${NIGHTHAWK_BUILD_ARCH}" == "aarch64" ]] && BAZEL_BUILD_OPTIONS="$BAZEL_BUILD_OPTIONS --copt -march=armv8-a+crypto"
     [[ "${NIGHTHAWK_BUILD_ARCH}" == "aarch64" ]] && BAZEL_TEST_OPTIONS="$BAZEL_TEST_OPTIONS --copt -march=armv8-a+crypto"
-    BAZEL_BUILD_OPTIONS="$BAZEL_BUILD_OPTIONS --copt -Wno-redundant-move --copt -Wno-error=dangling-reference"
+    BAZEL_BUILD_OPTIONS="$BAZEL_BUILD_OPTIONS --copt -Wno-redundant-move --copt -Wno-error=dangling-reference --define tcmalloc=gperftools"
     echo "$CC/$CXX toolchain configured"
 }
 
