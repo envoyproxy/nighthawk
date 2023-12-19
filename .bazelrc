@@ -368,7 +368,8 @@ build:compile-time-options --@envoy//source/extensions/filters/http/kill_request
 
 # Docker sandbox
 # NOTE: Update this from https://github.com/envoyproxy/envoy-build-tools/blob/main/toolchains/rbe_toolchains_config.bzl#L8
-build:docker-sandbox --experimental_docker_image=envoyproxy/envoy-build-ubuntu:7467652575122d8d54e767a68f141598bd855383@sha256:8781bc7e431b754c142edbfc937905fdf343db91f3fe19bbf54c362828db9849 # unique
+build:docker-sandbox --experimental_docker_image=envoyproxy/envoy-build-ubuntu:6eba113ee1a0ef8e4f71830e90b6aedbbeb7360c@sha256:d117d6139f3af1eede6bb1606ad05ffccb766eef3262b336dd31bcf02a81a669
+build:docker-sandbox --define=tcmalloc=disabled # unique
 build:docker-sandbox --spawn_strategy=docker
 build:docker-sandbox --strategy=Javac=docker
 build:docker-sandbox --strategy=Closure=docker
@@ -437,7 +438,7 @@ build:oss-fuzz --dynamic_mode=off
 build:oss-fuzz --strip=never
 build:oss-fuzz --copt=-fno-sanitize=vptr
 build:oss-fuzz --linkopt=-fno-sanitize=vptr
-build:oss-fuzz --define=tcmalloc=disabled
+build:oss-fuzz --define=tcmalloc=disabled # this could also be useful? 
 build:oss-fuzz --define=signal_trace=disabled
 build:oss-fuzz --copt=-D_LIBCPP_DISABLE_DEPRECATION_WARNINGS
 build:oss-fuzz --define=force_libcpp=enabled
