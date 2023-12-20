@@ -148,6 +148,8 @@ function setup_gcc_toolchain() {
     export BAZEL_COMPILER=gcc
     [[ "${NIGHTHAWK_BUILD_ARCH}" == "aarch64" ]] && BAZEL_BUILD_OPTIONS="$BAZEL_BUILD_OPTIONS --copt -march=armv8-a+crypto"
     [[ "${NIGHTHAWK_BUILD_ARCH}" == "aarch64" ]] && BAZEL_TEST_OPTIONS="$BAZEL_TEST_OPTIONS --copt -march=armv8-a+crypto"
+    BAZEL_BUILD_OPTIONS="$BAZEL_BUILD_OPTIONS --copt -Wno-redundant-move --copt -Wno-error=dangling-reference --define tcmalloc=gperftools"
+    BAZEL_TEST_OPTIONS="$BAZEL_TEST_OPTIONS --copt -Wno-redundant-move --copt -Wno-error=dangling-reference --define tcmalloc=gperftools"
     echo "$CC/$CXX toolchain configured"
 }
 
