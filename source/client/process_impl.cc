@@ -340,12 +340,6 @@ public:
     PANIC("NighthawkServerFactoryContext::overloadManager not implemented");
   }
 
-  Envoy::Server::Configuration::DownstreamHTTPFilterConfigProviderManagerSharedPtr
-  downstreamHttpFilterConfigProviderManager() override {
-    PANIC(
-        "NighthawkServerFactoryContext::downstreamHttpFilterConfigProviderManager not implemented");
-  }
-
   bool healthCheckFailed() const override {
     PANIC("NighthawkServerFactoryContext::healthCheckFailed not implemented");
   }
