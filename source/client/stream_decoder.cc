@@ -187,8 +187,9 @@ void StreamDecoder::setupForTracing() {
                                                                       random_generator_);
   uuid_generator.set(*headers_copy, true);
   uuid_generator.setTraceReason(*headers_copy, Envoy::Tracing::Reason::ClientForced);
-  active_span_ = tracer_->startSpan(config_, *headers_copy, stream_info_, tracing_decision);
-  active_span_->injectContext(*headers_copy, /*upstream=*/nullptr);
+  Envoy::Tracing::HttpTraceContext trace_context(*headers_copy);
+  active_span_ = tracer_->startSpan(config_, trace_context, stream_info_, tracing_decision);
+  active_span_->injectContext(trace_context, /*upstream=*/nullptr);
   request_headers_.reset(headers_copy.release());
   // We pass in a fake remote address; recently trace finalization mandates setting this, and will
   // segfault without it.
