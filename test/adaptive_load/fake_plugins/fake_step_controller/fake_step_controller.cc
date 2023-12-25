@@ -1,5 +1,7 @@
 #include "test/adaptive_load/fake_plugins/fake_step_controller/fake_step_controller.h"
 
+#include "external/envoy/source/common/protobuf/protobuf.h"
+
 #include "api/adaptive_load/benchmark_result.pb.h"
 
 #include "test/adaptive_load/fake_plugins/fake_step_controller/fake_step_controller.pb.h"
@@ -73,18 +75,20 @@ Envoy::ProtobufTypes::MessagePtr FakeStepControllerConfigFactory::createEmptyCon
 StepControllerPtr FakeStepControllerConfigFactory::createStepController(
     const Envoy::Protobuf::Message& message,
     const nighthawk::client::CommandLineOptions& command_line_options_template) {
-  const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
+  const auto* any =
+      Envoy::Protobuf::DynamicCastToGenerated<const Envoy::ProtobufWkt::Any>(&message);
   nighthawk::adaptive_load::FakeStepControllerConfig config;
-  Envoy::MessageUtil::unpackTo(any, config);
+  Envoy::MessageUtil::unpackTo(*any, config);
   return std::make_unique<FakeStepController>(config, command_line_options_template);
 }
 
 absl::Status
 FakeStepControllerConfigFactory::ValidateConfig(const Envoy::Protobuf::Message& message) const {
   try {
-    const auto& any = dynamic_cast<const Envoy::ProtobufWkt::Any&>(message);
+    const auto* any =
+        Envoy::Protobuf::DynamicCastToGenerated<const Envoy::ProtobufWkt::Any>(&message);
     nighthawk::adaptive_load::FakeStepControllerConfig config;
-    Envoy::MessageUtil::unpackTo(any, config);
+    Envoy::MessageUtil::unpackTo(*any, config);
     if (config.has_artificial_validation_failure()) {
       return StatusFromProtoRpcStatus(config.artificial_validation_failure());
     }
