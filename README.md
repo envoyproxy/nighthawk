@@ -2,6 +2,8 @@
 
 *A L7 (HTTP/HTTPS/HTTP2) performance characterization tool*
 
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/envoyproxy/nighthawk/badge)](https://api.securityscorecards.dev/projects/github.com/envoyproxy/nighthawk)
+
 ## Current state
 
 Nighthawk currently offers:
