@@ -1,5 +1,13 @@
 version: 2
 updates:
+- package-ecosystem: docker
+  directory: /ci/docker
+  schedule:
+    interval: daily
+- package-ecosystem: docker
+  directory: /benchmarks/docker
+  schedule:
+    interval: daily
 - package-ecosystem: github-actions
   directory: /
   schedule:
