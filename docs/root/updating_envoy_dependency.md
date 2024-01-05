@@ -298,6 +298,7 @@ of [tools/base/requirements.txt](/tools/base/requirements.txt) and update the
 dependencies by running:
 
 ```bash
+echo > tools/base/requirements.txt
 bazel run //tools/base:requirements.update
 ```
 
