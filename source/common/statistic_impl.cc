@@ -29,7 +29,9 @@ static void setDurationFromNanos(Envoy::ProtobufWkt::Duration& mutable_duration,
 
 } // namespace
 
-std::string StatisticImpl::toString() const { return absl::StrCat(SerializationDomain::RAW); }
+std::string StatisticImpl::toString() const {
+  return absl::StrCat(toProto(SerializationDomain::RAW));
+}
 
 nighthawk::client::Statistic StatisticImpl::toProto(SerializationDomain domain) const {
   nighthawk::client::Statistic statistic;
