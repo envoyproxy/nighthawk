@@ -9,6 +9,8 @@
 #include "source/sink/nighthawk_sink_client_impl.h"
 #include "source/sink/sink_impl.h"
 
+#include "absl/strings/str_cat.h"
+
 namespace Nighthawk {
 
 using ::Envoy::Protobuf::util::MessageDifferencer;
@@ -21,7 +23,7 @@ grpc::Status SinkServiceImpl::StoreExecutionResponseStream(
   RELEASE_ASSERT(request_reader != nullptr, "stream == nullptr");
   nighthawk::StoreExecutionRequest request;
   while (request_reader->Read(&request)) {
-    ENVOY_LOG(trace, "StoreExecutionResponseStream request {}", request.DebugString());
+    ENVOY_LOG(trace, "StoreExecutionResponseStream request {}", absl::StrCat(request));
     const absl::Status status = sink_->StoreExecutionResultPiece(request.execution_response());
     if (!status.ok()) {
       return abslStatusToGrpcStatus(status);
@@ -44,7 +46,7 @@ grpc::Status SinkServiceImpl::SinkRequestStream(
   nighthawk::SinkRequest request;
   RELEASE_ASSERT(stream != nullptr, "stream == nullptr");
   while (stream->Read(&request)) {
-    ENVOY_LOG(trace, "Inbound SinkRequest {}", request.DebugString());
+    ENVOY_LOG(trace, "Inbound SinkRequest {}", absl::StrCat(request));
     absl::StatusOr<std::vector<nighthawk::client::ExecutionResponse>> execution_responses =
         sink_->LoadExecutionResult(request.execution_id());
     if (!execution_responses.status().ok()) {
@@ -80,14 +82,14 @@ absl::Status mergeOutput(const nighthawk::client::Output& input_to_merge,
     if (!MessageDifferencer::Equivalent(input_to_merge.options(), merge_target.options())) {
       return absl::Status{absl::StatusCode::kInternal,
                           fmt::format("Options divergence detected: {} vs {}.",
-                                      merge_target.options().DebugString(),
-                                      input_to_merge.options().DebugString())};
+                                      absl::StrCat(merge_target.options()),
+                                      absl::StrCat(input_to_merge.options()))};
     }
     if (!MessageDifferencer::Equivalent(input_to_merge.version(), merge_target.version())) {
       return absl::Status{absl::StatusCode::kInternal,
                           fmt::format("Version divergence detected: {} vs {}.",
-                                      merge_target.version().DebugString(),
-                                      input_to_merge.version().DebugString())};
+                                      absl::StrCat(merge_target.version()),
+                                      absl::StrCat(input_to_merge.version()))};
     }
   }
   // Append all input results into our own results.

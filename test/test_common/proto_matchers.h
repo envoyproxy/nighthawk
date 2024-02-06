@@ -4,6 +4,7 @@
 
 #include "external/envoy/source/common/protobuf/protobuf.h"
 
+#include "absl/strings/str_cat.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -26,9 +27,9 @@ MATCHER_P(EqualsProto, expected_proto, "is equal to the expected_proto") {
   if (!equal) {
     *result_listener << "\n"
                      << "=======================Expected proto:===========================\n"
-                     << expected_proto.DebugString()
+                     << absl::StrCat(expected_proto)
                      << "------------------is not equal to actual proto:------------------\n"
-                     << arg.DebugString()
+                     << absl::StrCat(arg)
                      << "------------------------the diff is:-----------------------------\n"
                      << diff
                      << "=================================================================\n";

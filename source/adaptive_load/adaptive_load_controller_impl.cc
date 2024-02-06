@@ -27,6 +27,7 @@
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
 
@@ -87,7 +88,7 @@ void LogGlobalResultExcludingStatistics(const nighthawk::client::ExecutionRespon
   ENVOY_LOG_MISC(info,
                  "Got result (stripped to just the global result excluding "
                  "statistics): {}",
-                 stripped.DebugString());
+                 absl::StrCat(stripped));
 }
 
 /**
@@ -137,7 +138,7 @@ absl::StatusOr<BenchmarkResult> AdaptiveLoadControllerImpl::PerformAndAnalyzeNig
   // or testing stage.
   *command_line_options.mutable_duration() = std::move(duration);
 
-  ENVOY_LOG_MISC(info, "Sending load: {}", command_line_options.DebugString());
+  ENVOY_LOG_MISC(info, "Sending load: {}", absl::StrCat(command_line_options));
   Envoy::SystemTime start_time = time_source_.systemTime();
   absl::StatusOr<nighthawk::client::ExecutionResponse> nighthawk_response_or =
       nighthawk_service_client_.PerformNighthawkBenchmark(nighthawk_service_stub,
@@ -165,7 +166,7 @@ absl::StatusOr<BenchmarkResult> AdaptiveLoadControllerImpl::PerformAndAnalyzeNig
   Envoy::TimestampUtil::systemClockToTimestamp(end_time, *benchmark_result.mutable_end_time());
 
   for (const MetricEvaluation& evaluation : benchmark_result.metric_evaluations()) {
-    ENVOY_LOG_MISC(info, "Evaluation: {}", evaluation.DebugString());
+    ENVOY_LOG_MISC(info, "Evaluation: {}", absl::StrCat(evaluation));
   }
   step_controller.UpdateAndRecompute(benchmark_result);
   return benchmark_result;
@@ -206,7 +207,7 @@ absl::StatusOr<AdaptiveLoadSessionOutput> AdaptiveLoadControllerImpl::PerformAda
 
     if (spec.has_benchmark_cooldown_duration()) {
       ENVOY_LOG_MISC(info, "Cooling down before the next benchmark for duration: {}",
-                     spec.benchmark_cooldown_duration().ShortDebugString());
+                     absl::StrCat(spec.benchmark_cooldown_duration()));
       uint64_t sleep_time_ms = Envoy::Protobuf::util::TimeUtil::DurationToMilliseconds(
           spec.benchmark_cooldown_duration());
       absl::SleepFor(absl::Milliseconds(sleep_time_ms));

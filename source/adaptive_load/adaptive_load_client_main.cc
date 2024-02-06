@@ -20,6 +20,7 @@
 #include "source/common/utility.h"
 #include "source/common/version_info.h"
 
+#include "absl/strings/str_cat.h"
 #include "fmt/ranges.h"
 #include "google/rpc/status.pb.h"
 #include "tclap/CmdLine.h"
@@ -125,7 +126,7 @@ uint32_t AdaptiveLoadClientMain::Run() {
     return 1;
   }
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput output = output_or.value();
-  WriteFileOrThrow(filesystem_, output_filename_, output.DebugString());
+  WriteFileOrThrow(filesystem_, output_filename_, absl::StrCat(output));
   return 0;
 }
 

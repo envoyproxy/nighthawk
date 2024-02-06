@@ -9,6 +9,7 @@
 #include "external/envoy/source/common/common/assert.h"
 #include "external/envoy/source/common/protobuf/utility.h"
 
+#include "absl/strings/str_cat.h"
 #include "internal_proto/statistic/statistic.pb.h"
 
 namespace Nighthawk {
@@ -28,9 +29,7 @@ static void setDurationFromNanos(Envoy::ProtobufWkt::Duration& mutable_duration,
 
 } // namespace
 
-std::string StatisticImpl::toString() const {
-  return toProto(SerializationDomain::RAW).DebugString();
-}
+std::string StatisticImpl::toString() const { return absl::StrCat(SerializationDomain::RAW); }
 
 nighthawk::client::Statistic StatisticImpl::toProto(SerializationDomain domain) const {
   nighthawk::client::Statistic statistic;

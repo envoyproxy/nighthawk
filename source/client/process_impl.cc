@@ -37,6 +37,7 @@
 
 #include "source/client/process_bootstrap.h"
 
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_replace.h"
 #include "absl/types/optional.h"
 
@@ -839,7 +840,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
       setupTracingImplementation(bootstrap_, *tracing_uri);
       addTracingCluster(bootstrap_, *tracing_uri);
     }
-    ENVOY_LOG(debug, "Computed configuration: {}", bootstrap_.DebugString());
+    ENVOY_LOG(debug, "Computed configuration: {}", absl::StrCat(bootstrap_));
     cluster_manager_ = cluster_manager_factory_->clusterManagerFromProto(bootstrap_);
     maybeCreateTracingDriver(bootstrap_.tracing());
     cluster_manager_->setInitializedCb(
