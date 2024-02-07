@@ -14,6 +14,8 @@
 
 #include "source/common/request_impl.h"
 
+#include "absl/strings/str_cat.h"
+
 namespace Nighthawk {
 
 using ::nighthawk::request_source::RequestSpecifier;
@@ -41,7 +43,7 @@ void RequestStreamGrpcClientImpl::trySendRequest() {
     request.set_quantity(header_buffer_length_);
     stream_->sendMessage(request, false);
     in_flight_headers_ = header_buffer_length_;
-    ENVOY_LOG(trace, "send request: {}", request.DebugString());
+    ENVOY_LOG(trace, "send request: {}", absl::StrCat(request));
   }
 }
 
@@ -142,7 +144,7 @@ RequestPtr RequestStreamGrpcClientImpl::maybeDequeue() {
 
 void RequestStreamGrpcClientImpl::emplaceMessage(
     std::unique_ptr<nighthawk::request_source::RequestStreamResponse>&& message) {
-  ENVOY_LOG(trace, "message received: {}", message->DebugString());
+  ENVOY_LOG(trace, "message received: {}", absl::StrCat(*message));
   messages_.emplace(std::move(message));
 }
 

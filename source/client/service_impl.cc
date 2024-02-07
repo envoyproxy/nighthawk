@@ -9,6 +9,8 @@
 #include "source/client/output_collector_impl.h"
 #include "source/common/request_source_impl.h"
 
+#include "absl/strings/str_cat.h"
+
 namespace Nighthawk {
 namespace Client {
 
@@ -78,7 +80,7 @@ void ServiceImpl::handleExecutionRequest(const nighthawk::client::ExecutionReque
 }
 
 void ServiceImpl::writeResponse(const nighthawk::client::ExecutionResponse& response) {
-  ENVOY_LOG(debug, "Write response: {}", response.DebugString());
+  ENVOY_LOG(debug, "Write response: {}", absl::StrCat(response));
   if (!stream_->Write(response)) {
     ENVOY_LOG(warn, "Failed to write response to the stream");
   }
@@ -107,7 +109,7 @@ grpc::Status ServiceImpl::ExecutionStream(
   stream_ = stream;
 
   while (stream->Read(&request)) {
-    ENVOY_LOG(debug, "Read ExecutionRequest data {}", request.DebugString());
+    ENVOY_LOG(debug, "Read ExecutionRequest data {}", absl::StrCat(request));
     if (request.has_start_request()) {
       // If busy_lock_ is held we can't start a new benchmark run because one is active already.
       if (busy_lock_.tryLock()) {
@@ -153,7 +155,7 @@ grpc::Status RequestSourceServiceImpl::RequestStream(
   nighthawk::request_source::RequestStreamRequest request;
   bool ok = true;
   while (stream->Read(&request)) {
-    ENVOY_LOG(trace, "Inbound RequestStreamRequest {}", request.DebugString());
+    ENVOY_LOG(trace, "Inbound RequestStreamRequest {}", absl::StrCat(request));
 
     // TODO(oschaaf): this is useful for integration testing purposes, but sending
     // these nearly empty headers will basically be a near no-op (note that the client will merge
