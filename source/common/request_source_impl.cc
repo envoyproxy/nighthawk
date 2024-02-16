@@ -2,8 +2,9 @@
 
 #include <chrono>
 
-#include "external/envoy/source/common/common/assert.h"
 #include "envoy/common/exception.h"
+
+#include "external/envoy/source/common/common/assert.h"
 
 #include "source/common/request_impl.h"
 
@@ -13,7 +14,7 @@ using namespace std::chrono_literals;
 
 namespace {
 using EnvoyException = Envoy::EnvoyException;
-}  // namespace
+} // namespace
 
 StaticRequestSourceImpl::StaticRequestSourceImpl(Envoy::Http::RequestHeaderMapPtr&& header,
                                                  const uint64_t max_yields)
