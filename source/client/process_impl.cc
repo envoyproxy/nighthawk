@@ -21,6 +21,7 @@
 #include "external/envoy/source/common/api/api_impl.h"
 #include "external/envoy/source/common/common/cleanup.h"
 #include "external/envoy/source/common/common/statusor.h"
+#include "external/envoy/source/common/config/stats_utility.h"
 #include "external/envoy/source/common/config/utility.h"
 #include "external/envoy/source/common/event/dispatcher_impl.h"
 #include "external/envoy/source/common/event/real_time_system.h"
@@ -804,7 +805,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
     // the objects that require stats.
     if (!options_.statsSinks().empty()) {
       store_root_.setTagProducer(
-          Envoy::Config::Utility::createTagProducer(bootstrap_, envoy_options_.statsTags()));
+          Envoy::Config::StatsUtility::createTagProducer(bootstrap_, envoy_options_.statsTags()));
     }
 
     absl::Status workers_status = createWorkers(number_of_workers_, scheduled_start);

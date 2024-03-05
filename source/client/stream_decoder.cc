@@ -10,6 +10,12 @@
 
 #include "fmt/ostream.h"
 
+// NOLINT(namespace-nighthawk)
+namespace fmt {
+// Allow fmtlib to use operator << defined in HeaderMapPtr.
+template <> struct formatter<::Nighthawk::HeaderMapPtr> : ostream_formatter {};
+} // namespace fmt
+
 namespace Nighthawk {
 namespace Client {
 
@@ -200,9 +206,3 @@ void StreamDecoder::setupForTracing() {
 
 } // namespace Client
 } // namespace Nighthawk
-
-// NOLINT(namespace-nighthawk)
-namespace fmt {
-// Allow fmtlib to use operator << defined in HeaderMapPtr.
-template <> struct formatter<::Nighthawk::HeaderMapPtr> : ostream_formatter {};
-} // namespace fmt
