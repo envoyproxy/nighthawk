@@ -55,7 +55,23 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
-    name = "nighthawk_client_lib",
+    name = "stream_decoder_lib",
+    srcs = [
+        "stream_decoder.cc",
+    ],
+    hdrs = [
+        "stream_decoder.h",
+    ],
+    repository = "@envoy",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//include/nighthawk/common:base_includes",
+        "@envoy//source/server:server_lib_with_external_headers",
+    ]
+)
+
+envoy_cc_library(
+    name = "nighthawk_client_lib_minus_stream_decoder",
     srcs = [
         "benchmark_client_impl.cc",
         "client.cc",
@@ -64,7 +80,6 @@ envoy_cc_library(
         "flush_worker_impl.cc",
         "process_impl.cc",
         "remote_process_impl.cc",
-        "stream_decoder.cc",
     ],
     hdrs = [
         "benchmark_client_impl.h",
@@ -74,7 +89,6 @@ envoy_cc_library(
         "flush_worker_impl.h",
         "process_impl.h",
         "remote_process_impl.h",
-        "stream_decoder.h",
     ],
     copts = select({
         "//bazel:zipkin_disabled": [],
@@ -87,6 +101,7 @@ envoy_cc_library(
         ":output_collector_impl_lib",
         ":output_formatter_impl_lib",
         ":process_bootstrap",
+        ":stream_decoder_lib",
         "//api/client:base_cc_proto",
         "//include/nighthawk/client:client_includes",
         "//include/nighthawk/common:base_includes",
@@ -145,6 +160,16 @@ envoy_cc_library(
             "@envoy//source/extensions/tracers/zipkin:zipkin_lib_with_external_headers",
         ],
     }),
+)
+
+envoy_cc_library(
+    name = "nighthawk_client_lib",
+    repository = "@envoy",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":nighthawk_client_lib_minus_stream_decoder",
+        ":stream_decoder_lib",
+    ],
 )
 
 envoy_cc_library(
