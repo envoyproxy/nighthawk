@@ -18,6 +18,7 @@
 #include "test/mocks/adaptive_load/mock_adaptive_load_controller.h"
 #include "test/test_common/environment.h"
 
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -327,7 +328,7 @@ TEST(AdaptiveLoadClientMainTest, WritesOutputProtoToFile) {
                                 .value();
   nighthawk::adaptive_load::AdaptiveLoadSessionOutput golden_proto;
   Envoy::Protobuf::TextFormat::ParseFromString(golden_text, &golden_proto);
-  EXPECT_EQ(actual_outfile_contents, golden_proto.DebugString());
+  EXPECT_EQ(actual_outfile_contents, absl::StrCat(golden_proto));
 }
 
 TEST(AdaptiveLoadClientMainTest, DefaultsToInsecureConnection) {

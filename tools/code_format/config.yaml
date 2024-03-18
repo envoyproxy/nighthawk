@@ -102,19 +102,14 @@ paths:
     - source/common/listener_manager/filter_chain_manager_impl.cc
     - source/common/upstream/thread_aware_lb_impl.cc
     - source/common/upstream/subset_lb_config.cc
-    - source/common/upstream/load_balancer_impl.cc
     - source/common/upstream/cluster_manager_impl.cc
-    - source/common/upstream/outlier_detection_impl.cc
     - source/common/upstream/upstream_impl.cc
     - source/common/upstream/default_local_address_selector_factory.cc
     - source/common/network/listen_socket_impl.cc
     - source/common/network/io_socket_handle_base_impl.cc
     - source/common/network/address_impl.cc
-    - source/common/network/cidr_range.cc
     - source/common/network/utility.cc
     - source/common/network/dns_resolver/dns_factory_util.cc
-    - source/common/network/resolver_impl.cc
-    - source/common/network/socket_impl.cc
     - source/common/ssl/tls_certificate_config_impl.cc
     - source/common/formatter/http_specific_formatter.cc
     - source/common/formatter/stream_info_formatter.h
@@ -125,7 +120,6 @@ paths:
     - source/common/stats/tag_extractor_impl.cc
     - source/common/stats/tag_producer_impl.cc
     - source/common/http/http2/codec_impl.cc
-    - source/common/http/utility.cc
     - source/common/http/hash_policy.cc
     - source/common/http/conn_manager_utility.cc
     - source/common/http/match_delegate/config.cc
@@ -133,25 +127,19 @@ paths:
     - source/common/protobuf/visitor.cc
     - source/common/protobuf/utility.cc
     - source/common/protobuf/message_validator_impl.cc
-    - source/common/access_log/access_log_manager_impl.cc
+    - source/common/quic/quic_server_transport_socket_factory.cc
     - source/common/secret/secret_manager_impl.cc
-    - source/common/grpc/async_client_manager_impl.cc
     - source/common/grpc/google_grpc_utils.cc
     - source/common/tcp_proxy/tcp_proxy.cc
     - source/common/config/subscription_factory_impl.cc
     - source/common/config/xds_resource.cc
-    - source/common/config/datasource.cc
-    - source/common/config/utility.cc
     - source/common/runtime/runtime_impl.cc
-    - source/common/quic/quic_transport_socket_factory.cc
     - source/common/filter/config_discovery_impl.cc
     - source/common/json/json_internal.cc
     - source/common/router/scoped_rds.cc
     - source/common/router/config_impl.cc
     - source/common/router/scoped_config_impl.cc
     - source/common/router/router_ratelimit.cc
-    - source/common/router/vhds.cc
-    - source/common/router/config_utility.cc
     - source/common/router/header_parser.cc
     - source/common/filesystem/inotify/watcher_impl.cc
     - source/common/filesystem/posix/directory_iterator_impl.cc
@@ -170,7 +158,21 @@ paths:
     - source/server/hot_restarting_base.cc
     - source/server/hot_restart_impl.cc
     - source/server/ssl_context_manager.cc
-    - source/server/configuration_impl.cc
+    - source/server/config_validation/cluster_manager.cc
+    - source/common/upstream/health_discovery_service.cc
+    - source/common/secret/sds_api.h
+    - source/common/secret/sds_api.cc
+    - source/common/secret/secret_provider_impl.cc
+    - source/common/router/router.cc
+    - source/common/config/config_provider_impl.h
+    - source/common/common/logger_delegates.cc
+    - source/common/upstream/health_checker_event_logger.h
+    - source/common/upstream/outlier_detection_impl.h
+    - source/common/ssl/certificate_validation_context_config_impl.cc
+    - source/common/grpc/google_grpc_creds_impl.cc
+    - source/common/local_reply/local_reply.cc
+    - source/common/tls/context_impl.cc
+    - source/common/tls/context_config_impl.cc
 
   # Only one C++ file should instantiate grpc_init
   grpc_init:
@@ -405,6 +407,7 @@ visibility_excludes:
 - source/extensions/filters/network/common/BUILD
 - source/extensions/http/header_validators/envoy_default/BUILD
 - source/extensions/transport_sockets/common/BUILD
+- source/extensions/transport_sockets/tap/BUILD
 - source/extensions/udp_packet_writer/default/BUILD
 - source/extensions/udp_packet_writer/gso/BUILD
 - source/extensions/path/uri_template_lib/BUILD

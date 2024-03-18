@@ -10,6 +10,12 @@
 
 #include "fmt/ostream.h"
 
+// NOLINT(namespace-nighthawk)
+namespace fmt {
+// Allow fmtlib to use operator << defined in HeaderMapPtr.
+template <> struct formatter<::Nighthawk::HeaderMapPtr> : ostream_formatter {};
+} // namespace fmt
+
 namespace Nighthawk {
 namespace Client {
 
@@ -97,7 +103,7 @@ void StreamDecoder::onPoolFailure(Envoy::Http::ConnectionPool::PoolFailureReason
                                   absl::string_view /* transport_failure_reason */,
                                   Envoy::Upstream::HostDescriptionConstSharedPtr) {
   decoder_completion_callback_.onPoolFailure(reason);
-  stream_info_.setResponseFlag(Envoy::StreamInfo::ResponseFlag::UpstreamConnectionFailure);
+  stream_info_.setResponseFlag(Envoy::StreamInfo::CoreResponseFlag::UpstreamConnectionFailure);
   finalizeActiveSpan();
   caller_completion_callback_(false, false);
   dispatcher_.deferredDelete(std::unique_ptr<StreamDecoder>(this));
@@ -144,28 +150,28 @@ void StreamDecoder::onPoolReady(Envoy::Http::RequestEncoder& encoder,
 
 // TODO(https://github.com/envoyproxy/nighthawk/issues/139): duplicated from
 // envoy/source/common/router/router.cc
-Envoy::StreamInfo::ResponseFlag
+Envoy::StreamInfo::CoreResponseFlag
 StreamDecoder::streamResetReasonToResponseFlag(Envoy::Http::StreamResetReason reset_reason) {
   switch (reset_reason) {
   case Envoy::Http::StreamResetReason::LocalConnectionFailure:
   case Envoy::Http::StreamResetReason::RemoteConnectionFailure:
   case Envoy::Http::StreamResetReason::ConnectionTimeout:
-    return Envoy::StreamInfo::ResponseFlag::UpstreamConnectionFailure;
+    return Envoy::StreamInfo::CoreResponseFlag::UpstreamConnectionFailure;
   case Envoy::Http::StreamResetReason::ConnectionTermination:
-    return Envoy::StreamInfo::ResponseFlag::UpstreamConnectionTermination;
+    return Envoy::StreamInfo::CoreResponseFlag::UpstreamConnectionTermination;
   case Envoy::Http::StreamResetReason::LocalReset:
   case Envoy::Http::StreamResetReason::LocalRefusedStreamReset:
-    return Envoy::StreamInfo::ResponseFlag::LocalReset;
+    return Envoy::StreamInfo::CoreResponseFlag::LocalReset;
   case Envoy::Http::StreamResetReason::Overflow:
-    return Envoy::StreamInfo::ResponseFlag::UpstreamOverflow;
+    return Envoy::StreamInfo::CoreResponseFlag::UpstreamOverflow;
   case Envoy::Http::StreamResetReason::ConnectError:
   case Envoy::Http::StreamResetReason::RemoteReset:
   case Envoy::Http::StreamResetReason::RemoteRefusedStreamReset:
-    return Envoy::StreamInfo::ResponseFlag::UpstreamRemoteReset;
+    return Envoy::StreamInfo::CoreResponseFlag::UpstreamRemoteReset;
   case Envoy::Http::StreamResetReason::ProtocolError:
-    return Envoy::StreamInfo::ResponseFlag::UpstreamProtocolError;
+    return Envoy::StreamInfo::CoreResponseFlag::UpstreamProtocolError;
   case Envoy::Http::StreamResetReason::OverloadManager:
-    return Envoy::StreamInfo::ResponseFlag::OverloadManager;
+    return Envoy::StreamInfo::CoreResponseFlag::OverloadManager;
   }
   PANIC("not reached");
 }
@@ -200,9 +206,3 @@ void StreamDecoder::setupForTracing() {
 
 } // namespace Client
 } // namespace Nighthawk
-
-// NOLINT(namespace-nighthawk)
-namespace fmt {
-// Allow fmtlib to use operator << defined in HeaderMapPtr.
-template <> struct formatter<::Nighthawk::HeaderMapPtr> : ostream_formatter {};
-} // namespace fmt

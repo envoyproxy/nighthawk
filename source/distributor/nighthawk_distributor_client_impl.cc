@@ -2,6 +2,8 @@
 
 #include "external/envoy/source/common/common/assert.h"
 
+#include "absl/strings/str_cat.h"
+
 namespace Nighthawk {
 
 absl::StatusOr<nighthawk::DistributedResponse> NighthawkDistributorClientImpl::DistributedRequest(
@@ -11,7 +13,7 @@ absl::StatusOr<nighthawk::DistributedResponse> NighthawkDistributorClientImpl::D
   std::shared_ptr<::grpc::ClientReaderWriterInterface<nighthawk::DistributedRequest,
                                                       nighthawk::DistributedResponse>>
       stream(nighthawk_distributor_stub.DistributedRequestStream(&context));
-  ENVOY_LOG_MISC(trace, "Write {}", distributed_request.DebugString());
+  ENVOY_LOG_MISC(trace, "Write {}", absl::StrCat(distributed_request));
   if (!stream->Write(distributed_request)) {
     return absl::UnavailableError(
         "Failed to write request to the Nighthawk Distributor gRPC channel.");
@@ -25,7 +27,7 @@ absl::StatusOr<nighthawk::DistributedResponse> NighthawkDistributorClientImpl::D
     RELEASE_ASSERT(!got_response,
                    "Distributor Service has started responding with more than one message.");
     got_response = true;
-    ENVOY_LOG_MISC(trace, "Read {}", response.DebugString());
+    ENVOY_LOG_MISC(trace, "Read {}", absl::StrCat(response));
   }
   if (!got_response) {
     return absl::InternalError("Distributor Service did not send a gRPC response.");

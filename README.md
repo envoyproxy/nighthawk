@@ -2,6 +2,8 @@
 
 *A L7 (HTTP/HTTPS/HTTP2) performance characterization tool*
 
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/envoyproxy/nighthawk/badge)](https://securityscorecards.dev/viewer/?uri=github.com/envoyproxy/nighthawk)
+
 ## Current state
 
 Nighthawk currently offers:
@@ -110,9 +112,11 @@ echo "build --config=clang" >> user.bazelrc
 
 #### Install Python libraries
 
+It is advisable to use the same version of Python as the one listed at the top of `tools/base/requirements.txt`. While other versions may also work, the chances of success are greatest if using the same one.
+
 Recommended: Use `virtualenv` to avoid conflicts between Nighthawk's Python package version requirements and other versions already on your system:
 ```
-virtualenv ~/my_nh_venv
+python3 -m venv ~/my_nh_venv
 source ~/my_nh_venv/bin/activate
 ```
 
@@ -120,7 +124,7 @@ Note: Avoid creating the environment under the Nighthawk project directory.
 
 Install Python packages required for Nighthawk (whether using `virtualenv` or not):
 ```
-pip3 install --user -r requirements.txt
+pip3 install --user -r tools/base/requirements.txt
 ```
 
 If `pip3 install` fails, you will need to troubleshoot the Python environment before attempting to build and test Nighthawk.

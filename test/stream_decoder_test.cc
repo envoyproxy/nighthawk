@@ -197,34 +197,34 @@ TEST_F(StreamDecoderTest, PoolFailureTest) {
 TEST_F(StreamDecoderTest, StreamResetReasonToResponseFlag) {
   ASSERT_EQ(StreamDecoder::streamResetReasonToResponseFlag(
                 Envoy::Http::StreamResetReason::LocalConnectionFailure),
-            Envoy::StreamInfo::ResponseFlag::UpstreamConnectionFailure);
+            Envoy::StreamInfo::CoreResponseFlag::UpstreamConnectionFailure);
   ASSERT_EQ(StreamDecoder::streamResetReasonToResponseFlag(
                 Envoy::Http::StreamResetReason::RemoteConnectionFailure),
-            Envoy::StreamInfo::ResponseFlag::UpstreamConnectionFailure);
+            Envoy::StreamInfo::CoreResponseFlag::UpstreamConnectionFailure);
   ASSERT_EQ(StreamDecoder::streamResetReasonToResponseFlag(
                 Envoy::Http::StreamResetReason::ConnectionTimeout),
-            Envoy::StreamInfo::ResponseFlag::UpstreamConnectionFailure);
+            Envoy::StreamInfo::CoreResponseFlag::UpstreamConnectionFailure);
   ASSERT_EQ(StreamDecoder::streamResetReasonToResponseFlag(
                 Envoy::Http::StreamResetReason::ConnectionTermination),
-            Envoy::StreamInfo::ResponseFlag::UpstreamConnectionTermination);
+            Envoy::StreamInfo::CoreResponseFlag::UpstreamConnectionTermination);
   ASSERT_EQ(
       StreamDecoder::streamResetReasonToResponseFlag(Envoy::Http::StreamResetReason::LocalReset),
-      Envoy::StreamInfo::ResponseFlag::LocalReset);
+      Envoy::StreamInfo::CoreResponseFlag::LocalReset);
   ASSERT_EQ(StreamDecoder::streamResetReasonToResponseFlag(
                 Envoy::Http::StreamResetReason::LocalRefusedStreamReset),
-            Envoy::StreamInfo::ResponseFlag::LocalReset);
+            Envoy::StreamInfo::CoreResponseFlag::LocalReset);
   ASSERT_EQ(
       StreamDecoder::streamResetReasonToResponseFlag(Envoy::Http::StreamResetReason::Overflow),
-      Envoy::StreamInfo::ResponseFlag::UpstreamOverflow);
+      Envoy::StreamInfo::CoreResponseFlag::UpstreamOverflow);
   ASSERT_EQ(
       StreamDecoder::streamResetReasonToResponseFlag(Envoy::Http::StreamResetReason::RemoteReset),
-      Envoy::StreamInfo::ResponseFlag::UpstreamRemoteReset);
+      Envoy::StreamInfo::CoreResponseFlag::UpstreamRemoteReset);
   ASSERT_EQ(StreamDecoder::streamResetReasonToResponseFlag(
                 Envoy::Http::StreamResetReason::RemoteRefusedStreamReset),
-            Envoy::StreamInfo::ResponseFlag::UpstreamRemoteReset);
+            Envoy::StreamInfo::CoreResponseFlag::UpstreamRemoteReset);
   ASSERT_EQ(
       StreamDecoder::streamResetReasonToResponseFlag(Envoy::Http::StreamResetReason::ConnectError),
-      Envoy::StreamInfo::ResponseFlag::UpstreamRemoteReset);
+      Envoy::StreamInfo::CoreResponseFlag::UpstreamRemoteReset);
 }
 
 // This test parameterization structure carries the response header name that ought to be treated

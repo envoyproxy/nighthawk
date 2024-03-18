@@ -42,6 +42,7 @@
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -171,7 +172,7 @@ TEST_F(AdaptiveLoadControllerImplFixture, CopiesThresholdSpecsIntoOutput) {
   MetricSpecWithThreshold actual_spec_with_threshold = output_or.value().metric_thresholds(0);
   EXPECT_TRUE(
       MessageDifferencer::Equivalent(actual_spec_with_threshold, spec.metric_thresholds(0)));
-  EXPECT_EQ(actual_spec_with_threshold.DebugString(), spec.metric_thresholds(0).DebugString());
+  EXPECT_EQ(absl::StrCat(actual_spec_with_threshold), absl::StrCat(spec.metric_thresholds(0)));
 }
 
 TEST_F(AdaptiveLoadControllerImplFixture, TimesOutIfNeverConverged) {

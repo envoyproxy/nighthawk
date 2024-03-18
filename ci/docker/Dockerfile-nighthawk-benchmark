@@ -1,4 +1,4 @@
-FROM frolvlad/alpine-glibc:alpine-3.13_glibc-2.32
+FROM frolvlad/alpine-glibc:alpine-3.13_glibc-2.33@sha256:92a8245bd6680b6b256225653369d7b0d3a32ed01ef2c2c397e9622e113cbc42
 
 CMD ["./benchmarks" "--help"]
 ENV RUNFILES_DIR=/usr/local/bin/benchmarks/benchmarks.runfiles

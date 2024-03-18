@@ -2,6 +2,8 @@
 
 #include <chrono>
 
+#include "envoy/common/exception.h"
+
 #include "external/envoy/source/common/common/assert.h"
 
 #include "source/common/request_impl.h"
@@ -9,6 +11,10 @@
 namespace Nighthawk {
 
 using namespace std::chrono_literals;
+
+namespace {
+using EnvoyException = Envoy::EnvoyException;
+} // namespace
 
 StaticRequestSourceImpl::StaticRequestSourceImpl(Envoy::Http::RequestHeaderMapPtr&& header,
                                                  const uint64_t max_yields)
@@ -38,15 +44,17 @@ void RemoteRequestSourceImpl::connectToRequestStreamGrpcService() {
   const auto clusters = cluster_manager_->clusters();
   const bool have_cluster =
       clusters.active_clusters_.find(service_cluster_name_) != clusters.active_clusters_.end();
-  ASSERT(have_cluster);
+  RELEASE_ASSERT(have_cluster,
+                 absl::StrCat("Failed to find service cluster ", service_cluster_name_));
   const std::chrono::seconds STREAM_SETUP_TIMEOUT = 60s;
   envoy::config::core::v3::GrpcService grpc_service;
   grpc_service.mutable_envoy_grpc()->set_cluster_name(service_cluster_name_);
-  Envoy::Grpc::AsyncClientFactoryPtr cluster_manager =
+  absl::StatusOr<Envoy::Grpc::AsyncClientFactoryPtr> cluster_manager =
       cluster_manager_->grpcAsyncClientManager().factoryForGrpcService(grpc_service, scope_,
                                                                        /*skip_cluster_check=*/true);
+  THROW_IF_STATUS_NOT_OK(cluster_manager, throw);
   grpc_client_ = std::make_unique<RequestStreamGrpcClientImpl>(
-      cluster_manager->createUncachedRawAsyncClient(), dispatcher_, *base_header_,
+      (*cluster_manager)->createUncachedRawAsyncClient(), dispatcher_, *base_header_,
       header_buffer_length_);
   grpc_client_->start();
   const Envoy::MonotonicTime start = time_source.monotonicTime();

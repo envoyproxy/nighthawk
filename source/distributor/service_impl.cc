@@ -10,6 +10,8 @@
 
 #include "api/distributor/distributor.pb.validate.h"
 
+#include "absl/strings/str_cat.h"
+
 namespace Nighthawk {
 namespace {
 
@@ -87,7 +89,7 @@ grpc::Status NighthawkDistributorServiceImpl::DistributedRequestStream(
   nighthawk::DistributedRequest request;
   grpc::Status status = grpc::Status::OK;
   while (status.ok() && stream->Read(&request)) {
-    ENVOY_LOG(trace, "Inbound DistributedRequest {}", request.DebugString());
+    ENVOY_LOG(trace, "Inbound DistributedRequest {}", absl::StrCat(request));
     status = validateRequest(request);
     if (status.ok()) {
       std::tuple<grpc::Status, nighthawk::DistributedResponse> status_and_response =
@@ -99,7 +101,7 @@ grpc::Status NighthawkDistributorServiceImpl::DistributedRequestStream(
         status = grpc::Status(grpc::StatusCode::INTERNAL,
                               std::string("Failed to write DistributedResponse."));
       } else {
-        ENVOY_LOG(trace, "Wrote DistributedResponse {}", response.DebugString());
+        ENVOY_LOG(trace, "Wrote DistributedResponse {}", absl::StrCat(response));
       }
     } else {
       ENVOY_LOG(error, "DistributedRequest invalid: ({}) '{}'", status.error_code(),

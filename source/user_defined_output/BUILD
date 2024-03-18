@@ -42,5 +42,6 @@ envoy_cc_library(
         "@envoy//envoy/config:typed_config_interface",
         "@envoy//source/common/common:statusor_lib_with_external_headers",
         "@envoy//source/common/config:utility_lib_with_external_headers",
+        "@envoy//source/common/http:utility_lib",
     ],
 )

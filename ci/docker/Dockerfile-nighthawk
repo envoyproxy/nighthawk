@@ -1,4 +1,4 @@
-FROM frolvlad/alpine-glibc:alpine-3.13_glibc-2.32
+FROM frolvlad/alpine-glibc:alpine-3.13_glibc-2.33@sha256:92a8245bd6680b6b256225653369d7b0d3a32ed01ef2c2c397e9622e113cbc42
 
 ADD nighthawk_client /usr/local/bin/nighthawk_client
 ADD nighthawk_test_server /usr/local/bin/nighthawk_test_server

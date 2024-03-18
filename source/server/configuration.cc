@@ -11,6 +11,7 @@
 #include "api/server/response_options.pb.validate.h"
 
 #include "absl/strings/numbers.h"
+#include "absl/strings/str_cat.h"
 
 namespace Nighthawk {
 namespace Server {
@@ -75,7 +76,7 @@ void validateResponseOptions(const nighthawk::server::ResponseOptions& response_
     throw Envoy::EnvoyException(
         absl::StrCat("invalid configuration in nighthawk::server::ResponseOptions ",
                      "cannot specify both response_headers and v3_response_headers ",
-                     "configuration was: ", response_options.ShortDebugString()));
+                     "configuration was: ", absl::StrCat(response_options)));
   }
 }
 

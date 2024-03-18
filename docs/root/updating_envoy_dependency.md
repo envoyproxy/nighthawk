@@ -293,10 +293,12 @@ These should always be accompanied with a comment explaining them. Avoid using
 First attempt to remove all existing pins in
 [tools/base/requirements.in](/tools/base/requirements.in) to see if they are
 still necessary. Once done editing
-[tools/base/requirements.in](/tools/base/requirements.in), update the
+[tools/base/requirements.in](/tools/base/requirements.in), delete the contents
+of [tools/base/requirements.txt](/tools/base/requirements.txt) and update the
 dependencies by running:
 
 ```bash
+echo > tools/base/requirements.txt
 bazel run //tools/base:requirements.update
 ```
 
