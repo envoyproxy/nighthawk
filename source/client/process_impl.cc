@@ -243,6 +243,9 @@ public:
   void setSinkPredicates(std::unique_ptr<Envoy::Stats::SinkPredicates>&&) override {
     PANIC("NighthawkServerInstance::setSinkPredicates not implemented");
   }
+  Envoy::Regex::Engine& regexEngine() override {
+    PANIC("NighthawkServerInstance::regexEngine not implemented");
+  };
 
 private:
   Envoy::OptRef<Envoy::Server::Admin> admin_;
@@ -308,6 +311,10 @@ public:
 
   Envoy::Server::ServerLifecycleNotifier& lifecycleNotifier() override {
     PANIC("NighthawkServerFactoryContext::lifecycleNotifier not implemented");
+  };
+
+  Envoy::Regex::Engine& regexEngine() override {
+    PANIC("NighthawkServerFactoryContext::regexEngine not implemented");
   };
 
   Envoy::Init::Manager& initManager() override {
@@ -815,12 +822,13 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
     }
     tls_.registerThread(*dispatcher_, true);
     store_root_.initializeThreading(*dispatcher_, tls_);
+    absl::Status creation_status;
     runtime_loader_ = Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl(
         *dispatcher_, tls_, {}, *local_info_, store_root_, generator_,
-        Envoy::ProtobufMessage::getStrictValidationVisitor(), *api_)};
+        Envoy::ProtobufMessage::getStrictValidationVisitor(), *api_, creation_status)};
     ssl_context_manager_ =
         std::make_unique<Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl>(
-            time_system_);
+            *server_factory_context_);
 
     server_ = std::make_unique<NighthawkServerInstance>(
         admin_, *api_, *dispatcher_, access_log_manager_, envoy_options_, *runtime_loader_.get(),
