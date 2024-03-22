@@ -54,6 +54,7 @@ TEST_F(WorkerTest, WorkerExecutesOnThread) {
   Envoy::Runtime::LoaderPtr loader = Envoy::Runtime::LoaderPtr{
       new Envoy::Runtime::LoaderImpl(dispatcher, tls_, {}, local_info_, test_store_, rand_,
                                      validation_visitor_, *api_, creation_status)};
+  ASSERT_TRUE(creation_status.ok());
   worker.start();
   worker.waitForCompletion();
 

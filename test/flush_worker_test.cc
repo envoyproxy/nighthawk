@@ -1,6 +1,8 @@
 #include <functional>
 #include <thread>
 
+#include "envoy/common/exception.h"
+
 #include "external/envoy/source/common/common/random_generator.h"
 #include "external/envoy/source/common/event/dispatcher_impl.h"
 #include "external/envoy/source/common/runtime/runtime_impl.h"
@@ -25,6 +27,7 @@ using ::testing::NiceMock;
 using ::testing::ReturnRef;
 using ::testing::StrictMock;
 using ::testing::Test;
+using EnvoyException = Envoy::EnvoyException;
 
 // Number of times the simulated timer loops run in simulateTimerLoop().
 const int kNumTimerLoops = 100;
@@ -41,6 +44,7 @@ public:
     loader_ = Envoy::Runtime::LoaderPtr{
         new Envoy::Runtime::LoaderImpl(*dispatcher_, tls_, {}, local_info, store_, rand,
                                        validation_visitor, api_, creation_status)};
+    THROW_IF_NOT_OK(creation_status);
     sink_ = new StrictMock<Envoy::Stats::MockSink>();
     stats_sinks_.emplace_back(sink_);
 

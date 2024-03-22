@@ -826,6 +826,11 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
     runtime_loader_ = Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl(
         *dispatcher_, tls_, {}, *local_info_, store_root_, generator_,
         Envoy::ProtobufMessage::getStrictValidationVisitor(), *api_, creation_status)};
+    if (!creation_status.ok()) {
+      ENVOY_LOG(error, "create runtime loader failed. Received bad status: {}",
+                creation_status.message());
+      return false;
+    }
 
     server_ = std::make_unique<NighthawkServerInstance>(
         admin_, *api_, *dispatcher_, access_log_manager_, envoy_options_, *runtime_loader_.get(),
