@@ -37,8 +37,10 @@ public:
     Envoy::Random::RandomGeneratorImpl rand;
     NiceMock<Envoy::LocalInfo::MockLocalInfo> local_info;
     NiceMock<Envoy::ProtobufMessage::MockValidationVisitor> validation_visitor;
+    absl::Status status;
     loader_ = Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl(
-        *dispatcher_, tls_, {}, local_info, store_, rand, validation_visitor, api_)};
+        *dispatcher_, tls_, {}, local_info, store_, rand, validation_visitor, api_, status)};
+    EXPECT_TRUE(status.ok());
     sink_ = new StrictMock<Envoy::Stats::MockSink>();
     stats_sinks_.emplace_back(sink_);
 

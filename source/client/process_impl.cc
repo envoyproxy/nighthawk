@@ -815,9 +815,14 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
     }
     tls_.registerThread(*dispatcher_, true);
     store_root_.initializeThreading(*dispatcher_, tls_);
+    absl::Status runtime_status;
     runtime_loader_ = Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl(
         *dispatcher_, tls_, {}, *local_info_, store_root_, generator_,
-        Envoy::ProtobufMessage::getStrictValidationVisitor(), *api_)};
+        Envoy::ProtobufMessage::getStrictValidationVisitor(), *api_, runtime_status)};
+    if (!runtime_status.ok()) {
+      ENVOY_LOG(error, "Runtime initialization failed. Status: {}", runtime_status.message());
+      return false;
+    }
     ssl_context_manager_ =
         std::make_unique<Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl>(
             time_system_);
