@@ -243,6 +243,9 @@ public:
   void setSinkPredicates(std::unique_ptr<Envoy::Stats::SinkPredicates>&&) override {
     PANIC("NighthawkServerInstance::setSinkPredicates not implemented");
   }
+  Envoy::Regex::Engine& regexEngine() override {
+    PANIC("NighthawkServerInstance::regexEngine not implemented");
+  };
 
 private:
   Envoy::OptRef<Envoy::Server::Admin> admin_;
@@ -308,6 +311,10 @@ public:
 
   Envoy::Server::ServerLifecycleNotifier& lifecycleNotifier() override {
     PANIC("NighthawkServerFactoryContext::lifecycleNotifier not implemented");
+  };
+
+  Envoy::Regex::Engine& regexEngine() override {
+    PANIC("NighthawkServerFactoryContext::regexEngine not implemented");
   };
 
   Envoy::Init::Manager& initManager() override {
@@ -815,12 +822,15 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
     }
     tls_.registerThread(*dispatcher_, true);
     store_root_.initializeThreading(*dispatcher_, tls_);
+    absl::Status creation_status;
     runtime_loader_ = Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl(
         *dispatcher_, tls_, {}, *local_info_, store_root_, generator_,
-        Envoy::ProtobufMessage::getStrictValidationVisitor(), *api_)};
-    ssl_context_manager_ =
-        std::make_unique<Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl>(
-            time_system_);
+        Envoy::ProtobufMessage::getStrictValidationVisitor(), *api_, creation_status)};
+    if (!creation_status.ok()) {
+      ENVOY_LOG(error, "create runtime loader failed. Received bad status: {}",
+                creation_status.message());
+      return false;
+    }
 
     server_ = std::make_unique<NighthawkServerInstance>(
         admin_, *api_, *dispatcher_, access_log_manager_, envoy_options_, *runtime_loader_.get(),
@@ -828,6 +838,9 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
         router_context_);
     server_factory_context_ =
         std::make_unique<NighthawkServerFactoryContext>(*server_, scope_root_);
+    ssl_context_manager_ =
+        std::make_unique<Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl>(
+            *server_factory_context_);
     cluster_manager_factory_ = std::make_unique<ClusterManagerFactory>(
         *server_factory_context_, store_root_, tls_, http_context_,
         [dns_resolver]() -> Envoy::Network::DnsResolverSharedPtr { return dns_resolver; },

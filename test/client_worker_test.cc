@@ -1,6 +1,7 @@
 #include <functional>
 #include <thread>
 
+#include "envoy/common/exception.h"
 #include "envoy/upstream/cluster_manager.h"
 
 #include "nighthawk/user_defined_output/user_defined_output_plugin.h"
@@ -33,12 +34,19 @@ using namespace std::chrono_literals;
 namespace Nighthawk {
 namespace Client {
 
+namespace {
+using EnvoyException = Envoy::EnvoyException;
+} // namespace
+
 class ClientWorkerTest : public Test {
 public:
   ClientWorkerTest()
       : api_(Envoy::Api::createApiForTest()), thread_id_(std::this_thread::get_id()) {
-    loader_ = Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl(
-        dispatcher_, tls_, {}, local_info_, store_, rand_, validation_visitor_, *api_)};
+    absl::Status creation_status;
+    loader_ = Envoy::Runtime::LoaderPtr{
+        new Envoy::Runtime::LoaderImpl(dispatcher_, tls_, {}, local_info_, store_, rand_,
+                                       validation_visitor_, *api_, creation_status)};
+    THROW_IF_NOT_OK(creation_status);
     benchmark_client_ = new MockBenchmarkClient();
     sequencer_ = new MockSequencer();
     request_generator_ = new MockRequestSource();

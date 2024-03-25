@@ -50,8 +50,11 @@ TEST_F(WorkerTest, WorkerExecutesOnThread) {
 
   TestWorker worker(*api_, tls_);
   NiceMock<Envoy::Event::MockDispatcher> dispatcher;
-  Envoy::Runtime::LoaderPtr loader = Envoy::Runtime::LoaderPtr{new Envoy::Runtime::LoaderImpl(
-      dispatcher, tls_, {}, local_info_, test_store_, rand_, validation_visitor_, *api_)};
+  absl::Status creation_status;
+  Envoy::Runtime::LoaderPtr loader = Envoy::Runtime::LoaderPtr{
+      new Envoy::Runtime::LoaderImpl(dispatcher, tls_, {}, local_info_, test_store_, rand_,
+                                     validation_visitor_, *api_, creation_status)};
+  ASSERT_TRUE(creation_status.ok());
   worker.start();
   worker.waitForCompletion();
 
