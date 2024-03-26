@@ -227,8 +227,12 @@ public:
   envoy::config::bootstrap::v3::Bootstrap& bootstrap() override {
     PANIC("NighthawkServerInstance::bootstrap not implemented");
   }
+  void setServerFactoryContext(
+      Envoy::Server::Configuration::ServerFactoryContext& server_factory_context) {
+    server_factory_context_ = &server_factory_context;
+  }
   Envoy::Server::Configuration::ServerFactoryContext& serverFactoryContext() override {
-    PANIC("NighthawkServerInstance::serverFactoryContext not implemented");
+    return *server_factory_context_;
   }
   Envoy::Server::Configuration::TransportSocketFactoryContext&
   transportSocketFactoryContext() override {
@@ -261,6 +265,8 @@ private:
   Envoy::Grpc::Context& grpc_context_;
   Envoy::Router::Context& router_context_;
   StatsConfigImpl stats_config_;
+  // Lifetime managed by ProcessImpl
+  Envoy::Server::Configuration::ServerFactoryContext* server_factory_context_;
 };
 
 // Implementation of Envoy::Server::Configuration::ServerFactoryContext.
@@ -832,12 +838,15 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
       return false;
     }
 
-    server_ = std::make_unique<NighthawkServerInstance>(
-        admin_, *api_, *dispatcher_, access_log_manager_, envoy_options_, *runtime_loader_.get(),
-        *singleton_manager_, tls_, *local_info_, validation_context_, grpc_context_,
-        router_context_);
+    std::unique_ptr<NighthawkServerInstance> nighthawk_server =
+        std::make_unique<NighthawkServerInstance>(
+            admin_, *api_, *dispatcher_, access_log_manager_, envoy_options_,
+            *runtime_loader_.get(), *singleton_manager_, tls_, *local_info_, validation_context_,
+            grpc_context_, router_context_);
     server_factory_context_ =
-        std::make_unique<NighthawkServerFactoryContext>(*server_, scope_root_);
+        std::make_unique<NighthawkServerFactoryContext>(*nighthawk_server, scope_root_);
+    nighthawk_server->setServerFactoryContext(*server_factory_context_);
+    server_ = std::move(nighthawk_server);
     ssl_context_manager_ =
         std::make_unique<Envoy::Extensions::TransportSockets::Tls::ContextManagerImpl>(
             *server_factory_context_);
