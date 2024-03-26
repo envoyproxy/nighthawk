@@ -229,6 +229,9 @@ public:
   }
   void setServerFactoryContext(
       Envoy::Server::Configuration::ServerFactoryContext& server_factory_context) {
+    RELEASE_ASSERT(server_factory_context_ != nullptr,
+                   "Mutual pointers between NighthawkServerInstance and "
+                   "NighthawkServerFactoryContext were not correctly set");
     server_factory_context_ = &server_factory_context;
   }
   Envoy::Server::Configuration::ServerFactoryContext& serverFactoryContext() override {
@@ -266,7 +269,7 @@ private:
   Envoy::Router::Context& router_context_;
   StatsConfigImpl stats_config_;
   // Lifetime managed by ProcessImpl
-  Envoy::Server::Configuration::ServerFactoryContext* server_factory_context_;
+  Envoy::Server::Configuration::ServerFactoryContext* server_factory_context_ = nullptr;
 };
 
 // Implementation of Envoy::Server::Configuration::ServerFactoryContext.
