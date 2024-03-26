@@ -229,12 +229,12 @@ public:
   }
   void setServerFactoryContext(
       Envoy::Server::Configuration::ServerFactoryContext& server_factory_context) {
-    RELEASE_ASSERT(server_factory_context_ != nullptr,
-                   "Mutual pointers between NighthawkServerInstance and "
-                   "NighthawkServerFactoryContext were not correctly set");
     server_factory_context_ = &server_factory_context;
   }
   Envoy::Server::Configuration::ServerFactoryContext& serverFactoryContext() override {
+    RELEASE_ASSERT(server_factory_context_ != nullptr,
+                   "Mutual pointers between NighthawkServerInstance and "
+                   "NighthawkServerFactoryContext were not correctly set");
     return *server_factory_context_;
   }
   Envoy::Server::Configuration::TransportSocketFactoryContext&
