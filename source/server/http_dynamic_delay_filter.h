@@ -67,7 +67,7 @@ public:
   Envoy::Stats::Scope& scope() { return scope_; }
 
   /**
-   * @return Envoy::Server::Configuration::ServerFactoryContext& to be used by filter
+   * @return Envoy::Server::Configuration::CommonFactoryContext& to be used by filter
    * instantiations associated to this.
    */
   Envoy::Server::Configuration::CommonFactoryContext& common_factory_context() {
