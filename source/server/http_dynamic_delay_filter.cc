@@ -74,10 +74,10 @@ computeEffectiveConfiguration(std::shared_ptr<const DynamicDelayConfiguration> b
 HttpDynamicDelayDecoderFilterConfig::HttpDynamicDelayDecoderFilterConfig(
     const DynamicDelayConfiguration& proto_config, Envoy::Runtime::Loader& runtime,
     const std::string& stats_prefix, Envoy::Stats::Scope& scope,
-    Envoy::Server::Configuration::ServerFactoryContext& server_factory_context)
+    Envoy::Server::Configuration::CommonFactoryContext& common_factory_context)
     : FilterConfigurationBase("dynamic-delay"), runtime_(runtime),
       stats_prefix_(absl::StrCat(stats_prefix, fmt::format("{}.", filter_name()))), scope_(scope),
-      server_factory_context_(server_factory_context),
+      common_factory_context_(common_factory_context),
       server_config_(std::make_shared<DynamicDelayConfiguration>(proto_config)) {}
 
 std::shared_ptr<const DynamicDelayConfiguration>
@@ -166,7 +166,7 @@ HttpDynamicDelayDecoderFilter::translateOurConfigIntoFaultFilterConfig(
   fault_config.mutable_delay()->mutable_percentage()->set_numerator(100);
   fault_config.mutable_delay()->mutable_header_delay();
   return std::make_shared<Envoy::Extensions::HttpFilters::Fault::FaultFilterConfig>(
-      fault_config, config.stats_prefix(), config.scope(), config.server_factory_context());
+      fault_config, config.stats_prefix(), config.scope(), config.common_factory_context());
 }
 
 void HttpDynamicDelayDecoderFilter::setDecoderFilterCallbacks(

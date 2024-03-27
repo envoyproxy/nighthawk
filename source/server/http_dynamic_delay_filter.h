@@ -39,7 +39,7 @@ public:
   HttpDynamicDelayDecoderFilterConfig(
       const nighthawk::server::DynamicDelayConfiguration& proto_config,
       Envoy::Runtime::Loader& runtime, const std::string& stats_prefix, Envoy::Stats::Scope& scope,
-      Envoy::Server::Configuration::ServerFactoryContext& server_factory_context);
+      Envoy::Server::Configuration::CommonFactoryContext& common_factory_context);
   /**
    * Increments the number of globally active filter instances.
    */
@@ -70,8 +70,8 @@ public:
    * @return Envoy::Server::Configuration::ServerFactoryContext& to be used by filter
    * instantiations associated to this.
    */
-  Envoy::Server::Configuration::ServerFactoryContext& server_factory_context() {
-    return server_factory_context_;
+  Envoy::Server::Configuration::CommonFactoryContext& common_factory_context() {
+    return common_factory_context_;
   }
 
   /**
@@ -95,7 +95,7 @@ private:
   Envoy::Runtime::Loader& runtime_;
   const std::string stats_prefix_;
   Envoy::Stats::Scope& scope_;
-  Envoy::Server::Configuration::ServerFactoryContext& server_factory_context_;
+  Envoy::Server::Configuration::CommonFactoryContext& common_factory_context_;
   std::shared_ptr<const nighthawk::server::DynamicDelayConfiguration> server_config_;
 };
 
