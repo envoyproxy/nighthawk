@@ -223,7 +223,9 @@ public:
   Envoy::ProtobufMessage::ValidationContext& messageValidationContext() override {
     return validation_context_;
   }
-  Envoy::Server::Configuration::StatsConfig& statsConfig() override { return stats_config_; }
+  Envoy::Server::Configuration::StatsConfig& statsConfig() override {
+    PANIC("NighthawkServerInstance::statsConfig not implemented");
+  }
   envoy::config::bootstrap::v3::Bootstrap& bootstrap() override {
     PANIC("NighthawkServerInstance::bootstrap not implemented");
   }
@@ -260,7 +262,6 @@ private:
   Envoy::ProtobufMessage::ProdValidationContextImpl& validation_context_;
   Envoy::Grpc::Context& grpc_context_;
   Envoy::Router::Context& router_context_;
-  StatsConfigImpl stats_config_;
   Envoy::Server::Configuration::ServerFactoryContext& server_factory_context_;
 };
 
@@ -374,7 +375,7 @@ private:
   Envoy::ProtobufMessage::ProdValidationContextImpl& validation_context_;
   Envoy::Grpc::Context& grpc_context_;
   Envoy::Router::Context& router_context_;
-  StatsConfigImpl stats_config_;
+  StatsConfigImpl stats_config_;  // Using the default value.
   Envoy::Stats::Scope& server_scope_;
 };
 
