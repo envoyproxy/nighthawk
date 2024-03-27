@@ -375,7 +375,7 @@ private:
   Envoy::ProtobufMessage::ProdValidationContextImpl& validation_context_;
   Envoy::Grpc::Context& grpc_context_;
   Envoy::Router::Context& router_context_;
-  StatsConfigImpl stats_config_;  // Using the default value.
+  StatsConfigImpl stats_config_; // Using the default value.
   Envoy::Stats::Scope& server_scope_;
 };
 
