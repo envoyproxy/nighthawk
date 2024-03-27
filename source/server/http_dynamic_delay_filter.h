@@ -75,11 +75,6 @@ public:
   }
 
   /**
-   * @return Envoy::TimeSource& to be used by filter instantiations associated to this.
-   */
-  // Envoy::TimeSource& time_source() { return server_factory_context_.timeSource(); }
-
-  /**
    * @return std::string to be used by filter instantiations associated to this.
    */
   std::string stats_prefix() { return stats_prefix_; }
