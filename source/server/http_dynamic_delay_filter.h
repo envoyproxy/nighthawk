@@ -34,7 +34,7 @@ public:
    * @param stats_prefix Prefix to use by the filter when it names statistics. E.g.
    * dynamic-delay.fault.delays_injected: 1
    * @param scope Statistics scope to be used by the filter.
-   * @param server_factory_context ServerFactoryContext to be used by the filter.
+   * @param common_factory_context CommonFactoryContext to be used by the filter.
    */
   HttpDynamicDelayDecoderFilterConfig(
       const nighthawk::server::DynamicDelayConfiguration& proto_config,
