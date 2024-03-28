@@ -34,12 +34,12 @@ public:
    * @param stats_prefix Prefix to use by the filter when it names statistics. E.g.
    * dynamic-delay.fault.delays_injected: 1
    * @param scope Statistics scope to be used by the filter.
-   * @param time_source Time source to be used by the filter.
+   * @param common_factory_context CommonFactoryContext to be used by the filter.
    */
   HttpDynamicDelayDecoderFilterConfig(
       const nighthawk::server::DynamicDelayConfiguration& proto_config,
       Envoy::Runtime::Loader& runtime, const std::string& stats_prefix, Envoy::Stats::Scope& scope,
-      Envoy::TimeSource& time_source);
+      Envoy::Server::Configuration::CommonFactoryContext& common_factory_context);
   /**
    * Increments the number of globally active filter instances.
    */
@@ -67,9 +67,12 @@ public:
   Envoy::Stats::Scope& scope() { return scope_; }
 
   /**
-   * @return Envoy::TimeSource& to be used by filter instantiations associated to this.
+   * @return Envoy::Server::Configuration::CommonFactoryContext& to be used by filter
+   * instantiations associated to this.
    */
-  Envoy::TimeSource& time_source() { return time_source_; }
+  Envoy::Server::Configuration::CommonFactoryContext& common_factory_context() {
+    return common_factory_context_;
+  }
 
   /**
    * @return std::string to be used by filter instantiations associated to this.
@@ -92,7 +95,7 @@ private:
   Envoy::Runtime::Loader& runtime_;
   const std::string stats_prefix_;
   Envoy::Stats::Scope& scope_;
-  Envoy::TimeSource& time_source_;
+  Envoy::Server::Configuration::CommonFactoryContext& common_factory_context_;
   std::shared_ptr<const nighthawk::server::DynamicDelayConfiguration> server_config_;
 };
 
