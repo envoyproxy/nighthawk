@@ -1,4 +1,4 @@
-FROM frolvlad/alpine-python3@sha256:d2b602c49f332ab70060ecf2e3beae6f54efc4e163784620946fc04de8050c74
+FROM frolvlad/alpine-python3@sha256:c2c85950417687e18cb6eada73dfb7f5a0f80bcea6f5318f135acff6f7ec8e4c
 
 RUN apk add docker openrc
 RUN rc-update add docker boot
