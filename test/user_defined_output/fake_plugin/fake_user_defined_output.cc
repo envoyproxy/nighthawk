@@ -68,7 +68,7 @@ FakeUserDefinedOutputPluginFactory::createUserDefinedOutputPlugin(
     const Envoy::ProtobufWkt::Any& config_any, const WorkerMetadata& worker_metadata) {
   plugin_count_++;
   FakeUserDefinedOutputConfig config;
-  absl::Status status = Envoy::MessageUtil::unpackToNoThrow(config_any, config);
+  absl::Status status = Envoy::MessageUtil::unpackTo(config_any, config);
   if (!status.ok()) {
     return status;
   }
@@ -85,7 +85,7 @@ absl::StatusOr<Envoy::ProtobufWkt::Any> FakeUserDefinedOutputPluginFactory::Aggr
     if (user_defined_output.has_typed_output()) {
       Envoy::ProtobufWkt::Any any = user_defined_output.typed_output();
       FakeUserDefinedOutput output;
-      absl::Status status = Envoy::MessageUtil::unpackToNoThrow(any, output);
+      absl::Status status = Envoy::MessageUtil::unpackTo(any, output);
       if (status.ok()) {
         data_called += output.data_called();
         headers_called += output.headers_called();

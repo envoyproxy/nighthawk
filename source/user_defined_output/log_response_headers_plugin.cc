@@ -126,7 +126,7 @@ absl::StatusOr<UserDefinedOutputPluginPtr>
 LogResponseHeadersPluginFactory::createUserDefinedOutputPlugin(
     const Envoy::ProtobufWkt::Any& config_any, const WorkerMetadata& worker_metadata) {
   LogResponseHeadersConfig config;
-  absl::Status unpack_status = Envoy::MessageUtil::unpackToNoThrow(config_any, config);
+  absl::Status unpack_status = Envoy::MessageUtil::unpackTo(config_any, config);
   if (!unpack_status.ok()) {
     return unpack_status;
   }

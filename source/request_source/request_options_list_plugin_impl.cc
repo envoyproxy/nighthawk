@@ -27,7 +27,7 @@ RequestSourcePtr FileBasedOptionsListRequestSourceFactory::createRequestSourcePl
       Envoy::Protobuf::DynamicCastToGenerated<const Envoy::ProtobufWkt::Any>(&message);
   nighthawk::request_source::FileBasedOptionsListRequestSourceConfig config;
   Envoy::MessageUtil util;
-  util.unpackTo(*any, config);
+  util.unpackToOrThrow(*any, config);
   uint32_t max_file_size = config.has_max_file_size() ? config.max_file_size().value() : 1000000;
   if (api.fileSystem().fileSize(config.file_path()) > max_file_size) {
     throw NighthawkException("file size must be less than max_file_size");
@@ -60,7 +60,7 @@ RequestSourcePtr InLineOptionsListRequestSourceFactory::createRequestSourcePlugi
   const auto* any =
       Envoy::Protobuf::DynamicCastToGenerated<const Envoy::ProtobufWkt::Any>(&message);
   nighthawk::request_source::InLineOptionsListRequestSourceConfig config;
-  Envoy::MessageUtil::unpackTo(*any, config);
+  Envoy::MessageUtil::unpackToOrThrow(*any, config);
   auto loaded_list_ptr =
       std::make_unique<const nighthawk::client::RequestOptionsList>(config.options_list());
   return std::make_unique<OptionsListRequestSource>(config.num_requests(), std::move(header),

@@ -20,6 +20,7 @@
 
 #include "external/envoy/source/common/api/api_impl.h"
 #include "external/envoy/source/common/common/cleanup.h"
+#include "external/envoy/source/common/common/regex.h"
 #include "external/envoy/source/common/common/statusor.h"
 #include "external/envoy/source/common/config/stats_utility.h"
 #include "external/envoy/source/common/config/utility.h"
@@ -126,6 +127,14 @@ private:
   const std::chrono::milliseconds flush_interval_;
 };
 
+// A fake ServerLifecycleNotifier. Because it does nothing, it's safe to just create
+// multiple instances of it, rather than manage the lifetime of a single one.
+class LifecycleNotifierImpl : public Envoy::Server::ServerLifecycleNotifier {
+public:
+  HandlePtr registerCallback(Stage, StageCallback) override { return nullptr; }
+  HandlePtr registerCallback(Stage, StageCallbackWithCompletion) override { return nullptr; }
+};
+
 // Implementation of Envoy::Server::Instance. Only methods used by Envoy's code
 // when Nighthawk is running are implemented.
 class NighthawkServerInstance : public Envoy::Server::Instance {
@@ -195,7 +204,7 @@ public:
   const Envoy::Server::Options& options() override { return options_; }
   Envoy::Runtime::Loader& runtime() override { return runtime_; }
   Envoy::Server::ServerLifecycleNotifier& lifecycleNotifier() override {
-    PANIC("NighthawkServerInstance::lifecycleNotifier not implemented");
+    return lifecycle_notifier_;
   }
   void shutdown() override { PANIC("NighthawkServerInstance::shutdown not implemented"); }
   bool isShutdown() override { PANIC("NighthawkServerInstance::isShutdown not implemented"); }
@@ -263,6 +272,7 @@ private:
   Envoy::Grpc::Context& grpc_context_;
   Envoy::Router::Context& router_context_;
   Envoy::Server::Configuration::ServerFactoryContext& server_factory_context_;
+  LifecycleNotifierImpl lifecycle_notifier_; // A no-op object that lives here.
 };
 
 // Implementation of Envoy::Server::Configuration::ServerFactoryContext.
@@ -321,12 +331,10 @@ public:
   Envoy::AccessLog::AccessLogManager& accessLogManager() override { return log_manager_; }
 
   Envoy::Server::ServerLifecycleNotifier& lifecycleNotifier() override {
-    PANIC("NighthawkServerFactoryContext::lifecycleNotifier not implemented");
-  };
+    return lifecycle_notifier_;
+  }
 
-  Envoy::Regex::Engine& regexEngine() override {
-    PANIC("NighthawkServerFactoryContext::regexEngine not implemented");
-  };
+  Envoy::Regex::Engine& regexEngine() override { return regex_engine_; }
 
   Envoy::Init::Manager& initManager() override {
     PANIC("NighthawkServerFactoryContext::initManager not implemented");
@@ -375,8 +383,10 @@ private:
   Envoy::ProtobufMessage::ProdValidationContextImpl& validation_context_;
   Envoy::Grpc::Context& grpc_context_;
   Envoy::Router::Context& router_context_;
-  StatsConfigImpl stats_config_; // Using the default value.
+  StatsConfigImpl stats_config_; // Using the object created here.
   Envoy::Stats::Scope& server_scope_;
+  LifecycleNotifierImpl lifecycle_notifier_;  // A no-op object that lives here.
+  Envoy::Regex::GoogleReEngine regex_engine_; // Using the object created here.
 };
 
 /**

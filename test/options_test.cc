@@ -298,8 +298,8 @@ TEST_F(OptionsImplTest, AlmostAll) {
   EXPECT_EQ(options->userDefinedOutputPluginConfigs().size(), 1);
   envoy::config::core::v3::TypedExtensionConfig extension_config =
       options->userDefinedOutputPluginConfigs()[0];
-  EXPECT_TRUE(Envoy::MessageUtil::unpackToNoThrow(extension_config.typed_config(),
-                                                  actual_user_defined_output_config)
+  EXPECT_TRUE(Envoy::MessageUtil::unpackTo(extension_config.typed_config(),
+                                           actual_user_defined_output_config)
                   .ok());
   EXPECT_THAT(actual_user_defined_output_config, EqualsProto(expected_user_defined_output_config));
 

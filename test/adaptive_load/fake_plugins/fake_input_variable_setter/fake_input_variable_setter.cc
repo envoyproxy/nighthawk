@@ -40,7 +40,7 @@ InputVariableSetterPtr FakeInputVariableSetterConfigFactory::createInputVariable
   const auto* any =
       Envoy::Protobuf::DynamicCastToGenerated<const Envoy::ProtobufWkt::Any>(&message);
   nighthawk::adaptive_load::FakeInputVariableSetterConfig config;
-  Envoy::MessageUtil::unpackTo(*any, config);
+  Envoy::MessageUtil::unpackToOrThrow(*any, config);
   return std::make_unique<FakeInputVariableSetter>(config);
 }
 
@@ -50,7 +50,7 @@ absl::Status FakeInputVariableSetterConfigFactory::ValidateConfig(
     const auto* any =
         Envoy::Protobuf::DynamicCastToGenerated<const Envoy::ProtobufWkt::Any>(&message);
     nighthawk::adaptive_load::FakeInputVariableSetterConfig config;
-    Envoy::MessageUtil::unpackTo(*any, config);
+    Envoy::MessageUtil::unpackToOrThrow(*any, config);
     if (config.has_artificial_validation_failure()) {
       return StatusFromProtoRpcStatus(config.artificial_validation_failure());
     }

@@ -1,4 +1,3 @@
-load("@nh_pip3//:requirements.bzl", "entry_point")
 load("@nh_pip3//:requirements.bzl", "requirement")
 load("@rules_python//python:defs.bzl", "py_binary")
 
