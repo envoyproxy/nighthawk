@@ -129,10 +129,16 @@ private:
 
 // A fake ServerLifecycleNotifier. Because it does nothing, it's safe to just create
 // multiple instances of it, rather than manage the lifetime of a single one.
-class LifecycleNotifierImpl : public Envoy::Server::ServerLifecycleNotifier {
+class NighthawkLifecycleNotifierImpl : public Envoy::Server::ServerLifecycleNotifier {
 public:
-  HandlePtr registerCallback(Stage, StageCallback) override { return nullptr; }
-  HandlePtr registerCallback(Stage, StageCallbackWithCompletion) override { return nullptr; }
+  HandlePtr registerCallback(Stage, StageCallback) override {
+    PANIC(
+        "NighthawkLifecycleNotifierImpl::registerCallbacki(Stage, StageCallback) not implemented");
+  }
+  HandlePtr registerCallback(Stage, StageCallbackWithCompletion) override {
+    PANIC("NighthawkLifecycleNotifierImpl::registerCallback(Stage, StageCallbackWithCompletion) "
+          "not implemented");
+  }
 };
 
 // Implementation of Envoy::Server::Instance. Only methods used by Envoy's code
@@ -272,7 +278,7 @@ private:
   Envoy::Grpc::Context& grpc_context_;
   Envoy::Router::Context& router_context_;
   Envoy::Server::Configuration::ServerFactoryContext& server_factory_context_;
-  LifecycleNotifierImpl lifecycle_notifier_; // A no-op object that lives here.
+  NighthawkLifecycleNotifierImpl lifecycle_notifier_; // A no-op object that lives here.
 };
 
 // Implementation of Envoy::Server::Configuration::ServerFactoryContext.
@@ -385,8 +391,8 @@ private:
   Envoy::Router::Context& router_context_;
   StatsConfigImpl stats_config_; // Using the object created here.
   Envoy::Stats::Scope& server_scope_;
-  LifecycleNotifierImpl lifecycle_notifier_;  // A no-op object that lives here.
-  Envoy::Regex::GoogleReEngine regex_engine_; // Using the object created here.
+  NighthawkLifecycleNotifierImpl lifecycle_notifier_; // A no-op object that lives here.
+  Envoy::Regex::GoogleReEngine regex_engine_;         // Using the object created here.
 };
 
 /**
