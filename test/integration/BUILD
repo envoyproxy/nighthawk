@@ -1,9 +1,9 @@
-load("@rules_python//python:defs.bzl", "py_binary", "py_library")
 load(
     "@envoy//bazel:envoy_build_system.bzl",
     "envoy_package",
 )
 load("@nh_pip3//:requirements.bzl", "requirement")
+load("@rules_python//python:defs.bzl", "py_binary", "py_library")
 
 licenses(["notice"])  # Apache 2
 

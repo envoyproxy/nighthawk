@@ -1,5 +1,5 @@
-load("@rules_python//python:pip.bzl", "pip_parse")
 load("@python3_11//:defs.bzl", "interpreter")
+load("@rules_python//python:pip.bzl", "pip_parse")
 
 def nighthawk_python_dependencies():
     pip_parse(

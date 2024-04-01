@@ -129,7 +129,7 @@ TEST(MakeFakeMetricsPluginTypedExtensionConfig, PacksGivenConfigProto) {
   envoy::config::core::v3::TypedExtensionConfig activator =
       MakeFakeMetricsPluginTypedExtensionConfig(expected_config);
   nighthawk::adaptive_load::FakeMetricsPluginConfig actual_config;
-  Envoy::MessageUtil::unpackTo(activator.typed_config(), actual_config);
+  Envoy::MessageUtil::unpackToOrThrow(activator.typed_config(), actual_config);
   EXPECT_THAT(expected_config, EqualsProto(actual_config));
 }
 

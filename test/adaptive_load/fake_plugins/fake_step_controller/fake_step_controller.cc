@@ -78,7 +78,7 @@ StepControllerPtr FakeStepControllerConfigFactory::createStepController(
   const auto* any =
       Envoy::Protobuf::DynamicCastToGenerated<const Envoy::ProtobufWkt::Any>(&message);
   nighthawk::adaptive_load::FakeStepControllerConfig config;
-  Envoy::MessageUtil::unpackTo(*any, config);
+  Envoy::MessageUtil::unpackToOrThrow(*any, config);
   return std::make_unique<FakeStepController>(config, command_line_options_template);
 }
 
@@ -88,7 +88,7 @@ FakeStepControllerConfigFactory::ValidateConfig(const Envoy::Protobuf::Message& 
     const auto* any =
         Envoy::Protobuf::DynamicCastToGenerated<const Envoy::ProtobufWkt::Any>(&message);
     nighthawk::adaptive_load::FakeStepControllerConfig config;
-    Envoy::MessageUtil::unpackTo(*any, config);
+    Envoy::MessageUtil::unpackToOrThrow(*any, config);
     if (config.has_artificial_validation_failure()) {
       return StatusFromProtoRpcStatus(config.artificial_validation_failure());
     }

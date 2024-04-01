@@ -493,7 +493,7 @@ TEST_F(BenchmarkClientHttpTest, CallsUserDefinedPluginHandleHeaders) {
   absl::StatusOr<Envoy::ProtobufWkt::Any> output_any = plugin_ptr->getPerWorkerOutput();
   ASSERT_TRUE(output_any.ok());
   nighthawk::FakeUserDefinedOutput output;
-  ASSERT_TRUE(Envoy::MessageUtil::unpackToNoThrow(*output_any, output).ok());
+  ASSERT_TRUE(Envoy::MessageUtil::unpackTo(*output_any, output).ok());
   EXPECT_EQ(output.headers_called(), 2);
   EXPECT_EQ(getCounter("user_defined_plugin_handle_headers_failure"), 0);
 }
@@ -524,7 +524,7 @@ TEST_F(BenchmarkClientHttpTest, IncrementsCounterWhenUserDefinedPluginHandleHead
   absl::StatusOr<Envoy::ProtobufWkt::Any> output_any = plugin_ptr->getPerWorkerOutput();
   ASSERT_TRUE(output_any.ok());
   nighthawk::FakeUserDefinedOutput output;
-  ASSERT_TRUE(Envoy::MessageUtil::unpackToNoThrow(*output_any, output).ok());
+  ASSERT_TRUE(Envoy::MessageUtil::unpackTo(*output_any, output).ok());
   EXPECT_EQ(output.headers_called(), 2);
   EXPECT_EQ(getCounter("user_defined_plugin_handle_headers_failure"), 2);
 }
@@ -551,7 +551,7 @@ TEST_F(BenchmarkClientHttpTest, CallsUserDefinedPluginHandleData) {
   absl::StatusOr<Envoy::ProtobufWkt::Any> output_any = plugin_ptr->getPerWorkerOutput();
   ASSERT_TRUE(output_any.ok());
   nighthawk::FakeUserDefinedOutput output;
-  ASSERT_TRUE(Envoy::MessageUtil::unpackToNoThrow(*output_any, output).ok());
+  ASSERT_TRUE(Envoy::MessageUtil::unpackTo(*output_any, output).ok());
   EXPECT_EQ(output.data_called(), 2);
   EXPECT_EQ(getCounter("user_defined_plugin_handle_data_failure"), 0);
 }
@@ -580,7 +580,7 @@ TEST_F(BenchmarkClientHttpTest, IncrementsCounterWhenUserDefinedPluginHandleData
   absl::StatusOr<Envoy::ProtobufWkt::Any> output_any = plugin_ptr->getPerWorkerOutput();
   ASSERT_TRUE(output_any.ok());
   nighthawk::FakeUserDefinedOutput output;
-  ASSERT_TRUE(Envoy::MessageUtil::unpackToNoThrow(*output_any, output).ok());
+  ASSERT_TRUE(Envoy::MessageUtil::unpackTo(*output_any, output).ok());
   EXPECT_EQ(output.data_called(), 2);
   EXPECT_EQ(getCounter("user_defined_plugin_handle_data_failure"), 2);
 }

@@ -41,7 +41,7 @@ absl::Status DoValidateConfig(const Envoy::Protobuf::Message& message) {
   const auto* any =
       Envoy::Protobuf::DynamicCastToGenerated<const Envoy::ProtobufWkt::Any>(&message);
   nighthawk::adaptive_load::LinearScoringFunctionConfig config;
-  Envoy::MessageUtil::unpackTo(*any, config);
+  Envoy::MessageUtil::unpackToOrThrow(*any, config);
   return config.threshold() == kBadConfigThreshold
              ? absl::InvalidArgumentError("input validation failed")
              : absl::OkStatus();
@@ -86,7 +86,7 @@ public:
     const auto* any =
         Envoy::Protobuf::DynamicCastToGenerated<const Envoy::ProtobufWkt::Any>(&message);
     nighthawk::adaptive_load::LinearScoringFunctionConfig config;
-    Envoy::MessageUtil::unpackTo(*any, config);
+    Envoy::MessageUtil::unpackToOrThrow(*any, config);
     return std::make_unique<TestInputVariableSetter>(config);
   }
 };
@@ -125,7 +125,7 @@ public:
     const auto* any =
         Envoy::Protobuf::DynamicCastToGenerated<const Envoy::ProtobufWkt::Any>(&message);
     nighthawk::adaptive_load::LinearScoringFunctionConfig config;
-    Envoy::MessageUtil::unpackTo(*any, config);
+    Envoy::MessageUtil::unpackToOrThrow(*any, config);
     return std::make_unique<TestScoringFunction>(config);
   }
 };
@@ -165,7 +165,7 @@ public:
     const auto* any =
         Envoy::Protobuf::DynamicCastToGenerated<const Envoy::ProtobufWkt::Any>(&message);
     nighthawk::adaptive_load::LinearScoringFunctionConfig config;
-    Envoy::MessageUtil::unpackTo(*any, config);
+    Envoy::MessageUtil::unpackToOrThrow(*any, config);
     return std::make_unique<TestMetricsPlugin>(config);
   }
 };
@@ -216,7 +216,7 @@ public:
     const auto* any =
         Envoy::Protobuf::DynamicCastToGenerated<const Envoy::ProtobufWkt::Any>(&message);
     nighthawk::adaptive_load::LinearScoringFunctionConfig config;
-    Envoy::MessageUtil::unpackTo(*any, config);
+    Envoy::MessageUtil::unpackToOrThrow(*any, config);
     return std::make_unique<TestStepController>(config, command_line_options_template);
   }
 };
