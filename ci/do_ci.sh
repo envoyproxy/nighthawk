@@ -215,7 +215,6 @@ function do_benchmark_with_own_binaries() {
         --compilation_mode=opt \
         --cxxopt=-g \
         --cxxopt=-ggdb3 \
-        --define tcmalloc=gperftools \
         //benchmarks:*
 }
 
