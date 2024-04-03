@@ -42,8 +42,9 @@ build --action_env=CXX --host_action_env=CXX
 build --action_env=LLVM_CONFIG --host_action_env=LLVM_CONFIG
 # Do not pass through PATH however.
 # It tends to have machine-specific values, such as dynamically created temp folders.
-# This would make it impossible to share remote action cache hits among machines.# build --action_env=PATH --host_action_env=PATH
-build --action_env=PATH=/usr/sbin:/usr/bin:/sbin:/bin:/opt/llvm/bin
+# This would make it impossible to share remote action cache hits among machines.
+# build --action_env=PATH --host_action_env=PATH
+build --action_env=PATH=/usr/sbin:/usr/bin:/sbin:/bin:/opt/llvm/bin --host_action_env=PATH
 # To make our own CI green, we do need that flag on Windows though.
 build:windows --action_env=PATH --host_action_env=PATH
 
@@ -147,7 +148,6 @@ build:clang-asan --linkopt --unwindlib=libgcc
 build:macos --cxxopt=-std=c++20 --host_cxxopt=-std=c++20
 build:macos --action_env=PATH=/opt/homebrew/bin:/opt/local/bin:/usr/local/bin:/usr/bin:/bin
 build:macos --host_action_env=PATH=/opt/homebrew/bin:/opt/local/bin:/usr/local/bin:/usr/bin:/bin
-build:macos --define tcmalloc=disabled
 
 # macOS ASAN/UBSAN
 build:macos-asan --config=asan
