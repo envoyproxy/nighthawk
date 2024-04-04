@@ -162,6 +162,7 @@ build:macos-asan --copt -D_FORTIFY_SOURCE=0
 build:macos-asan --copt -DGRPC_BAZEL_BUILD
 # Dynamic link cause issues like: `dyld: malformed mach-o: load commands size (59272) > 32768`
 build:macos-asan --dynamic_mode=off
+build:macos --define tcmalloc=disabled
 
 # Clang TSAN
 build:clang-tsan --action_env=ENVOY_TSAN=1
