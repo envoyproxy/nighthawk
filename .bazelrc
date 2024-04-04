@@ -152,6 +152,7 @@ build:clang-asan --linkopt --unwindlib=libgcc
 build:macos --cxxopt=-std=c++20 --host_cxxopt=-std=c++20
 build:macos --action_env=PATH=/opt/homebrew/bin:/opt/local/bin:/usr/local/bin:/usr/bin:/bin
 build:macos --host_action_env=PATH=/opt/homebrew/bin:/opt/local/bin:/usr/local/bin:/usr/bin:/bin
+build:macos --define tcmalloc=disabled
 
 # macOS ASAN/UBSAN
 build:macos-asan --config=asan
@@ -162,7 +163,6 @@ build:macos-asan --copt -D_FORTIFY_SOURCE=0
 build:macos-asan --copt -DGRPC_BAZEL_BUILD
 # Dynamic link cause issues like: `dyld: malformed mach-o: load commands size (59272) > 32768`
 build:macos-asan --dynamic_mode=off
-build:macos --define tcmalloc=disabled
 
 # Clang TSAN
 build:clang-tsan --action_env=ENVOY_TSAN=1
