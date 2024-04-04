@@ -46,7 +46,7 @@ build --action_env=LLVM_CONFIG --host_action_env=LLVM_CONFIG
 # such as:
 # build -action_env=PATH --host_action_env=PATH
 # We need to explicitly set the --host_action_env for clang build since we are not building rbe-toolchain-clang that Envoy builds.
-# To allow PATH to be part of the action inputs (and the cache key), we set it to a value which will be the same form different VMs,
+# To allow PATH to be part of the action inputs (and the cache key), we set it to a value which will be the same for different VMs,
 # so cache hits can be shared among machines.
 build --host_action_env=PATH=/usr/sbin:/usr/bin:/opt/llvm/bin
 # To make our own CI green, we do need that flag on Windows though.
