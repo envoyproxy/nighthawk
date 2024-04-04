@@ -40,11 +40,15 @@ build --enable_platform_specific_config
 build --action_env=CC --host_action_env=CC
 build --action_env=CXX --host_action_env=CXX
 build --action_env=LLVM_CONFIG --host_action_env=LLVM_CONFIG
-# Do not pass through PATH however.
-# It tends to have machine-specific values, such as dynamically created temp folders.
-# This would make it impossible to share remote action cache hits among machines.
-# build --action_env=PATH --host_action_env=PATH
-build --action_env=PATH --host_action_env=PATH
+# Do not pass  machine-specific values through PATH however.
+# Values that has machine-specific information, such as dynamically created temp folders,
+# would make it impossible to share remote action cache hits among machines.
+# such as:
+# build -action_env=PATH --host_action_env=PATH
+# We need to explicit the --host_action_env for clang build.
+# To allow PATH to be part of the action inputs (and the cache key), we set it to a value which will be the same form different VMs,
+# so cache hits can be shared among machines.
+build --host_action_env=PATH=/usr/sbin:/usr/bin:/opt/llvm/bin
 # To make our own CI green, we do need that flag on Windows though.
 build:windows --action_env=PATH --host_action_env=PATH
 
