@@ -848,8 +848,9 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
     // Needs to happen as early as possible (before createWorkers()) in the instantiation to preempt
     // the objects that require stats.
     if (!options_.statsSinks().empty()) {
-      auto producer_or_error = Envoy::Stats::TagProducerImpl::createTagProducer(
-          bootstrap_.stats_config(), envoy_options_.statsTags());
+      absl::StatusOr<Envoy::Stats::TagProducerPtr> producer_or_error =
+          Envoy::Stats::TagProducerImpl::createTagProducer(bootstrap_.stats_config(),
+                                                           envoy_options_.statsTags());
       if (!producer_or_error.ok()) {
         ENVOY_LOG(error, "createTagProducer failed. Received bad status: {}",
                   producer_or_error.status());
