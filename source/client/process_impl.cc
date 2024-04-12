@@ -22,7 +22,6 @@
 #include "external/envoy/source/common/common/cleanup.h"
 #include "external/envoy/source/common/common/regex.h"
 #include "external/envoy/source/common/common/statusor.h"
-#include "external/envoy/source/common/config/stats_utility.h"
 #include "external/envoy/source/common/config/utility.h"
 #include "external/envoy/source/common/event/dispatcher_impl.h"
 #include "external/envoy/source/common/event/real_time_system.h"
@@ -33,6 +32,7 @@
 #include "external/envoy/source/common/protobuf/protobuf.h"
 #include "external/envoy/source/common/runtime/runtime_impl.h"
 #include "external/envoy/source/common/singleton/manager_impl.h"
+#include "external/envoy/source/common/stats/tag_producer_impl.h"
 #include "external/envoy/source/common/thread_local/thread_local_impl.h"
 #include "external/envoy/source/server/server.h"
 #include "external/envoy_api/envoy/config/core/v3/resolver.pb.h"
@@ -848,8 +848,14 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
     // Needs to happen as early as possible (before createWorkers()) in the instantiation to preempt
     // the objects that require stats.
     if (!options_.statsSinks().empty()) {
-      store_root_.setTagProducer(
-          Envoy::Config::StatsUtility::createTagProducer(bootstrap_, envoy_options_.statsTags()));
+      auto producer_or_error = Envoy::Stats::TagProducerImpl::createTagProducer(
+          bootstrap_.stats_config(), envoy_options_.statsTags());
+      if (!producer_or_error.ok()) {
+        ENVOY_LOG(error, "createTagProducer failed. Received bad status: {}",
+                  producer_or_error.status());
+        return false;
+      }
+      store_root_.setTagProducer(std::move(producer_or_error.value()));
     }
 
     absl::Status workers_status = createWorkers(number_of_workers_, scheduled_start);
