@@ -202,6 +202,7 @@ bazel-bin/nighthawk_test_server  [--stats-tag <string>] ...
 [--allow-unknown-fields] [--config-yaml
 <string>] [-c <string>] [--concurrency
 <uint32_t>] [--base-id-path <string>]
+[--skip-hot-restart-on-no-parent]
 [--use-dynamic-base-id] [--base-id
 <uint32_t>] [--] [--version] [-h]
 
@@ -323,6 +324,12 @@ Path to configuration file
 
 --base-id-path <string>
 Path to which the base ID is written
+
+--skip-hot-restart-on-no-parent
+When hot restarting with epoch>0, the default behavior is for the
+child to crash if the connection to the parent cannot be established.
+Set this to true to instead continue with a regular startup, while
+retaining the new epoch value.
 
 --use-dynamic-base-id
 The server chooses a base ID dynamically. Supersedes a static base ID.
