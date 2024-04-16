@@ -142,11 +142,11 @@ build:asan --copt -O1
 build:asan --copt -fno-optimize-sibling-calls
 
 # Clang ASAN/UBSAN
-build:clang-asan --config=clang
-build:clang-asan --config=asan
-build:clang-asan --linkopt -fuse-ld=lld
-build:clang-asan --linkopt --rtlib=compiler-rt
-build:clang-asan --linkopt --unwindlib=libgcc
+build:clang-asan --config=clang                                                             # unique
+build:clang-asan --config=asan                                                              # unique
+build:clang-asan --linkopt -fuse-ld=lld                                                     # unique
+build:clang-asan --linkopt --rtlib=compiler-rt                                              # unique
+build:clang-asan --linkopt --unwindlib=libgcc                                               # unique
 
 # macOS
 build:macos --cxxopt=-std=c++20 --host_cxxopt=-std=c++20
