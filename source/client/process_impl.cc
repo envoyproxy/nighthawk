@@ -902,6 +902,7 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
     }
     ENVOY_LOG(debug, "Computed configuration: {}", absl::StrCat(bootstrap_));
     cluster_manager_ = cluster_manager_factory_->clusterManagerFromProto(bootstrap_);
+    cluster_manager_->initialize(bootstrap_);
     maybeCreateTracingDriver(bootstrap_.tracing());
     cluster_manager_->setInitializedCb(
         [this]() -> void { init_manager_.initialize(init_watcher_); });
