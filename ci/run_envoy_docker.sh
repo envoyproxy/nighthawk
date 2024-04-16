@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+# test
 set -e
 
 # shellcheck source=ci/envoy_build_sha.sh
