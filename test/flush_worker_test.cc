@@ -40,11 +40,12 @@ public:
     Envoy::Random::RandomGeneratorImpl rand;
     NiceMock<Envoy::LocalInfo::MockLocalInfo> local_info;
     NiceMock<Envoy::ProtobufMessage::MockValidationVisitor> validation_visitor;
-    absl::Status creation_status;
-    loader_ = Envoy::Runtime::LoaderPtr{
-        new Envoy::Runtime::LoaderImpl(*dispatcher_, tls_, {}, local_info, store_, rand,
-                                       validation_visitor, api_, creation_status)};
-    THROW_IF_NOT_OK(creation_status);
+    absl::StatusOr<Envoy::Runtime::LoaderPtr> loader = Envoy::Runtime::LoaderImpl::create(
+        *dispatcher_, tls_, {}, local_info, store_, rand, validation_visitor, api_);
+
+    THROW_IF_NOT_OK(loader.status());
+    loader_ = *std::move(loader);
+
     sink_ = new StrictMock<Envoy::Stats::MockSink>();
     stats_sinks_.emplace_back(sink_);
 
