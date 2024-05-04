@@ -867,16 +867,16 @@ bool ProcessImpl::runInternal(OutputCollector& collector, const UriPtr& tracing_
     tls_.registerThread(*dispatcher_, true);
     store_root_.initializeThreading(*dispatcher_, tls_);
 
-    absl::StatusOr<Envoy::Runtime::LoaderPtr> loader_ = Envoy::Runtime::LoaderImpl::create(
+    absl::StatusOr<Envoy::Runtime::LoaderPtr> loader = Envoy::Runtime::LoaderImpl::create(
         *dispatcher_, tls_, {}, *local_info_, store_root_, generator_,
         Envoy::ProtobufMessage::getStrictValidationVisitor(), *api_);
 
-    if (!loader_.ok()) {
-      ENVOY_LOG(error, "create runtime loader failed. Received bad status: {}", loader_.status());
+    if (!loader.ok()) {
+      ENVOY_LOG(error, "create runtime loader failed. Received bad status: {}", loader.status());
       return false;
     }
 
-    runtime_loader_ = *std::move(loader_);
+    runtime_loader_ = *std::move(loader);
 
     server_factory_context_ = std::make_unique<NighthawkServerFactoryContext>(
         admin_, *api_, *dispatcher_, access_log_manager_, envoy_options_, *runtime_loader_.get(),
