@@ -42,11 +42,12 @@ class ClientWorkerTest : public Test {
 public:
   ClientWorkerTest()
       : api_(Envoy::Api::createApiForTest()), thread_id_(std::this_thread::get_id()) {
-    absl::Status creation_status;
-    loader_ = Envoy::Runtime::LoaderPtr{
-        new Envoy::Runtime::LoaderImpl(dispatcher_, tls_, {}, local_info_, store_, rand_,
-                                       validation_visitor_, *api_, creation_status)};
-    THROW_IF_NOT_OK(creation_status);
+    absl::StatusOr<Envoy::Runtime::LoaderPtr> loader = Envoy::Runtime::LoaderImpl::create(
+        dispatcher_, tls_, {}, local_info_, store_, rand_, validation_visitor_, *api_);
+
+    THROW_IF_NOT_OK(loader.status());
+    loader_ = *std::move(loader);
+
     benchmark_client_ = new MockBenchmarkClient();
     sequencer_ = new MockSequencer();
     request_generator_ = new MockRequestSource();
